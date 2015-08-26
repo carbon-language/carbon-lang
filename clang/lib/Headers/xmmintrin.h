@@ -577,6 +577,12 @@ _mm_loadr_ps(const float *__p)
 }
 
 static __inline__ __m128 __DEFAULT_FN_ATTRS
+_mm_undefined_ps()
+{
+  return (__m128)__builtin_ia32_undef128();
+}
+
+static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_set_ss(float __w)
 {
   return (__m128){ __w, 0, 0, 0 };

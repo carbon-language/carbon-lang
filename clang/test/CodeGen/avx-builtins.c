@@ -147,3 +147,21 @@ __m256i test_256_insert_epi64(__m256i __a) {
   // CHECK: insertelement <4 x i64> {{.*}}, i64 {{.*}}, i32 {{.*}}
   return _mm256_insert_epi64(__a, 42, 3);
 }
+
+__m256 test_mm256_undefined_ps() {
+  // CHECK-LABEL: @test_mm256_undefined_ps
+  // CHECK: ret <8 x float> undef
+  return _mm256_undefined_ps();
+}
+
+__m256d test_mm256_undefined_pd() {
+  // CHECK-LABEL: @test_mm256_undefined_pd
+  // CHECK: ret <4 x double> undef
+  return _mm256_undefined_pd();
+}
+
+__m256i test_mm256_undefined_si256() {
+  // CHECK-LABEL: @test_mm256_undefined_si256
+  // CHECK: ret <4 x i64> undef
+  return _mm256_undefined_si256();
+}

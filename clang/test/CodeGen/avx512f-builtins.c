@@ -1875,3 +1875,27 @@ __m128d test_mm_maskz_min_sd(__mmask8 __U, __m128d __A, __m128d __B) {
   // CHECK: @llvm.x86.avx512.mask.min.sd.round
   return _mm_maskz_min_sd(__U,__A,__B); 
 }
+
+__m512 test_mm512_undefined() {
+  // CHECK-LABEL: @test_mm512_undefined
+  // CHECK: ret <16 x float> undef
+  return _mm512_undefined();
+}
+
+__m512 test_mm512_undefined_ps() {
+  // CHECK-LABEL: @test_mm512_undefined_ps
+  // CHECK: ret <16 x float> undef
+  return _mm512_undefined_ps();
+}
+
+__m512d test_mm512_undefined_pd() {
+  // CHECK-LABEL: @test_mm512_undefined_pd
+  // CHECK: ret <8 x double> undef
+  return _mm512_undefined_pd();
+}
+
+__m512i test_mm512_undefined_epi32() {
+  // CHECK-LABEL: @test_mm512_undefined_epi32
+  // CHECK: ret <8 x i64> undef
+  return _mm512_undefined_epi32();
+}

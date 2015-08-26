@@ -30,6 +30,12 @@
 // can use it?
 BUILTIN(__builtin_cpu_supports, "bcC*", "nc")
 
+// Undefined Values
+//
+TARGET_BUILTIN(__builtin_ia32_undef128, "V2d", "nc", "")
+TARGET_BUILTIN(__builtin_ia32_undef256, "V4d", "nc", "")
+TARGET_BUILTIN(__builtin_ia32_undef512, "V8d", "nc", "")
+
 // 3DNow!
 //
 TARGET_BUILTIN(__builtin_ia32_femms, "v", "", "3dnow")

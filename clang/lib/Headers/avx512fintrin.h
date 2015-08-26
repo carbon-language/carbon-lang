@@ -57,6 +57,30 @@ _mm512_setzero_si512(void)
   return (__m512i)(__v8di){ 0, 0, 0, 0, 0, 0, 0, 0 };
 }
 
+static __inline__ __m512d __DEFAULT_FN_ATTRS
+_mm512_undefined_pd()
+{
+  return (__m512d)__builtin_ia32_undef512();
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_undefined()
+{
+  return (__m512)__builtin_ia32_undef512();
+}
+
+static __inline__ __m512 __DEFAULT_FN_ATTRS
+_mm512_undefined_ps()
+{
+  return (__m512)__builtin_ia32_undef512();
+}
+
+static __inline__ __m512i __DEFAULT_FN_ATTRS
+_mm512_undefined_epi32()
+{
+  return (__m512i)__builtin_ia32_undef512();
+}
+
 static __inline __m512i __DEFAULT_FN_ATTRS
 _mm512_maskz_set1_epi32(__mmask16 __M, int __A)
 {

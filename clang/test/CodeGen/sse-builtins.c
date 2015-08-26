@@ -649,3 +649,21 @@ __m128i test_mm_cvtepu32_epi64(__m128i a) {
   // CHECK: call <2 x i64> @llvm.x86.sse41.pmovzxdq(<4 x i32> {{.*}})
   return _mm_cvtepu32_epi64(a);
 }
+
+__m128 test_mm_undefined_ps() {
+  // CHECK-LABEL: @test_mm_undefined_ps
+  // CHECK: ret <4 x float> undef
+  return _mm_undefined_ps();
+}
+
+__m128d test_mm_undefined_pd() {
+  // CHECK-LABEL: @test_mm_undefined_pd
+  // CHECK: ret <2 x double> undef
+  return _mm_undefined_pd();
+}
+
+__m128i test_mm_undefined_si128() {
+  // CHECK-LABEL: @test_mm_undefined_si128
+  // CHECK: ret <2 x i64> undef
+  return _mm_undefined_si128();
+}

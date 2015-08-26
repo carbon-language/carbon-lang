@@ -900,6 +900,24 @@ _mm256_stream_ps(float *__p, __m256 __a)
 }
 
 /* Create vectors */
+static __inline__ __m256d __DEFAULT_FN_ATTRS
+_mm256_undefined_pd()
+{
+  return (__m256d)__builtin_ia32_undef256();
+}
+
+static __inline__ __m256 __DEFAULT_FN_ATTRS
+_mm256_undefined_ps()
+{
+  return (__m256)__builtin_ia32_undef256();
+}
+
+static __inline__ __m256i __DEFAULT_FN_ATTRS
+_mm256_undefined_si256()
+{
+  return (__m256i)__builtin_ia32_undef256();
+}
+
 static __inline __m256d __DEFAULT_FN_ATTRS
 _mm256_set_pd(double __a, double __b, double __c, double __d)
 {

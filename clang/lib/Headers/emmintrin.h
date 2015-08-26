@@ -523,6 +523,12 @@ _mm_loadl_pd(__m128d __a, double const *__dp)
 }
 
 static __inline__ __m128d __DEFAULT_FN_ATTRS
+_mm_undefined_pd()
+{
+  return (__m128d)__builtin_ia32_undef128();
+}
+
+static __inline__ __m128d __DEFAULT_FN_ATTRS
 _mm_set_sd(double __w)
 {
   return (__m128d){ __w, 0 };
@@ -1113,6 +1119,12 @@ _mm_loadl_epi64(__m128i const *__p)
     long long __u;
   } __attribute__((__packed__, __may_alias__));
   return (__m128i) { ((struct __mm_loadl_epi64_struct*)__p)->__u, 0};
+}
+
+static __inline__ __m128i __DEFAULT_FN_ATTRS
+_mm_undefined_si128()
+{
+  return (__m128i)__builtin_ia32_undef128();
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
