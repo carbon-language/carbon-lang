@@ -206,6 +206,23 @@ This example was taken from the tests for the :ref:`RewriteStatepointsForGC` uti
 
   opt -rewrite-statepoints-for-gc test/Transforms/RewriteStatepointsForGC/basics.ll -S | llc -debug-only=stackmaps
 
+Base & Derived Pointers
+^^^^^^^^^^^^^^^^^^^^^^^
+
+A base pointer is one which points to the base of an allocation (object).  A 
+derived pointer is one which is offset from a base pointer by some amount.  
+When relocating objects, a garbage collector needs to be able to relocate each 
+derived pointer associated with an allocation to the same offset from the new 
+address.    
+
+Derived pointers fall in to two categories: 
+ * "Interior derived pointers" remain within the bounds of the allocation 
+   they're associated with.  As a result, the base object can be found at 
+   runtime provided the bounds of allocations are known to the runtime system.
+ * "Exterior derived pointers" are outside the bounds of the associated object;
+   they may even fall within *another* allocations address range.  As a result,
+   there is no way for a garbage collector to determine which allocation they 
+   are associated with at runtime and compiler support is needed.
 
 GC Transitions
 ^^^^^^^^^^^^^^^^^^
