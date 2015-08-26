@@ -574,16 +574,15 @@ class Configuration(object):
                 '-D_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER',
                 '-Wall', '-Werror'
             ]
-            self.cxx.addCompileFlagIfSupported('-Wno-attributes')
-            if self.cxx.type == 'clang' or self.cxx.type == 'apple-clang':
-                self.cxx.addCompileFlagIfSupported('-Wno-pessimizing-move')
-                self.cxx.addCompileFlagIfSupported('-Wno-c++11-extensions')
-                self.cxx.addCompileFlagIfSupported('-Wno-user-defined-literals')
+            self.cxx.addWarningFlagIfSupported('-Wno-attributes')
+            self.cxx.addWarningFlagIfSupported('-Wno-pessimizing-move')
+            self.cxx.addWarningFlagIfSupported('-Wno-c++11-extensions')
+            self.cxx.addWarningFlagIfSupported('-Wno-user-defined-literals')
             std = self.get_lit_conf('std', None)
             if std in ['c++98', 'c++03']:
                 # The '#define static_assert' provided by libc++ in C++03 mode
                 # causes an unused local typedef whenever it is used.
-                self.cxx.addCompileFlagIfSupported('-Wno-unused-local-typedef')
+                self.cxx.addWarningFlagIfSupported('-Wno-unused-local-typedef')
 
     def configure_sanitizer(self):
         san = self.get_lit_conf('use_sanitizer', '').strip()
