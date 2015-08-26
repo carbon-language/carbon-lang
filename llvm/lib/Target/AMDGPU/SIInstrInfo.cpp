@@ -2513,18 +2513,19 @@ void SIInstrInfo::splitScalar64BitBCNT(SmallVectorImpl<MachineInstr *> &Worklist
   MachineOperand SrcRegSub1 = buildExtractSubRegOrImm(MII, MRI, Src, SrcRC,
                                                       AMDGPU::sub1, SrcSubRC);
 
-  MachineInstr *First = BuildMI(MBB, MII, DL, InstDesc, MidReg)
+  BuildMI(MBB, MII, DL, InstDesc, MidReg)
     .addOperand(SrcRegSub0)
     .addImm(0);
 
-  MachineInstr *Second = BuildMI(MBB, MII, DL, InstDesc, ResultReg)
+  BuildMI(MBB, MII, DL, InstDesc, ResultReg)
     .addOperand(SrcRegSub1)
     .addReg(MidReg);
 
   MRI.replaceRegWith(Dest.getReg(), ResultReg);
 
-  Worklist.push_back(First);
-  Worklist.push_back(Second);
+  // We don't need to legalize operands here. src0 for etiher instruction can be
+  // an SGPR, and the second input is unused or determined here.
+  addUsersToMoveToVALUWorklist(ResultReg, MRI, Worklist);
 }
 
 void SIInstrInfo::splitScalar64BitBFE(SmallVectorImpl<MachineInstr *> &Worklist,
