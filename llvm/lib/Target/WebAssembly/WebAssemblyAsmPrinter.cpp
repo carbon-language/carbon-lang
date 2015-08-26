@@ -180,7 +180,7 @@ void WebAssemblyAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::ExternalLinkage:
   case GlobalValue::CommonLinkage:
     report_fatal_error("Linkage types other than internal and private aren't "
-                       "supported by WebAssembly");
+                       "supported by WebAssembly yet");
   default:
     llvm_unreachable("Unknown linkage type");
     return;
