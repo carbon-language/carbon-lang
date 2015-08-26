@@ -1133,10 +1133,10 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                                 continue_after_async = false;
 
                                 // We didn't get a SIGINT or SIGSTOP, so try for a
-                                // very brief time (1 ms) to get another stop reply
+                                // very brief time (0.1s) to get another stop reply
                                 // packet to make sure it doesn't get in the way
                                 StringExtractorGDBRemote extra_stop_reply_packet;
-                                uint32_t timeout_usec = 1000;
+                                uint32_t timeout_usec = 100000;
                                 if (ReadPacket (extra_stop_reply_packet, timeout_usec, false) == PacketResult::Success)
                                 {
                                     switch (extra_stop_reply_packet.GetChar())
