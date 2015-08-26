@@ -644,14 +644,14 @@ SourceManager::File::CalculateLineOffsets (uint32_t line)
         else
         {
             // Some lines have been populated, start where we last left off
-            assert("Not implemented yet" == NULL);
+            assert("Not implemented yet" && false);
         }
 
     }
     else
     {
         // Calculate all line offsets up to "line"
-        assert("Not implemented yet" == NULL);
+        assert("Not implemented yet" && false);
     }
     return false;
 }
