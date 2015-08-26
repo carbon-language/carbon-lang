@@ -7579,9 +7579,6 @@ TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
       return nullptr;
 
   // Add the features to the compile options.
-  //
-  // FIXME: If we are completely confident that we have the right set, we only
-  // need to pass the minuses.
   Opts->Features.clear();
   for (const auto &F : Features)
     Opts->Features.push_back((F.getValue() ? "+" : "-") + F.getKey().str());
