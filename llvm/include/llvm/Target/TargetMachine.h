@@ -103,6 +103,11 @@ protected: // Can only create subclasses.
 
   unsigned RequireStructuredCFG : 1;
 
+  /// This API is here to support the C API, deprecated in 3.7 release.
+  /// This should never be used outside of legacy existing client.
+  const DataLayout &getDataLayout() const { return DL; }
+  friend struct C_API_PRIVATE_ACCESS;
+
 public:
   mutable TargetOptions Options;
 

@@ -32,25 +32,23 @@
 
 using namespace llvm;
 
-
-// The TargetMachine uses to offer access to a DataLayout member. This is reflected
-// in the C API. For backward compatibility reason, this structure allows to keep
-// a DataLayout member accessible to C client that have a handle to a
-// LLVMTargetMachineRef.
-struct LLVMOpaqueTargetMachine {
-  std::unique_ptr<TargetMachine> Machine;
-  DataLayout DL;
+namespace llvm {
+// Friend to the TargetMachine, access legacy API that are made private in C++
+struct C_API_PRIVATE_ACCESS {
+  static const DataLayout &getDataLayout(const TargetMachine &T) {
+    return T.getDataLayout();
+  }
 };
-
+}
 
 static TargetMachine *unwrap(LLVMTargetMachineRef P) {
-  return P->Machine.get();
+  return reinterpret_cast<TargetMachine *>(P);
 }
 static Target *unwrap(LLVMTargetRef P) {
   return reinterpret_cast<Target*>(P);
 }
 static LLVMTargetMachineRef wrap(const TargetMachine *P) {
-  return new LLVMOpaqueTargetMachine{ std::unique_ptr<TargetMachine>(const_cast<TargetMachine*>(P)),  P->createDataLayout() };
+  return reinterpret_cast<LLVMTargetMachineRef>(const_cast<TargetMachine *>(P));
 }
 static LLVMTargetRef wrap(const Target * P) {
   return reinterpret_cast<LLVMTargetRef>(const_cast<Target*>(P));
@@ -79,16 +77,16 @@ LLVMTargetRef LLVMGetTargetFromName(const char *Name) {
 LLVMBool LLVMGetTargetFromTriple(const char* TripleStr, LLVMTargetRef *T,
                                  char **ErrorMessage) {
   std::string Error;
-  
+
   *T = wrap(TargetRegistry::lookupTarget(TripleStr, Error));
-  
+
   if (!*T) {
     if (ErrorMessage)
       *ErrorMessage = strdup(Error.c_str());
 
     return 1;
   }
-  
+
   return 0;
 }
 
@@ -155,10 +153,7 @@ LLVMTargetMachineRef LLVMCreateTargetMachine(LLVMTargetRef T,
     CM, OL));
 }
 
-
-void LLVMDisposeTargetMachine(LLVMTargetMachineRef T) {
-  delete T;
-}
+void LLVMDisposeTargetMachine(LLVMTargetMachineRef T) { delete unwrap(T); }
 
 LLVMTargetRef LLVMGetTargetMachineTarget(LLVMTargetMachineRef T) {
   const Target* target = &(unwrap(T)->getTarget());
@@ -180,9 +175,9 @@ char* LLVMGetTargetMachineFeatureString(LLVMTargetMachineRef T) {
   return strdup(StringRep.c_str());
 }
 
-/// @deprecated: see "struct LLVMOpaqueTargetMachine" description above
+/** Deprecated: use LLVMGetDataLayout(LLVMModuleRef M) instead. */
 LLVMTargetDataRef LLVMGetTargetMachineData(LLVMTargetMachineRef T) {
-  return wrap(&T->DL);
+  return wrap(&C_API_PRIVATE_ACCESS::getDataLayout(*unwrap(T)));
 }
 
 void LLVMSetTargetMachineAsmVerbosity(LLVMTargetMachineRef T,
