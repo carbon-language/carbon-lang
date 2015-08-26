@@ -6,8 +6,8 @@ struct C {
 extern bool b;
 // CHECK: call {{.*}}, !dbg [[DTOR_CALL1_LOC:![0-9]*]]
 // CHECK: call {{.*}}, !dbg [[DTOR_CALL2_LOC:![0-9]*]]
-// CHECK: [[FUN1:.*]] = !DISubprogram(name: "fun1",{{.*}} isDefinition: true
-// CHECK: [[FUN2:.*]] = !DISubprogram(name: "fun2",{{.*}} isDefinition: true
+// CHECK: [[FUN1:.*]] = distinct !DISubprogram(name: "fun1",{{.*}} isDefinition: true
+// CHECK: [[FUN2:.*]] = distinct !DISubprogram(name: "fun2",{{.*}} isDefinition: true
 // CHECK: [[DTOR_CALL1_LOC]] = !DILocation(line: [[@LINE+1]], scope: [[FUN1]])
 void fun1() { b && (C(), 1); }
 // CHECK: [[DTOR_CALL2_LOC]] = !DILocation(line: [[@LINE+1]], scope: [[FUN2]])

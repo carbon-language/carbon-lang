@@ -114,9 +114,9 @@ foo func(foo f) {
 // CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "b"
 // CHECK-SAME:             DIFlagFwdDecl
 
-// CHECK: [[FUNC:![0-9]+]] = !DISubprogram(name: "func", linkageName: "_ZN7pr147634funcENS_3fooE"
-// CHECK-SAME:                             type: [[FUNC_TYPE:![0-9]*]]
-// CHECK-SAME:                             isDefinition: true
+// CHECK: [[FUNC:![0-9]+]] = distinct !DISubprogram(name: "func", linkageName: "_ZN7pr147634funcENS_3fooE"
+// CHECK-SAME:                                      type: [[FUNC_TYPE:![0-9]*]]
+// CHECK-SAME:                                      isDefinition: true
 }
 
 void foo() {

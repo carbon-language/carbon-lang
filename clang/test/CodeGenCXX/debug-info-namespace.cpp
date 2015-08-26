@@ -67,10 +67,10 @@ void B::func_fwd() {}
 // CHECK: [[BAR:![0-9]+]] = !DICompositeType(tag: DW_TAG_structure_type, name: "bar",
 // CHECK-SAME:                               line: 6
 // CHECK-SAME:                               DIFlagFwdDecl
-// CHECK: [[F1:![0-9]+]] = !DISubprogram(name: "f1",{{.*}} line: 4
+// CHECK: [[F1:![0-9]+]] = distinct !DISubprogram(name: "f1",{{.*}} line: 4
 // CHECK-SAME:                           isDefinition: true
-// CHECK: [[FUNC:![0-9]+]] = !DISubprogram(name: "func",{{.*}} isDefinition: true
-// CHECK: [[FUNC_FWD:![0-9]+]] = !DISubprogram(name: "func_fwd",{{.*}} line: 47,{{.*}} isDefinition: true
+// CHECK: [[FUNC:![0-9]+]] = distinct !DISubprogram(name: "func",{{.*}} isDefinition: true
+// CHECK: [[FUNC_FWD:![0-9]+]] = distinct !DISubprogram(name: "func_fwd",{{.*}} line: 47,{{.*}} isDefinition: true
 // CHECK: [[I:![0-9]+]] = !DIGlobalVariable(name: "i",{{.*}} scope: [[NS]],
 // CHECK: [[VAR_FWD:![0-9]+]] = !DIGlobalVariable(name: "var_fwd",{{.*}} scope: [[NS]],
 // CHECK-SAME:                                    line: 44

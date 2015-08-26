@@ -19,5 +19,5 @@ void Derived::VariadicFunction(...) { }
 //
 // CHECK: ![[CU]] = distinct !DICompileUnit({{.*}} subprograms: ![[SPs:[0-9]+]]
 // CHECK: ![[SPs]] = !{![[SP:[0-9]+]]}
-// CHECK: ![[SP]] = !DISubprogram(name: "VariadicFunction",{{.*}} function: {{[^:]+}} @_ZN7Derived16VariadicFunctionEz
+// CHECK: ![[SP]] = distinct !DISubprogram(name: "VariadicFunction",{{.*}} function: {{[^:]+}} @_ZN7Derived16VariadicFunctionEz
 // CHECK: ![[LOC]] = !DILocation({{.*}}scope: ![[SP]])

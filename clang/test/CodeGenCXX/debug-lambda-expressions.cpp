@@ -20,16 +20,16 @@ int d(int x) { D y[10]; return [x,y] { return y[x].x; }(); }
 // CHECK: ![[INT:[0-9]+]] = !DIBasicType(name: "int"
 
 // A: 10
-// CHECK: ![[A_FUNC:.*]] = !DISubprogram(name: "a"{{.*}}, line: [[A_LINE:[0-9]+]]{{.*}}, isDefinition: true
+// CHECK: ![[A_FUNC:.*]] = distinct !DISubprogram(name: "a"{{.*}}, line: [[A_LINE:[0-9]+]]{{.*}}, isDefinition: true
 
 // B: 14
-// CHECK: ![[B_FUNC:.*]] = !DISubprogram(name: "b"{{.*}}, line: [[B_LINE:[0-9]+]]{{.*}}, isDefinition: true
+// CHECK: ![[B_FUNC:.*]] = distinct !DISubprogram(name: "b"{{.*}}, line: [[B_LINE:[0-9]+]]{{.*}}, isDefinition: true
 
 // C: 17
-// CHECK: ![[C_FUNC:.*]] = !DISubprogram(name: "c"{{.*}}, line: [[C_LINE:[0-9]+]]{{.*}}, isDefinition: true
+// CHECK: ![[C_FUNC:.*]] = distinct !DISubprogram(name: "c"{{.*}}, line: [[C_LINE:[0-9]+]]{{.*}}, isDefinition: true
 
 // D: 18
-// CHECK: ![[D_FUNC:.*]] = !DISubprogram(name: "d"{{.*}}, line: [[D_LINE:[0-9]+]]{{.*}}, isDefinition: true
+// CHECK: ![[D_FUNC:.*]] = distinct !DISubprogram(name: "d"{{.*}}, line: [[D_LINE:[0-9]+]]{{.*}}, isDefinition: true
 
 
 // Back to A. -- 78
