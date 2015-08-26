@@ -984,15 +984,15 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
       MachineBasicBlock::iterator Paired =
           findMatchingInsn(MBBI, Flags, ScanLimit);
       if (Paired != E) {
+        ++NumPairCreated;
+        if (isUnscaledLdSt(MI))
+          ++NumUnscaledPairCreated;
+
         // Merge the loads into a pair. Keeping the iterator straight is a
         // pain, so we let the merge routine tell us what the next instruction
         // is after it's done mucking about.
         MBBI = mergePairedInsns(MBBI, Paired, Flags);
-
         Modified = true;
-        ++NumPairCreated;
-        if (isUnscaledLdSt(MI))
-          ++NumUnscaledPairCreated;
         break;
       }
       ++MBBI;
