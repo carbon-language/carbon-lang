@@ -2195,22 +2195,22 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
       continue;
     }
     case AMDGPU::S_AND_B64:
-      splitScalar64BitBinaryOp(Worklist, Inst, AMDGPU::S_AND_B32);
+      splitScalar64BitBinaryOp(Worklist, Inst, AMDGPU::V_AND_B32_e64);
       Inst->eraseFromParent();
       continue;
 
     case AMDGPU::S_OR_B64:
-      splitScalar64BitBinaryOp(Worklist, Inst, AMDGPU::S_OR_B32);
+      splitScalar64BitBinaryOp(Worklist, Inst, AMDGPU::V_OR_B32_e64);
       Inst->eraseFromParent();
       continue;
 
     case AMDGPU::S_XOR_B64:
-      splitScalar64BitBinaryOp(Worklist, Inst, AMDGPU::S_XOR_B32);
+      splitScalar64BitBinaryOp(Worklist, Inst, AMDGPU::V_XOR_B32_e64);
       Inst->eraseFromParent();
       continue;
 
     case AMDGPU::S_NOT_B64:
-      splitScalar64BitUnaryOp(Worklist, Inst, AMDGPU::S_NOT_B32);
+      splitScalar64BitUnaryOp(Worklist, Inst, AMDGPU::V_NOT_B32_e32);
       Inst->eraseFromParent();
       continue;
 
@@ -2347,13 +2347,7 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
     // Legalize the operands
     legalizeOperands(Inst);
 
-    for (MachineRegisterInfo::use_iterator I = MRI.use_begin(NewDstReg),
-           E = MRI.use_end(); I != E; ++I) {
-      MachineInstr &UseMI = *I->getParent();
-      if (!canReadVGPR(UseMI, I.getOperandNo())) {
-        Worklist.push_back(&UseMI);
-      }
-    }
+    addUsersToMoveToVALUWorklist(NewDstReg, MRI, Worklist);
   }
 }
 
@@ -2395,20 +2389,21 @@ void SIInstrInfo::splitScalar64BitUnaryOp(
                                                        AMDGPU::sub0, Src0SubRC);
 
   const TargetRegisterClass *DestRC = MRI.getRegClass(Dest.getReg());
-  const TargetRegisterClass *DestSubRC = RI.getSubRegClass(DestRC, AMDGPU::sub0);
+  const TargetRegisterClass *NewDestRC = RI.getEquivalentVGPRClass(DestRC);
+  const TargetRegisterClass *NewDestSubRC = RI.getSubRegClass(NewDestRC, AMDGPU::sub0);
 
-  unsigned DestSub0 = MRI.createVirtualRegister(DestRC);
-  MachineInstr *LoHalf = BuildMI(MBB, MII, DL, InstDesc, DestSub0)
+  unsigned DestSub0 = MRI.createVirtualRegister(NewDestSubRC);
+  BuildMI(MBB, MII, DL, InstDesc, DestSub0)
     .addOperand(SrcReg0Sub0);
 
   MachineOperand SrcReg0Sub1 = buildExtractSubRegOrImm(MII, MRI, Src0, Src0RC,
                                                        AMDGPU::sub1, Src0SubRC);
 
-  unsigned DestSub1 = MRI.createVirtualRegister(DestSubRC);
-  MachineInstr *HiHalf = BuildMI(MBB, MII, DL, InstDesc, DestSub1)
+  unsigned DestSub1 = MRI.createVirtualRegister(NewDestSubRC);
+  BuildMI(MBB, MII, DL, InstDesc, DestSub1)
     .addOperand(SrcReg0Sub1);
 
-  unsigned FullDestReg = MRI.createVirtualRegister(DestRC);
+  unsigned FullDestReg = MRI.createVirtualRegister(NewDestRC);
   BuildMI(MBB, MII, DL, get(TargetOpcode::REG_SEQUENCE), FullDestReg)
     .addReg(DestSub0)
     .addImm(AMDGPU::sub0)
@@ -2417,10 +2412,11 @@ void SIInstrInfo::splitScalar64BitUnaryOp(
 
   MRI.replaceRegWith(Dest.getReg(), FullDestReg);
 
-  // Try to legalize the operands in case we need to swap the order to keep it
-  // valid.
-  Worklist.push_back(LoHalf);
-  Worklist.push_back(HiHalf);
+  // We don't need to legalizeOperands here because for a single operand, src0
+  // will support any kind of input.
+
+  // Move all users of this moved value.
+  addUsersToMoveToVALUWorklist(FullDestReg, MRI, Worklist);
 }
 
 void SIInstrInfo::splitScalar64BitBinaryOp(
@@ -2455,9 +2451,10 @@ void SIInstrInfo::splitScalar64BitBinaryOp(
                                                        AMDGPU::sub0, Src1SubRC);
 
   const TargetRegisterClass *DestRC = MRI.getRegClass(Dest.getReg());
-  const TargetRegisterClass *DestSubRC = RI.getSubRegClass(DestRC, AMDGPU::sub0);
+  const TargetRegisterClass *NewDestRC = RI.getEquivalentVGPRClass(DestRC);
+  const TargetRegisterClass *NewDestSubRC = RI.getSubRegClass(NewDestRC, AMDGPU::sub0);
 
-  unsigned DestSub0 = MRI.createVirtualRegister(DestRC);
+  unsigned DestSub0 = MRI.createVirtualRegister(NewDestSubRC);
   MachineInstr *LoHalf = BuildMI(MBB, MII, DL, InstDesc, DestSub0)
     .addOperand(SrcReg0Sub0)
     .addOperand(SrcReg1Sub0);
@@ -2467,12 +2464,12 @@ void SIInstrInfo::splitScalar64BitBinaryOp(
   MachineOperand SrcReg1Sub1 = buildExtractSubRegOrImm(MII, MRI, Src1, Src1RC,
                                                        AMDGPU::sub1, Src1SubRC);
 
-  unsigned DestSub1 = MRI.createVirtualRegister(DestSubRC);
+  unsigned DestSub1 = MRI.createVirtualRegister(NewDestSubRC);
   MachineInstr *HiHalf = BuildMI(MBB, MII, DL, InstDesc, DestSub1)
     .addOperand(SrcReg0Sub1)
     .addOperand(SrcReg1Sub1);
 
-  unsigned FullDestReg = MRI.createVirtualRegister(DestRC);
+  unsigned FullDestReg = MRI.createVirtualRegister(NewDestRC);
   BuildMI(MBB, MII, DL, get(TargetOpcode::REG_SEQUENCE), FullDestReg)
     .addReg(DestSub0)
     .addImm(AMDGPU::sub0)
@@ -2483,8 +2480,11 @@ void SIInstrInfo::splitScalar64BitBinaryOp(
 
   // Try to legalize the operands in case we need to swap the order to keep it
   // valid.
-  Worklist.push_back(LoHalf);
-  Worklist.push_back(HiHalf);
+  legalizeOperands(LoHalf);
+  legalizeOperands(HiHalf);
+
+  // Move all users of this moved vlaue.
+  addUsersToMoveToVALUWorklist(FullDestReg, MRI, Worklist);
 }
 
 void SIInstrInfo::splitScalar64BitBCNT(SmallVectorImpl<MachineInstr *> &Worklist,
@@ -2586,6 +2586,19 @@ void SIInstrInfo::splitScalar64BitBFE(SmallVectorImpl<MachineInstr *> &Worklist,
     .addImm(AMDGPU::sub1);
 
   MRI.replaceRegWith(Dest.getReg(), ResultReg);
+}
+
+void SIInstrInfo::addUsersToMoveToVALUWorklist(
+  unsigned DstReg,
+  MachineRegisterInfo &MRI,
+  SmallVectorImpl<MachineInstr *> &Worklist) const {
+  for (MachineRegisterInfo::use_iterator I = MRI.use_begin(DstReg),
+         E = MRI.use_end(); I != E; ++I) {
+    MachineInstr &UseMI = *I->getParent();
+    if (!canReadVGPR(UseMI, I.getOperandNo())) {
+      Worklist.push_back(&UseMI);
+    }
+  }
 }
 
 unsigned SIInstrInfo::findUsedSGPR(const MachineInstr *MI,

@@ -58,6 +58,10 @@ private:
   void splitScalar64BitBFE(SmallVectorImpl<MachineInstr *> &Worklist,
                            MachineInstr *Inst) const;
 
+  void addUsersToMoveToVALUWorklist(
+    unsigned Reg, MachineRegisterInfo &MRI,
+    SmallVectorImpl<MachineInstr *> &Worklist) const;
+
   bool checkInstOffsetsDoNotOverlap(MachineInstr *MIa,
                                     MachineInstr *MIb) const;
 
