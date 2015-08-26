@@ -12,7 +12,7 @@ declare void @stack_realign_helper(i32 %a, i32* %b)
 ;; CHECK:      andn %sp, 63, %sp
 ;; CHECK-NEXT: ld [%fp+92], %o0
 ;; CHECK-NEXT: call stack_realign_helper
-;; CHECK-NEXT: add %sp, 96, %o1
+;; CHECK-NEXT: add %sp, 128, %o1
 
 define void @stack_realign(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f, i32 %g) {
 entry:

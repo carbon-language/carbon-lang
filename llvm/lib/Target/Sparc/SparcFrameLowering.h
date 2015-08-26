@@ -41,6 +41,12 @@ public:
 
   int getFrameIndexReference(const MachineFunction &MF, int FI,
                              unsigned &FrameReg) const override;
+
+  /// targetHandlesStackFrameRounding - Returns true if the target is
+  /// responsible for rounding up the stack frame (probably at emitPrologue
+  /// time).
+  bool targetHandlesStackFrameRounding() const override { return true; }
+
 private:
   // Remap input registers to output registers for leaf procedure.
   void remapRegsForLeafProc(MachineFunction &MF) const;

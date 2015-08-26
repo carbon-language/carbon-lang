@@ -118,8 +118,37 @@ void SparcFrameLowering::emitPrologue(MachineFunction &MF,
     SAVErr = SP::ADDrr;
   }
 
+  // The SPARC ABI is a bit odd in that it requires a reserved 92-byte
+  // (128 in v9) area in the user's stack, starting at %sp. Thus, the
+  // first part of the stack that can actually be used is located at
+  // %sp + 92.
+  //
+  // We therefore need to add that offset to the total stack size
+  // after all the stack objects are placed by
+  // PrologEpilogInserter calculateFrameObjectOffsets. However, since the stack needs to be
+  // aligned *after* the extra size is added, we need to disable
+  // calculateFrameObjectOffsets's built-in stack alignment, by having
+  // targetHandlesStackFrameRounding return true.
+
+
+  // Add the extra call frame stack size, if needed. (This is the same
+  // code as in PrologEpilogInserter, but also gets disabled by
+  // targetHandlesStackFrameRounding)
+  if (MFI->adjustsStack() && hasReservedCallFrame(MF))
+    NumBytes += MFI->getMaxCallFrameSize();
+
+  // Adds the SPARC subtarget-specific spill area to the stack
+  // size. Also ensures target-required alignment.
   NumBytes = MF.getSubtarget<SparcSubtarget>().getAdjustedFrameSize(NumBytes);
-  MFI->setStackSize(NumBytes); // Update stack size with corrected value.
+
+  // Finally, ensure that the size is sufficiently aligned for the
+  // data on the stack.
+  if (MFI->getMaxAlignment() > 0) {
+    NumBytes = RoundUpToAlignment(NumBytes, MFI->getMaxAlignment());
+  }
+
+  // Update stack size with corrected value.
+  MFI->setStackSize(NumBytes);
 
   emitSPAdjustment(MF, MBB, MBBI, -NumBytes, SAVErr, SAVEri);
 
