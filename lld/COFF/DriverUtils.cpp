@@ -562,6 +562,15 @@ llvm::opt::InputArgList ArgParser::parse(ArrayRef<const char *> ArgsArr) {
   unsigned MissingCount;
   llvm::opt::InputArgList Args =
       Table.ParseArgs(Argv, MissingIndex, MissingCount);
+
+  // Print the real command line if response files are expanded.
+  if (Args.hasArg(OPT_verbose) && ArgsArr.size() != Argv.size()) {
+    llvm::outs() << "Command line:";
+    for (const char *S : Argv)
+      llvm::outs() << " " << S;
+    llvm::outs() << "\n";
+  }
+
   if (MissingCount)
     error(Twine("missing arg value for \"") + Args.getArgString(MissingIndex) +
           "\", expected " + Twine(MissingCount) +
