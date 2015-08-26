@@ -3248,6 +3248,23 @@ static bool EliminateDeadSwitchCases(SwitchInst *SI, AssumptionCache *AC,
     }
   }
 
+  // If we can prove that the cases must cover all possible values, the 
+  // default destination becomes dead and we can remove it.
+  bool HasDefault =
+    !isa<UnreachableInst>(SI->getDefaultDest()->getFirstNonPHIOrDbg());
+  if (HasDefault && Bits < 64 /* avoid overflow */ &&  
+      SI->getNumCases() == (1ULL << Bits)) {
+    DEBUG(dbgs() << "SimplifyCFG: switch default is dead.\n");
+    BasicBlock *NewDefault = SplitBlockPredecessors(SI->getDefaultDest(),
+                                                    SI->getParent(), "");
+    SI->setDefaultDest(NewDefault);
+    SplitBlock(NewDefault, NewDefault->begin());
+    auto *OldTI = NewDefault->getTerminator();
+    new UnreachableInst(SI->getContext(), OldTI);
+    EraseTerminatorInstAndDCECond(OldTI);
+    return true;
+  }
+
   SmallVector<uint64_t, 8> Weights;
   bool HasWeight = HasBranchWeights(SI);
   if (HasWeight) {
