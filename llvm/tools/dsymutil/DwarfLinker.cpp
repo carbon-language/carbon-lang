@@ -10,6 +10,7 @@
 #include "BinaryHolder.h"
 #include "DebugMap.h"
 #include "dsymutil.h"
+#include "NonRelocatableStringpool.h"
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -83,7 +84,6 @@ struct PatchLocation {
 
 class CompileUnit;
 struct DeclMapInfo;
-class NonRelocatableStringpool;
 
 /// A DeclContext is a named program scope that is used for ODR
 /// uniquing of types.
@@ -442,91 +442,6 @@ void CompileUnit::addNameAccelerator(const DIE *Die, const char *Name,
 void CompileUnit::addTypeAccelerator(const DIE *Die, const char *Name,
                                      uint32_t Offset) {
   Pubtypes.emplace_back(Name, Die, Offset, false);
-}
-
-/// \brief A string table that doesn't need relocations.
-///
-/// We are doing a final link, no need for a string table that
-/// has relocation entries for every reference to it. This class
-/// provides this ablitity by just associating offsets with
-/// strings.
-class NonRelocatableStringpool {
-public:
-  /// \brief Entries are stored into the StringMap and simply linked
-  /// together through the second element of this pair in order to
-  /// keep track of insertion order.
-  typedef StringMap<std::pair<uint32_t, StringMapEntryBase *>, BumpPtrAllocator>
-      MapTy;
-
-  NonRelocatableStringpool()
-      : CurrentEndOffset(0), Sentinel(0), Last(&Sentinel) {
-    // Legacy dsymutil puts an empty string at the start of the line
-    // table.
-    getStringOffset("");
-  }
-
-  /// \brief Get the offset of string \p S in the string table. This
-  /// can insert a new element or return the offset of a preexisitng
-  /// one.
-  uint32_t getStringOffset(StringRef S);
-
-  /// \brief Get permanent storage for \p S (but do not necessarily
-  /// emit \p S in the output section).
-  /// \returns The StringRef that points to permanent storage to use
-  /// in place of \p S.
-  StringRef internString(StringRef S);
-
-  // \brief Return the first entry of the string table.
-  const MapTy::MapEntryTy *getFirstEntry() const {
-    return getNextEntry(&Sentinel);
-  }
-
-  // \brief Get the entry following \p E in the string table or null
-  // if \p E was the last entry.
-  const MapTy::MapEntryTy *getNextEntry(const MapTy::MapEntryTy *E) const {
-    return static_cast<const MapTy::MapEntryTy *>(E->getValue().second);
-  }
-
-  uint64_t getSize() { return CurrentEndOffset; }
-
-private:
-  MapTy Strings;
-  uint32_t CurrentEndOffset;
-  MapTy::MapEntryTy Sentinel, *Last;
-};
-
-/// \brief Get the offset of string \p S in the string table. This
-/// can insert a new element or return the offset of a preexisitng
-/// one.
-uint32_t NonRelocatableStringpool::getStringOffset(StringRef S) {
-  if (S.empty() && !Strings.empty())
-    return 0;
-
-  std::pair<uint32_t, StringMapEntryBase *> Entry(0, nullptr);
-  MapTy::iterator It;
-  bool Inserted;
-
-  // A non-empty string can't be at offset 0, so if we have an entry
-  // with a 0 offset, it must be a previously interned string.
-  std::tie(It, Inserted) = Strings.insert(std::make_pair(S, Entry));
-  if (Inserted || It->getValue().first == 0) {
-    // Set offset and chain at the end of the entries list.
-    It->getValue().first = CurrentEndOffset;
-    CurrentEndOffset += S.size() + 1; // +1 for the '\0'.
-    Last->getValue().second = &*It;
-    Last = &*It;
-  }
-  return It->getValue().first;
-}
-
-/// \brief Put \p S into the StringMap so that it gets permanent
-/// storage, but do not actually link it in the chain of elements
-/// that go into the output section. A latter call to
-/// getStringOffset() with the same string will chain it though.
-StringRef NonRelocatableStringpool::internString(StringRef S) {
-  std::pair<uint32_t, StringMapEntryBase *> Entry(0, nullptr);
-  auto InsertResult = Strings.insert(std::make_pair(S, Entry));
-  return InsertResult.first->getKey();
 }
 
 /// \brief The Dwarf streaming logic
@@ -3139,6 +3054,40 @@ bool DwarfLinker::link(const DebugMap &Map) {
 
   return Options.NoOutput ? true : Streamer->finish();
 }
+}
+
+/// \brief Get the offset of string \p S in the string table. This
+/// can insert a new element or return the offset of a preexisitng
+/// one.
+uint32_t NonRelocatableStringpool::getStringOffset(StringRef S) {
+  if (S.empty() && !Strings.empty())
+    return 0;
+
+  std::pair<uint32_t, StringMapEntryBase *> Entry(0, nullptr);
+  MapTy::iterator It;
+  bool Inserted;
+
+  // A non-empty string can't be at offset 0, so if we have an entry
+  // with a 0 offset, it must be a previously interned string.
+  std::tie(It, Inserted) = Strings.insert(std::make_pair(S, Entry));
+  if (Inserted || It->getValue().first == 0) {
+    // Set offset and chain at the end of the entries list.
+    It->getValue().first = CurrentEndOffset;
+    CurrentEndOffset += S.size() + 1; // +1 for the '\0'.
+    Last->getValue().second = &*It;
+    Last = &*It;
+  }
+  return It->getValue().first;
+}
+
+/// \brief Put \p S into the StringMap so that it gets permanent
+/// storage, but do not actually link it in the chain of elements
+/// that go into the output section. A latter call to
+/// getStringOffset() with the same string will chain it though.
+StringRef NonRelocatableStringpool::internString(StringRef S) {
+  std::pair<uint32_t, StringMapEntryBase *> Entry(0, nullptr);
+  auto InsertResult = Strings.insert(std::make_pair(S, Entry));
+  return InsertResult.first->getKey();
 }
 
 bool linkDwarf(StringRef OutputFilename, const DebugMap &DM,
