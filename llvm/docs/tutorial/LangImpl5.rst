@@ -97,7 +97,7 @@ To represent the new expression we add a new AST node for it:
 
     /// IfExprAST - Expression class for if/then/else.
     class IfExprAST : public ExprAST {
-      std::unique<ExprAST> Cond, Then, Else;
+      std::unique_ptr<ExprAST> Cond, Then, Else;
 
     public:
       IfExprAST(std::unique_ptr<ExprAST> Cond, std::unique_ptr<ExprAST> Then,
