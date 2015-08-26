@@ -117,7 +117,8 @@ uint64_t MachObjectWriter::getPaddingSize(const MCSection *Sec,
   return OffsetToAlignment(EndAddr, NextSec.getAlignment());
 }
 
-void MachObjectWriter::writeHeader(unsigned NumLoadCommands,
+void MachObjectWriter::writeHeader(MachO::HeaderFileType Type,
+                                   unsigned NumLoadCommands,
                                    unsigned LoadCommandsSize,
                                    bool SubsectionsViaSymbols) {
   uint32_t Flags = 0;
@@ -136,7 +137,7 @@ void MachObjectWriter::writeHeader(unsigned NumLoadCommands,
   write32(TargetObjectWriter->getCPUType());
   write32(TargetObjectWriter->getCPUSubtype());
 
-  write32(MachO::MH_OBJECT);
+  write32(Type);
   write32(NumLoadCommands);
   write32(LoadCommandsSize);
   write32(Flags);
@@ -151,10 +152,10 @@ void MachObjectWriter::writeHeader(unsigned NumLoadCommands,
 ///
 /// \param NumSections The number of sections in this segment.
 /// \param SectionDataSize The total size of the sections.
-void MachObjectWriter::writeSegmentLoadCommand(unsigned NumSections,
-                                               uint64_t VMSize,
-                                               uint64_t SectionDataStartOffset,
-                                               uint64_t SectionDataSize) {
+void MachObjectWriter::writeSegmentLoadCommand(
+    StringRef Name, unsigned NumSections, uint64_t VMAddr, uint64_t VMSize,
+    uint64_t SectionDataStartOffset, uint64_t SectionDataSize, uint32_t MaxProt,
+    uint32_t InitProt) {
   // struct segment_command (56 bytes) or
   // struct segment_command_64 (72 bytes)
 
@@ -169,31 +170,32 @@ void MachObjectWriter::writeSegmentLoadCommand(unsigned NumSections,
           NumSections * (is64Bit() ? sizeof(MachO::section_64) :
                          sizeof(MachO::section)));
 
-  writeBytes("", 16);
+  assert(Name.size() <= 16);
+  writeBytes(Name, 16);
   if (is64Bit()) {
-    write64(0); // vmaddr
+    write64(VMAddr);                 // vmaddr
     write64(VMSize); // vmsize
     write64(SectionDataStartOffset); // file offset
     write64(SectionDataSize); // file size
   } else {
-    write32(0); // vmaddr
+    write32(VMAddr);                 // vmaddr
     write32(VMSize); // vmsize
     write32(SectionDataStartOffset); // file offset
     write32(SectionDataSize); // file size
   }
   // maxprot
-  write32(MachO::VM_PROT_READ | MachO::VM_PROT_WRITE | MachO::VM_PROT_EXECUTE);
+  write32(MaxProt);
   // initprot
-  write32(MachO::VM_PROT_READ | MachO::VM_PROT_WRITE | MachO::VM_PROT_EXECUTE);
+  write32(InitProt);
   write32(NumSections);
   write32(0); // flags
 
   assert(OS.tell() - Start == SegmentLoadCommandSize);
 }
 
-void MachObjectWriter::writeSection(const MCAssembler &Asm,
-                                    const MCAsmLayout &Layout,
-                                    const MCSection &Sec, uint64_t FileOffset,
+void MachObjectWriter::writeSection(const MCAsmLayout &Layout,
+                                    const MCSection &Sec, uint64_t VMAddr,
+                                    uint64_t FileOffset, unsigned Flags,
                                     uint64_t RelocationsStart,
                                     unsigned NumRelocations) {
   uint64_t SectionSize = Layout.getSectionAddressSize(&Sec);
@@ -214,17 +216,13 @@ void MachObjectWriter::writeSection(const MCAssembler &Asm,
   writeBytes(Section.getSectionName(), 16);
   writeBytes(Section.getSegmentName(), 16);
   if (is64Bit()) {
-    write64(getSectionAddress(&Sec)); // address
+    write64(VMAddr);      // address
     write64(SectionSize); // size
   } else {
-    write32(getSectionAddress(&Sec)); // address
+    write32(VMAddr);      // address
     write32(SectionSize); // size
   }
   write32(FileOffset);
-
-  unsigned Flags = Section.getTypeAndAttributes();
-  if (Section.hasInstructions())
-    Flags |= MachO::S_ATTR_SOME_INSTRUCTIONS;
 
   assert(isPowerOf2_32(Section.getAlignment()) && "Invalid alignment!");
   write32(Log2_32(Section.getAlignment()));
@@ -776,18 +774,25 @@ void MachObjectWriter::writeObject(MCAssembler &Asm,
   SectionDataFileSize += SectionDataPadding;
 
   // Write the prolog, starting with the header and load command...
-  writeHeader(NumLoadCommands, LoadCommandsSize,
+  writeHeader(MachO::MH_OBJECT, NumLoadCommands, LoadCommandsSize,
               Asm.getSubsectionsViaSymbols());
-  writeSegmentLoadCommand(NumSections, VMSize,
-                          SectionDataStart, SectionDataSize);
+  uint32_t Prot =
+      MachO::VM_PROT_READ | MachO::VM_PROT_WRITE | MachO::VM_PROT_EXECUTE;
+  writeSegmentLoadCommand("", NumSections, 0, VMSize, SectionDataStart,
+                          SectionDataSize, Prot, Prot);
 
   // ... and then the section headers.
   uint64_t RelocTableEnd = SectionDataStart + SectionDataFileSize;
-  for (const MCSection &Sec : Asm) {
+  for (const MCSection &Section : Asm) {
+    const auto &Sec = cast<MCSectionMachO>(Section);
     std::vector<RelAndSymbol> &Relocs = Relocations[&Sec];
     unsigned NumRelocs = Relocs.size();
     uint64_t SectionStart = SectionDataStart + getSectionAddress(&Sec);
-    writeSection(Asm, Layout, Sec, SectionStart, RelocTableEnd, NumRelocs);
+    unsigned Flags = Sec.getTypeAndAttributes();
+    if (Sec.hasInstructions())
+      Flags |= MachO::S_ATTR_SOME_INSTRUCTIONS;
+    writeSection(Layout, Sec, getSectionAddress(&Sec), SectionStart, Flags,
+                 RelocTableEnd, NumRelocs);
     RelocTableEnd += NumRelocs * sizeof(MachO::any_relocation_info);
   }
 

@@ -159,19 +159,21 @@ public:
 
   /// @}
 
-  void writeHeader(unsigned NumLoadCommands, unsigned LoadCommandsSize,
-                   bool SubsectionsViaSymbols);
+  void writeHeader(MachO::HeaderFileType Type, unsigned NumLoadCommands,
+                   unsigned LoadCommandsSize, bool SubsectionsViaSymbols);
 
   /// Write a segment load command.
   ///
   /// \param NumSections The number of sections in this segment.
   /// \param SectionDataSize The total size of the sections.
-  void writeSegmentLoadCommand(unsigned NumSections, uint64_t VMSize,
+  void writeSegmentLoadCommand(StringRef Name, unsigned NumSections,
+                               uint64_t VMAddr, uint64_t VMSize,
                                uint64_t SectionDataStartOffset,
-                               uint64_t SectionDataSize);
+                               uint64_t SectionDataSize, uint32_t MaxProt,
+                               uint32_t InitProt);
 
-  void writeSection(const MCAssembler &Asm, const MCAsmLayout &Layout,
-                    const MCSection &Sec, uint64_t FileOffset,
+  void writeSection(const MCAsmLayout &Layout, const MCSection &Sec,
+                    uint64_t VMAddr, uint64_t FileOffset, unsigned Flags,
                     uint64_t RelocationsStart, unsigned NumRelocations);
 
   void writeSymtabLoadCommand(uint32_t SymbolOffset, uint32_t NumSymbols,
