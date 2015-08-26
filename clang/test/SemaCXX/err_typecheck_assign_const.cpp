@@ -122,3 +122,10 @@ void test12(H h) {
   h.a = 1;  // expected-error {{cannot assign to non-static data member 'a' with const-qualified type 'const int'}}
   h.b = 2;  // expected-error {{cannot assign to non-static data member 'b' with const-qualified type 'const int &'}}
 }
+
+void test() {
+  typedef const int &Func();
+
+  Func &bar();
+  bar()() = 0; // expected-error {{read-only variable is not assignable}}
+}

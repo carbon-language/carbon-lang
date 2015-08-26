@@ -9316,7 +9316,7 @@ static void DiagnoseConstAssignment(Sema &S, const Expr *E,
   if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
     // Function calls
     const FunctionDecl *FD = CE->getDirectCallee();
-    if (!IsTypeModifiable(FD->getReturnType(), IsDereference)) {
+    if (FD && !IsTypeModifiable(FD->getReturnType(), IsDereference)) {
       if (!DiagnosticEmitted) {
         S.Diag(Loc, diag::err_typecheck_assign_const) << ExprRange
                                                       << ConstFunction << FD;
