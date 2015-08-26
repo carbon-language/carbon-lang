@@ -79,7 +79,7 @@ namespace {
 
         AI->setName("alias");
       }
-      
+
       // Rename all global variables
       for (Module::global_iterator GI = M.global_begin(), GE = M.global_end();
            GI != GE; ++GI) {
