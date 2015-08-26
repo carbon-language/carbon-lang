@@ -235,9 +235,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
     ESym->st_name = Builder.getOffset(Name);
-    uint8_t Binding = 0;
     SymbolBody *Body = Sym->Body;
-    uint8_t Type = 0;
 
     const SectionChunk<ELFT> *Section = nullptr;
     const Elf_Sym *InputSym = nullptr;
@@ -259,10 +257,10 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     }
 
     if (InputSym) {
-      Type = InputSym->getType();
-      Binding = InputSym->getBinding();
+      uint8_t Type = InputSym->getType();
+      uint8_t Binding = InputSym->getBinding();
+      ESym->setBindingAndType(Binding, Type);
     }
-    ESym->setBindingAndType(Binding, Type);
 
     if (Section) {
       OutputSection<ELFT> *Out = Section->getOutputSection();
