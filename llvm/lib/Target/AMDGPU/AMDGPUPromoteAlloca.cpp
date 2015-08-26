@@ -276,6 +276,9 @@ static bool collectUsesWithPtrTypes(Value *Val, std::vector<Value*> &WorkList) {
 }
 
 void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
+  if (!I.isStaticAlloca())
+    return;
+
   IRBuilder<> Builder(&I);
 
   // First try to replace the alloca with a vector
