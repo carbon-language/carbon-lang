@@ -609,3 +609,53 @@ define void @sext_in_reg_i2_bfe_offset_1(i32 addrspace(1)* %out, i32 addrspace(1
   store i32 %bfe, i32 addrspace(1)* %out, align 4
   ret void
 }
+
+; Make sure we propagate the VALUness to users of a moved scalar BFE.
+
+; FUNC-LABEL: {{^}}v_sext_in_reg_i1_to_i64_move_use:
+; SI: buffer_load_dwordx2
+; SI: v_lshl_b64 v{{\[}}[[VAL_LO:[0-9]+]]:[[VAL_HI:[0-9]+]]{{\]}}
+; SI-DAG: v_bfe_i32 v[[LO:[0-9]+]], v[[VAL_LO]], 0, 1
+; SI-DAG: v_ashrrev_i32_e32 v[[HI:[0-9]+]], 31, v[[LO]]
+; SI-DAG: v_and_b32_e32 v[[RESULT_LO:[0-9]+]], s{{[0-9]+}}, v[[LO]]
+; SI-DAG: v_and_b32_e32 v[[RESULT_HI:[0-9]+]], s{{[0-9]+}}, v[[HI]]
+; SI: buffer_store_dwordx2 v{{\[}}[[RESULT_LO]]:[[RESULT_HI]]{{\]}}
+define void @v_sext_in_reg_i1_to_i64_move_use(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr, i64 %s.val) nounwind {
+  %tid = call i32 @llvm.r600.read.tidig.x()
+  %a.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %b.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %out.gep = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
+  %a = load i64, i64 addrspace(1)* %a.gep, align 8
+  %b = load i64, i64 addrspace(1)* %b.gep, align 8
+
+  %c = shl i64 %a, %b
+  %shl = shl i64 %c, 63
+  %ashr = ashr i64 %shl, 63
+
+  %and = and i64 %ashr, %s.val
+  store i64 %and, i64 addrspace(1)* %out.gep, align 8
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_sext_in_reg_i32_to_i64_move_use:
+; SI: buffer_load_dwordx2
+; SI: v_lshl_b64 v{{\[}}[[LO:[0-9]+]]:[[HI:[0-9]+]]{{\]}},
+; SI-DAG: v_ashrrev_i32_e32 v[[SHR:[0-9]+]], 31, v[[LO]]
+; SI-DAG: v_and_b32_e32 v[[RESULT_LO:[0-9]+]], s{{[0-9]+}}, v[[LO]]
+; SI-DAG: v_and_b32_e32 v[[RESULT_HI:[0-9]+]], s{{[0-9]+}}, v[[SHR]]
+; SI: buffer_store_dwordx2 v{{\[}}[[RESULT_LO]]:[[RESULT_HI]]{{\]}}
+define void @v_sext_in_reg_i32_to_i64_move_use(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr, i64 %s.val) nounwind {
+  %tid = call i32 @llvm.r600.read.tidig.x()
+  %a.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %b.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %out.gep = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
+  %a = load i64, i64 addrspace(1)* %a.gep, align 8
+  %b = load i64, i64 addrspace(1)* %b.gep, align 8
+
+  %c = shl i64 %a, %b
+  %shl = shl i64 %c, 32
+  %ashr = ashr i64 %shl, 32
+  %and = and i64 %ashr, %s.val
+  store i64 %and, i64 addrspace(1)* %out.gep, align 8
+  ret void
+}

@@ -2568,6 +2568,7 @@ void SIInstrInfo::splitScalar64BitBFE(SmallVectorImpl<MachineInstr *> &Worklist,
       .addImm(AMDGPU::sub1);
 
     MRI.replaceRegWith(Dest.getReg(), ResultReg);
+    addUsersToMoveToVALUWorklist(ResultReg, MRI, Worklist);
     return;
   }
 
@@ -2586,6 +2587,7 @@ void SIInstrInfo::splitScalar64BitBFE(SmallVectorImpl<MachineInstr *> &Worklist,
     .addImm(AMDGPU::sub1);
 
   MRI.replaceRegWith(Dest.getReg(), ResultReg);
+  addUsersToMoveToVALUWorklist(ResultReg, MRI, Worklist);
 }
 
 void SIInstrInfo::addUsersToMoveToVALUWorklist(
