@@ -1082,11 +1082,8 @@ int FunctionComparator::cmpBasicBlocks(const BasicBlock *BBL,
         Value *OpR = InstR->getOperand(i);
         if (int Res = cmpValues(OpL, OpR))
           return Res;
-        if (int Res = cmpNumbers(OpL->getValueID(), OpR->getValueID()))
-          return Res;
-        // TODO: Already checked in cmpOperation
-        if (int Res = cmpTypes(OpL->getType(), OpR->getType()))
-          return Res;
+        // cmpValues should ensure this is true.
+        assert(cmpTypes(OpL->getType(), OpR->getType()) == 0);
       }
     }
 
