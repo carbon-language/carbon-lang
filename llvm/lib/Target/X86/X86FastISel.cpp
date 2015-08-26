@@ -1431,17 +1431,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
           .addMBB(TrueMBB);
       }
 
-      // Obtain the branch weight and add the TrueBB to the successor list.
-      uint32_t BranchWeight = 0;
-      if (FuncInfo.BPI)
-        BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
-                                                   TrueMBB->getBasicBlock());
-      FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
-
-      // Emits an unconditional branch to the FalseBB, obtains the branch
-      // weight, and adds it to the successor list.
-      fastEmitBranch(FalseMBB, DbgLoc);
-
+      finishCondBranch(BI->getParent(), TrueMBB, FalseMBB);
       return true;
     }
   } else if (TruncInst *TI = dyn_cast<TruncInst>(BI->getCondition())) {
@@ -1472,12 +1462,8 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
 
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(JmpOpc))
           .addMBB(TrueMBB);
-        fastEmitBranch(FalseMBB, DbgLoc);
-        uint32_t BranchWeight = 0;
-        if (FuncInfo.BPI)
-          BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
-                                                     TrueMBB->getBasicBlock());
-        FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
+
+        finishCondBranch(BI->getParent(), TrueMBB, FalseMBB);
         return true;
       }
     }
@@ -1492,12 +1478,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
 
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(BranchOpc))
       .addMBB(TrueMBB);
-    fastEmitBranch(FalseMBB, DbgLoc);
-    uint32_t BranchWeight = 0;
-    if (FuncInfo.BPI)
-      BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
-                                                 TrueMBB->getBasicBlock());
-    FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
+    finishCondBranch(BI->getParent(), TrueMBB, FalseMBB);
     return true;
   }
 
@@ -1511,12 +1492,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
     .addReg(OpReg).addImm(1);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JNE_1))
     .addMBB(TrueMBB);
-  fastEmitBranch(FalseMBB, DbgLoc);
-  uint32_t BranchWeight = 0;
-  if (FuncInfo.BPI)
-    BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
-                                               TrueMBB->getBasicBlock());
-  FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
+  finishCondBranch(BI->getParent(), TrueMBB, FalseMBB);
   return true;
 }
 

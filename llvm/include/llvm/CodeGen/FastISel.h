@@ -468,6 +468,11 @@ protected:
   /// immediate (fall-through) successor, and update the CFG.
   void fastEmitBranch(MachineBasicBlock *MBB, DebugLoc DL);
 
+  /// Emit an unconditional branch to \p FalseMBB, obtains the branch weight
+  /// and adds TrueMBB and FalseMBB to the successor list.
+  void finishCondBranch(const BasicBlock *BranchBB, MachineBasicBlock *TrueMBB,
+                        MachineBasicBlock *FalseMBB);
+
   /// \brief Update the value map to include the new mapping for this
   /// instruction, or insert an extra copy to get the result in a previous
   /// determined register.

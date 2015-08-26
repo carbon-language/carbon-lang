@@ -1408,6 +1408,18 @@ void FastISel::fastEmitBranch(MachineBasicBlock *MSucc, DebugLoc DbgLoc) {
   FuncInfo.MBB->addSuccessor(MSucc, BranchWeight);
 }
 
+void FastISel::finishCondBranch(const BasicBlock *BranchBB,
+                                MachineBasicBlock *TrueMBB,
+                                MachineBasicBlock *FalseMBB) {
+  uint32_t BranchWeight = 0;
+  if (FuncInfo.BPI)
+    BranchWeight = FuncInfo.BPI->getEdgeWeight(BranchBB,
+                                               TrueMBB->getBasicBlock());
+  FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
+
+  fastEmitBranch(FalseMBB, DbgLoc);
+}
+
 /// Emit an FNeg operation.
 bool FastISel::selectFNeg(const User *I) {
   unsigned OpReg = getRegForValue(BinaryOperator::getFNegArgument(I));

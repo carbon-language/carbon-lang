@@ -2260,14 +2260,7 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
     MIB.addImm(TestBit);
   MIB.addMBB(TBB);
 
-  // Obtain the branch weight and add the TrueBB to the successor list.
-  uint32_t BranchWeight = 0;
-  if (FuncInfo.BPI)
-    BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
-                                               TBB->getBasicBlock());
-  FuncInfo.MBB->addSuccessor(TBB, BranchWeight);
-  fastEmitBranch(FBB, DbgLoc);
-
+  finishCondBranch(BI->getParent(), TBB, FBB);
   return true;
 }
 
@@ -2342,14 +2335,7 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
           .addImm(CC)
           .addMBB(TBB);
 
-      // Obtain the branch weight and add the TrueBB to the successor list.
-      uint32_t BranchWeight = 0;
-      if (FuncInfo.BPI)
-        BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
-                                                  TBB->getBasicBlock());
-      FuncInfo.MBB->addSuccessor(TBB, BranchWeight);
-
-      fastEmitBranch(FBB, DbgLoc);
+      finishCondBranch(BI->getParent(), TBB, FBB);
       return true;
     }
   } else if (TruncInst *TI = dyn_cast<TruncInst>(BI->getCondition())) {
@@ -2380,14 +2366,7 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
           .addImm(CC)
           .addMBB(TBB);
 
-      // Obtain the branch weight and add the TrueBB to the successor list.
-      uint32_t BranchWeight = 0;
-      if (FuncInfo.BPI)
-        BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
-                                                  TBB->getBasicBlock());
-      FuncInfo.MBB->addSuccessor(TBB, BranchWeight);
-
-      fastEmitBranch(FBB, DbgLoc);
+      finishCondBranch(BI->getParent(), TBB, FBB);
       return true;
     }
   } else if (const auto *CI = dyn_cast<ConstantInt>(BI->getCondition())) {
@@ -2415,14 +2394,7 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
       .addImm(CC)
       .addMBB(TBB);
 
-    // Obtain the branch weight and add the TrueBB to the successor list.
-    uint32_t BranchWeight = 0;
-    if (FuncInfo.BPI)
-      BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
-                                                 TBB->getBasicBlock());
-    FuncInfo.MBB->addSuccessor(TBB, BranchWeight);
-
-    fastEmitBranch(FBB, DbgLoc);
+    finishCondBranch(BI->getParent(), TBB, FBB);
     return true;
   }
 
@@ -2453,14 +2425,7 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
       .addImm(CC)
       .addMBB(TBB);
 
-  // Obtain the branch weight and add the TrueBB to the successor list.
-  uint32_t BranchWeight = 0;
-  if (FuncInfo.BPI)
-    BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
-                                               TBB->getBasicBlock());
-  FuncInfo.MBB->addSuccessor(TBB, BranchWeight);
-
-  fastEmitBranch(FBB, DbgLoc);
+  finishCondBranch(BI->getParent(), TBB, FBB);
   return true;
 }
 
