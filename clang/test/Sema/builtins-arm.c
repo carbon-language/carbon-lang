@@ -46,3 +46,37 @@ void test4() {
 void test5() {
   __builtin_arm_dbg(16); // expected-error {{argument should be a value from 0 to 15}}
 }
+
+void test6(int a, int b, int c) {
+  __builtin_arm_mrc( a, 0, 13, 0, 3); // expected-error {{argument to '__builtin_arm_mrc' must be a constant integer}}
+  __builtin_arm_mrc(15, a, 13, 0, 3); // expected-error {{argument to '__builtin_arm_mrc' must be a constant integer}}
+  __builtin_arm_mrc(15, 0,  a, 0, 3); // expected-error {{argument to '__builtin_arm_mrc' must be a constant integer}}
+  __builtin_arm_mrc(15, 0, 13, a, 3); // expected-error {{argument to '__builtin_arm_mrc' must be a constant integer}}
+  __builtin_arm_mrc(15, 0, 13, 0, a); // expected-error {{argument to '__builtin_arm_mrc' must be a constant integer}}
+
+  __builtin_arm_mrc2( a, 0, 13, 0, 3); // expected-error {{argument to '__builtin_arm_mrc2' must be a constant integer}}
+  __builtin_arm_mrc2(15, a, 13, 0, 3); // expected-error {{argument to '__builtin_arm_mrc2' must be a constant integer}}
+  __builtin_arm_mrc2(15, 0,  a, 0, 3); // expected-error {{argument to '__builtin_arm_mrc2' must be a constant integer}}
+  __builtin_arm_mrc2(15, 0, 13, a, 3); // expected-error {{argument to '__builtin_arm_mrc2' must be a constant integer}}
+  __builtin_arm_mrc2(15, 0, 13, 0, a); // expected-error {{argument to '__builtin_arm_mrc2' must be a constant integer}}
+
+  __builtin_arm_mcr( a, 0, b, 13, 0, 3); // expected-error {{argument to '__builtin_arm_mcr' must be a constant integer}}
+  __builtin_arm_mcr(15, a, b, 13, 0, 3); // expected-error {{argument to '__builtin_arm_mcr' must be a constant integer}}
+  __builtin_arm_mcr(15, 0, b,  a, 0, 3); // expected-error {{argument to '__builtin_arm_mcr' must be a constant integer}}
+  __builtin_arm_mcr(15, 0, b, 13, a, 3); // expected-error {{argument to '__builtin_arm_mcr' must be a constant integer}}
+  __builtin_arm_mcr(15, 0, b, 13, 0, a); // expected-error {{argument to '__builtin_arm_mcr' must be a constant integer}}
+
+  __builtin_arm_mcr2( a, 0, b, 13, 0, 3); // expected-error {{argument to '__builtin_arm_mcr2' must be a constant integer}}
+  __builtin_arm_mcr2(15, a, b, 13, 0, 3); // expected-error {{argument to '__builtin_arm_mcr2' must be a constant integer}}
+  __builtin_arm_mcr2(15, 0, b,  a, 0, 3); // expected-error {{argument to '__builtin_arm_mcr2' must be a constant integer}}
+  __builtin_arm_mcr2(15, 0, b, 13, a, 3); // expected-error {{argument to '__builtin_arm_mcr2' must be a constant integer}}
+  __builtin_arm_mcr2(15, 0, b, 13, 0, a); // expected-error {{argument to '__builtin_arm_mcr2' must be a constant integer}}
+
+  __builtin_arm_mcrr( a, 0, b, c, 0); // expected-error {{argument to '__builtin_arm_mcrr' must be a constant integer}}
+  __builtin_arm_mcrr(15, a, b, c, 0); // expected-error {{argument to '__builtin_arm_mcrr' must be a constant integer}}
+  __builtin_arm_mcrr(15, 0, b, c, a); // expected-error {{argument to '__builtin_arm_mcrr' must be a constant integer}}
+
+  __builtin_arm_mcrr2( a, 0, b, c, 0); // expected-error {{argument to '__builtin_arm_mcrr2' must be a constant integer}}
+  __builtin_arm_mcrr2(15, a, b, c, 0); // expected-error {{argument to '__builtin_arm_mcrr2' must be a constant integer}}
+  __builtin_arm_mcrr2(15, 0, b, c, a); // expected-error {{argument to '__builtin_arm_mcrr2' must be a constant integer}}
+}

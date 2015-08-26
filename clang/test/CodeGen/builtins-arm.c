@@ -85,6 +85,44 @@ void prefetch(int i) {
 // CHECK: call {{.*}} @llvm.prefetch(i8* %{{.*}}, i32 1, i32 3, i32 0)
 }
 
+unsigned mrc() {
+  // CHECK: define i32 @mrc()
+  // CHECK: [[R:%.*]] = {{.*}} call i32 @llvm.arm.mrc(i32 15, i32 0, i32 13, i32 0, i32 3)
+  // CHECK-NEXT: ret i32 [[R]]
+  return __builtin_arm_mrc(15, 0, 13, 0, 3);
+}
+
+unsigned mrc2() {
+  // CHECK: define i32 @mrc2()
+  // CHECK: [[R:%.*]] = {{.*}} call i32 @llvm.arm.mrc2(i32 15, i32 0, i32 13, i32 0, i32 3)
+  // CHECK-NEXT: ret i32 [[R]]
+  return __builtin_arm_mrc2(15, 0, 13, 0, 3);
+}
+
+void mcr(unsigned a) {
+  // CHECK: define void @mcr(i32 [[A:%.*]])
+  // CHECK: call void @llvm.arm.mcr(i32 15, i32 0, i32 [[A]], i32 13, i32 0, i32 3)
+  __builtin_arm_mcr(15, 0, a, 13, 0, 3);
+}
+
+void mcr2(unsigned a) {
+  // CHECK: define void @mcr2(i32 [[A:%.*]])
+  // CHECK: call void @llvm.arm.mcr2(i32 15, i32 0, i32 [[A]], i32 13, i32 0, i32 3)
+  __builtin_arm_mcr2(15, 0, a, 13, 0, 3);
+}
+
+void mcrr(unsigned a, unsigned b) {
+  // CHECK: define void @mcrr(i32 [[A:%.*]], i32 [[B:%.*]])
+  // CHECK: call void @llvm.arm.mcrr(i32 15, i32 0, i32 [[A]], i32 [[B]], i32 0)
+  __builtin_arm_mcrr(15, 0, a, b, 0);
+}
+
+void mcrr2(unsigned a, unsigned b) {
+  // CHECK: define void @mcrr2(i32 [[A:%.*]], i32 [[B:%.*]])
+  // CHECK: call void @llvm.arm.mcrr2(i32 15, i32 0, i32 [[A]], i32 [[B]], i32 0)
+  __builtin_arm_mcrr2(15, 0, a, b, 0);
+}
+
 unsigned rsr() {
   // CHECK: [[V0:[%A-Za-z0-9.]+]] = {{.*}} call i32 @llvm.read_register.i32(metadata !7)
   // CHECK-NEXT: ret i32 [[V0]]

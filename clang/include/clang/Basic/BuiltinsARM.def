@@ -48,14 +48,14 @@ BUILTIN(__builtin_arm_vcvtr_f, "ffi", "nc")
 BUILTIN(__builtin_arm_vcvtr_d, "fdi", "nc")
 
 // Coprocessor
-BUILTIN(__builtin_arm_mcr, "vUiUiUiUiUiUi", "")
-BUILTIN(__builtin_arm_mcr2, "vUiUiUiUiUiUi", "")
-BUILTIN(__builtin_arm_mrc, "UiUiUiUiUiUi", "")
-BUILTIN(__builtin_arm_mrc2, "UiUiUiUiUiUi", "")
+BUILTIN(__builtin_arm_mcr, "vUIiUIiUiUIiUIiUIi", "")
+BUILTIN(__builtin_arm_mcr2, "vUIiUIiUiUIiUIiUIi", "")
+BUILTIN(__builtin_arm_mrc, "UiUIiUIiUIiUIiUIi", "")
+BUILTIN(__builtin_arm_mrc2, "UiUIiUIiUIiUIiUIi", "")
 BUILTIN(__builtin_arm_cdp, "vUiUiUiUiUiUi", "")
 BUILTIN(__builtin_arm_cdp2, "vUiUiUiUiUiUi", "")
-BUILTIN(__builtin_arm_mcrr, "vUiUiUiUiUi", "")
-BUILTIN(__builtin_arm_mcrr2, "vUiUiUiUiUi", "")
+BUILTIN(__builtin_arm_mcrr, "vUIiUIiUiUiUIi", "")
+BUILTIN(__builtin_arm_mcrr2, "vUIiUIiUiUiUIi", "")
 
 // CRC32
 BUILTIN(__builtin_arm_crc32b, "UiUiUc", "nc")
