@@ -114,6 +114,7 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   const SIRegisterInfo *TRI = static_cast<const SIRegisterInfo *>(
       MF.getSubtarget().getRegisterInfo());
+  bool MadeChange = false;
 
   MachinePostDominatorTree *PDT = &getAnalysis<MachinePostDominatorTree>();
   std::vector<std::pair<unsigned, LiveRange *>> SGPRLiveRanges;
@@ -209,6 +210,8 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
                 TII->get(AMDGPU::SGPR_USE))
         .addReg(Reg, RegState::Implicit);
 
+      MadeChange = true;
+
       SlotIndex SI = LIS->InsertMachineInstrInMaps(NCDSGPRUse);
       LIS->extendToIndices(*LR, SI.getRegSlot());
 
@@ -221,5 +224,5 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  return false;
+  return MadeChange;
 }
