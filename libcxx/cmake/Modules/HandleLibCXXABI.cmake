@@ -41,11 +41,13 @@ macro(setup_abi_lib abidefines abilib abifiles abidirs)
         file(COPY "${incpath}/${fpath}"
           DESTINATION "${CMAKE_BINARY_DIR}/include/${dstdir}"
           )
-        install(FILES "${CMAKE_BINARY_DIR}/include/${fpath}"
-          DESTINATION include/c++/v1/${dstdir}
-          COMPONENT libcxx
-          PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-          )
+        if (LIBCXX_INSTALL_HEADERS)
+          install(FILES "${CMAKE_BINARY_DIR}/include/${fpath}"
+            DESTINATION include/c++/v1/${dstdir}
+            COMPONENT libcxx
+            PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+            )
+        endif()
         list(APPEND abilib_headers "${CMAKE_BINARY_DIR}/include/${fpath}")
       endif()
     endforeach()

@@ -133,15 +133,18 @@ set_target_properties(cxx
     SOVERSION     "1"
   )
 
-install(TARGETS cxx
-  LIBRARY DESTINATION lib${LIBCXX_LIBDIR_SUFFIX} COMPONENT libcxx
-  ARCHIVE DESTINATION lib${LIBCXX_LIBDIR_SUFFIX} COMPONENT libcxx
-  )
+if (LIBCXX_INSTALL_LIBRARY)
+  install(TARGETS cxx
+    LIBRARY DESTINATION lib${LIBCXX_LIBDIR_SUFFIX} COMPONENT libcxx
+    ARCHIVE DESTINATION lib${LIBCXX_LIBDIR_SUFFIX} COMPONENT libcxx
+    )
+endif()
 
-if (NOT CMAKE_CONFIGURATION_TYPES)
-  add_custom_target(install-libcxx
-                    DEPENDS cxx
-                    COMMAND "${CMAKE_COMMAND}"
-                    -DCMAKE_INSTALL_COMPONENT=libcxx
-                    -P "${LIBCXX_BINARY_DIR}/cmake_install.cmake")
+if (NOT CMAKE_CONFIGURATION_TYPES AND (LIBCXX_INSTALL_LIBRARY OR
+                                       LIBCXX_INSTALL_HEADERS))
+    add_custom_target(install-libcxx
+                      DEPENDS cxx
+                      COMMAND "${CMAKE_COMMAND}"
+                      -DCMAKE_INSTALL_COMPONENT=libcxx
+                      -P "${LIBCXX_BINARY_DIR}/cmake_install.cmake")
 endif()
