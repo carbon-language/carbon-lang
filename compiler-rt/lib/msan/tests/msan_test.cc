@@ -1952,6 +1952,16 @@ TEST(MemorySanitizer, wcsnrtombs) {
   EXPECT_POISONED(buff[2]);
 }
 
+TEST(MemorySanitizer, wcrtomb) {
+  wchar_t x = L'a';
+  char buff[10];
+  mbstate_t mbs;
+  memset(&mbs, 0, sizeof(mbs));
+  size_t res = wcrtomb(buff, x, &mbs);
+  EXPECT_EQ(res, (size_t)1);
+  EXPECT_EQ(buff[0], 'a');
+}
+
 TEST(MemorySanitizer, wmemset) {
     wchar_t x[25];
     break_optimization(x);
