@@ -2386,7 +2386,7 @@ CGDebugInfo::getFunctionForwardDeclaration(const FunctionDecl *FD) {
   llvm::DISubprogram *SP = DBuilder.createTempFunctionFwdDecl(
       DContext, Name, LinkageName, Unit, Line,
       getOrCreateFunctionType(FD, FnType, Unit), !FD->isExternallyVisible(),
-      false /*declaration*/, 0, Flags, CGM.getLangOpts().Optimize, nullptr,
+      /* isDefinition = */ false, 0, Flags, CGM.getLangOpts().Optimize, nullptr,
       TParamsArray.get(), getFunctionDeclaration(FD));
   const FunctionDecl *CanonDecl = cast<FunctionDecl>(FD->getCanonicalDecl());
   FwdDeclReplaceMap.emplace_back(std::piecewise_construct,
