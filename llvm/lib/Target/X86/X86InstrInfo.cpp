@@ -2431,7 +2431,7 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
 }
 
 /// True if MI has a condition code def, e.g. EFLAGS, that is not marked dead.
-static bool hasLiveCondCodeDef(MachineInstr *MI) {
+bool X86InstrInfo::hasLiveCondCodeDef(MachineInstr *MI) const {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isReg() && MO.isDef() &&
