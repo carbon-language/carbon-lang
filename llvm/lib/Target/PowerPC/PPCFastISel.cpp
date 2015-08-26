@@ -775,8 +775,7 @@ bool PPCFastISel::SelectBranch(const Instruction *I) {
 
       BuildMI(*BrBB, FuncInfo.InsertPt, DbgLoc, TII.get(PPC::BCC))
         .addImm(PPCPred).addReg(CondReg).addMBB(TBB);
-      fastEmitBranch(FBB, DbgLoc);
-      FuncInfo.MBB->addSuccessor(TBB);
+      finishCondBranch(BI->getParent(), TBB, FBB);
       return true;
     }
   } else if (const ConstantInt *CI =

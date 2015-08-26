@@ -912,8 +912,7 @@ bool MipsFastISel::selectBranch(const Instruction *I) {
     BuildMI(*BrBB, FuncInfo.InsertPt, DbgLoc, TII.get(Mips::BGTZ))
         .addReg(CondReg)
         .addMBB(TBB);
-    fastEmitBranch(FBB, DbgLoc);
-    FuncInfo.MBB->addSuccessor(TBB);
+    finishCondBranch(BI->getParent(), TBB, FBB);
     return true;
   }
   return false;
