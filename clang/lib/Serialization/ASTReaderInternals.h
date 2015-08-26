@@ -48,35 +48,30 @@ public:
   typedef unsigned hash_value_type;
   typedef unsigned offset_type;
 
-  /// \brief Special internal key for declaration names.
-  /// The hash table creates keys for comparison; we do not create
-  /// a DeclarationName for the internal key to avoid deserializing types.
-  struct DeclNameKey {
-    DeclarationName::NameKind Kind;
-    uint64_t Data;
-    DeclNameKey() : Kind((DeclarationName::NameKind)0), Data(0) { }
-  };
-
   typedef DeclarationName external_key_type;
-  typedef DeclNameKey internal_key_type;
+  typedef DeclarationNameKey internal_key_type;
 
   explicit ASTDeclContextNameLookupTrait(ASTReader &Reader, ModuleFile &F)
     : Reader(Reader), F(F) { }
 
   static bool EqualKey(const internal_key_type& a,
                        const internal_key_type& b) {
-    return a.Kind == b.Kind && a.Data == b.Data;
+    return a == b;
   }
 
-  static hash_value_type ComputeHash(const DeclNameKey &Key);
-  static internal_key_type GetInternalKey(const external_key_type& Name);
+  static hash_value_type ComputeHash(const internal_key_type &Key) {
+    return Key.getHash();
+  }
+  static internal_key_type GetInternalKey(const external_key_type &Name) {
+    return Name;
+  }
 
   static std::pair<unsigned, unsigned>
-  ReadKeyDataLength(const unsigned char*& d);
+  ReadKeyDataLength(const unsigned char *&d);
 
-  internal_key_type ReadKey(const unsigned char* d, unsigned);
+  internal_key_type ReadKey(const unsigned char *d, unsigned);
 
-  data_type ReadData(internal_key_type, const unsigned char* d,
+  data_type ReadData(internal_key_type, const unsigned char *d,
                      unsigned DataLen);
 };
 

@@ -3340,7 +3340,7 @@ class ASTDeclContextNameLookupTrait {
   ASTWriter &Writer;
 
 public:
-  typedef DeclarationName key_type;
+  typedef DeclarationNameKey key_type;
   typedef key_type key_type_ref;
 
   typedef DeclContext::lookup_result data_type;
@@ -3351,42 +3351,17 @@ public:
 
   explicit ASTDeclContextNameLookupTrait(ASTWriter &Writer) : Writer(Writer) { }
 
-  hash_value_type ComputeHash(DeclarationName Name) {
-    llvm::FoldingSetNodeID ID;
-    ID.AddInteger(Name.getNameKind());
-
-    switch (Name.getNameKind()) {
-    case DeclarationName::Identifier:
-      ID.AddString(Name.getAsIdentifierInfo()->getName());
-      break;
-    case DeclarationName::ObjCZeroArgSelector:
-    case DeclarationName::ObjCOneArgSelector:
-    case DeclarationName::ObjCMultiArgSelector:
-      ID.AddInteger(serialization::ComputeHash(Name.getObjCSelector()));
-      break;
-    case DeclarationName::CXXConstructorName:
-    case DeclarationName::CXXDestructorName:
-    case DeclarationName::CXXConversionFunctionName:
-      break;
-    case DeclarationName::CXXOperatorName:
-      ID.AddInteger(Name.getCXXOverloadedOperator());
-      break;
-    case DeclarationName::CXXLiteralOperatorName:
-      ID.AddString(Name.getCXXLiteralIdentifier()->getName());
-    case DeclarationName::CXXUsingDirective:
-      break;
-    }
-
-    return ID.ComputeHash();
+  hash_value_type ComputeHash(DeclarationNameKey Name) {
+    return Name.getHash();
   }
 
-  std::pair<unsigned,unsigned>
-    EmitKeyDataLength(raw_ostream& Out, DeclarationName Name,
-                      data_type_ref Lookup) {
+  std::pair<unsigned, unsigned> EmitKeyDataLength(raw_ostream &Out,
+                                                  DeclarationNameKey Name,
+                                                  data_type_ref Lookup) {
     using namespace llvm::support;
     endian::Writer<little> LE(Out);
     unsigned KeyLen = 1;
-    switch (Name.getNameKind()) {
+    switch (Name.getKind()) {
     case DeclarationName::Identifier:
     case DeclarationName::ObjCZeroArgSelector:
     case DeclarationName::ObjCOneArgSelector:
@@ -3412,26 +3387,24 @@ public:
     return std::make_pair(KeyLen, DataLen);
   }
 
-  void EmitKey(raw_ostream& Out, DeclarationName Name, unsigned) {
+  void EmitKey(raw_ostream &Out, DeclarationNameKey Name, unsigned) {
     using namespace llvm::support;
     endian::Writer<little> LE(Out);
-    LE.write<uint8_t>(Name.getNameKind());
-    switch (Name.getNameKind()) {
+    LE.write<uint8_t>(Name.getKind());
+    switch (Name.getKind()) {
     case DeclarationName::Identifier:
-      LE.write<uint32_t>(Writer.getIdentifierRef(Name.getAsIdentifierInfo()));
+    case DeclarationName::CXXLiteralOperatorName:
+      LE.write<uint32_t>(Writer.getIdentifierRef(Name.getIdentifier()));
       return;
     case DeclarationName::ObjCZeroArgSelector:
     case DeclarationName::ObjCOneArgSelector:
     case DeclarationName::ObjCMultiArgSelector:
-      LE.write<uint32_t>(Writer.getSelectorRef(Name.getObjCSelector()));
+      LE.write<uint32_t>(Writer.getSelectorRef(Name.getSelector()));
       return;
     case DeclarationName::CXXOperatorName:
-      assert(Name.getCXXOverloadedOperator() < NUM_OVERLOADED_OPERATORS &&
+      assert(Name.getOperatorKind() < NUM_OVERLOADED_OPERATORS &&
              "Invalid operator?");
-      LE.write<uint8_t>(Name.getCXXOverloadedOperator());
-      return;
-    case DeclarationName::CXXLiteralOperatorName:
-      LE.write<uint32_t>(Writer.getIdentifierRef(Name.getCXXLiteralIdentifier()));
+      LE.write<uint8_t>(Name.getOperatorKind());
       return;
     case DeclarationName::CXXConstructorName:
     case DeclarationName::CXXDestructorName:
@@ -3443,8 +3416,8 @@ public:
     llvm_unreachable("Invalid name kind?");
   }
 
-  void EmitData(raw_ostream& Out, key_type_ref,
-                data_type Lookup, unsigned DataLen) {
+  void EmitData(raw_ostream &Out, key_type_ref, data_type Lookup,
+                unsigned DataLen) {
     using namespace llvm::support;
     endian::Writer<little> LE(Out);
     uint64_t Start = Out.tell(); (void)Start;

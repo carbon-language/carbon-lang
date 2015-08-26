@@ -850,23 +850,48 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   return II;
 }
 
-unsigned 
-ASTDeclContextNameLookupTrait::ComputeHash(const DeclNameKey &Key) {
-  llvm::FoldingSetNodeID ID;
-  ID.AddInteger(Key.Kind);
-
-  switch (Key.Kind) {
+DeclarationNameKey::DeclarationNameKey(DeclarationName Name)
+    : Kind(Name.getNameKind()) {
+  switch (Kind) {
   case DeclarationName::Identifier:
-  case DeclarationName::CXXLiteralOperatorName:
-    ID.AddString(((IdentifierInfo*)Key.Data)->getName());
+    Data = (uint64_t)Name.getAsIdentifierInfo();
     break;
   case DeclarationName::ObjCZeroArgSelector:
   case DeclarationName::ObjCOneArgSelector:
   case DeclarationName::ObjCMultiArgSelector:
-    ID.AddInteger(serialization::ComputeHash(Selector(Key.Data)));
+    Data = (uint64_t)Name.getObjCSelector().getAsOpaquePtr();
     break;
   case DeclarationName::CXXOperatorName:
-    ID.AddInteger((OverloadedOperatorKind)Key.Data);
+    Data = Name.getCXXOverloadedOperator();
+    break;
+  case DeclarationName::CXXLiteralOperatorName:
+    Data = (uint64_t)Name.getCXXLiteralIdentifier();
+    break;
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+  case DeclarationName::CXXUsingDirective:
+    Data = 0;
+    break;
+  }
+}
+
+unsigned DeclarationNameKey::getHash() const {
+  llvm::FoldingSetNodeID ID;
+  ID.AddInteger(Kind);
+
+  switch (Kind) {
+  case DeclarationName::Identifier:
+  case DeclarationName::CXXLiteralOperatorName:
+    ID.AddString(((IdentifierInfo*)Data)->getName());
+    break;
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+    ID.AddInteger(serialization::ComputeHash(Selector(Data)));
+    break;
+  case DeclarationName::CXXOperatorName:
+    ID.AddInteger((OverloadedOperatorKind)Data);
     break;
   case DeclarationName::CXXConstructorName:
   case DeclarationName::CXXDestructorName:
@@ -878,80 +903,49 @@ ASTDeclContextNameLookupTrait::ComputeHash(const DeclNameKey &Key) {
   return ID.ComputeHash();
 }
 
-ASTDeclContextNameLookupTrait::internal_key_type 
-ASTDeclContextNameLookupTrait::GetInternalKey(
-                                          const external_key_type& Name) {
-  DeclNameKey Key;
-  Key.Kind = Name.getNameKind();
-  switch (Name.getNameKind()) {
-  case DeclarationName::Identifier:
-    Key.Data = (uint64_t)Name.getAsIdentifierInfo();
-    break;
-  case DeclarationName::ObjCZeroArgSelector:
-  case DeclarationName::ObjCOneArgSelector:
-  case DeclarationName::ObjCMultiArgSelector:
-    Key.Data = (uint64_t)Name.getObjCSelector().getAsOpaquePtr();
-    break;
-  case DeclarationName::CXXOperatorName:
-    Key.Data = Name.getCXXOverloadedOperator();
-    break;
-  case DeclarationName::CXXLiteralOperatorName:
-    Key.Data = (uint64_t)Name.getCXXLiteralIdentifier();
-    break;
-  case DeclarationName::CXXConstructorName:
-  case DeclarationName::CXXDestructorName:
-  case DeclarationName::CXXConversionFunctionName:
-  case DeclarationName::CXXUsingDirective:
-    Key.Data = 0;
-    break;
-  }
-
-  return Key;
-}
-
 std::pair<unsigned, unsigned>
-ASTDeclContextNameLookupTrait::ReadKeyDataLength(const unsigned char*& d) {
+ASTDeclContextNameLookupTrait::ReadKeyDataLength(const unsigned char *&d) {
   using namespace llvm::support;
   unsigned KeyLen = endian::readNext<uint16_t, little, unaligned>(d);
   unsigned DataLen = endian::readNext<uint16_t, little, unaligned>(d);
   return std::make_pair(KeyLen, DataLen);
 }
 
-ASTDeclContextNameLookupTrait::internal_key_type 
-ASTDeclContextNameLookupTrait::ReadKey(const unsigned char* d, unsigned) {
+ASTDeclContextNameLookupTrait::internal_key_type
+ASTDeclContextNameLookupTrait::ReadKey(const unsigned char *d, unsigned) {
   using namespace llvm::support;
 
-  DeclNameKey Key;
-  Key.Kind = (DeclarationName::NameKind)*d++;
-  switch (Key.Kind) {
+  auto Kind = (DeclarationName::NameKind)*d++;
+  uint64_t Data;
+  switch (Kind) {
   case DeclarationName::Identifier:
-    Key.Data = (uint64_t)Reader.getLocalIdentifier(
+    Data = (uint64_t)Reader.getLocalIdentifier(
         F, endian::readNext<uint32_t, little, unaligned>(d));
     break;
   case DeclarationName::ObjCZeroArgSelector:
   case DeclarationName::ObjCOneArgSelector:
   case DeclarationName::ObjCMultiArgSelector:
-    Key.Data =
+    Data =
         (uint64_t)Reader.getLocalSelector(
                              F, endian::readNext<uint32_t, little, unaligned>(
                                     d)).getAsOpaquePtr();
     break;
   case DeclarationName::CXXOperatorName:
-    Key.Data = *d++; // OverloadedOperatorKind
+    Data = *d++; // OverloadedOperatorKind
     break;
   case DeclarationName::CXXLiteralOperatorName:
-    Key.Data = (uint64_t)Reader.getLocalIdentifier(
+    Data = (uint64_t)Reader.getLocalIdentifier(
         F, endian::readNext<uint32_t, little, unaligned>(d));
     break;
   case DeclarationName::CXXConstructorName:
   case DeclarationName::CXXDestructorName:
   case DeclarationName::CXXConversionFunctionName:
   case DeclarationName::CXXUsingDirective:
-    Key.Data = 0;
+    Data = 0;
     break;
   }
 
-  return Key;
+  return DeclarationNameKey(Kind, Data);
 }
 
 ASTDeclContextNameLookupTrait::data_type
@@ -6388,21 +6382,18 @@ namespace {
     ASTReader &Reader;
     const DeclContext *Context;
     DeclarationName Name;
-    ASTDeclContextNameLookupTrait::DeclNameKey NameKey;
+    DeclarationNameKey NameKey;
     unsigned NameHash;
     SmallVectorImpl<NamedDecl *> &Decls;
     llvm::SmallPtrSetImpl<NamedDecl *> &DeclSet;
 
   public:
-    DeclContextNameLookupVisitor(ASTReader &Reader,
-                                 const DeclContext *Context,
+    DeclContextNameLookupVisitor(ASTReader &Reader, const DeclContext *Context,
                                  DeclarationName Name,
                                  SmallVectorImpl<NamedDecl *> &Decls,
                                  llvm::SmallPtrSetImpl<NamedDecl *> &DeclSet)
-      : Reader(Reader), Context(Context), Name(Name),
-        NameKey(ASTDeclContextNameLookupTrait::GetInternalKey(Name)),
-        NameHash(ASTDeclContextNameLookupTrait::ComputeHash(NameKey)),
-        Decls(Decls), DeclSet(DeclSet) {}
+        : Reader(Reader), Context(Context), Name(Name), NameKey(Name),
+          NameHash(NameKey.getHash()), Decls(Decls), DeclSet(DeclSet) {}
 
     bool operator()(ModuleFile &M) {
       // Check whether we have any visible declaration information for
@@ -6427,12 +6418,9 @@ namespace {
           continue;
 
         if (ND->getDeclName() != Name) {
-          // A name might be null because the decl's redeclarable part is
-          // currently read before reading its name. The lookup is triggered by
-          // building that decl (likely indirectly), and so it is later in the
-          // sense of "already existing" and can be ignored here.
-          // FIXME: This should not happen; deserializing declarations should
-          // not perform lookups since that can lead to deserialization cycles.
+          // Not all names map to a unique DeclarationNameKey.
+          assert(DeclarationNameKey(ND->getDeclName()) == NameKey &&
+                 "mismatched name for decl in decl context lookup table?");
           continue;
         }
 
