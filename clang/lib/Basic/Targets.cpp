@@ -1023,53 +1023,24 @@ const Builtin::Info PPCTargetInfo::BuiltinInfo[] = {
 /// configured set of features.
 bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
                                          DiagnosticsEngine &Diags) {
-  for (unsigned i = 0, e = Features.size(); i !=e; ++i) {
-    // Ignore disabled features.
-    if (Features[i][0] == '-')
-      continue;
-
-    StringRef Feature = StringRef(Features[i]).substr(1);
-
-    if (Feature == "vsx") {
+  for (const auto &Feature : Features) {
+    if (Feature == "+vsx") {
       HasVSX = true;
-      continue;
-    }
-
-    if (Feature == "bpermd") {
+    } else if (Feature == "+bpermd") {
       HasBPERMD = true;
-      continue;
-    }
-
-    if (Feature == "extdiv") {
+    } else if (Feature == "+extdiv") {
       HasExtDiv = true;
-      continue;
-    }
-
-    if (Feature == "power8-vector") {
+    } else if (Feature == "+power8-vector") {
       HasP8Vector = true;
-      continue;
-    }
-
-    if (Feature == "crypto") {
+    } else if (Feature == "+crypto") {
       HasP8Crypto = true;
-      continue;
-    }
-
-    if (Feature == "direct-move") {
+    } else if (Feature == "+direct-move") {
       HasDirectMove = true;
-      continue;
-    }
-
-    if (Feature == "qpx") {
+    } else if (Feature == "+qpx") {
       HasQPX = true;
-      continue;
-    }
-
-    if (Feature == "htm") {
+    } else if (Feature == "+htm") {
       HasHTM = true;
-      continue;
     }
-
     // TODO: Finish this list and add an assert that we've handled them
     // all.
   }
@@ -2886,155 +2857,84 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
 /// configured set of features.
 bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
                                          DiagnosticsEngine &Diags) {
-  // Remember the maximum enabled sselevel.
-  for (unsigned i = 0, e = Features.size(); i !=e; ++i) {
-    // Ignore disabled features.
-    if (Features[i][0] == '-')
+  for (const auto &Feature : Features) {
+    if (Feature[0] != '+')
       continue;
 
-    StringRef Feature = StringRef(Features[i]).substr(1);
-
-    if (Feature == "aes") {
+    if (Feature == "+aes") {
       HasAES = true;
-      continue;
-    }
-
-    if (Feature == "pclmul") {
+    } else if (Feature == "+pclmul") {
       HasPCLMUL = true;
-      continue;
-    }
-
-    if (Feature == "lzcnt") {
+    } else if (Feature == "+lzcnt") {
       HasLZCNT = true;
-      continue;
-    }
-
-    if (Feature == "rdrnd") {
+    } else if (Feature == "+rdrnd") {
       HasRDRND = true;
-      continue;
-    }
-
-    if (Feature == "fsgsbase") {
+    } else if (Feature == "+fsgsbase") {
       HasFSGSBASE = true;
-      continue;
-    }
-
-    if (Feature == "bmi") {
+    } else if (Feature == "+bmi") {
       HasBMI = true;
-      continue;
-    }
-
-    if (Feature == "bmi2") {
+    } else if (Feature == "+bmi2") {
       HasBMI2 = true;
-      continue;
-    }
-
-    if (Feature == "popcnt") {
+    } else if (Feature == "+popcnt") {
       HasPOPCNT = true;
-      continue;
-    }
-
-    if (Feature == "rtm") {
+    } else if (Feature == "+rtm") {
       HasRTM = true;
-      continue;
-    }
-
-    if (Feature == "prfchw") {
+    } else if (Feature == "+prfchw") {
       HasPRFCHW = true;
-      continue;
-    }
-
-    if (Feature == "rdseed") {
+    } else if (Feature == "+rdseed") {
       HasRDSEED = true;
-      continue;
-    }
-
-    if (Feature == "adx") {
+    } else if (Feature == "+adx") {
       HasADX = true;
-      continue;
-    }
-
-    if (Feature == "tbm") {
+    } else if (Feature == "+tbm") {
       HasTBM = true;
-      continue;
-    }
-
-    if (Feature == "fma") {
+    } else if (Feature == "+fma") {
       HasFMA = true;
-      continue;
-    }
-
-    if (Feature == "f16c") {
+    } else if (Feature == "+f16c") {
       HasF16C = true;
-      continue;
-    }
-
-    if (Feature == "avx512cd") {
+    } else if (Feature == "+avx512cd") {
       HasAVX512CD = true;
-      continue;
-    }
-
-    if (Feature == "avx512er") {
+    } else if (Feature == "+avx512er") {
       HasAVX512ER = true;
-      continue;
-    }
-
-    if (Feature == "avx512pf") {
+    } else if (Feature == "+avx512pf") {
       HasAVX512PF = true;
-      continue;
-    }
-
-    if (Feature == "avx512dq") {
+    } else if (Feature == "+avx512dq") {
       HasAVX512DQ = true;
-      continue;
-    }
-
-    if (Feature == "avx512bw") {
+    } else if (Feature == "+avx512bw") {
       HasAVX512BW = true;
-      continue;
-    }
-
-    if (Feature == "avx512vl") {
+    } else if (Feature == "+avx512vl") {
       HasAVX512VL = true;
-      continue;
-    }
-
-    if (Feature == "sha") {
+    } else if (Feature == "+sha") {
       HasSHA = true;
-      continue;
-    }
-
-    if (Feature == "cx16") {
+    } else if (Feature == "+cx16") {
       HasCX16 = true;
-      continue;
     }
 
-    assert(Features[i][0] == '+' && "Invalid target feature!");
+    assert(Feature[0] == '+' && "Invalid target feature!");
     X86SSEEnum Level = llvm::StringSwitch<X86SSEEnum>(Feature)
-      .Case("avx512f", AVX512F)
-      .Case("avx2", AVX2)
-      .Case("avx", AVX)
-      .Case("sse4.2", SSE42)
-      .Case("sse4.1", SSE41)
-      .Case("ssse3", SSSE3)
-      .Case("sse3", SSE3)
-      .Case("sse2", SSE2)
-      .Case("sse", SSE1)
+      .Case("+avx512f", AVX512F)
+      .Case("+avx2", AVX2)
+      .Case("+avx", AVX)
+      .Case("+sse4.2", SSE42)
+      .Case("+sse4.1", SSE41)
+      .Case("+ssse3", SSSE3)
+      .Case("+sse3", SSE3)
+      .Case("+sse2", SSE2)
+      .Case("+sse", SSE1)
       .Default(NoSSE);
     SSELevel = std::max(SSELevel, Level);
 
     MMX3DNowEnum ThreeDNowLevel =
       llvm::StringSwitch<MMX3DNowEnum>(Feature)
-        .Case("3dnowa", AMD3DNowAthlon)
-        .Case("3dnow", AMD3DNow)
-        .Case("mmx", MMX)
+        .Case("+3dnowa", AMD3DNowAthlon)
+        .Case("+3dnow", AMD3DNow)
+        .Case("+mmx", MMX)
         .Default(NoMMX3DNow);
     MMX3DNowLevel = std::max(MMX3DNowLevel, ThreeDNowLevel);
 
     XOPEnum XLevel = llvm::StringSwitch<XOPEnum>(Feature)
-        .Case("xop", XOP)
-        .Case("fma4", FMA4)
-        .Case("sse4a", SSE4A)
+        .Case("+xop", XOP)
+        .Case("+fma4", FMA4)
+        .Case("+sse4a", SSE4A)
         .Default(NoXOP);
     XOPLevel = std::max(XOPLevel, XLevel);
   }
@@ -5247,12 +5147,12 @@ public:
     FPU = FPUMode;
     CRC = 0;
     Crypto = 0;
-    for (unsigned i = 0, e = Features.size(); i != e; ++i) {
-      if (Features[i] == "+neon")
+    for (const auto &Feature : Features) {
+      if (Feature == "+neon")
         FPU = NeonMode;
-      if (Features[i] == "+crc")
+      if (Feature == "+crc")
         CRC = 1;
-      if (Features[i] == "+crypto")
+      if (Feature == "+crypto")
         Crypto = 1;
     }
 
@@ -5926,10 +5826,10 @@ public:
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override {
     HasTransactionalExecution = false;
-    for (unsigned i = 0, e = Features.size(); i != e; ++i) {
-      if (Features[i] == "+transactional-execution")
+    for (const auto &Feature : Features) {
+      if (Feature == "+transactional-execution")
         HasTransactionalExecution = true;
-      if (Features[i] == "+vector")
+      else if (Feature == "+vector")
         HasVector = true;
     }
     // If we use the vector ABI, vector types are 64-bit aligned.
@@ -6477,29 +6377,28 @@ public:
     DspRev = NoDSP;
     HasFP64 = isFP64Default();
 
-    for (std::vector<std::string>::iterator it = Features.begin(),
-         ie = Features.end(); it != ie; ++it) {
-      if (*it == "+single-float")
+    for (const auto &Feature : Features) {
+      if (Feature == "+single-float")
         IsSingleFloat = true;
-      else if (*it == "+soft-float")
+      else if (Feature == "+soft-float")
         FloatABI = SoftFloat;
-      else if (*it == "+mips16")
+      else if (Feature == "+mips16")
         IsMips16 = true;
-      else if (*it == "+micromips")
+      else if (Feature == "+micromips")
         IsMicromips = true;
-      else if (*it == "+dsp")
+      else if (Feature == "+dsp")
         DspRev = std::max(DspRev, DSP1);
-      else if (*it == "+dspr2")
+      else if (Feature == "+dspr2")
         DspRev = std::max(DspRev, DSP2);
-      else if (*it == "+msa")
+      else if (Feature == "+msa")
         HasMSA = true;
-      else if (*it == "+fp64")
+      else if (Feature == "+fp64")
         HasFP64 = true;
-      else if (*it == "-fp64")
+      else if (Feature == "-fp64")
         HasFP64 = false;
-      else if (*it == "+nan2008")
+      else if (Feature == "+nan2008")
         IsNan2008 = true;
-      else if (*it == "-nan2008")
+      else if (Feature == "-nan2008")
         IsNan2008 = false;
     }
 
