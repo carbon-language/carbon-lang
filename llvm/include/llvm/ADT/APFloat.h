@@ -142,6 +142,9 @@ public:
   /// @}
 
   static unsigned int semanticsPrecision(const fltSemantics &);
+  static ExponentType semanticsMinExponent(const fltSemantics &);
+  static ExponentType semanticsMaxExponent(const fltSemantics &);
+  static unsigned int semanticsSizeInBits(const fltSemantics &);
 
   /// IEEE-754R 5.11: Floating Point Comparison Relations.
   enum cmpResult {

@@ -841,6 +841,21 @@ APFloat::semanticsPrecision(const fltSemantics &semantics)
 {
   return semantics.precision;
 }
+APFloat::ExponentType
+APFloat::semanticsMaxExponent(const fltSemantics &semantics)
+{
+  return semantics.maxExponent;
+}
+APFloat::ExponentType
+APFloat::semanticsMinExponent(const fltSemantics &semantics)
+{
+  return semantics.minExponent;
+}
+unsigned int
+APFloat::semanticsSizeInBits(const fltSemantics &semantics)
+{
+  return semantics.sizeInBits;
+}
 
 const integerPart *
 APFloat::significandParts() const
