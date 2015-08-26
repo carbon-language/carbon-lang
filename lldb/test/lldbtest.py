@@ -1195,8 +1195,7 @@ class Base(unittest2.TestCase):
         if doCleanup and not lldb.skip_build_and_cleanup:
             # First, let's do the platform-specific cleanup.
             module = builder_module()
-            if not module.cleanup():
-                raise Exception("Don't know how to do cleanup")
+            module.cleanup()
 
             # Subclass might have specific cleanup function defined.
             if getattr(cls, "classCleanup", None):
@@ -1385,6 +1384,7 @@ class Base(unittest2.TestCase):
         # initially.  If the test errored/failed, the session info
         # (self.session) is then dumped into a session specific file for
         # diagnosis.
+        self.__cleanup_errored__ = False
         self.__errored__    = False
         self.__failed__     = False
         self.__expected__   = False
@@ -1616,9 +1616,6 @@ class Base(unittest2.TestCase):
 
         self.disableLogChannelsForCurrentTest()
 
-        # Decide whether to dump the session info.
-        self.dumpSessionInfo()
-
     # =========================================================
     # Various callbacks to allow introspection of test progress
     # =========================================================
@@ -1630,6 +1627,14 @@ class Base(unittest2.TestCase):
             # False because there's no need to write "ERROR" to the stderr twice.
             # Once by the Python unittest framework, and a second time by us.
             print >> sbuf, "ERROR"
+
+    def markCleanupError(self):
+        """Callback invoked when an error occurs while a test is cleaning up."""
+        self.__cleanup_errored__ = True
+        with recording(self, False) as sbuf:
+            # False because there's no need to write "CLEANUP_ERROR" to the stderr twice.
+            # Once by the Python unittest framework, and a second time by us.
+            print >> sbuf, "CLEANUP_ERROR"
 
     def markFailure(self):
         """Callback invoked when a failure (test assertion failure) occurred."""
@@ -1729,6 +1734,9 @@ class Base(unittest2.TestCase):
         if self.__errored__:
             pairs = lldb.test_result.errors
             prefix = 'Error'
+        if self.__cleanup_errored__:
+            pairs = lldb.test_result.cleanup_errors
+            prefix = 'CleanupError'
         elif self.__failed__:
             pairs = lldb.test_result.failures
             prefix = 'Failure'

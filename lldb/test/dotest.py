@@ -1685,6 +1685,17 @@ for ia in range(len(archs) if iterArchs else 1):
                 if parsable:
                     self.stream.write("FAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
 
+            def addCleanupError(self, test, err):
+                global sdir_has_content
+                global parsable
+                sdir_has_content = True
+                super(LLDBTestResult, self).addCleanupError(test, err)
+                method = getattr(test, "markCleanupError", None)
+                if method:
+                    method()
+                if parsable:
+                    self.stream.write("CLEANUP ERROR: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+
             def addFailure(self, test, err):
                 global sdir_has_content
                 global failuresPerCategory

@@ -383,8 +383,10 @@ class TestCase(unittest.TestCase):
                 try:
                     self.tearDown()
                 except Exception:
-                    result.addError(self, sys.exc_info())
+                    result.addCleanupError(self, sys.exc_info())
                     success = False
+
+                self.dumpSessionInfo()
 
             cleanUpSuccess = self.doCleanups()
             success = success and cleanUpSuccess
