@@ -660,6 +660,10 @@ public:
                              std::string &/*SuggestedModifier*/) const {
     return true;
   }
+  virtual bool
+  validateAsmConstraint(const char *&Name,
+                        TargetInfo::ConstraintInfo &info) const = 0;
+
   bool resolveSymbolicName(const char *&Name,
                            ConstraintInfo *OutputConstraints,
                            unsigned NumOutputs, unsigned &Index) const;
@@ -674,15 +678,14 @@ public:
     return std::string(1, *Constraint);
   }
 
+  /// \brief Returns a string of target-specific clobbers, in LLVM format.
+  virtual const char *getClobbers() const = 0;
+
   /// \brief Returns true if NaN encoding is IEEE 754-2008.
   /// Only MIPS allows a different encoding.
   virtual bool isNan2008() const {
     return true;
   }
-
-  /// \brief Returns a string of target-specific clobbers, in LLVM format.
-  virtual const char *getClobbers() const = 0;
-
 
   /// \brief Returns the target triple of the primary target.
   const llvm::Triple &getTriple() const {
@@ -939,8 +942,6 @@ protected:
     Addl = nullptr;
     NumAddl = 0;
   }
-  virtual bool validateAsmConstraint(const char *&Name,
-                                     TargetInfo::ConstraintInfo &info) const= 0;
 };
 
 }  // end namespace clang
