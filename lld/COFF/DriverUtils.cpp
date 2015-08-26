@@ -483,18 +483,18 @@ static std::string writeToTempFile(StringRef Contents) {
 static std::string createModuleDefinitionFile() {
   std::string S;
   llvm::raw_string_ostream OS(S);
-  OS << "LIBRARY \"" << llvm::sys::path::filename(Config->OutputFile) << "\"\n"
-     << "EXPORTS\n";
+  OS << "  LIBRARY \"" << llvm::sys::path::filename(Config->OutputFile) << "\"\n"
+     << "  EXPORTS\n";
   for (Export &E : Config->Exports) {
-    OS << "  " << E.ExtLibName;
+    OS << "    " << E.ExtLibName;
     if (E.Ordinal > 0)
-      OS << " @" << E.Ordinal;
+      OS << "   @" << E.Ordinal;
     if (E.Noname)
-      OS << " NONAME";
+      OS << "   NONAME";
     if (E.Data)
-      OS << " DATA";
+      OS << "   DATA";
     if (E.Private)
-      OS << " PRIVATE";
+      OS << "   PRIVATE";
     OS << "\n";
   }
   OS.flush();
@@ -506,6 +506,9 @@ void writeImportLibrary() {
   std::string Contents = createModuleDefinitionFile();
   std::string Def = writeToTempFile(Contents);
   llvm::FileRemover TempFile(Def);
+
+  if (Config->Verbose)
+    llvm::outs() << "Module-definition file:" << Contents;
 
   Executor E("lib.exe");
   E.add("/nologo");
