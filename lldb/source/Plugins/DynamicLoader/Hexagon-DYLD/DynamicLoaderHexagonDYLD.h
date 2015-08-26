@@ -47,29 +47,29 @@ public:
     //------------------------------------------------------------------
 
     virtual void
-    DidAttach();
+    DidAttach() override;
 
     virtual void
-    DidLaunch();
+    DidLaunch() override;
 
     virtual lldb::ThreadPlanSP
     GetStepThroughTrampolinePlan(lldb_private::Thread &thread,
-                                 bool stop_others);
+                                 bool stop_others) override;
 
     virtual lldb_private::Error
-    CanLoadImage();
+    CanLoadImage() override;
 
     virtual lldb::addr_t
-    GetThreadLocalData (const lldb::ModuleSP module, const lldb::ThreadSP thread);
+    GetThreadLocalData (const lldb::ModuleSP module, const lldb::ThreadSP thread) override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
     virtual lldb_private::ConstString
-    GetPluginName();
+    GetPluginName() override;
 
     virtual uint32_t
-    GetPluginVersion();
+    GetPluginVersion() override;
 
     virtual void
     GetPluginCommandHelp(const char *command, lldb_private::Stream *strm);
@@ -131,7 +131,7 @@ protected:
     ///
     /// @param module The module to traverse.
     void
-    UnloadSections(const lldb::ModuleSP module);
+    UnloadSections(const lldb::ModuleSP module) override;
 
     /// Locates or creates a module given by @p file and updates/loads the
     /// resulting module at the virtual base address @p base_addr.
