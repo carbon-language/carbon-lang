@@ -674,6 +674,13 @@ Instruction::DumpEmulation (const ArchSpec &arch)
     return false;
 }
 
+bool
+Instruction::HasDelaySlot ()
+{
+    // Default is false.
+    return false;
+}
+
 OptionValueSP
 Instruction::ReadArray (FILE *in_file, Stream *out_stream, OptionValue::Type data_type)
 {
@@ -1318,6 +1325,13 @@ PseudoInstruction::DoesBranch ()
     return false;
 }
     
+bool
+PseudoInstruction::HasDelaySlot ()
+{
+    // This is NOT a valid question for a pseudo instruction.
+    return false;
+}
+
 size_t
 PseudoInstruction::Decode (const lldb_private::Disassembler &disassembler,
                            const lldb_private::DataExtractor &data,

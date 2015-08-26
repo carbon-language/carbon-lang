@@ -52,6 +52,7 @@ public:
         Instruction (address, addr_class),
         m_disasm_sp (disasm.shared_from_this()),
         m_does_branch (eLazyBoolCalculate),
+        m_has_delay_slot (eLazyBoolCalculate),
         m_is_valid (false),
         m_using_file_addr (false)
     {
@@ -97,6 +98,43 @@ public:
             GetDisassemblerLLVMC().Unlock();
         }
         return m_does_branch == eLazyBoolYes;
+    }
+
+    virtual bool
+    HasDelaySlot ()
+    {
+        if (m_has_delay_slot == eLazyBoolCalculate)
+        {
+            GetDisassemblerLLVMC().Lock(this, NULL);
+            DataExtractor data;
+            if (m_opcode.GetData(data))
+            {
+                bool is_alternate_isa;
+                lldb::addr_t pc = m_address.GetFileAddress();
+
+                DisassemblerLLVMC::LLVMCDisassembler *mc_disasm_ptr = GetDisasmToUse (is_alternate_isa);
+                const uint8_t *opcode_data = data.GetDataStart();
+                const size_t opcode_data_len = data.GetByteSize();
+                llvm::MCInst inst;
+                const size_t inst_size = mc_disasm_ptr->GetMCInst (opcode_data,
+                                                                   opcode_data_len,
+                                                                   pc,
+                                                                   inst);
+                // if we didn't understand the instruction, say it doesn't have a delay slot...
+                if (inst_size == 0)
+                    m_has_delay_slot = eLazyBoolNo;
+                else
+                {
+                    const bool has_delay_slot = mc_disasm_ptr->HasDelaySlot(inst);
+                    if (has_delay_slot)
+                        m_has_delay_slot = eLazyBoolYes;
+                    else
+                        m_has_delay_slot = eLazyBoolNo;
+                }
+            }
+            GetDisassemblerLLVMC().Unlock();
+        }
+        return m_has_delay_slot == eLazyBoolYes;
     }
 
     DisassemblerLLVMC::LLVMCDisassembler *
@@ -409,6 +447,7 @@ protected:
 
     DisassemblerSP          m_disasm_sp; // for ownership
     LazyBool                m_does_branch;
+    LazyBool                m_has_delay_slot;
     bool                    m_is_valid;
     bool                    m_using_file_addr;
 };
@@ -540,6 +579,12 @@ bool
 DisassemblerLLVMC::LLVMCDisassembler::CanBranch (llvm::MCInst &mc_inst)
 {
     return m_instr_info_ap->get(mc_inst.getOpcode()).mayAffectControlFlow(mc_inst, *m_reg_info_ap.get());
+}
+
+bool
+DisassemblerLLVMC::LLVMCDisassembler::HasDelaySlot (llvm::MCInst &mc_inst)
+{
+    return m_instr_info_ap->get(mc_inst.getOpcode()).hasDelaySlot();
 }
 
 bool

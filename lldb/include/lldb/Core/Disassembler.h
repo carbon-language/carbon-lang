@@ -142,6 +142,9 @@ public:
     virtual bool
     DoesBranch () = 0;
 
+    virtual bool
+    HasDelaySlot ();
+
     virtual size_t
     Decode (const Disassembler &disassembler, 
             const DataExtractor& data,
@@ -265,6 +268,9 @@ public:
      
     virtual bool
     DoesBranch ();
+
+    virtual bool
+    HasDelaySlot ();
 
     virtual void
     CalculateMnemonicOperandsAndComment (const ExecutionContext* exe_ctx)

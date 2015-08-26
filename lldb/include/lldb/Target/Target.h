@@ -920,6 +920,14 @@ public:
     lldb::addr_t
     GetOpcodeLoadAddress (lldb::addr_t load_addr, lldb::AddressClass addr_class = lldb::eAddressClassInvalid) const;
 
+    // Get load_addr as breakable load address for this target.
+    // Take a addr and check if for any reason there is a better address than this to put a breakpoint on.
+    // If there is then return that address.
+    // For MIPS, if instruction at addr is a delay slot instruction then this method will find the address of its
+    // previous instruction and return that address.
+    lldb::addr_t
+    GetBreakableLoadAddress (lldb::addr_t addr);
+
 protected:
     //------------------------------------------------------------------
     /// Implementing of ModuleList::Notifier.
