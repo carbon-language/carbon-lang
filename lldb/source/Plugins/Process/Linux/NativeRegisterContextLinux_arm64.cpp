@@ -391,10 +391,15 @@ NativeRegisterContextLinux_arm64::SetHardwareBreakpoint (lldb::addr_t addr, size
     if (log)
         log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
 
-    // Read hardware breakpoint and watchpoint information.
-    ReadHardwareDebugInfo ();
+    Error error;
 
-    uint32_t control_value, bp_index;
+    // Read hardware breakpoint and watchpoint information.
+    error = ReadHardwareDebugInfo ();
+
+    if (error.Fail())
+        return LLDB_INVALID_INDEX32;
+
+    uint32_t control_value = 0, bp_index = 0;
 
     // Check if size has a valid hardware breakpoint length.
     if (size != 4)
@@ -436,7 +441,10 @@ NativeRegisterContextLinux_arm64::SetHardwareBreakpoint (lldb::addr_t addr, size
         m_hbr_regs[bp_index].refcount = 1;
 
         // PTRACE call to set corresponding hardware breakpoint register.
-        WriteHardwareDebugRegs(eDREGTypeBREAK);
+        error = WriteHardwareDebugRegs(eDREGTypeBREAK);
+
+        if (error.Fail())
+            return LLDB_INVALID_INDEX32;
     }
     else
         m_hbr_regs[bp_index].refcount++;
@@ -452,8 +460,13 @@ NativeRegisterContextLinux_arm64::ClearHardwareBreakpoint (uint32_t hw_idx)
     if (log)
         log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
 
+    Error error;
+
     // Read hardware breakpoint and watchpoint information.
-    ReadHardwareDebugInfo ();
+    error = ReadHardwareDebugInfo ();
+
+    if (error.Fail())
+        return false;
 
     if (hw_idx >= m_max_hbp_supported)
         return false;
@@ -472,6 +485,11 @@ NativeRegisterContextLinux_arm64::ClearHardwareBreakpoint (uint32_t hw_idx)
 
         // PTRACE call to clear corresponding hardware breakpoint register.
         WriteHardwareDebugRegs(eDREGTypeBREAK);
+
+        if (error.Fail())
+            return false;
+
+        return true;
     }
 
     return false;
@@ -485,8 +503,13 @@ NativeRegisterContextLinux_arm64::NumSupportedHardwareWatchpoints ()
     if (log)
         log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
 
+    Error error;
+
     // Read hardware breakpoint and watchpoint information.
-    ReadHardwareDebugInfo ();
+    error = ReadHardwareDebugInfo ();
+
+    if (error.Fail())
+        return LLDB_INVALID_INDEX32;
 
     return m_max_hwp_supported;
 }
@@ -499,10 +522,15 @@ NativeRegisterContextLinux_arm64::SetHardwareWatchpoint (lldb::addr_t addr, size
     if (log)
         log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
     
+    Error error;
+
     // Read hardware breakpoint and watchpoint information.
-    ReadHardwareDebugInfo ();
+    error = ReadHardwareDebugInfo ();
+
+    if (error.Fail())
+        return LLDB_INVALID_INDEX32;
 		
-    uint32_t control_value, wp_index;
+    uint32_t control_value = 0, wp_index = 0;
 
     // Check if we are setting watchpoint other than read/write/access
     // Also update watchpoint flag to match AArch64 write-read bit configuration.
@@ -562,7 +590,10 @@ NativeRegisterContextLinux_arm64::SetHardwareWatchpoint (lldb::addr_t addr, size
         m_hwp_regs[wp_index].refcount = 1;
 
         // PTRACE call to set corresponding watchpoint register.
-        WriteHardwareDebugRegs(eDREGTypeWATCH);
+        error = WriteHardwareDebugRegs(eDREGTypeWATCH);
+
+        if (error.Fail())
+            return LLDB_INVALID_INDEX32;
     }
     else
         m_hwp_regs[wp_index].refcount++;
@@ -578,8 +609,13 @@ NativeRegisterContextLinux_arm64::ClearHardwareWatchpoint (uint32_t wp_index)
     if (log)
         log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
 
+    Error error;
+
     // Read hardware breakpoint and watchpoint information.
-    ReadHardwareDebugInfo ();
+    error = ReadHardwareDebugInfo ();
+
+    if (error.Fail())
+        return false;
 
     if (wp_index >= m_max_hwp_supported)
         return false;
@@ -598,7 +634,11 @@ NativeRegisterContextLinux_arm64::ClearHardwareWatchpoint (uint32_t wp_index)
         m_hwp_regs[wp_index].refcount = 0;
 
         // Ptrace call to update hardware debug registers
-        WriteHardwareDebugRegs(eDREGTypeWATCH);
+        error = WriteHardwareDebugRegs(eDREGTypeWATCH);
+
+        if (error.Fail())
+            return false;
+
         return true;
     }
 
@@ -613,8 +653,13 @@ NativeRegisterContextLinux_arm64::ClearAllHardwareWatchpoints ()
     if (log)
         log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
 
+    Error error;
+
     // Read hardware breakpoint and watchpoint information.
-    ReadHardwareDebugInfo ();
+    error = ReadHardwareDebugInfo ();
+
+    if (error.Fail())
+        return error;
 
     for (uint32_t i = 0; i < m_max_hwp_supported; i++)
     {
@@ -626,7 +671,10 @@ NativeRegisterContextLinux_arm64::ClearAllHardwareWatchpoints ()
             m_hwp_regs[i].refcount = 0;
 
             // Ptrace call to update hardware debug registers
-            WriteHardwareDebugRegs(eDREGTypeWATCH);
+            error = WriteHardwareDebugRegs(eDREGTypeWATCH);
+
+            if (error.Fail())
+                return error;
         }
     }
 
@@ -730,12 +778,19 @@ NativeRegisterContextLinux_arm64::ReadHardwareDebugInfo()
     ioVec.iov_base = &dreg_state;
     ioVec.iov_len = sizeof (dreg_state);
     error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET, tid, &regset, &ioVec, ioVec.iov_len);
+
+    if (error.Fail())
+        return error;
+
     m_max_hwp_supported = dreg_state.dbg_info & 0xff;
 
     regset = NT_ARM_HW_BREAK;
     error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET, tid, &regset, &ioVec, ioVec.iov_len);
-    m_max_hbp_supported = dreg_state.dbg_info & 0xff;
 
+    if (error.Fail())
+        return error;
+	
+    m_max_hbp_supported = dreg_state.dbg_info & 0xff;
     m_refresh_hwdebug_info = false;
 
     return error;
