@@ -747,6 +747,9 @@ public:
   /// if not specified it is automatically created from backend.
   void Finish();
 
+  // Layout all section and prepare them for emission.
+  void layout(MCAsmLayout &Layout);
+
   // FIXME: This does not belong here.
   bool getSubsectionsViaSymbols() const { return SubsectionsViaSymbols; }
   void setSubsectionsViaSymbols(bool Value) { SubsectionsViaSymbols = Value; }

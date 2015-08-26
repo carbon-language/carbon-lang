@@ -852,13 +852,10 @@ std::pair<uint64_t, bool> MCAssembler::handleFixup(const MCAsmLayout &Layout,
   return std::make_pair(FixedValue, IsPCRel);
 }
 
-void MCAssembler::Finish() {
+void MCAssembler::layout(MCAsmLayout &Layout) {
   DEBUG_WITH_TYPE("mc-dump", {
       llvm::errs() << "assembler backend - pre-layout\n--\n";
       dump(); });
-
-  // Create the layout object.
-  MCAsmLayout Layout(*this);
 
   // Create dummy fragments and assign section ordinals.
   unsigned SectionIndex = 0;
@@ -896,8 +893,6 @@ void MCAssembler::Finish() {
       llvm::errs() << "assembler backend - final-layout\n--\n";
       dump(); });
 
-  uint64_t StartOffset = OS.tell();
-
   // Allow the object writer a chance to perform post-layout binding (for
   // example, to set the index fields in the symbol data).
   getWriter().executePostLayoutBinding(*this, Layout);
@@ -931,6 +926,14 @@ void MCAssembler::Finish() {
       }
     }
   }
+}
+
+void MCAssembler::Finish() {
+  // Create the layout object.
+  MCAsmLayout Layout(*this);
+  layout(Layout);
+
+  uint64_t StartOffset = OS.tell();
 
   // Write the object file.
   getWriter().writeObject(*this, Layout);
