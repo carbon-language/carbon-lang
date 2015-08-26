@@ -363,7 +363,7 @@ static bool isAliasDecl(const Decl *TheDecl, const VarDecl *IndexVar) {
       return isDereferenceOfOpCall(OpCall, IndexVar);
     if (OpCall->getOperator() == OO_Subscript) {
       assert(OpCall->getNumArgs() == 2);
-      return true;
+      return isIndexInSubscriptExpr(OpCall->getArg(1), IndexVar);
     }
     break;
   }

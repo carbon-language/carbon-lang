@@ -202,6 +202,16 @@ void refs_and_vals() {
   // CHECK-FIXES-NOT: MutableVal &{{[a-z_]+}} =
   // CHECK-FIXES: {}
   // CHECK-FIXES-NEXT: alias.x = 0;
+
+  dependent<int> dep, other;
+  for (dependent<int>::iterator it = dep.begin(), e = dep.end(); it != e; ++it) {
+    printf("%d\n", *it);
+    const int& idx = other[0];
+  }
+  // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : dep)
+  // CHECK-FIXES-NEXT: printf("%d\n", elem);
+  // CHECK-FIXES-NEXT: const int& idx = other[0];
 }
 
 } // namespace NamingAlias
