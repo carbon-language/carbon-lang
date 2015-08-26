@@ -2009,20 +2009,18 @@ int __kmp_execute_tasks_oncore(kmp_info_t *thread, kmp_int32 gtid, kmp_flag_onco
 static void
 __kmp_enable_tasking( kmp_task_team_t *task_team, kmp_info_t *this_thr )
 {
-    kmp_team_t *team;
     kmp_thread_data_t *threads_data;
     int nthreads, i, is_init_thread;
 
     KA_TRACE( 10, ( "__kmp_enable_tasking(enter): T#%d\n",
                     __kmp_gtid_from_thread( this_thr ) ) );
 
-    team = this_thr->th.th_team;
     KMP_DEBUG_ASSERT(task_team != NULL);
-    KMP_DEBUG_ASSERT(team != NULL);
+    KMP_DEBUG_ASSERT(this_thr->th.th_team != NULL);
 
     nthreads = task_team->tt.tt_nproc;
     KMP_DEBUG_ASSERT(nthreads > 0);
-    KMP_DEBUG_ASSERT(nthreads == team->t.t_nproc);
+    KMP_DEBUG_ASSERT(nthreads == this_thr->th.th_team->t.t_nproc);
 
     // Allocate or increase the size of threads_data if necessary
     is_init_thread = __kmp_realloc_task_threads_data( this_thr, task_team );
