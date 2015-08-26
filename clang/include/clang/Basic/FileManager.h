@@ -218,7 +218,8 @@ public:
                            bool CacheFailure = true);
 
   /// \brief Returns the current file system options
-  const FileSystemOptions &getFileSystemOptions() { return FileSystemOpts; }
+  FileSystemOptions &getFileSystemOpts() { return FileSystemOpts; }
+  const FileSystemOptions &getFileSystemOpts() const { return FileSystemOpts; }
 
   IntrusiveRefCntPtr<vfs::FileSystem> getVirtualFileSystem() const {
     return FS;

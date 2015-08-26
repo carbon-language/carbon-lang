@@ -1326,8 +1326,8 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
 
   // File system options.
   Record.clear();
-  const FileSystemOptions &FSOpts
-    = Context.getSourceManager().getFileManager().getFileSystemOptions();
+  const FileSystemOptions &FSOpts =
+      Context.getSourceManager().getFileManager().getFileSystemOpts();
   AddString(FSOpts.WorkingDir, Record);
   Stream.EmitRecord(FILE_SYSTEM_OPTIONS, Record);
 
