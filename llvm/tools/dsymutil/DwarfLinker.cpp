@@ -10,6 +10,7 @@
 #include "BinaryHolder.h"
 #include "DebugMap.h"
 #include "dsymutil.h"
+#include "MachOUtils.h"
 #include "NonRelocatableStringpool.h"
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/StringMap.h"
@@ -475,7 +476,7 @@ public:
   bool init(Triple TheTriple, StringRef OutputFilename);
 
   /// \brief Dump the file to the disk.
-  bool finish();
+  bool finish(const DebugMap &);
 
   AsmPrinter &getAsmPrinter() const { return *Asm; }
 
@@ -617,7 +618,10 @@ bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
   return true;
 }
 
-bool DwarfStreamer::finish() {
+bool DwarfStreamer::finish(const DebugMap &DM) {
+  if (DM.getTriple().isOSDarwin() && !DM.getBinaryPath().empty())
+    return MachOUtils::generateDsymCompanion(DM, *MS, *OutFile);
+
   MS->Finish();
   return true;
 }
@@ -3041,7 +3045,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
     Streamer->emitStrings(StringPool);
   }
 
-  return Options.NoOutput ? true : Streamer->finish();
+  return Options.NoOutput ? true : Streamer->finish(Map);
 }
 }
 
