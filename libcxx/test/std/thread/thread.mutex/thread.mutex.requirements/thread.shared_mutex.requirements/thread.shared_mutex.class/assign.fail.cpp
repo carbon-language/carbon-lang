@@ -6,6 +6,8 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
 // <shared_mutex>
 
@@ -15,15 +17,9 @@
 
 #include <shared_mutex>
 
-#include "test_macros.h"
-
 int main()
 {
-#if TEST_STD_VER > 14
     std::shared_mutex m0;
     std::shared_mutex m1;
-    m1 = m0;
-#else
-#   error
-#endif
+    m1 = m0; // expected-error {{overload resolution selected deleted operator '='}}
 }
