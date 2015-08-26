@@ -1276,10 +1276,11 @@ __kmp_omp_task( kmp_int32 gtid, kmp_task_t * new_task, bool serialize_immediate 
 kmp_int32
 __kmpc_omp_task( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t * new_task)
 {
-    kmp_taskdata_t * new_taskdata;
     kmp_int32 res;
 
-    new_taskdata = KMP_TASK_TO_TASKDATA(new_task);
+#if KMP_DEBUG
+    kmp_taskdata_t * new_taskdata = KMP_TASK_TO_TASKDATA(new_task);
+#endif
     KA_TRACE(10, ("__kmpc_omp_task(enter): T#%d loc=%p task=%p\n",
                   gtid, loc_ref, new_taskdata ) );
 

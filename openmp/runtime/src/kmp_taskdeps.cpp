@@ -287,9 +287,10 @@ __kmp_check_deps ( kmp_int32 gtid, kmp_depnode_t *node, kmp_task_t *task, kmp_de
                    kmp_int32 ndeps_noalias, kmp_depend_info_t *noalias_dep_list )
 {
     int i;
-    kmp_taskdata_t * taskdata;
 
-    taskdata = KMP_TASK_TO_TASKDATA(task);
+#if KMP_DEBUG
+    kmp_taskdata_t * taskdata = KMP_TASK_TO_TASKDATA(task);
+#endif
     KA_TRACE(20, ("__kmp_check_deps: T#%d checking dependencies for task %p : %d possibly aliased dependencies, %d non-aliased depedencies : dep_barrier=%d .\n", gtid, taskdata, ndeps, ndeps_noalias, dep_barrier ) );
 
     // Filter deps in dep_list
