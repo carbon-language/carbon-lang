@@ -47,8 +47,10 @@ foreach(arch ${MSAN_SUPPORTED_ARCH})
   list(APPEND MSAN_RUNTIME_LIBRARIES clang_rt.msan-${arch}
                                      clang_rt.msan_cxx-${arch})
   if(UNIX)
-    add_sanitizer_rt_symbols(clang_rt.msan-${arch} msan.syms.extra)
-    add_sanitizer_rt_symbols(clang_rt.msan_cxx-${arch} msan.syms.extra)
+    add_sanitizer_rt_symbols(clang_rt.msan-${arch}
+      EXTRA msan.syms.extra)
+    add_sanitizer_rt_symbols(clang_rt.msan_cxx-${arch}
+      EXTRA msan.syms.extra)
     add_dependencies(msan clang_rt.msan-${arch}-symbols
                           clang_rt.msan_cxx-${arch}-symbols)
   endif()

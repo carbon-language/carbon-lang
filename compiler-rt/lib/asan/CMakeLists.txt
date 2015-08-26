@@ -191,7 +191,8 @@ else()
     if (UNIX AND NOT ${arch} MATCHES "i386|i686")
       add_sanitizer_rt_symbols(clang_rt.asan_cxx-${arch})
       add_dependencies(asan clang_rt.asan_cxx-${arch}-symbols)
-      add_sanitizer_rt_symbols(clang_rt.asan-${arch} asan.syms.extra)
+      add_sanitizer_rt_symbols(clang_rt.asan-${arch} 
+        EXTRA asan.syms.extra)
       add_dependencies(asan clang_rt.asan-${arch}-symbols)
     endif()
 

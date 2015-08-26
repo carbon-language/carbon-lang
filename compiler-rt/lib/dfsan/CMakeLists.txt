@@ -24,7 +24,8 @@ foreach(arch ${DFSAN_SUPPORTED_ARCH})
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
     CFLAGS ${DFSAN_CFLAGS}
     PARENT_TARGET dfsan)
-  add_sanitizer_rt_symbols(clang_rt.dfsan-${arch} dfsan.syms.extra)
+  add_sanitizer_rt_symbols(clang_rt.dfsan-${arch}
+    EXTRA dfsan.syms.extra)
   add_dependencies(dfsan
     clang_rt.dfsan-${arch}-symbols)
 endforeach()

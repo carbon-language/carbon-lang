@@ -8,11 +8,17 @@ set(SANITIZER_LINT_SCRIPT
 # that need to be exported from sanitizer runtime "<name>". Function
 # interceptors are exported automatically, user can also provide files with
 # symbol names that should be exported as well.
-#   add_sanitizer_rt_symbols(<name> <files with extra symbols to export>)
+#   add_sanitizer_rt_symbols(<name>
+#                            EXTRA <files with extra symbols to export>)
 macro(add_sanitizer_rt_symbols name)
+  cmake_parse_arguments(ARG
+    ""
+    ""
+    "EXTRA"
+    ${ARGN})
   set(stamp ${CMAKE_CURRENT_BINARY_DIR}/${name}.syms-stamp)
   set(extra_args)
-  foreach(arg ${ARGN})
+  foreach(arg ${ARG_EXTRA})
     list(APPEND extra_args "--extra" ${arg})
   endforeach()
   add_custom_command(OUTPUT ${stamp}
@@ -20,13 +26,13 @@ macro(add_sanitizer_rt_symbols name)
       ${SANITIZER_GEN_DYNAMIC_LIST} ${extra_args} $<TARGET_FILE:${name}>
       > $<TARGET_FILE:${name}>.syms
     COMMAND ${CMAKE_COMMAND} -E touch ${stamp}
-    DEPENDS ${name} ${SANITIZER_GEN_DYNAMIC_LIST} ${ARGN}
+    DEPENDS ${name} ${SANITIZER_GEN_DYNAMIC_LIST} ${ARG_EXTRA}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Generating exported symbols for ${name}"
     VERBATIM)
   add_custom_target(${name}-symbols ALL
     DEPENDS ${stamp}
-    SOURCES ${SANITIZER_GEN_DYNAMIC_LIST} ${ARGN})
+    SOURCES ${SANITIZER_GEN_DYNAMIC_LIST} ${ARG_EXTRA})
 
   if(NOT CMAKE_VERSION VERSION_LESS 3.0)
     install(FILES $<TARGET_FILE:${name}>.syms
