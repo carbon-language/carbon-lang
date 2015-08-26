@@ -3936,6 +3936,20 @@ AST_MATCHER_P(ElaboratedType, namesType, internal::Matcher<QualType>,
   return InnerMatcher.matches(Node.getNamedType(), Finder, Builder);
 }
 
+/// \brief Matches types that represent the result of substituting a type for a
+/// template type parameter.
+///
+/// Given
+/// \code
+///   template <typename T>
+///   void F(T t) {
+///     int i = 1 + t;
+///   }
+/// \code
+///
+/// \c substTemplateTypeParmType() matches the type of 't' but not '1'
+AST_TYPE_MATCHER(SubstTemplateTypeParmType, substTemplateTypeParmType);
+
 /// \brief Matches declarations whose declaration context, interpreted as a
 /// Decl, matches \c InnerMatcher.
 ///

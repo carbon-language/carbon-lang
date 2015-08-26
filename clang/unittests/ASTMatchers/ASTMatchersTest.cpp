@@ -4331,6 +4331,18 @@ TEST(ElaboratedTypeNarrowing, namesType) {
     elaboratedType(elaboratedType(namesType(typedefType())))));
 }
 
+TEST(TypeMatching, MatchesSubstTemplateTypeParmType) {
+  const std::string code = "template <typename T>"
+                           "int F() {"
+                           "  return 1 + T();"
+                           "}"
+                           "int i = F<int>();";
+  EXPECT_FALSE(matches(code, binaryOperator(hasLHS(
+                                 expr(hasType(substTemplateTypeParmType()))))));
+  EXPECT_TRUE(matches(code, binaryOperator(hasRHS(
+                                expr(hasType(substTemplateTypeParmType()))))));
+}
+
 TEST(NNS, MatchesNestedNameSpecifiers) {
   EXPECT_TRUE(matches("namespace ns { struct A {}; } ns::A a;",
                       nestedNameSpecifier()));
