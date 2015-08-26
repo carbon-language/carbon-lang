@@ -19,8 +19,7 @@ using namespace lld::elf2;
 template <class ELFT>
 SectionChunk<ELFT>::SectionChunk(object::ELFFile<ELFT> *Obj,
                                  const Elf_Shdr *Header)
-    : Obj(Obj), Header(Header) {
-}
+    : Obj(Obj), Header(Header) {}
 
 template <class ELFT> void SectionChunk<ELFT>::writeTo(uint8_t *Buf) {
   if (Header->sh_type == SHT_NOBITS)
