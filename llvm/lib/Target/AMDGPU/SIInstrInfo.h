@@ -39,12 +39,6 @@ private:
                                          unsigned SubIdx,
                                          const TargetRegisterClass *SubRC) const;
 
-  unsigned split64BitImm(SmallVectorImpl<MachineInstr *> &Worklist,
-                         MachineBasicBlock::iterator MI,
-                         MachineRegisterInfo &MRI,
-                         const TargetRegisterClass *RC,
-                         const MachineOperand &Op) const;
-
   void swapOperands(MachineBasicBlock::iterator Inst) const;
 
   void splitScalar64BitUnaryOp(SmallVectorImpl<MachineInstr *> &Worklist,

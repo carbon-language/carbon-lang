@@ -2817,10 +2817,6 @@ class DSAtomicRetPat<DS inst, ValueType vt, PatFrag frag> : Pat <
 // -1. For the non-rtn variants, the manual says it does
 // DS[A] = (DS[A] >= D0) ? 0 : DS[A] + 1, and setting D0 to uint_max
 // will always do the increment so I'm assuming it's the same.
-//
-// We also load this -1 with s_mov_b32 / s_mov_b64 even though this
-// needs to be a VGPR. The SGPR copy pass will fix this, and it's
-// easier since there is no v_mov_b64.
 class DSAtomicIncRetPat<DS inst, ValueType vt,
                         Instruction LoadImm, PatFrag frag> : Pat <
   (frag (DS1Addr1Offset i32:$ptr, i32:$offset), (vt 1)),
@@ -2836,9 +2832,9 @@ class DSAtomicCmpXChg <DS inst, ValueType vt, PatFrag frag> : Pat <
 
 // 32-bit atomics.
 def : DSAtomicIncRetPat<DS_INC_RTN_U32, i32,
-                        S_MOV_B32, si_atomic_load_add_local>;
+                        V_MOV_B32_e32, si_atomic_load_add_local>;
 def : DSAtomicIncRetPat<DS_DEC_RTN_U32, i32,
-                        S_MOV_B32, si_atomic_load_sub_local>;
+                        V_MOV_B32_e32, si_atomic_load_sub_local>;
 
 def : DSAtomicRetPat<DS_WRXCHG_RTN_B32, i32, si_atomic_swap_local>;
 def : DSAtomicRetPat<DS_ADD_RTN_U32, i32, si_atomic_load_add_local>;
@@ -2855,9 +2851,9 @@ def : DSAtomicCmpXChg<DS_CMPST_RTN_B32, i32, si_atomic_cmp_swap_32_local>;
 
 // 64-bit atomics.
 def : DSAtomicIncRetPat<DS_INC_RTN_U64, i64,
-                        S_MOV_B64, si_atomic_load_add_local>;
+                        V_MOV_B64_PSEUDO, si_atomic_load_add_local>;
 def : DSAtomicIncRetPat<DS_DEC_RTN_U64, i64,
-                        S_MOV_B64, si_atomic_load_sub_local>;
+                        V_MOV_B64_PSEUDO, si_atomic_load_sub_local>;
 
 def : DSAtomicRetPat<DS_WRXCHG_RTN_B64, i64, si_atomic_swap_local>;
 def : DSAtomicRetPat<DS_ADD_RTN_U64, i64, si_atomic_load_add_local>;
