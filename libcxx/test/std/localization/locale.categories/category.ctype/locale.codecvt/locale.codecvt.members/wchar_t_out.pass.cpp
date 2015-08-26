@@ -15,11 +15,6 @@
 //            const internT* from, const internT* from_end, const internT*& from_next,
 //            externT* to, externT* to_end, externT*& to_next) const;
 
-// As of 24/Aug/2015 MSAN fails on this test because it doesn't provide an
-// interceptor for `wcrtomb` causing it to generate false positives.
-// TODO(EricWF) Remove this once D12311 lands.
-// XFAIL: msan
-
 #include <locale>
 #include <string>
 #include <vector>
