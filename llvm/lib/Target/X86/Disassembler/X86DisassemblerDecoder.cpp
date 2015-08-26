@@ -980,6 +980,47 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
       insn->opcode == 0xE3)
     attrMask ^= ATTR_ADSIZE;
 
+  /*
+   * In 64-bit mode all f64 superscripted opcodes ignore opcode size prefix
+   * CALL/JMP/JCC instructions need to ignore 0x66 and consume 4 bytes
+   */
+
+  if (insn->mode == MODE_64BIT &&
+      isPrefixAtLocation(insn, 0x66, insn->necessaryPrefixLocation)) {
+    switch (insn->opcode) {
+    case 0xE8:
+    case 0xE9:
+      if (insn->opcodeType ==
+          ONEBYTE) { // breaks psubsb and other mmx instructions otherwise
+        attrMask ^= ATTR_OPSIZE;
+        insn->immediateSize = 4;
+        insn->displacementSize = 4;
+      }
+      break;
+    case 0x82:
+    case 0x83:
+    case 0x84:
+    case 0x85:
+    case 0x86:
+    case 0x87:
+    case 0x88:
+    case 0x89:
+    case 0x8A:
+    case 0x8B:
+    case 0x8C:
+    case 0x8D:
+    case 0x8E:
+    case 0x8F:
+      if (insn->opcodeType ==
+          TWOBYTE) { // breaks lea and three byte ops otherwise
+        attrMask ^= ATTR_OPSIZE;
+        insn->immediateSize = 4;
+        insn->displacementSize = 4; // otherwise not sign extended
+      }
+      break;
+    }
+  }
+
   if (getIDWithAttrMask(&instructionID, insn, attrMask))
     return -1;
 
