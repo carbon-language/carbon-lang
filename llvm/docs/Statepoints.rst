@@ -209,20 +209,49 @@ This example was taken from the tests for the :ref:`RewriteStatepointsForGC` uti
 Base & Derived Pointers
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-A base pointer is one which points to the base of an allocation (object).  A 
-derived pointer is one which is offset from a base pointer by some amount.  
-When relocating objects, a garbage collector needs to be able to relocate each 
-derived pointer associated with an allocation to the same offset from the new 
-address.    
+A "base pointer" is one which points to the starting address of an allocation
+(object).  A "derived pointer" is one which is offset from a base pointer by
+some amount.  When relocating objects, a garbage collector needs to be able 
+to relocate each derived pointer associated with an allocation to the same 
+offset from the new address.
 
-Derived pointers fall in to two categories: 
- * "Interior derived pointers" remain within the bounds of the allocation 
-   they're associated with.  As a result, the base object can be found at 
-   runtime provided the bounds of allocations are known to the runtime system.
- * "Exterior derived pointers" are outside the bounds of the associated object;
-   they may even fall within *another* allocations address range.  As a result,
-   there is no way for a garbage collector to determine which allocation they 
-   are associated with at runtime and compiler support is needed.
+"Interior derived pointers" remain within the bounds of the allocation 
+they're associated with.  As a result, the base object can be found at 
+runtime provided the bounds of allocations are known to the runtime system.
+
+"Exterior derived pointers" are outside the bounds of the associated object;
+they may even fall within *another* allocations address range.  As a result,
+there is no way for a garbage collector to determine which allocation they 
+are associated with at runtime and compiler support is needed.
+
+The ``gc.relocate`` intrinsic supports an explicit operand for describing the
+allocation associated with a derived pointer.  This operand is frequently 
+referred to as the base operand, but does not strictly speaking have to be
+a base pointer, but it does need to lie within the bounds of the associated
+allocation.  Some collectors may require that the operand be an actual base
+pointer rather than merely an internal derived pointer. Note that during 
+lowering both the base and derived pointer operands are required to be live 
+over the associated call safepoint even if the base is otherwise unused 
+afterwards.
+
+If we extend our previous example to include a pointless derived pointer, 
+we get:
+
+.. code-block:: llvm
+
+  define i8 addrspace(1)* @test1(i8 addrspace(1)* %obj) 
+         gc "statepoint-example" {
+    %gep = getelementptr i8, i8 addrspace(1)* %obj, i64 20000
+    %token = call i32 (i64, i32, void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @foo, i32 0, i32 0, i32 0, i32 0, i8 addrspace(1)* %obj, i8 addrspace(1)* %gep)
+    %obj.relocated = call i8 addrspace(1)* @llvm.experimental.gc.relocate.p1i8(i32 %token, i32 7, i32 7)
+    %gep.relocated = call i8 addrspace(1)* @llvm.experimental.gc.relocate.p1i8(i32 %token, i32 7, i32 8)
+    %p = getelementptr i8, i8 addrspace(1)* %gep, i64 -20000
+    ret i8 addrspace(1)* %p
+  }
+
+Note that in this example %p and %obj.relocate are the same address and we
+could replace one with the other, potentially removing the derived pointer
+from the live set at the safepoint entirely.  
 
 GC Transitions
 ^^^^^^^^^^^^^^^^^^
@@ -486,9 +515,14 @@ Despite the typing of this as a generic i32, *only* the value defined
 by a ``gc.statepoint`` is legal here.
 
 The second argument is an index into the statepoints list of arguments
-which specifies the base pointer for the pointer being relocated.
+which specifies the allocation for the pointer being relocated.
 This index must land within the 'gc parameter' section of the
-statepoint's argument list.
+statepoint's argument list.  The associated value must be within the
+object with which the pointer being relocated is associated. The optimizer
+is free to change *which* interior derived pointer is reported, provided that
+it does not replace an actual base pointer with another interior derived 
+pointer.  Collectors are allowed to rely on the base pointer operand 
+remaining an actual base pointer if so constructed.
 
 The third argument is an index into the statepoint's list of arguments
 which specify the (potentially) derived pointer being relocated.  It
@@ -631,8 +665,18 @@ non references.  Address space 1 is not globally reserved for this purpose.
 This pass can be used an utility function by a language frontend that doesn't 
 want to manually reason about liveness, base pointers, or relocation when 
 constructing IR.  As currently implemented, RewriteStatepointsForGC must be 
-run after SSA construction (i.e. mem2ref).  
+run after SSA construction (i.e. mem2ref).
 
+RewriteStatepointsForGC will ensure that appropriate base pointers are listed
+for every relocation created.  It will do so by duplicating code as needed to
+propagate the base pointer associated with each pointer being relocated to
+the appropriate safepoints.  The implementation assumes that the following 
+IR constructs produce base pointers: loads from the heap, addresses of global 
+variables, function arguments, function return values. Constant pointers (such
+as null) are also assumed to be base pointers.  In practice, this constraint
+can be relaxed to producing interior derived pointers provided the target 
+collector can find the associated allocation from an arbitrary interior 
+derived pointer.
 
 In practice, RewriteStatepointsForGC can be run much later in the pass 
 pipeline, after most optimization is already done.  This helps to improve 
