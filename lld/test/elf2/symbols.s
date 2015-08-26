@@ -25,6 +25,7 @@ zed2:
 
 .section        foobar,"a",@nobits,unique,2
 .globl zed3
+.size zed3, 4
 zed3:
 
 // CHECK:      Name: .text
@@ -64,7 +65,7 @@ zed3:
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed3
 // CHECK-NEXT:     Value: 0x100C
-// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0

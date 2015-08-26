@@ -260,6 +260,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       uint8_t Type = InputSym->getType();
       uint8_t Binding = InputSym->getBinding();
       ESym->setBindingAndType(Binding, Type);
+      ESym->st_size = InputSym->st_size;
     }
 
     if (Section) {
