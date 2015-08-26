@@ -1269,7 +1269,7 @@ Optional<ArrayRef<QualType>> Type::getObjCSubstitutions(
     if (!dcTypeParams)
       return None;
   } else {
-    // If we are in neither a class mor a category, there's no
+    // If we are in neither a class nor a category, there's no
     // substitution to perform.
     dcCategoryDecl = dyn_cast<ObjCCategoryDecl>(dc);
     if (!dcCategoryDecl)
@@ -2254,7 +2254,7 @@ bool QualType::isCXX11PODType(ASTContext &Context) const {
       //   a standard-layout class, and has no non-static data members of type
       //   non-POD struct, non-POD union (or array of such types). [...]
       //
-      // We don't directly query the recursive aspect as the requiremets for
+      // We don't directly query the recursive aspect as the requirements for
       // both standard-layout classes and trivial classes apply recursively
       // already.
     }
@@ -3517,7 +3517,7 @@ bool Type::isObjCARCImplicitlyUnretainedType() const {
 
   if (const ObjCObjectPointerType *opt
         = dyn_cast<ObjCObjectPointerType>(canon)) {
-    // Class and Class<Protocol> don't require retension.
+    // Class and Class<Protocol> don't require retention.
     if (opt->getObjectType()->isObjCClass())
       return true;
   }
