@@ -44,17 +44,6 @@ namespace dsymutil {
 
 namespace {
 
-void warn(const Twine &Warning, const Twine &Context) {
-  errs() << Twine("while processing ") + Context + ":\n";
-  errs() << Twine("warning: ") + Warning + "\n";
-}
-
-bool error(const Twine &Error, const Twine &Context) {
-  errs() << Twine("while processing ") + Context + ":\n";
-  errs() << Twine("error: ") + Error + "\n";
-  return false;
-}
-
 template <typename KeyT, typename ValT>
 using HalfOpenIntervalMap =
     IntervalMap<KeyT, ValT, IntervalMapImpl::NodeSizer<KeyT, ValT>::LeafSize,
@@ -3088,6 +3077,17 @@ StringRef NonRelocatableStringpool::internString(StringRef S) {
   std::pair<uint32_t, StringMapEntryBase *> Entry(0, nullptr);
   auto InsertResult = Strings.insert(std::make_pair(S, Entry));
   return InsertResult.first->getKey();
+}
+
+void warn(const Twine &Warning, const Twine &Context) {
+  errs() << Twine("while processing ") + Context + ":\n";
+  errs() << Twine("warning: ") + Warning + "\n";
+}
+
+bool error(const Twine &Error, const Twine &Context) {
+  errs() << Twine("while processing ") + Context + ":\n";
+  errs() << Twine("error: ") + Error + "\n";
+  return false;
 }
 
 bool linkDwarf(StringRef OutputFilename, const DebugMap &DM,

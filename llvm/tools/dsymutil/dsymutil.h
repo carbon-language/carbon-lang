@@ -48,6 +48,9 @@ bool linkDwarf(StringRef OutputFilename, const DebugMap &DM,
 /// \brief Exit the dsymutil process, cleaning up every temporary
 /// files that we created.
 LLVM_ATTRIBUTE_NORETURN void exitDsymutil(int ExitStatus);
+
+void warn(const Twine &Warning, const Twine &Context);
+bool error(const Twine &Error, const Twine &Context);
 }
 }
 #endif // LLVM_TOOLS_DSYMUTIL_DSYMUTIL_H
