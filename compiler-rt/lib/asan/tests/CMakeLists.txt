@@ -217,7 +217,7 @@ macro(add_asan_tests_for_arch_and_kind arch kind)
   set(ASAN_TEST_RUNTIME RTAsanTest.${arch}${kind})
   if(APPLE)
     set(ASAN_TEST_RUNTIME_OBJECTS
-      $<TARGET_OBJECTS:RTAsan.osx>
+      $<TARGET_OBJECTS:RTAsan_dynamic.osx>
       $<TARGET_OBJECTS:RTInterception.osx>
       $<TARGET_OBJECTS:RTSanitizerCommon.osx>
       $<TARGET_OBJECTS:RTLSanCommon.osx>

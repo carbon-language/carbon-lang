@@ -73,14 +73,15 @@ append_list_if(COMPILER_RT_HAS_LIBSTDCXX stdc++ ASAN_DYNAMIC_LIBS)
 append_list_if(COMPILER_RT_HAS_LIBLOG log ASAN_DYNAMIC_LIBS)
 
 # Compile ASan sources into an object library.
-if(APPLE)
-  add_compiler_rt_object_libraries(RTAsan
-    OS ${SANITIZER_COMMON_SUPPORTED_OS}
-    ARCHS ${ASAN_SUPPORTED_ARCH}
-    SOURCES ${ASAN_SOURCES} ${ASAN_CXX_SOURCES}
-    CFLAGS ${ASAN_DYNAMIC_CFLAGS}
-    DEFS ${ASAN_DYNAMIC_DEFINITIONS})
-else()
+
+add_compiler_rt_object_libraries(RTAsan_dynamic 
+  OS ${SANITIZER_COMMON_SUPPORTED_OS}
+  ARCHS ${ASAN_SUPPORTED_ARCH}
+  SOURCES ${ASAN_SOURCES} ${ASAN_CXX_SOURCES}
+  CFLAGS ${ASAN_DYNAMIC_CFLAGS}
+  DEFS ${ASAN_DYNAMIC_DEFINITIONS})
+
+if(NOT APPLE)
   add_compiler_rt_object_libraries(RTAsan 
     ARCHS ${ASAN_SUPPORTED_ARCH}
     SOURCES ${ASAN_SOURCES} CFLAGS ${ASAN_CFLAGS}
@@ -93,11 +94,6 @@ else()
     ARCHS ${ASAN_SUPPORTED_ARCH}
     SOURCES ${ASAN_PREINIT_SOURCES} CFLAGS ${ASAN_CFLAGS}
     DEFS ${ASAN_COMMON_DEFINITIONS})
-  add_compiler_rt_object_libraries(RTAsan_dynamic 
-    ARCHS ${ASAN_SUPPORTED_ARCH}
-    SOURCES ${ASAN_SOURCES} ${ASAN_CXX_SOURCES}
-    CFLAGS ${ASAN_DYNAMIC_CFLAGS}
-    DEFS ${ASAN_DYNAMIC_DEFINITIONS})
 
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/dummy.cc "")
   add_compiler_rt_object_libraries(RTAsan_dynamic_version_script_dummy
@@ -110,57 +106,56 @@ endif()
 # Build ASan runtimes shipped with Clang.
 add_custom_target(asan)
 if(APPLE)
-  foreach (os ${SANITIZER_COMMON_SUPPORTED_OS})
-    add_compiler_rt_runtime(clang_rt.asan
-      SHARED
-      OS ${os}
-      ARCHS ${ASAN_SUPPORTED_ARCH}
-      SOURCES $<TARGET_OBJECTS:RTAsan.${os}>
-              $<TARGET_OBJECTS:RTInterception.${os}>
-              $<TARGET_OBJECTS:RTSanitizerCommon.${os}>
-              $<TARGET_OBJECTS:RTLSanCommon.${os}>
-              $<TARGET_OBJECTS:RTUbsan.${os}>
-      CFLAGS ${ASAN_DYNAMIC_CFLAGS}
-      DEFS ${ASAN_DYNAMIC_DEFINITIONS}
-      PARENT_TARGET asan)
-  endforeach()
+  add_compiler_rt_runtime(clang_rt.asan
+    SHARED
+    OS ${SANITIZER_COMMON_SUPPORTED_OS}
+    ARCHS ${ASAN_SUPPORTED_ARCH}
+    OBJECT_LIBS RTAsan_dynamic
+                RTInterception
+                RTSanitizerCommon
+                RTLSanCommon
+                RTUbsan
+    CFLAGS ${ASAN_DYNAMIC_CFLAGS}
+    DEFS ${ASAN_DYNAMIC_DEFINITIONS}
+    PARENT_TARGET asan)
 else()
   # Build separate libraries for each target.
-  foreach(arch ${ASAN_SUPPORTED_ARCH})
-    set(ASAN_COMMON_RUNTIME_OBJECTS
-      $<TARGET_OBJECTS:RTInterception.${arch}>
-      $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-      $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-      $<TARGET_OBJECTS:RTLSanCommon.${arch}>
-      $<TARGET_OBJECTS:RTUbsan.${arch}>)
+  
+    set(ASAN_COMMON_RUNTIME_OBJECT_LIBS
+      RTInterception
+      RTSanitizerCommon
+      RTSanitizerCommonLibc
+      RTLSanCommon
+      RTUbsan)
 
     add_compiler_rt_runtime(clang_rt.asan
       STATIC
-      ARCHS ${arch}
-      SOURCES $<TARGET_OBJECTS:RTAsan_preinit.${arch}>
-              $<TARGET_OBJECTS:RTAsan.${arch}>
-              ${ASAN_COMMON_RUNTIME_OBJECTS}
+      ARCHS ${ASAN_SUPPORTED_ARCH}
+      OBJECT_LIBS RTAsan_preinit
+                  RTAsan
+                  ${ASAN_COMMON_RUNTIME_OBJECT_LIBS}
       CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS}
       PARENT_TARGET asan)
 
     add_compiler_rt_runtime(clang_rt.asan_cxx
       STATIC
-      ARCHS ${arch}
-      SOURCES $<TARGET_OBJECTS:RTAsan_cxx.${arch}>
-              $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
+      ARCHS ${ASAN_SUPPORTED_ARCH}
+      OBJECT_LIBS RTAsan_cxx
+                  RTUbsan_cxx
       CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS}
       PARENT_TARGET asan)
 
     add_compiler_rt_runtime(clang_rt.asan-preinit
       STATIC
-      ARCHS ${arch}
-      SOURCES $<TARGET_OBJECTS:RTAsan_preinit.${arch}>
+      ARCHS ${ASAN_SUPPORTED_ARCH}
+      OBJECT_LIBS RTAsan_preinit
       CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS}
       PARENT_TARGET asan)
 
+  foreach(arch ${ASAN_SUPPORTED_ARCH})
     if (UNIX AND NOT ${arch} MATCHES "i386|i686")
       add_sanitizer_rt_version_list(clang_rt.asan-dynamic-${arch}
                                     LIBS clang_rt.asan-${arch} clang_rt.asan_cxx-${arch}
@@ -178,14 +173,14 @@ else()
     add_compiler_rt_runtime(clang_rt.asan
       SHARED
       ARCHS ${arch}
-      SOURCES $<TARGET_OBJECTS:RTAsan_dynamic.${arch}>
+      OBJECT_LIBS ${ASAN_COMMON_RUNTIME_OBJECT_LIBS}
+              RTAsan_dynamic
               # The only purpose of RTAsan_dynamic_version_script_dummy is to carry
               # a dependency of the shared runtime on the version script. With CMake
               # 3.1 or later it can be replaced with a straightforward
               # add_dependencies(clang_rt.asan-dynamic-${arch} clang_rt.asan-dynamic-${arch}-version-list)
-              $<TARGET_OBJECTS:RTAsan_dynamic_version_script_dummy.${arch}>
-              $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
-              ${ASAN_COMMON_RUNTIME_OBJECTS}
+              RTAsan_dynamic_version_script_dummy
+              RTUbsan_cxx
       CFLAGS ${ASAN_DYNAMIC_CFLAGS}
       LINKFLAGS ${ASAN_DYNAMIC_LINK_FLAGS}
                 ${VERSION_SCRIPT_FLAG}

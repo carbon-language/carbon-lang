@@ -46,6 +46,15 @@ function(add_compiler_rt_object_libraries name)
   endforeach()
 endfunction()
 
+# Takes a list of object library targets, and a suffix and appends the proper
+# TARGET_OBJECTS string to the output variable.
+# format_object_libs(<output> <suffix> ...)
+macro(format_object_libs output suffix)
+  foreach(lib ${ARGN})
+    list(APPEND ${output} $<TARGET_OBJECTS:${lib}.${suffix}>)
+  endforeach()
+endmacro()
+
 # Adds static or shared runtime for a list of architectures and operating
 # systems and puts it in the proper directory in the build and install trees.
 # add_compiler_rt_runtime(<name>
@@ -57,6 +66,7 @@ endfunction()
 #                         LINKFLAGS <linker flags>
 #                         DEFS <compile definitions>
 #                         LINK_LIBS <linked libraries> (only for shared library)
+#                         OBJECT_LIBS <object libraries to use as sources>
 #                         PARENT_TARGET <convenience parent target>)
 function(add_compiler_rt_runtime name type)
   if(NOT type MATCHES "^(STATIC|SHARED)$")
@@ -66,7 +76,7 @@ function(add_compiler_rt_runtime name type)
   cmake_parse_arguments(LIB
     ""
     "PARENT_TARGET"
-    "OS;ARCHS;SOURCES;CFLAGS;LINKFLAGS;DEFS;LINK_LIBS"
+    "OS;ARCHS;SOURCES;CFLAGS;LINKFLAGS;DEFS;LINK_LIBS;OBJECT_LIBS"
     ${ARGN})
   set(libnames)
   if(APPLE)
@@ -82,6 +92,8 @@ function(add_compiler_rt_runtime name type)
         list(APPEND libnames ${libname})
         set(extra_cflags_${libname} ${DARWIN_${os}_CFLAGS} ${LIB_CFLAGS})
         set(output_name_${libname} ${libname}${COMPILER_RT_OS_SUFFIX})
+        set(sources_${libname} ${LIB_SOURCES})
+        format_object_libs(sources_${libname} ${os} ${LIB_OBJECT_LIBS})
       endif()
     endforeach()
   else()
@@ -102,6 +114,8 @@ function(add_compiler_rt_runtime name type)
           set(output_name_${libname} ${name}-${arch}${COMPILER_RT_OS_SUFFIX})
         endif()
       endif()
+      set(sources_${libname} ${LIB_SOURCES})
+      format_object_libs(sources_${libname} ${arch} ${LIB_OBJECT_LIBS})
       set(libnames ${libnames} ${libname})
       set(extra_cflags_${libname} ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
     endforeach()
@@ -116,7 +130,7 @@ function(add_compiler_rt_runtime name type)
   endif()
 
   foreach(libname ${libnames})
-    add_library(${libname} ${type} ${LIB_SOURCES})
+    add_library(${libname} ${type} ${sources_${libname}})
     set_target_compile_flags(${libname} ${extra_cflags_${libname}})
     set_target_link_flags(${libname} ${extra_linkflags_${libname}})
     set_property(TARGET ${libname} APPEND PROPERTY 
