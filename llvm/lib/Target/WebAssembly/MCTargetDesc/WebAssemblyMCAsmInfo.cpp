@@ -52,6 +52,7 @@ WebAssemblyMCAsmInfo::WebAssemblyMCAsmInfo(const Triple &T) {
   // For now, WebAssembly does not support exceptions.
   ExceptionsType = ExceptionHandling::None;
 
+  // FIXME: modify AsmPrinter to be more flexible, and fix other virtual ISAs.
   WeakDirective = "\t;; .weak\t";
   GlobalDirective = "\t;; .globl\t";
 
