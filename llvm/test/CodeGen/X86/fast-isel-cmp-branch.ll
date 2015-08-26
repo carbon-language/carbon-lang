@@ -1,5 +1,18 @@
-; RUN: llc -O0 -mtriple=x86_64-linux -asm-verbose=false < %s | FileCheck %s
-; RUN: llc -O0 -mtriple=x86_64-windows-itanium -asm-verbose=false < %s | FileCheck %s
+; RUN: llc -O0 -mtriple=x86_64-linux -asm-verbose=false -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -O0 -mtriple=x86_64-windows-itanium -asm-verbose=false -verify-machineinstrs < %s | FileCheck %s
+
+; Fast-isel mustn't add a block to the MBB successor/predecessor list twice.
+; The machine verifier will catch and complain about this case.
+; CHECK-LABEL: baz
+; CHECK: retq
+define void @baz() {
+entry:
+  br i1 undef, label %exit, label %exit
+
+exit:
+  ret void
+}
+
 ; rdar://8337108
 
 ; Fast-isel shouldn't try to look through the compare because it's in a

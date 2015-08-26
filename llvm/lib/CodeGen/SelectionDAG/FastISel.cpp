@@ -1415,7 +1415,11 @@ void FastISel::finishCondBranch(const BasicBlock *BranchBB,
   if (FuncInfo.BPI)
     BranchWeight = FuncInfo.BPI->getEdgeWeight(BranchBB,
                                                TrueMBB->getBasicBlock());
-  FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
+  // Add TrueMBB as successor unless it is equal to the FalseMBB: This can
+  // happen in degenerate IR and MachineIR forbids to have a block twice in the
+  // successor/predecessor lists.
+  if (TrueMBB != FalseMBB)
+    FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
 
   fastEmitBranch(FalseMBB, DbgLoc);
 }
