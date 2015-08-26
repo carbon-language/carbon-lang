@@ -207,11 +207,17 @@ void refs_and_vals() {
   for (dependent<int>::iterator it = dep.begin(), e = dep.end(); it != e; ++it) {
     printf("%d\n", *it);
     const int& idx = other[0];
+    unsigned othersize = other.size();
   }
-  // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
+  // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : dep)
   // CHECK-FIXES-NEXT: printf("%d\n", elem);
   // CHECK-FIXES-NEXT: const int& idx = other[0];
+  // CHECK-FIXES-NEXT: unsigned othersize = other.size();
+
+  for (int i = 0, e = dep.size(); i != e; ++i) {
+    int idx = other.at(i);
+  }
 }
 
 } // namespace NamingAlias

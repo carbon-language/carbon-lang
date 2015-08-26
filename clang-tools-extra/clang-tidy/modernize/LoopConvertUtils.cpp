@@ -368,8 +368,14 @@ static bool isAliasDecl(const Decl *TheDecl, const VarDecl *IndexVar) {
     break;
   }
 
-  case Stmt::CXXMemberCallExprClass:
-    return true;
+  case Stmt::CXXMemberCallExprClass: {
+    const auto *MemCall = cast<CXXMemberCallExpr>(Init);
+    if (MemCall->getMethodDecl()->getName() == "at") {
+      assert(MemCall->getNumArgs() == 1);
+      return isIndexInSubscriptExpr(MemCall->getArg(0), IndexVar);
+    }
+    return false;
+  }
 
   default:
     break;
