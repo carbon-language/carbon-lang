@@ -153,7 +153,7 @@ this:
 
       unsigned getBinaryPrecedence() const { return Precedence; }
 
-      Function *Codegen();
+      Function *codegen();
     };
 
 Basically, in addition to knowing a name for the prototype, we now keep
@@ -235,9 +235,9 @@ default case for our existing binary operator node:
 
 .. code-block:: c++
 
-    Value *BinaryExprAST::Codegen() {
-      Value *L = LHS->Codegen();
-      Value *R = RHS->Codegen();
+    Value *BinaryExprAST::codegen() {
+      Value *L = LHS->codegen();
+      Value *R = RHS->codegen();
       if (!L || !R)
         return nullptr;
 
@@ -276,10 +276,10 @@ The final piece of code we are missing, is a bit of top-level magic:
 
 .. code-block:: c++
 
-    Function *FunctionAST::Codegen() {
+    Function *FunctionAST::codegen() {
       NamedValues.clear();
 
-      Function *TheFunction = Proto->Codegen();
+      Function *TheFunction = Proto->codegen();
       if (!TheFunction)
         return nullptr;
 
@@ -291,7 +291,7 @@ The final piece of code we are missing, is a bit of top-level magic:
       BasicBlock *BB = BasicBlock::Create(getGlobalContext(), "entry", TheFunction);
       Builder.SetInsertPoint(BB);
 
-      if (Value *RetVal = Body->Codegen()) {
+      if (Value *RetVal = Body->codegen()) {
         ...
 
 Basically, before codegening a function, if it is a user-defined
@@ -323,7 +323,7 @@ that, we need an AST node:
     public:
       UnaryExprAST(char Opcode, std::unique_ptr<ExprAST> Operand)
         : Opcode(Opcode), Operand(std::move(Operand)) {}
-      virtual Value *Codegen();
+      virtual Value *codegen();
     };
 
 This AST node is very simple and obvious by now. It directly mirrors the
@@ -428,8 +428,8 @@ unary operators. It looks like this:
 
 .. code-block:: c++
 
-    Value *UnaryExprAST::Codegen() {
-      Value *OperandV = Operand->Codegen();
+    Value *UnaryExprAST::codegen() {
+      Value *OperandV = Operand->codegen();
       if (!OperandV)
         return nullptr;
 

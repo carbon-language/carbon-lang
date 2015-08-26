@@ -355,7 +355,7 @@ from the stack slot:
 
 .. code-block:: c++
 
-    Value *VariableExprAST::Codegen() {
+    Value *VariableExprAST::codegen() {
       // Look this variable up in the function.
       Value *V = NamedValues[Name];
       if (!V)
@@ -367,7 +367,7 @@ from the stack slot:
 
 As you can see, this is pretty straightforward. Now we need to update
 the things that define the variables to set up the alloca. We'll start
-with ``ForExprAST::Codegen`` (see the `full code listing <#code>`_ for
+with ``ForExprAST::codegen()`` (see the `full code listing <#code>`_ for
 the unabridged code):
 
 .. code-block:: c++
@@ -378,7 +378,7 @@ the unabridged code):
       AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName);
 
         // Emit the start code first, without 'variable' in scope.
-      Value *StartVal = Start->Codegen();
+      Value *StartVal = Start->codegen();
       if (!StartVal)
         return nullptr;
 
@@ -387,7 +387,7 @@ the unabridged code):
       ...
 
       // Compute the end condition.
-      Value *EndCond = End->Codegen();
+      Value *EndCond = End->codegen();
       if (!EndCond)
         return nullptr;
 
@@ -426,7 +426,7 @@ them. The code for this is also pretty simple:
 
 For each argument, we make an alloca, store the input value to the
 function into the alloca, and register the alloca as the memory location
-for the argument. This method gets invoked by ``FunctionAST::Codegen``
+for the argument. This method gets invoked by ``FunctionAST::codegen()``
 right after it sets up the entry block for the function.
 
 The final missing piece is adding the mem2reg pass, which allows us to
@@ -572,7 +572,7 @@ implement codegen for the assignment operator. This looks like:
 
 .. code-block:: c++
 
-    Value *BinaryExprAST::Codegen() {
+    Value *BinaryExprAST::codegen() {
       // Special case '=' because we don't want to emit the LHS as an expression.
       if (Op == '=') {
         // Assignment requires the LHS to be an identifier.
@@ -590,7 +590,7 @@ allowed.
 .. code-block:: c++
 
         // Codegen the RHS.
-        Value *Val = RHS->Codegen();
+        Value *Val = RHS->codegen();
         if (!Val)
           return nullptr;
 
@@ -680,7 +680,7 @@ var/in, it looks like this:
                  std::unique_ptr<ExprAST> body)
       : VarNames(std::move(VarNames)), Body(std::move(Body)) {}
 
-      virtual Value *Codegen();
+      virtual Value *codegen();
     };
 
 var/in allows a list of names to be defined all at once, and each name
@@ -785,7 +785,7 @@ emission of LLVM IR for it. This code starts out with:
 
 .. code-block:: c++
 
-    Value *VarExprAST::Codegen() {
+    Value *VarExprAST::codegen() {
       std::vector<AllocaInst *> OldBindings;
 
       Function *TheFunction = Builder.GetInsertBlock()->getParent();
@@ -808,7 +808,7 @@ previous value that we replace in OldBindings.
         //    var a = a in ...   # refers to outer 'a'.
         Value *InitVal;
         if (Init) {
-          InitVal = Init->Codegen();
+          InitVal = Init->codegen();
           if (!InitVal)
             return nullptr;
         } else { // If not specified, use 0.0.
@@ -834,7 +834,7 @@ we evaluate the body of the var/in expression:
 .. code-block:: c++
 
       // Codegen the body, now that all vars are in scope.
-      Value *BodyVal = Body->Codegen();
+      Value *BodyVal = Body->codegen();
       if (!BodyVal)
         return nullptr;
 

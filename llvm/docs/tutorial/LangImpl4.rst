@@ -122,55 +122,51 @@ optimizer until the entire file has been parsed.
 In order to get per-function optimizations going, we need to set up a
 `FunctionPassManager <../WritingAnLLVMPass.html#passmanager>`_ to hold
 and organize the LLVM optimizations that we want to run. Once we have
-that, we can add a set of optimizations to run. The code looks like
-this:
+that, we can add a set of optimizations to run. We'll need a new
+FunctionPassManager for each module that we want to optimize, so we'll
+write a function to create and initialize both the module and pass manager
+for us:
 
 .. code-block:: c++
 
-      FunctionPassManager OurFPM(TheModule);
+    void InitializeModuleAndPassManager(void) {
+      // Open a new module.
+      TheModule = llvm::make_unique<Module>("my cool jit", getGlobalContext());
+      TheModule->setDataLayout(TheJIT->getTargetMachine().createDataLayout());
 
-      // Set up the optimizer pipeline.  Start with registering info about how the
-      // target lays out data structures.
-      OurFPM.add(new DataLayout(*TheExecutionEngine->getDataLayout()));
+      // Create a new pass manager attached to it.
+      TheFPM = llvm::make_unique<FunctionPassManager>(TheModule.get());
+
       // Provide basic AliasAnalysis support for GVN.
-      OurFPM.add(createBasicAliasAnalysisPass());
+      TheFPM.add(createBasicAliasAnalysisPass());
       // Do simple "peephole" optimizations and bit-twiddling optzns.
-      OurFPM.add(createInstructionCombiningPass());
+      TheFPM.add(createInstructionCombiningPass());
       // Reassociate expressions.
-      OurFPM.add(createReassociatePass());
+      TheFPM.add(createReassociatePass());
       // Eliminate Common SubExpressions.
-      OurFPM.add(createGVNPass());
+      TheFPM.add(createGVNPass());
       // Simplify the control flow graph (deleting unreachable blocks, etc).
-      OurFPM.add(createCFGSimplificationPass());
+      TheFPM.add(createCFGSimplificationPass());
 
-      OurFPM.doInitialization();
+      TheFPM.doInitialization();
+    }
 
-      // Set the global so the code gen can use this.
-      TheFPM = &OurFPM;
+This code initializes the global module ``TheModule``, and the function pass
+manager ``TheFPM``, which is attached to ``TheModule``. One the pass manager is
+set up, we use a series of "add" calls to add a bunch of LLVM passes.
 
-      // Run the main "interpreter loop" now.
-      MainLoop();
-
-This code defines a ``FunctionPassManager``, "``OurFPM``". It requires a
-pointer to the ``Module`` to construct itself. Once it is set up, we use
-a series of "add" calls to add a bunch of LLVM passes. The first pass is
-basically boilerplate, it adds a pass so that later optimizations know
-how the data structures in the program are laid out. The
-"``TheExecutionEngine``" variable is related to the JIT, which we will
-get to in the next section.
-
-In this case, we choose to add 4 optimization passes. The passes we
-chose here are a pretty standard set of "cleanup" optimizations that are
-useful for a wide variety of code. I won't delve into what they do but,
-believe me, they are a good starting place :).
+In this case, we choose to add five passes: one analysis pass (alias analysis),
+and four optimization passes. The passes we choose here are a pretty standard set
+of "cleanup" optimizations that are useful for a wide variety of code. I won't
+delve into what they do but, believe me, they are a good starting place :).
 
 Once the PassManager is set up, we need to make use of it. We do this by
 running it after our newly created function is constructed (in
-``FunctionAST::Codegen``), but before it is returned to the client:
+``FunctionAST::codegen()``), but before it is returned to the client:
 
 .. code-block:: c++
 
-      if (Value *RetVal = Body->Codegen()) {
+      if (Value *RetVal = Body->codegen()) {
         // Finish off the function.
         Builder.CreateRet(RetVal);
 
@@ -231,55 +227,85 @@ should evaluate and print out 3. If they define a function, they should
 be able to call it from the command line.
 
 In order to do this, we first declare and initialize the JIT. This is
-done by adding a global variable and a call in ``main``:
+done by adding a global variable ``TheJIT``, and initializing it in
+``main``:
 
 .. code-block:: c++
 
-    static ExecutionEngine *TheExecutionEngine;
+    static std::unique_ptr<KaleidoscopeJIT> TheJIT;
     ...
     int main() {
       ..
-      // Create the JIT.  This takes ownership of the module.
-      TheExecutionEngine = EngineBuilder(TheModule).create();
-      ..
+      TheJIT = llvm::make_unique<KaleidoscopeJIT>();
+
+      // Run the main "interpreter loop" now.
+      MainLoop();
+
+      return 0;
     }
 
-This creates an abstract "Execution Engine" which can be either a JIT
-compiler or the LLVM interpreter. LLVM will automatically pick a JIT
-compiler for you if one is available for your platform, otherwise it
-will fall back to the interpreter.
+The KaleidoscopeJIT class is a simple JIT built specifically for these
+tutorials. In later chapters we will look at how it works and extend it with
+new features, but for now we will take it as given. Its API is very simple::
+``addModule`` adds an LLVM IR module to the JIT, making its functions
+available for execution; ``removeModule`` removes a module, freeing any
+memory associated with the code in that module; and ``findSymbol`` allows us
+to look up pointers to the compiled code.
 
-Once the ``ExecutionEngine`` is created, the JIT is ready to be used.
-There are a variety of APIs that are useful, but the simplest one is the
-"``getPointerToFunction(F)``" method. This method JIT compiles the
-specified LLVM Function and returns a function pointer to the generated
-machine code. In our case, this means that we can change the code that
-parses a top-level expression to look like this:
+We can take this simple API and change our code that parses top-level expressions to
+look like this:
 
 .. code-block:: c++
 
     static void HandleTopLevelExpression() {
       // Evaluate a top-level expression into an anonymous function.
       if (auto FnAST = ParseTopLevelExpr()) {
-        if (auto *FnIR = FnAST->Codegen()) {
-          FnIR->dump();  // Dump the function for exposition purposes.
+        if (FnAST->codegen()) {
 
-          // JIT the function, returning a function pointer.
-          void *FPtr = TheExecutionEngine->getPointerToFunction(FnIR);
+          // JIT the module containing the anonymous expression, keeping a handle so
+          // we can free it later.
+          auto H = TheJIT->addModule(std::move(TheModule));
+          InitializeModuleAndPassManager();
 
-          // Cast it to the right type (takes no arguments, returns a double) so we
-          // can call it as a native function.
-          double (*FP)() = (double (*)())(intptr_t)FPtr;
+          // Search the JIT for the __anon_expr symbol.
+          auto ExprSymbol = TheJIT->findSymbol("__anon_expr");
+          assert(ExprSymbol && "Function not found");
+
+          // Get the symbol's address and cast it to the right type (takes no
+          // arguments, returns a double) so we can call it as a native function.
+          double (*FP)() = (double (*)())(intptr_t)ExprSymbol.getAddress();
           fprintf(stderr, "Evaluated to %f\n", FP());
+
+          // Delete the anonymous expression module from the JIT.
+          TheJIT->removeModule(H);
         }
 
-Recall that we compile top-level expressions into a self-contained LLVM
-function that takes no arguments and returns the computed double.
-Because the LLVM JIT compiler matches the native platform ABI, this
-means that you can just cast the result pointer to a function pointer of
-that type and call it directly. This means, there is no difference
-between JIT compiled code and native machine code that is statically
-linked into your application.
+If parsing and codegen succeeed, the next step is to add the module containing
+the top-level expression to the JIT. We do this by calling addModule, which
+triggers code generation for all the functions in the module, and returns a
+handle that can be used to remove the module from the JIT later. Once the module
+has been added to the JIT it can no longer be modified, so we also open a new
+module to hold subsequent code by calling ``InitializeModuleAndPassManager()``.
+
+Once we've added the module to the JIT we need to get a pointer to the final
+generated code. We do this by calling the JIT's findSymbol method, and passing
+the name of the top-level expression function: ``__anon_expr``. Since we just
+added this function, we assert that findSymbol returned a result.
+
+Next, we get the in-memory address of the ``__anon_expr`` function by calling
+``getAddress()`` on the symbol. Recall that we compile top-level expressions
+into a self-contained LLVM function that takes no arguments and returns the
+computed double. Because the LLVM JIT compiler matches the native platform ABI,
+this means that you can just cast the result pointer to a function pointer of
+that type and call it directly. This means, there is no difference between JIT
+compiled code and native machine code that is statically linked into your
+application.
+
+Finally, since we don't support re-evaluation of top-level expressions, we
+remove the module from the JIT when we're done to free the associated memory.
+Recall, however, that the module we created a few lines earlier (via
+``InitializeModuleAndPassManager``) is still open and waiting for new code to be
+added.
 
 With just these two changes, lets see how Kaleidoscope works now!
 
@@ -320,19 +346,161 @@ demonstrates very basic functionality, but can we do more?
 
     Evaluated to 24.000000
 
-This illustrates that we can now call user code, but there is something
-a bit subtle going on here. Note that we only invoke the JIT on the
-anonymous functions that *call testfunc*, but we never invoked it on
-*testfunc* itself. What actually happened here is that the JIT scanned
-for all non-JIT'd functions transitively called from the anonymous
-function and compiled all of them before returning from
-``getPointerToFunction()``.
+    ready> testfunc(5, 10);
+    ready> LLVM ERROR: Program used external function 'testfunc' which could not be resolved!
 
-The JIT provides a number of other more advanced interfaces for things
-like freeing allocated machine code, rejit'ing functions to update them,
-etc. However, even with this simple code, we get some surprisingly
-powerful capabilities - check this out (I removed the dump of the
-anonymous functions, you should get the idea by now :) :
+
+Function definitions and calls also work, but something went very wrong on that
+last line. The call looks valid, so what happened? As you may have guessed from
+the the API a Module is a unit of allocation for the JIT, and testfunc was part
+of the same module that contained anonymous expression. When we removed that
+module from the JIT to free the memory for the anonymous expression, we deleted
+the definition of ``testfunc`` along with it. Then, when we tried to call
+testfunc a second time, the JIT could no longer find it.
+
+The easiest way to fix this is to put the anonymous expression in a separate
+module from the rest of the function definitions. The JIT will happily resolve
+function calls across module boundaries, as long as each of the functions called
+has a prototype, and is added to the JIT before it is called. By putting the
+anonymous expression in a different module we can delete it without affecting
+the rest of the functions.
+
+In fact, we're going to go a step further and put every function in its own
+module. Doing so allows us to exploit a useful property of the KaleidoscopeJIT
+that will make our environment more REPL-like: Functions can be added to the
+JIT more than once (unlike a module where every function must have a unique
+definition). When you look up a symbol in KaleidoscopeJIT it will always return
+the most recent definition:
+
+::
+
+    ready> def foo(x) x + 1;
+    Read function definition:
+    define double @foo(double %x) {
+    entry:
+      %addtmp = fadd double %x, 1.000000e+00
+      ret double %addtmp
+    }
+
+    ready> foo(2);
+    Evaluated to 3.000000
+
+    ready> def foo(x) x + 2;
+    define double @foo(double %x) {
+    entry:
+      %addtmp = fadd double %x, 2.000000e+00
+      ret double %addtmp
+    }
+
+    ready> foo(2);
+    Evaluated to 4.000000
+
+
+To allow each function to live in its own module we'll need a way to
+re-generate previous function declarations into each new module we open:
+
+.. code-block:: c++
+
+    static std::unique_ptr<KaleidoscopeJIT> TheJIT;
+
+    ...
+
+    Function *getFunction(std::string Name) {
+      // First, see if the function has already been added to the current module.
+      if (auto *F = TheModule->getFunction(Name))
+        return F;
+
+      // If not, check whether we can codegen the declaration from some existing
+      // prototype.
+      auto FI = FunctionProtos.find(Name);
+      if (FI != FunctionProtos.end())
+        return FI->second->codegen();
+
+      // If no existing prototype exists, return null.
+      return nullptr;
+    }
+
+    ...
+
+    Value *CallExprAST::codegen() {
+      // Look up the name in the global module table.
+      Function *CalleeF = getFunction(Callee);
+
+    ...
+
+    Function *FunctionAST::codegen() {
+      // Transfer ownership of the prototype to the FunctionProtos map, but keep a
+      // reference to it for use below.
+      auto &P = *Proto;
+      FunctionProtos[Proto->getName()] = std::move(Proto);
+      Function *TheFunction = getFunction(P.getName());
+      if (!TheFunction)
+        return nullptr;
+
+
+To enable this, we'll start by adding a new global, ``FunctionProtos``, that
+holds the most recent prototype for each function. We'll also add a convenience
+method, ``getFunction()``, to replace calls to ``TheModule->getFunction()``.
+Our convenience method searches ``TheModule`` for an existing function
+declaration, falling back to generating a new declaration from FunctionProtos if
+it doesn't find one. In ``CallExprAST::codegen()`` we just need to replace the
+call to ``TheModule->getFunction()``. In ``FunctionAST::codegen()`` we need to
+update the FunctionProtos map first, then call ``getFunction()``. With this
+done, we can always obtain a function declaration in the current module for any
+previously declared function.
+
+We also need to update HandleDefinition and HandleExtern:
+
+.. code-block:: c++
+
+    static void HandleDefinition() {
+      if (auto FnAST = ParseDefinition()) {
+        if (auto *FnIR = FnAST->codegen()) {
+          fprintf(stderr, "Read function definition:");
+          FnIR->dump();
+          TheJIT->addModule(std::move(TheModule));
+          InitializeModuleAndPassManager();
+        }
+      } else {
+        // Skip token for error recovery.
+         getNextToken();
+      }
+    }
+
+    static void HandleExtern() {
+      if (auto ProtoAST = ParseExtern()) {
+        if (auto *FnIR = ProtoAST->codegen()) {
+          fprintf(stderr, "Read extern: ");
+          FnIR->dump();
+          FunctionProtos[ProtoAST->getName()] = std::move(ProtoAST);
+        }
+      } else {
+        // Skip token for error recovery.
+        getNextToken();
+      }
+    }
+
+In HandleDefinition, we add two lines to transfer the newly defined function to
+the JIT and open a new module. In HandleExtern, we just need to add one line to
+add the prototype to FunctionProtos.
+
+With these changes made, lets try our REPL again (I removed the dump of the
+anonymous functions this time, you should get the idea by now :) :
+
+::
+
+    ready> def foo(x) x + 1;
+    ready> foo(2);
+    Evaluated to 3.000000
+
+    ready> def foo(x) x + 2;
+    ready> foo(2);
+    Evaluated to 4.000000
+
+It works!
+
+Even with this simple code, we get some surprisingly powerful capabilities -
+check this out:
 
 ::
 
@@ -375,27 +543,24 @@ anonymous functions, you should get the idea by now :) :
 
     Evaluated to 1.000000
 
-Whoa, how does the JIT know about sin and cos? The answer is
-surprisingly simple: in this example, the JIT started execution of a
-function and got to a function call. It realized that the function was
-not yet JIT compiled and invoked the standard set of routines to resolve
-the function. In this case, there is no body defined for the function,
-so the JIT ended up calling "``dlsym("sin")``" on the Kaleidoscope
-process itself. Since "``sin``" is defined within the JIT's address
-space, it simply patches up calls in the module to call the libm version
-of ``sin`` directly.
+Whoa, how does the JIT know about sin and cos? The answer is surprisingly
+simple: The KaleidoscopeJIT has a straightforward symbol resolution rule that
+it uses to find symbols that aren't available in any given module: First
+it searches all the modules that have already been added to the JIT, from the
+most recent to the oldest, to find the newest definition. If no definition is
+found inside the JIT, it falls back to calling "``dlsym("sin")``" on the
+Kaleidoscope process itself. Since "``sin``" is defined within the JIT's
+address space, it simply patches up calls in the module to call the libm
+version of ``sin`` directly.
 
-The LLVM JIT provides a number of interfaces (look in the
-``ExecutionEngine.h`` file) for controlling how unknown functions get
-resolved. It allows you to establish explicit mappings between IR
-objects and addresses (useful for LLVM global variables that you want to
-map to static tables, for example), allows you to dynamically decide on
-the fly based on the function name, and even allows you to have the JIT
-compile functions lazily the first time they're called.
+In the future we'll see how tweaking this symbol resolution rule can be used to
+enable all sorts of useful features, from security (restricting the set of
+symbols available to JIT'd code), to dynamic code generation based on symbol
+names, and even lazy compilation.
 
-One interesting application of this is that we can now extend the
-language by writing arbitrary C++ code to implement operations. For
-example, if we add:
+One immediate benefit of the symbol resolution rule is that we can now extend
+the language by writing arbitrary C++ code to implement operations. For example,
+if we add:
 
 .. code-block:: c++
 
