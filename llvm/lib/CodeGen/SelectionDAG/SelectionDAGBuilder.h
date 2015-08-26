@@ -516,6 +516,7 @@ private:
     void resetPerFunctionState() {
       FailureMBB = nullptr;
       Guard = nullptr;
+      GuardReg = 0;
     }
 
     MachineBasicBlock *getParentMBB() { return ParentMBB; }
