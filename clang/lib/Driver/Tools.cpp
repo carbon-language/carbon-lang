@@ -563,6 +563,13 @@ static void checkARMCPUName(const Driver &D, const Arg *A, const ArgList &Args,
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
 
+static bool useAAPCSForMachO(const llvm::Triple &T) {
+  // The backend is hardwired to assume AAPCS for M-class processors, ensure
+  // the frontend matches that.
+  return T.getEnvironment() == llvm::Triple::EABI ||
+         T.getOS() == llvm::Triple::UnknownOS || isARMMProfile(T);
+}
+
 // Select the float ABI as determined by -msoft-float, -mhard-float, and
 // -mfloat-abi=.
 StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
@@ -582,6 +589,13 @@ StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
         FloatABI = "soft";
       }
     }
+
+    // It is incorrect to select hard float ABI on MachO platforms if the ABI is
+    // "apcs-gnu".
+    if (Triple.isOSBinFormatMachO() && !useAAPCSForMachO(Triple) &&
+        FloatABI == "hard")
+      D.Diag(diag::err_drv_unsupported_opt_for_target) << A->getAsString(Args)
+                                                       << Triple.getArchName();
   }
 
   // If unspecified, choose the default based on the platform.
@@ -856,10 +870,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs,
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     ABIName = A->getValue();
   } else if (Triple.isOSBinFormatMachO()) {
-    // The backend is hardwired to assume AAPCS for M-class processors, ensure
-    // the frontend matches that.
-    if (Triple.getEnvironment() == llvm::Triple::EABI ||
-        Triple.getOS() == llvm::Triple::UnknownOS || isARMMProfile(Triple)) {
+    if (useAAPCSForMachO(Triple)) {
       ABIName = "aapcs";
     } else {
       ABIName = "apcs-gnu";
