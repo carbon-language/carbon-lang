@@ -2202,7 +2202,7 @@ void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) {
 // cbrt:
 //   * cbrt(expN(X))  -> expN(x/3)
 //   * cbrt(sqrt(x))  -> pow(x,1/6)
-//   * cbrt(sqrt(x))  -> pow(x,1/9)
+//   * cbrt(cbrt(x))  -> pow(x,1/9)
 //
 // exp, expf, expl:
 //   * exp(log(x))  -> x
