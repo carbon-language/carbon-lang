@@ -1113,10 +1113,7 @@ __kmp_create_monitor( kmp_info_t *th )
     pthread_attr_t      thread_attr;
     size_t              size;
     int                 status;
-    int                 caller_gtid;
     int                 auto_adj_size = FALSE;
-
-    caller_gtid = __kmp_get_gtid();
 
     KA_TRACE( 10, ("__kmp_create_monitor: try to create monitor\n" ) );
 

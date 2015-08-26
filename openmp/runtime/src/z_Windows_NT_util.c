@@ -1427,7 +1427,6 @@ __kmp_create_monitor( kmp_info_t *th )
     kmp_thread_t        handle;
     DWORD               idThread;
     int                 ideal, new_ideal;
-    int     caller_gtid = __kmp_get_gtid();
 
     KA_TRACE( 10, ("__kmp_create_monitor: try to create monitor\n" ) );
 
