@@ -22,8 +22,7 @@ class ObjCModulesTestCase(TestBase):
         self.expr()
 
     @dwarf_test
-    @skipIfFreeBSD
-    @skipIfLinux
+    @skipUnlessDarwin
     @unittest2.expectedFailure("rdar://20416388")
     def test_expr_with_dwarf(self):
         self.buildDwarf()
