@@ -13,7 +13,7 @@ using namespace lld::elf;
 
 AMDGPUExecutableWriter::AMDGPUExecutableWriter(AMDGPULinkingContext &ctx,
                                                AMDGPUTargetLayout &layout)
-    : ExecutableWriter(ctx, layout), _ctx(ctx), _targetLayout(layout) {}
+    : ExecutableWriter(ctx, layout), _ctx(ctx) {}
 
 void AMDGPUExecutableWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &Result) {

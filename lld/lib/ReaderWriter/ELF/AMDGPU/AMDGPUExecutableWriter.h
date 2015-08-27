@@ -33,7 +33,6 @@ public:
 
 private:
   AMDGPULinkingContext &_ctx;
-  AMDGPUTargetLayout &_targetLayout;
 };
 
 } // namespace elf
