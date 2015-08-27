@@ -121,8 +121,9 @@ bool AddDieCallback(DieCallbackType callback) {
 bool RemoveDieCallback(DieCallbackType callback) {
   for (int i = 0; i < kMaxNumOfInternalDieCallbacks; i++) {
     if (InternalDieCallbacks[i] == callback) {
-      for (int j = i + 1; j < kMaxNumOfInternalDieCallbacks; j++)
-        InternalDieCallbacks[j - 1] = InternalDieCallbacks[j];
+      internal_memmove(&InternalDieCallbacks[i], &InternalDieCallbacks[i + 1],
+                       sizeof(InternalDieCallbacks[0]) *
+                           (kMaxNumOfInternalDieCallbacks - i - 1));
       InternalDieCallbacks[kMaxNumOfInternalDieCallbacks - 1] = nullptr;
       return true;
     }
