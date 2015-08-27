@@ -129,8 +129,6 @@ append_list_if(SANITIZER_LIMIT_FRAME_SIZE -Wframe-larger-than=570
 append_list_if(COMPILER_RT_HAS_WGLOBAL_CONSTRUCTORS_FLAG -Wglobal-constructors
                SANITIZER_CFLAGS)
 
-add_custom_target(sanitizer_common)
-set(SANITIZER_RUNTIME_LIBRARIES)
 if(APPLE)
   # Build universal binary on APPLE.
 
@@ -140,12 +138,9 @@ if(APPLE)
     SOURCES ${SANITIZER_SOURCES} ${SANITIZER_LIBCDEP_SOURCES}
     CFLAGS ${SANITIZER_CFLAGS}
     DEFS ${SANITIZER_COMMON_DEFINITIONS})
-  foreach(os ${SANITIZER_COMMON_SUPPORTED_OS})
-    list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${os})
-  endforeach()
 else()
   # Otherwise, build separate libraries for each target.
-  
+
   add_compiler_rt_object_libraries(RTSanitizerCommon
     ARCHS ${SANITIZER_COMMON_SUPPORTED_ARCH}
     SOURCES ${SANITIZER_SOURCES} CFLAGS ${SANITIZER_CFLAGS}
@@ -158,13 +153,7 @@ else()
     ARCHS ${SANITIZER_COMMON_SUPPORTED_ARCH}
     SOURCES ${SANITIZER_LIBCDEP_SOURCES} CFLAGS ${SANITIZER_CFLAGS}
     DEFS ${SANITIZER_COMMON_DEFINITIONS})
-  foreach(arch ${SANITIZER_COMMON_SUPPORTED_ARCH})
-    list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${arch}
-                                            RTSanitizerCommonLibc.${arch})
-  endforeach()
 endif()
-
-add_dependencies(compiler-rt sanitizer_common)
 
 # Unit tests for common sanitizer runtime.
 if(COMPILER_RT_INCLUDE_TESTS)
