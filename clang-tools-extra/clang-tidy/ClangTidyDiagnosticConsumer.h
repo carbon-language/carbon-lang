@@ -149,9 +149,6 @@ public:
   /// \brief Sets ASTContext for the current translation unit.
   void setASTContext(ASTContext *Context);
 
-  /// \brief Gets the language options from the AST context
-  LangOptions getLangOpts() const { return LangOpts; }
-
   /// \brief Returns the name of the clang-tidy check which produced this
   /// diagnostic ID.
   StringRef getCheckName(unsigned DiagnosticID) const;
@@ -200,8 +197,6 @@ private:
   std::string CurrentFile;
   ClangTidyOptions CurrentOptions;
   std::unique_ptr<GlobList> CheckFilter;
-
-  LangOptions LangOpts;
 
   ClangTidyStats Stats;
 

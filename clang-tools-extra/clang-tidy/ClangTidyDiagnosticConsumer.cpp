@@ -212,7 +212,6 @@ void ClangTidyContext::setCurrentFile(StringRef File) {
 
 void ClangTidyContext::setASTContext(ASTContext *Context) {
   DiagEngine->SetArgToStringFn(&FormatASTNodeDiagnosticArgument, Context);
-  LangOpts = Context->getLangOpts();
 }
 
 const ClangTidyGlobalOptions &ClangTidyContext::getGlobalOptions() const {
