@@ -102,6 +102,9 @@ void f0() {
   const V4d* tmp_V4dCp;
   const V8f* tmp_V8fCp;
 
+  tmp_V2LLi = __builtin_ia32_undef128();
+  tmp_V4LLi = __builtin_ia32_undef256();
+
   tmp_i = __builtin_ia32_comieq(tmp_V4f, tmp_V4f);
   tmp_i = __builtin_ia32_comilt(tmp_V4f, tmp_V4f);
   tmp_i = __builtin_ia32_comile(tmp_V4f, tmp_V4f);
