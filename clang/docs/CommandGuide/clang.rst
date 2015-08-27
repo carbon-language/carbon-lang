@@ -257,6 +257,13 @@ Code Generation Options
 
   Generate debug information.  Note that Clang debug information works best at -O0.
 
+.. option:: -gmodules
+
+  Generate debug information that contains external references to
+  types defined in clang modules or precompiled headers instead of
+  emitting redundant debug type information into every object file.
+  This option implies `-fmodule-format=obj`.
+  
 .. option:: -fstandalone-debug -fno-standalone-debug
 
   Clang supports a number of optimizations to reduce the size of debug

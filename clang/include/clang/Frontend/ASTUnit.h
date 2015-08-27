@@ -728,8 +728,8 @@ public:
   static std::unique_ptr<ASTUnit> LoadFromASTFile(
       const std::string &Filename, const PCHContainerReader &PCHContainerRdr,
       IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-      const FileSystemOptions &FileSystemOpts, bool OnlyLocalDecls = false,
-      ArrayRef<RemappedFile> RemappedFiles = None,
+      const FileSystemOptions &FileSystemOpts, bool UseDebugInfo = false,
+      bool OnlyLocalDecls = false, ArrayRef<RemappedFile> RemappedFiles = None,
       bool CaptureDiagnostics = false, bool AllowPCHWithCompilerErrors = false,
       bool UserFilesAreVolatile = false);
 

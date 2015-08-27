@@ -77,6 +77,9 @@
 //
 // RUN: %clang -### -g %s 2>&1 | FileCheck -check-prefix=CI %s
 //
+// RUN: %clang -### -gmodules %s 2>&1 \
+// RUN:        | FileCheck -check-prefix=GEXTREFS %s
+//
 // G: "-cc1"
 // G: "-g"
 //
@@ -126,3 +129,5 @@
 // CI: "-dwarf-column-info"
 //
 // NOCI-NOT: "-dwarf-column-info"
+//
+// GEXTREFS: "-g" "-dwarf-ext-refs" "-fmodule-format=obj"

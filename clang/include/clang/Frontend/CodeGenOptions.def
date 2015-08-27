@@ -161,6 +161,9 @@ VALUE_CODEGENOPT(StackProbeSize    , 32, 4096) ///< Overrides default stack
 CODEGENOPT(DebugColumnInfo, 1, 0) ///< Whether or not to use column information
                                   ///< in debug info.
 
+CODEGENOPT(DebugTypeExtRefs, 1, 0) ///< Whether or not debug info should contain
+                                   ///< external references to a PCH or module.
+
 CODEGENOPT(EmitLLVMUseLists, 1, 0) ///< Control whether to serialize use-lists.
 
 /// The user specified number of registers to be used for integral arguments,
