@@ -118,9 +118,11 @@ foreach(arch ${TSAN_SUPPORTED_ARCH})
     CFLAGS ${TSAN_RTL_CFLAGS})
   list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-${arch}
                                      clang_rt.tsan_cxx-${arch})
-  add_sanitizer_rt_symbols(clang_rt.tsan-${arch}
+  add_sanitizer_rt_symbols(clang_rt.tsan
+    ARCHS ${arch}
     EXTRA rtl/tsan.syms.extra)
-  add_sanitizer_rt_symbols(clang_rt.tsan_cxx-${arch}
+  add_sanitizer_rt_symbols(clang_rt.tsan_cxx
+    ARCHS ${arch}
     EXTRA rtl/tsan.syms.extra)
   add_dependencies(tsan clang_rt.tsan-${arch}
                         clang_rt.tsan_cxx-${arch}

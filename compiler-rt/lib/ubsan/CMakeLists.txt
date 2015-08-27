@@ -94,16 +94,18 @@ else()
       CFLAGS ${UBSAN_CXXFLAGS}
       PARENT_TARGET ubsan)
 
-    foreach(arch ${UBSAN_SUPPORTED_ARCH})
-      if (UNIX AND NOT ${arch} MATCHES "i386|i686")
-        add_sanitizer_rt_symbols(clang_rt.ubsan_standalone-${arch}
-          PARENT_TARGET ubsan
-          EXTRA ubsan.syms.extra)
-        add_sanitizer_rt_symbols(clang_rt.ubsan_standalone_cxx-${arch}
-          PARENT_TARGET ubsan
-          EXTRA ubsan.syms.extra)
-      endif()
-    endforeach()
+    if (UNIX)
+      set(ARCHS_FOR_SYMBOLS ${UBSAN_SUPPORTED_ARCH})
+      list(REMOVE_ITEM ARCHS_FOR_SYMBOLS i386 i686)
+      add_sanitizer_rt_symbols(clang_rt.ubsan_standalone
+        ARCHS ${ARCHS_FOR_SYMBOLS}
+        PARENT_TARGET ubsan
+        EXTRA ubsan.syms.extra)
+      add_sanitizer_rt_symbols(clang_rt.ubsan_standalone_cxx
+        ARCHS ${ARCHS_FOR_SYMBOLS}
+        PARENT_TARGET ubsan
+        EXTRA ubsan.syms.extra)
+    endif()
   endif()
 endif()
 
