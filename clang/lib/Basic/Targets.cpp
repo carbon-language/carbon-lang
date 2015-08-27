@@ -2917,7 +2917,6 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasCX16 = true;
     }
 
-    assert(Feature[0] == '+' && "Invalid target feature!");
     X86SSEEnum Level = llvm::StringSwitch<X86SSEEnum>(Feature)
       .Case("+avx512f", AVX512F)
       .Case("+avx2", AVX2)
