@@ -4,7 +4,7 @@ add_subdirectory(HowToUseJIT)
 add_subdirectory(Kaleidoscope)
 add_subdirectory(ModuleMaker)
 
-if( ( NOT WIN32 ) AND ( NOT "${LLVM_NATIVE_ARCH}" STREQUAL "ARM" ) )
+if(LLVM_ENABLE_EH AND (NOT WIN32) AND (NOT "${LLVM_NATIVE_ARCH}" STREQUAL "ARM"))
     add_subdirectory(ExceptionDemo)
 endif()
 
