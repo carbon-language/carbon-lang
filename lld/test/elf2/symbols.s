@@ -28,6 +28,9 @@ zed2:
 .size zed3, 4
 zed3:
 
+.globl abs
+abs = 0x123
+
 // CHECK:      Name: .text
 // CHECK-NEXT: Type: SHT_PROGBITS
 // CHECK-NEXT: Flags [
@@ -88,6 +91,15 @@ zed3:
 // CHECK-NEXT:     Type: Object (0x1)
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: abs
+// CHECK-NEXT:     Value: 0x123
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: Absolute
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: foo

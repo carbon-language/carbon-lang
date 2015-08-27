@@ -39,11 +39,12 @@ public:
   enum Kind {
     DefinedFirst = 0,
     DefinedRegularKind = 0,
-    DefinedWeakKind = 1,
-    DefinedLast = 1,
-    UndefinedWeakKind = 2,
-    UndefinedKind = 3,
-    UndefinedSyntheticKind = 4
+    DefinedAbsoluteKind = 1,
+    DefinedWeakKind = 2,
+    DefinedLast = 2,
+    UndefinedWeakKind = 3,
+    UndefinedKind = 4,
+    UndefinedSyntheticKind = 5
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
@@ -103,14 +104,35 @@ public:
 // etc.
 template <class ELFT> class Defined : public ELFSymbolBody<ELFT> {
   typedef ELFSymbolBody<ELFT> Base;
+
+protected:
+  typedef typename Base::Kind Kind;
+  typedef typename Base::Elf_Sym Elf_Sym;
+
+public:
+  explicit Defined(Kind K, StringRef N, const Elf_Sym &Sym)
+      : ELFSymbolBody<ELFT>(K, N, Sym) {}
+};
+
+template <class ELFT> class DefinedAbsolute : public Defined<ELFT> {
+  typedef ELFSymbolBody<ELFT> Base;
+  typedef typename Base::Elf_Sym Elf_Sym;
+
+public:
+  explicit DefinedAbsolute(StringRef N, const Elf_Sym &Sym)
+      : Defined<ELFT>(Base::DefinedAbsoluteKind, N, Sym) {}
+};
+
+template <class ELFT> class DefinedInSection : public Defined<ELFT> {
+  typedef ELFSymbolBody<ELFT> Base;
   typedef typename Base::Kind Kind;
 
 public:
   typedef typename Base::Elf_Sym Elf_Sym;
 
-  explicit Defined(Kind K, StringRef N, const Elf_Sym &Sym,
-                   SectionChunk<ELFT> &Section)
-      : ELFSymbolBody<ELFT>(K, N, Sym), Section(Section) {}
+  explicit DefinedInSection(Kind K, StringRef N, const Elf_Sym &Sym,
+                            SectionChunk<ELFT> &Section)
+      : Defined<ELFT>(K, N, Sym), Section(Section) {}
 
   static bool classof(const SymbolBody *S) {
     Kind K = S->kind();
@@ -121,28 +143,28 @@ public:
 };
 
 // Regular defined symbols read from object file symbol tables.
-template <class ELFT> class DefinedRegular : public Defined<ELFT> {
+template <class ELFT> class DefinedRegular : public DefinedInSection<ELFT> {
   typedef Defined<ELFT> Base;
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
   explicit DefinedRegular(StringRef N, const Elf_Sym &Sym,
                           SectionChunk<ELFT> &Section)
-      : Defined<ELFT>(Base::DefinedRegularKind, N, Sym, Section) {}
+      : DefinedInSection<ELFT>(Base::DefinedRegularKind, N, Sym, Section) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedRegularKind;
   }
 };
 
-template <class ELFT> class DefinedWeak : public Defined<ELFT> {
+template <class ELFT> class DefinedWeak : public DefinedInSection<ELFT> {
   typedef Defined<ELFT> Base;
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
   explicit DefinedWeak(StringRef N, const Elf_Sym &Sym,
                        SectionChunk<ELFT> &Section)
-      : Defined<ELFT>(Base::DefinedWeakKind, N, Sym, Section) {}
+      : DefinedInSection<ELFT>(Base::DefinedWeakKind, N, Sym, Section) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedWeakKind;

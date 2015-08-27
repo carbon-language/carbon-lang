@@ -33,6 +33,7 @@ int SymbolBody::compare(SymbolBody *Other) {
 
   // Now handle the case where the kinds are the same.
   switch (LK) {
+  case DefinedAbsoluteKind:
   case DefinedRegularKind:
     return 0;
   case DefinedWeakKind:

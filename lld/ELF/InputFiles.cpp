@@ -90,6 +90,9 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   StringRef Name = *NameOrErr;
 
   uint32_t SecIndex = Sym->st_shndx;
+  if (SecIndex == SHN_ABS)
+    return new (Alloc) DefinedAbsolute<ELFT>(Name, *Sym);
+
   if (SecIndex == SHN_XINDEX)
     SecIndex = ELFObj->getExtendedSymbolTableIndex(Sym, Symtab, SymtabSHNDX);
 

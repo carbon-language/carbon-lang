@@ -246,11 +246,12 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       llvm_unreachable("Should be defined by now");
     case SymbolBody::DefinedWeakKind:
     case SymbolBody::DefinedRegularKind: {
-      auto *Def = cast<Defined<ELFT>>(Body);
+      auto *Def = cast<DefinedInSection<ELFT>>(Body);
       InputSym = &Def->Sym;
       Section = &Def->Section;
       break;
     }
+    case SymbolBody::DefinedAbsoluteKind:
     case SymbolBody::UndefinedWeakKind:
       InputSym = &cast<ELFSymbolBody<ELFT>>(Body)->Sym;
       break;
@@ -261,6 +262,10 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       uint8_t Binding = InputSym->getBinding();
       ESym->setBindingAndType(Binding, Type);
       ESym->st_size = InputSym->st_size;
+      if (InputSym->isAbsolute()) {
+        ESym->st_shndx = SHN_ABS;
+        ESym->st_value = InputSym->st_value;
+      }
     }
 
     if (Section) {
