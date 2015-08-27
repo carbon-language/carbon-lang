@@ -19,15 +19,12 @@ class AMDGPUTargetLayout;
 
 class AMDGPUTargetRelocationHandler final : public TargetRelocationHandler {
 public:
-  AMDGPUTargetRelocationHandler(AMDGPUTargetLayout &layout)
-      : _targetLayout(layout) {}
+  AMDGPUTargetRelocationHandler(AMDGPUTargetLayout &layout) { }
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const AtomLayout &,
                                   const Reference &) const override;
 
-private:
-  AMDGPUTargetLayout &_targetLayout;
 };
 } // elf
 } // lld
