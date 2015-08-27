@@ -73,6 +73,10 @@ endfunction()
 macro(add_tablegen target project)
   set(${target}_OLD_LLVM_LINK_COMPONENTS ${LLVM_LINK_COMPONENTS})
   set(LLVM_LINK_COMPONENTS ${LLVM_LINK_COMPONENTS} TableGen)
+
+  # FIXME: It leaks to user, callee of add_tablegen.
+  set(LLVM_ENABLE_OBJLIB ON)
+
   add_llvm_utility(${target} ${ARGN})
   set(LLVM_LINK_COMPONENTS ${${target}_OLD_LLVM_LINK_COMPONENTS})
 
