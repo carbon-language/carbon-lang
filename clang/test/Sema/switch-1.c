@@ -1,18 +1,50 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-apple-darwin10 %s
 // RUN: %clang_cc1 -x c++ -fsyntax-only -verify -triple x86_64-apple-darwin10 %s
+// RUN: %clang_cc1 -x c++ -fsyntax-only -verify -triple x86_64-apple-darwin10 -std=c++98 %s
+// RUN: %clang_cc1 -x c++ -fsyntax-only -verify -triple x86_64-apple-darwin10 -std=c++11 %s
 // rdar://11577384
 // rdar://13423975
 
 int f(int i) {
   switch (i) {
-    case 2147483647 + 2: // expected-warning {{overflow in expression; result is -2147483647 with type 'int'}}
+    case 2147483647 + 2:
+#if (__cplusplus <= 199711L) // C or C++03 or earlier modes
+    // expected-warning@-2 {{overflow in expression; result is -2147483647 with type 'int'}}
+#else
+    // expected-error@-4 {{case value is not a constant expression}} \
+    // expected-note@-4 {{value 2147483649 is outside the range of representable values of type 'int'}}
+#endif
       return 1;
-    case 9223372036854775807L * 4: // expected-warning {{overflow in expression; result is -4 with type 'long'}}
+    case 9223372036854775807L * 4:
+#if (__cplusplus <= 199711L)
+    // expected-warning@-2 {{overflow in expression; result is -4 with type 'long'}}
+#else
+    // expected-error@-4 {{case value is not a constant expression}} \
+    // expected-note@-4 {{value 36893488147419103228 is outside the range of representable values of type 'long'}}
+#endif
       return 2;
-    case (123456 *789012) + 1:  // expected-warning {{overflow in expression; result is -1375982336 with type 'int'}}
+    case (123456 *789012) + 1:
+#if (__cplusplus <= 199711L)
+    // expected-warning@-2 {{overflow in expression; result is -1375982336 with type 'int'}}
+#else
+    // expected-error@-4 {{case value is not a constant expression}} \
+    // expected-note@-4 {{value 97408265472 is outside the range of representable values of type 'int'}}
+#endif
       return 3;
-    case (2147483647*4)/4: 	// expected-warning {{overflow in expression; result is -4 with type 'int'}}
-    case (2147483647*4)%4: 	// expected-warning {{overflow in expression; result is -4 with type 'int'}}
+    case (2147483647*4)/4:
+#if (__cplusplus <= 199711L)
+    // expected-warning@-2 {{overflow in expression; result is -4 with type 'int'}}
+#else
+    // expected-error@-4 {{case value is not a constant expression}} \
+    // expected-note@-4 {{value 8589934588 is outside the range of representable values of type 'int'}}
+#endif
+    case (2147483647*4)%4:
+#if (__cplusplus <= 199711L)
+    // expected-warning@-2 {{overflow in expression; result is -4 with type 'int'}}
+#else
+    // expected-error@-4 {{case value is not a constant expression}} \
+    // expected-note@-4 {{value 8589934588 is outside the range of representable values of type 'int'}}
+#endif
       return 4;
     case 2147483647:
       return 0;

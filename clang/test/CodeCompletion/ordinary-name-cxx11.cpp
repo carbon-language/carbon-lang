@@ -4,9 +4,11 @@ typedef struct t TYPEDEF;
 
 void foo() {
   int y = 17;
-  // RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -code-completion-patterns -code-completion-at=%s:6:14 -std=gnu++98 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s
+  // RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -code-completion-patterns -code-completion-at=%s:6:14 -std=gnu++11 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s
   // CHECK-CC1: COMPLETION: bool
   // CHECK-CC1-NEXT: COMPLETION: char
+  // CHECK-CC1-NEXT: COMPLETION: char16
+  // CHECK-CC1-NEXT: COMPLETION: char32
   // CHECK-CC1-NEXT: COMPLETION: class
   // CHECK-CC1-NEXT: COMPLETION: const
   // CHECK-CC1-NEXT: COMPLETION: Pattern : const_cast<<#type#>>(<#expression#>)
@@ -27,12 +29,15 @@ void foo() {
   // CHECK-CC1-NEXT: COMPLETION: long
   // CHECK-CC1-NEXT: COMPLETION: Pattern : new <#type#>(<#expressions#>)
   // CHECK-CC1-NEXT: COMPLETION: Pattern : new <#type#>[<#size#>](<#expressions#>)
+  // CHECK-CC1-NEXT: COMPLETION: Pattern : [#bool#]noexcept(<#expression#>)
+  // CHECK-CC1-NEXT: COMPLETION: Pattern : [#std::nullptr_t#]nullptr
   // CHECK-CC1-NEXT: COMPLETION: operator
   // CHECK-CC1-NEXT: COMPLETION: Pattern : reinterpret_cast<<#type#>>(<#expression#>)
   // CHECK-CC1-NEXT: COMPLETION: Pattern : return
   // CHECK-CC1-NEXT: COMPLETION: short
   // CHECK-CC1-NEXT: COMPLETION: signed
   // CHECK-CC1-NEXT: COMPLETION: Pattern : [#size_t#]sizeof(<#expression-or-type#>)
+  // CHECK-CC1-NEXT: COMPLETION: Pattern : [#size_t#]sizeof...(<#parameter-pack#>)
   // CHECK-CC1-NEXT: COMPLETION: static
   // CHECK-CC1-NEXT: COMPLETION: Pattern : static_cast<<#type#>>(<#expression#>)
   // CHECK-CC1-NEXT: COMPLETION: struct
@@ -58,12 +63,16 @@ void foo() {
   // CHECK-CC1-NEXT: COMPLETION: y : [#int#]y
   // CHECK-CC1-NEXT: COMPLETION: z : [#void#]z(<#int#>)
 
-  // RUN: %clang_cc1 -fsyntax-only  -code-completion-patterns -code-completion-at=%s:4:1 -std=gnu++98 %s -o - | FileCheck -check-prefix=CHECK-CC2 %s
+  // RUN: %clang_cc1 -fsyntax-only  -code-completion-patterns -code-completion-at=%s:4:1 -std=gnu++11 %s -o - | FileCheck -check-prefix=CHECK-CC2 %s
   // CHECK-CC2: COMPLETION: Pattern : asm(<#string-literal#>)
+  // CHECK-CC2: COMPLETION: auto
   // CHECK-CC2-NEXT: COMPLETION: bool
   // CHECK-CC2-NEXT: COMPLETION: char
+  // CHECK-CC2-NEXT: COMPLETION: char16
+  // CHECK-CC2-NEXT: COMPLETION: char32
   // CHECK-CC2-NEXT: COMPLETION: class
   // CHECK-CC2-NEXT: COMPLETION: const
+  // CHECK-CC2-NEXT: COMPLETION: Pattern : decltype(<#expression#>)
   // CHECK-CC2-NEXT: COMPLETION: double
   // CHECK-CC2-NEXT: COMPLETION: enum
   // CHECK-CC2-NEXT: COMPLETION: extern
@@ -95,11 +104,14 @@ void foo() {
   // CHECK-CC2-NEXT: COMPLETION: wchar_t
   // CHECK-CC2-NEXT: COMPLETION: X : X
 
-  // RUN: %clang_cc1 -fsyntax-only -code-completion-patterns -code-completion-at=%s:1:19 -std=gnu++98 %s -o - | FileCheck -check-prefix=CHECK-CC3 %s
+  // RUN: %clang_cc1 -fsyntax-only -code-completion-patterns -code-completion-at=%s:1:19 -std=gnu++11 %s -o - | FileCheck -check-prefix=CHECK-CC3 %s
   // CHECK-CC3: COMPLETION: bool
   // CHECK-CC3-NEXT: COMPLETION: char
+  // CHECK-CC3-NEXT: COMPLETION: char16_t
+  // CHECK-CC3-NEXT: COMPLETION: char32_t
   // CHECK-CC3-NEXT: COMPLETION: class
   // CHECK-CC3-NEXT: COMPLETION: const
+  // CHECK-CC3-NEXT: COMPLETION: Pattern : decltype(<#expression#>)
   // CHECK-CC3-NEXT: COMPLETION: double
   // CHECK-CC3-NEXT: COMPLETION: enum
   // CHECK-CC3-NEXT: COMPLETION: explicit
@@ -132,12 +144,15 @@ void foo() {
   // CHECK-CC3-NEXT: COMPLETION: wchar_t
   // CHECK-CC3-NEXT: COMPLETION: X : X
 
-  // RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -code-completion-patterns -code-completion-at=%s:6:11 -std=gnu++98 %s -o - | FileCheck -check-prefix=CHECK-CC4 %s
+  // RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -code-completion-patterns -code-completion-at=%s:6:11 -std=gnu++11 %s -o - | FileCheck -check-prefix=CHECK-CC4 %s
   // CHECK-CC4: COMPLETION: bool
   // CHECK-CC4-NEXT: COMPLETION: char
+  // CHECK-CC4-NEXT: COMPLETION: char16_t
+  // CHECK-CC4-NEXT: COMPLETION: char32_t
   // CHECK-CC4-NEXT: COMPLETION: class
   // CHECK-CC4-NEXT: COMPLETION: const
   // CHECK-CC4-NEXT: COMPLETION: Pattern : const_cast<<#type#>>(<#expression#>)
+  // CHECK-CC4-NEXT: COMPLETION: Pattern : decltype(<#expression#>)
   // CHECK-CC4-NEXT: COMPLETION: Pattern : [#void#]delete <#expression#>
   // CHECK-CC4-NEXT: COMPLETION: Pattern : [#void#]delete [] <#expression#>
   // CHECK-CC4-NEXT: COMPLETION: double
@@ -150,11 +165,14 @@ void foo() {
   // CHECK-CC4-NEXT: COMPLETION: long
   // CHECK-CC4-NEXT: COMPLETION: Pattern : new <#type#>(<#expressions#>)
   // CHECK-CC4-NEXT: COMPLETION: Pattern : new <#type#>[<#size#>](<#expressions#>)
+  // CHECK-CC4-NEXT: COMPLETION: Pattern : [#bool#]noexcept(<#expression#>)
+  // CHECK-CC4-NEXT: COMPLETION: Pattern : [#std::nullptr_t#]nullptr
   // CHECK-CC4-NEXT: COMPLETION: operator
   // CHECK-CC4-NEXT: COMPLETION: Pattern : reinterpret_cast<<#type#>>(<#expression#>)
   // CHECK-CC4-NEXT: COMPLETION: short
   // CHECK-CC4-NEXT: COMPLETION: signed
   // CHECK-CC4-NEXT: COMPLETION: Pattern : [#size_t#]sizeof(<#expression-or-type#>)
+  // CHECK-CC4-NEXT: COMPLETION: Pattern : [#size_t#]sizeof...(<#parameter-pack#>)
   // CHECK-CC4-NEXT: COMPLETION: Pattern : static_cast<<#type#>>(<#expression#>)
   // CHECK-CC4-NEXT: COMPLETION: struct
   // CHECK-CC4-NEXT: COMPLETION: t : t
@@ -174,9 +192,11 @@ void foo() {
   // CHECK-CC4-NEXT: COMPLETION: y : [#int#]y
   // CHECK-CC4-NEXT: COMPLETION: z : [#void#]z(<#int#>)
 
-  // RUN: %clang_cc1 -fsyntax-only -fno-rtti -code-completion-patterns -code-completion-at=%s:6:14 -std=gnu++98 %s -o - | FileCheck -check-prefix=CHECK-NO-RTTI %s
+  // RUN: %clang_cc1 -fsyntax-only -fno-rtti -code-completion-patterns -code-completion-at=%s:6:14 -std=gnu++11 %s -o - | FileCheck -check-prefix=CHECK-NO-RTTI %s
   // CHECK-NO-RTTI: COMPLETION: bool
   // CHECK-NO-RTTI-NEXT: COMPLETION: char
+  // CHECK-NO-RTTI-NEXT: COMPLETION: char16_t
+  // CHECK-NO-RTTI-NEXT: COMPLETION: char32_t
   // CHECK-NO-RTTI-NEXT: COMPLETION: class
   // CHECK-NO-RTTI-NEXT: COMPLETION: const
   // CHECK-NO-RTTI-NEXT: COMPLETION: Pattern : const_cast<<#type#>>(<#expression#>)
@@ -197,12 +217,15 @@ void foo() {
   // CHECK-NO-RTTI-NEXT: COMPLETION: long
   // CHECK-NO-RTTI-NEXT: COMPLETION: Pattern : new <#type#>(<#expressions#>)
   // CHECK-NO-RTTI-NEXT: COMPLETION: Pattern : new <#type#>[<#size#>](<#expressions#>)
+  // CHECK-NO-RTTI-NEXT: COMPLETION: Pattern : [#bool#]noexcept(<#expression#>)
+  // CHECK-NO-RTTI-NEXT: COMPLETION: Pattern : [#std::nullptr_t#]nullptr
   // CHECK-NO-RTTI-NEXT: COMPLETION: operator
   // CHECK-NO-RTTI-NEXT: COMPLETION: Pattern : reinterpret_cast<<#type#>>(<#expression#>)
   // CHECK-NO-RTTI-NEXT: COMPLETION: Pattern : return
   // CHECK-NO-RTTI-NEXT: COMPLETION: short
   // CHECK-NO-RTTI-NEXT: COMPLETION: signed
   // CHECK-NO-RTTI-NEXT: COMPLETION: Pattern : [#size_t#]sizeof(<#expression-or-type#>)
+  // CHECK-NO-RTTI-NEXT: COMPLETION: Pattern : [#size_t#]sizeof...(<#parameter-pack#>)
   // CHECK-NO-RTTI-NEXT: COMPLETION: static
   // CHECK-NO-RTTI-NEXT: COMPLETION: Pattern : static_cast<<#type#>>(<#expression#>)
   // CHECK-NO-RTTI-NEXT: COMPLETION: struct
