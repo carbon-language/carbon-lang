@@ -57,6 +57,7 @@ if(APPLE)
       OBJECT_LIBS RTUbsan
                   RTUbsan_standalone
                   RTSanitizerCommon
+                  RTSanitizerCommonLibc
       PARENT_TARGET ubsan)
   endif()
 

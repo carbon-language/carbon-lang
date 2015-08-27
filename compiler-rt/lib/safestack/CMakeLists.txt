@@ -15,6 +15,7 @@ if(APPLE)
     SOURCES ${SAFESTACK_SOURCES}
             $<TARGET_OBJECTS:RTInterception.osx>
             $<TARGET_OBJECTS:RTSanitizerCommon.osx>
+            $<TARGET_OBJECTS:RTSanitizerCommonNoLibc.osx>
     CFLAGS ${SAFESTACK_CFLAGS}
     PARENT_TARGET safestack)
 else()

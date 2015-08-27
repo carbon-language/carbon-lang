@@ -113,6 +113,7 @@ if(APPLE)
     OBJECT_LIBS RTAsan_dynamic
                 RTInterception
                 RTSanitizerCommon
+                RTSanitizerCommonLibc
                 RTLSanCommon
                 RTUbsan
     CFLAGS ${ASAN_DYNAMIC_CFLAGS}

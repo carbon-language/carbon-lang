@@ -220,6 +220,7 @@ macro(add_asan_tests_for_arch_and_kind arch kind)
       $<TARGET_OBJECTS:RTAsan_dynamic.osx>
       $<TARGET_OBJECTS:RTInterception.osx>
       $<TARGET_OBJECTS:RTSanitizerCommon.osx>
+      $<TARGET_OBJECTS:RTSanitizerCommonLibc.osx>
       $<TARGET_OBJECTS:RTLSanCommon.osx>
       $<TARGET_OBJECTS:RTUbsan.osx>)
   else()
