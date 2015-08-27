@@ -105,9 +105,10 @@ TEST_F(SuppressionContextTest, Parse3) {
   ctx_.Parse(
     "# last suppression w/o line-feed\n"
     "race:foo\n"
-    "race:bar"
+    "race:bar\r\n"
+    "race:baz"
   );  // NOLINT
-  CheckSuppressions(2, {"race", "race"}, {"foo", "bar"});
+  CheckSuppressions(3, {"race", "race", "race"}, {"foo", "bar", "baz"});
 }
 
 TEST_F(SuppressionContextTest, ParseType) {
