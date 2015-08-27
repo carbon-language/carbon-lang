@@ -1528,7 +1528,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
           // overall feature validity for the function with the rest of the
           // attributes on the function.
           ;
-        else if (Feature.startswith("mno-"))
+        else if (Feature.startswith("no-"))
           FnFeatures.push_back("-" + Feature.split("-").second.str());
         else
           FnFeatures.push_back("+" + Feature.str());

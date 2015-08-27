@@ -7,14 +7,14 @@ int __attribute__((target("avx,sse4.2,arch=ivybridge"))) foo(int a) { return 4; 
 int __attribute__((target("tune=sandybridge"))) walrus(int a) { return 4; }
 int __attribute__((target("fpmath=387"))) koala(int a) { return 4; }
 
-int __attribute__((target("mno-sse2"))) echidna(int a) { return 4; }
+int __attribute__((target("no-sse2"))) echidna(int a) { return 4; }
 
 int __attribute__((target("sse4"))) panda(int a) { return 4; }
 
 int bar(int a) { return baz(a) + foo(a); }
 
 int __attribute__((target("avx,      sse4.2,      arch=   ivybridge"))) qux(int a) { return 4; }
-int __attribute__((target("mno-aes, arch=ivybridge"))) qax(int a) { return 4; }
+int __attribute__((target("no-aes, arch=ivybridge"))) qax(int a) { return 4; }
 
 // Check that we emit the additional subtarget and cpu features for foo and not for baz or bar.
 // CHECK: baz{{.*}} #0
