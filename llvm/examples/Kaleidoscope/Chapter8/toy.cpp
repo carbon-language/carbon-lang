@@ -1383,14 +1383,14 @@ static void MainLoop() {
 //===----------------------------------------------------------------------===//
 
 /// putchard - putchar that takes a double and returns 0.
-extern "C" double putchard(double X) {
-  putchar((char)X);
+__attribute__((used)) extern "C" double putchard(double X) {
+  fputc((char)X, stderr);
   return 0;
 }
 
 /// printd - printf that takes a double prints it as "%f\n", returning 0.
-extern "C" double printd(double X) {
-  printf("%f\n", X);
+__attribute__((used)) extern "C" double printd(double X) {
+  fprintf(stderr, "%f\n", X);
   return 0;
 }
 

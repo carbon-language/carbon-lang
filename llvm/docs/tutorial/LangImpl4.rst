@@ -566,7 +566,7 @@ if we add:
 
     /// putchard - putchar that takes a double and returns 0.
     extern "C" double putchard(double X) {
-      putchar((char)X);
+      fputc((char)X, stderr);
       return 0;
     }
 
