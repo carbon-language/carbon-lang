@@ -1,7 +1,7 @@
 ; RUN: opt %s -rewrite-statepoints-for-gc -spp-print-base-pointers -S 2>&1 | FileCheck %s
 
 
-; CHECK: derived %obj_to_consume base %obj_to_consume.base
+; CHECK: derived %obj_to_consume base %obj_to_consume
 
 declare void @foo()
 declare i64 addrspace(1)* @generate_obj()
@@ -33,7 +33,6 @@ dest_c:
 
 merge:
 ; CHECK: merge:
-; CHECK:  %obj_to_consume.base = phi i64 addrspace(1)* [ %obj2, %dest_a ], [ null, %dest_b ], [ null, %dest_c ]
 ; CHECK:  %obj_to_consume = phi i64 addrspace(1)* [ %obj2, %dest_a ], [ null, %dest_b ], [ null, %dest_c ]
 
   %obj_to_consume = phi i64 addrspace(1)* [ %obj2, %dest_a ], [ null, %dest_b ], [ null, %dest_c ]

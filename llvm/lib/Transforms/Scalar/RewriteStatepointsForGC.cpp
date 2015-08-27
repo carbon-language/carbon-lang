@@ -14,6 +14,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Analysis/CFG.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/Statistic.h"
@@ -1009,6 +1010,62 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     }
   }
 
+  // Now that we're done with the algorithm, see if we can optimize the 
+  // results slightly by reducing the number of new instructions needed. 
+  // Arguably, this should be integrated into the algorithm above, but 
+  // doing as a post process step is easier to reason about for the moment.
+  DenseMap<Value *, Value *> ReverseMap;
+  SmallPtrSet<Instruction *, 16> NewInsts;
+  SmallSetVector<Instruction *, 16> Worklist;
+  for (auto Item : states) {
+    Value *V = Item.first;
+    Value *Base = Item.second.getBase();
+    assert(V && Base);
+    assert(!isKnownBaseResult(V) && "why did it get added?");
+    assert(isKnownBaseResult(Base) &&
+           "must be something we 'know' is a base pointer");
+    if (!Item.second.isConflict())
+      continue;
+
+    ReverseMap[Base] = V;
+    if (auto *BaseI = dyn_cast<Instruction>(Base)) {
+      NewInsts.insert(BaseI);
+      Worklist.insert(BaseI);
+    }
+  }
+  auto PushNewUsers = [&](Instruction *I) {
+    for (User *U : I->users())
+      if (auto *UI = dyn_cast<Instruction>(U))
+        if (NewInsts.count(UI))
+          Worklist.insert(UI);
+  };
+  const DataLayout &DL = cast<Instruction>(def)->getModule()->getDataLayout();
+  while (!Worklist.empty()) {
+    Instruction *BaseI = Worklist.pop_back_val();
+    Value *Bdv = ReverseMap[BaseI];
+    if (auto *BdvI = dyn_cast<Instruction>(Bdv))
+      if (BaseI->isIdenticalTo(BdvI)) {
+        DEBUG(dbgs() << "Identical Base: " << *BaseI << "\n");
+        PushNewUsers(BaseI);
+        BaseI->replaceAllUsesWith(Bdv);
+        BaseI->eraseFromParent();
+        states[Bdv] = BDVState(BDVState::Conflict, Bdv);
+        NewInsts.erase(BaseI);
+        ReverseMap.erase(BaseI);
+        continue;
+      }
+    if (Value *V = SimplifyInstruction(BaseI, DL)) {
+      DEBUG(dbgs() << "Base " << *BaseI << " simplified to " << *V << "\n");
+      PushNewUsers(BaseI);
+      BaseI->replaceAllUsesWith(V);
+      BaseI->eraseFromParent();
+      states[Bdv] = BDVState(BDVState::Conflict, V);
+      NewInsts.erase(BaseI);
+      ReverseMap.erase(BaseI);
+      continue;
+    }
+  }
+
   // Cache all of our results so we can cheaply reuse them
   // NOTE: This is actually two caches: one of the base defining value
   // relation and one of the base pointer relation!  FIXME
@@ -1016,7 +1073,6 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     Value *v = item.first;
     Value *base = item.second.getBase();
     assert(v && base);
-    assert(!isKnownBaseResult(v) && "why did it get added?");
 
     if (TraceLSP) {
       std::string fromstr =
@@ -1028,8 +1084,6 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
              << " to: " << (base->hasName() ? base->getName() : "") << "\n";
     }
 
-    assert(isKnownBaseResult(base) &&
-           "must be something we 'know' is a base pointer");
     if (cache.count(v)) {
       // Once we transition from the BDV relation being store in the cache to
       // the base relation being stored, it must be stable

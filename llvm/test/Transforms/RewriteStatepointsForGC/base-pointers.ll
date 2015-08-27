@@ -80,7 +80,6 @@ loop:                                             ; preds = %loop, %entry
 ; we'd have commoned these, but that's a missed optimization, not correctness.
 ; CHECK-DAG: [ [[DISCARD:%.*.base.relocated.casted]], %loop ]
 ; CHECK-NOT: extra.base
-; CHECK: next.base = select
 ; CHECK: next = select
 ; CHECK: extra2.base = select
 ; CHECK: extra2 = select
@@ -94,6 +93,24 @@ loop:                                             ; preds = %loop, %entry
   %safepoint_token = call i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @foo, i32 0, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
   br label %loop
 }
+
+define i64 addrspace(1)* @test3(i1 %cnd, i64 addrspace(1)* %obj, 
+                                i64 addrspace(1)* %obj2)
+    gc "statepoint-example" {
+; CHECK-LABEL: @test3
+entry:
+  br i1 %cnd, label %merge, label %taken
+taken:
+  br label %merge
+merge:
+; CHECK-LABEL: merge:
+; CHECK-NEXT: %bdv = phi
+; CHECK-NEXT: gc.statepoint
+  %bdv = phi i64 addrspace(1)* [ %obj, %entry ], [ %obj2, %taken ]
+  %safepoint_token = call i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @foo, i32 0, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  ret i64 addrspace(1)* %bdv
+}
+
 
 declare void @foo()
 declare i32 @llvm.experimental.gc.statepoint.p0f_isVoidf(i64, i32, void ()*, i32, i32, ...)

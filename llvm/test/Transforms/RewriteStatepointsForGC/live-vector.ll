@@ -121,9 +121,6 @@ define <2 x i64 addrspace(1)*> @test6(i1 %cnd, <2 x i64 addrspace(1)*>* %ptr)
 ; CHECK-LABEL: test6
 ; CHECK-LABEL: merge:
 ; CHECK-NEXT: = phi
-; CHECK-NEXT: = phi
-; CHECK-NEXT: extractelement
-; CHECK-NEXT: extractelement
 ; CHECK-NEXT: extractelement
 ; CHECK-NEXT: extractelement
 ; CHECK-NEXT: gc.statepoint
@@ -131,12 +128,6 @@ define <2 x i64 addrspace(1)*> @test6(i1 %cnd, <2 x i64 addrspace(1)*>* %ptr)
 ; CHECK-NEXT: bitcast
 ; CHECK-NEXT: gc.relocate
 ; CHECK-NEXT: bitcast
-; CHECK-NEXT: gc.relocate
-; CHECK-NEXT: bitcast
-; CHECK-NEXT: gc.relocate
-; CHECK-NEXT: bitcast
-; CHECK-NEXT: insertelement
-; CHECK-NEXT: insertelement
 ; CHECK-NEXT: insertelement
 ; CHECK-NEXT: insertelement
 ; CHECK-NEXT: ret <2 x i64 addrspace(1)*>

@@ -40,13 +40,10 @@ untaken2:
   br label %merge2
 merge2:
 ; CHECK-LABEL: merge2:
-; CHECK: %obj.base = phi i64 addrspace(1)*
-; CHECK: %obj = phi i64 addrspace(1)*
-; CHECK: statepoint
+; CHECK-NEXT: %obj = phi i64 addrspace(1)*
+; CHECK-NEXT: statepoint
 ; CHECK: gc.relocate
-; CHECK-DAG: ; (%obj.base, %obj)
-; CHECK: gc.relocate
-; CHECK-DAG: ; (%obj.base, %obj.base)
+; CHECK-DAG: ; (%obj, %obj)
   %obj = phi i64 addrspace(1)* [%obj0, %taken2], [%obj1, %untaken2]
   %safepoint_token = call i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
   ret i64 addrspace(1)* %obj
