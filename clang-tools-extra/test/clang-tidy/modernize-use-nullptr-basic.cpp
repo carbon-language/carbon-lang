@@ -1,5 +1,8 @@
 // RUN: %python %S/check_clang_tidy.py %s modernize-use-nullptr %t -- \
 // RUN:   -std=c++98 -Wno-non-literal-null-conversion
+//
+// Some parts of the test (e.g. assignment of `const int` to `int *`) fail in
+// C++11, so we need to run the test in C++98 mode.
 
 const unsigned int g_null = 0;
 #define NULL 0
