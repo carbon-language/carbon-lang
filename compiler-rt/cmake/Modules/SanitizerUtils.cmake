@@ -9,11 +9,12 @@ set(SANITIZER_LINT_SCRIPT
 # interceptors are exported automatically, user can also provide files with
 # symbol names that should be exported as well.
 #   add_sanitizer_rt_symbols(<name>
+#                            PARENT_TARGET <convenience parent target>
 #                            EXTRA <files with extra symbols to export>)
 macro(add_sanitizer_rt_symbols name)
   cmake_parse_arguments(ARG
     ""
-    ""
+    "PARENT_TARGET"
     "EXTRA"
     ${ARGN})
   set(stamp ${CMAKE_CURRENT_BINARY_DIR}/${name}.syms-stamp)
@@ -49,6 +50,9 @@ macro(add_sanitizer_rt_symbols name)
       get_target_property(libfile ${name} LOCATION_${CMAKE_BUILD_TYPE})
       install(FILES ${libfile}.syms DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
     endif()
+  endif()
+  if(ARG_PARENT_TARGET)
+    add_dependencies(${ARG_PARENT_TARGET} ${name}-symbols)
   endif()
 endmacro()
 

@@ -97,12 +97,11 @@ else()
     foreach(arch ${UBSAN_SUPPORTED_ARCH})
       if (UNIX AND NOT ${arch} MATCHES "i386|i686")
         add_sanitizer_rt_symbols(clang_rt.ubsan_standalone-${arch}
+          PARENT_TARGET ubsan
           EXTRA ubsan.syms.extra)
         add_sanitizer_rt_symbols(clang_rt.ubsan_standalone_cxx-${arch}
+          PARENT_TARGET ubsan
           EXTRA ubsan.syms.extra)
-        add_dependencies(ubsan
-          clang_rt.ubsan_standalone-${arch}-symbols
-          clang_rt.ubsan_standalone_cxx-${arch}-symbols)
       endif()
     endforeach()
   endif()
