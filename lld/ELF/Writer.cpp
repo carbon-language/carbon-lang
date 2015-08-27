@@ -10,12 +10,14 @@
 #include "Chunks.h"
 #include "Config.h"
 #include "Error.h"
+#include "Symbols.h"
 #include "SymbolTable.h"
 #include "Writer.h"
 #include "Symbols.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/FileOutputBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -77,6 +79,8 @@ class lld::elf2::OutputSection final
     : public OutputSectionBase<ELFT::Is64Bits> {
 public:
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
+  typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags)
       : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags) {}
 
@@ -215,9 +219,52 @@ void OutputSection<ELFT>::addChunk(SectionChunk<ELFT> *C) {
   this->Header.sh_size = Off;
 }
 
+template <class ELFT>
+static typename llvm::object::ELFFile<ELFT>::uintX_t
+getSymVA(DefinedRegular<ELFT> *DR) {
+  const SectionChunk<ELFT> *SC = &DR->Section;
+  OutputSection<ELFT> *OS = SC->getOutputSection();
+  return OS->getVA() + SC->getOutputSectionOff() + DR->Sym.st_value;
+}
+
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
-  for (SectionChunk<ELFT> *C : Chunks)
+  for (SectionChunk<ELFT> *C : Chunks) {
     C->writeTo(Buf);
+    ObjectFile<ELFT> *File = C->getFile();
+    ELFFile<ELFT> *EObj = File->getObj();
+    uint8_t *Base = Buf + C->getOutputSectionOff();
+
+    // Iterate over all relocation sections that apply to this section.
+    for (const Elf_Shdr *RelSec : C->RelocSections) {
+      // Only support RELA for now.
+      if (RelSec->sh_type != SHT_RELA)
+        continue;
+      for (const Elf_Rela &RI : EObj->relas(RelSec)) {
+        uint32_t SymIndex = RI.getSymbol(EObj->isMips64EL());
+        SymbolBody *Body = File->getSymbolBody(SymIndex);
+        if (!Body)
+          continue;
+        // Skip undefined weak for now.
+        if (isa<UndefinedWeak<ELFT>>(Body))
+          continue;
+        if (!isa<DefinedRegular<ELFT>>(Body))
+          error(Twine("Can't relocate symbol ") + Body->getName());
+        uintX_t Offset = RI.r_offset;
+        uint32_t Type = RI.getType(EObj->isMips64EL());
+        uintX_t P = this->getVA() + C->getOutputSectionOff();
+        uintX_t SymVA = getSymVA<ELFT>(cast<DefinedRegular<ELFT>>(Body));
+        switch (Type) {
+        case llvm::ELF::R_X86_64_PC32:
+          support::endian::write32le(Base + Offset,
+                                     SymVA + (RI.r_addend - (P + Offset)));
+          break;
+        default:
+          llvm::errs() << Twine("unrecognized reloc ") + Twine(Type) << '\n';
+          break;
+        }
+      }
+    }
+  }
 }
 
 template <bool Is64Bits>

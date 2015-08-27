@@ -91,6 +91,13 @@ public:
 
   ArrayRef<SectionChunk<ELFT> *> getChunks() { return Chunks; }
 
+  SymbolBody *getSymbolBody(uint32_t SymbolIndex) {
+    uint32_t FirstNonLocal = Symtab->sh_info;
+    if (SymbolIndex < FirstNonLocal)
+      return nullptr;
+    return SymbolBodies[SymbolIndex - FirstNonLocal]->getReplacement();
+  }
+
 private:
   void initializeChunks();
   void initializeSymbols();

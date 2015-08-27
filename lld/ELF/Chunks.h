@@ -27,7 +27,7 @@ template <class ELFT> class SectionChunk {
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
-  SectionChunk(llvm::object::ELFFile<ELFT> *Obj, const Elf_Shdr *Header);
+  SectionChunk(ObjectFile<ELFT> *F, const Elf_Shdr *Header);
 
   // Returns the size of this chunk (even if this is a common or BSS.)
   size_t getSize() const { return Header->sh_size; }
@@ -38,6 +38,7 @@ public:
 
   StringRef getSectionName() const;
   const Elf_Shdr *getSectionHdr() const { return Header; }
+  ObjectFile<ELFT> *getFile() { return File; }
 
   // The writer sets and uses the addresses.
   uintX_t getOutputSectionOff() const { return OutputSectionOff; }
@@ -47,13 +48,16 @@ public:
   void setOutputSection(OutputSection<ELFT> *O) { Out = O; }
   OutputSection<ELFT> *getOutputSection() const { return Out; }
 
+  // Relocation sections that refer to this one.
+  SmallVector<const Elf_Shdr *, 1> RelocSections;
+
 private:
   // The offset from beginning of the output sections this chunk was assigned
   // to. The writer sets a value.
   uint64_t OutputSectionOff = 0;
 
-  // A file this chunk was created from.
-  llvm::object::ELFFile<ELFT> *Obj;
+  // The file this chunk was created from.
+  ObjectFile<ELFT> *File;
 
   OutputSection<ELFT> *Out = nullptr;
 
