@@ -9,6 +9,7 @@
 
 #include "AMDGPUExecutableWriter.h"
 
+using namespace lld;
 using namespace lld::elf;
 
 AMDGPUExecutableWriter::AMDGPUExecutableWriter(AMDGPULinkingContext &ctx,

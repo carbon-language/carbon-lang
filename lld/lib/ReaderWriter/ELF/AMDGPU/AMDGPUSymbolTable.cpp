@@ -12,6 +12,7 @@
 #include "Atoms.h"
 #include "SectionChunks.h"
 
+using namespace lld;
 using namespace lld::elf;
 
 AMDGPUSymbolTable::AMDGPUSymbolTable(const ELFLinkingContext &ctx)
