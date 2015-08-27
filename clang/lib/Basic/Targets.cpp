@@ -2984,7 +2984,7 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
     MMX3DNowLevel = std::max(MMX3DNowLevel, MMX);
 
   SimdDefaultAlign =
-      (getABI() == "avx512") ? 512 : (getABI() == "avx") ? 256 : 128;
+      hasFeature("avx512f") ? 512 : hasFeature("avx") ? 256 : 128;
   return true;
 }
 
