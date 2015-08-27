@@ -2027,6 +2027,7 @@ MachProcess::GetOSVersionNumbers (uint64_t *major, uint64_t *minor, uint64_t *pa
 {
     bool success = false;
 
+#if (__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 101000)
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
     NSOperatingSystemVersion vers = [[NSProcessInfo processInfo] operatingSystemVersion];
@@ -2040,6 +2041,7 @@ MachProcess::GetOSVersionNumbers (uint64_t *major, uint64_t *minor, uint64_t *pa
     success = true;
 
     [pool drain];
+#endif
 
     return success;
 }
