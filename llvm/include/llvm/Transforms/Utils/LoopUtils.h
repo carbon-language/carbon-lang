@@ -85,13 +85,16 @@ public:
 
   RecurrenceDescriptor()
       : StartValue(nullptr), LoopExitInstr(nullptr), Kind(RK_NoRecurrence),
-        MinMaxKind(MRK_Invalid), UnsafeAlgebraInst(nullptr) {}
+        MinMaxKind(MRK_Invalid), UnsafeAlgebraInst(nullptr),
+        RecurrenceType(nullptr), IsSigned(false) {}
 
   RecurrenceDescriptor(Value *Start, Instruction *Exit, RecurrenceKind K,
-                       MinMaxRecurrenceKind MK,
-                       Instruction *UAI /*Unsafe Algebra Inst*/)
+                       MinMaxRecurrenceKind MK, Instruction *UAI, Type *RT,
+                       bool Signed, SmallPtrSetImpl<Instruction *> &CI)
       : StartValue(Start), LoopExitInstr(Exit), Kind(K), MinMaxKind(MK),
-        UnsafeAlgebraInst(UAI) {}
+        UnsafeAlgebraInst(UAI), RecurrenceType(RT), IsSigned(Signed) {
+    CastInsts.insert(CI.begin(), CI.end());
+  }
 
   /// This POD struct holds information about a potential recurrence operation.
   class InstDesc {
@@ -184,6 +187,44 @@ public:
   /// Returns first unsafe algebra instruction in the PHI node's use-chain.
   Instruction *getUnsafeAlgebraInst() { return UnsafeAlgebraInst; }
 
+  /// Returns true if the recurrence kind is an integer kind.
+  static bool isIntegerRecurrenceKind(RecurrenceKind Kind);
+
+  /// Returns true if the recurrence kind is a floating point kind.
+  static bool isFloatingPointRecurrenceKind(RecurrenceKind Kind);
+
+  /// Returns true if the recurrence kind is an arithmetic kind.
+  static bool isArithmeticRecurrenceKind(RecurrenceKind Kind);
+
+  /// Determines if Phi may have been type-promoted. If Phi has a single user
+  /// that ANDs the Phi with a type mask, return the user. RT is updated to
+  /// account for the narrower bit width represented by the mask, and the AND
+  /// instruction is added to CI.
+  static Instruction *lookThroughAnd(PHINode *Phi, Type *&RT,
+                                     SmallPtrSetImpl<Instruction *> &Visited,
+                                     SmallPtrSetImpl<Instruction *> &CI);
+
+  /// Returns true if all the source operands of a recurrence are either
+  /// SExtInsts or ZExtInsts. This function is intended to be used with
+  /// lookThroughAnd to determine if the recurrence has been type-promoted. The
+  /// source operands are added to CI, and IsSigned is updated to indicate if
+  /// all source operands are SExtInsts.
+  static bool getSourceExtensionKind(Instruction *Start, Instruction *Exit,
+                                     Type *RT, bool &IsSigned,
+                                     SmallPtrSetImpl<Instruction *> &Visited,
+                                     SmallPtrSetImpl<Instruction *> &CI);
+
+  /// Returns the type of the recurrence. This type can be narrower than the
+  /// actual type of the Phi if the recurrence has been type-promoted.
+  Type *getRecurrenceType() { return RecurrenceType; }
+
+  /// Returns a reference to the instructions used for type-promoting the
+  /// recurrence.
+  SmallPtrSet<Instruction *, 8> &getCastInsts() { return CastInsts; }
+
+  /// Returns true if all source operands of the recurrence are SExtInsts.
+  bool isSigned() { return IsSigned; }
+
 private:
   // The starting value of the recurrence.
   // It does not have to be zero!
@@ -196,6 +237,12 @@ private:
   MinMaxRecurrenceKind MinMaxKind;
   // First occurance of unasfe algebra in the PHI's use-chain.
   Instruction *UnsafeAlgebraInst;
+  // The type of the recurrence.
+  Type *RecurrenceType;
+  // True if all source operands of the recurrence are SExtInsts.
+  bool IsSigned;
+  // Instructions used for type-promoting the recurrence.
+  SmallPtrSet<Instruction *, 8> CastInsts;
 };
 
 /// A struct for saving information about induction variables.

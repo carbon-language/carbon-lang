@@ -1308,11 +1308,10 @@ public:
                              LoopVectorizationLegality *Legal,
                              const TargetTransformInfo &TTI,
                              const TargetLibraryInfo *TLI, AssumptionCache *AC,
-                             const Function *F, const LoopVectorizeHints *Hints)
+                             const Function *F, const LoopVectorizeHints *Hints,
+                             SmallPtrSetImpl<const Value *> &ValuesToIgnore)
       : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI), TLI(TLI),
-        TheFunction(F), Hints(Hints) {
-    CodeMetrics::collectEphemeralValues(L, AC, EphValues);
-  }
+        TheFunction(F), Hints(Hints), ValuesToIgnore(ValuesToIgnore) {}
 
   /// Information about vectorization costs
   struct VectorizationFactor {
@@ -1381,9 +1380,6 @@ private:
     emitAnalysisDiag(TheFunction, TheLoop, *Hints, Message);
   }
 
-  /// Values used only by @llvm.assume calls.
-  SmallPtrSet<const Value *, 32> EphValues;
-
   /// The loop that we evaluate.
   Loop *TheLoop;
   /// Scev analysis.
@@ -1399,6 +1395,8 @@ private:
   const Function *TheFunction;
   // Loop Vectorize Hint.
   const LoopVectorizeHints *Hints;
+  // Values to ignore in the cost model.
+  const SmallPtrSetImpl<const Value *> &ValuesToIgnore;
 };
 
 /// \brief This holds vectorization requirements that must be verified late in
@@ -1643,8 +1641,19 @@ struct LoopVectorize : public FunctionPass {
       return false;
     }
 
+    // Collect values we want to ignore in the cost model. This includes
+    // type-promoting instructions we identified during reduction detection.
+    SmallPtrSet<const Value *, 32> ValuesToIgnore;
+    CodeMetrics::collectEphemeralValues(L, AC, ValuesToIgnore);
+    for (auto &Reduction : *LVL.getReductionVars()) {
+      RecurrenceDescriptor &RedDes = Reduction.second;
+      SmallPtrSetImpl<Instruction *> &Casts = RedDes.getCastInsts();
+      ValuesToIgnore.insert(Casts.begin(), Casts.end());
+    }
+
     // Use the cost model.
-    LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI, TLI, AC, F, &Hints);
+    LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI, TLI, AC, F, &Hints,
+                                  ValuesToIgnore);
 
     // Check the function attributes to find out if this function should be
     // optimized for size.
@@ -3234,12 +3243,11 @@ void InnerLoopVectorizer::vectorizeLoop() {
     // instructions.
     Builder.SetInsertPoint(LoopMiddleBlock->getFirstInsertionPt());
 
-    VectorParts RdxParts;
+    VectorParts RdxParts, &RdxExitVal = getVectorValue(LoopExitInst);
     setDebugLocFromInst(Builder, LoopExitInst);
     for (unsigned part = 0; part < UF; ++part) {
       // This PHINode contains the vectorized reduction variable, or
       // the initial value vector, if we bypass the vector loop.
-      VectorParts &RdxExitVal = getVectorValue(LoopExitInst);
       PHINode *NewPhi = Builder.CreatePHI(VecTy, 2, "rdx.vec.exit.phi");
       Value *StartVal = (part == 0) ? VectorStart : Identity;
       for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
@@ -3247,6 +3255,28 @@ void InnerLoopVectorizer::vectorizeLoop() {
       NewPhi->addIncoming(RdxExitVal[part],
                           LoopVectorBody.back());
       RdxParts.push_back(NewPhi);
+    }
+
+    // If the vector reduction can be performed in a smaller type, we truncate
+    // then extend the loop exit value to enable InstCombine to evaluate the
+    // entire expression in the smaller type.
+    if (VF > 1 && RdxPhi->getType() != RdxDesc.getRecurrenceType()) {
+      Type *RdxVecTy = VectorType::get(RdxDesc.getRecurrenceType(), VF);
+      Builder.SetInsertPoint(LoopVectorBody.back()->getTerminator());
+      for (unsigned part = 0; part < UF; ++part) {
+        Value *Trunc = Builder.CreateTrunc(RdxExitVal[part], RdxVecTy);
+        Value *Extnd = RdxDesc.isSigned() ? Builder.CreateSExt(Trunc, VecTy)
+                                          : Builder.CreateZExt(Trunc, VecTy);
+        for (Value::user_iterator UI = RdxExitVal[part]->user_begin();
+             UI != RdxExitVal[part]->user_end();)
+          if (*UI != Trunc)
+            (*UI++)->replaceUsesOfWith(RdxExitVal[part], Extnd);
+          else
+            ++UI;
+      }
+      Builder.SetInsertPoint(LoopMiddleBlock->getFirstInsertionPt());
+      for (unsigned part = 0; part < UF; ++part)
+        RdxParts[part] = Builder.CreateTrunc(RdxParts[part], RdxVecTy);
     }
 
     // Reduce all of the unrolled parts into a single vector.
@@ -3299,6 +3329,14 @@ void InnerLoopVectorizer::vectorizeLoop() {
       // The result is in the first element of the vector.
       ReducedPartRdx = Builder.CreateExtractElement(TmpVec,
                                                     Builder.getInt32(0));
+
+      // If the reduction can be performed in a smaller type, we need to extend
+      // the reduction to the wider type before we branch to the original loop.
+      if (RdxPhi->getType() != RdxDesc.getRecurrenceType())
+        ReducedPartRdx =
+            RdxDesc.isSigned()
+                ? Builder.CreateSExt(ReducedPartRdx, RdxPhi->getType())
+                : Builder.CreateZExt(ReducedPartRdx, RdxPhi->getType());
     }
 
     // Create a phi node that merges control-flow from the backedge-taken check
@@ -4652,18 +4690,22 @@ unsigned LoopVectorizationCostModel::getWidestType() {
     for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
       Type *T = it->getType();
 
-      // Ignore ephemeral values.
-      if (EphValues.count(it))
+      // Skip ignored values.
+      if (ValuesToIgnore.count(it))
         continue;
 
       // Only examine Loads, Stores and PHINodes.
       if (!isa<LoadInst>(it) && !isa<StoreInst>(it) && !isa<PHINode>(it))
         continue;
 
-      // Examine PHI nodes that are reduction variables.
-      if (PHINode *PN = dyn_cast<PHINode>(it))
+      // Examine PHI nodes that are reduction variables. Update the type to
+      // account for the recurrence type.
+      if (PHINode *PN = dyn_cast<PHINode>(it)) {
         if (!Legal->getReductionVars()->count(PN))
           continue;
+        RecurrenceDescriptor RdxDesc = (*Legal->getReductionVars())[PN];
+        T = RdxDesc.getRecurrenceType();
+      }
 
       // Examine the stored values.
       if (StoreInst *ST = dyn_cast<StoreInst>(it))
@@ -4924,8 +4966,8 @@ LoopVectorizationCostModel::calculateRegisterUsage() {
     // Ignore instructions that are never used within the loop.
     if (!Ends.count(I)) continue;
 
-    // Ignore ephemeral values.
-    if (EphValues.count(I))
+    // Skip ignored values.
+    if (ValuesToIgnore.count(I))
       continue;
 
     // Remove all of the instructions that end at this location.
@@ -4968,8 +5010,8 @@ unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
       if (isa<DbgInfoIntrinsic>(it))
         continue;
 
-      // Ignore ephemeral values.
-      if (EphValues.count(it))
+      // Skip ignored values.
+      if (ValuesToIgnore.count(it))
         continue;
 
       unsigned C = getInstructionCost(it, VF);
