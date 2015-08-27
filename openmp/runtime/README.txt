@@ -127,6 +127,20 @@ Intel(R) Many Integrated Core Architecture
     __kmpc_atomic_*_fp
 (8) Community contribution provided AS IS, not tested by Intel.
 
+Supported Architectures: IBM(R) Power 7 and Power 8
+
+              -----------------------------
+              |   gcc      |   clang      |
+--------------|------------|--------------|
+| Linux* OS   |  Yes(1,2)  | Yes(3,4)     |
+-------------------------------------------
+
+(1) On Power 7, gcc version 4.8.2 is supported.
+(2) On Power 8, gcc version 4.8.2 is supported.
+(3) On Power 7, clang version 3.7 is supported.
+(4) On Power 8, clang version 3.7 is supported.
+
+
 Front-end Compilers that work with this RTL
 ===========================================
 
