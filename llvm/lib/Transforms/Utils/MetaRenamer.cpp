@@ -79,7 +79,7 @@ namespace {
         randSeed += C;
 
       Renamer renamer(randSeed);
-           
+
       // Rename all aliases
       for (auto AI = M.alias_begin(), AE = M.alias_end(); AI != AE; ++AI) {
         StringRef Name = AI->getName();
