@@ -165,9 +165,12 @@ namespace clang {
     void AddFirstDeclFromEachModule(const Decl *D, bool IncludeLocal) {
       llvm::MapVector<ModuleFile*, const Decl*> Firsts;
       // FIXME: We can skip entries that we know are implied by others.
-      for (const Decl *R = D->getMostRecentDecl(); R; R = R->getPreviousDecl())
-        if (IncludeLocal || R->isFromASTFile())
+      for (const Decl *R = D->getMostRecentDecl(); R; R = R->getPreviousDecl()) {
+        if (R->isFromASTFile())
           Firsts[Writer.Chain->getOwningModuleFile(R)] = R;
+        else if (IncludeLocal)
+          Firsts[nullptr] = R;
+      }
       for (const auto &F : Firsts)
         Writer.AddDeclRef(F.second, Record);
     }
