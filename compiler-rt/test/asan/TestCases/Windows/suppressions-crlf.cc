@@ -1,7 +1,6 @@
 // Try a strlen suppression, but force the input file to be DOS format (CRLF).
 // RUN: %clangxx_asan -O0 %s -o %t
-// RUN: echo "interceptor_name:strlen" > %t.supp
-// RUN: unix2dos %t.supp
+// RUN: python -c 'import sys; sys.stdout.write("interceptor_name:strlen\r\n")' > %t.supp
 // RUN: %env_asan_opts=suppressions='"%t.supp"' %run %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
