@@ -44,6 +44,7 @@ using llvm::object::ELF64BE;
 class ELFWriter;
 
 std::unique_ptr<ELFLinkingContext> createAArch64LinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createAMDGPULinkingContext(llvm::Triple);
 std::unique_ptr<ELFLinkingContext> createARMLinkingContext(llvm::Triple);
 std::unique_ptr<ELFLinkingContext> createExampleLinkingContext(llvm::Triple);
 std::unique_ptr<ELFLinkingContext> createHexagonLinkingContext(llvm::Triple);

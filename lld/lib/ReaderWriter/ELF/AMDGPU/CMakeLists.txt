@@ -1,0 +1,13 @@
+add_llvm_library(lldAMDGPUELFTarget
+  AMDGPUExecutableWriter.cpp
+  AMDGPULinkingContext.cpp
+  AMDGPURelocationHandler.cpp
+  AMDGPUSymbolTable.cpp
+  AMDGPUTargetHandler.cpp
+  LINK_LIBS
+    lldELF
+    lldReaderWriter
+    lldCore
+    LLVMObject
+    LLVMSupport
+  )

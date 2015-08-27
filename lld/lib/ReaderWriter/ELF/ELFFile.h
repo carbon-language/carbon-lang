@@ -196,12 +196,14 @@ protected:
 
   /// Determines if the target wants to create an atom for a section that has no
   /// symbol references.
-  bool handleSectionWithNoSymbols(const Elf_Shdr *shdr,
-                                  std::vector<const Elf_Sym *> &syms) const {
+  bool
+  handleSectionWithNoSymbols(const Elf_Shdr *shdr,
+                             std::vector<const Elf_Sym *> &syms) const {
     return shdr &&
            (shdr->sh_type == llvm::ELF::SHT_PROGBITS ||
             shdr->sh_type == llvm::ELF::SHT_INIT_ARRAY ||
-            shdr->sh_type == llvm::ELF::SHT_FINI_ARRAY) &&
+            shdr->sh_type == llvm::ELF::SHT_FINI_ARRAY ||
+            shdr->sh_type == llvm::ELF::SHT_NOTE) &&
            syms.empty();
   }
 
