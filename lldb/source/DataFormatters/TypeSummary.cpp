@@ -193,15 +193,15 @@ std::string
 CXXFunctionSummaryFormat::GetDescription ()
 {
     StreamString sstr;
-    sstr.Printf ("`%s (%p) `%s%s%s%s%s%s%s", m_description.c_str(),
-                 static_cast<void*>(&m_impl),
+    sstr.Printf ("%s%s%s%s%s%s%s %s",
                  Cascades() ? "" : " (not cascading)",
                  !DoesPrintChildren(nullptr) ? "" : " (show children)",
                  !DoesPrintValue(nullptr) ? " (hide value)" : "",
                  IsOneLiner() ? " (one-line printout)" : "",
                  SkipsPointers() ? " (skip pointers)" : "",
                  SkipsReferences() ? " (skip references)" : "",
-                 HideNames(nullptr) ? " (hide member names)" : "");
+                 HideNames(nullptr) ? " (hide member names)" : "",
+                 m_description.c_str());
     return sstr.GetString();
 }
 

@@ -111,11 +111,10 @@ std::string
 CXXSyntheticChildren::GetDescription()
 {
     StreamString sstr;
-    sstr.Printf("%s%s%s Generator at %p - %s",
+    sstr.Printf("%s%s%s %s",
                 Cascades() ? "" : " (not cascading)",
                 SkipsPointers() ? " (skip pointers)" : "",
                 SkipsReferences() ? " (skip references)" : "",
-                reinterpret_cast<void*>(reinterpret_cast<intptr_t>(m_create_callback)),
                 m_description.c_str());
 
     return sstr.GetString();

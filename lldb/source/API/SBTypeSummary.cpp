@@ -315,7 +315,7 @@ SBTypeSummary::IsEqualTo (lldb::SBTypeSummary &rhs)
     {
         lldb_private::CXXFunctionSummaryFormat *self_cxx = (lldb_private::CXXFunctionSummaryFormat*)m_opaque_sp.get();
         lldb_private::CXXFunctionSummaryFormat *other_cxx = (lldb_private::CXXFunctionSummaryFormat*)rhs.m_opaque_sp.get();
-        return (self_cxx->m_impl == other_cxx->m_impl);
+        return (self_cxx == other_cxx);
     }
     
     if (m_opaque_sp->IsScripted() != rhs.m_opaque_sp->IsScripted())

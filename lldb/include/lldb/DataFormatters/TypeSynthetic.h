@@ -14,6 +14,7 @@
 #include <stdint.h>
 
 // C++ Includes
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -344,7 +345,7 @@ namespace lldb_private {
         GetFrontEnd (ValueObject &backend) = 0;
         
         typedef std::shared_ptr<SyntheticChildren> SharedPointer;
-        typedef bool(*SyntheticChildrenCallback)(void*, ConstString, const SyntheticChildren::SharedPointer&);
+        typedef std::function<bool(void*, ConstString, SyntheticChildren::SharedPointer)> SyntheticChildrenCallback;
         
         uint32_t&
         GetRevision ()
@@ -485,11 +486,7 @@ namespace lldb_private {
     class CXXSyntheticChildren : public SyntheticChildren
     {
     public:
-        typedef SyntheticChildrenFrontEnd* (*CreateFrontEndCallback) (CXXSyntheticChildren*, lldb::ValueObjectSP);
-    protected:
-        CreateFrontEndCallback m_create_callback;
-        std::string m_description;
-    public:
+        typedef std::function<SyntheticChildrenFrontEnd*(CXXSyntheticChildren*, lldb::ValueObjectSP)> CreateFrontEndCallback;
         CXXSyntheticChildren (const SyntheticChildren::Flags& flags,
                               const char* description,
                               CreateFrontEndCallback callback) :
@@ -514,6 +511,10 @@ namespace lldb_private {
             return SyntheticChildrenFrontEnd::AutoPointer(m_create_callback(this, backend.GetSP()));
         }
         
+    protected:
+        CreateFrontEndCallback m_create_callback;
+        std::string m_description;
+
     private:
         DISALLOW_COPY_AND_ASSIGN(CXXSyntheticChildren);
     };

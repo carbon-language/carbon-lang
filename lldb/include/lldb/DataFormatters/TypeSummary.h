@@ -14,6 +14,7 @@
 #include <stdint.h>
 
 // C++ Includes
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -409,8 +410,8 @@ namespace lldb_private {
         }
         
         typedef std::shared_ptr<TypeSummaryImpl> SharedPointer;
-        typedef bool(*SummaryCallback)(void*, ConstString, const lldb::TypeSummaryImplSP&);
-        typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const lldb::TypeSummaryImplSP&);
+        typedef std::function<bool(void*, ConstString, TypeSummaryImpl::SharedPointer)> SummaryCallback;
+        typedef std::function<bool(void*, lldb::RegularExpressionSP, TypeSummaryImpl::SharedPointer)> RegexSummaryCallback;
         
     protected:
         uint32_t m_my_revision;
@@ -472,9 +473,9 @@ namespace lldb_private {
     {
         // we should convert these to SBValue and SBStream if we ever cross
         // the boundary towards the external world
-        typedef bool (*Callback)(ValueObject&,
-                                 Stream&,
-                                 const TypeSummaryOptions&);
+        typedef std::function<bool(ValueObject&,
+                                   Stream&,
+                                   const TypeSummaryOptions&)> Callback;
         
         Callback m_impl;
         std::string m_description;
