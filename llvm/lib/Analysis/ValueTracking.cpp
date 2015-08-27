@@ -3226,9 +3226,12 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
   if (const Argument *A = dyn_cast<Argument>(V))
     return A->hasByValOrInAllocaAttr() || A->hasNonNullAttr();
 
-  // Global values are not null unless extern weak.
+  // A global variable in address space 0 is non null unless extern weak.
+  // Other address spaces may have null as a valid address for a global,
+  // so we can't assume anything.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
-    return !GV->hasExternalWeakLinkage();
+    return !GV->hasExternalWeakLinkage() &&
+           GV->getType()->getAddressSpace() == 0;
 
   // A Load tagged w/nonnull metadata is never null. 
   if (const LoadInst *LI = dyn_cast<LoadInst>(V))
