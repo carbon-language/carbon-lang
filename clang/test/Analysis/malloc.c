@@ -1386,7 +1386,8 @@ char* reallocButNoMalloc(struct HasPtr *a, int c, int size) {
   int *s;
   char *b = realloc(a->p, size);
   char *m = realloc(a->p, size); // expected-warning {{Attempt to free released memory}}
-  return a->p;
+  //PR24184: Object "a->p" is returned after being freed by calling "realloc".
+  return a->p; // expected-warning {{Use of memory after it is freed}}
 }
 
 // We should not warn in this case since the caller will presumably free a->p in all cases.

@@ -287,7 +287,10 @@ private:
                                  bool MarkAsSink,
                                  ExplodedNode *P = nullptr,
                                  const ProgramPointTag *Tag = nullptr) {
-    if (!State || (State == Pred->getState() && !Tag && !MarkAsSink))
+    // It may not be safe to use the "Pred" node with no tag because the "Pred"
+    // node may be recycled in the reclamation function.
+    if (!State || (State == Pred->getState() && !Tag && !MarkAsSink &&
+                   Pred->getLocation().getTag()))
       return Pred;
 
     Changed = true;
