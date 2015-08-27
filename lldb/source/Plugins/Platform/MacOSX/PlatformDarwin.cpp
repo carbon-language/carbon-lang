@@ -1531,3 +1531,15 @@ PlatformDarwin::AddClangModuleCompilationOptionsForSDKType (Target *target, std:
         options.push_back(sysroot_spec.GetPath());
     }
 }
+
+ConstString
+PlatformDarwin::GetFullNameForDylib (ConstString basename)
+{
+    if (basename.IsEmpty())
+        return basename;
+    
+    StreamString stream;
+    stream.Printf("lib%s.dylib", basename.GetCString());
+    return ConstString(stream.GetData());
+}
+

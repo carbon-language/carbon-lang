@@ -156,6 +156,9 @@ public:
     CalculateTrapHandlerSymbolNames () override
     {
     }
+    
+    ConstString
+    GetFullNameForDylib (ConstString basename) override;
 
 protected:
     lldb::PlatformSP m_remote_platform_sp;

@@ -111,6 +111,9 @@ namespace platform_linux {
         uint64_t
         ConvertMmapFlagsToPlatform(const ArchSpec &arch, unsigned flags) override;
 
+        ConstString
+        GetFullNameForDylib (ConstString basename) override;
+        
     private:
         DISALLOW_COPY_AND_ASSIGN (PlatformLinux);
     };

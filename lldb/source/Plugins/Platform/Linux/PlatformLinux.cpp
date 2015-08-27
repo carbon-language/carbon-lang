@@ -854,3 +854,14 @@ PlatformLinux::ConvertMmapFlagsToPlatform(const ArchSpec &arch, unsigned flags)
         flags_platform |= map_anon;
     return flags_platform;
 }
+
+ConstString
+PlatformLinux::GetFullNameForDylib (ConstString basename)
+{
+    if (basename.IsEmpty())
+        return basename;
+    
+    StreamString stream;
+    stream.Printf("lib%s.so", basename.GetCString());
+    return ConstString(stream.GetData());
+}

@@ -743,3 +743,14 @@ PlatformWindows::GetEnvironment(StringList &env)
 
     return Host::GetEnvironment(env);
 }
+
+ConstString
+PlatformWindows::GetFullNameForDylib (ConstString basename)
+{
+    if (basename.IsEmpty())
+        return basename;
+    
+    StreamString stream;
+    stream.Printf("%s.dll", basename.GetCString());
+    return ConstString(stream.GetData());
+}

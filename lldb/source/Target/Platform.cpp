@@ -947,6 +947,12 @@ Platform::GetHostname ()
     return m_name.c_str();
 }
 
+ConstString
+Platform::GetFullNameForDylib (ConstString basename)
+{
+    return basename;
+}
+
 bool
 Platform::SetRemoteWorkingDirectory(const FileSpec &working_dir)
 {

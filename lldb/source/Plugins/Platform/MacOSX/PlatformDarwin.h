@@ -84,6 +84,9 @@ public:
     
     bool
     SupportsModules () override { return true; }
+    
+    lldb_private::ConstString
+    GetFullNameForDylib (lldb_private::ConstString basename) override;
 
 protected:
 

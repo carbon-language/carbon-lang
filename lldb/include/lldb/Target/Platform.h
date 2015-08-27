@@ -268,6 +268,9 @@ class ModuleCache;
 
         virtual const char *
         GetHostname ();
+        
+        virtual ConstString
+        GetFullNameForDylib (ConstString basename);
 
         virtual const char *
         GetDescription () = 0;
