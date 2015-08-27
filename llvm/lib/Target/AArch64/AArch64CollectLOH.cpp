@@ -523,6 +523,8 @@ static bool isCandidateStore(const MachineInstr *Instr) {
   switch (Instr->getOpcode()) {
   default:
     return false;
+  case AArch64::STRBBui:
+  case AArch64::STRHHui:
   case AArch64::STRBui:
   case AArch64::STRHui:
   case AArch64::STRWui:
@@ -884,7 +886,8 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
     bool IsL2Add = (ImmediateDefOpc == AArch64::ADDXri);
     // If the chain is three instructions long and ldr is the second element,
     // then this ldr must load form GOT, otherwise this is not a correct chain.
-    if (L2 && !IsL2Add && L2->getOperand(2).getTargetFlags() != AArch64II::MO_GOT)
+    if (L2 && !IsL2Add &&
+        !(L2->getOperand(2).getTargetFlags() & AArch64II::MO_GOT))
       continue;
     SmallVector<const MachineInstr *, 3> Args;
     MCLOHType Kind;
@@ -1000,7 +1003,8 @@ static void collectInvolvedReg(const MachineFunction &MF, MapRegToId &RegToId,
   DEBUG(dbgs() << "** Collect Involved Register\n");
   for (const auto &MBB : MF) {
     for (const MachineInstr &MI : MBB) {
-      if (!canDefBePartOfLOH(&MI))
+      if (!canDefBePartOfLOH(&MI) &&
+          !isCandidateLoad(&MI) && !isCandidateStore(&MI))
         continue;
 
       // Process defs
