@@ -2230,7 +2230,7 @@ class X86TargetInfo : public TargetInfo {
     //@}
   } CPU;
 
-  CPUKind getCPUKind(StringRef CPU) {
+  CPUKind getCPUKind(StringRef CPU) const {
     return llvm::StringSwitch<CPUKind>(CPU)
         .Case("i386", CK_i386)
         .Case("i486", CK_i486)
