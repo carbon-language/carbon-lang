@@ -16,16 +16,16 @@ namespace clang {
 namespace tidy {
 namespace readability {
 
-/// \brief Checks whether a call to the \c size() method can be replaced with a
-/// call to \c empty().
+/// Checks whether a call to the `size()` method can be replaced with a call to
+/// `empty()`.
 ///
-/// The emptiness of a container should be checked using the \c empty() method
-/// instead of the \c size() method. It is not guaranteed that \c size() is a
+/// The emptiness of a container should be checked using the `empty()` method
+/// instead of the `size()` method. It is not guaranteed that `size()` is a
 /// constant-time function, and it is generally more efficient and also shows
-/// clearer intent to use \c empty(). Furthermore some containers may implement
-/// the \c empty() method but not implement the \c size() method. Using \c
-/// empty() whenever possible makes it easier to switch to another container in
-/// the future.
+/// clearer intent to use `empty()`. Furthermore some containers may implement
+/// the `empty()` method but not implement the `size()` method. Using `empty()`
+/// whenever possible makes it easier to switch to another container in the
+/// future.
 class ContainerSizeEmptyCheck : public ClangTidyCheck {
 public:
   ContainerSizeEmptyCheck(StringRef Name, ClangTidyContext *Context);

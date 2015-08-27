@@ -17,9 +17,10 @@ namespace clang {
 namespace tidy {
 namespace readability {
 
-/// \brief Checks that long namespaces have a closing comment.
+/// Checks that long namespaces have a closing comment.
 ///
 /// http://llvm.org/docs/CodingStandards.html#namespace-indentation
+///
 /// http://google-styleguide.googlecode.com/svn/trunk/cppguide.html#Namespaces
 class NamespaceCommentCheck : public ClangTidyCheck {
 public:

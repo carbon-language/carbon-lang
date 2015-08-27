@@ -15,7 +15,7 @@
 namespace clang {
 namespace tidy {
 
-/// \brief Finds and fixes header guards.
+/// Finds and fixes header guards.
 class HeaderGuardCheck : public ClangTidyCheck {
 public:
   HeaderGuardCheck(StringRef Name, ClangTidyContext *Context)

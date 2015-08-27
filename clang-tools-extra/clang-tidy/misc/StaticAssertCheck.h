@@ -17,10 +17,10 @@
 namespace clang {
 namespace tidy {
 
-/// \brief Replaces \c assert() with \c static_assert() if the condition is
-/// evaluatable at compile time.
+/// Replaces `assert()` with `static_assert()` if the condition is evaluatable
+/// at compile time.
 ///
-/// The condition of \c static_assert() is evaluated at compile time which is
+/// The condition of `static_assert()` is evaluated at compile time which is
 /// safer and more efficient.
 class StaticAssertCheck : public ClangTidyCheck {
 public:

@@ -16,8 +16,7 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-/// \brief Checks for repeated argument with side effects in macros.
-///
+/// Checks for repeated argument with side effects in macros.
 class MacroRepeatedSideEffectsCheck : public ClangTidyCheck {
 public:
   MacroRepeatedSideEffectsCheck(StringRef Name, ClangTidyContext *Context)

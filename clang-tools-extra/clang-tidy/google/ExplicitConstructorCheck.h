@@ -16,10 +16,9 @@ namespace clang {
 namespace tidy {
 namespace google {
 
-/// \brief Checks that all single-argument constructors are explicit.
+/// Checks that all single-argument constructors are explicit.
 ///
-/// see:
-/// http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml#Explicit_Constructors
+/// See http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml#Explicit_Constructors
 class ExplicitConstructorCheck : public ClangTidyCheck {
 public:
   ExplicitConstructorCheck(StringRef Name, ClangTidyContext *Context)

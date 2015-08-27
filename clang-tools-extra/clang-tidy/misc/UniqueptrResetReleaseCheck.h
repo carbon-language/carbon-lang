@@ -16,14 +16,17 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-/// \brief Find and replace unique_ptr::reset(release()) with std::move
+/// Find and replace `unique_ptr::reset(release())` with `std::move()`.
 ///
 /// Example:
+///
+/// \code
 ///   std::unique_ptr<Foo> x, y;
 ///   x.reset(y.release()); -> x = std::move(y);
+/// \endcode
 ///
-/// If "y" is already rvalue, std::move is not added.
-/// "x" and "y" can also be std::unique_ptr<Foo>*.
+/// If `y` is already rvalue, `std::move()` is not added.  `x` and `y` can also
+/// be `std::unique_ptr<Foo>*`.
 class UniqueptrResetReleaseCheck : public ClangTidyCheck {
 public:
   UniqueptrResetReleaseCheck(StringRef Name, ClangTidyContext *Context)

@@ -16,7 +16,7 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-/// \brief Use C++11's 'override' and remove 'virtual' where applicable.
+/// Use C++11's `override` and remove `virtual` where applicable.
 class UseOverrideCheck : public ClangTidyCheck {
 public:
   UseOverrideCheck(StringRef Name, ClangTidyContext *Context)

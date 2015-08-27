@@ -17,7 +17,20 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-/// \brief Checks that argument comments match parameter names.
+/// Checks that argument comments match parameter names.
+///
+/// The check understands argument comments in the form `/*parameter_name=*/`
+/// that are placed right before the argument.
+///
+/// \code
+///   void f(bool foo);
+///
+///   ...
+///   f(/*bar=*/true);
+///   // warning: argument name 'bar' in comment does not match parameter name 'foo'
+/// \endcode
+///
+/// The check tries to detect typos and suggest automated fixes for them.
 class ArgumentCommentCheck : public ClangTidyCheck {
 public:
   ArgumentCommentCheck(StringRef Name, ClangTidyContext *Context);

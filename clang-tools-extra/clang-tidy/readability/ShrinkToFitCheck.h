@@ -16,12 +16,12 @@ namespace clang {
 namespace tidy {
 namespace readability {
 
-/// \brief Replace copy and swap tricks on shrinkable containers with the
-/// \c shrink_to_fit() method call.
+/// Replace copy and swap tricks on shrinkable containers with the
+/// `shrink_to_fit()` method call.
 ///
-/// The \c shrink_to_fit() method is more readable and more effective than
+/// The `shrink_to_fit()` method is more readable and more effective than
 /// the copy and swap trick to reduce the capacity of a shrinkable container.
-/// Note that, the \c shrink_to_fit() method is only available in C++11 and up.
+/// Note that, the `shrink_to_fit()` method is only available in C++11 and up.
 class ShrinkToFitCheck : public ClangTidyCheck {
 public:
   ShrinkToFitCheck(StringRef Name, ClangTidyContext *Context)

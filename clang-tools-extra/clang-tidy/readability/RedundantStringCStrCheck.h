@@ -16,7 +16,7 @@ namespace clang {
 namespace tidy {
 namespace readability {
 
-/// \brief Finds unnecessary calls to std::string::c_str().
+/// Finds unnecessary calls to `std::string::c_str()`.
 class RedundantStringCStrCheck : public ClangTidyCheck {
 public:
   RedundantStringCStrCheck(StringRef Name, ClangTidyContext *Context)

@@ -16,12 +16,12 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-/// \brief Finds declarations of assign operators with the wrong return and/or
-///   argument types.
+/// Finds declarations of assign operators with the wrong return and/or argument
+/// types.
 ///
-/// The return type must be \c Class&.
-/// Works with move-assign and assign by value.
-/// Private and deleted operators are ignored.
+///   * The return type must be `Class&`.
+///   * Works with move-assign and assign by value.
+///   * Private and deleted operators are ignored.
 class AssignOperatorSignatureCheck : public ClangTidyCheck {
 public:
   AssignOperatorSignatureCheck(StringRef Name, ClangTidyContext *Context)

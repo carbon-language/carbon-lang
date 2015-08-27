@@ -15,8 +15,8 @@
 namespace clang {
 namespace tidy {
 
-/// \brief Finds unused parameters and fixes them, so that -Wunused-parameter
-/// can be turned on.
+/// Finds unused parameters and fixes them, so that `-Wunused-parameter` can be
+/// turned on.
 class UnusedParametersCheck : public ClangTidyCheck {
 public:
   UnusedParametersCheck(StringRef Name, ClangTidyContext *Context)

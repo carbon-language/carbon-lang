@@ -17,10 +17,21 @@ namespace tidy {
 namespace google {
 namespace build {
 
-/// \brief Finds using namespace directives.
+/// Finds using namespace directives.
 ///
 /// http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml?showone=Namespaces#Namespaces
-/// Corresponding cpplint.py check name: 'build/namespaces'.
+///
+/// The check implements the following rule of the Google C++ Style Guide:
+///
+///   You may not use a using-directive to make all names from a namespace
+///   available.
+///
+///   \code
+///     // Forbidden -- This pollutes the namespace.
+///     using namespace foo;
+///   \endcode
+///
+/// Corresponding cpplint.py check name: `build/namespaces`.
 class UsingNamespaceDirectiveCheck : public ClangTidyCheck {
 public:
   UsingNamespaceDirectiveCheck(StringRef Name, ClangTidyContext *Context)

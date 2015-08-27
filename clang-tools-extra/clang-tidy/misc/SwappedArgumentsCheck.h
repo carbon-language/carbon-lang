@@ -16,8 +16,7 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-/// \brief Finds potentially swapped arguments by looking at implicit
-/// conversions.
+/// Finds potentially swapped arguments by looking at implicit conversions.
 class SwappedArgumentsCheck : public ClangTidyCheck {
 public:
   SwappedArgumentsCheck(StringRef Name, ClangTidyContext *Context)

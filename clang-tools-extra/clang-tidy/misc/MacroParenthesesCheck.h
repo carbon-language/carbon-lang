@@ -15,8 +15,7 @@
 namespace clang {
 namespace tidy {
 
-/// \brief Finds macros that can have unexpected behaviour due to missing
-/// parentheses.
+/// Finds macros that can have unexpected behaviour due to missing parentheses.
 ///
 /// Macros are expanded by the preprocessor as-is. As a result, there can be
 /// unexpected behaviour; operators may be evaluated in unexpected order and

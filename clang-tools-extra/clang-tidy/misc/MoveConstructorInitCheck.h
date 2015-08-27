@@ -15,9 +15,9 @@
 namespace clang {
 namespace tidy {
 
-/// \brief The check flags user-defined move constructors that have a
-/// ctor-initializer initializing a member or base class through a copy
-/// constructor instead of a move constructor.
+/// The check flags user-defined move constructors that have a ctor-initializer
+/// initializing a member or base class through a copy constructor instead of a
+/// move constructor.
 class MoveConstructorInitCheck : public ClangTidyCheck {
 public:
   MoveConstructorInitCheck(StringRef Name, ClangTidyContext *Context)

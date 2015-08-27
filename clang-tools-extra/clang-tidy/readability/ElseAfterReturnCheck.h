@@ -16,6 +16,9 @@ namespace clang {
 namespace tidy {
 namespace readability {
 
+/// Flags the usages of `else` after `return`.
+///
+/// http://llvm.org/docs/CodingStandards.html#don-t-use-else-after-a-return
 class ElseAfterReturnCheck : public ClangTidyCheck {
 public:
   ElseAfterReturnCheck(StringRef Name, ClangTidyContext *Context)

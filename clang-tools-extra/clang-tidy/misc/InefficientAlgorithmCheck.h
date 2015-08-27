@@ -16,7 +16,7 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-/// \brief Warns on inefficient use of STL algorithms on associative containers.
+/// Warns on inefficient use of STL algorithms on associative containers.
 ///
 /// Associative containers implements some of the algorithms as methods which
 /// should be preferred to the algorithms in the algorithm header. The methods

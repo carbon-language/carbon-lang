@@ -16,12 +16,17 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-/// \brief Checks for conditions based on implicit conversion from a bool
-/// pointer to bool e.g.
-/// bool *p;
-/// if (p) {
-///   // Never used in a pointer-specific way.
-/// }
+/// Checks for conditions based on implicit conversion from a bool pointer to
+/// bool.
+///
+/// Example:
+///
+/// \code
+///   bool *p;
+///   if (p) {
+///     // Never used in a pointer-specific way.
+///   }
+/// \endcode
 class BoolPointerImplicitConversionCheck : public ClangTidyCheck {
 public:
   BoolPointerImplicitConversionCheck(StringRef Name, ClangTidyContext *Context)

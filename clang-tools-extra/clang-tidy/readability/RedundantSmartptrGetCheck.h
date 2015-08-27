@@ -16,12 +16,15 @@ namespace clang {
 namespace tidy {
 namespace readability {
 
-/// \brief Find and remove redundant calls to smart pointer's .get() method.
+/// Find and remove redundant calls to smart pointer's `.get()` method.
 ///
 /// Examples:
+///
+/// \code
 ///   ptr.get()->Foo()  ==>  ptr->Foo()
 ///   *ptr.get()  ==>  *ptr
 ///   *ptr->get()  ==>  **ptr
+/// \endcode
 class RedundantSmartptrGetCheck : public ClangTidyCheck {
 public:
   RedundantSmartptrGetCheck(StringRef Name, ClangTidyContext *Context)
