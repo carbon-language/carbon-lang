@@ -1398,8 +1398,15 @@ llvm::DIType *CGDebugInfo::getOrCreateRecordType(QualType RTy,
 
 llvm::DIType *CGDebugInfo::getOrCreateInterfaceType(QualType D,
                                                     SourceLocation Loc) {
+  return getOrCreateStandaloneType(D, Loc);
+}
+
+llvm::DIType *CGDebugInfo::getOrCreateStandaloneType(QualType D,
+                                                     SourceLocation Loc) {
   assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);
+  assert(!D.isNull() && "null type");
   llvm::DIType *T = getOrCreateType(D, getOrCreateFile(Loc));
+  assert(T && "could not create debug info for type");
   RetainedTypes.push_back(D.getAsOpaquePtr());
   return T;
 }
@@ -3360,9 +3367,14 @@ void CGDebugInfo::finalize() {
 
   // We keep our own list of retained types, because we need to look
   // up the final type in the type cache.
-  for (std::vector<void *>::const_iterator RI = RetainedTypes.begin(),
-         RE = RetainedTypes.end(); RI != RE; ++RI)
-    DBuilder.retainType(cast<llvm::DIType>(TypeCache[*RI]));
+  llvm::DenseSet<void *> UniqueTypes;
+  UniqueTypes.resize(RetainedTypes.size() * 2);
+  for (auto &RT : RetainedTypes) {
+    if (!UniqueTypes.insert(RT).second)
+      continue;
+    if (auto MD = TypeCache[RT])
+      DBuilder.retainType(cast<llvm::DIType>(MD));
+  }
 
   DBuilder.finalize();
 }
