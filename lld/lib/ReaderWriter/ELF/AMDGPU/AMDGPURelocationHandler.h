@@ -10,6 +10,7 @@
 #define LLD_READER_WRITER_ELF_AMDGPU_AMDGPU_RELOCATION_HANDLER_H
 
 #include "lld/ReaderWriter/ELFLinkingContext.h"
+#include <system_error>
 
 namespace lld {
 namespace elf {
