@@ -870,7 +870,7 @@ public:
                             DiagnosticsEngine &Diags) override;
   bool handleUserFeatures(llvm::StringMap<bool> &Features,
                           std::vector<std::string> &UserFeatures,
-                          DiagnosticsEngine &Diags) override;
+                          DiagnosticsEngine &Diags) const override;
   bool hasFeature(StringRef Feature) const override;
   void setFeatureEnabled(llvm::StringMap<bool> &Features, StringRef Name,
                          bool Enabled) const override;
@@ -1051,7 +1051,7 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
 
 bool PPCTargetInfo::handleUserFeatures(llvm::StringMap<bool> &Features,
                                        std::vector<std::string> &UserFeatures,
-                                       DiagnosticsEngine &Diags) {
+                                       DiagnosticsEngine &Diags) const {
 
   // Handle explicit options being passed to the compiler here: if we've
   // explicitly turned off vsx and turned on power8-vector or direct-move then

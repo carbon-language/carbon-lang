@@ -788,7 +788,7 @@ public:
   /// \return False on error.
   virtual bool handleUserFeatures(llvm::StringMap<bool> &Features,
 				  std::vector<std::string> &UserFeatures,
-				  DiagnosticsEngine &Diags) {
+				  DiagnosticsEngine &Diags) const {
     for (const auto &F : UserFeatures) {
       const char *Name = F.c_str();
       // Apply the feature via the target.
