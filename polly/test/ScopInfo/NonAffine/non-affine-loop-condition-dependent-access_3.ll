@@ -1,6 +1,12 @@
-; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=false -analyze < %s | FileCheck %s --check-prefix=INNERMOST
-; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s --check-prefix=INNERMOST
-; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s --check-prefix=ALL
+; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine-branches \
+; RUN:     -polly-allow-nonaffine-loops=false -polly-detect-unprofitable \
+; RUN:     -analyze < %s | FileCheck %s --check-prefix=INNERMOST
+; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine-branches \
+; RUN:     -polly-allow-nonaffine-loops=true -polly-detect-unprofitable \
+; RUN:      -analyze < %s | FileCheck %s --check-prefix=INNERMOST
+; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine \
+; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true \
+; RUN:     -analyze < %s | FileCheck %s --check-prefix=ALL
 ;
 ; Here we have a non-affine loop (in the context of the loop nest)
 ; and also a non-affine access (A[k]). While we can always model the

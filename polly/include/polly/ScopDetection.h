@@ -294,6 +294,11 @@ private:
   /// @return True if the loop is valid in the region.
   bool isValidLoop(Loop *L, DetectionContext &Context) const;
 
+  /// @brief Check if a region contains more than one loop.
+  ///
+  /// @param R The region to check
+  bool hasMoreThanOneLoop(Region *R) const;
+
   /// @brief Check if the function @p F is marked as invalid.
   ///
   /// @note An OpenMP subfunction will be marked as invalid.

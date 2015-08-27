@@ -1,4 +1,5 @@
-; RUN: opt -S %loadPolly -polly-dependences -analyze < %s | FileCheck %s
+; RUN: opt -S %loadPolly -polly-dependences -polly-detect-unprofitable \
+; RUN:                   -analyze < %s | FileCheck %s
 
 ; CHECK: RAW dependences:
 ; CHECK:   { Stmt_bb9[0] -> Stmt_bb10[0] }

@@ -1,5 +1,10 @@
-; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s --check-prefix=INNERMOST
-; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s --check-prefix=ALL
+; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine-branches \
+; RUN:     -polly-allow-nonaffine-loops=true -polly-detect-unprofitable \
+; RUN:     -analyze < %s | FileCheck %s --check-prefix=INNERMOST
+; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine \
+; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true \
+; RUN:     -polly-detect-unprofitable -analyze < %s | FileCheck %s \
+; RUN:     --check-prefix=ALL
 ;
 ; INNERMOST:    Function: f
 ; INNERMOST:    Region: %bb9---%bb17

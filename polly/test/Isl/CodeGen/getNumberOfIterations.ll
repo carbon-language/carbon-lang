@@ -1,4 +1,5 @@
-; RUN: opt %loadPolly -polly-vectorizer=polly -polly-codegen < %s -S | FileCheck %s
+; RUN: opt %loadPolly -polly-vectorizer=polly -polly-codegen \
+; RUN:     -polly-detect-unprofitable  < %s -S | FileCheck %s
 
 ; #pragma known-parallel
 ; for (int c0 = 0; c0 <= min(15, N - 1); c0 += 1)

@@ -1,5 +1,8 @@
-; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s --check-prefix=FOUND
-; RUN: opt %loadPolly -polly-scops -analyze -polly-rtc-max-arrays-per-group=3 < %s | FileCheck %s --check-prefix=IGNORED
+; RUN: opt %loadPolly -polly-scops -polly-detect-unprofitable -analyze \
+; RUN:                < %s | FileCheck %s --check-prefix=FOUND
+; RUN: opt %loadPolly -polly-scops -polly-detect-unprofitable -analyze \
+; RUN:                -polly-rtc-max-arrays-per-group=3 < %s | FileCheck %s \
+; RUN:                --check-prefix=IGNORED
 ;
 ; FOUND: Function: foo
 ; IGNORED-NOT: Function: foo

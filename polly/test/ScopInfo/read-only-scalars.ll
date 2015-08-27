@@ -1,5 +1,8 @@
-; RUN: opt %loadPolly -polly-analyze-read-only-scalars=false -polly-scops -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-analyze-read-only-scalars=true -polly-scops -analyze < %s | FileCheck %s -check-prefix=SCALARS
+; RUN: opt %loadPolly -polly-analyze-read-only-scalars=false -polly-scops \
+; RUN:                -polly-detect-unprofitable -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-analyze-read-only-scalars=true -polly-scops \
+; RUN:                -polly-detect-unprofitable -analyze < %s | FileCheck %s \
+; RUN:                -check-prefix=SCALARS
 
 ; CHECK-NOT: Memref_scalar
 

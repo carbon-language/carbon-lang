@@ -798,6 +798,23 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
   return invalid<ReportLoopBound>(Context, /*Assert=*/true, L, LoopCount);
 }
 
+bool ScopDetection::hasMoreThanOneLoop(Region *R) const {
+  Loop *EntryLoop = LI->getLoopFor(R->getEntry());
+  if (!EntryLoop)
+    return false;
+
+  if (!EntryLoop->getSubLoops().empty())
+    return true;
+
+  for (pred_iterator PI = pred_begin(R->getExit()), PE = pred_end(R->getExit());
+       PI != PE; ++PI)
+    if (R->contains(*PI))
+      if (EntryLoop != LI->getLoopFor(*PI))
+        return true;
+
+  return false;
+}
+
 Region *ScopDetection::expandRegion(Region &R) {
   // Initial no valid region was found (greater than R)
   std::unique_ptr<Region> LastValidRegion;
@@ -1008,6 +1025,9 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   if (CurRegion.getEntry() ==
       &(CurRegion.getEntry()->getParent()->getEntryBlock()))
     return invalid<ReportEntry>(Context, /*Assert=*/true, CurRegion.getEntry());
+
+  if (!DetectUnprofitable && !hasMoreThanOneLoop(&CurRegion))
+    invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
   if (!isValidExit(Context))
     return false;

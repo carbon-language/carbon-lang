@@ -1,4 +1,5 @@
-; RUN: opt %loadPolly -tbaa -polly-scops -polly-ignore-aliasing -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -tbaa -polly-scops -polly-ignore-aliasing \
+; RUN:                -polly-detect-unprofitable -analyze < %s | FileCheck %s
 ;
 ; CHECK: Arrays {
 ; CHECK:   i32** MemRef_A[*][8]

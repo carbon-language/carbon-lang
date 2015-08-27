@@ -1,6 +1,9 @@
-; RUN: opt %loadPolly -analyze -polly-detect < %s | FileCheck %s --check-prefix=DETECT
-; RUN: opt %loadPolly -analyze -polly-scops < %s | FileCheck %s --check-prefix=INFO
-; RUN: opt %loadPolly -analyze -polly-ast < %s | FileCheck %s
+; RUN: opt %loadPolly -analyze -polly-detect -polly-detect-unprofitable < %s | \
+; RUN:     FileCheck %s --check-prefix=DETECT
+; RUN: opt %loadPolly -analyze -polly-scops -polly-detect-unprofitable < %s | \
+; RUN:     FileCheck %s --check-prefix=INFO
+; RUN: opt %loadPolly -analyze -polly-ast -polly-detect-unprofitable < %s | \
+; RUN:     FileCheck %s
 ;
 ; This test used to crash the scalar code generation, now we will bail out after
 ; ScopInfo and destory the ScoP as the runtime context is empty.
