@@ -222,9 +222,11 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
 
       unsigned Index;
       if (SN2I.lookup(S->Info, Index)) {
-        errs() << "error: Unknown section referenced: '" << S->Info
-               << "' at YAML section '" << S->Name << "'.\n";
-        return false;
+        if (S->Info.getAsInteger(0, Index)) {
+          errs() << "error: Unknown section referenced: '" << S->Info
+                 << "' at YAML section '" << S->Name << "'.\n";
+          return false;
+        }
       }
       SHeader.sh_info = Index;
 
