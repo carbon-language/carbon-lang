@@ -2,6 +2,12 @@
 Clang-Tidy
 ==========
 
+.. toctree::
+   :maxdepth: 1
+
+   checks/list
+
+
 :program:`clang-tidy` is a clang-based C++ linter tool. Its purpose is to
 provide an extensible framework for diagnosing and fixing typical programming
 errors, like style violations, interface misuse, or bugs that can be deduced via
@@ -248,12 +254,14 @@ The Directory Structure
   |-- ClangTidyModuleRegistry.h     # Interface for registering of modules.
      ...
   |-- google/                       # Google clang-tidy module.
-  |--  |-- GoogleTidyModule.cpp
-  |--  |-- GoogleTidyModule.h
+  |-+
+    |-- GoogleTidyModule.cpp
+    |-- GoogleTidyModule.h
           ...
   |-- llvm/                         # LLVM clang-tidy module.
-  |--  |-- LLVMTidyModule.cpp
-  |--  |-- LLVMTidyModule.h
+  |-+
+    |-- LLVMTidyModule.cpp
+    |-- LLVMTidyModule.h
           ...
   |-- tool/                         # Sources of the clang-tidy binary.
           ...
