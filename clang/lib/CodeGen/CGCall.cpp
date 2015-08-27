@@ -1503,8 +1503,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       const auto *TD = FD->getAttr<TargetAttr>();
 
       // Make a copy of the features as passed on the command line.
-      std::vector<std::string> FnFeatures(
-          getTarget().getTargetOpts().FeaturesAsWritten);
+      std::vector<std::string> FnFeatures =
+          getTarget().getTargetOpts().FeaturesAsWritten;
 
       // Grab the target attribute string.
       StringRef FeaturesStr = TD->getFeatures();
