@@ -5998,7 +5998,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         break;
       case SC_Register:
         // Local Named register
-        if (!Context.getTargetInfo().isValidGCCRegisterName(Label))
+        if (!Context.getTargetInfo().isValidGCCRegisterName(Label) &&
+            DeclAttrsMatchCUDAMode(getLangOpts(), getCurFunctionDecl()))
           Diag(E->getExprLoc(), diag::err_asm_unknown_register_name) << Label;
         break;
       case SC_Static:
@@ -6009,7 +6010,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       }
     } else if (SC == SC_Register) {
       // Global Named register
-      if (!Context.getTargetInfo().isValidGCCRegisterName(Label))
+      if (!Context.getTargetInfo().isValidGCCRegisterName(Label) &&
+          DeclAttrsMatchCUDAMode(getLangOpts(), NewVD))
         Diag(E->getExprLoc(), diag::err_asm_unknown_register_name) << Label;
       if (!R->isIntegralType(Context) && !R->isPointerType()) {
         Diag(D.getLocStart(), diag::err_asm_bad_register_type);
