@@ -22,8 +22,7 @@ endif()
 
 set(lld_link "${LLVM_RUNTIME_OUTPUT_INTDIR}/lld-link${CMAKE_EXECUTABLE_SUFFIX}")
 
-add_custom_command(OUTPUT ${lld_link}
-                   COMMAND ${CMAKE_COMMAND} -E ${LLD_LINK_OR_COPY} "${lld_binary}" "${lld_link}"
-                   DEPENDS lld)
+add_custom_command(TARGET lld POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E ${LLD_LINK_OR_COPY} "${lld_binary}" "${lld_link}")
 
 install(SCRIPT install_symlink.cmake -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
