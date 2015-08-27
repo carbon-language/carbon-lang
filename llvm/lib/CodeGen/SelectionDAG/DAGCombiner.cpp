@@ -4457,8 +4457,9 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   // fold (shl (mul x, c1), c2) -> (mul x, c1 << c2)
   if (N1C && N0.getOpcode() == ISD::MUL && N0.getNode()->hasOneUse()) {
     if (ConstantSDNode *N0C1 = isConstOrConstSplat(N0.getOperand(1))) {
-      SDValue Folded = DAG.FoldConstantArithmetic(ISD::SHL, SDLoc(N1), VT, N0C1, N1C);
-      return DAG.getNode(ISD::MUL, SDLoc(N), VT, N0.getOperand(0), Folded);
+      if (SDValue Folded =
+              DAG.FoldConstantArithmetic(ISD::SHL, SDLoc(N1), VT, N0C1, N1C))
+        return DAG.getNode(ISD::MUL, SDLoc(N), VT, N0.getOperand(0), Folded);
     }
   }
 
