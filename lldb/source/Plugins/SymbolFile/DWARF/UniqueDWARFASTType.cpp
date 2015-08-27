@@ -15,8 +15,6 @@
 // Project includes
 #include "lldb/Symbol/Declaration.h"
 
-#include "DWARFDebugInfoEntry.h"
-
 bool
 UniqueDWARFASTTypeList::Find (const DWARFDIE &die,
                               const lldb_private::Declaration &decl,

@@ -20,7 +20,6 @@
 #include "DWARFDefines.h"
 
 class SymbolFileDWARF;
-class DWARFDebugInfoEntry;
 
 //----------------------------------------------------------------------
 // DWARFDebugLine

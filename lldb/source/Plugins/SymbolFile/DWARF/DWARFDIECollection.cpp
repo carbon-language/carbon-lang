@@ -13,8 +13,6 @@
 
 #include "lldb/Core/Stream.h"
 
-#include "DWARFDebugInfoEntry.h"
-
 using namespace lldb_private;
 using namespace std;
 
@@ -56,5 +54,5 @@ DWARFDIECollection::Dump(Stream *s, const char* title) const
     if (title && title[0] != '\0')
         s->Printf( "%s\n", title);
     for (const auto &die : m_dies)
-        s->Printf( "0x%8.8x\n", die.GetDIE()->GetOffset());
+        s->Printf( "0x%8.8x\n", die.GetOffset());
 }

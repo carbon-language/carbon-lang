@@ -21,10 +21,6 @@
 #include "lldb/Symbol/Declaration.h"
 #include "DWARFDIE.h"
 
-class DWARFCompileUnit;
-class DWARFDebugInfoEntry;
-class SymbolFileDWARF;
-
 class UniqueDWARFASTType
 {
 public:

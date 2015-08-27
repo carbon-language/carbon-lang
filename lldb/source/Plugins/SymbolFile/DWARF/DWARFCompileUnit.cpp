@@ -396,7 +396,7 @@ DWARFCompileUnit::BuildAddressRangeTable (SymbolFileDWARF* dwarf2Data,
     size_t num_debug_aranges = debug_aranges->GetNumRanges();
     
     // First get the compile unit DIE only and check if it has a DW_AT_ranges
-    const DWARFDebugInfoEntry* die = GetCompileUnitDIEOnly();
+    const DWARFDebugInfoEntry* die = GetCompileUnitDIEPtrOnly();
     
     const dw_offset_t cu_offset = GetOffset();
     if (die)
@@ -996,7 +996,7 @@ DWARFCompileUnit::ParseProducerInfo ()
     m_producer_version_minor = UINT32_MAX;
     m_producer_version_update = UINT32_MAX;
 
-    const DWARFDebugInfoEntry *die = GetCompileUnitDIEOnly();
+    const DWARFDebugInfoEntry *die = GetCompileUnitDIEPtrOnly();
     if (die)
     {
 
@@ -1087,7 +1087,7 @@ DWARFCompileUnit::GetLanguageType()
     if (m_language_type != eLanguageTypeUnknown)
         return m_language_type;
 
-    const DWARFDebugInfoEntry *die = GetCompileUnitDIEOnly();
+    const DWARFDebugInfoEntry *die = GetCompileUnitDIEPtrOnly();
     if (die)
         m_language_type = LanguageTypeFromDWARF(die->GetAttributeValueAsUnsigned(m_dwarf2Data, this, DW_AT_language, 0));
     return m_language_type;
@@ -1104,7 +1104,7 @@ DWARFCompileUnit::GetIsOptimized ()
 {
     if (m_is_optimized == eLazyBoolCalculate)
     {
-        const DWARFDebugInfoEntry *die = GetCompileUnitDIEOnly();
+        const DWARFDebugInfoEntry *die = GetCompileUnitDIEPtrOnly();
         if (die)
         {
             m_is_optimized = eLazyBoolNo;

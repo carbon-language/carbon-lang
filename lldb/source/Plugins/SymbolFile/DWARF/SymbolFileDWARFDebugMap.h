@@ -22,11 +22,8 @@
 #include "UniqueDWARFASTType.h"
 
 class SymbolFileDWARF;
-class DWARFCompileUnit;
 class DWARFDebugAranges;
-class DWARFDebugInfoEntry;
 class DWARFDeclContext;
-class DebugMapModule;
 
 class SymbolFileDWARFDebugMap : public lldb_private::SymbolFile
 {

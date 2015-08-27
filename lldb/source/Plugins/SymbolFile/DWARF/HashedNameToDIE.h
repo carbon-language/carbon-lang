@@ -20,11 +20,6 @@
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/MappedHash.h"
 
-
-class SymbolFileDWARF;
-class DWARFCompileUnit;
-class DWARFDebugInfoEntry;
-
 struct DWARFMappedHash
 {
     struct DIEInfo
@@ -217,12 +212,6 @@ struct DWARFMappedHash
     };
     
     typedef std::vector<Atom> AtomArray;
-    
-    static uint32_t 
-    GetTypeFlags (SymbolFileDWARF *dwarf2Data,
-                  const DWARFCompileUnit* cu,
-                  const DWARFDebugInfoEntry* die);
-    
 
     static const char *
     GetAtomTypeName (uint16_t atom)
@@ -522,64 +511,6 @@ struct DWARFMappedHash
             }
         }
     };
-    
-//    class ExportTable
-//    {
-//    public:
-//        ExportTable ();
-//        
-//        void
-//        AppendNames (DWARFDebugPubnamesSet &pubnames_set,
-//                     StringTable &string_table);
-//        
-//        void
-//        AppendNamesEntry (SymbolFileDWARF *dwarf2Data,
-//                          const DWARFCompileUnit* cu,
-//                          const DWARFDebugInfoEntry* die,
-//                          StringTable &string_table);
-//        
-//        void
-//        AppendTypesEntry (DWARFData *dwarf2Data,
-//                          const DWARFCompileUnit* cu,
-//                          const DWARFDebugInfoEntry* die,
-//                          StringTable &string_table);
-//        
-//        size_t
-//        Save (BinaryStreamBuf &names_data, const StringTable &string_table);
-//        
-//        void
-//        AppendName (const char *name, 
-//                    uint32_t die_offset, 
-//                    StringTable &string_table,
-//                    dw_offset_t name_debug_str_offset = DW_INVALID_OFFSET); // If "name" has already been looked up, then it can be supplied
-//        void
-//        AppendType (const char *name, 
-//                    uint32_t die_offset, 
-//                    StringTable &string_table);
-//        
-//        
-//    protected:
-//        struct Entry
-//        {
-//            uint32_t hash;
-//            uint32_t str_offset;
-//            uint32_t die_offset;
-//        };
-//        
-//        // Map uniqued .debug_str offset to the corresponding DIE offsets
-//        typedef std::map<uint32_t, DIEInfoArray> NameInfo;
-//        // Map a name hash to one or more name infos
-//        typedef std::map<uint32_t, NameInfo> BucketEntry;
-//        
-//        static uint32_t
-//        GetByteSize (const NameInfo &name_info);
-//        
-//        typedef std::vector<BucketEntry> BucketEntryColl;
-//        typedef std::vector<Entry> EntryColl;
-//        EntryColl m_entries;
-//        
-//    };
-    
     
     // A class for reading and using a saved hash table from a block of data
     // in memory

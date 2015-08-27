@@ -19,7 +19,6 @@
 #include "clang/AST/Type.h"
 
 class DWARFDIE;
-class DWARFDebugInfoEntry;
 
 namespace lldb_private {
     

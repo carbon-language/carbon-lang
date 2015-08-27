@@ -8761,7 +8761,6 @@ ClangASTContext::DumpTypeDescription (void* type, Stream *s)
 
 #include "Plugins/SymbolFile/DWARF/DWARFCompileUnit.h"
 #include "Plugins/SymbolFile/DWARF/DWARFDebugInfo.h"
-#include "Plugins/SymbolFile/DWARF/DWARFDebugInfoEntry.h"
 #include "Plugins/SymbolFile/DWARF/DWARFDeclContext.h"
 #include "Plugins/SymbolFile/DWARF/DWARFDefines.h"
 #include "Plugins/SymbolFile/DWARF/DWARFDIE.h"
@@ -10539,20 +10538,6 @@ ClangASTContext::ParseChildArrayInfo (const SymbolContext& sc,
     }
 }
 
-//clang::DeclContext*
-//ClangASTContext::GetClangDeclContextContainingTypeUID (SymbolFileDWARF *dwarf, lldb::user_id_t type_uid)
-//{
-//    DWARFDebugInfo* debug_info = dwarf->DebugInfo();
-//    if (debug_info && dwarf->UserIDMatches(type_uid))
-//    {
-//        DWARFCompileUnitSP cu_sp;
-//        const DWARFDebugInfoEntry* die = debug_info->GetDIEPtr(type_uid, &cu_sp);
-//        if (die)
-//            return GetClangDeclContextContainingDIE (dwarf, cu_sp.get(), die, NULL);
-//    }
-//    return NULL;
-//}
-//
 //----------------------------------------------------------------------
 // CompilerDeclContext functions
 //----------------------------------------------------------------------
@@ -10694,7 +10679,7 @@ ClangASTContext::GetClangDeclContextForDIE (const DWARFDIE &die)
 {
     if (die)
     {
-        clang::DeclContext *decl_ctx = GetCachedClangDeclContextForDIE (die.GetDIE());
+        clang::DeclContext *decl_ctx = GetCachedClangDeclContextForDIE (die);
         if (decl_ctx)
             return decl_ctx;
 
@@ -10719,7 +10704,7 @@ ClangASTContext::GetClangDeclContextForDIE (const DWARFDIE &die)
         {
             Type* type = die.GetDWARF()->ResolveType (die);
             if (type)
-                decl_ctx = GetCachedClangDeclContextForDIE (die.GetDIE());
+                decl_ctx = GetCachedClangDeclContextForDIE (die);
         }
 
         if (decl_ctx)
@@ -12244,6 +12229,17 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
     return type_sp;
 }
 
+clang::DeclContext *
+ClangASTContext::GetCachedClangDeclContextForDIE (const DWARFDIE &die)
+{
+    if (die)
+    {
+        DIEToDeclContextMap::iterator pos = m_die_to_decl_ctx.find(die.GetDIE());
+        if (pos != m_die_to_decl_ctx.end())
+            return pos->second;
+    }
+    return nullptr;
+}
 
 void
 ClangASTContext::LinkDeclContextToDIE (clang::DeclContext *decl_ctx, const DWARFDIE &die)
@@ -12490,8 +12486,6 @@ ClangASTContext::CopyUniqueClassMethodTypes (const DWARFDIE &src_class_die,
 
     const uint32_t src_size_artificial = src_name_to_die_artificial.GetSize ();
     const uint32_t dst_size_artificial = dst_name_to_die_artificial.GetSize ();
-
-    UniqueCStringMap<const DWARFDebugInfoEntry *> name_to_die_artificial_not_in_src;
 
     if (src_size_artificial && dst_size_artificial)
     {

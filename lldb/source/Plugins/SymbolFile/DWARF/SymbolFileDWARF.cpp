@@ -61,7 +61,6 @@
 #include "DWARFDebugAbbrev.h"
 #include "DWARFDebugAranges.h"
 #include "DWARFDebugInfo.h"
-#include "DWARFDebugInfoEntry.h"
 #include "DWARFDebugLine.h"
 #include "DWARFDebugPubnames.h"
 #include "DWARFDebugRanges.h"
@@ -923,17 +922,17 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx)
                 ModuleSP module_sp (m_obj_file->GetModule());
                 if (module_sp)
                 {
-                    const DWARFDebugInfoEntry * cu_die = dwarf_cu->GetCompileUnitDIEOnly ();
+                    const DWARFDIE cu_die = dwarf_cu->GetCompileUnitDIEOnly ();
                     if (cu_die)
                     {
-                        FileSpec cu_file_spec{cu_die->GetName(this, dwarf_cu), false};
+                        FileSpec cu_file_spec{cu_die.GetName(), false};
                         if (cu_file_spec)
                         {
                             // If we have a full path to the compile unit, we don't need to resolve
                             // the file.  This can be expensive e.g. when the source files are NFS mounted.
                             if (cu_file_spec.IsRelative())
                             {
-                                const char *cu_comp_dir{cu_die->GetAttributeValueAsString(this, dwarf_cu, DW_AT_comp_dir, nullptr)};
+                                const char *cu_comp_dir{cu_die.GetAttributeValueAsString(DW_AT_comp_dir, nullptr)};
                                 cu_file_spec.PrependPathComponent(resolveCompDir(cu_comp_dir));
                             }
 
@@ -942,7 +941,7 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx)
                                 cu_file_spec.SetFile(remapped_file, false);
                         }
 
-                        LanguageType cu_language = DWARFCompileUnit::LanguageTypeFromDWARF(cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0));
+                        LanguageType cu_language = DWARFCompileUnit::LanguageTypeFromDWARF(cu_die.GetAttributeValueAsUnsigned(DW_AT_language, 0));
 
                         bool is_optimized = dwarf_cu->GetIsOptimized ();
                         cu_sp.reset(new CompileUnit (module_sp,
@@ -1038,12 +1037,9 @@ SymbolFileDWARF::ParseCompileUnitLanguage (const SymbolContext& sc)
     assert (sc.comp_unit);
     DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
     if (dwarf_cu)
-    {
-        const DWARFDebugInfoEntry *die = dwarf_cu->GetCompileUnitDIEOnly();
-        if (die)
-            return DWARFCompileUnit::LanguageTypeFromDWARF(die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0));
-    }
-    return eLanguageTypeUnknown;
+        return dwarf_cu->GetLanguageType();
+    else
+        return eLanguageTypeUnknown;
 }
 
 size_t
@@ -1078,13 +1074,13 @@ SymbolFileDWARF::ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpec
     DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
     if (dwarf_cu)
     {
-        const DWARFDebugInfoEntry * cu_die = dwarf_cu->GetCompileUnitDIEOnly();
+        const DWARFDIE cu_die = dwarf_cu->GetCompileUnitDIEOnly();
 
         if (cu_die)
         {
-            const char * cu_comp_dir = resolveCompDir(cu_die->GetAttributeValueAsString(this, dwarf_cu, DW_AT_comp_dir, nullptr));
+            const char * cu_comp_dir = resolveCompDir(cu_die.GetAttributeValueAsString(DW_AT_comp_dir, nullptr));
 
-            dw_offset_t stmt_list = cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_stmt_list, DW_INVALID_OFFSET);
+            const dw_offset_t stmt_list = cu_die.GetAttributeValueAsUnsigned(DW_AT_stmt_list, DW_INVALID_OFFSET);
 
             // All file indexes in DWARF are one based and a file of index zero is
             // supposed to be the compile unit itself.
@@ -1177,10 +1173,10 @@ SymbolFileDWARF::ParseCompileUnitLineTable (const SymbolContext &sc)
     DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
     if (dwarf_cu)
     {
-        const DWARFDebugInfoEntry *dwarf_cu_die = dwarf_cu->GetCompileUnitDIEOnly();
+        const DWARFDIE dwarf_cu_die = dwarf_cu->GetCompileUnitDIEOnly();
         if (dwarf_cu_die)
         {
-            const dw_offset_t cu_line_offset = dwarf_cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_stmt_list, DW_INVALID_OFFSET);
+            const dw_offset_t cu_line_offset = dwarf_cu_die.GetAttributeValueAsUnsigned(DW_AT_stmt_list, DW_INVALID_OFFSET);
             if (cu_line_offset != DW_INVALID_OFFSET)
             {
                 std::unique_ptr<LineTable> line_table_ap(new LineTable(sc.comp_unit));
@@ -1489,8 +1485,7 @@ bool
 SymbolFileDWARF::HasForwardDeclForClangType (const CompilerType &clang_type)
 {
     CompilerType clang_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(clang_type);
-    const DWARFDebugInfoEntry* die = m_forward_decl_clang_type_to_die.lookup (clang_type_no_qualifiers.GetOpaqueQualType());
-    return die != NULL;
+    return m_forward_decl_clang_type_to_die.lookup (clang_type_no_qualifiers.GetOpaqueQualType()) != nullptr;
 }
 
 
@@ -1632,11 +1627,11 @@ SymbolFileDWARF::UpdateExternalModuleListIfNeeded()
     {
         DWARFCompileUnit* dwarf_cu = debug_info->GetCompileUnitAtIndex(cu_idx);
         
-        const DWARFDebugInfoEntry *die = dwarf_cu->GetCompileUnitDIEOnly();
-        if (die && die->HasChildren() == false)
+        const DWARFDIE die = dwarf_cu->GetCompileUnitDIEOnly();
+        if (die && die.HasChildren() == false)
         {
-            const uint64_t name_strp = die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_name, UINT64_MAX);
-            const uint64_t dwo_path_strp = die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_GNU_dwo_name, UINT64_MAX);
+            const uint64_t name_strp = die.GetAttributeValueAsUnsigned (DW_AT_name, UINT64_MAX);
+            const uint64_t dwo_path_strp = die.GetAttributeValueAsUnsigned (DW_AT_GNU_dwo_name, UINT64_MAX);
             
             if (name_strp != UINT64_MAX)
             {
@@ -3321,7 +3316,7 @@ SymbolFileDWARF::DIEDeclContextsMatch (const DWARFDIE &die1,
 
     // Make sure the top item in the decl context die array is always 
     // DW_TAG_compile_unit. If it isn't then something went wrong in
-    // the DWARFDebugInfoEntry::GetDeclContextDIEs() function...
+    // the DWARFDIE::GetDeclContextDIEs() function...
     assert (decl_ctx_1.GetDIEAtIndex (count1 - 1).Tag() == DW_TAG_compile_unit);
 
 #endif

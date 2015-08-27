@@ -22,14 +22,12 @@ typedef std::multimap<const char*, dw_offset_t, CStringCompareFunctionObject> CS
 typedef CStringToDIEMap::iterator CStringToDIEMapIter;
 typedef CStringToDIEMap::const_iterator CStringToDIEMapConstIter;
 
-typedef std::shared_ptr<DWARFCompileUnit> DWARFCompileUnitSP;
-
 class DWARFDebugInfo
 {
 public:
     typedef dw_offset_t (*Callback)(
         SymbolFileDWARF* dwarf2Data,
-        DWARFCompileUnit* cu_shared_ptr,
+        DWARFCompileUnit* cu,
         DWARFDebugInfoEntry* die,
         const dw_offset_t next_offset,
         const uint32_t depth,
@@ -42,7 +40,6 @@ public:
     LookupAddress(const dw_addr_t address,
                   const dw_offset_t cu_offset);    // Can be valid (find in .debug_aranges), or DW_INVALID_OFFSET if we need to search manually
 
-    void AddCompileUnit(DWARFCompileUnitSP& cu);
     size_t GetNumCompileUnits();
     bool ContainsCompileUnit (const DWARFCompileUnit *cu) const;
     DWARFCompileUnit* GetCompileUnitAtIndex (uint32_t idx);
@@ -70,8 +67,17 @@ public:
     GetCompileUnitAranges ();
 
 protected:
-    SymbolFileDWARF* m_dwarf2Data;
+    typedef std::shared_ptr<DWARFCompileUnit> DWARFCompileUnitSP;
+
+    static bool
+    OffsetLessThanCompileUnitOffset (dw_offset_t offset, const DWARFCompileUnitSP& cu_sp);
+
     typedef std::vector<DWARFCompileUnitSP>     CompileUnitColl;
+
+    //----------------------------------------------------------------------
+    // Member variables
+    //----------------------------------------------------------------------
+    SymbolFileDWARF* m_dwarf2Data;
     CompileUnitColl m_compile_units;
     std::unique_ptr<DWARFDebugAranges> m_cu_aranges_ap; // A quick address to compile unit table
 

@@ -204,8 +204,8 @@ DWARFDebugInfo::ContainsCompileUnit (const DWARFCompileUnit *cu) const
     return false;
 }
 
-static bool
-OffsetLessThanCompileUnitOffset (dw_offset_t offset, const DWARFCompileUnitSP& cu_sp)
+bool
+DWARFDebugInfo::OffsetLessThanCompileUnitOffset (dw_offset_t offset, const DWARFCompileUnitSP& cu_sp)
 {
     return offset < cu_sp->GetOffset();
 }
@@ -305,26 +305,6 @@ DWARFDebugInfo::GetDIEContainingOffset (dw_offset_t die_offset)
     return DWARFDIE();    // Not found
 
 }
-
-//----------------------------------------------------------------------
-// AddCompileUnit
-//----------------------------------------------------------------------
-void
-DWARFDebugInfo::AddCompileUnit(DWARFCompileUnitSP& cu)
-{
-    m_compile_units.push_back(cu);
-}
-
-/*
-void
-DWARFDebugInfo::AddDIE(DWARFDebugInfoEntry& die)
-{
-    m_die_array.push_back(die);
-}
-*/
-
-
-
 
 //----------------------------------------------------------------------
 // Parse
@@ -656,10 +636,10 @@ DWARFDebugInfo::Dump (Stream *s, const uint32_t die_offset, const uint32_t recur
     ParseCompileUnitHeadersIfNeeded();
     for (pos = m_compile_units.begin(); pos != m_compile_units.end(); ++pos)
     {
-        const DWARFCompileUnitSP& cu_sp = *pos;
-        DumpCallback(m_dwarf2Data, cu_sp.get(), NULL, 0, curr_depth, &dumpInfo);
+        DWARFCompileUnit *cu = pos->get();
+        DumpCallback(m_dwarf2Data, cu, NULL, 0, curr_depth, &dumpInfo);
         
-        const DWARFDIE die = cu_sp->DIE();
+        const DWARFDIE die = cu->DIE();
         if (die)
             die.Dump(s, recurse_depth);
     }

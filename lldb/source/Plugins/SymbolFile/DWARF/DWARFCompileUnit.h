@@ -68,28 +68,16 @@ public:
         m_base_addr = base_addr;
     }
 
-    const DWARFDebugInfoEntry*
+    DWARFDIE
     GetCompileUnitDIEOnly()
     {
-        ExtractDIEsIfNeeded (true);
-        if (m_die_array.empty())
-            return NULL;
-        return &m_die_array[0];
+        return DWARFDIE(this, GetCompileUnitDIEPtrOnly());
     }
 
     DWARFDIE
     DIE ()
     {
         return DWARFDIE(this, DIEPtr());
-    }
-
-    const DWARFDebugInfoEntry*
-    DIEPtr()
-    {
-        ExtractDIEsIfNeeded (false);
-        if (m_die_array.empty())
-            return NULL;
-        return &m_die_array[0];
     }
 
     void
@@ -113,12 +101,6 @@ public:
     HasDIEsParsed () const
     {
         return m_die_array.size() > 1;
-    }
-
-    DWARFDebugInfoEntry*
-    GetDIEAtIndexUnchecked (uint32_t idx)
-    {
-        return &m_die_array[idx];
     }
 
     DWARFDIE
@@ -160,12 +142,6 @@ public:
     bool
     Supports_unnamed_objc_bitfields ();
 
-//    void
-//    AddGlobalDIEByIndex (uint32_t die_idx);
-//
-//    void
-//    AddGlobal (const DWARFDebugInfoEntry* die);
-//
     void
     Index (const uint32_t cu_idx,
            NameToDIE& func_basenames,
@@ -232,6 +208,26 @@ protected:
     void
     ParseProducerInfo ();
 private:
+
+    const DWARFDebugInfoEntry*
+    GetCompileUnitDIEPtrOnly()
+    {
+        ExtractDIEsIfNeeded (true);
+        if (m_die_array.empty())
+            return NULL;
+        return &m_die_array[0];
+    }
+
+    const DWARFDebugInfoEntry*
+    DIEPtr()
+    {
+        ExtractDIEsIfNeeded (false);
+        if (m_die_array.empty())
+            return NULL;
+        return &m_die_array[0];
+    }
+
+
     DISALLOW_COPY_AND_ASSIGN (DWARFCompileUnit);
 };
 

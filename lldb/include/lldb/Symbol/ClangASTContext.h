@@ -35,6 +35,7 @@
 
 
 // Forward definitions for DWARF plug-in for type parsing
+class DWARFDebugInfoEntry;
 class DWARFDIE;
 class DWARFDIECollection;
 
@@ -1198,14 +1199,7 @@ protected:
                                 DWARFDIECollection &failures);
 
     clang::DeclContext *
-    GetCachedClangDeclContextForDIE (const DWARFDebugInfoEntry *die)
-    {
-        DIEToDeclContextMap::iterator pos = m_die_to_decl_ctx.find(die);
-        if (pos != m_die_to_decl_ctx.end())
-            return pos->second;
-        else
-            return NULL;
-    }
+    GetCachedClangDeclContextForDIE (const DWARFDIE &die);
 
     void
     LinkDeclContextToDIE (clang::DeclContext *decl_ctx,
