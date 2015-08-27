@@ -698,9 +698,9 @@ bool LoopInterchangeLegality::findInductionAndReductions(
     return false;
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I) {
     RecurrenceDescriptor RD;
+    InductionDescriptor ID;
     PHINode *PHI = cast<PHINode>(I);
-    ConstantInt *StepValue = nullptr;
-    if (isInductionPHI(PHI, SE, StepValue))
+    if (InductionDescriptor::isInductionPHI(PHI, SE, ID))
       Inductions.push_back(PHI);
     else if (RecurrenceDescriptor::isReductionPHI(PHI, L, RD))
       Reductions.push_back(PHI);

@@ -456,8 +456,54 @@ Value *RecurrenceDescriptor::createMinMaxOp(IRBuilder<> &Builder,
   return Select;
 }
 
-bool llvm::isInductionPHI(PHINode *Phi, ScalarEvolution *SE,
-                          ConstantInt *&StepValue) {
+InductionDescriptor::InductionDescriptor(Value *Start, InductionKind K,
+                                         ConstantInt *Step)
+  : StartValue(Start), IK(K), StepValue(Step) {
+  assert(IK != IK_NoInduction && "Not an induction");
+  assert(StartValue && "StartValue is null");
+  assert(StepValue && !StepValue->isZero() && "StepValue is zero");
+  assert((IK != IK_PtrInduction || StartValue->getType()->isPointerTy()) &&
+         "StartValue is not a pointer for pointer induction");
+  assert((IK != IK_IntInduction || StartValue->getType()->isIntegerTy()) &&
+         "StartValue is not an integer for integer induction");
+  assert(StepValue->getType()->isIntegerTy() &&
+         "StepValue is not an integer");
+}
+
+int InductionDescriptor::getConsecutiveDirection() const {
+  if (StepValue && (StepValue->isOne() || StepValue->isMinusOne()))
+    return StepValue->getSExtValue();
+  return 0;
+}
+
+Value *InductionDescriptor::transform(IRBuilder<> &B, Value *Index) const {
+  switch (IK) {
+  case IK_IntInduction:
+    assert(Index->getType() == StartValue->getType() &&
+           "Index type does not match StartValue type");
+    if (StepValue->isMinusOne())
+      return B.CreateSub(StartValue, Index);
+    if (!StepValue->isOne())
+      Index = B.CreateMul(Index, StepValue);
+    return B.CreateAdd(StartValue, Index);
+
+  case IK_PtrInduction:
+    assert(Index->getType() == StepValue->getType() &&
+           "Index type does not match StepValue type");
+    if (StepValue->isMinusOne())
+      Index = B.CreateNeg(Index);
+    else if (!StepValue->isOne())
+      Index = B.CreateMul(Index, StepValue);
+    return B.CreateGEP(nullptr, StartValue, Index);
+
+  case IK_NoInduction:
+    return nullptr;
+  }
+  llvm_unreachable("invalid enum");
+}
+
+bool InductionDescriptor::isInductionPHI(PHINode *Phi, ScalarEvolution *SE,
+                                         InductionDescriptor &D) {
   Type *PhiTy = Phi->getType();
   // We only handle integer and pointer inductions variables.
   if (!PhiTy->isIntegerTy() && !PhiTy->isPointerTy())
@@ -471,6 +517,10 @@ bool llvm::isInductionPHI(PHINode *Phi, ScalarEvolution *SE,
     return false;
   }
 
+  assert(AR->getLoop()->getHeader() == Phi->getParent() &&
+         "PHI is an AddRec for a different loop?!");
+  Value *StartValue =
+    Phi->getIncomingValueForBlock(AR->getLoop()->getLoopPreheader());
   const SCEV *Step = AR->getStepRecurrence(*SE);
   // Calculate the pointer stride and check if it is consecutive.
   const SCEVConstant *C = dyn_cast<SCEVConstant>(Step);
@@ -479,7 +529,7 @@ bool llvm::isInductionPHI(PHINode *Phi, ScalarEvolution *SE,
 
   ConstantInt *CV = C->getValue();
   if (PhiTy->isIntegerTy()) {
-    StepValue = CV;
+    D = InductionDescriptor(StartValue, IK_IntInduction, CV);
     return true;
   }
 
@@ -498,7 +548,9 @@ bool llvm::isInductionPHI(PHINode *Phi, ScalarEvolution *SE,
   int64_t CVSize = CV->getSExtValue();
   if (CVSize % Size)
     return false;
-  StepValue = ConstantInt::getSigned(CV->getType(), CVSize / Size);
+  auto *StepValue = ConstantInt::getSigned(CV->getType(), CVSize / Size);
+
+  D = InductionDescriptor(StartValue, IK_PtrInduction, StepValue);
   return true;
 }
 

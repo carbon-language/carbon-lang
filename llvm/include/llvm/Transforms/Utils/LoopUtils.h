@@ -198,6 +198,54 @@ private:
   Instruction *UnsafeAlgebraInst;
 };
 
+/// A struct for saving information about induction variables.
+class InductionDescriptor {
+public:
+  /// This enum represents the kinds of inductions that we support.
+  enum InductionKind {
+    IK_NoInduction,  ///< Not an induction variable.
+    IK_IntInduction, ///< Integer induction variable. Step = C.
+    IK_PtrInduction  ///< Pointer induction var. Step = C / sizeof(elem).
+  };
+
+private:
+  /// Private constructor - use \c isInductionPHI.
+  InductionDescriptor(Value *Start, InductionKind K, ConstantInt *Step);
+public:
+  /// Default constructor - creates an invalid induction.
+  InductionDescriptor()
+    : StartValue(nullptr), IK(IK_NoInduction), StepValue(nullptr) {}
+
+  /// Get the consecutive direction. Returns:
+  ///   0 - unknown or non-consecutive.
+  ///   1 - consecutive and increasing.
+  ///  -1 - consecutive and decreasing.
+  int getConsecutiveDirection() const;
+
+  /// Compute the transformed value of Index at offset StartValue using step
+  /// StepValue.
+  /// For integer induction, returns StartValue + Index * StepValue.
+  /// For pointer induction, returns StartValue[Index * StepValue].
+  /// FIXME: The newly created binary instructions should contain nsw/nuw
+  /// flags, which can be found from the original scalar operations.
+  Value *transform(IRBuilder<> &B, Value *Index) const;
+
+  Value *getStartValue() const { return StartValue; }
+  InductionKind getKind() const { return IK; }
+  ConstantInt *getStepValue() const { return StepValue; }
+
+  static bool isInductionPHI(PHINode *Phi, ScalarEvolution *SE,
+                             InductionDescriptor &D);
+  
+private:
+  /// Start value.
+  TrackingVH<Value> StartValue;
+  /// Induction kind.
+  InductionKind IK;
+  /// Step value.
+  ConstantInt *StepValue;
+};
+
 BasicBlock *InsertPreheaderForLoop(Loop *L, Pass *P);
 
 /// \brief Simplify each loop in a loop nest recursively.
@@ -276,11 +324,6 @@ bool promoteLoopAccessesToScalars(AliasSet &, SmallVectorImpl<BasicBlock*> &,
 /// exception, it takes LICMSafetyInfo and loop as argument.
 /// Updates safety information in LICMSafetyInfo argument.
 void computeLICMSafetyInfo(LICMSafetyInfo *, Loop *);
-
-/// \brief Checks if the given PHINode in a loop header is an induction
-/// variable. Returns true if this is an induction PHI along with the step
-/// value.
-bool isInductionPHI(PHINode *, ScalarEvolution *, ConstantInt *&);
 
 /// \brief Returns the instructions that use values defined in the loop.
 SmallVector<Instruction *, 8> findDefsUsedOutsideOfLoop(Loop *L);
