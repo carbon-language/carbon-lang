@@ -75,10 +75,6 @@ ASAN_FLAG(bool, check_malloc_usable_size, true,
           "295.*.")
 ASAN_FLAG(bool, unmap_shadow_on_exit, false,
           "If set, explicitly unmaps the (huge) shadow at exit.")
-ASAN_FLAG(
-    bool, abort_on_error, SANITIZER_MAC,
-    "If set, the tool calls abort() instead of _exit() after printing the "
-    "error report.")
 ASAN_FLAG(bool, print_stats, false,
           "Print various statistics after printing an error message or if "
           "atexit=1.")

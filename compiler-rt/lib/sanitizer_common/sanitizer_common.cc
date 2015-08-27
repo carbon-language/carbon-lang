@@ -143,6 +143,8 @@ void NORETURN Die() {
     if (InternalDieCallbacks[i])
       InternalDieCallbacks[i]();
   }
+  if (common_flags()->abort_on_error)
+    Abort();
   internal__exit(common_flags()->exitcode);
 }
 

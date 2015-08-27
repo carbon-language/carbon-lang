@@ -56,8 +56,6 @@ static void AsanDie() {
       UnmapOrDie((void*)kLowShadowBeg, kHighShadowEnd - kLowShadowBeg);
     }
   }
-  if (flags()->abort_on_error)
-    Abort();
 }
 
 static void AsanCheckFailed(const char *file, int line, const char *cond,
