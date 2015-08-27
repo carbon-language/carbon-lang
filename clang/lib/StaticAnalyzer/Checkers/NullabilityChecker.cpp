@@ -335,7 +335,10 @@ void NullabilityChecker::checkEvent(ImplicitNullDerefEvent Event) const {
   if (Filter.CheckNullableDereferenced &&
       TrackedNullability->getValue() == Nullability::Nullable) {
     BugReporter &BR = *Event.BR;
-    reportBug(ErrorKind::NullableDereferenced, Event.SinkNode, Region, BR);
+    if (Event.IsDirectDereference)
+      reportBug(ErrorKind::NullableDereferenced, Event.SinkNode, Region, BR);
+    else
+      reportBug(ErrorKind::NullablePassedToNonnull, Event.SinkNode, Region, BR);
   }
 }
 

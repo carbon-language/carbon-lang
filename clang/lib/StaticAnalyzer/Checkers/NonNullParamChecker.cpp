@@ -28,7 +28,7 @@ using namespace ento;
 
 namespace {
 class NonNullParamChecker
-  : public Checker< check::PreCall > {
+  : public Checker< check::PreCall, EventDispatcher<ImplicitNullDerefEvent> > {
   mutable std::unique_ptr<BugType> BTAttrNonNull;
   mutable std::unique_ptr<BugType> BTNullRefArg;
 
@@ -139,26 +139,34 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
     ProgramStateRef stateNotNull, stateNull;
     std::tie(stateNotNull, stateNull) = CM.assumeDual(state, *DV);
 
-    if (stateNull && !stateNotNull) {
-      // Generate an error node.  Check for a null node in case
-      // we cache out.
-      if (ExplodedNode *errorNode = C.generateSink(stateNull)) {
+    if (stateNull) {
+      if (!stateNotNull) {
+        // Generate an error node.  Check for a null node in case
+        // we cache out.
+        if (ExplodedNode *errorNode = C.generateSink(stateNull)) {
 
-        std::unique_ptr<BugReport> R;
-        if (haveAttrNonNull)
-          R = genReportNullAttrNonNull(errorNode, ArgE);
-        else if (haveRefTypeParam)
-          R = genReportReferenceToNullPointer(errorNode, ArgE);
+          std::unique_ptr<BugReport> R;
+          if (haveAttrNonNull)
+            R = genReportNullAttrNonNull(errorNode, ArgE);
+          else if (haveRefTypeParam)
+            R = genReportReferenceToNullPointer(errorNode, ArgE);
 
-        // Highlight the range of the argument that was null.
-        R->addRange(Call.getArgSourceRange(idx));
+          // Highlight the range of the argument that was null.
+          R->addRange(Call.getArgSourceRange(idx));
 
-        // Emit the bug report.
-        C.emitReport(std::move(R));
+          // Emit the bug report.
+          C.emitReport(std::move(R));
+        }
+
+        // Always return.  Either we cached out or we just emitted an error.
+        return;
       }
-
-      // Always return.  Either we cached out or we just emitted an error.
-      return;
+      if (ExplodedNode *N = C.generateSink(stateNull)) {
+        ImplicitNullDerefEvent event = {
+            V, false, N, &C.getBugReporter(),
+            /*IsDirectDereference=*/haveRefTypeParam};
+        dispatchEvent(event);
+      }
     }
 
     // If a pointer value passed the check we should assume that it is

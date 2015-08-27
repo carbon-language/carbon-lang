@@ -514,6 +514,10 @@ struct ImplicitNullDerefEvent {
   bool IsLoad;
   ExplodedNode *SinkNode;
   BugReporter *BR;
+  // When true, the dereference is in the source code directly. When false, the
+  // dereference might happen later (for example pointer passed to a parameter
+  // that is marked with nonnull attribute.)
+  bool IsDirectDereference;
 };
 
 /// \brief A helper class which wraps a boolean value set to false by default.

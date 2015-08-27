@@ -50,6 +50,8 @@ int *_Nullable returnsNullableInt();
 
 template <typename T> T *eraseNullab(T *p) { return p; }
 
+void takesAttrNonnull(Dummy *p) __attribute((nonnull(1)));
+
 void testBasicRules() {
   Dummy *p = returnsNullable();
   int *ptr = returnsNullableInt();
@@ -73,10 +75,8 @@ void testBasicRules() {
     Dummy dd(d);
     break;
   }
-  // Here the copy constructor is called, so a reference is initialized with the
-  // value of p. No ImplicitNullDereference event will be dispatched for this
-  // case. A followup patch is expected to fix this in NonNullParamChecker.
-  default: { Dummy d = *p; } break; // No warning.
+  case 5: takesAttrNonnull(p); break; // expected-warning {{Nullable pointer is passed to}}
+  default: { Dummy d = *p; } break; // expected-warning {{Nullable pointer is dereferenced}}
   }
   if (p) {
     takesNonnull(p);
