@@ -158,6 +158,9 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
           getColumnLimit(State))
     return true;
   if (Current.is(TT_CtorInitializerColon) &&
+      (State.Column + State.Line->Last->TotalLength - Current.TotalLength + 2 >
+           getColumnLimit(State) ||
+       State.Stack.back().BreakBeforeParameter) &&
       ((Style.AllowShortFunctionsOnASingleLine != FormatStyle::SFS_All) ||
        Style.BreakConstructorInitializersBeforeComma || Style.ColumnLimit != 0))
     return true;
