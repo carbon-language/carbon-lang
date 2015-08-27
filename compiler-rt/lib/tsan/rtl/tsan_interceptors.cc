@@ -1274,61 +1274,6 @@ TSAN_INTERCEPTOR(int, pthread_once, void *o, void (*f)()) {
   return 0;
 }
 
-TSAN_INTERCEPTOR(int, sem_init, void *s, int pshared, unsigned value) {
-  SCOPED_TSAN_INTERCEPTOR(sem_init, s, pshared, value);
-  int res = REAL(sem_init)(s, pshared, value);
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_destroy, void *s) {
-  SCOPED_TSAN_INTERCEPTOR(sem_destroy, s);
-  int res = REAL(sem_destroy)(s);
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_wait, void *s) {
-  SCOPED_TSAN_INTERCEPTOR(sem_wait, s);
-  int res = BLOCK_REAL(sem_wait)(s);
-  if (res == 0) {
-    Acquire(thr, pc, (uptr)s);
-  }
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_trywait, void *s) {
-  SCOPED_TSAN_INTERCEPTOR(sem_trywait, s);
-  int res = BLOCK_REAL(sem_trywait)(s);
-  if (res == 0) {
-    Acquire(thr, pc, (uptr)s);
-  }
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_timedwait, void *s, void *abstime) {
-  SCOPED_TSAN_INTERCEPTOR(sem_timedwait, s, abstime);
-  int res = BLOCK_REAL(sem_timedwait)(s, abstime);
-  if (res == 0) {
-    Acquire(thr, pc, (uptr)s);
-  }
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_post, void *s) {
-  SCOPED_TSAN_INTERCEPTOR(sem_post, s);
-  Release(thr, pc, (uptr)s);
-  int res = REAL(sem_post)(s);
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_getvalue, void *s, int *sval) {
-  SCOPED_TSAN_INTERCEPTOR(sem_getvalue, s, sval);
-  int res = REAL(sem_getvalue)(s, sval);
-  if (res == 0) {
-    Acquire(thr, pc, (uptr)s);
-  }
-  return res;
-}
-
 #if !SANITIZER_FREEBSD
 TSAN_INTERCEPTOR(int, __xstat, int version, const char *path, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__xstat, version, path, buf);
@@ -2277,6 +2222,12 @@ static void HandleRecvmsg(ThreadState *thr, uptr pc,
 #define COMMON_INTERCEPTOR_LIBRARY_UNLOADED() \
   libignore()->OnLibraryUnloaded()
 
+#define COMMON_INTERCEPTOR_ACQUIRE(ctx, u) \
+  Acquire(((TsanInterceptorContext *) ctx)->thr, pc, u)
+
+#define COMMON_INTERCEPTOR_RELEASE(ctx, u) \
+  Release(((TsanInterceptorContext *) ctx)->thr, pc, u)
+
 #define COMMON_INTERCEPTOR_DIR_ACQUIRE(ctx, path) \
   Acquire(((TsanInterceptorContext *) ctx)->thr, pc, Dir2addr(path))
 
@@ -2543,14 +2494,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(pthread_barrier_wait);
 
   TSAN_INTERCEPT(pthread_once);
-
-  TSAN_INTERCEPT(sem_init);
-  TSAN_INTERCEPT(sem_destroy);
-  TSAN_INTERCEPT(sem_wait);
-  TSAN_INTERCEPT(sem_trywait);
-  TSAN_INTERCEPT(sem_timedwait);
-  TSAN_INTERCEPT(sem_post);
-  TSAN_INTERCEPT(sem_getvalue);
 
   TSAN_INTERCEPT(stat);
   TSAN_MAYBE_INTERCEPT___XSTAT;
