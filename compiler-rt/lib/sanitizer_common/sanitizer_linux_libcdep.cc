@@ -327,12 +327,12 @@ uptr ThreadSelf() {
 #if !SANITIZER_GO
 static void GetTls(uptr *addr, uptr *size) {
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
-# if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)
+# if defined(__x86_64__) || defined(__i386__)
   *addr = ThreadSelf();
   *size = GetTlsSize();
   *addr -= *size;
   *addr += ThreadDescriptorSize();
-# elif defined(__mips__)
+# elif defined(__mips__) || defined(__aarch64__)
   *addr = ThreadSelf();
   *size = GetTlsSize();
 # else
