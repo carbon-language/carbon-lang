@@ -1,3 +1,6 @@
+# We need to execute this script at installation time because the
+# DESTDIR environment variable may be unset at configuration time.
+# See PR8397.
 if(UNIX)
   set(LINK_OR_COPY create_symlink)
   set(DESTDIR $ENV{DESTDIR})
