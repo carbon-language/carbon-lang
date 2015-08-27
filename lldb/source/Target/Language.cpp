@@ -9,6 +9,7 @@
 
 #include <functional>
 #include <map>
+#include <mutex>
 
 #include "lldb/Target/Language.h"
 
