@@ -1,7 +1,3 @@
-if(LLVM_BUILD_EXAMPLES)
-  set(ENABLE_EXAMPLES 1)
-endif()
-
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
@@ -98,16 +94,6 @@ if(TARGET ocaml_llvm)
           ocaml_llvm_transform_utils
           ocaml_llvm_vectorize
         )
-endif()
-
-if(LLVM_BUILD_EXAMPLES)
-  list(APPEND LLVM_TEST_DEPENDS
-    Kaleidoscope-Ch3
-    Kaleidoscope-Ch4
-    Kaleidoscope-Ch5
-    Kaleidoscope-Ch6
-    Kaleidoscope-Ch7
-    )
 endif()
 
 add_lit_testsuite(check-llvm "Running the LLVM regression tests"
