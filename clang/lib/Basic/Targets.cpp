@@ -863,7 +863,8 @@ public:
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override;
 
-  void initDefaultFeatures(llvm::StringMap<bool> &Features) const override;
+  void initDefaultFeatures(llvm::StringMap<bool> &Features,
+                           StringRef CPU) const override;
 
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
@@ -1262,7 +1263,8 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   //   __NO_FPRS__
 }
 
-void PPCTargetInfo::initDefaultFeatures(llvm::StringMap<bool> &Features) const {
+void PPCTargetInfo::initDefaultFeatures(llvm::StringMap<bool> &Features,
+                                        StringRef CPU) const {
   Features["altivec"] = llvm::StringSwitch<bool>(CPU)
     .Case("7400", true)
     .Case("g4", true)
@@ -2372,7 +2374,8 @@ public:
   // initDefaultFeatures which calls this repeatedly.
   static void setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
                                     StringRef Name, bool Enabled);
-  void initDefaultFeatures(llvm::StringMap<bool> &Features) const override;
+  void initDefaultFeatures(llvm::StringMap<bool> &Features,
+                           StringRef CPU) const override;
   bool hasFeature(StringRef Feature) const override;
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
@@ -2498,14 +2501,15 @@ bool X86TargetInfo::setFPMath(StringRef Name) {
   return false;
 }
 
-void X86TargetInfo::initDefaultFeatures(llvm::StringMap<bool> &Features) const {
+void X86TargetInfo::initDefaultFeatures(llvm::StringMap<bool> &Features,
+                                        StringRef CPU) const {
   // FIXME: This *really* should not be here.
 
   // X86_64 always has SSE2.
   if (getTriple().getArch() == llvm::Triple::x86_64)
     setFeatureEnabledImpl(Features, "sse2", true);
 
-  switch (CPU) {
+  switch (getCPUKind(CPU)) {
   case CK_Generic:
   case CK_i386:
   case CK_i486:
@@ -4375,7 +4379,8 @@ public:
   }
 
   // FIXME: This should be based on Arch attributes, not CPU names.
-  void initDefaultFeatures(llvm::StringMap<bool> &Features) const override {
+  void initDefaultFeatures(llvm::StringMap<bool> &Features,
+                           StringRef CPU) const override {
     if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
       Features["vfp2"] = true;
     else if (CPU == "cortex-a8" || CPU == "cortex-a9") {
@@ -5818,7 +5823,8 @@ public:
 
     return CPUKnown;
   }
-  void initDefaultFeatures(llvm::StringMap<bool> &Features) const override {
+  void initDefaultFeatures(llvm::StringMap<bool> &Features,
+                           StringRef CPU) const override {
     if (CPU == "zEC12")
       Features["transactional-execution"] = true;
     if (CPU == "z13") {
@@ -6185,7 +6191,8 @@ public:
         .Default(false);
   }
   const std::string& getCPU() const { return CPU; }
-  void initDefaultFeatures(llvm::StringMap<bool> &Features) const override {
+  void initDefaultFeatures(llvm::StringMap<bool> &Features,
+                           StringRef CPU) const override {
     if (CPU == "octeon")
       Features["mips64r2"] = Features["cnmips"] = true;
     else
@@ -7475,7 +7482,7 @@ TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   // Compute the default target features, we need the target to handle this
   // because features may have dependencies on one another.
   llvm::StringMap<bool> Features;
-  Target->initDefaultFeatures(Features);
+  Target->initDefaultFeatures(Features, Opts->CPU);
 
   // Apply the user specified deltas.
   if (!Target->handleUserFeatures(Features, Opts->FeaturesAsWritten, Diags))
