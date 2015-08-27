@@ -18,8 +18,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <vector>
-
 #include "libunwind.h"
 #include "dwarf2.h"
 
