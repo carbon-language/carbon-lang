@@ -15,10 +15,10 @@ target triple = "arm64-apple-ios7.0.0"
 ; CHECK: Maze1
 ; CHECK: %if.then
 ; CHECK: cmp x{{[0-9]+}}, #2
-; CHECK-NEXT b.cc
+; CHECK-NEXT: b.lo
 ; CHECK: %if.then
 ; CHECK: cmp x{{[0-9]+}}, #2
-; CHECK-NEXT b.cc
+; CHECK-NEXT: b.lo
 define i32 @Maze1() nounwind ssp {
 entry:
   %0 = load i64, i64* @channelColumns, align 8, !tbaa !0
