@@ -132,6 +132,23 @@ public:
     GetOperatingSystemCreateCallbackForPluginName (const ConstString &name);
 
     //------------------------------------------------------------------
+    // Language
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const ConstString &name,
+                    const char *description,
+                    LanguageCreateInstance create_callback);
+    
+    static bool
+    UnregisterPlugin (LanguageCreateInstance create_callback);
+    
+    static LanguageCreateInstance
+    GetLanguageCreateCallbackAtIndex (uint32_t idx);
+    
+    static LanguageCreateInstance
+    GetLanguageCreateCallbackForPluginName (const ConstString &name);
+    
+    //------------------------------------------------------------------
     // LanguageRuntime
     //------------------------------------------------------------------
     static bool

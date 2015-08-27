@@ -868,6 +868,111 @@ PluginManager::GetOperatingSystemCreateCallbackForPluginName (const ConstString 
 }
 
 
+#pragma mark Language
+
+
+struct LanguageInstance
+{
+    LanguageInstance() :
+        name(),
+        description(),
+        create_callback(NULL)
+    {
+    }
+    
+    ConstString name;
+    std::string description;
+    LanguageCreateInstance create_callback;
+};
+
+typedef std::vector<LanguageInstance> LanguageInstances;
+
+static Mutex &
+GetLanguageMutex ()
+{
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
+
+static LanguageInstances &
+GetLanguageInstances ()
+{
+    static LanguageInstances g_instances;
+    return g_instances;
+}
+
+bool
+PluginManager::RegisterPlugin
+(
+ const ConstString &name,
+ const char *description,
+ LanguageCreateInstance create_callback
+ )
+{
+    if (create_callback)
+    {
+        LanguageInstance instance;
+        assert ((bool)name);
+        instance.name = name;
+        if (description && description[0])
+            instance.description = description;
+        instance.create_callback = create_callback;
+        Mutex::Locker locker (GetLanguageMutex ());
+        GetLanguageInstances ().push_back (instance);
+    }
+    return false;
+}
+
+bool
+PluginManager::UnregisterPlugin (LanguageCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        Mutex::Locker locker (GetLanguageMutex ());
+        LanguageInstances &instances = GetLanguageInstances ();
+        
+        LanguageInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+LanguageCreateInstance
+PluginManager::GetLanguageCreateCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetLanguageMutex ());
+    LanguageInstances &instances = GetLanguageInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
+    return NULL;
+}
+
+LanguageCreateInstance
+PluginManager::GetLanguageCreateCallbackForPluginName (const ConstString &name)
+{
+    if (name)
+    {
+        Mutex::Locker locker (GetLanguageMutex ());
+        LanguageInstances &instances = GetLanguageInstances ();
+        
+        LanguageInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (name == pos->name)
+                return pos->create_callback;
+        }
+    }
+    return NULL;
+}
+
+
 #pragma mark LanguageRuntime
 
 

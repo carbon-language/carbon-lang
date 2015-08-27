@@ -28,6 +28,7 @@ namespace lldb_private
     typedef LogChannel* (*LogChannelCreateInstance) ();
     typedef EmulateInstruction * (*EmulateInstructionCreateInstance) (const ArchSpec &arch, InstructionType inst_type);
     typedef OperatingSystem* (*OperatingSystemCreateInstance) (Process *process, bool force);
+    typedef Language *(*LanguageCreateInstance) (lldb::LanguageType language);
     typedef LanguageRuntime *(*LanguageRuntimeCreateInstance) (Process *process, lldb::LanguageType language);
     typedef lldb::CommandObjectSP (*LanguageRuntimeGetCommandObject) (CommandInterpreter& interpreter);
     typedef SystemRuntime *(*SystemRuntimeCreateInstance) (Process *process);

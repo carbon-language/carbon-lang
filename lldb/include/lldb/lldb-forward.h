@@ -114,6 +114,7 @@ class   IOObject;
 class   IRExecutionUnit;
 class   JITLoader;
 class   JITLoaderList;
+class   Language;
 class   LanguageRuntime;
 class   MemoryRegionInfo;
 class   LineTable;
