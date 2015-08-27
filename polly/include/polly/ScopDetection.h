@@ -299,6 +299,14 @@ private:
   /// @note An OpenMP subfunction will be marked as invalid.
   bool isValidFunction(llvm::Function &F);
 
+  /// @brief Can ISL compute the trip count of a loop.
+  ///
+  /// @param L The loop to check.
+  /// @param Context The context of scop detection.
+  ///
+  /// @return True if ISL can compute the trip count of the loop.
+  bool canUseISLTripCount(Loop *L, DetectionContext &Context) const;
+
   /// @brief Print the locations of all detected scops.
   void printLocations(llvm::Function &F);
 

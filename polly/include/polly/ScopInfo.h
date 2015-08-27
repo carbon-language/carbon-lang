@@ -557,6 +557,7 @@ private:
   __isl_give isl_set *buildConditionSet(const Comparison &Cmp);
   void addConditionsToDomain(TempScop &tempScop, const Region &CurRegion);
   void addLoopBoundsToDomain(TempScop &tempScop);
+  void addLoopTripCountToDomain(const Loop *L);
   void buildDomain(TempScop &tempScop, const Region &CurRegion);
 
   /// @brief Create the accesses for instructions in @p Block.
@@ -1221,6 +1222,9 @@ public:
   ///
   /// @return true if a change was made
   bool restrictDomains(__isl_take isl_union_set *Domain);
+
+  /// @brief Get the depth of a loop relative to the outermost loop in the Scop.
+  unsigned getRelativeLoopDepth(const Loop *L) const;
 };
 
 /// @brief Print Scop scop to raw_ostream O.

@@ -739,6 +739,65 @@ void ScopStmt::realignParams() {
   Domain = isl_set_align_params(Domain, Parent.getParamSpace());
 }
 
+void ScopStmt::addLoopTripCountToDomain(const Loop *L) {
+
+  unsigned loopDimension = getParent()->getRelativeLoopDepth(L);
+  ScalarEvolution *SE = getParent()->getSE();
+  isl_space *DomSpace = isl_set_get_space(Domain);
+
+  isl_space *MapSpace = isl_space_map_from_set(isl_space_copy(DomSpace));
+  isl_multi_aff *LoopMAff = isl_multi_aff_identity(MapSpace);
+  isl_aff *LoopAff = isl_multi_aff_get_aff(LoopMAff, loopDimension);
+  LoopAff = isl_aff_add_constant_si(LoopAff, 1);
+  LoopMAff = isl_multi_aff_set_aff(LoopMAff, loopDimension, LoopAff);
+  isl_map *TranslationMap = isl_map_from_multi_aff(LoopMAff);
+
+  BasicBlock *ExitingBB = L->getExitingBlock();
+  assert(ExitingBB && "Loop has more than one exiting block");
+
+  BranchInst *Term = dyn_cast<BranchInst>(ExitingBB->getTerminator());
+  assert(Term && Term->isConditional() && "Terminator is not conditional");
+
+  const SCEV *LHS = nullptr;
+  const SCEV *RHS = nullptr;
+  Value *Cond = Term->getCondition();
+  CmpInst::Predicate Pred = CmpInst::Predicate::BAD_ICMP_PREDICATE;
+
+  ICmpInst *CondICmpInst = dyn_cast<ICmpInst>(Cond);
+  ConstantInt *CondConstant = dyn_cast<ConstantInt>(Cond);
+  if (CondICmpInst) {
+    LHS = SE->getSCEVAtScope(CondICmpInst->getOperand(0), L);
+    RHS = SE->getSCEVAtScope(CondICmpInst->getOperand(1), L);
+    Pred = CondICmpInst->getPredicate();
+  } else if (CondConstant) {
+    LHS = SE->getConstant(CondConstant);
+    RHS = SE->getConstant(ConstantInt::getTrue(SE->getContext()));
+    Pred = CmpInst::Predicate::ICMP_EQ;
+  } else {
+    llvm_unreachable("Condition is neither a ConstantInt nor a ICmpInst");
+  }
+
+  if (!L->contains(Term->getSuccessor(0)))
+    Pred = ICmpInst::getInversePredicate(Pred);
+  Comparison Comp(LHS, RHS, Pred);
+
+  isl_set *CondSet = buildConditionSet(Comp);
+  isl_map *ForwardMap = isl_map_lex_le(isl_space_copy(DomSpace));
+  for (unsigned i = 0; i < isl_set_n_dim(Domain); i++)
+    if (i != loopDimension)
+      ForwardMap = isl_map_equate(ForwardMap, isl_dim_in, i, isl_dim_out, i);
+
+  ForwardMap = isl_map_apply_range(ForwardMap, isl_map_copy(TranslationMap));
+  isl_set *CondDom = isl_set_subtract(isl_set_copy(Domain), CondSet);
+  isl_set *ForwardCond = isl_set_apply(CondDom, isl_map_copy(ForwardMap));
+  isl_set *ForwardDomain = isl_set_apply(isl_set_copy(Domain), ForwardMap);
+  ForwardCond = isl_set_gist(ForwardCond, ForwardDomain);
+  Domain = isl_set_subtract(Domain, ForwardCond);
+
+  isl_map_free(TranslationMap);
+  isl_space_free(DomSpace);
+}
+
 __isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp) {
   isl_pw_aff *L = getPwAff(Comp.getLHS());
   isl_pw_aff *R = getPwAff(Comp.getRHS());
@@ -789,9 +848,15 @@ void ScopStmt::addLoopBoundsToDomain(TempScop &tempScop) {
     // IV <= LatchExecutions.
     const Loop *L = getLoopForDimension(i);
     const SCEV *LatchExecutions = SE->getBackedgeTakenCount(L);
-    isl_pw_aff *UpperBound = getPwAff(LatchExecutions);
-    isl_set *UpperBoundSet = isl_pw_aff_le_set(IV, UpperBound);
-    Domain = isl_set_intersect(Domain, UpperBoundSet);
+    if (!isa<SCEVCouldNotCompute>(LatchExecutions)) {
+      isl_pw_aff *UpperBound = getPwAff(LatchExecutions);
+      isl_set *UpperBoundSet = isl_pw_aff_le_set(IV, UpperBound);
+      Domain = isl_set_intersect(Domain, UpperBoundSet);
+    } else {
+      // If SCEV cannot provide a loop trip count we compute it with ISL.
+      addLoopTripCountToDomain(L);
+      isl_pw_aff_free(IV);
+    }
   }
 
   isl_local_space_free(LocalSpace);
@@ -2057,6 +2122,12 @@ ScopStmt *Scop::getStmtForBasicBlock(BasicBlock *BB) const {
   if (StmtMapIt == StmtMap.end())
     return nullptr;
   return StmtMapIt->second;
+}
+
+unsigned Scop::getRelativeLoopDepth(const Loop *L) const {
+  Loop *OuterLoop = R.outermostLoopInRegion(const_cast<Loop *>(L));
+  assert(OuterLoop && "Scop does not contain this loop");
+  return L->getLoopDepth() - OuterLoop->getLoopDepth();
 }
 
 //===----------------------------------------------------------------------===//

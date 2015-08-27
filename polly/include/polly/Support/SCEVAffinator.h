@@ -71,8 +71,6 @@ private:
   llvm::ScalarEvolution &SE;
   const ScopStmt *Stmt;
 
-  int getLoopDepth(const llvm::Loop *L);
-
   __isl_give isl_pw_aff *visit(const llvm::SCEV *E);
   __isl_give isl_pw_aff *visitConstant(const llvm::SCEVConstant *E);
   __isl_give isl_pw_aff *visitTruncateExpr(const llvm::SCEVTruncateExpr *E);

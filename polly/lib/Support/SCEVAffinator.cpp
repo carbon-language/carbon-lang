@@ -160,7 +160,7 @@ SCEVAffinator::visitAddRecExpr(const SCEVAddRecExpr *Expr) {
     isl_space *Space = isl_space_set_alloc(Ctx, 0, NumIterators);
     isl_local_space *LocalSpace = isl_local_space_from_space(Space);
 
-    int loopDimension = getLoopDepth(Expr->getLoop());
+    unsigned loopDimension = S->getRelativeLoopDepth(Expr->getLoop());
 
     isl_aff *LAff = isl_aff_set_coefficient_si(
         isl_aff_zero_on_domain(LocalSpace), isl_dim_in, loopDimension, 1);
@@ -247,10 +247,4 @@ __isl_give isl_pw_aff *SCEVAffinator::visitUnknown(const SCEVUnknown *Expr) {
 
   llvm_unreachable(
       "Unknowns SCEV was neither parameter nor a valid instruction.");
-}
-
-int SCEVAffinator::getLoopDepth(const Loop *L) {
-  Loop *outerLoop = S->getRegion().outermostLoopInRegion(const_cast<Loop *>(L));
-  assert(outerLoop && "Scop does not contain this loop");
-  return L->getLoopDepth() - outerLoop->getLoopDepth();
 }
