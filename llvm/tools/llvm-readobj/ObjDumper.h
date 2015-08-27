@@ -56,6 +56,7 @@ public:
 
   // Only implemented for MachO.
   virtual void printMachODataInCode() { }
+  virtual void printMachOVersionMin() { }
 
   virtual void printStackMap() const = 0;
 

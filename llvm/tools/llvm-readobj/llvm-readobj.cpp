@@ -186,6 +186,10 @@ namespace opts {
   MachODataInCode("macho-data-in-code",
                   cl::desc("Display MachO Data in Code command"));
 
+  // -macho-version-min
+  cl::opt<bool>
+  MachOVersionMin("macho-version-min",
+                  cl::desc("Display MachO version min command"));
   // -stackmap
   cl::opt<bool>
   PrintStackMap("stackmap",
@@ -320,6 +324,8 @@ static void dumpObject(const ObjectFile *Obj) {
   if (Obj->isMachO())
     if (opts::MachODataInCode)
       Dumper->printMachODataInCode();
+    if (opts::MachOVersionMin)
+      Dumper->printMachOVersionMin();
   if (opts::PrintStackMap)
     Dumper->printStackMap();
 }

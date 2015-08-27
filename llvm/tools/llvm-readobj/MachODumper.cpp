@@ -42,6 +42,7 @@ public:
 
   // MachO-specific.
   void printMachODataInCode() override;
+  void printMachOVersionMin() override;
 
 private:
   template<class MachHeader>
@@ -622,6 +623,43 @@ void MachODumper::printMachODataInCode() {
         W.printNumber("Length", DICE.length);
         W.printNumber("Kind", DICE.kind);
       }
+    }
+  }
+}
+
+void MachODumper::printMachOVersionMin() {
+  for (const auto &Load : Obj->load_commands()) {
+    if (Load.C.cmd == MachO::LC_VERSION_MIN_MACOSX ||
+        Load.C.cmd == MachO::LC_VERSION_MIN_IPHONEOS) {
+      MachO::version_min_command VMC = Obj->getVersionMinLoadCommand(Load);
+      DictScope Group(W, "MinVersion");
+      StringRef Cmd;
+      if (Load.C.cmd == MachO::LC_VERSION_MIN_MACOSX)
+        Cmd = "LC_VERSION_MIN_MACOSX";
+      else
+        Cmd = "LC_VERSION_MIN_IPHONEOS";
+      W.printString("Cmd", Cmd);
+      W.printNumber("Size", VMC.cmdsize);
+      SmallString<32> Version;
+      Version = utostr(MachOObjectFile::getVersionMinMajor(VMC, false)) + "." +
+        utostr(MachOObjectFile::getVersionMinMinor(VMC, false));
+      uint32_t Update = MachOObjectFile::getVersionMinUpdate(VMC, false);
+      if (Update != 0)
+        Version += "." + utostr(MachOObjectFile::getVersionMinUpdate(VMC,
+                                                                     false));
+      W.printString("Version", Version);
+      SmallString<32> SDK;
+      if (VMC.sdk == 0)
+        SDK = "n/a";
+      else {
+        SDK = utostr(MachOObjectFile::getVersionMinMajor(VMC, true)) + "." +
+          utostr(MachOObjectFile::getVersionMinMinor(VMC, true));
+        uint32_t Update = MachOObjectFile::getVersionMinUpdate(VMC, true);
+        if (Update != 0)
+          SDK += "." + utostr(MachOObjectFile::getVersionMinUpdate(VMC,
+                                                                   true));
+      }
+      W.printString("SDK", SDK);
     }
   }
 }
