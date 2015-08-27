@@ -184,8 +184,8 @@ void f() {
 }  // Test8
 
 namespace Test9 {
-// all virtual functions are outline, so we can assume that it will
-// be generated in translation unit where foo is defined
+// All virtual functions are outline, so we can assume that it will
+// be generated in translation unit where foo is defined.
 // CHECK-TEST9-DAG: @_ZTVN5Test91AE = available_externally unnamed_addr constant
 // CHECK-TEST9-DAG: @_ZTVN5Test91BE = available_externally unnamed_addr constant
 struct A {
@@ -217,14 +217,14 @@ struct A {
 };
 void A::foo() {}
 
-// Because key function is inline we will generate vtable as linkonce_odr
+// Because key function is inline we will generate vtable as linkonce_odr.
 // CHECK-TEST10-DAG: @_ZTVN6Test101DE = linkonce_odr unnamed_addr constant
 struct D : A {
   void bar();
 };
 inline void D::bar() {}
 
-// because B has outline key function then we can refer to
+// Because B has outline all virtual functions, we can refer to them.
 // CHECK-TEST10-DAG: @_ZTVN6Test101BE = available_externally unnamed_addr constant
 struct B : A {
   void foo();
@@ -233,7 +233,7 @@ struct B : A {
 
 // C's key function (car) is outline, but C has inline virtual function so we
 // can't guarantee that we will be able to refer to bar from name
-// so (at the moment) we can't emit vtable available_externally
+// so (at the moment) we can't emit vtable available_externally.
 // CHECK-TEST10-DAG: @_ZTVN6Test101CE = external unnamed_addr constant
 struct C : A {
   void bar() {}               // defined in body - not key function
@@ -364,5 +364,4 @@ void test() {
   d->f();
 }
 }
-
 

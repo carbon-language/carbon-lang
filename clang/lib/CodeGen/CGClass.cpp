@@ -1857,8 +1857,15 @@ void CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
   // with a vtable.  We don't do this for base subobjects for two reasons:
   // first, it's incorrect for classes with virtual bases, and second, we're
   // about to overwrite the vptrs anyway.
+  // We also have to make sure if we can refer to vtable:
+  // - If vtable is external then it's safe to use it (for available_externally
+  //   CGVTables will make sure if it can emit it).
+  // - Otherwise we can refer to vtable if it's safe to speculatively emit.
+  // FIXME: If vtable is used by ctor/dtor, we are always safe to refer to it.
   if (CGM.getCodeGenOpts().OptimizationLevel > 0 &&
-      ClassDecl->isDynamicClass() && Type != Ctor_Base)
+      ClassDecl->isDynamicClass() && Type != Ctor_Base &&
+      (CGM.getVTables().isVTableExternal(ClassDecl) ||
+       CGM.getCXXABI().canSpeculativelyEmitVTable(ClassDecl)))
     EmitVTableAssumptionLoads(ClassDecl, This);
 }
 

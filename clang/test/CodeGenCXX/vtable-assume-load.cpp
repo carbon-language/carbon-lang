@@ -6,7 +6,9 @@
 // RUN: FileCheck --check-prefix=CHECK3 --input-file=%t.ll %s
 // RUN: FileCheck --check-prefix=CHECK4 --input-file=%t.ll %s
 // RUN: FileCheck --check-prefix=CHECK-MS --input-file=%t.ms.ll %s
-
+// RUN: FileCheck --check-prefix=CHECK6 --input-file=%t.ll %s
+// RUN: FileCheck --check-prefix=CHECK7 --input-file=%t.ll %s
+// RUN: FileCheck --check-prefix=CHECK8 --input-file=%t.ll %s
 namespace test1 {
 
 struct A {
@@ -150,7 +152,7 @@ void test() {
 }
 } // test4
 
-namespace test5 {
+namespace testMS {
 
 struct __declspec(novtable) S {
   virtual void foo();
@@ -159,8 +161,8 @@ struct __declspec(novtable) S {
 void g(S &s) { s.foo(); }
 
 // if struct has novtable specifier, then we can't generate assumes
-// CHECK-MS-LABEL: define void @"\01?test@test5@@YAXXZ"()
-// CHECK-MS: call x86_thiscallcc %"struct.test5::S"* @"\01??0S@test5@@QAE@XZ"(
+// CHECK-MS-LABEL: define void @"\01?test@testMS@@YAXXZ"()
+// CHECK-MS: call x86_thiscallcc %"struct.testMS::S"* @"\01??0S@testMS@@QAE@XZ"(
 // CHECK-MS-NOT: @llvm.assume
 // CHECK-MS-LABEL: }
 
@@ -169,4 +171,125 @@ void test() {
   g(s);
 }
 
-} // test5
+} // testMS
+
+namespace test6 {
+// CHECK6: @_ZTVN5test61AE = external
+struct A {
+  A();
+  virtual void foo();
+  virtual ~A() {}
+};
+struct B : A {
+  B();
+};
+// Because A's vtable is external, it's safe to generate assumption loads.
+// CHECK6-LABEL: define void @_ZN5test61gEv()
+// CHECK6: call void @_ZN5test61AC1Ev(
+// CHECK6: call void @llvm.assume(
+
+// We can't emit assumption loads for B, because if we would refer to vtable
+// it would refer to functions that will not be able to find (like implicit
+// inline destructor).
+
+// CHECK6-LABEL:   call void @_ZN5test61BC1Ev(
+// CHECK6-NOT: call void @llvm.assume(
+// CHECK6-LABEL: }
+void g() {
+  A *a = new A;
+  B *b = new B;
+}
+
+}
+
+namespace test7 {
+// Because A's key function is defined here, vtable is generated in this TU
+// CHECK7: @_ZTVN5test71AE = unnamed_addr constant
+struct A {
+  A();
+  virtual void foo();
+  virtual void bar();
+};
+void A::foo() {}
+
+// CHECK7-LABEL: define void @_ZN5test71gEv()
+// CHECK7: call void @_ZN5test71AC1Ev(
+// CHECK7: call void @llvm.assume(
+// CHECK7-LABEL: }
+void g() {
+  A *a = new A();
+  a->bar();
+}
+}
+
+namespace test8 {
+
+struct A {
+  virtual void foo();
+  virtual void bar();
+};
+
+// CHECK8-DAG: @_ZTVN5test81BE = available_externally unnamed_addr constant
+struct B : A {
+  B();
+  void foo();
+  void bar();
+};
+
+// CHECK8-DAG: @_ZTVN5test81CE = linkonce_odr unnamed_addr constant
+struct C : A {
+  C();
+  void bar();
+  void foo() {}
+};
+inline void C::bar() {}
+
+// CHECK8-DAG: @_ZTVN5test81DE = external unnamed_addr constant
+struct D : A {
+  D();
+  void foo();
+  void inline bar();
+};
+void D::bar() {}
+
+// CHECK8-DAG: @_ZTVN5test81EE = linkonce_odr unnamed_addr constant
+struct E : A {
+  E();
+};
+
+// CHECK8-LABEL: define void @_ZN5test81bEv()
+// CHECK8: call void @llvm.assume(
+// CHECK8-LABEL: }
+void b() {
+  B b;
+  b.bar();
+}
+
+// FIXME: C has inline virtual functions which prohibits as from generating
+// assumption loads, but because vtable is generated in this TU (key function
+// defined here) it would be correct to refer to it.
+// CHECK8-LABEL: define void @_ZN5test81cEv()
+// CHECK8-NOT: call void @llvm.assume(
+// CHECK8-LABEL: }
+void c() {
+  C c;
+  c.bar();
+}
+
+// CHECK8-LABEL: define void @_ZN5test81dEv()
+// CHECK8: call void @llvm.assume(
+// CHECK8-LABEL: }
+void d() {
+  D d;
+  d.bar();
+}
+
+// CHECK8-LABEL: define void @_ZN5test81eEv()
+// CHECK8: call void @llvm.assume(
+// CHECK8-LABEL: }
+void e() {
+  E e;
+  e.bar();
+}
+}
+

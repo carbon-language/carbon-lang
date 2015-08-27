@@ -398,11 +398,13 @@ D::~D() {}
 // Checking with opt
 // CHECK-OPT-LABEL: define internal void @_ZThn8_N6Test4B12_GLOBAL__N_11C1fEv(%"struct.Test4B::(anonymous namespace)::C"* %this) unnamed_addr #0 align 2
 
+// This is from Test5:
+// CHECK-OPT-LABEL: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
+
 // This is from Test10:
 // CHECK-OPT-LABEL: define linkonce_odr void @_ZN6Test101C3fooEv
 // CHECK-OPT-LABEL: define linkonce_odr void @_ZThn8_N6Test101C3fooEv
 
-// This is from Test5:
-// CHECK-OPT-LABEL: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
+
 
 // CHECK: attributes [[NUW]] = { nounwind uwtable{{.*}} }

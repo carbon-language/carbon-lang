@@ -106,8 +106,7 @@ public:
                                      QualType DestTy) override;
 
   bool EmitBadCastCall(CodeGenFunction &CGF) override;
-  bool canEmitAvailableExternallyVTable(
-      const CXXRecordDecl *RD) const override {
+  bool canSpeculativelyEmitVTable(const CXXRecordDecl *RD) const override {
     return false;
   }
 
