@@ -399,13 +399,7 @@ void DiagnosticRenderer::emitSingleMacroExpansion(
     const SourceManager &SM) {
   // Find the spelling location for the macro definition. We must use the
   // spelling location here to avoid emitting a macro backtrace for the note.
-  SourceLocation SpellingLoc = Loc;
-
-  // If this is the expansion of a macro argument, point the caret at the
-  // use of the argument in the definition of the macro, not the expansion.
-  if (SM.isMacroArgExpansion(Loc))
-    SpellingLoc = SM.getImmediateExpansionRange(Loc).first;
-  SpellingLoc = SM.getSpellingLoc(SpellingLoc);
+  SourceLocation SpellingLoc = SM.getSpellingLoc(Loc);
 
   // Map the ranges into the FileID of the diagnostic location.
   SmallVector<CharSourceRange, 4> SpellingRanges;
@@ -477,11 +471,23 @@ void DiagnosticRenderer::emitMacroExpansions(SourceLocation Loc,
   SmallVector<SourceLocation, 8> LocationStack;
   unsigned IgnoredEnd = 0;
   while (Loc.isMacroID()) {
-    LocationStack.push_back(Loc);
+    // If this is the expansion of a macro argument, point the caret at the
+    // use of the argument in the definition of the macro, not the expansion.
+    if (SM.isMacroArgExpansion(Loc))
+      LocationStack.push_back(SM.getImmediateExpansionRange(Loc).first);
+    else
+      LocationStack.push_back(Loc);
+
     if (checkRangesForMacroArgExpansion(Loc, Ranges, SM))
       IgnoredEnd = LocationStack.size();
 
     Loc = SM.getImmediateMacroCallerLoc(Loc);
+
+    // Once the location no longer points into a macro, try stepping through
+    // the last found location.  This sometimes produces additional useful
+    // backtraces.
+    if (Loc.isFileID())
+      Loc = SM.getImmediateMacroCallerLoc(LocationStack.back());
     assert(!Loc.isInvalid() && "must have a valid source location here");
   }
 
