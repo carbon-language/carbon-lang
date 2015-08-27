@@ -4316,18 +4316,9 @@ wbuffer_convert<_Codecvt, _Elem, _Tr>::seekoff(off_type __off, ios_base::seekdir
     int __width = __cv_->encoding();
     if (__cv_ == 0 || __bufptr_ == 0 || (__width <= 0 && __off != 0) || sync())
         return pos_type(off_type(-1));
-    // __width > 0 || __off == 0
-    switch (__way)
-    {
-    case ios_base::beg:
-        break;
-    case ios_base::cur:
-        break;
-    case ios_base::end:
-        break;
-    default:
+    // __width > 0 || __off == 0, now check __way
+    if (__way != ios_base::beg && __way != ios_base::cur && __way != ios_base::end)
         return pos_type(off_type(-1));
-    }
     pos_type __r = __bufptr_->pubseekoff(__width * __off, __way, __om);
     __r.state(__st_);
     return __r;
