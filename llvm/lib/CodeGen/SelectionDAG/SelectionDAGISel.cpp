@@ -19,6 +19,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/CFG.h"
+#include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/FastISel.h"
@@ -969,7 +970,7 @@ bool SelectionDAGISel::PrepareEHLandingPad() {
           InvokeBB->addSuccessor(ClauseBB);
 
         // Mark the clause as a landing pad or MI passes will delete it.
-        ClauseBB->setIsLandingPad();
+        ClauseBB->setIsEHPad();
       }
     }
 
@@ -998,9 +999,9 @@ bool SelectionDAGISel::PrepareEHLandingPad() {
 static bool isFoldedOrDeadInstruction(const Instruction *I,
                                       FunctionLoweringInfo *FuncInfo) {
   return !I->mayWriteToMemory() && // Side-effecting instructions aren't folded.
-         !isa<TerminatorInst>(I) && // Terminators aren't folded.
+         !isa<TerminatorInst>(I) &&    // Terminators aren't folded.
          !isa<DbgInfoIntrinsic>(I) &&  // Debug instructions aren't folded.
-         !isa<LandingPadInst>(I) &&    // Landingpad instructions aren't folded.
+         !I->isEHPad() &&              // EH pad instructions aren't folded.
          !FuncInfo->isExportedInst(I); // Exported instrs must be computed.
 }
 
@@ -1163,6 +1164,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       if (!PrepareEHLandingPad())
         continue;
 
+
     // Before doing SelectionDAG ISel, see if FastISel has been requested.
     if (FastIS) {
       FastIS->startNewBlock();
@@ -1251,7 +1253,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
             // For the purpose of debugging, just abort.
             report_fatal_error("FastISel didn't select the entire block");
 
-          if (!Inst->getType()->isVoidTy() && !Inst->use_empty()) {
+          if (!Inst->getType()->isVoidTy() && !Inst->getType()->isTokenTy() &&
+              !Inst->use_empty()) {
             unsigned &R = FuncInfo->ValueMap[Inst];
             if (!R)
               R = FuncInfo->CreateRegs(Inst->getType());

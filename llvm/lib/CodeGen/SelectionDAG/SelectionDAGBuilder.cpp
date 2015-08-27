@@ -1158,28 +1158,54 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
   llvm_unreachable("Can't get register for value!");
 }
 
+void SelectionDAGBuilder::visitCatchPad(const CatchPadInst &I) {
+  // Update machine-CFG edges.
+  MachineBasicBlock *PadMBB = FuncInfo.MBB;
+  MachineBasicBlock *CatchingMBB = FuncInfo.MBBMap[I.getNormalDest()];
+  MachineBasicBlock *UnwindMBB = FuncInfo.MBBMap[I.getUnwindDest()];
+  PadMBB->addSuccessor(CatchingMBB);
+  PadMBB->addSuccessor(UnwindMBB);
+
+  CatchingMBB->setIsEHFuncletEntry();
+  MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
+  MMI.setHasEHFunclets(true);
+}
+
+void SelectionDAGBuilder::visitCatchRet(const CatchReturnInst &I) {
+  // Update machine-CFG edge.
+  MachineBasicBlock *PadMBB = FuncInfo.MBB;
+  MachineBasicBlock *TargetMBB = FuncInfo.MBBMap[I.getSuccessor()];
+  PadMBB->addSuccessor(TargetMBB);
+
+  // Create the terminator node.
+  SDValue Ret = DAG.getNode(ISD::CATCHRET, getCurSDLoc(), MVT::Other,
+                            getControlRoot(), DAG.getBasicBlock(TargetMBB));
+  DAG.setRoot(Ret);
+}
+
+void SelectionDAGBuilder::visitCatchEndPad(const CatchEndPadInst &I) {
+  // If this unwinds to caller, we don't need a DAG node hanging around.
+  if (!I.hasUnwindDest())
+    return;
+
+  // Update machine-CFG edge.
+  MachineBasicBlock *PadMBB = FuncInfo.MBB;
+  MachineBasicBlock *UnwindMBB = FuncInfo.MBBMap[I.getUnwindDest()];
+  PadMBB->addSuccessor(UnwindMBB);
+}
+
+void SelectionDAGBuilder::visitCleanupPad(const CleanupPadInst &CPI) {
+  MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
+  MMI.setHasEHFunclets(true);
+  report_fatal_error("visitCleanupPad not yet implemented!");
+}
+
 void SelectionDAGBuilder::visitCleanupRet(const CleanupReturnInst &I) {
   report_fatal_error("visitCleanupRet not yet implemented!");
 }
 
-void SelectionDAGBuilder::visitCatchEndPad(const CatchEndPadInst &I) {
-  report_fatal_error("visitCatchEndPad not yet implemented!");
-}
-
-void SelectionDAGBuilder::visitCatchRet(const CatchReturnInst &I) {
-  report_fatal_error("visitCatchRet not yet implemented!");
-}
-
-void SelectionDAGBuilder::visitCatchPad(const CatchPadInst &I) {
-  report_fatal_error("visitCatchPad not yet implemented!");
-}
-
 void SelectionDAGBuilder::visitTerminatePad(const TerminatePadInst &TPI) {
   report_fatal_error("visitTerminatePad not yet implemented!");
-}
-
-void SelectionDAGBuilder::visitCleanupPad(const CleanupPadInst &CPI) {
-  report_fatal_error("visitCleanupPad not yet implemented!");
 }
 
 void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
@@ -2021,7 +2047,7 @@ void SelectionDAGBuilder::visitResume(const ResumeInst &RI) {
 }
 
 void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &LP) {
-  assert(FuncInfo.MBB->isLandingPad() &&
+  assert(FuncInfo.MBB->isEHPad() &&
          "Call to landingpad not in landing pad!");
 
   MachineBasicBlock *MBB = FuncInfo.MBB;
@@ -5094,7 +5120,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     assert(Reg && "cannot get exception code on this platform");
     MVT PtrVT = TLI.getPointerTy(DAG.getDataLayout());
     const TargetRegisterClass *PtrRC = TLI.getRegClassFor(PtrVT);
-    assert(FuncInfo.MBB->isLandingPad() && "eh.exceptioncode in non-lpad");
+    assert(FuncInfo.MBB->isEHPad() && "eh.exceptioncode in non-lpad");
     unsigned VReg = FuncInfo.MBB->addLiveIn(Reg, PtrRC);
     SDValue N =
         DAG.getCopyFromReg(DAG.getEntryNode(), getCurSDLoc(), VReg, PtrVT);

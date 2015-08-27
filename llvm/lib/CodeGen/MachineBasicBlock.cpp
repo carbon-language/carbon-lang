@@ -39,8 +39,7 @@ using namespace llvm;
 #define DEBUG_TYPE "codegen"
 
 MachineBasicBlock::MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb)
-  : BB(bb), Number(-1), xParent(&mf), Alignment(0), IsLandingPad(false),
-    AddressTaken(false), CachedMCSymbol(nullptr) {
+    : BB(bb), Number(-1), xParent(&mf) {
   Insts.Parent = this;
 }
 
@@ -203,7 +202,7 @@ const MachineBasicBlock *MachineBasicBlock::getLandingPadSuccessor() const {
   if (succ_size() > 2)
     return nullptr;
   for (const_succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I)
-    if ((*I)->isLandingPad())
+    if ((*I)->isEHPad())
       return *I;
   return nullptr;
 }
@@ -266,7 +265,7 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
     LBB->printAsOperand(OS, /*PrintType=*/false, MST);
     Comma = ", ";
   }
-  if (isLandingPad()) { OS << Comma << "EH LANDING PAD"; Comma = ", "; }
+  if (isEHPad()) { OS << Comma << "EH LANDING PAD"; Comma = ", "; }
   if (hasAddressTaken()) { OS << Comma << "ADDRESS TAKEN"; Comma = ", "; }
   if (Alignment)
     OS << Comma << "Align " << Alignment << " (" << (1u << Alignment)
@@ -338,7 +337,7 @@ MachineBasicBlock::addLiveIn(MCPhysReg PhysReg, const TargetRegisterClass *RC) {
   assert(getParent() && "MBB must be inserted in function");
   assert(TargetRegisterInfo::isPhysicalRegister(PhysReg) && "Expected physreg");
   assert(RC && "Register class is required");
-  assert((isLandingPad() || this == &getParent()->front()) &&
+  assert((isEHPad() || this == &getParent()->front()) &&
          "Only the entry block and landing pads can have physreg live ins");
 
   bool LiveIn = isLiveIn(PhysReg);
@@ -396,7 +395,7 @@ void MachineBasicBlock::updateTerminator() {
       // its layout successor, insert a branch. First we have to locate the
       // only non-landing-pad successor, as that is the fallthrough block.
       for (succ_iterator SI = succ_begin(), SE = succ_end(); SI != SE; ++SI) {
-        if ((*SI)->isLandingPad())
+        if ((*SI)->isEHPad())
           continue;
         assert(!TBB && "Found more than one non-landing-pad successor!");
         TBB = *SI;
@@ -432,7 +431,7 @@ void MachineBasicBlock::updateTerminator() {
       // as the fallthrough successor.
       MachineBasicBlock *FallthroughBB = nullptr;
       for (succ_iterator SI = succ_begin(), SE = succ_end(); SI != SE; ++SI) {
-        if ((*SI)->isLandingPad() || *SI == TBB)
+        if ((*SI)->isEHPad() || *SI == TBB)
           continue;
         assert(!FallthroughBB && "Found more than one fallthrough successor.");
         FallthroughBB = *SI;
@@ -662,7 +661,7 @@ MachineBasicBlock *
 MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   // Splitting the critical edge to a landing pad block is non-trivial. Don't do
   // it in this generic function.
-  if (Succ->isLandingPad())
+  if (Succ->isEHPad())
     return nullptr;
 
   MachineFunction *MF = getParent();
@@ -1046,7 +1045,7 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
   while (SI != succ_end()) {
     const MachineBasicBlock *MBB = *SI;
     if (!SeenMBBs.insert(MBB).second ||
-        (MBB != DestA && MBB != DestB && !MBB->isLandingPad())) {
+        (MBB != DestA && MBB != DestB && !MBB->isEHPad())) {
       // This is a superfluous edge, remove it.
       SI = removeSuccessor(SI);
       Changed = true;

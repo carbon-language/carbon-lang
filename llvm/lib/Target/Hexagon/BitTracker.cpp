@@ -951,7 +951,7 @@ void BT::visitBranchesFrom(const MachineInstr *BI) {
     // be processed.
     for (succ_iterator I = B.succ_begin(), E = B.succ_end(); I != E; ++I) {
       const MachineBasicBlock *SB = *I;
-      if (SB->isLandingPad())
+      if (SB->isEHPad())
         Targets.insert(SB);
     }
     if (FallsThrough) {

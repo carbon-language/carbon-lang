@@ -165,6 +165,9 @@ public:
   unsigned CreateRegs(Type *Ty);
   
   unsigned InitializeRegForValue(const Value *V) {
+    // Tokens never live in vregs.
+    if (V->getType()->isTokenTy())
+      return 0;
     unsigned &R = ValueMap[V];
     assert(R == 0 && "Already initialized this value register!");
     return R = CreateRegs(V->getType());

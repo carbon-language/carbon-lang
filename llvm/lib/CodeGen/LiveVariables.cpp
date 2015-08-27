@@ -598,7 +598,7 @@ void LiveVariables::runOnBlock(MachineBasicBlock *MBB, const unsigned NumRegs) {
   for (MachineBasicBlock::const_succ_iterator SI = MBB->succ_begin(),
          SE = MBB->succ_end(); SI != SE; ++SI) {
     MachineBasicBlock *SuccMBB = *SI;
-    if (SuccMBB->isLandingPad())
+    if (SuccMBB->isEHPad())
       continue;
     for (unsigned LI : SuccMBB->liveins()) {
       if (!TRI->isInAllocatableClass(LI))

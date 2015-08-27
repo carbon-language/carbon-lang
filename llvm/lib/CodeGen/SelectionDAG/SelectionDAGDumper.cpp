@@ -278,6 +278,10 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::CALLSEQ_START:              return "callseq_start";
   case ISD::CALLSEQ_END:                return "callseq_end";
 
+    // EH instructions
+  case ISD::CATCHRET:                   return "catchret";
+  case ISD::CLEANUPRET:                 return "cleanupret";
+
     // Other operators
   case ISD::LOAD:                       return "load";
   case ISD::STORE:                      return "store";

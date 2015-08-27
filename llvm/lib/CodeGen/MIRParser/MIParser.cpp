@@ -368,7 +368,7 @@ bool MIParser::parseBasicBlockDefinition(
     MBB->setAlignment(Alignment);
   if (HasAddressTaken)
     MBB->setHasAddressTaken();
-  MBB->setIsLandingPad(IsLandingPad);
+  MBB->setIsEHPad(IsLandingPad);
   return false;
 }
 

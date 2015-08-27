@@ -163,6 +163,7 @@ class MachineModuleInfo : public ImmutablePass {
 
   bool CallsEHReturn;
   bool CallsUnwindInit;
+  bool HasEHFunclets;
 
   /// DbgInfoAvailable - True if debugging information is available
   /// in this module.
@@ -370,6 +371,12 @@ public:
   const std::vector<LandingPadInfo> &getLandingPads() const {
     return LandingPads;
   }
+
+  bool hasEHFunclets() const {
+    return HasEHFunclets;
+  }
+
+  void setHasEHFunclets(bool V) { HasEHFunclets = true; }
 
   /// setCallSiteLandingPad - Map the landing pad's EH symbol to the call
   /// site indexes.

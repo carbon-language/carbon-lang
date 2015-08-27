@@ -591,6 +591,10 @@ namespace ISD {
     /// take a chain as input and return a chain.
     EH_LABEL,
 
+    CATCHRET,
+
+    CLEANUPRET,
+
     /// STACKSAVE - STACKSAVE has one operand, an input chain.  It produces a
     /// value, the same type as the pointer type for the system, and an output
     /// chain.

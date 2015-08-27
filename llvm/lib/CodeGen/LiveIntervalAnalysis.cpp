@@ -299,7 +299,7 @@ void LiveIntervals::computeLiveInRegUnits() {
     const MachineBasicBlock *MBB = MFI;
 
     // We only care about ABI blocks: Entry + landing pads.
-    if ((MFI != MF->begin() && !MBB->isLandingPad()) || MBB->livein_empty())
+    if ((MFI != MF->begin() && !MBB->isEHPad()) || MBB->livein_empty())
       continue;
 
     // Create phi-defs at Begin for all live-in registers.

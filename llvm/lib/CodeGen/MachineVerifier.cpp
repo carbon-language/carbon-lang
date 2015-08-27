@@ -508,7 +508,7 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
     // If this block has allocatable physical registers live-in, check that
     // it is an entry block or landing pad.
     for (unsigned LI : MBB->liveins()) {
-      if (isAllocatable(LI) && !MBB->isLandingPad() &&
+      if (isAllocatable(LI) && !MBB->isEHPad() &&
           MBB != MBB->getParent()->begin()) {
         report("MBB has allocable live-in, but isn't entry or landing-pad.", MBB);
       }
@@ -519,7 +519,7 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
   SmallPtrSet<MachineBasicBlock*, 4> LandingPadSuccs;
   for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
        E = MBB->succ_end(); I != E; ++I) {
-    if ((*I)->isLandingPad())
+    if ((*I)->isEHPad())
       LandingPadSuccs.insert(*I);
     if (!FunctionBlocks.count(*I))
       report("MBB has successor that isn't part of the function.", MBB);
@@ -1606,7 +1606,7 @@ void MachineVerifier::verifyLiveRangeSegment(const LiveRange &LR,
     assert(LiveInts->isLiveInToMBB(LR, MFI));
     // We don't know how to track physregs into a landing pad.
     if (!TargetRegisterInfo::isVirtualRegister(Reg) &&
-        MFI->isLandingPad()) {
+        MFI->isEHPad()) {
       if (&*MFI == EndMBB)
         break;
       ++MFI;

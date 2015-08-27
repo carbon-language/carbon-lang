@@ -28,7 +28,7 @@ llvm::findPHICopyInsertPoint(MachineBasicBlock* MBB, MachineBasicBlock* SuccMBB,
   // Usually, we just want to insert the copy before the first terminator
   // instruction. However, for the edge going to a landing pad, we must insert
   // the copy before the call/invoke instruction.
-  if (!SuccMBB->isLandingPad())
+  if (!SuccMBB->isEHPad())
     return MBB->getFirstTerminator();
 
   // Discover any defs/uses in this basic block.

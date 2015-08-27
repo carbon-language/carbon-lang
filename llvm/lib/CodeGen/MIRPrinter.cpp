@@ -439,7 +439,7 @@ void MIPrinter::print(const MachineBasicBlock &MBB) {
     OS << "address-taken";
     HasAttributes = true;
   }
-  if (MBB.isLandingPad()) {
+  if (MBB.isEHPad()) {
     OS << (HasAttributes ? ", " : " (");
     OS << "landing-pad";
     HasAttributes = true;

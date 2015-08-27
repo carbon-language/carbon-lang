@@ -678,7 +678,7 @@ MachineBlockPlacement::findBestLoopExit(MachineFunction &F, MachineLoop &L,
     uint32_t WeightScale = 0;
     uint32_t SumWeight = MBPI->getSumForBlock(MBB, WeightScale);
     for (MachineBasicBlock *Succ : MBB->successors()) {
-      if (Succ->isLandingPad())
+      if (Succ->isEHPad())
         continue;
       if (Succ == MBB)
         continue;

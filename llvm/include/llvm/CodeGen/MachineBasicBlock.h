@@ -85,18 +85,21 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
 
   /// Alignment of the basic block. Zero if the basic block does not need to be
   /// aligned. The alignment is specified as log2(bytes).
-  unsigned Alignment;
+  unsigned Alignment = 0;
 
   /// Indicate that this basic block is entered via an exception handler.
-  bool IsLandingPad;
+  bool IsEHPad = false;
 
   /// Indicate that this basic block is potentially the target of an indirect
   /// branch.
-  bool AddressTaken;
+  bool AddressTaken = false;
+
+  /// Indicate that this basic block is the entry block of an EH funclet.
+  bool IsEHFuncletEntry = false;
 
   /// \brief since getSymbol is a relatively heavy-weight operation, the symbol
   /// is only computed once and is cached.
-  mutable MCSymbol *CachedMCSymbol;
+  mutable MCSymbol *CachedMCSymbol = nullptr;
 
   // Intrusive list support
   MachineBasicBlock() {}
@@ -352,15 +355,21 @@ public:
 
   /// Returns true if the block is a landing pad. That is this basic block is
   /// entered via an exception handler.
-  bool isLandingPad() const { return IsLandingPad; }
+  bool isEHPad() const { return IsEHPad; }
 
   /// Indicates the block is a landing pad.  That is this basic block is entered
   /// via an exception handler.
-  void setIsLandingPad(bool V = true) { IsLandingPad = V; }
+  void setIsEHPad(bool V = true) { IsEHPad = V; }
 
   /// If this block has a successor that is a landing pad, return it. Otherwise
   /// return NULL.
   const MachineBasicBlock *getLandingPadSuccessor() const;
+
+  /// Returns true if this is the entry block of an EH funclet.
+  bool isEHFuncletEntry() const { return IsEHFuncletEntry; }
+
+  /// Indicates if this is the entry block of an EH funclet.
+  void setIsEHFuncletEntry(bool V = true) { IsEHFuncletEntry = V; }
 
   // Code Layout methods.
 

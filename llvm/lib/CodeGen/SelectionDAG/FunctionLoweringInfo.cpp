@@ -252,16 +252,17 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   // Mark landing pad blocks.
   SmallVector<const LandingPadInst *, 4> LPads;
   for (BB = Fn->begin(); BB != EB; ++BB) {
-    if (const auto *Invoke = dyn_cast<InvokeInst>(BB->getTerminator()))
-      MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
-    if (BB->isLandingPad())
-      LPads.push_back(BB->getLandingPadInst());
+    if (BB->isEHPad())
+      MBBMap[BB]->setIsEHPad();
+    const Instruction *FNP = BB->getFirstNonPHI();
+    if (const auto *LPI = dyn_cast<LandingPadInst>(FNP))
+      LPads.push_back(LPI);
   }
 
   // If this is an MSVC EH personality, we need to do a bit more work.
-  EHPersonality Personality = EHPersonality::Unknown;
-  if (Fn->hasPersonalityFn())
-    Personality = classifyEHPersonality(Fn->getPersonalityFn());
+  if (!Fn->hasPersonalityFn())
+    return;
+  EHPersonality Personality = classifyEHPersonality(Fn->getPersonalityFn());
   if (!isMSVCEHPersonality(Personality))
     return;
 
@@ -272,8 +273,13 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
 
   WinEHFuncInfo &EHInfo = MMI.getWinEHFuncInfo(&fn);
   if (Personality == EHPersonality::MSVC_CXX) {
+    // Calculate state numbers and then map from funclet BBs to MBBs.
     const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
     calculateWinCXXEHStateNumbers(WinEHParentFn, EHInfo);
+    for (WinEHTryBlockMapEntry &TBME : EHInfo.TryBlockMap)
+      for (WinEHHandlerType &H : TBME.HandlerArray)
+        if (const auto *BB = dyn_cast<BasicBlock>(H.Handler))
+          H.HandlerMBB = MBBMap[BB];
   }
 
   // Copy the state numbers to LandingPadInfo for the current function, which

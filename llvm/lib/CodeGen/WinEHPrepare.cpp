@@ -2608,7 +2608,8 @@ static void addTryBlockMapEntry(WinEHFuncInfo &FuncInfo, int TryLow,
       HT.TypeDescriptor =
           cast<GlobalVariable>(CS->getAggregateElement(1)->stripPointerCasts());
     }
-    HT.Handler = CPI->getParent();
+    HT.Handler = CPI->getNormalDest();
+    HT.HandlerMBB = nullptr;
     // FIXME: Pass CPI->getArgOperand(1).
     HT.CatchObjRecoverIdx = -1;
     TBME.HandlerArray.push_back(HT);
@@ -2684,6 +2685,7 @@ void WinEHNumbering::createTryBlockMapEntry(int TryLow, int TryHigh,
           cast<GlobalVariable>(CS->getAggregateElement(1)->stripPointerCasts());
     }
     HT.Handler = cast<Function>(CH->getHandlerBlockOrFunc());
+    HT.HandlerMBB = nullptr;
     HT.CatchObjRecoverIdx = CH->getExceptionVarIndex();
     TBME.HandlerArray.push_back(HT);
   }

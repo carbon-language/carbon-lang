@@ -27,6 +27,7 @@ class InvokeInst;
 class IntrinsicInst;
 class LandingPadInst;
 class MCSymbol;
+class MachineBasicBlock;
 class Value;
 
 enum ActionType { Catch, Cleanup };
@@ -123,6 +124,7 @@ struct WinEHHandlerType {
   GlobalVariable *TypeDescriptor;
   int CatchObjRecoverIdx;
   const Value *Handler;
+  MachineBasicBlock *HandlerMBB;
 };
 
 struct WinEHTryBlockMapEntry {

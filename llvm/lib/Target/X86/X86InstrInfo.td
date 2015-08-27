@@ -205,6 +205,8 @@ def X86tlsbaseaddr : SDNode<"X86ISD::TLSBASEADDR", SDT_X86TLSBASEADDR,
 def X86ehret : SDNode<"X86ISD::EH_RETURN", SDT_X86EHRET,
                         [SDNPHasChain]>;
 
+def X86catchret : SDNode<"X86ISD::CATCHRET", SDT_X86EHRET, [SDNPHasChain]>;
+
 def X86eh_sjlj_setjmp  : SDNode<"X86ISD::EH_SJLJ_SETJMP",
                                 SDTypeProfile<1, 1, [SDTCisInt<0>,
                                                      SDTCisPtrTy<1>]>,

@@ -1001,7 +1001,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
         // Failing case: the only way IBB can be reached from PBB is via
         // exception handling.  Happens for landing pads.  Would be nice to have
         // a bit in the edge so we didn't have to do all this.
-        if (IBB->isLandingPad()) {
+        if (IBB->isEHPad()) {
           MachineFunction::iterator IP = PBB;  IP++;
           MachineBasicBlock *PredNextBB = nullptr;
           if (IP != MF.end())
@@ -1178,13 +1178,13 @@ ReoptimizeBlock:
   // explicitly.  Landing pads should not do this since the landing-pad table
   // points to this block.  Blocks with their addresses taken shouldn't be
   // optimized away.
-  if (IsEmptyBlock(MBB) && !MBB->isLandingPad() && !MBB->hasAddressTaken()) {
+  if (IsEmptyBlock(MBB) && !MBB->isEHPad() && !MBB->hasAddressTaken()) {
     // Dead block?  Leave for cleanup later.
     if (MBB->pred_empty()) return MadeChange;
 
     if (FallThrough == MF.end()) {
       // TODO: Simplify preds to not branch here if possible!
-    } else if (FallThrough->isLandingPad()) {
+    } else if (FallThrough->isEHPad()) {
       // Don't rewrite to a landing pad fallthough.  That could lead to the case
       // where a BB jumps to more than one landing pad.
       // TODO: Is it ever worth rewriting predecessors which don't already
@@ -1241,7 +1241,7 @@ ReoptimizeBlock:
     // AnalyzeBranch.
     if (PriorCond.empty() && !PriorTBB && MBB->pred_size() == 1 &&
         PrevBB.succ_size() == 1 &&
-        !MBB->hasAddressTaken() && !MBB->isLandingPad()) {
+        !MBB->hasAddressTaken() && !MBB->isEHPad()) {
       DEBUG(dbgs() << "\nMerging into block: " << PrevBB
                    << "From MBB: " << *MBB);
       // Remove redundant DBG_VALUEs first.
@@ -1472,7 +1472,7 @@ ReoptimizeBlock:
     // see if it has a fall-through into its successor.
     bool CurFallsThru = MBB->canFallThrough();
 
-    if (!MBB->isLandingPad()) {
+    if (!MBB->isEHPad()) {
       // Check all the predecessors of this block.  If one of them has no fall
       // throughs, move this block right after it.
       for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
@@ -1523,7 +1523,7 @@ ReoptimizeBlock:
         // fallthrough to happen.
         if (SuccBB != MBB && &*SuccPrev != MBB &&
             !SuccPrev->canFallThrough() && !CurUnAnalyzable &&
-            !SuccBB->isLandingPad()) {
+            !SuccBB->isEHPad()) {
           MBB->moveBefore(SuccBB);
           MadeChange = true;
           goto ReoptimizeBlock;

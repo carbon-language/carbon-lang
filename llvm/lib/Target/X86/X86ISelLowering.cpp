@@ -407,6 +407,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SETCC         , MVT::i64  , Custom);
   }
   setOperationAction(ISD::EH_RETURN       , MVT::Other, Custom);
+  setOperationAction(ISD::CATCHRET        , MVT::Other, Custom);
   // NOTE: EH_SJLJ_SETJMP/_LONGJMP supported here is NOT intended to support
   // SjLj exception handling but a light-weight setjmp/longjmp replacement to
   // support continuation, user-level threading, and etc.. As a result, no
@@ -16664,6 +16665,25 @@ SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
                      DAG.getRegister(StoreAddrReg, PtrVT));
 }
 
+SDValue X86TargetLowering::LowerCATCHRET(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Chain = Op.getOperand(0);
+  SDValue Dest = Op.getOperand(1);
+  SDLoc DL(Op);
+
+  MVT PtrVT = getPointerTy(DAG.getDataLayout());
+  unsigned ReturnReg = (PtrVT == MVT::i64 ? X86::RAX : X86::EAX);
+
+  // Load the address of the destination block.
+  MachineBasicBlock *DestMBB = cast<BasicBlockSDNode>(Dest)->getBasicBlock();
+  SDValue BlockPtr = DAG.getMCSymbol(DestMBB->getSymbol(), PtrVT);
+  unsigned WrapperKind =
+      Subtarget->isPICStyleRIPRel() ? X86ISD::WrapperRIP : X86ISD::Wrapper;
+  SDValue WrappedPtr = DAG.getNode(WrapperKind, DL, PtrVT, BlockPtr);
+  Chain = DAG.getCopyToReg(Chain, DL, ReturnReg, WrappedPtr);
+  return DAG.getNode(X86ISD::CATCHRET, DL, MVT::Other, Chain,
+                     DAG.getRegister(ReturnReg, PtrVT));
+}
+
 SDValue X86TargetLowering::lowerEH_SJLJ_SETJMP(SDValue Op,
                                                SelectionDAG &DAG) const {
   SDLoc DL(Op);
@@ -18903,6 +18923,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
                                 return LowerFRAME_TO_ARGS_OFFSET(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::EH_RETURN:          return LowerEH_RETURN(Op, DAG);
+  case ISD::CATCHRET:           return LowerCATCHRET(Op, DAG);
   case ISD::EH_SJLJ_SETJMP:     return lowerEH_SJLJ_SETJMP(Op, DAG);
   case ISD::EH_SJLJ_LONGJMP:    return lowerEH_SJLJ_LONGJMP(Op, DAG);
   case ISD::INIT_TRAMPOLINE:    return LowerINIT_TRAMPOLINE(Op, DAG);
@@ -19238,6 +19259,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::EH_SJLJ_SETJMP:     return "X86ISD::EH_SJLJ_SETJMP";
   case X86ISD::EH_SJLJ_LONGJMP:    return "X86ISD::EH_SJLJ_LONGJMP";
   case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
+  case X86ISD::CATCHRET:           return "X86ISD::CATCHRET";
   case X86ISD::TC_RETURN:          return "X86ISD::TC_RETURN";
   case X86ISD::FNSTCW16m:          return "X86ISD::FNSTCW16m";
   case X86ISD::FNSTSW16r:          return "X86ISD::FNSTSW16r";

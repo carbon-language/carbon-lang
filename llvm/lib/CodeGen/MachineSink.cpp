@@ -667,7 +667,7 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
 
   // It's not safe to sink instructions to EH landing pad. Control flow into
   // landing pad is implicitly defined.
-  if (SuccToSinkTo && SuccToSinkTo->isLandingPad())
+  if (SuccToSinkTo && SuccToSinkTo->isEHPad())
     return nullptr;
 
   return SuccToSinkTo;

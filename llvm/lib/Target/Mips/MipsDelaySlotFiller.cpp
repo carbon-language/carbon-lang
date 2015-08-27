@@ -806,7 +806,7 @@ MachineBasicBlock *Filler::selectSuccBB(MachineBasicBlock &B) const {
                                                const MachineBasicBlock *Dst1) {
     return Prob.getEdgeWeight(&B, Dst0) < Prob.getEdgeWeight(&B, Dst1);
   });
-  return S->isLandingPad() ? nullptr : S;
+  return S->isEHPad() ? nullptr : S;
 }
 
 std::pair<MipsInstrInfo::BranchType, MachineInstr *>
