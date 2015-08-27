@@ -286,7 +286,6 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   isl_id *Id = isl_ast_expr_get_id(StmtExpr);
   isl_ast_expr_free(StmtExpr);
   ScopStmt *Stmt = (ScopStmt *)isl_id_get_user(Id);
-  Stmt->setAstBuild(IslAstInfo::getBuild(User));
   VectorValueMapT VectorMap(IVS.size());
   std::vector<LoopToScevMapT> VLTS(IVS.size());
 
@@ -294,9 +293,11 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   Schedule = isl_union_map_intersect_domain(Schedule, Domain);
   isl_map *S = isl_map_from_union_map(Schedule);
 
+  auto *NewAccesses = createNewAccesses(Stmt, IslAstInfo::getBuild(User));
   createSubstitutionsVector(Expr, Stmt, VectorMap, VLTS, IVS, IteratorID);
-  VectorBlockGenerator::generate(BlockGen, *Stmt, VectorMap, VLTS, S);
-
+  VectorBlockGenerator::generate(BlockGen, *Stmt, VectorMap, VLTS, S,
+                                 NewAccesses);
+  isl_id_to_ast_expr_free(NewAccesses);
   isl_map_free(S);
   isl_id_free(Id);
   isl_ast_node_free(User);
@@ -640,6 +641,25 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   isl_ast_node_free(If);
 }
 
+__isl_give isl_id_to_ast_expr *
+IslNodeBuilder::createNewAccesses(ScopStmt *Stmt,
+                                  __isl_keep isl_ast_build *Build) {
+  isl_id_to_ast_expr *NewAccesses =
+      isl_id_to_ast_expr_alloc(isl_ast_build_get_ctx(Build), 0);
+  for (auto *MA : *Stmt) {
+    if (!MA->hasNewAccessRelation())
+      continue;
+
+    auto Schedule = isl_ast_build_get_schedule(Build);
+    auto PWAccRel = MA->applyScheduleToAccessRelation(Schedule);
+
+    auto AccessExpr = isl_ast_build_access_from_pw_multi_aff(Build, PWAccRel);
+    NewAccesses = isl_id_to_ast_expr_set(NewAccesses, MA->getId(), AccessExpr);
+  }
+
+  return NewAccesses;
+}
+
 void IslNodeBuilder::createSubstitutions(isl_ast_expr *Expr, ScopStmt *Stmt,
                                          ValueMapT &VMap, LoopToScevMapT &LTS) {
   assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op &&
@@ -697,14 +717,15 @@ void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
   LTS.insert(OutsideLoopIterations.begin(), OutsideLoopIterations.end());
 
   Stmt = (ScopStmt *)isl_id_get_user(Id);
-  Stmt->setAstBuild(IslAstInfo::getBuild(User));
-
+  auto *NewAccesses = createNewAccesses(Stmt, IslAstInfo::getBuild(User));
   createSubstitutions(Expr, Stmt, VMap, LTS);
-  if (Stmt->isBlockStmt())
-    BlockGen.copyStmt(*Stmt, VMap, LTS);
-  else
-    RegionGen.copyStmt(*Stmt, VMap, LTS);
 
+  if (Stmt->isBlockStmt())
+    BlockGen.copyStmt(*Stmt, VMap, LTS, NewAccesses);
+  else
+    RegionGen.copyStmt(*Stmt, VMap, LTS, NewAccesses);
+
+  isl_id_to_ast_expr_free(NewAccesses);
   isl_ast_node_free(User);
   isl_id_free(Id);
 }

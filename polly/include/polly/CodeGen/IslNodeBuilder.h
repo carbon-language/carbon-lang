@@ -23,6 +23,7 @@ using namespace polly;
 using namespace llvm;
 
 struct isl_ast_node;
+struct isl_ast_build;
 
 class IslNodeBuilder {
 public:
@@ -190,6 +191,22 @@ private:
   ///
   /// @param For The FOR isl_ast_node for which code is generated.
   void createForParallel(__isl_take isl_ast_node *For);
+
+  /// @brief Create new access functions for modified memory accesses.
+  ///
+  /// In case the access function of one of the memory references in the Stmt
+  /// has been modified, we generate a new isl_ast_expr that reflects the
+  /// newly modified access function and return a map that maps from the
+  /// individual memory references in the statement (identified by their id)
+  /// to these newly generated ast expressions.
+  ///
+  /// @param Build The build to use to generate these expressions.
+  /// @param Stmt  The statement for which to (possibly) generate new access
+  ///              functions.
+  /// @return A new hash table that contains remappings from memory ids to new
+  ///         access expressions.
+  __isl_give isl_id_to_ast_expr *
+  createNewAccesses(ScopStmt *Stmt, __isl_keep isl_ast_build *Build);
 
   /// Generate LLVM-IR that computes the values of the original induction
   /// variables in function of the newly generated loop induction variables.
