@@ -453,7 +453,9 @@ void UseNullptrCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
 }
 
 void UseNullptrCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(makeCastSequenceMatcher(), this);
+  // Only register the matcher for C++11.
+  if (getLangOpts().CPlusPlus11)
+    Finder->addMatcher(makeCastSequenceMatcher(), this);
 }
 
 void UseNullptrCheck::check(const MatchFinder::MatchResult &Result) {
