@@ -14,7 +14,9 @@
 #include <__config>
 #include <chrono>
 #include <system_error>
+#ifndef _LIBCPP_HAS_NO_THREADS
 #include <pthread.h>
+#endif
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header

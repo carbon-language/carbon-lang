@@ -179,7 +179,9 @@ template<class Callable, class ...Args>
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 #include <tuple>
 #endif
+#ifndef _LIBCPP_HAS_NO_THREADS
 #include <sched.h>
+#endif
 
 #include <__undef_min_max>
 
