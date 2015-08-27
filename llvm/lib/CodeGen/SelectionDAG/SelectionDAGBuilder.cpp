@@ -8033,6 +8033,7 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
       // Put Cond in a virtual register to make it available from the new blocks.
       ExportFromCurrentBlock(Cond);
     }
+    UnhandledWeights -= I->Weight;
 
     switch (I->Kind) {
       case CC_JumpTable: {
@@ -8103,7 +8104,6 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
         }
 
         // The false weight is the sum of all unhandled cases.
-        UnhandledWeights -= I->Weight;
         CaseBlock CB(CC, LHS, RHS, MHS, I->MBB, Fallthrough, CurMBB, I->Weight,
                      UnhandledWeights);
 
