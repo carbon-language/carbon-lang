@@ -8,18 +8,18 @@ ENTRY(_start)
 SECTIONS
 {
   . = 0x500000;
-  .foo : { *p1.o(.text .rodata*) }
+  .foo : { *p1-wc.o(.text .rodata*) }
   .bar : { *(.text .rodata*) }
 }
 
 /*
 RUN: mkdir -p %T
-RUN: yaml2obj -format=elf %p/Inputs/prog1.o.yaml -o=%T/p1.o
-RUN: yaml2obj -format=elf %p/Inputs/prog2.o.yaml -o=%T/p2.o
-RUN: yaml2obj -format=elf %p/Inputs/prog3.o.yaml -o=%T/p3.o
+RUN: yaml2obj -format=elf %p/Inputs/prog1.o.yaml -o=%T/p1-wc.o
+RUN: yaml2obj -format=elf %p/Inputs/prog2.o.yaml -o=%T/p2-wc.o
+RUN: yaml2obj -format=elf %p/Inputs/prog3.o.yaml -o=%T/p3-wc.o
 RUN: cd %T
 
-RUN: lld -flavor gnu  -target x86_64 -T %s p1.o p2.o p3.o \
+RUN: lld -flavor gnu  -target x86_64 -T %s p1-wc.o p2-wc.o p3-wc.o \
 RUN:   -static -o %t1
 RUN: llvm-readobj -s %t1 | FileCheck -check-prefix CHECKSECTIONS %s
 
