@@ -16,7 +16,6 @@
 // Project includes
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/Options.h"
-#include "lldb/Core/Language.h"
 
 namespace lldb_private {
     

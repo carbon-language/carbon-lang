@@ -9,10 +9,10 @@
 
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Core/Module.h"
-#include "lldb/Core/Language.h"
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
+#include "lldb/Target/LanguageRuntime.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -87,7 +87,7 @@ CompileUnit::DumpSymbolContext(Stream *s)
 void
 CompileUnit::GetDescription(Stream *s, lldb::DescriptionLevel level) const
 {
-    Language language(m_language);
+    const char* language = LanguageRuntime::GetNameForLanguageType(m_language);
     *s << "id = " << (const UserID&)*this << ", file = \"" << (const FileSpec&)*this << "\", language = \"" << language << '"';
 }
 
@@ -101,10 +101,12 @@ CompileUnit::GetDescription(Stream *s, lldb::DescriptionLevel level) const
 void
 CompileUnit::Dump(Stream *s, bool show_context) const
 {
+    const char* language = LanguageRuntime::GetNameForLanguageType(m_language);
+    
     s->Printf("%p: ", static_cast<const void*>(this));
     s->Indent();
     *s << "CompileUnit" << static_cast<const UserID&>(*this)
-       << ", language = \"" << reinterpret_cast<const Language&>(*this)
+       << ", language = \"" << language
        << "\", file = '" << static_cast<const FileSpec&>(*this) << "'\n";
 
 //  m_types.Dump(s);

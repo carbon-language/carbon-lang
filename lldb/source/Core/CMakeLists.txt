@@ -31,7 +31,6 @@ add_lldb_library(lldbCore
   FormatEntity.cpp
   History.cpp
   IOHandler.cpp
-  Language.cpp
   Listener.cpp
   Log.cpp
   Logging.cpp

@@ -13,7 +13,6 @@
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Debugger.h"
-#include "lldb/Core/Language.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
@@ -31,6 +30,7 @@
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/SectionLoadList.h"
@@ -1528,8 +1528,7 @@ FormatEntity::Format (const Entry &entry,
                 CompileUnit *cu = sc->comp_unit;
                 if (cu)
                 {
-                    Language lang(cu->GetLanguage());
-                    const char *lang_name = lang.AsCString();
+                    const char *lang_name = LanguageRuntime::GetNameForLanguageType(cu->GetLanguage());
                     if (lang_name)
                     {
                         s.PutCString(lang_name);

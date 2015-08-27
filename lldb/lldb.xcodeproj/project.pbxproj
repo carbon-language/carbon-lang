@@ -360,7 +360,6 @@
 		2689003C13353E0400698AC0 /* Error.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7810F1B85900F91463 /* Error.cpp */; };
 		2689003D13353E0400698AC0 /* Event.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7910F1B85900F91463 /* Event.cpp */; };
 		2689003E13353E0400698AC0 /* FileSpecList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7B10F1B85900F91463 /* FileSpecList.cpp */; };
-		2689004013353E0400698AC0 /* Language.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7D10F1B85900F91463 /* Language.cpp */; };
 		2689004113353E0400698AC0 /* Listener.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7E10F1B85900F91463 /* Listener.cpp */; };
 		2689004213353E0400698AC0 /* Log.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7F10F1B85900F91463 /* Log.cpp */; };
 		2689004313353E0400698AC0 /* Mangled.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E8010F1B85900F91463 /* Mangled.cpp */; };
@@ -1840,7 +1839,6 @@
 		26BC7D6310F1B77400F91463 /* FileSpecList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileSpecList.h; path = include/lldb/Core/FileSpecList.h; sourceTree = "<group>"; };
 		26BC7D6410F1B77400F91463 /* Flags.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Flags.h; path = include/lldb/Core/Flags.h; sourceTree = "<group>"; };
 		26BC7D6510F1B77400F91463 /* IOStreamMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IOStreamMacros.h; path = include/lldb/Core/IOStreamMacros.h; sourceTree = "<group>"; };
-		26BC7D6610F1B77400F91463 /* Language.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Language.h; path = include/lldb/Core/Language.h; sourceTree = "<group>"; };
 		26BC7D6710F1B77400F91463 /* Listener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Listener.h; path = include/lldb/Core/Listener.h; sourceTree = "<group>"; };
 		26BC7D6810F1B77400F91463 /* Log.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Log.h; path = include/lldb/Core/Log.h; sourceTree = "<group>"; };
 		26BC7D6910F1B77400F91463 /* Mangled.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Mangled.h; path = include/lldb/Core/Mangled.h; sourceTree = "<group>"; };
@@ -1937,7 +1935,6 @@
 		26BC7E7810F1B85900F91463 /* Error.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Error.cpp; path = source/Core/Error.cpp; sourceTree = "<group>"; };
 		26BC7E7910F1B85900F91463 /* Event.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Event.cpp; path = source/Core/Event.cpp; sourceTree = "<group>"; };
 		26BC7E7B10F1B85900F91463 /* FileSpecList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileSpecList.cpp; path = source/Core/FileSpecList.cpp; sourceTree = "<group>"; };
-		26BC7E7D10F1B85900F91463 /* Language.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Language.cpp; path = source/Core/Language.cpp; sourceTree = "<group>"; };
 		26BC7E7E10F1B85900F91463 /* Listener.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Listener.cpp; path = source/Core/Listener.cpp; sourceTree = "<group>"; };
 		26BC7E7F10F1B85900F91463 /* Log.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Log.cpp; path = source/Core/Log.cpp; sourceTree = "<group>"; };
 		26BC7E8010F1B85900F91463 /* Mangled.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Mangled.cpp; path = source/Core/Mangled.cpp; sourceTree = "<group>"; };
@@ -4039,8 +4036,6 @@
 				260A63161861008E00FECF8E /* IOHandler.h */,
 				260A63181861009E00FECF8E /* IOHandler.cpp */,
 				26BC7D6510F1B77400F91463 /* IOStreamMacros.h */,
-				26BC7D6610F1B77400F91463 /* Language.h */,
-				26BC7E7D10F1B85900F91463 /* Language.cpp */,
 				26BC7D6710F1B77400F91463 /* Listener.h */,
 				26BC7E7E10F1B85900F91463 /* Listener.cpp */,
 				26BC7D6810F1B77400F91463 /* Log.h */,
@@ -6097,7 +6092,6 @@
 				2689003D13353E0400698AC0 /* Event.cpp in Sources */,
 				26B75B441AD6E29A001F7A57 /* MipsLinuxSignals.cpp in Sources */,
 				2689003E13353E0400698AC0 /* FileSpecList.cpp in Sources */,
-				2689004013353E0400698AC0 /* Language.cpp in Sources */,
 				2689004113353E0400698AC0 /* Listener.cpp in Sources */,
 				2689004213353E0400698AC0 /* Log.cpp in Sources */,
 				2689004313353E0400698AC0 /* Mangled.cpp in Sources */,
