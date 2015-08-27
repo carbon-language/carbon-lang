@@ -1407,6 +1407,12 @@ llvm::DIType *CGDebugInfo::getOrCreateStandaloneType(QualType D,
   assert(!D.isNull() && "null type");
   llvm::DIType *T = getOrCreateType(D, getOrCreateFile(Loc));
   assert(T && "could not create debug info for type");
+
+  // Composite types with UIDs were already retained by DIBuilder
+  // because they are only referenced by name in the IR.
+  if (auto *CTy = dyn_cast<llvm::DICompositeType>(T))
+    if (!CTy->getIdentifier().empty())
+      return T;
   RetainedTypes.push_back(D.getAsOpaquePtr());
   return T;
 }
@@ -3367,14 +3373,9 @@ void CGDebugInfo::finalize() {
 
   // We keep our own list of retained types, because we need to look
   // up the final type in the type cache.
-  llvm::DenseSet<void *> UniqueTypes;
-  UniqueTypes.resize(RetainedTypes.size() * 2);
-  for (auto &RT : RetainedTypes) {
-    if (!UniqueTypes.insert(RT).second)
-      continue;
+  for (auto &RT : RetainedTypes)
     if (auto MD = TypeCache[RT])
       DBuilder.retainType(cast<llvm::DIType>(MD));
-  }
 
   DBuilder.finalize();
 }
