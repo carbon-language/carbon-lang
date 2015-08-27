@@ -22,7 +22,9 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/raw_ostream.h"
+#include <list>
 
 using namespace llvm;
 
@@ -76,6 +78,9 @@ static cl::opt<bool> ListSymbolsOnly(
 static cl::opt<bool> SetMergedModule(
     "set-merged-module", cl::init(false),
     cl::desc("Use the first input module as the merged module"));
+
+static cl::opt<unsigned> Parallelism("j", cl::Prefix, cl::init(1),
+                                     cl::desc("Number of backend threads"));
 
 namespace {
 struct ModuleInfo {
@@ -240,24 +245,41 @@ int main(int argc, char **argv) {
 
   if (!OutputFilename.empty()) {
     std::string ErrorInfo;
-    std::unique_ptr<MemoryBuffer> Code = CodeGen.compile(
-        DisableInline, DisableGVNLoadPRE, DisableLTOVectorization, ErrorInfo);
-    if (!Code) {
-      errs() << argv[0]
-             << ": error compiling the code: " << ErrorInfo << "\n";
+    if (!CodeGen.optimize(DisableInline, DisableGVNLoadPRE,
+                          DisableLTOVectorization, ErrorInfo)) {
+      errs() << argv[0] << ": error optimizing the code: " << ErrorInfo << "\n";
       return 1;
     }
 
-    std::error_code EC;
-    raw_fd_ostream FileStream(OutputFilename, EC, sys::fs::F_None);
-    if (EC) {
-      errs() << argv[0] << ": error opening the file '" << OutputFilename
-             << "': " << EC.message() << "\n";
+    std::list<tool_output_file> OSs;
+    std::vector<raw_pwrite_stream *> OSPtrs;
+    for (unsigned I = 0; I != Parallelism; ++I) {
+      std::string PartFilename = OutputFilename;
+      if (Parallelism != 1)
+        PartFilename += "." + utostr(I);
+      std::error_code EC;
+      OSs.emplace_back(PartFilename, EC, sys::fs::F_None);
+      if (EC) {
+        errs() << argv[0] << ": error opening the file '" << PartFilename
+               << "': " << EC.message() << "\n";
+        return 1;
+      }
+      OSPtrs.push_back(&OSs.back().os());
+    }
+
+    if (!CodeGen.compileOptimized(OSPtrs, ErrorInfo)) {
+      errs() << argv[0] << ": error compiling the code: " << ErrorInfo << "\n";
       return 1;
     }
 
-    FileStream.write(Code->getBufferStart(), Code->getBufferSize());
+    for (tool_output_file &OS : OSs)
+      OS.keep();
   } else {
+    if (Parallelism != 1) {
+      errs() << argv[0] << ": -j must be specified together with -o\n";
+      return 1;
+    }
+
     std::string ErrorInfo;
     const char *OutputName = nullptr;
     if (!CodeGen.compile_to_file(&OutputName, DisableInline,

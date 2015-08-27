@@ -18,6 +18,7 @@
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/CodeGen/ParallelCG.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/Config/config.h"
 #include "llvm/IR/Constants.h"
@@ -218,7 +219,7 @@ bool LTOCodeGenerator::compileOptimizedToFile(const char **name,
   // generate object file
   tool_output_file objFile(Filename.c_str(), FD);
 
-  bool genResult = compileOptimized(objFile.os(), errMsg);
+  bool genResult = compileOptimized(&objFile.os(), errMsg);
   objFile.os().close();
   if (objFile.os().has_error()) {
     objFile.os().clear_error();
@@ -495,25 +496,26 @@ bool LTOCodeGenerator::optimize(bool DisableInline,
   return true;
 }
 
-bool LTOCodeGenerator::compileOptimized(raw_pwrite_stream &out,
+bool LTOCodeGenerator::compileOptimized(ArrayRef<raw_pwrite_stream *> out,
                                         std::string &errMsg) {
   if (!this->determineTarget(errMsg))
     return false;
 
-  legacy::PassManager codeGenPasses;
+  legacy::PassManager preCodeGenPasses;
 
   // If the bitcode files contain ARC code and were compiled with optimization,
   // the ObjCARCContractPass must be run, so do it unconditionally here.
-  codeGenPasses.add(createObjCARCContractPass());
+  preCodeGenPasses.add(createObjCARCContractPass());
+  preCodeGenPasses.run(*MergedModule);
 
-  if (TargetMach->addPassesToEmitFile(codeGenPasses, out,
-                                      TargetMachine::CGFT_ObjectFile)) {
-    errMsg = "target file type not supported";
-    return false;
-  }
-
-  // Run the code generator, and write object file
-  codeGenPasses.run(*MergedModule);
+  // Do code generation. We need to preserve the module in case the client calls
+  // writeMergedModules() after compilation, but we only need to allow this at
+  // parallelism level 1. This is achieved by having splitCodeGen return the
+  // original module at parallelism level 1 which we then assign back to
+  // MergedModule.
+  MergedModule =
+      splitCodeGen(std::move(MergedModule), out, MCpu, FeatureStr, Options,
+                   RelocModel, CodeModel::Default, CGOptLevel);
 
   return true;
 }

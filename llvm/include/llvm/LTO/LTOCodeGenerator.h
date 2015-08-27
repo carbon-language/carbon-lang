@@ -133,6 +133,12 @@ struct LTOCodeGenerator {
   // if the compilation was not successful.
   std::unique_ptr<MemoryBuffer> compileOptimized(std::string &errMsg);
 
+  // Compile the merged optimized module into out.size() object files each
+  // representing a linkable partition of the module. If out contains more than
+  // one element, code generation is done in parallel with out.size() threads.
+  // Object files will be written to members of out. Returns true on success.
+  bool compileOptimized(ArrayRef<raw_pwrite_stream *> out, std::string &errMsg);
+
   void setDiagnosticHandler(lto_diagnostic_handler_t, void *);
 
   LLVMContext &getContext() { return Context; }
@@ -140,7 +146,6 @@ struct LTOCodeGenerator {
 private:
   void initializeLTOPasses();
 
-  bool compileOptimized(raw_pwrite_stream &out, std::string &errMsg);
   bool compileOptimizedToFile(const char **name, std::string &errMsg);
   void applyScopeRestrictions();
   void applyRestriction(GlobalValue &GV, ArrayRef<StringRef> Libcalls,
