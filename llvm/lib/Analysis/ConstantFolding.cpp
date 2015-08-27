@@ -1282,30 +1282,24 @@ bool llvm::canConstantFoldCallTo(const Function *F) {
   // return true for a name like "cos\0blah" which strcmp would return equal to
   // "cos", but has length 8.
   switch (Name[0]) {
-  default:
-    return false;
+  default: return false;
   case 'a':
-    return Name == "acos" || Name == "asin" || Name == "atan" ||
-           Name == "atan2" || Name == "acosf" || Name == "asinf" ||
-           Name == "atanf" || Name == "atan2f";
+    return Name == "acos" || Name == "asin" || Name == "atan" || Name =="atan2";
   case 'c':
-    return Name == "ceil" || Name == "cos" || Name == "cosh" ||
-           Name == "ceilf" || Name == "cosf" || Name == "coshf";
+    return Name == "cos" || Name == "ceil" || Name == "cosf" || Name == "cosh";
   case 'e':
-    return Name == "exp" || Name == "exp2" || Name == "expf" || Name == "exp2f";
+    return Name == "exp" || Name == "exp2";
   case 'f':
-    return Name == "fabs" || Name == "floor" || Name == "fmod" ||
-           Name == "fabsf" || Name == "floorf" || Name == "fmodf";
+    return Name == "fabs" || Name == "fmod" || Name == "floor";
   case 'l':
-    return Name == "log" || Name == "log10" || Name == "logf" ||
-           Name == "log10f";
+    return Name == "log" || Name == "log10";
   case 'p':
-    return Name == "pow" || Name == "powf";
+    return Name == "pow";
   case 's':
     return Name == "sin" || Name == "sinh" || Name == "sqrt" ||
-           Name == "sinf" || Name == "sinhf" || Name == "sqrtf";
+      Name == "sinf" || Name == "sqrtf";
   case 't':
-    return Name == "tan" || Name == "tanh" || Name == "tanf" || Name == "tanhf";
+    return Name == "tan" || Name == "tanh";
   }
 }
 
@@ -1501,51 +1495,43 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
 
       switch (Name[0]) {
       case 'a':
-        if ((Name == "acos" && TLI->has(LibFunc::acos)) ||
-            (Name == "acosf" && TLI->has(LibFunc::acosf)))
+        if (Name == "acos" && TLI->has(LibFunc::acos))
           return ConstantFoldFP(acos, V, Ty);
-        else if ((Name == "asin" && TLI->has(LibFunc::asin)) ||
-                 (Name == "asinf" && TLI->has(LibFunc::asinf)))
+        else if (Name == "asin" && TLI->has(LibFunc::asin))
           return ConstantFoldFP(asin, V, Ty);
-        else if ((Name == "atan" && TLI->has(LibFunc::atan)) ||
-                 (Name == "atanf" && TLI->has(LibFunc::atanf)))
+        else if (Name == "atan" && TLI->has(LibFunc::atan))
           return ConstantFoldFP(atan, V, Ty);
         break;
       case 'c':
-        if ((Name == "ceil" && TLI->has(LibFunc::ceil)) ||
-            (Name == "ceilf" && TLI->has(LibFunc::ceilf)))
+        if (Name == "ceil" && TLI->has(LibFunc::ceil))
           return ConstantFoldFP(ceil, V, Ty);
-        else if ((Name == "cos" && TLI->has(LibFunc::cos)) ||
-                 (Name == "cosf" && TLI->has(LibFunc::cosf)))
+        else if (Name == "cos" && TLI->has(LibFunc::cos))
           return ConstantFoldFP(cos, V, Ty);
-        else if ((Name == "cosh" && TLI->has(LibFunc::cosh)) ||
-                 (Name == "coshf" && TLI->has(LibFunc::coshf)))
+        else if (Name == "cosh" && TLI->has(LibFunc::cosh))
           return ConstantFoldFP(cosh, V, Ty);
+        else if (Name == "cosf" && TLI->has(LibFunc::cosf))
+          return ConstantFoldFP(cos, V, Ty);
         break;
       case 'e':
-        if ((Name == "exp" && TLI->has(LibFunc::exp)) ||
-            (Name == "expf" && TLI->has(LibFunc::expf)))
+        if (Name == "exp" && TLI->has(LibFunc::exp))
           return ConstantFoldFP(exp, V, Ty);
-        if ((Name == "exp2" && TLI->has(LibFunc::exp2)) ||
-            (Name == "exp2f" && TLI->has(LibFunc::exp2f)))
+
+        if (Name == "exp2" && TLI->has(LibFunc::exp2)) {
           // Constant fold exp2(x) as pow(2,x) in case the host doesn't have a
           // C99 library.
           return ConstantFoldBinaryFP(pow, 2.0, V, Ty);
+        }
         break;
       case 'f':
-        if ((Name == "fabs" && TLI->has(LibFunc::fabs)) ||
-            (Name == "fabsf" && TLI->has(LibFunc::fabsf)))
+        if (Name == "fabs" && TLI->has(LibFunc::fabs))
           return ConstantFoldFP(fabs, V, Ty);
-        else if ((Name == "floor" && TLI->has(LibFunc::floor)) ||
-                 (Name == "floorf" && TLI->has(LibFunc::floorf)))
+        else if (Name == "floor" && TLI->has(LibFunc::floor))
           return ConstantFoldFP(floor, V, Ty);
         break;
       case 'l':
-        if ((Name == "log" && V > 0 && TLI->has(LibFunc::log)) ||
-            (Name == "logf" && V > 0 && TLI->has(LibFunc::logf)))
+        if (Name == "log" && V > 0 && TLI->has(LibFunc::log))
           return ConstantFoldFP(log, V, Ty);
-        else if ((Name == "log10" && V > 0 && TLI->has(LibFunc::log10)) ||
-                 (Name == "log10f" && V > 0 && TLI->has(LibFunc::log10f)))
+        else if (Name == "log10" && V > 0 && TLI->has(LibFunc::log10))
           return ConstantFoldFP(log10, V, Ty);
         else if (IntrinsicID == Intrinsic::sqrt &&
                  (Ty->isHalfTy() || Ty->isFloatTy() || Ty->isDoubleTy())) {
@@ -1562,22 +1548,21 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
         }
         break;
       case 's':
-        if ((Name == "sin" && TLI->has(LibFunc::sin)) ||
-            (Name == "sinf" && TLI->has(LibFunc::sinf)))
+        if (Name == "sin" && TLI->has(LibFunc::sin))
           return ConstantFoldFP(sin, V, Ty);
-        else if ((Name == "sinh" && TLI->has(LibFunc::sinh)) ||
-                 (Name == "sinhf" && TLI->has(LibFunc::sinhf)))
+        else if (Name == "sinh" && TLI->has(LibFunc::sinh))
           return ConstantFoldFP(sinh, V, Ty);
-        else if ((Name == "sqrt" && V >= 0 && TLI->has(LibFunc::sqrt)) ||
-                 (Name == "sqrtf" && V >= 0 && TLI->has(LibFunc::sqrtf)))
+        else if (Name == "sqrt" && V >= 0 && TLI->has(LibFunc::sqrt))
           return ConstantFoldFP(sqrt, V, Ty);
+        else if (Name == "sqrtf" && V >= 0 && TLI->has(LibFunc::sqrtf))
+          return ConstantFoldFP(sqrt, V, Ty);
+        else if (Name == "sinf" && TLI->has(LibFunc::sinf))
+          return ConstantFoldFP(sin, V, Ty);
         break;
       case 't':
-        if ((Name == "tan" && TLI->has(LibFunc::tan)) ||
-            (Name == "tanf" && TLI->has(LibFunc::tanf)))
+        if (Name == "tan" && TLI->has(LibFunc::tan))
           return ConstantFoldFP(tan, V, Ty);
-        else if ((Name == "tanh" && TLI->has(LibFunc::tanh)) ||
-                 (Name == "tanhf" && TLI->has(LibFunc::tanhf)))
+        else if (Name == "tanh" && TLI->has(LibFunc::tanh))
           return ConstantFoldFP(tanh, V, Ty);
         break;
       default:
@@ -1680,14 +1665,11 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
 
         if (!TLI)
           return nullptr;
-        if ((Name == "pow" && TLI->has(LibFunc::pow)) ||
-            (Name == "powf" && TLI->has(LibFunc::powf)))
+        if (Name == "pow" && TLI->has(LibFunc::pow))
           return ConstantFoldBinaryFP(pow, Op1V, Op2V, Ty);
-        if ((Name == "fmod" && TLI->has(LibFunc::fmod)) ||
-            (Name == "fmodf" && TLI->has(LibFunc::fmodf)))
+        if (Name == "fmod" && TLI->has(LibFunc::fmod))
           return ConstantFoldBinaryFP(fmod, Op1V, Op2V, Ty);
-        if ((Name == "atan2" && TLI->has(LibFunc::atan2)) ||
-            (Name == "atan2f" && TLI->has(LibFunc::atan2f)))
+        if (Name == "atan2" && TLI->has(LibFunc::atan2))
           return ConstantFoldBinaryFP(atan2, Op1V, Op2V, Ty);
       } else if (ConstantInt *Op2C = dyn_cast<ConstantInt>(Operands[1])) {
         if (IntrinsicID == Intrinsic::powi && Ty->isHalfTy())
