@@ -9,6 +9,7 @@
 
 #include "AMDGPURelocationHandler.h"
 
+using namespace lld;
 using namespace lld::elf;
 
 std::error_code AMDGPUTargetRelocationHandler::applyRelocation(
