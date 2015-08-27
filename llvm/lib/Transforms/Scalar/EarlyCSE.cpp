@@ -613,6 +613,17 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       continue;
     }
 
+    // A release fence requires that all stores complete before it, but does
+    // not prevent the reordering of following loads 'before' the fence.  As a
+    // result, we don't need to consider it as writing to memory and don't need
+    // to advance the generation.  We do need to prevent DSE across the fence,
+    // but that's handled above.
+    if (FenceInst *FI = dyn_cast<FenceInst>(Inst))
+      if (FI->getOrdering() == Release) {
+        assert(Inst->mayReadFromMemory() && "relied on to prevent DSE above");
+        continue;
+      }
+
     // Okay, this isn't something we can CSE at all.  Check to see if it is
     // something that could modify memory.  If so, our available memory values
     // cannot be used so bump the generation count.
