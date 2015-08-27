@@ -214,6 +214,11 @@ static cl::opt<unsigned> MaxNestedScalarReductionIC(
     cl::desc("The maximum interleave count to use when interleaving a scalar "
              "reduction in a nested loop."));
 
+static cl::opt<unsigned> PragmaVectorizeMemoryCheckThreshold(
+    "pragma-vectorize-memory-check-threshold", cl::init(128), cl::Hidden,
+    cl::desc("The maximum allowed number of runtime memory checks with a "
+             "vectorize(enable) pragma."));
+
 namespace {
 
 // Forward declarations.
@@ -929,6 +934,15 @@ public:
     return DiagnosticInfo::AlwaysPrint;
   }
 
+  bool allowReordering() const {
+    // When enabling loop hints are provided we allow the vectorizer to change
+    // the order of operations that is given by the scalar loop. This is not
+    // enabled by default because can be unsafe or inefficient. For example,
+    // reordering floating-point operations will change the way round-off
+    // error accumulates in the loop.
+    return getForce() == LoopVectorizeHints::FK_Enabled || getWidth() > 1;
+  }
+
 private:
   /// Find hints specified in the loop metadata and update local values.
   void getHintsFromMetadata() {
@@ -1427,29 +1441,25 @@ public:
   bool doesNotMeet(Function *F, Loop *L, const LoopVectorizeHints &Hints) {
     const char *Name = Hints.vectorizeAnalysisPassName();
     bool Failed = false;
-    if (UnsafeAlgebraInst &&
-        Hints.getForce() == LoopVectorizeHints::FK_Undefined &&
-        Hints.getWidth() == 0) {
+    if (UnsafeAlgebraInst && !Hints.allowReordering()) {
       emitOptimizationRemarkAnalysisFPCommute(
           F->getContext(), Name, *F, UnsafeAlgebraInst->getDebugLoc(),
-          VectorizationReport() << "vectorization requires changes in the "
-                                   "order of operations, however IEEE 754 "
-                                   "floating-point operations are not "
-                                   "commutative");
+          VectorizationReport() << "cannot prove it is safe to reorder "
+                                   "floating-point operations");
       Failed = true;
     }
 
-    if (NumRuntimePointerChecks >
-        VectorizerParams::RuntimeMemoryCheckThreshold) {
+    // Test if runtime memcheck thresholds are exceeded.
+    bool PragmaThresholdReached =
+        NumRuntimePointerChecks > PragmaVectorizeMemoryCheckThreshold;
+    bool ThresholdReached =
+        NumRuntimePointerChecks > VectorizerParams::RuntimeMemoryCheckThreshold;
+    if ((ThresholdReached && !Hints.allowReordering()) ||
+        PragmaThresholdReached) {
       emitOptimizationRemarkAnalysisAliasing(
           F->getContext(), Name, *F, L->getStartLoc(),
           VectorizationReport()
-              << "cannot prove pointers refer to independent arrays in memory. "
-                 "The loop requires "
-              << NumRuntimePointerChecks
-              << " runtime independence checks to vectorize the loop, but that "
-                 "would exceed the limit of "
-              << VectorizerParams::RuntimeMemoryCheckThreshold << " checks");
+              << "cannot prove it is safe to reorder memory operations");
       DEBUG(dbgs() << "LV: Too many memory checks needed.\n");
       Failed = true;
     }
