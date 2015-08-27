@@ -3,7 +3,6 @@ set(LLVM_LINK_COMPONENTS
   Core
   ExecutionEngine
   InstCombine
-  MCJIT
   Object
   RuntimeDyld
   ScalarOpts
