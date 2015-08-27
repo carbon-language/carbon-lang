@@ -11,6 +11,7 @@ add_lldb_library(lldbTarget
   JITLoaderList.cpp
   InstrumentationRuntime.cpp
   InstrumentationRuntimeStopInfo.cpp
+  Language.cpp
   LanguageRuntime.cpp
   Memory.cpp
   MemoryHistory.cpp
