@@ -862,14 +862,16 @@ public:
   bool allowVectorization(Function *F, Loop *L, bool AlwaysVectorize) const {
     if (getForce() == LoopVectorizeHints::FK_Disabled) {
       DEBUG(dbgs() << "LV: Not vectorizing: #pragma vectorize disable.\n");
-      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+      emitOptimizationRemarkAnalysis(F->getContext(),
+                                     vectorizeAnalysisPassName(), *F,
                                      L->getStartLoc(), emitRemark());
       return false;
     }
 
     if (!AlwaysVectorize && getForce() != LoopVectorizeHints::FK_Enabled) {
       DEBUG(dbgs() << "LV: Not vectorizing: No #pragma vectorize enable.\n");
-      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+      emitOptimizationRemarkAnalysis(F->getContext(),
+                                     vectorizeAnalysisPassName(), *F,
                                      L->getStartLoc(), emitRemark());
       return false;
     }
@@ -882,7 +884,7 @@ public:
       // vectorize.disable to be used without disabling the pass and errors
       // to differentiate between disabled vectorization and a width of 1.
       emitOptimizationRemarkAnalysis(
-          F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
+          F->getContext(), vectorizeAnalysisPassName(), *F, L->getStartLoc(),
           "loop not vectorized: vectorization and interleaving are explicitly "
           "disabled, or vectorize width and interleave count are both set to "
           "1");
@@ -915,9 +917,16 @@ public:
   unsigned getWidth() const { return Width.Value; }
   unsigned getInterleave() const { return Interleave.Value; }
   enum ForceKind getForce() const { return (ForceKind)Force.Value; }
-  bool isForced() const {
-    return getForce() == LoopVectorizeHints::FK_Enabled || getWidth() > 1 ||
-           getInterleave() > 1;
+  const char *vectorizeAnalysisPassName() const {
+    // If hints are provided that don't disable vectorization use the
+    // AlwaysPrint pass name to force the frontend to print the diagnostic.
+    if (getWidth() == 1)
+      return LV_NAME;
+    if (getForce() == LoopVectorizeHints::FK_Disabled)
+      return LV_NAME;
+    if (getForce() == LoopVectorizeHints::FK_Undefined && getWidth() == 0)
+      return LV_NAME;
+    return DiagnosticInfo::AlwaysPrint;
   }
 
 private:
@@ -1039,15 +1048,14 @@ private:
 static void emitAnalysisDiag(const Function *TheFunction, const Loop *TheLoop,
                              const LoopVectorizeHints &Hints,
                              const LoopAccessReport &Message) {
-  // If a loop hint is provided the diagnostic is always produced.
-  const char *Name = Hints.isForced() ? DiagnosticInfo::AlwaysPrint : LV_NAME;
+  const char *Name = Hints.vectorizeAnalysisPassName();
   LoopAccessReport::emitAnalysis(Message, TheFunction, TheLoop, Name);
 }
 
 static void emitMissedWarning(Function *F, Loop *L,
                               const LoopVectorizeHints &LH) {
-  emitOptimizationRemarkMissed(F->getContext(), DEBUG_TYPE, *F,
-                               L->getStartLoc(), LH.emitRemark());
+  emitOptimizationRemarkMissed(F->getContext(), LV_NAME, *F, L->getStartLoc(),
+                               LH.emitRemark());
 
   if (LH.getForce() == LoopVectorizeHints::FK_Enabled) {
     if (LH.getWidth() != 1)
@@ -1497,8 +1505,7 @@ public:
   void addRuntimePointerChecks(unsigned Num) { NumRuntimePointerChecks = Num; }
 
   bool doesNotMeet(Function *F, Loop *L, const LoopVectorizeHints &Hints) {
-    // If a loop hint is provided the diagnostic is always produced.
-    const char *Name = Hints.isForced() ? DiagnosticInfo::AlwaysPrint : LV_NAME;
+    const char *Name = Hints.vectorizeAnalysisPassName();
     bool Failed = false;
     if (UnsafeAlgebraInst &&
         Hints.getForce() == LoopVectorizeHints::FK_Undefined &&
@@ -1799,21 +1806,22 @@ struct LoopVectorize : public FunctionPass {
     IC = UserIC > 0 ? UserIC : IC;
 
     // Emit diagnostic messages, if any.
+    const char *VAPassName = Hints.vectorizeAnalysisPassName();
     if (!VectorizeLoop && !InterleaveLoop) {
       // Do not vectorize or interleaving the loop.
-      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+      emitOptimizationRemarkAnalysis(F->getContext(), VAPassName, *F,
                                      L->getStartLoc(), VecDiagMsg);
-      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+      emitOptimizationRemarkAnalysis(F->getContext(), LV_NAME, *F,
                                      L->getStartLoc(), IntDiagMsg);
       return false;
     } else if (!VectorizeLoop && InterleaveLoop) {
       DEBUG(dbgs() << "LV: Interleave Count is " << IC << '\n');
-      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+      emitOptimizationRemarkAnalysis(F->getContext(), VAPassName, *F,
                                      L->getStartLoc(), VecDiagMsg);
     } else if (VectorizeLoop && !InterleaveLoop) {
       DEBUG(dbgs() << "LV: Found a vectorizable loop (" << VF.Width << ") in "
                    << DebugLocStr << '\n');
-      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+      emitOptimizationRemarkAnalysis(F->getContext(), LV_NAME, *F,
                                      L->getStartLoc(), IntDiagMsg);
     } else if (VectorizeLoop && InterleaveLoop) {
       DEBUG(dbgs() << "LV: Found a vectorizable loop (" << VF.Width << ") in "
@@ -1828,7 +1836,7 @@ struct LoopVectorize : public FunctionPass {
       InnerLoopUnroller Unroller(L, SE, LI, DT, TLI, TTI, IC);
       Unroller.vectorize(&LVL);
 
-      emitOptimizationRemark(F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
+      emitOptimizationRemark(F->getContext(), LV_NAME, *F, L->getStartLoc(),
                              Twine("interleaved loop (interleaved count: ") +
                                  Twine(IC) + ")");
     } else {
@@ -1844,7 +1852,7 @@ struct LoopVectorize : public FunctionPass {
         AddRuntimeUnrollDisableMetaData(L);
 
       // Report the vectorization decision.
-      emitOptimizationRemark(F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
+      emitOptimizationRemark(F->getContext(), LV_NAME, *F, L->getStartLoc(),
                              Twine("vectorized loop (vectorization width: ") +
                                  Twine(VF.Width) + ", interleaved count: " +
                                  Twine(IC) + ")");
