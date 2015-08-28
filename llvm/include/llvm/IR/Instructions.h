@@ -1473,8 +1473,14 @@ public:
 
   /// getArgOperand/setArgOperand - Return/set the i-th call argument.
   ///
-  Value *getArgOperand(unsigned i) const { return getOperand(i); }
-  void setArgOperand(unsigned i, Value *v) { setOperand(i, v); }
+  Value *getArgOperand(unsigned i) const {
+    assert(i < getNumArgOperands() && "Out of bounds!");
+    return getOperand(i);
+  }
+  void setArgOperand(unsigned i, Value *v) {
+    assert(i < getNumArgOperands() && "Out of bounds!");
+    setOperand(i, v);
+  }
 
   /// arg_operands - iteration adapter for range-for loops.
   iterator_range<op_iterator> arg_operands() {
@@ -1489,8 +1495,14 @@ public:
   }
 
   /// \brief Wrappers for getting the \c Use of a call argument.
-  const Use &getArgOperandUse(unsigned i) const { return getOperandUse(i); }
-  Use &getArgOperandUse(unsigned i) { return getOperandUse(i); }
+  const Use &getArgOperandUse(unsigned i) const {
+    assert(i < getNumArgOperands() && "Out of bounds!");
+    return getOperandUse(i);
+  }
+  Use &getArgOperandUse(unsigned i) {
+    assert(i < getNumArgOperands() && "Out of bounds!");
+    return getOperandUse(i);
+  }
 
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
@@ -3268,8 +3280,14 @@ public:
 
   /// getArgOperand/setArgOperand - Return/set the i-th invoke argument.
   ///
-  Value *getArgOperand(unsigned i) const { return getOperand(i); }
-  void setArgOperand(unsigned i, Value *v) { setOperand(i, v); }
+  Value *getArgOperand(unsigned i) const {
+    assert(i < getNumArgOperands() && "Out of bounds!");
+    return getOperand(i);
+  }
+  void setArgOperand(unsigned i, Value *v) {
+    assert(i < getNumArgOperands() && "Out of bounds!");
+    setOperand(i, v);
+  }
 
   /// arg_operands - iteration adapter for range-for loops.
   iterator_range<op_iterator> arg_operands() {
@@ -3282,8 +3300,14 @@ public:
   }
 
   /// \brief Wrappers for getting the \c Use of a invoke argument.
-  const Use &getArgOperandUse(unsigned i) const { return getOperandUse(i); }
-  Use &getArgOperandUse(unsigned i) { return getOperandUse(i); }
+  const Use &getArgOperandUse(unsigned i) const {
+    assert(i < getNumArgOperands() && "Out of bounds!");
+    return getOperandUse(i);
+  }
+  Use &getArgOperandUse(unsigned i) {
+    assert(i < getNumArgOperands() && "Out of bounds!");
+    return getOperandUse(i);
+  }
 
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
