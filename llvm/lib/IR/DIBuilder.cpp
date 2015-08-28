@@ -689,8 +689,6 @@ DISubprogram *DIBuilder::createFunction(DIScope *Context, StringRef Name,
                                         unsigned ScopeLine, unsigned Flags,
                                         bool isOptimized, Function *Fn,
                                         MDNode *TParams, MDNode *Decl) {
-  assert(Ty->getTag() == dwarf::DW_TAG_subroutine_type &&
-         "function types should be subroutines");
   auto *Node = getSubprogram(/* IsDistinct = */ isDefinition, VMContext,
                              DIScopeRef::get(getNonCompileUnitScope(Context)),
                              Name, LinkageName, File, LineNo, Ty, isLocalToUnit,
@@ -725,8 +723,6 @@ DIBuilder::createMethod(DIScope *Context, StringRef Name, StringRef LinkageName,
                         bool isLocalToUnit, bool isDefinition, unsigned VK,
                         unsigned VIndex, DIType *VTableHolder, unsigned Flags,
                         bool isOptimized, Function *Fn, MDNode *TParam) {
-  assert(Ty->getTag() == dwarf::DW_TAG_subroutine_type &&
-         "function types should be subroutines");
   assert(getNonCompileUnitScope(Context) &&
          "Methods should have both a Context and a context that isn't "
          "the compile unit.");

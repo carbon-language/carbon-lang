@@ -1195,11 +1195,10 @@ void DwarfUnit::applySubprogramAttributes(const DISubprogram *SP, DIE &SPDie,
        Language == dwarf::DW_LANG_ObjC))
     addFlag(SPDie, dwarf::DW_AT_prototyped);
 
-  const DISubroutineType *SPTy = SP->getType();
-  assert(SPTy->getTag() == dwarf::DW_TAG_subroutine_type &&
-         "the type of a subprogram should be a subroutine");
+  DITypeRefArray Args;
+  if (const DISubroutineType *SPTy = SP->getType())
+    Args = SPTy->getTypeArray();
 
-  auto Args = SPTy->getTypeArray();
   // Add a return type. If this is a type like a C/C++ void type we don't add a
   // return type.
   if (Args.size())
