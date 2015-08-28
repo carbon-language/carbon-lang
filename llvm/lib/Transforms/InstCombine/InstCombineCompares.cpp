@@ -2140,6 +2140,12 @@ bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
     return true;
   };
 
+  // If the overflow check was an add followed by a compare, the insertion point
+  // may be pointing to the compare.  We want to insert the new instructions
+  // before the add in case there are uses of the add between the add and the
+  // compare.
+  Builder->SetInsertPoint(&OrigI);
+
   switch (OCF) {
   case OCF_INVALID:
     llvm_unreachable("bad overflow check kind!");
