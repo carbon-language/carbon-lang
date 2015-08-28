@@ -1353,6 +1353,20 @@ referenceType() matches the types of b, c, d, e, and f.
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('substTemplateTypeParmType0')"><a name="substTemplateTypeParmType0Anchor">substTemplateTypeParmType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1SubstTemplateTypeParmType.html">SubstTemplateTypeParmType</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="substTemplateTypeParmType0"><pre>Matches types that represent the result of substituting a type for a
+template type parameter.
+
+Given
+  template &lt;typename T&gt;
+  void F(T t) {
+    int i = 1 + t;
+  }
+
+substTemplateTypeParmType() matches the type of 't' but not '1'
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('templateSpecializationType0')"><a name="templateSpecializationType0Anchor">templateSpecializationType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateSpecializationType.html">TemplateSpecializationType</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="templateSpecializationType0"><pre>Matches template specialization types.
 
