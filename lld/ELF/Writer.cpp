@@ -246,7 +246,7 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
         if (!Body)
           continue;
         // Skip undefined weak for now.
-        if (isa<UndefinedWeak<ELFT>>(Body))
+        if (isa<Undefined<ELFT>>(Body) && Body->isWeak())
           continue;
         if (!isa<DefinedRegular<ELFT>>(Body))
           error(Twine("Can't relocate symbol ") + Body->getName());
@@ -300,18 +300,17 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     const Elf_Sym *InputSym = nullptr;
 
     switch (Body->kind()) {
-    case SymbolBody::UndefinedKind:
     case SymbolBody::UndefinedSyntheticKind:
       llvm_unreachable("Should be defined by now");
-    case SymbolBody::DefinedWeakKind:
     case SymbolBody::DefinedRegularKind: {
-      auto *Def = cast<DefinedInSection<ELFT>>(Body);
+      auto *Def = cast<DefinedRegular<ELFT>>(Body);
       InputSym = &Def->Sym;
       Section = &Def->Section;
       break;
     }
+    case SymbolBody::UndefinedKind:
+      assert(Body->isWeak() && "Should be defined by now");
     case SymbolBody::DefinedAbsoluteKind:
-    case SymbolBody::UndefinedWeakKind:
       InputSym = &cast<ELFSymbolBody<ELFT>>(Body)->Sym;
       break;
     }

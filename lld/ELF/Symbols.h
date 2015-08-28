@@ -40,18 +40,19 @@ public:
     DefinedFirst = 0,
     DefinedRegularKind = 0,
     DefinedAbsoluteKind = 1,
-    DefinedWeakKind = 2,
-    DefinedLast = 2,
-    UndefinedWeakKind = 3,
-    UndefinedKind = 4,
-    UndefinedSyntheticKind = 5
+    DefinedLast = 1,
+    UndefinedKind = 2,
+    UndefinedSyntheticKind = 3
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
 
-  bool isStrongUndefined() {
+  bool isWeak() const { return IsWeak; }
+  bool isUndefined() const {
     return SymbolKind == UndefinedKind || SymbolKind == UndefinedSyntheticKind;
   }
+  bool isDefined() const { return !isUndefined(); }
+  bool isStrongUndefined() { return !IsWeak && isUndefined(); }
 
   // Returns the symbol name.
   StringRef getName() const { return Name; }
@@ -71,10 +72,12 @@ public:
   int compare(SymbolBody *Other);
 
 protected:
-  SymbolBody(Kind K, StringRef Name) : SymbolKind(K), Name(Name) {}
+  SymbolBody(Kind K, StringRef Name, bool IsWeak)
+      : SymbolKind(K), IsWeak(IsWeak), Name(Name) {}
 
 protected:
   const unsigned SymbolKind : 8;
+  const unsigned IsWeak : 1;
   StringRef Name;
   Symbol *Backref = nullptr;
 };
@@ -90,7 +93,8 @@ template <class ELFT> class ELFSymbolBody : public SymbolBody {
 protected:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   ELFSymbolBody(Kind K, StringRef Name, const Elf_Sym &Sym)
-      : SymbolBody(K, Name), Sym(Sym) {}
+      : SymbolBody(K, Name, Sym.getBinding() == llvm::ELF::STB_WEAK), Sym(Sym) {
+  }
 
 public:
   const Elf_Sym &Sym;
@@ -113,6 +117,8 @@ protected:
 public:
   explicit Defined(Kind K, StringRef N, const Elf_Sym &Sym)
       : ELFSymbolBody<ELFT>(K, N, Sym) {}
+
+  static bool classof(const SymbolBody *S) { return S->isDefined(); }
 };
 
 template <class ELFT> class DefinedAbsolute : public Defined<ELFT> {
@@ -122,63 +128,37 @@ template <class ELFT> class DefinedAbsolute : public Defined<ELFT> {
 public:
   explicit DefinedAbsolute(StringRef N, const Elf_Sym &Sym)
       : Defined<ELFT>(Base::DefinedAbsoluteKind, N, Sym) {}
-};
-
-template <class ELFT> class DefinedInSection : public Defined<ELFT> {
-  typedef ELFSymbolBody<ELFT> Base;
-  typedef typename Base::Kind Kind;
-
-public:
-  typedef typename Base::Elf_Sym Elf_Sym;
-
-  explicit DefinedInSection(Kind K, StringRef N, const Elf_Sym &Sym,
-                            SectionChunk<ELFT> &Section)
-      : Defined<ELFT>(K, N, Sym), Section(Section) {}
 
   static bool classof(const SymbolBody *S) {
-    Kind K = S->kind();
-    return Base::DefinedFirst <= K && K <= Base::DefinedLast;
+    return S->kind() == Base::DefinedAbsoluteKind;
   }
-
-  const SectionChunk<ELFT> &Section;
 };
 
 // Regular defined symbols read from object file symbol tables.
-template <class ELFT> class DefinedRegular : public DefinedInSection<ELFT> {
+template <class ELFT> class DefinedRegular : public Defined<ELFT> {
   typedef Defined<ELFT> Base;
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
   explicit DefinedRegular(StringRef N, const Elf_Sym &Sym,
                           SectionChunk<ELFT> &Section)
-      : DefinedInSection<ELFT>(Base::DefinedRegularKind, N, Sym, Section) {}
+      : Defined<ELFT>(Base::DefinedRegularKind, N, Sym), Section(Section) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedRegularKind;
   }
-};
 
-template <class ELFT> class DefinedWeak : public DefinedInSection<ELFT> {
-  typedef Defined<ELFT> Base;
-  typedef typename Base::Elf_Sym Elf_Sym;
-
-public:
-  explicit DefinedWeak(StringRef N, const Elf_Sym &Sym,
-                       SectionChunk<ELFT> &Section)
-      : DefinedInSection<ELFT>(Base::DefinedWeakKind, N, Sym, Section) {}
-
-  static bool classof(const SymbolBody *S) {
-    return S->kind() == Base::DefinedWeakKind;
-  }
+  const SectionChunk<ELFT> &Section;
 };
 
 // Undefined symbols.
 class SyntheticUndefined : public SymbolBody {
 public:
-  explicit SyntheticUndefined(StringRef N) : SymbolBody(UndefinedKind, N) {}
+  explicit SyntheticUndefined(StringRef N)
+      : SymbolBody(UndefinedKind, N, false) {}
 
   static bool classof(const SymbolBody *S) {
-    return S->kind() == UndefinedKind;
+    return S->kind() == UndefinedSyntheticKind;
   }
 };
 
@@ -192,19 +172,6 @@ public:
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::UndefinedKind;
-  }
-};
-
-template <class ELFT> class UndefinedWeak : public ELFSymbolBody<ELFT> {
-  typedef ELFSymbolBody<ELFT> Base;
-  typedef typename Base::Elf_Sym Elf_Sym;
-
-public:
-  explicit UndefinedWeak(StringRef N, const Elf_Sym &Sym)
-      : ELFSymbolBody<ELFT>(Base::UndefinedWeakKind, N, Sym) {}
-
-  static bool classof(const SymbolBody *S) {
-    return S->kind() == Base::UndefinedWeakKind;
   }
 };
 

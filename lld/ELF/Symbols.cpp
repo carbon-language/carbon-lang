@@ -20,27 +20,17 @@ using namespace lld::elf2;
 // Returns 1, 0 or -1 if this symbol should take precedence
 // over the Other, tie or lose, respectively.
 int SymbolBody::compare(SymbolBody *Other) {
-  Kind LK = kind();
-  Kind RK = Other->kind();
+  std::pair<bool, bool> L(isDefined(), isWeak());
+  std::pair<bool, bool> R(Other->isDefined(), Other->isWeak());
 
-  // Normalize so that the smaller kind is on the left.
-  if (LK > RK)
+  // Normalize
+  if (L > R)
     return -Other->compare(this);
 
-  // First handle comparisons between two different kinds.
-  if (LK != RK)
-    return 1;
+  if (L != R)
+    return -1;
 
-  // Now handle the case where the kinds are the same.
-  switch (LK) {
-  case DefinedAbsoluteKind:
-  case DefinedRegularKind:
+  if (L.first && !L.second)
     return 0;
-  case DefinedWeakKind:
-  case UndefinedKind:
-  case UndefinedWeakKind:
-  case UndefinedSyntheticKind:
-    return 1;
-  }
-  llvm_unreachable("unknown symbol kind");
+  return 1;
 }

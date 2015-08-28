@@ -113,13 +113,10 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   default:
     error("unexpected binding");
   case STB_GLOBAL:
+  case STB_WEAK:
     if (Sym->isUndefined())
       return new (Alloc) Undefined<ELFT>(Name, *Sym);
     return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, *Chunks[SecIndex]);
-  case STB_WEAK:
-    if (Sym->isUndefined())
-      return new (Alloc) UndefinedWeak<ELFT>(Name, *Sym);
-    return new (Alloc) DefinedWeak<ELFT>(Name, *Sym, *Chunks[SecIndex]);
   }
 }
 

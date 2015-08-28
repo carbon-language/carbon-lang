@@ -16,3 +16,6 @@ foo:
 
 .weak zed
 .long zed
+
+.global abs
+abs = 123
