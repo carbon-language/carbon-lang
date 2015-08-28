@@ -39,7 +39,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !1 = !DIFile(filename: "t2.c", directory: "/local/mnt/workspace/build/tip-Release")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, function: void ()* @foo, variables: !8)
+!4 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, function: void ()* @foo, variables: !8)
 !5 = !DIFile(filename: "t2.c", directory: "/local/mnt/workspace/build/tip-Release")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}
