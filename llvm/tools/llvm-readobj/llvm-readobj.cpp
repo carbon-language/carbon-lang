@@ -331,12 +331,6 @@ static void dumpObject(const ObjectFile *Obj) {
     Dumper->printStackMap();
 }
 
-static void dumpCOFFImportFile(const COFFImportFile *File) {
-  outs() << '\n';
-  outs() << "File: " << File->getFileName() << "\n";
-  outs() << "Format: COFF-import-file\n";
-}
-
 /// @brief Dumps each object file in \a Arc;
 static void dumpArchive(const Archive *Arc) {
   for (const auto &Child : Arc->children()) {

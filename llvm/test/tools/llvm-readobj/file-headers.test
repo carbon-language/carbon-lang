@@ -330,4 +330,8 @@ COFF-UNKNOWN-NEXT:   Characteristics [ (0x0)
 COFF-UNKNOWN-NEXT:   ]
 COFF-UNKNOWN-NEXT: }
 
-COFF-IMPORTLIB: Format: COFF-import-file
+COFF-IMPORTLIB:      Format: COFF-import-file
+COFF-IMPORTLIB-NEXT: Type: code
+COFF-IMPORTLIB-NEXT: Name type: noprefix
+COFF-IMPORTLIB-NEXT: Symbol: _func
+COFF-IMPORTLIB-NEXT: Symbol: __imp__func

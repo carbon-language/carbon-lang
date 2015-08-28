@@ -57,11 +57,14 @@ public:
     return BasicSymbolRef(Symb, this);
   }
 
+  const coff_import_header *getCOFFImportHeader() const {
+    return reinterpret_cast<const object::coff_import_header *>(
+        Data.getBufferStart());
+  }
+
 private:
   bool isCode() const {
-    auto *Import = reinterpret_cast<const object::coff_import_header *>(
-        Data.getBufferStart());
-    return Import->getType() == COFF::IMPORT_CODE;
+    return getCOFFImportHeader()->getType() == COFF::IMPORT_CODE;
   }
 };
 
