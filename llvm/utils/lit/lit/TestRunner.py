@@ -544,6 +544,13 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
         return lit.Test.Result(Test.UNSUPPORTED,
                     "Test is unsupported with the following features: %s" % msg)
 
+    unsupported_targets = [f for f in unsupported
+                           if f in test.suite.config.target_triple]
+    if unsupported_targets:
+      return lit.Test.Result(Test.UNSUPPORTED,
+                  "Test is unsupported with the following triple: %s" % (
+                      test.suite.config.target_triple,))
+
     if test.config.limit_to_features:
         # Check that we have one of the limit_to_features features in requires.
         limit_to_features_tests = [f for f in test.config.limit_to_features
