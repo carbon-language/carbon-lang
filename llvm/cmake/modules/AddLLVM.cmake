@@ -563,7 +563,6 @@ endmacro(add_llvm_loadable_module name)
 
 macro(add_llvm_executable name)
   llvm_process_sources( ALL_FILES ${ARGN} )
-  add_windows_version_resource_file(ALL_FILES ${ALL_FILES})
 
   # Generate objlib
   if(LLVM_ENABLE_OBJLIB)
@@ -577,6 +576,8 @@ macro(add_llvm_executable name)
 
     set_target_properties(${obj_name} PROPERTIES FOLDER "Object Libraries")
   endif()
+
+  add_windows_version_resource_file(ALL_FILES ${ALL_FILES})
 
   if( EXCLUDE_FROM_ALL )
     add_executable(${name} EXCLUDE_FROM_ALL ${ALL_FILES})
