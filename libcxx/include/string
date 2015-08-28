@@ -1444,7 +1444,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY size_type length() const _NOEXCEPT {return size();}
     _LIBCPP_INLINE_VISIBILITY size_type max_size() const _NOEXCEPT;
     _LIBCPP_INLINE_VISIBILITY size_type capacity() const _NOEXCEPT
-        {return (__is_long() ? __get_long_cap() : __min_cap) - 1;}
+        {return (__is_long() ? __get_long_cap()
+                             : static_cast<size_type>(__min_cap)) - 1;}
 
     void resize(size_type __n, value_type __c);
     _LIBCPP_INLINE_VISIBILITY void resize(size_type __n) {resize(__n, value_type());}
@@ -1784,11 +1785,11 @@ private:
     template <size_type __a> static
         _LIBCPP_INLINE_VISIBILITY
         size_type __align_it(size_type __s) _NOEXCEPT
-            {return __s + (__a-1) & ~(__a-1);}
+            {return (__s + (__a-1)) & ~(__a-1);}
     enum {__alignment = 16};
     static _LIBCPP_INLINE_VISIBILITY
     size_type __recommend(size_type __s) _NOEXCEPT
-        {return (__s < __min_cap ? __min_cap :
+        {return (__s < __min_cap ? static_cast<size_type>(__min_cap) :
                  __align_it<sizeof(value_type) < __alignment ?
                             __alignment/sizeof(value_type) : 1 > (__s+1)) - 1;}
 
