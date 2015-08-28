@@ -3147,7 +3147,8 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
         LI->getPointerOperand(), LI->getAlignment(), DL, CtxI, DT, TLI);
   }
   case Instruction::Call: {
-    if (cast<CallInst>(Inst)->doesNotAccessMemory())
+    auto *CI = cast<CallInst>(Inst);
+    if (CI->doesNotAccessMemory() && !CI->isMustTailCall())
       return true;
     return false; // The called function could have undefined behavior or
                   // side-effects.

@@ -506,18 +506,16 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, const TargetMachine &TM) {
 
   // If I will have a chain, make sure no other instruction that will have a
   // chain interposes between I and the return.
-  if (I->mayHaveSideEffects() || I->mayReadFromMemory() ||
-      !isSafeToSpeculativelyExecute(I))
-    for (BasicBlock::const_iterator BBI = std::prev(ExitBB->end(), 2);; --BBI) {
-      if (&*BBI == I)
-        break;
-      // Debug info intrinsics do not get in the way of tail call optimization.
-      if (isa<DbgInfoIntrinsic>(BBI))
-        continue;
-      if (BBI->mayHaveSideEffects() || BBI->mayReadFromMemory() ||
-          !isSafeToSpeculativelyExecute(BBI))
-        return false;
-    }
+  for (BasicBlock::const_iterator BBI = std::prev(ExitBB->end(), 2);; --BBI) {
+    if (&*BBI == I)
+      break;
+    // Debug info intrinsics do not get in the way of tail call optimization.
+    if (isa<DbgInfoIntrinsic>(BBI))
+      continue;
+    if (BBI->mayHaveSideEffects() || BBI->mayReadFromMemory() ||
+        !isSafeToSpeculativelyExecute(BBI))
+      return false;
+  }
 
   const Function *F = ExitBB->getParent();
   return returnTypeIsEligibleForTailCall(
