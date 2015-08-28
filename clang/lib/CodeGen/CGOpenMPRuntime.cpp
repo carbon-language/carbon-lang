@@ -2091,27 +2091,6 @@ emitTaskPrivateMappingFunction(CodeGenModule &CGM, SourceLocation Loc,
   return TaskPrivatesMap;
 }
 
-llvm::Value *getTypeSize(CodeGenFunction &CGF, QualType Ty) {
-  auto &C = CGF.getContext();
-  llvm::Value *Size;
-  auto SizeInChars = C.getTypeSizeInChars(Ty);
-  if (SizeInChars.isZero()) {
-    // getTypeSizeInChars() returns 0 for a VLA.
-    Size = nullptr;
-    while (auto *VAT = C.getAsVariableArrayType(Ty)) {
-      llvm::Value *ArraySize;
-      std::tie(ArraySize, Ty) = CGF.getVLASize(VAT);
-      Size = Size ? CGF.Builder.CreateNUWMul(Size, ArraySize) : ArraySize;
-    }
-    SizeInChars = C.getTypeSizeInChars(Ty);
-    assert(!SizeInChars.isZero());
-    Size = CGF.Builder.CreateNUWMul(
-        Size, llvm::ConstantInt::get(CGF.SizeTy, SizeInChars.getQuantity()));
-  } else
-    Size = llvm::ConstantInt::get(CGF.SizeTy, SizeInChars.getQuantity());
-  return Size;
-}
-
 static int array_pod_sort_comparator(const PrivateDataTy *P1,
                                      const PrivateDataTy *P2) {
   return P1->first < P2->first ? 1 : (P2->first < P1->first ? -1 : 0);
@@ -2349,30 +2328,19 @@ void CGOpenMPRuntime::emitTaskCall(
     // kmp_depend_info[<Dependences.size()>] deps;
     DependInfo = CGF.CreateMemTemp(KmpDependInfoArrayTy);
     for (unsigned i = 0; i < DependencesNumber; ++i) {
-      auto *E = Dependences[i].second;
-      LValue Addr = CGF.EmitLValue(E);
-      llvm::Value *Size;
-      QualType Ty = E->getType();
-      auto *DestAddr = Addr.getAddress();
-      if (auto *ASE = dyn_cast<OMPArraySectionExpr>(E->IgnoreParenImpCasts())) {
-        LValue UpAddrLVal =
-            CGF.EmitOMPArraySectionExpr(ASE, /*LowerBound=*/false);
-        llvm::Value *UpAddr =
-            CGF.Builder.CreateConstGEP1_32(UpAddrLVal.getAddress(), /*Idx0=*/1);
-        llvm::Value *LowIntPtr =
-            CGF.Builder.CreatePtrToInt(DestAddr, CGM.SizeTy);
-        llvm::Value *UpIntPtr = CGF.Builder.CreatePtrToInt(UpAddr, CGM.SizeTy);
-        Size = CGF.Builder.CreateNUWSub(UpIntPtr, LowIntPtr);
-      } else
-        Size = getTypeSize(CGF, Ty);
+      auto Addr = CGF.EmitLValue(Dependences[i].second);
+      auto *Size = llvm::ConstantInt::get(
+          CGF.SizeTy,
+          C.getTypeSizeInChars(Dependences[i].second->getType()).getQuantity());
       auto Base = CGF.MakeNaturalAlignAddrLValue(
           CGF.Builder.CreateStructGEP(/*Ty=*/nullptr, DependInfo, i),
           KmpDependInfoTy);
       // deps[i].base_addr = &<Dependences[i].second>;
       auto BaseAddrLVal = CGF.EmitLValueForField(
           Base, *std::next(KmpDependInfoRD->field_begin(), BaseAddr));
-      CGF.EmitStoreOfScalar(CGF.Builder.CreatePtrToInt(DestAddr, CGF.IntPtrTy),
-                            BaseAddrLVal);
+      CGF.EmitStoreOfScalar(
+          CGF.Builder.CreatePtrToInt(Addr.getAddress(), CGF.IntPtrTy),
+          BaseAddrLVal);
       // deps[i].len = sizeof(<Dependences[i].second>);
       auto LenLVal = CGF.EmitLValueForField(
           Base, *std::next(KmpDependInfoRD->field_begin(), Len));
