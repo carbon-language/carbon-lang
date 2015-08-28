@@ -6389,10 +6389,14 @@ static bool hasReassociableSibling(const MachineInstr &Inst, bool &Commuted) {
 
 // TODO: There are many more machine instruction opcodes to match:
 //       1. Other data types (integer, vectors)
-//       2. Other math / logic operations (and, or)
+//       2. Other math / logic operations (xor, or)
 //       3. Other forms of the same operation (intrinsics and other variants)
 static bool isAssociativeAndCommutative(const MachineInstr &Inst) {
   switch (Inst.getOpcode()) {
+  case X86::AND8rr:
+  case X86::AND16rr:
+  case X86::AND32rr:
+  case X86::AND64rr:
   case X86::IMUL16rr:
   case X86::IMUL32rr:
   case X86::IMUL64rr:

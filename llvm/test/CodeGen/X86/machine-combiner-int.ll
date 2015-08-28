@@ -4,6 +4,9 @@
 ; Verify that integer multiplies are reassociated. The first multiply in 
 ; each test should be independent of the result of the preceding add (lea).
 
+; TODO: This test does not actually test i16 machine instruction reassociation 
+; because the operands are being promoted to i32 types.
+
 define i16 @reassociate_muls_i16(i16 %x0, i16 %x1, i16 %x2, i16 %x3) {
 ; CHECK-LABEL: reassociate_muls_i16:
 ; CHECK:       # BB#0:
@@ -47,3 +50,51 @@ define i64 @reassociate_muls_i64(i64 %x0, i64 %x1, i64 %x2, i64 %x3) {
   %t2 = mul i64 %x3, %t1
   ret i64 %t2
 }
+
+; Verify that integer 'ands' are reassociated. The first 'and' in 
+; each test should be independent of the result of the preceding sub.
+
+define i8 @reassociate_ands_i8(i8 %x0, i8 %x1, i8 %x2, i8 %x3) {
+; CHECK-LABEL: reassociate_ands_i8:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    subb  %sil, %dil
+; CHECK-NEXT:    andb  %cl, %dl
+; CHECK-NEXT:    andb  %dil, %dl
+; CHECK_NEXT:    movb  %dx, %ax
+; CHECK_NEXT:    retq
+  %t0 = sub i8 %x0, %x1
+  %t1 = and i8 %x2, %t0
+  %t2 = and i8 %x3, %t1
+  ret i8 %t2
+}
+
+; TODO: No way to test i16? These appear to always get promoted to i32.
+
+define i32 @reassociate_ands_i32(i32 %x0, i32 %x1, i32 %x2, i32 %x3) {
+; CHECK-LABEL: reassociate_ands_i32:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    subl  %esi, %edi
+; CHECK-NEXT:    andl  %ecx, %edx
+; CHECK-NEXT:    andl  %edi, %edx
+; CHECK_NEXT:    movl  %edx, %eax
+; CHECK_NEXT:    retq
+  %t0 = sub i32 %x0, %x1
+  %t1 = and i32 %x2, %t0
+  %t2 = and i32 %x3, %t1
+  ret i32 %t2
+}
+
+define i64 @reassociate_ands_i64(i64 %x0, i64 %x1, i64 %x2, i64 %x3) {
+; CHECK-LABEL: reassociate_ands_i64:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    subq  %rsi, %rdi
+; CHECK-NEXT:    andq  %rcx, %rdx
+; CHECK-NEXT:    andq  %rdi, %rdx
+; CHECK-NEXT:    movq  %rdx, %rax
+; CHECK_NEXT:    retq
+  %t0 = sub i64 %x0, %x1
+  %t1 = and i64 %x2, %t0
+  %t2 = and i64 %x3, %t1
+  ret i64 %t2
+}
+
