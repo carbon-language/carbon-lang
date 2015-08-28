@@ -1349,7 +1349,7 @@ namespace {
 
   }; // end class DeclExtractor
 
-  // DeclMatcher checks to see if the decls are used in a non-evauluated
+  // DeclMatcher checks to see if the decls are used in a non-evaluated
   // context.
   class DeclMatcher : public EvaluatedExprVisitor<DeclMatcher> {
     llvm::SmallPtrSetImpl<VarDecl*> &Decls;
