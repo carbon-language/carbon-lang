@@ -21,17 +21,25 @@ define void @foo() {
 ; CHECK-VEC-DAG: vrepib %v31, 8
 ; CHECK-VEC: brasl %r14, bar@PLT
 ;
+
+; CHECK-STACK: .LCPI0_0:
+; CHECK-STACK:	.quad	795741901033570304      # 0xb0b0b0b00000000
+; CHECK-STACK:	.quad	868082074056920076      # 0xc0c0c0c0c0c0c0c
+; CHECK-STACK: .LCPI0_1:
+; CHECK-STACK:	.quad	648518346341351424      # 0x900000000000000
+; CHECK-STACK:	.quad	723390690146385920      # 0xa0a000000000000
+
 ; CHECK-STACK-LABEL: foo:
 ; CHECK-STACK: aghi %r15, -192
-; CHECK-STACK-DAG: llihh [[REG1:%r[0-9]+]], 2304
-; CHECK-STACK-DAG: stg [[REG1]], 160(%r15)
-; CHECK-STACK-DAG: llihh [[REG2:%r[0-9]+]], 2570
-; CHECK-STACK-DAG: stg [[REG2]], 168(%r15)
-; CHECK-STACK-DAG: llihf [[REG3:%r[0-9]+]], 185273099
-; CHECK-STACK-DAG: stg [[REG3]], 176(%r15)
-; CHECK-STACK-DAG: llihf [[REG4:%r[0-9]+]], 202116108
-; CHECK-STACK-DAG: oilf [[REG4]], 202116108
-; CHECK-STACK-DAG: stg [[REG4]], 176(%r15)
+
+; CHECK-STACK-DAG: larl [[REG1:%r[0-9]+]], .LCPI0_0
+; CHECK-STACK-DAG: vl [[VREG0:%v[0-9]+]], 0([[REG1]])
+; CHECK-STACK-DAG: vst [[VREG0]], 176(%r15)
+
+; CHECK-STACK-DAG: larl [[REG2:%r[0-9]+]], .LCPI0_1
+; CHECK-STACK-DAG: vl [[VREG1:%v[0-9]+]], 0([[REG2]])
+; CHECK-STACK-DAG: vst [[VREG1]], 160(%r15)
+
 ; CHECK-STACK: brasl %r14, bar@PLT
 
   call void @bar (<1 x i8> <i8 1>,

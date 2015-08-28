@@ -14,12 +14,14 @@ define void @foo() {
 ; CHECK-VEC-DAG: vrepib %v26, 2
 ; CHECK-VEC: brasl %r14, bar@PLT
 ;
+; CHECK-STACK: .LCPI0_0:
+; CHECK-STACK: .quad	217020518463700992      # 0x303030300000000
+; CHECK-STACK: .quad	289360691284934656      # 0x404040400000000
 ; CHECK-STACK-LABEL: foo:
 ; CHECK-STACK: aghi %r15, -176
-; CHECK-STACK-DAG: llihf [[REG1:%r[0-9]+]], 50529027
-; CHECK-STACK-DAG: stg [[REG1]], 160(%r15)
-; CHECK-STACK-DAG: llihf [[REG2:%r[0-9]+]], 67372036
-; CHECK-STACK-DAG: stg [[REG2]], 168(%r15)
+; CHECK-STACK-DAG: larl [[REG1:%r[0-9]+]], .LCPI0_0
+; CHECK-STACK-DAG: vl [[VREG:%v[0-9]+]], 0([[REG1]])
+; CHECK-STACK-DAG: vst [[VREG]], 160(%r15)
 ; CHECK-STACK: brasl %r14, bar@PLT
 
   call void (<4 x i8>, <4 x i8>, ...) @bar

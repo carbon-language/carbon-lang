@@ -14,8 +14,11 @@ entry:
 
 ; PWR7-LABEL: @foo1
 ; PWR7-NOT: bl memcpy
-; PWR7: ld {{[0-9]+}}, {{[0-9]+}}(4)
-; PWR7: std {{[0-9]+}}, {{[0-9]+}}(3)
+; PWR7-DAG: li [[OFFSET:[0-9]+]], 16
+; PWR7-DAG: lxvd2x [[TMP0:[0-9]+]], 4, [[OFFSET]]
+; PWR7-DAG: stxvd2x [[TMP0]], 0, 3
+; PWR7-DAG: lxvd2x [[TMP1:[0-9]+]], 0, 4
+; PWR7-DAG: stxvd2x [[TMP1]], 0, 3
 ; PWR7: blr
 
 ; PWR8-LABEL: @foo1
