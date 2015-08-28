@@ -9967,9 +9967,17 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
   // dllimport/dllexport variables cannot be thread local, their TLS index
   // isn't exported with the variable.
   if (DLLAttr && VD->getTLSKind()) {
-    Diag(VD->getLocation(), diag::err_attribute_dll_thread_local) << VD
-                                                                  << DLLAttr;
-    VD->setInvalidDecl();
+    FunctionDecl *F = dyn_cast<FunctionDecl>(VD->getDeclContext());
+    if (F && getDLLAttr(F)) {
+      assert(VD->isStaticLocal());
+      // But if this is a static local in a dlimport/dllexport function, the
+      // function will never be inlined, which means the var would never be
+      // imported, so having it marked import/export is safe.
+    } else {
+      Diag(VD->getLocation(), diag::err_attribute_dll_thread_local) << VD
+                                                                    << DLLAttr;
+      VD->setInvalidDecl();
+    }
   }
 
   if (UsedAttr *Attr = VD->getAttr<UsedAttr>()) {

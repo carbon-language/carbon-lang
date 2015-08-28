@@ -1448,6 +1448,35 @@ namespace {
       return true;
     }
   };
+
+  struct DLLImportFunctionVisitor
+      : public RecursiveASTVisitor<DLLImportFunctionVisitor> {
+    bool SafeToInline = true;
+
+    bool VisitVarDecl(VarDecl *VD) {
+      // A thread-local variable cannot be imported.
+      SafeToInline = !VD->getTLSKind();
+      return SafeToInline;
+    }
+
+    // Make sure we're not referencing non-imported vars or functions.
+    bool VisitDeclRefExpr(DeclRefExpr *E) {
+      ValueDecl *VD = E->getDecl();
+      if (isa<FunctionDecl>(VD))
+        SafeToInline = VD->hasAttr<DLLImportAttr>();
+      else if (VarDecl *V = dyn_cast<VarDecl>(VD))
+        SafeToInline = !V->hasGlobalStorage() || V->hasAttr<DLLImportAttr>();
+      return SafeToInline;
+    }
+    bool VisitCXXDeleteExpr(CXXDeleteExpr *E) {
+      SafeToInline = E->getOperatorDelete()->hasAttr<DLLImportAttr>();
+      return SafeToInline;
+    }
+    bool VisitCXXNewExpr(CXXNewExpr *E) {
+      SafeToInline = E->getOperatorNew()->hasAttr<DLLImportAttr>();
+      return SafeToInline;
+    }
+  };
 }
 
 // isTriviallyRecursive - Check if this function calls another
@@ -1478,6 +1507,15 @@ CodeGenModule::shouldEmitFunction(GlobalDecl GD) {
   const auto *F = cast<FunctionDecl>(GD.getDecl());
   if (CodeGenOpts.OptimizationLevel == 0 && !F->hasAttr<AlwaysInlineAttr>())
     return false;
+
+  if (F->hasAttr<DLLImportAttr>()) {
+    // Check whether it would be safe to inline this dllimport function.
+    DLLImportFunctionVisitor Visitor;
+    Visitor.TraverseFunctionDecl(const_cast<FunctionDecl*>(F));
+    if (!Visitor.SafeToInline)
+      return false;
+  }
+
   // PR9614. Avoid cases where the source code is lying to us. An available
   // externally function should have an equivalent function somewhere else,
   // but a function that calls itself is clearly not equivalent to the real

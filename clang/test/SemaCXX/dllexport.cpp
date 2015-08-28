@@ -71,6 +71,15 @@ __declspec(dllexport) auto ExternalAutoTypeGlobal = External();
 
 // Thread local variables are invalid.
 __declspec(dllexport) __thread int ThreadLocalGlobal; // expected-error{{'ThreadLocalGlobal' cannot be thread local when declared 'dllexport'}}
+inline void InlineWithThreadLocal() {
+  static __declspec(dllexport) __thread int ThreadLocalGlobal; // expected-error{{'ThreadLocalGlobal' cannot be thread local when declared 'dllexport'}}
+}
+
+// But if they're in a dllexport function, it's ok, because they will never get imported.
+inline void __declspec(dllexport) ExportedInlineWithThreadLocal() {
+  static __declspec(dllexport) __thread int OK1; // no-error
+  static __thread int OK2; // no-error
+}
 
 // Export in local scope.
 void functionScope() {
