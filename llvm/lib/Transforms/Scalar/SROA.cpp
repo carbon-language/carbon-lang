@@ -2471,9 +2471,19 @@ private:
     V = convertValue(DL, IRB, V, IntTy);
     assert(NewBeginOffset >= NewAllocaBeginOffset && "Out of bounds offset");
     uint64_t Offset = NewBeginOffset - NewAllocaBeginOffset;
-    if (Offset > 0 || NewEndOffset < NewAllocaEndOffset)
-      V = extractInteger(DL, IRB, V, cast<IntegerType>(LI.getType()), Offset,
-                         "extract");
+    if (Offset > 0 || NewEndOffset < NewAllocaEndOffset) {
+      IntegerType *ExtractTy = Type::getIntNTy(LI.getContext(), SliceSize * 8);
+      V = extractInteger(DL, IRB, V, ExtractTy, Offset, "extract");
+    }
+    // It is possible that the extracted type is not the load type. This
+    // happens if there is a load past the end of the alloca, and as
+    // a consequence the slice is narrower but still a candidate for integer
+    // lowering. To handle this case, we just zero extend the extracted
+    // integer.
+    assert(cast<IntegerType>(LI.getType())->getBitWidth() >= SliceSize * 8 &&
+           "Can only handle an extract for an overly wide load");
+    if (cast<IntegerType>(LI.getType())->getBitWidth() > SliceSize * 8)
+      V = IRB.CreateZExt(V, LI.getType());
     return V;
   }
 
