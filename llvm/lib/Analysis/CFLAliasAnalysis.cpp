@@ -398,6 +398,8 @@ public:
   }
 
   template <typename InstT> void visitCallLikeInst(InstT &Inst) {
+    // TODO: Add support for noalias args/all the other fun function attributes
+    // that we can tack on.
     SmallVector<Function *, 4> Targets;
     if (getPossibleTargets(&Inst, Targets)) {
       if (tryInterproceduralAnalysis(Targets, &Inst, Inst.arg_operands()))
@@ -406,8 +408,16 @@ public:
       Output.clear();
     }
 
+    // Because the function is opaque, we need to note that anything
+    // could have happened to the arguments, and that the result could alias
+    // just about anything, too.
+    // The goal of the loop is in part to unify many Values into one set, so we
+    // don't care if the function is void there.
     for (Value *V : Inst.arg_operands())
       Output.push_back(Edge(&Inst, V, EdgeType::Assign, AttrAll));
+    if (Inst.getNumArgOperands() == 0 &&
+        Inst.getType() != Type::getVoidTy(Inst.getContext()))
+      Output.push_back(Edge(&Inst, &Inst, EdgeType::Assign, AttrAll));
   }
 
   void visitCallInst(CallInst &Inst) { visitCallLikeInst(Inst); }
