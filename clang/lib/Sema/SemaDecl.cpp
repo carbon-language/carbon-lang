@@ -9967,7 +9967,7 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
   // dllimport/dllexport variables cannot be thread local, their TLS index
   // isn't exported with the variable.
   if (DLLAttr && VD->getTLSKind()) {
-    FunctionDecl *F = dyn_cast<FunctionDecl>(VD->getDeclContext());
+    auto *F = dyn_cast_or_null<FunctionDecl>(VD->getParentFunctionOrMethod());
     if (F && getDLLAttr(F)) {
       assert(VD->isStaticLocal());
       // But if this is a static local in a dlimport/dllexport function, the
