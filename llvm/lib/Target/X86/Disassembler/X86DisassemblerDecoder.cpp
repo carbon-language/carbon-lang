@@ -990,8 +990,8 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
     switch (insn->opcode) {
     case 0xE8:
     case 0xE9:
-      if (insn->opcodeType ==
-          ONEBYTE) { // breaks psubsb and other mmx instructions otherwise
+      // Take care of psubsb and other mmx instructions.
+      if (insn->opcodeType == ONEBYTE) {
         attrMask ^= ATTR_OPSIZE;
         insn->immediateSize = 4;
         insn->displacementSize = 4;
@@ -1011,11 +1011,11 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
     case 0x8D:
     case 0x8E:
     case 0x8F:
-      if (insn->opcodeType ==
-          TWOBYTE) { // breaks lea and three byte ops otherwise
+      // Take care of lea and three byte ops.
+      if (insn->opcodeType == TWOBYTE) {
         attrMask ^= ATTR_OPSIZE;
         insn->immediateSize = 4;
-        insn->displacementSize = 4; // otherwise not sign extended
+        insn->displacementSize = 4;
       }
       break;
     }
