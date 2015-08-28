@@ -1230,9 +1230,9 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
       Diag(Dcl->getLocation(),
            OK ? diag::warn_cxx11_compat_constexpr_body_no_return
               : diag::err_constexpr_body_no_return);
-      return OK;
-    }
-    if (ReturnStmts.size() > 1) {
+      if (!OK)
+        return false;
+    } else if (ReturnStmts.size() > 1) {
       Diag(ReturnStmts.back(),
            getLangOpts().CPlusPlus14
              ? diag::warn_cxx11_compat_constexpr_body_multiple_return
