@@ -19,6 +19,7 @@
 #include <regex>
 #include <cassert>
 
+#include "test_macros.h"
 #include "test_iterators.h"
 
 extern "C" void LLVMFuzzerTestOneInput(const char *data)
@@ -40,7 +41,10 @@ extern "C" void LLVMFuzzerTestOneInput(const char *data)
 
 void fuzz_tests()  // patterns that the fuzzer has found
 {
+// Raw string literals are a C++11
+#if TEST_STD_VER >= 11
     LLVMFuzzerTestOneInput(R"XX(Õ)_%()()((\8'_%()_%()_%()_%(()_%()_%()_%(.t;)()¥f()_%()(.)_%;)()!¥f(((()()XX");
+#endif
 }
 
 int main()
