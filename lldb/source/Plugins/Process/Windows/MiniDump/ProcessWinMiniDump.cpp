@@ -30,12 +30,43 @@
 #include "lldb/Target/UnixSignals.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ConvertUTF.h"
 #include "Plugins/DynamicLoader/Windows-DYLD/DynamicLoaderWindowsDYLD.h"
 
 #include "ExceptionRecord.h"
 #include "ThreadWinMiniDump.h"
 
 using namespace lldb_private;
+
+namespace
+{
+
+// Getting a string out of a mini dump is a chore.  You're usually given a
+// relative virtual address (RVA), which points to a counted string that's in
+// Windows Unicode (UTF-16).  This wrapper handles all the redirection and
+// returns a UTF-8 copy of the string.
+std::string
+GetMiniDumpString(const void *base_addr, const RVA rva)
+{
+    std::string result;
+    if (!base_addr)
+    {
+        return result;
+    }
+    auto md_string = reinterpret_cast<const MINIDUMP_STRING *>(static_cast<const char *>(base_addr) + rva);
+    auto source_start = reinterpret_cast<const UTF16 *>(md_string->Buffer);
+    const auto source_length = ::wcslen(md_string->Buffer);
+    const auto source_end = source_start + source_length;
+    result.resize(4*source_length);  // worst case length
+    auto result_start = reinterpret_cast<UTF8 *>(&result[0]);
+    const auto result_end = result_start + result.size();
+    ConvertUTF16toUTF8(&source_start, source_end, &result_start, result_end, strictConversion);
+    const auto result_size = std::distance(reinterpret_cast<UTF8 *>(&result[0]), result_start);
+    result.resize(result_size);  // shrink to actual length
+    return result;
+}
+
+}  // anonymous namespace
 
 // Encapsulates the private data for ProcessWinMiniDump.
 // TODO(amccarth):  Determine if we need a mutex for access.
@@ -133,8 +164,7 @@ ProcessWinMiniDump::DoLoadCore()
     }
 
     m_target.SetArchitecture(DetermineArchitecture());
-    // TODO(amccarth):  Build the module list.
-
+    ReadModuleList();
     ReadExceptionRecord();
 
     return error;
@@ -338,6 +368,31 @@ ProcessWinMiniDump::ReadExceptionRecord() {
     if (exception_stream_ptr)
     {
         m_data_up->m_exception_sp.reset(new ExceptionRecord(exception_stream_ptr->ExceptionRecord, exception_stream_ptr->ThreadId));
+    }
+}
+
+void
+ProcessWinMiniDump::ReadModuleList() {
+    size_t size = 0;
+    auto module_list_ptr = static_cast<MINIDUMP_MODULE_LIST*>(FindDumpStream(ModuleListStream, &size));
+    if (!module_list_ptr || module_list_ptr->NumberOfModules == 0)
+    {
+        return;
+    }
+
+    for (ULONG32 i = 0; i < module_list_ptr->NumberOfModules; ++i)
+    {
+        const auto &module = module_list_ptr->Modules[i];
+        const auto file_name = GetMiniDumpString(m_data_up->m_base_addr, module.ModuleNameRva);
+        ModuleSpec module_spec = FileSpec(file_name, true);
+
+        lldb::ModuleSP module_sp = GetTarget().GetSharedModule(module_spec);
+        if (!module_sp)
+        {
+            continue;
+        }
+        bool load_addr_changed = false;
+        module_sp->SetLoadAddress(GetTarget(), module.BaseOfImage, false, load_addr_changed);
     }
 }
 

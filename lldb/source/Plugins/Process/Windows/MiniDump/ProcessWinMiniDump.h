@@ -100,6 +100,9 @@ private:
     void
     ReadExceptionRecord();
 
+    void
+    ReadModuleList();
+
     // A thin wrapper around WinAPI's MiniDumpReadDumpStream to avoid redundant
     // checks.  If there's a failure (e.g., if the requested stream doesn't exist),
     // the function returns nullptr and sets *size_out to 0.
