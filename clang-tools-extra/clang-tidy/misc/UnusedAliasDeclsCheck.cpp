@@ -17,10 +17,6 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace tidy {
 
-// FIXME: Move this to ASTMatchers.h.
-const ast_matchers::internal::VariadicDynCastAllOfMatcher<
-    Decl, NamespaceAliasDecl> namespaceAliasDecl;
-
 void UnusedAliasDeclsCheck::registerMatchers(MatchFinder *Finder) {
   // Only register the matchers for C++11; the functionality currently does not
   // provide any benefit to other languages, despite being benign.
