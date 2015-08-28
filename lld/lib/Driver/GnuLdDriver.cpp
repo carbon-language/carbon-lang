@@ -169,8 +169,8 @@ getArchType(const llvm::Triple &triple, StringRef value) {
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
     return llvm::StringSwitch<llvm::Optional<llvm::Triple::ArchType>>(value)
-        .Case("elf32btsmip", llvm::Triple::mips)
-        .Case("elf32ltsmip", llvm::Triple::mipsel)
+        .Cases("elf32btsmip", "elf32btsmipn32", llvm::Triple::mips)
+        .Cases("elf32ltsmip", "elf32ltsmipn32", llvm::Triple::mipsel)
         .Case("elf64btsmip", llvm::Triple::mips64)
         .Case("elf64ltsmip", llvm::Triple::mips64el)
         .Default(llvm::None);
