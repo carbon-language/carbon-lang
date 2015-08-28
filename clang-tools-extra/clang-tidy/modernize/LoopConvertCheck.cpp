@@ -539,9 +539,14 @@ void LoopConvertCheck::findAndVerifyUsages(
 }
 
 void LoopConvertCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(makeArrayLoopMatcher(), this);
-  Finder->addMatcher(makeIteratorLoopMatcher(), this);
-  Finder->addMatcher(makePseudoArrayLoopMatcher(), this);
+  // Only register the matchers for C++. Because this checker is used for
+  // modernization, it is reasonable to run it on any C++ standard with the
+  // assumption the user is trying to modernize their codebase.
+  if (getLangOpts().CPlusPlus) {
+    Finder->addMatcher(makeArrayLoopMatcher(), this);
+    Finder->addMatcher(makeIteratorLoopMatcher(), this);
+    Finder->addMatcher(makePseudoArrayLoopMatcher(), this);
+  }
 }
 
 void LoopConvertCheck::check(const MatchFinder::MatchResult &Result) {

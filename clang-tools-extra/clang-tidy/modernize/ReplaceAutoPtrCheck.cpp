@@ -198,15 +198,24 @@ void ReplaceAutoPtrCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
 }
 
 void ReplaceAutoPtrCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(makeAutoPtrTypeLocMatcher(), this);
-  Finder->addMatcher(makeAutoPtrUsingDeclMatcher(), this);
-  Finder->addMatcher(makeTransferOwnershipExprMatcher(), this);
+  // Only register the matchers for C++; the functionality currently does not
+  // provide any benefit to other languages, despite being benign.
+  if (getLangOpts().CPlusPlus) {
+    Finder->addMatcher(makeAutoPtrTypeLocMatcher(), this);
+    Finder->addMatcher(makeAutoPtrUsingDeclMatcher(), this);
+    Finder->addMatcher(makeTransferOwnershipExprMatcher(), this);
+  }
 }
 
 void ReplaceAutoPtrCheck::registerPPCallbacks(CompilerInstance &Compiler) {
-  Inserter.reset(new IncludeInserter(Compiler.getSourceManager(),
-                                     Compiler.getLangOpts(), IncludeStyle));
-  Compiler.getPreprocessor().addPPCallbacks(Inserter->CreatePPCallbacks());
+  // Only register the preprocessor callbacks for C++; the functionality
+  // currently does not provide any benefit to other languages, despite being
+  // benign.
+  if (getLangOpts().CPlusPlus) {
+    Inserter.reset(new IncludeInserter(Compiler.getSourceManager(),
+                                       Compiler.getLangOpts(), IncludeStyle));
+    Compiler.getPreprocessor().addPPCallbacks(Inserter->CreatePPCallbacks());
+  }
 }
 
 void ReplaceAutoPtrCheck::check(const MatchFinder::MatchResult &Result) {

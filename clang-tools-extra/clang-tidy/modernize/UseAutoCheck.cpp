@@ -238,8 +238,12 @@ StatementMatcher makeDeclWithNewMatcher() {
 } // namespace
 
 void UseAutoCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(makeIteratorDeclMatcher(), this);
-  Finder->addMatcher(makeDeclWithNewMatcher(), this);
+  // Only register the matchers for C++; the functionality currently does not
+  // provide any benefit to other languages, despite being benign.
+  if (getLangOpts().CPlusPlus) {
+    Finder->addMatcher(makeIteratorDeclMatcher(), this);
+    Finder->addMatcher(makeDeclWithNewMatcher(), this);
+  }
 }
 
 void UseAutoCheck::replaceIterators(const DeclStmt *D, ASTContext *Context) {
