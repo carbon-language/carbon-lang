@@ -1538,8 +1538,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       // the default or a new one from the target attribute string. Then we'll
       // use the passed in features (FeaturesAsWritten) along with the new ones
       // from the attribute.
-      getTarget().initDefaultFeatures(FeatureMap, TargetCPU);
-      getTarget().handleUserFeatures(FeatureMap, FnFeatures, Diags);
+      getTarget().initFeatureMap(FeatureMap, Diags, TargetCPU, FnFeatures);
 
       // Produce the canonical string for this set of features.
       std::vector<std::string> Features;

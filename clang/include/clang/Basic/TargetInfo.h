@@ -742,8 +742,13 @@ public:
 
   /// \brief Initialize the map with the default set of target features for the
   /// CPU this should include all legal feature strings on the target.
-  virtual void initDefaultFeatures(llvm::StringMap<bool> &Features,
-                                   StringRef CPU) const {}
+  ///
+  /// \return False on error (invalid features).
+  virtual bool initFeatureMap(llvm::StringMap<bool> &Features,
+                              DiagnosticsEngine &Diags, StringRef CPU,
+                              std::vector<std::string> &FAW) const {
+    return handleUserFeatures(Features, FAW, Diags);
+  }
 
   /// \brief Get the ABI currently in use.
   virtual StringRef getABI() const { return StringRef(); }
