@@ -165,19 +165,15 @@ getArchType(const llvm::Triple &triple, StringRef value) {
       return llvm::Triple::x86_64;
     return llvm::None;
   case llvm::Triple::mips:
-  case llvm::Triple::mips64:
-    if (value == "elf32btsmip")
-      return llvm::Triple::mips;
-    if (value == "elf64btsmip")
-      return llvm::Triple::mips64;
-    return llvm::None;
   case llvm::Triple::mipsel:
+  case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
-    if (value == "elf32ltsmip")
-      return llvm::Triple::mipsel;
-    if (value == "elf64ltsmip")
-      return llvm::Triple::mips64el;
-    return llvm::None;
+    return llvm::StringSwitch<llvm::Optional<llvm::Triple::ArchType>>(value)
+        .Case("elf32btsmip", llvm::Triple::mips)
+        .Case("elf32ltsmip", llvm::Triple::mipsel)
+        .Case("elf64btsmip", llvm::Triple::mips64)
+        .Case("elf64ltsmip", llvm::Triple::mips64el)
+        .Default(llvm::None);
   case llvm::Triple::aarch64:
     if (value == "aarch64linux")
       return llvm::Triple::aarch64;
