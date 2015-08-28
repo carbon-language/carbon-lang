@@ -226,12 +226,26 @@ void MipsELFFile<ELFT>::createRelocationReferences(
     const Elf_Sym *symbol, ArrayRef<uint8_t> content,
     range<const Elf_Rela *> rels) {
   const auto value = this->getSymbolValue(symbol);
+  unsigned numInGroup = 0;
   for (const auto &rel : rels) {
-    if (rel.r_offset < value || value + content.size() <= rel.r_offset)
+    if (rel.r_offset < value || value + content.size() <= rel.r_offset) {
+      numInGroup = 0;
       continue;
+    }
+    if (numInGroup > 0) {
+      auto &last =
+          *static_cast<MipsELFReference<ELFT> *>(this->_references.back());
+      if (last.offsetInAtom() + value == rel.r_offset) {
+        last.setTag(last.tag() |
+                    (rel.getType(isMips64EL<ELFT>()) << 8 * (numInGroup - 1)));
+        ++numInGroup;
+        continue;
+      }
+    }
     auto r = new (this->_readerStorage) MipsELFReference<ELFT>(value, rel);
     this->addReferenceToSymbol(r, symbol);
     this->_references.push_back(r);
+    numInGroup = 1;
   }
 }
 
