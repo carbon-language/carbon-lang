@@ -11,6 +11,8 @@
 #define LLD_ELF_INPUT_FILES_H
 
 #include "Chunks.h"
+#include "Symbols.h"
+
 #include "lld/Core/LLVM.h"
 #include "llvm/Object/ELF.h"
 
