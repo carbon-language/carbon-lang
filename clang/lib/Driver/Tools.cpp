@@ -8122,7 +8122,7 @@ static std::string getLinuxDynamicLinker(const ArgList &Args,
       return "/lib64/ld64.so.1";
     return "/lib64/ld64.so.2";
   } else if (Arch == llvm::Triple::systemz)
-    return "/lib64/ld64.so.1";
+    return "/lib/ld64.so.1";
   else if (Arch == llvm::Triple::sparcv9)
     return "/lib64/ld-linux.so.2";
   else if (Arch == llvm::Triple::x86_64 &&
