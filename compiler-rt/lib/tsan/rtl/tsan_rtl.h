@@ -754,11 +754,7 @@ void ALWAYS_INLINE TraceAddEvent(ThreadState *thr, FastState fs,
 
 #ifndef SANITIZER_GO
 uptr ALWAYS_INLINE HeapEnd() {
-#if SANITIZER_CAN_USE_ALLOCATOR64
   return kHeapMemEnd + PrimaryAllocator::AdditionalSize();
-#else
-  return kHeapMemEnd;
-#endif
 }
 #endif
 

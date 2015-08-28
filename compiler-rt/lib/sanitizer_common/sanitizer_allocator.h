@@ -822,6 +822,10 @@ class SizeClassAllocator32 {
   void PrintStats() {
   }
 
+  static uptr AdditionalSize() {
+    return 0;
+  }
+
   typedef SizeClassMap SizeClassMapT;
   static const uptr kNumClasses = SizeClassMap::kNumClasses;
 

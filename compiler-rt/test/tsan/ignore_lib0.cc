@@ -9,7 +9,7 @@
 // suppression are ignored.
 
 // Some aarch64 kernels do not support non executable write pages
-// XFAIL: aarch64
+// REQUIRES: stable-runtime
 
 #ifndef LIB
 

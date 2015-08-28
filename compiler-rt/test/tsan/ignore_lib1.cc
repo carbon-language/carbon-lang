@@ -8,7 +8,7 @@
 // Tests that interceptors coming from a dynamically loaded library specified
 // in called_from_lib suppression are ignored.
 
-// XFAIL: aarch64
+// REQUIRES: stable-runtime
 
 #ifndef LIB
 

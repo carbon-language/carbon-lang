@@ -267,7 +267,7 @@ set(ALL_LSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el)
 set(ALL_MSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el)
 set(ALL_PROFILE_SUPPORTED_ARCH ${X86_64} i386 i686 ${ARM32} mips mips64
     mipsel mips64el ${ARM64} powerpc64 powerpc64le)
-set(ALL_TSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el)
+set(ALL_TSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el ${ARM64})
 set(ALL_UBSAN_SUPPORTED_ARCH ${X86_64} i386 i686 ${ARM32} ${ARM64} mips
     mipsel mips64 mips64el powerpc64 powerpc64le)
 set(ALL_SAFESTACK_SUPPORTED_ARCH ${X86_64} i386 i686)

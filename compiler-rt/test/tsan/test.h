@@ -40,7 +40,23 @@ void print_address(void *address) {
 // to the format used in the diagnotic message.
 #ifdef __x86_64__
   fprintf(stderr, "0x%012lx", (unsigned long) address);
-#elif defined(__mips64) || defined(__aarch64__)
+#elif defined(__mips64)
   fprintf(stderr, "0x%010lx", (unsigned long) address);
+#elif defined(__aarch64__)
+  // AArch64 currently has 3 different VMA (39, 42, and 48 bits) and it requires
+  // different pointer size to match the diagnostic message.
+  const char *format = 0;
+  unsigned long vma = (unsigned long)__builtin_frame_address(0);
+  vma = 64 - __builtin_clzll(vma);
+  if (vma == 39)
+    format = "0x%010lx";
+  else if (vma == 42)
+    format = "0x%011lx";
+  else {
+    fprintf(stderr, "unsupported vma: %ul\n", vma);
+    exit(1);
+  }
+
+  fprintf(stderr, format, (unsigned long) address);
 #endif
 }
