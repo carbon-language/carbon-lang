@@ -24,6 +24,7 @@
 #include "ObjDumper.h"
 #include "StreamWriter.h"
 #include "llvm/Object/Archive.h"
+#include "llvm/Object/COFFImportFile.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
@@ -330,6 +331,12 @@ static void dumpObject(const ObjectFile *Obj) {
     Dumper->printStackMap();
 }
 
+static void dumpCOFFImportFile(const COFFImportFile *File) {
+  outs() << '\n';
+  outs() << "File: " << File->getFileName() << "\n";
+  outs() << "Format: COFF-import-file\n";
+}
+
 /// @brief Dumps each object file in \a Arc;
 static void dumpArchive(const Archive *Arc) {
   for (const auto &Child : Arc->children()) {
@@ -384,6 +391,8 @@ static void dumpInput(StringRef File) {
     dumpMachOUniversalBinary(UBinary);
   else if (ObjectFile *Obj = dyn_cast<ObjectFile>(&Binary))
     dumpObject(Obj);
+  else if (COFFImportFile *Import = dyn_cast<COFFImportFile>(&Binary))
+    dumpCOFFImportFile(Import);
   else
     reportError(File, readobj_error::unrecognized_file_format);
 }

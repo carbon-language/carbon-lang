@@ -41,6 +41,7 @@ protected:
   enum {
     ID_Archive,
     ID_MachOUniversalBinary,
+    ID_COFFImportFile,
     ID_IR, // LLVM IR
 
     // Object and children.
@@ -111,6 +112,10 @@ public:
 
   bool isCOFF() const {
     return TypeID == ID_COFF;
+  }
+
+  bool isCOFFImportFile() const {
+    return TypeID == ID_COFFImportFile;
   }
 
   bool isIR() const {

@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Object/COFF.h"
+#include "llvm/Object/COFFImportFile.h"
 #include "llvm/Object/IRObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/SymbolicFile.h"
@@ -54,9 +56,10 @@ ErrorOr<std::unique_ptr<SymbolicFile>> SymbolicFile::createSymbolicFile(
   case sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
   case sys::fs::file_magic::macho_dsym_companion:
   case sys::fs::file_magic::macho_kext_bundle:
-  case sys::fs::file_magic::coff_import_library:
   case sys::fs::file_magic::pecoff_executable:
     return ObjectFile::createObjectFile(Object, Type);
+  case sys::fs::file_magic::coff_import_library:
+    return std::unique_ptr<SymbolicFile>(new COFFImportFile(Object));
   case sys::fs::file_magic::elf_relocatable:
   case sys::fs::file_magic::macho_object:
   case sys::fs::file_magic::coff_object: {
