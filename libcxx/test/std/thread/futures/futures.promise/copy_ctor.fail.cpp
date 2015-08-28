@@ -14,68 +14,36 @@
 // promise(const promise&) = delete;
 
 #include <future>
-#include <cassert>
 
-#include "../test_allocator.h"
+#include "test_macros.h"
 
 int main()
 {
-    assert(test_alloc_base::count == 0);
+#if TEST_STD_VER >= 11
     {
-        std::promise<int> p0(std::allocator_arg, test_allocator<int>());
-        std::promise<int> p(p0);
-        assert(test_alloc_base::count == 1);
-        std::future<int> f = p.get_future();
-        assert(test_alloc_base::count == 1);
-        assert(f.valid());
-        try
-        {
-            f = p0.get_future();
-            assert(false);
-        }
-        catch (const std::future_error& e)
-        {
-            assert(e.code() == make_error_code(std::future_errc::no_state));
-        }
-        assert(test_alloc_base::count == 1);
+        std::promise<int> p0;
+        std::promise<int> p(p0); // expected-error {{call to deleted constructor of 'std::promise<int>'}}
     }
-    assert(test_alloc_base::count == 0);
     {
-        std::promise<int&> p0(std::allocator_arg, test_allocator<int>());
-        std::promise<int&> p(p0);
-        assert(test_alloc_base::count == 1);
-        std::future<int&> f = p.get_future();
-        assert(test_alloc_base::count == 1);
-        assert(f.valid());
-        try
-        {
-            f = p0.get_future();
-            assert(false);
-        }
-        catch (const std::future_error& e)
-        {
-            assert(e.code() == make_error_code(std::future_errc::no_state));
-        }
-        assert(test_alloc_base::count == 1);
+        std::promise<int &> p0;
+        std::promise<int &> p(p0); // expected-error {{call to deleted constructor of 'std::promise<int &>'}}
     }
-    assert(test_alloc_base::count == 0);
     {
-        std::promise<void> p0(std::allocator_arg, test_allocator<void>());
-        std::promise<void> p(p0);
-        assert(test_alloc_base::count == 1);
-        std::future<void> f = p.get_future();
-        assert(test_alloc_base::count == 1);
-        assert(f.valid());
-        try
-        {
-            f = p0.get_future();
-            assert(false);
-        }
-        catch (const std::future_error& e)
-        {
-            assert(e.code() == make_error_code(std::future_errc::no_state));
-        }
-        assert(test_alloc_base::count == 1);
+        std::promise<void> p0;
+        std::promise<void> p(p0); // expected-error {{call to deleted constructor of 'std::promise<void>'}}
     }
-    assert(test_alloc_base::count == 0);
+#else
+    {
+        std::promise<int> p0;
+        std::promise<int> p(p0); // expected-error {{calling a private constructor of class 'std::__1::promise<int>'}}
+    }
+    {
+        std::promise<int &> p0;
+        std::promise<int &> p(p0); // expected-error {{calling a private constructor of class 'std::__1::promise<int &>'}}
+    }
+    {
+        std::promise<void> p0;
+        std::promise<void> p(p0); // expected-error {{calling a private constructor of class 'std::__1::promise<void>'}}
+    }
+#endif
 }

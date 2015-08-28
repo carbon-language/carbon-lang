@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // UNSUPPORTED: libcpp-has-no-threads
+// UNSUPPORTED: c++98, c++03
 
 // <future>
 
@@ -19,36 +20,36 @@
 #include <future>
 #include <cassert>
 
-#include "../test_allocator.h"
+#include "test_allocator.h"
 #include "min_allocator.h"
 
 int main()
 {
-    assert(test_alloc_base::count == 0);
+    assert(test_alloc_base::alloc_count == 0);
     {
-        std::promise<int> p(std::allocator_arg, test_allocator<int>());
-        assert(test_alloc_base::count == 1);
+        std::promise<int> p(std::allocator_arg, test_allocator<int>(42));
+        assert(test_alloc_base::alloc_count == 1);
         std::future<int> f = p.get_future();
-        assert(test_alloc_base::count == 1);
+        assert(test_alloc_base::alloc_count == 1);
         assert(f.valid());
     }
-    assert(test_alloc_base::count == 0);
+    assert(test_alloc_base::alloc_count == 0);
     {
-        std::promise<int&> p(std::allocator_arg, test_allocator<int>());
-        assert(test_alloc_base::count == 1);
+        std::promise<int&> p(std::allocator_arg, test_allocator<int>(42));
+        assert(test_alloc_base::alloc_count == 1);
         std::future<int&> f = p.get_future();
-        assert(test_alloc_base::count == 1);
+        assert(test_alloc_base::alloc_count == 1);
         assert(f.valid());
     }
-    assert(test_alloc_base::count == 0);
+    assert(test_alloc_base::alloc_count == 0);
     {
-        std::promise<void> p(std::allocator_arg, test_allocator<void>());
-        assert(test_alloc_base::count == 1);
+        std::promise<void> p(std::allocator_arg, test_allocator<void>(42));
+        assert(test_alloc_base::alloc_count == 1);
         std::future<void> f = p.get_future();
-        assert(test_alloc_base::count == 1);
+        assert(test_alloc_base::alloc_count == 1);
         assert(f.valid());
     }
-    assert(test_alloc_base::count == 0);
+    assert(test_alloc_base::alloc_count == 0);
     // Test with a minimal allocator
     {
         std::promise<int> p(std::allocator_arg, bare_allocator<void>());

@@ -14,53 +14,36 @@
 // future(const future&) = delete;
 
 #include <future>
-#include <cassert>
+
+#include "test_macros.h"
 
 int main()
 {
+#if TEST_STD_VER >= 11
     {
-        typedef int T;
-        std::promise<T> p;
-        std::future<T> f0 = p.get_future();
-        std::future<T> f = f0;
-        assert(!f0.valid());
-        assert(f.valid());
+        std::future<int> f0;
+        std::future<int> f = f0; // expected-error {{call to deleted constructor of 'std::future<int>'}}
     }
     {
-        typedef int T;
-        std::future<T> f0;
-        std::future<T> f = f0;
-        assert(!f0.valid());
-        assert(!f.valid());
+        std::future<int &> f0;
+        std::future<int &> f = f0; // expected-error {{call to deleted constructor of 'std::future<int &>'}}
     }
     {
-        typedef int& T;
-        std::promise<T> p;
-        std::future<T> f0 = p.get_future();
-        std::future<T> f = f0;
-        assert(!f0.valid());
-        assert(f.valid());
+        std::future<void> f0;
+        std::future<void> f = f0; // expected-error {{call to deleted constructor of 'std::future<void>'}}
+    }
+#else
+    {
+        std::future<int> f0;
+        std::future<int> f = f0; // expected-error {{calling a private constructor of class 'std::__1::future<int>'}}
     }
     {
-        typedef int& T;
-        std::future<T> f0;
-        std::future<T> f = std::move(f0);
-        assert(!f0.valid());
-        assert(!f.valid());
+        std::future<int &> f0;
+        std::future<int &> f = f0; // expected-error {{calling a private constructor of class 'std::__1::future<int &>'}}
     }
     {
-        typedef void T;
-        std::promise<T> p;
-        std::future<T> f0 = p.get_future();
-        std::future<T> f = f0;
-        assert(!f0.valid());
-        assert(f.valid());
+        std::future<void> f0;
+        std::future<void> f = f0; // expected-error {{calling a private constructor of class 'std::__1::future<void>'}}
     }
-    {
-        typedef void T;
-        std::future<T> f0;
-        std::future<T> f = f0;
-        assert(!f0.valid());
-        assert(!f.valid());
-    }
+#endif
 }

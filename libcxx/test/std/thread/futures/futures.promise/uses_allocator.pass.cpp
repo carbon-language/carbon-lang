@@ -18,7 +18,7 @@
 //      : true_type { };
 
 #include <future>
-#include "../test_allocator.h"
+#include "test_allocator.h"
 
 int main()
 {

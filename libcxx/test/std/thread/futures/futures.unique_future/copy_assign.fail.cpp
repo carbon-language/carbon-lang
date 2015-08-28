@@ -14,61 +14,36 @@
 // future& operator=(const future&) = delete;
 
 #include <future>
-#include <cassert>
+
+#include "test_macros.h"
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if TEST_STD_VER >= 11
     {
-        typedef int T;
-        std::promise<T> p;
-        std::future<T> f0 = p.get_future();
-        std::future<T> f;
-        f = f0;
-        assert(!f0.valid());
-        assert(f.valid());
+        std::future<int> f0, f;
+        f = f0; // expected-error {{overload resolution selected deleted operator '='}}
     }
     {
-        typedef int T;
-        std::future<T> f0;
-        std::future<T> f;
-        f = f0;
-        assert(!f0.valid());
-        assert(!f.valid());
+        std::future<int &> f0, f;
+        f = f0; // expected-error {{overload resolution selected deleted operator '='}}
     }
     {
-        typedef int& T;
-        std::promise<T> p;
-        std::future<T> f0 = p.get_future();
-        std::future<T> f;
-        f = f0;
-        assert(!f0.valid());
-        assert(f.valid());
+        std::future<void> f0, f;
+        f = f0; // expected-error {{overload resolution selected deleted operator '='}}
+    }
+#else
+    {
+        std::future<int> f0, f;
+        f = f0; // expected-error {{'operator=' is a private member of 'std::__1::future<int>'}}
     }
     {
-        typedef int& T;
-        std::future<T> f0;
-        std::future<T> f;
-        f = f0;
-        assert(!f0.valid());
-        assert(!f.valid());
+        std::future<int &> f0, f;
+        f = f0; // expected-error {{'operator=' is a private member of 'std::__1::future<int &>'}}
     }
     {
-        typedef void T;
-        std::promise<T> p;
-        std::future<T> f0 = p.get_future();
-        std::future<T> f;
-        f = f0;
-        assert(!f0.valid());
-        assert(f.valid());
+        std::future<void> f0, f;
+        f = f0; // expected-error {{'operator=' is a private member of 'std::__1::future<void>'}}
     }
-    {
-        typedef void T;
-        std::future<T> f0;
-        std::future<T> f;
-        f = f0;
-        assert(!f0.valid());
-        assert(!f.valid());
-    }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif
 }
