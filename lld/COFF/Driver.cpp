@@ -372,9 +372,14 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     if (StringRef(S).startswith("lldlto=")) {
       StringRef OptLevel = StringRef(S).substr(7);
       if (OptLevel.getAsInteger(10, Config->LTOOptLevel) ||
-          Config->LTOOptLevel > 3) {
+          Config->LTOOptLevel > 3)
         error("/opt:lldlto: invalid optimization level: " + OptLevel);
-      }
+      continue;
+    }
+    if (StringRef(S).startswith("lldltojobs=")) {
+      StringRef Jobs = StringRef(S).substr(11);
+      if (Jobs.getAsInteger(10, Config->LTOJobs) || Config->LTOJobs == 0)
+        error("/opt:lldltojobs: invalid job count: " + Jobs);
       continue;
     }
     if (S != "ref" && S != "icf" && S != "noicf" &&
@@ -594,9 +599,9 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     Symtab.run();
   }
 
-  // Do LTO by compiling bitcode input files to a native COFF file
-  // then link that file.
-  Symtab.addCombinedLTOObject();
+  // Do LTO by compiling bitcode input files to a set of native COFF files then
+  // link those files.
+  Symtab.addCombinedLTOObjects();
 
   // Make sure we have resolved all symbols.
   Symtab.reportRemainingUndefines(/*Resolve=*/true);

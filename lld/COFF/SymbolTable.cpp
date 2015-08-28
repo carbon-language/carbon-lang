@@ -331,21 +331,7 @@ void SymbolTable::printMap(llvm::raw_ostream &OS) {
   }
 }
 
-void SymbolTable::addCombinedLTOObject() {
-  if (BitcodeFiles.empty())
-    return;
-
-  // Diagnose any undefined symbols early, but do not resolve weak externals,
-  // as resolution breaks the invariant that each Symbol points to a unique
-  // SymbolBody, which we rely on to replace DefinedBitcode symbols correctly.
-  reportRemainingUndefines(/*Resolve=*/false);
-
-  // Create an object file and add it to the symbol table by replacing any
-  // DefinedBitcode symbols with the definitions in the object file.
-  LTOCodeGenerator CG;
-  CG.setOptLevel(Config->LTOOptLevel);
-  ObjectFile *Obj = createLTOObject(&CG);
-
+void SymbolTable::addCombinedLTOObject(ObjectFile *Obj) {
   for (SymbolBody *Body : Obj->getSymbols()) {
     if (!Body->isExternal())
       continue;
@@ -371,6 +357,25 @@ void SymbolTable::addCombinedLTOObject() {
     if (Comp < 0)
       Sym->Body = Body;
   }
+}
+
+void SymbolTable::addCombinedLTOObjects() {
+  if (BitcodeFiles.empty())
+    return;
+
+  // Diagnose any undefined symbols early, but do not resolve weak externals,
+  // as resolution breaks the invariant that each Symbol points to a unique
+  // SymbolBody, which we rely on to replace DefinedBitcode symbols correctly.
+  reportRemainingUndefines(/*Resolve=*/false);
+
+  // Create an object file and add it to the symbol table by replacing any
+  // DefinedBitcode symbols with the definitions in the object file.
+  LTOCodeGenerator CG;
+  CG.setOptLevel(Config->LTOOptLevel);
+  std::vector<ObjectFile *> Objs = createLTOObjects(&CG);
+
+  for (ObjectFile *Obj : Objs)
+    addCombinedLTOObject(Obj);
 
   size_t NumBitcodeFiles = BitcodeFiles.size();
   run();
@@ -379,8 +384,8 @@ void SymbolTable::addCombinedLTOObject() {
 }
 
 // Combine and compile bitcode files and then return the result
-// as a regular COFF object file.
-ObjectFile *SymbolTable::createLTOObject(LTOCodeGenerator *CG) {
+// as a vector of regular COFF object files.
+std::vector<ObjectFile *> SymbolTable::createLTOObjects(LTOCodeGenerator *CG) {
   // All symbols referenced by non-bitcode objects must be preserved.
   for (ObjectFile *File : ObjectFiles)
     for (SymbolBody *Body : File->getSymbols())
@@ -406,14 +411,32 @@ ObjectFile *SymbolTable::createLTOObject(LTOCodeGenerator *CG) {
     CG->addModule(BitcodeFiles[I]->getModule());
 
   std::string ErrMsg;
-  LTOMB = CG->compile(false, false, false, ErrMsg); // take MB ownership
-  if (!LTOMB)
+  if (!CG->optimize(false, false, false, ErrMsg))
     error(ErrMsg);
-  auto *Obj = new ObjectFile(LTOMB->getMemBufferRef());
-  Files.emplace_back(Obj);
-  ObjectFiles.push_back(Obj);
-  Obj->parse();
-  return Obj;
+
+  Objs.resize(Config->LTOJobs);
+  // Use std::list to avoid invalidation of pointers in OSPtrs.
+  std::list<raw_svector_ostream> OSs;
+  std::vector<raw_pwrite_stream *> OSPtrs;
+  for (SmallVector<char, 0> &Obj : Objs) {
+    OSs.emplace_back(Obj);
+    OSPtrs.push_back(&OSs.back());
+  }
+
+  if (!CG->compileOptimized(OSPtrs, ErrMsg))
+    error(ErrMsg);
+
+  std::vector<ObjectFile *> ObjFiles;
+  for (SmallVector<char, 0> &Obj : Objs) {
+    auto *ObjFile = new ObjectFile(
+        MemoryBufferRef(StringRef(Obj.data(), Obj.size()), "<LTO object>"));
+    Files.emplace_back(ObjFile);
+    ObjectFiles.push_back(ObjFile);
+    ObjFile->parse();
+    ObjFiles.push_back(ObjFile);
+  }
+
+  return ObjFiles;
 }
 
 } // namespace coff

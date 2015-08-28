@@ -91,6 +91,9 @@ struct Configuration {
   // Used for /opt:lldlto=N
   unsigned LTOOptLevel = 2;
 
+  // Used for /opt:lldltojobs=N
+  unsigned LTOJobs = 1;
+
   // Used for /merge:from=to (e.g. /merge:.rdata=.text)
   std::map<StringRef, StringRef> Merge;
 

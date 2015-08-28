@@ -68,10 +68,10 @@ public:
   // Print a layout map to OS.
   void printMap(llvm::raw_ostream &OS);
 
-  // Build a COFF object representing the combined contents of BitcodeFiles
-  // and add it to the symbol table. Called after all files are added and
-  // before the writer writes results to a file.
-  void addCombinedLTOObject();
+  // Build a set of COFF objects representing the combined contents of
+  // BitcodeFiles and add them to the symbol table. Called after all files are
+  // added and before the writer writes results to a file.
+  void addCombinedLTOObjects();
 
   // The writer needs to handle DLL import libraries specially in
   // order to create the import descriptor table.
@@ -98,7 +98,8 @@ private:
   StringRef findByPrefix(StringRef Prefix);
 
   void addMemberFile(Lazy *Body);
-  ObjectFile *createLTOObject(llvm::LTOCodeGenerator *CG);
+  void addCombinedLTOObject(ObjectFile *Obj);
+  std::vector<ObjectFile *> createLTOObjects(llvm::LTOCodeGenerator *CG);
 
   llvm::DenseMap<StringRef, Symbol *> Symtab;
 
@@ -107,7 +108,7 @@ private:
   std::vector<InputFile *> ObjectQueue;
 
   std::vector<BitcodeFile *> BitcodeFiles;
-  std::unique_ptr<MemoryBuffer> LTOMB;
+  std::vector<SmallVector<char, 0>> Objs;
   llvm::BumpPtrAllocator Alloc;
 };
 
