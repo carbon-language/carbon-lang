@@ -57,6 +57,42 @@ abs = 0x123
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: _start
+// CHECK-NEXT:     Value: 0x1000
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global (0x1)
+// CHECK-NEXT:     Type: Function
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: abs
+// CHECK-NEXT:     Value: 0x123
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: Absolute
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Weak (0x2)
+// CHECK-NEXT:     Type: Object (0x1)
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: Undefined (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: foo
+// CHECK-NEXT:     Value: 0x1000
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Weak (0x2)
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed
 // CHECK-NEXT:     Value: 0x1004
 // CHECK-NEXT:     Size: 0
@@ -73,42 +109,6 @@ abs = 0x123
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: foobar
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: _start
-// CHECK-NEXT:     Value: 0x1000
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Global (0x1)
-// CHECK-NEXT:     Type: Function
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar
-// CHECK-NEXT:     Value: 0x0
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Weak (0x2)
-// CHECK-NEXT:     Type: Object (0x1)
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: Undefined (0x0)
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: abs
-// CHECK-NEXT:     Value: 0x123
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: Absolute
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: foo
-// CHECK-NEXT:     Value: 0x1000
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Weak (0x2)
-// CHECK-NEXT:     Type: Object
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed2

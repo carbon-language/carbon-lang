@@ -16,6 +16,7 @@
 #include "Symbols.h"
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -273,7 +274,18 @@ void StringTableSection<Is64Bits>::writeTo(uint8_t *Buf) {
   memcpy(Buf, Data.data(), Data.size());
 }
 
+template <class ELFT>
+static int compareSym(const typename ELFFile<ELFT>::Elf_Sym *A,
+                      const typename ELFFile<ELFT>::Elf_Sym *B) {
+  uint32_t AN = A->st_name;
+  uint32_t BN = B->st_name;
+  assert(AN != BN);
+  return AN - BN;
+}
+
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
+  uint8_t *BufStart = Buf;
+
   Buf += sizeof(Elf_Sym);
   llvm::StringTableBuilder &Builder = Table.getStringBuilder();
   for (auto &P : Table.getSymbols()) {
@@ -326,6 +338,15 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
     Buf += sizeof(Elf_Sym);
   }
+
+  // The order the global symbols are in is not defined. We can use an arbitrary
+  // order, but it has to be reproducible. That is true even when cross linking.
+  // The default hashing of StringRef produces different results on 32 and 64
+  // bit systems so we sort by st_name. That is arbitrary but deterministic.
+  // FIXME: Experiment with passing in a custom hashing instead.
+  auto *Syms = reinterpret_cast<Elf_Sym *>(BufStart);
+  ++Syms;
+  array_pod_sort(Syms, Syms + Table.getSymbols().size(), compareSym<ELFT>);
 }
 
 template <bool Is64Bits>
