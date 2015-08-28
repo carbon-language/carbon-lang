@@ -24,6 +24,7 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/ExprOpenMP.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/ABI.h"
 #include "clang/Basic/CapturedStmt.h"
@@ -2427,6 +2428,8 @@ public:
   LValue EmitUnaryOpLValue(const UnaryOperator *E);
   LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
                                 bool Accessed = false);
+  LValue EmitOMPArraySectionExpr(const OMPArraySectionExpr *E,
+                                 bool LowerBound = true);
   LValue EmitExtVectorElementExpr(const ExtVectorElementExpr *E);
   LValue EmitMemberExpr(const MemberExpr *E);
   LValue EmitObjCIsaExpr(const ObjCIsaExpr *E);
