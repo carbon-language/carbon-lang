@@ -489,6 +489,21 @@ MipsAbiInfoHandler<ELFT>::getAbiFlags() const {
   return sec;
 }
 
+template <class ELFT> MipsAbi MipsAbiInfoHandler<ELFT>::getAbi() const {
+  if (!_abiFlags.hasValue())
+    return ELFT::Is64Bits ? MipsAbi::N64 : MipsAbi::O32;
+  switch (_abiFlags->_abi & (EF_MIPS_ABI_O32 | EF_MIPS_ABI2)) {
+  case EF_MIPS_ABI_O32:
+    return MipsAbi::O32;
+  case EF_MIPS_ABI2:
+    return MipsAbi::N32;
+  case 0:
+    return MipsAbi::N64;
+  default:
+    llvm_unreachable("Unknown ABI flag");
+  }
+}
+
 template <class ELFT>
 std::error_code
 MipsAbiInfoHandler<ELFT>::mergeFlags(uint32_t newFlags,
@@ -499,11 +514,15 @@ MipsAbiInfoHandler<ELFT>::mergeFlags(uint32_t newFlags,
   if (auto ec = abiFlags.getError())
     return ec;
 
-  // We support two ABI: O32 and N64. The last one does not have
+  // We support three ABI: O32, N32, and N64. The last one does not have
   // the corresponding ELF flag.
-  uint32_t supportedAbi = ELFT::Is64Bits ? 0 : uint32_t(EF_MIPS_ABI_O32);
-  if (abiFlags->_abi != supportedAbi)
-    return make_dynamic_error_code("Unsupported ABI");
+  if (ELFT::Is64Bits) {
+    if (abiFlags->_abi)
+      return make_dynamic_error_code("Unsupported ABI");
+  } else {
+    if (!(abiFlags->_abi & (EF_MIPS_ABI_O32 | EF_MIPS_ABI2)))
+      return make_dynamic_error_code("Unsupported ABI");
+  }
 
   // ... and still do not support MIPS-16 extension.
   if (abiFlags->_ases & AFL_ASE_MIPS16)
@@ -519,6 +538,10 @@ MipsAbiInfoHandler<ELFT>::mergeFlags(uint32_t newFlags,
     _abiFlags = *abiFlags;
     return std::error_code();
   }
+
+  // Check ABI compatibility.
+  if (abiFlags->_abi != _abiFlags->_abi)
+    return make_dynamic_error_code("Linking modules with incompatible ABI");
 
   // Check PIC / CPIC flags compatibility.
   if (abiFlags->_isCPic != _abiFlags->_isCPic)
@@ -614,7 +637,7 @@ MipsAbiInfoHandler<ELFT>::createAbiFromHeaderFlags(uint32_t flags) {
     return ec;
   abi._ases = *ases;
   abi._flags1 = 0;
-  abi._abi = flags & EF_MIPS_ABI;
+  abi._abi = flags & (EF_MIPS_ABI | EF_MIPS_ABI2);
   abi._isPic = flags & EF_MIPS_PIC;
   abi._isCPic = flags & EF_MIPS_CPIC;
   abi._isNoReorder = flags & EF_MIPS_NOREORDER;

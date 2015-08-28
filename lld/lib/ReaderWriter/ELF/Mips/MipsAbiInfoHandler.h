@@ -18,6 +18,8 @@
 namespace lld {
 namespace elf {
 
+enum class MipsAbi { O32, N32, N64 };
+
 struct MipsAbiFlags {
   unsigned _isa = 0;
   unsigned _fpAbi = 0;
@@ -52,6 +54,8 @@ public:
   uint32_t getFlags() const;
   llvm::Optional<Elf_Mips_RegInfo> getRegistersMask() const;
   llvm::Optional<Elf_Mips_ABIFlags> getAbiFlags() const;
+
+  MipsAbi getAbi() const;
 
   /// \brief Merge saved ELF header flags and the new set of flags.
   std::error_code mergeFlags(uint32_t newFlags,

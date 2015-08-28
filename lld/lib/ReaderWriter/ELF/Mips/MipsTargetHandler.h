@@ -17,8 +17,14 @@
 namespace lld {
 namespace elf {
 
+class MipsBaseTargetHandler : public TargetHandler {
+public:
+  virtual MipsAbi getAbi() const = 0;
+};
+
 /// \brief TargetHandler for Mips
-template <class ELFT> class MipsTargetHandler final : public TargetHandler {
+template <class ELFT>
+class MipsTargetHandler final : public MipsBaseTargetHandler {
 public:
   MipsTargetHandler(MipsLinkingContext &ctx);
 
@@ -28,6 +34,7 @@ public:
   std::unique_ptr<Reader> getDSOReader() override;
   const TargetRelocationHandler &getRelocationHandler() const override;
   std::unique_ptr<Writer> getWriter() override;
+  MipsAbi getAbi() const override;
 
 private:
   MipsLinkingContext &_ctx;

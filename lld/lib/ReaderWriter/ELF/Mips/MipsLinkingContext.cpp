@@ -46,9 +46,16 @@ MipsLinkingContext::MipsLinkingContext(llvm::Triple triple)
     : ELFLinkingContext(triple, createTarget(triple, *this)) {}
 
 uint64_t MipsLinkingContext::getBaseAddress() const {
-  if (_baseAddress == 0 && getOutputELFType() == llvm::ELF::ET_EXEC)
-    return getTriple().isArch64Bit() ? 0x120000000 : 0x400000;
-  return _baseAddress;
+  if (_baseAddress != 0 || getOutputELFType() != llvm::ELF::ET_EXEC)
+    return _baseAddress;
+  switch (getAbi()) {
+    case MipsAbi::O32:
+      return 0x0400000;
+    case MipsAbi::N32:
+      return 0x10000000;
+    case MipsAbi::N64:
+      return 0x120000000;
+  }
 }
 
 StringRef MipsLinkingContext::entrySymbolName() const {
@@ -58,7 +65,14 @@ StringRef MipsLinkingContext::entrySymbolName() const {
 }
 
 StringRef MipsLinkingContext::getDefaultInterpreter() const {
-  return getTriple().isArch64Bit() ? "/lib64/ld.so.1" : "/lib/ld.so.1";
+  switch (getAbi()) {
+    case MipsAbi::O32:
+      return "/lib/ld.so.1";
+    case MipsAbi::N32:
+      return "/lib32/ld.so.1";
+    case MipsAbi::N64:
+      return "/lib64/ld.so.1";
+  }
 }
 
 void MipsLinkingContext::addPasses(PassManager &pm) {
@@ -122,6 +136,11 @@ bool MipsLinkingContext::isRelativeReloc(const Reference &r) const {
   default:
     return false;
   }
+}
+
+MipsAbi MipsLinkingContext::getAbi() const {
+  auto &handler = static_cast<MipsBaseTargetHandler &>(getTargetHandler());
+  return handler.getAbi();
 }
 
 const Registry::KindStrings kindStrings[] = {

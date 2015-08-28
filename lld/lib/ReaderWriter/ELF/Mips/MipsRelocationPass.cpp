@@ -61,6 +61,30 @@ static const uint8_t mipsLePlt0AtomContent[] = {
   0xfe, 0xff, 0x18, 0x27  // subu  $24, $24, 2
 };
 
+// N32 big-endian PLT0 entry
+static const uint8_t mipsN32BePlt0AtomContent[] = {
+  0x3c, 0x0e, 0x00, 0x00, // lui   $14, %hi(&GOTPLT[0])
+  0x8d, 0xd9, 0x00, 0x00, // lw    $25, %lo(&GOTPLT[0])($14)
+  0x25, 0xce, 0x00, 0x00, // addiu $14, $14, %lo(&GOTPLT[0])
+  0x03, 0x0e, 0xc0, 0x23, // subu  $24, $24, $14
+  0x03, 0xe0, 0x78, 0x25, // move  $15, $31
+  0x00, 0x18, 0xc0, 0x82, // srl   $24, $24, 2
+  0x03, 0x20, 0xf8, 0x09, // jalr  $25
+  0x27, 0x18, 0xff, 0xfe  // subu  $24, $24, 2
+};
+
+// N32 little-endian PLT0 entry
+static const uint8_t mipsN32LePlt0AtomContent[] = {
+  0x00, 0x00, 0x0e, 0x3c, // lui   $14, %hi(&GOTPLT[0])
+  0x00, 0x00, 0xd9, 0x8d, // lw    $25, %lo(&GOTPLT[0])($14)
+  0x00, 0x00, 0xce, 0x25, // addiu $14, $14, %lo(&GOTPLT[0])
+  0x23, 0xc0, 0x0e, 0x03, // subu  $24, $24, $14
+  0x25, 0x78, 0xe0, 0x03, // move  $15, $31
+  0x82, 0xc0, 0x18, 0x00, // srl   $24, $24, 2
+  0x09, 0xf8, 0x20, 0x03, // jalr  $25
+  0xfe, 0xff, 0x18, 0x27  // subu  $24, $24, 2
+};
+
 // microMIPS big-endian PLT0 entry
 static const uint8_t microMipsBePlt0AtomContent[] = {
   0x79, 0x80, 0x00, 0x00, // addiupc $3,  (&GOTPLT[0]) - .
@@ -283,6 +307,27 @@ template <> ArrayRef<uint8_t> PLT0Atom<ELF32BE>::rawContent() const {
 }
 template <> ArrayRef<uint8_t> PLT0Atom<ELF32LE>::rawContent() const {
   return llvm::makeArrayRef(mipsLePlt0AtomContent);
+}
+
+template <class ELFT> class PLT0N32Atom : public PLTAtom {
+public:
+  PLT0N32Atom(const Atom *got, const File &f) : PLTAtom(f, ".plt") {
+    // Setup reference to fixup the PLT0 entry.
+    addReferenceELF_Mips(R_MIPS_HI16, 0, got, 0);
+    addReferenceELF_Mips(R_MIPS_LO16, 4, got, 0);
+    addReferenceELF_Mips(R_MIPS_LO16, 8, got, 0);
+  }
+
+  ArrayRef<uint8_t> rawContent() const override {
+    llvm_unreachable("PLT0 is not applicable for this target");
+  }
+};
+
+template <> ArrayRef<uint8_t> PLT0N32Atom<ELF32BE>::rawContent() const {
+  return llvm::makeArrayRef(mipsN32BePlt0AtomContent);
+}
+template <> ArrayRef<uint8_t> PLT0N32Atom<ELF32LE>::rawContent() const {
+  return llvm::makeArrayRef(mipsN32LePlt0AtomContent);
 }
 
 template <class ELFT> class PLT0MicroAtom : public PLTAtom {
@@ -1253,6 +1298,8 @@ PLTAtom *RelocationPass<ELFT>::createPLTHeader(bool isMicroMips) {
 
   if (isMicroMips)
     return new (_file._alloc) PLT0MicroAtom<ELFT>(ga0, _file);
+  if (_ctx.getAbi() == MipsAbi::N32)
+    return new (_file._alloc) PLT0N32Atom<ELFT>(ga0, _file);
   return new (_file._alloc) PLT0Atom<ELFT>(ga0, _file);
 }
 

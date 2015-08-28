@@ -9,6 +9,7 @@
 #ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_LINKING_CONTEXT_H
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_LINKING_CONTEXT_H
 
+#include "MipsAbiInfoHandler.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
 namespace lld {
@@ -45,6 +46,8 @@ public:
   bool isCopyRelocation(const Reference &r) const override;
   bool isPLTRelocation(const Reference &r) const override;
   bool isRelativeReloc(const Reference &r) const override;
+
+  MipsAbi getAbi() const;
 };
 
 } // elf

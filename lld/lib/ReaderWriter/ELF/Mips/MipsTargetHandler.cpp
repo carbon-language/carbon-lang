@@ -53,6 +53,10 @@ std::unique_ptr<Writer> MipsTargetHandler<ELFT>::getWriter() {
   }
 }
 
+template <class ELFT> MipsAbi MipsTargetHandler<ELFT>::getAbi() const {
+  return _abiInfoHandler.getAbi();
+}
+
 template class MipsTargetHandler<ELF32BE>;
 template class MipsTargetHandler<ELF32LE>;
 template class MipsTargetHandler<ELF64BE>;
