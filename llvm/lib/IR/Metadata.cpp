@@ -1259,3 +1259,11 @@ void Function::clearMetadata() {
   getContext().pImpl->FunctionMetadata.erase(this);
   setHasMetadataHashEntry(false);
 }
+
+void Function::setSubprogram(DISubprogram *SP) {
+  setMetadata(LLVMContext::MD_dbg, SP);
+}
+
+DISubprogram *Function::getSubprogram() const {
+  return cast_or_null<DISubprogram>(getMetadata(LLVMContext::MD_dbg));
+}

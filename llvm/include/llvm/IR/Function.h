@@ -32,6 +32,7 @@ namespace llvm {
 
 class FunctionType;
 class LLVMContext;
+class DISubprogram;
 
 template<> struct ilist_traits<Argument>
   : public SymbolTableListTraits<Argument, Function> {
@@ -605,6 +606,17 @@ public:
   ///
   /// Drop all metadata from \c this not included in \c KnownIDs.
   void dropUnknownMetadata(ArrayRef<unsigned> KnownIDs);
+
+  /// \brief Set the attached subprogram.
+  ///
+  /// Calls \a setMetadata() with \a LLVMContext::MD_dbg.
+  void setSubprogram(DISubprogram *SP);
+
+  /// \brief Get the attached subprogram.
+  ///
+  /// Calls \a getMetadata() with \a LLVMContext::MD_dbg and casts the result
+  /// to \a DISubprogram.
+  DISubprogram *getSubprogram() const;
 
 private:
   // Shadow Value::setValueSubclassData with a private forwarding method so that

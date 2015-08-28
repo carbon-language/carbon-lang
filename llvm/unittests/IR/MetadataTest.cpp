@@ -2273,4 +2273,16 @@ TEST_F(FunctionAttachmentTest, EntryCount) {
   EXPECT_EQ(12304u, *F->getEntryCount());
 }
 
+TEST_F(FunctionAttachmentTest, SubprogramAttachment) {
+  Function *F = getFunction("foo");
+  DISubprogram *SP = getSubprogram();
+  F->setSubprogram(SP);
+
+  // Note that the static_cast confirms that F->getSubprogram() actually
+  // returns an DISubprogram.
+  EXPECT_EQ(SP, static_cast<DISubprogram *>(F->getSubprogram()));
+  EXPECT_EQ(SP, F->getMetadata("dbg"));
+  EXPECT_EQ(SP, F->getMetadata(LLVMContext::MD_dbg));
+}
+
 }
