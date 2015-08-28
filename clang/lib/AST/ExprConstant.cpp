@@ -3248,12 +3248,21 @@ static bool EvaluateCond(EvalInfo &Info, const VarDecl *CondDecl,
   return EvaluateAsBooleanCondition(Cond, Result, Info);
 }
 
-static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
+/// \brief A location where the result (returned value) of evaluating a
+/// statement should be stored.
+struct StmtResult {
+  /// The APValue that should be filled in with the returned value.
+  APValue &Value;
+  /// The location containing the result, if any (used to support RVO).
+  const LValue *Slot;
+};
+
+static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
                                    const Stmt *S,
                                    const SwitchCase *SC = nullptr);
 
 /// Evaluate the body of a loop, and translate the result as appropriate.
-static EvalStmtResult EvaluateLoopBody(APValue &Result, EvalInfo &Info,
+static EvalStmtResult EvaluateLoopBody(StmtResult &Result, EvalInfo &Info,
                                        const Stmt *Body,
                                        const SwitchCase *Case = nullptr) {
   BlockScopeRAII Scope(Info);
@@ -3272,7 +3281,7 @@ static EvalStmtResult EvaluateLoopBody(APValue &Result, EvalInfo &Info,
 }
 
 /// Evaluate a switch statement.
-static EvalStmtResult EvaluateSwitch(APValue &Result, EvalInfo &Info,
+static EvalStmtResult EvaluateSwitch(StmtResult &Result, EvalInfo &Info,
                                      const SwitchStmt *SS) {
   BlockScopeRAII Scope(Info);
 
@@ -3329,7 +3338,7 @@ static EvalStmtResult EvaluateSwitch(APValue &Result, EvalInfo &Info,
 }
 
 // Evaluate a statement.
-static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
+static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
                                    const Stmt *S, const SwitchCase *Case) {
   if (!Info.nextStep(S))
     return ESR_Failed;
@@ -3435,7 +3444,10 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
   case Stmt::ReturnStmtClass: {
     const Expr *RetExpr = cast<ReturnStmt>(S)->getRetValue();
     FullExpressionRAII Scope(Info);
-    if (RetExpr && !Evaluate(Result, Info, RetExpr))
+    if (RetExpr &&
+        !(Result.Slot
+              ? EvaluateInPlace(Result.Value, Info, *Result.Slot, RetExpr)
+              : Evaluate(Result.Value, Info, RetExpr)))
       return ESR_Failed;
     return ESR_Returned;
   }
@@ -3705,7 +3717,8 @@ static bool EvaluateArgs(ArrayRef<const Expr*> Args, ArgVector &ArgValues,
 static bool HandleFunctionCall(SourceLocation CallLoc,
                                const FunctionDecl *Callee, const LValue *This,
                                ArrayRef<const Expr*> Args, const Stmt *Body,
-                               EvalInfo &Info, APValue &Result) {
+                               EvalInfo &Info, APValue &Result,
+                               const LValue *ResultSlot) {
   ArgVector ArgValues(Args.size());
   if (!EvaluateArgs(Args, ArgValues, Info))
     return false;
@@ -3740,7 +3753,8 @@ static bool HandleFunctionCall(SourceLocation CallLoc,
     return true;
   }
 
-  EvalStmtResult ESR = EvaluateStmt(Result, Info, Body);
+  StmtResult Ret = {Result, ResultSlot};
+  EvalStmtResult ESR = EvaluateStmt(Ret, Info, Body);
   if (ESR == ESR_Succeeded) {
     if (Callee->getReturnType()->isVoidType())
       return true;
@@ -3769,6 +3783,11 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
 
   CallStackFrame Frame(Info, CallLoc, Definition, &This, ArgValues.data());
 
+  // FIXME: Creating an APValue just to hold a nonexistent return value is
+  // wasteful.
+  APValue RetVal;
+  StmtResult Ret = {RetVal, nullptr};
+
   // If it's a delegating constructor, just delegate.
   if (Definition->isDelegatingConstructor()) {
     CXXConstructorDecl::init_const_iterator I = Definition->init_begin();
@@ -3777,7 +3796,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
       if (!EvaluateInPlace(Result, Info, This, (*I)->getInit()))
         return false;
     }
-    return EvaluateStmt(Result, Info, Definition->getBody()) != ESR_Failed;
+    return EvaluateStmt(Ret, Info, Definition->getBody()) != ESR_Failed;
   }
 
   // For a trivial copy or move constructor, perform an APValue copy. This is
@@ -3885,7 +3904,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
   }
 
   return Success &&
-         EvaluateStmt(Result, Info, Definition->getBody()) != ESR_Failed;
+         EvaluateStmt(Ret, Info, Definition->getBody()) != ESR_Failed;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3897,11 +3916,12 @@ template <class Derived>
 class ExprEvaluatorBase
   : public ConstStmtVisitor<Derived, bool> {
 private:
+  Derived &getDerived() { return static_cast<Derived&>(*this); }
   bool DerivedSuccess(const APValue &V, const Expr *E) {
-    return static_cast<Derived*>(this)->Success(V, E);
+    return getDerived().Success(V, E);
   }
   bool DerivedZeroInitialization(const Expr *E) {
-    return static_cast<Derived*>(this)->ZeroInitialization(E);
+    return getDerived().ZeroInitialization(E);
   }
 
   // Check whether a conditional operator with a non-constant condition is a
@@ -4082,6 +4102,14 @@ public:
   }
 
   bool VisitCallExpr(const CallExpr *E) {
+    APValue Result;
+    if (!handleCallExpr(E, Result, nullptr))
+      return false;
+    return DerivedSuccess(Result, E);
+  }
+
+  bool handleCallExpr(const CallExpr *E, APValue &Result,
+                     const LValue *ResultSlot) {
     const Expr *Callee = E->getCallee()->IgnoreParens();
     QualType CalleeType = Callee->getType();
 
@@ -4156,14 +4184,13 @@ public:
 
     const FunctionDecl *Definition = nullptr;
     Stmt *Body = FD->getBody(Definition);
-    APValue Result;
 
     if (!CheckConstexprFunction(Info, E->getExprLoc(), FD, Definition) ||
-        !HandleFunctionCall(E->getExprLoc(), Definition, This, Args, Body,
-                            Info, Result))
+        !HandleFunctionCall(E->getExprLoc(), Definition, This, Args, Body, Info,
+                            Result, ResultSlot))
       return false;
 
-    return DerivedSuccess(Result, E);
+    return true;
   }
 
   bool VisitCompoundLiteralExpr(const CompoundLiteralExpr *E) {
@@ -4288,7 +4315,8 @@ public:
       }
 
       APValue ReturnValue;
-      EvalStmtResult ESR = EvaluateStmt(ReturnValue, Info, *BI);
+      StmtResult Result = { ReturnValue, nullptr };
+      EvalStmtResult ESR = EvaluateStmt(Result, Info, *BI);
       if (ESR != ESR_Succeeded) {
         // FIXME: If the statement-expression terminated due to 'return',
         // 'break', or 'continue', it would be nice to propagate that to
@@ -5143,6 +5171,9 @@ namespace {
     }
     bool ZeroInitialization(const Expr *E);
 
+    bool VisitCallExpr(const CallExpr *E) {
+      return handleCallExpr(E, Result, &This);
+    }
     bool VisitCastExpr(const CastExpr *E);
     bool VisitInitListExpr(const InitListExpr *E);
     bool VisitCXXConstructExpr(const CXXConstructExpr *E);
@@ -5705,6 +5736,9 @@ namespace {
       return EvaluateInPlace(Result.getArrayFiller(), Info, Subobject, &VIE);
     }
 
+    bool VisitCallExpr(const CallExpr *E) {
+      return handleCallExpr(E, Result, &This);
+    }
     bool VisitInitListExpr(const InitListExpr *E);
     bool VisitCXXConstructExpr(const CXXConstructExpr *E);
     bool VisitCXXConstructExpr(const CXXConstructExpr *E,
@@ -9224,7 +9258,7 @@ bool Expr::isPotentialConstantExpr(const FunctionDecl *FD,
     HandleConstructorCall(Loc, This, Args, CD, Info, Scratch);
   } else
     HandleFunctionCall(Loc, FD, (MD && MD->isInstance()) ? &This : nullptr,
-                       Args, FD->getBody(), Info, Scratch);
+                       Args, FD->getBody(), Info, Scratch, nullptr);
 
   return Diags.empty();
 }

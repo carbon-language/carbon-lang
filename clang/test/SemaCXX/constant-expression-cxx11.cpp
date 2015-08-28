@@ -1994,3 +1994,15 @@ namespace PR17938 {
 
   static constexpr auto z = f(Z());
 }
+
+namespace PR24597 {
+  struct A {
+    int x, *p;
+    constexpr A() : x(0), p(&x) {}
+    constexpr A(const A &a) : x(a.x), p(&x) {}
+  };
+  constexpr A f() { return A(); }
+  constexpr A g() { return f(); }
+  constexpr int a = *f().p;
+  constexpr int b = *g().p;
+}
