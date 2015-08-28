@@ -11,57 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Object/COFF.h"
 #include "llvm/Object/IRObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/SymbolicFile.h"
-#include "llvm/Support/COFF.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 using namespace llvm;
 using namespace object;
-
-// COFF short import file is a special kind of file which contains
-// only symbol names for DLL-exported symbols. This class implements
-// SymbolicFile interface for the file.
-namespace {
-class COFFImportFile : public SymbolicFile {
-public:
-  COFFImportFile(MemoryBufferRef Source)
-      : SymbolicFile(sys::fs::file_magic::coff_import_library, Source) {}
-
-  void moveSymbolNext(DataRefImpl &Symb) const override { ++Symb.p; }
-
-  std::error_code printSymbolName(raw_ostream &OS,
-                                  DataRefImpl Symb) const override {
-    if (Symb.p == 1)
-      OS << "__imp_";
-    OS << StringRef(Data.getBufferStart() + sizeof(coff_import_header));
-    return std::error_code();
-  }
-
-  uint32_t getSymbolFlags(DataRefImpl Symb) const override {
-    return SymbolRef::SF_Global;
-  }
-
-  basic_symbol_iterator symbol_begin_impl() const override {
-    return BasicSymbolRef(DataRefImpl(), this);
-  }
-
-  basic_symbol_iterator symbol_end_impl() const override {
-    DataRefImpl Symb;
-    Symb.p = isCode() ? 2 : 1;
-    return BasicSymbolRef(Symb, this);
-  }
-
-private:
-  bool isCode() const {
-    auto *Import = reinterpret_cast<const coff_import_header *>(
-        Data.getBufferStart());
-    return Import->getType() == llvm::COFF::IMPORT_CODE;
-  }
-};
-} // anonymous namespace
 
 SymbolicFile::SymbolicFile(unsigned int Type, MemoryBufferRef Source)
     : Binary(Type, Source) {}
@@ -98,10 +54,9 @@ ErrorOr<std::unique_ptr<SymbolicFile>> SymbolicFile::createSymbolicFile(
   case sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
   case sys::fs::file_magic::macho_dsym_companion:
   case sys::fs::file_magic::macho_kext_bundle:
+  case sys::fs::file_magic::coff_import_library:
   case sys::fs::file_magic::pecoff_executable:
     return ObjectFile::createObjectFile(Object, Type);
-  case sys::fs::file_magic::coff_import_library:
-    return std::unique_ptr<SymbolicFile>(new COFFImportFile(Object));
   case sys::fs::file_magic::elf_relocatable:
   case sys::fs::file_magic::macho_object:
   case sys::fs::file_magic::coff_object: {
