@@ -292,6 +292,18 @@ const internal::VariadicDynCastAllOfMatcher<Decl, NamedDecl> namedDecl;
 ///   matches "namespace {}" and "namespace test {}"
 const internal::VariadicDynCastAllOfMatcher<Decl, NamespaceDecl> namespaceDecl;
 
+/// \brief Matches a declaration of a namespace alias.
+///
+/// Given
+/// \code
+///   namespace test {}
+///   namespace alias = ::test;
+/// \endcode
+/// namespaceAliasDecl()
+///   matches "namespace alias" but not "namespace test"
+const internal::VariadicDynCastAllOfMatcher<Decl, NamespaceAliasDecl>
+    namespaceAliasDecl;
+
 /// \brief Matches C++ class declarations.
 ///
 /// Example matches \c X, \c Z

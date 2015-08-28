@@ -285,6 +285,17 @@ Example matches X, S, the anonymous union type, i, and U;
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('namespaceAliasDecl0')"><a name="namespaceAliasDecl0Anchor">namespaceAliasDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1NamespaceAliasDecl.html">NamespaceAliasDecl</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="namespaceAliasDecl0"><pre>Matches a declaration of a namespace alias.
+
+Given
+  namespace test {}
+  namespace alias = ::test;
+namespaceAliasDecl()
+  matches "namespace alias" but not "namespace test"
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('namespaceDecl0')"><a name="namespaceDecl0Anchor">namespaceDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1NamespaceDecl.html">NamespaceDecl</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="namespaceDecl0"><pre>Matches a declaration of a namespace.
 

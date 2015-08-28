@@ -4369,6 +4369,11 @@ TEST(NS, Anonymous) {
   EXPECT_TRUE(matches("namespace {}", namespaceDecl(isAnonymous())));
 }
 
+TEST(NS, Alias) {
+  EXPECT_TRUE(matches("namespace test {} namespace alias = ::test;",
+                      namespaceAliasDecl(hasName("alias"))));
+}
+
 TEST(NNS, MatchesTypes) {
   NestedNameSpecifierMatcher Matcher = nestedNameSpecifier(
     specifiesType(hasDeclaration(recordDecl(hasName("A")))));
