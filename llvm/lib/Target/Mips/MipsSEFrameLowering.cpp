@@ -376,7 +376,7 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF,
       *static_cast<const MipsRegisterInfo *>(STI.getRegisterInfo());
 
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+  DebugLoc dl;
   MipsABIInfo ABI = STI.getABI();
   unsigned SP = ABI.GetStackPtr();
   unsigned FP = ABI.GetFramePtr();
