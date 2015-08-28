@@ -158,6 +158,8 @@ protected:
   OptionsView Options;
   /// \brief Returns the main file name of the current translation unit.
   StringRef getCurrentMainFile() const { return Context->getCurrentFile(); }
+  /// \brief Returns the language options from the context.
+  LangOptions getLangOpts() const { return Context->getLangOpts(); }
 };
 
 class ClangTidyCheckFactories;

@@ -453,7 +453,11 @@ void UseNullptrCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
 }
 
 void UseNullptrCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(makeCastSequenceMatcher(), this);
+  // Only register the matcher for C++. Because this checker is used for
+  // modernization, it is reasonable to run it on any C++ standard with the
+  // assumption the user is trying to modernize their codebase.
+  if (getLangOpts().CPlusPlus)
+    Finder->addMatcher(makeCastSequenceMatcher(), this);
 }
 
 void UseNullptrCheck::check(const MatchFinder::MatchResult &Result) {
