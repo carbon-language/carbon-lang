@@ -49,17 +49,16 @@ public:
 
   /// @brief Translate a SCEV to an isl_pw_aff.
   ///
-  /// @param E    The expression that is translated.
-  /// @param Stmt The SCoP statement surrounding @p E or nullptr, if no
-  ///             loop induction variables inside the scop are referenced.
+  /// @param E      The expression that is translated.
+  /// @param Domain The domain in which @p E is executed.
   ///
-  /// @returns The isl representation of the SCEV @p E in @p Stmt.
+  /// @returns The isl representation of the SCEV @p E in @p Domain.
   __isl_give isl_pw_aff *getPwAff(const llvm::SCEV *E,
-                                  const ScopStmt *Stmt = nullptr);
+                                  __isl_keep isl_set *Domain = nullptr);
 
 private:
   /// @brief Key to identify cached expressions.
-  using CacheKey = std::pair<const llvm::SCEV *, const ScopStmt *>;
+  using CacheKey = std::pair<const llvm::SCEV *, isl_set *>;
 
   /// @brief Map to remembered cached expressions.
   llvm::DenseMap<CacheKey, isl_pw_aff *> CachedExpressions;
@@ -69,7 +68,7 @@ private:
   unsigned NumIterators;
   const llvm::Region &R;
   llvm::ScalarEvolution &SE;
-  const ScopStmt *Stmt;
+  isl_set *Domain;
 
   __isl_give isl_pw_aff *visit(const llvm::SCEV *E);
   __isl_give isl_pw_aff *visitConstant(const llvm::SCEVConstant *E);

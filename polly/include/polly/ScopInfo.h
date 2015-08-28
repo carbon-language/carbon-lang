@@ -1181,11 +1181,11 @@ public:
 
   /// @brief Compute the isl representation for the SCEV @p
   ///
-  ///
-  /// @param Stmt An (optional) statement for which the isl_pw_aff is
-  ///             computed. SCEVs known to not reference any loops in the
-  ///             scop can be passed without a statement.
-  __isl_give isl_pw_aff *getPwAff(const SCEV *E, ScopStmt *Stmt = nullptr);
+  /// @param Domain An (optional) domain in which the isl_pw_aff is computed.
+  ///               SCEVs known to not reference any loops in the SCoP can be
+  ///               passed without a @p Domain.
+  __isl_give isl_pw_aff *getPwAff(const SCEV *E,
+                                  __isl_keep isl_set *Domain = nullptr);
 
   /// @brief Get a union set containing the iteration domains of all statements.
   __isl_give isl_union_set *getDomains() const;

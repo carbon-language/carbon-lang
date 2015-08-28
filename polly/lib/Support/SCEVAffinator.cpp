@@ -35,11 +35,11 @@ SCEVAffinator::~SCEVAffinator() {
 }
 
 __isl_give isl_pw_aff *SCEVAffinator::getPwAff(const SCEV *Expr,
-                                               const ScopStmt *Stmt) {
-  this->Stmt = Stmt;
+                                               isl_set *Domain) {
+  this->Domain = Domain;
 
-  if (Stmt)
-    NumIterators = Stmt->getNumIterators();
+  if (Domain)
+    NumIterators = isl_set_n_dim(Domain);
   else
     NumIterators = 0;
 
@@ -50,7 +50,7 @@ __isl_give isl_pw_aff *SCEVAffinator::getPwAff(const SCEV *Expr,
 
 __isl_give isl_pw_aff *SCEVAffinator::visit(const SCEV *Expr) {
 
-  auto Key = std::make_pair(Expr, Stmt);
+  auto Key = std::make_pair(Expr, Domain);
   isl_pw_aff *PWA = CachedExpressions[Key];
 
   if (PWA)

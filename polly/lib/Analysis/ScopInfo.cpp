@@ -697,7 +697,7 @@ isl_map *ScopStmt::getSchedule() const {
 }
 
 __isl_give isl_pw_aff *ScopStmt::getPwAff(const SCEV *E) {
-  return getParent()->getPwAff(E, this);
+  return getParent()->getPwAff(E, Domain);
 }
 
 void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
@@ -1843,8 +1843,8 @@ void Scop::dump() const { print(dbgs()); }
 
 isl_ctx *Scop::getIslCtx() const { return IslCtx; }
 
-__isl_give isl_pw_aff *Scop::getPwAff(const SCEV *E, ScopStmt *Stmt) {
-  return Affinator.getPwAff(E, Stmt);
+__isl_give isl_pw_aff *Scop::getPwAff(const SCEV *E, isl_set *Domain) {
+  return Affinator.getPwAff(E, Domain);
 }
 
 __isl_give isl_union_set *Scop::getDomains() const {
