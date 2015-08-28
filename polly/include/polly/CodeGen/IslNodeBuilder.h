@@ -36,7 +36,7 @@ public:
                  &ExprBuilder),
         RegionGen(BlockGen), P(P), DL(DL), LI(LI), SE(SE), DT(DT) {}
 
-  ~IslNodeBuilder() {}
+  virtual ~IslNodeBuilder() {}
 
   void addParameters(__isl_take isl_set *Context);
   void create(__isl_take isl_ast_node *Node);
@@ -182,8 +182,8 @@ private:
   /// currently not special handling for marker nodes implemented.
   ///
   /// @param Mark The node we generate code for.
-  void createMark(__isl_take isl_ast_node *Marker);
-  void createFor(__isl_take isl_ast_node *For);
+  virtual void createMark(__isl_take isl_ast_node *Marker);
+  virtual void createFor(__isl_take isl_ast_node *For);
   void createForVector(__isl_take isl_ast_node *For, int VectorWidth);
   void createForSequential(__isl_take isl_ast_node *For);
 
@@ -254,13 +254,13 @@ private:
                                  std::vector<LoopToScevMapT> &VLTS,
                                  std::vector<Value *> &IVS,
                                  __isl_take isl_id *IteratorID);
-  void createIf(__isl_take isl_ast_node *If);
+  virtual void createIf(__isl_take isl_ast_node *If);
   void createUserVector(__isl_take isl_ast_node *User,
                         std::vector<Value *> &IVS,
                         __isl_take isl_id *IteratorID,
                         __isl_take isl_union_map *Schedule);
-  void createUser(__isl_take isl_ast_node *User);
-  void createBlock(__isl_take isl_ast_node *Block);
+  virtual void createUser(__isl_take isl_ast_node *User);
+  virtual void createBlock(__isl_take isl_ast_node *Block);
 };
 
 #endif
