@@ -4,15 +4,10 @@
 FileHeader:
   Class:           ELFCLASS64
   Data:            ELFDATA2LSB
-  OSABI:           ELFOSABI_GNU
   Type:            ET_REL
   Machine:         EM_X86_64
 Sections:
-  - Name:            .text
-    Type:            SHT_PROGBITS
-    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
-    AddressAlign:    0x0000000000000004
-    Content:         E800000000
+  - Type:            SHT_PROGBITS
   - Name:            .rela.text
     Type:            SHT_RELA
     Info:            12 # Invalid index
@@ -20,11 +15,8 @@ Sections:
       - Offset:          0x0000000000000001
         Symbol:          lulz
         Type:            R_X86_64_PC32
-        Addend:          -4
 Symbols:
   Global:
     - Name:            lulz
-      Type:            STT_FUNC
-      Section:         .text
 
 # CHECK: Invalid relocated section index
