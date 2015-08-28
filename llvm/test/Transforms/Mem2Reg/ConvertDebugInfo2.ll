@@ -1,10 +1,18 @@
-; RUN: opt -mem2reg < %s | llvm-dis | grep ".dbg " | count 7
+; RUN: opt -S -mem2reg <%s | FileCheck %s
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 declare void @foo(i32, i64, i8*)
 
 define void @baz(i32 %a) nounwind ssp {
+; CHECK-LABEL:  entry:
+; CHECK-NEXT:     %"alloca point" = bitcast i32 0 to i32{{$}}
+; CHECK-NEXT:     call void @llvm.dbg.value(metadata i32 %a,{{.*}}, !dbg
+; CHECK-NEXT:     call void @llvm.dbg.value(metadata i32 %a,{{.*}}, !dbg
+; CHECK-NEXT:     call void @llvm.dbg.value(metadata i64 55,{{.*}}, !dbg
+; CHECK-NEXT:     call void @llvm.dbg.value(metadata i8* bitcast (void (i32)* @baz to i8*),{{.*}}, !dbg
+; CHECK-NEXT:     call void @foo({{.*}}, !dbg
+; CHECK-NEXT:     br label %return, !dbg
 entry:
   %x_addr.i = alloca i32                          ; <i32*> [#uses=2]
   %y_addr.i = alloca i64                          ; <i64*> [#uses=2]
@@ -26,6 +34,8 @@ entry:
   call void @foo(i32 %1, i64 %2, i8* %3) nounwind, !dbg !18
   br label %return, !dbg !19
 
+; CHECK-LABEL:  return:
+; CHECK-NEXT:     ret void, !dbg
 return:                                           ; preds = %entry
   ret void, !dbg !19
 }
@@ -35,7 +45,7 @@ return:                                           ; preds = %entry
 !0 = !DILocalVariable(name: "a", line: 8, arg: 1, scope: !1, file: !2, type: !6)
 !1 = distinct !DISubprogram(name: "baz", linkageName: "baz", line: 8, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 8, file: !20, scope: !2, type: !4, function: void (i32)* @baz)
 !2 = !DIFile(filename: "bar.c", directory: "/tmp/")
-!3 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !20, enums: !21, retainedTypes: !21)
+!3 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !20, enums: !21, retainedTypes: !21, subprograms: !{!1})
 !4 = !DISubroutineType(types: !5)
 !5 = !{null, !6}
 !6 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
