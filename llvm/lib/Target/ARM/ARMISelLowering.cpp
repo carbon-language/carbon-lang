@@ -725,7 +725,12 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::CTTZ_ZERO_UNDEF  , MVT::i32  , Expand);
   setOperationAction(ISD::CTLZ_ZERO_UNDEF  , MVT::i32  , Expand);
 
-  setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Custom);
+  // @llvm.readcyclecounter requires the Performance Monitors extension.
+  // Default to the 0 expansion on unsupported platforms.
+  // FIXME: Technically there are older ARM CPUs that have
+  // implementation-specific ways of obtaining this information.
+  if (Subtarget->hasPerfMon())
+    setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Custom);
 
   // Only ARMv6 has BSWAP.
   if (!Subtarget->hasV6Ops())
@@ -6645,36 +6650,22 @@ static void ReplaceREADCYCLECOUNTER(SDNode *N,
                                     SelectionDAG &DAG,
                                     const ARMSubtarget *Subtarget) {
   SDLoc DL(N);
-  SDValue Cycles32, OutChain;
+  // Under Power Management extensions, the cycle-count is:
+  //    mrc p15, #0, <Rt>, c9, c13, #0
+  SDValue Ops[] = { N->getOperand(0), // Chain
+                    DAG.getConstant(Intrinsic::arm_mrc, DL, MVT::i32),
+                    DAG.getConstant(15, DL, MVT::i32),
+                    DAG.getConstant(0, DL, MVT::i32),
+                    DAG.getConstant(9, DL, MVT::i32),
+                    DAG.getConstant(13, DL, MVT::i32),
+                    DAG.getConstant(0, DL, MVT::i32)
+  };
 
-  if (Subtarget->hasPerfMon()) {
-    // Under Power Management extensions, the cycle-count is:
-    //    mrc p15, #0, <Rt>, c9, c13, #0
-    SDValue Ops[] = { N->getOperand(0), // Chain
-                      DAG.getConstant(Intrinsic::arm_mrc, DL, MVT::i32),
-                      DAG.getConstant(15, DL, MVT::i32),
-                      DAG.getConstant(0, DL, MVT::i32),
-                      DAG.getConstant(9, DL, MVT::i32),
-                      DAG.getConstant(13, DL, MVT::i32),
-                      DAG.getConstant(0, DL, MVT::i32)
-    };
-
-    Cycles32 = DAG.getNode(ISD::INTRINSIC_W_CHAIN, DL,
-                           DAG.getVTList(MVT::i32, MVT::Other), Ops);
-    OutChain = Cycles32.getValue(1);
-  } else {
-    // Intrinsic is defined to return 0 on unsupported platforms. Technically
-    // there are older ARM CPUs that have implementation-specific ways of
-    // obtaining this information (FIXME!).
-    Cycles32 = DAG.getConstant(0, DL, MVT::i32);
-    OutChain = DAG.getEntryNode();
-  }
-
-
-  SDValue Cycles64 = DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64,
-                                 Cycles32, DAG.getConstant(0, DL, MVT::i32));
-  Results.push_back(Cycles64);
-  Results.push_back(OutChain);
+  SDValue Cycles32 = DAG.getNode(ISD::INTRINSIC_W_CHAIN, DL,
+                                 DAG.getVTList(MVT::i32, MVT::Other), Ops);
+  Results.push_back(DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, Cycles32,
+                                DAG.getConstant(0, DL, MVT::i32)));
+  Results.push_back(Cycles32.getValue(1));
 }
 
 SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {

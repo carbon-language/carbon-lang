@@ -1269,6 +1269,11 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     if (Action == TargetLowering::Legal)
       Action = TargetLowering::Custom;
     break;
+  case ISD::READCYCLECOUNTER:
+    // READCYCLECOUNTER returns an i64, even if type legalization might have
+    // expanded that to several smaller types.
+    Action = TLI.getOperationAction(Node->getOpcode(), MVT::i64);
+    break;
   case ISD::READ_REGISTER:
   case ISD::WRITE_REGISTER:
     // Named register is legal in the DAG, but blocked by register name
@@ -2899,6 +2904,13 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
   case ISD::EH_SJLJ_LONGJMP:
     // If the target didn't expand these, there's nothing to do, so just
     // preserve the chain and be done.
+    Results.push_back(Node->getOperand(0));
+    break;
+  case ISD::READCYCLECOUNTER:
+    // If the target didn't expand this, just return 'zero' and preserve the
+    // chain.
+    Results.append(Node->getNumValues() - 1,
+                   DAG.getConstant(0, dl, Node->getValueType(0)));
     Results.push_back(Node->getOperand(0));
     break;
   case ISD::EH_SJLJ_SETJMP:

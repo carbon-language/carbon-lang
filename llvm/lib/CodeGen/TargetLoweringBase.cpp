@@ -845,6 +845,9 @@ void TargetLoweringBase::initActions() {
   // Most targets ignore the @llvm.prefetch intrinsic.
   setOperationAction(ISD::PREFETCH, MVT::Other, Expand);
 
+  // Most targets also ignore the @llvm.readcyclecounter intrinsic.
+  setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Expand);
+
   // ConstantFP nodes default to expand.  Targets can either change this to
   // Legal, in which case all fp constants are legal, or use isFPImmLegal()
   // to optimize expansions for certain constants.

@@ -638,9 +638,11 @@ namespace ISD {
     PCMARKER,
 
     /// READCYCLECOUNTER - This corresponds to the readcyclecounter intrinsic.
-    /// The only operand is a chain and a value and a chain are produced.  The
-    /// value is the contents of the architecture specific cycle counter like
-    /// register (or other high accuracy low latency clock source)
+    /// It produces a chain and one i64 value. The only operand is a chain.
+    /// If i64 is not legal, the result will be expanded into smaller values.
+    /// Still, it returns an i64, so targets should set legality for i64.
+    /// The result is the content of the architecture-specific cycle
+    /// counter-like register (or other high accuracy low latency clock source).
     READCYCLECOUNTER,
 
     /// HANDLENODE node - Used as a handle for various purposes.
