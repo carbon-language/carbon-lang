@@ -31,6 +31,8 @@ zed3:
 .globl abs
 abs = 0x123
 
+.comm common,4,4
+
 // CHECK:      Name: .text
 // CHECK-NEXT: Type: SHT_PROGBITS
 // CHECK-NEXT: Flags [
@@ -91,6 +93,15 @@ abs = 0x123
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: common (34)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 4
+// CHECK-NEXT:     Binding: Global (0x1)
+// CHECK-NEXT:     Type: Object (0x1)
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed

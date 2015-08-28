@@ -310,6 +310,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     }
     case SymbolBody::UndefinedKind:
       assert(Body->isWeak() && "Should be defined by now");
+    case SymbolBody::DefinedCommonKind:
     case SymbolBody::DefinedAbsoluteKind:
       InputSym = &cast<ELFSymbolBody<ELFT>>(Body)->Sym;
       break;

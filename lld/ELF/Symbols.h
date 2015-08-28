@@ -40,9 +40,10 @@ public:
     DefinedFirst = 0,
     DefinedRegularKind = 0,
     DefinedAbsoluteKind = 1,
-    DefinedLast = 1,
-    UndefinedKind = 2,
-    UndefinedSyntheticKind = 3
+    DefinedCommonKind = 2,
+    DefinedLast = 2,
+    UndefinedKind = 3,
+    UndefinedSyntheticKind = 4
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
@@ -131,6 +132,19 @@ public:
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedAbsoluteKind;
+  }
+};
+
+template <class ELFT> class DefinedCommon : public Defined<ELFT> {
+  typedef ELFSymbolBody<ELFT> Base;
+  typedef typename Base::Elf_Sym Elf_Sym;
+
+public:
+  explicit DefinedCommon(StringRef N, const Elf_Sym &Sym)
+      : Defined<ELFT>(Base::DefinedCommonKind, N, Sym) {}
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == Base::DefinedCommonKind;
   }
 };
 

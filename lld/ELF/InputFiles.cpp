@@ -99,11 +99,17 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   StringRef Name = *NameOrErr;
 
   uint32_t SecIndex = Sym->st_shndx;
-  if (SecIndex == SHN_ABS)
+  switch (SecIndex) {
+  case SHN_ABS:
     return new (Alloc) DefinedAbsolute<ELFT>(Name, *Sym);
-
-  if (SecIndex == SHN_XINDEX)
+  case SHN_UNDEF:
+    return new (Alloc) Undefined<ELFT>(Name, *Sym);
+  case SHN_COMMON:
+    return new (Alloc) DefinedCommon<ELFT>(Name, *Sym);
+  case SHN_XINDEX:
     SecIndex = ELFObj->getExtendedSymbolTableIndex(Sym, Symtab, SymtabSHNDX);
+    break;
+  }
 
   if (SecIndex >= Chunks.size() ||
       (SecIndex != 0 && !Chunks[SecIndex]))
@@ -114,8 +120,6 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
     error("unexpected binding");
   case STB_GLOBAL:
   case STB_WEAK:
-    if (Sym->isUndefined())
-      return new (Alloc) Undefined<ELFT>(Name, *Sym);
     return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, *Chunks[SecIndex]);
   }
 }
