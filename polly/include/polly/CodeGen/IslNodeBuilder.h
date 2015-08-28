@@ -48,6 +48,11 @@ public:
 
   IslExprBuilder &getExprBuilder() { return ExprBuilder; }
 
+  /// @brief Get the associated block generator.
+  ///
+  /// @return A referecne to the associated block generator.
+  BlockGenerator &getBlockGenerator() { return BlockGen; }
+
 private:
   Scop &S;
   PollyIRBuilder &Builder;
