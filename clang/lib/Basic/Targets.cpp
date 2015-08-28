@@ -865,13 +865,10 @@ public:
 
   bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
                       StringRef CPU,
-                      std::vector<std::string> &FAW) const override;
+                      std::vector<std::string> &FeaturesVec) const override;
 
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
-  bool handleUserFeatures(llvm::StringMap<bool> &Features,
-                          std::vector<std::string> &UserFeatures,
-                          DiagnosticsEngine &Diags) const override;
   bool hasFeature(StringRef Feature) const override;
   void setFeatureEnabled(llvm::StringMap<bool> &Features, StringRef Name,
                          bool Enabled) const override;
@@ -1048,30 +1045,6 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
   }
 
   return true;
-}
-
-bool PPCTargetInfo::handleUserFeatures(llvm::StringMap<bool> &Features,
-                                       std::vector<std::string> &FAW,
-                                       DiagnosticsEngine &Diags) const {
-  // Handle explicit options being passed to the compiler here: if we've
-  // explicitly turned off vsx and turned on power8-vector or direct-move then
-  // go ahead and error since the customer has expressed a somewhat incompatible
-  // set of options.
-  if (std::find(FAW.begin(), FAW.end(), "-vsx") != FAW.end()) {
-    if (std::find(FAW.begin(), FAW.end(), "+power8-vector") != FAW.end()) {
-      Diags.Report(diag::err_opt_not_valid_with_opt) << "-mpower8-vector"
-                                                     << "-mno-vsx";
-      return false;
-    }
-
-    if (std::find(FAW.begin(), FAW.end(), "+direct-move") != FAW.end()) {
-      Diags.Report(diag::err_opt_not_valid_with_opt) << "-mdirect-move"
-                                                     << "-mno-vsx";
-      return false;
-    }
-  }
-
-  return TargetInfo::handleUserFeatures(Features, FAW, Diags);
 }
 
 /// PPCTargetInfo::getTargetDefines - Return a set of the PowerPC-specific
@@ -1253,9 +1226,9 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   //   __NO_FPRS__
 }
 
-bool PPCTargetInfo::initFeatureMap(llvm::StringMap<bool> &Features,
-                                   DiagnosticsEngine &Diags, StringRef CPU,
-                                   std::vector<std::string> &FAW) const {
+bool PPCTargetInfo::initFeatureMap(
+    llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags, StringRef CPU,
+    std::vector<std::string> &FeaturesVec) const {
   Features["altivec"] = llvm::StringSwitch<bool>(CPU)
     .Case("7400", true)
     .Case("g4", true)
@@ -1299,7 +1272,27 @@ bool PPCTargetInfo::initFeatureMap(llvm::StringMap<bool> &Features,
     .Case("pwr7", true)
     .Default(false);
 
-  return handleUserFeatures(Features, FAW, Diags);
+  // Handle explicit options being passed to the compiler here: if we've
+  // explicitly turned off vsx and turned on power8-vector or direct-move then
+  // go ahead and error since the customer has expressed a somewhat incompatible
+  // set of options.
+  if (std::find(FeaturesVec.begin(), FeaturesVec.end(), "-vsx") !=
+      FeaturesVec.end()) {
+    if (std::find(FeaturesVec.begin(), FeaturesVec.end(), "+power8-vector") !=
+        FeaturesVec.end()) {
+      Diags.Report(diag::err_opt_not_valid_with_opt) << "-mpower8-vector"
+                                                     << "-mno-vsx";
+      return false;
+    }
+
+    if (std::find(FeaturesVec.begin(), FeaturesVec.end(), "+direct-move") !=
+        FeaturesVec.end()) {
+      Diags.Report(diag::err_opt_not_valid_with_opt) << "-mdirect-move"
+                                                     << "-mno-vsx";
+      return false;
+    }
+  }
+  return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
 }
 
 bool PPCTargetInfo::hasFeature(StringRef Feature) const {
@@ -2369,7 +2362,7 @@ public:
                                     StringRef Name, bool Enabled);
   bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
                       StringRef CPU,
-                      std::vector<std::string> &FAW) const override;
+                      std::vector<std::string> &FeaturesVec) const override;
   bool hasFeature(StringRef Feature) const override;
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
@@ -2495,9 +2488,9 @@ bool X86TargetInfo::setFPMath(StringRef Name) {
   return false;
 }
 
-bool X86TargetInfo::initFeatureMap(llvm::StringMap<bool> &Features,
-                                   DiagnosticsEngine &Diags, StringRef CPU,
-                                   std::vector<std::string> &FAW) const {
+bool X86TargetInfo::initFeatureMap(
+    llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags, StringRef CPU,
+    std::vector<std::string> &FeaturesVec) const {
   // FIXME: This *really* should not be here.
 
   // X86_64 always has SSE2.
@@ -2673,7 +2666,7 @@ bool X86TargetInfo::initFeatureMap(llvm::StringMap<bool> &Features,
     setFeatureEnabledImpl(Features, "cx16", true);
     break;
   }
-  return handleUserFeatures(Features, FAW, Diags);
+  return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
 }
 
 void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
@@ -4395,7 +4388,7 @@ public:
   // FIXME: This should be based on Arch attributes, not CPU names.
   bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
                       StringRef CPU,
-                      std::vector<std::string> &FAW) const override {
+                      std::vector<std::string> &FeaturesVec) const override {
     if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
       Features["vfp2"] = true;
     else if (CPU == "cortex-a8" || CPU == "cortex-a9") {
@@ -4427,7 +4420,7 @@ public:
                CPU == "sc300" || CPU == "cortex-r4" || CPU == "cortex-r4f") {
       Features["hwdiv"] = true;
     }
-    return handleUserFeatures(Features, FAW, Diags);
+    return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
   }
 
   bool handleTargetFeatures(std::vector<std::string> &Features,
@@ -5841,14 +5834,14 @@ public:
   }
   bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
                     StringRef CPU,
-                    std::vector<std::string> &FAW) const override {
+                    std::vector<std::string> &FeaturesVec) const override {
     if (CPU == "zEC12")
       Features["transactional-execution"] = true;
     if (CPU == "z13") {
       Features["transactional-execution"] = true;
       Features["vector"] = true;
     }
-    return handleUserFeatures(Features, FAW, Diags);
+    return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
   }
 
   bool handleTargetFeatures(std::vector<std::string> &Features,
@@ -6211,12 +6204,12 @@ public:
   const std::string& getCPU() const { return CPU; }
   bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
                     StringRef CPU,
-                    std::vector<std::string> &FAW) const override {
+                    std::vector<std::string> &FeaturesVec) const override {
     if (CPU == "octeon")
       Features["mips64r2"] = Features["cnmips"] = true;
     else
       Features[CPU] = true;
-    return handleUserFeatures(Features, FAW, Diags);
+    return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
   }
 
   void getTargetDefines(const LangOptions &Opts,
@@ -7502,7 +7495,8 @@ TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   // Compute the default target features, we need the target to handle this
   // because features may have dependencies on one another.
   llvm::StringMap<bool> Features;
-  if (!Target->initFeatureMap(Features, Diags, Opts->CPU, Opts->FeaturesAsWritten))
+  if (!Target->initFeatureMap(Features, Diags, Opts->CPU,
+                              Opts->FeaturesAsWritten))
       return nullptr;
 
   // Add the features to the compile options.
