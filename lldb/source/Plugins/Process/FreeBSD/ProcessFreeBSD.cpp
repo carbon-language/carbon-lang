@@ -462,11 +462,25 @@ ProcessFreeBSD::DoLaunch (Module *module,
     int terminal = m_monitor->GetTerminalFD();
     if (terminal >= 0) {
         // The reader thread will close the file descriptor when done, so we pass it a copy.
+#ifdef F_DUPFD_CLOEXEC
         int stdio = fcntl(terminal, F_DUPFD_CLOEXEC, 0);
         if (stdio == -1) {
             error.SetErrorToErrno();
             return error;
         }
+#else
+        // Special case when F_DUPFD_CLOEXEC does not exist (Debian kFreeBSD)
+        int stdio = fcntl(terminal, F_DUPFD, 0);
+        if (stdio == -1) {
+            error.SetErrorToErrno();
+            return error;
+        }
+        stdio = fcntl(terminal, F_SETFD, FD_CLOEXEC);
+        if (stdio == -1) {
+            error.SetErrorToErrno();
+            return error;
+        }
+#endif
         SetSTDIOFileDescriptor(stdio);
     }
 
