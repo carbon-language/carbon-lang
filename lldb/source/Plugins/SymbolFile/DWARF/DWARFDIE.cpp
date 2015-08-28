@@ -323,6 +323,16 @@ DWARFDIE::GetTypeSystem () const
         return nullptr;
 }
 
+DWARFASTParser *
+DWARFDIE::GetDWARFParser () const
+{
+    lldb_private::TypeSystem *type_system = GetTypeSystem ();
+    if (type_system)
+        return type_system->GetDWARFParser();
+    else
+        return nullptr;
+}
+
 bool
 DWARFDIE::IsStructOrClass () const
 {

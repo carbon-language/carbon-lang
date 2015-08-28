@@ -21,8 +21,6 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
@@ -69,7 +67,8 @@ public:
     friend class SymbolFileDWARFDebugMap;
     friend class DebugMapModule;
     friend class DWARFCompileUnit;
-    friend class lldb_private::ClangASTContext;
+    friend class DWARFASTParserClang;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------

@@ -19,6 +19,7 @@
 #include "clang/AST/Type.h"
 
 class DWARFDIE;
+class DWARFASTParser;
 
 namespace lldb_private {
     
@@ -38,37 +39,10 @@ public:
     virtual ClangASTContext *
     AsClangASTContext() = 0;
 
-    //----------------------------------------------------------------------
-    // DWARF type parsing
-    //----------------------------------------------------------------------
-    virtual lldb::TypeSP
-    ParseTypeFromDWARF (const SymbolContext& sc,
-                        const DWARFDIE &die,
-                        Log *log,
-                        bool *type_is_new_ptr) = 0;
-
-    virtual Function *
-    ParseFunctionFromDWARF (const SymbolContext& sc,
-                            const DWARFDIE &die) = 0;
-
-    virtual bool
-    CompleteTypeFromDWARF (const DWARFDIE &die,
-                           lldb_private::Type *type,
-                           CompilerType &clang_type)
+    virtual DWARFASTParser *
+    GetDWARFParser ()
     {
-        return false;
-    }
-
-    virtual CompilerDeclContext
-    GetDeclContextForUIDFromDWARF (const DWARFDIE &die)
-    {
-        return CompilerDeclContext();
-    }
-
-    virtual CompilerDeclContext
-    GetDeclContextContainingUIDFromDWARF (const DWARFDIE &die)
-    {
-        return CompilerDeclContext();
+        return nullptr;
     }
 
     virtual SymbolFile *

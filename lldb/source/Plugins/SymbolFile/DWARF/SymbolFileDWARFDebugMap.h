@@ -109,7 +109,7 @@ protected:
     friend class DWARFCompileUnit;
     friend class SymbolFileDWARF;
     friend class DebugMapModule;
-    friend class lldb_private::ClangASTContext;
+    friend class DWARFASTParserClang;
     struct OSOInfo
     {
         lldb::ModuleSP module_sp;

@@ -13,6 +13,7 @@
 #include "lldb/lldb-types.h"
 #include "lldb/Core/dwarf.h"
 
+class DWARFASTParser;
 class DWARFAttributes;
 class DWARFCompileUnit;
 class DWARFDebugInfoEntry;
@@ -96,6 +97,9 @@ public:
 
     lldb_private::TypeSystem *
     GetTypeSystem () const;
+
+    DWARFASTParser *
+    GetDWARFParser () const;
 
     void
     Set (DWARFCompileUnit *cu, DWARFDebugInfoEntry *die)

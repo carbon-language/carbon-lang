@@ -29,15 +29,8 @@
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
-#include "lldb/Core/dwarf.h"
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/TypeSystem.h"
-
-
-// Forward definitions for DWARF plug-in for type parsing
-class DWARFDebugInfoEntry;
-class DWARFDIE;
-class DWARFDIECollection;
 
 namespace lldb_private {
 
@@ -499,27 +492,8 @@ public:
         return this;
     }
 
-    lldb::TypeSP
-    ParseTypeFromDWARF (const SymbolContext& sc,
-                        const DWARFDIE &die,
-                        Log *log,
-                        bool *type_is_new_ptr) override;
-
-
-    Function *
-    ParseFunctionFromDWARF (const SymbolContext& sc,
-                            const DWARFDIE &die) override;
-
-    bool
-    CompleteTypeFromDWARF (const DWARFDIE &die,
-                           lldb_private::Type *type,
-                           CompilerType &clang_type) override;
-
-    CompilerDeclContext
-    GetDeclContextForUIDFromDWARF (const DWARFDIE &die) override;
-
-    CompilerDeclContext
-    GetDeclContextContainingUIDFromDWARF (const DWARFDIE &die) override;
+    DWARFASTParser *
+    GetDWARFParser () override;
 
     //------------------------------------------------------------------
     // ClangASTContext callbacks for external source lookups.
@@ -538,9 +512,6 @@ public:
                      llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets);
-
-    clang::NamespaceDecl *
-    ResolveNamespaceDIE (const DWARFDIE &die);
 
     //----------------------------------------------------------------------
     // CompilerDeclContext override functions
@@ -1089,6 +1060,13 @@ public:
         return clang::QualType();
     }
 
+    clang::ClassTemplateDecl *
+    ParseClassTemplateDecl (clang::DeclContext *decl_ctx,
+                            lldb::AccessType access_type,
+                            const char *parent_name,
+                            int tag_decl_kind,
+                            const ClangASTContext::TemplateParameterInfos &template_param_infos);
+
 protected:
     static clang::QualType
     GetQualType (void *type)
@@ -1106,109 +1084,6 @@ protected:
         return clang::QualType();
     }
 
-    struct LayoutInfo
-    {
-        LayoutInfo () :
-        bit_size(0),
-        alignment(0),
-        field_offsets(),
-        base_offsets(),
-        vbase_offsets()
-        {
-        }
-        uint64_t bit_size;
-        uint64_t alignment;
-        llvm::DenseMap<const clang::FieldDecl *, uint64_t> field_offsets;
-        llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> base_offsets;
-        llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> vbase_offsets;
-    };
-
-    typedef llvm::DenseMap<const clang::RecordDecl *, LayoutInfo> RecordDeclToLayoutMap;
-
-
-    // DWARF parsing functions
-    bool
-    ParseTemplateDIE (const DWARFDIE &die,
-                      ClangASTContext::TemplateParameterInfos &template_param_infos);
-    bool
-    ParseTemplateParameterInfos (const DWARFDIE &parent_die,
-                                 ClangASTContext::TemplateParameterInfos &template_param_infos);
-
-    clang::ClassTemplateDecl *
-    ParseClassTemplateDecl (clang::DeclContext *decl_ctx,
-                            lldb::AccessType access_type,
-                            const char *parent_name,
-                            int tag_decl_kind,
-                            const ClangASTContext::TemplateParameterInfos &template_param_infos);
-
-    class DelayedAddObjCClassProperty;
-    typedef std::vector <DelayedAddObjCClassProperty> DelayedPropertyList;
-
-    size_t
-    ParseChildMembers (const lldb_private::SymbolContext& sc,
-                       const DWARFDIE &die,
-                       lldb_private::CompilerType &class_clang_type,
-                       const lldb::LanguageType class_language,
-                       std::vector<clang::CXXBaseSpecifier *>& base_classes,
-                       std::vector<int>& member_accessibilities,
-                       DWARFDIECollection& member_function_dies,
-                       DelayedPropertyList& delayed_properties,
-                       lldb::AccessType &default_accessibility,
-                       bool &is_a_class,
-                       LayoutInfo &layout_info);
-
-    size_t
-    ParseChildParameters (const lldb_private::SymbolContext& sc,
-                          clang::DeclContext *containing_decl_ctx,
-                          const DWARFDIE &parent_die,
-                          bool skip_artificial,
-                          bool &is_static,
-                          bool &is_variadic,
-                          std::vector<lldb_private::CompilerType>& function_args,
-                          std::vector<clang::ParmVarDecl*>& function_param_decls,
-                          unsigned &type_quals);
-
-
-    void
-    ParseChildArrayInfo (const lldb_private::SymbolContext& sc,
-                         const DWARFDIE &parent_die,
-                         int64_t& first_index,
-                         std::vector<uint64_t>& element_orders,
-                         uint32_t& byte_stride,
-                         uint32_t& bit_stride);
-
-
-    size_t
-    ParseChildEnumerators (const SymbolContext& sc,
-                           lldb_private::CompilerType &clang_type,
-                           bool is_signed,
-                           uint32_t enumerator_byte_size,
-                           const DWARFDIE &parent_die);
-
-    clang::DeclContext *
-    GetClangDeclContextForDIE (const DWARFDIE &die);
-
-    clang::DeclContext *
-    GetClangDeclContextContainingDIE (const DWARFDIE &die,
-                                      DWARFDIE *decl_ctx_die);
-
-    bool
-    CopyUniqueClassMethodTypes (const DWARFDIE &src_class_die,
-                                const DWARFDIE &dst_class_die,
-                                Type *class_type,
-                                DWARFDIECollection &failures);
-
-    clang::DeclContext *
-    GetCachedClangDeclContextForDIE (const DWARFDIE &die);
-
-    void
-    LinkDeclContextToDIE (clang::DeclContext *decl_ctx,
-                          const DWARFDIE &die);
-
-    typedef llvm::SmallPtrSet<const DWARFDebugInfoEntry *, 4> DIEPointerSet;
-    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;
-    typedef llvm::DenseMap<const clang::DeclContext *, DIEPointerSet> DeclContextToDIEMap;
-
     //------------------------------------------------------------------
     // Classes that inherit from ClangASTContext can see and modify these
     //------------------------------------------------------------------
@@ -1225,18 +1100,12 @@ protected:
     std::unique_ptr<clang::IdentifierTable>         m_identifier_table_ap;
     std::unique_ptr<clang::SelectorTable>           m_selector_table_ap;
     std::unique_ptr<clang::Builtin::Context>        m_builtins_ap;
+    std::unique_ptr<DWARFASTParser>                 m_dwarf_ast_parser_ap;
     CompleteTagDeclCallback                         m_callback_tag_decl;
     CompleteObjCInterfaceDeclCallback               m_callback_objc_decl;
     void *                                          m_callback_baton;
     uint32_t                                        m_pointer_byte_size;
     bool                                            m_ast_owned;
-    // DWARF Parsing related ivars
-    RecordDeclToLayoutMap                           m_record_decl_to_layout_map;
-    DIEToDeclContextMap                             m_die_to_decl_ctx;
-    DeclContextToDIEMap                             m_decl_ctx_to_die;
-    clang::TranslationUnitDecl *                    m_clang_tu_decl;
-
-
 
 private:
     //------------------------------------------------------------------

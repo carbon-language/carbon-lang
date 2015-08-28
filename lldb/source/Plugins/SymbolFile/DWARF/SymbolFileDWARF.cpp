@@ -57,6 +57,7 @@
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/CPPLanguageRuntime.h"
 
+#include "DWARFASTParser.h"
 #include "DWARFCompileUnit.h"
 #include "DWARFDebugAbbrev.h"
 #include "DWARFDebugAranges.h"
@@ -1014,7 +1015,9 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, const DWARFD
 
         if (type_system)
         {
-            return type_system->ParseFunctionFromDWARF(sc, die);
+            DWARFASTParser *dwarf_ast = type_system->GetDWARFParser();
+            if (dwarf_ast)
+                return dwarf_ast->ParseFunctionFromDWARF(sc, die);
         }
     }
     return nullptr;
@@ -1381,9 +1384,9 @@ SymbolFileDWARF::GetDeclContextForUID (lldb::user_id_t type_uid)
             DWARFDIE die = debug_info->GetDIE(type_uid);
             if (die)
             {
-                TypeSystem *type_system = die.GetTypeSystem();
-                if (type_system)
-                    return type_system->GetDeclContextForUIDFromDWARF(die);
+                DWARFASTParser *dwarf_ast = die.GetDWARFParser();
+                if (dwarf_ast)
+                    return dwarf_ast->GetDeclContextForUIDFromDWARF(die);
             }
         }
     }
@@ -1401,9 +1404,9 @@ SymbolFileDWARF::GetDeclContextContainingUID (lldb::user_id_t type_uid)
             DWARFDIE die = debug_info->GetDIE(type_uid);
             if (die)
             {
-                TypeSystem *type_system = die.GetTypeSystem();
-                if (type_system)
-                    return type_system->GetDeclContextContainingUIDFromDWARF(die);
+                DWARFASTParser *dwarf_ast = die.GetDWARFParser();
+                if (dwarf_ast)
+                    return dwarf_ast->GetDeclContextContainingUIDFromDWARF(die);
             }
         }
     }
@@ -1521,10 +1524,9 @@ SymbolFileDWARF::CompleteType (CompilerType &clang_type)
     DWARFAttributes attributes;
 
 
-    TypeSystem *type_system = dwarf_die.GetTypeSystem();
-
-    if (type_system)
-        return type_system->CompleteTypeFromDWARF (dwarf_die, type, clang_type);
+    DWARFASTParser *dwarf_ast = dwarf_die.GetDWARFParser();
+    if (dwarf_ast)
+        return dwarf_ast->CompleteTypeFromDWARF (dwarf_die, type, clang_type);
 
     return false;
 }
@@ -2144,11 +2146,10 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const CompilerDec
 
                             if (parent_decl_ctx)
                             {
-                                TypeSystem *type_system = die.GetTypeSystem();
-
-                                if (type_system)
+                                DWARFASTParser *dwarf_ast = die.GetDWARFParser();
+                                if (dwarf_ast)
                                 {
-                                    CompilerDeclContext actual_parent_decl_ctx = type_system->GetDeclContextContainingUIDFromDWARF (die);
+                                    CompilerDeclContext actual_parent_decl_ctx = dwarf_ast->GetDeclContextContainingUIDFromDWARF (die);
                                     if (!actual_parent_decl_ctx || actual_parent_decl_ctx != *parent_decl_ctx)
                                         continue;
                                 }
@@ -2414,11 +2415,10 @@ SymbolFileDWARF::DIEInDeclContext (const CompilerDeclContext *decl_ctx,
 
     if (die)
     {
-        TypeSystem *type_system = die.GetTypeSystem();
-
-        if (type_system)
+        DWARFASTParser *dwarf_ast = die.GetDWARFParser();
+        if (dwarf_ast)
         {
-            CompilerDeclContext actual_decl_ctx = type_system->GetDeclContextContainingUIDFromDWARF (die);
+            CompilerDeclContext actual_decl_ctx = dwarf_ast->GetDeclContextContainingUIDFromDWARF (die);
             if (actual_decl_ctx)
                 return actual_decl_ctx == *decl_ctx;
         }
@@ -2967,11 +2967,10 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
                     if (!DIEInDeclContext (parent_decl_ctx, die))
                         continue; // The containing decl contexts don't match
 
-                    TypeSystem *type_system = die.GetTypeSystem();
-
-                    if (type_system)
+                    DWARFASTParser *dwarf_ast = die.GetDWARFParser();
+                    if (dwarf_ast)
                     {
-                        namespace_decl_ctx = type_system->GetDeclContextForUIDFromDWARF (die);
+                        namespace_decl_ctx = dwarf_ast->GetDeclContextForUIDFromDWARF (die);
                         if (namespace_decl_ctx)
                             break;
                     }
@@ -3525,13 +3524,17 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, const DWARFDIE &die, bool *
 
         if (type_system)
         {
-            Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO);
-            type_sp = type_system->ParseTypeFromDWARF (sc, die, log, type_is_new_ptr);
-            if (type_sp)
+            DWARFASTParser *dwarf_ast = type_system->GetDWARFParser();
+            if (dwarf_ast)
             {
-                TypeList* type_list = GetTypeList();
-                if (type_list)
-                    type_list->Insert(type_sp);
+                Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO);
+                type_sp = dwarf_ast->ParseTypeFromDWARF (sc, die, log, type_is_new_ptr);
+                if (type_sp)
+                {
+                    TypeList* type_list = GetTypeList();
+                    if (type_list)
+                        type_list->Insert(type_sp);
+                }
             }
         }
     }
