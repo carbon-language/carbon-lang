@@ -17,6 +17,8 @@
 #ifndef KMP_H
 #define KMP_H
 
+#include "kmp_config.h"
+
 /* #define BUILD_PARALLEL_ORDERED 1 */
 
 /* This fix replaces gettimeofday with clock_gettime for better scalability on

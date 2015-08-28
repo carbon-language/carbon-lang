@@ -16,6 +16,7 @@
 #ifndef KMP_OS_H
 #define KMP_OS_H
 
+#include "kmp_config.h"
 #include <stdlib.h>
 
 #define KMP_FTN_PLAIN   1
@@ -61,8 +62,6 @@
 #else
 # error Unknown compiler
 #endif
-
-#include "kmp_platform.h"
 
 #if (KMP_OS_LINUX || KMP_OS_WINDOWS) && !KMP_OS_CNK && !KMP_ARCH_PPC64
 # define KMP_AFFINITY_SUPPORTED 1

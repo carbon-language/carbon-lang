@@ -16,10 +16,10 @@
 #ifndef __OMP_H
 #   define __OMP_H
 
-#   define KMP_VERSION_MAJOR    $KMP_VERSION_MAJOR
-#   define KMP_VERSION_MINOR    $KMP_VERSION_MINOR
-#   define KMP_VERSION_BUILD    $KMP_VERSION_BUILD
-#   define KMP_BUILD_DATE       "$KMP_BUILD_DATE"
+#   define KMP_VERSION_MAJOR    @LIBOMP_VERSION_MAJOR@
+#   define KMP_VERSION_MINOR    @LIBOMP_VERSION_MINOR@
+#   define KMP_VERSION_BUILD    @LIBOMP_VERSION_BUILD@
+#   define KMP_BUILD_DATE       "@LIBOMP_BUILD_DATE@"
 
 #   ifdef __cplusplus
     extern "C" {

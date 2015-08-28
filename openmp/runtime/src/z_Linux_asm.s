@@ -16,7 +16,7 @@
 // macros
 // -----------------------------------------------------------------------
 
-#include "kmp_platform.h"
+#include "kmp_config.h"
 
 #if KMP_ARCH_X86 || KMP_ARCH_X86_64
 

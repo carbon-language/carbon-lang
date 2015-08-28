@@ -32,12 +32,12 @@
 
         use omp_lib_kinds
 
-        integer (kind=omp_integer_kind), parameter :: openmp_version    = $OMP_VERSION
-        integer (kind=omp_integer_kind), parameter :: kmp_version_major = $KMP_VERSION_MAJOR
-        integer (kind=omp_integer_kind), parameter :: kmp_version_minor = $KMP_VERSION_MINOR
-        integer (kind=omp_integer_kind), parameter :: kmp_version_build = $KMP_VERSION_BUILD
+        integer (kind=omp_integer_kind), parameter :: openmp_version    = @LIBOMP_OMP_YEAR_MONTH@
+        integer (kind=omp_integer_kind), parameter :: kmp_version_major = @LIBOMP_VERSION_MAJOR@
+        integer (kind=omp_integer_kind), parameter :: kmp_version_minor = @LIBOMP_VERSION_MINOR@
+        integer (kind=omp_integer_kind), parameter :: kmp_version_build = @LIBOMP_VERSION_BUILD@
         character(*)               kmp_build_date
-        parameter( kmp_build_date = '$KMP_BUILD_DATE' )
+        parameter( kmp_build_date = '@LIBOMP_BUILD_DATE@' )
 
         integer(kind=omp_sched_kind), parameter :: omp_sched_static  = 1
         integer(kind=omp_sched_kind), parameter :: omp_sched_dynamic = 2

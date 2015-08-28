@@ -15,6 +15,7 @@
  * ompt include files
  ****************************************************************************/
 
+#include "kmp_config.h"
 #include "ompt-internal.h"
 #include "ompt-specific.c"
 

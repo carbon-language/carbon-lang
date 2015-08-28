@@ -33,12 +33,12 @@
       integer(kind=omp_sched_kind), parameter :: omp_sched_guided  = 3
       integer(kind=omp_sched_kind), parameter :: omp_sched_auto    = 4
 
-      integer (kind=omp_integer_kind), parameter :: kmp_version_major = $KMP_VERSION_MAJOR
-      integer (kind=omp_integer_kind), parameter :: kmp_version_minor = $KMP_VERSION_MINOR
-      integer (kind=omp_integer_kind), parameter :: kmp_version_build = $KMP_VERSION_BUILD
+      integer (kind=omp_integer_kind), parameter :: kmp_version_major = @LIBOMP_VERSION_MAJOR@
+      integer (kind=omp_integer_kind), parameter :: kmp_version_minor = @LIBOMP_VERSION_MINOR@
+      integer (kind=omp_integer_kind), parameter :: kmp_version_build = @LIBOMP_VERSION_BUILD@
       character(*)               kmp_build_date
-      parameter( kmp_build_date = '$KMP_BUILD_DATE' )
-      integer (kind=omp_integer_kind), parameter :: openmp_version    = $OMP_VERSION
+      parameter( kmp_build_date = '@LIBOMP_BUILD_DATE@' )
+      integer (kind=omp_integer_kind), parameter :: openmp_version    = @LIBOMP_OMP_YEAR_MONTH@
 
       interface
 

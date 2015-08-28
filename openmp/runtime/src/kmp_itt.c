@@ -1,3 +1,5 @@
+#include "kmp_config.h"
+
 #if USE_ITT_BUILD
 /*
  * kmp_itt.c -- ITT Notify interface.

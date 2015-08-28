@@ -116,9 +116,6 @@ Library type can be normal, profile, or stubs.
 -DCMAKE_BUILD_TYPE=Release|Debug|RelWithDebInfo
 Build type can be Release, Debug, or RelWithDebInfo.
 
--DLIBOMP_VERSION=5|4
-libomp major version can be 5 or 4.
-
 -DLIBOMP_OMP_VERSION=41|40|30
 OpenMP version can be either 41, 40 or 30.
 
