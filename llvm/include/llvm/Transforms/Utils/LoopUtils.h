@@ -255,9 +255,6 @@ public:
     IK_PtrInduction  ///< Pointer induction var. Step = C / sizeof(elem).
   };
 
-private:
-  /// Private constructor - use \c isInductionPHI.
-  InductionDescriptor(Value *Start, InductionKind K, ConstantInt *Step);
 public:
   /// Default constructor - creates an invalid induction.
   InductionDescriptor()
@@ -285,6 +282,9 @@ public:
                              InductionDescriptor &D);
   
 private:
+  /// Private constructor - used by \c isInductionPHI.
+  InductionDescriptor(Value *Start, InductionKind K, ConstantInt *Step);
+
   /// Start value.
   TrackingVH<Value> StartValue;
   /// Induction kind.
