@@ -1071,13 +1071,7 @@ bool PPCTargetInfo::handleUserFeatures(llvm::StringMap<bool> &Features,
     }
   }
 
-  for (const auto &F : FAW) {
-    const char *Name = F.c_str();
-    // Apply the feature via the target.
-    bool Enabled = Name[0] == '+';
-    setFeatureEnabled(Features, Name + 1, Enabled);
-  }
-  return true;
+  return TargetInfo::handleUserFeatures(Features, FAW, Diags);
 }
 
 /// PPCTargetInfo::getTargetDefines - Return a set of the PowerPC-specific
