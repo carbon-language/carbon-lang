@@ -1302,7 +1302,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t &info, NativeThreadLinux &thr
             log->Printf("NativeProcessLinux::%s() "
                         "received error while checking for watchpoint hits, "
                         "pid = %" PRIu64 " error = %s",
-                        __FUNCTION__, pid, error.AsCString());
+                        __FUNCTION__, thread.GetID(), error.AsCString());
         if (wp_index != LLDB_INVALID_INDEX32)
         {
             MonitorWatchpoint(thread, wp_index);
