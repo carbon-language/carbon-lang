@@ -3795,7 +3795,11 @@ bool
 operator==(const _CharT* __lhs,
            const basic_string<_CharT, _Traits, _Allocator>& __rhs) _NOEXCEPT
 {
-    return __rhs.compare(__lhs) == 0;
+    typedef basic_string<_CharT, _Traits, _Allocator> _String;
+    _LIBCPP_ASSERT(__lhs != nullptr, "operator==(char*, basic_string): received nullptr");
+    size_t __lhs_len = _Traits::length(__lhs);
+    if (__lhs_len != __rhs.size()) return false;
+    return __rhs.compare(0, _String::npos, __lhs, __lhs_len) == 0;
 }
 
 template<class _CharT, class _Traits, class _Allocator>
@@ -3804,7 +3808,11 @@ bool
 operator==(const basic_string<_CharT,_Traits,_Allocator>& __lhs,
            const _CharT* __rhs) _NOEXCEPT
 {
-    return __lhs.compare(__rhs) == 0;
+    typedef basic_string<_CharT, _Traits, _Allocator> _String;
+    _LIBCPP_ASSERT(__rhs != nullptr, "operator==(basic_string, char*): received nullptr");
+    size_t __rhs_len = _Traits::length(__rhs);
+    if (__rhs_len != __lhs.size()) return false;
+    return __lhs.compare(0, _String::npos, __rhs, __rhs_len) == 0;
 }
 
 // operator!=
