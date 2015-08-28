@@ -386,6 +386,9 @@ DILexicalBlock *DILexicalBlock::getImpl(LLVMContext &Context, Metadata *Scope,
                                         Metadata *File, unsigned Line,
                                         unsigned Column, StorageType Storage,
                                         bool ShouldCreate) {
+  // Fixup column.
+  adjustColumn(Column);
+
   assert(Scope && "Expected scope");
   DEFINE_GETIMPL_LOOKUP(DILexicalBlock, (Scope, File, Line, Column));
   Metadata *Ops[] = {File, Scope};

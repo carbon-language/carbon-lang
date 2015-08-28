@@ -1591,6 +1591,32 @@ TEST_F(DILexicalBlockTest, get) {
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
+TEST_F(DILexicalBlockTest, Overflow) {
+  DISubprogram *SP = getSubprogram();
+  DIFile *F = getFile();
+  {
+    auto *LB = DILexicalBlock::get(Context, SP, F, 2, 7);
+    EXPECT_EQ(2u, LB->getLine());
+    EXPECT_EQ(7u, LB->getColumn());
+  }
+  unsigned U16 = 1u << 16;
+  {
+    auto *LB = DILexicalBlock::get(Context, SP, F, UINT32_MAX, U16 - 1);
+    EXPECT_EQ(UINT32_MAX, LB->getLine());
+    EXPECT_EQ(U16 - 1, LB->getColumn());
+  }
+  {
+    auto *LB = DILexicalBlock::get(Context, SP, F, UINT32_MAX, U16);
+    EXPECT_EQ(UINT32_MAX, LB->getLine());
+    EXPECT_EQ(0u, LB->getColumn());
+  }
+  {
+    auto *LB = DILexicalBlock::get(Context, SP, F, UINT32_MAX, U16 + 1);
+    EXPECT_EQ(UINT32_MAX, LB->getLine());
+    EXPECT_EQ(0u, LB->getColumn());
+  }
+}
+
 typedef MetadataTest DILexicalBlockFileTest;
 
 TEST_F(DILexicalBlockFileTest, get) {
