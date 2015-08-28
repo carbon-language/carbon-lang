@@ -684,11 +684,11 @@ RuntimeDyldELF::evaluateMIPS64Relocation(const SectionEntry &Section,
   }
   case ELF::R_MIPS_PC18_S3: {
     uint64_t FinalAddress = (Section.LoadAddress + Offset);
-    return ((Value + Addend - ((FinalAddress | 7) ^ 7)) >> 3) & 0x3ffff;
+    return ((Value + Addend - (FinalAddress & ~0x7)) >> 3) & 0x3ffff;
   }
   case ELF::R_MIPS_PC19_S2: {
     uint64_t FinalAddress = (Section.LoadAddress + Offset);
-    return ((Value + Addend - FinalAddress) >> 2) & 0x7ffff;
+    return ((Value + Addend - (FinalAddress & ~0x3)) >> 2) & 0x7ffff;
   }
   case ELF::R_MIPS_PC21_S2: {
     uint64_t FinalAddress = (Section.LoadAddress + Offset);

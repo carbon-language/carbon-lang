@@ -2,6 +2,10 @@
 # RUN: llc -mtriple=mips64el-unknown-linux -relocation-model=pic -filetype=obj -o %T/test_ELF_ExternalFunction_Mips64N64.o %S/Inputs/ExternalFunction.ll
 # RUN: llvm-rtdyld -triple=mips64el-unknown-linux -verify -map-section test_ELF_Mips64N64.o,.text=0x1000 -map-section test_ELF_ExternalFunction_Mips64N64.o,.text=0x10000 -check=%s %/T/test_ELF_Mips64N64.o %T/test_ELF_ExternalFunction_Mips64N64.o
 
+# RUN: llvm-mc -triple=mips64-unknown-linux -relocation-model=pic -code-model=small -filetype=obj -o %T/test_ELF_Mips64N64.o %s
+# RUN: llc -mtriple=mips64-unknown-linux -relocation-model=pic -filetype=obj -o %T/test_ELF_ExternalFunction_Mips64N64.o %S/Inputs/ExternalFunction.ll
+# RUN: llvm-rtdyld -triple=mips64-unknown-linux -verify -map-section test_ELF_Mips64N64.o,.text=0x1000 -map-section test_ELF_ExternalFunction_Mips64N64.o,.text=0x10000 -check=%s %/T/test_ELF_Mips64N64.o %T/test_ELF_ExternalFunction_Mips64N64.o
+
 	.data
 # Test R_MIPS_PC32 relocation.
 # rtdyld-check: *{4}(R_MIPS_PC32) = (foo - R_MIPS_PC32)[31:0]
@@ -39,7 +43,7 @@ bar:
 	sd	$4, 8($fp)
 
 # Test R_MIPS_26 relocation.
-# rtdyld-check:  decode_operand(insn1, 0)[25:0] = foo
+# rtdyld-check:  decode_operand(insn1, 0)[27:0] = foo[27:0]
 insn1:
 	.option pic0
 	jal   foo
@@ -47,7 +51,7 @@ insn1:
 	nop
 
 # Test R_MIPS_PC16 relocation.
-# rtdyld-check:  decode_operand(insn2, 1)[15:0] = foo - insn2
+# rtdyld-check:  decode_operand(insn2, 1)[17:0] = (foo - insn2)[17:0]
 insn2:
 	bal   foo
 	nop
