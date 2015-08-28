@@ -115,6 +115,24 @@ public:
   void copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap, LoopToScevMapT &LTS,
                 isl_id_to_ast_expr *NewAccesses);
 
+  /// @brief Return the scalar alloca for @p ScalarBase
+  ///
+  /// If no alloca was mapped to @p ScalarBase a new one is created.
+  ///
+  /// @param ScalarBase The demoted scalar value.
+  ///
+  /// @returns The alloca for @p ScalarBase
+  AllocaInst *getOrCreateScalarAlloca(Value *ScalarBase);
+
+  /// @brief Return the PHi-node alloca for @p ScalarBase
+  ///
+  /// If no alloca was mapped to @p ScalarBase a new one is created.
+  ///
+  /// @param ScalarBase The demoted scalar value.
+  ///
+  /// @returns The alloca for @p ScalarBase
+  AllocaInst *getOrCreatePHIAlloca(Value *ScalarBase);
+
   /// @brief Finalize the code generation for the SCoP @p S.
   ///
   /// This will initialize and finalize the scalar variables we demoted during

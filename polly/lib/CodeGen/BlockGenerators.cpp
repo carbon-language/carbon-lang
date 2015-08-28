@@ -362,6 +362,14 @@ AllocaInst *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
   return Addr;
 }
 
+AllocaInst *BlockGenerator::getOrCreateScalarAlloca(Value *ScalarBase) {
+  return getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
+}
+
+AllocaInst *BlockGenerator::getOrCreatePHIAlloca(Value *ScalarBase) {
+  return getOrCreateAlloca(ScalarBase, PHIOpMap, ".phiops");
+}
+
 void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
                                         Value *InstCopy) {
   // If there are escape users we get the alloca for this instruction and put
@@ -422,9 +430,9 @@ void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
     auto Base = MA.getBaseAddr();
 
     if (MA.getScopArrayInfo()->isPHI())
-      Address = getOrCreateAlloca(Base, PHIOpMap, ".phiops");
+      Address = getOrCreatePHIAlloca(Base);
     else
-      Address = getOrCreateAlloca(Base, ScalarMap, ".s2a");
+      Address = getOrCreateScalarAlloca(Base);
 
     BBMap[Base] = Builder.CreateLoad(Address, Address->getName() + ".reload");
   }
@@ -487,9 +495,9 @@ void BlockGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
 
     AllocaInst *Address = nullptr;
     if (MA->getScopArrayInfo()->isPHI())
-      Address = getOrCreateAlloca(Base, PHIOpMap, ".phiops");
+      Address = getOrCreatePHIAlloca(Base);
     else
-      Address = getOrCreateAlloca(Base, ScalarMap, ".s2a");
+      Address = getOrCreateScalarAlloca(Base);
 
     Val = getNewScalarValue(Val, R, ScalarMap, BBMap, GlobalMap);
     Builder.CreateStore(Val, Address);
@@ -1122,9 +1130,9 @@ void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
     AllocaInst *ScalarAddr = nullptr;
 
     if (MA->getScopArrayInfo()->isPHI())
-      ScalarAddr = getOrCreateAlloca(ScalarBase, PHIOpMap, ".phiops");
+      ScalarAddr = getOrCreatePHIAlloca(ScalarBase);
     else
-      ScalarAddr = getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
+      ScalarAddr = getOrCreateScalarAlloca(ScalarBase);
 
     Val = getNewScalarValue(Val, R, ScalarMap, BBMap, GlobalMap);
     Builder.CreateStore(Val, ScalarAddr);
@@ -1161,8 +1169,7 @@ void RegionGenerator::addOperandToPHI(ScopStmt &Stmt, const PHINode *PHI,
     if (PHICopy->getBasicBlockIndex(BBCopy) >= 0)
       return;
 
-    AllocaInst *PHIOpAddr =
-        getOrCreateAlloca(const_cast<PHINode *>(PHI), PHIOpMap, ".phiops");
+    AllocaInst *PHIOpAddr = getOrCreatePHIAlloca(const_cast<PHINode *>(PHI));
     OpCopy = new LoadInst(PHIOpAddr, PHIOpAddr->getName() + ".reload",
                           BlockMap[IncomingBB]->getTerminator());
   }
