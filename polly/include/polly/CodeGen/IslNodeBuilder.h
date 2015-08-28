@@ -53,7 +53,7 @@ public:
   /// @return A referecne to the associated block generator.
   BlockGenerator &getBlockGenerator() { return BlockGen; }
 
-private:
+protected:
   Scop &S;
   PollyIRBuilder &Builder;
   ScopAnnotator &Annotator;
