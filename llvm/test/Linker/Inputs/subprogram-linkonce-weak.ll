@@ -12,5 +12,5 @@ declare i32 @fastadd(i32, i32)
 !llvm.dbg.cu = !{!1}
 !1 = distinct !DICompileUnit(language: DW_LANG_C99, file: !2, subprograms: !{!3}, emissionKind: 1)
 !2 = !DIFile(filename: "foo.c", directory: "/path/to/dir")
-!3 = !DISubprogram(file: !2, scope: !2, line: 51, name: "foo", function: i32 (i32, i32)* @foo, type: !4)
+!3 = distinct !DISubprogram(file: !2, scope: !2, line: 51, name: "foo", function: i32 (i32, i32)* @foo, type: !4)
 !4 = !DISubroutineType(types: !{})

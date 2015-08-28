@@ -18,7 +18,7 @@ define void @f1() {
 !1 = !DIFile(filename: "file.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !1, type: !6, function: i32 ()* null, variables: !2)
+!4 = distinct !DISubprogram(name: "", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !1, type: !6, function: i32 ()* null, variables: !2)
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}
 !8 = !DIBasicType(tag: DW_TAG_base_type, size: 32, align: 32, encoding: DW_ATE_signed)

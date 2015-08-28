@@ -52,7 +52,7 @@ declare void @ibar(i32*) #1
 !1 = !DIFile(filename: "vectorization-remarks.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "foo", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !5, type: !6, function: i32 (i32)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !5, type: !6, function: i32 (i32)* @foo, variables: !2)
 !5 = !DIFile(filename: "vectorization-remarks.c", directory: ".")
 !6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}

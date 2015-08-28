@@ -57,7 +57,7 @@ attributes #0 = { nounwind uwtable "disable-tail-calls"="false" "less-precise-fp
 !1 = !DIFile(filename: "dwarf-linkage-names.cpp", directory: "/home/probinson/projects/scratch")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "bar", linkageName: "_ZN4test3barEv", scope: !5, file: !1, line: 3, type: !6, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, function: i32 ()* @_ZN4test3barEv, variables: !2)
+!4 = distinct !DISubprogram(name: "bar", linkageName: "_ZN4test3barEv", scope: !5, file: !1, line: 3, type: !6, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, function: i32 ()* @_ZN4test3barEv, variables: !2)
 !5 = !DINamespace(name: "test", scope: null, file: !1, line: 1)
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

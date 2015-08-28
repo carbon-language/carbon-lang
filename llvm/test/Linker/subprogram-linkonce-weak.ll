@@ -55,14 +55,14 @@ entry:
 
 ; LW: ![[LCU]] = distinct !DICompileUnit({{.*}} subprograms: ![[LSPs:[0-9]+]]
 ; LW: ![[LSPs]] = !{![[BARSP:[0-9]+]], ![[FOOSP:[0-9]+]]}
-; LW: ![[BARSP]] = !DISubprogram(name: "bar",
+; LW: ![[BARSP]] = distinct !DISubprogram(name: "bar",
 ; LW-SAME: function: i32 (i32, i32)* @bar
-; LW: ![[FOOSP]] = {{.*}}!DISubprogram(name: "foo",
+; LW: ![[FOOSP]] = distinct !DISubprogram(name: "foo",
 ; LW-NOT: function:
 ; LW-SAME: ){{$}}
 ; LW: ![[WCU]] = distinct !DICompileUnit({{.*}} subprograms: ![[WSPs:[0-9]+]]
 ; LW: ![[WSPs]] = !{![[WEAKFOOSP:[0-9]+]]}
-; LW: ![[WEAKFOOSP]] = !DISubprogram(name: "foo",
+; LW: ![[WEAKFOOSP]] = distinct !DISubprogram(name: "foo",
 ; LW-SAME: function: i32 (i32, i32)* @foo
 ; LW: ![[FOOINBAR]] = !DILocation(line: 2, scope: ![[FOOSP]], inlinedAt: ![[BARIA:[0-9]+]])
 ; LW: ![[BARIA]] = !DILocation(line: 12, scope: ![[BARSP]])
@@ -73,13 +73,13 @@ entry:
 ; Same as above, but reordered.
 ; WL: ![[WCU]] = distinct !DICompileUnit({{.*}} subprograms: ![[WSPs:[0-9]+]]
 ; WL: ![[WSPs]] = !{![[WEAKFOOSP:[0-9]+]]}
-; WL: ![[WEAKFOOSP]] = !DISubprogram(name: "foo",
+; WL: ![[WEAKFOOSP]] = distinct !DISubprogram(name: "foo",
 ; WL-SAME: function: i32 (i32, i32)* @foo
 ; WL: ![[LCU]] = distinct !DICompileUnit({{.*}} subprograms: ![[LSPs:[0-9]+]]
 ; WL: ![[LSPs]] = !{![[BARSP:[0-9]+]], ![[FOOSP:[0-9]+]]}
-; WL: ![[BARSP]] = !DISubprogram(name: "bar",
+; WL: ![[BARSP]] = distinct !DISubprogram(name: "bar",
 ; WL-SAME: function: i32 (i32, i32)* @bar
-; WL: ![[FOOSP]] = {{.*}}!DISubprogram(name: "foo",
+; WL: ![[FOOSP]] = distinct !DISubprogram(name: "foo",
 ; Note, for symmetry, this should be "NOT: function:" and "SAME: ){{$}}".
 ; WL-SAME: function: i32 (i32, i32)* @foo
 ; WL: ![[FOOCALL]] = !DILocation(line: 52, scope: ![[WEAKFOOSP]])
@@ -90,8 +90,8 @@ entry:
 
 !1 = distinct !DICompileUnit(language: DW_LANG_C99, file: !2, subprograms: !{!3, !4}, emissionKind: 1)
 !2 = !DIFile(filename: "bar.c", directory: "/path/to/dir")
-!3 = !DISubprogram(file: !2, scope: !2, line: 11, name: "bar", function: i32 (i32, i32)* @bar, type: !5)
-!4 = !DISubprogram(file: !2, scope: !2, line: 1, name: "foo", function: i32 (i32, i32)* @foo, type: !5)
+!3 = distinct !DISubprogram(file: !2, scope: !2, line: 11, name: "bar", function: i32 (i32, i32)* @bar, type: !5)
+!4 = distinct !DISubprogram(file: !2, scope: !2, line: 1, name: "foo", function: i32 (i32, i32)* @foo, type: !5)
 !5 = !DISubroutineType(types: !{})
 
 ; Crasher for llc.

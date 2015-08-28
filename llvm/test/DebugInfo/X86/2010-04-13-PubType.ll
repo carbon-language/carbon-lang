@@ -32,7 +32,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.module.flags = !{!20}
 
 !0 = !DILocalVariable(name: "x", line: 7, arg: 1, scope: !1, file: !2, type: !7)
-!1 = !DISubprogram(name: "foo", linkageName: "foo", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 7, file: !18, scope: !2, type: !4, function: i32 (%struct.X*, %struct.Y*)* @foo)
+!1 = distinct !DISubprogram(name: "foo", linkageName: "foo", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 7, file: !18, scope: !2, type: !4, function: i32 (%struct.X*, %struct.Y*)* @foo)
 !2 = !DIFile(filename: "a.c", directory: "/tmp/")
 !3 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: false, emissionKind: 0, file: !18, enums: !19, retainedTypes: !19, subprograms: !17, imports:  null)
 !4 = !DISubroutineType(types: !5)

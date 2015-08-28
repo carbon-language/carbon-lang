@@ -54,7 +54,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !1 = !DIFile(filename: "first-only.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !2)
 !5 = !DIFile(filename: "first-only.c", directory: ".")
 !6 = !DISubroutineType(types: !{null})
 !7 = !{i32 2, !"Dwarf Version", i32 4}
@@ -63,7 +63,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !10 = !DILocation(line: 3, scope: !11)
 
 !11 = distinct !DILexicalBlock(line: 3, column: 0, file: !1, scope: !4)
-; CHECK: ![[FOO:[0-9]+]] = !DISubprogram(name: "foo"
+; CHECK: ![[FOO:[0-9]+]] = distinct !DISubprogram(name: "foo"
 ; CHECK: ![[BLOCK1:[0-9]+]] = distinct !DILexicalBlock(scope: ![[FOO]],{{.*}} line: 3)
 
 !12 = !DILocation(line: 3, scope: !13)

@@ -137,7 +137,7 @@ attributes #2 = { nounwind readnone }
 !21 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !22)
 !22 = !DIDerivedType(tag: DW_TAG_const_type, baseType: !"_ZTS4AAA3")
 !23 = !{!24, !35, !40}
-!24 = !DISubprogram(name: "bar", linkageName: "_Z3barii", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 11, file: !1, scope: !25, type: !26, function: void (i32, i32)* @_Z3barii, variables: !29)
+!24 = distinct !DISubprogram(name: "bar", linkageName: "_Z3barii", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 11, file: !1, scope: !25, type: !26, function: void (i32, i32)* @_Z3barii, variables: !29)
 !25 = !DIFile(filename: "dbg-changes-codegen-branch-folding.cpp", directory: "/tmp/dbginfo")
 !26 = !DISubroutineType(types: !27)
 !27 = !{null, !28, !28}
@@ -148,12 +148,12 @@ attributes #2 = { nounwind readnone }
 !32 = !DILocalVariable(name: "temp", line: 12, scope: !24, file: !25, type: !15)
 !33 = !DILocalVariable(name: "var1", line: 17, scope: !24, file: !25, type: !"_ZTS4AAA3")
 !34 = !DILocalVariable(name: "var2", line: 18, scope: !24, file: !25, type: !"_ZTS4AAA3")
-!35 = !DISubprogram(name: "operator=", linkageName: "_ZN4AAA3aSEPKc", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !"_ZTS4AAA3", type: !12, declaration: !17, variables: !36)
+!35 = distinct !DISubprogram(name: "operator=", linkageName: "_ZN4AAA3aSEPKc", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !"_ZTS4AAA3", type: !12, declaration: !17, variables: !36)
 !36 = !{!37, !39}
 !37 = !DILocalVariable(name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !35, type: !38)
 !38 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS4AAA3")
 !39 = !DILocalVariable(name: "value", line: 6, arg: 2, scope: !35, file: !25, type: !15)
-!40 = !DISubprogram(name: "AAA3", linkageName: "_ZN4AAA3C2EPKc", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !1, scope: !"_ZTS4AAA3", type: !12, declaration: !11, variables: !41)
+!40 = distinct !DISubprogram(name: "AAA3", linkageName: "_ZN4AAA3C2EPKc", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !1, scope: !"_ZTS4AAA3", type: !12, declaration: !11, variables: !41)
 !41 = !{!42, !43}
 !42 = !DILocalVariable(name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !40, type: !38)
 !43 = !DILocalVariable(name: "value", line: 5, arg: 2, scope: !40, file: !25, type: !15)

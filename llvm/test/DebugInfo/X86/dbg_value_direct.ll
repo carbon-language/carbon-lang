@@ -151,7 +151,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !1 = !DIFile(filename: "crash.cpp", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "func", linkageName: "_Z4funci", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: void (%struct.A*, i32)* @_Z4funci, variables: !2)
+!4 = distinct !DISubprogram(name: "func", linkageName: "_Z4funci", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: void (%struct.A*, i32)* @_Z4funci, variables: !2)
 !5 = !DIFile(filename: "crash.cpp", directory: "/tmp")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !21}

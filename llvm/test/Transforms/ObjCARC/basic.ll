@@ -3018,7 +3018,7 @@ define void @test67(i8* %x) {
 
 !0 = !{}
 !1 = !{i32 1, !"Debug Info Version", i32 3}
-!2 = !DISubprogram()
+!2 = distinct !DISubprogram()
 
 ; CHECK: attributes #0 = { nounwind readnone }
 ; CHECK: attributes [[NUW]] = { nounwind }

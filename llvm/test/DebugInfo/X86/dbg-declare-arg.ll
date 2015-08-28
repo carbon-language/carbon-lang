@@ -91,13 +91,13 @@ entry:
 !16 = !{null, !13, !17}
 !17 = !DIDerivedType(tag: DW_TAG_reference_type, scope: !2, baseType: !18)
 !18 = !DIDerivedType(tag: DW_TAG_const_type, file: !3, baseType: !1)
-!19 = !DISubprogram(name: "foo", linkageName: "_Z3fooi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !20, function: void (%class.A*, i32)* @_Z3fooi)
+!19 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !20, function: void (%class.A*, i32)* @_Z3fooi)
 !20 = !DISubroutineType(types: !21)
 !21 = !{!1}
-!22 = !DISubprogram(name: "~A", linkageName: "_ZN1AD1Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !23, function: void (%class.A*)* @_ZN1AD1Ev)
+!22 = distinct !DISubprogram(name: "~A", linkageName: "_ZN1AD1Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !23, function: void (%class.A*)* @_ZN1AD1Ev)
 !23 = !DISubroutineType(types: !24)
 !24 = !{null}
-!25 = !DISubprogram(name: "~A", linkageName: "_ZN1AD2Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !23, function: void (%class.A*)* @_ZN1AD2Ev)
+!25 = distinct !DISubprogram(name: "~A", linkageName: "_ZN1AD2Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !23, function: void (%class.A*)* @_ZN1AD2Ev)
 !26 = !DILocalVariable(name: "i", line: 4, arg: 1, scope: !19, file: !3, type: !6)
 !27 = !DILocation(line: 4, column: 11, scope: !19)
 !28 = !DILocalVariable(name: "j", line: 5, scope: !29, file: !3, type: !6)

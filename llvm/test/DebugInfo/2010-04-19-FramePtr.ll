@@ -24,7 +24,7 @@ return:                                           ; preds = %entry
 !9 = !{!1}
 
 !0 = !DILocation(line: 2, scope: !1)
-!1 = !DISubprogram(name: "foo", linkageName: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 2, file: !10, scope: null, type: !4, function: i32 ()* @foo)
+!1 = distinct !DISubprogram(name: "foo", linkageName: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 2, file: !10, scope: null, type: !4, function: i32 ()* @foo)
 !2 = !DIFile(filename: "a.c", directory: "/tmp")
 !3 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: false, emissionKind: 0, file: !10, enums: !11, retainedTypes: !11, subprograms: !9, imports:  null)
 !4 = !DISubroutineType(types: !5)

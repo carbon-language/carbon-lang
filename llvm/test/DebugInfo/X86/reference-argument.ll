@@ -36,7 +36,7 @@ declare void @_ZN4SValD2Ev(%class.SVal* %this)
 !1 = !DIFile(filename: "aggregate-indirect-arg.cpp", directory: "")
 !2 = !{}
 !3 = !{!4, !29, !33, !34, !35}
-!4 = !DISubprogram(name: "bar", linkageName: "_Z3barR4SVal", line: 19, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 19, file: !1, scope: !5, type: !6, function: void (%class.SVal*)* @_Z3barR4SVal, variables: !2)
+!4 = distinct !DISubprogram(name: "bar", linkageName: "_Z3barR4SVal", line: 19, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 19, file: !1, scope: !5, type: !6, function: void (%class.SVal*)* @_Z3barR4SVal, variables: !2)
 !5 = !DIFile(filename: "aggregate-indirect-arg.cpp", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}
@@ -58,13 +58,13 @@ declare void @_ZN4SValD2Ev(%class.SVal* %this)
 !25 = !{null, !19, !26}
 !26 = !DIDerivedType(tag: DW_TAG_reference_type, baseType: !27)
 !27 = !DIDerivedType(tag: DW_TAG_const_type, baseType: !9)
-!29 = !DISubprogram(name: "main", line: 25, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 25, file: !1, scope: !5, type: !30, function: i32 ()* @main, variables: !2)
+!29 = distinct !DISubprogram(name: "main", line: 25, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 25, file: !1, scope: !5, type: !30, function: i32 ()* @main, variables: !2)
 !30 = !DISubroutineType(types: !31)
 !31 = !{!32}
 !32 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!33 = !DISubprogram(name: "~SVal", linkageName: "_ZN4SValD1Ev", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 14, file: !1, scope: null, type: !17, function: void (%class.SVal*)* @_ZN4SValD1Ev, declaration: !16, variables: !2)
-!34 = !DISubprogram(name: "~SVal", linkageName: "_ZN4SValD2Ev", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 14, file: !1, scope: null, type: !17, function: void (%class.SVal*)* @_ZN4SValD2Ev, declaration: !16, variables: !2)
-!35 = !DISubprogram(name: "foo", linkageName: "_ZN1A3fooE4SVal", line: 22, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 22, file: !1, scope: null, type: !36, function: void (%class.A*, %class.SVal*)* @_ZN1A3fooE4SVal, declaration: !41, variables: !2)
+!33 = distinct !DISubprogram(name: "~SVal", linkageName: "_ZN4SValD1Ev", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 14, file: !1, scope: null, type: !17, function: void (%class.SVal*)* @_ZN4SValD1Ev, declaration: !16, variables: !2)
+!34 = distinct !DISubprogram(name: "~SVal", linkageName: "_ZN4SValD2Ev", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 14, file: !1, scope: null, type: !17, function: void (%class.SVal*)* @_ZN4SValD2Ev, declaration: !16, variables: !2)
+!35 = distinct !DISubprogram(name: "foo", linkageName: "_ZN1A3fooE4SVal", line: 22, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 22, file: !1, scope: null, type: !36, function: void (%class.A*, %class.SVal*)* @_ZN1A3fooE4SVal, declaration: !41, variables: !2)
 !36 = !DISubroutineType(types: !37)
 !37 = !{null, !38, !9}
 !38 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !39)

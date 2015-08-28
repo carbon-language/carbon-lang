@@ -14,7 +14,7 @@ entry:
 !0 = !DILocation(line: 662302, column: 26, scope: !1)
 !1 = !DILocalVariable(name: "foo", scope: !6)
 !4 = !DIFile(filename: "scratch.cpp", directory: "/usr/local/google/home/blaikie/dev/scratch")
-!6 = !DISubprogram()
+!6 = distinct !DISubprogram()
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !5 = !{i32 1, !"Debug Info Version", i32 3}

@@ -24,7 +24,7 @@ entry:
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!20}
 
-!0 = !DISubprogram(name: "__OpenCL_test_kernel", linkageName: "__OpenCL_test_kernel", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !19, scope: !1, type: !3, function: void (i32 addrspace(1)*)* @__OpenCL_test_kernel)
+!0 = distinct !DISubprogram(name: "__OpenCL_test_kernel", linkageName: "__OpenCL_test_kernel", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !19, scope: !1, type: !3, function: void (i32 addrspace(1)*)* @__OpenCL_test_kernel)
 !1 = !DIFile(filename: "OCL6368.tmp.cl", directory: "E:CUsersCmvillmow.AMDCAppDataCLocalCTemp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "clc", isOptimized: false, emissionKind: 1, file: !19, enums: !12, retainedTypes: !12, subprograms: !18, imports:  null)
 !3 = !DISubroutineType(types: !4)

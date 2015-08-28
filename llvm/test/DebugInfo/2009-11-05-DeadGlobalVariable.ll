@@ -13,7 +13,7 @@ entry:
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 139632)", isOptimized: true, emissionKind: 0, file: !17, enums: !1, retainedTypes: !1, subprograms: !3, globals: !12)
 !1 = !{}
 !3 = !{!5}
-!5 = !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !17, scope: !6, type: !7, function: i32 ()* @foo)
+!5 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !17, scope: !6, type: !7, function: i32 ()* @foo)
 !6 = !DIFile(filename: "fb.c", directory: "/private/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}

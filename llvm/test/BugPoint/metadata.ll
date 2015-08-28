@@ -6,8 +6,8 @@
 
 ; CHECK: call void @foo(), !dbg ![[LOC:[0-9]+]], !attach ![[CALL:[0-9]+]]
 ; CHECK: ![[LOC]] = !DILocation(line: 104, column: 105, scope: ![[SCOPE:[0-9]+]])
-; CHECK: ![[SCOPE]] = !DISubprogram(name: "test"
-; CHECK-SAME:                       file: ![[FILE:[0-9]+]]
+; CHECK: ![[SCOPE]] = distinct !DISubprogram(name: "test"
+; CHECK-SAME:                                file: ![[FILE:[0-9]+]]
 ; CHECK: ![[FILE]] = !DIFile(filename: "source.c", directory: "/dir")
 ; CHECK: ![[CALL]] = !{!"the call to foo"}
 
@@ -31,7 +31,7 @@ declare void @foo()
 !3 = !{!"noise"}
 !4 = !{!"filler"}
 
-!9 = !DISubprogram(name: "test", file: !15)
+!9 = distinct !DISubprogram(name: "test", file: !15)
 !10 = !DILocation(line: 100, column: 101, scope: !9)
 !11 = !DILocation(line: 102, column: 103, scope: !9)
 !12 = !DILocation(line: 104, column: 105, scope: !9)

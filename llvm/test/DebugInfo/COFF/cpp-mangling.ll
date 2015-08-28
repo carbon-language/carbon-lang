@@ -33,7 +33,7 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 !1 = !DIFile(filename: "<stdin>", directory: "D:\5C")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "bar", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !5, scope: !6, type: !7, function: i32 (i32)* @"\01?bar@foo@@YAHH@Z", variables: !2)
+!4 = distinct !DISubprogram(name: "bar", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !5, scope: !6, type: !7, function: i32 (i32)* @"\01?bar@foo@@YAHH@Z", variables: !2)
 !5 = !DIFile(filename: "src.cpp", directory: "D:\5C")
 !6 = !DIFile(filename: "src.cpp", directory: "D:C")
 !7 = !DISubroutineType(types: !2)

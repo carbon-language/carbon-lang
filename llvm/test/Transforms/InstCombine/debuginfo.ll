@@ -32,7 +32,7 @@ entry:
 !llvm.module.flags = !{!30}
 
 !0 = !DILocalVariable(name: "__dest", line: 78, arg: 1, scope: !1, file: !2, type: !6)
-!1 = !DISubprogram(name: "foobar", line: 79, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 79, file: !27, scope: !2, type: !4, function: i8* (i8*, i32, i64)* @foobar, variables: !25)
+!1 = distinct !DISubprogram(name: "foobar", line: 79, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 79, file: !27, scope: !2, type: !4, function: i8* (i8*, i32, i64)* @foobar, variables: !25)
 !2 = !DIFile(filename: "string.h", directory: "Game")
 !3 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 127710)", isOptimized: true, emissionKind: 0, file: !28, enums: !29, retainedTypes: !29, subprograms: !24)
 !4 = !DISubroutineType(types: !5)

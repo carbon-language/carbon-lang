@@ -93,11 +93,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !13 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !14 = !DISubroutineType(types: !15)
 !15 = !{null, !12}
-!16 = !DISubprogram(name: "SVal", linkageName: "_ZN4SValC1Ev", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !1, type: !14, function: void (%struct.SVal*)* @_ZN4SValC1Ev)
-!17 = !DISubprogram(name: "foo", linkageName: "_Z3fooi4SVal", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !2, type: !18, function: i32 (i32, %struct.SVal*)* @_Z3fooi4SVal)
+!16 = distinct !DISubprogram(name: "SVal", linkageName: "_ZN4SValC1Ev", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !1, type: !14, function: void (%struct.SVal*)* @_ZN4SValC1Ev)
+!17 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi4SVal", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !2, type: !18, function: i32 (i32, %struct.SVal*)* @_Z3fooi4SVal)
 !18 = !DISubroutineType(types: !19)
 !19 = !{!13, !13, !1}
-!20 = !DISubprogram(name: "main", linkageName: "main", line: 23, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !2, type: !21, function: i32 ()* @main)
+!20 = distinct !DISubprogram(name: "main", linkageName: "main", line: 23, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !2, type: !21, function: i32 ()* @main)
 !21 = !DISubroutineType(types: !22)
 !22 = !{!13}
 !23 = !DILocalVariable(name: "i", line: 16, arg: 1, scope: !17, file: !2, type: !13)

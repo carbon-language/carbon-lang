@@ -16,7 +16,7 @@ entry:
 !1 = !{!2}
 !2 = !{}
 !3 = !{!5}
-!5 = !DISubprogram(name: "bar", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !12, scope: !6, type: !7, function: i32 ()* @bar)
+!5 = distinct !DISubprogram(name: "bar", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !12, scope: !6, type: !7, function: i32 ()* @bar)
 !6 = !DIFile(filename: "two.c", directory: "/private/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}

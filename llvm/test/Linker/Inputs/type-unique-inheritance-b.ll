@@ -60,11 +60,11 @@ attributes #3 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !17 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 4, size: 32, align: 32, flags: DIFlagPrivate, file: !5, scope: !"_ZTS4Base", baseType: !8)
 !18 = !DIDerivedType(tag: DW_TAG_member, name: "x", line: 4, size: 32, align: 32, offset: 32, flags: DIFlagPrivate, file: !12, scope: !"_ZTS1A", baseType: !8)
 !19 = !{!20, !24}
-!20 = !DISubprogram(name: "g", linkageName: "_Z1gi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !21, type: !22, function: void (i32)* @_Z1gi, variables: !2)
+!20 = distinct !DISubprogram(name: "g", linkageName: "_Z1gi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !21, type: !22, function: void (i32)* @_Z1gi, variables: !2)
 !21 = !DIFile(filename: "bar.cpp", directory: "/Users/mren/c_testing/type_unique_air/inher")
 !22 = !DISubroutineType(types: !23)
 !23 = !{null, !8}
-!24 = !DISubprogram(name: "main", line: 9, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 9, file: !1, scope: !21, type: !25, function: i32 ()* @main, variables: !2)
+!24 = distinct !DISubprogram(name: "main", line: 9, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 9, file: !1, scope: !21, type: !25, function: i32 ()* @main, variables: !2)
 !25 = !DISubroutineType(types: !26)
 !26 = !{!8}
 !27 = !{i32 2, !"Dwarf Version", i32 2}

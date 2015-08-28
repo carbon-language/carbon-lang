@@ -7,7 +7,7 @@ entry:
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!14}
 
-!0 = !DISubprogram(name: "foo", linkageName: "foo", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !10, scope: !1, type: !3, function: i32 ()* @foo)
+!0 = distinct !DISubprogram(name: "foo", linkageName: "foo", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !10, scope: !1, type: !3, function: i32 ()* @foo)
 !1 = !DIFile(filename: "/tmp/a.c", directory: "/Volumes/Lalgate/clean/D.CW")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 2.8 (trunk 112062)", isOptimized: true, emissionKind: 1, file: !10, enums: !11, retainedTypes: !11, subprograms: !12, globals: !13)
 !3 = !DISubroutineType(types: !4)

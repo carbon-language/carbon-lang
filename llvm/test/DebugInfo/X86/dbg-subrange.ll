@@ -18,7 +18,7 @@ entry:
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.1 (trunk 144833)", isOptimized: false, emissionKind: 0, file: !21, enums: !1, retainedTypes: !1, subprograms: !3, globals: !11, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !DISubprogram(name: "bar", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !21, scope: !6, type: !7, function: void ()* @bar)
+!5 = distinct !DISubprogram(name: "bar", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !21, scope: !6, type: !7, function: void ()* @bar)
 !6 = !DIFile(filename: "small.c", directory: "/private/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}

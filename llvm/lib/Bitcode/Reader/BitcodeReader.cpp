@@ -1950,7 +1950,8 @@ std::error_code BitcodeReader::parseMetadata() {
 
       MDValueList.assignValue(
           GET_OR_DISTINCT(
-              DISubprogram, Record[0],
+              DISubprogram,
+              Record[0] || Record[8], // All definitions should be distinct.
               (Context, getMDOrNull(Record[1]), getMDString(Record[2]),
                getMDString(Record[3]), getMDOrNull(Record[4]), Record[5],
                getMDOrNull(Record[6]), Record[7], Record[8], Record[9],

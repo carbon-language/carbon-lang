@@ -36,7 +36,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !1 = !DIFile(filename: "z.c", directory: "/usr/local/google/home/echristo")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "z", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void ()* @z, variables: !2)
+!4 = distinct !DISubprogram(name: "z", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void ()* @z, variables: !2)
 !5 = !DIFile(filename: "z.c", directory: "/usr/local/google/home/echristo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}

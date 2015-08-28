@@ -48,7 +48,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.gv = !{!14}
 
 !0 = !DILocalVariable(name: "buf", line: 4, arg: 1, scope: !1, file: !2, type: !6)
-!1 = !DISubprogram(name: "x0", linkageName: "x0", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !26, scope: null, type: !4)
+!1 = distinct !DISubprogram(name: "x0", linkageName: "x0", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !26, scope: null, type: !4)
 !2 = !DIFile(filename: "t.c", directory: "/private/tmp")
 !3 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang 2.0", isOptimized: true, file: !26)
 !4 = !DISubroutineType(types: !5)

@@ -15,7 +15,7 @@ entry:
 !1 = !DIFile(filename: "test.c", directory: "/home/user/clang-llvm/build")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: false, function: double ()* @f, variables: !2)
+!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: false, function: double ()* @f, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{!7}
 !7 = !DIBasicType(name: "double", size: 64, align: 64, encoding: DW_ATE_float)

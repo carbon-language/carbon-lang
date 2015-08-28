@@ -5,7 +5,7 @@
 !named = !{!0, !1, !2, !3, !4, !5, !6, !7, !8, !9}
 
 !0 = distinct !{}
-!1 = !DISubprogram(name: "foo", scope: !2)
+!1 = distinct !DISubprogram(name: "foo", scope: !2)
 !2 = !DIFile(filename: "path/to/file", directory: "/path/to/dir")
 
 ; CHECK: !3 = !DILexicalBlock(scope: !1, file: !2, line: 7, column: 35)

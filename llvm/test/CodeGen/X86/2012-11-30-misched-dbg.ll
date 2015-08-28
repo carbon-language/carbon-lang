@@ -86,7 +86,7 @@ declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)
 !19 = !DIFile(filename: "MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c", directory: "MultiSource/Benchmarks/MiBench/consumer-typeset")
 
 !20 = !{!21}
-!21 = !DISubprogram(name: "AttachGalley", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !19, scope: !14, type: !22, function: i32 (%union.rec**)* @AttachGalley)
+!21 = distinct !DISubprogram(name: "AttachGalley", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !19, scope: !14, type: !22, function: i32 (%union.rec**)* @AttachGalley)
 !22 = !DISubroutineType(types: !23)
 !23 = !{null}
 
@@ -141,4 +141,4 @@ declare void @_Znwm()
 !34 = !DIFile(filename: "SingleSource/Benchmarks/Shootout-C++/hash.cpp", directory: "SingleSource/Benchmarks/Shootout-C++")
 !35 = !{i32 1, !"Debug Info Version", i32 3}
 !36 = !{!37}
-!37 = !DISubprogram(name: "main", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !19, scope: !14, type: !22, function: void ()* @main)
+!37 = distinct !DISubprogram(name: "main", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !19, scope: !14, type: !22, function: void ()* @main)

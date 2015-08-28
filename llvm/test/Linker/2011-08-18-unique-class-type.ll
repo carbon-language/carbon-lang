@@ -24,7 +24,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !1 = !{!2}
 !2 = !{}
 !3 = !{!5}
-!5 = !DISubprogram(name: "foo", linkageName: "_Z3fooN2N11AE", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !16, scope: !6, type: !7, function: void ()* @_Z3fooN2N11AE)
+!5 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooN2N11AE", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !16, scope: !6, type: !7, function: void ()* @_Z3fooN2N11AE)
 !6 = !DIFile(filename: "n1.c", directory: "/private/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}

@@ -38,7 +38,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !9 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !DIDerivedType(tag: DW_TAG_member, name: "b", scope: !"_ZT5Class", baseType: !9, size: 32, align: 32)
 !11 = !{!12}
-!12 = !DISubprogram(name: "foo", scope: null, file: !3, type: !13, isLocal: false, isDefinition: true, isOptimized: false, function: void ()* @_Z3foov)
+!12 = distinct !DISubprogram(name: "foo", scope: null, file: !3, type: !13, isLocal: false, isDefinition: true, isOptimized: false, function: void ()* @_Z3foov)
 !13 = !DISubroutineType(types: !14)
 !14 = !{null}
 !15 = !DILocalVariable(name: "v", scope: !12, type: !"_ZT5Class")

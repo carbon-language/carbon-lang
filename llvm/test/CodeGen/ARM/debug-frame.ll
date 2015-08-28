@@ -129,7 +129,7 @@ declare void @_ZSt9terminatev()
 !1 = !DIFile(filename: "exp.cpp", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "test", linkageName: "_Z4testiiiiiddddd", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !5, type: !6, function: void (i32, i32, i32, i32, i32, double, double, double, double, double)* @_Z4testiiiiiddddd, variables: !2)
+!4 = distinct !DISubprogram(name: "test", linkageName: "_Z4testiiiiiddddd", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !5, type: !6, function: void (i32, i32, i32, i32, i32, double, double, double, double, double)* @_Z4testiiiiiddddd, variables: !2)
 !5 = !DIFile(filename: "exp.cpp", directory: "/tmp")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8, !8, !8, !8, !8, !9, !9, !9, !9, !9}

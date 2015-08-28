@@ -118,7 +118,7 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !20 = !DIFile(filename: "header4.h", directory: "/Volumes/Sandbox/llvm")
 !21 = !{!22}
 !22 = !DIEnumerator(name: "Eleven", value: 0) ; [ DW_TAG_enumerator ]
-!23 = !DISubprogram(name: "foobar_func_block_invoke_0", line: 609, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 609, file: !152, scope: !24, type: !25, function: void (i8*, %0*, [4 x i32], [4 x i32])* @foobar_func_block_invoke_0)
+!23 = distinct !DISubprogram(name: "foobar_func_block_invoke_0", line: 609, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 609, file: !152, scope: !24, type: !25, function: void (i8*, %0*, [4 x i32], [4 x i32])* @foobar_func_block_invoke_0)
 !24 = !DIFile(filename: "MyLibrary.m", directory: "/Volumes/Sandbox/llvm")
 !25 = !DISubroutineType(types: !26)
 !26 = !{null}

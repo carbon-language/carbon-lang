@@ -53,4 +53,4 @@ attributes #0 = { nounwind readnone }
 !3 = !{i32 2, !"Dwarf Version", i32 4}
 !4 = !{i32 1, !"Debug Info Version", i32 3}
 !5 = !{!""}
-!6 = !DISubprogram()
+!6 = distinct !DISubprogram()

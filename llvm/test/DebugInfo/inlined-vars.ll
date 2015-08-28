@@ -22,12 +22,12 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !1 = !{i32 0}
 !2 = !{}
 !3 = !{!5, !10}
-!5 = !DISubprogram(name: "main", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 10, file: !26, scope: !6, type: !7, function: i32 ()* @main, variables: !2)
+!5 = distinct !DISubprogram(name: "main", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 10, file: !26, scope: !6, type: !7, function: i32 ()* @main, variables: !2)
 !6 = !DIFile(filename: "inline-bug.cc", directory: "/tmp/dbginfo/pr13202")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !DISubprogram(name: "f", linkageName: "_ZL1fi", line: 3, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !26, scope: !6, type: !11, variables: !13)
+!10 = distinct !DISubprogram(name: "f", linkageName: "_ZL1fi", line: 3, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !26, scope: !6, type: !11, variables: !13)
 !11 = !DISubroutineType(types: !12)
 !12 = !{!9, !9}
 !13 = !{!15, !16}

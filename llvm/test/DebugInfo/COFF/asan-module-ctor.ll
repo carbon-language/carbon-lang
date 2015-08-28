@@ -86,7 +86,7 @@ attributes #0 = { nounwind sanitize_address "less-precise-fpmad"="false" "no-fra
 !1 = !DIFile(filename: "asan.c", directory: "D:\5C")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 ()* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 ()* @foo, variables: !2)
 !5 = !DIFile(filename: "asan.c", directory: "D:C")
 !6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"CodeView", i32 1}

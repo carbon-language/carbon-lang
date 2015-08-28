@@ -31,6 +31,6 @@ entry:
 !0 = !{i32 2, !"Debug Info Version", i32 3}
 !1 = distinct !DICompileUnit(language: DW_LANG_C99, file: !DIFile(filename: "f", directory: "/d"),
                              subprograms: !{!2})
-!2 = !DISubprogram(name: "foo")
+!2 = distinct !DISubprogram(name: "foo")
 !3 = !DILocation(line: 1, scope: !2)
 !4 = !DILocation(line: 2, scope: !2)

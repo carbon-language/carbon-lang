@@ -38,7 +38,7 @@ invoke.cont44:                                    ; preds = %if.end
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 168984) (llvm/trunk 168983)", isOptimized: true, emissionKind: 0, file: !6, subprograms: !1)
 !1 = !{!2}
-!2 = !DISubprogram(name: "test", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !6, scope: !5, type: !7, function: void ()* @test)
+!2 = distinct !DISubprogram(name: "test", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !6, scope: !5, type: !7, function: void ()* @test)
 !3 = !DILocalVariable(name: "callback", line: 214, scope: !2, type: !4)
 !4 = !DICompositeType(tag: DW_TAG_structure_type, name: "btCompoundLeafCallback", line: 90, size: 512, align: 64, file: !6)
 !5 = !DIFile(filename: "MultiSource/Benchmarks/Bullet/btCompoundCollisionAlgorithm.cpp", directory: "MultiSource/Benchmarks/Bullet")

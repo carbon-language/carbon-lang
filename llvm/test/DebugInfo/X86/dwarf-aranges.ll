@@ -66,7 +66,7 @@ entry:
 !1 = !DIFile(filename: "test.c", directory: "/home/kayamon")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "some_code", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: void ()* @some_code, variables: !2)
+!4 = distinct !DISubprogram(name: "some_code", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: void ()* @some_code, variables: !2)
 !5 = !DIFile(filename: "test.c", directory: "/home/kayamon")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}

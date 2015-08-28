@@ -12,17 +12,18 @@ declare void @_Z3foov()
 !3 = !DISubroutineType(types: !0)
 !4 = distinct !DICompositeType(tag: DW_TAG_structure_type)
 !5 = distinct !{}
-!6 = distinct !DISubprogram(isDefinition: false)
-!7 = distinct !{}
+!6 = distinct !{}
 
-; CHECK: !8 = !DISubprogram(name: "foo", linkageName: "_Zfoov", scope: !1, file: !2, line: 7, type: !3, isLocal: true, isDefinition: false, scopeLine: 8, containingType: !4, virtuality: DW_VIRTUALITY_pure_virtual, virtualIndex: 10, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @_Z3foov, templateParams: !5, declaration: !6, variables: !7)
-!8 = !DISubprogram(name: "foo", linkageName: "_Zfoov", scope: !1,
-                   file: !2, line: 7, type: !3, isLocal: true,
-                   isDefinition: false, scopeLine: 8, containingType: !4,
-                   virtuality: DW_VIRTUALITY_pure_virtual, virtualIndex: 10,
-                   flags: DIFlagPrototyped, isOptimized: true, function: void ()* @_Z3foov,
-                   templateParams: !5, declaration: !6, variables: !7)
+; CHECK: !7 = distinct !DISubprogram(scope: null, isLocal: false, isDefinition: true, isOptimized: false)
+!7 = distinct !DISubprogram()
 
-; CHECK: !9 = !DISubprogram(scope: null, isLocal: false, isDefinition: true, isOptimized: false)
-!9 = !DISubprogram()
+; CHECK: !8 = !DISubprogram(scope: null, isLocal: false, isDefinition: false, isOptimized: false)
+!8 = !DISubprogram(isDefinition: false)
 
+; CHECK: !9 = distinct !DISubprogram(name: "foo", linkageName: "_Zfoov", scope: !1, file: !2, line: 7, type: !3, isLocal: true, isDefinition: true, scopeLine: 8, containingType: !4, virtuality: DW_VIRTUALITY_pure_virtual, virtualIndex: 10, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @_Z3foov, templateParams: !5, declaration: !8, variables: !6)
+!9 = distinct !DISubprogram(name: "foo", linkageName: "_Zfoov", scope: !1,
+                            file: !2, line: 7, type: !3, isLocal: true,
+                            isDefinition: true, scopeLine: 8, containingType: !4,
+                            virtuality: DW_VIRTUALITY_pure_virtual, virtualIndex: 10,
+                            flags: DIFlagPrototyped, isOptimized: true, function: void ()* @_Z3foov,
+                            templateParams: !5, declaration: !8, variables: !6)

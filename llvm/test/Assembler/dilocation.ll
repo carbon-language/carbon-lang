@@ -4,8 +4,8 @@
 ; CHECK: !named = !{!0, !1, !1, !2, !2, !3, !3, !4}
 !named = !{!0, !1, !2, !3, !4, !5, !6, !7}
 
-; CHECK: !0 = !DISubprogram(
-!0 = !DISubprogram()
+; CHECK: !0 = distinct !DISubprogram(
+!0 = distinct !DISubprogram()
 
 ; CHECK-NEXT: !1 = !DILocation(line: 3, column: 7, scope: !0)
 !1 = !DILocation(line: 3, column: 7, scope: !0)

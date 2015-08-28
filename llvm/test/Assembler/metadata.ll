@@ -30,7 +30,7 @@ define void @test_attachment_name() {
 }
 
 !0 = !DILocation(line: 662302, column: 26, scope: !1)
-!1 = !DISubprogram(name: "foo")
+!1 = distinct !DISubprogram(name: "foo")
 !2 = distinct !{}
 !3 = distinct !{}
 !4 = distinct !{}

@@ -16,7 +16,7 @@ for.body:                                         ; preds = %_ZN8nsTArray9Elemen
   %tmp = bitcast %struct.nsTArrayHeader* %add.ptr.i to %struct.nsTArray*
   %arrayidx = getelementptr inbounds %struct.nsTArray, %struct.nsTArray* %tmp, i32 %i.06
   %add = add nsw i32 %i.06, 1
-  call void @llvm.dbg.value(metadata %struct.nsTArray* %aValues, i64 0, metadata !0, metadata !DIExpression()) nounwind, !dbg !DILocation(scope: !DISubprogram())
+  call void @llvm.dbg.value(metadata %struct.nsTArray* %aValues, i64 0, metadata !0, metadata !DIExpression()) nounwind, !dbg !DILocation(scope: !1)
   br label %_ZN8nsTArray9ElementAtEi.exit
 
 _ZN8nsTArray9ElementAtEi.exit:                    ; preds = %for.body
@@ -35,4 +35,5 @@ declare %struct.nsTArrayHeader* @_ZN8nsTArray4Hdr2Ev()
 
 declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
-!0 = !DILocalVariable(scope: !DISubprogram())
+!0 = !DILocalVariable(scope: !1)
+!1 = distinct !DISubprogram()

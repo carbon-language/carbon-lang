@@ -59,7 +59,7 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !1 = !DIFile(filename: "hello.c", directory: "/home/venkatra/work/benchmarks/test/hello")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
+!4 = distinct !DISubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
 !5 = !DIFile(filename: "hello.c", directory: "/home/venkatra/work/benchmarks/test/hello")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

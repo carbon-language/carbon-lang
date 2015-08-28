@@ -38,13 +38,13 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.2 (trunk 156513)", isOptimized: true, emissionKind: 1, file: !32, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports: !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !DISubprogram(name: "foo", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !32, scope: !6, type: !7, function: void ()* @foo, variables: !1)
+!5 = distinct !DISubprogram(name: "foo", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !32, scope: !6, type: !7, function: void ()* @foo, variables: !1)
 !6 = !DIFile(filename: "foo.c", directory: "/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}
 !9 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.2 (trunk 156513)", isOptimized: true, emissionKind: 1, file: !32, enums: !1, retainedTypes: !1, subprograms: !10, globals: !1, imports: !1)
 !10 = !{!12}
-!12 = !DISubprogram(name: "main", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 11, file: !32, scope: !6, type: !13, function: i32 (i32, i8**)* @main, variables: !19)
+!12 = distinct !DISubprogram(name: "main", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 11, file: !32, scope: !6, type: !13, function: i32 (i32, i8**)* @main, variables: !19)
 !13 = !DISubroutineType(types: !14)
 !14 = !{!15, !15, !16}
 !15 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

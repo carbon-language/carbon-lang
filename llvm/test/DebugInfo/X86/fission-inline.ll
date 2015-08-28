@@ -102,8 +102,8 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !7 = !DISubroutineType(types: !8)
 !8 = !{null, null}
 !9 = !{!10, !11}
-!10 = !DISubprogram(name: "f3", linkageName: "_ZN3foo2f3Ez", line: 15, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 15, file: !1, scope: !"_ZTS3foo", type: !7, function: void (...)* @_ZN3foo2f3Ez, declaration: !6, variables: !2)
-!11 = !DISubprogram(name: "f2<int>", linkageName: "_ZN3foo2f2IiEEvv", line: 10, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !"_ZTS3foo", type: !12, templateParams: !14, declaration: !17, variables: !2)
+!10 = distinct !DISubprogram(name: "f3", linkageName: "_ZN3foo2f3Ez", line: 15, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 15, file: !1, scope: !"_ZTS3foo", type: !7, function: void (...)* @_ZN3foo2f3Ez, declaration: !6, variables: !2)
+!11 = distinct !DISubprogram(name: "f2<int>", linkageName: "_ZN3foo2f2IiEEvv", line: 10, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !"_ZTS3foo", type: !12, templateParams: !14, declaration: !17, variables: !2)
 !12 = !DISubroutineType(types: !13)
 !13 = !{null}
 !14 = !{!15}

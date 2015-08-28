@@ -68,14 +68,14 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !3 = !{!4}
 !4 = !DICompositeType(tag: DW_TAG_class_type, name: "C", line: 2, size: 8, align: 8, file: !1, elements: !5, identifier: "_ZTS1C")
 !5 = !{!6}
-!6 = !DISubprogram(name: "test", file: !1, scope: !"_ZTS1C", type: !7)
+!6 = !DISubprogram(name: "test", file: !1, scope: !"_ZTS1C", type: !7, isDefinition: false)
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9, !10, !11, !11, !11, null}
 !9 = !DIBasicType(encoding: DW_ATE_signed, size: 32, align: 32, name: "int")
 !10 = !DIDerivedType(baseType: !"_ZTS1C", tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial)
 !11 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !12 = !{!13}
-!13 = !DISubprogram(name: "test_with_debug", linkageName: "test_with_debug", line: 6, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !14, type: !15, function: void ()* @test_with_debug, variables: !17)
+!13 = distinct !DISubprogram(name: "test_with_debug", linkageName: "test_with_debug", line: 6, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !14, type: !15, function: void ()* @test_with_debug, variables: !17)
 !14 = !DIFile(filename: "test.cpp", directory: "")
 !15 = !DISubroutineType(types: !16)
 !16 = !{null}

@@ -43,7 +43,7 @@ define void @test_basic() #0 {
 !1 = !DIFile(filename: "var.c", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = !DISubprogram(name: "test_basic", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !5, type: !6, function: void ()* @test_basic, variables: !2)
+!4 = distinct !DISubprogram(name: "test_basic", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !5, type: !6, function: void ()* @test_basic, variables: !2)
 !5 = !DIFile(filename: "var.c", directory: "/tmp")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}

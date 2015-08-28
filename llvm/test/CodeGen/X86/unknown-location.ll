@@ -22,7 +22,7 @@ entry:
 !llvm.module.flags = !{!12}
 
 !0 = !DILocalVariable(name: "x", line: 1, arg: 2, scope: !1, file: !2, type: !6)
-!1 = !DISubprogram(name: "foo", linkageName: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !10, scope: !2, type: !4, function: i32 (i32, i32, i32, i32)* @foo)
+!1 = distinct !DISubprogram(name: "foo", linkageName: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !10, scope: !2, type: !4, function: i32 (i32, i32, i32, i32)* @foo)
 !2 = !DIFile(filename: "test.c", directory: "/dir")
 !3 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "producer", isOptimized: false, emissionKind: 0, file: !10, enums: !11, retainedTypes: !11, subprograms: !9)
 !4 = !DISubroutineType(types: !5)
