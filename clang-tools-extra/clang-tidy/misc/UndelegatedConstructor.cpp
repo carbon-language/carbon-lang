@@ -55,15 +55,20 @@ void UndelegatedConstructorCheck::registerMatchers(MatchFinder *Finder) {
   // depending on the type's destructor and the number of arguments on the
   // constructor call, this is handled by ignoringTemporaryExpr. Ignore template
   // instantiations to reduce the number of duplicated warnings.
-  Finder->addMatcher(
-      compoundStmt(
-          hasParent(constructorDecl(ofClass(recordDecl().bind("parent")))),
-          forEach(ignoringTemporaryExpr(
-              constructExpr(hasDeclaration(constructorDecl(ofClass(
-                                recordDecl(baseOfBoundNode("parent"))))))
-                  .bind("construct"))),
-          unless(isInTemplateInstantiation())),
-      this);
+  //
+  // Only register the matchers for C++11; the functionality currently does not
+  // provide any benefit to other languages, despite being benign.
+  if (getLangOpts().CPlusPlus11) {
+    Finder->addMatcher(
+        compoundStmt(
+            hasParent(constructorDecl(ofClass(recordDecl().bind("parent")))),
+            forEach(ignoringTemporaryExpr(
+                constructExpr(hasDeclaration(constructorDecl(ofClass(
+                                  recordDecl(baseOfBoundNode("parent"))))))
+                    .bind("construct"))),
+            unless(isInTemplateInstantiation())),
+        this);
+  }
 }
 
 void UndelegatedConstructorCheck::check(const MatchFinder::MatchResult &Result) {

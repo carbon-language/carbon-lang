@@ -19,7 +19,9 @@ namespace tidy {
 namespace misc {
 
 void UseOverrideCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(methodDecl(isOverride()).bind("method"), this);
+  // Only register the matcher for C++11.
+  if (getLangOpts().CPlusPlus11)
+    Finder->addMatcher(methodDecl(isOverride()).bind("method"), this);
 }
 
 // Re-lex the tokens to get precise locations to insert 'override' and remove
@@ -58,9 +60,6 @@ static StringRef GetText(const Token &Tok, const SourceManager &Sources) {
 }
 
 void UseOverrideCheck::check(const MatchFinder::MatchResult &Result) {
-  if (!Result.Context->getLangOpts().CPlusPlus11)
-    return;
-
   const FunctionDecl *Method = Result.Nodes.getStmtAs<FunctionDecl>("method");
   const SourceManager &Sources = *Result.SourceManager;
 

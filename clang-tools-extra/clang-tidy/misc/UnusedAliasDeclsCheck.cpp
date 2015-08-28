@@ -22,11 +22,15 @@ const ast_matchers::internal::VariadicDynCastAllOfMatcher<
     Decl, NamespaceAliasDecl> namespaceAliasDecl;
 
 void UnusedAliasDeclsCheck::registerMatchers(MatchFinder *Finder) {
-  // We cannot do anything about headers (yet), as the alias declarations
-  // used in one header could be used by some other translation unit.
-  Finder->addMatcher(namespaceAliasDecl(isExpansionInMainFile()).bind("alias"),
-                     this);
-  Finder->addMatcher(nestedNameSpecifier().bind("nns"), this);
+  // Only register the matchers for C++11; the functionality currently does not
+  // provide any benefit to other languages, despite being benign.
+  if (getLangOpts().CPlusPlus11) {
+    // We cannot do anything about headers (yet), as the alias declarations
+    // used in one header could be used by some other translation unit.
+    Finder->addMatcher(
+        namespaceAliasDecl(isExpansionInMainFile()).bind("alias"), this);
+    Finder->addMatcher(nestedNameSpecifier().bind("nns"), this);
+  }
 }
 
 void UnusedAliasDeclsCheck::check(const MatchFinder::MatchResult &Result) {

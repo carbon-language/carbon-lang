@@ -28,30 +28,35 @@ static bool areTypesCompatible(QualType Left, QualType Right) {
 }
 
 void InefficientAlgorithmCheck::registerMatchers(MatchFinder *Finder) {
-  const std::string Algorithms =
-      "^::std::(find|count|equal_range|lower_bound|upper_bound)$";
-  const auto ContainerMatcher = classTemplateSpecializationDecl(
-      matchesName("^::std::(unordered_)?(multi)?(set|map)$"));
-  const auto Matcher =
-      callExpr(
-          callee(functionDecl(matchesName(Algorithms))),
-          hasArgument(
-              0, constructExpr(has(memberCallExpr(
-                     callee(methodDecl(hasName("begin"))),
-                     on(declRefExpr(
-                            hasDeclaration(decl().bind("IneffContObj")),
-                            anyOf(hasType(ContainerMatcher.bind("IneffCont")),
-                                  hasType(pointsTo(
-                                      ContainerMatcher.bind("IneffContPtr")))))
-                            .bind("IneffContExpr")))))),
-          hasArgument(1, constructExpr(has(memberCallExpr(
-                             callee(methodDecl(hasName("end"))),
-                             on(declRefExpr(hasDeclaration(
-                                 equalsBoundNode("IneffContObj")))))))),
-          hasArgument(2, expr().bind("AlgParam")),
-          unless(isInTemplateInstantiation())).bind("IneffAlg");
+  // Only register the matchers for C++; the functionality currently does not
+  // provide any benefit to other languages, despite being benign.
+  if (getLangOpts().CPlusPlus) {
+    const std::string Algorithms =
+        "^::std::(find|count|equal_range|lower_bound|upper_bound)$";
+    const auto ContainerMatcher = classTemplateSpecializationDecl(
+        matchesName("^::std::(unordered_)?(multi)?(set|map)$"));
+    const auto Matcher =
+        callExpr(
+            callee(functionDecl(matchesName(Algorithms))),
+            hasArgument(
+                0, constructExpr(has(memberCallExpr(
+                       callee(methodDecl(hasName("begin"))),
+                       on(declRefExpr(
+                              hasDeclaration(decl().bind("IneffContObj")),
+                              anyOf(hasType(ContainerMatcher.bind("IneffCont")),
+                                    hasType(pointsTo(ContainerMatcher.bind(
+                                        "IneffContPtr")))))
+                              .bind("IneffContExpr")))))),
+            hasArgument(1, constructExpr(has(memberCallExpr(
+                               callee(methodDecl(hasName("end"))),
+                               on(declRefExpr(hasDeclaration(
+                                   equalsBoundNode("IneffContObj")))))))),
+            hasArgument(2, expr().bind("AlgParam")),
+            unless(isInTemplateInstantiation()))
+            .bind("IneffAlg");
 
-  Finder->addMatcher(Matcher, this);
+    Finder->addMatcher(Matcher, this);
+  }
 }
 
 void InefficientAlgorithmCheck::check(const MatchFinder::MatchResult &Result) {

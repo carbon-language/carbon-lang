@@ -25,17 +25,22 @@ namespace tidy {
 namespace misc {
 
 void UnusedRAIICheck::registerMatchers(MatchFinder *Finder) {
-  // Look for temporaries that are constructed in-place and immediately
-  // destroyed. Look for temporaries created by a functional cast but not for
-  // those returned from a call.
-  auto BindTemp = bindTemporaryExpr(unless(has(callExpr()))).bind("temp");
-  Finder->addMatcher(
-      exprWithCleanups(unless(isInTemplateInstantiation()),
-                       hasParent(compoundStmt().bind("compound")),
-                       hasType(recordDecl(hasNonTrivialDestructor())),
-                       anyOf(has(BindTemp), has(functionalCastExpr(
-                                                has(BindTemp))))).bind("expr"),
-      this);
+  // Only register the matchers for C++; the functionality currently does not
+  // provide any benefit to other languages, despite being benign.
+  if (getLangOpts().CPlusPlus) {
+    // Look for temporaries that are constructed in-place and immediately
+    // destroyed. Look for temporaries created by a functional cast but not for
+    // those returned from a call.
+    auto BindTemp = bindTemporaryExpr(unless(has(callExpr()))).bind("temp");
+    Finder->addMatcher(
+        exprWithCleanups(
+            unless(isInTemplateInstantiation()),
+            hasParent(compoundStmt().bind("compound")),
+            hasType(recordDecl(hasNonTrivialDestructor())),
+            anyOf(has(BindTemp), has(functionalCastExpr(has(BindTemp)))))
+            .bind("expr"),
+        this);
+  }
 }
 
 void UnusedRAIICheck::check(const MatchFinder::MatchResult &Result) {
