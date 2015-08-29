@@ -211,8 +211,12 @@ static void foldOperand(MachineOperand &OpToFold, MachineInstr *UseMI,
 
     Imm = APInt(64, OpToFold.getImm());
 
+    const MCInstrDesc &FoldDesc = TII->get(OpToFold.getParent()->getOpcode());
+    const TargetRegisterClass *FoldRC =
+        TRI.getRegClass(FoldDesc.OpInfo[0].RegClass);
+
     // Split 64-bit constants into 32-bits for folding.
-    if (UseOp.getSubReg()) {
+    if (FoldRC->getSize() == 8 && UseOp.getSubReg()) {
       if (UseRC->getSize() != 8)
         return;
 
