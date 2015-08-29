@@ -254,10 +254,14 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
         uint32_t Type = RI.getType(EObj->isMips64EL());
         uintX_t P = this->getVA() + C->getOutputSectionOff();
         uintX_t SymVA = getSymVA<ELFT>(cast<DefinedRegular<ELFT>>(Body));
+        uint8_t *Location = Base + Offset;
         switch (Type) {
         case llvm::ELF::R_X86_64_PC32:
-          support::endian::write32le(Base + Offset,
+          support::endian::write32le(Location,
                                      SymVA + (RI.r_addend - (P + Offset)));
+          break;
+        case llvm::ELF::R_X86_64_32:
+          support::endian::write32le(Location, SymVA + RI.r_addend);
           break;
         default:
           llvm::errs() << Twine("unrecognized reloc ") + Twine(Type) << '\n';
