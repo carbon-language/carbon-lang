@@ -133,3 +133,7 @@ EVAL_EXPR(51, 0 != (float)1e99)
 
 // PR21945
 void PR21945() { int i = (({}), 0l); }
+
+void PR24622();
+struct PR24622 {} pr24622;
+EVAL_EXPR(52, &pr24622 == (void *)&PR24622); // expected-error {{must have a constant size}}

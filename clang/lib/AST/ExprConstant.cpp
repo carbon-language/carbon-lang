@@ -6602,9 +6602,15 @@ static bool isOnePastTheEndOfCompleteObject(const ASTContext &Ctx,
       !LV.getLValueDesignator().isOnePastTheEnd())
     return false;
 
+  // A pointer to an incomplete type might be past-the-end if the type's size is
+  // zero.  We cannot tell because the type is incomplete.
+  QualType Ty = getType(LV.getLValueBase());
+  if (Ty->isIncompleteType())
+    return true;
+
   // We're a past-the-end pointer if we point to the byte after the object,
   // no matter what our type or path is.
-  auto Size = Ctx.getTypeSizeInChars(getType(LV.getLValueBase()));
+  auto Size = Ctx.getTypeSizeInChars(Ty);
   return LV.getLValueOffset() == Size;
 }
 
