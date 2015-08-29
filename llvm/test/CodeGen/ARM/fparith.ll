@@ -56,7 +56,7 @@ entry:
 	ret float %tmp1
 }
 
-define double @f8(double %a) {
+define arm_aapcs_vfpcc double @f8(double %a) {
 ;CHECK-LABEL: f8:
 ;CHECK: vneg.f64
 entry:
@@ -90,7 +90,7 @@ entry:
 
 declare float @fabsf(float)
 
-define double @f12(double %a) {
+define arm_aapcs_vfpcc double @f12(double %a) {
 ;CHECK-LABEL: f12:
 ;CHECK: vabs.f64
 entry:
