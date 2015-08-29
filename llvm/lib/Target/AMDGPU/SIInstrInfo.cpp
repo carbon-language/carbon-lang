@@ -508,14 +508,23 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   }
 
   if (Opcode != -1) {
+    MachinePointerInfo PtrInfo
+      = MachinePointerInfo::getFixedStack(*MF, FrameIndex);
+    unsigned Size = FrameInfo->getObjectSize(FrameIndex);
+    unsigned Align = FrameInfo->getObjectAlignment(FrameIndex);
+    MachineMemOperand *MMO
+      = MF->getMachineMemOperand(PtrInfo, MachineMemOperand::MOStore,
+                                 Size, Align);
+
     FrameInfo->setObjectAlignment(FrameIndex, 4);
     BuildMI(MBB, MI, DL, get(Opcode))
-            .addReg(SrcReg)
-            .addFrameIndex(FrameIndex)
-            // Place-holder registers, these will be filled in by
-            // SIPrepareScratchRegs.
-            .addReg(AMDGPU::SGPR0_SGPR1_SGPR2_SGPR3, RegState::Undef)
-            .addReg(AMDGPU::SGPR0, RegState::Undef);
+      .addReg(SrcReg)
+      .addFrameIndex(FrameIndex)
+      // Place-holder registers, these will be filled in by
+      // SIPrepareScratchRegs.
+      .addReg(AMDGPU::SGPR0_SGPR1_SGPR2_SGPR3, RegState::Undef)
+      .addReg(AMDGPU::SGPR0, RegState::Undef)
+      .addMemOperand(MMO);
   } else {
     LLVMContext &Ctx = MF->getFunction()->getContext();
     Ctx.emitError("SIInstrInfo::storeRegToStackSlot - Do not know how to"
@@ -556,14 +565,22 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   }
 
   if (Opcode != -1) {
-    FrameInfo->setObjectAlignment(FrameIndex, 4);
-    BuildMI(MBB, MI, DL, get(Opcode), DestReg)
-            .addFrameIndex(FrameIndex)
-            // Place-holder registers, these will be filled in by
-            // SIPrepareScratchRegs.
-            .addReg(AMDGPU::SGPR0_SGPR1_SGPR2_SGPR3, RegState::Undef)
-            .addReg(AMDGPU::SGPR0, RegState::Undef);
+    unsigned Align = 4;
+    FrameInfo->setObjectAlignment(FrameIndex, Align);
+    unsigned Size = FrameInfo->getObjectSize(FrameIndex);
 
+    MachinePointerInfo PtrInfo
+      = MachinePointerInfo::getFixedStack(*MF, FrameIndex);
+    MachineMemOperand *MMO = MF->getMachineMemOperand(
+      PtrInfo, MachineMemOperand::MOLoad, Size, Align);
+
+    BuildMI(MBB, MI, DL, get(Opcode), DestReg)
+      .addFrameIndex(FrameIndex)
+      // Place-holder registers, these will be filled in by
+      // SIPrepareScratchRegs.
+      .addReg(AMDGPU::SGPR0_SGPR1_SGPR2_SGPR3, RegState::Undef)
+      .addReg(AMDGPU::SGPR0, RegState::Undef)
+      .addMemOperand(MMO);
   } else {
     LLVMContext &Ctx = MF->getFunction()->getContext();
     Ctx.emitError("SIInstrInfo::loadRegFromStackSlot - Do not know how to"

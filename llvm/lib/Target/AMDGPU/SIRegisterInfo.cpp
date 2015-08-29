@@ -177,14 +177,15 @@ void SIRegisterInfo::buildScratchLoadStore(MachineBasicBlock::iterator MI,
     bool IsKill = (i == e - 1);
 
     BuildMI(*MBB, MI, DL, TII->get(LoadStoreOp))
-            .addReg(SubReg, getDefRegState(IsLoad))
-            .addReg(ScratchRsrcReg, getKillRegState(IsKill))
-            .addReg(SOffset)
-            .addImm(Offset)
-            .addImm(0) // glc
-            .addImm(0) // slc
-            .addImm(0) // tfe
-            .addReg(Value, RegState::Implicit | getDefRegState(IsLoad));
+      .addReg(SubReg, getDefRegState(IsLoad))
+      .addReg(ScratchRsrcReg, getKillRegState(IsKill))
+      .addReg(SOffset)
+      .addImm(Offset)
+      .addImm(0) // glc
+      .addImm(0) // slc
+      .addImm(0) // tfe
+      .addReg(Value, RegState::Implicit | getDefRegState(IsLoad))
+      .setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
   }
 }
 

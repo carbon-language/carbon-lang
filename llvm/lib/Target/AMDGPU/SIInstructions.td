@@ -1992,13 +1992,19 @@ multiclass SI_SPILL_SGPR <RegisterClass sgpr_class> {
       (ins sgpr_class:$src, i32imm:$frame_idx, SReg_128:$scratch_rsrc,
            SReg_32:$scratch_offset),
       "", []
-    >;
+    > {
+      let mayStore = 1;
+      let mayLoad = 0;
+    }
 
     def _RESTORE : InstSI <
       (outs sgpr_class:$dst),
       (ins i32imm:$frame_idx, SReg_128:$scratch_rsrc, SReg_32:$scratch_offset),
       "", []
-    >;
+    > {
+      let mayStore = 0;
+      let mayLoad = 1;
+    }
   } // End UseNamedOperandTable = 1
 }
 
@@ -2018,13 +2024,19 @@ multiclass SI_SPILL_VGPR <RegisterClass vgpr_class> {
       (ins vgpr_class:$src, i32imm:$frame_idx, SReg_128:$scratch_rsrc,
            SReg_32:$scratch_offset),
       "", []
-    >;
+    > {
+      let mayStore = 1;
+      let mayLoad = 0;
+    }
 
     def _RESTORE : InstSI <
       (outs vgpr_class:$dst),
       (ins i32imm:$frame_idx, SReg_128:$scratch_rsrc, SReg_32:$scratch_offset),
       "", []
-    >;
+    > {
+      let mayStore = 0;
+      let mayLoad = 1;
+    }
   } // End UseNamedOperandTable = 1, VGPRSpill = 1
 }
 
