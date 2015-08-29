@@ -3,8 +3,8 @@
 
 ; Test that we correctly commute a sub instruction
 ; FUNC-LABEL: {{^}}sub_rev:
-; SI-NOT: v_sub_i32_e32 v{{[0-9]+}}, s
-; SI: v_subrev_i32_e32 v{{[0-9]+}}, s
+; SI-NOT: v_sub_i32_e32 v{{[0-9]+}}, vcc, s
+; SI: v_subrev_i32_e32 v{{[0-9]+}}, vcc, s
 
 ; ModuleID = 'vop-shrink.ll'
 

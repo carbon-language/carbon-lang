@@ -32,4 +32,7 @@ v_mul_i32_i24_e64 v1, 100, v3
 v_mul_i32_i24_e64 v1, v2, 100
 // CHECK: error: invalid operand for instruction
 
+v_add_i32_e32 v1, s[0:1], v2, v3
+// CHECK: error: invalid operand for instruction
+
 // TODO: Constant bus restrictions

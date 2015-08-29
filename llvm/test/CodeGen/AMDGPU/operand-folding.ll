@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=amdgcn -mcpu=SI -verify-machineinstrs | FileCheck %s
 
 ; CHECK-LABEL: {{^}}fold_sgpr:
-; CHECK: v_add_i32_e32 v{{[0-9]+}}, s
+; CHECK: v_add_i32_e32 v{{[0-9]+}}, vcc, s
 define void @fold_sgpr(i32 addrspace(1)* %out, i32 %fold) {
 entry:
   %tmp0 = icmp ne i32 %fold, 0

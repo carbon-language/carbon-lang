@@ -7,7 +7,7 @@ declare i32 @llvm.r600.read.tidig.x() readnone
 ; FUNC-LABEL: {{^}}test_sub_i32:
 ; EG: SUB_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-; SI: v_subrev_i32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+; SI: v_subrev_i32_e32 v{{[0-9]+, vcc, v[0-9]+, v[0-9]+}}
 define void @test_sub_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   %b_ptr = getelementptr i32, i32 addrspace(1)* %in, i32 1
   %a = load i32, i32 addrspace(1)* %in
@@ -22,8 +22,8 @@ define void @test_sub_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 ; EG: SUB_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; EG: SUB_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-; SI: v_sub_i32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
-; SI: v_sub_i32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+; SI: v_sub_i32_e32 v{{[0-9]+, vcc, v[0-9]+, v[0-9]+}}
+; SI: v_sub_i32_e32 v{{[0-9]+, vcc, v[0-9]+, v[0-9]+}}
 
 define void @test_sub_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <2 x i32>, <2 x i32> addrspace(1)* %in, i32 1
@@ -40,10 +40,10 @@ define void @test_sub_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)
 ; EG: SUB_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; EG: SUB_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-; SI: v_sub_i32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
-; SI: v_sub_i32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
-; SI: v_sub_i32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
-; SI: v_sub_i32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+; SI: v_sub_i32_e32 v{{[0-9]+, vcc, v[0-9]+, v[0-9]+}}
+; SI: v_sub_i32_e32 v{{[0-9]+, vcc, v[0-9]+, v[0-9]+}}
+; SI: v_sub_i32_e32 v{{[0-9]+, vcc, v[0-9]+, v[0-9]+}}
+; SI: v_sub_i32_e32 v{{[0-9]+, vcc, v[0-9]+, v[0-9]+}}
 
 define void @test_sub_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x i32>, <4 x i32> addrspace(1)* %in, i32 1

@@ -154,7 +154,7 @@ define void @load_v8i8_to_v8f32(<8 x float> addrspace(1)* noalias %out, <8 x i8>
 
 ; SI-LABEL: {{^}}i8_zext_inreg_i32_to_f32:
 ; SI: buffer_load_dword [[LOADREG:v[0-9]+]],
-; SI: v_add_i32_e32 [[ADD:v[0-9]+]], 2, [[LOADREG]]
+; SI: v_add_i32_e32 [[ADD:v[0-9]+]], vcc, 2, [[LOADREG]]
 ; SI-NEXT: v_cvt_f32_ubyte0_e32 [[CONV:v[0-9]+]], [[ADD]]
 ; SI: buffer_store_dword [[CONV]],
 define void @i8_zext_inreg_i32_to_f32(float addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in) nounwind {

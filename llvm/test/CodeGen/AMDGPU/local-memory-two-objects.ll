@@ -30,7 +30,7 @@
 ; constant offsets.
 ; EG: LDS_READ_RET {{[*]*}} OQAP, {{PV|T}}[[ADDRR:[0-9]*\.[XYZW]]]
 ; EG-NOT: LDS_READ_RET {{[*]*}} OQAP, T[[ADDRR]]
-; SI: v_add_i32_e32 [[SIPTR:v[0-9]+]], 16, v{{[0-9]+}}
+; SI: v_add_i32_e32 [[SIPTR:v[0-9]+]], vcc, 16, v{{[0-9]+}}
 ; SI: ds_read_b32 {{v[0-9]+}}, [[SIPTR]]
 ; CI: ds_read_b32 {{v[0-9]+}}, [[ADDRR:v[0-9]+]] offset:16
 ; CI: ds_read_b32 {{v[0-9]+}}, [[ADDRR]]

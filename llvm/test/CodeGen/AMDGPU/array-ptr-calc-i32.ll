@@ -14,7 +14,7 @@ declare void @llvm.AMDGPU.barrier.local() nounwind noduplicate
 ; FIXME: We end up with zero argument for ADD, because
 ; SIRegisterInfo::eliminateFrameIndex() blindly replaces the frame index
 ; with the appropriate offset.  We should fold this into the store.
-; SI-ALLOCA: v_add_i32_e32 [[PTRREG:v[0-9]+]], 0, v{{[0-9]+}}
+; SI-ALLOCA: v_add_i32_e32 [[PTRREG:v[0-9]+]], vcc, 0, v{{[0-9]+}}
 ; SI-ALLOCA: buffer_store_dword {{v[0-9]+}}, [[PTRREG]], s[{{[0-9]+:[0-9]+}}]
 ;
 ; FIXME: The AMDGPUPromoteAlloca pass should be able to convert this
@@ -22,7 +22,7 @@ declare void @llvm.AMDGPU.barrier.local() nounwind noduplicate
 ; to interpret:
 ; getelementptr [4 x i32], [4 x i32]* %alloca, i32 1, i32 %b
 
-; SI-PROMOTE: v_add_i32_e32 [[PTRREG:v[0-9]+]], 16
+; SI-PROMOTE: v_add_i32_e32 [[PTRREG:v[0-9]+]], vcc, 16
 ; SI-PROMOTE: ds_write_b32 [[PTRREG]]
 define void @test_private_array_ptr_calc(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %inA, i32 addrspace(1)* noalias %inB) {
   %alloca = alloca [4 x i32], i32 4, align 16

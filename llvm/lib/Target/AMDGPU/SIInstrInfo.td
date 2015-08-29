@@ -1091,6 +1091,11 @@ class VOPProfile <list<ValueType> _ArgVT> {
 
   field dag Outs = (outs DstRC:$dst);
 
+  // VOP3b instructions are a special case with a second explicit
+  // output. This is manually overridden for them.
+  field dag Outs32 = Outs;
+  field dag Outs64 = Outs;
+
   field dag Ins32 = getIns32<Src0RC32, Src1RC32, NumSrcArgs>.ret;
   field dag Ins64 = getIns64<Src0RC64, Src1RC64, Src2RC64, NumSrcArgs,
                              HasModifiers>.ret;
@@ -1126,7 +1131,17 @@ def VOP_F64_F64_I32 : VOPProfile <[f64, f64, i32, untyped]>;
 def VOP_I32_F32_F32 : VOPProfile <[i32, f32, f32, untyped]>;
 def VOP_I32_F32_I32 : VOPProfile <[i32, f32, i32, untyped]>;
 def VOP_I32_I32_I32 : VOPProfile <[i32, i32, i32, untyped]>;
-def VOP_I32_I32_I32_VCC : VOPProfile <[i32, i32, i32, untyped]> {
+
+class VOP2b_Profile<ValueType vt> : VOPProfile<[vt, vt, vt, untyped]> {
+  let Asm32 = "$dst, vcc, $src0, $src1";
+  let Asm64 = "$dst, $sdst, $src0, $src1";
+  let Outs32 = (outs DstRC:$dst);
+  let Outs64 = (outs DstRC:$dst, SReg_64:$sdst);
+}
+
+def VOP2b_I32_I1_I32_I32 : VOP2b_Profile<i32>;
+
+def VOP2b_I32_I1_I32_I32_VCC : VOP2b_Profile<i32> {
   let Src0RC32 = VCSrc_32;
 }
 
@@ -1422,16 +1437,11 @@ multiclass VOP3b_2_m <vop op, dag outs, dag ins, string asm,
   def "" : VOP3_Pseudo <outs, ins, pattern, opName>,
            VOP2_REV<revOp#"_e64", !eq(revOp, opName)>;
 
-  // The VOP2 variant puts the carry out into VCC, the VOP3 variant
-  // can write it into any SGPR. We currently don't use the carry out,
-  // so for now hardcode it to VCC as well.
-  let sdst = SIOperand.VCC, Defs = [VCC] in {
-    def _si : VOP3b_Real_si <op.SI3, outs, ins, asm, opName>,
-              VOP3DisableFields<1, 0, HasMods>;
+  def _si : VOP3b_Real_si <op.SI3, outs, ins, asm, opName>,
+            VOP3DisableFields<1, 0, HasMods>;
 
-    def _vi : VOP3b_Real_vi <op.VI3, outs, ins, asm, opName>,
-              VOP3DisableFields<1, 0, HasMods>;
-  } // End sdst = SIOperand.VCC, Defs = [VCC]
+  def _vi : VOP3b_Real_vi <op.VI3, outs, ins, asm, opName>,
+            VOP3DisableFields<1, 0, HasMods>;
 }
 
 multiclass VOP3b_3_m <vop op, dag outs, dag ins, string asm,
@@ -1562,22 +1572,22 @@ multiclass VOP2InstSI <vop2 op, string opName, VOPProfile P,
     opName, revOp, P.HasModifiers>;
 }
 
-multiclass VOP2b_Helper <vop2 op, string opName, dag outs,
+multiclass VOP2b_Helper <vop2 op, string opName, dag outs32, dag outs64,
                          dag ins32, string asm32, list<dag> pat32,
                          dag ins64, string asm64, list<dag> pat64,
                          string revOp, bit HasMods> {
 
-  defm _e32 : VOP2_m <op, outs, ins32, asm32, pat32, opName, revOp>;
+  defm _e32 : VOP2_m <op, outs32, ins32, asm32, pat32, opName, revOp>;
 
   defm _e64 : VOP3b_2_m <op,
-    outs, ins64, opName#asm64, pat64, opName, revOp, HasMods
+    outs64, ins64, opName#asm64, pat64, opName, revOp, HasMods
   >;
 }
 
 multiclass VOP2bInst <vop2 op, string opName, VOPProfile P,
                       SDPatternOperator node = null_frag,
                       string revOp = opName> : VOP2b_Helper <
-  op, opName, P.Outs,
+  op, opName, P.Outs32, P.Outs64,
   P.Ins32, P.Asm32, [],
   P.Ins64, P.Asm64,
   !if(P.HasModifiers,

@@ -35,7 +35,7 @@ define void @load_shl_base_lds_0(float addrspace(1)* %out, i32 addrspace(1)* %ad
 ; SI-LABEL: {{^}}load_shl_base_lds_1:
 ; SI: v_lshlrev_b32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: ds_read_b32 [[RESULT:v[0-9]+]], [[PTR]] offset:8
-; SI: v_add_i32_e32 [[ADDUSE:v[0-9]+]], 8, v{{[0-9]+}}
+; SI: v_add_i32_e32 [[ADDUSE:v[0-9]+]], vcc, 8, v{{[0-9]+}}
 ; SI-DAG: buffer_store_dword [[RESULT]]
 ; SI-DAG: buffer_store_dword [[ADDUSE]]
 ; SI: s_endpgm
