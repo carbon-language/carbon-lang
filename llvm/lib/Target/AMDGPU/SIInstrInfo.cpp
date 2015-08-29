@@ -1888,17 +1888,18 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
       // Create the new instruction.
       unsigned Addr64Opcode = AMDGPU::getAddr64Inst(MI->getOpcode());
       MachineInstr *Addr64 =
-          BuildMI(MBB, MI, MI->getDebugLoc(), get(Addr64Opcode))
-                  .addOperand(*VData)
-                  .addReg(AMDGPU::NoRegister) // Dummy value for vaddr.
-                                              // This will be replaced later
-                                              // with the new value of vaddr.
-                  .addOperand(*SRsrc)
-                  .addOperand(*SOffset)
-                  .addOperand(*Offset)
-                  .addImm(0) // glc
-                  .addImm(0) // slc
-                  .addImm(0); // tfe
+        BuildMI(MBB, MI, MI->getDebugLoc(), get(Addr64Opcode))
+        .addOperand(*VData)
+        .addReg(AMDGPU::NoRegister) // Dummy value for vaddr.
+                                    // This will be replaced later
+                                    // with the new value of vaddr.
+        .addOperand(*SRsrc)
+        .addOperand(*SOffset)
+        .addOperand(*Offset)
+        .addImm(0) // glc
+        .addImm(0) // slc
+        .addImm(0) // tfe
+        .setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
 
       MI->removeFromParent();
       MI = Addr64;
