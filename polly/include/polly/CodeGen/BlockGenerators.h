@@ -133,6 +133,15 @@ public:
   /// @returns The alloca for @p ScalarBase
   AllocaInst *getOrCreatePHIAlloca(Value *ScalarBase);
 
+  /// @brief Return the alloca for @p Access
+  ///
+  /// If no alloca was mapped for @p Access a new one is created.
+  ///
+  /// @param Access The memory access for which to generate the alloca
+  ///
+  /// @returns The alloca for @p Access
+  AllocaInst *getOrCreateAlloca(MemoryAccess &Access);
+
   /// @brief Finalize the code generation for the SCoP @p S.
   ///
   /// This will initialize and finalize the scalar variables we demoted during

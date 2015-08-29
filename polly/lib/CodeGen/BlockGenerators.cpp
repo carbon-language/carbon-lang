@@ -362,6 +362,13 @@ AllocaInst *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
   return Addr;
 }
 
+AllocaInst *BlockGenerator::getOrCreateAlloca(MemoryAccess &Access) {
+  if (Access.getScopArrayInfo()->isPHI())
+    return getOrCreatePHIAlloca(Access.getBaseAddr());
+  else
+    return getOrCreateScalarAlloca(Access.getBaseAddr());
+}
+
 AllocaInst *BlockGenerator::getOrCreateScalarAlloca(Value *ScalarBase) {
   return getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
 }
@@ -427,14 +434,9 @@ void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
     if (!MA.isScalar() || !MA.isRead())
       continue;
 
-    auto Base = MA.getBaseAddr();
-
-    if (MA.getScopArrayInfo()->isPHI())
-      Address = getOrCreatePHIAlloca(Base);
-    else
-      Address = getOrCreateScalarAlloca(Base);
-
-    BBMap[Base] = Builder.CreateLoad(Address, Address->getName() + ".reload");
+    Address = getOrCreateAlloca(MA);
+    BBMap[MA.getBaseAddr()] =
+        Builder.CreateLoad(Address, Address->getName() + ".reload");
   }
 }
 
@@ -490,14 +492,8 @@ void BlockGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
     if (!MA->isScalar() || MA->isRead())
       continue;
 
-    Instruction *Base = cast<Instruction>(MA->getBaseAddr());
     Value *Val = MA->getAccessValue();
-
-    AllocaInst *Address = nullptr;
-    if (MA->getScopArrayInfo()->isPHI())
-      Address = getOrCreatePHIAlloca(Base);
-    else
-      Address = getOrCreateScalarAlloca(Base);
+    auto *Address = getOrCreateAlloca(*MA);
 
     Val = getNewScalarValue(Val, R, ScalarMap, BBMap, GlobalMap);
     Builder.CreateStore(Val, Address);
@@ -1119,7 +1115,6 @@ void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
     if (!MA->isScalar() || MA->isRead())
       continue;
 
-    Instruction *ScalarBase = cast<Instruction>(MA->getBaseAddr());
     Instruction *ScalarInst = MA->getAccessInstruction();
 
     // Only generate accesses that belong to this basic block.
@@ -1127,15 +1122,11 @@ void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
       continue;
 
     Value *Val = MA->getAccessValue();
-    AllocaInst *ScalarAddr = nullptr;
 
-    if (MA->getScopArrayInfo()->isPHI())
-      ScalarAddr = getOrCreatePHIAlloca(ScalarBase);
-    else
-      ScalarAddr = getOrCreateScalarAlloca(ScalarBase);
+    auto Address = getOrCreateAlloca(*MA);
 
     Val = getNewScalarValue(Val, R, ScalarMap, BBMap, GlobalMap);
-    Builder.CreateStore(Val, ScalarAddr);
+    Builder.CreateStore(Val, Address);
   }
 }
 
