@@ -24,6 +24,7 @@ int __attribute__((target("no-aes, arch=ivybridge"))) qax(int a) { return 4; }
 // We're currently ignoring the fpmath attribute so koala should be identical to baz and bar.
 // CHECK: koala{{.*}} #0
 // CHECK: echidna{{.*}} #2
+// CHECK: panda{{.*}} #3
 // CHECK: bar{{.*}} #0
 // CHECK: qux{{.*}} #1
 // CHECK: qax{{.*}} #4
