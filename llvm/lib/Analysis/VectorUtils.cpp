@@ -410,22 +410,24 @@ Value *llvm::findScalarElement(Value *V, unsigned EltNo) {
 }
 
 /// \brief Get splat value if the input is a splat vector or return nullptr.
-/// The value may be extracted from a splat constants vector or from
-/// a sequence of instructions that broadcast a single value into a vector.
+/// This function is not fully general. It checks only 2 cases:
+/// the input value is (1) a splat constants vector or (2) a sequence
+/// of instructions that broadcast a single value into a vector.
+///
 llvm::Value *llvm::getSplatValue(Value *V) {
-  llvm::ConstantDataVector *CV = dyn_cast<llvm::ConstantDataVector>(V);
-  if (CV)
+  if (auto *CV = dyn_cast<ConstantDataVector>(V))
     return CV->getSplatValue();
-  llvm::ShuffleVectorInst *ShuffleInst = dyn_cast<llvm::ShuffleVectorInst>(V);
+
+  auto *ShuffleInst = dyn_cast<ShuffleVectorInst>(V);
   if (!ShuffleInst)
     return nullptr;
-  // All-zero (our undef) shuffle mask elements.
-  for (int i : ShuffleInst->getShuffleMask())
-    if (i != 0 && i != -1)
+  // All-zero (or undef) shuffle mask elements.
+  for (int MaskElt : ShuffleInst->getShuffleMask())
+    if (MaskElt != 0 && MaskElt != -1)
       return nullptr;
   // The first shuffle source is 'insertelement' with index 0.
-  llvm::InsertElementInst *InsertEltInst =
-    dyn_cast<llvm::InsertElementInst>(ShuffleInst->getOperand(0));
+  auto *InsertEltInst =
+    dyn_cast<InsertElementInst>(ShuffleInst->getOperand(0));
   if (!InsertEltInst || !isa<ConstantInt>(InsertEltInst->getOperand(2)) ||
       !cast<ConstantInt>(InsertEltInst->getOperand(2))->isNullValue())
     return nullptr;
