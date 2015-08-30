@@ -22,6 +22,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Analysis/VectorUtils.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/GCMetadata.h"
@@ -3150,17 +3151,12 @@ static bool getUniformBase(Value *& Ptr, SDValue& Base, SDValue& Index,
                            SelectionDAGBuilder* SDB) {
 
   assert(Ptr->getType()->isVectorTy() && "Unexpected pointer type");
-  GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
-  if (!Gep || Gep->getNumOperands() > 2)
+  GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr);
+  if (!GEP || GEP->getNumOperands() > 2)
     return false;
-  ShuffleVectorInst *ShuffleInst = 
-    dyn_cast<ShuffleVectorInst>(Gep->getPointerOperand());
-  if (!ShuffleInst || !ShuffleInst->getMask()->isNullValue() ||
-      cast<Instruction>(ShuffleInst->getOperand(0))->getOpcode() !=
-      Instruction::InsertElement)
+  Value *GEPPtrs = GEP->getPointerOperand();
+  if (!(Ptr = getSplatValue(GEPPtrs)))
     return false;
-
-  Ptr = cast<InsertElementInst>(ShuffleInst->getOperand(0))->getOperand(1);
 
   SelectionDAG& DAG = SDB->DAG;
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -3168,19 +3164,19 @@ static bool getUniformBase(Value *& Ptr, SDValue& Base, SDValue& Index,
   // If not, look for the shuffle instruction
   if (SDB->findValue(Ptr))
     Base = SDB->getValue(Ptr);
-  else if (SDB->findValue(ShuffleInst)) {
-    SDValue ShuffleNode = SDB->getValue(ShuffleInst);
-    SDLoc sdl = ShuffleNode;
-    Base = DAG.getNode(
-        ISD::EXTRACT_VECTOR_ELT, sdl,
-        ShuffleNode.getValueType().getScalarType(), ShuffleNode,
-        DAG.getConstant(0, sdl, TLI.getVectorIdxTy(DAG.getDataLayout())));
+  else if (SDB->findValue(GEPPtrs)) {
+    SDValue GEPPtrsVal = SDB->getValue(GEPPtrs);
+    SDLoc sdl = GEPPtrsVal;
+    EVT IdxVT = TLI.getVectorIdxTy(DAG.getDataLayout());
+    Base = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, sdl,
+                       GEPPtrsVal.getValueType().getScalarType(), GEPPtrsVal,
+                       DAG.getConstant(0, sdl, IdxVT));
     SDB->setValue(Ptr, Base);
   }
   else
     return false;
 
-  Value *IndexVal = Gep->getOperand(1);
+  Value *IndexVal = GEP->getOperand(1);
   if (SDB->findValue(IndexVal)) {
     Index = SDB->getValue(IndexVal);
 

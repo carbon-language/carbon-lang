@@ -18,6 +18,8 @@
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/Value.h"
+#include "llvm/IR/Constants.h"
+
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
@@ -405,4 +407,28 @@ Value *llvm::findScalarElement(Value *V, unsigned EltNo) {
 
   // Otherwise, we don't know.
   return nullptr;
+}
+
+/// \brief Get splat value if the input is a splat vector or return nullptr.
+/// The value may be extracted from a splat constants vector or from
+/// a sequence of instructions that broadcast a single value into a vector.
+llvm::Value *llvm::getSplatValue(Value *V) {
+  llvm::ConstantDataVector *CV = dyn_cast<llvm::ConstantDataVector>(V);
+  if (CV)
+    return CV->getSplatValue();
+  llvm::ShuffleVectorInst *ShuffleInst = dyn_cast<llvm::ShuffleVectorInst>(V);
+  if (!ShuffleInst)
+    return nullptr;
+  // All-zero (our undef) shuffle mask elements.
+  for (int i : ShuffleInst->getShuffleMask())
+    if (i != 0 && i != -1)
+      return nullptr;
+  // The first shuffle source is 'insertelement' with index 0.
+  llvm::InsertElementInst *InsertEltInst =
+    dyn_cast<llvm::InsertElementInst>(ShuffleInst->getOperand(0));
+  if (!InsertEltInst || !isa<ConstantInt>(InsertEltInst->getOperand(2)) ||
+      !cast<ConstantInt>(InsertEltInst->getOperand(2))->isNullValue())
+    return nullptr;
+
+  return InsertEltInst->getOperand(1);
 }
