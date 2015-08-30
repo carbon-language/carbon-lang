@@ -22,7 +22,11 @@
 ; CHECK: Region: %bb2---%bb21
 ; CHECK:   Stmt_bb3__TO__bb18
 ; CHECK:         Domain :=
-; CHECK:             { Stmt_bb3__TO__bb18[i0] : i0 >= 0 and i0 <= 1023 };
+; CHECK:             { Stmt_bb3__TO__bb18[i0] :
+; CHECK-DAG:               i0 >= 0
+; CHECK-DAG:             and
+; CHECK-DAG:               i0 <= 1023
+; CHECK:                };
 ; CHECK:         Schedule :=
 ; CHECK:             { Stmt_bb3__TO__bb18[i0] -> [i0, 0] };
 ; CHECK-NOT:         { Stmt_bb3__TO__bb18[i0] -> MemRef_x_0[] };
@@ -41,7 +45,11 @@
 ; CHECK-NOT:         { Stmt_bb3__TO__bb18[i0] -> MemRef_x_1[] };
 ; CHECK:   Stmt_bb18
 ; CHECK:         Domain :=
-; CHECK:             { Stmt_bb18[i0] : i0 >= 0 and i0 <= 1023 };
+; CHECK:             { Stmt_bb18[i0] :
+; CHECK-DAG:               i0 >= 0
+; CHECK-DAG:             and
+; CHECK-DAG:               i0 <= 1023
+; CHECK:                };
 ; CHECK:         Schedule :=
 ; CHECK:             { Stmt_bb18[i0] -> [i0, 1] };
 ; CHECK:         ReadAccess := [Reduction Type: NONE] [Scalar: 1]

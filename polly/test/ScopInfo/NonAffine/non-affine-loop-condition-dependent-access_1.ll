@@ -12,7 +12,11 @@
 ; SCALAR:    Statements {
 ; SCALAR:      Stmt_bb3__TO__bb11
 ; SCALAR:            Domain :=
-; SCALAR:                { Stmt_bb3__TO__bb11[i0] : i0 >= 0 and i0 <= 1023 };
+; SCALAR:                { Stmt_bb3__TO__bb11[i0] :
+; SCALAR-DAG:               i0 >= 0
+; SCALAR-DAG:             and
+; SCALAR-DAG:               i0 <= 1023
+; SCALAR:                }
 ; SCALAR:            Schedule :=
 ; SCALAR:                { Stmt_bb3__TO__bb11[i0] -> [i0] };
 ; SCALAR:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]

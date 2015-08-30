@@ -37,12 +37,12 @@ return:
 
 ; CHECK:  Stmt_store
 ; CHECK:        Domain :=
-; CHECK:            [N, P] -> { Stmt_store[i0] :
+; CHECK:            [P, N] -> { Stmt_store[i0] :
 ; CHECK:              (P <= -1 and i0 >= 0 and i0 <= -1 + N)
 ; CHECK:                or
 ; CHECK:              (P >= 1 and i0 >= 0 and i0 <= -1 + N)
 ; CHECK:                   };
 ; CHECK:        Schedule :=
-; CHECK:            [N, P] -> { Stmt_store[i0] -> [i0] : P <= -1 or P >= 1 };
+; CHECK:            [P, N] -> { Stmt_store[i0] -> [i0] : P <= -1 or P >= 1 };
 ; CHECK:        MustWriteAccess := [Reduction Type: NONE]
-; CHECK:            [N, P] -> { Stmt_store[i0] -> MemRef_a[i0] };
+; CHECK:            [P, N] -> { Stmt_store[i0] -> MemRef_a[i0] };

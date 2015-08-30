@@ -554,7 +554,6 @@ private:
 
   /// Build the statement.
   //@{
-  __isl_give isl_set *buildConditionSet(const Comparison &Cmp);
   void addConditionsToDomain(TempScop &tempScop, const Region &CurRegion);
   void addLoopBoundsToDomain(TempScop &tempScop);
   void addLoopTripCountToDomain(const Loop *L);
@@ -788,6 +787,7 @@ private:
   Scop(const Scop &) = delete;
   const Scop &operator=(const Scop &) = delete;
 
+  DominatorTree &DT;
   ScalarEvolution *SE;
 
   /// The underlying Region.
@@ -816,6 +816,9 @@ private:
 
   /// @brief A map from basic blocks to SCoP statements.
   DenseMap<BasicBlock *, ScopStmt *> StmtMap;
+
+  /// @brief A map from basic blocks to their domains.
+  DenseMap<BasicBlock *, isl_set *> DomainMap;
 
   /// Constraints on parameters.
   isl_set *Context;
@@ -893,7 +896,8 @@ private:
   MinMaxVectorPairVectorTy MinMaxAliasGroups;
 
   /// @brief Scop constructor; used by static createFromTempScop
-  Scop(Region &R, ScalarEvolution &SE, isl_ctx *ctx, unsigned MaxLoopDepth);
+  Scop(Region &R, ScalarEvolution &SE, DominatorTree &DT, isl_ctx *ctx,
+       unsigned MaxLoopDepth);
 
   /// @brief Initialize this ScopInfo using a TempScop object.
   void initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD,
@@ -903,7 +907,26 @@ private:
   /// region and parameters used in this region.
   static Scop *createFromTempScop(TempScop &TempScop, LoopInfo &LI,
                                   ScalarEvolution &SE, ScopDetection &SD,
-                                  AliasAnalysis &AA, isl_ctx *ctx);
+                                  AliasAnalysis &AA, DominatorTree &DT,
+                                  isl_ctx *ctx);
+
+  /// @brief Compute the branching constraints for each basic block in @p R.
+  ///
+  /// @param R  The region we currently build branching conditions for.
+  /// @param LI The LoopInfo analysis to obtain the number of iterators.
+  /// @param SD The ScopDetection analysis to identify non-affine sub-regions.
+  /// @param DT The dominator tree of the current function.
+  void buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
+                                         ScopDetection &SD, DominatorTree &DT);
+
+  /// @brief Compute the domain for each basic block in @p R.
+  ///
+  /// @param R  The region we currently traverse.
+  /// @param LI The LoopInfo analysis to argue about the number of iterators.
+  /// @param SD The ScopDetection analysis to identify non-affine sub-regions.
+  /// @param DT The dominator tree of the current function.
+  void buildDomains(Region *R, LoopInfo &LI, ScopDetection &SD,
+                    DominatorTree &DT);
 
   /// @brief Check if a basic block is trivial.
   ///
@@ -1187,6 +1210,11 @@ public:
   __isl_give isl_pw_aff *getPwAff(const SCEV *E,
                                   __isl_keep isl_set *Domain = nullptr);
 
+  /// @brief Return the non-loop carried conditions on the domain of @p Stmt.
+  ///
+  /// @param Stmt The statement for which the conditions should be returned.
+  __isl_give isl_set *getDomainConditions(ScopStmt *Stmt);
+
   /// @brief Get a union set containing the iteration domains of all statements.
   __isl_give isl_union_set *getDomains() const;
 
@@ -1224,7 +1252,12 @@ public:
   bool restrictDomains(__isl_take isl_union_set *Domain);
 
   /// @brief Get the depth of a loop relative to the outermost loop in the Scop.
-  unsigned getRelativeLoopDepth(const Loop *L) const;
+  ///
+  /// This will return
+  ///    0 if @p L is an outermost loop in the SCoP
+  ///   >0 for other loops in the SCoP
+  ///   -1 if @p L is nullptr or there is no outermost loop in the SCoP
+  int getRelativeLoopDepth(const Loop *L) const;
 };
 
 /// @brief Print Scop scop to raw_ostream O.

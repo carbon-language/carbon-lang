@@ -60,21 +60,6 @@ void Comparison::print(raw_ostream &OS) const {
   // Not yet implemented.
 }
 
-/// Helper function to print the condition
-static void printBBCond(raw_ostream &OS, const BBCond &Cond) {
-  assert(!Cond.empty() && "Unexpected empty condition!");
-  Cond[0].print(OS);
-  for (unsigned i = 1, e = Cond.size(); i != e; ++i) {
-    OS << " && ";
-    Cond[i].print(OS);
-  }
-}
-
-inline raw_ostream &operator<<(raw_ostream &OS, const BBCond &Cond) {
-  printBBCond(OS, Cond);
-  return OS;
-}
-
 //===----------------------------------------------------------------------===//
 // TempScop implementation
 TempScop::~TempScop() {}
@@ -346,124 +331,10 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
   Accs.insert(Accs.end(), Functions.begin(), Functions.end());
 }
 
-Comparison TempScopInfo::buildAffineCondition(Value &V, bool inverted) {
-  if (ConstantInt *C = dyn_cast<ConstantInt>(&V)) {
-    // If this is always true condition, we will create 0 <= 1,
-    // otherwise we will create 0 >= 1.
-    const SCEV *LHS = SE->getConstant(C->getType(), 0);
-    const SCEV *RHS = SE->getConstant(C->getType(), 1);
-
-    if (C->isOne() == inverted)
-      return Comparison(LHS, RHS, ICmpInst::ICMP_SLE);
-    else
-      return Comparison(LHS, RHS, ICmpInst::ICMP_SGE);
-  }
-
-  ICmpInst *ICmp = dyn_cast<ICmpInst>(&V);
-  assert(ICmp && "Only ICmpInst of constant as condition supported!");
-
-  Loop *L = LI->getLoopFor(ICmp->getParent());
-  const SCEV *LHS = SE->getSCEVAtScope(ICmp->getOperand(0), L);
-  const SCEV *RHS = SE->getSCEVAtScope(ICmp->getOperand(1), L);
-
-  ICmpInst::Predicate Pred = ICmp->getPredicate();
-
-  // Invert the predicate if needed.
-  if (inverted)
-    Pred = ICmpInst::getInversePredicate(Pred);
-
-  switch (Pred) {
-  case ICmpInst::ICMP_UGT:
-  case ICmpInst::ICMP_UGE:
-  case ICmpInst::ICMP_ULT:
-  case ICmpInst::ICMP_ULE:
-    // TODO: At the moment we need to see everything as signed. This is an
-    //       correctness issue that needs to be solved.
-    // AffLHS->setUnsigned();
-    // AffRHS->setUnsigned();
-    break;
-  default:
-    break;
-  }
-
-  return Comparison(LHS, RHS, Pred);
-}
-
-void TempScopInfo::buildCondition(BasicBlock *BB, Region &R) {
-  BasicBlock *RegionEntry = R.getEntry();
-  BBCond Cond;
-
-  DomTreeNode *BBNode = DT->getNode(BB), *EntryNode = DT->getNode(RegionEntry);
-  assert(BBNode && EntryNode && "Get null node while building condition!");
-
-  // Walk up the dominance tree until reaching the entry node. Collect all
-  // branching blocks on the path to BB except if BB postdominates the block
-  // containing the condition.
-  SmallVector<BasicBlock *, 4> DominatorBrBlocks;
-  while (BBNode != EntryNode) {
-    BasicBlock *CurBB = BBNode->getBlock();
-    BBNode = BBNode->getIDom();
-    assert(BBNode && "BBNode should not reach the root node!");
-
-    if (PDT->dominates(CurBB, BBNode->getBlock()))
-      continue;
-
-    BranchInst *Br = dyn_cast<BranchInst>(BBNode->getBlock()->getTerminator());
-    assert(Br && "A Valid Scop should only contain branch instruction");
-
-    if (Br->isUnconditional())
-      continue;
-
-    DominatorBrBlocks.push_back(BBNode->getBlock());
-  }
-
-  RegionInfo *RI = R.getRegionInfo();
-  // Iterate in reverse order over the dominating blocks.  Until a non-affine
-  // branch was encountered add all conditions collected. If a non-affine branch
-  // was encountered, stop as we overapproximate from here on anyway.
-  for (auto BIt = DominatorBrBlocks.rbegin(), BEnd = DominatorBrBlocks.rend();
-       BIt != BEnd; BIt++) {
-
-    BasicBlock *BBNode = *BIt;
-    BranchInst *Br = dyn_cast<BranchInst>(BBNode->getTerminator());
-    assert(Br && "A Valid Scop should only contain branch instruction");
-    assert(Br->isConditional() && "Assumed a conditional branch");
-
-    if (SD->isNonAffineSubRegion(RI->getRegionFor(BBNode), &R))
-      break;
-
-    BasicBlock *TrueBB = Br->getSuccessor(0), *FalseBB = Br->getSuccessor(1);
-
-    // Is BB on the ELSE side of the branch?
-    bool inverted = DT->dominates(FalseBB, BB);
-
-    // If both TrueBB and FalseBB dominate BB, one of them must be the target of
-    // a back-edge, i.e. a loop header.
-    if (inverted && DT->dominates(TrueBB, BB)) {
-      assert(
-          (DT->dominates(TrueBB, FalseBB) || DT->dominates(FalseBB, TrueBB)) &&
-          "One of the successors should be the loop header and dominate the"
-          "other!");
-
-      // It is not an invert if the FalseBB is the header.
-      if (DT->dominates(FalseBB, TrueBB))
-        inverted = false;
-    }
-
-    Cond.push_back(buildAffineCondition(*(Br->getCondition()), inverted));
-  }
-
-  if (!Cond.empty())
-    BBConds[BB] = Cond;
-}
-
 TempScop *TempScopInfo::buildTempScop(Region &R) {
-  TempScop *TScop = new TempScop(R, BBConds, AccFuncMap);
+  TempScop *TScop = new TempScop(R, AccFuncMap);
 
   buildAccessFunctions(R, R);
-
-  for (const auto &BB : R.blocks())
-    buildCondition(BB, R);
 
   return TScop;
 }
@@ -482,8 +353,6 @@ bool TempScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
     return false;
 
   Function *F = R->getEntry()->getParent();
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  PDT = &getAnalysis<PostDominatorTree>();
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   AA = &getAnalysis<AliasAnalysis>();
@@ -497,8 +366,6 @@ bool TempScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 }
 
 void TempScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequiredTransitive<DominatorTreeWrapperPass>();
-  AU.addRequiredTransitive<PostDominatorTree>();
   AU.addRequiredTransitive<LoopInfoWrapperPass>();
   AU.addRequiredTransitive<ScalarEvolutionWrapperPass>();
   AU.addRequiredTransitive<ScopDetection>();
@@ -510,7 +377,6 @@ void TempScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 TempScopInfo::~TempScopInfo() { clear(); }
 
 void TempScopInfo::clear() {
-  BBConds.clear();
   AccFuncMap.clear();
   if (TempScopOfRegion)
     delete TempScopOfRegion;
@@ -527,9 +393,7 @@ INITIALIZE_PASS_BEGIN(TempScopInfo, "polly-analyze-ir",
                       "Polly - Analyse the LLVM-IR in the detected regions",
                       false, false);
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis);
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
-INITIALIZE_PASS_DEPENDENCY(PostDominatorTree);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);
 INITIALIZE_PASS_END(TempScopInfo, "polly-analyze-ir",

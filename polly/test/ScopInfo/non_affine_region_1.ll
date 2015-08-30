@@ -30,7 +30,11 @@
 ; CHECK:                 [b] -> { Stmt_bb8[i0] -> MemRef_x_1__phi[] };
 ; CHECK:       Stmt_bb10__TO__bb18
 ; CHECK-NEXT:        Domain :=
-; CHECK-NEXT:            [b] -> { Stmt_bb10__TO__bb18[i0] : i0 >= 0 and i0 <= 1023 };
+; CHECK-NEXT:            [b] -> { Stmt_bb10__TO__bb18[i0] :
+; CHECK-DAG:               i0 >= 0
+; CHECK-DAG:             and
+; CHECK-DAG:               i0 <= 1023
+; CHECK:                };
 ; CHECK-NEXT:        Schedule :=
 ; CHECK-NEXT:            [b] -> { Stmt_bb10__TO__bb18[i0] -> [i0, 3] };
 ; CHECK-NEXT:        ReadAccess := [Reduction Type: NONE] [Scalar: 1]

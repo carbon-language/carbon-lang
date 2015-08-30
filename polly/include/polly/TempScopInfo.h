@@ -118,9 +118,6 @@ public:
 };
 
 //===---------------------------------------------------------------------===//
-/// Types
-// The condition of a Basicblock, combine brcond with "And" operator.
-typedef SmallVector<Comparison, 4> BBCond;
 
 /// Maps from a loop to the affine function expressing its backedge taken count.
 /// The backedge taken count already enough to express iteration domain as we
@@ -129,9 +126,6 @@ typedef SmallVector<Comparison, 4> BBCond;
 /// an integer recurrence that starts at 0 and increments by one each time
 /// through the loop.
 typedef std::map<const Loop *, const SCEV *> LoopBoundMapType;
-
-/// Mapping BBs to its condition constrains
-typedef std::map<const BasicBlock *, BBCond> BBCondMapType;
 
 typedef std::vector<std::pair<IRAccess, Instruction *>> AccFuncSetType;
 typedef std::map<const BasicBlock *, AccFuncSetType> AccFuncMapType;
@@ -145,17 +139,13 @@ class TempScop {
   // The Region.
   Region &R;
 
-  // Remember the bounds of loops, to help us build iteration domain of BBs.
-  const BBCondMapType &BBConds;
-
   // Access function of bbs.
   AccFuncMapType &AccFuncMap;
 
   friend class TempScopInfo;
 
-  explicit TempScop(Region &r, BBCondMapType &BBCmps,
-                    AccFuncMapType &accFuncMap)
-      : R(r), BBConds(BBCmps), AccFuncMap(accFuncMap) {}
+  explicit TempScop(Region &r, AccFuncMapType &accFuncMap)
+      : R(r), AccFuncMap(accFuncMap) {}
 
 public:
   ~TempScop();
@@ -164,17 +154,6 @@ public:
   ///
   /// @return The maximum Region contained by this Scop.
   Region &getMaxRegion() const { return R; }
-
-  /// @brief Get the condition from entry block of the Scop to a BasicBlock
-  ///
-  /// @param BB The BasicBlock
-  ///
-  /// @return The condition from entry block of the Scop to a BB
-  ///
-  const BBCond *getBBCond(const BasicBlock *BB) const {
-    BBCondMapType::const_iterator at = BBConds.find(BB);
-    return at != BBConds.end() ? &(at->second) : 0;
-  }
 
   /// @brief Get all access functions in a BasicBlock
   ///
@@ -227,15 +206,8 @@ class TempScopInfo : public RegionPass {
   // Valid Regions for Scop
   ScopDetection *SD;
 
-  // For condition extraction support.
-  DominatorTree *DT;
-  PostDominatorTree *PDT;
-
   // Target data for element size computing.
   const DataLayout *TD;
-
-  // And also Remember the constrains for BBs
-  BBCondMapType BBConds;
 
   // Access function of statements (currently BasicBlocks) .
   AccFuncMapType AccFuncMap;
@@ -249,15 +221,6 @@ class TempScopInfo : public RegionPass {
 
   // Clear the context.
   void clear();
-
-  /// @brief Build condition constrains to BBs in a valid Scop.
-  ///
-  /// @param BB The BasicBlock to build condition constrains
-  /// @param R  The region for the current TempScop.
-  void buildCondition(BasicBlock *BB, Region &R);
-
-  // Build the affine function of the given condition
-  Comparison buildAffineCondition(Value &V, bool inverted);
 
   // Build the temprory information of Region R, where R must be a valid part
   // of Scop.

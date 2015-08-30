@@ -54,5 +54,11 @@ for.end7:                                         ; preds = %for.cond
 ; CHECK: p0: {0,+,1}<%for.cond>
 
 ; CHECK: Domain :=
-; CHECK: [p_0] -> { Stmt_if_then[i0] : i0 >= 0 and i0 <= 1022 and i0 >= 999 - p_0 };
+; CHECK: [p_0] -> { Stmt_if_then[i0] :
+; CHECK-DAG:         i0 >= 0
+; CHECK-DAG:       and
+; CHECK-DAG:         i0 <= 1022
+; CHECK-DAG:       and
+; CHECK-DAG:         i0 >= 999 - p_0
+; CHECK:          }
 

@@ -18,8 +18,8 @@
 ; INNERMOST:    Function: f
 ; INNERMOST:    Region: %bb15---%bb26
 ; INNERMOST:    Max Loop Depth:  1
-; INNERMOST:    p0: {0,+,{0,+,-1}<nw><%bb11>}<nw><%bb13>
-; INNERMOST:    p1: {0,+,{0,+,1}<nuw><nsw><%bb11>}<nuw><nsw><%bb13>
+; INNERMOST:    p0: {0,+,{0,+,1}<nuw><nsw><%bb11>}<nuw><nsw><%bb13>
+; INNERMOST:    p1: {0,+,{0,+,-1}<nw><%bb11>}<nw><%bb13>
 ; INNERMOST:    p2: {0,+,4}<nuw><nsw><%bb11>
 ; INNERMOST:    p3: {0,+,4}<nuw><nsw><%bb13>
 ; INNERMOST:    p4: {0,+,{0,+,4}<nuw><nsw><%bb11>}<%bb13>
@@ -28,9 +28,9 @@
 ; INNERMOST:    Statements {
 ; INNERMOST:      Stmt_bb16
 ; INNERMOST:            Domain :=
-; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb16[i0] : (i0 <= 1023 - p_1 and i0 >= 0 and i0 <= 1024 + p_0) or (i0 >= 0 and i0 >= 1025 - p_1 and i0 <= 1024 + p_0) };
+; TODO-INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb16[i0] : i0 <= 1023 - p_0 and i0 >= 0 }
 ; INNERMOST:            Schedule :=
-; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb16[i0] -> [i0] : i0 >= 1025 - p_1 or i0 <= 1023 - p_1 };
+; TODO-INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb16[i0] -> [i0] }
 ; INNERMOST:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb16[i0] -> MemRef_A[o0] : 4o0 = p_2 };
 ; INNERMOST:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
@@ -53,7 +53,15 @@
 ; ALL:    Statements {
 ; ALL:      Stmt_bb15__TO__bb25
 ; ALL:            Domain :=
-; ALL:                { Stmt_bb15__TO__bb25[i0, i1] : i0 >= 0 and i0 <= 1023 and i1 >= 0 and i1 <= 1023 };
+; ALL:                { Stmt_bb15__TO__bb25[i0, i1] :
+; ALL-DAG:               i0 >= 0
+; ALL-DAG:             and
+; ALL-DAG:               i0 <= 1023
+; ALL-DAG:             and
+; ALL-DAG:               i1 >= 0
+; ALL-DAG:             and
+; ALL-DAG:               i1 <= 1023
+; ALL:                }
 ; ALL:            Schedule :=
 ; ALL:                { Stmt_bb15__TO__bb25[i0, i1] -> [i0, i1] };
 ; ALL:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]

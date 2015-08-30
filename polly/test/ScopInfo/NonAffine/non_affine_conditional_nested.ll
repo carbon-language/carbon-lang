@@ -12,8 +12,6 @@
 ; CHECK:    Max Loop Depth:  1
 ; CHECK:    Statements {
 ; CHECK:      Stmt_bb2__TO__bb16
-; CHECK:            Domain :=
-; CHECK:                { Stmt_bb2__TO__bb16[i0] : i0 >= 0 and i0 <= 1023 };
 ; CHECK:            Schedule :=
 ; CHECK:                { Stmt_bb2__TO__bb16[i0] -> [i0] };
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]

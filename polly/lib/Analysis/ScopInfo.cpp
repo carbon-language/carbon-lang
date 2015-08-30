@@ -29,6 +29,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
@@ -739,9 +740,85 @@ void ScopStmt::realignParams() {
   Domain = isl_set_align_params(Domain, Parent.getParamSpace());
 }
 
+static __isl_give isl_set *buildConditionSet(ICmpInst::Predicate Pred,
+                                             isl_pw_aff *L, isl_pw_aff *R) {
+  switch (Pred) {
+  case ICmpInst::ICMP_EQ:
+    return isl_pw_aff_eq_set(L, R);
+  case ICmpInst::ICMP_NE:
+    return isl_pw_aff_ne_set(L, R);
+  case ICmpInst::ICMP_SLT:
+    return isl_pw_aff_lt_set(L, R);
+  case ICmpInst::ICMP_SLE:
+    return isl_pw_aff_le_set(L, R);
+  case ICmpInst::ICMP_SGT:
+    return isl_pw_aff_gt_set(L, R);
+  case ICmpInst::ICMP_SGE:
+    return isl_pw_aff_ge_set(L, R);
+  case ICmpInst::ICMP_ULT:
+    return isl_pw_aff_lt_set(L, R);
+  case ICmpInst::ICMP_UGT:
+    return isl_pw_aff_gt_set(L, R);
+  case ICmpInst::ICMP_ULE:
+    return isl_pw_aff_le_set(L, R);
+  case ICmpInst::ICMP_UGE:
+    return isl_pw_aff_ge_set(L, R);
+  default:
+    llvm_unreachable("Non integer predicate not supported");
+  }
+}
+
+/// @brief Build the conditions sets for the branch @p BI in the @p Domain.
+///
+/// This will fill @p ConditionSets with the conditions under which control
+/// will be moved from @p BI to its successors. Hence, @p ConditionSets will
+/// have as many elements as @p BI has successors.
+static void
+buildConditionSets(Scop &S, BranchInst *BI, Loop *L, __isl_keep isl_set *Domain,
+                   SmallVectorImpl<__isl_give isl_set *> &ConditionSets) {
+
+  if (BI->isUnconditional()) {
+    ConditionSets.push_back(isl_set_copy(Domain));
+    return;
+  }
+
+  Value *Condition = BI->getCondition();
+
+  isl_set *ConsequenceCondSet = nullptr;
+  if (auto *CCond = dyn_cast<ConstantInt>(Condition)) {
+    if (CCond->isZero())
+      ConsequenceCondSet = isl_set_empty(isl_set_get_space(Domain));
+    else
+      ConsequenceCondSet = isl_set_universe(isl_set_get_space(Domain));
+  } else {
+    auto *ICond = dyn_cast<ICmpInst>(Condition);
+    assert(ICond &&
+           "Condition of exiting branch was neither constant nor ICmp!");
+
+    ScalarEvolution &SE = *S.getSE();
+    isl_pw_aff *LHS, *RHS;
+    LHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(0), L), Domain);
+    RHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(1), L), Domain);
+    ConsequenceCondSet = buildConditionSet(ICond->getPredicate(), LHS, RHS);
+  }
+
+  assert(ConsequenceCondSet);
+  isl_set *AlternativeCondSet =
+      isl_set_complement(isl_set_copy(ConsequenceCondSet));
+
+  ConditionSets.push_back(isl_set_coalesce(
+      isl_set_intersect(ConsequenceCondSet, isl_set_copy(Domain))));
+  ConditionSets.push_back(isl_set_coalesce(
+      isl_set_intersect(AlternativeCondSet, isl_set_copy(Domain))));
+}
+
 void ScopStmt::addLoopTripCountToDomain(const Loop *L) {
 
-  unsigned loopDimension = getParent()->getRelativeLoopDepth(L);
+  int RelativeLoopDimension = getParent()->getRelativeLoopDepth(L);
+  assert(RelativeLoopDimension >= 0 &&
+         "Expected relative loop depth of L to be non-negative");
+  unsigned loopDimension = RelativeLoopDimension;
+
   ScalarEvolution *SE = getParent()->getSE();
   isl_space *DomSpace = isl_set_get_space(Domain);
 
@@ -781,7 +858,10 @@ void ScopStmt::addLoopTripCountToDomain(const Loop *L) {
     Pred = ICmpInst::getInversePredicate(Pred);
   Comparison Comp(LHS, RHS, Pred);
 
-  isl_set *CondSet = buildConditionSet(Comp);
+  isl_pw_aff *LPWA = getPwAff(Comp.getLHS());
+  isl_pw_aff *RPWA = getPwAff(Comp.getRHS());
+
+  isl_set *CondSet = buildConditionSet(Comp.getPred(), LPWA, RPWA);
   isl_map *ForwardMap = isl_map_lex_le(isl_space_copy(DomSpace));
   for (unsigned i = 0; i < isl_set_n_dim(Domain); i++)
     if (i != loopDimension)
@@ -796,36 +876,6 @@ void ScopStmt::addLoopTripCountToDomain(const Loop *L) {
 
   isl_map_free(TranslationMap);
   isl_space_free(DomSpace);
-}
-
-__isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp) {
-  isl_pw_aff *L = getPwAff(Comp.getLHS());
-  isl_pw_aff *R = getPwAff(Comp.getRHS());
-
-  switch (Comp.getPred()) {
-  case ICmpInst::ICMP_EQ:
-    return isl_pw_aff_eq_set(L, R);
-  case ICmpInst::ICMP_NE:
-    return isl_pw_aff_ne_set(L, R);
-  case ICmpInst::ICMP_SLT:
-    return isl_pw_aff_lt_set(L, R);
-  case ICmpInst::ICMP_SLE:
-    return isl_pw_aff_le_set(L, R);
-  case ICmpInst::ICMP_SGT:
-    return isl_pw_aff_gt_set(L, R);
-  case ICmpInst::ICMP_SGE:
-    return isl_pw_aff_ge_set(L, R);
-  case ICmpInst::ICMP_ULT:
-    return isl_pw_aff_lt_set(L, R);
-  case ICmpInst::ICMP_UGT:
-    return isl_pw_aff_gt_set(L, R);
-  case ICmpInst::ICMP_ULE:
-    return isl_pw_aff_le_set(L, R);
-  case ICmpInst::ICMP_UGE:
-    return isl_pw_aff_ge_set(L, R);
-  default:
-    llvm_unreachable("Non integer predicate not supported");
-  }
 }
 
 void ScopStmt::addLoopBoundsToDomain(TempScop &tempScop) {
@@ -862,25 +912,6 @@ void ScopStmt::addLoopBoundsToDomain(TempScop &tempScop) {
   isl_local_space_free(LocalSpace);
 }
 
-void ScopStmt::addConditionsToDomain(TempScop &tempScop,
-                                     const Region &CurRegion) {
-  const Region *TopRegion = tempScop.getMaxRegion().getParent(),
-               *CurrentRegion = &CurRegion;
-  const BasicBlock *BranchingBB = BB ? BB : R->getEntry();
-
-  do {
-    if (BranchingBB != CurrentRegion->getEntry()) {
-      if (const BBCond *Condition = tempScop.getBBCond(BranchingBB))
-        for (const auto &C : *Condition) {
-          isl_set *ConditionSet = buildConditionSet(C);
-          Domain = isl_set_intersect(Domain, ConditionSet);
-        }
-    }
-    BranchingBB = CurrentRegion->getEntry();
-    CurrentRegion = CurrentRegion->getParent();
-  } while (TopRegion != CurrentRegion);
-}
-
 void ScopStmt::buildDomain(TempScop &tempScop, const Region &CurRegion) {
   isl_space *Space;
   isl_id *Id;
@@ -891,7 +922,8 @@ void ScopStmt::buildDomain(TempScop &tempScop, const Region &CurRegion) {
 
   Domain = isl_set_universe(Space);
   addLoopBoundsToDomain(tempScop);
-  addConditionsToDomain(tempScop, CurRegion);
+  Domain = isl_set_intersect(Domain, getParent()->getDomainConditions(this));
+  Domain = isl_set_coalesce(Domain);
   Domain = isl_set_set_tuple_id(Domain, Id);
 }
 
@@ -1419,6 +1451,151 @@ static bool calculateMinMaxAccess(__isl_take isl_union_map *Accesses,
   return Valid;
 }
 
+/// @brief Helper to treat non-affine regions and basic blocks the same.
+///
+///{
+
+/// @brief Return the block that is the representing block for @p RN.
+static inline BasicBlock *getRegionNodeBasicBlock(RegionNode *RN) {
+  return RN->isSubRegion() ? RN->getNodeAs<Region>()->getEntry()
+                           : RN->getNodeAs<BasicBlock>();
+}
+
+/// @brief Return the @p idx'th block that is executed after @p RN.
+static inline BasicBlock *getRegionNodeSuccessor(RegionNode *RN, BranchInst *BI,
+                                                 unsigned idx) {
+  if (RN->isSubRegion()) {
+    assert(idx == 0);
+    return RN->getNodeAs<Region>()->getExit();
+  }
+  return BI->getSuccessor(idx);
+}
+
+/// @brief Return the smallest loop surrounding @p RN.
+static inline Loop *getRegionNodeLoop(RegionNode *RN, LoopInfo &LI) {
+  if (!RN->isSubRegion())
+    return LI.getLoopFor(RN->getNodeAs<BasicBlock>());
+
+  Region *NonAffineSubRegion = RN->getNodeAs<Region>();
+  Loop *L = LI.getLoopFor(NonAffineSubRegion->getEntry());
+  while (L && NonAffineSubRegion->contains(L))
+    L = L->getParentLoop();
+  return L;
+}
+
+///}
+
+isl_set *Scop::getDomainConditions(ScopStmt *Stmt) {
+  BasicBlock *BB = Stmt->isBlockStmt() ? Stmt->getBasicBlock()
+                                       : Stmt->getRegion()->getEntry();
+  isl_set *Domain = isl_set_copy(DomainMap[BB]);
+
+  unsigned NumDims = Stmt->getNumIterators();
+  Domain = isl_set_remove_dims(Domain, isl_dim_set, NumDims,
+                               getMaxLoopDepth() - NumDims);
+  return Domain;
+}
+
+void Scop::buildDomains(Region *R, LoopInfo &LI, ScopDetection &SD,
+                        DominatorTree &DT) {
+
+  auto *S = isl_set_universe(isl_space_set_alloc(getIslCtx(), 0, MaxLoopDepth));
+  DomainMap[R->getEntry()] = S;
+
+  buildDomainsWithBranchConstraints(R, LI, SD, DT);
+}
+
+void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
+                                             ScopDetection &SD,
+                                             DominatorTree &DT) {
+
+  // To create the domain for each block in R we iterate over all blocks and
+  // subregions in R and propagate the conditions under which the current region
+  // element is executed. To this end we iterate in reverse post order over R as
+  // it ensures that we first visit all predecessors of a region node (either a
+  // basic block or a subregion) before we visit the region node itself.
+  // Initially, only the domain for the SCoP region entry block is set and from
+  // there we propagate the current domain to all successors, however we add the
+  // condition that the successor is actually executed next.
+  // As we are only interested in non-loop carried constraints here we can
+  // simply skip loop back edges.
+
+  ReversePostOrderTraversal<Region *> RTraversal(R);
+  for (auto *RN : RTraversal) {
+
+    // Recurse for affine subregions but go on for basic blocks and non-affine
+    // subregions.
+    if (RN->isSubRegion()) {
+      Region *SubRegion = RN->getNodeAs<Region>();
+      if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
+        buildDomainsWithBranchConstraints(SubRegion, LI, SD, DT);
+        continue;
+      }
+    }
+
+    BasicBlock *BB = getRegionNodeBasicBlock(RN);
+    isl_set *Domain = DomainMap[BB];
+    DEBUG(dbgs() << "\tVisit: " << BB->getName() << " : " << Domain << "\n");
+    assert(Domain && "Due to reverse post order traversal of the region all "
+                     "predecessor of the current region node should have been "
+                     "visited and a domain for this region node should have "
+                     "been set.");
+
+    Loop *BBLoop = getRegionNodeLoop(RN, LI);
+    int BBLoopDepth = getRelativeLoopDepth(BBLoop);
+
+    // Build the condition sets for the successor nodes of the current region
+    // node. If it is a non-affine subregion we will always execute the single
+    // exit node, hence the single entry node domain is the condition set. For
+    // basic blocks we use the helper function buildConditionSets.
+    SmallVector<isl_set *, 2> ConditionSets;
+    BranchInst *BI = cast<BranchInst>(BB->getTerminator());
+    if (RN->isSubRegion())
+      ConditionSets.push_back(isl_set_copy(Domain));
+    else
+      buildConditionSets(*this, BI, BBLoop, Domain, ConditionSets);
+
+    // Now iterate over the successors and set their initial domain based on
+    // their condition set. We skip back edges here and have to be careful when
+    // we leave a loop not to keep constraints over a dimension that doesn't
+    // exist anymore.
+    for (unsigned u = 0, e = ConditionSets.size(); u < e; u++) {
+      BasicBlock *SuccBB = getRegionNodeSuccessor(RN, BI, u);
+      isl_set *CondSet = ConditionSets[u];
+
+      // Skip back edges.
+      if (DT.dominates(SuccBB, BB)) {
+        isl_set_free(CondSet);
+        continue;
+      }
+
+      // Check if the edge to SuccBB is a loop exit edge. If so drop the
+      // constrains on the loop/dimension we leave.
+      Loop *SuccBBLoop = LI.getLoopFor(SuccBB);
+      if (SuccBBLoop != BBLoop &&
+          BBLoopDepth > getRelativeLoopDepth(SuccBBLoop)) {
+        assert(BBLoopDepth >= 0 &&
+               "Can only remove a dimension if we exit a loop");
+        CondSet = isl_set_drop_constraints_involving_dims(CondSet, isl_dim_set,
+                                                          BBLoopDepth, 1);
+      }
+
+      // Set the domain for the successor or merge it with an existing domain in
+      // case there are multiple paths (without loop back edges) to the
+      // successor block.
+      isl_set *&SuccDomain = DomainMap[SuccBB];
+      if (!SuccDomain)
+        SuccDomain = CondSet;
+      else
+        SuccDomain = isl_set_union(SuccDomain, CondSet);
+
+      SuccDomain = isl_set_coalesce(SuccDomain);
+      DEBUG(dbgs() << "\tSet SuccBB: " << SuccBB->getName() << " : " << Domain
+                   << "\n");
+    }
+  }
+}
+
 void Scop::buildAliasChecks(AliasAnalysis &AA) {
   if (!PollyUseRuntimeAliasChecks)
     return;
@@ -1619,14 +1796,16 @@ static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI,
   return MaxLD - MinLD + 1;
 }
 
-Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, isl_ctx *Context,
-           unsigned MaxLoopDepth)
-    : SE(&ScalarEvolution), R(R), IsOptimized(false),
+Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, DominatorTree &DT,
+           isl_ctx *Context, unsigned MaxLoopDepth)
+    : DT(DT), SE(&ScalarEvolution), R(R), IsOptimized(false),
       MaxLoopDepth(MaxLoopDepth), IslCtx(Context), Affinator(this) {}
 
 void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD,
                             AliasAnalysis &AA) {
   buildContext();
+
+  buildDomains(&R, LI, SD, DT);
 
   SmallVector<Loop *, 8> NestLoops;
 
@@ -1647,10 +1826,11 @@ void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD,
 
 Scop *Scop::createFromTempScop(TempScop &TempScop, LoopInfo &LI,
                                ScalarEvolution &SE, ScopDetection &SD,
-                               AliasAnalysis &AA, isl_ctx *ctx) {
+                               AliasAnalysis &AA, DominatorTree &DT,
+                               isl_ctx *ctx) {
   auto &R = TempScop.getMaxRegion();
   auto MaxLoopDepth = getMaxLoopDepthInRegion(R, LI, SD);
-  auto S = new Scop(R, SE, ctx, MaxLoopDepth);
+  auto S = new Scop(R, SE, DT, ctx, MaxLoopDepth);
   S->initFromTempScop(TempScop, LI, SD, AA);
 
   return S;
@@ -1660,6 +1840,9 @@ Scop::~Scop() {
   isl_set_free(Context);
   isl_set_free(AssumedContext);
   isl_schedule_free(Schedule);
+
+  for (auto It : DomainMap)
+    isl_set_free(It.second);
 
   // Free the alias groups
   for (MinMaxVectorPairTy &MinMaxAccessPair : MinMaxAliasGroups) {
@@ -2124,9 +2307,11 @@ ScopStmt *Scop::getStmtForBasicBlock(BasicBlock *BB) const {
   return StmtMapIt->second;
 }
 
-unsigned Scop::getRelativeLoopDepth(const Loop *L) const {
-  Loop *OuterLoop = R.outermostLoopInRegion(const_cast<Loop *>(L));
-  assert(OuterLoop && "Scop does not contain this loop");
+int Scop::getRelativeLoopDepth(const Loop *L) const {
+  Loop *OuterLoop =
+      L ? R.outermostLoopInRegion(const_cast<Loop *>(L)) : nullptr;
+  if (!OuterLoop)
+    return -1;
   return L->getLoopDepth() - OuterLoop->getLoopDepth();
 }
 
@@ -2144,6 +2329,7 @@ ScopInfo::~ScopInfo() {
 void ScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<RegionInfoPass>();
+  AU.addRequired<DominatorTreeWrapperPass>();
   AU.addRequired<ScalarEvolutionWrapperPass>();
   AU.addRequired<ScopDetection>();
   AU.addRequired<TempScopInfo>();
@@ -2156,6 +2342,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   ScopDetection &SD = getAnalysis<ScopDetection>();
   ScalarEvolution &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+  DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   TempScop *tempScop = getAnalysis<TempScopInfo>().getTempScop();
 
@@ -2165,7 +2352,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
     return false;
   }
 
-  scop = Scop::createFromTempScop(*tempScop, LI, SE, SD, AA, ctx);
+  scop = Scop::createFromTempScop(*tempScop, LI, SE, SD, AA, DT, ctx);
 
   DEBUG(scop->print(dbgs()));
 
@@ -2195,6 +2382,7 @@ INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);
 INITIALIZE_PASS_DEPENDENCY(TempScopInfo);
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_END(ScopInfo, "polly-scops",
                     "Polly - Create polyhedral description of Scops", false,
                     false)

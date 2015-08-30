@@ -29,7 +29,11 @@
 ; INNERMOST:    Statements {
 ; INNERMOST:      Stmt_bb16
 ; INNERMOST:            Domain :=
-; INNERMOST:                [p_0, p_1, p_2] -> { Stmt_bb16[i0] : i0 >= 0 and i0 <= -1 + p_0 };
+; INNERMOST:                [p_0, p_1, p_2] -> { Stmt_bb16[i0] :
+; INNERMOST-DAG:               i0 >= 0
+; INNERMOST-DAG:             and
+; INNERMOST-DAG:               i0 <= -1 + p_0
+; INNERMOST-DAG:             };
 ; INNERMOST:            Schedule :=
 ; INNERMOST:                [p_0, p_1, p_2] -> { Stmt_bb16[i0] -> [i0] };
 ; INNERMOST:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
@@ -54,7 +58,15 @@
 ; ALL:    Statements {
 ; ALL:      Stmt_bb15__TO__bb25
 ; ALL:            Domain :=
-; ALL:                { Stmt_bb15__TO__bb25[i0, i1] : i0 >= 0 and i0 <= 1023 and i1 >= 0 and i1 <= 1023 };
+; ALL:                { Stmt_bb15__TO__bb25[i0, i1] :
+; ALL-DAG:               i0 >= 0
+; ALL-DAG:             and
+; ALL-DAG:               i0 <= 1023
+; ALL-DAG:             and
+; ALL-DAG:               i1 >= 0
+; ALL-DAG:             and
+; ALL-DAG:               i1 <= 1023
+; ALL:                }
 ; ALL:            Schedule :=
 ; ALL:                { Stmt_bb15__TO__bb25[i0, i1] -> [i0, i1] };
 ; ALL:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]

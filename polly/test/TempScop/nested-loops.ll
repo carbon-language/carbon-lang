@@ -29,4 +29,12 @@ return:
 
 ; CHECK: body
 ; CHECK:        Domain :=
-; CHECK:           { Stmt_body[i0, i1] : i0 >= 0 and i0 <= 2046 and i1 >= 0 and i1 <= 1022 }
+; CHECK:           { Stmt_body[i0, i1] :
+; CHECK-DAG:         i0 >= 0
+; CHECK-DAG:       and
+; CHECK-DAG:         i0 <= 2046
+; CHECK-DAG:       and
+; CHECK-DAG:         i1 >= 0
+; CHECK-DAG:       and
+; CHECK-DAG:         i1 <= 1022
+; CHECK:           }

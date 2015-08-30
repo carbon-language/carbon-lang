@@ -26,8 +26,6 @@ for.end:
 
 ; CHECK: p0: %n
 
-; CHECK: Domain
-; CHECK:   [n] -> { Stmt_for_body[i0] : i0 >= 0 and i0 <= -1 + n };
 ; CHECK: Schedule
 ; CHECK:   [n] -> { Stmt_for_body[i0] -> [i0] };
 ; CHECK: ReadAccess

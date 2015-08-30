@@ -10,18 +10,30 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; }
 
 ; CHECK: Assumed Context:
-; CHECK:   [n, m, o] -> {  :  }
-; CHECK: p0: %n
+; CHECK:   [o, m, n] -> {  :  }
+; CHECK: p0: %o
 ; CHECK: p1: %m
-; CHECK: p2: %o
+; CHECK: p2: %n
 ; CHECK-NOT: p3
 ;
 ; CHECK: Domain
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= -1 + n and i1 >= 0 and i1 <= -1 + m and i2 >= 0 and i2 <= -1 + o };
+; CHECK:   [o, m, n] -> { Stmt_for_k[i0, i1, i2] :
+; CHECK-DAG:             i0 >= 0
+; CHECK-DAG:          and
+; CHECK-DAG:             i0 <= -1 + n
+; CHECK-DAG:          and
+; CHECK-DAG:             i1 >= 0
+; CHECK-DAG:          and
+; CHECK-DAG:             i1 <= -1 + m
+; CHECK-DAG:          and
+; CHECK-DAG:             i2 >= 0
+; CHECK-DAG:          and
+; CHECK-DAG:             i2 <= -1 + o
+; CHECK:              }
 ; CHECK: Schedule
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> [i0, i1, i2] };
+; CHECK:   [o, m, n] -> { Stmt_for_k[i0, i1, i2] -> [i0, i1, i2] };
 ; CHECK: WriteAccess
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[i0, i1, i2] };
+; CHECK:   [o, m, n] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[i0, i1, i2] };
 
 define void @foo(i64 %n, i64 %m, i64 %o, double* %A) {
 entry:
