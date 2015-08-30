@@ -282,12 +282,12 @@ unsigned llvm::ARM::getDefaultFPU(StringRef CPU) {
 }
 
 bool llvm::ARM::getHWDivFeatures(unsigned HWDivKind,
-                                       std::vector<const char *> &Features) {
+                                 std::vector<const char *> &Features) {
 
   if (HWDivKind == ARM::AEK_INVALID)
     return false;
 
-   if (HWDivKind & ARM::AEK_HWDIVARM)
+  if (HWDivKind & ARM::AEK_HWDIVARM)
     Features.push_back("+hwdiv-arm");
   else
     Features.push_back("-hwdiv-arm");
@@ -301,7 +301,7 @@ bool llvm::ARM::getHWDivFeatures(unsigned HWDivKind,
 }
 
 bool llvm::ARM::getFPUFeatures(unsigned FPUKind,
-                                     std::vector<const char *> &Features) {
+                               std::vector<const char *> &Features) {
 
   if (FPUKind >= ARM::FK_LAST || FPUKind == ARM::FK_INVALID)
     return false;
@@ -440,38 +440,38 @@ const char *llvm::ARM::getDefaultCPU(StringRef Arch) {
 
 static StringRef getHWDivSynonym(StringRef HWDiv) {
   return StringSwitch<StringRef>(HWDiv)
-    .Case("thumb,arm", "arm,thumb")
-    .Default(HWDiv);
+      .Case("thumb,arm", "arm,thumb")
+      .Default(HWDiv);
 }
 
 static StringRef getFPUSynonym(StringRef FPU) {
   return StringSwitch<StringRef>(FPU)
-    .Cases("fpa", "fpe2", "fpe3", "maverick", "invalid") // Unsupported
-    .Case("vfp2", "vfpv2")
-    .Case("vfp3", "vfpv3")
-    .Case("vfp4", "vfpv4")
-    .Case("vfp3-d16", "vfpv3-d16")
-    .Case("vfp4-d16", "vfpv4-d16")
-    .Cases("fp4-sp-d16", "vfpv4-sp-d16", "fpv4-sp-d16")
-    .Cases("fp4-dp-d16", "fpv4-dp-d16", "vfpv4-d16")
-    .Case("fp5-sp-d16", "fpv5-sp-d16")
-    .Cases("fp5-dp-d16", "fpv5-dp-d16", "fpv5-d16")
-    // FIXME: Clang uses it, but it's bogus, since neon defaults to vfpv3.
-    .Case("neon-vfpv3", "neon")
-    .Default(FPU);
+      .Cases("fpa", "fpe2", "fpe3", "maverick", "invalid") // Unsupported
+      .Case("vfp2", "vfpv2")
+      .Case("vfp3", "vfpv3")
+      .Case("vfp4", "vfpv4")
+      .Case("vfp3-d16", "vfpv3-d16")
+      .Case("vfp4-d16", "vfpv4-d16")
+      .Cases("fp4-sp-d16", "vfpv4-sp-d16", "fpv4-sp-d16")
+      .Cases("fp4-dp-d16", "fpv4-dp-d16", "vfpv4-d16")
+      .Case("fp5-sp-d16", "fpv5-sp-d16")
+      .Cases("fp5-dp-d16", "fpv5-dp-d16", "fpv5-d16")
+      // FIXME: Clang uses it, but it's bogus, since neon defaults to vfpv3.
+      .Case("neon-vfpv3", "neon")
+      .Default(FPU);
 }
 
 static StringRef getArchSynonym(StringRef Arch) {
   return StringSwitch<StringRef>(Arch)
-    .Case("v6sm", "v6s-m")
-    .Case("v6m", "v6-m")
-    .Case("v7a", "v7-a")
-    .Case("v7r", "v7-r")
-    .Case("v7m", "v7-m")
-    .Case("v7em", "v7e-m")
-    .Cases("v8", "v8a", "aarch64", "arm64", "v8-a")
-    .Case("v8.1a", "v8.1-a")
-    .Default(Arch);
+      .Case("v6sm", "v6s-m")
+      .Case("v6m", "v6-m")
+      .Case("v7a", "v7-a")
+      .Case("v7r", "v7-r")
+      .Case("v7m", "v7-m")
+      .Case("v7em", "v7e-m")
+      .Cases("v8", "v8a", "aarch64", "arm64", "v8-a")
+      .Case("v8.1a", "v8.1-a")
+      .Default(Arch);
 }
 
 // MArch is expected to be of the form (arm|thumb)?(eb)?(v.+)?(eb)?, but
@@ -495,7 +495,7 @@ StringRef llvm::ARM::getCanonicalArchName(StringRef Arch) {
     // AArch64 uses "_be", not "eb" suffix.
     if (A.find("eb") != StringRef::npos)
       return Error;
-    if (A.substr(offset,3) == "_be")
+    if (A.substr(offset, 3) == "_be")
       offset += 3;
   }
 
@@ -515,7 +515,7 @@ StringRef llvm::ARM::getCanonicalArchName(StringRef Arch) {
 
   // Only match non-marketing names
   if (offset != StringRef::npos) {
-  // Must start with 'vN'.
+    // Must start with 'vN'.
     if (A[0] != 'v' || !std::isdigit(A[1]))
       return Error;
     // Can't have an extra 'eb'.
@@ -576,16 +576,15 @@ unsigned llvm::ARM::parseCPUArch(StringRef CPU) {
 unsigned llvm::ARM::parseArchISA(StringRef Arch) {
   return StringSwitch<unsigned>(Arch)
       .StartsWith("aarch64", ARM::IK_AARCH64)
-      .StartsWith("arm64",   ARM::IK_AARCH64)
-      .StartsWith("thumb",   ARM::IK_THUMB)
-      .StartsWith("arm",     ARM::IK_ARM)
+      .StartsWith("arm64", ARM::IK_AARCH64)
+      .StartsWith("thumb", ARM::IK_THUMB)
+      .StartsWith("arm", ARM::IK_ARM)
       .Default(ARM::EK_INVALID);
 }
 
 // Little/Big endian
 unsigned llvm::ARM::parseArchEndian(StringRef Arch) {
-  if (Arch.startswith("armeb") ||
-      Arch.startswith("thumbeb") ||
+  if (Arch.startswith("armeb") || Arch.startswith("thumbeb") ||
       Arch.startswith("aarch64_be"))
     return ARM::EK_BIG;
 
@@ -605,7 +604,7 @@ unsigned llvm::ARM::parseArchEndian(StringRef Arch) {
 // Profile A/R/M
 unsigned llvm::ARM::parseArchProfile(StringRef Arch) {
   Arch = getCanonicalArchName(Arch);
-  switch(parseArch(Arch)) {
+  switch (parseArch(Arch)) {
   case ARM::AK_ARMV6M:
   case ARM::AK_ARMV7M:
   case ARM::AK_ARMV6SM:
@@ -626,7 +625,7 @@ unsigned llvm::ARM::parseArchProfile(StringRef Arch) {
 // Version number (ex. v7 = 7).
 unsigned llvm::ARM::parseArchVersion(StringRef Arch) {
   Arch = getCanonicalArchName(Arch);
-  switch(parseArch(Arch)) {
+  switch (parseArch(Arch)) {
   case ARM::AK_ARMV2:
   case ARM::AK_ARMV2A:
     return 2;
