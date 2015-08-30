@@ -79,6 +79,11 @@ Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE, Loop *Lp);
 /// from the vector.
 Value *findScalarElement(Value *V, unsigned EltNo);
 
+/// \brief Get splat value if the input is a splat vector or return nullptr.
+/// The value may be extracted from a splat constants vector or from
+/// a sequence of instructions that broadcast a single value into a vector.
+Value *getSplatValue(Value *V);
+
 } // llvm namespace
 
 #endif
