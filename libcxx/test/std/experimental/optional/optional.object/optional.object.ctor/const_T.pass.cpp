@@ -6,6 +6,8 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// UNSUPPORTED: c++98, c++03, c++11
 
 // <optional>
 
@@ -14,8 +16,6 @@
 #include <experimental/optional>
 #include <type_traits>
 #include <cassert>
-
-#if _LIBCPP_STD_VER > 11
 
 using std::experimental::optional;
 
@@ -39,18 +39,14 @@ public:
 
 class Z
 {
-    int i_;
 public:
-    Z(int i) : i_(i) {}
+    Z(int)  {}
     Z(const Z&) {throw 6;}
 };
 
 
-#endif  // _LIBCPP_STD_VER > 11
-
 int main()
 {
-#if _LIBCPP_STD_VER > 11
     {
         typedef int T;
         constexpr T t(5);
@@ -113,5 +109,4 @@ int main()
             assert(i == 6);
         }
     }
-#endif  // _LIBCPP_STD_VER > 11
 }

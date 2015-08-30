@@ -38,8 +38,6 @@ int move_only_constructed = 0;
 #if TEST_STD_VER >= 11
 class move_only
 {
-    int data;
-
     move_only(const move_only&) = delete;
     move_only& operator=(const move_only&)= delete;
 
@@ -49,6 +47,10 @@ public:
 
     move_only() {++move_only_constructed;}
     ~move_only() {--move_only_constructed;}
+
+public:
+    int data; // unused other than to make sizeof(move_only) == sizeof(int).
+              // but public to suppress "-Wunused-private-field"
 };
 #endif // TEST_STD_VER >= 11
 

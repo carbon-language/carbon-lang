@@ -578,6 +578,10 @@ class Configuration(object):
             self.cxx.addWarningFlagIfSupported('-Wno-pessimizing-move')
             self.cxx.addWarningFlagIfSupported('-Wno-c++11-extensions')
             self.cxx.addWarningFlagIfSupported('-Wno-user-defined-literals')
+            # TODO(EricWF) Remove the unused warnings once the test suite
+            # compiles clean with them.
+            self.cxx.addWarningFlagIfSupported('-Wno-unused-local-typedef')
+            self.cxx.addWarningFlagIfSupported('-Wno-unused-variable')
             std = self.get_lit_conf('std', None)
             if std in ['c++98', 'c++03']:
                 # The '#define static_assert' provided by libc++ in C++03 mode

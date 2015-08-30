@@ -17,6 +17,10 @@
 #include <sstream>
 #include <cassert>
 
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wliteral-conversion"
+#endif
+
 int main()
 {
     {

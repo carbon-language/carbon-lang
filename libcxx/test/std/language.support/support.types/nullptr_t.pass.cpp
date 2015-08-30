@@ -52,6 +52,24 @@ void test_comparisons()
     assert(!(nullptr > p));
 }
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma diagnostic ignored "-Wnull-conversion"
+#endif
+void test_nullptr_conversions() {
+    {
+        bool b = nullptr;
+        assert(!b);
+    }
+    {
+        bool b(nullptr);
+        assert(!b);
+    }
+}
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 
 int main()
 {
@@ -72,8 +90,5 @@ int main()
         test_comparisons<A*>();
         test_comparisons<void(*)()>();
     }
-    {
-        bool b = nullptr;
-        assert(!b);
-    }
+    test_nullptr_conversions();
 }
