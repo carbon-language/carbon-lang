@@ -1992,3 +1992,35 @@ unsigned PPCInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   }
 }
 
+std::pair<unsigned, unsigned>
+PPCInstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
+  const unsigned Mask = PPCII::MO_ACCESS_MASK;
+  return std::make_pair(TF & Mask, TF & ~Mask);
+}
+
+ArrayRef<std::pair<unsigned, const char *>>
+PPCInstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
+  using namespace PPCII;
+  static std::pair<unsigned, const char *> TargetFlags[] = {
+      {MO_LO, "ppc-lo"},
+      {MO_HA, "ppc-ha"},
+      {MO_TPREL_LO, "ppc-tprel-lo"},
+      {MO_TPREL_HA, "ppc-tprel-ha"},
+      {MO_DTPREL_LO, "ppc-dtprel-lo"},
+      {MO_TLSLD_LO, "ppc-tlsld-lo"},
+      {MO_TOC_LO, "ppc-toc-lo"},
+      {MO_TLS, "ppc-tls"}};
+  return makeArrayRef(TargetFlags);
+}
+
+ArrayRef<std::pair<unsigned, const char *>>
+PPCInstrInfo::getSerializableBitmaskMachineOperandTargetFlags() const {
+  using namespace PPCII;
+  static std::pair<unsigned, const char *> TargetFlags[] = {
+      {MO_PLT_OR_STUB, "ppc-plt-or-stub"},
+      {MO_PIC_FLAG, "ppc-pic"},
+      {MO_NLP_FLAG, "ppc-nlp"},
+      {MO_NLP_HIDDEN_FLAG, "ppc-nlp-hidden"}};
+  return makeArrayRef(TargetFlags);
+}
+

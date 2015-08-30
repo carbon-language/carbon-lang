@@ -271,6 +271,15 @@ public:
   unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
 
   void getNoopForMachoTarget(MCInst &NopInst) const override;
+
+  std::pair<unsigned, unsigned>
+  decomposeMachineOperandsTargetFlags(unsigned TF) const override;
+
+  ArrayRef<std::pair<unsigned, const char *>>
+  getSerializableDirectMachineOperandTargetFlags() const override;
+
+  ArrayRef<std::pair<unsigned, const char *>>
+  getSerializableBitmaskMachineOperandTargetFlags() const override;
 };
 
 }
