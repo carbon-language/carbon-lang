@@ -102,7 +102,7 @@ enum ProfileKind { PK_INVALID = 0, PK_A, PK_R, PK_M };
 StringRef getCanonicalArchName(StringRef Arch);
 
 // Information by ID
-const char *getFPUName(unsigned FPUKind);
+StringRef getFPUName(unsigned FPUKind);
 unsigned getFPUVersion(unsigned FPUKind);
 unsigned getFPUNeonSupportLevel(unsigned FPUKind);
 unsigned getFPURestriction(unsigned FPUKind);
@@ -110,13 +110,13 @@ unsigned getDefaultFPU(StringRef CPU);
 // FIXME: This should be moved to TargetTuple once it exists
 bool getFPUFeatures(unsigned FPUKind, std::vector<const char *> &Features);
 bool getHWDivFeatures(unsigned HWDivKind, std::vector<const char *> &Features);
-const char *getArchName(unsigned ArchKind);
+StringRef getArchName(unsigned ArchKind);
 unsigned getArchAttr(unsigned ArchKind);
-const char *getCPUAttr(unsigned ArchKind);
-const char *getSubArch(unsigned ArchKind);
-const char *getArchExtName(unsigned ArchExtKind);
-const char *getHWDivName(unsigned HWDivKind);
-const char *getDefaultCPU(StringRef Arch);
+StringRef getCPUAttr(unsigned ArchKind);
+StringRef getSubArch(unsigned ArchKind);
+StringRef getArchExtName(unsigned ArchExtKind);
+StringRef getHWDivName(unsigned HWDivKind);
+StringRef getDefaultCPU(StringRef Arch);
 
 // Parser
 unsigned parseHWDiv(StringRef HWDiv);

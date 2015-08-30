@@ -1290,7 +1290,7 @@ Triple Triple::getLittleEndianArchVariant() const {
   return T;
 }
 
-const char *Triple::getARMCPUForArch(StringRef MArch) const {
+StringRef Triple::getARMCPUForArch(StringRef MArch) const {
   if (MArch.empty())
     MArch = getArchName();
   MArch = ARM::getCanonicalArchName(MArch);
@@ -1310,10 +1310,10 @@ const char *Triple::getARMCPUForArch(StringRef MArch) const {
   }
 
   if (MArch.empty())
-    return nullptr;
+    return StringRef();
 
-  const char *CPU = ARM::getDefaultCPU(MArch);
-  if (CPU)
+  StringRef CPU = ARM::getDefaultCPU(MArch);
+  if (!CPU.empty())
     return CPU;
 
   // If no specific architecture version is requested, return the minimum CPU

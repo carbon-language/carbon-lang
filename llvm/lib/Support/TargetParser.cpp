@@ -28,14 +28,17 @@ namespace {
 // FIXME: TableGen this.
 // The entries must appear in the order listed in ARM::FPUKind for correct indexing
 struct {
-  const char * Name;
+  const char *NameCStr;
+  size_t NameLength;
   ARM::FPUKind ID;
   ARM::FPUVersion FPUVersion;
   ARM::NeonSupportLevel NeonSupport;
   ARM::FPURestriction Restriction;
+
+  StringRef getName() const { return StringRef(NameCStr, NameLength); }
 } FPUNames[] = {
 #define ARM_FPU(NAME, KIND, VERSION, NEON_SUPPORT, RESTRICTION) \
-  { NAME, KIND, VERSION, NEON_SUPPORT, RESTRICTION },
+  { NAME, sizeof(NAME) - 1, KIND, VERSION, NEON_SUPPORT, RESTRICTION },
 #include "llvm/Support/ARMTargetParser.def"
 };
 
@@ -48,48 +51,72 @@ struct {
 // Check to see if the expectation should be changed.
 // FIXME: TableGen this.
 struct {
-  const char *Name;
+  const char *NameCStr;
+  size_t NameLength;
   ARM::ArchKind ID;
-  const char *CPUAttr; // CPU class in build attributes.
-  const char *SubArch; // Sub-Arch name.
+  const char *CPUAttrCStr;
+  size_t CPUAttrLength;
+  const char *SubArchCStr;
+  size_t SubArchLength;
   ARMBuildAttrs::CPUArch ArchAttr; // Arch ID in build attributes.
+
+  StringRef getName() const { return StringRef(NameCStr, NameLength); }
+
+  // CPU class in build attributes.
+  StringRef getCPUAttr() const { return StringRef(CPUAttrCStr, CPUAttrLength); }
+
+  // Sub-Arch name.
+  StringRef getSubArch() const { return StringRef(SubArchCStr, SubArchLength); }
 } ARCHNames[] = {
-#define ARM_ARCH(NAME, ID, CPU_ATTR, SUB_ARCH, ARCH_ATTR) \
-  { NAME, ID, CPU_ATTR, SUB_ARCH, ARCH_ATTR },
+#define ARM_ARCH(NAME, ID, CPU_ATTR, SUB_ARCH, ARCH_ATTR)                      \
+  {NAME, sizeof(NAME) - 1, ID, CPU_ATTR, sizeof(CPU_ATTR) - 1, SUB_ARCH,       \
+   sizeof(SUB_ARCH) - 1, ARCH_ATTR},
 #include "llvm/Support/ARMTargetParser.def"
 };
+
 // List of Arch Extension names.
 // FIXME: TableGen this.
 struct {
-  const char *Name;
+  const char *NameCStr;
+  size_t NameLength;
   unsigned ID;
+
+  StringRef getName() const { return StringRef(NameCStr, NameLength); }
 } ARCHExtNames[] = {
-#define ARM_ARCH_EXT_NAME(NAME, ID) { NAME, ID },
+#define ARM_ARCH_EXT_NAME(NAME, ID) { NAME, sizeof(NAME) - 1, ID },
 #include "llvm/Support/ARMTargetParser.def"
 };
+
 // List of HWDiv names (use getHWDivSynonym) and which architectural
 // features they correspond to (use getHWDivFeatures).
 // FIXME: TableGen this.
 struct {
-  const char *Name;
+  const char *NameCStr;
+  size_t NameLength;
   unsigned ID;
+
+  StringRef getName() const { return StringRef(NameCStr, NameLength); }
 } HWDivNames[] = {
-#define ARM_HW_DIV_NAME(NAME, ID) { NAME, ID },
+#define ARM_HW_DIV_NAME(NAME, ID) { NAME, sizeof(NAME) - 1, ID },
 #include "llvm/Support/ARMTargetParser.def"
 };
+
 // List of CPU names and their arches.
 // The same CPU can have multiple arches and can be default on multiple arches.
 // When finding the Arch for a CPU, first-found prevails. Sort them accordingly.
 // When this becomes table-generated, we'd probably need two tables.
 // FIXME: TableGen this.
 struct {
-  const char *Name;
+  const char *NameCStr;
+  size_t NameLength;
   ARM::ArchKind ArchID;
   ARM::FPUKind DefaultFPU;
   bool Default; // is $Name the default CPU for $ArchID ?
+
+  StringRef getName() const { return StringRef(NameCStr, NameLength); }
 } CPUNames[] = {
 #define ARM_CPU_NAME(NAME, ID, DEFAULT_FPU, IS_DEFAULT) \
-  { NAME, ID, DEFAULT_FPU, IS_DEFAULT },
+  { NAME, sizeof(NAME) - 1, ID, DEFAULT_FPU, IS_DEFAULT },
 #include "llvm/Support/ARMTargetParser.def"
 };
 
@@ -99,10 +126,10 @@ struct {
 // Information by ID
 // ======================================================= //
 
-const char *llvm::ARM::getFPUName(unsigned FPUKind) {
+StringRef llvm::ARM::getFPUName(unsigned FPUKind) {
   if (FPUKind >= ARM::FK_LAST)
-    return nullptr;
-  return FPUNames[FPUKind].Name;
+    return StringRef();
+  return FPUNames[FPUKind].getName();
 }
 
 unsigned llvm::ARM::getFPUVersion(unsigned FPUKind) {
@@ -125,7 +152,7 @@ unsigned llvm::ARM::getFPURestriction(unsigned FPUKind) {
 
 unsigned llvm::ARM::getDefaultFPU(StringRef CPU) {
   for (const auto C : CPUNames) {
-    if (CPU == C.Name)
+    if (CPU == C.getName())
       return C.DefaultFPU;
   }
   return ARM::FK_INVALID;
@@ -231,22 +258,22 @@ bool llvm::ARM::getFPUFeatures(unsigned FPUKind,
   return true;
 }
 
-const char *llvm::ARM::getArchName(unsigned ArchKind) {
+StringRef llvm::ARM::getArchName(unsigned ArchKind) {
   if (ArchKind >= ARM::AK_LAST)
-    return nullptr;
-  return ARCHNames[ArchKind].Name;
+    return StringRef();
+  return ARCHNames[ArchKind].getName();
 }
 
-const char *llvm::ARM::getCPUAttr(unsigned ArchKind) {
+StringRef llvm::ARM::getCPUAttr(unsigned ArchKind) {
   if (ArchKind >= ARM::AK_LAST)
-    return nullptr;
-  return ARCHNames[ArchKind].CPUAttr;
+    return StringRef();
+  return ARCHNames[ArchKind].getCPUAttr();
 }
 
-const char *llvm::ARM::getSubArch(unsigned ArchKind) {
+StringRef llvm::ARM::getSubArch(unsigned ArchKind) {
   if (ArchKind >= ARM::AK_LAST)
-    return nullptr;
-  return ARCHNames[ArchKind].SubArch;
+    return StringRef();
+  return ARCHNames[ArchKind].getSubArch();
 }
 
 unsigned llvm::ARM::getArchAttr(unsigned ArchKind) {
@@ -255,33 +282,33 @@ unsigned llvm::ARM::getArchAttr(unsigned ArchKind) {
   return ARCHNames[ArchKind].ArchAttr;
 }
 
-const char *llvm::ARM::getArchExtName(unsigned ArchExtKind) {
+StringRef llvm::ARM::getArchExtName(unsigned ArchExtKind) {
   for (const auto AE : ARCHExtNames) {
     if (ArchExtKind == AE.ID)
-      return AE.Name;
+      return AE.getName();
   }
-  return nullptr;
+  return StringRef();
 }
 
-const char *llvm::ARM::getHWDivName(unsigned HWDivKind) {
+StringRef llvm::ARM::getHWDivName(unsigned HWDivKind) {
   for (const auto D : HWDivNames) {
     if (HWDivKind == D.ID)
-      return D.Name;
+      return D.getName();
   }
-  return nullptr;
+  return StringRef();
 }
 
-const char *llvm::ARM::getDefaultCPU(StringRef Arch) {
+StringRef llvm::ARM::getDefaultCPU(StringRef Arch) {
   unsigned AK = parseArch(Arch);
   if (AK == ARM::AK_INVALID)
-    return nullptr;
+    return StringRef();
 
   // Look for multiple AKs to find the default for pair AK+Name.
   for (const auto CPU : CPUNames) {
     if (CPU.ArchID == AK && CPU.Default)
-      return CPU.Name;
+      return CPU.getName();
   }
-  return nullptr;
+  return StringRef();
 }
 
 // ======================================================= //
@@ -380,7 +407,7 @@ StringRef llvm::ARM::getCanonicalArchName(StringRef Arch) {
 unsigned llvm::ARM::parseHWDiv(StringRef HWDiv) {
   StringRef Syn = getHWDivSynonym(HWDiv);
   for (const auto D : HWDivNames) {
-    if (Syn == D.Name)
+    if (Syn == D.getName())
       return D.ID;
   }
   return ARM::AEK_INVALID;
@@ -389,7 +416,7 @@ unsigned llvm::ARM::parseHWDiv(StringRef HWDiv) {
 unsigned llvm::ARM::parseFPU(StringRef FPU) {
   StringRef Syn = getFPUSynonym(FPU);
   for (const auto F : FPUNames) {
-    if (Syn == F.Name)
+    if (Syn == F.getName())
       return F.ID;
   }
   return ARM::FK_INVALID;
@@ -400,7 +427,7 @@ unsigned llvm::ARM::parseArch(StringRef Arch) {
   Arch = getCanonicalArchName(Arch);
   StringRef Syn = getArchSynonym(Arch);
   for (const auto A : ARCHNames) {
-    if (StringRef(A.Name).endswith(Syn))
+    if (A.getName().endswith(Syn))
       return A.ID;
   }
   return ARM::AK_INVALID;
@@ -408,7 +435,7 @@ unsigned llvm::ARM::parseArch(StringRef Arch) {
 
 unsigned llvm::ARM::parseArchExt(StringRef ArchExt) {
   for (const auto A : ARCHExtNames) {
-    if (ArchExt == A.Name)
+    if (ArchExt == A.getName())
       return A.ID;
   }
   return ARM::AEK_INVALID;
@@ -416,7 +443,7 @@ unsigned llvm::ARM::parseArchExt(StringRef ArchExt) {
 
 unsigned llvm::ARM::parseCPUArch(StringRef CPU) {
   for (const auto C : CPUNames) {
-    if (CPU == C.Name)
+    if (CPU == C.getName())
       return C.ArchID;
   }
   return ARM::AK_INVALID;
