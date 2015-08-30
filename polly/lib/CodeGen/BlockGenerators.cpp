@@ -413,13 +413,12 @@ void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
     return;
 
   for (MemoryAccess &MA : *MAL) {
-    AllocaInst *Address;
     if (!MA.isScalar() || !MA.isRead())
       continue;
 
-    Address = getOrCreateAlloca(MA);
-    BBMap[MA.getBaseAddr()] =
-        Builder.CreateLoad(Address, Address->getName() + ".reload");
+    auto *Address = getOrCreateAlloca(MA);
+    auto Name = Address->getName() + ".reload";
+    BBMap[MA.getBaseAddr()] = Builder.CreateLoad(Address, Name);
   }
 }
 
