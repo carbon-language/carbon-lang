@@ -6654,7 +6654,7 @@ X86InstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
 ArrayRef<std::pair<unsigned, const char *>>
 X86InstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
   using namespace X86II;
-  static std::pair<unsigned, const char *> TargetFlags[] = {
+  static const std::pair<unsigned, const char *> TargetFlags[] = {
       {MO_GOT_ABSOLUTE_ADDRESS, "x86-got-absolute-address"},
       {MO_PIC_BASE_OFFSET, "x86-pic-base-offset"},
       {MO_GOT, "x86-got"},

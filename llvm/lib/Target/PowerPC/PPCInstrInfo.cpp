@@ -2001,7 +2001,7 @@ PPCInstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
 ArrayRef<std::pair<unsigned, const char *>>
 PPCInstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
   using namespace PPCII;
-  static std::pair<unsigned, const char *> TargetFlags[] = {
+  static const std::pair<unsigned, const char *> TargetFlags[] = {
       {MO_LO, "ppc-lo"},
       {MO_HA, "ppc-ha"},
       {MO_TPREL_LO, "ppc-tprel-lo"},
@@ -2016,7 +2016,7 @@ PPCInstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
 ArrayRef<std::pair<unsigned, const char *>>
 PPCInstrInfo::getSerializableBitmaskMachineOperandTargetFlags() const {
   using namespace PPCII;
-  static std::pair<unsigned, const char *> TargetFlags[] = {
+  static const std::pair<unsigned, const char *> TargetFlags[] = {
       {MO_PLT_OR_STUB, "ppc-plt-or-stub"},
       {MO_PIC_FLAG, "ppc-pic"},
       {MO_NLP_FLAG, "ppc-nlp"},

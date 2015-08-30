@@ -2988,7 +2988,7 @@ AArch64InstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
 ArrayRef<std::pair<unsigned, const char *>>
 AArch64InstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
   using namespace AArch64II;
-  static std::pair<unsigned, const char *> TargetFlags[] = {
+  static const std::pair<unsigned, const char *> TargetFlags[] = {
       {MO_PAGE, "aarch64-page"},
       {MO_PAGEOFF, "aarch64-pageoff"},
       {MO_G3, "aarch64-g3"},
@@ -3002,7 +3002,7 @@ AArch64InstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
 ArrayRef<std::pair<unsigned, const char *>>
 AArch64InstrInfo::getSerializableBitmaskMachineOperandTargetFlags() const {
   using namespace AArch64II;
-  static std::pair<unsigned, const char *> TargetFlags[] = {
+  static const std::pair<unsigned, const char *> TargetFlags[] = {
       {MO_GOT, "aarch64-got"},
       {MO_NC, "aarch64-nc"},
       {MO_TLS, "aarch64-tls"},
