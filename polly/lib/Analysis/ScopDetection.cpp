@@ -395,28 +395,8 @@ bool ScopDetection::isValidCallInst(CallInst &CI) {
   if (CalledFunction == 0)
     return false;
 
-  // Check if we can handle the intrinsic call.
-  if (auto *IT = dyn_cast<IntrinsicInst>(&CI)) {
-    switch (IT->getIntrinsicID()) {
-    // Lifetime markers are supported/ignored.
-    case llvm::Intrinsic::lifetime_start:
-    case llvm::Intrinsic::lifetime_end:
-    // Invariant markers are supported/ignored.
-    case llvm::Intrinsic::invariant_start:
-    case llvm::Intrinsic::invariant_end:
-    // Some misc annotations are supported/ignored.
-    case llvm::Intrinsic::var_annotation:
-    case llvm::Intrinsic::ptr_annotation:
-    case llvm::Intrinsic::annotation:
-    case llvm::Intrinsic::donothing:
-    case llvm::Intrinsic::assume:
-    case llvm::Intrinsic::expect:
-      return true;
-    default:
-      // Other intrinsics which may access the memory are not yet supported.
-      break;
-    }
-  }
+  if (isIgnoredIntrinsic(&CI))
+    return true;
 
   return false;
 }

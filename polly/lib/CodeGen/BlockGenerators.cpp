@@ -267,27 +267,8 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
 
   // Skip some special intrinsics for which we do not adjust the semantics to
   // the new schedule. All others are handled like every other instruction.
-  if (auto *IT = dyn_cast<IntrinsicInst>(Inst)) {
-    switch (IT->getIntrinsicID()) {
-    // Lifetime markers are ignored.
-    case llvm::Intrinsic::lifetime_start:
-    case llvm::Intrinsic::lifetime_end:
-    // Invariant markers are ignored.
-    case llvm::Intrinsic::invariant_start:
-    case llvm::Intrinsic::invariant_end:
-    // Some misc annotations are ignored.
-    case llvm::Intrinsic::var_annotation:
-    case llvm::Intrinsic::ptr_annotation:
-    case llvm::Intrinsic::annotation:
-    case llvm::Intrinsic::donothing:
-    case llvm::Intrinsic::assume:
-    case llvm::Intrinsic::expect:
-      return;
-    default:
-      // Other intrinsics are copied.
-      break;
-    }
-  }
+  if (isIgnoredIntrinsic(Inst))
+    return;
 
   copyInstScalar(Stmt, Inst, BBMap, GlobalMap, LTS);
 }
