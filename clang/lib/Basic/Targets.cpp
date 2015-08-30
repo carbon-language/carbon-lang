@@ -4184,13 +4184,13 @@ class ARMTargetInfo : public TargetInfo {
   void setArchInfo() {
     StringRef ArchName = getTriple().getArchName();
 
-    ArchISA    = llvm::ARMTargetParser::parseArchISA(ArchName);
+    ArchISA    = llvm::ARM::parseArchISA(ArchName);
     DefaultCPU = getDefaultCPU(ArchName);
 
-    unsigned ArchKind = llvm::ARMTargetParser::parseArch(ArchName);
+    unsigned ArchKind = llvm::ARM::parseArch(ArchName);
     if (ArchKind == llvm::ARM::AK_INVALID)
       // set arch of the CPU, either provided explicitly or hardcoded default
-      ArchKind = llvm::ARMTargetParser::parseCPUArch(CPU);
+      ArchKind = llvm::ARM::parseCPUArch(CPU);
     setArchInfo(ArchKind);
   }
 
@@ -4199,9 +4199,9 @@ class ARMTargetInfo : public TargetInfo {
 
     // cache TargetParser info
     ArchKind    = Kind;
-    SubArch     = llvm::ARMTargetParser::getSubArch(ArchKind);
-    ArchProfile = llvm::ARMTargetParser::parseArchProfile(SubArch);
-    ArchVersion = llvm::ARMTargetParser::parseArchVersion(SubArch);
+    SubArch     = llvm::ARM::getSubArch(ArchKind);
+    ArchProfile = llvm::ARM::parseArchProfile(SubArch);
+    ArchVersion = llvm::ARM::parseArchVersion(SubArch);
 
     // cache CPU related strings
     CPUAttr    = getCPUAttr();
@@ -4241,7 +4241,7 @@ class ARMTargetInfo : public TargetInfo {
   }
 
   StringRef getDefaultCPU(StringRef ArchName) const {
-    const char *DefaultCPU = llvm::ARMTargetParser::getDefaultCPU(ArchName);
+    const char *DefaultCPU = llvm::ARM::getDefaultCPU(ArchName);
     return DefaultCPU ? DefaultCPU : "";
   }
 
@@ -4251,7 +4251,7 @@ class ARMTargetInfo : public TargetInfo {
     // For Cortex variants, it's slightly different.
     switch(ArchKind) {
     default:
-      CPUAttr = llvm::ARMTargetParser::getCPUAttr(ArchKind);
+      CPUAttr = llvm::ARM::getCPUAttr(ArchKind);
       return CPUAttr ? CPUAttr : "";
     case llvm::ARM::AK_ARMV6M:
     case llvm::ARM::AK_ARMV6SM:
@@ -4501,7 +4501,7 @@ public:
 
   bool setCPU(const std::string &Name) override {
     if (Name != "generic")
-      setArchInfo(llvm::ARMTargetParser::parseCPUArch(Name));
+      setArchInfo(llvm::ARM::parseCPUArch(Name));
 
     if (ArchKind == llvm::ARM::AK_INVALID)
       return false;
