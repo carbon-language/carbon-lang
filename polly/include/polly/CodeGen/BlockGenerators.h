@@ -498,7 +498,6 @@ protected:
   ///
   /// @param ScalarValue The original value needed.
   /// @param R           The current SCoP region.
-  /// @param ReloadMap   The scalar map for demoted values.
   /// @param BBMap       A mapping from old values to their new values
   ///                    (for values recalculated within this basic block).
   /// @param GlobalMap   A mapping from old values to their new values
@@ -507,8 +506,7 @@ protected:
   ///
   /// @returns The newest version (e.g., reloaded) of the scalar value.
   Value *getNewScalarValue(Value *ScalarValue, const Region &R,
-                           ScalarAllocaMapTy &ReloadMap, ValueMapT &BBMap,
-                           ValueMapT &GlobalMap);
+                           ValueMapT &BBMap, ValueMapT &GlobalMap);
 };
 
 /// @brief Generate a new vector basic block for a polyhedral statement.

@@ -407,7 +407,6 @@ void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
 }
 
 Value *BlockGenerator::getNewScalarValue(Value *ScalarValue, const Region &R,
-                                         ScalarAllocaMapTy &ReloadMap,
                                          ValueMapT &BBMap,
                                          ValueMapT &GlobalMap) {
   // If the value we want to store is an instruction we might have demoted it
@@ -438,9 +437,8 @@ Value *BlockGenerator::getNewScalarValue(Value *ScalarValue, const Region &R,
     return /* Case (3a) */ ScalarValueCopy;
 
   // Case (3b)
-  Value *ReloadAddr = getOrCreateAlloca(ScalarValueInst, ReloadMap, ".s2a");
-  ScalarValue =
-      Builder.CreateLoad(ReloadAddr, ReloadAddr->getName() + ".reload");
+  Value *Address = getOrCreateScalarAlloca(ScalarValueInst);
+  ScalarValue = Builder.CreateLoad(Address, Address->getName() + ".reload");
 
   return ScalarValue;
 }
@@ -461,7 +459,7 @@ void BlockGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
     Value *Val = MA->getAccessValue();
     auto *Address = getOrCreateAlloca(*MA);
 
-    Val = getNewScalarValue(Val, R, ScalarMap, BBMap, GlobalMap);
+    Val = getNewScalarValue(Val, R, BBMap, GlobalMap);
     Builder.CreateStore(Val, Address);
   }
 }
@@ -1087,7 +1085,7 @@ void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
 
     auto Address = getOrCreateAlloca(*MA);
 
-    Val = getNewScalarValue(Val, R, ScalarMap, BBMap, GlobalMap);
+    Val = getNewScalarValue(Val, R, BBMap, GlobalMap);
     Builder.CreateStore(Val, Address);
   }
 }
