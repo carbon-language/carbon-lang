@@ -325,10 +325,7 @@ static Triple::ArchType parseARMArch(StringRef ArchName) {
 }
 
 static Triple::ArchType parseArch(StringRef ArchName) {
-  Triple::ArchType ARMArch(parseARMArch(ArchName));
-  Triple::ArchType BPFArch(parseBPFArch(ArchName));
-
-  return StringSwitch<Triple::ArchType>(ArchName)
+  auto AT = StringSwitch<Triple::ArchType>(ArchName)
     .Cases("i386", "i486", "i586", "i686", Triple::x86)
     // FIXME: Do we need to support these?
     .Cases("i786", "i886", "i986", Triple::x86)
@@ -338,9 +335,13 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("powerpc64le", Triple::ppc64le)
     .Case("xscale", Triple::arm)
     .Case("xscaleeb", Triple::armeb)
-    .StartsWith("arm", ARMArch)
-    .StartsWith("thumb", ARMArch)
-    .StartsWith("aarch64", ARMArch)
+    .Case("aarch64", Triple::aarch64)
+    .Case("aarch64_be", Triple::aarch64_be)
+    .Case("arm64", Triple::aarch64)
+    .Case("arm", Triple::arm)
+    .Case("armeb", Triple::armeb)
+    .Case("thumb", Triple::thumb)
+    .Case("thumbeb", Triple::thumbeb)
     .Case("msp430", Triple::msp430)
     .Cases("mips", "mipseb", "mipsallegrex", Triple::mips)
     .Cases("mipsel", "mipsallegrexel", Triple::mipsel)
@@ -348,7 +349,6 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("mips64el", Triple::mips64el)
     .Case("r600", Triple::r600)
     .Case("amdgcn", Triple::amdgcn)
-    .StartsWith("bpf", BPFArch)
     .Case("hexagon", Triple::hexagon)
     .Case("s390x", Triple::systemz)
     .Case("sparc", Triple::sparc)
@@ -371,6 +371,18 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("wasm32", Triple::wasm32)
     .Case("wasm64", Triple::wasm64)
     .Default(Triple::UnknownArch);
+
+  // Some architectures require special parsing logic just to compute the
+  // ArchType result.
+  if (AT == Triple::UnknownArch) {
+    if (ArchName.startswith("arm") || ArchName.startswith("thumb") ||
+        ArchName.startswith("aarch64"))
+      return parseARMArch(ArchName);
+    if (ArchName.startswith("bpf"))
+      return parseBPFArch(ArchName);
+  }
+
+  return AT;
 }
 
 static Triple::VendorType parseVendor(StringRef VendorName) {
