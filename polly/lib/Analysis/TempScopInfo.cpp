@@ -323,6 +323,9 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
       Functions.push_back(
           std::make_pair(buildIRAccess(Inst, L, &R, BoxedLoops), Inst));
 
+    if (isIgnoredIntrinsic(Inst))
+      continue;
+
     if (PHINode *PHI = dyn_cast<PHINode>(Inst))
       buildPHIAccesses(PHI, R, Functions, NonAffineSubRegion);
 
