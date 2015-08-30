@@ -466,8 +466,7 @@ void BlockGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
   }
 }
 
-void BlockGenerator::createScalarInitialization(Region &R,
-                                                ValueMapT &GlobalMap) {
+void BlockGenerator::createScalarInitialization(Region &R) {
   // The split block __just before__ the region and optimized region.
   BasicBlock *SplitBB = R.getEnteringBlock();
   BranchInst *SplitBBTerm = cast<BranchInst>(SplitBB->getTerminator());
@@ -482,7 +481,6 @@ void BlockGenerator::createScalarInitialization(Region &R,
   // value prior to entering the optimized region.
   Builder.SetInsertPoint(StartBB->getTerminator());
 
-  ScalarAllocaMapTy EmptyMap;
   for (const auto &PHIOpMapping : PHIOpMap) {
     const PHINode *PHI = cast<PHINode>(PHIOpMapping.getFirst());
 
@@ -493,8 +491,6 @@ void BlockGenerator::createScalarInitialization(Region &R,
       continue;
 
     Value *ScalarValue = PHI->getIncomingValue(idx);
-    ScalarValue =
-        getNewScalarValue(ScalarValue, R, EmptyMap, GlobalMap, GlobalMap);
 
     // If the split block is the predecessor initialize the PHI operator alloca.
     Builder.CreateStore(ScalarValue, PHIOpMapping.getSecond());
@@ -545,8 +541,8 @@ void BlockGenerator::createScalarFinalization(Region &R) {
   }
 }
 
-void BlockGenerator::finalizeSCoP(Scop &S, ValueMapT &GlobalMap) {
-  createScalarInitialization(S.getRegion(), GlobalMap);
+void BlockGenerator::finalizeSCoP(Scop &S) {
+  createScalarInitialization(S.getRegion());
   createScalarFinalization(S.getRegion());
 }
 

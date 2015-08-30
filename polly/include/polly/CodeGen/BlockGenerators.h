@@ -147,9 +147,9 @@ public:
   /// This will initialize and finalize the scalar variables we demoted during
   /// the code generation.
   ///
-  /// @see createScalarInitialization(Region &, ValueMapT &)
+  /// @see createScalarInitialization(Region &)
   /// @see createScalarFinalization(Region &)
-  void finalizeSCoP(Scop &S, ValueMapT &VMap);
+  void finalizeSCoP(Scop &S);
 
   /// @brief An empty destructor
   virtual ~BlockGenerator(){};
@@ -387,7 +387,7 @@ protected:
   /// the SCoP we need to initialize the memory cell we demoted the PHI into
   /// with the value corresponding to that predecessor. As a SCoP is a
   /// __single__ entry region there is at most one such predecessor.
-  void createScalarInitialization(Region &R, ValueMapT &VMap);
+  void createScalarInitialization(Region &R);
 
   /// @brief Promote the values of demoted scalars after the SCoP.
   ///

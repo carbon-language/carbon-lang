@@ -44,7 +44,7 @@ public:
   /// @brief Finalize code generation for the SCoP @p S.
   ///
   /// @see BlockGenerator::finalizeSCoP(Scop &S)
-  void finalizeSCoP(Scop &S) { BlockGen.finalizeSCoP(S, ValueMap); }
+  void finalizeSCoP(Scop &S) { BlockGen.finalizeSCoP(S); }
 
   IslExprBuilder &getExprBuilder() { return ExprBuilder; }
 
