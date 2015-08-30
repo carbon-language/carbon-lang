@@ -401,8 +401,8 @@ void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
       continue;
 
     auto *Address = getOrCreateAlloca(MA);
-    auto Name = Address->getName() + ".reload";
-    BBMap[MA.getBaseAddr()] = Builder.CreateLoad(Address, Name);
+    BBMap[MA.getBaseAddr()] =
+        Builder.CreateLoad(Address, Address->getName() + ".reload");
   }
 }
 
