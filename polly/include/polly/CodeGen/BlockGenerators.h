@@ -348,12 +348,10 @@ protected:
   /// @param ScalarBase The demoted scalar value.
   /// @param Map        The map we should look for a mapped alloca value.
   /// @param NameExt    The suffix we add to the name of a new created alloca.
-  /// @param IsNew      If set it will hold true iff the alloca was created.
   ///
   /// @returns The alloca for @p ScalarBase in @p Map.
   AllocaInst *getOrCreateAlloca(Value *ScalarBase, ScalarAllocaMapTy &Map,
-                                const char *NameExt = ".s2a",
-                                bool *IsNew = nullptr);
+                                const char *NameExt);
 
   /// @brief Generate reload of scalars demoted to memory and needed by @p Inst.
   ///

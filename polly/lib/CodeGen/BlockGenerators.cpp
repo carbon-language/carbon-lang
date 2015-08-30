@@ -342,15 +342,9 @@ void BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB, BasicBlock *CopyBB,
 
 AllocaInst *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
                                               ScalarAllocaMapTy &Map,
-                                              const char *NameExt,
-                                              bool *IsNew) {
-
+                                              const char *NameExt) {
   // Check if an alloca was cached for the base instruction.
   AllocaInst *&Addr = Map[ScalarBase];
-
-  // If needed indicate if it was found already or will be created.
-  if (IsNew)
-    *IsNew = (Addr == nullptr);
 
   // If no alloca was found create one and insert it in the entry block.
   if (!Addr) {
@@ -379,11 +373,9 @@ AllocaInst *BlockGenerator::getOrCreatePHIAlloca(Value *ScalarBase) {
 
 void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
                                         Value *InstCopy) {
-  // If there are escape users we get the alloca for this instruction and put
-  // it in the EscapeMap for later finalization. However, if the alloca was not
-  // created by an already handled scalar dependence we have to initialize it
-  // also. Lastly, if the instruction was copied multiple times we already did
-  // this and can exit.
+  // If there are escape users we get the alloca for this instruction and put it
+  // in the EscapeMap for later finalization. Lastly, if the instruction was
+  // copied multiple times we already did this and can exit.
   if (EscapeMap.count(Inst))
     return;
 
@@ -406,19 +398,10 @@ void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
     return;
 
   // Get or create an escape alloca for this instruction.
-  bool IsNew;
-  AllocaInst *ScalarAddr =
-      getOrCreateAlloca(Inst, ScalarMap, ".escape", &IsNew);
+  AllocaInst *ScalarAddr = getOrCreateScalarAlloca(Inst);
 
   // Remember that this instruction has escape uses and the escape alloca.
   EscapeMap[Inst] = std::make_pair(ScalarAddr, std::move(EscapeUsers));
-
-  // If the escape alloca was just created store the instruction in there,
-  // otherwise that happened already.
-  if (IsNew) {
-    assert(InstCopy && "Except PHIs every instruction should have a copy!");
-    Builder.CreateStore(InstCopy, ScalarAddr);
-  }
 }
 
 void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
