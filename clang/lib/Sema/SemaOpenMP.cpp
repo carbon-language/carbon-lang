@@ -3514,24 +3514,18 @@ CheckOpenMPLoop(OpenMPDirectiveKind DKind, Expr *CollapseLoopCountExpr,
 }
 
 static Expr *getCollapseNumberExpr(ArrayRef<OMPClause *> Clauses) {
-  auto &&CollapseFilter = [](const OMPClause *C) -> bool {
-    return C->getClauseKind() == OMPC_collapse;
-  };
-  OMPExecutableDirective::filtered_clause_iterator<decltype(CollapseFilter)> I(
-      Clauses, std::move(CollapseFilter));
-  if (I)
-    return cast<OMPCollapseClause>(*I)->getNumForLoops();
+  auto CollapseClauses =
+      OMPExecutableDirective::getClausesOfKind<OMPCollapseClause>(Clauses);
+  if (CollapseClauses.begin() != CollapseClauses.end())
+    return (*CollapseClauses.begin())->getNumForLoops();
   return nullptr;
 }
 
 static Expr *getOrderedNumberExpr(ArrayRef<OMPClause *> Clauses) {
-  auto &&OrderedFilter = [](const OMPClause *C) -> bool {
-    return C->getClauseKind() == OMPC_ordered;
-  };
-  OMPExecutableDirective::filtered_clause_iterator<decltype(OrderedFilter)> I(
-      Clauses, std::move(OrderedFilter));
-  if (I)
-    return cast<OMPOrderedClause>(*I)->getNumForLoops();
+  auto OrderedClauses =
+      OMPExecutableDirective::getClausesOfKind<OMPOrderedClause>(Clauses);
+  if (OrderedClauses.begin() != OrderedClauses.end())
+    return (*OrderedClauses.begin())->getNumForLoops();
   return nullptr;
 }
 

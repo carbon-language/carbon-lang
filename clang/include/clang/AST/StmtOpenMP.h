@@ -92,65 +92,91 @@ public:
   /// \brief Iterates over a filtered subrange of clauses applied to a
   /// directive.
   ///
-  /// This iterator visits only those declarations that meet some run-time
-  /// criteria.
-  template <class FilterPredicate> class filtered_clause_iterator {
-  protected:
+  /// This iterator visits only clauses of type SpecificClause.
+  template <typename SpecificClause>
+  class specific_clause_iterator
+      : public std::iterator<std::forward_iterator_tag, const SpecificClause *,
+                             ptrdiff_t, const SpecificClause *,
+                             const SpecificClause *> {
     ArrayRef<OMPClause *>::const_iterator Current;
     ArrayRef<OMPClause *>::const_iterator End;
-    FilterPredicate Pred;
+
     void SkipToNextClause() {
-      while (Current != End && !Pred(*Current))
+      while (Current != End && !isa<SpecificClause>(*Current))
         ++Current;
     }
 
   public:
-    typedef const OMPClause *value_type;
-    filtered_clause_iterator() : Current(), End() {}
-    filtered_clause_iterator(ArrayRef<OMPClause *> Arr, FilterPredicate Pred)
-        : Current(Arr.begin()), End(Arr.end()), Pred(std::move(Pred)) {
+    explicit specific_clause_iterator(ArrayRef<OMPClause *> Clauses)
+        : Current(Clauses.begin()), End(Clauses.end()) {
       SkipToNextClause();
     }
-    value_type operator*() const { return *Current; }
-    value_type operator->() const { return *Current; }
-    filtered_clause_iterator &operator++() {
+
+    const SpecificClause *operator*() const {
+      return cast<SpecificClause>(*Current);
+    }
+    const SpecificClause *operator->() const {
+      return cast<SpecificClause>(*Current);
+    }
+
+    specific_clause_iterator &operator++() {
       ++Current;
       SkipToNextClause();
       return *this;
     }
-
-    filtered_clause_iterator operator++(int) {
-      filtered_clause_iterator tmp(*this);
+    specific_clause_iterator operator++(int) {
+      specific_clause_iterator tmp(*this);
       ++(*this);
       return tmp;
     }
 
-    bool operator!() { return Current == End; }
-    explicit operator bool() { return Current != End; }
-    bool empty() const { return Current == End; }
-  };
-
-  template <typename Fn>
-  filtered_clause_iterator<Fn> getFilteredClauses(Fn &&fn) const {
-    return filtered_clause_iterator<Fn>(clauses(), std::move(fn));
-  }
-  struct ClauseKindFilter {
-    OpenMPClauseKind Kind;
-    bool operator()(const OMPClause *clause) const {
-      return clause->getClauseKind() == Kind;
+    bool operator==(const specific_clause_iterator &RHS) const {
+      assert(End == RHS.End && "Comparing iterators of different directives!");
+      return Current == RHS.Current;
+    }
+    bool operator!=(const specific_clause_iterator &RHS) const {
+      return !(*this == RHS);
     }
   };
-  filtered_clause_iterator<ClauseKindFilter>
-  getClausesOfKind(OpenMPClauseKind Kind) const {
-    return getFilteredClauses(ClauseKindFilter{Kind});
+
+  template <typename SpecificClause>
+  static llvm::iterator_range<specific_clause_iterator<SpecificClause>>
+  getClausesOfKind(ArrayRef<OMPClause *> Clauses) {
+    return {specific_clause_iterator<SpecificClause>(Clauses),
+            specific_clause_iterator<SpecificClause>(
+                llvm::makeArrayRef(Clauses.end(), 0))};
   }
 
-  /// \brief Gets a single clause of the specified kind \a K associated with the
+  template <typename SpecificClause>
+  llvm::iterator_range<specific_clause_iterator<SpecificClause>>
+  getClausesOfKind() const {
+    return getClausesOfKind<SpecificClause>(clauses());
+  }
+
+  /// Gets a single clause of the specified kind associated with the
   /// current directive iff there is only one clause of this kind (and assertion
   /// is fired if there is more than one clause is associated with the
-  /// directive). Returns nullptr if no clause of kind \a K is associated with
+  /// directive). Returns nullptr if no clause of this kind is associated with
   /// the directive.
-  const OMPClause *getSingleClause(OpenMPClauseKind K) const;
+  template <typename SpecificClause>
+  const SpecificClause *getSingleClause() const {
+    auto Clauses = getClausesOfKind<SpecificClause>();
+
+    if (Clauses.begin() != Clauses.end()) {
+      assert(std::next(Clauses.begin()) == Clauses.end() &&
+             "There are at least 2 clauses of the specified kind");
+      return *Clauses.begin();
+    }
+    return nullptr;
+  }
+
+  /// Returns true if the current directive has one or more clauses of a
+  /// specific kind.
+  template <typename SpecificClause>
+  bool hasClausesOfKind() const {
+    auto Clauses = getClausesOfKind<SpecificClause>();
+    return Clauses.begin() != Clauses.end();
+  }
 
   /// \brief Returns starting location of directive kind.
   SourceLocation getLocStart() const { return StartLoc; }

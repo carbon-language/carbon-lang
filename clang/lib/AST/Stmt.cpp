@@ -1621,18 +1621,6 @@ OMPDependClause *OMPDependClause::CreateEmpty(const ASTContext &C, unsigned N) {
   return new (Mem) OMPDependClause(N);
 }
 
-const OMPClause *
-OMPExecutableDirective::getSingleClause(OpenMPClauseKind K) const {
-  auto &&I = getClausesOfKind(K);
-
-  if (I) {
-    auto *Clause = *I;
-    assert(!++I && "There are at least 2 clauses of the specified kind");
-    return Clause;
-  }
-  return nullptr;
-}
-
 OMPParallelDirective *OMPParallelDirective::Create(
                                               const ASTContext &C,
                                               SourceLocation StartLoc,
