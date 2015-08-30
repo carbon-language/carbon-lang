@@ -110,13 +110,12 @@ struct {
   const char *NameCStr;
   size_t NameLength;
   ARM::ArchKind ArchID;
-  ARM::FPUKind DefaultFPU;
   bool Default; // is $Name the default CPU for $ArchID ?
 
   StringRef getName() const { return StringRef(NameCStr, NameLength); }
 } CPUNames[] = {
 #define ARM_CPU_NAME(NAME, ID, DEFAULT_FPU, IS_DEFAULT) \
-  { NAME, sizeof(NAME) - 1, ID, DEFAULT_FPU, IS_DEFAULT },
+  { NAME, sizeof(NAME) - 1, ID, IS_DEFAULT },
 #include "llvm/Support/ARMTargetParser.def"
 };
 
@@ -151,11 +150,11 @@ unsigned llvm::ARM::getFPURestriction(unsigned FPUKind) {
 }
 
 unsigned llvm::ARM::getDefaultFPU(StringRef CPU) {
-  for (const auto C : CPUNames) {
-    if (CPU == C.getName())
-      return C.DefaultFPU;
-  }
-  return ARM::FK_INVALID;
+  return StringSwitch<unsigned>(CPU)
+#define ARM_CPU_NAME(NAME, ID, DEFAULT_FPU, IS_DEFAULT) \
+    .Case(NAME, DEFAULT_FPU)
+#include "llvm/Support/ARMTargetParser.def"
+    .Default(ARM::FK_INVALID);
 }
 
 bool llvm::ARM::getHWDivFeatures(unsigned HWDivKind,
