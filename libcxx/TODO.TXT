@@ -39,7 +39,6 @@ Atomic Related Tasks
 
 Test Suite Tasks
 ================
-* Get test suite passing in C++03.
 * Move all libc++ specific tests from test/std into test/libcxx.
 * Improve how LIT handles compiler warnings.
 * Improve the quality and portability of the locale test data.
