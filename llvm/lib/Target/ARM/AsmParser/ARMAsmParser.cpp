@@ -9016,7 +9016,7 @@ bool ARMAsmParser::parseDirectiveUnreq(SMLoc L) {
 bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
   StringRef Arch = getParser().parseStringToEndOfStatement().trim();
 
-  unsigned ID = ARMTargetParser::parseArch(Arch);
+  unsigned ID = ARM::parseArch(Arch);
 
   if (ID == ARM::AK_INVALID) {
     Error(L, "Unknown arch name");
@@ -9163,9 +9163,9 @@ bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
   SMLoc FPUNameLoc = getTok().getLoc();
   StringRef FPU = getParser().parseStringToEndOfStatement().trim();
 
-  unsigned ID = ARMTargetParser::parseFPU(FPU);
+  unsigned ID = ARM::parseFPU(FPU);
   std::vector<const char *> Features;
-  if (!ARMTargetParser::getFPUFeatures(ID, Features)) {
+  if (!ARM::getFPUFeatures(ID, Features)) {
     Error(FPUNameLoc, "Unknown FPU name");
     return false;
   }
@@ -9809,7 +9809,7 @@ bool ARMAsmParser::parseDirectiveObjectArch(SMLoc L) {
   SMLoc ArchLoc = Parser.getTok().getLoc();
   getLexer().Lex();
 
-  unsigned ID = ARMTargetParser::parseArch(Arch);
+  unsigned ID = ARM::parseArch(Arch);
 
   if (ID == ARM::AK_INVALID) {
     Error(ArchLoc, "unknown architecture '" + Arch + "'");
@@ -9934,7 +9934,7 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
     EnableFeature = false;
     Name = Name.substr(2);
   }
-  unsigned FeatureKind = ARMTargetParser::parseArchExt(Name);
+  unsigned FeatureKind = ARM::parseArchExt(Name);
   if (FeatureKind == ARM::AEK_INVALID)
     Error(ExtLoc, "unknown architectural extension: " + Name);
 

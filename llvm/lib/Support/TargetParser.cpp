@@ -249,31 +249,31 @@ struct {
 // Information by ID
 // ======================================================= //
 
-const char *ARMTargetParser::getFPUName(unsigned FPUKind) {
+const char *llvm::ARM::getFPUName(unsigned FPUKind) {
   if (FPUKind >= ARM::FK_LAST)
     return nullptr;
   return FPUNames[FPUKind].Name;
 }
 
-unsigned ARMTargetParser::getFPUVersion(unsigned FPUKind) {
+unsigned llvm::ARM::getFPUVersion(unsigned FPUKind) {
   if (FPUKind >= ARM::FK_LAST)
     return 0;
   return FPUNames[FPUKind].FPUVersion;
 }
 
-unsigned ARMTargetParser::getFPUNeonSupportLevel(unsigned FPUKind) {
+unsigned llvm::ARM::getFPUNeonSupportLevel(unsigned FPUKind) {
   if (FPUKind >= ARM::FK_LAST)
     return 0;
   return FPUNames[FPUKind].NeonSupport;
 }
 
-unsigned ARMTargetParser::getFPURestriction(unsigned FPUKind) {
+unsigned llvm::ARM::getFPURestriction(unsigned FPUKind) {
   if (FPUKind >= ARM::FK_LAST)
     return 0;
   return FPUNames[FPUKind].Restriction;
 }
 
-unsigned ARMTargetParser::getDefaultFPU(StringRef CPU) {
+unsigned llvm::ARM::getDefaultFPU(StringRef CPU) {
   for (const auto C : CPUNames) {
     if (CPU == C.Name)
       return C.DefaultFPU;
@@ -281,7 +281,7 @@ unsigned ARMTargetParser::getDefaultFPU(StringRef CPU) {
   return ARM::FK_INVALID;
 }
 
-bool ARMTargetParser::getHWDivFeatures(unsigned HWDivKind,
+bool llvm::ARM::getHWDivFeatures(unsigned HWDivKind,
                                        std::vector<const char *> &Features) {
 
   if (HWDivKind == ARM::AEK_INVALID)
@@ -300,7 +300,7 @@ bool ARMTargetParser::getHWDivFeatures(unsigned HWDivKind,
   return true;
 }
 
-bool ARMTargetParser::getFPUFeatures(unsigned FPUKind,
+bool llvm::ARM::getFPUFeatures(unsigned FPUKind,
                                      std::vector<const char *> &Features) {
 
   if (FPUKind >= ARM::FK_LAST || FPUKind == ARM::FK_INVALID)
@@ -381,31 +381,31 @@ bool ARMTargetParser::getFPUFeatures(unsigned FPUKind,
   return true;
 }
 
-const char *ARMTargetParser::getArchName(unsigned ArchKind) {
+const char *llvm::ARM::getArchName(unsigned ArchKind) {
   if (ArchKind >= ARM::AK_LAST)
     return nullptr;
   return ARCHNames[ArchKind].Name;
 }
 
-const char *ARMTargetParser::getCPUAttr(unsigned ArchKind) {
+const char *llvm::ARM::getCPUAttr(unsigned ArchKind) {
   if (ArchKind >= ARM::AK_LAST)
     return nullptr;
   return ARCHNames[ArchKind].CPUAttr;
 }
 
-const char *ARMTargetParser::getSubArch(unsigned ArchKind) {
+const char *llvm::ARM::getSubArch(unsigned ArchKind) {
   if (ArchKind >= ARM::AK_LAST)
     return nullptr;
   return ARCHNames[ArchKind].SubArch;
 }
 
-unsigned ARMTargetParser::getArchAttr(unsigned ArchKind) {
+unsigned llvm::ARM::getArchAttr(unsigned ArchKind) {
   if (ArchKind >= ARM::AK_LAST)
     return ARMBuildAttrs::CPUArch::Pre_v4;
   return ARCHNames[ArchKind].ArchAttr;
 }
 
-const char *ARMTargetParser::getArchExtName(unsigned ArchExtKind) {
+const char *llvm::ARM::getArchExtName(unsigned ArchExtKind) {
   for (const auto AE : ARCHExtNames) {
     if (ArchExtKind == AE.ID)
       return AE.Name;
@@ -413,7 +413,7 @@ const char *ARMTargetParser::getArchExtName(unsigned ArchExtKind) {
   return nullptr;
 }
 
-const char *ARMTargetParser::getHWDivName(unsigned HWDivKind) {
+const char *llvm::ARM::getHWDivName(unsigned HWDivKind) {
   for (const auto D : HWDivNames) {
     if (HWDivKind == D.ID)
       return D.Name;
@@ -421,7 +421,7 @@ const char *ARMTargetParser::getHWDivName(unsigned HWDivKind) {
   return nullptr;
 }
 
-const char *ARMTargetParser::getDefaultCPU(StringRef Arch) {
+const char *llvm::ARM::getDefaultCPU(StringRef Arch) {
   unsigned AK = parseArch(Arch);
   if (AK == ARM::AK_INVALID)
     return nullptr;
@@ -438,13 +438,13 @@ const char *ARMTargetParser::getDefaultCPU(StringRef Arch) {
 // Parsers
 // ======================================================= //
 
-StringRef ARMTargetParser::getHWDivSynonym(StringRef HWDiv) {
+static StringRef getHWDivSynonym(StringRef HWDiv) {
   return StringSwitch<StringRef>(HWDiv)
     .Case("thumb,arm", "arm,thumb")
     .Default(HWDiv);
 }
 
-StringRef ARMTargetParser::getFPUSynonym(StringRef FPU) {
+static StringRef getFPUSynonym(StringRef FPU) {
   return StringSwitch<StringRef>(FPU)
     .Cases("fpa", "fpe2", "fpe3", "maverick", "invalid") // Unsupported
     .Case("vfp2", "vfpv2")
@@ -461,7 +461,7 @@ StringRef ARMTargetParser::getFPUSynonym(StringRef FPU) {
     .Default(FPU);
 }
 
-StringRef ARMTargetParser::getArchSynonym(StringRef Arch) {
+static StringRef getArchSynonym(StringRef Arch) {
   return StringSwitch<StringRef>(Arch)
     .Case("v6sm", "v6s-m")
     .Case("v6m", "v6-m")
@@ -478,7 +478,7 @@ StringRef ARMTargetParser::getArchSynonym(StringRef Arch) {
 // (iwmmxt|xscale)(eb)? is also permitted. If the former, return
 // "v.+", if the latter, return unmodified string, minus 'eb'.
 // If invalid, return empty string.
-StringRef ARMTargetParser::getCanonicalArchName(StringRef Arch) {
+StringRef llvm::ARM::getCanonicalArchName(StringRef Arch) {
   size_t offset = StringRef::npos;
   StringRef A = Arch;
   StringRef Error = "";
@@ -527,7 +527,7 @@ StringRef ARMTargetParser::getCanonicalArchName(StringRef Arch) {
   return A;
 }
 
-unsigned ARMTargetParser::parseHWDiv(StringRef HWDiv) {
+unsigned llvm::ARM::parseHWDiv(StringRef HWDiv) {
   StringRef Syn = getHWDivSynonym(HWDiv);
   for (const auto D : HWDivNames) {
     if (Syn == D.Name)
@@ -536,7 +536,7 @@ unsigned ARMTargetParser::parseHWDiv(StringRef HWDiv) {
   return ARM::AEK_INVALID;
 }
 
-unsigned ARMTargetParser::parseFPU(StringRef FPU) {
+unsigned llvm::ARM::parseFPU(StringRef FPU) {
   StringRef Syn = getFPUSynonym(FPU);
   for (const auto F : FPUNames) {
     if (Syn == F.Name)
@@ -546,7 +546,7 @@ unsigned ARMTargetParser::parseFPU(StringRef FPU) {
 }
 
 // Allows partial match, ex. "v7a" matches "armv7a".
-unsigned ARMTargetParser::parseArch(StringRef Arch) {
+unsigned llvm::ARM::parseArch(StringRef Arch) {
   Arch = getCanonicalArchName(Arch);
   StringRef Syn = getArchSynonym(Arch);
   for (const auto A : ARCHNames) {
@@ -556,7 +556,7 @@ unsigned ARMTargetParser::parseArch(StringRef Arch) {
   return ARM::AK_INVALID;
 }
 
-unsigned ARMTargetParser::parseArchExt(StringRef ArchExt) {
+unsigned llvm::ARM::parseArchExt(StringRef ArchExt) {
   for (const auto A : ARCHExtNames) {
     if (ArchExt == A.Name)
       return A.ID;
@@ -564,7 +564,7 @@ unsigned ARMTargetParser::parseArchExt(StringRef ArchExt) {
   return ARM::AEK_INVALID;
 }
 
-unsigned ARMTargetParser::parseCPUArch(StringRef CPU) {
+unsigned llvm::ARM::parseCPUArch(StringRef CPU) {
   for (const auto C : CPUNames) {
     if (CPU == C.Name)
       return C.ArchID;
@@ -573,7 +573,7 @@ unsigned ARMTargetParser::parseCPUArch(StringRef CPU) {
 }
 
 // ARM, Thumb, AArch64
-unsigned ARMTargetParser::parseArchISA(StringRef Arch) {
+unsigned llvm::ARM::parseArchISA(StringRef Arch) {
   return StringSwitch<unsigned>(Arch)
       .StartsWith("aarch64", ARM::IK_AARCH64)
       .StartsWith("arm64",   ARM::IK_AARCH64)
@@ -583,7 +583,7 @@ unsigned ARMTargetParser::parseArchISA(StringRef Arch) {
 }
 
 // Little/Big endian
-unsigned ARMTargetParser::parseArchEndian(StringRef Arch) {
+unsigned llvm::ARM::parseArchEndian(StringRef Arch) {
   if (Arch.startswith("armeb") ||
       Arch.startswith("thumbeb") ||
       Arch.startswith("aarch64_be"))
@@ -603,7 +603,7 @@ unsigned ARMTargetParser::parseArchEndian(StringRef Arch) {
 }
 
 // Profile A/R/M
-unsigned ARMTargetParser::parseArchProfile(StringRef Arch) {
+unsigned llvm::ARM::parseArchProfile(StringRef Arch) {
   Arch = getCanonicalArchName(Arch);
   switch(parseArch(Arch)) {
   case ARM::AK_ARMV6M:
@@ -624,7 +624,7 @@ unsigned ARMTargetParser::parseArchProfile(StringRef Arch) {
 }
 
 // Version number (ex. v7 = 7).
-unsigned ARMTargetParser::parseArchVersion(StringRef Arch) {
+unsigned llvm::ARM::parseArchVersion(StringRef Arch) {
   Arch = getCanonicalArchName(Arch);
   switch(parseArch(Arch)) {
   case ARM::AK_ARMV2:

@@ -165,49 +165,39 @@ namespace ARM {
     PK_R,
     PK_M
   };
-} // namespace ARM
 
-// Target Parsers, one per architecture.
-class ARMTargetParser {
-  static StringRef getHWDivSynonym(StringRef HWDiv);
-  static StringRef getFPUSynonym(StringRef FPU);
-  static StringRef getArchSynonym(StringRef Arch);
-
-public:
-  static StringRef getCanonicalArchName(StringRef Arch);
+  StringRef getCanonicalArchName(StringRef Arch);
 
   // Information by ID
-  static const char * getFPUName(unsigned FPUKind);
-  static     unsigned getFPUVersion(unsigned FPUKind);
-  static     unsigned getFPUNeonSupportLevel(unsigned FPUKind);
-  static     unsigned getFPURestriction(unsigned FPUKind);
-  static     unsigned getDefaultFPU(StringRef CPU);
+  const char * getFPUName(unsigned FPUKind);
+  unsigned getFPUVersion(unsigned FPUKind);
+  unsigned getFPUNeonSupportLevel(unsigned FPUKind);
+  unsigned getFPURestriction(unsigned FPUKind);
+  unsigned getDefaultFPU(StringRef CPU);
   // FIXME: This should be moved to TargetTuple once it exists
-  static       bool   getFPUFeatures(unsigned FPUKind,
-                                     std::vector<const char*> &Features);
-  static       bool   getHWDivFeatures(unsigned HWDivKind,
-                                       std::vector<const char*> &Features);
-  static const char * getArchName(unsigned ArchKind);
-  static   unsigned   getArchAttr(unsigned ArchKind);
-  static const char * getCPUAttr(unsigned ArchKind);
-  static const char * getSubArch(unsigned ArchKind);
-  static const char * getArchExtName(unsigned ArchExtKind);
-  static const char * getHWDivName(unsigned HWDivKind);
-  static const char * getDefaultCPU(StringRef Arch);
+  bool getFPUFeatures(unsigned FPUKind, std::vector<const char *> &Features);
+  bool getHWDivFeatures(unsigned HWDivKind,
+                        std::vector<const char *> &Features);
+  const char *getArchName(unsigned ArchKind);
+  unsigned getArchAttr(unsigned ArchKind);
+  const char *getCPUAttr(unsigned ArchKind);
+  const char *getSubArch(unsigned ArchKind);
+  const char *getArchExtName(unsigned ArchExtKind);
+  const char *getHWDivName(unsigned HWDivKind);
+  const char *getDefaultCPU(StringRef Arch);
 
   // Parser
-  static unsigned parseHWDiv(StringRef HWDiv);
-  static unsigned parseFPU(StringRef FPU);
-  static unsigned parseArch(StringRef Arch);
-  static unsigned parseArchExt(StringRef ArchExt);
-  static unsigned parseCPUArch(StringRef CPU);
-  static unsigned parseArchISA(StringRef Arch);
-  static unsigned parseArchEndian(StringRef Arch);
-  static unsigned parseArchProfile(StringRef Arch);
-  static unsigned parseArchVersion(StringRef Arch);
+  unsigned parseHWDiv(StringRef HWDiv);
+  unsigned parseFPU(StringRef FPU);
+  unsigned parseArch(StringRef Arch);
+  unsigned parseArchExt(StringRef ArchExt);
+  unsigned parseCPUArch(StringRef CPU);
+  unsigned parseArchISA(StringRef Arch);
+  unsigned parseArchEndian(StringRef Arch);
+  unsigned parseArchProfile(StringRef Arch);
+  unsigned parseArchVersion(StringRef Arch);
 
-};
-
+} // namespace ARM
 } // namespace llvm
 
 #endif

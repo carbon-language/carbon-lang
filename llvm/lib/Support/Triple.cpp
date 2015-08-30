@@ -267,8 +267,8 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
 }
 
 static Triple::ArchType parseARMArch(StringRef ArchName) {
-  unsigned ISA = ARMTargetParser::parseArchISA(ArchName);
-  unsigned ENDIAN = ARMTargetParser::parseArchEndian(ArchName);
+  unsigned ISA = ARM::parseArchISA(ArchName);
+  unsigned ENDIAN = ARM::parseArchEndian(ArchName);
 
   Triple::ArchType arch = Triple::UnknownArch;
   switch (ENDIAN) {
@@ -302,7 +302,7 @@ static Triple::ArchType parseARMArch(StringRef ArchName) {
   }
   }
 
-  ArchName = ARMTargetParser::getCanonicalArchName(ArchName);
+  ArchName = ARM::getCanonicalArchName(ArchName);
   if (ArchName.empty())
     return Triple::UnknownArch;
 
@@ -312,8 +312,8 @@ static Triple::ArchType parseARMArch(StringRef ArchName) {
     return Triple::UnknownArch;
 
   // Thumb only for v6m
-  unsigned Profile = ARMTargetParser::parseArchProfile(ArchName);
-  unsigned Version = ARMTargetParser::parseArchVersion(ArchName);
+  unsigned Profile = ARM::parseArchProfile(ArchName);
+  unsigned Version = ARM::parseArchVersion(ArchName);
   if (Profile == ARM::PK_M && Version == 6) {
     if (ENDIAN == ARM::EK_BIG)
       return Triple::thumbeb;
@@ -446,7 +446,7 @@ static Triple::ObjectFormatType parseFormat(StringRef EnvironmentName) {
 }
 
 static Triple::SubArchType parseSubArch(StringRef SubArchName) {
-  StringRef ARMSubArch = ARMTargetParser::getCanonicalArchName(SubArchName);
+  StringRef ARMSubArch = ARM::getCanonicalArchName(SubArchName);
 
   // For now, this is the small part. Early return.
   if (ARMSubArch.empty())
@@ -457,7 +457,7 @@ static Triple::SubArchType parseSubArch(StringRef SubArchName) {
       .Default(Triple::NoSubArch);
 
   // ARM sub arch.
-  switch(ARMTargetParser::parseArch(ARMSubArch)) {
+  switch(ARM::parseArch(ARMSubArch)) {
   case ARM::AK_ARMV4:
     return Triple::NoSubArch;
   case ARM::AK_ARMV4T:
@@ -1293,7 +1293,7 @@ Triple Triple::getLittleEndianArchVariant() const {
 const char *Triple::getARMCPUForArch(StringRef MArch) const {
   if (MArch.empty())
     MArch = getArchName();
-  MArch = ARMTargetParser::getCanonicalArchName(MArch);
+  MArch = ARM::getCanonicalArchName(MArch);
 
   // Some defaults are forced.
   switch (getOS()) {
@@ -1312,7 +1312,7 @@ const char *Triple::getARMCPUForArch(StringRef MArch) const {
   if (MArch.empty())
     return nullptr;
 
-  const char *CPU = ARMTargetParser::getDefaultCPU(MArch);
+  const char *CPU = ARM::getDefaultCPU(MArch);
   if (CPU)
     return CPU;
 

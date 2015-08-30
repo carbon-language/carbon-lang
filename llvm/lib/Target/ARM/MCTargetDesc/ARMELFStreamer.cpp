@@ -195,16 +195,16 @@ void ARMTargetAsmStreamer::emitIntTextAttribute(unsigned Attribute,
   OS << "\n";
 }
 void ARMTargetAsmStreamer::emitArch(unsigned Arch) {
-  OS << "\t.arch\t" << ARMTargetParser::getArchName(Arch) << "\n";
+  OS << "\t.arch\t" << ARM::getArchName(Arch) << "\n";
 }
 void ARMTargetAsmStreamer::emitArchExtension(unsigned ArchExt) {
-  OS << "\t.arch_extension\t" << ARMTargetParser::getArchExtName(ArchExt) << "\n";
+  OS << "\t.arch_extension\t" << ARM::getArchExtName(ArchExt) << "\n";
 }
 void ARMTargetAsmStreamer::emitObjectArch(unsigned Arch) {
-  OS << "\t.object_arch\t" << ARMTargetParser::getArchName(Arch) << '\n';
+  OS << "\t.object_arch\t" << ARM::getArchName(Arch) << '\n';
 }
 void ARMTargetAsmStreamer::emitFPU(unsigned FPU) {
-  OS << "\t.fpu\t" << ARMTargetParser::getFPUName(FPU) << "\n";
+  OS << "\t.fpu\t" << ARM::getFPUName(FPU) << "\n";
 }
 void ARMTargetAsmStreamer::finishAttributeSection() {
 }
@@ -684,16 +684,16 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
   using namespace ARMBuildAttrs;
 
   setAttributeItem(CPU_name,
-                   ARMTargetParser::getCPUAttr(Arch),
+                   ARM::getCPUAttr(Arch),
                    false);
 
   if (EmittedArch == ARM::AK_INVALID)
     setAttributeItem(CPU_arch,
-                     ARMTargetParser::getArchAttr(Arch),
+                     ARM::getArchAttr(Arch),
                      false);
   else
     setAttributeItem(CPU_arch,
-                     ARMTargetParser::getArchAttr(EmittedArch),
+                     ARM::getArchAttr(EmittedArch),
                      false);
 
   switch (Arch) {

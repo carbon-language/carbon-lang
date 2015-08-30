@@ -745,7 +745,7 @@ void ARMAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
 }
 
 static MachO::CPUSubTypeARM getMachOSubTypeFromArch(StringRef Arch) {
-  unsigned AK = ARMTargetParser::parseArch(Arch);
+  unsigned AK = ARM::parseArch(Arch);
   switch (AK) {
   default:
     return MachO::CPU_SUBTYPE_ARM_V7;
