@@ -559,7 +559,7 @@ static void checkARMCPUName(const Driver &D, const Arg *A, const ArgList &Args,
                             const llvm::Triple &Triple) {
   std::string CPU = arm::getARMTargetCPU(CPUName, ArchName, Triple);
   std::string Arch = arm::getARMArch(ArchName, Triple);
-  if (strcmp(arm::getLLVMArchSuffixForARM(CPU, Arch), "") == 0)
+  if (arm::getLLVMArchSuffixForARM(CPU, Arch).empty())
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
 
@@ -6018,33 +6018,30 @@ const std::string arm::getARMArch(StringRef Arch, const llvm::Triple &Triple) {
     std::string CPU = llvm::sys::getHostCPUName();
     if (CPU != "generic") {
       // Translate the native cpu into the architecture suffix for that CPU.
-      const char *Suffix = arm::getLLVMArchSuffixForARM(CPU, MArch);
+      StringRef Suffix = arm::getLLVMArchSuffixForARM(CPU, MArch);
       // If there is no valid architecture suffix for this CPU we don't know how
       // to handle it, so return no architecture.
-      if (strcmp(Suffix, "") == 0)
+      if (Suffix.empty())
         MArch = "";
       else
-        MArch = std::string("arm") + Suffix;
+        MArch = std::string("arm") + Suffix.str();
     }
   }
 
   return MArch;
 }
+
 /// Get the (LLVM) name of the minimum ARM CPU for the arch we are targeting.
-const char *arm::getARMCPUForMArch(StringRef Arch, const llvm::Triple &Triple) {
+StringRef arm::getARMCPUForMArch(StringRef Arch, const llvm::Triple &Triple) {
   std::string MArch = getARMArch(Arch, Triple);
   // getARMCPUForArch defaults to the triple if MArch is empty, but empty MArch
   // here means an -march=native that we can't handle, so instead return no CPU.
   if (MArch.empty())
-    return "";
+    return StringRef();
 
   // We need to return an empty string here on invalid MArch values as the
   // various places that call this function can't cope with a null result.
-  const char *result = Triple.getARMCPUForArch(MArch);
-  if (result)
-    return result;
-  else
-    return "";
+  return Triple.getARMCPUForArch(MArch);
 }
 
 /// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targeting.
@@ -6067,7 +6064,7 @@ std::string arm::getARMTargetCPU(StringRef CPU, StringRef Arch,
 /// getLLVMArchSuffixForARM - Get the LLVM arch name to use for a particular
 /// CPU  (or Arch, if CPU is generic).
 // FIXME: This is redundant with -mcpu, why does LLVM use this.
-const char *arm::getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch) {
+StringRef arm::getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch) {
   if (CPU == "generic")
     return llvm::ARM::getSubArch(
         llvm::ARM::parseArch(Arch));

@@ -4241,18 +4241,15 @@ class ARMTargetInfo : public TargetInfo {
   }
 
   StringRef getDefaultCPU(StringRef ArchName) const {
-    const char *DefaultCPU = llvm::ARM::getDefaultCPU(ArchName);
-    return DefaultCPU ? DefaultCPU : "";
+    return llvm::ARM::getDefaultCPU(ArchName);
   }
 
   StringRef getCPUAttr() const {
-    const char *CPUAttr;
     // For most sub-arches, the build attribute CPU name is enough.
     // For Cortex variants, it's slightly different.
     switch(ArchKind) {
     default:
-      CPUAttr = llvm::ARM::getCPUAttr(ArchKind);
-      return CPUAttr ? CPUAttr : "";
+      return llvm::ARM::getCPUAttr(ArchKind);
     case llvm::ARM::AK_ARMV6M:
     case llvm::ARM::AK_ARMV6SM:
     case llvm::ARM::AK_ARMV6HL:

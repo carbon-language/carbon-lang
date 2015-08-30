@@ -310,9 +310,10 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
       MCPU = A->getValue();
     if (const Arg *A = Args.getLastArg(options::OPT_march_EQ))
       MArch = A->getValue();
-    std::string CPU = Triple.isOSBinFormatMachO()
-      ? tools::arm::getARMCPUForMArch(MArch, Triple)
-      : tools::arm::getARMTargetCPU(MCPU, MArch, Triple);
+    std::string CPU =
+        Triple.isOSBinFormatMachO()
+            ? tools::arm::getARMCPUForMArch(MArch, Triple).str()
+            : tools::arm::getARMTargetCPU(MCPU, MArch, Triple);
     StringRef Suffix =
       tools::arm::getLLVMArchSuffixForARM(CPU,
                                           tools::arm::getARMArch(MArch, Triple));
