@@ -245,11 +245,9 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
         SymbolBody *Body = File->getSymbolBody(SymIndex);
         if (!Body)
           continue;
-        // Skip undefined weak for now.
-        if (isa<Undefined<ELFT>>(Body) && Body->isWeak())
-          continue;
+        // Skip unsupported for now.
         if (!isa<DefinedRegular<ELFT>>(Body))
-          error(Twine("Can't relocate symbol ") + Body->getName());
+          continue;
         uintX_t Offset = RI.r_offset;
         uint32_t Type = RI.getType(EObj->isMips64EL());
         uintX_t P = this->getVA() + C->getOutputSectionOff();

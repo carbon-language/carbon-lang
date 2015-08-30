@@ -20,8 +20,8 @@ using namespace lld::elf2;
 // Returns 1, 0 or -1 if this symbol should take precedence
 // over the Other, tie or lose, respectively.
 int SymbolBody::compare(SymbolBody *Other) {
-  std::pair<bool, bool> L(isDefined(), isWeak());
-  std::pair<bool, bool> R(Other->isDefined(), Other->isWeak());
+  std::pair<bool, bool> L(isDefined(), !isWeak());
+  std::pair<bool, bool> R(Other->isDefined(), !Other->isWeak());
 
   // Normalize
   if (L > R)
@@ -30,7 +30,14 @@ int SymbolBody::compare(SymbolBody *Other) {
   if (L != R)
     return -1;
 
-  if (L.first && !L.second)
+  if (L.first && L.second) {
+    // FIXME: In the case where both are common we need to pick the largest
+    // and remember the alignment restriction.
+    if (isCommon())
+      return -1;
+    if (Other->isCommon())
+      return 1;
     return 0;
+  }
   return 1;
 }

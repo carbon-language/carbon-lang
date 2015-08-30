@@ -53,7 +53,8 @@ public:
     return SymbolKind == UndefinedKind || SymbolKind == UndefinedSyntheticKind;
   }
   bool isDefined() const { return !isUndefined(); }
-  bool isStrongUndefined() { return !IsWeak && isUndefined(); }
+  bool isStrongUndefined() const { return !IsWeak && isUndefined(); }
+  bool isCommon() const { return SymbolKind == DefinedCommonKind; }
 
   // Returns the symbol name.
   StringRef getName() const { return Name; }
