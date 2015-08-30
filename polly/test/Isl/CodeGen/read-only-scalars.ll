@@ -10,7 +10,12 @@
 ; SCALAR-LABEL: entry:
 ; SCALAR-NEXT: %scalar.s2a = alloca float
 
-; SCALAR:  %scalar.s2a.reload = load float, float* %scalar.s2a
+; SCALAR-LABEL: polly.start:
+; SCALAR-NEXT:  store float %scalar, float* %scalar.s2a
+
+; SCALAR-LABEL: polly.stmt.stmt1:
+; SCALAR-NEXT:  %val_p_scalar_ = load float, float* %A,
+; SCALAR-NEXT:  %scalar.s2a.reload = load float, float* %scalar.s2a
 ; SCALAR-NEXT:  %p_sum = fadd float %val_p_scalar_, %scalar.s2a.reload
 
 define void @foo(float* noalias %A, float %scalar) {

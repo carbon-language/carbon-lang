@@ -464,7 +464,8 @@ void BlockGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
   }
 }
 
-void BlockGenerator::createScalarInitialization(Region &R) {
+void BlockGenerator::createScalarInitialization(Scop &S) {
+  Region &R = S.getRegion();
   // The split block __just before__ the region and optimized region.
   BasicBlock *SplitBB = R.getEnteringBlock();
   BranchInst *SplitBBTerm = cast<BranchInst>(SplitBB->getTerminator());
@@ -475,23 +476,41 @@ void BlockGenerator::createScalarInitialization(Region &R) {
   if (StartBB == R.getEntry())
     StartBB = SplitBBTerm->getSuccessor(1);
 
-  // For each PHI predecessor outside the region store the incoming operand
-  // value prior to entering the optimized region.
   Builder.SetInsertPoint(StartBB->getTerminator());
 
-  for (const auto &PHIOpMapping : PHIOpMap) {
-    const PHINode *PHI = cast<PHINode>(PHIOpMapping.getFirst());
+  for (auto &Pair : S.arrays()) {
+    auto &Array = Pair.second;
+    if (Array->getNumberOfDimensions() != 0)
+      continue;
+    if (Array->isPHI()) {
+      // For PHI nodes, the only values we need to store are the ones that
+      // reach the PHI node from outside the region. In general there should
+      // only be one such incoming edge and this edge should enter through
+      // 'SplitBB'.
+      auto PHI = cast<PHINode>(Array->getBasePtr());
 
-    // Check if this PHI has the split block as predecessor (that is the only
-    // possible predecessor outside the SCoP).
-    int idx = PHI->getBasicBlockIndex(SplitBB);
-    if (idx < 0)
+      for (auto BI = PHI->block_begin(), BE = PHI->block_end(); BI != BE; BI++)
+        if (!R.contains(*BI) && *BI != SplitBB)
+          llvm_unreachable("Incoming edges from outside the scop should always "
+                           "come from SplitBB");
+
+      int Idx = PHI->getBasicBlockIndex(SplitBB);
+      if (Idx < 0)
+        continue;
+
+      Value *ScalarValue = PHI->getIncomingValue(Idx);
+
+      Builder.CreateStore(ScalarValue, getOrCreatePHIAlloca(PHI));
+      continue;
+    }
+
+    auto *Inst = dyn_cast<Instruction>(Array->getBasePtr());
+
+    if (Inst && R.contains(Inst))
       continue;
 
-    Value *ScalarValue = PHI->getIncomingValue(idx);
-
-    // If the split block is the predecessor initialize the PHI operator alloca.
-    Builder.CreateStore(ScalarValue, PHIOpMapping.getSecond());
+    Builder.CreateStore(Array->getBasePtr(),
+                        getOrCreateScalarAlloca(Array->getBasePtr()));
   }
 }
 
@@ -540,7 +559,7 @@ void BlockGenerator::createScalarFinalization(Region &R) {
 }
 
 void BlockGenerator::finalizeSCoP(Scop &S) {
-  createScalarInitialization(S.getRegion());
+  createScalarInitialization(S);
   createScalarFinalization(S.getRegion());
 }
 

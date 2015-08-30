@@ -147,7 +147,7 @@ public:
   /// This will initialize and finalize the scalar variables we demoted during
   /// the code generation.
   ///
-  /// @see createScalarInitialization(Region &)
+  /// @see createScalarInitialization(Scop &)
   /// @see createScalarFinalization(Region &)
   void finalizeSCoP(Scop &S);
 
@@ -383,11 +383,8 @@ protected:
 
   /// @brief Initialize the memory of demoted scalars.
   ///
-  /// If a PHI node was demoted and one of its predecessor blocks was outside
-  /// the SCoP we need to initialize the memory cell we demoted the PHI into
-  /// with the value corresponding to that predecessor. As a SCoP is a
-  /// __single__ entry region there is at most one such predecessor.
-  void createScalarInitialization(Region &R);
+  /// @param S The scop for which to generate the scalar initializers.
+  void createScalarInitialization(Scop &S);
 
   /// @brief Promote the values of demoted scalars after the SCoP.
   ///
