@@ -7534,6 +7534,18 @@ QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
     return QualType();
   }
 
+  // OpenCL V1.1 6.2.6.p1:
+  // If the operands are of more than one vector type, then an error shall
+  // occur. Implicit conversions between vector types are not permitted, per
+  // section 6.2.1.
+  if (getLangOpts().OpenCL &&
+      RHSVecType && isa<ExtVectorType>(RHSVecType) &&
+      LHSVecType && isa<ExtVectorType>(LHSVecType)) {
+    Diag(Loc, diag::err_opencl_implicit_vector_conversion) << LHSType
+                                                           << RHSType;
+    return QualType();
+  }
+
   // Otherwise, use the generic diagnostic.
   Diag(Loc, diag::err_typecheck_vector_not_convertable)
     << LHSType << RHSType
