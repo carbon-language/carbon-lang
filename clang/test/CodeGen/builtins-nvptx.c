@@ -234,30 +234,30 @@ __device__ void nvvm_atom(float *fp, float f, int *ip, int i, long *lp, long l,
   // CHECK: atomicrmw xchg
   __nvvm_atom_xchg_gen_ll(&sll, ll);
 
-  // CHECK: atomicrmw max
+  // CHECK: atomicrmw max i32*
   __nvvm_atom_max_gen_i(ip, i);
-  // CHECK: atomicrmw max
+  // CHECK: atomicrmw umax i32*
   __nvvm_atom_max_gen_ui((unsigned int *)ip, i);
   // CHECK: atomicrmw max
   __nvvm_atom_max_gen_l(&dl, l);
-  // CHECK: atomicrmw max
+  // CHECK: atomicrmw umax
   __nvvm_atom_max_gen_ul((unsigned long *)&dl, l);
-  // CHECK: atomicrmw max
+  // CHECK: atomicrmw max i64*
   __nvvm_atom_max_gen_ll(&sll, ll);
-  // CHECK: atomicrmw max
+  // CHECK: atomicrmw umax i64*
   __nvvm_atom_max_gen_ull((unsigned long long *)&sll, ll);
 
-  // CHECK: atomicrmw min
+  // CHECK: atomicrmw min i32*
   __nvvm_atom_min_gen_i(ip, i);
-  // CHECK: atomicrmw min
+  // CHECK: atomicrmw umin i32*
   __nvvm_atom_min_gen_ui((unsigned int *)ip, i);
   // CHECK: atomicrmw min
   __nvvm_atom_min_gen_l(&dl, l);
-  // CHECK: atomicrmw min
+  // CHECK: atomicrmw umin
   __nvvm_atom_min_gen_ul((unsigned long *)&dl, l);
-  // CHECK: atomicrmw min
+  // CHECK: atomicrmw min i64*
   __nvvm_atom_min_gen_ll(&sll, ll);
-  // CHECK: atomicrmw min
+  // CHECK: atomicrmw umin i64*
   __nvvm_atom_min_gen_ull((unsigned long long *)&sll, ll);
 
   // CHECK: cmpxchg
