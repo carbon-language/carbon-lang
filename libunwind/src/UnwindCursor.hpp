@@ -556,6 +556,10 @@ private:
   compact_unwind_encoding_t dwarfEncoding(Registers_arm64 &) const {
     return UNWIND_ARM64_MODE_DWARF;
   }
+
+  compact_unwind_encoding_t dwarfEncoding(Registers_or1k &) const {
+    return 0;
+  }
 #endif // _LIBUNWIND_SUPPORT_DWARF_UNWIND
 
 
