@@ -166,7 +166,7 @@ class BitcodeReader : public GVMaterializer {
   /// is thus not represented here.  As such all indices are off by one.
   std::vector<AttributeSet> MAttributes;
 
-  /// \brief The set of attribute groups.
+  /// The set of attribute groups.
   std::map<unsigned, AttributeSet> MAttributeGroups;
 
   /// While parsing a function body, this is a list of the basic blocks for the
