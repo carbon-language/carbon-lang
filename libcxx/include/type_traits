@@ -277,6 +277,53 @@ using bool_constant = integral_constant<bool, __b>;
 typedef _LIBCPP_BOOL_CONSTANT(true)  true_type;
 typedef _LIBCPP_BOOL_CONSTANT(false) false_type;
 
+#if !defined(_LIBCPP_HAS_NO_VARIADICS)
+
+// __lazy_and
+
+template <bool _Last, class ..._Preds>
+struct __lazy_and_impl;
+
+template <class ..._Preds>
+struct __lazy_and_impl<false, _Preds...> : false_type {};
+
+template <>
+struct __lazy_and_impl<true> : true_type {};
+
+template <class _Pred>
+struct __lazy_and_impl<true, _Pred> : integral_constant<bool, _Pred::type::value> {};
+
+template <class _Hp, class ..._Tp>
+struct __lazy_and_impl<true, _Hp, _Tp...> : __lazy_and_impl<_Hp::type::value, _Tp...> {};
+
+template <class _P1, class ..._Pr>
+struct __lazy_and : __lazy_and_impl<_P1::type::value, _Pr...> {};
+
+// __lazy_or
+
+template <bool _List, class ..._Preds>
+struct __lazy_or_impl;
+
+template <class ..._Preds>
+struct __lazy_or_impl<true, _Preds...> : true_type {};
+
+template <>
+struct __lazy_or_impl<false> : false_type {};
+
+template <class _Hp, class ..._Tp>
+struct __lazy_or_impl<false, _Hp, _Tp...>
+        : __lazy_or_impl<_Hp::type::value, _Tp...> {};
+
+template <class _P1, class ..._Pr>
+struct __lazy_or : __lazy_or_impl<_P1::type::value, _Pr...> {};
+
+// __lazy_not
+
+template <class _Pred>
+struct __lazy_not : integral_constant<bool, !_Pred::type::value> {};
+
+#endif // !defined(_LIBCPP_HAS_NO_VARIADICS)
+
 // is_const
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_const            : public false_type {};

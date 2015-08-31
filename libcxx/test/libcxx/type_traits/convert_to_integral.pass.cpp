@@ -1,6 +1,21 @@
-
+//===----------------------------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
 // TODO: Make this test pass for all standards.
 // XFAIL: c++98, c++03
+
+// <type_traits>
+
+// __convert_to_integral(Tp)
+
+// Test that the __convert_to_integral functions properly converts Tp to the
+// correct type and value for integral, enum and user defined types.
 
 #include <limits>
 #include <type_traits>

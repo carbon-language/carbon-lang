@@ -136,31 +136,6 @@ get(array<_Tp, _Size>&&) _NOEXCEPT;
 
 #if !defined(_LIBCPP_HAS_NO_VARIADICS)
 
-// __lazy_and
-
-template <bool _Last, class ..._Preds>
-struct __lazy_and_impl;
-
-template <class ..._Preds>
-struct __lazy_and_impl<false, _Preds...> : false_type {};
-
-template <>
-struct __lazy_and_impl<true> : true_type {};
-
-template <class _Pred>
-struct __lazy_and_impl<true, _Pred> : integral_constant<bool, _Pred::type::value> {};
-
-template <class _Hp, class ..._Tp>
-struct __lazy_and_impl<true, _Hp, _Tp...> : __lazy_and_impl<_Hp::type::value, _Tp...> {};
-
-template <class _P1, class ..._Pr>
-struct __lazy_and : __lazy_and_impl<_P1::type::value, _Pr...> {};
-
-// __lazy_not
-
-template <class _Pred>
-struct __lazy_not : integral_constant<bool, !_Pred::type::value> {};
-
 // __make_tuple_indices
 
 template <size_t...> struct __tuple_indices {};
