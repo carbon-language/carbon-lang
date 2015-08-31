@@ -1,6 +1,6 @@
 /* Compile with:
    clang -g -c  odr-uniquing.cpp -o odr-uniquing/1.o
- 
+   cp odr-uniquing/1.o odr-uniquing/2.o
    The aim of these test is to check that all the 'type types' that
    should be uniqued through the ODR really are.
    
