@@ -11,7 +11,6 @@ class CommandRegexTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @expectedFailureFreeBSD("llvm.org/pr22784: pexpect failing on the FreeBSD buildbot")
     @expectedFailureHostWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_command_regex(self):
         """Test a simple scenario of 'command regex' invocation and subsequent use."""
