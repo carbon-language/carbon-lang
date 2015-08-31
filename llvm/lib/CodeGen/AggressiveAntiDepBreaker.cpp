@@ -689,6 +689,20 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
         }
       }
 
+      // Also, we cannot rename 'Reg' to 'NewReg' if the instruction defining
+      // 'Reg' is an early-clobber define and that instruction also uses
+      // 'NewReg'.
+      for (const auto &Q : make_range(RegRefs.equal_range(Reg))) {
+        if (!Q.second.Operand->isDef() || !Q.second.Operand->isEarlyClobber())
+          continue;
+
+        MachineInstr *DefMI = Q.second.Operand->getParent();
+        if (DefMI->readsRegister(NewReg, TRI)) {
+          DEBUG(dbgs() << "(ec)");
+          goto next_super_reg;
+        }
+      }
+
       // Record that 'Reg' can be renamed to 'NewReg'.
       RenameMap.insert(std::pair<unsigned, unsigned>(Reg, NewReg));
     }
