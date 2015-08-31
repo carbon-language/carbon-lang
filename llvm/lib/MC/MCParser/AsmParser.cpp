@@ -693,9 +693,9 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
         // FIXME: We would really like to refer back to where the symbol was
         // first referenced for a source location. We need to add something
         // to track that. Currently, we just point to the end of the file.
-        printMessage(
-            getLexer().getLoc(), SourceMgr::DK_Error,
-            "assembler local symbol '" + Sym->getName() + "' not defined");
+        printMessage(getLexer().getLoc(), SourceMgr::DK_Error,
+                     "assembler local symbol '" + Sym->getName() +
+                         "' not defined");
     }
   }
 
@@ -867,11 +867,12 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
 
     // If this is an absolute variable reference, substitute it now to preserve
     // semantics in the face of reassignment.
-    if (Sym->isVariable() && isa<MCConstantExpr>(Sym->getVariableValue())) {
+    if (Sym->isVariable() &&
+        isa<MCConstantExpr>(Sym->getVariableValue(/*SetUsed*/ false))) {
       if (Variant)
         return Error(EndLoc, "unexpected modifier on variable reference");
 
-      Res = Sym->getVariableValue();
+      Res = Sym->getVariableValue(/*SetUsed*/ false);
       return false;
     }
 
@@ -4805,7 +4806,8 @@ bool parseAssignmentExpression(StringRef Name, bool allow_redef,
     // FIXME: Diagnose assignment to protected identifier (e.g., register name).
     if (isSymbolUsedInExpression(Sym, Value))
       return Parser.Error(EqualLoc, "Recursive use of '" + Name + "'");
-    else if (Sym->isUndefined() && !Sym->isUsed() && !Sym->isVariable())
+    else if (Sym->isUndefined(/*SetUsed*/ false) && !Sym->isUsed() &&
+             !Sym->isVariable())
       ; // Allow redefinitions of undefined symbols only used in directives.
     else if (Sym->isVariable() && !Sym->isUsed() && allow_redef)
       ; // Allow redefinitions of variables that haven't yet been used.
@@ -4817,9 +4819,6 @@ bool parseAssignmentExpression(StringRef Name, bool allow_redef,
       return Parser.Error(EqualLoc,
                           "invalid reassignment of non-absolute variable '" +
                               Name + "'");
-
-    // Don't count these checks as uses.
-    Sym->setUsed(false);
   } else if (Name == ".") {
     if (Parser.getStreamer().EmitValueToOffset(Value, 0)) {
       Parser.Error(EqualLoc, "expected absolute expression");

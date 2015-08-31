@@ -223,7 +223,7 @@ public:
 
   /// isUsed - Check if this is used.
   bool isUsed() const { return IsUsed; }
-  void setUsed(bool Value) const { IsUsed = Value; }
+  void setUsed(bool Value) const { IsUsed |= Value; }
 
   /// \brief Check if this symbol is redefinable.
   bool isRedefinable() const { return IsRedefinable; }
