@@ -2282,7 +2282,10 @@ __kmp_join_ompt(
 #endif
 
 void
-__kmp_join_call(ident_t *loc, int gtid, enum fork_context_e fork_context
+__kmp_join_call(ident_t *loc, int gtid
+#if OMPT_SUPPORT
+               , enum fork_context_e fork_context
+#endif
 #if OMP_40_ENABLED
                , int exit_teams
 #endif /* OMP_40_ENABLED */
@@ -6984,7 +6987,11 @@ __kmp_teams_master( int gtid )
     
     // AC: last parameter "1" eliminates join barrier which won't work because
     // worker threads are in a fork barrier waiting for more parallel regions
-    __kmp_join_call( loc, gtid, fork_context_intel, 1 ); 
+    __kmp_join_call( loc, gtid
+#if OMPT_SUPPORT
+        , fork_context_intel
+#endif
+        , 1 ); 
 }
 
 int

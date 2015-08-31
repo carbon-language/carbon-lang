@@ -330,7 +330,11 @@ __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
 #if INCLUDE_SSC_MARKS
     SSC_MARK_JOINING();
 #endif
-    __kmp_join_call( loc, gtid, fork_context_intel );
+    __kmp_join_call( loc, gtid
+#if OMPT_SUPPORT
+        , fork_context_intel
+#endif
+    );
 
     va_end( ap );
 
@@ -421,7 +425,11 @@ __kmpc_fork_teams(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
             ap
 #endif
             );
-    __kmp_join_call( loc, gtid, fork_context_intel );
+    __kmp_join_call( loc, gtid
+#if OMPT_SUPPORT
+        , fork_context_intel
+#endif
+    );
 
 #if OMPT_SUPPORT
     if (ompt_status & ompt_status_track) {
