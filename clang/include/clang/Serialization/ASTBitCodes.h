@@ -344,7 +344,7 @@ namespace clang {
 
       /// \brief This is so that older clang versions, before the introduction
       /// of the control block, can read and reject the newer PCH format.
-      /// *DON"T CHANGE THIS NUMBER*.
+      /// *DON'T CHANGE THIS NUMBER*.
       METADATA_OLD_FORMAT = 4,
 
       /// \brief Record code for the identifier table.
