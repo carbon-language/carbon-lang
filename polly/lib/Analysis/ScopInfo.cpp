@@ -1488,19 +1488,16 @@ static inline Loop *getRegionNodeLoop(RegionNode *RN, LoopInfo &LI) {
 isl_set *Scop::getDomainConditions(ScopStmt *Stmt) {
   BasicBlock *BB = Stmt->isBlockStmt() ? Stmt->getBasicBlock()
                                        : Stmt->getRegion()->getEntry();
-  isl_set *Domain = isl_set_copy(DomainMap[BB]);
-
-  unsigned NumDims = Stmt->getNumIterators();
-  Domain = isl_set_remove_dims(Domain, isl_dim_set, NumDims,
-                               getMaxLoopDepth() - NumDims);
-  return Domain;
+  return isl_set_copy(DomainMap[BB]);
 }
 
 void Scop::buildDomains(Region *R, LoopInfo &LI, ScopDetection &SD,
                         DominatorTree &DT) {
 
-  auto *S = isl_set_universe(isl_space_set_alloc(getIslCtx(), 0, MaxLoopDepth));
-  DomainMap[R->getEntry()] = S;
+  auto *EntryBB = R->getEntry();
+  int LD = getRelativeLoopDepth(LI.getLoopFor(EntryBB));
+  auto *S = isl_set_universe(isl_space_set_alloc(getIslCtx(), 0, LD + 1));
+  DomainMap[EntryBB] = S;
 
   buildDomainsWithBranchConstraints(R, LI, SD, DT);
 }
@@ -1508,6 +1505,7 @@ void Scop::buildDomains(Region *R, LoopInfo &LI, ScopDetection &SD,
 void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
                                              ScopDetection &SD,
                                              DominatorTree &DT) {
+  RegionInfo &RI = *R->getRegionInfo();
 
   // To create the domain for each block in R we iterate over all blocks and
   // subregions in R and propagate the conditions under which the current region
@@ -1569,15 +1567,26 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
         continue;
       }
 
-      // Check if the edge to SuccBB is a loop exit edge. If so drop the
-      // constrains on the loop/dimension we leave.
+      // Do not adjust the number of dimensions if we enter a boxed loop or are
+      // in a non-affine subregion or if the surrounding loop stays the same.
       Loop *SuccBBLoop = LI.getLoopFor(SuccBB);
-      if (SuccBBLoop != BBLoop &&
-          BBLoopDepth > getRelativeLoopDepth(SuccBBLoop)) {
-        assert(BBLoopDepth >= 0 &&
-               "Can only remove a dimension if we exit a loop");
-        CondSet = isl_set_drop_constraints_involving_dims(CondSet, isl_dim_set,
-                                                          BBLoopDepth, 1);
+      Region *SuccRegion = RI.getRegionFor(SuccBB);
+      if (BBLoop != SuccBBLoop && !RN->isSubRegion() &&
+          !(SD.isNonAffineSubRegion(SuccRegion, &getRegion()) &&
+            SuccRegion->contains(SuccBBLoop))) {
+
+        // Check if the edge to SuccBB is a loop entry or exit edge. If so
+        // adjust the dimensionality accordingly. Lastly, if we leave a loop
+        // and enter a new one we need to drop the old constraints.
+        int SuccBBLoopDepth = getRelativeLoopDepth(SuccBBLoop);
+        assert(std::abs(BBLoopDepth - SuccBBLoopDepth) <= 1);
+        if (BBLoopDepth > SuccBBLoopDepth)
+          CondSet = isl_set_remove_dims(CondSet, isl_dim_set, BBLoopDepth, 1);
+        else if (SuccBBLoopDepth > BBLoopDepth)
+          CondSet = isl_set_add_dims(CondSet, isl_dim_set, 1);
+        else if (BBLoopDepth >= 0)
+          CondSet = isl_set_drop_constraints_involving_dims(
+              CondSet, isl_dim_set, BBLoopDepth, 1);
       }
 
       // Set the domain for the successor or merge it with an existing domain in
