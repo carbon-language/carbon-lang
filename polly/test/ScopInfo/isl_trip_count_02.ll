@@ -1,6 +1,8 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-allow-non-scev-backedge-taken-count -polly-scops -analyze < %s | FileCheck %s
 ;
-; CHECK: [M, N] -> { Stmt_for_body[i0] : i0 >= 0 and N <= -1 + M };
+; TODO: We do not allow unbounded loops at the moment.
+;
+; CHECK-NOT: Stmt_for_body
 ;
 ;   void f(int *A, int N, int M) {
 ;     for (int i = M; i > N; i++)

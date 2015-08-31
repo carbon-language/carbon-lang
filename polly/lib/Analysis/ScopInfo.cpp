@@ -903,9 +903,13 @@ void ScopStmt::addLoopBoundsToDomain(TempScop &tempScop) {
       isl_set *UpperBoundSet = isl_pw_aff_le_set(IV, UpperBound);
       Domain = isl_set_intersect(Domain, UpperBoundSet);
     } else {
-      // If SCEV cannot provide a loop trip count we compute it with ISL.
+      // If SCEV cannot provide a loop trip count, we compute it with ISL. If
+      // the domain remains unbounded, make the assumed context infeasible
+      // as code generation currently does not expect unbounded loops.
       addLoopTripCountToDomain(L);
       isl_pw_aff_free(IV);
+      if (!isl_set_dim_has_upper_bound(Domain, isl_dim_set, i))
+        Parent.addAssumption(isl_set_empty(Parent.getParamSpace()));
     }
   }
 
