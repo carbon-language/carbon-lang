@@ -109,16 +109,25 @@ struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
   }
 
 private:
-  enum ExtensionKind { EK_NotExtended, EK_SignExt, EK_ZeroExt };
-
+  // A linear transformation of a Value; this class represents ZExt(SExt(V,
+  // SExtBits), ZExtBits) * Scale + Offset.
   struct VariableGEPIndex {
+
+    // An opaque Value - we can't decompose this further.
     const Value *V;
-    ExtensionKind Extension;
+
+    // We need to track what extensions we've done as we consider the same Value
+    // with different extensions as different variables in a GEP's linear
+    // expression;
+    // e.g.: if V == -1, then sext(x) != zext(x).
+    unsigned ZExtBits;
+    unsigned SExtBits;
+
     int64_t Scale;
 
     bool operator==(const VariableGEPIndex &Other) const {
-      return V == Other.V && Extension == Other.Extension &&
-             Scale == Other.Scale;
+      return V == Other.V && ZExtBits == Other.ZExtBits &&
+             SExtBits == Other.SExtBits && Scale == Other.Scale;
     }
 
     bool operator!=(const VariableGEPIndex &Other) const {
@@ -150,16 +159,30 @@ private:
   /// Tracks instructions visited by pointsToConstantMemory.
   SmallPtrSet<const Value *, 16> Visited;
 
-  static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
-                                    ExtensionKind &Extension,
-                                    const DataLayout &DL, unsigned Depth,
-                                    AssumptionCache *AC, DominatorTree *DT);
+  static const Value *
+  GetLinearExpression(const Value *V, APInt &Scale, APInt &Offset,
+                      unsigned &ZExtBits, unsigned &SExtBits,
+                      const DataLayout &DL, unsigned Depth, AssumptionCache *AC,
+                      DominatorTree *DT, bool &NSW, bool &NUW);
 
   static const Value *
   DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
                          SmallVectorImpl<VariableGEPIndex> &VarIndices,
                          bool &MaxLookupReached, const DataLayout &DL,
                          AssumptionCache *AC, DominatorTree *DT);
+  /// \brief A Heuristic for aliasGEP that searches for a constant offset
+  /// between the variables.
+  ///
+  /// GetLinearExpression has some limitations, as generally zext(%x + 1)
+  /// != zext(%x) + zext(1) if the arithmetic overflows. GetLinearExpression
+  /// will therefore conservatively refuse to decompose these expressions.
+  /// However, we know that, for all %x, zext(%x) != zext(%x + 1), even if
+  /// the addition overflows.
+  bool
+  constantOffsetHeuristic(const SmallVectorImpl<VariableGEPIndex> &VarIndices,
+                          uint64_t V1Size, uint64_t V2Size, int64_t BaseOffset,
+                          const DataLayout *DL, AssumptionCache *AC,
+                          DominatorTree *DT);
 
   bool isValueEqualInPotentialCycles(const Value *V1, const Value *V2);
 
