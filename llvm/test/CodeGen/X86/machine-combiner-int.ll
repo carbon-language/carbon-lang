@@ -98,3 +98,50 @@ define i64 @reassociate_ands_i64(i64 %x0, i64 %x1, i64 %x2, i64 %x3) {
   ret i64 %t2
 }
 
+; Verify that integer 'ors' are reassociated. The first 'or' in 
+; each test should be independent of the result of the preceding sub.
+
+define i8 @reassociate_ors_i8(i8 %x0, i8 %x1, i8 %x2, i8 %x3) {
+; CHECK-LABEL: reassociate_ors_i8:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    subb  %sil, %dil
+; CHECK-NEXT:    orb   %cl, %dl
+; CHECK-NEXT:    orb   %dil, %dl
+; CHECK_NEXT:    movb  %dx, %ax
+; CHECK_NEXT:    retq
+  %t0 = sub i8 %x0, %x1
+  %t1 = or i8 %x2, %t0
+  %t2 = or i8 %x3, %t1
+  ret i8 %t2
+}
+
+; TODO: No way to test i16? These appear to always get promoted to i32.
+
+define i32 @reassociate_ors_i32(i32 %x0, i32 %x1, i32 %x2, i32 %x3) {
+; CHECK-LABEL: reassociate_ors_i32:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    subl  %esi, %edi
+; CHECK-NEXT:    orl   %ecx, %edx
+; CHECK-NEXT:    orl   %edi, %edx
+; CHECK_NEXT:    movl  %edx, %eax
+; CHECK_NEXT:    retq
+  %t0 = sub i32 %x0, %x1
+  %t1 = or i32 %x2, %t0
+  %t2 = or i32 %x3, %t1
+  ret i32 %t2
+}
+
+define i64 @reassociate_ors_i64(i64 %x0, i64 %x1, i64 %x2, i64 %x3) {
+; CHECK-LABEL: reassociate_ors_i64:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    subq  %rsi, %rdi
+; CHECK-NEXT:    orq   %rcx, %rdx
+; CHECK-NEXT:    orq   %rdi, %rdx
+; CHECK-NEXT:    movq  %rdx, %rax
+; CHECK_NEXT:    retq
+  %t0 = sub i64 %x0, %x1
+  %t1 = or i64 %x2, %t0
+  %t2 = or i64 %x3, %t1
+  ret i64 %t2
+}
+
