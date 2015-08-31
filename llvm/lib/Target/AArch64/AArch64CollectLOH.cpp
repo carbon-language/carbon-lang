@@ -353,9 +353,17 @@ static void initReachingDef(const MachineFunction &MF,
 
         for (MCRegAliasIterator AI(CurReg, TRI, true); AI.isValid(); ++AI) {
           MapRegToId::const_iterator ItRegId = RegToId.find(*AI);
-          assert(ItRegId != RegToId.end() &&
-                 "Sub-register of an "
-                 "involved register, not recorded as involved!");
+          // If this alias has not been recorded, then it is not interesting
+          // for the current analysis.
+          // We can end up in this situation because of tuple registers.
+          // E.g., Let say we are interested in S1. When we register
+          // S1, we will also register its aliases and in particular
+          // the tuple Q1_Q2.
+          // Now, when we encounter Q1_Q2, we will look through its aliases
+          // and will find that S2 is not registered.
+          if (ItRegId == RegToId.end())
+            continue;
+
           BBKillSet.set(ItRegId->second);
           BBGen[ItRegId->second] = &MI;
         }

@@ -622,3 +622,36 @@ define void @setL(<1 x i8> %t) {
   store <1 x i8> %t, <1 x i8>* @L, align 4
   ret void
 }
+
+; Make sure we do not assert when we do not track
+; all the aliases of a tuple register.
+; Indeed the tuple register can be tracked because of
+; one of its element, but the other elements of the tuple
+; do not need to be tracked and we used to assert on that.
+; Note: The test case is fragile in the sense that we need
+; a tuple register to appear in the lowering. Thus, the target
+; cpu is required to have the problem reproduced.
+; CHECK-LABEL: _uninterestingSub
+; CHECK: adrp [[ADRP_REG:x[0-9]+]], [[CONSTPOOL:lCPI[0-9]+_[0-9]+]]@PAGE
+; CHECK-NEXT: ldr q[[IDX:[0-9]+]], {{\[}}[[ADRP_REG]], [[CONSTPOOL]]@PAGEOFF]
+; The tuple comes from the next instruction.
+; CHECK-NEXT: tbl.16b v{{[0-9]+}}, { v{{[0-9]+}}, v{{[0-9]+}} }, v[[IDX]]
+; CHECK: ret
+define void @uninterestingSub(i8* nocapture %row) #0 {
+  %tmp = bitcast i8* %row to <16 x i8>*
+  %tmp1 = load <16 x i8>, <16 x i8>* %tmp, align 16
+  %vext43 = shufflevector <16 x i8> <i8 undef, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>, <16 x i8> %tmp1, <16 x i32> <i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16>
+  %add.i.414 = add <16 x i8> zeroinitializer, %vext43
+  store <16 x i8> %add.i.414, <16 x i8>* %tmp, align 16
+  %add.ptr51 = getelementptr inbounds i8, i8* %row, i64 16
+  %tmp2 = bitcast i8* %add.ptr51 to <16 x i8>*
+  %tmp3 = load <16 x i8>, <16 x i8>* %tmp2, align 16
+  %tmp4 = bitcast i8* undef to <16 x i8>*
+  %tmp5 = load <16 x i8>, <16 x i8>* %tmp4, align 16
+  %vext157 = shufflevector <16 x i8> %tmp3, <16 x i8> %tmp5, <16 x i32> <i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16>
+  %add.i.402 = add <16 x i8> zeroinitializer, %vext157
+  store <16 x i8> %add.i.402, <16 x i8>* %tmp4, align 16
+  ret void
+}
+
+attributes #0 = { "target-cpu"="cyclone" }
