@@ -79,6 +79,9 @@ def X86pshufb  : SDNode<"X86ISD::PSHUFB",
 def X86psadbw  : SDNode<"X86ISD::PSADBW",
                  SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                       SDTCisSameAs<0,2>]>>;
+def X86dbpsadbw : SDNode<"X86ISD::DBPSADBW",
+                  SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisVec<1>,
+                                       SDTCisSameAs<1,2>, SDTCisInt<3>]>>;
 def X86andnp   : SDNode<"X86ISD::ANDNP",
                  SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                       SDTCisSameAs<0,2>]>>;

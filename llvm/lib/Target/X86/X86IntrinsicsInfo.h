@@ -611,7 +611,12 @@ static const IntrinsicData  IntrinsicsWithoutChain[] = {
                      ISD::UINT_TO_FP, 0),
   X86_INTRINSIC_DATA(avx512_mask_cvtuqq2ps_512, INTR_TYPE_1OP_MASK,
                      ISD::UINT_TO_FP, ISD::UINT_TO_FP),
-
+  X86_INTRINSIC_DATA(avx512_mask_dbpsadbw_128, INTR_TYPE_3OP_IMM8_MASK,
+                     X86ISD::DBPSADBW, 0),
+  X86_INTRINSIC_DATA(avx512_mask_dbpsadbw_256, INTR_TYPE_3OP_IMM8_MASK,
+                     X86ISD::DBPSADBW, 0),
+  X86_INTRINSIC_DATA(avx512_mask_dbpsadbw_512, INTR_TYPE_3OP_IMM8_MASK,
+                     X86ISD::DBPSADBW, 0),
   X86_INTRINSIC_DATA(avx512_mask_div_pd_128, INTR_TYPE_2OP_MASK, ISD::FDIV, 0),
   X86_INTRINSIC_DATA(avx512_mask_div_pd_256, INTR_TYPE_2OP_MASK, ISD::FDIV, 0),
   X86_INTRINSIC_DATA(avx512_mask_div_pd_512, INTR_TYPE_2OP_MASK, ISD::FDIV,

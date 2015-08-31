@@ -1201,3 +1201,23 @@ define <64 x i8>@test_int_x86_avx512_mask_palignr_512(<64 x i8> %x0, <64 x i8> %
   %res4 = add <64 x i8> %res3, %res2
   ret <64 x i8> %res4
 }
+
+declare <32 x i16> @llvm.x86.avx512.mask.dbpsadbw.512(<64 x i8>, <64 x i8>, i32, <32 x i16>, i32)
+
+define <32 x i16>@test_int_x86_avx512_mask_dbpsadbw_512(<64 x i8> %x0, <64 x i8> %x1, <32 x i16> %x3, i32 %x4) {
+; CHECK-LABEL: test_int_x86_avx512_mask_dbpsadbw_512:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovd %edi, %k1
+; CHECK-NEXT:    vdbpsadbw $2, %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    vdbpsadbw $2, %zmm1, %zmm0, %zmm3 {%k1} {z}
+; CHECK-NEXT:    vdbpsadbw $2, %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    vpaddw %zmm3, %zmm2, %zmm1
+; CHECK-NEXT:    vpaddw %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %res = call <32 x i16> @llvm.x86.avx512.mask.dbpsadbw.512(<64 x i8> %x0, <64 x i8> %x1, i32 2, <32 x i16> %x3, i32 %x4)
+  %res1 = call <32 x i16> @llvm.x86.avx512.mask.dbpsadbw.512(<64 x i8> %x0, <64 x i8> %x1, i32 2, <32 x i16> zeroinitializer, i32 %x4)
+  %res2 = call <32 x i16> @llvm.x86.avx512.mask.dbpsadbw.512(<64 x i8> %x0, <64 x i8> %x1, i32 2, <32 x i16> %x3, i32 -1)
+  %res3 = add <32 x i16> %res, %res1
+  %res4 = add <32 x i16> %res3, %res2
+  ret <32 x i16> %res4
+}

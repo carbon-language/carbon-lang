@@ -6713,6 +6713,9 @@ defm VPALIGN:   avx512_common_3Op_rm_imm8<0x0F, X86PAlignr, "vpalignr" ,
                 avx512_vpalign_lowering_common<avx512vl_f64_info>,
                 EVEX_CD8<8, CD8VF>;
 
+defm VDBPSADBW: avx512_common_3Op_rm_imm8<0x42, X86dbpsadbw, "vdbpsadbw" ,
+                    avx512vl_i16_info, avx512vl_i8_info>, EVEX_CD8<8, CD8VF>;
+
 multiclass avx512_unary_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                            X86VectorVTInfo _> {
   defm rr : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),

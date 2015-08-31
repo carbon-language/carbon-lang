@@ -182,6 +182,8 @@ namespace llvm {
 
       /// Compute Sum of Absolute Differences.
       PSADBW,
+      /// Compute Double Block Packed Sum-Absolute-Differences
+      DBPSADBW,
 
       /// Bitwise Logical AND NOT of Packed FP values.
       ANDNP,
