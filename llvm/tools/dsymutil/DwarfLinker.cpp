@@ -2640,8 +2640,9 @@ void DwarfLinker::patchRangesForUnit(const CompileUnit &Unit,
     const auto &Entries = RangeList.getEntries();
     const DWARFDebugRangeList::RangeListEntry &First = Entries.front();
 
-    if (CurrRange == InvalidRange || First.StartAddress < CurrRange.start() ||
-        First.StartAddress >= CurrRange.stop()) {
+    if (CurrRange == InvalidRange ||
+        First.StartAddress + OrigLowPc < CurrRange.start() ||
+        First.StartAddress + OrigLowPc >= CurrRange.stop()) {
       CurrRange = FunctionRanges.find(First.StartAddress + OrigLowPc);
       if (CurrRange == InvalidRange ||
           CurrRange.start() > First.StartAddress + OrigLowPc) {
