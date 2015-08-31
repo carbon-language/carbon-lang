@@ -51,7 +51,7 @@ public:
 private:
   void addObject(ObjectFileBase *File);
 
-  void resolve(SymbolBody *Body);
+  template <class ELFT> void resolve(SymbolBody *Body);
 
   llvm::DenseMap<StringRef, Symbol *> Symtab;
   llvm::BumpPtrAllocator Alloc;
