@@ -273,7 +273,7 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB,
     // as having cost of 2 total, and if they are a vector intrinsic, we model
     // them as having cost 1.
     if (const CallInst *CI = dyn_cast<CallInst>(I)) {
-      if (CI->cannotDuplicate())
+      if (CI->cannotDuplicate() || CI->isConvergent())
         // Blocks with NoDuplicate are modelled as having infinite cost, so they
         // are never duplicated.
         return ~0U;

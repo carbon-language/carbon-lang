@@ -1634,6 +1634,12 @@ public:
     addAttribute(AttributeSet::FunctionIndex, Attribute::NoDuplicate);
   }
 
+  /// \brief Determine if the call is convergent
+  bool isConvergent() const { return hasFnAttr(Attribute::Convergent); }
+  void setConvergent() {
+    addAttribute(AttributeSet::FunctionIndex, Attribute::Convergent);
+  }
+
   /// \brief Determine if the call returns a structure through first
   /// pointer argument.
   bool hasStructRetAttr() const {
