@@ -63,6 +63,7 @@ public:
   uintX_t getFlags() { return Header.sh_flags; }
   uintX_t getFileOff() { return Header.sh_offset; }
   uintX_t getAlign() { return Header.sh_addralign; }
+  uint32_t getType() { return Header.sh_type; }
 
   virtual void finalize() {}
   virtual void writeTo(uint8_t *Buf) = 0;
@@ -449,7 +450,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       VA += RoundUpToAlignment(Size, Align);
     }
     Sec->setFileOffset(FileOff);
-    FileOff += RoundUpToAlignment(Size, Align);
+    if (Sec->getType() != SHT_NOBITS)
+      FileOff += RoundUpToAlignment(Size, Align);
   }
 
   // Regular sections.
