@@ -210,6 +210,9 @@ bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
         if (R->contains(OpInst))
           continue;
 
+      if (isa<Constant>(Op))
+        continue;
+
       IRAccess ScalarAccess(IRAccess::READ, Op, ZeroOffset, 1, true, Op);
       AccFuncMap[Inst->getParent()].push_back(
           std::make_pair(ScalarAccess, Inst));
