@@ -1274,14 +1274,44 @@ LazyValueInfo::getPredicateAt(unsigned Pred, Value *V, Constant *C,
   // than re-queried on each call. This would also allow us to merge the
   // underlying lattice values to get more information.
   if (CxtI) {
+    BasicBlock *BB = CxtI->getParent();
+
+    // Function entry or an unreachable block.  Bail to avoid confusing
+    // analysis below.
+    pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+    if (PI == PE)
+      return Unknown;
+
+    // If V is a PHI node in the same block as the context, we need to ask
+    // questions about the predicate as applied to the incoming value along
+    // each edge. This is useful for eliminating cases where the predicate is
+    // known along all incoming edges.
+    if (auto *PHI = dyn_cast<PHINode>(V))
+      if (PHI->getParent() == BB) {
+        Tristate Baseline = Unknown;
+        for (unsigned i = 0, e = PHI->getNumIncomingValues(); i < e; i++) {
+          Value *Incoming = PHI->getIncomingValue(i);
+          BasicBlock *PredBB = PHI->getIncomingBlock(i);
+          // Note that PredBB may be BB itself.        
+          Tristate Result = getPredicateOnEdge(Pred, Incoming, C, PredBB, BB,
+                                               CxtI);
+          
+          // Keep going as long as we've seen a consistent known result for
+          // all inputs.
+          Baseline = (i == 0) ? Result /* First iteration */
+            : (Baseline == Result ? Baseline : Unknown); /* All others */
+          if (Baseline == Unknown)
+            break;
+        }
+        if (Baseline != Unknown)
+          return Baseline;
+      }    
+
     // For a comparison where the V is outside this block, it's possible
     // that we've branched on it before. Look to see if the value is known
     // on all incoming edges.
-    BasicBlock *BB = CxtI->getParent();
-    pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
-    if (PI != PE &&
-        (!isa<Instruction>(V) ||
-         cast<Instruction>(V)->getParent() != BB)) {
+    if (!isa<Instruction>(V) ||
+        cast<Instruction>(V)->getParent() != BB) {
       // For predecessor edge, determine if the comparison is true or false
       // on that edge. If they're all true or all false, we can conclude
       // the value of the comparison in this block.
