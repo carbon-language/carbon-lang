@@ -207,20 +207,21 @@ endif()
 # Building the Fortran module files
 # One compilation step creates both omp_lib.mod and omp_lib_kinds.mod
 if(${LIBOMP_FORTRAN_MODULES})
-  configure_file(${LIBOMP_INC_DIR}/omp_lib.h.var ${CMAKE_CURRENT_BINARY_DIR}/omp_lib.h @ONLY)
-  configure_file(${LIBOMP_INC_DIR}/omp_lib.f.var ${CMAKE_CURRENT_BINARY_DIR}/omp_lib.f @ONLY)
-  configure_file(${LIBOMP_INC_DIR}/omp_lib.f90.var ${CMAKE_CURRENT_BINARY_DIR}/omp_lib.f90 @ONLY)
+  configure_file(${LIBOMP_INC_DIR}/omp_lib.h.var omp_lib.h @ONLY)
+  configure_file(${LIBOMP_INC_DIR}/omp_lib.f.var omp_lib.f @ONLY)
+  configure_file(${LIBOMP_INC_DIR}/omp_lib.f90.var omp_lib.f90 @ONLY)
   add_custom_target(libomp-mod ALL DEPENDS omp_lib.mod omp_lib_kinds.mod)
   libomp_get_fflags(LIBOMP_CONFIGURED_FFLAGS)
   if(CMAKE_Fortran_COMPILER_SUPPORTS_F90)
-    set(LIBOMP_FORTRAN_SOURCE_FILE ${CMAKE_CURRENT_BINARY_DIR}/omp_lib.f90)
+    set(LIBOMP_FORTRAN_SOURCE_FILE omp_lib.f90)
   else()
-    set(LIBOMP_FORTRAN_SOURCE_FILE ${CMAKE_CURRENT_BINARY_DIR}/omp_lib.f)
+    set(LIBOMP_FORTRAN_SOURCE_FILE omp_lib.f)
   endif()
   add_custom_command(
     OUTPUT omp_lib.mod omp_lib_kinds.mod
     COMMAND ${CMAKE_Fortran_COMPILER} -c ${LIBOMP_CONFIGURED_FFLAGS} ${LIBOMP_FORTRAN_SOURCE_FILE}
-    DEPENDS ${LIBOMP_FORTRAN_SOURCE_FILE} ${CMAKE_CURRENT_BINARY_DIR}/omp_lib.h
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${LIBOMP_FORTRAN_SOURCE_FILE}
+      ${CMAKE_CURRENT_BINARY_DIR}/omp_lib.h
   )
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES omp_lib${CMAKE_C_OUTPUT_EXTENSION})
 endif()
