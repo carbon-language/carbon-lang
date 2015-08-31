@@ -15,9 +15,7 @@
 #ifndef LLVM_CLANG_BASIC_TARGETINFO_H
 #define LLVM_CLANG_BASIC_TARGETINFO_H
 
-#include "clang/AST/Attr.h"
 #include "clang/Basic/AddressSpaces.h"
-#include "clang/Basic/Attributes.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TargetCXXABI.h"
@@ -742,18 +740,21 @@ public:
   /// language options which change the target configuration.
   virtual void adjust(const LangOptions &Opts);
 
-  /// \brief Parse a __target__ attribute and get the cpu/feature strings
-  /// out of it for later use.
-  typedef std::pair<StringRef, std::vector<std::string>> ParsedTargetAttr;
-  ParsedTargetAttr parseTargetAttr(const TargetAttr *TA) const;
-
   /// \brief Initialize the map with the default set of target features for the
   /// CPU this should include all legal feature strings on the target.
   ///
   /// \return False on error (invalid features).
   virtual bool initFeatureMap(llvm::StringMap<bool> &Features,
                               DiagnosticsEngine &Diags, StringRef CPU,
-                              std::vector<std::string> &FeatureVec) const;
+                              std::vector<std::string> &FeatureVec) const {
+    for (const auto &F : FeatureVec) {
+      const char *Name = F.c_str();
+      // Apply the feature via the target.
+      bool Enabled = Name[0] == '+';
+      setFeatureEnabled(Features, Name + 1, Enabled);
+    }
+    return true;
+  }
 
   /// \brief Get the ABI currently in use.
   virtual StringRef getABI() const { return StringRef(); }

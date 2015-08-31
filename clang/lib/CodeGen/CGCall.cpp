@@ -1499,19 +1499,45 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(TargetDecl);
     if (FD && FD->getAttr<TargetAttr>()) {
       llvm::StringMap<bool> FeatureMap;
+      const auto *TD = FD->getAttr<TargetAttr>();
 
+      // Make a copy of the features as passed on the command line.
+      std::vector<std::string> FnFeatures =
+          getTarget().getTargetOpts().FeaturesAsWritten;
+
+      // Grab the target attribute string.
+      StringRef FeaturesStr = TD->getFeatures();
+      SmallVector<StringRef, 1> AttrFeatures;
+      FeaturesStr.split(AttrFeatures, ",");
+
+      // Grab the various features and prepend a "+" to turn on the feature to
+      // the backend and add them to our existing set of features.
+      for (auto &Feature : AttrFeatures) {
+        // Go ahead and trim whitespace rather than either erroring or
+        // accepting it weirdly.
+        Feature = Feature.trim();
+
+        // While we're here iterating check for a different target cpu.
+        if (Feature.startswith("arch="))
+          TargetCPU = Feature.split("=").second.trim();
+        else if (Feature.startswith("tune="))
+          // We don't support cpu tuning this way currently.
+          ;
+        else if (Feature.startswith("fpmath="))
+          // TODO: Support the fpmath option this way. It will require checking
+          // overall feature validity for the function with the rest of the
+          // attributes on the function.
+          ;
+        else if (Feature.startswith("no-"))
+          FnFeatures.push_back("-" + Feature.split("-").second.str());
+        else
+          FnFeatures.push_back("+" + Feature.str());
+      }
       // Now populate the feature map, first with the TargetCPU which is either
       // the default or a new one from the target attribute string. Then we'll
       // use the passed in features (FeaturesAsWritten) along with the new ones
       // from the attribute.
-      TargetInfo::ParsedTargetAttr PTA =
-          getTarget().parseTargetAttr(FD->getAttr<TargetAttr>());
-      if (PTA.first != "")
-	TargetCPU = PTA.first;
-      PTA.second.insert(PTA.second.begin(),
-                        getTarget().getTargetOpts().FeaturesAsWritten.begin(),
-                        getTarget().getTargetOpts().FeaturesAsWritten.end());
-      getTarget().initFeatureMap(FeatureMap, Diags, TargetCPU, PTA.second);
+      getTarget().initFeatureMap(FeatureMap, Diags, TargetCPU, FnFeatures);
 
       // Produce the canonical string for this set of features.
       std::vector<std::string> Features;
