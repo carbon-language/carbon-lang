@@ -6902,7 +6902,7 @@ static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
     Hi = DAG.getBitcast(AlignVT, Hi);
 
     return DAG.getBitcast(
-        VT, DAG.getNode(X86ISD::PALIGNR, DL, AlignVT, Hi, Lo,
+        VT, DAG.getNode(X86ISD::PALIGNR, DL, AlignVT, Lo, Hi,
                         DAG.getConstant(Rotation * Scale, DL, MVT::i8)));
   }
 
@@ -15695,12 +15695,16 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
         Src1, Src2, Imm, Rnd),
         Mask, PassThru, Subtarget, DAG);
     }
+    case INTR_TYPE_3OP_IMM8_MASK:
     case INTR_TYPE_3OP_MASK: {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
       SDValue Src3 = Op.getOperand(3);
       SDValue PassThru = Op.getOperand(4);
       SDValue Mask = Op.getOperand(5);
+
+      if (IntrData->Type == INTR_TYPE_3OP_IMM8_MASK)
+        Src3 = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, Src3);
       // We specify 2 possible opcodes for intrinsics with rounding modes.
       // First, we check if the intrinsic may have non-default rounding mode,
       // (IntrData->Opc1 != 0), then we check the rounding mode operand.

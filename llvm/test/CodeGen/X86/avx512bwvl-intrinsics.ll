@@ -4194,3 +4194,43 @@ define <16 x i16>@test_int_x86_avx512_mask_punpckhw_d_256(<16 x i16> %x0, <16 x 
   %res2 = add <16 x i16> %res, %res1
   ret <16 x i16> %res2
 }
+
+declare <16 x i8> @llvm.x86.avx512.mask.palignr.128(<16 x i8>, <16 x i8>, i32, <16 x i8>, i16)
+
+define <16 x i8>@test_int_x86_avx512_mask_palignr_128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x3, i16 %x4) {
+; CHECK-LABEL: test_int_x86_avx512_mask_palignr_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vpalignr $2, %xmm1, %xmm0, %xmm2 {%k1}
+; CHECK-NEXT:    vpalignr $2, %xmm1, %xmm0, %xmm3 {%k1} {z}
+; CHECK-NEXT:    vpalignr $2, %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpaddb %xmm3, %xmm2, %xmm1
+; CHECK-NEXT:    vpaddb %xmm0, %xmm1, %xmm0
+; CHECK-NEXT:    retq
+  %res = call <16 x i8> @llvm.x86.avx512.mask.palignr.128(<16 x i8> %x0, <16 x i8> %x1, i32 2, <16 x i8> %x3, i16 %x4)
+  %res1 = call <16 x i8> @llvm.x86.avx512.mask.palignr.128(<16 x i8> %x0, <16 x i8> %x1, i32 2, <16 x i8> zeroinitializer, i16 %x4)
+  %res2 = call <16 x i8> @llvm.x86.avx512.mask.palignr.128(<16 x i8> %x0, <16 x i8> %x1, i32 2, <16 x i8> %x3, i16 -1)
+  %res3 = add <16 x i8> %res, %res1
+  %res4 = add <16 x i8> %res3, %res2
+  ret <16 x i8> %res4
+}
+
+declare <32 x i8> @llvm.x86.avx512.mask.palignr.256(<32 x i8>, <32 x i8>, i32, <32 x i8>, i32)
+
+define <32 x i8>@test_int_x86_avx512_mask_palignr_256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x3, i32 %x4) {
+; CHECK-LABEL: test_int_x86_avx512_mask_palignr_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovd %edi, %k1
+; CHECK-NEXT:    vpalignr $2, %ymm1, %ymm0, %ymm2 {%k1}
+; CHECK-NEXT:    vpalignr $2, %ymm1, %ymm0, %ymm3 {%k1} {z}
+; CHECK-NEXT:    vpalignr $2, %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:    vpaddb %ymm3, %ymm2, %ymm1
+; CHECK-NEXT:    vpaddb %ymm0, %ymm1, %ymm0
+; CHECK-NEXT:    retq
+  %res = call <32 x i8> @llvm.x86.avx512.mask.palignr.256(<32 x i8> %x0, <32 x i8> %x1, i32 2, <32 x i8> %x3, i32 %x4)
+  %res1 = call <32 x i8> @llvm.x86.avx512.mask.palignr.256(<32 x i8> %x0, <32 x i8> %x1, i32 2, <32 x i8> zeroinitializer, i32 %x4)
+  %res2 = call <32 x i8> @llvm.x86.avx512.mask.palignr.256(<32 x i8> %x0, <32 x i8> %x1, i32 2, <32 x i8> %x3, i32 -1)
+  %res3 = add <32 x i8> %res, %res1
+  %res4 = add <32 x i8> %res3, %res2
+  ret <32 x i8> %res4
+}

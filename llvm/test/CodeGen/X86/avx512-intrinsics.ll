@@ -566,27 +566,27 @@ declare <8 x i64> @llvm.x86.avx512.movntdqa(i8*)
 define <8 x i64> @test_valign_q(<8 x i64> %a, <8 x i64> %b) {
 ; CHECK-LABEL: test_valign_q:
 ; CHECK: valignq $2, %zmm1, %zmm0, %zmm0
-  %res = call <8 x i64> @llvm.x86.avx512.mask.valign.q.512(<8 x i64> %a, <8 x i64> %b, i8 2, <8 x i64> zeroinitializer, i8 -1)
+  %res = call <8 x i64> @llvm.x86.avx512.mask.valign.q.512(<8 x i64> %a, <8 x i64> %b, i32 2, <8 x i64> zeroinitializer, i8 -1)
   ret <8 x i64> %res
 }
 
 define <8 x i64> @test_mask_valign_q(<8 x i64> %a, <8 x i64> %b, <8 x i64> %src, i8 %mask) {
 ; CHECK-LABEL: test_mask_valign_q:
 ; CHECK: valignq $2, %zmm1, %zmm0, %zmm2 {%k1}
-  %res = call <8 x i64> @llvm.x86.avx512.mask.valign.q.512(<8 x i64> %a, <8 x i64> %b, i8 2, <8 x i64> %src, i8 %mask)
+  %res = call <8 x i64> @llvm.x86.avx512.mask.valign.q.512(<8 x i64> %a, <8 x i64> %b, i32 2, <8 x i64> %src, i8 %mask)
   ret <8 x i64> %res
 }
 
-declare <8 x i64> @llvm.x86.avx512.mask.valign.q.512(<8 x i64>, <8 x i64>, i8, <8 x i64>, i8)
+declare <8 x i64> @llvm.x86.avx512.mask.valign.q.512(<8 x i64>, <8 x i64>, i32, <8 x i64>, i8)
 
 define <16 x i32> @test_maskz_valign_d(<16 x i32> %a, <16 x i32> %b, i16 %mask) {
 ; CHECK-LABEL: test_maskz_valign_d:
 ; CHECK: valignd $5, %zmm1, %zmm0, %zmm0 {%k1} {z} ## encoding: [0x62,0xf3,0x7d,0xc9,0x03,0xc1,0x05]
-  %res = call <16 x i32> @llvm.x86.avx512.mask.valign.d.512(<16 x i32> %a, <16 x i32> %b, i8 5, <16 x i32> zeroinitializer, i16 %mask)
+  %res = call <16 x i32> @llvm.x86.avx512.mask.valign.d.512(<16 x i32> %a, <16 x i32> %b, i32 5, <16 x i32> zeroinitializer, i16 %mask)
   ret <16 x i32> %res
 }
 
-declare <16 x i32> @llvm.x86.avx512.mask.valign.d.512(<16 x i32>, <16 x i32>, i8, <16 x i32>, i16)
+declare <16 x i32> @llvm.x86.avx512.mask.valign.d.512(<16 x i32>, <16 x i32>, i32, <16 x i32>, i16)
 
 define void @test_mask_store_ss(i8* %ptr, <4 x float> %data, i8 %mask) {
  ; CHECK-LABEL: test_mask_store_ss
