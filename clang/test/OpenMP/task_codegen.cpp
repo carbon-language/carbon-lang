@@ -18,7 +18,7 @@ struct S {
   ~S() {}
 };
 int a;
-// CHECK-LABEL : @main
+// CHECK-LABEL: @main
 int main() {
 // CHECK: [[B:%.+]] = alloca i8
 // CHECK: [[S:%.+]] = alloca [2 x [[STRUCT_S]]]

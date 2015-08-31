@@ -76,7 +76,7 @@ void bar() {
 // FIXME: The copy ctor is deleted.
 // CHECK-DISABLED-LABEL: define void @_ZN11all_deleted3barEv()
 // CHECK-DISABLED: call void @_Z{{.*}}C1Ev(
-// CHECK-DISABLED-NOT call
+// CHECK-DISABLED-NOT: call
 // CHECK-DISABLED: call void @_ZN11all_deleted3fooENS_1AE(%"struct.all_deleted::A"* %{{.*}})
 // CHECK-DISABLED-LABEL: declare void @_ZN11all_deleted3fooENS_1AE(%"struct.all_deleted::A"*)
 
@@ -96,7 +96,7 @@ void bar() {
 // FIXME: The copy and move ctors are implicitly deleted.
 // CHECK-DISABLED-LABEL: define void @_ZN18implicitly_deleted3barEv()
 // CHECK-DISABLED: call void @_Z{{.*}}C1Ev(
-// CHECK-DISABLED-NOT call
+// CHECK-DISABLED-NOT: call
 // CHECK-DISABLED: call void @_ZN18implicitly_deleted3fooENS_1AE(%"struct.implicitly_deleted::A"* %{{.*}})
 // CHECK-DISABLED-LABEL: declare void @_ZN18implicitly_deleted3fooENS_1AE(%"struct.implicitly_deleted::A"*)
 
@@ -116,7 +116,7 @@ void bar() {
 // FIXME: The copy constructor is implicitly deleted.
 // CHECK-DISABLED-LABEL: define void @_ZN11one_deleted3barEv()
 // CHECK-DISABLED: call void @_Z{{.*}}C1Ev(
-// CHECK-DISABLED-NOT call
+// CHECK-DISABLED-NOT: call
 // CHECK-DISABLED: call void @_ZN11one_deleted3fooENS_1AE(%"struct.one_deleted::A"* %{{.*}})
 // CHECK-DISABLED-LABEL: declare void @_ZN11one_deleted3fooENS_1AE(%"struct.one_deleted::A"*)
 

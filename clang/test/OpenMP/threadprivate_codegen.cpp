@@ -943,7 +943,7 @@ int foobar() {
 // CHECK-TLS-NEXT: br i1 [[IS_INIT]], label %[[INIT_LABEL:[^,]+]], label %[[DONE_LABEL:[^,]+]]{{.*}}
 // CHECK-TLS:      [[INIT_LABEL]]
 // CHECK-TLS:      call void [[GS1_CXX_INIT]]
-// CHECK-TLS-NOT   call void [[GS2_CXX_INIT]]
+// CHECK-TLS-NOT:  call void [[GS2_CXX_INIT]]
 // CHECK-TLS:      call void [[ARR_X_CXX_INIT]]
 // CHECK-TLS:      call void [[ST_S4_ST_CXX_INIT]]
 // CHECK-TLS:      [[DONE_LABEL]]

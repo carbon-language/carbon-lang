@@ -242,7 +242,7 @@ void test23(struct Test22Ty *p) {
 
 
 // PR24493 -- ICE if __builtin_object_size called with NULL and (Type & 1) != 0
-// CHECK @test24
+// CHECK: @test24
 void test24() {
   // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* {{.*}}, i1 false)
   gi = __builtin_object_size((void*)0, 0);
@@ -256,7 +256,7 @@ void test24() {
   gi = __builtin_object_size((void*)0, 3);
 }
 
-// CHECK @test25
+// CHECK: @test25
 void test25() {
   // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* {{.*}}, i1 false)
   gi = __builtin_object_size((void*)0x1000, 0);

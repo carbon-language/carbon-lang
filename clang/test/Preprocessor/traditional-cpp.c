@@ -99,8 +99,8 @@ FOO_NO_STRINGIFY(foobar)
  */
 
 #define FOO_NO_PASTE(a, b) test(b##a)
-FOO_NO_PASTE(foo,bar)
-/* CHECK {{^}}test(bar##foo){{$}}
+FOO_NO_PASTE(xxx,yyy)
+/* CHECK: {{^}}test(yyy##xxx){{$}}
  */
 
 #define BAR_NO_STRINGIFY(a) test(#a)
