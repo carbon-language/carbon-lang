@@ -106,7 +106,7 @@ abs = 0x123
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: common (34)
-// CHECK-NEXT:     Value: 0x1008
+// CHECK-NEXT:     Value: 0x1004
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: Object (0x1)

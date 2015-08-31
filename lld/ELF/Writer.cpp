@@ -344,7 +344,10 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       uintX_t VA = Out->getVA();
       if (Section)
         VA += Section->getOutputSectionOff();
-      VA += InputSym->st_value;
+      if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
+        VA += C->OffsetInBSS;
+      else
+        VA += InputSym->st_value;
       ESym->st_value = VA;
     }
 
@@ -445,6 +448,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     const Elf_Sym &Sym = C->Sym;
     uintX_t Align = Sym.st_value;
     Off = RoundUpToAlignment(Off, Align);
+    C->OffsetInBSS = Off;
     Off += Sym.st_size;
   }
   BSSSec->setSize(Off);

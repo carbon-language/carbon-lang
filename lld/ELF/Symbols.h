@@ -138,12 +138,18 @@ template <class ELFT> class DefinedCommon : public Defined<ELFT> {
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
+  typedef typename std::conditional<ELFT::Is64Bits, uint64_t, uint32_t>::type
+      uintX_t;
   explicit DefinedCommon(StringRef N, const Elf_Sym &Sym)
       : Defined<ELFT>(Base::DefinedCommonKind, N, Sym) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedCommonKind;
   }
+
+  // The output offset of this common symbol in the output bss. Computed by the
+  // writer.
+  uintX_t OffsetInBSS;
 };
 
 // Regular defined symbols read from object file symbol tables.
