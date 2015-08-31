@@ -553,10 +553,9 @@ void llvm::ComputeUsesVAFloatArgument(const CallInst &I,
 /// landingpad instruction and add them to the specified machine module info.
 void llvm::AddLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,
                              MachineBasicBlock *MBB) {
-  MMI.addPersonality(
-      MBB,
-      cast<Function>(
-          I.getParent()->getParent()->getPersonalityFn()->stripPointerCasts()));
+  if (const auto *PF = dyn_cast<Function>(
+      I.getParent()->getParent()->getPersonalityFn()->stripPointerCasts()))
+    MMI.addPersonality(PF);
 
   if (I.isCleanup())
     MMI.addCleanup(MBB);

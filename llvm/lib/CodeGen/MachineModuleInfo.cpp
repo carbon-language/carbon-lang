@@ -211,8 +211,6 @@ bool MachineModuleInfo::doInitialization(Module &M) {
   CallsUnwindInit = false;
   HasEHFunclets = false;
   DbgInfoAvailable = UsesVAFloatArgument = UsesMorestackAddr = false;
-  // Always emit some info, by default "no personality" info.
-  Personalities.push_back(nullptr);
   PersonalityTypeCache = EHPersonality::Unknown;
   AddrLabelSymbols = nullptr;
   TheModule = nullptr;
@@ -316,26 +314,11 @@ MCSymbol *MachineModuleInfo::addLandingPad(MachineBasicBlock *LandingPad) {
   return LandingPadLabel;
 }
 
-/// addPersonality - Provide the personality function for the exception
-/// information.
-void MachineModuleInfo::addPersonality(MachineBasicBlock *LandingPad,
-                                       const Function *Personality) {
-  LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
-  LP.Personality = Personality;
-  addPersonality(Personality);
-}
-
 void MachineModuleInfo::addPersonality(const Function *Personality) {
   for (unsigned i = 0; i < Personalities.size(); ++i)
     if (Personalities[i] == Personality)
       return;
-
-  // If this is the first personality we're adding go
-  // ahead and add it at the beginning.
-  if (!Personalities[0])
-    Personalities[0] = Personality;
-  else
-    Personalities.push_back(Personality);
+  Personalities.push_back(Personality);
 }
 
 void MachineModuleInfo::addWinEHState(MachineBasicBlock *LandingPad,
@@ -482,44 +465,6 @@ try_next:;
   FilterEnds.push_back(FilterIds.size());
   FilterIds.push_back(0); // terminator
   return FilterID;
-}
-
-/// getPersonality - Return the personality function for the current function.
-const Function *MachineModuleInfo::getPersonality() const {
-  for (const LandingPadInfo &LPI : LandingPads)
-    if (LPI.Personality)
-      return LPI.Personality;
-  return nullptr;
-}
-
-EHPersonality MachineModuleInfo::getPersonalityType() {
-  if (PersonalityTypeCache == EHPersonality::Unknown) {
-    if (const Function *F = getPersonality())
-      PersonalityTypeCache = classifyEHPersonality(F);
-  }
-  return PersonalityTypeCache;
-}
-
-/// getPersonalityIndex - Return unique index for current personality
-/// function. NULL/first personality function should always get zero index.
-unsigned MachineModuleInfo::getPersonalityIndex() const {
-  const Function* Personality = nullptr;
-
-  // Scan landing pads. If there is at least one non-NULL personality - use it.
-  for (unsigned i = 0, e = LandingPads.size(); i != e; ++i)
-    if (LandingPads[i].Personality) {
-      Personality = LandingPads[i].Personality;
-      break;
-    }
-
-  for (unsigned i = 0, e = Personalities.size(); i < e; ++i) {
-    if (Personalities[i] == Personality)
-      return i;
-  }
-
-  // This will happen if the current personality function is
-  // in the zero index.
-  return 0;
 }
 
 const Function *MachineModuleInfo::getWinEHParent(const Function *F) const {

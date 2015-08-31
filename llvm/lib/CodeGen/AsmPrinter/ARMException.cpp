@@ -73,7 +73,6 @@ void ARMException::endFunction(const MachineFunction *MF) {
   const Function *Per = nullptr;
   if (F->hasPersonalityFn())
     Per = dyn_cast<Function>(F->getPersonalityFn()->stripPointerCasts());
-  assert(!MMI->getPersonality() || Per == MMI->getPersonality());
   bool forceEmitPersonality =
     F->hasPersonalityFn() && !isNoOpWithoutInvoke(classifyEHPersonality(Per)) &&
     F->needsUnwindTableEntry();

@@ -1484,14 +1484,14 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   if (MAI->doesSupportExceptionHandling() && MMI) {
     // Add the (possibly multiple) personalities to the set of global values.
     // Only referenced functions get into the Personalities list.
-    const std::vector<const Function*> &Personalities = MMI->getPersonalities();
-    for (std::vector<const Function*>::const_iterator I = Personalities.begin(),
-         E = Personalities.end(); I != E; ++I) {
-      if (*I) {
-        MCSymbol *NLPSym = getSymbolWithGlobalValueBase(*I, "$non_lazy_ptr");
+    for (const Function *Personality : MMI->getPersonalities()) {
+      if (Personality) {
+        MCSymbol *NLPSym =
+            getSymbolWithGlobalValueBase(Personality, "$non_lazy_ptr");
         MachineModuleInfoImpl::StubValueTy &StubSym =
-          MMIMacho.getGVStubEntry(NLPSym);
-        StubSym = MachineModuleInfoImpl::StubValueTy(getSymbol(*I), true);
+            MMIMacho.getGVStubEntry(NLPSym);
+        StubSym =
+            MachineModuleInfoImpl::StubValueTy(getSymbol(Personality), true);
       }
     }
   }

@@ -21,7 +21,8 @@ using namespace llvm;
 /// See if the given exception handling personality function is one that we
 /// understand.  If so, return a description of it; otherwise return Unknown.
 EHPersonality llvm::classifyEHPersonality(const Value *Pers) {
-  const Function *F = dyn_cast<Function>(Pers->stripPointerCasts());
+  const Function *F =
+      Pers ? dyn_cast<Function>(Pers->stripPointerCasts()) : nullptr;
   if (!F)
     return EHPersonality::Unknown;
   return StringSwitch<EHPersonality>(F->getName())
