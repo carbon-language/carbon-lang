@@ -38,12 +38,16 @@ def main():
     sys.exit('Not enough arguments.')
 
   input_file_name = sys.argv[1]
+  extension = '.cpp'
+  if (input_file_name.endswith('.c')):
+    extension = '.c'
+    
   check_name = sys.argv[2]
-  temp_file_name = sys.argv[3] + '.cpp'
+  temp_file_name = sys.argv[3] + extension
 
   clang_tidy_extra_args = sys.argv[4:]
   if len(clang_tidy_extra_args) == 0:
-    clang_tidy_extra_args = ['--', '--std=c++11']
+    clang_tidy_extra_args = ['--', '--std=c++11'] if extension == '.cpp' else ['--']
 
   with open(input_file_name, 'r') as input_file:
     input_text = input_file.read()
