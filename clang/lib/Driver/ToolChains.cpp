@@ -1340,8 +1340,20 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
       "s390x-linux-gnu", "s390x-unknown-linux-gnu", "s390x-ibm-linux-gnu",
       "s390x-suse-linux", "s390x-redhat-linux"};
 
+  // Solaris.
+  static const char *const SolarisSPARCLibDirs[] = {"/gcc"};
+  static const char *const SolarisSPARCTriples[] = {"sparc-sun-solaris2.11",
+                                                    "i386-pc-solaris2.11"};
+
   using std::begin;
   using std::end;
+
+  if (TargetTriple.getOS() == llvm::Triple::Solaris) {
+    LibDirs.append(begin(SolarisSPARCLibDirs), end(SolarisSPARCLibDirs));
+    TripleAliases.append(begin(SolarisSPARCTriples), end(SolarisSPARCTriples));
+
+    return;
+  }
 
   switch (TargetTriple.getArch()) {
   case llvm::Triple::aarch64:
@@ -1907,6 +1919,54 @@ static bool findBiarchMultilibs(const llvm::Triple &TargetTriple,
   return true;
 }
 
+void Generic_GCC::GCCInstallationDetector::scanLibDirForGCCTripleSolaris(
+    const llvm::Triple &TargetArch, const llvm::opt::ArgList &Args,
+    const std::string &LibDir, StringRef CandidateTriple,
+    bool NeedsBiarchSuffix) {
+  // Solaris is a special case. The GCC installation is under
+  // /usr/gcc/<major>.<minor>/lib/gcc/<triple>/<major>.<minor>.<patch>/, so we
+  // need to iterate twice.
+  std::error_code EC;
+  for (llvm::sys::fs::directory_iterator LI(LibDir, EC), LE; !EC && LI != LE;
+       LI = LI.increment(EC)) {
+    StringRef VersionText = llvm::sys::path::filename(LI->path());
+    GCCVersion CandidateVersion = GCCVersion::Parse(VersionText);
+
+    if (CandidateVersion.Major != -1) // Filter obviously bad entries.
+      if (!CandidateGCCInstallPaths.insert(LI->path()).second)
+        continue; // Saw this path before; no need to look at it again.
+    if (CandidateVersion.isOlderThan(4, 1, 1))
+      continue;
+    if (CandidateVersion <= Version)
+      continue;
+
+    GCCInstallPath =
+        LibDir + "/" + VersionText.str() + "/lib/gcc/" + CandidateTriple.str();
+    if (!llvm::sys::fs::exists(GCCInstallPath))
+      continue;
+
+    // If we make it here there has to be at least one GCC version, let's just
+    // use the latest one.
+    std::error_code EEC;
+    for (llvm::sys::fs::directory_iterator LLI(GCCInstallPath, EEC), LLE;
+         !EEC && LLI != LLE; LLI = LLI.increment(EEC)) {
+
+      StringRef SubVersionText = llvm::sys::path::filename(LLI->path());
+      GCCVersion CandidateSubVersion = GCCVersion::Parse(SubVersionText);
+
+      if (CandidateSubVersion > Version)
+        Version = CandidateSubVersion;
+    }
+
+    GCCTriple.setTriple(CandidateTriple);
+
+    GCCInstallPath += "/" + Version.Text;
+    GCCParentLibPath = GCCInstallPath + "/../../../../";
+
+    IsValid = true;
+  }
+}
+
 void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
     const llvm::Triple &TargetTriple, const ArgList &Args,
     const std::string &LibDir, StringRef CandidateTriple,
@@ -1935,6 +1995,12 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       // FIXME: It may be worthwhile to generalize this and look for a second
       // triple.
       {"/i386-linux-gnu/gcc/" + CandidateTriple.str(), "/../../../.."}};
+
+  if (TargetTriple.getOS() == llvm::Triple::Solaris) {
+    scanLibDirForGCCTripleSolaris(TargetTriple, Args, LibDir, CandidateTriple,
+                                  NeedsBiarchSuffix);
+    return;
+  }
 
   // Only look at the final, weird Ubuntu suffix for i386-linux-gnu.
   const unsigned NumLibSuffixes = (llvm::array_lengthof(LibAndInstallSuffixes) -
@@ -2849,18 +2915,45 @@ Tool *Minix::buildAssembler() const {
 
 Tool *Minix::buildLinker() const { return new tools::minix::Linker(*this); }
 
+static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
+  if (llvm::sys::fs::exists(Path))
+    Paths.push_back(Path.str());
+}
+
 /// Solaris - Solaris tool chain which can call as(1) and ld(1) directly.
 
 Solaris::Solaris(const Driver &D, const llvm::Triple &Triple,
                  const ArgList &Args)
     : Generic_GCC(D, Triple, Args) {
 
-  getProgramPaths().push_back(getDriver().getInstalledDir());
-  if (getDriver().getInstalledDir() != getDriver().Dir)
-    getProgramPaths().push_back(getDriver().Dir);
+  GCCInstallation.init(D, Triple, Args);
 
-  getFilePaths().push_back(getDriver().Dir + "/../lib");
-  getFilePaths().push_back("/usr/lib");
+  path_list &Paths = getFilePaths();
+  if (GCCInstallation.isValid())
+    addPathIfExists(GCCInstallation.getInstallPath(), Paths);
+
+  addPathIfExists(getDriver().getInstalledDir(), Paths);
+  if (getDriver().getInstalledDir() != getDriver().Dir)
+    addPathIfExists(getDriver().Dir, Paths);
+
+  addPathIfExists(getDriver().SysRoot + getDriver().Dir + "/../lib", Paths);
+
+  std::string LibPath = "/usr/lib/";
+  switch (Triple.getArch()) {
+  case llvm::Triple::x86:
+  case llvm::Triple::sparc:
+    break;
+  case llvm::Triple::x86_64:
+    LibPath += "amd64/";
+    break;
+  case llvm::Triple::sparcv9:
+    LibPath += "sparcv9/";
+    break;
+  default:
+    llvm_unreachable("Unsupported architecture");
+  }
+
+  addPathIfExists(getDriver().SysRoot + LibPath, Paths);
 }
 
 Tool *Solaris::buildAssembler() const {
@@ -3105,11 +3198,6 @@ static std::string getMultiarchTriple(const llvm::Triple &TargetTriple,
     break;
   }
   return TargetTriple.str();
-}
-
-static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
-  if (llvm::sys::fs::exists(Path))
-    Paths.push_back(Path.str());
 }
 
 static StringRef getOSLibDir(const llvm::Triple &Triple, const ArgList &Args) {

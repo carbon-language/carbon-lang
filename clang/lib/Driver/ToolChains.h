@@ -145,6 +145,12 @@ public:
                                 const std::string &LibDir,
                                 StringRef CandidateTriple,
                                 bool NeedsBiarchSuffix = false);
+
+    void scanLibDirForGCCTripleSolaris(const llvm::Triple &TargetArch,
+                                       const llvm::opt::ArgList &Args,
+                                       const std::string &LibDir,
+                                       StringRef CandidateTriple,
+                                       bool NeedsBiarchSuffix = false);
   };
 
 protected:
