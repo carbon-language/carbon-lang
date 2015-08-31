@@ -257,9 +257,6 @@ def executeShCmd(cmd, shenv, results):
     exitCode = None
     for i,(out,err) in enumerate(procData):
         res = procs[i].wait()
-        # On Windows, manually close the process handles.
-        if kIsWindows:
-            procs[i]._handle.Close()
         # Detect Ctrl-C in subprocess.
         if res == -signal.SIGINT:
             raise KeyboardInterrupt
