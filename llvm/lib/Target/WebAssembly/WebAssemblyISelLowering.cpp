@@ -113,8 +113,6 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   // Compute derived properties from the register classes.
   computeRegisterProperties(Subtarget->getRegisterInfo());
 
-  // FIXME: many setOperationAction are missing...
-
   setOperationAction(ISD::GlobalAddress, MVTPtr, Custom);
 
   for (auto T : {MVT::f32, MVT::f64}) {
@@ -154,6 +152,16 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVTPtr, Expand);
+
+  // WebAssembly doesn't have:
+  //  - Floating-point extending loads.
+  //  - Floating-point truncating stores.
+  //  - i1 extending loads.
+  setLoadExtAction(ISD::EXTLOAD, MVT::f32, MVT::f64, Expand);
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+  for (auto T : MVT::integer_valuetypes())
+    for (auto Ext : {ISD::EXTLOAD, ISD::ZEXTLOAD, ISD::SEXTLOAD})
+      setLoadExtAction(Ext, T, MVT::i1, Promote);
 }
 
 FastISel *WebAssemblyTargetLowering::createFastISel(
