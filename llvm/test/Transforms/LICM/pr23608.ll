@@ -31,7 +31,7 @@ bb2:                                              ; preds = %while.cond
   br i1 %tobool, label %bb13, label %bb15
 
 bb13:                                             ; preds = %bb2
-; CHECK-LABEL bb13:
+; CHECK-LABEL: bb13:
 ; CHECK: %tmp8.le = inttoptr
   %.lcssa7 = phi i32* [ %tmp8, %bb2 ]
   call void @__msan_warning_noreturn()

@@ -13,7 +13,7 @@ continue:
 ; CHECK-LABEL: continue:
 ; CHECK: phi
 ; CHECK-DAG: [ %p.relocated, %safepoint ]
-; CHECK-DAG [ %p, %entry ]
+; CHECK-DAG: [ %p, %entry ]
 ; CHECK: %cond = icmp
 ; CHECK: br i1 %cond
    br i1 %cond, label %taken, label %untaken
@@ -37,10 +37,10 @@ continue:
 ; CHECK-LABEL: continue:
 ; CHECK: phi
 ; CHECK-DAG: [ %q.relocated, %safepoint ]
-; CHECK-DAG [ %q, %entry ]
+; CHECK-DAG: [ %q, %entry ]
 ; CHECK: phi
 ; CHECK-DAG: [ %p.relocated, %safepoint ]
-; CHECK-DAG [ %p, %entry ]
+; CHECK-DAG: [ %p, %entry ]
 ; CHECK: %cond = icmp
 ; CHECK: br i1 %cond
    br i1 %cond, label %taken, label %untaken

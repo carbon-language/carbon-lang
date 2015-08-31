@@ -83,7 +83,7 @@ define void @store_flat_trunc_i8(i8 addrspace(1)* %gptr, i32 %x) #0 {
 
 
 
-; CHECK-LABEL @load_flat_i32:
+; CHECK-LABEL: load_flat_i32:
 ; CHECK: flat_load_dword
 define void @load_flat_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i32 addrspace(1)* %gptr to i32 addrspace(4)*
@@ -92,7 +92,7 @@ define void @load_flat_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noa
   ret void
 }
 
-; CHECK-LABEL @load_flat_i64:
+; CHECK-LABEL: load_flat_i64:
 ; CHECK: flat_load_dwordx2
 define void @load_flat_i64(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i64 addrspace(1)* %gptr to i64 addrspace(4)*
@@ -101,7 +101,7 @@ define void @load_flat_i64(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noa
   ret void
 }
 
-; CHECK-LABEL @load_flat_v4i32:
+; CHECK-LABEL: load_flat_v4i32:
 ; CHECK: flat_load_dwordx4
 define void @load_flat_v4i32(<4 x i32> addrspace(1)* noalias %out, <4 x i32> addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast <4 x i32> addrspace(1)* %gptr to <4 x i32> addrspace(4)*
@@ -110,7 +110,7 @@ define void @load_flat_v4i32(<4 x i32> addrspace(1)* noalias %out, <4 x i32> add
   ret void
 }
 
-; CHECK-LABEL @sextload_flat_i8:
+; CHECK-LABEL: sextload_flat_i8:
 ; CHECK: flat_load_sbyte
 define void @sextload_flat_i8(i32 addrspace(1)* noalias %out, i8 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i8 addrspace(1)* %gptr to i8 addrspace(4)*
@@ -120,7 +120,7 @@ define void @sextload_flat_i8(i32 addrspace(1)* noalias %out, i8 addrspace(1)* n
   ret void
 }
 
-; CHECK-LABEL @zextload_flat_i8:
+; CHECK-LABEL: zextload_flat_i8:
 ; CHECK: flat_load_ubyte
 define void @zextload_flat_i8(i32 addrspace(1)* noalias %out, i8 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i8 addrspace(1)* %gptr to i8 addrspace(4)*
@@ -130,7 +130,7 @@ define void @zextload_flat_i8(i32 addrspace(1)* noalias %out, i8 addrspace(1)* n
   ret void
 }
 
-; CHECK-LABEL @sextload_flat_i16:
+; CHECK-LABEL: sextload_flat_i16:
 ; CHECK: flat_load_sshort
 define void @sextload_flat_i16(i32 addrspace(1)* noalias %out, i16 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i16 addrspace(1)* %gptr to i16 addrspace(4)*
@@ -140,7 +140,7 @@ define void @sextload_flat_i16(i32 addrspace(1)* noalias %out, i16 addrspace(1)*
   ret void
 }
 
-; CHECK-LABEL @zextload_flat_i16:
+; CHECK-LABEL: zextload_flat_i16:
 ; CHECK: flat_load_ushort
 define void @zextload_flat_i16(i32 addrspace(1)* noalias %out, i16 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i16 addrspace(1)* %gptr to i16 addrspace(4)*

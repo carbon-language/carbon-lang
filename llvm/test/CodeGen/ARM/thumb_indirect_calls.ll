@@ -3,7 +3,7 @@
 
 @f = common global void (i32)* null, align 4
 
-; CHECK-LABEL foo:
+; CHECK-LABEL: foo:
 define void @foo(i32 %x) {
 entry:
   %0 = load void (i32)*, void (i32)** @f, align 4
@@ -21,7 +21,7 @@ entry:
 ; CHECK-V5T: blx [[CALLEE]]
 }
 
-; CHECK-LABEL bar:
+; CHECK-LABEL: bar:
 define void @bar(void (i32)* nocapture %g, i32 %x, void (i32)* nocapture %h) {
 entry:
   tail call void %g(i32 %x)
@@ -37,4 +37,3 @@ entry:
 ; CHECK-V5T: blx
 ; CHECK-V5T: blx
 }
-

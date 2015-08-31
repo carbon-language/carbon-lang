@@ -4,7 +4,7 @@
 ;; other than the first for SELECT. Thus, the 'trunc' got eliminated
 ;; as redundant. But, cmp does NOT ignore the other bits!
 
-; CHECK-LABEL select_mask:
+; CHECK-LABEL: select_mask:
 ; CHECK: ldub [%o0], [[R:%[goli][0-7]]]
 ; CHECK: and [[R]], 1, [[V:%[goli][0-7]]]
 ; CHECK: cmp [[V]], 0

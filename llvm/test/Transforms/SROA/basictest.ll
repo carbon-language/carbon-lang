@@ -1616,7 +1616,7 @@ define i16 @PR24463() {
 ; a sub-integer that requires extraction *and* extends past the end of the
 ; alloca. In this case, we should extract the i8 and then zext it to i16.
 ;
-; CHECK-LABEL @PR24463(
+; CHECK-LABEL: @PR24463(
 ; CHECK-NOT: alloca
 ; CHECK: %[[SHIFT:.*]] = lshr i16 0, 8
 ; CHECK: %[[TRUNC:.*]] = trunc i16 %[[SHIFT]] to i8

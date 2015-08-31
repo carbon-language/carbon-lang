@@ -244,7 +244,7 @@ define i1 @ashr_ne_opposite_msb(i8 %a) {
 }
 
 ; CHECK-LABEL: @exact_ashr_eq_shift_gt
-; CHECK-NEXT : ret i1 false
+; CHECK-NEXT: ret i1 false
 define i1 @exact_ashr_eq_shift_gt(i8 %a) {
  %shr = ashr exact i8 -2, %a
  %cmp = icmp eq i8 %shr, -8
@@ -252,7 +252,7 @@ define i1 @exact_ashr_eq_shift_gt(i8 %a) {
 }
 
 ; CHECK-LABEL: @exact_ashr_ne_shift_gt
-; CHECK-NEXT : ret i1 true
+; CHECK-NEXT: ret i1 true
 define i1 @exact_ashr_ne_shift_gt(i8 %a) {
  %shr = ashr exact i8 -2, %a
  %cmp = icmp ne i8 %shr, -8
@@ -260,7 +260,7 @@ define i1 @exact_ashr_ne_shift_gt(i8 %a) {
 }
 
 ; CHECK-LABEL: @nonexact_ashr_eq_shift_gt
-; CHECK-NEXT : ret i1 false
+; CHECK-NEXT: ret i1 false
 define i1 @nonexact_ashr_eq_shift_gt(i8 %a) {
  %shr = ashr i8 -2, %a
  %cmp = icmp eq i8 %shr, -8
@@ -268,7 +268,7 @@ define i1 @nonexact_ashr_eq_shift_gt(i8 %a) {
 }
 
 ; CHECK-LABEL: @nonexact_ashr_ne_shift_gt
-; CHECK-NEXT : ret i1 true
+; CHECK-NEXT: ret i1 true
 define i1 @nonexact_ashr_ne_shift_gt(i8 %a) {
  %shr = ashr i8 -2, %a
  %cmp = icmp ne i8 %shr, -8
@@ -292,7 +292,7 @@ define i1 @exact_lshr_ne_shift_gt(i8 %a) {
 }
 
 ; CHECK-LABEL: @nonexact_lshr_eq_shift_gt
-; CHECK-NEXT : ret i1 false
+; CHECK-NEXT: ret i1 false
 define i1 @nonexact_lshr_eq_shift_gt(i8 %a) {
  %shr = lshr i8 2, %a
  %cmp = icmp eq i8 %shr, 8
@@ -300,7 +300,7 @@ define i1 @nonexact_lshr_eq_shift_gt(i8 %a) {
 }
 
 ; CHECK-LABEL: @nonexact_lshr_ne_shift_gt
-; CHECK-NEXT : ret i1 true
+; CHECK-NEXT: ret i1 true
 define i1 @nonexact_lshr_ne_shift_gt(i8 %a) {
  %shr = ashr i8 2, %a
  %cmp = icmp ne i8 %shr, 8

@@ -20,7 +20,7 @@ entry:
 
 ; CHECK: {{^}}fcmp_br:
 ; CHECK: SET{{[N]*}}E_DX10 * T{{[0-9]+\.[XYZW],}}
-; CHECK-NEXT {{[0-9]+(5.0}}
+; CHECK-NEXT: {{[0-9]+\(5.0}}
 
 define void @fcmp_br(i32 addrspace(1)* %out, float %in) {
 entry:

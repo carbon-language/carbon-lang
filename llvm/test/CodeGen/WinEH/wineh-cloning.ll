@@ -168,10 +168,10 @@ exit:
 ; CHECK:    br i1 [[b_E]], label %[[left_E:[^ ]+]], label %[[right_E:[^ ]+]]
 ; CHECK:  [[left_C]]:
 ; CHECK:    [[y_C:%[^ ]+]] = call i32 @g()
-; CHECK     br label %[[looptail_C]]
+; CHECK:    br label %[[looptail_C]]
 ; CHECK:  [[left_E]]:
 ; CHECK:    [[y_E:%[^ ]+]] = call i32 @g()
-; CHECK     br label %[[looptail_E]]
+; CHECK:    br label %[[looptail_E]]
 ; CHECK:  [[right_C]]:
 ; CHECK:    call void @h(i32 [[x_C]])
 ; CHECK:    br label %[[looptail_C]]

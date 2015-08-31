@@ -461,7 +461,7 @@ tlbi vale3
 
 ; CHECK-ERRORS: error: invalid operand for instruction
 ; CHECK-ERRORS:   frsqrte.4s v0, v1, v2
-; CHECK-ERRORS                       ^
+; CHECK-ERRORS:                      ^
 ; CHECK-ERRORS: error: too few operands for instruction
 ; CHECK-ERRORS:   frsqrte.2s v0
 ; CHECK-ERRORS:   ^

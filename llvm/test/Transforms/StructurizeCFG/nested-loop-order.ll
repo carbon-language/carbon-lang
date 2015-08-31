@@ -41,7 +41,7 @@ ENDIF:                                            ; preds = %LOOP
   br i1 %tmp31, label %IF29, label %ENDIF28
 
 ; CHECK: Flow:
-; CHECK br i1 %{{[0-9]+}}, label %Flow, label %LOOP
+; CHECK: br i1 %{{[0-9]+}}, label %Flow2, label %LOOP
 
 ; CHECK: IF29:
 ; CHECK: br label %Flow1
