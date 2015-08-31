@@ -184,17 +184,13 @@ struct FindValuesUser {
 /// @brief Extract the values and SCEVs needed to generate code for a block.
 static int findValuesInBlock(struct FindValuesUser &User, const ScopStmt *Stmt,
                              const BasicBlock *BB) {
-  // Check all the operands of instructions in the basic block.
-  for (const Instruction &Inst : *BB) {
-    for (Value *SrcVal : Inst.operands()) {
-      if (Instruction *OpInst = dyn_cast<Instruction>(SrcVal))
-        if (canSynthesize(OpInst, &User.LI, &User.SE, &User.R)) {
-          User.SCEVs.insert(
-              User.SE.getSCEVAtScope(OpInst, User.LI.getLoopFor(BB)));
-          continue;
-        }
-    }
-  }
+  for (const Instruction &Inst : *BB)
+    for (Value *SrcVal : Inst.operands())
+      if (canSynthesize(SrcVal, &User.LI, &User.SE, &User.R)) {
+        User.SCEVs.insert(
+            User.SE.getSCEVAtScope(SrcVal, User.LI.getLoopFor(BB)));
+        continue;
+      }
   return 0;
 }
 
