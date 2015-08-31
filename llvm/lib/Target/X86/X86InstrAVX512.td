@@ -2080,28 +2080,27 @@ defm : avx512_mask_unpck_int<"kunpck",  "KUNPCK">;
 
 // Mask bit testing
 multiclass avx512_mask_testop<bits<8> opc, string OpcodeStr, RegisterClass KRC,
-                            SDNode OpNode> {
-  let Predicates = [HasAVX512], Defs = [EFLAGS] in
+                              SDNode OpNode, Predicate prd> {
+  let Predicates = [prd], Defs = [EFLAGS] in
     def rr : I<opc, MRMSrcReg, (outs), (ins KRC:$src1, KRC:$src2),
                !strconcat(OpcodeStr, "\t{$src2, $src1|$src1, $src2}"),
                [(set EFLAGS, (OpNode KRC:$src1, KRC:$src2))]>;
 }
 
-multiclass avx512_mask_testop_w<bits<8> opc, string OpcodeStr, SDNode OpNode> {
-  defm W : avx512_mask_testop<opc, !strconcat(OpcodeStr, "w"), VK16, OpNode>,
-                            VEX, PS;
-  let Predicates = [HasDQI] in
-  defm B : avx512_mask_testop<opc, !strconcat(OpcodeStr, "b"), VK8, OpNode>,
-                            VEX, PD;
-  let Predicates = [HasBWI] in {
-  defm Q : avx512_mask_testop<opc, !strconcat(OpcodeStr, "q"), VK64, OpNode>,
-                            VEX, PS, VEX_W;
-  defm D : avx512_mask_testop<opc, !strconcat(OpcodeStr, "d"), VK32, OpNode>,
-                            VEX, PD, VEX_W;
-  }
+multiclass avx512_mask_testop_w<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                Predicate prdW = HasAVX512> {
+  defm B : avx512_mask_testop<opc, OpcodeStr#"b", VK8, OpNode, HasDQI>,
+                                                                VEX, PD;
+  defm W : avx512_mask_testop<opc, OpcodeStr#"w", VK16, OpNode, prdW>,
+                                                                VEX, PS;
+  defm Q : avx512_mask_testop<opc, OpcodeStr#"q", VK64, OpNode, HasBWI>,
+                                                                VEX, PS, VEX_W;
+  defm D : avx512_mask_testop<opc, OpcodeStr#"d", VK32, OpNode, HasBWI>,
+                                                                VEX, PD, VEX_W;
 }
 
 defm KORTEST : avx512_mask_testop_w<0x98, "kortest", X86kortest>;
+defm KTEST   : avx512_mask_testop_w<0x99, "ktest", X86ktest, HasDQI>;
 
 // Mask shift
 multiclass avx512_mask_shiftop<bits<8> opc, string OpcodeStr, RegisterClass KRC,

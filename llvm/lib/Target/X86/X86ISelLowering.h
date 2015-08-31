@@ -352,6 +352,7 @@ namespace llvm {
 
       // OR/AND test for masks
       KORTEST,
+      KTEST,
 
       // Several flavors of instructions with vector shuffle behaviors.
       PACKSS,
