@@ -19,17 +19,18 @@ namespace tidy {
 void MoveConstructorInitCheck::registerMatchers(MatchFinder *Finder) {
   // Only register the matchers for C++11; the functionality currently does not
   // provide any benefit to other languages, despite being benign.
-  if (getLangOpts().CPlusPlus11) {
-    Finder->addMatcher(
-      constructorDecl(unless(isImplicit()), allOf(
-        isMoveConstructor(),
-        hasAnyConstructorInitializer(
-          ctorInitializer(withInitializer(constructExpr(hasDeclaration(
-            constructorDecl(isCopyConstructor()).bind("ctor")
-            )))).bind("init")
-          )
-        )), this);
-  }
+  if (!getLangOpts().CPlusPlus11)
+    return;
+
+  Finder->addMatcher(
+    constructorDecl(unless(isImplicit()), allOf(
+      isMoveConstructor(),
+      hasAnyConstructorInitializer(
+        ctorInitializer(withInitializer(constructExpr(hasDeclaration(
+          constructorDecl(isCopyConstructor()).bind("ctor")
+          )))).bind("init")
+        )
+      )), this); 
 }
 
 void MoveConstructorInitCheck::check(const MatchFinder::MatchResult &Result) {

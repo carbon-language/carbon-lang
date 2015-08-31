@@ -21,25 +21,26 @@ namespace misc {
 void InaccurateEraseCheck::registerMatchers(MatchFinder *Finder) {
   // Only register the matchers for C++; the functionality currently does not
   // provide any benefit to other languages, despite being benign.
-  if (getLangOpts().CPlusPlus) {
-    const auto CheckForEndCall = hasArgument(
-        1, anyOf(constructExpr(
-                     has(memberCallExpr(callee(methodDecl(hasName("end"))))
-                             .bind("InaccEndCall"))),
-                 anything()));
+  if (!getLangOpts().CPlusPlus)
+    return;
 
-    Finder->addMatcher(
-        memberCallExpr(
-            on(hasType(namedDecl(matchesName("^::std::")))),
-            callee(methodDecl(hasName("erase"))), argumentCountIs(1),
-            hasArgument(0, has(callExpr(callee(functionDecl(matchesName(
-                                            "^::std::(remove(_if)?|unique)$"))),
-                                        CheckForEndCall)
-                                   .bind("InaccAlgCall"))),
-            unless(isInTemplateInstantiation()))
-            .bind("InaccErase"),
-        this);
-  }
+  const auto CheckForEndCall = hasArgument(
+      1,
+      anyOf(constructExpr(has(memberCallExpr(callee(methodDecl(hasName("end"))))
+                                  .bind("InaccEndCall"))),
+            anything()));
+
+  Finder->addMatcher(
+      memberCallExpr(
+          on(hasType(namedDecl(matchesName("^::std::")))),
+          callee(methodDecl(hasName("erase"))), argumentCountIs(1),
+          hasArgument(0, has(callExpr(callee(functionDecl(matchesName(
+                                          "^::std::(remove(_if)?|unique)$"))),
+                                      CheckForEndCall)
+                                 .bind("InaccAlgCall"))),
+          unless(isInTemplateInstantiation()))
+          .bind("InaccErase"),
+      this);
 }
 
 void InaccurateEraseCheck::check(const MatchFinder::MatchResult &Result) {

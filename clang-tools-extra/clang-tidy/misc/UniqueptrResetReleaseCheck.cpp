@@ -20,23 +20,24 @@ namespace misc {
 void UniqueptrResetReleaseCheck::registerMatchers(MatchFinder *Finder) {
   // Only register the matchers for C++11; the functionality currently does not
   // provide any benefit to other languages, despite being benign.
-  if (getLangOpts().CPlusPlus11) {
-    Finder->addMatcher(
-        memberCallExpr(
-            on(expr().bind("left")), callee(memberExpr().bind("reset_member")),
-            callee(methodDecl(hasName("reset"),
-                              ofClass(recordDecl(hasName("::std::unique_ptr"),
-                                                 decl().bind("left_class"))))),
-            has(memberCallExpr(
-                on(expr().bind("right")),
-                callee(memberExpr().bind("release_member")),
-                callee(methodDecl(
-                    hasName("release"),
-                    ofClass(recordDecl(hasName("::std::unique_ptr"),
-                                       decl().bind("right_class"))))))))
-            .bind("reset_call"),
-        this);
-  }
+  if (!getLangOpts().CPlusPlus11)
+    return;
+
+  Finder->addMatcher(
+      memberCallExpr(
+          on(expr().bind("left")), callee(memberExpr().bind("reset_member")),
+          callee(methodDecl(hasName("reset"),
+                            ofClass(recordDecl(hasName("::std::unique_ptr"),
+                                               decl().bind("left_class"))))),
+          has(memberCallExpr(
+              on(expr().bind("right")),
+              callee(memberExpr().bind("release_member")),
+              callee(methodDecl(
+                  hasName("release"),
+                  ofClass(recordDecl(hasName("::std::unique_ptr"),
+                                     decl().bind("right_class"))))))))
+          .bind("reset_call"),
+      this);
 }
 
 namespace {

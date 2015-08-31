@@ -58,17 +58,18 @@ void UndelegatedConstructorCheck::registerMatchers(MatchFinder *Finder) {
   //
   // Only register the matchers for C++11; the functionality currently does not
   // provide any benefit to other languages, despite being benign.
-  if (getLangOpts().CPlusPlus11) {
-    Finder->addMatcher(
-        compoundStmt(
-            hasParent(constructorDecl(ofClass(recordDecl().bind("parent")))),
-            forEach(ignoringTemporaryExpr(
-                constructExpr(hasDeclaration(constructorDecl(ofClass(
-                                  recordDecl(baseOfBoundNode("parent"))))))
-                    .bind("construct"))),
-            unless(isInTemplateInstantiation())),
-        this);
-  }
+  if (!getLangOpts().CPlusPlus11)
+    return;
+
+  Finder->addMatcher(
+      compoundStmt(
+          hasParent(constructorDecl(ofClass(recordDecl().bind("parent")))),
+          forEach(ignoringTemporaryExpr(
+              constructExpr(hasDeclaration(constructorDecl(ofClass(
+                                recordDecl(baseOfBoundNode("parent"))))))
+                  .bind("construct"))),
+          unless(isInTemplateInstantiation())),
+      this);
 }
 
 void UndelegatedConstructorCheck::check(const MatchFinder::MatchResult &Result) {

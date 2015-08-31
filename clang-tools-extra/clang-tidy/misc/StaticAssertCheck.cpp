@@ -30,44 +30,44 @@ void StaticAssertCheck::registerMatchers(MatchFinder *Finder) {
   // FIXME: I don't see why this checker couldn't also be interesting for
   // _Static_assert in C11, or static_assert if <assert.h> has been included, 
   // but it is currently only enabled for C++11. Investigate.
-  if (getLangOpts().CPlusPlus11) {
-    auto IsAlwaysFalse = expr(ignoringParenImpCasts(
-        expr(anyOf(boolLiteral(equals(false)), integerLiteral(equals(0)),
-                   nullPtrLiteralExpr(), gnuNullExpr()))
-            .bind("isAlwaysFalse")));
-    auto IsAlwaysFalseWithCast = ignoringParenImpCasts(anyOf(
-        IsAlwaysFalse, cStyleCastExpr(has(IsAlwaysFalse)).bind("castExpr")));
-    auto AssertExprRoot =
-        anyOf(binaryOperator(
-                  anyOf(hasOperatorName("&&"), hasOperatorName("==")),
-                  hasEitherOperand(
-                      ignoringImpCasts(stringLiteral().bind("assertMSG"))),
-                  anyOf(binaryOperator(hasEitherOperand(IsAlwaysFalseWithCast)),
-                        anything()))
-                  .bind("assertExprRoot"),
-              IsAlwaysFalse);
-    auto NonConstexprFunctionCall =
-        callExpr(hasDeclaration(functionDecl(unless(isConstexpr()))));
-    auto AssertCondition =
-        expr(anyOf(expr(ignoringParenCasts(
-                       anyOf(AssertExprRoot,
-                             unaryOperator(hasUnaryOperand(
-                                 ignoringParenCasts(AssertExprRoot)))))),
-                   anything()),
-             unless(findAll(NonConstexprFunctionCall)))
-            .bind("condition");
-    auto Condition =
-        anyOf(ignoringParenImpCasts(callExpr(
-                  hasDeclaration(functionDecl(hasName("__builtin_expect"))),
-                  hasArgument(0, AssertCondition))),
-              AssertCondition);
+  if (!getLangOpts().CPlusPlus11)
+    return;
 
-    Finder->addMatcher(stmt(anyOf(conditionalOperator(hasCondition(Condition)),
-                                  ifStmt(hasCondition(Condition))),
-                            unless(isInTemplateInstantiation()))
-                           .bind("condStmt"),
-                       this);
-  }
+  auto IsAlwaysFalse = expr(ignoringParenImpCasts(
+      expr(anyOf(boolLiteral(equals(false)), integerLiteral(equals(0)),
+                 nullPtrLiteralExpr(), gnuNullExpr()))
+          .bind("isAlwaysFalse")));
+  auto IsAlwaysFalseWithCast = ignoringParenImpCasts(anyOf(
+      IsAlwaysFalse, cStyleCastExpr(has(IsAlwaysFalse)).bind("castExpr")));
+  auto AssertExprRoot = anyOf(
+      binaryOperator(
+          anyOf(hasOperatorName("&&"), hasOperatorName("==")),
+          hasEitherOperand(ignoringImpCasts(stringLiteral().bind("assertMSG"))),
+          anyOf(binaryOperator(hasEitherOperand(IsAlwaysFalseWithCast)),
+                anything()))
+          .bind("assertExprRoot"),
+      IsAlwaysFalse);
+  auto NonConstexprFunctionCall =
+      callExpr(hasDeclaration(functionDecl(unless(isConstexpr()))));
+  auto AssertCondition =
+      expr(
+          anyOf(expr(ignoringParenCasts(anyOf(
+                    AssertExprRoot, unaryOperator(hasUnaryOperand(
+                                        ignoringParenCasts(AssertExprRoot)))))),
+                anything()),
+          unless(findAll(NonConstexprFunctionCall)))
+          .bind("condition");
+  auto Condition =
+      anyOf(ignoringParenImpCasts(callExpr(
+                hasDeclaration(functionDecl(hasName("__builtin_expect"))),
+                hasArgument(0, AssertCondition))),
+            AssertCondition);
+
+  Finder->addMatcher(stmt(anyOf(conditionalOperator(hasCondition(Condition)),
+                                ifStmt(hasCondition(Condition))),
+                          unless(isInTemplateInstantiation()))
+                         .bind("condStmt"),
+                     this);
 }
 
 void StaticAssertCheck::check(const MatchFinder::MatchResult &Result) {
