@@ -302,8 +302,6 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     const Elf_Sym *InputSym = nullptr;
 
     switch (Body->kind()) {
-    case SymbolBody::UndefinedSyntheticKind:
-      llvm_unreachable("Should be defined by now");
     case SymbolBody::DefinedRegularKind: {
       auto *Def = cast<DefinedRegular<ELFT>>(Body);
       InputSym = &Def->Sym;

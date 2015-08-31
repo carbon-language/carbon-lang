@@ -42,16 +42,13 @@ public:
     DefinedAbsoluteKind = 1,
     DefinedCommonKind = 2,
     DefinedLast = 2,
-    UndefinedKind = 3,
-    UndefinedSyntheticKind = 4
+    UndefinedKind = 3
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
 
   bool isWeak() const { return IsWeak; }
-  bool isUndefined() const {
-    return SymbolKind == UndefinedKind || SymbolKind == UndefinedSyntheticKind;
-  }
+  bool isUndefined() const { return SymbolKind == UndefinedKind; }
   bool isDefined() const { return !isUndefined(); }
   bool isStrongUndefined() const { return !IsWeak && isUndefined(); }
   bool isCommon() const { return SymbolKind == DefinedCommonKind; }
@@ -166,22 +163,14 @@ public:
   const SectionChunk<ELFT> &Section;
 };
 
-// Undefined symbols.
-class SyntheticUndefined : public SymbolBody {
-public:
-  explicit SyntheticUndefined(StringRef N)
-      : SymbolBody(UndefinedKind, N, false) {}
-
-  static bool classof(const SymbolBody *S) {
-    return S->kind() == UndefinedSyntheticKind;
-  }
-};
-
+// Undefined symbol.
 template <class ELFT> class Undefined : public ELFSymbolBody<ELFT> {
   typedef ELFSymbolBody<ELFT> Base;
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
+  static Elf_Sym Synthetic;
+
   explicit Undefined(StringRef N, const Elf_Sym &Sym)
       : ELFSymbolBody<ELFT>(Base::UndefinedKind, N, Sym) {}
 
@@ -189,6 +178,9 @@ public:
     return S->kind() == Base::UndefinedKind;
   }
 };
+
+template <class ELFT>
+typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::Synthetic;
 
 } // namespace elf2
 } // namespace lld

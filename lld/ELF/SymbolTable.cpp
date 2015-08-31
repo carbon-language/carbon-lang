@@ -27,25 +27,29 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   addObject(P);
 }
 
+template <class ELFT> void SymbolTable::init() {
+  resolve<ELFT>(new (Alloc)
+                    Undefined<ELFT>("_start", Undefined<ELFT>::Synthetic));
+}
+
 void SymbolTable::addObject(ObjectFileBase *File) {
   if (!ObjectFiles.empty()) {
     ObjectFileBase &Old = *ObjectFiles[0];
     if (!Old.isCompatibleWith(*File))
       error(Twine(Old.getName() + " is incompatible with " + File->getName()));
   } else {
-    auto *Start = new (Alloc) SyntheticUndefined("_start");
     switch (File->kind()) {
     case InputFile::Object32LEKind:
-      resolve<ELF32LE>(Start);
+      init<ELF32LE>();
       break;
     case InputFile::Object32BEKind:
-      resolve<ELF32BE>(Start);
+      init<ELF32BE>();
       break;
     case InputFile::Object64LEKind:
-      resolve<ELF64LE>(Start);
+      init<ELF64LE>();
       break;
     case InputFile::Object64BEKind:
-      resolve<ELF64BE>(Start);
+      init<ELF64BE>();
       break;
     }
   }

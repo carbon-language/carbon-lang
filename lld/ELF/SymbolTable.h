@@ -51,6 +51,7 @@ public:
 private:
   void addObject(ObjectFileBase *File);
 
+  template <class ELFT> void init();
   template <class ELFT> void resolve(SymbolBody *Body);
 
   llvm::DenseMap<StringRef, Symbol *> Symtab;
