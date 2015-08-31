@@ -8500,7 +8500,7 @@ SDValue DAGCombiner::visitFSQRT(SDNode *N) {
   // Unfortunately, RV is now NaN if the input was exactly 0.
   // Select out this case and force the answer to 0.
   SDValue Zero = DAG.getConstantFP(0.0, DL, VT);
-  EVT CCVT = TLI.getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), VT);
+  EVT CCVT = getSetCCResultType(VT);
   SDValue ZeroCmp = DAG.getSetCC(DL, CCVT, N->getOperand(0), Zero, ISD::SETEQ);
   AddToWorklist(ZeroCmp.getNode());
   AddToWorklist(RV.getNode());
