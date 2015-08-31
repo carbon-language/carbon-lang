@@ -911,6 +911,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitUnaryOpLValue(cast<UnaryOperator>(E));
   case Expr::ArraySubscriptExprClass:
     return EmitArraySubscriptExpr(cast<ArraySubscriptExpr>(E));
+  case Expr::OMPArraySectionExprClass:
+    return EmitOMPArraySectionExpr(cast<OMPArraySectionExpr>(E));
   case Expr::ExtVectorElementExprClass:
     return EmitExtVectorElementExpr(cast<ExtVectorElementExpr>(E));
   case Expr::MemberExprClass:
@@ -2556,6 +2558,155 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
     LV.setNonGC(!E->isOBJCGCCandidate(getContext()));
     setObjCGCLValueClass(getContext(), E, LV);
   }
+  return LV;
+}
+
+LValue CodeGenFunction::EmitOMPArraySectionExpr(const OMPArraySectionExpr *E,
+                                                bool IsLowerBound) {
+  LValue Base;
+  if (auto *ASE =
+          dyn_cast<OMPArraySectionExpr>(E->getBase()->IgnoreParenImpCasts()))
+    Base = EmitOMPArraySectionExpr(ASE, IsLowerBound);
+  else
+    Base = EmitLValue(E->getBase());
+  QualType BaseTy = Base.getType();
+  llvm::Value *Idx = nullptr;
+  QualType ResultExprTy;
+  if (auto *AT = getContext().getAsArrayType(BaseTy))
+    ResultExprTy = AT->getElementType();
+  else
+    ResultExprTy = BaseTy->getPointeeType();
+  if (IsLowerBound || (!IsLowerBound && E->getColonLoc().isInvalid())) {
+    // Requesting lower bound or upper bound, but without provided length and
+    // without ':' symbol for the default length -> length = 1.
+    // Idx = LowerBound ?: 0;
+    if (auto *LowerBound = E->getLowerBound()) {
+      Idx = Builder.CreateIntCast(
+          EmitScalarExpr(LowerBound), IntPtrTy,
+          LowerBound->getType()->hasSignedIntegerRepresentation());
+    } else
+      Idx = llvm::ConstantInt::getNullValue(IntPtrTy);
+  } else {
+    // Try to emit length or lower bound as constant. If this is possible, 1 is
+    // subtracted from constant length or lower bound. Otherwise, emit LLVM IR
+    // (LB + Len) - 1.
+    auto &C = CGM.getContext();
+    auto *Length = E->getLength();
+    llvm::APSInt ConstLength;
+    if (Length) {
+      // Idx = LowerBound + Length - 1;
+      if (Length->isIntegerConstantExpr(ConstLength, C)) {
+        ConstLength = ConstLength.zextOrTrunc(PointerWidthInBits);
+        Length = nullptr;
+      }
+      auto *LowerBound = E->getLowerBound();
+      llvm::APSInt ConstLowerBound(PointerWidthInBits, /*isUnsigned=*/false);
+      if (LowerBound && LowerBound->isIntegerConstantExpr(ConstLowerBound, C)) {
+        ConstLowerBound = ConstLowerBound.zextOrTrunc(PointerWidthInBits);
+        LowerBound = nullptr;
+      }
+      if (!Length)
+        --ConstLength;
+      else if (!LowerBound)
+        --ConstLowerBound;
+
+      if (Length || LowerBound) {
+        auto *LowerBoundVal =
+            LowerBound
+                ? Builder.CreateIntCast(
+                      EmitScalarExpr(LowerBound), IntPtrTy,
+                      LowerBound->getType()->hasSignedIntegerRepresentation())
+                : llvm::ConstantInt::get(IntPtrTy, ConstLowerBound);
+        auto *LengthVal =
+            Length
+                ? Builder.CreateIntCast(
+                      EmitScalarExpr(Length), IntPtrTy,
+                      Length->getType()->hasSignedIntegerRepresentation())
+                : llvm::ConstantInt::get(IntPtrTy, ConstLength);
+        Idx = Builder.CreateAdd(LowerBoundVal, LengthVal, "lb_add_len",
+                                /*HasNUW=*/false,
+                                !getLangOpts().isSignedOverflowDefined());
+        if (Length && LowerBound) {
+          Idx = Builder.CreateSub(
+              Idx, llvm::ConstantInt::get(IntPtrTy, /*V=*/1), "idx_sub_1",
+              /*HasNUW=*/false, !getLangOpts().isSignedOverflowDefined());
+        }
+      } else
+        Idx = llvm::ConstantInt::get(IntPtrTy, ConstLength + ConstLowerBound);
+    } else {
+      // Idx = ArraySize - 1;
+      if (auto *VAT = C.getAsVariableArrayType(BaseTy)) {
+        Length = VAT->getSizeExpr();
+        if (Length->isIntegerConstantExpr(ConstLength, C))
+          Length = nullptr;
+      } else {
+        auto *CAT = C.getAsConstantArrayType(BaseTy);
+        ConstLength = CAT->getSize();
+      }
+      if (Length) {
+        auto *LengthVal = Builder.CreateIntCast(
+            EmitScalarExpr(Length), IntPtrTy,
+            Length->getType()->hasSignedIntegerRepresentation());
+        Idx = Builder.CreateSub(
+            LengthVal, llvm::ConstantInt::get(IntPtrTy, /*V=*/1), "len_sub_1",
+            /*HasNUW=*/false, !getLangOpts().isSignedOverflowDefined());
+      } else {
+        ConstLength = ConstLength.zextOrTrunc(PointerWidthInBits);
+        --ConstLength;
+        Idx = llvm::ConstantInt::get(IntPtrTy, ConstLength);
+      }
+    }
+  }
+  assert(Idx);
+
+  llvm::Value *Address;
+  CharUnits ArrayAlignment;
+  if (auto *VLA = getContext().getAsVariableArrayType(ResultExprTy)) {
+    // The element count here is the total number of non-VLA elements.
+    llvm::Value *numElements = getVLASize(VLA).first;
+
+    // Effectively, the multiply by the VLA size is part of the GEP.
+    // GEP indexes are signed, and scaling an index isn't permitted to
+    // signed-overflow, so we use the same semantics for our explicit
+    // multiply.  We suppress this if overflow is not undefined behavior.
+    if (getLangOpts().isSignedOverflowDefined()) {
+      Idx = Builder.CreateMul(Idx, numElements);
+      Address = Builder.CreateGEP(Base.getAddress(), Idx, "arrayidx");
+    } else {
+      Idx = Builder.CreateNSWMul(Idx, numElements);
+      Address = Builder.CreateInBoundsGEP(Base.getAddress(), Idx, "arrayidx");
+    }
+  } else if (BaseTy->isConstantArrayType()) {
+    llvm::Value *ArrayPtr = Base.getAddress();
+    llvm::Value *Zero = llvm::ConstantInt::getNullValue(IntPtrTy);
+    llvm::Value *Args[] = {Zero, Idx};
+
+    // Propagate the alignment from the array itself to the result.
+    ArrayAlignment = Base.getAlignment();
+
+    if (getLangOpts().isSignedOverflowDefined())
+      Address = Builder.CreateGEP(ArrayPtr, Args, "arrayidx");
+    else
+      Address = Builder.CreateInBoundsGEP(ArrayPtr, Args, "arrayidx");
+  } else {
+    // The base must be a pointer, which is not an aggregate.  Emit it.
+    if (getLangOpts().isSignedOverflowDefined())
+      Address = Builder.CreateGEP(Base.getAddress(), Idx, "arrayidx");
+    else
+      Address = Builder.CreateInBoundsGEP(Base.getAddress(), Idx, "arrayidx");
+  }
+
+  // Limit the alignment to that of the result type.
+  LValue LV;
+  if (!ArrayAlignment.isZero()) {
+    CharUnits Align = getContext().getTypeAlignInChars(ResultExprTy);
+    ArrayAlignment = std::min(Align, ArrayAlignment);
+    LV = MakeAddrLValue(Address, ResultExprTy, ArrayAlignment);
+  } else
+    LV = MakeNaturalAlignAddrLValue(Address, ResultExprTy);
+
+  LV.getQuals().setAddressSpace(BaseTy.getAddressSpace());
+
   return LV;
 }
 
