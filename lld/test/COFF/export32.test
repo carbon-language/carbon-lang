@@ -24,9 +24,9 @@
 # CHECK2-NEXT:       3        0
 # CHECK2-NEXT:       4        0
 # CHECK2-NEXT:       5   0x1008  exportfn1
-# CHECK2-NEXT:       6   0x1010  ?mangled@@YAHXZ
-# CHECK2-NEXT:       7   0x1010  exportfn2
-# CHECK2-NEXT:       8   0x1010  exportfn3
+# CHECK2-NEXT:       6   0x1010  exportfn2
+# CHECK2-NEXT:       7   0x1010  exportfn3
+# CHECK2-NEXT:       8   0x1010  mangled
 
 # RUN: lld-link /out:%t.dll /dll %t.obj /export:exportfn1,@5,noname /export:exportfn2
 # RUN: llvm-objdump -p %t.dll | FileCheck -check-prefix=CHECK3 %s

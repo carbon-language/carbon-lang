@@ -81,6 +81,10 @@ static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
   return std::unique_ptr<InputFile>(new ObjectFile(MB));
 }
 
+static bool isDecorated(StringRef Sym) {
+  return Sym.startswith("_") || Sym.startswith("@") || Sym.startswith("?");
+}
+
 // Parses .drectve section contents and returns a list of files
 // specified by /defaultlib.
 void LinkerDriver::parseDirectives(StringRef S) {
@@ -99,8 +103,7 @@ void LinkerDriver::parseDirectives(StringRef S) {
       break;
     case OPT_export: {
       Export E = parseExport(Arg->getValue());
-      if (Config->Machine == I386 && E.ExtName.startswith("_"))
-        E.ExtName = E.ExtName.substr(1);
+      E.Directives = true;
       Config->Exports.push_back(E);
       break;
     }
@@ -520,8 +523,12 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // Handle /export
   for (auto *Arg : Args.filtered(OPT_export)) {
     Export E = parseExport(Arg->getValue());
-    if (Config->Machine == I386 && !E.Name.startswith("_@?"))
-      E.Name = mangle(E.Name);
+    if (Config->Machine == I386) {
+      if (!isDecorated(E.Name))
+        E.Name = Alloc.save("_" + E.Name);
+      if (!E.ExtName.empty() && !isDecorated(E.ExtName))
+        E.ExtName = Alloc.save("_" + E.ExtName);
+    }
     Config->Exports.push_back(E);
   }
 
@@ -574,7 +581,8 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     // Windows specific -- Make sure we resolve all dllexported symbols.
     for (Export &E : Config->Exports) {
       E.Sym = addUndefined(E.Name);
-      Symtab.mangleMaybe(E.Sym);
+      if (!E.Directives)
+        Symtab.mangleMaybe(E.Sym);
     }
 
     // Add weak aliases. Weak aliases is a mechanism to give remaining
@@ -626,7 +634,7 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
 
   // Windows specific -- when we are creating a .dll file, we also
   // need to create a .lib file.
-  if (!Config->Exports.empty()) {
+  if (Config->DLL) {
     fixupExports();
     writeImportLibrary();
     assignExportOrdinals();

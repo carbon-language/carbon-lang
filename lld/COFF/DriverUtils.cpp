@@ -370,6 +370,12 @@ err:
   error(Twine("invalid /export: ") + Arg);
 }
 
+static StringRef undecorate(StringRef Sym) {
+  if (Config->Machine != I386)
+    return Sym;
+  return Sym.startswith("_") ? Sym.substr(1) : Sym;
+}
+
 // Performs error checking on all /export arguments.
 // It also sets ordinals.
 void fixupExports() {
@@ -379,30 +385,25 @@ void fixupExports() {
     if (E.Ordinal == 0)
       continue;
     if (!Ords.insert(E.Ordinal).second)
-      error(Twine("duplicate export ordinal: ") + E.Name);
+      error("duplicate export ordinal: " + E.Name);
   }
 
   for (Export &E : Config->Exports) {
-    if (!E.ExtName.empty()) {
-      E.ExtDLLName = E.ExtName;
-      E.ExtLibName = E.ExtName;
-      continue;
+    if (Undefined *U = cast_or_null<Undefined>(E.Sym->WeakAlias)) {
+      E.SymbolName = U->getName();
+    } else {
+      E.SymbolName = E.Sym->getName();
     }
-    StringRef S = E.Sym->repl()->getName();
-    if (Config->Machine == I386 && S.startswith("_")) {
-      E.ExtDLLName = S.substr(1).split('@').first;
-      E.ExtLibName = S.substr(1);
-      continue;
-    }
-    E.ExtDLLName = S;
-    E.ExtLibName = S;
   }
+
+  for (Export &E : Config->Exports)
+    E.ExportName = undecorate(E.ExtName.empty() ? E.Name : E.ExtName);
 
   // Uniquefy by name.
   std::map<StringRef, Export *> Map;
   std::vector<Export> V;
   for (Export &E : Config->Exports) {
-    auto Pair = Map.insert(std::make_pair(E.ExtLibName, &E));
+    auto Pair = Map.insert(std::make_pair(E.ExportName, &E));
     bool Inserted = Pair.second;
     if (Inserted) {
       V.push_back(E);
@@ -418,7 +419,7 @@ void fixupExports() {
   // Sort by name.
   std::sort(Config->Exports.begin(), Config->Exports.end(),
             [](const Export &A, const Export &B) {
-              return A.ExtDLLName < B.ExtDLLName;
+              return A.ExportName < B.ExportName;
             });
 }
 
@@ -535,12 +536,8 @@ class ShortImportCreator {
 public:
   ShortImportCreator(object::Archive *A, StringRef S) : Parent(A), DLLName(S) {}
 
-  NewArchiveIterator create(const Export &E) {
-    std::string Sym = E.ExtLibName;
-    bool Decorated =
-        E.ExtLibName.startswith("?") || E.ExtLibName.startswith("@");
-    if (Config->Machine == I386 && !Decorated)
-      Sym = (Twine("_") + Sym).str();
+  NewArchiveIterator create(StringRef Sym, uint16_t Ordinal,
+                            ImportNameType NameType, bool isData) {
     size_t ImpSize = DLLName.size() + Sym.size() + 2; // +2 for NULs
     size_t Size = sizeof(object::ArchiveMemberHeader) +
                   sizeof(coff_import_header) + ImpSize;
@@ -564,22 +561,16 @@ public:
     Imp->Sig2 = 0xFFFF;
     Imp->Machine = Config->Machine;
     Imp->SizeOfData = ImpSize;
-    if (E.Ordinal > 0)
-      Imp->OrdinalHint = E.Ordinal;
-    Imp->TypeInfo = (E.Data ? IMPORT_DATA : IMPORT_CODE);
+    if (Ordinal > 0)
+      Imp->OrdinalHint = Ordinal;
+    Imp->TypeInfo = (isData ? IMPORT_DATA : IMPORT_CODE);
     Imp->TypeInfo = IMPORT_CODE;
-    if (E.Noname) {
-      Imp->TypeInfo |= IMPORT_ORDINAL << 2;
-    } else if (Decorated) {
-      Imp->TypeInfo |= IMPORT_NAME << 2;
-    } else {
-      Imp->TypeInfo |= IMPORT_NAME_NOPREFIX << 2;
-    }
+    Imp->TypeInfo |= NameType << 2;
 
     // Write symbol name and DLL name.
-    sprintf(P, Sym.data(), Sym.size());
+    memcpy(P, Sym.data(), Sym.size());
     P += Sym.size() + 1;
-    sprintf(P, DLLName.data(), DLLName.size());
+    memcpy(P, DLLName.data(), DLLName.size());
 
     object::Archive::Child C(Parent, Buf);
     return NewArchiveIterator(C, nextFilename());
@@ -598,6 +589,20 @@ private:
   int Idx = 1;
 };
 
+static ImportNameType getNameType(StringRef Sym, StringRef ExtName) {
+  if (Sym != ExtName)
+    return IMPORT_NAME_UNDECORATE;
+  if (Config->Machine == I386 && Sym.startswith("_"))
+    return IMPORT_NAME_NOPREFIX;
+  return IMPORT_NAME;
+}
+
+static std::string replace(StringRef S, StringRef From, StringRef To) {
+  size_t Pos = S.find(From);
+  assert(Pos != StringRef::npos);
+  return (Twine(S.substr(0, Pos)) + To + S.substr(Pos + From.size())).str();
+}
+
 // Creates an import library for a DLL. In this function, we first
 // create an empty import library using lib.exe and then adds short
 // import files to that file.
@@ -610,9 +615,18 @@ void writeImportLibrary() {
 
   std::string DLLName = llvm::sys::path::filename(Config->OutputFile);
   ShortImportCreator ShortImport(&Archive, DLLName);
-  for (Export &E : Config->Exports)
-    if (!E.Private)
-      Members.push_back(ShortImport.create(E));
+  for (Export &E : Config->Exports) {
+    if (E.Private)
+      continue;
+    if (E.ExtName.empty()) {
+      Members.push_back(ShortImport.create(
+          E.SymbolName, E.Ordinal, getNameType(E.SymbolName, E.Name), E.Data));
+    } else {
+      Members.push_back(ShortImport.create(
+          replace(E.SymbolName, E.Name, E.ExtName), E.Ordinal,
+          getNameType(E.SymbolName, E.Name), E.Data));
+    }
+  }
 
   std::string Path = getImplibPath();
   std::pair<StringRef, std::error_code> Result =

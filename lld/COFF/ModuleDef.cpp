@@ -54,6 +54,10 @@ struct Token {
   StringRef Value;
 };
 
+static bool isDecorated(StringRef Sym) {
+  return Sym.startswith("_") || Sym.startswith("@") || Sym.startswith("?");
+}
+
 class Lexer {
 public:
   explicit Lexer(StringRef S) : Buf(S) {}
@@ -191,8 +195,12 @@ private:
       unget();
     }
 
-    if (Config->Machine == I386 && !E.Name.startswith("_@?"))
-      E.Name = Alloc->save("_" + E.Name);
+    if (Config->Machine == I386) {
+      if (!isDecorated(E.Name))
+        E.Name = Alloc->save("_" + E.Name);
+      if (!E.ExtName.empty() && !isDecorated(E.ExtName))
+        E.ExtName = Alloc->save("_" + E.ExtName);
+    }
 
     for (;;) {
       read();

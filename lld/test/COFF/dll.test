@@ -10,10 +10,10 @@ EXPORT:      Export Table:
 EXPORT:      DLL name: dll.test.tmp.dll
 EXPORT:      Ordinal      RVA  Name
 EXPORT-NEXT:       0        0
-EXPORT-NEXT:       1   0x1010  ?mangled@@YAHXZ
-EXPORT-NEXT:       2   0x1008  exportfn1
-EXPORT-NEXT:       3   0x1010  exportfn2
-EXPORT-NEXT:       4   0x1010  exportfn3
+EXPORT-NEXT:       1   0x1008  exportfn1
+EXPORT-NEXT:       2   0x1010  exportfn2
+EXPORT-NEXT:       3   0x1010  exportfn3
+EXPORT-NEXT:       4   0x1010  mangled
 
 # RUN: yaml2obj < %p/Inputs/export2.yaml > %t5.obj
 # RUN: rm -f %t5.lib
@@ -25,8 +25,8 @@ EXPORT2:      Export Table:
 EXPORT2:      DLL name: dll.test.tmp5.dll
 EXPORT2:      Ordinal      RVA  Name
 EXPORT2-NEXT:       0        0
-EXPORT2-NEXT:       1   0x101c  ?mangled2@@YAHXZ
-EXPORT2-NEXT:       2   0x1010  exportfn3
+EXPORT2-NEXT:       1   0x1010  exportfn3
+EXPORT2-NEXT:       2   0x101c  mangled2
 
 # RUN: llvm-as -o %t.lto.obj %p/Inputs/export.ll
 # RUN: lld-link /out:%t.lto.dll /dll %t.lto.obj /export:exportfn1 /export:exportfn2
