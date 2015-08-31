@@ -5,20 +5,20 @@
 // REQUIRES: x86
 
 // CHECK:      Name: sym2
-// CHECK-NEXT: Value: 0x0
+// CHECK-NEXT: Value: 0x1004
 // CHECK-NEXT: Size: 8
 // CHECK-NEXT: Binding: Global
 // CHECK-NEXT: Type: Object
 // CHECK-NEXT: Other: 0
-// CHECK-NEXT: Section: Undefined
+// CHECK-NEXT: Section: .bss
 
 // CHECK:      Name: sym1
-// CHECK-NEXT: Value: 0x0
+// CHECK-NEXT: Value: 0x1004
 // CHECK-NEXT: Size: 8
 // CHECK-NEXT: Binding: Global
 // CHECK-NEXT: Type: Object
 // CHECK-NEXT: Other: 0
-// CHECK-NEXT: Section: Undefined
+// CHECK-NEXT: Section: .bss
 
 
 .globl _start

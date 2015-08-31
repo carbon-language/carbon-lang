@@ -141,6 +141,8 @@ public:
 
   const SymbolTable &getSymTable() { return Table; }
 
+  OutputSection<ELFT> *BSSSec = nullptr;
+
 private:
   SymbolTable &Table;
 };
@@ -303,6 +305,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
     const SectionChunk<ELFT> *Section = nullptr;
     const Elf_Sym *InputSym = nullptr;
+    OutputSection<ELFT> *Out = nullptr;
 
     switch (Body->kind()) {
     case SymbolBody::DefinedRegularKind: {
@@ -311,9 +314,12 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       Section = &Def->Section;
       break;
     }
+    case SymbolBody::DefinedCommonKind:
+      InputSym = &cast<ELFSymbolBody<ELFT>>(Body)->Sym;
+      Out = BSSSec;
+      break;
     case SymbolBody::UndefinedKind:
       assert(Body->isWeak() && "Should be defined by now");
-    case SymbolBody::DefinedCommonKind:
     case SymbolBody::DefinedAbsoluteKind:
       InputSym = &cast<ELFSymbolBody<ELFT>>(Body)->Sym;
       break;
@@ -330,11 +336,14 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       }
     }
 
-    if (Section) {
-      OutputSection<ELFT> *Out = Section->getOutputSection();
+    if (Section)
+      Out = Section->getOutputSection();
+
+    if (Out) {
       ESym->st_shndx = Out->getSectionIndex();
       uintX_t VA = Out->getVA();
-      VA += Section->getOutputSectionOff();
+      if (Section)
+        VA += Section->getOutputSectionOff();
       VA += InputSym->st_value;
       ESym->st_value = VA;
     }
@@ -424,8 +433,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     }
   }
 
-  OutputSection<ELFT> *BSSSec =
-      getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
+  SymTable.BSSSec = getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
+  OutputSection<ELFT> *BSSSec = SymTable.BSSSec;
   uintX_t Off = BSSSec->getSize();
   // FIXME: Try to avoid the extra walk over all global symbols.
   for (auto &P : Symtab.getSymbols()) {

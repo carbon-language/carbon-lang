@@ -106,12 +106,12 @@ abs = 0x123
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: common (34)
-// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Value: 0x1008
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: Object (0x1)
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: Undefined (0x0)
+// CHECK-NEXT:     Section: .bss
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed
