@@ -20,6 +20,9 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 define void @foo(float* %A, float* %B, i64 %N) {
+entry:
+  br label %bb
+
 bb:
   %tmp = icmp sgt i64 %N, 100
   br i1 %tmp, label %bb2, label %bb12

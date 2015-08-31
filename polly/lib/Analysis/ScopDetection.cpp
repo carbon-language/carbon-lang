@@ -791,7 +791,7 @@ bool ScopDetection::hasMoreThanOneLoop(Region *R) const {
   for (auto &SubLoop : SubLoops)
     if (R->contains(SubLoop)) {
       LoopNum++;
-      if (SubLoop > 0)
+      if (SubLoop->getSubLoopsVector().size() > 0)
         LoopNum++;
 
       if (LoopNum >= 2)
