@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-assert-side-effect %t -config="{CheckOptions: [{key: misc-assert-side-effect.CheckFunctionCalls, value: 1}, {key: misc-assert-side-effect.AssertMacros, value: 'assert,assert2,my_assert'}]}" -- -fexceptions
+// RUN: %python %S/check_clang_tidy.py %s misc-assert-side-effect %t -config="{CheckOptions: [{key: misc-assert-side-effect.CheckFunctionCalls, value: 1}, {key: misc-assert-side-effect.AssertMacros, value: 'assert,assert2,my_assert,convoluted_assert'}]}" -- -fexceptions
 
 //===--- assert definition block ------------------------------------------===//
 int abort() { return 0; }
@@ -29,6 +29,12 @@ void print(...);
   if (!(x))                                                                    \
   (void)abort()
 #endif
+
+#define real_assert(x) ((void)((x) ? 1 : abort()))
+#define wrap1(x) real_assert(x)
+#define wrap2(x) wrap1(x)
+#define convoluted_assert(x) wrap2(x)
+
 //===----------------------------------------------------------------------===//
 
 class MyClass {
@@ -59,6 +65,8 @@ int main() {
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() with side effect [misc-assert-side-effect]
   my_assert(X = 1);
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found my_assert() with side effect
+  convoluted_assert(X = 1);
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found convoluted_assert() with side effect
   not_my_assert(X = 1);
 
   assert(++X);
