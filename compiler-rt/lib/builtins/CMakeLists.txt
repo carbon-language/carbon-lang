@@ -337,14 +337,14 @@ if (APPLE)
     endforeach()
 
     if(${os}_builtin_libs)
-      add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/clang_rt.builtins_${os}.a
+      add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libclang_rt.builtins_${os}.a
         COMMAND lipo -output
-                ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/clang_rt.builtins_${os}.a
+                ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/libclang_rt.builtins_${os}.a
                 -create ${${os}_builtin_lipo_flags}
         DEPENDS ${${os}_builtin_libs}
         )
       add_custom_target(clang_rt.builtins_${os}
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/clang_rt.builtins_${os}.a)
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libclang_rt.builtins_${os}.a)
       add_dependencies(builtins clang_rt.builtins_${os})
     endif()
   endforeach()
