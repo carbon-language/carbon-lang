@@ -120,9 +120,6 @@ protected:
   /// Default setting for -enable-tail-merge on this target.
   bool EnableTailMerge;
 
-  /// Default setting for -enable-shrink-wrap on this target.
-  bool EnableShrinkWrap;
-
 public:
   TargetPassConfig(TargetMachine *tm, PassManagerBase &pm);
   // Dummy constructor.

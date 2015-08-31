@@ -78,6 +78,10 @@ STATISTIC(NumCandidates, "Number of shrink-wrapping candidates");
 STATISTIC(NumCandidatesDropped,
           "Number of shrink-wrapping candidates dropped because of frequency");
 
+static cl::opt<cl::boolOrDefault>
+    EnableShrinkWrapOpt("enable-shrink-wrap", cl::Hidden,
+                        cl::desc("enable the shrink-wrapping pass"));
+
 namespace {
 /// \brief Class to determine where the safe point to insert the
 /// prologue and epilogue are.
@@ -148,6 +152,9 @@ class ShrinkWrap : public MachineFunctionPass {
   /// shrink-wrapping.
   bool ArePointsInteresting() const { return Save != Entry && Save && Restore; }
 
+  /// \brief Check if shrink wrapping is enabled for this target and function.
+  static bool isShrinkWrapEnabled(const MachineFunction &MF);
+  
 public:
   static char ID;
 
@@ -319,8 +326,9 @@ void ShrinkWrap::updateSaveRestorePoints(MachineBasicBlock &MBB) {
 }
 
 bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
-  if (MF.empty())
+  if (MF.empty() || !isShrinkWrapEnabled(MF))
     return false;
+
   DEBUG(dbgs() << "**** Analysing " << MF.getName() << '\n');
 
   init(MF);
@@ -403,4 +411,21 @@ bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
   MFI->setRestorePoint(Restore);
   ++NumCandidates;
   return false;
+}
+
+bool ShrinkWrap::isShrinkWrapEnabled(const MachineFunction &MF) {
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
+
+  switch (EnableShrinkWrapOpt) {
+  case cl::BOU_UNSET:
+    return TFI->enableShrinkWrapping(MF);
+  // If EnableShrinkWrap is set, it takes precedence on whatever the
+  // target sets. The rational is that we assume we want to test
+  // something related to shrink-wrapping.
+  case cl::BOU_TRUE:
+    return true;
+  case cl::BOU_FALSE:
+    return false;
+  }
+  llvm_unreachable("Invalid shrink-wrapping state");
 }

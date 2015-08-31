@@ -141,6 +141,11 @@ public:
     return false;
   }
 
+  /// Returns true if the target will correctly handle shrink wrapping.
+  virtual bool enableShrinkWrapping(const MachineFunction &MF) const {
+    return false;
+  }
+  
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
   virtual void emitPrologue(MachineFunction &MF,
