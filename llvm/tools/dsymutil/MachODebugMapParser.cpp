@@ -271,8 +271,7 @@ void MachODebugMapParser::dumpOneBinaryStab(const MachOObjectFile &MainBinary,
   MainBinaryStrings = MainBinary.getStringTableData();
   raw_ostream &OS(llvm::outs());
 
-  StringRef ArchName = getArchName(MainBinary);
-  dumpSymTabHeader(OS, ArchName);
+  dumpSymTabHeader(OS, getArchName(MainBinary));
   uint64_t Idx = 0;
   for (const SymbolRef &Symbol : MainBinary.symbols()) {
     const DataRefImpl &DRI = Symbol.getRawDataRefImpl();
