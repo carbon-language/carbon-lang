@@ -410,7 +410,7 @@ namespace {
     /// vector elements, try to merge them into one larger store.
     /// \return True if a merged store was created.
     bool MergeStoresOfConstantsOrVecElts(SmallVectorImpl<MemOpLink> &StoreNodes,
-                                         EVT MemVT, unsigned NumElem,
+                                         EVT MemVT, unsigned NumStores,
                                          bool IsConstantSrc, bool UseVector);
 
     /// This is a helper function for MergeConsecutiveStores.
@@ -10708,16 +10708,16 @@ SDValue DAGCombiner::getMergedConstantVectorStore(SelectionDAG &DAG,
 
 bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
                   SmallVectorImpl<MemOpLink> &StoreNodes, EVT MemVT,
-                  unsigned NumElem, bool IsConstantSrc, bool UseVector) {
+                  unsigned NumStores, bool IsConstantSrc, bool UseVector) {
   // Make sure we have something to merge.
-  if (NumElem < 2)
+  if (NumStores < 2)
     return false;
 
   int64_t ElementSizeBytes = MemVT.getSizeInBits() / 8;
   LSBaseSDNode *FirstInChain = StoreNodes[0].MemNode;
   unsigned LatestNodeUsed = 0;
 
-  for (unsigned i=0; i < NumElem; ++i) {
+  for (unsigned i=0; i < NumStores; ++i) {
     // Find a chain for the new wide-store operand. Notice that some
     // of the store nodes that we found may not be selected for inclusion
     // in the wide store. The chain we use needs to be the chain of the
@@ -10732,38 +10732,45 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
 
   SDValue StoredVal;
   if (UseVector) {
-    // Find a legal type for the vector store.
-    EVT Ty = EVT::getVectorVT(*DAG.getContext(), MemVT, NumElem);
+    bool IsVec = MemVT.isVector();
+    unsigned Elts = NumStores;
+    if (IsVec) {
+      // When merging vector stores, get the total number of elements.
+      Elts *= MemVT.getVectorNumElements();
+    }
+    // Get the type for the merged vector store.
+    EVT Ty = EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(), Elts);
     assert(TLI.isTypeLegal(Ty) && "Illegal vector store");
+
     if (IsConstantSrc) {
       StoredVal = getMergedConstantVectorStore(DAG, DL, StoreNodes, Ty);
     } else {
       SmallVector<SDValue, 8> Ops;
-      for (unsigned i = 0; i < NumElem ; ++i) {
+      for (unsigned i = 0; i < NumStores; ++i) {
         StoreSDNode *St = cast<StoreSDNode>(StoreNodes[i].MemNode);
         SDValue Val = St->getValue();
-        // All of the operands of a BUILD_VECTOR must have the same type.
+        // All operands of BUILD_VECTOR / CONCAT_VECTOR must have the same type.
         if (Val.getValueType() != MemVT)
           return false;
         Ops.push_back(Val);
       }
 
       // Build the extracted vector elements back into a vector.
-      StoredVal = DAG.getNode(ISD::BUILD_VECTOR, DL, Ty, Ops);
-    }
+      StoredVal = DAG.getNode(IsVec ? ISD::CONCAT_VECTORS : ISD::BUILD_VECTOR,
+                              DL, Ty, Ops);    }
   } else {
     // We should always use a vector store when merging extracted vector
     // elements, so this path implies a store of constants.
     assert(IsConstantSrc && "Merged vector elements should use vector store");
 
-    unsigned SizeInBits = NumElem * ElementSizeBytes * 8;
+    unsigned SizeInBits = NumStores * ElementSizeBytes * 8;
     APInt StoreInt(SizeInBits, 0);
 
     // Construct a single integer constant which is made of the smaller
     // constant inputs.
     bool IsLE = DAG.getDataLayout().isLittleEndian();
-    for (unsigned i = 0; i < NumElem ; ++i) {
-      unsigned Idx = IsLE ? (NumElem - 1 - i) : i;
+    for (unsigned i = 0; i < NumStores; ++i) {
+      unsigned Idx = IsLE ? (NumStores - 1 - i) : i;
       StoreSDNode *St  = cast<StoreSDNode>(StoreNodes[Idx].MemNode);
       SDValue Val = St->getValue();
       StoreInt <<= ElementSizeBytes * 8;
@@ -10790,7 +10797,7 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
   // Replace the last store with the new store
   CombineTo(LatestOp, NewStore);
   // Erase all other stores.
-  for (unsigned i = 0; i < NumElem ; ++i) {
+  for (unsigned i = 0; i < NumStores; ++i) {
     if (StoreNodes[i].MemNode == LatestOp)
       continue;
     StoreSDNode *St = cast<StoreSDNode>(StoreNodes[i].MemNode);
