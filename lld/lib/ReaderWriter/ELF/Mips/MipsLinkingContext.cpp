@@ -49,12 +49,14 @@ uint64_t MipsLinkingContext::getBaseAddress() const {
   if (_baseAddress != 0 || getOutputELFType() != llvm::ELF::ET_EXEC)
     return _baseAddress;
   switch (getAbi()) {
-    case MipsAbi::O32:
-      return 0x0400000;
-    case MipsAbi::N32:
-      return 0x10000000;
-    case MipsAbi::N64:
-      return 0x120000000;
+  case MipsAbi::O32:
+    return 0x0400000;
+  case MipsAbi::N32:
+    return 0x10000000;
+  case MipsAbi::N64:
+    return 0x120000000;
+  default:
+    llvm_unreachable("unknown MIPS ABI flag");
   }
 }
 
@@ -66,12 +68,14 @@ StringRef MipsLinkingContext::entrySymbolName() const {
 
 StringRef MipsLinkingContext::getDefaultInterpreter() const {
   switch (getAbi()) {
-    case MipsAbi::O32:
-      return "/lib/ld.so.1";
-    case MipsAbi::N32:
-      return "/lib32/ld.so.1";
-    case MipsAbi::N64:
-      return "/lib64/ld.so.1";
+  case MipsAbi::O32:
+    return "/lib/ld.so.1";
+  case MipsAbi::N32:
+    return "/lib32/ld.so.1";
+  case MipsAbi::N64:
+    return "/lib64/ld.so.1";
+  default:
+    llvm_unreachable("unknown MIPS ABI flag");
   }
 }
 
