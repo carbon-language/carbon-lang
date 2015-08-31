@@ -43,6 +43,7 @@ public:
   // MachO-specific.
   void printMachODataInCode() override;
   void printMachOVersionMin() override;
+  void printMachODysymtab() override;
 
 private:
   template<class MachHeader>
@@ -660,6 +661,33 @@ void MachODumper::printMachOVersionMin() {
                                                                    true));
       }
       W.printString("SDK", SDK);
+    }
+  }
+}
+
+void MachODumper::printMachODysymtab() {
+  for (const auto &Load : Obj->load_commands()) {
+    if (Load.C.cmd == MachO::LC_DYSYMTAB) {
+      MachO::dysymtab_command DLC = Obj->getDysymtabLoadCommand();
+      DictScope Group(W, "Dysymtab");
+      W.printNumber("ilocalsym", DLC.ilocalsym);
+      W.printNumber("nlocalsym", DLC.nlocalsym);
+      W.printNumber("iextdefsym", DLC.iextdefsym);
+      W.printNumber("nextdefsym", DLC.nextdefsym);
+      W.printNumber("iundefsym", DLC.iundefsym);
+      W.printNumber("nundefsym", DLC.nundefsym);
+      W.printNumber("tocoff", DLC.tocoff);
+      W.printNumber("ntoc", DLC.ntoc);
+      W.printNumber("modtaboff", DLC.modtaboff);
+      W.printNumber("nmodtab", DLC.nmodtab);
+      W.printNumber("extrefsymoff", DLC.extrefsymoff);
+      W.printNumber("nextrefsyms", DLC.nextrefsyms);
+      W.printNumber("indirectsymoff", DLC.indirectsymoff);
+      W.printNumber("nindirectsyms", DLC.nindirectsyms);
+      W.printNumber("extreloff", DLC.extreloff);
+      W.printNumber("nextrel", DLC.nextrel);
+      W.printNumber("locreloff", DLC.locreloff);
+      W.printNumber("nlocrel", DLC.nlocrel);
     }
   }
 }

@@ -191,6 +191,12 @@ namespace opts {
   cl::opt<bool>
   MachOVersionMin("macho-version-min",
                   cl::desc("Display MachO version min command"));
+
+  // -macho-dysymtab
+  cl::opt<bool>
+  MachODysymtab("macho-dysymtab",
+                  cl::desc("Display MachO Dysymtab command"));
+
   // -stackmap
   cl::opt<bool>
   PrintStackMap("stackmap",
@@ -327,6 +333,8 @@ static void dumpObject(const ObjectFile *Obj) {
       Dumper->printMachODataInCode();
     if (opts::MachOVersionMin)
       Dumper->printMachOVersionMin();
+    if (opts::MachODysymtab)
+      Dumper->printMachODysymtab();
   }
   if (opts::PrintStackMap)
     Dumper->printStackMap();
