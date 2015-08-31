@@ -11054,25 +11054,19 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
         }
       }
 
-      // Find a legal type for the vector store.
-      EVT Ty = EVT::getVectorVT(Context, MemVT, i+1);
-      if (TLI.isTypeLegal(Ty) &&
-          TLI.allowsMemoryAccess(Context, DL, Ty, FirstStoreAS,
-                                 FirstStoreAlign)) {
-        LastLegalVectorType = i + 1;
+      // We only use vectors if the constant is known to be zero or the target
+      // allows it and the function is not marked with the noimplicitfloat
+      // attribute.
+      if ((!NonZero || TLI.storeOfVectorConstantIsCheap(MemVT, i+1,
+                                                        FirstStoreAS)) &&
+          !NoVectors) {
+        // Find a legal type for the vector store.
+        EVT Ty = EVT::getVectorVT(Context, MemVT, i+1);
+        if (TLI.isTypeLegal(Ty) &&
+            TLI.allowsMemoryAccess(Context, DL, Ty, FirstStoreAS,
+                                   FirstStoreAlign))
+          LastLegalVectorType = i + 1;
       }
-    }
-
-
-    // We only use vectors if the constant is known to be zero or the target
-    // allows it and the function is not marked with the noimplicitfloat
-    // attribute.
-    if (NoVectors) {
-      LastLegalVectorType = 0;
-    } else if (NonZero && !TLI.storeOfVectorConstantIsCheap(MemVT,
-                                                            LastLegalVectorType,
-                                                            FirstStoreAS)) {
-      LastLegalVectorType = 0;
     }
 
     // Check if we found a legal integer type to store.
