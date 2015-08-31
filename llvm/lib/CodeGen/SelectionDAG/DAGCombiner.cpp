@@ -2880,10 +2880,13 @@ SDValue DAGCombiner::visitANDLike(SDValue N0, SDValue N1,
       if (Result != ISD::SETCC_INVALID &&
           (!LegalOperations ||
            (TLI.isCondCodeLegal(Result, LL.getSimpleValueType()) &&
-            TLI.isOperationLegal(ISD::SETCC,
-                            getSetCCResultType(N0.getSimpleValueType())))))
-        return DAG.getSetCC(SDLoc(LocReference), N0.getValueType(),
-                            LL, LR, Result);
+            TLI.isOperationLegal(ISD::SETCC, LL.getValueType())))) {
+        EVT CCVT = getSetCCResultType(LL.getValueType());
+        if (N0.getValueType() == CCVT ||
+            (!LegalOperations && N0.getValueType() == MVT::i1))
+          return DAG.getSetCC(SDLoc(LocReference), N0.getValueType(),
+                              LL, LR, Result);
+      }
     }
   }
 
@@ -3538,10 +3541,13 @@ SDValue DAGCombiner::visitORLike(SDValue N0, SDValue N1, SDNode *LocReference) {
       if (Result != ISD::SETCC_INVALID &&
           (!LegalOperations ||
            (TLI.isCondCodeLegal(Result, LL.getSimpleValueType()) &&
-            TLI.isOperationLegal(ISD::SETCC,
-              getSetCCResultType(N0.getValueType())))))
-        return DAG.getSetCC(SDLoc(LocReference), N0.getValueType(),
-                            LL, LR, Result);
+            TLI.isOperationLegal(ISD::SETCC, LL.getValueType())))) {
+        EVT CCVT = getSetCCResultType(LL.getValueType());
+        if (N0.getValueType() == CCVT ||
+            (!LegalOperations && N0.getValueType() == MVT::i1))
+          return DAG.getSetCC(SDLoc(LocReference), N0.getValueType(),
+                              LL, LR, Result);
+      }
     }
   }
 
@@ -6059,7 +6065,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
 
     if (!VT.isVector()) {
       EVT SetCCVT = getSetCCResultType(N0.getOperand(0).getValueType());
-      if (!LegalOperations || TLI.isOperationLegal(ISD::SETCC, SetCCVT)) {
+      if (!LegalOperations ||
+          TLI.isOperationLegal(ISD::SETCC, N0.getOperand(0).getValueType())) {
         SDLoc DL(N);
         ISD::CondCode CC = cast<CondCodeSDNode>(N0.getOperand(2))->get();
         SDValue SetCC = DAG.getSetCC(DL, SetCCVT,
@@ -13730,8 +13737,7 @@ SDValue DAGCombiner::SimplifySelectCC(SDLoc DL, SDValue N0, SDValue N1,
     // Get a SetCC of the condition
     // NOTE: Don't create a SETCC if it's not legal on this target.
     if (!LegalOperations ||
-        TLI.isOperationLegal(ISD::SETCC,
-          LegalTypes ? getSetCCResultType(N0.getValueType()) : MVT::i1)) {
+        TLI.isOperationLegal(ISD::SETCC, N0.getValueType())) {
       SDValue Temp, SCC;
       // cast from setcc result type to select result type
       if (LegalTypes) {
