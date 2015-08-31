@@ -41,12 +41,22 @@ abs = 0x123
 // CHECK-NEXT: ]
 // CHECK-NEXT: Address: 0x1000
 
+// CHECK:      Name: .bss (14)
+// CHECK-NEXT: Type: SHT_NOBITS (0x8)
+// CHECK-NEXT: Flags [ (0x3)
+// CHECK-NEXT:   SHF_ALLOC (0x2)
+// CHECK-NEXT:   SHF_WRITE (0x1)
+// CHECK-NEXT: ]
+// CHECK-NEXT: Address: 0x1004
+// CHECK-NEXT: Offset: 0x1004
+// CHECK-NEXT: Size: 4
+
 // CHECK:      Name: foobar
 // CHECK-NEXT: Type: SHT_NOBITS
 // CHECK-NEXT: Flags [
 // CHECK-NEXT:   SHF_ALLOC
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x1004
+// CHECK-NEXT: Address: 0x1008
 
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
@@ -105,7 +115,7 @@ abs = 0x123
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed
-// CHECK-NEXT:     Value: 0x1004
+// CHECK-NEXT:     Value: 0x1008
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: None
@@ -114,7 +124,7 @@ abs = 0x123
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed3
-// CHECK-NEXT:     Value: 0x100C
+// CHECK-NEXT:     Value: 0x1010
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
@@ -123,7 +133,7 @@ abs = 0x123
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed2
-// CHECK-NEXT:     Value: 0x1008
+// CHECK-NEXT:     Value: 0x100C
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
