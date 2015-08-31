@@ -72,7 +72,8 @@ protected:
   void growHungoffUses(unsigned N, bool IsPhi = false);
 
 public:
-  ~User() override {}
+  ~User() override {
+  }
   /// \brief Free memory allocated for User and Use objects.
   void operator delete(void *Usr);
   /// \brief Placement delete - required by std, but never called.
