@@ -220,7 +220,9 @@ _Unwind_Reason_Code __gcc_personality_v0(int version, _Unwind_Action actions,
 // for use with some implementations of assert() in <assert.h>
 void __eprintf(const char* format, const char* assertion_expression,
 				const char* line, const char* file);
-				
+
+// for systems with emulated thread local storage
+void* __emutls_get_address(struct __emutls_control*);
 
 
 //   Power PC specific functions

@@ -139,6 +139,12 @@ set(GENERIC_SOURCES
   umodsi3.c
   umodti3.c)
 
+if(NOT WIN32)
+  set(GENERIC_SOURCES
+      ${GENERIC_SOURCES}
+      emutls.c)
+endif()
+
 if (HAVE_UNWIND_H)
   set(GENERIC_SOURCES
       ${GENERIC_SOURCES}
