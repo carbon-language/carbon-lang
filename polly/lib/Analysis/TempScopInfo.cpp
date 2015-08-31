@@ -128,10 +128,9 @@ void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
       }
     }
 
-    // If the operand is a constant, global or argument we use the terminator
-    // of the incoming basic block as the access instruction.
-    if (!OpI)
-      OpI = OpBB->getTerminator();
+    // Always use the terminator of the incoming basic block as the access
+    // instruction.
+    OpI = OpBB->getTerminator();
 
     IRAccess ScalarAccess(IRAccess::MUST_WRITE, PHI, ZeroOffset, 1, true, Op,
                           /* IsPHI */ true);
