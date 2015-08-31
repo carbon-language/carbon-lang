@@ -336,8 +336,6 @@ Build (make sure to use fresh clang as the host compiler)::
 
 Optionally build other kinds of binaries (asan+Debug, msan, ubsan, etc).
 
-TODO: commit the pre-fuzzed corpus to svn (?).
-
 Tracking bug: https://llvm.org/bugs/show_bug.cgi?id=23052
 
 clang-fuzzer
@@ -347,6 +345,11 @@ The default behavior is very similar to ``clang-format-fuzzer``.
 Clang can also be fuzzed with Tokens_ using ``-tokens=$LLVM/lib/Fuzzer/cxx_fuzzer_tokens.txt`` option.
 
 Tracking bug: https://llvm.org/bugs/show_bug.cgi?id=23057
+
+llvm-as-fuzzer
+--------------
+
+Tracking bug: https://llvm.org/bugs/show_bug.cgi?id=24639
 
 Buildbot
 --------
@@ -364,6 +367,7 @@ The corpuses are stored in git on github and can be used like this::
   bin/clang-format-fuzzer fuzzing-with-sanitizers/llvm/clang-format/C1
   bin/clang-fuzzer        fuzzing-with-sanitizers/llvm/clang/C1/
   bin/clang-fuzzer        fuzzing-with-sanitizers/llvm/clang/TOK1  -tokens=$LLVM/llvm/lib/Fuzzer/cxx_fuzzer_tokens.txt
+  bin/llvm-as-fuzzer      fuzzing-with-sanitizers/llvm/llvm-as/C1  -only_ascii=1
 
 
 FAQ
@@ -444,6 +448,8 @@ Trophies
   * Clang-format: https://llvm.org/bugs/show_bug.cgi?id=23052
 
   * libc++: https://llvm.org/bugs/show_bug.cgi?id=24411
+
+  * llvm-as: https://llvm.org/bugs/show_bug.cgi?id=24639
 
 
 
