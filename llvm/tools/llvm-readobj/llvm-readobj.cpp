@@ -322,11 +322,12 @@ static void dumpObject(const ObjectFile *Obj) {
     if (opts::COFFBaseRelocs)
       Dumper->printCOFFBaseReloc();
   }
-  if (Obj->isMachO())
+  if (Obj->isMachO()) {
     if (opts::MachODataInCode)
       Dumper->printMachODataInCode();
     if (opts::MachOVersionMin)
       Dumper->printMachOVersionMin();
+  }
   if (opts::PrintStackMap)
     Dumper->printStackMap();
 }
