@@ -1955,11 +1955,12 @@ multiclass avx512_mask_binop<bits<8> opc, string OpcodeStr,
 }
 
 multiclass avx512_mask_binop_all<bits<8> opc, string OpcodeStr,
-                               SDPatternOperator OpNode, bit IsCommutable> {
+                               SDPatternOperator OpNode, bit IsCommutable,
+                               Predicate prdW = HasAVX512> {
   defm B : avx512_mask_binop<opc, !strconcat(OpcodeStr, "b"), VK8, OpNode,
                              HasDQI, IsCommutable>, VEX_4V, VEX_L, PD;
   defm W : avx512_mask_binop<opc, !strconcat(OpcodeStr, "w"), VK16, OpNode,
-                             HasAVX512, IsCommutable>, VEX_4V, VEX_L, PS;
+                             prdW, IsCommutable>, VEX_4V, VEX_L, PS;
   defm D : avx512_mask_binop<opc, !strconcat(OpcodeStr, "d"), VK32, OpNode,
                              HasBWI, IsCommutable>, VEX_4V, VEX_L, VEX_W, PD;
   defm Q : avx512_mask_binop<opc, !strconcat(OpcodeStr, "q"), VK64, OpNode,
@@ -1974,6 +1975,7 @@ defm KOR   : avx512_mask_binop_all<0x45, "kor",   or,   1>;
 defm KXNOR : avx512_mask_binop_all<0x46, "kxnor", xnor, 1>;
 defm KXOR  : avx512_mask_binop_all<0x47, "kxor",  xor,  1>;
 defm KANDN : avx512_mask_binop_all<0x42, "kandn", andn, 0>;
+defm KADD  : avx512_mask_binop_all<0x4A, "kadd",  add,  1, HasDQI>;
 
 multiclass avx512_mask_binop_int<string IntName, string InstName> {
   let Predicates = [HasAVX512] in

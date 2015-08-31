@@ -2371,3 +2371,19 @@
 // CHECK:  encoding: [0x62,0xa1,0xff,0xca,0x7a,0xd5]
           vcvtuqq2ps %zmm21, %ymm18 {%k2} {z}
 
+// CHECK: kaddb  %k7, %k4, %k5
+// CHECK:  encoding: [0xc5,0xdd,0x4a,0xef]
+          kaddb  %k7, %k4, %k5
+
+// CHECK: kaddb  %k4, %k6, %k5
+// CHECK:  encoding: [0xc5,0xcd,0x4a,0xec]
+          kaddb  %k4, %k6, %k5
+
+// CHECK: kaddw  %k4, %k3, %k2
+// CHECK:  encoding: [0xc5,0xe4,0x4a,0xd4]
+          kaddw  %k4, %k3, %k2
+
+// CHECK: kaddw  %k6, %k6, %k2
+// CHECK:  encoding: [0xc5,0xcc,0x4a,0xd6]
+          kaddw  %k6, %k6, %k2
+
