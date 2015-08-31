@@ -6264,7 +6264,10 @@ FailedModImm:
     // a) Avoid a RMW dependency on the full vector register, and
     // b) Allow the register coalescer to fold away the copy if the
     //    value is already in an S or D register.
-    if (Op0.getOpcode() != ISD::UNDEF && (ElemSize == 32 || ElemSize == 64)) {
+    // Do not do this for UNDEF/LOAD nodes because we have better patterns
+    // for those avoiding the SCALAR_TO_VECTOR/BUILD_VECTOR.
+    if (Op0.getOpcode() != ISD::UNDEF && Op0.getOpcode() != ISD::LOAD &&
+        (ElemSize == 32 || ElemSize == 64)) {
       unsigned SubIdx = ElemSize == 32 ? AArch64::ssub : AArch64::dsub;
       MachineSDNode *N =
           DAG.getMachineNode(TargetOpcode::INSERT_SUBREG, dl, VT, Vec, Op0,

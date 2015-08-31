@@ -6215,3 +6215,27 @@ define <4 x i16> @test_v4i16_post_reg_ld1lane_forced_narrow(i16* %bar, i16** %pt
 }
 
 declare <2 x i32> @llvm.ctpop.v2i32(<2 x i32>)
+
+; CHECK-LABEL: test_ld1lane_build:
+; CHECK-DAG: ld1.s { [[REG0:v[0-9]+]] }[0], [x0]
+; CHECK-DAG: ld1.s { [[REG0:v[0-9]+]] }[1], [x1]
+; CHECK-DAG: ld1.s { [[REG1:v[0-9]+]] }[0], [x2]
+; CHECK-DAG: ld1.s { [[REG1:v[0-9]+]] }[1], [x3]
+; CHECK: sub.2s v[[REGNUM2:[0-9]+]], [[REG0]], [[REG1]]
+; CHECK-NEXT: str d[[REGNUM2]], [x4]
+; CHECK-NEXT: ret
+define void @test_ld1lane_build(i32* %ptr0, i32* %ptr1, i32* %ptr2, i32* %ptr3, <2 x i32>* %out) {
+  %load0 = load i32, i32* %ptr0, align 4
+  %load1 = load i32, i32* %ptr1, align 4
+  %vec0_0 = insertelement <2 x i32> undef, i32 %load0, i32 0
+  %vec0_1 = insertelement <2 x i32> %vec0_0, i32 %load1, i32 1
+
+  %load2 = load i32, i32* %ptr2, align 4
+  %load3 = load i32, i32* %ptr3, align 4
+  %vec1_0 = insertelement <2 x i32> undef, i32 %load2, i32 0
+  %vec1_1 = insertelement <2 x i32> %vec1_0, i32 %load3, i32 1
+
+  %sub = sub nsw <2 x i32> %vec0_1, %vec1_1
+  store <2 x i32> %sub, <2 x i32>* %out, align 16
+  ret void
+}
