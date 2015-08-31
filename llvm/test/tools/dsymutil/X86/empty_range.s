@@ -55,3 +55,7 @@ Ldebug_range:
 # CHECK-NEXT:      DW_AT_low_pc{{.*}}(0x0000000000010000)
 # CHECK-NEXT:      DW_AT_ranges{{.*}}(0x00000000)
 
+# There was a bug that would use the currently active object file when a
+# debug map object isn't found. Check that we only linked one file.
+# CHECK-NOT: DW_TAG_compile_unit
+

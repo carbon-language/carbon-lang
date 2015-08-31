@@ -2942,8 +2942,10 @@ DwarfLinker::loadObject(BinaryHolder &BinaryHolder, DebugMapObject &Obj,
                         const DebugMap &Map) {
   auto ErrOrObjs =
       BinaryHolder.GetObjectFiles(Obj.getObjectFilename(), Obj.getTimestamp());
-  if (std::error_code EC = ErrOrObjs.getError())
+  if (std::error_code EC = ErrOrObjs.getError()) {
     reportWarning(Twine(Obj.getObjectFilename()) + ": " + EC.message());
+    return EC;
+  }
   auto ErrOrObj = BinaryHolder.Get(Map.getTriple());
   if (std::error_code EC = ErrOrObj.getError())
     reportWarning(Twine(Obj.getObjectFilename()) + ": " + EC.message());
