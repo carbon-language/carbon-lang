@@ -317,13 +317,14 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
     if (PHINode *PHI = dyn_cast<PHINode>(Inst))
       buildPHIAccesses(PHI, R, Functions, NonAffineSubRegion);
 
-    if (!isa<StoreInst>(Inst) &&
-        buildScalarDependences(Inst, &R, NonAffineSubRegion)) {
+    if (buildScalarDependences(Inst, &R, NonAffineSubRegion)) {
       // If the Instruction is used outside the statement, we need to build the
       // write access.
-      IRAccess ScalarAccess(IRAccess::MUST_WRITE, Inst, ZeroOffset, 1, true,
-                            Inst);
-      Functions.push_back(std::make_pair(ScalarAccess, Inst));
+      if (!isa<StoreInst>(Inst)) {
+        IRAccess ScalarAccess(IRAccess::MUST_WRITE, Inst, ZeroOffset, 1, true,
+                              Inst);
+        Functions.push_back(std::make_pair(ScalarAccess, Inst));
+      }
     }
   }
 

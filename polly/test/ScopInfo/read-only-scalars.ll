@@ -10,8 +10,11 @@
 
 ; SCALARS: ReadAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; SCALARS:     { Stmt_stmt1[i0] -> MemRef_scalar[] };
+; SCALARS: ReadAccess :=       [Reduction Type: NONE] [Scalar: 1]
+; SCALARS:     { Stmt_stmt1[i0] -> MemRef_scalar2[] };
 
-define void @foo(float* noalias %A, float %scalar) {
+
+define void @foo(float* noalias %A, float* %B, float %scalar, float %scalar2) {
 entry:
   br label %loop
 
@@ -23,6 +26,7 @@ stmt1:
   %val = load float, float* %A
   %sum = fadd float %val, %scalar
   store float %sum, float* %A
+  store float %scalar2, float* %B
   br label %loop.backedge
 
 loop.backedge:
