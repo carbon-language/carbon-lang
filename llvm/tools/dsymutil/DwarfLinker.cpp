@@ -688,7 +688,7 @@ void DwarfStreamer::emitRangesEntries(
   MS->SwitchSection(MC->getObjectFileInfo()->getDwarfRangesSection());
 
   // Offset each range by the right amount.
-  int64_t PcOffset = FuncRange.value() + UnitPcOffset;
+  int64_t PcOffset = Entries.empty() ? 0 : FuncRange.value() + UnitPcOffset;
   for (const auto &Range : Entries) {
     if (Range.isBaseAddressSelectionEntry(AddressSize)) {
       warn("unsupported base address selection operation",
@@ -2638,16 +2638,18 @@ void DwarfLinker::patchRangesForUnit(const CompileUnit &Unit,
     RangeAttribute.set(Streamer->getRangesSectionSize());
     RangeList.extract(RangeExtractor, &Offset);
     const auto &Entries = RangeList.getEntries();
-    const DWARFDebugRangeList::RangeListEntry &First = Entries.front();
+    if (!Entries.empty()) {
+      const DWARFDebugRangeList::RangeListEntry &First = Entries.front();
 
-    if (CurrRange == InvalidRange ||
-        First.StartAddress + OrigLowPc < CurrRange.start() ||
-        First.StartAddress + OrigLowPc >= CurrRange.stop()) {
-      CurrRange = FunctionRanges.find(First.StartAddress + OrigLowPc);
       if (CurrRange == InvalidRange ||
-          CurrRange.start() > First.StartAddress + OrigLowPc) {
-        reportWarning("no mapping for range.");
-        continue;
+          First.StartAddress + OrigLowPc < CurrRange.start() ||
+          First.StartAddress + OrigLowPc >= CurrRange.stop()) {
+        CurrRange = FunctionRanges.find(First.StartAddress + OrigLowPc);
+        if (CurrRange == InvalidRange ||
+            CurrRange.start() > First.StartAddress + OrigLowPc) {
+          reportWarning("no mapping for range.");
+          continue;
+        }
       }
     }
 
