@@ -22,7 +22,7 @@
 #include <mutex>
 #include <stack>
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && LLVM_ENABLE_THREADS
 #include <concrt.h>
 #include <ppl.h>
 #endif
