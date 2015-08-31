@@ -1206,6 +1206,7 @@ private:
     const char *Name, *MangledName;         ///< Names.
     uint32_t NameOffset, MangledNameOffset; ///< Offsets in the string pool.
 
+    uint64_t OrigLowPc;  ///< Value of AT_low_pc in the input DIE
     uint64_t OrigHighPc; ///< Value of AT_high_pc in the input DIE
     int64_t PCOffset;    ///< Offset to apply to PC addresses inside a function.
 
@@ -1214,8 +1215,8 @@ private:
 
     AttributesInfo()
         : Name(nullptr), MangledName(nullptr), NameOffset(0),
-          MangledNameOffset(0), OrigHighPc(0), PCOffset(0), HasLowPc(false),
-          IsDeclaration(false) {}
+          MangledNameOffset(0), OrigLowPc(UINT64_MAX), OrigHighPc(0),
+          PCOffset(0), HasLowPc(false), IsDeclaration(false) {}
   };
 
   /// \brief Helper for cloneDIE.
@@ -2274,7 +2275,12 @@ unsigned DwarfLinker::cloneAddressAttribute(DIE &Die, AttributeSpec AttrSpec,
   if (AttrSpec.Attr == dwarf::DW_AT_low_pc) {
     if (Die.getTag() == dwarf::DW_TAG_inlined_subroutine ||
         Die.getTag() == dwarf::DW_TAG_lexical_block)
-      Addr += Info.PCOffset;
+      // The low_pc of a block or inline subroutine might get
+      // relocated because it happens to match the low_pc of the
+      // enclosing subprogram. To prevent issues with that, always use
+      // the low_pc from the input DIE if relocations have been applied.
+      Addr = (Info.OrigLowPc != UINT64_MAX ? Info.OrigLowPc : Addr) +
+             Info.PCOffset;
     else if (Die.getTag() == dwarf::DW_TAG_compile_unit) {
       Addr = Unit.getLowPc();
       if (Addr == UINT64_MAX)
@@ -2522,6 +2528,11 @@ DIE *DwarfLinker::cloneDIE(const DWARFDebugInfoEntryMinimal &InputDIE,
     // high_pc value is done in cloneAddressAttribute().
     AttrInfo.OrigHighPc =
         InputDIE.getAttributeValueAsAddress(&U, dwarf::DW_AT_high_pc, 0);
+    // Also store the low_pc. It might get relocated in an
+    // inline_subprogram that happens at the beginning of its
+    // inlining function.
+    AttrInfo.OrigLowPc =
+        InputDIE.getAttributeValueAsAddress(&U, dwarf::DW_AT_low_pc, UINT64_MAX);
   }
 
   // Reset the Offset to 0 as we will be working on the local copy of
