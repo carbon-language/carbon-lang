@@ -6414,6 +6414,11 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
   switch (BuiltinID) {
   default: return nullptr;
 
+  // __builtin_ppc_get_timebase is GCC 4.8+'s PowerPC-specific name for what we
+  // call __builtin_readcyclecounter.
+  case PPC::BI__builtin_ppc_get_timebase:
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::readcyclecounter));
+
   // vec_ld, vec_lvsl, vec_lvsr
   case PPC::BI__builtin_altivec_lvx:
   case PPC::BI__builtin_altivec_lvxl:

@@ -17,6 +17,8 @@
 
 // The format of this database matches clang/Basic/Builtins.def.
 
+BUILTIN(__builtin_ppc_get_timebase, "ULLi", "n")
+
 // This is just a placeholder, the types and attributes are wrong.
 BUILTIN(__builtin_altivec_vaddcuw, "V4UiV4UiV4Ui", "")
 
