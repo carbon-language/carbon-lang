@@ -779,19 +779,24 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
 }
 
 bool ScopDetection::hasMoreThanOneLoop(Region *R) const {
-  Loop *EntryLoop = LI->getLoopFor(R->getEntry());
-  if (!EntryLoop)
-    return false;
+  auto LoopNum = 0;
 
-  if (!EntryLoop->getSubLoops().empty())
-    return true;
+  auto L = LI->getLoopFor(R->getEntry());
+  L = L ? R->outermostLoopInRegion(L) : nullptr;
+  L = L ? L->getParentLoop() : nullptr;
 
-  for (pred_iterator PI = pred_begin(R->getExit()), PE = pred_end(R->getExit());
-       PI != PE; ++PI)
-    if (R->contains(*PI))
-      if (EntryLoop != LI->getLoopFor(*PI))
+  auto SubLoops =
+      L ? L->getSubLoopsVector() : std::vector<Loop *>(LI->begin(), LI->end());
+
+  for (auto &SubLoop : SubLoops)
+    if (R->contains(SubLoop)) {
+      LoopNum++;
+      if (SubLoop > 0)
+        LoopNum++;
+
+      if (LoopNum >= 2)
         return true;
-
+    }
   return false;
 }
 
