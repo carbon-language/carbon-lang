@@ -650,3 +650,50 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
 
   return true;
 }
+
+bool TargetInfo::initFeatureMap(llvm::StringMap<bool> &Features,
+                                DiagnosticsEngine &Diags, StringRef CPU,
+                                std::vector<std::string> &FeatureVec) const {
+  for (const auto &F : FeatureVec) {
+    const char *Name = F.c_str();
+    // Apply the feature via the target.
+    bool Enabled = Name[0] == '+';
+    setFeatureEnabled(Features, Name + 1, Enabled);
+  }
+  return true;
+}
+
+TargetInfo::ParsedTargetAttr
+TargetInfo::parseTargetAttr(const TargetAttr *TA) const {
+  std::pair<StringRef, std::vector<std::string>> RetPair;
+
+  // Grab the target attribute string.
+  StringRef FeaturesStr = TA->getFeatures();
+  SmallVector<StringRef, 1> AttrFeatures;
+  FeaturesStr.split(AttrFeatures, ",");
+
+  // Grab the various features and prepend a "+" to turn on the feature to
+  // the backend and add them to our existing set of features.
+  for (auto &Feature : AttrFeatures) {
+    // Go ahead and trim whitespace rather than either erroring or
+    // accepting it weirdly.
+    Feature = Feature.trim();
+
+    // While we're here iterating check for a different target cpu.
+    if (Feature.startswith("arch="))
+      RetPair.first = Feature.split("=").second.trim();
+    else if (Feature.startswith("tune="))
+      // We don't support cpu tuning this way currently.
+      ;
+    else if (Feature.startswith("fpmath="))
+      // TODO: Support the fpmath option this way. It will require checking
+      // overall feature validity for the function with the rest of the
+      // attributes on the function.
+      ;
+    else if (Feature.startswith("no-"))
+      RetPair.second.push_back("-" + Feature.split("-").second.str());
+    else
+      RetPair.second.push_back("+" + Feature.str());
+  }
+  return RetPair;
+}
