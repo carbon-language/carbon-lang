@@ -53,7 +53,7 @@ private:
     
     MemoryHistoryASan(const lldb::ProcessSP &process_sp);
     
-    lldb::ProcessSP m_process_sp;
+    lldb::ProcessWP m_process_wp;
     
 };
 

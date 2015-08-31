@@ -294,13 +294,15 @@ AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::SetUpRegion()
     // First read in the header:
     
     char memory_buffer[16];
-    Process *process = m_owner->GetProcess();
+    ProcessSP process_sp = m_owner->GetProcessSP();
+    if (!process_sp)
+        return;
     DataExtractor data(memory_buffer, sizeof(memory_buffer), 
-                       process->GetByteOrder(), 
-                       process->GetAddressByteSize());
-    size_t actual_size = 8 + process->GetAddressByteSize();
+                       process_sp->GetByteOrder(),
+                       process_sp->GetAddressByteSize());
+    size_t actual_size = 8 + process_sp->GetAddressByteSize();
     Error error;
-    size_t bytes_read = process->ReadMemory (m_header_addr, memory_buffer, actual_size, error);
+    size_t bytes_read = process_sp->ReadMemory (m_header_addr, memory_buffer, actual_size, error);
     if (bytes_read != actual_size)
     {
         m_valid = false;
@@ -340,9 +342,9 @@ AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::SetUpRegion()
     uint8_t* dst = (uint8_t*)data_sp->GetBytes();
 
     DataExtractor desc_extractor (dst, desc_array_size,
-                                  process->GetByteOrder(), 
-                                  process->GetAddressByteSize());
-    bytes_read = process->ReadMemory(desc_ptr, dst, desc_array_size, error);
+                                  process_sp->GetByteOrder(),
+                                  process_sp->GetAddressByteSize());
+    bytes_read = process_sp->ReadMemory(desc_ptr, dst, desc_array_size, error);
     if (bytes_read != desc_array_size)
     {
         m_valid = false;
@@ -428,79 +430,88 @@ AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::Dump (Stream &s)
         
 AppleObjCTrampolineHandler::AppleObjCVTables::AppleObjCVTables (const ProcessSP &process_sp, 
                                                                 const ModuleSP &objc_module_sp) :
-    m_process_sp (process_sp),
+    m_process_wp (),
     m_trampoline_header (LLDB_INVALID_ADDRESS),
     m_trampolines_changed_bp_id (LLDB_INVALID_BREAK_ID),
     m_objc_module_sp (objc_module_sp)
 {
-    
+    if (process_sp)
+        m_process_wp = process_sp;
 }
 
 AppleObjCTrampolineHandler::AppleObjCVTables::~AppleObjCVTables()
 {
-    if (m_trampolines_changed_bp_id != LLDB_INVALID_BREAK_ID)
-        m_process_sp->GetTarget().RemoveBreakpointByID (m_trampolines_changed_bp_id);
+    ProcessSP process_sp = GetProcessSP ();
+    if (process_sp)
+    {
+        if (m_trampolines_changed_bp_id != LLDB_INVALID_BREAK_ID)
+            process_sp->GetTarget().RemoveBreakpointByID (m_trampolines_changed_bp_id);
+    }
 }
-    
+
 bool
 AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
 {
     if (m_trampoline_header != LLDB_INVALID_ADDRESS)
         return true;
-    Target &target = m_process_sp->GetTarget();
-    
-    const ModuleList &target_modules = target.GetImages();
-    Mutex::Locker modules_locker(target_modules.GetMutex());
-    size_t num_modules = target_modules.GetSize();
-    if (!m_objc_module_sp)
+
+    ProcessSP process_sp = GetProcessSP ();
+    if (process_sp)
     {
-        for (size_t i = 0; i < num_modules; i++)
+        Target &target = process_sp->GetTarget();
+        
+        const ModuleList &target_modules = target.GetImages();
+        Mutex::Locker modules_locker(target_modules.GetMutex());
+        size_t num_modules = target_modules.GetSize();
+        if (!m_objc_module_sp)
         {
-            if (m_process_sp->GetObjCLanguageRuntime()->IsModuleObjCLibrary (target_modules.GetModuleAtIndexUnlocked(i)))
+            for (size_t i = 0; i < num_modules; i++)
             {
-                m_objc_module_sp = target_modules.GetModuleAtIndexUnlocked(i);
-                break;
+                if (process_sp->GetObjCLanguageRuntime()->IsModuleObjCLibrary (target_modules.GetModuleAtIndexUnlocked(i)))
+                {
+                    m_objc_module_sp = target_modules.GetModuleAtIndexUnlocked(i);
+                    break;
+                }
             }
         }
-    }
-    
-    if (m_objc_module_sp)
-    {
-        ConstString trampoline_name ("gdb_objc_trampolines");
-        const Symbol *trampoline_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType (trampoline_name, 
-                                                                                            eSymbolTypeData);
-        if (trampoline_symbol != NULL)
+        
+        if (m_objc_module_sp)
         {
-            m_trampoline_header = trampoline_symbol->GetLoadAddress(&target);
-            if (m_trampoline_header == LLDB_INVALID_ADDRESS)
-                return false;
-            
-            // Next look up the "changed" symbol and set a breakpoint on that...
-            ConstString changed_name ("gdb_objc_trampolines_changed");
-            const Symbol *changed_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType (changed_name, 
-                                                                                             eSymbolTypeCode);
-            if (changed_symbol != NULL)
+            ConstString trampoline_name ("gdb_objc_trampolines");
+            const Symbol *trampoline_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType (trampoline_name, 
+                                                                                                eSymbolTypeData);
+            if (trampoline_symbol != NULL)
             {
-                const Address changed_symbol_addr = changed_symbol->GetAddress();
-                if (!changed_symbol_addr.IsValid())
+                m_trampoline_header = trampoline_symbol->GetLoadAddress(&target);
+                if (m_trampoline_header == LLDB_INVALID_ADDRESS)
                     return false;
-                    
-                lldb::addr_t changed_addr = changed_symbol_addr.GetOpcodeLoadAddress (&target);
-                if (changed_addr != LLDB_INVALID_ADDRESS)
+                
+                // Next look up the "changed" symbol and set a breakpoint on that...
+                ConstString changed_name ("gdb_objc_trampolines_changed");
+                const Symbol *changed_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType (changed_name, 
+                                                                                                 eSymbolTypeCode);
+                if (changed_symbol != NULL)
                 {
-                    BreakpointSP trampolines_changed_bp_sp = target.CreateBreakpoint (changed_addr, true, false);
-                    if (trampolines_changed_bp_sp)
+                    const Address changed_symbol_addr = changed_symbol->GetAddress();
+                    if (!changed_symbol_addr.IsValid())
+                        return false;
+                        
+                    lldb::addr_t changed_addr = changed_symbol_addr.GetOpcodeLoadAddress (&target);
+                    if (changed_addr != LLDB_INVALID_ADDRESS)
                     {
-                        m_trampolines_changed_bp_id = trampolines_changed_bp_sp->GetID();
-                        trampolines_changed_bp_sp->SetCallback (RefreshTrampolines, this, true);
-                        trampolines_changed_bp_sp->SetBreakpointKind ("objc-trampolines-changed");
-                        return true;
+                        BreakpointSP trampolines_changed_bp_sp = target.CreateBreakpoint (changed_addr, true, false);
+                        if (trampolines_changed_bp_sp)
+                        {
+                            m_trampolines_changed_bp_id = trampolines_changed_bp_sp->GetID();
+                            trampolines_changed_bp_sp->SetCallback (RefreshTrampolines, this, true);
+                            trampolines_changed_bp_sp->SetBreakpointKind ("objc-trampolines-changed");
+                            return true;
+                        }
                     }
                 }
             }
         }
     }
-    
     return false;
 }
     
@@ -559,16 +570,21 @@ AppleObjCTrampolineHandler::AppleObjCVTables::ReadRegions ()
     if (!InitializeVTableSymbols())
         return false;
     Error error;
-    lldb::addr_t region_addr = m_process_sp->ReadPointerFromMemory (m_trampoline_header, error);
-    if (error.Success())    
-        return ReadRegions (region_addr);
+    ProcessSP process_sp = GetProcessSP ();
+    if (process_sp)
+    {
+        lldb::addr_t region_addr = process_sp->ReadPointerFromMemory (m_trampoline_header, error);
+        if (error.Success())
+            return ReadRegions (region_addr);
+    }
     return false;
 }
 
 bool
 AppleObjCTrampolineHandler::AppleObjCVTables::ReadRegions (lldb::addr_t region_addr)
 {
-    if (!m_process_sp)
+    ProcessSP process_sp = GetProcessSP ();
+    if (!process_sp)
         return false;
         
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
@@ -639,12 +655,14 @@ AppleObjCTrampolineHandler::g_dispatch_functions[] =
 
 AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (const ProcessSP &process_sp, 
                                                         const ModuleSP &objc_module_sp) :
-    m_process_sp (process_sp),
+    m_process_wp (),
     m_objc_module_sp (objc_module_sp),
     m_impl_fn_addr (LLDB_INVALID_ADDRESS),
     m_impl_stret_fn_addr (LLDB_INVALID_ADDRESS),
     m_msg_forward_addr (LLDB_INVALID_ADDRESS)
 {
+    if (process_sp)
+        m_process_wp = process_sp;
     // Look up the known resolution functions:
     
     ConstString get_impl_name("class_getMethodImplementation");
@@ -652,7 +670,7 @@ AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (const ProcessSP &process
     ConstString msg_forward_name("_objc_msgForward");
     ConstString msg_forward_stret_name("_objc_msgForward_stret");
     
-    Target *target = m_process_sp ? &m_process_sp->GetTarget() : NULL;
+    Target *target = process_sp ? &process_sp->GetTarget() : NULL;
     const Symbol *class_getMethodImplementation = m_objc_module_sp->FindFirstSymbolWithNameAndType (get_impl_name, eSymbolTypeCode);
     const Symbol *class_getMethodImplementation_stret = m_objc_module_sp->FindFirstSymbolWithNameAndType (get_impl_stret_name, eSymbolTypeCode);
     const Symbol *msg_forward = m_objc_module_sp->FindFirstSymbolWithNameAndType (msg_forward_name, eSymbolTypeCode);
@@ -1041,7 +1059,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                 log->Printf("Resolving call for class - 0x%" PRIx64 " and selector - 0x%" PRIx64,
                             isa_addr, sel_addr);
             }
-            ObjCLanguageRuntime *objc_runtime = m_process_sp->GetObjCLanguageRuntime ();
+            ObjCLanguageRuntime *objc_runtime = thread.GetProcess()->GetObjCLanguageRuntime ();
             assert(objc_runtime != NULL);
             
             impl_addr = objc_runtime->LookupInMethodCache (isa_addr, sel_addr);

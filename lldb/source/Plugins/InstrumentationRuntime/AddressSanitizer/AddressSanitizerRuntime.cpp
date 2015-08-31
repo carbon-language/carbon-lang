@@ -66,9 +66,11 @@ AddressSanitizerRuntime::GetTypeStatic()
 AddressSanitizerRuntime::AddressSanitizerRuntime(const ProcessSP &process_sp) :
     m_is_active(false),
     m_runtime_module(),
-    m_process(process_sp),
+    m_process_wp(),
     m_breakpoint_id(0)
 {
+    if (process_sp)
+        m_process_wp = process_sp;
 }
 
 AddressSanitizerRuntime::~AddressSanitizerRuntime()
@@ -161,7 +163,11 @@ t
 StructuredData::ObjectSP
 AddressSanitizerRuntime::RetrieveReportData()
 {
-    ThreadSP thread_sp = m_process->GetThreadList().GetSelectedThread();
+    ProcessSP process_sp = GetProcessSP();
+    if (!process_sp)
+        return StructuredData::ObjectSP();
+
+    ThreadSP thread_sp = process_sp->GetThreadList().GetSelectedThread();
     StackFrameSP frame_sp = thread_sp->GetSelectedFrame();
     
     if (!frame_sp)
@@ -175,7 +181,7 @@ AddressSanitizerRuntime::RetrieveReportData()
     options.SetTimeoutUsec(RETRIEVE_REPORT_DATA_FUNCTION_TIMEOUT_USEC);
     
     ValueObjectSP return_value_sp;
-    if (m_process->GetTarget().EvaluateExpression(address_sanitizer_retrieve_report_data_command, frame_sp.get(), return_value_sp, options) != eExpressionCompleted)
+    if (process_sp->GetTarget().EvaluateExpression(address_sanitizer_retrieve_report_data_command, frame_sp.get(), return_value_sp, options) != eExpressionCompleted)
         return StructuredData::ObjectSP();
     
     int present = return_value_sp->GetValueForExpressionPath(".present")->GetValueAsUnsigned(0);
@@ -193,7 +199,7 @@ AddressSanitizerRuntime::RetrieveReportData()
     addr_t description_ptr = return_value_sp->GetValueForExpressionPath(".description")->GetValueAsUnsigned(0);
     std::string description;
     Error error;
-    m_process->ReadCStringFromMemory(description_ptr, description, error);
+    process_sp->ReadCStringFromMemory(description_ptr, description, error);
     
     StructuredData::Dictionary *dict = new StructuredData::Dictionary();
     dict->AddStringItem("instrumentation_class", "AddressSanitizer");
@@ -249,33 +255,41 @@ AddressSanitizerRuntime::NotifyBreakpointHit(void *baton, StoppointCallbackConte
     assert (baton && "null baton");
     if (!baton)
         return false;
-    
+
     AddressSanitizerRuntime *const instance = static_cast<AddressSanitizerRuntime*>(baton);
-    
+
     StructuredData::ObjectSP report = instance->RetrieveReportData();
     std::string description;
     if (report) {
         description = instance->FormatDescription(report);
     }
-    ThreadSP thread = context->exe_ctx_ref.GetThreadSP();
-    thread->SetStopInfo(InstrumentationRuntimeStopInfo::CreateStopReasonWithInstrumentationData(*thread, description.c_str(), report));
-
-    if (instance->m_process)
+    ProcessSP process_sp = instance->GetProcessSP();
+    // Make sure this is the right process
+    if (process_sp && process_sp == context->exe_ctx_ref.GetProcessSP())
     {
-        StreamFileSP stream_sp (instance->m_process->GetTarget().GetDebugger().GetOutputFile());
+        ThreadSP thread_sp = context->exe_ctx_ref.GetThreadSP();
+        if (thread_sp)
+            thread_sp->SetStopInfo(InstrumentationRuntimeStopInfo::CreateStopReasonWithInstrumentationData(*thread_sp, description.c_str(), report));
+        
+        StreamFileSP stream_sp (process_sp->GetTarget().GetDebugger().GetOutputFile());
         if (stream_sp)
         {
             stream_sp->Printf ("AddressSanitizer report breakpoint hit. Use 'thread info -s' to get extended information about the report.\n");
         }
+        return true;    // Return true to stop the target
     }
-    // Return true to stop the target, false to just let the target run.
-    return true;
+    else
+        return false;   // Let target run
 }
 
 void
 AddressSanitizerRuntime::Activate()
 {
     if (m_is_active)
+        return;
+
+    ProcessSP process_sp = GetProcessSP();
+    if (!process_sp)
         return;
 
     ConstString symbol_name ("__asan::AsanDie()");
@@ -287,7 +301,7 @@ AddressSanitizerRuntime::Activate()
     if (!symbol->ValueIsAddress() || !symbol->GetAddressRef().IsValid())
         return;
     
-    Target &target = m_process->GetTarget();
+    Target &target = process_sp->GetTarget();
     addr_t symbol_address = symbol->GetAddressRef().GetOpcodeLoadAddress(&target);
     
     if (symbol_address == LLDB_INVALID_ADDRESS)
@@ -295,18 +309,15 @@ AddressSanitizerRuntime::Activate()
     
     bool internal = true;
     bool hardware = false;
-    Breakpoint *breakpoint = m_process->GetTarget().CreateBreakpoint(symbol_address, internal, hardware).get();
+    Breakpoint *breakpoint = process_sp->GetTarget().CreateBreakpoint(symbol_address, internal, hardware).get();
     breakpoint->SetCallback (AddressSanitizerRuntime::NotifyBreakpointHit, this, true);
     breakpoint->SetBreakpointKind ("address-sanitizer-report");
     m_breakpoint_id = breakpoint->GetID();
     
-    if (m_process)
+    StreamFileSP stream_sp (process_sp->GetTarget().GetDebugger().GetOutputFile());
+    if (stream_sp)
     {
-        StreamFileSP stream_sp (m_process->GetTarget().GetDebugger().GetOutputFile());
-        if (stream_sp)
-        {
-                stream_sp->Printf ("AddressSanitizer debugger support is active. Memory error breakpoint has been installed and you can now use the 'memory history' command.\n");
-        }
+            stream_sp->Printf ("AddressSanitizer debugger support is active. Memory error breakpoint has been installed and you can now use the 'memory history' command.\n");
     }
 
     m_is_active = true;
@@ -317,8 +328,12 @@ AddressSanitizerRuntime::Deactivate()
 {
     if (m_breakpoint_id != LLDB_INVALID_BREAK_ID)
     {
-        m_process->GetTarget().RemoveBreakpointByID(m_breakpoint_id);
-        m_breakpoint_id = LLDB_INVALID_BREAK_ID;
+        ProcessSP process_sp = GetProcessSP();
+        if (process_sp)
+        {
+            process_sp->GetTarget().RemoveBreakpointByID(m_breakpoint_id);
+            m_breakpoint_id = LLDB_INVALID_BREAK_ID;
+        }
     }
     m_is_active = false;
 }

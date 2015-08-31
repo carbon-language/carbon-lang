@@ -56,7 +56,13 @@ public:
     IsActive();
     
 private:
-    
+
+    lldb::ProcessSP
+    GetProcessSP ()
+    {
+        return m_process_wp.lock();
+    }
+
     AddressSanitizerRuntime(const lldb::ProcessSP &process_sp);
     
     void
@@ -76,7 +82,7 @@ private:
     
     bool m_is_active;
     lldb::ModuleSP m_runtime_module;
-    lldb::ProcessSP m_process;
+    lldb::ProcessWP m_process_wp;
     lldb::user_id_t m_breakpoint_id;
 
 };
