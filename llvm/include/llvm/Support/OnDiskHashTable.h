@@ -53,6 +53,8 @@ namespace llvm {
 ///   /// Write Data to Out.  DataLen is the length from EmitKeyDataLength.
 ///   static void EmitData(raw_ostream &Out, key_type_ref Key,
 ///                        data_type_ref Data, offset_type DataLen);
+///   /// Determine if two keys are equal. Optional, only needed by contains.
+///   static bool EqualKey(key_type_ref Key1, key_type_ref Key2);
 /// };
 /// \endcode
 template <typename Info> class OnDiskChainedHashTableGenerator {
@@ -122,11 +124,19 @@ public:
   /// Uses the provided Info instead of a stack allocated one.
   void insert(typename Info::key_type_ref Key,
               typename Info::data_type_ref Data, Info &InfoObj) {
-
     ++NumEntries;
     if (4 * NumEntries >= 3 * NumBuckets)
       resize(NumBuckets * 2);
     insert(Buckets, NumBuckets, new (BA.Allocate()) Item(Key, Data, InfoObj));
+  }
+
+  /// \brief Determine whether an entry has been inserted.
+  bool contains(typename Info::key_type_ref Key, Info &InfoObj) {
+    unsigned Hash = InfoObj.ComputeHash(Key);
+    for (Item *I = Buckets[Hash & (NumBuckets - 1)].Head; I; I = I->Next)
+      if (I->Hash == Hash && InfoObj.EqualKey(I->Key, Key))
+        return true;
+    return false;
   }
 
   /// \brief Emit the table to Out, which must not be at offset 0.
@@ -290,6 +300,10 @@ public:
         : Key(K), Data(D), Len(L), InfoObj(InfoObj) {}
 
     data_type operator*() const { return InfoObj->ReadData(Key, Data, Len); }
+
+    const unsigned char *getDataPtr() const { return Data; }
+    offset_type getDataLen() const { return Len; }
+
     bool operator==(const iterator &X) const { return X.Data == Data; }
     bool operator!=(const iterator &X) const { return X.Data != Data; }
   };
