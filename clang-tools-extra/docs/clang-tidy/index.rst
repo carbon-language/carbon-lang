@@ -53,8 +53,14 @@ There are currently the following groups of checks:
 * Checks related to the Google coding conventions have names starting with
   ``google-``.
 
-* Checks with names starting with ``misc-`` don't relate to any particular
-  coding style.
+* Checks named ``modernize-*`` advocate the usage of modern (currently "modern"
+  means "C++11") language constructs.
+
+* The ``readability-`` checks target readability-related issues that don't
+  relate to any particular coding style.
+
+* Checks with names starting with ``misc-`` the checks that we didn't have a
+  better category for.
 
 * Clang static analyzer checks are named starting with ``clang-analyzer-``.
 
@@ -494,8 +500,8 @@ The script provides multiple configuration flags.
 
 * The default set of checks can be overridden using the ``-checks`` argument,
   taking the identical format as :program:`clang-tidy` does. For example
-  ``-checks=-*,misc-use-override`` will run the ``misc-use-override``
-  checker only.
+  ``-checks=-*,modernize-use-override`` will run the ``modernize-use-override``
+  check only.
 
 * To restrict the files examined you can provide one or more regex arguments
   that the file names are matched against.

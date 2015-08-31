@@ -18,7 +18,6 @@
 #include "NamedParameterCheck.h"
 #include "RedundantSmartptrGetCheck.h"
 #include "RedundantStringCStrCheck.h"
-#include "ShrinkToFitCheck.h"
 #include "SimplifyBooleanExprCheck.h"
 
 namespace clang {
@@ -44,8 +43,6 @@ public:
         "readability-redundant-smartptr-get");
     CheckFactories.registerCheck<RedundantStringCStrCheck>(
         "readability-redundant-string-cstr");
-    CheckFactories.registerCheck<ShrinkToFitCheck>(
-        "readability-shrink-to-fit");
     CheckFactories.registerCheck<SimplifyBooleanExprCheck>(
         "readability-simplify-boolean-expr");
   }

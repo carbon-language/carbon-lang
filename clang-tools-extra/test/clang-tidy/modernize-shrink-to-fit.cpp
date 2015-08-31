@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s readability-shrink-to-fit %t
+// RUN: %python %S/check_clang_tidy.py %s modernize-shrink-to-fit %t
 
 namespace std {
 template <typename T> struct vector { void swap(vector &other); };
@@ -8,7 +8,7 @@ void f() {
   std::vector<int> v;
 
   std::vector<int>(v).swap(v);
-  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: the shrink_to_fit method should be used to reduce the capacity of a shrinkable container [readability-shrink-to-fit] 
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: the shrink_to_fit method should be used to reduce the capacity of a shrinkable container [modernize-shrink-to-fit] 
   // CHECK-FIXES: {{^  }}v.shrink_to_fit();{{$}}
 
   std::vector<int> &vref = v;

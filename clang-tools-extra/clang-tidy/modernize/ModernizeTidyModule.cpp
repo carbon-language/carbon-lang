@@ -13,8 +13,10 @@
 #include "LoopConvertCheck.h"
 #include "PassByValueCheck.h"
 #include "ReplaceAutoPtrCheck.h"
+#include "ShrinkToFitCheck.h"
 #include "UseAutoCheck.h"
 #include "UseNullptrCheck.h"
+#include "UseOverrideCheck.h"
 
 using namespace clang::ast_matchers;
 
@@ -29,8 +31,10 @@ public:
     CheckFactories.registerCheck<PassByValueCheck>("modernize-pass-by-value");
     CheckFactories.registerCheck<ReplaceAutoPtrCheck>(
         "modernize-replace-auto-ptr");
+    CheckFactories.registerCheck<ShrinkToFitCheck>("modernize-shrink-to-fit");
     CheckFactories.registerCheck<UseAutoCheck>("modernize-use-auto");
     CheckFactories.registerCheck<UseNullptrCheck>("modernize-use-nullptr");
+    CheckFactories.registerCheck<UseOverrideCheck>("modernize-use-override");
   }
 
   ClangTidyOptions getModuleOptions() override {

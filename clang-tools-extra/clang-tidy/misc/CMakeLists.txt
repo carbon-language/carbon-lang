@@ -19,7 +19,6 @@ add_clang_library(clangTidyMiscModule
   UnusedParametersCheck.cpp
   UnusedRAIICheck.cpp
   UniqueptrResetReleaseCheck.cpp
-  UseOverrideCheck.cpp
 
   LINK_LIBS
   clangAST

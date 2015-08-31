@@ -38,10 +38,11 @@ List of clang-tidy Checks
    misc-unused-alias-decls
    misc-unused-parameters
    misc-unused-raii
-   misc-use-override
    modernize-loop-convert
    modernize-pass-by-value
+   modernize-shrink-to-fit
    modernize-use-nullptr
+   modernize-use-override
    readability-braces-around-statements
    readability-container-size-empty
    readability-else-after-return
@@ -50,5 +51,4 @@ List of clang-tidy Checks
    readability-named-parameter
    readability-redundant-smartptr-get
    readability-redundant-string-cstr
-   readability-shrink-to-fit
    readability-simplify-boolean-expr

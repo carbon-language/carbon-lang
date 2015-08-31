@@ -16,7 +16,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
-namespace misc {
+namespace modernize {
 
 void UseOverrideCheck::registerMatchers(MatchFinder *Finder) {
   // Only register the matcher for C++11.
@@ -192,6 +192,6 @@ void UseOverrideCheck::check(const MatchFinder::MatchResult &Result) {
   }
 }
 
-} // namespace misc
+} // namespace modernize
 } // namespace tidy
 } // namespace clang

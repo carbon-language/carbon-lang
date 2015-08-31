@@ -33,7 +33,7 @@ AST_MATCHER(NamedDecl, stlShrinkableContainer) {
 } // namespace
 
 namespace tidy {
-namespace readability {
+namespace modernize {
 
 void ShrinkToFitCheck::registerMatchers(MatchFinder *Finder) {
   // Swap as a function need not to be considered, because rvalue can not
@@ -99,6 +99,6 @@ void ShrinkToFitCheck::check(const MatchFinder::MatchResult &Result) {
       << Hint;
 }
 
-} // namespace readability
+} // namespace modernize
 } // namespace tidy
 } // namespace clang

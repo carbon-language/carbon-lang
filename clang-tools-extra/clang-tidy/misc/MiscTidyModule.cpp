@@ -27,7 +27,6 @@
 #include "UnusedAliasDeclsCheck.h"
 #include "UnusedParametersCheck.h"
 #include "UnusedRAIICheck.h"
-#include "UseOverrideCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -68,7 +67,6 @@ public:
     CheckFactories.registerCheck<UnusedParametersCheck>(
         "misc-unused-parameters");
     CheckFactories.registerCheck<UnusedRAIICheck>("misc-unused-raii");
-    CheckFactories.registerCheck<UseOverrideCheck>("misc-use-override");
   }
 };
 

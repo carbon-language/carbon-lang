@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-use-override %t
+// RUN: %python %S/check_clang_tidy.py %s modernize-use-override %t
 
 #define ABSTRACT = 0
 
@@ -42,7 +42,7 @@ struct Base {
 struct SimpleCases : public Base {
 public:
   virtual ~SimpleCases();
-  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: prefer using 'override' or (rarely) 'final' instead of 'virtual'
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: prefer using 'override' or (rarely) 'final' instead of 'virtual' [modernize-use-override]
   // CHECK-FIXES: {{^}}  ~SimpleCases() override;
 
   void a();

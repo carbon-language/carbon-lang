@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-use-override %t -- -std=c++98
+// RUN: %python %S/check_clang_tidy.py %s modernize-use-override %t -- -std=c++98
 
 struct Base {
   virtual ~Base() {}
