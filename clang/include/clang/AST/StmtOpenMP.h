@@ -95,47 +95,34 @@ public:
   /// This iterator visits only clauses of type SpecificClause.
   template <typename SpecificClause>
   class specific_clause_iterator
-      : public std::iterator<std::forward_iterator_tag, const SpecificClause *,
-                             ptrdiff_t, const SpecificClause *,
-                             const SpecificClause *> {
-    ArrayRef<OMPClause *>::const_iterator Current;
+      : public llvm::iterator_adaptor_base<
+            specific_clause_iterator<SpecificClause>,
+            ArrayRef<OMPClause *>::const_iterator, std::forward_iterator_tag,
+            const SpecificClause *, ptrdiff_t, const SpecificClause *,
+            const SpecificClause *> {
     ArrayRef<OMPClause *>::const_iterator End;
 
     void SkipToNextClause() {
-      while (Current != End && !isa<SpecificClause>(*Current))
-        ++Current;
+      while (this->I != End && !isa<SpecificClause>(*this->I))
+        ++this->I;
     }
 
   public:
     explicit specific_clause_iterator(ArrayRef<OMPClause *> Clauses)
-        : Current(Clauses.begin()), End(Clauses.end()) {
+        : specific_clause_iterator::iterator_adaptor_base(Clauses.begin()),
+          End(Clauses.end()) {
       SkipToNextClause();
     }
 
     const SpecificClause *operator*() const {
-      return cast<SpecificClause>(*Current);
+      return cast<SpecificClause>(*this->I);
     }
-    const SpecificClause *operator->() const {
-      return cast<SpecificClause>(*Current);
-    }
+    const SpecificClause *operator->() const { return **this; }
 
     specific_clause_iterator &operator++() {
-      ++Current;
+      ++this->I;
       SkipToNextClause();
       return *this;
-    }
-    specific_clause_iterator operator++(int) {
-      specific_clause_iterator tmp(*this);
-      ++(*this);
-      return tmp;
-    }
-
-    bool operator==(const specific_clause_iterator &RHS) const {
-      assert(End == RHS.End && "Comparing iterators of different directives!");
-      return Current == RHS.Current;
-    }
-    bool operator!=(const specific_clause_iterator &RHS) const {
-      return !(*this == RHS);
     }
   };
 
