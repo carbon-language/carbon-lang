@@ -38,7 +38,7 @@ using namespace polly;
 static cl::opt<bool> ModelReadOnlyScalars(
     "polly-analyze-read-only-scalars",
     cl::desc("Model read-only scalar values in the scop description"),
-    cl::Hidden, cl::ZeroOrMore, cl::init(false), cl::cat(PollyCategory));
+    cl::Hidden, cl::ZeroOrMore, cl::init(true), cl::cat(PollyCategory));
 
 #define DEBUG_TYPE "polly-analyze-ir"
 
