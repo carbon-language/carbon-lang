@@ -3560,11 +3560,8 @@ void Sema::handleTagNumbering(const TagDecl *Tag, Scope *TagScope) {
 
 void Sema::setTagNameForLinkagePurposes(TagDecl *TagFromDeclSpec,
                                         TypedefNameDecl *NewTD) {
-  // Do nothing if the tag is not anonymous or already has an
-  // associated typedef (from an earlier typedef in this decl group).
-  if (TagFromDeclSpec->getIdentifier())
-    return;
-  if (TagFromDeclSpec->getTypedefNameForAnonDecl())
+  // Do nothing if the tag already has a name for linkage purposes.
+  if (TagFromDeclSpec->hasNameForLinkage())
     return;
 
   // A well-formed anonymous tag must always be a TUK_Definition.
@@ -3572,8 +3569,11 @@ void Sema::setTagNameForLinkagePurposes(TagDecl *TagFromDeclSpec,
 
   // The type must match the tag exactly;  no qualifiers allowed.
   if (!Context.hasSameType(NewTD->getUnderlyingType(),
-                           Context.getTagDeclType(TagFromDeclSpec)))
+                           Context.getTagDeclType(TagFromDeclSpec))) {
+    if (getLangOpts().CPlusPlus)
+      Context.addTypedefNameForUnnamedTagDecl(TagFromDeclSpec, NewTD);
     return;
+  }
 
   // If we've already computed linkage for the anonymous tag, then
   // adding a typedef name for the anonymous decl can change that
@@ -10050,8 +10050,9 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
   if (DeclSpec::isDeclRep(DS.getTypeSpecType())) {
     if (TagDecl *Tag = dyn_cast_or_null<TagDecl>(DS.getRepAsDecl())) {
       handleTagNumbering(Tag, S);
-      if (!Tag->hasNameForLinkage() && !Tag->hasDeclaratorForAnonDecl())
-        Tag->setDeclaratorForAnonDecl(FirstDeclaratorInGroup);
+      if (FirstDeclaratorInGroup && !Tag->hasNameForLinkage() &&
+          getLangOpts().CPlusPlus)
+        Context.addDeclaratorForUnnamedTagDecl(Tag, FirstDeclaratorInGroup);
     }
   }
 

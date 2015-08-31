@@ -378,9 +378,6 @@ void ASTDeclWriter::VisitTagDecl(TagDecl *D) {
     Record.push_back(2);
     Writer.AddDeclRef(TD, Record);
     Writer.AddIdentifierRef(TD->getDeclName().getAsIdentifierInfo(), Record);
-  } else if (auto *DD = D->getDeclaratorForAnonDecl()) {
-    Record.push_back(3);
-    Writer.AddDeclRef(DD, Record);
   } else {
     Record.push_back(0);
   }
@@ -410,7 +407,6 @@ void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
       !D->getTypedefNameForAnonDecl() &&
-      !D->getDeclaratorForAnonDecl() &&
       D->getFirstDecl() == D->getMostRecentDecl() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
@@ -439,7 +435,6 @@ void ASTDeclWriter::VisitRecordDecl(RecordDecl *D) {
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
       !D->getTypedefNameForAnonDecl() &&
-      !D->getDeclaratorForAnonDecl() &&
       D->getFirstDecl() == D->getMostRecentDecl() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&

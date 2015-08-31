@@ -2778,12 +2778,12 @@ private:
   /// declaration specifier for variables, it points to the first VarDecl (used
   /// for mangling);
   /// otherwise, it is a null (TypedefNameDecl) pointer.
-  llvm::PointerUnion<NamedDecl *, ExtInfo *> NamedDeclOrQualifier;
+  llvm::PointerUnion<TypedefNameDecl *, ExtInfo *> TypedefNameDeclOrQualifier;
 
-  bool hasExtInfo() const { return NamedDeclOrQualifier.is<ExtInfo *>(); }
-  ExtInfo *getExtInfo() { return NamedDeclOrQualifier.get<ExtInfo *>(); }
+  bool hasExtInfo() const { return TypedefNameDeclOrQualifier.is<ExtInfo *>(); }
+  ExtInfo *getExtInfo() { return TypedefNameDeclOrQualifier.get<ExtInfo *>(); }
   const ExtInfo *getExtInfo() const {
-    return NamedDeclOrQualifier.get<ExtInfo *>();
+    return TypedefNameDeclOrQualifier.get<ExtInfo *>();
   }
 
 protected:
@@ -2794,7 +2794,7 @@ protected:
         TagDeclKind(TK), IsCompleteDefinition(false), IsBeingDefined(false),
         IsEmbeddedInDeclarator(false), IsFreeStanding(false),
         IsCompleteDefinitionRequired(false),
-        NamedDeclOrQualifier((NamedDecl *)nullptr) {
+        TypedefNameDeclOrQualifier((TypedefNameDecl *)nullptr) {
     assert((DK != Enum || TK == TTK_Enum) &&
            "EnumDecl not matched with TTK_Enum");
     setPreviousDecl(PrevDecl);
@@ -2941,21 +2941,10 @@ public:
     return (getDeclName() || getTypedefNameForAnonDecl());
   }
 
-  bool hasDeclaratorForAnonDecl() const {
-    return dyn_cast_or_null<DeclaratorDecl>(
-        NamedDeclOrQualifier.get<NamedDecl *>());
-  }
-  DeclaratorDecl *getDeclaratorForAnonDecl() const {
-    return hasExtInfo() ? nullptr : dyn_cast_or_null<DeclaratorDecl>(
-                                  NamedDeclOrQualifier.get<NamedDecl *>());
-  }
-
   TypedefNameDecl *getTypedefNameForAnonDecl() const {
-    return hasExtInfo() ? nullptr : dyn_cast_or_null<TypedefNameDecl>(
-                                  NamedDeclOrQualifier.get<NamedDecl *>());
+    return hasExtInfo() ? nullptr
+                        : TypedefNameDeclOrQualifier.get<TypedefNameDecl *>();
   }
-
-  void setDeclaratorForAnonDecl(DeclaratorDecl *DD) { NamedDeclOrQualifier = DD; }
 
   void setTypedefNameForAnonDecl(TypedefNameDecl *TDD);
 

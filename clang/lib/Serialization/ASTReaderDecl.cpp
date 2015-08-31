@@ -441,8 +441,8 @@ void ASTDeclReader::Visit(Decl *D) {
     // If this is a tag declaration with a typedef name for linkage, it's safe
     // to load that typedef now.
     if (NamedDeclForTagDecl)
-      cast<TagDecl>(D)->NamedDeclOrQualifier =
-          cast<NamedDecl>(Reader.GetDecl(NamedDeclForTagDecl));
+      cast<TagDecl>(D)->TypedefNameDeclOrQualifier =
+          cast<TypedefNameDecl>(Reader.GetDecl(NamedDeclForTagDecl));
   } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
     // if we have a fully initialized TypeDecl, we can safely read its type now.
     ID->TypeForDecl = Reader.GetType(TypeIDForTypeDecl).getTypePtrOrNull();
@@ -595,15 +595,12 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitTagDecl(TagDecl *TD) {
   case 1: { // ExtInfo
     TagDecl::ExtInfo *Info = new (Reader.getContext()) TagDecl::ExtInfo();
     ReadQualifierInfo(*Info, Record, Idx);
-    TD->NamedDeclOrQualifier = Info;
+    TD->TypedefNameDeclOrQualifier = Info;
     break;
   }
   case 2: // TypedefNameForAnonDecl
     NamedDeclForTagDecl = ReadDeclID(Record, Idx);
     TypedefNameForLinkage = Reader.GetIdentifierInfo(F, Record, Idx);
-    break;
-  case 3: // DeclaratorForAnonDecl
-    NamedDeclForTagDecl = ReadDeclID(Record, Idx);
     break;
   default:
     llvm_unreachable("unexpected tag info kind");

@@ -8549,6 +8549,25 @@ Expr *ASTContext::getDefaultArgExprForConstructor(const CXXConstructorDecl *CD,
       cast<CXXConstructorDecl>(CD->getFirstDecl()), ParmIdx);
 }
 
+void ASTContext::addTypedefNameForUnnamedTagDecl(TagDecl *TD,
+                                                 TypedefNameDecl *DD) {
+  return ABI->addTypedefNameForUnnamedTagDecl(TD, DD);
+}
+
+TypedefNameDecl *
+ASTContext::getTypedefNameForUnnamedTagDecl(const TagDecl *TD) {
+  return ABI->getTypedefNameForUnnamedTagDecl(TD);
+}
+
+void ASTContext::addDeclaratorForUnnamedTagDecl(TagDecl *TD,
+                                                DeclaratorDecl *DD) {
+  return ABI->addDeclaratorForUnnamedTagDecl(TD, DD);
+}
+
+DeclaratorDecl *ASTContext::getDeclaratorForUnnamedTagDecl(const TagDecl *TD) {
+  return ABI->getDeclaratorForUnnamedTagDecl(TD);
+}
+
 void ASTContext::setParameterIndex(const ParmVarDecl *D, unsigned int index) {
   ParamIndices[D] = index;
 }

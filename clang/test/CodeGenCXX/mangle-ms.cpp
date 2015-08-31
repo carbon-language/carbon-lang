@@ -389,3 +389,32 @@ template void fn_tmpl<extern_c_func>();
 
 extern "C" void __attribute__((overloadable)) overloaded_fn() {}
 // CHECK-DAG: @"\01?overloaded_fn@@$$J0YAXXZ"
+
+namespace UnnamedType {
+struct S {
+  typedef struct {} *T1[1];
+  typedef struct {} T2;
+  typedef struct {} *T3, T4;
+  using T5 = struct {};
+  using T6 = struct {} *;
+};
+void f(S::T1) {}
+void f(S::T2) {}
+void f(S::T3) {}
+void f(S::T4) {}
+void f(S::T5) {}
+void f(S::T6) {}
+// CHECK-DAG: @"\01?f@UnnamedType@@YAXQAPAU<unnamed-type-T1>@S@1@@Z"
+// CHECK-DAG: @"\01?f@UnnamedType@@YAXUT2@S@1@@Z"
+// CHECK-DAG: @"\01?f@UnnamedType@@YAXPAUT4@S@1@@Z"
+// CHECK-DAG: @"\01?f@UnnamedType@@YAXUT4@S@1@@Z"
+// CHECK-DAG: @"\01?f@UnnamedType@@YAXUT5@S@1@@Z"
+// CHECK-DAG: @"\01?f@UnnamedType@@YAXPAU<unnamed-type-T6>@S@1@@Z"
+
+// X64-DAG: @"\01?f@UnnamedType@@YAXQEAPEAU<unnamed-type-T1>@S@1@@Z"
+// X64-DAG: @"\01?f@UnnamedType@@YAXUT2@S@1@@Z"
+// X64-DAG: @"\01?f@UnnamedType@@YAXPEAUT4@S@1@@Z"(%"struct.UnnamedType::S::T4"
+// X64-DAG: @"\01?f@UnnamedType@@YAXUT4@S@1@@Z"
+// X64-DAG: @"\01?f@UnnamedType@@YAXUT5@S@1@@Z"
+// X64-DAG: @"\01?f@UnnamedType@@YAXPEAU<unnamed-type-T6>@S@1@@Z"
+}

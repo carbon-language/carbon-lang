@@ -3403,7 +3403,7 @@ SourceRange TagDecl::getSourceRange() const {
 TagDecl *TagDecl::getCanonicalDecl() { return getFirstDecl(); }
 
 void TagDecl::setTypedefNameForAnonDecl(TypedefNameDecl *TDD) {
-  NamedDeclOrQualifier = TDD;
+  TypedefNameDeclOrQualifier = TDD;
   if (const Type *T = getTypeForDecl()) {
     (void)T;
     assert(T->isLinkageValid());
@@ -3461,7 +3461,7 @@ void TagDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
   if (QualifierLoc) {
     // Make sure the extended qualifier info is allocated.
     if (!hasExtInfo())
-      NamedDeclOrQualifier = new (getASTContext()) ExtInfo;
+      TypedefNameDeclOrQualifier = new (getASTContext()) ExtInfo;
     // Set qualifier info.
     getExtInfo()->QualifierLoc = QualifierLoc;
   } else {
@@ -3469,7 +3469,7 @@ void TagDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
     if (hasExtInfo()) {
       if (getExtInfo()->NumTemplParamLists == 0) {
         getASTContext().Deallocate(getExtInfo());
-        NamedDeclOrQualifier = (TypedefNameDecl*)nullptr;
+        TypedefNameDeclOrQualifier = (TypedefNameDecl *)nullptr;
       }
       else
         getExtInfo()->QualifierLoc = QualifierLoc;
@@ -3483,7 +3483,7 @@ void TagDecl::setTemplateParameterListsInfo(
   // Make sure the extended decl info is allocated.
   if (!hasExtInfo())
     // Allocate external info struct.
-    NamedDeclOrQualifier = new (getASTContext()) ExtInfo;
+    TypedefNameDeclOrQualifier = new (getASTContext()) ExtInfo;
   // Set the template parameter lists info.
   getExtInfo()->setTemplateParameterListsInfo(Context, TPLists);
 }

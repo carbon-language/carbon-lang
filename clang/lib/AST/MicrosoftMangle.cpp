@@ -786,10 +786,17 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       }
 
       llvm::SmallString<64> Name("<unnamed-type-");
-      if (TD->hasDeclaratorForAnonDecl()) {
-        // Anonymous types with no tag or typedef get the name of their
+      if (DeclaratorDecl *DD =
+              Context.getASTContext().getDeclaratorForUnnamedTagDecl(TD)) {
+        // Anonymous types without a name for linkage purposes have their
         // declarator mangled in if they have one.
-        Name += TD->getDeclaratorForAnonDecl()->getName();
+        Name += DD->getName();
+      } else if (TypedefNameDecl *TND =
+                     Context.getASTContext().getTypedefNameForUnnamedTagDecl(
+                         TD)) {
+        // Anonymous types without a name for linkage purposes have their
+        // associate typedef mangled in if they have one.
+        Name += TND->getName();
       } else {
         // Otherwise, number the types using a $S prefix.
         Name += "$S";
