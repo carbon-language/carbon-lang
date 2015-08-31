@@ -55,9 +55,8 @@ uint64_t MipsLinkingContext::getBaseAddress() const {
     return 0x10000000;
   case MipsAbi::N64:
     return 0x120000000;
-  default:
-    llvm_unreachable("unknown MIPS ABI flag");
   }
+  llvm_unreachable("unknown MIPS ABI flag");
 }
 
 StringRef MipsLinkingContext::entrySymbolName() const {
@@ -74,9 +73,8 @@ StringRef MipsLinkingContext::getDefaultInterpreter() const {
     return "/lib32/ld.so.1";
   case MipsAbi::N64:
     return "/lib64/ld.so.1";
-  default:
-    llvm_unreachable("unknown MIPS ABI flag");
   }
+  llvm_unreachable("unknown MIPS ABI flag");
 }
 
 void MipsLinkingContext::addPasses(PassManager &pm) {
