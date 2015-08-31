@@ -285,6 +285,7 @@ if(APPLE)
   # Note: In order to target x86_64h on OS X the minimum deployment target must
   # be 10.8 or higher.
   set(SANITIZER_COMMON_SUPPORTED_OS osx)
+  set(BUILTIN_SUPPORTED_OS osx)
   if(NOT SANITIZER_MIN_OSX_VERSION)
     string(REGEX MATCH "-mmacosx-version-min=([.0-9]+)"
            MACOSX_VERSION_MIN_FLAG "${CMAKE_CXX_FLAGS}")
@@ -346,6 +347,7 @@ if(APPLE)
         -isysroot ${IOSSIM_SDK_DIR})
 
       list(APPEND SANITIZER_COMMON_SUPPORTED_OS iossim)
+      list(APPEND BUILTIN_SUPPORTED_OS iossim)
       darwin_test_archs(iossim
         DARWIN_iossim_ARCHS
         ${toolchain_arches})
@@ -367,6 +369,7 @@ if(APPLE)
         -isysroot ${IOS_SDK_DIR})
 
       list(APPEND SANITIZER_COMMON_SUPPORTED_OS ios)
+      list(APPEND BUILTIN_SUPPORTED_OS ios)
       darwin_test_archs(ios
         DARWIN_ios_ARCHS
         ${toolchain_arches})

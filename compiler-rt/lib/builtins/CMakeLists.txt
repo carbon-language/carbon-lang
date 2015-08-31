@@ -309,7 +309,7 @@ set(arm64_SOURCES ${aarch64_SOURCES})
 add_custom_target(builtins)
 
 if (APPLE)
-  foreach (os osx)
+  foreach (os ${BUILTIN_SUPPORTED_OS})
     list_union(DARWIN_BUILTIN_ARCHS DARWIN_${os}_ARCHS BUILTIN_SUPPORTED_ARCH)
     set(${os}_builtin_libs)
     set(${os}_builtin_lipo_flags)
