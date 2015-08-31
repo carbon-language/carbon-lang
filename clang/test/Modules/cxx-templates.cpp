@@ -29,14 +29,14 @@ void g() {
   f<int>();
   f(); // expected-error {{no matching function}}
   // expected-note@Inputs/cxx-templates-b.h:3 {{couldn't infer template argument}}
-  // expected-note@Inputs/cxx-templates-b.h:4 {{requires single argument}}
+  // expected-note-re@Inputs/cxx-templates-a.h:4 {{requires {{single|1}} argument}}
 
   N::f(0);
   N::f<double>(1.0);
   N::f<int>();
   N::f(); // expected-error {{no matching function}}
   // expected-note@Inputs/cxx-templates-b.h:6 {{couldn't infer template argument}}
-  // expected-note@Inputs/cxx-templates-b.h:7 {{requires single argument}}
+  // expected-note-re@Inputs/cxx-templates-a.h:7 {{requires {{single|1}} argument}}
 
   template_param_kinds_1<0>(); // ok, from cxx-templates-a.h
   template_param_kinds_1<int>(); // ok, from cxx-templates-b.h
@@ -179,9 +179,13 @@ namespace Std {
 
 // CHECK-GLOBAL:      DeclarationName 'f'
 // CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
+// CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
+// CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-GLOBAL-NEXT: `-FunctionTemplate {{.*}} 'f'
 
 // CHECK-NAMESPACE-N:      DeclarationName 'f'
+// CHECK-NAMESPACE-N-NEXT: |-FunctionTemplate {{.*}} 'f'
+// CHECK-NAMESPACE-N-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-NAMESPACE-N-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-NAMESPACE-N-NEXT: `-FunctionTemplate {{.*}} 'f'
 
