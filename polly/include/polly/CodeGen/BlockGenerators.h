@@ -120,27 +120,42 @@ public:
   /// If no alloca was mapped to @p ScalarBase a new one is created.
   ///
   /// @param ScalarBase The demoted scalar value.
+  /// @param GlobalMap  A mapping from Allocas to other memory locations that
+  ///                   can be used to replace the original alloca locations
+  ///                   with new memory locations, e.g. when passing values to
+  ///                   subfunctions while offloading parallel sections.
   ///
-  /// @returns The alloca for @p ScalarBase
-  AllocaInst *getOrCreateScalarAlloca(Value *ScalarBase);
+  /// @returns The alloca for @p ScalarBase or a replacement value taken from
+  ///          GlobalMap.
+  Value *getOrCreateScalarAlloca(Value *ScalarBase, ValueMapT *GlobalMap);
 
   /// @brief Return the PHi-node alloca for @p ScalarBase
   ///
   /// If no alloca was mapped to @p ScalarBase a new one is created.
   ///
   /// @param ScalarBase The demoted scalar value.
+  /// @param GlobalMap  A mapping from Allocas to other memory locations that
+  ///                   can be used to replace the original alloca locations
+  ///                   with new memory locations, e.g. when passing values to
+  ///                   subfunctions while offloading parallel sections.
   ///
-  /// @returns The alloca for @p ScalarBase
-  AllocaInst *getOrCreatePHIAlloca(Value *ScalarBase);
+  /// @returns The alloca for @p ScalarBase or a replacement value taken from
+  ///          GlobalMap.
+  Value *getOrCreatePHIAlloca(Value *ScalarBase, ValueMapT *GlobalMap);
 
   /// @brief Return the alloca for @p Access
   ///
   /// If no alloca was mapped for @p Access a new one is created.
   ///
-  /// @param Access The memory access for which to generate the alloca
+  /// @param Access    The memory access for which to generate the alloca
+  /// @param GlobalMap A mapping from Allocas to other memory locations that
+  ///                  can be used to replace the original alloca locations with
+  ///                  new memory locations, e.g. when passing values to
+  ///                  subfunctions while offloading parallel sections.
   ///
-  /// @returns The alloca for @p Access
-  AllocaInst *getOrCreateAlloca(MemoryAccess &Access);
+  /// @returns The alloca for @p Access or a replacement value taken from
+  ///          GlobalMap.
+  Value *getOrCreateAlloca(MemoryAccess &Access, ValueMapT *GlobalMap);
 
   /// @brief Finalize the code generation for the SCoP @p S.
   ///
@@ -348,10 +363,15 @@ protected:
   /// @param ScalarBase The demoted scalar value.
   /// @param Map        The map we should look for a mapped alloca value.
   /// @param NameExt    The suffix we add to the name of a new created alloca.
+  /// @param GlobalMap  A mapping from Allocas to other memory locations that
+  ///                   can be used to replace the original alloca locations
+  ///                   with new memory locations, e.g. when passing values to
+  ///                   subfunctions while offloading parallel sections.
   ///
-  /// @returns The alloca for @p ScalarBase in @p Map.
-  AllocaInst *getOrCreateAlloca(Value *ScalarBase, ScalarAllocaMapTy &Map,
-                                const char *NameExt);
+  /// @returns The alloca for @p ScalarBase or a replacement value taken from
+  ///          GlobalMap.
+  Value *getOrCreateAlloca(Value *ScalarBase, ScalarAllocaMapTy &Map,
+                           ValueMapT *GlobalMap, const char *NameExt);
 
   /// @brief Generate reload of scalars demoted to memory and needed by @p Inst.
   ///
@@ -359,7 +379,7 @@ protected:
   /// @param Inst  The instruction that might need reloaded values.
   /// @param BBMap A mapping from old values to their new values in this block.
   virtual void generateScalarLoads(ScopStmt &Stmt, const Instruction *Inst,
-                                   ValueMapT &BBMap);
+                                   ValueMapT &BBMap, ValueMapT &GlobalMap);
 
   /// @brief Generate the scalar stores for the given statement.
   ///
@@ -376,10 +396,15 @@ protected:
 
   /// @brief Handle users of @p Inst outside the SCoP.
   ///
-  /// @param R        The current SCoP region.
-  /// @param Inst     The current instruction we check.
-  /// @param InstCopy The copy of the instruction @p Inst in the optimized SCoP.
-  void handleOutsideUsers(const Region &R, Instruction *Inst, Value *InstCopy);
+  /// @param R         The current SCoP region.
+  /// @param GlobalMap A mapping from old values to their new values
+  ///                  (for values recalculated in the new ScoP, but not
+  ///                  within this basic block).
+  /// @param Inst      The current instruction we check.
+  /// @param InstCopy  The copy of the instruction @p Inst in the optimized
+  ///                  SCoP.
+  void handleOutsideUsers(const Region &R, ValueMapT &GlobalMap,
+                          Instruction *Inst, Value *InstCopy);
 
   /// @brief Initialize the memory of demoted scalars.
   ///
@@ -449,6 +474,9 @@ protected:
                             LoopToScevMapT &LTS,
                             isl_id_to_ast_expr *NewAccesses);
 
+  /// @param GlobalMap   A mapping from old values to their new values
+  ///                    (for values recalculated in the new ScoP, but not
+  ///                    within this basic block).
   /// @param NewAccesses A map from memory access ids to new ast expressions,
   ///                    which may contain new access expressions for certain
   ///                    memory accesses.
@@ -752,7 +780,8 @@ private:
   /// @param Inst  The instruction that might need reloaded values.
   /// @param BBMap A mapping from old values to their new values in this block.
   virtual void generateScalarLoads(ScopStmt &Stmt, const Instruction *Inst,
-                                   ValueMapT &BBMap) override;
+                                   ValueMapT &BBMap,
+                                   ValueMapT &GlobalMap) override;
 
   /// @brief Generate the scalar stores for the given statement.
   ///

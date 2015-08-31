@@ -234,7 +234,7 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
                                      isl_id_to_ast_expr *NewAccesses) {
 
   // First check for possible scalar dependences for this instruction.
-  generateScalarLoads(Stmt, Inst, BBMap);
+  generateScalarLoads(Stmt, Inst, BBMap, GlobalMap);
 
   // Terminator instructions control the control flow. They are explicitly
   // expressed in the clast and do not need to be copied.
@@ -321,12 +321,13 @@ void BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB, BasicBlock *CopyBB,
 
   const Region &R = Stmt.getParent()->getRegion();
   for (Instruction &Inst : *BB)
-    handleOutsideUsers(R, &Inst, BBMap[&Inst]);
+    handleOutsideUsers(R, GlobalMap, &Inst, BBMap[&Inst]);
 }
 
-AllocaInst *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
-                                              ScalarAllocaMapTy &Map,
-                                              const char *NameExt) {
+Value *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
+                                         ScalarAllocaMapTy &Map,
+                                         ValueMapT *GlobalMap,
+                                         const char *NameExt) {
   // Check if an alloca was cached for the base instruction.
   AllocaInst *&Addr = Map[ScalarBase];
 
@@ -334,29 +335,36 @@ AllocaInst *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
   if (!Addr) {
     auto *Ty = ScalarBase->getType();
     Addr = new AllocaInst(Ty, ScalarBase->getName() + NameExt);
+    EntryBB = &Builder.GetInsertBlock()->getParent()->getEntryBlock();
     Addr->insertBefore(EntryBB->getFirstInsertionPt());
   }
+
+  if (GlobalMap && GlobalMap->count(Addr))
+    return (*GlobalMap)[Addr];
 
   return Addr;
 }
 
-AllocaInst *BlockGenerator::getOrCreateAlloca(MemoryAccess &Access) {
+Value *BlockGenerator::getOrCreateAlloca(MemoryAccess &Access,
+                                         ValueMapT *GlobalMap) {
   if (Access.getScopArrayInfo()->isPHI())
-    return getOrCreatePHIAlloca(Access.getBaseAddr());
+    return getOrCreatePHIAlloca(Access.getBaseAddr(), GlobalMap);
   else
-    return getOrCreateScalarAlloca(Access.getBaseAddr());
+    return getOrCreateScalarAlloca(Access.getBaseAddr(), GlobalMap);
 }
 
-AllocaInst *BlockGenerator::getOrCreateScalarAlloca(Value *ScalarBase) {
-  return getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
+Value *BlockGenerator::getOrCreateScalarAlloca(Value *ScalarBase,
+                                               ValueMapT *GlobalMap) {
+  return getOrCreateAlloca(ScalarBase, ScalarMap, GlobalMap, ".s2a");
 }
 
-AllocaInst *BlockGenerator::getOrCreatePHIAlloca(Value *ScalarBase) {
-  return getOrCreateAlloca(ScalarBase, PHIOpMap, ".phiops");
+Value *BlockGenerator::getOrCreatePHIAlloca(Value *ScalarBase,
+                                            ValueMapT *GlobalMap) {
+  return getOrCreateAlloca(ScalarBase, PHIOpMap, GlobalMap, ".phiops");
 }
 
-void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
-                                        Value *InstCopy) {
+void BlockGenerator::handleOutsideUsers(const Region &R, ValueMapT &GlobalMap,
+                                        Instruction *Inst, Value *InstCopy) {
   // If there are escape users we get the alloca for this instruction and put it
   // in the EscapeMap for later finalization. Lastly, if the instruction was
   // copied multiple times we already did this and can exit.
@@ -382,7 +390,8 @@ void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
     return;
 
   // Get or create an escape alloca for this instruction.
-  AllocaInst *ScalarAddr = getOrCreateScalarAlloca(Inst);
+  auto *ScalarAddr =
+      cast<AllocaInst>(getOrCreateScalarAlloca(Inst, &GlobalMap));
 
   // Remember that this instruction has escape uses and the escape alloca.
   EscapeMap[Inst] = std::make_pair(ScalarAddr, std::move(EscapeUsers));
@@ -390,7 +399,8 @@ void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
 
 void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
                                          const Instruction *Inst,
-                                         ValueMapT &BBMap) {
+                                         ValueMapT &BBMap,
+                                         ValueMapT &GlobalMap) {
   auto *MAL = Stmt.lookupAccessesFor(Inst);
 
   if (!MAL)
@@ -400,7 +410,7 @@ void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
     if (!MA.isScalar() || !MA.isRead())
       continue;
 
-    auto *Address = getOrCreateAlloca(MA);
+    auto *Address = getOrCreateAlloca(MA, &GlobalMap);
     BBMap[MA.getBaseAddr()] =
         Builder.CreateLoad(Address, Address->getName() + ".reload");
   }
@@ -437,7 +447,7 @@ Value *BlockGenerator::getNewScalarValue(Value *ScalarValue, const Region &R,
     return /* Case (3a) */ ScalarValueCopy;
 
   // Case (3b)
-  Value *Address = getOrCreateScalarAlloca(ScalarValueInst);
+  Value *Address = getOrCreateScalarAlloca(ScalarValueInst, &GlobalMap);
   ScalarValue = Builder.CreateLoad(Address, Address->getName() + ".reload");
 
   return ScalarValue;
@@ -457,7 +467,7 @@ void BlockGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
       continue;
 
     Value *Val = MA->getAccessValue();
-    auto *Address = getOrCreateAlloca(*MA);
+    auto *Address = getOrCreateAlloca(*MA, &GlobalMap);
 
     Val = getNewScalarValue(Val, R, BBMap, GlobalMap);
     Builder.CreateStore(Val, Address);
@@ -500,7 +510,7 @@ void BlockGenerator::createScalarInitialization(Scop &S) {
 
       Value *ScalarValue = PHI->getIncomingValue(Idx);
 
-      Builder.CreateStore(ScalarValue, getOrCreatePHIAlloca(PHI));
+      Builder.CreateStore(ScalarValue, getOrCreatePHIAlloca(PHI, nullptr));
       continue;
     }
 
@@ -509,8 +519,9 @@ void BlockGenerator::createScalarInitialization(Scop &S) {
     if (Inst && R.contains(Inst))
       continue;
 
+    ValueMapT EmptyMap;
     Builder.CreateStore(Array->getBasePtr(),
-                        getOrCreateScalarAlloca(Array->getBasePtr()));
+                        getOrCreateScalarAlloca(Array->getBasePtr(), nullptr));
   }
 }
 
@@ -532,7 +543,7 @@ void BlockGenerator::createScalarFinalization(Region &R) {
     Instruction *EscapeInst = EscapeMapping.getFirst();
     const auto &EscapeMappingValue = EscapeMapping.getSecond();
     const EscapeUserVectorTy &EscapeUsers = EscapeMappingValue.second;
-    AllocaInst *ScalarAddr = EscapeMappingValue.first;
+    Value *ScalarAddr = EscapeMappingValue.first;
 
     // Reload the demoted instruction in the optimized version of the SCoP.
     Instruction *EscapeInstReload =
@@ -1068,7 +1079,8 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
 
 void RegionGenerator::generateScalarLoads(ScopStmt &Stmt,
                                           const Instruction *Inst,
-                                          ValueMapT &BBMap) {
+                                          ValueMapT &BBMap,
+                                          ValueMapT &GlobalMap) {
 
   // Inside a non-affine region PHI nodes are copied not demoted. Once the
   // phi is copied it will reload all inputs from outside the region, hence
@@ -1077,7 +1089,7 @@ void RegionGenerator::generateScalarLoads(ScopStmt &Stmt,
   if (isa<PHINode>(Inst))
     return;
 
-  return BlockGenerator::generateScalarLoads(Stmt, Inst, BBMap);
+  return BlockGenerator::generateScalarLoads(Stmt, Inst, BBMap, GlobalMap);
 }
 
 void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
@@ -1102,7 +1114,7 @@ void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
 
     Value *Val = MA->getAccessValue();
 
-    auto Address = getOrCreateAlloca(*MA);
+    auto Address = getOrCreateAlloca(*MA, &GlobalMap);
 
     Val = getNewScalarValue(Val, R, BBMap, GlobalMap);
     Builder.CreateStore(Val, Address);
@@ -1139,7 +1151,8 @@ void RegionGenerator::addOperandToPHI(ScopStmt &Stmt, const PHINode *PHI,
     if (PHICopy->getBasicBlockIndex(BBCopy) >= 0)
       return;
 
-    AllocaInst *PHIOpAddr = getOrCreatePHIAlloca(const_cast<PHINode *>(PHI));
+    Value *PHIOpAddr =
+        getOrCreatePHIAlloca(const_cast<PHINode *>(PHI), &GlobalMap);
     OpCopy = new LoadInst(PHIOpAddr, PHIOpAddr->getName() + ".reload",
                           BlockMap[IncomingBB]->getTerminator());
   }

@@ -178,6 +178,7 @@ struct FindValuesUser {
   Region &R;
   SetVector<Value *> &Values;
   SetVector<const SCEV *> &SCEVs;
+  BlockGenerator &BlockGen;
 };
 
 /// @brief Extract the values and SCEVs needed to generate code for a block.
@@ -192,12 +193,6 @@ static int findValuesInBlock(struct FindValuesUser &User, const ScopStmt *Stmt,
               User.SE.getSCEVAtScope(OpInst, User.LI.getLoopFor(BB)));
           continue;
         }
-      if (Instruction *OpInst = dyn_cast<Instruction>(SrcVal))
-        if (Stmt->getParent()->getRegion().contains(OpInst))
-          continue;
-
-      if (isa<Instruction>(SrcVal) || isa<Argument>(SrcVal))
-        User.Values.insert(SrcVal);
     }
   }
   return 0;
@@ -222,6 +217,20 @@ static isl_stat findValuesInStmt(isl_set *Set, void *UserPtr) {
       findValuesInBlock(User, Stmt, BB);
   }
 
+  for (auto &Access : *Stmt) {
+    if (!Access->isScalar()) {
+      auto *BasePtr = Access->getScopArrayInfo()->getBasePtr();
+      if (Instruction *OpInst = dyn_cast<Instruction>(BasePtr))
+        if (Stmt->getParent()->getRegion().contains(OpInst))
+          continue;
+
+      User.Values.insert(BasePtr);
+      continue;
+    }
+
+    User.Values.insert(User.BlockGen.getOrCreateAlloca(*Access, nullptr));
+  }
+
   isl_id_free(Id);
   isl_set_free(Set);
   return isl_stat_ok;
@@ -232,7 +241,8 @@ void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
                                             SetVector<const Loop *> &Loops) {
 
   SetVector<const SCEV *> SCEVs;
-  struct FindValuesUser FindValues = {LI, SE, S.getRegion(), Values, SCEVs};
+  struct FindValuesUser FindValues = {LI,     SE,    S.getRegion(),
+                                      Values, SCEVs, getBlockGenerator()};
 
   for (const auto &I : IDToValue)
     Values.insert(I.second);
