@@ -39,6 +39,10 @@ llvm::ErrorOr<std::vector<std::unique_ptr<DebugMap>>>
 parseDebugMap(StringRef InputFile, ArrayRef<std::string> Archs,
               StringRef PrependPath, bool Verbose, bool InputIsYAML);
 
+/// \brief Dump the symbol table
+bool dumpStab(StringRef InputFile, ArrayRef<std::string> Archs,
+              StringRef PrependPath = "");
+
 /// \brief Link the Dwarf debuginfo as directed by the passed DebugMap
 /// \p DM into a DwarfFile named \p OutputFilename.
 /// \returns false if the link failed.

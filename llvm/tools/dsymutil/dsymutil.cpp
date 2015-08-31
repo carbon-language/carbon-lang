@@ -48,6 +48,13 @@ static opt<std::string> OsoPrependPath(
     desc("Specify a directory to prepend to the paths of object files."),
     value_desc("path"), cat(DsymCategory));
 
+static opt<bool> DumpStab(
+    "symtab",
+    desc("Dumps the symbol table found in executable or object file(s) and\n"
+         "exits."),
+    init(false), cat(DsymCategory));
+static alias DumpStabA("s", desc("Alias for --symtab"), aliasopt(DumpStab));
+
 static opt<bool> FlatOut("flat",
                          desc("Produce a flat dSYM file (not a bundle)."),
                          init(false), cat(DsymCategory));
@@ -274,6 +281,13 @@ int main(int argc, char **argv) {
     }
 
   for (auto &InputFile : InputFiles) {
+    // Dump the symbol table for each input file and requested arch
+    if (DumpStab) {
+      if (!dumpStab(InputFile, ArchFlags, OsoPrependPath))
+        exitDsymutil(1);
+      continue;
+    }
+
     auto DebugMapPtrsOrErr = parseDebugMap(InputFile, ArchFlags, OsoPrependPath,
                                            Verbose, InputIsYAMLDebugMap);
 
