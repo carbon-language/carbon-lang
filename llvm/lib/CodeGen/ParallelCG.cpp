@@ -56,7 +56,7 @@ llvm::splitCodeGen(std::unique_ptr<Module> M,
     return M;
   }
 
-  std::vector<std::thread> Threads;
+  std::vector<thread> Threads;
   SplitModule(std::move(M), OSs.size(), [&](std::unique_ptr<Module> MPart) {
     // We want to clone the module in a new context to multi-thread the codegen.
     // We do it by serializing partition modules to bitcode (while still on the
@@ -88,7 +88,7 @@ llvm::splitCodeGen(std::unique_ptr<Module> M,
         std::move(BC));
   });
 
-  for (std::thread &T : Threads)
+  for (thread &T : Threads)
     T.join();
 
   return {};
