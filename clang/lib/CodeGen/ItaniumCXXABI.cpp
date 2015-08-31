@@ -3298,7 +3298,7 @@ void ItaniumCXXABI::emitCXXStructor(const CXXMethodDecl *MD,
 
     if (CGType == StructorCodegen::RAUW) {
       StringRef MangledName = CGM.getMangledName(CompleteDecl);
-      auto *Aliasee = cast<llvm::GlobalValue>(CGM.GetAddrOfGlobal(BaseDecl));
+      auto *Aliasee = CGM.GetAddrOfGlobal(BaseDecl);
       CGM.addReplacement(MangledName, Aliasee);
       return;
     }

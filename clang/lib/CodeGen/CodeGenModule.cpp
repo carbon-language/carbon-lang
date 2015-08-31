@@ -237,6 +237,20 @@ void CodeGenModule::applyReplacements() {
   }
 }
 
+void CodeGenModule::addGlobalValReplacement(llvm::GlobalValue *GV, llvm::Constant *C) {
+  GlobalValReplacements.push_back(std::make_pair(GV, C));
+}
+
+void CodeGenModule::applyGlobalValReplacements() {
+  for (auto &I : GlobalValReplacements) {
+    llvm::GlobalValue *GV = I.first;
+    llvm::Constant *C = I.second;
+
+    GV->replaceAllUsesWith(C);
+    GV->eraseFromParent();
+  }
+}
+
 // This is only used in aliases that we created and we know they have a
 // linear structure.
 static const llvm::GlobalObject *getAliasedGlobal(const llvm::GlobalAlias &GA) {
@@ -339,6 +353,7 @@ void InstrProfStats::reportDiagnostics(DiagnosticsEngine &Diags,
 
 void CodeGenModule::Release() {
   EmitDeferred();
+  applyGlobalValReplacements();
   applyReplacements();
   checkAliases();
   EmitCXXGlobalInitFunc();
@@ -1108,9 +1123,16 @@ void CodeGenModule::EmitDeferred() {
     llvm::GlobalValue *GV = G.GV;
     G.GV = nullptr;
 
-    assert(!GV || GV == GetGlobalValue(getMangledName(D)));
-    if (!GV)
-      GV = GetGlobalValue(getMangledName(D));
+    // We should call GetAddrOfGlobal with IsForDefinition set to true in order
+    // to get GlobalValue with exactly the type we need, not something that
+    // might had been created for another decl with the same mangled name but
+    // different type.
+    // FIXME: Support for variables is not implemented yet.
+    if (isa<FunctionDecl>(D.getDecl()))
+      GV = cast<llvm::GlobalValue>(GetAddrOfGlobal(D, /*IsForDefinition=*/true));
+    else
+      if (!GV)
+        GV = GetGlobalValue(getMangledName(D));
 
     // Check to see if we've already emitted this.  This is necessary
     // for a couple of reasons: first, decls can end up in the
@@ -1579,6 +1601,9 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD, llvm::GlobalValue *GV) {
   llvm_unreachable("Invalid argument to EmitGlobalDefinition()");
 }
 
+static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
+                                                      llvm::Function *NewFn);
+
 /// GetOrCreateLLVMFunction - If the specified mangled name is not in the
 /// module, create and return an llvm Function with the specified type. If there
 /// is something in the module with the specified name, return it potentially
@@ -1591,7 +1616,8 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
                                        llvm::Type *Ty,
                                        GlobalDecl GD, bool ForVTable,
                                        bool DontDefer, bool IsThunk,
-                                       llvm::AttributeSet ExtraAttrs) {
+                                       llvm::AttributeSet ExtraAttrs,
+                                       bool IsForDefinition) {
   const Decl *D = GD.getDecl();
 
   // Lookup the entry, lazily creating it if necessary.
@@ -1607,11 +1633,33 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
     if (D && !D->hasAttr<DLLImportAttr>() && !D->hasAttr<DLLExportAttr>())
       Entry->setDLLStorageClass(llvm::GlobalValue::DefaultStorageClass);
 
-    if (Entry->getType()->getElementType() == Ty)
+    // If there are two attempts to define the same mangled name, issue an
+    // error.
+    if (IsForDefinition && !Entry->isDeclaration()) {
+      GlobalDecl OtherGD;
+      // Check that GD is not yet in ExplicitDefinitions is required to make
+      // sure that we issue an error only once.
+      if (lookupRepresentativeDecl(MangledName, OtherGD) &&
+          (GD.getCanonicalDecl().getDecl() !=
+           OtherGD.getCanonicalDecl().getDecl()) &&
+          DiagnosedConflictingDefinitions.insert(GD).second) {
+        getDiags().Report(D->getLocation(),
+                          diag::err_duplicate_mangled_name);
+        getDiags().Report(OtherGD.getDecl()->getLocation(),
+                          diag::note_previous_definition);
+      }
+    }
+
+    if ((isa<llvm::Function>(Entry) || isa<llvm::GlobalAlias>(Entry)) &&
+        (Entry->getType()->getElementType() == Ty)) {
       return Entry;
+    }
 
     // Make sure the result is of the correct type.
-    return llvm::ConstantExpr::getBitCast(Entry, Ty->getPointerTo());
+    // (If function is requested for a definition, we always need to create a new
+    // function, not just return a bitcast.)
+    if (!IsForDefinition)
+      return llvm::ConstantExpr::getBitCast(Entry, Ty->getPointerTo());
   }
 
   // This function doesn't have a complete type (for example, the return
@@ -1626,10 +1674,36 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
     FTy = llvm::FunctionType::get(VoidTy, false);
     IsIncompleteFunction = true;
   }
-  
-  llvm::Function *F = llvm::Function::Create(FTy,
-                                             llvm::Function::ExternalLinkage,
-                                             MangledName, &getModule());
+
+  llvm::Function *F =
+      llvm::Function::Create(FTy, llvm::Function::ExternalLinkage,
+                             Entry ? StringRef() : MangledName, &getModule());
+
+  // If we already created a function with the same mangled name (but different
+  // type) before, take its name and add it to the list of functions to be
+  // replaced with F at the end of CodeGen.
+  //
+  // This happens if there is a prototype for a function (e.g. "int f()") and
+  // then a definition of a different type (e.g. "int f(int x)").
+  if (Entry) {
+    F->takeName(Entry);
+
+    // This might be an implementation of a function without a prototype, in
+    // which case, try to do special replacement of calls which match the new
+    // prototype.  The really key thing here is that we also potentially drop
+    // arguments from the call site so as to make a direct call, which makes the
+    // inliner happier and suppresses a number of optimizer warnings (!) about
+    // dropping arguments.
+    if (!Entry->use_empty()) {
+      ReplaceUsesOfNonProtoTypeWithRealFunction(Entry, F);
+      Entry->removeDeadConstantUsers();
+    }
+
+    llvm::Constant *BC = llvm::ConstantExpr::getBitCast(
+        F, Entry->getType()->getElementType()->getPointerTo());
+    addGlobalValReplacement(Entry, BC);
+  }
+
   assert(F->getName() == MangledName && "name was uniqued!");
   if (D)
     SetFunctionAttributes(GD, F, IsIncompleteFunction, IsThunk);
@@ -1702,13 +1776,16 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
 llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
                                                  llvm::Type *Ty,
                                                  bool ForVTable,
-                                                 bool DontDefer) {
+                                                 bool DontDefer,
+                                                 bool IsForDefinition) {
   // If there was no specific requested type, just convert it now.
   if (!Ty)
     Ty = getTypes().ConvertType(cast<ValueDecl>(GD.getDecl())->getType());
-  
+
   StringRef MangledName = getMangledName(GD);
-  return GetOrCreateLLVMFunction(MangledName, Ty, GD, ForVTable, DontDefer);
+  return GetOrCreateLLVMFunction(MangledName, Ty, GD, ForVTable, DontDefer,
+                                 /*IsThunk=*/false, llvm::AttributeSet(),
+                                 IsForDefinition);
 }
 
 /// CreateRuntimeFunction - Create a new runtime function with the specified
@@ -1847,6 +1924,33 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
   return GV;
 }
 
+llvm::Constant *
+CodeGenModule::GetAddrOfGlobal(GlobalDecl GD,
+                               bool IsForDefinition) {
+  if (isa<CXXConstructorDecl>(GD.getDecl()))
+    return getAddrOfCXXStructor(cast<CXXConstructorDecl>(GD.getDecl()),
+                                getFromCtorType(GD.getCtorType()),
+                                /*FnInfo=*/nullptr, /*FnType=*/nullptr,
+                                /*DontDefer=*/false, IsForDefinition);
+  else if (isa<CXXDestructorDecl>(GD.getDecl()))
+    return getAddrOfCXXStructor(cast<CXXDestructorDecl>(GD.getDecl()),
+                                getFromDtorType(GD.getDtorType()),
+                                /*FnInfo=*/nullptr, /*FnType=*/nullptr,
+                                /*DontDefer=*/false, IsForDefinition);
+  else if (isa<CXXMethodDecl>(GD.getDecl())) {
+    auto FInfo = &getTypes().arrangeCXXMethodDeclaration(
+        cast<CXXMethodDecl>(GD.getDecl()));
+    auto Ty = getTypes().GetFunctionType(*FInfo);
+    return GetAddrOfFunction(GD, Ty, /*ForVTable=*/false, /*DontDefer=*/false,
+                             IsForDefinition);
+  } else if (isa<FunctionDecl>(GD.getDecl())) {
+    const CGFunctionInfo &FI = getTypes().arrangeGlobalDeclaration(GD);
+    llvm::FunctionType *Ty = getTypes().GetFunctionType(FI);
+    return GetAddrOfFunction(GD, Ty, /*ForVTable=*/false, /*DontDefer=*/false,
+                             IsForDefinition);
+  } else
+    return GetAddrOfGlobalVar(cast<VarDecl>(GD.getDecl()));
+}
 
 llvm::GlobalVariable *
 CodeGenModule::CreateOrReplaceCXXRuntimeVariable(StringRef Name, 
@@ -2459,66 +2563,14 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
   llvm::FunctionType *Ty = getTypes().GetFunctionType(FI);
 
   // Get or create the prototype for the function.
-  if (!GV) {
-    llvm::Constant *C =
-        GetAddrOfFunction(GD, Ty, /*ForVTable=*/false, /*DontDefer*/ true);
+  if (!GV || (GV->getType()->getElementType() != Ty))
+    GV = cast<llvm::GlobalValue>(GetAddrOfFunction(GD, Ty, /*ForVTable=*/false,
+                                                   /*DontDefer=*/true,
+                                                   /*IsForDefinition=*/true));
 
-    // Strip off a bitcast if we got one back.
-    if (auto *CE = dyn_cast<llvm::ConstantExpr>(C)) {
-      assert(CE->getOpcode() == llvm::Instruction::BitCast);
-      GV = cast<llvm::GlobalValue>(CE->getOperand(0));
-    } else {
-      GV = cast<llvm::GlobalValue>(C);
-    }
-  }
-
-  if (!GV->isDeclaration()) {
-    getDiags().Report(D->getLocation(), diag::err_duplicate_mangled_name);
-    GlobalDecl OldGD = Manglings.lookup(GV->getName());
-    if (auto *Prev = OldGD.getDecl())
-      getDiags().Report(Prev->getLocation(), diag::note_previous_definition);
+  // Already emitted.
+  if (!GV->isDeclaration())
     return;
-  }
-
-  if (GV->getType()->getElementType() != Ty) {
-    // If the types mismatch then we have to rewrite the definition.
-    assert(GV->isDeclaration() && "Shouldn't replace non-declaration");
-
-    // F is the Function* for the one with the wrong type, we must make a new
-    // Function* and update everything that used F (a declaration) with the new
-    // Function* (which will be a definition).
-    //
-    // This happens if there is a prototype for a function
-    // (e.g. "int f()") and then a definition of a different type
-    // (e.g. "int f(int x)").  Move the old function aside so that it
-    // doesn't interfere with GetAddrOfFunction.
-    GV->setName(StringRef());
-    auto *NewFn = cast<llvm::Function>(GetAddrOfFunction(GD, Ty));
-
-    // This might be an implementation of a function without a
-    // prototype, in which case, try to do special replacement of
-    // calls which match the new prototype.  The really key thing here
-    // is that we also potentially drop arguments from the call site
-    // so as to make a direct call, which makes the inliner happier
-    // and suppresses a number of optimizer warnings (!) about
-    // dropping arguments.
-    if (!GV->use_empty()) {
-      ReplaceUsesOfNonProtoTypeWithRealFunction(GV, NewFn);
-      GV->removeDeadConstantUsers();
-    }
-
-    // Replace uses of F with the Function we will endow with a body.
-    if (!GV->use_empty()) {
-      llvm::Constant *NewPtrForOldDecl =
-          llvm::ConstantExpr::getBitCast(NewFn, GV->getType());
-      GV->replaceAllUsesWith(NewPtrForOldDecl);
-    }
-
-    // Ok, delete the old function now, which is dead.
-    GV->eraseFromParent();
-
-    GV = NewFn;
-  }
 
   // We need to set linkage and visibility on the function before
   // generating code for it because various parts of IR generation
