@@ -258,6 +258,7 @@ if(APPLE)
   set(X86_64 x86_64 x86_64h)
 endif()
 
+set(ALL_BUILTIN_SUPPORTED_ARCH i386 i686 ${X86_64} ${ARM32} ${ARM64})
 set(ALL_SANITIZER_COMMON_SUPPORTED_ARCH ${X86_64} i386 i686 powerpc64
   powerpc64le ${ARM32} ${ARM64} mips mips64 mipsel mips64el)
 set(ALL_ASAN_SUPPORTED_ARCH ${X86_64} i386 i686 powerpc64 powerpc64le ${ARM32}
@@ -380,6 +381,8 @@ if(APPLE)
   # for list_union
   include(CompilerRTUtils)
 
+  list_union(BUILTIN_SUPPORTED_ARCH ALL_BUILTIN_SUPPORTED_ARCH toolchain_arches)
+
   list_union(SANITIZER_COMMON_SUPPORTED_ARCH
     ALL_SANITIZER_COMMON_SUPPORTED_ARCH
     COMPILER_RT_SUPPORTED_ARCH
@@ -413,6 +416,8 @@ if(APPLE)
     SANITIZER_COMMON_SUPPORTED_ARCH)
 else()
   # Architectures supported by compiler-rt libraries.
+  filter_available_targets(BUILTIN_SUPPORTED_ARCH
+    ${ALL_BUILTIN_SUPPORTED_ARCH})
   filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
     ${ALL_SANITIZER_COMMON_SUPPORTED_ARCH})
   # LSan and UBSan common files should be available on all architectures
