@@ -1226,9 +1226,36 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   //   __NO_FPRS__
 }
 
-bool PPCTargetInfo::initFeatureMap(
-    llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags, StringRef CPU,
-    std::vector<std::string> &FeaturesVec) const {
+// Handle explicit options being passed to the compiler here: if we've
+// explicitly turned off vsx and turned on power8-vector or direct-move then
+// go ahead and error since the customer has expressed a somewhat incompatible
+// set of options.
+static bool ppcUserFeaturesCheck(DiagnosticsEngine &Diags,
+                                 std::vector<std::string> &FeaturesVec) {
+
+  if (std::find(FeaturesVec.begin(), FeaturesVec.end(), "-vsx") !=
+      FeaturesVec.end()) {
+    if (std::find(FeaturesVec.begin(), FeaturesVec.end(), "+power8-vector") !=
+        FeaturesVec.end()) {
+      Diags.Report(diag::err_opt_not_valid_with_opt) << "-mpower8-vector"
+                                                     << "-mno-vsx";
+      return false;
+    }
+
+    if (std::find(FeaturesVec.begin(), FeaturesVec.end(), "+direct-move") !=
+        FeaturesVec.end()) {
+      Diags.Report(diag::err_opt_not_valid_with_opt) << "-mdirect-move"
+                                                     << "-mno-vsx";
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool PPCTargetInfo::initFeatureMap(llvm::StringMap<bool> &Features,
+                                   DiagnosticsEngine &Diags, StringRef CPU,
+                                   std::vector<std::string> &FeaturesVec) const {
   Features["altivec"] = llvm::StringSwitch<bool>(CPU)
     .Case("7400", true)
     .Case("g4", true)
@@ -1272,26 +1299,9 @@ bool PPCTargetInfo::initFeatureMap(
     .Case("pwr7", true)
     .Default(false);
 
-  // Handle explicit options being passed to the compiler here: if we've
-  // explicitly turned off vsx and turned on power8-vector or direct-move then
-  // go ahead and error since the customer has expressed a somewhat incompatible
-  // set of options.
-  if (std::find(FeaturesVec.begin(), FeaturesVec.end(), "-vsx") !=
-      FeaturesVec.end()) {
-    if (std::find(FeaturesVec.begin(), FeaturesVec.end(), "+power8-vector") !=
-        FeaturesVec.end()) {
-      Diags.Report(diag::err_opt_not_valid_with_opt) << "-mpower8-vector"
-                                                     << "-mno-vsx";
-      return false;
-    }
+  if (!ppcUserFeaturesCheck(Diags, FeaturesVec))
+    return false;
 
-    if (std::find(FeaturesVec.begin(), FeaturesVec.end(), "+direct-move") !=
-        FeaturesVec.end()) {
-      Diags.Report(diag::err_opt_not_valid_with_opt) << "-mdirect-move"
-                                                     << "-mno-vsx";
-      return false;
-    }
-  }
   return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
 }
 
@@ -2492,7 +2502,6 @@ bool X86TargetInfo::initFeatureMap(
     llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags, StringRef CPU,
     std::vector<std::string> &FeaturesVec) const {
   // FIXME: This *really* should not be here.
-
   // X86_64 always has SSE2.
   if (getTriple().getArch() == llvm::Triple::x86_64)
     setFeatureEnabledImpl(Features, "sse2", true);
@@ -5830,8 +5839,8 @@ public:
     return CPUKnown;
   }
   bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
-                    StringRef CPU,
-                    std::vector<std::string> &FeaturesVec) const override {
+                      StringRef CPU,
+                      std::vector<std::string> &FeaturesVec) const override {
     if (CPU == "zEC12")
       Features["transactional-execution"] = true;
     if (CPU == "z13") {
@@ -6200,8 +6209,8 @@ public:
   }
   const std::string& getCPU() const { return CPU; }
   bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
-                    StringRef CPU,
-                    std::vector<std::string> &FeaturesVec) const override {
+                      StringRef CPU,
+                      std::vector<std::string> &FeaturesVec) const override {
     if (CPU == "octeon")
       Features["mips64r2"] = Features["cnmips"] = true;
     else
