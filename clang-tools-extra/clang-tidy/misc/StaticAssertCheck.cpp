@@ -27,10 +27,9 @@ StaticAssertCheck::StaticAssertCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context) {}
 
 void StaticAssertCheck::registerMatchers(MatchFinder *Finder) {
-  // FIXME: I don't see why this checker couldn't also be interesting for
-  // _Static_assert in C11, or static_assert if <assert.h> has been included, 
-  // but it is currently only enabled for C++11. Investigate.
-  if (!getLangOpts().CPlusPlus11)
+  // This checker only makes sense for languages that have static assertion
+  // capabilities: C++11 and C11.
+  if (!(getLangOpts().CPlusPlus11 || getLangOpts().C11))
     return;
 
   auto IsAlwaysFalse = expr(ignoringParenImpCasts(
