@@ -38,6 +38,7 @@ public:
   typedef typename Info::external_key_type external_key_type;
   typedef typename Info::internal_key_type internal_key_type;
   typedef typename Info::data_type data_type;
+  typedef typename Info::data_type_builder data_type_builder;
   typedef unsigned hash_value_type;
 
 private:
@@ -135,8 +136,9 @@ private:
         // FIXME: Don't rely on the OnDiskHashTable format here.
         auto L = InfoObj.ReadKeyDataLength(LocalPtr);
         const internal_key_type &Key = InfoObj.ReadKey(LocalPtr, L.first);
+        data_type_builder ValueBuilder(Merged->Data[Key]);
         InfoObj.ReadDataInto(Key, LocalPtr + L.first, L.second,
-                             Merged->Data[Key]);
+                             ValueBuilder);
       }
 
       Merged->Files.push_back(ODT->File);
@@ -218,12 +220,14 @@ public:
         Result = It->second;
     }
 
+    data_type_builder ResultBuilder(Result);
+
     for (auto *ODT : tables()) {
       auto &HT = ODT->Table;
       auto It = HT.find_hashed(Key, KeyHash);
       if (It != HT.end())
         HT.getInfoObj().ReadDataInto(Key, It.getDataPtr(), It.getDataLen(),
-                                     Result);
+                                     ResultBuilder);
     }
 
     return Result;
@@ -233,13 +237,14 @@ public:
   /// sense if merging values across keys is meaningful.
   data_type findAll() {
     data_type Result;
+    data_type_builder ResultBuilder(Result);
 
     if (!PendingOverrides.empty())
       removeOverriddenTables();
 
     if (MergedTable *M = getMergedTable()) {
       for (auto &KV : M->Data)
-        Info::MergeDataInto(KV.second, Result);
+        Info::MergeDataInto(KV.second, ResultBuilder);
     }
 
     for (auto *ODT : tables()) {
@@ -251,7 +256,7 @@ public:
         // FIXME: Don't rely on the OnDiskHashTable format here.
         auto L = InfoObj.ReadKeyDataLength(LocalPtr);
         const internal_key_type &Key = InfoObj.ReadKey(LocalPtr, L.first);
-        InfoObj.ReadDataInto(Key, LocalPtr + L.first, L.second, Result);
+        InfoObj.ReadDataInto(Key, LocalPtr + L.first, L.second, ResultBuilder);
       }
     }
 

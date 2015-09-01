@@ -47,8 +47,31 @@ public:
   static const int MaxTables = 4;
 
   /// The lookup result is a list of global declaration IDs.
-  // FIXME: LLVM doesn't really have a good data structure for this.
-  typedef llvm::DenseSet<DeclID> data_type;
+  typedef llvm::SmallVector<DeclID, 4> data_type;
+  struct data_type_builder {
+    data_type &Data;
+    llvm::DenseSet<DeclID> Found;
+
+    data_type_builder(data_type &D) : Data(D) {}
+    void insert(DeclID ID) {
+      // Just use a linear scan unless we have more than a few IDs.
+      if (Found.empty() && !Data.empty()) {
+        if (Data.size() <= 4) {
+          for (auto I : Found)
+            if (I == ID)
+              return;
+          Data.push_back(ID);
+          return;
+        }
+
+        // Switch to tracking found IDs in the set.
+        Found.insert(Data.begin(), Data.end());
+      }
+
+      if (Found.insert(ID).second)
+        Data.push_back(ID);
+    }
+  };
   typedef unsigned hash_value_type;
   typedef unsigned offset_type;
   typedef ModuleFile *file_type;
@@ -76,10 +99,12 @@ public:
   internal_key_type ReadKey(const unsigned char *d, unsigned);
 
   void ReadDataInto(internal_key_type, const unsigned char *d,
-                    unsigned DataLen, data_type &Val);
+                    unsigned DataLen, data_type_builder &Val);
 
-  static void MergeDataInto(const data_type &From, data_type &To) {
-    To.insert(From.begin(), From.end());
+  static void MergeDataInto(const data_type &From, data_type_builder &To) {
+    To.Data.reserve(To.Data.size() + From.size());
+    for (DeclID ID : From)
+      To.insert(ID);
   }
 
   file_type ReadFileRef(const unsigned char *&d);

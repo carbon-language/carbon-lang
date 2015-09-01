@@ -959,7 +959,7 @@ ASTDeclContextNameLookupTrait::ReadKey(const unsigned char *d, unsigned) {
 void ASTDeclContextNameLookupTrait::ReadDataInto(internal_key_type,
                                                  const unsigned char *d,
                                                  unsigned DataLen,
-                                                 data_type &Val) {
+                                                 data_type_builder &Val) {
   using namespace llvm::support;
   for (unsigned NumDecls = DataLen / 4; NumDecls; --NumDecls) {
     uint32_t LocalID = endian::readNext<uint32_t, little, unaligned>(d);
