@@ -80,7 +80,7 @@ LTOCodeGenerator::LTOCodeGenerator(std::unique_ptr<LLVMContext> Context)
 
 LTOCodeGenerator::~LTOCodeGenerator() {}
 
-// Initialize LTO passes. Please keep this funciton in sync with
+// Initialize LTO passes. Please keep this function in sync with
 // PassManagerBuilder::populateLTOPassManager(), and make sure all LTO
 // passes are initialized.
 void LTOCodeGenerator::initializeLTOPasses() {
