@@ -51,7 +51,7 @@ return: ret void
 ; CHECK-LABEL: simple_ranges
 ; CHECK: leal -100
 ; CHECK: cmpl $4
-; CHECK: jae
+; CHECK: jb
 ; CHECK: cmpl $3
 ; CHECK: ja
 

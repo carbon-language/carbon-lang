@@ -16,9 +16,9 @@ entry:
     i64 5, label %sw.bb1
   ], !prof !0
 ; CHECK: BB#0: derived from LLVM BB %entry
-; CHECK: Successors according to CFG: BB#2(64) BB#4(14)
+; CHECK: Successors according to CFG: BB#2(64) BB#4(21)
 ; CHECK: BB#4: derived from LLVM BB %entry
-; CHECK: Successors according to CFG: BB#1(10) BB#5(4)
+; CHECK: Successors according to CFG: BB#1(10) BB#5(11)
 ; CHECK: BB#5: derived from LLVM BB %entry
 ; CHECK: Successors according to CFG: BB#1(4) BB#3(7)
 

@@ -1490,9 +1490,7 @@ SelectionDAGISel::FinishBasicBlock() {
       CodeGenAndEmitDAG();
     }
 
-    uint32_t UnhandledWeight = 0;
-    for (unsigned j = 0, ej = SDB->BitTestCases[i].Cases.size(); j != ej; ++j)
-      UnhandledWeight += SDB->BitTestCases[i].Cases[j].ExtraWeight;
+    uint32_t UnhandledWeight = SDB->BitTestCases[i].Weight;
 
     for (unsigned j = 0, ej = SDB->BitTestCases[i].Cases.size(); j != ej; ++j) {
       UnhandledWeight -= SDB->BitTestCases[i].Cases[j].ExtraWeight;

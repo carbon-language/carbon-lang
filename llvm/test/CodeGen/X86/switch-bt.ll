@@ -5,7 +5,7 @@
 
 ;      CHECK: movabsq $2305843009482129440, %r
 ; CHECK-NEXT: btq %rax, %r
-; CHECK-NEXT: jae
+; CHECK-NEXT: jb
 ;     CHECK: movl  $671088640, %e
 ; CHECK-NEXT: btq %rax, %r
 ; CHECK-NEXT: jae
@@ -145,13 +145,13 @@ sw.epilog:
 ; CHECK: cmpl $10
 ; CHECK: je
 ; CHECK: cmpl $20
+; CHECK: je
+; CHECK: cmpl $30
 ; CHECK: jne
 ; CHECK: cmpl $40
 ; CHECK: je
 ; CHECK: cmpl $50
-; CHECK: jne
-; CHECK: cmpl $30
-; CHECK: jne
+; CHECK: je
 ; CHECK: cmpl $60
 ; CHECK: jne
 }

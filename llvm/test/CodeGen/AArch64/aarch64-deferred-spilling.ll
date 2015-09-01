@@ -7,9 +7,9 @@
 ;
 ; CHECK: // %if.then.120
 ;
-; REGULAR: str w22, [sp, #[[OFFSET:[0-9]+]]] // 4-byte Folded Spill
-; Check that w22 wouldn't need to be spilled since it is never reused.
-; REGULAR-NOT: {{[wx]}}22{{,?}}
+; REGULAR: str w21, [sp, #[[OFFSET:[0-9]+]]] // 4-byte Folded Spill
+; Check that w21 wouldn't need to be spilled since it is never reused.
+; REGULAR-NOT: {{[wx]}}21{{,?}}
 ;
 ; Check that w22 is used to carry a value through the call.
 ; DEFERRED-NOT: str {{[wx]}}22,
@@ -22,8 +22,8 @@
 ; DEFERRED: mov {{[wx][0-9]+}}, {{[wx]}}22
 ; DEFERRED-NOT: ldr {{[wx]}}22,
 ;
-; REGULAR-NOT: {{[wx]}}22{{,?}}
-; REGUAL: ldr w22, [sp, #[[OFFSET]]] // 4-byte Folded Reload
+; REGULAR-NOT: {{[wx]}}21{{,?}}
+; REGULAR: ldr w21, [sp, #[[OFFSET]]] // 4-byte Folded Reload
 ;
 ; End of the basic block we are interested in.
 ; CHECK:        b

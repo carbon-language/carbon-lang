@@ -13,8 +13,8 @@ entry:
 ; CHECK-LABEL: test1:
 ; CHECK-NOT: unr
 ; CHECK: cmpl $10
-; CHECK: bar
 ; CHECK: cmpl $20
+; CHECK: bar
 
 if.then:
   tail call void @unr(i32 23) noreturn nounwind

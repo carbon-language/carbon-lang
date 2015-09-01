@@ -7,9 +7,11 @@
 ; CHECK-NEXT: %if.else163
 ; CHECK-NEXT: mov.w
 ; CHECK-NEXT: b
+; CHECK: [[JUMPTARGET]]:{{.*}}%if.else173
+; CHECK-NEXT: mov.w
+; CHECK-NEXT: pop
 ; CHECK-NEXT: %if.else145
 ; CHECK-NEXT: mov.w
-; CHECK: [[JUMPTARGET]]:{{.*}}%if.else173
 
 %struct.hc = type { i32, i32, i32, i32 }
 

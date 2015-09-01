@@ -1924,8 +1924,7 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B,
 
   MachineBasicBlock* MBB = B.Cases[0].ThisBB;
 
-  uint32_t DefaultWeight = getEdgeWeight(SwitchBB, B.Default);
-  addSuccessorWithWeight(SwitchBB, B.Default, DefaultWeight);
+  addSuccessorWithWeight(SwitchBB, B.Default, B.DefaultWeight);
   addSuccessorWithWeight(SwitchBB, MBB, B.Weight);
 
   SDValue BrRange = DAG.getNode(ISD::BRCOND, dl,
@@ -8037,7 +8036,8 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
   }
 
   // Compute total weight.
-  uint32_t UnhandledWeights = 0;
+  uint32_t DefaultWeight = W.DefaultWeight;
+  uint32_t UnhandledWeights = DefaultWeight;
   for (CaseClusterIt I = W.FirstCluster; I <= W.LastCluster; ++I) {
     UnhandledWeights += I->Weight;
     assert(UnhandledWeights >= I->Weight && "Weight overflow!");
@@ -8067,14 +8067,24 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
         MachineBasicBlock *JumpMBB = JT->MBB;
         CurMF->insert(BBI, JumpMBB);
 
-        // Collect the sum of weights of outgoing edges from JumpMBB, which will
-        // be the edge weight on CurMBB->JumpMBB.
-        uint32_t JumpWeight = 0;
-        for (auto Succ : JumpMBB->successors())
-          JumpWeight += getEdgeWeight(JumpMBB, Succ);
-        uint32_t FallthruWeight = getEdgeWeight(CurMBB, Fallthrough);
+        uint32_t JumpWeight = I->Weight;
+        uint32_t FallthroughWeight = UnhandledWeights;
 
-        addSuccessorWithWeight(CurMBB, Fallthrough, FallthruWeight);
+        // If Fallthrough is a target of the jump table, we evenly distribute
+        // the weight on the edge to Fallthrough to successors of CurMBB.
+        // Also update the weight on the edge from JumpMBB to Fallthrough.
+        for (MachineBasicBlock::succ_iterator SI = JumpMBB->succ_begin(),
+                                              SE = JumpMBB->succ_end();
+             SI != SE; ++SI) {
+          if (*SI == Fallthrough) {
+            JumpWeight += DefaultWeight / 2;
+            FallthroughWeight -= DefaultWeight / 2;
+            JumpMBB->setSuccWeight(SI, DefaultWeight / 2);
+            break;
+          }
+        }
+
+        addSuccessorWithWeight(CurMBB, Fallthrough, FallthroughWeight);
         addSuccessorWithWeight(CurMBB, JumpMBB, JumpWeight);
 
         // The jump table header will be inserted in our current block, do the
@@ -8101,8 +8111,17 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
         BTB->Parent = CurMBB;
         BTB->Default = Fallthrough;
 
-        // If we're in the right place, emit the bit test header header right now.
-        if (CurMBB ==SwitchMBB) {
+        BTB->DefaultWeight = UnhandledWeights;
+        // If the cases in bit test don't form a contiguous range, we evenly
+        // distribute the weight on the edge to Fallthrough to two successors
+        // of CurMBB.
+        if (!BTB->ContiguousRange) {
+          BTB->Weight += DefaultWeight / 2;
+          BTB->DefaultWeight -= DefaultWeight / 2;
+        }
+
+        // If we're in the right place, emit the bit test header right now.
+        if (CurMBB == SwitchMBB) {
           visitBitTestHeader(*BTB, SwitchMBB);
           BTB->Emitted = true;
         }
@@ -8167,8 +8186,8 @@ void SelectionDAGBuilder::splitWorkItem(SwitchWorkList &WorkList,
   // Mehlhorn "Nearly Optimal Binary Search Trees" (1975).
   CaseClusterIt LastLeft = W.FirstCluster;
   CaseClusterIt FirstRight = W.LastCluster;
-  uint32_t LeftWeight = LastLeft->Weight;
-  uint32_t RightWeight = FirstRight->Weight;
+  uint32_t LeftWeight = LastLeft->Weight + W.DefaultWeight / 2;
+  uint32_t RightWeight = FirstRight->Weight + W.DefaultWeight / 2;
 
   // Move LastLeft and FirstRight towards each other from opposite directions to
   // find a partitioning of the clusters which balances the weight on both
@@ -8254,7 +8273,8 @@ void SelectionDAGBuilder::splitWorkItem(SwitchWorkList &WorkList,
   } else {
     LeftMBB = FuncInfo.MF->CreateMachineBasicBlock(W.MBB->getBasicBlock());
     FuncInfo.MF->insert(BBI, LeftMBB);
-    WorkList.push_back({LeftMBB, FirstLeft, LastLeft, W.GE, Pivot});
+    WorkList.push_back(
+        {LeftMBB, FirstLeft, LastLeft, W.GE, Pivot, W.DefaultWeight / 2});
     // Put Cond in a virtual register to make it available from the new blocks.
     ExportFromCurrentBlock(Cond);
   }
@@ -8269,7 +8289,8 @@ void SelectionDAGBuilder::splitWorkItem(SwitchWorkList &WorkList,
   } else {
     RightMBB = FuncInfo.MF->CreateMachineBasicBlock(W.MBB->getBasicBlock());
     FuncInfo.MF->insert(BBI, RightMBB);
-    WorkList.push_back({RightMBB, FirstRight, LastRight, Pivot, W.LT});
+    WorkList.push_back(
+        {RightMBB, FirstRight, LastRight, Pivot, W.LT, W.DefaultWeight / 2});
     // Put Cond in a virtual register to make it available from the new blocks.
     ExportFromCurrentBlock(Cond);
   }
@@ -8370,7 +8391,8 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
   SwitchWorkList WorkList;
   CaseClusterIt First = Clusters.begin();
   CaseClusterIt Last = Clusters.end() - 1;
-  WorkList.push_back({SwitchMBB, First, Last, nullptr, nullptr});
+  uint32_t DefaultWeight = getEdgeWeight(SwitchMBB, DefaultMBB);
+  WorkList.push_back({SwitchMBB, First, Last, nullptr, nullptr, DefaultWeight});
 
   while (!WorkList.empty()) {
     SwitchWorkListItem W = WorkList.back();
