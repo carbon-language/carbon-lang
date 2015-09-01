@@ -135,8 +135,8 @@ public:
   }
 
   TypedefNameDecl *getTypedefNameForUnnamedTagDecl(const TagDecl *TD) override {
-    return UnnamedTagDeclToTypedefNameDecl[const_cast<TagDecl *>(
-        TD->getCanonicalDecl())];
+    return UnnamedTagDeclToTypedefNameDecl.lookup(
+        const_cast<TagDecl *>(TD->getCanonicalDecl()));
   }
 
   void addDeclaratorForUnnamedTagDecl(TagDecl *TD,
@@ -149,8 +149,8 @@ public:
   }
 
   DeclaratorDecl *getDeclaratorForUnnamedTagDecl(const TagDecl *TD) override {
-    return UnnamedTagDeclToDeclaratorDecl[const_cast<TagDecl *>(
-        TD->getCanonicalDecl())];
+    return UnnamedTagDeclToDeclaratorDecl.lookup(
+        const_cast<TagDecl *>(TD->getCanonicalDecl()));
   }
 
   MangleNumberingContext *createMangleNumberingContext() const override {
