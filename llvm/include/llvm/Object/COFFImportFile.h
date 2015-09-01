@@ -37,7 +37,7 @@ public:
 
   std::error_code printSymbolName(raw_ostream &OS,
                                   DataRefImpl Symb) const override {
-    if (Symb.p == 1)
+    if (Symb.p == 0)
       OS << "__imp_";
     OS << StringRef(Data.getBufferStart() + sizeof(coff_import_header));
     return std::error_code();
