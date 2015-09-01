@@ -333,22 +333,22 @@ ProcessGDBRemote::Terminate()
 
 
 lldb::ProcessSP
-ProcessGDBRemote::CreateInstance (Target &target, Listener &listener, const FileSpec *crash_file_path)
+ProcessGDBRemote::CreateInstance (lldb::TargetSP target_sp, Listener &listener, const FileSpec *crash_file_path)
 {
     lldb::ProcessSP process_sp;
     if (crash_file_path == NULL)
-        process_sp.reset (new ProcessGDBRemote (target, listener));
+        process_sp.reset (new ProcessGDBRemote (target_sp, listener));
     return process_sp;
 }
 
 bool
-ProcessGDBRemote::CanDebug (Target &target, bool plugin_specified_by_name)
+ProcessGDBRemote::CanDebug (lldb::TargetSP target_sp, bool plugin_specified_by_name)
 {
     if (plugin_specified_by_name)
         return true;
 
     // For now we are just making sure the file exists for a given module
-    Module *exe_module = target.GetExecutableModulePointer();
+    Module *exe_module = target_sp->GetExecutableModulePointer();
     if (exe_module)
     {
         ObjectFile *exe_objfile = exe_module->GetObjectFile();
@@ -377,8 +377,8 @@ ProcessGDBRemote::CanDebug (Target &target, bool plugin_specified_by_name)
 //----------------------------------------------------------------------
 // ProcessGDBRemote constructor
 //----------------------------------------------------------------------
-ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
-    Process (target, listener),
+ProcessGDBRemote::ProcessGDBRemote(lldb::TargetSP target_sp, Listener &listener) :
+    Process (target_sp, listener),
     m_flags (0),
     m_gdb_comm (),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
@@ -804,15 +804,16 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
             if (GetTarget().GetNonStopModeEnabled())
                 HandleStopReplySequence();
 
-            if (!m_target.GetArchitecture().IsValid()) 
+            Target &target = GetTarget();
+            if (!target.GetArchitecture().IsValid()) 
             {
                 if (m_gdb_comm.GetProcessArchitecture().IsValid())
                 {
-                    m_target.SetArchitecture(m_gdb_comm.GetProcessArchitecture());
+                    target.SetArchitecture(m_gdb_comm.GetProcessArchitecture());
                 }
                 else
                 {
-                    m_target.SetArchitecture(m_gdb_comm.GetHostArchitecture());
+                    target.SetArchitecture(m_gdb_comm.GetHostArchitecture());
                 }
             }
 
@@ -946,7 +947,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
             lldb_utility::PseudoTerminal pty;
             const bool disable_stdio = (launch_flags & eLaunchFlagDisableSTDIO) != 0;
 
-            PlatformSP platform_sp (m_target.GetPlatform());
+            PlatformSP platform_sp (GetTarget().GetPlatform());
             if (disable_stdio)
             {
                 // set to /dev/null unless redirected to a file above
@@ -1002,7 +1003,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
             m_gdb_comm.SetDisableASLR (launch_flags & eLaunchFlagDisableASLR);
             m_gdb_comm.SetDetachOnError (launch_flags & eLaunchFlagDetachOnError);
 
-            m_gdb_comm.SendLaunchArchPacket (m_target.GetArchitecture().GetArchitectureName());
+            m_gdb_comm.SendLaunchArchPacket (GetTarget().GetArchitecture().GetArchitectureName());
             
             const char * launch_event_data = launch_info.GetLaunchEventData();
             if (launch_event_data != NULL && *launch_event_data != '\0')
@@ -1069,13 +1070,13 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
 
                 if (process_arch.IsValid())
                 {
-                    m_target.MergeArchitecture(process_arch);
+                    GetTarget().MergeArchitecture(process_arch);
                 }
                 else
                 {
                     const ArchSpec &host_arch = m_gdb_comm.GetHostArchitecture();
                     if (host_arch.IsValid())
-                        m_target.MergeArchitecture(host_arch);
+                        GetTarget().MergeArchitecture(host_arch);
                 }
 
                 SetPrivateState (SetThreadStopInfo (response));
@@ -3991,10 +3992,10 @@ ProcessGDBRemote::StartNoticingNewThreads()
     }
     else
     {
-        PlatformSP platform_sp (m_target.GetPlatform());
+        PlatformSP platform_sp (GetTarget().GetPlatform());
         if (platform_sp)
         {
-            m_thread_create_bp_sp = platform_sp->SetThreadCreationBreakpoint(m_target);
+            m_thread_create_bp_sp = platform_sp->SetThreadCreationBreakpoint(GetTarget());
             if (m_thread_create_bp_sp)
             {
                 if (log && log->GetVerbose())
@@ -4774,7 +4775,7 @@ ProcessGDBRemote::LoadModules ()
 
     if (new_modules.GetSize() > 0)
     {
-        Target & target = m_target;
+        Target &target = GetTarget();
 
         new_modules.ForEach ([&target](const lldb::ModuleSP module_sp) -> bool
         {

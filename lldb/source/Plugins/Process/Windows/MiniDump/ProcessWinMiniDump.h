@@ -23,7 +23,7 @@ class ProcessWinMiniDump : public lldb_private::Process
 {
 public:
     static lldb::ProcessSP
-    CreateInstance (lldb_private::Target& target,
+    CreateInstance (lldb::TargetSP target_sp,
                     lldb_private::Listener &listener,
                     const lldb_private::FileSpec *crash_file_path);
 
@@ -39,7 +39,7 @@ public:
     static const char *
     GetPluginDescriptionStatic();
 
-    ProcessWinMiniDump(lldb_private::Target& target,
+    ProcessWinMiniDump(lldb::TargetSP target_sp,
                        lldb_private::Listener &listener,
                        const lldb_private::FileSpec &core_file);
 
@@ -47,7 +47,7 @@ public:
     ~ProcessWinMiniDump();
 
     bool
-    CanDebug(lldb_private::Target &target, bool plugin_specified_by_name) override;
+    CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name) override;
 
     lldb_private::Error
     DoLoadCore() override;

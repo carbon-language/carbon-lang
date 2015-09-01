@@ -46,7 +46,7 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     static lldb::ProcessSP
-    CreateInstance (Target& target, 
+    CreateInstance (lldb::TargetSP target_sp,
                     Listener &listener,
                     const FileSpec *crash_file_path);
 
@@ -68,7 +68,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    ProcessGDBRemote(Target& target, Listener &listener);
+    ProcessGDBRemote(lldb::TargetSP target_sp, Listener &listener);
 
     virtual
     ~ProcessGDBRemote();
@@ -77,7 +77,7 @@ public:
     // Check if a given Process
     //------------------------------------------------------------------
     bool
-    CanDebug (Target &target, bool plugin_specified_by_name) override;
+    CanDebug (lldb::TargetSP target_sp, bool plugin_specified_by_name) override;
 
     CommandObject *
     GetPluginCommandObject() override;

@@ -64,7 +64,7 @@ ProcessMachCore::Terminate()
 
 
 lldb::ProcessSP
-ProcessMachCore::CreateInstance (Target &target, Listener &listener, const FileSpec *crash_file)
+ProcessMachCore::CreateInstance (lldb::TargetSP target_sp, Listener &listener, const FileSpec *crash_file)
 {
     lldb::ProcessSP process_sp;
     if (crash_file)
@@ -80,7 +80,7 @@ ProcessMachCore::CreateInstance (Target &target, Listener &listener, const FileS
             if (ObjectFileMachO::ParseHeader(data, &data_offset, mach_header))
             {
                 if (mach_header.filetype == llvm::MachO::MH_CORE)
-                    process_sp.reset(new ProcessMachCore (target, listener, *crash_file));
+                    process_sp.reset(new ProcessMachCore (target_sp, listener, *crash_file));
             }
         }
         
@@ -89,7 +89,7 @@ ProcessMachCore::CreateInstance (Target &target, Listener &listener, const FileS
 }
 
 bool
-ProcessMachCore::CanDebug(Target &target, bool plugin_specified_by_name)
+ProcessMachCore::CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name)
 {
     if (plugin_specified_by_name)
         return true;
@@ -121,8 +121,8 @@ ProcessMachCore::CanDebug(Target &target, bool plugin_specified_by_name)
 //----------------------------------------------------------------------
 // ProcessMachCore constructor
 //----------------------------------------------------------------------
-ProcessMachCore::ProcessMachCore(Target& target, Listener &listener, const FileSpec &core_file) :
-    Process (target, listener),
+ProcessMachCore::ProcessMachCore(lldb::TargetSP target_sp, Listener &listener, const FileSpec &core_file) :
+    Process (target_sp, listener),
     m_core_aranges (),
     m_core_module_sp (),
     m_core_file (core_file),
@@ -360,10 +360,10 @@ ProcessMachCore::DoLoadCore ()
     ArchSpec arch (m_core_module_sp->GetArchitecture());
     if (arch.GetCore() == ArchSpec::eCore_x86_32_i486)
     {
-        arch.SetTriple ("i386", m_target.GetPlatform().get());
+        arch.SetTriple ("i386", GetTarget().GetPlatform().get());
     }
     if (arch.IsValid())
-        m_target.SetArchitecture(arch);            
+        GetTarget().SetArchitecture(arch);
 
     return error;
 }

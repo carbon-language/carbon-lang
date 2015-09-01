@@ -648,7 +648,7 @@ ProcessInstanceInfoMatch::Clear()
 }
 
 ProcessSP
-Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener, const FileSpec *crash_file_path)
+Process::FindPlugin (lldb::TargetSP target_sp, const char *plugin_name, Listener &listener, const FileSpec *crash_file_path)
 {
     static uint32_t g_process_unique_id = 0;
 
@@ -660,10 +660,10 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
         create_callback  = PluginManager::GetProcessCreateCallbackForPluginName (const_plugin_name);
         if (create_callback)
         {
-            process_sp = create_callback(target, listener, crash_file_path);
+            process_sp = create_callback(target_sp, listener, crash_file_path);
             if (process_sp)
             {
-                if (process_sp->CanDebug(target, true))
+                if (process_sp->CanDebug(target_sp, true))
                 {
                     process_sp->m_process_unique_id = ++g_process_unique_id;
                 }
@@ -676,10 +676,10 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
     {
         for (uint32_t idx = 0; (create_callback = PluginManager::GetProcessCreateCallbackAtIndex(idx)) != NULL; ++idx)
         {
-            process_sp = create_callback(target, listener, crash_file_path);
+            process_sp = create_callback(target_sp, listener, crash_file_path);
             if (process_sp)
             {
-                if (process_sp->CanDebug(target, false))
+                if (process_sp->CanDebug(target_sp, false))
                 {
                     process_sp->m_process_unique_id = ++g_process_unique_id;
                     break;
@@ -702,18 +702,18 @@ Process::GetStaticBroadcasterClass ()
 //----------------------------------------------------------------------
 // Process constructor
 //----------------------------------------------------------------------
-Process::Process(Target &target, Listener &listener) :
-    Process(target, listener, UnixSignals::Create(HostInfo::GetArchitecture()))
+Process::Process(lldb::TargetSP target_sp, Listener &listener) :
+    Process(target_sp, listener, UnixSignals::Create(HostInfo::GetArchitecture()))
 {
     // This constructor just delegates to the full Process constructor,
     // defaulting to using the Host's UnixSignals.
 }
 
-Process::Process(Target &target, Listener &listener, const UnixSignalsSP &unix_signals_sp) :
+Process::Process(lldb::TargetSP target_sp, Listener &listener, const UnixSignalsSP &unix_signals_sp) :
     ProcessProperties (this),
     UserID (LLDB_INVALID_PROCESS_ID),
-    Broadcaster (&(target.GetDebugger()), Process::GetStaticBroadcasterClass().AsCString()),
-    m_target (target),
+    Broadcaster (&(target_sp->GetDebugger()), Process::GetStaticBroadcasterClass().AsCString()),
+    m_target_sp (target_sp),
     m_public_state (eStateUnloaded),
     m_private_state (eStateUnloaded),
     m_private_state_broadcaster (NULL, "lldb.process.internal_state_broadcaster"),
@@ -2095,7 +2095,7 @@ const lldb::ABISP &
 Process::GetABI()
 {
     if (!m_abi_sp)
-        m_abi_sp = ABI::FindPlugin(m_target.GetArchitecture());
+        m_abi_sp = ABI::FindPlugin(GetTarget().GetArchitecture());
     return m_abi_sp;
 }
 
@@ -2275,22 +2275,22 @@ Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardw
             load_addr = ResolveIndirectFunction (&symbol_address, error);
             if (!error.Success() && show_error)
             {
-                m_target.GetDebugger().GetErrorFile()->Printf ("warning: failed to resolve indirect function at 0x%" PRIx64 " for breakpoint %i.%i: %s\n",
-                                                               symbol->GetLoadAddress(&m_target),
-                                                               owner->GetBreakpoint().GetID(),
-                                                               owner->GetID(),
-                                                               error.AsCString() ? error.AsCString() : "unknown error");
+                GetTarget().GetDebugger().GetErrorFile()->Printf ("warning: failed to resolve indirect function at 0x%" PRIx64 " for breakpoint %i.%i: %s\n",
+                                                                   symbol->GetLoadAddress(&GetTarget()),
+                                                                   owner->GetBreakpoint().GetID(),
+                                                                   owner->GetID(),
+                                                                   error.AsCString() ? error.AsCString() : "unknown error");
                 return LLDB_INVALID_BREAK_ID;
             }
             Address resolved_address(load_addr);
-            load_addr = resolved_address.GetOpcodeLoadAddress (&m_target);
+            load_addr = resolved_address.GetOpcodeLoadAddress (&GetTarget());
             owner->SetIsIndirect(true);
         }
         else
-            load_addr = owner->GetAddress().GetOpcodeLoadAddress (&m_target);
+            load_addr = owner->GetAddress().GetOpcodeLoadAddress (&GetTarget());
     }
     else
-        load_addr = owner->GetAddress().GetOpcodeLoadAddress (&m_target);
+        load_addr = owner->GetAddress().GetOpcodeLoadAddress (&GetTarget());
     
     if (load_addr != LLDB_INVALID_ADDRESS)
     {
@@ -2323,11 +2323,11 @@ Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardw
                     if (show_error)
                     {
                         // Report error for setting breakpoint...
-                        m_target.GetDebugger().GetErrorFile()->Printf ("warning: failed to set breakpoint site at 0x%" PRIx64 " for breakpoint %i.%i: %s\n",
-                                                                       load_addr,
-                                                                       owner->GetBreakpoint().GetID(),
-                                                                       owner->GetID(),
-                                                                       error.AsCString() ? error.AsCString() : "unknown error");
+                        GetTarget().GetDebugger().GetErrorFile()->Printf ("warning: failed to set breakpoint site at 0x%" PRIx64 " for breakpoint %i.%i: %s\n",
+                                                                           load_addr,
+                                                                           owner->GetBreakpoint().GetID(),
+                                                                           owner->GetID(),
+                                                                           error.AsCString() ? error.AsCString() : "unknown error");
                     }
                 }
             }
@@ -2385,9 +2385,9 @@ Process::RemoveBreakpointOpcodesFromBuffer (addr_t bp_addr, size_t size, uint8_t
 size_t
 Process::GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site)
 {
-    PlatformSP platform_sp (m_target.GetPlatform());
+    PlatformSP platform_sp (GetTarget().GetPlatform());
     if (platform_sp)
-        return platform_sp->GetSoftwareBreakpointTrapOpcode (m_target, bp_site);
+        return platform_sp->GetSoftwareBreakpointTrapOpcode (GetTarget(), bp_site);
     return 0;
 }
 
@@ -3165,7 +3165,7 @@ Process::Launch (ProcessLaunchInfo &launch_info)
     m_process_input_reader.reset();
     m_stop_info_override_callback = NULL;
 
-    Module *exe_module = m_target.GetExecutableModulePointer();
+    Module *exe_module = GetTarget().GetExecutableModulePointer();
     if (exe_module)
     {
         char local_exec_file_path[PATH_MAX];
@@ -3512,7 +3512,7 @@ Process::Attach (ProcessAttachInfo &attach_info)
             else
             {
                 ProcessInstanceInfoList process_infos;
-                PlatformSP platform_sp (m_target.GetPlatform ());
+                PlatformSP platform_sp (GetTarget().GetPlatform ());
                 
                 if (platform_sp)
                 {
@@ -3614,7 +3614,7 @@ Process::CompleteAttach ()
     
     if (process_arch.IsValid())
     {
-        m_target.SetArchitecture(process_arch);
+        GetTarget().SetArchitecture(process_arch);
         if (log)
         {
             const char *triple_str = process_arch.GetTriple().getTriple().c_str ();
@@ -3626,19 +3626,19 @@ Process::CompleteAttach ()
 
     // We just attached.  If we have a platform, ask it for the process architecture, and if it isn't
     // the same as the one we've already set, switch architectures.
-    PlatformSP platform_sp (m_target.GetPlatform ());
+    PlatformSP platform_sp (GetTarget().GetPlatform ());
     assert (platform_sp.get());
     if (platform_sp)
     {
-        const ArchSpec &target_arch = m_target.GetArchitecture();
+        const ArchSpec &target_arch = GetTarget().GetArchitecture();
         if (target_arch.IsValid() && !platform_sp->IsCompatibleArchitecture (target_arch, false, NULL))
         {
             ArchSpec platform_arch;
             platform_sp = platform_sp->GetPlatformForArchitecture (target_arch, &platform_arch);
             if (platform_sp)
             {
-                m_target.SetPlatform (platform_sp);
-                m_target.SetArchitecture(platform_arch);
+                GetTarget().SetPlatform (platform_sp);
+                GetTarget().SetArchitecture(platform_arch);
                 if (log)
                     log->Printf ("Process::%s switching platform to %s and architecture to %s based on info from attach", __FUNCTION__, platform_sp->GetName().AsCString (""), platform_arch.GetTriple().getTriple().c_str ());
             }
@@ -3648,9 +3648,9 @@ Process::CompleteAttach ()
             ProcessInstanceInfo process_info;
             platform_sp->GetProcessInfo (GetID(), process_info);
             const ArchSpec &process_arch = process_info.GetArchitecture();
-            if (process_arch.IsValid() && !m_target.GetArchitecture().IsExactMatch(process_arch))
+            if (process_arch.IsValid() && !GetTarget().GetArchitecture().IsExactMatch(process_arch))
             {
-                m_target.SetArchitecture (process_arch);
+                GetTarget().SetArchitecture (process_arch);
                 if (log)
                     log->Printf ("Process::%s switching architecture to %s based on info the platform retrieved for pid %" PRIu64, __FUNCTION__, process_arch.GetTriple().getTriple().c_str (), GetID ());
             }
@@ -3665,7 +3665,7 @@ Process::CompleteAttach ()
         dyld->DidAttach();
         if (log)
         {
-            ModuleSP exe_module_sp = m_target.GetExecutableModule ();
+            ModuleSP exe_module_sp = GetTarget().GetExecutableModule ();
             log->Printf ("Process::%s after DynamicLoader::DidAttach(), target executable is %s (using %s plugin)",
                          __FUNCTION__,
                          exe_module_sp ? exe_module_sp->GetFileSpec().GetPath().c_str () : "<none>",
@@ -3681,7 +3681,7 @@ Process::CompleteAttach ()
         system_runtime->DidAttach();
         if (log)
         {
-            ModuleSP exe_module_sp = m_target.GetExecutableModule ();
+            ModuleSP exe_module_sp = GetTarget().GetExecutableModule ();
             log->Printf ("Process::%s after SystemRuntime::DidAttach(), target executable is %s (using %s plugin)",
                          __FUNCTION__,
                          exe_module_sp ? exe_module_sp->GetFileSpec().GetPath().c_str () : "<none>",
@@ -3691,7 +3691,7 @@ Process::CompleteAttach ()
 
     m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
     // Figure out which one is the executable, and set that in our target:
-    const ModuleList &target_modules = m_target.GetImages();
+    const ModuleList &target_modules = GetTarget().GetImages();
     Mutex::Locker modules_locker(target_modules.GetMutex());
     size_t num_modules = target_modules.GetSize();
     ModuleSP new_executable_module_sp;
@@ -3701,17 +3701,17 @@ Process::CompleteAttach ()
         ModuleSP module_sp (target_modules.GetModuleAtIndexUnlocked (i));
         if (module_sp && module_sp->IsExecutable())
         {
-            if (m_target.GetExecutableModulePointer() != module_sp.get())
+            if (GetTarget().GetExecutableModulePointer() != module_sp.get())
                 new_executable_module_sp = module_sp;
             break;
         }
     }
     if (new_executable_module_sp)
     {
-        m_target.SetExecutableModule (new_executable_module_sp, false);
+        GetTarget().SetExecutableModule (new_executable_module_sp, false);
         if (log)
         {
-            ModuleSP exe_module_sp = m_target.GetExecutableModule ();
+            ModuleSP exe_module_sp = GetTarget().GetExecutableModule ();
             log->Printf ("Process::%s after looping through modules, target executable is %s",
                          __FUNCTION__,
                          exe_module_sp ? exe_module_sp->GetFileSpec().GetPath().c_str () : "<none>");
@@ -4136,13 +4136,13 @@ Process::GetUnixSignals ()
 lldb::ByteOrder
 Process::GetByteOrder () const
 {
-    return m_target.GetArchitecture().GetByteOrder();
+    return GetTarget().GetArchitecture().GetByteOrder();
 }
 
 uint32_t
 Process::GetAddressByteSize () const
 {
-    return m_target.GetArchitecture().GetAddressByteSize();
+    return GetTarget().GetArchitecture().GetAddressByteSize();
 }
 
 
@@ -4549,7 +4549,7 @@ Process::HandlePrivateEvent (EventSP &event_sp)
                 // events) and we do need the IO handler to be pushed and popped
                 // correctly.
                 
-                if (is_hijacked || m_target.GetDebugger().IsHandlingEvents() == false)
+                if (is_hijacked || GetTarget().GetDebugger().IsHandlingEvents() == false)
                     PopProcessIOHandler ();
             }
         }
@@ -4989,13 +4989,13 @@ Process::ProcessEventData::SetUpdateStateOnRemoval (Event *event_ptr)
 lldb::TargetSP
 Process::CalculateTarget ()
 {
-    return m_target.shared_from_this();
+    return m_target_sp.lock();
 }
 
 void
 Process::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
-    exe_ctx.SetTargetPtr (&m_target);
+    exe_ctx.SetTargetPtr (&GetTarget());
     exe_ctx.SetProcessPtr (this);
     exe_ctx.SetThreadPtr(NULL);
     exe_ctx.SetFramePtr (NULL);
@@ -5323,7 +5323,7 @@ Process::ProcessIOHandlerIsActive ()
 {
     IOHandlerSP io_handler_sp (m_process_input_reader);
     if (io_handler_sp)
-        return m_target.GetDebugger().IsTopIOHandler (io_handler_sp);
+        return GetTarget().GetDebugger().IsTopIOHandler (io_handler_sp);
     return false;
 }
 bool
@@ -5337,7 +5337,7 @@ Process::PushProcessIOHandler ()
             log->Printf("Process::%s pushing IO handler", __FUNCTION__);
 
         io_handler_sp->SetIsDone(false);
-        m_target.GetDebugger().PushIOHandler (io_handler_sp);
+        GetTarget().GetDebugger().PushIOHandler (io_handler_sp);
         return true;
     }
     return false;
@@ -5348,7 +5348,7 @@ Process::PopProcessIOHandler ()
 {
     IOHandlerSP io_handler_sp (m_process_input_reader);
     if (io_handler_sp)
-        return m_target.GetDebugger().PopIOHandler (io_handler_sp);
+        return GetTarget().GetDebugger().PopIOHandler (io_handler_sp);
     return false;
 }
 

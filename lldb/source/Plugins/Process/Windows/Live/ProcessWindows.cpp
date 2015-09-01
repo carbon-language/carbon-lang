@@ -121,9 +121,9 @@ class ProcessWindowsData
 // Static functions.
 
 ProcessSP
-ProcessWindows::CreateInstance(Target &target, Listener &listener, const FileSpec *)
+ProcessWindows::CreateInstance(lldb::TargetSP target_sp, Listener &listener, const FileSpec *)
 {
-    return ProcessSP(new ProcessWindows(target, listener));
+    return ProcessSP(new ProcessWindows(target_sp, listener));
 }
 
 void
@@ -142,8 +142,8 @@ ProcessWindows::Initialize()
 //------------------------------------------------------------------------------
 // Constructors and destructors.
 
-ProcessWindows::ProcessWindows(Target &target, Listener &listener)
-    : lldb_private::Process(target, listener)
+ProcessWindows::ProcessWindows(lldb::TargetSP target_sp, Listener &listener)
+    : lldb_private::Process(target_sp, listener)
 {
 }
 
@@ -788,13 +788,13 @@ ProcessWindows::GetImageInfoAddress()
 }
 
 bool
-ProcessWindows::CanDebug(Target &target, bool plugin_specified_by_name)
+ProcessWindows::CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name)
 {
     if (plugin_specified_by_name)
         return true;
 
     // For now we are just making sure the file exists for a given module
-    ModuleSP exe_module_sp(target.GetExecutableModule());
+    ModuleSP exe_module_sp(target_sp->GetExecutableModule());
     if (exe_module_sp.get())
         return exe_module_sp->GetFileSpec().Exists();
     // However, if there is no executable module, we return true since we might be preparing to attach.
@@ -807,10 +807,14 @@ ProcessWindows::OnExitProcess(uint32_t exit_code)
     // No need to acquire the lock since m_session_data isn't accessed.
     WINLOG_IFALL(WINDOWS_LOG_PROCESS, "Process %u exited with code %u", GetID(), exit_code);
 
-    ModuleSP executable_module = GetTarget().GetExecutableModule();
-    ModuleList unloaded_modules;
-    unloaded_modules.Append(executable_module);
-    GetTarget().ModulesDidUnload(unloaded_modules, true);
+    TargetSP target = m_target_sp.lock();
+    if (target)
+    {
+        ModuleSP executable_module = target->GetExecutableModule();
+        ModuleList unloaded_modules;
+        unloaded_modules.Append(executable_module);
+        target->ModulesDidUnload(unloaded_modules, true);
+    }
 
     SetProcessExitStatus(nullptr, GetID(), true, 0, exit_code);
     SetPrivateState(eStateExited);

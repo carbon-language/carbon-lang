@@ -203,7 +203,7 @@ const lldb::ProcessSP &
 Target::CreateProcess (Listener &listener, const char *plugin_name, const FileSpec *crash_file)
 {
     DeleteCurrentProcess ();
-    m_process_sp = Process::FindPlugin(*this, plugin_name, listener, crash_file);
+    m_process_sp = Process::FindPlugin(shared_from_this(), plugin_name, listener, crash_file);
     return m_process_sp;
 }
 

@@ -955,13 +955,13 @@ public:
     /// Construct with a shared pointer to a target, and the Process listener.
     /// Uses the Host UnixSignalsSP by default.
     //------------------------------------------------------------------
-    Process(Target &target, Listener &listener);
+    Process(lldb::TargetSP target_sp, Listener &listener);
 
     //------------------------------------------------------------------
     /// Construct with a shared pointer to a target, the Process listener,
     /// and the appropriate UnixSignalsSP for the process.
     //------------------------------------------------------------------
-    Process(Target &target, Listener &listener, const lldb::UnixSignalsSP &unix_signals_sp);
+    Process(lldb::TargetSP target_sp, Listener &listener, const lldb::UnixSignalsSP &unix_signals_sp);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -990,7 +990,7 @@ public:
     /// @see Process::CanDebug ()
     //------------------------------------------------------------------
     static lldb::ProcessSP
-    FindPlugin (Target &target, 
+    FindPlugin (lldb::TargetSP target_sp,
                 const char *plugin_name, 
                 Listener &listener, 
                 const FileSpec *crash_file_path);
@@ -1041,7 +1041,7 @@ public:
     ///     debug the executable, \b false otherwise.
     //------------------------------------------------------------------
     virtual bool
-    CanDebug (Target &target,
+    CanDebug (lldb::TargetSP target,
               bool plugin_specified_by_name) = 0;
 
 
@@ -1847,7 +1847,7 @@ public:
     Target &
     GetTarget ()
     {
-        return m_target;
+        return *m_target_sp.lock();
     }
 
     //------------------------------------------------------------------
@@ -1860,7 +1860,7 @@ public:
     const Target &
     GetTarget () const
     {
-        return m_target;
+        return *m_target_sp.lock();
     }
 
     //------------------------------------------------------------------
@@ -3315,7 +3315,7 @@ protected:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
-    Target &                    m_target;               ///< The target that owns this process.
+    std::weak_ptr<Target>       m_target_sp;            ///< The target that owns this process.
     ThreadSafeValue<lldb::StateType>  m_public_state;
     ThreadSafeValue<lldb::StateType>  m_private_state; // The actual state of our process
     Broadcaster                 m_private_state_broadcaster;  // This broadcaster feeds state changed events into the private state thread's listener.

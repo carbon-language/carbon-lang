@@ -104,26 +104,26 @@ ProcessWinMiniDump::Terminate()
 
 
 lldb::ProcessSP
-ProcessWinMiniDump::CreateInstance(Target &target, Listener &listener, const FileSpec *crash_file)
+ProcessWinMiniDump::CreateInstance(lldb::TargetSP target_sp, Listener &listener, const FileSpec *crash_file)
 {
     lldb::ProcessSP process_sp;
     if (crash_file)
     {
-       process_sp.reset(new ProcessWinMiniDump(target, listener, *crash_file));
+       process_sp.reset(new ProcessWinMiniDump(target_sp, listener, *crash_file));
     }
     return process_sp;
 }
 
 bool
-ProcessWinMiniDump::CanDebug(Target &target, bool plugin_specified_by_name)
+ProcessWinMiniDump::CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name)
 {
     // TODO(amccarth):  Eventually, this needs some actual logic.
     return true;
 }
 
-ProcessWinMiniDump::ProcessWinMiniDump(Target& target, Listener &listener,
+ProcessWinMiniDump::ProcessWinMiniDump(lldb::TargetSP target_sp, Listener &listener,
                                        const FileSpec &core_file) :
-    Process(target, listener),
+    Process(target_sp, listener),
     m_data_up(new Data)
 {
     m_data_up->m_core_file = core_file;
@@ -163,7 +163,7 @@ ProcessWinMiniDump::DoLoadCore()
         return error;
     }
 
-    m_target.SetArchitecture(DetermineArchitecture());
+    GetTarget().SetArchitecture(DetermineArchitecture());
     ReadModuleList();
     ReadExceptionRecord();
 

@@ -41,7 +41,7 @@ public:
     // Static functions.
     //------------------------------------------------------------------
     static lldb::ProcessSP
-    CreateInstance(lldb_private::Target& target,
+    CreateInstance(lldb::TargetSP target_sp,
                    lldb_private::Listener &listener,
                    const lldb_private::FileSpec *);
 
@@ -60,7 +60,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and destructors
     //------------------------------------------------------------------
-    ProcessWindows(lldb_private::Target& target,
+    ProcessWindows(lldb::TargetSP target_sp,
                    lldb_private::Listener &listener);
 
     ~ProcessWindows();
@@ -90,7 +90,7 @@ public:
     void RefreshStateAfterStop() override;
     lldb::addr_t GetImageInfoAddress() override;
 
-    bool CanDebug(lldb_private::Target &target, bool plugin_specified_by_name) override;
+    bool CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name) override;
     bool
     DestroyRequiresHalt() override
     {

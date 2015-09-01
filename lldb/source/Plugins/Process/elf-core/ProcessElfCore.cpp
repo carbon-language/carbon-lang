@@ -57,7 +57,7 @@ ProcessElfCore::Terminate()
 
 
 lldb::ProcessSP
-ProcessElfCore::CreateInstance (Target &target, Listener &listener, const FileSpec *crash_file)
+ProcessElfCore::CreateInstance (lldb::TargetSP target_sp, Listener &listener, const FileSpec *crash_file)
 {
     lldb::ProcessSP process_sp;
     if (crash_file)
@@ -75,7 +75,7 @@ ProcessElfCore::CreateInstance (Target &target, Listener &listener, const FileSp
             if (elf_header.Parse(data, &data_offset))
             {
                 if (elf_header.e_type == llvm::ELF::ET_CORE)
-                    process_sp.reset(new ProcessElfCore (target, listener, *crash_file));
+                    process_sp.reset(new ProcessElfCore (target_sp, listener, *crash_file));
             }
         }
     }
@@ -83,12 +83,12 @@ ProcessElfCore::CreateInstance (Target &target, Listener &listener, const FileSp
 }
 
 bool
-ProcessElfCore::CanDebug(Target &target, bool plugin_specified_by_name)
+ProcessElfCore::CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name)
 {
     // For now we are just making sure the file exists for a given module
     if (!m_core_module_sp && m_core_file.Exists())
     {
-        ModuleSpec core_module_spec(m_core_file, target.GetArchitecture());
+        ModuleSpec core_module_spec(m_core_file, target_sp->GetArchitecture());
         Error error (ModuleList::GetSharedModule (core_module_spec, m_core_module_sp,
                                                   NULL, NULL, NULL));
         if (m_core_module_sp)
@@ -104,9 +104,9 @@ ProcessElfCore::CanDebug(Target &target, bool plugin_specified_by_name)
 //----------------------------------------------------------------------
 // ProcessElfCore constructor
 //----------------------------------------------------------------------
-ProcessElfCore::ProcessElfCore(Target& target, Listener &listener,
+ProcessElfCore::ProcessElfCore(lldb::TargetSP target_sp, Listener &listener,
                                const FileSpec &core_file) :
-    Process (target, listener),
+    Process (target_sp, listener),
     m_core_module_sp (),
     m_core_file (core_file),
     m_dyld_plugin_name (),
@@ -233,7 +233,7 @@ ProcessElfCore::DoLoadCore ()
     // it to match the core file which is always single arch.
     ArchSpec arch (m_core_module_sp->GetArchitecture());
     if (arch.IsValid())
-        m_target.SetArchitecture(arch);
+        GetTarget().SetArchitecture(arch);
 
     SetUnixSignals(UnixSignals::Create(GetArchitecture()));
 
@@ -370,12 +370,11 @@ ProcessElfCore::Initialize()
 lldb::addr_t
 ProcessElfCore::GetImageInfoAddress()
 {
-    Target *target = &GetTarget();
-    ObjectFile *obj_file = target->GetExecutableModule()->GetObjectFile();
-    Address addr = obj_file->GetImageInfoAddress(target);
+    ObjectFile *obj_file = GetTarget().GetExecutableModule()->GetObjectFile();
+    Address addr = obj_file->GetImageInfoAddress(&GetTarget());
 
     if (addr.IsValid())
-        return addr.GetLoadAddress(target);
+        return addr.GetLoadAddress(&GetTarget());
     return LLDB_INVALID_ADDRESS;
 }
 
