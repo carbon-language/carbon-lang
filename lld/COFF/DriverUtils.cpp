@@ -572,16 +572,10 @@ public:
     memcpy(P, DLLName.data(), DLLName.size());
 
     object::Archive::Child C(Parent, Buf);
-    return NewArchiveIterator(C, nextFilename());
+    return NewArchiveIterator(C, DLLName);
   }
 
 private:
-  char *nextFilename() {
-    char *P = Alloc.Allocate<char>(16);
-    sprintf(P, "%d.obj", Idx++);
-    return P;
-  }
-
   BumpPtrAllocator Alloc;
   object::Archive *Parent;
   StringRef DLLName;
