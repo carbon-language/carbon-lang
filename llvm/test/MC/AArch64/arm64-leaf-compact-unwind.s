@@ -22,6 +22,7 @@
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Reserved1:
 // CHECK-NEXT:   Reserved2:
+// CHECK-NEXT:   Reserved3:
 // CHECK-NEXT:   Relocations [
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x60

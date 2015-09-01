@@ -260,6 +260,7 @@ namespace {
     uint32_t Flags;
     uint32_t Reserved1;
     uint32_t Reserved2;
+    uint32_t Reserved3;
   };
 
   struct MachOSymbol {
@@ -297,6 +298,7 @@ static void getSection(const MachOObjectFile *Obj,
   Section.Flags       = Sect.flags;
   Section.Reserved1   = Sect.reserved1;
   Section.Reserved2   = Sect.reserved2;
+  Section.Reserved3   = Sect.reserved3;
 }
 
 
@@ -402,6 +404,8 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
                  makeArrayRef(MachOSectionAttributes));
     W.printHex("Reserved1", MOSection.Reserved1);
     W.printHex("Reserved2", MOSection.Reserved2);
+    if (Obj->is64Bit())
+      W.printHex("Reserved3", MOSection.Reserved3);
 
     if (opts::SectionRelocations) {
       ListScope D(W, "Relocations");
