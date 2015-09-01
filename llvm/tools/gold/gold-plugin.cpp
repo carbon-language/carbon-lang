@@ -20,6 +20,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CommandFlags.h"
+#include "llvm/CodeGen/ParallelCG.h"
 #include "llvm/IR/AutoUpgrade.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -92,6 +93,7 @@ namespace options {
   static bool generate_api_file = false;
   static OutputType TheOutputType = OT_NORMAL;
   static unsigned OptLevel = 2;
+  static unsigned Parallelism = 1;
   static std::string obj_path;
   static std::string extra_library_path;
   static std::string triple;
@@ -127,8 +129,11 @@ namespace options {
       TheOutputType = OT_DISABLE;
     } else if (opt.size() == 2 && opt[0] == 'O') {
       if (opt[1] < '0' || opt[1] > '3')
-        report_fatal_error("Optimization level must be between 0 and 3");
+        message(LDPL_FATAL, "Optimization level must be between 0 and 3");
       OptLevel = opt[1] - '0';
+    } else if (opt.startswith("jobs=")) {
+      if (StringRef(opt_ + 5).getAsInteger(10, Parallelism))
+        message(LDPL_FATAL, "Invalid parallelism level: %s", opt_ + 5);
     } else {
       // Save this option to pass to the code generator.
       // ParseCommandLineOptions() expects argv[0] to be program name. Lazily
@@ -742,8 +747,8 @@ static void saveBCFile(StringRef Path, Module &M) {
   WriteBitcodeToFile(&M, OS, /* ShouldPreserveUseListOrder */ true);
 }
 
-static void codegen(Module &M) {
-  const std::string &TripleStr = M.getTargetTriple();
+static void codegen(std::unique_ptr<Module> M) {
+  const std::string &TripleStr = M->getTargetTriple();
   Triple TheTriple(TripleStr);
 
   std::string ErrMsg;
@@ -779,12 +784,10 @@ static void codegen(Module &M) {
       TripleStr, options::mcpu, Features.getString(), Options, RelocationModel,
       CodeModel::Default, CGOptLevel));
 
-  runLTOPasses(M, *TM);
+  runLTOPasses(*M, *TM);
 
   if (options::TheOutputType == options::OT_SAVE_TEMPS)
-    saveBCFile(output_name + ".opt.bc", M);
-
-  legacy::PassManager CodeGenPasses;
+    saveBCFile(output_name + ".opt.bc", *M);
 
   SmallString<128> Filename;
   if (!options::obj_path.empty())
@@ -792,37 +795,47 @@ static void codegen(Module &M) {
   else if (options::TheOutputType == options::OT_SAVE_TEMPS)
     Filename = output_name + ".o";
 
-  int FD;
+  std::vector<SmallString<128>> Filenames(options::Parallelism);
   bool TempOutFile = Filename.empty();
-  if (TempOutFile) {
-    std::error_code EC =
-        sys::fs::createTemporaryFile("lto-llvm", "o", FD, Filename);
-    if (EC)
-      message(LDPL_FATAL, "Could not create temporary file: %s",
-              EC.message().c_str());
-  } else {
-    std::error_code EC =
-        sys::fs::openFileForWrite(Filename.c_str(), FD, sys::fs::F_None);
-    if (EC)
-      message(LDPL_FATAL, "Could not open file: %s", EC.message().c_str());
-  }
-
   {
-    raw_fd_ostream OS(FD, true);
+    // Open a file descriptor for each backend thread. This is done in a block
+    // so that the output file descriptors are closed before gold opens them.
+    std::list<llvm::raw_fd_ostream> OSs;
+    std::vector<llvm::raw_pwrite_stream *> OSPtrs(options::Parallelism);
+    for (unsigned I = 0; I != options::Parallelism; ++I) {
+      int FD;
+      if (TempOutFile) {
+        std::error_code EC =
+            sys::fs::createTemporaryFile("lto-llvm", "o", FD, Filenames[I]);
+        if (EC)
+          message(LDPL_FATAL, "Could not create temporary file: %s",
+                  EC.message().c_str());
+      } else {
+        Filenames[I] = Filename;
+        if (options::Parallelism != 1)
+          Filenames[I] += utostr(I);
+        std::error_code EC =
+            sys::fs::openFileForWrite(Filenames[I], FD, sys::fs::F_None);
+        if (EC)
+          message(LDPL_FATAL, "Could not open file: %s", EC.message().c_str());
+      }
+      OSs.emplace_back(FD, true);
+      OSPtrs[I] = &OSs.back();
+    }
 
-    if (TM->addPassesToEmitFile(CodeGenPasses, OS,
-                                TargetMachine::CGFT_ObjectFile))
-      message(LDPL_FATAL, "Failed to setup codegen");
-    CodeGenPasses.run(M);
+    // Run backend threads.
+    splitCodeGen(std::move(M), OSPtrs, options::mcpu, Features.getString(),
+                 Options, RelocationModel, CodeModel::Default, CGOptLevel);
   }
 
-  if (add_input_file(Filename.c_str()) != LDPS_OK)
-    message(LDPL_FATAL,
-            "Unable to add .o file to the link. File left behind in: %s",
-            Filename.c_str());
-
-  if (TempOutFile)
-    Cleanup.push_back(Filename.c_str());
+  for (auto &Filename : Filenames) {
+    if (add_input_file(Filename.c_str()) != LDPS_OK)
+      message(LDPL_FATAL,
+              "Unable to add .o file to the link. File left behind in: %s",
+              Filename.c_str());
+    if (TempOutFile)
+      Cleanup.push_back(Filename.c_str());
+  }
 }
 
 /// gold informs us that all symbols have been read. At this point, we use
@@ -889,7 +902,7 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
       return LDPS_OK;
   }
 
-  codegen(*L.getModule());
+  codegen(std::move(Combined));
 
   if (!options::extra_library_path.empty() &&
       set_extra_library_path(options::extra_library_path.c_str()) != LDPS_OK)
