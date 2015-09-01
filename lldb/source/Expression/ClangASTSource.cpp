@@ -746,38 +746,42 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
 
         bool found_a_type = false;
         
-        if (types.GetSize())
+        if (size_t num_types = types.GetSize())
         {
-            lldb::TypeSP type_sp = types.GetTypeAtIndex(0);
-
-            if (log)
+            for (size_t ti = 0; ti < num_types; ++ti)
             {
-                const char *name_string = type_sp->GetName().GetCString();
-
-                log->Printf("  CAS::FEVD[%u] Matching type found for \"%s\": %s",
-                            current_id,
-                            name.GetCString(),
-                            (name_string ? name_string : "<anonymous>"));
-            }
-
-            CompilerType full_type = type_sp->GetFullCompilerType ();
-
-            CompilerType copied_clang_type (GuardedCopyType(full_type));
-
-            if (!copied_clang_type)
-            {
+                lldb::TypeSP type_sp = types.GetTypeAtIndex(ti);
+                
                 if (log)
-                    log->Printf("  CAS::FEVD[%u] - Couldn't export a type",
-                                current_id);
-
+                {
+                    const char *name_string = type_sp->GetName().GetCString();
+                    
+                    log->Printf("  CAS::FEVD[%u] Matching type found for \"%s\": %s",
+                                current_id,
+                                name.GetCString(),
+                                (name_string ? name_string : "<anonymous>"));
+                }
+                
+                CompilerType full_type = type_sp->GetFullCompilerType();
+                
+                CompilerType copied_clang_type (GuardedCopyType(full_type));
+                
+                if (!copied_clang_type)
+                {
+                    if (log)
+                        log->Printf("  CAS::FEVD[%u] - Couldn't export a type",
+                                    current_id);
+                    
+                    continue;
+                }
+                
+                context.AddTypeDecl(copied_clang_type);
+                
+                found_a_type = true;
                 break;
             }
-
-            context.AddTypeDecl(copied_clang_type);
-            
-            found_a_type = true;
         }
-        
+
         if (!found_a_type)
         {
             // Try the modules next.
@@ -1885,6 +1889,9 @@ ClangASTSource::AddNamespace (NameSearchContext &context, ClangASTImporter::Name
 CompilerType
 ClangASTSource::GuardedCopyType (const CompilerType &src_type)
 {
+    if (!ClangASTContext::IsClangType(src_type))
+        return CompilerType();
+    
     ClangASTMetrics::RegisterLLDBImport();
 
     ClangASTContext* src_ast = src_type.GetTypeSystem()->AsClangASTContext();
