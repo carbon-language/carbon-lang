@@ -37,6 +37,14 @@ abs = 0x123
 .protected protected
 protected:
 
+.global hidden
+.hidden hidden
+hidden:
+
+.global internal
+.internal internal
+internal:
+
 // CHECK:      Name: .text
 // CHECK-NEXT: Type: SHT_PROGBITS
 // CHECK-NEXT: Flags [

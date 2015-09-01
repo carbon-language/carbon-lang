@@ -41,7 +41,6 @@ public:
   // The writer needs to infer the machine type from the object files.
   std::vector<std::unique_ptr<ObjectFileBase>> ObjectFiles;
 
-  unsigned getNumSymbols() { return Symtab.size(); }
   llvm::StringTableBuilder &getStringBuilder() { return Builder; };
 
   const llvm::DenseMap<StringRef, Symbol *> &getSymbols() const {

@@ -133,8 +133,12 @@ public:
 
     Header.sh_entsize = sizeof(Elf_Sym);
     Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
-    this->Header.sh_size = (Table.getNumSymbols() + 1) * sizeof(Elf_Sym);
   }
+
+  void finalize() override {
+    this->Header.sh_size = (NumVisible + 1) * sizeof(Elf_Sym);
+  }
+
   void setStringTableIndex(uint32_t Index) { this->Header.sh_link = Index; }
 
   void writeTo(uint8_t *Buf) override;
@@ -142,6 +146,7 @@ public:
   const SymbolTable &getSymTable() { return Table; }
 
   OutputSection<ELFT> *BSSSec = nullptr;
+  unsigned NumVisible = 0;
 
 private:
   SymbolTable &Table;
@@ -301,6 +306,10 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     SymbolBody *Body = Sym->Body;
     const Elf_Sym &InputSym = cast<ELFSymbolBody<ELFT>>(Body)->Sym;
 
+    uint8_t V = InputSym.getVisibility();
+    if (V != STV_DEFAULT && V != STV_PROTECTED)
+      continue;
+
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
     ESym->st_name = Builder.getOffset(Name);
 
@@ -355,7 +364,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   // FIXME: Experiment with passing in a custom hashing instead.
   auto *Syms = reinterpret_cast<Elf_Sym *>(BufStart);
   ++Syms;
-  array_pod_sort(Syms, Syms + Table.getSymbols().size(), compareSym<ELFT>);
+  array_pod_sort(Syms, Syms + NumVisible, compareSym<ELFT>);
 }
 
 template <bool Is64Bits>
@@ -439,11 +448,16 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   SymTable.BSSSec = getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
   OutputSection<ELFT> *BSSSec = SymTable.BSSSec;
   // FIXME: Try to avoid the extra walk over all global symbols.
+  unsigned &NumVisible = SymTable.NumVisible;
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
   for (auto &P : Symtab.getSymbols()) {
     SymbolBody *Body = P.second->Body;
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
+    auto *E = cast<ELFSymbolBody<ELFT>>(Body);
+    uint8_t V = E->Sym.getVisibility();
+    if (V == STV_DEFAULT || V == STV_PROTECTED)
+      NumVisible++;
   }
 
   // Sort the common symbols by alignment as an heuristic to pack them better.
