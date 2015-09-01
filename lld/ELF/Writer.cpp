@@ -298,43 +298,36 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   for (auto &P : Table.getSymbols()) {
     StringRef Name = P.first;
     Symbol *Sym = P.second;
+    SymbolBody *Body = Sym->Body;
+    const Elf_Sym &InputSym = cast<ELFSymbolBody<ELFT>>(Body)->Sym;
 
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
     ESym->st_name = Builder.getOffset(Name);
-    SymbolBody *Body = Sym->Body;
 
     const SectionChunk<ELFT> *Section = nullptr;
-    const Elf_Sym *InputSym = nullptr;
     OutputSection<ELFT> *Out = nullptr;
 
     switch (Body->kind()) {
-    case SymbolBody::DefinedRegularKind: {
-      auto *Def = cast<DefinedRegular<ELFT>>(Body);
-      InputSym = &Def->Sym;
-      Section = &Def->Section;
+    case SymbolBody::DefinedRegularKind:
+      Section = &cast<DefinedRegular<ELFT>>(Body)->Section;
       break;
-    }
     case SymbolBody::DefinedCommonKind:
-      InputSym = &cast<ELFSymbolBody<ELFT>>(Body)->Sym;
       Out = BSSSec;
       break;
     case SymbolBody::UndefinedKind:
       assert(Body->isWeak() && "Should be defined by now");
     case SymbolBody::DefinedAbsoluteKind:
-      InputSym = &cast<ELFSymbolBody<ELFT>>(Body)->Sym;
       break;
     }
 
-    if (InputSym) {
-      uint8_t Type = InputSym->getType();
-      uint8_t Binding = InputSym->getBinding();
-      ESym->setBindingAndType(Binding, Type);
-      ESym->st_size = InputSym->st_size;
-      ESym->st_other = InputSym->st_other;
-      if (InputSym->isAbsolute()) {
-        ESym->st_shndx = SHN_ABS;
-        ESym->st_value = InputSym->st_value;
-      }
+    uint8_t Type = InputSym.getType();
+    uint8_t Binding = InputSym.getBinding();
+    ESym->setBindingAndType(Binding, Type);
+    ESym->st_size = InputSym.st_size;
+    ESym->st_other = InputSym.st_other;
+    if (InputSym.isAbsolute()) {
+      ESym->st_shndx = SHN_ABS;
+      ESym->st_value = InputSym.st_value;
     }
 
     if (Section)
@@ -348,7 +341,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
         VA += C->OffsetInBSS;
       else
-        VA += InputSym->st_value;
+        VA += InputSym.st_value;
       ESym->st_value = VA;
     }
 
