@@ -579,7 +579,6 @@ private:
   BumpPtrAllocator Alloc;
   object::Archive *Parent;
   StringRef DLLName;
-  int Idx = 1;
 };
 
 static ImportNameType getNameType(StringRef Sym, StringRef ExtName) {
