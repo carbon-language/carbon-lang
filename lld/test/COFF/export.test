@@ -71,3 +71,12 @@ CHECK5-NEXT:       4   0x1010  exportfn3
 
 CHECK6:     duplicate /export option: exportfn2
 CHECK6-NOT: duplicate /export option: exportfn1
+
+# RUN: llvm-nm -M %t.lib | FileCheck --check-prefix=SYMTAB %s
+
+SYMTAB: __imp_exportfn1 in 1.obj
+SYMTAB: exportfn1 in 1.obj
+SYMTAB: __imp_exportfn2 in 2.obj
+SYMTAB: exportfn2 in 2.obj
+SYMTAB: __imp_exportfn3 in 3.obj
+SYMTAB: exportfn3 in 3.obj

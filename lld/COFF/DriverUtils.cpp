@@ -564,7 +564,6 @@ public:
     if (Ordinal > 0)
       Imp->OrdinalHint = Ordinal;
     Imp->TypeInfo = (isData ? IMPORT_DATA : IMPORT_CODE);
-    Imp->TypeInfo = IMPORT_CODE;
     Imp->TypeInfo |= NameType << 2;
 
     // Write symbol name and DLL name.
