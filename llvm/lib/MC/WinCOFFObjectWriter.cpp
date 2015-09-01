@@ -35,6 +35,7 @@
 #include "llvm/Support/JamCRC.h"
 #include "llvm/Support/TimeValue.h"
 #include <cstdio>
+#include <ctime>
 
 using namespace llvm;
 
@@ -1012,8 +1013,12 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
 
   Header.PointerToSymbolTable = offset;
 
-  // We want a deterministic output. It looks like GNU as also writes 0 in here.
-  Header.TimeDateStamp = 0;
+  // MS LINK expects to be able to use this timestamp to implement their
+  // /INCREMENTAL feature.
+  std::time_t Now = time(nullptr);
+  if (Now < 0 || Now > UINT32_MAX)
+    Now = UINT32_MAX;
+  Header.TimeDateStamp = Now;
 
   // Write it all to disk...
   WriteFileHeader(Header);
