@@ -5511,7 +5511,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   // TODO: Check if 32-byte or greater accesses are slow too?
   if (!MI->hasOneMemOperand() &&
       RC == &X86::VR128RegClass &&
-      Subtarget.isUnalignedMemUnder32Slow())
+      Subtarget.isUnalignedMem16Slow())
     // Without memoperands, loadRegFromAddr and storeRegToStackSlot will
     // conservatively assume the address is unaligned. That's bad for
     // performance.
@@ -5659,7 +5659,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
                             cast<MachineSDNode>(N)->memoperands_end());
     if (!(*MMOs.first) &&
         RC == &X86::VR128RegClass &&
-        Subtarget.isUnalignedMemUnder32Slow())
+        Subtarget.isUnalignedMem16Slow())
       // Do not introduce a slow unaligned load.
       return false;
     // FIXME: If a VR128 can have size 32, we should be checking if a 32-byte
@@ -5704,7 +5704,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
                              cast<MachineSDNode>(N)->memoperands_end());
     if (!(*MMOs.first) &&
         RC == &X86::VR128RegClass &&
-        Subtarget.isUnalignedMemUnder32Slow())
+        Subtarget.isUnalignedMem16Slow())
       // Do not introduce a slow unaligned store.
       return false;
     // FIXME: If a VR128 can have size 32, we should be checking if a 32-byte

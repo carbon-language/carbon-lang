@@ -1869,7 +1869,7 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
   if ((!IsMemset || ZeroMemset) &&
       !F->hasFnAttribute(Attribute::NoImplicitFloat)) {
     if (Size >= 16 &&
-        (!Subtarget->isUnalignedMemUnder32Slow() ||
+        (!Subtarget->isUnalignedMem16Slow() ||
          ((DstAlign == 0 || DstAlign >= 16) &&
           (SrcAlign == 0 || SrcAlign >= 16)))) {
       if (Size >= 32) {
@@ -1916,7 +1916,9 @@ X86TargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
     if (VT.getSizeInBits() == 256)
       *Fast = !Subtarget->isUnalignedMem32Slow();
     else
-      *Fast = !Subtarget->isUnalignedMemUnder32Slow();
+      // FIXME: We should always return that 8-byte and under accesses are fast.
+      // That is what other x86 lowering code assumes.
+      *Fast = !Subtarget->isUnalignedMem16Slow();
   }
   return true;
 }

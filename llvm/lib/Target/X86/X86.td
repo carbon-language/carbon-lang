@@ -79,9 +79,10 @@ def FeatureSlowBTMem : SubtargetFeature<"slow-bt-mem", "IsBTMemSlow", "true",
                                        "Bit testing of memory is slow">;
 def FeatureSlowSHLD : SubtargetFeature<"slow-shld", "IsSHLDSlow", "true",
                                        "SHLD instruction is slow">;
-def FeatureSlowUAMem : SubtargetFeature<"slow-unaligned-mem-under-32",
-                                "IsUAMemUnder32Slow", "true",
-                                "Slow unaligned 16-byte-or-less memory access">;
+// FIXME: This should not apply to CPUs that do not have SSE.
+def FeatureSlowUAMem16 : SubtargetFeature<"slow-unaligned-mem-16",
+                                "IsUAMem16Slow", "true",
+                                "Slow unaligned 16-byte memory access">;
 def FeatureSlowUAMem32 : SubtargetFeature<"slow-unaligned-mem-32",
                                 "IsUAMem32Slow", "true",
                                 "Slow unaligned 32-byte memory access">;
@@ -209,42 +210,45 @@ def ProcIntelSLM  : SubtargetFeature<"slm", "X86ProcFamily", "IntelSLM",
 class Proc<string Name, list<SubtargetFeature> Features>
  : ProcessorModel<Name, GenericModel, Features>;
 
-def : Proc<"generic",         [FeatureSlowUAMem]>;
-def : Proc<"i386",            [FeatureSlowUAMem]>;
-def : Proc<"i486",            [FeatureSlowUAMem]>;
-def : Proc<"i586",            [FeatureSlowUAMem]>;
-def : Proc<"pentium",         [FeatureSlowUAMem]>;
-def : Proc<"pentium-mmx",     [FeatureSlowUAMem, FeatureMMX]>;
-def : Proc<"i686",            [FeatureSlowUAMem]>;
-def : Proc<"pentiumpro",      [FeatureSlowUAMem, FeatureCMOV]>;
-def : Proc<"pentium2",        [FeatureSlowUAMem, FeatureMMX, FeatureCMOV]>;
-def : Proc<"pentium3",        [FeatureSlowUAMem, FeatureSSE1]>;
-def : Proc<"pentium3m",       [FeatureSlowUAMem, FeatureSSE1, FeatureSlowBTMem]>;
-def : Proc<"pentium-m",       [FeatureSlowUAMem, FeatureSSE2, FeatureSlowBTMem]>;
-def : Proc<"pentium4",        [FeatureSlowUAMem, FeatureSSE2]>;
-def : Proc<"pentium4m",       [FeatureSlowUAMem, FeatureSSE2, FeatureSlowBTMem]>;
+def : Proc<"generic",         [FeatureSlowUAMem16]>;
+def : Proc<"i386",            [FeatureSlowUAMem16]>;
+def : Proc<"i486",            [FeatureSlowUAMem16]>;
+def : Proc<"i586",            [FeatureSlowUAMem16]>;
+def : Proc<"pentium",         [FeatureSlowUAMem16]>;
+def : Proc<"pentium-mmx",     [FeatureSlowUAMem16, FeatureMMX]>;
+def : Proc<"i686",            [FeatureSlowUAMem16]>;
+def : Proc<"pentiumpro",      [FeatureSlowUAMem16, FeatureCMOV]>;
+def : Proc<"pentium2",        [FeatureSlowUAMem16, FeatureMMX, FeatureCMOV]>;
+def : Proc<"pentium3",        [FeatureSlowUAMem16, FeatureSSE1]>;
+def : Proc<"pentium3m",       [FeatureSlowUAMem16, FeatureSSE1,
+                               FeatureSlowBTMem]>;
+def : Proc<"pentium-m",       [FeatureSlowUAMem16, FeatureSSE2,
+                               FeatureSlowBTMem]>;
+def : Proc<"pentium4",        [FeatureSlowUAMem16, FeatureSSE2]>;
+def : Proc<"pentium4m",       [FeatureSlowUAMem16, FeatureSSE2,
+                               FeatureSlowBTMem]>;
 
 // Intel Core Duo.
 def : ProcessorModel<"yonah", SandyBridgeModel,
-                     [FeatureSlowUAMem, FeatureSSE3, FeatureSlowBTMem]>;
+                     [FeatureSlowUAMem16, FeatureSSE3, FeatureSlowBTMem]>;
 
 // NetBurst.
-def : Proc<"prescott", [FeatureSlowUAMem, FeatureSSE3, FeatureSlowBTMem]>;
-def : Proc<"nocona",   [FeatureSlowUAMem, FeatureSSE3, FeatureCMPXCHG16B,
+def : Proc<"prescott", [FeatureSlowUAMem16, FeatureSSE3, FeatureSlowBTMem]>;
+def : Proc<"nocona",   [FeatureSlowUAMem16, FeatureSSE3, FeatureCMPXCHG16B,
                         FeatureSlowBTMem]>;
 
 // Intel Core 2 Solo/Duo.
 def : ProcessorModel<"core2", SandyBridgeModel,
-                     [FeatureSlowUAMem, FeatureSSSE3, FeatureCMPXCHG16B,
+                     [FeatureSlowUAMem16, FeatureSSSE3, FeatureCMPXCHG16B,
                       FeatureSlowBTMem]>;
 def : ProcessorModel<"penryn", SandyBridgeModel,
-                     [FeatureSlowUAMem, FeatureSSE41, FeatureCMPXCHG16B,
+                     [FeatureSlowUAMem16, FeatureSSE41, FeatureCMPXCHG16B,
                       FeatureSlowBTMem]>;
 
 // Atom CPUs.
 class BonnellProc<string Name> : ProcessorModel<Name, AtomModel, [
                                    ProcIntelAtom,
-                                   FeatureSlowUAMem,
+                                   FeatureSlowUAMem16,
                                    FeatureSSSE3,
                                    FeatureCMPXCHG16B,
                                    FeatureMOVBE,
@@ -399,38 +403,38 @@ def : SkylakeProc<"skx">; // Legacy alias.
 
 // AMD CPUs.
 
-def : Proc<"k6",              [FeatureSlowUAMem, FeatureMMX]>;
-def : Proc<"k6-2",            [FeatureSlowUAMem, Feature3DNow]>;
-def : Proc<"k6-3",            [FeatureSlowUAMem, Feature3DNow]>;
-def : Proc<"athlon",          [FeatureSlowUAMem, Feature3DNowA,
+def : Proc<"k6",              [FeatureSlowUAMem16, FeatureMMX]>;
+def : Proc<"k6-2",            [FeatureSlowUAMem16, Feature3DNow]>;
+def : Proc<"k6-3",            [FeatureSlowUAMem16, Feature3DNow]>;
+def : Proc<"athlon",          [FeatureSlowUAMem16, Feature3DNowA,
                                FeatureSlowBTMem, FeatureSlowSHLD]>;
-def : Proc<"athlon-tbird",    [FeatureSlowUAMem, Feature3DNowA,
+def : Proc<"athlon-tbird",    [FeatureSlowUAMem16, Feature3DNowA,
                                FeatureSlowBTMem, FeatureSlowSHLD]>;
-def : Proc<"athlon-4",        [FeatureSlowUAMem, FeatureSSE1, Feature3DNowA,
+def : Proc<"athlon-4",        [FeatureSlowUAMem16, FeatureSSE1, Feature3DNowA,
                                FeatureSlowBTMem, FeatureSlowSHLD]>;
-def : Proc<"athlon-xp",       [FeatureSlowUAMem, FeatureSSE1, Feature3DNowA,
+def : Proc<"athlon-xp",       [FeatureSlowUAMem16, FeatureSSE1, Feature3DNowA,
                                FeatureSlowBTMem, FeatureSlowSHLD]>;
-def : Proc<"athlon-mp",       [FeatureSlowUAMem, FeatureSSE1, Feature3DNowA,
+def : Proc<"athlon-mp",       [FeatureSlowUAMem16, FeatureSSE1, Feature3DNowA,
                                FeatureSlowBTMem, FeatureSlowSHLD]>;
-def : Proc<"k8",              [FeatureSlowUAMem, FeatureSSE2, Feature3DNowA,
+def : Proc<"k8",              [FeatureSlowUAMem16, FeatureSSE2, Feature3DNowA,
                                Feature64Bit, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
-def : Proc<"opteron",         [FeatureSlowUAMem, FeatureSSE2, Feature3DNowA,
+def : Proc<"opteron",         [FeatureSlowUAMem16, FeatureSSE2, Feature3DNowA,
                                Feature64Bit, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
-def : Proc<"athlon64",        [FeatureSlowUAMem, FeatureSSE2,   Feature3DNowA,
+def : Proc<"athlon64",        [FeatureSlowUAMem16, FeatureSSE2,   Feature3DNowA,
                                Feature64Bit, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
-def : Proc<"athlon-fx",       [FeatureSlowUAMem, FeatureSSE2,   Feature3DNowA,
+def : Proc<"athlon-fx",       [FeatureSlowUAMem16, FeatureSSE2,   Feature3DNowA,
                                Feature64Bit, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
-def : Proc<"k8-sse3",         [FeatureSlowUAMem, FeatureSSE3,   Feature3DNowA,
+def : Proc<"k8-sse3",         [FeatureSlowUAMem16, FeatureSSE3,   Feature3DNowA,
                                FeatureCMPXCHG16B, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
-def : Proc<"opteron-sse3",    [FeatureSlowUAMem, FeatureSSE3,   Feature3DNowA,
+def : Proc<"opteron-sse3",    [FeatureSlowUAMem16, FeatureSSE3,   Feature3DNowA,
                                FeatureCMPXCHG16B, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
-def : Proc<"athlon64-sse3",   [FeatureSlowUAMem, FeatureSSE3,   Feature3DNowA,
+def : Proc<"athlon64-sse3",   [FeatureSlowUAMem16, FeatureSSE3,   Feature3DNowA,
                                FeatureCMPXCHG16B, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
 def : Proc<"amdfam10",        [FeatureSSE4A,
@@ -483,12 +487,12 @@ def : Proc<"bdver4",          [FeatureAVX2, FeatureXOP, FeatureFMA4,
                                FeatureTBM, FeatureFMA, FeatureSSE4A,
                                FeatureFSGSBase]>;
 
-def : Proc<"geode",           [FeatureSlowUAMem, Feature3DNowA]>;
+def : Proc<"geode",           [FeatureSlowUAMem16, Feature3DNowA]>;
 
-def : Proc<"winchip-c6",      [FeatureSlowUAMem, FeatureMMX]>;
-def : Proc<"winchip2",        [FeatureSlowUAMem, Feature3DNow]>;
-def : Proc<"c3",              [FeatureSlowUAMem, Feature3DNow]>;
-def : Proc<"c3-2",            [FeatureSlowUAMem, FeatureSSE1]>;
+def : Proc<"winchip-c6",      [FeatureSlowUAMem16, FeatureMMX]>;
+def : Proc<"winchip2",        [FeatureSlowUAMem16, Feature3DNow]>;
+def : Proc<"c3",              [FeatureSlowUAMem16, Feature3DNow]>;
+def : Proc<"c3-2",            [FeatureSlowUAMem16, FeatureSSE1]>;
 
 // We also provide a generic 64-bit specific x86 processor model which tries to
 // be good for modern chips without enabling instruction set encodings past the
