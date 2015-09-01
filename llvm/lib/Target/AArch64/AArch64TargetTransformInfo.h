@@ -75,6 +75,8 @@ public:
   /// \name Vector TTI Implementations
   /// @{
 
+  bool enableInterleavedAccessVectorization() { return true; }
+
   unsigned getNumberOfRegisters(bool Vector) {
     if (Vector) {
       if (ST->hasNEON())
