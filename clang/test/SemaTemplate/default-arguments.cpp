@@ -166,3 +166,9 @@ namespace NondefDecls {
   }
   template void f1<int>();  // expected-note{{in instantiation of function template specialization 'NondefDecls::f1<int>' requested here}}
 }
+
+template <typename T>
+struct C {
+  C(T t = ); // expected-error {{expected expression}}
+};
+C<int> obj;
