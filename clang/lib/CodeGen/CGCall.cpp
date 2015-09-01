@@ -1497,7 +1497,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     // parse that and add it to the feature set.
     StringRef TargetCPU = getTarget().getTargetOpts().CPU;
     const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(TargetDecl);
-    if (FD && FD->getAttr<TargetAttr>()) {
+    if (FD && FD->hasAttr<TargetAttr>()) {
       llvm::StringMap<bool> FeatureMap;
       const auto *TD = FD->getAttr<TargetAttr>();
 
