@@ -636,7 +636,7 @@ FormatManager::GetTypeForCache (ValueObject& valobj,
     return ConstString();
 }
 
-static std::initializer_list<lldb::LanguageType>
+static std::vector<lldb::LanguageType>
 GetCandidateLanguages (ValueObject& valobj)
 {
     lldb::LanguageType lang_type = valobj.GetObjectRuntimeLanguage();
