@@ -408,6 +408,12 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
 };
 }
 
+template <class ELFT>
+static bool cmpAlign(const DefinedCommon<ELFT> *A,
+                     const DefinedCommon<ELFT> *B) {
+  return A->Sym.st_value > B->Sym.st_value;
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT> *> Map;
@@ -438,19 +444,25 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   SymTable.BSSSec = getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
   OutputSection<ELFT> *BSSSec = SymTable.BSSSec;
-  uintX_t Off = BSSSec->getSize();
   // FIXME: Try to avoid the extra walk over all global symbols.
+  std::vector<DefinedCommon<ELFT> *> CommonSymbols;
   for (auto &P : Symtab.getSymbols()) {
     SymbolBody *Body = P.second->Body;
-    auto *C = dyn_cast<DefinedCommon<ELFT>>(Body);
-    if (!C)
-      continue;
+    if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
+      CommonSymbols.push_back(C);
+  }
+
+  // Sort the common symbols by alignment as an heuristic to pack them better.
+  std::stable_sort(CommonSymbols.begin(), CommonSymbols.end(), cmpAlign<ELFT>);
+  uintX_t Off = BSSSec->getSize();
+  for (DefinedCommon<ELFT> *C : CommonSymbols) {
     const Elf_Sym &Sym = C->Sym;
     uintX_t Align = Sym.st_value;
     Off = RoundUpToAlignment(Off, Align);
     C->OffsetInBSS = Off;
     Off += Sym.st_size;
   }
+
   BSSSec->setSize(Off);
 }
 

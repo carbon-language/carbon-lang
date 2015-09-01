@@ -11,7 +11,17 @@
 // CHECK-NEXT:   SHF_WRITE
 // CHECK-NEXT: ]
 // CHECK-NEXT: Address: 0x1000
+// CHECK-NEXT: Offset:
+// CHECK-NEXT: Size: 18
 
+
+// CHECK:      Name: sym3
+// CHECK-NEXT: Value: 0x1010
+// CHECK-NEXT: Size: 2
+// CHECK-NEXT: Binding: Global
+// CHECK-NEXT: Type: Object
+// CHECK-NEXT: Other: 0
+// CHECK-NEXT: Section: .bss
 
 // CHECK:      Name: sym2
 // CHECK-NEXT: Value: 0x1008
@@ -35,3 +45,4 @@ _start:
 
 .comm sym1,4,4
 .comm sym2,8,4
+.comm sym3,2,2
