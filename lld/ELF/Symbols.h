@@ -56,6 +56,10 @@ public:
   // Returns the symbol name.
   StringRef getName() const { return Name; }
 
+  uint8_t getMostConstrainingVisibility() const {
+    return MostConstrainingVisibility;
+  }
+
   // A SymbolBody has a backreference to a Symbol. Originally they are
   // doubly-linked. A backreference will never change. But the pointer
   // in the Symbol may be mutated by the resolver. If you have a
@@ -71,12 +75,14 @@ public:
   template <class ELFT> int compare(SymbolBody *Other);
 
 protected:
-  SymbolBody(Kind K, StringRef Name, bool IsWeak)
-      : SymbolKind(K), IsWeak(IsWeak), Name(Name) {}
+  SymbolBody(Kind K, StringRef Name, bool IsWeak, uint8_t Visibility)
+      : SymbolKind(K), IsWeak(IsWeak), MostConstrainingVisibility(Visibility),
+        Name(Name) {}
 
 protected:
   const unsigned SymbolKind : 8;
   const unsigned IsWeak : 1;
+  unsigned MostConstrainingVisibility : 2;
   StringRef Name;
   Symbol *Backref = nullptr;
 };
@@ -92,8 +98,9 @@ template <class ELFT> class ELFSymbolBody : public SymbolBody {
 protected:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   ELFSymbolBody(Kind K, StringRef Name, const Elf_Sym &Sym)
-      : SymbolBody(K, Name, Sym.getBinding() == llvm::ELF::STB_WEAK), Sym(Sym) {
-  }
+      : SymbolBody(K, Name, Sym.getBinding() == llvm::ELF::STB_WEAK,
+                   Sym.getVisibility()),
+        Sym(Sym) {}
 
 public:
   const Elf_Sym &Sym;

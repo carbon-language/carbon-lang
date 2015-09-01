@@ -13,9 +13,18 @@
 #include "InputFiles.h"
 
 using namespace llvm::object;
+using namespace llvm::ELF;
 
 using namespace lld;
 using namespace lld::elf2;
+
+static uint8_t getMinVisibility(uint8_t VA, uint8_t VB) {
+  if (VA == STV_DEFAULT)
+    return VB;
+  if (VB == STV_DEFAULT)
+    return VA;
+  return std::min(VA, VB);
+}
 
 // Returns 1, 0 or -1 if this symbol should take precedence
 // over the Other, tie or lose, respectively.
@@ -26,6 +35,11 @@ template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
   // Normalize
   if (L > R)
     return -Other->compare<ELFT>(this);
+
+  uint8_t LV = getMostConstrainingVisibility();
+  uint8_t RV = Other->getMostConstrainingVisibility();
+  MostConstrainingVisibility = getMinVisibility(LV, RV);
+  Other->MostConstrainingVisibility = MostConstrainingVisibility;
 
   if (L != R)
     return -1;

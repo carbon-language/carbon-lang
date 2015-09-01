@@ -304,7 +304,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     SymbolBody *Body = Sym->Body;
     const Elf_Sym &InputSym = cast<ELFSymbolBody<ELFT>>(Body)->Sym;
 
-    uint8_t V = InputSym.getVisibility();
+    uint8_t V = Body->getMostConstrainingVisibility();
     if (V != STV_DEFAULT && V != STV_PROTECTED)
       continue;
 
@@ -331,7 +331,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     uint8_t Binding = InputSym.getBinding();
     ESym->setBindingAndType(Binding, Type);
     ESym->st_size = InputSym.st_size;
-    ESym->st_other = InputSym.st_other;
+    uint8_t Other = InputSym.st_other;
+    ESym->st_other = (Other & ~0x3) | Body->getMostConstrainingVisibility();
     if (InputSym.isAbsolute()) {
       ESym->st_shndx = SHN_ABS;
       ESym->st_value = InputSym.st_value;
@@ -454,8 +455,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     SymbolBody *Body = P.second->Body;
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
-    auto *E = cast<ELFSymbolBody<ELFT>>(Body);
-    uint8_t V = E->Sym.getVisibility();
+    uint8_t V = Body->getMostConstrainingVisibility();
     if (V != STV_DEFAULT && V != STV_PROTECTED)
       continue;
     NumVisible++;
