@@ -352,8 +352,7 @@ ProcessElfCore::Clear()
     m_thread_list.Clear();
     m_os = llvm::Triple::UnknownOS;
 
-    static const auto s_default_unix_signals_sp = std::make_shared<UnixSignals>();
-    SetUnixSignals(s_default_unix_signals_sp);
+    SetUnixSignals(std::make_shared<UnixSignals>());
 }
 
 void

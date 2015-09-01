@@ -1432,7 +1432,7 @@ public:
     Signal (int signal);
 
     void
-    SetUnixSignals(const lldb::UnixSignalsSP &signals_sp);
+    SetUnixSignals(lldb::UnixSignalsSP &&signals_sp);
 
     const lldb::UnixSignalsSP &
     GetUnixSignals();

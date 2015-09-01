@@ -2904,6 +2904,12 @@ ProcessGDBRemote::SetLastStopPacket (const StringExtractorGDBRemote &response)
     }
 }
 
+void
+ProcessGDBRemote::SetUnixSignals(const UnixSignalsSP &signals_sp)
+{
+    Process::SetUnixSignals(std::make_shared<GDBRemoteSignals>(signals_sp));
+}
+
 //------------------------------------------------------------------
 // Process Queries
 //------------------------------------------------------------------

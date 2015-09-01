@@ -152,6 +152,9 @@ public:
     void
     RefreshStateAfterStop() override;
 
+    void
+    SetUnixSignals(const lldb::UnixSignalsSP &signals_sp);
+
     //------------------------------------------------------------------
     // Process Queries
     //------------------------------------------------------------------
