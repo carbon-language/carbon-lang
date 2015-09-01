@@ -114,6 +114,12 @@ if (CXX_SUPPORTS_NO_DEPRECATED_REGISTER)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register")
 endif ()
 
+check_cxx_compiler_flag("-Wno-vla-extension"
+                        CXX_SUPPORTS_NO_VLA_EXTENSION)
+if (CXX_SUPPORTS_NO_VLA_EXTENSION)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-vla-extension")
+endif ()
+
 # Disable MSVC warnings
 if( MSVC )
   add_definitions(
