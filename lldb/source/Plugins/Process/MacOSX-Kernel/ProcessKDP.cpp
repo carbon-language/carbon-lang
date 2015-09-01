@@ -131,27 +131,27 @@ ProcessKDP::Terminate()
 
 
 lldb::ProcessSP
-ProcessKDP::CreateInstance (Target &target, 
+ProcessKDP::CreateInstance (TargetSP target_sp,
                             Listener &listener,
                             const FileSpec *crash_file_path)
 {
     lldb::ProcessSP process_sp;
     if (crash_file_path == NULL)
-        process_sp.reset(new ProcessKDP (target, listener));
+        process_sp.reset(new ProcessKDP (target_sp, listener));
     return process_sp;
 }
 
 bool
-ProcessKDP::CanDebug(Target &target, bool plugin_specified_by_name)
+ProcessKDP::CanDebug(TargetSP target_sp, bool plugin_specified_by_name)
 {
     if (plugin_specified_by_name)
         return true;
 
     // For now we are just making sure the file exists for a given module
-    Module *exe_module = target.GetExecutableModulePointer();
+    Module *exe_module = target_sp->GetExecutableModulePointer();
     if (exe_module)
     {
-        const llvm::Triple &triple_ref = target.GetArchitecture().GetTriple();
+        const llvm::Triple &triple_ref = target_sp->GetArchitecture().GetTriple();
         switch (triple_ref.getOS())
         {
             case llvm::Triple::Darwin:  // Should use "macosx" for desktop and "ios" for iOS, but accept darwin just in case
@@ -176,8 +176,8 @@ ProcessKDP::CanDebug(Target &target, bool plugin_specified_by_name)
 //----------------------------------------------------------------------
 // ProcessKDP constructor
 //----------------------------------------------------------------------
-ProcessKDP::ProcessKDP(Target& target, Listener &listener) :
-    Process (target, listener),
+ProcessKDP::ProcessKDP(TargetSP target_sp, Listener &listener) :
+    Process (target_sp, listener),
     m_comm("lldb.process.kdp-remote.communication"),
     m_async_broadcaster (NULL, "lldb.process.kdp-remote.async-broadcaster"),
     m_dyld_plugin_name (),
@@ -292,7 +292,9 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
                     uint32_t sub = m_comm.GetCPUSubtype();
                     ArchSpec kernel_arch;
                     kernel_arch.SetArchitecture(eArchTypeMachO, cpu, sub);
-                    m_target.SetArchitecture(kernel_arch);
+                    Target &target = GetTarget();
+                    
+                    target.SetArchitecture(kernel_arch);
 
                     /* Get the kernel's UUID and load address via KDP_KERNELVERSION packet.  */
                     /* An EFI kdp session has neither UUID nor load address. */
@@ -314,7 +316,7 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
                             // from the dSYM, that can load all of the symbols.
                             ModuleSpec module_spec;
                             module_spec.GetUUID() = kernel_uuid;
-                            module_spec.GetArchitecture() = m_target.GetArchitecture();
+                            module_spec.GetArchitecture() = target.GetArchitecture();
 
                             // Lookup UUID locally, before attempting dsymForUUID like action
                             module_spec.GetSymbolFileSpec() = Symbols::LocateExecutableSymbolFile(module_spec);
@@ -325,15 +327,15 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
 
                             if (module_spec.GetFileSpec().Exists())
                             {
-                                ModuleSP module_sp(new Module (module_spec.GetFileSpec(), m_target.GetArchitecture()));
+                                ModuleSP module_sp(new Module (module_spec.GetFileSpec(), target.GetArchitecture()));
                                 if (module_sp.get() && module_sp->MatchesModuleSpec (module_spec))
                                 {
                                     // Get the current target executable
-                                    ModuleSP exe_module_sp (m_target.GetExecutableModule ());
+                                    ModuleSP exe_module_sp (target.GetExecutableModule ());
 
                                     // Make sure you don't already have the right module loaded and they will be uniqued
                                     if (exe_module_sp.get() != module_sp.get())
-                                        m_target.SetExecutableModule (module_sp, false);
+                                        target.SetExecutableModule (module_sp, false);
                                 }
                             }
                         }
@@ -352,7 +354,7 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
                     SetID (1);
                     GetThreadList ();
                     SetPrivateState (eStateStopped);
-                    StreamSP async_strm_sp(m_target.GetDebugger().GetAsyncOutputStream());
+                    StreamSP async_strm_sp(target.GetDebugger().GetAsyncOutputStream());
                     if (async_strm_sp)
                     {
                         const char *cstr;
