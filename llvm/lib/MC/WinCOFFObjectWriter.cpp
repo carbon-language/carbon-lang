@@ -1037,10 +1037,11 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
         continue;
 
       if ((*i)->Header.PointerToRawData != 0) {
-        assert(OS.tell() <= (*i)->Header.PointerToRawData &&
+        assert(getStream().tell() <= (*i)->Header.PointerToRawData &&
                "Section::PointerToRawData is insane!");
 
-        unsigned SectionDataPadding = (*i)->Header.PointerToRawData - OS.tell();
+        unsigned SectionDataPadding =
+            (*i)->Header.PointerToRawData - getStream().tell();
         assert(SectionDataPadding < 4 &&
                "Should only need at most three bytes of padding!");
 
@@ -1050,7 +1051,7 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
       }
 
       if ((*i)->Relocations.size() > 0) {
-        assert(OS.tell() == (*i)->Header.PointerToRelocations &&
+        assert(getStream().tell() == (*i)->Header.PointerToRelocations &&
                "Section::PointerToRelocations is insane!");
 
         if ((*i)->Relocations.size() >= 0xffff) {
@@ -1071,14 +1072,14 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
     }
   }
 
-  assert(OS.tell() == Header.PointerToSymbolTable &&
+  assert(getStream().tell() == Header.PointerToSymbolTable &&
          "Header::PointerToSymbolTable is insane!");
 
   for (auto &Symbol : Symbols)
     if (Symbol->getIndex() != -1)
       WriteSymbol(*Symbol);
 
-  OS.write(Strings.data().data(), Strings.data().size());
+  getStream().write(Strings.data().data(), Strings.data().size());
 }
 
 MCWinCOFFObjectTargetWriter::MCWinCOFFObjectTargetWriter(unsigned Machine_)

@@ -40,14 +40,14 @@ class MCObjectWriter {
   MCObjectWriter(const MCObjectWriter &) = delete;
   void operator=(const MCObjectWriter &) = delete;
 
-protected:
-  raw_pwrite_stream &OS;
+  raw_pwrite_stream *OS;
 
+protected:
   unsigned IsLittleEndian : 1;
 
 protected: // Can only create subclasses.
   MCObjectWriter(raw_pwrite_stream &OS, bool IsLittleEndian)
-      : OS(OS), IsLittleEndian(IsLittleEndian) {}
+      : OS(&OS), IsLittleEndian(IsLittleEndian) {}
 
 public:
   virtual ~MCObjectWriter();
@@ -57,7 +57,8 @@ public:
 
   bool isLittleEndian() const { return IsLittleEndian; }
 
-  raw_ostream &getStream() { return OS; }
+  raw_pwrite_stream &getStream() { return *OS; }
+  void setStream(raw_pwrite_stream &NewOS) { OS = &NewOS; }
 
   /// \name High-Level API
   /// @{
@@ -113,30 +114,30 @@ public:
   /// \name Binary Output
   /// @{
 
-  void write8(uint8_t Value) { OS << char(Value); }
+  void write8(uint8_t Value) { *OS << char(Value); }
 
   void writeLE16(uint16_t Value) {
-    support::endian::Writer<support::little>(OS).write(Value);
+    support::endian::Writer<support::little>(*OS).write(Value);
   }
 
   void writeLE32(uint32_t Value) {
-    support::endian::Writer<support::little>(OS).write(Value);
+    support::endian::Writer<support::little>(*OS).write(Value);
   }
 
   void writeLE64(uint64_t Value) {
-    support::endian::Writer<support::little>(OS).write(Value);
+    support::endian::Writer<support::little>(*OS).write(Value);
   }
 
   void writeBE16(uint16_t Value) {
-    support::endian::Writer<support::big>(OS).write(Value);
+    support::endian::Writer<support::big>(*OS).write(Value);
   }
 
   void writeBE32(uint32_t Value) {
-    support::endian::Writer<support::big>(OS).write(Value);
+    support::endian::Writer<support::big>(*OS).write(Value);
   }
 
   void writeBE64(uint64_t Value) {
-    support::endian::Writer<support::big>(OS).write(Value);
+    support::endian::Writer<support::big>(*OS).write(Value);
   }
 
   void write16(uint16_t Value) {
@@ -164,9 +165,9 @@ public:
     const char Zeros[16] = {0};
 
     for (unsigned i = 0, e = N / 16; i != e; ++i)
-      OS << StringRef(Zeros, 16);
+      *OS << StringRef(Zeros, 16);
 
-    OS << StringRef(Zeros, N % 16);
+    *OS << StringRef(Zeros, N % 16);
   }
 
   void writeBytes(const SmallVectorImpl<char> &ByteVec,
@@ -180,7 +181,7 @@ public:
     assert(
         (ZeroFillSize == 0 || Str.size() <= ZeroFillSize) &&
         "data size greater than fill size, unexpected large write will occur");
-    OS << Str;
+    *OS << Str;
     if (ZeroFillSize)
       WriteZeros(ZeroFillSize - Str.size());
   }

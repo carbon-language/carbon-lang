@@ -157,9 +157,9 @@ class ELFObjectWriter : public MCObjectWriter {
 
     template <typename T> void write(T Val) {
       if (IsLittleEndian)
-        support::endian::Writer<support::little>(OS).write(Val);
+        support::endian::Writer<support::little>(getStream()).write(Val);
       else
-        support::endian::Writer<support::big>(OS).write(Val);
+        support::endian::Writer<support::big>(getStream()).write(Val);
     }
 
     void writeHeader(const MCAssembler &Asm);
@@ -232,7 +232,7 @@ class ELFObjectWriter : public MCObjectWriter {
 }
 
 void ELFObjectWriter::align(unsigned Alignment) {
-  uint64_t Padding = OffsetToAlignment(OS.tell(), Alignment);
+  uint64_t Padding = OffsetToAlignment(getStream().tell(), Alignment);
   WriteZeros(Padding);
 }
 
@@ -764,7 +764,7 @@ void ELFObjectWriter::computeSymbolTable(
   SymbolTableIndex = addToSectionTable(SymtabSection);
 
   align(SymtabSection->getAlignment());
-  uint64_t SecStart = OS.tell();
+  uint64_t SecStart = getStream().tell();
 
   // The first entry is the undefined symbol entry.
   Writer.writeSymbol(0, 0, 0, 0, 0, 0, false);
@@ -911,7 +911,7 @@ void ELFObjectWriter::computeSymbolTable(
     assert(MSD.Symbol->getBinding() != ELF::STB_LOCAL);
   }
 
-  uint64_t SecEnd = OS.tell();
+  uint64_t SecEnd = getStream().tell();
   SectionOffsets[SymtabSection] = std::make_pair(SecStart, SecEnd);
 
   ArrayRef<uint32_t> ShndxIndexes = Writer.getShndxIndexes();
@@ -921,12 +921,12 @@ void ELFObjectWriter::computeSymbolTable(
   }
   assert(SymtabShndxSectionIndex != 0);
 
-  SecStart = OS.tell();
+  SecStart = getStream().tell();
   const MCSectionELF *SymtabShndxSection =
       SectionTable[SymtabShndxSectionIndex - 1];
   for (uint32_t Index : ShndxIndexes)
     write(Index);
-  SecEnd = OS.tell();
+  SecEnd = getStream().tell();
   SectionOffsets[SymtabShndxSection] = std::make_pair(SecStart, SecEnd);
 }
 
@@ -955,31 +955,6 @@ ELFObjectWriter::createRelocationSection(MCContext &Ctx,
       Flags, EntrySize, Sec.getGroup(), &Sec);
   RelaSection->setAlignment(is64Bit() ? 8 : 4);
   return RelaSection;
-}
-
-static SmallVector<char, 128>
-getUncompressedData(const MCAsmLayout &Layout,
-                    const MCSection::FragmentListType &Fragments) {
-  SmallVector<char, 128> UncompressedData;
-  for (const MCFragment &F : Fragments) {
-    const SmallVectorImpl<char> *Contents;
-    switch (F.getKind()) {
-    case MCFragment::FT_Data:
-      Contents = &cast<MCDataFragment>(F).getContents();
-      break;
-    case MCFragment::FT_Dwarf:
-      Contents = &cast<MCDwarfLineAddrFragment>(F).getContents();
-      break;
-    case MCFragment::FT_DwarfFrame:
-      Contents = &cast<MCDwarfCallFrameFragment>(F).getContents();
-      break;
-    default:
-      llvm_unreachable(
-          "Not expecting any other fragment types in a debug_* section");
-    }
-    UncompressedData.append(Contents->begin(), Contents->end());
-  }
-  return UncompressedData;
 }
 
 // Include the debug info compression header:
@@ -1016,27 +991,29 @@ void ELFObjectWriter::writeSectionData(const MCAssembler &Asm, MCSection &Sec,
     return;
   }
 
-  // Gather the uncompressed data from all the fragments.
-  const MCSection::FragmentListType &Fragments = Section.getFragmentList();
-  SmallVector<char, 128> UncompressedData =
-      getUncompressedData(Layout, Fragments);
+  SmallVector<char, 128> UncompressedData;
+  raw_svector_ostream VecOS(UncompressedData);
+  raw_pwrite_stream &OldStream = getStream();
+  setStream(VecOS);
+  Asm.writeSectionData(&Section, Layout);
+  setStream(OldStream);
 
   SmallVector<char, 128> CompressedContents;
   zlib::Status Success = zlib::compress(
       StringRef(UncompressedData.data(), UncompressedData.size()),
       CompressedContents);
   if (Success != zlib::StatusOK) {
-    Asm.writeSectionData(&Section, Layout);
+    getStream() << UncompressedData;
     return;
   }
 
   if (!prependCompressionHeader(UncompressedData.size(), CompressedContents)) {
-    Asm.writeSectionData(&Section, Layout);
+    getStream() << UncompressedData;
     return;
   }
   Asm.getContext().renameELFSection(&Section,
                                     (".z" + SectionName.drop_front(1)).str());
-  OS << CompressedContents;
+  getStream() << CompressedContents;
 }
 
 void ELFObjectWriter::WriteSecHdrEntry(uint32_t Name, uint32_t Type,
@@ -1100,7 +1077,7 @@ void ELFObjectWriter::writeRelocations(const MCAssembler &Asm,
 
 const MCSectionELF *ELFObjectWriter::createStringTable(MCContext &Ctx) {
   const MCSectionELF *StrtabSection = SectionTable[StringTableIndex - 1];
-  OS << StrTabBuilder.data();
+  getStream() << StrTabBuilder.data();
   return StrtabSection;
 }
 
@@ -1209,12 +1186,12 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
     align(Section.getAlignment());
 
     // Remember the offset into the file for this section.
-    uint64_t SecStart = OS.tell();
+    uint64_t SecStart = getStream().tell();
 
     const MCSymbolELF *SignatureSymbol = Section.getGroup();
     writeSectionData(Asm, Section, Layout);
 
-    uint64_t SecEnd = OS.tell();
+    uint64_t SecEnd = getStream().tell();
     SectionOffsets[&Section] = std::make_pair(SecStart, SecEnd);
 
     MCSectionELF *RelSection = createRelocationSection(Ctx, Section);
@@ -1246,7 +1223,7 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
     align(Group->getAlignment());
 
     // Remember the offset into the file for this section.
-    uint64_t SecStart = OS.tell();
+    uint64_t SecStart = getStream().tell();
 
     const MCSymbol *SignatureSymbol = Group->getGroup();
     assert(SignatureSymbol);
@@ -1256,7 +1233,7 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
       write(SecIndex);
     }
 
-    uint64_t SecEnd = OS.tell();
+    uint64_t SecEnd = getStream().tell();
     SectionOffsets[Group] = std::make_pair(SecStart, SecEnd);
   }
 
@@ -1267,25 +1244,25 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
     align(RelSection->getAlignment());
 
     // Remember the offset into the file for this section.
-    uint64_t SecStart = OS.tell();
+    uint64_t SecStart = getStream().tell();
 
     writeRelocations(Asm, *RelSection->getAssociatedSection());
 
-    uint64_t SecEnd = OS.tell();
+    uint64_t SecEnd = getStream().tell();
     SectionOffsets[RelSection] = std::make_pair(SecStart, SecEnd);
   }
 
   {
-    uint64_t SecStart = OS.tell();
+    uint64_t SecStart = getStream().tell();
     const MCSectionELF *Sec = createStringTable(Ctx);
-    uint64_t SecEnd = OS.tell();
+    uint64_t SecEnd = getStream().tell();
     SectionOffsets[Sec] = std::make_pair(SecStart, SecEnd);
   }
 
   uint64_t NaturalAlignment = is64Bit() ? 8 : 4;
   align(NaturalAlignment);
 
-  const unsigned SectionHeaderOffset = OS.tell();
+  const unsigned SectionHeaderOffset = getStream().tell();
 
   // ... then the section header table ...
   writeSectionHeader(Layout, SectionIndexMap, SectionOffsets);
@@ -1301,19 +1278,19 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
     uint64_t Val = SectionHeaderOffset;
     if (sys::IsLittleEndianHost != IsLittleEndian)
       sys::swapByteOrder(Val);
-    OS.pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
-              offsetof(ELF::Elf64_Ehdr, e_shoff));
+    getStream().pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
+                       offsetof(ELF::Elf64_Ehdr, e_shoff));
     NumSectionsOffset = offsetof(ELF::Elf64_Ehdr, e_shnum);
   } else {
     uint32_t Val = SectionHeaderOffset;
     if (sys::IsLittleEndianHost != IsLittleEndian)
       sys::swapByteOrder(Val);
-    OS.pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
-              offsetof(ELF::Elf32_Ehdr, e_shoff));
+    getStream().pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
+                       offsetof(ELF::Elf32_Ehdr, e_shoff));
     NumSectionsOffset = offsetof(ELF::Elf32_Ehdr, e_shnum);
   }
-  OS.pwrite(reinterpret_cast<char *>(&NumSections), sizeof(NumSections),
-            NumSectionsOffset);
+  getStream().pwrite(reinterpret_cast<char *>(&NumSections),
+                     sizeof(NumSections), NumSectionsOffset);
 }
 
 bool ELFObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(
