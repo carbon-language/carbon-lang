@@ -1584,13 +1584,14 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
         // and enter a new one we need to drop the old constraints.
         int SuccBBLoopDepth = getRelativeLoopDepth(SuccBBLoop);
         assert(std::abs(BBLoopDepth - SuccBBLoopDepth) <= 1);
-        if (BBLoopDepth > SuccBBLoopDepth)
-          CondSet = isl_set_remove_dims(CondSet, isl_dim_set, BBLoopDepth, 1);
-        else if (SuccBBLoopDepth > BBLoopDepth)
+        if (BBLoopDepth > SuccBBLoopDepth) {
+          CondSet = isl_set_project_out(CondSet, isl_dim_set, BBLoopDepth, 1);
+        } else if (SuccBBLoopDepth > BBLoopDepth) {
           CondSet = isl_set_add_dims(CondSet, isl_dim_set, 1);
-        else if (BBLoopDepth >= 0)
-          CondSet = isl_set_drop_constraints_involving_dims(
-              CondSet, isl_dim_set, BBLoopDepth, 1);
+        } else if (BBLoopDepth >= 0) {
+          CondSet = isl_set_project_out(CondSet, isl_dim_set, BBLoopDepth, 1);
+          CondSet = isl_set_add_dims(CondSet, isl_dim_set, 1);
+        }
       }
 
       // Set the domain for the successor or merge it with an existing domain in
