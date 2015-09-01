@@ -227,19 +227,42 @@ ProcessWinMiniDump::IsAlive()
     return true;
 }
 
+bool
+ProcessWinMiniDump::WarnBeforeDetach () const
+{
+    // Since this is post-mortem debugging, there's no need to warn the user
+    // that quitting the debugger will terminate the process.
+    return false;
+}
+
 size_t
 ProcessWinMiniDump::ReadMemory(lldb::addr_t addr, void *buf, size_t size, Error &error)
 {
     // Don't allow the caching that lldb_private::Process::ReadMemory does
-    // since in core files we have it all cached our our core file anyway.
+    // since we have it all cached our our dump file anyway.
     return DoReadMemory(addr, buf, size, error);
 }
 
 size_t
 ProcessWinMiniDump::DoReadMemory(lldb::addr_t addr, void *buf, size_t size, Error &error)
 {
-    // TODO
-    return 0;
+    // I don't have a sense of how frequently this is called or how many memory
+    // ranges a mini dump typically has, so I'm not sure if searching for the
+    // appropriate range linearly each time is stupid.  Perhaps we should build
+    // an index for faster lookups.
+    Range range = {0};
+    if (!FindMemoryRange(addr, &range))
+    {
+        return 0;
+    }
+
+    // There's at least some overlap between the beginning of the desired range
+    // (addr) and the current range.  Figure out where the overlap begins and
+    // how much overlap there is, then copy it to the destination buffer.
+    const size_t offset = range.start - addr;
+    const size_t overlap = std::min(size, range.size - offset);
+    std::memcpy(buf, range.ptr + offset, overlap);
+    return overlap;
 }
 
 void
@@ -306,6 +329,54 @@ ProcessWinMiniDump::Data::~Data()
         m_dump_file = INVALID_HANDLE_VALUE;
     }
 }
+
+bool
+ProcessWinMiniDump::FindMemoryRange(lldb::addr_t addr, Range *range_out) const
+{
+    size_t stream_size = 0;
+    auto mem_list_stream = static_cast<const MINIDUMP_MEMORY_LIST *>(FindDumpStream(MemoryListStream, &stream_size));
+    if (mem_list_stream)
+    {
+        for (ULONG32 i = 0; i < mem_list_stream->NumberOfMemoryRanges; ++i) {
+            const MINIDUMP_MEMORY_DESCRIPTOR &mem_desc = mem_list_stream->MemoryRanges[i];
+            const MINIDUMP_LOCATION_DESCRIPTOR &loc_desc = mem_desc.Memory;
+            const lldb::addr_t range_start = mem_desc.StartOfMemoryRange;
+            const size_t range_size = loc_desc.DataSize;
+            if (range_start <= addr && addr < range_start + range_size)
+            {
+                range_out->start = range_start;
+                range_out->size = range_size;
+                range_out->ptr = reinterpret_cast<const uint8_t *>(m_data_up->m_base_addr) + loc_desc.Rva;
+                return true;
+            }
+        }
+    }
+
+    // Some mini dumps have a Memory64ListStream that captures all the heap
+    // memory.  We can't exactly use the same loop as above, because the mini
+    // dump uses slightly different data structures to describe those.
+    auto mem_list64_stream = static_cast<const MINIDUMP_MEMORY64_LIST *>(FindDumpStream(Memory64ListStream, &stream_size));
+    if (mem_list64_stream)
+    {
+        size_t base_rva = mem_list64_stream->BaseRva;
+        for (ULONG32 i = 0; i < mem_list64_stream->NumberOfMemoryRanges; ++i) {
+            const MINIDUMP_MEMORY_DESCRIPTOR64 &mem_desc = mem_list64_stream->MemoryRanges[i];
+            const lldb::addr_t range_start = mem_desc.StartOfMemoryRange;
+            const size_t range_size = mem_desc.DataSize;
+            if (range_start <= addr && addr < range_start + range_size)
+            {
+                range_out->start = range_start;
+                range_out->size = range_size;
+                range_out->ptr = reinterpret_cast<const uint8_t *>(m_data_up->m_base_addr) + base_rva;
+                return true;
+            }
+            base_rva += range_size;
+        }
+    }
+
+    return false;
+}
+
 
 Error
 ProcessWinMiniDump::MapMiniDumpIntoMemory(const char *file)
@@ -397,7 +468,8 @@ ProcessWinMiniDump::ReadModuleList() {
 }
 
 void *
-ProcessWinMiniDump::FindDumpStream(unsigned stream_number, size_t *size_out) {
+ProcessWinMiniDump::FindDumpStream(unsigned stream_number, size_t *size_out) const
+{
     void *stream = nullptr;
     *size_out = 0;
 
