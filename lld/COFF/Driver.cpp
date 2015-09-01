@@ -634,7 +634,7 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
 
   // Windows specific -- when we are creating a .dll file, we also
   // need to create a .lib file.
-  if (Config->DLL) {
+  if (!Config->Exports.empty() || Config->DLL) {
     fixupExports();
     writeImportLibrary();
     assignExportOrdinals();
