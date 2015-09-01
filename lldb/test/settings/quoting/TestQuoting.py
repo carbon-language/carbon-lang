@@ -38,7 +38,6 @@ class SettingsCommandTestCase(TestBase):
     def test_double_quote_escape2(self):
         self.do_test_args('"a b\\\\" c', 'a b\\\0c\0')
 
-    @expectedFailureWindows("http://llvm.org/pr24557")
     def test_single_in_double(self):
         self.do_test_args('"a\'b"', "a'b\0")
 
@@ -49,7 +48,6 @@ class SettingsCommandTestCase(TestBase):
     def test_combined(self):
         self.do_test_args('"a b"c\'d e\'', 'a bcd e\0')
 
-    @expectedFailureWindows("http://llvm.org/pr24557")
     def test_bare_single(self):
         self.do_test_args("a\\'b", "a'b\0")
 
