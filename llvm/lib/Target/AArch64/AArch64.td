@@ -32,6 +32,9 @@ def FeatureCrypto : SubtargetFeature<"crypto", "HasCrypto", "true",
 def FeatureCRC : SubtargetFeature<"crc", "HasCRC", "true",
   "Enable ARMv8 CRC-32 checksum instructions">;
 
+def FeaturePerfMon : SubtargetFeature<"perfmon", "HasPerfMon", "true",
+  "Enable ARMv8 PMUv3 Performance Monitors extension">;
+
 /// Cyclone has register move instructions which are "free".
 def FeatureZCRegMove : SubtargetFeature<"zcm", "HasZeroCycleRegMove", "true",
                                         "Has zero-cycle register moves">;
@@ -84,14 +87,16 @@ def ProcA53     : SubtargetFeature<"a53", "ARMProcFamily", "CortexA53",
                                    [FeatureFPARMv8,
                                    FeatureNEON,
                                    FeatureCrypto,
-                                   FeatureCRC]>;
+                                   FeatureCRC,
+                                   FeaturePerfMon]>;
 
 def ProcA57     : SubtargetFeature<"a57", "ARMProcFamily", "CortexA57",
                                    "Cortex-A57 ARM processors",
                                    [FeatureFPARMv8,
                                    FeatureNEON,
                                    FeatureCrypto,
-                                   FeatureCRC]>;
+                                   FeatureCRC,
+                                   FeaturePerfMon]>;
 
 def ProcCyclone : SubtargetFeature<"cyclone", "ARMProcFamily", "Cyclone",
                                    "Cyclone",
@@ -99,11 +104,13 @@ def ProcCyclone : SubtargetFeature<"cyclone", "ARMProcFamily", "Cyclone",
                                    FeatureNEON,
                                    FeatureCrypto,
                                    FeatureCRC,
+                                   FeaturePerfMon,
                                    FeatureZCRegMove, FeatureZCZeroing]>;
 
 def : ProcessorModel<"generic", NoSchedModel, [FeatureFPARMv8,
                                               FeatureNEON,
-                                              FeatureCRC]>;
+                                              FeatureCRC,
+                                              FeaturePerfMon]>;
 
 def : ProcessorModel<"cortex-a53", CortexA53Model, [ProcA53]>;
 def : ProcessorModel<"cortex-a57", CortexA57Model, [ProcA57]>;

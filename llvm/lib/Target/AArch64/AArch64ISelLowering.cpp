@@ -399,6 +399,11 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
 
   setOperationAction(ISD::PREFETCH, MVT::Other, Custom);
 
+  // Lower READCYCLECOUNTER using an mrs from PMCCNTR_EL0.
+  // This requires the Performance Monitors extension.
+  if (Subtarget->hasPerfMon())
+    setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Legal);
+
   if (Subtarget->isTargetMachO()) {
     // For iOS, we don't want to the normal expansion of a libcall to
     // sincos. We want to issue a libcall to __sincos_stret to avoid memory

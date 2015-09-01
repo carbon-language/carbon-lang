@@ -47,9 +47,9 @@ AArch64Subtarget::AArch64Subtarget(const Triple &TT, const std::string &CPU,
                                    const TargetMachine &TM, bool LittleEndian)
     : AArch64GenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
       HasV8_1aOps(false), HasFPARMv8(false), HasNEON(false), HasCrypto(false),
-      HasCRC(false), HasZeroCycleRegMove(false), HasZeroCycleZeroing(false),
-      StrictAlign(false), ReserveX18(false), IsLittle(LittleEndian),
-      CPUString(CPU), TargetTriple(TT), FrameLowering(),
+      HasCRC(false), HasPerfMon(false), HasZeroCycleRegMove(false),
+      HasZeroCycleZeroing(false), StrictAlign(false), ReserveX18(false),
+      IsLittle(LittleEndian), CPUString(CPU), TargetTriple(TT), FrameLowering(),
       InstrInfo(initializeSubtargetDependencies(FS)), TSInfo(),
       TLInfo(TM, *this) {}
 

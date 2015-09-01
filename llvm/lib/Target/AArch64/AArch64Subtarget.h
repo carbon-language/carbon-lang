@@ -44,6 +44,7 @@ protected:
   bool HasNEON;
   bool HasCrypto;
   bool HasCRC;
+  bool HasPerfMon;
 
   // HasZeroCycleRegMove - Has zero-cycle register mov instructions.
   bool HasZeroCycleRegMove;
@@ -114,6 +115,7 @@ public:
   bool hasNEON() const { return HasNEON; }
   bool hasCrypto() const { return HasCrypto; }
   bool hasCRC() const { return HasCRC; }
+  bool hasPerfMon() const { return HasPerfMon; }
 
   bool isLittleEndian() const { return IsLittle; }
 

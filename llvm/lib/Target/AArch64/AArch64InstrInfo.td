@@ -24,6 +24,7 @@ def HasCrypto        : Predicate<"Subtarget->hasCrypto()">,
                                  AssemblerPredicate<"FeatureCrypto", "crypto">;
 def HasCRC           : Predicate<"Subtarget->hasCRC()">,
                                  AssemblerPredicate<"FeatureCRC", "crc">;
+def HasPerfMon       : Predicate<"Subtarget->hasPerfMon()">;
 def IsLE             : Predicate<"Subtarget->isLittleEndian()">;
 def IsBE             : Predicate<"!Subtarget->isLittleEndian()">;
 def IsCyclone        : Predicate<"Subtarget->isCyclone()">;
@@ -403,6 +404,10 @@ def MSRpstate: MSRpstateI;
 // The thread pointer (on Linux, at least, where this has been implemented) is
 // TPIDR_EL0.
 def : Pat<(AArch64threadpointer), (MRS 0xde82)>;
+
+// The cycle counter PMC register is PMCCNTR_EL0.
+let Predicates = [HasPerfMon] in
+def : Pat<(readcyclecounter), (MRS 0xdce8)>;
 
 // Generic system instructions
 def SYSxt  : SystemXtI<0, "sys">;
