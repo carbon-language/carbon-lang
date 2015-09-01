@@ -12,11 +12,19 @@
 // CHECK-NEXT: ]
 // CHECK-NEXT: Address: 0x1000
 // CHECK-NEXT: Offset:
-// CHECK-NEXT: Size: 18
+// CHECK-NEXT: Size: 22
 
+
+// CHECK:      Name: sym4
+// CHECK-NEXT: Value: 0x1000
+// CHECK-NEXT: Size: 4
+// CHECK-NEXT: Binding: Global
+// CHECK-NEXT: Type: Object
+// CHECK-NEXT: Other: 0
+// CHECK-NEXT: Section: .bss
 
 // CHECK:      Name: sym3
-// CHECK-NEXT: Value: 0x1010
+// CHECK-NEXT: Value: 0x1014
 // CHECK-NEXT: Size: 2
 // CHECK-NEXT: Binding: Global
 // CHECK-NEXT: Type: Object
@@ -24,7 +32,7 @@
 // CHECK-NEXT: Section: .bss
 
 // CHECK:      Name: sym2
-// CHECK-NEXT: Value: 0x1008
+// CHECK-NEXT: Value: 0x100C
 // CHECK-NEXT: Size: 8
 // CHECK-NEXT: Binding: Global
 // CHECK-NEXT: Type: Object
@@ -32,7 +40,7 @@
 // CHECK-NEXT: Section: .bss
 
 // CHECK:      Name: sym1
-// CHECK-NEXT: Value: 0x1000
+// CHECK-NEXT: Value: 0x1004
 // CHECK-NEXT: Size: 8
 // CHECK-NEXT: Binding: Global
 // CHECK-NEXT: Type: Object
@@ -46,3 +54,4 @@ _start:
 .comm sym1,4,4
 .comm sym2,8,4
 .comm sym3,2,2
+.comm sym4,4,2

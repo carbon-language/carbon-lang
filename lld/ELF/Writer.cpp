@@ -411,7 +411,7 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
 template <class ELFT>
 static bool cmpAlign(const DefinedCommon<ELFT> *A,
                      const DefinedCommon<ELFT> *B) {
-  return A->Sym.st_value > B->Sym.st_value;
+  return A->MaxAlignment > B->MaxAlignment;
 }
 
 // Create output section objects and add them to OutputSections.
@@ -457,7 +457,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   uintX_t Off = BSSSec->getSize();
   for (DefinedCommon<ELFT> *C : CommonSymbols) {
     const Elf_Sym &Sym = C->Sym;
-    uintX_t Align = Sym.st_value;
+    uintX_t Align = C->MaxAlignment;
     Off = RoundUpToAlignment(Off, Align);
     C->OffsetInBSS = Off;
     Off += Sym.st_size;

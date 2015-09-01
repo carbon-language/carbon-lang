@@ -141,7 +141,9 @@ public:
   typedef typename std::conditional<ELFT::Is64Bits, uint64_t, uint32_t>::type
       uintX_t;
   explicit DefinedCommon(StringRef N, const Elf_Sym &Sym)
-      : Defined<ELFT>(Base::DefinedCommonKind, N, Sym) {}
+      : Defined<ELFT>(Base::DefinedCommonKind, N, Sym) {
+    MaxAlignment = Sym.st_value;
+  }
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedCommonKind;
@@ -150,6 +152,9 @@ public:
   // The output offset of this common symbol in the output bss. Computed by the
   // writer.
   uintX_t OffsetInBSS;
+
+  // The maximum alignment we have seen for this symbol.
+  uintX_t MaxAlignment;
 };
 
 // Regular defined symbols read from object file symbol tables.

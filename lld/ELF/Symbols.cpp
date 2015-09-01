@@ -33,10 +33,15 @@ template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
   if (L.first && L.second) {
     if (isCommon()) {
       if (Other->isCommon()) {
-        // FIXME: We also need to remember the alignment restriction.
-        if (cast<DefinedCommon<ELFT>>(this)->Sym.st_size >=
-            cast<DefinedCommon<ELFT>>(Other)->Sym.st_size)
+        auto *ThisC = cast<DefinedCommon<ELFT>>(this);
+        auto *OtherC = cast<DefinedCommon<ELFT>>(Other);
+        typename DefinedCommon<ELFT>::uintX_t MaxAlign =
+            std::max(ThisC->MaxAlignment, OtherC->MaxAlignment);
+        if (ThisC->Sym.st_size >= OtherC->Sym.st_size) {
+          ThisC->MaxAlignment = MaxAlign;
           return 1;
+        }
+        OtherC->MaxAlignment = MaxAlign;
         return -1;
       }
       return -1;
