@@ -1981,10 +1981,19 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     LineTableInfo &LineTable = SourceMgr.getLineTable();
 
     Record.clear();
-    // Emit the file names.
-    Record.push_back(LineTable.getNumFilenames());
-    for (unsigned I = 0, N = LineTable.getNumFilenames(); I != N; ++I)
-      AddPath(LineTable.getFilename(I), Record);
+
+    // Emit the needed file names.
+    llvm::DenseMap<int, int> FilenameMap;
+    for (const auto &L : LineTable) {
+      if (L.first.ID < 0)
+        continue;
+      for (auto &LE : L.second) {
+        if (FilenameMap.insert(std::make_pair(LE.FilenameID,
+                                              FilenameMap.size())).second)
+          AddPath(LineTable.getFilename(LE.FilenameID), Record);
+      }
+    }
+    Record.push_back(0);
 
     // Emit the line entries
     for (LineTableInfo::iterator L = LineTable.begin(), LEnd = LineTable.end();
@@ -2003,11 +2012,12 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
            LE != LEEnd; ++LE) {
         Record.push_back(LE->FileOffset);
         Record.push_back(LE->LineNo);
-        Record.push_back(LE->FilenameID);
+        Record.push_back(FilenameMap[LE->FilenameID]);
         Record.push_back((unsigned)LE->FileKind);
         Record.push_back(LE->IncludeOffset);
       }
     }
+
     Stream.EmitRecord(SOURCE_MANAGER_LINE_TABLE, Record);
   }
 }
