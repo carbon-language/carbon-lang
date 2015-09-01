@@ -147,31 +147,6 @@ func (d *DIBuilder) PopFunction() {
 	d.fnFile = ""
 }
 
-// Declare creates an llvm.dbg.declare call for the specified function
-// parameter or local variable.
-func (d *DIBuilder) Declare(b llvm.Builder, v ssa.Value, llv llvm.Value, paramIndex int) {
-	tag := tagAutoVariable
-	if paramIndex >= 0 {
-		tag = tagArgVariable
-	}
-	var diFile llvm.Metadata
-	var line int
-	if file := d.fset.File(v.Pos()); file != nil {
-		line = file.Line(v.Pos())
-		diFile = d.getFile(file)
-	}
-	localVar := d.builder.CreateLocalVariable(d.scope(), llvm.DILocalVariable{
-		Tag:   tag,
-		Name:  llv.Name(),
-		File:  diFile,
-		Line:  line,
-		ArgNo: paramIndex + 1,
-		Type:  d.DIType(v.Type()),
-	})
-	expr := d.builder.CreateExpression(nil)
-	d.builder.InsertDeclareAtEnd(llv, localVar, expr, b.GetInsertBlock())
-}
-
 // Value creates an llvm.dbg.value call for the specified register value.
 func (d *DIBuilder) Value(b llvm.Builder, v ssa.Value, llv llvm.Value, paramIndex int) {
 	// TODO(axw)
