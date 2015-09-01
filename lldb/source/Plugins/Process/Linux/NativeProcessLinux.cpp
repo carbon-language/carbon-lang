@@ -1794,14 +1794,20 @@ NativeProcessLinux::Detach ()
 {
     Error error;
 
-    // Tell ptrace to detach from the process.
-    if (GetID () != LLDB_INVALID_PROCESS_ID)
-        error = Detach (GetID ());
-
     // Stop monitoring the inferior.
     m_sigchld_handle.reset();
 
-    // No error.
+    // Tell ptrace to detach from the process.
+    if (GetID () == LLDB_INVALID_PROCESS_ID)
+        return error;
+
+    for (auto thread_sp : m_threads)
+    {
+        Error e = Detach(thread_sp->GetID());
+        if (e.Fail())
+            error = e; // Save the error, but still attempt to detach from other threads.
+    }
+
     return error;
 }
 
