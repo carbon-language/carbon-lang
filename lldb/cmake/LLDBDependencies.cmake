@@ -20,10 +20,6 @@ set( LLDB_USED_LIBS
   lldbPluginDynamicLoaderPosixDYLD
   lldbPluginDynamicLoaderHexagonDYLD
   lldbPluginDynamicLoaderWindowsDYLD
-  
-  lldbPluginCPlusPlusLanguage
-  lldbPluginObjCLanguage
-  lldbPluginObjCPlusPlusLanguage
 
   lldbPluginObjectFileELF
   lldbPluginObjectFileJIT

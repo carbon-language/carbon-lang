@@ -87,12 +87,6 @@ Language::ForEach (std::function<bool(Language*)> callback)
     }
 }
 
-lldb::TypeCategoryImplSP
-Language::GetFormatters ()
-{
-    return nullptr;
-}
-
 //----------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------

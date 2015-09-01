@@ -41,9 +41,6 @@
 #include "Plugins/Instruction/ARM64/EmulateInstructionARM64.h"
 #include "Plugins/InstrumentationRuntime/AddressSanitizer/AddressSanitizerRuntime.h"
 #include "Plugins/JITLoader/GDB/JITLoaderGDB.h"
-#include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
-#include "Plugins/Language/ObjC/ObjCLanguage.h"
-#include "Plugins/Language/ObjCPlusPlus/ObjCPlusPlusLanguage.h"
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV2.h"
@@ -284,10 +281,6 @@ SystemInitializerFull::Initialize()
     AppleObjCRuntimeV1::Initialize();
     SystemRuntimeMacOSX::Initialize();
     RenderScriptRuntime::Initialize();
-    
-    CPlusPlusLanguage::Initialize();
-    ObjCLanguage::Initialize();
-    ObjCPlusPlusLanguage::Initialize();
 
 #if defined(_MSC_VER)
     ProcessWindows::Initialize();
@@ -392,10 +385,6 @@ SystemInitializerFull::Terminate()
     SystemRuntimeMacOSX::Terminate();
     RenderScriptRuntime::Terminate();
 
-    CPlusPlusLanguage::Terminate();
-    ObjCLanguage::Terminate();
-    ObjCPlusPlusLanguage::Terminate();
-    
 #if defined(__APPLE__)
     ProcessMachCore::Terminate();
     ProcessKDP::Terminate();
