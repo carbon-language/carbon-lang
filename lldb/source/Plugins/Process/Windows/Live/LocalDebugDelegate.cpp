@@ -13,7 +13,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-LocalDebugDelegate::LocalDebugDelegate(ProcessSP process)
+LocalDebugDelegate::LocalDebugDelegate(ProcessWP process)
     : m_process(process)
 {
 }
@@ -21,53 +21,71 @@ LocalDebugDelegate::LocalDebugDelegate(ProcessSP process)
 void
 LocalDebugDelegate::OnExitProcess(uint32_t exit_code)
 {
-    ((ProcessWindows &)*m_process).OnExitProcess(exit_code);
+    if (ProcessWindowsSP process = GetProcessPointer())
+        process->OnExitProcess(exit_code);
 }
 
 void
 LocalDebugDelegate::OnDebuggerConnected(lldb::addr_t image_base)
 {
-    ((ProcessWindows &)*m_process).OnDebuggerConnected(image_base);
+    if (ProcessWindowsSP process = GetProcessPointer())
+        process->OnDebuggerConnected(image_base);
 }
 
 ExceptionResult
 LocalDebugDelegate::OnDebugException(bool first_chance, const ExceptionRecord &record)
 {
-    return ((ProcessWindows &)*m_process).OnDebugException(first_chance, record);
+    if (ProcessWindowsSP process = GetProcessPointer())
+        return process->OnDebugException(first_chance, record);
+    else
+        return ExceptionResult::MaskException;
 }
 
 void
 LocalDebugDelegate::OnCreateThread(const HostThread &thread)
 {
-    ((ProcessWindows &)*m_process).OnCreateThread(thread);
+    if (ProcessWindowsSP process = GetProcessPointer())
+        process->OnCreateThread(thread);
 }
 
 void
 LocalDebugDelegate::OnExitThread(lldb::tid_t thread_id, uint32_t exit_code)
 {
-    ((ProcessWindows &)*m_process).OnExitThread(thread_id, exit_code);
+    if (ProcessWindowsSP process = GetProcessPointer())
+        process->OnExitThread(thread_id, exit_code);
 }
 
 void
 LocalDebugDelegate::OnLoadDll(const lldb_private::ModuleSpec &module_spec, lldb::addr_t module_addr)
 {
-    ((ProcessWindows &)*m_process).OnLoadDll(module_spec, module_addr);
+    if (ProcessWindowsSP process = GetProcessPointer())
+        process->OnLoadDll(module_spec, module_addr);
 }
 
 void
 LocalDebugDelegate::OnUnloadDll(lldb::addr_t module_addr)
 {
-    ((ProcessWindows &)*m_process).OnUnloadDll(module_addr);
+    if (ProcessWindowsSP process = GetProcessPointer())
+        process->OnUnloadDll(module_addr);
 }
 
 void
 LocalDebugDelegate::OnDebugString(const std::string &string)
 {
-    ((ProcessWindows &)*m_process).OnDebugString(string);
+    if (ProcessWindowsSP process = GetProcessPointer())
+        process->OnDebugString(string);
 }
 
 void
 LocalDebugDelegate::OnDebuggerError(const Error &error, uint32_t type)
 {
-    ((ProcessWindows &)*m_process).OnDebuggerError(error, type);
+    if (ProcessWindowsSP process = GetProcessPointer())
+        process->OnDebuggerError(error, type);
+}
+
+ProcessWindowsSP
+LocalDebugDelegate::GetProcessPointer()
+{
+    ProcessSP process = m_process.lock();
+    return std::static_pointer_cast<ProcessWindows>(process);
 }

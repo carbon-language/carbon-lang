@@ -39,6 +39,7 @@
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 
+#include "Plugins/Process/Windows/Live/ProcessWindowsForward.h"
 #include "Plugins/Process/Windows/live/ProcessWindowsLog.h"
 
 #include "DebuggerThread.h"

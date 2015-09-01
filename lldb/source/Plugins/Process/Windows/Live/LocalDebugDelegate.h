@@ -11,6 +11,8 @@
 #define liblldb_Plugins_Process_Windows_LocalDebugDelegate_H_
 
 #include "IDebugDelegate.h"
+#include "ProcessWindowsForward.h"
+
 #include "lldb/lldb-forward.h"
 
 class ProcessWindows;
@@ -40,7 +42,7 @@ namespace lldb_private
 class LocalDebugDelegate : public IDebugDelegate
 {
   public:
-    explicit LocalDebugDelegate(lldb::ProcessSP process);
+    explicit LocalDebugDelegate(lldb::ProcessWP process);
 
     void OnExitProcess(uint32_t exit_code) override;
     void OnDebuggerConnected(lldb::addr_t image_base) override;
@@ -53,7 +55,10 @@ class LocalDebugDelegate : public IDebugDelegate
     void OnDebuggerError(const Error &error, uint32_t type) override;
 
   private:
-    lldb::ProcessSP m_process;
+    ProcessWindowsSP
+    GetProcessPointer();
+
+    lldb::ProcessWP m_process;
 };
 }
 
