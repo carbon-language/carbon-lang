@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AppleObjCClassDescriptorV2.h"
+#include "lldb/Core/Log.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -518,6 +519,9 @@ ClassDescriptorV2::iVarsStorage::fill (AppleObjCRuntimeV2& runtime, ClassDescrip
     if (m_filled)
         return;
     Mutex::Locker lock(m_mutex);
+    Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_TYPES | LIBLLDB_LOG_VERBOSE));
+    if (log)
+        log->Printf("[ClassDescriptorV2::iVarsStorage::fill] class_name = %s", descriptor.GetClassName().AsCString("<unknown"));
     m_filled = true;
     ObjCLanguageRuntime::EncodingToTypeSP encoding_to_type_sp(runtime.GetEncodingToType());
     Process* process(runtime.GetProcess());
@@ -526,17 +530,33 @@ ClassDescriptorV2::iVarsStorage::fill (AppleObjCRuntimeV2& runtime, ClassDescrip
     descriptor.Describe(nullptr,
                         nullptr,
                         nullptr,
-                        [this,process,encoding_to_type_sp](const char * name, const char * type, lldb::addr_t offset_ptr, uint64_t size) -> bool {
+                        [this,process,encoding_to_type_sp,log](const char * name, const char * type, lldb::addr_t offset_ptr, uint64_t size) -> bool {
                  const bool for_expression = false;
                  const bool stop_loop = false;
+                 if (log)
+                     log->Printf("[ClassDescriptorV2::iVarsStorage::fill] name = %s, encoding = %s, offset_ptr = %" PRIx64 ", size = %" PRIu64,
+                                 name,type,offset_ptr,size);
                  CompilerType ivar_type = encoding_to_type_sp->RealizeType(type, for_expression);
                  if (ivar_type)
                  {
+                     if (log)
+                         log->Printf("[ClassDescriptorV2::iVarsStorage::fill] name = %s, encoding = %s, offset_ptr = %" PRIx64 ", size = %" PRIu64 " , type_size = %" PRIu64,
+                                     name,type,offset_ptr,size,ivar_type.GetByteSize(nullptr));
                      Scalar offset_scalar;
                      Error error;
-                     size_t read = process->ReadScalarIntegerFromMemory(offset_ptr, 4, true, offset_scalar, error);
+                     const int offset_ptr_size = 4;
+                     const bool is_signed = false;
+                     size_t read = process->ReadScalarIntegerFromMemory(offset_ptr, offset_ptr_size, is_signed, offset_scalar, error);
                      if (error.Success() && 4 == read)
+                     {
+                         if (log)
+                             log->Printf("[ClassDescriptorV2::iVarsStorage::fill] offset_ptr = %" PRIx64 " --> %" PRIu32,
+                                         offset_ptr, offset_scalar.SInt());
                          m_ivars.push_back({ ConstString(name), ivar_type, size, offset_scalar.SInt() });
+                     }
+                     else if (log)
+                         log->Printf("[ClassDescriptorV2::iVarsStorage::fill] offset_ptr = %" PRIx64 " --> read fail, read = %zu",
+                                     offset_ptr, read);
                  }
                  return stop_loop;
              });

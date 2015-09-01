@@ -229,6 +229,19 @@ TypeCategoryMap::GetFormat (ValueObject& valobj,
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     
+    if (log)
+    {
+        for (auto match : matches)
+        {
+            log->Printf("[CategoryMap::GetSummaryFormat] candidate match = %s %s %s %s reason = %" PRIu32,
+                        match.GetTypeName().GetCString(),
+                        match.DidStripPointer() ? "strip-pointers" : "no-strip-pointers",
+                        match.DidStripReference() ? "strip-reference" : "no-strip-reference",
+                        match.DidStripTypedef() ? "strip-typedef" : "no-strip-typedef",
+                        match.GetReason());
+        }
+    }
+
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
         lldb::TypeCategoryImplSP category_sp = *begin;
@@ -256,6 +269,19 @@ TypeCategoryMap::GetSummaryFormat (ValueObject& valobj,
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     
+    if (log)
+    {
+        for (auto match : matches)
+        {
+            log->Printf("[CategoryMap::GetSummaryFormat] candidate match = %s %s %s %s reason = %" PRIu32,
+                        match.GetTypeName().GetCString(),
+                        match.DidStripPointer() ? "strip-pointers" : "no-strip-pointers",
+                        match.DidStripReference() ? "strip-reference" : "no-strip-reference",
+                        match.DidStripTypedef() ? "strip-typedef" : "no-strip-typedef",
+                        match.GetReason());
+        }
+    }
+
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
         lldb::TypeCategoryImplSP category_sp = *begin;
@@ -285,6 +311,19 @@ TypeCategoryMap::GetSyntheticChildren (ValueObject& valobj,
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     
+    if (log)
+    {
+        for (auto match : matches)
+        {
+            log->Printf("[CategoryMap::GetSummaryFormat] candidate match = %s %s %s %s reason = %" PRIu32,
+                        match.GetTypeName().GetCString(),
+                        match.DidStripPointer() ? "strip-pointers" : "no-strip-pointers",
+                        match.DidStripReference() ? "strip-reference" : "no-strip-reference",
+                        match.DidStripTypedef() ? "strip-typedef" : "no-strip-typedef",
+                        match.GetReason());
+        }
+    }
+
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
         lldb::TypeCategoryImplSP category_sp = *begin;
@@ -313,6 +352,19 @@ TypeCategoryMap::GetValidator (ValueObject& valobj,
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     
+    if (log)
+    {
+        for (auto match : matches)
+        {
+            log->Printf("[CategoryMap::GetSummaryFormat] candidate match = %s %s %s %s reason = %" PRIu32,
+                        match.GetTypeName().GetCString(),
+                        match.DidStripPointer() ? "strip-pointers" : "no-strip-pointers",
+                        match.DidStripReference() ? "strip-reference" : "no-strip-reference",
+                        match.DidStripTypedef() ? "strip-typedef" : "no-strip-typedef",
+                        match.GetReason());
+        }
+    }
+
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
         lldb::TypeCategoryImplSP category_sp = *begin;
