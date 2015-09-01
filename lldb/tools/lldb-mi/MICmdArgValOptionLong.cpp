@@ -254,7 +254,7 @@ CMICmdArgValOptionLong::IsArgLongOption(const CMIUtilString &vrTxt) const
     if (bHavePosSlash || bHaveBckSlash)
         return false;
 
-    const size_t nPos = vrTxt.find_first_of("--");
+    const size_t nPos = vrTxt.find("--");
     if (nPos != 0)
         return false;
 

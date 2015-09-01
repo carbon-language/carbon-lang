@@ -146,7 +146,7 @@ CMICmdArgValFile::IsFilePath(const CMIUtilString &vrFileNamePath) const
     const bool bHaveBckSlash = (vrFileNamePath.find_first_of("\\") != std::string::npos);
 
     // Look for --someLongOption
-    size_t nPos = vrFileNamePath.find_first_of("--");
+    size_t nPos = vrFileNamePath.find("--");
     const bool bLong = (nPos == 0);
     if (bLong)
         return false;
