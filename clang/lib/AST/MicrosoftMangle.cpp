@@ -28,6 +28,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/JamCRC.h"
 
 using namespace clang;
 
@@ -2696,28 +2697,6 @@ void MicrosoftMangleContextImpl::mangleStringLiteral(const StringLiteral *SL,
   // N.B. The length is in terms of bytes, not characters.
   Mangler.mangleNumber(SL->getByteLength() + SL->getCharByteWidth());
 
-  // We will use the "Rocksoft^tm Model CRC Algorithm" to describe the
-  // properties of our CRC:
-  //   Width  : 32
-  //   Poly   : 04C11DB7
-  //   Init   : FFFFFFFF
-  //   RefIn  : True
-  //   RefOut : True
-  //   XorOut : 00000000
-  //   Check  : 340BC6D9
-  uint32_t CRC = 0xFFFFFFFFU;
-
-  auto UpdateCRC = [&CRC](char Byte) {
-    for (unsigned i = 0; i < 8; ++i) {
-      bool Bit = CRC & 0x80000000U;
-      if (Byte & (1U << i))
-        Bit = !Bit;
-      CRC <<= 1;
-      if (Bit)
-        CRC ^= 0x04C11DB7U;
-    }
-  };
-
   auto GetLittleEndianByte = [&Mangler, &SL](unsigned Index) {
     unsigned CharByteWidth = SL->getCharByteWidth();
     uint32_t CodeUnit = SL->getCodeUnit(Index / CharByteWidth);
@@ -2733,22 +2712,19 @@ void MicrosoftMangleContextImpl::mangleStringLiteral(const StringLiteral *SL,
   };
 
   // CRC all the bytes of the StringLiteral.
+  llvm::JamCRC JC;
   for (unsigned I = 0, E = SL->getByteLength(); I != E; ++I)
-    UpdateCRC(GetLittleEndianByte(I));
+    JC.update(GetLittleEndianByte(I));
 
   // The NUL terminator byte(s) were not present earlier,
   // we need to manually process those bytes into the CRC.
   for (unsigned NullTerminator = 0; NullTerminator < SL->getCharByteWidth();
        ++NullTerminator)
-    UpdateCRC('\x00');
-
-  // The literature refers to the process of reversing the bits in the final CRC
-  // output as "reflection".
-  CRC = llvm::reverseBits(CRC);
+    JC.update('\x00');
 
   // <encoded-crc>: The CRC is encoded utilizing the standard number mangling
   // scheme.
-  Mangler.mangleNumber(CRC);
+  Mangler.mangleNumber(JC.getCRC());
 
   // <encoded-string>: The mangled name also contains the first 32 _characters_
   // (including null-terminator bytes) of the StringLiteral.
