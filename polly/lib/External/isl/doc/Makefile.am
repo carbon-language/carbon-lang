@@ -1,3 +1,16 @@
+
+CLEANFILES = \
+	manual.toc \
+	manual.bbl \
+	version.tex \
+	user.tex \
+	manual.pdf \
+	manual.aux \
+	manual.out \
+	manual.blg \
+	manual.log \
+	manual.brf
+
 if GENERATE_DOC
 export TEXINPUTS := $(srcdir):$(TEXINPUTS)
 export BIBINPUTS := $(srcdir):$(BIBINPUTS)

@@ -3418,6 +3418,31 @@ error:
 	return NULL;
 }
 
+/* Replace the domain of domain node "node" with the gist
+ * of the original domain with respect to the parameter domain "context".
+ */
+__isl_give isl_schedule_node *isl_schedule_node_domain_gist_params(
+	__isl_take isl_schedule_node *node, __isl_take isl_set *context)
+{
+	isl_union_set *domain;
+	isl_schedule_tree *tree;
+
+	if (!node || !context)
+		goto error;
+
+	tree = isl_schedule_tree_copy(node->tree);
+	domain = isl_schedule_tree_domain_get_domain(node->tree);
+	domain = isl_union_set_gist_params(domain, context);
+	tree = isl_schedule_tree_domain_set_domain(tree, domain);
+	node = isl_schedule_node_graft_tree(node, tree);
+
+	return node;
+error:
+	isl_schedule_node_free(node);
+	isl_set_free(context);
+	return NULL;
+}
+
 /* Internal data structure for isl_schedule_node_get_subtree_expansion.
  * "expansions" contains a list of accumulated expansions
  * for each outer expansion, set or sequence node.  The first element

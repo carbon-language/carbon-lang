@@ -544,6 +544,32 @@ error:
 	return NULL;
 }
 
+/* Return "bset" and set *T and *T2 to the identity transformation
+ * on "bset" (provided T and T2 are not NULL).
+ */
+static __isl_give isl_basic_set *return_with_identity(
+	__isl_take isl_basic_set *bset, __isl_give isl_mat **T,
+	__isl_give isl_mat **T2)
+{
+	unsigned dim;
+	isl_mat *id;
+
+	if (!bset)
+		return NULL;
+	if (!T && !T2)
+		return bset;
+
+	dim = isl_basic_set_dim(bset, isl_dim_set);
+	id = isl_mat_identity(isl_basic_map_get_ctx(bset), 1 + dim);
+	if (T)
+		*T = isl_mat_copy(id);
+	if (T2)
+		*T2 = isl_mat_copy(id);
+	isl_mat_free(id);
+
+	return bset;
+}
+
 /* Use the n equalities of bset to unimodularly transform the
  * variables x such that n transformed variables x1' have a constant value
  * and rewrite the constraints of bset in terms of the remaining
@@ -568,7 +594,7 @@ static struct isl_basic_set *compress_variables(
 	dim = isl_basic_set_n_dim(bset);
 	isl_assert(bset->ctx, bset->n_eq <= dim, goto error);
 	if (bset->n_eq == 0)
-		return bset;
+		return return_with_identity(bset, T, T2);
 
 	B = isl_mat_sub_alloc6(bset->ctx, bset->eq, 0, bset->n_eq, 0, 1 + dim);
 	TC = isl_mat_variable_compression(B, T2);
@@ -604,7 +630,7 @@ struct isl_basic_set *isl_basic_set_remove_equalities(
 	isl_assert(bset->ctx, isl_basic_set_n_param(bset) == 0, goto error);
 	bset = isl_basic_set_gauss(bset, NULL);
 	if (ISL_F_ISSET(bset, ISL_BASIC_SET_EMPTY))
-		return bset;
+		return return_with_identity(bset, T, T2);
 	bset = compress_variables(bset, T, T2);
 	return bset;
 error:

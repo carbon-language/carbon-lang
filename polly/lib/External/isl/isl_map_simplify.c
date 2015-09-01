@@ -2362,6 +2362,7 @@ static __isl_give isl_basic_set *update_ineq_free(
  * The (explicit) equalities of "bset" are assumed to have been taken
  * into account by the transformation such that only the inequalities
  * are relevant.
+ * "context" is assumed not to be empty.
  *
  * "row" keeps track of the constraint index of a "bset" inequality in "tab".
  * A value of -1 means that the inequality is obviously redundant and may
@@ -2557,8 +2558,13 @@ static __isl_give isl_basic_set *uset_gist_compressed(
 	ineq = isl_mat_product(ineq, isl_mat_copy(T));
 	context = isl_basic_set_preimage(context, T);
 
-	if (!ineq)
+	if (!ineq || !context)
 		goto error;
+	if (isl_basic_set_plain_is_empty(context)) {
+		isl_mat_free(ineq);
+		isl_basic_set_free(context);
+		return isl_basic_set_set_to_empty(bset);
+	}
 
 	ctx = isl_mat_get_ctx(ineq);
 	n_row = isl_mat_rows(ineq);

@@ -1309,6 +1309,9 @@ struct {
 	  "[t1, t2] -> { [i4, i5, i6] : exists (e0 = floor((381 - t1)/5), "
 		"e1 = floor((-1 + i4)/2): t2 = 0 and 2e1 = -1 + i4 and "
 		"i4 <= 1 and 5e0 <= 381 - t1 and 20e0 >= 1511 - 4t1 - 5i4) }" },
+	{ "{ [0, 0, q, p] : -5 <= q <= 5 and p >= 0 }",
+	  "{ [a, b, q, p] : b >= 1 + a }",
+	  "{ [a, b, q, p] : false }" },
 };
 
 static int test_gist(struct isl_ctx *ctx)

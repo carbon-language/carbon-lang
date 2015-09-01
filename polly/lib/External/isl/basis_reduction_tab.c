@@ -63,19 +63,19 @@ struct tab_lp {
 #ifdef USE_SMALL_INT_OPT
 #define GBR_numref(a)	isl_sioimath_encode_big(mp_rat_numer_ref(a))
 #define GBR_denref(a)	isl_sioimath_encode_big(mp_rat_denom_ref(a))
-#define GBR_floor(a, b)	isl_sioimath_fdiv_q(&(a), GBR_numref(b), GBR_denref(b))
-#define GBR_ceil(a, b)	isl_sioimath_cdiv_q(&(a), GBR_numref(b), GBR_denref(b))
+#define GBR_floor(a, b)	isl_sioimath_fdiv_q((a), GBR_numref(b), GBR_denref(b))
+#define GBR_ceil(a, b)	isl_sioimath_cdiv_q((a), GBR_numref(b), GBR_denref(b))
 #define GBR_set_num_neg(a, b)                              \
 	do {                                               \
 		isl_sioimath_scratchspace_t scratch;       \
 		impz_neg(mp_rat_numer_ref(*a),             \
-		    isl_sioimath_bigarg_src(b, &scratch)); \
+		    isl_sioimath_bigarg_src(*b, &scratch));\
 	} while (0)
 #define GBR_set_den(a, b)                                  \
 	do {                                               \
 		isl_sioimath_scratchspace_t scratch;       \
 		impz_set(mp_rat_denom_ref(*a),             \
-		    isl_sioimath_bigarg_src(b, &scratch)); \
+		    isl_sioimath_bigarg_src(*b, &scratch));\
 	} while (0)
 #else /* USE_SMALL_INT_OPT */
 #define GBR_numref(a)		mp_rat_numer_ref(a)

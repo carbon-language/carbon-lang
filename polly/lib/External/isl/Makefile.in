@@ -1045,6 +1045,17 @@ deprecated_HEADERS = \
 	include/isl/deprecated/val_int.h \
 	include/isl/deprecated/vec_int.h
 
+BUILT_SOURCES = gitversion.h
+CLEANFILES = \
+	gitversion.h
+
+DISTCLEANFILES = \
+	isl-uninstalled.sh \
+	isl-uninstalled.pc \
+	isl.pc \
+	isl.pc.in \
+	include/isl/stdint.h
+
 EXTRA_DIST = \
 	LICENSE \
 	isl_config_post.h \
@@ -1094,7 +1105,7 @@ EXTRA_DIST = \
 
 pkgconfigdir = $(pkgconfig_libdir)
 pkgconfig_DATA = $(pkgconfig_libfile)
-all: isl_config.h
+all: $(BUILT_SOURCES) isl_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
@@ -1980,7 +1991,8 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
-check: check-recursive
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-recursive
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS) \
 		isl_config.h
 installdirs: installdirs-recursive
@@ -1988,7 +2000,8 @@ installdirs-am:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(deprecateddir)" "$(DESTDIR)$(pkgincludedir)" "$(DESTDIR)$(pkgincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-recursive
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-recursive
 install-exec: install-exec-recursive
 install-data: install-data-recursive
 uninstall: uninstall-recursive
@@ -2013,16 +2026,19 @@ mostlyclean-generic:
 	-test -z "$(TEST_SUITE_LOG)" || rm -f $(TEST_SUITE_LOG)
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f imath_wrap/$(DEPDIR)/$(am__dirstamp)
 	-rm -f imath_wrap/$(am__dirstamp)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-recursive
 
 clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
@@ -2101,7 +2117,8 @@ uninstall-am: uninstall-deprecatedHEADERS uninstall-libLTLIBRARIES \
 	uninstall-local uninstall-nodist_pkgincludeHEADERS \
 	uninstall-pkgconfigDATA uninstall-pkgincludeHEADERS
 
-.MAKE: $(am__recursive_targets) all check-am install-am install-strip
+.MAKE: $(am__recursive_targets) all check check-am install install-am \
+	install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
 	am--refresh check check-TESTS check-am clean clean-cscope \

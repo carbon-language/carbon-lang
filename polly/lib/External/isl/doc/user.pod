@@ -7582,6 +7582,15 @@ redundant.
 		__isl_take isl_schedule *schedule,
 		__isl_take isl_union_set *domain);
 
+The following function can be used to simplify the domain
+of a schedule with a domain node as root with respect to the given
+parameter domain.
+
+	#include <isl/schedule.h>
+	__isl_give isl_schedule *isl_schedule_gist_domain_params(
+		__isl_take isl_schedule *schedule,
+		__isl_take isl_set *context);
+
 The following function resets the user pointers on all parameter
 and tuple identifiers referenced by the nodes of the given schedule.
 

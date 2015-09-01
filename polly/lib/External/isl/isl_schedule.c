@@ -478,6 +478,36 @@ error:
 	return NULL;
 }
 
+/* Replace the domain of the schedule "schedule" with the gist
+ * of the original domain with respect to the parameter domain "context".
+ */
+__isl_give isl_schedule *isl_schedule_gist_domain_params(
+	__isl_take isl_schedule *schedule, __isl_take isl_set *context)
+{
+	enum isl_schedule_node_type root_type;
+	isl_schedule_node *node;
+
+	if (!schedule || !context)
+		goto error;
+
+	root_type = isl_schedule_tree_get_type(schedule->root);
+	if (root_type != isl_schedule_node_domain)
+		isl_die(isl_schedule_get_ctx(schedule), isl_error_invalid,
+			"root node must be a domain node", goto error);
+
+	node = isl_schedule_get_root(schedule);
+	isl_schedule_free(schedule);
+	node = isl_schedule_node_domain_gist_params(node, context);
+	schedule = isl_schedule_node_get_schedule(node);
+	isl_schedule_node_free(node);
+
+	return schedule;
+error:
+	isl_schedule_free(schedule);
+	isl_set_free(context);
+	return NULL;
+}
+
 /* Return an isl_union_map representation of the schedule.
  * If we still have access to the schedule tree, then we return
  * an isl_union_map corresponding to the subtree schedule of the child

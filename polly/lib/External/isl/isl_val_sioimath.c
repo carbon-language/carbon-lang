@@ -13,8 +13,8 @@ __isl_give isl_val *isl_val_int_from_chunks(isl_ctx *ctx, size_t n,
 	if (!v)
 		return NULL;
 
-	impz_import(isl_sioimath_reinit_big(&v->n), n, -1, size, 0, 0, chunks);
-	isl_sioimath_try_demote(&v->n);
+	impz_import(isl_sioimath_reinit_big(v->n), n, -1, size, 0, 0, chunks);
+	isl_sioimath_try_demote(v->n);
 	isl_int_set_si(v->d, 1);
 
 	return v;
@@ -44,7 +44,7 @@ int isl_val_get_abs_num_chunks(__isl_keep isl_val *v, size_t size,
 			"expecting rational value", return -1);
 
 	impz_export(chunks, NULL, -1, size, 0, 0,
-	    isl_sioimath_bigarg_src(v->n, &scratch));
+	    isl_sioimath_bigarg_src(*v->n, &scratch));
 	if (isl_val_is_zero(v))
 		memset(chunks, 0, size);
 
@@ -64,5 +64,5 @@ size_t isl_val_n_abs_num_chunks(__isl_keep isl_val *v, size_t size)
 			"expecting rational value", return 0);
 
 	size *= 8;
-	return (isl_sioimath_sizeinbase(v->n, 2) + size - 1) / size;
+	return (isl_sioimath_sizeinbase(*v->n, 2) + size - 1) / size;
 }

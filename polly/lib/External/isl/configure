@@ -18480,7 +18480,6 @@ ac_config_commands="$ac_config_commands $ax_create_pkgconfig_generate"
 	    GIT_HEAD_VERSION="\`GIT_DIR=$GIT_REPO git describe --always\`"
 	fi
 
-echo '#define GIT_HEAD_ID "'$GIT_HEAD_ID'"' > gitversion.h
 
 
 ac_config_headers="$ac_config_headers isl_config.h"

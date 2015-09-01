@@ -29,8 +29,8 @@ static void int_test_hash(isl_int val)
 	isl_int_init(promoted);
 	isl_int_set(promoted, val);
 
-	isl_sioimath_try_demote(&demoted);
-	isl_sioimath_promote(&promoted);
+	isl_sioimath_try_demote(demoted);
+	isl_sioimath_promote(promoted);
 
 	assert(isl_int_eq(demoted, promoted));
 
@@ -86,14 +86,14 @@ static void invoke_alternate_representations_2args(char *arg1, char *arg2,
 		isl_int_read(int2, arg2);
 
 		if (j & 1)
-			isl_sioimath_promote(&int1);
+			isl_sioimath_promote(int1);
 		else
-			isl_sioimath_try_demote(&int1);
+			isl_sioimath_try_demote(int1);
 
 		if (j & 2)
-			isl_sioimath_promote(&int2);
+			isl_sioimath_promote(int2);
 		else
-			isl_sioimath_try_demote(&int2);
+			isl_sioimath_try_demote(int2);
 
 		(*fn)(int1, int2);
 	}
@@ -118,19 +118,19 @@ static void invoke_alternate_representations_3args(char *arg1, char *arg2,
 		isl_int_read(int3, arg3);
 
 		if (j & 1)
-			isl_sioimath_promote(&int1);
+			isl_sioimath_promote(int1);
 		else
-			isl_sioimath_try_demote(&int1);
+			isl_sioimath_try_demote(int1);
 
 		if (j & 2)
-			isl_sioimath_promote(&int2);
+			isl_sioimath_promote(int2);
 		else
-			isl_sioimath_try_demote(&int2);
+			isl_sioimath_try_demote(int2);
 
 		if (j & 4)
-			isl_sioimath_promote(&int3);
+			isl_sioimath_promote(int3);
 		else
-			isl_sioimath_try_demote(&int3);
+			isl_sioimath_try_demote(int3);
 
 		(*fn)(int1, int2, int3);
 	}

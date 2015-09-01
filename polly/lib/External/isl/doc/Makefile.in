@@ -262,6 +262,18 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 versioninfo = @versioninfo@
+CLEANFILES = \
+	manual.toc \
+	manual.bbl \
+	version.tex \
+	user.tex \
+	manual.pdf \
+	manual.aux \
+	manual.out \
+	manual.blg \
+	manual.log \
+	manual.brf
+
 all: all-am
 
 .SUFFIXES:
@@ -364,6 +376,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -451,6 +464,7 @@ uninstall-am:
 	maintainer-clean maintainer-clean-generic mostlyclean \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags-am uninstall uninstall-am
+
 
 @GENERATE_DOC_TRUE@export TEXINPUTS := $(srcdir):$(TEXINPUTS)
 @GENERATE_DOC_TRUE@export BIBINPUTS := $(srcdir):$(BIBINPUTS)

@@ -515,7 +515,12 @@ error:
 static __isl_give isl_printer *print_div(__isl_keep isl_space *dim,
 	__isl_keep isl_mat *div, int pos, __isl_take isl_printer *p)
 {
-	int c = p->output_format == ISL_FORMAT_C;
+	int c;
+
+	if (!p || !div)
+		return isl_printer_free(p);
+
+	c = p->output_format == ISL_FORMAT_C;
 	p = isl_printer_print_str(p, c ? "floord(" : "floor((");
 	p = print_affine_of_len(dim, div, p,
 				div->row[pos] + 1, div->n_col - 1);
@@ -554,22 +559,19 @@ static __isl_give isl_printer *print_div_list(__isl_take isl_printer *p,
 }
 
 static __isl_give isl_printer *print_disjunct(__isl_keep isl_basic_map *bmap,
-	__isl_keep isl_space *dim, __isl_take isl_printer *p, int latex)
+	__isl_keep isl_space *space, __isl_take isl_printer *p, int latex)
 {
 	if (bmap->n_div > 0) {
-		isl_space *space;
 		isl_mat *div;
 
-		space = isl_basic_map_get_space(bmap);
 		div = isl_basic_map_get_divs(bmap);
 		p = isl_printer_print_str(p, s_open_exists[latex]);
 		p = print_div_list(p, space, div, latex);
-		isl_space_free(space);
 		isl_mat_free(div);
 		p = isl_printer_print_str(p, ": ");
 	}
 
-	p = print_constraints(bmap, dim, p, latex);
+	p = print_constraints(bmap, space, p, latex);
 
 	if (bmap->n_div > 0)
 		p = isl_printer_print_str(p, s_close_exists[latex]);
@@ -2028,6 +2030,7 @@ __isl_give isl_printer *isl_printer_print_local_space(__isl_take isl_printer *p,
 		p = isl_printer_print_str(p, " : ");
 		p = isl_printer_print_str(p, s_open_exists[0]);
 		p = print_div_list(p, ls->dim, ls->div, 0);
+		p = isl_printer_print_str(p, s_close_exists[0]);
 	} else if (isl_space_is_params(ls->dim))
 		p = isl_printer_print_str(p, s_such_that[0]);
 	p = isl_printer_print_str(p, " }");
