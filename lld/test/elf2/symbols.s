@@ -33,6 +33,10 @@ abs = 0x123
 
 .comm common,4,4
 
+.global protected
+.protected protected
+protected:
+
 // CHECK:      Name: .text
 // CHECK-NEXT: Type: SHT_PROGBITS
 // CHECK-NEXT: Flags [
@@ -120,6 +124,15 @@ abs = 0x123
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: foobar
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: protected
+// CHECK-NEXT:     Value: 0x1010
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 3
 // CHECK-NEXT:     Section: foobar
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
