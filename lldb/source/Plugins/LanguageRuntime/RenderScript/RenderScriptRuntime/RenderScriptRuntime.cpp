@@ -609,12 +609,12 @@ RSModuleDescriptor::ParseRSInfo()
         std::string info((const char *)buffer->GetBytes());
 
         std::vector<std::string> info_lines;
-        size_t lpos = info.find_first_of("\n");
+        size_t lpos = info.find('\n');
         while (lpos != std::string::npos)
         {
             info_lines.push_back(info.substr(0, lpos));
             info = info.substr(lpos + 1);
-            lpos = info.find_first_of("\n");
+            lpos = info.find('\n');
         }
         size_t offset = 0;
         while (offset < info_lines.size())

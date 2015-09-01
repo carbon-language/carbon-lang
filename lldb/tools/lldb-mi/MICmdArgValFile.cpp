@@ -142,8 +142,8 @@ CMICmdArgValFile::IsFilePath(const CMIUtilString &vrFileNamePath) const
     if (vrFileNamePath.empty())
         return false;
 
-    const bool bHavePosSlash = (vrFileNamePath.find_first_of("/") != std::string::npos);
-    const bool bHaveBckSlash = (vrFileNamePath.find_first_of("\\") != std::string::npos);
+    const bool bHavePosSlash = (vrFileNamePath.find('/') != std::string::npos);
+    const bool bHaveBckSlash = (vrFileNamePath.find('\\') != std::string::npos);
 
     // Look for --someLongOption
     size_t nPos = vrFileNamePath.find("--");
@@ -152,13 +152,13 @@ CMICmdArgValFile::IsFilePath(const CMIUtilString &vrFileNamePath) const
         return false;
 
     // Look for -f type short parameters
-    nPos = vrFileNamePath.find_first_of("-");
+    nPos = vrFileNamePath.find('-');
     const bool bShort = (nPos == 0);
     if (bShort)
         return false;
 
     // Look for i1 i2 i3....
-    nPos = vrFileNamePath.find_first_of("i");
+    nPos = vrFileNamePath.find('i');
     const bool bFoundI1 = ((nPos == 0) && (::isdigit(vrFileNamePath[1])));
     if (bFoundI1)
         return false;

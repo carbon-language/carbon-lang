@@ -230,7 +230,7 @@ AppleObjCTypeEncodingParser::BuildObjCObjectPointerType (clang::ASTContext &ast_
     
     if (for_expression && !name.empty())
     {
-        size_t less_than_pos = name.find_first_of('<');
+        size_t less_than_pos = name.find('<');
         
         if (less_than_pos != std::string::npos)
         {

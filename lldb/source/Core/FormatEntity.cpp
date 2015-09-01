@@ -2424,10 +2424,10 @@ FormatEntity::ExtractVariableInfo (llvm::StringRef &format_str, llvm::StringRef 
     variable_name = llvm::StringRef();
     variable_format = llvm::StringRef();
 
-    const size_t paren_pos = format_str.find_first_of('}');
+    const size_t paren_pos = format_str.find('}');
     if (paren_pos != llvm::StringRef::npos)
     {
-        const size_t percent_pos = format_str.find_first_of('%');
+        const size_t percent_pos = format_str.find('%');
         if (percent_pos < paren_pos)
         {
             if (percent_pos > 0)

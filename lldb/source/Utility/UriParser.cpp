@@ -40,7 +40,7 @@ UriParser::Parse(const std::string& uri,
     // Extract path.
     tmp_scheme = uri.substr(0, pos);
     auto host_pos = pos + strlen(kSchemeSep);
-    auto path_pos = uri.find_first_of("/", host_pos);
+    auto path_pos = uri.find('/', host_pos);
     if (path_pos != std::string::npos)
         tmp_path = uri.substr(path_pos);
     else

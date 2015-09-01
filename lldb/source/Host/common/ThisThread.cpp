@@ -37,7 +37,7 @@ ThisThread::SetName(llvm::StringRef name, int max_length)
         {
             // We're still too long.  Since this is a dotted component, use everything after the last
             // dot, up to a maximum of |length| characters.
-            std::string::size_type last_dot = truncated_name.find_last_of(".");
+            std::string::size_type last_dot = truncated_name.rfind('.');
             if (last_dot != std::string::npos)
                 begin = last_dot + 1;
 

@@ -117,7 +117,7 @@ bool
 CMICmdArgValThreadGrp::IsArgThreadGrp(const CMIUtilString &vrTxt) const
 {
     // Look for i1 i2 i3....
-    const MIint nPos = vrTxt.find_first_of("i");
+    const MIint nPos = vrTxt.find('i');
     if (nPos != 0)
         return false;
 

@@ -220,8 +220,8 @@ CMICmdArgValString::IsStringArgSingleText(const CMIUtilString &vrTxt) const
     if (!m_bHandleDirPaths)
     {
         // Look for directory file paths, if found reject
-        const bool bHavePosSlash = (vrTxt.find_first_of("/") != std::string::npos);
-        const bool bHaveBckSlash = (vrTxt.find_first_of("\\") != std::string::npos);
+        const bool bHavePosSlash = (vrTxt.find('/') != std::string::npos);
+        const bool bHaveBckSlash = (vrTxt.find('\\') != std::string::npos);
         if (bHavePosSlash || bHaveBckSlash)
             return false;
     }

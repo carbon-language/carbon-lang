@@ -118,10 +118,10 @@ static size_t findFileSeparatorPos(const std::string& x)
 {
     // Full paths in windows can have ':' after a drive letter, so we
     // search backwards, taking care to skip C++ namespace tokens '::'.
-    size_t n = x.find_last_of(':');
+    size_t n = x.rfind(':');
     while (n != std::string::npos && n > 1 && x[n-1] == ':')
     {
-        n = x.find_last_of(':', n - 2);
+        n = x.rfind(':', n - 2);
     }
     return n;
 }
