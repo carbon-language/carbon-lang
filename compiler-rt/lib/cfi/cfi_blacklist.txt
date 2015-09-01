@@ -6,3 +6,21 @@ type:stdext::*
 
 # Types with a uuid attribute, i.e. COM types.
 type:attr:uuid
+
+# STL allocators (T *allocator<T *>::allocate(size_type, const void*)).
+# The type signature mandates a cast from uninitialized void* to T*.
+# size_type can either be unsigned int (j) or unsigned long (m).
+fun:*8allocateEjPKv
+fun:*8allocateEmPKv
+
+# std::get_temporary_buffer, likewise (libstdc++, libc++).
+fun:_ZSt20get_temporary_buffer*
+fun:_ZNSt3__120get_temporary_buffer*
+
+# STL address-of magic (libstdc++, libc++).
+fun:*__addressof*
+fun:_ZNSt3__19addressof*
+
+# Windows C++ stdlib headers that contain bad unrelated casts.
+src:*xmemory0
+src:*xstddef
