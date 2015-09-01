@@ -1881,19 +1881,15 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
       NewVAddrHi = MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
 
       // NewVaddrLo = SRsrcPtrLo + VAddr:sub0
-      BuildMI(MBB, MI, MI->getDebugLoc(), get(AMDGPU::V_ADD_I32_e32),
-              NewVAddrLo)
-              .addReg(SRsrcPtrLo)
-              .addReg(VAddr->getReg(), 0, AMDGPU::sub0)
-              .addReg(AMDGPU::VCC, RegState::ImplicitDefine);
+      DebugLoc DL = MI->getDebugLoc();
+      BuildMI(MBB, MI, DL, get(AMDGPU::V_ADD_I32_e32), NewVAddrLo)
+        .addReg(SRsrcPtrLo)
+        .addReg(VAddr->getReg(), 0, AMDGPU::sub0);
 
       // NewVaddrHi = SRsrcPtrHi + VAddr:sub1
-      BuildMI(MBB, MI, MI->getDebugLoc(), get(AMDGPU::V_ADDC_U32_e32),
-              NewVAddrHi)
-              .addReg(SRsrcPtrHi)
-              .addReg(VAddr->getReg(), 0, AMDGPU::sub1)
-              .addReg(AMDGPU::VCC, RegState::ImplicitDefine)
-              .addReg(AMDGPU::VCC, RegState::Implicit);
+      BuildMI(MBB, MI, DL, get(AMDGPU::V_ADDC_U32_e32), NewVAddrHi)
+        .addReg(SRsrcPtrHi)
+        .addReg(VAddr->getReg(), 0, AMDGPU::sub1);
 
     } else {
       // This instructions is the _OFFSET variant, so we need to convert it to
