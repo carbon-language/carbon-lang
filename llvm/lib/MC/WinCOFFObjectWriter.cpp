@@ -32,6 +32,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/JamCRC.h"
 #include "llvm/Support/TimeValue.h"
 #include <cstdio>
 
@@ -1029,6 +1030,7 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
       }
     }
 
+    SmallVector<char, 128> SectionContents;
     for (i = Sections.begin(), ie = Sections.end(), j = Asm.begin(),
         je = Asm.end();
          (i != ie) && (j != je); ++i, ++j) {
@@ -1047,7 +1049,33 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
 
         WriteZeros(SectionDataPadding);
 
+        // Save the contents of the section to a temporary buffer, we need this
+        // to CRC the data before we dump it into the object file.
+        SectionContents.clear();
+        raw_svector_ostream VecOS(SectionContents);
+        raw_pwrite_stream &OldStream = getStream();
+        // Redirect the output stream to our buffer.
+        setStream(VecOS);
+        // Fill our buffer with the section data.
         Asm.writeSectionData(&*j, Layout);
+        // Reset the stream back to what it was before.
+        setStream(OldStream);
+
+        // Calculate our CRC with an initial value of '0', this is not how
+        // JamCRC is specified but it aligns with the expected output.
+        JamCRC JC(/*Init=*/0x00000000U);
+        JC.update(SectionContents);
+
+        // Write the section contents to the object file.
+        getStream() << SectionContents;
+
+        // Update the section definition auxiliary symbol to record the CRC.
+        COFFSection *Sec = SectionMap[&*j];
+        COFFSymbol::AuxiliarySymbols &AuxSyms = Sec->Symbol->Aux;
+        assert(AuxSyms.size() == 1 &&
+               AuxSyms[0].AuxType == ATSectionDefinition);
+        AuxSymbol &SecDef = AuxSyms[0];
+        SecDef.Aux.SectionDefinition.CheckSum = JC.getCRC();
       }
 
       if ((*i)->Relocations.size() > 0) {

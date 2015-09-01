@@ -114,7 +114,7 @@ L_.str2:
 // CHECK:       Length: 45
 // CHECK:       RelocationCount: 6
 // CHECK:       LineNumberCount: 0
-// CHECK:       Checksum: 0x0
+// CHECK:       Checksum: 0xDED1DC2
 // CHECK:       Number: 1
 // CHECK:       Selection: 0x0
 // CHECK:     }
@@ -131,7 +131,7 @@ L_.str2:
 // CHECK:       Length: 35
 // CHECK:       RelocationCount: 0
 // CHECK:       LineNumberCount: 0
-// CHECK:       Checksum: 0x0
+// CHECK:       Checksum: 0xB0A4C21
 // CHECK:       Number: 2
 // CHECK:       Selection: 0x0
 // CHECK:     }

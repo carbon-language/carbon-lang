@@ -93,7 +93,7 @@ L_.str:                                 # @.str
 // CHECK:       Length: 21
 // CHECK:       RelocationCount: 2
 // CHECK:       LineNumberCount: 0
-// CHECK:       Checksum: 0x0
+// CHECK:       Checksum: 0xC6461CBE
 // CHECK:       Number: 1
 // CHECK:       Selection: 0x0
 // CHECK:     }
@@ -110,7 +110,7 @@ L_.str:                                 # @.str
 // CHECK:       Length: 12
 // CHECK:       RelocationCount: 0
 // CHECK:       LineNumberCount: 0
-// CHECK:       Checksum: 0x0
+// CHECK:       Checksum: 0x2B95CA92
 // CHECK:       Number: 2
 // CHECK:       Selection: 0x0
 // CHECK:     }

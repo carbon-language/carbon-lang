@@ -114,7 +114,7 @@ _main:                                  # @main
 // CHECK:       Length: 48
 // CHECK:       RelocationCount: 6
 // CHECK:       LineNumberCount: 0
-// CHECK:       Checksum: 0x0
+// CHECK:       Checksum: 0x7BD396E3
 // CHECK:       Number: 1
 // CHECK:       Selection: 0x0
 // CHECK:     }
@@ -131,7 +131,7 @@ _main:                                  # @main
 // CHECK:       Length: 35
 // CHECK:       RelocationCount: 0
 // CHECK:       LineNumberCount: 0
-// CHECK:       Checksum: 0x0
+// CHECK:       Checksum: 0xB0A4C21
 // CHECK:       Number: 2
 // CHECK:       Selection: 0x0
 // CHECK:     }

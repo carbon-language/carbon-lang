@@ -93,7 +93,7 @@ _main:                                  # @main
 // CHECK:       Length: [[TextSize]]
 // CHECK:       RelocationCount: 2
 // CHECK:       LineNumberCount: 0
-// CHECK:       Checksum: 0x0
+// CHECK:       Checksum: 0x8E1B6D20
 // CHECK:       Number: [[TextNum]]
 // CHECK:       Selection: 0x0
 // CHECK:     }
@@ -110,7 +110,7 @@ _main:                                  # @main
 // CHECK:       Length: [[DataSize]]
 // CHECK:       RelocationCount: 0
 // CHECK:       LineNumberCount: 0
-// CHECK:       Checksum: 0x0
+// CHECK:       Checksum: 0x2B95CA92
 // CHECK:       Number: [[DataNum]]
 // CHECK:       Selection: 0x0
 // CHECK:     }

@@ -59,6 +59,7 @@ add_llvm_library(LLVMSupport
   IntEqClasses.cpp
   IntervalMap.cpp
   IntrusiveRefCntPtr.cpp
+  JamCRC.cpp
   LEB128.cpp
   LineIterator.cpp
   Locale.cpp
