@@ -13,8 +13,6 @@
 
 #include "clang/Serialization/ASTWriter.h"
 #include "ASTCommon.h"
-#include "ASTReaderInternals.h"
-#include "MultiOnDiskHashTable.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclContextInternals.h"
@@ -3379,14 +3377,12 @@ namespace {
 // Trait used for the on-disk hash table used in the method pool.
 class ASTDeclContextNameLookupTrait {
   ASTWriter &Writer;
-  llvm::SmallVector<DeclID, 64> DeclIDs;
 
 public:
   typedef DeclarationNameKey key_type;
   typedef key_type key_type_ref;
 
-  /// A start and end index into DeclIDs, representing a sequence of decls.
-  typedef std::pair<unsigned, unsigned> data_type;
+  typedef DeclContext::lookup_result data_type;
   typedef const data_type& data_type_ref;
 
   typedef unsigned hash_value_type;
@@ -3394,38 +3390,8 @@ public:
 
   explicit ASTDeclContextNameLookupTrait(ASTWriter &Writer) : Writer(Writer) { }
 
-  template<typename Coll>
-  data_type getData(const Coll &Decls) {
-    unsigned Start = DeclIDs.size();
-    for (NamedDecl *D : Decls) {
-      DeclIDs.push_back(
-          Writer.GetDeclRef(getDeclForLocalLookup(Writer.getLangOpts(), D)));
-    }
-    return std::make_pair(Start, DeclIDs.size());
-  }
-
-  data_type ImportData(const reader::ASTDeclContextNameLookupTrait::data_type &FromReader) {
-    unsigned Start = DeclIDs.size();
-    for (auto ID : FromReader)
-      DeclIDs.push_back(ID);
-    return std::make_pair(Start, DeclIDs.size());
-  }
-
-  static bool EqualKey(key_type_ref a, key_type_ref b) {
-    return a == b;
-  }
-
   hash_value_type ComputeHash(DeclarationNameKey Name) {
     return Name.getHash();
-  }
-
-  void EmitFileRef(raw_ostream &Out, ModuleFile *F) const {
-    assert(Writer.hasChain() &&
-           "have reference to loaded module file but no chain?");
-
-    using namespace llvm::support;
-    endian::Writer<little>(Out)
-        .write<uint32_t>(Writer.getChain()->getModuleFileID(F));
   }
 
   std::pair<unsigned, unsigned> EmitKeyDataLength(raw_ostream &Out,
@@ -3454,9 +3420,7 @@ public:
     LE.write<uint16_t>(KeyLen);
 
     // 4 bytes for each DeclID.
-    unsigned DataLen = 4 * (Lookup.second - Lookup.first);
-    assert(uint16_t(DataLen) == DataLen &&
-           "too many decls for serialized lookup result");
+    unsigned DataLen = 4 * Lookup.size();
     LE.write<uint16_t>(DataLen);
 
     return std::make_pair(KeyLen, DataLen);
@@ -3496,8 +3460,11 @@ public:
     using namespace llvm::support;
     endian::Writer<little> LE(Out);
     uint64_t Start = Out.tell(); (void)Start;
-    for (unsigned I = Lookup.first, N = Lookup.second; I != N; ++I)
-      LE.write<uint32_t>(DeclIDs[I]);
+    for (DeclContext::lookup_iterator I = Lookup.begin(), E = Lookup.end();
+         I != E; ++I)
+      LE.write<uint32_t>(
+          Writer.GetDeclRef(getDeclForLocalLookup(Writer.getLangOpts(), *I)));
+
     assert(Out.tell() - Start == DataLen && "Data length is wrong");
   }
 };
@@ -3517,7 +3484,7 @@ bool ASTWriter::isLookupResultEntirelyExternal(StoredDeclsList &Result,
   return true;
 }
 
-void
+uint32_t
 ASTWriter::GenerateNameLookupTable(const DeclContext *ConstDC,
                                    llvm::SmallVectorImpl<char> &LookupTable) {
   assert(!ConstDC->HasLazyLocalLexicalLookups &&
@@ -3529,8 +3496,8 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *ConstDC,
   assert(DC == DC->getPrimaryContext() && "only primary DC has lookup table");
 
   // Create the on-disk hash table representation.
-  MultiOnDiskHashTableGenerator<reader::ASTDeclContextNameLookupTrait,
-                                ASTDeclContextNameLookupTrait> Generator;
+  llvm::OnDiskChainedHashTableGenerator<ASTDeclContextNameLookupTrait>
+      Generator;
   ASTDeclContextNameLookupTrait Trait(*this);
 
   // The first step is to collect the declaration names which we need to
@@ -3665,7 +3632,7 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *ConstDC,
 
     switch (Name.getNameKind()) {
     default:
-      Generator.insert(Name, Trait.getData(Result), Trait);
+      Generator.insert(Name, Result, Trait);
       break;
 
     case DeclarationName::CXXConstructorName:
@@ -3683,15 +3650,17 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *ConstDC,
   // the key, only the kind of name is used.
   if (!ConstructorDecls.empty())
     Generator.insert(ConstructorDecls.front()->getDeclName(),
-                     Trait.getData(ConstructorDecls), Trait);
+                     DeclContext::lookup_result(ConstructorDecls), Trait);
   if (!ConversionDecls.empty())
     Generator.insert(ConversionDecls.front()->getDeclName(),
-                     Trait.getData(ConversionDecls), Trait);
+                     DeclContext::lookup_result(ConversionDecls), Trait);
 
-  // Create the on-disk hash table. Also emit the existing imported and
-  // merged table if there is one.
-  auto *Lookups = Chain ? Chain->getLoadedLookupTables(DC) : nullptr;
-  Generator.emit(LookupTable, Trait, Lookups ? &Lookups->Table : nullptr);
+  // Create the on-disk hash table in a buffer.
+  llvm::raw_svector_ostream Out(LookupTable);
+  // Make sure that no bucket is at offset 0
+  using namespace llvm::support;
+  endian::Writer<little>(Out).write<uint32_t>(0);
+  return Generator.Emit(Out, Trait);
 }
 
 /// \brief Write the block containing all of the declaration IDs
@@ -3774,11 +3743,12 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
 
   // Create the on-disk hash table in a buffer.
   SmallString<4096> LookupTable;
-  GenerateNameLookupTable(DC, LookupTable);
+  uint32_t BucketOffset = GenerateNameLookupTable(DC, LookupTable);
 
   // Write the lookup table
   RecordData Record;
   Record.push_back(DECL_CONTEXT_VISIBLE);
+  Record.push_back(BucketOffset);
   Stream.EmitRecordWithBlob(DeclContextVisibleLookupAbbrev, Record,
                             LookupTable);
   ++NumVisibleDeclContexts;
@@ -3801,7 +3771,7 @@ void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
 
   // Create the on-disk hash table in a buffer.
   SmallString<4096> LookupTable;
-  GenerateNameLookupTable(DC, LookupTable);
+  uint32_t BucketOffset = GenerateNameLookupTable(DC, LookupTable);
 
   // If we're updating a namespace, select a key declaration as the key for the
   // update record; those are the only ones that will be checked on reload.
@@ -3812,6 +3782,7 @@ void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
   RecordData Record;
   Record.push_back(UPDATE_VISIBLE);
   Record.push_back(getDeclID(cast<Decl>(DC)));
+  Record.push_back(BucketOffset);
   Stream.EmitRecordWithBlob(UpdateVisibleAbbrev, Record, LookupTable);
 }
 
@@ -4275,6 +4246,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   Abv = new llvm::BitCodeAbbrev();
   Abv->Add(llvm::BitCodeAbbrevOp(UPDATE_VISIBLE));
   Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::VBR, 6));
+  Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Fixed, 32));
   Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Blob));
   UpdateVisibleAbbrev = Stream.EmitAbbrev(Abv);
   WriteDeclContextVisibleUpdate(TU);

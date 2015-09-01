@@ -282,8 +282,9 @@ class ReadMethodPoolVisitor;
 
 namespace reader {
   class ASTIdentifierLookupTrait;
-  /// \brief The on-disk hash table(s) used for DeclContext name lookup.
-  struct DeclContextLookupTable;
+  /// \brief The on-disk hash table used for the DeclContext's Name lookup table.
+  typedef llvm::OnDiskIterableChainedHashTable<ASTDeclContextNameLookupTrait>
+    ASTDeclContextNameLookupTable;
 }
 
 } // end namespace serialization
@@ -506,10 +507,6 @@ private:
   /// \brief Map from the TU to its lexical contents from each module file.
   std::vector<std::pair<ModuleFile*, LexicalContents>> TULexicalDecls;
 
-  /// \brief Map from a DeclContext to its lookup tables.
-  llvm::DenseMap<const DeclContext *,
-                 serialization::reader::DeclContextLookupTable> Lookups;
-
   // Updates for visible decls can occur for other contexts than just the
   // TU, and when we read those update records, the actual context may not
   // be available yet, so have this pending map using the ID as a key. It
@@ -517,6 +514,7 @@ private:
   struct PendingVisibleUpdate {
     ModuleFile *Mod;
     const unsigned char *Data;
+    unsigned BucketOffset;
   };
   typedef SmallVector<PendingVisibleUpdate, 1> DeclContextVisibleUpdates;
 
@@ -1090,10 +1088,6 @@ public:
       for (auto ID : It->second)
         Visit(GetExistingDecl(ID));
   }
-
-  /// \brief Get the loaded lookup tables for \p Primary, if any.
-  const serialization::reader::DeclContextLookupTable *
-  getLoadedLookupTables(DeclContext *Primary) const;
 
 private:
   struct ImportedModule {
@@ -1875,13 +1869,6 @@ public:
   ///
   /// Note: overrides method in ExternalASTSource
   Module *getModule(unsigned ID) override;
-
-  /// \brief Retrieve the module file with a given local ID within the specified
-  /// ModuleFile.
-  ModuleFile *getLocalModuleFile(ModuleFile &M, unsigned ID);
-
-  /// \brief Get an ID for the given module file.
-  unsigned getModuleFileID(ModuleFile *M);
 
   /// \brief Return a descriptor for the corresponding module.
   llvm::Optional<ASTSourceDescriptor> getSourceDescriptor(unsigned ID) override;

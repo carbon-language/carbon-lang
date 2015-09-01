@@ -1489,8 +1489,6 @@ void ASTDeclReader::MergeDefinitionData(
     Reader.PendingDefinitions.erase(MergeDD.Definition);
     MergeDD.Definition->IsCompleteDefinition = false;
     mergeDefinitionVisibility(DD.Definition, MergeDD.Definition);
-    assert(Reader.Lookups.find(MergeDD.Definition) == Reader.Lookups.end() &&
-           "already loaded pending lookups for merged definition");
   }
 
   auto PFDI = Reader.PendingFakeDefinitionData.find(&DD);
@@ -3348,10 +3346,15 @@ void ASTReader::loadDeclUpdateRecords(serialization::DeclID ID, Decl *D) {
     PendingVisibleUpdates.erase(I);
 
     auto *DC = cast<DeclContext>(D)->getPrimaryContext();
-    for (const PendingVisibleUpdate &Update : VisibleUpdates)
-      Lookups[DC].Table.add(
-          Update.Mod, Update.Data,
+    for (const PendingVisibleUpdate &Update : VisibleUpdates) {
+      auto *&LookupTable = Update.Mod->DeclContextInfos[DC].NameLookupTableData;
+      assert(!LookupTable && "multiple lookup tables for DC in module");
+      LookupTable = reader::ASTDeclContextNameLookupTable::Create(
+          Update.Data + Update.BucketOffset,
+          Update.Data + sizeof(uint32_t),
+          Update.Data,
           reader::ASTDeclContextNameLookupTrait(*this, *Update.Mod));
+    }
     DC->setHasExternalVisibleStorage(true);
   }
 
