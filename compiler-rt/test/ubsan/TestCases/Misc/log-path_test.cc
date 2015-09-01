@@ -1,6 +1,9 @@
 // FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
 // XFAIL: android
 
+// The globs below do not work in the lit shell.
+// REQUIRES: shell
+
 // RUN: %clangxx -fsanitize=undefined %s -O1 -o %t
 
 // Regular run.
