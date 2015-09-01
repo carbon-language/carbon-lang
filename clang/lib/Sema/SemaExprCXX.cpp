@@ -6397,7 +6397,7 @@ static ExprResult attemptRecovery(Sema &SemaRef,
       if (MightBeImplicitMember)
         return SemaRef.BuildPossibleImplicitMemberExpr(
             NewSS, /*TemplateKWLoc*/ SourceLocation(), R,
-            /*TemplateArgs*/ nullptr);
+            /*TemplateArgs*/ nullptr, /*S*/ nullptr);
     } else if (auto *Ivar = dyn_cast<ObjCIvarDecl>(ND)) {
       return SemaRef.LookupInObjCMethod(R, Consumer.getScope(),
                                         Ivar->getIdentifier());

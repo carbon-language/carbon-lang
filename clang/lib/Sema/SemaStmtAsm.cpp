@@ -675,7 +675,7 @@ Sema::LookupInlineAsmVarDeclField(Expr *E, StringRef Member, unsigned &Offset,
   // Make an Expr to thread through OpDecl.
   ExprResult Result = BuildMemberReferenceExpr(
       E, E->getType(), AsmLoc, /*IsArrow=*/false, CXXScopeSpec(),
-      SourceLocation(), nullptr, FieldResult, nullptr);
+      SourceLocation(), nullptr, FieldResult, nullptr, nullptr);
   if (Result.isInvalid())
     return Result;
   Info.OpDecl = Result.get();

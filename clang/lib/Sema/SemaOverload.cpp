@@ -10701,8 +10701,8 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
   // casts and such from the call, we don't really care.
   ExprResult NewFn = ExprError();
   if ((*R.begin())->isCXXClassMember())
-    NewFn = SemaRef.BuildPossibleImplicitMemberExpr(SS, TemplateKWLoc,
-                                                    R, ExplicitTemplateArgs);
+    NewFn = SemaRef.BuildPossibleImplicitMemberExpr(SS, TemplateKWLoc, R,
+                                                    ExplicitTemplateArgs, S);
   else if (ExplicitTemplateArgs || TemplateKWLoc.isValid())
     NewFn = SemaRef.BuildTemplateIdExpr(SS, TemplateKWLoc, R, false,
                                         ExplicitTemplateArgs);
@@ -12321,7 +12321,7 @@ Sema::BuildForRangeBeginEndCall(Scope *S, SourceLocation Loc,
                                  /*TemplateKWLoc=*/SourceLocation(),
                                  /*FirstQualifierInScope=*/nullptr,
                                  MemberLookup,
-                                 /*TemplateArgs=*/nullptr);
+                                 /*TemplateArgs=*/nullptr, S);
     if (MemberRef.isInvalid()) {
       *CallExpr = ExprError();
       Diag(Range->getLocStart(), diag::note_in_for_range)

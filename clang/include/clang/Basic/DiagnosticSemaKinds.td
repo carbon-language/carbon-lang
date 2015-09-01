@@ -5674,6 +5674,9 @@ def err_throw_incomplete_ptr : Error<
   "cannot throw pointer to object of incomplete type %0">;
 def err_return_in_constructor_handler : Error<
   "return in the catch of a function try block of a constructor is illegal">;
+def warn_cdtor_function_try_handler_mem_expr : Warning<
+  "cannot refer to a non-static member from the handler of a "
+  "%select{constructor|destructor}0 function try block">, InGroup<Exceptions>;
 
 let CategoryName = "Lambda Issue" in {
   def err_capture_more_than_once : Error<

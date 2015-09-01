@@ -1968,7 +1968,8 @@ public:
     return getSema().BuildMemberReferenceExpr(Base, BaseType, OpLoc, isArrow,
                                               SS, TemplateKWLoc,
                                               FirstQualifierInScope,
-                                              R, ExplicitTemplateArgs);
+                                              R, ExplicitTemplateArgs,
+                                              /*S*/nullptr);
   }
 
   /// \brief Build a new binary operator expression.
@@ -2034,7 +2035,8 @@ public:
                                               SS, SourceLocation(),
                                               /*FirstQualifierInScope*/ nullptr,
                                               NameInfo,
-                                              /* TemplateArgs */ nullptr);
+                                              /* TemplateArgs */ nullptr,
+                                              /*S*/ nullptr);
   }
 
   /// \brief Build a new initializer list expression.
@@ -2482,7 +2484,7 @@ public:
                                                     TemplateArgs);
 
     return getSema().BuildQualifiedDeclarationNameExpr(
-        SS, NameInfo, IsAddressOfOperand, RecoveryTSI);
+        SS, NameInfo, IsAddressOfOperand, /*S*/nullptr, RecoveryTSI);
   }
 
   /// \brief Build a new template-id expression.
@@ -2576,7 +2578,7 @@ public:
                                             SS, TemplateKWLoc,
                                             FirstQualifierInScope,
                                             MemberNameInfo,
-                                            TemplateArgs);
+                                            TemplateArgs, /*S*/nullptr);
   }
 
   /// \brief Build a new member reference expression.
@@ -2598,7 +2600,7 @@ public:
                                             OperatorLoc, IsArrow,
                                             SS, TemplateKWLoc,
                                             FirstQualifierInScope,
-                                            R, TemplateArgs);
+                                            R, TemplateArgs, /*S*/nullptr);
   }
 
   /// \brief Build a new noexcept expression.
@@ -2738,7 +2740,8 @@ public:
                                               SS, SourceLocation(),
                                               /*FirstQualifierInScope=*/nullptr,
                                               NameInfo,
-                                              /*TemplateArgs=*/nullptr);
+                                              /*TemplateArgs=*/nullptr,
+                                              /*S=*/nullptr);
   }
 
   /// \brief Build a new Objective-C property reference expression.
@@ -2756,7 +2759,8 @@ public:
                                               SS, SourceLocation(),
                                               /*FirstQualifierInScope=*/nullptr,
                                               NameInfo,
-                                              /*TemplateArgs=*/nullptr);
+                                              /*TemplateArgs=*/nullptr,
+                                              /*S=*/nullptr);
   }
 
   /// \brief Build a new Objective-C property reference expression.
@@ -2788,7 +2792,8 @@ public:
                                               SS, SourceLocation(),
                                               /*FirstQualifierInScope=*/nullptr,
                                               NameInfo,
-                                              /*TemplateArgs=*/nullptr);
+                                              /*TemplateArgs=*/nullptr,
+                                              /*S=*/nullptr);
   }
 
   /// \brief Build a new shuffle vector expression.
@@ -11186,7 +11191,8 @@ TreeTransform<Derived>::RebuildCXXPseudoDestructorExpr(Expr *Base,
                                             SS, TemplateKWLoc,
                                             /*FIXME: FirstQualifier*/ nullptr,
                                             NameInfo,
-                                            /*TemplateArgs*/ nullptr);
+                                            /*TemplateArgs*/ nullptr,
+                                            /*S*/nullptr);
 }
 
 template<typename Derived>
