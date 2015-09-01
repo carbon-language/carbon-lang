@@ -325,11 +325,10 @@ void MCFragment::destroy() {
 /* *** */
 
 MCAssembler::MCAssembler(MCContext &Context_, MCAsmBackend &Backend_,
-                         MCCodeEmitter &Emitter_, MCObjectWriter &Writer_,
-                         raw_ostream &OS_)
+                         MCCodeEmitter &Emitter_, MCObjectWriter &Writer_)
     : Context(Context_), Backend(Backend_), Emitter(Emitter_), Writer(Writer_),
-      OS(OS_), BundleAlignSize(0), RelaxAll(false),
-      SubsectionsViaSymbols(false), ELFHeaderEFlags(0) {
+      BundleAlignSize(0), RelaxAll(false), SubsectionsViaSymbols(false),
+      ELFHeaderEFlags(0) {
   VersionMinInfo.Major = 0; // Major version == 0 for "none specified"
 }
 
@@ -933,6 +932,7 @@ void MCAssembler::Finish() {
   MCAsmLayout Layout(*this);
   layout(Layout);
 
+  raw_ostream &OS = getWriter().getStream();
   uint64_t StartOffset = OS.tell();
 
   // Write the object file.
