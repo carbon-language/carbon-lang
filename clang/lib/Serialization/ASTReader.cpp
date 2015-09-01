@@ -7268,8 +7268,7 @@ unsigned ASTReader::getModuleFileID(ModuleFile *F) {
   // files loaded beforehand will be the same on reload.
   // FIXME: Is this true even if we have an explicit module file and a PCH?
   if (F->isModule())
-    // FIXME: BaseSubmoduleID appears to be off by one.
-    return ((F->BaseSubmoduleID + 1) << 1) | 1;
+    return ((F->BaseSubmoduleID + NUM_PREDEF_SUBMODULE_IDS) << 1) | 1;
 
   auto PCHModules = getModuleManager().pch_modules();
   auto I = std::find(PCHModules.begin(), PCHModules.end(), F);
