@@ -52,6 +52,8 @@ public:
       : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
         TLI(std::move(Arg.TLI)) {}
 
+  bool enableInterleavedAccessVectorization() { return true; }
+
   /// \name Scalar TTI Implementations
   /// @{
 

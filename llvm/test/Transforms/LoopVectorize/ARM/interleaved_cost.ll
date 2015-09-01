@@ -1,4 +1,4 @@
-; RUN: opt -S -debug-only=loop-vectorize -loop-vectorize -instcombine -enable-interleaved-mem-accesses=true  < %s 2>&1 | FileCheck %s
+; RUN: opt -S -debug-only=loop-vectorize -loop-vectorize -instcombine  < %s 2>&1 | FileCheck %s
 ; REQUIRES: asserts
 
 target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128"
