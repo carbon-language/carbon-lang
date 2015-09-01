@@ -5554,6 +5554,10 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
       // A shuffle can only come from building a vector from various
       // elements of other vectors.
       return SDValue();
+    } else if (!isa<ConstantSDNode>(V.getOperand(1))) {
+      // Furthermore, shuffles require a constant mask, whereas extractelts
+      // accept variable indices.
+      return SDValue();
     }
 
     // Add this element source to the list if it's not already there.

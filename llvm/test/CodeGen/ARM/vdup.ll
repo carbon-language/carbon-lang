@@ -364,3 +364,19 @@ define <4 x float> @check_spr_splat4_lane1(<4 x float> %p, i16 %q) {
   %sub = fsub <4 x float> %splat.splat, %p
   ret <4 x float> %sub
 }
+
+; Also make sure we don't barf on variable-index extractelts, where we almost
+; could have generated a vdup.
+
+define <8 x i8> @check_i8_varidx(<16 x i8> %v, i32 %idx) {
+; CHECK-LABEL: check_i8_varidx:
+; CHECK: mov r[[FP:[0-9]+]], sp
+; CHECK: ldr r[[IDX:[0-9]+]], [r[[FP]], #4]
+; CHECK: mov r[[SPCOPY:[0-9]+]], sp
+; CHECK: vst1.64 {d{{.*}}, d{{.*}}}, [r[[SPCOPY]]:128], r[[IDX]]
+; CHECK: vld1.8 {d{{.*}}[]}, [r[[SPCOPY]]]
+  %x = extractelement <16 x i8> %v, i32 %idx
+  %1 = insertelement  <8 x i8> undef, i8 %x, i32 0
+  %2 = insertelement  <8 x i8> %1, i8 %x, i32 1
+  ret <8 x i8> %2
+}
