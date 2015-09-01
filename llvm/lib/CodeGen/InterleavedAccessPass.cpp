@@ -52,7 +52,7 @@ using namespace llvm;
 static cl::opt<bool> LowerInterleavedAccesses(
     "lower-interleaved-accesses",
     cl::desc("Enable lowering interleaved accesses to intrinsics"),
-    cl::init(false), cl::Hidden);
+    cl::init(true), cl::Hidden);
 
 static unsigned MaxFactor; // The maximum supported interleave factor.
 

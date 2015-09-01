@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - -lower-interleaved-accesses=false | FileCheck %s
 
 define <8 x i8> @vpaddi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vpaddi8:
