@@ -530,6 +530,16 @@ public:
                               ConstString *language_object_name_ptr) override;
 
     //----------------------------------------------------------------------
+    // Clang specific CompilerType predicates
+    //----------------------------------------------------------------------
+    
+    static bool
+    IsClangType (const CompilerType &ct)
+    {
+        return (ct.GetTypeSystem()->AsClangASTContext() != nullptr);
+    }
+
+    //----------------------------------------------------------------------
     // Clang specific clang::DeclContext functions
     //----------------------------------------------------------------------
 
