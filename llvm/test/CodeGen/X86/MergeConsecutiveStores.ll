@@ -4,7 +4,7 @@
 %struct.A = type { i8, i8, i8, i8, i8, i8, i8, i8 }
 %struct.B = type { i32, i32, i32, i32, i32, i32, i32, i32 }
 
-; CHECK: merge_const_store
+; CHECK-LABEL: merge_const_store:
 ; save 1,2,3 ... as one big integer.
 ; CHECK: movabsq $578437695752307201
 ; CHECK: ret
@@ -39,7 +39,7 @@ define void @merge_const_store(i32 %count, %struct.A* nocapture %p) nounwind uwt
 }
 
 ; No vectors because we use noimplicitfloat
-; CHECK: merge_const_store_no_vec
+; CHECK-LABEL: merge_const_store_no_vec:
 ; CHECK-NOT: vmovups
 ; CHECK: ret
 define void @merge_const_store_no_vec(i32 %count, %struct.B* nocapture %p) noimplicitfloat{
@@ -73,7 +73,7 @@ define void @merge_const_store_no_vec(i32 %count, %struct.B* nocapture %p) noimp
 }
 
 ; Move the constants using a single vector store.
-; CHECK: merge_const_store_vec
+; CHECK-LABEL: merge_const_store_vec:
 ; CHECK: vmovups
 ; CHECK: ret
 define void @merge_const_store_vec(i32 %count, %struct.B* nocapture %p) nounwind uwtable noinline ssp {
@@ -107,7 +107,7 @@ define void @merge_const_store_vec(i32 %count, %struct.B* nocapture %p) nounwind
 }
 
 ; Move the first 4 constants as a single vector. Move the rest as scalars.
-; CHECK: merge_nonconst_store
+; CHECK-LABEL: merge_nonconst_store:
 ; CHECK: movl $67305985
 ; CHECK: movb
 ; CHECK: movb
@@ -332,7 +332,7 @@ block4:                                       ; preds = %4, %.lr.ph
 
 ; Make sure that we merge the consecutive load/store sequence below and use a
 ; word (16 bit) instead of a byte copy.
-; CHECK: MergeLoadStoreBaseIndexOffset
+; CHECK-LABEL: MergeLoadStoreBaseIndexOffset:
 ; CHECK: movw    (%{{.*}},%{{.*}}), [[REG:%[a-z]+]]
 ; CHECK: movw    [[REG]], (%{{.*}})
 define void @MergeLoadStoreBaseIndexOffset(i64* %a, i8* %b, i8* %c, i32 %n) {
@@ -364,7 +364,7 @@ define void @MergeLoadStoreBaseIndexOffset(i64* %a, i8* %b, i8* %c, i32 %n) {
 ; Make sure that we merge the consecutive load/store sequence below and use a
 ; word (16 bit) instead of a byte copy even if there are intermediate sign
 ; extensions.
-; CHECK: MergeLoadStoreBaseIndexOffsetSext
+; CHECK-LABEL: MergeLoadStoreBaseIndexOffsetSext:
 ; CHECK: movw    (%{{.*}},%{{.*}}), [[REG:%[a-z]+]]
 ; CHECK: movw    [[REG]], (%{{.*}})
 define void @MergeLoadStoreBaseIndexOffsetSext(i8* %a, i8* %b, i8* %c, i32 %n) {
@@ -396,7 +396,7 @@ define void @MergeLoadStoreBaseIndexOffsetSext(i8* %a, i8* %b, i8* %c, i32 %n) {
 
 ; However, we can only merge ignore sign extensions when they are on all memory
 ; computations;
-; CHECK: loadStoreBaseIndexOffsetSextNoSex
+; CHECK-LABEL: loadStoreBaseIndexOffsetSextNoSex:
 ; CHECK-NOT: movw    (%{{.*}},%{{.*}}), [[REG:%[a-z]+]]
 ; CHECK-NOT: movw    [[REG]], (%{{.*}})
 define void @loadStoreBaseIndexOffsetSextNoSex(i8* %a, i8* %b, i8* %c, i32 %n) {
