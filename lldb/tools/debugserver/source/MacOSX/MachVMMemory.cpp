@@ -19,6 +19,8 @@
 #include <sys/sysctl.h>
 #include <dlfcn.h>
 
+static const vm_size_t kInvalidPageSize = ~0;
+
 MachVMMemory::MachVMMemory() :
     m_page_size    (kInvalidPageSize),
     m_err        (0)

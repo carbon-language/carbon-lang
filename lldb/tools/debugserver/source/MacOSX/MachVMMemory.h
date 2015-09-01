@@ -21,7 +21,6 @@
 class MachVMMemory
 {
 public:
-    enum { kInvalidPageSize = ~0 };
     MachVMMemory();
     ~MachVMMemory();
     nub_size_t Read(task_t task, nub_addr_t address, void *data, nub_size_t data_count);
