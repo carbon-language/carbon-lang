@@ -585,12 +585,12 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                     0,                    // byte size
                     reg_offset,           // offset
                     eEncodingUint,        // encoding
-                    eFormatHex,           // formate
+                    eFormatHex,           // format
                     {
-                        LLDB_INVALID_REGNUM, // GCC reg num
+                        LLDB_INVALID_REGNUM, // eh_frame reg num
                         LLDB_INVALID_REGNUM, // DWARF reg num
                         LLDB_INVALID_REGNUM, // generic reg num
-                        reg_num,             // GDB reg num
+                        reg_num,             // stabs reg num
                         reg_num           // native register number
                     },
                     NULL,
@@ -4279,12 +4279,12 @@ ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemot
             0,                    // byte size
             reg_offset,           // offset
             eEncodingUint,        // encoding
-            eFormatHex,           // formate
+            eFormatHex,           // format
             {
-                LLDB_INVALID_REGNUM, // GCC reg num
+                LLDB_INVALID_REGNUM, // eh_frame reg num
                 LLDB_INVALID_REGNUM, // DWARF reg num
                 LLDB_INVALID_REGNUM, // generic reg num
-                prev_reg_num,        // GDB reg num
+                prev_reg_num,        // stabs reg num
                 prev_reg_num         // native register number
             },
             NULL,
