@@ -20,6 +20,7 @@
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/DataFormatters/FormatManager.h"
+#include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -1785,20 +1786,34 @@ FormatEntity::Format (const Entry &entry,
 
                                 VariableSP var_sp (args.GetVariableAtIndex (arg_idx));
                                 ValueObjectSP var_value_sp (ValueObjectVariable::Create (exe_scope, var_sp));
+                                StreamString ss;
                                 const char *var_representation = nullptr;
                                 const char *var_name = var_value_sp->GetName().GetCString();
-                                if (var_value_sp->GetCompilerType().IsAggregateType() &&
-                                    DataVisualization::ShouldPrintAsOneLiner(*var_value_sp.get()))
+                                if (var_value_sp->GetCompilerType().IsValid())
                                 {
-                                    static StringSummaryFormat format(TypeSummaryImpl::Flags()
-                                                                      .SetHideItemNames(false)
-                                                                      .SetShowMembersOneLiner(true),
-                                                                      "");
-                                    format.FormatObject(var_value_sp.get(), buffer, TypeSummaryOptions());
-                                    var_representation = buffer.c_str();
+                                    if (var_value_sp && exe_scope->CalculateTarget())
+                                        var_value_sp = var_value_sp->GetQualifiedRepresentationIfAvailable(exe_scope->CalculateTarget()->TargetProperties::GetPreferDynamicValue(),
+                                                                                                           exe_scope->CalculateTarget()->TargetProperties::GetEnableSyntheticValue());
+                                    if (var_value_sp->GetCompilerType().IsAggregateType() &&
+                                        DataVisualization::ShouldPrintAsOneLiner(*var_value_sp.get()))
+                                    {
+                                        static StringSummaryFormat format(TypeSummaryImpl::Flags()
+                                                                          .SetHideItemNames(false)
+                                                                          .SetShowMembersOneLiner(true),
+                                                                          "");
+                                        format.FormatObject(var_value_sp.get(), buffer, TypeSummaryOptions());
+                                        var_representation = buffer.c_str();
+                                    }
+                                    else
+                                        var_value_sp->DumpPrintableRepresentation(ss,
+                                                                                  ValueObject::ValueObjectRepresentationStyle::eValueObjectRepresentationStyleSummary,
+                                                                                  eFormatDefault,
+                                                                                  ValueObject::PrintableRepresentationSpecialCases::ePrintableRepresentationSpecialCasesAllow,
+                                                                                  false);
                                 }
-                                else
-                                    var_representation = var_value_sp->GetValueAsCString();
+                                
+                                if (ss.GetData() && ss.GetSize())
+                                    var_representation = ss.GetData();
                                 if (arg_idx > 0)
                                     s.PutCString (", ");
                                 if (var_value_sp->GetError().Success())
