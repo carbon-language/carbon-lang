@@ -41,7 +41,7 @@ function(llvm_update_compile_flags name)
   # Assume that;
   #   - LLVM_COMPILE_FLAGS is list.
   #   - PROPERTY COMPILE_FLAGS is string.
-  string(REPLACE ";" " " target_compile_flags "${LLVM_COMPILE_FLAGS}")
+  string(REPLACE ";" " " target_compile_flags " ${LLVM_COMPILE_FLAGS}")
 
   if(update_src_props)
     foreach(fn ${sources})
@@ -303,6 +303,9 @@ endfunction(set_windows_version_resource_properties)
 #   MODULE
 #     Target ${name} might not be created on unsupported platforms.
 #     Check with "if(TARGET ${name})".
+#   DISABLE_LLVM_LINK_LLVM_DYLIB
+#     Do not link this library to libLLVM, even if
+#     LLVM_LINK_LLVM_DYLIB is enabled.
 #   OUTPUT_NAME name
 #     Corresponds to OUTPUT_NAME in target properties.
 #   DEPENDS targets...
@@ -316,7 +319,7 @@ endfunction(set_windows_version_resource_properties)
 #   )
 function(llvm_add_library name)
   cmake_parse_arguments(ARG
-    "MODULE;SHARED;STATIC"
+    "MODULE;SHARED;STATIC;DISABLE_LLVM_LINK_LLVM_DYLIB"
     "OUTPUT_NAME"
     "ADDITIONAL_HEADERS;DEPENDS;LINK_COMPONENTS;LINK_LIBS;OBJLIBS"
     ${ARGN})
@@ -444,10 +447,14 @@ function(llvm_add_library name)
   # property has been set to an empty value.
   get_property(lib_deps GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_${name})
 
-  llvm_map_components_to_libnames(llvm_libs
-    ${ARG_LINK_COMPONENTS}
-    ${LLVM_LINK_COMPONENTS}
-    )
+  if (LLVM_LINK_LLVM_DYLIB AND NOT ARG_STATIC AND NOT ARG_DISABLE_LLVM_LINK_LLVM_DYLIB)
+    set(llvm_libs LLVM)
+  else()
+    llvm_map_components_to_libnames(llvm_libs
+      ${ARG_LINK_COMPONENTS}
+      ${LLVM_LINK_COMPONENTS}
+      )
+  endif()
 
   if(CMAKE_VERSION VERSION_LESS 2.8.12)
     # Link libs w/o keywords, assuming PUBLIC.
@@ -562,7 +569,8 @@ endmacro(add_llvm_loadable_module name)
 
 
 macro(add_llvm_executable name)
-  llvm_process_sources( ALL_FILES ${ARGN} )
+  cmake_parse_arguments(ARG "DISABLE_LLVM_LINK_LLVM_DYLIB" "" "" ${ARGN})
+  llvm_process_sources( ALL_FILES ${ARG_UNPARSED_ARGUMENTS} )
 
   # Generate objlib
   if(LLVM_ENABLE_OBJLIB)
@@ -604,7 +612,11 @@ macro(add_llvm_executable name)
 
   set(EXCLUDE_FROM_ALL OFF)
   set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
-  llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
+  if (LLVM_LINK_LLVM_DYLIB AND NOT ARG_DISABLE_LLVM_LINK_LLVM_DYLIB)
+    target_link_libraries(${name} LLVM)
+  else()
+    llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
+  endif()
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
@@ -836,8 +848,13 @@ function(llvm_add_go_executable binary pkgpath)
       set(cppflags "${cppflags} -I${d}")
     endforeach(d)
     set(ldflags "${CMAKE_EXE_LINKER_FLAGS}")
+    if (LLVM_LINK_LLVM_DYLIB)
+      set(linkmode "dylib")
+    else()
+      set(linkmode "component-libs")
+    endif()
     add_custom_command(OUTPUT ${binpath}
-      COMMAND ${CMAKE_BINARY_DIR}/bin/llvm-go "go=${GO_EXECUTABLE}" "cc=${cc}" "cxx=${cxx}" "cppflags=${cppflags}" "ldflags=${ldflags}"
+      COMMAND ${CMAKE_BINARY_DIR}/bin/llvm-go "go=${GO_EXECUTABLE}" "cc=${cc}" "cxx=${cxx}" "cppflags=${cppflags}" "ldflags=${ldflags}" "linkmode=${linkmode}"
               ${ARG_GOFLAGS} build -o ${binpath} ${pkgpath}
       DEPENDS llvm-config ${CMAKE_BINARY_DIR}/bin/llvm-go${CMAKE_EXECUTABLE_SUFFIX}
               ${llvmlibs} ${ARG_DEPENDS}

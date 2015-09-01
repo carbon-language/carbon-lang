@@ -2,11 +2,23 @@
 # library is enabled by setting LLVM_BUILD_LLVM_DYLIB=yes on the CMake
 # commandline. By default the shared library only exports the LLVM C API.
 
+if(LLVM_LINK_LLVM_DYLIB)
+  if(DEFINED LLVM_DYLIB_COMPONENTS)
+    # To avoid inscrutable link errors, just disallow setting
+    # LLVM_DYLIB_COMPONENTS when we're intending to link tools
+    # and shared libraries with the dylib.
+    message(FATAL_ERROR "LLVM_DYLIB_COMPONENTS must not be set when LLVM_LINK_LLVM_DYLIB is ON")
+  endif()
+  if(NOT LLVM_DYLIB_EXPORT_ALL)
+    message(FATAL_ERROR "LLVM_DYLIB_EXPORT_ALL must be ON when LLVM_LINK_LLVM_DYLIB is ON")
+  endif()
+  set(LLVM_DYLIB_COMPONENTS all)
+endif()
 
-# You can configure which libraries from LLVM you want to include in the shared
-# library by setting LLVM_DYLIB_COMPONENTS to a semi-colon delimited list of
-# LLVM components. All compoenent names handled by llvm-config are valid.
-
+# If LLVM_LINK_LLVM_DYLIB is not OFF, you can configure which libraries from
+# LLVM you want to include in the shared library by setting
+# LLVM_DYLIB_COMPONENTS to a semi-colon delimited list of LLVM components.
+# All component names handled by llvm-config are valid.
 if(NOT DEFINED LLVM_DYLIB_COMPONENTS)
   set(LLVM_DYLIB_COMPONENTS
     ${LLVM_TARGETS_TO_BUILD}
@@ -44,6 +56,25 @@ set(SOURCES
   )
 
 llvm_map_components_to_libnames(LIB_NAMES ${LLVM_DYLIB_COMPONENTS})
+
+if(LLVM_LINK_LLVM_DYLIB)
+  # libLLVM.so should not have any dependencies on any other LLVM
+  # shared libraries. When using the "all" pseudo-component,
+  # LLVM_AVAILABLE_LIBS is added to the dependencies, which may
+  # contain shared libraries (e.g. libLTO).
+  #
+  # Also exclude libLLVMTableGen for the following reasons:
+  #  - it is only used by internal *-tblgen utilities;
+  #  - it pollutes the global options space.
+  foreach(lib ${LIB_NAMES})
+    get_target_property(t ${lib} TYPE)
+    if("${lib}" STREQUAL "LLVMTableGen")
+    elseif("x${t}" STREQUAL "xSTATIC_LIBRARY")
+      list(APPEND FILTERED_LIB_NAMES ${lib})
+    endif()
+  endforeach()
+  set(LIB_NAMES ${FILTERED_LIB_NAMES})
+endif()
 
 if(NOT DEFINED LLVM_DYLIB_EXPORTED_SYMBOL_FILE)
 
@@ -94,7 +125,7 @@ else()
   add_custom_target(libLLVMExports DEPENDS ${LLVM_EXPORTED_SYMBOL_FILE})
 endif()
 
-add_llvm_library(LLVM SHARED ${SOURCES})
+add_llvm_library(LLVM SHARED DISABLE_LLVM_LINK_LLVM_DYLIB ${SOURCES})
 
 list(REMOVE_DUPLICATES LIB_NAMES)
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") # FIXME: It should be "GNU ld for elf"
