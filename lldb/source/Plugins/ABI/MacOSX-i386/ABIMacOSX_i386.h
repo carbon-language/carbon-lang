@@ -36,13 +36,6 @@ public:
                         llvm::ArrayRef<lldb::addr_t> args) const;
     
     virtual bool
-    PrepareNormalCall (lldb_private::Thread &thread,
-                       lldb::addr_t sp,
-                       lldb::addr_t func_addr,
-                       lldb::addr_t return_addr,
-                       lldb_private::ValueList &args) const;
-    
-    virtual bool
     GetArgumentValues (lldb_private::Thread &thread,
                        lldb_private::ValueList &values) const;
     
