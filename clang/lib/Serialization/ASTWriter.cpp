@@ -43,6 +43,7 @@
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Serialization/ASTReader.h"
+#include "clang/Serialization/SerializationDiagnostic.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/Hashing.h"
@@ -2054,10 +2055,9 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
   Stream.EnterSubblock(PREPROCESSOR_BLOCK_ID, 3);
 
   // If the AST file contains __DATE__ or __TIME__ emit a warning about this.
-  // FIXME: use diagnostics subsystem for localization etc.
+  // FIXME: Include a location for the use, and say which one was used.
   if (PP.SawDateOrTime())
-    fprintf(stderr, "warning: precompiled header used __DATE__ or __TIME__.\n");
-
+    PP.Diag(SourceLocation(), diag::warn_module_uses_date_time) << IsModule;
 
   // Loop over all the macro directives that are live at the end of the file,
   // emitting each to the PP section.

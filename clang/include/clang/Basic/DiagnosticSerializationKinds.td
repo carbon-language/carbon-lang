@@ -111,6 +111,10 @@ def note_module_odr_violation_different_definitions : Note<
 def err_module_odr_violation_different_instantiations : Error<
   "instantiation of %q0 is different in different modules">;
 
+def warn_module_uses_date_time : Warning<
+  "%select{precompiled header|module}0 uses __DATE__ or __TIME__">,
+  InGroup<DiagGroup<"pch-date-time">>;
+
 } // let CategoryName
 } // let Component
 
