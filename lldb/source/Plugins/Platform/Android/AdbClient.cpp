@@ -131,10 +131,10 @@ AdbClient::GetDevices (DeviceIDList &device_list)
 }
 
 Error
-AdbClient::SetPortForwarding (const uint16_t port)
+AdbClient::SetPortForwarding (const uint16_t local_port, const uint16_t remote_port)
 {
     char message[48];
-    snprintf (message, sizeof (message), "forward:tcp:%d;tcp:%d", port, port);
+    snprintf (message, sizeof (message), "forward:tcp:%d;tcp:%d", local_port, remote_port);
 
     const auto error = SendDeviceMessage (message);
     if (error.Fail ())
@@ -144,10 +144,10 @@ AdbClient::SetPortForwarding (const uint16_t port)
 }
 
 Error
-AdbClient::DeletePortForwarding (const uint16_t port)
+AdbClient::DeletePortForwarding (const uint16_t local_port)
 {
     char message[32];
-    snprintf (message, sizeof (message), "killforward:tcp:%d", port);
+    snprintf (message, sizeof (message), "killforward:tcp:%d", local_port);
 
     const auto error = SendDeviceMessage (message);
     if (error.Fail ())

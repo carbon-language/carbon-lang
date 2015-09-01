@@ -48,10 +48,10 @@ public:
     GetDevices (DeviceIDList &device_list);
 
     Error
-    SetPortForwarding (const uint16_t port);
+    SetPortForwarding (const uint16_t local_port, const uint16_t remote_port);
 
     Error
-    DeletePortForwarding (const uint16_t port);
+    DeletePortForwarding (const uint16_t local_port);
 
     Error
     PullFile (const FileSpec &remote_file, const FileSpec &local_file);

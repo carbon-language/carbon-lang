@@ -235,9 +235,10 @@ protected:
     KillSpawnedProcess (lldb::pid_t pid);
 
     virtual std::string
-    MakeServerUrl(const char* scheme,
-                  const char* hostname,
-                  uint16_t port);
+    MakeUrl(const char* scheme,
+            const char* hostname,
+            uint16_t port,
+            const char* path);
 
 private:
     std::string

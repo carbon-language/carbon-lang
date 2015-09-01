@@ -963,17 +963,21 @@ PlatformRemoteGDBServer::MakeGdbServerUrl(const std::string &platform_scheme,
     const char *port_offset_c_str = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_PORT_OFFSET");
     int port_offset = port_offset_c_str ? ::atoi(port_offset_c_str) : 0;
 
-    return MakeServerUrl(override_scheme ? override_scheme : platform_scheme.c_str(),
-                         override_hostname ? override_hostname : platform_hostname.c_str(),
-                         port + port_offset);
+    return MakeUrl(override_scheme ? override_scheme : platform_scheme.c_str(),
+                   override_hostname ? override_hostname : platform_hostname.c_str(),
+                   port + port_offset,
+                   nullptr);
 }
 
 std::string
-PlatformRemoteGDBServer::MakeServerUrl(const char* scheme,
+PlatformRemoteGDBServer::MakeUrl(const char* scheme,
                                        const char* hostname,
-                                       uint16_t port)
+                                       uint16_t port,
+                                       const char* path)
 {
     StreamString result;
     result.Printf("%s://%s:%u", scheme, hostname, port);
+    if (path)
+        result.Write(path, strlen(path));
     return result.GetString();
 }
