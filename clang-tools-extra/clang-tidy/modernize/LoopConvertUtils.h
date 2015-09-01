@@ -197,14 +197,14 @@ private:
 /// \brief The information needed to describe a valid convertible usage
 /// of an array index or iterator.
 struct Usage {
-  const Expr *E;
+  const Expr *Expression;
   bool IsArrow;
   SourceRange Range;
 
   explicit Usage(const Expr *E)
-      : E(E), IsArrow(false), Range(E->getSourceRange()) {}
+      : Expression(E), IsArrow(false), Range(Expression->getSourceRange()) {}
   Usage(const Expr *E, bool IsArrow, SourceRange Range)
-      : E(E), IsArrow(IsArrow), Range(std::move(Range)) {}
+      : Expression(E), IsArrow(IsArrow), Range(std::move(Range)) {}
 };
 
 /// \brief A class to encapsulate lowering of the tool's confidence level.

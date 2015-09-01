@@ -387,6 +387,14 @@ void f() {
 
 namespace Nesting {
 
+void g(S::iterator it);
+void const_g(S::const_iterator it);
+class Foo {
+ public:
+  void g(S::iterator it);
+  void const_g(S::const_iterator it);
+};
+
 void f() {
   const int N = 10;
   const int M = 15;
@@ -454,6 +462,48 @@ void f() {
   // CHECK-FIXES: for (const auto & elem : NestS) {
   // CHECK-FIXES-NEXT: for (S::const_iterator SI = (elem).begin(), SE = (elem).end(); SI != SE; ++SI) {
   // CHECK-FIXES-NEXT: printf("%d", *SI);
+
+  for (Nested<S>::const_iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
+    const S &s = *I;
+    for (S::const_iterator SI = s.begin(), SE = s.end(); SI != SE; ++SI) {
+      printf("%d", *SI);
+      const_g(SI);
+    }
+  }
+  // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (const auto & s : NestS) {
+
+  for (Nested<S>::iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
+    S &s = *I;
+    for (S::iterator SI = s.begin(), SE = s.end(); SI != SE; ++SI) {
+      printf("%d", *SI);
+      g(SI);
+    }
+  }
+  // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & s : NestS) {
+
+  Foo foo;
+  for (Nested<S>::const_iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
+    const S &s = *I;
+    for (S::const_iterator SI = s.begin(), SE = s.end(); SI != SE; ++SI) {
+      printf("%d", *SI);
+      foo.const_g(SI);
+    }
+  }
+  // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (const auto & s : NestS) {
+
+  for (Nested<S>::iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
+    S &s = *I;
+    for (S::iterator SI = s.begin(), SE = s.end(); SI != SE; ++SI) {
+      printf("%d", *SI);
+      foo.g(SI);
+    }
+  }
+  // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & s : NestS) {
+
 }
 
 } // namespace Nesting

@@ -494,12 +494,12 @@ void noContainer() {
   for (auto i = 0; i < v.size(); ++i) {
   }
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & elem : v) {
+  // CHECK-FIXES: for (const auto & elem : v) {
 
   for (auto i = 0; i < v.size(); ++i)
     ;
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & elem : v)
+  // CHECK-FIXES: for (const auto & elem : v)
 }
 
 struct NoBeginEnd {
@@ -509,15 +509,15 @@ struct NoBeginEnd {
 struct NoConstBeginEnd {
   NoConstBeginEnd();
   unsigned size() const;
-  unsigned begin();
-  unsigned end();
+  unsigned* begin();
+  unsigned* end();
 };
 
 struct ConstBeginEnd {
   ConstBeginEnd();
   unsigned size() const;
-  unsigned begin() const;
-  unsigned end() const;
+  unsigned* begin() const;
+  unsigned* end() const;
 };
 
 // Shouldn't transform pseudo-array uses if the container doesn't provide
@@ -535,13 +535,32 @@ void NoBeginEndTest() {
   for (unsigned i = 0, e = CBE.size(); i < e; ++i) {
   }
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & elem : CBE) {
+  // CHECK-FIXES: for (const auto & elem : CBE) {
 
   const ConstBeginEnd const_CBE;
   for (unsigned i = 0, e = const_CBE.size(); i < e; ++i) {
   }
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & elem : const_CBE) {
+  // CHECK-FIXES: for (const auto & elem : const_CBE) {
+}
+
+struct DerefByValue {
+  DerefByValue();
+  struct iter { unsigned operator*(); };
+  unsigned size() const;
+  iter begin();
+  iter end();
+  unsigned operator[](int);
+};
+
+void DerefByValueTest() {
+  DerefByValue DBV;
+  for (unsigned i = 0, e = DBV.size(); i < e; ++i) {
+    printf("%d\n", DBV[i]);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto && elem : DBV) {
+
 }
 
 } // namespace PseudoArray

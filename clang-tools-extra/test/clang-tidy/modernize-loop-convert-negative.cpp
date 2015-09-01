@@ -3,91 +3,92 @@
 #include "structures.h"
 
 // CHECK-FIXES-NOT: for ({{.*[^:]:[^:].*}})
+// CHECK-MESSAGES-NOT: modernize-loop-convert
 
 namespace Negative {
 
 const int N = 6;
 int arr[N] = {1, 2, 3, 4, 5, 6};
 int (*pArr)[N] = &arr;
-int sum = 0;
+int Sum = 0;
 
-// Checks for the index start and end:
-void indexStartAndEnd() {
-  for (int i = 0; i < N + 1; ++i)
-    sum += arr[i];
+// Checks for the Index start and end:
+void IndexStartAndEnd() {
+  for (int I = 0; I < N + 1; ++I)
+    Sum += arr[I];
 
-  for (int i = 0; i < N - 1; ++i)
-    sum += arr[i];
+  for (int I = 0; I < N - 1; ++I)
+    Sum += arr[I];
 
-  for (int i = 1; i < N; ++i)
-    sum += arr[i];
+  for (int I = 1; I < N; ++I)
+    Sum += arr[I];
 
-  for (int i = 1; i < N; ++i)
-    sum += arr[i];
+  for (int I = 1; I < N; ++I)
+    Sum += arr[I];
 
-  for (int i = 0;; ++i)
-    sum += (*pArr)[i];
+  for (int I = 0;; ++I)
+    Sum += (*pArr)[I];
 }
 
 // Checks for invalid increment steps:
 void increment() {
-  for (int i = 0; i < N; --i)
-    sum += arr[i];
+  for (int I = 0; I < N; --I)
+    Sum += arr[I];
 
-  for (int i = 0; i < N; i)
-    sum += arr[i];
+  for (int I = 0; I < N; I)
+    Sum += arr[I];
 
-  for (int i = 0; i < N;)
-    sum += arr[i];
+  for (int I = 0; I < N;)
+    Sum += arr[I];
 
-  for (int i = 0; i < N; i += 2)
-    sum++;
+  for (int I = 0; I < N; I += 2)
+    Sum++;
 }
 
-// Checks to make sure that the index isn't used outside of the array:
-void indexUse() {
-  for (int i = 0; i < N; ++i)
-    arr[i] += 1 + i;
+// Checks to make sure that the Index isn't used outside of the array:
+void IndexUse() {
+  for (int I = 0; I < N; ++I)
+    arr[I] += 1 + I;
 }
 
 // Check for loops that don't mention arrays
 void noArray() {
-  for (int i = 0; i < N; ++i)
-    sum += i;
+  for (int I = 0; I < N; ++I)
+    Sum += I;
 
-  for (int i = 0; i < N; ++i) {
+  for (int I = 0; I < N; ++I) {
   }
 
-  for (int i = 0; i < N; ++i)
+  for (int I = 0; I < N; ++I)
     ;
 }
 
 // Checks for incorrect loop variables.
 void mixedVariables() {
   int badIndex;
-  for (int i = 0; badIndex < N; ++i)
-    sum += arr[i];
+  for (int I = 0; badIndex < N; ++I)
+    Sum += arr[I];
 
-  for (int i = 0; i < N; ++badIndex)
-    sum += arr[i];
+  for (int I = 0; I < N; ++badIndex)
+    Sum += arr[I];
 
-  for (int i = 0; badIndex < N; ++badIndex)
-    sum += arr[i];
+  for (int I = 0; badIndex < N; ++badIndex)
+    Sum += arr[I];
 
-  for (int i = 0; badIndex < N; ++badIndex)
-    sum += arr[badIndex];
+  for (int I = 0; badIndex < N; ++badIndex)
+    Sum += arr[badIndex];
 }
 
-// Checks for multiple arrays indexed.
+// Checks for multiple arrays Indexed.
 void multipleArrays() {
   int badArr[N];
 
-  for (int i = 0; i < N; ++i)
-    sum += arr[i] + badArr[i];
+  for (int I = 0; I < N; ++I)
+    Sum += arr[I] + badArr[I];
 
-  for (int i = 0; i < N; ++i) {
-    int k = badArr[i];
-    sum += arr[i] + k;
+  for (int I = 0; I < N; ++I) {
+    int K = badArr[I];
+    Sum += arr[I] + K;
   }
 }
 
@@ -99,22 +100,22 @@ struct HasArr {
 struct HasIndirectArr {
   HasArr HA;
   void implicitThis() {
-    for (int i = 0; i < N; ++i) {
-      printf("%d", HA.Arr[i]);
+    for (int I = 0; I < N; ++I) {
+      printf("%d", HA.Arr[I]);
     }
 
-    for (int i = 0; i < N; ++i) {
-      printf("%d", HA.ValArr[i].x);
+    for (int I = 0; I < N; ++I) {
+      printf("%d", HA.ValArr[I].x);
     }
   }
 
   void explicitThis() {
-    for (int i = 0; i < N; ++i) {
-      printf("%d", this->HA.Arr[i]);
+    for (int I = 0; I < N; ++I) {
+      printf("%d", this->HA.Arr[I]);
     }
 
-    for (int i = 0; i < N; ++i) {
-      printf("%d", this->HA.ValArr[i].x);
+    for (int I = 0; I < N; ++I) {
+      printf("%d", this->HA.ValArr[I].x);
     }
   }
 };
@@ -133,38 +134,38 @@ struct BadBeginEnd : T {
 
 void notBeginOrEnd() {
   BadBeginEnd Bad;
-  for (T::iterator i = Bad.notBegin(), e = Bad.end(); i != e; ++i)
-    int k = *i;
+  for (T::iterator I = Bad.notBegin(), E = Bad.end();  I != E; ++I)
+    int K = *I;
 
-  for (T::iterator i = Bad.begin(), e = Bad.notEnd(); i != e; ++i)
-    int k = *i;
+  for (T::iterator I = Bad.begin(), E = Bad.notEnd();  I != E; ++I)
+    int K = *I;
 }
 
 void badLoopShapes() {
-  for (T::iterator i = t.begin(), e = t.end(), f = e; i != e; ++i)
-    int k = *i;
+  for (T::iterator I = t.begin(), E = t.end(), F = E;  I != E; ++I)
+    int K = *I;
 
-  for (T::iterator i = t.begin(), e = t.end(); i != e;)
-    int k = *i;
+  for (T::iterator I = t.begin(), E = t.end();  I != E;)
+    int K = *I;
 
-  for (T::iterator i = t.begin(), e = t.end();; ++i)
-    int k = *i;
+  for (T::iterator I = t.begin(), E = t.end();; ++I)
+    int K = *I;
 
   T::iterator outsideI;
   T::iterator outsideE;
 
   for (; outsideI != outsideE; ++outsideI)
-    int k = *outsideI;
+    int K = *outsideI;
 }
 
 void iteratorArrayMix() {
   int lower;
   const int N = 6;
-  for (T::iterator i = t.begin(), e = t.end(); lower < N; ++i)
-    int k = *i;
+  for (T::iterator I = t.begin(), E = t.end(); lower < N; ++I)
+    int K = *I;
 
-  for (T::iterator i = t.begin(), e = t.end(); lower < N; ++lower)
-    int k = *i;
+  for (T::iterator I = t.begin(), E = t.end(); lower < N; ++lower)
+    int K = *I;
 }
 
 struct ExtraConstructor : T::iterator {
@@ -173,61 +174,77 @@ struct ExtraConstructor : T::iterator {
 };
 
 void badConstructor() {
-  for (T::iterator i = ExtraConstructor(t.begin(), 0), e = t.end();
-       i != e; ++i)
-    int k = *i;
-  for (T::iterator i = ExtraConstructor(t.begin()), e = t.end(); i != e; ++i)
-    int k = *i;
+  for (T::iterator I = ExtraConstructor(t.begin(), 0), E = t.end();
+        I != E; ++I)
+    int K = *I;
+  for (T::iterator I = ExtraConstructor(t.begin()), E = t.end();  I != E; ++I)
+    int K = *I;
+}
+
+void foo(S::iterator It) {}
+class Foo {public: void bar(S::iterator It); };
+Foo fo;
+
+void iteratorUsed() {
+  for (S::iterator I = s.begin(), E = s.end();  I != E; ++I)
+    foo(I);
+
+  for (S::iterator I = s.begin(), E = s.end();  I != E; ++I)
+    fo.bar(I);
+
+  S::iterator Ret;
+  for (S::iterator I = s.begin(), E = s.end();  I != E; ++I)
+    Ret = I;
 }
 
 void iteratorMemberUsed() {
-  for (T::iterator i = t.begin(), e = t.end(); i != e; ++i)
-    i.x = *i;
+  for (T::iterator I = t.begin(), E = t.end();  I != E; ++I)
+    I.x = *I;
 
-  for (T::iterator i = t.begin(), e = t.end(); i != e; ++i)
-    int k = i.x + *i;
+  for (T::iterator I = t.begin(), E = t.end();  I != E; ++I)
+    int K = I.x + *I;
 
-  for (T::iterator i = t.begin(), e = t.end(); i != e; ++i)
-    int k = e.x + *i;
+  for (T::iterator I = t.begin(), E = t.end();  I != E; ++I)
+    int K = E.x + *I;
 }
 
 void iteratorMethodCalled() {
-  for (T::iterator i = t.begin(), e = t.end(); i != e; ++i)
-    i.insert(3);
+  for (T::iterator I = t.begin(), E = t.end();  I != E; ++I)
+    I.insert(3);
 
-  for (T::iterator i = t.begin(), e = t.end(); i != e; ++i)
-    if (i != i)
-      int k = 3;
+  for (T::iterator I = t.begin(), E = t.end();  I != E; ++I)
+    if (I != I)
+      int K = 3;
 }
 
 void iteratorOperatorCalled() {
-  for (T::iterator i = t.begin(), e = t.end(); i != e; ++i)
-    int k = *(++i);
+  for (T::iterator I = t.begin(), E = t.end();  I != E; ++I)
+    int K = *(++I);
 
-  for (S::iterator i = s.begin(), e = s.end(); i != e; ++i)
-    MutableVal k = *(++i);
+  for (S::iterator I = s.begin(), E = s.end();  I != E; ++I)
+    MutableVal K = *(++I);
 }
 
 void differentContainers() {
   T other;
-  for (T::iterator i = t.begin(), e = other.end(); i != e; ++i)
-    int k = *i;
+  for (T::iterator I = t.begin(), E = other.end();  I != E; ++I)
+    int K = *I;
 
-  for (T::iterator i = other.begin(), e = t.end(); i != e; ++i)
-    int k = *i;
+  for (T::iterator I = other.begin(), E = t.end();  I != E; ++I)
+    int K = *I;
 
   S otherS;
-  for (S::iterator i = s.begin(), e = otherS.end(); i != e; ++i)
-    MutableVal k = *i;
+  for (S::iterator I = s.begin(), E = otherS.end();  I != E; ++I)
+    MutableVal K = *I;
 
-  for (S::iterator i = otherS.begin(), e = s.end(); i != e; ++i)
-    MutableVal k = *i;
+  for (S::iterator I = otherS.begin(), E = s.end();  I != E; ++I)
+    MutableVal K = *I;
 }
 
 void wrongIterators() {
   T::iterator other;
-  for (T::iterator i = t.begin(), e = t.end(); i != other; ++i)
-    int k = *i;
+  for (T::iterator I = t.begin(), E = t.end(); I != other; ++I)
+    int K = *I;
 }
 
 struct EvilArrow : U {
@@ -237,10 +254,10 @@ struct EvilArrow : U {
 
 void differentMemberAccessTypes() {
   EvilArrow A;
-  for (EvilArrow::iterator i = A.begin(), e = A->end(); i != e; ++i)
-    Val k = *i;
-  for (EvilArrow::iterator i = A->begin(), e = A.end(); i != e; ++i)
-    Val k = *i;
+  for (EvilArrow::iterator I = A.begin(), E = A->end();  I != E; ++I)
+    Val K = *I;
+  for (EvilArrow::iterator I = A->begin(), E = A.end();  I != E; ++I)
+    Val K = *I;
 }
 
 void f(const T::iterator &it, int);
@@ -248,21 +265,21 @@ void f(const T &it, int);
 void g(T &it, int);
 
 void iteratorPassedToFunction() {
-  for (T::iterator i = t.begin(), e = t.end(); i != e; ++i)
-    f(i, *i);
+  for (T::iterator I = t.begin(), E = t.end();  I != E; ++I)
+    f(I, *I);
 }
 
 // FIXME: These tests can be removed if this tool ever does enough analysis to
 // decide that this is a safe transformation. Until then, we don't want it
 // applied.
 void iteratorDefinedOutside() {
-  T::iterator theEnd = t.end();
-  for (T::iterator i = t.begin(); i != theEnd; ++i)
-    int k = *i;
+  T::iterator TheEnd = t.end();
+  for (T::iterator I = t.begin(); I != TheEnd; ++I)
+    int K = *I;
 
-  T::iterator theBegin = t.begin();
-  for (T::iterator e = t.end(); theBegin != e; ++theBegin)
-    int k = *theBegin;
+  T::iterator TheBegin = t.begin();
+  for (T::iterator E = t.end(); TheBegin != E; ++TheBegin)
+    int K = *TheBegin;
 }
 
 } // namespace NegativeIterator
@@ -274,102 +291,102 @@ dependent<int> v;
 dependent<int> *pv;
 
 transparent<dependent<int>> cv;
-int sum = 0;
+int Sum = 0;
 
-// Checks for the index start and end:
-void indexStartAndEnd() {
-  for (int i = 0; i < v.size() + 1; ++i)
-    sum += v[i];
+// Checks for the Index start and end:
+void IndexStartAndEnd() {
+  for (int I = 0; I < v.size() + 1; ++I)
+    Sum += v[I];
 
-  for (int i = 0; i < v.size() - 1; ++i)
-    sum += v[i];
+  for (int I = 0; I < v.size() - 1; ++I)
+    Sum += v[I];
 
-  for (int i = 1; i < v.size(); ++i)
-    sum += v[i];
+  for (int I = 1; I < v.size(); ++I)
+    Sum += v[I];
 
-  for (int i = 1; i < v.size(); ++i)
-    sum += v[i];
+  for (int I = 1; I < v.size(); ++I)
+    Sum += v[I];
 
-  for (int i = 0;; ++i)
-    sum += (*pv)[i];
+  for (int I = 0;; ++I)
+    Sum += (*pv)[I];
 }
 
 // Checks for invalid increment steps:
 void increment() {
-  for (int i = 0; i < v.size(); --i)
-    sum += v[i];
+  for (int I = 0; I < v.size(); --I)
+    Sum += v[I];
 
-  for (int i = 0; i < v.size(); i)
-    sum += v[i];
+  for (int I = 0; I < v.size(); I)
+    Sum += v[I];
 
-  for (int i = 0; i < v.size();)
-    sum += v[i];
+  for (int I = 0; I < v.size();)
+    Sum += v[I];
 
-  for (int i = 0; i < v.size(); i += 2)
-    sum++;
+  for (int I = 0; I < v.size(); I += 2)
+    Sum++;
 }
 
-// Checks to make sure that the index isn't used outside of the container:
-void indexUse() {
-  for (int i = 0; i < v.size(); ++i)
-    v[i] += 1 + i;
+// Checks to make sure that the Index isn't used outside of the container:
+void IndexUse() {
+  for (int I = 0; I < v.size(); ++I)
+    v[I] += 1 + I;
 }
 
 // Checks for incorrect loop variables.
 void mixedVariables() {
   int badIndex;
-  for (int i = 0; badIndex < v.size(); ++i)
-    sum += v[i];
+  for (int I = 0; badIndex < v.size(); ++I)
+    Sum += v[I];
 
-  for (int i = 0; i < v.size(); ++badIndex)
-    sum += v[i];
+  for (int I = 0; I < v.size(); ++badIndex)
+    Sum += v[I];
 
-  for (int i = 0; badIndex < v.size(); ++badIndex)
-    sum += v[i];
+  for (int I = 0; badIndex < v.size(); ++badIndex)
+    Sum += v[I];
 
-  for (int i = 0; badIndex < v.size(); ++badIndex)
-    sum += v[badIndex];
+  for (int I = 0; badIndex < v.size(); ++badIndex)
+    Sum += v[badIndex];
 }
 
-// Checks for an array indexed in addition to the container.
+// Checks for an array Indexed in addition to the container.
 void multipleArrays() {
   int badArr[N];
 
-  for (int i = 0; i < v.size(); ++i)
-    sum += v[i] + badArr[i];
+  for (int I = 0; I < v.size(); ++I)
+    Sum += v[I] + badArr[I];
 
-  for (int i = 0; i < v.size(); ++i)
-    sum += badArr[i];
+  for (int I = 0; I < v.size(); ++I)
+    Sum += badArr[I];
 
-  for (int i = 0; i < v.size(); ++i) {
-    int k = badArr[i];
-    sum += k + 2;
+  for (int I = 0; I < v.size(); ++I) {
+    int K = badArr[I];
+    Sum += K + 2;
   }
 
-  for (int i = 0; i < v.size(); ++i) {
-    int k = badArr[i];
-    sum += v[i] + k;
+  for (int I = 0; I < v.size(); ++I) {
+    int K = badArr[I];
+    Sum += v[I] + K;
   }
 }
 
-// Checks for multiple containers being indexed container.
+// Checks for multiple containers being Indexed container.
 void multipleContainers() {
   dependent<int> badArr;
 
-  for (int i = 0; i < v.size(); ++i)
-    sum += v[i] + badArr[i];
+  for (int I = 0; I < v.size(); ++I)
+    Sum += v[I] + badArr[I];
 
-  for (int i = 0; i < v.size(); ++i)
-    sum += badArr[i];
+  for (int I = 0; I < v.size(); ++I)
+    Sum += badArr[I];
 
-  for (int i = 0; i < v.size(); ++i) {
-    int k = badArr[i];
-    sum += k + 2;
+  for (int I = 0; I < v.size(); ++I) {
+    int K = badArr[I];
+    Sum += K + 2;
   }
 
-  for (int i = 0; i < v.size(); ++i) {
-    int k = badArr[i];
-    sum += v[i] + k;
+  for (int I = 0; I < v.size(); ++I) {
+    int K = badArr[I];
+    Sum += v[I] + K;
   }
 }
 
@@ -377,31 +394,31 @@ void multipleContainers() {
 void derefContainer() {
   // Note the dependent<T>::operator*() returns another dependent<T>.
   // This test makes sure that we don't allow an arbitrary number of *'s.
-  for (int i = 0; i < pv->size(); ++i)
-    sum += (**pv).at(i);
+  for (int I = 0; I < pv->size(); ++I)
+    Sum += (**pv).at(I);
 
-  for (int i = 0; i < pv->size(); ++i)
-    sum += (**pv)[i];
+  for (int I = 0; I < pv->size(); ++I)
+    Sum += (**pv)[I];
 }
 
 void wrongEnd() {
-  int bad;
-  for (int i = 0, e = v.size(); i < bad; ++i)
-    sum += v[i];
+  int Bad;
+  for (int I = 0, E = v.size(); I < Bad; ++I)
+    Sum += v[I];
 }
 
 // Checks to see that non-const member functions are not called on the container
 // object.
 // These could be conceivably allowed with a lower required confidence level.
 void memberFunctionCalled() {
-  for (int i = 0; i < v.size(); ++i) {
-    sum += v[i];
+  for (int I = 0; I < v.size(); ++I) {
+    Sum += v[I];
     v.foo();
   }
 
-  for (int i = 0; i < v.size(); ++i) {
-    sum += v[i];
-    dependent<int>::iterator it = v.begin();
+  for (int I = 0; I < v.size(); ++I) {
+    Sum += v[I];
+    dependent<int>::iterator It = v.begin();
   }
 }
 
@@ -419,39 +436,39 @@ void f(T);
 
 void complexContainer() {
   X x;
-  for (S::iterator i = x.s.begin(), e = x.s.end(); i != e; ++i) {
+  for (S::iterator I = x.s.begin(), E = x.s.end();  I != E; ++I) {
     f(x);
-    MutableVal k = *i;
+    MutableVal K = *I;
   }
 
-  for (T::iterator i = x.t.begin(), e = x.t.end(); i != e; ++i) {
+  for (T::iterator I = x.t.begin(), E = x.t.end();  I != E; ++I) {
     f(x);
-    int k = *i;
+    int K = *I;
   }
 
-  for (S::iterator i = x.s.begin(), e = x.s.end(); i != e; ++i) {
+  for (S::iterator I = x.s.begin(), E = x.s.end();  I != E; ++I) {
     f(x.s);
-    MutableVal k = *i;
+    MutableVal K = *I;
   }
 
-  for (T::iterator i = x.t.begin(), e = x.t.end(); i != e; ++i) {
+  for (T::iterator I = x.t.begin(), E = x.t.end();  I != E; ++I) {
     f(x.t);
-    int k = *i;
+    int K = *I;
   }
 
-  for (S::iterator i = x.getS().begin(), e = x.getS().end(); i != e; ++i) {
+  for (S::iterator I = x.getS().begin(), E = x.getS().end();  I != E; ++I) {
     f(x.getS());
-    MutableVal k = *i;
+    MutableVal K = *I;
   }
 
-  X exes[5];
-  int index = 0;
+  X Exes[5];
+  int Index = 0;
 
-  for (S::iterator i = exes[index].getS().begin(),
-                   e = exes[index].getS().end();
-       i != e; ++i) {
-    index++;
-    MutableVal k = *i;
+  for (S::iterator I = Exes[Index].getS().begin(),
+                   E = Exes[Index].getS().end();
+        I != E; ++I) {
+    Index++;
+    MutableVal K = *I;
   }
 }
 
