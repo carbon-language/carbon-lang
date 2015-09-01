@@ -1797,27 +1797,28 @@ inline void Registers_or1k::setRegister(int regNum, uint32_t value) {
   _LIBUNWIND_ABORT("unsupported or1k register");
 }
 
-inline bool Registers_or1k::validFloatRegister(int regNum) const {
+inline bool Registers_or1k::validFloatRegister(int /* regNum */) const {
   return false;
 }
 
-inline double Registers_or1k::getFloatRegister(int regNum) const {
+inline double Registers_or1k::getFloatRegister(int /* regNum */) const {
   _LIBUNWIND_ABORT("or1k float support not implemented");
 }
 
-inline void Registers_or1k::setFloatRegister(int regNum, double value) {
+inline void Registers_or1k::setFloatRegister(int /* regNum */,
+                                             double /* value */) {
   _LIBUNWIND_ABORT("or1k float support not implemented");
 }
 
-inline bool Registers_or1k::validVectorRegister(int regNum) const {
+inline bool Registers_or1k::validVectorRegister(int /* regNum */) const {
   return false;
 }
 
-inline v128 Registers_or1k::getVectorRegister(int regNum) const {
+inline v128 Registers_or1k::getVectorRegister(int /* regNum */) const {
   _LIBUNWIND_ABORT("or1k vector support not implemented");
 }
 
-inline void Registers_or1k::setVectorRegister(int regNum, v128 value) {
+inline void Registers_or1k::setVectorRegister(int /* regNum */, v128 /* value */) {
   _LIBUNWIND_ABORT("or1k vector support not implemented");
 }
 
