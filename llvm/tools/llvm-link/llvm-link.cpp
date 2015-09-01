@@ -48,6 +48,12 @@ OutputFilename("o", cl::desc("Override output filename"), cl::init("-"),
                cl::value_desc("filename"));
 
 static cl::opt<bool>
+Internalize("internalize", cl::desc("Internalize linked symbols"));
+
+static cl::opt<bool>
+OnlyNeeded("only-needed", cl::desc("Link only needed symbols"));
+
+static cl::opt<bool>
 Force("f", cl::desc("Enable binary output on terminals"));
 
 static cl::opt<bool>
@@ -114,7 +120,9 @@ static void diagnosticHandler(const DiagnosticInfo &DI) {
 
 static bool linkFiles(const char *argv0, LLVMContext &Context, Linker &L,
                       const cl::list<std::string> &Files,
-                      bool OverrideDuplicateSymbols) {
+                      unsigned Flags) {
+  // Filter out flags that don't apply to the first file we load.
+  unsigned ApplicableFlags = Flags & Linker::Flags::OverrideFromSrc;
   for (const auto &File : Files) {
     std::unique_ptr<Module> M = loadFile(argv0, File, Context);
     if (!M.get()) {
@@ -130,8 +138,10 @@ static bool linkFiles(const char *argv0, LLVMContext &Context, Linker &L,
     if (Verbose)
       errs() << "Linking in '" << File << "'\n";
 
-    if (L.linkInModule(M.get(), OverrideDuplicateSymbols))
+    if (L.linkInModule(M.get(), ApplicableFlags))
       return false;
+    // All linker flags apply to linking of subsequent files.
+    ApplicableFlags = Flags;
   }
 
   return true;
@@ -149,12 +159,19 @@ int main(int argc, char **argv) {
   auto Composite = make_unique<Module>("llvm-link", Context);
   Linker L(Composite.get(), diagnosticHandler);
 
+  unsigned Flags = Linker::Flags::None;
+  if (Internalize)
+    Flags |= Linker::Flags::InternalizeLinkedSymbols;
+  if (OnlyNeeded)
+    Flags |= Linker::Flags::LinkOnlyNeeded;
+
   // First add all the regular input files
-  if (!linkFiles(argv[0], Context, L, InputFilenames, false))
+  if (!linkFiles(argv[0], Context, L, InputFilenames, Flags))
     return 1;
 
   // Next the -override ones.
-  if (!linkFiles(argv[0], Context, L, OverridingInputs, true))
+  if (!linkFiles(argv[0], Context, L, OverridingInputs,
+                 Flags | Linker::Flags::OverrideFromSrc))
     return 1;
 
   if (DumpAsm) errs() << "Here's the assembly:\n" << *Composite;

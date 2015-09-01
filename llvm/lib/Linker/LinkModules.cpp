@@ -425,18 +425,22 @@ class ModuleLinker {
   DiagnosticHandlerFunction DiagnosticHandler;
 
   /// For symbol clashes, prefer those from Src.
-  bool OverrideFromSrc;
+  unsigned Flags;
 
 public:
   ModuleLinker(Module *dstM, Linker::IdentifiedStructTypeSet &Set, Module *srcM,
-               DiagnosticHandlerFunction DiagnosticHandler,
-               bool OverrideFromSrc)
+               DiagnosticHandlerFunction DiagnosticHandler, unsigned Flags)
       : DstM(dstM), SrcM(srcM), TypeMap(Set),
         ValMaterializer(TypeMap, DstM, LazilyLinkGlobalValues),
-        DiagnosticHandler(DiagnosticHandler), OverrideFromSrc(OverrideFromSrc) {
-  }
+        DiagnosticHandler(DiagnosticHandler), Flags(Flags) {}
 
   bool run();
+
+  bool shouldOverrideFromSrc() { return Flags & Linker::OverrideFromSrc; }
+  bool shouldLinkOnlyNeeded() { return Flags & Linker::LinkOnlyNeeded; }
+  bool shouldInternalizeLinkedSymbols() {
+    return Flags & Linker::InternalizeLinkedSymbols;
+  }
 
 private:
   bool shouldLinkFromSource(bool &LinkFromSrc, const GlobalValue &Dest,
@@ -730,7 +734,7 @@ bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
                                         const GlobalValue &Dest,
                                         const GlobalValue &Src) {
   // Should we unconditionally use the Src?
-  if (OverrideFromSrc) {
+  if (shouldOverrideFromSrc()) {
     LinkFromSrc = true;
     return false;
   }
@@ -1081,9 +1085,16 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
   } else {
     // If the GV is to be lazily linked, don't create it just yet.
     // The ValueMaterializerTy will deal with creating it if it's used.
-    if (!DGV && !OverrideFromSrc &&
+    if (!DGV && !shouldOverrideFromSrc() &&
         (SGV->hasLocalLinkage() || SGV->hasLinkOnceLinkage() ||
          SGV->hasAvailableExternallyLinkage())) {
+      DoNotLinkFromSource.insert(SGV);
+      return false;
+    }
+
+    // When we only want to link in unresolved dependencies, blacklist
+    // the symbol unless unless DestM has a matching declaration (DGV).
+    if (shouldLinkOnlyNeeded() && !(DGV && DGV->isDeclaration())) {
       DoNotLinkFromSource.insert(SGV);
       return false;
     }
@@ -1249,6 +1260,9 @@ void ModuleLinker::linkAliasBody(GlobalAlias &Dst, GlobalAlias &Src) {
 bool ModuleLinker::linkGlobalValueBody(GlobalValue &Src) {
   Value *Dst = ValueMap[&Src];
   assert(Dst);
+  if (shouldInternalizeLinkedSymbols())
+    if (auto *DGV = dyn_cast<GlobalValue>(Dst))
+      DGV->setLinkage(GlobalValue::InternalLinkage);
   if (auto *F = dyn_cast<Function>(&Src))
     return linkFunctionBody(cast<Function>(*Dst), *F);
   if (auto *GVar = dyn_cast<GlobalVariable>(&Src)) {
@@ -1632,6 +1646,11 @@ bool ModuleLinker::run() {
     GlobalValue *SGV = LazilyLinkGlobalValues.back();
     LazilyLinkGlobalValues.pop_back();
 
+    // Skip declarations that ValueMaterializer may have created in
+    // case we link in only some of SrcM.
+    if (shouldLinkOnlyNeeded() && SGV->isDeclaration())
+      continue;
+
     assert(!SGV->isDeclaration() && "users should not pass down decls");
     if (linkGlobalValueBody(*SGV))
       return true;
@@ -1759,9 +1778,9 @@ void Linker::deleteModule() {
   Composite = nullptr;
 }
 
-bool Linker::linkInModule(Module *Src, bool OverrideSymbols) {
+bool Linker::linkInModule(Module *Src, unsigned Flags) {
   ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src,
-                         DiagnosticHandler, OverrideSymbols);
+                         DiagnosticHandler, Flags);
   bool RetCode = TheLinker.run();
   Composite->dropTriviallyDeadConstantArrays();
   return RetCode;
@@ -1781,14 +1800,15 @@ void Linker::setModule(Module *Dst) {
 /// Upon failure, the Dest module could be in a modified state, and shouldn't be
 /// relied on to be consistent.
 bool Linker::LinkModules(Module *Dest, Module *Src,
-                         DiagnosticHandlerFunction DiagnosticHandler) {
+                         DiagnosticHandlerFunction DiagnosticHandler,
+                         unsigned Flags) {
   Linker L(Dest, DiagnosticHandler);
-  return L.linkInModule(Src);
+  return L.linkInModule(Src, Flags);
 }
 
-bool Linker::LinkModules(Module *Dest, Module *Src) {
+bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Flags) {
   Linker L(Dest);
-  return L.linkInModule(Src);
+  return L.linkInModule(Src, Flags);
 }
 
 //===----------------------------------------------------------------------===//

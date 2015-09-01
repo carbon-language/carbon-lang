@@ -60,6 +60,13 @@ public:
     bool hasType(StructType *Ty);
   };
 
+  enum Flags {
+    None = 0,
+    OverrideFromSrc = (1 << 0),
+    LinkOnlyNeeded = (1 << 1),
+    InternalizeLinkedSymbols = (1 << 2)
+  };
+
   Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
   Linker(Module *M);
 
@@ -70,15 +77,17 @@ public:
   /// Passing OverrideSymbols as true will have symbols from Src
   /// shadow those in the Dest.
   /// Returns true on error.
-  bool linkInModule(Module *Src, bool OverrideSymbols = false);
+  bool linkInModule(Module *Src, unsigned Flags = Flags::None);
 
   /// \brief Set the composite to the passed-in module.
   void setModule(Module *Dst);
 
   static bool LinkModules(Module *Dest, Module *Src,
-                          DiagnosticHandlerFunction DiagnosticHandler);
+                          DiagnosticHandlerFunction DiagnosticHandler,
+                          unsigned Flags = Flags::None);
 
-  static bool LinkModules(Module *Dest, Module *Src);
+  static bool LinkModules(Module *Dest, Module *Src,
+                          unsigned Flags = Flags::None);
 
 private:
   void init(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
