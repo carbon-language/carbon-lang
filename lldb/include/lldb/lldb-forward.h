@@ -115,6 +115,7 @@ class   IRExecutionUnit;
 class   JITLoader;
 class   JITLoaderList;
 class   Language;
+class   LanguageCategory;
 class   LanguageRuntime;
 class   MemoryRegionInfo;
 class   LineTable;

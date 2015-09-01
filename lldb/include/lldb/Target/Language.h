@@ -39,6 +39,9 @@ namespace lldb_private {
         virtual lldb::LanguageType
         GetLanguageType () const = 0;
         
+        virtual lldb::TypeCategoryImplSP
+        GetFormatters ();
+
     protected:
         //------------------------------------------------------------------
         // Classes that inherit from Language can see and modify these

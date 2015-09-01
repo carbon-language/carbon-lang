@@ -18,14 +18,18 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 
+#include "lldb/Core/ThreadSafeDenseMap.h"
+
 #include "lldb/DataFormatters/FormatCache.h"
 #include "lldb/DataFormatters/FormatClasses.h"
 #include "lldb/DataFormatters/FormattersContainer.h"
+#include "lldb/DataFormatters/LanguageCategory.h"
 #include "lldb/DataFormatters/TypeCategory.h"
 #include "lldb/DataFormatters/TypeCategoryMap.h"
 
 #include <atomic>
 #include <functional>
+#include <memory>
 
 namespace lldb_private {
     
@@ -47,6 +51,8 @@ public:
     
     template <typename FormatterType>
     using HardcodedFormatterFinders = std::vector<HardcodedFormatterFinder<FormatterType>>;
+    
+    typedef std::map<lldb::LanguageType, LanguageCategory::UniquePointer> LanguageCategories;
     
     typedef TypeCategoryMap::CallbackType CategoryCallback;
     
@@ -123,11 +129,8 @@ public:
     }
     
     void
-    LoopThroughCategories (CategoryCallback callback, void* param)
-    {
-        m_categories_map.LoopThrough(callback, param);
-    }
-    
+    LoopThroughCategories (CategoryCallback callback, void* param);
+
     lldb::TypeCategoryImplSP
     GetCategory (const char* category_name = NULL,
                  bool can_create = true)
@@ -258,6 +261,9 @@ public:
                             true);
         return matches;
     }
+    
+    static ConstString
+    GetTypeForCache (ValueObject&, lldb::DynamicValueType);
 
 private:
     
@@ -272,10 +278,15 @@ private:
                         bool did_strip_typedef,
                         bool root_level = false);
     
+    LanguageCategory*
+    GetCategoryForLanguage (lldb::LanguageType lang_type);
+    
     FormatCache m_format_cache;
     NamedSummariesMap m_named_summaries_map;
     std::atomic<uint32_t> m_last_revision;
     TypeCategoryMap m_categories_map;
+    LanguageCategories m_language_categories_map;
+    Mutex m_language_categories_mutex;
     
     ConstString m_default_category_name;
     ConstString m_system_category_name;

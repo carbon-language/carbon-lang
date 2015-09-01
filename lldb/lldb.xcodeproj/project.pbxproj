@@ -726,6 +726,8 @@
 		941BCC8214E48C4000BB969C /* SBTypeSynthetic.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568914E355F2003A195C /* SBTypeSynthetic.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		94235B9E1A8D667400EB2EED /* SBVariablesOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94235B9B1A8D5FF300EB2EED /* SBVariablesOptions.cpp */; };
 		94235B9F1A8D66D600EB2EED /* SBVariablesOptions.h in Headers */ = {isa = PBXBuildFile; fileRef = 94235B9A1A8D5FD800EB2EED /* SBVariablesOptions.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		942612F71B95000000EF842E /* LanguageCategory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 942612F61B95000000EF842E /* LanguageCategory.cpp */; settings = {ASSET_TAGS = (); }; };
+		942612F81B952C9B00EF842E /* ObjCLanguage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B6385E1B8FB7A2004FE1E4 /* ObjCLanguage.cpp */; settings = {ASSET_TAGS = (); }; };
 		942829561A89614C00521B30 /* JSON.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 942829551A89614C00521B30 /* JSON.cpp */; };
 		942829CC1A89839300521B30 /* liblldb-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */; };
 		942AFF0519F84ABF007B43B4 /* LibCxxVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 942AFF0419F84ABF007B43B4 /* LibCxxVector.cpp */; };
@@ -2407,6 +2409,8 @@
 		94235B9A1A8D5FD800EB2EED /* SBVariablesOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBVariablesOptions.h; path = include/lldb/API/SBVariablesOptions.h; sourceTree = "<group>"; };
 		94235B9B1A8D5FF300EB2EED /* SBVariablesOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBVariablesOptions.cpp; path = source/API/SBVariablesOptions.cpp; sourceTree = "<group>"; };
 		94235B9D1A8D601A00EB2EED /* SBVariablesOptions.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBVariablesOptions.i; sourceTree = "<group>"; };
+		942612F51B94FFE900EF842E /* LanguageCategory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LanguageCategory.h; path = include/lldb/DataFormatters/LanguageCategory.h; sourceTree = "<group>"; };
+		942612F61B95000000EF842E /* LanguageCategory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LanguageCategory.cpp; path = source/DataFormatters/LanguageCategory.cpp; sourceTree = "<group>"; };
 		942829541A89614000521B30 /* JSON.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = JSON.h; path = include/lldb/Utility/JSON.h; sourceTree = "<group>"; };
 		942829551A89614C00521B30 /* JSON.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JSON.cpp; path = source/Utility/JSON.cpp; sourceTree = "<group>"; };
 		942829C01A89835300521B30 /* argdumper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = argdumper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -5296,6 +5300,8 @@
 				94CB256216B069800059775D /* FormatManager.h */,
 				94CB255A16B069770059775D /* FormatManager.cpp */,
 				94EE33F218643C6900CD703B /* FormattersContainer.h */,
+				942612F51B94FFE900EF842E /* LanguageCategory.h */,
+				942612F61B95000000EF842E /* LanguageCategory.cpp */,
 				94D0B10A16D5535900EA9C70 /* LibCxx.cpp */,
 				942AFF0619F84C02007B43B4 /* LibCxxInitializerList.cpp */,
 				94CD704F16F8DF1C00CF1E42 /* LibCxxList.cpp */,
@@ -6197,6 +6203,7 @@
 				2689005C13353E0400698AC0 /* ValueObjectVariable.cpp in Sources */,
 				264A58EE1A7DBCAD00A6B1B0 /* OptionValueFormatEntity.cpp in Sources */,
 				8C2D6A53197A1EAF006989C9 /* MemoryHistory.cpp in Sources */,
+				942612F71B95000000EF842E /* LanguageCategory.cpp in Sources */,
 				2689005D13353E0400698AC0 /* VMRange.cpp in Sources */,
 				2689005E13353E0E00698AC0 /* ClangASTSource.cpp in Sources */,
 				3FDFED0F19B7D269009756A7 /* ThisThread.cpp in Sources */,
@@ -6231,6 +6238,7 @@
 				2689007213353E1A00698AC0 /* Mutex.cpp in Sources */,
 				25420ED21A649D88009ADBCB /* PipeBase.cpp in Sources */,
 				AF20F7661AF18F8500751A6E /* ABISysV_arm.cpp in Sources */,
+				942612F81B952C9B00EF842E /* ObjCLanguage.cpp in Sources */,
 				2689007313353E1A00698AC0 /* Symbols.cpp in Sources */,
 				26474CBC18D0CB2D0073DEBA /* RegisterContextMach_arm.cpp in Sources */,
 				257E47171AA56C2000A62F81 /* ModuleCache.cpp in Sources */,

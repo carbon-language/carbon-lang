@@ -219,7 +219,8 @@ TypeCategoryMap::AnyMatches (ConstString type_name,
 
 lldb::TypeFormatImplSP
 TypeCategoryMap::GetFormat (ValueObject& valobj,
-                            lldb::DynamicValueType use_dynamic)
+                            lldb::DynamicValueType use_dynamic,
+                            FormattersMatchVector matches)
 {
     Mutex::Locker locker(m_map_mutex);
     
@@ -227,8 +228,6 @@ TypeCategoryMap::GetFormat (ValueObject& valobj,
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-    
-    FormattersMatchVector matches = FormatManager::GetPossibleMatches(valobj, use_dynamic);
     
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
@@ -247,7 +246,8 @@ TypeCategoryMap::GetFormat (ValueObject& valobj,
 
 lldb::TypeSummaryImplSP
 TypeCategoryMap::GetSummaryFormat (ValueObject& valobj,
-                                   lldb::DynamicValueType use_dynamic)
+                                   lldb::DynamicValueType use_dynamic,
+                                   FormattersMatchVector matches)
 {
     Mutex::Locker locker(m_map_mutex);
     
@@ -255,8 +255,6 @@ TypeCategoryMap::GetSummaryFormat (ValueObject& valobj,
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-    
-    FormattersMatchVector matches = FormatManager::GetPossibleMatches(valobj, use_dynamic);
     
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
@@ -276,7 +274,8 @@ TypeCategoryMap::GetSummaryFormat (ValueObject& valobj,
 #ifndef LLDB_DISABLE_PYTHON
 lldb::SyntheticChildrenSP
 TypeCategoryMap::GetSyntheticChildren (ValueObject& valobj,
-                                       lldb::DynamicValueType use_dynamic)
+                                       lldb::DynamicValueType use_dynamic,
+                                       FormattersMatchVector matches)
 {
     Mutex::Locker locker(m_map_mutex);
     
@@ -285,8 +284,6 @@ TypeCategoryMap::GetSyntheticChildren (ValueObject& valobj,
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-    
-    FormattersMatchVector matches = FormatManager::GetPossibleMatches(valobj, use_dynamic);
     
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
@@ -306,7 +303,8 @@ TypeCategoryMap::GetSyntheticChildren (ValueObject& valobj,
 
 lldb::TypeValidatorImplSP
 TypeCategoryMap::GetValidator (ValueObject& valobj,
-                               lldb::DynamicValueType use_dynamic)
+                               lldb::DynamicValueType use_dynamic,
+                               FormattersMatchVector matches)
 {
     Mutex::Locker locker(m_map_mutex);
     
@@ -314,8 +312,6 @@ TypeCategoryMap::GetValidator (ValueObject& valobj,
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-    
-    FormattersMatchVector matches = FormatManager::GetPossibleMatches(valobj, use_dynamic);
     
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
