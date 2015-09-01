@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -97,13 +98,11 @@ private:
 namespace {
 template <bool Is64Bits>
 class StringTableSection final : public OutputSectionBase<Is64Bits> {
-  llvm::StringTableBuilder &StrTabBuilder;
-
 public:
+  llvm::StringTableBuilder StrTabBuilder;
+
   typedef typename OutputSectionBase<Is64Bits>::uintX_t uintX_t;
-  StringTableSection(llvm::StringTableBuilder &StrTabBuilder)
-      : OutputSectionBase<Is64Bits>(".strtab", SHT_STRTAB, 0),
-        StrTabBuilder(StrTabBuilder) {
+  StringTableSection() : OutputSectionBase<Is64Bits>(".strtab", SHT_STRTAB, 0) {
     this->Header.sh_addralign = 1;
   }
 
@@ -122,9 +121,9 @@ class SymbolTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
 public:
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
-  SymbolTableSection(SymbolTable &Table)
+  SymbolTableSection(SymbolTable &Table, llvm::StringTableBuilder &Builder)
       : OutputSectionBase<ELFT::Is64Bits>(".symtab", SHT_SYMTAB, 0),
-        Table(Table) {
+        Table(Table), Builder(Builder) {
     typedef OutputSectionBase<ELFT::Is64Bits> Base;
     typename Base::HeaderT &Header = this->Header;
 
@@ -150,6 +149,7 @@ public:
 
 private:
   SymbolTable &Table;
+  llvm::StringTableBuilder &Builder;
 };
 
 // The writer writes a SymbolTable result to a file.
@@ -158,8 +158,7 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  Writer(SymbolTable *T)
-      : SymTable(*T), StringTable(T->getStringBuilder()) {}
+  Writer(SymbolTable *T) : SymTable(*T, StringTable.StrTabBuilder) {}
   void run();
 
 private:
@@ -177,10 +176,10 @@ private:
   uintX_t SizeOfHeaders;
   uintX_t SectionHeaderOff;
 
-  SymbolTableSection<ELFT> SymTable;
-
   unsigned StringTableIndex;
   StringTableSection<ELFT::Is64Bits> StringTable;
+
+  SymbolTableSection<ELFT> SymTable;
 
   unsigned NumSections;
 
@@ -299,7 +298,6 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   uint8_t *BufStart = Buf;
 
   Buf += sizeof(Elf_Sym);
-  llvm::StringTableBuilder &Builder = Table.getStringBuilder();
   for (auto &P : Table.getSymbols()) {
     StringRef Name = P.first;
     Symbol *Sym = P.second;
@@ -449,15 +447,19 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   OutputSection<ELFT> *BSSSec = SymTable.BSSSec;
   // FIXME: Try to avoid the extra walk over all global symbols.
   unsigned &NumVisible = SymTable.NumVisible;
+  llvm::StringTableBuilder &Builder = StringTable.StrTabBuilder;
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
   for (auto &P : Symtab.getSymbols()) {
+    StringRef Name = P.first;
     SymbolBody *Body = P.second->Body;
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
     auto *E = cast<ELFSymbolBody<ELFT>>(Body);
     uint8_t V = E->Sym.getVisibility();
-    if (V == STV_DEFAULT || V == STV_PROTECTED)
-      NumVisible++;
+    if (V != STV_DEFAULT && V != STV_PROTECTED)
+      continue;
+    NumVisible++;
+    Builder.add(Name);
   }
 
   // Sort the common symbols by alignment as an heuristic to pack them better.

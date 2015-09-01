@@ -86,7 +86,6 @@ void SymbolTable::reportRemainingUndefines() {
 template <class ELFT> void SymbolTable::resolve(SymbolBody *New) {
   // Find an existing Symbol or create and insert a new one.
   StringRef Name = New->getName();
-  Builder.add(Name);
   Symbol *&Sym = Symtab[Name];
   if (!Sym) {
     Sym = new (Alloc) Symbol(New);
