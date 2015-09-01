@@ -31,6 +31,8 @@ template int UseAll<YA>();
 template int UseAll<YB>();
 template int UseAll<Y>();
 
+// Which of these two sets of diagnostics is chosen is not important. It's OK
+// if this varies with ORDER, but it must be consistent across runs.
 #if ORDER == 1
 // Here, we're instantiating the definition from 'A' and merging the definition
 // from 'B' into it.

@@ -45,13 +45,6 @@ ModuleFile::ModuleFile(ModuleKind Kind, unsigned Generation)
 {}
 
 ModuleFile::~ModuleFile() {
-  for (DeclContextInfosMap::iterator I = DeclContextInfos.begin(),
-       E = DeclContextInfos.end();
-       I != E; ++I) {
-    if (I->second.NameLookupTableData)
-      delete I->second.NameLookupTableData;
-  }
-  
   delete static_cast<ASTIdentifierLookupTable *>(IdentifierLookupTable);
   delete static_cast<HeaderFileInfoLookupTable *>(HeaderFileInfoTable);
   delete static_cast<ASTSelectorLookupTable *>(SelectorLookupTable);

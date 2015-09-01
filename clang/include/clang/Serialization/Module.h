@@ -50,14 +50,6 @@ enum ModuleKind {
   MK_MainFile        ///< File is a PCH file treated as the actual main file.
 };
 
-/// \brief Information about the contents of a DeclContext.
-struct DeclContextInfo {
-  DeclContextInfo() : NameLookupTableData() {}
-
-  llvm::OnDiskIterableChainedHashTable<reader::ASTDeclContextNameLookupTrait>
-    *NameLookupTableData; // an ASTDeclContextNameLookupTable.
-};
-
 /// \brief The input file that has been loaded from this AST file, along with
 /// bools indicating whether this was an overridden buffer or if it was
 /// out-of-date or not-found.
@@ -415,13 +407,6 @@ public:
   /// \brief Offset of each C++ ctor initializer list within the bitstream,
   /// indexed by the C++ ctor initializer list ID minus 1.
   const uint32_t *CXXCtorInitializersOffsets;
-
-  typedef llvm::DenseMap<const DeclContext *, DeclContextInfo>
-  DeclContextInfosMap;
-
-  /// \brief Information about the lexical and visible declarations
-  /// for each DeclContext.
-  DeclContextInfosMap DeclContextInfos;
 
   /// \brief Array of file-level DeclIDs sorted by file.
   const serialization::DeclID *FileSortedDecls;

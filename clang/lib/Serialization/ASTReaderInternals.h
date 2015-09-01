@@ -15,8 +15,12 @@
 
 #include "clang/AST/DeclarationName.h"
 #include "clang/Serialization/ASTBitCodes.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/OnDiskHashTable.h"
+#include "MultiOnDiskHashTable.h"
 #include <utility>
 
 namespace clang {
@@ -39,14 +43,38 @@ class ASTDeclContextNameLookupTrait {
   ModuleFile &F;
   
 public:
-  /// \brief Pair of begin/end iterators for DeclIDs.
-  ///
-  /// Note that these declaration IDs are local to the module that contains this
-  /// particular lookup t
-  typedef llvm::support::ulittle32_t LE32DeclID;
-  typedef std::pair<LE32DeclID *, LE32DeclID *> data_type;
+  // Maximum number of lookup tables we allow before condensing the tables.
+  static const int MaxTables = 4;
+
+  /// The lookup result is a list of global declaration IDs.
+  typedef llvm::SmallVector<DeclID, 4> data_type;
+  struct data_type_builder {
+    data_type &Data;
+    llvm::DenseSet<DeclID> Found;
+
+    data_type_builder(data_type &D) : Data(D) {}
+    void insert(DeclID ID) {
+      // Just use a linear scan unless we have more than a few IDs.
+      if (Found.empty() && !Data.empty()) {
+        if (Data.size() <= 4) {
+          for (auto I : Found)
+            if (I == ID)
+              return;
+          Data.push_back(ID);
+          return;
+        }
+
+        // Switch to tracking found IDs in the set.
+        Found.insert(Data.begin(), Data.end());
+      }
+
+      if (Found.insert(ID).second)
+        Data.push_back(ID);
+    }
+  };
   typedef unsigned hash_value_type;
   typedef unsigned offset_type;
+  typedef ModuleFile *file_type;
 
   typedef DeclarationName external_key_type;
   typedef DeclarationNameKey internal_key_type;
@@ -54,8 +82,7 @@ public:
   explicit ASTDeclContextNameLookupTrait(ASTReader &Reader, ModuleFile &F)
     : Reader(Reader), F(F) { }
 
-  static bool EqualKey(const internal_key_type& a,
-                       const internal_key_type& b) {
+  static bool EqualKey(const internal_key_type &a, const internal_key_type &b) {
     return a == b;
   }
 
@@ -71,8 +98,31 @@ public:
 
   internal_key_type ReadKey(const unsigned char *d, unsigned);
 
-  data_type ReadData(internal_key_type, const unsigned char *d,
-                     unsigned DataLen);
+  void ReadDataInto(internal_key_type, const unsigned char *d,
+                    unsigned DataLen, data_type_builder &Val);
+
+  static void MergeDataInto(const data_type &From, data_type_builder &To) {
+    To.Data.reserve(To.Data.size() + From.size());
+    for (DeclID ID : From)
+      To.insert(ID);
+  }
+
+  file_type ReadFileRef(const unsigned char *&d);
+};
+
+struct DeclContextLookupTable {
+  MultiOnDiskHashTable<ASTDeclContextNameLookupTrait> Table;
+
+  // These look redundant, but don't remove them -- they work around MSVC 2013's
+  // inability to synthesize move operations. Without them, the
+  // MultiOnDiskHashTable will be copied (despite being move-only!).
+  DeclContextLookupTable() : Table() {}
+  DeclContextLookupTable(DeclContextLookupTable &&O)
+      : Table(std::move(O.Table)) {}
+  DeclContextLookupTable &operator=(DeclContextLookupTable &&O) {
+    Table = std::move(O.Table);
+    return *this;
+  }
 };
 
 /// \brief Base class for the trait describing the on-disk hash table for the
