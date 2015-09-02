@@ -5051,8 +5051,16 @@
 		4984BA0B1B975E9F008658D4 /* ExpressionParser */ = {
 			isa = PBXGroup;
 			children = (
+				4984BA0C1B97620B008658D4 /* Clang */,
 			);
 			name = ExpressionParser;
+			sourceTree = "<group>";
+		};
+		4984BA0C1B97620B008658D4 /* Clang */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Clang;
 			sourceTree = "<group>";
 		};
 		4CCA643A13B40B82003BDF98 /* LanguageRuntime */ = {
