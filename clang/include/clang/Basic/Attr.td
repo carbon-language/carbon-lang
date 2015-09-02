@@ -1315,9 +1315,52 @@ def Pascal : InheritableAttr {
 
 def Target : InheritableAttr {
   let Spellings = [GCC<"target">];
-  let Args = [StringArgument<"features">];
+  let Args = [StringArgument<"featuresStr">];
   let Subjects = SubjectList<[Function], ErrorDiag>;
   let Documentation = [TargetDocs];
+  let AdditionalMembers = [{
+    StringRef CPU;
+    std::vector<std::string> Features;
+    bool Parsed = false;
+    StringRef getCPU() {
+      if (!Parsed)
+        parse();
+      return CPU;
+    }
+    std::vector<std::string> &getFeatures() {
+      if (!Parsed)
+        parse();
+      return Features;
+    }
+    void parse() {
+      SmallVector<StringRef, 1> AttrFeatures;
+      getFeaturesStr().split(AttrFeatures, ",");
+
+      // Grab the various features and prepend a "+" to turn on the feature to
+      // the backend and add them to our existing set of features.
+      for (auto &Feature : AttrFeatures) {
+        // Go ahead and trim whitespace rather than either erroring or
+        // accepting it weirdly.
+        Feature = Feature.trim();
+
+        // We don't support cpu tuning this way currently.
+        // TODO: Support the fpmath option. It will require checking
+        // overall feature validity for the function with the rest of the
+        // attributes on the function.
+        if (Feature.startswith("fpmath=") || Feature.startswith("tune="))
+	  continue;
+
+        // While we're here iterating check for a different target cpu.
+        if (Feature.startswith("arch="))
+          CPU = Feature.split("=").second.trim();
+        else if (Feature.startswith("no-"))
+          Features.push_back("-" + Feature.split("-").second.str());
+        else
+          Features.push_back("+" + Feature.str());
+      }
+      Parsed = true;
+    }
+  }];
 }
 
 def TransparentUnion : InheritableAttr {
