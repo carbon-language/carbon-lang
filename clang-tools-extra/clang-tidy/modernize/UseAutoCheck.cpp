@@ -298,7 +298,7 @@ void UseAutoCheck::replaceIterators(const DeclStmt *D, ASTContext *Context) {
 }
 
 void UseAutoCheck::replaceNew(const DeclStmt *D, ASTContext *Context) {
-  const auto *FirstDecl = cast<VarDecl>(*D->decl_begin());
+  const auto *FirstDecl = dyn_cast<VarDecl>(*D->decl_begin());
   // Ensure that there is at least one VarDecl within the DeclStmt.
   if (!FirstDecl)
     return;

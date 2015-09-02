@@ -37,6 +37,8 @@ void auto_new() {
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use auto when initializing with new
   // CHECK-FIXES: auto  volatile vol = new MyType();
 
+  struct SType {} *stype = new SType;
+
   int (**func)(int, int) = new (int(*[5])(int,int));
 
   int *array = new int[5];
