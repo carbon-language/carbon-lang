@@ -1351,7 +1351,6 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
   if (TargetTriple.getOS() == llvm::Triple::Solaris) {
     LibDirs.append(begin(SolarisSPARCLibDirs), end(SolarisSPARCLibDirs));
     TripleAliases.append(begin(SolarisSPARCTriples), end(SolarisSPARCTriples));
-
     return;
   }
 
@@ -1448,6 +1447,7 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
     TripleAliases.append(begin(PPC64LETriples), end(PPC64LETriples));
     break;
   case llvm::Triple::sparc:
+  case llvm::Triple::sparcel:
     LibDirs.append(begin(SPARCv8LibDirs), end(SPARCv8LibDirs));
     TripleAliases.append(begin(SPARCv8Triples), end(SPARCv8Triples));
     BiarchLibDirs.append(begin(SPARCv9LibDirs), end(SPARCv9LibDirs));
