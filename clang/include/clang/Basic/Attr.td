@@ -1321,20 +1321,9 @@ def Target : InheritableAttr {
   let Subjects = SubjectList<[Function], ErrorDiag>;
   let Documentation = [TargetDocs];
   let AdditionalMembers = [{
-    StringRef CPU;
-    std::vector<std::string> Features;
-    bool Parsed = false;
-    StringRef getCPU() {
-      if (!Parsed)
-        parse();
-      return CPU;
-    }
-    std::vector<std::string> &getFeatures() {
-      if (!Parsed)
-        parse();
-      return Features;
-    }
-    void parse() {
+    typedef std::pair<std::vector<std::string>, StringRef> ParsedTargetAttr;
+    ParsedTargetAttr parse() const {
+      ParsedTargetAttr Ret;
       SmallVector<StringRef, 1> AttrFeatures;
       getFeaturesStr().split(AttrFeatures, ",");
 
@@ -1354,13 +1343,13 @@ def Target : InheritableAttr {
 
         // While we're here iterating check for a different target cpu.
         if (Feature.startswith("arch="))
-          CPU = Feature.split("=").second.trim();
+          Ret.second = Feature.split("=").second.trim();
         else if (Feature.startswith("no-"))
-          Features.push_back("-" + Feature.split("-").second.str());
+          Ret.first.push_back("-" + Feature.split("-").second.str());
         else
-          Features.push_back("+" + Feature.str());
+          Ret.first.push_back("+" + Feature.str());
       }
-      Parsed = true;
+      return Ret;
     }
   }];
 }

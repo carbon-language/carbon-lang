@@ -1499,24 +1499,24 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(TargetDecl);
     if (FD && FD->hasAttr<TargetAttr>()) {
       llvm::StringMap<bool> FeatureMap;
-      auto *TD = FD->getAttr<TargetAttr>();
+      const auto *TD = FD->getAttr<TargetAttr>();
+      TargetAttr::ParsedTargetAttr ParsedAttr = TD->parse();
 
-      // Make a copy of the features as passed on the command line.
-      std::vector<std::string> FnFeatures =
-          getTarget().getTargetOpts().FeaturesAsWritten;
+      // Make a copy of the features as passed on the command line into the
+      // beginning of the additional features from the function to override.
+      ParsedAttr.first.insert(
+          ParsedAttr.first.begin(),
+          getTarget().getTargetOpts().FeaturesAsWritten.begin(),
+          getTarget().getTargetOpts().FeaturesAsWritten.end());
 
-      std::vector<std::string> &AttrFeatures = TD->getFeatures();
-      std::copy(AttrFeatures.begin(), AttrFeatures.end(),
-                std::back_inserter(FnFeatures));
-
-      if (TD->getCPU() != "")
-	TargetCPU = TD->getCPU();
+      if (ParsedAttr.second != "")
+	TargetCPU = ParsedAttr.second;
 
       // Now populate the feature map, first with the TargetCPU which is either
       // the default or a new one from the target attribute string. Then we'll
       // use the passed in features (FeaturesAsWritten) along with the new ones
       // from the attribute.
-      getTarget().initFeatureMap(FeatureMap, Diags, TargetCPU, FnFeatures);
+      getTarget().initFeatureMap(FeatureMap, Diags, TargetCPU, ParsedAttr.first);
 
       // Produce the canonical string for this set of features.
       std::vector<std::string> Features;
