@@ -343,7 +343,6 @@ protected:
             return 0;
         }
 
-
         class LessThanBinaryPredicate
         {
         public:
@@ -400,12 +399,11 @@ protected:
             LineSequence()
         {}
 
-        virtual
-        ~LineSequenceImpl()
+        ~LineSequenceImpl() override
         {}
 
-        virtual void
-        Clear();
+        void
+        Clear() override;
 
         entry_collection m_entries; ///< The collection of line entries in this sequence.
     };
@@ -419,4 +417,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_LineTable_h_
+#endif // liblldb_LineTable_h_

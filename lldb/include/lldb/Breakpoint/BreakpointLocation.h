@@ -49,7 +49,7 @@ class BreakpointLocation :
     public StoppointLocation
 {
 public:
-    ~BreakpointLocation ();
+    ~BreakpointLocation() override;
 
     //------------------------------------------------------------------
     /// Gets the load address for this breakpoint location
@@ -58,7 +58,7 @@ public:
     ///     LLDB_INVALID_ADDRESS if not yet set.
     //------------------------------------------------------------------
     lldb::addr_t
-    GetLoadAddress () const;
+    GetLoadAddress() const override;
 
     //------------------------------------------------------------------
     /// Gets the Address for this breakpoint location
@@ -88,7 +88,7 @@ public:
     ///     \b false otherwise.
     //------------------------------------------------------------------
     bool
-    ShouldStop (StoppointCallbackContext *context);
+    ShouldStop(StoppointCallbackContext *context) override;
 
     //------------------------------------------------------------------
     // The next section deals with various breakpoint options.
@@ -177,7 +177,6 @@ public:
     
     bool
     ConditionSaysStop (ExecutionContext &exe_ctx, Error &error);
-
 
     //------------------------------------------------------------------
     /// Set the valid thread to be checked when the breakpoint is hit.
@@ -270,7 +269,7 @@ public:
     /// Standard "Dump" method.  At present it does nothing.
     //------------------------------------------------------------------
     void
-    Dump (Stream *s) const;
+    Dump(Stream *s) const override;
 
     //------------------------------------------------------------------
     /// Use this to set location specific breakpoint options.
@@ -299,7 +298,6 @@ public:
     bool
     ValidForThisThread (Thread *thread);
 
-    
     //------------------------------------------------------------------
     /// Invoke the callback action when the breakpoint is hit.
     ///
@@ -418,7 +416,6 @@ private:
     void
     UndoBumpHitCount();
 
-
     //------------------------------------------------------------------
     // Constructors and Destructors
     //
@@ -479,4 +476,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_BreakpointLocation_h_
+#endif // liblldb_BreakpointLocation_h_

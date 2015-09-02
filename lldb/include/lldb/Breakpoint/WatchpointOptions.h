@@ -99,7 +99,6 @@ public:
     //------------------------------------------------------------------
     void SetCallback (WatchpointHitCallback callback, const lldb::BatonSP &baton_sp, bool synchronous = false);
     
-    
     //------------------------------------------------------------------
     /// Remove the callback from this option set.
     //------------------------------------------------------------------
@@ -196,7 +195,6 @@ public:
                   StoppointCallbackContext *context, 
                   lldb::user_id_t watch_id);
     
-    
     struct CommandData
     {
         CommandData () :
@@ -223,16 +221,14 @@ public:
         {
         }
 
-        virtual
-        ~CommandBaton ()
+        ~CommandBaton() override
         {
             delete ((CommandData *)m_data);
             m_data = NULL;
         }
         
-        virtual void
-        GetDescription (Stream *s, lldb::DescriptionLevel level) const;
-
+        void
+        GetDescription(Stream *s, lldb::DescriptionLevel level) const override;
     };
 
 protected:
@@ -252,4 +248,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_WatchpointOptions_h_
+#endif // liblldb_WatchpointOptions_h_

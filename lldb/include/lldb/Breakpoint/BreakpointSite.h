@@ -55,7 +55,7 @@ public:
                     // display any breakpoint opcodes.
     };
 
-    virtual ~BreakpointSite ();
+    ~BreakpointSite() override;
 
     //----------------------------------------------------------------------
     // This section manages the breakpoint traps
@@ -139,8 +139,8 @@ public:
     /// @return
     ///    \b true if we should stop, \b false otherwise.
     //------------------------------------------------------------------
-    virtual bool
-    ShouldStop (StoppointCallbackContext *context);
+    bool
+    ShouldStop(StoppointCallbackContext *context) override;
 
     //------------------------------------------------------------------
     /// Standard Dump method
@@ -149,7 +149,7 @@ public:
     ///    The stream to dump this output.
     //------------------------------------------------------------------
     void
-    Dump (Stream *s) const;
+    Dump(Stream *s) const override;
 
     //------------------------------------------------------------------
     /// The "Owners" are the breakpoint locations that share this
@@ -214,7 +214,6 @@ public:
     //------------------------------------------------------------------
     bool 
     ValidForThisThread (Thread *thread);
-
 
     //------------------------------------------------------------------
     /// Print a description of this breakpoint site to the stream \a s.
@@ -315,4 +314,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_BreakpointSite_h_
+#endif // liblldb_BreakpointSite_h_

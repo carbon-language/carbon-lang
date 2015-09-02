@@ -276,9 +276,9 @@ private:
         
         void ImportDefinitionTo (clang::Decl *to, clang::Decl *from);
         
-        clang::Decl *Imported (clang::Decl *from, clang::Decl *to);
+        clang::Decl *Imported(clang::Decl *from, clang::Decl *to) override;
         
-        clang::Decl *GetOriginalDecl (clang::Decl *To);
+        clang::Decl *GetOriginalDecl(clang::Decl *To) override;
         
         std::set<clang::NamedDecl *>   *m_decls_to_deport;
         std::set<clang::NamedDecl *>   *m_decls_already_deported;
@@ -368,6 +368,6 @@ private:
     clang::FileManager      m_file_manager;
 };
     
-}
+} // namespace lldb_private
 
-#endif
+#endif // liblldb_ClangASTImporter_h_

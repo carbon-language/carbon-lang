@@ -66,8 +66,7 @@ public:
     /// The Destructor is virtual, all significant breakpoint resolvers derive
     /// from this class.
     //------------------------------------------------------------------
-    virtual
-    ~BreakpointResolver ();
+    ~BreakpointResolver() override;
 
     //------------------------------------------------------------------
     /// This sets the breakpoint for this resolver.
@@ -105,8 +104,8 @@ public:
     /// @param[in] s
     ///   Stream to which the output is copied.
     //------------------------------------------------------------------
-    virtual void
-    GetDescription (Stream *s) = 0;
+    void
+    GetDescription(Stream *s) override = 0;
 
     //------------------------------------------------------------------
     /// Standard "Dump" method.  At present it does nothing.
@@ -157,4 +156,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_BreakpointResolver_h_
+#endif // liblldb_BreakpointResolver_h_

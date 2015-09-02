@@ -35,8 +35,7 @@ public:
                                 bool skip_prologue,
                                 bool exact_match);
 
-    virtual
-    ~BreakpointResolverFileLine ();
+    ~BreakpointResolverFileLine() override;
 
     Searcher::CallbackReturn
     SearchCallback (SearchFilter &filter,
@@ -76,4 +75,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_BreakpointResolverFileLine_h_
+#endif // liblldb_BreakpointResolverFileLine_h_

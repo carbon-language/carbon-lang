@@ -111,8 +111,7 @@ public:
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    virtual
-    ~CompileUnit();
+    ~CompileUnit() override;
 
     //------------------------------------------------------------------
     /// Add a function to this compile unit.
@@ -131,22 +130,22 @@ public:
     ///
     /// @see SymbolContextScope
     //------------------------------------------------------------------
-    virtual void
-    CalculateSymbolContext(SymbolContext* sc);
+    void
+    CalculateSymbolContext(SymbolContext* sc) override;
 
-    virtual lldb::ModuleSP
-    CalculateSymbolContextModule ();
+    lldb::ModuleSP
+    CalculateSymbolContextModule() override;
     
-    virtual CompileUnit *
-    CalculateSymbolContextCompileUnit ();
+    CompileUnit *
+    CalculateSymbolContextCompileUnit() override;
 
     //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::DumpSymbolContext(Stream*)
     ///
     /// @see SymbolContextScope
     //------------------------------------------------------------------
-    virtual void
-    DumpSymbolContext(Stream *s);
+    void
+    DumpSymbolContext(Stream *s) override;
 
     lldb::LanguageType
     GetLanguage();
@@ -457,4 +456,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_CompUnit_h_
+#endif // liblldb_CompUnit_h_

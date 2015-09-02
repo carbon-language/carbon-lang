@@ -24,7 +24,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/TemplateBase.h"
 
-
 // Project includes
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/ClangForward.h"
@@ -47,7 +46,7 @@ public:
     //------------------------------------------------------------------
     ClangASTContext (const char *triple = NULL);
 
-    ~ClangASTContext();
+    ~ClangASTContext() override;
     
     static ClangASTContext*
     GetASTContext (clang::ASTContext* ast_ctx);
@@ -353,7 +352,6 @@ public:
     static bool
     RecordHasFields (const clang::RecordDecl *record_decl);
 
-
     CompilerType
     CreateObjCClass (const char *name, 
                      clang::DeclContext *decl_ctx, 
@@ -369,8 +367,6 @@ public:
                                      int default_accessibility,
                                      int *assigned_accessibilities,
                                      size_t num_assigned_accessibilities);
-
-    
 
     // Returns a mask containing bits from the ClangASTContext::eTypeXXX enumerations
 
@@ -672,7 +668,6 @@ public:
     static bool
     GetObjCClassName (const CompilerType& type, std::string &class_name);
     
-    
     //----------------------------------------------------------------------
     // Type Completion
     //----------------------------------------------------------------------
@@ -879,7 +874,6 @@ public:
                          size_t idx,
                          lldb::TemplateArgumentKind &kind) override;
     
-    
     //----------------------------------------------------------------------
     // Modifying RecordType
     //----------------------------------------------------------------------
@@ -930,7 +924,6 @@ public:
                                 clang::CXXBaseSpecifier const * const *base_classes,
                                 unsigned num_base_classes);
     
-    
     static bool
     SetObjCSuperClass (const CompilerType& type,
                        const CompilerType &superclass_clang_type);
@@ -980,7 +973,6 @@ public:
     
     CompilerType
     GetEnumerationIntegerType (void *type);
-    
     
     //------------------------------------------------------------------
     // Pointers & References
@@ -1045,7 +1037,6 @@ public:
     static clang::EnumDecl *
     GetAsEnumDecl (const CompilerType& type);
     
-    
     static clang::RecordDecl *
     GetAsRecordDecl (const CompilerType& type);
     
@@ -1062,6 +1053,7 @@ public:
             return clang::QualType::getFromOpaquePtr(type.GetOpaqueQualType());
         return clang::QualType();
     }
+
     static clang::QualType
     GetCanonicalQualType (const CompilerType& type)
     {
@@ -1127,4 +1119,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ClangASTContext_h_
+#endif // liblldb_ClangASTContext_h_

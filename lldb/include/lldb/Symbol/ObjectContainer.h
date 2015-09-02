@@ -71,8 +71,7 @@ public:
     /// The destructor is virtual since this class is designed to be
     /// inherited from by the plug-in instance.
     //------------------------------------------------------------------
-    virtual
-    ~ObjectContainer()
+    ~ObjectContainer() override
     {
     }
 
@@ -233,4 +232,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ObjectContainer_h_
+#endif // liblldb_ObjectContainer_h_

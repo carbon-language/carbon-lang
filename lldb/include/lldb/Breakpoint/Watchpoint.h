@@ -38,18 +38,16 @@ public:
         public EventData
     {
     public:
+        WatchpointEventData (lldb::WatchpointEventType sub_type,
+                             const lldb::WatchpointSP &new_watchpoint_sp);
+
+        ~WatchpointEventData() override;
 
         static const ConstString &
         GetFlavorString ();
 
-        virtual const ConstString &
-        GetFlavor () const;
-
-        WatchpointEventData (lldb::WatchpointEventType sub_type,
-                             const lldb::WatchpointSP &new_watchpoint_sp);
-
-        virtual
-        ~WatchpointEventData();
+        const ConstString &
+        GetFlavor() const override;
 
         lldb::WatchpointEventType
         GetWatchpointEventType () const;
@@ -57,8 +55,8 @@ public:
         lldb::WatchpointSP &
         GetWatchpoint ();
         
-        virtual void
-        Dump (Stream *s) const;
+        void
+        Dump(Stream *s) const override;
 
         static lldb::WatchpointEventType
         GetWatchpointEventTypeFromEvent (const lldb::EventSP &event_sp);
@@ -78,7 +76,7 @@ public:
     };
 
     Watchpoint (Target& target, lldb::addr_t addr, uint32_t size, const CompilerType *type, bool hardware = true);
-    ~Watchpoint ();
+    ~Watchpoint() override;
 
     void
     IncrementFalseAlarmsAndReviseHitCount();
@@ -89,11 +87,11 @@ public:
     void
     SetEnabled (bool enabled, bool notify = true);
 
-    virtual bool
-    IsHardware () const;
+    bool
+    IsHardware() const override;
 
-    virtual bool
-    ShouldStop (StoppointCallbackContext *context);
+    bool
+    ShouldStop(StoppointCallbackContext *context) override;
 
     bool        WatchpointRead () const;
     bool        WatchpointWrite () const;
@@ -110,7 +108,7 @@ public:
     bool        CaptureWatchedValue (const ExecutionContext &exe_ctx);
 
     void        GetDescription (Stream *s, lldb::DescriptionLevel level);
-    void        Dump (Stream *s) const;
+    void        Dump (Stream *s) const override;
     void        DumpSnapshots (Stream *s, const char * prefix = NULL) const;
     void        DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
     Target      &GetTarget() { return m_target; }
@@ -201,7 +199,6 @@ public:
         return m_type;
     }
 
-
 private:
     friend class Target;
     friend class WatchpointList;
@@ -261,4 +258,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_Watchpoint_h_
+#endif // liblldb_Watchpoint_h_

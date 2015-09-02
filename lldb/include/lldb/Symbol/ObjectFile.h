@@ -125,8 +125,7 @@ public:
     /// The destructor is virtual since this class is designed to be
     /// inherited from by the plug-in instance.
     //------------------------------------------------------------------
-    virtual
-    ~ObjectFile();
+    ~ObjectFile() override;
     
     //------------------------------------------------------------------
     /// Dump a description of this object to a Stream.
@@ -374,7 +373,6 @@ public:
     virtual void
     CreateSections (SectionList &unified_section_list) = 0;
 
-
     //------------------------------------------------------------------
     /// Notify the ObjectFile that the file addresses in the Sections
     /// for this module have been changed.
@@ -595,7 +593,6 @@ public:
     virtual lldb_private::Address
     GetHeaderAddress () { return Address(m_memory_addr);}
 
-    
     virtual uint32_t
     GetNumThreadContexts ()
     {
@@ -767,7 +764,6 @@ public:
         return 0;
     }
 
-
     //------------------------------------------------------------------
     /// Return true if this file is a dynamic link editor (dyld)
     ///
@@ -823,6 +819,7 @@ public:
                      lldb::offset_t section_offset, 
                      void *dst, 
                      size_t dst_len) const;
+
     virtual size_t
     ReadSectionData (const Section *section, 
                      DataExtractor& section_data) const;
@@ -880,5 +877,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ObjectFile_h_
-
+#endif // liblldb_ObjectFile_h_

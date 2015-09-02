@@ -126,6 +126,7 @@ public:
         return lldb::eLanguageTypeUnknown;
             
     }
+
     const char *
     GetObjectPtrName() const
     {
@@ -167,7 +168,7 @@ class ClangExternalASTSourceCommon : public clang::ExternalASTSource
 {
 public:
     ClangExternalASTSourceCommon();
-    ~ClangExternalASTSourceCommon();
+    ~ClangExternalASTSourceCommon() override;
 
     ClangASTMetadata *GetMetadata(const void *object);
     void SetMetadata(const void *object, ClangASTMetadata &metadata);
@@ -181,6 +182,6 @@ private:
     MetadataMap m_metadata;
 };
 
-}
+} // namespace lldb_private
 
-#endif
+#endif // liblldb_ClangExternalASTSourceCommon_h

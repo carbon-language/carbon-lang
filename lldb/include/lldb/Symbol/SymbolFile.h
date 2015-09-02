@@ -56,8 +56,7 @@ public:
     {
     }
 
-    virtual
-    ~SymbolFile()
+    ~SymbolFile() override
     {
     }
 
@@ -171,16 +170,15 @@ public:
     { 
     }
 
-    
 protected:
     ObjectFile*             m_obj_file; // The object file that symbols can be extracted from.
     uint32_t                m_abilities;
     bool                    m_calculated_abilities;
+
 private:
     DISALLOW_COPY_AND_ASSIGN (SymbolFile);
 };
 
-
 } // namespace lldb_private
 
-#endif  // liblldb_SymbolFile_h_
+#endif // liblldb_SymbolFile_h_

@@ -14,6 +14,7 @@
 // C++ Includes
 #include <vector>
 #include <string>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Breakpoint/BreakpointResolver.h"
@@ -64,8 +65,7 @@ public:
                             Breakpoint::MatchType type,
                             bool skip_prologue);
 
-    virtual
-    ~BreakpointResolverName ();
+    ~BreakpointResolverName() override;
 
     Searcher::CallbackReturn
     SearchCallback (SearchFilter &filter,
@@ -126,4 +126,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_BreakpointResolverName_h_
+#endif // liblldb_BreakpointResolverName_h_

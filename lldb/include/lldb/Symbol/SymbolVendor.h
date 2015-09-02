@@ -17,7 +17,6 @@
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Symbol/TypeList.h"
 
-
 namespace lldb_private {
 
 //----------------------------------------------------------------------
@@ -44,8 +43,7 @@ public:
     //------------------------------------------------------------------
     SymbolVendor(const lldb::ModuleSP &module_sp);
 
-    virtual
-    ~SymbolVendor();
+    ~SymbolVendor() override;
 
     void
     AddSymbolFileRepresentation(const lldb::ObjectFileSP &objfile_sp);
@@ -188,11 +186,11 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual ConstString
-    GetPluginName();
+    ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
 protected:
     //------------------------------------------------------------------
@@ -214,7 +212,6 @@ private:
     DISALLOW_COPY_AND_ASSIGN (SymbolVendor);
 };
 
-
 } // namespace lldb_private
 
-#endif  // liblldb_SymbolVendor_h_
+#endif // liblldb_SymbolVendor_h_

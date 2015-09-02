@@ -32,8 +32,7 @@ public:
                                  RegularExpression &regex,
                                  bool exact_match);
 
-    virtual
-    ~BreakpointResolverFileRegex ();
+    ~BreakpointResolverFileRegex() override;
 
     Searcher::CallbackReturn
     SearchCallback (SearchFilter &filter,
@@ -70,4 +69,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_BreakpointResolverFileRegex_h_
+#endif // liblldb_BreakpointResolverFileRegex_h_

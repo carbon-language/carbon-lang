@@ -115,7 +115,6 @@ public:
     //------------------------------------------------------------------
     void SetCallback (BreakpointHitCallback callback, const lldb::BatonSP &baton_sp, bool synchronous = false);
     
-    
     //------------------------------------------------------------------
     /// Remove the callback from this option set.
     //------------------------------------------------------------------
@@ -298,7 +297,6 @@ public:
                   lldb::user_id_t break_id,
                   lldb::user_id_t break_loc_id);
     
-    
     struct CommandData
     {
         CommandData () :
@@ -325,16 +323,14 @@ public:
         {
         }
 
-        virtual
-        ~CommandBaton ()
+        ~CommandBaton() override
         {
             delete ((CommandData *)m_data);
             m_data = NULL;
         }
         
-        virtual void
-        GetDescription (Stream *s, lldb::DescriptionLevel level) const;
-
+        void
+        GetDescription (Stream *s, lldb::DescriptionLevel level) const override;
     };
 
 protected:
@@ -359,4 +355,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_BreakpointOptions_h_
+#endif // liblldb_BreakpointOptions_h_

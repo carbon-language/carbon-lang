@@ -333,6 +333,7 @@ public:
     {
         return m_demangled_is_synthesized;
     }
+
     void
     SetDemangledNameIsSynthesized(bool b)
     {
@@ -354,22 +355,22 @@ public:
     ///
     /// @see SymbolContextScope
     //------------------------------------------------------------------
-    virtual void
-    CalculateSymbolContext (SymbolContext *sc);
+    void
+    CalculateSymbolContext(SymbolContext *sc) override;
 
-    virtual lldb::ModuleSP
-    CalculateSymbolContextModule ();
+    lldb::ModuleSP
+    CalculateSymbolContextModule() override;
     
-    virtual Symbol *
-    CalculateSymbolContextSymbol ();
+    Symbol *
+    CalculateSymbolContextSymbol() override;
 
     //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::DumpSymbolContext(Stream*)
     ///
     /// @see SymbolContextScope
     //------------------------------------------------------------------
-    virtual void
-    DumpSymbolContext (Stream *s);
+    void
+    DumpSymbolContext(Stream *s) override;
 
     lldb::DisassemblerSP
     GetInstructions (const ExecutionContext &exe_ctx,
@@ -411,4 +412,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_Symbol_h_
+#endif // liblldb_Symbol_h_

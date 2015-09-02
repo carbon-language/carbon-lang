@@ -26,7 +26,7 @@ class SystemInitializerFull : public SystemInitializerCommon
 {
   public:
     SystemInitializerFull();
-    virtual ~SystemInitializerFull();
+    ~SystemInitializerFull() override;
 
     void Initialize() override;
     void Terminate() override;
@@ -34,6 +34,7 @@ class SystemInitializerFull : public SystemInitializerCommon
   private:
     void InitializeSWIG();
 };
-}
 
-#endif
+} // namespace lldb_private
+
+#endif // LLDB_API_SYSTEM_INITIALIZER_FULL_H

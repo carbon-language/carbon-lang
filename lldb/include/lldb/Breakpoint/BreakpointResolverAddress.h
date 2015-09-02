@@ -31,8 +31,7 @@ public:
     BreakpointResolverAddress (Breakpoint *bkpt,
                        const Address &addr);
 
-    virtual
-    ~BreakpointResolverAddress ();
+    ~BreakpointResolverAddress() override;
 
     void
     ResolveBreakpoint (SearchFilter &filter) override;
@@ -74,4 +73,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_BreakpointResolverAddress_h_
+#endif // liblldb_BreakpointResolverAddress_h_
