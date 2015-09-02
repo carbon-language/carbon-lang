@@ -215,7 +215,7 @@ public:
     if (!PendingOverrides.empty())
       removeOverriddenTables();
 
-    if (Tables.size() > Info::MaxTables)
+    if (Tables.size() > static_cast<unsigned>(Info::MaxTables))
       condense();
 
     internal_key_type Key = Info::GetInternalKey(EKey);
