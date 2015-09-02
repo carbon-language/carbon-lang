@@ -51,6 +51,7 @@ class ThreadStepOutTestCase(TestBase):
     @skipIfLinux                              # Test occasionally times out on the Linux build bot
     @expectedFailureLinux("llvm.org/pr23477") # Test occasionally times out on the Linux build bot
     @expectedFailureFreeBSD("llvm.org/pr19347")
+    @expectedFailureWindows("llvm.org/pr24681")
     @dwarf_test
     def test_python_with_dwarf(self):
         """Test thread step out on one thread via Python API (dwarf)."""
