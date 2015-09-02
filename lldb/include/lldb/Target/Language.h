@@ -27,20 +27,20 @@ namespace lldb_private {
     {
     public:
         
-        ~Language() override;
-        
-        static Language*
-        FindPlugin (lldb::LanguageType language);
-        
-        // return false from callback to stop iterating
-        static void
-        ForEach (std::function<bool(Language*)> callback);
-        
-        virtual lldb::LanguageType
-        GetLanguageType () const = 0;
-        
-        virtual lldb::TypeCategoryImplSP
-        GetFormatters ();
+    ~Language() override;
+    
+    static Language*
+    FindPlugin (lldb::LanguageType language);
+    
+    // return false from callback to stop iterating
+    static void
+    ForEach (std::function<bool(Language*)> callback);
+    
+    virtual lldb::LanguageType
+    GetLanguageType () const = 0;
+    
+    virtual lldb::TypeCategoryImplSP
+    GetFormatters ();
 
     // These are accessors for general information about the Languages lldb knows about:
     
@@ -52,6 +52,10 @@ namespace lldb_private {
 
     static void
     PrintAllLanguages (Stream &s, const char *prefix, const char *suffix);
+        
+    // return false from callback to stop iterating
+    static void
+    ForAllLanguages (std::function<bool(lldb::LanguageType)> callback);
 
     static bool
     LanguageIsCPlusPlus (lldb::LanguageType language);

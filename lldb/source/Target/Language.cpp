@@ -179,6 +179,16 @@ Language::PrintAllLanguages (Stream &s, const char *prefix, const char *suffix)
     }
 }
 
+void
+Language::ForAllLanguages (std::function<bool(lldb::LanguageType)> callback)
+{
+    for (uint32_t i = 1; i < num_languages; i++)
+    {
+        if (!callback(language_names[i].type))
+            break;
+    }
+}
+
 bool
 Language::LanguageIsCPlusPlus (LanguageType language)
 {
