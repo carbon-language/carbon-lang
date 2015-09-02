@@ -184,7 +184,6 @@ TEST_F(MatchSelectPatternTest, DoubleCastBad) {
       "  %A = select i1 %1, i32 %2, i32 %3\n"
       "  ret i32 %A\n"
       "}\n");
-  // We should be able to look through the situation where we cast both operands
-  // to the select.
+  // The cast types here aren't the same, so we cannot match an UMIN.
   expectPattern({SPF_UNKNOWN, SPNB_NA, false});
 }
