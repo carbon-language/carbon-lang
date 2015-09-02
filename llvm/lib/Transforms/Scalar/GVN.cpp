@@ -725,7 +725,8 @@ namespace {
     bool splitCriticalEdges();
     BasicBlock *splitCriticalEdges(BasicBlock *Pred, BasicBlock *Succ);
     bool replaceOperandsWithConsts(Instruction *I) const;
-    bool propagateEquality(Value *LHS, Value *RHS, const BasicBlockEdge &Root);
+    bool propagateEquality(Value *LHS, Value *RHS, const BasicBlockEdge &Root,
+                           bool DominatesByEdge);
     bool processFoldableCondBr(BranchInst *BI);
     void addDeadBlock(BasicBlock *BB);
     void assignValNumForDeadCode();
@@ -1777,9 +1778,17 @@ bool GVN::processAssumeIntrinsic(IntrinsicInst *IntrinsicI) {
 
     // This property is only true in dominated successors, propagateEquality
     // will check dominance for us.
-    Changed |= propagateEquality(V, True, Edge);
+    Changed |= propagateEquality(V, True, Edge, false);
   }
+  // We can replace assume value with true, which covers cases like this:
+  // call void @llvm.assume(i1 %cmp)
+  // br i1 %cmp, label %bb1, label %bb2 ; will change %cmp to true
+  ReplaceWithConstMap[V] = True;
 
+  // If one of *cmp *eq operand is const, adding it to map will cover this:
+  // %cmp = fcmp oeq float 3.000000e+00, %0 ; const on lhs could happen
+  // call void @llvm.assume(i1 %cmp)
+  // ret float %0 ; will change it to ret float 3.000000e+00
   if (auto *CmpI = dyn_cast<CmpInst>(V)) {
     if (CmpI->getPredicate() == CmpInst::Predicate::ICMP_EQ ||
         CmpI->getPredicate() == CmpInst::Predicate::FCMP_OEQ ||
@@ -2088,8 +2097,9 @@ bool GVN::replaceOperandsWithConsts(Instruction *Instr) const {
 /// The given values are known to be equal in every block
 /// dominated by 'Root'.  Exploit this, for example by replacing 'LHS' with
 /// 'RHS' everywhere in the scope.  Returns whether a change was made.
-bool GVN::propagateEquality(Value *LHS, Value *RHS,
-                            const BasicBlockEdge &Root) {
+/// If DominatesByEdge is false, then it means that it is dominated by Root.End.
+bool GVN::propagateEquality(Value *LHS, Value *RHS, const BasicBlockEdge &Root,
+                            bool DominatesByEdge) {
   SmallVector<std::pair<Value*, Value*>, 4> Worklist;
   Worklist.push_back(std::make_pair(LHS, RHS));
   bool Changed = false;
@@ -2146,7 +2156,11 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS,
     // LHS always has at least one use that is not dominated by Root, this will
     // never do anything if LHS has only one use.
     if (!LHS->hasOneUse()) {
-      unsigned NumReplacements = replaceDominatedUsesWith(LHS, RHS, *DT, Root);
+      unsigned NumReplacements =
+          DominatesByEdge
+              ? replaceDominatedUsesWith(LHS, RHS, *DT, Root)
+              : replaceDominatedUsesWith(LHS, RHS, *DT, Root.getEnd());
+
       Changed |= NumReplacements > 0;
       NumGVNEqProp += NumReplacements;
     }
@@ -2218,7 +2232,10 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS,
         Value *NotCmp = findLeader(Root.getEnd(), Num);
         if (NotCmp && isa<Instruction>(NotCmp)) {
           unsigned NumReplacements =
-            replaceDominatedUsesWith(NotCmp, NotVal, *DT, Root);
+              DominatesByEdge
+                  ? replaceDominatedUsesWith(NotCmp, NotVal, *DT, Root)
+                  : replaceDominatedUsesWith(NotCmp, NotVal, *DT,
+                                             Root.getEnd());
           Changed |= NumReplacements > 0;
           NumGVNEqProp += NumReplacements;
         }
@@ -2292,11 +2309,11 @@ bool GVN::processInstruction(Instruction *I) {
 
     Value *TrueVal = ConstantInt::getTrue(TrueSucc->getContext());
     BasicBlockEdge TrueE(Parent, TrueSucc);
-    Changed |= propagateEquality(BranchCond, TrueVal, TrueE);
+    Changed |= propagateEquality(BranchCond, TrueVal, TrueE, true);
 
     Value *FalseVal = ConstantInt::getFalse(FalseSucc->getContext());
     BasicBlockEdge FalseE(Parent, FalseSucc);
-    Changed |= propagateEquality(BranchCond, FalseVal, FalseE);
+    Changed |= propagateEquality(BranchCond, FalseVal, FalseE, true);
 
     return Changed;
   }
@@ -2318,7 +2335,7 @@ bool GVN::processInstruction(Instruction *I) {
       // If there is only a single edge, propagate the case value into it.
       if (SwitchEdges.lookup(Dst) == 1) {
         BasicBlockEdge E(Parent, Dst);
-        Changed |= propagateEquality(SwitchCond, i.getCaseValue(), E);
+        Changed |= propagateEquality(SwitchCond, i.getCaseValue(), E, true);
       }
     }
     return Changed;

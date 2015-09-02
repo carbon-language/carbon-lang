@@ -99,8 +99,6 @@ entry:
 }
 
 ; CHECK-LABEL: define float @_Z1if(float %p)
-
-
 define float @_Z1if(float %p) {
 entry:
   %p.addr = alloca float, align 4
@@ -112,6 +110,23 @@ entry:
   
   ; CHECK-NOT: ret float 3.000000e+00
   ret float %0
+}
+
+; This test checks if constant propagation works for multiple node edges
+; CHECK-LABEL: define i32 @_Z1ii(i32 %p)
+define i32 @_Z1ii(i32 %p) {
+entry:
+  %cmp = icmp eq i32 %p, 42
+  call void @llvm.assume(i1 %cmp)
+  
+  ; CHECK: br i1 true, label %bb2, label %bb2
+  br i1 %cmp, label %bb2, label %bb2
+bb2:
+  ; CHECK: br i1 true, label %bb2, label %bb2
+  br i1 %cmp, label %bb2, label %bb2
+  
+  ; CHECK: ret i32 42
+  ret i32 %p
 }
 
 declare noalias i8* @_Znwm(i64)

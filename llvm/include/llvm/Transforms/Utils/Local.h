@@ -291,6 +291,10 @@ void combineMetadata(Instruction *K, const Instruction *J, ArrayRef<unsigned> Kn
 /// the given edge.  Returns the number of replacements made.
 unsigned replaceDominatedUsesWith(Value *From, Value *To, DominatorTree &DT,
                                   const BasicBlockEdge &Edge);
+/// \brief Replace each use of 'From' with 'To' if that use is dominated by
+/// the given BasicBlock. Returns the number of replacements made.
+unsigned replaceDominatedUsesWith(Value *From, Value *To, DominatorTree &DT,
+                                  const BasicBlock *BB);
 } // End llvm namespace
 
 #endif

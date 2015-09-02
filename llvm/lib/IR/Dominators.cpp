@@ -147,7 +147,8 @@ bool DominatorTree::dominates(const BasicBlockEdge &BBE,
   // Assert that we have a single edge. We could handle them by simply
   // returning false, but since isSingleEdge is linear on the number of
   // edges, the callers can normally handle them more efficiently.
-  assert(BBE.isSingleEdge());
+  assert(BBE.isSingleEdge() &&
+         "This function is not efficient in handling multiple edges");
 
   // If the BB the edge ends in doesn't dominate the use BB, then the
   // edge also doesn't.
@@ -197,7 +198,8 @@ bool DominatorTree::dominates(const BasicBlockEdge &BBE, const Use &U) const {
   // Assert that we have a single edge. We could handle them by simply
   // returning false, but since isSingleEdge is linear on the number of
   // edges, the callers can normally handle them more efficiently.
-  assert(BBE.isSingleEdge());
+  assert(BBE.isSingleEdge() &&
+         "This function is not efficient in handling multiple edges");
 
   Instruction *UserInst = cast<Instruction>(U.getUser());
   // A PHI in the end of the edge is dominated by it.
