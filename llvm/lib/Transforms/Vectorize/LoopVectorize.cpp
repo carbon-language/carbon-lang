@@ -274,7 +274,8 @@ public:
       : OrigLoop(OrigLoop), SE(SE), LI(LI), DT(DT), TLI(TLI), TTI(TTI),
         VF(VecWidth), UF(UnrollFactor), Builder(SE->getContext()),
         Induction(nullptr), OldInduction(nullptr), WidenMap(UnrollFactor),
-        Legal(nullptr), AddedSafetyChecks(false) {}
+        TripCount(nullptr), VectorTripCount(nullptr), Legal(nullptr),
+        AddedSafetyChecks(false) {}
 
   // Perform the actual loop widening (vectorization).
   void vectorize(LoopVectorizationLegality *L) {
@@ -383,6 +384,12 @@ protected:
   /// Generate a shuffle sequence that will reverse the vector Vec.
   virtual Value *reverseVector(Value *Vec);
 
+  /// Returns (and creates if needed) the original loop trip count.
+  Value *getOrCreateTripCount(Loop *NewLoop);
+
+  /// Returns (and creates if needed) the trip count of the widened loop.
+  Value *getOrCreateVectorTripCount(Loop *NewLoop);
+  
   /// This is a helper class that holds the vectorizer state. It maps scalar
   /// instructions to vector instructions. When the code is 'unrolled' then
   /// then a single scalar value is mapped to multiple vector parts. The parts
@@ -474,6 +481,10 @@ protected:
   /// Maps scalars to widened vectors.
   ValueMap WidenMap;
   EdgeMaskCache MaskCache;
+  /// Trip count of the original loop.
+  Value *TripCount;
+  /// Trip count of the widened loop (TripCount - TripCount % (VF*UF))
+  Value *VectorTripCount;
 
   LoopVectorizationLegality *Legal;
 
@@ -2595,6 +2606,68 @@ PHINode *InnerLoopVectorizer::createInductionVariable(Loop *L,
   return Induction;
 }
 
+Value *InnerLoopVectorizer::getOrCreateTripCount(Loop *L) {
+  if (TripCount)
+    return TripCount;
+
+  IRBuilder<> Builder(L->getLoopPreheader()->getTerminator());
+  // Find the loop boundaries.
+  const SCEV *ExitCount = SE->getBackedgeTakenCount(OrigLoop);
+  assert(ExitCount != SE->getCouldNotCompute() && "Invalid loop count");
+
+  Type *IdxTy = Legal->getWidestInductionType();
+  
+  // The exit count might have the type of i64 while the phi is i32. This can
+  // happen if we have an induction variable that is sign extended before the
+  // compare. The only way that we get a backedge taken count is that the
+  // induction variable was signed and as such will not overflow. In such a case
+  // truncation is legal.
+  if (ExitCount->getType()->getPrimitiveSizeInBits() >
+      IdxTy->getPrimitiveSizeInBits())
+    ExitCount = SE->getTruncateOrNoop(ExitCount, IdxTy);
+
+  const SCEV *BackedgeTakeCount = SE->getNoopOrZeroExtend(ExitCount, IdxTy);
+  // Get the total trip count from the count by adding 1.
+  ExitCount = SE->getAddExpr(BackedgeTakeCount,
+                             SE->getConstant(BackedgeTakeCount->getType(), 1));
+
+  const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+
+  // Expand the trip count and place the new instructions in the preheader.
+  // Notice that the pre-header does not change, only the loop body.
+  SCEVExpander Exp(*SE, DL, "induction");
+
+  // Count holds the overall loop count (N).
+  TripCount = Exp.expandCodeFor(ExitCount, ExitCount->getType(),
+                                L->getLoopPreheader()->getTerminator());
+
+  if (TripCount->getType()->isPointerTy())
+    TripCount =
+      CastInst::CreatePointerCast(TripCount, IdxTy,
+                                  "exitcount.ptrcnt.to.int",
+                                  L->getLoopPreheader()->getTerminator());
+
+  return TripCount;
+}
+
+Value *InnerLoopVectorizer::getOrCreateVectorTripCount(Loop *L) {
+  if (VectorTripCount)
+    return VectorTripCount;
+  
+  Value *TC = getOrCreateTripCount(L);
+  IRBuilder<> Builder(L->getLoopPreheader()->getTerminator());
+  
+  // Now we need to generate the expression for N - (N % VF), which is
+  // the part that the vectorized body will execute.
+  // The loop step is equal to the vectorization factor (num of SIMD elements)
+  // times the unroll factor (num of SIMD instructions).
+  Constant *Step = ConstantInt::get(TC->getType(), VF * UF);
+  Value *R = Builder.CreateURem(TC, Step, "n.mod.vf");
+  VectorTripCount = Builder.CreateSub(TC, R, "n.vec");
+
+  return VectorTripCount;
+}
+
 void InnerLoopVectorizer::createEmptyLoop() {
   /*
    In this function we generate a new loop. The new loop will contain
@@ -2647,54 +2720,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // then we create a new one.
   OldInduction = Legal->getInduction();
   Type *IdxTy = Legal->getWidestInductionType();
-  
-  // Find the loop boundaries.
-  const SCEV *ExitCount = SE->getBackedgeTakenCount(OrigLoop);
-  assert(ExitCount != SE->getCouldNotCompute() && "Invalid loop count");
-
-  // The exit count might have the type of i64 while the phi is i32. This can
-  // happen if we have an induction variable that is sign extended before the
-  // compare. The only way that we get a backedge taken count is that the
-  // induction variable was signed and as such will not overflow. In such a case
-  // truncation is legal.
-  if (ExitCount->getType()->getPrimitiveSizeInBits() >
-      IdxTy->getPrimitiveSizeInBits())
-    ExitCount = SE->getTruncateOrNoop(ExitCount, IdxTy);
-
-  const SCEV *BackedgeTakeCount = SE->getNoopOrZeroExtend(ExitCount, IdxTy);
-  // Get the total trip count from the count by adding 1.
-  ExitCount = SE->getAddExpr(BackedgeTakeCount,
-                             SE->getConstant(BackedgeTakeCount->getType(), 1));
-
-  const DataLayout &DL = OldBasicBlock->getModule()->getDataLayout();
-
-  // Expand the trip count and place the new instructions in the preheader.
-  // Notice that the pre-header does not change, only the loop body.
-  SCEVExpander Exp(*SE, DL, "induction");
-
-  // The loop minimum iterations check below is to ensure the loop has enough
-  // trip count so the generated vector loop will likely be executed and the
-  // preparation and rounding-off costs will likely be worthy.
-  //
-  // The minimum iteration check also covers case where the backedge-taken
-  // count is uint##_max.  Adding one to it will cause overflow and an
-  // incorrect loop trip count being generated in the vector body. In this
-  // case we also want to directly jump to the scalar remainder loop.
-  Value *ExitCountValue = Exp.expandCodeFor(ExitCount, ExitCount->getType(),
-                                            VectorPH->getTerminator());
-  if (ExitCountValue->getType()->isPointerTy())
-    ExitCountValue = CastInst::CreatePointerCast(ExitCountValue, IdxTy,
-                                                 "exitcount.ptrcnt.to.int",
-                                                 VectorPH->getTerminator());
-
-  Instruction *CheckMinIters =
-      CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_ULT, ExitCountValue,
-                      ConstantInt::get(ExitCountValue->getType(), VF * UF),
-                      "min.iters.check", VectorPH->getTerminator());
-
-  Value *StartIdx = ConstantInt::get(IdxTy, 0);
-
-  LoopBypassBlocks.push_back(VectorPH);
 
   // Split the single block loop into the two loop structure described above.
   BasicBlock *VecBody =
@@ -2719,6 +2744,26 @@ void InnerLoopVectorizer::createEmptyLoop() {
   }
   Lp->addBasicBlockToLoop(VecBody, *LI);
 
+  // Find the loop boundaries.
+  Value *Count = getOrCreateTripCount(Lp);
+
+  // The loop minimum iterations check below is to ensure the loop has enough
+  // trip count so the generated vector loop will likely be executed and the
+  // preparation and rounding-off costs will likely be worthy.
+  //
+  // The minimum iteration check also covers case where the backedge-taken
+  // count is uint##_max.  Adding one to it will cause overflow and an
+  // incorrect loop trip count being generated in the vector body. In this
+  // case we also want to directly jump to the scalar remainder loop.
+  Instruction *CheckMinIters =
+      CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_ULT, Count,
+                      ConstantInt::get(Count->getType(), VF * UF),
+                      "min.iters.check", VectorPH->getTerminator());
+
+  Value *StartIdx = ConstantInt::get(IdxTy, 0);
+
+  LoopBypassBlocks.push_back(VectorPH);
+
   // Use this IR builder to create the loop instructions (Phi, Br, Cmp)
   // inside the loop.
   Builder.SetInsertPoint(VecBody->getFirstNonPHI());
@@ -2740,27 +2785,20 @@ void InnerLoopVectorizer::createEmptyLoop() {
                       getDebugLocFromInstOrOperands(OldInduction));
 
   // Add the start index to the loop count to get the new end index.
-  Value *IdxEnd = BypassBuilder.CreateAdd(ExitCountValue, StartIdx, "end.idx");
+  Value *CountRoundDown = getOrCreateVectorTripCount(Lp);
 
-  // Now we need to generate the expression for N - (N % VF), which is
-  // the part that the vectorized body will execute.
+  // Generate the induction variable.
   // The loop step is equal to the vectorization factor (num of SIMD elements)
   // times the unroll factor (num of SIMD instructions).
   Constant *Step = ConstantInt::get(IdxTy, VF * UF);
-  Value *R = BypassBuilder.CreateURem(ExitCountValue, Step, "n.mod.vf");
-  Value *CountRoundDown = BypassBuilder.CreateSub(ExitCountValue, R, "n.vec");
-  Value *IdxEndRoundDown = BypassBuilder.CreateAdd(CountRoundDown, StartIdx,
-                                                     "end.idx.rnd.down");
-
-  // Generate the induction variable.
   Induction =
-    createInductionVariable(Lp, StartIdx, IdxEndRoundDown, Step,
+    createInductionVariable(Lp, StartIdx, CountRoundDown, Step,
                             getDebugLocFromInstOrOperands(OldInduction));
   
   // Now, compare the new count to zero. If it is zero skip the vector loop and
   // jump to the scalar loop.
   Value *Cmp =
-      BypassBuilder.CreateICmpEQ(IdxEndRoundDown, StartIdx, "cmp.zero");
+      BypassBuilder.CreateICmpEQ(CountRoundDown, StartIdx, "cmp.zero");
   NewVectorPH =
       VectorPH->splitBasicBlock(VectorPH->getTerminator(), "vector.ph");
   if (ParentLoop)
@@ -2852,7 +2890,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
     Value *EndValue;
     if (OrigPhi == OldInduction) {
       // We know what the end value is.
-      EndValue = IdxEndRoundDown;
+      EndValue = CountRoundDown;
       // We also know which PHI node holds it.
       ResumeIndex = ResumeVal;
     } else {
@@ -2888,7 +2926,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
                                   MiddleBlock->getTerminator());
     for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
       ResumeIndex->addIncoming(StartIdx, LoopBypassBlocks[I]);
-    ResumeIndex->addIncoming(IdxEndRoundDown, VecBody);
+    ResumeIndex->addIncoming(CountRoundDown, VecBody);
   }
 
   // Make sure that we found the index where scalar loop needs to continue.
@@ -2898,7 +2936,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // Add a check in the middle block to see if we have completed
   // all of the iterations in the first vector loop.
   // If (N - N%VF) == N, then we *don't* need to run the remainder.
-  Value *CmpN = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ, IdxEnd,
+  Value *CmpN = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ, Count,
                                 ResumeIndex, "cmp.n",
                                 MiddleBlock->getTerminator());
   ReplaceInstWithInst(MiddleBlock->getTerminator(),
