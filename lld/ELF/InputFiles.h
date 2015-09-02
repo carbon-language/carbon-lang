@@ -27,9 +27,6 @@ public:
   Kind kind() const { return FileKind; }
   virtual ~InputFile() {}
 
-  // Returns symbols defined by this file.
-  virtual ArrayRef<SymbolBody *> getSymbols() = 0;
-
   // Reads a file (constructors don't do that).
   virtual void parse() = 0;
 
@@ -52,7 +49,7 @@ public:
       : InputFile(ObjectKind, M), EKind(EKind) {}
   static bool classof(const InputFile *F) { return F->kind() == ObjectKind; }
 
-  ArrayRef<SymbolBody *> getSymbols() override { return SymbolBodies; }
+  ArrayRef<SymbolBody *> getSymbols() { return SymbolBodies; }
 
   virtual bool isCompatibleWith(const ObjectFileBase &Other) const = 0;
 
