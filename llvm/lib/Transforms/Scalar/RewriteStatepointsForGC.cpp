@@ -615,14 +615,16 @@ private:
   Status status;
   Value *base; // non null only if status == base
 };
+}
 
 #ifndef NDEBUG
-inline raw_ostream &operator<<(raw_ostream &OS, const BDVState &State) {
+static raw_ostream &operator<<(raw_ostream &OS, const BDVState &State) {
   State.print(OS);
   return OS;
 }
 #endif
 
+namespace {
 typedef DenseMap<Value *, BDVState> ConflictStateMapTy;
 // Values of type BDVState form a lattice, and this is a helper
 // class that implementes the meet operation.  The meat of the meet
@@ -680,6 +682,8 @@ private:
   }
 };
 }
+
+
 /// For a given value or instruction, figure out what base ptr it's derived
 /// from.  For gc objects, this is simply itself.  On success, returns a value
 /// which is the base pointer.  (This is reliable and can be used for
