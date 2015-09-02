@@ -874,6 +874,11 @@ bool llvm::EliminateDuplicatePHINodes(BasicBlock *BB) {
       PN->replaceAllUsesWith(*Inserted.first);
       PN->eraseFromParent();
       Changed = true;
+
+      // The RAUW can change PHIs that we already visited. Start over from the
+      // beginning.
+      PHISet.clear();
+      I = BB->begin();
     }
   }
 
