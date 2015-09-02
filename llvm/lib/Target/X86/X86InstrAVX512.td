@@ -1786,6 +1786,11 @@ let Predicates = [HasDQI] in {
             (KMOVBmk addr:$dst, VK8:$src)>;
   def : Pat<(v8i1 (bitconvert (i8 (load addr:$src)))),
             (KMOVBkm addr:$src)>;
+
+  def : Pat<(store VK4:$src, addr:$dst),
+            (KMOVBmk addr:$dst, (COPY_TO_REGCLASS VK4:$src, VK8))>;
+  def : Pat<(store VK2:$src, addr:$dst),
+            (KMOVBmk addr:$dst, (COPY_TO_REGCLASS VK2:$src, VK8))>;
 }
 let Predicates = [HasAVX512, NoDQI] in {
   def : Pat<(store (i8 (bitconvert (v8i1 VK8:$src))), addr:$dst),

@@ -407,3 +407,17 @@ define <32 x i16> @test21(<32 x i16> %x , <32 x i1> %mask) nounwind readnone {
   %ret = select <32 x i1> %mask, <32 x i16> %x, <32 x i16> zeroinitializer
   ret <32 x i16> %ret
 }
+
+; SKX-LABEL: test22
+; SKX: kmovb
+define void @test22(<4 x i1> %a, <4 x i1>* %addr) {
+  store <4 x i1> %a, <4 x i1>* %addr
+  ret void
+}
+
+; SKX-LABEL: test23
+; SKX: kmovb
+define void @test23(<2 x i1> %a, <2 x i1>* %addr) {
+  store <2 x i1> %a, <2 x i1>* %addr
+  ret void
+}
