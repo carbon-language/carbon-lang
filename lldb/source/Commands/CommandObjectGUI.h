@@ -28,16 +28,14 @@ public:
 
     CommandObjectGUI (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectGUI ();
+    ~CommandObjectGUI() override;
 
 protected:
-    virtual bool
-    DoExecute (Args& args,
-               CommandReturnObject &result);
-
+    bool
+    DoExecute(Args& args,
+	      CommandReturnObject &result) override;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectGUI_h_
+#endif // liblldb_CommandObjectGUI_h_

@@ -13,7 +13,6 @@
 // C Includes
 // C++ Includes
 
-
 // Other libraries and framework includes
 // Project includes
 
@@ -27,10 +26,9 @@ namespace lldb_private {
     public:
         CommandObjectPlugin (CommandInterpreter &interpreter);
         
-        virtual
-        ~CommandObjectPlugin ();
+        ~CommandObjectPlugin() override;
     };
     
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectPlugin_h_
+#endif // liblldb_CommandObjectPlugin_h_

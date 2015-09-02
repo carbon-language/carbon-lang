@@ -13,7 +13,6 @@
 // C Includes
 // C++ Includes
 
-
 // Other libraries and framework includes
 // Project includes
 
@@ -26,11 +25,10 @@ namespace lldb_private {
     public:
         CommandObjectLanguage (CommandInterpreter &interpreter);
         
-        virtual
-        ~CommandObjectLanguage ();
+        ~CommandObjectLanguage() override;
         
-        virtual void
-        GenerateHelpText (Stream &output_stream);
+        void
+        GenerateHelpText(Stream &output_stream) override;
         
     protected:
         bool
@@ -38,4 +36,4 @@ namespace lldb_private {
     };
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectLanguage_h_
+#endif // liblldb_CommandObjectLanguage_h_

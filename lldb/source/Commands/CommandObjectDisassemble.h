@@ -33,17 +33,16 @@ public:
 
         CommandOptions (CommandInterpreter &interpreter);
 
-        virtual
-        ~CommandOptions ();
+        ~CommandOptions() override;
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg);
+        Error
+        SetOptionValue(uint32_t option_idx, const char *option_arg) override;
 
         void
-        OptionParsingStarting ();
+        OptionParsingStarting() override;
 
         const OptionDefinition*
-        GetDefinitions ();
+        GetDefinitions() override;
 
         const char *
         GetPluginName ()
@@ -61,8 +60,8 @@ public:
             return flavor_string.c_str();
         }
         
-        virtual Error
-        OptionParsingFinished ();
+        Error
+        OptionParsingFinished() override;
 
         bool show_mixed; // Show mixed source/assembly
         bool show_bytes;
@@ -86,25 +85,22 @@ public:
 
     CommandObjectDisassemble (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectDisassemble ();
+    ~CommandObjectDisassemble() override;
 
-    virtual
     Options *
-    GetOptions ()
+    GetOptions() override
     {
         return &m_options;
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& command,
-             CommandReturnObject &result);
+    bool
+    DoExecute(Args& command,
+	      CommandReturnObject &result) override;
 
     CommandOptions m_options;
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectDisassemble_h_
+#endif // liblldb_CommandObjectDisassemble_h_

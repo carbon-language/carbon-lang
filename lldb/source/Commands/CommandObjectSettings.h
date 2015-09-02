@@ -31,11 +31,9 @@ public:
 
     CommandObjectMultiwordSettings (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectMultiwordSettings ();
-
+    ~CommandObjectMultiwordSettings() override;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectSettings_h_
+#endif // liblldb_CommandObjectSettings_h_

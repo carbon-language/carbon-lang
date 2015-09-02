@@ -30,8 +30,7 @@ public:
     //------------------------------------------------------------------
     CommandObjectRegister(CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectRegister();
+    ~CommandObjectRegister() override;
 
 private:
     //------------------------------------------------------------------
@@ -42,4 +41,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectRegister_h_
+#endif // liblldb_CommandObjectRegister_h_

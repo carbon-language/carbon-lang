@@ -13,7 +13,6 @@
 // C Includes
 // C++ Includes
 
-
 // Other libraries and framework includes
 // Project includes
 
@@ -33,11 +32,9 @@ class CommandObjectWatchpointCommand : public CommandObjectMultiword
 public:
     CommandObjectWatchpointCommand (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectWatchpointCommand ();
-
+    ~CommandObjectWatchpointCommand() override;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectWatchpointCommand_h_
+#endif // liblldb_CommandObjectWatchpointCommand_h_

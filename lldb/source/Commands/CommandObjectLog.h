@@ -33,8 +33,7 @@ public:
     //------------------------------------------------------------------
     CommandObjectLog(CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectLog();
+    ~CommandObjectLog() override;
 
 private:
     //------------------------------------------------------------------
@@ -45,4 +44,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectLog_h_
+#endif // liblldb_CommandObjectLog_h_

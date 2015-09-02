@@ -30,11 +30,9 @@ public:
 
     CommandObjectMultiwordFrame (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectMultiwordFrame ();
-
+    ~CommandObjectMultiwordFrame() override;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectFrame_h_
+#endif // liblldb_CommandObjectFrame_h_

@@ -28,17 +28,14 @@ public:
 
     CommandObjectApropos (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectApropos ();
+    ~CommandObjectApropos() override;
 
 protected:
-    virtual bool
-    DoExecute (Args& command,
-             CommandReturnObject &result);
-
-
+    bool
+    DoExecute(Args& command,
+	      CommandReturnObject &result) override;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectApropos_h_
+#endif // liblldb_CommandObjectApropos_h_

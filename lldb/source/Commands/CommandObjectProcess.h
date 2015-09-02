@@ -27,11 +27,9 @@ class CommandObjectMultiwordProcess : public CommandObjectMultiword
 public:
     CommandObjectMultiwordProcess (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectMultiwordProcess ();
-
+    ~CommandObjectMultiwordProcess() override;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectProcess_h_
+#endif // liblldb_CommandObjectProcess_h_

@@ -28,17 +28,14 @@ public:
 
     CommandObjectSyntax (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectSyntax ();
+    ~CommandObjectSyntax() override;
     
 protected:
-    virtual bool
-    DoExecute (Args& command,
-             CommandReturnObject &result);
-
-
+    bool
+    DoExecute(Args& command,
+	      CommandReturnObject &result) override;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectSyntax_h_
+#endif // liblldb_CommandObjectSyntax_h_

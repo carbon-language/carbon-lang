@@ -30,14 +30,12 @@ class CommandObjectMultiwordWatchpoint : public CommandObjectMultiword
 public:
     CommandObjectMultiwordWatchpoint (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectMultiwordWatchpoint ();
+    ~CommandObjectMultiwordWatchpoint() override;
 
     static bool
     VerifyWatchpointIDs(Target *target, Args &args, std::vector<uint32_t> &wp_ids);
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectWatchpoint_h_
+#endif // liblldb_CommandObjectWatchpoint_h_

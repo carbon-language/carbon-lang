@@ -28,19 +28,17 @@ public:
 
     CommandObjectQuit (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectQuit ();
+    ~CommandObjectQuit() override;
 
 protected:
-    virtual bool
-    DoExecute (Args& args,
-             CommandReturnObject &result);
+    bool
+    DoExecute(Args& args,
+	      CommandReturnObject &result) override;
     
     bool
     ShouldAskForConfirmation (bool& is_a_detach);
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectQuit_h_
+#endif // liblldb_CommandObjectQuit_h_

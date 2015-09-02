@@ -28,13 +28,12 @@ class CommandObjectPlatform : public CommandObjectMultiword
 public:
     CommandObjectPlatform(CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectPlatform();
+    ~CommandObjectPlatform() override;
 
-    private:
+private:
     DISALLOW_COPY_AND_ASSIGN (CommandObjectPlatform);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectPlatform_h_
+#endif // liblldb_CommandObjectPlatform_h_

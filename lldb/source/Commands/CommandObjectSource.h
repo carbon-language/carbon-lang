@@ -30,11 +30,9 @@ public:
 
     CommandObjectMultiwordSource (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectMultiwordSource ();
-
+    ~CommandObjectMultiwordSource() override;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectSource.h_h_
+#endif // liblldb_CommandObjectSource_h_

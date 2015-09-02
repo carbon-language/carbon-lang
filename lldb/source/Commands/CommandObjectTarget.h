@@ -30,12 +30,9 @@ public:
 
     CommandObjectMultiwordTarget (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectMultiwordTarget ();
-
-
+    ~CommandObjectMultiwordTarget() override;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectTarget_h_
+#endif // liblldb_CommandObjectTarget_h_

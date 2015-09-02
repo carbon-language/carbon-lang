@@ -34,8 +34,7 @@ class CommandObjectMultiwordBreakpoint : public CommandObjectMultiword
 public:
     CommandObjectMultiwordBreakpoint (CommandInterpreter &interpreter);
 
-    virtual
-    ~CommandObjectMultiwordBreakpoint ();
+    ~CommandObjectMultiwordBreakpoint() override;
 
     static void
     VerifyBreakpointOrLocationIDs (Args &args, Target *target, CommandReturnObject &result, BreakpointIDList *valid_ids)
@@ -56,4 +55,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectBreakpoint_h_
+#endif // liblldb_CommandObjectBreakpoint_h_
