@@ -304,7 +304,17 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8   , Legal);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
   setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
-  setOperationAction(ISD::FREM             , MVT::f32  , Expand);
+
+  if (Subtarget->is32Bit() && Subtarget->isTargetKnownWindowsMSVC()) {
+    // On 32 bit MSVC, `fmodf(f32)` is not defined - only `fmod(f64)`
+    // is. We should promote the value to 64-bits to solve this.
+    // This is what the CRT headers do - `fmodf` is an inline header
+    // function casting to f64 and calling `fmod`.
+    setOperationAction(ISD::FREM           , MVT::f32  , Promote);
+  } else {
+    setOperationAction(ISD::FREM           , MVT::f32  , Expand);
+  }
+
   setOperationAction(ISD::FREM             , MVT::f64  , Expand);
   setOperationAction(ISD::FREM             , MVT::f80  , Expand);
   setOperationAction(ISD::FLT_ROUNDS_      , MVT::i32  , Custom);
