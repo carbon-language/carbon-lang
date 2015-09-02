@@ -58,14 +58,7 @@ CPlusPlusLanguage::GetPluginVersion()
 Language *
 CPlusPlusLanguage::CreateInstance (lldb::LanguageType language)
 {
-    switch (language)
-    {
-        case lldb::eLanguageTypeC_plus_plus:
-        case lldb::eLanguageTypeC_plus_plus_03:
-        case lldb::eLanguageTypeC_plus_plus_11:
-        case lldb::eLanguageTypeC_plus_plus_14:
-            return new CPlusPlusLanguage();
-        default:
-            return nullptr;
-    }
+    if (Language::LanguageIsCPlusPlus(language))
+        return new CPlusPlusLanguage();
+    return nullptr;
 }
