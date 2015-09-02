@@ -320,31 +320,46 @@ int PPCTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
 
   int Cost = BaseT::getMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
 
-  // VSX loads/stores support unaligned access.
-  if (ST->hasVSX()) {
-    if (LT.second == MVT::v2f64 || LT.second == MVT::v2i64)
-      return Cost;
-  }
+  // Aligned loads and stores are easy.
+  unsigned SrcBytes = LT.second.getStoreSize();
+  if (!SrcBytes || !Alignment || Alignment >= SrcBytes)
+    return Cost;
 
-  bool UnalignedAltivec =
-    Src->isVectorTy() &&
-    Src->getPrimitiveSizeInBits() >= LT.second.getSizeInBits() &&
-    LT.second.getSizeInBits() == 128 &&
-    Opcode == Instruction::Load;
+  bool IsAltivecType = ST->hasAltivec() &&
+                       (LT.second == MVT::v16i8 || LT.second == MVT::v8i16 ||
+                        LT.second == MVT::v4i32 || LT.second == MVT::v4f32);
+  bool IsVSXType = ST->hasVSX() &&
+                   (LT.second == MVT::v2f64 || LT.second == MVT::v2i64);
+  bool IsQPXType = ST->hasQPX() &&
+                   (LT.second == MVT::v4f64 || LT.second == MVT::v4f32);
+
+  // For VSX, we can do unaligned loads and stores on Altivec/VSX types. On the
+  // P7, unaligned vector loads are more expensive than the permutation-based
+  // load sequence, so that might be used instead, but regardless, the net cost
+  // is about the same (not counting loop-invariant instructions).
+  if (IsVSXType || (ST->hasVSX() && IsAltivecType))
+    return Cost;
+
+  // If we can use the permutation-based load sequence, then this is also
+  // relatively cheap (not counting loop-invariant instructions).
+  bool PermutationLoad = Opcode == Instruction::Load &&
+                         (IsAltivecType || IsQPXType) &&
+                         Alignment >= LT.second.getScalarType().getStoreSize();
+  if (PermutationLoad)
+    return Cost;
 
   // PPC in general does not support unaligned loads and stores. They'll need
   // to be decomposed based on the alignment factor.
-  unsigned SrcBytes = LT.second.getStoreSize();
-  if (SrcBytes && Alignment && Alignment < SrcBytes && !UnalignedAltivec) {
-    Cost += LT.first*(SrcBytes/Alignment-1);
 
-    // For a vector type, there is also scalarization overhead (only for
-    // stores, loads are expanded using the vector-load + permutation sequence,
-    // which is much less expensive).
-    if (Src->isVectorTy() && Opcode == Instruction::Store)
-      for (int i = 0, e = Src->getVectorNumElements(); i < e; ++i)
-        Cost += getVectorInstrCost(Instruction::ExtractElement, Src, i);
-  }
+  // Add the cost of each scalar load or store.
+  Cost += LT.first*(SrcBytes/Alignment-1);
+
+  // For a vector type, there is also scalarization overhead (only for
+  // stores, loads are expanded using the vector-load + permutation sequence,
+  // which is much less expensive).
+  if (Src->isVectorTy() && Opcode == Instruction::Store)
+    for (int i = 0, e = Src->getVectorNumElements(); i < e; ++i)
+      Cost += getVectorInstrCost(Instruction::ExtractElement, Src, i);
 
   return Cost;
 }
