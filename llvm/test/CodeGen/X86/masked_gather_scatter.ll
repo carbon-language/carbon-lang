@@ -140,3 +140,108 @@ define <16 x i32> @test8(<16 x i32*> %ptr.random, <16 x i32> %ind, i16 %mask) {
   %res = add <16 x i32> %gt1, %gt2
   ret <16 x i32> %res
 }
+
+%struct.RT = type { i8, [10 x [20 x i32]], i8 }
+%struct.ST = type { i32, double, %struct.RT }
+
+; Masked gather for agregate types
+; Test9 and Test10 should give the same result (scalar and vector indices in GEP)
+
+; KNL-LABEL: test9
+; KNL: vpbroadcastq    %rdi, %zmm
+; KNL: vpmovsxdq
+; KNL: vpbroadcastq
+; KNL: vpmuludq
+; KNL: vpaddq
+; KNL: vpaddq
+; KNL: vpaddq
+; KNL: vpaddq
+; KNL: vpgatherqd      (,%zmm
+
+define <8 x i32> @test9(%struct.ST* %base, <8 x i64> %ind1, <8 x i32>%ind5) {
+entry:
+  %broadcast.splatinsert = insertelement <8 x %struct.ST*> undef, %struct.ST* %base, i32 0
+  %broadcast.splat = shufflevector <8 x %struct.ST*> %broadcast.splatinsert, <8 x %struct.ST*> undef, <8 x i32> zeroinitializer
+
+  %arrayidx = getelementptr  %struct.ST, <8 x %struct.ST*> %broadcast.splat, <8 x i64> %ind1, <8 x i32> <i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2>, <8 x i32><i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>, <8 x i32> %ind5, <8 x i64> <i64 13, i64 13, i64 13, i64 13, i64 13, i64 13, i64 13, i64 13>
+  %res = call <8 x i32 >  @llvm.masked.gather.v8i32(<8 x i32*>%arrayidx, i32 4, <8 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true>, <8 x i32> undef)
+  ret <8 x i32> %res
+}
+
+; KNL-LABEL: test10
+; KNL: vpbroadcastq    %rdi, %zmm
+; KNL: vpmovsxdq
+; KNL: vpbroadcastq
+; KNL: vpmuludq
+; KNL: vpaddq
+; KNL: vpaddq
+; KNL: vpaddq
+; KNL: vpaddq
+; KNL: vpgatherqd      (,%zmm
+define <8 x i32> @test10(%struct.ST* %base, <8 x i64> %i1, <8 x i32>%ind5) {
+entry:
+  %broadcast.splatinsert = insertelement <8 x %struct.ST*> undef, %struct.ST* %base, i32 0
+  %broadcast.splat = shufflevector <8 x %struct.ST*> %broadcast.splatinsert, <8 x %struct.ST*> undef, <8 x i32> zeroinitializer
+
+  %arrayidx = getelementptr  %struct.ST, <8 x %struct.ST*> %broadcast.splat, <8 x i64> %i1, i32 2, i32 1, <8 x i32> %ind5, i64 13
+  %res = call <8 x i32 >  @llvm.masked.gather.v8i32(<8 x i32*>%arrayidx, i32 4, <8 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true>, <8 x i32> undef)
+  ret <8 x i32> %res
+}
+
+; Splat index in GEP, requires broadcast
+; KNL-LABEL: test11
+; KNL: vpbroadcastd    %esi, %zmm
+; KNL: vgatherdps      (%rdi,%zmm
+define <16 x float> @test11(float* %base, i32 %ind) {
+
+  %broadcast.splatinsert = insertelement <16 x float*> undef, float* %base, i32 0
+  %broadcast.splat = shufflevector <16 x float*> %broadcast.splatinsert, <16 x float*> undef, <16 x i32> zeroinitializer
+
+  %gep.random = getelementptr float, <16 x float*> %broadcast.splat, i32 %ind
+
+  %res = call <16 x float> @llvm.masked.gather.v16f32(<16 x float*> %gep.random, i32 4, <16 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true>, <16 x float> undef)
+  ret <16 x float>%res
+}
+
+; We are checking the uniform base here. It is taken directly from input to vgatherdps
+; KNL-LABEL: test12
+; KNL: kxnorw  %k1, %k1, %k1
+; KNL: vgatherdps      (%rdi,%zmm
+define <16 x float> @test12(float* %base, <16 x i32> %ind) {
+
+  %sext_ind = sext <16 x i32> %ind to <16 x i64>
+  %gep.random = getelementptr float, float *%base, <16 x i64> %sext_ind
+
+  %res = call <16 x float> @llvm.masked.gather.v16f32(<16 x float*> %gep.random, i32 4, <16 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true>, <16 x float> undef)
+  ret <16 x float>%res
+}
+
+; The same as the previous, but the mask is undefined
+; KNL-LABEL: test13
+; KNL-NOT: kxnorw
+; KNL: vgatherdps      (%rdi,%zmm
+define <16 x float> @test13(float* %base, <16 x i32> %ind) {
+
+  %sext_ind = sext <16 x i32> %ind to <16 x i64>
+  %gep.random = getelementptr float, float *%base, <16 x i64> %sext_ind
+
+  %res = call <16 x float> @llvm.masked.gather.v16f32(<16 x float*> %gep.random, i32 4, <16 x i1> undef, <16 x float> undef)
+  ret <16 x float>%res
+}
+
+; The base pointer is not splat, can't find unform base
+; KNL-LABEL: test14
+; KNL: vgatherqps      (,%zmm0)
+; KNL: vgatherqps      (,%zmm0)
+define <16 x float> @test14(float* %base, i32 %ind, <16 x float*> %vec) {
+
+  %broadcast.splatinsert = insertelement <16 x float*> %vec, float* %base, i32 1
+  %broadcast.splat = shufflevector <16 x float*> %broadcast.splatinsert, <16 x float*> undef, <16 x i32> zeroinitializer
+
+  %gep.random = getelementptr float, <16 x float*> %broadcast.splat, i32 %ind
+
+  %res = call <16 x float> @llvm.masked.gather.v16f32(<16 x float*> %gep.random, i32 4, <16 x i1> undef, <16 x float> undef)
+  ret <16 x float>%res
+}
+
+
