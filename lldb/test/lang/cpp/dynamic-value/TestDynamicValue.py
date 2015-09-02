@@ -21,6 +21,7 @@ class DynamicValueTestCase(TestBase):
         self.do_get_dynamic_vals()
 
     @expectedFailureFreeBSD # FIXME: This needs to be root-caused.
+    @expectedFailureWindows("llvm.org/pr24663")
     @python_api_test
     @dwarf_test
     def test_get_dynamic_vals_with_dwarf(self):
