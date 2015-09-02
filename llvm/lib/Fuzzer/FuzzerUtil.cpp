@@ -86,4 +86,10 @@ bool ToASCII(Unit &U) {
   return Changed;
 }
 
+bool IsASCII(const Unit &U) {
+  for (auto X : U)
+    if (!(isprint(X) || isspace(X))) return false;
+  return true;
+}
+
 }  // namespace fuzzer

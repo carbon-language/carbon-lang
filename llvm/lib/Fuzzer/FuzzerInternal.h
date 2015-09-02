@@ -53,6 +53,7 @@ void ComputeSHA1(const uint8_t *Data, size_t Len, uint8_t *Out);
 // Changes U to contain only ASCII (isprint+isspace) characters.
 // Returns true iff U has been changed.
 bool ToASCII(Unit &U);
+bool IsASCII(const Unit &U);
 
 int NumberOfCpuCores();
 

@@ -136,6 +136,8 @@ void Fuzzer::ShuffleAndMinimize() {
       U.clear();
       size_t Last = std::min(First + Options.MaxLen, C.size());
       U.insert(U.begin(), C.begin() + First, C.begin() + Last);
+      if (Options.OnlyASCII)
+        ToASCII(U);
       size_t NewCoverage = RunOne(U);
       if (NewCoverage) {
         MaxCov = NewCoverage;
@@ -256,11 +258,7 @@ void Fuzzer::WriteToOutputCorpus(const Unit &U) {
   WriteToFile(U, Path);
   if (Options.Verbosity >= 2)
     Printf("Written to %s\n", Path.c_str());
-#ifdef DEBUG
-  if (Options.OnlyASCII)
-    for (auto X : U)
-      assert(isprint(X) || isspace(X));
-#endif
+  assert(!Options.OnlyASCII || IsASCII(U));
 }
 
 void Fuzzer::WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix) {
