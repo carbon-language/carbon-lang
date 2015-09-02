@@ -616,11 +616,12 @@ private:
   Value *base; // non null only if status == base
 };
 
+#ifndef NDEBUG
 inline raw_ostream &operator<<(raw_ostream &OS, const BDVState &State) {
   State.print(OS);
   return OS;
 }
-
+#endif
 
 typedef DenseMap<Value *, BDVState> ConflictStateMapTy;
 // Values of type BDVState form a lattice, and this is a helper
