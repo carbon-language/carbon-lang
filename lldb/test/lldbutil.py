@@ -721,6 +721,21 @@ def print_stacktraces(process, string_buffer = False):
     if string_buffer:
         return output.getvalue()
 
+def expect_state_changes(test, listener, states, timeout = 5):
+    """Listens for state changed events on the listener and makes sure they match what we
+    expect. Stop-and-restart events (where GetRestartedFromEvent() returns true) are ignored."""
+    event = lldb.SBEvent()
+    for expected_state in states:
+        if not listener.WaitForEvent(timeout, event):
+            test.Fail("Timed out while waiting for a transition to state %s" %
+                lldb.SBDebugger.StateAsCString(expected_state))
+
+        got_state = lldb.SBProcess.GetStateFromEvent(event)
+        if got_state == lldb.eStateStopped and lldb.SBProcess.GetRestartedFromEvent(event):
+            continue
+
+        test.assertEqual(expected_state, got_state)
+
 # ===================================
 # Utility functions related to Frames
 # ===================================

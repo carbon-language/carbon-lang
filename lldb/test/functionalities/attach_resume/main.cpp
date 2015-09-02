@@ -8,15 +8,17 @@
 #include <sys/prctl.h>
 #endif
 
+volatile bool debugger_flag = true; // The debugger will flip this to false
+
 void *start(void *data)
 {
     int i;
     size_t idx = (size_t)data;
     for (i=0; i<30; i++)
     {
-        if ( idx == 0 )
-            std::this_thread::sleep_for(std::chrono::microseconds(1));
-        std::this_thread::sleep_for(std::chrono::seconds(1)); // Set breakpoint here
+        if ( idx == 0 && debugger_flag)
+            std::this_thread::sleep_for(std::chrono::microseconds(1)); // Set breakpoint here
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     return 0;
 }
