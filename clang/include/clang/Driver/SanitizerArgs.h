@@ -27,6 +27,7 @@ class SanitizerArgs {
   SanitizerSet TrapSanitizers;
 
   std::vector<std::string> BlacklistFiles;
+  std::vector<std::string> ExtraDeps;
   int CoverageFeatures;
   int MsanTrackOrigins;
   bool MsanUseAfterDtor;

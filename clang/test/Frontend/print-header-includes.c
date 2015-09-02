@@ -14,7 +14,7 @@
 // MS-NOT: Note
 
 // RUN: echo "fun:foo" > %t.blacklist
-// RUN: %clang_cc1 -fsanitize=address -fsanitize-blacklist=%t.blacklist -E --show-includes -o %t.out %s > %t.stdout
+// RUN: %clang_cc1 -fsanitize=address -fdepfile-entry=%t.blacklist -E --show-includes -o %t.out %s > %t.stdout
 // RUN: FileCheck --check-prefix=MS-BLACKLIST < %t.stdout %s
 // MS-BLACKLIST: Note: including file: {{.*\.blacklist}}
 // MS-BLACKLIST: Note: including file: {{.*test.h}}
