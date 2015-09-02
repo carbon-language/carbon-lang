@@ -6553,12 +6553,12 @@ multiclass avx512_common_fp_sae_scalar_imm<string OpcodeStr,
   }
 }
 
-multiclass avx512_common_fp_sae_packed_imm_all<string OpcodeStr, bits<8> opcPs,
-             bits<8> opcPd, SDNode OpNode, Predicate prd>{
-  defm PS : avx512_common_unary_fp_sae_packed_imm<OpcodeStr,  avx512vl_f32_info, opcPs,
-                                            OpNode, prd>, EVEX_CD8<32, CD8VF>;
-  defm PD : avx512_common_unary_fp_sae_packed_imm<OpcodeStr,  avx512vl_f64_info, opcPd,
-                                            OpNode, prd>,EVEX_CD8<64, CD8VF> , VEX_W;
+multiclass avx512_common_unary_fp_sae_packed_imm_all<string OpcodeStr,
+                    bits<8> opcPs, bits<8> opcPd, SDNode OpNode, Predicate prd>{
+  defm PS : avx512_common_unary_fp_sae_packed_imm<OpcodeStr, avx512vl_f32_info,
+                            opcPs, OpNode, prd>, EVEX_CD8<32, CD8VF>;
+  defm PD : avx512_common_unary_fp_sae_packed_imm<OpcodeStr, avx512vl_f64_info,
+                            opcPd, OpNode, prd>, EVEX_CD8<64, CD8VF>, VEX_W;
 }
 
 defm VFIXUPIMMPD : avx512_common_fp_sae_packed_imm<"vfixupimmpd",
@@ -6575,8 +6575,13 @@ defm VFIXUPIMMSS: avx512_common_fp_sae_scalar_imm<"vfixupimmss", f32x_info,
                                                  0x55, X86VFixupimm, HasAVX512>,
       AVX512AIi8Base, VEX_LIG, EVEX_4V, EVEX_CD8<32, CD8VT1>;
 
-defm VREDUCE : avx512_common_fp_sae_packed_imm_all<"vreduce", 0x56, 0x56, X86VReduce, HasDQI>,AVX512AIi8Base,EVEX;
-defm VRNDSCALE : avx512_common_fp_sae_packed_imm_all<"vrndscale", 0x08, 0x09, X86VRndScale, HasAVX512>,AVX512AIi8Base, EVEX;
+defm VREDUCE   : avx512_common_unary_fp_sae_packed_imm_all<"vreduce", 0x56, 0x56,
+                              X86VReduce, HasDQI>, AVX512AIi8Base, EVEX;
+defm VRNDSCALE : avx512_common_unary_fp_sae_packed_imm_all<"vrndscale", 0x08, 0x09,
+                              X86VRndScale, HasAVX512>, AVX512AIi8Base, EVEX;
+defm VGETMANT : avx512_common_unary_fp_sae_packed_imm_all<"vgetmant", 0x26, 0x26,
+                              X86VGetMant, HasAVX512>, AVX512AIi8Base, EVEX;
+
 
 defm VRANGEPD : avx512_common_fp_sae_packed_imm<"vrangepd", avx512vl_f64_info,
                                                        0x50, X86VRange, HasDQI>,
@@ -6597,6 +6602,13 @@ defm VREDUCESD: avx512_common_fp_sae_scalar_imm<"vreducesd", f64x_info,
       AVX512AIi8Base, VEX_LIG, EVEX_4V, EVEX_CD8<64, CD8VT1>, VEX_W;
 defm VREDUCESS: avx512_common_fp_sae_scalar_imm<"vreducess", f32x_info,
                                                  0x57, X86Reduces, HasDQI>,
+      AVX512AIi8Base, VEX_LIG, EVEX_4V, EVEX_CD8<32, CD8VT1>;
+
+defm VGETMANTSD: avx512_common_fp_sae_scalar_imm<"vgetmantsd", f64x_info,
+                                                 0x27, X86GetMants, HasAVX512>,
+      AVX512AIi8Base, VEX_LIG, EVEX_4V, EVEX_CD8<64, CD8VT1>, VEX_W;
+defm VGETMANTSS: avx512_common_fp_sae_scalar_imm<"vgetmantss", f32x_info,
+                                                 0x27, X86GetMants, HasAVX512>,
       AVX512AIi8Base, VEX_LIG, EVEX_4V, EVEX_CD8<32, CD8VT1>;
 
 multiclass avx512_shuff_packed_128<string OpcodeStr, AVX512VLVectorVTInfo _,

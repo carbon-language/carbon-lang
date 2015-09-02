@@ -213,6 +213,8 @@ namespace llvm {
 
       // FP vector get exponent 
       FGETEXP_RND,
+      // Extract Normalized Mantissas
+      VGETMANT,
       // FP Scale
       SCALEF,
       // Integer add/sub with unsigned saturation.

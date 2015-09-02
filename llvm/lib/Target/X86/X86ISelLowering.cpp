@@ -15689,6 +15689,18 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                               Src1, Src2, Rnd),
                                   Mask, PassThru, Subtarget, DAG);
     }
+    case INTR_TYPE_3OP_SCALAR_MASK_RM: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue Src3 = Op.getOperand(3);
+      SDValue PassThru = Op.getOperand(4);
+      SDValue Mask = Op.getOperand(5);
+      SDValue Sae  = Op.getOperand(6);
+
+      return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1,
+                                              Src2, Src3, Sae),
+                                  Mask, PassThru, Subtarget, DAG);
+    }
     case INTR_TYPE_3OP_MASK_RM: {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
@@ -19394,6 +19406,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FMSUBADD_RND:       return "X86ISD::FMSUBADD_RND";
   case X86ISD::VRNDSCALE:          return "X86ISD::VRNDSCALE";
   case X86ISD::VREDUCE:            return "X86ISD::VREDUCE";
+  case X86ISD::VGETMANT:           return "X86ISD::VGETMANT";
   case X86ISD::PCMPESTRI:          return "X86ISD::PCMPESTRI";
   case X86ISD::PCMPISTRI:          return "X86ISD::PCMPISTRI";
   case X86ISD::XTEST:              return "X86ISD::XTEST";
