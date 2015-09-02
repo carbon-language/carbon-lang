@@ -99,17 +99,17 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
 
   // Write the result.
   ObjectFileBase &FirstObj = *Symtab.ObjectFiles[0];
-  switch (FirstObj.kind()) {
-  case InputFile::Object32LEKind:
+  switch (FirstObj.getELFKind()) {
+  case ELF32LEKind:
     writeResult<object::ELF32LE>(&Symtab);
     return;
-  case InputFile::Object32BEKind:
+  case ELF32BEKind:
     writeResult<object::ELF32BE>(&Symtab);
     return;
-  case InputFile::Object64LEKind:
+  case ELF64LEKind:
     writeResult<object::ELF64LE>(&Symtab);
     return;
-  case InputFile::Object64BEKind:
+  case ELF64BEKind:
     writeResult<object::ELF64BE>(&Symtab);
     return;
   }

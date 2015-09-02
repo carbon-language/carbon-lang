@@ -20,7 +20,7 @@ using namespace lld::elf2;
 
 template <class ELFT>
 bool ObjectFile<ELFT>::isCompatibleWith(const ObjectFileBase &Other) const {
-  if (kind() != Other.kind())
+  if (getELFKind() != Other.getELFKind())
     return false;
   return getObj()->getHeader()->e_machine ==
          cast<ObjectFile<ELFT>>(Other).getObj()->getHeader()->e_machine;

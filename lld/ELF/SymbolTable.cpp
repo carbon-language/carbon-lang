@@ -38,17 +38,17 @@ void SymbolTable::addObject(ObjectFileBase *File) {
     if (!Old.isCompatibleWith(*File))
       error(Twine(Old.getName() + " is incompatible with " + File->getName()));
   } else {
-    switch (File->kind()) {
-    case InputFile::Object32LEKind:
+    switch (File->getELFKind()) {
+    case ELF32LEKind:
       init<ELF32LE>();
       break;
-    case InputFile::Object32BEKind:
+    case ELF32BEKind:
       init<ELF32BE>();
       break;
-    case InputFile::Object64LEKind:
+    case ELF64LEKind:
       init<ELF64LE>();
       break;
-    case InputFile::Object64BEKind:
+    case ELF64BEKind:
       init<ELF64BE>();
       break;
     }
@@ -56,17 +56,17 @@ void SymbolTable::addObject(ObjectFileBase *File) {
 
   ObjectFiles.emplace_back(File);
   for (SymbolBody *Body : File->getSymbols()) {
-    switch (File->kind()) {
-    case InputFile::Object32LEKind:
+    switch (File->getELFKind()) {
+    case ELF32LEKind:
       resolve<ELF32LE>(Body);
       break;
-    case InputFile::Object32BEKind:
+    case ELF32BEKind:
       resolve<ELF32BE>(Body);
       break;
-    case InputFile::Object64LEKind:
+    case ELF64LEKind:
       resolve<ELF64LE>(Body);
       break;
-    case InputFile::Object64BEKind:
+    case ELF64BEKind:
       resolve<ELF64BE>(Body);
       break;
     }
