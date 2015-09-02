@@ -4164,7 +4164,7 @@ Examples:
     !3 = !{ i8 -2, i8 0, i8 3, i8 6 }
 
 '``unpredictable``' Metadata
-^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``unpredictable`` metadata may be attached to any branch or switch
 instruction. It can be used to express the unpredictability of control
