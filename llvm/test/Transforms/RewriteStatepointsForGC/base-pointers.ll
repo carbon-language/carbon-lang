@@ -111,6 +111,40 @@ merge:
   ret i64 addrspace(1)* %bdv
 }
 
+define i64 addrspace(1)* @test4(i1 %cnd, i64 addrspace(1)* %obj, 
+                                i64 addrspace(1)* %obj2)
+    gc "statepoint-example" {
+; CHECK-LABEL: @test4
+entry:
+  br i1 %cnd, label %merge, label %taken
+taken:
+  br label %merge
+merge:
+; CHECK-LABEL: merge:
+; CHECK-NEXT: %bdv = phi
+; CHECK-NEXT: gc.statepoint
+  %bdv = phi i64 addrspace(1)* [ %obj, %entry ], [ %obj, %taken ]
+  %safepoint_token = call i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @foo, i32 0, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  ret i64 addrspace(1)* %bdv
+}
+
+define i64 addrspace(1)* @test5(i1 %cnd, i64 addrspace(1)* %obj, 
+                                i64 addrspace(1)* %obj2)
+    gc "statepoint-example" {
+; CHECK-LABEL: @test5
+entry:
+  br label %merge
+merge:
+; CHECK-LABEL: merge:
+; CHECK-NEXT: %bdv = phi
+; CHECK-NEXT: br i1
+  %bdv = phi i64 addrspace(1)* [ %obj, %entry ], [ %obj2, %merge ]
+  br i1 %cnd, label %merge, label %next
+next:
+  %safepoint_token = call i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @foo, i32 0, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  ret i64 addrspace(1)* %bdv
+}
+
 
 declare void @foo()
 declare i32 @llvm.experimental.gc.statepoint.p0f_isVoidf(i64, i32, void ()*, i32, i32, ...)

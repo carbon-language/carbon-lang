@@ -47,10 +47,6 @@
 
 using namespace llvm;
 
-// Print tracing output
-static cl::opt<bool> TraceLSP("trace-rewrite-statepoints", cl::Hidden,
-                              cl::init(false));
-
 // Print the liveset found at the insert location
 static cl::opt<bool> PrintLiveSet("spp-print-liveset", cl::Hidden,
                                   cl::init(false));
@@ -277,14 +273,12 @@ static void analyzeParsePointLiveness(
     // Note: This output is used by several of the test cases
     // The order of elements in a set is not stable, put them in a vec and sort
     // by name
-    SmallVector<Value *, 64> temp;
-    temp.insert(temp.end(), liveset.begin(), liveset.end());
-    std::sort(temp.begin(), temp.end(), order_by_name);
+    SmallVector<Value *, 64> Temp;
+    Temp.insert(Temp.end(), liveset.begin(), liveset.end());
+    std::sort(Temp.begin(), Temp.end(), order_by_name);
     errs() << "Live Variables:\n";
-    for (Value *V : temp) {
-      errs() << " " << V->getName(); // no newline
-      V->dump();
-    }
+    for (Value *V : Temp)
+      dbgs() << " " << V->getName() << " " << *V << "\n";
   }
   if (PrintLiveSetSize) {
     errs() << "Safepoint For: " << CS.getCalledValue()->getName() << "\n";
@@ -602,7 +596,18 @@ public:
   void dump() const { print(dbgs()); dbgs() << '\n'; }
   
   void print(raw_ostream &OS) const {
-    OS << status << " (" << base << " - "
+    switch (status) {
+    case Unknown:
+      OS << "U";
+      break;
+    case Base:
+      OS << "B";
+      break;
+    case Conflict:
+      OS << "C";
+      break;
+    };
+    OS << " (" << base << " - "
        << (base ? base->getName() : "nullptr") << "): ";
   }
 
@@ -761,11 +766,12 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     }
   }
 
-  if (TraceLSP) {
-    errs() << "States after initialization:\n";
-    for (auto Pair : states)
-      dbgs() << " " << Pair.second << " for " << *Pair.first << "\n";
+#ifndef NDEBUG
+  DEBUG(dbgs() << "States after initialization:\n");
+  for (auto Pair : states) {
+    DEBUG(dbgs() << " " << Pair.second << " for " << *Pair.first << "\n");
   }
+#endif
 
   // TODO: come back and revisit the state transitions around inputs which
   // have reached conflict state.  The current version seems too conservative.
@@ -825,12 +831,13 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     assert(oldSize == states.size() || progress);
   }
 
-  if (TraceLSP) {
-    errs() << "States after meet iteration:\n";
-    for (auto Pair : states)
-      dbgs() << " " << Pair.second << " for " << *Pair.first << "\n";
+#ifndef NDEBUG
+  DEBUG(dbgs() << "States after meet iteration:\n");
+  for (auto Pair : states) {
+    DEBUG(dbgs() << " " << Pair.second << " for " << *Pair.first << "\n");
   }
-
+#endif
+  
   // Insert Phis for all conflicts
   // We want to keep naming deterministic in the loop that follows, so
   // sort the keys before iteration.  This is useful in allowing us to
@@ -1042,6 +1049,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   const DataLayout &DL = cast<Instruction>(def)->getModule()->getDataLayout();
   while (!Worklist.empty()) {
     Instruction *BaseI = Worklist.pop_back_val();
+    assert(NewInsts.count(BaseI));
     Value *Bdv = ReverseMap[BaseI];
     if (auto *BdvI = dyn_cast<Instruction>(Bdv))
       if (BaseI->isIdenticalTo(BdvI)) {
@@ -1074,15 +1082,13 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     Value *base = item.second.getBase();
     assert(v && base);
 
-    if (TraceLSP) {
-      std::string fromstr =
-          cache.count(v) ? (cache[v]->hasName() ? cache[v]->getName() : "")
-                         : "none";
-      errs() << "Updating base value cache"
-             << " for: " << (v->hasName() ? v->getName() : "")
-             << " from: " << fromstr
-             << " to: " << (base->hasName() ? base->getName() : "") << "\n";
-    }
+    std::string fromstr =
+      cache.count(v) ? (cache[v]->hasName() ? cache[v]->getName() : "")
+                     : "none";
+    DEBUG(dbgs() << "Updating base value cache"
+          << " for: " << (v->hasName() ? v->getName() : "")
+          << " from: " << fromstr
+          << " to: " << (base->hasName() ? base->getName() : "") << "\n");
 
     if (cache.count(v)) {
       // Once we transition from the BDV relation being store in the cache to
