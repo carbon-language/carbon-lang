@@ -6732,7 +6732,7 @@ The optional ``!nonnull`` metadata must reference a single
 metadata name ``<index>`` corresponding to a metadata node with no
 entries. The existence of the ``!nonnull`` metadata on the
 instruction tells the optimizer that the value loaded is known to
-never be null. This is analogous to the ''nonnull'' attribute
+never be null. This is analogous to the ``nonnull`` attribute
 on parameters and return values. This metadata can only be applied
 to loads of a pointer type.
 
