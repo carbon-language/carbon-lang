@@ -122,11 +122,51 @@ entry:
   ; CHECK: br i1 true, label %bb2, label %bb2
   br i1 %cmp, label %bb2, label %bb2
 bb2:
+  call void @llvm.assume(i1 true)
   ; CHECK: br i1 true, label %bb2, label %bb2
   br i1 %cmp, label %bb2, label %bb2
   
   ; CHECK: ret i32 42
   ret i32 %p
+}
+
+; CHECK-LABEL: define i32 @_Z1ij(i32 %p)
+define i32 @_Z1ij(i32 %p) {
+entry:
+  %cmp = icmp eq i32 %p, 42
+  call void @llvm.assume(i1 %cmp)
+  
+  ; CHECK: br i1 true, label %bb2, label %bb2
+  br i1 %cmp, label %bb2, label %bb2
+bb2:
+   ; CHECK-NOT: %cmp2 = 
+  %cmp2 = icmp eq i32 %p, 42
+  ; CHECK-NOT: call void @llvm.assume(
+  call void @llvm.assume(i1 %cmp2)
+  
+  ; CHECK: br i1 true, label %bb2, label %bb2
+  br i1 %cmp, label %bb2, label %bb2
+  
+  ; CHECK: ret i32 42
+  ret i32 %p
+}
+
+; CHECK-LABEL: define i32 @_Z1ik(i32 %p)
+define i32 @_Z1ik(i32 %p) {
+entry:
+  %cmp = icmp eq i32 %p, 42
+  call void @llvm.assume(i1 %cmp)
+  
+  ; CHECK: br i1 true, label %bb2, label %bb3
+  br i1 %cmp, label %bb2, label %bb3
+bb2:
+  ; CHECK-NOT: %cmp3 = 
+  %cmp3 = icmp eq i32 %p, 43
+  ; CHECK: store i8 undef, i8* null
+  call void @llvm.assume(i1 %cmp3)
+  ret i32 15
+bb3:
+  ret i32 17
 }
 
 declare noalias i8* @_Znwm(i64)

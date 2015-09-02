@@ -1771,8 +1771,24 @@ bool GVN::processAssumeIntrinsic(IntrinsicInst *IntrinsicI) {
   assert(IntrinsicI->getIntrinsicID() == Intrinsic::assume &&
          "This function can only be called with llvm.assume intrinsic");
   Value *V = IntrinsicI->getArgOperand(0);
+
+  if (ConstantInt *Cond = dyn_cast<ConstantInt>(V)) {
+    if (Cond->isZero()) {
+      Type *Int8Ty = Type::getInt8Ty(V->getContext());
+      // Insert a new store to null instruction before the load to indicate that
+      // this code is not reachable.  FIXME: We could insert unreachable
+      // instruction directly because we can modify the CFG.
+      new StoreInst(UndefValue::get(Int8Ty),
+                    Constant::getNullValue(Int8Ty->getPointerTo()),
+                    IntrinsicI);
+    }
+    markInstructionForDeletion(IntrinsicI);
+    return false;
+  }
+
   Constant *True = ConstantInt::getTrue(V->getContext());
   bool Changed = false;
+
   for (BasicBlock *Successor : successors(IntrinsicI->getParent())) {
     BasicBlockEdge Edge(IntrinsicI->getParent(), Successor);
 
@@ -1780,6 +1796,7 @@ bool GVN::processAssumeIntrinsic(IntrinsicInst *IntrinsicI) {
     // will check dominance for us.
     Changed |= propagateEquality(V, True, Edge, false);
   }
+
   // We can replace assume value with true, which covers cases like this:
   // call void @llvm.assume(i1 %cmp)
   // br i1 %cmp, label %bb1, label %bb2 ; will change %cmp to true
@@ -2087,6 +2104,8 @@ bool GVN::replaceOperandsWithConsts(Instruction *Instr) const {
     Value *Operand = Instr->getOperand(OpNum);
     auto it = ReplaceWithConstMap.find(Operand);
     if (it != ReplaceWithConstMap.end()) {
+      assert(!isa<Constant>(Operand) &&
+             "Replacing constants with constants is invalid");
       Instr->setOperand(OpNum, it->second);
       Changed = true;
     }
@@ -2459,8 +2478,8 @@ bool GVN::processBlock(BasicBlock *BB) {
        BI != BE;) {
     if (!ReplaceWithConstMap.empty())
       ChangedFunction |= replaceOperandsWithConsts(BI);
-
     ChangedFunction |= processInstruction(BI);
+
     if (InstrsToErase.empty()) {
       ++BI;
       continue;
