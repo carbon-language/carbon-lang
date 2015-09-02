@@ -626,12 +626,14 @@ def nontemporalstore : PatFrag<(ops node:$val, node:$ptr),
 
 def alignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
                                       (nontemporalstore node:$val, node:$ptr), [{
-  return cast<StoreSDNode>(N)->getAlignment() >= 16;
+  StoreSDNode *St = cast<StoreSDNode>(N);
+  return St->getAlignment() >= St->getMemoryVT().getStoreSize();
 }]>;
 
 def unalignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
                                         (nontemporalstore node:$val, node:$ptr), [{
-  return cast<StoreSDNode>(N)->getAlignment() < 16;
+  StoreSDNode *St = cast<StoreSDNode>(N);
+  return St->getAlignment() < St->getMemoryVT().getStoreSize();
 }]>;
 
 def mgatherv4i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),

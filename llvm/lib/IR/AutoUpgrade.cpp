@@ -370,7 +370,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                         "cast");
       StoreInst *SI = Builder.CreateStore(Arg1, BC);
       SI->setMetadata(M->getMDKindID("nontemporal"), Node);
-      SI->setAlignment(16);
+      SI->setAlignment(32);
 
       // Remove intrinsic.
       CI->eraseFromParent();

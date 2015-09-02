@@ -1,6 +1,6 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=corei7 | FileCheck %s -check-prefix=CHECK -check-prefix=SSE
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=corei7-avx | FileCheck %s -check-prefix=CHECK -check-prefix=AVX
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=core-avx2 | FileCheck %s -check-prefix=CHECK -check-prefix=AVX2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown | FileCheck %s -check-prefix=CHECK -check-prefix=SSE
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx | FileCheck %s -check-prefix=CHECK -check-prefix=AVX
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2 | FileCheck %s -check-prefix=CHECK -check-prefix=AVX2
 
 ; Make sure that we generate non-temporal stores for the test cases below.
 ; We use xorps for zeroing, so domain information isn't available anymore.
@@ -297,6 +297,21 @@ define void @test_op_v32i8(<32 x i8> %a, <32 x i8> %b, <32 x i8>* %dst) {
 ; AVX2: vmovntdq %ymm
   %r = add <32 x i8> %a, %b
   store <32 x i8> %r, <32 x i8>* %dst, align 32, !nontemporal !1
+  ret void
+}
+
+; 256-bit NT stores require 256-bit alignment.
+; FIXME: For AVX, we could lower this to 2x movntps %xmm. Taken further, we
+; could even scalarize to movnti when we have 1-alignment: nontemporal is
+; probably always worth even some 20 instruction scalarization.
+define void @test_unaligned_v8f32(<8 x float> %a, <8 x float> %b, <8 x float>* %dst) {
+; CHECK-LABEL: test_unaligned_v8f32:
+; SSE: movntps %xmm
+; SSE: movntps %xmm
+; AVX-NOT: movnt
+; AVX: vmovups %ymm
+  %r = fadd <8 x float> %a, %b
+  store <8 x float> %r, <8 x float>* %dst, align 16, !nontemporal !1
   ret void
 }
 
