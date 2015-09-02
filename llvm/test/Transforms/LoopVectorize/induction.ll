@@ -6,8 +6,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; CHECK-LABEL: @multi_int_induction(
 ; CHECK: vector.body:
 ; CHECK:  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-; CHECK:  %normalized.idx = sub i64 %index, 0
-; CHECK:  %[[VAR:.*]] = trunc i64 %normalized.idx to i32
+; CHECK:  %[[VAR:.*]] = trunc i64 %index to i32
 ; CHECK:  %offset.idx = add i32 190, %[[VAR]]
 define void @multi_int_induction(i32* %A, i32 %N) {
 for.body.lr.ph:
@@ -142,11 +141,10 @@ define i32 @max_i32_backedgetaken() nounwind readnone ssp uwtable {
 ; CHECK-LABEL: testoverflowcheck
 ; CHECK: entry
 ; CHECK: %[[LOAD:.*]] = load i8
-; CHECK: %[[VAL:.*]] =  zext i8 %[[LOAD]] to i32
 ; CHECK: br
 
 ; CHECK: scalar.ph
-; CHECK: phi i32 [ %{{.*}}, %middle.block ], [ %[[VAL]], %entry ]
+; CHECK: phi i8 [ %{{.*}}, %middle.block ], [ %[[LOAD]], %entry ]
 
 @e = global i8 1, align 1
 @d = common global i32 0, align 4

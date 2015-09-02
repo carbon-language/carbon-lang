@@ -2652,15 +2652,8 @@ void InnerLoopVectorizer::createEmptyLoop() {
                       ConstantInt::get(ExitCountValue->getType(), VF * UF),
                       "min.iters.check", VectorPH->getTerminator());
 
-  // The loop index does not have to start at Zero. Find the original start
-  // value from the induction PHI node. If we don't have an induction variable
-  // then we know that it starts at zero.
   Builder.SetInsertPoint(VectorPH->getTerminator());
-  Value *StartIdx = ExtendedIdx =
-      OldInduction
-          ? Builder.CreateZExt(OldInduction->getIncomingValueForBlock(VectorPH),
-                               IdxTy)
-          : ConstantInt::get(IdxTy, 0);
+  Value *StartIdx = ExtendedIdx = ConstantInt::get(IdxTy, 0);
 
   // Count holds the overall loop count (N).
   Value *Count = Exp.expandCodeFor(ExitCount, ExitCount->getType(),
@@ -3542,10 +3535,8 @@ void InnerLoopVectorizer::widenPHIInstruction(Instruction *PN,
       } else {
         // Handle other induction variables that are now based on the
         // canonical one.
-        Value *NormalizedIdx = Builder.CreateSub(Induction, ExtendedIdx,
-                                                 "normalized.idx");
-        NormalizedIdx = Builder.CreateSExtOrTrunc(NormalizedIdx, PhiTy);
-        Broadcasted = II.transform(Builder, NormalizedIdx);
+        auto *V = Builder.CreateSExtOrTrunc(Induction, PhiTy);
+        Broadcasted = II.transform(Builder, V);
         Broadcasted->setName("offset.idx");
       }
       Broadcasted = getBroadcastInstrs(Broadcasted);
@@ -4134,10 +4125,13 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 
           // Int inductions are special because we only allow one IV.
           if (ID.getKind() == InductionDescriptor::IK_IntInduction &&
-              ID.getStepValue()->isOne()) {
+              ID.getStepValue()->isOne() &&
+              isa<Constant>(ID.getStartValue()) &&
+                cast<Constant>(ID.getStartValue())->isNullValue()) {
             // Use the phi node with the widest type as induction. Use the last
             // one if there are multiple (no good reason for doing this other
-            // than it is expedient).
+            // than it is expedient). We've checked that it begins at zero and
+            // steps by one, so this is a canonical induction variable.
             if (!Induction || PhiTy == WidestIndTy)
               Induction = Phi;
           }
