@@ -112,8 +112,7 @@ define i32 @i16_loop() nounwind readnone ssp uwtable {
 ; condition and branch directly to the scalar loop.
 
 ; CHECK-LABEL: max_i32_backedgetaken
-; CHECK:  %min.iters.check = icmp ult i32 0, 2
-; CHECK:  br i1 %min.iters.check, label %scalar.ph, label %min.iters.checked
+; CHECK:  br i1 true, label %scalar.ph, label %min.iters.checked
 
 ; CHECK: scalar.ph:
 ; CHECK:  %bc.resume.val = phi i32 [ %resume.val, %middle.block ], [ 0, %0 ]

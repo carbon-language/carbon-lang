@@ -389,6 +389,16 @@ protected:
 
   /// Returns (and creates if needed) the trip count of the widened loop.
   Value *getOrCreateVectorTripCount(Loop *NewLoop);
+
+  /// Emit a bypass check to see if the trip count would overflow, or we
+  /// wouldn't have enough iterations to execute one vector loop.
+  void emitMinimumIterationCountCheck(Loop *L, BasicBlock *Bypass);
+  /// Emit a bypass check to see if the vector trip count is nonzero.
+  void emitVectorLoopEnteredCheck(Loop *L, BasicBlock *Bypass);
+  /// Emit bypass checks to check if strides we've assumed to be one really are.
+  void emitStrideChecks(Loop *L, BasicBlock *Bypass);
+  /// Emit bypass checks to check any memory assumptions we may have made.
+  void emitMemRuntimeChecks(Loop *L, BasicBlock *Bypass);
   
   /// This is a helper class that holds the vectorizer state. It maps scalar
   /// instructions to vector instructions. When the code is 'unrolled' then
@@ -2668,6 +2678,100 @@ Value *InnerLoopVectorizer::getOrCreateVectorTripCount(Loop *L) {
   return VectorTripCount;
 }
 
+void InnerLoopVectorizer::emitMinimumIterationCountCheck(Loop *L,
+                                                         BasicBlock *Bypass) {
+  Value *Count = getOrCreateTripCount(L);
+  BasicBlock *BB = L->getLoopPreheader();
+  IRBuilder<> Builder(BB->getTerminator());
+
+  // Generate code to check that the loop's trip count that we computed by
+  // adding one to the backedge-taken count will not overflow.
+  Value *CheckMinIters =
+    Builder.CreateICmpULT(Count,
+                          ConstantInt::get(Count->getType(), VF * UF),
+                          "min.iters.check");
+  
+  BasicBlock *NewBB = BB->splitBasicBlock(BB->getTerminator(),
+                                          "min.iters.checked");
+  if (L->getParentLoop())
+    L->getParentLoop()->addBasicBlockToLoop(NewBB, *LI);
+  ReplaceInstWithInst(BB->getTerminator(),
+                      BranchInst::Create(Bypass, NewBB, CheckMinIters));
+  LoopBypassBlocks.push_back(BB);
+}
+
+void InnerLoopVectorizer::emitVectorLoopEnteredCheck(Loop *L,
+                                                     BasicBlock *Bypass) {
+  Value *TC = getOrCreateVectorTripCount(L);
+  BasicBlock *BB = L->getLoopPreheader();
+  IRBuilder<> Builder(BB->getTerminator());
+  
+  // Now, compare the new count to zero. If it is zero skip the vector loop and
+  // jump to the scalar loop.
+  Value *Cmp = Builder.CreateICmpEQ(TC, Constant::getNullValue(TC->getType()),
+                                    "cmp.zero");
+
+  // Generate code to check that the loop's trip count that we computed by
+  // adding one to the backedge-taken count will not overflow.
+  BasicBlock *NewBB = BB->splitBasicBlock(BB->getTerminator(),
+                                          "vector.ph");
+  if (L->getParentLoop())
+    L->getParentLoop()->addBasicBlockToLoop(NewBB, *LI);
+  ReplaceInstWithInst(BB->getTerminator(),
+                      BranchInst::Create(Bypass, NewBB, Cmp));
+  LoopBypassBlocks.push_back(BB);
+}
+
+void InnerLoopVectorizer::emitStrideChecks(Loop *L,
+                                           BasicBlock *Bypass) {
+  BasicBlock *BB = L->getLoopPreheader();
+  
+  // Generate the code to check that the strides we assumed to be one are really
+  // one. We want the new basic block to start at the first instruction in a
+  // sequence of instructions that form a check.
+  Instruction *StrideCheck;
+  Instruction *FirstCheckInst;
+  std::tie(FirstCheckInst, StrideCheck) = addStrideCheck(BB->getTerminator());
+  if (!StrideCheck)
+    return;
+
+  // Create a new block containing the stride check.
+  BB->setName("vector.stridecheck");
+  auto *NewBB = BB->splitBasicBlock(BB->getTerminator(), "vector.ph");
+  if (L->getParentLoop())
+    L->getParentLoop()->addBasicBlockToLoop(NewBB, *LI);
+  ReplaceInstWithInst(BB->getTerminator(),
+                      BranchInst::Create(Bypass, NewBB, StrideCheck));
+  LoopBypassBlocks.push_back(BB);
+  AddedSafetyChecks = true;
+}
+
+void InnerLoopVectorizer::emitMemRuntimeChecks(Loop *L,
+                                               BasicBlock *Bypass) {
+  BasicBlock *BB = L->getLoopPreheader();
+
+  // Generate the code that checks in runtime if arrays overlap. We put the
+  // checks into a separate block to make the more common case of few elements
+  // faster.
+  Instruction *FirstCheckInst;
+  Instruction *MemRuntimeCheck;
+  std::tie(FirstCheckInst, MemRuntimeCheck) =
+      Legal->getLAI()->addRuntimeChecks(BB->getTerminator());
+  if (!MemRuntimeCheck)
+    return;
+
+  // Create a new block containing the memory check.
+  BB->setName("vector.memcheck");
+  auto *NewBB = BB->splitBasicBlock(BB->getTerminator(), "vector.ph");
+  if (L->getParentLoop())
+    L->getParentLoop()->addBasicBlockToLoop(NewBB, *LI);
+  ReplaceInstWithInst(BB->getTerminator(),
+                      BranchInst::Create(Bypass, NewBB, MemRuntimeCheck));
+  LoopBypassBlocks.push_back(BB);
+  AddedSafetyChecks = true;
+}
+
+
 void InnerLoopVectorizer::createEmptyLoop() {
   /*
    In this function we generate a new loop. The new loop will contain
@@ -2747,42 +2851,24 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // Find the loop boundaries.
   Value *Count = getOrCreateTripCount(Lp);
 
-  // The loop minimum iterations check below is to ensure the loop has enough
-  // trip count so the generated vector loop will likely be executed and the
-  // preparation and rounding-off costs will likely be worthy.
-  //
-  // The minimum iteration check also covers case where the backedge-taken
-  // count is uint##_max.  Adding one to it will cause overflow and an
-  // incorrect loop trip count being generated in the vector body. In this
-  // case we also want to directly jump to the scalar remainder loop.
-  Instruction *CheckMinIters =
-      CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_ULT, Count,
-                      ConstantInt::get(Count->getType(), VF * UF),
-                      "min.iters.check", VectorPH->getTerminator());
-
   Value *StartIdx = ConstantInt::get(IdxTy, 0);
 
-  LoopBypassBlocks.push_back(VectorPH);
-
-  // Use this IR builder to create the loop instructions (Phi, Br, Cmp)
-  // inside the loop.
-  Builder.SetInsertPoint(VecBody->getFirstNonPHI());
-
-  // Generate code to check that the loop's trip count is not less than the
-  // minimum loop iteration number threshold.
-  BasicBlock *NewVectorPH =
-      VectorPH->splitBasicBlock(VectorPH->getTerminator(), "min.iters.checked");
-  if (ParentLoop)
-    ParentLoop->addBasicBlockToLoop(NewVectorPH, *LI);
-  ReplaceInstWithInst(VectorPH->getTerminator(),
-                      BranchInst::Create(ScalarPH, NewVectorPH, CheckMinIters));
-  VectorPH = NewVectorPH;
-
-  // This is the IR builder that we use to add all of the logic for bypassing
-  // the new vector loop.
-  IRBuilder<> BypassBuilder(VectorPH->getTerminator());
-  setDebugLocFromInst(BypassBuilder,
-                      getDebugLocFromInstOrOperands(OldInduction));
+  // We need to test whether the backedge-taken count is uint##_max. Adding one
+  // to it will cause overflow and an incorrect loop trip count in the vector
+  // body. In case of overflow we want to directly jump to the scalar remainder
+  // loop.
+  emitMinimumIterationCountCheck(Lp, ScalarPH);
+  // Now, compare the new count to zero. If it is zero skip the vector loop and
+  // jump to the scalar loop.
+  emitVectorLoopEnteredCheck(Lp, MiddleBlock);
+  // Generate the code to check that the strides we assumed to be one are really
+  // one. We want the new basic block to start at the first instruction in a
+  // sequence of instructions that form a check.
+  emitStrideChecks(Lp, MiddleBlock);
+  // Generate the code that checks in runtime if arrays overlap. We put the
+  // checks into a separate block to make the more common case of few elements
+  // faster.
+  emitMemRuntimeChecks(Lp, MiddleBlock);
 
   // Add the start index to the loop count to get the new end index.
   Value *CountRoundDown = getOrCreateVectorTripCount(Lp);
@@ -2794,70 +2880,12 @@ void InnerLoopVectorizer::createEmptyLoop() {
   Induction =
     createInductionVariable(Lp, StartIdx, CountRoundDown, Step,
                             getDebugLocFromInstOrOperands(OldInduction));
-  
-  // Now, compare the new count to zero. If it is zero skip the vector loop and
-  // jump to the scalar loop.
-  Value *Cmp =
-      BypassBuilder.CreateICmpEQ(CountRoundDown, StartIdx, "cmp.zero");
-  NewVectorPH =
-      VectorPH->splitBasicBlock(VectorPH->getTerminator(), "vector.ph");
-  if (ParentLoop)
-    ParentLoop->addBasicBlockToLoop(NewVectorPH, *LI);
-  LoopBypassBlocks.push_back(VectorPH);
-  ReplaceInstWithInst(VectorPH->getTerminator(),
-                      BranchInst::Create(MiddleBlock, NewVectorPH, Cmp));
-  VectorPH = NewVectorPH;
 
-  // Generate the code to check that the strides we assumed to be one are really
-  // one. We want the new basic block to start at the first instruction in a
-  // sequence of instructions that form a check.
-  Instruction *StrideCheck;
-  Instruction *FirstCheckInst;
-  std::tie(FirstCheckInst, StrideCheck) =
-      addStrideCheck(VectorPH->getTerminator());
-  if (StrideCheck) {
-    AddedSafetyChecks = true;
-    // Create a new block containing the stride check.
-    VectorPH->setName("vector.stridecheck");
-    NewVectorPH =
-        VectorPH->splitBasicBlock(VectorPH->getTerminator(), "vector.ph");
-    if (ParentLoop)
-      ParentLoop->addBasicBlockToLoop(NewVectorPH, *LI);
-    LoopBypassBlocks.push_back(VectorPH);
-
-    // Replace the branch into the memory check block with a conditional branch
-    // for the "few elements case".
-    ReplaceInstWithInst(
-        VectorPH->getTerminator(),
-        BranchInst::Create(MiddleBlock, NewVectorPH, StrideCheck));
-
-    VectorPH = NewVectorPH;
-  }
-
-  // Generate the code that checks in runtime if arrays overlap. We put the
-  // checks into a separate block to make the more common case of few elements
-  // faster.
-  Instruction *MemRuntimeCheck;
-  std::tie(FirstCheckInst, MemRuntimeCheck) =
-      Legal->getLAI()->addRuntimeChecks(VectorPH->getTerminator());
-  if (MemRuntimeCheck) {
-    AddedSafetyChecks = true;
-    // Create a new block containing the memory check.
-    VectorPH->setName("vector.memcheck");
-    NewVectorPH =
-        VectorPH->splitBasicBlock(VectorPH->getTerminator(), "vector.ph");
-    if (ParentLoop)
-      ParentLoop->addBasicBlockToLoop(NewVectorPH, *LI);
-    LoopBypassBlocks.push_back(VectorPH);
-
-    // Replace the branch into the memory check block with a conditional branch
-    // for the "few elements case".
-    ReplaceInstWithInst(
-        VectorPH->getTerminator(),
-        BranchInst::Create(MiddleBlock, NewVectorPH, MemRuntimeCheck));
-
-    VectorPH = NewVectorPH;
-  }
+  // This is the IR builder that we use to add all of the logic for bypassing
+  // the new vector loop.
+  IRBuilder<> BypassBuilder(LoopBypassBlocks.back()->getTerminator());
+  setDebugLocFromInst(BypassBuilder,
+                      getDebugLocFromInstOrOperands(OldInduction));
 
   // We are going to resume the execution of the scalar loop.
   // Go over all of the induction variables that we found and fix the
@@ -2873,8 +2901,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
   PHINode *ResumeIndex = nullptr;
   LoopVectorizationLegality::InductionList::iterator I, E;
   LoopVectorizationLegality::InductionList *List = Legal->getInductionVars();
-  // Set builder to point to last bypass block.
-  BypassBuilder.SetInsertPoint(LoopBypassBlocks.back()->getTerminator());
   for (I = List->begin(), E = List->end(); I != E; ++I) {
     PHINode *OrigPhi = I->first;
     InductionDescriptor II = I->second;
@@ -2946,7 +2972,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
   Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
 
   // Save the state.
-  LoopVectorPreHeader = VectorPH;
+  LoopVectorPreHeader = Lp->getLoopPreheader();
   LoopScalarPreHeader = ScalarPH;
   LoopMiddleBlock = MiddleBlock;
   LoopExitBlock = ExitBlock;
