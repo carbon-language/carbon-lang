@@ -63,8 +63,8 @@ void SymbolTable::readArchives() {
     if (Config->Verbose)
       llvm::outs() << "Reading " << File->getShortName() << "\n";
     File->parse();
-    for (Lazy *Sym : File->getLazySymbols())
-      addLazy(Sym, &LazySyms);
+    for (Lazy &Sym : File->getLazySymbols())
+      addLazy(&Sym, &LazySyms);
   }
   ArchiveQueue.clear();
 

@@ -58,13 +58,11 @@ void ArchiveFile::parse() {
 
   // Allocate a buffer for Lazy objects.
   size_t NumSyms = File->getNumberOfSymbols();
-  size_t BufSize = NumSyms * sizeof(Lazy);
-  Lazy *Buf = (Lazy *)Alloc.Allocate(BufSize, llvm::alignOf<Lazy>());
   LazySymbols.reserve(NumSyms);
 
   // Read the symbol table to construct Lazy objects.
   for (const Archive::Symbol &Sym : File->symbols())
-    LazySymbols.push_back(new (Buf++) Lazy(this, Sym));
+    LazySymbols.emplace_back(this, Sym);
 
   // Seen is a map from member files to boolean values. Initially
   // all members are mapped to false, which indicates all these files
