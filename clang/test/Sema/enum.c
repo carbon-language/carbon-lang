@@ -119,3 +119,7 @@ void crash(enum E* e) // expected-warning {{declaration of 'enum E' will not be 
 
 typedef enum { NegativeShort = (short)-1 } NegativeShortEnum;
 int NegativeShortTest[NegativeShort == -1 ? 1 : -1];
+
+// PR24610
+enum Color { Red, Green, Blue }; // expected-note{{previous use is here}}
+typedef struct Color NewColor; // expected-error {{use of 'Color' with tag type that does not match previous declaration}}

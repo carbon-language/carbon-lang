@@ -3560,6 +3560,9 @@ void Sema::handleTagNumbering(const TagDecl *Tag, Scope *TagScope) {
 
 void Sema::setTagNameForLinkagePurposes(TagDecl *TagFromDeclSpec,
                                         TypedefNameDecl *NewTD) {
+  if (TagFromDeclSpec->isInvalidDecl())
+    return;
+
   // Do nothing if the tag already has a name for linkage purposes.
   if (TagFromDeclSpec->hasNameForLinkage())
     return;
