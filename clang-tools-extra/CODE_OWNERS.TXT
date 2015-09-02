@@ -8,6 +8,14 @@ beautification by scripts.  The fields are: name (N), email (E), web-address
 (W), PGP key ID and fingerprint (P), description (D), and snail-mail address
 (S).
 
-N: Edwin Vane
-E: revane@gmail.com
-D: clang-modernize
+N: Peter Collingbourne
+E: peter@pcc.me.uk
+D: clang-query
+
+N: Manuel Klimek
+E: klimek@google.com
+D: clang-rename, all parts of clang-tools-extra not covered by someone else
+
+N: Alexander Kornienko
+E: alexfh@google.com
+D: clang-tidy
