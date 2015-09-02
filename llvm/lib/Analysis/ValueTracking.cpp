@@ -3750,13 +3750,25 @@ static SelectPatternResult matchSelectPattern(CmpInst::Predicate Pred,
   return {SPF_UNKNOWN, SPNB_NA, false};
 }
 
-static Constant *lookThroughCast(CmpInst *CmpI, Value *V1, Value *V2,
-                                 Instruction::CastOps *CastOp) {
+static Value *lookThroughCast(CmpInst *CmpI, Value *V1, Value *V2,
+                              Instruction::CastOps *CastOp) {
   CastInst *CI = dyn_cast<CastInst>(V1);
   Constant *C = dyn_cast<Constant>(V2);
-  if (!CI || !C)
+  CastInst *CI2 = dyn_cast<CastInst>(V2);
+  if (!CI)
     return nullptr;
   *CastOp = CI->getOpcode();
+
+  if (CI2) {
+    // If V1 and V2 are both the same cast from the same type, we can look
+    // through V1.
+    if (CI2->getOpcode() == CI->getOpcode() &&
+        CI2->getSrcTy() == CI->getSrcTy())
+      return CI2->getOperand(0);
+    return nullptr;
+  } else if (!C) {
+    return nullptr;
+  }
 
   if (isa<SExtInst>(CI) && CmpI->isSigned()) {
     Constant *T = ConstantExpr::getTrunc(C, CI->getSrcTy());
@@ -3817,11 +3829,11 @@ SelectPatternResult llvm::matchSelectPattern(Value *V,
 
   // Deal with type mismatches.
   if (CastOp && CmpLHS->getType() != TrueVal->getType()) {
-    if (Constant *C = lookThroughCast(CmpI, TrueVal, FalseVal, CastOp))
+    if (Value *C = lookThroughCast(CmpI, TrueVal, FalseVal, CastOp))
       return ::matchSelectPattern(Pred, FMF, CmpLHS, CmpRHS,
                                   cast<CastInst>(TrueVal)->getOperand(0), C,
                                   LHS, RHS);
-    if (Constant *C = lookThroughCast(CmpI, FalseVal, TrueVal, CastOp))
+    if (Value *C = lookThroughCast(CmpI, FalseVal, TrueVal, CastOp))
       return ::matchSelectPattern(Pred, FMF, CmpLHS, CmpRHS,
                                   C, cast<CastInst>(FalseVal)->getOperand(0),
                                   LHS, RHS);

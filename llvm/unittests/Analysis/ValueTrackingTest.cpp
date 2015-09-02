@@ -146,3 +146,45 @@ TEST_F(MatchSelectPatternTest, FMinConstantZeroNsz) {
   // But this should be, because we've ignored signed zeroes.
   expectPattern({SPF_FMINNUM, SPNB_RETURNS_OTHER, true});
 }
+
+TEST_F(MatchSelectPatternTest, DoubleCastU) {
+  parseAssembly(
+      "define i32 @test(i8 %a, i8 %b) {\n"
+      "  %1 = icmp ult i8 %a, %b\n"
+      "  %2 = zext i8 %a to i32\n"
+      "  %3 = zext i8 %b to i32\n"
+      "  %A = select i1 %1, i32 %2, i32 %3\n"
+      "  ret i32 %A\n"
+      "}\n");
+  // We should be able to look through the situation where we cast both operands
+  // to the select.
+  expectPattern({SPF_UMIN, SPNB_NA, false});
+}
+
+TEST_F(MatchSelectPatternTest, DoubleCastS) {
+  parseAssembly(
+      "define i32 @test(i8 %a, i8 %b) {\n"
+      "  %1 = icmp slt i8 %a, %b\n"
+      "  %2 = sext i8 %a to i32\n"
+      "  %3 = sext i8 %b to i32\n"
+      "  %A = select i1 %1, i32 %2, i32 %3\n"
+      "  ret i32 %A\n"
+      "}\n");
+  // We should be able to look through the situation where we cast both operands
+  // to the select.
+  expectPattern({SPF_SMIN, SPNB_NA, false});
+}
+
+TEST_F(MatchSelectPatternTest, DoubleCastBad) {
+  parseAssembly(
+      "define i32 @test(i8 %a, i8 %b) {\n"
+      "  %1 = icmp ult i8 %a, %b\n"
+      "  %2 = zext i8 %a to i32\n"
+      "  %3 = sext i8 %b to i32\n"
+      "  %A = select i1 %1, i32 %2, i32 %3\n"
+      "  ret i32 %A\n"
+      "}\n");
+  // We should be able to look through the situation where we cast both operands
+  // to the select.
+  expectPattern({SPF_UNKNOWN, SPNB_NA, false});
+}
