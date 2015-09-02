@@ -316,6 +316,9 @@ protected:
 
   /// Create an empty loop, based on the loop ranges of the old loop.
   void createEmptyLoop();
+  /// Create a new induction variable inside L.
+  PHINode *createInductionVariable(Loop *L, Value *Start, Value *End,
+                                   Value *Step, Instruction *DL);
   /// Copy and widen the instructions from the old loop.
   virtual void vectorizeLoop();
 
@@ -2560,6 +2563,38 @@ InnerLoopVectorizer::addStrideCheck(Instruction *Loc) {
   return std::make_pair(FirstInst, TheCheck);
 }
 
+PHINode *InnerLoopVectorizer::createInductionVariable(Loop *L,
+                                                      Value *Start,
+                                                      Value *End,
+                                                      Value *Step,
+                                                      Instruction *DL) {
+  BasicBlock *Header = L->getHeader();
+  BasicBlock *Latch = L->getLoopLatch();
+  // As we're just creating this loop, it's possible no latch exists
+  // yet. If so, use the header as this will be a single block loop.
+  if (!Latch)
+    Latch = Header;
+    
+  IRBuilder<> Builder(Header->getFirstInsertionPt());
+  setDebugLocFromInst(Builder, getDebugLocFromInstOrOperands(OldInduction));
+  auto *Induction = Builder.CreatePHI(Start->getType(), 2, "index");
+
+  Builder.SetInsertPoint(Latch->getTerminator());
+  
+  // Create i+1 and fill the PHINode.
+  Value *Next = Builder.CreateAdd(Induction, Step, "index.next");
+  Induction->addIncoming(Start, L->getLoopPreheader());
+  Induction->addIncoming(Next, Latch);
+  // Create the compare.
+  Value *ICmp = Builder.CreateICmpEQ(Next, End);
+  Builder.CreateCondBr(ICmp, L->getExitBlock(), Header);
+  
+  // Now we have two terminators. Remove the old one from the block.
+  Latch->getTerminator()->eraseFromParent();
+
+  return Induction;
+}
+
 void InnerLoopVectorizer::createEmptyLoop() {
   /*
    In this function we generate a new loop. The new loop will contain
@@ -2657,7 +2692,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
                       ConstantInt::get(ExitCountValue->getType(), VF * UF),
                       "min.iters.check", VectorPH->getTerminator());
 
-  Builder.SetInsertPoint(VectorPH->getTerminator());
   Value *StartIdx = ConstantInt::get(IdxTy, 0);
 
   LoopBypassBlocks.push_back(VectorPH);
@@ -2689,13 +2723,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // inside the loop.
   Builder.SetInsertPoint(VecBody->getFirstNonPHI());
 
-  // Generate the induction variable.
-  setDebugLocFromInst(Builder, getDebugLocFromInstOrOperands(OldInduction));
-  Induction = Builder.CreatePHI(IdxTy, 2, "index");
-  // The loop step is equal to the vectorization factor (num of SIMD elements)
-  // times the unroll factor (num of SIMD instructions).
-  Constant *Step = ConstantInt::get(IdxTy, VF * UF);
-
   // Generate code to check that the loop's trip count is not less than the
   // minimum loop iteration number threshold.
   BasicBlock *NewVectorPH =
@@ -2717,11 +2744,19 @@ void InnerLoopVectorizer::createEmptyLoop() {
 
   // Now we need to generate the expression for N - (N % VF), which is
   // the part that the vectorized body will execute.
+  // The loop step is equal to the vectorization factor (num of SIMD elements)
+  // times the unroll factor (num of SIMD instructions).
+  Constant *Step = ConstantInt::get(IdxTy, VF * UF);
   Value *R = BypassBuilder.CreateURem(ExitCountValue, Step, "n.mod.vf");
   Value *CountRoundDown = BypassBuilder.CreateSub(ExitCountValue, R, "n.vec");
   Value *IdxEndRoundDown = BypassBuilder.CreateAdd(CountRoundDown, StartIdx,
                                                      "end.idx.rnd.down");
 
+  // Generate the induction variable.
+  Induction =
+    createInductionVariable(Lp, StartIdx, IdxEndRoundDown, Step,
+                            getDebugLocFromInstOrOperands(OldInduction));
+  
   // Now, compare the new count to zero. If it is zero skip the vector loop and
   // jump to the scalar loop.
   Value *Cmp =
@@ -2868,17 +2903,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
                                 MiddleBlock->getTerminator());
   ReplaceInstWithInst(MiddleBlock->getTerminator(),
                       BranchInst::Create(ExitBlock, ScalarPH, CmpN));
-
-  // Create i+1 and fill the PHINode.
-  Value *NextIdx = Builder.CreateAdd(Induction, Step, "index.next");
-  Induction->addIncoming(StartIdx, VectorPH);
-  Induction->addIncoming(NextIdx, VecBody);
-  // Create the compare.
-  Value *ICmp = Builder.CreateICmpEQ(NextIdx, IdxEndRoundDown);
-  Builder.CreateCondBr(ICmp, MiddleBlock, VecBody);
-
-  // Now we have two terminators. Remove the old one from the block.
-  VecBody->getTerminator()->eraseFromParent();
 
   // Get ready to start creating new instructions into the vectorized body.
   Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
