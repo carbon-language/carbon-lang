@@ -54,6 +54,11 @@ ContainerSizeEmptyCheck::ContainerSizeEmptyCheck(StringRef Name,
     : ClangTidyCheck(Name, Context) {}
 
 void ContainerSizeEmptyCheck::registerMatchers(MatchFinder *Finder) {
+  // Only register the matchers for C++; the functionality currently does not
+  // provide any benefit to other languages, despite being benign.
+  if (!getLangOpts().CPlusPlus)
+    return;
+
   const auto WrongUse = anyOf(
       hasParent(
           binaryOperator(

@@ -80,6 +80,11 @@ namespace readability {
 
 void RedundantStringCStrCheck::registerMatchers(
     ast_matchers::MatchFinder *Finder) {
+  // Only register the matchers for C++; the functionality currently does not
+  // provide any benefit to other languages, despite being benign.
+  if (!getLangOpts().CPlusPlus)
+    return;
+
   Finder->addMatcher(
       constructExpr(
           hasDeclaration(methodDecl(hasName(StringConstructor))),

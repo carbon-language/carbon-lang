@@ -74,6 +74,11 @@ void registerMatchersForGetEquals(MatchFinder *Finder,
 }  // namespace
 
 void RedundantSmartptrGetCheck::registerMatchers(MatchFinder *Finder) {
+  // Only register the matchers for C++; the functionality currently does not
+  // provide any benefit to other languages, despite being benign.
+  if (!getLangOpts().CPlusPlus)
+    return;
+
   registerMatchersForGetArrowStart(Finder, this);
   registerMatchersForGetEquals(Finder, this);
 }
