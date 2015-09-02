@@ -602,5 +602,17 @@ def executeShTest(test, litConfig, useExternalSh,
         return lit.Test.Result(Test.PASS)
 
     script, tmpBase, execdir = res
-    return _runShTest(test, litConfig, useExternalSh, script, tmpBase, execdir)
 
+    # Re-run failed tests up to test_retry_attempts times.
+    attempts = 1
+    if hasattr(test.config, 'test_retry_attempts'):
+        attempts += test.config.test_retry_attempts
+    for i in range(attempts):
+        res = _runShTest(test, litConfig, useExternalSh, script, tmpBase, execdir)
+        if res.code != Test.FAIL:
+            break
+    # If we had to run the test more than once, count it as a flaky pass. These
+    # will be printed separately in the test summary.
+    if i > 0 and res.code == Test.PASS:
+        res.code = Test.FLAKYPASS
+    return res

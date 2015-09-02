@@ -27,6 +27,7 @@ class ResultCode(object):
                          (self.name, self.isFailure))
 
 PASS        = ResultCode('PASS', False)
+FLAKYPASS   = ResultCode('FLAKYPASS', False)
 XFAIL       = ResultCode('XFAIL', False)
 FAIL        = ResultCode('FAIL', True)
 XPASS       = ResultCode('XPASS', True)
