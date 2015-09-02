@@ -620,27 +620,18 @@ def memopmmx  : PatFrag<(ops node:$ptr), (x86mmx  (memop64 node:$ptr))>;
 // MOVNT Support
 // Like 'store', but requires the non-temporal bit to be set
 def nontemporalstore : PatFrag<(ops node:$val, node:$ptr),
-                           (st node:$val, node:$ptr), [{
-  if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
-    return ST->isNonTemporal();
-  return false;
+                               (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->isNonTemporal();
 }]>;
 
 def alignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
-                                    (st node:$val, node:$ptr), [{
-  if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
-    return ST->isNonTemporal() && !ST->isTruncatingStore() &&
-           ST->getAddressingMode() == ISD::UNINDEXED &&
-           ST->getAlignment() >= 16;
-  return false;
+                                      (nontemporalstore node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() >= 16;
 }]>;
 
 def unalignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
-                                      (st node:$val, node:$ptr), [{
-  if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
-    return ST->isNonTemporal() &&
-           ST->getAlignment() < 16;
-  return false;
+                                        (nontemporalstore node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() < 16;
 }]>;
 
 def mgatherv4i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
