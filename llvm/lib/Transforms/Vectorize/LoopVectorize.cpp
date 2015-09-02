@@ -2870,12 +2870,10 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // faster.
   emitMemRuntimeChecks(Lp, MiddleBlock);
 
-  // Add the start index to the loop count to get the new end index.
-  Value *CountRoundDown = getOrCreateVectorTripCount(Lp);
-
   // Generate the induction variable.
   // The loop step is equal to the vectorization factor (num of SIMD elements)
   // times the unroll factor (num of SIMD instructions).
+  Value *CountRoundDown = getOrCreateVectorTripCount(Lp);
   Constant *Step = ConstantInt::get(IdxTy, VF * UF);
   Induction =
     createInductionVariable(Lp, StartIdx, CountRoundDown, Step,
