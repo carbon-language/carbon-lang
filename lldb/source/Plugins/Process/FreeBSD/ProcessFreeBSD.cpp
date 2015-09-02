@@ -62,13 +62,13 @@ namespace
 // Static functions.
 
 lldb::ProcessSP
-ProcessFreeBSD::CreateInstance(Target& target,
+ProcessFreeBSD::CreateInstance(lldb::TargetSP target_sp,
                                Listener &listener,
                                const FileSpec *crash_file_path)
 {
     lldb::ProcessSP process_sp;
     if (crash_file_path == NULL)
-        process_sp.reset(new ProcessFreeBSD (target, listener, GetFreeBSDSignals()));
+        process_sp.reset(new ProcessFreeBSD (target_sp, listener, GetFreeBSDSignals()));
     return process_sp;
 }
 
@@ -286,8 +286,8 @@ ProcessFreeBSD::SendMessage(const ProcessMessage &message)
 //------------------------------------------------------------------------------
 // Constructors and destructors.
 
-ProcessFreeBSD::ProcessFreeBSD(Target& target, Listener &listener, UnixSignalsSP &unix_signals_sp)
-    : Process(target, listener, unix_signals_sp),
+ProcessFreeBSD::ProcessFreeBSD(lldb::TargetSP target_sp, Listener &listener, UnixSignalsSP &unix_signals_sp)
+    : Process(target_sp, listener, unix_signals_sp),
       m_byte_order(lldb::endian::InlHostByteOrder()),
       m_monitor(NULL),
       m_module(NULL),
@@ -320,10 +320,10 @@ ProcessFreeBSD::Finalize()
 }
 
 bool
-ProcessFreeBSD::CanDebug(Target &target, bool plugin_specified_by_name)
+ProcessFreeBSD::CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name)
 {
     // For now we are just making sure the file exists for a given module
-    ModuleSP exe_module_sp(target.GetExecutableModule());
+    ModuleSP exe_module_sp(target_sp->GetExecutableModule());
     if (exe_module_sp.get())
         return exe_module_sp->GetFileSpec().Exists();
     // If there is no executable module, we return true since we might be preparing to attach.
@@ -345,7 +345,7 @@ ProcessFreeBSD::DoAttachToProcessWithID (lldb::pid_t pid,  const ProcessAttachIn
     if (!error.Success())
         return error;
 
-    PlatformSP platform_sp (m_target.GetPlatform ());
+    PlatformSP platform_sp (GetTarget().GetPlatform ());
     assert (platform_sp.get());
     if (!platform_sp)
         return error;  // FIXME: Detatch?
@@ -357,7 +357,7 @@ ProcessFreeBSD::DoAttachToProcessWithID (lldb::pid_t pid,  const ProcessAttachIn
     // Resolve the executable module
     ModuleSP exe_module_sp;
     FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths());
-    ModuleSpec exe_module_spec(process_info.GetExecutableFile(), m_target.GetArchitecture());
+    ModuleSpec exe_module_spec(process_info.GetExecutableFile(), GetTarget().GetArchitecture());
     error = platform_sp->ResolveExecutable(exe_module_spec,
                                            exe_module_sp,
                                            executable_search_paths.GetSize() ? &executable_search_paths : NULL);
@@ -366,11 +366,11 @@ ProcessFreeBSD::DoAttachToProcessWithID (lldb::pid_t pid,  const ProcessAttachIn
 
     // Fix the target architecture if necessary
     const ArchSpec &module_arch = exe_module_sp->GetArchitecture();
-    if (module_arch.IsValid() && !m_target.GetArchitecture().IsExactMatch(module_arch))
-        m_target.SetArchitecture(module_arch);
+    if (module_arch.IsValid() && !GetTarget().GetArchitecture().IsExactMatch(module_arch))
+        GetTarget().SetArchitecture(module_arch);
 
     // Initialize the target module list
-    m_target.SetExecutableModule (exe_module_sp, true);
+    GetTarget().SetExecutableModule (exe_module_sp, true);
 
     SetSTDIOFileDescriptor(m_monitor->GetTerminalFD());
 
@@ -1052,7 +1052,7 @@ const DataBufferSP
 ProcessFreeBSD::GetAuxvData ()
 {
     // If we're the local platform, we can ask the host for auxv data.
-    PlatformSP platform_sp = m_target.GetPlatform ();
+    PlatformSP platform_sp = GetTarget().GetPlatform ();
     if (platform_sp && platform_sp->IsHost ())
         return lldb_private::Host::GetAuxvData(this);
 

@@ -34,7 +34,7 @@ public:
     // Static functions.
     //------------------------------------------------------------------
     static lldb::ProcessSP
-    CreateInstance(lldb_private::Target& target,
+    CreateInstance(lldb::TargetSP target_sp,
                    lldb_private::Listener &listener,
                    const lldb_private::FileSpec *crash_file_path);
 
@@ -53,7 +53,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and destructors
     //------------------------------------------------------------------
-    ProcessFreeBSD(lldb_private::Target& target,
+    ProcessFreeBSD(lldb::TargetSP target_sp,
                    lldb_private::Listener &listener,
                    lldb::UnixSignalsSP &unix_signals_sp);
 
@@ -90,7 +90,7 @@ public:
     Finalize() override;
 
     bool
-    CanDebug(lldb_private::Target &target, bool plugin_specified_by_name) override;
+    CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name) override;
 
     lldb_private::Error
     WillLaunch(lldb_private::Module *module) override;
