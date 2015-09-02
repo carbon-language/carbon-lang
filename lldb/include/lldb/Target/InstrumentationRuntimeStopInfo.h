@@ -25,21 +25,21 @@ class InstrumentationRuntimeStopInfo : public StopInfo
 {
 public:
     
-    virtual ~InstrumentationRuntimeStopInfo()
+    ~InstrumentationRuntimeStopInfo() override
     {
     }
     
-    virtual lldb::StopReason
-    GetStopReason () const
+    lldb::StopReason
+    GetStopReason() const override
     {
         return lldb::eStopReasonInstrumentation;
     }
     
-    virtual const char *
-    GetDescription ();
+    const char *
+    GetDescription() override;
 
-    virtual bool
-    DoShouldNotify (Event *event_ptr)
+    bool
+    DoShouldNotify(Event *event_ptr) override
     {
         return true;
     }
@@ -50,9 +50,8 @@ public:
 private:
     
     InstrumentationRuntimeStopInfo(Thread &thread, std::string description, StructuredData::ObjectSP additional_data);
-    
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_InstrumentationRuntimeStopInfo_h_
+#endif // liblldb_InstrumentationRuntimeStopInfo_h_

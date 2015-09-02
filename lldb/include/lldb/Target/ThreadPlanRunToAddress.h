@@ -36,37 +36,35 @@ public:
                             const std::vector<lldb::addr_t> &addresses,
                             bool stop_others);
 
+    ~ThreadPlanRunToAddress() override;
 
-    virtual
-    ~ThreadPlanRunToAddress ();
+    void
+    GetDescription(Stream *s, lldb::DescriptionLevel level) override;
 
-    virtual void
-    GetDescription (Stream *s, lldb::DescriptionLevel level);
+    bool
+    ValidatePlan(Stream *error) override;
 
-    virtual bool
-    ValidatePlan (Stream *error);
+    bool
+    ShouldStop(Event *event_ptr) override;
 
-    virtual bool
-    ShouldStop (Event *event_ptr);
-
-    virtual bool
-    StopOthers ();
+    bool
+    StopOthers() override;
     
-    virtual void
-    SetStopOthers (bool new_value);
+    void
+    SetStopOthers(bool new_value) override;
     
-    virtual lldb::StateType
-    GetPlanRunState ();
+    lldb::StateType
+    GetPlanRunState() override;
 
-    virtual bool
-    WillStop ();
+    bool
+    WillStop() override;
 
-    virtual bool
-    MischiefManaged ();
+    bool
+    MischiefManaged() override;
 
 protected:
-    virtual bool
-    DoPlanExplainsStop (Event *event_ptr);
+    bool
+    DoPlanExplainsStop(Event *event_ptr) override;
 
     void SetInitialBreakpoints();
     bool AtOurAddress();
@@ -77,9 +75,8 @@ private:
     std::vector<lldb::break_id_t> m_break_ids; // This is the breakpoint we are using to stop us at m_address.
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanRunToAddress);
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanRunToAddress_h_
+#endif // liblldb_ThreadPlanRunToAddress_h_

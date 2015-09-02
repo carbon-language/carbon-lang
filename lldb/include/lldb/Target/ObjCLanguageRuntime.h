@@ -194,7 +194,7 @@ public:
     public:
         ObjCExceptionPrecondition();
 
-        virtual ~ObjCExceptionPrecondition() {}
+        ~ObjCExceptionPrecondition() override {}
 
         bool EvaluatePrecondition(StoppointCallbackContext &context) override;
         void DescribePrecondition(Stream &stream, lldb::DescriptionLevel level) override;
@@ -251,8 +251,7 @@ public:
     ClassDescriptorSP
     GetNonKVOClassDescriptor (ObjCISA isa);
     
-    virtual
-    ~ObjCLanguageRuntime();
+    ~ObjCLanguageRuntime() override;
     
     lldb::LanguageType
     GetLanguageType () const override
@@ -383,7 +382,6 @@ protected:
         return false;
     }
     
-    
     bool
     ISAIsCached (ObjCISA isa) const
     {
@@ -430,11 +428,13 @@ private:
             sel_addr = LLDB_INVALID_ADDRESS;
             class_addr = LLDB_INVALID_ADDRESS;
         }
+
         ClassAndSel (lldb::addr_t in_sel_addr, lldb::addr_t in_class_addr) :
             class_addr (in_class_addr),
             sel_addr(in_sel_addr)
         {
         }
+
         bool operator== (const ClassAndSel &rhs)
         {
             if (class_addr == rhs.class_addr
@@ -511,4 +511,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ObjCLanguageRuntime_h_
+#endif // liblldb_ObjCLanguageRuntime_h_

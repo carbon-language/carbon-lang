@@ -23,19 +23,19 @@ namespace lldb_private {
 class ThreadPlanStepInstruction : public ThreadPlan
 {
 public:
-    virtual ~ThreadPlanStepInstruction ();
+    ~ThreadPlanStepInstruction() override;
 
-    virtual void GetDescription (Stream *s, lldb::DescriptionLevel level);
-    virtual bool ValidatePlan (Stream *error);
-    virtual bool ShouldStop (Event *event_ptr);
-    virtual bool StopOthers ();
-    virtual lldb::StateType GetPlanRunState ();
-    virtual bool WillStop ();
-    virtual bool MischiefManaged ();
-    virtual bool IsPlanStale ();
+    void GetDescription(Stream *s, lldb::DescriptionLevel level) override;
+    bool ValidatePlan(Stream *error) override;
+    bool ShouldStop(Event *event_ptr) override;
+    bool StopOthers() override;
+    lldb::StateType GetPlanRunState() override;
+    bool WillStop() override;
+    bool MischiefManaged() override;
+    bool IsPlanStale() override;
 
 protected:
-    virtual bool DoPlanExplainsStop (Event *event_ptr);
+    bool DoPlanExplainsStop(Event *event_ptr) override;
 
     ThreadPlanStepInstruction (Thread &thread,
                                bool step_over,
@@ -57,10 +57,8 @@ private:
     StackID m_parent_frame_id;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepInstruction);
-
 };
-
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanStepInstruction_h_
+#endif // liblldb_ThreadPlanStepInstruction_h_

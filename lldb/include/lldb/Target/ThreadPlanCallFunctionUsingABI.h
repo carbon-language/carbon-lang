@@ -38,7 +38,7 @@ public:
                                  llvm::ArrayRef<ABI::CallArgument> args,
                                  const EvaluateExpressionOptions &options);
 
-    ~ThreadPlanCallFunctionUsingABI ();
+    ~ThreadPlanCallFunctionUsingABI() override;
 
     void
     GetDescription (Stream *s, lldb::DescriptionLevel level) override;
@@ -47,7 +47,6 @@ protected:
     void
     SetReturnValue () override;
 
-
 private:
     llvm::Type                                     &m_return_type;
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallFunctionUsingABI);
@@ -55,4 +54,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanCallFunctionUsingABI_h_
+#endif // liblldb_ThreadPlanCallFunctionUsingABI_h_

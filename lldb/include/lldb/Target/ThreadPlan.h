@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <string>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
@@ -562,6 +563,7 @@ public:
         else
             return m_iteration_count;
     }
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ThreadPlan can see and modify these
@@ -656,47 +658,46 @@ class ThreadPlanNull : public ThreadPlan
 {
 public:
     ThreadPlanNull (Thread &thread);
-    virtual ~ThreadPlanNull ();
+    ~ThreadPlanNull() override;
     
-    virtual void
-    GetDescription (Stream *s,
-                    lldb::DescriptionLevel level);
+    void
+    GetDescription(Stream *s,
+		   lldb::DescriptionLevel level) override;
 
-    virtual bool
-    ValidatePlan (Stream *error);
+    bool
+    ValidatePlan(Stream *error) override;
 
-    virtual bool
-    ShouldStop (Event *event_ptr);
+    bool
+    ShouldStop(Event *event_ptr) override;
 
-    virtual bool
-    MischiefManaged ();
+    bool
+    MischiefManaged() override;
 
-    virtual bool
-    WillStop ();
+    bool
+    WillStop() override;
 
-    virtual bool
-    IsBasePlan()
+    bool
+    IsBasePlan() override
     {
         return true;
     }
     
-    virtual bool
-    OkayToDiscard ()
+    bool
+    OkayToDiscard() override
     {
         return false;
     }
 
 protected:
-    virtual bool
-    DoPlanExplainsStop (Event *event_ptr);
+    bool
+    DoPlanExplainsStop(Event *event_ptr) override;
     
-    virtual lldb::StateType
-    GetPlanRunState ();
+    lldb::StateType
+    GetPlanRunState() override;
 
     DISALLOW_COPY_AND_ASSIGN(ThreadPlanNull);
 };
 
-
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlan_h_
+#endif // liblldb_ThreadPlan_h_

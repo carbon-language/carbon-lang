@@ -55,8 +55,7 @@ class TargetProperties : public Properties
 public:
     TargetProperties(Target *target);
 
-    virtual
-    ~TargetProperties();
+    ~TargetProperties() override;
     
     ArchSpec
     GetDefaultArchitecture () const;
@@ -530,7 +529,7 @@ public:
     
     static ConstString &GetStaticBroadcasterClass ();
 
-    virtual ConstString &GetBroadcasterClass() const
+    ConstString &GetBroadcasterClass() const override
     {
         return GetStaticBroadcasterClass();
     }
@@ -543,20 +542,19 @@ public:
 
         TargetEventData (const lldb::TargetSP &target_sp, const ModuleList &module_list);
 
-        virtual
-        ~TargetEventData();
+        ~TargetEventData() override;
 
         static const ConstString &
         GetFlavorString ();
 
-        virtual const ConstString &
-        GetFlavor () const
+        const ConstString &
+        GetFlavor() const override
         {
             return TargetEventData::GetFlavorString ();
         }
 
-        virtual void
-        Dump (Stream *s) const;
+        void
+        Dump(Stream *s) const override;
 
         static const TargetEventData *
         GetEventDataFromEvent (const Event *event_ptr);
@@ -621,7 +619,6 @@ public:
     static const lldb::TargetPropertiesSP &
     GetGlobalProperties();
 
-
 private:
     //------------------------------------------------------------------
     /// Construct with optional file and arch.
@@ -649,7 +646,7 @@ private:
     AddBreakpoint(lldb::BreakpointSP breakpoint_sp, bool internal);
 
 public:
-    ~Target();
+    ~Target() override;
 
     Mutex &
     GetAPIMutex ()
@@ -811,7 +808,6 @@ public:
                       bool internal,
                       bool request_hardware);
 
-
     // Use this to create a general breakpoint:
     lldb::BreakpointSP
     CreateBreakpoint (lldb::SearchFilterSP &filter_sp,
@@ -933,18 +929,18 @@ protected:
     /// Implementing of ModuleList::Notifier.
     //------------------------------------------------------------------
     
-    virtual void
-    ModuleAdded (const ModuleList& module_list, const lldb::ModuleSP& module_sp);
+    void
+    ModuleAdded(const ModuleList& module_list, const lldb::ModuleSP& module_sp) override;
     
-    virtual void
-    ModuleRemoved (const ModuleList& module_list, const lldb::ModuleSP& module_sp);
+    void
+    ModuleRemoved(const ModuleList& module_list, const lldb::ModuleSP& module_sp) override;
     
-    virtual void
-    ModuleUpdated (const ModuleList& module_list,
-                   const lldb::ModuleSP& old_module_sp,
-                   const lldb::ModuleSP& new_module_sp);
-    virtual void
-    WillClearList (const ModuleList& module_list);
+    void
+    ModuleUpdated(const ModuleList& module_list,
+		  const lldb::ModuleSP& old_module_sp,
+		  const lldb::ModuleSP& new_module_sp) override;
+    void
+    WillClearList(const ModuleList& module_list) override;
 
 public:
     
@@ -1213,20 +1209,20 @@ public:
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
-    virtual lldb::TargetSP
-    CalculateTarget ();
+    lldb::TargetSP
+    CalculateTarget() override;
     
-    virtual lldb::ProcessSP
-    CalculateProcess ();
+    lldb::ProcessSP
+    CalculateProcess() override;
     
-    virtual lldb::ThreadSP
-    CalculateThread ();
+    lldb::ThreadSP
+    CalculateThread() override;
     
-    virtual lldb::StackFrameSP
-    CalculateStackFrame ();
+    lldb::StackFrameSP
+    CalculateStackFrame() override;
 
-    virtual void
-    CalculateExecutionContext (ExecutionContext &exe_ctx);
+    void
+    CalculateExecutionContext(ExecutionContext &exe_ctx) override;
 
     PathMappingList &
     GetImageSearchPathList ();
@@ -1509,4 +1505,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_Target_h_
+#endif // liblldb_Target_h_

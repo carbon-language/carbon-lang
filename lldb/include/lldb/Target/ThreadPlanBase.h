@@ -31,31 +31,32 @@ class ThreadPlanBase : public ThreadPlan
 {
 friend class Process;  // RunThreadPlan manages "stopper" base plans.
 public:
-    virtual ~ThreadPlanBase ();
+    ~ThreadPlanBase() override;
 
-    virtual void GetDescription (Stream *s, lldb::DescriptionLevel level);
-    virtual bool ValidatePlan (Stream *error);
-    virtual bool ShouldStop (Event *event_ptr);
-    virtual Vote ShouldReportStop (Event *event_ptr);
-    virtual bool StopOthers ();
-    virtual lldb::StateType GetPlanRunState ();
-    virtual bool WillStop ();
-    virtual bool MischiefManaged ();
+    void GetDescription(Stream *s, lldb::DescriptionLevel level) override;
+    bool ValidatePlan(Stream *error) override;
+    bool ShouldStop(Event *event_ptr) override;
+    Vote ShouldReportStop(Event *event_ptr) override;
+    bool StopOthers() override;
+    lldb::StateType GetPlanRunState() override;
+    bool WillStop() override;
+    bool MischiefManaged() override;
 
-    virtual bool OkayToDiscard()
+    bool
+    OkayToDiscard() override
     {
         return false;
     }
 
-    virtual bool
-    IsBasePlan()
+    bool
+    IsBasePlan() override
     {
         return true;
     }
     
 protected:
-    virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
-    virtual bool DoPlanExplainsStop (Event *event_ptr);
+    bool DoWillResume(lldb::StateType resume_state, bool current_plan) override;
+    bool DoPlanExplainsStop(Event *event_ptr) override;
     ThreadPlanBase (Thread &thread);
 
 private:
@@ -65,7 +66,6 @@ private:
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanBase);
 };
 
-
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanFundamental_h_
+#endif // liblldb_ThreadPlanFundamental_h_

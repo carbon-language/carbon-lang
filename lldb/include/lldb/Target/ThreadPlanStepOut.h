@@ -33,32 +33,32 @@ public:
                        uint32_t frame_idx,
                        LazyBool step_out_avoids_code_without_debug_info);
 
-    virtual ~ThreadPlanStepOut ();
+    ~ThreadPlanStepOut() override;
 
-    virtual void GetDescription (Stream *s, lldb::DescriptionLevel level);
-    virtual bool ValidatePlan (Stream *error);
-    virtual bool ShouldStop (Event *event_ptr);
-    virtual bool StopOthers ();
-    virtual lldb::StateType GetPlanRunState ();
-    virtual bool WillStop ();
-    virtual bool MischiefManaged ();
-    virtual void DidPush();
-    virtual bool IsPlanStale();
+    void GetDescription(Stream *s, lldb::DescriptionLevel level) override;
+    bool ValidatePlan(Stream *error) override;
+    bool ShouldStop(Event *event_ptr) override;
+    bool StopOthers() override;
+    lldb::StateType GetPlanRunState() override;
+    bool WillStop() override;
+    bool MischiefManaged() override;
+    void DidPush() override;
+    bool IsPlanStale() override;
     
-    virtual lldb::ValueObjectSP GetReturnValueObject()
+    lldb::ValueObjectSP GetReturnValueObject() override
     {
         return m_return_valobj_sp;
     }
 
 protected:
-    virtual void
-    SetFlagsToDefault ()
+    void
+    SetFlagsToDefault() override
     {
         GetFlags().Set(ThreadPlanStepOut::s_default_flag_values);
     }
     
-    virtual bool DoPlanExplainsStop (Event *event_ptr);
-    virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
+    bool DoPlanExplainsStop (Event *event_ptr) override;
+    bool DoWillResume(lldb::StateType resume_state, bool current_plan) override;
     bool QueueInlinedStepPlan (bool queue_now);
 
 private:
@@ -95,9 +95,8 @@ private:
     CalculateReturnValue();
     
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepOut);
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanStepOut_h_
+#endif // liblldb_ThreadPlanStepOut_h_

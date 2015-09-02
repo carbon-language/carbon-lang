@@ -38,35 +38,34 @@ public:
                            const Address &function,
                            const EvaluateExpressionOptions &options);
 
-    virtual
-    ~ThreadPlanCallFunction ();
+    ~ThreadPlanCallFunction() override;
 
-    virtual void
-    GetDescription (Stream *s, lldb::DescriptionLevel level);
+    void
+    GetDescription(Stream *s, lldb::DescriptionLevel level) override;
 
-    virtual bool
-    ValidatePlan (Stream *error);
+    bool
+    ValidatePlan(Stream *error) override;
 
-    virtual bool
-    ShouldStop (Event *event_ptr);
+    bool
+    ShouldStop(Event *event_ptr) override;
     
-    virtual Vote
-    ShouldReportStop(Event *event_ptr);
+    Vote
+    ShouldReportStop(Event *event_ptr) override;
 
-    virtual bool
-    StopOthers ();
+    bool
+    StopOthers() override;
     
-    virtual lldb::StateType
-    GetPlanRunState ();
+    lldb::StateType
+    GetPlanRunState() override;
 
-    virtual void
-    DidPush ();
+    void
+    DidPush() override;
 
-    virtual bool
-    WillStop ();
+    bool
+    WillStop() override;
 
-    virtual bool
-    MischiefManaged ();
+    bool
+    MischiefManaged() override;
 
     // To get the return value from a function call you must create a 
     // lldb::ValueSP that contains a valid clang type in its context and call
@@ -77,8 +76,8 @@ public:
     // plan is complete, you can call "GetReturnValue()" to retrieve the value
     // that was extracted.
 
-    virtual lldb::ValueObjectSP
-    GetReturnValueObject ()
+    lldb::ValueObjectSP
+    GetReturnValueObject() override
     {
         return m_return_valobj_sp;
     }
@@ -96,8 +95,8 @@ public:
     // Classes that derive from ClangFunction, and implement
     // their own WillPop methods should call this so that the
     // thread state gets restored if the plan gets discarded.
-    virtual void
-    WillPop ();
+    void
+    WillPop() override;
     
     // If the thread plan stops mid-course, this will be the stop reason that interrupted us.
     // Once DoTakedown is called, this will be the real stop reason at the end of the function call.
@@ -105,8 +104,8 @@ public:
     // This is needed because we want the CallFunction thread plans not to show up as the stop reason.
     // But if something bad goes wrong, it is nice to be able to tell the user what really happened.
 
-    virtual lldb::StopInfoSP
-    GetRealStopInfo()
+    lldb::StopInfoSP
+    GetRealStopInfo() override
     {
         if (m_real_stop_info_sp)
             return m_real_stop_info_sp;
@@ -120,23 +119,23 @@ public:
         return m_stop_address;
     }
 
-    virtual bool
-    RestoreThreadState();
+    bool
+    RestoreThreadState() override;
     
-    virtual void
-    ThreadDestroyed ()
+    void
+    ThreadDestroyed() override
     {
         m_takedown_done = true;
     }
     
-    virtual void
-    SetStopOthers (bool new_value);
+    void
+    SetStopOthers(bool new_value) override;
     
 protected:
     void ReportRegisterState (const char *message);
 
-    virtual bool
-    DoPlanExplainsStop (Event *event_ptr);
+    bool
+    DoPlanExplainsStop(Event *event_ptr) override;
 
     virtual void
     SetReturnValue();
@@ -190,4 +189,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanCallFunction_h_
+#endif // liblldb_ThreadPlanCallFunction_h_

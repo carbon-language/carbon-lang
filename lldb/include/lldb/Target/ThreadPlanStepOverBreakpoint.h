@@ -22,29 +22,31 @@ namespace lldb_private {
 class ThreadPlanStepOverBreakpoint : public ThreadPlan
 {
 public:
-    virtual ~ThreadPlanStepOverBreakpoint ();
-
     ThreadPlanStepOverBreakpoint (Thread &thread);
-    virtual void GetDescription (Stream *s, lldb::DescriptionLevel level);
-    virtual bool ValidatePlan (Stream *error);
-    virtual bool ShouldStop (Event *event_ptr);
-    virtual bool StopOthers ();
-    virtual lldb::StateType GetPlanRunState ();
-    virtual bool WillStop ();
-    virtual bool MischiefManaged ();
-    virtual void ThreadDestroyed ();
-    void SetAutoContinue (bool do_it);
-    virtual bool ShouldAutoContinue(Event *event_ptr);
-    virtual bool IsPlanStale();
+
+    ~ThreadPlanStepOverBreakpoint() override;
+
+    void GetDescription(Stream *s, lldb::DescriptionLevel level) override;
+    bool ValidatePlan(Stream *error) override;
+    bool ShouldStop(Event *event_ptr) override;
+    bool StopOthers() override;
+    lldb::StateType GetPlanRunState() override;
+    bool WillStop() override;
+    bool MischiefManaged() override;
+    void ThreadDestroyed() override;
+    void SetAutoContinue(bool do_it);
+    bool ShouldAutoContinue(Event *event_ptr) override;
+    bool IsPlanStale() override;
 
     lldb::addr_t
     GetBreakpointLoadAddress() const
     {
         return m_breakpoint_addr;
     }
+
 protected:
-    virtual bool DoPlanExplainsStop (Event *event_ptr);
-    virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
+    bool DoPlanExplainsStop(Event *event_ptr) override;
+    bool DoWillResume(lldb::StateType resume_state, bool current_plan) override;
 
     void ReenableBreakpointSite ();
 private:
@@ -55,9 +57,8 @@ private:
     bool m_reenabled_breakpoint_site;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepOverBreakpoint);
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanStepOverBreakpoint_h_
+#endif // liblldb_ThreadPlanStepOverBreakpoint_h_

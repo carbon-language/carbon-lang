@@ -42,14 +42,13 @@ public:
                             LazyBool step_in_avoids_code_without_debug_info,
                             LazyBool step_out_avoids_code_without_debug_info);
 
-    virtual
-    ~ThreadPlanStepInRange ();
+    ~ThreadPlanStepInRange() override;
 
-    virtual void
-    GetDescription (Stream *s, lldb::DescriptionLevel level);
+    void
+    GetDescription(Stream *s, lldb::DescriptionLevel level) override;
 
-    virtual bool
-    ShouldStop (Event *event_ptr);
+    bool
+    ShouldStop(Event *event_ptr) override;
 
     void SetAvoidRegexp(const char *name);
     
@@ -62,19 +61,19 @@ public:
     SetDefaultFlagValue (uint32_t new_value);
     
     bool
-    IsVirtualStep();
+    IsVirtualStep() override;
 
 protected:
     static bool
     DefaultShouldStopHereCallback (ThreadPlan *current_plan, Flags &flags, lldb::FrameComparison operation, void *baton);
 
-    virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
+    bool DoWillResume(lldb::StateType resume_state, bool current_plan) override;
 
-    virtual bool
-    DoPlanExplainsStop (Event *event_ptr);
+    bool
+    DoPlanExplainsStop(Event *event_ptr) override;
 
-    virtual void
-    SetFlagsToDefault ()
+    void
+    SetFlagsToDefault() override
     {
         GetFlags().Set(ThreadPlanStepInRange::s_default_flag_values);
     }
@@ -119,9 +118,8 @@ private:
     bool m_virtual_step;        // true if we've just done a "virtual step", i.e. just moved the inline stack depth.
     ConstString m_step_into_target;
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepInRange);
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanStepInRange_h_
+#endif // liblldb_ThreadPlanStepInRange_h_

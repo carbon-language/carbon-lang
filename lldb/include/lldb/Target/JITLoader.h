@@ -50,8 +50,7 @@ public:
     //------------------------------------------------------------------
     JITLoader (Process *process);
 
-    virtual 
-    ~JITLoader ();
+    ~JITLoader() override;
 
     //------------------------------------------------------------------
     /// Called after attaching a process.
