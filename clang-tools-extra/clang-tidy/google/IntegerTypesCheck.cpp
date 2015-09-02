@@ -22,15 +22,12 @@ namespace runtime {
 using namespace ast_matchers;
 
 void IntegerTypesCheck::registerMatchers(MatchFinder *Finder) {
-  // Find all TypeLocs.
-  Finder->addMatcher(typeLoc().bind("tl"), this);
+  // Find all TypeLocs. The relevant Style Guide rule only applies to C++.
+  if (getLangOpts().CPlusPlus)
+    Finder->addMatcher(typeLoc().bind("tl"), this);
 }
 
 void IntegerTypesCheck::check(const MatchFinder::MatchResult &Result) {
-  // The relevant Style Guide rule only applies to C++.
-  if (!Result.Context->getLangOpts().CPlusPlus)
-    return;
-
   auto TL = *Result.Nodes.getNodeAs<TypeLoc>("tl");
   SourceLocation Loc = TL.getLocStart();
 

@@ -21,7 +21,10 @@ namespace build {
 
 void UsingNamespaceDirectiveCheck::registerMatchers(
     ast_matchers::MatchFinder *Finder) {
-  Finder->addMatcher(usingDirectiveDecl().bind("usingNamespace"), this);
+  // Only register the matchers for C++; the functionality currently does not
+  // provide any benefit to other languages, despite being benign.
+  if (getLangOpts().CPlusPlus)
+    Finder->addMatcher(usingDirectiveDecl().bind("usingNamespace"), this);
 }
 
 void

@@ -20,8 +20,11 @@ namespace tidy {
 namespace google {
 
 void ExplicitConstructorCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(constructorDecl(unless(isInstantiated())).bind("ctor"),
-                     this);
+  // Only register the matchers for C++; the functionality currently does not
+  // provide any benefit to other languages, despite being benign.
+  if (getLangOpts().CPlusPlus)
+    Finder->addMatcher(constructorDecl(unless(isInstantiated())).bind("ctor"),
+                       this);
 }
 
 // Looks for the token matching the predicate and returns the range of the found
