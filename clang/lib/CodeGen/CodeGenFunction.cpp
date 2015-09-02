@@ -24,6 +24,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
@@ -1203,6 +1204,22 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
     return;
   }
 
+  // If the branch has a condition wrapped by __builtin_unpredictable,
+  // create metadata that specifies that the branch is unpredictable.
+  // Don't bother if not optimizing because that metadata would not be used.
+  llvm::MDNode *Unpredictable = nullptr;
+  if (CGM.getCodeGenOpts().OptimizationLevel != 0) {
+    if (const CallExpr *Call = dyn_cast<CallExpr>(Cond)) {
+      const Decl *TargetDecl = Call->getCalleeDecl();
+      if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(TargetDecl)) {
+        if (FD->getBuiltinID() == Builtin::BI__builtin_unpredictable) {
+          llvm::MDBuilder MDHelper(getLLVMContext());
+          Unpredictable = MDHelper.createUnpredictable();
+        }
+      }
+    }
+  }
+
   // Create branch weights based on the number of times we get here and the
   // number of times the condition should be true.
   uint64_t CurrentCount = std::max(getCurrentProfileCount(), TrueCount);
@@ -1215,7 +1232,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
     ApplyDebugLocation DL(*this, Cond);
     CondV = EvaluateExprAsBool(Cond);
   }
-  Builder.CreateCondBr(CondV, TrueBlock, FalseBlock, Weights);
+  Builder.CreateCondBr(CondV, TrueBlock, FalseBlock, Weights, Unpredictable);
 }
 
 /// ErrorUnsupported - Print out an error that codegen doesn't support the
