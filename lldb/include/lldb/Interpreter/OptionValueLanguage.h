@@ -37,8 +37,7 @@ public:
     {
     }
     
-    virtual 
-    ~OptionValueLanguage ()
+    ~OptionValueLanguage() override
     {
     }
     
@@ -104,4 +103,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionValueLanguage_h_
+#endif // liblldb_OptionValueLanguage_h_

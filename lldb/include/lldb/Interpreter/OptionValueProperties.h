@@ -43,33 +43,33 @@ public:
 
     OptionValueProperties (const OptionValueProperties &global_properties);
     
-    virtual
-    ~OptionValueProperties()
+    ~OptionValueProperties() override
     {
     }
     
-    virtual Type
-    GetType () const
+    Type
+    GetType() const override
     {
         return eTypeProperties;
     }
     
-    virtual bool
-    Clear ();
+    bool
+    Clear() override;
 
-    virtual lldb::OptionValueSP
-    DeepCopy () const;
+    lldb::OptionValueSP
+    DeepCopy() const override;
     
-    virtual Error
-    SetValueFromString (llvm::StringRef value, VarSetOperationType op = eVarSetOperationAssign);
+    Error
+    SetValueFromString(llvm::StringRef value,
+		       VarSetOperationType op = eVarSetOperationAssign) override;
 
-    virtual void
-    DumpValue (const ExecutionContext *exe_ctx,
-               Stream &strm,
-               uint32_t dump_mask);
+    void
+    DumpValue(const ExecutionContext *exe_ctx,
+	      Stream &strm,
+	      uint32_t dump_mask) override;
 
-    virtual ConstString
-    GetName () const
+    ConstString
+    GetName() const override
     {
         return m_name;
     }
@@ -149,16 +149,16 @@ public:
                      bool value_will_be_modified) const;
 
     lldb::OptionValueSP
-    GetSubValue (const ExecutionContext *exe_ctx,
-                 const char *name,
-                 bool value_will_be_modified,
-                 Error &error) const;
+    GetSubValue(const ExecutionContext *exe_ctx,
+		const char *name,
+		bool value_will_be_modified,
+		Error &error) const override;
 
-    virtual Error
-    SetSubValue (const ExecutionContext *exe_ctx,
-                 VarSetOperationType op,
-                 const char *path,
-                 const char *value);
+    Error
+    SetSubValue(const ExecutionContext *exe_ctx,
+		VarSetOperationType op,
+		const char *path,
+		const char *value) override;
 
     virtual bool
     PredicateMatches (const ExecutionContext *exe_ctx,
@@ -254,6 +254,7 @@ public:
     SetValueChangedCallback (uint32_t property_idx,
                              OptionValueChangedCallback callback,
                              void *baton);
+
 protected:
 
     Property *
@@ -281,4 +282,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionValueProperties_h_
+#endif // liblldb_OptionValueProperties_h_

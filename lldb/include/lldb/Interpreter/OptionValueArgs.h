@@ -26,16 +26,15 @@ public:
     {
     }
     
-    virtual
-    ~OptionValueArgs()
+    ~OptionValueArgs() override
     {
     }
     
     size_t
     GetArgs (Args &args);
     
-    virtual Type
-    GetType() const
+    Type
+    GetType() const override
     {
         return eTypeArgs;
     }
@@ -43,4 +42,4 @@ public:
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionValueArgs_h_
+#endif // liblldb_OptionValueArgs_h_

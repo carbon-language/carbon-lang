@@ -23,7 +23,6 @@
 
 namespace lldb_private {
 
-
 class OptionValueEnumeration : public OptionValue
 {
 public:
@@ -38,44 +37,43 @@ public:
 
     OptionValueEnumeration (const OptionEnumValueElement *enumerators, enum_type value);
     
-    virtual
-    ~OptionValueEnumeration();
+    ~OptionValueEnumeration() override;
     
     //---------------------------------------------------------------------
     // Virtual subclass pure virtual overrides
     //---------------------------------------------------------------------
     
-    virtual OptionValue::Type
-    GetType () const
+    OptionValue::Type
+    GetType() const override
     {
         return eTypeEnum;
     }
     
-    virtual void
-    DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask);
+    void
+    DumpValue(const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask) override;
     
-    virtual Error
-    SetValueFromString (llvm::StringRef value,
-                         VarSetOperationType op = eVarSetOperationAssign);
+    Error
+    SetValueFromString(llvm::StringRef value,
+		       VarSetOperationType op = eVarSetOperationAssign) override;
     
-    virtual bool
-    Clear ()
+    bool
+    Clear() override
     {
         m_current_value = m_default_value;
         m_value_was_set = false;
         return true;
     }
     
-    virtual lldb::OptionValueSP
-    DeepCopy () const;
+    lldb::OptionValueSP
+    DeepCopy() const override;
     
-    virtual size_t
-    AutoComplete (CommandInterpreter &interpreter,
-                  const char *s,
-                  int match_start_point,
-                  int max_return_elements,
-                  bool &word_complete,
-                  StringList &matches);
+    size_t
+    AutoComplete(CommandInterpreter &interpreter,
+		 const char *s,
+		 int match_start_point,
+		 int max_return_elements,
+		 bool &word_complete,
+		 StringList &matches) override;
 
     //---------------------------------------------------------------------
     // Subclass specific functions
@@ -123,4 +121,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionValueEnumeration_h_
+#endif // liblldb_OptionValueEnumeration_h_

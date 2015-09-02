@@ -27,6 +27,7 @@ public:
         m_default_value (value)
     {
     }
+
     OptionValueChar (char current_value,
                      char default_value) :
         OptionValue(),
@@ -35,8 +36,7 @@ public:
     {
     }
     
-    virtual 
-    ~OptionValueChar()
+    ~OptionValueChar() override
     {
     }
     
@@ -44,21 +44,21 @@ public:
     // Virtual subclass pure virtual overrides
     //---------------------------------------------------------------------
     
-    virtual OptionValue::Type
-    GetType () const
+    OptionValue::Type
+    GetType() const override
     {
         return eTypeChar;
     }
     
-    virtual void
-    DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask);
+    void
+    DumpValue(const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask) override;
     
-    virtual Error
-    SetValueFromString (llvm::StringRef value,
-                         VarSetOperationType op = eVarSetOperationAssign);
+    Error
+    SetValueFromString(llvm::StringRef value,
+		       VarSetOperationType op = eVarSetOperationAssign) override;
     
-    virtual bool
-    Clear ()
+    bool
+    Clear() override
     {
         m_current_value = m_default_value;
         m_value_was_set = false;
@@ -100,8 +100,8 @@ public:
         m_default_value = value;
     }
     
-    virtual lldb::OptionValueSP
-    DeepCopy () const;
+    lldb::OptionValueSP
+    DeepCopy() const override;
 
 protected:
     char m_current_value;
@@ -110,4 +110,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionValueChar_h_
+#endif // liblldb_OptionValueChar_h_

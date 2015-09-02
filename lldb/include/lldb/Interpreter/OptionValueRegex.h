@@ -30,8 +30,7 @@ public:
     {
     }
 
-    virtual 
-    ~OptionValueRegex()
+    ~OptionValueRegex() override
     {
     }
     
@@ -39,29 +38,29 @@ public:
     // Virtual subclass pure virtual overrides
     //---------------------------------------------------------------------
     
-    virtual OptionValue::Type
-    GetType () const
+    OptionValue::Type
+    GetType() const override
     {
         return eTypeRegex;
     }
     
-    virtual void
-    DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask);
+    void
+    DumpValue(const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask) override;
     
-    virtual Error
-    SetValueFromString (llvm::StringRef value,
-                         VarSetOperationType op = eVarSetOperationAssign);
+    Error
+    SetValueFromString(llvm::StringRef value,
+		       VarSetOperationType op = eVarSetOperationAssign) override;
 
-    virtual bool
-    Clear ()
+    bool
+    Clear() override
     {
         m_regex.Clear();
         m_value_was_set = false;
         return true;
     }
 
-    virtual lldb::OptionValueSP
-    DeepCopy () const;
+    lldb::OptionValueSP
+    DeepCopy() const override;
 
     //---------------------------------------------------------------------
     // Subclass specific functions
@@ -95,4 +94,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionValueRegex_h_
+#endif // liblldb_OptionValueRegex_h_

@@ -34,8 +34,7 @@ public:
     {
     }
     
-    virtual 
-    ~OptionValueUUID()
+    ~OptionValueUUID() override
     {
     }
     
@@ -43,29 +42,29 @@ public:
     // Virtual subclass pure virtual overrides
     //---------------------------------------------------------------------
     
-    virtual OptionValue::Type
-    GetType () const
+    OptionValue::Type
+    GetType() const override
     {
         return eTypeUUID;
     }
     
-    virtual void
-    DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask);
+    void
+    DumpValue(const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask) override;
     
-    virtual Error
-    SetValueFromString (llvm::StringRef value,
-                         VarSetOperationType op = eVarSetOperationAssign);
+    Error
+    SetValueFromString(llvm::StringRef value,
+		       VarSetOperationType op = eVarSetOperationAssign) override;
     
-    virtual bool
-    Clear ()
+    bool
+    Clear() override
     {
         m_uuid.Clear();
         m_value_was_set = false;
         return true;
     }
     
-    virtual lldb::OptionValueSP
-    DeepCopy () const;
+    lldb::OptionValueSP
+    DeepCopy() const override;
     
     //---------------------------------------------------------------------
     // Subclass specific functions
@@ -89,13 +88,13 @@ public:
         m_uuid = value;
     }
     
-    virtual size_t
-    AutoComplete (CommandInterpreter &interpreter,
-                  const char *s,
-                  int match_start_point,
-                  int max_return_elements,
-                  bool &word_complete,
-                  StringList &matches);
+    size_t
+    AutoComplete(CommandInterpreter &interpreter,
+		 const char *s,
+		 int match_start_point,
+		 int max_return_elements,
+		 bool &word_complete,
+		 StringList &matches) override;
 
 protected:
     UUID m_uuid;
@@ -103,4 +102,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionValueUUID_h_
+#endif // liblldb_OptionValueUUID_h_
