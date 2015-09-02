@@ -468,8 +468,6 @@ protected:
   PHINode *Induction;
   /// The induction variable of the old basic block.
   PHINode *OldInduction;
-  /// Holds the extended (to the widest induction type) start index.
-  Value *ExtendedIdx;
   /// Maps scalars to widened vectors.
   ValueMap WidenMap;
   EdgeMaskCache MaskCache;
@@ -2605,9 +2603,16 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // don't. One example is c++ iterators that often have multiple pointer
   // induction variables. In the code below we also support a case where we
   // don't have a single induction variable.
+  //
+  // We try to obtain an induction variable from the original loop as hard
+  // as possible. However if we don't find one that:
+  //   - is an integer
+  //   - counts from zero, stepping by one
+  //   - is the size of the widest induction variable type
+  // then we create a new one.
   OldInduction = Legal->getInduction();
   Type *IdxTy = Legal->getWidestInductionType();
-
+  
   // Find the loop boundaries.
   const SCEV *ExitCount = SE->getBackedgeTakenCount(OrigLoop);
   assert(ExitCount != SE->getCouldNotCompute() && "Invalid loop count");
@@ -2653,11 +2658,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
                       "min.iters.check", VectorPH->getTerminator());
 
   Builder.SetInsertPoint(VectorPH->getTerminator());
-  Value *StartIdx = ExtendedIdx = ConstantInt::get(IdxTy, 0);
-
-  // Count holds the overall loop count (N).
-  Value *Count = Exp.expandCodeFor(ExitCount, ExitCount->getType(),
-                                   VectorPH->getTerminator());
+  Value *StartIdx = ConstantInt::get(IdxTy, 0);
 
   LoopBypassBlocks.push_back(VectorPH);
 
@@ -2711,24 +2712,13 @@ void InnerLoopVectorizer::createEmptyLoop() {
   setDebugLocFromInst(BypassBuilder,
                       getDebugLocFromInstOrOperands(OldInduction));
 
-  // We may need to extend the index in case there is a type mismatch.
-  // We know that the count starts at zero and does not overflow.
-  if (Count->getType() != IdxTy) {
-    // The exit count can be of pointer type. Convert it to the correct
-    // integer type.
-    if (ExitCount->getType()->isPointerTy())
-      Count = BypassBuilder.CreatePointerCast(Count, IdxTy, "ptrcnt.to.int");
-    else
-      Count = BypassBuilder.CreateZExtOrTrunc(Count, IdxTy, "cnt.cast");
-  }
-
   // Add the start index to the loop count to get the new end index.
-  Value *IdxEnd = BypassBuilder.CreateAdd(Count, StartIdx, "end.idx");
+  Value *IdxEnd = BypassBuilder.CreateAdd(ExitCountValue, StartIdx, "end.idx");
 
   // Now we need to generate the expression for N - (N % VF), which is
   // the part that the vectorized body will execute.
-  Value *R = BypassBuilder.CreateURem(Count, Step, "n.mod.vf");
-  Value *CountRoundDown = BypassBuilder.CreateSub(Count, R, "n.vec");
+  Value *R = BypassBuilder.CreateURem(ExitCountValue, Step, "n.mod.vf");
+  Value *CountRoundDown = BypassBuilder.CreateSub(ExitCountValue, R, "n.vec");
   Value *IdxEndRoundDown = BypassBuilder.CreateAdd(CountRoundDown, StartIdx,
                                                      "end.idx.rnd.down");
 
@@ -2804,7 +2794,9 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // If we come from a bypass edge then we need to start from the original
   // start value.
 
-  // This variable saves the new starting index for the scalar loop.
+  // This variable saves the new starting index for the scalar loop. It is used
+  // to test if there are any tail iterations left once the vector loop has
+  // completed.
   PHINode *ResumeIndex = nullptr;
   LoopVectorizationLegality::InductionList::iterator I, E;
   LoopVectorizationLegality::InductionList *List = Legal->getInductionVars();
@@ -2814,84 +2806,32 @@ void InnerLoopVectorizer::createEmptyLoop() {
     PHINode *OrigPhi = I->first;
     InductionDescriptor II = I->second;
 
-    Type *ResumeValTy = (OrigPhi == OldInduction) ? IdxTy : OrigPhi->getType();
-    PHINode *ResumeVal = PHINode::Create(ResumeValTy, 2, "resume.val",
+    PHINode *ResumeVal = PHINode::Create(OrigPhi->getType(), 2, "resume.val",
                                          MiddleBlock->getTerminator());
-    // We might have extended the type of the induction variable but we need a
-    // truncated version for the scalar loop.
-    PHINode *TruncResumeVal = (OrigPhi == OldInduction) ?
-      PHINode::Create(OrigPhi->getType(), 2, "trunc.resume.val",
-                      MiddleBlock->getTerminator()) : nullptr;
-
     // Create phi nodes to merge from the  backedge-taken check block.
-    PHINode *BCResumeVal = PHINode::Create(ResumeValTy, 3, "bc.resume.val",
+    PHINode *BCResumeVal = PHINode::Create(OrigPhi->getType(), 3,
+                                           "bc.resume.val",
                                            ScalarPH->getTerminator());
     BCResumeVal->addIncoming(ResumeVal, MiddleBlock);
 
-    PHINode *BCTruncResumeVal = nullptr;
+    Value *EndValue;
     if (OrigPhi == OldInduction) {
-      BCTruncResumeVal =
-          PHINode::Create(OrigPhi->getType(), 2, "bc.trunc.resume.val",
-                          ScalarPH->getTerminator());
-      BCTruncResumeVal->addIncoming(TruncResumeVal, MiddleBlock);
-    }
-
-    Value *EndValue = nullptr;
-    switch (II.getKind()) {
-    case InductionDescriptor::IK_NoInduction:
-      llvm_unreachable("Unknown induction");
-    case InductionDescriptor::IK_IntInduction: {
-      // Handle the integer induction counter.
-      assert(OrigPhi->getType()->isIntegerTy() && "Invalid type");
-
-      // We have the canonical induction variable.
-      if (OrigPhi == OldInduction) {
-        // Create a truncated version of the resume value for the scalar loop,
-        // we might have promoted the type to a larger width.
-        EndValue =
-          BypassBuilder.CreateTrunc(IdxEndRoundDown, OrigPhi->getType());
-        // The new PHI merges the original incoming value, in case of a bypass,
-        // or the value at the end of the vectorized loop.
-        for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
-          TruncResumeVal->addIncoming(II.getStartValue(), LoopBypassBlocks[I]);
-        TruncResumeVal->addIncoming(EndValue, VecBody);
-
-        BCTruncResumeVal->addIncoming(II.getStartValue(), LoopBypassBlocks[0]);
-
-        // We know what the end value is.
-        EndValue = IdxEndRoundDown;
-        // We also know which PHI node holds it.
-        ResumeIndex = ResumeVal;
-        break;
-      }
-
-      // Not the canonical induction variable - add the vector loop count to the
-      // start value.
-      Value *CRD = BypassBuilder.CreateSExtOrTrunc(CountRoundDown,
-                                                   II.getStartValue()->getType(),
-                                                   "cast.crd");
-      EndValue = II.transform(BypassBuilder, CRD);
-      EndValue->setName("ind.end");
-      break;
-    }
-    case InductionDescriptor::IK_PtrInduction: {
+      // We know what the end value is.
+      EndValue = IdxEndRoundDown;
+      // We also know which PHI node holds it.
+      ResumeIndex = ResumeVal;
+    } else {
       Value *CRD = BypassBuilder.CreateSExtOrTrunc(CountRoundDown,
                                                    II.getStepValue()->getType(),
                                                    "cast.crd");
       EndValue = II.transform(BypassBuilder, CRD);
-      EndValue->setName("ptr.ind.end");
-      break;
+      EndValue->setName("ind.end");
     }
-    }// end of case
 
     // The new PHI merges the original incoming value, in case of a bypass,
     // or the value at the end of the vectorized loop.
-    for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I) {
-      if (OrigPhi == OldInduction)
-        ResumeVal->addIncoming(StartIdx, LoopBypassBlocks[I]);
-      else
-        ResumeVal->addIncoming(II.getStartValue(), LoopBypassBlocks[I]);
-    }
+    for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
+      ResumeVal->addIncoming(II.getStartValue(), LoopBypassBlocks[I]);
     ResumeVal->addIncoming(EndValue, VecBody);
 
     // Fix the scalar body counter (PHI node).
@@ -2899,13 +2839,8 @@ void InnerLoopVectorizer::createEmptyLoop() {
 
     // The old induction's phi node in the scalar body needs the truncated
     // value.
-    if (OrigPhi == OldInduction) {
-      BCResumeVal->addIncoming(StartIdx, LoopBypassBlocks[0]);
-      OrigPhi->setIncomingValue(BlockIdx, BCTruncResumeVal);
-    } else {
-      BCResumeVal->addIncoming(II.getStartValue(), LoopBypassBlocks[0]);
-      OrigPhi->setIncomingValue(BlockIdx, BCResumeVal);
-    }
+    BCResumeVal->addIncoming(II.getStartValue(), LoopBypassBlocks[0]);
+    OrigPhi->setIncomingValue(BlockIdx, BCResumeVal);
   }
 
   // If we are generating a new induction variable then we also need to
@@ -3526,20 +3461,15 @@ void InnerLoopVectorizer::widenPHIInstruction(Instruction *PN,
       llvm_unreachable("Unknown induction");
     case InductionDescriptor::IK_IntInduction: {
       assert(P->getType() == II.getStartValue()->getType() && "Types must match");
-      Type *PhiTy = P->getType();
-      Value *Broadcasted;
-      if (P == OldInduction) {
-        // Handle the canonical induction variable. We might have had to
-        // extend the type.
-        Broadcasted = Builder.CreateTrunc(Induction, PhiTy);
-      } else {
-        // Handle other induction variables that are now based on the
-        // canonical one.
-        auto *V = Builder.CreateSExtOrTrunc(Induction, PhiTy);
-        Broadcasted = II.transform(Builder, V);
-        Broadcasted->setName("offset.idx");
+      // Handle other induction variables that are now based on the
+      // canonical one.
+      Value *V = Induction;
+      if (P != OldInduction) {
+        V = Builder.CreateSExtOrTrunc(Induction, P->getType());
+        V = II.transform(Builder, V);
+        V->setName("offset.idx");
       }
-      Broadcasted = getBroadcastInstrs(Broadcasted);
+      Value *Broadcasted = getBroadcastInstrs(V);
       // After broadcasting the induction variable we need to make the vector
       // consecutive by adding 0, 1, 2, etc.
       for (unsigned part = 0; part < UF; ++part)
@@ -3550,17 +3480,15 @@ void InnerLoopVectorizer::widenPHIInstruction(Instruction *PN,
       // Handle the pointer induction variable case.
       assert(P->getType()->isPointerTy() && "Unexpected type.");
       // This is the normalized GEP that starts counting at zero.
-      Value *NormalizedIdx =
-          Builder.CreateSub(Induction, ExtendedIdx, "normalized.idx");
-      NormalizedIdx =
-          Builder.CreateSExtOrTrunc(NormalizedIdx, II.getStepValue()->getType());
+      Value *PtrInd = Induction;
+      PtrInd = Builder.CreateSExtOrTrunc(PtrInd, II.getStepValue()->getType());
       // This is the vector of results. Notice that we don't generate
       // vector geps because scalar geps result in better code.
       for (unsigned part = 0; part < UF; ++part) {
         if (VF == 1) {
           int EltIndex = part;
-          Constant *Idx = ConstantInt::get(NormalizedIdx->getType(), EltIndex);
-          Value *GlobalIdx = Builder.CreateAdd(NormalizedIdx, Idx);
+          Constant *Idx = ConstantInt::get(PtrInd->getType(), EltIndex);
+          Value *GlobalIdx = Builder.CreateAdd(PtrInd, Idx);
           Value *SclrGep = II.transform(Builder, GlobalIdx);
           SclrGep->setName("next.gep");
           Entry[part] = SclrGep;
@@ -3570,8 +3498,8 @@ void InnerLoopVectorizer::widenPHIInstruction(Instruction *PN,
         Value *VecVal = UndefValue::get(VectorType::get(P->getType(), VF));
         for (unsigned int i = 0; i < VF; ++i) {
           int EltIndex = i + part * VF;
-          Constant *Idx = ConstantInt::get(NormalizedIdx->getType(), EltIndex);
-          Value *GlobalIdx = Builder.CreateAdd(NormalizedIdx, Idx);
+          Constant *Idx = ConstantInt::get(PtrInd->getType(), EltIndex);
+          Value *GlobalIdx = Builder.CreateAdd(PtrInd, Idx);
           Value *SclrGep = II.transform(Builder, GlobalIdx);
           SclrGep->setName("next.gep");
           VecVal = Builder.CreateInsertElement(VecVal, SclrGep,
@@ -4238,6 +4166,12 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
       return false;
     }
   }
+
+  // Now we know the widest induction type, check if our found induction
+  // is the same size. If it's not, unset it here and InnerLoopVectorizer
+  // will create another.
+  if (Induction && WidestIndTy != Induction->getType())
+    Induction = nullptr;
 
   return true;
 }
