@@ -23,6 +23,7 @@ class ThreadStateTestCase(TestBase):
     @expectedFailureDarwin("rdar://15367566")
     @expectedFailureFreeBSD('llvm.org/pr15824')
     @expectedFailureLinux("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureWindows("llvm.org/pr24668") # Breakpoints not resolved correctly
     @dwarf_test
     def test_state_after_breakpoint_with_dwarf(self):
         """Test thread state after breakpoint."""
@@ -73,6 +74,7 @@ class ThreadStateTestCase(TestBase):
 
     @dwarf_test
     @unittest2.expectedFailure("llvm.org/pr16712") # thread states not properly maintained
+    @expectedFailureWindows("llvm.org/pr24668") # Breakpoints not resolved correctly
     def test_process_interrupt_with_dwarf(self):
         """Test process interrupt."""
         self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
@@ -88,6 +90,7 @@ class ThreadStateTestCase(TestBase):
 
     @dwarf_test
     @unittest2.expectedFailure("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureWindows("llvm.org/pr24668") # Breakpoints not resolved correctly
     def test_process_state_with_dwarf(self):
         """Test thread states (comprehensive)."""
         self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))

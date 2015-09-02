@@ -39,6 +39,7 @@ class CreateDuringStepTestCase(TestBase):
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @expectedFailureLinux("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureWindows("llvm.org/pr24668") # Breakpoints not resolved correctly
     @dwarf_test
     def test_step_inst_with_dwarf(self):
         """Test thread creation during step-inst handling."""
@@ -48,6 +49,7 @@ class CreateDuringStepTestCase(TestBase):
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @expectedFailureLinux("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureWindows("llvm.org/pr24668") # Breakpoints not resolved correctly
     @dwarf_test
     def test_step_over_with_dwarf(self):
         """Test thread creation during step-over handling."""
@@ -57,6 +59,7 @@ class CreateDuringStepTestCase(TestBase):
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @expectedFailureLinux("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureWindows("llvm.org/pr24668") # Breakpoints not resolved correctly
     @dwarf_test
     def test_step_in_with_dwarf(self):
         """Test thread creation during step-in handling."""
