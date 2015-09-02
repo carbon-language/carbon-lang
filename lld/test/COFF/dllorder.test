@@ -6,10 +6,9 @@
 # RUN: rm -f %tlib/lib2.lib
 
 # RUN: echo EXPORTS sym1 > %t1.def
-# RUN: lib /nologo /machine:amd64 /def:%t1.def /out:%tlib\\lib1.lib > /dev/null
-
 # RUN: echo EXPORTS sym2 > %t2.def
-# RUN: lib /nologo /machine:amd64 /def:%t2.def /out:%tlib\\lib2.lib > /dev/null
+# RUN: lib /nologo /machine:amd64 /def:%t1.def /out:%tlib\lib1.lib
+# RUN: lib /nologo /machine:amd64 /def:%t2.def /out:%tlib\lib2.lib
 
 # RUN: lld-link /out:%t1.exe /entry:main /libpath:%tlib %t.obj /defaultlib:lib1 /defaultlib:lib2
 # RUN: lld-link /out:%t2.exe /entry:main /libpath:%tlib %t.obj /defaultlib:lib2 /defaultlib:lib1
