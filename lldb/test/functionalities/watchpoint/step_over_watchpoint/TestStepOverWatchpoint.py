@@ -22,6 +22,7 @@ class TestStepOverWatchpoint(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446")
     def test_with_dwarf(self):
         """Test stepping over watchpoints."""
         self.buildDwarf()

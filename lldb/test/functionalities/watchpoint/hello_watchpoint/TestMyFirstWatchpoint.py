@@ -24,6 +24,7 @@ class HelloWatchpointTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446")
     def test_hello_watchpoint_with_dwarf_using_watchpoint_set(self):
         """Test a simple sequence of watchpoint creation and watchpoint hit."""
         self.buildDwarf(dictionary=self.d)

@@ -33,6 +33,7 @@ class TargetWatchAddressAPITestCase(TestBase):
     @python_api_test
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446")
     def test_watch_address_with_dwarf(self):
         """Exercise SBTarget.WatchAddress() API to set a watchpoint."""
         self.buildDwarf()
