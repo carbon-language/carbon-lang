@@ -789,4 +789,14 @@ TEST(Support, NormalizePath) {
 
 #undef EXPECT_PATH_IS
 }
+
+TEST(Support, RemoveLeadingDotSlash) {
+  StringRef Path1("././/foolz/wat");
+  StringRef Path2("./////");
+
+  Path1 = path::remove_leading_dotslash(Path1);
+  EXPECT_EQ(Path1, "foolz/wat");
+  Path2 = path::remove_leading_dotslash(Path2);
+  EXPECT_EQ(Path2, "");
+}
 } // anonymous namespace

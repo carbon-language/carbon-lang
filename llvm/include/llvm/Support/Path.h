@@ -401,6 +401,12 @@ bool is_absolute(const Twine &path);
 /// @result True if the path is relative, false if it is not.
 bool is_relative(const Twine &path);
 
+/// @brief Remove redundant leading "./" pieces and consecutive separators.
+///
+/// @param path Input path.
+/// @result The cleaned-up \a path.
+StringRef remove_leading_dotslash(StringRef path);
+
 } // end namespace path
 } // end namespace sys
 } // end namespace llvm

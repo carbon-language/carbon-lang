@@ -661,8 +661,16 @@ bool is_absolute(const Twine &path) {
   return rootDir && rootName;
 }
 
-bool is_relative(const Twine &path) {
-  return !is_absolute(path);
+bool is_relative(const Twine &path) { return !is_absolute(path); }
+
+StringRef remove_leading_dotslash(StringRef Path) {
+  // Remove leading "./" (or ".//" or "././" etc.)
+  while (Path.size() > 2 && Path[0] == '.' && is_separator(Path[1])) {
+    Path = Path.substr(2);
+    while (Path.size() > 0 && is_separator(Path[0]))
+      Path = Path.substr(1);
+  }
+  return Path;
 }
 
 } // end namespace path
