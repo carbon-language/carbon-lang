@@ -1024,7 +1024,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   // doing as a post process step is easier to reason about for the moment.
   DenseMap<Value *, Value *> ReverseMap;
   SmallPtrSet<Instruction *, 16> NewInsts;
-  SmallSetVector<Instruction *, 16> Worklist;
+  SmallSetVector<AssertingVH<Instruction>, 16> Worklist;
   for (auto Item : states) {
     Value *V = Item.first;
     Value *Base = Item.second.getBase();
@@ -1041,11 +1041,21 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
       Worklist.insert(BaseI);
     }
   }
-  auto PushNewUsers = [&](Instruction *I) {
-    for (User *U : I->users())
+  auto ReplaceBaseInstWith = [&](Value *BDV, Instruction *BaseI,
+                                 Value *Replacement) {
+    // Add users which are new instructions (excluding self references)
+    for (User *U : BaseI->users())
       if (auto *UI = dyn_cast<Instruction>(U))
-        if (NewInsts.count(UI))
+        if (NewInsts.count(UI) && UI != BaseI)
           Worklist.insert(UI);
+    // Then do the actual replacement
+    NewInsts.erase(BaseI);
+    ReverseMap.erase(BaseI);
+    BaseI->replaceAllUsesWith(Replacement);
+    BaseI->eraseFromParent();
+    assert(states.count(BDV));
+    assert(states[BDV].isConflict() && states[BDV].getBase() == BaseI);
+    states[BDV] = BDVState(BDVState::Conflict, Replacement);
   };
   const DataLayout &DL = cast<Instruction>(def)->getModule()->getDataLayout();
   while (!Worklist.empty()) {
@@ -1055,22 +1065,12 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     if (auto *BdvI = dyn_cast<Instruction>(Bdv))
       if (BaseI->isIdenticalTo(BdvI)) {
         DEBUG(dbgs() << "Identical Base: " << *BaseI << "\n");
-        PushNewUsers(BaseI);
-        BaseI->replaceAllUsesWith(Bdv);
-        BaseI->eraseFromParent();
-        states[Bdv] = BDVState(BDVState::Conflict, Bdv);
-        NewInsts.erase(BaseI);
-        ReverseMap.erase(BaseI);
+        ReplaceBaseInstWith(Bdv, BaseI, Bdv);
         continue;
       }
     if (Value *V = SimplifyInstruction(BaseI, DL)) {
       DEBUG(dbgs() << "Base " << *BaseI << " simplified to " << *V << "\n");
-      PushNewUsers(BaseI);
-      BaseI->replaceAllUsesWith(V);
-      BaseI->eraseFromParent();
-      states[Bdv] = BDVState(BDVState::Conflict, V);
-      NewInsts.erase(BaseI);
-      ReverseMap.erase(BaseI);
+      ReplaceBaseInstWith(Bdv, BaseI, V);
       continue;
     }
   }
