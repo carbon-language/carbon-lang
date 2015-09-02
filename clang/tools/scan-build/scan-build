@@ -24,8 +24,8 @@ use Term::ANSIColor;
 use Term::ANSIColor qw(:constants);
 use Cwd qw/ getcwd abs_path /;
 use Sys::Hostname;
+use Hash::Util qw(lock_keys);
 
-my $Verbose = 0;       # Verbose output from this script.
 my $Prog = "scan-build";
 my $BuildName;
 my $BuildDate;
@@ -39,14 +39,39 @@ my $UseColor = (defined $TERM and $TERM =~ 'xterm-.*color' and -t STDOUT
 my $UserName = HtmlEscape(getlogin() || getpwuid($<) || 'unknown');
 my $HostName = HtmlEscape(hostname() || 'unknown');
 my $CurrentDir = HtmlEscape(getcwd());
-my $CurrentDirSuffix = basename($CurrentDir);
 
-my @PluginsToLoad;
 my $CmdArgs;
 
-my $HtmlTitle;
-
 my $Date = localtime();
+
+# Command-line/config arguments.
+my %Options = (
+  Verbose => 0,              # Verbose output from this script.
+  AnalyzeHeaders => 0,
+  OutputDir => undef,        # Parent directory to store HTML files.
+  HtmlTitle => basename($CurrentDir)." - scan-build results",
+  IgnoreErrors => 0,         # Ignore build errors.
+  ViewResults => 0,          # View results when the build terminates.
+  ExitStatusFoundBugs => 0,  # Exit status reflects whether bugs were found
+  KeepEmpty => 0,            # Don't remove output directory even with 0 results.
+  EnableCheckers => [],
+  DisableCheckers => [],
+  UseCC => undef,            # C compiler to use for compilation.
+  UseCXX => undef,           # C++ compiler to use for compilation.
+  AnalyzerTarget => undef,
+  StoreModel => undef,
+  ConstraintsModel => undef,
+  InternalStats => undef,
+  OutputFormat => "html",
+  ConfigOptions => [],       # Options to pass through to the analyzer's -analyzer-config flag.
+  ReportFailures => undef,
+  AnalyzerStats => 0,
+  MaxLoop => 0,
+  PluginsToLoad => [],
+  AnalyzerDiscoveryMethod => undef,
+  OverrideCompiler => 0      # The flag corresponding to the --override-compiler command line option.
+);
+lock_keys(%Options);
 
 ##----------------------------------------------------------------------------##
 # Diagnostics
@@ -231,7 +256,7 @@ sub SetHtmlEnv {
     return;
   }
 
-  if ($Verbose) {
+  if ($Options{Verbose}) {
     Diag("Emitting reports for this run to '$Dir'.\n");
   }
 
@@ -582,7 +607,7 @@ sub Postprocess {
 print OUT <<ENDTEXT;
 <html>
 <head>
-<title>${HtmlTitle}</title>
+<title>${Options{HtmlTitle}}</title>
 <link type="text/css" rel="stylesheet" href="scanview.css"/>
 <script src="sorttable.js"></script>
 <script language='javascript' type="text/javascript">
@@ -637,7 +662,7 @@ function ToggleDisplay(CheckButton, ClassName) {
 <!-- SUMMARYENDHEAD -->
 </head>
 <body>
-<h1>${HtmlTitle}</h1>
+<h1>${Options{HtmlTitle}}</h1>
 
 <table>
 <tr><th>User:</th><td>${UserName}\@${HostName}</td></tr>
@@ -912,21 +937,25 @@ sub AddIfNotPresent {
 }
 
 sub SetEnv {
-  my $Options = shift @_;
-  foreach my $opt ('CC', 'CXX', 'CLANG', 'CLANG_CXX',
-                    'CCC_ANALYZER_ANALYSIS', 'CCC_ANALYZER_PLUGINS',
-                    'CCC_ANALYZER_CONFIG') {
-    die "$opt is undefined\n" if (!defined $opt);
-    $ENV{$opt} = $Options->{$opt};
+  my $EnvVars = shift @_;
+  foreach my $var ('CC', 'CXX', 'CLANG', 'CLANG_CXX',
+                   'CCC_ANALYZER_ANALYSIS', 'CCC_ANALYZER_PLUGINS',
+                   'CCC_ANALYZER_CONFIG') {
+    die "$var is undefined\n" if (!defined $var);
+    $ENV{$var} = $EnvVars->{$var};
   }
-  foreach my $opt ('CCC_ANALYZER_STORE_MODEL',
-                    'CCC_ANALYZER_CONSTRAINTS_MODEL',
-                    'CCC_ANALYZER_INTERNAL_STATS',
-                    'CCC_ANALYZER_OUTPUT_FORMAT') {
-    my $x = $Options->{$opt};
-    if (defined $x) { $ENV{$opt} = $x }
+  foreach my $var ('CCC_ANALYZER_STORE_MODEL',
+                   'CCC_ANALYZER_CONSTRAINTS_MODEL',
+                   'CCC_ANALYZER_INTERNAL_STATS',
+                   'CCC_ANALYZER_OUTPUT_FORMAT',
+                   'CCC_CC',
+                   'CCC_CXX',
+                   'CCC_REPORT_FAILURES',
+                   'CLANG_ANALYZER_TARGET') {
+    my $x = $EnvVars->{$var};
+    if (defined $x) { $ENV{$var} = $x }
   }
-  my $Verbose = $Options->{'VERBOSE'};
+  my $Verbose = $EnvVars->{'VERBOSE'};
   if ($Verbose >= 2) {
     $ENV{'CCC_ANALYZER_VERBOSE'} = 1;
   }
@@ -935,15 +964,12 @@ sub SetEnv {
   }
 }
 
-# The flag corresponding to the --override-compiler command line option.
-my $OverrideCompiler = 0;
-
 sub RunXcodebuild {
   my $Args = shift;
   my $IgnoreErrors = shift;
   my $CCAnalyzer = shift;
   my $CXXAnalyzer = shift;
-  my $Options = shift;
+  my $EnvVars = shift;
 
   if ($IgnoreErrors) {
     AddIfNotPresent($Args,"-PBXBuildsContinueAfterErrors=YES");
@@ -972,14 +998,14 @@ sub RunXcodebuild {
 
   # If --override-compiler is explicitely requested, resort to the old
   # behavior regardless of Xcode version.
-  if ($OverrideCompiler) {
+  if ($Options{OverrideCompiler}) {
     $oldBehavior = 1;
   }
 
   if ($oldBehavior == 0) {
-    my $OutputDir = $Options->{"OUTPUT_DIR"};
-    my $CLANG = $Options->{"CLANG"};
-    my $OtherFlags = $Options->{"CCC_ANALYZER_ANALYSIS"};
+    my $OutputDir = $EnvVars->{"OUTPUT_DIR"};
+    my $CLANG = $EnvVars->{"CLANG"};
+    my $OtherFlags = $EnvVars->{"CCC_ANALYZER_ANALYSIS"};
     push @$Args,
         "RUN_CLANG_STATIC_ANALYZER=YES",
         "CLANG_ANALYZER_OUTPUT=plist-html",
@@ -991,7 +1017,7 @@ sub RunXcodebuild {
   }
 
   # Default to old behavior where we insert a bogus compiler.
-  SetEnv($Options);
+  SetEnv($EnvVars);
 
   # Check if using iPhone SDK 3.0 (simulator).  If so the compiler being
   # used should be gcc-4.2.
@@ -1023,14 +1049,14 @@ sub RunBuildCommand {
   my $Cmd = $Args->[0];
   my $CCAnalyzer = shift;
   my $CXXAnalyzer = shift;
-  my $Options = shift;
+  my $EnvVars = shift;
 
   if ($Cmd =~ /\bxcodebuild$/) {
-    return RunXcodebuild($Args, $IgnoreErrors, $CCAnalyzer, $CXXAnalyzer, $Options);
+    return RunXcodebuild($Args, $IgnoreErrors, $CCAnalyzer, $CXXAnalyzer, $EnvVars);
   }
 
   # Setup the environment.
-  SetEnv($Options);
+  SetEnv($EnvVars);
 
   if ($Cmd =~ /(.*\/?gcc[^\/]*$)/ or
       $Cmd =~ /(.*\/?cc[^\/]*$)/ or
@@ -1237,10 +1263,13 @@ ENDTEXT
   # create a list to load the plugins via the 'Xclang' command line
   # argument
   my @PluginLoadCommandline_xclang;
-  foreach my $param ( @PluginsToLoad ) {
+  foreach my $param ( @{$Options{PluginsToLoad}} ) {
+    push ( @PluginLoadCommandline_xclang, "-Xclang" );
+    push ( @PluginLoadCommandline_xclang, "-load" );
     push ( @PluginLoadCommandline_xclang, "-Xclang" );
     push ( @PluginLoadCommandline_xclang, $param );
   }
+
   my %EnabledCheckers;
   foreach my $lang ("c", "objective-c", "objective-c++", "c++") {
     my $ExecLine = join(' ', qq/"$Clang"/, @PluginLoadCommandline_xclang, "--analyze", "-x", $lang, "-", "-###", "2>&1", "|");
@@ -1256,8 +1285,13 @@ ENDTEXT
   }
 
   # Query clang for complete list of checkers.
+  my @PluginLoadCommandline;
+  foreach my $param ( @{$Options{PluginsToLoad}} ) {
+    push ( @PluginLoadCommandline, "-load" );
+    push ( @PluginLoadCommandline, $param );
+  }
   if (defined $Clang && -x $Clang) {
-    my $ExecLine = join(' ', qq/"$Clang"/, "-cc1", @PluginsToLoad, "-analyzer-checker-help", "2>&1", "|");
+    my $ExecLine = join(' ', qq/"$Clang"/, "-cc1", @PluginLoadCommandline, "-analyzer-checker-help", "2>&1", "|");
     open(PS, $ExecLine);
     my $foundCheckers = 0;
     while (<PS>) {
@@ -1361,245 +1395,245 @@ sub ShellEscape {
 # Process command-line arguments.
 ##----------------------------------------------------------------------------##
 
-my $AnalyzeHeaders = 0;
-my $HtmlDir;           # Parent directory to store HTML files.
-my $IgnoreErrors = 0;  # Ignore build errors.
-my $ViewResults  = 0;  # View results when the build terminates.
-my $ExitStatusFoundBugs = 0; # Exit status reflects whether bugs were found
-my $KeepEmpty    = 0;  # Don't remove output directory even with 0 results.
-my @AnalysesToRun;
-my $StoreModel;
-my $ConstraintsModel;
-my $InternalStats;
-my @ConfigOptions;
-my $OutputFormat = "html";
-my $AnalyzerStats = 0;
-my $MaxLoop = 0;
 my $RequestDisplayHelp = 0;
 my $ForceDisplayHelp = 0;
-my $AnalyzerDiscoveryMethod;
+
+sub ProcessArgs {
+  my $Args = shift;
+ 
+  while (@$Args) {
+
+    # Scan for options we recognize.
+
+    my $arg = $Args->[0];
+
+    if ($arg eq "-h" or $arg eq "--help") {
+      $RequestDisplayHelp = 1;
+      shift @$Args;
+      next;
+    }
+
+    if ($arg eq '-analyze-headers') {
+      shift @$Args;
+      $Options{AnalyzeHeaders} = 1;
+      next;
+    }
+
+    if ($arg eq "-o") {
+      shift @$Args;
+
+      if (!@$Args) {
+        DieDiag("'-o' option requires a target directory name.\n");
+      }
+
+      # Construct an absolute path.  Uses the current working directory
+      # as a base if the original path was not absolute.
+      $Options{OutputDir} = abs_path(shift @$Args);
+
+      next;
+    }
+
+    if ($arg =~ /^--html-title(=(.+))?$/) {
+      shift @$Args;
+
+      if (!defined $2 || $2 eq '') {
+        if (!@$Args) {
+          DieDiag("'--html-title' option requires a string.\n");
+        }
+
+        $Options{HtmlTitle} = shift @$Args;
+      } else {
+        $Options{HtmlTitle} = $2;
+      }
+
+      next;
+    }
+
+    if ($arg eq "-k" or $arg eq "--keep-going") {
+      shift @$Args;
+      $Options{IgnoreErrors} = 1;
+      next;
+    }
+
+    if ($arg =~ /^--use-cc(=(.+))?$/) {
+      shift @$Args;
+      my $cc;
+
+      if (!defined $2 || $2 eq "") {
+        if (!@$Args) {
+          DieDiag("'--use-cc' option requires a compiler executable name.\n");
+        }
+        $cc = shift @$Args;
+      }
+      else {
+        $cc = $2;
+      }
+
+      $Options{UseCC} = $cc;
+      next;
+    }
+
+    if ($arg =~ /^--use-c\+\+(=(.+))?$/) {
+      shift @$Args;
+      my $cxx;
+
+      if (!defined $2 || $2 eq "") {
+        if (!@$Args) {
+          DieDiag("'--use-c++' option requires a compiler executable name.\n");
+        }
+        $cxx = shift @$Args;
+      }
+      else {
+        $cxx = $2;
+      }
+
+      $Options{UseCXX} = $cxx;
+      next;
+    }
+
+    if ($arg =~ /^--analyzer-target(=(.+))?$/) {
+      shift @ARGV;
+      my $AnalyzerTarget;
+
+      if (!defined $2 || $2 eq "") {
+        if (!@ARGV) {
+          DieDiag("'--analyzer-target' option requires a target triple name.\n");
+        }
+        $AnalyzerTarget = shift @ARGV;
+      }
+      else {
+        $AnalyzerTarget = $2;
+      }
+
+      $Options{AnalyzerTarget} = $AnalyzerTarget;
+      next;
+    }
+
+    if ($arg eq "-v") {
+      shift @$Args;
+      $Options{Verbose}++;
+      next;
+    }
+
+    if ($arg eq "-V" or $arg eq "--view") {
+      shift @$Args;
+      $Options{ViewResults} = 1;
+      next;
+    }
+
+    if ($arg eq "--status-bugs") {
+      shift @$Args;
+      $Options{ExitStatusFoundBugs} = 1;
+      next;
+    }
+
+    if ($arg eq "-store") {
+      shift @$Args;
+      $Options{StoreModel} = shift @$Args;
+      next;
+    }
+
+    if ($arg eq "-constraints") {
+      shift @$Args;
+      $Options{ConstraintsModel} = shift @$Args;
+      next;
+    }
+
+    if ($arg eq "-internal-stats") {
+      shift @$Args;
+      $Options{InternalStats} = 1;
+      next;
+    }
+
+    if ($arg eq "-plist") {
+      shift @$Args;
+      $Options{OutputFormat} = "plist";
+      next;
+    }
+
+    if ($arg eq "-plist-html") {
+      shift @$Args;
+      $Options{OutputFormat} = "plist-html";
+      next;
+    }
+
+    if ($arg eq "-analyzer-config") {
+      shift @$Args;
+      push @{$Options{ConfigOptions}}, shift @$Args;
+      next;
+    }
+
+    if ($arg eq "-no-failure-reports") {
+      shift @$Args;
+      $Options{ReportFailures} = 0;
+      next;
+    }
+
+    if ($arg eq "-stats") {
+      shift @$Args;
+      $Options{AnalyzerStats} = 1;
+      next;
+    }
+
+    if ($arg eq "-maxloop") {
+      shift @$Args;
+      $Options{MaxLoop} = shift @$Args;
+      next;
+    }
+
+    if ($arg eq "-enable-checker") {
+      shift @$Args;
+      push @{$Options{EnableCheckers}}, shift @$Args;
+      next;
+    }
+
+    if ($arg eq "-disable-checker") {
+      shift @$Args;
+      push @{$Options{DisableCheckers}}, shift @$Args;
+      next;
+    }
+
+    if ($arg eq "-load-plugin") {
+      shift @$Args;
+      push @{$Options{PluginsToLoad}}, shift @$Args;
+      next;
+    }
+
+    if ($arg eq "--use-analyzer") {
+      shift @$Args;
+      $Options{AnalyzerDiscoveryMethod} = shift @$Args;
+      next;
+    }
+
+    if ($arg =~ /^--use-analyzer=(.+)$/) {
+      shift @$Args;
+      $Options{AnalyzerDiscoveryMethod} = $1;
+      next;
+    }
+
+    if ($arg eq "--keep-empty") {
+      shift @$Args;
+      $Options{KeepEmpty} = 1;
+      next;
+    }
+
+    if ($arg eq "--override-compiler") {
+      shift @$Args;
+      $Options{OverrideCompiler} = 1;
+      next;
+    }
+
+    DieDiag("unrecognized option '$arg'\n") if ($arg =~ /^-/);
+
+    last;
+  }
+}
 
 if (!@ARGV) {
   $ForceDisplayHelp = 1
 }
 
-while (@ARGV) {
-
-  # Scan for options we recognize.
-
-  my $arg = $ARGV[0];
-
-  if ($arg eq "-h" or $arg eq "--help") {
-    $RequestDisplayHelp = 1;
-    shift @ARGV;
-    next;
-  }
-
-  if ($arg eq '-analyze-headers') {
-    shift @ARGV;
-    $AnalyzeHeaders = 1;
-    next;
-  }
-
-  if ($arg eq "-o") {
-    shift @ARGV;
-
-    if (!@ARGV) {
-      DieDiag("'-o' option requires a target directory name.\n");
-    }
-
-    # Construct an absolute path.  Uses the current working directory
-    # as a base if the original path was not absolute.
-    $HtmlDir = abs_path(shift @ARGV);
-
-    next;
-  }
-
-  if ($arg =~ /^--html-title(=(.+))?$/) {
-    shift @ARGV;
-
-    if (!defined $2 || $2 eq '') {
-      if (!@ARGV) {
-        DieDiag("'--html-title' option requires a string.\n");
-      }
-
-      $HtmlTitle = shift @ARGV;
-    } else {
-      $HtmlTitle = $2;
-    }
-
-    next;
-  }
-
-  if ($arg eq "-k" or $arg eq "--keep-going") {
-    shift @ARGV;
-    $IgnoreErrors = 1;
-    next;
-  }
-
-  if ($arg =~ /^--use-cc(=(.+))?$/) {
-    shift @ARGV;
-    my $cc;
-
-    if (!defined $2 || $2 eq "") {
-      if (!@ARGV) {
-        DieDiag("'--use-cc' option requires a compiler executable name.\n");
-      }
-      $cc = shift @ARGV;
-    }
-    else {
-      $cc = $2;
-    }
-
-    $ENV{"CCC_CC"} = $cc;
-    next;
-  }
-
-  if ($arg =~ /^--use-c\+\+(=(.+))?$/) {
-    shift @ARGV;
-    my $cxx;
-
-    if (!defined $2 || $2 eq "") {
-      if (!@ARGV) {
-        DieDiag("'--use-c++' option requires a compiler executable name.\n");
-      }
-      $cxx = shift @ARGV;
-    }
-    else {
-      $cxx = $2;
-    }
-
-    $ENV{"CCC_CXX"} = $cxx;
-    next;
-  }
-
-  if ($arg =~ /^--analyzer-target(=(.+))?$/) {
-    shift @ARGV;
-    my $AnalyzerTarget;
-
-    if (!defined $2 || $2 eq "") {
-      if (!@ARGV) {
-        DieDiag("'--analyzer-target' option requires a target triple name.\n");
-      }
-      $AnalyzerTarget = shift @ARGV;
-    }
-    else {
-      $AnalyzerTarget = $2;
-    }
-
-    $ENV{"CLANG_ANALYZER_TARGET"} = $AnalyzerTarget;
-    next;
-  }
-
-  if ($arg eq "-v") {
-    shift @ARGV;
-    $Verbose++;
-    next;
-  }
-
-  if ($arg eq "-V" or $arg eq "--view") {
-    shift @ARGV;
-    $ViewResults = 1;
-    next;
-  }
-
-  if ($arg eq "--status-bugs") {
-    shift @ARGV;
-    $ExitStatusFoundBugs = 1;
-    next;
-  }
-
-  if ($arg eq "-store") {
-    shift @ARGV;
-    $StoreModel = shift @ARGV;
-    next;
-  }
-
-  if ($arg eq "-constraints") {
-    shift @ARGV;
-    $ConstraintsModel = shift @ARGV;
-    next;
-  }
-
-  if ($arg eq "-internal-stats") {
-    shift @ARGV;
-    $InternalStats = 1;
-    next;
-  }
-
-  if ($arg eq "-plist") {
-    shift @ARGV;
-    $OutputFormat = "plist";
-    next;
-  }
-  if ($arg eq "-plist-html") {
-    shift @ARGV;
-    $OutputFormat = "plist-html";
-    next;
-  }
-
-  if ($arg eq "-analyzer-config") {
-    shift @ARGV;
-    push @ConfigOptions, "-analyzer-config", shift @ARGV;
-    next;
-  }
-
-  if ($arg eq "-no-failure-reports") {
-    shift @ARGV;
-    $ENV{"CCC_REPORT_FAILURES"} = 0;
-    next;
-  }
-  if ($arg eq "-stats") {
-    shift @ARGV;
-    $AnalyzerStats = 1;
-    next;
-  }
-  if ($arg eq "-maxloop") {
-    shift @ARGV;
-    $MaxLoop = shift @ARGV;
-    next;
-  }
-  if ($arg eq "-enable-checker") {
-    shift @ARGV;
-    push @AnalysesToRun, "-analyzer-checker", shift @ARGV;
-    next;
-  }
-  if ($arg eq "-disable-checker") {
-    shift @ARGV;
-    push @AnalysesToRun, "-analyzer-disable-checker", shift @ARGV;
-    next;
-  }
-  if ($arg eq "-load-plugin") {
-    shift @ARGV;
-    push @PluginsToLoad, "-load", shift @ARGV;
-    next;
-  }
-  if ($arg eq "--use-analyzer") {
-     shift @ARGV;
-      $AnalyzerDiscoveryMethod = shift @ARGV;
-    next;
-  }
-  if ($arg =~ /^--use-analyzer=(.+)$/) {
-    shift @ARGV;
-    $AnalyzerDiscoveryMethod = $1;
-    next;
-  }
-  if ($arg eq "--keep-empty") {
-    shift @ARGV;
-    $KeepEmpty = 1;
-    next;
-  }
-
-  if ($arg eq "--override-compiler") {
-    shift @ARGV;
-    $OverrideCompiler = 1;
-    next;
-  }
-
-  DieDiag("unrecognized option '$arg'\n") if ($arg =~ /^-/);
-
-  last;
-}
+ProcessArgs(\@ARGV);
 
 if (!@ARGV and !$RequestDisplayHelp) {
   ErrorDiag("No build command specified.\n\n");
@@ -1607,7 +1641,7 @@ if (!@ARGV and !$RequestDisplayHelp) {
 }
 
 # Find 'clang'
-if (!defined $AnalyzerDiscoveryMethod) {
+if (!defined $Options{AnalyzerDiscoveryMethod}) {
   $Clang = Cwd::realpath("$RealBin/bin/clang");
   if (!defined $Clang || ! -x $Clang) {
     $Clang = Cwd::realpath("$RealBin/clang");
@@ -1620,7 +1654,7 @@ if (!defined $AnalyzerDiscoveryMethod) {
   }
 }
 else {
-  if ($AnalyzerDiscoveryMethod =~ /^[Xx]code$/) {
+  if ($Options{AnalyzerDiscoveryMethod} =~ /^[Xx]code$/) {
     my $xcrun = `which xcrun`;
     chomp $xcrun;
     if ($xcrun eq "") {
@@ -1633,9 +1667,9 @@ else {
     }
   }
   else {
-    $Clang = $AnalyzerDiscoveryMethod;
+    $Clang = $Options{AnalyzerDiscoveryMethod};
     if (!defined $Clang or not -x $Clang) {
-         DieDiag("Cannot find an executable clang at '$AnalyzerDiscoveryMethod'\n");
+      DieDiag("Cannot find an executable clang at '$Options{AnalyzerDiscoveryMethod}'\n");
     }
   }
 }
@@ -1667,12 +1701,10 @@ $ClangVersion = HtmlEscape(`"$Clang" --version`);
 
 # Determine where results go.
 $CmdArgs = HtmlEscape(join(' ', map(ShellEscape($_), @ARGV)));
-$HtmlTitle = "${CurrentDirSuffix} - scan-build results"
-  unless (defined($HtmlTitle));
 
 # Determine the output directory for the HTML reports.
-my $BaseDir = $HtmlDir;
-$HtmlDir = GetHTMLRunDir($HtmlDir);
+my $BaseDir = $Options{OutputDir};
+$Options{OutputDir} = GetHTMLRunDir($Options{OutputDir});
 
 # Determine the location of ccc-analyzer.
 my $AbsRealBin = Cwd::realpath($RealBin);
@@ -1694,63 +1726,63 @@ if (!defined $CmdCXX || ! -e $CmdCXX) {
 
 Diag("Using '$Clang' for static analysis\n");
 
-SetHtmlEnv(\@ARGV, $HtmlDir);
-if ($AnalyzeHeaders) { push @AnalysesToRun,"-analyzer-opt-analyze-headers"; }
-if ($AnalyzerStats) { push @AnalysesToRun, '-analyzer-checker=debug.Stats'; }
-if ($MaxLoop > 0) { push @AnalysesToRun, "-analyzer-max-loop $MaxLoop"; }
+SetHtmlEnv(\@ARGV, $Options{OutputDir});
+
+my @AnalysesToRun;
+foreach (@{$Options{EnableCheckers}}) { push @AnalysesToRun, "-analyzer-checker", $_; }
+foreach (@{$Options{DisableCheckers}}) { push @AnalysesToRun, "-analyzer-disable-checker", $_; }
+if ($Options{AnalyzeHeaders}) { push @AnalysesToRun, "-analyzer-opt-analyze-headers"; }
+if ($Options{AnalyzerStats}) { push @AnalysesToRun, '-analyzer-checker=debug.Stats'; }
+if ($Options{MaxLoop} > 0) { push @AnalysesToRun, "-analyzer-max-loop $Options{MaxLoop}"; }
 
 # Delay setting up other environment variables in case we can do true
 # interposition.
-my $CCC_ANALYZER_ANALYSIS = join ' ',@AnalysesToRun;
-my $CCC_ANALYZER_PLUGINS = join ' ',@PluginsToLoad;
-my $CCC_ANALYZER_CONFIG = join ' ',@ConfigOptions;
-my %Options = (
+my $CCC_ANALYZER_ANALYSIS = join ' ', @AnalysesToRun;
+my $CCC_ANALYZER_PLUGINS = join ' ', map { "-load ".$_ } @{$Options{PluginsToLoad}};
+my $CCC_ANALYZER_CONFIG = join ' ', map { "-analyzer-config ".$_ } @{$Options{ConfigOptions}};
+my %EnvVars = (
   'CC' => $Cmd,
   'CXX' => $CmdCXX,
   'CLANG' => $Clang,
   'CLANG_CXX' => $ClangCXX,
-  'VERBOSE' => $Verbose,
+  'VERBOSE' => $Options{Verbose},
   'CCC_ANALYZER_ANALYSIS' => $CCC_ANALYZER_ANALYSIS,
   'CCC_ANALYZER_PLUGINS' => $CCC_ANALYZER_PLUGINS,
   'CCC_ANALYZER_CONFIG' => $CCC_ANALYZER_CONFIG,
-  'OUTPUT_DIR' => $HtmlDir
+  'OUTPUT_DIR' => $Options{OutputDir},
+  'CCC_CC' => $Options{UseCC},
+  'CCC_CXX' => $Options{UseCXX},
+  'CCC_REPORT_FAILURES' => $Options{ReportFailures},
+  'CCC_ANALYZER_STORE_MODEL' => $Options{StoreModel},
+  'CCC_ANALYZER_CONSTRAINTS_MODEL' => $Options{ConstraintsModel},
+  'CCC_ANALYZER_INTERNAL_STATS' => $Options{InternalStats},
+  'CCC_ANALYZER_OUTPUT_FORMAT' => $Options{OutputFormat},
+  'CLANG_ANALYZER_TARGET' => $Options{AnalyzerTarget}
 );
 
-if (defined $StoreModel) {
-  $Options{'CCC_ANALYZER_STORE_MODEL'} = $StoreModel;
-}
-if (defined $ConstraintsModel) {
-  $Options{'CCC_ANALYZER_CONSTRAINTS_MODEL'} = $ConstraintsModel;
-}
-if (defined $InternalStats) {
-  $Options{'CCC_ANALYZER_INTERNAL_STATS'} = 1;
-}
-if (defined $OutputFormat) {
-  $Options{'CCC_ANALYZER_OUTPUT_FORMAT'} = $OutputFormat;
-}
-
 # Run the build.
-my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd, $CmdCXX,
-                                \%Options);
+my $ExitStatus = RunBuildCommand(\@ARGV, $Options{IgnoreErrors}, $Cmd, $CmdCXX,
+                                \%EnvVars);
 
-if (defined $OutputFormat) {
-  if ($OutputFormat =~ /plist/) {
+if (defined $Options{OutputFormat}) {
+  if ($Options{OutputFormat} =~ /plist/) {
     Diag "Analysis run complete.\n";
-    Diag "Analysis results (plist files) deposited in '$HtmlDir'\n";
+    Diag "Analysis results (plist files) deposited in '$Options{OutputDir}'\n";
   }
-  if ($OutputFormat =~ /html/) {
+  if ($Options{OutputFormat} =~ /html/) {
     # Postprocess the HTML directory.
-    my $NumBugs = Postprocess($HtmlDir, $BaseDir, $AnalyzerStats, $KeepEmpty);
+    my $NumBugs = Postprocess($Options{OutputDir}, $BaseDir,
+                              $Options{AnalyzerStats}, $Options{KeepEmpty});
 
-    if ($ViewResults and -r "$HtmlDir/index.html") {
+    if ($Options{ViewResults} and -r "$Options{OutputDir}/index.html") {
       Diag "Analysis run complete.\n";
-      Diag "Viewing analysis results in '$HtmlDir' using scan-view.\n";
+      Diag "Viewing analysis results in '$Options{OutputDir}' using scan-view.\n";
       my $ScanView = Cwd::realpath("$RealBin/scan-view");
       if (! -x $ScanView) { $ScanView = "scan-view"; }
-      exec $ScanView, "$HtmlDir";
+      exec $ScanView, "$Options{OutputDir}";
     }
 
-    if ($ExitStatusFoundBugs) {
+    if ($Options{ExitStatusFoundBugs}) {
       exit 1 if ($NumBugs > 0);
       exit 0;
     }
