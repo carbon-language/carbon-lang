@@ -263,21 +263,21 @@ DEFINE_REAL_PTHREAD_FUNCTIONS
 
 #if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
 
-#if SANITIZER_ANDROID && !defined(_LP64)
+#if SANITIZER_ANDROID
 INTERCEPTOR(void*, bsd_signal, int signum, void *handler) {
   if (!IsDeadlySignal(signum) || common_flags()->allow_user_segv_handler) {
     return REAL(bsd_signal)(signum, handler);
   }
   return 0;
 }
-#else
+#endif
+
 INTERCEPTOR(void*, signal, int signum, void *handler) {
   if (!IsDeadlySignal(signum) || common_flags()->allow_user_segv_handler) {
     return REAL(signal)(signum, handler);
   }
   return 0;
 }
-#endif
 
 INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
                             struct sigaction *oldact) {
@@ -769,11 +769,10 @@ void InitializeAsanInterceptors() {
   ASAN_INTERCEPT_FUNC(longjmp);
 #if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
   ASAN_INTERCEPT_FUNC(sigaction);
-#if SANITIZER_ANDROID && !defined(_LP64)
+#if SANITIZER_ANDROID
   ASAN_INTERCEPT_FUNC(bsd_signal);
-#else
-  ASAN_INTERCEPT_FUNC(signal);
 #endif
+  ASAN_INTERCEPT_FUNC(signal);
 #endif
 #if ASAN_INTERCEPT_SWAPCONTEXT
   ASAN_INTERCEPT_FUNC(swapcontext);
