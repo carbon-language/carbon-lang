@@ -708,10 +708,6 @@ int ModuleSlotTracker::getLocalSlot(const Value *V) {
   return Machine->getLocalSlot(V);
 }
 
-static SlotTracker *createSlotTracker(const Module *M) {
-  return new SlotTracker(M);
-}
-
 static SlotTracker *createSlotTracker(const Value *V) {
   if (const Argument *FA = dyn_cast<Argument>(V))
     return new SlotTracker(FA->getParent());
@@ -2017,11 +2013,6 @@ public:
                  AssemblyAnnotationWriter *AAW,
                  bool ShouldPreserveUseListOrder = false);
 
-  /// Construct an AssemblyWriter with an internally allocated SlotTracker
-  AssemblyWriter(formatted_raw_ostream &o, const Module *M,
-                 AssemblyAnnotationWriter *AAW,
-                 bool ShouldPreserveUseListOrder = false);
-
   void printMDNodeBody(const MDNode *MD);
   void printNamedMDNode(const NamedMDNode *NMD);
 
@@ -2052,8 +2043,6 @@ public:
   void printUseLists(const Function *F);
 
 private:
-  void init();
-
   /// \brief Print out metadata attachments.
   void printMetadataAttachments(
       const SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs,
@@ -2069,7 +2058,11 @@ private:
 };
 } // namespace
 
-void AssemblyWriter::init() {
+AssemblyWriter::AssemblyWriter(formatted_raw_ostream &o, SlotTracker &Mac,
+                               const Module *M, AssemblyAnnotationWriter *AAW,
+                               bool ShouldPreserveUseListOrder)
+    : Out(o), TheModule(M), Machine(Mac), AnnotationWriter(AAW),
+      ShouldPreserveUseListOrder(ShouldPreserveUseListOrder) {
   if (!TheModule)
     return;
   TypePrinter.incorporateTypes(*TheModule);
@@ -2079,23 +2072,6 @@ void AssemblyWriter::init() {
   for (const GlobalVariable &GV : TheModule->globals())
     if (const Comdat *C = GV.getComdat())
       Comdats.insert(C);
-}
-
-AssemblyWriter::AssemblyWriter(formatted_raw_ostream &o, SlotTracker &Mac,
-                               const Module *M, AssemblyAnnotationWriter *AAW,
-                               bool ShouldPreserveUseListOrder)
-    : Out(o), TheModule(M), Machine(Mac), AnnotationWriter(AAW),
-      ShouldPreserveUseListOrder(ShouldPreserveUseListOrder) {
-  init();
-}
-
-AssemblyWriter::AssemblyWriter(formatted_raw_ostream &o, const Module *M,
-                               AssemblyAnnotationWriter *AAW,
-                               bool ShouldPreserveUseListOrder)
-    : Out(o), TheModule(M), SlotTrackerStorage(createSlotTracker(M)),
-      Machine(*SlotTrackerStorage), AnnotationWriter(AAW),
-      ShouldPreserveUseListOrder(ShouldPreserveUseListOrder) {
-  init();
 }
 
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
