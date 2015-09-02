@@ -1625,11 +1625,12 @@ void SelectionDAGBuilder::visitBr(const BranchInst &I) {
   //     jle foo
   //
   if (const BinaryOperator *BOp = dyn_cast<BinaryOperator>(CondVal)) {
-    if (!DAG.getTargetLoweringInfo().isJumpExpensive() &&
-        BOp->hasOneUse() && (BOp->getOpcode() == Instruction::And ||
-                             BOp->getOpcode() == Instruction::Or)) {
+    Instruction::BinaryOps Opcode = BOp->getOpcode();
+    if (!DAG.getTargetLoweringInfo().isJumpExpensive() && BOp->hasOneUse() &&
+        !I.getMetadata(LLVMContext::MD_unpredictable) &&
+        (Opcode == Instruction::And || Opcode == Instruction::Or)) {
       FindMergedConditions(BOp, Succ0MBB, Succ1MBB, BrMBB, BrMBB,
-                           BOp->getOpcode(), getEdgeWeight(BrMBB, Succ0MBB),
+                           Opcode, getEdgeWeight(BrMBB, Succ0MBB),
                            getEdgeWeight(BrMBB, Succ1MBB));
       // If the compares in later blocks need to use values not currently
       // exported from this block, export them now.  This block should always
