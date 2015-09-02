@@ -23,6 +23,7 @@ class DynamicValueChildCountTestCase(TestBase):
 
     @expectedFailureLinux("llvm.org/pr23039")
     @expectedFailureFreeBSD("llvm.org/pr19311") # continue at a breakpoint does not work
+    @expectedFailureWindows("llvm.org/pr24663")
     @python_api_test
     @dwarf_test
     @expectedFailurei386("to be figured out")
