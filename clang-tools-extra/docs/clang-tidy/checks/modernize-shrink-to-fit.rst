@@ -1,5 +1,5 @@
-readability-shrink-to-fit
-=========================
+modernize-shrink-to-fit
+=======================
 
 
 Replace copy and swap tricks on shrinkable containers with the
