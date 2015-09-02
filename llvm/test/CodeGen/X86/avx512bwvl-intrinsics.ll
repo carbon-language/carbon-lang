@@ -4275,3 +4275,4 @@ define <16 x i16>@test_int_x86_avx512_mask_dbpsadbw_256(<32 x i8> %x0, <32 x i8>
   %res4 = add <16 x i16> %res3, %res2
   ret <16 x i16> %res4
 }
+

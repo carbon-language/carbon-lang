@@ -1221,3 +1221,41 @@ define <32 x i16>@test_int_x86_avx512_mask_dbpsadbw_512(<64 x i8> %x0, <64 x i8>
   %res4 = add <32 x i16> %res3, %res2
   ret <32 x i16> %res4
 }
+
+declare <8 x i64> @llvm.x86.avx512.psll.dq.512(<8 x i64>, i32)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_psll_dq_512
+; CHECK-NOT: call 
+; CHECK: vpslldq 
+; CHECK: vpslldq 
+define <8 x i64>@test_int_x86_avx512_mask_psll_dq_512(<8 x i64> %x0) {
+  %res = call <8 x i64> @llvm.x86.avx512.psll.dq.512(<8 x i64> %x0, i32 8)
+  %res1 = call <8 x i64> @llvm.x86.avx512.psll.dq.512(<8 x i64> %x0, i32 4)
+  %res2 = add <8 x i64> %res, %res1
+  ret <8 x i64> %res2
+}
+
+declare <8 x i64> @llvm.x86.avx512.psrl.dq.512(<8 x i64>, i32)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_psrl_dq_512
+; CHECK-NOT: call 
+; CHECK: vpsrldq 
+; CHECK: vpsrldq
+define <8 x i64>@test_int_x86_avx512_mask_psrl_dq_512(<8 x i64> %x0) {
+  %res = call <8 x i64> @llvm.x86.avx512.psrl.dq.512(<8 x i64> %x0, i32 8)
+  %res1 = call <8 x i64> @llvm.x86.avx512.psrl.dq.512(<8 x i64> %x0, i32 4)
+  %res2 = add <8 x i64> %res, %res1
+  ret <8 x i64> %res2
+}
+declare  <64 x i8> @llvm.x86.avx512.psad.bw.512(<64 x i8>, <64 x i8>)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_psadb_w_512
+; CHECK-NOT: call 
+; CHECK: vpsadbw %zmm1
+; CHECK: vpsadbw %zmm2
+define  <64 x i8>@test_int_x86_avx512_mask_psadb_w_512(<64 x i8> %x0, <64 x i8> %x1, <64 x i8> %x2){
+  %res = call  <64 x i8> @llvm.x86.avx512.psad.bw.512(<64 x i8> %x0, <64 x i8> %x1)
+  %res1 = call  <64 x i8> @llvm.x86.avx512.psad.bw.512(<64 x i8> %x0, <64 x i8> %x2)
+  %res2 = add  <64 x i8> %res, %res1
+  ret  <64 x i8> %res2
+}

@@ -262,3 +262,8 @@ define <2 x double> @shuffle_v2f64_bitcast_1z(<2 x double> %a) {
   %bitcast64 = bitcast <4 x float> %shuffle32 to <2 x double>
   ret <2 x double> %bitcast64
 }
+
+define <16 x i16> @shuffle_v16i16_zz_zz_zz_zz_zz_zz_zz_16_zz_zz_zz_zz_zz_zz_zz_24(<16 x i16> %a) {
+  %shuffle = shufflevector <16 x i16> zeroinitializer, <16 x i16> %a, <16 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 16, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 24>
+  ret <16 x i16> %shuffle
+}
