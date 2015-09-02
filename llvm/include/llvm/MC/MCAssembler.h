@@ -713,8 +713,6 @@ public:
 
 public:
   /// Construct a new assembler instance.
-  ///
-  /// \param OS The stream to output to.
   //
   // FIXME: How are we going to parameterize this? Two obvious options are stay
   // concrete and require clients to pass in a target like object. The other
