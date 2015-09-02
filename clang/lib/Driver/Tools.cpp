@@ -264,6 +264,7 @@ void Clang::AddPreprocessingOptions(Compilation &C, const JobAction &JA,
     const char *DepFile;
     if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
       DepFile = MF->getValue();
+      llvm::errs()<<"Your depfile is "<<DepFile<<"\n";
       C.addFailureResultFile(DepFile, &JA);
     } else if (Output.getType() == types::TY_Dependencies) {
       DepFile = Output.getFilename();
