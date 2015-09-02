@@ -8,17 +8,19 @@
 //===----------------------------------------------------------------------===//
 
 #include <map>
+#include <set>
 
 #include "lldb/Core/Module.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Symtab.h"
-#include "lldb/Target/CPPLanguageRuntime.h"
-#include "lldb/Target/ObjCLanguageRuntime.h"
+#include "Plugins/Language/ObjC/ObjCLanguage.h"
+#include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -329,7 +331,7 @@ Symtab::InitNameIndexes()
                          entry.cstring[2] != 'G' && // avoid guard variables
                          entry.cstring[2] != 'Z'))  // named local entities (if we eventually handle eSymbolTypeData, we will want this back)
                     {
-                        CPPLanguageRuntime::MethodName cxx_method (mangled.GetDemangledName(lldb::eLanguageTypeC_plus_plus));
+                        CPlusPlusLanguage::MethodName cxx_method (mangled.GetDemangledName(lldb::eLanguageTypeC_plus_plus));
                         entry.cstring = ConstString(cxx_method.GetBasename()).GetCString();
                         if (entry.cstring && entry.cstring[0])
                         {
@@ -392,7 +394,7 @@ Symtab::InitNameIndexes()
                 
             // If the demangled name turns out to be an ObjC name, and
             // is a category name, add the version without categories to the index too.
-            ObjCLanguageRuntime::MethodName objc_method (entry.cstring, true);
+            ObjCLanguage::MethodName objc_method (entry.cstring, true);
             if (objc_method.IsValid(true))
             {
                 entry.cstring = objc_method.GetSelector().GetCString();

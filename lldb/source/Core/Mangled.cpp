@@ -38,7 +38,7 @@
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
-#include "lldb/Target/CPPLanguageRuntime.h"
+#include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
@@ -94,7 +94,7 @@ get_demangled_name_without_arguments (ConstString mangled, ConstString demangled
             mangled_name_cstr[2] != 'G' && // avoid guard variables
             mangled_name_cstr[2] != 'Z'))  // named local entities (if we eventually handle eSymbolTypeData, we will want this back)
         {
-            CPPLanguageRuntime::MethodName cxx_method (demangled);
+            CPlusPlusLanguage::MethodName cxx_method (demangled);
             if (!cxx_method.GetBasename().empty())
             {
                 std::string shortname;

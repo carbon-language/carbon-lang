@@ -28,13 +28,13 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/SymbolVendor.h"
-#include "lldb/Target/CPPLanguageRuntime.h"
 #include "lldb/Target/Language.h"
-#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Symbol/SymbolFile.h"
+#include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
+#include "Plugins/Language/ObjC/ObjCLanguage.h"
 
 #include "Plugins/ObjectFile/JIT/ObjectFileJIT.h"
 
@@ -1781,11 +1781,11 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
     
     if (name_type_mask & eFunctionNameTypeAuto)
     {
-        if (CPPLanguageRuntime::IsCPPMangledName (name_cstr))
+        if (CPlusPlusLanguage::IsCPPMangledName (name_cstr))
             lookup_name_type_mask = eFunctionNameTypeFull;
         else if ((language == eLanguageTypeUnknown ||
                   Language::LanguageIsObjC(language)) &&
-                 ObjCLanguageRuntime::IsPossibleObjCMethodName (name_cstr))
+                 ObjCLanguage::IsPossibleObjCMethodName (name_cstr))
             lookup_name_type_mask = eFunctionNameTypeFull;
         else if (Language::LanguageIsC(language))
         {
@@ -1795,14 +1795,14 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
         {
             if ((language == eLanguageTypeUnknown ||
                  Language::LanguageIsObjC(language)) &&
-                ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
+                ObjCLanguage::IsPossibleObjCSelector(name_cstr))
                 lookup_name_type_mask |= eFunctionNameTypeSelector;
             
-            CPPLanguageRuntime::MethodName cpp_method (name);
+            CPlusPlusLanguage::MethodName cpp_method (name);
             basename = cpp_method.GetBasename();
             if (basename.empty())
             {
-                if (CPPLanguageRuntime::ExtractContextAndIdentifier (name_cstr, context, basename))
+                if (CPlusPlusLanguage::ExtractContextAndIdentifier (name_cstr, context, basename))
                     lookup_name_type_mask |= (eFunctionNameTypeMethod | eFunctionNameTypeBase);
                 else
                     lookup_name_type_mask |= eFunctionNameTypeFull;
@@ -1820,7 +1820,7 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
         {
             // If they've asked for a CPP method or function name and it can't be that, we don't
             // even need to search for CPP methods or names.
-            CPPLanguageRuntime::MethodName cpp_method (name);
+            CPlusPlusLanguage::MethodName cpp_method (name);
             if (cpp_method.IsValid())
             {
                 basename = cpp_method.GetBasename();
@@ -1838,13 +1838,13 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
             {
                 // If the CPP method parser didn't manage to chop this up, try to fill in the base name if we can.
                 // If a::b::c is passed in, we need to just look up "c", and then we'll filter the result later.
-                CPPLanguageRuntime::ExtractContextAndIdentifier (name_cstr, context, basename);
+                CPlusPlusLanguage::ExtractContextAndIdentifier (name_cstr, context, basename);
             }
         }
         
         if (lookup_name_type_mask & eFunctionNameTypeSelector)
         {
-            if (!ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
+            if (!ObjCLanguage::IsPossibleObjCSelector(name_cstr))
             {
                 lookup_name_type_mask &= ~(eFunctionNameTypeSelector);
                 if (lookup_name_type_mask == eFunctionNameTypeNone)

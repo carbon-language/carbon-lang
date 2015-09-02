@@ -12,12 +12,13 @@
 #include "lldb/Core/Mangled.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/ObjectFile.h"
-#include "lldb/Target/ObjCLanguageRuntime.h"
+#include "Plugins/Language/ObjC/ObjCLanguage.h"
 
 #include "DWARFDebugAbbrev.h"
 #include "DWARFDebugAranges.h"
@@ -815,9 +816,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
             {
                 if (name)
                 {
-                    // Note, this check is also done in ParseMethodName, but since this is a hot loop, we do the
-                    // simple inlined check outside the call.
-                    ObjCLanguageRuntime::MethodName objc_method(name, true);
+                    ObjCLanguage::MethodName objc_method(name, true);
                     if (objc_method.IsValid(true))
                     {
                         ConstString objc_class_name_with_category (objc_method.GetClassNameWithCategory());

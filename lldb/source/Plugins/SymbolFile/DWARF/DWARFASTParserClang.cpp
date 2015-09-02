@@ -18,15 +18,19 @@
 #include "SymbolFileDWARFDebugMap.h"
 #include "UniqueDWARFASTType.h"
 
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/StreamString.h"
+#include "lldb/Core/Value.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/TypeList.h"
 #include "lldb/Target/Language.h"
-#include "lldb/Target/ObjCLanguageRuntime.h"
+#include "Plugins/Language/ObjC/ObjCLanguage.h"
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -1045,7 +1049,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                         if (tag == DW_TAG_subprogram ||
                             tag == DW_TAG_inlined_subroutine)
                         {
-                            ObjCLanguageRuntime::MethodName objc_method (type_name_cstr, true);
+                            ObjCLanguage::MethodName objc_method (type_name_cstr, true);
                             if (objc_method.IsValid(true))
                             {
                                 CompilerType class_opaque_type;
@@ -2473,13 +2477,13 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
 
                         if (prop_getter_name && prop_getter_name[0] == '-')
                         {
-                            ObjCLanguageRuntime::MethodName prop_getter_method(prop_getter_name, true);
+                            ObjCLanguage::MethodName prop_getter_method(prop_getter_name, true);
                             prop_getter_name = prop_getter_method.GetSelector().GetCString();
                         }
 
                         if (prop_setter_name && prop_setter_name[0] == '-')
                         {
-                            ObjCLanguageRuntime::MethodName prop_setter_method(prop_setter_name, true);
+                            ObjCLanguage::MethodName prop_setter_method(prop_setter_name, true);
                             prop_setter_name = prop_setter_method.GetSelector().GetCString();
                         }
 

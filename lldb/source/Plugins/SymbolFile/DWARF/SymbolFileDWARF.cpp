@@ -54,8 +54,8 @@
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
 
-#include "lldb/Target/ObjCLanguageRuntime.h"
-#include "lldb/Target/CPPLanguageRuntime.h"
+#include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
+#include "Plugins/Language/ObjC/ObjCLanguage.h"
 
 #include "lldb/Target/Language.h"
 
@@ -2102,7 +2102,7 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const CompilerDec
             llvm::StringRef basename;
             llvm::StringRef context;
 
-            if (!CPPLanguageRuntime::ExtractContextAndIdentifier(name_cstr, context, basename))
+            if (!CPlusPlusLanguage::ExtractContextAndIdentifier(name_cstr, context, basename))
                 basename = name_cstr;
 
             m_apple_names_ap->FindByName (basename.data(), die_offsets);
@@ -2531,7 +2531,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     if (die)
                     {
                         const char *die_name = die.GetName();
-                        if (ObjCLanguageRuntime::IsPossibleObjCMethodName(die_name))
+                        if (ObjCLanguage::IsPossibleObjCMethodName(die_name))
                         {
                             if (resolved_dies.find(die.GetDIE()) == resolved_dies.end())
                             {

@@ -21,7 +21,7 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/SymbolContext.h"
-#include "lldb/Target/ObjCLanguageRuntime.h"
+#include "Plugins/Language/ObjC/ObjCLanguage.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -143,7 +143,7 @@ BreakpointResolverName::BreakpointResolverName(const BreakpointResolverName &rhs
 void
 BreakpointResolverName::AddNameLookup (const ConstString &name, uint32_t name_type_mask)
 {
-    ObjCLanguageRuntime::MethodName objc_method(name.GetCString(), false);
+    ObjCLanguage::MethodName objc_method(name.GetCString(), false);
     if (objc_method.IsValid(false))
     {
         std::vector<ConstString> objc_names;
