@@ -9,6 +9,7 @@ add_lldb_library(lldbDataFormatters
   FormatCache.cpp
   FormatClasses.cpp
   FormatManager.cpp
+  FormattersHelpers.cpp
   LanguageCategory.cpp
   LibCxx.cpp
   LibCxxInitializerList.cpp

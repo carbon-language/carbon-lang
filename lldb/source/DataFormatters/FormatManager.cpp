@@ -16,6 +16,7 @@
 
 #include "lldb/Core/Debugger.h"
 #include "lldb/DataFormatters/CXXFormatterFunctions.h"
+#include "lldb/DataFormatters/FormattersHelpers.h"
 #include "lldb/DataFormatters/LanguageCategory.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Platform.h"
@@ -25,7 +26,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
-
+using namespace lldb_private::formatters;
 
 struct FormatInfo
 {
@@ -1023,104 +1024,6 @@ FormatManager::FormatManager() :
     EnableCategory(m_vectortypes_category_name,TypeCategoryMap::Last);
     EnableCategory(m_system_category_name,TypeCategoryMap::Last);
 }
-
-static void
-AddFormat (TypeCategoryImpl::SharedPointer category_sp,
-           lldb::Format format,
-           ConstString type_name,
-           TypeFormatImpl::Flags flags,
-           bool regex = false)
-{
-    lldb::TypeFormatImplSP format_sp(new TypeFormatImpl_Format(format, flags));
-    
-    if (regex)
-        category_sp->GetRegexTypeFormatsContainer()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),format_sp);
-    else
-        category_sp->GetTypeFormatsContainer()->Add(type_name, format_sp);
-}
-
-
-static void
-AddStringSummary(TypeCategoryImpl::SharedPointer category_sp,
-                 const char* string,
-                 ConstString type_name,
-                 TypeSummaryImpl::Flags flags,
-                 bool regex = false)
-{
-    lldb::TypeSummaryImplSP summary_sp(new StringSummaryFormat(flags,
-                                                               string));
-    
-    if (regex)
-        category_sp->GetRegexTypeSummariesContainer()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),summary_sp);
-    else
-        category_sp->GetTypeSummariesContainer()->Add(type_name, summary_sp);
-}
-
-static void
-AddOneLineSummary (TypeCategoryImpl::SharedPointer category_sp,
-                   ConstString type_name,
-                   TypeSummaryImpl::Flags flags,
-                   bool regex = false)
-{
-    flags.SetShowMembersOneLiner(true);
-    lldb::TypeSummaryImplSP summary_sp(new StringSummaryFormat(flags, ""));
-    
-    if (regex)
-        category_sp->GetRegexTypeSummariesContainer()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),summary_sp);
-    else
-        category_sp->GetTypeSummariesContainer()->Add(type_name, summary_sp);
-}
-
-#ifndef LLDB_DISABLE_PYTHON
-static void
-AddCXXSummary (TypeCategoryImpl::SharedPointer category_sp,
-               CXXFunctionSummaryFormat::Callback funct,
-               const char* description,
-               ConstString type_name,
-               TypeSummaryImpl::Flags flags,
-               bool regex = false)
-{
-    lldb::TypeSummaryImplSP summary_sp(new CXXFunctionSummaryFormat(flags,funct,description));
-    if (regex)
-        category_sp->GetRegexTypeSummariesContainer()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),summary_sp);
-    else
-        category_sp->GetTypeSummariesContainer()->Add(type_name, summary_sp);
-}
-#endif
-
-#ifndef LLDB_DISABLE_PYTHON
-static void AddCXXSynthetic  (TypeCategoryImpl::SharedPointer category_sp,
-                              CXXSyntheticChildren::CreateFrontEndCallback generator,
-                              const char* description,
-                              ConstString type_name,
-                              ScriptedSyntheticChildren::Flags flags,
-                              bool regex = false)
-{
-    lldb::SyntheticChildrenSP synth_sp(new CXXSyntheticChildren(flags,description,generator));
-    if (regex)
-        category_sp->GetRegexTypeSyntheticsContainer()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())), synth_sp);
-    else
-        category_sp->GetTypeSyntheticsContainer()->Add(type_name,synth_sp);
-}
-#endif
-
-#ifndef LLDB_DISABLE_PYTHON
-static void AddFilter  (TypeCategoryImpl::SharedPointer category_sp,
-                        std::vector<std::string> children,
-                        const char* description,
-                        ConstString type_name,
-                        ScriptedSyntheticChildren::Flags flags,
-                        bool regex = false)
-{
-    TypeFilterImplSP filter_sp(new TypeFilterImpl(flags));
-    for (auto child : children)
-        filter_sp->AddExpressionPath(child);
-    if (regex)
-        category_sp->GetRegexTypeFiltersContainer()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())), filter_sp);
-    else
-        category_sp->GetTypeFiltersContainer()->Add(type_name,filter_sp);
-}
-#endif
 
 void
 FormatManager::LoadLibStdcppFormatters()
