@@ -2091,7 +2091,7 @@ emitTaskPrivateMappingFunction(CodeGenModule &CGM, SourceLocation Loc,
   return TaskPrivatesMap;
 }
 
-llvm::Value *getTypeSize(CodeGenFunction &CGF, QualType Ty) {
+static llvm::Value *getTypeSize(CodeGenFunction &CGF, QualType Ty) {
   auto &C = CGF.getContext();
   llvm::Value *Size;
   auto SizeInChars = C.getTypeSizeInChars(Ty);
