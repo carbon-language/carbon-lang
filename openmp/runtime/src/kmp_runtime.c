@@ -5049,7 +5049,6 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
                 kmp_info_t * new_worker = __kmp_allocate_thread( root, team, f );
                 KMP_DEBUG_ASSERT( new_worker );
                 team->t.t_threads[ f ] = new_worker;
-                new_worker->th.th_team_nproc = team->t.t_nproc;
 
                 KA_TRACE( 20, ("__kmp_allocate_team: team %d init T#%d arrived: join=%u, plain=%u\n",
                                 team->t.t_id, __kmp_gtid_from_tid( f, team ), team->t.t_id, f,
