@@ -180,7 +180,9 @@ public:
 
     // Anonymous tags are already numbered.
     if (const TagDecl *Tag = dyn_cast<TagDecl>(ND)) {
-      if (Tag->getName().empty() && !Tag->getTypedefNameForAnonDecl())
+      if (!Tag->hasNameForLinkage() &&
+          !getASTContext().getDeclaratorForUnnamedTagDecl(Tag) &&
+          !getASTContext().getTypedefNameForUnnamedTagDecl(Tag))
         return false;
     }
 
