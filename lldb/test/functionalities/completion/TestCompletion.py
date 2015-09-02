@@ -219,6 +219,23 @@ class CommandLineCompletionTestCase(TestBase):
         """Test that 'target va' completes to 'target variable '."""
         self.complete_from_to('target va', 'target variable ')
 
+    @skipUnlessDarwin
+    @dsym_test
+    def test_symbol_name_dsym(self):
+        self.buildDsym()
+        self.complete_from_to('''file a.out
+                                 breakpoint set -n Fo''',
+                              'breakpoint set -n Foo::Bar(int,\\ int)',
+                              turn_off_re_match=True)
+
+    @dwarf_test
+    def test_symbol_name_dwarf(self):
+        self.buildDwarf()
+        self.complete_from_to('''file a.out
+                                 breakpoint set -n Fo''',
+                              'breakpoint set -n Foo::Bar(int,\\ int)',
+                              turn_off_re_match=True)
+
     def complete_from_to(self, str_input, patterns, turn_off_re_match=False):
         """Test that the completion mechanism completes str_input to patterns,
         where patterns could be a pattern-string or a list of pattern-strings"""

@@ -1668,3 +1668,33 @@ Args::ExpandEscapedCharacters (const char *src, std::string &dst)
     }
 }
 
+std::string
+Args::EscapeLLDBCommandArgument (const std::string& arg, char quote_char)
+{
+    const char* chars_to_escape = nullptr;
+    switch (quote_char)
+    {
+        case '\0':
+            chars_to_escape = " \t\\'\"`";
+            break;
+        case '\'':
+            chars_to_escape = "";
+            break;
+        case '"':
+            chars_to_escape = "$\"`\\";
+            break;
+        default:
+            assert(false && "Unhandled quote character");
+    }
+
+    std::string res;
+    res.reserve(arg.size());
+    for (char c : arg)
+    {
+        if (::strchr(chars_to_escape, c))
+            res.push_back('\\');
+        res.push_back(c);
+    }
+    return res;
+}
+

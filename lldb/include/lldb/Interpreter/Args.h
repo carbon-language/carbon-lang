@@ -424,6 +424,9 @@ public:
     static void
     ExpandEscapedCharacters (const char *src, std::string &dst);
 
+    static std::string
+    EscapeLLDBCommandArgument (const std::string& arg, char quote_char);
+
     // This one isn't really relevant to Arguments per se, but we're using the Args as a
     // general strings container, so...
     void

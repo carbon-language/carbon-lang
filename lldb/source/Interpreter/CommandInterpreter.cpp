@@ -2002,7 +2002,7 @@ CommandInterpreter::HandleCompletion (const char *current_line,
                                                    matches);
 
     if (num_command_matches <= 0)
-            return num_command_matches;
+        return num_command_matches;
 
     if (num_args == 0)
     {
@@ -2021,18 +2021,18 @@ CommandInterpreter::HandleCompletion (const char *current_line,
         std::string common_prefix;
         matches.LongestCommonPrefix (common_prefix);
         const size_t partial_name_len = command_partial_str.size();
+        common_prefix.erase (0, partial_name_len);
 
         // If we matched a unique single command, add a space...
         // Only do this if the completer told us this was a complete word, however...
         if (num_command_matches == 1 && word_complete)
         {
             char quote_char = parsed_line.GetArgumentQuoteCharAtIndex(cursor_index);
+            common_prefix = Args::EscapeLLDBCommandArgument(common_prefix, quote_char);
             if (quote_char != '\0')
                 common_prefix.push_back(quote_char);
-
             common_prefix.push_back(' ');
         }
-        common_prefix.erase (0, partial_name_len);
         matches.InsertStringAtIndex(0, common_prefix.c_str());
     }
     return num_command_matches;
