@@ -2881,12 +2881,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
     createInductionVariable(Lp, StartIdx, CountRoundDown, Step,
                             getDebugLocFromInstOrOperands(OldInduction));
 
-  // This is the IR builder that we use to add all of the logic for bypassing
-  // the new vector loop.
-  IRBuilder<> BypassBuilder(LoopBypassBlocks.back()->getTerminator());
-  setDebugLocFromInst(BypassBuilder,
-                      getDebugLocFromInstOrOperands(OldInduction));
-
   // We are going to resume the execution of the scalar loop.
   // Go over all of the induction variables that we found and fix the
   // PHIs that are left in the scalar version of the loop.
@@ -2920,10 +2914,11 @@ void InnerLoopVectorizer::createEmptyLoop() {
       // We also know which PHI node holds it.
       ResumeIndex = ResumeVal;
     } else {
-      Value *CRD = BypassBuilder.CreateSExtOrTrunc(CountRoundDown,
-                                                   II.getStepValue()->getType(),
-                                                   "cast.crd");
-      EndValue = II.transform(BypassBuilder, CRD);
+      IRBuilder<> B(LoopBypassBlocks.back()->getTerminator());
+      Value *CRD = B.CreateSExtOrTrunc(CountRoundDown,
+                                       II.getStepValue()->getType(),
+                                       "cast.crd");
+      EndValue = II.transform(B, CRD);
       EndValue->setName("ind.end");
     }
 
