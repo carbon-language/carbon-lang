@@ -370,7 +370,10 @@ static bool isAliasDecl(const Decl *TheDecl, const VarDecl *IndexVar) {
 
   case Stmt::CXXMemberCallExprClass: {
     const auto *MemCall = cast<CXXMemberCallExpr>(Init);
-    if (MemCall->getMethodDecl()->getName() == "at") {
+    // This check is needed because getMethodDecl can return nullptr if the
+    // callee is a member function pointer.
+    if (MemCall->getMethodDecl() &&
+        MemCall->getMethodDecl()->getName() == "at") {
       assert(MemCall->getNumArgs() == 1);
       return isIndexInSubscriptExpr(MemCall->getArg(0), IndexVar);
     }

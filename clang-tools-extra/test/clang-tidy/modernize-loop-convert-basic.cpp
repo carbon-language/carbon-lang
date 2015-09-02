@@ -156,6 +156,17 @@ void memberFunctionPointer() {
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : mfpArr)
   // CHECK-FIXES-NEXT: (v.*elem)();
+
+  struct Foo {
+    int (Val::*f)();
+  } foo[N];
+
+  for (int i = 0; i < N; ++i)
+    int r = (v.*(foo[i].f))();
+  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : foo)
+  // CHECK-FIXES-NEXT: int r = (v.*(elem.f))();
+
 }
 
 } // namespace Array
