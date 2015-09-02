@@ -281,7 +281,7 @@ void ImportFile::parse() {
   StringRef Name = StringAlloc.save(StringRef(Buf + sizeof(*Hdr)));
   StringRef ImpName = StringAlloc.save(Twine("__imp_") + Name);
   const char *NameStart = Buf + sizeof(coff_import_header) + Name.size() + 1;
-  DLLName = StringRef(NameStart).lower();
+  DLLName = StringRef(NameStart);
   StringRef ExtName;
   switch (Hdr->getNameType()) {
   case IMPORT_ORDINAL:

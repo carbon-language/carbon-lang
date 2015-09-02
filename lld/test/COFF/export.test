@@ -65,7 +65,7 @@ CHECK5-NEXT:       2   0x1010  fn2
 CHECK5-NEXT:       3   0x1008  exportfn1
 CHECK5-NEXT:       4   0x1010  exportfn3
 
-# RUN: lld-link /out:%t.dll /dll %t.obj /export:exportfn1 /export:exportfn2 \
+# RUN: lld-link /out:%t.DLL /dll %t.obj /export:exportfn1 /export:exportfn2 \
 # RUN:   /export:exportfn1 /export:exportfn2,@5 >& %t.log
 # RUN: FileCheck -check-prefix=CHECK6 %s < %t.log
 
@@ -74,9 +74,9 @@ CHECK6-NOT: duplicate /export option: exportfn1
 
 # RUN: llvm-nm -M %t.lib | FileCheck --check-prefix=SYMTAB %s
 
-SYMTAB: __imp_exportfn1 in export.test.tmp.dll
-SYMTAB: exportfn1 in export.test.tmp.dll
-SYMTAB: __imp_exportfn2 in export.test.tmp.dll
-SYMTAB: exportfn2 in export.test.tmp.dll
-SYMTAB: __imp_exportfn3 in export.test.tmp.dll
-SYMTAB: exportfn3 in export.test.tmp.dll
+SYMTAB: __imp_exportfn1 in export.test.tmp.DLL
+SYMTAB: exportfn1 in export.test.tmp.DLL
+SYMTAB: __imp_exportfn2 in export.test.tmp.DLL
+SYMTAB: exportfn2 in export.test.tmp.DLL
+SYMTAB: __imp_exportfn3 in export.test.tmp.DLL
+SYMTAB: exportfn3 in export.test.tmp.DLL

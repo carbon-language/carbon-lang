@@ -81,7 +81,7 @@ struct Configuration {
   StringRef Implib;
   std::vector<Export> Exports;
   std::set<std::string> DelayLoads;
-  std::map<StringRef, int> DLLOrder;
+  std::map<std::string, int> DLLOrder;
   Undefined *DelayLoadHelper = nullptr;
 
   // Used for SafeSEH.
