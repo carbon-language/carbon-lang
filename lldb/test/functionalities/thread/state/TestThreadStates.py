@@ -1,4 +1,4 @@
-﻿"""
+"""
 Test thread states.
 """
 
@@ -39,6 +39,7 @@ class ThreadStateTestCase(TestBase):
     @dwarf_test
     @skipIfDarwin # 'llvm.org/pr23669', cause Python crash randomly
     @expectedFailureDarwin('llvm.org/pr23669')
+    @expectedFailureWindows("llvm.org/pr24660")
     def test_state_after_continue_with_dwarf(self):
         """Test thread state after continue."""
         self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
@@ -55,6 +56,7 @@ class ThreadStateTestCase(TestBase):
 
     @skipIfDarwin # 'llvm.org/pr23669', cause Python crash randomly
     @expectedFailureDarwin('llvm.org/pr23669')
+    @expectedFailureWindows("llvm.org/pr24660")
     @dwarf_test
     def test_state_after_expression_with_dwarf(self):
         """Test thread state after expression."""
