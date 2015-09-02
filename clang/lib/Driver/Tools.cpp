@@ -9606,6 +9606,7 @@ void tools::SHAVE::Compiler::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_f_Group,
                    options::OPT_f_clang_Group,
                    options::OPT_g_Group,
+                   options::OPT_M_Group,
                    options::OPT_O_Group,
                    options::OPT_W_Group});
   CmdArgs.push_back("-fno-exceptions"); // Always do this even if unspecified.

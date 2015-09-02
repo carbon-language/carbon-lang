@@ -22,7 +22,7 @@
 // INCLUDES: "-iquote" "quotepath" "-isystem" "syspath"
 
 // RUN: %clang -target shave -c -### %s -g -fno-inline-functions \
-// RUN: -fno-inline-functions-called-once -Os -Wall \
-// RUN: -ffunction-sections 2>&1 | FileCheck %s -check-prefix=F_G_O_W_OPTIONS
-// F_G_O_W_OPTIONS: "-g" "-fno-inline-functions" "-fno-inline-functions-called-once"
-// F_G_O_W_OPTIONS: "-Os" "-Wall" "-ffunction-sections"
+// RUN: -fno-inline-functions-called-once -Os -Wall -MF dep.d \
+// RUN: -ffunction-sections 2>&1 | FileCheck %s -check-prefix=PASSTHRU_OPTIONS
+// PASSTHRU_OPTIONS: "-g" "-fno-inline-functions" "-fno-inline-functions-called-once"
+// PASSTHRU_OPTIONS: "-Os" "-Wall" "-MF" "dep.d" "-ffunction-sections"
