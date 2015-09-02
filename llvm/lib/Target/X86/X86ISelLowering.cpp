@@ -1923,13 +1923,21 @@ X86TargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
                                                   unsigned,
                                                   bool *Fast) const {
   if (Fast) {
-    if (VT.getSizeInBits() == 256)
-      *Fast = !Subtarget->isUnalignedMem32Slow();
-    else
-      // FIXME: We should always return that 8-byte and under accesses are fast.
-      // That is what other x86 lowering code assumes.
+    switch (VT.getSizeInBits()) {
+    default:
+      // 8-byte and under are always assumed to be fast.
+      *Fast = true;
+      break;
+    case 128:
       *Fast = !Subtarget->isUnalignedMem16Slow();
+      break;
+    case 256:
+      *Fast = !Subtarget->isUnalignedMem32Slow();
+      break;
+    // TODO: What about AVX-512 (512-bit) accesses?
+    }
   }
+  // Misaligned accesses of any size are always allowed.
   return true;
 }
 

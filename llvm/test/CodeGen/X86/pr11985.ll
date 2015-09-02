@@ -1,26 +1,20 @@
 ; RUN: llc < %s -mtriple=x86_64-pc-linux -mcpu=prescott | FileCheck %s --check-prefix=PRESCOTT
 ; RUN: llc < %s -mtriple=x86_64-pc-linux -mcpu=nehalem | FileCheck %s --check-prefix=NEHALEM
 
-;;; TODO: The last run line chooses cpu=nehalem to reveal possible bugs in the "foo" test case.
-;;;
-;;; Nehalem has a 'fast unaligned memory' attribute, so (1) some of the loads and stores
-;;; are certainly unaligned and (2) the first load and first store overlap with the second
-;;; load and second store respectively.
+;;; TODO: (1) Some of the loads and stores are certainly unaligned and (2) the first load and first
+;;; store overlap with the second load and second store respectively.
 ;;;
 ;;; Is either of these sequences ideal? 
-;;; Is the ideal code being generated for all CPU models?
 
 define float @foo(i8* nocapture %buf, float %a, float %b) nounwind uwtable {
 ; PRESCOTT-LABEL: foo:
 ; PRESCOTT:       # BB#0: # %entry
-; PRESCOTT-NEXT:    movw .Ltmp0+20(%rip), %ax
-; PRESCOTT-NEXT:    movw %ax, 20(%rdi)
-; PRESCOTT-NEXT:    movl .Ltmp0+16(%rip), %eax
-; PRESCOTT-NEXT:    movl %eax, 16(%rdi)
-; PRESCOTT-NEXT:    movq .Ltmp0+8(%rip), %rax
-; PRESCOTT-NEXT:    movq %rax, 8(%rdi)
-; PRESCOTT-NEXT:    movq .Ltmp0(%rip), %rax
-; PRESCOTT-NEXT:    movq %rax, (%rdi)
+; PRESCOTT-NEXT:    movq   .Ltmp0+14(%rip), %rax
+; PRESCOTT-NEXT:    movq   %rax, 14(%rdi)
+; PRESCOTT-NEXT:    movq   .Ltmp0+8(%rip), %rax
+; PRESCOTT-NEXT:    movq   %rax, 8(%rdi)
+; PRESCOTT-NEXT:    movq   .Ltmp0(%rip), %rax
+; PRESCOTT-NEXT:    movq   %rax, (%rdi)
 ;
 ; NEHALEM-LABEL: foo:
 ; NEHALEM:       # BB#0: # %entry

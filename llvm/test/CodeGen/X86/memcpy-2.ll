@@ -5,15 +5,6 @@
 ; RUN: llc < %s                 -mtriple=x86_64-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=X86-64
 ; RUN: llc < %s                 -mtriple=x86_64-apple-darwin -mcpu=nehalem | FileCheck %s -check-prefix=NHM_64
 
-;;; TODO: The last run line chooses cpu=nehalem to reveal possible bugs in the "t4" test case.
-;;;
-;;; Nehalem has a 'fast unaligned memory' attribute, so (1) some of the loads and stores
-;;; are certainly unaligned and (2) the first load and first store overlap with the second
-;;; load and second store respectively.
-;;;
-;;; Is either of the sequences ideal?
-;;; Is the ideal code being generated for all CPU models?
-
 
 @.str = internal constant [25 x i8] c"image\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
 @.str2 = internal constant [30 x i8] c"xxxxxxxxxxxxxxxxxxxxxxxxxxxxx\00", align 4
@@ -190,13 +181,18 @@ entry:
 ; NOSSE: movl $2021161080
 ; NOSSE: movl $2021161080
 
+;;; TODO: (1) Some of the loads and stores are certainly unaligned and (2) the first load and first
+;;; store overlap with the second load and second store respectively.
+;;;
+;;; Is either of the sequences ideal?
+
 ; X86-64-LABEL: t4:
-; X86-64: movabsq $8680820740569200760, %rax
-; X86-64: movq %rax
-; X86-64: movq %rax
-; X86-64: movq %rax
-; X86-64: movw $120
-; X86-64: movl $2021161080
+; X86-64: movabsq  $33909456017848440, %rax ## imm = 0x78787878787878
+; X86-64: movq     %rax, -10(%rsp)
+; X86-64: movabsq  $8680820740569200760, %rax ## imm = 0x7878787878787878
+; X86-64: movq     %rax, -16(%rsp)
+; X86-64: movq     %rax, -24(%rsp)
+; X86-64: movq     %rax, -32(%rsp)
 
 ; NHM_64-LABEL: t4:
 ; NHM_64: movups   _.str2+14(%rip), %xmm0
