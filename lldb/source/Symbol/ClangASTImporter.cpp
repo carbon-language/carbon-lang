@@ -607,7 +607,7 @@ void
 ClangASTImporter::Minion::InitDeportWorkQueues (std::set<clang::NamedDecl *> *decls_to_deport,
                                                 std::set<clang::NamedDecl *> *decls_already_deported)
 {
-    assert(!m_decls_to_deport); // TODO make debug only
+    assert(!m_decls_to_deport);
     assert(!m_decls_already_deported);
     
     m_decls_to_deport = decls_to_deport;
@@ -617,7 +617,7 @@ ClangASTImporter::Minion::InitDeportWorkQueues (std::set<clang::NamedDecl *> *de
 void
 ClangASTImporter::Minion::ExecuteDeportWorkQueues ()
 {
-    assert(m_decls_to_deport); // TODO make debug only
+    assert(m_decls_to_deport);
     assert(m_decls_already_deported);
     
     ASTContextMetadataSP to_context_md = m_master.GetContextMetadata(&getToContext());
