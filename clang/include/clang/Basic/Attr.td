@@ -290,6 +290,8 @@ class Attr {
   // attribute to be applicable. If empty, no language options are required.
   list<LangOpt> LangOpts = [];
   // Any additional text that should be included verbatim in the class.
+  // Note: Any additional data members will leak and should be constructed
+  // externally on the ASTContext.
   code AdditionalMembers = [{}];
   // Any documentation that should be associated with the attribute. Since an
   // attribute may be documented under multiple categories, more than one
