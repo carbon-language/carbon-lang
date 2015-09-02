@@ -100,7 +100,7 @@ private:
                    StringRef StrTable, bool IsDynamic);
 
   void printRelocations(const Elf_Shdr *Sec);
-  void printRelocation(const Elf_Shdr *Sec, Elf_Rela Rel);
+  void printRelocation(Elf_Rela Rel, const Elf_Shdr *SymTab);
   void printValue(uint64_t Type, uint64_t Value);
 
   const Elf_Rela *dyn_rela_begin() const;
@@ -1095,6 +1095,10 @@ void ELFDumper<ELFT>::printDynamicRelocations() {
 
 template <class ELFT>
 void ELFDumper<ELFT>::printRelocations(const Elf_Shdr *Sec) {
+  ErrorOr<const Elf_Shdr *> SymTabOrErr = Obj->getSection(Sec->sh_link);
+  error(SymTabOrErr.getError());
+  const Elf_Shdr *SymTab = *SymTabOrErr;
+
   switch (Sec->sh_type) {
   case ELF::SHT_REL:
     for (const Elf_Rel &R : Obj->rels(Sec)) {
@@ -1102,35 +1106,32 @@ void ELFDumper<ELFT>::printRelocations(const Elf_Shdr *Sec) {
       Rela.r_offset = R.r_offset;
       Rela.r_info = R.r_info;
       Rela.r_addend = 0;
-      printRelocation(Sec, Rela);
+      printRelocation(Rela, SymTab);
     }
     break;
   case ELF::SHT_RELA:
     for (const Elf_Rela &R : Obj->relas(Sec))
-      printRelocation(Sec, R);
+      printRelocation(R, SymTab);
     break;
   }
 }
 
 template <class ELFT>
-void ELFDumper<ELFT>::printRelocation(const Elf_Shdr *Sec, Elf_Rela Rel) {
+void ELFDumper<ELFT>::printRelocation(Elf_Rela Rel, const Elf_Shdr *SymTab) {
   SmallString<32> RelocName;
   Obj->getRelocationTypeName(Rel.getType(Obj->isMips64EL()), RelocName);
   StringRef TargetName;
-  std::pair<const Elf_Shdr *, const Elf_Sym *> Sym =
-      Obj->getRelocationSymbol(Sec, &Rel);
-  if (Sym.second && Sym.second->getType() == ELF::STT_SECTION) {
-    ErrorOr<const Elf_Shdr *> Sec =
-        Obj->getSection(Sym.second, Sym.first, ShndxTable);
+  const Elf_Sym *Sym = Obj->getRelocationSymbol(&Rel, SymTab);
+  if (Sym && Sym->getType() == ELF::STT_SECTION) {
+    ErrorOr<const Elf_Shdr *> Sec = Obj->getSection(Sym, SymTab, ShndxTable);
     error(Sec.getError());
     ErrorOr<StringRef> SecName = Obj->getSectionName(*Sec);
     if (SecName)
       TargetName = SecName.get();
-  } else if (Sym.first) {
-    const Elf_Shdr *SymTable = Sym.first;
-    ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*SymTable);
+  } else if (Sym) {
+    ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*SymTab);
     error(StrTableOrErr.getError());
-    TargetName = errorOrDefault(Sym.second->getName(*StrTableOrErr));
+    TargetName = errorOrDefault(Sym->getName(*StrTableOrErr));
   }
 
   if (opts::ExpandRelocs) {
@@ -1767,7 +1768,8 @@ template <class ELFT> void MipsGOTParser<ELFT>::parsePLT() {
   ErrorOr<const Elf_Shdr *> SymTableOrErr =
       Obj->getSection(PLTRelShdr->sh_link);
   error(SymTableOrErr.getError());
-  ErrorOr<StringRef> StrTable = Obj->getStringTableForSymtab(**SymTableOrErr);
+  const Elf_Shdr *SymTable = *SymTableOrErr;
+  ErrorOr<StringRef> StrTable = Obj->getStringTableForSymtab(*SymTable);
   error(StrTable.getError());
 
   const GOTEntry *PLTBegin = makeGOTIter(*PLT, 0);
@@ -1789,8 +1791,7 @@ template <class ELFT> void MipsGOTParser<ELFT>::parsePLT() {
       for (const Elf_Rel *RI = Obj->rel_begin(PLTRelShdr),
                          *RE = Obj->rel_end(PLTRelShdr);
            RI != RE && It != PLTEnd; ++RI, ++It) {
-        const Elf_Sym *Sym =
-            Obj->getRelocationSymbol(&*PLTRelShdr, &*RI).second;
+        const Elf_Sym *Sym = Obj->getRelocationSymbol(&*RI, SymTable);
         printPLTEntry(PLTShdr->sh_addr, PLTBegin, It, *StrTable, Sym);
       }
       break;
@@ -1798,8 +1799,7 @@ template <class ELFT> void MipsGOTParser<ELFT>::parsePLT() {
       for (const Elf_Rela *RI = Obj->rela_begin(PLTRelShdr),
                           *RE = Obj->rela_end(PLTRelShdr);
            RI != RE && It != PLTEnd; ++RI, ++It) {
-        const Elf_Sym *Sym =
-            Obj->getRelocationSymbol(&*PLTRelShdr, &*RI).second;
+        const Elf_Sym *Sym = Obj->getRelocationSymbol(&*RI, SymTable);
         printPLTEntry(PLTShdr->sh_addr, PLTBegin, It, *StrTable, Sym);
       }
       break;

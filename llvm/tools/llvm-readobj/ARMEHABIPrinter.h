@@ -375,6 +375,10 @@ PrinterContext<ET>::FindExceptionTable(unsigned IndexSectionIndex,
     if (Sec.sh_type != ELF::SHT_REL || Sec.sh_info != IndexSectionIndex)
       continue;
 
+    ErrorOr<const Elf_Shdr *> SymTabOrErr = ELF->getSection(Sec.sh_link);
+    error(SymTabOrErr.getError());
+    const Elf_Shdr *SymTab = *SymTabOrErr;
+
     for (const Elf_Rel &R : ELF->rels(&Sec)) {
       if (R.r_offset != static_cast<unsigned>(IndexTableOffset))
         continue;
@@ -384,11 +388,10 @@ PrinterContext<ET>::FindExceptionTable(unsigned IndexSectionIndex,
       RelA.r_info = R.r_info;
       RelA.r_addend = 0;
 
-      std::pair<const Elf_Shdr *, const Elf_Sym *> Symbol =
-        ELF->getRelocationSymbol(&Sec, &RelA);
+      const Elf_Sym *Symbol = ELF->getRelocationSymbol(&RelA, SymTab);
 
       ErrorOr<const Elf_Shdr *> Ret =
-          ELF->getSection(Symbol.second, Symbol.first, ShndxTable);
+          ELF->getSection(Symbol, SymTab, ShndxTable);
       if (std::error_code EC = Ret.getError())
         report_fatal_error(EC.message());
       return *Ret;
