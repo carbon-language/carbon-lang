@@ -24,6 +24,7 @@ class ObjCNewSyntaxTestCase(TestBase):
     @dwarf_test
     @skipIfFreeBSD
     @skipIfLinux
+    @skipIfWindows
     @expectedFailureDarwin # expr -- @((char*)"Hello world" + 6) cannot box a string value because NSString has not been declared
     def test_expr_with_dwarf(self):
         self.buildDwarf()

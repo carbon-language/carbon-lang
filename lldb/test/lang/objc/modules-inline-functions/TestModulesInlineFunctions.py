@@ -23,6 +23,7 @@ class ModulesInlineFunctionsTestCase(TestBase):
     @dwarf_test
     @skipIfFreeBSD
     @skipIfLinux
+    @skipIfWindows
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()
