@@ -778,9 +778,6 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   }
 #endif
 
-  // TODO: come back and revisit the state transitions around inputs which
-  // have reached conflict state.  The current version seems too conservative.
-
   // Return a phi state for a base defining value.  We'll generate a new
   // base state for known bases and expect to find a cached state otherwise.
   auto getStateForBDV = [&](Value *baseValue) {
