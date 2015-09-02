@@ -115,8 +115,8 @@ define i32 @i16_loop() nounwind readnone ssp uwtable {
 ; CHECK:  br i1 true, label %scalar.ph, label %min.iters.checked
 
 ; CHECK: scalar.ph:
-; CHECK:  %bc.resume.val = phi i32 [ %resume.val, %middle.block ], [ 0, %0 ]
-; CHECK:  %bc.merge.rdx = phi i32 [ 1, %0 ], [ %5, %middle.block ]
+; CHECK:  %bc.resume.val = phi i32 [ 0, %middle.block ], [ 0, %0 ]
+; CHECK:  %bc.merge.rdx = phi i32 [ 1, %0 ], [ 1, %min.iters.checked ], [ %5, %middle.block ]
 
 define i32 @max_i32_backedgetaken() nounwind readnone ssp uwtable {
 

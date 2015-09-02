@@ -175,8 +175,8 @@ for.end:                                          ; preds = %for.body, %entry
 }
 
 ;CHECK-LABEL: @reduction_and(
-;CHECK: and <4 x i32>
 ;CHECK: <i32 -1, i32 -1, i32 -1, i32 -1>
+;CHECK: and <4 x i32>
 ;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
 ;CHECK: and <4 x i32>
 ;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>

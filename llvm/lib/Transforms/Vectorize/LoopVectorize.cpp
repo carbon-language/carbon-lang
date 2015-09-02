@@ -2785,13 +2785,13 @@ void InnerLoopVectorizer::createEmptyLoop() {
   |  /  |
   | /   v
   ||   [ ]     <-- vector pre header.
-  ||    |
-  ||    v
-  ||   [  ] \
-  ||   [  ]_|   <-- vector loop.
-  ||    |
-  | \   v
-  |   >[ ]   <--- middle-block.
+  |/    |
+  |     v
+  |    [  ] \
+  |    [  ]_|   <-- vector loop.
+  |     |
+  |     v
+  |   -[ ]   <--- middle-block.
   |  /  |
   | /   v
   -|- >[ ]     <--- new preheader.
@@ -2860,16 +2860,16 @@ void InnerLoopVectorizer::createEmptyLoop() {
   emitMinimumIterationCountCheck(Lp, ScalarPH);
   // Now, compare the new count to zero. If it is zero skip the vector loop and
   // jump to the scalar loop.
-  emitVectorLoopEnteredCheck(Lp, MiddleBlock);
+  emitVectorLoopEnteredCheck(Lp, ScalarPH);
   // Generate the code to check that the strides we assumed to be one are really
   // one. We want the new basic block to start at the first instruction in a
   // sequence of instructions that form a check.
-  emitStrideChecks(Lp, MiddleBlock);
+  emitStrideChecks(Lp, ScalarPH);
   // Generate the code that checks in runtime if arrays overlap. We put the
   // checks into a separate block to make the more common case of few elements
   // faster.
-  emitMemRuntimeChecks(Lp, MiddleBlock);
-
+  emitMemRuntimeChecks(Lp, ScalarPH);
+  
   // Generate the induction variable.
   // The loop step is equal to the vectorization factor (num of SIMD elements)
   // times the unroll factor (num of SIMD instructions).
@@ -2890,27 +2890,20 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // This variable saves the new starting index for the scalar loop. It is used
   // to test if there are any tail iterations left once the vector loop has
   // completed.
-  PHINode *ResumeIndex = nullptr;
   LoopVectorizationLegality::InductionList::iterator I, E;
   LoopVectorizationLegality::InductionList *List = Legal->getInductionVars();
   for (I = List->begin(), E = List->end(); I != E; ++I) {
     PHINode *OrigPhi = I->first;
     InductionDescriptor II = I->second;
 
-    PHINode *ResumeVal = PHINode::Create(OrigPhi->getType(), 2, "resume.val",
-                                         MiddleBlock->getTerminator());
     // Create phi nodes to merge from the  backedge-taken check block.
     PHINode *BCResumeVal = PHINode::Create(OrigPhi->getType(), 3,
                                            "bc.resume.val",
                                            ScalarPH->getTerminator());
-    BCResumeVal->addIncoming(ResumeVal, MiddleBlock);
-
     Value *EndValue;
     if (OrigPhi == OldInduction) {
       // We know what the end value is.
       EndValue = CountRoundDown;
-      // We also know which PHI node holds it.
-      ResumeIndex = ResumeVal;
     } else {
       IRBuilder<> B(LoopBypassBlocks.back()->getTerminator());
       Value *CRD = B.CreateSExtOrTrunc(CountRoundDown,
@@ -2922,41 +2915,23 @@ void InnerLoopVectorizer::createEmptyLoop() {
 
     // The new PHI merges the original incoming value, in case of a bypass,
     // or the value at the end of the vectorized loop.
-    for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
-      ResumeVal->addIncoming(II.getStartValue(), LoopBypassBlocks[I]);
-    ResumeVal->addIncoming(EndValue, VecBody);
+    BCResumeVal->addIncoming(EndValue, MiddleBlock);
 
     // Fix the scalar body counter (PHI node).
     unsigned BlockIdx = OrigPhi->getBasicBlockIndex(ScalarPH);
 
     // The old induction's phi node in the scalar body needs the truncated
     // value.
-    BCResumeVal->addIncoming(II.getStartValue(), LoopBypassBlocks[0]);
+    for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
+      BCResumeVal->addIncoming(II.getStartValue(), LoopBypassBlocks[I]);
     OrigPhi->setIncomingValue(BlockIdx, BCResumeVal);
   }
-
-  // If we are generating a new induction variable then we also need to
-  // generate the code that calculates the exit value. This value is not
-  // simply the end of the counter because we may skip the vectorized body
-  // in case of a runtime check.
-  if (!OldInduction){
-    assert(!ResumeIndex && "Unexpected resume value found");
-    ResumeIndex = PHINode::Create(IdxTy, 2, "new.indc.resume.val",
-                                  MiddleBlock->getTerminator());
-    for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
-      ResumeIndex->addIncoming(StartIdx, LoopBypassBlocks[I]);
-    ResumeIndex->addIncoming(CountRoundDown, VecBody);
-  }
-
-  // Make sure that we found the index where scalar loop needs to continue.
-  assert(ResumeIndex && ResumeIndex->getType()->isIntegerTy() &&
-         "Invalid resume Index");
 
   // Add a check in the middle block to see if we have completed
   // all of the iterations in the first vector loop.
   // If (N - N%VF) == N, then we *don't* need to run the remainder.
   Value *CmpN = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ, Count,
-                                ResumeIndex, "cmp.n",
+                                CountRoundDown, "cmp.n",
                                 MiddleBlock->getTerminator());
   ReplaceInstWithInst(MiddleBlock->getTerminator(),
                       BranchInst::Create(ExitBlock, ScalarPH, CmpN));
@@ -3262,19 +3237,8 @@ void InnerLoopVectorizer::vectorizeLoop() {
     // instructions.
     Builder.SetInsertPoint(LoopMiddleBlock->getFirstInsertionPt());
 
-    VectorParts RdxParts, &RdxExitVal = getVectorValue(LoopExitInst);
+    VectorParts RdxParts = getVectorValue(LoopExitInst);
     setDebugLocFromInst(Builder, LoopExitInst);
-    for (unsigned part = 0; part < UF; ++part) {
-      // This PHINode contains the vectorized reduction variable, or
-      // the initial value vector, if we bypass the vector loop.
-      PHINode *NewPhi = Builder.CreatePHI(VecTy, 2, "rdx.vec.exit.phi");
-      Value *StartVal = (part == 0) ? VectorStart : Identity;
-      for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
-        NewPhi->addIncoming(StartVal, LoopBypassBlocks[I]);
-      NewPhi->addIncoming(RdxExitVal[part],
-                          LoopVectorBody.back());
-      RdxParts.push_back(NewPhi);
-    }
 
     // If the vector reduction can be performed in a smaller type, we truncate
     // then extend the loop exit value to enable InstCombine to evaluate the
@@ -3283,15 +3247,17 @@ void InnerLoopVectorizer::vectorizeLoop() {
       Type *RdxVecTy = VectorType::get(RdxDesc.getRecurrenceType(), VF);
       Builder.SetInsertPoint(LoopVectorBody.back()->getTerminator());
       for (unsigned part = 0; part < UF; ++part) {
-        Value *Trunc = Builder.CreateTrunc(RdxExitVal[part], RdxVecTy);
+        Value *Trunc = Builder.CreateTrunc(RdxParts[part], RdxVecTy);
         Value *Extnd = RdxDesc.isSigned() ? Builder.CreateSExt(Trunc, VecTy)
                                           : Builder.CreateZExt(Trunc, VecTy);
-        for (Value::user_iterator UI = RdxExitVal[part]->user_begin();
-             UI != RdxExitVal[part]->user_end();)
-          if (*UI != Trunc)
-            (*UI++)->replaceUsesOfWith(RdxExitVal[part], Extnd);
-          else
+        for (Value::user_iterator UI = RdxParts[part]->user_begin();
+             UI != RdxParts[part]->user_end();)
+          if (*UI != Trunc) {
+            (*UI++)->replaceUsesOfWith(RdxParts[part], Extnd);
+            RdxParts[part] = Extnd;
+          } else {
             ++UI;
+          }
       }
       Builder.SetInsertPoint(LoopMiddleBlock->getFirstInsertionPt());
       for (unsigned part = 0; part < UF; ++part)
@@ -3362,7 +3328,8 @@ void InnerLoopVectorizer::vectorizeLoop() {
     // block and the middle block.
     PHINode *BCBlockPhi = PHINode::Create(RdxPhi->getType(), 2, "bc.merge.rdx",
                                           LoopScalarPreHeader->getTerminator());
-    BCBlockPhi->addIncoming(ReductionStartValue, LoopBypassBlocks[0]);
+    for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
+      BCBlockPhi->addIncoming(ReductionStartValue, LoopBypassBlocks[I]);
     BCBlockPhi->addIncoming(ReducedPartRdx, LoopMiddleBlock);
 
     // Now, we need to fix the users of the reduction variable
@@ -3850,7 +3817,7 @@ void InnerLoopVectorizer::updateAnalysis() {
     }
   }
 
-  DT->addNewBlock(LoopMiddleBlock, LoopBypassBlocks[1]);
+  DT->addNewBlock(LoopMiddleBlock, LoopVectorBody.back());
   DT->addNewBlock(LoopScalarPreHeader, LoopBypassBlocks[0]);
   DT->changeImmediateDominator(LoopScalarBody, LoopScalarPreHeader);
   DT->changeImmediateDominator(LoopExitBlock, LoopBypassBlocks[0]);

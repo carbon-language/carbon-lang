@@ -11,9 +11,9 @@ target triple = "x86_64-apple-macosx10.9.0"
 
 ;CHECK-LABEL: define i32 @foo
 ;CHECK: for.body.preheader:
-;CHECK: br i1 %cmp.zero, label %middle.block, label %vector.memcheck, !dbg [[BODY_LOC:![0-9]+]]
+;CHECK: br i1 %cmp.zero, label %scalar.ph, label %vector.memcheck, !dbg [[BODY_LOC:![0-9]+]]
 ;CHECK: vector.memcheck:
-;CHECK: br i1 %memcheck.conflict, label %middle.block, label %vector.ph, !dbg [[BODY_LOC]]
+;CHECK: br i1 %memcheck.conflict, label %scalar.ph, label %vector.ph, !dbg [[BODY_LOC]]
 ;CHECK: load <4 x float>
 define i32 @foo(float* nocapture %a, float* nocapture %b, i32 %n) nounwind uwtable ssp {
 entry:
