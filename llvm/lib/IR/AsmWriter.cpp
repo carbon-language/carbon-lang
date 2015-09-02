@@ -2545,28 +2545,26 @@ void AssemblyWriter::printFunction(const Function *F) {
   Machine.incorporateFunction(F);
 
   // Loop over the arguments, printing them...
-
-  unsigned Idx = 1;
-  if (!F->isDeclaration()) {
-    // If this isn't a declaration, print the argument names as well.
-    for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
-         I != E; ++I) {
+  if (F->isDeclaration()) {
+    // We're only interested in the type here - don't print argument names.
+    for (unsigned I = 0, E = FT->getNumParams(); I != E; ++I) {
       // Insert commas as we go... the first arg doesn't get a comma
-      if (I != F->arg_begin()) Out << ", ";
-      printArgument(I, Attrs, Idx);
-      Idx++;
+      if (I)
+        Out << ", ";
+      // Output type...
+      TypePrinter.print(FT->getParamType(I), Out);
+
+      if (Attrs.hasAttributes(I + 1))
+        Out << ' ' << Attrs.getAsString(I + 1);
     }
   } else {
-    // Otherwise, print the types from the function type.
-    for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i) {
+    // The arguments are meaningful here, print them in detail.
+    unsigned Idx = 1;
+    for (const Argument &Arg : F->args()) {
       // Insert commas as we go... the first arg doesn't get a comma
-      if (i) Out << ", ";
-
-      // Output type...
-      TypePrinter.print(FT->getParamType(i), Out);
-
-      if (Attrs.hasAttributes(i+1))
-        Out << ' ' << Attrs.getAsString(i+1);
+      if (Idx != 1)
+        Out << ", ";
+      printArgument(&Arg, Attrs, Idx++);
     }
   }
 
