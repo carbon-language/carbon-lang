@@ -110,6 +110,12 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   assert(MakeImplicitID == MD_make_implicit &&
          "make.implicit kind id drifted");
   (void)MakeImplicitID;
+
+  // Create the 'unpredictable' metadata kind.
+  unsigned UnpredictableID = getMDKindID("unpredictable");
+  assert(UnpredictableID == MD_unpredictable &&
+         "unpredictable kind id drifted");
+  (void)UnpredictableID;
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 

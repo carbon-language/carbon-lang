@@ -60,6 +60,9 @@ public:
   /// \brief Return metadata containing a number of branch weights.
   MDNode *createBranchWeights(ArrayRef<uint32_t> Weights);
 
+  /// Return metadata specifying that a branch or switch is unpredictable.
+  MDNode *createUnpredictable();
+
   /// Return metadata containing the entry count for a function.
   MDNode *createFunctionEntryCount(uint64_t Count);
 

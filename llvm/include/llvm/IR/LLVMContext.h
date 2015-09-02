@@ -61,7 +61,8 @@ public:
     MD_nonnull = 11, // "nonnull"
     MD_dereferenceable = 12, // "dereferenceable"
     MD_dereferenceable_or_null = 13, // "dereferenceable_or_null"
-    MD_make_implicit = 14 // "make.implicit"
+    MD_make_implicit = 14, // "make.implicit"
+    MD_unpredictable = 15 // "unpredictable"
   };
 
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.

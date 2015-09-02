@@ -4163,6 +4163,16 @@ Examples:
     !2 = !{ i8 0, i8 2, i8 3, i8 6 }
     !3 = !{ i8 -2, i8 0, i8 3, i8 6 }
 
+'``unpredictable``' Metadata
+^^^^^^^^^^^^^^^^^^^^^
+
+``unpredictable`` metadata may be attached to any branch or switch
+instruction. It can be used to express the unpredictability of control
+flow. Similar to the llvm.expect intrinsic, it may be used to alter
+optimizations related to compare and branch instructions. The metadata
+is treated as a boolean value; if it exists, it signals that the branch
+or switch that it is attached to is completely unpredictable.
+
 '``llvm.loop``'
 ^^^^^^^^^^^^^^^
 

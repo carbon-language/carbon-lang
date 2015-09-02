@@ -53,6 +53,10 @@ MDNode *MDBuilder::createBranchWeights(ArrayRef<uint32_t> Weights) {
   return MDNode::get(Context, Vals);
 }
 
+MDNode *MDBuilder::createUnpredictable() {
+  return MDNode::get(Context, None);
+}
+
 MDNode *MDBuilder::createFunctionEntryCount(uint64_t Count) {
   SmallVector<Metadata *, 2> Vals(2);
   Vals[0] = createString("function_entry_count");
