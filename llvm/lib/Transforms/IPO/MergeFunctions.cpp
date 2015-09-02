@@ -1315,7 +1315,7 @@ class MergeFunctions : public ModulePass {
 public:
   static char ID;
   MergeFunctions()
-    : ModulePass(ID), FnTree(FunctionNodeCmp(&GlobalNumbers)),
+    : ModulePass(ID), FnTree(FunctionNodeCmp(&GlobalNumbers)), FNodesInTree(),
       HasGlobalAliases(false) {
     initializeMergeFunctionsPass(*PassRegistry::getPassRegistry());
   }
@@ -1381,11 +1381,17 @@ private:
   void writeAlias(Function *F, Function *G);
 
   /// Replace function F with function G in the function tree.
-  void replaceFunctionInTree(FnTreeType::iterator &IterToF, Function *G);
+  void replaceFunctionInTree(const FunctionNode &FN, Function *G);
 
   /// The set of all distinct functions. Use the insert() and remove() methods
-  /// to modify it.
+  /// to modify it. The map allows efficient lookup and deferring of Functions.
   FnTreeType FnTree;
+  // Map functions to the iterators of the FunctionNode which contains them
+  // in the FnTree. This must be updated carefully whenever the FnTree is
+  // modified, i.e. in insert(), remove(), and replaceFunctionInTree(), to avoid
+  // dangling iterators into FnTree. The invariant that preserves this is that
+  // there is exactly one mapping F -> FN for each FunctionNode FN in FnTree.
+  ValueMap<Function*, FnTreeType::iterator> FNodesInTree;
 
   /// Whether or not the target supports global aliases.
   bool HasGlobalAliases;
@@ -1714,21 +1720,24 @@ void MergeFunctions::mergeTwoFunctions(Function *F, Function *G) {
   ++NumFunctionsMerged;
 }
 
-/// Replace function F for function G in the map.
-void MergeFunctions::replaceFunctionInTree(FnTreeType::iterator &IterToF,
+/// Replace function F by function G.
+void MergeFunctions::replaceFunctionInTree(const FunctionNode &FN,
                                            Function *G) {
-  Function *F = IterToF->getFunc();
-
-  // A total order is already guaranteed otherwise because we process strong
-  // functions before weak functions.
-  assert(((F->mayBeOverridden() && G->mayBeOverridden()) ||
-          (!F->mayBeOverridden() && !G->mayBeOverridden())) &&
-         "Only change functions if both are strong or both are weak");
-  (void)F;
+  Function *F = FN.getFunc();
   assert(FunctionComparator(F, G, &GlobalNumbers).compare() == 0 &&
          "The two functions must be equal");
-
-  IterToF->replaceBy(G);
+  
+  auto I = FNodesInTree.find(F);
+  assert(I != FNodesInTree.end() && "F should be in FNodesInTree");
+  assert(FNodesInTree.count(G) == 0 && "FNodesInTree should not contain G");
+  
+  FnTreeType::iterator IterToFNInFnTree = I->second;
+  assert(&(*IterToFNInFnTree) == &FN && "F should map to FN in FNodesInTree.");
+  // Remove F -> FN and insert G -> FN
+  FNodesInTree.erase(I);
+  FNodesInTree.insert({G, IterToFNInFnTree});
+  // Replace F with G in FN, which is stored inside the FnTree.
+  FN.replaceBy(G);
 }
 
 // Insert a ComparableFunction into the FnTree, or merge it away if equal to one
@@ -1738,6 +1747,8 @@ bool MergeFunctions::insert(Function *NewFunction) {
       FnTree.insert(FunctionNode(NewFunction));
 
   if (Result.second) {
+    assert(FNodesInTree.count(NewFunction) == 0);
+    FNodesInTree.insert({NewFunction, Result.first});
     DEBUG(dbgs() << "Inserting as unique: " << NewFunction->getName() << '\n');
     return false;
   }
@@ -1767,7 +1778,7 @@ bool MergeFunctions::insert(Function *NewFunction) {
     if (OldF.getFunc()->getName() > NewFunction->getName()) {
       // Swap the two functions.
       Function *F = OldF.getFunc();
-      replaceFunctionInTree(Result.first, NewFunction);
+      replaceFunctionInTree(*Result.first, NewFunction);
       NewFunction = F;
       assert(OldF.getFunc() != F && "Must have swapped the functions.");
     }
@@ -1786,18 +1797,13 @@ bool MergeFunctions::insert(Function *NewFunction) {
 // Remove a function from FnTree. If it was already in FnTree, add
 // it to Deferred so that we'll look at it in the next round.
 void MergeFunctions::remove(Function *F) {
-  // We need to make sure we remove F, not a function "equal" to F per the
-  // function equality comparator.
-  FnTreeType::iterator found = FnTree.find(FunctionNode(F));
-  size_t Erased = 0;
-  if (found != FnTree.end() && found->getFunc() == F) {
-    Erased = 1;
-    FnTree.erase(found);
-  }
-
-  if (Erased) {
-    DEBUG(dbgs() << "Removed " << F->getName()
-                 << " from set and deferred it.\n");
+  auto I = FNodesInTree.find(F);
+  if (I != FNodesInTree.end()) {
+    DEBUG(dbgs() << "Deferred " << F->getName()<< ".\n");
+    FnTree.erase(I->second);
+    // I->second has been invalidated, remove it from the FNodesInTree map to
+    // preserve the invariant.
+    FNodesInTree.erase(I);
     Deferred.emplace_back(F);
   }
 }
