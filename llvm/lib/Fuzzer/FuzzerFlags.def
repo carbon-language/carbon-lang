@@ -50,8 +50,9 @@ FUZZER_FLAG_INT(workers, 0,
 FUZZER_FLAG_INT(reload, 1,
                 "Reload the main corpus periodically to get new units"
                 " discovered by other processes.")
-FUZZER_FLAG_STRING(tokens, "Use the file with tokens (one token per line) to"
-                           " fuzz a token based input language.")
+FUZZER_FLAG_STRING(deprecated_tokens,
+                   "Use the file with tokens (one token per line) to"
+                   " fuzz a token based input language.")
 FUZZER_FLAG_STRING(apply_tokens, "Read the given input file, substitute bytes "
                                  " with tokens and write the result to stdout.")
 FUZZER_FLAG_STRING(sync_command, "Execute an external command "
