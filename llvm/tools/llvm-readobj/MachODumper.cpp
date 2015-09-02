@@ -44,6 +44,7 @@ public:
   void printMachODataInCode() override;
   void printMachOVersionMin() override;
   void printMachODysymtab() override;
+  void printMachOSegment() override;
 
 private:
   template<class MachHeader>
@@ -263,6 +264,20 @@ namespace {
     uint32_t Reserved3;
   };
 
+  struct MachOSegment {
+    StringRef CmdName;
+    StringRef SegName;
+    uint64_t cmdsize;
+    uint64_t vmaddr;
+    uint64_t vmsize;
+    uint64_t fileoff;
+    uint64_t filesize;
+    uint32_t maxprot;
+    uint32_t initprot;
+    uint32_t nsects;
+    uint32_t flags;
+  };
+
   struct MachOSymbol {
     uint32_t StringIndex;
     uint8_t Type;
@@ -270,6 +285,18 @@ namespace {
     uint16_t Flags;
     uint64_t Value;
   };
+}
+
+static std::string getMask(uint32_t prot)
+{
+  // TODO (davide): This always assumes prot is valid.
+  // Catch mistakes and report if needed.
+  std::string Prot;
+  Prot = "";
+  Prot += (prot & MachO::VM_PROT_READ) ? "r" : "-";
+  Prot += (prot & MachO::VM_PROT_WRITE) ? "w" : "-";
+  Prot += (prot & MachO::VM_PROT_EXECUTE) ? "x" : "-";
+  return Prot;
 }
 
 static void getSection(const MachOObjectFile *Obj,
@@ -301,6 +328,37 @@ static void getSection(const MachOObjectFile *Obj,
   Section.Reserved3   = Sect.reserved3;
 }
 
+static void getSegment(const MachOObjectFile *Obj,
+                       const MachOObjectFile::LoadCommandInfo &L,
+                       MachOSegment &Segment) {
+  if (!Obj->is64Bit()) {
+    MachO::segment_command SC = Obj->getSegmentLoadCommand(L);
+    Segment.CmdName = "LC_SEGMENT";
+    Segment.SegName = SC.segname;
+    Segment.cmdsize = SC.cmdsize;
+    Segment.vmaddr = SC.vmaddr;
+    Segment.vmsize = SC.vmsize;
+    Segment.fileoff = SC.fileoff;
+    Segment.filesize = SC.filesize;
+    Segment.maxprot = SC.maxprot;
+    Segment.initprot = SC.initprot;
+    Segment.nsects = SC.nsects;
+    Segment.flags = SC.flags;
+    return;
+  }
+  MachO::segment_command_64 SC = Obj->getSegment64LoadCommand(L);
+  Segment.CmdName = "LC_SEGMENT_64";
+  Segment.SegName = SC.segname;
+  Segment.cmdsize = SC.cmdsize;
+  Segment.vmaddr = SC.vmaddr;
+  Segment.vmsize = SC.vmsize;
+  Segment.fileoff = SC.fileoff;
+  Segment.filesize = SC.filesize;
+  Segment.maxprot = SC.maxprot;
+  Segment.initprot = SC.initprot;
+  Segment.nsects = SC.nsects;
+  Segment.flags = SC.flags;
+}
 
 static void getSymbol(const MachOObjectFile *Obj,
                       DataRefImpl DRI,
@@ -692,6 +750,27 @@ void MachODumper::printMachODysymtab() {
       W.printNumber("nextrel", DLC.nextrel);
       W.printNumber("locreloff", DLC.locreloff);
       W.printNumber("nlocrel", DLC.nlocrel);
+    }
+  }
+}
+
+void MachODumper::printMachOSegment() {
+  for (const auto &Load : Obj->load_commands()) {
+    if (Load.C.cmd == MachO::LC_SEGMENT || Load.C.cmd == MachO::LC_SEGMENT_64) {
+      MachOSegment MOSegment;
+      getSegment(Obj, Load, MOSegment);
+      DictScope Group(W, "Segment");
+      W.printString("Cmd", MOSegment.CmdName);
+      W.printString("Name", MOSegment.SegName);
+      W.printNumber("Size", MOSegment.cmdsize);
+      W.printHex("vmaddr", MOSegment.vmaddr);
+      W.printHex("vmsize", MOSegment.vmsize);
+      W.printNumber("fileoff", MOSegment.fileoff);
+      W.printNumber("filesize", MOSegment.fileoff);
+      W.printString("maxprot", getMask(MOSegment.maxprot));
+      W.printString("initprot", getMask(MOSegment.initprot));
+      W.printNumber("nsects", MOSegment.nsects);
+      W.printHex("flags", MOSegment.flags);
     }
   }
 }

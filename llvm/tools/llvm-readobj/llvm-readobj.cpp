@@ -187,6 +187,11 @@ namespace opts {
   MachODataInCode("macho-data-in-code",
                   cl::desc("Display MachO Data in Code command"));
 
+  // -macho-segment
+  cl::opt<bool>
+  MachOSegment("macho-segment",
+                  cl::desc("Display MachO Segment command"));
+
   // -macho-version-min
   cl::opt<bool>
   MachOVersionMin("macho-version-min",
@@ -331,6 +336,8 @@ static void dumpObject(const ObjectFile *Obj) {
   if (Obj->isMachO()) {
     if (opts::MachODataInCode)
       Dumper->printMachODataInCode();
+    if (opts::MachOSegment)
+      Dumper->printMachOSegment();
     if (opts::MachOVersionMin)
       Dumper->printMachOVersionMin();
     if (opts::MachODysymtab)
