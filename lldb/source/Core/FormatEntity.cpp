@@ -31,7 +31,7 @@
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
-#include "lldb/Target/LanguageRuntime.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/SectionLoadList.h"
@@ -1529,7 +1529,7 @@ FormatEntity::Format (const Entry &entry,
                 CompileUnit *cu = sc->comp_unit;
                 if (cu)
                 {
-                    const char *lang_name = LanguageRuntime::GetNameForLanguageType(cu->GetLanguage());
+                    const char *lang_name = Language::GetNameForLanguageType(cu->GetLanguage());
                     if (lang_name)
                     {
                         s.PutCString(lang_name);

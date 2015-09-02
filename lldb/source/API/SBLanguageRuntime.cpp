@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBLanguageRuntime.h"
-#include "lldb/Target/LanguageRuntime.h"
+#include "lldb/Target/Language.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -16,11 +16,11 @@ using namespace lldb_private;
 lldb::LanguageType
 SBLanguageRuntime::GetLanguageTypeFromString (const char *string)
 {
-    return LanguageRuntime::GetLanguageTypeFromString(string);
+    return Language::GetLanguageTypeFromString(string);
 }
 
 const char *
 SBLanguageRuntime::GetNameForLanguageType (lldb::LanguageType language)
 {
-    return LanguageRuntime::GetNameForLanguageType(language);
+    return Language::GetNameForLanguageType(language);
 }

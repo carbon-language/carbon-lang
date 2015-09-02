@@ -421,7 +421,7 @@ namespace lldb {
         eLanguageTypeFortran03       = 0x0022,   ///< ISO Fortran 2003.
         eLanguageTypeFortran08       = 0x0023,   ///< ISO Fortran 2008.
         // Vendor Extensions
-        // Note: LanguageRuntime::GetNameForLanguageType
+        // Note: Language::GetNameForLanguageType
         // assumes these can be used as indexes into array language_names, and
         // Language::SetLanguageFromCString and Language::AsCString
         // assume these can be used as indexes into array g_languages.

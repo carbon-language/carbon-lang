@@ -52,6 +52,7 @@
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ABI.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
@@ -1133,7 +1134,7 @@ SBTarget::BreakpointCreateForException  (lldb::LanguageType language,
     if (log)
         log->Printf ("SBTarget(%p)::BreakpointCreateByRegex (Language: %s, catch: %s throw: %s) => SBBreakpoint(%p)",
                      static_cast<void*>(target_sp.get()),
-                     LanguageRuntime::GetNameForLanguageType(language),
+                     Language::GetNameForLanguageType(language),
                      catch_bp ? "on" : "off", throw_bp ? "on" : "off",
                      static_cast<void*>(sb_bp.get()));
 

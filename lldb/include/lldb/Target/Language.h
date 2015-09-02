@@ -42,6 +42,30 @@ namespace lldb_private {
         virtual lldb::TypeCategoryImplSP
         GetFormatters ();
 
+    // These are accessors for general information about the Languages lldb knows about:
+    
+    static lldb::LanguageType
+    GetLanguageTypeFromString (const char *string);
+    
+    static const char *
+    GetNameForLanguageType (lldb::LanguageType language);
+
+    static void
+    PrintAllLanguages (Stream &s, const char *prefix, const char *suffix);
+
+    static bool
+    LanguageIsCPlusPlus (lldb::LanguageType language);
+    
+    static bool
+    LanguageIsObjC (lldb::LanguageType language);
+    
+    static bool
+    LanguageIsC (lldb::LanguageType language);
+    
+    static bool
+    LanguageIsPascal (lldb::LanguageType language);
+    
+
     protected:
         //------------------------------------------------------------------
         // Classes that inherit from Language can see and modify these

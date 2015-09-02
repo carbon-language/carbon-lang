@@ -16,7 +16,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/DataFormatters/FormatManager.h"
 #include "lldb/Interpreter/Args.h"
-#include "lldb/Target/LanguageRuntime.h"
+#include "lldb/Target/Language.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -30,7 +30,7 @@ OptionValueLanguage::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, u
     {
         if (dump_mask & eDumpOptionType)
             strm.PutCString (" = ");
-        strm.PutCString (LanguageRuntime::GetNameForLanguageType(m_current_value));
+        strm.PutCString (Language::GetNameForLanguageType(m_current_value));
     }
 }
 
@@ -48,7 +48,7 @@ OptionValueLanguage::SetValueFromString (llvm::StringRef value, VarSetOperationT
     case eVarSetOperationAssign:
         {
             ConstString lang_name(value.trim());
-            LanguageType new_type = LanguageRuntime::GetLanguageTypeFromString(lang_name.GetCString());
+            LanguageType new_type = Language::GetLanguageTypeFromString(lang_name.GetCString());
             if (new_type)
             {
                 m_value_was_set = true;
@@ -59,7 +59,7 @@ OptionValueLanguage::SetValueFromString (llvm::StringRef value, VarSetOperationT
                 StreamString error_strm;
                 error_strm.Printf("invalid language type '%s', ", value.str().c_str());
                 error_strm.Printf("valid values are:\n");
-                LanguageRuntime::PrintAllLanguages(error_strm, "    ", "\n");
+                Language::PrintAllLanguages(error_strm, "    ", "\n");
                 error.SetErrorString(error_strm.GetData());
             }
         }

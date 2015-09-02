@@ -17,7 +17,7 @@
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/OptionValues.h"
-#include "lldb/Target/LanguageRuntime.h"
+#include "lldb/Target/Language.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -129,7 +129,7 @@ Property::Property (const PropertyDefinition &definition) :
         {
             LanguageType new_lang = eLanguageTypeUnknown;
             if (definition.default_cstr_value)
-                LanguageRuntime::GetLanguageTypeFromString(definition.default_cstr_value);
+                Language::GetLanguageTypeFromString(definition.default_cstr_value);
             else
                 new_lang = (LanguageType)definition.default_uint_value;
             m_value_sp.reset (new OptionValueLanguage(new_lang));

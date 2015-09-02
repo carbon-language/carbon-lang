@@ -57,6 +57,8 @@
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/CPPLanguageRuntime.h"
 
+#include "lldb/Target/Language.h"
+
 #include "DWARFASTParser.h"
 #include "DWARFCompileUnit.h"
 #include "DWARFDebugAbbrev.h"
@@ -3914,7 +3916,7 @@ SymbolFileDWARF::ParseVariableDIE
                 // "(int) A::B::j = 4". If the compiler does not emit a linkage name, we should be able
                 // to generate a fully qualified name from the declaration context.
                 if (parent_tag == DW_TAG_compile_unit &&
-                    LanguageRuntime::LanguageIsCPlusPlus(die.GetLanguage()))
+                    Language::LanguageIsCPlusPlus(die.GetLanguage()))
                 {
                     DWARFDeclContext decl_ctx;
 

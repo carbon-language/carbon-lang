@@ -28,6 +28,8 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
+#include "lldb/Target/Language.h"
+
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 
@@ -848,7 +850,7 @@ LanguageTypeHelpTextCallback ()
     StreamString sstr;
     sstr << "One of the following languages:\n";
 
-    LanguageRuntime::PrintAllLanguages(sstr, "  ", "\n");
+    Language::PrintAllLanguages(sstr, "  ", "\n");
 
     sstr.Flush();
     

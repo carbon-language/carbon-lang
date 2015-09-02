@@ -14,6 +14,7 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 
+#include "lldb/Target/Language.h"
 #include "lldb/Target/LanguageRuntime.h"
 
 using namespace lldb;
@@ -36,7 +37,7 @@ CommandObjectLanguage::GenerateHelpText (Stream &output_stream) {
 
     output_stream << "\nlanguage name can be one of the following:\n";
 
-    LanguageRuntime::PrintAllLanguages(output_stream, "  ", "\n");
+    Language::PrintAllLanguages(output_stream, "  ", "\n");
 }
 
 CommandObjectLanguage::~CommandObjectLanguage ()

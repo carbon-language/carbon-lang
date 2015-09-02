@@ -29,6 +29,7 @@
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Target/CPPLanguageRuntime.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/SectionLoadList.h"
@@ -1783,17 +1784,17 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
         if (CPPLanguageRuntime::IsCPPMangledName (name_cstr))
             lookup_name_type_mask = eFunctionNameTypeFull;
         else if ((language == eLanguageTypeUnknown ||
-                  LanguageRuntime::LanguageIsObjC(language)) &&
+                  Language::LanguageIsObjC(language)) &&
                  ObjCLanguageRuntime::IsPossibleObjCMethodName (name_cstr))
             lookup_name_type_mask = eFunctionNameTypeFull;
-        else if (LanguageRuntime::LanguageIsC(language))
+        else if (Language::LanguageIsC(language))
         {
             lookup_name_type_mask = eFunctionNameTypeFull;
         }
         else
         {
             if ((language == eLanguageTypeUnknown ||
-                 LanguageRuntime::LanguageIsObjC(language)) &&
+                 Language::LanguageIsObjC(language)) &&
                 ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
                 lookup_name_type_mask |= eFunctionNameTypeSelector;
             

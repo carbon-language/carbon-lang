@@ -25,6 +25,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Variable.h"
@@ -86,7 +87,7 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
     switch (short_option)
     {
     case 'l':
-        language = LanguageRuntime::GetLanguageTypeFromString (option_arg);
+        language = Language::GetLanguageTypeFromString (option_arg);
         if (language == eLanguageTypeUnknown)
             error.SetErrorStringWithFormat ("unknown language type: '%s' for expression", option_arg);
         break;

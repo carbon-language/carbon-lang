@@ -25,6 +25,7 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/TypeList.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 
 #include "clang/AST/DeclCXX.h"
@@ -2252,7 +2253,7 @@ DWARFASTParserClang::ParseFunctionFromDWARF (const SymbolContext& sc,
             if (mangled)
                 func_name.SetValue(ConstString(mangled), true);
             else if (die.GetParent().Tag() == DW_TAG_compile_unit &&
-                     LanguageRuntime::LanguageIsCPlusPlus(die.GetLanguage()) &&
+                     Language::LanguageIsCPlusPlus(die.GetLanguage()) &&
                      name && strcmp(name, "main") != 0)
             {
                 // If the mangled name is not present in the DWARF, generate the demangled name

@@ -92,28 +92,6 @@ public:
     CreateExceptionPrecondition (lldb::LanguageType language,
                                  bool catch_bp,
                                  bool throw_bp);
-
-    static lldb::LanguageType
-    GetLanguageTypeFromString (const char *string);
-    
-    static const char *
-    GetNameForLanguageType (lldb::LanguageType language);
-
-    static void
-    PrintAllLanguages (Stream &s, const char *prefix, const char *suffix);
-
-    static bool
-    LanguageIsCPlusPlus (lldb::LanguageType language);
-    
-    static bool
-    LanguageIsObjC (lldb::LanguageType language);
-    
-    static bool
-    LanguageIsC (lldb::LanguageType language);
-    
-    static bool
-    LanguageIsPascal (lldb::LanguageType language);
-    
     Process *
     GetProcess()
     {
