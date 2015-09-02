@@ -219,6 +219,7 @@ class CommandLineCompletionTestCase(TestBase):
         """Test that 'target va' completes to 'target variable '."""
         self.complete_from_to('target va', 'target variable ')
 
+    @expectedFailureHostWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipUnlessDarwin
     @dsym_test
     def test_symbol_name_dsym(self):
@@ -228,6 +229,7 @@ class CommandLineCompletionTestCase(TestBase):
                               'breakpoint set -n Foo::Bar(int,\\ int)',
                               turn_off_re_match=True)
 
+    @expectedFailureHostWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @dwarf_test
     def test_symbol_name_dwarf(self):
         self.buildDwarf()
