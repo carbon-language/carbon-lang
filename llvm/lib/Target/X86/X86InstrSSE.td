@@ -2609,19 +2609,20 @@ multiclass sse12_shuffle<RegisterClass RC, X86MemOperand x86memop,
             Sched<[WriteFShuffle]>;
 }
 
-defm VSHUFPS  : sse12_shuffle<VR128, f128mem, v4f32,
+let Predicates = [HasAVX, NoVLX] in {
+  defm VSHUFPS  : sse12_shuffle<VR128, f128mem, v4f32,
            "shufps\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
            loadv4f32, SSEPackedSingle>, PS, VEX_4V;
-defm VSHUFPSY : sse12_shuffle<VR256, f256mem, v8f32,
+  defm VSHUFPSY : sse12_shuffle<VR256, f256mem, v8f32,
            "shufps\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
            loadv8f32, SSEPackedSingle>, PS, VEX_4V, VEX_L;
-defm VSHUFPD  : sse12_shuffle<VR128, f128mem, v2f64,
+  defm VSHUFPD  : sse12_shuffle<VR128, f128mem, v2f64,
            "shufpd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
            loadv2f64, SSEPackedDouble>, PD, VEX_4V;
-defm VSHUFPDY : sse12_shuffle<VR256, f256mem, v4f64,
+  defm VSHUFPDY : sse12_shuffle<VR256, f256mem, v4f64,
            "shufpd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
            loadv4f64, SSEPackedDouble>, PD, VEX_4V, VEX_L;
-
+}
 let Constraints = "$src1 = $dst" in {
   defm SHUFPS : sse12_shuffle<VR128, f128mem, v4f32,
                     "shufps\t{$src3, $src2, $dst|$dst, $src2, $src3}",
@@ -2631,7 +2632,7 @@ let Constraints = "$src1 = $dst" in {
                     memopv2f64, SSEPackedDouble>, PD;
 }
 
-let Predicates = [HasAVX] in {
+let Predicates = [HasAVX, NoVLX] in {
   def : Pat<(v4i32 (X86Shufp VR128:$src1,
                        (bc_v4i32 (loadv2i64 addr:$src2)), (i8 imm:$imm))),
             (VSHUFPSrmi VR128:$src1, addr:$src2, imm:$imm)>;

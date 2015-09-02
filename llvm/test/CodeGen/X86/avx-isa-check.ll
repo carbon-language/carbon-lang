@@ -249,3 +249,16 @@ define <8 x i32> @shuffle_v8i32_vpalignr(<8 x i32> %a, <8 x i32> %b) {
   %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 11, i32 0, i32 1, i32 2, i32 15, i32 4, i32 5, i32 6>
   ret <8 x i32> %shuffle
 }
+
+define <4 x double> @shuffle_v4f64_5163(<4 x double> %a, <4 x double> %b) {
+  %shuffle = shufflevector <4 x double> %a, <4 x double> %b, <4 x i32> <i32 5, i32 1, i32 6, i32 3>
+  ret <4 x double> %shuffle
+}
+
+define <2 x double> @shuffle_v2f64_bitcast_1z(<2 x double> %a) {
+  %shuffle64 = shufflevector <2 x double> %a, <2 x double> zeroinitializer, <2 x i32> <i32 2, i32 1>
+  %bitcast32 = bitcast <2 x double> %shuffle64 to <4 x float>
+  %shuffle32 = shufflevector <4 x float> %bitcast32, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %bitcast64 = bitcast <4 x float> %shuffle32 to <2 x double>
+  ret <2 x double> %bitcast64
+}

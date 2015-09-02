@@ -6042,44 +6042,6 @@ defm VSCATTERPF1DPD: avx512_gather_scatter_prefetch<0xC6, MRM6m, "vscatterpf1dpd
 
 defm VSCATTERPF1QPD: avx512_gather_scatter_prefetch<0xC7, MRM6m, "vscatterpf1qpd",
                      VK8WM, vz64mem>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
-//===----------------------------------------------------------------------===//
-// VSHUFPS - VSHUFPD Operations
-
-multiclass avx512_shufp<RegisterClass RC, X86MemOperand x86memop,
-                      ValueType vt, string OpcodeStr, PatFrag mem_frag,
-                      Domain d> {
-  def rmi : AVX512PIi8<0xC6, MRMSrcMem, (outs RC:$dst),
-                   (ins RC:$src1, x86memop:$src2, u8imm:$src3),
-                   !strconcat(OpcodeStr,
-                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-                   [(set RC:$dst, (vt (X86Shufp RC:$src1, (mem_frag addr:$src2),
-                                       (i8 imm:$src3))))], d, IIC_SSE_SHUFP>,
-                   EVEX_4V, Sched<[WriteShuffleLd, ReadAfterLd]>;
-  def rri : AVX512PIi8<0xC6, MRMSrcReg, (outs RC:$dst),
-                   (ins RC:$src1, RC:$src2, u8imm:$src3),
-                   !strconcat(OpcodeStr,
-                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-                   [(set RC:$dst, (vt (X86Shufp RC:$src1, RC:$src2,
-                                       (i8 imm:$src3))))], d, IIC_SSE_SHUFP>,
-                   EVEX_4V, Sched<[WriteShuffle]>;
-}
-
-defm VSHUFPSZ  : avx512_shufp<VR512, f512mem, v16f32, "vshufps", loadv16f32,
-                  SSEPackedSingle>, PS, EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VSHUFPDZ  : avx512_shufp<VR512, f512mem, v8f64, "vshufpd", loadv8f64,
-                  SSEPackedDouble>, PD, VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
-
-def : Pat<(v16i32 (X86Shufp VR512:$src1, VR512:$src2, (i8 imm:$imm))),
-          (VSHUFPSZrri VR512:$src1, VR512:$src2, imm:$imm)>;
-def : Pat<(v16i32 (X86Shufp VR512:$src1,
-                    (loadv16i32 addr:$src2), (i8 imm:$imm))),
-          (VSHUFPSZrmi VR512:$src1, addr:$src2, imm:$imm)>;
-
-def : Pat<(v8i64 (X86Shufp VR512:$src1, VR512:$src2, (i8 imm:$imm))),
-          (VSHUFPDZrri VR512:$src1, VR512:$src2, imm:$imm)>;
-def : Pat<(v8i64 (X86Shufp VR512:$src1,
-                            (loadv8i64 addr:$src2), (i8 imm:$imm))),
-          (VSHUFPDZrmi VR512:$src1, addr:$src2, imm:$imm)>;
 
 // Helper fragments to match sext vXi1 to vXiY.
 def v16i1sextv16i32  : PatLeaf<(v16i32 (X86vsrai VR512:$src, (i8 31)))>;
@@ -6831,3 +6793,20 @@ defm VPUNPCKLQDQ : avx512_binop_rm_vl_q<0x6C, "vpunpcklqdq", X86Unpckl,
                                        SSE_INTALU_ITINS_P, HasAVX512>;
 defm VPUNPCKHQDQ : avx512_binop_rm_vl_q<0x6D, "vpunpckhqdq", X86Unpckh,
                                        SSE_INTALU_ITINS_P, HasAVX512>;
+//===----------------------------------------------------------------------===//
+// VSHUFPS - VSHUFPD Operations
+//===----------------------------------------------------------------------===//
+multiclass avx512_shufp<string OpcodeStr, AVX512VLVectorVTInfo VTInfo_I,
+                                                AVX512VLVectorVTInfo VTInfo_FP>{
+  defm NAME:     avx512_common_3Op_imm8<OpcodeStr, VTInfo_FP, 0xC6, X86Shufp>,
+                                   EVEX_CD8<VTInfo_FP.info512.EltSize, CD8VF>,
+                                   AVX512AIi8Base, EVEX_4V;
+  let isCodeGenOnly = 1 in {
+    defm NAME#_I: avx512_common_3Op_imm8<OpcodeStr, VTInfo_I, 0xC6, X86Shufp>,
+                                   EVEX_CD8<VTInfo_I.info512.EltSize, CD8VF>,
+                                   AVX512AIi8Base, EVEX_4V;
+  }
+}
+
+defm VSHUFPS: avx512_shufp<"vshufps", avx512vl_i32_info, avx512vl_f32_info>, PS;
+defm VSHUFPD: avx512_shufp<"vshufpd", avx512vl_i64_info, avx512vl_f64_info>, PD, VEX_W;
