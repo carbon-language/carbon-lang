@@ -3710,14 +3710,7 @@ ASTReader::ReadASTCore(StringRef FileName,
       break;
     }
 
-    // We only know the control subblock ID.
     switch (Entry.ID) {
-    case llvm::bitc::BLOCKINFO_BLOCK_ID:
-      if (Stream.ReadBlockInfoBlock()) {
-        Error("malformed BlockInfoBlock in AST file");
-        return Failure;
-      }
-      break;
     case CONTROL_BLOCK_ID:
       HaveReadControlBlock = true;
       switch (ReadControlBlock(F, Loaded, ImportedBy, ClientLoadCapabilities)) {
@@ -3744,6 +3737,7 @@ ASTReader::ReadASTCore(StringRef FileName,
       case HadErrors: return HadErrors;
       }
       break;
+
     case AST_BLOCK_ID:
       if (!HaveReadControlBlock) {
         if ((ClientLoadCapabilities & ARR_VersionMismatch) == 0)
