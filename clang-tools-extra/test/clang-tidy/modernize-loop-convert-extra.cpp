@@ -159,7 +159,16 @@ void aliasing() {
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto alias : IntArr)
   // CHECK-FIXES-NEXT: for (unsigned j = 0; alias; ++j) {
+
+  struct IntRef { IntRef(const int& i); };
+  for (int i = 0; i < N; ++i) {
+    IntRef Int(IntArr[i]);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : IntArr) {
+  // CHECK-FIXES-NEXT: IntRef Int(elem);
 }
+
 
 void refs_and_vals() {
   // The following tests check that the transform correctly preserves the
@@ -713,3 +722,165 @@ void template_instantiation() {
 }
 
 } // namespace Templates
+
+namespace Lambdas {
+
+void capturesIndex() {
+  const int N = 10;
+  int Arr[N];
+  // FIXME: the next four loops could be convertible, if the capture list is
+  // also changed.
+
+  for (int I = 0; I < N; ++I)
+    auto F1 = [Arr, I]() { int R1 = Arr[I] + 1; };
+  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : Arr)
+  // CHECK-FIXES-NEXT: auto F1 = [Arr, elem]() { int R1 = elem + 1; };
+
+  for (int I = 0; I < N; ++I)
+    auto F2 = [Arr, &I]() { int R2 = Arr[I] + 3; };
+  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : Arr)
+  // CHECK-FIXES-NEXT: auto F2 = [Arr, &elem]() { int R2 = elem + 3; };
+
+  // FIXME: alias don't work if the index is captured.
+  // Alias declared inside lambda (by value).
+  for (int I = 0; I < N; ++I)
+    auto F3 = [&Arr, I]() { int R3 = Arr[I]; };
+  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : Arr)
+  // CHECK-FIXES-NEXT: auto F3 = [&Arr, elem]() { int R3 = elem; };
+  // FIXME: this does two copies instead of one. Capture elem by ref?
+
+
+  for (int I = 0; I < N; ++I)
+    auto F4 = [&Arr, &I]() { int R4 = Arr[I]; };
+  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : Arr)
+  // CHECK-FIXES-NEXT: auto F4 = [&Arr, &elem]() { int R4 = elem; };
+
+  // Alias declared inside lambda (by reference).
+  for (int I = 0; I < N; ++I)
+    auto F5 = [&Arr, I]() { int &R5 = Arr[I]; };
+  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : Arr)
+  // CHECK-FIXES-NEXT: auto F5 = [&Arr, elem]() { int &R5 = elem; };
+  // FIXME: this does one copy instead of none. Capture elem by ref?
+
+
+  for (int I = 0; I < N; ++I)
+    auto F6 = [&Arr, &I]() { int &R6 = Arr[I]; };
+  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : Arr)
+  // CHECK-FIXES-NEXT: auto F6 = [&Arr, &elem]() { int &R6 = elem; };
+
+  for (int I = 0; I < N; ++I) {
+    auto F = [Arr, I](int k) {
+      printf("%d\n", Arr[I] + k);
+    };
+    F(Arr[I]);
+  }
+  // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : Arr)
+  // CHECK-FIXES-NEXT: auto F = [Arr, elem](int k) {
+  // CHECK-FIXES-NEXT: printf("%d\n", elem + k);
+  // CHECK-FIXES-NEXT: };
+  // CHECK-FIXES-NEXT: F(elem);
+}
+
+void implicitCapture() {
+  const int N = 10;
+  int Arr[N];
+  // Index is used, not convertible.
+  for (int I = 0; I < N; ++I) {
+    auto G1 = [&]() {
+      int R = Arr[I];
+      int J = I;
+    };
+  }
+
+  for (int I = 0; I < N; ++I) {
+    auto G2 = [=]() {
+      int R = Arr[I];
+      int J = I;
+    };
+  }
+
+  // Convertible.
+  for (int I = 0; I < N; ++I) {
+    auto G3 = [&]() {
+      int R3 = Arr[I];
+      int J3 = Arr[I] + R3;
+    };
+  }
+  // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : Arr)
+  // CHECK-FIXES-NEXT: auto G3 = [&]() {
+  // CHECK-FIXES-NEXT: int R3 = elem;
+  // CHECK-FIXES-NEXT: int J3 = elem + R3;
+
+  for (int I = 0; I < N; ++I) {
+    auto G4 = [=]() {
+      int R4 = Arr[I] + 5;
+    };
+  }
+  // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : Arr)
+  // CHECK-FIXES-NEXT: auto G4 = [=]() {
+  // CHECK-FIXES-NEXT: int R4 = elem + 5;
+
+  // Alias by value.
+  for (int I = 0; I < N; ++I) {
+    auto G5 = [&]() {
+      int R5 = Arr[I];
+      int J5 = 8 + R5;
+    };
+  }
+  // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto R5 : Arr)
+  // CHECK-FIXES-NEXT: auto G5 = [&]() {
+  // CHECK-FIXES: int J5 = 8 + R5;
+
+  // Alias by reference.
+  for (int I = 0; I < N; ++I) {
+    auto G6 = [&]() {
+      int &R6 = Arr[I];
+      int J6 = -1 + R6;
+    };
+  }
+  // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & R6 : Arr)
+  // CHECK-FIXES-NEXT: auto G6 = [&]() {
+  // CHECK-FIXES: int J6 = -1 + R6;
+}
+
+void iterators() {
+  dependent<int> dep;
+
+  for (dependent<int>::iterator I = dep.begin(), E = dep.end(); I != E; ++I)
+    auto H1 = [&I]() { int R = *I; };
+  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : dep)
+  // CHECK-FIXES-NEXT: auto H1 = [&elem]() { int R = elem; };
+
+  for (dependent<int>::iterator I = dep.begin(), E = dep.end(); I != E; ++I)
+    auto H2 = [&]() { int R = *I + 2; };
+  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : dep)
+  // CHECK-FIXES-NEXT: auto H2 = [&]() { int R = elem + 2; };
+
+  // FIXME: It doesn't work with const iterators.
+  for (dependent<int>::const_iterator I = dep.begin(), E = dep.end();
+       I != E; ++I)
+    auto H3 = [I]() { int R = *I; };
+
+  for (dependent<int>::const_iterator I = dep.begin(), E = dep.end();
+       I != E; ++I)
+    auto H4 = [&]() { int R = *I + 1; };
+
+  for (dependent<int>::const_iterator I = dep.begin(), E = dep.end();
+       I != E; ++I)
+    auto H5 = [=]() { int R = *I; };
+}
+
+} // namespace Lambdas

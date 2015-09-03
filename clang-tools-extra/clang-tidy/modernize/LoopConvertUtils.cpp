@@ -334,7 +334,8 @@ static bool isDereferenceOfUop(const UnaryOperator *Uop,
 ///     // use t, do not use i
 ///   }
 /// \endcode
-static bool isAliasDecl(const Decl *TheDecl, const VarDecl *IndexVar) {
+static bool isAliasDecl(ASTContext *Context, const Decl *TheDecl,
+                        const VarDecl *IndexVar) {
   const auto *VDecl = dyn_cast<VarDecl>(TheDecl);
   if (!VDecl)
     return false;
@@ -344,6 +345,15 @@ static bool isAliasDecl(const Decl *TheDecl, const VarDecl *IndexVar) {
   const Expr *Init =
       digThroughConstructors(VDecl->getInit()->IgnoreParenImpCasts());
   if (!Init)
+    return false;
+
+  // Check that the declared type is the same as (or a reference to) the
+  // container type.
+  QualType DeclarationType = VDecl->getType();
+  if (DeclarationType->isReferenceType())
+    DeclarationType = DeclarationType.getNonReferenceType();
+  QualType InitType = Init->getType();
+  if (!Context->hasSameUnqualifiedType(DeclarationType, InitType))
     return false;
 
   switch (Init->getStmtClass()) {
@@ -711,13 +721,49 @@ bool ForLoopIndexUseVisitor::VisitDeclRefExpr(DeclRefExpr *E) {
   return true;
 }
 
+/// \brief If the loop index is captured by a lambda, replace this capture
+/// by the range-for loop variable.
+///
+/// For example:
+/// \code
+///   for (int i = 0; i < N; ++i) {
+///     auto f = [v, i](int k) {
+///       printf("%d\n", v[i] + k);
+///     };
+///     f(v[i]);
+///   }
+/// \endcode
+///
+/// Will be replaced by:
+/// \code
+///   for (auto & elem : v) {
+///     auto f = [v, elem](int k) {
+///       printf("%d\n", elem + k);
+///     };
+///     f(elem);
+///   }
+/// \endcode
+bool ForLoopIndexUseVisitor::TraverseLambdaCapture(LambdaExpr *LE,
+                                                   const LambdaCapture *C) {
+  if (C->capturesVariable()) {
+    const VarDecl* VDecl = C->getCapturedVar();
+    if (areSameVariable(IndexVar, cast<ValueDecl>(VDecl))) {
+      // FIXME: if the index is captured, it will count as an usage and the
+      // alias (if any) won't work, because it is only used in case of having
+      // exactly one usage.
+      Usages.push_back(Usage(nullptr, false, C->getLocation()));
+    }
+  }
+  return VisitorBase::TraverseLambdaCapture(LE, C);
+}
+
 /// \brief If we find that another variable is created just to refer to the loop
 /// element, note it for reuse as the loop variable.
 ///
 /// See the comments for isAliasDecl.
 bool ForLoopIndexUseVisitor::VisitDeclStmt(DeclStmt *S) {
   if (!AliasDecl && S->isSingleDecl() &&
-      isAliasDecl(S->getSingleDecl(), IndexVar)) {
+      isAliasDecl(Context, S->getSingleDecl(), IndexVar)) {
     AliasDecl = S;
     if (CurrStmtParent) {
       if (isa<IfStmt>(CurrStmtParent) || isa<WhileStmt>(CurrStmtParent) ||
