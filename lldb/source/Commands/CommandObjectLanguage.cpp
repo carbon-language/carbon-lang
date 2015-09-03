@@ -34,10 +34,6 @@ CommandObjectMultiword (interpreter,
 void
 CommandObjectLanguage::GenerateHelpText (Stream &output_stream) {
     CommandObjectMultiword::GenerateHelpText(output_stream);
-
-    output_stream << "\nlanguage name can be one of the following:\n";
-
-    Language::PrintAllLanguages(output_stream, "  ", "\n");
 }
 
 CommandObjectLanguage::~CommandObjectLanguage ()
