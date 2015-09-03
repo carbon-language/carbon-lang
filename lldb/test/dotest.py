@@ -1261,580 +1261,581 @@ def isMultiprocessTestRunner():
     # test runner
     return not (is_inferior_test_runner or no_multiprocess_test_runner)
 
-# On MacOS X, check to make sure that domain for com.apple.DebugSymbols defaults
-# does not exist before proceeding to running the test suite.
-if sys.platform.startswith("darwin"):
-    checkDsymForUUIDIsNotOn()
+if __name__ == "__main__":
+    # On MacOS X, check to make sure that domain for com.apple.DebugSymbols defaults
+    # does not exist before proceeding to running the test suite.
+    if sys.platform.startswith("darwin"):
+        checkDsymForUUIDIsNotOn()
 
-#
-# Start the actions by first parsing the options while setting up the test
-# directories, followed by setting up the search paths for lldb utilities;
-# then, we walk the directory trees and collect the tests into our test suite.
-#
-parseOptionsAndInitTestdirs()
+    #
+    # Start the actions by first parsing the options while setting up the test
+    # directories, followed by setting up the search paths for lldb utilities;
+    # then, we walk the directory trees and collect the tests into our test suite.
+    #
+    parseOptionsAndInitTestdirs()
 
-# If we are running as the multiprocess test runner, kick off the
-# multiprocess test runner here.
-if isMultiprocessTestRunner():
-    import dosep
-    dosep.main(output_on_success, num_threads, multiprocess_test_subdir)
-    raise "should never get here"
+    # If we are running as the multiprocess test runner, kick off the
+    # multiprocess test runner here.
+    if isMultiprocessTestRunner():
+        import dosep
+        dosep.main(output_on_success, num_threads, multiprocess_test_subdir)
+        raise "should never get here"
 
-setupSysPath()
-setupCrashInfoHook()
+    setupSysPath()
+    setupCrashInfoHook()
 
-#
-# If '-l' is specified, do not skip the long running tests.
-if not skip_long_running_test:
-    os.environ["LLDB_SKIP_LONG_RUNNING_TEST"] = "NO"
+    #
+    # If '-l' is specified, do not skip the long running tests.
+    if not skip_long_running_test:
+        os.environ["LLDB_SKIP_LONG_RUNNING_TEST"] = "NO"
 
-# For the time being, let's bracket the test runner within the
-# lldb.SBDebugger.Initialize()/Terminate() pair.
-import lldb
+    # For the time being, let's bracket the test runner within the
+    # lldb.SBDebugger.Initialize()/Terminate() pair.
+    import lldb
 
-# Create a singleton SBDebugger in the lldb namespace.
-lldb.DBG = lldb.SBDebugger.Create()
+    # Create a singleton SBDebugger in the lldb namespace.
+    lldb.DBG = lldb.SBDebugger.Create()
 
-if lldb_platform_name:
-    print "Setting up remote platform '%s'" % (lldb_platform_name)
-    lldb.remote_platform = lldb.SBPlatform(lldb_platform_name)
-    if not lldb.remote_platform.IsValid():
-        print "error: unable to create the LLDB platform named '%s'." % (lldb_platform_name)
-        exitTestSuite(1)
-    if lldb_platform_url:
-        # We must connect to a remote platform if a LLDB platform URL was specified
-        print "Connecting to remote platform '%s' at '%s'..." % (lldb_platform_name, lldb_platform_url)
-        lldb.platform_url = lldb_platform_url
-        platform_connect_options = lldb.SBPlatformConnectOptions(lldb_platform_url)
-        err = lldb.remote_platform.ConnectRemote(platform_connect_options)
-        if err.Success():
-            print "Connected."
-        else:
-            print "error: failed to connect to remote platform using URL '%s': %s" % (lldb_platform_url, err)
+    if lldb_platform_name:
+        print "Setting up remote platform '%s'" % (lldb_platform_name)
+        lldb.remote_platform = lldb.SBPlatform(lldb_platform_name)
+        if not lldb.remote_platform.IsValid():
+            print "error: unable to create the LLDB platform named '%s'." % (lldb_platform_name)
             exitTestSuite(1)
+        if lldb_platform_url:
+            # We must connect to a remote platform if a LLDB platform URL was specified
+            print "Connecting to remote platform '%s' at '%s'..." % (lldb_platform_name, lldb_platform_url)
+            lldb.platform_url = lldb_platform_url
+            platform_connect_options = lldb.SBPlatformConnectOptions(lldb_platform_url)
+            err = lldb.remote_platform.ConnectRemote(platform_connect_options)
+            if err.Success():
+                print "Connected."
+            else:
+                print "error: failed to connect to remote platform using URL '%s': %s" % (lldb_platform_url, err)
+                exitTestSuite(1)
+        else:
+            lldb.platform_url = None
+
+        if lldb_platform_working_dir:
+            print "Setting remote platform working directory to '%s'..." % (lldb_platform_working_dir)
+            lldb.remote_platform.SetWorkingDirectory(lldb_platform_working_dir)
+    
+        lldb.remote_platform_working_dir = lldb_platform_working_dir
+        lldb.DBG.SetSelectedPlatform(lldb.remote_platform)
     else:
+        lldb.remote_platform = None
+        lldb.remote_platform_working_dir = None
         lldb.platform_url = None
 
-    if lldb_platform_working_dir:
-        print "Setting remote platform working directory to '%s'..." % (lldb_platform_working_dir)
-        lldb.remote_platform.SetWorkingDirectory(lldb_platform_working_dir)
-    
-    lldb.remote_platform_working_dir = lldb_platform_working_dir
-    lldb.DBG.SetSelectedPlatform(lldb.remote_platform)
-else:
-    lldb.remote_platform = None
-    lldb.remote_platform_working_dir = None
-    lldb.platform_url = None
+    target_platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
 
-target_platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
+    # By default, both dsym and dwarf tests are performed.
+    # Use @dsym_test or @dwarf_test decorators, defined in lldbtest.py, to mark a test
+    # as a dsym or dwarf test.  Use '-N dsym' or '-N dwarf' to exclude dsym or dwarf
+    # tests from running.
+    dont_do_dsym_test = dont_do_dsym_test or "linux" in target_platform or "freebsd" in target_platform or "windows" in target_platform
 
-# By default, both dsym and dwarf tests are performed.
-# Use @dsym_test or @dwarf_test decorators, defined in lldbtest.py, to mark a test
-# as a dsym or dwarf test.  Use '-N dsym' or '-N dwarf' to exclude dsym or dwarf
-# tests from running.
-dont_do_dsym_test = dont_do_dsym_test or "linux" in target_platform or "freebsd" in target_platform or "windows" in target_platform
+    # Don't do debugserver tests on everything except OS X.
+    dont_do_debugserver_test = "linux" in target_platform or "freebsd" in target_platform or "windows" in target_platform
 
-# Don't do debugserver tests on everything except OS X.
-dont_do_debugserver_test = "linux" in target_platform or "freebsd" in target_platform or "windows" in target_platform
+    # Don't do lldb-server (llgs) tests on anything except Linux.
+    dont_do_llgs_test = not ("linux" in target_platform)
 
-# Don't do lldb-server (llgs) tests on anything except Linux.
-dont_do_llgs_test = not ("linux" in target_platform)
+    #
+    # Walk through the testdirs while collecting tests.
+    #
+    for testdir in testdirs:
+        os.path.walk(testdir, visit, 'Test')
 
-#
-# Walk through the testdirs while collecting tests.
-#
-for testdir in testdirs:
-    os.path.walk(testdir, visit, 'Test')
+    #
+    # Now that we have loaded all the test cases, run the whole test suite.
+    #
 
-#
-# Now that we have loaded all the test cases, run the whole test suite.
-#
+    # Put the blacklist in the lldb namespace, to be used by lldb.TestBase.
+    lldb.blacklist = blacklist
 
-# Put the blacklist in the lldb namespace, to be used by lldb.TestBase.
-lldb.blacklist = blacklist
+    # The pre_flight and post_flight come from reading a config file.
+    lldb.pre_flight = pre_flight
+    lldb.post_flight = post_flight
+    def getsource_if_available(obj):
+        """
+        Return the text of the source code for an object if available.  Otherwise,
+        a print representation is returned.
+        """
+        import inspect
+        try:
+            return inspect.getsource(obj)
+        except:
+            return repr(obj)
 
-# The pre_flight and post_flight come from reading a config file.
-lldb.pre_flight = pre_flight
-lldb.post_flight = post_flight
-def getsource_if_available(obj):
-    """
-    Return the text of the source code for an object if available.  Otherwise,
-    a print representation is returned.
-    """
-    import inspect
-    try:
-        return inspect.getsource(obj)
-    except:
-        return repr(obj)
+    if not noHeaders:
+        print "lldb.pre_flight:", getsource_if_available(lldb.pre_flight)
+        print "lldb.post_flight:", getsource_if_available(lldb.post_flight)
 
-if not noHeaders:
-    print "lldb.pre_flight:", getsource_if_available(lldb.pre_flight)
-    print "lldb.post_flight:", getsource_if_available(lldb.post_flight)
-
-# If either pre_flight or post_flight is defined, set lldb.test_remote to True.
-if lldb.pre_flight or lldb.post_flight:
-    lldb.test_remote = True
-else:
-    lldb.test_remote = False
-
-# So do the lldbtest_remote_sandbox and lldbtest_remote_shell_template variables.
-lldb.lldbtest_remote_sandbox = lldbtest_remote_sandbox
-lldb.lldbtest_remote_sandboxed_executable = None
-lldb.lldbtest_remote_shell_template = lldbtest_remote_shell_template
-
-# Put all these test decorators in the lldb namespace.
-lldb.dont_do_python_api_test = dont_do_python_api_test
-lldb.just_do_python_api_test = just_do_python_api_test
-lldb.dont_do_lldbmi_test = dont_do_lldbmi_test
-lldb.just_do_lldbmi_test = just_do_lldbmi_test
-lldb.just_do_benchmarks_test = just_do_benchmarks_test
-lldb.dont_do_dsym_test = dont_do_dsym_test
-lldb.dont_do_dwarf_test = dont_do_dwarf_test
-lldb.dont_do_debugserver_test = dont_do_debugserver_test
-lldb.dont_do_llgs_test = dont_do_llgs_test
-
-# Do we need to skip build and cleanup?
-lldb.skip_build_and_cleanup = skip_build_and_cleanup
-
-# Put bmExecutable, bmBreakpointSpec, and bmIterationCount into the lldb namespace, too.
-lldb.bmExecutable = bmExecutable
-lldb.bmBreakpointSpec = bmBreakpointSpec
-lldb.bmIterationCount = bmIterationCount
-
-# And don't forget the runHooks!
-lldb.runHooks = runHooks
-
-# Turn on lldb loggings if necessary.
-lldbLoggings()
-
-# Disable default dynamic types for testing purposes
-disabledynamics()
-
-# Install the control-c handler.
-unittest2.signals.installHandler()
-
-# If sdir_name is not specified through the '-s sdir_name' option, get a
-# timestamp string and export it as LLDB_SESSION_DIR environment var.  This will
-# be used when/if we want to dump the session info of individual test cases
-# later on.
-#
-# See also TestBase.dumpSessionInfo() in lldbtest.py.
-import datetime
-# The windows platforms don't like ':' in the pathname.
-timestamp_started = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
-if not sdir_name:
-    sdir_name = timestamp_started
-os.environ["LLDB_SESSION_DIRNAME"] = os.path.join(os.getcwd(), sdir_name)
-
-if not noHeaders:
-    sys.stderr.write("\nSession logs for test failures/errors/unexpected successes"
-                     " will go into directory '%s'\n" % sdir_name)
-    sys.stderr.write("Command invoked: %s\n" % getMyCommandLine())
-
-if not os.path.isdir(sdir_name):
-    try:
-        os.mkdir(sdir_name)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-where_to_save_session = os.getcwd()
-fname = os.path.join(sdir_name, "TestStarted-%d" % os.getpid())
-with open(fname, "w") as f:
-    print >> f, "Test started at: %s\n" % timestamp_started
-    print >> f, svn_info
-    print >> f, "Command invoked: %s\n" % getMyCommandLine()
-
-#
-# Invoke the default TextTestRunner to run the test suite, possibly iterating
-# over different configurations.
-#
-
-iterArchs = False
-iterCompilers = False
-
-if not archs and "archs" in config:
-    archs = config["archs"]
-
-if isinstance(archs, list) and len(archs) >= 1:
-    iterArchs = True
-
-if not compilers and "compilers" in config:
-    compilers = config["compilers"]
-
-#
-# Add some intervention here to sanity check that the compilers requested are sane.
-# If found not to be an executable program, the invalid one is dropped from the list.
-for i in range(len(compilers)):
-    c = compilers[i]
-    if which(c):
-        continue
+    # If either pre_flight or post_flight is defined, set lldb.test_remote to True.
+    if lldb.pre_flight or lldb.post_flight:
+        lldb.test_remote = True
     else:
-        if sys.platform.startswith("darwin"):
-            pipe = subprocess.Popen(['xcrun', '-find', c], stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
-            cmd_output = pipe.stdout.read()
-            if cmd_output:
-                if "not found" in cmd_output:
-                    print "dropping %s from the compilers used" % c
-                    compilers.remove(i)
-                else:
-                    compilers[i] = cmd_output.split('\n')[0]
-                    print "'xcrun -find %s' returning %s" % (c, compilers[i])
+        lldb.test_remote = False
 
-if not parsable:
-    print "compilers=%s" % str(compilers)
+    # So do the lldbtest_remote_sandbox and lldbtest_remote_shell_template variables.
+    lldb.lldbtest_remote_sandbox = lldbtest_remote_sandbox
+    lldb.lldbtest_remote_sandboxed_executable = None
+    lldb.lldbtest_remote_shell_template = lldbtest_remote_shell_template
 
-if not compilers or len(compilers) == 0:
-    print "No eligible compiler found, exiting."
-    exitTestSuite(1)
+    # Put all these test decorators in the lldb namespace.
+    lldb.dont_do_python_api_test = dont_do_python_api_test
+    lldb.just_do_python_api_test = just_do_python_api_test
+    lldb.dont_do_lldbmi_test = dont_do_lldbmi_test
+    lldb.just_do_lldbmi_test = just_do_lldbmi_test
+    lldb.just_do_benchmarks_test = just_do_benchmarks_test
+    lldb.dont_do_dsym_test = dont_do_dsym_test
+    lldb.dont_do_dwarf_test = dont_do_dwarf_test
+    lldb.dont_do_debugserver_test = dont_do_debugserver_test
+    lldb.dont_do_llgs_test = dont_do_llgs_test
 
-if isinstance(compilers, list) and len(compilers) >= 1:
-    iterCompilers = True
+    # Do we need to skip build and cleanup?
+    lldb.skip_build_and_cleanup = skip_build_and_cleanup
 
-# Make a shallow copy of sys.path, we need to manipulate the search paths later.
-# This is only necessary if we are relocated and with different configurations.
-if rdir:
-    old_sys_path = sys.path[:]
-# If we iterate on archs or compilers, there is a chance we want to split stderr/stdout.
-if iterArchs or iterCompilers:
-    old_stderr = sys.stderr
-    old_stdout = sys.stdout
-    new_stderr = None
-    new_stdout = None
+    # Put bmExecutable, bmBreakpointSpec, and bmIterationCount into the lldb namespace, too.
+    lldb.bmExecutable = bmExecutable
+    lldb.bmBreakpointSpec = bmBreakpointSpec
+    lldb.bmIterationCount = bmIterationCount
 
-# Iterating over all possible architecture and compiler combinations.
-for ia in range(len(archs) if iterArchs else 1):
-    archConfig = ""
-    if iterArchs:
-        os.environ["ARCH"] = archs[ia]
-        archConfig = "arch=%s" % archs[ia]
-    for ic in range(len(compilers) if iterCompilers else 1):
-        if iterCompilers:
-            os.environ["CC"] = compilers[ic]
-            configString = "%s compiler=%s" % (archConfig, compilers[ic])
+    # And don't forget the runHooks!
+    lldb.runHooks = runHooks
+
+    # Turn on lldb loggings if necessary.
+    lldbLoggings()
+
+    # Disable default dynamic types for testing purposes
+    disabledynamics()
+
+    # Install the control-c handler.
+    unittest2.signals.installHandler()
+
+    # If sdir_name is not specified through the '-s sdir_name' option, get a
+    # timestamp string and export it as LLDB_SESSION_DIR environment var.  This will
+    # be used when/if we want to dump the session info of individual test cases
+    # later on.
+    #
+    # See also TestBase.dumpSessionInfo() in lldbtest.py.
+    import datetime
+    # The windows platforms don't like ':' in the pathname.
+    timestamp_started = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
+    if not sdir_name:
+        sdir_name = timestamp_started
+    os.environ["LLDB_SESSION_DIRNAME"] = os.path.join(os.getcwd(), sdir_name)
+
+    if not noHeaders:
+        sys.stderr.write("\nSession logs for test failures/errors/unexpected successes"
+                         " will go into directory '%s'\n" % sdir_name)
+        sys.stderr.write("Command invoked: %s\n" % getMyCommandLine())
+
+    if not os.path.isdir(sdir_name):
+        try:
+            os.mkdir(sdir_name)
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
+    where_to_save_session = os.getcwd()
+    fname = os.path.join(sdir_name, "TestStarted-%d" % os.getpid())
+    with open(fname, "w") as f:
+        print >> f, "Test started at: %s\n" % timestamp_started
+        print >> f, svn_info
+        print >> f, "Command invoked: %s\n" % getMyCommandLine()
+
+    #
+    # Invoke the default TextTestRunner to run the test suite, possibly iterating
+    # over different configurations.
+    #
+
+    iterArchs = False
+    iterCompilers = False
+
+    if not archs and "archs" in config:
+        archs = config["archs"]
+
+    if isinstance(archs, list) and len(archs) >= 1:
+        iterArchs = True
+
+    if not compilers and "compilers" in config:
+        compilers = config["compilers"]
+
+    #
+    # Add some intervention here to sanity check that the compilers requested are sane.
+    # If found not to be an executable program, the invalid one is dropped from the list.
+    for i in range(len(compilers)):
+        c = compilers[i]
+        if which(c):
+            continue
         else:
-            configString = archConfig
+            if sys.platform.startswith("darwin"):
+                pipe = subprocess.Popen(['xcrun', '-find', c], stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+                cmd_output = pipe.stdout.read()
+                if cmd_output:
+                    if "not found" in cmd_output:
+                        print "dropping %s from the compilers used" % c
+                        compilers.remove(i)
+                    else:
+                        compilers[i] = cmd_output.split('\n')[0]
+                        print "'xcrun -find %s' returning %s" % (c, compilers[i])
 
-        if iterArchs or iterCompilers:
-            # Translate ' ' to '-' for pathname component.
-            from string import maketrans
-            tbl = maketrans(' ', '-')
-            configPostfix = configString.translate(tbl)
+    if not parsable:
+        print "compilers=%s" % str(compilers)
 
-            # Check whether we need to split stderr/stdout into configuration
-            # specific files.
-            if old_stderr.name != '<stderr>' and config.get('split_stderr'):
-                if new_stderr:
-                    new_stderr.close()
-                new_stderr = open("%s.%s" % (old_stderr.name, configPostfix), "w")
-                sys.stderr = new_stderr
-            if old_stdout.name != '<stdout>' and config.get('split_stdout'):
-                if new_stdout:
-                    new_stdout.close()
-                new_stdout = open("%s.%s" % (old_stdout.name, configPostfix), "w")
-                sys.stdout = new_stdout
+    if not compilers or len(compilers) == 0:
+        print "No eligible compiler found, exiting."
+        exitTestSuite(1)
 
-            # If we specified a relocated directory to run the test suite, do
-            # the extra housekeeping to copy the testdirs to a configStringified
-            # directory and to update sys.path before invoking the test runner.
-            # The purpose is to separate the configuration-specific directories
-            # from each other.
-            if rdir:
-                from shutil import copytree, rmtree, ignore_patterns
+    if isinstance(compilers, list) and len(compilers) >= 1:
+        iterCompilers = True
 
-                newrdir = "%s.%s" % (rdir, configPostfix)
+    # Make a shallow copy of sys.path, we need to manipulate the search paths later.
+    # This is only necessary if we are relocated and with different configurations.
+    if rdir:
+        old_sys_path = sys.path[:]
+    # If we iterate on archs or compilers, there is a chance we want to split stderr/stdout.
+    if iterArchs or iterCompilers:
+        old_stderr = sys.stderr
+        old_stdout = sys.stdout
+        new_stderr = None
+        new_stdout = None
 
-                # Copy the tree to a new directory with postfix name configPostfix.
-                if os.path.exists(newrdir):
-                    rmtree(newrdir)
-                copytree(rdir, newrdir, ignore=ignore_patterns('*.pyc', '*.o', '*.d'))
+    # Iterating over all possible architecture and compiler combinations.
+    for ia in range(len(archs) if iterArchs else 1):
+        archConfig = ""
+        if iterArchs:
+            os.environ["ARCH"] = archs[ia]
+            archConfig = "arch=%s" % archs[ia]
+        for ic in range(len(compilers) if iterCompilers else 1):
+            if iterCompilers:
+                os.environ["CC"] = compilers[ic]
+                configString = "%s compiler=%s" % (archConfig, compilers[ic])
+            else:
+                configString = archConfig
 
-                # Update the LLDB_TEST environment variable to reflect new top
-                # level test directory.
-                #
-                # See also lldbtest.TestBase.setUpClass(cls).
-                if len(testdirs) == 1 and os.path.basename(testdirs[0]) == 'test':
-                    os.environ["LLDB_TEST"] = os.path.join(newrdir, 'test')
-                else:
-                    os.environ["LLDB_TEST"] = newrdir
+            if iterArchs or iterCompilers:
+                # Translate ' ' to '-' for pathname component.
+                from string import maketrans
+                tbl = maketrans(' ', '-')
+                configPostfix = configString.translate(tbl)
 
-                # And update the Python search paths for modules.
-                sys.path = [x.replace(rdir, newrdir, 1) for x in old_sys_path]
+                # Check whether we need to split stderr/stdout into configuration
+                # specific files.
+                if old_stderr.name != '<stderr>' and config.get('split_stderr'):
+                    if new_stderr:
+                        new_stderr.close()
+                    new_stderr = open("%s.%s" % (old_stderr.name, configPostfix), "w")
+                    sys.stderr = new_stderr
+                if old_stdout.name != '<stdout>' and config.get('split_stdout'):
+                    if new_stdout:
+                        new_stdout.close()
+                    new_stdout = open("%s.%s" % (old_stdout.name, configPostfix), "w")
+                    sys.stdout = new_stdout
 
-            # Output the configuration.
+                # If we specified a relocated directory to run the test suite, do
+                # the extra housekeeping to copy the testdirs to a configStringified
+                # directory and to update sys.path before invoking the test runner.
+                # The purpose is to separate the configuration-specific directories
+                # from each other.
+                if rdir:
+                    from shutil import copytree, rmtree, ignore_patterns
+
+                    newrdir = "%s.%s" % (rdir, configPostfix)
+
+                    # Copy the tree to a new directory with postfix name configPostfix.
+                    if os.path.exists(newrdir):
+                        rmtree(newrdir)
+                    copytree(rdir, newrdir, ignore=ignore_patterns('*.pyc', '*.o', '*.d'))
+
+                    # Update the LLDB_TEST environment variable to reflect new top
+                    # level test directory.
+                    #
+                    # See also lldbtest.TestBase.setUpClass(cls).
+                    if len(testdirs) == 1 and os.path.basename(testdirs[0]) == 'test':
+                        os.environ["LLDB_TEST"] = os.path.join(newrdir, 'test')
+                    else:
+                        os.environ["LLDB_TEST"] = newrdir
+
+                    # And update the Python search paths for modules.
+                    sys.path = [x.replace(rdir, newrdir, 1) for x in old_sys_path]
+
+                # Output the configuration.
+                if not parsable:
+                    sys.stderr.write("\nConfiguration: " + configString + "\n")
+
+            #print "sys.stderr name is", sys.stderr.name
+            #print "sys.stdout name is", sys.stdout.name
+
+            # First, write out the number of collected test cases.
             if not parsable:
-                sys.stderr.write("\nConfiguration: " + configString + "\n")
+                sys.stderr.write(separator + "\n")
+                sys.stderr.write("Collected %d test%s\n\n"
+                                 % (suite.countTestCases(),
+                                    suite.countTestCases() != 1 and "s" or ""))
 
-        #print "sys.stderr name is", sys.stderr.name
-        #print "sys.stdout name is", sys.stdout.name
+            class LLDBTestResult(unittest2.TextTestResult):
+                """
+                Enforce a singleton pattern to allow introspection of test progress.
 
-        # First, write out the number of collected test cases.
-        if not parsable:
-            sys.stderr.write(separator + "\n")
-            sys.stderr.write("Collected %d test%s\n\n"
-                             % (suite.countTestCases(),
-                                suite.countTestCases() != 1 and "s" or ""))
+                Overwrite addError(), addFailure(), and addExpectedFailure() methods
+                to enable each test instance to track its failure/error status.  It
+                is used in the LLDB test framework to emit detailed trace messages
+                to a log file for easier human inspection of test failures/errors.
+                """
+                __singleton__ = None
+                __ignore_singleton__ = False
 
-        class LLDBTestResult(unittest2.TextTestResult):
-            """
-            Enforce a singleton pattern to allow introspection of test progress.
+                @staticmethod
+                def getTerminalSize():
+                    import os
+                    env = os.environ
+                    def ioctl_GWINSZ(fd):
+                        try:
+                            import fcntl, termios, struct, os
+                            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
+                        '1234'))
+                        except:
+                            return
+                        return cr
+                    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
+                    if not cr:
+                        try:
+                            fd = os.open(os.ctermid(), os.O_RDONLY)
+                            cr = ioctl_GWINSZ(fd)
+                            os.close(fd)
+                        except:
+                            pass
+                    if not cr:
+                        cr = (env.get('LINES', 25), env.get('COLUMNS', 80))
+                    return int(cr[1]), int(cr[0])
 
-            Overwrite addError(), addFailure(), and addExpectedFailure() methods
-            to enable each test instance to track its failure/error status.  It
-            is used in the LLDB test framework to emit detailed trace messages
-            to a log file for easier human inspection of test failures/errors.
-            """
-            __singleton__ = None
-            __ignore_singleton__ = False
+                def __init__(self, *args):
+                    if not LLDBTestResult.__ignore_singleton__ and LLDBTestResult.__singleton__:
+                        raise Exception("LLDBTestResult instantiated more than once")
+                    super(LLDBTestResult, self).__init__(*args)
+                    LLDBTestResult.__singleton__ = self
+                    # Now put this singleton into the lldb module namespace.
+                    lldb.test_result = self
+                    # Computes the format string for displaying the counter.
+                    global suite
+                    counterWidth = len(str(suite.countTestCases()))
+                    self.fmt = "%" + str(counterWidth) + "d: "
+                    self.indentation = ' ' * (counterWidth + 2)
+                    # This counts from 1 .. suite.countTestCases().
+                    self.counter = 0
+                    (width, height) = LLDBTestResult.getTerminalSize()
+                    self.progressbar = None
+                    global progress_bar
+                    if width > 10 and not parsable and progress_bar:
+                        try:
+                            self.progressbar = progress.ProgressWithEvents(stdout=self.stream,start=0,end=suite.countTestCases(),width=width-10)
+                        except:
+                            self.progressbar = None
 
-            @staticmethod
-            def getTerminalSize():
-                import os
-                env = os.environ
-                def ioctl_GWINSZ(fd):
-                    try:
-                        import fcntl, termios, struct, os
-                        cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
-                    '1234'))
-                    except:
-                        return
-                    return cr
-                cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
-                if not cr:
-                    try:
-                        fd = os.open(os.ctermid(), os.O_RDONLY)
-                        cr = ioctl_GWINSZ(fd)
-                        os.close(fd)
-                    except:
-                        pass
-                if not cr:
-                    cr = (env.get('LINES', 25), env.get('COLUMNS', 80))
-                return int(cr[1]), int(cr[0])
+                def _config_string(self, test):
+                  compiler = getattr(test, "getCompiler", None)
+                  arch = getattr(test, "getArchitecture", None)
+                  return "%s-%s" % (compiler() if compiler else "", arch() if arch else "")
 
-            def __init__(self, *args):
-                if not LLDBTestResult.__ignore_singleton__ and LLDBTestResult.__singleton__:
-                    raise Exception("LLDBTestResult instantiated more than once")
-                super(LLDBTestResult, self).__init__(*args)
-                LLDBTestResult.__singleton__ = self
-                # Now put this singleton into the lldb module namespace.
-                lldb.test_result = self
-                # Computes the format string for displaying the counter.
-                global suite
-                counterWidth = len(str(suite.countTestCases()))
-                self.fmt = "%" + str(counterWidth) + "d: "
-                self.indentation = ' ' * (counterWidth + 2)
-                # This counts from 1 .. suite.countTestCases().
-                self.counter = 0
-                (width, height) = LLDBTestResult.getTerminalSize()
-                self.progressbar = None
-                global progress_bar
-                if width > 10 and not parsable and progress_bar:
-                    try:
-                        self.progressbar = progress.ProgressWithEvents(stdout=self.stream,start=0,end=suite.countTestCases(),width=width-10)
-                    except:
-                        self.progressbar = None
+                def _exc_info_to_string(self, err, test):
+                    """Overrides superclass TestResult's method in order to append
+                    our test config info string to the exception info string."""
+                    if hasattr(test, "getArchitecture") and hasattr(test, "getCompiler"):
+                        return '%sConfig=%s-%s' % (super(LLDBTestResult, self)._exc_info_to_string(err, test),
+                                                                  test.getArchitecture(),
+                                                                  test.getCompiler())
+                    else:
+                        return super(LLDBTestResult, self)._exc_info_to_string(err, test)
 
-            def _config_string(self, test):
-              compiler = getattr(test, "getCompiler", None)
-              arch = getattr(test, "getArchitecture", None)
-              return "%s-%s" % (compiler() if compiler else "", arch() if arch else "")
+                def getDescription(self, test):
+                    doc_first_line = test.shortDescription()
+                    if self.descriptions and doc_first_line:
+                        return '\n'.join((str(test), self.indentation + doc_first_line))
+                    else:
+                        return str(test)
 
-            def _exc_info_to_string(self, err, test):
-                """Overrides superclass TestResult's method in order to append
-                our test config info string to the exception info string."""
-                if hasattr(test, "getArchitecture") and hasattr(test, "getCompiler"):
-                    return '%sConfig=%s-%s' % (super(LLDBTestResult, self)._exc_info_to_string(err, test),
-                                                              test.getArchitecture(),
-                                                              test.getCompiler())
-                else:
-                    return super(LLDBTestResult, self)._exc_info_to_string(err, test)
+                def getCategoriesForTest(self,test):
+                    if hasattr(test,"_testMethodName"):
+                        test_method = getattr(test,"_testMethodName")
+                        test_method = getattr(test,test_method)
+                    else:
+                        test_method = None
+                    if test_method != None and hasattr(test_method,"getCategories"):
+                        test_categories = test_method.getCategories(test)
+                    elif hasattr(test,"getCategories"):
+                        test_categories = test.getCategories()
+                    elif inspect.ismethod(test) and test.__self__ != None and hasattr(test.__self__,"getCategories"):
+                        test_categories = test.__self__.getCategories()
+                    else:
+                        test_categories = []
+                    if test_categories == None:
+                        test_categories = []
+                    return test_categories
 
-            def getDescription(self, test):
-                doc_first_line = test.shortDescription()
-                if self.descriptions and doc_first_line:
-                    return '\n'.join((str(test), self.indentation + doc_first_line))
-                else:
-                    return str(test)
+                def shouldSkipBecauseOfCategories(self,test):
+                    global useCategories
+                    import inspect
+                    if useCategories:
+                        global categoriesList
+                        test_categories = self.getCategoriesForTest(test)
+                        if len(test_categories) == 0 or len(categoriesList & set(test_categories)) == 0:
+                            return True
 
-            def getCategoriesForTest(self,test):
-                if hasattr(test,"_testMethodName"):
-                    test_method = getattr(test,"_testMethodName")
-                    test_method = getattr(test,test_method)
-                else:
-                    test_method = None
-                if test_method != None and hasattr(test_method,"getCategories"):
-                    test_categories = test_method.getCategories(test)
-                elif hasattr(test,"getCategories"):
-                    test_categories = test.getCategories()
-                elif inspect.ismethod(test) and test.__self__ != None and hasattr(test.__self__,"getCategories"):
-                    test_categories = test.__self__.getCategories()
-                else:
-                    test_categories = []
-                if test_categories == None:
-                    test_categories = []
-                return test_categories
+                    global skipCategories
+                    for category in skipCategories:
+                        if category in self.getCategoriesForTest(test):
+                            return True
 
-            def shouldSkipBecauseOfCategories(self,test):
-                global useCategories
-                import inspect
-                if useCategories:
-                    global categoriesList
-                    test_categories = self.getCategoriesForTest(test)
-                    if len(test_categories) == 0 or len(categoriesList & set(test_categories)) == 0:
-                        return True
+                    return False
 
-                global skipCategories
-                for category in skipCategories:
-                    if category in self.getCategoriesForTest(test):
-                        return True
+                def hardMarkAsSkipped(self,test):
+                    getattr(test, test._testMethodName).__func__.__unittest_skip__ = True
+                    getattr(test, test._testMethodName).__func__.__unittest_skip_why__ = "test case does not fall in any category of interest for this run"
+                    test.__class__.__unittest_skip__ = True
+                    test.__class__.__unittest_skip_why__ = "test case does not fall in any category of interest for this run"
 
-                return False
+                def startTest(self, test):
+                    if self.shouldSkipBecauseOfCategories(test):
+                        self.hardMarkAsSkipped(test)
+                    global setCrashInfoHook
+                    setCrashInfoHook("%s at %s" % (str(test),inspect.getfile(test.__class__)))
+                    self.counter += 1
+                    #if self.counter == 4:
+                    #    import crashinfo
+                    #    crashinfo.testCrashReporterDescription(None)
+                    test.test_number = self.counter
+                    if self.showAll:
+                        self.stream.write(self.fmt % self.counter)
+                    super(LLDBTestResult, self).startTest(test)
 
-            def hardMarkAsSkipped(self,test):
-                getattr(test, test._testMethodName).__func__.__unittest_skip__ = True
-                getattr(test, test._testMethodName).__func__.__unittest_skip_why__ = "test case does not fall in any category of interest for this run"
-                test.__class__.__unittest_skip__ = True
-                test.__class__.__unittest_skip_why__ = "test case does not fall in any category of interest for this run"
+                def addSuccess(self, test):
+                    global parsable
+                    super(LLDBTestResult, self).addSuccess(test)
+                    if parsable:
+                        self.stream.write("PASS: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
 
-            def startTest(self, test):
-                if self.shouldSkipBecauseOfCategories(test):
-                    self.hardMarkAsSkipped(test)
-                global setCrashInfoHook
-                setCrashInfoHook("%s at %s" % (str(test),inspect.getfile(test.__class__)))
-                self.counter += 1
-                #if self.counter == 4:
-                #    import crashinfo
-                #    crashinfo.testCrashReporterDescription(None)
-                test.test_number = self.counter
-                if self.showAll:
-                    self.stream.write(self.fmt % self.counter)
-                super(LLDBTestResult, self).startTest(test)
+                def addError(self, test, err):
+                    global sdir_has_content
+                    global parsable
+                    sdir_has_content = True
+                    super(LLDBTestResult, self).addError(test, err)
+                    method = getattr(test, "markError", None)
+                    if method:
+                        method()
+                    if parsable:
+                        self.stream.write("FAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
 
-            def addSuccess(self, test):
-                global parsable
-                super(LLDBTestResult, self).addSuccess(test)
-                if parsable:
-                    self.stream.write("PASS: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+                def addCleanupError(self, test, err):
+                    global sdir_has_content
+                    global parsable
+                    sdir_has_content = True
+                    super(LLDBTestResult, self).addCleanupError(test, err)
+                    method = getattr(test, "markCleanupError", None)
+                    if method:
+                        method()
+                    if parsable:
+                        self.stream.write("CLEANUP ERROR: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
 
-            def addError(self, test, err):
-                global sdir_has_content
-                global parsable
-                sdir_has_content = True
-                super(LLDBTestResult, self).addError(test, err)
-                method = getattr(test, "markError", None)
-                if method:
-                    method()
-                if parsable:
-                    self.stream.write("FAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+                def addFailure(self, test, err):
+                    global sdir_has_content
+                    global failuresPerCategory
+                    global parsable
+                    sdir_has_content = True
+                    super(LLDBTestResult, self).addFailure(test, err)
+                    method = getattr(test, "markFailure", None)
+                    if method:
+                        method()
+                    if parsable:
+                        self.stream.write("FAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+                    if useCategories:
+                        test_categories = self.getCategoriesForTest(test)
+                        for category in test_categories:
+                            if category in failuresPerCategory:
+                                failuresPerCategory[category] = failuresPerCategory[category] + 1
+                            else:
+                                failuresPerCategory[category] = 1
 
-            def addCleanupError(self, test, err):
-                global sdir_has_content
-                global parsable
-                sdir_has_content = True
-                super(LLDBTestResult, self).addCleanupError(test, err)
-                method = getattr(test, "markCleanupError", None)
-                if method:
-                    method()
-                if parsable:
-                    self.stream.write("CLEANUP ERROR: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+                def addExpectedFailure(self, test, err, bugnumber):
+                    global sdir_has_content
+                    global parsable
+                    sdir_has_content = True
+                    super(LLDBTestResult, self).addExpectedFailure(test, err, bugnumber)
+                    method = getattr(test, "markExpectedFailure", None)
+                    if method:
+                        method(err, bugnumber)
+                    if parsable:
+                        self.stream.write("XFAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
 
-            def addFailure(self, test, err):
-                global sdir_has_content
-                global failuresPerCategory
-                global parsable
-                sdir_has_content = True
-                super(LLDBTestResult, self).addFailure(test, err)
-                method = getattr(test, "markFailure", None)
-                if method:
-                    method()
-                if parsable:
-                    self.stream.write("FAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
-                if useCategories:
-                    test_categories = self.getCategoriesForTest(test)
-                    for category in test_categories:
-                        if category in failuresPerCategory:
-                            failuresPerCategory[category] = failuresPerCategory[category] + 1
-                        else:
-                            failuresPerCategory[category] = 1
+                def addSkip(self, test, reason):
+                    global sdir_has_content
+                    global parsable
+                    sdir_has_content = True
+                    super(LLDBTestResult, self).addSkip(test, reason)
+                    method = getattr(test, "markSkippedTest", None)
+                    if method:
+                        method()
+                    if parsable:
+                        self.stream.write("UNSUPPORTED: LLDB (%s) :: %s (%s) \n" % (self._config_string(test), str(test), reason))
 
-            def addExpectedFailure(self, test, err, bugnumber):
-                global sdir_has_content
-                global parsable
-                sdir_has_content = True
-                super(LLDBTestResult, self).addExpectedFailure(test, err, bugnumber)
-                method = getattr(test, "markExpectedFailure", None)
-                if method:
-                    method(err, bugnumber)
-                if parsable:
-                    self.stream.write("XFAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+                def addUnexpectedSuccess(self, test, bugnumber):
+                    global sdir_has_content
+                    global parsable
+                    sdir_has_content = True
+                    super(LLDBTestResult, self).addUnexpectedSuccess(test, bugnumber)
+                    method = getattr(test, "markUnexpectedSuccess", None)
+                    if method:
+                        method(bugnumber)
+                    if parsable:
+                        self.stream.write("XPASS: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
 
-            def addSkip(self, test, reason):
-                global sdir_has_content
-                global parsable
-                sdir_has_content = True
-                super(LLDBTestResult, self).addSkip(test, reason)
-                method = getattr(test, "markSkippedTest", None)
-                if method:
-                    method()
-                if parsable:
-                    self.stream.write("UNSUPPORTED: LLDB (%s) :: %s (%s) \n" % (self._config_string(test), str(test), reason))
+            if parsable:
+                v = 0
+            elif progress_bar:
+                v = 1
+            else:
+                v = verbose
 
-            def addUnexpectedSuccess(self, test, bugnumber):
-                global sdir_has_content
-                global parsable
-                sdir_has_content = True
-                super(LLDBTestResult, self).addUnexpectedSuccess(test, bugnumber)
-                method = getattr(test, "markUnexpectedSuccess", None)
-                if method:
-                    method(bugnumber)
-                if parsable:
-                    self.stream.write("XPASS: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
-
-        if parsable:
-            v = 0
-        elif progress_bar:
-            v = 1
-        else:
-            v = verbose
-
-        # Invoke the test runner.
-        if count == 1:
-            result = unittest2.TextTestRunner(stream=sys.stderr,
-                                              verbosity=v,
-                                              failfast=failfast,
-                                              resultclass=LLDBTestResult).run(suite)
-        else:
-            # We are invoking the same test suite more than once.  In this case,
-            # mark __ignore_singleton__ flag as True so the signleton pattern is
-            # not enforced.
-            LLDBTestResult.__ignore_singleton__ = True
-            for i in range(count):
-               
+            # Invoke the test runner.
+            if count == 1:
                 result = unittest2.TextTestRunner(stream=sys.stderr,
                                                   verbosity=v,
                                                   failfast=failfast,
                                                   resultclass=LLDBTestResult).run(suite)
+            else:
+                # We are invoking the same test suite more than once.  In this case,
+                # mark __ignore_singleton__ flag as True so the signleton pattern is
+                # not enforced.
+                LLDBTestResult.__ignore_singleton__ = True
+                for i in range(count):
+               
+                    result = unittest2.TextTestRunner(stream=sys.stderr,
+                                                      verbosity=v,
+                                                      failfast=failfast,
+                                                      resultclass=LLDBTestResult).run(suite)
 
-        failed = failed or not result.wasSuccessful()
+            failed = failed or not result.wasSuccessful()
 
-if sdir_has_content and not parsable:
-    sys.stderr.write("Session logs for test failures/errors/unexpected successes"
-                     " can be found in directory '%s'\n" % sdir_name)
+    if sdir_has_content and not parsable:
+        sys.stderr.write("Session logs for test failures/errors/unexpected successes"
+                         " can be found in directory '%s'\n" % sdir_name)
 
-if useCategories and len(failuresPerCategory) > 0:
-    sys.stderr.write("Failures per category:\n")
-    for category in failuresPerCategory:
-        sys.stderr.write("%s - %d\n" % (category,failuresPerCategory[category]))
+    if useCategories and len(failuresPerCategory) > 0:
+        sys.stderr.write("Failures per category:\n")
+        for category in failuresPerCategory:
+            sys.stderr.write("%s - %d\n" % (category,failuresPerCategory[category]))
 
-os.chdir(where_to_save_session)
-fname = os.path.join(sdir_name, "TestFinished-%d" % os.getpid())
-with open(fname, "w") as f:
-    print >> f, "Test finished at: %s\n" % datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
+    os.chdir(where_to_save_session)
+    fname = os.path.join(sdir_name, "TestFinished-%d" % os.getpid())
+    with open(fname, "w") as f:
+        print >> f, "Test finished at: %s\n" % datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
 
-# Terminate the test suite if ${LLDB_TESTSUITE_FORCE_FINISH} is defined.
-# This should not be necessary now.
-if ("LLDB_TESTSUITE_FORCE_FINISH" in os.environ):
-    print "Terminating Test suite..."
-    subprocess.Popen(["/bin/sh", "-c", "kill %s; exit 0" % (os.getpid())])
+    # Terminate the test suite if ${LLDB_TESTSUITE_FORCE_FINISH} is defined.
+    # This should not be necessary now.
+    if ("LLDB_TESTSUITE_FORCE_FINISH" in os.environ):
+        print "Terminating Test suite..."
+        subprocess.Popen(["/bin/sh", "-c", "kill %s; exit 0" % (os.getpid())])
 
-# Exiting.
-exitTestSuite(failed)
+    # Exiting.
+    exitTestSuite(failed)
