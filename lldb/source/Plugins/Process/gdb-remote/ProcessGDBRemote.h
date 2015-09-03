@@ -358,6 +358,7 @@ protected:
     Mutex m_last_stop_packet_mutex;
     GDBRemoteDynamicRegisterInfo m_register_info;
     Broadcaster m_async_broadcaster;
+    Listener m_async_listener;
     HostThread m_async_thread;
     Mutex m_async_thread_state_mutex;
     typedef std::vector<lldb::tid_t> tid_collection;
