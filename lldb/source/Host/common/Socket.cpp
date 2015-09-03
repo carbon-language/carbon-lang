@@ -93,7 +93,11 @@ NativeSocket Accept(NativeSocket sockfd, struct sockaddr *addr, socklen_t *addrl
     if (!child_processes_inherit) {
         flags |= SOCK_CLOEXEC;
     }
+#if defined(__NetBSD__)
+    return ::paccept (sockfd, addr, addrlen, NULL, flags);
+#else
     return ::accept4 (sockfd, addr, addrlen, flags);
+#endif
 #else
     return ::accept (sockfd, addr, addrlen);
 #endif
@@ -790,5 +794,3 @@ std::string Socket::GetRemoteIPAddress () const
     }
     return "";
 }
-
-
