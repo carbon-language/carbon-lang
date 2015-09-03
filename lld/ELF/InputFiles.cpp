@@ -38,6 +38,7 @@ static uint16_t getEMachine(const ELFFileBase &B) {
   case ELF64LEKind:
     return getEMachine<ELF64LE>(B);
   }
+  llvm_unreachable("Invalid kind");
 }
 
 bool ELFFileBase::isCompatibleWith(const ELFFileBase &Other) const {
