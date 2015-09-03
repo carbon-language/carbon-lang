@@ -8,7 +8,7 @@ entry:
   ret <16 x i8> %r
 
 ; CHECK-LABEL: test_l_v16i8
-; CHECK: cost of 1 for instruction:   %r = load <16 x i8>, <16 x i8>* %p, align 1
+; CHECK: cost of 2 for instruction:   %r = load <16 x i8>, <16 x i8>* %p, align 1
 }
 
 define <32 x i8> @test_l_v32i8(<32 x i8>* %p) #0 {
@@ -17,7 +17,7 @@ entry:
   ret <32 x i8> %r
 
 ; CHECK-LABEL: test_l_v32i8
-; CHECK: cost of 2 for instruction:   %r = load <32 x i8>, <32 x i8>* %p, align 1
+; CHECK: cost of 4 for instruction:   %r = load <32 x i8>, <32 x i8>* %p, align 1
 }
 
 define <8 x i16> @test_l_v8i16(<8 x i16>* %p) #0 {
@@ -26,7 +26,7 @@ entry:
   ret <8 x i16> %r
 
 ; CHECK-LABEL: test_l_v8i16
-; CHECK: cost of 1 for instruction:   %r = load <8 x i16>, <8 x i16>* %p, align 2
+; CHECK: cost of 2 for instruction:   %r = load <8 x i16>, <8 x i16>* %p, align 2
 }
 
 define <16 x i16> @test_l_v16i16(<16 x i16>* %p) #0 {
@@ -35,7 +35,7 @@ entry:
   ret <16 x i16> %r
 
 ; CHECK-LABEL: test_l_v16i16
-; CHECK: cost of 2 for instruction:   %r = load <16 x i16>, <16 x i16>* %p, align 2
+; CHECK: cost of 4 for instruction:   %r = load <16 x i16>, <16 x i16>* %p, align 2
 }
 
 define <4 x i32> @test_l_v4i32(<4 x i32>* %p) #0 {
@@ -44,7 +44,7 @@ entry:
   ret <4 x i32> %r
 
 ; CHECK-LABEL: test_l_v4i32
-; CHECK: cost of 1 for instruction:   %r = load <4 x i32>, <4 x i32>* %p, align 4
+; CHECK: cost of 2 for instruction:   %r = load <4 x i32>, <4 x i32>* %p, align 4
 }
 
 define <8 x i32> @test_l_v8i32(<8 x i32>* %p) #0 {
@@ -53,7 +53,7 @@ entry:
   ret <8 x i32> %r
 
 ; CHECK-LABEL: test_l_v8i32
-; CHECK: cost of 2 for instruction:   %r = load <8 x i32>, <8 x i32>* %p, align 4
+; CHECK: cost of 4 for instruction:   %r = load <8 x i32>, <8 x i32>* %p, align 4
 }
 
 define <2 x i64> @test_l_v2i64(<2 x i64>* %p) #0 {
@@ -80,7 +80,7 @@ entry:
   ret <4 x float> %r
 
 ; CHECK-LABEL: test_l_v4float
-; CHECK: cost of 1 for instruction:   %r = load <4 x float>, <4 x float>* %p, align 4
+; CHECK: cost of 2 for instruction:   %r = load <4 x float>, <4 x float>* %p, align 4
 }
 
 define <8 x float> @test_l_v8float(<8 x float>* %p) #0 {
@@ -89,7 +89,7 @@ entry:
   ret <8 x float> %r
 
 ; CHECK-LABEL: test_l_v8float
-; CHECK: cost of 2 for instruction:   %r = load <8 x float>, <8 x float>* %p, align 4
+; CHECK: cost of 4 for instruction:   %r = load <8 x float>, <8 x float>* %p, align 4
 }
 
 define <2 x double> @test_l_v2double(<2 x double>* %p) #0 {
@@ -224,7 +224,7 @@ entry:
   ret <4 x float> %r
 
 ; CHECK-LABEL: test_l_qv4float
-; CHECK: cost of 1 for instruction:   %r = load <4 x float>, <4 x float>* %p, align 4
+; CHECK: cost of 2 for instruction:   %r = load <4 x float>, <4 x float>* %p, align 4
 }
 
 define <8 x float> @test_l_qv8float(<8 x float>* %p) #1 {
@@ -233,7 +233,7 @@ entry:
   ret <8 x float> %r
 
 ; CHECK-LABEL: test_l_qv8float
-; CHECK: cost of 2 for instruction:   %r = load <8 x float>, <8 x float>* %p, align 4
+; CHECK: cost of 4 for instruction:   %r = load <8 x float>, <8 x float>* %p, align 4
 }
 
 define <4 x double> @test_l_qv4double(<4 x double>* %p) #1 {
@@ -242,7 +242,7 @@ entry:
   ret <4 x double> %r
 
 ; CHECK-LABEL: test_l_qv4double
-; CHECK: cost of 1 for instruction:   %r = load <4 x double>, <4 x double>* %p, align 8
+; CHECK: cost of 2 for instruction:   %r = load <4 x double>, <4 x double>* %p, align 8
 }
 
 define <8 x double> @test_l_qv8double(<8 x double>* %p) #1 {
@@ -251,7 +251,7 @@ entry:
   ret <8 x double> %r
 
 ; CHECK-LABEL: test_l_qv8double
-; CHECK: cost of 2 for instruction:   %r = load <8 x double>, <8 x double>* %p, align 8
+; CHECK: cost of 4 for instruction:   %r = load <8 x double>, <8 x double>* %p, align 8
 }
 
 define void @test_s_v16i8(<16 x i8>* %p, <16 x i8> %v) #0 {

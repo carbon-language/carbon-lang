@@ -333,19 +333,23 @@ int PPCTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
   bool IsQPXType = ST->hasQPX() &&
                    (LT.second == MVT::v4f64 || LT.second == MVT::v4f32);
 
+  // If we can use the permutation-based load sequence, then this is also
+  // relatively cheap (not counting loop-invariant instructions): one load plus
+  // one permute (the last load in a series has extra cost, but we're
+  // neglecting that here). Note that on the P7, we should do unaligned loads
+  // for Altivec types using the VSX instructions, but that's more expensive
+  // than using the permutation-based load sequence. On the P8, that's no
+  // longer true.
+  if (Opcode == Instruction::Load &&
+      ((!ST->hasP8Vector() && IsAltivecType) || IsQPXType) &&
+      Alignment >= LT.second.getScalarType().getStoreSize())
+    return Cost + LT.first; // Add the cost of the permutations.
+
   // For VSX, we can do unaligned loads and stores on Altivec/VSX types. On the
   // P7, unaligned vector loads are more expensive than the permutation-based
   // load sequence, so that might be used instead, but regardless, the net cost
   // is about the same (not counting loop-invariant instructions).
   if (IsVSXType || (ST->hasVSX() && IsAltivecType))
-    return Cost;
-
-  // If we can use the permutation-based load sequence, then this is also
-  // relatively cheap (not counting loop-invariant instructions).
-  bool PermutationLoad = Opcode == Instruction::Load &&
-                         (IsAltivecType || IsQPXType) &&
-                         Alignment >= LT.second.getScalarType().getStoreSize();
-  if (PermutationLoad)
     return Cost;
 
   // PPC in general does not support unaligned loads and stores. They'll need
