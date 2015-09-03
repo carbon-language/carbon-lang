@@ -45,6 +45,7 @@ public:
   void printMachOVersionMin() override;
   void printMachODysymtab() override;
   void printMachOSegment() override;
+  void printMachOIndirectSymbols() override;
 
 private:
   template<class MachHeader>
@@ -771,6 +772,22 @@ void MachODumper::printMachOSegment() {
       W.printString("initprot", getMask(MOSegment.initprot));
       W.printNumber("nsects", MOSegment.nsects);
       W.printHex("flags", MOSegment.flags);
+    }
+  }
+}
+
+void MachODumper::printMachOIndirectSymbols() {
+  for (const auto &Load : Obj->load_commands()) {
+    if (Load.C.cmd == MachO::LC_DYSYMTAB) {
+      MachO::dysymtab_command DLC = Obj->getDysymtabLoadCommand();
+      DictScope Group(W, "Indirect Symbols");
+      W.printNumber("Number", DLC.nindirectsyms);
+      ListScope D(W, "Symbols");
+      for (unsigned i = 0; i < DLC.nindirectsyms; ++i) {
+        DictScope Group(W, "Entry");
+        W.printNumber("Entry Index", i);
+        W.printHex("Symbol Index", Obj->getIndirectSymbolTableEntry(DLC, i));
+      }
     }
   }
 }

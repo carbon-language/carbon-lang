@@ -187,6 +187,11 @@ namespace opts {
   MachODataInCode("macho-data-in-code",
                   cl::desc("Display MachO Data in Code command"));
 
+  // -macho-indirect-symbols
+  cl::opt<bool>
+  MachOIndirectSymbols("macho-indirect-symbols",
+                  cl::desc("Display MachO indirect symbols"));
+
   // -macho-segment
   cl::opt<bool>
   MachOSegment("macho-segment",
@@ -336,6 +341,8 @@ static void dumpObject(const ObjectFile *Obj) {
   if (Obj->isMachO()) {
     if (opts::MachODataInCode)
       Dumper->printMachODataInCode();
+    if (opts::MachOIndirectSymbols)
+      Dumper->printMachOIndirectSymbols();
     if (opts::MachOSegment)
       Dumper->printMachOSegment();
     if (opts::MachOVersionMin)
