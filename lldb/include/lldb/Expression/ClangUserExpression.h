@@ -24,7 +24,7 @@
 #include "lldb/Core/Address.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/ClangExpression.h"
-#include "lldb/Expression/ClangExpressionVariable.h"
+#include "lldb/../../source/Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
 #include "lldb/Expression/IRForTarget.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Symbol/TaggedASTType.h"

@@ -393,7 +393,6 @@
 		2689005F13353E0E00698AC0 /* ClangFunction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C98D3DA118FB96F00E575D0 /* ClangFunction.cpp */; };
 		2689006013353E0E00698AC0 /* ClangExpressionDeclMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */; };
 		2689006113353E0E00698AC0 /* ClangExpressionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49445C2512245E3600C11A81 /* ClangExpressionParser.cpp */; };
-		2689006213353E0E00698AC0 /* ClangExpressionVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */; };
 		2689006313353E0E00698AC0 /* ClangPersistentVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D4FE871210B61C00CDB854 /* ClangPersistentVariables.cpp */; };
 		2689006413353E0E00698AC0 /* ClangUserExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7ED510F1B86700F91463 /* ClangUserExpression.cpp */; };
 		2689006513353E0E00698AC0 /* ClangUtilityFunction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 497C86BD122823D800B54702 /* ClangUtilityFunction.cpp */; };
@@ -674,6 +673,9 @@
 		4959511F1A1BC4BC00F6F8FC /* ClangModulesDeclVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4959511E1A1BC4BC00F6F8FC /* ClangModulesDeclVendor.cpp */; };
 		4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */; };
 		49724D991AD6ED390033C538 /* RenderScriptRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49724D971AD6ED390033C538 /* RenderScriptRuntime.cpp */; };
+		4984BA131B978C55008658D4 /* ClangExpressionVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4984BA0E1B978C3E008658D4 /* ClangExpressionVariable.cpp */; };
+		4984BA161B979973008658D4 /* ExpressionVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4984BA151B979973008658D4 /* ExpressionVariable.cpp */; };
+		4984BA181B979C08008658D4 /* ExpressionVariable.h in Headers */ = {isa = PBXBuildFile; fileRef = 4984BA171B979C08008658D4 /* ExpressionVariable.h */; };
 		49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A1CAC31430E8BD00306AC9 /* ExpressionSourceCode.cpp */; };
 		49A71FE7141FFA5C00D59478 /* IRInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 496B01581406DE8900F830D5 /* IRInterpreter.cpp */; };
 		49A71FE8141FFACF00D59478 /* DataEncoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268ED0A4140FF54200DE830F /* DataEncoder.cpp */; };
@@ -1877,7 +1879,6 @@
 		26BC7D8510F1B77400F91463 /* ValueObjectVariable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectVariable.h; path = include/lldb/Core/ValueObjectVariable.h; sourceTree = "<group>"; };
 		26BC7D8610F1B77400F91463 /* VMRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VMRange.h; path = include/lldb/Core/VMRange.h; sourceTree = "<group>"; };
 		26BC7DC010F1B79500F91463 /* ClangExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpression.h; path = include/lldb/Expression/ClangExpression.h; sourceTree = "<group>"; };
-		26BC7DC110F1B79500F91463 /* ClangExpressionVariable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpressionVariable.h; path = include/lldb/Expression/ClangExpressionVariable.h; sourceTree = "<group>"; };
 		26BC7DC310F1B79500F91463 /* DWARFExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DWARFExpression.h; path = include/lldb/Expression/DWARFExpression.h; sourceTree = "<group>"; };
 		26BC7DD210F1B7D500F91463 /* Condition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Condition.h; path = include/lldb/Host/Condition.h; sourceTree = "<group>"; };
 		26BC7DD310F1B7D500F91463 /* Endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Endian.h; path = include/lldb/Host/Endian.h; sourceTree = "<group>"; };
@@ -1971,7 +1972,6 @@
 		26BC7E9D10F1B85900F91463 /* ValueObjectVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectVariable.cpp; path = source/Core/ValueObjectVariable.cpp; sourceTree = "<group>"; };
 		26BC7E9E10F1B85900F91463 /* VMRange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VMRange.cpp; path = source/Core/VMRange.cpp; sourceTree = "<group>"; };
 		26BC7ED510F1B86700F91463 /* ClangUserExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangUserExpression.cpp; path = source/Expression/ClangUserExpression.cpp; sourceTree = "<group>"; };
-		26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionVariable.cpp; path = source/Expression/ClangExpressionVariable.cpp; sourceTree = "<group>"; };
 		26BC7ED810F1B86700F91463 /* DWARFExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DWARFExpression.cpp; path = source/Expression/DWARFExpression.cpp; sourceTree = "<group>"; };
 		26BC7EE810F1B88F00F91463 /* Host.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = Host.mm; path = source/Host/macosx/Host.mm; sourceTree = "<group>"; };
 		26BC7EED10F1B8AD00F91463 /* CFCBundle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CFCBundle.cpp; path = source/Host/macosx/cfcpp/CFCBundle.cpp; sourceTree = "<group>"; };
@@ -2260,6 +2260,10 @@
 		497C86C1122823F300B54702 /* ClangUtilityFunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangUtilityFunction.h; path = include/lldb/Expression/ClangUtilityFunction.h; sourceTree = "<group>"; };
 		497E7B331188ED300065CCA1 /* ABI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABI.h; path = include/lldb/Target/ABI.h; sourceTree = "<group>"; };
 		497E7B9D1188F6690065CCA1 /* ABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABI.cpp; path = source/Target/ABI.cpp; sourceTree = "<group>"; };
+		4984BA0E1B978C3E008658D4 /* ClangExpressionVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionVariable.cpp; path = ExpressionParser/Clang/ClangExpressionVariable.cpp; sourceTree = "<group>"; };
+		4984BA0F1B978C3E008658D4 /* ClangExpressionVariable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpressionVariable.h; path = ExpressionParser/Clang/ClangExpressionVariable.h; sourceTree = "<group>"; };
+		4984BA151B979973008658D4 /* ExpressionVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ExpressionVariable.cpp; path = source/Expression/ExpressionVariable.cpp; sourceTree = "<group>"; };
+		4984BA171B979C08008658D4 /* ExpressionVariable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExpressionVariable.h; path = include/lldb/Expression/ExpressionVariable.h; sourceTree = "<group>"; };
 		499F381E11A5B3F300F5CE02 /* CommandObjectArgs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectArgs.h; path = source/Commands/CommandObjectArgs.h; sourceTree = "<group>"; };
 		499F381F11A5B3F300F5CE02 /* CommandObjectArgs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectArgs.cpp; path = source/Commands/CommandObjectArgs.cpp; sourceTree = "<group>"; };
 		49A1CAC11430E21D00306AC9 /* ExpressionSourceCode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExpressionSourceCode.h; path = include/lldb/Expression/ExpressionSourceCode.h; sourceTree = "<group>"; };
@@ -4355,6 +4359,8 @@
 			children = (
 				49A1CAC11430E21D00306AC9 /* ExpressionSourceCode.h */,
 				49A1CAC31430E8BD00306AC9 /* ExpressionSourceCode.cpp */,
+				4984BA171B979C08008658D4 /* ExpressionVariable.h */,
+				4984BA151B979973008658D4 /* ExpressionVariable.cpp */,
 				49D7072611B5AD03001AD875 /* ClangASTSource.h */,
 				49D7072811B5AD11001AD875 /* ClangASTSource.cpp */,
 				26BC7DC010F1B79500F91463 /* ClangExpression.h */,
@@ -4364,8 +4370,6 @@
 				49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */,
 				49445C2912245E5500C11A81 /* ClangExpressionParser.h */,
 				49445C2512245E3600C11A81 /* ClangExpressionParser.cpp */,
-				26BC7DC110F1B79500F91463 /* ClangExpressionVariable.h */,
-				26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */,
 				4959511B1A1BC48100F6F8FC /* ClangModulesDeclVendor.h */,
 				4959511E1A1BC4BC00F6F8FC /* ClangModulesDeclVendor.cpp */,
 				49D4FE821210B5FB00CDB854 /* ClangPersistentVariables.h */,
@@ -5059,6 +5063,8 @@
 		4984BA0C1B97620B008658D4 /* Clang */ = {
 			isa = PBXGroup;
 			children = (
+				4984BA0F1B978C3E008658D4 /* ClangExpressionVariable.h */,
+				4984BA0E1B978C3E008658D4 /* ClangExpressionVariable.cpp */,
 			);
 			name = Clang;
 			sourceTree = "<group>";
@@ -5560,6 +5566,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4984BA181B979C08008658D4 /* ExpressionVariable.h in Headers */,
 				260A63171861008E00FECF8E /* IOHandler.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6196,8 +6203,10 @@
 				263FDE601A79A01500E68013 /* FormatEntity.cpp in Sources */,
 				2689004A13353E0400698AC0 /* SearchFilter.cpp in Sources */,
 				2689004B13353E0400698AC0 /* Section.cpp in Sources */,
+				4984BA161B979973008658D4 /* ExpressionVariable.cpp in Sources */,
 				2689004C13353E0400698AC0 /* SourceManager.cpp in Sources */,
 				2689004D13353E0400698AC0 /* State.cpp in Sources */,
+				4984BA131B978C55008658D4 /* ClangExpressionVariable.cpp in Sources */,
 				94D0B10D16D5535900EA9C70 /* LibStdcpp.cpp in Sources */,
 				3F81691A1ABA2419001DA9DF /* NameMatches.cpp in Sources */,
 				AF0E22F018A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp in Sources */,
@@ -6233,7 +6242,6 @@
 				942AFF0719F84C02007B43B4 /* LibCxxInitializerList.cpp in Sources */,
 				2689006113353E0E00698AC0 /* ClangExpressionParser.cpp in Sources */,
 				B5EFAE861AE53B1D007059F3 /* RegisterContextFreeBSD_arm.cpp in Sources */,
-				2689006213353E0E00698AC0 /* ClangExpressionVariable.cpp in Sources */,
 				2689006313353E0E00698AC0 /* ClangPersistentVariables.cpp in Sources */,
 				2689006413353E0E00698AC0 /* ClangUserExpression.cpp in Sources */,
 				4C3ADCD61810D88B00357218 /* BreakpointResolverFileRegex.cpp in Sources */,

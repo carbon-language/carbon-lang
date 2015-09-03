@@ -35,7 +35,7 @@
 #include "lldb/DataFormatters/StringPrinter.h"
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
 
-#include "lldb/Expression/ClangExpressionVariable.h"
+#include "lldb/../../source/Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
 
 #include "lldb/Host/Endian.h"

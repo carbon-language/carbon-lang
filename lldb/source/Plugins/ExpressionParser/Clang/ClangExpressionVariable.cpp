@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Expression/ClangExpressionVariable.h"
+#include "ClangExpressionVariable.h"
+
 #include "clang/AST/ASTContext.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/DataExtractor.h"
@@ -19,6 +20,8 @@
 
 using namespace lldb_private;
 using namespace clang;
+
+const char *g_clang_expression_variable_kind_name = "ClangExpressionVariable";
 
 ClangExpressionVariable::ClangExpressionVariable(ExecutionContextScope *exe_scope, lldb::ByteOrder byte_order, uint32_t addr_byte_size) :
     m_parser_vars(),
