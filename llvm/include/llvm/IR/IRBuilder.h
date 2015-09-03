@@ -1364,9 +1364,11 @@ public:
                                 const Twine &Name = "") {
     if (V->getType() == DestTy)
       return V;
-    if (V->getType()->isPointerTy() && DestTy->isIntegerTy())
+    if (V->getType()->getScalarType()->isPointerTy() &&
+        DestTy->getScalarType()->isIntegerTy())
       return CreatePtrToInt(V, DestTy, Name);
-    if (V->getType()->isIntegerTy() && DestTy->isPointerTy())
+    if (V->getType()->getScalarType()->isIntegerTy() &&
+        DestTy->getScalarType()->isPointerTy())
       return CreateIntToPtr(V, DestTy, Name);
 
     return CreateBitCast(V, DestTy, Name);
