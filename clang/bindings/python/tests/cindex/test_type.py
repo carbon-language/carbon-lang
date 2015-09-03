@@ -134,7 +134,7 @@ def test_equal():
 
 def test_type_spelling():
     """Ensure Type.spelling works."""
-    tu = get_tu('int c[5]; int i[]; int x; int v[x];')
+    tu = get_tu('int c[5]; void f(int i[]); int x; int v[x];')
     c = get_cursor(tu, 'c')
     i = get_cursor(tu, 'i')
     x = get_cursor(tu, 'x')
@@ -253,7 +253,7 @@ void bar(int a, int b);
 
 def test_element_type():
     """Ensure Type.element_type works."""
-    tu = get_tu('int c[5]; int i[]; int x; int v[x];')
+    tu = get_tu('int c[5]; void f(int i[]); int x; int v[x];')
     c = get_cursor(tu, 'c')
     i = get_cursor(tu, 'i')
     v = get_cursor(tu, 'v')

@@ -164,20 +164,14 @@ CXType clang_getCursorType(CXCursor C) {
       return MakeCXType(Context.getTypeDeclType(TD), TU);
     if (const ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
       return MakeCXType(Context.getObjCInterfaceType(ID), TU);
-    if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
-      if (TypeSourceInfo *TSInfo = DD->getTypeSourceInfo())
-        return MakeCXType(TSInfo->getType(), TU);
-      return MakeCXType(DD->getType(), TU);      
-    }
+    if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D))
+      return MakeCXType(DD->getType(), TU);
     if (const ValueDecl *VD = dyn_cast<ValueDecl>(D))
       return MakeCXType(VD->getType(), TU);
     if (const ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(D))
       return MakeCXType(PD->getType(), TU);
-    if (const FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(D)) {
-      if (TypeSourceInfo *TSInfo = FTD->getTemplatedDecl()->getTypeSourceInfo())
-        return MakeCXType(TSInfo->getType(), TU);
+    if (const FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(D))
       return MakeCXType(FTD->getTemplatedDecl()->getType(), TU);
-    }
     return MakeCXType(QualType(), TU);
   }
   
