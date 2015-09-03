@@ -302,6 +302,42 @@ protected:
     Emulate_BC1ANY4T  (llvm::MCInst& insn);
 
     bool
+    Emulate_BNZB  (llvm::MCInst& insn);
+
+    bool
+    Emulate_BNZH  (llvm::MCInst& insn);
+
+    bool
+    Emulate_BNZW  (llvm::MCInst& insn);
+
+    bool
+    Emulate_BNZD  (llvm::MCInst& insn);
+
+    bool
+    Emulate_BZB  (llvm::MCInst& insn);
+
+    bool
+    Emulate_BZH  (llvm::MCInst& insn);
+
+    bool
+    Emulate_BZW  (llvm::MCInst& insn);
+
+    bool
+    Emulate_BZD  (llvm::MCInst& insn);
+
+    bool
+    Emulate_MSA_Branch_DF (llvm::MCInst& insn, int element_byte_size, bool bnz);
+
+    bool
+    Emulate_BNZV  (llvm::MCInst& insn);
+
+    bool
+    Emulate_BZV  (llvm::MCInst& insn);
+
+    bool
+    Emulate_MSA_Branch_V (llvm::MCInst& insn, bool bnz);
+
+    bool
     nonvolatile_reg_p (uint64_t regnum);
 
     const char *

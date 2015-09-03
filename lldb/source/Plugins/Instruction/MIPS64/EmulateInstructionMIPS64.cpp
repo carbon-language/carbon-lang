@@ -221,41 +221,76 @@ EmulateInstructionMIPS64::GetRegisterName (unsigned reg_num, bool alternate_name
     {
         switch (reg_num)
         {
-            case gcc_dwarf_sp_mips64:  return "r29"; 
-            case gcc_dwarf_r30_mips64: return "r30"; 
-            case gcc_dwarf_ra_mips64:  return "r31";
-            case gcc_dwarf_f0_mips64:  return "f0";
-            case gcc_dwarf_f1_mips64:  return "f1";
-            case gcc_dwarf_f2_mips64:  return "f2";
-            case gcc_dwarf_f3_mips64:  return "f3";
-            case gcc_dwarf_f4_mips64:  return "f4";
-            case gcc_dwarf_f5_mips64:  return "f5";
-            case gcc_dwarf_f6_mips64:  return "f6";
-            case gcc_dwarf_f7_mips64:  return "f7";
-            case gcc_dwarf_f8_mips64:  return "f8";
-            case gcc_dwarf_f9_mips64:  return "f9";
-            case gcc_dwarf_f10_mips64: return "f10";
-            case gcc_dwarf_f11_mips64: return "f11";
-            case gcc_dwarf_f12_mips64: return "f12";
-            case gcc_dwarf_f13_mips64: return "f13";
-            case gcc_dwarf_f14_mips64: return "f14";
-            case gcc_dwarf_f15_mips64: return "f15";
-            case gcc_dwarf_f16_mips64: return "f16";
-            case gcc_dwarf_f17_mips64: return "f17";
-            case gcc_dwarf_f18_mips64: return "f18";
-            case gcc_dwarf_f19_mips64: return "f19";
-            case gcc_dwarf_f20_mips64: return "f20";
-            case gcc_dwarf_f21_mips64: return "f21";
-            case gcc_dwarf_f22_mips64: return "f22";
-            case gcc_dwarf_f23_mips64: return "f23";
-            case gcc_dwarf_f24_mips64: return "f24";
-            case gcc_dwarf_f25_mips64: return "f25";
-            case gcc_dwarf_f26_mips64: return "f26";
-            case gcc_dwarf_f27_mips64: return "f27";
-            case gcc_dwarf_f28_mips64: return "f28";
-            case gcc_dwarf_f29_mips64: return "f29";
-            case gcc_dwarf_f30_mips64: return "f30";
-            case gcc_dwarf_f31_mips64: return "f31";
+            case gcc_dwarf_sp_mips64:      return "r29"; 
+            case gcc_dwarf_r30_mips64:     return "r30"; 
+            case gcc_dwarf_ra_mips64:      return "r31";
+            case gcc_dwarf_f0_mips64:      return "f0";
+            case gcc_dwarf_f1_mips64:      return "f1";
+            case gcc_dwarf_f2_mips64:      return "f2";
+            case gcc_dwarf_f3_mips64:      return "f3";
+            case gcc_dwarf_f4_mips64:      return "f4";
+            case gcc_dwarf_f5_mips64:      return "f5";
+            case gcc_dwarf_f6_mips64:      return "f6";
+            case gcc_dwarf_f7_mips64:      return "f7";
+            case gcc_dwarf_f8_mips64:      return "f8";
+            case gcc_dwarf_f9_mips64:      return "f9";
+            case gcc_dwarf_f10_mips64:     return "f10";
+            case gcc_dwarf_f11_mips64:     return "f11";
+            case gcc_dwarf_f12_mips64:     return "f12";
+            case gcc_dwarf_f13_mips64:     return "f13";
+            case gcc_dwarf_f14_mips64:     return "f14";
+            case gcc_dwarf_f15_mips64:     return "f15";
+            case gcc_dwarf_f16_mips64:     return "f16";
+            case gcc_dwarf_f17_mips64:     return "f17";
+            case gcc_dwarf_f18_mips64:     return "f18";
+            case gcc_dwarf_f19_mips64:     return "f19";
+            case gcc_dwarf_f20_mips64:     return "f20";
+            case gcc_dwarf_f21_mips64:     return "f21";
+            case gcc_dwarf_f22_mips64:     return "f22";
+            case gcc_dwarf_f23_mips64:     return "f23";
+            case gcc_dwarf_f24_mips64:     return "f24";
+            case gcc_dwarf_f25_mips64:     return "f25";
+            case gcc_dwarf_f26_mips64:     return "f26";
+            case gcc_dwarf_f27_mips64:     return "f27";
+            case gcc_dwarf_f28_mips64:     return "f28";
+            case gcc_dwarf_f29_mips64:     return "f29";
+            case gcc_dwarf_f30_mips64:     return "f30";
+            case gcc_dwarf_f31_mips64:     return "f31";
+            case gcc_dwarf_w0_mips64:      return "w0";
+            case gcc_dwarf_w1_mips64:      return "w1";
+            case gcc_dwarf_w2_mips64:      return "w2";
+            case gcc_dwarf_w3_mips64:      return "w3";
+            case gcc_dwarf_w4_mips64:      return "w4";
+            case gcc_dwarf_w5_mips64:      return "w5";
+            case gcc_dwarf_w6_mips64:      return "w6";
+            case gcc_dwarf_w7_mips64:      return "w7";
+            case gcc_dwarf_w8_mips64:      return "w8";
+            case gcc_dwarf_w9_mips64:      return "w9";
+            case gcc_dwarf_w10_mips64:     return "w10";
+            case gcc_dwarf_w11_mips64:     return "w11";
+            case gcc_dwarf_w12_mips64:     return "w12";
+            case gcc_dwarf_w13_mips64:     return "w13";
+            case gcc_dwarf_w14_mips64:     return "w14";
+            case gcc_dwarf_w15_mips64:     return "w15";
+            case gcc_dwarf_w16_mips64:     return "w16";
+            case gcc_dwarf_w17_mips64:     return "w17";
+            case gcc_dwarf_w18_mips64:     return "w18";
+            case gcc_dwarf_w19_mips64:     return "w19";
+            case gcc_dwarf_w20_mips64:     return "w20";
+            case gcc_dwarf_w21_mips64:     return "w21";
+            case gcc_dwarf_w22_mips64:     return "w22";
+            case gcc_dwarf_w23_mips64:     return "w23";
+            case gcc_dwarf_w24_mips64:     return "w24";
+            case gcc_dwarf_w25_mips64:     return "w25";
+            case gcc_dwarf_w26_mips64:     return "w26";
+            case gcc_dwarf_w27_mips64:     return "w27";
+            case gcc_dwarf_w28_mips64:     return "w28";
+            case gcc_dwarf_w29_mips64:     return "w29";
+            case gcc_dwarf_w30_mips64:     return "w30";
+            case gcc_dwarf_w31_mips64:     return "w31";
+            case gcc_dwarf_mir_mips64:     return "mir";
+            case gcc_dwarf_mcsr_mips64:    return "mcsr";
+            case gcc_dwarf_config5_mips64: return "config5";
             default:
                 break;
         }
@@ -336,6 +371,41 @@ EmulateInstructionMIPS64::GetRegisterName (unsigned reg_num, bool alternate_name
         case gcc_dwarf_f31_mips64:      return "f31";
         case gcc_dwarf_fcsr_mips64:     return "fcsr";
         case gcc_dwarf_fir_mips64:      return "fir";
+        case gcc_dwarf_w0_mips64:       return "w0";
+        case gcc_dwarf_w1_mips64:       return "w1";
+        case gcc_dwarf_w2_mips64:       return "w2";
+        case gcc_dwarf_w3_mips64:       return "w3";
+        case gcc_dwarf_w4_mips64:       return "w4";
+        case gcc_dwarf_w5_mips64:       return "w5";
+        case gcc_dwarf_w6_mips64:       return "w6";
+        case gcc_dwarf_w7_mips64:       return "w7";
+        case gcc_dwarf_w8_mips64:       return "w8";
+        case gcc_dwarf_w9_mips64:       return "w9";
+        case gcc_dwarf_w10_mips64:      return "w10";
+        case gcc_dwarf_w11_mips64:      return "w11";
+        case gcc_dwarf_w12_mips64:      return "w12";
+        case gcc_dwarf_w13_mips64:      return "w13";
+        case gcc_dwarf_w14_mips64:      return "w14";
+        case gcc_dwarf_w15_mips64:      return "w15";
+        case gcc_dwarf_w16_mips64:      return "w16";
+        case gcc_dwarf_w17_mips64:      return "w17";
+        case gcc_dwarf_w18_mips64:      return "w18";
+        case gcc_dwarf_w19_mips64:      return "w19";
+        case gcc_dwarf_w20_mips64:      return "w20";
+        case gcc_dwarf_w21_mips64:      return "w21";
+        case gcc_dwarf_w22_mips64:      return "w22";
+        case gcc_dwarf_w23_mips64:      return "w23";
+        case gcc_dwarf_w24_mips64:      return "w24";
+        case gcc_dwarf_w25_mips64:      return "w25";
+        case gcc_dwarf_w26_mips64:      return "w26";
+        case gcc_dwarf_w27_mips64:      return "w27";
+        case gcc_dwarf_w28_mips64:      return "w28";
+        case gcc_dwarf_w29_mips64:      return "w29";
+        case gcc_dwarf_w30_mips64:      return "w30";
+        case gcc_dwarf_w31_mips64:      return "w31";
+        case gcc_dwarf_mcsr_mips64:     return "mcsr";
+        case gcc_dwarf_mir_mips64:      return "mir";
+        case gcc_dwarf_config5_mips64:  return "config5";
     }
     return nullptr;
 }
@@ -362,7 +432,7 @@ EmulateInstructionMIPS64::GetRegisterInfo (RegisterKind reg_kind, uint32_t reg_n
        ::memset (&reg_info, 0, sizeof(RegisterInfo));
        ::memset (reg_info.kinds, LLDB_INVALID_REGNUM, sizeof(reg_info.kinds));
 
-       if (reg_num == gcc_dwarf_sr_mips64 || reg_num == gcc_dwarf_fcsr_mips64 || reg_num == gcc_dwarf_fir_mips64)
+       if (reg_num == gcc_dwarf_sr_mips64 || reg_num == gcc_dwarf_fcsr_mips64 || reg_num == gcc_dwarf_fir_mips64 || reg_num == gcc_dwarf_mcsr_mips64 || reg_num == gcc_dwarf_mir_mips64 || reg_num == gcc_dwarf_config5_mips64)
        {
            reg_info.byte_size = 4;
            reg_info.format = eFormatHex;
@@ -373,6 +443,12 @@ EmulateInstructionMIPS64::GetRegisterInfo (RegisterKind reg_kind, uint32_t reg_n
            reg_info.byte_size = 8;
            reg_info.format = eFormatHex;
            reg_info.encoding = eEncodingUint;
+       }
+       else if ((int)reg_num >= gcc_dwarf_w0_mips64 && (int)reg_num <= gcc_dwarf_w31_mips64)
+       {
+           reg_info.byte_size = 16;
+           reg_info.format = eFormatVectorOfUInt8;
+           reg_info.encoding = eEncodingVector;
        }
        else
        {
@@ -474,6 +550,16 @@ EmulateInstructionMIPS64::GetOpcodeForInstruction (const char *op_name)
         { "BC1ANY2T",   &EmulateInstructionMIPS64::Emulate_BC1ANY2T,    "BC1ANY2T cc, offset"       },
         { "BC1ANY4F",   &EmulateInstructionMIPS64::Emulate_BC1ANY4F,    "BC1ANY4F cc, offset"       },
         { "BC1ANY4T",   &EmulateInstructionMIPS64::Emulate_BC1ANY4T,    "BC1ANY4T cc, offset"       },
+        { "BNZ_B",      &EmulateInstructionMIPS64::Emulate_BNZB,        "BNZ.b wt,s16"              },
+        { "BNZ_H",      &EmulateInstructionMIPS64::Emulate_BNZH,        "BNZ.h wt,s16"              },
+        { "BNZ_W",      &EmulateInstructionMIPS64::Emulate_BNZW,        "BNZ.w wt,s16"              },
+        { "BNZ_D",      &EmulateInstructionMIPS64::Emulate_BNZD,        "BNZ.d wt,s16"              },
+        { "BZ_B",       &EmulateInstructionMIPS64::Emulate_BZB,         "BZ.b wt,s16"               },
+        { "BZ_H",       &EmulateInstructionMIPS64::Emulate_BZH,         "BZ.h wt,s16"               },
+        { "BZ_W",       &EmulateInstructionMIPS64::Emulate_BZW,         "BZ.w wt,s16"               },
+        { "BZ_D",       &EmulateInstructionMIPS64::Emulate_BZD,         "BZ.d wt,s16"               },
+        { "BNZ_V",      &EmulateInstructionMIPS64::Emulate_BNZV,        "BNZ.V wt,s16"              },
+        { "BZ_V",       &EmulateInstructionMIPS64::Emulate_BZV,         "BZ.V wt,s16"               },
     };
 
     static const size_t k_num_mips_opcodes = llvm::array_lengthof(g_opcodes);
@@ -2990,6 +3076,162 @@ EmulateInstructionMIPS64::Emulate_BC1ANY4T (llvm::MCInst& insn)
         target = pc + 8;
     
     Context context;
+
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, gcc_dwarf_pc_mips64, target))
+        return false;
+
+    return true;
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_BNZB (llvm::MCInst& insn)
+{
+    return Emulate_MSA_Branch_DF(insn, 1, true);
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_BNZH (llvm::MCInst& insn)
+{
+    return Emulate_MSA_Branch_DF(insn, 2, true);
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_BNZW (llvm::MCInst& insn)
+{
+    return Emulate_MSA_Branch_DF(insn, 4, true);
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_BNZD (llvm::MCInst& insn)
+{
+    return Emulate_MSA_Branch_DF(insn, 8, true);
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_BZB (llvm::MCInst& insn)
+{
+    return Emulate_MSA_Branch_DF(insn, 1, false);
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_BZH (llvm::MCInst& insn)
+{
+    return Emulate_MSA_Branch_DF(insn, 2, false);
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_BZW (llvm::MCInst& insn)
+{
+    return Emulate_MSA_Branch_DF(insn, 4, false);
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_BZD (llvm::MCInst& insn)
+{
+    return Emulate_MSA_Branch_DF(insn, 8, false);
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_MSA_Branch_DF (llvm::MCInst& insn, int element_byte_size, bool bnz)
+{
+    bool success = false, branch_hit = true;
+    int64_t target = 0;
+    RegisterValue reg_value;
+    uint8_t * ptr = NULL;
+
+    uint32_t wt = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
+    int64_t offset = insn.getOperand(1).getImm();
+
+    int64_t pc = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_pc_mips64, 0, &success);
+    if (!success)
+        return false;
+
+    if (ReadRegister (eRegisterKindDWARF, gcc_dwarf_w0_mips64 + wt, reg_value))
+        ptr = (uint8_t *)reg_value.GetBytes();
+    else
+        return false;
+
+    for(int i = 0; i < 16 / element_byte_size; i++)
+    {
+        switch(element_byte_size)
+        {
+            case 1:
+                if((*ptr == 0 && bnz) || (*ptr != 0 && !bnz) )
+                    branch_hit = false;
+                break;
+            case 2:
+                if((*(uint16_t *)ptr == 0 && bnz) || (*(uint16_t *)ptr != 0 && !bnz))
+                    branch_hit = false;
+                break;
+            case 4:
+                if((*(uint32_t *)ptr == 0 && bnz) || (*(uint32_t *)ptr != 0 && !bnz))
+                    branch_hit = false;
+                break;
+            case 8:
+                if((*(uint64_t *)ptr == 0 && bnz) || (*(uint64_t *)ptr != 0 && !bnz))
+                    branch_hit = false;
+                break;
+        }
+        if(!branch_hit)
+           break;
+        ptr = ptr + element_byte_size;
+    }
+
+    if(branch_hit)
+        target = pc + offset;
+    else
+        target = pc + 8;
+
+    Context context;
+    context.type = eContextRelativeBranchImmediate;
+
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, gcc_dwarf_pc_mips64, target))
+        return false;
+
+    return true;
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_BNZV (llvm::MCInst& insn)
+{
+    return Emulate_MSA_Branch_V (insn, true);
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_BZV (llvm::MCInst& insn)
+{
+    return Emulate_MSA_Branch_V (insn, false);
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_MSA_Branch_V (llvm::MCInst& insn, bool bnz)
+{
+    bool success = false;
+    int64_t target = 0;
+    llvm::APInt wr_val = llvm::APInt::getNullValue(128);
+    llvm::APInt fail_value = llvm::APInt::getMaxValue(128);
+    llvm::APInt zero_value = llvm::APInt::getNullValue(128);
+    RegisterValue reg_value;
+
+    uint32_t wt = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
+    int64_t offset = insn.getOperand(1).getImm();
+
+    int64_t pc = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_pc_mips64, 0, &success);
+    if (!success)
+        return false;
+
+    if (ReadRegister (eRegisterKindDWARF, gcc_dwarf_w0_mips64 + wt, reg_value))
+        wr_val = reg_value.GetAsUInt128(fail_value);
+    else
+        return false;
+
+    if((llvm::APInt::isSameValue(zero_value, wr_val) && !bnz) || (!llvm::APInt::isSameValue(zero_value, wr_val) && bnz))
+        target = pc + offset;
+    else
+        target = pc + 8;
+
+    Context context;
+    context.type = eContextRelativeBranchImmediate;
 
     if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, gcc_dwarf_pc_mips64, target))
         return false;
