@@ -159,7 +159,8 @@ bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
       // If Operand N already has a matching input, reject this.  An output
       // can't be constrained to the same value as multiple inputs.
       if (isMultipleAlternative) {
-        if (multipleAlternativeIndex >= ConstraintsSoFar[N].multipleAlternatives.size())
+        if (multipleAlternativeIndex >=
+            ConstraintsSoFar[N].multipleAlternatives.size())
           return true;
         InlineAsm::SubConstraintInfo &scInfo =
           ConstraintsSoFar[N].multipleAlternatives[multipleAlternativeIndex];
