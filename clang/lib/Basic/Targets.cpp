@@ -4568,10 +4568,6 @@ public:
     // ACLE predefines.
     Builder.defineMacro("__ARM_ACLE", "200");
 
-    // FP16 support (we currently only support IEEE format).
-    Builder.defineMacro("__ARM_FP16_FORMAT_IEEE", "1");
-    Builder.defineMacro("__ARM_FP16_ARGS", "1");
-
     // Subtarget options.
 
     // FIXME: It's more complicated than this and we don't really support
