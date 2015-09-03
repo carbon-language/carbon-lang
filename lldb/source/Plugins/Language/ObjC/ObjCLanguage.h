@@ -75,7 +75,7 @@ public:
         bool
         HasCategory()
         {
-            return !GetCategory();
+            return !GetCategory().IsEmpty();
         }
 
         Type
