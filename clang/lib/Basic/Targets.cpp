@@ -4081,6 +4081,16 @@ class ARMTargetInfo : public TargetInfo {
 
   unsigned CRC : 1;
   unsigned Crypto : 1;
+  unsigned Unaligned : 1;
+
+  enum {
+    LDREX_B = (1 << 0), /// byte (8-bit)
+    LDREX_H = (1 << 1), /// half (16-bit)
+    LDREX_W = (1 << 2), /// word (32-bit)
+    LDREX_D = (1 << 3), /// double (64-bit)
+  };
+
+  uint32_t LDREX;
 
   // ACLE 6.5.1 Hardware floating point
   enum {
@@ -4299,7 +4309,7 @@ class ARMTargetInfo : public TargetInfo {
 public:
   ARMTargetInfo(const llvm::Triple &Triple, bool IsBigEndian)
       : TargetInfo(Triple), CPU("arm1136j-s"), FPMath(FP_Default),
-        IsAAPCS(true), HW_FP(0) {
+        IsAAPCS(true), LDREX(0), HW_FP(0) {
     BigEndian = IsBigEndian;
 
     switch (getTriple().getOS()) {
@@ -4426,6 +4436,11 @@ public:
                CPU == "sc300" || CPU == "cortex-r4" || CPU == "cortex-r4f") {
       Features["hwdiv"] = true;
     }
+
+    if (ArchVersion < 6  || 
+       (ArchVersion == 6 && ArchProfile == llvm::ARM::PK_M))
+      Features["strict-align"] = true;
+
     return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
   }
 
@@ -4434,6 +4449,7 @@ public:
     FPU = 0;
     CRC = 0;
     Crypto = 0;
+    Unaligned = 1;
     SoftFloat = SoftFloatABI = false;
     HWDiv = 0;
 
@@ -4470,9 +4486,32 @@ public:
         Crypto = 1;
       } else if (Feature == "+fp-only-sp") {
         HW_FP_remove |= HW_FP_DP | HW_FP_HP;
+      } else if (Feature == "+strict-align") {
+        Unaligned = 0;
+      } else if (Feature == "+fp16") {
+        HW_FP |= HW_FP_HP;
       }
     }
     HW_FP &= ~HW_FP_remove;
+
+    switch (ArchVersion) {
+    case 6:
+      if (ArchProfile == llvm::ARM::PK_M)
+        LDREX = 0;
+      else if (ArchKind == llvm::ARM::AK_ARMV6K)
+        LDREX = LDREX_D | LDREX_W | LDREX_H | LDREX_B ;
+      else
+        LDREX = LDREX_W;
+      break;
+    case 7:
+      if (ArchProfile == llvm::ARM::PK_M)
+        LDREX = LDREX_W | LDREX_H | LDREX_B ;
+      else
+        LDREX = LDREX_D | LDREX_W | LDREX_H | LDREX_B ;
+      break;
+    case 8:
+      LDREX = LDREX_D | LDREX_W | LDREX_H | LDREX_B ;
+    }
 
     if (!(FPU & NeonFPU) && FPMath == FP_Neon) {
       Diags.Report(diag::err_target_unsupported_fpmath) << "neon";
@@ -4532,9 +4571,18 @@ public:
     // ACLE 6.4.1 ARM/Thumb instruction set architecture
     // __ARM_ARCH is defined as an integer value indicating the current ARM ISA
     Builder.defineMacro("__ARM_ARCH", llvm::utostr(ArchVersion));
+
     if (ArchVersion >= 8) {
-      Builder.defineMacro("__ARM_FEATURE_NUMERIC_MAXMIN");
-      Builder.defineMacro("__ARM_FEATURE_DIRECTED_ROUNDING");
+      // ACLE 6.5.7 Crypto Extension
+      if (Crypto)
+        Builder.defineMacro("__ARM_FEATURE_CRYPTO", "1");
+      // ACLE 6.5.8 CRC32 Extension
+      if (CRC)
+        Builder.defineMacro("__ARM_FEATURE_CRC32", "1");
+      // ACLE 6.5.10 Numeric Maximum and Minimum
+      Builder.defineMacro("__ARM_FEATURE_NUMERIC_MAXMIN", "1");
+      // ACLE 6.5.9 Directed Rounding
+      Builder.defineMacro("__ARM_FEATURE_DIRECTED_ROUNDING", "1");
     }
 
     // __ARM_ARCH_ISA_ARM is defined to 1 if the core supports the ARM ISA.  It
@@ -4561,6 +4609,20 @@ public:
     if (!CPUProfile.empty())
       Builder.defineMacro("__ARM_ARCH_PROFILE", "'" + CPUProfile + "'");
 
+    // ACLE 6.4.3 Unaligned access supported in hardware
+    if (Unaligned) 
+      Builder.defineMacro("__ARM_FEATURE_UNALIGNED", "1");
+ 
+    // ACLE 6.4.4 LDREX/STREX
+    if (LDREX)
+      Builder.defineMacro("__ARM_FEATURE_LDREX", "0x" + llvm::utohexstr(LDREX));
+
+    // ACLE 6.4.5 CLZ
+    if (ArchVersion == 5 || 
+       (ArchVersion == 6 && CPUProfile != "M") || 
+        ArchVersion >  6) 
+      Builder.defineMacro("__ARM_FEATURE_CLZ", "1");
+
     // ACLE 6.5.1 Hardware Floating Point
     if (HW_FP)
       Builder.defineMacro("__ARM_FP", "0x" + llvm::utohexstr(HW_FP));
@@ -4571,6 +4633,10 @@ public:
     // FP16 support (we currently only support IEEE format).
     Builder.defineMacro("__ARM_FP16_FORMAT_IEEE", "1");
     Builder.defineMacro("__ARM_FP16_ARGS", "1");
+
+    // ACLE 6.5.3 Fused multiply-accumulate (FMA)
+    if (ArchVersion >= 7 && (CPUProfile != "M" || CPUAttr == "7EM"))
+      Builder.defineMacro("__ARM_FEATURE_FMA", "1");
 
     // Subtarget options.
 
@@ -4603,8 +4669,16 @@ public:
       if (supportsThumb2())
         Builder.defineMacro("__thumb2__");
     }
-    if (((HWDiv & HWDivThumb) && isThumb()) || ((HWDiv & HWDivARM) && !isThumb()))
+
+    // ACLE 6.4.9 32-bit SIMD instructions
+    if (ArchVersion >= 6 && (CPUProfile != "M" || CPUAttr == "7EM"))
+      Builder.defineMacro("__ARM_FEATURE_SIMD32", "1");
+
+    // ACLE 6.4.10 Hardware Integer Divide
+    if (((HWDiv & HWDivThumb) && isThumb()) || ((HWDiv & HWDivARM) && !isThumb())) {
+      Builder.defineMacro("__ARM_FEATURE_IDIV", "1");
       Builder.defineMacro("__ARM_ARCH_EXT_IDIV__", "1");
+    }
 
     // Note, this is always on in gcc, even though it doesn't make sense.
     Builder.defineMacro("__APCS_32__");
@@ -4624,8 +4698,11 @@ public:
     // different from gcc, we follow the intent which was that it should be set
     // when Neon instructions are actually available.
     if ((FPU & NeonFPU) && !SoftFloat && ArchVersion >= 7) {
-      Builder.defineMacro("__ARM_NEON");
+      Builder.defineMacro("__ARM_NEON", "1");
       Builder.defineMacro("__ARM_NEON__");
+      // current AArch32 NEON implementations do not support double-precision
+      // floating-point even when it is present in VFP.
+      Builder.defineMacro("__ARM_NEON_FP", "0x" + llvm::utohexstr(HW_FP & ~HW_FP_DP));
     }
 
     Builder.defineMacro("__ARM_SIZEOF_WCHAR_T",
@@ -4634,12 +4711,6 @@ public:
     Builder.defineMacro("__ARM_SIZEOF_MINIMAL_ENUM",
                         Opts.ShortEnums ? "1" : "4");
 
-    if (CRC)
-      Builder.defineMacro("__ARM_FEATURE_CRC32");
-
-    if (Crypto)
-      Builder.defineMacro("__ARM_FEATURE_CRYPTO");
-
     if (ArchVersion >= 6 && CPUAttr != "6M") {
       Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_1");
       Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_2");
@@ -4647,12 +4718,27 @@ public:
       Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8");
     }
 
+    // ACLE 6.4.7 DSP instructions
+    bool hasDSP = false;
     bool is5EOrAbove = (ArchVersion >= 6 ||
                        (ArchVersion == 5 && CPUAttr.count('E')));
     // FIXME: We are not getting all 32-bit ARM architectures
     bool is32Bit = (!isThumb() || supportsThumb2());
-    if (is5EOrAbove && is32Bit && (CPUProfile != "M" || CPUAttr  == "7EM"))
-      Builder.defineMacro("__ARM_FEATURE_DSP");
+    if (is5EOrAbove && is32Bit && (CPUProfile != "M" || CPUAttr  == "7EM")) {
+      Builder.defineMacro("__ARM_FEATURE_DSP", "1");
+      hasDSP = true;
+    }
+
+    // ACLE 6.4.8 Saturation instructions
+    bool hasSAT = false;
+    if ((ArchVersion == 6 && CPUProfile != "M") || ArchVersion > 6 ) {
+      Builder.defineMacro("__ARM_FEATURE_SAT", "1");
+      hasSAT = true;
+    }
+
+    // ACLE 6.4.6 Q (saturation) flag
+    if (hasDSP || hasSAT)
+      Builder.defineMacro("__ARM_FEATURE_QBIT", "1");
   }
 
   void getTargetBuiltins(const Builtin::Info *&Records,
@@ -5027,6 +5113,7 @@ class AArch64TargetInfo : public TargetInfo {
   unsigned FPU;
   unsigned CRC;
   unsigned Crypto;
+  unsigned Unaligned;
 
   static const Builtin::Info BuiltinInfo[];
 
@@ -5104,28 +5191,27 @@ public:
     Builder.defineMacro("__ARM_ARCH", "8");
     Builder.defineMacro("__ARM_ARCH_PROFILE", "'A'");
 
-    Builder.defineMacro("__ARM_64BIT_STATE");
+    Builder.defineMacro("__ARM_64BIT_STATE", "1");
     Builder.defineMacro("__ARM_PCS_AAPCS64");
-    Builder.defineMacro("__ARM_ARCH_ISA_A64");
+    Builder.defineMacro("__ARM_ARCH_ISA_A64", "1");
 
-    Builder.defineMacro("__ARM_FEATURE_UNALIGNED");
-    Builder.defineMacro("__ARM_FEATURE_CLZ");
-    Builder.defineMacro("__ARM_FEATURE_FMA");
-    Builder.defineMacro("__ARM_FEATURE_DIV");
-    Builder.defineMacro("__ARM_FEATURE_IDIV"); // As specified in ACLE
+    Builder.defineMacro("__ARM_FEATURE_CLZ", "1");
+    Builder.defineMacro("__ARM_FEATURE_FMA", "1");
+    Builder.defineMacro("__ARM_FEATURE_LDREX", "0xF");
+    Builder.defineMacro("__ARM_FEATURE_IDIV", "1"); // As specified in ACLE
     Builder.defineMacro("__ARM_FEATURE_DIV");  // For backwards compatibility
-    Builder.defineMacro("__ARM_FEATURE_NUMERIC_MAXMIN");
-    Builder.defineMacro("__ARM_FEATURE_DIRECTED_ROUNDING");
+    Builder.defineMacro("__ARM_FEATURE_NUMERIC_MAXMIN", "1");
+    Builder.defineMacro("__ARM_FEATURE_DIRECTED_ROUNDING", "1");
 
     Builder.defineMacro("__ARM_ALIGN_MAX_STACK_PWR", "4");
 
     // 0xe implies support for half, single and double precision operations.
-    Builder.defineMacro("__ARM_FP", "0xe");
+    Builder.defineMacro("__ARM_FP", "0xE");
 
     // PCS specifies this for SysV variants, which is all we support. Other ABIs
     // may choose __ARM_FP16_FORMAT_ALTERNATIVE.
-    Builder.defineMacro("__ARM_FP16_FORMAT_IEEE");
-    Builder.defineMacro("__ARM_FP16_ARGS");
+    Builder.defineMacro("__ARM_FP16_FORMAT_IEEE", "1");
+    Builder.defineMacro("__ARM_FP16_ARGS", "1");
 
     if (Opts.FastMath || Opts.FiniteMathOnly)
       Builder.defineMacro("__ARM_FP_FAST");
@@ -5139,16 +5225,19 @@ public:
                         Opts.ShortEnums ? "1" : "4");
 
     if (FPU == NeonMode) {
-      Builder.defineMacro("__ARM_NEON");
+      Builder.defineMacro("__ARM_NEON", "1");
       // 64-bit NEON supports half, single and double precision operations.
-      Builder.defineMacro("__ARM_NEON_FP", "0xe");
+      Builder.defineMacro("__ARM_NEON_FP", "0xE");
     }
 
     if (CRC)
-      Builder.defineMacro("__ARM_FEATURE_CRC32");
+      Builder.defineMacro("__ARM_FEATURE_CRC32", "1");
 
     if (Crypto)
-      Builder.defineMacro("__ARM_FEATURE_CRYPTO");
+      Builder.defineMacro("__ARM_FEATURE_CRYPTO", "1");
+
+    if (Unaligned)
+      Builder.defineMacro("__ARM_FEATURE_UNALIGNED", "1");
 
     // All of the __sync_(bool|val)_compare_and_swap_(1|2|4|8) builtins work.
     Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_1");
@@ -5175,6 +5264,8 @@ public:
     FPU = FPUMode;
     CRC = 0;
     Crypto = 0;
+    Unaligned = 1;
+
     for (const auto &Feature : Features) {
       if (Feature == "+neon")
         FPU = NeonMode;
@@ -5182,6 +5273,8 @@ public:
         CRC = 1;
       if (Feature == "+crypto")
         Crypto = 1;
+      if (Feature == "+strict-align")
+        Unaligned = 0;
     }
 
     setDataLayoutString();

@@ -3,10 +3,17 @@
 
 // CHECK: __AARCH64EL__ 1
 // CHECK: __ARM_64BIT_STATE 1
+// CHECK-NOT: __ARM_32BIT_STATE
 // CHECK: __ARM_ACLE 200
 // CHECK: __ARM_ALIGN_MAX_STACK_PWR 4
 // CHECK: __ARM_ARCH 8
 // CHECK: __ARM_ARCH_ISA_A64 1
+// CHECK-NOT: __ARM_ARCH_ISA_ARM
+// CHECK-NOT: __ARM_ARCH_ISA_THUMB
+// CHECK-NOT: __ARM_FEATURE_QBIT
+// CHECK-NOT: __ARM_FEATURE_DSP
+// CHECK-NOT: __ARM_FEATURE_SAT
+// CHECK-NOT: __ARM_FEATURE_SIMD32
 // CHECK: __ARM_ARCH_PROFILE 'A'
 // CHECK-NOT: __ARM_FEATURE_BIG_ENDIAN
 // CHECK: __ARM_FEATURE_CLZ 1
@@ -16,18 +23,22 @@
 // CHECK: __ARM_FEATURE_DIV 1
 // CHECK: __ARM_FEATURE_FMA 1
 // CHECK: __ARM_FEATURE_IDIV 1
+// CHECK: __ARM_FEATURE_LDREX 0xF
 // CHECK: __ARM_FEATURE_NUMERIC_MAXMIN 1
 // CHECK: __ARM_FEATURE_UNALIGNED 1
-// CHECK: __ARM_FP 0xe
+// CHECK: __ARM_FP 0xE
 // CHECK: __ARM_FP16_ARGS 1
 // CHECK: __ARM_FP16_FORMAT_IEEE 1
 // CHECK-NOT: __ARM_FP_FAST 1
 // CHECK: __ARM_FP_FENV_ROUNDING 1
 // CHECK: __ARM_NEON 1
-// CHECK: __ARM_NEON_FP 0xe
+// CHECK: __ARM_NEON_FP 0xE
 // CHECK: __ARM_PCS_AAPCS64 1
 // CHECK-NOT: __ARM_SIZEOF_MINIMAL_ENUM 1
 // CHECK-NOT: __ARM_SIZEOF_WCHAR_T 2
+
+// RUN: %clang -target aarch64_be-eabi -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-BIGENDIAN
+// CHECK-BIGENDIAN: __ARM_BIG_ENDIAN 1
 
 // RUN: %clang -target aarch64-none-linux-gnu -march=armv8-a+crypto -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-CRYPTO %s
 // RUN: %clang -target arm64-none-linux-gnu -march=armv8-a+crypto -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-CRYPTO %s
@@ -54,7 +65,7 @@
 // RUN: %clang -target aarch64-none-linux-gnu -march=armv8-a+simd -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-NEON %s
 // RUN: %clang -target arm64-none-linux-gnu -march=armv8-a+simd -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-NEON %s
 // CHECK-NEON: __ARM_NEON 1
-// CHECK-NEON: __ARM_NEON_FP 0xe
+// CHECK-NEON: __ARM_NEON_FP 0xE
 
 // RUN: %clang -target aarch64 -march=arm64 -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-ARCH-NOT-ACCEPT %s
 // RUN: %clang -target aarch64 -march=aarch64 -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-ARCH-NOT-ACCEPT %s
