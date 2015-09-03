@@ -1496,6 +1496,18 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     if (Subtarget->hasCDI()) {
       setOperationAction(ISD::CTLZ,             MVT::v8i64, Legal);
       setOperationAction(ISD::CTLZ,             MVT::v16i32, Legal);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v8i64, Legal);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v16i32, Legal);
+    }
+    if (Subtarget->hasVLX() && Subtarget->hasCDI()) {
+      setOperationAction(ISD::CTLZ,             MVT::v4i64, Legal);
+      setOperationAction(ISD::CTLZ,             MVT::v8i32, Legal);
+      setOperationAction(ISD::CTLZ,             MVT::v2i64, Legal);
+      setOperationAction(ISD::CTLZ,             MVT::v4i32, Legal);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v4i64, Legal);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v8i32, Legal);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v2i64, Legal);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF,  MVT::v4i32, Legal);
     }
     if (Subtarget->hasDQI()) {
       setOperationAction(ISD::MUL,             MVT::v2i64, Legal);
@@ -19282,6 +19294,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FHADD:              return "X86ISD::FHADD";
   case X86ISD::FHSUB:              return "X86ISD::FHSUB";
   case X86ISD::ABS:                return "X86ISD::ABS";
+  case X86ISD::CONFLICT:           return "X86ISD::CONFLICT";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMAX_RND:           return "X86ISD::FMAX_RND";
   case X86ISD::FMIN:               return "X86ISD::FMIN";

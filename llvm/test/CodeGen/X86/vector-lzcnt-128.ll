@@ -4,6 +4,7 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse4.1 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE41
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX1
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx2 | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX2
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl -mattr=+avx512cd -mattr=+avx512vl| FileCheck %s --check-prefix=AVX512VLCD
 
 target triple = "x86_64-unknown-unknown"
 
@@ -93,6 +94,11 @@ define <2 x i64> @testv2i64(<2 x i64> %in) nounwind {
 ; AVX-NEXT:    vmovq %rax, %xmm0
 ; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
+
+; AVX512VLCD-LABEL: testv2i64:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntq %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
   %out = call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> %in, i1 0)
   ret <2 x i64> %out
 }
@@ -168,6 +174,11 @@ define <2 x i64> @testv2i64u(<2 x i64> %in) nounwind {
 ; AVX-NEXT:    vmovq %rax, %xmm0
 ; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
+
+; AVX512VLCD-LABEL: testv2i64u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntq %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
   %out = call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> %in, i1 -1)
   ret <2 x i64> %out
 }
@@ -319,6 +330,11 @@ define <4 x i32> @testv4i32(<4 x i32> %in) nounwind {
 ; AVX-NEXT:    xorl $31, %eax
 ; AVX-NEXT:    vpinsrd $3, %eax, %xmm1, %xmm0
 ; AVX-NEXT:    retq
+
+; AVX512VLCD-LABEL: testv4i32:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntd %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
   %out = call <4 x i32> @llvm.ctlz.v4i32(<4 x i32> %in, i1 0)
   ret <4 x i32> %out
 }
@@ -445,6 +461,11 @@ define <4 x i32> @testv4i32u(<4 x i32> %in) nounwind {
 ; AVX-NEXT:    xorl $31, %eax
 ; AVX-NEXT:    vpinsrd $3, %eax, %xmm1, %xmm0
 ; AVX-NEXT:    retq
+
+; AVX512VLCD-LABEL: testv4i32u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntd %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
   %out = call <4 x i32> @llvm.ctlz.v4i32(<4 x i32> %in, i1 -1)
   ret <4 x i32> %out
 }

@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mcpu=x86-64 -mattr=+avx | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX1
 ; RUN: llc < %s -mcpu=x86-64 -mattr=+avx2 | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX2
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl -mattr=+avx512cd -mattr=+avx512vl| FileCheck %s --check-prefix=AVX512VLCD
 
 target triple = "x86_64-unknown-unknown"
 
@@ -61,6 +62,11 @@ define <4 x i64> @testv4i64(<4 x i64> %in) nounwind {
 ; AVX2-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm2[0]
 ; AVX2-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
+
+; AVX512VLCD-LABEL: testv4i64:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntq %ymm0, %ymm0
+; AVX512VLCD-NEXT:    retq
   %out = call <4 x i64> @llvm.ctlz.v4i64(<4 x i64> %in, i1 0)
   ret <4 x i64> %out
 }
@@ -113,6 +119,11 @@ define <4 x i64> @testv4i64u(<4 x i64> %in) nounwind {
 ; AVX2-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm2[0]
 ; AVX2-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
+
+; AVX512VLCD-LABEL: testv4i64u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntq %ymm0, %ymm0
+; AVX512VLCD-NEXT:    retq
   %out = call <4 x i64> @llvm.ctlz.v4i64(<4 x i64> %in, i1 -1)
   ret <4 x i64> %out
 }
@@ -211,6 +222,11 @@ define <8 x i32> @testv8i32(<8 x i32> %in) nounwind {
 ; AVX2-NEXT:    vpinsrd $3, %ecx, %xmm2, %xmm0
 ; AVX2-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
+
+; AVX512VLCD-LABEL: testv8i32:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntd %ymm0, %ymm0
+; AVX512VLCD-NEXT:    retq
   %out = call <8 x i32> @llvm.ctlz.v8i32(<8 x i32> %in, i1 0)
   ret <8 x i32> %out
 }
@@ -291,6 +307,11 @@ define <8 x i32> @testv8i32u(<8 x i32> %in) nounwind {
 ; AVX2-NEXT:    vpinsrd $3, %eax, %xmm2, %xmm0
 ; AVX2-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
+
+; AVX512VLCD-LABEL: testv8i32u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntd %ymm0, %ymm0
+; AVX512VLCD-NEXT:    retq
   %out = call <8 x i32> @llvm.ctlz.v8i32(<8 x i32> %in, i1 -1)
   ret <8 x i32> %out
 }

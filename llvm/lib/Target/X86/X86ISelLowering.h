@@ -240,6 +240,9 @@ namespace llvm {
       // Integer absolute value
       ABS,
 
+      // Detect Conflicts Within a Vector
+      CONFLICT,
+
       /// Floating point max and min.
       FMAX, FMIN,
 
