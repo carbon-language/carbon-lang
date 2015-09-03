@@ -657,7 +657,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         // first and the second alias with the first, we can combine the first
         // into the second.
         if (!ModifiedRegs[getLdStRegOp(FirstMI).getReg()] &&
-            !(FirstMI->mayLoad() && UsedRegs[getLdStRegOp(FirstMI).getReg()]) &&
+            !(MayLoad && UsedRegs[getLdStRegOp(FirstMI).getReg()]) &&
             !mayAlias(FirstMI, MemInsns, TII)) {
           Flags.setMergeForward(true);
           return MBBI;
