@@ -1840,7 +1840,7 @@ static void CallUserSignalHandler(ThreadState *thr, bool sync, bool acquire,
     ObtainCurrentStack(thr, StackTrace::GetNextInstructionPc(pc), &stack);
     ThreadRegistryLock l(ctx->thread_registry);
     ScopedReport rep(ReportTypeErrnoInSignal);
-    if (!IsFiredSuppression(ctx, rep, stack)) {
+    if (!IsFiredSuppression(ctx, ReportTypeErrnoInSignal, stack)) {
       rep.AddStack(stack, true);
       OutputReport(thr, rep);
     }

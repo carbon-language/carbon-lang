@@ -100,8 +100,8 @@ static uptr IsSuppressed(const char *stype, const AddressInfo &info,
   if (suppression_ctx->Match(info.function, stype, sp) ||
       suppression_ctx->Match(info.file, stype, sp) ||
       suppression_ctx->Match(info.module, stype, sp)) {
-    DPrintf("ThreadSanitizer: matched suppression '%s'\n", (*sp)->templ);
-    (*sp)->hit_count++;
+    VPrintf(2, "ThreadSanitizer: matched suppression '%s'\n", (*sp)->templ);
+    atomic_fetch_add(&(*sp)->hit_count, 1, memory_order_relaxed);
     return info.address;
   }
   return 0;
@@ -138,8 +138,8 @@ uptr IsSuppressed(ReportType typ, const ReportLocation *loc, Suppression **sp) {
   const DataInfo &global = loc->global;
   if (suppression_ctx->Match(global.name, stype, &s) ||
       suppression_ctx->Match(global.module, stype, &s)) {
-      DPrintf("ThreadSanitizer: matched suppression '%s'\n", s->templ);
-      s->hit_count++;
+      VPrintf(2, "ThreadSanitizer: matched suppression '%s'\n", s->templ);
+      atomic_fetch_add(&s->hit_count, 1, memory_order_relaxed);
       *sp = s;
       return global.start;
   }
@@ -154,7 +154,7 @@ void PrintMatchedSuppressions() {
     return;
   int hit_count = 0;
   for (uptr i = 0; i < matched.size(); i++)
-    hit_count += matched[i]->hit_count;
+    hit_count += atomic_load_relaxed(&matched[i]->hit_count);
   Printf("ThreadSanitizer: Matched %d suppressions (pid=%d):\n", hit_count,
          (int)internal_getpid());
   for (uptr i = 0; i < matched.size(); i++) {

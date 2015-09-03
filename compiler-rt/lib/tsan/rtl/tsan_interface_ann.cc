@@ -63,8 +63,8 @@ static const int kMaxDescLen = 128;
 struct ExpectRace {
   ExpectRace *next;
   ExpectRace *prev;
-  int hitcount;
-  int addcount;
+  atomic_uintptr_t hitcount;
+  atomic_uintptr_t addcount;
   uptr addr;
   uptr size;
   char *file;
@@ -90,7 +90,8 @@ static void AddExpectRace(ExpectRace *list,
   ExpectRace *race = list->next;
   for (; race != list; race = race->next) {
     if (race->addr == addr && race->size == size) {
-      race->addcount++;
+      atomic_store_relaxed(&race->addcount,
+          atomic_load_relaxed(&race->addcount) + 1);
       return;
     }
   }
@@ -100,8 +101,8 @@ static void AddExpectRace(ExpectRace *list,
   race->file = f;
   race->line = l;
   race->desc[0] = 0;
-  race->hitcount = 0;
-  race->addcount = 1;
+  atomic_store_relaxed(&race->hitcount, 0);
+  atomic_store_relaxed(&race->addcount, 1);
   if (desc) {
     int i = 0;
     for (; i < kMaxDescLen - 1 && desc[i]; i++)
@@ -130,7 +131,7 @@ static bool CheckContains(ExpectRace *list, uptr addr, uptr size) {
     return false;
   DPrintf("Hit expected/benign race: %s addr=%zx:%d %s:%d\n",
       race->desc, race->addr, (int)race->size, race->file, race->line);
-  race->hitcount++;
+  atomic_fetch_add(&race->hitcount, 1, memory_order_relaxed);
   return true;
 }
 
@@ -146,7 +147,7 @@ void InitializeDynamicAnnotations() {
 }
 
 bool IsExpectedReport(uptr addr, uptr size) {
-  Lock lock(&dyn_ann_ctx->mtx);
+  ReadLock lock(&dyn_ann_ctx->mtx);
   if (CheckContains(&dyn_ann_ctx->expect, addr, size))
     return true;
   if (CheckContains(&dyn_ann_ctx->benign, addr, size))
@@ -155,20 +156,21 @@ bool IsExpectedReport(uptr addr, uptr size) {
 }
 
 static void CollectMatchedBenignRaces(Vector<ExpectRace> *matched,
-    int *unique_count, int *hit_count, int ExpectRace::*counter) {
+    int *unique_count, int *hit_count, atomic_uintptr_t ExpectRace::*counter) {
   ExpectRace *list = &dyn_ann_ctx->benign;
   for (ExpectRace *race = list->next; race != list; race = race->next) {
     (*unique_count)++;
-    if (race->*counter == 0)
+    const uptr cnt = atomic_load_relaxed(&(race->*counter));
+    if (cnt == 0)
       continue;
-    (*hit_count) += race->*counter;
+    *hit_count += cnt;
     uptr i = 0;
     for (; i < matched->Size(); i++) {
       ExpectRace *race0 = &(*matched)[i];
       if (race->line == race0->line
           && internal_strcmp(race->file, race0->file) == 0
           && internal_strcmp(race->desc, race0->desc) == 0) {
-        race0->*counter += race->*counter;
+        atomic_fetch_add(&(race0->*counter), cnt, memory_order_relaxed);
         break;
       }
     }
@@ -193,8 +195,8 @@ void PrintMatchedBenignRaces() {
         hit_count, (int)internal_getpid());
     for (uptr i = 0; i < hit_matched.Size(); i++) {
       Printf("%d %s:%d %s\n",
-          hit_matched[i].hitcount, hit_matched[i].file,
-          hit_matched[i].line, hit_matched[i].desc);
+          atomic_load_relaxed(&hit_matched[i].hitcount),
+          hit_matched[i].file, hit_matched[i].line, hit_matched[i].desc);
     }
   }
   if (hit_matched.Size()) {
@@ -203,8 +205,8 @@ void PrintMatchedBenignRaces() {
         add_count, unique_count, (int)internal_getpid());
     for (uptr i = 0; i < add_matched.Size(); i++) {
       Printf("%d %s:%d %s\n",
-          add_matched[i].addcount, add_matched[i].file,
-          add_matched[i].line, add_matched[i].desc);
+          atomic_load_relaxed(&add_matched[i].addcount),
+          add_matched[i].file, add_matched[i].line, add_matched[i].desc);
     }
   }
 }
@@ -303,7 +305,7 @@ void INTERFACE_ATTRIBUTE AnnotateFlushExpectedRaces(char *f, int l) {
   Lock lock(&dyn_ann_ctx->mtx);
   while (dyn_ann_ctx->expect.next != &dyn_ann_ctx->expect) {
     ExpectRace *race = dyn_ann_ctx->expect.next;
-    if (race->hitcount == 0) {
+    if (atomic_load_relaxed(&race->hitcount) == 0) {
       ctx->nmissed_expected++;
       ReportMissedExpectedRace(race);
     }

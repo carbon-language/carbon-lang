@@ -164,8 +164,9 @@ void StatOutput(u64 *stat) {
   name[StatMtxAtExit]                    = "  Atexit                          ";
   name[StatMtxAnnotations]               = "  Annotations                     ";
   name[StatMtxMBlock]                    = "  MBlock                          ";
-  name[StatMtxJavaMBlock]                = "  JavaMBlock                      ";
   name[StatMtxDeadlockDetector]          = "  DeadlockDetector                ";
+  name[StatMtxFired]                     = "  FiredSuppressions               ";
+  name[StatMtxRacy]                      = "  RacyStacks                      ";
   name[StatMtxFD]                        = "  FD                              ";
 
   Printf("Statistics:\n");

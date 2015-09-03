@@ -32,6 +32,8 @@ enum MutexType {
   MutexTypeMBlock,
   MutexTypeJavaMBlock,
   MutexTypeDDetector,
+  MutexTypeFired,
+  MutexTypeRacy,
 
   // This must be the last.
   MutexTypeCount

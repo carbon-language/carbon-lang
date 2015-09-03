@@ -63,4 +63,20 @@ struct atomic_uintptr_t {
 # error "Unsupported compiler"
 #endif
 
+namespace __sanitizer {
+
+// Clutter-reducing helpers.
+
+template<typename T>
+INLINE typename T::Type atomic_load_relaxed(const volatile T *a) {
+  return atomic_load(a, memory_order_relaxed);
+}
+
+template<typename T>
+INLINE void atomic_store_relaxed(volatile T *a, typename T::Type v) {
+  atomic_store(a, v, memory_order_relaxed);
+}
+
+}  // namespace __sanitizer
+
 #endif  // SANITIZER_ATOMIC_H

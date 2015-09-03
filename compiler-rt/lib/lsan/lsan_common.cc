@@ -375,8 +375,8 @@ static void PrintMatchedSuppressions() {
   Printf("Suppressions used:\n");
   Printf("  count      bytes template\n");
   for (uptr i = 0; i < matched.size(); i++)
-    Printf("%7zu %10zu %s\n", static_cast<uptr>(matched[i]->hit_count),
-           matched[i]->weight, matched[i]->templ);
+    Printf("%7zu %10zu %s\n", static_cast<uptr>(atomic_load_relaxed(
+        &matched[i]->hit_count)), matched[i]->weight, matched[i]->templ);
   Printf("%s\n\n", line);
 }
 
@@ -598,7 +598,8 @@ void LeakReport::ApplySuppressions() {
     Suppression *s = GetSuppressionForStack(leaks_[i].stack_trace_id);
     if (s) {
       s->weight += leaks_[i].total_size;
-      s->hit_count += leaks_[i].hit_count;
+      atomic_store_relaxed(&s->hit_count, atomic_load_relaxed(&s->hit_count) +
+          leaks_[i].hit_count);
       leaks_[i].is_suppressed = true;
     }
   }

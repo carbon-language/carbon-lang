@@ -41,6 +41,8 @@ static MutexType CanLockTab[MutexTypeCount][MutexTypeCount] = {
   /*9  MutexTypeMBlock*/      {MutexTypeSyncVar},
   /*10 MutexTypeJavaMBlock*/  {MutexTypeSyncVar},
   /*11 MutexTypeDDetector*/   {},
+  /*12 MutexTypeFired*/       {MutexTypeLeaf},
+  /*13 MutexTypeRacy*/        {MutexTypeLeaf},
 };
 
 static bool CanLockAdj[MutexTypeCount][MutexTypeCount];
