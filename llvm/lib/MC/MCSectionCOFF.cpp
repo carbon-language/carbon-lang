@@ -11,6 +11,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/COFF.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 

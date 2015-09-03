@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCSection.h"
-#include "llvm/Support/COFF.h"
 
 namespace llvm {
 class MCSymbol;
