@@ -5,6 +5,8 @@
 // CHECK: __ARM_FEATURE_CRC32 1
 // CHECK: __ARM_FEATURE_DIRECTED_ROUNDING 1
 // CHECK: __ARM_FEATURE_NUMERIC_MAXMIN 1
+// CHECK: __ARM_FP16_ARGS 1
+// CHECK: __ARM_FP16_FORMAT_IEEE 1
 
 // RUN: %clang -target armv7a-none-linux-gnu -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-V7 %s
 // CHECK-V7: __ARMEL__ 1

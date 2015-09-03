@@ -4714,6 +4714,15 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
   }
 
+  // __fp16 gets passed as if it were an int or float, but with the top 16 bits
+  // unspecified.
+  if (Ty->isHalfType()) {
+    llvm::Type *ResType = IsEffectivelyAAPCS_VFP ?
+      llvm::Type::getFloatTy(getVMContext()) :
+      llvm::Type::getInt32Ty(getVMContext());
+    return ABIArgInfo::getDirect(ResType);
+  }
+
   if (!isAggregateTypeForABI(Ty)) {
     // Treat an enum type as its underlying type.
     if (const EnumType *EnumTy = Ty->getAs<EnumType>()) {
@@ -4870,6 +4879,15 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
   // Large vector types should be returned via memory.
   if (RetTy->isVectorType() && getContext().getTypeSize(RetTy) > 128) {
     return ABIArgInfo::getIndirect(0);
+  }
+
+  // __fp16 gets returned as if it were an int or float, but with the top 16
+  // bits unspecified.
+  if (RetTy->isHalfType()) {
+    llvm::Type *ResType = IsEffectivelyAAPCS_VFP ?
+      llvm::Type::getFloatTy(getVMContext()) :
+      llvm::Type::getInt32Ty(getVMContext());
+    return ABIArgInfo::getDirect(ResType);
   }
 
   if (!isAggregateTypeForABI(RetTy)) {
