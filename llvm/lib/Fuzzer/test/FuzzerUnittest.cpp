@@ -215,3 +215,51 @@ void TestShuffleBytes(Mutator M, int NumIter) {
 
 TEST(FuzzerMutate, ShuffleBytes1) { TestShuffleBytes(Mutate_ShuffleBytes, 1 << 15); }
 TEST(FuzzerMutate, ShuffleBytes2) { TestShuffleBytes(Mutate, 1 << 16); }
+
+TEST(FuzzerDictionary, ParseOneDictionaryEntry) {
+  Unit U;
+  EXPECT_FALSE(ParseOneDictionaryEntry("", &U));
+  EXPECT_FALSE(ParseOneDictionaryEntry(" ", &U));
+  EXPECT_FALSE(ParseOneDictionaryEntry("\t  ", &U));
+  EXPECT_FALSE(ParseOneDictionaryEntry("  \" ", &U));
+  EXPECT_FALSE(ParseOneDictionaryEntry("  zz\" ", &U));
+  EXPECT_FALSE(ParseOneDictionaryEntry("  \"zz ", &U));
+  EXPECT_FALSE(ParseOneDictionaryEntry("  \"\" ", &U));
+  EXPECT_TRUE(ParseOneDictionaryEntry("\"a\"", &U));
+  EXPECT_EQ(U, Unit({'a'}));
+  EXPECT_TRUE(ParseOneDictionaryEntry("\"abc\"", &U));
+  EXPECT_EQ(U, Unit({'a', 'b', 'c'}));
+  EXPECT_TRUE(ParseOneDictionaryEntry("abc=\"abc\"", &U));
+  EXPECT_EQ(U, Unit({'a', 'b', 'c'}));
+  EXPECT_FALSE(ParseOneDictionaryEntry("\"\\\"", &U));
+  EXPECT_TRUE(ParseOneDictionaryEntry("\"\\\\\"", &U));
+  EXPECT_EQ(U, Unit({'\\'}));
+  EXPECT_TRUE(ParseOneDictionaryEntry("\"\\xAB\"", &U));
+  EXPECT_EQ(U, Unit({0xAB}));
+  EXPECT_TRUE(ParseOneDictionaryEntry("\"\\xABz\\xDE\"", &U));
+  EXPECT_EQ(U, Unit({0xAB, 'z', 0xDE}));
+  EXPECT_TRUE(ParseOneDictionaryEntry("\"#\"", &U));
+  EXPECT_EQ(U, Unit({'#'}));
+  EXPECT_TRUE(ParseOneDictionaryEntry("\"\\\"\"", &U));
+  EXPECT_EQ(U, Unit({'"'}));
+}
+
+TEST(FuzzerDictionary, ParseDictionaryFile) {
+  std::vector<Unit> Units;
+  EXPECT_FALSE(ParseDictionaryFile("zzz\n", &Units));
+  EXPECT_FALSE(ParseDictionaryFile("", &Units));
+  EXPECT_TRUE(ParseDictionaryFile("\n", &Units));
+  EXPECT_EQ(Units.size(), 0U);
+  EXPECT_TRUE(ParseDictionaryFile("#zzzz a b c d\n", &Units));
+  EXPECT_EQ(Units.size(), 0U);
+  EXPECT_TRUE(ParseDictionaryFile(" #zzzz\n", &Units));
+  EXPECT_EQ(Units.size(), 0U);
+  EXPECT_TRUE(ParseDictionaryFile("  #zzzz\n", &Units));
+  EXPECT_EQ(Units.size(), 0U);
+  EXPECT_TRUE(ParseDictionaryFile("  #zzzz\naaa=\"aa\"", &Units));
+  EXPECT_EQ(Units, std::vector<Unit>({Unit({'a', 'a'})}));
+  EXPECT_TRUE(
+      ParseDictionaryFile("  #zzzz\naaa=\"aa\"\n\nabc=\"abc\"", &Units));
+  EXPECT_EQ(Units,
+            std::vector<Unit>({Unit({'a', 'a'}), Unit({'a', 'b', 'c'})}));
+}

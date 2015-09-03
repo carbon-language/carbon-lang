@@ -63,6 +63,7 @@ FUZZER_FLAG_INT(report_slow_units, 10,
     "Report slowest units if they run for more than this number of seconds.")
 FUZZER_FLAG_INT(only_ascii, 0,
                 "If 1, generate only ASCII (isprint+isspace) inputs.")
+FUZZER_FLAG_STRING(dict, "Experimental. Use the dictionary file.")
 FUZZER_FLAG_INT(tbm_depth, 5, "Apply at most this number of consecutive"
                                "trace-based-mutations (tbm).")
 FUZZER_FLAG_INT(tbm_width, 5, "Apply at most this number of independent"

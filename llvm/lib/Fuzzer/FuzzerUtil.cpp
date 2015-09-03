@@ -16,6 +16,7 @@
 #include <cassert>
 #include <cstring>
 #include <signal.h>
+#include <sstream>
 #include <unistd.h>
 
 namespace fuzzer {
@@ -89,6 +90,79 @@ bool ToASCII(Unit &U) {
 bool IsASCII(const Unit &U) {
   for (auto X : U)
     if (!(isprint(X) || isspace(X))) return false;
+  return true;
+}
+
+bool ParseOneDictionaryEntry(const std::string &Str, Unit *U) {
+  U->clear();
+  if (Str.empty()) return false;
+  size_t L = 0, R = Str.size() - 1;  // We are parsing the range [L,R].
+  // Skip spaces from both sides.
+  while (L < R && isspace(Str[L])) L++;
+  while (R > L && isspace(Str[R])) R--;
+  if (R - L < 2) return false;
+  // Check the closing "
+  if (Str[R] != '"') return false;
+  R--;
+  // Find the opening "
+  while (L < R && Str[L] != '"') L++;
+  if (L >= R) return false;
+  assert(Str[L] == '\"');
+  L++;
+  assert(L <= R);
+  for (size_t Pos = L; Pos <= R; Pos++) {
+    uint8_t V = (uint8_t)Str[Pos];
+    if (!isprint(V) && !isspace(V)) return false;
+    if (V =='\\') {
+      // Handle '\\'
+      if (Pos + 1 <= R && (Str[Pos + 1] == '\\' || Str[Pos + 1] == '"')) {
+        U->push_back(Str[Pos + 1]);
+        Pos++;
+        continue;
+      }
+      // Handle '\xAB'
+      if (Pos + 3 <= R && Str[Pos + 1] == 'x'
+           && isxdigit(Str[Pos + 2]) && isxdigit(Str[Pos + 3])) {
+        char Hex[] = "0xAA";
+        Hex[2] = Str[Pos + 2];
+        Hex[3] = Str[Pos + 3];
+        U->push_back(strtol(Hex, nullptr, 16));
+        Pos += 3;
+        continue;
+      }
+      return false;  // Invalid escape.
+    } else {
+      // Any other character.
+      U->push_back(V);
+    }
+  }
+  return true;
+}
+
+bool ParseDictionaryFile(const std::string &Text, std::vector<Unit> *Units) {
+  if (Text.empty()) {
+    Printf("ParseDictionaryFile: file does not exist or is empty\n");
+    return false;
+  }
+  std::istringstream ISS(Text);
+  Units->clear();
+  Unit U;
+  int LineNo = 0;
+  std::string S;
+  while (std::getline(ISS, S, '\n')) {
+    LineNo++;
+    size_t Pos = 0;
+    while (Pos < S.size() && isspace(S[Pos])) Pos++;  // Skip spaces.
+    if (Pos == S.size()) continue;  // Empty line.
+    if (S[Pos] == '#') continue;  // Comment line.
+    if (ParseOneDictionaryEntry(S, &U)) {
+      Units->push_back(U);
+    } else {
+      Printf("ParseDictionaryFile: error in line %d\n\t\t%s\n", LineNo,
+             S.c_str());
+      return false;
+    }
+  }
   return true;
 }
 

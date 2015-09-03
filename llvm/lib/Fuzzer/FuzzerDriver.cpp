@@ -256,6 +256,13 @@ int FuzzerDriver(int argc, char **argv, UserSuppliedFuzzer &USF) {
   if (Flags.apply_tokens)
     return ApplyTokens(F, Flags.apply_tokens);
 
+  if (Flags.dict)
+    if (!ParseDictionaryFile(FileToString(Flags.dict), &Options.Dictionary))
+      return 1;
+
+  if (Flags.verbosity > 0 && !Options.Dictionary.empty())
+    Printf("Dictionary: %zd entries\n", Options.Dictionary.size());
+
   unsigned Seed = Flags.seed;
   // Initialize Seed.
   if (Seed == 0)

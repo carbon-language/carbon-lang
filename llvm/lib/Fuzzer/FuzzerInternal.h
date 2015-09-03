@@ -57,6 +57,16 @@ bool IsASCII(const Unit &U);
 
 int NumberOfCpuCores();
 
+// Dictionary.
+
+// Parses one dictionary entry.
+// If successfull, write the enty to Unit and returns true,
+// otherwise returns false.
+bool ParseOneDictionaryEntry(const std::string &Str, Unit *U);
+// Parses the dictionary file, fills Units, returns true iff all lines
+// were parsed succesfully.
+bool ParseDictionaryFile(const std::string &Text, std::vector<Unit> *Units);
+
 class Fuzzer {
  public:
   struct FuzzingOptions {
@@ -80,6 +90,7 @@ class Fuzzer {
     std::string OutputCorpus;
     std::string SyncCommand;
     std::vector<std::string> Tokens;
+    std::vector<Unit> Dictionary;
   };
   Fuzzer(UserSuppliedFuzzer &USF, FuzzingOptions Options);
   void AddToCorpus(const Unit &U) { Corpus.push_back(U); }
