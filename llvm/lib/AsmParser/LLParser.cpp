@@ -1040,6 +1040,17 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
 // GlobalValue Reference/Resolution Routines.
 //===----------------------------------------------------------------------===//
 
+static inline GlobalValue *createGlobalFwdRef(Module *M, PointerType *PTy,
+                                              const std::string &Name) {
+  if (auto *FT = dyn_cast<FunctionType>(PTy->getElementType()))
+    return Function::Create(FT, GlobalValue::ExternalWeakLinkage, Name, M);
+  else
+    return new GlobalVariable(*M, PTy->getElementType(), false,
+                              GlobalValue::ExternalWeakLinkage, nullptr, Name,
+                              nullptr, GlobalVariable::NotThreadLocal,
+                              PTy->getAddressSpace());
+}
+
 /// GetGlobalVal - Get a value with the specified name or ID, creating a
 /// forward reference record if needed.  This can return null if the value
 /// exists but does not have the right type.
@@ -1073,15 +1084,7 @@ GlobalValue *LLParser::GetGlobalVal(const std::string &Name, Type *Ty,
   }
 
   // Otherwise, create a new forward reference for this value and remember it.
-  GlobalValue *FwdVal;
-  if (FunctionType *FT = dyn_cast<FunctionType>(PTy->getElementType()))
-    FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, Name, M);
-  else
-    FwdVal = new GlobalVariable(*M, PTy->getElementType(), false,
-                                GlobalValue::ExternalWeakLinkage, nullptr, Name,
-                                nullptr, GlobalVariable::NotThreadLocal,
-                                PTy->getAddressSpace());
-
+  GlobalValue *FwdVal = createGlobalFwdRef(M, PTy, Name);
   ForwardRefVals[Name] = std::make_pair(FwdVal, Loc);
   return FwdVal;
 }
@@ -1113,13 +1116,7 @@ GlobalValue *LLParser::GetGlobalVal(unsigned ID, Type *Ty, LocTy Loc) {
   }
 
   // Otherwise, create a new forward reference for this value and remember it.
-  GlobalValue *FwdVal;
-  if (FunctionType *FT = dyn_cast<FunctionType>(PTy->getElementType()))
-    FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, "", M);
-  else
-    FwdVal = new GlobalVariable(*M, PTy->getElementType(), false,
-                                GlobalValue::ExternalWeakLinkage, nullptr, "");
-
+  GlobalValue *FwdVal = createGlobalFwdRef(M, PTy, "");
   ForwardRefValIDs[ID] = std::make_pair(FwdVal, Loc);
   return FwdVal;
 }
