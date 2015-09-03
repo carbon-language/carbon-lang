@@ -158,3 +158,71 @@ lldb_private::formatters::LibStdcppVectorIteratorSyntheticFrontEndCreator (CXXSy
         return NULL;
     return (new VectorIteratorSyntheticFrontEnd(valobj_sp,g_item_name));
 }
+
+lldb_private::formatters::VectorIteratorSyntheticFrontEnd::VectorIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp,
+                                                                                            ConstString item_name) :
+SyntheticChildrenFrontEnd(*valobj_sp.get()),
+m_exe_ctx_ref(),
+m_item_name(item_name),
+m_item_sp()
+{
+    if (valobj_sp)
+        Update();
+}
+
+bool
+lldb_private::formatters::VectorIteratorSyntheticFrontEnd::Update()
+{
+    m_item_sp.reset();
+    
+    ValueObjectSP valobj_sp = m_backend.GetSP();
+    if (!valobj_sp)
+        return false;
+    
+    if (!valobj_sp)
+        return false;
+    
+    ValueObjectSP item_ptr(valobj_sp->GetChildMemberWithName(m_item_name,true));
+    if (!item_ptr)
+        return false;
+    if (item_ptr->GetValueAsUnsigned(0) == 0)
+        return false;
+    Error err;
+    m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
+    m_item_sp = CreateValueObjectFromAddress("item", item_ptr->GetValueAsUnsigned(0), m_exe_ctx_ref, item_ptr->GetCompilerType().GetPointeeType());
+    if (err.Fail())
+        m_item_sp.reset();
+    return false;
+}
+
+size_t
+lldb_private::formatters::VectorIteratorSyntheticFrontEnd::CalculateNumChildren ()
+{
+    return 1;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::VectorIteratorSyntheticFrontEnd::GetChildAtIndex (size_t idx)
+{
+    if (idx == 0)
+        return m_item_sp;
+    return lldb::ValueObjectSP();
+}
+
+bool
+lldb_private::formatters::VectorIteratorSyntheticFrontEnd::MightHaveChildren ()
+{
+    return true;
+}
+
+size_t
+lldb_private::formatters::VectorIteratorSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
+{
+    if (name == ConstString("item"))
+        return 0;
+    return UINT32_MAX;
+}
+
+lldb_private::formatters::VectorIteratorSyntheticFrontEnd::~VectorIteratorSyntheticFrontEnd ()
+{
+}

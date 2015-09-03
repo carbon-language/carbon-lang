@@ -737,6 +737,7 @@
 		94380B8219940B0A00BFE4A8 /* StringLexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94380B8119940B0A00BFE4A8 /* StringLexer.cpp */; };
 		9439FB1A19EF140C006FD6A4 /* NSIndexPath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9439FB1919EF140C006FD6A4 /* NSIndexPath.cpp */; };
 		943BDEFE1AA7B2F800789CE8 /* LLDBAssert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 943BDEFD1AA7B2F800789CE8 /* LLDBAssert.cpp */; };
+		943F31A61B97D9970047A590 /* CxxStringTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 943F31A51B97D9970047A590 /* CxxStringTypes.cpp */; settings = {ASSET_TAGS = (); }; };
 		944372DC171F6B4300E57C32 /* RegisterContextDummy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 944372DA171F6B4300E57C32 /* RegisterContextDummy.cpp */; };
 		9443B122140C18C40013457C /* SBData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9443B121140C18C10013457C /* SBData.cpp */; };
 		9443B123140C26AB0013457C /* SBData.h in Headers */ = {isa = PBXBuildFile; fileRef = 9443B120140C18A90013457C /* SBData.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -2426,6 +2427,7 @@
 		9439FB1919EF140C006FD6A4 /* NSIndexPath.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSIndexPath.cpp; path = source/DataFormatters/NSIndexPath.cpp; sourceTree = "<group>"; };
 		943BDEFC1AA7B2DE00789CE8 /* LLDBAssert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LLDBAssert.h; path = include/lldb/Utility/LLDBAssert.h; sourceTree = "<group>"; };
 		943BDEFD1AA7B2F800789CE8 /* LLDBAssert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LLDBAssert.cpp; path = source/Utility/LLDBAssert.cpp; sourceTree = "<group>"; };
+		943F31A51B97D9970047A590 /* CxxStringTypes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CxxStringTypes.cpp; path = source/DataFormatters/CxxStringTypes.cpp; sourceTree = "<group>"; };
 		944372DA171F6B4300E57C32 /* RegisterContextDummy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextDummy.cpp; path = Utility/RegisterContextDummy.cpp; sourceTree = "<group>"; };
 		944372DB171F6B4300E57C32 /* RegisterContextDummy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextDummy.h; path = Utility/RegisterContextDummy.h; sourceTree = "<group>"; };
 		9443B120140C18A90013457C /* SBData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBData.h; path = include/lldb/API/SBData.h; sourceTree = "<group>"; };
@@ -5316,6 +5318,7 @@
 				9492E2A41A8AC11000295BBD /* CoreMedia.cpp */,
 				94CB255F16B069800059775D /* CXXFormatterFunctions.h */,
 				94CB255716B069770059775D /* CXXFormatterFunctions.cpp */,
+				943F31A51B97D9970047A590 /* CxxStringTypes.cpp */,
 				94CB256016B069800059775D /* DataVisualization.h */,
 				94CB255816B069770059775D /* DataVisualization.cpp */,
 				94CB257516B1D3910059775D /* FormatCache.h */,
@@ -6466,6 +6469,7 @@
 				3FDFED0B19B7C8DE009756A7 /* HostThreadMacOSX.mm in Sources */,
 				266603CA1345B5A8004DA8B6 /* ConnectionSharedMemory.cpp in Sources */,
 				2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */,
+				943F31A61B97D9970047A590 /* CxxStringTypes.cpp in Sources */,
 				4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */,
 				4CD0BD0F134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp in Sources */,
 				946216C21A97C080006E19CC /* OptionValueLanguage.cpp in Sources */,
