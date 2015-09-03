@@ -159,6 +159,8 @@ bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
       // If Operand N already has a matching input, reject this.  An output
       // can't be constrained to the same value as multiple inputs.
       if (isMultipleAlternative) {
+        if (multipleAlternativeIndex >= ConstraintsSoFar[N].multipleAlternatives.size())
+          return true;
         InlineAsm::SubConstraintInfo &scInfo =
           ConstraintsSoFar[N].multipleAlternatives[multipleAlternativeIndex];
         if (scInfo.MatchingInput != -1)
@@ -290,4 +292,3 @@ bool InlineAsm::Verify(FunctionType *Ty, StringRef ConstStr) {
   if (Ty->getNumParams() != NumInputs) return false;
   return true;
 }
-
