@@ -59,7 +59,7 @@ namespace llvm {
 
     LLLexer::LocTy Loc;
     unsigned UIntVal;
-    FunctionType *FTy;
+    FunctionType *FTy = nullptr;
     std::string StrVal, StrVal2;
     APSInt APSIntVal;
     APFloat APFloatVal{0.0};
