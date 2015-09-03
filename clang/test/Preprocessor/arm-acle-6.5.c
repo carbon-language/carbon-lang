@@ -1,6 +1,6 @@
 // RUN: %clang -target arm-eabi -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-DEFAULT
 
-// CHECK-DEFAULT-NOT: __ARM_FP
+// CHECK-DEFAULT-NOT: __ARM_FP 0x
 
 // RUN: %clang -target arm-eabi -mfpu=vfp -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP-DP
 // RUN: %clang -target arm-eabi -mfpu=vfp3 -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP-DP
