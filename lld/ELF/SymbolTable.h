@@ -34,6 +34,12 @@ public:
 
   void addFile(std::unique_ptr<InputFile> File);
 
+  ObjectFileBase *getFirstObject() const {
+    if (!ObjectFiles.empty())
+      return ObjectFiles[0].get();
+    return nullptr;
+  }
+
   // Print an error message on undefined symbols.
   void reportRemainingUndefines();
 

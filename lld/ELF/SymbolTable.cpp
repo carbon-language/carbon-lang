@@ -33,10 +33,9 @@ template <class ELFT> void SymbolTable::init() {
 }
 
 void SymbolTable::addObject(ObjectFileBase *File) {
-  if (!ObjectFiles.empty()) {
-    ObjectFileBase &Old = *ObjectFiles[0];
-    if (!Old.isCompatibleWith(*File))
-      error(Twine(Old.getName() + " is incompatible with " + File->getName()));
+  if (const ObjectFileBase *Old = getFirstObject()) {
+    if (!Old->isCompatibleWith(*File))
+      error(Twine(Old->getName() + " is incompatible with " + File->getName()));
   } else {
     switch (File->getELFKind()) {
     case ELF32LEKind:

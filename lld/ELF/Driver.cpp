@@ -98,7 +98,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Symtab.reportRemainingUndefines();
 
   // Write the result.
-  ObjectFileBase &FirstObj = *Symtab.getObjectFiles()[0];
+  ObjectFileBase &FirstObj = *Symtab.getFirstObject();
   switch (FirstObj.getELFKind()) {
   case ELF32LEKind:
     writeResult<object::ELF32LE>(&Symtab);

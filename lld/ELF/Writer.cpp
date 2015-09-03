@@ -543,7 +543,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
 
   EHdr->e_type = ET_EXEC;
   const SymbolTable &Symtab = SymTable.getSymTable();
-  auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.getObjectFiles()[0]);
+  auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.getFirstObject());
   EHdr->e_machine = FirstObj.getObj()->getHeader()->e_machine;
   EHdr->e_version = EV_CURRENT;
   EHdr->e_entry = 0x401000;
