@@ -39,7 +39,7 @@ T tmain(T argc, S **argv) {
   // expected-error@+1 {{argument to 'schedule' clause must be a positive integer value}}
   #pragma omp for simd schedule (static, foobool(argc)), schedule (dynamic, true), schedule (guided, -5)
   for (int i = ST; i < N; i++) argv[0][i] = argv[0][i] - argv[0][i-ST];
-  #pragma omp for simd schedule (static, S) // expected-error {{'S' does not refer to a value}} expected-warning {{extra tokens at the end of '#pragma omp for simd' are ignored}}
+  #pragma omp for simd schedule (static, S) // expected-error {{'S' does not refer to a value}}
   for (int i = ST; i < N; i++) argv[0][i] = argv[0][i] - argv[0][i-ST];
   // expected-error@+1 2 {{expression must have integral or unscoped enumeration type, not 'char *'}}
   #pragma omp for simd schedule (guided, argv[1]=2) // expected-error {{expected ')'}} expected-note {{to match this '('}}
@@ -76,14 +76,14 @@ int main(int argc, char **argv) {
   // expected-error@+1 {{argument to 'schedule' clause must be a positive integer value}}
   #pragma omp for simd schedule (guided, foobool(argc)), schedule (static, true), schedule (dynamic, -5)
   for (int i = 4; i < 12; i++) argv[0][i] = argv[0][i] - argv[0][i-4];
-  #pragma omp for simd schedule (guided, S1) // expected-error {{'S1' does not refer to a value}} expected-warning {{extra tokens at the end of '#pragma omp for simd' are ignored}}
+  #pragma omp for simd schedule (guided, S1) // expected-error {{'S1' does not refer to a value}}
   for (int i = 4; i < 12; i++) argv[0][i] = argv[0][i] - argv[0][i-4];
   // expected-error@+1 {{expression must have integral or unscoped enumeration type, not 'char *'}}
   #pragma omp for simd schedule (static, argv[1]=2) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   for (int i = 4; i < 12; i++) argv[0][i] = argv[0][i] - argv[0][i-4];
   // expected-error@+3 {{statement after '#pragma omp for simd' must be a for loop}}
   // expected-note@+1 {{in instantiation of function template specialization 'tmain<int, char, -1, -2>' requested here}}
-  #pragma omp for simd schedule(dynamic, schedule(tmain<int, char, -1, -2>(argc, argv) // expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp for simd schedule(dynamic, schedule(tmain<int, char, -1, -2>(argc, argv) // expected-error 2 {{expected ')'}} expected-note 2 {{to match this '('}}
   foo();
   // expected-note@+1 {{in instantiation of function template specialization 'tmain<int, char, 1, 0>' requested here}}
   return tmain<int, char, 1, 0>(argc, argv);

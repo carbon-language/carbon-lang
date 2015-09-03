@@ -22,6 +22,12 @@ int tmain(T argc, S **argv) {
   #pragma omp task if (argv[1]=2) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp task if (argc argc) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp task if(argc)
+  #pragma omp task if(task : // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp task if(task : argc // expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp task if(task : argc)
+  #pragma omp task if(task : argc) if (for:argc) // expected-error {{directive name modifier 'for' is not allowed for '#pragma omp task'}}
+  #pragma omp task if(task : argc) if (task:argc) // expected-error {{directive '#pragma omp task' cannot contain more than one 'if' clause with 'task' name modifier}}
+  #pragma omp task if(task : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
   foo();
 
   return 0;
@@ -40,6 +46,12 @@ int main(int argc, char **argv) {
   #pragma omp task if (argc argc) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp task if (1 0) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp task if(if(tmain(argc, argv) // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp task if(task : // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp task if(task : argc // expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp task if(task : argc)
+  #pragma omp task if(task : argc) if (for:argc) // expected-error {{directive name modifier 'for' is not allowed for '#pragma omp task'}}
+  #pragma omp task if(task : argc) if (task:argc) // expected-error {{directive '#pragma omp task' cannot contain more than one 'if' clause with 'task' name modifier}}
+  #pragma omp task if(task : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
   foo();
 
   return tmain(argc, argv);

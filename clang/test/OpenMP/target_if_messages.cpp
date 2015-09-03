@@ -22,6 +22,12 @@ int tmain(T argc, S **argv) {
   #pragma omp target if (argv[1]=2) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp target if (argc argc) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp target if(argc)
+  #pragma omp target if(target : // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp target if(target : argc // expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp target if(target : argc)
+  #pragma omp target if(target : argc) if (for:argc) // expected-error {{directive name modifier 'for' is not allowed for '#pragma omp target'}}
+  #pragma omp target if(target : argc) if (target:argc) // expected-error {{directive '#pragma omp target' cannot contain more than one 'if' clause with 'target' name modifier}}
+  #pragma omp target if(target : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
   foo();
 
   return 0;
@@ -40,6 +46,12 @@ int main(int argc, char **argv) {
   #pragma omp target if (argc argc) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp target if (1 0) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp target if(if(tmain(argc, argv) // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp target if(target : // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp target if(target : argc // expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp target if(target : argc)
+  #pragma omp target if(target : argc) if (for:argc) // expected-error {{directive name modifier 'for' is not allowed for '#pragma omp target'}}
+  #pragma omp target if(target : argc) if (target:argc) // expected-error {{directive '#pragma omp target' cannot contain more than one 'if' clause with 'target' name modifier}}
+  #pragma omp target if(target : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
   foo();
 
   return tmain(argc, argv);

@@ -34,6 +34,20 @@ int tmain(T argc, S **argv) {
   for (i = 0; i < argc; ++i) foo();
   #pragma omp parallel for if(argc)
   for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel // expected-warning {{missing ':' after directive name modifier - ignoring}} expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : argc // expected-error {{expected ')'}} expected-note {{to match this '('}}
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : argc)
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : argc) if (for:argc) // expected-error {{directive name modifier 'for' is not allowed for '#pragma omp parallel for'}}
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : argc) if (parallel:argc) // expected-error {{directive '#pragma omp parallel for' cannot contain more than one 'if' clause with 'parallel' name modifier}}
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
+  for (i = 0; i < argc; ++i) foo();
 
   return 0;
 }
@@ -63,6 +77,20 @@ int main(int argc, char **argv) {
   #pragma omp parallel for if (1 0) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   for (i = 0; i < argc; ++i) foo();
   #pragma omp parallel for if(if(tmain(argc, argv) // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel // expected-warning {{missing ':' after directive name modifier - ignoring}} expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : argc // expected-error {{expected ')'}} expected-note {{to match this '('}}
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : argc)
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : argc) if (for:argc) // expected-error {{directive name modifier 'for' is not allowed for '#pragma omp parallel for'}}
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : argc) if (parallel:argc) // expected-error {{directive '#pragma omp parallel for' cannot contain more than one 'if' clause with 'parallel' name modifier}}
+  for (i = 0; i < argc; ++i) foo();
+  #pragma omp parallel for if(parallel : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
   for (i = 0; i < argc; ++i) foo();
 
   return tmain(argc, argv);
