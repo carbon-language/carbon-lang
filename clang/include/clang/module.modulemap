@@ -35,6 +35,7 @@ module Clang_Basic {
   textual header "Basic/BuiltinsPPC.def"
   textual header "Basic/BuiltinsR600.def"
   textual header "Basic/BuiltinsSystemZ.def"
+  textual header "Basic/BuiltinsWebAssembly.def"
   textual header "Basic/BuiltinsX86.def"
   textual header "Basic/BuiltinsXCore.def"
   textual header "Basic/DiagnosticOptions.def"

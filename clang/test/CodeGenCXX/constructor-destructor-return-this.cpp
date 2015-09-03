@@ -1,6 +1,8 @@
 //RUN: %clang_cc1 %s -emit-llvm -o - -triple=i686-unknown-linux | FileCheck --check-prefix=CHECKGEN %s
 //RUN: %clang_cc1 %s -emit-llvm -o - -triple=thumbv7-apple-ios6.0 -target-abi apcs-gnu | FileCheck --check-prefix=CHECKARM %s
 //RUN: %clang_cc1 %s -emit-llvm -o - -triple=thumbv7-apple-ios5.0 -target-abi apcs-gnu | FileCheck --check-prefix=CHECKIOS5 %s
+//RUN: %clang_cc1 %s -emit-llvm -o - -triple=wasm32-unknown-unknown \
+//RUN:   | FileCheck --check-prefix=CHECKARM %s
 //RUN: %clang_cc1 %s -emit-llvm -o - -triple=i386-pc-win32 -fno-rtti | FileCheck --check-prefix=CHECKMS %s
 // FIXME: these tests crash on the bots when run with -triple=x86_64-pc-win32
 

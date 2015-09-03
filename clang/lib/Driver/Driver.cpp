@@ -2265,6 +2265,10 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
       case llvm::Triple::shave:
         TC = new toolchains::SHAVEToolChain(*this, Target, Args);
         break;
+      case llvm::Triple::wasm32:
+      case llvm::Triple::wasm64:
+        TC = new toolchains::WebAssembly(*this, Target, Args);
+        break;
       default:
         if (Target.isOSBinFormatELF())
           TC = new toolchains::Generic_ELF(*this, Target, Args);

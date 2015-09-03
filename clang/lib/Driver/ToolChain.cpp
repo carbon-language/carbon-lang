@@ -244,11 +244,13 @@ ObjCRuntime ToolChain::getDefaultObjCRuntime(bool isNonFragile) const {
 
 bool ToolChain::isThreadModelSupported(const StringRef Model) const {
   if (Model == "single") {
-    // FIXME: 'single' is only supported on ARM so far.
+    // FIXME: 'single' is only supported on ARM and WebAssembly so far.
     return Triple.getArch() == llvm::Triple::arm ||
            Triple.getArch() == llvm::Triple::armeb ||
            Triple.getArch() == llvm::Triple::thumb ||
-           Triple.getArch() == llvm::Triple::thumbeb;
+           Triple.getArch() == llvm::Triple::thumbeb ||
+           Triple.getArch() == llvm::Triple::wasm32 ||
+           Triple.getArch() == llvm::Triple::wasm64;
   } else if (Model == "posix")
     return true;
 

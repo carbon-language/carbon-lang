@@ -1888,6 +1888,9 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
   case llvm::Triple::nvptx:
   case llvm::Triple::nvptx64:
     return EmitNVPTXBuiltinExpr(BuiltinID, E);
+  case llvm::Triple::wasm32:
+  case llvm::Triple::wasm64:
+    return EmitWebAssemblyBuiltinExpr(BuiltinID, E);
   default:
     return nullptr;
   }
@@ -7026,6 +7029,20 @@ Value *CodeGenFunction::EmitNVPTXBuiltinExpr(unsigned BuiltinID,
     Value *FnALAF32 =
         CGM.getIntrinsic(Intrinsic::nvvm_atomic_load_add_f32, Ptr->getType());
     return Builder.CreateCall(FnALAF32, {Ptr, Val});
+  }
+
+  default:
+    return nullptr;
+  }
+}
+
+Value *CodeGenFunction::EmitWebAssemblyBuiltinExpr(unsigned BuiltinID,
+                                                   const CallExpr *E) {
+  switch (BuiltinID) {
+  case WebAssembly::BI__builtin_wasm_page_size: {
+    llvm::Type *ResultType = ConvertType(E->getType());
+    Value *Callee = CGM.getIntrinsic(Intrinsic::wasm_page_size, ResultType);
+    return Builder.CreateCall(Callee);
   }
 
   default:
