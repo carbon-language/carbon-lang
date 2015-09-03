@@ -1026,14 +1026,19 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   DenseMap<Value *, Value *> ReverseMap;
   SmallPtrSet<Instruction *, 16> NewInsts;
   SmallSetVector<AssertingVH<Instruction>, 16> Worklist;
-  for (auto Item : states) {
-    Value *V = Item.first;
-    Value *Base = Item.second.getBase();
+  // Note: We need to visit the states in a deterministic order.  We uses the
+  // Keys we sorted above for this purpose.  Note that we are papering over a
+  // bigger problem with the algorithm above - it's visit order is not
+  // deterministic.  A larger change is needed to fix this.
+  for (auto Key : Keys) {
+    Value *V = Key;
+    auto State = states[Key];
+    Value *Base = State.getBase();
     assert(V && Base);
     assert(!isKnownBaseResult(V) && "why did it get added?");
     assert(isKnownBaseResult(Base) &&
            "must be something we 'know' is a base pointer");
-    if (!Item.second.isConflict())
+    if (!State.isConflict())
       continue;
 
     ReverseMap[Base] = V;
