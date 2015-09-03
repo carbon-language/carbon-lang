@@ -16,7 +16,6 @@
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;

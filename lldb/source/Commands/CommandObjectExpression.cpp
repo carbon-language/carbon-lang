@@ -26,7 +26,6 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Language.h"
-#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Target/Process.h"

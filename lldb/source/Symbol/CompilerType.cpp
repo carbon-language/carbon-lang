@@ -22,7 +22,6 @@
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/VerifyDecl.h"
 #include "lldb/Target/ExecutionContext.h"
-#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 
 #include <iterator>
