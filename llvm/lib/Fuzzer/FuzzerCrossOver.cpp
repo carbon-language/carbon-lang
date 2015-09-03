@@ -16,9 +16,9 @@
 namespace fuzzer {
 
 // Cross Data1 and Data2, store the result (up to MaxOutSize bytes) in Out.
-size_t CrossOver(const uint8_t *Data1, size_t Size1,
-                 const uint8_t *Data2, size_t Size2,
-                 uint8_t *Out, size_t MaxOutSize, FuzzerRandomBase &Rand) {
+size_t MutationDispatcher::CrossOver(const uint8_t *Data1, size_t Size1,
+                                     const uint8_t *Data2, size_t Size2,
+                                     uint8_t *Out, size_t MaxOutSize) {
   assert(Size1 || Size2);
   MaxOutSize = Rand(MaxOutSize) + 1;
   size_t OutPos = 0;

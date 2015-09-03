@@ -35,8 +35,8 @@ static char RandCh(FuzzerRandomBase &Rand) {
   return Special[Rand(sizeof(Special) - 1)];
 }
 
-size_t Mutate_ShuffleBytes(uint8_t *Data, size_t Size, size_t MaxSize,
-                           FuzzerRandomBase &Rand) {
+size_t MutationDispatcher::Mutate_ShuffleBytes(uint8_t *Data, size_t Size,
+                                               size_t MaxSize) {
   assert(Size);
   size_t ShuffleAmount = Rand(std::min(Size, 8UL)) + 1;  // [1,8] and <= Size.
   size_t ShuffleStart = Rand(Size - ShuffleAmount);
@@ -46,8 +46,8 @@ size_t Mutate_ShuffleBytes(uint8_t *Data, size_t Size, size_t MaxSize,
   return Size;
 }
 
-size_t Mutate_EraseByte(uint8_t *Data, size_t Size, size_t MaxSize,
-                        FuzzerRandomBase &Rand) {
+size_t MutationDispatcher::Mutate_EraseByte(uint8_t *Data, size_t Size,
+                                            size_t MaxSize) {
   assert(Size);
   if (Size == 1) return Size;
   size_t Idx = Rand(Size);
@@ -56,8 +56,8 @@ size_t Mutate_EraseByte(uint8_t *Data, size_t Size, size_t MaxSize,
   return Size - 1;
 }
 
-size_t Mutate_InsertByte(uint8_t *Data, size_t Size, size_t MaxSize,
-                         FuzzerRandomBase &Rand) {
+size_t MutationDispatcher::Mutate_InsertByte(uint8_t *Data, size_t Size,
+                                             size_t MaxSize) {
   if (Size == MaxSize) return Size;
   size_t Idx = Rand(Size + 1);
   // Insert new value at Data[Idx].
@@ -66,23 +66,22 @@ size_t Mutate_InsertByte(uint8_t *Data, size_t Size, size_t MaxSize,
   return Size + 1;
 }
 
-size_t Mutate_ChangeByte(uint8_t *Data, size_t Size, size_t MaxSize,
-                         FuzzerRandomBase &Rand) {
+size_t MutationDispatcher::Mutate_ChangeByte(uint8_t *Data, size_t Size,
+                                             size_t MaxSize) {
   size_t Idx = Rand(Size);
   Data[Idx] = RandCh(Rand);
   return Size;
 }
 
-size_t Mutate_ChangeBit(uint8_t *Data, size_t Size, size_t MaxSize,
-                        FuzzerRandomBase &Rand) {
+size_t MutationDispatcher::Mutate_ChangeBit(uint8_t *Data, size_t Size,
+                                            size_t MaxSize) {
   size_t Idx = Rand(Size);
   Data[Idx] = FlipRandomBit(Data[Idx], Rand);
   return Size;
 }
 
 // Mutates Data in place, returns new size.
-size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
-              FuzzerRandomBase &Rand) {
+size_t MutationDispatcher::Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
   assert(MaxSize > 0);
   assert(Size <= MaxSize);
   if (Size == 0) {
@@ -92,11 +91,11 @@ size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
   }
   assert(Size > 0);
   switch (Rand(5)) {
-  case 0: Size = Mutate_EraseByte(Data, Size, MaxSize, Rand); break;
-  case 1: Size = Mutate_InsertByte(Data, Size, MaxSize, Rand); break;
-  case 2: Size = Mutate_ChangeByte(Data, Size, MaxSize, Rand); break;
-  case 3: Size = Mutate_ChangeBit(Data, Size, MaxSize, Rand); break;
-  case 4: Size = Mutate_ShuffleBytes(Data, Size, MaxSize, Rand); break;
+  case 0: Size = Mutate_EraseByte(Data, Size, MaxSize); break;
+  case 1: Size = Mutate_InsertByte(Data, Size, MaxSize); break;
+  case 2: Size = Mutate_ChangeByte(Data, Size, MaxSize); break;
+  case 3: Size = Mutate_ChangeBit(Data, Size, MaxSize); break;
+  case 4: Size = Mutate_ShuffleBytes(Data, Size, MaxSize); break;
   }
   assert(Size > 0);
   return Size;

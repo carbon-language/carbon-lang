@@ -62,33 +62,38 @@ class FuzzerRandomLibc : public FuzzerRandomBase {
   size_t Rand() override;
 };
 
+class MutationDispatcher {
+ public:
+  MutationDispatcher(FuzzerRandomBase &Rand) : Rand(Rand) {}
+  /// Mutates data by shuffling bytes.
+  size_t Mutate_ShuffleBytes(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Mutates data by erasing a byte.
+  size_t Mutate_EraseByte(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Mutates data by inserting a byte.
+  size_t Mutate_InsertByte(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Mutates data by chanding one byte.
+  size_t Mutate_ChangeByte(uint8_t *Data, size_t Size, size_t MaxSize);
+  /// Mutates data by chanding one bit.
+  size_t Mutate_ChangeBit(uint8_t *Data, size_t Size, size_t MaxSize);
 
-/// Mutates data by shuffling bytes.
-size_t Mutate_ShuffleBytes(uint8_t *Data, size_t Size, size_t MaxSize,
-                           FuzzerRandomBase &Rand);
-/// Mutates data by erasing a byte.
-size_t Mutate_EraseByte(uint8_t *Data, size_t Size, size_t MaxSize,
-                        FuzzerRandomBase &Rand);
-/// Mutates data by inserting a byte.
-size_t Mutate_InsertByte(uint8_t *Data, size_t Size, size_t MaxSize,
-                         FuzzerRandomBase &Rand);
-/// Mutates data by chanding one byte.
-size_t Mutate_ChangeByte(uint8_t *Data, size_t Size, size_t MaxSize,
-                         FuzzerRandomBase &Rand);
-/// Mutates data by chanding one bit.
-size_t Mutate_ChangeBit(uint8_t *Data, size_t Size, size_t MaxSize,
-                       FuzzerRandomBase &Rand);
+  /// Applies one of the above mutations.
+  /// Returns the new size of data which could be up to MaxSize.
+  size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize);
 
-/// Applies one of the above mutations.
-/// Returns the new size of data which could be up to MaxSize.
-size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
-              FuzzerRandomBase &Rand);
+  /// Creates a cross-over of two pieces of Data, returns its size.
+  size_t CrossOver(const uint8_t *Data1, size_t Size1, const uint8_t *Data2,
+                   size_t Size2, uint8_t *Out, size_t MaxOutSize);
 
-/// Creates a cross-over of two pieces of Data, returns its size.
-size_t CrossOver(const uint8_t *Data1, size_t Size1, const uint8_t *Data2,
-                 size_t Size2, uint8_t *Out, size_t MaxOutSize,
-                 FuzzerRandomBase &Rand);
+ private:
+  FuzzerRandomBase &Rand;
+};
 
+// For backward compatibility only, deprecated.
+static inline size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
+                            FuzzerRandomBase &Rand) {
+  MutationDispatcher MD(Rand);
+  return MD.Mutate(Data, Size, MaxSize);
+}
 
 /** An abstract class that allows to use user-supplied mutators with libFuzzer.
 
@@ -122,15 +127,14 @@ class UserSuppliedFuzzer {
   /// Mutates 'Size' bytes of data in 'Data' inplace into up to 'MaxSize' bytes,
   /// returns the new size of the data, which should be positive.
   virtual size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
-    return ::fuzzer::Mutate(Data, Size, MaxSize, GetRand());
+    return MD.Mutate(Data, Size, MaxSize);
   }
   /// Crosses 'Data1' and 'Data2', writes up to 'MaxOutSize' bytes into Out,
   /// returns the number of bytes written, which should be positive.
   virtual size_t CrossOver(const uint8_t *Data1, size_t Size1,
                            const uint8_t *Data2, size_t Size2,
                            uint8_t *Out, size_t MaxOutSize) {
-    return ::fuzzer::CrossOver(Data1, Size1, Data2, Size2, Out, MaxOutSize,
-                               GetRand());
+    return MD.CrossOver(Data1, Size1, Data2, Size2, Out, MaxOutSize);
   }
   virtual ~UserSuppliedFuzzer();
 
@@ -139,6 +143,7 @@ class UserSuppliedFuzzer {
  private:
   bool OwnRand = false;
   FuzzerRandomBase *Rand;
+  MutationDispatcher MD;
 };
 
 /// Runs the fuzzing with the UserSuppliedFuzzer.
