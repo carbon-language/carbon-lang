@@ -13,8 +13,6 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "AppleThreadPlanStepThroughObjCTrampoline.h"
-
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
 
@@ -30,6 +28,8 @@
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
