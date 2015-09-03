@@ -61,7 +61,7 @@
 // CHECK-EXTEND-LEGACY: -fsanitize-coverage-type=1
 // CHECK-EXTEND-LEGACY: -fsanitize-coverage-trace-cmp
 
-// RUN: %clang_cl -fsanitize=address -fsanitize-coverage=1 -c -### -- %s 2>&1 | FileCheck %s -check-prefix=CLANG-CL-COVERAGE
+// RUN: %clang_cl --target=i386-pc-win32 -fsanitize=address -fsanitize-coverage=1 -c -### -- %s 2>&1 | FileCheck %s -check-prefix=CLANG-CL-COVERAGE
 // CLANG-CL-COVERAGE-NOT: error:
 // CLANG-CL-COVERAGE-NOT: warning:
 // CLANG-CL-COVERAGE-NOT: argument unused
