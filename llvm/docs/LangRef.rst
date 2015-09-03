@@ -7524,10 +7524,12 @@ implies that ``fptrunc`` cannot be used to make a *no-op cast*.
 Semantics:
 """"""""""
 
-The '``fptrunc``' instruction truncates a ``value`` from a larger
+The '``fptrunc``' instruction casts a ``value`` from a larger
 :ref:`floating point <t_floating>` type to a smaller :ref:`floating
-point <t_floating>` type. If the value cannot fit within the
-destination type, ``ty2``, then the results are undefined.
+point <t_floating>` type. If the value cannot fit (i.e. overflows) within the
+destination type, ``ty2``, then the results are undefined. If the cast produces
+an inexact result, how rounding is performed (e.g. truncation, also known as
+round to zero) is undefined.
 
 Example:
 """"""""
