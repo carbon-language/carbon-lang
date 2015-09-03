@@ -56,7 +56,7 @@ syn keyword llvmKeyword sspstrong tail target thread_local to triple
 syn keyword llvmKeyword unnamed_addr unordered uwtable volatile weak weak_odr
 syn keyword llvmKeyword x86_fastcallcc x86_stdcallcc x86_thiscallcc
 syn keyword llvmKeyword x86_64_sysvcc x86_64_win64cc zeroext uselistorder
-syn keyword llvmKeyword uselistorder_bb
+syn keyword llvmKeyword uselistorder_bb musttail
 
 " Obsolete keywords.
 syn keyword llvmError  getresult begin end
