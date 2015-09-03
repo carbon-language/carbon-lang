@@ -14,14 +14,14 @@
 Windows support
 ===============
 
-LLD has some experimental Windows support. When invoked as ``link.exe`` or with
+LLD supports Windows operating system. When invoked as ``lld-link.exe`` or with
 ``-flavor link``, the driver for Windows operating system is used to parse
 command line options, and it drives further linking processes. LLD accepts
 almost all command line options that the linker shipped with Microsoft Visual
 C++ (link.exe) supports.
 
-The current status is that LLD can link itself on Windows x86 using Visual C++
-2012 or 2013 as the compiler.
+The current status is that LLD can link itself on Windows x86/x64
+using Visual C++ 2013 as the compiler.
 
 Development status
 ==================
@@ -55,16 +55,11 @@ Windows resource files support
   COFF object file section. Both tools are shipped with MSVC.
 
 Safe Structured Exception Handler (SEH)
-  :good:`Done` for x86. :partial:`Work in progress` for x64.
+  :good:`Done` for both x86 and x64.
 
 Module-definition file
   :partial:`Partially done`. LLD currently recognizes these directives:
   ``EXPORTS``, ``HEAPSIZE``, ``STACKSIZE``, ``NAME``, and ``VERSION``.
-
-x64 (x86-64)
-  :partial:`Work in progress`. LLD can create PE32+ executable but the generated
-  file does not work unless source object files are very simple because of the
-  lack of SEH handler table.
 
 Debug info
   :none:`No progress has been made`. Microsoft linker can interpret the CodeGen
@@ -86,7 +81,7 @@ Using Visual Studio IDE/MSBuild
 Alternatively, you can use msbuild if you don't like to work in an IDE::
 
   msbuild LLVM.sln /m /target:"lld executables\lld"
-
+  
 MSBuild.exe had been shipped as a component of the .NET framework, but since
 2013 it's part of Visual Studio. You can find it at "C:\\Program Files
 (x86)\\msbuild".
@@ -100,19 +95,3 @@ Using Ninja
 1. Check out LLVM and LLD from the LLVM SVN repository (or Git mirror),
 #. run ``cmake -G ninja <llvm-source-dir>`` from VS command prompt,
 #. run ``ninja lld``
-
-Known issues
-============
-
-Note that LLD is still in early stage in development, so there are still many
-bugs. Here is a list of notable bugs.
-
-* Symbol name resolution from library files sometimes fails. On Windows, the
-  order of library files in command line does not matter, but LLD sometimes
-  fails to simulate the semantics. A workaround for it is to explicitly add
-  library files to command line with ``/DEFAULTLIB``.
-
-* Subsystem inference is not very reliable. Linker is supposed to set
-  ``subsystem`` field in the PE/COFF header according to entry function name,
-  but LLD sometimes ended up with ``unknown`` subsystem type. You need to give
-  ``/SUBSYSTEM`` option if it fails to infer it.
