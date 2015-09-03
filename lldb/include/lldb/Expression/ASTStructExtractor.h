@@ -12,7 +12,7 @@
 
 #include "clang/Sema/SemaConsumer.h"
 #include "lldb/Core/ClangForward.h"
-#include "lldb/../../source/Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
+#include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
 #include "lldb/Expression/ClangFunction.h"
 
 namespace lldb_private {

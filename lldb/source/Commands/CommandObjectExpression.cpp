@@ -16,7 +16,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
-#include "lldb/../../source/Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
+#include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/DWARFExpression.h"

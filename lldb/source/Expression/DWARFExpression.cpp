@@ -25,7 +25,7 @@
 #include "lldb/Core/VMRange.h"
 
 #include "lldb/Expression/ClangExpressionDeclMap.h"
-#include "lldb/../../source/Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
+#include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
 
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Host.h"
