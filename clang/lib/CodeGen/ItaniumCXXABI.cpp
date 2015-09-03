@@ -1823,10 +1823,12 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
     // If the variable is thread-local, so is its guard variable.
     guard->setThreadLocalMode(var->getThreadLocalMode());
 
-    // The ABI says: It is suggested that it be emitted in the same COMDAT group
-    // as the associated data object
+    // The ABI says: "It is suggested that it be emitted in the same COMDAT
+    // group as the associated data object." In practice, this doesn't work for
+    // non-ELF object formats, so only do it for ELF.
     llvm::Comdat *C = var->getComdat();
-    if (!D.isLocalVarDecl() && C) {
+    if (!D.isLocalVarDecl() && C &&
+        CGM.getTarget().getTriple().isOSBinFormatELF()) {
       guard->setComdat(C);
       CGF.CurFn->setComdat(C);
     } else if (CGM.supportsCOMDAT() && guard->isWeakForLinker()) {
