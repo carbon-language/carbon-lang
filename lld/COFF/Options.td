@@ -117,5 +117,6 @@ def pdbaltpath : QF<"pdbaltpath">;
 def tlbid : QF<"tlbid">;
 def tlbout : QF<"tlbout">;
 def verbose_all : QF<"verbose">;
+def guardsym : QF<"guardsym">;
 
 defm wx : QB<"wx">;
