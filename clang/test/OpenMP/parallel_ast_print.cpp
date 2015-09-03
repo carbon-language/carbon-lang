@@ -35,7 +35,7 @@ T tmain(T argc, T *argv) {
   S<T> s;
 #pragma omp parallel
   a=2;
-#pragma omp parallel default(none), private(argc,b) firstprivate(argv) shared (d) if (argc > 0) num_threads(C) copyin(S<T>::TS) proc_bind(master) reduction(+:c) reduction(max:e)
+#pragma omp parallel default(none), private(argc,b) firstprivate(argv) shared (d) if (parallel:argc > 0) num_threads(C) copyin(S<T>::TS) proc_bind(master) reduction(+:c) reduction(max:e)
   foo();
 #pragma omp parallel if (C) num_threads(s) proc_bind(close) reduction(^:e, f) reduction(&& : g)
   foo();
@@ -48,7 +48,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: S<int> s;
 // CHECK-NEXT: #pragma omp parallel
 // CHECK-NEXT: a = 2;
-// CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) num_threads(5) copyin(S<int>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
+// CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) shared(d) if(parallel: argc > 0) num_threads(5) copyin(S<int>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
 // CHECK-NEXT: foo()
 // CHECK-NEXT: #pragma omp parallel if(5) num_threads(s) proc_bind(close) reduction(^: e,f) reduction(&&: g)
 // CHECK-NEXT: foo()
@@ -58,7 +58,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: S<long> s;
 // CHECK-NEXT: #pragma omp parallel
 // CHECK-NEXT: a = 2;
-// CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) num_threads(1) copyin(S<long>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
+// CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) shared(d) if(parallel: argc > 0) num_threads(1) copyin(S<long>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
 // CHECK-NEXT: foo()
 // CHECK-NEXT: #pragma omp parallel if(1) num_threads(s) proc_bind(close) reduction(^: e,f) reduction(&&: g)
 // CHECK-NEXT: foo()
@@ -68,7 +68,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: S<T> s;
 // CHECK-NEXT: #pragma omp parallel
 // CHECK-NEXT: a = 2;
-// CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) num_threads(C) copyin(S<T>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
+// CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) shared(d) if(parallel: argc > 0) num_threads(C) copyin(S<T>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
 // CHECK-NEXT: foo()
 // CHECK-NEXT: #pragma omp parallel if(C) num_threads(s) proc_bind(close) reduction(^: e,f) reduction(&&: g)
 // CHECK-NEXT: foo()
@@ -86,10 +86,14 @@ int main (int argc, char **argv) {
 // CHECK-NEXT: #pragma omp parallel
   a=2;
 // CHECK-NEXT: a = 2;
-#pragma omp parallel default(none), private(argc,b) firstprivate(argv) if (argc > 0) num_threads(ee) copyin(a) proc_bind(spread) reduction(| : c, d) reduction(* : e)
-// CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) if(argc > 0) num_threads(ee) copyin(a) proc_bind(spread) reduction(|: c,d) reduction(*: e)
+#pragma omp parallel default(none), private(argc,b) firstprivate(argv) if (parallel: argc > 0) num_threads(ee) copyin(a) proc_bind(spread) reduction(| : c, d) reduction(* : e)
+// CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) if(parallel: argc > 0) num_threads(ee) copyin(a) proc_bind(spread) reduction(|: c,d) reduction(*: e)
   foo();
 // CHECK-NEXT: foo();
+// CHECK-NEXT: #pragma omp parallel if(b) num_threads(c) proc_bind(close) reduction(^: e,f) reduction(&&: g)
+// CHECK-NEXT: foo()
+#pragma omp parallel if (b) num_threads(c) proc_bind(close) reduction(^:e, f) reduction(&& : g)
+  foo();
   return tmain<int, 5>(b, &b) + tmain<long, 1>(x, &x);
 }
 

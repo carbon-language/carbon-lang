@@ -17,8 +17,8 @@ int main (int argc, char **argv) {
 // CHECK:      #pragma omp target data
   a=2;
 // CHECK-NEXT: a = 2;
-#pragma omp target data if (b)
-// CHECK: #pragma omp target data if(b)
+#pragma omp target data if (target data: b)
+// CHECK: #pragma omp target data if(target data: b)
   foo();
 // CHECK-NEXT: foo();
 

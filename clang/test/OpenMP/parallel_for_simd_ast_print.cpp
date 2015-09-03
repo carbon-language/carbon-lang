@@ -14,8 +14,8 @@ template<class T, class N> T reduct(T* arr, N num) {
   N myind;
   T sum = (T)0;
 // CHECK: T sum = (T)0;
-#pragma omp parallel for simd private(myind, g_ind), linear(ind), aligned(arr)
-// CHECK-NEXT: #pragma omp parallel for simd private(myind,g_ind) linear(ind) aligned(arr)
+#pragma omp parallel for simd private(myind, g_ind), linear(ind), aligned(arr) if (parallel :num)
+// CHECK-NEXT: #pragma omp parallel for simd private(myind,g_ind) linear(ind) aligned(arr) if(parallel: num)
   for (i = 0; i < num; ++i) {
     myind = ind;
     T cur = arr[myind];
@@ -35,8 +35,8 @@ template<class T> struct S {
 // CHECK: T res;
 // CHECK: T val;
 // CHECK: T lin = 0;
-    #pragma omp parallel for simd private(val)  safelen(7) linear(lin : -5) lastprivate(res) simdlen(5)
-// CHECK-NEXT: #pragma omp parallel for simd private(val) safelen(7) linear(lin: -5) lastprivate(res) simdlen(5)
+    #pragma omp parallel for simd private(val)  safelen(7) linear(lin : -5) lastprivate(res) simdlen(5) if(7)
+// CHECK-NEXT: #pragma omp parallel for simd private(val) safelen(7) linear(lin: -5) lastprivate(res) simdlen(5) if(7)
     for (T i = 7; i < m_a; ++i) {
       val = v[i-7] + m_a;
       res = val;
@@ -92,17 +92,17 @@ int main (int argc, char **argv) {
   int k1=0,k2=0;
   static int *a;
 // CHECK: static int *a;
-#pragma omp parallel for simd
-// CHECK-NEXT: #pragma omp parallel for simd
+#pragma omp parallel for simd if(parallel :b)
+// CHECK-NEXT: #pragma omp parallel for simd if(parallel: b)
   for (int i=0; i < 2; ++i)*a=2;
 // CHECK-NEXT: for (int i = 0; i < 2; ++i)
 // CHECK-NEXT: *a = 2;
 #pragma omp  parallel
-#pragma omp parallel for simd private(argc, b),lastprivate(d,f) collapse(2) aligned(a : 4) ,firstprivate( g )
+#pragma omp parallel for simd private(argc, b),lastprivate(d,f) collapse(2) aligned(a : 4) ,firstprivate( g ) if(g)
   for (int i = 0; i < 10; ++i)
   for (int j = 0; j < 10; ++j) {foo(); k1 += 8; k2 += 8;}
 // CHECK-NEXT: #pragma omp parallel
-// CHECK-NEXT: #pragma omp parallel for simd private(argc,b) lastprivate(d,f) collapse(2) aligned(a: 4) firstprivate(g)
+// CHECK-NEXT: #pragma omp parallel for simd private(argc,b) lastprivate(d,f) collapse(2) aligned(a: 4) firstprivate(g) if(g)
 // CHECK-NEXT: for (int i = 0; i < 10; ++i)
 // CHECK-NEXT: for (int j = 0; j < 10; ++j) {
 // CHECK-NEXT: foo();

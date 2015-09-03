@@ -37,7 +37,7 @@ T tmain(T argc, T *argv) {
   {
     a = 2;
   }
-#pragma omp parallel sections default(none), private(argc, b) firstprivate(argv) shared(d) if (argc > 0) num_threads(C) copyin(S < T > ::TS) proc_bind(master) reduction(+ : c) reduction(max : e)
+#pragma omp parallel sections default(none), private(argc, b) firstprivate(argv) shared(d) if (parallel: argc > 0) num_threads(C) copyin(S < T > ::TS) proc_bind(master) reduction(+ : c) reduction(max : e)
   {
     foo();
   }
@@ -58,7 +58,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: {
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: }
-// CHECK-NEXT: #pragma omp parallel sections default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) num_threads(5) copyin(S<int>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
+// CHECK-NEXT: #pragma omp parallel sections default(none) private(argc,b) firstprivate(argv) shared(d) if(parallel: argc > 0) num_threads(5) copyin(S<int>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
 // CHECK-NEXT: {
 // CHECK-NEXT: foo();
 // CHECK-NEXT: }
@@ -76,7 +76,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: {
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: }
-// CHECK-NEXT: #pragma omp parallel sections default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) num_threads(1) copyin(S<long>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
+// CHECK-NEXT: #pragma omp parallel sections default(none) private(argc,b) firstprivate(argv) shared(d) if(parallel: argc > 0) num_threads(1) copyin(S<long>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
 // CHECK-NEXT: {
 // CHECK-NEXT: foo();
 // CHECK-NEXT: }
@@ -94,7 +94,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: {
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: }
-// CHECK-NEXT: #pragma omp parallel sections default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) num_threads(C) copyin(S<T>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
+// CHECK-NEXT: #pragma omp parallel sections default(none) private(argc,b) firstprivate(argv) shared(d) if(parallel: argc > 0) num_threads(C) copyin(S<T>::TS) proc_bind(master) reduction(+: c) reduction(max: e)
 // CHECK-NEXT: {
 // CHECK-NEXT: foo();
 // CHECK-NEXT: }

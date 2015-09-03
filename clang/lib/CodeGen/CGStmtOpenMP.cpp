@@ -475,8 +475,12 @@ static void emitCommonOMPParallelDirective(CodeGenFunction &CGF,
         CGF, ProcBindClause->getProcBindKind(), ProcBindClause->getLocStart());
   }
   const Expr *IfCond = nullptr;
-  if (const auto *C = S.getSingleClause<OMPIfClause>()) {
-    IfCond = C->getCondition();
+  for (const auto *C : S.getClausesOfKind<OMPIfClause>()) {
+    if (C->getNameModifier() == OMPD_unknown ||
+        C->getNameModifier() == OMPD_parallel) {
+      IfCond = C->getCondition();
+      break;
+    }
   }
   CGF.CGM.getOpenMPRuntime().emitParallelCall(CGF, S.getLocStart(), OutlinedFn,
                                               CapturedStruct, IfCond);
@@ -1605,8 +1609,12 @@ void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {
   }
   auto SharedsTy = getContext().getRecordType(CS->getCapturedRecordDecl());
   const Expr *IfCond = nullptr;
-  if (const auto *C = S.getSingleClause<OMPIfClause>()) {
-    IfCond = C->getCondition();
+  for (const auto *C : S.getClausesOfKind<OMPIfClause>()) {
+    if (C->getNameModifier() == OMPD_unknown ||
+        C->getNameModifier() == OMPD_task) {
+      IfCond = C->getCondition();
+      break;
+    }
   }
   CGM.getOpenMPRuntime().emitTaskCall(
       *this, S.getLocStart(), S, Tied, Final, OutlinedFn, SharedsTy,

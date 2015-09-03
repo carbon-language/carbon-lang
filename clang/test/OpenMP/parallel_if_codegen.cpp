@@ -18,7 +18,7 @@ int Arg;
 void gtid_test() {
 // CHECK:  call {{.*}}void {{.+}} @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{.+}} 1, {{.+}}* [[GTID_TEST_REGION1:@.+]] to void
 #pragma omp parallel
-#pragma omp parallel if (false)
+#pragma omp parallel if (parallel: false)
   gtid_test();
 // CHECK: ret void
 }
@@ -43,7 +43,7 @@ int tmain(T Arg) {
   fn1();
 #pragma omp parallel if (false)
   fn2();
-#pragma omp parallel if (Arg)
+#pragma omp parallel if (parallel: Arg)
   fn3();
   return 0;
 }

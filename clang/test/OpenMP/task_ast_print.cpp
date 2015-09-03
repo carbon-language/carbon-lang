@@ -34,7 +34,7 @@ T tmain(T argc, T *argv) {
   static T a;
   S<T> s;
   T arr[argc];
-#pragma omp task untied depend(in : argc, argv[b:argc], arr[:])
+#pragma omp task untied depend(in : argc, argv[b:argc], arr[:]) if (task : argc > 0)
   a = 2;
 #pragma omp task default(none), private(argc, b) firstprivate(argv) shared(d) if (argc > 0) final(S<T>::TS > 0)
   foo();
@@ -48,7 +48,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: static int a;
 // CHECK-NEXT: S<int> s;
 // CHECK-NEXT: int arr[argc];
-// CHECK-NEXT: #pragma omp task untied depend(in : argc,argv[b:argc],arr[:])
+// CHECK-NEXT: #pragma omp task untied depend(in : argc,argv[b:argc],arr[:]) if(task: argc > 0)
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) final(S<int>::TS > 0)
 // CHECK-NEXT: foo()
@@ -59,7 +59,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: static long a;
 // CHECK-NEXT: S<long> s;
 // CHECK-NEXT: long arr[argc];
-// CHECK-NEXT: #pragma omp task untied depend(in : argc,argv[b:argc],arr[:])
+// CHECK-NEXT: #pragma omp task untied depend(in : argc,argv[b:argc],arr[:]) if(task: argc > 0)
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) final(S<long>::TS > 0)
 // CHECK-NEXT: foo()
@@ -70,7 +70,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: static T a;
 // CHECK-NEXT: S<T> s;
 // CHECK-NEXT: T arr[argc];
-// CHECK-NEXT: #pragma omp task untied depend(in : argc,argv[b:argc],arr[:])
+// CHECK-NEXT: #pragma omp task untied depend(in : argc,argv[b:argc],arr[:]) if(task: argc > 0)
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) final(S<T>::TS > 0)
 // CHECK-NEXT: foo()
@@ -87,8 +87,8 @@ int main(int argc, char **argv) {
 #pragma omp threadprivate(a)
   Enum ee;
 // CHECK: Enum ee;
-#pragma omp task untied mergeable depend(out:argv[1], (arr)[0:])
-  // CHECK-NEXT: #pragma omp task untied mergeable depend(out : argv[1],(arr)[0:])
+#pragma omp task untied mergeable depend(out:argv[1], (arr)[0:]) if(task: argc > 0)
+  // CHECK-NEXT: #pragma omp task untied mergeable depend(out : argv[1],(arr)[0:]) if(task: argc > 0)
   a = 2;
 // CHECK-NEXT: a = 2;
 #pragma omp task default(none), private(argc, b) firstprivate(argv) if (argc > 0) final(a > 0) depend(inout : a, argv[:argc],arr[:a])
