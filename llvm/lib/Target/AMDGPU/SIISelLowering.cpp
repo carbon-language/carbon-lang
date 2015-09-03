@@ -409,7 +409,10 @@ bool SITargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
     // ds_read/write_b64 require 8-byte alignment, but we can do a 4 byte
     // aligned, 8 byte access in a single operation using ds_read2/write2_b32
     // with adjacent offsets.
-    return Align % 4 == 0;
+    bool AlignedBy4 = (Align % 4 == 0);
+    if (IsFast)
+      *IsFast = AlignedBy4;
+    return AlignedBy4;
   }
 
   // Smaller than dword value must be aligned.
