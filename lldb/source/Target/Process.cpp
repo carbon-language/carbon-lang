@@ -3920,7 +3920,7 @@ Process::HaltForDestroyOrDetach(lldb::EventSP &exit_event_sp)
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
         if (log)
-            log->Printf("Process::Destroy() About to halt.");
+            log->Printf("Process::%s() About to halt.", __FUNCTION__);
         error = Halt();
         if (error.Success())
         {
