@@ -9184,6 +9184,20 @@ unsigned PPCTargetLowering::combineRepeatedFPDivisors() const {
   }
 }
 
+// isConsecutiveLSLoc needs to work even if all adds have not yet been
+// collapsed, and so we need to look through chains of them.
+static void getBaseWithConstantOffset(SDValue Loc, SDValue &Base,
+                                     int64_t& Offset, SelectionDAG &DAG) {
+  if (DAG.isBaseWithConstantOffset(Loc)) {
+    Base = Loc.getOperand(0);
+    Offset += cast<ConstantSDNode>(Loc.getOperand(1))->getSExtValue();
+
+    // The base might itself be a base plus an offset, and if so, accumulate
+    // that as well.
+    getBaseWithConstantOffset(Loc.getOperand(0), Base, Offset, DAG);
+  }
+}
+
 static bool isConsecutiveLSLoc(SDValue Loc, EVT VT, LSBaseSDNode *Base,
                             unsigned Bytes, int Dist,
                             SelectionDAG &DAG) {
@@ -9203,16 +9217,18 @@ static bool isConsecutiveLSLoc(SDValue Loc, EVT VT, LSBaseSDNode *Base,
     return MFI->getObjectOffset(FI) == (MFI->getObjectOffset(BFI) + Dist*Bytes);
   }
 
-  // Handle X+C
-  if (DAG.isBaseWithConstantOffset(Loc) && Loc.getOperand(0) == BaseLoc &&
-      cast<ConstantSDNode>(Loc.getOperand(1))->getSExtValue() == Dist*Bytes)
-    return true;
-
+  SDValue Base1 = Loc, Base2 = BaseLoc;
+  int64_t Offset1 = 0, Offset2 = 0;
+  getBaseWithConstantOffset(Loc, Base1, Offset1, DAG);
+  getBaseWithConstantOffset(BaseLoc, Base2, Offset2, DAG);
+    if (Base1 == Base2 && Offset1 == (Offset2 + Dist*Bytes))
+      return true;
+  
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   const GlobalValue *GV1 = nullptr;
   const GlobalValue *GV2 = nullptr;
-  int64_t Offset1 = 0;
-  int64_t Offset2 = 0;
+  Offset1 = 0;
+  Offset2 = 0;
   bool isGA1 = TLI.isGAPlusOffset(Loc.getNode(), GV1, Offset1);
   bool isGA2 = TLI.isGAPlusOffset(BaseLoc.getNode(), GV2, Offset2);
   if (isGA1 && isGA2 && GV1 == GV2)
