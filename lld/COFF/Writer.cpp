@@ -379,7 +379,7 @@ void Writer::createImportTables() {
   for (ImportFile *File : Symtab->ImportFiles) {
     if (DefinedImportThunk *Thunk = File->ThunkSym)
       Text->addChunk(Thunk->getChunk());
-    if (Config->DelayLoads.count(File->DLLName)) {
+    if (Config->DelayLoads.count(StringRef(File->DLLName).lower())) {
       DelayIdata.add(File->ImpSym);
     } else {
       Idata.add(File->ImpSym);
