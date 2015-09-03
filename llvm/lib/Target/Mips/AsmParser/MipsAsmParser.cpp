@@ -216,6 +216,10 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool expandCondBranches(MCInst &Inst, SMLoc IDLoc,
                           SmallVectorImpl<MCInst> &Instructions);
 
+  bool expandDiv(MCInst &Inst, SMLoc IDLoc,
+                 SmallVectorImpl<MCInst> &Instructions, const bool IsMips64,
+                 const bool Signed);
+
   bool expandUlhu(MCInst &Inst, SMLoc IDLoc,
                   SmallVectorImpl<MCInst> &Instructions);
 
@@ -486,6 +490,10 @@ public:
 
   bool inMips16Mode() const {
     return STI.getFeatureBits()[Mips::FeatureMips16];
+  }
+
+  bool useTraps() const {
+    return STI.getFeatureBits()[Mips::FeatureUseTCCInDIV];
   }
 
   bool useSoftFloat() const {
@@ -1821,6 +1829,10 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   case Mips::BLEU:
   case Mips::BGEU:
   case Mips::BGTU:
+  case Mips::SDivMacro:
+  case Mips::UDivMacro:
+  case Mips::DSDivMacro:
+  case Mips::DUDivMacro:
   case Mips::Ulhu:
   case Mips::Ulw:
     return true;
@@ -1876,6 +1888,14 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
   case Mips::BGEU:
   case Mips::BGTU:
     return expandCondBranches(Inst, IDLoc, Instructions);
+  case Mips::SDivMacro:
+    return expandDiv(Inst, IDLoc, Instructions, false, true);
+  case Mips::DSDivMacro:
+    return expandDiv(Inst, IDLoc, Instructions, true, true);
+  case Mips::UDivMacro:
+    return expandDiv(Inst, IDLoc, Instructions, false, false);
+  case Mips::DUDivMacro:
+    return expandDiv(Inst, IDLoc, Instructions, true, false);
   case Mips::Ulhu:
     return expandUlhu(Inst, IDLoc, Instructions);
   case Mips::Ulw:
@@ -1897,6 +1917,30 @@ void emitRX(unsigned Opcode, unsigned Reg0, MCOperand Op1, SMLoc IDLoc,
 void emitRI(unsigned Opcode, unsigned Reg0, int32_t Imm, SMLoc IDLoc,
             SmallVectorImpl<MCInst> &Instructions) {
   emitRX(Opcode, Reg0, MCOperand::createImm(Imm), IDLoc, Instructions);
+}
+
+void emitRR(unsigned Opcode, unsigned Reg0, unsigned Reg1, SMLoc IDLoc,
+            SmallVectorImpl<MCInst> &Instructions) {
+  emitRX(Opcode, Reg0, MCOperand::createReg(Reg1), IDLoc, Instructions);
+}
+
+void emitII(unsigned Opcode, int16_t Imm1, int16_t Imm2, SMLoc IDLoc,
+            SmallVectorImpl<MCInst> &Instructions) {
+  MCInst tmpInst;
+  tmpInst.setOpcode(Opcode);
+  tmpInst.addOperand(MCOperand::createImm(Imm1));
+  tmpInst.addOperand(MCOperand::createImm(Imm2));
+  tmpInst.setLoc(IDLoc);
+  Instructions.push_back(tmpInst);
+}
+
+void emitR(unsigned Opcode, unsigned Reg0, SMLoc IDLoc,
+           SmallVectorImpl<MCInst> &Instructions) {
+  MCInst tmpInst;
+  tmpInst.setOpcode(Opcode);
+  tmpInst.addOperand(MCOperand::createReg(Reg0));
+  tmpInst.setLoc(IDLoc);
+  Instructions.push_back(tmpInst);
 }
 
 void emitRRX(unsigned Opcode, unsigned Reg0, unsigned Reg1, MCOperand Op2,
@@ -2721,6 +2765,122 @@ bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
   BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
   BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
   Instructions.push_back(BranchInst);
+  return false;
+}
+
+bool MipsAsmParser::expandDiv(MCInst &Inst, SMLoc IDLoc,
+                              SmallVectorImpl<MCInst> &Instructions,
+                              const bool IsMips64, const bool Signed) {
+  if (hasMips32r6()) {
+    Error(IDLoc, "instruction not supported on mips32r6 or mips64r6");
+    return false;
+  }
+
+  warnIfNoMacro(IDLoc);
+
+  const MCOperand &RsRegOp = Inst.getOperand(0);
+  assert(RsRegOp.isReg() && "expected register operand kind");
+  unsigned RsReg = RsRegOp.getReg();
+
+  const MCOperand &RtRegOp = Inst.getOperand(1);
+  assert(RtRegOp.isReg() && "expected register operand kind");
+  unsigned RtReg = RtRegOp.getReg();
+  unsigned DivOp;
+  unsigned ZeroReg;
+
+  if (IsMips64) {
+    DivOp = Signed ? Mips::DSDIV : Mips::DUDIV;
+    ZeroReg = Mips::ZERO_64;
+  } else {
+    DivOp = Signed ? Mips::SDIV : Mips::UDIV;
+    ZeroReg = Mips::ZERO;
+  }
+
+  bool UseTraps = useTraps();
+
+  if (RsReg == Mips::ZERO || RsReg == Mips::ZERO_64) {
+    if (RtReg == Mips::ZERO || RtReg == Mips::ZERO_64)
+      Warning(IDLoc, "dividing zero by zero");
+    if (IsMips64) {
+      if (Signed && (RtReg == Mips::ZERO || RtReg == Mips::ZERO_64)) {
+        if (UseTraps) {
+          emitRRI(Mips::TEQ, RtReg, ZeroReg, 0x7, IDLoc, Instructions);
+          return false;
+        }
+
+        emitII(Mips::BREAK, 0x7, 0, IDLoc, Instructions);
+        return false;
+      }
+    } else {
+      emitRR(DivOp, RsReg, RtReg, IDLoc, Instructions);
+      return false;
+    }
+  }
+
+  if (RtReg == Mips::ZERO || RtReg == Mips::ZERO_64) {
+    Warning(IDLoc, "division by zero");
+    if (Signed) {
+      if (UseTraps) {
+        emitRRI(Mips::TEQ, RtReg, ZeroReg, 0x7, IDLoc, Instructions);
+        return false;
+      }
+
+      emitII(Mips::BREAK, 0x7, 0, IDLoc, Instructions);
+      return false;
+    }
+  }
+
+  // FIXME: The values for these two BranchTarget variables may be different in
+  // micromips. These magic numbers need to be removed.
+  unsigned BranchTargetNoTraps;
+  unsigned BranchTarget;
+
+  if (UseTraps) {
+    BranchTarget = IsMips64 ? 12 : 8;
+    emitRRI(Mips::TEQ, RtReg, ZeroReg, 0x7, IDLoc, Instructions);
+  } else {
+    BranchTarget = IsMips64 ? 20 : 16;
+    BranchTargetNoTraps = 8;
+    // Branch to the li instruction.
+    emitRRI(Mips::BNE, RtReg, ZeroReg, BranchTargetNoTraps, IDLoc,
+            Instructions);
+  }
+
+  emitRR(DivOp, RsReg, RtReg, IDLoc, Instructions);
+
+  if (!UseTraps)
+    emitII(Mips::BREAK, 0x7, 0, IDLoc, Instructions);
+
+  if (!Signed) {
+    emitR(Mips::MFLO, RsReg, IDLoc, Instructions);
+    return false;
+  }
+
+  unsigned ATReg = getATReg(IDLoc);
+  if (!ATReg)
+    return true;
+
+  emitRRI(Mips::ADDiu, ATReg, ZeroReg, -1, IDLoc, Instructions);
+  if (IsMips64) {
+    // Branch to the mflo instruction.
+    emitRRI(Mips::BNE, RtReg, ATReg, BranchTarget, IDLoc, Instructions);
+    emitRRI(Mips::ADDiu, ATReg, ZeroReg, 1, IDLoc, Instructions);
+    emitRRI(Mips::DSLL32, ATReg, ATReg, 0x1f, IDLoc, Instructions);
+  } else {
+    // Branch to the mflo instruction.
+    emitRRI(Mips::BNE, RtReg, ATReg, BranchTarget, IDLoc, Instructions);
+    emitRI(Mips::LUi, ATReg, (uint16_t)0x8000, IDLoc, Instructions);
+  }
+
+  if (UseTraps)
+    emitRRI(Mips::TEQ, RsReg, ATReg, 0x6, IDLoc, Instructions);
+  else {
+    // Branch to the mflo instruction.
+    emitRRI(Mips::BNE, RsReg, ATReg, BranchTargetNoTraps, IDLoc, Instructions);
+    emitRRI(Mips::SLL, ZeroReg, ZeroReg, 0, IDLoc, Instructions);
+    emitII(Mips::BREAK, 0x6, 0, IDLoc, Instructions);
+  }
+  emitR(Mips::MFLO, RsReg, IDLoc, Instructions);
   return false;
 }
 

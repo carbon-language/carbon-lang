@@ -130,6 +130,9 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
   // HasMSA -- supports MSA ASE.
   bool HasMSA;
 
+  // UseTCCInDIV -- Enables the use of trapping in the assembler.
+  bool UseTCCInDIV;
+
   InstrItineraryData InstrItins;
 
   // We can override the determination of whether we are in mips16 mode

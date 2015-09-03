@@ -205,6 +205,7 @@ def NotInMicroMips :  Predicate<"!Subtarget->inMicroMipsMode()">,
 def IsLE           :  Predicate<"Subtarget->isLittle()">;
 def IsBE           :  Predicate<"!Subtarget->isLittle()">;
 def IsNotNaCl    :    Predicate<"!Subtarget->isTargetNaCl()">;
+def UseTCCInDIV    :  AssemblerPredicate<"FeatureUseTCCInDIV">;
 
 //===----------------------------------------------------------------------===//
 // Mips GPR size adjectives.
@@ -1732,6 +1733,18 @@ def BLTU : CondBranchPseudo<"bltu">;
 def BLEU : CondBranchPseudo<"bleu">;
 def BGEU : CondBranchPseudo<"bgeu">;
 def BGTU : CondBranchPseudo<"bgtu">;
+
+def SDivMacro : MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
+                                  "div\t$rs, $rt">, ISA_MIPS1_NOT_32R6_64R6;
+
+def UDivMacro : MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
+                                  "divu\t$rs, $rt">, ISA_MIPS1_NOT_32R6_64R6;
+
+def DSDivMacro : MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
+                                   "ddiv\t$rs, $rt">, ISA_MIPS64_NOT_64R6;
+
+def DUDivMacro : MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
+                                   "ddivu\t$rs, $rt">, ISA_MIPS64_NOT_64R6;
 
 def Ulhu : MipsAsmPseudoInst<(outs GPR32Opnd:$rt), (ins mem:$addr),
                              "ulhu\t$rt, $addr">, ISA_MIPS1_NOT_32R6_64R6;
