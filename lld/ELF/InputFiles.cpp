@@ -14,23 +14,46 @@
 #include "llvm/ADT/STLExtras.h"
 
 using namespace llvm::ELF;
+using namespace llvm::object;
 
 using namespace lld;
 using namespace lld::elf2;
 
-template <class ELFT>
-bool ObjectFile<ELFT>::isCompatibleWith(const ObjectFileBase &Other) const {
-  if (getELFKind() != Other.getELFKind())
-    return false;
-  return getObj()->getHeader()->e_machine ==
-         cast<ObjectFile<ELFT>>(Other).getObj()->getHeader()->e_machine;
+template <class ELFT> static uint16_t getEMachine(const ELFFileBase &B) {
+  bool IsShared = isa<SharedFileBase>(B);
+  if (IsShared)
+    return cast<SharedFile<ELFT>>(B).getEMachine();
+  return cast<ObjectFile<ELFT>>(B).getEMachine();
 }
 
-template <class ELFT> void elf2::ObjectFile<ELFT>::parse() {
+static uint16_t getEMachine(const ELFFileBase &B) {
+  ELFKind K = B.getELFKind();
+  switch (K) {
+  case ELF32BEKind:
+    return getEMachine<ELF32BE>(B);
+  case ELF32LEKind:
+    return getEMachine<ELF32LE>(B);
+  case ELF64BEKind:
+    return getEMachine<ELF64BE>(B);
+  case ELF64LEKind:
+    return getEMachine<ELF64LE>(B);
+  }
+}
+
+bool ELFFileBase::isCompatibleWith(const ELFFileBase &Other) const {
+  return getELFKind() == Other.getELFKind() &&
+         getEMachine(*this) == getEMachine(Other);
+}
+
+template <class ELFT> void ELFData<ELFT>::openELF(MemoryBufferRef MB) {
   // Parse a memory buffer as a ELF file.
   std::error_code EC;
   ELFObj = llvm::make_unique<ELFFile<ELFT>>(MB.getBuffer(), EC);
   error(EC);
+}
+
+template <class ELFT> void elf2::ObjectFile<ELFT>::parse() {
+  this->openELF(MB);
 
   // Read section and symbol tables.
   initializeChunks();
@@ -38,16 +61,17 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::parse() {
 }
 
 template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
-  uint64_t Size = ELFObj->getNumSections();
+  uint64_t Size = this->ELFObj->getNumSections();
   Chunks.resize(Size);
   unsigned I = 0;
-  for (const Elf_Shdr &Sec : ELFObj->sections()) {
+  for (const Elf_Shdr &Sec : this->ELFObj->sections()) {
     switch (Sec.sh_type) {
     case SHT_SYMTAB:
       Symtab = &Sec;
       break;
     case SHT_SYMTAB_SHNDX: {
-      ErrorOr<ArrayRef<Elf_Word>> ErrorOrTable = ELFObj->getSHNDXTable(Sec);
+      ErrorOr<ArrayRef<Elf_Word>> ErrorOrTable =
+          this->ELFObj->getSHNDXTable(Sec);
       error(ErrorOrTable);
       SymtabSHNDX = *ErrorOrTable;
       break;
@@ -76,11 +100,11 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
 
 template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
   ErrorOr<StringRef> StringTableOrErr =
-      ELFObj->getStringTableForSymtab(*Symtab);
+      this->ELFObj->getStringTableForSymtab(*Symtab);
   error(StringTableOrErr.getError());
   StringRef StringTable = *StringTableOrErr;
 
-  Elf_Sym_Range Syms = ELFObj->symbols(Symtab);
+  Elf_Sym_Range Syms = this->ELFObj->symbols(Symtab);
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   uint32_t FirstNonLocal = Symtab->sh_info;
   if (FirstNonLocal > NumSymbols)
@@ -107,7 +131,8 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case SHN_COMMON:
     return new (Alloc) DefinedCommon<ELFT>(Name, *Sym);
   case SHN_XINDEX:
-    SecIndex = ELFObj->getExtendedSymbolTableIndex(Sym, Symtab, SymtabSHNDX);
+    SecIndex =
+        this->ELFObj->getExtendedSymbolTableIndex(Sym, Symtab, SymtabSHNDX);
     break;
   }
 
@@ -124,11 +149,18 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   }
 }
 
+template <class ELFT> void SharedFile<ELFT>::parse() { this->openELF(MB); }
+
 namespace lld {
 namespace elf2 {
 template class elf2::ObjectFile<llvm::object::ELF32LE>;
 template class elf2::ObjectFile<llvm::object::ELF32BE>;
 template class elf2::ObjectFile<llvm::object::ELF64LE>;
 template class elf2::ObjectFile<llvm::object::ELF64BE>;
+
+template class elf2::SharedFile<llvm::object::ELF32LE>;
+template class elf2::SharedFile<llvm::object::ELF32BE>;
+template class elf2::SharedFile<llvm::object::ELF64LE>;
+template class elf2::SharedFile<llvm::object::ELF64BE>;
 }
 }

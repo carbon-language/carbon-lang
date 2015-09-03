@@ -23,7 +23,7 @@ class SymbolBody;
 // The root class of input files.
 class InputFile {
 public:
-  enum Kind { ObjectKind };
+  enum Kind { ObjectKind, SharedKind };
   Kind kind() const { return FileKind; }
   virtual ~InputFile() {}
 
@@ -42,58 +42,78 @@ private:
 
 enum ELFKind { ELF32LEKind, ELF32BEKind, ELF64LEKind, ELF64BEKind };
 
+class ELFFileBase : public InputFile {
+public:
+  explicit ELFFileBase(Kind K, ELFKind EKind, MemoryBufferRef M)
+      : InputFile(K, M), EKind(EKind) {}
+  static bool classof(const InputFile *F) {
+    Kind K = F->kind();
+    return K == ObjectKind || K == SharedKind;
+  }
+
+  bool isCompatibleWith(const ELFFileBase &Other) const;
+  ELFKind getELFKind() const { return EKind; }
+
+protected:
+  const ELFKind EKind;
+};
+
 // .o file.
-class ObjectFileBase : public InputFile {
+class ObjectFileBase : public ELFFileBase {
 public:
   explicit ObjectFileBase(ELFKind EKind, MemoryBufferRef M)
-      : InputFile(ObjectKind, M), EKind(EKind) {}
+      : ELFFileBase(ObjectKind, EKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == ObjectKind; }
 
   ArrayRef<SymbolBody *> getSymbols() { return SymbolBodies; }
-
-  virtual bool isCompatibleWith(const ObjectFileBase &Other) const = 0;
-
-  ELFKind getELFKind() const { return EKind; }
 
 protected:
   // List of all symbols referenced or defined by this file.
   std::vector<SymbolBody *> SymbolBodies;
 
   llvm::BumpPtrAllocator Alloc;
-  const ELFKind EKind;
 };
 
-template <class ELFT> class ObjectFile : public ObjectFileBase {
+template <class ELFT> static ELFKind getStaticELFKind() {
+  if (!ELFT::Is64Bits) {
+    if (ELFT::TargetEndianness == llvm::support::little)
+      return ELF32LEKind;
+    return ELF32BEKind;
+  }
+  if (ELFT::TargetEndianness == llvm::support::little)
+    return ELF64LEKind;
+  return ELF64BEKind;
+}
+
+template <class ELFT> class ELFData {
+public:
+  llvm::object::ELFFile<ELFT> *getObj() const { return ELFObj.get(); }
+
+  uint16_t getEMachine() const { return getObj()->getHeader()->e_machine; }
+
+protected:
+  std::unique_ptr<llvm::object::ELFFile<ELFT>> ELFObj;
+
+  void openELF(MemoryBufferRef MB);
+};
+
+template <class ELFT>
+class ObjectFile : public ObjectFileBase, public ELFData<ELFT> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Word Elf_Word;
 
 public:
-  bool isCompatibleWith(const ObjectFileBase &Other) const override;
-
-  static ELFKind getStaticELFKind() {
-    if (!ELFT::Is64Bits) {
-      if (ELFT::TargetEndianness == llvm::support::little)
-        return ELF32LEKind;
-      return ELF32BEKind;
-    }
-    if (ELFT::TargetEndianness == llvm::support::little)
-      return ELF64LEKind;
-    return ELF64BEKind;
-  }
 
   static bool classof(const InputFile *F) {
     return F->kind() == ObjectKind &&
-           cast<ObjectFileBase>(F)->getELFKind() == getStaticELFKind();
+           cast<ELFFileBase>(F)->getELFKind() == getStaticELFKind<ELFT>();
   }
 
   explicit ObjectFile(MemoryBufferRef M)
-      : ObjectFileBase(getStaticELFKind(), M) {}
+      : ObjectFileBase(getStaticELFKind<ELFT>(), M) {}
   void parse() override;
-
-  // Returns the underying ELF file.
-  llvm::object::ELFFile<ELFT> *getObj() const { return ELFObj.get(); }
 
   ArrayRef<SectionChunk<ELFT> *> getChunks() { return Chunks; }
 
@@ -110,13 +130,33 @@ private:
 
   SymbolBody *createSymbolBody(StringRef StringTable, const Elf_Sym *Sym);
 
-  std::unique_ptr<llvm::object::ELFFile<ELFT>> ELFObj;
-
   // List of all chunks defined by this file.
   std::vector<SectionChunk<ELFT> *> Chunks;
 
   const Elf_Shdr *Symtab = nullptr;
   ArrayRef<Elf_Word> SymtabSHNDX;
+};
+
+// .so file.
+class SharedFileBase : public ELFFileBase {
+public:
+  explicit SharedFileBase(ELFKind EKind, MemoryBufferRef M)
+      : ELFFileBase(SharedKind, EKind, M) {}
+  static bool classof(const InputFile *F) { return F->kind() == SharedKind; }
+};
+
+template <class ELFT>
+class SharedFile : public SharedFileBase, public ELFData<ELFT> {
+public:
+  static bool classof(const InputFile *F) {
+    return F->kind() == SharedKind &&
+           cast<ELFFileBase>(F)->getELFKind() == getStaticELFKind<ELFT>();
+  }
+
+  explicit SharedFile(MemoryBufferRef M)
+      : SharedFileBase(getStaticELFKind<ELFT>(), M) {}
+
+  void parse() override;
 };
 
 } // namespace elf2

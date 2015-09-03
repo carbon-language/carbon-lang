@@ -14,6 +14,7 @@
 #include "SymbolTable.h"
 #include "Writer.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/FileSystem.h"
 
 using namespace llvm;
 
@@ -44,21 +45,33 @@ MemoryBufferRef LinkerDriver::openFile(StringRef Path) {
   return MBRef;
 }
 
+template <class ELFT>
+static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB,
+                                             bool IsShared) {
+  if (IsShared)
+    return make_unique<SharedFile<ELFT>>(MB);
+  return make_unique<ObjectFile<ELFT>>(MB);
+}
+
 static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
+  using namespace llvm::sys::fs;
+  file_magic Magic = identify_magic(MB.getBuffer());
+
   std::pair<unsigned char, unsigned char> Type =
       object::getElfArchType(MB.getBuffer());
   if (Type.second != ELF::ELFDATA2LSB && Type.second != ELF::ELFDATA2MSB)
     error("Invalid data encoding");
 
+  bool IsShared = Magic == file_magic::elf_shared_object;
   if (Type.first == ELF::ELFCLASS32) {
     if (Type.second == ELF::ELFDATA2LSB)
-      return make_unique<ObjectFile<object::ELF32LE>>(MB);
-    return make_unique<ObjectFile<object::ELF32BE>>(MB);
+      return createFile<object::ELF32LE>(MB, IsShared);
+    return createFile<object::ELF32BE>(MB, IsShared);
   }
   if (Type.first == ELF::ELFCLASS64) {
     if (Type.second == ELF::ELFDATA2LSB)
-      return make_unique<ObjectFile<object::ELF64LE>>(MB);
-    return make_unique<ObjectFile<object::ELF64BE>>(MB);
+      return createFile<object::ELF64LE>(MB, IsShared);
+    return createFile<object::ELF64BE>(MB, IsShared);
   }
   error("Invalid file class");
 }
@@ -98,8 +111,8 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Symtab.reportRemainingUndefines();
 
   // Write the result.
-  ObjectFileBase &FirstObj = *Symtab.getFirstObject();
-  switch (FirstObj.getELFKind()) {
+  const ELFFileBase *FirstObj = Symtab.getFirstELF();
+  switch (FirstObj->getELFKind()) {
   case ELF32LEKind:
     writeResult<object::ELF32LE>(&Symtab);
     return;

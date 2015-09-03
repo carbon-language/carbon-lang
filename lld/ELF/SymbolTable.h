@@ -34,9 +34,11 @@ public:
 
   void addFile(std::unique_ptr<InputFile> File);
 
-  ObjectFileBase *getFirstObject() const {
+  const ELFFileBase *getFirstELF() const {
     if (!ObjectFiles.empty())
       return ObjectFiles[0].get();
+    if (!SharedFiles.empty())
+      return SharedFiles[0].get();
     return nullptr;
   }
 
@@ -52,7 +54,7 @@ public:
   }
 
 private:
-  void addObject(ObjectFileBase *File);
+  void addELFFile(ELFFileBase *File);
 
   template <class ELFT> void init();
   template <class ELFT> void resolve(SymbolBody *Body);
@@ -62,6 +64,8 @@ private:
 
   // The writer needs to infer the machine type from the object files.
   std::vector<std::unique_ptr<ObjectFileBase>> ObjectFiles;
+
+  std::vector<std::unique_ptr<SharedFileBase>> SharedFiles;
 };
 
 } // namespace elf2

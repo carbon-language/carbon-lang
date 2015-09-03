@@ -23,8 +23,8 @@ SymbolTable::SymbolTable() {
 void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   File->parse();
   InputFile *FileP = File.release();
-  auto *P = cast<ObjectFileBase>(FileP);
-  addObject(P);
+  auto *P = cast<ELFFileBase>(FileP);
+  addELFFile(P);
 }
 
 template <class ELFT> void SymbolTable::init() {
@@ -32,8 +32,8 @@ template <class ELFT> void SymbolTable::init() {
                     Undefined<ELFT>("_start", Undefined<ELFT>::Synthetic));
 }
 
-void SymbolTable::addObject(ObjectFileBase *File) {
-  if (const ObjectFileBase *Old = getFirstObject()) {
+void SymbolTable::addELFFile(ELFFileBase *File) {
+  if (const ELFFileBase *Old = getFirstELF()) {
     if (!Old->isCompatibleWith(*File))
       error(Twine(Old->getName() + " is incompatible with " + File->getName()));
   } else {
@@ -53,23 +53,28 @@ void SymbolTable::addObject(ObjectFileBase *File) {
     }
   }
 
-  ObjectFiles.emplace_back(File);
-  for (SymbolBody *Body : File->getSymbols()) {
-    switch (File->getELFKind()) {
-    case ELF32LEKind:
-      resolve<ELF32LE>(Body);
-      break;
-    case ELF32BEKind:
-      resolve<ELF32BE>(Body);
-      break;
-    case ELF64LEKind:
-      resolve<ELF64LE>(Body);
-      break;
-    case ELF64BEKind:
-      resolve<ELF64BE>(Body);
-      break;
+  if (auto *O = dyn_cast<ObjectFileBase>(File)) {
+    ObjectFiles.emplace_back(O);
+    for (SymbolBody *Body : O->getSymbols()) {
+      switch (File->getELFKind()) {
+      case ELF32LEKind:
+        resolve<ELF32LE>(Body);
+        break;
+      case ELF32BEKind:
+        resolve<ELF32BE>(Body);
+        break;
+      case ELF64LEKind:
+        resolve<ELF64LE>(Body);
+        break;
+      case ELF64BEKind:
+        resolve<ELF64BE>(Body);
+        break;
+      }
     }
   }
+
+  if (auto *S = dyn_cast<SharedFileBase>(File))
+    SharedFiles.emplace_back(S);
 }
 
 void SymbolTable::reportRemainingUndefines() {
