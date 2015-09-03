@@ -10302,7 +10302,8 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       // original unaligned load.
       MachineFunction &MF = DAG.getMachineFunction();
       MachineMemOperand *BaseMMO =
-        MF.getMachineMemOperand(LD->getMemOperand(), -MemVT.getStoreSize()+1,
+        MF.getMachineMemOperand(LD->getMemOperand(),
+                                -(long)MemVT.getStoreSize()+1,
                                 2*MemVT.getStoreSize()-1);
 
       // Create the new base load.
