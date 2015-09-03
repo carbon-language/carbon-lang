@@ -5091,3 +5091,58 @@ class Foo {
 
 }  // end namespace ScopedAdoptTest
 
+
+namespace TestReferenceNoThreadSafetyAnalysis {
+
+#define TS_UNCHECKED_READ(x) ts_unchecked_read(x)
+
+// Takes a reference to a guarded data member, and returns an unguarded
+// reference.
+template <class T>
+inline const T& ts_unchecked_read(const T& v) NO_THREAD_SAFETY_ANALYSIS {
+  return v;
+}
+
+template <class T>
+inline T& ts_unchecked_read(T& v) NO_THREAD_SAFETY_ANALYSIS {
+  return v;
+}
+
+
+class Foo {
+public:
+  Foo(): a(0) { }
+
+  int a;
+};
+
+
+class Bar {
+public:
+  Bar() : a(0) { }
+
+  Mutex mu;
+  int a   GUARDED_BY(mu);
+  Foo foo GUARDED_BY(mu);
+};
+
+
+void test() {
+  Bar bar;
+  const Bar cbar;
+
+  int a = TS_UNCHECKED_READ(bar.a);       // nowarn
+  TS_UNCHECKED_READ(bar.a) = 1;           // nowarn
+
+  int b = TS_UNCHECKED_READ(bar.foo).a;   // nowarn
+  TS_UNCHECKED_READ(bar.foo).a = 1;       // nowarn
+
+  int c = TS_UNCHECKED_READ(cbar.a);      // nowarn
+}
+
+#undef TS_UNCHECKED_READ
+
+}  // end namespace TestReferenceNoThreadSafetyAnalysis
+
+
+

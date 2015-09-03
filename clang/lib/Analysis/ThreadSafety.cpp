@@ -1926,34 +1926,42 @@ void BuildLockset::VisitCallExpr(CallExpr *Exp) {
     }
   }
 
-
   if (ExamineArgs) {
     if (FunctionDecl *FD = Exp->getDirectCallee()) {
-      unsigned Fn = FD->getNumParams();
-      unsigned Cn = Exp->getNumArgs();
-      unsigned Skip = 0;
 
-      unsigned i = 0;
-      if (OperatorFun) {
-        if (isa<CXXMethodDecl>(FD)) {
-          // First arg in operator call is implicit self argument,
-          // and doesn't appear in the FunctionDecl.
-          Skip = 1;
-          Cn--;
-        } else {
-          // Ignore the first argument of operators; it's been checked above.
-          i = 1;
+      // NO_THREAD_SAFETY_ANALYSIS does double duty here.  Normally it
+      // only turns off checking within the body of a function, but we also
+      // use it to turn off checking in arguments to the function.  This
+      // could result in some false negatives, but the alternative is to
+      // create yet another attribute.
+      //
+      if (!FD->hasAttr<NoThreadSafetyAnalysisAttr>()) {
+        unsigned Fn = FD->getNumParams();
+        unsigned Cn = Exp->getNumArgs();
+        unsigned Skip = 0;
+
+        unsigned i = 0;
+        if (OperatorFun) {
+          if (isa<CXXMethodDecl>(FD)) {
+            // First arg in operator call is implicit self argument,
+            // and doesn't appear in the FunctionDecl.
+            Skip = 1;
+            Cn--;
+          } else {
+            // Ignore the first argument of operators; it's been checked above.
+            i = 1;
+          }
         }
-      }
-      // Ignore default arguments
-      unsigned n = (Fn < Cn) ? Fn : Cn;
+        // Ignore default arguments
+        unsigned n = (Fn < Cn) ? Fn : Cn;
 
-      for (; i < n; ++i) {
-        ParmVarDecl* Pvd = FD->getParamDecl(i);
-        Expr* Arg = Exp->getArg(i+Skip);
-        QualType Qt = Pvd->getType();
-        if (Qt->isReferenceType())
-          checkAccess(Arg, AK_Read, POK_PassByRef);
+        for (; i < n; ++i) {
+          ParmVarDecl* Pvd = FD->getParamDecl(i);
+          Expr* Arg = Exp->getArg(i+Skip);
+          QualType Qt = Pvd->getType();
+          if (Qt->isReferenceType())
+            checkAccess(Arg, AK_Read, POK_PassByRef);
+        }
       }
     }
   }
