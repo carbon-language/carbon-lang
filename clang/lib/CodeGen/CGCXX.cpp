@@ -39,6 +39,12 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
   if (getCodeGenOpts().OptimizationLevel == 0)
     return true;
 
+  // If sanitizing memory to check for use-after-dtor, do not emit as
+  //  an alias, unless this class owns no members.
+  if (getCodeGenOpts().SanitizeMemoryUseAfterDtor &&
+      !D->getParent()->field_empty())
+    return true;
+
   // If the destructor doesn't have a trivial body, we have to emit it
   // separately.
   if (!D->hasTrivialBody())

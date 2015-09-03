@@ -1099,6 +1099,13 @@ public:
   /// are emitted lazily.
   void EmitGlobal(GlobalDecl D);
 
+  bool
+  HasTrivialDestructorBody(ASTContext &Context,
+                           const CXXRecordDecl *BaseClassDecl,
+                           const CXXRecordDecl *MostDerivedClassDecl);
+  bool
+  FieldHasTrivialDestructorBody(ASTContext &Context, const FieldDecl *Field);
+
   bool TryEmitDefinitionAsAlias(GlobalDecl Alias, GlobalDecl Target,
                                 bool InEveryTU);
   bool TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D);

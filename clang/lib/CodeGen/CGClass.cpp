@@ -1334,7 +1334,7 @@ HasTrivialDestructorBody(ASTContext &Context,
 
 static bool
 FieldHasTrivialDestructorBody(ASTContext &Context,
-                              const FieldDecl *Field)
+                                          const FieldDecl *Field)
 {
   QualType FieldBaseElementType = Context.getBaseElementType(Field->getType());
 
@@ -1353,7 +1353,7 @@ FieldHasTrivialDestructorBody(ASTContext &Context,
 
 /// CanSkipVTablePointerInitialization - Check whether we need to initialize
 /// any vtable pointers before calling this destructor.
-static bool CanSkipVTablePointerInitialization(ASTContext &Context,
+static bool CanSkipVTablePointerInitialization(CodeGenFunction &CGF,
                                                const CXXDestructorDecl *Dtor) {
   if (!Dtor->hasTrivialBody())
     return false;
@@ -1361,56 +1361,10 @@ static bool CanSkipVTablePointerInitialization(ASTContext &Context,
   // Check the fields.
   const CXXRecordDecl *ClassDecl = Dtor->getParent();
   for (const auto *Field : ClassDecl->fields())
-    if (!FieldHasTrivialDestructorBody(Context, Field))
+    if (!FieldHasTrivialDestructorBody(CGF.getContext(), Field))
       return false;
 
   return true;
-}
-
-// Generates function call for handling object poisoning, passing in
-// references to 'this' and its size as arguments.
-// Disables tail call elimination, to prevent the current stack frame from
-// disappearing from the stack trace.
-static void EmitDtorSanitizerCallback(CodeGenFunction &CGF,
-                                      const CXXDestructorDecl *Dtor) {
-  const ASTRecordLayout &Layout =
-      CGF.getContext().getASTRecordLayout(Dtor->getParent());
-
-  // Nothing to poison
-  if(Layout.getFieldCount() == 0)
-    return;
-
-  // Construct pointer to region to begin poisoning, and calculate poison
-  // size, so that only members declared in this class are poisoned.
-  llvm::Value *OffsetPtr;
-  CharUnits::QuantityType PoisonSize;
-  ASTContext &Context = CGF.getContext();
-
-  llvm::ConstantInt *OffsetSizePtr = llvm::ConstantInt::get(
-      CGF.SizeTy, Context.toCharUnitsFromBits(Layout.getFieldOffset(0)).
-      getQuantity());
-
-  OffsetPtr = CGF.Builder.CreateGEP(CGF.Builder.CreateBitCast(
-      CGF.LoadCXXThis(), CGF.Int8PtrTy), OffsetSizePtr);
-
-  PoisonSize = Layout.getSize().getQuantity() -
-      Context.toCharUnitsFromBits(Layout.getFieldOffset(0)).getQuantity();
-
-  llvm::Value *Args[] = {
-    CGF.Builder.CreateBitCast(OffsetPtr, CGF.VoidPtrTy),
-    llvm::ConstantInt::get(CGF.SizeTy, PoisonSize)};
-
-  llvm::Type *ArgTypes[] = {CGF.VoidPtrTy, CGF.SizeTy};
-
-  llvm::FunctionType *FnType =
-      llvm::FunctionType::get(CGF.VoidTy, ArgTypes, false);
-  llvm::Value *Fn =
-      CGF.CGM.CreateRuntimeFunction(FnType, "__sanitizer_dtor_callback");
-
-  // Disables tail call elimination, to prevent the current stack frame from
-  // disappearing from the stack trace.
-  CGF.CurFn->addFnAttr("disable-tail-calls", "true");
-  CGF.EmitNounwindRuntimeCall(Fn, Args);
 }
 
 /// EmitDestructorBody - Emits the body of the current destructor.
@@ -1476,7 +1430,7 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     EnterDtorCleanups(Dtor, Dtor_Base);
 
     // Initialize the vtable pointers before entering the body.
-    if (!CanSkipVTablePointerInitialization(getContext(), Dtor))
+    if (!CanSkipVTablePointerInitialization(*this, Dtor))
         InitializeVTablePointers(Dtor->getParent());
 
     if (isTryBody)
@@ -1491,12 +1445,6 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     // the caller's body.
     if (getLangOpts().AppleKext)
       CurFn->addFnAttr(llvm::Attribute::AlwaysInline);
-
-    // Insert memory-poisoning instrumentation, before final clean ups,
-    // to ensure this class's members are protected from invalid access.
-    if (CGM.getCodeGenOpts().SanitizeMemoryUseAfterDtor
-        && SanOpts.has(SanitizerKind::Memory))
-      EmitDtorSanitizerCallback(*this, Dtor);
 
     break;
   }
@@ -1541,7 +1489,7 @@ namespace {
     llvm::Value *ShouldDeleteCondition;
   public:
     CallDtorDeleteConditional(llvm::Value *ShouldDeleteCondition)
-      : ShouldDeleteCondition(ShouldDeleteCondition) {
+        : ShouldDeleteCondition(ShouldDeleteCondition) {
       assert(ShouldDeleteCondition != nullptr);
     }
 
@@ -1571,8 +1519,8 @@ namespace {
   public:
     DestroyField(const FieldDecl *field, CodeGenFunction::Destroyer *destroyer,
                  bool useEHCleanupForArray)
-      : field(field), destroyer(destroyer),
-        useEHCleanupForArray(useEHCleanupForArray) {}
+        : field(field), destroyer(destroyer),
+          useEHCleanupForArray(useEHCleanupForArray) {}
 
     void Emit(CodeGenFunction &CGF, Flags flags) override {
       // Find the address of the field.
@@ -1584,6 +1532,105 @@ namespace {
 
       CGF.emitDestroy(LV.getAddress(), field->getType(), destroyer,
                       flags.isForNormalCleanup() && useEHCleanupForArray);
+    }
+  };
+
+  class SanitizeDtor final : public EHScopeStack::Cleanup {
+    const CXXDestructorDecl *Dtor;
+
+  public:
+    SanitizeDtor(const CXXDestructorDecl *Dtor) : Dtor(Dtor) {}
+
+    // Generate function call for handling object poisoning.
+    // Disables tail call elimination, to prevent the current stack frame
+    // from disappearing from the stack trace.
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
+      const ASTRecordLayout &Layout =
+          CGF.getContext().getASTRecordLayout(Dtor->getParent());
+
+      // Nothing to poison.
+      if (Layout.getFieldCount() == 0)
+        return;
+
+      // Prevent the current stack frame from disappearing from the stack trace.
+      CGF.CurFn->addFnAttr("disable-tail-calls", "true");
+
+      // Construct pointer to region to begin poisoning, and calculate poison
+      // size, so that only members declared in this class are poisoned.
+      ASTContext &Context = CGF.getContext();
+      unsigned fieldIndex = 0;
+      int startIndex = -1;
+      // RecordDecl::field_iterator Field;
+      for (const FieldDecl *Field : Dtor->getParent()->fields()) {
+        // Poison field if it is trivial
+        if (FieldHasTrivialDestructorBody(Context, Field)) {
+          // Start sanitizing at this field
+          if (startIndex < 0)
+            startIndex = fieldIndex;
+
+          // Currently on the last field, and it must be poisoned with the
+          // current block.
+          if (fieldIndex == Layout.getFieldCount() - 1) {
+            PoisonBlock(CGF, startIndex, Layout.getFieldCount());
+          }
+        } else if (startIndex >= 0) {
+          // No longer within a block of memory to poison, so poison the block
+          PoisonBlock(CGF, startIndex, fieldIndex);
+          // Re-set the start index
+          startIndex = -1;
+        }
+        fieldIndex += 1;
+      }
+    }
+
+  private:
+    /// \param layoutStartOffset: index of the ASTRecordLayout field to
+    ///     start poisoning (inclusive)
+    /// \param layoutEndOffset: index of the ASTRecordLayout field to
+    ///     end poisoning (exclusive)
+    void PoisonBlock(CodeGenFunction &CGF, unsigned layoutStartOffset,
+                     unsigned layoutEndOffset) {
+      ASTContext &Context = CGF.getContext();
+      const ASTRecordLayout &Layout =
+          Context.getASTRecordLayout(Dtor->getParent());
+
+      llvm::ConstantInt *OffsetSizePtr = llvm::ConstantInt::get(
+          CGF.SizeTy,
+          Context.toCharUnitsFromBits(Layout.getFieldOffset(layoutStartOffset))
+              .getQuantity());
+
+      llvm::Value *OffsetPtr = CGF.Builder.CreateGEP(
+          CGF.Builder.CreateBitCast(CGF.LoadCXXThis(), CGF.Int8PtrTy),
+          OffsetSizePtr);
+
+      CharUnits::QuantityType PoisonSize;
+      if (layoutEndOffset >= Layout.getFieldCount()) {
+        PoisonSize = Layout.getNonVirtualSize().getQuantity() -
+                     Context.toCharUnitsFromBits(
+                                Layout.getFieldOffset(layoutStartOffset))
+                         .getQuantity();
+      } else {
+        PoisonSize = Context.toCharUnitsFromBits(
+                                Layout.getFieldOffset(layoutEndOffset) -
+                                Layout.getFieldOffset(layoutStartOffset))
+                         .getQuantity();
+      }
+
+      if (PoisonSize == 0)
+        return;
+
+      // Pass in void pointer and size of region as arguments to runtime
+      // function
+      llvm::Value *Args[] = {CGF.Builder.CreateBitCast(OffsetPtr, CGF.VoidPtrTy),
+                             llvm::ConstantInt::get(CGF.SizeTy, PoisonSize)};
+
+      llvm::Type *ArgTypes[] = {CGF.VoidPtrTy, CGF.SizeTy};
+
+      llvm::FunctionType *FnType =
+          llvm::FunctionType::get(CGF.VoidTy, ArgTypes, false);
+      llvm::Value *Fn =
+          CGF.CGM.CreateRuntimeFunction(FnType, "__sanitizer_dtor_callback");
+      CGF.EmitNounwindRuntimeCall(Fn, Args);
     }
   };
 }
@@ -1657,6 +1704,12 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
                                       BaseClassDecl,
                                       /*BaseIsVirtual*/ false);
   }
+
+  // Poison fields such that access after their destructors are
+  // invoked, and before the base class destructor runs, is invalid.
+  if (CGM.getCodeGenOpts().SanitizeMemoryUseAfterDtor &&
+      SanOpts.has(SanitizerKind::Memory))
+    EHStack.pushCleanup<SanitizeDtor>(NormalAndEHCleanup, DD);
 
   // Destroy direct fields.
   for (const auto *Field : ClassDecl->fields()) {
