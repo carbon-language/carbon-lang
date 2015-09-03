@@ -287,7 +287,35 @@ static void analyzeParsePointLiveness(
   result.liveset = liveset;
 }
 
-static Value *findBaseDefiningValue(Value *I);
+static bool isKnownBaseResult(Value *V);
+namespace {
+/// A single base defining value - An immediate base defining value for an
+/// instruction 'Def' is an input to 'Def' whose base is also a base of 'Def'.
+/// For instructions which have multiple pointer [vector] inputs or that
+/// transition between vector and scalar types, there is no immediate base
+/// defining value.  The 'base defining value' for 'Def' is the transitive
+/// closure of this relation stopping at the first instruction which has no
+/// immediate base defining value.  The b.d.v. might itself be a base pointer,
+/// but it can also be an arbitrary derived pointer. 
+struct BaseDefiningValueResult {
+  /// Contains the value which is the base defining value.
+  Value * const BDV;
+  /// True if the base defining value is also known to be an actual base
+  /// pointer.
+  const bool IsKnownBase;
+  BaseDefiningValueResult(Value *BDV, bool IsKnownBase)
+    : BDV(BDV), IsKnownBase(IsKnownBase) {
+#ifndef NDEBUG
+    // Check consistency between new and old means of checking whether a BDV is
+    // a base.
+    bool MustBeBase = isKnownBaseResult(BDV);
+    assert(!MustBeBase || MustBeBase == IsKnownBase);
+#endif
+  }
+};
+}
+
+static BaseDefiningValueResult findBaseDefiningValue(Value *I);
 
 /// Return a base defining value for the 'Index' element of the given vector
 /// instruction 'I'.  If Index is null, returns a BDV for the entire vector
@@ -298,7 +326,7 @@ static Value *findBaseDefiningValue(Value *I);
 /// vector returned is a BDV (and possibly a base) of the entire vector 'I'.
 /// If the later, the return pointer is a BDV (or possibly a base) for the
 /// particular element in 'I'.  
-static std::pair<Value *, bool>
+static BaseDefiningValueResult
 findBaseDefiningValueOfVector(Value *I, Value *Index = nullptr) {
   assert(I->getType()->isVectorTy() &&
          cast<VectorType>(I->getType())->getElementType()->isPointerTy() &&
@@ -309,7 +337,7 @@ findBaseDefiningValueOfVector(Value *I, Value *Index = nullptr) {
 
   if (isa<Argument>(I))
     // An incoming argument to the function is a base pointer
-    return std::make_pair(I, true);
+    return BaseDefiningValueResult(I, true);
 
   // We shouldn't see the address of a global as a vector value?
   assert(!isa<GlobalVariable>(I) &&
@@ -320,7 +348,7 @@ findBaseDefiningValueOfVector(Value *I, Value *Index = nullptr) {
   if (isa<UndefValue>(I))
     // utterly meaningless, but useful for dealing with partially optimized
     // code.
-    return std::make_pair(I, true);
+    return BaseDefiningValueResult(I, true);
 
   // Due to inheritance, this must be _after_ the global variable and undef
   // checks
@@ -328,11 +356,11 @@ findBaseDefiningValueOfVector(Value *I, Value *Index = nullptr) {
     assert(!isa<GlobalVariable>(I) && !isa<UndefValue>(I) &&
            "order of checks wrong!");
     assert(Con->isNullValue() && "null is the only case which makes sense");
-    return std::make_pair(Con, true);
+    return BaseDefiningValueResult(Con, true);
   }
   
   if (isa<LoadInst>(I))
-    return std::make_pair(I, true);
+    return BaseDefiningValueResult(I, true);
   
   // For an insert element, we might be able to look through it if we know
   // something about the indexes.
@@ -341,17 +369,26 @@ findBaseDefiningValueOfVector(Value *I, Value *Index = nullptr) {
       Value *InsertIndex = IEI->getOperand(2);
       // This index is inserting the value, look for its BDV
       if (InsertIndex == Index)
-        return std::make_pair(findBaseDefiningValue(IEI->getOperand(1)), false);
+        return findBaseDefiningValue(IEI->getOperand(1));
       // Both constant, and can't be equal per above. This insert is definitely
       // not relevant, look back at the rest of the vector and keep trying.
       if (isa<ConstantInt>(Index) && isa<ConstantInt>(InsertIndex))
         return findBaseDefiningValueOfVector(IEI->getOperand(0), Index);
     }
+
+    // If both inputs to the insertelement are known bases, then so is the
+    // insertelement itself.  NOTE: This should be handled within the generic
+    // base pointer inference code and after http://reviews.llvm.org/D12583,
+    // will be.  However, when strengthening asserts I needed to add this to
+    // keep an existing test passing which was 'working'. FIXME
+    if (findBaseDefiningValue(IEI->getOperand(0)).IsKnownBase &&
+        findBaseDefiningValue(IEI->getOperand(1)).IsKnownBase)
+      return BaseDefiningValueResult(IEI, true);
     
     // We don't know whether this vector contains entirely base pointers or
     // not.  To be conservatively correct, we treat it as a BDV and will
     // duplicate code as needed to construct a parallel vector of bases.
-    return std::make_pair(IEI, false);
+    return BaseDefiningValueResult(IEI, false);
   }
 
   if (isa<ShuffleVectorInst>(I))
@@ -360,24 +397,22 @@ findBaseDefiningValueOfVector(Value *I, Value *Index = nullptr) {
     // duplicate code as needed to construct a parallel vector of bases.
     // TODO: There a number of local optimizations which could be applied here
     // for particular sufflevector patterns.
-    return std::make_pair(I, false);
+    return BaseDefiningValueResult(I, false);
 
   // A PHI or Select is a base defining value.  The outer findBasePointer
   // algorithm is responsible for constructing a base value for this BDV.
   assert((isa<SelectInst>(I) || isa<PHINode>(I)) &&
          "unknown vector instruction - no base found for vector element");
-  return std::make_pair(I, false);
+  return BaseDefiningValueResult(I, false);
 }
-
-static bool isKnownBaseResult(Value *V);
 
 /// Helper function for findBasePointer - Will return a value which either a)
 /// defines the base pointer for the input, b) blocks the simple search
 /// (i.e. a PHI or Select of two derived pointers), or c) involves a change
 /// from pointer to vector type or back.
-static Value *findBaseDefiningValue(Value *I) {
+static BaseDefiningValueResult findBaseDefiningValue(Value *I) {
   if (I->getType()->isVectorTy())
-    return findBaseDefiningValueOfVector(I).first;
+    return findBaseDefiningValueOfVector(I);
   
   assert(I->getType()->isPointerTy() &&
          "Illegal to ask for the base pointer of a non-pointer type");
@@ -385,18 +420,18 @@ static Value *findBaseDefiningValue(Value *I) {
   if (isa<Argument>(I))
     // An incoming argument to the function is a base pointer
     // We should have never reached here if this argument isn't an gc value
-    return I;
+    return BaseDefiningValueResult(I, true);
 
   if (isa<GlobalVariable>(I))
     // base case
-    return I;
+    return BaseDefiningValueResult(I, true);
 
   // inlining could possibly introduce phi node that contains
   // undef if callee has multiple returns
   if (isa<UndefValue>(I))
     // utterly meaningless, but useful for dealing with
     // partially optimized code.
-    return I;
+    return BaseDefiningValueResult(I, true);
 
   // Due to inheritance, this must be _after_ the global variable and undef
   // checks
@@ -413,7 +448,7 @@ static Value *findBaseDefiningValue(Value *I) {
     // want to find a base pointer for).
     assert(isa<ConstantPointerNull>(Con) &&
            "null is the only case which makes sense");
-    return Con;
+    return BaseDefiningValueResult(I, true);
   }
 
   if (CastInst *CI = dyn_cast<CastInst>(I)) {
@@ -426,7 +461,9 @@ static Value *findBaseDefiningValue(Value *I) {
   }
 
   if (isa<LoadInst>(I))
-    return I; // The value loaded is an gc base itself
+    // The value loaded is an gc base itself
+    return BaseDefiningValueResult(I, true);
+  
 
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I))
     // The base of this GEP is the base
@@ -460,7 +497,7 @@ static Value *findBaseDefiningValue(Value *I) {
   // pointers.  This should probably be generalized via attributes to support
   // both source language and internal functions.
   if (isa<CallInst>(I) || isa<InvokeInst>(I))
-    return I;
+    return BaseDefiningValueResult(I, true);
 
   // I have absolutely no idea how to implement this part yet.  It's not
   // necessarily hard, I just haven't really looked at it yet.
@@ -470,7 +507,7 @@ static Value *findBaseDefiningValue(Value *I) {
     // A CAS is effectively a atomic store and load combined under a
     // predicate.  From the perspective of base pointers, we just treat it
     // like a load.
-    return I;
+    return BaseDefiningValueResult(I, true);
 
   assert(!isa<AtomicRMWInst>(I) && "Xchg handled above, all others are "
                                    "binary ops which don't apply to pointers");
@@ -479,7 +516,7 @@ static Value *findBaseDefiningValue(Value *I) {
   // stack, but in either case, this is simply a field load.  As a result,
   // this is a defining definition of the base just like a load is.
   if (isa<ExtractValueInst>(I))
-    return I;
+    return BaseDefiningValueResult(I, true);
 
   // We should never see an insert vector since that would require we be
   // tracing back a struct value not a pointer value.
@@ -493,23 +530,22 @@ static Value *findBaseDefiningValue(Value *I) {
   if (auto *EEI = dyn_cast<ExtractElementInst>(I)) {
     Value *VectorOperand = EEI->getVectorOperand();
     Value *Index = EEI->getIndexOperand();
-    std::pair<Value *, bool> pair =
-      findBaseDefiningValueOfVector(VectorOperand, Index);
-    Value *VectorBase = pair.first;
+    auto VecResult = findBaseDefiningValueOfVector(VectorOperand, Index);
+    Value *VectorBase = VecResult.BDV;
     if (VectorBase->getType()->isPointerTy())
       // We found a BDV for this specific element with the vector.  This is an
       // optimization, but in practice it covers most of the useful cases
       // created via scalarization. Note: The peephole optimization here is
       // currently needed for correctness since the general algorithm doesn't
       // yet handle insertelements.  That will change shortly.
-      return VectorBase;
+      return BaseDefiningValueResult(VectorBase, VecResult.IsKnownBase);
     else {
       assert(VectorBase->getType()->isVectorTy());
       // Otherwise, we have an instruction which potentially produces a
       // derived pointer and we need findBasePointers to clone code for us
       // such that we can create an instruction which produces the
       // accompanying base pointer.
-      return EEI;
+      return BaseDefiningValueResult(I, VecResult.IsKnownBase);
     }
   }
 
@@ -519,14 +555,14 @@ static Value *findBaseDefiningValue(Value *I) {
   // the caller to resolve these.
   assert((isa<SelectInst>(I) || isa<PHINode>(I)) &&
          "missing instruction case in findBaseDefiningValing");
-  return I;
+  return BaseDefiningValueResult(I, false);
 }
 
 /// Returns the base defining value for this value.
 static Value *findBaseDefiningValueCached(Value *I, DefiningValueMapTy &Cache) {
   Value *&Cached = Cache[I];
   if (!Cached) {
-    Cached = findBaseDefiningValue(I);
+    Cached = findBaseDefiningValue(I).BDV;
     DEBUG(dbgs() << "fBDV-cached: " << I->getName() << " -> "
                  << Cached->getName() << "\n");
   }
