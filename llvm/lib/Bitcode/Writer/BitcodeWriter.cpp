@@ -1906,6 +1906,14 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Vals.push_back(VE.getValueID(CEPI.getUnwindDest()));
     break;
   }
+  case Instruction::CleanupEndPad: {
+    Code = bitc::FUNC_CODE_INST_CLEANUPENDPAD;
+    const auto &CEPI = cast<CleanupEndPadInst>(I);
+    pushValue(CEPI.getCleanupPad(), InstID, Vals, VE);
+    if (CEPI.hasUnwindDest())
+      Vals.push_back(VE.getValueID(CEPI.getUnwindDest()));
+    break;
+  }
   case Instruction::Unreachable:
     Code = bitc::FUNC_CODE_INST_UNREACHABLE;
     AbbrevToUse = FUNCTION_INST_UNREACHABLE_ABBREV;

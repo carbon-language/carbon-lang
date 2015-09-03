@@ -2889,6 +2889,15 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(CEPI->getUnwindDest(), /*PrintType=*/true);
     else
       Out << "to caller";
+  } else if (const auto *CEPI = dyn_cast<CleanupEndPadInst>(&I)) {
+    Out << ' ';
+    writeOperand(CEPI->getCleanupPad(), /*PrintType=*/false);
+
+    Out << " unwind ";
+    if (CEPI->hasUnwindDest())
+      writeOperand(CEPI->getUnwindDest(), /*PrintType=*/true);
+    else
+      Out << "to caller";
   } else if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
     // Print the calling convention being used.
     if (CI->getCallingConv() != CallingConv::C) {

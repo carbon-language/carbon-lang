@@ -179,3 +179,53 @@ try.cont:
 bb:
   catchendpad unwind to caller
 }
+
+define void @cleanupendpad0() personality i32 (...)* @__gxx_personality_v0 {
+entry:
+  invoke void @_Z3quxv() optsize
+          to label %exit unwind label %pad
+pad:
+  %cp = cleanuppad [i7 4]
+  invoke void @_Z3quxv() optsize
+          to label %stop unwind label %endpad
+stop:
+  unreachable
+endpad:
+  cleanupendpad %cp unwind label %pad
+exit:
+  ret void
+}
+
+; forward ref by name
+define void @cleanupendpad1() personality i32 (...)* @__gxx_personality_v0 {
+entry:
+  invoke void @_Z3quxv() optsize
+          to label %exit unwind label %pad
+endpad:
+  cleanupendpad %cp unwind to caller
+pad:
+  %cp = cleanuppad []
+  invoke void @_Z3quxv() optsize
+          to label %stop unwind label %endpad
+stop:
+  unreachable
+exit:
+  ret void
+}
+
+; forward ref by ID
+define void @cleanupendpad2() personality i32 (...)* @__gxx_personality_v0 {
+entry:
+  invoke void @_Z3quxv() optsize
+          to label %exit unwind label %pad
+endpad:
+  cleanupendpad %0 unwind label %pad
+pad:
+  %0 = cleanuppad []
+  invoke void @_Z3quxv() optsize
+          to label %stop unwind label %endpad
+stop:
+  unreachable
+exit:
+  ret void
+}

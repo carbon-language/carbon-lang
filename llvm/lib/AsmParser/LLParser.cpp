@@ -4686,6 +4686,7 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_terminatepad: return ParseTerminatePad(Inst, PFS);
   case lltok::kw_cleanuppad: return ParseCleanupPad(Inst, PFS);
   case lltok::kw_catchendpad: return ParseCatchEndPad(Inst, PFS);
+  case lltok::kw_cleanupendpad: return ParseCleanupEndPad(Inst, PFS);
   // Binary Operators.
   case lltok::kw_add:
   case lltok::kw_sub:
@@ -5240,6 +5241,35 @@ bool LLParser::ParseCatchEndPad(Instruction *&Inst, PerFunctionState &PFS) {
   }
 
   Inst = CatchEndPadInst::Create(Context, UnwindBB);
+  return false;
+}
+
+/// ParseCatchEndPad
+///   ::= 'cleanupendpad' Value unwind ('to' 'caller' | TypeAndValue)
+bool LLParser::ParseCleanupEndPad(Instruction *&Inst, PerFunctionState &PFS) {
+  Value *CleanupPad = nullptr;
+
+  if (ParseValue(Type::getTokenTy(Context), CleanupPad, PFS, OC_CleanupPad))
+    return true;
+
+  if (ParseToken(lltok::kw_unwind, "expected 'unwind' in catchendpad"))
+    return true;
+
+  BasicBlock *UnwindBB = nullptr;
+  if (Lex.getKind() == lltok::kw_to) {
+    Lex.Lex();
+    if (Lex.getKind() == lltok::kw_caller) {
+      Lex.Lex();
+    } else {
+      return true;
+    }
+  } else {
+    if (ParseTypeAndBasicBlock(UnwindBB, PFS)) {
+      return true;
+    }
+  }
+
+  Inst = CleanupEndPadInst::Create(cast<CleanupPadInst>(CleanupPad), UnwindBB);
   return false;
 }
 

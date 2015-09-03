@@ -681,6 +681,11 @@ public:
     return Insert(CleanupReturnInst::Create(CleanupPad, UnwindBB));
   }
 
+  CatchEndPadInst *CreateCleanupEndPad(CleanupPadInst *CleanupPad,
+                                       BasicBlock *UnwindBB = nullptr) {
+    return Insert(CleanupEndPadInst::Create(CleanupPad, UnwindBB));
+  }
+
   CatchPadInst *CreateCatchPad(BasicBlock *NormalDest, BasicBlock *UnwindDest,
                                ArrayRef<Value *> Args, const Twine &Name = "") {
     return Insert(CatchPadInst::Create(NormalDest, UnwindDest, Args), Name);

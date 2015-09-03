@@ -3207,6 +3207,7 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
   case Instruction::CatchEndPad:
   case Instruction::CatchRet:
   case Instruction::CleanupPad:
+  case Instruction::CleanupEndPad:
   case Instruction::CleanupRet:
   case Instruction::TerminatePad:
     return false; // Misc instructions which have effects

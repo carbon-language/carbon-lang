@@ -170,7 +170,8 @@ public:
   RetTy visitResumeInst(ResumeInst &I)            { DELEGATE(TerminatorInst);}
   RetTy visitUnreachableInst(UnreachableInst &I)  { DELEGATE(TerminatorInst);}
   RetTy visitCleanupReturnInst(CleanupReturnInst &I) { DELEGATE(TerminatorInst);}
-  RetTy visitCatchReturnInst(CatchReturnInst &I)  { DELEGATE(TerminatorInst);}
+  RetTy visitCleanupEndPadInst(CleanupEndPadInst &I) { DELEGATE(TerminatorInst); }
+  RetTy visitCatchReturnInst(CatchReturnInst &I)  { DELEGATE(TerminatorInst); }
   RetTy visitCatchPadInst(CatchPadInst &I)    { DELEGATE(TerminatorInst);}
   RetTy visitCatchEndPadInst(CatchEndPadInst &I) { DELEGATE(TerminatorInst); }
   RetTy visitTerminatePadInst(TerminatePadInst &I) { DELEGATE(TerminatorInst);}

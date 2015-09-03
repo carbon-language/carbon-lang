@@ -4020,6 +4020,93 @@ struct OperandTraits<CatchReturnInst>
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CatchReturnInst, Value)
 
 //===----------------------------------------------------------------------===//
+//                               CleanupEndPadInst Class
+//===----------------------------------------------------------------------===//
+
+class CleanupEndPadInst : public TerminatorInst {
+private:
+  CleanupEndPadInst(const CleanupEndPadInst &CEPI);
+
+  void init(CleanupPadInst *CleanupPad, BasicBlock *UnwindBB);
+  CleanupEndPadInst(CleanupPadInst *CleanupPad, BasicBlock *UnwindBB,
+                    unsigned Values, Instruction *InsertBefore = nullptr);
+  CleanupEndPadInst(CleanupPadInst *CleanupPad, BasicBlock *UnwindBB,
+                    unsigned Values, BasicBlock *InsertAtEnd);
+
+protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  CleanupEndPadInst *cloneImpl() const;
+
+public:
+  static CleanupEndPadInst *Create(CleanupPadInst *CleanupPad,
+                                   BasicBlock *UnwindBB = nullptr,
+                                   Instruction *InsertBefore = nullptr) {
+    unsigned Values = UnwindBB ? 2 : 1;
+    return new (Values)
+        CleanupEndPadInst(CleanupPad, UnwindBB, Values, InsertBefore);
+  }
+  static CleanupEndPadInst *Create(CleanupPadInst *CleanupPad,
+                                   BasicBlock *UnwindBB,
+                                   BasicBlock *InsertAtEnd) {
+    unsigned Values = UnwindBB ? 2 : 1;
+    return new (Values)
+        CleanupEndPadInst(CleanupPad, UnwindBB, Values, InsertAtEnd);
+  }
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  bool hasUnwindDest() const { return getSubclassDataFromInstruction() & 1; }
+  bool unwindsToCaller() const { return !hasUnwindDest(); }
+
+  unsigned getNumSuccessors() const { return hasUnwindDest() ? 1 : 0; }
+
+  /// Convenience accessors
+  CleanupPadInst *getCleanupPad() const {
+    return cast<CleanupPadInst>(Op<-1>());
+  }
+  void setCleanupPad(CleanupPadInst *CleanupPad) {
+    assert(CleanupPad);
+    Op<-1>() = CleanupPad;
+  }
+
+  BasicBlock *getUnwindDest() const {
+    return hasUnwindDest() ? cast<BasicBlock>(Op<-2>()) : nullptr;
+  }
+  void setUnwindDest(BasicBlock *NewDest) {
+    assert(hasUnwindDest());
+    assert(NewDest);
+    Op<-2>() = NewDest;
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::CleanupEndPad);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+
+private:
+  BasicBlock *getSuccessorV(unsigned Idx) const override;
+  unsigned getNumSuccessorsV() const override;
+  void setSuccessorV(unsigned Idx, BasicBlock *B) override;
+
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
+  }
+};
+
+template <>
+struct OperandTraits<CleanupEndPadInst>
+    : public VariadicOperandTraits<CleanupEndPadInst, /*MINARITY=*/1> {};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CleanupEndPadInst, Value)
+
+//===----------------------------------------------------------------------===//
 //                               CleanupReturnInst Class
 //===----------------------------------------------------------------------===//
 

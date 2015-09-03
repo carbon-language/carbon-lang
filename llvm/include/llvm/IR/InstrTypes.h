@@ -82,6 +82,7 @@ public:
     case Instruction::CatchPad:
     case Instruction::CatchEndPad:
     case Instruction::CatchRet:
+    case Instruction::CleanupEndPad:
     case Instruction::CleanupRet:
     case Instruction::Invoke:
     case Instruction::Resume:

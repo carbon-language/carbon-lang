@@ -2698,6 +2698,11 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     // Nothing to do here.
   }
 
+  void visitCleanupEndPadInst(CleanupEndPadInst &I) {
+    DEBUG(dbgs() << "CleanupEndPad: " << I << "\n");
+    // Nothing to do here.
+  }
+
   void visitGetElementPtrInst(GetElementPtrInst &I) {
     handleShadowOr(I);
   }

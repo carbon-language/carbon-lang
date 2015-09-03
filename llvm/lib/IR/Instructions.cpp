@@ -674,6 +674,61 @@ BasicBlock *ResumeInst::getSuccessorV(unsigned idx) const {
 }
 
 //===----------------------------------------------------------------------===//
+//                        CleanupEndPadInst Implementation
+//===----------------------------------------------------------------------===//
+
+CleanupEndPadInst::CleanupEndPadInst(const CleanupEndPadInst &CEPI)
+    : TerminatorInst(CEPI.getType(), Instruction::CleanupEndPad,
+                     OperandTraits<CleanupEndPadInst>::op_end(this) -
+                         CEPI.getNumOperands(),
+                     CEPI.getNumOperands()) {
+  setInstructionSubclassData(CEPI.getSubclassDataFromInstruction());
+  setCleanupPad(CEPI.getCleanupPad());
+  if (BasicBlock *UnwindDest = CEPI.getUnwindDest())
+    setUnwindDest(UnwindDest);
+}
+
+void CleanupEndPadInst::init(CleanupPadInst *CleanupPad, BasicBlock *UnwindBB) {
+  setCleanupPad(CleanupPad);
+  if (UnwindBB) {
+    setInstructionSubclassData(getSubclassDataFromInstruction() | 1);
+    setUnwindDest(UnwindBB);
+  }
+}
+
+CleanupEndPadInst::CleanupEndPadInst(CleanupPadInst *CleanupPad,
+                                     BasicBlock *UnwindBB, unsigned Values,
+                                     Instruction *InsertBefore)
+    : TerminatorInst(Type::getVoidTy(CleanupPad->getContext()),
+                     Instruction::CleanupEndPad,
+                     OperandTraits<CleanupEndPadInst>::op_end(this) - Values,
+                     Values, InsertBefore) {
+  init(CleanupPad, UnwindBB);
+}
+
+CleanupEndPadInst::CleanupEndPadInst(CleanupPadInst *CleanupPad,
+                                     BasicBlock *UnwindBB, unsigned Values,
+                                     BasicBlock *InsertAtEnd)
+    : TerminatorInst(Type::getVoidTy(CleanupPad->getContext()),
+                     Instruction::CleanupEndPad,
+                     OperandTraits<CleanupEndPadInst>::op_end(this) - Values,
+                     Values, InsertAtEnd) {
+  init(CleanupPad, UnwindBB);
+}
+
+BasicBlock *CleanupEndPadInst::getSuccessorV(unsigned Idx) const {
+  assert(Idx == 0);
+  return getUnwindDest();
+}
+unsigned CleanupEndPadInst::getNumSuccessorsV() const {
+  return getNumSuccessors();
+}
+void CleanupEndPadInst::setSuccessorV(unsigned Idx, BasicBlock *B) {
+  assert(Idx == 0);
+  setUnwindDest(B);
+}
+
+//===----------------------------------------------------------------------===//
 //                        CleanupReturnInst Implementation
 //===----------------------------------------------------------------------===//
 
@@ -3901,6 +3956,10 @@ InvokeInst *InvokeInst::cloneImpl() const {
 }
 
 ResumeInst *ResumeInst::cloneImpl() const { return new (1) ResumeInst(*this); }
+
+CleanupEndPadInst *CleanupEndPadInst::cloneImpl() const {
+  return new (getNumOperands()) CleanupEndPadInst(*this);
+}
 
 CleanupReturnInst *CleanupReturnInst::cloneImpl() const {
   return new (getNumOperands()) CleanupReturnInst(*this);

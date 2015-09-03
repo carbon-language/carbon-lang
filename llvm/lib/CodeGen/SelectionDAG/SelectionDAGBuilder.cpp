@@ -1205,6 +1205,10 @@ void SelectionDAGBuilder::visitCleanupRet(const CleanupReturnInst &I) {
   report_fatal_error("visitCleanupRet not yet implemented!");
 }
 
+void SelectionDAGBuilder::visitCleanupEndPad(const CleanupEndPadInst &I) {
+  report_fatal_error("visitCleanupEndPad not yet implemented!");
+}
+
 void SelectionDAGBuilder::visitTerminatePad(const TerminatePadInst &TPI) {
   report_fatal_error("visitTerminatePad not yet implemented!");
 }

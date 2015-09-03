@@ -403,7 +403,7 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
     } else if (First->isEHPad()) {
       if (!ForExplicitEH)
         EntryBlocks.push_back(&Fn.getEntryBlock());
-      if (!isa<CatchEndPadInst>(First))
+      if (!isa<CatchEndPadInst>(First) && !isa<CleanupEndPadInst>(First))
         EntryBlocks.push_back(&BB);
       ForExplicitEH = true;
     }
@@ -2965,6 +2965,8 @@ static const BasicBlock *getEHPadFromPredecessor(const BasicBlock *BB) {
   if (isa<CatchPadInst>(TI) || isa<CatchEndPadInst>(TI) ||
       isa<TerminatePadInst>(TI))
     return BB;
+  if (auto *CEPI = dyn_cast<CleanupEndPadInst>(TI))
+    return CEPI->getCleanupPad()->getParent();
   return cast<CleanupReturnInst>(TI)->getCleanupPad()->getParent();
 }
 
@@ -3035,18 +3037,27 @@ void llvm::calculateWinCXXEHStateNumbers(const Function *ParentFn,
   for (const BasicBlock &BB : *ParentFn) {
     if (!BB.isEHPad())
       continue;
+    const Instruction *FirstNonPHI = BB.getFirstNonPHI();
+    // Skip cleanupendpads; they are exits, not entries.
+    if (isa<CleanupEndPadInst>(FirstNonPHI))
+      continue;
     // Check if the EH Pad has no exceptional successors (i.e. it unwinds to
     // caller).  Cleanups are a little bit of a special case because their
     // control flow cannot be determined by looking at the pad but instead by
     // the pad's users.
     bool HasNoSuccessors = false;
-    const Instruction *FirstNonPHI = BB.getFirstNonPHI();
     if (FirstNonPHI->mayThrow()) {
       HasNoSuccessors = true;
     } else if (auto *CPI = dyn_cast<CleanupPadInst>(FirstNonPHI)) {
-      HasNoSuccessors =
-          CPI->use_empty() ||
-          cast<CleanupReturnInst>(CPI->user_back())->unwindsToCaller();
+      if (CPI->use_empty()) {
+        HasNoSuccessors = true;
+      } else {
+        const Instruction *User = CPI->user_back();
+        if (auto *CRI = dyn_cast<CleanupReturnInst>(User))
+          HasNoSuccessors = CRI->unwindsToCaller();
+        else
+          HasNoSuccessors = cast<CleanupEndPadInst>(User)->unwindsToCaller();
+      }
     }
 
     if (!HasNoSuccessors)
@@ -3096,7 +3107,8 @@ void WinEHPrepare::colorFunclets(Function &F,
     BasicBlock *Color;
     std::tie(Visiting, Color) = Worklist.pop_back_val();
     Instruction *VisitingHead = Visiting->getFirstNonPHI();
-    if (VisitingHead->isEHPad() && !isa<CatchEndPadInst>(VisitingHead)) {
+    if (VisitingHead->isEHPad() && !isa<CatchEndPadInst>(VisitingHead) &&
+        !isa<CleanupEndPadInst>(VisitingHead)) {
       // Mark this as a funclet head as a member of itself.
       FuncletBlocks[Visiting].insert(Visiting);
       // Queue exits with the parent color.
@@ -3132,7 +3144,8 @@ void WinEHPrepare::colorFunclets(Function &F,
       FuncletBlocks[Color].insert(Visiting);
       TerminatorInst *Terminator = Visiting->getTerminator();
       if (isa<CleanupReturnInst>(Terminator) ||
-          isa<CatchReturnInst>(Terminator)) {
+          isa<CatchReturnInst>(Terminator) ||
+          isa<CleanupEndPadInst>(Terminator)) {
         // These block's successors have already been queued with the parent
         // color.
         continue;
@@ -3288,11 +3301,16 @@ bool WinEHPrepare::prepareExplicitEH(
       bool IsUnreachableCatchret = false;
       if (auto *CRI = dyn_cast<CatchReturnInst>(TI))
         IsUnreachableCatchret = CRI->getCatchPad() != CatchPad;
-      // The token consumed by a CleanupPadInst must match the funclet token.
+      // The token consumed by a CleanupReturnInst must match the funclet token.
       bool IsUnreachableCleanupret = false;
       if (auto *CRI = dyn_cast<CleanupReturnInst>(TI))
         IsUnreachableCleanupret = CRI->getCleanupPad() != CleanupPad;
-      if (IsUnreachableRet || IsUnreachableCatchret || IsUnreachableCleanupret) {
+      // The token consumed by a CleanupEndPadInst must match the funclet token.
+      bool IsUnreachableCleanupendpad = false;
+      if (auto *CEPI = dyn_cast<CleanupEndPadInst>(TI))
+        IsUnreachableCleanupendpad = CEPI->getCleanupPad() != CleanupPad;
+      if (IsUnreachableRet || IsUnreachableCatchret ||
+          IsUnreachableCleanupret || IsUnreachableCleanupendpad) {
         new UnreachableInst(BB->getContext(), TI);
         TI->eraseFromParent();
       }

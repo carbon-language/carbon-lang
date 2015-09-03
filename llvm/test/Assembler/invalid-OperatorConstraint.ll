@@ -4,6 +4,9 @@
 ; RUN: sed -e s/.T4:// %s | not llvm-as -disable-output 2>&1 | FileCheck --check-prefix=CHECK4 %s
 ; RUN: sed -e s/.T5:// %s | not llvm-as -disable-output 2>&1 | FileCheck --check-prefix=CHECK5 %s
 ; RUN: sed -e s/.T6:// %s | not llvm-as -disable-output 2>&1 | FileCheck --check-prefix=CHECK6 %s
+; RUN: sed -e s/.T7:// %s | not llvm-as -disable-output 2>&1 | FileCheck --check-prefix=CHECK7 %s
+; RUN: sed -e s/.T8:// %s | not llvm-as -disable-output 2>&1 | FileCheck --check-prefix=CHECK8 %s
+; RUN: sed -e s/.T9:// %s | not llvm-as -disable-output 2>&1 | FileCheck --check-prefix=CHECK9 %s
 
 ;T1: define void @f() {
 ;T1:   entry:
@@ -57,3 +60,30 @@
 ;T6:   next:
 ;T6:     %x = catchpad [] to label %entry unwind label %next
 ;T6: }
+
+;T7: define void @f() {
+;T7:   entry:
+;T7:     ; operator constraint requires an operator
+;T7:     cleanupendpad undef unwind to caller
+;T7:     ; CHECK7: [[@LINE-1]]:20: error: Cleanuppad value required in this position
+;T7: }
+
+;T8: define void @f() {
+;T8:   entry:
+;T8:     %x = catchpad []
+;T8:             to label %next unwind label %entry
+;T8:   next:
+;T8:     ; cleanupret first operand's operator must be cleanuppad
+;T8:     cleanupendpad %x unwind label next
+;T8:     ; CHECK8: [[@LINE-1]]:20: error: '%x' is not a cleanuppad
+;T8: }
+
+;T9: define void @f() {
+;T9:   entry:
+;T9:     ; cleanupret's first operand's operator must be cleanuppad
+;T9:     ; (forward reference case)
+;T9:     cleanupendpad %x unwind label %next
+;T9:     ; CHECK9: [[@LINE-1]]:20: error: '%x' is not a cleanuppad
+;T9:   next:
+;T9:     %x = catchpad [] to label %entry unwind label %next
+;T9: }
