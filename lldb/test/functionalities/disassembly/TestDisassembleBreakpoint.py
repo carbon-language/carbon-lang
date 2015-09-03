@@ -38,7 +38,7 @@ class DisassemblyTestCase(TestBase):
         disassembly = self.res.GetOutput()
 
         # ARCH, if not specified, defaults to x86_64.
-        if self.getArchitecture() in ["", 'x86_64', 'i386']:
+        if self.getArchitecture() in ["", 'x86_64', 'i386', 'i686']:
             breakpoint_opcodes = ["int3"]
             instructions = [' mov', ' addl ', 'ret']
         elif self.getArchitecture() in ["arm", "aarch64"]:
