@@ -495,6 +495,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
   setTargetDAGCombine(ISD::INTRINSIC_VOID);
   setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
   setTargetDAGCombine(ISD::INSERT_VECTOR_ELT);
+  setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
 
   MaxStoresPerMemset = MaxStoresPerMemsetOptSize = 8;
   MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = 4;
@@ -8584,6 +8585,102 @@ static SDValue performPostLD1Combine(SDNode *N,
   return SDValue();
 }
 
+/// Target-specific DAG combine for the across vector reduction.
+/// This function specifically handles the final clean-up step of a vector
+/// reduction produced by the LoopVectorizer. It is the log2-shuffle pattern,
+/// consisting of log2(NumVectorElements) steps and, in each step, 2^(s)
+/// elements are reduced, where s is an induction variable from 0
+/// to log2(NumVectorElements).
+/// For example,
+///   %1 = vector_shuffle %0, <2,3,u,u>
+///   %2 = add %0, %1
+///   %3 = vector_shuffle %2, <1,u,u,u>
+///   %4 = add %2, %3
+///   %5 = extract_vector_elt %4, 0
+/// becomes :
+///   %0 = uaddv %0
+///   %1 = extract_vector_elt %0, 0
+///
+/// FIXME: Currently this function is implemented and tested specifically
+/// for the add reduction. We could also support other types of across lane
+/// reduction available in AArch64, including SMAXV, SMINV, UMAXV, UMINV,
+/// SADDLV, UADDLV, FMAXNMV, FMAXV, FMINNMV, FMINV.
+static SDValue
+performAcrossLaneReductionCombine(SDNode *N, SelectionDAG &DAG,
+                                  const AArch64Subtarget *Subtarget) {
+  if (!Subtarget->hasNEON())
+    return SDValue();
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+
+  // Check if the input vector is fed by the operator we want to handle.
+  // We specifically check only ADD for now.
+  if (N0->getOpcode() != ISD::ADD)
+    return SDValue();
+
+  // The vector extract idx must constant zero because we only expect the final
+  // result of the reduction is placed in lane 0.
+  if (!isa<ConstantSDNode>(N1) || cast<ConstantSDNode>(N1)->getZExtValue())
+    return SDValue();
+
+  EVT EltTy = N0.getValueType().getVectorElementType();
+  if (EltTy != MVT::i32 && EltTy != MVT::i16 && EltTy != MVT::i8)
+    return SDValue();
+
+  int NumVecElts = N0.getValueType().getVectorNumElements();
+  if (NumVecElts != 4 && NumVecElts != 8 && NumVecElts != 16)
+    return SDValue();
+
+  int NumExpectedSteps = APInt(8, NumVecElts).logBase2();
+  SDValue PreOp = N0;
+  // Iterate over each step of the across vector reduction.
+  for (int CurStep = 0; CurStep != NumExpectedSteps; ++CurStep) {
+    // We specifically check ADD for now.
+    if (PreOp.getOpcode() != ISD::ADD)
+      return SDValue();
+    SDValue CurOp = PreOp.getOperand(0);
+    SDValue Shuffle = PreOp.getOperand(1);
+    if (Shuffle.getOpcode() != ISD::VECTOR_SHUFFLE) {
+      // Try to swap the 1st and 2nd operand as add is commutative.
+      CurOp = PreOp.getOperand(1);
+      Shuffle = PreOp.getOperand(0);
+      if (Shuffle.getOpcode() != ISD::VECTOR_SHUFFLE)
+        return SDValue();
+    }
+    // Check if it forms one step of the across vector reduction.
+    // E.g.,
+    //   %cur = add %1, %0
+    //   %shuffle = vector_shuffle %cur, <2, 3, u, u>
+    //   %pre = add %cur, %shuffle
+    if (Shuffle.getOperand(0) != CurOp)
+      return SDValue();
+
+    int NumMaskElts = 1 << CurStep;
+    ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(Shuffle)->getMask();
+    // Check mask values in each step.
+    // We expect the shuffle mask in each step follows a specific pattern
+    // denoted here by the <M, U> form, where M is a sequence of integers
+    // starting from NumMaskElts, increasing by 1, and the number integers
+    // in M should be NumMaskElts. U is a sequence of UNDEFs and the number
+    // of undef in U should be NumVecElts - NumMaskElts.
+    // E.g., for <8 x i16>, mask values in each step should be :
+    //   step 0 : <1,u,u,u,u,u,u,u>
+    //   step 1 : <2,3,u,u,u,u,u,u>
+    //   step 2 : <4,5,6,7,u,u,u,u>
+    for (int i = 0; i < NumVecElts; ++i)
+      if ((i < NumMaskElts && Mask[i] != (NumMaskElts + i)) ||
+          (i >= NumMaskElts && !(Mask[i] < 0)))
+        return SDValue();
+
+    PreOp = CurOp;
+  }
+  SDLoc DL(N);
+  return DAG.getNode(
+      ISD::EXTRACT_VECTOR_ELT, DL, N->getValueType(0),
+      DAG.getNode(AArch64ISD::UADDV, DL, PreOp.getSimpleValueType(), PreOp),
+      DAG.getConstant(0, DL, MVT::i64));
+}
+
 /// Target-specific DAG combine function for NEON load/store intrinsics
 /// to merge base address updates.
 static SDValue performNEONPostLDSTCombine(SDNode *N,
@@ -9178,6 +9275,8 @@ SDValue AArch64TargetLowering::PerformDAGCombine(SDNode *N,
     return performNVCASTCombine(N);
   case ISD::INSERT_VECTOR_ELT:
     return performPostLD1Combine(N, DCI, true);
+  case ISD::EXTRACT_VECTOR_ELT:
+    return performAcrossLaneReductionCombine(N, DAG, Subtarget);
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN:
     switch (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue()) {
