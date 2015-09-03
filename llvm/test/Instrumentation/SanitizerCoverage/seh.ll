@@ -45,14 +45,12 @@ eh.resume:                                        ; preds = %lpad
   resume { i8*, i32 } %1
 }
 
-; Check that the alloca remains static and the localescape call remains in the
-; entry block.
+; Check that we don't do any instrumentation.
 
 ; CHECK-LABEL: define i32 @main()
-; CHECK-NOT: br {{.*}}label
-; CHECK: %__exception_code = alloca i32, align 4
-; CHECK-NOT: br {{.*}}label
-; CHECK: call void (...) @llvm.localescape(i32* nonnull %__exception_code)
+; CHECK-NOT: load atomic i32, i32* {{.*}} monotonic, align 4, !nosanitize
+; CHECK-NOT: call void @__sanitizer_cov
+; CHECK: ret i32
 
 ; Function Attrs: nounwind
 define internal i32 @"\01?filt$0@0@main@@"() #1 {

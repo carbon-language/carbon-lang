@@ -31,6 +31,7 @@
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
@@ -290,6 +291,12 @@ bool SanitizerCoverageModule::runOnFunction(Function &F) {
   if (F.empty()) return false;
   if (F.getName().find(".module_ctor") != std::string::npos)
     return false;  // Should not instrument sanitizer init functions.
+  // Don't instrument functions using SEH for now. Splitting basic blocks like
+  // we do for coverage breaks WinEHPrepare.
+  // FIXME: Remove this when SEH no longer uses landingpad pattern matching.
+  if (F.hasPersonalityFn() &&
+      isAsynchronousEHPersonality(classifyEHPersonality(F.getPersonalityFn())))
+    return false;
   if (Options.CoverageType >= SanitizerCoverageOptions::SCK_Edge)
     SplitAllCriticalEdges(F);
   SmallVector<Instruction*, 8> IndirCalls;
