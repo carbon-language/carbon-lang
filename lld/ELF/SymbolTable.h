@@ -37,11 +37,12 @@ public:
   // Print an error message on undefined symbols.
   void reportRemainingUndefines();
 
-  // The writer needs to infer the machine type from the object files.
-  std::vector<std::unique_ptr<ObjectFileBase>> ObjectFiles;
-
   const llvm::DenseMap<StringRef, Symbol *> &getSymbols() const {
     return Symtab;
+  }
+
+  const std::vector<std::unique_ptr<ObjectFileBase>> &getObjectFiles() const {
+    return ObjectFiles;
   }
 
 private:
@@ -52,6 +53,9 @@ private:
 
   llvm::DenseMap<StringRef, Symbol *> Symtab;
   llvm::BumpPtrAllocator Alloc;
+
+  // The writer needs to infer the machine type from the object files.
+  std::vector<std::unique_ptr<ObjectFileBase>> ObjectFiles;
 };
 
 } // namespace elf2
