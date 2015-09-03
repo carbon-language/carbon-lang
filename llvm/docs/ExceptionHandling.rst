@@ -401,6 +401,20 @@ intrinsic serves as a placeholder to delimit code before a catch handler is
 outlined.  After the handler is outlined, this intrinsic is simply removed.
 
 
+.. _llvm.eh.exceptionpointer:
+
+``llvm.eh.exceptionpointer``
+----------------------
+
+.. code-block:: llvm
+
+  i8 addrspace(N)* @llvm.eh.padparam.pNi8(token %catchpad)
+
+
+This intrinsic retrieves a pointer to the exception caught by the given
+``catchpad``.
+
+
 SJLJ Intrinsics
 ---------------
 

@@ -436,6 +436,11 @@ def int_eh_begincatch : Intrinsic<[], [llvm_ptr_ty, llvm_ptr_ty],
                                   [NoCapture<0>, NoCapture<1>]>;
 def int_eh_endcatch : Intrinsic<[], []>;
 
+// eh.exceptionpointer returns the pointer to the exception caught by
+// the given `catchpad`.
+def int_eh_exceptionpointer : Intrinsic<[llvm_anyptr_ty], [llvm_token_ty],
+                                        [IntrNoMem]>;
+
 // Represents the list of actions to take when an exception is thrown.
 def int_eh_actions : Intrinsic<[llvm_ptr_ty], [llvm_vararg_ty], []>;
 

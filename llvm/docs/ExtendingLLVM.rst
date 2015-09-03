@@ -49,9 +49,9 @@ function and then be turned into an instruction if warranted.
 
    Add an entry for your intrinsic.  Describe its memory access characteristics
    for optimization (this controls whether it will be DCE'd, CSE'd, etc). Note
-   that any intrinsic using the ``llvm_int_ty`` type for an argument will
-   be deemed by ``tblgen`` as overloaded and the corresponding suffix will
-   be required on the intrinsic's name.
+   that any intrinsic using one of the ``llvm_any*_ty`` types for an argument or
+   return type will be deemed by ``tblgen`` as overloaded and the corresponding
+   suffix will be required on the intrinsic's name.
 
 #. ``llvm/lib/Analysis/ConstantFolding.cpp``:
 

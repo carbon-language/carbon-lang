@@ -3681,6 +3681,11 @@ void Verifier::visitIntrinsicCallSite(Intrinsic::ID ID, CallSite CS) {
            "gc.relocate: relocating a pointer shouldn't change its address space", CS);
     break;
   }
+  case Intrinsic::eh_exceptionpointer: {
+    Assert(isa<CatchPadInst>(CS.getArgOperand(0)),
+           "eh.exceptionpointer argument must be a catchpad", CS);
+    break;
+  }
   };
 }
 
