@@ -29,8 +29,6 @@ import progress
 import signal
 import subprocess
 import sys
-import textwrap
-import time
 import inspect
 import unittest2
 import lldbtest_config
@@ -244,6 +242,13 @@ failed = False
 lldb_platform_name = None
 lldb_platform_url = None
 lldb_platform_working_dir = None
+
+# Parallel execution settings
+is_inferior_test_runner = False
+multiprocess_test_subdir = None
+num_threads = None
+output_on_success = False
+no_multiprocess_test_runner = False
 
 def usage(parser):
     parser.print_help()
@@ -485,6 +490,11 @@ def parseOptionsAndInitTestdirs():
     global lldb_platform_url
     global lldb_platform_working_dir
     global setCrashInfoHook
+    global is_inferior_test_runner
+    global multiprocess_test_subdir
+    global num_threads
+    global output_on_success
+    global no_multiprocess_test_runner
 
     do_help = False
 
@@ -493,7 +503,7 @@ def parseOptionsAndInitTestdirs():
 
     parser = dotest_args.create_parser()
     args = dotest_args.parse_args(parser, sys.argv[1:])
-    
+
     if args.unset_env_varnames:
         for env_var in args.unset_env_varnames:
             if env_var in os.environ:
@@ -606,7 +616,7 @@ def parseOptionsAndInitTestdirs():
 
     if args.d:
         sys.stdout.write("Suspending the process %d to wait for debugger to attach...\n" % os.getpid())
-        sys.stdout.flush()    
+        sys.stdout.flush()
         os.kill(os.getpid(), signal.SIGSTOP)
 
     if args.e:
@@ -739,6 +749,21 @@ def parseOptionsAndInitTestdirs():
     # Do not specify both '-m' and '+m' at the same time.
     if dont_do_lldbmi_test and just_do_lldbmi_test:
         usage(parser)
+
+    if args.no_multiprocess:
+        no_multiprocess_test_runner = True
+
+    if args.inferior:
+        is_inferior_test_runner = True
+
+    if args.output_on_success:
+        output_on_success = True
+
+    if args.num_threads:
+        num_threads = args.num_threads
+
+    if args.test_subdir:
+        multiprocess_test_subdir = args.test_subdir
 
     if args.lldb_platform_name:
         lldb_platform_name = args.lldb_platform_name
@@ -1228,6 +1253,14 @@ def exitTestSuite(exitCode = None):
     if exitCode:
         sys.exit(exitCode)
 
+
+def isMultiprocessTestRunner():
+    # We're not multiprocess when we're either explicitly
+    # the inferior (as specified by the multiprocess test
+    # runner) OR we've been told to skip using the multiprocess
+    # test runner
+    return not (is_inferior_test_runner or no_multiprocess_test_runner)
+
 # On MacOS X, check to make sure that domain for com.apple.DebugSymbols defaults
 # does not exist before proceeding to running the test suite.
 if sys.platform.startswith("darwin"):
@@ -1239,6 +1272,14 @@ if sys.platform.startswith("darwin"):
 # then, we walk the directory trees and collect the tests into our test suite.
 #
 parseOptionsAndInitTestdirs()
+
+# If we are running as the multiprocess test runner, kick off the
+# multiprocess test runner here.
+if isMultiprocessTestRunner():
+    import dosep
+    dosep.main(output_on_success, num_threads, multiprocess_test_subdir)
+    raise "should never get here"
+
 setupSysPath()
 setupCrashInfoHook()
 

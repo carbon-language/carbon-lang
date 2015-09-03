@@ -38,7 +38,6 @@ import fnmatch
 import platform
 import re
 import dotest_args
-import shlex
 import subprocess
 import sys
 
@@ -131,8 +130,6 @@ def parse_test_results(output):
                                 result, re.MULTILINE)
         unexpected_success_count = re.search("^RESULT:.*([0-9]+) unexpected successes",
                                              result, re.MULTILINE)
-        this_fail_count = 0
-        this_error_count = 0
         if pass_count is not None:
             passes = passes + int(pass_count.group(1))
         if fail_count is not None:
@@ -183,7 +180,7 @@ def process_dir(root, files, test_root, dotest_argv):
         script_file = os.path.join(test_root, "dotest.py")
         command = ([sys.executable, script_file] +
                    dotest_argv +
-                   ["-p", name, root])
+                   ["--inferior", "-p", name, root])
 
         timeout_name = os.path.basename(os.path.splitext(name)[0]).upper()
 
@@ -201,7 +198,7 @@ def process_dir(root, files, test_root, dotest_argv):
               if status != ePassed]
     unexpected_passes = [name for name, _, _, _, unexpected_successes in results
                          if unexpected_successes > 0]
-    
+
     pass_count = sum([result[2] for result in results])
     fail_count = sum([result[3] for result in results])
 
@@ -284,7 +281,6 @@ def getExpectedTimeouts(platform_name):
     else:
         m = re.search('remote-(\w+)', platform_name)
         target = m.group(1)
-        remote = True
 
     expected_timeout = set()
 
@@ -358,7 +354,27 @@ def find(pattern, path):
     return result
 
 
-def main():
+def main(print_details_on_success, num_threads, test_subdir):
+    """Run dotest.py in inferior mode in parallel.
+
+    @param print_details_on_success the parsed value of the output-on-success
+    command line argument.  When True, details of a successful dotest inferior
+    are printed even when everything succeeds.  The normal behavior is to
+    not print any details when all the inferior tests pass.
+
+    @param num_threads the parsed value of the num-threads command line
+    argument.
+
+    @param test_subdir optionally specifies a subdir to limit testing
+    within.  May be None if the entire test tree is to be used.  This subdir
+    is assumed to be relative to the lldb/test root of the test hierarchy.
+    """
+
+    dotest_argv = sys.argv[1:]
+
+    global output_on_success
+    output_on_success = print_details_on_success
+
     # We can't use sys.path[0] to determine the script directory
     # because it doesn't work under a debugger
     test_directory = os.path.dirname(os.path.realpath(__file__))
@@ -382,37 +398,8 @@ Run lldb test suite using a separate process for each test file.
        E.g., export LLDB_TEST_TIMEOUT=0
        or    export LLDB_TESTCONCURRENTEVENTS_TIMEOUT=0
 """)
-    parser.add_option(
-        '-o', '--options',
-        type='string', action='store',
-        dest='dotest_options',
-        help="""The options passed to 'dotest.py' if specified.""")
-
-    parser.add_option(
-        '-s', '--output-on-success',
-        action='store_true',
-        dest='output_on_success',
-        default=False,
-        help="""Print full output of 'dotest.py' even when it succeeds.""")
-
-    parser.add_option(
-        '-t', '--threads',
-        type='int',
-        dest='num_threads',
-        help="""The number of threads to use when running tests separately.""")
-
-    opts, args = parser.parse_args()
-    dotest_option_string = opts.dotest_options
-
-    is_posix = (os.name == "posix")
-    dotest_argv = (shlex.split(dotest_option_string, posix=is_posix)
-                   if dotest_option_string
-                   else [])
-
     parser = dotest_args.create_parser()
     global dotest_options
-    global output_on_success
-    output_on_success = opts.output_on_success
     dotest_options = dotest_args.parse_args(parser, dotest_argv)
 
     if not dotest_options.s:
@@ -428,19 +415,17 @@ Run lldb test suite using a separate process for each test file.
     session_dir = os.path.join(os.getcwd(), dotest_options.s)
 
     # The root directory was specified on the command line
-    if len(args) == 0:
-        test_subdir = test_directory
+    if test_subdir and len(test_subdir) > 0:
+        test_subdir = os.path.join(test_directory, test_subdir)
     else:
-        test_subdir = os.path.join(test_directory, args[0])
+        test_subdir = test_directory
 
     # clean core files in test tree from previous runs (Linux)
     cores = find('core.*', test_subdir)
     for core in cores:
         os.unlink(core)
 
-    if opts.num_threads:
-        num_threads = opts.num_threads
-    else:
+    if not num_threads:
         num_threads_str = os.environ.get("LLDB_TEST_THREADS")
         if num_threads_str:
             num_threads = int(num_threads_str)
@@ -511,4 +496,8 @@ Run lldb test suite using a separate process for each test file.
     sys.exit(exit_code)
 
 if __name__ == '__main__':
-    main()
+    sys.stderr.write(
+        "error: dosep.py no longer supports being called directly. "
+        "Please call dotest.py directly.  The dosep.py-specific arguments "
+        "have been added under the Parallel processing arguments.\n")
+    sys.exit(128)

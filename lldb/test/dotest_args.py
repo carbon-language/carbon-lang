@@ -107,6 +107,33 @@ def create_parser():
     group.set_defaults(disable_crash_dialog=True)
     group.set_defaults(hide_inferior_console=True)
 
+    group = parser.add_argument_group('Parallel execution options')
+    group.add_argument(
+        '--inferior',
+        action='store_true',
+        help=('specify this invocation is a multiprocess inferior, '
+              'used internally'))
+    group.add_argument(
+        '--no-multiprocess',
+        action='store_true',
+        help='skip running the multiprocess test runner')
+    group.add_argument(
+        '--output-on-success',
+        action='store_true',
+        help=('print full output of the dotest.py inferior, '
+              'even when all tests succeed'))
+    group.add_argument(
+        '--threads',
+        type=int,
+        dest='num_threads',
+        help=('The number of threads/processes to use when running tests '
+              'separately, defaults to the number of CPU cores available'))
+    parser.add_argument(
+        '--test-subdir',
+        action='store',
+        help='Specify a test subdirectory to use relative to the test root dir'
+    )
+
     # Remove the reference to our helper function
     del X
 

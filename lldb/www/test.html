@@ -67,19 +67,30 @@
             </code>
 
             <p>
-              Besides <code>dotest.py</code>, there is also <code>dosep.py</code>, which runs
-              multiple instances of <code>dotest.py</code> in parallel, thereby greatly
-              decreasing the time it takes to run the full testsuite. The number of concurrent
-              tests is controlled by the <code>LLDB_TEST_THREADS</code> environment variable or
-              the <code>--threads</code> command line parameter. The default value is the number
-              of CPUs on your system. To pass additional options to <code>dotest.py</code>,
-              specify those options as an <code>-o</code> argument to <code>dosep.py</code>. For
-              example, the command
+              The dotest.py script runs tests in parallel by default.
+              To disable the parallel test running feature, use the
+              <code>--no-multiprocess</code> flag. The number of
+              concurrent tests is controlled by
+              the <code>LLDB_TEST_THREADS</code> environment variable
+              or the <code>--threads</code> command line parameter.
+              The default value is the number of CPU cores on your
+              system.
             </p>
-            <code>python dosep.py -o "--executable bin/lldb -C bin/clang"</code>
             <p>
-              will specify the lldb and clang executables to test for each dotest invocation.
-              <code>ninja check-lldb</code> is wrapper around <code>dosep.py</code>.
+              The parallel test running feature will handle an
+              additional <code>--test-subdir SUBDIR</code> arg.  When
+              specified, SUBDIR is relative to the root test directory
+              and will limit all parallel test running to that
+              sudirectory's tree of tests.
+            </p>
+            <p>
+              The parallel test runner will run all tests within a
+              given directory serially, but will run multiple
+              directories concurrently.  Thus, as a test writer, we
+              provide serialized test run semantics within a
+              directory.  Note child directories are considered
+              entirely separate, so two child directories could be
+              running in parallel with a parent directory.
             </p>
 
             <h3>Running the test-suite remotely</h3>

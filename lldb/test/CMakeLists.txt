@@ -62,16 +62,16 @@ endif()
 
 add_python_test_target(check-lldb-single
   ${LLDB_SOURCE_DIR}/test/dotest.py
-  "${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS}"
+  "--no-multiprocess;${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS}"
   "Testing LLDB with args: ${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS}"
   )
 
-set(LLDB_DOSEP_ARGS -o;\"-q;${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS}\")
+set(LLDB_DOTEST_ARGS -q;${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS})
 
 # If tests crash cause LLDB to crash, or things are otherwise unstable, or if machine-parsable
 # output is desired (i.e. in continuous integration contexts) check-lldb-single is a better target.
 add_python_test_target(check-lldb
-  ${LLDB_SOURCE_DIR}/test/dosep.py
-  "${LLDB_DOSEP_ARGS}"
-  "Testing LLDB (with a separate subprocess per test)"
+  ${LLDB_SOURCE_DIR}/test/dotest.py
+  "${LLDB_DOTEST_ARGS}"
+  "Testing LLDB (parallel execution, with a separate subprocess per test)"
   )
