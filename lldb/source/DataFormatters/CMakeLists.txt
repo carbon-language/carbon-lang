@@ -1,5 +1,3 @@
-set(LLVM_NO_RTTI 1)
-
 add_lldb_library(lldbDataFormatters
   CF.cpp
   Cocoa.cpp

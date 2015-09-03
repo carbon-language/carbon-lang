@@ -1,5 +1,3 @@
-set(LLVM_NO_RTTI 1)
-
 # We depend on AppleThreadPlanStepThroughObjCTrampoline.h
 include_directories(../../LanguageRuntime/ObjC/AppleObjCRuntime)
 

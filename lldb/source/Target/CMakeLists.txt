@@ -1,5 +1,3 @@
-set(LLVM_NO_RTTI 1)
-
 include_directories(../Plugins/Process/Utility)
 
 add_lldb_library(lldbTarget

@@ -1,5 +1,3 @@
-set(LLVM_NO_RTTI 1)
-
 file(GLOB SWIG_INTERFACES interface/*.i)
 file(GLOB_RECURSE SWIG_SOURCES *.swig)
 set(SWIG_HEADERS

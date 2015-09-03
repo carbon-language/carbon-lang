@@ -1,5 +1,3 @@
-set(LLVM_NO_RTTI 1)
-
 if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
 include_directories(
   ../../../../llvm/include

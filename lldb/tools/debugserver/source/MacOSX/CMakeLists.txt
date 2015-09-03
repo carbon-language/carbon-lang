@@ -1,5 +1,3 @@
-set(LLVM_NO_RTTI 1)
-
 #add_subdirectory(arm64)
 #add_subdirectory(arm)
 add_subdirectory(i386)

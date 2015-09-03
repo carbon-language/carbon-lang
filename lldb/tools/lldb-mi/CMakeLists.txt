@@ -1,5 +1,3 @@
-set(LLVM_NO_RTTI 1)
-
 set(LLDB_MI_SOURCES
   MICmdArgContext.cpp
   MICmdArgSet.cpp

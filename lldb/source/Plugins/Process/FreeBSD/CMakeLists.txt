@@ -1,5 +1,3 @@
-set(LLVM_NO_RTTI 1)
-
 include_directories(.)
 include_directories(../POSIX)
 include_directories(../Utility)

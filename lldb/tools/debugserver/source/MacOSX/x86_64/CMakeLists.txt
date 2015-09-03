@@ -1,5 +1,3 @@
-set(LLVM_NO_RTTI 1)
-
 # Due to sources including headers like:
 # #include "MacOSX/i386/DNBArchImplI386.h"
 # we must include the grandparent directory...
