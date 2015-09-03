@@ -110,7 +110,7 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
   if (FirstNonLocal > NumSymbols)
     error("Invalid sh_info in symbol table");
   Syms = llvm::make_range(Syms.begin() + FirstNonLocal, Syms.end());
-  SymbolBodies.reserve(NumSymbols);
+  SymbolBodies.reserve(NumSymbols - FirstNonLocal);
   for (const Elf_Sym &Sym : Syms)
     SymbolBodies.push_back(createSymbolBody(StringTable, &Sym));
 }
