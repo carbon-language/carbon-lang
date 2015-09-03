@@ -197,6 +197,13 @@ void PPCTTIImpl::getUnrollingPreferences(Loop *L,
 }
 
 bool PPCTTIImpl::enableAggressiveInterleaving(bool LoopHasReductions) {
+  // On the A2, always unroll aggressively. For QPX unaligned loads, we depend
+  // on combining the loads generated for consecutive accesses, and failure to
+  // do so is particularly expensive. This makes it much more likely (compared
+  // to only using concatenation unrolling).
+  if (ST->getDarwinDirective() == PPC::DIR_A2)
+    return true;
+
   return LoopHasReductions;
 }
 
