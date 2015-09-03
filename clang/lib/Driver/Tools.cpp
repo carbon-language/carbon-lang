@@ -2335,6 +2335,12 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
       } else if (Value.startswith("-mcpu") || Value.startswith("-mfpu") ||
                  Value.startswith("-mhwdiv") || Value.startswith("-march")) {
         // Do nothing, we'll validate it later.
+      } else if (Value == "--trap") {
+        CmdArgs.push_back("-target-feature");
+        CmdArgs.push_back("+use-tcc-in-div");
+      } else if (Value == "--break") {
+        CmdArgs.push_back("-target-feature");
+        CmdArgs.push_back("-use-tcc-in-div");
       } else {
         D.Diag(diag::err_drv_unsupported_option_argument)
             << A->getOption().getName() << Value;
