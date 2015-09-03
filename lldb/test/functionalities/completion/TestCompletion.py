@@ -269,6 +269,8 @@ class CommandLineCompletionTestCase(TestBase):
                 child.send("%s\t" % str_input)
                 child.sendline('')
                 child.expect_exact(prompt)
+                child.sendline('')
+                child.expect_exact(prompt)
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
