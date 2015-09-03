@@ -1479,12 +1479,7 @@ Process::SetExitStatus (int status, const char *cstr)
     else
         m_exit_string.clear();
 
-    // When we exit, we no longer need to the communication channel
-    m_stdio_communication.Disconnect();
-    m_stdio_communication.StopReadThread();
-    m_stdin_forward = false;
-
-    // And we don't need the input reader anymore as well
+    // When we exit, we don't need the input reader anymore
     if (m_process_input_reader)
     {
         m_process_input_reader->SetIsDone(true);
@@ -4159,6 +4154,10 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
         case eStateExited:
         case eStateUnloaded:
             m_stdio_communication.SynchronizeWithReadThread();
+            m_stdio_communication.Disconnect();
+            m_stdio_communication.StopReadThread();
+            m_stdin_forward = false;
+
             // fall-through
         case eStateConnected:
         case eStateAttaching:
