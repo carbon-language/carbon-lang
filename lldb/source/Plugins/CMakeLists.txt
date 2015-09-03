@@ -1,6 +1,7 @@
 add_subdirectory(ABI)
 add_subdirectory(Disassembler)
 add_subdirectory(DynamicLoader)
+add_subdirectory(ExpressionParser)
 add_subdirectory(Instruction)
 add_subdirectory(InstrumentationRuntime)
 add_subdirectory(JITLoader)

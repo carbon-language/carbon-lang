@@ -71,6 +71,7 @@ set( LLDB_USED_LIBS
   lldbPluginSystemRuntimeMacOSX
   lldbPluginProcessElfCore
   lldbPluginJITLoaderGDB
+  lldbPluginExpressionParserClang
   )
 
 # Windows-only libraries
