@@ -47,6 +47,8 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
+#include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace clang;
@@ -498,6 +500,7 @@ FindCodeSymbolInContext
 (
     const ConstString &name,
     SymbolContext &sym_ctx,
+    uint32_t name_type_mask,
     SymbolContextList &sc_list
 )
 {
@@ -506,7 +509,7 @@ FindCodeSymbolInContext
     if (sym_ctx.module_sp)
         sym_ctx.module_sp->FindFunctions(name,
                                          NULL,
-                                         eFunctionNameTypeAuto,
+                                         name_type_mask,
                                          true,  // include_symbols
                                          false, // include_inlines
                                          true,  // append
@@ -515,7 +518,7 @@ FindCodeSymbolInContext
     {
         if (sym_ctx.target_sp)
             sym_ctx.target_sp->GetImages().FindFunctions(name,
-                                                         eFunctionNameTypeAuto,
+                                                         name_type_mask,
                                                          true,  // include_symbols
                                                          false, // include_inlines
                                                          true,  // append
@@ -573,10 +576,33 @@ ClangExpressionDeclMap::GetFunctionAddress
 
     SymbolContextList sc_list;
 
-    FindCodeSymbolInContext(name, m_parser_vars->m_sym_ctx, sc_list);
+    FindCodeSymbolInContext(name, m_parser_vars->m_sym_ctx, eFunctionNameTypeAuto, sc_list);
 
     uint32_t sc_list_size = sc_list.GetSize();
-    
+
+    if (sc_list_size == 0)
+    {
+        SymbolContext &sc = m_parser_vars->m_sym_ctx;
+        if (sc.comp_unit)
+        {
+            LanguageType lang_type = sc.comp_unit->GetLanguage();
+            if (Language::LanguageIsCPlusPlus(lang_type) &&
+                CPlusPlusLanguage::IsCPPMangledName(name.AsCString()))
+            {
+                // 1. Demangle the name
+                Mangled mangled(name, true);
+                ConstString demangled = mangled.GetDemangledName(lang_type);
+
+                if (demangled)
+                {
+                    FindCodeSymbolInContext(
+                        demangled, m_parser_vars->m_sym_ctx, eFunctionNameTypeFull, sc_list);
+                    sc_list_size = sc_list.GetSize();
+                }
+            }
+        }
+    }
+
     if (sc_list_size == 0)
     {
         // We occasionally get debug information in which a const function is reported
@@ -592,7 +618,8 @@ ClangExpressionDeclMap::GetFunctionAddress
             if (log)
                 log->Printf("Failed to find symbols given non-const name %s; trying %s", name.GetCString(), fixed_name.GetCString());
 
-            FindCodeSymbolInContext(fixed_name, m_parser_vars->m_sym_ctx, sc_list);
+            FindCodeSymbolInContext(
+                fixed_name, m_parser_vars->m_sym_ctx, eFunctionNameTypeAuto, sc_list);
             sc_list_size = sc_list.GetSize();
         }
     }

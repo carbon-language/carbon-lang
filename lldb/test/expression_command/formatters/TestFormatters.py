@@ -26,7 +26,6 @@ class ExprFormattersTestCase(TestBase):
         self.do_my_test()
 
     @expectedFailureFreeBSD('llvm.org/pr19011') # Newer Clang omits C1 complete object constructor
-    @expectedFailureLinux('llvm.org/pr19011', ['clang'])
     @expectedFailureWindows("llvm.org/pr21765")
     @skipIfTargetAndroid() # skipping to avoid crashing the test runner
     @expectedFailureAndroid('llvm.org/pr24691') # we hit an assertion in clang
