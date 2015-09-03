@@ -404,7 +404,7 @@ outlined.  After the handler is outlined, this intrinsic is simply removed.
 .. _llvm.eh.exceptionpointer:
 
 ``llvm.eh.exceptionpointer``
-----------------------
+----------------------------
 
 .. code-block:: llvm
 
