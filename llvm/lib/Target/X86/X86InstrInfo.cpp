@@ -6401,6 +6401,10 @@ static bool isAssociativeAndCommutative(const MachineInstr &Inst) {
   case X86::OR16rr:
   case X86::OR32rr:
   case X86::OR64rr:
+  case X86::XOR8rr:
+  case X86::XOR16rr:
+  case X86::XOR32rr:
+  case X86::XOR64rr:
   case X86::IMUL16rr:
   case X86::IMUL32rr:
   case X86::IMUL64rr:
