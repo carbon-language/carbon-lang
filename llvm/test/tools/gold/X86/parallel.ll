@@ -1,10 +1,7 @@
 ; RUN: llvm-as -o %t.bc %s
-; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so -u foo -u bar -plugin-opt jobs=2 -plugin-opt save-temps -o %t %t.bc
+; RUN: env LD_PRELOAD=%llvmshlibdir/LLVMgold.so %gold -plugin %llvmshlibdir/LLVMgold.so -u foo -u bar -plugin-opt jobs=2 -plugin-opt save-temps -o %t %t.bc
 ; RUN: llvm-nm %t.o0 | FileCheck --check-prefix=CHECK0 %s
 ; RUN: llvm-nm %t.o1 | FileCheck --check-prefix=CHECK1 %s
-
-; FIXME: Invesigating. std::thread crashes in _dl_fixup().
-; REQUIRES: disabled
 
 target triple = "x86_64-unknown-linux-gnu"
 
