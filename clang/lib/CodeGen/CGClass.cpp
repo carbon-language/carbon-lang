@@ -1584,9 +1584,9 @@ namespace {
     }
 
   private:
-    /// \param layoutStartOffset: index of the ASTRecordLayout field to
+    /// \param layoutStartOffset index of the ASTRecordLayout field to
     ///     start poisoning (inclusive)
-    /// \param layoutEndOffset: index of the ASTRecordLayout field to
+    /// \param layoutEndOffset index of the ASTRecordLayout field to
     ///     end poisoning (exclusive)
     void PoisonBlock(CodeGenFunction &CGF, unsigned layoutStartOffset,
                      unsigned layoutEndOffset) {
