@@ -30,6 +30,7 @@
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/OptionGroupFormat.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
@@ -2460,12 +2461,79 @@ CommandObjectTypeSummaryList::CommandOptions::g_option_table[] =
 
 class CommandObjectTypeCategoryEnable : public CommandObjectParsed
 {
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions (){}
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+            
+            switch (short_option)
+            {
+                case 'l':
+                    if (option_arg)
+                    {
+                        m_language = Language::GetLanguageTypeFromString(option_arg);
+                        if (m_language == lldb::eLanguageTypeUnknown)
+                            error.SetErrorStringWithFormat ("unrecognized language '%s'", option_arg);
+                    }
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            m_language = lldb::eLanguageTypeUnknown;
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        lldb::LanguageType m_language;
+        
+    };
+    
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
 public:
     CommandObjectTypeCategoryEnable (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
                              "type category enable",
                              "Enable a category as a source of formatters.",
-                             NULL)
+                             NULL),
+        m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -2489,9 +2557,10 @@ protected:
     {
         const size_t argc = command.GetArgumentCount();
         
-        if (argc < 1)
+        if (argc < 1 &&
+            m_options.m_language == lldb::eLanguageTypeUnknown)
         {
-            result.AppendErrorWithFormat ("%s takes 1 or more args.\n", m_cmd_name.c_str());
+            result.AppendErrorWithFormat ("%s takes arguments and/or a language", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
@@ -2500,7 +2569,7 @@ protected:
         {
             DataVisualization::Categories::EnableStar();
         }
-        else
+        else if (argc > 0)
         {
             for (int i = argc - 1; i >= 0; i--)
             {
@@ -2525,10 +2594,20 @@ protected:
             }
         }
         
+        if (m_options.m_language != lldb::eLanguageTypeUnknown)
+            DataVisualization::Categories::Enable(m_options.m_language);
+        
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
     
+};
+
+OptionDefinition
+CommandObjectTypeCategoryEnable::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "language", 'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLanguage,  "Enable the category for this language."},
+    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -2610,12 +2689,79 @@ protected:
 
 class CommandObjectTypeCategoryDisable : public CommandObjectParsed
 {
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions (){}
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+            
+            switch (short_option)
+            {
+                case 'l':
+                    if (option_arg)
+                    {
+                        m_language = Language::GetLanguageTypeFromString(option_arg);
+                        if (m_language == lldb::eLanguageTypeUnknown)
+                            error.SetErrorStringWithFormat ("unrecognized language '%s'", option_arg);
+                    }
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            m_language = lldb::eLanguageTypeUnknown;
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        lldb::LanguageType m_language;
+        
+    };
+    
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
 public:
     CommandObjectTypeCategoryDisable (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
                              "type category disable",
                              "Disable a category as a source of formatters.",
-                             NULL)
+                             NULL),
+        m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -2639,9 +2785,10 @@ protected:
     {
         const size_t argc = command.GetArgumentCount();
         
-        if (argc < 1)
+        if (argc < 1 &&
+            m_options.m_language == lldb::eLanguageTypeUnknown)
         {
-            result.AppendErrorWithFormat ("%s takes 1 or more args.\n", m_cmd_name.c_str());
+            result.AppendErrorWithFormat ("%s takes arguments and/or a language", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
@@ -2650,7 +2797,7 @@ protected:
         {
             DataVisualization::Categories::DisableStar();
         }
-        else
+        else if (argc > 0)
         {
             // the order is not relevant here
             for (int i = argc - 1; i >= 0; i--)
@@ -2667,11 +2814,21 @@ protected:
                 DataVisualization::Categories::Disable(typeCS);
             }
         }
+        
+        if (m_options.m_language != lldb::eLanguageTypeUnknown)
+            DataVisualization::Categories::Disable(m_options.m_language);
 
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
     
+};
+
+OptionDefinition
+CommandObjectTypeCategoryDisable::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "language", 'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLanguage,  "Enable the category for this language."},
+    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------

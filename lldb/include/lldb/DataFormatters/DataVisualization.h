@@ -134,7 +134,13 @@ public:
                 TypeCategoryMap::Position = TypeCategoryMap::Default);
         
         static void
+        Enable (lldb::LanguageType lang_type);
+        
+        static void
         Disable (const ConstString& category);
+        
+        static void
+        Disable (lldb::LanguageType lang_type);
 
         static void
         Enable (const lldb::TypeCategoryImplSP& category,

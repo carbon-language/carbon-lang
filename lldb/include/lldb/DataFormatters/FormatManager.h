@@ -258,6 +258,9 @@ public:
     
     static ConstString
     GetTypeForCache (ValueObject&, lldb::DynamicValueType);
+    
+    LanguageCategory*
+    GetCategoryForLanguage (lldb::LanguageType lang_type);
 
 private:
     
@@ -271,9 +274,6 @@ private:
                         bool did_strip_ref,
                         bool did_strip_typedef,
                         bool root_level = false);
-    
-    LanguageCategory*
-    GetCategoryForLanguage (lldb::LanguageType lang_type);
     
     FormatCache m_format_cache;
     NamedSummariesMap m_named_summaries_map;

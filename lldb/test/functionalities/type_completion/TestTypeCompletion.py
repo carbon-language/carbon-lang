@@ -14,14 +14,12 @@ class TypeCompletionTestCase(TestBase):
 
     @skipUnlessDarwin
     @dsym_test
-    @unittest2.expectedFailure("xfail pending a way to disable language categories")
     def test_with_dsym_and_run_command(self):
         """Check that types only get completed when necessary."""
         self.buildDsym()
         self.type_completion_commands()
 
     @dwarf_test
-    @unittest2.expectedFailure("xfail pending a way to disable language categories")
     @expectedFailureIcc # often fails with 'NameAndAddress should be valid'
     # Fails with gcc 4.8.1 with llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
     def test_with_dwarf_and_run_command(self):
@@ -49,11 +47,9 @@ class TypeCompletionTestCase(TestBase):
         # This is the function to remove the custom formats in order to have a
         # clean slate for the next test case.
         def cleanup():
-            self.runCmd('type category enable gnu-libstdc++', check=False)
-            self.runCmd('type category enable libcxx', check=False)
+            self.runCmd('type category enable -l c++', check=False)
 
-        self.runCmd('type category disable gnu-libstdc++', check=False)
-        self.runCmd('type category disable libcxx', check=False)
+        self.runCmd('type category disable -l c++', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
@@ -117,8 +113,7 @@ class TypeCompletionTestCase(TestBase):
         self.assertTrue(string.IsValid(), 'std::string should be valid')
         self.assertFalse(string.IsTypeComplete(), 'std::string complete but it should not be')
 
-        self.runCmd('type category enable gnu-libstdc++', check=False)
-        self.runCmd('type category enable libcxx', check=False)
+        self.runCmd('type category enable -l c++', check=False)
         self.runCmd('frame variable guy --show-types')
 
         p_vector = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable('p')
