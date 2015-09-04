@@ -1791,7 +1791,17 @@ class Base(unittest2.TestCase):
         else:
             # success!  (and we don't want log files) delete log files
             for log_file in log_files_for_this_test:
-                os.unlink(log_file)
+                try:
+                    os.unlink(log_file)
+                except:
+                    # We've seen consistent unlink failures on Windows, perhaps because the
+                    # just-created log file is being scanned by anti-virus.  Empirically, this
+                    # sleep-and-retry approach allows tests to succeed much more reliably.
+                    # Attempts to figure out exactly what process was still holding a file handle
+                    # have failed because running instrumentation like Process Monitor seems to
+                    # slow things down enough that the problem becomes much less consistent.
+                    time.sleep(0.5)
+                    os.unlink(log_file)
 
     # ====================================================
     # Config. methods supported through a plugin interface
