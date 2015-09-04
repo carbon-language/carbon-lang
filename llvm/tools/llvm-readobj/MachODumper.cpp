@@ -767,7 +767,7 @@ void MachODumper::printMachOSegment() {
       W.printHex("vmaddr", MOSegment.vmaddr);
       W.printHex("vmsize", MOSegment.vmsize);
       W.printNumber("fileoff", MOSegment.fileoff);
-      W.printNumber("filesize", MOSegment.fileoff);
+      W.printNumber("filesize", MOSegment.filesize);
       W.printString("maxprot", getMask(MOSegment.maxprot));
       W.printString("initprot", getMask(MOSegment.initprot));
       W.printNumber("nsects", MOSegment.nsects);
