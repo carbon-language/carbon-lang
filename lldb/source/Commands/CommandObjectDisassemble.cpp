@@ -289,7 +289,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
 
     if (!m_options.arch.IsValid())
     {
-        result.AppendError ("use the --arch option or set the target architecure to disassemble");
+        result.AppendError ("use the --arch option or set the target architecture to disassemble");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
