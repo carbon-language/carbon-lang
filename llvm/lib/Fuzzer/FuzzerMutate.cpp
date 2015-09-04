@@ -71,7 +71,7 @@ size_t MutationDispatcher::Mutate_ShuffleBytes(uint8_t *Data, size_t Size,
 size_t MutationDispatcher::Mutate_EraseByte(uint8_t *Data, size_t Size,
                                             size_t MaxSize) {
   assert(Size);
-  if (Size == 1) return Size;
+  if (Size == 1) return 0;
   size_t Idx = Rand(Size);
   // Erase Data[Idx].
   memmove(Data + Idx, Data + Idx + 1, Size - Idx - 1);
@@ -80,7 +80,7 @@ size_t MutationDispatcher::Mutate_EraseByte(uint8_t *Data, size_t Size,
 
 size_t MutationDispatcher::Mutate_InsertByte(uint8_t *Data, size_t Size,
                                              size_t MaxSize) {
-  if (Size == MaxSize) return Size;
+  if (Size == MaxSize) return 0;
   size_t Idx = Rand(Size + 1);
   // Insert new value at Data[Idx].
   memmove(Data + Idx + 1, Data + Idx, Size - Idx);
@@ -106,9 +106,10 @@ size_t MutationDispatcher::Mutate_AddWordFromDictionary(uint8_t *Data,
                                                         size_t Size,
                                                         size_t MaxSize) {
   auto &D = MDImpl->Dictionary;
-  if (D.empty()) return Size;  // FIXME: indicate failure.
+  assert(!D.empty());
+  if (D.empty()) return 0;
   const Unit &Word = D[Rand(D.size())];
-  if (Size + Word.size() > MaxSize) return Size;
+  if (Size + Word.size() > MaxSize) return 0;
   size_t Idx = Rand(Size + 1);
   memmove(Data + Idx + Word.size(), Data + Idx, Size - Idx);
   memcpy(Data + Idx, Word.data(), Word.size());
@@ -125,9 +126,15 @@ size_t MutationDispatcher::Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
     return MaxSize;
   }
   assert(Size > 0);
-  size_t MutatorIdx = Rand(MDImpl->Mutators.size());
-  Size = (this->*(MDImpl->Mutators[MutatorIdx]))(Data, Size, MaxSize);
-  assert(Size > 0);
+  // Some mutations may fail (e.g. can't insert more bytes if Size == MaxSize),
+  // in which case they will return 0.
+  // Try several times before returning un-mutated data.
+  for (int Iter = 0; Iter < 10; Iter++) {
+    size_t MutatorIdx = Rand(MDImpl->Mutators.size());
+    size_t NewSize =
+        (this->*(MDImpl->Mutators[MutatorIdx]))(Data, Size, MaxSize);
+    if (NewSize) return NewSize;
+  }
   return Size;
 }
 
