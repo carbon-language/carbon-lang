@@ -903,6 +903,10 @@ public:
   /// for C++ records.
   llvm::FoldingSet<SpecialMemberOverloadResult> SpecialMemberCache;
 
+  /// \brief A cache of the flags available in enumerations with the flag_bits
+  /// attribute.
+  mutable llvm::DenseMap<const EnumDecl*, llvm::APInt> FlagBitsCache;
+
   /// \brief The kind of translation unit we are processing.
   ///
   /// When we're processing a complete translation unit, Sema will perform

@@ -698,8 +698,6 @@ static bool ShouldDiagnoseSwitchCaseNotInEnum(const Sema &S,
                                               EnumValsTy::iterator &EI,
                                               EnumValsTy::iterator &EIEnd,
                                               const llvm::APSInt &Val) {
-  bool FlagType = ED->hasAttr<FlagEnumAttr>();
-
   if (const DeclRefExpr *DRE =
           dyn_cast<DeclRefExpr>(CaseExpr->IgnoreParenImpCasts())) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
@@ -711,7 +709,7 @@ static bool ShouldDiagnoseSwitchCaseNotInEnum(const Sema &S,
     }
   }
 
-  if (FlagType) {
+  if (ED->hasAttr<FlagEnumAttr>()) {
     return !S.IsValueInFlagEnum(ED, Val, false);
   } else {
     while (EI != EIEnd && EI->first < Val)

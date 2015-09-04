@@ -747,18 +747,6 @@ def FlagEnum : InheritableAttr {
   let Subjects = SubjectList<[Enum]>;
   let Documentation = [FlagEnumDocs];
   let LangOpts = [COnly];
-  let AdditionalMembers = [{
-private:
-    llvm::APInt FlagBits;
-public:
-    llvm::APInt &getFlagBits() {
-      return FlagBits;
-    }
-
-    const llvm::APInt &getFlagBits() const {
-      return FlagBits;
-    }
-}];
 }
 
 def Flatten : InheritableAttr {
