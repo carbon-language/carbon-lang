@@ -29,7 +29,7 @@
     if (PyInt_Check($input))
         $1 = PyInt_AsLong($input);
     else if (PyLong_Check($input))
-        $1 = PyLong_AsLong($input);
+        $1 = PyLong_AsLongLong($input);
     else
     {
         PyErr_SetString(PyExc_ValueError, "Expecting an integer");
