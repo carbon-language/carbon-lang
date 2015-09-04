@@ -9,6 +9,7 @@ add_host_subdirectory(common
   common/FileCache.cpp
   common/FileSpec.cpp
   common/FileSystem.cpp
+  common/GetOptInc.cpp
   common/Host.cpp
   common/HostInfoBase.cpp
   common/HostNativeThreadBase.cpp
@@ -67,7 +68,6 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     windows/ProcessRunLock.cpp
     windows/ThisThread.cpp
     windows/Windows.cpp
-    windows/getopt/GetOptInc.cpp
     )
 else()
   add_host_subdirectory(posix

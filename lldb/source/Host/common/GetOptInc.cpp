@@ -1,20 +1,19 @@
-#include "lldb/Host/windows/getopt/GetOptInc.h"
+#include "lldb/Host/common/GetOptInc.h"
+
+#if defined(REPLACE_GETOPT) || defined(REPLACE_GETOPT_LONG) || defined(REPLACE_GETOPT_LONG_ONLY)
 
 // getopt.cpp
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(__clang__) && defined(_MSC_VER)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wwritable-strings"
-#endif
-
+#if defined(REPLACE_GETOPT)
 int opterr = 1;     /* if error message should be printed */
 int optind = 1;     /* index into parent argv vector */
 int optopt = '?';   /* character checked for validity */
 int optreset;       /* reset getopt */
 char *optarg;       /* argument associated with option */
+#endif
 
 #define PRINT_ERROR ((opterr) && (*options != ':'))
 
@@ -36,7 +35,7 @@ static int parse_long_options(char * const *, const char *,
 static int gcd(int, int);
 static void permute_args(int, int, int, char * const *);
 
-static char *place = EMSG; /* option letter processing */
+static const char *place = EMSG; /* option letter processing */
 
 /* XXX: set optreset to 1 rather than these two */
 static int nonopt_start = -1; /* first non option argument (for permute) */
@@ -113,7 +112,7 @@ const struct option *long_options, int *idx, int short_too)
     size_t current_argv_len;
     int i, match;
 
-    current_argv = place;
+    current_argv = const_cast<char*>(place);
     match = -1;
 
     optind++;
@@ -400,7 +399,7 @@ start:
     else {                /* takes (optional) argument */
         optarg = NULL;
         if (*place)         /* no white space */
-            optarg = place;
+            optarg = const_cast<char*>(place);
         else if (oli[1] != ':') {   /* arg not optional */
             if (++optind >= nargc) {    /* no arg */
                 place = EMSG;
@@ -425,6 +424,7 @@ start:
 *
 * [eventually this will replace the BSD getopt]
 */
+#if defined(REPLACE_GETOPT)
 int
 getopt(int nargc, char * const *nargv, const char *options)
 {
@@ -439,11 +439,13 @@ getopt(int nargc, char * const *nargv, const char *options)
     */
     return (getopt_internal(nargc, nargv, options, NULL, NULL, 0));
 }
+#endif
 
 /*
 * getopt_long --
 *  Parse argc/argv argument vector.
 */
+#if defined(REPLACE_GETOPT_LONG)
 int
 getopt_long(int nargc, char * const *nargv, const char *options,
 const struct option *long_options, int *idx)
@@ -451,11 +453,13 @@ const struct option *long_options, int *idx)
     return (getopt_internal(nargc, nargv, options, long_options, idx,
         FLAG_PERMUTE));
 }
+#endif
 
 /*
 * getopt_long_only --
 *  Parse argc/argv argument vector.
 */
+#if defined(REPLACE_GETOPT_LONG_ONLY)
 int
 getopt_long_only(int nargc, char * const *nargv, const char *options,
 const struct option *long_options, int *idx)
@@ -464,7 +468,6 @@ const struct option *long_options, int *idx)
     return (getopt_internal(nargc, nargv, options, long_options, idx,
         FLAG_PERMUTE | FLAG_LONGONLY));
 }
+#endif
 
-#if defined(__clang__) && defined(_MSC_VER)
-#pragma clang diagnostic pop
 #endif
