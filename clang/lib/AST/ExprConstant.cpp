@@ -6249,8 +6249,8 @@ static QualType getObjectType(APValue::LValueBase B) {
 }
 
 /// A more selective version of E->IgnoreParenCasts for
-/// TryEvaluateBuiltinObjectSize. This ignores casts/parens that serve only to
-/// change the type of E.
+/// TryEvaluateBuiltinObjectSize. This ignores some casts/parens that serve only
+/// to change the type of E.
 /// Ex. For E = `(short*)((char*)(&foo))`, returns `&foo`
 ///
 /// Always returns an RValue with a pointer representation.
@@ -6259,7 +6259,14 @@ static const Expr *ignorePointerCastsAndParens(const Expr *E) {
 
   auto *NoParens = E->IgnoreParens();
   auto *Cast = dyn_cast<CastExpr>(NoParens);
-  if (Cast == nullptr || Cast->getCastKind() == CK_DerivedToBase)
+  if (Cast == nullptr)
+    return NoParens;
+
+  // We only conservatively allow a few kinds of casts, because this code is
+  // inherently a simple solution that seeks to support the common case.
+  auto CastKind = Cast->getCastKind();
+  if (CastKind != CK_NoOp && CastKind != CK_BitCast &&
+      CastKind != CK_AddressSpaceConversion)
     return NoParens;
 
   auto *SubExpr = Cast->getSubExpr();
