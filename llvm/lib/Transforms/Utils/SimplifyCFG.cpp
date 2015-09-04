@@ -3092,8 +3092,6 @@ bool SimplifyCFGOpt::SimplifyCleanupReturn(CleanupReturnInst *RI) {
           NewTPI->takeName(TPI);
           NewTPI->setDebugLoc(TPI->getDebugLoc());
           TPI->eraseFromParent();
-        } else if (auto *CPI = dyn_cast<CatchPadInst>(TI)) {
-          llvm_unreachable("A catchpad may not unwind to a cleanuppad.");
         } else {
           llvm_unreachable("Unexpected predecessor to cleanup pad.");
         }
@@ -3111,8 +3109,6 @@ bool SimplifyCFGOpt::SimplifyCleanupReturn(CleanupReturnInst *RI) {
         CEP->setUnwindDest(UnwindDest);
       else if (auto *TPI = dyn_cast<TerminatePadInst>(TI))
         TPI->setUnwindDest(UnwindDest);
-      else if (auto *CPI = dyn_cast<CatchPadInst>(TI))
-        llvm_unreachable("A catchpad may not unwind to a cleanuppad.");
       else
         llvm_unreachable("Unexpected predecessor to cleanup pad.");
     }
