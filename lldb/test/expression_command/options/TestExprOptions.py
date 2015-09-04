@@ -26,15 +26,7 @@ class ExprOptionsTestCase(TestBase):
         self.line = line_number('main.cpp', '// breakpoint_in_main')
         self.exe = os.path.join(os.getcwd(), "a.out")
 
-    @skipUnlessDarwin
-    def test_expr_options_objc_cpp(self):
-        self.expr_options(test_objc = True, test_cpp = True)
-
-    @skipIfDarwin # Already covered by test_expr_options_objc_cpp
-    def test_expr_options_cpp(self):
-        self.expr_options(test_objc = False, test_cpp = True)
-
-    def expr_options(self, test_objc, test_cpp):
+    def test_expr_options(self):
         """These expression command options should work as expected."""
         self.buildDefault()
 
@@ -59,49 +51,26 @@ class ExprOptionsTestCase(TestBase):
         frame = threads[0].GetFrameAtIndex(0)
         options = lldb.SBExpressionOptions()
 
-        if test_objc:
-            # -- test --language on ObjC builtin type using the SB API's --
-            # Make sure we can evaluate the ObjC builtin type 'id':
-            val = frame.EvaluateExpression('id my_id = 0; my_id')
-            self.assertTrue(val.IsValid())
-            self.assertTrue(val.GetError().Success())
-            self.assertEqual(val.GetValueAsUnsigned(0), 0)
-            self.DebugSBValue(val)
+        # test --language on C++ expression using the SB API's
 
-            # Make sure it still works if language is set to ObjC++:
-            options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
-            val = frame.EvaluateExpression('id my_id = 0; my_id', options)
-            self.assertTrue(val.IsValid())
-            self.assertTrue(val.GetError().Success())
-            self.assertEqual(val.GetValueAsUnsigned(0), 0)
-            self.DebugSBValue(val)
+        # Make sure we can evaluate 'ns::func'.
+        val = frame.EvaluateExpression('foo != nullptr')
+        self.assertTrue(val.IsValid())
+        self.assertTrue(val.GetError().Success())
+        self.DebugSBValue(val)
 
-            # Make sure it fails if language is set to C:
-            options.SetLanguage(lldb.eLanguageTypeC)
-            val = frame.EvaluateExpression('id my_id = 0; my_id', options)
-            self.assertTrue(val.IsValid())
-            self.assertFalse(val.GetError().Success())
+        # Make sure it still works if language is set to C++11:
+        options.SetLanguage(lldb.eLanguageTypeC_plus_plus_11)
+        val = frame.EvaluateExpression('foo != nullptr', options)
+        self.assertTrue(val.IsValid())
+        self.assertTrue(val.GetError().Success())
+        self.DebugSBValue(val)
 
-        if test_cpp:
-            # -- test --language on C++ expression using the SB API's --
-            # Make sure we can evaluate 'ns::func'.
-            val = frame.EvaluateExpression('ns::func')
-            self.assertTrue(val.IsValid())
-            self.assertTrue(val.GetError().Success())
-            self.DebugSBValue(val)
-
-            # Make sure it still works if language is set to C++:
-            options.SetLanguage(lldb.eLanguageTypeC_plus_plus)
-            val = frame.EvaluateExpression('ns::func', options)
-            self.assertTrue(val.IsValid())
-            self.assertTrue(val.GetError().Success())
-            self.DebugSBValue(val)
-
-            # Make sure it fails if language is set to C:
-            options.SetLanguage(lldb.eLanguageTypeC)
-            val = frame.EvaluateExpression('ns::func', options)
-            self.assertTrue(val.IsValid())
-            self.assertFalse(val.GetError().Success())
+        # Make sure it fails if language is set to C:
+        options.SetLanguage(lldb.eLanguageTypeC)
+        val = frame.EvaluateExpression('foo != nullptr', options)
+        self.assertTrue(val.IsValid())
+        self.assertFalse(val.GetError().Success())
 
 if __name__ == '__main__':
     import atexit

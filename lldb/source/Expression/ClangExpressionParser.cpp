@@ -210,17 +210,38 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     switch (language)
     {
     case lldb::eLanguageTypeC:
+    case lldb::eLanguageTypeC89:
+    case lldb::eLanguageTypeC99:
+    case lldb::eLanguageTypeC11:
+        // FIXME: the following language option is a temporary workaround,
+        // to "ask for C, get C++."
+        // For now, the expression parser must use C++ anytime the
+        // language is a C family language, because the expression parser
+        // uses features of C++ to capture values.
+        m_compiler->getLangOpts().CPlusPlus = true;
         break;
     case lldb::eLanguageTypeObjC:
         m_compiler->getLangOpts().ObjC1 = true;
         m_compiler->getLangOpts().ObjC2 = true;
+        // FIXME: the following language option is a temporary workaround,
+        // to "ask for ObjC, get ObjC++" (see comment above).
+        m_compiler->getLangOpts().CPlusPlus = true;
         break;
     case lldb::eLanguageTypeC_plus_plus:
-        m_compiler->getLangOpts().CPlusPlus = true;
+    case lldb::eLanguageTypeC_plus_plus_11:
+    case lldb::eLanguageTypeC_plus_plus_14:
         m_compiler->getLangOpts().CPlusPlus11 = true;
         m_compiler->getHeaderSearchOpts().UseLibcxx = true;
+        // fall thru ...
+    case lldb::eLanguageTypeC_plus_plus_03:
+        m_compiler->getLangOpts().CPlusPlus = true;
+        // FIXME: the following language option is a temporary workaround,
+        // to "ask for C++, get ObjC++".  Apple hopes to remove this requirement
+        // on non-Apple platforms, but for now it is needed.
+        m_compiler->getLangOpts().ObjC1 = true;
         break;
     case lldb::eLanguageTypeObjC_plus_plus:
+    case lldb::eLanguageTypeUnknown:
     default:
         m_compiler->getLangOpts().ObjC1 = true;
         m_compiler->getLangOpts().ObjC2 = true;

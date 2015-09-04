@@ -1316,6 +1316,15 @@ StackFrame::IsInlined ()
     return false;
 }
 
+lldb::LanguageType
+StackFrame::GetLanguage ()
+{
+    CompileUnit *cu = GetSymbolContext(eSymbolContextCompUnit).comp_unit;
+    if (cu)
+        return cu->GetLanguage();
+    return lldb::eLanguageTypeUnknown;
+}
+
 TargetSP
 StackFrame::CalculateTarget ()
 {

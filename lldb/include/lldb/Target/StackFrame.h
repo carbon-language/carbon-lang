@@ -466,6 +466,16 @@ public:
     TrackGlobalVariable (const lldb::VariableSP &variable_sp, lldb::DynamicValueType use_dynamic);
 
     //------------------------------------------------------------------
+    /// Query this frame to determine what the default language should be
+    /// when parsing expressions given the execution context.
+    ///
+    /// @return
+    ///   The language of the frame if known, else lldb::eLanguageTypeUnknown.
+    //------------------------------------------------------------------
+    lldb::LanguageType
+    GetLanguage ();
+
+    //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
     lldb::TargetSP

@@ -289,8 +289,8 @@ CommandObjectExpression::EvaluateExpression
     if (target)
     {
         lldb::ValueObjectSP result_valobj_sp;
-
         bool keep_in_memory = true;
+        StackFrame *frame = exe_ctx.GetFramePtr();
 
         EvaluateExpressionOptions options;
         options.SetCoerceToId(m_varobj_options.use_objc);
@@ -301,11 +301,15 @@ CommandObjectExpression::EvaluateExpression
         options.SetTryAllThreads(m_command_options.try_all_threads);
         options.SetDebug(m_command_options.debug);
         
-        // If the language was not specified, set it from target's properties
+        // If the language was not specified in the expression command,
+        // set it to the language in the target's properties if
+        // specified, else default to the langage for the frame.
         if (m_command_options.language != eLanguageTypeUnknown)
             options.SetLanguage(m_command_options.language);
-        else
+        else if (target->GetLanguage() != eLanguageTypeUnknown)
             options.SetLanguage(target->GetLanguage());
+        else if (frame)
+            options.SetLanguage(frame->GetLanguage());
 
         // If there is any chance we are going to stop and want to see
         // what went wrong with our expression, we should generate debug info
@@ -318,8 +322,7 @@ CommandObjectExpression::EvaluateExpression
         else
             options.SetTimeoutUsec(0);
 
-        target->EvaluateExpression(expr, exe_ctx.GetFramePtr(),
-                                   result_valobj_sp, options);
+        target->EvaluateExpression(expr, frame, result_valobj_sp, options);
 
         if (result_valobj_sp)
         {
