@@ -14,7 +14,10 @@
 
 #if defined(__linux__)
 
-#if defined(__x86_64__) || (defined(__i386__) && defined(__SSE2__))
+// Assembly instrumentation is broken on x86 Android (x86 + PIC + shared runtime
+// library). See https://github.com/google/sanitizers/issues/353
+#if defined(__x86_64__) ||                                                     \
+    (defined(__i386__) && defined(__SSE2__) && !defined(__ANDROID__))
 
 #include <emmintrin.h>
 
@@ -70,7 +73,7 @@ DECLARE_ASM_REP_MOVS(U8, "movsq");
 
 #endif // defined(__x86_64__)
 
-#if defined(__i386__) && defined(__SSE2__)
+#if defined(__i386__) && defined(__SSE2__) && !defined(__ANDROID__)
 
 namespace {
 
@@ -108,7 +111,7 @@ template<> Type asm_read<Type>(Type *ptr) {        \
 
 #endif  // defined(__i386__) && defined(__SSE2__)
 
-#if defined(__x86_64__) || (defined(__i386__) && defined(__SSE2__))
+#if defined(__x86_64__) || (defined(__i386__) && defined(__SSE2__) && !defined(__ANDROID__))
 
 namespace {
 
