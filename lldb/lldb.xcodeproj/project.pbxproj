@@ -7257,7 +7257,7 @@
 				CURRENT_PROJECT_VERSION = 350.99.0;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 350.99.0;
-				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
+				EXPORTED_SYMBOLS_FILE = "source/API/liblldb.xcode.exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -7330,7 +7330,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 350.99.0;
-				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
+				EXPORTED_SYMBOLS_FILE = "source/API/liblldb.xcode.exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -7720,7 +7720,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 350.99.0;
-				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
+				EXPORTED_SYMBOLS_FILE = "source/API/liblldb.xcode.exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8007,7 +8007,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				DEAD_CODE_STRIPPING = YES;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/exports";
+				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/lldb-server.exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8080,7 +8080,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				DEAD_CODE_STRIPPING = YES;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/exports";
+				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/lldb-server.exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8150,7 +8150,7 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/exports";
+				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/lldb-server.exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8430,7 +8430,7 @@
 				CURRENT_PROJECT_VERSION = 350.99.0;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 350.99.0;
-				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
+				EXPORTED_SYMBOLS_FILE = "source/API/liblldb.xcode.exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8556,7 +8556,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				DEAD_CODE_STRIPPING = YES;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/exports";
+				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/lldb-server.exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8720,7 +8720,7 @@
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				EXPORTED_SYMBOLS_FILE = tools/argdumper/exports;
+				EXPORTED_SYMBOLS_FILE = tools/argdumper/argdumper.exports;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8787,7 +8787,7 @@
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				EXPORTED_SYMBOLS_FILE = tools/argdumper/exports;
+				EXPORTED_SYMBOLS_FILE = tools/argdumper/argdumper.exports;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8856,7 +8856,7 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
-				EXPORTED_SYMBOLS_FILE = tools/argdumper/exports;
+				EXPORTED_SYMBOLS_FILE = tools/argdumper/argdumper.exports;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8921,7 +8921,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
-				EXPORTED_SYMBOLS_FILE = tools/argdumper/exports;
+				EXPORTED_SYMBOLS_FILE = tools/argdumper/argdumper.exports;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
