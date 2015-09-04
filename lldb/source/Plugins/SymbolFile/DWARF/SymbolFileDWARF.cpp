@@ -845,6 +845,9 @@ SymbolFileDWARF::DebugInfo() const
 DWARFCompileUnit*
 SymbolFileDWARF::GetDWARFCompileUnit(lldb_private::CompileUnit *comp_unit)
 {
+    if (!comp_unit)
+        return nullptr;
+
     DWARFDebugInfo* info = DebugInfo();
     if (info)
     {
