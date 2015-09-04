@@ -207,6 +207,10 @@ bool PPCTTIImpl::enableAggressiveInterleaving(bool LoopHasReductions) {
   return LoopHasReductions;
 }
 
+bool PPCTTIImpl::enableInterleavedAccessVectorization() {
+  return true;
+}
+
 unsigned PPCTTIImpl::getNumberOfRegisters(bool Vector) {
   if (Vector && !ST->hasAltivec() && !ST->hasQPX())
     return 0;
@@ -266,7 +270,15 @@ int PPCTTIImpl::getArithmeticInstrCost(
 
 int PPCTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
                                Type *SubTp) {
-  return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
+  // Legalize the type.
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
+
+  // PPC, for both Altivec/VSX and QPX, support cheap arbitrary permutations
+  // (at least in the sense that there need only be one non-loop-invariant
+  // instruction). We need one such shuffle instruction for each actual
+  // register (this is not true for arbitrary shuffles, but is true for the
+  // structured types of shuffles covered by TTI::ShuffleKind).
+  return LT.first;
 }
 
 int PPCTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
@@ -371,6 +383,30 @@ int PPCTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
   if (Src->isVectorTy() && Opcode == Instruction::Store)
     for (int i = 0, e = Src->getVectorNumElements(); i < e; ++i)
       Cost += getVectorInstrCost(Instruction::ExtractElement, Src, i);
+
+  return Cost;
+}
+
+int PPCTTIImpl::getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
+                                           unsigned Factor,
+                                           ArrayRef<unsigned> Indices,
+                                           unsigned Alignment,
+                                           unsigned AddressSpace) {
+  assert(isa<VectorType>(VecTy) &&
+         "Expect a vector type for interleaved memory op");
+
+  // Legalize the type.
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, VecTy);
+
+  // Firstly, the cost of load/store operation.
+  int Cost = getMemoryOpCost(Opcode, VecTy, Alignment, AddressSpace);
+
+  // PPC, for both Altivec/VSX and QPX, support cheap arbitrary permutations
+  // (at least in the sense that there need only be one non-loop-invariant
+  // instruction). For each result vector, we need one shuffle per incoming
+  // vector (except that the first shuffle can take two incoming vectors
+  // because it does not need to take itself).
+  Cost += Factor*(LT.first-1);
 
   return Cost;
 }
