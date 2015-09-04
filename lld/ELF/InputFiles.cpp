@@ -13,6 +13,7 @@
 #include "Symbols.h"
 #include "llvm/ADT/STLExtras.h"
 
+using namespace llvm;
 using namespace llvm::ELF;
 using namespace llvm::object;
 
@@ -148,6 +149,36 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case STB_WEAK:
     return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, *Chunks[SecIndex]);
   }
+}
+
+void ArchiveFile::parse() {
+  auto ArchiveOrErr = Archive::create(MB);
+  error(ArchiveOrErr, "Failed to parse archive");
+  File = std::move(*ArchiveOrErr);
+
+  // Allocate a buffer for Lazy objects.
+  size_t NumSyms = File->getNumberOfSymbols();
+  LazySymbols.reserve(NumSyms);
+
+  // Read the symbol table to construct Lazy objects.
+  for (const Archive::Symbol &Sym : File->symbols())
+    LazySymbols.emplace_back(this, Sym);
+}
+
+// Returns a buffer pointing to a member file containing a given symbol.
+MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
+  ErrorOr<Archive::child_iterator> ItOrErr = Sym->getMember();
+  error(ItOrErr,
+        Twine("Could not get the member for symbol ") + Sym->getName());
+  Archive::child_iterator It = *ItOrErr;
+
+  if (!Seen.insert(It->getChildOffset()).second) {
+    return MemoryBufferRef();
+  }
+  ErrorOr<MemoryBufferRef> Ret = It->getMemoryBufferRef();
+  error(Ret, Twine("Could not get the buffer for the member defining symbol ") +
+                 Sym->getName());
+  return *Ret;
 }
 
 template <class ELFT> void SharedFile<ELFT>::parse() { this->openELF(MB); }

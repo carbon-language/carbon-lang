@@ -54,11 +54,16 @@ public:
   }
 
 private:
+  Symbol *insert(SymbolBody *New);
   template <class ELFT> void addELFFile(ELFFileBase *File);
   void addELFFile(ELFFileBase *File);
+  void addLazy(Lazy *New);
+  void addMemberFile(Lazy *Body);
 
   template <class ELFT> void init();
   template <class ELFT> void resolve(SymbolBody *Body);
+
+  std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;
 
   llvm::DenseMap<StringRef, Symbol *> Symtab;
   llvm::BumpPtrAllocator Alloc;

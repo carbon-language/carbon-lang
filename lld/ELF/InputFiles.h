@@ -11,19 +11,27 @@
 #define LLD_ELF_INPUT_FILES_H
 
 #include "Chunks.h"
+#include "Error.h"
 #include "Symbols.h"
 
 #include "lld/Core/LLVM.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Object/Archive.h"
 #include "llvm/Object/ELF.h"
 
 namespace lld {
 namespace elf2 {
+
+using llvm::object::Archive;
+
+class Lazy;
 class SymbolBody;
 
 // The root class of input files.
 class InputFile {
 public:
-  enum Kind { ObjectKind, SharedKind };
+  enum Kind { ObjectKind, SharedKind, ArchiveKind };
   Kind kind() const { return FileKind; }
   virtual ~InputFile() {}
 
@@ -137,6 +145,25 @@ private:
   ArrayRef<Elf_Word> SymtabSHNDX;
 };
 
+class ArchiveFile : public InputFile {
+public:
+  explicit ArchiveFile(MemoryBufferRef M) : InputFile(ArchiveKind, M) {}
+  static bool classof(const InputFile *F) { return F->kind() == ArchiveKind; }
+  void parse() override;
+
+  // Returns a memory buffer for a given symbol. An empty memory buffer
+  // is returned if we have already returned the same memory buffer.
+  // (So that we don't instantiate same members more than once.)
+  MemoryBufferRef getMember(const Archive::Symbol *Sym);
+
+  llvm::MutableArrayRef<Lazy> getLazySymbols() { return LazySymbols; }
+
+private:
+  std::unique_ptr<Archive> File;
+  std::vector<Lazy> LazySymbols;
+  llvm::DenseSet<uint64_t> Seen;
+};
+
 // .so file.
 class SharedFileBase : public ELFFileBase {
 public:
@@ -158,6 +185,28 @@ public:
 
   void parse() override;
 };
+
+template <template <class> class T>
+std::unique_ptr<ELFFileBase> createELFFile(MemoryBufferRef MB) {
+  using namespace llvm;
+
+  std::pair<unsigned char, unsigned char> Type =
+    object::getElfArchType(MB.getBuffer());
+  if (Type.second != ELF::ELFDATA2LSB && Type.second != ELF::ELFDATA2MSB)
+    error("Invalid data encoding");
+
+  if (Type.first == ELF::ELFCLASS32) {
+    if (Type.second == ELF::ELFDATA2LSB)
+      return make_unique<T<object::ELF32LE>>(MB);
+    return make_unique<T<object::ELF32BE>>(MB);
+  }
+  if (Type.first == ELF::ELFCLASS64) {
+    if (Type.second == ELF::ELFDATA2LSB)
+      return make_unique<T<object::ELF64LE>>(MB);
+    return make_unique<T<object::ELF64BE>>(MB);
+  }
+  error("Invalid file class");
+}
 
 } // namespace elf2
 } // namespace lld

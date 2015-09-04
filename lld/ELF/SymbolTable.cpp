@@ -23,8 +23,13 @@ SymbolTable::SymbolTable() {
 void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   File->parse();
   InputFile *FileP = File.release();
-  auto *P = cast<ELFFileBase>(FileP);
-  addELFFile(P);
+  if (auto *AF = dyn_cast<ArchiveFile>(FileP)) {
+    ArchiveFiles.emplace_back(AF);
+    for (Lazy &Sym : AF->getLazySymbols())
+      addLazy(&Sym);
+    return;
+  }
+  addELFFile(cast<ELFFileBase>(FileP));
 }
 
 template <class ELFT> void SymbolTable::init() {
@@ -78,22 +83,64 @@ void SymbolTable::reportRemainingUndefines() {
 // This function resolves conflicts if there's an existing symbol with
 // the same name. Decisions are made based on symbol type.
 template <class ELFT> void SymbolTable::resolve(SymbolBody *New) {
+  Symbol *Sym = insert(New);
+  if (Sym->Body == New)
+    return;
+
+  SymbolBody *Existing = Sym->Body;
+
+  if (Lazy *L = dyn_cast<Lazy>(Existing)) {
+    if (New->isUndefined()) {
+      addMemberFile(L);
+      return;
+    }
+
+    // Found a definition for something also in an archive. Ignore the archive
+    // definition.
+    Sym->Body = New;
+    return;
+  }
+
+  // compare() returns -1, 0, or 1 if the lhs symbol is less preferable,
+  // equivalent (conflicting), or more preferable, respectively.
+  int comp = Existing->compare<ELFT>(New);
+  if (comp < 0)
+    Sym->Body = New;
+  if (comp == 0)
+    error(Twine("duplicate symbol: ") + Sym->Body->getName());
+}
+
+Symbol *SymbolTable::insert(SymbolBody *New) {
   // Find an existing Symbol or create and insert a new one.
   StringRef Name = New->getName();
   Symbol *&Sym = Symtab[Name];
   if (!Sym) {
     Sym = new (Alloc) Symbol(New);
     New->setBackref(Sym);
-    return;
+    return Sym;
   }
   New->setBackref(Sym);
+  return Sym;
+}
 
-  // compare() returns -1, 0, or 1 if the lhs symbol is less preferable,
-  // equivalent (conflicting), or more preferable, respectively.
+void SymbolTable::addLazy(Lazy *New) {
+  Symbol *Sym = insert(New);
+  if (Sym->Body == New)
+    return;
   SymbolBody *Existing = Sym->Body;
-  int comp = Existing->compare<ELFT>(New);
-  if (comp < 0)
-    Sym->Body = New;
-  if (comp == 0)
-    error(Twine("duplicate symbol: ") + Name);
+  if (Existing->isDefined() || Existing->isLazy())
+    return;
+  Sym->Body = New;
+  assert(Existing->isUndefined() && "Unexpected symbol kind.");
+  addMemberFile(New);
+}
+
+void SymbolTable::addMemberFile(Lazy *Body) {
+  std::unique_ptr<InputFile> File = Body->getMember();
+
+  // getMember returns nullptr if the member was already read from the library.
+  if (!File)
+    return;
+
+  addFile(std::move(File));
 }

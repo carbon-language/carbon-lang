@@ -302,6 +302,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     StringRef Name = P.first;
     Symbol *Sym = P.second;
     SymbolBody *Body = Sym->Body;
+    if (Body->isLazy())
+      continue;
     const Elf_Sym &InputSym = cast<ELFSymbolBody<ELFT>>(Body)->Sym;
 
     uint8_t V = Body->getMostConstrainingVisibility();
@@ -325,6 +327,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       assert(Body->isWeak() && "Should be defined by now");
     case SymbolBody::DefinedAbsoluteKind:
       break;
+    case SymbolBody::LazyKind:
+      llvm_unreachable("Lazy symbol got to output symbol table!");
     }
 
     ESym->setBindingAndType(InputSym.getBinding(), InputSym.getType());
@@ -450,6 +454,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   for (auto &P : Symtab.getSymbols()) {
     StringRef Name = P.first;
     SymbolBody *Body = P.second->Body;
+    if (Body->isLazy())
+      continue;
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
     uint8_t V = Body->getMostConstrainingVisibility();

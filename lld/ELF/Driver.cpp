@@ -45,35 +45,17 @@ MemoryBufferRef LinkerDriver::openFile(StringRef Path) {
   return MBRef;
 }
 
-template <class ELFT>
-static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB,
-                                             bool IsShared) {
-  if (IsShared)
-    return make_unique<SharedFile<ELFT>>(MB);
-  return make_unique<ObjectFile<ELFT>>(MB);
-}
-
 static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
   using namespace llvm::sys::fs;
   file_magic Magic = identify_magic(MB.getBuffer());
 
-  std::pair<unsigned char, unsigned char> Type =
-      object::getElfArchType(MB.getBuffer());
-  if (Type.second != ELF::ELFDATA2LSB && Type.second != ELF::ELFDATA2MSB)
-    error("Invalid data encoding");
+  if (Magic == file_magic::archive)
+    return make_unique<ArchiveFile>(MB);
 
-  bool IsShared = Magic == file_magic::elf_shared_object;
-  if (Type.first == ELF::ELFCLASS32) {
-    if (Type.second == ELF::ELFDATA2LSB)
-      return createFile<object::ELF32LE>(MB, IsShared);
-    return createFile<object::ELF32BE>(MB, IsShared);
-  }
-  if (Type.first == ELF::ELFCLASS64) {
-    if (Type.second == ELF::ELFDATA2LSB)
-      return createFile<object::ELF64LE>(MB, IsShared);
-    return createFile<object::ELF64BE>(MB, IsShared);
-  }
-  error("Invalid file class");
+  if (Magic == file_magic::elf_shared_object)
+    return createELFFile<SharedFile>(MB);
+
+  return createELFFile<ObjectFile>(MB);
 }
 
 void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {

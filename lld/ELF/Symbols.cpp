@@ -12,6 +12,9 @@
 #include "Error.h"
 #include "InputFiles.h"
 
+#include "llvm/ADT/STLExtras.h"
+
+using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::ELF;
 
@@ -29,6 +32,7 @@ static uint8_t getMinVisibility(uint8_t VA, uint8_t VB) {
 // Returns 1, 0 or -1 if this symbol should take precedence
 // over the Other, tie or lose, respectively.
 template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
+  assert(!isLazy() && !Other->isLazy());
   std::pair<bool, bool> L(isDefined(), !isWeak());
   std::pair<bool, bool> R(Other->isDefined(), !Other->isWeak());
 
@@ -65,6 +69,17 @@ template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
     return 0;
   }
   return 1;
+}
+
+std::unique_ptr<InputFile> Lazy::getMember() {
+  MemoryBufferRef MBRef = File->getMember(&Sym);
+
+  // getMember returns an empty buffer if the member was already
+  // read from the library.
+  if (MBRef.getBuffer().empty())
+    return std::unique_ptr<InputFile>(nullptr);
+
+  return createELFFile<ObjectFile>(MBRef);
 }
 
 template int SymbolBody::compare<ELF32LE>(SymbolBody *Other);

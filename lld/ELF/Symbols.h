@@ -13,13 +13,13 @@
 #include "Chunks.h"
 
 #include "lld/Core/LLVM.h"
+#include "llvm/Object/Archive.h"
 #include "llvm/Object/ELF.h"
 
 namespace lld {
 namespace elf2 {
 
-using llvm::object::ELFFile;
-
+class ArchiveFile;
 class Chunk;
 class InputFile;
 class SymbolBody;
@@ -42,16 +42,18 @@ public:
     DefinedAbsoluteKind = 1,
     DefinedCommonKind = 2,
     DefinedLast = 2,
-    UndefinedKind = 3
+    UndefinedKind = 3,
+    LazyKind = 4,
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
 
   bool isWeak() const { return IsWeak; }
   bool isUndefined() const { return SymbolKind == UndefinedKind; }
-  bool isDefined() const { return !isUndefined(); }
+  bool isDefined() const { return SymbolKind <= DefinedLast; }
   bool isStrongUndefined() const { return !IsWeak && isUndefined(); }
   bool isCommon() const { return SymbolKind == DefinedCommonKind; }
+  bool isLazy() const { return SymbolKind == LazyKind; }
 
   // Returns the symbol name.
   StringRef getName() const { return Name; }
@@ -199,6 +201,28 @@ public:
 
 template <class ELFT>
 typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::Synthetic;
+
+// This class represents a symbol defined in an archive file. It is
+// created from an archive file header, and it knows how to load an
+// object file from an archive to replace itself with a defined
+// symbol. If the resolver finds both Undefined and Lazy for
+// the same name, it will ask the Lazy to load a file.
+class Lazy : public SymbolBody {
+public:
+  Lazy(ArchiveFile *F, const llvm::object::Archive::Symbol S)
+      : SymbolBody(LazyKind, S.getName(), false, llvm::ELF::STV_DEFAULT),
+        File(F), Sym(S) {}
+
+  static bool classof(const SymbolBody *S) { return S->kind() == LazyKind; }
+
+  // Returns an object file for this symbol, or a nullptr if the file
+  // was already returned.
+  std::unique_ptr<InputFile> getMember();
+
+private:
+  ArchiveFile *File;
+  const llvm::object::Archive::Symbol Sym;
+};
 
 } // namespace elf2
 } // namespace lld
