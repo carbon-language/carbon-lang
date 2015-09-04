@@ -2,7 +2,7 @@ add_lldb_library(lldbDataFormatters
   CF.cpp
   Cocoa.cpp
   CoreMedia.cpp
-  CXXFormatterFunctions.cpp
+  CXXFunctionPointer.cpp
   CxxStringTypes.cpp
   DataVisualization.cpp
   FormatCache.cpp

@@ -18,6 +18,8 @@
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/RegularExpression.h"
+#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -118,3 +120,178 @@ lldb_private::formatters::AddFilter  (TypeCategoryImpl::SharedPointer category_s
         category_sp->GetTypeFiltersContainer()->Add(type_name,filter_sp);
 }
 #endif
+
+StackFrame*
+lldb_private::formatters::GetViableFrame (ExecutionContext exe_ctx)
+{
+    StackFrame* frame = exe_ctx.GetFramePtr();
+    if (frame)
+        return frame;
+    
+    Process* process = exe_ctx.GetProcessPtr();
+    if (!process)
+        return nullptr;
+    
+    ThreadSP thread_sp(process->GetThreadList().GetSelectedThread());
+    if (thread_sp)
+        return thread_sp->GetSelectedFrame().get();
+    return nullptr;
+}
+
+bool
+lldb_private::formatters::ExtractValueFromObjCExpression (ValueObject &valobj,
+                                                          const char* target_type,
+                                                          const char* selector,
+                                                          uint64_t &value)
+{
+    if (!target_type || !*target_type)
+        return false;
+    if (!selector || !*selector)
+        return false;
+    StreamString expr;
+    expr.Printf("(%s)[(id)0x%" PRIx64 " %s]",target_type,valobj.GetPointerValue(),selector);
+    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+    lldb::ValueObjectSP result_sp;
+    Target* target = exe_ctx.GetTargetPtr();
+    StackFrame* stack_frame = GetViableFrame(exe_ctx);
+    if (!target || !stack_frame)
+        return false;
+    
+    EvaluateExpressionOptions options;
+    options.SetCoerceToId(false);
+    options.SetUnwindOnError(true);
+    options.SetKeepInMemory(true);
+    
+    target->EvaluateExpression(expr.GetData(),
+                               stack_frame,
+                               result_sp,
+                               options);
+    if (!result_sp)
+        return false;
+    value = result_sp->GetValueAsUnsigned(0);
+    return true;
+}
+
+bool
+lldb_private::formatters::ExtractSummaryFromObjCExpression (ValueObject &valobj,
+                                                            const char* target_type,
+                                                            const char* selector,
+                                                            Stream &stream)
+{
+    if (!target_type || !*target_type)
+        return false;
+    if (!selector || !*selector)
+        return false;
+    StreamString expr;
+    expr.Printf("(%s)[(id)0x%" PRIx64 " %s]",target_type,valobj.GetPointerValue(),selector);
+    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+    lldb::ValueObjectSP result_sp;
+    Target* target = exe_ctx.GetTargetPtr();
+    StackFrame* stack_frame = GetViableFrame(exe_ctx);
+    if (!target || !stack_frame)
+        return false;
+    
+    EvaluateExpressionOptions options;
+    options.SetCoerceToId(false);
+    options.SetUnwindOnError(true);
+    options.SetKeepInMemory(true);
+    options.SetUseDynamic(lldb::eDynamicCanRunTarget);
+    
+    target->EvaluateExpression(expr.GetData(),
+                               stack_frame,
+                               result_sp,
+                               options);
+    if (!result_sp)
+        return false;
+    stream.Printf("%s",result_sp->GetSummaryAsCString());
+    return true;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
+                                                const char* return_type,
+                                                const char* selector,
+                                                uint64_t index)
+{
+    lldb::ValueObjectSP valobj_sp;
+    if (!return_type || !*return_type)
+        return valobj_sp;
+    if (!selector || !*selector)
+        return valobj_sp;
+    StreamString expr_path_stream;
+    valobj.GetExpressionPath(expr_path_stream, false);
+    StreamString expr;
+    expr.Printf("(%s)[%s %s:%" PRId64 "]",return_type,expr_path_stream.GetData(),selector,index);
+    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+    lldb::ValueObjectSP result_sp;
+    Target* target = exe_ctx.GetTargetPtr();
+    StackFrame* stack_frame = GetViableFrame(exe_ctx);
+    if (!target || !stack_frame)
+        return valobj_sp;
+    
+    EvaluateExpressionOptions options;
+    options.SetCoerceToId(false);
+    options.SetUnwindOnError(true);
+    options.SetKeepInMemory(true);
+    options.SetUseDynamic(lldb::eDynamicCanRunTarget);
+    
+    target->EvaluateExpression(expr.GetData(),
+                               stack_frame,
+                               valobj_sp,
+                               options);
+    return valobj_sp;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
+                                                const char* return_type,
+                                                const char* selector,
+                                                const char* key)
+{
+    lldb::ValueObjectSP valobj_sp;
+    if (!return_type || !*return_type)
+        return valobj_sp;
+    if (!selector || !*selector)
+        return valobj_sp;
+    if (!key || !*key)
+        return valobj_sp;
+    StreamString expr_path_stream;
+    valobj.GetExpressionPath(expr_path_stream, false);
+    StreamString expr;
+    expr.Printf("(%s)[%s %s:%s]",return_type,expr_path_stream.GetData(),selector,key);
+    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+    lldb::ValueObjectSP result_sp;
+    Target* target = exe_ctx.GetTargetPtr();
+    StackFrame* stack_frame = GetViableFrame(exe_ctx);
+    if (!target || !stack_frame)
+        return valobj_sp;
+    
+    EvaluateExpressionOptions options;
+    options.SetCoerceToId(false);
+    options.SetUnwindOnError(true);
+    options.SetKeepInMemory(true);
+    options.SetUseDynamic(lldb::eDynamicCanRunTarget);
+    
+    target->EvaluateExpression(expr.GetData(),
+                               stack_frame,
+                               valobj_sp,
+                               options);
+    return valobj_sp;
+}
+
+size_t
+lldb_private::formatters::ExtractIndexFromString (const char* item_name)
+{
+    if (!item_name || !*item_name)
+        return UINT32_MAX;
+    if (*item_name != '[')
+        return UINT32_MAX;
+    item_name++;
+    char* endptr = NULL;
+    unsigned long int idx = ::strtoul(item_name, &endptr, 0);
+    if (idx == 0 && endptr == item_name)
+        return UINT32_MAX;
+    if (idx == ULONG_MAX)
+        return UINT32_MAX;
+    return idx;
+}

@@ -7,10 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/DataFormatters/CXXFormatterFunctions.h"
+#include "lldb/DataFormatters/LibCxx.h"
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/ValueObject.h"
+#include "lldb/DataFormatters/FormattersHelpers.h"
 
 using namespace lldb;
 using namespace lldb_private;

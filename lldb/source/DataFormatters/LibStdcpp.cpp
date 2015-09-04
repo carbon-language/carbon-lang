@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/DataFormatters/CXXFormatterFunctions.h"
+#include "lldb/DataFormatters/LibStdcpp.h"
 
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/DataFormatters/VectorIterator.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/Target.h"
@@ -21,6 +22,36 @@
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::formatters;
+
+class LibstdcppMapIteratorSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+{
+public:
+    LibstdcppMapIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+    
+    size_t
+    CalculateNumChildren() override;
+    
+    lldb::ValueObjectSP
+    GetChildAtIndex(size_t idx) override;
+    
+    bool
+    Update() override;
+    
+    bool
+    MightHaveChildren() override;
+    
+    size_t
+    GetIndexOfChildWithName (const ConstString &name) override;
+    
+    ~LibstdcppMapIteratorSyntheticFrontEnd() override;
+    
+private:
+    ExecutionContextRef m_exe_ctx_ref;
+    lldb::addr_t m_pair_address;
+    CompilerType m_pair_type;
+    EvaluateExpressionOptions m_options;
+    lldb::ValueObjectSP m_pair_sp;
+};
 
 /*
  (std::_Rb_tree_iterator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > >) ibeg = {
@@ -33,7 +64,7 @@ using namespace lldb_private::formatters;
  }
  */
 
-lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::LibstdcppMapIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
+LibstdcppMapIteratorSyntheticFrontEnd::LibstdcppMapIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
     SyntheticChildrenFrontEnd(*valobj_sp.get()),
     m_exe_ctx_ref(),
     m_pair_address(0),
@@ -50,7 +81,7 @@ lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::LibstdcppMapIte
 }
 
 bool
-lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::Update()
+LibstdcppMapIteratorSyntheticFrontEnd::Update()
 {
     ValueObjectSP valobj_sp = m_backend.GetSP();
     if (!valobj_sp)
@@ -93,13 +124,13 @@ lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::Update()
 }
 
 size_t
-lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::CalculateNumChildren ()
+LibstdcppMapIteratorSyntheticFrontEnd::CalculateNumChildren ()
 {
     return 2;
 }
 
 lldb::ValueObjectSP
-lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::GetChildAtIndex (size_t idx)
+LibstdcppMapIteratorSyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
     if (m_pair_address != 0 && m_pair_type)
     {
@@ -112,13 +143,13 @@ lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::GetChildAtIndex
 }
 
 bool
-lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::MightHaveChildren ()
+LibstdcppMapIteratorSyntheticFrontEnd::MightHaveChildren ()
 {
     return true;
 }
 
 size_t
-lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
+LibstdcppMapIteratorSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
 {
     if (name == ConstString("first"))
         return 0;
@@ -127,7 +158,7 @@ lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::GetIndexOfChild
     return UINT32_MAX;
 }
 
-lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::~LibstdcppMapIteratorSyntheticFrontEnd ()
+LibstdcppMapIteratorSyntheticFrontEnd::~LibstdcppMapIteratorSyntheticFrontEnd ()
 {}
 
 SyntheticChildrenFrontEnd*

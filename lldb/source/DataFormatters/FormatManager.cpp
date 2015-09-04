@@ -15,7 +15,14 @@
 // Project includes
 
 #include "lldb/Core/Debugger.h"
-#include "lldb/DataFormatters/CXXFormatterFunctions.h"
+#include "lldb/DataFormatters/CF.h"
+#include "lldb/DataFormatters/Cocoa.h"
+#include "lldb/DataFormatters/CoreMedia.h"
+#include "lldb/DataFormatters/CXXFunctionPointer.h"
+#include "lldb/DataFormatters/CxxStringTypes.h"
+#include "lldb/DataFormatters/LibCxx.h"
+#include "lldb/DataFormatters/LibStdcpp.h"
+#include "lldb/DataFormatters/VectorType.h"
 #include "lldb/DataFormatters/FormattersHelpers.h"
 #include "lldb/DataFormatters/LanguageCategory.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -1635,7 +1642,7 @@ FormatManager::LoadHardcodedFormatters()
                                         [](lldb_private::ValueObject& valobj,
                                             lldb::DynamicValueType,
                                             FormatManager&) -> TypeSummaryImpl::SharedPointer {
-                                            static CXXFunctionSummaryFormat::SharedPointer formatter_sp(new CXXFunctionSummaryFormat(TypeSummaryImpl::Flags(), lldb_private::formatters::FunctionPointerSummaryProvider, "Function pointer summary provider"));
+                                            static CXXFunctionSummaryFormat::SharedPointer formatter_sp(new CXXFunctionSummaryFormat(TypeSummaryImpl::Flags(), lldb_private::formatters::CXXFunctionPointerSummaryProvider, "Function pointer summary provider"));
                                             if (valobj.GetCompilerType().IsFunctionPointerType())
                                             {
                                                 return formatter_sp;

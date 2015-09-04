@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/DataFormatters/CXXFormatterFunctions.h"
+#include "lldb/DataFormatters/CoreMedia.h"
 
 #include "lldb/Core/Flags.h"
 #include "lldb/Symbol/ClangASTContext.h"

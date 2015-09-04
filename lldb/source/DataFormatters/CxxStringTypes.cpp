@@ -7,9 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/DataFormatters/CXXFormatterFunctions.h"
-#include "lldb/DataFormatters/StringPrinter.h"
-#include "lldb/DataFormatters/TypeSummary.h"
+#include "lldb/DataFormatters/CxxStringTypes.h"
 
 #include "llvm/Support/ConvertUTF.h"
 
@@ -18,12 +16,13 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/DataFormatters/StringPrinter.h"
+#include "lldb/DataFormatters/TypeSummary.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
-
 #include "lldb/Utility/ProcessStructReader.h"
 
 #include <algorithm>

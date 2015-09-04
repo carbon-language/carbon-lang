@@ -7,20 +7,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/DataFormatters/CXXFormatterFunctions.h"
-#include "lldb/DataFormatters/StringPrinter.h"
-#include "lldb/DataFormatters/TypeSummary.h"
+#include "lldb/DataFormatters/Cocoa.h"
 
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/DataFormatters/FormattersHelpers.h"
+#include "lldb/DataFormatters/StringPrinter.h"
+#include "lldb/DataFormatters/TypeSummary.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
-
+#include "lldb/Target/Process.h"
 #include "lldb/Utility/ProcessStructReader.h"
 
 using namespace lldb;
@@ -1127,6 +1128,13 @@ lldb_private::formatters::GetOSXEpoch ()
 #endif
     }
     return epoch;
+}
+
+bool
+lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
+{
+    stream.Printf("%s",valobj.GetObjectDescription());
+    return true;
 }
 
 template bool
