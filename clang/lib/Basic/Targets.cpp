@@ -2051,6 +2051,14 @@ const TargetInfo::AddlRegName AddlRegNames[] = {
   { { "edi", "rdi" }, 5 },
   { { "esp", "rsp" }, 7 },
   { { "ebp", "rbp" }, 6 },
+  { { "r8d", "r8w", "r8b" }, 38 },
+  { { "r9d", "r9w", "r9b" }, 39 },
+  { { "r10d", "r10w", "r10b" }, 40 },
+  { { "r11d", "r11w", "r11b" }, 41 },
+  { { "r12d", "r12w", "r12b" }, 42 },
+  { { "r13d", "r13w", "r13b" }, 43 },
+  { { "r14d", "r14w", "r14b" }, 44 },
+  { { "r15d", "r15w", "r15b" }, 45 },
 };
 
 // X86 target abstract base class; x86-32 and x86-64 are very close, so
