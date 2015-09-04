@@ -14014,24 +14014,22 @@ static void CheckForDuplicateEnumValues(Sema &S, ArrayRef<Decl *> Elements,
   }
 }
 
-bool
-Sema::IsValueInFlagEnum(const EnumDecl *ED, const llvm::APInt &Val,
-                        bool AllowMask) const {
+bool Sema::IsValueInFlagEnum(const EnumDecl *ED, const llvm::APInt &Val,
+                             bool AllowMask) const {
   assert(ED->hasAttr<FlagEnumAttr>() && "looking for value in non-flag enum");
+  assert(ED->isCompleteDefinition() && "expected enum definition");
 
   auto R = FlagBitsCache.insert(std::make_pair(ED, llvm::APInt()));
   llvm::APInt &FlagBits = R.first->second;
 
   if (R.second) {
     for (auto *E : ED->enumerators()) {
-      const auto &Val = E->getInitVal();
+      const auto &EVal = E->getInitVal();
       // Only single-bit enumerators introduce new flag values.
-      if (Val.isPowerOf2())
-        FlagBits = FlagBits.zextOrSelf(Val.getBitWidth()) | Val;
+      if (EVal.isPowerOf2())
+        FlagBits = FlagBits.zextOrSelf(EVal.getBitWidth()) | EVal;
     }
   }
-
-  llvm::APInt FlagMask = ~FlagBits.zextOrTrunc(Val.getBitWidth());
 
   // A value is in a flag enum if either its bits are a subset of the enum's
   // flag bits (the first condition) or we are allowing masks and the same is
@@ -14041,11 +14039,8 @@ Sema::IsValueInFlagEnum(const EnumDecl *ED, const llvm::APInt &Val,
   // While it's true that any value could be used as a mask, the assumption is
   // that a mask will have all of the insignificant bits set. Anything else is
   // likely a logic error.
-  if (!(FlagMask & Val) ||
-      (AllowMask && !(FlagMask & ~Val)))
-    return true;
-
-  return false;
+  llvm::APInt FlagMask = ~FlagBits.zextOrTrunc(Val.getBitWidth());
+  return !(FlagMask & Val) || (AllowMask && !(FlagMask & ~Val));
 }
 
 void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
@@ -14261,6 +14256,11 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
       ECD->setType(NewTy);
   }
 
+  Enum->completeDefinition(BestType, BestPromotionType,
+                           NumPositiveBits, NumNegativeBits);
+
+  CheckForDuplicateEnumValues(*this, Elements, Enum, EnumType);
+
   if (Enum->hasAttr<FlagEnumAttr>()) {
     for (Decl *D : Elements) {
       EnumConstantDecl *ECD = cast_or_null<EnumConstantDecl>(D);
@@ -14273,11 +14273,6 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
           << ECD << Enum;
     }
   }
-
-  Enum->completeDefinition(BestType, BestPromotionType,
-                           NumPositiveBits, NumNegativeBits);
-
-  CheckForDuplicateEnumValues(*this, Elements, Enum, EnumType);
 
   // Now that the enum type is defined, ensure it's not been underaligned.
   if (Enum->hasAttrs())
