@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CXXFunctionPointer.h"
+#include "lldb/DataFormatters/CXXFunctionPointer.h"
+
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 

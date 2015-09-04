@@ -20,7 +20,6 @@
 #include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/DataFormatters/FormattersHelpers.h"
 
-#include "CXXFunctionPointer.h"
 #include "CxxStringTypes.h"
 #include "LibCxx.h"
 #include "LibStdcpp.h"
