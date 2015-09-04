@@ -57,6 +57,12 @@ public:
     lldb::TypeCategoryImplSP
     GetCategory () const;
     
+    void
+    Enable ();
+    
+    void
+    Disable ();
+    
 private:
     lldb::TypeCategoryImplSP m_category_sp;
     lldb_private::FormatCache m_format_cache;

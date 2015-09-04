@@ -42,6 +42,9 @@ LanguageCategory::Get (ValueObject& valobj,
 {
     if (!m_category_sp)
         return false;
+    
+    if (!m_category_sp->IsEnabled())
+        return false;
 
     ConstString type_name = FormatManager::GetTypeForCache(valobj, dynamic);
     if (type_name)
@@ -65,6 +68,9 @@ LanguageCategory::Get (ValueObject& valobj,
 {
     if (!m_category_sp)
         return false;
+    
+    if (!m_category_sp->IsEnabled())
+        return false;
 
     ConstString type_name = FormatManager::GetTypeForCache(valobj, dynamic);
     if (type_name)
@@ -87,6 +93,9 @@ LanguageCategory::Get (ValueObject& valobj,
                        lldb::SyntheticChildrenSP& format_sp)
 {
     if (!m_category_sp)
+        return false;
+    
+    if (!m_category_sp->IsEnabled())
         return false;
 
     ConstString type_name = FormatManager::GetTypeForCache(valobj, dynamic);
@@ -112,6 +121,9 @@ LanguageCategory::Get (ValueObject& valobj,
     if (!m_category_sp)
         return false;
 
+    if (!m_category_sp->IsEnabled())
+        return false;
+
     ConstString type_name = FormatManager::GetTypeForCache(valobj, dynamic);
     if (type_name)
     {
@@ -130,4 +142,18 @@ lldb::TypeCategoryImplSP
 LanguageCategory::GetCategory () const
 {
     return m_category_sp;
+}
+
+void
+LanguageCategory::Enable ()
+{
+    if (m_category_sp)
+        m_category_sp->Enable(true, TypeCategoryMap::Default);
+}
+
+void
+LanguageCategory::Disable ()
+{
+    if (m_category_sp)
+        m_category_sp->Disable();
 }

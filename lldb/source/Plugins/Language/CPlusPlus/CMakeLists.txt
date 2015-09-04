@@ -1,3 +1,11 @@
 add_lldb_library(lldbPluginCPlusPlusLanguage
   CPlusPlusLanguage.cpp
+  CxxStringTypes.cpp
+  LibCxx.cpp
+  LibCxxInitializerList.cpp
+  LibCxxList.cpp
+  LibCxxMap.cpp
+  LibCxxUnorderedMap.cpp
+  LibCxxVector.cpp
+  LibStdcpp.cpp
 )

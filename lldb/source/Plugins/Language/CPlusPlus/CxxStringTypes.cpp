@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/DataFormatters/CxxStringTypes.h"
+#include "CxxStringTypes.h"
 
 #include "llvm/Support/ConvertUTF.h"
 

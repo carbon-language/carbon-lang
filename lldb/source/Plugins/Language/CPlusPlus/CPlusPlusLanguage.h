@@ -121,10 +121,13 @@ public:
     CPlusPlusLanguage () = default;
     
     lldb::LanguageType
-    GetLanguageType () const
+    GetLanguageType () const override
     {
         return lldb::eLanguageTypeC_plus_plus;
     }
+    
+    lldb::TypeCategoryImplSP
+    GetFormatters () override;
     
     //------------------------------------------------------------------
     // Static Functions
@@ -167,10 +170,10 @@ public:
     // PluginInterface protocol
     //------------------------------------------------------------------
     virtual ConstString
-    GetPluginName();
+    GetPluginName() override;
     
     virtual uint32_t
-    GetPluginVersion();
+    GetPluginVersion() override;
 };
     
 } // namespace lldb_private

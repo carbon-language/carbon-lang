@@ -314,6 +314,7 @@ namespace lldb_private {
             m_enabled_position = p;
         }
         
+        friend class FormatManager;
         friend class LanguageCategory;
         friend class TypeCategoryMap;
         

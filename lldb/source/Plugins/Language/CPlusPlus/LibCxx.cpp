@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/DataFormatters/LibCxx.h"
+#include "LibCxx.h"
 
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Debugger.h"
