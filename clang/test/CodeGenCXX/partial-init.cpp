@@ -22,6 +22,6 @@ static Foo table[] = {
 };
 
 // CHECK: define internal void @__cxx_global_var_init
-// CHECK: invoke void @_ZNSt6stringC1EPKc(
+// CHECK: invoke {{.*}} @_ZNSt6stringC1EPKc(
 // CHECK-NOT: unreachable
 // CHECK: br label
