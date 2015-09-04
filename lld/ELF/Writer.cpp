@@ -327,12 +327,9 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       break;
     }
 
-    uint8_t Type = InputSym.getType();
-    uint8_t Binding = InputSym.getBinding();
-    ESym->setBindingAndType(Binding, Type);
+    ESym->setBindingAndType(InputSym.getBinding(), InputSym.getType());
     ESym->st_size = InputSym.st_size;
-    uint8_t Other = InputSym.st_other;
-    ESym->st_other = (Other & ~0x3) | Body->getMostConstrainingVisibility();
+    ESym->setVisibility(Body->getMostConstrainingVisibility());
     if (InputSym.isAbsolute()) {
       ESym->st_shndx = SHN_ABS;
       ESym->st_value = InputSym.st_value;
