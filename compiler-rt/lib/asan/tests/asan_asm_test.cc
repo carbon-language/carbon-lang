@@ -111,7 +111,8 @@ template<> Type asm_read<Type>(Type *ptr) {        \
 
 #endif  // defined(__i386__) && defined(__SSE2__)
 
-#if defined(__x86_64__) || (defined(__i386__) && defined(__SSE2__) && !defined(__ANDROID__))
+#if defined(__x86_64__) ||                                                     \
+    (defined(__i386__) && defined(__SSE2__) && !defined(__ANDROID__))
 
 namespace {
 
