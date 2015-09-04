@@ -256,6 +256,26 @@ Voila::
 Advanced features
 =================
 
+Dictionaries
+------------
+*EXPERIMENTAL*.
+LibFuzzer supports user-supplied dictionaries with input language keywords
+or other interesting byte sequences (e.g. multi-byte magic values).
+Use ``-dict=DICTIONARY_FILE``. For some input languages using a dictionary
+may significantly improve the search speed.
+The dictionary syntax is similar to that used by AFL_ for its ``-x`` option::
+
+  # Lines starting with '#' and empty lines are ignored.
+
+  # Adds "blah" (w/o quotes) to the dictionary.
+  kw1="blah"
+  # Use \\ for backslash and \" for quotes.
+  kw2="\"ac\\dc\""
+  # Use \xAB for hex values
+  kw3="\xF7\xF8"
+  # the name of the keyword followed by '=' may be omitted:
+  "foo\x0Abar"
+
 Data-flow-guided fuzzing
 ------------------------
 

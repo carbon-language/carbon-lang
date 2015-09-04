@@ -64,7 +64,8 @@ class FuzzerRandomLibc : public FuzzerRandomBase {
 
 class MutationDispatcher {
  public:
-  MutationDispatcher(FuzzerRandomBase &Rand) : Rand(Rand) {}
+  MutationDispatcher(FuzzerRandomBase &Rand);
+  ~MutationDispatcher();
   /// Mutates data by shuffling bytes.
   size_t Mutate_ShuffleBytes(uint8_t *Data, size_t Size, size_t MaxSize);
   /// Mutates data by erasing a byte.
@@ -76,6 +77,10 @@ class MutationDispatcher {
   /// Mutates data by chanding one bit.
   size_t Mutate_ChangeBit(uint8_t *Data, size_t Size, size_t MaxSize);
 
+  /// Mutates data by adding a word from the dictionary.
+  size_t Mutate_AddWordFromDictionary(uint8_t *Data, size_t Size,
+                                      size_t MaxSize);
+
   /// Applies one of the above mutations.
   /// Returns the new size of data which could be up to MaxSize.
   size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize);
@@ -84,8 +89,12 @@ class MutationDispatcher {
   size_t CrossOver(const uint8_t *Data1, size_t Size1, const uint8_t *Data2,
                    size_t Size2, uint8_t *Out, size_t MaxOutSize);
 
+  void AddWordToDictionary(const uint8_t *Word, size_t Size);
+
  private:
   FuzzerRandomBase &Rand;
+  struct Impl;
+  Impl *MDImpl;
 };
 
 // For backward compatibility only, deprecated.
@@ -139,6 +148,8 @@ class UserSuppliedFuzzer {
   virtual ~UserSuppliedFuzzer();
 
   FuzzerRandomBase &GetRand() { return *Rand; }
+
+  MutationDispatcher &GetMD() { return MD; }
 
  private:
   bool OwnRand = false;

@@ -105,8 +105,12 @@ void TestEraseByte(Mutator M, int NumIter) {
   EXPECT_EQ(FoundMask, 255);
 }
 
-TEST(FuzzerMutate, EraseByte1) { TestEraseByte(&MutationDispatcher::Mutate_EraseByte, 100); }
-TEST(FuzzerMutate, EraseByte2) { TestEraseByte(&MutationDispatcher::Mutate, 1000); }
+TEST(FuzzerMutate, EraseByte1) {
+  TestEraseByte(&MutationDispatcher::Mutate_EraseByte, 100);
+}
+TEST(FuzzerMutate, EraseByte2) {
+  TestEraseByte(&MutationDispatcher::Mutate, 1000);
+}
 
 void TestInsertByte(Mutator M, int NumIter) {
   FuzzerRandomLibc Rand(0);
@@ -135,8 +139,12 @@ void TestInsertByte(Mutator M, int NumIter) {
   EXPECT_EQ(FoundMask, 255);
 }
 
-TEST(FuzzerMutate, InsertByte1) { TestInsertByte(&MutationDispatcher::Mutate_InsertByte, 1 << 15); }
-TEST(FuzzerMutate, InsertByte2) { TestInsertByte(&MutationDispatcher::Mutate, 1 << 17); }
+TEST(FuzzerMutate, InsertByte1) {
+  TestInsertByte(&MutationDispatcher::Mutate_InsertByte, 1 << 15);
+}
+TEST(FuzzerMutate, InsertByte2) {
+  TestInsertByte(&MutationDispatcher::Mutate, 1 << 17);
+}
 
 void TestChangeByte(Mutator M, int NumIter) {
   FuzzerRandomLibc Rand(0);
@@ -165,8 +173,12 @@ void TestChangeByte(Mutator M, int NumIter) {
   EXPECT_EQ(FoundMask, 255);
 }
 
-TEST(FuzzerMutate, ChangeByte1) { TestChangeByte(&MutationDispatcher::Mutate_ChangeByte, 1 << 15); }
-TEST(FuzzerMutate, ChangeByte2) { TestChangeByte(&MutationDispatcher::Mutate, 1 << 17); }
+TEST(FuzzerMutate, ChangeByte1) {
+  TestChangeByte(&MutationDispatcher::Mutate_ChangeByte, 1 << 15);
+}
+TEST(FuzzerMutate, ChangeByte2) {
+  TestChangeByte(&MutationDispatcher::Mutate, 1 << 17);
+}
 
 void TestChangeBit(Mutator M, int NumIter) {
   FuzzerRandomLibc Rand(0);
@@ -195,8 +207,12 @@ void TestChangeBit(Mutator M, int NumIter) {
   EXPECT_EQ(FoundMask, 255);
 }
 
-TEST(FuzzerMutate, ChangeBit1) { TestChangeBit(&MutationDispatcher::Mutate_ChangeBit, 1 << 16); }
-TEST(FuzzerMutate, ChangeBit2) { TestChangeBit(&MutationDispatcher::Mutate, 1 << 18); }
+TEST(FuzzerMutate, ChangeBit1) {
+  TestChangeBit(&MutationDispatcher::Mutate_ChangeBit, 1 << 16);
+}
+TEST(FuzzerMutate, ChangeBit2) {
+  TestChangeBit(&MutationDispatcher::Mutate, 1 << 18);
+}
 
 void TestShuffleBytes(Mutator M, int NumIter) {
   FuzzerRandomLibc Rand(0);
@@ -219,8 +235,52 @@ void TestShuffleBytes(Mutator M, int NumIter) {
   EXPECT_EQ(FoundMask, 31);
 }
 
-TEST(FuzzerMutate, ShuffleBytes1) { TestShuffleBytes(&MutationDispatcher::Mutate_ShuffleBytes, 1 << 15); }
-TEST(FuzzerMutate, ShuffleBytes2) { TestShuffleBytes(&MutationDispatcher::Mutate, 1 << 16); }
+TEST(FuzzerMutate, ShuffleBytes1) {
+  TestShuffleBytes(&MutationDispatcher::Mutate_ShuffleBytes, 1 << 15);
+}
+TEST(FuzzerMutate, ShuffleBytes2) {
+  TestShuffleBytes(&MutationDispatcher::Mutate, 1 << 16);
+}
+
+void TestAddWordFromDictionary(Mutator M, int NumIter) {
+  FuzzerRandomLibc Rand(0);
+  MutationDispatcher MD(Rand);
+  uint8_t Word1[4] = {0xAA, 0xBB, 0xCC, 0xDD};
+  uint8_t Word2[3] = {0xFF, 0xEE, 0xEF};
+  MD.AddWordToDictionary(Word1, sizeof(Word1));
+  MD.AddWordToDictionary(Word2, sizeof(Word2));
+  int FoundMask = 0;
+  uint8_t CH0[7] = {0x00, 0x11, 0x22, 0xAA, 0xBB, 0xCC, 0xDD};
+  uint8_t CH1[7] = {0x00, 0x11, 0xAA, 0xBB, 0xCC, 0xDD, 0x22};
+  uint8_t CH2[7] = {0x00, 0xAA, 0xBB, 0xCC, 0xDD, 0x11, 0x22};
+  uint8_t CH3[7] = {0xAA, 0xBB, 0xCC, 0xDD, 0x00, 0x11, 0x22};
+  uint8_t CH4[6] = {0x00, 0x11, 0x22, 0xFF, 0xEE, 0xEF};
+  uint8_t CH5[6] = {0x00, 0x11, 0xFF, 0xEE, 0xEF, 0x22};
+  uint8_t CH6[6] = {0x00, 0xFF, 0xEE, 0xEF, 0x11, 0x22};
+  uint8_t CH7[6] = {0xFF, 0xEE, 0xEF, 0x00, 0x11, 0x22};
+  for (int i = 0; i < NumIter; i++) {
+    uint8_t T[7] = {0x00, 0x11, 0x22};
+    size_t NewSize = (MD.*M)(T, 3, 7);
+    if (NewSize == 7 && !memcmp(CH0, T, 7)) FoundMask |= 1 << 0;
+    if (NewSize == 7 && !memcmp(CH1, T, 7)) FoundMask |= 1 << 1;
+    if (NewSize == 7 && !memcmp(CH2, T, 7)) FoundMask |= 1 << 2;
+    if (NewSize == 7 && !memcmp(CH3, T, 7)) FoundMask |= 1 << 3;
+    if (NewSize == 6 && !memcmp(CH4, T, 6)) FoundMask |= 1 << 4;
+    if (NewSize == 6 && !memcmp(CH5, T, 6)) FoundMask |= 1 << 5;
+    if (NewSize == 6 && !memcmp(CH6, T, 6)) FoundMask |= 1 << 6;
+    if (NewSize == 6 && !memcmp(CH7, T, 6)) FoundMask |= 1 << 7;
+  }
+  EXPECT_EQ(FoundMask, 255);
+}
+
+TEST(FuzzerMutate, AddWordFromDictionary1) {
+  TestAddWordFromDictionary(&MutationDispatcher::Mutate_AddWordFromDictionary,
+                            1 << 15);
+}
+
+TEST(FuzzerMutate, AddWordFromDictionary2) {
+  TestAddWordFromDictionary(&MutationDispatcher::Mutate, 1 << 15);
+}
 
 TEST(FuzzerDictionary, ParseOneDictionaryEntry) {
   Unit U;

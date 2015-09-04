@@ -17,6 +17,28 @@
 
 namespace fuzzer {
 
+typedef size_t (MutationDispatcher::*Mutator)(uint8_t *Data, size_t Size,
+                                              size_t Max);
+
+struct MutationDispatcher::Impl {
+  std::vector<Unit> Dictionary;
+  std::vector<Mutator> Mutators;
+  Impl() {
+    Mutators.push_back(&MutationDispatcher::Mutate_EraseByte);
+    Mutators.push_back(&MutationDispatcher::Mutate_InsertByte);
+    Mutators.push_back(&MutationDispatcher::Mutate_ChangeByte);
+    Mutators.push_back(&MutationDispatcher::Mutate_ChangeBit);
+    Mutators.push_back(&MutationDispatcher::Mutate_ShuffleBytes);
+  }
+  void AddWordToDictionary(const uint8_t *Word, size_t Size) {
+    if (Dictionary.empty()) {
+      Mutators.push_back(&MutationDispatcher::Mutate_AddWordFromDictionary);
+    }
+    Dictionary.push_back(Unit(Word, Word + Size));
+  }
+};
+
+
 static char FlipRandomBit(char X, FuzzerRandomBase &Rand) {
   int Bit = Rand(8);
   char Mask = 1 << Bit;
@@ -80,6 +102,19 @@ size_t MutationDispatcher::Mutate_ChangeBit(uint8_t *Data, size_t Size,
   return Size;
 }
 
+size_t MutationDispatcher::Mutate_AddWordFromDictionary(uint8_t *Data,
+                                                        size_t Size,
+                                                        size_t MaxSize) {
+  auto &D = MDImpl->Dictionary;
+  if (D.empty()) return Size;  // FIXME: indicate failure.
+  const Unit &Word = D[Rand(D.size())];
+  if (Size + Word.size() > MaxSize) return Size;
+  size_t Idx = Rand(Size + 1);
+  memmove(Data + Idx + Word.size(), Data + Idx, Size - Idx);
+  memcpy(Data + Idx, Word.data(), Word.size());
+  return Size + Word.size();
+}
+
 // Mutates Data in place, returns new size.
 size_t MutationDispatcher::Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
   assert(MaxSize > 0);
@@ -90,15 +125,20 @@ size_t MutationDispatcher::Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
     return MaxSize;
   }
   assert(Size > 0);
-  switch (Rand(5)) {
-  case 0: Size = Mutate_EraseByte(Data, Size, MaxSize); break;
-  case 1: Size = Mutate_InsertByte(Data, Size, MaxSize); break;
-  case 2: Size = Mutate_ChangeByte(Data, Size, MaxSize); break;
-  case 3: Size = Mutate_ChangeBit(Data, Size, MaxSize); break;
-  case 4: Size = Mutate_ShuffleBytes(Data, Size, MaxSize); break;
-  }
+  size_t MutatorIdx = Rand(MDImpl->Mutators.size());
+  Size = (this->*(MDImpl->Mutators[MutatorIdx]))(Data, Size, MaxSize);
   assert(Size > 0);
   return Size;
 }
+
+void MutationDispatcher::AddWordToDictionary(const uint8_t *Word, size_t Size) {
+  MDImpl->AddWordToDictionary(Word, Size);
+}
+
+MutationDispatcher::MutationDispatcher(FuzzerRandomBase &Rand) : Rand(Rand) {
+  MDImpl = new Impl;
+}
+
+MutationDispatcher::~MutationDispatcher() { delete MDImpl; }
 
 }  // namespace fuzzer
