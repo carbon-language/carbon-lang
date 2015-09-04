@@ -1016,7 +1016,7 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
   // MS LINK expects to be able to use this timestamp to implement their
   // /INCREMENTAL feature.
   std::time_t Now = time(nullptr);
-  if (Now < 0 || (unsigned long)Now > UINT32_MAX)
+  if (Now < 0 || !isUInt<32>(Now))
     Now = UINT32_MAX;
   Header.TimeDateStamp = Now;
 
