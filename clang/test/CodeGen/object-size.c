@@ -161,6 +161,15 @@ void test19() {
   gi = __builtin_object_size(&foo.a, 2);
   // CHECK: store i32 4
   gi = __builtin_object_size(&foo.a, 3);
+
+  // CHECK: store i32 4
+  gi = __builtin_object_size(&foo.b, 0);
+  // CHECK: store i32 4
+  gi = __builtin_object_size(&foo.b, 1);
+  // CHECK: store i32 4
+  gi = __builtin_object_size(&foo.b, 2);
+  // CHECK: store i32 4
+  gi = __builtin_object_size(&foo.b, 3);
 }
 
 // CHECK: @test20
@@ -221,25 +230,59 @@ void test22() {
   gi = __builtin_object_size(&t[9].t[10], 2);
   // CHECK: store i32 0
   gi = __builtin_object_size(&t[9].t[10], 3);
+
+  // CHECK: store i32 0
+  gi = __builtin_object_size((char*)&t[0] + sizeof(t), 0);
+  // CHECK: store i32 0
+  gi = __builtin_object_size((char*)&t[0] + sizeof(t), 1);
+  // CHECK: store i32 0
+  gi = __builtin_object_size((char*)&t[0] + sizeof(t), 2);
+  // CHECK: store i32 0
+  gi = __builtin_object_size((char*)&t[0] + sizeof(t), 3);
+
+  // CHECK: store i32 0
+  gi = __builtin_object_size((char*)&t[9].t[0] + 10*sizeof(t[0].t), 0);
+  // CHECK: store i32 0
+  gi = __builtin_object_size((char*)&t[9].t[0] + 10*sizeof(t[0].t), 1);
+  // CHECK: store i32 0
+  gi = __builtin_object_size((char*)&t[9].t[0] + 10*sizeof(t[0].t), 2);
+  // CHECK: store i32 0
+  gi = __builtin_object_size((char*)&t[9].t[0] + 10*sizeof(t[0].t), 3);
 }
 
-struct Test23Ty { int t[10]; };
+struct Test23Ty { int a; int t[10]; };
 
 // CHECK: @test23
-void test23(struct Test22Ty *p) {
+void test23(struct Test23Ty *p) {
   // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* %{{.*}}, i1 false)
   gi = __builtin_object_size(p, 0);
   // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* %{{.*}}, i1 false)
   gi = __builtin_object_size(p, 1);
   // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* %{{.*}}, i1 true)
   gi = __builtin_object_size(p, 2);
-
   // Note: this is currently fixed at 0 because LLVM doesn't have sufficient
   // data to correctly handle type=3
   // CHECK: store i32 0
   gi = __builtin_object_size(p, 3);
-}
 
+  // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* %{{.*}}, i1 false)
+  gi = __builtin_object_size(&p->a, 0);
+  // CHECK: store i32 4
+  gi = __builtin_object_size(&p->a, 1);
+  // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* %{{.*}}, i1 true)
+  gi = __builtin_object_size(&p->a, 2);
+  // CHECK: store i32 4
+  gi = __builtin_object_size(&p->a, 3);
+
+  // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* %{{.*}}, i1 false)
+  gi = __builtin_object_size(&p->t[5], 0);
+  // CHECK: store i32 20
+  gi = __builtin_object_size(&p->t[5], 1);
+  // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* %{{.*}}, i1 true)
+  gi = __builtin_object_size(&p->t[5], 2);
+  // CHECK: store i32 20
+  gi = __builtin_object_size(&p->t[5], 3);
+}
 
 // PR24493 -- ICE if __builtin_object_size called with NULL and (Type & 1) != 0
 // CHECK: @test24
@@ -279,4 +322,72 @@ void test25() {
   // Hopefully will be lowered properly in the future.
   // CHECK: store i32 0
   gi = __builtin_object_size((void*)0 + 0x1000, 3);
+}
+
+// CHECK: @test26
+void test26() {
+  struct { int v[10]; } t[10];
+
+  // CHECK: store i32 316
+  gi = __builtin_object_size(&t[1].v[11], 0);
+  // CHECK: store i32 312
+  gi = __builtin_object_size(&t[1].v[12], 1);
+  // CHECK: store i32 308
+  gi = __builtin_object_size(&t[1].v[13], 2);
+  // CHECK: store i32 0
+  gi = __builtin_object_size(&t[1].v[14], 3);
+}
+
+struct Test27IncompleteTy;
+
+// CHECK: @test27
+void test27(struct Test27IncompleteTy *t) {
+  // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* %{{.*}}, i1 false)
+  gi = __builtin_object_size(t, 0);
+  // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* %{{.*}}, i1 false)
+  gi = __builtin_object_size(t, 1);
+  // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* %{{.*}}, i1 true)
+  gi = __builtin_object_size(t, 2);
+  // Note: this is currently fixed at 0 because LLVM doesn't have sufficient
+  // data to correctly handle type=3
+  // CHECK: store i32 0
+  gi = __builtin_object_size(t, 3);
+
+  // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* {{.*}}, i1 false)
+  gi = __builtin_object_size(&test27, 0);
+  // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* {{.*}}, i1 false)
+  gi = __builtin_object_size(&test27, 1);
+  // CHECK: call i64 @llvm.objectsize.i64.p0i8(i8* {{.*}}, i1 true)
+  gi = __builtin_object_size(&test27, 2);
+  // Note: this is currently fixed at 0 because LLVM doesn't have sufficient
+  // data to correctly handle type=3
+  // CHECK: store i32 0
+  gi = __builtin_object_size(&test27, 3);
+}
+
+// The intent of this test is to ensure that __builtin_object_size treats `&foo`
+// and `(T*)&foo` identically, when used as the pointer argument.
+// CHECK: @test28
+void test28() {
+  struct { int v[10]; } t[10];
+
+#define addCasts(s) ((char*)((short*)(s)))
+  // CHECK: store i32 360
+  gi = __builtin_object_size(addCasts(&t[1]), 0);
+  // CHECK: store i32 360
+  gi = __builtin_object_size(addCasts(&t[1]), 1);
+  // CHECK: store i32 360
+  gi = __builtin_object_size(addCasts(&t[1]), 2);
+  // CHECK: store i32 360
+  gi = __builtin_object_size(addCasts(&t[1]), 3);
+
+  // CHECK: store i32 356
+  gi = __builtin_object_size(addCasts(&t[1].v[1]), 0);
+  // CHECK: store i32 36
+  gi = __builtin_object_size(addCasts(&t[1].v[1]), 1);
+  // CHECK: store i32 356
+  gi = __builtin_object_size(addCasts(&t[1].v[1]), 2);
+  // CHECK: store i32 36
+  gi = __builtin_object_size(addCasts(&t[1].v[1]), 3);
+#undef addCasts
 }

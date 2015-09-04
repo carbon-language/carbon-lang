@@ -492,7 +492,11 @@ namespace {
       /// optimizer if we don't constant fold them here, but in an unevaluated
       /// context we try to fold them immediately since the optimizer never
       /// gets a chance to look at it.
-      EM_PotentialConstantExpressionUnevaluated
+      EM_PotentialConstantExpressionUnevaluated,
+
+      /// Evaluate as a constant expression. Continue evaluating if we find a
+      /// MemberExpr with a base that can't be evaluated.
+      EM_DesignatorFold,
     } EvalMode;
 
     /// Are we checking whether the expression is a potential constant
@@ -595,6 +599,7 @@ namespace {
           case EM_PotentialConstantExpression:
           case EM_ConstantExpressionUnevaluated:
           case EM_PotentialConstantExpressionUnevaluated:
+          case EM_DesignatorFold:
             HasActiveDiagnostic = false;
             return OptionalDiagnostic();
           }
@@ -674,6 +679,7 @@ namespace {
       case EM_ConstantExpression:
       case EM_ConstantExpressionUnevaluated:
       case EM_ConstantFold:
+      case EM_DesignatorFold:
         return false;
       }
       llvm_unreachable("Missed EvalMode case");
@@ -702,9 +708,14 @@ namespace {
       case EM_ConstantExpressionUnevaluated:
       case EM_ConstantFold:
       case EM_IgnoreSideEffects:
+      case EM_DesignatorFold:
         return false;
       }
       llvm_unreachable("Missed EvalMode case");
+    }
+
+    bool allowInvalidBaseExpr() const {
+      return EvalMode == EM_DesignatorFold;
     }
   };
 
@@ -734,6 +745,21 @@ namespace {
         Info.EvalStatus.Diag->clear();
       Info.EvalMode = OldMode;
     }
+  };
+
+  /// RAII object used to treat the current evaluation as the correct pointer
+  /// offset fold for the current EvalMode
+  struct FoldOffsetRAII {
+    EvalInfo &Info;
+    EvalInfo::EvaluationMode OldMode;
+    explicit FoldOffsetRAII(EvalInfo &Info, bool Subobject)
+        : Info(Info), OldMode(Info.EvalMode) {
+      if (!Info.checkingPotentialConstantExpression())
+        Info.EvalMode = Subobject ? EvalInfo::EM_DesignatorFold
+                                  : EvalInfo::EM_ConstantFold;
+    }
+
+    ~FoldOffsetRAII() { Info.EvalMode = OldMode; }
   };
 
   /// RAII object used to suppress diagnostics and side-effects from a
@@ -917,7 +943,8 @@ namespace {
   struct LValue {
     APValue::LValueBase Base;
     CharUnits Offset;
-    unsigned CallIndex;
+    bool InvalidBase : 1;
+    unsigned CallIndex : 31;
     SubobjectDesignator Designator;
 
     const APValue::LValueBase getLValueBase() const { return Base; }
@@ -938,15 +965,21 @@ namespace {
       assert(V.isLValue());
       Base = V.getLValueBase();
       Offset = V.getLValueOffset();
+      InvalidBase = false;
       CallIndex = V.getLValueCallIndex();
       Designator = SubobjectDesignator(Ctx, V);
     }
 
-    void set(APValue::LValueBase B, unsigned I = 0) {
+    void set(APValue::LValueBase B, unsigned I = 0, bool BInvalid = false) {
       Base = B;
       Offset = CharUnits::Zero();
+      InvalidBase = BInvalid;
       CallIndex = I;
       Designator = SubobjectDesignator(getType(B));
+    }
+
+    void setInvalid(APValue::LValueBase B, unsigned I = 0) {
+      set(B, I, true);
     }
 
     // Check that this LValue is not based on a null pointer. If it is, produce
@@ -4368,19 +4401,22 @@ public:
   bool VisitMemberExpr(const MemberExpr *E) {
     // Handle non-static data members.
     QualType BaseTy;
+    bool EvalOK;
     if (E->isArrow()) {
-      if (!EvaluatePointer(E->getBase(), Result, this->Info))
-        return false;
+      EvalOK = EvaluatePointer(E->getBase(), Result, this->Info);
       BaseTy = E->getBase()->getType()->castAs<PointerType>()->getPointeeType();
     } else if (E->getBase()->isRValue()) {
       assert(E->getBase()->getType()->isRecordType());
-      if (!EvaluateTemporary(E->getBase(), Result, this->Info))
-        return false;
+      EvalOK = EvaluateTemporary(E->getBase(), Result, this->Info);
       BaseTy = E->getBase()->getType();
     } else {
-      if (!this->Visit(E->getBase()))
-        return false;
+      EvalOK = this->Visit(E->getBase());
       BaseTy = E->getBase()->getType();
+    }
+    if (!EvalOK) {
+      if (!this->Info.allowInvalidBaseExpr())
+        return false;
+      Result.setInvalid(E->getBase());
     }
 
     const ValueDecl *MD = E->getMemberDecl();
@@ -4793,7 +4829,7 @@ public:
   bool VisitObjCStringLiteral(const ObjCStringLiteral *E)
       { return Success(E); }
   bool VisitObjCBoxedExpr(const ObjCBoxedExpr *E)
-      { return Success(E); }    
+      { return Success(E); }
   bool VisitAddrLabelExpr(const AddrLabelExpr *E)
       { return Success(E); }
   bool VisitCallExpr(const CallExpr *E);
@@ -4919,6 +4955,7 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
       unsigned Size = Info.Ctx.getTypeSize(E->getType());
       uint64_t N = Value.getInt().extOrTrunc(Size).getZExtValue();
       Result.Base = (Expr*)nullptr;
+      Result.InvalidBase = false;
       Result.Offset = CharUnits::fromQuantity(N);
       Result.CallIndex = 0;
       Result.Designator.setInvalid();
@@ -6211,6 +6248,26 @@ static QualType getObjectType(APValue::LValueBase B) {
   return QualType();
 }
 
+/// A more selective version of E->IgnoreParenCasts for
+/// TryEvaluateBuiltinObjectSize. This ignores casts/parens that serve only to
+/// change the type of E.
+/// Ex. For E = `(short*)((char*)(&foo))`, returns `&foo`
+///
+/// Always returns an RValue with a pointer representation.
+static const Expr *ignorePointerCastsAndParens(const Expr *E) {
+  assert(E->isRValue() && E->getType()->hasPointerRepresentation());
+
+  auto *NoParens = E->IgnoreParens();
+  auto *Cast = dyn_cast<CastExpr>(NoParens);
+  if (Cast == nullptr || Cast->getCastKind() == CK_DerivedToBase)
+    return NoParens;
+
+  auto *SubExpr = Cast->getSubExpr();
+  if (!SubExpr->getType()->hasPointerRepresentation() || !SubExpr->isRValue())
+    return NoParens;
+  return ignorePointerCastsAndParens(SubExpr);
+}
+
 bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
                                                     unsigned Type) {
   // Determine the denoted object.
@@ -6220,23 +6277,35 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
     // If there are any, but we can determine the pointed-to object anyway, then
     // ignore the side-effects.
     SpeculativeEvaluationRAII SpeculativeEval(Info);
-    FoldConstant Fold(Info, true);
-    if (!EvaluatePointer(E->getArg(0), Base, Info))
+    FoldOffsetRAII Fold(Info, Type & 1);
+    const Expr *Ptr = ignorePointerCastsAndParens(E->getArg(0));
+    if (!EvaluatePointer(Ptr, Base, Info))
       return false;
   }
 
   CharUnits BaseOffset = Base.getLValueOffset();
-
-  // If we point to before the start of the object, there are no
-  // accessible bytes.
-  if (BaseOffset < CharUnits::Zero())
+  // If we point to before the start of the object, there are no accessible
+  // bytes.
+  if (BaseOffset.isNegative())
     return Success(0, E);
 
-  // MostDerivedType is null if we're dealing with a literal such as nullptr or
-  // (char*)0x100000. Lower it to LLVM in either case so it can figure out what
-  // to do with it.
-  // FIXME(gbiv): Try to do a better job with this in clang.
-  if (Base.Designator.MostDerivedType.isNull())
+  // In the case where we're not dealing with a subobject, we discard the
+  // subobject bit.
+  if (!Base.Designator.Invalid && Base.Designator.Entries.empty())
+    Type = Type & ~1U;
+
+  // If Type & 1 is 0, we need to be able to statically guarantee that the bytes
+  // exist. If we can't verify the base, then we can't do that.
+  //
+  // As a special case, we produce a valid object size for an unknown object
+  // with a known designator if Type & 1 is 1. For instance:
+  //
+  //   extern struct X { char buff[32]; int a, b, c; } *p;
+  //   int a = __builtin_object_size(p->buff + 4, 3); // returns 28
+  //   int b = __builtin_object_size(p->buff + 4, 2); // returns 0, not 40
+  //
+  // This matches GCC's behavior.
+  if ((Type & 1) == 0 && Base.InvalidBase)
     return Error(E);
 
   // If Type & 1 is 0, the object in question is the complete object; reset to
@@ -6256,16 +6325,6 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
     }
   }
 
-  // FIXME: We should produce a valid object size for an unknown object with a
-  // known designator, if Type & 1 is 1. For instance:
-  //
-  //   extern struct X { char buff[32]; int a, b, c; } *p;
-  //   int a = __builtin_object_size(p->buff + 4, 3); // returns 28
-  //   int b = __builtin_object_size(p->buff + 4, 2); // returns 0, not 40
-  //
-  // This is GCC's behavior. We currently don't do this, but (hopefully) will in
-  // the near future.
-
   // If it is not possible to determine which objects ptr points to at compile
   // time, __builtin_object_size should return (size_t) -1 for type 0 or 1
   // and (size_t) 0 for type 2 or 3.
@@ -6280,14 +6339,15 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
       End.Designator.Entries.size() == End.Designator.MostDerivedPathLength) {
     // We got a pointer to an array. Step to its end.
     AmountToAdd = End.Designator.MostDerivedArraySize -
-                  End.Designator.Entries.back().ArrayIndex;
-  } else if (End.Designator.IsOnePastTheEnd) {
+      End.Designator.Entries.back().ArrayIndex;
+  } else if (End.Designator.isOnePastTheEnd()) {
     // We're already pointing at the end of the object.
     AmountToAdd = 0;
   }
 
-  if (End.Designator.MostDerivedType->isIncompleteType() ||
-      End.Designator.MostDerivedType->isFunctionType())
+  QualType PointeeType = End.Designator.MostDerivedType;
+  assert(!PointeeType.isNull());
+  if (PointeeType->isIncompleteType() || PointeeType->isFunctionType())
     return Error(E);
 
   if (!HandleLValueArrayAdjustment(Info, E, End, End.Designator.MostDerivedType,
@@ -6331,6 +6391,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     case EvalInfo::EM_ConstantFold:
     case EvalInfo::EM_EvaluateForOverflow:
     case EvalInfo::EM_IgnoreSideEffects:
+    case EvalInfo::EM_DesignatorFold:
       // Leave it to IR generation.
       return Error(E);
     case EvalInfo::EM_ConstantExpressionUnevaluated:
