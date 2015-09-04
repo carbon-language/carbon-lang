@@ -72,12 +72,10 @@ CMICmdArgValConsume::Validate(CMICmdArgContext &vwArgContext)
         {
             m_bFound = true;
             m_bValid = true;
+            if ( !vwArgContext.RemoveArg( rTxt ) )
+                return MIstatus::failure;
             return MIstatus::success;
         }
-	
-        if ( !vwArgContext.RemoveArg( rTxt ) )
-            return MIstatus::failure;
-
         // Next
         ++it;
     }
