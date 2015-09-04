@@ -182,6 +182,8 @@ public:
   // with other chunk by ICF, it points to another chunk,
   // and this chunk is considrered as dead.
   SectionChunk *Ptr;
+  int Outdegree = 0;
+  std::vector<SectionChunk *> Ins;
 
   // The CRC of the contents as described in the COFF spec 4.5.5.
   // Auxiliary Format 5: Section Definitions. Used for ICF.

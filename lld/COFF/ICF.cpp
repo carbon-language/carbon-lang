@@ -90,31 +90,53 @@ bool SectionChunk::equals(const SectionChunk *X) const {
   return std::equal(Relocs.begin(), Relocs.end(), X->Relocs.begin(), Eq);
 }
 
+static void link(SectionChunk *From, SectionChunk *To) {
+  ++From->Outdegree;
+  To->Ins.push_back(From);
+}
+
 // Merge identical COMDAT sections.
-// Two sections are considered as identical when their section headers,
+// Two sections are considered the same if their section headers,
 // contents and relocations are all the same.
 void doICF(const std::vector<Chunk *> &Chunks) {
-  std::unordered_set<SectionChunk *, Hasher, Equals> Set;
-  bool Redo;
-  do {
-    Set.clear();
-    Redo = false;
-    for (Chunk *C : Chunks) {
-      auto *SC = dyn_cast<SectionChunk>(C);
-      if (!SC || !SC->isCOMDAT() || !SC->isLive())
-        continue;
+  std::vector<SectionChunk *> SChunks;
+  for (Chunk *C : Chunks)
+    if (auto *SC = dyn_cast<SectionChunk>(C))
+      if (SC->isCOMDAT() && SC->isLive())
+        SChunks.push_back(SC);
+
+  // Initialize SectionChunks' outdegrees and in-chunk lists.
+  for (SectionChunk *SC : SChunks) {
+    for (SectionChunk *C : SC->children())
+      link(SC, C);
+    for (SymbolBody *B : SC->symbols())
+      if (auto *D = dyn_cast<DefinedRegular>(B))
+        link(SC, D->getChunk());
+  }
+
+  // By merging two sections, more sections can become mergeable
+  // because two originally different relocations can now point to
+  // the same section. We process sections whose outdegree is zero
+  // first to deal with that.
+  for (;;) {
+    std::unordered_set<SectionChunk *, Hasher, Equals> Set;
+    auto Pred = [](SectionChunk *SC) { return SC->Outdegree > 0; };
+    auto Bound = std::partition(SChunks.begin(), SChunks.end(), Pred);
+    if (Bound == SChunks.end())
+      return;
+    for (auto It = Bound, E = SChunks.end(); It != E; ++It) {
+      SectionChunk *SC = *It;
       auto P = Set.insert(SC);
       bool Inserted = P.second;
       if (Inserted)
         continue;
       SectionChunk *Existing = *P.first;
       SC->replaceWith(Existing);
-      // By merging sections, two relocations that originally pointed to
-      // different locations can now point to the same location.
-      // So, repeat the process until a convegence is obtained.
-      Redo = true;
+      for (SectionChunk *In : SC->Ins)
+        --In->Outdegree;
     }
-  } while (Redo);
+    SChunks.erase(Bound, SChunks.end());
+  }
 }
 
 } // namespace coff
