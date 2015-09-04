@@ -460,6 +460,15 @@ void ForLoopIndexUseVisitor::addComponent(const Expr *E) {
   DependentExprs.push_back(std::make_pair(Node, ID));
 }
 
+void ForLoopIndexUseVisitor::addUsage(const Usage &U) {
+  SourceLocation Begin = U.Range.getBegin();
+  if (Begin.isMacroID())
+    Begin = Context->getSourceManager().getSpellingLoc(Begin);
+
+  if (UsageLocations.insert(Begin).second)
+    Usages.push_back(U);
+}
+
 /// \brief If the unary operator is a dereference of IndexVar, include it
 /// as a valid usage and prune the traversal.
 ///
@@ -475,7 +484,7 @@ bool ForLoopIndexUseVisitor::TraverseUnaryDeref(UnaryOperator *Uop) {
   // If we dereference an iterator that's actually a pointer, count the
   // occurrence.
   if (isDereferenceOfUop(Uop, IndexVar)) {
-    Usages.push_back(Usage(Uop));
+    addUsage(Usage(Uop));
     return true;
   }
 
@@ -549,8 +558,8 @@ bool ForLoopIndexUseVisitor::TraverseMemberExpr(MemberExpr *Member) {
     // If something complicated is happening (i.e. the next token isn't an
     // arrow), give up on making this work.
     if (!ArrowLoc.isInvalid()) {
-      Usages.push_back(Usage(ResultExpr, /*IsArrow=*/true,
-                             SourceRange(Base->getExprLoc(), ArrowLoc)));
+      addUsage(Usage(ResultExpr, /*IsArrow=*/true,
+                     SourceRange(Base->getExprLoc(), ArrowLoc)));
       return true;
     }
   }
@@ -579,7 +588,7 @@ bool ForLoopIndexUseVisitor::TraverseCXXMemberCallExpr(
     if (isIndexInSubscriptExpr(Context, MemberCall->getArg(0), IndexVar,
                                Member->getBase(), ContainerExpr,
                                ContainerNeedsDereference)) {
-      Usages.push_back(Usage(MemberCall));
+      addUsage(Usage(MemberCall));
       return true;
     }
   }
@@ -614,7 +623,7 @@ bool ForLoopIndexUseVisitor::TraverseCXXOperatorCallExpr(
   switch (OpCall->getOperator()) {
   case OO_Star:
     if (isDereferenceOfOpCall(OpCall, IndexVar)) {
-      Usages.push_back(Usage(OpCall));
+      addUsage(Usage(OpCall));
       return true;
     }
     break;
@@ -625,7 +634,7 @@ bool ForLoopIndexUseVisitor::TraverseCXXOperatorCallExpr(
     if (isIndexInSubscriptExpr(Context, OpCall->getArg(1), IndexVar,
                                OpCall->getArg(0), ContainerExpr,
                                ContainerNeedsDereference)) {
-      Usages.push_back(Usage(OpCall));
+      addUsage(Usage(OpCall));
       return true;
     }
     break;
@@ -674,7 +683,7 @@ bool ForLoopIndexUseVisitor::TraverseArraySubscriptExpr(ArraySubscriptExpr *E) {
   if (!ContainerExpr)
     ContainerExpr = Arr;
 
-  Usages.push_back(Usage(E));
+  addUsage(Usage(E));
   return true;
 }
 
@@ -746,12 +755,12 @@ bool ForLoopIndexUseVisitor::VisitDeclRefExpr(DeclRefExpr *E) {
 bool ForLoopIndexUseVisitor::TraverseLambdaCapture(LambdaExpr *LE,
                                                    const LambdaCapture *C) {
   if (C->capturesVariable()) {
-    const VarDecl* VDecl = C->getCapturedVar();
+    const VarDecl *VDecl = C->getCapturedVar();
     if (areSameVariable(IndexVar, cast<ValueDecl>(VDecl))) {
       // FIXME: if the index is captured, it will count as an usage and the
       // alias (if any) won't work, because it is only used in case of having
       // exactly one usage.
-      Usages.push_back(Usage(nullptr, false, C->getLocation()));
+      addUsage(Usage(nullptr, false, C->getLocation()));
     }
   }
   return VisitorBase::TraverseLambdaCapture(LE, C);

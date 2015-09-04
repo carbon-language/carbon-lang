@@ -277,6 +277,9 @@ public:
   /// \brief Accessor for Usages.
   const UsageResult &getUsages() const { return Usages; }
 
+  /// \brief Adds the Usage if it was not added before.
+  void addUsage(const Usage &U);
+
   /// \brief Get the container indexed by IndexVar, if any.
   const Expr *getContainerIndexed() const { return ContainerExpr; }
 
@@ -336,6 +339,7 @@ private:
   /// A container which holds all usages of IndexVar as the index of
   /// ArraySubscriptExpressions.
   UsageResult Usages;
+  llvm::SmallSet<SourceLocation, 8> UsageLocations;
   bool OnlyUsedAsIndex;
   /// The DeclStmt for an alias to the container element.
   const DeclStmt *AliasDecl;

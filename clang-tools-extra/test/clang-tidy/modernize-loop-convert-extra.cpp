@@ -884,3 +884,32 @@ void iterators() {
 }
 
 } // namespace Lambdas
+
+namespace InitLists {
+
+struct D { int i; };
+struct E { D d; };
+int g(int b);
+
+void f() {
+  const unsigned N = 3;
+  int Array[N];
+
+  // Subtrees of InitListExpr are visited twice. Test that we do not do repeated
+  // replacements.
+  for (unsigned i = 0; i < N; ++i) {
+    int a{ Array[i] };
+    int b{ g(Array[i]) };
+    int c{ g( { Array[i] } ) };
+    D d{ { g( { Array[i] } ) } };
+    E e{ { { g( { Array[i] } ) } } };
+  }
+  // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: int a{ elem };
+  // CHECK-FIXES-NEXT: int b{ g(elem) };
+  // CHECK-FIXES-NEXT: int c{ g( { elem } ) };
+  // CHECK-FIXES-NEXT: D d{ { g( { elem } ) } };
+  // CHECK-FIXES-NEXT: E e{ { { g( { elem } ) } } };
+}
+
+} // namespace InitLists
