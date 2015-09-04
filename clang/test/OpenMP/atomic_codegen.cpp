@@ -6,6 +6,7 @@ int a;
 int b;
 
 struct St {
+  unsigned long field;
   St() {}
   ~St() {}
   int &get() { return a; }
@@ -13,6 +14,7 @@ struct St {
 
 // CHECK-LABEL: parallel_atomic_ewc
 void parallel_atomic_ewc() {
+  St s;
 #pragma omp parallel
   {
       // CHECK: invoke void @_ZN2StC1Ev(%struct.St* [[TEMP_ST_ADDR:%.+]])
@@ -47,6 +49,8 @@ void parallel_atomic_ewc() {
       // CHECK: invoke void @_ZN2StD1Ev(%struct.St* [[TEMP_ST_ADDR]])
 #pragma omp atomic
       St().get() %= b;
+#pragma omp atomic
+      s.field++;
       // CHECK: invoke void @_ZN2StC1Ev(%struct.St* [[TEMP_ST_ADDR:%.+]])
       // CHECK: [[SCALAR_ADDR:%.+]] = invoke dereferenceable(4) i32* @_ZN2St3getEv(%struct.St* [[TEMP_ST_ADDR]])
       // CHECK: [[B_VAL:%.+]] = load i32, i32* @b

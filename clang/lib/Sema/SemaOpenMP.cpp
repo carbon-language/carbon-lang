@@ -4294,7 +4294,7 @@ bool OpenMPAtomicUpdateChecker::checkStatement(Stmt *S, unsigned DiagId,
           NoteLoc = AtomicUnaryOp->getOperatorLoc();
           NoteRange = SourceRange(NoteLoc, NoteLoc);
         }
-      } else {
+      } else if (!AtomicBody->isInstantiationDependent()) {
         ErrorFound = NotABinaryOrUnaryExpression;
         NoteLoc = ErrorLoc = AtomicBody->getExprLoc();
         NoteRange = ErrorRange = AtomicBody->getSourceRange();
@@ -4440,7 +4440,7 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
           NoteLoc = NotScalarExpr->getExprLoc();
           NoteRange = NotScalarExpr->getSourceRange();
         }
-      } else {
+      } else if (!AtomicBody->isInstantiationDependent()) {
         ErrorFound = NotAnAssignmentOp;
         ErrorLoc = AtomicBody->getExprLoc();
         ErrorRange = AtomicBody->getSourceRange();
@@ -4501,7 +4501,7 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
           NoteLoc = NotScalarExpr->getExprLoc();
           NoteRange = NotScalarExpr->getSourceRange();
         }
-      } else {
+      } else if (!AtomicBody->isInstantiationDependent()) {
         ErrorFound = NotAnAssignmentOp;
         ErrorLoc = AtomicBody->getExprLoc();
         ErrorRange = AtomicBody->getSourceRange();
@@ -4579,7 +4579,7 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
         UE = Checker.getUpdateExpr();
         IsXLHSInRHSPart = Checker.isXLHSInRHSPart();
         IsPostfixUpdate = Checker.isPostfixUpdate();
-      } else {
+      } else if (!AtomicBody->isInstantiationDependent()) {
         ErrorLoc = AtomicBody->getExprLoc();
         ErrorRange = AtomicBody->getSourceRange();
         NoteLoc = AtomicBinOp ? AtomicBinOp->getOperatorLoc()
@@ -4686,46 +4686,54 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
           }
           if (!IsUpdateExprFound) {
             //  { v = x; x = expr; }
-            auto *FirstBinOp = dyn_cast<BinaryOperator>(First);
-            if (!FirstBinOp || FirstBinOp->getOpcode() != BO_Assign) {
-              ErrorFound = NotAnAssignmentOp;
-              NoteLoc = ErrorLoc = FirstBinOp ? FirstBinOp->getOperatorLoc()
-                                              : First->getLocStart();
-              NoteRange = ErrorRange = FirstBinOp
-                                           ? FirstBinOp->getSourceRange()
-                                           : SourceRange(ErrorLoc, ErrorLoc);
-            } else {
-              auto *SecondBinOp = dyn_cast<BinaryOperator>(Second);
-              if (!SecondBinOp || SecondBinOp->getOpcode() != BO_Assign) {
+            auto *FirstExpr = dyn_cast<Expr>(First);
+            auto *SecondExpr = dyn_cast<Expr>(Second);
+            if (!FirstExpr || !SecondExpr ||
+                !(FirstExpr->isInstantiationDependent() ||
+                  SecondExpr->isInstantiationDependent())) {
+              auto *FirstBinOp = dyn_cast<BinaryOperator>(First);
+              if (!FirstBinOp || FirstBinOp->getOpcode() != BO_Assign) {
                 ErrorFound = NotAnAssignmentOp;
-                NoteLoc = ErrorLoc = SecondBinOp ? SecondBinOp->getOperatorLoc()
-                                                 : Second->getLocStart();
-                NoteRange = ErrorRange = SecondBinOp
-                                             ? SecondBinOp->getSourceRange()
+                NoteLoc = ErrorLoc = FirstBinOp ? FirstBinOp->getOperatorLoc()
+                                                : First->getLocStart();
+                NoteRange = ErrorRange = FirstBinOp
+                                             ? FirstBinOp->getSourceRange()
                                              : SourceRange(ErrorLoc, ErrorLoc);
               } else {
-                auto *PossibleXRHSInFirst =
-                    FirstBinOp->getRHS()->IgnoreParenImpCasts();
-                auto *PossibleXLHSInSecond =
-                    SecondBinOp->getLHS()->IgnoreParenImpCasts();
-                llvm::FoldingSetNodeID X1Id, X2Id;
-                PossibleXRHSInFirst->Profile(X1Id, Context, /*Canonical=*/true);
-                PossibleXLHSInSecond->Profile(X2Id, Context,
-                                              /*Canonical=*/true);
-                IsUpdateExprFound = X1Id == X2Id;
-                if (IsUpdateExprFound) {
-                  V = FirstBinOp->getLHS();
-                  X = SecondBinOp->getLHS();
-                  E = SecondBinOp->getRHS();
-                  UE = nullptr;
-                  IsXLHSInRHSPart = false;
-                  IsPostfixUpdate = true;
+                auto *SecondBinOp = dyn_cast<BinaryOperator>(Second);
+                if (!SecondBinOp || SecondBinOp->getOpcode() != BO_Assign) {
+                  ErrorFound = NotAnAssignmentOp;
+                  NoteLoc = ErrorLoc = SecondBinOp
+                                           ? SecondBinOp->getOperatorLoc()
+                                           : Second->getLocStart();
+                  NoteRange = ErrorRange =
+                      SecondBinOp ? SecondBinOp->getSourceRange()
+                                  : SourceRange(ErrorLoc, ErrorLoc);
                 } else {
-                  ErrorFound = NotASpecificExpression;
-                  ErrorLoc = FirstBinOp->getExprLoc();
-                  ErrorRange = FirstBinOp->getSourceRange();
-                  NoteLoc = SecondBinOp->getLHS()->getExprLoc();
-                  NoteRange = SecondBinOp->getRHS()->getSourceRange();
+                  auto *PossibleXRHSInFirst =
+                      FirstBinOp->getRHS()->IgnoreParenImpCasts();
+                  auto *PossibleXLHSInSecond =
+                      SecondBinOp->getLHS()->IgnoreParenImpCasts();
+                  llvm::FoldingSetNodeID X1Id, X2Id;
+                  PossibleXRHSInFirst->Profile(X1Id, Context,
+                                               /*Canonical=*/true);
+                  PossibleXLHSInSecond->Profile(X2Id, Context,
+                                                /*Canonical=*/true);
+                  IsUpdateExprFound = X1Id == X2Id;
+                  if (IsUpdateExprFound) {
+                    V = FirstBinOp->getLHS();
+                    X = SecondBinOp->getLHS();
+                    E = SecondBinOp->getRHS();
+                    UE = nullptr;
+                    IsXLHSInRHSPart = false;
+                    IsPostfixUpdate = true;
+                  } else {
+                    ErrorFound = NotASpecificExpression;
+                    ErrorLoc = FirstBinOp->getExprLoc();
+                    ErrorRange = FirstBinOp->getSourceRange();
+                    NoteLoc = SecondBinOp->getLHS()->getExprLoc();
+                    NoteRange = SecondBinOp->getRHS()->getSourceRange();
+                  }
                 }
               }
             }

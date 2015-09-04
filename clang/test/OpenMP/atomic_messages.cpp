@@ -48,8 +48,8 @@ T read() {
   // expected-note@+1 {{expected built-in assignment operator}}
   foo();
 #pragma omp atomic read
-  // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
-  // expected-note@+1 {{expected built-in assignment operator}}
+  // expected-error@+2 2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
+  // expected-note@+1 2 {{expected built-in assignment operator}}
   a += b;
 #pragma omp atomic read
   // expected-error@+2 {{the statement for 'atomic read' must be an expression statement of form 'v = x;', where v and x are both lvalue expressions with scalar type}}
@@ -93,7 +93,8 @@ int read() {
 #pragma omp atomic read read
   a = b;
 
-  // expected-note@+1 {{in instantiation of function template specialization 'read<S>' requested here}}
+  // expected-note@+2 {{in instantiation of function template specialization 'read<S>' requested here}}
+  // expected-note@+1 {{in instantiation of function template specialization 'read<int>' requested here}}
   return read<int>() + read<S>().a;
 }
 
@@ -147,6 +148,7 @@ int write() {
 #pragma omp atomic write
   a = foo();
 
+  // expected-note@+1 {{in instantiation of function template specialization 'write<int>' requested here}}
   return write<int>();
 }
 
@@ -672,6 +674,7 @@ int capture() {
 #pragma omp atomic capture capture
   b = a /= b;
 
+  // expected-note@+1 {{in instantiation of function template specialization 'capture<int>' requested here}}
   return capture<int>();
 }
 
