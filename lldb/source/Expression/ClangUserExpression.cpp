@@ -797,7 +797,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
 bool
 ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
                                            ExecutionContext &exe_ctx,
-                                           lldb::ClangExpressionVariableSP &result,
+                                           lldb::ExpressionVariableSP &result,
                                            lldb::addr_t function_stack_bottom,
                                            lldb::addr_t function_stack_top)
 {
@@ -835,7 +835,7 @@ ClangUserExpression::Execute (Stream &error_stream,
                               ExecutionContext &exe_ctx,
                               const EvaluateExpressionOptions& options,
                               lldb::ClangUserExpressionSP &shared_ptr_to_me,
-                              lldb::ClangExpressionVariableSP &result)
+                              lldb::ExpressionVariableSP &result)
 {
     // The expression log is quite verbose, and if you're just tracking the execution of the
     // expression, it's quite convenient to have these logs come out with the STEP log as well.
@@ -1090,7 +1090,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     }
     else
     {
-        lldb::ClangExpressionVariableSP expr_result;
+        lldb::ExpressionVariableSP expr_result;
 
         if (execution_policy == eExecutionPolicyNever &&
             !user_expression_sp->CanInterpret())

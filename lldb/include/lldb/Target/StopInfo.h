@@ -172,7 +172,7 @@ public:
     static lldb::StopInfoSP
     CreateStopReasonWithPlan (lldb::ThreadPlanSP &plan,
                               lldb::ValueObjectSP return_valobj_sp,
-                              lldb::ClangExpressionVariableSP expression_variable_sp);
+                              lldb::ExpressionVariableSP expression_variable_sp);
 
     static lldb::StopInfoSP
     CreateStopReasonWithException (Thread &thread, const char *description);
@@ -183,7 +183,7 @@ public:
     static lldb::ValueObjectSP
     GetReturnValueObject (lldb::StopInfoSP &stop_info_sp);
 
-    static lldb::ClangExpressionVariableSP
+    static lldb::ExpressionVariableSP
     GetExpressionVariable (lldb::StopInfoSP &stop_info_sp);
 
 protected:

@@ -1139,7 +1139,7 @@ protected:
     
     friend class ValueObjectChild;
     friend class ClangExpressionDeclMap;  // For GetValue
-    friend class ClangExpressionVariable; // For SetName
+    friend class ExpressionVariable;      // For SetName
     friend class Target;                  // For SetName
     friend class ValueObjectConstResultImpl;
     friend class ValueObjectSynthetic;    // For ClearUserVisibleData

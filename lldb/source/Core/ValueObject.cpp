@@ -4280,7 +4280,7 @@ ValueObject::Persist ()
     
     ConstString name(target_sp->GetPersistentVariables().GetNextPersistentVariableName());
     
-    ClangExpressionVariableSP clang_var_sp(new ClangExpressionVariable(target_sp.get(), GetValue(), name));
+    ExpressionVariableSP clang_var_sp(new ClangExpressionVariable(target_sp.get(), GetValue(), name));
     if (clang_var_sp)
     {
         clang_var_sp->m_live_sp = clang_var_sp->m_frozen_sp;

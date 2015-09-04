@@ -519,10 +519,10 @@ public:
     // the user regained control at that point) a subsequent process control command step/continue/etc. might
     // complete the expression evaluations.  If so, the result of the expression evaluation will show up here.
     
-    virtual lldb::ClangExpressionVariableSP
+    virtual lldb::ExpressionVariableSP
     GetExpressionVariable ()
     {
-        return lldb::ClangExpressionVariableSP();
+        return lldb::ExpressionVariableSP();
     }
     
     // If a thread plan stores the state before it was run, then you might

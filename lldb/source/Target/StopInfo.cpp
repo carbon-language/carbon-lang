@@ -1054,7 +1054,7 @@ class StopInfoThreadPlan : public StopInfo
 {
 public:
 
-    StopInfoThreadPlan (ThreadPlanSP &plan_sp, ValueObjectSP &return_valobj_sp, ClangExpressionVariableSP &expression_variable_sp) :
+    StopInfoThreadPlan (ThreadPlanSP &plan_sp, ValueObjectSP &return_valobj_sp, ExpressionVariableSP &expression_variable_sp) :
         StopInfo (plan_sp->GetThread(), LLDB_INVALID_UID),
         m_plan_sp (plan_sp),
         m_return_valobj_sp (return_valobj_sp),
@@ -1090,7 +1090,7 @@ public:
         return m_return_valobj_sp;
     }
     
-    ClangExpressionVariableSP
+    ExpressionVariableSP
     GetExpressionVariable()
     {
         return m_expression_variable_sp;
@@ -1109,7 +1109,7 @@ protected:
 private:
     ThreadPlanSP m_plan_sp;
     ValueObjectSP m_return_valobj_sp;
-    ClangExpressionVariableSP m_expression_variable_sp;
+    ExpressionVariableSP m_expression_variable_sp;
 };
     
 class StopInfoExec : public StopInfo
@@ -1190,7 +1190,7 @@ StopInfo::CreateStopReasonToTrace (Thread &thread)
 StopInfoSP
 StopInfo::CreateStopReasonWithPlan (ThreadPlanSP &plan_sp,
                                     ValueObjectSP return_valobj_sp,
-                                    ClangExpressionVariableSP expression_variable_sp)
+                                    ExpressionVariableSP expression_variable_sp)
 {
     return StopInfoSP (new StopInfoThreadPlan (plan_sp, return_valobj_sp, expression_variable_sp));
 }
@@ -1219,7 +1219,7 @@ StopInfo::GetReturnValueObject(StopInfoSP &stop_info_sp)
         return ValueObjectSP();
 }
 
-ClangExpressionVariableSP
+ExpressionVariableSP
 StopInfo::GetExpressionVariable(StopInfoSP &stop_info_sp)
 {
     if (stop_info_sp && stop_info_sp->GetStopReason() == eStopReasonPlanComplete)
@@ -1228,5 +1228,5 @@ StopInfo::GetExpressionVariable(StopInfoSP &stop_info_sp)
         return plan_stop_info->GetExpressionVariable();
     }
     else
-        return ClangExpressionVariableSP();
+        return ExpressionVariableSP();
 }

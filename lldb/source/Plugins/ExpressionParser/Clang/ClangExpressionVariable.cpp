@@ -24,122 +24,38 @@ using namespace clang;
 const char *g_clang_expression_variable_kind_name = "ClangExpressionVariable";
 
 ClangExpressionVariable::ClangExpressionVariable(ExecutionContextScope *exe_scope, lldb::ByteOrder byte_order, uint32_t addr_byte_size) :
+    ExpressionVariable(),
     m_parser_vars(),
-    m_jit_vars (),
-    m_flags (EVNone),
-    m_frozen_sp (ValueObjectConstResult::Create (exe_scope, byte_order, addr_byte_size))
+    m_jit_vars ()
 {
+    m_flags = EVNone;
+    m_frozen_sp = ValueObjectConstResult::Create (exe_scope, byte_order, addr_byte_size);
 }
 
 ClangExpressionVariable::ClangExpressionVariable (ExecutionContextScope *exe_scope,
                                                   Value &value,
                                                   const ConstString &name,
                                                   uint16_t flags) :
+    ExpressionVariable(),
     m_parser_vars(),
-    m_jit_vars (),
-    m_flags (flags),
-    m_frozen_sp (ValueObjectConstResult::Create (exe_scope, value, name))
+    m_jit_vars ()
 {
+    m_flags = flags;
+    m_frozen_sp = ValueObjectConstResult::Create (exe_scope, value, name);
 }
 
 ClangExpressionVariable::ClangExpressionVariable (const lldb::ValueObjectSP &valobj_sp) :
+    ExpressionVariable(),
     m_parser_vars(),
-    m_jit_vars (),
-    m_flags (EVNone),
-    m_frozen_sp (valobj_sp)
+    m_jit_vars ()
 {
+    m_flags = EVNone;
+    m_frozen_sp = valobj_sp;
 }
-
-//----------------------------------------------------------------------
-/// Return the variable's size in bytes
-//----------------------------------------------------------------------
-size_t
-ClangExpressionVariable::GetByteSize ()
-{
-    return m_frozen_sp->GetByteSize();
-}
-
-const ConstString &
-ClangExpressionVariable::GetName ()
-{
-    return m_frozen_sp->GetName();
-}
-
-lldb::ValueObjectSP
-ClangExpressionVariable::GetValueObject()
-{
-    return m_frozen_sp;
-}
-
-RegisterInfo *
-ClangExpressionVariable::GetRegisterInfo()
-{
-    return m_frozen_sp->GetValue().GetRegisterInfo();
-}
-
-void
-ClangExpressionVariable::SetRegisterInfo (const RegisterInfo *reg_info)
-{
-    return m_frozen_sp->GetValue().SetContext (Value::eContextTypeRegisterInfo, const_cast<RegisterInfo *>(reg_info));
-}
-
-CompilerType
-ClangExpressionVariable::GetCompilerType()
-{
-    return m_frozen_sp->GetCompilerType();
-}
-
-void
-ClangExpressionVariable::SetCompilerType(const CompilerType &clang_type)
-{
-    m_frozen_sp->GetValue().SetCompilerType(clang_type);
-}
-
 
 TypeFromUser
 ClangExpressionVariable::GetTypeFromUser()
 {
     TypeFromUser tfu (m_frozen_sp->GetCompilerType());
     return tfu;
-}
-
-uint8_t *
-ClangExpressionVariable::GetValueBytes()
-{
-    const size_t byte_size = m_frozen_sp->GetByteSize();
-    if (byte_size > 0)
-    {
-        if (m_frozen_sp->GetDataExtractor().GetByteSize() < byte_size)
-        {
-            m_frozen_sp->GetValue().ResizeData(byte_size);
-            m_frozen_sp->GetValue().GetData (m_frozen_sp->GetDataExtractor());
-        }
-        return const_cast<uint8_t *>(m_frozen_sp->GetDataExtractor().GetDataStart());
-    }
-    return NULL;
-}
-
-void
-ClangExpressionVariable::SetName (const ConstString &name)
-{
-    m_frozen_sp->SetName (name);
-}
-
-void
-ClangExpressionVariable::ValueUpdated ()
-{
-    m_frozen_sp->ValueUpdated ();
-}
-
-void
-ClangExpressionVariable::TransferAddress (bool force)
-{
-    if (m_live_sp.get() == NULL)
-        return;
-
-    if (m_frozen_sp.get() == NULL)
-        return;
-
-    if (force || (m_frozen_sp->GetLiveAddress() == LLDB_INVALID_ADDRESS))
-        m_frozen_sp->SetLiveAddress(m_live_sp->GetLiveAddress());
 }

@@ -314,7 +314,7 @@ BreakpointLocation::ConditionSaysStop (ExecutionContext &exe_ctx, Error &error)
     
     StreamString execution_errors;
     
-    ClangExpressionVariableSP result_variable_sp;
+    ExpressionVariableSP result_variable_sp;
     
     ExpressionResults result_code =
     m_user_expression_sp->Execute(execution_errors,

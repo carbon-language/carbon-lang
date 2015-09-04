@@ -141,7 +141,7 @@ ABI::GetReturnValueObject (Thread &thread,
         
         return_valobj_sp = const_valobj_sp;
 
-        ClangExpressionVariableSP clang_expr_variable_sp(persistent_variables.CreatePersistentVariable(return_valobj_sp));
+        ExpressionVariableSP clang_expr_variable_sp(persistent_variables.CreatePersistentVariable(return_valobj_sp));
                
         assert (clang_expr_variable_sp.get());
         

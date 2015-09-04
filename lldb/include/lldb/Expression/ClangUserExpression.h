@@ -145,7 +145,7 @@ public:
              ExecutionContext &exe_ctx,
              const EvaluateExpressionOptions& options,
              lldb::ClangUserExpressionSP &shared_ptr_to_me,
-             lldb::ClangExpressionVariableSP &result);
+             lldb::ExpressionVariableSP &result);
 
     //------------------------------------------------------------------
     /// Apply the side effects of the function to program state.
@@ -173,7 +173,7 @@ public:
     bool
     FinalizeJITExecution (Stream &error_stream,
                           ExecutionContext &exe_ctx,
-                          lldb::ClangExpressionVariableSP &result,
+                          lldb::ExpressionVariableSP &result,
                           lldb::addr_t function_stack_bottom = LLDB_INVALID_ADDRESS,
                           lldb::addr_t function_stack_top = LLDB_INVALID_ADDRESS);
 

@@ -134,18 +134,18 @@ ClangExpressionDeclMap::DidParse()
              entity_index < num_entities;
              ++entity_index)
         {
-            ClangExpressionVariableSP var_sp(m_found_entities.GetVariableAtIndex(entity_index));
+            ExpressionVariableSP var_sp(m_found_entities.GetVariableAtIndex(entity_index));
             if (var_sp)
-                var_sp->DisableParserVars(GetParserID());
+                var_sp->AsClangExpressionVariable()->DisableParserVars(GetParserID());
         }
 
         for (size_t pvar_index = 0, num_pvars = m_parser_vars->m_persistent_vars->GetSize();
              pvar_index < num_pvars;
              ++pvar_index)
         {
-            ClangExpressionVariableSP pvar_sp(m_parser_vars->m_persistent_vars->GetVariableAtIndex(pvar_index));
+            ExpressionVariableSP pvar_sp(m_parser_vars->m_persistent_vars->GetVariableAtIndex(pvar_index));
             if (pvar_sp)
-                pvar_sp->DisableParserVars(GetParserID());
+                pvar_sp->AsClangExpressionVariable()->DisableParserVars(GetParserID());
         }
 
         DisableParserVars();
@@ -212,25 +212,26 @@ ClangExpressionDeclMap::AddPersistentVariable
 
         uint32_t offset = m_parser_vars->m_materializer->AddResultVariable(user_type, is_lvalue, m_keep_result_in_memory, err);
 
-        ClangExpressionVariableSP var_sp = m_found_entities.CreateVariable(exe_ctx.GetBestExecutionContextScope(),
-                                                                           name,
-                                                                           user_type,
-                                                                           m_parser_vars->m_target_info.byte_order,
-                                                                           m_parser_vars->m_target_info.address_byte_size);
+        ClangExpressionVariable *var = ClangExpressionVariable::CreateVariableInList(m_found_entities,
+                                                                                     exe_ctx.GetBestExecutionContextScope(),
+                                                                                     name,
+                                                                                     user_type,
+                                                                                     m_parser_vars->m_target_info.byte_order,
+                                                                                     m_parser_vars->m_target_info.address_byte_size);
 
-        if (!var_sp)
+        if (!var)
             return false;
 
-        var_sp->EnableParserVars(GetParserID());
+        var->EnableParserVars(GetParserID());
 
-        ClangExpressionVariable::ParserVars *parser_vars = var_sp->GetParserVars(GetParserID());
+        ClangExpressionVariable::ParserVars *parser_vars = var->GetParserVars(GetParserID());
 
         parser_vars->m_named_decl = decl;
         parser_vars->m_parser_type = parser_type;
 
-        var_sp->EnableJITVars(GetParserID());
+        var->EnableJITVars(GetParserID());
 
-        ClangExpressionVariable::JITVars *jit_vars = var_sp->GetJITVars(GetParserID());
+        ClangExpressionVariable::JITVars *jit_vars = var->GetJITVars(GetParserID());
 
         jit_vars->m_offset = offset;
 
@@ -260,43 +261,43 @@ ClangExpressionDeclMap::AddPersistentVariable
     if (!m_parser_vars->m_target_info.IsValid())
         return false;
 
-    ClangExpressionVariableSP var_sp = m_parser_vars->m_persistent_vars->CreatePersistentVariable (exe_ctx.GetBestExecutionContextScope (),
-                                                                                                   name,
-                                                                                                   user_type,
-                                                                                                   m_parser_vars->m_target_info.byte_order,
-                                                                                                   m_parser_vars->m_target_info.address_byte_size);
+    ClangExpressionVariable *var = m_parser_vars->m_persistent_vars->CreatePersistentVariable (exe_ctx.GetBestExecutionContextScope (),
+                                                                                               name,
+                                                                                               user_type,
+                                                                                               m_parser_vars->m_target_info.byte_order,
+                                                                                               m_parser_vars->m_target_info.address_byte_size);
 
-    if (!var_sp)
+    if (!var)
         return false;
 
-    var_sp->m_frozen_sp->SetHasCompleteType();
+    var->m_frozen_sp->SetHasCompleteType();
 
     if (is_result)
-        var_sp->m_flags |= ClangExpressionVariable::EVNeedsFreezeDry;
+        var->m_flags |= ClangExpressionVariable::EVNeedsFreezeDry;
     else
-        var_sp->m_flags |= ClangExpressionVariable::EVKeepInTarget; // explicitly-declared persistent variables should persist
+        var->m_flags |= ClangExpressionVariable::EVKeepInTarget; // explicitly-declared persistent variables should persist
 
     if (is_lvalue)
     {
-        var_sp->m_flags |= ClangExpressionVariable::EVIsProgramReference;
+        var->m_flags |= ClangExpressionVariable::EVIsProgramReference;
     }
     else
     {
-        var_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
-        var_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
+        var->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
+        var->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
     }
 
     if (m_keep_result_in_memory)
     {
-        var_sp->m_flags |= ClangExpressionVariable::EVKeepInTarget;
+        var->m_flags |= ClangExpressionVariable::EVKeepInTarget;
     }
 
     if (log)
-        log->Printf("Created persistent variable with flags 0x%hx", var_sp->m_flags);
+        log->Printf("Created persistent variable with flags 0x%hx", var->m_flags);
 
-    var_sp->EnableParserVars(GetParserID());
+    var->EnableParserVars(GetParserID());
 
-    ClangExpressionVariable::ParserVars *parser_vars = var_sp->GetParserVars(GetParserID());
+    ClangExpressionVariable::ParserVars *parser_vars = var->GetParserVars(GetParserID());
 
     parser_vars->m_named_decl = decl;
     parser_vars->m_parser_type = parser_type;
@@ -323,33 +324,33 @@ ClangExpressionDeclMap::AddValueToStruct
 
     m_struct_vars->m_struct_laid_out = false;
 
-    if (m_struct_members.GetVariable(decl, GetParserID()))
+    if (ClangExpressionVariable::FindVariableInList(m_struct_members, decl, GetParserID()))
         return true;
 
-    ClangExpressionVariableSP var_sp (m_found_entities.GetVariable(decl, GetParserID()));
+    ClangExpressionVariable *var(ClangExpressionVariable::FindVariableInList(m_found_entities, decl, GetParserID()));
 
-    if (!var_sp)
+    if (!var)
     {
-        var_sp = m_parser_vars->m_persistent_vars->GetVariable(decl, GetParserID());
+        var = ClangExpressionVariable::FindVariableInList(*m_parser_vars->m_persistent_vars, decl, GetParserID());
         is_persistent_variable = true;
     }
 
-    if (!var_sp)
+    if (!var)
         return false;
 
     if (log)
         log->Printf("Adding value for (NamedDecl*)%p [%s - %s] to the structure",
                     static_cast<const void*>(decl), name.GetCString(),
-                    var_sp->GetName().GetCString());
+                    var->GetName().GetCString());
 
     // We know entity->m_parser_vars is valid because we used a parser variable
     // to find it
 
-    ClangExpressionVariable::ParserVars *parser_vars = var_sp->GetParserVars(GetParserID());
+    ClangExpressionVariable::ParserVars *parser_vars = var->AsClangExpressionVariable()->GetParserVars(GetParserID());
 
     parser_vars->m_llvm_value = value;
 
-    if (ClangExpressionVariable::JITVars *jit_vars = var_sp->GetJITVars(GetParserID()))
+    if (ClangExpressionVariable::JITVars *jit_vars = var->AsClangExpressionVariable()->GetJITVars(GetParserID()))
     {
         // We already laid this out; do not touch
 
@@ -357,14 +358,14 @@ ClangExpressionDeclMap::AddValueToStruct
             log->Printf("Already placed at 0x%llx", (unsigned long long)jit_vars->m_offset);
     }
 
-    var_sp->EnableJITVars(GetParserID());
+    var->AsClangExpressionVariable()->EnableJITVars(GetParserID());
 
-    ClangExpressionVariable::JITVars *jit_vars = var_sp->GetJITVars(GetParserID());
+    ClangExpressionVariable::JITVars *jit_vars = var->AsClangExpressionVariable()->GetJITVars(GetParserID());
 
     jit_vars->m_alignment = alignment;
     jit_vars->m_size = size;
 
-    m_struct_members.AddVariable(var_sp);
+    m_struct_members.AddVariable(var->shared_from_this());
 
     if (m_parser_vars->m_materializer)
     {
@@ -374,13 +375,14 @@ ClangExpressionDeclMap::AddValueToStruct
 
         if (is_persistent_variable)
         {
+            ExpressionVariableSP var_sp(var->shared_from_this());
             offset = m_parser_vars->m_materializer->AddPersistentVariable(var_sp, err);
         }
         else
         {
             if (const lldb_private::Symbol *sym = parser_vars->m_lldb_sym)
                 offset = m_parser_vars->m_materializer->AddSymbol(*sym, err);
-            else if (const RegisterInfo *reg_info = var_sp->GetRegisterInfo())
+            else if (const RegisterInfo *reg_info = var->GetRegisterInfo())
                 offset = m_parser_vars->m_materializer->AddRegister(*reg_info, err);
             else if (parser_vars->m_lldb_var)
                 offset = m_parser_vars->m_materializer->AddVariable(parser_vars->m_lldb_var, err);
@@ -452,13 +454,13 @@ ClangExpressionDeclMap::GetStructElement
     if (index >= m_struct_members.GetSize())
         return false;
 
-    ClangExpressionVariableSP member_sp(m_struct_members.GetVariableAtIndex(index));
+    ExpressionVariableSP member_sp(m_struct_members.GetVariableAtIndex(index));
 
     if (!member_sp)
         return false;
 
-    ClangExpressionVariable::ParserVars *parser_vars = member_sp->GetParserVars(GetParserID());
-    ClangExpressionVariable::JITVars *jit_vars = member_sp->GetJITVars(GetParserID());
+    ClangExpressionVariable::ParserVars *parser_vars = member_sp->AsClangExpressionVariable()->GetParserVars(GetParserID());
+    ClangExpressionVariable::JITVars *jit_vars = member_sp->AsClangExpressionVariable()->GetJITVars(GetParserID());
 
     if (!parser_vars ||
         !jit_vars ||
@@ -480,15 +482,15 @@ ClangExpressionDeclMap::GetFunctionInfo
     uint64_t &ptr
 )
 {
-    ClangExpressionVariableSP entity_sp(m_found_entities.GetVariable(decl, GetParserID()));
+    ClangExpressionVariable *entity(ClangExpressionVariable::FindVariableInList(m_found_entities, decl, GetParserID()));
 
-    if (!entity_sp)
+    if (!entity)
         return false;
 
     // We know m_parser_vars is valid since we searched for the variable by
     // its NamedDecl
 
-    ClangExpressionVariable::ParserVars *parser_vars = entity_sp->GetParserVars(GetParserID());
+    ClangExpressionVariable::ParserVars *parser_vars = entity->GetParserVars(GetParserID());
 
     ptr = parser_vars->m_lldb_value.GetScalar().ULongLong();
 
@@ -1315,7 +1317,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             context.AddNamedDecl(parser_ptype_type_decl);
         } while (0);
 
-        ClangExpressionVariableSP pvar_sp(m_parser_vars->m_persistent_vars->GetVariable(name));
+        ExpressionVariableSP pvar_sp(m_parser_vars->m_persistent_vars->GetVariable(name));
 
         if (pvar_sp)
         {
@@ -1771,9 +1773,9 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
 
     std::string decl_name(context.m_decl_name.getAsString());
     ConstString entity_name(decl_name.c_str());
-    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (valobj));
+    ClangExpressionVariable *entity(ClangExpressionVariable::CreateVariableInList(m_found_entities, valobj));
 
-    assert (entity.get());
+    assert (entity);
     entity->EnableParserVars(GetParserID());
     ClangExpressionVariable::ParserVars *parser_vars = entity->GetParserVars(GetParserID());
     parser_vars->m_parser_type = pt;
@@ -1795,12 +1797,12 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
 
 void
 ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
-                                       ClangExpressionVariableSP &pvar_sp,
+                                       ExpressionVariableSP &pvar_sp,
                                        unsigned int current_id)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    TypeFromUser user_type (pvar_sp->GetTypeFromUser());
+    TypeFromUser user_type (pvar_sp->AsClangExpressionVariable()->GetTypeFromUser());
 
     TypeFromParser parser_type (GuardedCopyType(user_type));
 
@@ -1813,8 +1815,8 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
 
     NamedDecl *var_decl = context.AddVarDecl(ClangASTContext::GetLValueReferenceType(parser_type));
 
-    pvar_sp->EnableParserVars(GetParserID());
-    ClangExpressionVariable::ParserVars *parser_vars = pvar_sp->GetParserVars(GetParserID());
+    pvar_sp->AsClangExpressionVariable()->EnableParserVars(GetParserID());
+    ClangExpressionVariable::ParserVars *parser_vars = pvar_sp->AsClangExpressionVariable()->GetParserVars(GetParserID());
     parser_vars->m_parser_type = parser_type;
     parser_vars->m_named_decl = var_decl;
     parser_vars->m_llvm_value = NULL;
@@ -1849,12 +1851,13 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
 
     std::string decl_name(context.m_decl_name.getAsString());
     ConstString entity_name(decl_name.c_str());
-    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx.GetBestExecutionContextScope (),
-                                                                      entity_name,
-                                                                      user_type,
-                                                                      m_parser_vars->m_target_info.byte_order,
-                                                                      m_parser_vars->m_target_info.address_byte_size));
-    assert (entity.get());
+    ClangExpressionVariable *entity(ClangExpressionVariable::CreateVariableInList(m_found_entities,
+                                                                                  m_parser_vars->m_exe_ctx.GetBestExecutionContextScope (),
+                                                                                  entity_name,
+                                                                                  user_type,
+                                                                                  m_parser_vars->m_target_info.byte_order,
+                                                                                  m_parser_vars->m_target_info.address_byte_size));
+    assert (entity);
 
     entity->EnableParserVars(GetParserID());
     ClangExpressionVariable::ParserVars *parser_vars = entity->GetParserVars(GetParserID());
@@ -1892,9 +1895,9 @@ ClangExpressionDeclMap::ResolveUnknownTypes()
          index < num_entities;
          ++index)
     {
-        ClangExpressionVariableSP entity = m_found_entities.GetVariableAtIndex(index);
+        ExpressionVariableSP entity = m_found_entities.GetVariableAtIndex(index);
 
-        ClangExpressionVariable::ParserVars *parser_vars = entity->GetParserVars(GetParserID());
+        ClangExpressionVariable::ParserVars *parser_vars = entity->AsClangExpressionVariable()->GetParserVars(GetParserID());
 
         if (entity->m_flags & ClangExpressionVariable::EVUnknownType)
         {
@@ -1924,7 +1927,7 @@ ClangExpressionDeclMap::ResolveUnknownTypes()
                 if (log)
                     log->Printf("ClangExpressionDeclMap::ResolveUnknownType - Couldn't import the type for a variable");
 
-                return (bool) lldb::ClangExpressionVariableSP();
+                return (bool) lldb::ExpressionVariableSP();
             }
 
             TypeFromUser user_type(copied_type, scratch_ast_context);
@@ -1964,10 +1967,11 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
 
     NamedDecl *var_decl = context.AddVarDecl(parser_clang_type);
 
-    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx.GetBestExecutionContextScope(),
-                                                                      m_parser_vars->m_target_info.byte_order,
-                                                                      m_parser_vars->m_target_info.address_byte_size));
-    assert (entity.get());
+    ClangExpressionVariable *entity(ClangExpressionVariable::CreateVariableInList(m_found_entities,
+                                                                                  m_parser_vars->m_exe_ctx.GetBestExecutionContextScope(),
+                                                                                  m_parser_vars->m_target_info.byte_order,
+                                                                                  m_parser_vars->m_target_info.address_byte_size));
+    assert (entity);
 
     std::string decl_name(context.m_decl_name.getAsString());
     entity->SetName (ConstString (decl_name.c_str()));
@@ -2072,10 +2076,11 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
 
     lldb::addr_t load_addr = fun_address.GetCallableLoadAddress(target, is_indirect_function);
 
-    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx.GetBestExecutionContextScope (),
-                                                                      m_parser_vars->m_target_info.byte_order,
-                                                                      m_parser_vars->m_target_info.address_byte_size));
-    assert (entity.get());
+    ClangExpressionVariable *entity(ClangExpressionVariable::CreateVariableInList (m_found_entities,
+                                                                                   m_parser_vars->m_exe_ctx.GetBestExecutionContextScope (),
+                                                                                   m_parser_vars->m_target_info.byte_order,
+                                                                                   m_parser_vars->m_target_info.address_byte_size));
+    assert (entity);
 
     std::string decl_name(context.m_decl_name.getAsString());
     entity->SetName(ConstString(decl_name.c_str()));

@@ -1437,7 +1437,7 @@ FormatEntity::Format (const Entry &entry,
                     StopInfoSP stop_info_sp = thread->GetStopInfo ();
                     if (stop_info_sp && stop_info_sp->IsValid())
                     {
-                        ClangExpressionVariableSP expression_var_sp = StopInfo::GetExpressionVariable (stop_info_sp);
+                        ExpressionVariableSP expression_var_sp = StopInfo::GetExpressionVariable (stop_info_sp);
                         if (expression_var_sp && expression_var_sp->GetValueObject())
                         {
                             expression_var_sp->GetValueObject()->Dump(s);

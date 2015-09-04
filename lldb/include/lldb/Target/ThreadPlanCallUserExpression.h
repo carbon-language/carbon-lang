@@ -52,7 +52,7 @@ public:
         m_manage_materialization = true;
     }
     
-    lldb::ClangExpressionVariableSP
+    lldb::ExpressionVariableSP
     GetExpressionVariable() override
     {
         return m_result_var_sp;
@@ -64,7 +64,7 @@ private:
                                                          // User expression the initiated this ThreadPlan
                                                          // lives as long as the thread plan does.
     bool m_manage_materialization = false;
-    lldb::ClangExpressionVariableSP m_result_var_sp;     // If we are left to manage the materialization,
+    lldb::ExpressionVariableSP m_result_var_sp;     // If we are left to manage the materialization,
                                                          // then stuff the result expression variable here.
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallUserExpression);

@@ -19,35 +19,29 @@ using namespace lldb;
 using namespace lldb_private;
 
 ClangPersistentVariables::ClangPersistentVariables () :
-    ClangExpressionVariableList(),
+    ExpressionVariableList(),
     m_next_persistent_variable_id (0)
 {
 }
 
-ClangExpressionVariableSP
+ExpressionVariableSP
 ClangPersistentVariables::CreatePersistentVariable (const lldb::ValueObjectSP &valobj_sp)
 {
-    ClangExpressionVariableSP var_sp (CreateVariable(valobj_sp));
-    return var_sp;
+    return ClangExpressionVariable::CreateVariableInList(*this, valobj_sp)->shared_from_this();
 }
 
-ClangExpressionVariableSP
+ClangExpressionVariable *
 ClangPersistentVariables::CreatePersistentVariable (ExecutionContextScope *exe_scope, 
                                                     const ConstString &name, 
                                                     const TypeFromUser& user_type, 
                                                     lldb::ByteOrder byte_order, 
                                                     uint32_t addr_byte_size)
 {
-    ClangExpressionVariableSP var_sp (GetVariable(name));
-    
-    if (!var_sp)
-        var_sp = CreateVariable(exe_scope, name, user_type, byte_order, addr_byte_size);
-
-    return var_sp;
+    return ClangExpressionVariable::CreateVariableInList(*this, exe_scope, name, user_type, byte_order, addr_byte_size);
 }
 
 void
-ClangPersistentVariables::RemovePersistentVariable (lldb::ClangExpressionVariableSP variable)
+ClangPersistentVariables::RemovePersistentVariable (lldb::ExpressionVariableSP variable)
 {
     RemoveVariable(variable);
     
