@@ -168,3 +168,8 @@ __declspec(dllimport) inline void redecl7() {}
 
 // External linkage is required.
 __declspec(dllimport) static int staticFunc(); // expected-error{{'staticFunc' must have external linkage when declared 'dllimport'}}
+
+// Static locals don't count as having external linkage.
+void staticLocalFunc() {
+  __declspec(dllimport) static int staticLocal; // expected-error{{'staticLocal' must have external linkage when declared 'dllimport'}}
+}

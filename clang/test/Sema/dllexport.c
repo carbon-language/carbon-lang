@@ -109,6 +109,11 @@ __declspec(dllexport) void redecl6(); // expected-warning{{redeclaration of 'red
 // External linkage is required.
 __declspec(dllexport) static int staticFunc(); // expected-error{{'staticFunc' must have external linkage when declared 'dllexport'}}
 
+// Static locals don't count as having external linkage.
+void staticLocalFunc() {
+  __declspec(dllexport) static int staticLocal; // expected-error{{'staticLocal' must have external linkage when declared 'dllexport'}}
+}
+
 
 
 //===----------------------------------------------------------------------===//
