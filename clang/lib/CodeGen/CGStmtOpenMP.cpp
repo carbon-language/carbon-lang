@@ -383,6 +383,12 @@ void CodeGenFunction::EmitOMPLastprivateClauseFinal(
           auto *OriginalAddr = GetAddrOfLocalVar(DestVD);
           // Get the address of the private variable.
           auto *PrivateAddr = GetAddrOfLocalVar(PrivateVD);
+          if (PrivateVD->getType()->isReferenceType())
+            PrivateAddr =
+                EmitLoadOfLValue(MakeNaturalAlignAddrLValue(
+                                     PrivateAddr, PrivateVD->getType()),
+                                 (*IRef)->getExprLoc())
+                    .getScalarVal();
           EmitOMPCopy(*this, Type, OriginalAddr, PrivateAddr, DestVD, SrcVD,
                       AssignOp);
         }

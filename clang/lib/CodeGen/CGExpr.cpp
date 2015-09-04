@@ -1942,11 +1942,17 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       if (auto *FD = LambdaCaptureFields.lookup(VD))
         return EmitCapturedFieldLValue(*this, FD, CXXABIThisValue);
       else if (CapturedStmtInfo) {
-        if (auto *V = LocalDeclMap.lookup(VD))
+        if (auto *V = LocalDeclMap.lookup(VD)) {
+          if (VD->getType()->isReferenceType()) {
+            llvm::LoadInst *LI = Builder.CreateLoad(V);
+            LI->setAlignment(Alignment.getQuantity());
+            V = LI;
+            return MakeNaturalAlignAddrLValue(V, T);
+          }
           return MakeAddrLValue(V, T, Alignment);
-        else
-          return EmitCapturedFieldLValue(*this, CapturedStmtInfo->lookup(VD),
-                                         CapturedStmtInfo->getContextValue());
+        }
+        return EmitCapturedFieldLValue(*this, CapturedStmtInfo->lookup(VD),
+                                       CapturedStmtInfo->getContextValue());
       }
       assert(isa<BlockDecl>(CurCodeDecl));
       return MakeAddrLValue(GetAddrOfBlockDecl(VD, VD->hasAttr<BlocksAttr>()),

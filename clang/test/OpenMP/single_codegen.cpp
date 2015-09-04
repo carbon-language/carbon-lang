@@ -38,7 +38,7 @@ int main() {
   // CHECK-DAG: [[C_ADDR:%.+]] = alloca [[TEST_CLASS_TY]]
   char a;
   char a2[2];
-  TestClass c;
+  TestClass &c = tc;
 
 // CHECK:       [[GTID:%.+]] = call i32 @__kmpc_global_thread_num([[IDENT_T_TY]]* [[DEFAULT_LOC:@.+]])
 // CHECK-DAG:   [[DID_IT:%.+]] = alloca i32,
@@ -81,8 +81,7 @@ int main() {
 // CHECK:       [[A_PTR_REF:%.+]] = getelementptr inbounds [5 x i8*], [5 x i8*]* [[COPY_LIST]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
 // CHECK:       store i8* [[A_ADDR]], i8** [[A_PTR_REF]],
 // CHECK:       [[C_PTR_REF:%.+]] = getelementptr inbounds [5 x i8*], [5 x i8*]* [[COPY_LIST]], i{{[0-9]+}} 0, i{{[0-9]+}} 1
-// CHECK:       [[C_PTR_REF_VOID_PTR:%.+]] = bitcast [[TEST_CLASS_TY]]* [[C_ADDR]] to i8*
-// CHECK:       store i8* [[C_PTR_REF_VOID_PTR]], i8** [[C_PTR_REF]],
+// CHECK:       store i8* {{.+}}, i8** [[C_PTR_REF]],
 // CHECK:       [[TC_PTR_REF:%.+]] = getelementptr inbounds [5 x i8*], [5 x i8*]* [[COPY_LIST]], i{{[0-9]+}} 0, i{{[0-9]+}} 2
 // CHECK:       [[TC_THREADPRIVATE_ADDR_VOID_PTR:%.+]] = call{{.*}} i8* @__kmpc_threadprivate_cached
 // CHECK:       [[TC_THREADPRIVATE_ADDR:%.+]] = bitcast i8* [[TC_THREADPRIVATE_ADDR_VOID_PTR]] to [[TEST_CLASS_TY]]*

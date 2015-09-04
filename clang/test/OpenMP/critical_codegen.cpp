@@ -37,6 +37,23 @@ int main() {
   return a;
 }
 
+struct S {
+  int a;
+};
+// CHECK-LABEL: critical_ref
+void critical_ref(S &s) {
+  // CHECK: [[S_ADDR:%.+]] = alloca %struct.S*,
+  // CHECK: [[S_REF:%.+]] = load %struct.S*, %struct.S** [[S_ADDR]],
+  // CHECK: [[S_A_REF:%.+]] = getelementptr inbounds %struct.S, %struct.S* [[S_REF]], i32 0, i32 0
+  ++s.a;
+  // CHECK: call void @__kmpc_critical(
+#pragma omp critical
+  // CHECK: [[S_REF:%.+]] = load %struct.S*, %struct.S** [[S_ADDR]],
+  // CHECK: [[S_A_REF:%.+]] = getelementptr inbounds %struct.S, %struct.S* [[S_REF]], i32 0, i32 0
+  ++s.a;
+  // CHECK: call void @__kmpc_end_critical(
+}
+
 // CHECK-LABEL:      parallel_critical
 // TERM_DEBUG-LABEL: parallel_critical
 void parallel_critical() {

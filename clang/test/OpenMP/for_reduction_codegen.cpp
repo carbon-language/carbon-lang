@@ -8,7 +8,8 @@
 #ifndef HEADER
 #define HEADER
 
-volatile double g;
+volatile double g, g_orig;
+volatile double &g1 = g_orig;
 
 template <class T>
 struct S {
@@ -36,7 +37,8 @@ T tmain() {
   T t_var = T(), t_var1;
   T vec[] = {1, 2};
   S<T> s_arr[] = {1, 2};
-  S<T> var(3), var1;
+  S<T> &var = test;
+  S<T> var1;
 #pragma omp parallel
 #pragma omp for reduction(+:t_var) reduction(&:var) reduction(&& : var1) reduction(min: t_var1) nowait
   for (int i = 0; i < 2; ++i) {
@@ -61,24 +63,25 @@ int main() {
   // LAMBDA: define{{.*}} internal{{.*}} void [[OUTER_LAMBDA]](
   // LAMBDA: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* %{{.+}})
 #pragma omp parallel
-#pragma omp for reduction(+:g)
+#pragma omp for reduction(+:g, g1)
     for (int i = 0; i < 2; ++i) {
     // LAMBDA: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* %{{.+}})
     // LAMBDA: [[G_PRIVATE_ADDR:%.+]] = alloca double,
 
     // Reduction list for runtime.
-    // LAMBDA: [[RED_LIST:%.+]] = alloca [1 x i8*],
+    // LAMBDA: [[RED_LIST:%.+]] = alloca [2 x i8*],
 
     // LAMBDA: store double 0.0{{.+}}, double* [[G_PRIVATE_ADDR]]
     // LAMBDA: call void @__kmpc_for_static_init_4(
     g = 1;
+    g1 = 1;
     // LAMBDA: store double 1.0{{.+}}, double* [[G_PRIVATE_ADDR]],
     // LAMBDA: [[G_PRIVATE_ADDR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
     // LAMBDA: store double* [[G_PRIVATE_ADDR]], double** [[G_PRIVATE_ADDR_REF]]
     // LAMBDA: call void [[INNER_LAMBDA:@.+]](%{{.+}}* [[ARG]])
     // LAMBDA: call void @__kmpc_for_static_fini(
 
-    // LAMBDA: [[G_PRIV_REF:%.+]] = getelementptr inbounds [1 x i8*], [1 x i8*]* [[RED_LIST]], i32 0, i32 0
+    // LAMBDA: [[G_PRIV_REF:%.+]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[RED_LIST]], i32 0, i32 0
     // LAMBDA: [[BITCAST:%.+]] = bitcast double* [[G_PRIVATE_ADDR]] to i8*
     // LAMBDA: store i8* [[BITCAST]], i8** [[G_PRIV_REF]],
     // LAMBDA: call i32 @__kmpc_reduce(
@@ -104,6 +107,7 @@ int main() {
       // LAMBDA: define {{.+}} void [[INNER_LAMBDA]](%{{.+}}* [[ARG_PTR:%.+]])
       // LAMBDA: store %{{.+}}* [[ARG_PTR]], %{{.+}}** [[ARG_PTR_REF:%.+]],
       g = 2;
+      g1 = 2;
       // LAMBDA: [[ARG_PTR:%.+]] = load %{{.+}}*, %{{.+}}** [[ARG_PTR_REF]]
       // LAMBDA: [[G_PTR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG_PTR]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
       // LAMBDA: [[G_REF:%.+]] = load double*, double** [[G_PTR_REF]]
@@ -120,16 +124,17 @@ int main() {
   // BLOCKS: define{{.*}} internal{{.*}} void {{.+}}(i8*
   // BLOCKS: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* %{{.+}})
 #pragma omp parallel
-#pragma omp for reduction(-:g)
+#pragma omp for reduction(-:g, g1)
     for (int i = 0; i < 2; ++i)  {
     // BLOCKS: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* %{{.+}})
     // BLOCKS: [[G_PRIVATE_ADDR:%.+]] = alloca double,
 
     // Reduction list for runtime.
-    // BLOCKS: [[RED_LIST:%.+]] = alloca [1 x i8*],
+    // BLOCKS: [[RED_LIST:%.+]] = alloca [2 x i8*],
 
     // BLOCKS: store double 0.0{{.+}}, double* [[G_PRIVATE_ADDR]]
     g = 1;
+    g1 = 1;
     // BLOCKS: call void @__kmpc_for_static_init_4(
     // BLOCKS: store double 1.0{{.+}}, double* [[G_PRIVATE_ADDR]],
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
@@ -138,7 +143,7 @@ int main() {
     // BLOCKS: call void {{%.+}}(i8
     // BLOCKS: call void @__kmpc_for_static_fini(
 
-    // BLOCKS: [[G_PRIV_REF:%.+]] = getelementptr inbounds [1 x i8*], [1 x i8*]* [[RED_LIST]], i32 0, i32 0
+    // BLOCKS: [[G_PRIV_REF:%.+]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[RED_LIST]], i32 0, i32 0
     // BLOCKS: [[BITCAST:%.+]] = bitcast double* [[G_PRIVATE_ADDR]] to i8*
     // BLOCKS: store i8* [[BITCAST]], i8** [[G_PRIV_REF]],
     // BLOCKS: call i32 @__kmpc_reduce(
@@ -163,6 +168,7 @@ int main() {
     ^{
       // BLOCKS: define {{.+}} void {{@.+}}(i8*
       g = 2;
+      g1 = 2;
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
       // BLOCKS: store double 2.0{{.+}}, double*
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
@@ -176,7 +182,8 @@ int main() {
   float t_var = 0, t_var1;
   int vec[] = {1, 2};
   S<float> s_arr[] = {1, 2};
-  S<float> var(3), var1;
+  S<float> &var = test;
+  S<float> var1;
 #pragma omp parallel
 #pragma omp for reduction(+:t_var) reduction(&:var) reduction(&& : var1) reduction(min: t_var1)
   for (int i = 0; i < 2; ++i) {

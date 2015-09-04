@@ -19,6 +19,7 @@ struct S {
 };
 
 volatile int g = 1212;
+volatile int &g1 = g;
 float f;
 char cnt;
 
@@ -62,7 +63,7 @@ int main() {
   // LAMBDA: define{{.*}} internal{{.*}} void [[OUTER_LAMBDA]](
   // LAMBDA: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* %{{.+}})
 #pragma omp parallel
-#pragma omp for lastprivate(g)
+#pragma omp for lastprivate(g, g1)
   for (int i = 0; i < 2; ++i) {
     // LAMBDA: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* [[ARG:%.+]])
     // LAMBDA: alloca i{{[0-9]+}},
@@ -81,6 +82,7 @@ int main() {
     // LAMBDA: call void [[INNER_LAMBDA:@.+]](%{{.+}}* [[ARG]])
     // LAMBDA: call void @__kmpc_for_static_fini(%{{.+}}* @{{.+}}, i32 [[GTID]])
     g = 1;
+    g1 = 1;
     // Check for final copying of private values back to original vars.
     // LAMBDA: [[IS_LAST_VAL:%.+]] = load i32, i32* [[IS_LAST_ADDR]],
     // LAMBDA: [[IS_LAST_ITER:%.+]] = icmp ne i32 [[IS_LAST_VAL]], 0
@@ -98,6 +100,7 @@ int main() {
       // LAMBDA: define {{.+}} void [[INNER_LAMBDA]](%{{.+}}* [[ARG_PTR:%.+]])
       // LAMBDA: store %{{.+}}* [[ARG_PTR]], %{{.+}}** [[ARG_PTR_REF:%.+]],
       g = 2;
+      g1 = 2;
       // LAMBDA: [[ARG_PTR:%.+]] = load %{{.+}}*, %{{.+}}** [[ARG_PTR_REF]]
       // LAMBDA: [[G_PTR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG_PTR]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
       // LAMBDA: [[G_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[G_PTR_REF]]
@@ -114,7 +117,7 @@ int main() {
   // BLOCKS: define{{.*}} internal{{.*}} void {{.+}}(i8*
   // BLOCKS: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* %{{.+}})
 #pragma omp parallel
-#pragma omp for lastprivate(g)
+#pragma omp for lastprivate(g, g1)
   for (int i = 0; i < 2; ++i) {
     // BLOCKS: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* [[ARG:%.+]])
     // BLOCKS: alloca i{{[0-9]+}},
@@ -134,6 +137,7 @@ int main() {
     // BLOCKS: call void {{%.+}}(i8
     // BLOCKS: call void @__kmpc_for_static_fini(%{{.+}}* @{{.+}}, i32 [[GTID]])
     g = 1;
+    g1 = 1;
     // Check for final copying of private values back to original vars.
     // BLOCKS: [[IS_LAST_VAL:%.+]] = load i32, i32* [[IS_LAST_ADDR]],
     // BLOCKS: [[IS_LAST_ITER:%.+]] = icmp ne i32 [[IS_LAST_VAL]], 0
@@ -148,9 +152,11 @@ int main() {
     // BLOCKS: [[LAST_DONE]]
     // BLOCKS: call i32 @__kmpc_cancel_barrier(%{{.+}}* @{{.+}}, i{{[0-9]+}} [[GTID]])
     g = 1;
+    g1 = 1;
     ^{
       // BLOCKS: define {{.+}} void {{@.+}}(i8*
       g = 2;
+      g1 = 1;
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
       // BLOCKS: store i{{[0-9]+}} 2, i{{[0-9]+}}*
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
@@ -408,6 +414,7 @@ int main() {
 // CHECK: [[VEC_PRIV:%.+]] = alloca [2 x i{{[0-9]+}}],
 // CHECK: [[S_ARR_PRIV:%.+]] = alloca [2 x [[S_INT_TY]]],
 // CHECK: [[VAR_PRIV:%.+]] = alloca [[S_INT_TY]],
+// CHECK: [[VAR_PRIV_REF:%.+]] = alloca [[S_INT_TY]]*,
 // CHECK: store i{{[0-9]+}}* [[GTID_ADDR]], i{{[0-9]+}}** [[GTID_ADDR_REF:%.+]]
 
 // Check for default initialization.
@@ -424,6 +431,7 @@ int main() {
 // CHECK: [[VAR_REF_PTR:%.+]] = getelementptr inbounds [[CAP_TMAIN_TY]], [[CAP_TMAIN_TY]]* %{{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 3
 // CHECK: [[VAR_REF:%.+]] = load [[S_INT_TY]]*, [[S_INT_TY]]** [[VAR_REF_PTR]],
 // CHECK: call {{.*}} [[S_INT_TY_DEF_CONSTR]]([[S_INT_TY]]* [[VAR_PRIV]])
+// CHECK: store [[S_INT_TY]]* [[VAR_PRIV]], [[S_INT_TY]]** [[VAR_PRIV_REF]]
 // CHECK: call {{.+}} @__kmpc_for_static_init_4(%{{.+}}* @{{.+}}, i32 %{{.+}}, i32 34, i32* [[IS_LAST_ADDR:%.+]], i32* %{{.+}}, i32* %{{.+}}, i32* %{{.+}}, i32 1, i32 1)
 // <Skip loop body>
 // CHECK: call void @__kmpc_for_static_fini(%{{.+}}* @{{.+}}, i32 %{{.+}})
@@ -456,7 +464,8 @@ int main() {
 // CHECK: [[S_ARR_BODY_DONE]]
 
 // original var=private_var;
-// CHECK: call {{.*}} [[S_INT_TY_COPY_ASSIGN:@.+]]([[S_INT_TY]]* [[VAR_REF]], [[S_INT_TY]]* {{.*}} [[VAR_PRIV]])
+// CHECK: [[VAR_PRIV1:%.+]] = load [[S_INT_TY]]*, [[S_INT_TY]]** [[VAR_PRIV_REF]],
+// CHECK: call {{.*}} [[S_INT_TY_COPY_ASSIGN:@.+]]([[S_INT_TY]]* [[VAR_REF]], [[S_INT_TY]]* {{.*}} [[VAR_PRIV1]])
 // CHECK: br label %[[LAST_DONE]]
 // CHECK: [[LAST_DONE]]
 // CHECK-DAG: call void [[S_INT_TY_DESTR]]([[S_INT_TY]]* [[VAR_PRIV]])

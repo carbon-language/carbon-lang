@@ -16,6 +16,7 @@ struct St {
 };
 
 volatile int g = 1212;
+volatile int &g1 = g;
 
 template <class T>
 struct S {
@@ -71,7 +72,7 @@ int main() {
 // LAMBDA: define{{.*}} internal{{.*}} void [[OUTER_LAMBDA]](
 // LAMBDA: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* %{{.+}})
 #pragma omp parallel
-#pragma omp for firstprivate(g)
+#pragma omp for firstprivate(g, g1)
   for (int i = 0; i < 2; ++i) {
     // LAMBDA: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* [[ARG:%.+]])
     // Skip temp vars for loop
@@ -85,6 +86,7 @@ int main() {
     // LAMBDA: store i{{[0-9]+}} [[G_VAL]], i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
     // LAMBDA: call void @__kmpc_barrier(
     g = 1;
+    g1 = 1;
     // LAMBDA: call void @__kmpc_for_static_init_4(
     // LAMBDA: store i{{[0-9]+}} 1, i{{[0-9]+}}* [[G_PRIVATE_ADDR]],
     // LAMBDA: [[G_PRIVATE_ADDR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
@@ -96,6 +98,7 @@ int main() {
       // LAMBDA: define {{.+}} void [[INNER_LAMBDA]](%{{.+}}* [[ARG_PTR:%.+]])
       // LAMBDA: store %{{.+}}* [[ARG_PTR]], %{{.+}}** [[ARG_PTR_REF:%.+]],
       g = 2;
+      g1 = 2;
       // LAMBDA: [[ARG_PTR:%.+]] = load %{{.+}}*, %{{.+}}** [[ARG_PTR_REF]]
       // LAMBDA: [[G_PTR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG_PTR]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
       // LAMBDA: [[G_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[G_PTR_REF]]
@@ -112,7 +115,7 @@ int main() {
 // BLOCKS: define{{.*}} internal{{.*}} void {{.+}}(i8*
 // BLOCKS: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* %{{.+}})
 #pragma omp parallel
-#pragma omp for firstprivate(g)
+#pragma omp for firstprivate(g, g1)
   for (int i = 0; i < 2; ++i) {
     // BLOCKS: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* [[ARG:%.+]])
     // Skip temp vars for loop
@@ -126,6 +129,7 @@ int main() {
     // BLOCKS: store i{{[0-9]+}} [[G_VAL]], i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
     // BLOCKS: call void @__kmpc_barrier(
     g = 1;
+    g1 =1;
     // BLOCKS: call void @__kmpc_for_static_init_4(
     // BLOCKS: store i{{[0-9]+}} 1, i{{[0-9]+}}* [[G_PRIVATE_ADDR]],
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
@@ -137,6 +141,7 @@ int main() {
     ^{
       // BLOCKS: define {{.+}} void {{@.+}}(i8*
       g = 2;
+      g1 = 2;
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
       // BLOCKS: store i{{[0-9]+}} 2, i{{[0-9]+}}*
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}

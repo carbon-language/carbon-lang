@@ -19,6 +19,7 @@ struct S {
 };
 
 volatile int g = 1212;
+volatile int &g1 = g;
 float f;
 char cnt;
 
@@ -51,11 +52,12 @@ int main() {
   // LAMBDA: define{{.*}} internal{{.*}} void [[OUTER_LAMBDA]](
   // LAMBDA: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* %{{.+}})
 #pragma omp parallel
-#pragma omp for linear(g:5)
+#pragma omp for linear(g, g1:5)
   for (int i = 0; i < 2; ++i) {
     // LAMBDA: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* [[ARG:%.+]])
     // LAMBDA: alloca i{{[0-9]+}},
     // LAMBDA: [[G_START_ADDR:%.+]] = alloca i{{[0-9]+}},
+    // LAMBDA: alloca i{{[0-9]+}},
     // LAMBDA: alloca i{{[0-9]+}},
     // LAMBDA: alloca i{{[0-9]+}},
     // LAMBDA: alloca i{{[0-9]+}},
@@ -79,11 +81,13 @@ int main() {
     // LAMBDA: call void [[INNER_LAMBDA:@.+]](%{{.+}}* [[ARG]])
     // LAMBDA: call void @__kmpc_for_static_fini(%{{.+}}* @{{.+}}, i32 [[GTID]])
     g += 5;
+    g1 += 5;
     // LAMBDA: call i32 @__kmpc_cancel_barrier(%{{.+}}* @{{.+}}, i{{[0-9]+}} [[GTID]])
     [&]() {
       // LAMBDA: define {{.+}} void [[INNER_LAMBDA]](%{{.+}}* [[ARG_PTR:%.+]])
       // LAMBDA: store %{{.+}}* [[ARG_PTR]], %{{.+}}** [[ARG_PTR_REF:%.+]],
       g = 2;
+      g1 = 2;
       // LAMBDA: [[ARG_PTR:%.+]] = load %{{.+}}*, %{{.+}}** [[ARG_PTR_REF]]
       // LAMBDA: [[G_PTR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG_PTR]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
       // LAMBDA: [[G_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[G_PTR_REF]]
@@ -100,11 +104,12 @@ int main() {
   // BLOCKS: define{{.*}} internal{{.*}} void {{.+}}(i8*
   // BLOCKS: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* %{{.+}})
 #pragma omp parallel
-#pragma omp for linear(g:5)
+#pragma omp for linear(g, g1:5)
   for (int i = 0; i < 2; ++i) {
     // BLOCKS: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* [[ARG:%.+]])
     // BLOCKS: alloca i{{[0-9]+}},
     // BLOCKS: [[G_START_ADDR:%.+]] = alloca i{{[0-9]+}},
+    // BLOCKS: alloca i{{[0-9]+}},
     // BLOCKS: alloca i{{[0-9]+}},
     // BLOCKS: alloca i{{[0-9]+}},
     // BLOCKS: alloca i{{[0-9]+}},
@@ -129,11 +134,14 @@ int main() {
     // BLOCKS: call void {{%.+}}(i8
     // BLOCKS: call void @__kmpc_for_static_fini(%{{.+}}* @{{.+}}, i32 [[GTID]])
     g += 5;
+    g1 += 5;
     // BLOCKS: call i32 @__kmpc_cancel_barrier(%{{.+}}* @{{.+}}, i{{[0-9]+}} [[GTID]])
     g = 1;
+    g1 = 5;
     ^{
       // BLOCKS: define {{.+}} void {{@.+}}(i8*
       g = 2;
+      g1 = 2;
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
       // BLOCKS: store i{{[0-9]+}} 2, i{{[0-9]+}}*
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
@@ -227,6 +235,7 @@ int main() {
 // CHECK: alloca i{{[0-9]+}},
 // CHECK: [[PVAR_PRIV:%.+]] = alloca i32*,
 // CHECK: [[LVAR_PRIV:%.+]] = alloca i32,
+// CHECK: [[LVAR_PRIV_REF:%.+]] = alloca i32*,
 // CHECK: store i{{[0-9]+}}* [[GTID_ADDR]], i{{[0-9]+}}** [[GTID_ADDR_REF:%.+]]
 
 // Check for default initialization.
@@ -238,6 +247,8 @@ int main() {
 // CHECK: [[LVAR_REF:%.+]] = load i32*, i32** [[LVAR_PTR_REF]],
 // CHECK: [[LVAR_VAL:%.+]] = load i32, i32* [[LVAR_REF]],
 // CHECK: store i32 [[LVAR_VAL]], i32* [[LVAR_START]],
+// CHECK: store i32* [[LVAR_PRIV]], i32** [[LVAR_PRIV_REF]],
+
 // CHECK: call {{.+}} @__kmpc_for_static_init_4(%{{.+}}* @{{.+}}, i32 [[GTID:%.+]], i32 34, i32* [[IS_LAST_ADDR:%.+]], i32* %{{.+}}, i32* %{{.+}}, i32* %{{.+}}, i32 1, i32 1)
 // CHECK: [[PVAR_VAL:%.+]] = load i32*, i32** [[PVAR_START]],
 // CHECK: [[CNT:%.+]] = load i32, i32*
@@ -253,6 +264,7 @@ int main() {
 // CHECK: [[PVAR_VAL:%.+]] = load i32*, i32** [[PVAR_PRIV]]
 // CHECK: [[PTR:%.+]] = getelementptr inbounds i32, i32* [[PVAR_VAL]], i32 1
 // CHECK: store i32* [[PTR]], i32** [[PVAR_PRIV]],
+// CHECK: [[LVAR_PRIV:%.+]] = load i32*, i32** [[LVAR_PRIV_REF]],
 // CHECK: [[LVAR_VAL:%.+]] = load i32, i32* [[LVAR_PRIV]],
 // CHECK: [[ADD:%.+]] = add nsw i32 [[LVAR_VAL]], 1
 // CHECK: store i32 [[ADD]], i32* [[LVAR_PRIV]],
