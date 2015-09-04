@@ -42,6 +42,7 @@ Test Suite Tasks
 * Move all libc++ specific tests from test/std into test/libcxx.
 * Improve how LIT handles compiler warnings.
 * Improve the quality and portability of the locale test data.
+* Convert failure tests to use Clang Verify.
 
 Misc Tasks
 ==========
@@ -51,6 +52,5 @@ Misc Tasks
 * Look at basic_string's move assignment operator, re LWG 2063 and POCMA
 * libc++ is missing try_emplace
 * Put a static_assert in std::allocator to deny const/volatile types (LWG 2447)
-* Convert failure tests to use Clang Verify.
 * Document support (or lack of) for C++11 libraries in C++03.
 * Document supported compilers.
