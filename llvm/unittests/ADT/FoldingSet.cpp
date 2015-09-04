@@ -24,11 +24,11 @@ TEST(FoldingSetTest, UnalignedStringTest) {
   SCOPED_TRACE("UnalignedStringTest");
 
   FoldingSetNodeID a, b;
-  // An aligned string
+  // An aligned string.
   std::string str1= "a test string";
   a.AddString(str1);
 
-  // An unaligned string
+  // An unaligned string.
   std::string str2 = ">" + str1;
   b.AddString(str2.c_str() + 1);
 
