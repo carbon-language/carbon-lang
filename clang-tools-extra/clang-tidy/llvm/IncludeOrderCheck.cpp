@@ -33,7 +33,7 @@ private:
   struct IncludeDirective {
     SourceLocation Loc;    ///< '#' location in the include directive
     CharSourceRange Range; ///< SourceRange for the file name
-    StringRef Filename;    ///< Filename as a string
+    std::string Filename;  ///< Filename as a string
     bool IsAngled;         ///< true if this was an include with angle brackets
     bool IsMainModule;     ///< true if this was the first include in a file
   };
