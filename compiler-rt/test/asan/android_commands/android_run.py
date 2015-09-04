@@ -18,13 +18,16 @@ def build_env():
             args.append('%s="%s"' % (key, value))
     return ' '.join(args)
 
+is_64bit = (subprocess.check_output(['file', sys.argv[0] + '.real']).find('64-bit') != -1)
+asanwrapper = "asanwrapper64" if is_64bit else "asanwrapper"
+
 device_env = build_env()
 device_args = ' '.join(sys.argv[1:]) # FIXME: escape?
 device_stdout = device_binary + '.stdout'
 device_stderr = device_binary + '.stderr'
 device_exitcode = device_binary + '.exitcode'
-ret = adb(['shell', 'cd %s && %s asanwrapper %s %s >%s 2>%s ; echo $? >%s' %
-           (ANDROID_TMPDIR, device_env, device_binary, device_args,
+ret = adb(['shell', 'cd %s && %s %s %s %s >%s 2>%s ; echo $? >%s' %
+           (ANDROID_TMPDIR, device_env, asanwrapper, device_binary, device_args,
             device_stdout, device_stderr, device_exitcode)])
 if ret != 0:
     sys.exit(ret)
