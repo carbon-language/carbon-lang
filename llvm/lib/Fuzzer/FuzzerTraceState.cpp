@@ -216,8 +216,8 @@ class TraceState {
                         dfsan_label L2);
   void DFSanSwitchCallback(uint64_t PC, size_t ValSizeInBits, uint64_t Val,
                            size_t NumCases, uint64_t *Cases, dfsan_label L);
-  void TraceCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType, uint64_t Arg1,
-                        uint64_t Arg2);
+  void TraceCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType,
+                        uint64_t Arg1, uint64_t Arg2);
 
   void TraceSwitchCallback(uintptr_t PC, size_t ValSizeInBits, uint64_t Val,
                            size_t NumCases, uint64_t *Cases);
@@ -330,7 +330,7 @@ int TraceState::TryToAddDesiredData(uint64_t PresentData, uint64_t DesiredData,
   int Res = 0;
   const uint8_t *Beg = CurrentUnit.data();
   const uint8_t *End = Beg + CurrentUnit.size();
-  for (const uint8_t *Cur = Beg; Cur < End; Cur += DataSize) {
+  for (const uint8_t *Cur = Beg; Cur < End; Cur++) {
     Cur = (uint8_t *)memmem(Cur, End - Cur, &PresentData, DataSize);
     if (!Cur)
       break;
@@ -340,14 +340,13 @@ int TraceState::TryToAddDesiredData(uint64_t PresentData, uint64_t DesiredData,
     Mutations.push_back({Pos, DataSize, DesiredData});
     Mutations.push_back({Pos, DataSize, DesiredData + 1});
     Mutations.push_back({Pos, DataSize, DesiredData - 1});
-    Cur += DataSize;
     Res++;
   }
   return Res;
 }
 
-void TraceState::TraceCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType, uint64_t Arg1,
-                        uint64_t Arg2) {
+void TraceState::TraceCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType,
+                                  uint64_t Arg1, uint64_t Arg2) {
   if (!RecordingTraces) return;
   int Added = 0;
   CmpSitePassport *CSP = CSPTable.GetPassport(PC);
