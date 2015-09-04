@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -ast-dump %s | FileCheck %s
+// RUN: %clang_cc1 -triple i686-mingw32 -ast-dump %s | FileCheck %s
 
 template<class T>
 class P {
@@ -46,7 +46,7 @@ struct D {
 void construct() {
   using namespace foo;
   A a = A(12);
-  // CHECK: CXXConstructExpr {{0x[0-9a-fA-F]+}} <col:9, col:13> 'class foo::A' 'void (int){{ __attribute__\(\(thiscall\)\)?}}'
+  // CHECK: CXXConstructExpr {{0x[0-9a-fA-F]+}} <col:9, col:13> 'class foo::A' 'void (int){{( __attribute__\(\(thiscall\)\))?}}'
   D d = D(12);
-  // CHECK: CXXConstructExpr {{0x[0-9a-fA-F]+}} <col:9, col:13> 'struct D' 'void (int){{ __attribute__\(\(thiscall\)\)?}}'
+  // CHECK: CXXConstructExpr {{0x[0-9a-fA-F]+}} <col:9, col:13> 'struct D' 'void (int){{( __attribute__\(\(thiscall\)\))?}}'
 }
