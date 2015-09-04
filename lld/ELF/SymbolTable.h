@@ -54,6 +54,7 @@ public:
   }
 
 private:
+  template <class ELFT> void addELFFile(ELFFileBase *File);
   void addELFFile(ELFFileBase *File);
 
   template <class ELFT> void init();
