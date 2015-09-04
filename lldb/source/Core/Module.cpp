@@ -1708,7 +1708,8 @@ Module::MatchesModuleSpec (const ModuleSpec &module_ref)
     const FileSpec &file_spec = module_ref.GetFileSpec();
     if (file_spec)
     {
-        if (!FileSpec::Equal (file_spec, m_file, (bool)file_spec.GetDirectory()))
+        if (!FileSpec::Equal (file_spec, m_file, (bool)file_spec.GetDirectory()) &&
+            !FileSpec::Equal (file_spec, m_platform_file, (bool)file_spec.GetDirectory()))
             return false;
     }
 
