@@ -120,6 +120,12 @@ testing::AssertionResult matchesObjC(const std::string &Code,
 }
 
 template <typename T>
+testing::AssertionResult matchesC(const std::string &Code, const T &AMatcher) {
+  return matchesConditionally(Code, AMatcher, true, "", FileContentMappings(),
+                              "input.c");
+}
+
+template <typename T>
 testing::AssertionResult notMatchesObjC(const std::string &Code,
                                      const T &AMatcher) {
   return matchesConditionally(

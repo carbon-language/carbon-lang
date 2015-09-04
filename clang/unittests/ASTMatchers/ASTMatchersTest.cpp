@@ -919,6 +919,9 @@ TEST(TypeMatcher, MatchesClassType) {
 
   EXPECT_TRUE(
       matches("class A { public: A *a; class B {}; };", TypeAHasClassB));
+
+  EXPECT_TRUE(matchesC("struct S {}; void f(void) { struct S s; }",
+                       varDecl(hasType(namedDecl(hasName("S"))))));
 }
 
 TEST(Matcher, BindMatchedNodes) {
