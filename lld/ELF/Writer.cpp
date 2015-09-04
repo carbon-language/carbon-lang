@@ -7,13 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Writer.h"
 #include "Chunks.h"
 #include "Config.h"
 #include "Error.h"
 #include "Symbols.h"
 #include "SymbolTable.h"
-#include "Writer.h"
-#include "Symbols.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
