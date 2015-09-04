@@ -44,7 +44,7 @@ uint64_t SectionChunk::getHash() const {
                       NumRelocs,
                       uint32_t(Header->SizeOfRawData),
                       std::distance(Relocs.end(), Relocs.begin()),
-                      hash_combine_range(A.data(), A.data() + A.size()));
+                      Checksum);
 }
 
 // Returns true if this and a given chunk are identical COMDAT sections.
@@ -57,6 +57,8 @@ bool SectionChunk::equals(const SectionChunk *X) const {
   if (Header->SizeOfRawData != X->Header->SizeOfRawData)
     return false;
   if (NumRelocs != X->NumRelocs)
+    return false;
+  if (Checksum != X->Checksum)
     return false;
 
   // Compare data

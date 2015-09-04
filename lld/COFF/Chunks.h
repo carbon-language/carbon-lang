@@ -183,6 +183,10 @@ public:
   // and this chunk is considrered as dead.
   SectionChunk *Ptr;
 
+  // The CRC of the contents as described in the COFF spec 4.5.5.
+  // Auxiliary Format 5: Section Definitions. Used for ICF.
+  uint32_t Checksum = 0;
+
 private:
   ArrayRef<uint8_t> getContents() const;
 
