@@ -937,7 +937,7 @@ CMICmdCmdBreakCondition::ParseArgs()
         *(new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
     m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgNamedNumber, true, true)));
     m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedExpr, true, true, true, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValListOfN(m_constStrArgNamedExprNoQuotes, true, false,
+    m_setCmdArgs.Add(*(new CMICmdArgValListOfN(m_constStrArgNamedExprNoQuotes, false, false,
                                                CMICmdArgValListBase::eArgValType_StringQuotedNumber)));
     return ParseValidateCmdOptions();
 }
@@ -1042,7 +1042,6 @@ CMICmdCmdBreakCondition::GetRestOfExpressionNotSurroundedInQuotes()
     CMICmdArgValListOfN *pArgExprNoQuotes = CMICmdBase::GetOption<CMICmdArgValListOfN>(m_constStrArgNamedExprNoQuotes);
     if (pArgExprNoQuotes != nullptr)
     {
-        CMIUtilString strExpression;
         const CMICmdArgValListBase::VecArgObjPtr_t &rVecExprParts(pArgExprNoQuotes->GetExpectedOptions());
         if (!rVecExprParts.empty())
         {
