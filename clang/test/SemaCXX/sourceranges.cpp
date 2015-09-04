@@ -7,7 +7,7 @@ class P {
 };
 
 namespace foo {
-class A { public: A() {} };
+class A { public: A(int = 0) {} };
 enum B {};
 typedef int C;
 }
@@ -36,4 +36,17 @@ void destruct(foo::A *a1, foo::A *a2, P<int> *p1) {
   a2->foo::A::~A();
   // CHECK: MemberExpr {{0x[0-9a-fA-F]+}} <col:3, col:13> '<bound member function type>' ->~P
   p1->~P<int>();
+}
+
+struct D {
+  D(int);
+  ~D();
+};
+
+void construct() {
+  using namespace foo;
+  A a = A(12);
+  // CHECK: CXXConstructExpr {{0x[0-9a-fA-F]+}} <col:9, col:13> 'class foo::A' 'void (int)'
+  D d = D(12);
+  // CHECK: CXXConstructExpr {{0x[0-9a-fA-F]+}} <col:9, col:13> 'struct D' 'void (int)'
 }
