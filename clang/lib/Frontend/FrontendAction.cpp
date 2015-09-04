@@ -284,7 +284,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
       if (!Found) {
         CI.getDiagnostics().Report(diag::err_fe_no_pch_in_dir) << PCHInclude;
-        return true;
+        goto failure;
       }
     }
   }

@@ -1,4 +1,6 @@
+// RUN: rm -rf %t.h.gch
 // RUN: mkdir -p %t.h.gch
+//
 // RUN: %clang -x c-header %S/pch-dir.h -DFOO=foo -o %t.h.gch/c.gch 
 // RUN: %clang -x c-header %S/pch-dir.h -DFOO=bar -o %t.h.gch/cbar.gch 
 // RUN: %clang -x c++-header -std=c++98 %S/pch-dir.h -o %t.h.gch/cpp.gch 
@@ -10,7 +12,11 @@
 // RUN: FileCheck -check-prefix=CHECK-CPP %s < %t.cpplog
 
 // RUN: not %clang -x c++ -std=c++11 -include %t.h -fsyntax-only %s 2> %t.cpp11log
-// RUN: FileCheck -check-prefix=CHECK-CPP11 %s < %t.cpp11log
+// RUN: FileCheck -check-prefix=CHECK-NO-SUITABLE %s < %t.cpp11log
+
+// Don't crash if the precompiled header file is missing.
+// RUN: not %clang_cc1 -include-pch %t.h.gch -DFOO=baz -fsyntax-only %s -print-stats 2> %t.missinglog
+// RUN: FileCheck -check-prefix=CHECK-NO-SUITABLE %s < %t.missinglog
 
 // CHECK-CBAR: int bar
 int FOO;
@@ -25,4 +31,4 @@ int get() {
 #endif
 }
 
-// CHECK-CPP11: no suitable precompiled header file found in directory
+// CHECK-NO-SUITABLE: no suitable precompiled header file found in directory
