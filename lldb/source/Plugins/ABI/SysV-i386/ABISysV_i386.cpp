@@ -418,8 +418,149 @@ Error
 ABISysV_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value_sp)
 {
     Error error;
-    //ToDo: Yet to be implemented
-    error.SetErrorString("ABISysV_i386::SetReturnValueObject(): Not implemented yet");
+    if (!new_value_sp)
+    {
+        error.SetErrorString("Empty value object for return value.");
+        return error;
+    }
+
+    CompilerType clang_type = new_value_sp->GetCompilerType();
+    if (!clang_type)
+    {
+        error.SetErrorString ("Null clang type for return value.");
+        return error;
+    }
+
+    const uint32_t type_flags = clang_type.GetTypeInfo ();
+    Thread *thread = frame_sp->GetThread().get();
+    RegisterContext *reg_ctx = thread->GetRegisterContext().get();
+    DataExtractor data;
+    Error data_error;
+    size_t num_bytes = new_value_sp->GetData(data, data_error);
+    bool register_write_successful = true;
+
+    if (data_error.Fail())
+    {
+        error.SetErrorStringWithFormat("Couldn't convert return value to raw data: %s", data_error.AsCString());
+        return error;
+    }
+
+    // Following "IF ELSE" block categorizes various 'Fundamental Data Types'.
+    // The terminology 'Fundamental Data Types' used here is adopted from
+    // Table 2.1 of the reference document (specified on top of this file)
+
+    if (type_flags & eTypeIsPointer)     // 'Pointer'
+    {
+        if(num_bytes != sizeof(uint32_t))
+        {
+            error.SetErrorString("Pointer to be returned is not 4 bytes wide");
+            return error;
+        }
+        lldb::offset_t offset = 0;
+        const RegisterInfo *eax_info = reg_ctx->GetRegisterInfoByName("eax", 0);
+        uint32_t raw_value = data.GetMaxU32(&offset, num_bytes);
+        register_write_successful = reg_ctx->WriteRegisterFromUnsigned (eax_info, raw_value);
+    }
+    else if ((type_flags & eTypeIsScalar) || (type_flags & eTypeIsEnumeration)) //'Integral' + 'Floating Point'
+    {
+        lldb::offset_t offset = 0;
+        const RegisterInfo *eax_info = reg_ctx->GetRegisterInfoByName("eax", 0);
+
+        if (type_flags & eTypeIsInteger)    // 'Integral' except enum
+        {
+            switch (num_bytes)
+            {
+                default:
+                    break;
+                case 16:
+                    // For clang::BuiltinType::UInt128 & Int128
+                    // ToDo: Need to decide how to handle it
+                    break;
+                case 8:
+                {
+                    uint32_t raw_value_low = data.GetMaxU32(&offset, 4);
+                    const RegisterInfo *edx_info = reg_ctx->GetRegisterInfoByName("edx", 0);
+                    uint32_t raw_value_high = data.GetMaxU32(&offset, num_bytes - offset);
+                    register_write_successful = (reg_ctx->WriteRegisterFromUnsigned (eax_info, raw_value_low) &&
+                                                reg_ctx->WriteRegisterFromUnsigned (edx_info, raw_value_high));
+                    break;
+                }
+                case 4:
+                case 2:
+                case 1:
+                {
+                    uint32_t raw_value = data.GetMaxU32(&offset, num_bytes);
+                    register_write_successful = reg_ctx->WriteRegisterFromUnsigned (eax_info, raw_value);
+                    break;
+                }
+            }
+        }
+        else if (type_flags & eTypeIsEnumeration)    // handles enum
+        {
+            uint32_t raw_value = data.GetMaxU32(&offset, num_bytes);
+            register_write_successful = reg_ctx->WriteRegisterFromUnsigned (eax_info, raw_value);
+        }
+        else if (type_flags & eTypeIsFloat)  // 'Floating Point'
+        {
+            RegisterValue st0_value, fstat_value, ftag_value;
+            const RegisterInfo *st0_info = reg_ctx->GetRegisterInfoByName("st0", 0);
+            const RegisterInfo *fstat_info = reg_ctx->GetRegisterInfoByName("fstat", 0);
+            const RegisterInfo *ftag_info = reg_ctx->GetRegisterInfoByName("ftag", 0);
+
+            /* According to Page 3-12 of document
+            System V Application Binary Interface, Intel386 Architecture Processor Supplement, Fourth Edition
+            To return Floating Point values, all st% registers except st0 should be empty after exiting from
+            a function. This requires setting fstat and ftag registers to specific values.
+            fstat: The TOP field of fstat should be set to a value [0,7]. ABI doesn't specify the specific
+            value of TOP in case of function return. Hence, we set the TOP field to 7 by our choice. */
+            uint32_t value_fstat_u32 = 0x00003800;
+
+            /* ftag: Implication of setting TOP to 7 and indicating all st% registers empty except st0 is to set
+            7th bit of 4th byte of FXSAVE area to 1 and all other bits of this byte to 0. This is in accordance
+            with the document Intel 64 and IA-32 Architectures Software Developer's Manual, January 2015 */
+            uint32_t value_ftag_u32 = 0x00000080;
+
+            if (num_bytes <= 12)      // handles float, double, long double, __float80
+            {
+                long double value_long_dbl = 0.0;
+                if (num_bytes == 4)
+                    value_long_dbl = data.GetFloat(&offset);
+                else if (num_bytes == 8)
+                    value_long_dbl = data.GetDouble(&offset);
+                else if (num_bytes == 12)
+                    value_long_dbl = data.GetLongDouble(&offset);
+                else
+                {
+                    error.SetErrorString ("Invalid number of bytes for this return type");
+                    return error;
+                }
+                st0_value.SetLongDouble(value_long_dbl);
+                fstat_value.SetUInt32(value_fstat_u32);
+                ftag_value.SetUInt32(value_ftag_u32);
+                register_write_successful = reg_ctx->WriteRegister(st0_info, st0_value) &&
+                                            reg_ctx->WriteRegister(fstat_info, fstat_value) &&
+                                            reg_ctx->WriteRegister(ftag_info, ftag_value);
+            }
+            else if(num_bytes == 16)   // handles __float128
+            {
+                error.SetErrorString ("Implementation is missing for this clang type.");
+            }
+        }
+        else
+        {
+            // Neither 'Integral' nor 'Floating Point'. If flow reaches here
+            // then check type_flags. This type_flags is not a valid type.
+            error.SetErrorString ("Invalid clang type");
+        }
+    }
+    else
+    {
+        /* 'Complex Floating Point', 'Packed', 'Decimal Floating Point' and 'Aggregate' data types
+        are yet to be implemented */
+        error.SetErrorString ("Currently only Integral and Floating Point clang types are supported.");
+    }
+    if(!register_write_successful)
+        error.SetErrorString ("Register writing failed");
     return error;
 }
 
