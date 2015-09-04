@@ -15,9 +15,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Transforms/Utils/CtorUtils.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 #include "llvm/Pass.h"
 using namespace llvm;
@@ -54,29 +52,28 @@ bool EliminateAvailableExternally::runOnModule(Module &M) {
   bool Changed = false;
 
   // Drop initializers of available externally global variables.
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    if (!I->hasAvailableExternallyLinkage())
+  for (GlobalVariable &GV :M.globals()) {
+    if (!GV.hasAvailableExternallyLinkage())
       continue;
-    if (I->hasInitializer()) {
-      Constant *Init = I->getInitializer();
-      I->setInitializer(nullptr);
+    if (GV.hasInitializer()) {
+      Constant *Init = GV.getInitializer();
+      GV.setInitializer(nullptr);
       if (isSafeToDestroyConstant(Init))
         Init->destroyConstant();
     }
-    I->removeDeadConstantUsers();
-    I->setLinkage(GlobalValue::ExternalLinkage);
+    GV.removeDeadConstantUsers();
+    GV.setLinkage(GlobalValue::ExternalLinkage);
     NumVariables++;
   }
 
   // Drop the bodies of available externally functions.
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    if (!I->hasAvailableExternallyLinkage())
+  for (Function &F : M) {
+    if (!F.hasAvailableExternallyLinkage())
       continue;
-    if (!I->isDeclaration())
+    if (!F.isDeclaration())
       // This will set the linkage to external
-      I->deleteBody();
-    I->removeDeadConstantUsers();
+      F.deleteBody();
+    F.removeDeadConstantUsers();
     NumFunctions++;
   }
 
