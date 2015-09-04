@@ -17,6 +17,13 @@ using namespace llvm;
 
 namespace {
 
+TEST(APIntTest, ValueInit) {
+  APInt Zero = APInt();
+  EXPECT_TRUE(!Zero);
+  EXPECT_TRUE(!Zero.zext(64));
+  EXPECT_TRUE(!Zero.sext(64));
+}
+
 // Test that APInt shift left works when bitwidth > 64 and shiftamt == 0
 TEST(APIntTest, ShiftLeftByZero) {
   APInt One = APInt::getNullValue(65) + 1;
