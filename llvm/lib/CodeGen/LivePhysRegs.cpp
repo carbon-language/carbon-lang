@@ -68,7 +68,7 @@ void LivePhysRegs::stepBackward(const MachineInstr &MI) {
 
 /// Simulates liveness when stepping forward over an instruction(bundle): Remove
 /// killed-uses, add defs. This is the not recommended way, because it depends
-/// on accurate kill flags. If possible use stepBackwards() instead of this
+/// on accurate kill flags. If possible use stepBackward() instead of this
 /// function.
 void LivePhysRegs::stepForward(const MachineInstr &MI,
         SmallVectorImpl<std::pair<unsigned, const MachineOperand*>> &Clobbers) {

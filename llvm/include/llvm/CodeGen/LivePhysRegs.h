@@ -109,7 +109,7 @@ public:
   /// \brief Simulates liveness when stepping forward over an
   /// instruction(bundle): Remove killed-uses, add defs. This is the not
   /// recommended way, because it depends on accurate kill flags. If possible
-  /// use stepBackwards() instead of this function.
+  /// use stepBackward() instead of this function.
   /// The clobbers set will be the list of registers either defined or clobbered
   /// by a regmask.  The operand will identify whether this is a regmask or
   /// register operand.
