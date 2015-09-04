@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 < %s | FileCheck %s
+; RUN: llc -march=aarch64 -aarch64-neon-syntax=generic < %s | FileCheck %s
 
 define i8 @f_v16i8(<16 x i8>* %arr)  {
 ; CHECK-LABEL: f_v16i8
