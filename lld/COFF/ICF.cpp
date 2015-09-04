@@ -38,7 +38,6 @@ struct Equals {
 } // anonymous namespace
 
 uint64_t SectionChunk::getHash() const {
-  ArrayRef<uint8_t> A = getContents();
   return hash_combine(getPermissions(),
                       hash_value(SectionName),
                       NumRelocs,
