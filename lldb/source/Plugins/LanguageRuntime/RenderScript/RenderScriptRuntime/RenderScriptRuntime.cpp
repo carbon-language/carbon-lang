@@ -30,6 +30,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_renderscript;
 
 //------------------------------------------------------------------
 // Static Functions
@@ -42,6 +43,47 @@ RenderScriptRuntime::CreateInstance(Process *process, lldb::LanguageType languag
         return new RenderScriptRuntime(process);
     else
         return NULL;
+}
+
+// Callback with a module to search for matching symbols.
+// We first check that the module contains RS kernels.
+// Then look for a symbol which matches our kernel name.
+// The breakpoint address is finally set using the address of this symbol.
+Searcher::CallbackReturn
+RSBreakpointResolver::SearchCallback(SearchFilter &filter,
+                                     SymbolContext &context,
+                                     Address*,
+                                     bool)
+{
+    ModuleSP module = context.module_sp;
+
+    if (!module)
+        return Searcher::eCallbackReturnContinue;
+
+    // Is this a module containing renderscript kernels?
+    if (nullptr == module->FindFirstSymbolWithNameAndType(ConstString(".rs.info"), eSymbolTypeData))
+        return Searcher::eCallbackReturnContinue;
+
+    // Attempt to set a breakpoint on the kernel name symbol within the module library.
+    // If it's not found, it's likely debug info is unavailable - try to set a
+    // breakpoint on <name>.expand.
+
+    const Symbol* kernel_sym = module->FindFirstSymbolWithNameAndType(m_kernel_name, eSymbolTypeCode);
+    if (!kernel_sym)
+    {
+        std::string kernel_name_expanded(m_kernel_name.AsCString());
+        kernel_name_expanded.append(".expand");
+        kernel_sym = module->FindFirstSymbolWithNameAndType(ConstString(kernel_name_expanded.c_str()), eSymbolTypeCode);
+    }
+
+    if (kernel_sym)
+    {
+        Address bp_addr = kernel_sym->GetAddress();
+        if (filter.AddressPasses(bp_addr))
+            m_breakpoint->AddLocation(bp_addr);
+    }
+
+    return Searcher::eCallbackReturnContinue;
 }
 
 void
@@ -767,68 +809,24 @@ RenderScriptRuntime::DumpKernels(Stream &strm) const
     strm.IndentLess();
 }
 
-void 
-RenderScriptRuntime::AttemptBreakpointAtKernelName(Stream &strm, const char* name, Error& error)
+void
+RenderScriptRuntime::AttemptBreakpointAtKernelName(Stream &strm, const char* name, Error& error, TargetSP target)
 {
-    if (!name) 
+    if (!name)
     {
         error.SetErrorString("invalid kernel name");
         return;
     }
 
-    bool kernels_found = false;
+    SearchFilterSP filter_sp(new SearchFilterForUnconstrainedSearches(target));
+
     ConstString kernel_name(name);
-    for (const auto &module : m_rsmodules)
-    {
-        for (const auto &kernel : module->m_kernels)
-        {
-            if (kernel.m_name == kernel_name)
-            {
-                //Attempt to set a breakpoint on this symbol, within the module library
-                //If it's not found, it's likely debug info is unavailable - set a
-                //breakpoint on <name>.expand and emit a warning.
+    BreakpointResolverSP resolver_sp(new RSBreakpointResolver(nullptr, kernel_name));
 
-                const Symbol* kernel_sym = module->m_module->FindFirstSymbolWithNameAndType(kernel_name, eSymbolTypeCode);
+    BreakpointSP bp = target->CreateBreakpoint(filter_sp, resolver_sp, false, false, false);
+    if (bp)
+        bp->GetDescription(&strm, lldb::eDescriptionLevelInitial, false);
 
-                if (!kernel_sym)
-                {
-                    std::string kernel_name_expanded(name);
-                    kernel_name_expanded.append(".expand");
-                    kernel_sym = module->m_module->FindFirstSymbolWithNameAndType(ConstString(kernel_name_expanded.c_str()), eSymbolTypeCode);
-
-                    if (kernel_sym)
-                    {
-                        strm.Printf("Kernel '%s' could not be found, but expansion exists. ", name); 
-                        strm.Printf("Breakpoint placed on expanded kernel. Have you compiled in debug mode?");
-                        strm.EOL();
-                    }
-                    else
-                    {
-                        error.SetErrorStringWithFormat("Could not locate symbols for loaded kernel '%s'.", name);
-                        return;
-                    }
-                }
-
-                addr_t bp_addr = kernel_sym->GetLoadAddress(&GetProcess()->GetTarget());
-                if (bp_addr == LLDB_INVALID_ADDRESS)
-                {
-                    error.SetErrorStringWithFormat("Could not locate load address for symbols of kernel '%s'.", name);
-                    return;
-                }
-
-                BreakpointSP bp = GetProcess()->GetTarget().CreateBreakpoint(bp_addr, false, false);
-                strm.Printf("Breakpoint %" PRIu64 ": kernel '%s' within script '%s'", (uint64_t)bp->GetID(), name, module->m_resname.c_str());
-                strm.EOL();
-
-                kernels_found = true;
-            }
-        }
-    }
-
-    if (!kernels_found)
-    {
-        error.SetErrorString("kernel name not found");
-    }
     return;
 }
 
@@ -1037,7 +1035,7 @@ class CommandObjectRenderScriptRuntimeKernelBreakpoint : public CommandObjectPar
   public:
     CommandObjectRenderScriptRuntimeKernelBreakpoint(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript kernel breakpoint",
-                              "Sets a breakpoint on a renderscript kernel.", "renderscript kernel breakpoint",
+                              "Sets a breakpoint on a renderscript kernel.", "renderscript kernel breakpoint <kernel_name>",
                               eCommandRequiresProcess | eCommandProcessMustBeLaunched | eCommandProcessMustBePaused)
     {
     }
@@ -1054,7 +1052,8 @@ class CommandObjectRenderScriptRuntimeKernelBreakpoint : public CommandObjectPar
                 (RenderScriptRuntime *)m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript);
 
             Error error;
-            runtime->AttemptBreakpointAtKernelName(result.GetOutputStream(), command.GetArgumentAtIndex(0), error);
+            runtime->AttemptBreakpointAtKernelName(result.GetOutputStream(), command.GetArgumentAtIndex(0),
+                                                   error, m_exe_ctx.GetTargetSP());
 
             if (error.Success())
             {
