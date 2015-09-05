@@ -31,7 +31,7 @@ public:
                  const DataLayout &DL, LoopInfo &LI, ScalarEvolution &SE,
                  DominatorTree &DT, Scop &S)
       : S(S), Builder(Builder), Annotator(Annotator),
-        ExprBuilder(S, Builder, IDToValue, DL, SE, DT, LI),
+        ExprBuilder(S, Builder, IDToValue, ValueMap, DL, SE, DT, LI),
         BlockGen(Builder, LI, SE, DT, ScalarMap, PHIOpMap, EscapeMap, ValueMap,
                  &ExprBuilder),
         RegionGen(BlockGen), P(P), DL(DL), LI(LI), SE(SE), DT(DT) {}

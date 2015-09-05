@@ -81,6 +81,7 @@ class IslExprBuilder {
 public:
   /// @brief A map from isl_ids to llvm::Values.
   typedef llvm::MapVector<isl_id *, llvm::Value *> IDToValueTy;
+  typedef llvm::DenseMap<const llvm::Value *, llvm::Value *> ValueToValueMap;
 
   /// @brief Construct an IslExprBuilder.
   ///
@@ -93,10 +94,11 @@ public:
   ///                  specifies the LLVM-IR Values that correspond to these
   ///                  parameters and variables.
   IslExprBuilder(Scop &S, PollyIRBuilder &Builder, IDToValueTy &IDToValue,
-                 const llvm::DataLayout &DL, llvm::ScalarEvolution &SE,
-                 llvm::DominatorTree &DT, llvm::LoopInfo &LI)
-      : S(S), Builder(Builder), IDToValue(IDToValue), DL(DL), SE(SE), DT(DT),
-        LI(LI) {}
+                 ValueToValueMap &GlobalMap, const llvm::DataLayout &DL,
+                 llvm::ScalarEvolution &SE, llvm::DominatorTree &DT,
+                 llvm::LoopInfo &LI)
+      : S(S), Builder(Builder), IDToValue(IDToValue), GlobalMap(GlobalMap),
+        DL(DL), SE(SE), DT(DT), LI(LI) {}
 
   /// @brief Create LLVM-IR for an isl_ast_expr[ession].
   ///
@@ -127,6 +129,7 @@ private:
 
   PollyIRBuilder &Builder;
   IDToValueTy &IDToValue;
+  ValueToValueMap &GlobalMap;
 
   const llvm::DataLayout &DL;
   llvm::ScalarEvolution &SE;
