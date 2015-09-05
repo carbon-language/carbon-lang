@@ -324,6 +324,10 @@ __isl_give isl_map *MemoryAccess::getNewAccessRelation() const {
   return isl_map_copy(NewAccessRelation);
 }
 
+std::string MemoryAccess::getNewAccessRelationStr() const {
+  return stringFromIslObj(NewAccessRelation);
+}
+
 __isl_give isl_basic_map *
 MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
   isl_space *Space = isl_space_set_alloc(Statement->getIslCtx(), 0, 1);
@@ -580,6 +584,8 @@ void MemoryAccess::print(raw_ostream &OS) const {
   OS << "[Reduction Type: " << getReductionType() << "] ";
   OS << "[Scalar: " << isScalar() << "]\n";
   OS.indent(16) << getOriginalAccessRelationStr() << ";\n";
+  if (hasNewAccessRelation())
+    OS.indent(11) << "new: " << getNewAccessRelationStr() << ";\n";
 }
 
 void MemoryAccess::dump() const { print(errs()); }

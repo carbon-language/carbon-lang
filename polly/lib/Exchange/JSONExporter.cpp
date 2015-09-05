@@ -343,12 +343,6 @@ bool JSONImporter::runOnScop(Scop &S) {
         isl_map_free(newAccessMap);
         return false;
       }
-      if (isl_map_dim(newAccessMap, isl_dim_out) != 1) {
-        errs() << "New access map in JScop file should be single dimensional\n";
-        isl_map_free(currentAccessMap);
-        isl_map_free(newAccessMap);
-        return false;
-      }
 
       auto NewAccessDomain = isl_map_domain(isl_map_copy(newAccessMap));
       auto CurrentAccessDomain = isl_map_domain(isl_map_copy(currentAccessMap));

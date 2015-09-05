@@ -386,6 +386,9 @@ public:
   /// @brief Get an isl string representing the access function read from IR.
   std::string getOriginalAccessRelationStr() const;
 
+  /// @brief Get an isl string representing a new access function, if available.
+  std::string getNewAccessRelationStr() const;
+
   /// @brief Get the base address of this access (e.g. A for A[i+j]).
   Value *getBaseAddr() const { return BaseAddr; }
 
