@@ -1,13 +1,11 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE2
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse3 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE3
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+ssse3 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSSE3
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse4.1 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE41
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX1
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx2 | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+sse3 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE3
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+ssse3 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSSE3
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+sse4.1 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE41
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX1
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2 | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX2
 
-target triple = "x86_64-unknown-unknown"
-
-define <2 x i64> @testv2i64(<2 x i64> %in) {
+define <2 x i64> @testv2i64(<2 x i64> %in) nounwind {
 ; SSE2-LABEL: testv2i64:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movdqa %xmm0, %xmm1
@@ -99,7 +97,7 @@ define <2 x i64> @testv2i64(<2 x i64> %in) {
   ret <2 x i64> %out
 }
 
-define <4 x i32> @testv4i32(<4 x i32> %in) {
+define <4 x i32> @testv4i32(<4 x i32> %in) nounwind {
 ; SSE2-LABEL: testv4i32:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movdqa %xmm0, %xmm1
@@ -217,7 +215,7 @@ define <4 x i32> @testv4i32(<4 x i32> %in) {
   ret <4 x i32> %out
 }
 
-define <8 x i16> @testv8i16(<8 x i16> %in) {
+define <8 x i16> @testv8i16(<8 x i16> %in) nounwind {
 ; SSE2-LABEL: testv8i16:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movdqa %xmm0, %xmm1
@@ -316,7 +314,7 @@ define <8 x i16> @testv8i16(<8 x i16> %in) {
   ret <8 x i16> %out
 }
 
-define <16 x i8> @testv16i8(<16 x i8> %in) {
+define <16 x i8> @testv16i8(<16 x i8> %in) nounwind {
 ; SSE2-LABEL: testv16i8:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movdqa %xmm0, %xmm1
@@ -400,7 +398,7 @@ define <16 x i8> @testv16i8(<16 x i8> %in) {
   ret <16 x i8> %out
 }
 
-define <2 x i64> @foldv2i64() {
+define <2 x i64> @foldv2i64() nounwind {
 ; SSE-LABEL: foldv2i64:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    movaps {{.*#+}} xmm0 = [1,64]
@@ -414,7 +412,7 @@ define <2 x i64> @foldv2i64() {
   ret <2 x i64> %out
 }
 
-define <4 x i32> @foldv4i32() {
+define <4 x i32> @foldv4i32() nounwind {
 ; SSE-LABEL: foldv4i32:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    movaps {{.*#+}} xmm0 = [1,32,0,8]
@@ -428,7 +426,7 @@ define <4 x i32> @foldv4i32() {
   ret <4 x i32> %out
 }
 
-define <8 x i16> @foldv8i16() {
+define <8 x i16> @foldv8i16() nounwind {
 ; SSE-LABEL: foldv8i16:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    movaps {{.*#+}} xmm0 = [1,16,0,8,0,3,2,3]
@@ -442,7 +440,7 @@ define <8 x i16> @foldv8i16() {
   ret <8 x i16> %out
 }
 
-define <16 x i8> @foldv16i8() {
+define <16 x i8> @foldv16i8() nounwind {
 ; SSE-LABEL: foldv16i8:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    movaps {{.*#+}} xmm0 = [0,8,0,8,0,3,2,3,7,7,1,1,1,1,1,1]
