@@ -1623,3 +1623,12 @@ define i1 @f9(i32 %val, i32 %lim) {
   %r = icmp ult i32 %val.and, %lim
   ret i1 %r
 }
+
+; CHECK: @f10(
+; CHECK: [[CMP:%.*]] = icmp uge i16 %p, mul (i16 zext (i8 ptrtoint (i1 (i16)* @f10 to i8) to i16), i16 zext (i8 ptrtoint (i1 (i16)* @f10 to i8) to i16))
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @f10(i16 %p) {
+entry:
+  %cmp580 = icmp ule i16 mul (i16 zext (i8 ptrtoint (i1 (i16)* @f10 to i8) to i16), i16 zext (i8 ptrtoint (i1 (i16)* @f10 to i8) to i16)), %p
+  ret i1 %cmp580
+}

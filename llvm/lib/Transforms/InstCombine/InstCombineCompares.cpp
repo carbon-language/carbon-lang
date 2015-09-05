@@ -2246,7 +2246,9 @@ static Instruction *ProcessUMulZExtIdiom(ICmpInst &I, Value *MulVal,
 
   assert(I.getOperand(0) == MulVal || I.getOperand(1) == MulVal);
   assert(I.getOperand(0) == OtherVal || I.getOperand(1) == OtherVal);
-  Instruction *MulInstr = cast<Instruction>(MulVal);
+  auto *MulInstr = dyn_cast<Instruction>(MulVal);
+  if (!MulInstr)
+    return nullptr;
   assert(MulInstr->getOpcode() == Instruction::Mul);
 
   auto *LHS = cast<ZExtOperator>(MulInstr->getOperand(0)),
