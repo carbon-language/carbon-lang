@@ -95,6 +95,23 @@ static void link(SectionChunk *From, SectionChunk *To) {
   To->Ins.push_back(From);
 }
 
+typedef std::vector<SectionChunk *>::iterator ChunkIterator;
+
+static void uniquefy(ChunkIterator Begin, ChunkIterator End) {
+  std::unordered_set<SectionChunk *, Hasher, Equals> Set;
+  for (auto It = Begin; It != End; ++It) {
+    SectionChunk *SC = *It;
+    auto P = Set.insert(SC);
+    bool Inserted = P.second;
+    if (Inserted)
+      continue;
+    SectionChunk *Existing = *P.first;
+    SC->replaceWith(Existing);
+    for (SectionChunk *In : SC->Ins)
+      --In->Outdegree;
+  }
+}
+
 // Merge identical COMDAT sections.
 // Two sections are considered the same if their section headers,
 // contents and relocations are all the same.
@@ -118,23 +135,12 @@ void doICF(const std::vector<Chunk *> &Chunks) {
   // because two originally different relocations can now point to
   // the same section. We process sections whose outdegree is zero
   // first to deal with that.
+  auto Pred = [](SectionChunk *SC) { return SC->Outdegree > 0; };
   for (;;) {
-    std::unordered_set<SectionChunk *, Hasher, Equals> Set;
-    auto Pred = [](SectionChunk *SC) { return SC->Outdegree > 0; };
     auto Bound = std::partition(SChunks.begin(), SChunks.end(), Pred);
     if (Bound == SChunks.end())
       return;
-    for (auto It = Bound, E = SChunks.end(); It != E; ++It) {
-      SectionChunk *SC = *It;
-      auto P = Set.insert(SC);
-      bool Inserted = P.second;
-      if (Inserted)
-        continue;
-      SectionChunk *Existing = *P.first;
-      SC->replaceWith(Existing);
-      for (SectionChunk *In : SC->Ins)
-        --In->Outdegree;
-    }
+    uniquefy(Bound, SChunks.end());
     SChunks.erase(Bound, SChunks.end());
   }
 }
