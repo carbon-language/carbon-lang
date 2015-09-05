@@ -172,7 +172,7 @@ int IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
     return NumberIterations + 1;
 }
 
-struct FindValuesUser {
+struct SubtreeReferences {
   LoopInfo &LI;
   ScalarEvolution &SE;
   Region &R;
@@ -182,35 +182,39 @@ struct FindValuesUser {
 };
 
 /// @brief Extract the values and SCEVs needed to generate code for a block.
-static int findValuesInBlock(struct FindValuesUser &User, const ScopStmt *Stmt,
-                             const BasicBlock *BB) {
+static int findReferencesInBlock(struct SubtreeReferences &References,
+                                 const ScopStmt *Stmt, const BasicBlock *BB) {
   for (const Instruction &Inst : *BB)
     for (Value *SrcVal : Inst.operands())
-      if (canSynthesize(SrcVal, &User.LI, &User.SE, &User.R)) {
-        User.SCEVs.insert(
-            User.SE.getSCEVAtScope(SrcVal, User.LI.getLoopFor(BB)));
+      if (canSynthesize(SrcVal, &References.LI, &References.SE,
+                        &References.R)) {
+        References.SCEVs.insert(
+            References.SE.getSCEVAtScope(SrcVal, References.LI.getLoopFor(BB)));
         continue;
       }
   return 0;
 }
 
-/// Extract the values and SCEVs needed to generate code for a ScopStmt.
+/// Extract the out-of-scop values and SCEVs referenced from a ScopStmt.
 ///
-/// This function extracts a ScopStmt from a given isl_set and computes the
-/// Values this statement depends on as well as a set of SCEV expressions that
-/// need to be synthesized when generating code for this statment.
-static isl_stat findValuesInStmt(isl_set *Set, void *UserPtr) {
-  isl_id *Id = isl_set_get_tuple_id(Set);
-  struct FindValuesUser &User = *static_cast<struct FindValuesUser *>(UserPtr);
-  const ScopStmt *Stmt = static_cast<const ScopStmt *>(isl_id_get_user(Id));
+/// This includes the SCEVUnknowns referenced by the SCEVs used in the
+/// statement and the base pointers of the memory accesses. For scalar
+/// statements we force the generation of alloca memory locations and list
+/// these locations in the set of out-of-scop values as well.
+///
+/// @param Stmt    The statement for which to extract the information.
+/// @param UserPtr A void pointer that can be casted to a SubtreeReferences
+///                structure.
+static isl_stat addReferencesFromStmt(const ScopStmt *Stmt, void *UserPtr) {
+  auto &References = *static_cast<struct SubtreeReferences *>(UserPtr);
 
   if (Stmt->isBlockStmt())
-    findValuesInBlock(User, Stmt, Stmt->getBasicBlock());
+    findReferencesInBlock(References, Stmt, Stmt->getBasicBlock());
   else {
     assert(Stmt->isRegionStmt() &&
            "Stmt was neither block nor region statement");
     for (const BasicBlock *BB : Stmt->getRegion()->blocks())
-      findValuesInBlock(User, Stmt, BB);
+      findReferencesInBlock(References, Stmt, BB);
   }
 
   for (auto &Access : *Stmt) {
@@ -220,16 +224,53 @@ static isl_stat findValuesInStmt(isl_set *Set, void *UserPtr) {
         if (Stmt->getParent()->getRegion().contains(OpInst))
           continue;
 
-      User.Values.insert(BasePtr);
+      References.Values.insert(BasePtr);
       continue;
     }
 
-    User.Values.insert(User.BlockGen.getOrCreateAlloca(*Access));
+    References.Values.insert(References.BlockGen.getOrCreateAlloca(*Access));
   }
 
+  return isl_stat_ok;
+}
+
+/// Extract the out-of-scop values and SCEVs referenced from a set describing
+/// a ScopStmt.
+///
+/// This includes the SCEVUnknowns referenced by the SCEVs used in the
+/// statement and the base pointers of the memory accesses. For scalar
+/// statements we force the generation of alloca memory locations and list
+/// these locations in the set of out-of-scop values as well.
+///
+/// @param Set     A set which references the ScopStmt we are interested in.
+/// @param UserPtr A void pointer that can be casted to a SubtreeReferences
+///                structure.
+static isl_stat addReferencesFromStmtSet(isl_set *Set, void *UserPtr) {
+  isl_id *Id = isl_set_get_tuple_id(Set);
+  auto *Stmt = static_cast<const ScopStmt *>(isl_id_get_user(Id));
   isl_id_free(Id);
   isl_set_free(Set);
-  return isl_stat_ok;
+  return addReferencesFromStmt(Stmt, UserPtr);
+}
+
+/// Extract the out-of-scop values and SCEVs referenced from a union set
+/// referencing multiple ScopStmts.
+///
+/// This includes the SCEVUnknowns referenced by the SCEVs used in the
+/// statement and the base pointers of the memory accesses. For scalar
+/// statements we force the generation of alloca memory locations and list
+/// these locations in the set of out-of-scop values as well.
+///
+/// @param USet       A union set referencing the ScopStmts we are interested
+///                   in.
+/// @param References The SubtreeReferences data structure through which
+///                   results are returned and further information is
+///                   provided.
+static void
+addReferencesFromStmtUnionSet(isl_union_set *USet,
+                              struct SubtreeReferences &References) {
+  isl_union_set_foreach_set(USet, addReferencesFromStmtSet, &References);
+  isl_union_set_free(USet);
 }
 
 void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
@@ -237,8 +278,8 @@ void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
                                             SetVector<const Loop *> &Loops) {
 
   SetVector<const SCEV *> SCEVs;
-  struct FindValuesUser FindValues = {LI,     SE,    S.getRegion(),
-                                      Values, SCEVs, getBlockGenerator()};
+  struct SubtreeReferences References = {LI,     SE,    S.getRegion(),
+                                         Values, SCEVs, getBlockGenerator()};
 
   for (const auto &I : IDToValue)
     Values.insert(I.second);
@@ -247,9 +288,7 @@ void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
     Values.insert(cast<SCEVUnknown>(I.second)->getValue());
 
   isl_union_set *Schedule = isl_union_map_domain(IslAstInfo::getSchedule(For));
-
-  isl_union_set_foreach_set(Schedule, findValuesInStmt, &FindValues);
-  isl_union_set_free(Schedule);
+  addReferencesFromStmtUnionSet(Schedule, References);
 
   for (const SCEV *Expr : SCEVs) {
     findValues(Expr, Values);
