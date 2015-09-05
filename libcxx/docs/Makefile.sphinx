@@ -1,5 +1,8 @@
 # Makefile for Sphinx documentation
 #
+# FIXME: This hack is only in place to allow the libcxx.llvm.org/docs builder
+# to work with libcxx. This should be removed when that builder supports
+# out-of-tree builds.
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
