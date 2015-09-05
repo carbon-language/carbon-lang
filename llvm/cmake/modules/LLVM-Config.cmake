@@ -31,7 +31,23 @@ endfunction(is_llvm_target_library)
 
 
 macro(llvm_config executable)
-  explicit_llvm_config(${executable} ${ARGN})
+  cmake_parse_arguments(ARG "USE_SHARED" "" "" ${ARGN})
+  set(link_components ${ARG_UNPARSED_ARGUMENTS})
+
+  if(USE_SHARED)
+    # If USE_SHARED is specified, then we link against libLLVM,
+    # but also against the component libraries below. This is
+    # done in case libLLVM does not contain all of the components
+    # the target requires.
+    #
+    # TODO strip LLVM_DYLIB_COMPONENTS out of link_components.
+    # To do this, we need special handling for "all", since that
+    # may imply linking to libraries that are not included in
+    # libLLVM.
+    target_link_libraries(${executable} LLVM)
+  endif()
+
+  explicit_llvm_config(${executable} ${link_components})
 endmacro(llvm_config)
 
 

@@ -347,6 +347,13 @@ option (LLVM_ENABLE_SPHINX "Use Sphinx to generate llvm documentation." OFF)
 option (LLVM_BUILD_EXTERNAL_COMPILER_RT
   "Build compiler-rt as an external project." OFF)
 
+# You can configure which libraries from LLVM you want to include in the
+# shared library by setting LLVM_DYLIB_COMPONENTS to a semi-colon delimited
+# list of LLVM components. All component names handled by llvm-config are valid.
+if(NOT DEFINED LLVM_DYLIB_COMPONENTS)
+  set(LLVM_DYLIB_COMPONENTS "all" CACHE STRING
+    "Semicolon-separated list of components to include in libLLVM, or \"all\".")
+endif()
 option(LLVM_LINK_LLVM_DYLIB "Link tools against the libllvm dynamic library" OFF)
 option(LLVM_BUILD_LLVM_DYLIB "Build libllvm dynamic library" ${LLVM_LINK_LLVM_DYLIB})
 option(LLVM_DYLIB_EXPORT_ALL "Export all symbols from libLLVM.dylib (default is C API only" ${LLVM_LINK_LLVM_DYLIB})
