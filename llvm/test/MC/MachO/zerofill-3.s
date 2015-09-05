@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
+// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | llvm-readobj -file-headers -s -sd -r -t --macho-segment --macho-dysymtab --macho-indirect-symbols | FileCheck %s
 
         // FIXME: We don't get the order right currently, the assembler first
         // orders the symbols, then assigns addresses. :(
@@ -19,123 +19,134 @@
         .lcomm          sym_lcomm_B, 4
 .endif
 
-// CHECK: ('cputype', 7)
-// CHECK: ('cpusubtype', 3)
-// CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 4)
-// CHECK: ('load_commands_size', 312)
-// CHECK: ('flag', 0)
-// CHECK: ('load_commands', [
-// CHECK:   # Load Command 0
-// CHECK:  (('command', 1)
-// CHECK:   ('size', 192)
-// CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:   ('vm_addr', 0)
-// CHECK:   ('vm_size', 16)
-// CHECK:   ('file_offset', 340)
-// CHECK:   ('file_size', 0)
-// CHECK:   ('maxprot', 7)
-// CHECK:   ('initprot', 7)
-// CHECK:   ('num_sections', 2)
-// CHECK:   ('flags', 0)
-// CHECK:   ('sections', [
-// CHECK:     # Section 0
-// CHECK:    (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 0)
-// CHECK:     ('size', 0)
-// CHECK:     ('offset', 340)
-// CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 0)
-// CHECK:     ('num_reloc', 0)
-// CHECK:     ('flags', 0x80000000)
-// CHECK:     ('reserved1', 0)
-// CHECK:     ('reserved2', 0)
-// CHECK:    ),
-// CHECK:   ('_relocations', [
-// CHECK:   ])
-// CHECK:     # Section 1
-// CHECK:    (('section_name', '__bss\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 0)
-// CHECK:     ('size', 16)
-// CHECK:     ('offset', 0)
-// CHECK:     ('alignment', 4)
-// CHECK:     ('reloc_offset', 0)
-// CHECK:     ('num_reloc', 0)
-// CHECK:     ('flags', 0x1)
-// CHECK:     ('reserved1', 0)
-// CHECK:     ('reserved2', 0)
-// CHECK:    ),
-// CHECK:   ('_relocations', [
-// CHECK:   ])
-// CHECK:   ])
-// CHECK:  ),
-// CHECK:   # Load Command 2
-// CHECK:  (('command', 2)
-// CHECK:   ('size', 24)
-// CHECK:   ('symoff', 340)
-// CHECK:   ('nsyms', 4)
-// CHECK:   ('stroff', 388)
-// CHECK:   ('strsize', 52)
-// CHECK:   ('_string_data', '\x00sym_lcomm_D\x00sym_lcomm_C\x00sym_lcomm_B\x00sym_lcomm_A\x00\x00\x00\x00')
-// CHECK:   ('_symbols', [
-// CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 37)
-// CHECK:     ('n_type', 0xe)
-// CHECK:     ('n_sect', 2)
-// CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 8)
-// CHECK:     ('_string', 'sym_lcomm_A')
-// CHECK:    ),
-// CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 25)
-// CHECK:     ('n_type', 0xe)
-// CHECK:     ('n_sect', 2)
-// CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 12)
-// CHECK:     ('_string', 'sym_lcomm_B')
-// CHECK:    ),
-// CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 13)
-// CHECK:     ('n_type', 0xf)
-// CHECK:     ('n_sect', 2)
-// CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 0)
-// CHECK:     ('_string', 'sym_lcomm_C')
-// CHECK:    ),
-// CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 1)
-// CHECK:     ('n_type', 0xf)
-// CHECK:     ('n_sect', 2)
-// CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 4)
-// CHECK:     ('_string', 'sym_lcomm_D')
-// CHECK:    ),
-// CHECK:   ])
-// CHECK:  ),
-// CHECK:   # Load Command 3
-// CHECK:  (('command', 11)
-// CHECK:   ('size', 80)
-// CHECK:   ('ilocalsym', 0)
-// CHECK:   ('nlocalsym', 2)
-// CHECK:   ('iextdefsym', 2)
-// CHECK:   ('nextdefsym', 2)
-// CHECK:   ('iundefsym', 4)
-// CHECK:   ('nundefsym', 0)
-// CHECK:   ('tocoff', 0)
-// CHECK:   ('ntoc', 0)
-// CHECK:   ('modtaboff', 0)
-// CHECK:   ('nmodtab', 0)
-// CHECK:   ('extrefsymoff', 0)
-// CHECK:   ('nextrefsyms', 0)
-// CHECK:   ('indirectsymoff', 0)
-// CHECK:   ('nindirectsyms', 0)
-// CHECK:   ('extreloff', 0)
-// CHECK:   ('nextrel', 0)
-// CHECK:   ('locreloff', 0)
-// CHECK:   ('nlocrel', 0)
-// CHECK:   ('_indirect_symbols', [
-// CHECK:   ])
-// CHECK:  ),
-// CHECK: ])
+// CHECK: File: <stdin>
+// CHECK: Format: Mach-O 32-bit i386
+// CHECK: Arch: i386
+// CHECK: AddressSize: 32bit
+// CHECK: MachHeader {
+// CHECK:   Magic: Magic (0xFEEDFACE)
+// CHECK:   CpuType: X86 (0x7)
+// CHECK:   CpuSubType: CPU_SUBTYPE_I386_ALL (0x3)
+// CHECK:   FileType: Relocatable (0x1)
+// CHECK:   NumOfLoadCommands: 4
+// CHECK:   SizeOfLoadCommands: 312
+// CHECK:   Flags [ (0x0)
+// CHECK:   ]
+// CHECK: }
+// CHECK: Sections [
+// CHECK:   Section {
+// CHECK:     Index: 0
+// CHECK:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Address: 0x0
+// CHECK:     Size: 0x0
+// CHECK:     Offset: 340
+// CHECK:     Alignment: 0
+// CHECK:     RelocationOffset: 0x0
+// CHECK:     RelocationCount: 0
+// CHECK:     Type: 0x0
+// CHECK:     Attributes [ (0x800000)
+// CHECK:       PureInstructions (0x800000)
+// CHECK:     ]
+// CHECK:     Reserved1: 0x0
+// CHECK:     Reserved2: 0x0
+// CHECK:     SectionData (
+// CHECK:     )
+// CHECK:   }
+// CHECK:   Section {
+// CHECK:     Index: 1
+// CHECK:     Name: __bss (5F 5F 62 73 73 00 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Address: 0x0
+// CHECK:     Size: 0x10
+// CHECK:     Offset: 0
+// CHECK:     Alignment: 4
+// CHECK:     RelocationOffset: 0x0
+// CHECK:     RelocationCount: 0
+// CHECK:     Type: LocReloc (0x1)
+// CHECK:     Attributes [ (0x0)
+// CHECK:     ]
+// CHECK:     Reserved1: 0x0
+// CHECK:     Reserved2: 0x0
+// CHECK:   }
+// CHECK: ]
+// CHECK: Relocations [
+// CHECK: ]
+// CHECK: Symbols [
+// CHECK:   Symbol {
+// CHECK:     Name: sym_lcomm_A (37)
+// CHECK:     Type: Section (0xE)
+// CHECK:     Section: __bss (0x2)
+// CHECK:     RefType: UndefinedNonLazy (0x0)
+// CHECK:     Flags [ (0x0)
+// CHECK:     ]
+// CHECK:     Value: 0x8
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: sym_lcomm_B (25)
+// CHECK:     Type: Section (0xE)
+// CHECK:     Section: __bss (0x2)
+// CHECK:     RefType: UndefinedNonLazy (0x0)
+// CHECK:     Flags [ (0x0)
+// CHECK:     ]
+// CHECK:     Value: 0xC
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: sym_lcomm_C (13)
+// CHECK:     Extern
+// CHECK:     Type: Section (0xE)
+// CHECK:     Section: __bss (0x2)
+// CHECK:     RefType: UndefinedNonLazy (0x0)
+// CHECK:     Flags [ (0x0)
+// CHECK:     ]
+// CHECK:     Value: 0x0
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: sym_lcomm_D (1)
+// CHECK:     Extern
+// CHECK:     Type: Section (0xE)
+// CHECK:     Section: __bss (0x2)
+// CHECK:     RefType: UndefinedNonLazy (0x0)
+// CHECK:     Flags [ (0x0)
+// CHECK:     ]
+// CHECK:     Value: 0x4
+// CHECK:   }
+// CHECK: ]
+// CHECK: Indirect Symbols {
+// CHECK:   Number: 0
+// CHECK:   Symbols [
+// CHECK:   ]
+// CHECK: }
+// CHECK: Segment {
+// CHECK:   Cmd: LC_SEGMENT
+// CHECK:   Name: 
+// CHECK:   Size: 192
+// CHECK:   vmaddr: 0x0
+// CHECK:   vmsize: 0x10
+// CHECK:   fileoff: 340
+// CHECK:   filesize: 0
+// CHECK:   maxprot: rwx
+// CHECK:   initprot: rwx
+// CHECK:   nsects: 2
+// CHECK:   flags: 0x0
+// CHECK: }
+// CHECK: Dysymtab {
+// CHECK:   ilocalsym: 0
+// CHECK:   nlocalsym: 2
+// CHECK:   iextdefsym: 2
+// CHECK:   nextdefsym: 2
+// CHECK:   iundefsym: 4
+// CHECK:   nundefsym: 0
+// CHECK:   tocoff: 0
+// CHECK:   ntoc: 0
+// CHECK:   modtaboff: 0
+// CHECK:   nmodtab: 0
+// CHECK:   extrefsymoff: 0
+// CHECK:   nextrefsyms: 0
+// CHECK:   indirectsymoff: 0
+// CHECK:   nindirectsyms: 0
+// CHECK:   extreloff: 0
+// CHECK:   nextrel: 0
+// CHECK:   locreloff: 0
+// CHECK:   nlocrel: 0
+// CHECK: }

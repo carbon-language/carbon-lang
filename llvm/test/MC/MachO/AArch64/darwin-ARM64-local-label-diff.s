@@ -1,4 +1,4 @@
-; RUN: llvm-mc -triple arm64-apple-darwin -filetype=obj -o - < %s | macho-dump -dump-section-data | FileCheck %s
+; RUN: llvm-mc -triple arm64-apple-darwin -filetype=obj -o - < %s | llvm-readobj -s -sd | FileCheck %s
 ; rdar://13028719
 
  .globl context_save0
@@ -18,4 +18,11 @@ Lcontext_save1_size: .quad (Lcontext_save1_end - Lcontext_save1)
 Llockup_release:
  .quad 0
 
-; CHECK:  ('_section_data', '05000000 00000000 05000000 00000000 10000000 00000000 1f2003d5 1f2003d5 1f2003d5 1f2003d5 1f2003d5 1f2003d5 1f2003d5 1f2003d5 1f2003d5 1f2003d5 00000000 00000000 00000000 00000000 10000000 00000000 00000000 00000000')
+; CHECK: SectionData (
+; CHECK:   0000: 05000000 00000000 05000000 00000000  |................|
+; CHECK:   0010: 10000000 00000000 1F2003D5 1F2003D5  |......... ... ..|
+; CHECK:   0020: 1F2003D5 1F2003D5 1F2003D5 1F2003D5  |. ... ... ... ..|
+; CHECK:   0030: 1F2003D5 1F2003D5 1F2003D5 1F2003D5  |. ... ... ... ..|
+; CHECK:   0040: 00000000 00000000 00000000 00000000  |................|
+; CHECK:   0050: 10000000 00000000 00000000 00000000  |................|
+; CHECK: )

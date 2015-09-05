@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
+// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | llvm-readobj -s -sd | FileCheck %s
 
 // rdar://15526046
 
@@ -24,4 +24,8 @@ _key64b_9:
 // be relocated, in this case _key64b_9+4, value correct in the instruction.
 // 01020f55	c7056475530100000000	movl	$0x0, 0x1537564
 
-// CHECK:   90c70564 75530100 000000')
+// CHECK: SectionData (
+// CHECK: F75530: 90909090 90909090 90909090 90909090  |................|
+// CHECK: 1020F50: 90909090 90C70564 75530100 000000    |.......duS.....|
+// CHECK: 75530: 00000000 00000000 00000000 00000000  |................|
+// CHECK: )

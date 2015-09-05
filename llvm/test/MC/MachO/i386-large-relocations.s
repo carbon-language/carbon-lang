@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple i386-apple-darwin10 %s -filetype=obj -o - | macho-dump | FileCheck %s
+// RUN: llvm-mc -triple i386-apple-darwin10 %s -filetype=obj -o - | llvm-readobj -r | FileCheck %s
 
 .space 0x1ed280
        .section        __DATA,__const
@@ -20,17 +20,11 @@ _foo:
 // so the assembler falls back to non-scattered relocations.
 // rdar://12358909
 
-// CHECK: ('_relocations', [
-// CHECK:   # Relocation 0
-// CHECK:   (('word-0', 0x5181034),
-// CHECK:    ('word-1', 0x4000003)),
-// CHECK:   # Relocation 1
-// CHECK:   (('word-0', 0x518102c),
-// CHECK:    ('word-1', 0x4000003)),
-// CHECK:   # Relocation 2
-// CHECK:   (('word-0', 0x5181028),
-// CHECK:    ('word-1', 0x4000003)),
-// CHECK:   # Relocation 3
-// CHECK:   (('word-0', 0x5181020),
-// CHECK:    ('word-1', 0x4000003)),
-// CHECK: ])
+// CHECK: Relocations [
+// CHECK:   Section __const {
+// CHECK:     0x5181034 0 2 0 GENERIC_RELOC_VANILLA 0 __bss
+// CHECK:     0x518102C 0 2 0 GENERIC_RELOC_VANILLA 0 __bss
+// CHECK:     0x5181028 0 2 0 GENERIC_RELOC_VANILLA 0 __bss
+// CHECK:     0x5181020 0 2 0 GENERIC_RELOC_VANILLA 0 __bss
+// CHECK:   }
+// CHECK: ]

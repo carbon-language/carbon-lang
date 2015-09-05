@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple x86_64-apple-darwin9 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
+// RUN: llvm-mc -triple x86_64-apple-darwin9 %s -filetype=obj -o - | llvm-readobj -r | FileCheck %s
 
 // Test case for rdar://10743265
 
@@ -17,11 +17,9 @@ _base = .
 _start_ap_2:
         cli
 
-// CHECK:   ('_relocations', [
-// CHECK:     # Relocation 0
-// CHECK:     (('word-0', 0x0),
-// CHECK:      ('word-1', 0x5c000000)),
-// CHECK:     # Relocation 1
-// CHECK:     (('word-0', 0x0),
-// CHECK:      ('word-1', 0xc000001)),
-// CHECK:   ])
+// CHECK: Relocations [
+// CHECK:   Section __text {
+// CHECK:     0x0 0 2 1 X86_64_RELOC_SUBTRACTOR 0 _base
+// CHECK:     0x0 0 2 1 X86_64_RELOC_UNSIGNED 0 _start_ap_2
+// CHECK:   }
+// CHECK: ]
