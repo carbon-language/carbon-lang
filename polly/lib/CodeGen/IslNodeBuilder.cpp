@@ -298,7 +298,7 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   Schedule = isl_union_map_intersect_domain(Schedule, Domain);
   isl_map *S = isl_map_from_union_map(Schedule);
 
-  auto *NewAccesses = createNewAccesses(Stmt, IslAstInfo::getBuild(User));
+  auto *NewAccesses = createNewAccesses(Stmt, User);
   createSubstitutionsVector(Expr, Stmt, VLTS, IVS, IteratorID);
   VectorBlockGenerator::generate(BlockGen, *Stmt, VLTS, S, NewAccesses);
   isl_id_to_ast_expr_free(NewAccesses);
@@ -647,13 +647,15 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
 
 __isl_give isl_id_to_ast_expr *
 IslNodeBuilder::createNewAccesses(ScopStmt *Stmt,
-                                  __isl_keep isl_ast_build *Build) {
+                                  __isl_keep isl_ast_node *Node) {
   isl_id_to_ast_expr *NewAccesses =
-      isl_id_to_ast_expr_alloc(isl_ast_build_get_ctx(Build), 0);
+      isl_id_to_ast_expr_alloc(Stmt->getParent()->getIslCtx(), 0);
   for (auto *MA : *Stmt) {
     if (!MA->hasNewAccessRelation())
       continue;
 
+    auto Build = IslAstInfo::getBuild(Node);
+    assert(Build && "Could not obtain isl_ast_build from user node");
     auto Schedule = isl_ast_build_get_schedule(Build);
     auto PWAccRel = MA->applyScheduleToAccessRelation(Schedule);
 
@@ -714,7 +716,7 @@ void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
   LTS.insert(OutsideLoopIterations.begin(), OutsideLoopIterations.end());
 
   Stmt = (ScopStmt *)isl_id_get_user(Id);
-  auto *NewAccesses = createNewAccesses(Stmt, IslAstInfo::getBuild(User));
+  auto *NewAccesses = createNewAccesses(Stmt, User);
   createSubstitutions(Expr, Stmt, LTS);
 
   if (Stmt->isBlockStmt())

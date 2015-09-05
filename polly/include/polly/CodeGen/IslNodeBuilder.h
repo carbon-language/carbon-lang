@@ -207,13 +207,14 @@ protected:
   /// individual memory references in the statement (identified by their id)
   /// to these newly generated ast expressions.
   ///
-  /// @param Build The build to use to generate these expressions.
   /// @param Stmt  The statement for which to (possibly) generate new access
   ///              functions.
+  /// @param Node  The ast node corresponding to the statement for us to extract
+  ///              the local schedule from.
   /// @return A new hash table that contains remappings from memory ids to new
   ///         access expressions.
   __isl_give isl_id_to_ast_expr *
-  createNewAccesses(ScopStmt *Stmt, __isl_keep isl_ast_build *Build);
+  createNewAccesses(ScopStmt *Stmt, __isl_keep isl_ast_node *Node);
 
   /// Generate LLVM-IR that computes the values of the original induction
   /// variables in function of the newly generated loop induction variables.
