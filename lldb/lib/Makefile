@@ -50,6 +50,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginDynamicLoaderHexagon.a \
 	lldbPluginDynamicLoaderMacOSXDYLD.a \
 	lldbPluginDynamicLoaderWindowsDYLD.a \
+	lldbPluginExpressionParserClang.a \
 	lldbPluginInstructionARM.a \
 	lldbPluginInstructionARM64.a \
 	lldbPluginInstructionMIPS.a \
@@ -59,6 +60,9 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginAppleObjCRuntime.a \
 	lldbPluginRenderScriptRuntime.a \
 	lldbPluginMemoryHistoryASan.a \
+	lldbPluginCPlusPlusLanguage.a \
+	lldbPluginObjCLanguage.a \
+	lldbPluginObjCPlusPlusLanguage.a \
 	lldbPluginObjectContainerBSDArchive.a \
 	lldbPluginObjectContainerMachOArchive.a \
 	lldbPluginObjectFileELF.a \

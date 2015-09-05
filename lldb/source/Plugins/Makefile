@@ -24,10 +24,14 @@ PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-i386 A
 	LanguageRuntime/CPlusPlus/ItaniumABI \
 	LanguageRuntime/ObjC/AppleObjCRuntime \
 	LanguageRuntime/RenderScript/RenderScriptRuntime \
+	Language/CPlusPlus \
+	Language/ObjC \
+	Language/ObjCPlusPlus \
 	DynamicLoader/POSIX-DYLD \
 	DynamicLoader/Hexagon-DYLD \
 	DynamicLoader/MacOSX-DYLD \
 	DynamicLoader/Windows-DYLD \
+	ExpressionParser/Clang \
 	OperatingSystem/Python \
 	SystemRuntime/MacOSX \
 	SymbolVendor/ELF \
