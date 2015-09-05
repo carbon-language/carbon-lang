@@ -303,6 +303,7 @@ void ParallelLoopGenerator::extractValuesFromStruct(
   for (unsigned i = 0; i < OldValues.size(); i++) {
     Value *Address = Builder.CreateStructGEP(Ty, Struct, i);
     Value *NewValue = Builder.CreateLoad(Address);
+    NewValue->setName("polly.subfunc.arg." + OldValues[i]->getName());
     Map[OldValues[i]] = NewValue;
   }
 }
