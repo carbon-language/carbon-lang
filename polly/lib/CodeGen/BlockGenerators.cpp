@@ -1039,11 +1039,6 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
     LTS[L] = SE.getUnknown(LoopPHI);
   }
 
-  // Add all mappings from the region to the global map so outside uses will use
-  // the copied instructions.
-  for (auto &BBMap : RegionMaps)
-    GlobalMap.insert(BBMap.second.begin(), BBMap.second.end());
-
   // Reset the old insert point for the build.
   Builder.SetInsertPoint(ExitBBCopy->begin());
 }
