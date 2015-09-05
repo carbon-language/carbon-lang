@@ -3756,6 +3756,19 @@ CXString clang_getCursorSpelling(CXCursor C) {
     return cxstring::createRef("packed");
   }
 
+  if (C.kind == CXCursor_VisibilityAttr) {
+    const VisibilityAttr *AA = cast<VisibilityAttr>(cxcursor::getCursorAttr(C));
+    switch (AA->getVisibility()) {
+    case VisibilityAttr::VisibilityType::Default:
+      return cxstring::createRef("default");
+    case VisibilityAttr::VisibilityType::Hidden:
+      return cxstring::createRef("hidden");
+    case VisibilityAttr::VisibilityType::Protected:
+      return cxstring::createRef("protected");
+    }
+    llvm_unreachable("unknown visibility type");
+  }
+
   return cxstring::createEmpty();
 }
 
@@ -4237,6 +4250,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return cxstring::createRef("attribute(host)");
   case CXCursor_CUDASharedAttr:
     return cxstring::createRef("attribute(shared)");
+  case CXCursor_VisibilityAttr:
+    return cxstring::createRef("attribute(visibility)");
   case CXCursor_PreprocessingDirective:
     return cxstring::createRef("preprocessing directive");
   case CXCursor_MacroDefinition:
