@@ -102,9 +102,9 @@ C++ Dialect Support
 ---------------------
 
 * C++11 - Complete
-* `C++14 - Complete <cxx14 status_>`__
-* `C++1z - In Progress <cxx1z status_>`__
-* `Post C++14 Technical Specifications - In Progress <ts status_>`__
+* `C++14 - Complete <cxx14 status_>`_
+* `C++1z - In Progress <cxx1z status_>`_
+* `Post C++14 Technical Specifications - In Progress <ts status_>`_
 
 .. _cxx14 status: http://libcxx.llvm.org/cxx1y_status.html
 .. _cxx1z status: http://libcxx.llvm.org/cxx1z_status.html
@@ -122,7 +122,7 @@ This list contains known issues with libc++
   must be used during configuration.
 
 
-A full list of currently open libc++ bugs can be `found here <libcxx bug list_>`__.
+A full list of currently open libc++ bugs can be `found here <libcxx bug list_>`_.
 
 .. _`libcxx bug list`: https://llvm.org/bugs/buglist.cgi?component=All%20Bugs&product=libc%2B%2B&query_format=advanced&resolution=---&order=changeddate%20DESC%2Cassigned_to%20DESC%2Cbug_status%2Cpriority%2Cbug_id&list_id=74184
 
@@ -132,7 +132,7 @@ Design Documents
 * `<atomic> design <http://libcxx.llvm.org/atomic_design.html>`_
 * `<type_traits> design <http://libcxx.llvm.org/type_traits_design.html>`_
 * `Status of debug mode <http://libcxx.llvm.org/debug_mode.html>`_
-* `Notes by Marshall Clow <clow notes_>`__
+* `Notes by Marshall Clow <clow notes_>`_
 
 .. _clow notes: https://cplusplusmusings.wordpress.com/2012/07/05/clang-and-standard-libraries-on-mac-os-x/
 
@@ -158,13 +158,13 @@ Please include "libc++" in your subject.
 **Patches**
 
 If you want to contribute a patch to libc++, the best place for that is
-`Phabricator <phab doc_>`__. Please include [libcxx] in the subject and
+`Phabricator <phab doc_>`_. Please include [libcxx] in the subject and
 add `cfe-commits` as a subscriber. Also make sure you are subscribed to the
-`cfe-commits mailing list <cfe-commits_>`__.
+`cfe-commits mailing list <cfe-commits_>`_.
 
 **Discussion and Questions**
 
-Send discussions and questions to the `cfe-dev mailing list <cfe-dev_>`__.
+Send discussions and questions to the `cfe-dev mailing list <cfe-dev_>`_.
 Please include [libcxx] in the subject.
 
 .. _phab doc: http://llvm.org/docs/Phabricator.html
@@ -172,11 +172,11 @@ Please include [libcxx] in the subject.
 
 Quick Links
 ===========
-* `LLVM Homepage <llvm_>`__
-* `libc++abi Homepage <libc++abi_>`__
+* `LLVM Homepage <llvm_>`_
+* `libc++abi Homepage <libc++abi_>`_
 * `LLVM Bugzilla`_
-* `cfe-commits Mailing List <cfe-commits_>`__
-* `cfe-dev Mailing List <cfe-dev_>`__
+* `cfe-commits Mailing List <cfe-commits_>`_
+* `cfe-dev Mailing List <cfe-dev_>`_
 * `Browse libc++ -- SVN <http://llvm.org/svn/llvm-project/libcxx/trunk/>`_
 * `Browse libc++ -- ViewVC <http://llvm.org/viewvc/llvm-project/libcxx/trunk/>`_
 
