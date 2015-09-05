@@ -224,7 +224,7 @@ static isl_stat findValuesInStmt(isl_set *Set, void *UserPtr) {
       continue;
     }
 
-    User.Values.insert(User.BlockGen.getOrCreateAlloca(*Access, nullptr));
+    User.Values.insert(User.BlockGen.getOrCreateAlloca(*Access));
   }
 
   isl_id_free(Id);
@@ -292,7 +292,6 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   isl_id *Id = isl_ast_expr_get_id(StmtExpr);
   isl_ast_expr_free(StmtExpr);
   ScopStmt *Stmt = (ScopStmt *)isl_id_get_user(Id);
-  VectorValueMapT VectorMap(IVS.size());
   std::vector<LoopToScevMapT> VLTS(IVS.size());
 
   isl_union_set *Domain = isl_union_set_from_set(Stmt->getDomain());
@@ -300,9 +299,8 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   isl_map *S = isl_map_from_union_map(Schedule);
 
   auto *NewAccesses = createNewAccesses(Stmt, IslAstInfo::getBuild(User));
-  createSubstitutionsVector(Expr, Stmt, VectorMap, VLTS, IVS, IteratorID);
-  VectorBlockGenerator::generate(BlockGen, *Stmt, VectorMap, VLTS, S,
-                                 NewAccesses);
+  createSubstitutionsVector(Expr, Stmt, VLTS, IVS, IteratorID);
+  VectorBlockGenerator::generate(BlockGen, *Stmt, VLTS, S, NewAccesses);
   isl_id_to_ast_expr_free(NewAccesses);
   isl_map_free(S);
   isl_id_free(Id);
@@ -667,7 +665,7 @@ IslNodeBuilder::createNewAccesses(ScopStmt *Stmt,
 }
 
 void IslNodeBuilder::createSubstitutions(isl_ast_expr *Expr, ScopStmt *Stmt,
-                                         ValueMapT &VMap, LoopToScevMapT &LTS) {
+                                         LoopToScevMapT &LTS) {
   assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op &&
          "Expression of type 'op' expected");
   assert(isl_ast_expr_get_op_type(Expr) == isl_ast_op_call &&
@@ -682,17 +680,11 @@ void IslNodeBuilder::createSubstitutions(isl_ast_expr *Expr, ScopStmt *Stmt,
     LTS[Stmt->getLoopForDimension(i)] = SE->getUnknown(V);
   }
 
-  // Add the current ValueMap to our per-statement value map.
-  //
-  // This is needed e.g. to rewrite array base addresses when moving code
-  // into a parallely executed subfunction.
-  VMap.insert(ValueMap.begin(), ValueMap.end());
-
   isl_ast_expr_free(Expr);
 }
 
 void IslNodeBuilder::createSubstitutionsVector(
-    __isl_take isl_ast_expr *Expr, ScopStmt *Stmt, VectorValueMapT &VMap,
+    __isl_take isl_ast_expr *Expr, ScopStmt *Stmt,
     std::vector<LoopToScevMapT> &VLTS, std::vector<Value *> &IVS,
     __isl_take isl_id *IteratorID) {
   int i = 0;
@@ -700,7 +692,7 @@ void IslNodeBuilder::createSubstitutionsVector(
   Value *OldValue = IDToValue[IteratorID];
   for (Value *IV : IVS) {
     IDToValue[IteratorID] = IV;
-    createSubstitutions(isl_ast_expr_copy(Expr), Stmt, VMap[i], VLTS[i]);
+    createSubstitutions(isl_ast_expr_copy(Expr), Stmt, VLTS[i]);
     i++;
   }
 
@@ -710,7 +702,6 @@ void IslNodeBuilder::createSubstitutionsVector(
 }
 
 void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
-  ValueMapT VMap;
   LoopToScevMapT LTS;
   isl_id *Id;
   ScopStmt *Stmt;
@@ -724,12 +715,12 @@ void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
 
   Stmt = (ScopStmt *)isl_id_get_user(Id);
   auto *NewAccesses = createNewAccesses(Stmt, IslAstInfo::getBuild(User));
-  createSubstitutions(Expr, Stmt, VMap, LTS);
+  createSubstitutions(Expr, Stmt, LTS);
 
   if (Stmt->isBlockStmt())
-    BlockGen.copyStmt(*Stmt, VMap, LTS, NewAccesses);
+    BlockGen.copyStmt(*Stmt, LTS, NewAccesses);
   else
-    RegionGen.copyStmt(*Stmt, VMap, LTS, NewAccesses);
+    RegionGen.copyStmt(*Stmt, LTS, NewAccesses);
 
   isl_id_to_ast_expr_free(NewAccesses);
   isl_ast_node_free(User);

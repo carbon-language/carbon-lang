@@ -32,7 +32,7 @@ public:
                  DominatorTree &DT, Scop &S)
       : S(S), Builder(Builder), Annotator(Annotator),
         ExprBuilder(S, Builder, IDToValue, DL, SE, DT, LI),
-        BlockGen(Builder, LI, SE, DT, ScalarMap, PHIOpMap, EscapeMap,
+        BlockGen(Builder, LI, SE, DT, ScalarMap, PHIOpMap, EscapeMap, ValueMap,
                  &ExprBuilder),
         RegionGen(BlockGen), P(P), DL(DL), LI(LI), SE(SE), DT(DT) {}
 
@@ -74,6 +74,8 @@ protected:
   BlockGenerator::EscapeUsersAllocaMapTy EscapeMap;
 
   ///@}
+  ///
+  ValueToValueMap GlobalMap;
 
   /// @brief The generator used to copy a basic block.
   BlockGenerator BlockGen;
@@ -239,12 +241,6 @@ protected:
   ///
   /// @param Expr The call expression that represents the statement.
   /// @param Stmt The statement that is called.
-  /// @param VMap The value map into which the mapping from the old induction
-  ///             variable to the new one is inserted. This mapping is used
-  ///             for the classical code generation (not scev-based) and
-  ///             gives an explicit mapping from an original, materialized
-  ///             induction variable. It consequently can only be expressed
-  ///             if there was an explicit induction variable.
   /// @param LTS  The loop to SCEV map in which the mapping from the original
   ///             loop to a SCEV representing the new loop iv is added. This
   ///             mapping does not require an explicit induction variable.
@@ -253,9 +249,8 @@ protected:
   ///             original loop this count, expressed in function of the new
   ///             induction variables, is added to the LTS map.
   void createSubstitutions(__isl_take isl_ast_expr *Expr, ScopStmt *Stmt,
-                           ValueMapT &VMap, LoopToScevMapT &LTS);
+                           LoopToScevMapT &LTS);
   void createSubstitutionsVector(__isl_take isl_ast_expr *Expr, ScopStmt *Stmt,
-                                 VectorValueMapT &VMap,
                                  std::vector<LoopToScevMapT> &VLTS,
                                  std::vector<Value *> &IVS,
                                  __isl_take isl_id *IteratorID);
