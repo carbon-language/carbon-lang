@@ -59,6 +59,7 @@ struct {
   const char *SubArchCStr;
   size_t SubArchLength;
   ARMBuildAttrs::CPUArch ArchAttr; // Arch ID in build attributes.
+  unsigned ArchBaseExtensions;
 
   StringRef getName() const { return StringRef(NameCStr, NameLength); }
 
@@ -68,9 +69,9 @@ struct {
   // Sub-Arch name.
   StringRef getSubArch() const { return StringRef(SubArchCStr, SubArchLength); }
 } ARCHNames[] = {
-#define ARM_ARCH(NAME, ID, CPU_ATTR, SUB_ARCH, ARCH_ATTR)                      \
+#define ARM_ARCH(NAME, ID, CPU_ATTR, SUB_ARCH, ARCH_ATTR, ARCH_BASE_EXT)       \
   {NAME, sizeof(NAME) - 1, ID, CPU_ATTR, sizeof(CPU_ATTR) - 1, SUB_ARCH,       \
-   sizeof(SUB_ARCH) - 1, ARCH_ATTR},
+   sizeof(SUB_ARCH) - 1, ARCH_ATTR, ARCH_BASE_EXT},
 #include "llvm/Support/ARMTargetParser.def"
 };
 
@@ -111,11 +112,12 @@ struct {
   size_t NameLength;
   ARM::ArchKind ArchID;
   bool Default; // is $Name the default CPU for $ArchID ?
+  unsigned DefaultExtensions;
 
   StringRef getName() const { return StringRef(NameCStr, NameLength); }
 } CPUNames[] = {
-#define ARM_CPU_NAME(NAME, ID, DEFAULT_FPU, IS_DEFAULT) \
-  { NAME, sizeof(NAME) - 1, ID, IS_DEFAULT },
+#define ARM_CPU_NAME(NAME, ID, DEFAULT_FPU, IS_DEFAULT, DEFAULT_EXT) \
+  { NAME, sizeof(NAME) - 1, ID, IS_DEFAULT, DEFAULT_EXT },
 #include "llvm/Support/ARMTargetParser.def"
 };
 
@@ -151,7 +153,7 @@ unsigned llvm::ARM::getFPURestriction(unsigned FPUKind) {
 
 unsigned llvm::ARM::getDefaultFPU(StringRef CPU) {
   return StringSwitch<unsigned>(CPU)
-#define ARM_CPU_NAME(NAME, ID, DEFAULT_FPU, IS_DEFAULT) \
+#define ARM_CPU_NAME(NAME, ID, DEFAULT_FPU, IS_DEFAULT, DEFAULT_EXT) \
     .Case(NAME, DEFAULT_FPU)
 #include "llvm/Support/ARMTargetParser.def"
     .Default(ARM::FK_INVALID);
@@ -174,6 +176,20 @@ bool llvm::ARM::getHWDivFeatures(unsigned HWDivKind,
     Features.push_back("-hwdiv");
 
   return true;
+}
+
+bool llvm::ARM::getExtensionFeatures(unsigned Extensions,
+                                     std::vector<const char *> &Features) {
+
+  if (Extensions == ARM::AEK_INVALID)
+    return false;
+
+  if (Extensions & ARM::AEK_CRC)
+    Features.push_back("+crc");
+  else
+    Features.push_back("-crc");
+
+  return getHWDivFeatures(Extensions, Features);
 }
 
 bool llvm::ARM::getFPUFeatures(unsigned FPUKind,
@@ -242,6 +258,7 @@ bool llvm::ARM::getFPUFeatures(unsigned FPUKind,
   // crypto includes neon, so we handle this similarly to FPU version.
   switch (FPUNames[FPUKind].NeonSupport) {
   case ARM::NS_Crypto:
+    Features.push_back("+neon");
     Features.push_back("+crypto");
     break;
   case ARM::NS_Neon:
@@ -295,6 +312,14 @@ StringRef llvm::ARM::getHWDivName(unsigned HWDivKind) {
       return D.getName();
   }
   return StringRef();
+}
+
+unsigned llvm::ARM::getDefaultExtensions(StringRef CPU) {
+  for (const auto C : CPUNames) {
+    if (CPU == C.getName())
+      return (ARCHNames[C.ArchID].ArchBaseExtensions | C.DefaultExtensions);
+  }
+  return ARM::AEK_INVALID;
 }
 
 StringRef llvm::ARM::getDefaultCPU(StringRef Arch) {

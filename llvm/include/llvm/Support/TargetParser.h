@@ -63,7 +63,7 @@ enum FPURestriction {
 
 // Arch names.
 enum ArchKind {
-#define ARM_ARCH(NAME, ID, CPU_ATTR, SUB_ARCH, ARCH_ATTR) ID,
+#define ARM_ARCH(NAME, ID, CPU_ATTR, SUB_ARCH, ARCH_ATTR, ARCH_BASE_EXT) ID,
 #include "ARMTargetParser.def"
   AK_LAST
 };
@@ -106,16 +106,23 @@ StringRef getFPUName(unsigned FPUKind);
 unsigned getFPUVersion(unsigned FPUKind);
 unsigned getFPUNeonSupportLevel(unsigned FPUKind);
 unsigned getFPURestriction(unsigned FPUKind);
-unsigned getDefaultFPU(StringRef CPU);
-// FIXME: This should be moved to TargetTuple once it exists
+
+// FIXME: These should be moved to TargetTuple once it exists
 bool getFPUFeatures(unsigned FPUKind, std::vector<const char *> &Features);
 bool getHWDivFeatures(unsigned HWDivKind, std::vector<const char *> &Features);
+bool getExtensionFeatures(unsigned Extensions,
+                                   std::vector<const char*> &Features);
+
 StringRef getArchName(unsigned ArchKind);
 unsigned getArchAttr(unsigned ArchKind);
 StringRef getCPUAttr(unsigned ArchKind);
 StringRef getSubArch(unsigned ArchKind);
 StringRef getArchExtName(unsigned ArchExtKind);
 StringRef getHWDivName(unsigned HWDivKind);
+
+// Information by Name
+unsigned  getDefaultFPU(StringRef CPU);
+unsigned  getDefaultExtensions(StringRef CPU);
 StringRef getDefaultCPU(StringRef Arch);
 
 // Parser
