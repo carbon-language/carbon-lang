@@ -110,6 +110,24 @@ class BNEZALC_MMR6_DESC : CMP_CBR_RT_Z_MMR6_DESC_BASE<"bnezalc", brtarget_mm,
   list<Register> Defs = [RA];
 }
 
+/// Floating Point Instructions
+class FADD_S_MMR6_ENC : POOL32F_ARITH_FM_MMR6<"add.s", 0, 0b00110000>;
+class FADD_D_MMR6_ENC : POOL32F_ARITH_FM_MMR6<"add.d", 1, 0b00110000>;
+class FSUB_S_MMR6_ENC : POOL32F_ARITH_FM_MMR6<"sub.s", 0, 0b01110000>;
+class FSUB_D_MMR6_ENC : POOL32F_ARITH_FM_MMR6<"sub.d", 1, 0b01110000>;
+class FMUL_S_MMR6_ENC : POOL32F_ARITH_FM_MMR6<"mul.s", 0, 0b10110000>;
+class FMUL_D_MMR6_ENC : POOL32F_ARITH_FM_MMR6<"mul.d", 1, 0b10110000>;
+class FDIV_S_MMR6_ENC : POOL32F_ARITH_FM_MMR6<"div.s", 0, 0b11110000>;
+class FDIV_D_MMR6_ENC : POOL32F_ARITH_FM_MMR6<"div.d", 1, 0b11110000>;
+class MADDF_S_MMR6_ENC : POOL32F_ARITHF_FM_MMR6<"maddf.s", 0, 0b110111000>;
+class MADDF_D_MMR6_ENC : POOL32F_ARITHF_FM_MMR6<"maddf.d", 1, 0b110111000>;
+class MSUBF_S_MMR6_ENC : POOL32F_ARITHF_FM_MMR6<"msubf.s", 0, 0b111111000>;
+class MSUBF_D_MMR6_ENC : POOL32F_ARITHF_FM_MMR6<"msubf.d", 1, 0b111111000>;
+class FMOV_S_MMR6_ENC : POOL32F_MOV_NEG_FM_MMR6<"mov.s", 0, 0b0000001>;
+class FMOV_D_MMR6_ENC : POOL32F_MOV_NEG_FM_MMR6<"mov.d", 1, 0b0000001>;
+class FNEG_S_MMR6_ENC : POOL32F_MOV_NEG_FM_MMR6<"neg.s", 0, 0b0101101>;
+class FNEG_D_MMR6_ENC : POOL32F_MOV_NEG_FM_MMR6<"neg.d", 1, 0b0101101>;
+
 //===----------------------------------------------------------------------===//
 //
 // Operand Definitions
@@ -311,6 +329,58 @@ class SWE_MMR6_DESC_BASE<string opstr, DAGOperand RO, DAGOperand MO,
 class SW_MMR6_DESC : Store<"sw", GPR32Opnd>;
 class SWE_MMR6_DESC : SWE_MMR6_DESC_BASE<"swe", GPR32Opnd, mem_simm9gpr>;
 
+/// Floating Point Instructions
+class FARITH_MMR6_DESC_BASE<string instr_asm, RegisterOperand RC,
+                            InstrItinClass Itin, bit isComm,
+                            SDPatternOperator OpNode = null_frag> : HARDFLOAT {
+  dag OutOperandList = (outs RC:$fd);
+  dag InOperandList = (ins RC:$ft, RC:$fs);
+  string AsmString = !strconcat(instr_asm, "\t$fd, $fs, $ft");
+  list<dag> Pattern = [(set RC:$fd, (OpNode RC:$fs, RC:$ft))];
+  InstrItinClass Itinerary = Itin;
+  bit isCommutable = isComm;
+}
+class FADD_S_MMR6_DESC
+  : FARITH_MMR6_DESC_BASE<"add.s", FGR32Opnd, II_ADD_S, 1, fadd>;
+class FADD_D_MMR6_DESC
+  : FARITH_MMR6_DESC_BASE<"add.d", AFGR64Opnd, II_ADD_D, 1, fadd>;
+class FSUB_S_MMR6_DESC
+  : FARITH_MMR6_DESC_BASE<"sub.s", FGR32Opnd, II_SUB_S, 0, fsub>;
+class FSUB_D_MMR6_DESC
+  : FARITH_MMR6_DESC_BASE<"sub.d", AFGR64Opnd, II_SUB_D, 0, fsub>;
+class FMUL_S_MMR6_DESC
+  : FARITH_MMR6_DESC_BASE<"mul.s", FGR32Opnd, II_MUL_S, 1, fmul>;
+class FMUL_D_MMR6_DESC
+  : FARITH_MMR6_DESC_BASE<"mul.d", AFGR64Opnd, II_MUL_D, 1, fmul>;
+class FDIV_S_MMR6_DESC
+  : FARITH_MMR6_DESC_BASE<"div.s", FGR32Opnd, II_DIV_S, 0, fdiv>;
+class FDIV_D_MMR6_DESC
+  : FARITH_MMR6_DESC_BASE<"div.d", AFGR64Opnd, II_DIV_D, 0, fdiv>;
+class MADDF_S_MMR6_DESC : COP1_4R_DESC_BASE<"maddf.s", FGR32Opnd>, HARDFLOAT;
+class MADDF_D_MMR6_DESC : COP1_4R_DESC_BASE<"maddf.d", FGR64Opnd>, HARDFLOAT;
+class MSUBF_S_MMR6_DESC : COP1_4R_DESC_BASE<"msubf.s", FGR32Opnd>, HARDFLOAT;
+class MSUBF_D_MMR6_DESC : COP1_4R_DESC_BASE<"msubf.d", FGR64Opnd>, HARDFLOAT;
+
+class FMOV_FNEG_MMR6_DESC_BASE<string instr_asm, RegisterOperand DstRC,
+                               RegisterOperand SrcRC, InstrItinClass Itin,
+                               SDPatternOperator OpNode = null_frag>
+                               : HARDFLOAT, NeverHasSideEffects {
+  dag OutOperandList = (outs DstRC:$ft);
+  dag InOperandList = (ins SrcRC:$fs);
+  string AsmString = !strconcat(instr_asm, "\t$ft, $fs");
+  list<dag> Pattern = [(set DstRC:$ft, (OpNode SrcRC:$fs))];
+  InstrItinClass Itinerary = Itin;
+  Format Form = FrmFR;
+}
+class FMOV_S_MMR6_DESC
+  : FMOV_FNEG_MMR6_DESC_BASE<"mov.s", FGR32Opnd, FGR32Opnd, II_MOV_S>;
+class FMOV_D_MMR6_DESC
+  : FMOV_FNEG_MMR6_DESC_BASE<"mov.d", AFGR64Opnd, AFGR64Opnd, II_MOV_D>;
+class FNEG_S_MMR6_DESC
+  : FMOV_FNEG_MMR6_DESC_BASE<"neg.s", FGR32Opnd, FGR32Opnd, II_NEG, fneg>;
+class FNEG_D_MMR6_DESC
+  : FMOV_FNEG_MMR6_DESC_BASE<"neg.d", AFGR64Opnd, AFGR64Opnd, II_NEG, fneg>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -388,6 +458,39 @@ let DecoderMethod = "DecodeMemMMImm16" in {
 let DecoderMethod = "DecodeMemMMImm9" in {
   def SWE_MMR6 : StdMMR6Rel, SWE_MMR6_DESC, SWE_MMR6_ENC, ISA_MICROMIPS32R6;
 }
+/// Floating Point Instructions
+def FADD_S_MMR6 : StdMMR6Rel, FADD_S_MMR6_ENC, FADD_S_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def FADD_D_MMR6 : StdMMR6Rel, FADD_D_MMR6_ENC, FADD_D_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def FSUB_S_MMR6 : StdMMR6Rel, FSUB_S_MMR6_ENC, FSUB_S_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def FSUB_D_MMR6 : StdMMR6Rel, FSUB_D_MMR6_ENC, FSUB_D_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def FMUL_S_MMR6 : StdMMR6Rel, FMUL_S_MMR6_ENC, FMUL_S_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def FMUL_D_MMR6 : StdMMR6Rel, FMUL_D_MMR6_ENC, FMUL_D_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def FDIV_S_MMR6 : StdMMR6Rel, FDIV_S_MMR6_ENC, FDIV_S_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def FDIV_D_MMR6 : StdMMR6Rel, FDIV_D_MMR6_ENC, FDIV_D_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def MADDF_S_MMR6 : R6MMR6Rel, MADDF_S_MMR6_ENC, MADDF_S_MMR6_DESC,
+                   ISA_MICROMIPS32R6;
+def MADDF_D_MMR6 : R6MMR6Rel, MADDF_D_MMR6_ENC, MADDF_D_MMR6_DESC,
+                   ISA_MICROMIPS32R6;
+def MSUBF_S_MMR6 : R6MMR6Rel, MSUBF_S_MMR6_ENC, MSUBF_S_MMR6_DESC,
+                   ISA_MICROMIPS32R6;
+def MSUBF_D_MMR6 : R6MMR6Rel, MSUBF_D_MMR6_ENC, MSUBF_D_MMR6_DESC,
+                   ISA_MICROMIPS32R6;
+def FMOV_S_MMR6 : StdMMR6Rel, FMOV_S_MMR6_ENC, FMOV_S_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def FMOV_D_MMR6 : StdMMR6Rel, FMOV_D_MMR6_ENC, FMOV_D_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def FNEG_S_MMR6 : StdMMR6Rel, FNEG_S_MMR6_ENC, FNEG_S_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def FNEG_D_MMR6 : StdMMR6Rel, FNEG_D_MMR6_ENC, FNEG_D_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
 }
 
 //===----------------------------------------------------------------------===//
