@@ -2990,9 +2990,9 @@ bool SimplifyCFGOpt::SimplifyCleanupReturn(CleanupReturnInst *RI) {
          I != IE; ++I) {
       PHINode *DestPN = cast<PHINode>(I);
  
-      unsigned Idx = DestPN->getBasicBlockIndex(BB);
+      int Idx = DestPN->getBasicBlockIndex(BB);
       // Since BB unwinds to UnwindDest, it has to be in the PHI node.
-      assert(Idx != -1);
+      assert(Idx != -1U);
       // This PHI node has an incoming value that corresponds to a control
       // path through the cleanup pad we are removing.  If the incoming
       // value is in the cleanup pad, it must be a PHINode (because we
