@@ -124,7 +124,7 @@ This list contains known issues with libc++
 
 A full list of currently open libc++ bugs can be `found here <libcxx bug list_>`__.
 
-.. _libcxx bug list: https://llvm.org/bugs/buglist.cgi?component=All%20Bugs&product=libc%2B%2B&query_format=advanced&resolution=---&order=changeddate%20DESC%2Cassigned_to%20DESC%2Cbug_status%2Cpriority%2Cbug_id&list_id=74184
+.. _`libcxx bug list`: https://llvm.org/bugs/buglist.cgi?component=All%20Bugs&product=libc%2B%2B&query_format=advanced&resolution=---&order=changeddate%20DESC%2Cassigned_to%20DESC%2Cbug_status%2Cpriority%2Cbug_id&list_id=74184
 
 Design Documents
 ----------------
