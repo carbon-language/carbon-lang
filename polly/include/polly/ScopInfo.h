@@ -273,7 +273,7 @@ private:
   Value *AccessValue;
 
   /// Updated access relation read from JSCOP file.
-  isl_map *newAccessRelation;
+  isl_map *NewAccessRelation;
 
   /// @brief A unique identifier for this memory access.
   ///
@@ -362,7 +362,7 @@ public:
   bool isWrite() const { return isMustWrite() || isMayWrite(); }
 
   /// @brief Check if a new access relation was imported or set by a pass.
-  bool hasNewAccessRelation() const { return newAccessRelation; }
+  bool hasNewAccessRelation() const { return NewAccessRelation; }
 
   /// @brief Return the newest access relation of this access.
   ///
@@ -441,7 +441,7 @@ public:
   ReductionType getReductionType() const { return RedType; }
 
   /// @brief Set the updated access relation read from JSCOP file.
-  void setNewAccessRelation(__isl_take isl_map *newAccessRelation);
+  void setNewAccessRelation(__isl_take isl_map *NewAccessRelation);
 
   /// @brief Mark this a reduction like access
   void markAsReductionLike(ReductionType RT) { RedType = RT; }

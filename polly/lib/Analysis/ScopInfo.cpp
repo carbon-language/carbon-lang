@@ -269,7 +269,7 @@ static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
 MemoryAccess::~MemoryAccess() {
   isl_id_free(Id);
   isl_map_free(AccessRelation);
-  isl_map_free(newAccessRelation);
+  isl_map_free(NewAccessRelation);
 }
 
 static MemoryAccess::AccessType getMemoryAccessType(const IRAccess &Access) {
@@ -321,7 +321,7 @@ __isl_give isl_space *MemoryAccess::getOriginalAccessRelationSpace() const {
 }
 
 __isl_give isl_map *MemoryAccess::getNewAccessRelation() const {
-  return isl_map_copy(newAccessRelation);
+  return isl_map_copy(NewAccessRelation);
 }
 
 __isl_give isl_basic_map *
@@ -484,7 +484,7 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
                            int Identifier)
     : AccType(getMemoryAccessType(Access)), Statement(Statement),
       AccessInstruction(AccInst), AccessValue(Access.getAccessValue()),
-      newAccessRelation(nullptr) {
+      NewAccessRelation(nullptr) {
 
   isl_ctx *Ctx = Statement->getIslCtx();
   BaseAddr = Access.getBase();
@@ -667,9 +667,9 @@ bool MemoryAccess::isStrideOne(const isl_map *Schedule) const {
   return isStrideX(Schedule, 1);
 }
 
-void MemoryAccess::setNewAccessRelation(isl_map *newAccess) {
-  isl_map_free(newAccessRelation);
-  newAccessRelation = newAccess;
+void MemoryAccess::setNewAccessRelation(isl_map *NewAccess) {
+  isl_map_free(NewAccessRelation);
+  NewAccessRelation = NewAccess;
 }
 
 //===----------------------------------------------------------------------===//
