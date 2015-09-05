@@ -162,7 +162,6 @@ Please include [libcxx] in the subject.
 .. _phab doc: http://llvm.org/docs/Phabricator.html
 .. _cfe-dev: http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev
 
-
 Links
 =====
 
