@@ -42,7 +42,11 @@ public:
 
   // The writer sets and uses the addresses.
   uintX_t getOutputSectionOff() const { return OutputSectionOff; }
-  uintX_t getAlign() { return Header->sh_addralign; }
+  uintX_t getAlign() {
+    // The ELF spec states that a value of 0 means the section has no alignment
+    // constraits.
+    return std::max<uintX_t>(Header->sh_addralign, 1);
+  }
   void setOutputSectionOff(uint64_t V) { OutputSectionOff = V; }
 
   void setOutputSection(OutputSection<ELFT> *O) { Out = O; }
