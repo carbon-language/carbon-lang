@@ -95,6 +95,14 @@ static bool IsMultiple(const APInt &C1, const APInt &C2, APInt &Quotient,
   assert(C1.getBitWidth() == C2.getBitWidth() &&
          "Inconsistent width of constants!");
 
+  // Bail if we will divide by zero.
+  if (C2.isMinValue())
+    return false;
+
+  // Bail if we would divide INT_MIN by -1.
+  if (IsSigned && C1.isMinSignedValue() && C2.isAllOnesValue())
+    return false;
+
   APInt Remainder(C1.getBitWidth(), /*Val=*/0ULL, IsSigned);
   if (IsSigned)
     APInt::sdivrem(C1, C2, Quotient, Remainder);

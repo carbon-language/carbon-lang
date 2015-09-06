@@ -325,3 +325,21 @@ define i32 @test36(i32 %A) {
 ; CHECK-NEXT: %[[shr:.*]] = lshr exact i32 %[[and]], %A
 ; CHECK-NEXT: ret i32 %[[shr]]
 }
+
+define i32 @test37(i32* %b) {
+entry:
+  store i32 0, i32* %b, align 4
+  %0 = load i32, i32* %b, align 4
+  br i1 undef, label %lor.rhs, label %lor.end
+
+lor.rhs:                                          ; preds = %entry
+  %mul = mul nsw i32 undef, %0
+  br label %lor.end
+
+lor.end:                                          ; preds = %lor.rhs, %entry
+  %t.0 = phi i32 [ %0, %entry ], [ %mul, %lor.rhs ]
+  %div = sdiv i32 %t.0, 2
+  ret i32 %div
+; CHECK-LABEL: @test37(
+; CHECK: ret i32 0
+}
