@@ -34,7 +34,7 @@ The basic steps needed to build libc++ are:
 
 #. Configure and build libc++ with libc++abi:
 
-   `CMake <CMake.html>`_ is the only supported configuration system. Unlike other LLVM
+   CMake is the only supported configuration system. Unlike other LLVM
    projects autotools is not supported for either libc++ or libc++abi.
 
    Clang is the preferred compiler when building and using libc++.
@@ -69,8 +69,8 @@ The instructions are for building libc++ on
 FreeBSD, Linux, or Mac using `libc++abi`_ as the C++ ABI library.
 On Linux, it is also possible to use :ref:`libsupc++ <libsupcxx>` or libcxxrt.
 
-It is sometimes beneficial to build outside of the LLVM tree. To build
-libc++ TODO
+It is sometimes beneficial to build outside of the LLVM tree. An out-of-tree
+build would look like this:
 
 .. code-block:: bash
 
