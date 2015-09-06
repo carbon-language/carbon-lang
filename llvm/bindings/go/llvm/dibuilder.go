@@ -216,9 +216,35 @@ func (d *DIBuilder) CreateFunction(diScope Metadata, f DIFunction) Metadata {
 	return Metadata{C: result}
 }
 
-// DILocalVariable holds the values for creating local variable debug metadata.
-type DILocalVariable struct {
-	Tag            dwarf.Tag
+// DIAutoVariable holds the values for creating auto variable debug metadata.
+type DIAutoVariable struct {
+	Name           string
+	File           Metadata
+	Line           int
+	Type           Metadata
+	AlwaysPreserve bool
+	Flags          int
+}
+
+// CreateAutoVariable creates local variable debug metadata.
+func (d *DIBuilder) CreateAutoVariable(scope Metadata, v DIAutoVariable) Metadata {
+	name := C.CString(v.Name)
+	defer C.free(unsafe.Pointer(name))
+	result := C.LLVMDIBuilderCreateAutoVariable(
+		d.ref,
+		scope.C,
+		name,
+		v.File.C,
+		C.unsigned(v.Line),
+		v.Type.C,
+		boolToCInt(v.AlwaysPreserve),
+		C.unsigned(v.Flags),
+	)
+	return Metadata{C: result}
+}
+
+// DIParameterVariable holds the values for creating parameter variable debug metadata.
+type DIParameterVariable struct {
 	Name           string
 	File           Metadata
 	Line           int
@@ -227,25 +253,24 @@ type DILocalVariable struct {
 	Flags          int
 
 	// ArgNo is the 1-based index of the argument in the function's
-	// parameter list if it is an argument, or 0 otherwise.
+	// parameter list.
 	ArgNo int
 }
 
-// CreateLocalVariable creates local variable debug metadata.
-func (d *DIBuilder) CreateLocalVariable(scope Metadata, v DILocalVariable) Metadata {
+// CreateParameterVariable creates parameter variable debug metadata.
+func (d *DIBuilder) CreateParameterVariable(scope Metadata, v DIParameterVariable) Metadata {
 	name := C.CString(v.Name)
 	defer C.free(unsafe.Pointer(name))
-	result := C.LLVMDIBuilderCreateLocalVariable(
+	result := C.LLVMDIBuilderCreateParameterVariable(
 		d.ref,
-		C.unsigned(v.Tag),
 		scope.C,
 		name,
+		C.unsigned(v.ArgNo),
 		v.File.C,
 		C.unsigned(v.Line),
 		v.Type.C,
 		boolToCInt(v.AlwaysPreserve),
 		C.unsigned(v.Flags),
-		C.unsigned(v.ArgNo),
 	)
 	return Metadata{C: result}
 }
