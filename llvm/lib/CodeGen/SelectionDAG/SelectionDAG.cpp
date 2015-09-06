@@ -3348,6 +3348,13 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
                               SDValue N2, const SDNodeFlags *Flags) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2);
+
+  // Canonicalize constant to RHS if commutative.
+  if (N1C && !N2C && isCommutativeBinOp(Opcode)) {
+    std::swap(N1C, N2C);
+    std::swap(N1, N2);
+  }
+
   switch (Opcode) {
   default: break;
   case ISD::TokenFactor:
@@ -3691,12 +3698,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
   if (SDValue SV =
           FoldConstantArithmetic(Opcode, DL, VT, N1.getNode(), N2.getNode()))
     return SV;
-
-  // Canonicalize constant to RHS if commutative.
-  if (N1C && !N2C && isCommutativeBinOp(Opcode)) {
-    std::swap(N1C, N2C);
-    std::swap(N1, N2);
-  }
 
   // Constant fold FP operations.
   bool HasFPExceptions = TLI->hasFloatingPointExceptions();
