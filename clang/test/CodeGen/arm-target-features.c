@@ -1,8 +1,11 @@
 // REQUIRES: arm-registered-target
 
 // RUN: %clang_cc1 -triple thumbv7-linux-gnueabihf -target-cpu cortex-a8 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP3
-// RUN: %clang_cc1 -triple thumbv7-linux-gnueabi -target-cpu cortex-a9 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP3
 // CHECK-VFP3: "target-features"="+neon,+vfp3"
+
+
+// RUN: %clang_cc1 -triple thumbv7-linux-gnueabi -target-cpu cortex-a9 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP3-FP16
+// CHECK-VFP3-FP16: "target-features"="+fp16,+neon,+vfp3"
 
 
 // RUN: %clang_cc1 -triple thumbv7-linux-gnueabihf -target-cpu cortex-a5 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP4
@@ -25,9 +28,29 @@
 // CHECK-BASIC-V8: "target-features"="+crc,+crypto,+fp-armv8,+hwdiv,+hwdiv-arm,+neon"
 
 
+// RUN: %clang_cc1 -triple thumbv7-linux-gnueabi -target-cpu cortex-r5f -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP3-D16-DIV
+// CHECK-VFP3-D16-DIV: "target-features"="+d16,+hwdiv,+hwdiv-arm,+vfp3"
+
+
+// RUN: %clang_cc1 -triple armv7-linux-gnueabi -target-cpu cortex-r4f -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP3-D16-THUMB-DIV
+// CHECK-VFP3-D16-THUMB-DIV: "target-features"="+d16,+hwdiv,+vfp3"
+
+
+// RUN: %clang_cc1 -triple thumbv7-linux-gnueabi -target-cpu cortex-r7 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP3-D16-FP16-DIV
+// CHECK-VFP3-D16-FP16-DIV: "target-features"="+d16,+fp16,+hwdiv,+hwdiv-arm,+vfp3"
+
+
+// RUN: %clang_cc1 -triple thumbv7-linux-gnueabi -target-cpu cortex-m4f -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP4-D16-SP-THUMB-DIV
+// CHECK-VFP4-D16-SP-THUMB-DIV: "target-features"="+d16,+fp-only-sp,+hwdiv,+vfp4"
+
+
+// RUN: %clang_cc1 -triple thumbv7-linux-gnueabi -target-cpu cortex-m7 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP5-D16-THUMB-DIV
+// CHECK-VFP5-D16-THUMB-DIV: "target-features"="+d16,+fp-armv8,+hwdiv"
+
+
 // RUN: %clang_cc1 -triple thumbv7-linux-gnueabi -target-cpu cortex-r5 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-DIV
-// RUN: %clang_cc1 -triple thumbv7-linux-gnueabi -target-cpu cortex-r7 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-DIV
 // CHECK-DIV: "target-features"="+hwdiv,+hwdiv-arm"
+
 
 // RUN: %clang_cc1 -triple armv7-linux-gnueabi -target-cpu cortex-r4 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-THUMB-DIV
 // RUN: %clang_cc1 -triple thumbv7-linux-gnueabi -target-cpu cortex-m3 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-THUMB-DIV

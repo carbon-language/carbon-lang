@@ -4442,37 +4442,20 @@ public:
   bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
                       StringRef CPU,
                       std::vector<std::string> &FeaturesVec) const override {
-    if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
-      Features["vfp2"] = true;
-    else if (CPU == "cortex-a8" || CPU == "cortex-a9") {
-      Features["vfp3"] = true;
-      Features["neon"] = true;
-    }
-    else if (CPU == "cortex-a5") {
-      Features["vfp4"] = true;
-      Features["neon"] = true;
-    } else if (CPU == "swift" || CPU == "cortex-a7" ||
-               CPU == "cortex-a12" || CPU == "cortex-a15" ||
-               CPU == "cortex-a17" || CPU == "krait") {
-      Features["vfp4"] = true;
-      Features["neon"] = true;
-      Features["hwdiv"] = true;
-      Features["hwdiv-arm"] = true;
-    } else if (CPU == "cyclone" || CPU == "cortex-a53" || CPU == "cortex-a57" ||
-               CPU == "cortex-a72") {
-      Features["fp-armv8"] = true;
-      Features["neon"] = true;
-      Features["hwdiv"] = true;
-      Features["hwdiv-arm"] = true;
-      Features["crc"] = true;
-      Features["crypto"] = true;
-    } else if (CPU == "cortex-r5" || CPU == "cortex-r7" || ArchVersion == 8) {
-      Features["hwdiv"] = true;
-      Features["hwdiv-arm"] = true;
-    } else if (CPU == "cortex-m3" || CPU == "cortex-m4" || CPU == "cortex-m7" ||
-               CPU == "sc300" || CPU == "cortex-r4" || CPU == "cortex-r4f") {
-      Features["hwdiv"] = true;
-    }
+   
+    std::vector<const char*> TargetFeatures;
+
+    // get default FPU features
+    unsigned FPUKind = llvm::ARM::getDefaultFPU(CPU);
+    llvm::ARM::getFPUFeatures(FPUKind, TargetFeatures);
+
+    // get default Extension features
+    unsigned Extensions = llvm::ARM::getDefaultExtensions(CPU);
+    llvm::ARM::getExtensionFeatures(Extensions, TargetFeatures);
+
+    for (const char *Feature : TargetFeatures)
+      if (Feature[0] == '+')
+        Features[Feature+1] = true; 
 
     if (ArchVersion < 6  || 
        (ArchVersion == 6 && ArchProfile == llvm::ARM::PK_M))
