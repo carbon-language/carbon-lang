@@ -478,16 +478,6 @@ __m128 test_mm_bsrli_si128(__m128 a) {
   return _mm_bsrli_si128(a, 5);
 }
 
-__m128i test_mm_alignr_epi8(__m128i a, __m128i b) {
-  // CHECK: shufflevector <16 x i8> %{{.*}}, <16 x i8> %{{.*}}, <16 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17>
-  return _mm_alignr_epi8(a, b, 2);
-}
-
-__m128i test2_mm_alignr_epi8(__m128i a, __m128i b) {
-  // CHECK: shufflevector <16 x i8> %{{.*}}, <16 x i8> zeroinitializer, <16 x i32> <i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16>
-  return _mm_alignr_epi8(a, b, 17);
-}
-
 __m128 test_mm_undefined_ps() {
   // CHECK-LABEL: @test_mm_undefined_ps
   // CHECK: ret <4 x float> undef
