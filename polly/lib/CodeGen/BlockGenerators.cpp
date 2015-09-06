@@ -17,6 +17,7 @@
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/CodeGen/IslExprBuilder.h"
+#include "polly/CodeGen/RuntimeDebugBuilder.h"
 #include "polly/Options.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/SCEVValidator.h"
@@ -40,6 +41,11 @@ static cl::opt<bool> Aligned("enable-polly-aligned",
                              cl::desc("Assumed aligned memory accesses."),
                              cl::Hidden, cl::init(false), cl::ZeroOrMore,
                              cl::cat(PollyCategory));
+
+static cl::opt<bool> DebugPrinting(
+    "polly-codegen-add-debug-printing",
+    cl::desc("Add printf calls that show the values loaded/stored."),
+    cl::Hidden, cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 bool polly::canSynthesize(const Value *V, const llvm::LoopInfo *LI,
                           ScalarEvolution *SE, const Region *R) {
@@ -208,6 +214,11 @@ Value *BlockGenerator::generateScalarLoad(ScopStmt &Stmt, const LoadInst *Load,
       generateLocationAccessed(Stmt, Load, Pointer, BBMap, LTS, NewAccesses);
   Value *ScalarLoad = Builder.CreateAlignedLoad(
       NewPointer, Load->getAlignment(), Load->getName() + "_p_scalar_");
+
+  if (DebugPrinting)
+    RuntimeDebugBuilder::createCPUPrinter(Builder, "Load from ", NewPointer,
+                                          ": ", ScalarLoad, "\n");
+
   return ScalarLoad;
 }
 
@@ -219,6 +230,10 @@ void BlockGenerator::generateScalarStore(ScopStmt &Stmt, const StoreInst *Store,
       generateLocationAccessed(Stmt, Store, Pointer, BBMap, LTS, NewAccesses);
   Value *ValueOperand = getNewValue(Stmt, Store->getValueOperand(), BBMap, LTS,
                                     getLoopForInst(Store));
+
+  if (DebugPrinting)
+    RuntimeDebugBuilder::createCPUPrinter(Builder, "Store to  ", NewPointer,
+                                          ": ", ValueOperand, "\n");
 
   Builder.CreateAlignedStore(ValueOperand, NewPointer, Store->getAlignment());
 }

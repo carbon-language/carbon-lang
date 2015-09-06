@@ -30,30 +30,21 @@ namespace polly {
 /// run time.
 struct RuntimeDebugBuilder {
 
-  /// @brief Print a string to stdout.
+  /// @brief Print a set of LLVM-IR Values or StringRefs via printf
   ///
-  /// @param String The string to print.
-  static void createStrPrinter(PollyIRBuilder &Builder,
-                               const std::string &String);
-
-  /// @brief Print a value to stdout.
+  ///  This function emits a call to printf that will print the given arguments.
+  ///  It is useful for debugging CPU programs. All arguments given in this list
+  ///  will be automatically concatenated and the resulting string will be
+  ///  printed atomically. We also support ArrayRef arguments, which can be used
+  ///  to provide of id values.
   ///
-  /// @param V The value to print.
-  ///
-  /// @note Only integer, floating point and pointer values up to 64bit are
-  ///       supported.
-  static void createValuePrinter(PollyIRBuilder &Builder, llvm::Value *V);
-
-  /// @brief Add a call to the fflush function with no file pointer given.
-  ///
-  /// This call will flush all opened file pointers including stdout and stderr.
-  static void createFlush(PollyIRBuilder &Builder);
-
-  /// @brief Get a reference to the 'printf' function.
-  ///
-  /// If the current module does not yet contain a reference to printf, we
-  /// insert a reference to it. Otherwise the existing reference is returned.
-  static llvm::Function *getPrintF(PollyIRBuilder &Builder);
+  ///  @param Builder The builder used to emit the printer calls.
+  ///  @param Args    The list of values to print.
+  template <typename... Args>
+  static void createCPUPrinter(PollyIRBuilder &Builder, Args... args) {
+    std::vector<llvm::Value *> Vector;
+    createPrinter(Builder, /* CPU */ false, Vector, args...);
+  }
 
   /// @brief Print a set of LLVM-IR Values or StringRefs on an NVIDIA GPU.
   ///
@@ -69,51 +60,76 @@ struct RuntimeDebugBuilder {
   template <typename... Args>
   static void createGPUPrinter(PollyIRBuilder &Builder, Args... args) {
     std::vector<llvm::Value *> Vector;
-    createGPUVAPrinter(Builder, Vector, args...);
+    createPrinter(Builder, /* GPU */ true, Vector, args...);
   }
 
 private:
-  /// @brief GPU printing - Print a list of LLVM Values.
-  ///
-  static void createGPUVAPrinter(PollyIRBuilder &Builder,
-                                 llvm::ArrayRef<llvm::Value *> Values);
-
-  /// @brief GPU printing - Handle Values.
+  /// @brief Handle Values.
   template <typename... Args>
-  static void createGPUVAPrinter(PollyIRBuilder &Builder,
-                                 std::vector<llvm::Value *> &Values,
-                                 llvm::Value *Value, Args... args) {
+  static void createPrinter(PollyIRBuilder &Builder, bool UseGPU,
+                            std::vector<llvm::Value *> &Values,
+                            llvm::Value *Value, Args... args) {
     Values.push_back(Value);
-    createGPUVAPrinter(Builder, Values, args...);
+    createPrinter(Builder, UseGPU, Values, args...);
   }
 
-  /// @brief GPU printing - Handle StringRefs.
+  /// @brief Handle StringRefs.
   template <typename... Args>
-  static void createGPUVAPrinter(PollyIRBuilder &Builder,
-                                 std::vector<llvm::Value *> &Values,
-                                 llvm::StringRef String, Args... args) {
+  static void createPrinter(PollyIRBuilder &Builder, bool UseGPU,
+                            std::vector<llvm::Value *> &Values,
+                            llvm::StringRef String, Args... args) {
     Values.push_back(Builder.CreateGlobalStringPtr(String, "", 4));
-    createGPUVAPrinter(Builder, Values, args...);
+    createPrinter(Builder, UseGPU, Values, args...);
   }
 
-  /// @brief GPU printing - Handle ArrayRefs.
+  /// @brief Handle ArrayRefs.
   template <typename... Args>
-  static void createGPUVAPrinter(PollyIRBuilder &Builder,
-                                 std::vector<llvm::Value *> &Values,
-                                 llvm::ArrayRef<llvm::Value *> Array,
-                                 Args... args) {
+  static void createPrinter(PollyIRBuilder &Builder, bool UseGPU,
+                            std::vector<llvm::Value *> &Values,
+                            llvm::ArrayRef<llvm::Value *> Array, Args... args) {
     if (Array.size() >= 2)
-      createGPUVAPrinter(
-          Builder, Values, Array[0], " ",
-          llvm::ArrayRef<llvm::Value *>(&Array[1], Array.size() - 1), args...);
+      createPrinter(Builder, Values, Array[0], " ",
+                    llvm::ArrayRef<llvm::Value *>(&Array[1], Array.size() - 1),
+                    args...);
     else if (Array.size() == 1)
-      createGPUVAPrinter(Builder, Values, Array[0], args...);
+      createPrinter(Builder, UseGPU, Values, Array[0], args...);
     else
-      createGPUVAPrinter(Builder, Values, args...);
+      createPrinter(Builder, UseGPU, Values, args...);
   }
+
+  /// @brief Print a list of Values.
+  static void createPrinter(PollyIRBuilder &Builder, bool UseGPU,
+                            llvm::ArrayRef<llvm::Value *> Values);
+
+  /// @brief Print a list of Values on a GPU.
+  static void createGPUPrinterT(PollyIRBuilder &Builder,
+                                llvm::ArrayRef<llvm::Value *> Values);
+
+  /// @brief Print a list of Values on a CPU.
+  static void createCPUPrinterT(PollyIRBuilder &Builder,
+                                llvm::ArrayRef<llvm::Value *> Values);
+
+  /// @brief Get a reference to the 'printf' function.
+  ///
+  /// If the current module does not yet contain a reference to printf, we
+  /// insert a reference to it. Otherwise the existing reference is returned.
+  static llvm::Function *getPrintF(PollyIRBuilder &Builder);
+
+  /// @brief Call printf
+  ///
+  /// @param Builder The builder used to insert the code.
+  /// @param Format  The format string.
+  /// @param Values  The set of values to print.
+  static void createPrintF(PollyIRBuilder &Builder, std::string Format,
+                           llvm::ArrayRef<llvm::Value *> Values);
 
   /// @brief Get (and possibly insert) a vprintf declaration into the module.
   static llvm::Function *getVPrintF(PollyIRBuilder &Builder);
+
+  /// @brief Call fflush
+  ///
+  /// @parma Builder The builder used to insert the code.
+  static void createFlush(PollyIRBuilder &Builder);
 
   /// @brief Get (and possibly insert) a NVIDIA address space cast call.
   static llvm::Function *getAddressSpaceCast(PollyIRBuilder &Builder,

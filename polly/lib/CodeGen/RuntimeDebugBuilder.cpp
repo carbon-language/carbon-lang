@@ -95,8 +95,72 @@ RuntimeDebugBuilder::getGPUThreadIdentifiers(PollyIRBuilder &Builder) {
   return Identifiers;
 }
 
-void RuntimeDebugBuilder::createGPUVAPrinter(PollyIRBuilder &Builder,
-                                             ArrayRef<Value *> Values) {
+void RuntimeDebugBuilder::createPrinter(PollyIRBuilder &Builder, bool IsGPU,
+                                        ArrayRef<Value *> Values) {
+  if (IsGPU)
+    createGPUPrinterT(Builder, Values);
+  else
+    createCPUPrinterT(Builder, Values);
+}
+
+static std::tuple<std::string, std::vector<Value *>>
+prepareValuesForPrinting(PollyIRBuilder &Builder, ArrayRef<Value *> Values) {
+  std::string FormatString;
+  std::vector<Value *> ValuesToPrint;
+
+  for (auto Val : Values) {
+    Type *Ty = Val->getType();
+
+    if (Ty->isFloatingPointTy()) {
+      if (!Ty->isDoubleTy())
+        Val = Builder.CreateFPExt(Val, Builder.getDoubleTy());
+    } else if (Ty->isIntegerTy()) {
+      if (Ty->getIntegerBitWidth() < 64)
+        Val = Builder.CreateSExt(Val, Builder.getInt64Ty());
+      else
+        assert(Ty->getIntegerBitWidth() &&
+               "Integer types larger 64 bit not supported");
+    } else if (isa<PointerType>(Ty)) {
+      if (Ty->getPointerElementType() == Builder.getInt8Ty() &&
+          Ty->getPointerAddressSpace() == 4) {
+        Val = Builder.CreateGEP(Val, Builder.getInt64(0));
+      } else {
+        Val = Builder.CreatePtrToInt(Val, Builder.getInt64Ty());
+      }
+    } else {
+      llvm_unreachable("Unknown type");
+    }
+
+    Ty = Val->getType();
+
+    if (Ty->isFloatingPointTy())
+      FormatString += "%f";
+    else if (Ty->isIntegerTy())
+      FormatString += "%ld";
+    else
+      FormatString += "%s";
+
+    ValuesToPrint.push_back(Val);
+  }
+
+  return std::make_tuple(FormatString, ValuesToPrint);
+}
+
+void RuntimeDebugBuilder::createCPUPrinterT(PollyIRBuilder &Builder,
+                                            ArrayRef<Value *> Values) {
+
+  std::string FormatString;
+  std::vector<Value *> ValuesToPrint;
+
+  std::tie(FormatString, ValuesToPrint) =
+      prepareValuesForPrinting(Builder, Values);
+
+  createPrintF(Builder, FormatString, ValuesToPrint);
+  createFlush(Builder);
+}
+
+void RuntimeDebugBuilder::createGPUPrinterT(PollyIRBuilder &Builder,
+                                            ArrayRef<Value *> Values) {
   std::string str;
 
   // Allocate print buffer (assuming 2*32 bit per element)
@@ -169,12 +233,22 @@ Function *RuntimeDebugBuilder::getPrintF(PollyIRBuilder &Builder) {
 
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    FunctionType *Ty =
-        FunctionType::get(Builder.getInt32Ty(), Builder.getInt8PtrTy(), true);
+    FunctionType *Ty = FunctionType::get(Builder.getInt32Ty(), true);
     F = Function::Create(Ty, Linkage, Name, M);
   }
 
   return F;
+}
+
+void RuntimeDebugBuilder::createPrintF(PollyIRBuilder &Builder,
+                                       std::string Format,
+                                       ArrayRef<Value *> Values) {
+  Value *FormatString = Builder.CreateGlobalStringPtr(Format);
+  std::vector<Value *> Arguments;
+
+  Arguments.push_back(FormatString);
+  Arguments.insert(Arguments.end(), Values.begin(), Values.end());
+  Builder.CreateCall(getPrintF(Builder), Arguments);
 }
 
 void RuntimeDebugBuilder::createFlush(PollyIRBuilder &Builder) {
@@ -196,31 +270,4 @@ void RuntimeDebugBuilder::createFlush(PollyIRBuilder &Builder) {
   // fflush is already declared in this translation unit, we use the very same
   // type to ensure that LLVM does not complain about mismatching types.
   Builder.CreateCall(F, Constant::getNullValue(F->arg_begin()->getType()));
-}
-
-void RuntimeDebugBuilder::createStrPrinter(PollyIRBuilder &Builder,
-                                           const std::string &String) {
-  Value *StringValue = Builder.CreateGlobalStringPtr(String);
-  Builder.CreateCall(getPrintF(Builder), StringValue);
-
-  createFlush(Builder);
-}
-
-void RuntimeDebugBuilder::createValuePrinter(PollyIRBuilder &Builder,
-                                             Value *V) {
-  const char *Format = nullptr;
-
-  Type *Ty = V->getType();
-  if (Ty->isIntegerTy())
-    Format = "%ld";
-  else if (Ty->isFloatingPointTy())
-    Format = "%lf";
-  else if (Ty->isPointerTy())
-    Format = "%p";
-
-  assert(Format && Ty->getPrimitiveSizeInBits() <= 64 && "Bad type to print.");
-
-  Value *FormatString = Builder.CreateGlobalStringPtr(Format);
-  Builder.CreateCall(getPrintF(Builder), {FormatString, V});
-  createFlush(Builder);
 }
