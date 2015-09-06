@@ -119,32 +119,28 @@ void RuntimeDebugBuilder::createGPUVAPrinter(PollyIRBuilder &Builder,
     Type *Ty = Val->getType();
 
     if (Ty->isFloatingPointTy()) {
-      if (!Ty->isDoubleTy()) {
-        Ty = Builder.getDoubleTy();
-        Val = Builder.CreateFPExt(Val, Ty);
-      }
+      if (!Ty->isDoubleTy())
+        Val = Builder.CreateFPExt(Val, Builder.getDoubleTy());
     } else if (Ty->isIntegerTy()) {
-      auto Int64Bitwidth = Builder.getInt64Ty()->getIntegerBitWidth();
-      assert(Ty->getIntegerBitWidth() <= Int64Bitwidth);
-      if (Ty->getIntegerBitWidth() < Int64Bitwidth) {
-        Ty = Builder.getInt64Ty();
-        Val = Builder.CreateSExt(Val, Ty);
-      }
+      if (Ty->getIntegerBitWidth() < 64)
+        Val = Builder.CreateSExt(Val, Builder.getInt64Ty());
+      else
+        assert(Ty->getIntegerBitWidth() &&
+               "Integer types larger 64 bit not supported");
     } else if (auto PtTy = dyn_cast<PointerType>(Ty)) {
       if (PtTy->getAddressSpace() == 4) {
         // Pointers in constant address space are printed as strings
         Val = Builder.CreateGEP(Val, Builder.getInt64(0));
         auto F = RuntimeDebugBuilder::getAddressSpaceCast(Builder, 4, 0);
         Val = Builder.CreateCall(F, Val);
-        Ty = Val->getType();
       } else {
         Val = Builder.CreatePtrToInt(Val, Builder.getInt64Ty());
-        Ty = Val->getType();
       }
     } else {
       llvm_unreachable("Unknown type");
     }
 
+    Ty = Val->getType();
     Ptr = Builder.CreatePointerBitCastOrAddrSpaceCast(Ptr, Ty->getPointerTo(5));
     Builder.CreateAlignedStore(Val, Ptr, 4);
 
