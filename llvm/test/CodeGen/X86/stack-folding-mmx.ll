@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+mmx,+sse2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+mmx,+ssse3 | FileCheck %s
 
 define x86_mmx @stack_fold_cvtpd2pi(<2 x double> %a0) {
   ;CHECK-LABEL: stack_fold_cvtpd2pi
@@ -58,6 +58,33 @@ declare x86_mmx @llvm.x86.sse.cvttps2pi(<4 x float>) nounwind readnone
 ; TODO stack_fold_movd_store
 ; TODO stack_fold_movq_load
 ; TODO stack_fold_movq_store
+
+define x86_mmx @stack_fold_pabsb(x86_mmx %a0) {
+  ;CHECK-LABEL: stack_fold_pabsb
+  ;CHECK:       pabsb {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm1},~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.pabs.b(x86_mmx %a0) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.pabs.b(x86_mmx) nounwind readnone
+
+define x86_mmx @stack_fold_pabsd(x86_mmx %a0) {
+  ;CHECK-LABEL: stack_fold_pabsd
+  ;CHECK:       pabsd {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm1},~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.pabs.d(x86_mmx %a0) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.pabs.d(x86_mmx) nounwind readnone
+
+define x86_mmx @stack_fold_pabsw(x86_mmx %a0) {
+  ;CHECK-LABEL: stack_fold_pabsw
+  ;CHECK:       pabsw {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm1},~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.pabs.w(x86_mmx %a0) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.pabs.w(x86_mmx) nounwind readnone
 
 define x86_mmx @stack_fold_packssdw(x86_mmx %a, x86_mmx %b) {
   ;CHECK-LABEL: stack_fold_packssdw
@@ -158,6 +185,15 @@ define x86_mmx @stack_fold_paddw(x86_mmx %a, x86_mmx %b) {
 }
 declare x86_mmx @llvm.x86.mmx.padd.w(x86_mmx, x86_mmx) nounwind readnone
 
+define x86_mmx @stack_fold_palignr(x86_mmx %a, x86_mmx %b) {
+  ;CHECK-LABEL: stack_fold_palignr
+  ;CHECK:       palignr $1, {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.mmx.palignr.b(x86_mmx %a, x86_mmx %b, i8 1) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.mmx.palignr.b(x86_mmx, x86_mmx, i8) nounwind readnone
+
 define x86_mmx @stack_fold_pand(x86_mmx %a, x86_mmx %b) {
   ;CHECK-LABEL: stack_fold_pand
   ;CHECK:       pand {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
@@ -248,7 +284,70 @@ define x86_mmx @stack_fold_pcmpgtw(x86_mmx %a, x86_mmx %b) {
 }
 declare x86_mmx @llvm.x86.mmx.pcmpgt.w(x86_mmx, x86_mmx) nounwind readnone
 
+define x86_mmx @stack_fold_phaddd(x86_mmx %a, x86_mmx %b) {
+  ;CHECK-LABEL: stack_fold_phaddd
+  ;CHECK:       phaddd {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.phadd.d(x86_mmx %a, x86_mmx %b) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.phadd.d(x86_mmx, x86_mmx) nounwind readnone
+
+define x86_mmx @stack_fold_phaddsw(x86_mmx %a, x86_mmx %b) {
+  ;CHECK-LABEL: stack_fold_phaddsw
+  ;CHECK:       phaddsw {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.phadd.sw(x86_mmx %a, x86_mmx %b) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.phadd.sw(x86_mmx, x86_mmx) nounwind readnone
+
+define x86_mmx @stack_fold_phaddw(x86_mmx %a, x86_mmx %b) {
+  ;CHECK-LABEL: stack_fold_phaddw
+  ;CHECK:       phaddw {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.phadd.w(x86_mmx %a, x86_mmx %b) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.phadd.w(x86_mmx, x86_mmx) nounwind readnone
+
+define x86_mmx @stack_fold_phsubd(x86_mmx %a, x86_mmx %b) {
+  ;CHECK-LABEL: stack_fold_phsubd
+  ;CHECK:       phsubd {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.phsub.d(x86_mmx %a, x86_mmx %b) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.phsub.d(x86_mmx, x86_mmx) nounwind readnone
+
+define x86_mmx @stack_fold_phsubsw(x86_mmx %a, x86_mmx %b) {
+  ;CHECK-LABEL: stack_fold_phsubsw
+  ;CHECK:       phsubsw {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.phsub.sw(x86_mmx %a, x86_mmx %b) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.phsub.sw(x86_mmx, x86_mmx) nounwind readnone
+
+define x86_mmx @stack_fold_phsubw(x86_mmx %a, x86_mmx %b) {
+  ;CHECK-LABEL: stack_fold_phsubw
+  ;CHECK:       phsubw {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.phsub.w(x86_mmx %a, x86_mmx %b) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.phsub.w(x86_mmx, x86_mmx) nounwind readnone
+
 ; TODO stack_fold_pinsrw
+
+define x86_mmx @stack_fold_pmaddubsw(x86_mmx %a, x86_mmx %b) {
+  ;CHECK-LABEL: stack_fold_pmaddubsw
+  ;CHECK:       pmaddubsw {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.pmadd.ub.sw(x86_mmx %a, x86_mmx %b) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.pmadd.ub.sw(x86_mmx, x86_mmx) nounwind readnone
 
 define x86_mmx @stack_fold_pmaddwd(x86_mmx %a, x86_mmx %b) {
   ;CHECK-LABEL: stack_fold_pmaddwd
@@ -294,6 +393,15 @@ define x86_mmx @stack_fold_pminub(x86_mmx %a, x86_mmx %b) {
   ret x86_mmx %2
 }
 declare x86_mmx @llvm.x86.mmx.pminu.b(x86_mmx, x86_mmx) nounwind readnone
+
+define x86_mmx @stack_fold_pmulhrsw(x86_mmx %a, x86_mmx %b) {
+  ;CHECK-LABEL: stack_fold_pmulhrsw
+  ;CHECK:       pmulhrsw {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.pmul.hr.sw(x86_mmx %a, x86_mmx %b) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.pmul.hr.sw(x86_mmx, x86_mmx) nounwind readnone
 
 define x86_mmx @stack_fold_pmulhuw(x86_mmx %a, x86_mmx %b) {
   ;CHECK-LABEL: stack_fold_pmulhuw
@@ -349,7 +457,16 @@ define x86_mmx @stack_fold_psadbw(x86_mmx %a, x86_mmx %b) {
 }
 declare x86_mmx @llvm.x86.mmx.psad.bw(x86_mmx, x86_mmx) nounwind readnone
 
-define x86_mmx @stack_fold_pshufw(x86_mmx %a, x86_mmx %b) {
+define x86_mmx @stack_fold_pshufb(x86_mmx %a, x86_mmx %b) {
+  ;CHECK-LABEL: stack_fold_pshufb
+  ;CHECK:       pshufb {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm1},~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.pshuf.b(x86_mmx %a, x86_mmx %b) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.pshuf.b(x86_mmx, x86_mmx) nounwind readnone
+
+define x86_mmx @stack_fold_pshufw(x86_mmx %a) {
   ;CHECK-LABEL: stack_fold_pshufw
   ;CHECK:       pshufw $1, {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
   %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm1},~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
@@ -357,6 +474,33 @@ define x86_mmx @stack_fold_pshufw(x86_mmx %a, x86_mmx %b) {
   ret x86_mmx %2
 }
 declare x86_mmx @llvm.x86.sse.pshuf.w(x86_mmx, i8) nounwind readnone
+
+define x86_mmx @stack_fold_psignb(x86_mmx %a0, x86_mmx %a1) {
+  ;CHECK-LABEL: stack_fold_psignb
+  ;CHECK:       psignb {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.psign.b(x86_mmx %a0, x86_mmx %a1) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.psign.b(x86_mmx, x86_mmx) nounwind readnone
+
+define x86_mmx @stack_fold_psignd(x86_mmx %a0, x86_mmx %a1) {
+  ;CHECK-LABEL: stack_fold_psignd
+  ;CHECK:       psignd {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.psign.d(x86_mmx %a0, x86_mmx %a1) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.psign.d(x86_mmx, x86_mmx) nounwind readnone
+
+define x86_mmx @stack_fold_psignw(x86_mmx %a0, x86_mmx %a1) {
+  ;CHECK-LABEL: stack_fold_psignw
+  ;CHECK:       psignw {{-?[0-9]*}}(%rsp), {{%mm[0-7]}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call x86_mmx asm sideeffect "nop", "=y,~{mm2},~{mm3},~{mm4},~{mm5},~{mm6},~{mm7}"()
+  %2 = call x86_mmx @llvm.x86.ssse3.psign.w(x86_mmx %a0, x86_mmx %a1) nounwind readnone
+  ret x86_mmx %2
+}
+declare x86_mmx @llvm.x86.ssse3.psign.w(x86_mmx, x86_mmx) nounwind readnone
 
 define x86_mmx @stack_fold_pslld(x86_mmx %a, x86_mmx %b) {
   ;CHECK-LABEL: stack_fold_pslld
