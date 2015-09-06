@@ -1393,7 +1393,7 @@ void AsmMatcherInfo::buildInfo() {
       if (CGI->TheDef->getValueAsBit("isCodeGenOnly"))
         continue;
 
-      std::unique_ptr<MatchableInfo> II(new MatchableInfo(*CGI));
+      auto II = llvm::make_unique<MatchableInfo>(*CGI);
 
       II->initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
 
@@ -1420,7 +1420,7 @@ void AsmMatcherInfo::buildInfo() {
             .startswith( MatchPrefix))
         continue;
 
-      std::unique_ptr<MatchableInfo> II(new MatchableInfo(std::move(Alias)));
+      auto II = llvm::make_unique<MatchableInfo>(std::move(Alias));
 
       II->initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
 
@@ -1489,7 +1489,7 @@ void AsmMatcherInfo::buildInfo() {
         II->TheDef->getValueAsString("TwoOperandAliasConstraint");
       if (Constraint != "") {
         // Start by making a copy of the original matchable.
-        std::unique_ptr<MatchableInfo> AliasII(new MatchableInfo(*II));
+        auto AliasII = llvm::make_unique<MatchableInfo>(*II);
 
         // Adjust it to be a two-operand alias.
         AliasII->formTwoOperandAlias(Constraint);
