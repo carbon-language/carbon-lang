@@ -55,7 +55,7 @@
 ; CHECK: %1 = call i32 (...) @printf(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @3, i32 0, i32 0), i8 addrspace(4)* getelementptr inbounds ([11 x i8], [11 x i8] addrspace(4)* @0, i32 0, i32 0), i64 %0, i8 addrspace(4)* getelementptr inbounds ([3 x i8], [3 x i8] addrspace(4)* @1, i32 0, i32 0), double %tmp3_p_scalar_, i8 addrspace(4)* getelementptr inbounds ([2 x i8], [2 x i8] addrspace(4)* @2, i32 0, i32 0))
 ; CHECK: %2 = call i32 @fflush(i8* null)
 ; CHECK: %scevgep1 = getelementptr i8, i8* %C, i64 %polly.indvar
-; CHECK: %tmp5_p_scalar_ = load i8, i8* %scevgep1, align 1, !alias.scope !4, !noalias !7
+; CHECK: %tmp5_p_scalar_ = load i8, i8* %scevgep1
 ; CHECK: %3 = ptrtoint i8* %scevgep1 to i64
 ; CHECK: %4 = sext i8 %tmp5_p_scalar_ to i64
 ; CHECK: %5 = call i32 (...) @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @7, i32 0, i32 0), i8 addrspace(4)* getelementptr inbounds ([11 x i8], [11 x i8] addrspace(4)* @4, i32 0, i32 0), i64 %3, i8 addrspace(4)* getelementptr inbounds ([3 x i8], [3 x i8] addrspace(4)* @5, i32 0, i32 0), i64 %4, i8 addrspace(4)* getelementptr inbounds ([2 x i8], [2 x i8] addrspace(4)* @6, i32 0, i32 0))
@@ -63,7 +63,7 @@
 ; CHECK: %p_tmp6 = sitofp i8 %tmp5_p_scalar_ to double
 ; CHECK: %p_tmp7 = fadd double %tmp3_p_scalar_, %p_tmp6
 ; CHECK: %scevgep2 = getelementptr i32, i32* %D, i64 %polly.indvar
-; CHECK: %tmp9_p_scalar_ = load i32, i32* %scevgep2, align 4, !alias.scope !5, !noalias !8
+; CHECK: %tmp9_p_scalar_ = load i32, i32* %scevgep2
 ; CHECK: %7 = ptrtoint i32* %scevgep2 to i64
 ; CHECK: %8 = sext i32 %tmp9_p_scalar_ to i64
 ; CHECK: %9 = call i32 (...) @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @11, i32 0, i32 0), i8 addrspace(4)* getelementptr inbounds ([11 x i8], [11 x i8] addrspace(4)* @8, i32 0, i32 0), i64 %7, i8 addrspace(4)* getelementptr inbounds ([3 x i8], [3 x i8] addrspace(4)* @9, i32 0, i32 0), i64 %8, i8 addrspace(4)* getelementptr inbounds ([2 x i8], [2 x i8] addrspace(4)* @10, i32 0, i32 0))
@@ -71,14 +71,14 @@
 ; CHECK: %p_tmp10 = sitofp i32 %tmp9_p_scalar_ to double
 ; CHECK: %p_tmp11 = fadd double %p_tmp7, %p_tmp10
 ; CHECK: %scevgep3 = getelementptr i64, i64* %E, i64 %polly.indvar
-; CHECK: %tmp13_p_scalar_ = load i64, i64* %scevgep3, align 8, !alias.scope !3, !noalias !9
+; CHECK: %tmp13_p_scalar_ = load i64, i64* %scevgep3
 ; CHECK: %11 = ptrtoint i64* %scevgep3 to i64
 ; CHECK: %12 = call i32 (...) @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @15, i32 0, i32 0), i8 addrspace(4)* getelementptr inbounds ([11 x i8], [11 x i8] addrspace(4)* @12, i32 0, i32 0), i64 %11, i8 addrspace(4)* getelementptr inbounds ([3 x i8], [3 x i8] addrspace(4)* @13, i32 0, i32 0), i64 %tmp13_p_scalar_, i8 addrspace(4)* getelementptr inbounds ([2 x i8], [2 x i8] addrspace(4)* @14, i32 0, i32 0))
 ; CHECK: %13 = call i32 @fflush(i8* null)
 ; CHECK: %p_tmp14 = sitofp i64 %tmp13_p_scalar_ to double
 ; CHECK: %p_tmp15 = fadd double %p_tmp11, %p_tmp14
 ; CHECK: %scevgep4 = getelementptr float, float* %A, i64 %polly.indvar
-; CHECK: %tmp17_p_scalar_ = load float, float* %scevgep4, align 4, !alias.scope !6, !noalias !10
+; CHECK: %tmp17_p_scalar_ = load float, float* %scevgep4
 ; CHECK: %14 = ptrtoint float* %scevgep4 to i64
 ; CHECK: %15 = fpext float %tmp17_p_scalar_ to double
 ; CHECK: %16 = call i32 (...) @printf(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @19, i32 0, i32 0), i8 addrspace(4)* getelementptr inbounds ([11 x i8], [11 x i8] addrspace(4)* @16, i32 0, i32 0), i64 %14, i8 addrspace(4)* getelementptr inbounds ([3 x i8], [3 x i8] addrspace(4)* @17, i32 0, i32 0), double %15, i8 addrspace(4)* getelementptr inbounds ([2 x i8], [2 x i8] addrspace(4)* @18, i32 0, i32 0))
