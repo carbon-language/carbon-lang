@@ -453,3 +453,35 @@ class POOL32F_CVT_DS_FM<string instr_asm, bits<2> fmt, bits<7> funct>
   let Inst{12-6} = funct;
   let Inst{5-0} = 0b111011;
 }
+
+class POOL32F_ABS_FM_MMR6<string instr_asm, bits<2> fmt, bits<7> funct>
+    : MMR6Arch<instr_asm>, MipsR6Inst {
+  bits<5> ft;
+  bits<5> fs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0b010101;
+  let Inst{25-21} = ft;
+  let Inst{20-16} = fs;
+  let Inst{15}    = 0;
+  let Inst{14-13} = fmt;
+  let Inst{12-6}  = funct;
+  let Inst{5-0}   = 0b111011;
+}
+
+class POOL32F_MATH_FM_MMR6<string instr_asm, bits<1> fmt, bits<8> funct>
+    : MMR6Arch<instr_asm>, MipsR6Inst {
+  bits<5> ft;
+  bits<5> fs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0b010101;
+  let Inst{25-21} = ft;
+  let Inst{20-16} = fs;
+  let Inst{15}    = 0;
+  let Inst{14}    = fmt;
+  let Inst{13-6}  = funct;
+  let Inst{5-0}   = 0b111011;
+}

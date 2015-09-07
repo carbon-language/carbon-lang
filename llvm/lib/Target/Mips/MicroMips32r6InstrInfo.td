@@ -73,6 +73,24 @@ class SW_MMR6_ENC : SW32_FM_MMR6<"sw", 0x3e>;
 class SWE_MMR6_ENC : POOL32C_SWE_FM_MMR6<"swe", 0x18, 0xa, 0x7>;
 class XOR_MMR6_ENC : ARITH_FM_MMR6<"xor", 0x310>;
 class XORI_MMR6_ENC : ADDI_FM_MMR6<"xori", 0x1c>;
+class ABS_S_MMR6_ENC : POOL32F_ABS_FM_MMR6<"abs.s", 0, 0b0001101>;
+class ABS_D_MMR6_ENC : POOL32F_ABS_FM_MMR6<"abs.d", 1, 0b0001101>;
+class FLOOR_L_S_MMR6_ENC : POOL32F_MATH_FM_MMR6<"floor.l.s", 0, 0b00001100>;
+class FLOOR_L_D_MMR6_ENC : POOL32F_MATH_FM_MMR6<"floor.l.d", 1, 0b00001100>;
+class FLOOR_W_S_MMR6_ENC : POOL32F_MATH_FM_MMR6<"floor.w.s", 0, 0b00101100>;
+class FLOOR_W_D_MMR6_ENC : POOL32F_MATH_FM_MMR6<"floor.w.d", 1, 0b00101100>;
+class CEIL_L_S_MMR6_ENC : POOL32F_MATH_FM_MMR6<"ceil.l.s", 0, 0b01001100>;
+class CEIL_L_D_MMR6_ENC : POOL32F_MATH_FM_MMR6<"ceil.l.d", 1, 0b01001100>;
+class CEIL_W_S_MMR6_ENC : POOL32F_MATH_FM_MMR6<"ceil.w.s", 0, 0b01101100>;
+class CEIL_W_D_MMR6_ENC : POOL32F_MATH_FM_MMR6<"ceil.w.d", 1, 0b01101100>;
+class TRUNC_L_S_MMR6_ENC : POOL32F_MATH_FM_MMR6<"trunc.l.s", 0, 0b10001100>;
+class TRUNC_L_D_MMR6_ENC : POOL32F_MATH_FM_MMR6<"trunc.l.d", 1, 0b10001100>;
+class TRUNC_W_S_MMR6_ENC : POOL32F_MATH_FM_MMR6<"trunc.w.s", 0, 0b10101100>;
+class TRUNC_W_D_MMR6_ENC : POOL32F_MATH_FM_MMR6<"trunc.w.d", 1, 0b10101100>;
+class SQRT_S_MMR6_ENC : POOL32F_MATH_FM_MMR6<"sqrt.s", 0, 0b00101000>;
+class SQRT_D_MMR6_ENC : POOL32F_MATH_FM_MMR6<"sqrt.d", 1, 0b00101000>;
+class RSQRT_S_MMR6_ENC : POOL32F_MATH_FM_MMR6<"rsqrt.s", 0, 0b00001000>;
+class RSQRT_D_MMR6_ENC : POOL32F_MATH_FM_MMR6<"rsqrt.d", 1, 0b00001000>;
 
 class CMP_CBR_RT_Z_MMR6_DESC_BASE<string instr_asm, DAGOperand opnd,
                                   RegisterOperand GPROpnd>
@@ -537,6 +555,56 @@ multiclass CMP_CC_MMR6<bits<6> format, string Typestr,
       ISA_MICROMIPS32R6;
 }
 
+class ABSS_FT_MMR6_DESC_BASE<string instr_asm, RegisterOperand DstRC,
+                             RegisterOperand SrcRC, InstrItinClass Itin,
+                             SDPatternOperator OpNode = null_frag>
+    : HARDFLOAT, NeverHasSideEffects {
+  dag OutOperandList = (outs DstRC:$ft);
+  dag InOperandList  = (ins SrcRC:$fs);
+  string AsmString   = !strconcat(instr_asm, "\t$ft, $fs");
+  list<dag>  Pattern = [(set DstRC:$ft, (OpNode SrcRC:$fs))];
+  InstrItinClass Itinerary = Itin;
+  Format Form = FrmFR;
+  list<Predicate> EncodingPredicates = [HasStdEnc];
+}
+
+class ABS_S_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"abs.s", FGR32Opnd, FGR32Opnd,
+                                                II_ABS, fabs>;
+class ABS_D_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"abs.d", AFGR64Opnd, AFGR64Opnd,
+                                                II_ABS, fabs>;
+class FLOOR_L_S_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"floor.l.s", FGR64Opnd,
+                                                    FGR32Opnd, II_FLOOR>;
+class FLOOR_L_D_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"floor.l.d", FGR64Opnd,
+                                                    FGR64Opnd, II_FLOOR>;
+class FLOOR_W_S_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"floor.w.s", FGR32Opnd,
+                                                    FGR32Opnd, II_FLOOR>;
+class FLOOR_W_D_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"floor.w.d", FGR32Opnd,
+                                                    AFGR64Opnd, II_FLOOR>;
+class CEIL_L_S_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"ceil.l.s", FGR64Opnd,
+                                                   FGR32Opnd, II_CEIL>;
+class CEIL_L_D_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"ceil.l.d", FGR64Opnd,
+                                                   FGR64Opnd, II_CEIL>;
+class CEIL_W_S_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"ceil.w.s", FGR32Opnd,
+                                                   FGR32Opnd, II_CEIL>;
+class CEIL_W_D_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"ceil.w.d", FGR32Opnd,
+                                                   AFGR64Opnd, II_CEIL>;
+class TRUNC_L_S_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"trunc.l.s", FGR64Opnd,
+                                                    FGR32Opnd, II_TRUNC>;
+class TRUNC_L_D_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"trunc.l.d", FGR64Opnd,
+                                                    FGR64Opnd, II_TRUNC>;
+class TRUNC_W_S_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"trunc.w.s", FGR32Opnd,
+                                                    FGR32Opnd, II_TRUNC>;
+class TRUNC_W_D_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"trunc.w.d", FGR32Opnd,
+                                                    AFGR64Opnd, II_TRUNC>;
+class SQRT_S_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"sqrt.s", FGR32Opnd, FGR32Opnd,
+                                                 II_SQRT_S, fsqrt>;
+class SQRT_D_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"sqrt.d", AFGR64Opnd, AFGR64Opnd,
+                                                 II_SQRT_D, fsqrt>;
+class RSQRT_S_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"rsqrt.s", FGR32Opnd,
+                                                  FGR32Opnd, II_TRUNC>;
+class RSQRT_D_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"rsqrt.d", FGR32Opnd,
+                                                  AFGR64Opnd, II_TRUNC>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -686,6 +754,40 @@ def CVT_S_L_MMR6 : StdMMR6Rel, CVT_S_L_MMR6_ENC, CVT_S_L_MMR6_DESC,
                    ISA_MICROMIPS32R6;
 defm S_MMR6 : CMP_CC_MMR6<0b000101, "s", FGR32Opnd>;
 defm D_MMR6 : CMP_CC_MMR6<0b010101, "d", FGR64Opnd>;
+def ABS_S_MMR6 : StdMMR6Rel, ABS_S_MMR6_ENC, ABS_S_MMR6_DESC, ISA_MICROMIPS32R6;
+def ABS_D_MMR6 : StdMMR6Rel, ABS_D_MMR6_ENC, ABS_D_MMR6_DESC, ISA_MICROMIPS32R6;
+def FLOOR_L_S_MMR6 : StdMMR6Rel, FLOOR_L_S_MMR6_ENC, FLOOR_L_S_MMR6_DESC,
+                     ISA_MICROMIPS32R6;
+def FLOOR_L_D_MMR6 : StdMMR6Rel, FLOOR_L_D_MMR6_ENC, FLOOR_L_D_MMR6_DESC,
+                     ISA_MICROMIPS32R6;
+def FLOOR_W_S_MMR6 : StdMMR6Rel, FLOOR_W_S_MMR6_ENC, FLOOR_W_S_MMR6_DESC,
+                     ISA_MICROMIPS32R6;
+def FLOOR_W_D_MMR6 : StdMMR6Rel, FLOOR_W_D_MMR6_ENC, FLOOR_W_D_MMR6_DESC,
+                     ISA_MICROMIPS32R6;
+def CEIL_L_S_MMR6 : StdMMR6Rel, CEIL_L_S_MMR6_ENC, CEIL_L_S_MMR6_DESC,
+                    ISA_MICROMIPS32R6;
+def CEIL_L_D_MMR6 : StdMMR6Rel, CEIL_L_D_MMR6_ENC, CEIL_L_D_MMR6_DESC,
+                    ISA_MICROMIPS32R6;
+def CEIL_W_S_MMR6 : StdMMR6Rel, CEIL_W_S_MMR6_ENC, CEIL_W_S_MMR6_DESC,
+                    ISA_MICROMIPS32R6;
+def CEIL_W_D_MMR6 : StdMMR6Rel, CEIL_W_D_MMR6_ENC, CEIL_W_D_MMR6_DESC,
+                    ISA_MICROMIPS32R6;
+def TRUNC_L_S_MMR6 : StdMMR6Rel, TRUNC_L_S_MMR6_ENC, TRUNC_L_S_MMR6_DESC,
+                     ISA_MICROMIPS32R6;
+def TRUNC_L_D_MMR6 : StdMMR6Rel, TRUNC_L_D_MMR6_ENC, TRUNC_L_D_MMR6_DESC,
+                     ISA_MICROMIPS32R6;
+def TRUNC_W_S_MMR6 : StdMMR6Rel, TRUNC_W_S_MMR6_ENC, TRUNC_W_S_MMR6_DESC,
+                     ISA_MICROMIPS32R6;
+def TRUNC_W_D_MMR6 : StdMMR6Rel, TRUNC_W_D_MMR6_ENC, TRUNC_W_D_MMR6_DESC,
+                     ISA_MICROMIPS32R6;
+def SQRT_S_MMR6 : StdMMR6Rel, SQRT_S_MMR6_ENC, SQRT_S_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def SQRT_D_MMR6 : StdMMR6Rel, SQRT_D_MMR6_ENC, SQRT_D_MMR6_DESC,
+                  ISA_MICROMIPS32R6;
+def RSQRT_S_MMR6 : StdMMR6Rel, RSQRT_S_MMR6_ENC, RSQRT_S_MMR6_DESC,
+                   ISA_MICROMIPS32R6;
+def RSQRT_D_MMR6 : StdMMR6Rel, RSQRT_D_MMR6_ENC, RSQRT_D_MMR6_DESC,
+                   ISA_MICROMIPS32R6;
 }
 
 //===----------------------------------------------------------------------===//
