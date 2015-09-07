@@ -367,21 +367,29 @@ Address::SetCallableLoadAddress (lldb::addr_t load_addr, Target *target)
 }
 
 addr_t
-Address::GetOpcodeLoadAddress (Target *target) const
+Address::GetOpcodeLoadAddress (Target *target, AddressClass addr_class) const
 {
     addr_t code_addr = GetLoadAddress (target);
     if (code_addr != LLDB_INVALID_ADDRESS)
-        code_addr = target->GetOpcodeLoadAddress (code_addr, GetAddressClass());
+    {
+        if (addr_class == eAddressClassInvalid)
+            addr_class = GetAddressClass();
+        code_addr = target->GetOpcodeLoadAddress (code_addr, addr_class);
+    }
     return code_addr;
 }
 
 bool
-Address::SetOpcodeLoadAddress (lldb::addr_t load_addr, Target *target)
+Address::SetOpcodeLoadAddress (lldb::addr_t load_addr, Target *target, AddressClass addr_class)
 {
     if (SetLoadAddress (load_addr, target))
     {
         if (target)
-            m_offset = target->GetOpcodeLoadAddress (m_offset, GetAddressClass());
+        {
+            if (addr_class == eAddressClassInvalid)
+                addr_class = GetAddressClass();
+            m_offset = target->GetOpcodeLoadAddress (m_offset, addr_class);
+        }
         return true;
     }
     return false;

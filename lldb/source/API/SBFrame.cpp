@@ -484,7 +484,7 @@ SBFrame::GetPC () const
             frame = exe_ctx.GetFramePtr();
             if (frame)
             {
-                addr = frame->GetFrameCodeAddress().GetOpcodeLoadAddress (target);
+                addr = frame->GetFrameCodeAddress().GetOpcodeLoadAddress (target, eAddressClassCode);
             }
             else
             {

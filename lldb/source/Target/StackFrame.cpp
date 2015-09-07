@@ -259,7 +259,7 @@ StackFrame::GetFrameCodeAddress()
             TargetSP target_sp (thread_sp->CalculateTarget());
             if (target_sp)
             {
-                if (m_frame_code_addr.SetOpcodeLoadAddress (m_frame_code_addr.GetOffset(), target_sp.get()))
+                if (m_frame_code_addr.SetOpcodeLoadAddress (m_frame_code_addr.GetOffset(), target_sp.get(), eAddressClassCode))
                 {
                     ModuleSP module_sp (m_frame_code_addr.GetModule());
                     if (module_sp)

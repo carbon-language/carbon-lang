@@ -326,7 +326,8 @@ public:
     ///     not loaded.
     //------------------------------------------------------------------
     lldb::addr_t
-    GetOpcodeLoadAddress (Target *target) const;
+    GetOpcodeLoadAddress (Target *target,
+                          lldb::AddressClass addr_class = lldb::eAddressClassInvalid) const;
 
     //------------------------------------------------------------------
     /// Get the section relative offset value.
@@ -425,7 +426,9 @@ public:
     SetLoadAddress (lldb::addr_t load_addr, Target *target);
     
     bool
-    SetOpcodeLoadAddress (lldb::addr_t load_addr, Target *target);
+    SetOpcodeLoadAddress (lldb::addr_t load_addr,
+                          Target *target,
+                          lldb::AddressClass addr_class = lldb::eAddressClassInvalid);
 
     bool
     SetCallableLoadAddress (lldb::addr_t load_addr, Target *target);
