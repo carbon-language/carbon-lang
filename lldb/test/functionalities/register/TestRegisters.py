@@ -36,6 +36,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.fp_register_write()
 
+    @expectedFailureAndroid(archs=["i386"]) # "register read fstat" always return 0xffff
     @expectedFailureClang("llvm.org/pr24733")
     def test_fp_special_purpose_register_read(self):
         """Test commands that read fpu special purpose registers."""
