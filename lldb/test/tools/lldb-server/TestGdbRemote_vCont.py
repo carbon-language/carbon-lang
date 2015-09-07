@@ -100,6 +100,7 @@ class TestGdbRemote_vCont(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
+    @expectedFailureAndroid(bugnumber="llvm.com/pr24739", archs=["arm", "aarch64"])
     def test_single_step_only_steps_one_instruction_with_Hc_vCont_s_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -116,6 +117,7 @@ class TestGdbRemote_vCont(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
+    @expectedFailureAndroid(bugnumber="llvm.com/pr24739", archs=["arm", "aarch64"])
     def test_single_step_only_steps_one_instruction_with_vCont_s_thread_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
