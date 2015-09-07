@@ -15,6 +15,8 @@
 #include <chrono>
 #include <thread>
 
+long double outermost_return_long_double (long double my_long_double);
+
 int main (int argc, char const *argv[])
 {
 #if defined(__linux__)
@@ -32,6 +34,7 @@ int main (int argc, char const *argv[])
 
     char my_string[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 0};
     double my_double = 1234.5678;
+    long double my_long_double = 1234.5678;
 
     // For simplicity assume that any cmdline argument means wait for attach.
     if (argc > 1)
@@ -43,5 +46,6 @@ int main (int argc, char const *argv[])
 
     printf("my_string=%s\n", my_string);
     printf("my_double=%g\n", my_double);
+    outermost_return_long_double (my_long_double);
     return 0;
 }

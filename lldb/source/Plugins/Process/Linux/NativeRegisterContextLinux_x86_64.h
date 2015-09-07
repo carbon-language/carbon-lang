@@ -136,6 +136,7 @@ namespace process_linux {
         YMM m_ymm_set;
         RegInfo m_reg_info;
         uint64_t m_gpr_x86_64[k_num_gpr_registers_x86_64];
+        uint32_t m_fctrl_offset_in_userarea;
 
         // Private member methods.
         bool IsRegisterSetAvailable (uint32_t set_index) const;

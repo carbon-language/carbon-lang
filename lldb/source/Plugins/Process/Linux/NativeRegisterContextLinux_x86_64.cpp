@@ -422,6 +422,10 @@ NativeRegisterContextLinux_x86_64::NativeRegisterContextLinux_x86_64 (const Arch
 
     // Clear out the FPR state.
     ::memset(&m_fpr, 0, sizeof(FPR));
+
+    // Store byte offset of fctrl (i.e. first register of FPR)
+    const RegisterInfo *reg_info_fctrl = GetRegisterInfoByName("fctrl");
+    m_fctrl_offset_in_userarea = reg_info_fctrl->byte_offset;
 }
 
 // CONSIDER after local and llgs debugging are merged, register set support can
@@ -559,8 +563,16 @@ NativeRegisterContextLinux_x86_64::ReadRegister (const RegisterInfo *reg_info, R
     }
 
     // Get pointer to m_fpr.xstate.fxsave variable and set the data from it.
-    assert (reg_info->byte_offset < sizeof(m_fpr));
-    uint8_t *src = (uint8_t *)&m_fpr + reg_info->byte_offset;
+
+    // Byte offsets of all registers are calculated wrt 'UserArea' structure.
+    // However, ReadFPR() reads fpu registers {using ptrace(PTRACE_GETFPREGS,..)}
+    // and stores them in 'm_fpr' (of type FPR structure). To extract values of fpu
+    // registers, m_fpr should be read at byte offsets calculated wrt to FPR structure.
+
+    // Since, FPR structure is also one of the member of UserArea structure.
+    // byte_offset(fpu wrt FPR) = byte_offset(fpu wrt UserArea) - byte_offset(fctrl wrt UserArea)
+    assert ( (reg_info->byte_offset - m_fctrl_offset_in_userarea) < sizeof(m_fpr));
+    uint8_t *src = (uint8_t *)&m_fpr + reg_info->byte_offset - m_fctrl_offset_in_userarea;
     switch (reg_info->byte_size)
     {
         case 2:
@@ -620,8 +632,16 @@ NativeRegisterContextLinux_x86_64::WriteRegister (const RegisterInfo *reg_info, 
         else
         {
             // Get pointer to m_fpr.xstate.fxsave variable and set the data to it.
-            assert (reg_info->byte_offset < sizeof(m_fpr));
-            uint8_t *dst = (uint8_t *)&m_fpr + reg_info->byte_offset;
+
+            // Byte offsets of all registers are calculated wrt 'UserArea' structure.
+            // However, WriteFPR() takes m_fpr (of type FPR structure) and writes only fpu
+            // registers using ptrace(PTRACE_SETFPREGS,..) API. Hence fpu registers should
+            // be written in m_fpr at byte offsets calculated wrt FPR structure.
+
+            // Since, FPR structure is also one of the member of UserArea structure.
+            // byte_offset(fpu wrt FPR) = byte_offset(fpu wrt UserArea) - byte_offset(fctrl wrt UserArea)
+            assert ( (reg_info->byte_offset - m_fctrl_offset_in_userarea) < sizeof(m_fpr));
+            uint8_t *dst = (uint8_t *)&m_fpr + reg_info->byte_offset - m_fctrl_offset_in_userarea;
             switch (reg_info->byte_size)
             {
                 case 2:
