@@ -229,8 +229,9 @@ NativeRegisterContextLinux_arm::ReadRegister (const RegisterInfo *reg_info, Regi
     }
 
     // Get pointer to m_fpr variable and set the data from it.
-    assert (reg_info->byte_offset < sizeof m_fpr);
-    uint8_t *src = (uint8_t *)&m_fpr + reg_info->byte_offset;
+    uint32_t fpr_offset = CalculateFprOffset(reg_info);
+    assert (fpr_offset < sizeof m_fpr);
+    uint8_t *src = (uint8_t *)&m_fpr + fpr_offset;
     switch (reg_info->byte_size)
     {
         case 2:
@@ -267,8 +268,9 @@ NativeRegisterContextLinux_arm::WriteRegister (const RegisterInfo *reg_info, con
     if (IsFPR(reg_index))
     {
         // Get pointer to m_fpr variable and set the data to it.
-        assert (reg_info->byte_offset < sizeof(m_fpr));
-        uint8_t *dst = (uint8_t *)&m_fpr + reg_info->byte_offset;
+        uint32_t fpr_offset = CalculateFprOffset(reg_info);
+        assert (fpr_offset < sizeof m_fpr);
+        uint8_t *dst = (uint8_t *)&m_fpr + fpr_offset;
         switch (reg_info->byte_size)
         {
             case 2:
@@ -844,4 +846,11 @@ NativeRegisterContextLinux_arm::WriteHardwareDebugRegs(int hwbType, int hwb_inde
 
     return error;
 }
+
+uint32_t
+NativeRegisterContextLinux_arm::CalculateFprOffset(const RegisterInfo* reg_info) const
+{
+    return reg_info->byte_offset - GetRegisterInfoAtIndex(m_reg_info.first_fpr)->byte_offset;
+}
+
 #endif // defined(__arm__)

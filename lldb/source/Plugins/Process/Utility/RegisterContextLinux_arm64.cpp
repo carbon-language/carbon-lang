@@ -21,7 +21,7 @@
 #define GPR_OFFSET_NAME(reg) (LLVM_EXTENSION offsetof (RegisterContextLinux_arm64::GPR, reg))
 
 #define FPU_OFFSET(idx) ((idx) * 16 + sizeof (RegisterContextLinux_arm64::GPR))
-#define FPU_OFFSET_NAME(reg) (LLVM_EXTENSION offsetof (RegisterContextLinux_arm64::FPU, reg))
+#define FPU_OFFSET_NAME(reg) (LLVM_EXTENSION offsetof (RegisterContextLinux_arm64::FPU, reg) + sizeof (RegisterContextLinux_arm64::GPR))
 
 #define EXC_OFFSET_NAME(reg) (LLVM_EXTENSION offsetof (RegisterContextLinux_arm64::EXC, reg) + sizeof (RegisterContextLinux_arm64::GPR) + sizeof (RegisterContextLinux_arm64::FPU))
 #define DBG_OFFSET_NAME(reg) (LLVM_EXTENSION offsetof (RegisterContextLinux_arm64::DBG, reg) + sizeof (RegisterContextLinux_arm64::GPR) + sizeof (RegisterContextLinux_arm64::FPU) + sizeof (RegisterContextLinux_arm64::EXC))

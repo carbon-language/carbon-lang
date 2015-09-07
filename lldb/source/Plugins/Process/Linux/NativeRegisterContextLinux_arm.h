@@ -161,6 +161,9 @@ namespace process_linux {
 
         Error
         WriteHardwareDebugRegs(int hwbType, int hwb_index);
+
+        uint32_t
+        CalculateFprOffset(const RegisterInfo* reg_info) const;
     };
 
 } // namespace process_linux
