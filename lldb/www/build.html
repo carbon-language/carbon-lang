@@ -16,7 +16,7 @@
       <!--#include virtual="sidebar.incl"-->
 
       <div id="middle">
-        <h1 class="postheader">Continuous Integraton</h1>
+        <h1 class="postheader">Continuous Integration</h1>
         <div class="postcontent">
           <p>
             The following LLVM buildbots build and test LLDB trunk:
@@ -362,7 +362,7 @@
               In order to debug remote targets running different architectures than your host, you
               will need to compile LLDB (or at least the server component) for the target. While
               the easiest solution is to just compile it locally on the target, this is often not
-              feasable, and in these cases you will need to cross-compile LLDB on your host.
+              feasible, and in these cases you will need to cross-compile LLDB on your host.
             </p>
 
             <p>
@@ -453,7 +453,7 @@
 
             <p>
               Ubuntu already provides the packages necessary to cross-compile LLDB for arm64. It
-              is sufficient to install pacakges gcc-aarch64-linux-gnu, g++-aarch64-linux-gnu,
+              is sufficient to install packages gcc-aarch64-linux-gnu, g++-aarch64-linux-gnu,
               binutils-aarch64-linux-gnu. Then it is possible to prepare the cmake build with the
               following parameters:
             </p>
@@ -485,7 +485,7 @@
             <p>
               If you wanted to build a full version of LLDB and avoid passing
               -DLLDB_DISABLE_PYTHON and other options, you would need to obtain the target
-              versions of the respective libraries. The easiest way to achive this is to use the
+              versions of the respective libraries. The easiest way to achieve this is to use the
               <code>qemu-debootstrap</code> utility, which can prepare a system image using qemu
               and chroot to simulate the target environment. Then you can install the necessary
               packages in this environment (python-dev, libedit-dev, etc.) and point your
@@ -524,7 +524,7 @@
             </code>
 
             <p>
-              Note that the full LLVM build is not functional on android yet, so simply runing
+              Note that the full LLVM build is not functional on android yet, so simply running
               <code>ninja</code> will not work. You will need to manually specify the target you
               want to build: <code>lldb</code>, <code>lldb-server</code>, etc.
             </p>
