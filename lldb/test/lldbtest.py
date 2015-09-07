@@ -641,11 +641,12 @@ def expectedFailureCompiler(compiler, compiler_version=None, bugnumber=None):
 # @expectedFailureAll, xfail for all platform/compiler/arch,
 # @expectedFailureAll(compiler='gcc'), xfail for gcc on all platform/architecture
 # @expectedFailureAll(bugnumber, ["linux"], "gcc", ['>=', '4.9'], ['i386']), xfail for gcc>=4.9 on linux with i386
-def expectedFailureAll(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None):
+def expectedFailureAll(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, triple=None):
     def fn(self):
         return ((oslist is None or self.getPlatform() in oslist) and
                 (compiler is None or (compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version))) and
-                self.expectedArch(archs))
+                self.expectedArch(archs) and
+                (triple is None or re.match(triple, lldb.DBG.GetSelectedPlatform().GetTriple())))
     return expectedFailure(fn, bugnumber)
 
 # to XFAIL a specific clang versions, try this
