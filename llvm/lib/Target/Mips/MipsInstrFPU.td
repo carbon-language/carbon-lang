@@ -305,10 +305,12 @@ let DecoderNamespace = "Mips64" in {
 
 def CVT_S_W : MMRel, ABSS_FT<"cvt.s.w", FGR32Opnd, FGR32Opnd, II_CVT>,
               ABSS_FM<0x20, 20>;
-def CVT_L_S : MMRel, ABSS_FT<"cvt.l.s", FGR64Opnd, FGR32Opnd, II_CVT>,
-              ABSS_FM<0x25, 16>, INSN_MIPS3_32R2;
-def CVT_L_D64: MMRel, ABSS_FT<"cvt.l.d", FGR64Opnd, FGR64Opnd, II_CVT>,
-               ABSS_FM<0x25, 17>, INSN_MIPS3_32R2;
+let AdditionalPredicates = [NotInMicroMips] in{
+  def CVT_L_S : MMRel, ABSS_FT<"cvt.l.s", FGR64Opnd, FGR32Opnd, II_CVT>,
+                ABSS_FM<0x25, 16>, INSN_MIPS3_32R2;
+  def CVT_L_D64: MMRel, ABSS_FT<"cvt.l.d", FGR64Opnd, FGR64Opnd, II_CVT>,
+                 ABSS_FM<0x25, 17>, INSN_MIPS3_32R2;
+}
 
 def CVT_S_D32 : MMRel, ABSS_FT<"cvt.s.d", FGR32Opnd, AFGR64Opnd, II_CVT>,
                 ABSS_FM<0x20, 17>, FGR_32;
@@ -320,8 +322,10 @@ def CVT_D32_S : MMRel, ABSS_FT<"cvt.d.s", AFGR64Opnd, FGR32Opnd, II_CVT>,
 let DecoderNamespace = "Mips64" in {
   def CVT_S_D64 : ABSS_FT<"cvt.s.d", FGR32Opnd, FGR64Opnd, II_CVT>,
                   ABSS_FM<0x20, 17>, FGR_64;
-  def CVT_S_L   : ABSS_FT<"cvt.s.l", FGR32Opnd, FGR64Opnd, II_CVT>,
-                  ABSS_FM<0x20, 21>, FGR_64;
+  let AdditionalPredicates = [NotInMicroMips] in{
+    def CVT_S_L   : ABSS_FT<"cvt.s.l", FGR32Opnd, FGR64Opnd, II_CVT>,
+                    ABSS_FM<0x20, 21>, FGR_64;
+  }
   def CVT_D64_W : ABSS_FT<"cvt.d.w", FGR64Opnd, FGR32Opnd, II_CVT>,
                   ABSS_FM<0x21, 20>, FGR_64;
   def CVT_D64_S : ABSS_FT<"cvt.d.s", FGR64Opnd, FGR32Opnd, II_CVT>,
