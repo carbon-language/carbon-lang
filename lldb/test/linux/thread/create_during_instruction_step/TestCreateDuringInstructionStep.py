@@ -18,6 +18,7 @@ class CreateDuringInstructionStepTestCase(TestBase):
         TestBase.setUp(self)
 
     @skipUnlessPlatform(['linux'])
+    @expectedFlakeyAndroid('llvm.org/pr24737', archs=['arm'])
     @dwarf_test
     def test_step_inst_with_dwarf(self):
         self.buildDwarf(dictionary=self.getBuildFlags())

@@ -789,6 +789,9 @@ def expectedFlakeyClang(bugnumber=None, compiler_version=None):
 def expectedFlakeyGcc(bugnumber=None, compiler_version=None):
     return expectedFlakeyCompiler('gcc', compiler_version, bugnumber)
 
+def expectedFlakeyAndroid(bugnumber=None, api_levels=None, archs=None):
+    return expectedFlakey(matchAndroid(api_levels, archs), bugnumber)
+
 def skipIfRemote(func):
     """Decorate the item to skip tests if testing remotely."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
