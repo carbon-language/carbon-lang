@@ -2,7 +2,7 @@
 ; This test is for Integer BitWidth <= 64 && BitWidth % 2 != 0.
 ;
 
-; RUN: opt < %s -instcombine -S | not grep or
+; RUN: opt < %s -instcombine -S | not grep " or "
 
 
 define i7 @test0(i7 %X) {
@@ -34,3 +34,12 @@ define i39 @test3(i39 %V, i39 %M) {
     %R = or i39 %B, %D
     ret i39 %R
 }
+
+define i43 @demorgan(i43 %A, i43 %B) {
+    ;; (~A | ~B) == (~(A & B)) - De Morgan's Law
+    %NotA = xor i43 %A, -1
+    %NotB = xor i43 %B, -1
+    %C1 = or i43 %NotA, %NotB
+    ret i43 %C1
+}
+

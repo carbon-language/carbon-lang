@@ -1,7 +1,7 @@
 ; This test makes sure that or instructions are properly eliminated.
 ; This test is for Integer BitWidth > 64 && BitWidth <= 1024.
 ;
-; RUN: opt < %s -instcombine -S | not grep or
+; RUN: opt < %s -instcombine -S | not grep " or "
 
 
 define i777 @test0(i777 %X) {
@@ -33,3 +33,12 @@ define i399 @test3(i399 %V, i399 %M) {
     %R = or i399 %B, %D
     ret i399 %R
 }
+
+define i129 @demorgan(i129 %A, i129 %B) {
+    ;; (~A | ~B) == (~(A & B)) - De Morgan's Law
+    %NotA = xor i129 %A, -1
+    %NotB = xor i129 %B, -1
+    %C1 = or i129 %NotA, %NotB
+    ret i129 %C1
+}
+
