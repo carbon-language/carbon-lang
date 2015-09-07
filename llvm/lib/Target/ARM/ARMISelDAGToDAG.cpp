@@ -171,8 +171,6 @@ public:
   bool SelectThumbAddrModeSP(SDValue N, SDValue &Base, SDValue &OffImm);
 
   // Thumb 2 Addressing Modes:
-  bool SelectT2ShifterOperandReg(SDValue N,
-                                 SDValue &BaseReg, SDValue &Opc);
   bool SelectT2AddrModeImm12(SDValue N, SDValue &Base, SDValue &OffImm);
   bool SelectT2AddrModeImm8(SDValue N, SDValue &Base,
                             SDValue &OffImm);
@@ -383,7 +381,7 @@ void ARMDAGToDAGISel::PreprocessISelDAG() {
     SDValue CPTmp1;
     SDValue CPTmp2;
     if (isThumb2) {
-      if (SelectT2ShifterOperandReg(N0, CPTmp0, CPTmp1))
+      if (SelectImmShifterOperand(N0, CPTmp0, CPTmp1))
         continue;
     } else {
       if (SelectImmShifterOperand(N0, CPTmp0, CPTmp1) ||
@@ -1175,28 +1173,6 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDValue N,
 //                        Thumb 2 Addressing Modes
 //===----------------------------------------------------------------------===//
 
-
-bool ARMDAGToDAGISel::SelectT2ShifterOperandReg(SDValue N, SDValue &BaseReg,
-                                                SDValue &Opc) {
-  if (DisableShifterOp)
-    return false;
-
-  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOpcode());
-
-  // Don't match base register only case. That is matched to a separate
-  // lower complexity pattern with explicit register operand.
-  if (ShOpcVal == ARM_AM::no_shift) return false;
-
-  BaseReg = N.getOperand(0);
-  unsigned ShImmVal = 0;
-  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    ShImmVal = RHS->getZExtValue() & 31;
-    Opc = getI32Imm(ARM_AM::getSORegOpc(ShOpcVal, ShImmVal), SDLoc(N));
-    return true;
-  }
-
-  return false;
-}
 
 bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDValue N,
                                             SDValue &Base, SDValue &OffImm) {

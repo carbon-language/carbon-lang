@@ -43,7 +43,7 @@ def t2_shift_imm : Operand<i32> {
 // Shifted operands. No register controlled shifts for Thumb2.
 // Note: We do not support rrx shifted operands yet.
 def t2_so_reg : Operand<i32>,    // reg imm
-                ComplexPattern<i32, 2, "SelectT2ShifterOperandReg",
+                ComplexPattern<i32, 2, "SelectShiftImmShifterOperand",
                                [shl,srl,sra,rotr]> {
   let EncoderMethod = "getT2SORegOpValue";
   let PrintMethod = "printT2SOOperand";
