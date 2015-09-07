@@ -33,18 +33,17 @@ extern "C" {
 #endif
 
 #include <dlfcn.h>  // for dladdr()
-#include <fcntl.h>
-#include <libkern/OSAtomic.h>
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>
-#include <pthread.h>
-#include <stdlib.h>  // for free()
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/sysctl.h>
 #include <sys/ucontext.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <stdlib.h>  // for free()
 #include <unistd.h>
-#include <xpc/xpc.h>
+#include <libkern/OSAtomic.h>
 
 namespace __asan {
 
@@ -273,6 +272,11 @@ void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
 // The implementation details are at
 //   http://libdispatch.macosforge.org/trac/browser/trunk/src/queue.c
 
+typedef void* dispatch_group_t;
+typedef void* dispatch_queue_t;
+typedef void* dispatch_source_t;
+typedef u64 dispatch_time_t;
+typedef void (*dispatch_function_t)(void *block);
 typedef void* (*worker_t)(void *block);
 
 // A wrapper for the ObjC blocks used to support libdispatch.
@@ -395,15 +399,6 @@ void dispatch_source_set_event_handler(dispatch_source_t ds, void(^work)(void));
     work(); \
   }
 
-#define GET_ASAN_BLOCK_XPC(work) \
-  void (^asan_block)(xpc_object_t object);  \
-  int parent_tid = GetCurrentTidOrInvalid(); \
-  asan_block = ^(xpc_object_t object) { \
-    GET_STACK_TRACE_THREAD; \
-    asan_register_worker_thread(parent_tid, &stack); \
-    work(object); \
-  }
-
 INTERCEPTOR(void, dispatch_async,
             dispatch_queue_t dq, void(^work)(void)) {
   ENABLE_FRAME_POINTER;
@@ -442,37 +437,6 @@ INTERCEPTOR(void, dispatch_source_set_event_handler,
   GET_ASAN_BLOCK(work);
   REAL(dispatch_source_set_event_handler)(ds, asan_block);
 }
-
-INTERCEPTOR(void, xpc_connection_send_message_with_reply,
-            xpc_connection_t connection, xpc_object_t message,
-            dispatch_queue_t replyq, xpc_handler_t handler) {
-  ENABLE_FRAME_POINTER;
-  GET_ASAN_BLOCK_XPC(handler);
-  REAL(xpc_connection_send_message_with_reply)(connection, message, replyq,
-                                               asan_block);
-}
-
-INTERCEPTOR(void, xpc_connection_set_event_handler, xpc_connection_t connection,
-            xpc_handler_t handler) {
-  ENABLE_FRAME_POINTER;
-  GET_ASAN_BLOCK_XPC(handler);
-  REAL(xpc_connection_set_event_handler)(connection, asan_block);
-}
-
-INTERCEPTOR(void, xpc_set_event_stream_handler, const char *stream,
-            dispatch_queue_t targetq, xpc_handler_t handler) {
-  ENABLE_FRAME_POINTER;
-  GET_ASAN_BLOCK_XPC(handler);
-  REAL(xpc_set_event_stream_handler)(stream, targetq, asan_block);
-}
-
-INTERCEPTOR(void, xpc_connection_send_barrier, xpc_connection_t connection,
-            dispatch_block_t barrier) {
-  ENABLE_FRAME_POINTER;
-  GET_ASAN_BLOCK(barrier);
-  REAL(xpc_connection_send_barrier)(connection, asan_block);
-}
-
 #endif
 
 #endif  // SANITIZER_MAC
