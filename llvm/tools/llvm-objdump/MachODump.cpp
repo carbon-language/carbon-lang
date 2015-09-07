@@ -1399,42 +1399,15 @@ static void printArchiveChild(Archive::Child &C, bool verbose,
     // FIXME: this first dash, "-", is for (Mode & S_IFMT) == S_IFREG.
     // But there is nothing in sys::fs::perms for S_IFMT or S_IFREG.
     outs() << "-";
-    if (Mode & sys::fs::owner_read)
-      outs() << "r";
-    else
-      outs() << "-";
-    if (Mode & sys::fs::owner_write)
-      outs() << "w";
-    else
-      outs() << "-";
-    if (Mode & sys::fs::owner_exe)
-      outs() << "x";
-    else
-      outs() << "-";
-    if (Mode & sys::fs::group_read)
-      outs() << "r";
-    else
-      outs() << "-";
-    if (Mode & sys::fs::group_write)
-      outs() << "w";
-    else
-      outs() << "-";
-    if (Mode & sys::fs::group_exe)
-      outs() << "x";
-    else
-      outs() << "-";
-    if (Mode & sys::fs::others_read)
-      outs() << "r";
-    else
-      outs() << "-";
-    if (Mode & sys::fs::others_write)
-      outs() << "w";
-    else
-      outs() << "-";
-    if (Mode & sys::fs::others_exe)
-      outs() << "x";
-    else
-      outs() << "-";
+    outs() << ((Mode & sys::fs::owner_read) ? "r" : "-");
+    outs() << ((Mode & sys::fs::owner_write) ? "w" : "-");
+    outs() << ((Mode & sys::fs::owner_exe) ? "x" : "-");
+    outs() << ((Mode & sys::fs::group_read) ? "r" : "-");
+    outs() << ((Mode & sys::fs::group_write) ? "w" : "-");
+    outs() << ((Mode & sys::fs::group_exe) ? "x" : "-");
+    outs() << ((Mode & sys::fs::others_read) ? "r" : "-");
+    outs() << ((Mode & sys::fs::others_write) ? "w" : "-");
+    outs() << ((Mode & sys::fs::others_exe) ? "x" : "-");
   } else {
     outs() << format("0%o ", Mode);
   }
