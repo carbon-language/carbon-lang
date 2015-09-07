@@ -13,7 +13,7 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @expectedFailureAll("llvm.org/pr24717", oslist=["linux"], compiler="clang", archs=["i386"])
+    @expectedFailureAll("llvm.org/pr24717", oslist=["linux"])
     def test_lldbmi_break_insert_function_pending(self):
         """Test that 'lldb-mi --interpreter' works for pending function breakpoints."""
 
