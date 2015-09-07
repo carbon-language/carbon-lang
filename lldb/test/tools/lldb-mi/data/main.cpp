@@ -31,6 +31,19 @@ local_array_test()
 }
 
 void
+local_2d_array_test()
+{
+    int array2d[2][3];
+    array2d[0][0] = 1;
+    array2d[0][1] = 2;
+    array2d[0][2] = 3;
+    array2d[1][0] = 4;
+    array2d[1][1] = 5;
+    array2d[1][2] = 6;
+    return; // BP_local_2d_array_test
+}
+
+void
 hello_world()
 {
     printf("Hello, World!\n"); // BP_hello_world
@@ -41,5 +54,6 @@ main(int argc, char const *argv[])
 { // FUNC_main
     local_array_test();
     hello_world();
+    local_2d_array_test();
     return 0;
 }

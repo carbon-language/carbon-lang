@@ -73,7 +73,6 @@ class CMICmdCmdDataEvaluateExpression : public CMICmdBase
     bool m_bEvaluatedExpression; // True = yes is expression evaluated, false = failed
     CMIUtilString m_strValue;
     CMICmnMIValueTuple m_miValueTuple;
-    bool m_bCompositeVarType; // True = yes composite type, false = internal type
     bool m_bFoundInvalidChar; // True = yes found unexpected character in the expression, false = all ok
     char m_cExpressionInvalidChar;
     const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option. Not handled by command.

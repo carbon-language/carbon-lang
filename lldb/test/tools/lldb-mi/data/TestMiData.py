@@ -312,5 +312,28 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-data-info-line main.cpp:0")
         self.expect("\^error,msg=\"error: zero is an invalid line number")
 
+    @lldbmi_test
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    def test_lldbmi_data_evaluate_expression(self):
+        """Test that 'lldb-mi --interpreter' works for -data-evaluate-expression."""
+
+        self.spawnLldbMi(args = None)
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        line = line_number('main.cpp', '// BP_local_2d_array_test')
+        self.runCmd('-break-insert main.cpp:%d' % line)
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Check 2d array 
+        self.runCmd("-data-evaluate-expression array2d")
+        self.expect("\^done,value=\"\{\[0\] = \{\[0\] = 1, \[1\] = 2, \[2\] = 3\}, \[1\] = \{\[0\] = 4, \[1\] = 5, \[2\] = 6\}\}\"")
+
 if __name__ == '__main__':
     unittest2.main()

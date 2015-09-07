@@ -54,7 +54,6 @@ CMICmdCmdDataEvaluateExpression::CMICmdCmdDataEvaluateExpression()
     : m_bExpressionValid(true)
     , m_bEvaluatedExpression(true)
     , m_strValue("??")
-    , m_bCompositeVarType(false)
     , m_bFoundInvalidChar(false)
     , m_cExpressionInvalidChar(0x00)
     , m_constStrArgThread("thread")
@@ -145,41 +144,7 @@ CMICmdCmdDataEvaluateExpression::Execute()
         m_strValue = rExpression.Trim('\"');
         return MIstatus::success;
     }
-
-    MIuint64 nNumber = 0;
-    if (CMICmnLLDBProxySBValue::GetValueAsUnsigned(value, nNumber) == MIstatus::success)
-    {
-        const lldb::ValueType eValueType = value.GetValueType();
-        MIunused(eValueType);
-        m_strValue = utilValue.GetValue().Escape().AddSlashes();
-        return MIstatus::success;
-    }
-
-    // Composite type i.e. struct
-    m_bCompositeVarType = true;
-    const MIuint nChild = value.GetNumChildren();
-    for (MIuint i = 0; i < nChild; i++)
-    {
-        lldb::SBValue member = value.GetChildAtIndex(i);
-        const bool bValid = member.IsValid();
-        CMIUtilString strType(MIRSRC(IDS_WORD_UNKNOWNTYPE_BRKTS));
-        if (bValid)
-        {
-            const CMIUtilString strValue(
-                CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted(member, CMICmnLLDBDebugSessionInfoVarObj::eVarFormat_Natural));
-            const char *pTypeName = member.GetName();
-            if (pTypeName != nullptr)
-                strType = pTypeName;
-
-            // MI print "{variable = 1, variable2 = 3, variable3 = 5}"
-            const bool bNoQuotes = true;
-            const CMICmnMIValueConst miValueConst(strValue, bNoQuotes);
-            const bool bUseSpaces = true;
-            const CMICmnMIValueResult miValueResult(strType, miValueConst, bUseSpaces);
-            m_miValueTuple.Add(miValueResult, bUseSpaces);
-        }
-    }
-
+    m_strValue = utilValue.GetValue(true).Escape().AddSlashes();
     return MIstatus::success;
 }
 
@@ -199,15 +164,6 @@ CMICmdCmdDataEvaluateExpression::Acknowledge()
     {
         if (m_bEvaluatedExpression)
         {
-            if (m_bCompositeVarType)
-            {
-                const CMICmnMIValueConst miValueConst(m_miValueTuple.GetString());
-                const CMICmnMIValueResult miValueResult("value", miValueConst);
-                const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult);
-                m_miResultRecord = miRecordResult;
-                return MIstatus::success;
-            }
-
             if (m_bFoundInvalidChar)
             {
                 const CMICmnMIValueConst miValueConst(
