@@ -28,6 +28,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.register_commands()
 
+    @skipIfTargetAndroid(archs=["i386"]) # Writing of mxcsr register fails, presumably due to a kernel/hardware problem
     def test_fp_register_write(self):
         """Test commands that write to registers, in particular floating-point registers."""
         if not self.getArchitecture() in ['amd64', 'i386', 'x86_64']:
