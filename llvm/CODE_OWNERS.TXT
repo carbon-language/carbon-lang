@@ -93,10 +93,6 @@ N: Lang Hames
 E: lhames@gmail.com
 D: MCJIT, RuntimeDyld and JIT event listeners
 
-N: David Majnemer
-E: david.majnemer@gmail.com
-D: IR Constant Folder, InstCombine
-
 N: Galina Kistanova
 E: gkistanova@gmail.com
 D: LLVM Buildbot
@@ -117,6 +113,10 @@ N: Chris Lattner
 E: sabre@nondot.org
 W: http://nondot.org/~sabre/
 D: Everything not covered by someone else
+
+N: David Majnemer
+E: david.majnemer@gmail.com
+D: IR Constant Folder, InstCombine
 
 N: Tim Northover
 E: t.p.northover@gmail.com
