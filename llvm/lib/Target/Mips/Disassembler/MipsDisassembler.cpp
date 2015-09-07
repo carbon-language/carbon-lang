@@ -836,8 +836,21 @@ DecodeStatus MipsDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
   if (IsMicroMips) {
     Result = readInstruction16(Bytes, Address, Size, Insn, IsBigEndian);
 
+    if (hasMips32r6()) {
+      DEBUG(dbgs() << "Trying MicroMipsR616 table (16-bit instructions):\n");
+      // Calling the auto-generated decoder function for microMIPS32R6
+      // (and microMIPS64R6) 16-bit instructions.
+      Result = decodeInstruction(DecoderTableMicroMipsR616, Instr, Insn,
+                                 Address, this, STI);
+      if (Result != MCDisassembler::Fail) {
+        Size = 2;
+        return Result;
+      }
+    }
+
     DEBUG(dbgs() << "Trying MicroMips16 table (16-bit instructions):\n");
-    // Calling the auto-generated decoder function.
+    // Calling the auto-generated decoder function for microMIPS 16-bit
+    // instructions.
     Result = decodeInstruction(DecoderTableMicroMips16, Instr, Insn, Address,
                                this, STI);
     if (Result != MCDisassembler::Fail) {
@@ -854,13 +867,16 @@ DecodeStatus MipsDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
       // Calling the auto-generated decoder function.
       Result = decodeInstruction(DecoderTableMicroMipsR632, Instr, Insn, Address,
                                  this, STI);
-    } else {
-      DEBUG(dbgs() << "Trying MicroMips32 table (32-bit instructions):\n");
-      // Calling the auto-generated decoder function.
-      Result = decodeInstruction(DecoderTableMicroMips32, Instr, Insn, Address,
-                                 this, STI);
+      if (Result != MCDisassembler::Fail) {
+        Size = 4;
+        return Result;
+      }
     }
 
+    DEBUG(dbgs() << "Trying MicroMips32 table (32-bit instructions):\n");
+    // Calling the auto-generated decoder function.
+    Result = decodeInstruction(DecoderTableMicroMips32, Instr, Insn, Address,
+                               this, STI);
     if (Result != MCDisassembler::Fail) {
       Size = 4;
       return Result;

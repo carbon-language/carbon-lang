@@ -16,6 +16,32 @@ class MMR6Arch<string opstr> {
   string BaseOpcode = opstr;
 }
 
+// Class used for microMIPS32r6 and microMIPS64r6 instructions.
+class MicroMipsR6Inst16 : PredicateControl {
+  string DecoderNamespace = "MicroMipsR6";
+  let InsnPredicates = [HasMicroMips32r6];
+}
+
+class BC16_FM_MM16R6 {
+  bits<10> offset;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = 0x33;
+  let Inst{9-0}   = offset;
+}
+
+class BEQZC_BNEZC_FM_MM16R6<bits<6> op> : MicroMipsR6Inst16 {
+  bits<3> rs;
+  bits<7> offset;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = op;
+  let Inst{9-7}   = rs;
+  let Inst{6-0}   = offset;
+}
+
 class POOL32A_BITSWAP_FM_MMR6<bits<6> funct> : MipsR6Inst {
   bits<5> rd;
   bits<5> rt;

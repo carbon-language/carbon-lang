@@ -1425,7 +1425,9 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
         return Error(IDLoc, "branch to misaligned address");
       break;
     case Mips::BEQZ16_MM:
+    case Mips::BEQZC16_MMR6:
     case Mips::BNEZ16_MM:
+    case Mips::BNEZC16_MMR6:
       assert(MCID.getNumOperands() == 2 && "unexpected number of operands");
       Offset = Inst.getOperand(1);
       if (!Offset.isImm())
@@ -1815,6 +1817,7 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   case Mips::LoadAddrReg32:
   case Mips::LoadAddrReg64:
   case Mips::B_MM_Pseudo:
+  case Mips::B_MMR6_Pseudo:
   case Mips::LWM_MM:
   case Mips::SWM_MM:
   case Mips::JalOneReg:
@@ -1869,6 +1872,7 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
         Inst.getOperand(0).getReg(), Inst.getOperand(1).getReg(), Inst.getOperand(2),
         Inst.getOpcode() == Mips::LoadAddrReg32, IDLoc, Instructions);
   case Mips::B_MM_Pseudo:
+  case Mips::B_MMR6_Pseudo:
     return expandUncondBranchMMPseudo(Inst, IDLoc, Instructions);
   case Mips::SWM_MM:
   case Mips::LWM_MM:
@@ -2370,7 +2374,8 @@ bool MipsAsmParser::expandUncondBranchMMPseudo(
     if (isIntN(11, Offset.getImm())) {
       // If offset fits into 11 bits then this instruction becomes microMIPS
       // 16-bit unconditional branch instruction.
-      Inst.setOpcode(Mips::B16_MM);
+      if (inMicroMipsMode())
+        Inst.setOpcode(hasMips32r6() ? Mips::BC16_MMR6 : Mips::B16_MM);
     } else {
       if (!isIntN(17, Offset.getImm()))
         Error(IDLoc, "branch target out of range");
@@ -2385,8 +2390,10 @@ bool MipsAsmParser::expandUncondBranchMMPseudo(
   }
   Instructions.push_back(Inst);
 
-  // If .set reorder is active, emit a NOP after the branch instruction.
-  if (AssemblerOptions.back()->isReorder())
+  // If .set reorder is active and branch instruction has a delay slot,
+  // emit a NOP after it.
+  const MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
+  if (MCID.hasDelaySlot() && AssemblerOptions.back()->isReorder())
     createNop(true, IDLoc, Instructions);
 
   return false;

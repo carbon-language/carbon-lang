@@ -28,6 +28,9 @@ class ALIGN_MMR6_ENC : POOL32A_ALIGN_FM_MMR6<0b011111>;
 class AUI_MMR6_ENC : AUI_FM_MMR6;
 class BALC_MMR6_ENC  : BRANCH_OFF26_FM<0b101101>;
 class BC_MMR6_ENC : BRANCH_OFF26_FM<0b100101>;
+class BC16_MMR6_ENC : BC16_FM_MM16R6;
+class BEQZC16_MMR6_ENC : BEQZC_BNEZC_FM_MM16R6<0x23>;
+class BNEZC16_MMR6_ENC : BEQZC_BNEZC_FM_MM16R6<0x2b>;
 class BITSWAP_MMR6_ENC : POOL32A_BITSWAP_FM_MMR6<0b101100>;
 class BRK_MMR6_ENC : BREAK_MMR6_ENC<"break">;
 class BEQZALC_MMR6_ENC : CMP_BRANCH_1R_RT_OFF16_FM_MMR6<0b011101>;
@@ -194,6 +197,29 @@ class BALC_MMR6_DESC : BC_MMR6_DESC_BASE<"balc", brtarget26> {
   list<Register> Defs = [RA];
 }
 class BC_MMR6_DESC : BC_MMR6_DESC_BASE<"bc", brtarget26>;
+
+class BC16_MMR6_DESC : MicroMipsInst16<(outs), (ins brtarget10_mm:$offset),
+                                       !strconcat("bc16", "\t$offset"), [],
+                                       IIBranch, FrmI>,
+                       MMR6Arch<"bc16">, MicroMipsR6Inst16 {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let isBarrier = 1;
+  let hasDelaySlot = 0;
+  let AdditionalPredicates = [RelocPIC];
+  let Defs = [AT];
+}
+
+class BEQZC_BNEZC_MM16R6_DESC_BASE<string instr_asm>
+    : CBranchZeroMM<instr_asm, brtarget7_mm, GPRMM16Opnd>, MMR6Arch<instr_asm> {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let hasDelaySlot = 0;
+  let Defs = [AT];
+}
+class BEQZC16_MMR6_DESC : BEQZC_BNEZC_MM16R6_DESC_BASE<"beqzc16">;
+class BNEZC16_MMR6_DESC : BEQZC_BNEZC_MM16R6_DESC_BASE<"bnezc16">;
+
 class SUB_MMR6_DESC : ArithLogicR<"sub", GPR32Opnd>;
 class SUBU_MMR6_DESC : ArithLogicR<"subu", GPR32Opnd>;
 
@@ -532,6 +558,11 @@ def ALIGN_MMR6 : R6MMR6Rel, ALIGN_MMR6_ENC, ALIGN_MMR6_DESC, ISA_MICROMIPS32R6;
 def AUI_MMR6 : R6MMR6Rel, AUI_MMR6_ENC, AUI_MMR6_DESC, ISA_MICROMIPS32R6;
 def BALC_MMR6 : R6MMR6Rel, BALC_MMR6_ENC, BALC_MMR6_DESC, ISA_MICROMIPS32R6;
 def BC_MMR6 : R6MMR6Rel, BC_MMR6_ENC, BC_MMR6_DESC, ISA_MICROMIPS32R6;
+def BC16_MMR6 : StdMMR6Rel, BC16_MMR6_DESC, BC16_MMR6_ENC, ISA_MICROMIPS32R6;
+def BEQZC16_MMR6 : StdMMR6Rel, BEQZC16_MMR6_DESC, BEQZC16_MMR6_ENC,
+                   ISA_MICROMIPS32R6;
+def BNEZC16_MMR6 : StdMMR6Rel, BNEZC16_MMR6_DESC, BNEZC16_MMR6_ENC,
+                   ISA_MICROMIPS32R6;
 def BITSWAP_MMR6 : R6MMR6Rel, BITSWAP_MMR6_ENC, BITSWAP_MMR6_DESC,
                    ISA_MICROMIPS32R6;
 def BEQZALC_MMR6 : R6MMR6Rel, BEQZALC_MMR6_ENC, BEQZALC_MMR6_DESC,
@@ -665,3 +696,6 @@ defm D_MMR6 : CMP_CC_MMR6<0b010101, "d", FGR64Opnd>;
 
 def : MipsInstAlias<"ei", (EI_MMR6 ZERO), 1>, ISA_MICROMIPS32R6;
 def : MipsInstAlias<"nop", (SLL_MMR6 ZERO, ZERO, 0), 1>, ISA_MICROMIPS32R6;
+def B_MMR6_Pseudo : MipsAsmPseudoInst<(outs), (ins brtarget_mm:$offset),
+                                      !strconcat("b", "\t$offset")>,
+                    MicroMipsR6Inst16;
