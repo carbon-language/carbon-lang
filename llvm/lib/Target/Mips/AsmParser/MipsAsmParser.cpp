@@ -1539,7 +1539,7 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     if (JalSym->isInSection() || JalSym->isTemporary()) {
       if (isABI_O32()) {
         // If it's a local symbol and the O32 ABI is being used, we expand to:
-        //  lw    $25, 0($gp)
+        //  lw $25, 0($gp)
         //    R_(MICRO)MIPS_GOT16  label
         //  addiu $25, $25, 0
         //    R_(MICRO)MIPS_LO16   label
@@ -1563,7 +1563,7 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
       } else if (isABI_N32() || isABI_N64()) {
         // If it's a local symbol and the N32/N64 ABIs are being used,
         // we expand to:
-        //  lw/ld    $25, 0($gp)
+        //  lw/ld $25, 0($gp)
         //    R_(MICRO)MIPS_GOT_DISP  label
         //  jalr  $25
         const MCExpr *GotDispRelocExpr = evaluateRelocExpr(JalExpr, "got_disp");

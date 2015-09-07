@@ -1242,7 +1242,7 @@ Value *LibCallSimplifier::optimizeFMinFMax(CallInst *CI, IRBuilder<> &B) {
       return nullptr;
     // No-signed-zeros is implied by the definitions of fmax/fmin themselves:
     // "Ideally, fmax would be sensitive to the sign of zero, for example
-    // fmax(−0. 0, +0. 0) would return +0; however, implementation in software
+    // fmax(-0. 0, +0. 0) would return +0; however, implementation in software
     // might be impractical."
     FMF.setNoSignedZeros();
     FMF.setNoNaNs();
