@@ -35,6 +35,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.fp_register_write()
 
+    @expectedFailureClang("llvm.org/pr24733")
     def test_fp_special_purpose_register_read(self):
         """Test commands that read fpu special purpose registers."""
         if not self.getArchitecture() in ['amd64', 'i386', 'x86_64']:
