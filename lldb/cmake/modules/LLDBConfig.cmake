@@ -26,8 +26,6 @@ set(LLDB_DISABLE_PYTHON ${LLDB_DEFAULT_DISABLE_PYTHON} CACHE BOOL
 set(LLDB_DISABLE_CURSES ${LLDB_DEFAULT_DISABLE_CURSES} CACHE BOOL
   "Disables the Curses integration.")
 
-set(LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION 1 CACHE BOOL
-  "Enables using new Python scripts for SWIG API generation .")
 set(LLDB_RELOCATABLE_PYTHON 0 CACHE BOOL
   "Causes LLDB to use the PYTHONHOME environment variable to locate Python.")
 
