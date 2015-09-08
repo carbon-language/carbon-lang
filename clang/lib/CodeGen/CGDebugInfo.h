@@ -281,6 +281,9 @@ public:
                          SourceLocation ScopeLoc, QualType FnType,
                          llvm::Function *Fn, CGBuilderTy &Builder);
 
+  /// Emit debug info for a function declaration.
+  void EmitFunctionDecl(GlobalDecl GD, SourceLocation Loc, QualType FnType);
+
   /// Constructs the debug code for exiting a function.
   void EmitFunctionEnd(CGBuilderTy &Builder);
 

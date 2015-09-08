@@ -2515,11 +2515,17 @@ llvm::DISubroutineType *CGDebugInfo::getOrCreateFunctionType(const Decl *D,
 
     Elts.push_back(getOrCreateType(ResultTy, F));
     // "self" pointer is always first argument.
-    QualType SelfDeclTy = OMethod->getSelfDecl()->getType();
-    Elts.push_back(CreateSelfType(SelfDeclTy, getOrCreateType(SelfDeclTy, F)));
+    QualType SelfDeclTy;
+    if (auto *SelfDecl = OMethod->getSelfDecl())
+      SelfDeclTy = SelfDecl->getType();
+    else if (auto *FPT = dyn_cast<FunctionProtoType>(FnType))
+      if (FPT->getNumParams() > 1)
+        SelfDeclTy = FPT->getParamType(0);
+    if (!SelfDeclTy.isNull())
+      Elts.push_back(CreateSelfType(SelfDeclTy, getOrCreateType(SelfDeclTy, F)));
     // "_cmd" pointer is always second argument.
     Elts.push_back(DBuilder.createArtificialType(
-        getOrCreateType(OMethod->getCmdDecl()->getType(), F)));
+        getOrCreateType(CGM.getContext().getObjCSelType(), F)));
     // Get rest of the arguments.
     for (const auto *PI : OMethod->params())
       Elts.push_back(getOrCreateType(PI->getType(), F));
@@ -2621,6 +2627,49 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, SourceLocation Loc,
 
   if (HasDecl)
     RegionMap[D].reset(SP);
+}
+
+void CGDebugInfo::EmitFunctionDecl(GlobalDecl GD, SourceLocation Loc,
+                                   QualType FnType) {
+  StringRef Name;
+  StringRef LinkageName;
+
+  const Decl *D = GD.getDecl();
+  if (!D)
+    return;
+
+  unsigned Flags = 0;
+  llvm::DIFile *Unit = getOrCreateFile(Loc);
+  llvm::DIScope *FDContext = Unit;
+  llvm::DINodeArray TParamsArray;
+  if (isa<FunctionDecl>(D)) {
+    // If there is a DISubprogram for this function available then use it.
+    collectFunctionDeclProps(GD, Unit, Name, LinkageName, FDContext,
+                             TParamsArray, Flags);
+  } else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)) {
+    Name = getObjCMethodName(OMD);
+    Flags |= llvm::DINode::FlagPrototyped;
+  } else {
+    llvm_unreachable("not a function or ObjC method");
+  }
+  if (!Name.empty() && Name[0] == '\01')
+    Name = Name.substr(1);
+
+  if (D->isImplicit()) {
+    Flags |= llvm::DINode::FlagArtificial;
+    // Artificial functions without a location should not silently reuse CurLoc.
+    if (Loc.isInvalid())
+      CurLoc = SourceLocation();
+  }
+  unsigned LineNo = getLineNumber(Loc);
+  unsigned ScopeLine = 0;
+
+  DBuilder.createFunction(FDContext, Name, LinkageName, Unit, LineNo,
+                          getOrCreateFunctionType(D, FnType, Unit),
+                          false /*internalLinkage*/, true /*definition*/,
+                          ScopeLine, Flags, CGM.getLangOpts().Optimize, nullptr,
+                          TParamsArray.get(),
+                          getFunctionDeclaration(D));
 }
 
 void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc) {

@@ -76,6 +76,48 @@ class PCHContainerGenerator : public ASTConsumer {
       return true;
     }
 
+    bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
+      QualType QualTy(D->getTypeForDecl(), 0);
+      if (!QualTy.isNull() && CanRepresent(QualTy.getTypePtr()))
+        DI.getOrCreateStandaloneType(QualTy, D->getLocation());
+      return true;
+    }
+
+    bool VisitFunctionDecl(FunctionDecl *D) {
+      if (isa<CXXMethodDecl>(D))
+        // This is not yet supported. Constructing the `this' argument
+        // mandates a CodeGenFunction.
+        return true;
+
+      SmallVector<QualType, 16> ArgTypes;
+      for (auto i : D->params())
+        ArgTypes.push_back(i->getType());
+      QualType RetTy = D->getReturnType();
+      QualType FnTy = Ctx.getFunctionType(RetTy, ArgTypes,
+                                          FunctionProtoType::ExtProtoInfo());
+      if (CanRepresent(FnTy.getTypePtr()))
+        DI.EmitFunctionDecl(D, D->getLocation(), FnTy);
+      return true;
+    }
+
+    bool VisitObjCMethodDecl(ObjCMethodDecl *D) {
+      if (!D->getClassInterface())
+        return true;
+
+      bool selfIsPseudoStrong, selfIsConsumed;
+      SmallVector<QualType, 16> ArgTypes;
+      ArgTypes.push_back(D->getSelfType(Ctx, D->getClassInterface(),
+                                        selfIsPseudoStrong, selfIsConsumed));
+      ArgTypes.push_back(Ctx.getObjCSelType());
+      for (auto i : D->params())
+        ArgTypes.push_back(i->getType());
+      QualType RetTy = D->getReturnType();
+      QualType FnTy = Ctx.getFunctionType(RetTy, ArgTypes,
+                                          FunctionProtoType::ExtProtoInfo());
+      if (CanRepresent(FnTy.getTypePtr()))
+        DI.EmitFunctionDecl(D, D->getLocation(), FnTy);
+      return true;
+    }
   };
 
 public:
