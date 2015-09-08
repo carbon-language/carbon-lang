@@ -10,17 +10,41 @@ for the type of the class or its derived classes.
 
 To use the mechanism, a client creates a global metadata node named
 ``llvm.bitsets``.  Each element is a metadata node with three elements:
-the first is a metadata string containing an identifier for the bitset,
-the second is a global variable and the third is a byte offset into the
-global variable.
+
+1. a metadata object representing an identifier for the bitset
+2. either a global variable or a function
+3. a byte offset into the global (generally zero for functions)
+
+Each bitset must exclusively contain either global variables or functions.
+
+.. admonition:: Limitation
+
+  The current implementation only supports functions as members of bitsets on
+  the x86-32 and x86-64 architectures.
 
 This will cause a link-time optimization pass to generate bitsets from the
-memory addresses referenced from the elements of the bitset metadata. The pass
-will lay out the referenced globals consecutively, so their definitions must
-be available at LTO time. The `GlobalLayoutBuilder`_ class is responsible for
-laying out the globals efficiently to minimize the sizes of the underlying
-bitsets. An intrinsic, :ref:`llvm.bitset.test <bitset.test>`, generates code
-to test whether a given pointer is a member of a bitset.
+memory addresses referenced from the elements of the bitset metadata. The
+pass will lay out referenced global variables consecutively, so their
+definitions must be available at LTO time.
+
+A bit set containing functions is transformed into a jump table, which
+is a block of code consisting of one branch instruction for each of the
+functions in the bit set that branches to the target function, and redirect
+any taken function addresses to the corresponding jump table entry. In the
+object file's symbol table, the jump table entries take the identities of
+the original functions, so that addresses taken outside the module will pass
+any verification done inside the module.
+
+Jump tables may call external functions, so their definitions need not
+be available at LTO time. Note that if an externally defined function is a
+member of a bitset, there is no guarantee that its identity within the module
+will be the same as its identity outside of the module, as the former will
+be the jump table entry if a jump table is necessary.
+
+The `GlobalLayoutBuilder`_ class is responsible for laying out the globals
+efficiently to minimize the sizes of the underlying bitsets. An intrinsic,
+:ref:`llvm.bitset.test <bitset.test>`, generates code to test whether a
+given pointer is a member of a bitset.
 
 :Example:
 
@@ -33,13 +57,25 @@ to test whether a given pointer is a member of a bitset.
     @c = internal global i32 0
     @d = internal global [2 x i32] [i32 0, i32 0]
 
-    !llvm.bitsets = !{!0, !1, !2, !3, !4}
+    define void @e() {
+      ret void
+    }
+
+    define void @f() {
+      ret void
+    }
+
+    declare void @g()
+
+    !llvm.bitsets = !{!0, !1, !2, !3, !4, !5, !6}
 
     !0 = !{!"bitset1", i32* @a, i32 0}
     !1 = !{!"bitset1", i32* @b, i32 0}
     !2 = !{!"bitset2", i32* @b, i32 0}
     !3 = !{!"bitset2", i32* @c, i32 0}
     !4 = !{!"bitset2", i32* @d, i32 4}
+    !5 = !{!"bitset3", void ()* @e, i32 0}
+    !6 = !{!"bitset3", void ()* @g, i32 0}
 
     declare i1 @llvm.bitset.test(i8* %ptr, metadata %bitset) nounwind readnone
 
@@ -55,6 +91,12 @@ to test whether a given pointer is a member of a bitset.
       ret i1 %x
     }
 
+    define i1 @baz(void ()* %p) {
+      %pi8 = bitcast void ()* %p to i8*
+      %x = call i1 @llvm.bitset.test(i8* %pi8, metadata !"bitset3")
+      ret i1 %x
+    }
+
     define void @main() {
       %a1 = call i1 @foo(i32* @a) ; returns 1
       %b1 = call i1 @foo(i32* @b) ; returns 1
@@ -64,6 +106,9 @@ to test whether a given pointer is a member of a bitset.
       %c2 = call i1 @bar(i32* @c) ; returns 1
       %d02 = call i1 @bar(i32* getelementptr ([2 x i32]* @d, i32 0, i32 0)) ; returns 0
       %d12 = call i1 @bar(i32* getelementptr ([2 x i32]* @d, i32 0, i32 1)) ; returns 1
+      %e = call i1 @baz(void ()* @e) ; returns 1
+      %f = call i1 @baz(void ()* @f) ; returns 0
+      %g = call i1 @baz(void ()* @g) ; returns 1
       ret void
     }
 
