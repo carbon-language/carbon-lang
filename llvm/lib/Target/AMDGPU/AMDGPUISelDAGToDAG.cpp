@@ -893,15 +893,39 @@ bool AMDGPUDAGToDAGISel::SelectDS1Addr1Offset(SDValue Addr, SDValue &Base,
       Offset = N1;
       return true;
     }
-  }
+  } else if (Addr.getOpcode() == ISD::SUB) {
+    // sub C, x -> add (sub 0, x), C
+    if (const ConstantSDNode *C = dyn_cast<ConstantSDNode>(Addr.getOperand(0))) {
+      int64_t ByteOffset = C->getSExtValue();
+      if (isUInt<16>(ByteOffset)) {
+        SDLoc DL(Addr);
+        SDValue Zero = CurDAG->getTargetConstant(0, DL, MVT::i32);
 
-  SDLoc DL(Addr);
+        // XXX - This is kind of hacky. Create a dummy sub node so we can check
+        // the known bits in isDSOffsetLegal. We need to emit the selected node
+        // here, so this is thrown away.
+        SDValue Sub = CurDAG->getNode(ISD::SUB, DL, MVT::i32,
+                                      Zero, Addr.getOperand(1));
 
-  // If we have a constant address, prefer to put the constant into the
-  // offset. This can save moves to load the constant address since multiple
-  // operations can share the zero base address register, and enables merging
-  // into read2 / write2 instructions.
-  if (const ConstantSDNode *CAddr = dyn_cast<ConstantSDNode>(Addr)) {
+        if (isDSOffsetLegal(Sub, ByteOffset, 16)) {
+          MachineSDNode *MachineSub
+            = CurDAG->getMachineNode(AMDGPU::V_SUB_I32_e32, DL, MVT::i32,
+                                     Zero, Addr.getOperand(1));
+
+          Base = SDValue(MachineSub, 0);
+          Offset = Addr.getOperand(0);
+          return true;
+        }
+      }
+    }
+  } else if (const ConstantSDNode *CAddr = dyn_cast<ConstantSDNode>(Addr)) {
+    // If we have a constant address, prefer to put the constant into the
+    // offset. This can save moves to load the constant address since multiple
+    // operations can share the zero base address register, and enables merging
+    // into read2 / write2 instructions.
+
+    SDLoc DL(Addr);
+
     if (isUInt<16>(CAddr->getZExtValue())) {
       SDValue Zero = CurDAG->getTargetConstant(0, DL, MVT::i32);
       MachineSDNode *MovZero = CurDAG->getMachineNode(AMDGPU::V_MOV_B32_e32,
@@ -914,10 +938,11 @@ bool AMDGPUDAGToDAGISel::SelectDS1Addr1Offset(SDValue Addr, SDValue &Base,
 
   // default case
   Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, DL, MVT::i16);
+  Offset = CurDAG->getTargetConstant(0, SDLoc(Addr), MVT::i16);
   return true;
 }
 
+// TODO: If offset is too big, put low 16-bit into offset.
 bool AMDGPUDAGToDAGISel::SelectDS64Bit4ByteAligned(SDValue Addr, SDValue &Base,
                                                    SDValue &Offset0,
                                                    SDValue &Offset1) const {
@@ -936,9 +961,35 @@ bool AMDGPUDAGToDAGISel::SelectDS64Bit4ByteAligned(SDValue Addr, SDValue &Base,
       Offset1 = CurDAG->getTargetConstant(DWordOffset1, DL, MVT::i8);
       return true;
     }
-  }
+  } else if (Addr.getOpcode() == ISD::SUB) {
+    // sub C, x -> add (sub 0, x), C
+    if (const ConstantSDNode *C = dyn_cast<ConstantSDNode>(Addr.getOperand(0))) {
+      unsigned DWordOffset0 = C->getZExtValue() / 4;
+      unsigned DWordOffset1 = DWordOffset0 + 1;
 
-  if (const ConstantSDNode *CAddr = dyn_cast<ConstantSDNode>(Addr)) {
+      if (isUInt<8>(DWordOffset0)) {
+        SDLoc DL(Addr);
+        SDValue Zero = CurDAG->getTargetConstant(0, DL, MVT::i32);
+
+        // XXX - This is kind of hacky. Create a dummy sub node so we can check
+        // the known bits in isDSOffsetLegal. We need to emit the selected node
+        // here, so this is thrown away.
+        SDValue Sub = CurDAG->getNode(ISD::SUB, DL, MVT::i32,
+                                      Zero, Addr.getOperand(1));
+
+        if (isDSOffsetLegal(Sub, DWordOffset1, 8)) {
+          MachineSDNode *MachineSub
+            = CurDAG->getMachineNode(AMDGPU::V_SUB_I32_e32, DL, MVT::i32,
+                                     Zero, Addr.getOperand(1));
+
+          Base = SDValue(MachineSub, 0);
+          Offset0 = CurDAG->getTargetConstant(DWordOffset0, DL, MVT::i8);
+          Offset1 = CurDAG->getTargetConstant(DWordOffset1, DL, MVT::i8);
+          return true;
+        }
+      }
+    }
+  } else if (const ConstantSDNode *CAddr = dyn_cast<ConstantSDNode>(Addr)) {
     unsigned DWordOffset0 = CAddr->getZExtValue() / 4;
     unsigned DWordOffset1 = DWordOffset0 + 1;
     assert(4 * DWordOffset0 == CAddr->getZExtValue());
