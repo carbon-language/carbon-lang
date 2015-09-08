@@ -576,7 +576,11 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.getFirstELF());
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
-  EHdr->e_entry = 0x401000;
+
+  llvm::DenseMap<StringRef, Symbol *>::const_iterator Entry =
+      Symtab.getSymbols().find("_start");
+
+  EHdr->e_entry = getSymVA(cast<DefinedRegular<ELFT>>(Entry->second->Body));
   EHdr->e_phoff = sizeof(Elf_Ehdr_Impl<ELFT>);
   EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_ehsize = sizeof(Elf_Ehdr_Impl<ELFT>);
