@@ -3803,6 +3803,25 @@ void CodeGenModule::EmitOMPThreadPrivateDecl(const OMPThreadPrivateDecl *D) {
   }
 }
 
+llvm::Metadata *CodeGenModule::CreateMetadataIdentifierForType(QualType T) {
+  llvm::Metadata *&InternalId = MetadataIdMap[T.getCanonicalType()];
+  if (InternalId)
+    return InternalId;
+
+  if (isExternallyVisible(T->getLinkage())) {
+    std::string OutName;
+    llvm::raw_string_ostream Out(OutName);
+    getCXXABI().getMangleContext().mangleTypeName(T, Out);
+
+    InternalId = llvm::MDString::get(getLLVMContext(), Out.str());
+  } else {
+    InternalId = llvm::MDNode::getDistinct(getLLVMContext(),
+                                           llvm::ArrayRef<llvm::Metadata *>());
+  }
+
+  return InternalId;
+}
+
 llvm::MDTuple *CodeGenModule::CreateVTableBitSetEntry(
     llvm::GlobalVariable *VTable, CharUnits Offset, const CXXRecordDecl *RD) {
   std::string OutName;

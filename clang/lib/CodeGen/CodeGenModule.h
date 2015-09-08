@@ -483,6 +483,12 @@ private:
   llvm::DenseMap<const Decl *, bool> DeferredEmptyCoverageMappingDecls;
 
   std::unique_ptr<CoverageMappingModuleGen> CoverageMapping;
+
+  /// Mapping from canonical types to their metadata identifiers. We need to
+  /// maintain this mapping because identifiers may be formed from distinct
+  /// MDNodes.
+  llvm::DenseMap<QualType, llvm::Metadata *> MetadataIdMap;
+
 public:
   CodeGenModule(ASTContext &C, const HeaderSearchOptions &headersearchopts,
                 const PreprocessorOptions &ppopts,
@@ -1111,6 +1117,11 @@ public:
   /// vptr CFI is enabled.
   void EmitVTableBitSetEntries(llvm::GlobalVariable *VTable,
                                const VTableLayout &VTLayout);
+
+  /// Create a metadata identifier for the given type. This may either be an
+  /// MDString (for external identifiers) or a distinct unnamed MDNode (for
+  /// internal identifiers).
+  llvm::Metadata *CreateMetadataIdentifierForType(QualType T);
 
   /// Create a bitset entry for the given vtable.
   llvm::MDTuple *CreateVTableBitSetEntry(llvm::GlobalVariable *VTable,
