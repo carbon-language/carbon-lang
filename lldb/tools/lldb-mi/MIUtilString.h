@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <cinttypes>
+#include <cstdarg>
 
 // In-house headers:
 #include "MIDataTypes.h"
