@@ -32,7 +32,7 @@ public:
 };
 } // end anonymous namespace
 
-void 
+void
 UndefinedArraySubscriptChecker::checkPreStmt(const ArraySubscriptExpr *A,
                                              CheckerContext &C) const {
   const Expr *Index = A->getIdx();

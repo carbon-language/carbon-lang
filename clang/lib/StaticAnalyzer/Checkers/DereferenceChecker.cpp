@@ -84,7 +84,7 @@ DereferenceChecker::AddDerefSource(raw_ostream &os,
       SourceLocation L = IV->getLocation();
       Ranges.push_back(SourceRange(L, L));
       break;
-    }    
+    }
   }
 }
 

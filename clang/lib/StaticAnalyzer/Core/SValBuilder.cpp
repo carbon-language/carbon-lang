@@ -91,7 +91,7 @@ nonloc::ConcreteInt SValBuilder::makeBoolVal(const CXXBoolLiteralExpr *boolean){
   return makeTruthVal(boolean->getValue());
 }
 
-DefinedOrUnknownSVal 
+DefinedOrUnknownSVal
 SValBuilder::getRegionValueSymbolVal(const TypedValueRegion* region) {
   QualType T = region->getValueType();
 
@@ -146,10 +146,10 @@ DefinedOrUnknownSVal SValBuilder::conjureSymbolVal(const Stmt *stmt,
     return UnknownVal();
 
   SymbolRef sym = SymMgr.conjureSymbol(stmt, LCtx, type, visitCount);
-  
+
   if (Loc::isLocType(type))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
-  
+
   return nonloc::SymbolVal(sym);
 }
 
@@ -307,7 +307,7 @@ SVal SValBuilder::makeSymExprValNN(ProgramStateRef State,
                                    QualType ResultTy) {
   if (!State->isTainted(RHS) && !State->isTainted(LHS))
     return UnknownVal();
-    
+
   const SymExpr *symLHS = LHS.getAsSymExpr();
   const SymExpr *symRHS = RHS.getAsSymExpr();
   // TODO: When the Max Complexity is reached, we should conjure a symbol
@@ -430,7 +430,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
     if (shouldBeModeledWithNoOp(Context, Context.getPointerType(castTy),
                                          Context.getPointerType(originalTy)))
       return val;
-  
+
   // Check for casts from pointers to integers.
   if (castTy->isIntegralOrEnumerationType() && Loc::isLocType(originalTy))
     return evalCastFromLoc(val.castAs<Loc>(), castTy);

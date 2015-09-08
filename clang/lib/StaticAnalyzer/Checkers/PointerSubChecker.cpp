@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This files defines PointerSubChecker, a builtin checker that checks for
-// pointer subtractions on two pointers pointing to different memory chunks. 
+// pointer subtractions on two pointers pointing to different memory chunks.
 // This check corresponds to CWE-469.
 //
 //===----------------------------------------------------------------------===//
@@ -23,7 +23,7 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class PointerSubChecker 
+class PointerSubChecker
   : public Checker< check::PreStmt<BinaryOperator> > {
   mutable std::unique_ptr<BuiltinBug> BT;
 

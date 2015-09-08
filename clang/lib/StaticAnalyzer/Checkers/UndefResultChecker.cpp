@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines UndefResultChecker, a builtin check in ExprEngine that 
+// This defines UndefResultChecker, a builtin check in ExprEngine that
 // performs checks for undefined results of non-assignment binary operators.
 //
 //===----------------------------------------------------------------------===//
@@ -25,7 +25,7 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class UndefResultChecker 
+class UndefResultChecker
   : public Checker< check::PostStmt<BinaryOperator> > {
 
   mutable std::unique_ptr<BugType> BT;
@@ -53,7 +53,7 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
     ExplodedNode *N = C.generateSink();
     if (!N)
       return;
-    
+
     if (!BT)
       BT.reset(
           new BuiltinBug(this, "Result of operation is garbage or undefined"));
@@ -62,7 +62,7 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
     llvm::raw_svector_ostream OS(sbuf);
     const Expr *Ex = nullptr;
     bool isLeft = true;
-    
+
     if (state->getSVal(B->getLHS(), LCtx).isUndef()) {
       Ex = B->getLHS()->IgnoreParenCasts();
       isLeft = true;
@@ -71,13 +71,13 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
       Ex = B->getRHS()->IgnoreParenCasts();
       isLeft = false;
     }
-    
+
     if (Ex) {
       OS << "The " << (isLeft ? "left" : "right")
          << " operand of '"
          << BinaryOperator::getOpcodeStr(B->getOpcode())
          << "' is a garbage value";
-    }          
+    }
     else {
       // Neither operand was undefined, but the result is undefined.
       OS << "The result of the '"
@@ -91,7 +91,7 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
     }
     else
       bugreporter::trackNullOrUndefValue(N, B, *report);
-    
+
     C.emitReport(std::move(report));
   }
 }

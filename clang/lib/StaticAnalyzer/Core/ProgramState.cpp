@@ -36,7 +36,7 @@ void ProgramStateRelease(const ProgramState *state) {
   if (--s->refCount == 0) {
     ProgramStateManager &Mgr = s->getStateManager();
     Mgr.StateSet.RemoveNode(s);
-    s->~ProgramState();    
+    s->~ProgramState();
     Mgr.freeStates.push_back(s);
   }
 }
@@ -86,7 +86,7 @@ ProgramStateManager::~ProgramStateManager() {
     I->second.second(I->second.first);
 }
 
-ProgramStateRef 
+ProgramStateRef
 ProgramStateManager::removeDeadBindings(ProgramStateRef state,
                                    const StackFrameContext *LCtx,
                                    SymbolReaper& SymReaper) {
@@ -113,7 +113,7 @@ ProgramStateManager::removeDeadBindings(ProgramStateRef state,
 
 ProgramStateRef ProgramState::bindLoc(Loc LV, SVal V, bool notifyChanges) const {
   ProgramStateManager &Mgr = getStateManager();
-  ProgramStateRef newState = makeWithStore(Mgr.StoreMgr->Bind(getStore(), 
+  ProgramStateRef newState = makeWithStore(Mgr.StoreMgr->Bind(getStore(),
                                                              LV, V));
   const MemRegion *MR = LV.getAsRegion();
   if (MR && Mgr.getOwningEngine() && notifyChanges)
@@ -127,15 +127,15 @@ ProgramStateRef ProgramState::bindDefault(SVal loc, SVal V) const {
   const MemRegion *R = loc.castAs<loc::MemRegionVal>().getRegion();
   const StoreRef &newStore = Mgr.StoreMgr->BindDefault(getStore(), R, V);
   ProgramStateRef new_state = makeWithStore(newStore);
-  return Mgr.getOwningEngine() ? 
-           Mgr.getOwningEngine()->processRegionChange(new_state, R) : 
+  return Mgr.getOwningEngine() ?
+           Mgr.getOwningEngine()->processRegionChange(new_state, R) :
            new_state;
 }
 
 typedef ArrayRef<const MemRegion *> RegionList;
 typedef ArrayRef<SVal> ValueList;
 
-ProgramStateRef 
+ProgramStateRef
 ProgramState::invalidateRegions(RegionList Regions,
                              const Expr *E, unsigned Count,
                              const LocationContext *LCtx,
@@ -197,11 +197,11 @@ ProgramState::invalidateRegionsImpl(ValueList Values,
     if (CausedByPointerEscape) {
       newState = Eng->notifyCheckersOfPointerEscape(newState, IS,
                                                     TopLevelInvalidated,
-                                                    Invalidated, Call, 
+                                                    Invalidated, Call,
                                                     *ITraits);
     }
 
-    return Eng->processRegionChanges(newState, IS, TopLevelInvalidated, 
+    return Eng->processRegionChanges(newState, IS, TopLevelInvalidated,
                                      Invalidated, Call);
   }
 
@@ -224,7 +224,7 @@ ProgramStateRef ProgramState::killBinding(Loc LV) const {
   return makeWithStore(newStore);
 }
 
-ProgramStateRef 
+ProgramStateRef
 ProgramState::enterStackFrame(const CallEvent &Call,
                               const StackFrameContext *CalleeCtx) const {
   const StoreRef &NewStore =
@@ -275,7 +275,7 @@ SVal ProgramState::getSVal(Loc location, QualType T) const {
         //  symbol for the call to foo(); the type of that symbol is 'char',
         //  not unsigned.
         const llvm::APSInt &NewV = getBasicVals().Convert(T, *Int);
-        
+
         if (V.getAs<Loc>())
           return loc::ConcreteInt(NewV);
         else
@@ -283,7 +283,7 @@ SVal ProgramState::getSVal(Loc location, QualType T) const {
       }
     }
   }
-  
+
   return V;
 }
 
@@ -353,11 +353,11 @@ ConditionTruthVal ProgramState::isNull(SVal V) const {
 
   if (V.isConstant())
     return false;
-  
+
   SymbolRef Sym = V.getAsSymbol(/* IncludeBaseRegion */ true);
   if (!Sym)
     return ConditionTruthVal();
-  
+
   return getStateManager().ConstraintMgr->isNull(this, Sym);
 }
 
@@ -390,7 +390,7 @@ ProgramStateRef ProgramStateManager::getPersistentState(ProgramState &State) {
   ProgramState *newState = nullptr;
   if (!freeStates.empty()) {
     newState = freeStates.back();
-    freeStates.pop_back();    
+    freeStates.pop_back();
   }
   else {
     newState = (ProgramState*) Alloc.Allocate<ProgramState>();
@@ -530,10 +530,10 @@ bool ScanReachableSymbols::scan(const SymExpr *sym) {
   bool wasVisited = !visited.insert(sym).second;
   if (wasVisited)
     return true;
-  
+
   if (!visitor.VisitSymbol(sym))
     return false;
-  
+
   // TODO: should be rewritten using SymExpr::symbol_iterator.
   switch (sym->getKind()) {
     case SymExpr::RegionValueKind:
@@ -582,11 +582,11 @@ bool ScanReachableSymbols::scan(SVal val) {
 bool ScanReachableSymbols::scan(const MemRegion *R) {
   if (isa<MemSpaceRegion>(R))
     return true;
-  
+
   bool wasVisited = !visited.insert(R).second;
   if (wasVisited)
     return true;
-  
+
   if (!visitor.VisitMemRegion(R))
     return false;
 
@@ -722,14 +722,14 @@ bool ProgramState::isTainted(const MemRegion *Reg, TaintTagType K) const {
 bool ProgramState::isTainted(SymbolRef Sym, TaintTagType Kind) const {
   if (!Sym)
     return false;
-  
+
   // Traverse all the symbols this symbol depends on to see if any are tainted.
   bool Tainted = false;
   for (SymExpr::symbol_iterator SI = Sym->symbol_begin(), SE =Sym->symbol_end();
        SI != SE; ++SI) {
     if (!isa<SymbolData>(*SI))
       continue;
-    
+
     const TaintTagType *Tag = get<TaintMap>(*SI);
     Tainted = (Tag && *Tag == Kind);
 
@@ -748,7 +748,7 @@ bool ProgramState::isTainted(SymbolRef Sym, TaintTagType Kind) const {
     if (Tainted)
       return true;
   }
-  
+
   return Tainted;
 }
 

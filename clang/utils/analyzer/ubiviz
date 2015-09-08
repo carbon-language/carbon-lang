@@ -18,7 +18,7 @@ import sys
 def Error(message):
     print >> sys.stderr, 'ubiviz: ' + message
     sys.exit(1)
-    
+
 def StreamData(filename):
   file = open(filename)
   for ln in file:
@@ -55,20 +55,19 @@ def Display(G, data):
 
 def main(args):
   if len(args) == 0:
-    Error('no input files')    
+    Error('no input files')
 
   server = xmlrpclib.Server('http://127.0.0.1:20738/RPC2')
   G = server.ubigraph
-            
+
   for arg in args:
     G.clear()
     for x in StreamData(arg):
       Display(G,x)
-  
+
   sys.exit(0)
-  
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])
-    
-    
+

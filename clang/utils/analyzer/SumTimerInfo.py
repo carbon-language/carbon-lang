@@ -3,7 +3,7 @@
 """
 Script to Summarize statistics in the scan-build output.
 
-Statistics are enabled by passing '-internal-stats' option to scan-build 
+Statistics are enabled by passing '-internal-stats' option to scan-build
 (or '-analyzer-stats' to the analyzer).
 
 """
@@ -69,7 +69,7 @@ if __name__ == '__main__':
         if ((")  Total" in line) and (Mode == 1)) :
           s = line.split()
           TotalTime = TotalTime + float(s[6])
-          
+
     print "TU Count %d" % (Count)
     print "Time %f" % (Time)
     print "Warnings %d" % (Warnings)
@@ -81,4 +81,3 @@ if __name__ == '__main__':
     print "MaxTime %f" % (MaxTime)
     print "TotalTime %f" % (TotalTime)
     print "Max CFG Size %d" % (MaxCFGSize)
-    

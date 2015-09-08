@@ -20,8 +20,8 @@
 //  been called on them. An invalidation method should either invalidate all
 //  the ivars or call another invalidation method (on self).
 //
-//  Partial invalidor annotation allows to addess cases when ivars are 
-//  invalidated by other methods, which might or might not be called from 
+//  Partial invalidor annotation allows to addess cases when ivars are
+//  invalidated by other methods, which might or might not be called from
 //  the invalidation method. The checker checks that each invalidation
 //  method and all the partial methods cumulatively invalidate all ivars.
 //    __attribute__((annotate("objc_instance_variable_invalidator_partial")));
@@ -310,7 +310,7 @@ const ObjCIvarDecl *IvarInvalidationCheckerImpl::findPropertyBackingIvar(
 
   // Lookup for the synthesized case.
   IvarD = Prop->getPropertyIvarDecl();
-  // We only track the ivars/properties that are defined in the current 
+  // We only track the ivars/properties that are defined in the current
   // class (not the parent).
   if (IvarD && IvarD->getContainingInterface() == InterfaceD) {
     if (TrackedIvars.count(IvarD)) {

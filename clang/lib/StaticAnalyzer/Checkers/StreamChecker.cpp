@@ -43,8 +43,8 @@ struct StreamState {
 
   static StreamState getOpened(const Stmt *s) { return StreamState(Opened, s); }
   static StreamState getClosed(const Stmt *s) { return StreamState(Closed, s); }
-  static StreamState getOpenFailed(const Stmt *s) { 
-    return StreamState(OpenFailed, s); 
+  static StreamState getOpenFailed(const Stmt *s) {
+    return StreamState(OpenFailed, s);
   }
   static StreamState getEscaped(const Stmt *s) {
     return StreamState(Escaped, s);
@@ -59,14 +59,14 @@ struct StreamState {
 class StreamChecker : public Checker<eval::Call,
                                      check::DeadSymbols > {
   mutable IdentifierInfo *II_fopen, *II_tmpfile, *II_fclose, *II_fread,
-                 *II_fwrite, 
-                 *II_fseek, *II_ftell, *II_rewind, *II_fgetpos, *II_fsetpos,  
+                 *II_fwrite,
+                 *II_fseek, *II_ftell, *II_rewind, *II_fgetpos, *II_fsetpos,
                  *II_clearerr, *II_feof, *II_ferror, *II_fileno;
   mutable std::unique_ptr<BuiltinBug> BT_nullfp, BT_illegalwhence,
       BT_doubleclose, BT_ResourceLeak;
 
 public:
-  StreamChecker() 
+  StreamChecker()
     : II_fopen(nullptr), II_tmpfile(nullptr), II_fclose(nullptr),
       II_fread(nullptr), II_fwrite(nullptr), II_fseek(nullptr),
       II_ftell(nullptr), II_rewind(nullptr), II_fgetpos(nullptr),
@@ -93,10 +93,10 @@ private:
   void Fileno(CheckerContext &C, const CallExpr *CE) const;
 
   void OpenFileAux(CheckerContext &C, const CallExpr *CE) const;
-  
-  ProgramStateRef CheckNullStream(SVal SV, ProgramStateRef state, 
+
+  ProgramStateRef CheckNullStream(SVal SV, ProgramStateRef state,
                                  CheckerContext &C) const;
-  ProgramStateRef CheckDoubleClose(const CallExpr *CE, ProgramStateRef state, 
+  ProgramStateRef CheckDoubleClose(const CallExpr *CE, ProgramStateRef state,
                                  CheckerContext &C) const;
 };
 
@@ -216,13 +216,13 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
                                                     C.blockCount())
       .castAs<DefinedSVal>();
   state = state->BindExpr(CE, C.getLocationContext(), RetVal);
-  
+
   ConstraintManager &CM = C.getConstraintManager();
   // Bifurcate the state into two: one with a valid FILE* pointer, the other
   // with a NULL.
   ProgramStateRef stateNotNull, stateNull;
   std::tie(stateNotNull, stateNull) = CM.assumeDual(state, RetVal);
-  
+
   if (SymbolRef Sym = RetVal.getAsSymbol()) {
     // if RetVal is not NULL, set the symbol's state to Opened.
     stateNotNull =
@@ -368,13 +368,13 @@ ProgramStateRef StreamChecker::CheckDoubleClose(const CallExpr *CE,
     state->getSVal(CE->getArg(0), C.getLocationContext()).getAsSymbol();
   if (!Sym)
     return state;
-  
+
   const StreamState *SS = state->get<StreamMap>(Sym);
 
   // If the file stream is not tracked, return.
   if (!SS)
     return state;
-  
+
   // Check: Double close a File Descriptor could cause undefined behaviour.
   // Conforming to man-pages
   if (SS->isClosed()) {
@@ -389,7 +389,7 @@ ProgramStateRef StreamChecker::CheckDoubleClose(const CallExpr *CE,
     }
     return nullptr;
   }
-  
+
   // Close the File Descriptor.
   return state->set<StreamMap>(Sym, StreamState::getClosed(CE));
 }

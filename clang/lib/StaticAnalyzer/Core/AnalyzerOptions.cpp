@@ -65,7 +65,7 @@ IPAKind AnalyzerOptions::getIPAMode() {
     // Set the member variable.
     IPAMode = IPAConfig;
   }
-  
+
   return IPAMode;
 }
 

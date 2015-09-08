@@ -62,10 +62,10 @@ class PthreadLockChecker : public Checker< check::PostStmt<CallExpr> > {
   };
 public:
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
-    
+
   void AcquireLock(CheckerContext &C, const CallExpr *CE, SVal lock,
                    bool isTryLock, enum LockingSemantics semantics) const;
-    
+
   void ReleaseLock(CheckerContext &C, const CallExpr *CE, SVal lock) const;
   void DestroyLock(CheckerContext &C, const CallExpr *CE, SVal Lock) const;
   void InitLock(CheckerContext &C, const CallExpr *CE, SVal Lock) const;
@@ -96,7 +96,7 @@ void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
                 false, PthreadSemantics);
   else if (FName == "lck_mtx_lock" ||
            FName == "lck_rw_lock_exclusive" ||
-           FName == "lck_rw_lock_shared") 
+           FName == "lck_rw_lock_shared")
     AcquireLock(C, CE, state->getSVal(CE->getArg(0), LCtx),
                 false, XNUSemantics);
   else if (FName == "pthread_mutex_trylock" ||
@@ -124,17 +124,17 @@ void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
 void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
                                      SVal lock, bool isTryLock,
                                      enum LockingSemantics semantics) const {
-  
+
   const MemRegion *lockR = lock.getAsRegion();
   if (!lockR)
     return;
-  
+
   ProgramStateRef state = C.getState();
-  
+
   SVal X = state->getSVal(CE, C.getLocationContext());
   if (X.isUnknownOrUndef())
     return;
-  
+
   DefinedSVal retVal = X.castAs<DefinedSVal>();
 
   if (const LockState *LState = state->get<LockMap>(lockR)) {
@@ -183,8 +183,8 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
     assert((semantics == XNUSemantics) && "Unknown locking semantics");
     lockSucc = state;
   }
-  
-  // Record that the lock was acquired.  
+
+  // Record that the lock was acquired.
   lockSucc = lockSucc->add<LockSet>(lockR);
   lockSucc = lockSucc->set<LockMap>(lockR, LockState::getLocked());
   C.addTransition(lockSucc);
@@ -196,7 +196,7 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
   const MemRegion *lockR = lock.getAsRegion();
   if (!lockR)
     return;
-  
+
   ProgramStateRef state = C.getState();
 
   if (const LockState *LState = state->get<LockMap>(lockR)) {

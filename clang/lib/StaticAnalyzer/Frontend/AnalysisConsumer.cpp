@@ -168,7 +168,7 @@ public:
   /// The local declaration to all declarations ratio might be very small when
   /// working with a PCH file.
   SetOfDecls LocalTUDecls;
-                           
+
   // Set of PathDiagnosticConsumers.  Owned by AnalysisManager.
   PathDiagnosticConsumers PathConsumers;
 
@@ -364,7 +364,7 @@ public:
     }
     return true;
   }
-  
+
   bool VisitBlockDecl(BlockDecl *BD) {
     if (BD->hasBody()) {
       assert(RecVisitorMode == AM_Syntax || Mgr->shouldInlineCall() == false);
@@ -475,7 +475,7 @@ void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
 
     CallGraphNode *N = *I;
     Decl *D = N->getDecl();
-    
+
     // Skip the abstract root node.
     if (!D)
       continue;
@@ -679,11 +679,11 @@ void AnalysisConsumer::RunPathSensitiveChecks(Decl *D,
   case LangOptions::NonGC:
     ActionExprEngine(D, false, IMode, Visited);
     break;
-  
+
   case LangOptions::GCOnly:
     ActionExprEngine(D, true, IMode, Visited);
     break;
-  
+
   case LangOptions::HybridGC:
     ActionExprEngine(D, false, IMode, Visited);
     ActionExprEngine(D, true, IMode, Visited);

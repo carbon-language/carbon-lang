@@ -97,9 +97,9 @@ SVal Environment::getSVal(const EnvironmentEntry &Entry,
     const ReturnStmt *RS = cast<ReturnStmt>(S);
     if (const Expr *RE = RS->getRetValue())
       return getSVal(EnvironmentEntry(RE, LCtx), svalBuilder);
-    return UndefinedVal();        
+    return UndefinedVal();
   }
-    
+
   // Handle all other Stmt* using a lookup.
   default:
     return lookupExpr(EnvironmentEntry(S, LCtx));
@@ -194,16 +194,16 @@ void Environment::print(raw_ostream &Out, const char *NL,
 
   for (Environment::iterator I = begin(), E = end(); I != E; ++I) {
     const EnvironmentEntry &En = I.getKey();
-    
+
     if (isFirst) {
       Out << NL << NL
           << "Expressions:"
-          << NL;      
+          << NL;
       isFirst = false;
     } else {
       Out << NL;
     }
-    
+
     const Stmt *S = En.getStmt();
     assert(S != nullptr && "Expected non-null Stmt");
 

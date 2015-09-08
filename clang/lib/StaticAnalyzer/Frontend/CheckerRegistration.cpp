@@ -42,7 +42,7 @@ public:
   ClangCheckerRegistry(ArrayRef<std::string> plugins,
                        DiagnosticsEngine *diags = nullptr);
 };
-  
+
 } // end anonymous namespace
 
 ClangCheckerRegistry::ClangCheckerRegistry(ArrayRef<std::string> plugins,

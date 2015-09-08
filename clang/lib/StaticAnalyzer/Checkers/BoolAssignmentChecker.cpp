@@ -42,45 +42,45 @@ void BoolAssignmentChecker::emitReport(ProgramStateRef state,
 static bool isBooleanType(QualType Ty) {
   if (Ty->isBooleanType()) // C++ or C99
     return true;
-  
+
   if (const TypedefType *TT = Ty->getAs<TypedefType>())
     return TT->getDecl()->getName() == "BOOL"   || // Objective-C
            TT->getDecl()->getName() == "_Bool"  || // stdbool.h < C99
            TT->getDecl()->getName() == "Boolean";  // MacTypes.h
-  
+
   return false;
 }
 
 void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
                                       CheckerContext &C) const {
-  
+
   // We are only interested in stores into Booleans.
   const TypedValueRegion *TR =
     dyn_cast_or_null<TypedValueRegion>(loc.getAsRegion());
-  
+
   if (!TR)
     return;
-  
+
   QualType valTy = TR->getValueType();
-  
+
   if (!isBooleanType(valTy))
     return;
-  
+
   // Get the value of the right-hand side.  We only care about values
   // that are defined (UnknownVals and UndefinedVals are handled by other
   // checkers).
   Optional<DefinedSVal> DV = val.getAs<DefinedSVal>();
   if (!DV)
     return;
-    
+
   // Check if the assigned value meets our criteria for correctness.  It must
   // be a value that is either 0 or 1.  One way to check this is to see if
   // the value is possibly < 0 (for a negative value) or greater than 1.
-  ProgramStateRef state = C.getState(); 
+  ProgramStateRef state = C.getState();
   SValBuilder &svalBuilder = C.getSValBuilder();
   ConstraintManager &CM = C.getConstraintManager();
-  
-  // First, ensure that the value is >= 0.  
+
+  // First, ensure that the value is >= 0.
   DefinedSVal zeroVal = svalBuilder.makeIntVal(0, valTy);
   SVal greaterThanOrEqualToZeroVal =
     svalBuilder.evalBinOp(state, BO_GE, *DV, zeroVal,
@@ -91,13 +91,13 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
 
   if (!greaterThanEqualToZero) {
     // The SValBuilder cannot construct a valid SVal for this condition.
-    // This means we cannot properly reason about it.    
+    // This means we cannot properly reason about it.
     return;
   }
-  
+
   ProgramStateRef stateLT, stateGE;
   std::tie(stateGE, stateLT) = CM.assumeDual(state, *greaterThanEqualToZero);
-  
+
   // Is it possible for the value to be less than zero?
   if (stateLT) {
     // It is possible for the value to be less than zero.  We only
@@ -106,15 +106,15 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
     // value is underconstrained and there is nothing left to be done.
     if (!stateGE)
       emitReport(stateLT, C);
-    
+
     // In either case, we are done.
     return;
   }
-  
+
   // If we reach here, it must be the case that the value is constrained
   // to only be >= 0.
   assert(stateGE == state);
-  
+
   // At this point we know that the value is >= 0.
   // Now check to ensure that the value is <= 1.
   DefinedSVal OneVal = svalBuilder.makeIntVal(1, valTy);
@@ -127,13 +127,13 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
 
   if (!lessThanEqToOne) {
     // The SValBuilder cannot construct a valid SVal for this condition.
-    // This means we cannot properly reason about it.    
+    // This means we cannot properly reason about it.
     return;
   }
-  
+
   ProgramStateRef stateGT, stateLE;
   std::tie(stateLE, stateGT) = CM.assumeDual(state, *lessThanEqToOne);
-  
+
   // Is it possible for the value to be greater than one?
   if (stateGT) {
     // It is possible for the value to be greater than one.  We only
@@ -142,11 +142,11 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
     // value is underconstrained and there is nothing left to be done.
     if (!stateLE)
       emitReport(stateGT, C);
-    
+
     // In either case, we are done.
     return;
   }
-  
+
   // If we reach here, it must be the case that the value is constrained
   // to only be <= 1.
   assert(stateLE == state);

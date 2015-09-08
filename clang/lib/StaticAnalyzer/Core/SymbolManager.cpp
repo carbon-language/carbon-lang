@@ -409,7 +409,7 @@ bool SymbolReaper::maybeDead(SymbolRef sym) {
 bool SymbolReaper::isLiveRegion(const MemRegion *MR) {
   if (RegionRoots.count(MR))
     return true;
-  
+
   MR = MR->getBaseRegion();
 
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR))
@@ -442,9 +442,9 @@ bool SymbolReaper::isLive(SymbolRef sym) {
     markDependentsLive(sym);
     return true;
   }
-  
+
   bool KnownLive;
-  
+
   switch (sym->getKind()) {
   case SymExpr::RegionValueKind:
     KnownLive = isLiveRegion(cast<SymbolRegionValue>(sym)->getRegion());
@@ -525,7 +525,7 @@ bool SymbolReaper::isLive(const VarRegion *VR, bool includeStoreBindings) const{
 
     if (!includeStoreBindings)
       return false;
-    
+
     unsigned &cachedQuery =
       const_cast<SymbolReaper*>(this)->includedRegionCache[VR];
 
@@ -535,12 +535,12 @@ bool SymbolReaper::isLive(const VarRegion *VR, bool includeStoreBindings) const{
 
     // Query the store to see if the region occurs in any live bindings.
     if (Store store = reapedStore.getStore()) {
-      bool hasRegion = 
+      bool hasRegion =
         reapedStore.getStoreManager().includedInBindings(store, VR);
       cachedQuery = hasRegion ? 1 : 2;
       return hasRegion;
     }
-    
+
     return false;
   }
 

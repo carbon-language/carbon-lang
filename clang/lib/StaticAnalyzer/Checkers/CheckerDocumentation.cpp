@@ -222,7 +222,7 @@ public:
   /// changed, this allows the analyzer core to skip the more expensive
   /// #checkRegionChanges when no checkers are tracking any state.
   bool wantsRegionChangeUpdate(ProgramStateRef St) const { return true; }
-  
+
   /// \brief Called when the contents of one or more regions change.
   ///
   /// This can occur in many different ways: an explicit bind, a blanket
@@ -246,7 +246,7 @@ public:
   /// #wantsRegionChangeUpdate returns \c true.
   ///
   /// check::RegionChanges
-  ProgramStateRef 
+  ProgramStateRef
     checkRegionChanges(ProgramStateRef State,
                        const InvalidatedSymbols *Invalidated,
                        ArrayRef<const MemRegion *> ExplicitRegions,
@@ -259,12 +259,12 @@ public:
   ///
   /// This notifies the checkers about pointer escape, which occurs whenever
   /// the analyzer cannot track the symbol any more. For example, as a
-  /// result of assigning a pointer into a global or when it's passed to a 
+  /// result of assigning a pointer into a global or when it's passed to a
   /// function call the analyzer cannot model.
-  /// 
+  ///
   /// \param State The state at the point of escape.
   /// \param Escaped The list of escaped symbols.
-  /// \param Call The corresponding CallEvent, if the symbols escape as 
+  /// \param Call The corresponding CallEvent, if the symbols escape as
   /// parameters to the given call.
   /// \param Kind How the symbols have escaped.
   /// \returns Checkers can modify the state by returning a new state.
@@ -285,7 +285,7 @@ public:
                                      PointerEscapeKind Kind) const {
     return State;
   }
-                                         
+
   /// check::Event<ImplicitNullDerefEvent>
   void checkEvent(ImplicitNullDerefEvent Event) const {}
 

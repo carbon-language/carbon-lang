@@ -357,9 +357,9 @@ void CheckerManager::runCheckersForEndFunction(NodeBuilderContext &BC,
                                                ExplodedNodeSet &Dst,
                                                ExplodedNode *Pred,
                                                ExprEngine &Eng) {
-  
+
   // We define the builder outside of the loop bacause if at least one checkers
-  // creates a sucsessor for Pred, we do not need to generate an 
+  // creates a sucsessor for Pred, we do not need to generate an
   // autotransition for it.
   NodeBuilder Bldr(Pred, Dst, BC);
   for (unsigned i = 0, e = EndFunctionCheckers.size(); i != e; ++i) {
@@ -467,7 +467,7 @@ bool CheckerManager::wantsRegionChangeUpdate(ProgramStateRef state) {
 }
 
 /// \brief Run checkers for region changes.
-ProgramStateRef 
+ProgramStateRef
 CheckerManager::runCheckersForRegionChanges(ProgramStateRef state,
                                     const InvalidatedSymbols *invalidated,
                                     ArrayRef<const MemRegion *> ExplicitRegions,
@@ -478,7 +478,7 @@ CheckerManager::runCheckersForRegionChanges(ProgramStateRef state,
     // bail out.
     if (!state)
       return nullptr;
-    state = RegionChangesCheckers[i].CheckFn(state, invalidated, 
+    state = RegionChangesCheckers[i].CheckFn(state, invalidated,
                                              ExplicitRegions, Regions, Call);
   }
   return state;
@@ -506,7 +506,7 @@ CheckerManager::runCheckersForPointerEscape(ProgramStateRef State,
 }
 
 /// \brief Run checkers for handling assumptions on symbolic values.
-ProgramStateRef 
+ProgramStateRef
 CheckerManager::runCheckersForEvalAssume(ProgramStateRef state,
                                          SVal Cond, bool Assumption) {
   for (unsigned i = 0, e = EvalAssumeCheckers.size(); i != e; ++i) {
@@ -558,7 +558,7 @@ void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
 #endif
       }
     }
-    
+
     // If none of the checkers evaluated the call, ask ExprEngine to handle it.
     if (!anyEvaluated) {
       NodeBuilder B(Pred, Dst, Eng.getBuilderContext());

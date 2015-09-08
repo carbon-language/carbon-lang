@@ -113,7 +113,7 @@ void DynamicTypePropagation::checkPostCall(const CallEvent &Call,
 
     ProgramStateRef State = C.getState();
     const ObjCMethodDecl *D = Msg->getDecl();
-    
+
     if (D && D->hasRelatedResultType()) {
       switch (Msg->getMethodFamily()) {
       default:
@@ -201,7 +201,7 @@ void DynamicTypePropagation::checkPostStmt(const CXXNewExpr *NewE,
   const MemRegion *MR = C.getSVal(NewE).getAsRegion();
   if (!MR)
     return;
-  
+
   C.addTransition(C.getState()->setDynamicTypeInfo(MR, NewE->getType(),
                                                    /*CanBeSubclass=*/false));
 }

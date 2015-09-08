@@ -90,8 +90,8 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // (7) The LocationContext is the same as the predecessor.
   // (8) Expressions that are *not* lvalue expressions.
   // (9) The PostStmt isn't for a non-consumed Stmt or Expr.
-  // (10) The successor is neither a CallExpr StmtPoint nor a CallEnter or 
-  //      PreImplicitCall (so that we would be able to find it when retrying a 
+  // (10) The successor is neither a CallExpr StmtPoint nor a CallEnter or
+  //      PreImplicitCall (so that we would be able to find it when retrying a
   //      call with no inlining).
   // FIXME: It may be safe to reclaim PreCall and PostCall nodes as well.
 
@@ -102,7 +102,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   const ExplodedNode *pred = *(node->pred_begin());
   if (pred->succ_size() != 1)
     return false;
-  
+
   const ExplodedNode *succ = *(node->succ_begin());
   if (succ->pred_size() != 1)
     return false;
@@ -123,7 +123,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
 
   // Conditions 5, 6, and 7.
   ProgramStateRef state = node->getState();
-  ProgramStateRef pred_state = pred->getState();    
+  ProgramStateRef pred_state = pred->getState();
   if (state->store != pred_state->store || state->GDM != pred_state->GDM ||
       progPoint.getLocationContext() != pred->getLocationContext())
     return false;
@@ -174,7 +174,7 @@ void ExplodedGraph::collectNode(ExplodedNode *node) {
   FreeNodes.push_back(node);
   Nodes.RemoveNode(node);
   --NumNodes;
-  node->~ExplodedNode();  
+  node->~ExplodedNode();
 }
 
 void ExplodedGraph::reclaimRecentlyAllocatedNodes() {

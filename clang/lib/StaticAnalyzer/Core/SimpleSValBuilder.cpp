@@ -638,7 +638,7 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
     // on the ABI).
     // FIXME: we can probably do a comparison against other MemRegions, though.
     // FIXME: is there a way to tell if two labels refer to the same location?
-    return UnknownVal(); 
+    return UnknownVal();
 
   case loc::ConcreteIntKind: {
     // If one of the operands is a symbol and the other is a constant,
@@ -863,7 +863,7 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
   // Special case: rhs is a zero constant.
   if (rhs.isZeroConstant())
     return lhs;
-  
+
   // We are dealing with pointer arithmetic.
 
   // Handle pointer arithmetic on constant values.
@@ -880,7 +880,7 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
       // Offset the increment by the pointer size.
       llvm::APSInt Multiplicand(rightI.getBitWidth(), /* isUnsigned */ true);
       rightI *= Multiplicand;
-      
+
       // Compute the adjusted pointer.
       switch (op) {
         case BO_Add:
@@ -922,7 +922,7 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
                                                        superR, getContext()));
     }
   }
-  return UnknownVal();  
+  return UnknownVal();
 }
 
 const llvm::APSInt *SimpleSValBuilder::getKnownValue(ProgramStateRef state,

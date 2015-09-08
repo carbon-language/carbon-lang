@@ -94,7 +94,7 @@ void CheckerRegistry::addChecker(InitializationFunction fn, StringRef name,
   }
 }
 
-void CheckerRegistry::initializeManager(CheckerManager &checkerMgr, 
+void CheckerRegistry::initializeManager(CheckerManager &checkerMgr,
                                   SmallVectorImpl<CheckerOptInfo> &opts) const {
   // Sort checkers for efficient collection.
   std::sort(Checkers.begin(), Checkers.end(), checkerNameLT);

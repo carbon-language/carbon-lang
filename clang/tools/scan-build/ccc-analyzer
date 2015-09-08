@@ -282,7 +282,7 @@ sub Analyze {
   # We save the output file in the 'crashes' directory if clang encounters
   # any problems with the file.
   my ($ofh, $ofile) = tempfile("clang_output_XXXXXX", DIR => $HtmlDir);
-  
+
   my $OutputStream = silent_system($HtmlDir, $Cmd, @CmdArgs);
   while ( <$OutputStream> ) {
     print $ofh $_;

@@ -54,7 +54,7 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
                                               BugReporter &B,
                                               ExprEngine &Eng) const {
   CFGBlocksSet reachable, visited;
-  
+
   if (Eng.hasWorkRemaining())
     return;
 
@@ -88,7 +88,7 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
   // Bail out if we didn't get the CFG or the ParentMap.
   if (!D || !C || !PM)
     return;
-  
+
   // Don't do anything for template instantiations.  Proving that code
   // in a template instantiation is unreachable means proving that it is
   // unreachable in all instantiations.

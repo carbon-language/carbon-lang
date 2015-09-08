@@ -30,7 +30,7 @@ class UndefBranchChecker : public Checker<check::BranchCondition> {
     ProgramStateRef St;
     const LocationContext *LCtx;
 
-    FindUndefExpr(ProgramStateRef S, const LocationContext *L) 
+    FindUndefExpr(ProgramStateRef S, const LocationContext *L)
       : St(S), LCtx(L) {}
 
     const Expr *FindExpr(const Expr *Ex) {
@@ -45,7 +45,7 @@ class UndefBranchChecker : public Checker<check::BranchCondition> {
       return Ex;
     }
 
-    bool MatchesCriteria(const Expr *Ex) { 
+    bool MatchesCriteria(const Expr *Ex) {
       return St->getSVal(Ex, LCtx).isUndef();
     }
   };

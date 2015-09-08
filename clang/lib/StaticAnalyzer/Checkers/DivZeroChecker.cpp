@@ -29,7 +29,7 @@ class DivZeroChecker : public Checker< check::PreStmt<BinaryOperator> > {
                  CheckerContext &C) const ;
 public:
   void checkPreStmt(const BinaryOperator *B, CheckerContext &C) const;
-};  
+};
 } // end anonymous namespace
 
 void DivZeroChecker::reportBug(const char *Msg,

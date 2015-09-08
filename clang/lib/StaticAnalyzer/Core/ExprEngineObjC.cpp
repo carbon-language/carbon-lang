@@ -19,18 +19,18 @@
 using namespace clang;
 using namespace ento;
 
-void ExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr *Ex, 
+void ExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr *Ex,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
   ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
   SVal baseVal = state->getSVal(Ex->getBase(), LCtx);
   SVal location = state->getLValue(Ex->getDecl(), baseVal);
-  
+
   ExplodedNodeSet dstIvar;
   StmtNodeBuilder Bldr(Pred, dstIvar, *currBldrCtx);
   Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, location));
-  
+
   // Perform the post-condition check of the ObjCIvarRefExpr and store
   // the created nodes in 'Dst'.
   getCheckerManager().runCheckersForPostStmt(Dst, dstIvar, Ex, *this);
@@ -45,7 +45,7 @@ void ExprEngine::VisitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt *S,
 void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
                                             ExplodedNode *Pred,
                                             ExplodedNodeSet &Dst) {
-  
+
   // ObjCForCollectionStmts are processed in two places.  This method
   // handles the case where an ObjCForCollectionStmt* occurs as one of the
   // statements within a basic block.  This transfer function does two things:
@@ -74,7 +74,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   const Stmt *elem = S->getElement();
   ProgramStateRef state = Pred->getState();
   SVal elementV;
-  
+
   if (const DeclStmt *DS = dyn_cast<DeclStmt>(elem)) {
     const VarDecl *elemD = cast<VarDecl>(DS->getSingleDecl());
     assert(elemD->getInit() == nullptr);
@@ -83,7 +83,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   else {
     elementV = state->getSVal(elem, Pred->getLocationContext());
   }
-  
+
   ExplodedNodeSet dstLocation;
   evalLocation(dstLocation, S, elem, Pred, state, elementV, nullptr, false);
 
@@ -95,17 +95,17 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
     Pred = *NI;
     ProgramStateRef state = Pred->getState();
     const LocationContext *LCtx = Pred->getLocationContext();
-    
+
     // Handle the case where the container still has elements.
     SVal TrueV = svalBuilder.makeTruthVal(1);
     ProgramStateRef hasElems = state->BindExpr(S, LCtx, TrueV);
-    
+
     // Handle the case where the container has no elements.
     SVal FalseV = svalBuilder.makeTruthVal(0);
     ProgramStateRef noElems = state->BindExpr(S, LCtx, FalseV);
 
     if (Optional<loc::MemRegionVal> MV = elementV.getAs<loc::MemRegionVal>())
-      if (const TypedValueRegion *R = 
+      if (const TypedValueRegion *R =
           dyn_cast<TypedValueRegion>(MV->getRegion())) {
         // FIXME: The proper thing to do is to really iterate over the
         //  container.  We will do this with dispatch logic to the store.
@@ -116,12 +116,12 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
                                              currBldrCtx->blockCount());
         SVal V = svalBuilder.makeLoc(Sym);
         hasElems = hasElems->bindLoc(elementV, V);
-        
+
         // Bind the location to 'nil' on the false branch.
         SVal nilV = svalBuilder.makeIntVal(0, T);
         noElems = noElems->bindLoc(elementV, nilV);
       }
-    
+
     // Create the new nodes.
     Bldr.generateNode(S, Pred, hasElems);
     Bldr.generateNode(S, Pred, noElems);
@@ -156,7 +156,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
     ExplodedNode *Pred = *DI;
     ProgramStateRef State = Pred->getState();
     CallEventRef<ObjCMethodCall> UpdatedMsg = Msg.cloneWithState(State);
-    
+
     if (UpdatedMsg->isInstanceMessage()) {
       SVal recVal = UpdatedMsg->getReceiverSVal();
       if (!recVal.isUndef()) {
@@ -166,7 +166,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
 
         ProgramStateRef notNilState, nilState;
         std::tie(notNilState, nilState) = State->assume(receiverVal);
-        
+
         // There are three cases: can be nil or non-nil, must be nil, must be
         // non-nil. We ignore must be nil, and merge the rest two into non-nil.
         // FIXME: This ignores many potential bugs (<rdar://problem/11733396>).
@@ -174,7 +174,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
         if (nilState && !notNilState) {
           continue;
         }
-        
+
         // Check if the "raise" message was sent.
         assert(notNilState);
         if (ObjCNoRet.isImplicitNoReturn(ME)) {
@@ -183,7 +183,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
           Bldr.generateSink(ME, Pred, State);
           continue;
         }
-        
+
         // Generate a transition to non-Nil state.
         if (notNilState != State) {
           Pred = Bldr.generateNode(ME, Pred, notNilState);
@@ -203,7 +203,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
 
     defaultEvalCall(Bldr, Pred, *UpdatedMsg);
   }
-  
+
   ExplodedNodeSet dstPostvisit;
   getCheckerManager().runCheckersForPostCall(dstPostvisit, dstEval,
                                              *Msg, *this);

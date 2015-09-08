@@ -44,19 +44,19 @@ void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
 
   const CFG *CalleeCFG = calleeCtx->getCFG();
   const CFGBlock *Entry = &(CalleeCFG->getEntry());
-  
+
   // Validate the CFG.
   assert(Entry->empty());
   assert(Entry->succ_size() == 1);
-  
+
   // Get the solitary successor.
   const CFGBlock *Succ = *(Entry->succ_begin());
-  
+
   // Construct an edge representing the starting location in the callee.
   BlockEdge Loc(Entry, Succ, calleeCtx);
 
   ProgramStateRef state = Pred->getState();
-  
+
   // Construct a new node and add it to the worklist.
   bool isNew;
   ExplodedNode *Node = G.getNode(Loc, state, false, &isNew);
@@ -207,8 +207,8 @@ static bool isTemporaryPRValue(const CXXConstructExpr *E, SVal V) {
   return isa<CXXTempObjectRegion>(MR);
 }
 
-/// The call exit is simulated with a sequence of nodes, which occur between 
-/// CallExitBegin and CallExitEnd. The following operations occur between the 
+/// The call exit is simulated with a sequence of nodes, which occur between
+/// CallExitBegin and CallExitEnd. The following operations occur between the
 /// two program points:
 /// 1. CallExitBegin (triggers the start of call exit sequence)
 /// 2. Bind the return value
@@ -220,12 +220,12 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
   PrettyStackTraceLocationContext CrashInfo(CEBNode->getLocationContext());
   const StackFrameContext *calleeCtx =
       CEBNode->getLocationContext()->getCurrentStackFrame();
-  
+
   // The parent context might not be a stack frame, so make sure we
   // look up the first enclosing stack frame.
   const StackFrameContext *callerCtx =
     calleeCtx->getParent()->getCurrentStackFrame();
-  
+
   const Stmt *CE = calleeCtx->getCallSite();
   ProgramStateRef state = CEBNode->getState();
   // Find the last statement in the function and the corresponding basic block.
@@ -429,7 +429,7 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
                                                          cast<BlockDecl>(D),
                                                          BR);
   }
-  
+
   // This may be NULL, but that's fine.
   const Expr *CallE = Call.getOriginExpr();
 
@@ -439,8 +439,8 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     CalleeADC->getStackFrame(ParentOfCallee, CallE,
                              currBldrCtx->getBlock(),
                              currStmtIdx);
-  
-    
+
+
   CallEnter Loc(CallE, CalleeSFC, CurLC);
 
   // Construct a new state which contains the mapping from actual to
@@ -769,7 +769,7 @@ static bool mayInlineDecl(AnalysisDeclContext *CalleeADC,
         if (!Ctx.getSourceManager().isInMainFile(FD->getLocation()))
           if (isContainerMethod(Ctx, FD))
             return false;
-            
+
       // Conditionally control the inlining of the destructor of C++ shared_ptr.
       // We don't currently do a good job modeling shared_ptr because we can't
       // see the reference count, so treating as opaque is probably the best
@@ -992,12 +992,12 @@ void ExprEngine::BifurcateCall(const MemRegion *BifurReg,
 
 void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
                                  ExplodedNodeSet &Dst) {
-  
+
   ExplodedNodeSet dstPreVisit;
   getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, RS, *this);
 
   StmtNodeBuilder B(dstPreVisit, Dst, *currBldrCtx);
-  
+
   if (RS->getRetValue()) {
     for (ExplodedNodeSet::iterator it = dstPreVisit.begin(),
                                   ei = dstPreVisit.end(); it != ei; ++it) {

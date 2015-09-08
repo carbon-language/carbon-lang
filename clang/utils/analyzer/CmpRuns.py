@@ -5,7 +5,7 @@ CmpRuns - A simple tool for comparing two static analyzer runs to determine
 which reports have been added, removed, or changed.
 
 This is designed to support automated testing using the static analyzer, from
-two perspectives: 
+two perspectives:
   1. To monitor changes in the static analyzer's reports on real code bases, for
      regression testing.
 
@@ -19,11 +19,11 @@ Usage:
     #
     resultsA = loadResultsFromSingleRun(singleRunInfoA, deleteEmpty)
     resultsB = loadResultsFromSingleRun(singleRunInfoB, deleteEmpty)
-    
-    # Generate a relation from diagnostics in run A to diagnostics in run B 
-    # to obtain a list of triples (a, b, confidence). 
+
+    # Generate a relation from diagnostics in run A to diagnostics in run B
+    # to obtain a list of triples (a, b, confidence).
     diff = compareResults(resultsA, resultsB)
-           
+
 """
 
 import os
@@ -32,7 +32,7 @@ import CmpRuns
 
 # Information about analysis run:
 # path - the analysis output directory
-# root - the name of the root directory, which will be disregarded when 
+# root - the name of the root directory, which will be disregarded when
 # determining the source file name
 class SingleRunInfo:
     def __init__(self, path, root="", verboseLog=None):
@@ -56,7 +56,7 @@ class AnalysisDiagnostic:
 
     def getLine(self):
         return self._loc['line']
-        
+
     def getColumn(self):
         return self._loc['col']
 
@@ -80,12 +80,12 @@ class AnalysisDiagnostic:
         return os.path.join(self._report.run.path, self._htmlReport)
 
     def getReadableName(self):
-        return '%s:%d:%d, %s: %s' % (self.getFileName(), self.getLine(), 
-                                     self.getColumn(), self.getCategory(), 
+        return '%s:%d:%d, %s: %s' % (self.getFileName(), self.getLine(),
+                                     self.getColumn(), self.getCategory(),
                                      self.getDescription())
-        
-    # Note, the data format is not an API and may change from one analyzer 
-    # version to another.        
+
+    # Note, the data format is not an API and may change from one analyzer
+    # version to another.
     def getRawData(self):
         return self._data
 
@@ -94,7 +94,7 @@ class multidict:
         self.data = {}
         for key,value in elts:
             self[key] = value
-    
+
     def __getitem__(self, item):
         return self.data[item]
     def __setitem__(self, key, value):
@@ -134,15 +134,15 @@ class AnalysisRun:
         # Cumulative list of all diagnostics from all the reports.
         self.diagnostics = []
         self.clang_version = None
-    
+
     def getClangVersion(self):
         return self.clang_version
 
     def readSingleFile(self, p, deleteEmpty):
         data = plistlib.readPlist(p)
 
-        # We want to retrieve the clang version even if there are no 
-        # reports. Assume that all reports were created using the same 
+        # We want to retrieve the clang version even if there are no
+        # reports. Assume that all reports were created using the same
         # clang version (this is always true and is more efficient).
         if 'clang_version' in data:
             if self.clang_version == None:
@@ -166,9 +166,9 @@ class AnalysisRun:
                 htmlFiles.append(d.pop('HTMLDiagnostics_files')[0])
         else:
             htmlFiles = [None] * len(data['diagnostics'])
-            
+
         report = AnalysisReport(self, data.pop('files'))
-        diagnostics = [AnalysisDiagnostic(d, report, h) 
+        diagnostics = [AnalysisDiagnostic(d, report, h)
                        for d,h in zip(data.pop('diagnostics'),
                                       htmlFiles)]
 
@@ -179,7 +179,7 @@ class AnalysisRun:
         self.diagnostics.extend(diagnostics)
 
 
-# Backward compatibility API. 
+# Backward compatibility API.
 def loadResults(path, opts, root = "", deleteEmpty=True):
     return loadResultsFromSingleRun(SingleRunInfo(path, root, opts.verboseLog),
                                     deleteEmpty)
@@ -257,7 +257,7 @@ def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True):
     # Load the run results.
     resultsA = loadResults(dirA, opts, opts.rootA, deleteEmpty)
     resultsB = loadResults(dirB, opts, opts.rootB, deleteEmpty)
-    
+
     # Open the verbose log, if given.
     if opts.verboseLog:
         auxLog = open(opts.verboseLog, "wb")
@@ -285,7 +285,7 @@ def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True):
                                          b.getReadableName())
             foundDiffs += 1
             if auxLog:
-                print >>auxLog, ("('CHANGED', %r, %r, %r, %r)" 
+                print >>auxLog, ("('CHANGED', %r, %r, %r, %r)"
                                  % (a.getReadableName(),
                                     b.getReadableName(),
                                     a.getReport(),
@@ -299,7 +299,7 @@ def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True):
     if auxLog:
         print >>auxLog, "('TOTAL NEW REPORTS', %r)" % TotalReports
         print >>auxLog, "('TOTAL DIFFERENCES', %r)" % foundDiffs
-        
+
     return foundDiffs, len(resultsA.diagnostics), len(resultsB.diagnostics)
 
 def main():
@@ -322,7 +322,7 @@ def main():
 
     dirA,dirB = args
 
-    dumpScanBuildResultsDiff(dirA, dirB, opts)    
+    dumpScanBuildResultsDiff(dirA, dirB, opts)
 
 if __name__ == '__main__':
     main()

@@ -271,7 +271,7 @@ void CoreEngine::dispatchWorkItem(ExplodedNode* Pred, ProgramPoint Loc,
 
 bool CoreEngine::ExecuteWorkListWithInitialState(const LocationContext *L,
                                                  unsigned Steps,
-                                                 ProgramStateRef InitState, 
+                                                 ProgramStateRef InitState,
                                                  ExplodedNodeSet &Dst) {
   bool DidNotFinish = ExecuteWorkList(L, Steps, InitState);
   for (ExplodedGraph::eop_iterator I = G.eop_begin(), E = G.eop_end(); I != E;
@@ -386,7 +386,7 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode *Pred) {
         }
         return;
       }
-        
+
       case Stmt::DoStmtClass:
         HandleBranch(cast<DoStmt>(Term)->getCond(), Term, B, Pred);
         return;
@@ -456,7 +456,7 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode *Pred) {
                Pred->State, Pred);
 }
 
-void CoreEngine::HandleBranch(const Stmt *Cond, const Stmt *Term, 
+void CoreEngine::HandleBranch(const Stmt *Cond, const Stmt *Term,
                                 const CFGBlock * B, ExplodedNode *Pred) {
   assert(B->succ_size() == 2);
   NodeBuilderContext Ctx(*this, B, Pred);
@@ -491,7 +491,7 @@ void CoreEngine::HandleStaticInit(const DeclStmt *DS, const CFGBlock *B,
 }
 
 
-void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx, 
+void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx,
                                   ExplodedNode *Pred) {
   assert(B);
   assert(!B->empty());

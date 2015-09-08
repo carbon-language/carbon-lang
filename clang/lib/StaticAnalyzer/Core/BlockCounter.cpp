@@ -26,7 +26,7 @@ class CountKey {
   unsigned BlockID;
 
 public:
-  CountKey(const StackFrameContext *CS, unsigned ID) 
+  CountKey(const StackFrameContext *CS, unsigned ID)
     : CallSite(CS), BlockID(ID) {}
 
   bool operator==(const CountKey &RHS) const {
@@ -55,7 +55,7 @@ static inline CountMap::Factory& GetFactory(void *F) {
   return *static_cast<CountMap::Factory*>(F);
 }
 
-unsigned BlockCounter::getNumVisited(const StackFrameContext *CallSite, 
+unsigned BlockCounter::getNumVisited(const StackFrameContext *CallSite,
                                        unsigned BlockID) const {
   CountMap M = GetMap(Data);
   CountMap::data_type* T = M.lookup(CountKey(CallSite, BlockID));
@@ -71,10 +71,10 @@ BlockCounter::Factory::~Factory() {
 }
 
 BlockCounter
-BlockCounter::Factory::IncrementCount(BlockCounter BC, 
+BlockCounter::Factory::IncrementCount(BlockCounter BC,
                                         const StackFrameContext *CallSite,
                                         unsigned BlockID) {
-  return BlockCounter(GetFactory(F).add(GetMap(BC.Data), 
+  return BlockCounter(GetFactory(F).add(GetMap(BC.Data),
                                           CountKey(CallSite, BlockID),
                              BC.getNumVisited(CallSite, BlockID)+1).getRoot());
 }

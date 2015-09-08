@@ -101,7 +101,7 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
   else if (isa<BlockDecl>(D)) {
     output << "block(line:" << Loc.getLine() << ":col:" << Loc.getColumn();
   }
-  
+
   NumBlocksUnreachable += unreachable;
   NumBlocks += total;
   std::string NameOfRootFunction = output.str();

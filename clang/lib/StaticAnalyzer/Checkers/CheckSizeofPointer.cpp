@@ -55,8 +55,8 @@ void WalkAST::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E) {
   QualType T = E->getTypeOfArgument();
   if (T->isPointerType()) {
 
-    // Many false positives have the form 'sizeof *p'. This is reasonable 
-    // because people know what they are doing when they intentionally 
+    // Many false positives have the form 'sizeof *p'. This is reasonable
+    // because people know what they are doing when they intentionally
     // dereference the pointer.
     Expr *ArgEx = E->getArgumentExpr();
     if (!isa<DeclRefExpr>(ArgEx->IgnoreParens()))

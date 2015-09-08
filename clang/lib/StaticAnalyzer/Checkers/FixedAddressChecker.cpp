@@ -23,7 +23,7 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class FixedAddressChecker 
+class FixedAddressChecker
   : public Checker< check::PreStmt<BinaryOperator> > {
   mutable std::unique_ptr<BuiltinBug> BT;
 

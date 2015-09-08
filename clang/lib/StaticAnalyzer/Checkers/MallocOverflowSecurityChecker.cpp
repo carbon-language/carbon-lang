@@ -33,7 +33,7 @@ struct MallocOverflowCheck {
   const BinaryOperator *mulop;
   const Expr *variable;
 
-  MallocOverflowCheck (const BinaryOperator *m, const Expr *v) 
+  MallocOverflowCheck (const BinaryOperator *m, const Expr *v)
     : mulop(m), variable (v)
   {}
 };

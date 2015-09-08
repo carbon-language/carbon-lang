@@ -1400,7 +1400,7 @@ my $ForceDisplayHelp = 0;
 
 sub ProcessArgs {
   my $Args = shift;
- 
+
   while (@$Args) {
 
     # Scan for options we recognize.

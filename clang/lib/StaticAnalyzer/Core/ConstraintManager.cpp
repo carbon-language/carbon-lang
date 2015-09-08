@@ -26,7 +26,7 @@ static DefinedSVal getLocFromSymbol(const ProgramStateRef &State,
 }
 
 ConditionTruthVal ConstraintManager::checkNull(ProgramStateRef State,
-                                               SymbolRef Sym) {  
+                                               SymbolRef Sym) {
   QualType Ty = Sym->getType();
   DefinedSVal V = Loc::isLocType(Ty) ? getLocFromSymbol(State, Sym)
                                      : nonloc::SymbolVal(Sym);

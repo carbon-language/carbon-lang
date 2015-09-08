@@ -300,7 +300,7 @@ void ExprEngine::VisitCXXDestructor(QualType ObjectType,
                                     const MemRegion *Dest,
                                     const Stmt *S,
                                     bool IsBaseDtor,
-                                    ExplodedNode *Pred, 
+                                    ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst) {
   const LocationContext *LCtx = Pred->getLocationContext();
   ProgramStateRef State = Pred->getState();
@@ -373,7 +373,7 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   // Also, we need to decide how allocators actually work -- they're not
   // really part of the CXXNewExpr because they happen BEFORE the
   // CXXConstructExpr subexpression. See PR12014 for some discussion.
-  
+
   unsigned blockCount = currBldrCtx->blockCount();
   const LocationContext *LCtx = Pred->getLocationContext();
   DefinedOrUnknownSVal symVal = UnknownVal();
@@ -392,8 +392,8 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
       IsStandardGlobalOpNewFunction = (FD->getNumParams() == 1);
   }
 
-  // We assume all standard global 'operator new' functions allocate memory in 
-  // heap. We realize this is an approximation that might not correctly model 
+  // We assume all standard global 'operator new' functions allocate memory in
+  // heap. We realize this is an approximation that might not correctly model
   // a custom global allocator.
   if (IsStandardGlobalOpNewFunction)
     symVal = svalBuilder.getConjuredHeapSymbolVal(CNE, LCtx, blockCount);
@@ -472,7 +472,7 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   }
 }
 
-void ExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE, 
+void ExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE,
                                     ExplodedNode *Pred, ExplodedNodeSet &Dst) {
   StmtNodeBuilder Bldr(Pred, Dst, *currBldrCtx);
   ProgramStateRef state = Pred->getState();

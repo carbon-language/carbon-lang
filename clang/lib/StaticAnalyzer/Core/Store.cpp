@@ -52,7 +52,7 @@ StoreRef StoreManager::BindDefault(Store store, const MemRegion *R, SVal V) {
   return StoreRef(store, *this);
 }
 
-const ElementRegion *StoreManager::GetElementZeroRegion(const MemRegion *R, 
+const ElementRegion *StoreManager::GetElementZeroRegion(const MemRegion *R,
                                                         QualType T) {
   NonLoc idx = svalBuilder.makeZeroArrayIndex();
   assert(!T.isNull());
@@ -366,22 +366,22 @@ SVal StoreManager::evalDynamicCast(SVal Base, QualType TargetType,
 ///  as another region.
 SVal StoreManager::CastRetrievedVal(SVal V, const TypedValueRegion *R,
                                     QualType castTy, bool performTestOnly) {
-  
+
   if (castTy.isNull() || V.isUnknownOrUndef())
     return V;
-  
+
   ASTContext &Ctx = svalBuilder.getContext();
 
-  if (performTestOnly) {  
+  if (performTestOnly) {
     // Automatically translate references to pointers.
     QualType T = R->getValueType();
     if (const ReferenceType *RT = T->getAs<ReferenceType>())
       T = Ctx.getPointerType(RT->getPointeeType());
-    
+
     assert(svalBuilder.getContext().hasSameUnqualifiedType(castTy, T));
     return V;
   }
-  
+
   return svalBuilder.dispatchCast(V, castTy);
 }
 
@@ -424,7 +424,7 @@ SVal StoreManager::getLValueIvar(const ObjCIvarDecl *decl, SVal base) {
   return getLValueFieldOrIvar(decl, base);
 }
 
-SVal StoreManager::getLValueElement(QualType elementType, NonLoc Offset, 
+SVal StoreManager::getLValueElement(QualType elementType, NonLoc Offset,
                                     SVal Base) {
 
   // If the base is an unknown or undefined value, just return it back.

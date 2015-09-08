@@ -79,7 +79,7 @@ void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
     if (TrimmedFName != FName)
       FName = TrimmedFName;
   }
-  
+
   SmallString<256> S;
   llvm::raw_svector_ostream os(S);
   os << "Call to '" << FName << "' uses";

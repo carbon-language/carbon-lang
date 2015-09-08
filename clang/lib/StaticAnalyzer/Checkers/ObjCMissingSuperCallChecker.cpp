@@ -49,7 +49,7 @@ public:
         DoesCallSuper = true;
 
     // Recurse if we didn't find the super call yet.
-    return !DoesCallSuper; 
+    return !DoesCallSuper;
   }
 
   bool DoesCallSuper;
@@ -59,7 +59,7 @@ private:
 };
 
 //===----------------------------------------------------------------------===//
-// ObjCSuperCallChecker 
+// ObjCSuperCallChecker
 //===----------------------------------------------------------------------===//
 
 class ObjCSuperCallChecker : public Checker<
@@ -202,7 +202,7 @@ void ObjCSuperCallChecker::checkASTDecl(const ObjCImplementationDecl *D,
         SmallString<320> Buf;
         llvm::raw_svector_ostream os(Buf);
 
-        os << "The '" << S.getAsString() 
+        os << "The '" << S.getAsString()
            << "' instance method in " << SuperclassName.str() << " subclass '"
            << *D << "' is missing a [super " << S.getAsString() << "] call";
 

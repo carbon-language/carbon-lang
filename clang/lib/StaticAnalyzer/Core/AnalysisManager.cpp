@@ -18,7 +18,7 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
                                  const LangOptions &lang,
                                  const PathDiagnosticConsumers &PDC,
                                  StoreManagerCreator storemgr,
-                                 ConstraintManagerCreator constraintmgr, 
+                                 ConstraintManagerCreator constraintmgr,
                                  CheckerManager *checkerMgr,
                                  AnalyzerOptions &Options,
                                  CodeInjector *injector)
