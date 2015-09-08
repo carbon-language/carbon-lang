@@ -2151,7 +2151,7 @@ AST_MATCHER(ObjCMessageExpr, hasKeywordSelector) {
 
 /// \brief Matches when the selector has the specified number of arguments
 ///
-///  matcher = objCMessageExpr(numSelectorArgs(1));
+///  matcher = objCMessageExpr(numSelectorArgs(0));
 ///  matches self.bodyView in the code below
 ///
 ///  matcher = objCMessageExpr(numSelectorArgs(2));

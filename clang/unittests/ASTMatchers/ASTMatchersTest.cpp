@@ -4890,6 +4890,9 @@ TEST(ObjCMessageExprMatcher, SimpleExprs) {
       objcMessageExpr(hasSelector("contents"), hasUnarySelector())));
   EXPECT_TRUE(matchesObjC(
       Objc1String,
+      objcMessageExpr(hasSelector("contents"), numSelectorArgs(0))));
+  EXPECT_TRUE(matchesObjC(
+      Objc1String,
       objcMessageExpr(matchesSelector("uppercase*"),
                       argumentCountIs(0)
                       )));
