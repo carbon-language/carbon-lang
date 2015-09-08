@@ -33,6 +33,23 @@ class ExpressionVariable :
     public std::enable_shared_from_this<ExpressionVariable>
 {
 public:
+    //----------------------------------------------------------------------
+    // See TypeSystem.h for how to add subclasses to this.
+    //----------------------------------------------------------------------
+    enum LLVMCastKind {
+        eKindClang,
+        eKindSwift,
+        eKindGo,
+        kNumKinds
+    };
+    
+    LLVMCastKind getKind() const { return m_kind; }
+    
+    ExpressionVariable(LLVMCastKind kind) :
+        m_kind(kind)
+    {
+    }
+    
     size_t
     GetByteSize ()
     {
@@ -49,10 +66,6 @@ public:
     GetValueObject()
     {
         return m_frozen_sp;
-    }
-    
-    virtual ClangExpressionVariable *AsClangExpressionVariable() {
-        return nullptr;
     }
     
     uint8_t *GetValueBytes();
@@ -135,6 +148,7 @@ public:
     // these should be private
     lldb::ValueObjectSP m_frozen_sp;
     lldb::ValueObjectSP m_live_sp;
+    LLVMCastKind        m_kind;
 };
     
 //----------------------------------------------------------------------

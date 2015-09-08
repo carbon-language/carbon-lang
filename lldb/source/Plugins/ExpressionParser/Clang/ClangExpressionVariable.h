@@ -21,6 +21,8 @@
 #include <vector>
 
 // Other libraries and framework includes
+#include "llvm/Support/Casting.h"
+
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ClangForward.h"
@@ -71,12 +73,7 @@ public:
                              uint16_t flags = EVNone);
     
     ClangExpressionVariable(const lldb::ValueObjectSP &valobj_sp);
-    
-    ClangExpressionVariable *AsClangExpressionVariable() override
-    {
-        return this;
-    }
-    
+        
     //----------------------------------------------------------------------
     /// Utility functions for dealing with ExpressionVariableLists in Clang-specific ways
     //----------------------------------------------------------------------
@@ -98,7 +95,7 @@ public:
         {
             var_sp = list.GetVariableAtIndex(index);
             
-            if (ClangExpressionVariable *clang_var = var_sp->AsClangExpressionVariable())
+            if (ClangExpressionVariable *clang_var = llvm::dyn_cast<ClangExpressionVariable>(var_sp.get()))
             {
                 ClangExpressionVariable::ParserVars *parser_vars = clang_var->GetParserVars(parser_id);
                 
@@ -276,6 +273,14 @@ public:
     
     TypeFromUser
     GetTypeFromUser ();
+    
+    //------------------------------------------------------------------
+    // llvm casting support
+    //------------------------------------------------------------------
+    static bool classof(const ExpressionVariable *ev)
+    {
+        return ev->getKind() == ExpressionVariable::eKindClang;
+    }
     
     //----------------------------------------------------------------------
     /// Members

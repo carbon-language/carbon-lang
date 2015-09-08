@@ -24,7 +24,7 @@ using namespace clang;
 const char *g_clang_expression_variable_kind_name = "ClangExpressionVariable";
 
 ClangExpressionVariable::ClangExpressionVariable(ExecutionContextScope *exe_scope, lldb::ByteOrder byte_order, uint32_t addr_byte_size) :
-    ExpressionVariable(),
+    ExpressionVariable(LLVMCastKind::eKindClang),
     m_parser_vars(),
     m_jit_vars ()
 {
@@ -36,7 +36,7 @@ ClangExpressionVariable::ClangExpressionVariable (ExecutionContextScope *exe_sco
                                                   Value &value,
                                                   const ConstString &name,
                                                   uint16_t flags) :
-    ExpressionVariable(),
+    ExpressionVariable(LLVMCastKind::eKindClang),
     m_parser_vars(),
     m_jit_vars ()
 {
@@ -45,7 +45,7 @@ ClangExpressionVariable::ClangExpressionVariable (ExecutionContextScope *exe_sco
 }
 
 ClangExpressionVariable::ClangExpressionVariable (const lldb::ValueObjectSP &valobj_sp) :
-    ExpressionVariable(),
+    ExpressionVariable(LLVMCastKind::eKindClang),
     m_parser_vars(),
     m_jit_vars ()
 {
