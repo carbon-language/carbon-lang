@@ -104,6 +104,10 @@ class SBE_MMR6_ENC : POOL32C_STORE_EVA_FM_MMR6<0b100>;
 class SCE_MMR6_ENC : POOL32C_STORE_EVA_FM_MMR6<0b110>;
 class SH_MMR6_ENC : SB32_SH32_STORE_FM_MMR6<0b001110>;
 class SHE_MMR6_ENC : POOL32C_STORE_EVA_FM_MMR6<0b101>;
+class LLE_MMR6_ENC : LOAD_WORD_EVA_FM_MMR6<0b110>;
+class LWE_MMR6_ENC : LOAD_WORD_EVA_FM_MMR6<0b111>;
+class LW_MMR6_ENC : LOAD_WORD_FM_MMR6;
+class LUI_MMR6_ENC : LOAD_UPPER_IMM_FM_MMR6;
 
 class CMP_CBR_RT_Z_MMR6_DESC_BASE<string instr_asm, DAGOperand opnd,
                                   RegisterOperand GPROpnd>
@@ -637,6 +641,39 @@ class SCE_MMR6_DESC : STORE_EVA_MMR6_DESC_BASE<"sce", GPR32Opnd>;
 class SH_MMR6_DESC : STORE_MMR6_DESC_BASE<"sh", GPR32Opnd>;
 class SHE_MMR6_DESC : STORE_EVA_MMR6_DESC_BASE<"she", GPR32Opnd>;
 
+class LOAD_WORD_EVA_MMR6_DESC_BASE<string instr_asm, RegisterOperand RO> :
+            MMR6Arch<instr_asm>, MipsR6Inst {
+  dag OutOperandList = (outs RO:$rt);
+  dag InOperandList = (ins mem_mm_12:$addr);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $addr");
+  string DecoderMethod = "DecodeMemMMImm9";
+  bit mayLoad = 1;
+}
+class LLE_MMR6_DESC : LOAD_WORD_EVA_MMR6_DESC_BASE<"lle", GPR32Opnd>;
+class LWE_MMR6_DESC : LOAD_WORD_EVA_MMR6_DESC_BASE<"lwe", GPR32Opnd>;
+
+class LW_MMR6_DESC : MMR6Arch<"lw">, MipsR6Inst {
+  dag OutOperandList = (outs GPR32Opnd:$rt);
+  dag InOperandList = (ins mem:$addr);
+  string AsmString = "lw\t$rt, $addr";
+  let DecoderMethod = "DecodeMemMMImm16";
+  let canFoldAsLoad = 1;
+  let mayLoad = 1;
+  list<dag> Pattern = [(set GPR32Opnd:$rt, (load addrDefault:$addr))];
+  InstrItinClass Itinerary = II_LW;
+}
+
+class LUI_MMR6_DESC : IsAsCheapAsAMove, MMR6Arch<"lui">, MipsR6Inst{
+  dag OutOperandList = (outs GPR32Opnd:$rt);
+  dag InOperandList = (ins uimm16:$imm16);
+  string AsmString = "lui\t$rt, $imm16";
+  list<dag> Pattern = [];
+  bit hasSideEffects = 0;
+  bit isReMaterializable = 1;
+  InstrItinClass Itinerary = II_LUI;
+  Format Form = FrmI;
+}
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -825,6 +862,10 @@ def SBE_MMR6 : StdMMR6Rel, SBE_MMR6_DESC, SBE_MMR6_ENC, ISA_MICROMIPS32R6;
 def SCE_MMR6 : StdMMR6Rel, SCE_MMR6_DESC, SCE_MMR6_ENC, ISA_MICROMIPS32R6;
 def SH_MMR6 : StdMMR6Rel, SH_MMR6_DESC, SH_MMR6_ENC, ISA_MICROMIPS32R6;
 def SHE_MMR6 : StdMMR6Rel, SHE_MMR6_DESC, SHE_MMR6_ENC, ISA_MICROMIPS32R6;
+def LLE_MMR6 : StdMMR6Rel, LLE_MMR6_DESC, LLE_MMR6_ENC, ISA_MICROMIPS32R6;
+def LWE_MMR6 : StdMMR6Rel, LWE_MMR6_DESC, LWE_MMR6_ENC, ISA_MICROMIPS32R6;
+def LW_MMR6 : StdMMR6Rel, LW_MMR6_DESC, LW_MMR6_ENC, ISA_MICROMIPS32R6;
+def LUI_MMR6 : R6MMR6Rel, LUI_MMR6_DESC, LUI_MMR6_ENC, ISA_MICROMIPS32R6;
 }
 
 //===----------------------------------------------------------------------===//

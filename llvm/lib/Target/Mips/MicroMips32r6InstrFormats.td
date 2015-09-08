@@ -254,6 +254,48 @@ class POOL32C_STORE_EVA_FM_MMR6<bits<3> funct> {
   let Inst{8-0}   = offset;
 }
 
+class LOAD_WORD_EVA_FM_MMR6<bits<3> funct> {
+  bits<5> rt;
+  bits<21> addr;
+  bits<5> base = addr{20-16};
+  bits<9> offset = addr{8-0};
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0b011000;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = base;
+  let Inst{15-12} = 0b0110;
+  let Inst{11-9}  = funct;
+  let Inst{8-0}   = offset;
+}
+
+class LOAD_WORD_FM_MMR6 {
+  bits<5> rt;
+  bits<21> addr;
+  bits<5> base = addr{20-16};
+  bits<16> offset = addr{15-0};
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0b111111;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = base;
+  let Inst{15-0}  = offset;
+}
+
+class LOAD_UPPER_IMM_FM_MMR6 {
+  bits<5> rt;
+  bits<16> imm16;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0b000100;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = 0;
+  let Inst{15-0}  = imm16;
+}
+
 class CMP_BRANCH_1R_RT_OFF16_FM_MMR6<bits<6> funct> : MipsR6Inst {
   bits<5> rt;
   bits<16> offset;
