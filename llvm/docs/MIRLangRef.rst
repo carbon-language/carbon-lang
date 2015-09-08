@@ -99,6 +99,8 @@ depends on the state of the target specific ``MachineFunctionInfo`` or
 High Level Structure
 ====================
 
+.. _embedded-module:
+
 Embedded Module
 ---------------
 
@@ -433,13 +435,32 @@ corresponding internal ``llvm::RegState`` representation:
    * - ``debug-use``
      - ``RegState::Debug``
 
+Global Value Operands
+^^^^^^^^^^^^^^^^^^^^^
+
+The global value machine operands reference the global values from the
+:ref:`embedded LLVM IR module <embedded-module>`.
+The example below shows an instance of the X86 ``MOV64rm`` instruction that has
+a global value operand named ``G``:
+
+.. code-block:: llvm
+
+    %rax = MOV64rm %rip, 1, _, @G, _
+
+The named global values are represented using an identifier with the '@' prefix.
+If the identifier doesn't match the regular expression
+`[-a-zA-Z$._][-a-zA-Z$._0-9]*`, then this identifier must be quoted.
+
+The unnamed global values are represented using an unsigned numeric value with
+the '@' prefix, like in the following examples: ``@0``, ``@989``.
+
 .. TODO: Describe the parsers default behaviour when optional YAML attributes
    are missing.
 .. TODO: Describe the syntax for the bundled instructions.
 .. TODO: Describe the syntax for virtual register YAML definitions.
 .. TODO: Describe the syntax of the subregisters.
 .. TODO: Describe the machine function's YAML flag attributes.
-.. TODO: Describe the syntax for the global value, external symbol and register
+.. TODO: Describe the syntax for the external symbol and register
    mask machine operands.
 .. TODO: Describe the frame information YAML mapping.
 .. TODO: Describe the syntax of the stack object machine operands and their
