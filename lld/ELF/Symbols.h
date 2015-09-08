@@ -41,9 +41,10 @@ public:
     DefinedRegularKind = 0,
     DefinedAbsoluteKind = 1,
     DefinedCommonKind = 2,
-    DefinedLast = 2,
-    UndefinedKind = 3,
-    LazyKind = 4,
+    SharedKind = 3,
+    DefinedLast = 3,
+    UndefinedKind = 4,
+    LazyKind = 5,
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
@@ -54,6 +55,8 @@ public:
   bool isStrongUndefined() const { return !IsWeak && isUndefined(); }
   bool isCommon() const { return SymbolKind == DefinedCommonKind; }
   bool isLazy() const { return SymbolKind == LazyKind; }
+  bool isShared() const { return SymbolKind == SharedKind; }
+  bool isUsedInRegularObj() const { return IsUsedInRegularObj; }
 
   // Returns the symbol name.
   StringRef getName() const { return Name; }
@@ -79,12 +82,15 @@ public:
 protected:
   SymbolBody(Kind K, StringRef Name, bool IsWeak, uint8_t Visibility)
       : SymbolKind(K), IsWeak(IsWeak), MostConstrainingVisibility(Visibility),
-        Name(Name) {}
+        Name(Name) {
+    IsUsedInRegularObj = K != SharedKind && K != LazyKind;
+  }
 
 protected:
   const unsigned SymbolKind : 8;
   const unsigned IsWeak : 1;
   unsigned MostConstrainingVisibility : 2;
+  unsigned IsUsedInRegularObj : 1;
   StringRef Name;
   Symbol *Backref = nullptr;
 };
@@ -201,6 +207,19 @@ public:
 
 template <class ELFT>
 typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::Synthetic;
+
+template <class ELFT> class SharedSymbol : public ELFSymbolBody<ELFT> {
+  typedef ELFSymbolBody<ELFT> Base;
+  typedef typename Base::Elf_Sym Elf_Sym;
+
+public:
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == Base::SharedKind;
+  }
+
+  SharedSymbol(StringRef Name, const Elf_Sym &Sym)
+      : ELFSymbolBody<ELFT>(Base::SharedKind, Name, Sym) {}
+};
 
 // This class represents a symbol defined in an archive file. It is
 // created from an archive file header, and it knows how to load an

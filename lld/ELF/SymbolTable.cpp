@@ -51,8 +51,11 @@ template <class ELFT> void SymbolTable::addELFFile(ELFFileBase *File) {
       resolve<ELFT>(Body);
   }
 
-  if (auto *S = dyn_cast<SharedFileBase>(File))
+  if (auto *S = dyn_cast<SharedFile<ELFT>>(File)) {
     SharedFiles.emplace_back(S);
+    for (SharedSymbol<ELFT> &Body : S->getSharedSymbols())
+      resolve<ELFT>(&Body);
+  }
 }
 
 void SymbolTable::addELFFile(ELFFileBase *File) {

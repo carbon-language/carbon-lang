@@ -95,12 +95,18 @@ template <class ELFT> static ELFKind getStaticELFKind() {
 
 template <class ELFT> class ELFData {
 public:
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
+
   llvm::object::ELFFile<ELFT> *getObj() const { return ELFObj.get(); }
 
   uint16_t getEMachine() const { return getObj()->getHeader()->e_machine; }
 
 protected:
   std::unique_ptr<llvm::object::ELFFile<ELFT>> ELFObj;
+  const Elf_Shdr *Symtab = nullptr;
+  StringRef StringTable;
+  Elf_Sym_Range getNonLocalSymbols();
 
   void openELF(MemoryBufferRef MB);
 };
@@ -126,7 +132,7 @@ public:
   ArrayRef<SectionChunk<ELFT> *> getChunks() { return Chunks; }
 
   SymbolBody *getSymbolBody(uint32_t SymbolIndex) {
-    uint32_t FirstNonLocal = Symtab->sh_info;
+    uint32_t FirstNonLocal = this->Symtab->sh_info;
     if (SymbolIndex < FirstNonLocal)
       return nullptr;
     return SymbolBodies[SymbolIndex - FirstNonLocal]->getReplacement();
@@ -141,7 +147,6 @@ private:
   // List of all chunks defined by this file.
   std::vector<SectionChunk<ELFT> *> Chunks;
 
-  const Elf_Shdr *Symtab = nullptr;
   ArrayRef<Elf_Word> SymtabSHNDX;
 };
 
@@ -174,7 +179,17 @@ public:
 
 template <class ELFT>
 class SharedFile : public SharedFileBase, public ELFData<ELFT> {
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
+
+  std::vector<SharedSymbol<ELFT>> SymbolBodies;
+
 public:
+  llvm::MutableArrayRef<SharedSymbol<ELFT>> getSharedSymbols() {
+    return SymbolBodies;
+  }
+
   static bool classof(const InputFile *F) {
     return F->kind() == SharedKind &&
            cast<ELFFileBase>(F)->getELFKind() == getStaticELFKind<ELFT>();

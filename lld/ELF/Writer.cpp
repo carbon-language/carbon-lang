@@ -297,6 +297,17 @@ static int compareSym(const typename ELFFile<ELFT>::Elf_Sym *A,
   return AN - BN;
 }
 
+static bool includeInSymtab(const SymbolBody &B) {
+  if (B.isLazy())
+    return false;
+  if (!B.isUsedInRegularObj())
+    return false;
+  uint8_t V = B.getMostConstrainingVisibility();
+  if (V != STV_DEFAULT && V != STV_PROTECTED)
+    return false;
+  return true;
+}
+
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   uint8_t *BufStart = Buf;
 
@@ -305,13 +316,9 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     StringRef Name = P.first;
     Symbol *Sym = P.second;
     SymbolBody *Body = Sym->Body;
-    if (Body->isLazy())
+    if (!includeInSymtab(*Body))
       continue;
     const Elf_Sym &InputSym = cast<ELFSymbolBody<ELFT>>(Body)->Sym;
-
-    uint8_t V = Body->getMostConstrainingVisibility();
-    if (V != STV_DEFAULT && V != STV_PROTECTED)
-      continue;
 
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
     ESym->st_name = Builder.getOffset(Name);
@@ -330,6 +337,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       if (!Body->isWeak())
         error(Twine("undefined symbol: ") + Name);
     case SymbolBody::DefinedAbsoluteKind:
+    case SymbolBody::SharedKind:
       break;
     case SymbolBody::LazyKind:
       llvm_unreachable("Lazy symbol got to output symbol table!");
@@ -458,12 +466,9 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   for (auto &P : Symtab.getSymbols()) {
     StringRef Name = P.first;
     SymbolBody *Body = P.second->Body;
-    if (Body->isLazy())
-      continue;
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
-    uint8_t V = Body->getMostConstrainingVisibility();
-    if (V != STV_DEFAULT && V != STV_PROTECTED)
+    if (!includeInSymtab(*Body))
       continue;
     NumVisible++;
     Builder.add(Name);

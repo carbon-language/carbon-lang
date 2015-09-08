@@ -54,6 +54,24 @@ template <class ELFT> void ELFData<ELFT>::openELF(MemoryBufferRef MB) {
   error(EC);
 }
 
+template <class ELFT>
+typename ELFData<ELFT>::Elf_Sym_Range ELFData<ELFT>::getNonLocalSymbols() {
+  if (!Symtab)
+    return Elf_Sym_Range(nullptr, nullptr);
+
+  ErrorOr<StringRef> StringTableOrErr =
+      ELFObj->getStringTableForSymtab(*Symtab);
+  error(StringTableOrErr.getError());
+  StringTable = *StringTableOrErr;
+
+  Elf_Sym_Range Syms = ELFObj->symbols(Symtab);
+  uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
+  uint32_t FirstNonLocal = Symtab->sh_info;
+  if (FirstNonLocal > NumSymbols)
+    error("Invalid sh_info in symbol table");
+  return llvm::make_range(Syms.begin() + FirstNonLocal, Syms.end());
+}
+
 template <class ELFT> void elf2::ObjectFile<ELFT>::parse() {
   this->openELF(MB);
 
@@ -69,7 +87,7 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
   for (const Elf_Shdr &Sec : this->ELFObj->sections()) {
     switch (Sec.sh_type) {
     case SHT_SYMTAB:
-      Symtab = &Sec;
+      this->Symtab = &Sec;
       break;
     case SHT_SYMTAB_SHNDX: {
       ErrorOr<ArrayRef<Elf_Word>> ErrorOrTable =
@@ -101,20 +119,11 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
 }
 
 template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
-  ErrorOr<StringRef> StringTableOrErr =
-      this->ELFObj->getStringTableForSymtab(*Symtab);
-  error(StringTableOrErr.getError());
-  StringRef StringTable = *StringTableOrErr;
-
-  Elf_Sym_Range Syms = this->ELFObj->symbols(Symtab);
+  Elf_Sym_Range Syms = this->getNonLocalSymbols();
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
-  uint32_t FirstNonLocal = Symtab->sh_info;
-  if (FirstNonLocal > NumSymbols)
-    error("Invalid sh_info in symbol table");
-  Syms = llvm::make_range(Syms.begin() + FirstNonLocal, Syms.end());
-  SymbolBodies.reserve(NumSymbols - FirstNonLocal);
+  SymbolBodies.reserve(NumSymbols);
   for (const Elf_Sym &Sym : Syms)
-    SymbolBodies.push_back(createSymbolBody(StringTable, &Sym));
+    SymbolBodies.push_back(createSymbolBody(this->StringTable, &Sym));
 }
 
 template <class ELFT>
@@ -133,8 +142,8 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case SHN_COMMON:
     return new (Alloc) DefinedCommon<ELFT>(Name, *Sym);
   case SHN_XINDEX:
-    SecIndex =
-        this->ELFObj->getExtendedSymbolTableIndex(Sym, Symtab, SymtabSHNDX);
+    SecIndex = this->ELFObj->getExtendedSymbolTableIndex(Sym, this->Symtab,
+                                                         SymtabSHNDX);
     break;
   }
 
@@ -181,7 +190,30 @@ MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
   return *Ret;
 }
 
-template <class ELFT> void SharedFile<ELFT>::parse() { this->openELF(MB); }
+template <class ELFT> void SharedFile<ELFT>::parse() {
+  this->openELF(MB);
+
+  for (const Elf_Shdr &Sec : this->ELFObj->sections()) {
+    if (Sec.sh_type == SHT_DYNSYM) {
+      this->Symtab = &Sec;
+      break;
+    }
+  }
+
+  Elf_Sym_Range Syms = this->getNonLocalSymbols();
+  uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
+  SymbolBodies.reserve(NumSymbols);
+  for (const Elf_Sym &Sym : Syms) {
+    if (Sym.isUndefined())
+      continue;
+
+    ErrorOr<StringRef> NameOrErr = Sym.getName(this->StringTable);
+    error(NameOrErr.getError());
+    StringRef Name = *NameOrErr;
+
+    SymbolBodies.emplace_back(Name, Sym);
+  }
+}
 
 namespace lld {
 namespace elf2 {
