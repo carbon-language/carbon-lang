@@ -478,7 +478,7 @@ def DirectIvarAssignmentForAnnotatedFunctions : Checker<"DirectIvarAssignmentFor
   DescFile<"DirectIvarAssignment.cpp">;
 
 def ObjCGenericsChecker : Checker<"ObjCGenerics">,
-  HelpText<"Check for incorrect usages of parameterized types.">,
+  HelpText<"Check for type errors when using Objective-C generics">,
   DescFile<"ObjCGenericsChecker.cpp">;
 
 def NonLocalizedStringChecker : Checker<"NonLocalizedStringChecker">,

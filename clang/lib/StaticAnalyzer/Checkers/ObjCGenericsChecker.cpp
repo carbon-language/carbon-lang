@@ -35,28 +35,22 @@ class ObjCGenericsChecker
     : public Checker<check::DeadSymbols, check::PreObjCMessage,
                      check::PostObjCMessage, check::PostStmt<CastExpr>> {
 public:
-  ProgramStateRef checkPointerEscape(ProgramStateRef State,
-                                     const InvalidatedSymbols &Escaped,
-                                     const CallEvent *Call,
-                                     PointerEscapeKind Kind) const;
-
   void checkPreObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const;
   void checkPostObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const;
   void checkPostStmt(const CastExpr *CE, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SR, CheckerContext &C) const;
 
 private:
-  mutable std::unique_ptr<BugType> BT;
+  mutable std::unique_ptr<BugType> ObjCGenericsBugType;
   void initBugType() const {
-    if (!BT)
-      BT.reset(
+    if (!ObjCGenericsBugType)
+      ObjCGenericsBugType.reset(
           new BugType(this, "Generics", categories::CoreFoundationObjectiveC));
   }
 
   class GenericsBugVisitor : public BugReporterVisitorImpl<GenericsBugVisitor> {
   public:
     GenericsBugVisitor(SymbolRef S) : Sym(S) {}
-    ~GenericsBugVisitor() override {}
 
     void Profile(llvm::FoldingSetNodeID &ID) const override {
       static int X = 0;
@@ -74,27 +68,40 @@ private:
     SymbolRef Sym;
   };
 
-  void reportBug(const ObjCObjectPointerType *From,
-                 const ObjCObjectPointerType *To, ExplodedNode *N,
-                 SymbolRef Sym, CheckerContext &C,
-                 const Stmt *ReportedNode = nullptr) const {
-    initBugType();
-    SmallString<64> Buf;
-    llvm::raw_svector_ostream OS(Buf);
-    OS << "Incompatible pointer types assigning to '";
-    QualType::print(To, Qualifiers(), OS, C.getLangOpts(), llvm::Twine());
-    OS << "' from '";
-    QualType::print(From, Qualifiers(), OS, C.getLangOpts(), llvm::Twine());
-    OS << "'";
-    std::unique_ptr<BugReport> R(new BugReport(*BT, OS.str(), N));
-    R->markInteresting(Sym);
-    R->addVisitor(llvm::make_unique<GenericsBugVisitor>(Sym));
-    if (ReportedNode)
-      R->addRange(ReportedNode->getSourceRange());
-    C.emitReport(std::move(R));
-  }
+  void reportGenericsBug(const ObjCObjectPointerType *From,
+                         const ObjCObjectPointerType *To, ExplodedNode *N,
+                         SymbolRef Sym, CheckerContext &C,
+                         const Stmt *ReportedNode = nullptr) const;
+
+  void checkReturnType(const ObjCMessageExpr *MessageExpr,
+                       const ObjCObjectPointerType *TrackedType, SymbolRef Sym,
+                       const ObjCMethodDecl *Method,
+                       ArrayRef<QualType> TypeArgs, bool SubscriptOrProperty,
+                       CheckerContext &C) const;
 };
 } // end anonymous namespace
+
+void ObjCGenericsChecker::reportGenericsBug(const ObjCObjectPointerType *From,
+                                            const ObjCObjectPointerType *To,
+                                            ExplodedNode *N, SymbolRef Sym,
+                                            CheckerContext &C,
+                                            const Stmt *ReportedNode) const {
+  initBugType();
+  SmallString<192> Buf;
+  llvm::raw_svector_ostream OS(Buf);
+  OS << "Conversion from value of type '";
+  QualType::print(From, Qualifiers(), OS, C.getLangOpts(), llvm::Twine());
+  OS << "' to incompatible type '";
+  QualType::print(To, Qualifiers(), OS, C.getLangOpts(), llvm::Twine());
+  OS << "'";
+  std::unique_ptr<BugReport> R(
+      new BugReport(*ObjCGenericsBugType, OS.str(), N));
+  R->markInteresting(Sym);
+  R->addVisitor(llvm::make_unique<GenericsBugVisitor>(Sym));
+  if (ReportedNode)
+    R->addRange(ReportedNode->getSourceRange());
+  C.emitReport(std::move(R));
+}
 
 PathDiagnosticPiece *ObjCGenericsChecker::GenericsBugVisitor::VisitNode(
     const ExplodedNode *N, const ExplodedNode *PrevN, BugReporterContext &BRC,
@@ -124,7 +131,7 @@ PathDiagnosticPiece *ObjCGenericsChecker::GenericsBugVisitor::VisitNode(
 
   const LangOptions &LangOpts = BRC.getASTContext().getLangOpts();
 
-  SmallString<64> Buf;
+  SmallString<256> Buf;
   llvm::raw_svector_ostream OS(Buf);
   OS << "Type '";
   QualType::print(*TrackedType, Qualifiers(), OS, LangOpts, llvm::Twine());
@@ -156,6 +163,7 @@ PathDiagnosticPiece *ObjCGenericsChecker::GenericsBugVisitor::VisitNode(
   return new PathDiagnosticEventPiece(Pos, OS.str(), true, nullptr);
 }
 
+/// Clean up the states stored by the checker.
 void ObjCGenericsChecker::checkDeadSymbols(SymbolReaper &SR,
                                            CheckerContext &C) const {
   if (!SR.hasDeadSymbols())
@@ -197,25 +205,99 @@ static const ObjCObjectPointerType *getMostInformativeDerivedClassImpl(
                                               MostInformativeCandidate, C);
 }
 
-/// Get the most derived class if From that do not loose information about type
-/// parameters. To has to be a subclass of From. From has to be specialized.
+/// A downcast may loose specialization information. E. g.:
+///   MutableMap<T, U> : Map
+/// The downcast to MutableMap looses the information about the types of the
+/// Map (due to the type parameters are not being forwarded to Map), and in
+/// general there is no way to recover that information from the
+/// declaration. In order to have to most information, lets find the most
+/// derived type that has all the type parameters forwarded.
+///
+/// Get the a subclass of \p From (which has a lower bound \p To) that do not
+/// loose information about type parameters. \p To has to be a subclass of
+/// \p From. From has to be specialized.
 static const ObjCObjectPointerType *
 getMostInformativeDerivedClass(const ObjCObjectPointerType *From,
                                const ObjCObjectPointerType *To, ASTContext &C) {
   return getMostInformativeDerivedClassImpl(From, To, To, C);
 }
 
-static bool storeWhenMoreInformative(ProgramStateRef &State, SymbolRef Sym,
-                                     const ObjCObjectPointerType *const *Old,
-                                     const ObjCObjectPointerType *New,
-                                     ASTContext &C) {
-  if (!Old || C.canAssignObjCInterfaces(*Old, New)) {
-    State = State->set<TypeParamMap>(Sym, New);
+/// Inputs:
+///   \param StaticLowerBound Static lower bound for a symbol. The dynamic lower
+///   bound might be the subclass of this type.
+///   \param StaticUpperBound A static upper bound for a symbol.
+///   \p StaticLowerBound expected to be the subclass of \p StaticUpperBound.
+///   \param Current The type that was inferred for a symbol in a previous
+///   context. Might be null when this is the first time that inference happens.
+/// Precondition:
+///   \p StaticLowerBound or \p StaticUpperBound is specialized. If \p Current
+///   is not null, it is specialized.
+/// Possible cases:
+///   (1) The \p Current is null and \p StaticLowerBound <: \p StaticUpperBound
+///   (2) \p StaticLowerBound <: \p Current <: \p StaticUpperBound
+///   (3) \p Current <: \p StaticLowerBound <: \p StaticUpperBound
+///   (4) \p StaticLowerBound <: \p StaticUpperBound <: \p Current
+/// Effect:
+///   Use getMostInformativeDerivedClass with the upper and lower bound of the
+///   set {\p StaticLowerBound, \p Current, \p StaticUpperBound}. The computed
+///   lower bound must be specialized. If the result differs from \p Current or
+///   \p Current is null, store the result.
+static bool
+storeWhenMoreInformative(ProgramStateRef &State, SymbolRef Sym,
+                         const ObjCObjectPointerType *const *Current,
+                         const ObjCObjectPointerType *StaticLowerBound,
+                         const ObjCObjectPointerType *StaticUpperBound,
+                         ASTContext &C) {
+  // Precondition
+  assert(StaticUpperBound->isSpecialized() ||
+         StaticLowerBound->isSpecialized());
+  assert(!Current || (*Current)->isSpecialized());
+
+  // Case (1)
+  if (!Current) {
+    if (StaticUpperBound->isUnspecialized()) {
+      State = State->set<TypeParamMap>(Sym, StaticLowerBound);
+      return true;
+    }
+    // Upper bound is specialized.
+    const ObjCObjectPointerType *WithMostInfo =
+        getMostInformativeDerivedClass(StaticUpperBound, StaticLowerBound, C);
+    State = State->set<TypeParamMap>(Sym, WithMostInfo);
     return true;
   }
+
+  // Case (3)
+  if (C.canAssignObjCInterfaces(StaticLowerBound, *Current)) {
+    return false;
+  }
+
+  // Case (4)
+  if (C.canAssignObjCInterfaces(*Current, StaticUpperBound)) {
+    // The type arguments might not be forwarded at any point of inheritance.
+    const ObjCObjectPointerType *WithMostInfo =
+        getMostInformativeDerivedClass(*Current, StaticUpperBound, C);
+    WithMostInfo =
+        getMostInformativeDerivedClass(WithMostInfo, StaticLowerBound, C);
+    if (WithMostInfo == *Current)
+      return false;
+    State = State->set<TypeParamMap>(Sym, WithMostInfo);
+    return true;
+  }
+
+  // Case (2)
+  const ObjCObjectPointerType *WithMostInfo =
+      getMostInformativeDerivedClass(*Current, StaticLowerBound, C);
+  if (WithMostInfo != *Current) {
+    State = State->set<TypeParamMap>(Sym, WithMostInfo);
+    return true;
+  }
+
   return false;
 }
 
+/// Type inference based on static type information that is available for the
+/// cast and the tracked type information for the given symbol. When the tracked
+/// symbol and the destination type of the cast are unrelated, report an error.
 void ObjCGenericsChecker::checkPostStmt(const CastExpr *CE,
                                         CheckerContext &C) const {
   if (CE->getCastKind() != CK_BitCast)
@@ -240,10 +322,10 @@ void ObjCGenericsChecker::checkPostStmt(const CastExpr *CE,
   OrigObjectPtrType = OrigObjectPtrType->stripObjCKindOfTypeAndQuals(ASTCtxt);
   DestObjectPtrType = DestObjectPtrType->stripObjCKindOfTypeAndQuals(ASTCtxt);
 
-  const ObjCObjectType *OrigObjectType = OrigObjectPtrType->getObjectType();
-  const ObjCObjectType *DestObjectType = DestObjectPtrType->getObjectType();
-
-  if (OrigObjectType->isUnspecialized() && DestObjectType->isUnspecialized())
+  // TODO: erase tracked information when there is a cast to unrelated type
+  //       and everything is unspecialized statically.
+  if (OrigObjectPtrType->isUnspecialized() &&
+      DestObjectPtrType->isUnspecialized())
     return;
 
   ProgramStateRef State = C.getState();
@@ -259,26 +341,9 @@ void ObjCGenericsChecker::checkPostStmt(const CastExpr *CE,
   const ObjCObjectPointerType *const *TrackedType =
       State->get<TypeParamMap>(Sym);
 
-  // If OrigObjectType could convert to DestObjectType, this could be an
-  // implicit cast. Do not treat that cast as explicit in that case.
-  if (isa<ExplicitCastExpr>(CE) && !OrigToDest) {
-    if (DestToOrig) {
-      // Trust explicit downcasts.
-      // However a downcast may also lose information. E. g.:
-      //   MutableMap<T, U> : Map
-      // The downcast to MutableMap loses the information about the types of the
-      // Map (due to the type parameters are not being forwarded to Map), and in
-      // general there is no way to recover that information from the
-      // declaration. In order to have to most information, lets find the most
-      // derived type that has all the type parameters forwarded.
-      const ObjCObjectPointerType *WithMostInfo =
-          getMostInformativeDerivedClass(OrigObjectPtrType, DestObjectPtrType,
-                                         C.getASTContext());
-      if (storeWhenMoreInformative(State, Sym, TrackedType, WithMostInfo,
-                                   ASTCtxt))
-        C.addTransition(State);
-      return;
-    }
+  // Downcasts and upcasts handled in an uniform way regardless of being
+  // explicit. Explicit casts however can happen between mismatched types.
+  if (isa<ExplicitCastExpr>(CE) && !OrigToDest && !DestToOrig) {
     // Mismatched types. If the DestType specialized, store it. Forget the
     // tracked type otherwise.
     if (DestObjectPtrType->isSpecialized()) {
@@ -291,22 +356,6 @@ void ObjCGenericsChecker::checkPostStmt(const CastExpr *CE,
     return;
   }
 
-  // Handle implicit casts and explicit upcasts.
-
-  if (DestObjectType->isUnspecialized()) {
-    assert(OrigObjectType->isSpecialized());
-    // In case we already have some type information for this symbol from a
-    // Specialized -> Specialized conversion, do not record the OrigType,
-    // because it might contain less type information than the tracked type.
-    if (!TrackedType) {
-      State = State->set<TypeParamMap>(Sym, OrigObjectPtrType);
-      C.addTransition(State);
-    }
-    return;
-  }
-
-  // The destination type is specialized.
-
   // The tracked type should be the sub or super class of the static destination
   // type. When an (implicit) upcast or a downcast happens according to static
   // types, and there is no subtyping relationship between the tracked and the
@@ -315,27 +364,23 @@ void ObjCGenericsChecker::checkPostStmt(const CastExpr *CE,
       !ASTCtxt.canAssignObjCInterfaces(DestObjectPtrType, *TrackedType) &&
       !ASTCtxt.canAssignObjCInterfaces(*TrackedType, DestObjectPtrType)) {
     static CheckerProgramPointTag IllegalConv(this, "IllegalConversion");
-    ExplodedNode *N = C.addTransition(State, C.getPredecessor(), &IllegalConv);
-    reportBug(*TrackedType, DestObjectPtrType, N, Sym, C);
+    ExplodedNode *N = C.addTransition(State, &IllegalConv);
+    reportGenericsBug(*TrackedType, DestObjectPtrType, N, Sym, C);
     return;
   }
 
-  if (OrigToDest && !DestToOrig) {
-    // When upcast happens, store the type with the most information about the
-    // type parameters.
-    const ObjCObjectPointerType *WithMostInfo = getMostInformativeDerivedClass(
-        DestObjectPtrType, OrigObjectPtrType, ASTCtxt);
-    if (storeWhenMoreInformative(State, Sym, TrackedType, WithMostInfo,
-                                 ASTCtxt))
-      C.addTransition(State);
-    return;
-  }
+  // Handle downcasts and upcasts.
 
-  // Downcast happens.
+  const ObjCObjectPointerType *LowerBound = DestObjectPtrType;
+  const ObjCObjectPointerType *UpperBound = OrigObjectPtrType;
+  if (OrigToDest && !DestToOrig)
+    std::swap(LowerBound, UpperBound);
 
-  // Trust tracked type on unspecialized value -> specialized implicit
-  // downcasts.
-  if (storeWhenMoreInformative(State, Sym, TrackedType, DestObjectPtrType,
+  // The id type is not a real bound. Eliminate it.
+  LowerBound = LowerBound->isObjCIdType() ? UpperBound : LowerBound;
+  UpperBound = UpperBound->isObjCIdType() ? LowerBound : UpperBound;
+
+  if (storeWhenMoreInformative(State, Sym, TrackedType, LowerBound, UpperBound,
                                ASTCtxt)) {
     C.addTransition(State);
   }
@@ -350,9 +395,9 @@ static const Expr *stripCastsAndSugar(const Expr *E) {
   return E;
 }
 
-// This callback is used to infer the types for Class variables. This info is
-// used later to validate messages that sent to classes. Class variables are
-// initialized with by invoking the 'class' method on a class.
+/// This callback is used to infer the types for Class variables. This info is
+/// used later to validate messages that sent to classes. Class variables are
+/// initialized with by invoking the 'class' method on a class.
 void ObjCGenericsChecker::checkPostObjCMessage(const ObjCMethodCall &M,
                                                CheckerContext &C) const {
   const ObjCMessageExpr *MessageExpr = M.getOriginExpr();
@@ -387,8 +432,7 @@ void ObjCGenericsChecker::checkPostObjCMessage(const ObjCMethodCall &M,
 
 static bool isObjCTypeParamDependent(QualType Type) {
   // It is illegal to typedef parameterized types inside an interface. Therfore
-  // an
-  // Objective-C type can only be dependent on a type parameter when the type
+  // an Objective-C type can only be dependent on a type parameter when the type
   // parameter structurally present in the type itself.
   class IsObjCTypeParamDependentTypeVisitor
       : public RecursiveASTVisitor<IsObjCTypeParamDependentTypeVisitor> {
@@ -401,22 +445,20 @@ static bool isObjCTypeParamDependent(QualType Type) {
       }
       return true;
     }
-    bool getResult() { return Result; }
 
-  private:
     bool Result;
   };
 
   IsObjCTypeParamDependentTypeVisitor Visitor;
   Visitor.TraverseType(Type);
-  return Visitor.getResult();
+  return Visitor.Result;
 }
 
-// A method might not be available in the interface indicated by the static
-// type. However it might be available in the tracked type. In order to properly
-// substitute the type parameters we need the declaration context of the method.
-// The more specialized the enclosing class of the method is, the more likely
-// that the parameter substitution will be successful.
+/// A method might not be available in the interface indicated by the static
+/// type. However it might be available in the tracked type. In order to
+/// properly substitute the type parameters we need the declaration context of
+/// the method. The more specialized the enclosing class of the method is, the
+/// more likely that the parameter substitution will be successful.
 static const ObjCMethodDecl *
 findMethodDecl(const ObjCMessageExpr *MessageExpr,
                const ObjCObjectPointerType *TrackedType, ASTContext &ASTCtxt) {
@@ -449,8 +491,57 @@ findMethodDecl(const ObjCMessageExpr *MessageExpr,
   return Method ? Method : MessageExpr->getMethodDecl();
 }
 
-// When the receiver has a tracked type, use that type to validate the
-// argumments of the message expression and the return value.
+/// Validate that the return type of a message expression is used correctly.
+void ObjCGenericsChecker::checkReturnType(
+    const ObjCMessageExpr *MessageExpr,
+    const ObjCObjectPointerType *TrackedType, SymbolRef Sym,
+    const ObjCMethodDecl *Method, ArrayRef<QualType> TypeArgs,
+    bool SubscriptOrProperty, CheckerContext &C) const {
+  QualType StaticResultType = Method->getReturnType();
+  ASTContext &ASTCtxt = C.getASTContext();
+  // Check whether the result type was a type parameter.
+  bool IsDeclaredAsInstanceType =
+      StaticResultType == ASTCtxt.getObjCInstanceType();
+  if (!isObjCTypeParamDependent(StaticResultType) && !IsDeclaredAsInstanceType)
+    return;
+
+  QualType ResultType = Method->getReturnType().substObjCTypeArgs(
+      ASTCtxt, TypeArgs, ObjCSubstitutionContext::Result);
+  if (IsDeclaredAsInstanceType)
+    ResultType = QualType(TrackedType, 0);
+
+  const Stmt *Parent =
+      C.getCurrentAnalysisDeclContext()->getParentMap().getParent(MessageExpr);
+  if (SubscriptOrProperty) {
+    // Properties and subscripts are not direct parents.
+    Parent =
+        C.getCurrentAnalysisDeclContext()->getParentMap().getParent(Parent);
+  }
+
+  const auto *ImplicitCast = dyn_cast_or_null<ImplicitCastExpr>(Parent);
+  if (!ImplicitCast || ImplicitCast->getCastKind() != CK_BitCast)
+    return;
+
+  const auto *ExprTypeAboveCast =
+      ImplicitCast->getType()->getAs<ObjCObjectPointerType>();
+  const auto *ResultPtrType = ResultType->getAs<ObjCObjectPointerType>();
+
+  if (!ExprTypeAboveCast || !ResultPtrType)
+    return;
+
+  // Only warn on unrelated types to avoid too many false positives on
+  // downcasts.
+  if (!ASTCtxt.canAssignObjCInterfaces(ExprTypeAboveCast, ResultPtrType) &&
+      !ASTCtxt.canAssignObjCInterfaces(ResultPtrType, ExprTypeAboveCast)) {
+    static CheckerProgramPointTag Tag(this, "ReturnTypeMismatch");
+    ExplodedNode *N = C.addTransition(C.getState(), &Tag);
+    reportGenericsBug(ResultPtrType, ExprTypeAboveCast, N, Sym, C);
+    return;
+  }
+}
+
+/// When the receiver has a tracked type, use that type to validate the
+/// argumments of the message expression and the return value.
 void ObjCGenericsChecker::checkPreObjCMessage(const ObjCMethodCall &M,
                                               CheckerContext &C) const {
   ProgramStateRef State = C.getState();
@@ -516,51 +607,14 @@ void ObjCGenericsChecker::checkPreObjCMessage(const ObjCMethodCall &M,
     if (!ASTCtxt.canAssignObjCInterfaces(ParamObjectPtrType,
                                          ArgObjectPtrType)) {
       static CheckerProgramPointTag Tag(this, "ArgTypeMismatch");
-      ExplodedNode *N = C.addTransition(State, C.getPredecessor(), &Tag);
-      reportBug(ArgObjectPtrType, ParamObjectPtrType, N, Sym, C, Arg);
+      ExplodedNode *N = C.addTransition(State, &Tag);
+      reportGenericsBug(ArgObjectPtrType, ParamObjectPtrType, N, Sym, C, Arg);
       return;
     }
   }
-  QualType StaticResultType = Method->getReturnType();
-  // Check whether the result type was a type parameter.
-  bool IsDeclaredAsInstanceType =
-      StaticResultType == ASTCtxt.getObjCInstanceType();
-  if (!isObjCTypeParamDependent(StaticResultType) && !IsDeclaredAsInstanceType)
-    return;
 
-  QualType ResultType = Method->getReturnType().substObjCTypeArgs(
-      ASTCtxt, *TypeArgs, ObjCSubstitutionContext::Result);
-  if (IsDeclaredAsInstanceType)
-    ResultType = QualType(*TrackedType, 0);
-
-  const Stmt *Parent =
-      C.getCurrentAnalysisDeclContext()->getParentMap().getParent(MessageExpr);
-  if (M.getMessageKind() != OCM_Message) {
-    // Properties and subscripts are not direct parents.
-    Parent =
-        C.getCurrentAnalysisDeclContext()->getParentMap().getParent(Parent);
-  }
-
-  const auto *ImplicitCast = dyn_cast_or_null<ImplicitCastExpr>(Parent);
-  if (!ImplicitCast || ImplicitCast->getCastKind() != CK_BitCast)
-    return;
-
-  const auto *ExprTypeAboveCast =
-      ImplicitCast->getType()->getAs<ObjCObjectPointerType>();
-  const auto *ResultPtrType = ResultType->getAs<ObjCObjectPointerType>();
-
-  if (!ExprTypeAboveCast || !ResultPtrType)
-    return;
-
-  // Only warn on unrelated types to avoid too many false positives on
-  // downcasts.
-  if (!ASTCtxt.canAssignObjCInterfaces(ExprTypeAboveCast, ResultPtrType) &&
-      !ASTCtxt.canAssignObjCInterfaces(ResultPtrType, ExprTypeAboveCast)) {
-    static CheckerProgramPointTag Tag(this, "ReturnTypeMismatch");
-    ExplodedNode *N = C.addTransition(State, C.getPredecessor(), &Tag);
-    reportBug(ResultPtrType, ExprTypeAboveCast, N, Sym, C);
-    return;
-  }
+  checkReturnType(MessageExpr, *TrackedType, Sym, Method, *TypeArgs,
+                  M.getMessageKind() != OCM_Message, C);
 }
 
 /// Register checker.
