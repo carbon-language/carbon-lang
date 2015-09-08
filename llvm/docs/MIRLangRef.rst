@@ -380,7 +380,8 @@ Register Operands
 The :ref:`register <registers>` primitive is used to represent the register
 machine operands. The register operands can also have optional
 :ref:`register flags <register-flags>`,
-a subregister index, and a reference to the tied register operand.
+:ref:`a subregister index <subregister-indices>`,
+and a reference to the tied register operand.
 The full syntax of a register operand is shown below:
 
 .. code-block:: llvm
@@ -435,6 +436,23 @@ corresponding internal ``llvm::RegState`` representation:
    * - ``debug-use``
      - ``RegState::Debug``
 
+.. _subregister-indices:
+
+Subregister Indices
+~~~~~~~~~~~~~~~~~~~
+
+The register machine operands can reference a portion of a register by using
+the subregister indices. The example below shows an instance of the ``COPY``
+pseudo instruction that uses the X86 ``sub_8bit`` subregister index to copy 8
+lower bits from the 32-bit virtual register 0 to the 8-bit virtual register 1:
+
+.. code-block:: llvm
+
+    %1 = COPY %0:sub_8bit
+
+The names of the subregister indices are target specific, and are typically
+defined in the target's ``*RegisterInfo.td`` file.
+
 Global Value Operands
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -458,7 +476,6 @@ the '@' prefix, like in the following examples: ``@0``, ``@989``.
    are missing.
 .. TODO: Describe the syntax for the bundled instructions.
 .. TODO: Describe the syntax for virtual register YAML definitions.
-.. TODO: Describe the syntax of the subregisters.
 .. TODO: Describe the machine function's YAML flag attributes.
 .. TODO: Describe the syntax for the external symbol and register
    mask machine operands.
