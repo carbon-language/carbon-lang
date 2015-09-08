@@ -1,5 +1,8 @@
 ; RUN: llc < %s -asm-verbose=false | FileCheck %s
 
+; This test depends on branching support, which is not yet checked in.
+; XFAIL: *
+
 ; Test that phis are lowered.
 
 target datalayout = "e-p:32:32-i64:64-v128:8:128-n32:64-S128"
