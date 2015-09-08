@@ -119,7 +119,7 @@ char *test_ptr(char *fmt, ...) {
 // ALL:   [[ARG:%.+]] = load i8*, i8** [[AP_CAST]], align [[PTRALIGN]]
 // ALL:   store i8* [[ARG]], i8** [[V]], align [[PTRALIGN]]
 //
-// ALL:   [[VA:%.+]] = bitcast i8** %va to i8*
+// ALL:   [[VA1:%.+]] = bitcast i8** %va to i8*
 // ALL:   call void @llvm.va_end(i8* [[VA1]])
 // ALL: }
 
