@@ -37,9 +37,9 @@ static inline Value *dyn_castNotVal(Value *V) {
   return nullptr;
 }
 
-/// getFCmpCode - Similar to getICmpCode but for FCmpInst. This encodes a fcmp
-/// predicate into a three bit mask. It also returns whether it is an ordered
-/// predicate by reference.
+/// Similar to getICmpCode but for FCmpInst. This encodes a fcmp predicate into
+/// a three bit mask. It also returns whether it is an ordered predicate by
+/// reference.
 static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
   isOrdered = false;
   switch (CC) {
@@ -64,10 +64,10 @@ static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
   }
 }
 
-/// getNewICmpValue - This is the complement of getICmpCode, which turns an
-/// opcode and two operands into either a constant true or false, or a brand
-/// new ICmp instruction. The sign is passed in to determine which kind
-/// of predicate to use in the new icmp instruction.
+/// This is the complement of getICmpCode, which turns an opcode and two
+/// operands into either a constant true or false, or a brand new ICmp
+/// instruction. The sign is passed in to determine which kind of predicate to
+/// use in the new icmp instruction.
 static Value *getNewICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS,
                               InstCombiner::BuilderTy *Builder) {
   ICmpInst::Predicate NewPred;
@@ -76,9 +76,9 @@ static Value *getNewICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS,
   return Builder->CreateICmp(NewPred, LHS, RHS);
 }
 
-/// getFCmpValue - This is the complement of getFCmpCode, which turns an
-/// opcode and two operands into either a FCmp instruction. isordered is passed
-/// in to determine which kind of predicate to use in the new fcmp instruction.
+/// This is the complement of getFCmpCode, which turns an opcode and two
+/// operands into either a FCmp instruction. isordered is passed in to determine
+/// which kind of predicate to use in the new fcmp instruction.
 static Value *getFCmpValue(bool isordered, unsigned code,
                            Value *LHS, Value *RHS,
                            InstCombiner::BuilderTy *Builder) {
@@ -155,9 +155,9 @@ Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
   return Builder->CreateCall(F, BinOp);
 }
 
-// OptAndOp - This handles expressions of the form ((val OP C1) & C2).  Where
-// the Op parameter is 'OP', OpRHS is 'C1', and AndRHS is 'C2'.  Op is
-// guaranteed to be a binary operator.
+/// This handles expressions of the form ((val OP C1) & C2).  Where
+/// the Op parameter is 'OP', OpRHS is 'C1', and AndRHS is 'C2'.  Op is
+/// guaranteed to be a binary operator.
 Instruction *InstCombiner::OptAndOp(Instruction *Op,
                                     ConstantInt *OpRHS,
                                     ConstantInt *AndRHS,
@@ -341,10 +341,10 @@ Value *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
   return Builder->CreateICmpUGT(Add, LowerBound);
 }
 
-// isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
-// any number of 0s on either side.  The 1s are allowed to wrap from LSB to
-// MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
-// not, since all 1s are not contiguous.
+/// Returns true iff Val consists of one contiguous run of 1s with any number
+/// of 0s on either side.  The 1s are allowed to wrap from LSB to MSB,
+/// so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
+/// not, since all 1s are not contiguous.
 static bool isRunOfOnes(ConstantInt *Val, uint32_t &MB, uint32_t &ME) {
   const APInt& V = Val->getValue();
   uint32_t BitWidth = Val->getType()->getBitWidth();
@@ -357,9 +357,8 @@ static bool isRunOfOnes(ConstantInt *Val, uint32_t &MB, uint32_t &ME) {
   return true;
 }
 
-/// FoldLogicalPlusAnd - This is part of an expression (LHS +/- RHS) & Mask,
-/// where isSub determines whether the operator is a sub.  If we can fold one of
-/// the following xforms:
+/// This is part of an expression (LHS +/- RHS) & Mask, where isSub determines
+/// whether the operator is a sub. If we can fold one of the following xforms:
 ///
 /// ((A & N) +/- B) & Mask -> (A +/- B) & Mask iff N&Mask == Mask
 /// ((A | N) +/- B) & Mask -> (A +/- B) & Mask iff N&Mask == 0
@@ -449,8 +448,8 @@ enum MaskedICmpType {
   FoldMskICmp_BMask_NotMixed          =   512
 };
 
-/// return the set of pattern classes (from MaskedICmpType)
-/// that (icmp SCC (A & B), C) satisfies
+/// Return the set of pattern classes (from MaskedICmpType)
+/// that (icmp SCC (A & B), C) satisfies.
 static unsigned getTypeOfMaskedICmp(Value* A, Value* B, Value* C,
                                     ICmpInst::Predicate SCC)
 {
@@ -538,8 +537,8 @@ static unsigned conjugateICmpMask(unsigned Mask) {
   return NewMask;
 }
 
-/// decomposeBitTestICmp - Decompose an icmp into the form ((X & Y) pred Z)
-/// if possible. The returned predicate is either == or !=. Returns false if
+/// Decompose an icmp into the form ((X & Y) pred Z) if possible.
+/// The returned predicate is either == or !=. Returns false if
 /// decomposition fails.
 static bool decomposeBitTestICmp(const ICmpInst *I, ICmpInst::Predicate &Pred,
                                  Value *&X, Value *&Y, Value *&Z) {
@@ -585,10 +584,9 @@ static bool decomposeBitTestICmp(const ICmpInst *I, ICmpInst::Predicate &Pred,
   return true;
 }
 
-/// foldLogOpOfMaskedICmpsHelper:
-/// handle (icmp(A & B) ==/!= C) &/| (icmp(A & D) ==/!= E)
-/// return the set of pattern classes (from MaskedICmpType)
-/// that both LHS and RHS satisfy
+/// Handle (icmp(A & B) ==/!= C) &/| (icmp(A & D) ==/!= E)
+/// Return the set of pattern classes (from MaskedICmpType)
+/// that both LHS and RHS satisfy.
 static unsigned foldLogOpOfMaskedICmpsHelper(Value*& A,
                                              Value*& B, Value*& C,
                                              Value*& D, Value*& E,
@@ -700,9 +698,9 @@ static unsigned foldLogOpOfMaskedICmpsHelper(Value*& A,
   unsigned right_type = getTypeOfMaskedICmp(A, D, E, RHSCC);
   return left_type & right_type;
 }
-/// foldLogOpOfMaskedICmps:
-/// try to fold (icmp(A & B) ==/!= C) &/| (icmp(A & D) ==/!= E)
-/// into a single (icmp(A & X) ==/!= Y)
+
+/// Try to fold (icmp(A & B) ==/!= C) &/| (icmp(A & D) ==/!= E)
+/// into a single (icmp(A & X) ==/!= Y).
 static Value *foldLogOpOfMaskedICmps(ICmpInst *LHS, ICmpInst *RHS, bool IsAnd,
                                      llvm::InstCombiner::BuilderTy *Builder) {
   Value *A = nullptr, *B = nullptr, *C = nullptr, *D = nullptr, *E = nullptr;
@@ -879,7 +877,7 @@ Value *InstCombiner::simplifyRangeCheck(ICmpInst *Cmp0, ICmpInst *Cmp1,
   return Builder->CreateICmp(NewPred, Input, RangeEnd);
 }
 
-/// FoldAndOfICmps - Fold (icmp)&(icmp) if possible.
+/// Fold (icmp)&(icmp) if possible.
 Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   ICmpInst::Predicate LHSCC = LHS->getPredicate(), RHSCC = RHS->getPredicate();
 
@@ -1123,9 +1121,8 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   return nullptr;
 }
 
-/// FoldAndOfFCmps - Optimize (fcmp)&(fcmp).  NOTE: Unlike the rest of
-/// instcombine, this returns a Value which should already be inserted into the
-/// function.
+/// Optimize (fcmp)&(fcmp).  NOTE: Unlike the rest of instcombine, this returns
+/// a Value which should already be inserted into the function.
 Value *InstCombiner::FoldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
   if (LHS->getPredicate() == FCmpInst::FCMP_ORD &&
       RHS->getPredicate() == FCmpInst::FCMP_ORD) {
@@ -1513,11 +1510,11 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   return Changed ? &I : nullptr;
 }
 
-/// CollectBSwapParts - Analyze the specified subexpression and see if it is
-/// capable of providing pieces of a bswap.  The subexpression provides pieces
-/// of a bswap if it is proven that each of the non-zero bytes in the output of
-/// the expression came from the corresponding "byte swapped" byte in some other
-/// value.  For example, if the current subexpression is "(shl i32 %X, 24)" then
+/// Analyze the specified subexpression and see if it is capable of providing
+/// pieces of a bswap.  The subexpression provides pieces of a bswap if it is
+/// proven that each of the non-zero bytes in the output of the expression came
+/// from the corresponding "byte swapped" byte in some other value.
+/// For example, if the current subexpression is "(shl i32 %X, 24)" then
 /// we know that the expression deposits the low byte of %X into the high byte
 /// of the bswap result and that all other bytes are zero.  This expression is
 /// accepted, the high byte of ByteValues is set to X to indicate a correct
@@ -1635,7 +1632,7 @@ static bool CollectBSwapParts(Value *V, int OverallLeftShift, uint32_t ByteMask,
   return false;
 }
 
-/// MatchBSwap - Given an OR instruction, check to see if this is a bswap idiom.
+/// Given an OR instruction, check to see if this is a bswap idiom.
 /// If so, insert the new bswap intrinsic and return it.
 Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
   IntegerType *ITy = dyn_cast<IntegerType>(I.getType());
@@ -1667,9 +1664,9 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
   return CallInst::Create(F, V);
 }
 
-/// MatchSelectFromAndOr - We have an expression of the form (A&C)|(B&D).  Check
-/// If A is (cond?-1:0) and either B or D is ~(cond?-1,0) or (cond?0,-1), then
-/// we can simplify this expression to "cond ? C : D or B".
+/// We have an expression of the form (A&C)|(B&D).  Check if A is (cond?-1:0)
+/// and either B or D is ~(cond?-1,0) or (cond?0,-1), then we can simplify this
+/// expression to "cond ? C : D or B".
 static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
                                          Value *C, Value *D) {
   // If A is not a select of -1/0, this cannot match.
@@ -1692,7 +1689,7 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
   return nullptr;
 }
 
-/// FoldOrOfICmps - Fold (icmp)|(icmp) if possible.
+/// Fold (icmp)|(icmp) if possible.
 Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS,
                                    Instruction *CxtI) {
   ICmpInst::Predicate LHSCC = LHS->getPredicate(), RHSCC = RHS->getPredicate();
@@ -2024,9 +2021,8 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS,
   return nullptr;
 }
 
-/// FoldOrOfFCmps - Optimize (fcmp)|(fcmp).  NOTE: Unlike the rest of
-/// instcombine, this returns a Value which should already be inserted into the
-/// function.
+/// Optimize (fcmp)|(fcmp).  NOTE: Unlike the rest of instcombine, this returns
+/// a Value which should already be inserted into the function.
 Value *InstCombiner::FoldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
   if (LHS->getPredicate() == FCmpInst::FCMP_UNO &&
       RHS->getPredicate() == FCmpInst::FCMP_UNO &&
@@ -2084,7 +2080,7 @@ Value *InstCombiner::FoldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
   return nullptr;
 }
 
-/// FoldOrWithConstants - This helper function folds:
+/// This helper function folds:
 ///
 ///     ((A | B) & C1) | (B & C2)
 ///
