@@ -68,7 +68,7 @@ def get_tidy_invocation(f, clang_tidy_binary, checks, tmpdir, build_path,
     # Show warnings in all in-project headers by default.
     start.append('-header-filter=^' + build_path + '/.*')
   if checks:
-    start.append('-checks=-*,' + checks)
+    start.append('-checks=' + checks)
   if tmpdir is not None:
     start.append('-export-fixes')
     # Get a temporary file. We immediately close the handle so clang-tidy can
@@ -133,7 +133,7 @@ def main():
   try:
     invocation = [args.clang_tidy_binary, '-list-checks']
     if args.checks:
-      invocation.append('-checks='+args.checks)
+      invocation.append('-checks=' + args.checks)
     invocation.append('-')
     print subprocess.check_output(invocation)
   except:
