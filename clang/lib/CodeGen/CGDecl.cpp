@@ -968,7 +968,11 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
         allocaAlignment = alignment;
       }
 
-      address = CreateTempAlloca(allocaTy, allocaAlignment, D.getName());
+      // Create the alloca.  Note that we set the name separately from
+      // building the instruction so that it's there even in no-asserts
+      // builds.
+      address = CreateTempAlloca(allocaTy, allocaAlignment);
+      address.getPointer()->setName(D.getName());
 
       // Emit a lifetime intrinsic if meaningful.  There's no point
       // in doing this if we don't have a valid insertion point (?).
