@@ -89,9 +89,6 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     Symtab.addFile(std::move(File));
   }
 
-  // Make sure we have resolved all symbols.
-  Symtab.reportRemainingUndefines();
-
   // Write the result.
   const ELFFileBase *FirstObj = Symtab.getFirstELF();
   switch (FirstObj->getELFKind()) {

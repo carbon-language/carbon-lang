@@ -72,14 +72,6 @@ void SymbolTable::addELFFile(ELFFileBase *File) {
   }
 }
 
-void SymbolTable::reportRemainingUndefines() {
-  for (auto &I : Symtab) {
-    SymbolBody *Body = I.second->Body;
-    if (Body->isStrongUndefined())
-      error(Twine("undefined symbol: ") + Body->getName());
-  }
-}
-
 // This function resolves conflicts if there's an existing symbol with
 // the same name. Decisions are made based on symbol type.
 template <class ELFT> void SymbolTable::resolve(SymbolBody *New) {

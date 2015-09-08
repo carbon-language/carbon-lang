@@ -42,9 +42,6 @@ public:
     return nullptr;
   }
 
-  // Print an error message on undefined symbols.
-  void reportRemainingUndefines();
-
   const llvm::DenseMap<StringRef, Symbol *> &getSymbols() const {
     return Symtab;
   }

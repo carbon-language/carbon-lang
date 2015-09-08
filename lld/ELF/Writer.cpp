@@ -327,7 +327,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       Out = BSSSec;
       break;
     case SymbolBody::UndefinedKind:
-      assert(Body->isWeak() && "Should be defined by now");
+      if (!Body->isWeak())
+        error(Twine("undefined symbol: ") + Name);
     case SymbolBody::DefinedAbsoluteKind:
       break;
     case SymbolBody::LazyKind:
