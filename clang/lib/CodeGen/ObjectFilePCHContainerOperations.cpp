@@ -50,6 +50,34 @@ class PCHContainerGenerator : public ASTConsumer {
   raw_pwrite_stream *OS;
   std::shared_ptr<PCHBuffer> Buffer;
 
+  /// Visit every type and emit debug info for it.
+  struct DebugTypeVisitor : public RecursiveASTVisitor<DebugTypeVisitor> {
+    clang::CodeGen::CGDebugInfo &DI;
+    ASTContext &Ctx;
+    DebugTypeVisitor(clang::CodeGen::CGDebugInfo &DI, ASTContext &Ctx)
+        : DI(DI), Ctx(Ctx) {}
+
+    /// Determine whether this type can be represented in DWARF.
+    static bool CanRepresent(const Type *Ty) {
+      return !Ty->isDependentType() && !Ty->isUndeducedType();
+    }
+
+    bool VisitTypeDecl(TypeDecl *D) {
+      QualType QualTy = Ctx.getTypeDeclType(D);
+      if (!QualTy.isNull() && CanRepresent(QualTy.getTypePtr()))
+        DI.getOrCreateStandaloneType(QualTy, D->getLocation());
+      return true;
+    }
+
+    bool VisitValueDecl(ValueDecl *D) {
+      QualType QualTy = D->getType();
+      if (!QualTy.isNull() && CanRepresent(QualTy.getTypePtr()))
+        DI.getOrCreateStandaloneType(QualTy, D->getLocation());
+      return true;
+    }
+
+  };
+
 public:
   PCHContainerGenerator(DiagnosticsEngine &diags,
                         const HeaderSearchOptions &HSO,
@@ -80,6 +108,36 @@ public:
     M->setDataLayout(Ctx->getTargetInfo().getDataLayoutString());
     Builder.reset(new CodeGen::CodeGenModule(
         *Ctx, HeaderSearchOpts, PreprocessorOpts, CodeGenOpts, *M, Diags));
+  }
+
+  bool HandleTopLevelDecl(DeclGroupRef D) override {
+    if (Diags.hasErrorOccurred() ||
+        (CodeGenOpts.getDebugInfo() == CodeGenOptions::NoDebugInfo))
+      return true;
+
+    // Collect debug info for all decls in this group.
+    for (auto *I : D)
+      if (!I->isFromASTFile()) {
+        DebugTypeVisitor DTV(*Builder->getModuleDebugInfo(), *Ctx);
+        DTV.TraverseDecl(I);
+      }
+    return true;
+  }
+
+  void HandleTagDeclDefinition(TagDecl *D) override {
+    if (Diags.hasErrorOccurred())
+      return;
+
+    Builder->UpdateCompletedType(D);
+  }
+
+  void HandleTagDeclRequiredDefinition(const TagDecl *D) override {
+    if (Diags.hasErrorOccurred())
+      return;
+
+    if (CodeGen::CGDebugInfo *DI = Builder->getModuleDebugInfo())
+      if (const RecordDecl *RD = dyn_cast<RecordDecl>(D))
+        DI->completeRequiredType(RD);
   }
 
   /// Emit a container holding the serialized AST.

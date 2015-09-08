@@ -332,6 +332,10 @@ module DebugModule {
   header "DebugModule.h"
 }
 
+module DebugCXX {
+  header "DebugCXX.h"
+}
+
 module ImportNameInDir {
   header "ImportNameInDir.h"
   export *
