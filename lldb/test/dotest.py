@@ -635,6 +635,17 @@ def parseOptionsAndInitTestdirs():
         if any([x.startswith('-') for x in args.f]):
             usage(parser)
         filters.extend(args.f)
+        # Shut off multiprocessing mode when additional filters are specified.
+        # The rational is that the user is probably going after a very specific
+        # test and doesn't need a bunch of parallel test runners all looking for
+        # it in a frenzy.  Also, '-v' now spits out all test run output even
+        # on success, so the standard recipe for redoing a failing test (with -v
+        # and a -f to filter to the specific test) now causes all test scanning
+        # (in parallel) to print results for do-nothing runs in a very distracting
+        # manner.  If we really need filtered parallel runs in the future, consider
+        # adding a --no-output-on-success that prevents -v from setting
+        # output-on-success.
+        no_multiprocess_test_runner = True
 
     if args.g:
         fs4all = False
@@ -780,6 +791,8 @@ def parseOptionsAndInitTestdirs():
     # Gather all the dirs passed on the command line.
     if len(args.args) > 0:
         testdirs = map(os.path.abspath, args.args)
+        # Shut off multiprocessing mode when test directories are specified.
+        no_multiprocess_test_runner = True
 
     # If '-r dir' is specified, the tests should be run under the relocated
     # directory.  Let's copy the testdirs over.
