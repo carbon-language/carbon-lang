@@ -149,34 +149,6 @@ public:
   CharUnits FieldOffset;
 };
 
-/// A pair of helper functions for a __block variable.
-class BlockByrefHelpers : public llvm::FoldingSetNode {
-public:
-  llvm::Constant *CopyHelper;
-  llvm::Constant *DisposeHelper;
-
-  /// The alignment of the field.  This is important because
-  /// different offsets to the field within the byref struct need to
-  /// have different helper functions.
-  CharUnits Alignment;
-
-  BlockByrefHelpers(CharUnits alignment) : Alignment(alignment) {}
-  BlockByrefHelpers(const BlockByrefHelpers &) = default;
-  virtual ~BlockByrefHelpers();
-
-  void Profile(llvm::FoldingSetNodeID &id) const {
-    id.AddInteger(Alignment.getQuantity());
-    profileImpl(id);
-  }
-  virtual void profileImpl(llvm::FoldingSetNodeID &id) const = 0;
-
-  virtual bool needsCopy() const { return true; }
-  virtual void emitCopy(CodeGenFunction &CGF, Address dest, Address src) = 0;
-
-  virtual bool needsDispose() const { return true; }
-  virtual void emitDispose(CodeGenFunction &CGF, Address field) = 0;
-};
-
 /// CGBlockInfo - Information to generate a block literal.
 class CGBlockInfo {
 public:
