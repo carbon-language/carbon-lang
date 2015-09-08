@@ -42,6 +42,8 @@ TEST(JSONCompilationDatabase, ErrsOnInvalidFormat) {
   expectFailure("[{\"arguments\":\"\",\"file\":\"\"}]", "Missing directory");
   expectFailure("[{\"directory\":\"\",\"arguments\":\"\",\"file\":\"\"}]", "Arguments not array");
   expectFailure("[{\"directory\":\"\",\"command\":[],\"file\":\"\"}]", "Command not string");
+  expectFailure("[{\"directory\":\"\",\"arguments\":[[]],\"file\":\"\"}]",
+                "Arguments contain non-string");
 }
 
 static std::vector<std::string> getAllFiles(StringRef JSONDatabase,
@@ -140,8 +142,8 @@ TEST(JSONCompilationDatabase, ArgumentsPreferredOverCommand) {
    CompileCommand FoundCommand = findCompileArgsInJsonDatabase(
       FileName,
       ("[{\"directory\":\"" + Directory + "\","
-         "\"command\":\"" + Command + "\","
          "\"arguments\":[\"" + Arguments + "\"],"
+         "\"command\":\"" + Command + "\","
          "\"file\":\"" + FileName + "\"}]").str(),
       ErrorMessage);
    EXPECT_EQ(Directory, FoundCommand.Directory) << ErrorMessage;
