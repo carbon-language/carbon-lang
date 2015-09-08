@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// UNSUPPORTED: c++98, c++03, c++11
+
 // <algorithm>
 
 //   template<class ForwardIterator, class Searcher>
