@@ -50,6 +50,10 @@ public:
     return ObjectFiles;
   }
 
+  const std::vector<std::unique_ptr<SharedFileBase>> &getSharedFiles() const {
+    return SharedFiles;
+  }
+
 private:
   Symbol *insert(SymbolBody *New);
   template <class ELFT> void addELFFile(ELFFileBase *File);

@@ -156,13 +156,36 @@ private:
   const StringTableSection<ELFT::Is64Bits> &StrTabSec;
 };
 
+template <bool Is64Bits>
+class DynamicSection final : public OutputSectionBase<Is64Bits> {
+public:
+  DynamicSection(const StringTableSection<Is64Bits> &StrTabSec)
+      : OutputSectionBase<Is64Bits>(".dynamic", SHT_DYNAMIC,
+                                    SHF_ALLOC | SHF_WRITE),
+        StrTabSec(StrTabSec) {
+    typedef OutputSectionBase<Is64Bits> Base;
+    typename Base::HeaderT &Header = this->Header;
+    Header.sh_addralign = Is64Bits ? 8 : 4;
+    Header.sh_entsize = Is64Bits ? 16 : 8;
+  }
+
+  void finalize() override {
+    this->Header.sh_link = StrTabSec.getSectionIndex();
+  }
+
+  void writeTo(uint8_t *Buf) override {}
+
+private:
+  const StringTableSection<Is64Bits> &StrTabSec;
+};
+
 // The writer writes a SymbolTable result to a file.
 template <class ELFT> class Writer {
 public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  Writer(SymbolTable *T) : SymTable(*T, StringTable) {}
+  Writer(SymbolTable *T) : SymTable(*T, StringTable), DynamicSec(StringTable) {}
   void run();
 
 private:
@@ -184,6 +207,8 @@ private:
   StringTableSection<ELFT::Is64Bits> StringTable;
 
   SymbolTableSection<ELFT> SymTable;
+
+  DynamicSection<ELFT::Is64Bits> DynamicSec;
 };
 } // anonymous namespace
 
@@ -490,6 +515,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   OutputSections.push_back(&SymTable);
   OutputSections.push_back(&StringTable);
+
+  const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
+      Symtab.getSharedFiles();
+  if (!SharedFiles.empty())
+    OutputSections.push_back(&DynamicSec);
 
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
                    compSec<ELFT::Is64Bits>);
