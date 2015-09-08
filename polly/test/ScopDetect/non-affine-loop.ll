@@ -6,13 +6,8 @@
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=ALLOWNONAFFINELOOPS
 ; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops=true -polly-allow-nonaffine \
-; RUN:     -polly-detect-unprofitable -analyze < %s | FileCheck %s \
+; RUN:     -analyze < %s | FileCheck %s \
 ; RUN:     --check-prefix=ALLOWNONAFFINELOOPSANDACCESSES
-; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-branches \
-; RUN:     -polly-allow-nonaffine-loops=true -polly-allow-nonaffine \
-; RUN:     -polly-detect-scops-in-regions-without-loops \
-; RUN:     -polly-detect-unprofitable -analyze < %s | FileCheck %s \
-; RUN:     --check-prefix=ALLOWNONAFFINELOOPSANDACCESSESANDNOLOOPS
 ;
 ; This function/region does contain a loop, however it is non-affine, hence the access
 ; A[i] is also. Furthermore, it is the only loop, thus when we over approximate
@@ -27,7 +22,6 @@
 ; REJECTNONAFFINELOOPS-NOT:                 Valid
 ; ALLOWNONAFFINELOOPS-NOT:                  Valid
 ; ALLOWNONAFFINELOOPSANDACCESSES-NOT:       Valid
-; ALLOWNONAFFINELOOPSANDACCESSESANDNOLOOPS: Valid Region for Scop: bb1 => bb10
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

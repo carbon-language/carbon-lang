@@ -73,18 +73,6 @@ using namespace polly;
 
 #define DEBUG_TYPE "polly-detect"
 
-static cl::opt<bool>
-    DetectScopsWithoutLoops("polly-detect-scops-in-functions-without-loops",
-                            cl::desc("Detect scops in functions without loops"),
-                            cl::Hidden, cl::init(false), cl::ZeroOrMore,
-                            cl::cat(PollyCategory));
-
-static cl::opt<bool>
-    DetectRegionsWithoutLoops("polly-detect-scops-in-regions-without-loops",
-                              cl::desc("Detect scops in regions without loops"),
-                              cl::Hidden, cl::init(false), cl::ZeroOrMore,
-                              cl::cat(PollyCategory));
-
 static cl::opt<bool> DetectUnprofitable("polly-detect-unprofitable",
                                         cl::desc("Detect unprofitable scops"),
                                         cl::Hidden, cl::init(false),
@@ -877,7 +865,7 @@ void ScopDetection::findScops(Region &R) {
                            false /*verifying*/);
 
   bool RegionIsValid = false;
-  if (!DetectRegionsWithoutLoops && regionWithoutLoops(R, LI))
+  if (!DetectUnprofitable && regionWithoutLoops(R, LI))
     invalid<ReportUnprofitable>(Context, /*Assert=*/true, &R);
   else
     RegionIsValid = isValidRegion(Context);
@@ -1027,7 +1015,7 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
 
   // Check if there was at least one non-overapproximated loop in the region or
   // we allow regions without loops.
-  if (!DetectRegionsWithoutLoops && !Context.hasAffineLoops)
+  if (!DetectUnprofitable && !Context.hasAffineLoops)
     invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
   DEBUG(dbgs() << "OK\n");
@@ -1083,7 +1071,7 @@ void ScopDetection::emitMissedRemarksForLeaves(const Function &F,
 bool ScopDetection::runOnFunction(llvm::Function &F) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   RI = &getAnalysis<RegionInfoPass>().getRegionInfo();
-  if (!DetectScopsWithoutLoops && LI->empty())
+  if (!DetectUnprofitable && LI->empty())
     return false;
 
   AA = &getAnalysis<AliasAnalysis>();
