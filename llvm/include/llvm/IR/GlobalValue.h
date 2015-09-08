@@ -236,7 +236,8 @@ public:
   /// Whether the definition of this global may be discarded if it is not used
   /// in its compilation unit.
   static bool isDiscardableIfUnused(LinkageTypes Linkage) {
-    return isLinkOnceLinkage(Linkage) || isLocalLinkage(Linkage);
+    return isLinkOnceLinkage(Linkage) || isLocalLinkage(Linkage) ||
+           isAvailableExternallyLinkage(Linkage);
   }
 
   /// Whether the definition of this global may be replaced by something
