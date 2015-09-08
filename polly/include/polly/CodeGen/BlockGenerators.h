@@ -386,7 +386,9 @@ protected:
   /// @param Inst      The current instruction we check.
   /// @param InstCopy  The copy of the instruction @p Inst in the optimized
   ///                  SCoP.
-  void handleOutsideUsers(const Region &R, Instruction *Inst, Value *InstCopy);
+  /// @param Address   If given it is used as the escape address for @p Inst.
+  void handleOutsideUsers(const Region &R, Instruction *Inst, Value *InstCopy,
+                          AllocaInst *Address = nullptr);
 
   /// @brief Initialize the memory of demoted scalars.
   ///

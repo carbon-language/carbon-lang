@@ -802,8 +802,7 @@ Region *ScopDetection::expandRegion(Region &R) {
     DEBUG(dbgs() << "\t\tTrying " << ExpandedRegion->getNameStr() << "\n");
     // Only expand when we did not collect errors.
 
-    // Check the exit first (cheap)
-    if (isValidExit(Context) && !Context.Log.hasErrors()) {
+    if (!Context.Log.hasErrors()) {
       // If the exit is valid check all blocks
       //  - if true, a valid region was found => store it + keep expanding
       //  - if false, .tbd. => stop  (should this really end the loop?)
@@ -945,18 +944,6 @@ bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
   return true;
 }
 
-bool ScopDetection::isValidExit(DetectionContext &Context) const {
-
-  // PHI nodes are not allowed in the exit basic block.
-  if (BasicBlock *Exit = Context.CurRegion.getExit()) {
-    BasicBlock::iterator I = Exit->begin();
-    if (I != Exit->end() && isa<PHINode>(*I))
-      return invalid<ReportPHIinExit>(Context, /*Assert=*/true, I);
-  }
-
-  return true;
-}
-
 bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   Region &CurRegion = Context.CurRegion;
 
@@ -1001,9 +988,6 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
 
   if (!DetectUnprofitable && !hasMoreThanOneLoop(&CurRegion))
     invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
-
-  if (!isValidExit(Context))
-    return false;
 
   if (!allBlocksValid(Context))
     return false;

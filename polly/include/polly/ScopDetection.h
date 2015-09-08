@@ -223,13 +223,6 @@ private:
   /// @return True if all blocks in R are valid, false otherwise.
   bool allBlocksValid(DetectionContext &Context) const;
 
-  /// @brief Check the exit block of a region is valid.
-  ///
-  /// @param Context The context of scop detection.
-  ///
-  /// @return True if the exit of R is valid, false otherwise.
-  bool isValidExit(DetectionContext &Context) const;
-
   /// @brief Check if a region is a Scop.
   ///
   /// @param Context The context of scop detection.

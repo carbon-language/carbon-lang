@@ -1819,7 +1819,8 @@ static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI,
 Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, DominatorTree &DT,
            isl_ctx *Context, unsigned MaxLoopDepth)
     : DT(DT), SE(&ScalarEvolution), R(R), IsOptimized(false),
-      MaxLoopDepth(MaxLoopDepth), IslCtx(Context), Affinator(this) {}
+      HasSingleExitEdge(R.getExitingBlock()), MaxLoopDepth(MaxLoopDepth),
+      IslCtx(Context), Affinator(this) {}
 
 void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD,
                             AliasAnalysis &AA) {

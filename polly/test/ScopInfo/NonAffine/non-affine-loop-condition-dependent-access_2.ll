@@ -16,7 +16,7 @@
 ; access.
 ;
 ; INNERMOST:    Function: f
-; INNERMOST:    Region: %bb15---%bb26
+; INNERMOST:    Region: %bb15---%bb13
 ; INNERMOST:    Max Loop Depth:  1
 ; INNERMOST:    p0: {0,+,{0,+,1}<nuw><nsw><%bb11>}<nuw><nsw><%bb13>
 ; INNERMOST:    p1: {0,+,{0,+,-1}<nw><%bb11>}<nw><%bb13>
@@ -39,6 +39,15 @@
 ; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb16[i0] -> MemRef_A[o0] : 4o0 = p_4 + 4i0 };
 ; INNERMOST:            MustWriteAccess :=  [Reduction Type: +] [Scalar: 0]
 ; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb16[i0] -> MemRef_A[o0] : 4o0 = p_4 + 4i0 };
+; INNERMOST:      Stmt_bb26
+; INNERMOST:            Domain :=
+; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb26[] };
+; INNERMOST:            Schedule :=
+; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb26[] -> [1, 0] };
+; INNERMOST:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb26[] -> MemRef_indvars_iv_next6[] };
+; INNERMOST:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb26[] -> MemRef_indvars_iv_next4[] };
 ; INNERMOST:    }
 ;
 ; ALL:    Function: f

@@ -1,17 +1,6 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s
 ;
-; The outer loop of this function will correctly not be recognized with the
-; message:
-;
-;   Non affine access function: (sext i32 %tmp to i64)
-;
-; The access A[x] might mistakenly be treated as a multidimensional access with
-; dimension size x. This test will check that we correctly invalidate the
-; region and do not detect an outer SCoP.
-;
-; FIXME:
-; We should detect the inner region but the PHI node in the exit blocks
-; prohibits that.
+; Check that we will recognize this SCoP.
 ;
 ;    void f(int *A, long N) {
 ;      int j = 0;
@@ -25,7 +14,7 @@
 ;      }
 ;    }
 ;
-; CHECK-NOT: Valid Region for Scop: bb0 => bb13
+; CHECK: Valid Region for Scop: bb1 => bb0
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

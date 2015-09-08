@@ -92,8 +92,18 @@ void TempScop::printDetail(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI,
 
 void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
                                     AccFuncSetType &Functions,
-                                    Region *NonAffineSubRegion) {
-  if (canSynthesize(PHI, LI, SE, &R))
+                                    Region *NonAffineSubRegion,
+                                    bool IsExitBlock) {
+
+  // PHI nodes that are in the exit block of the region, hence if IsExitBlock is
+  // true, are not modeled as ordinary PHI nodes as they are not part of the
+  // region. However, we model the operands in the predecessor blocks that are
+  // part of the region as regular scalar accesses.
+
+  // If we can synthesize a PHI we can skip it, however only if it is in
+  // the region. If it is not it can only be in the exit block of the region.
+  // In this case we model the operands but not the PHI itself.
+  if (!IsExitBlock && canSynthesize(PHI, LI, SE, &R))
     return;
 
   // PHI nodes are modeled as if they had been demoted prior to the SCoP
@@ -133,13 +143,13 @@ void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
     OpI = OpBB->getTerminator();
 
     IRAccess ScalarAccess(IRAccess::MUST_WRITE, PHI, ZeroOffset, 1, true, Op,
-                          /* IsPHI */ true);
+                          /* IsPHI */ !IsExitBlock);
     AccFuncMap[OpBB].push_back(std::make_pair(ScalarAccess, OpI));
   }
 
   if (!OnlyNonAffineSubRegionOperands) {
     IRAccess ScalarAccess(IRAccess::READ, PHI, ZeroOffset, 1, true, PHI,
-                          /* IsPHI */ true);
+                          /* IsPHI */ !IsExitBlock);
     Functions.push_back(std::make_pair(ScalarAccess, PHI));
   }
 }
@@ -297,7 +307,8 @@ void TempScopInfo::buildAccessFunctions(Region &R, Region &SR) {
 }
 
 void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
-                                        Region *NonAffineSubRegion) {
+                                        Region *NonAffineSubRegion,
+                                        bool IsExitBlock) {
   AccFuncSetType Functions;
   Loop *L = LI->getLoopFor(&BB);
 
@@ -306,15 +317,21 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
 
   for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I) {
     Instruction *Inst = I;
+
+    PHINode *PHI = dyn_cast<PHINode>(Inst);
+    if (PHI)
+      buildPHIAccesses(PHI, R, Functions, NonAffineSubRegion, IsExitBlock);
+
+    // For the exit block we stop modeling after the last PHI node.
+    if (!PHI && IsExitBlock)
+      break;
+
     if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst))
       Functions.push_back(
           std::make_pair(buildIRAccess(Inst, L, &R, BoxedLoops), Inst));
 
     if (isIgnoredIntrinsic(Inst))
       continue;
-
-    if (PHINode *PHI = dyn_cast<PHINode>(Inst))
-      buildPHIAccesses(PHI, R, Functions, NonAffineSubRegion);
 
     if (buildScalarDependences(Inst, &R, NonAffineSubRegion)) {
       // If the Instruction is used outside the statement, we need to build the
@@ -338,6 +355,16 @@ TempScop *TempScopInfo::buildTempScop(Region &R) {
   TempScop *TScop = new TempScop(R, AccFuncMap);
 
   buildAccessFunctions(R, R);
+
+  // In case the region does not have an exiting block we will later (during
+  // code generation) split the exit block. This will move potential PHI nodes
+  // from the current exit block into the new region exiting block. Hence, PHI
+  // nodes that are at this point not part of the region will be.
+  // To handle these PHI nodes later we will now model their operands as scalar
+  // accesses. Note that we do not model anything in the exit block if we have
+  // an exiting block in the region, as there will not be any splitting later.
+  if (!R.getExitingBlock())
+    buildAccessFunctions(R, *R.getExit(), nullptr, /* IsExitBlock */ true);
 
   return TScop;
 }

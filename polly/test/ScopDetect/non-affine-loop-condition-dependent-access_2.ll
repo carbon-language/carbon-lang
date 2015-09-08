@@ -14,9 +14,9 @@
 ; innermost loop as a SCoP of depth 1, we have to reject the loop nest if not
 ; both, non-affine loops as well as non-affine accesses are allowed.
 ;
-; REJECTNONAFFINELOOPS:           Valid Region for Scop: bb15 => bb26
+; REJECTNONAFFINELOOPS:           Valid Region for Scop: bb15 => bb13
 ; REJECTNONAFFINELOOPS-NOT:       Valid
-; ALLOWNONAFFINELOOPS:            Valid Region for Scop: bb15 => bb26
+; ALLOWNONAFFINELOOPS:            Valid Region for Scop: bb15 => bb13
 ; ALLOWNONAFFINELOOPS-NOT:        Valid
 ; ALLOWNONAFFINELOOPSANDACCESSES: Valid Region for Scop: bb11 => bb29
 ;

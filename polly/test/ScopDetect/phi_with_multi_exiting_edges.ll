@@ -1,7 +1,5 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze -S < %s | FileCheck %s
 ;
-; XFAIL: *
-;
 ; Region with an exit node that has a PHI node multiple incoming edges from
 ; inside the region. Motivation for supporting such cases in Polly.
 ;

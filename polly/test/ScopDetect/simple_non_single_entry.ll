@@ -1,5 +1,4 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s
 
 ; void f(long A[], long N) {
 ;   long i;
@@ -65,4 +64,4 @@ return:
   ret void
 }
 
-; CHECK: Valid Region for Scop: next => for.i.head1
+; CHECK: Valid Region for Scop: next => for.i

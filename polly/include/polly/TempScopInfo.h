@@ -256,8 +256,9 @@ class TempScopInfo : public RegionPass {
   /// @param R                  The SCoP region
   /// @param Functions          The access functions of the current BB
   /// @param NonAffineSubRegion The non affine sub-region @p PHI is in.
+  /// @param IsExitBlock        Flag to indicate that @p PHI is in the exit BB.
   void buildPHIAccesses(PHINode *PHI, Region &R, AccFuncSetType &Functions,
-                        Region *NonAffineSubRegion);
+                        Region *NonAffineSubRegion, bool IsExitBlock = false);
 
   /// @brief Build the access functions for the subregion @p SR.
   ///
@@ -270,8 +271,10 @@ class TempScopInfo : public RegionPass {
   /// @param R                  The SCoP region.
   /// @param BB                 A basic block in @p R.
   /// @param NonAffineSubRegion The non affine sub-region @p BB is in.
+  /// @param IsExitBlock        Flag to indicate that @p BB is in the exit BB.
   void buildAccessFunctions(Region &R, BasicBlock &BB,
-                            Region *NonAffineSubRegion = nullptr);
+                            Region *NonAffineSubRegion = nullptr,
+                            bool IsExitBlock = false);
 
 public:
   static char ID;

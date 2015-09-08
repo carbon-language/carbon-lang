@@ -42,4 +42,4 @@ for.end9:                                         ; preds = %for.body4
   ret i32 %add
 }
 
-; CHECK: Valid Region for Scop: for.body => for.cond2.preheader
+; CHECK: Valid Region for Scop: for.body => for.body4

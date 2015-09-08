@@ -799,6 +799,9 @@ private:
   /// Flag to indicate that the scheduler actually optimized the SCoP.
   bool IsOptimized;
 
+  /// @brief True if the underlying region has a single exiting block.
+  bool HasSingleExitEdge;
+
   /// Max loop depth.
   unsigned MaxLoopDepth;
 
@@ -1191,6 +1194,9 @@ public:
 
   /// @brief Align the parameters in the statement to the scop context
   void realignParams();
+
+  /// @brief Return true if the underlying region has a single exiting block.
+  bool hasSingleExitEdge() const { return HasSingleExitEdge; }
 
   /// @brief Print the static control part.
   ///

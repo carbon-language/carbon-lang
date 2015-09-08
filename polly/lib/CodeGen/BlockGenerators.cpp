@@ -365,7 +365,7 @@ Value *BlockGenerator::getOrCreatePHIAlloca(Value *ScalarBase) {
 }
 
 void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
-                                        Value *InstCopy) {
+                                        Value *InstCopy, AllocaInst *Address) {
   // If there are escape users we get the alloca for this instruction and put it
   // in the EscapeMap for later finalization. Lastly, if the instruction was
   // copied multiple times we already did this and can exit.
@@ -391,7 +391,8 @@ void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
     return;
 
   // Get or create an escape alloca for this instruction.
-  auto *ScalarAddr = cast<AllocaInst>(getOrCreateScalarAlloca(Inst));
+  auto *ScalarAddr =
+      Address ? Address : cast<AllocaInst>(getOrCreateScalarAlloca(Inst));
 
   // Remember that this instruction has escape uses and the escape alloca.
   EscapeMap[Inst] = std::make_pair(ScalarAddr, std::move(EscapeUsers));
@@ -516,6 +517,11 @@ void BlockGenerator::createScalarInitialization(Scop &S) {
     if (Inst && R.contains(Inst))
       continue;
 
+    // PHI nodes that are not marked as such in their SAI object are exit PHI
+    // nodes we model as common scalars but do not need to initialize.
+    if (Inst && isa<PHINode>(Inst))
+      continue;
+
     ValueMapT EmptyMap;
     Builder.CreateStore(Array->getBasePtr(),
                         getOrCreateScalarAlloca(Array->getBasePtr()));
@@ -567,6 +573,23 @@ void BlockGenerator::createScalarFinalization(Region &R) {
 }
 
 void BlockGenerator::finalizeSCoP(Scop &S) {
+
+  // Handle PHI nodes that were in the original exit and are now
+  // moved into the region exiting block.
+  if (!S.hasSingleExitEdge()) {
+    for (Instruction &I : *S.getRegion().getExitingBlock()) {
+      PHINode *PHI = dyn_cast<PHINode>(&I);
+      if (!PHI)
+        break;
+
+      assert(PHI->getNumUses() == 1);
+      assert(ScalarMap.count(PHI->user_back()));
+
+      handleOutsideUsers(S.getRegion(), PHI, nullptr,
+                         ScalarMap[PHI->user_back()]);
+    }
+  }
+
   createScalarInitialization(S);
   createScalarFinalization(S.getRegion());
 }
