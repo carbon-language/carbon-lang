@@ -32,7 +32,7 @@
 ; IR-NEXT: store i64 %polly.indvar, i64* %[[R2]]
 ; IR-NEXT: %polly.par.userContext1 = bitcast { i64, i64 }* %polly.par.userContext to i8*
 
-; IR-LABEL: @loop_references_outer_ids.polly.subfn(i8* %polly.par.userContext)
+; IR-LABEL: @loop_references_outer_ids_polly_subfn(i8* %polly.par.userContext)
 ; IR:       %polly.par.userContext1 = bitcast i8* %polly.par.userContext to { i64, i64 }*
 ; IR-NEXT:  %[[R3:[0-9a-z.]+]] = getelementptr inbounds { i64, i64 }, { i64, i64 }* %polly.par.userContext1, i32 0, i32 0
 ; IR-NEXT:  %[[R4:[0-9a-z.]+]] = load i64, i64* %[[R3]]

@@ -15,8 +15,8 @@
 ; AST:   for (int c0 = 0; c0 <= p_0 + p_2; c0 += 1)
 ; AST:     Stmt_for_body35(c0);
 
-; IR: @foo.polly.subfn
-; IR: @foo.polly.subfn.1
+; IR: @foo_polly_subfn
+; IR: @foo_polly_subfn_1
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

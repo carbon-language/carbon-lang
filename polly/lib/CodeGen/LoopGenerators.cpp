@@ -259,7 +259,13 @@ Function *ParallelLoopGenerator::createSubFnDefinition() {
   std::vector<Type *> Arguments(1, Builder.getInt8PtrTy());
   FunctionType *FT = FunctionType::get(Builder.getVoidTy(), Arguments, false);
   Function *SubFn = Function::Create(FT, Function::InternalLinkage,
-                                     F->getName() + ".polly.subfn", M);
+                                     F->getName() + "_polly_subfn", M);
+
+  // Certain backends (e.g., NVPTX) do not support '.'s in function names.
+  // Hence, we ensure that all '.'s are replaced by '_'s.
+  std::string FunctionName = SubFn->getName();
+  std::replace(FunctionName.begin(), FunctionName.end(), '.', '_');
+  SubFn->setName(FunctionName);
 
   // Do not run any polly pass on the new function.
   SubFn->addFnAttr(PollySkipFnAttr);

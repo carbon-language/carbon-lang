@@ -36,14 +36,14 @@
 ; IR-NEXT:   %0 = bitcast {}* %polly.par.userContext to i8*
 ; IR-NEXT:   call void @llvm.lifetime.start(i64 0, i8* %0)
 ; IR-NEXT:   %polly.par.userContext1 = bitcast {}* %polly.par.userContext to i8*
-; IR-NEXT:   call void @GOMP_parallel_loop_runtime_start(void (i8*)* @single_parallel_loop.polly.subfn, i8* %polly.par.userContext1, i32 0, i64 0, i64 1024, i64 1)
-; IR-NEXT:   call void @single_parallel_loop.polly.subfn(i8* %polly.par.userContext1)
+; IR-NEXT:   call void @GOMP_parallel_loop_runtime_start(void (i8*)* @single_parallel_loop_polly_subfn, i8* %polly.par.userContext1, i32 0, i64 0, i64 1024, i64 1)
+; IR-NEXT:   call void @single_parallel_loop_polly_subfn(i8* %polly.par.userContext1)
 ; IR-NEXT:   call void @GOMP_parallel_end()
 ; IR-NEXT:   %1 = bitcast {}* %polly.par.userContext to i8*
 ; IR-NEXT:   call void @llvm.lifetime.end(i64 8, i8* %1)
 ; IR-NEXT:   br label %polly.merge_new_and_old
 
-; IR: define internal void @single_parallel_loop.polly.subfn(i8* %polly.par.userContext) #2
+; IR: define internal void @single_parallel_loop_polly_subfn(i8* %polly.par.userContext) #2
 ; IR-LABEL: polly.par.setup:
 ; IR-NEXT:   %polly.par.LBPtr = alloca i64
 ; IR-NEXT:   %polly.par.UBPtr = alloca i64
@@ -85,7 +85,7 @@
 
 ; IR: attributes #2 = { "polly.skip.fn" }
 
-; IR-STRIDE4:   call void @GOMP_parallel_loop_runtime_start(void (i8*)* @single_parallel_loop.polly.subfn, i8* %polly.par.userContext1, i32 0, i64 0, i64 1024, i64 4)
+; IR-STRIDE4:   call void @GOMP_parallel_loop_runtime_start(void (i8*)* @single_parallel_loop_polly_subfn, i8* %polly.par.userContext1, i32 0, i64 0, i64 1024, i64 4)
 ; IR-STRIDE4:  add nsw i64 %polly.indvar, 3
 ; IR-STRIDE4:  %polly.indvar_next = add nsw i64 %polly.indvar, 4
 ; IR-STRIDE4   %polly.adjust_ub = sub i64 %polly.par.UBAdjusted, 4

@@ -8,7 +8,7 @@
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
-; CHECK: define internal void @foo.polly.subfn
+; CHECK: define internal void @foo_polly_subfn
 
 define void @foo(float* %A, float* %B) {
 bb:

@@ -1,6 +1,6 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-parallel -polly-parallel-force -polly-codegen -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
 
-; IR: @foo.polly.subfn
+; IR: @foo_polly_subfn
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 define void @foo(i32 %sendcount, i8* %recvbuf) {

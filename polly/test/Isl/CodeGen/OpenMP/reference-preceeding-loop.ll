@@ -17,8 +17,8 @@
 ; AST-NEXT:   for (int c0 = 0; c0 <= p_0 + p_2; c0 += 1)
 ; AST-NEXT:     Stmt_while_body(c0);
 
-; IR: @update_model.polly.subfn
-; IR: @update_model.polly.subfn.1
+; IR: @update_model_polly_subfn
+; IR: @update_model_polly_subfn_1
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
