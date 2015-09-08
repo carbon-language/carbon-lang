@@ -202,6 +202,10 @@ class LValue {
 
   unsigned AlignSource : 2;
 
+  // This flag shows if a nontemporal load/stores should be used when accessing
+  // this lvalue.
+  bool Nontemporal : 1;
+
   Expr *BaseIvarExp;
 
   /// Used by struct-path-aware TBAA.
@@ -228,6 +232,7 @@ private:
     // Initialize Objective-C flags.
     this->Ivar = this->ObjIsArray = this->NonGC = this->GlobalObjCRef = false;
     this->ImpreciseLifetime = false;
+    this->Nontemporal = false;
     this->ThreadLocalRef = false;
     this->BaseIvarExp = nullptr;
 
@@ -277,6 +282,8 @@ public:
   void setARCPreciseLifetime(ARCPreciseLifetime_t value) {
     ImpreciseLifetime = (value == ARCImpreciseLifetime);
   }
+  bool isNontemporal() const { return Nontemporal; }
+  void setNontemporal(bool Value) { Nontemporal = Value; }
 
   bool isObjCWeak() const {
     return Quals.getObjCGCAttr() == Qualifiers::Weak;

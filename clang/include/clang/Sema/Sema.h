@@ -8851,6 +8851,7 @@ private:
   bool SemaBuiltinLongjmp(CallExpr *TheCall);
   bool SemaBuiltinSetjmp(CallExpr *TheCall);
   ExprResult SemaBuiltinAtomicOverloaded(ExprResult TheCallResult);
+  ExprResult SemaBuiltinNontemporalOverloaded(ExprResult TheCallResult);
   ExprResult SemaAtomicOpsOverloaded(ExprResult TheCallResult,
                                      AtomicExpr::AtomicOp Op);
   bool SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,

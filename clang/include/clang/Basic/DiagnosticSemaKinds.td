@@ -6200,6 +6200,12 @@ def err_atomic_load_store_uses_lib : Error<
   "atomic %select{load|store}0 requires runtime support that is not "
   "available for this target">;
 
+def err_nontemporal_builtin_must_be_pointer : Error<
+  "address argument to nontemporal builtin must be a pointer (%0 invalid)">;
+def err_nontemporal_builtin_must_be_pointer_intfltptr_or_vector : Error<
+  "address argument to nontemporal builtin must be a pointer to integer, float, "
+  "pointer, or a vector of such types (%0 invalid)">;
+
 def err_deleted_function_use : Error<"attempt to use a deleted function">;
 
 def err_kern_type_not_void_return : Error<

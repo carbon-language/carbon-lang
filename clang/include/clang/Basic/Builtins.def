@@ -1245,6 +1245,10 @@ BUILTIN(__builtin_operator_delete, "vv*", "n")
 BUILTIN(__builtin___get_unsafe_stack_start, "v*", "Fn")
 BUILTIN(__builtin___get_unsafe_stack_ptr, "v*", "Fn")
 
+// Nontemporal loads/stores builtins
+BUILTIN(__builtin_nontemporal_store, "v.", "t")
+BUILTIN(__builtin_nontemporal_load, "v.", "t")
+
 #undef BUILTIN
 #undef LIBBUILTIN
 #undef LANGBUILTIN

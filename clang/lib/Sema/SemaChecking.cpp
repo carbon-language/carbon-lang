@@ -441,6 +441,9 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
   case Builtin::BI__sync_swap_8:
   case Builtin::BI__sync_swap_16:
     return SemaBuiltinAtomicOverloaded(TheCallResult);
+  case Builtin::BI__builtin_nontemporal_load:
+  case Builtin::BI__builtin_nontemporal_store:
+    return SemaBuiltinNontemporalOverloaded(TheCallResult);
 #define BUILTIN(ID, TYPE, ATTRS)
 #define ATOMIC_BUILTIN(ID, TYPE, ATTRS) \
   case Builtin::BI##ID: \
@@ -2207,6 +2210,78 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   // gracefully.
   TheCall->setType(ResultType);
 
+  return TheCallResult;
+}
+
+/// SemaBuiltinNontemporalOverloaded - We have a call to
+/// __builtin_nontemporal_store or __builtin_nontemporal_load, which is an
+/// overloaded function based on the pointer type of its last argument.
+///
+/// This function goes through and does final semantic checking for these
+/// builtins.
+ExprResult Sema::SemaBuiltinNontemporalOverloaded(ExprResult TheCallResult) {
+  CallExpr *TheCall = (CallExpr *)TheCallResult.get();
+  DeclRefExpr *DRE =
+      cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
+  FunctionDecl *FDecl = cast<FunctionDecl>(DRE->getDecl());
+  unsigned BuiltinID = FDecl->getBuiltinID();
+  assert((BuiltinID == Builtin::BI__builtin_nontemporal_store ||
+          BuiltinID == Builtin::BI__builtin_nontemporal_load) &&
+         "Unexpected nontemporal load/store builtin!");
+  bool isStore = BuiltinID == Builtin::BI__builtin_nontemporal_store;
+  unsigned numArgs = isStore ? 2 : 1;
+
+  // Ensure that we have the proper number of arguments.
+  if (checkArgCount(*this, TheCall, numArgs))
+    return ExprError();
+
+  // Inspect the last argument of the nontemporal builtin.  This should always
+  // be a pointer type, from which we imply the type of the memory access.
+  // Because it is a pointer type, we don't have to worry about any implicit
+  // casts here.
+  Expr *PointerArg = TheCall->getArg(numArgs - 1);
+  ExprResult PointerArgResult =
+      DefaultFunctionArrayLvalueConversion(PointerArg);
+
+  if (PointerArgResult.isInvalid())
+    return ExprError();
+  PointerArg = PointerArgResult.get();
+  TheCall->setArg(numArgs - 1, PointerArg);
+
+  const PointerType *pointerType = PointerArg->getType()->getAs<PointerType>();
+  if (!pointerType) {
+    Diag(DRE->getLocStart(), diag::err_nontemporal_builtin_must_be_pointer)
+        << PointerArg->getType() << PointerArg->getSourceRange();
+    return ExprError();
+  }
+
+  QualType ValType = pointerType->getPointeeType();
+
+  // Strip any qualifiers off ValType.
+  ValType = ValType.getUnqualifiedType();
+  if (!ValType->isIntegerType() && !ValType->isAnyPointerType() &&
+      !ValType->isBlockPointerType() && !ValType->isFloatingType() &&
+      !ValType->isVectorType()) {
+    Diag(DRE->getLocStart(),
+         diag::err_nontemporal_builtin_must_be_pointer_intfltptr_or_vector)
+        << PointerArg->getType() << PointerArg->getSourceRange();
+    return ExprError();
+  }
+
+  if (!isStore) {
+    TheCall->setType(ValType);
+    return TheCallResult;
+  }
+
+  ExprResult ValArg = TheCall->getArg(0);
+  InitializedEntity Entity = InitializedEntity::InitializeParameter(
+      Context, ValType, /*consume*/ false);
+  ValArg = PerformCopyInitialization(Entity, SourceLocation(), ValArg);
+  if (ValArg.isInvalid())
+    return ExprError();
+
+  TheCall->setArg(0, ValArg.get());
+  TheCall->setType(Context.VoidTy);
   return TheCallResult;
 }
 
