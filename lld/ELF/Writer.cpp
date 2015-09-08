@@ -174,6 +174,7 @@ private:
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
   llvm::SpecificBumpPtrAllocator<OutputSection<ELFT>> CAlloc;
   std::vector<OutputSectionBase<ELFT::Is64Bits> *> OutputSections;
+  unsigned getNumSections() const { return OutputSections.size() + 1; }
 
   uintX_t FileSize;
   uintX_t SizeOfHeaders;
@@ -183,8 +184,6 @@ private:
   StringTableSection<ELFT::Is64Bits> StringTable;
 
   SymbolTableSection<ELFT> SymTable;
-
-  unsigned NumSections;
 
   void addOutputSection(OutputSectionBase<ELFT::Is64Bits> *Sec) {
     OutputSections.push_back(Sec);
@@ -525,17 +524,11 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       FileOff += RoundUpToAlignment(Size, Align);
   }
 
-  // Regular sections.
-  NumSections = OutputSections.size();
-
-  // First dummy section.
-  NumSections++;
-
   FileOff += OffsetToAlignment(FileOff, ELFT::Is64Bits ? 8 : 4);
 
   // Add space for section headers.
   SectionHeaderOff = FileOff;
-  FileOff += NumSections * sizeof(Elf_Shdr_Impl<ELFT>);
+  FileOff += getNumSections() * sizeof(Elf_Shdr_Impl<ELFT>);
   FileSize = SizeOfHeaders + RoundUpToAlignment(FileOff - SizeOfHeaders, 8);
 }
 
@@ -565,7 +558,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_phentsize = sizeof(Elf_Phdr_Impl<ELFT>);
   EHdr->e_phnum = 1;
   EHdr->e_shentsize = sizeof(Elf_Shdr_Impl<ELFT>);
-  EHdr->e_shnum = NumSections;
+  EHdr->e_shnum = getNumSections();
   EHdr->e_shstrndx = StringTableIndex;
 
   auto PHdrs = reinterpret_cast<Elf_Phdr_Impl<ELFT> *>(Buf + EHdr->e_phoff);
