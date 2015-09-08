@@ -19,7 +19,6 @@ class PluginCommandTestCase(TestBase):
         self.lib_dir = os.environ["LLDB_LIB_DIR"]
         self.implib_dir = os.environ["LLDB_IMPLIB_DIR"]
 
-    @expectedFailureFreeBSD('llvm.org/pr17430')
     @skipIfNoSBHeaders
     @skipIfHostIncompatibleWithRemote # Requires a compatible arch and platform to link against the host's built lldb lib.
     def test_load_plugin(self):
