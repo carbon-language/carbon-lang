@@ -454,7 +454,7 @@ public:
     //------------------------------------------------------------------
     
     CompilerType
-    GetIntTypeFromBitSize (size_t bit_size, bool is_signed)
+    GetIntTypeFromBitSize (size_t bit_size, bool is_signed) override
     {
         return GetIntTypeFromBitSize (getASTContext(), bit_size, is_signed);
     }
@@ -477,7 +477,7 @@ public:
     //------------------------------------------------------------------
     
     CompilerType
-    GetFloatTypeFromBitSize (size_t bit_size)
+    GetFloatTypeFromBitSize (size_t bit_size) override
     {
         return GetFloatTypeFromBitSize (getASTContext(), bit_size);
     }

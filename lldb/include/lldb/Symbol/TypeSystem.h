@@ -400,6 +400,12 @@ public:
     virtual CompilerType
     GetBasicTypeFromAST (lldb::BasicType basic_type) = 0;
     
+    virtual CompilerType
+    GetIntTypeFromBitSize (size_t bit_size, bool is_signed) = 0;
+    
+    virtual CompilerType
+    GetFloatTypeFromBitSize (size_t bit_size) = 0;
+
     virtual bool
     IsBeingDefined (void *type) = 0;
     

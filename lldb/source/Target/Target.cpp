@@ -1906,6 +1906,27 @@ Target::GetScratchClangASTContext(bool create_on_demand)
     return m_scratch_ast_context_ap.get();
 }
 
+TypeSystem*
+Target::GetTypeSystemForLanguage (lldb::LanguageType language)
+{
+    switch (language)
+    {
+        case lldb::eLanguageTypeC:
+        case lldb::eLanguageTypeC11:
+        case lldb::eLanguageTypeC89:
+        case lldb::eLanguageTypeC99:
+        case lldb::eLanguageTypeC_plus_plus:
+        case lldb::eLanguageTypeC_plus_plus_03:
+        case lldb::eLanguageTypeC_plus_plus_11:
+        case lldb::eLanguageTypeC_plus_plus_14:
+        case lldb::eLanguageTypeObjC:
+        case lldb::eLanguageTypeObjC_plus_plus:
+            return GetScratchClangASTContext(true);
+        default:
+            return nullptr;
+    }
+}
+
 ClangASTImporter *
 Target::GetClangASTImporter()
 {
