@@ -2706,7 +2706,11 @@ bool AsmParser::parseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
 
     Alignment = 1ULL << Alignment;
   } else {
-    // Reject alignments that aren't a power of two, for gas compatibility.
+    // Reject alignments that aren't either a power of two or zero,
+    // for gas compatibility. Alignment of zero is silently rounded
+    // up to one.
+    if (Alignment == 0)
+      Alignment = 1;
     if (!isPowerOf2_64(Alignment))
       Error(AlignmentLoc, "alignment must be a power of 2");
   }
