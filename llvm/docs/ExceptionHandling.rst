@@ -162,11 +162,11 @@ pad to the back end. For C++, the ``landingpad`` instruction returns a pointer
 and integer pair corresponding to the pointer to the *exception structure* and
 the *selector value* respectively.
 
-The ``landingpad`` instruction takes a reference to the personality function to
-be used for this ``try``/``catch`` sequence. The remainder of the instruction is
-a list of *cleanup*, *catch*, and *filter* clauses. The exception is tested
-against the clauses sequentially from first to last. The clauses have the
-following meanings:
+The ``landingpad`` instruction looks for a reference to the personality
+function to be used for this ``try``/``catch`` sequence in the parent
+function's attribute list. The instruction contains a list of *cleanup*,
+*catch*, and *filter* clauses. The exception is tested against the clauses
+sequentially from first to last. The clauses have the following meanings:
 
 -  ``catch <type> @ExcType``
 
