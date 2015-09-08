@@ -1200,6 +1200,34 @@ Value *InstCombiner::FoldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
   return nullptr;
 }
 
+/// Match De Morgan's Laws:
+/// (~A & ~B) == (~(A | B))
+/// (~A | ~B) == (~(A & B))
+static Instruction *matchDeMorgansLaws(BinaryOperator &I,
+                                       InstCombiner::BuilderTy *Builder) {
+  auto Opcode = I.getOpcode();
+  assert((Opcode == Instruction::And || Opcode == Instruction::Or) &&
+         "Trying to match De Morgan's Laws with something other than and/or");
+
+  Value *Op0 = I.getOperand(0);
+  Value *Op1 = I.getOperand(1);
+  // TODO: Use pattern matchers instead of dyn_cast.
+  if (Value *Op0NotVal = dyn_castNotVal(Op0))
+    if (Value *Op1NotVal = dyn_castNotVal(Op1))
+      if (Op0->hasOneUse() && Op1->hasOneUse()) {
+        // Flip the logic operation.
+        if (Opcode == Instruction::And)
+          Opcode = Instruction::Or;
+        else
+          Opcode = Instruction::And;
+        Value *LogicOp = Builder->CreateBinOp(Opcode, Op0NotVal, Op1NotVal,
+                                              I.getName() + ".demorgan");
+        return BinaryOperator::CreateNot(LogicOp);
+      }
+
+  return nullptr;
+}
+
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -1330,15 +1358,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         return NV;
   }
 
-
-  // (~A & ~B) == (~(A | B)) - De Morgan's Law
-  if (Value *Op0NotVal = dyn_castNotVal(Op0))
-    if (Value *Op1NotVal = dyn_castNotVal(Op1))
-      if (Op0->hasOneUse() && Op1->hasOneUse()) {
-        Value *Or = Builder->CreateOr(Op0NotVal, Op1NotVal,
-                                      I.getName()+".demorgan");
-        return BinaryOperator::CreateNot(Or);
-      }
+  if (Instruction *DeMorgan = matchDeMorgansLaws(I, Builder))
+    return DeMorgan;
 
   {
     Value *A = nullptr, *B = nullptr, *C = nullptr, *D = nullptr;
@@ -2360,14 +2381,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (match(Op0, m_And(m_Or(m_Specific(Op1), m_Value(C)), m_Value(A))))
     return BinaryOperator::CreateOr(Op1, Builder->CreateAnd(A, C));
 
-  // (~A | ~B) == (~(A & B)) - De Morgan's Law
-  if (Value *Op0NotVal = dyn_castNotVal(Op0))
-    if (Value *Op1NotVal = dyn_castNotVal(Op1))
-      if (Op0->hasOneUse() && Op1->hasOneUse()) {
-        Value *And = Builder->CreateAnd(Op0NotVal, Op1NotVal,
-                                        I.getName()+".demorgan");
-        return BinaryOperator::CreateNot(And);
-      }
+  if (Instruction *DeMorgan = matchDeMorgansLaws(I, Builder))
+    return DeMorgan;
 
   // Canonicalize xor to the RHS.
   bool SwappedForXor = false;
