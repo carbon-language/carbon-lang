@@ -1653,7 +1653,8 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
             if (isIntN(9, MemOffset) && (MemOffset % 4 == 0) &&
                 getContext().getRegisterInfo()->getRegClass(
                   Mips::GPRMM16RegClassID).contains(DstReg.getReg()) &&
-                BaseReg.getReg() == Mips::GP) {
+                (BaseReg.getReg() == Mips::GP ||
+                BaseReg.getReg() == Mips::GP_64)) {
               MCInst TmpInst;
               TmpInst.setLoc(IDLoc);
               TmpInst.setOpcode(Mips::LWGP_MM);

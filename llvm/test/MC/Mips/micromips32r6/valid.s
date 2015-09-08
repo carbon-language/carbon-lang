@@ -157,3 +157,10 @@
   sqrt.d $f2, $f4          # CHECK: sqrt.d $f2, $f4     # encoding: [0x54,0x44,0x4a,0x3b]
   rsqrt.s $f3, $f5         # CHECK: rsqrt.s $f3, $f5    # encoding: [0x54,0x65,0x02,0x3b]
   rsqrt.d $f2, $f4         # CHECK: rsqrt.d $f2, $f4    # encoding: [0x54,0x44,0x42,0x3b]
+  lw $3, 32($gp)           # CHECK: lw $3, 32($gp)      # encoding: [0x65,0x88]
+  lw $3, 24($sp)           # CHECK: lw $3, 24($sp)      # encoding: [0x48,0x66]
+  lw16 $4, 8($17)          # CHECK: lw16 $4, 8($17)     # encoding: [0x6a,0x12]
+  lhu16 $3, 4($16)         # CHECK: lhu16 $3, 4($16)    # encoding: [0x29,0x82]
+  lbu16 $3, 4($17)         # CHECK: lbu16 $3, 4($17)    # encoding: [0x09,0x94]
+  lbu16 $3, -1($17)        # CHECK: lbu16 $3, -1($17)   # encoding: [0x09,0x9f]
+
