@@ -134,7 +134,7 @@ define i64 @shl64(i64 %x, i64 %y) {
 ; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
-; CHECK-NEXT: (setlocal @2 (shr @1 @0))
+; CHECK-NEXT: (setlocal @2 (shr_u @1 @0))
 ; CHECK-NEXT: (return @2)
 define i64 @shr64(i64 %x, i64 %y) {
   %a = lshr i64 %x, %y
@@ -145,7 +145,7 @@ define i64 @shr64(i64 %x, i64 %y) {
 ; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
-; CHECK-NEXT: (setlocal @2 (sar @1 @0))
+; CHECK-NEXT: (setlocal @2 (shr_s @1 @0))
 ; CHECK-NEXT: (return @2)
 define i64 @sar64(i64 %x, i64 %y) {
   %a = ashr i64 %x, %y

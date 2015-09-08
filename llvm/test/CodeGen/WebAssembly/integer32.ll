@@ -134,7 +134,7 @@ define i32 @shl32(i32 %x, i32 %y) {
 ; CHECK-NEXT: (param i32) (param i32) (result i32)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
-; CHECK-NEXT: (setlocal @2 (shr @1 @0))
+; CHECK-NEXT: (setlocal @2 (shr_u @1 @0))
 ; CHECK-NEXT: (return @2)
 define i32 @shr32(i32 %x, i32 %y) {
   %a = lshr i32 %x, %y
@@ -145,7 +145,7 @@ define i32 @shr32(i32 %x, i32 %y) {
 ; CHECK-NEXT: (param i32) (param i32) (result i32)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
-; CHECK-NEXT: (setlocal @2 (sar @1 @0))
+; CHECK-NEXT: (setlocal @2 (shr_s @1 @0))
 ; CHECK-NEXT: (return @2)
 define i32 @sar32(i32 %x, i32 %y) {
   %a = ashr i32 %x, %y
