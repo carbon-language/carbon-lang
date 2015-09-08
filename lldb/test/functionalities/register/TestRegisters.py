@@ -37,6 +37,7 @@ class RegisterCommandsTestCase(TestBase):
         self.fp_register_write()
 
     @expectedFailureAndroid(archs=["i386"]) # "register read fstat" always return 0xffff
+    @expectedFailureClang("llvm.org/pr24733")
     def test_fp_special_purpose_register_read(self):
         """Test commands that read fpu special purpose registers."""
         if not self.getArchitecture() in ['amd64', 'i386', 'x86_64']:
@@ -168,13 +169,14 @@ class RegisterCommandsTestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
+        # Find the line number to break inside a.cpp.
+        self.line = line_number('a.cpp', '// Set break point at this line.')
+
+        # Set breakpoint
+        lldbutil.run_break_set_by_file_and_line (self, "a.cpp", self.line, num_expected_locations=1, loc_exact=True)
+
         # Launch the process, and do not stop at the entry point.
         self.runCmd ("run", RUN_SUCCEEDED)
-
-        # Check stop reason; Should be SIGTRAP
-        stop_reason = 'stop reason = signal SIGTRAP'
-        self.expect("thread list", STOPPED_DUE_TO_SIGNAL,
-                      substrs = ['stopped', stop_reason])
 
         process = target.GetProcess()
         self.assertTrue(process.GetState() == lldb.eStateStopped,
