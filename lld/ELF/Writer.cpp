@@ -558,6 +558,17 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   FileSize = SizeOfHeaders + RoundUpToAlignment(FileOff - SizeOfHeaders, 8);
 }
 
+static uint32_t convertSectionFlagsToSegmentFlags(uint64_t Flags) {
+  uint32_t Ret = PF_R;
+  if (Flags & SHF_WRITE)
+    Ret |= PF_W;
+
+  if (Flags & SHF_EXECINSTR)
+    Ret |= PF_X;
+
+  return Ret;
+}
+
 template <class ELFT> void Writer<ELFT>::writeHeader() {
   uint8_t *Buf = Buffer->getBufferStart();
   auto *EHdr = reinterpret_cast<Elf_Ehdr *>(Buf);
@@ -572,8 +583,17 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_ident[EI_VERSION] = EV_CURRENT;
   EHdr->e_ident[EI_OSABI] = ELFOSABI_NONE;
 
-  EHdr->e_type = ET_EXEC;
+  // FIXME: Generalize the segment construction similar to how we create
+  // output sections.
+  unsigned NumSegments = 1;
   const SymbolTable &Symtab = SymTable.getSymTable();
+  const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
+      Symtab.getSharedFiles();
+  bool HasDynamicSegment = !SharedFiles.empty();
+  if (HasDynamicSegment)
+    NumSegments++;
+
+  EHdr->e_type = ET_EXEC;
   auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.getFirstELF());
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
@@ -582,7 +602,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_ehsize = sizeof(Elf_Ehdr);
   EHdr->e_phentsize = sizeof(Elf_Phdr);
-  EHdr->e_phnum = 1;
+  EHdr->e_phnum = NumSegments;
   EHdr->e_shentsize = sizeof(Elf_Shdr);
   EHdr->e_shnum = getNumSections();
   EHdr->e_shstrndx = StringTable.getSectionIndex();
@@ -596,6 +616,18 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   PHdrs->p_filesz = FileSize;
   PHdrs->p_memsz = FileSize;
   PHdrs->p_align = 0x4000;
+
+  if (HasDynamicSegment) {
+    PHdrs++;
+    PHdrs->p_type = PT_DYNAMIC;
+    PHdrs->p_flags = convertSectionFlagsToSegmentFlags(DynamicSec.getFlags());
+    PHdrs->p_offset = DynamicSec.getFileOff();
+    PHdrs->p_vaddr = DynamicSec.getVA();
+    PHdrs->p_paddr = PHdrs->p_vaddr;
+    PHdrs->p_filesz = 0;
+    PHdrs->p_memsz = 0;
+    PHdrs->p_align = DynamicSec.getAlign();
+  }
 
   auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
   // First entry is null.

@@ -1,6 +1,6 @@
 // RUN: llvm-mc -filetype=obj -triple=i686-unknown-linux %s -o %t.o
 // RUN: lld -flavor gnu2 %t.o %p/Inputs/i686-simple-library.so -o %t
-// RUN: llvm-readobj -t -s %t | FileCheck %s
+// RUN: llvm-readobj --program-headers -t -s %t | FileCheck %s
 // REQUIRES: x86
 
 // CHECK:        Name: .dynamic
@@ -9,16 +9,16 @@
 // CHECK-NEXT:     SHF_ALLOC
 // CHECK-NEXT:     SHF_WRITE
 // CHECK-NEXT:   ]
-// CHECK-NEXT:   Address:
-// CHECK-NEXT:   Offset:
-// CHECK-NEXT:   Size:
-// CHECK-NEXT:   Link: 6
+// CHECK-NEXT:   Address: [[ADDR:.*]]
+// CHECK-NEXT:   Offset: [[OFFSET:.*]]
+// CHECK-NEXT:   Size: 0
+// CHECK-NEXT:   Link: [[STRTAB:.*]]
 // CHECK-NEXT:   Info: 0
-// CHECK-NEXT:   AddressAlignment: 4
+// CHECK-NEXT:   AddressAlignment: [[ALIGN:.*]]
 // CHECK-NEXT:   EntrySize: 8
 // CHECK-NEXT: }
 
-// CHECK:        Index: 6
+// CHECK:        Index: [[STRTAB]]
 // CHECK-NEXT:   Name: .strtab
 // CHECK-NEXT:   Type: SHT_STRTAB
 // CHECK-NEXT:   Flags [
@@ -62,6 +62,21 @@
 // CHECK-NEXT:     Section: Undefined
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
+
+
+// CHECK:      ProgramHeader {
+// CHECK:        Type: PT_DYNAMIC
+// CHECK-NEXT:   Offset: [[OFFSET]]
+// CHECK-NEXT:   VirtualAddress: [[ADDR]]
+// CHECK-NEXT:   PhysicalAddress: [[ADDR]]
+// CHECK-NEXT:   FileSize: 0
+// CHECK-NEXT:   MemSize: 0
+// CHECK-NEXT:   Flags [
+// CHECK-NEXT:     PF_R
+// CHECK-NEXT:     PF_W
+// CHECK-NEXT:   ]
+// CHECK-NEXT:   Alignment: [[ALIGN]]
+// CHECK-NEXT: }
 
 .global _start
 _start:
