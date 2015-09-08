@@ -164,7 +164,27 @@ bool WebAssemblyPassConfig::addILPOpts() { return true; }
 
 void WebAssemblyPassConfig::addPreRegAlloc() {}
 
-void WebAssemblyPassConfig::addRegAllocPasses(bool Optimized) {}
+void WebAssemblyPassConfig::addRegAllocPasses(bool Optimized) {
+  // This is list is derived from the regalloc pass list used in
+  // addFastRegAlloc and addOptimizedRegAlloc in lib/CodeGen/Passes.cpp. We
+  // don't run the actual register allocator, but we do run the passes which
+  // lower SSA form, so after these passes are complete, we have non-SSA
+  // virtual registers.
+
+  if (Optimized) {
+    addPass(&ProcessImplicitDefsID);
+    addPass(&LiveVariablesID);
+    addPass(&MachineLoopInfoID);
+  }
+
+  addPass(&PHIEliminationID);
+  addPass(&TwoAddressInstructionPassID, false);
+
+  if (Optimized) {
+    addPass(&RegisterCoalescerID);
+    addPass(&MachineSchedulerID);
+  }
+}
 
 void WebAssemblyPassConfig::addPostRegAlloc() {
   // FIXME: the following passes dislike virtual registers. Disable them for now
