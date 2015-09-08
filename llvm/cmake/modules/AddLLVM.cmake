@@ -399,7 +399,10 @@ function(llvm_add_library name)
   endif()
 
   set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
-  llvm_update_compile_flags(${name})
+  # $<TARGET_OBJECTS> doesn't require compile flags.
+  if(NOT obj_name)
+    llvm_update_compile_flags(${name})
+  endif()
   add_link_opts( ${name} )
   if(ARG_OUTPUT_NAME)
     set_target_properties(${name}
@@ -597,7 +600,10 @@ macro(add_llvm_executable name)
     set_windows_version_resource_properties(${name} ${windows_resource_file})
   endif()
 
-  llvm_update_compile_flags(${name})
+  # $<TARGET_OBJECTS> doesn't require compile flags.
+  if(NOT LLVM_ENABLE_OBJLIB)
+    llvm_update_compile_flags(${name})
+  endif()
   add_link_opts( ${name} )
 
   # Do not add -Dname_EXPORTS to the command-line when building files in this
