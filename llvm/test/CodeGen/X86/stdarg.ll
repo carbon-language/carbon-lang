@@ -1,5 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
-; CHECK: testb %al, %al
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s -check-prefix=CHECK
 
 %struct.__va_list_tag = type { i32, i32, i8*, i8* }
 
@@ -8,6 +7,15 @@ entry:
   %ap = alloca [1 x %struct.__va_list_tag], align 8; <[1 x %struct.__va_list_tag]*> [#uses=2]
   %ap12 = bitcast [1 x %struct.__va_list_tag]* %ap to i8*; <i8*> [#uses=2]
   call void @llvm.va_start(i8* %ap12)
+; CHECK: testb %al, %al
+
+; These test for specific offsets, which is very fragile. Still, the test needs
+; to ensure that va_list is correctly handled by both x86-64 and x32.
+;
+; CHECK-DAG: movq {{.*}}, 192(%rsp)
+; CHECK-DAG: movq {{.*}}, 184(%rsp)
+; CHECK-DAG: movl {{.*}}, 180(%rsp)
+; CHECK-DAG: movl {{.*}}, 176(%rsp)
   %ap3 = getelementptr inbounds [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %ap, i64 0, i64 0; <%struct.__va_list_tag*> [#uses=1]
   call void @bar(%struct.__va_list_tag* %ap3) nounwind
   call void @llvm.va_end(i8* %ap12)

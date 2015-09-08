@@ -15382,10 +15382,11 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   MemOps.push_back(Store);
 
   // Store ptr to reg_save_area.
-  FIN = DAG.getNode(ISD::ADD, DL, PtrVT, FIN, DAG.getIntPtrConstant(8, DL));
+  FIN = DAG.getNode(ISD::ADD, DL, PtrVT, FIN, DAG.getIntPtrConstant(
+      Subtarget->isTarget64BitLP64() ? 8 : 4, DL));
   SDValue RSFIN = DAG.getFrameIndex(FuncInfo->getRegSaveFrameIndex(), PtrVT);
-  Store = DAG.getStore(Op.getOperand(0), DL, RSFIN, FIN,
-                       MachinePointerInfo(SV, 16), false, false, 0);
+  Store = DAG.getStore(Op.getOperand(0), DL, RSFIN, FIN, MachinePointerInfo(
+      SV, Subtarget->isTarget64BitLP64() ? 16 : 12), false, false, 0);
   MemOps.push_back(Store);
   return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOps);
 }

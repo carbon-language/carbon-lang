@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86    -mattr=+sse2,+soft-float | FileCheck %s
 ; RUN: llc < %s -march=x86-64 -mattr=+sse2,+soft-float | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-gnux32 -mattr=+sse2,+soft-float | FileCheck %s
 
 ; CHECK-NOT: xmm{[0-9]+}
 
