@@ -503,4 +503,74 @@ void DecodeINSERTQIMask(int Len, int Idx,
     ShuffleMask.push_back(SM_SentinelUndef);
 }
 
+void DecodeVPERMVMask(ArrayRef<uint64_t> RawMask,
+                      SmallVectorImpl<int> &ShuffleMask) {
+  for (int i = 0, e = RawMask.size(); i < e; ++i) {
+    uint64_t M = RawMask[i];
+    ShuffleMask.push_back((int)M);
+  }
+}
+
+void DecodeVPERMV3Mask(ArrayRef<uint64_t> RawMask,
+                      SmallVectorImpl<int> &ShuffleMask) {
+  for (int i = 0, e = RawMask.size(); i < e; ++i) {
+    uint64_t M = RawMask[i];
+    ShuffleMask.push_back((int)M);
+  }
+}
+
+void DecodeVPERMVMask(const Constant *C, MVT VT,
+                      SmallVectorImpl<int> &ShuffleMask) {
+  Type *MaskTy = C->getType();
+  if (MaskTy->isVectorTy()) {
+    unsigned NumElements = MaskTy->getVectorNumElements();
+    if (NumElements == VT.getVectorNumElements()) {
+      for (unsigned i = 0; i < NumElements; ++i) {
+        Constant *COp = C->getAggregateElement(i);
+        if (!COp || (!isa<UndefValue>(COp) && !isa<ConstantInt>(COp))) {
+          ShuffleMask.clear();
+          return;
+        }
+        if (isa<UndefValue>(COp))
+          ShuffleMask.push_back(SM_SentinelUndef);
+        else {
+          uint64_t Element = cast<ConstantInt>(COp)->getZExtValue();
+          Element &= (1 << NumElements) - 1;
+          ShuffleMask.push_back(Element);
+        }
+      }
+    }
+    return;
+  }
+  // Scalar value; just broadcast it
+  if (!isa<ConstantInt>(C))
+    return;
+  uint64_t Element = cast<ConstantInt>(C)->getZExtValue();
+  int NumElements = VT.getVectorNumElements();
+  Element &= (1 << NumElements) - 1;
+  for (int i = 0; i < NumElements; ++i)
+    ShuffleMask.push_back(Element);
+}
+
+void DecodeVPERMV3Mask(const Constant *C, MVT VT,
+                       SmallVectorImpl<int> &ShuffleMask) {
+  Type *MaskTy = C->getType();
+  unsigned NumElements = MaskTy->getVectorNumElements();
+  if (NumElements == VT.getVectorNumElements()) {
+    for (unsigned i = 0; i < NumElements; ++i) {
+      Constant *COp = C->getAggregateElement(i);
+      if (!COp) {
+        ShuffleMask.clear();
+        return;
+      }
+      if (isa<UndefValue>(COp))
+        ShuffleMask.push_back(SM_SentinelUndef);
+      else {
+        uint64_t Element = cast<ConstantInt>(COp)->getZExtValue();
+        Element &= (1 << NumElements*2) - 1;
+        ShuffleMask.push_back(Element);
+      }
+    }
+  }
+}
 } // llvm namespace
