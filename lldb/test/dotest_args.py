@@ -128,10 +128,16 @@ def create_parser():
         dest='num_threads',
         help=('The number of threads/processes to use when running tests '
               'separately, defaults to the number of CPU cores available'))
-    parser.add_argument(
+    group.add_argument(
         '--test-subdir',
         action='store',
         help='Specify a test subdirectory to use relative to the test root dir'
+    )
+    group.add_argument(
+        '--test-runner-name',
+        action='store',
+        help=('Specify a test runner strategy.  Valid values: multiprocessing,'
+              ' multiprocessing-pool, serial, threading, threading-pool')
     )
 
     # Remove the reference to our helper function

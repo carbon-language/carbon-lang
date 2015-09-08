@@ -249,6 +249,7 @@ multiprocess_test_subdir = None
 num_threads = None
 output_on_success = False
 no_multiprocess_test_runner = False
+test_runner_name = None
 
 def usage(parser):
     parser.print_help()
@@ -495,6 +496,7 @@ def parseOptionsAndInitTestdirs():
     global num_threads
     global output_on_success
     global no_multiprocess_test_runner
+    global test_runner_name
 
     do_help = False
 
@@ -756,7 +758,8 @@ def parseOptionsAndInitTestdirs():
     if args.inferior:
         is_inferior_test_runner = True
 
-    if args.output_on_success:
+    # Turn on output_on_sucess if either explicitly added or -v specified.
+    if args.output_on_success or args.v:
         output_on_success = True
 
     if args.num_threads:
@@ -764,6 +767,9 @@ def parseOptionsAndInitTestdirs():
 
     if args.test_subdir:
         multiprocess_test_subdir = args.test_subdir
+
+    if args.test_runner_name:
+        test_runner_name = args.test_runner_name
 
     if args.lldb_platform_name:
         lldb_platform_name = args.lldb_platform_name
@@ -1278,8 +1284,9 @@ if __name__ == "__main__":
     # multiprocess test runner here.
     if isMultiprocessTestRunner():
         import dosep
-        dosep.main(output_on_success, num_threads, multiprocess_test_subdir)
-        raise "should never get here"
+        dosep.main(output_on_success, num_threads, multiprocess_test_subdir,
+                   test_runner_name)
+        raise Exception("should never get here")
 
     setupSysPath()
     setupCrashInfoHook()
