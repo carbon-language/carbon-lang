@@ -903,6 +903,13 @@ public:
     return (Idx == -1) ? nullptr : &getOperand(Idx);
   }
 
+  const MachineOperand *findRegisterUseOperand(
+    unsigned Reg, bool isKill = false,
+    const TargetRegisterInfo *TRI = nullptr) const {
+    return const_cast<MachineInstr *>(this)->
+      findRegisterUseOperand(Reg, isKill, TRI);
+  }
+
   /// Returns the operand index that is a def of the specified register or
   /// -1 if it is not found. If isDead is true, defs that are not dead are
   /// skipped. If Overlap is true, then it also looks for defs that merely
