@@ -743,7 +743,10 @@ void BlockFrequencyInfoImplBase::adjustLoopHeaderMass(LoopData &Loop) {
     auto &BackedgeMass = Loop.BackedgeMass[Loop.getHeaderIndex(HeaderNode)];
     DEBUG(dbgs() << " - Add back edge mass for node "
                  << getBlockName(HeaderNode) << ": " << BackedgeMass << "\n");
-    Dist.addLocal(HeaderNode, BackedgeMass.getMass());
+    if (BackedgeMass.getMass() > 0)
+      Dist.addLocal(HeaderNode, BackedgeMass.getMass());
+    else
+      DEBUG(dbgs() << "   Nothing added. Back edge mass is zero\n");
   }
 
   DitheringDistributer D(Dist, LoopMass);
