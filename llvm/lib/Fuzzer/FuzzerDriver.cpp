@@ -291,7 +291,7 @@ int FuzzerDriver(int argc, char **argv, UserSuppliedFuzzer &USF) {
   F.ShuffleAndMinimize();
   if (Flags.save_minimized_corpus)
     F.SaveCorpus();
-  F.Loop(Flags.iterations < 0 ? INT_MAX : Flags.iterations);
+  F.Loop();
   if (Flags.verbosity)
     Printf("Done %d runs in %zd second(s)\n", F.getTotalNumberOfRuns(),
            F.secondsSinceProcessStartUp());

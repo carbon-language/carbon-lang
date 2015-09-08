@@ -94,7 +94,7 @@ class Fuzzer {
   };
   Fuzzer(UserSuppliedFuzzer &USF, FuzzingOptions Options);
   void AddToCorpus(const Unit &U) { Corpus.push_back(U); }
-  void Loop(size_t NumIterations);
+  void Loop();
   void ShuffleAndMinimize();
   void InitializeTraceState();
   size_t CorpusSize() const { return Corpus.size(); }

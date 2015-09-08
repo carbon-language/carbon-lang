@@ -327,11 +327,11 @@ void Fuzzer::MutateAndTestOne(Unit *U) {
   }
 }
 
-void Fuzzer::Loop(size_t NumIterations) {
+void Fuzzer::Loop() {
   for (auto &U: Options.Dictionary)
     USF.GetMD().AddWordToDictionary(U.data(), U.size());
 
-  for (size_t i = 1; i <= NumIterations; i++) {
+  while (true) {
     for (size_t J1 = 0; J1 < Corpus.size(); J1++) {
       SyncCorpus();
       RereadOutputCorpus();

@@ -12,9 +12,6 @@
 //===----------------------------------------------------------------------===//
 FUZZER_FLAG_INT(verbosity, 1, "Verbosity level.")
 FUZZER_FLAG_INT(seed, 0, "Random seed. If 0, seed is generated.")
-FUZZER_FLAG_INT(iterations, -1,
-            "Number of iterations of the fuzzer internal loop"
-            " (-1 for infinite iterations).")
 FUZZER_FLAG_INT(runs, -1,
             "Number of individual test runs (-1 for infinite runs).")
 FUZZER_FLAG_INT(max_len, 64, "Maximum length of the test input.")
