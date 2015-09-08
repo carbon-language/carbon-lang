@@ -480,10 +480,9 @@ def S_BARRIER : SOPP <0x0000000a, (ins), "s_barrier",
   [(int_AMDGPU_barrier_local)]
 > {
   let simm16 = 0;
-  let isBarrier = 1;
-  let hasCtrlDep = 1;
   let mayLoad = 1;
   let mayStore = 1;
+  let isConvergent = 1;
 }
 
 def S_WAITCNT : SOPP <0x0000000c, (ins WAIT_FLAG:$simm16), "s_waitcnt $simm16">;
