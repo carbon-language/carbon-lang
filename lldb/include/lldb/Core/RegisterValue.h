@@ -299,7 +299,7 @@ namespace lldb_private {
         SetUInt128 (llvm::APInt uint)
         {
             m_type = eTypeUInt128;
-            m_scalar = llvm::APInt(uint);
+            m_scalar = uint;
         }
         bool
         SetUInt (uint64_t uint, uint32_t byte_size);

@@ -892,7 +892,7 @@ RegisterValue::SetUInt (uint64_t uint, uint32_t byte_size)
     }
     else if (byte_size <= 16)
     {
-        SetUInt128 (llvm::APInt(64, uint));
+        SetUInt128 (llvm::APInt(128, uint));
     }
     else
         return false;
