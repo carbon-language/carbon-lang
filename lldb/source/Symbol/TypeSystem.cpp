@@ -10,7 +10,8 @@
 
 using namespace lldb_private;
 
-TypeSystem::TypeSystem() :
+TypeSystem::TypeSystem(LLVMCastKind kind) :
+    m_kind (kind),
     m_sym_file (nullptr)
 {
 }

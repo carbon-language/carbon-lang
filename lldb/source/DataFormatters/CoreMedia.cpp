@@ -11,7 +11,7 @@
 
 #include "lldb/Core/Flags.h"
 #include "lldb/Symbol/ClangASTContext.h"
-
+#include "lldb/Target/Target.h"
 #include <inttypes.h>
 
 using namespace lldb;
@@ -21,9 +21,11 @@ using namespace lldb_private::formatters;
 bool
 lldb_private::formatters::CMTimeSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
-    if (!valobj.GetCompilerType().IsValid())
+    CompilerType type = valobj.GetCompilerType();
+    if (!type.IsValid())
         return false;
-    ClangASTContext *ast_ctx = valobj.GetCompilerType().GetTypeSystem()->AsClangASTContext();
+
+    ClangASTContext *ast_ctx = valobj.GetExecutionContextRef().GetTargetSP()->GetScratchClangASTContext();
     if (!ast_ctx)
         return false;
     

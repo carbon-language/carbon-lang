@@ -232,7 +232,7 @@ namespace lldb_private {
                 CompilerType parent_type(m_backend.GetCompilerType());
                 CompilerType element_type;
                 parent_type.IsVectorType(&element_type, nullptr);
-                m_child_type = ::GetCompilerTypeForFormat(m_parent_format, element_type, parent_type.GetTypeSystem()->AsClangASTContext());
+                m_child_type = ::GetCompilerTypeForFormat(m_parent_format, element_type, llvm::dyn_cast_or_null<ClangASTContext>(parent_type.GetTypeSystem()));
                 m_num_children = ::CalculateNumChildren(parent_type,
                                                         m_child_type);
                 m_item_format = GetItemFormatForFormat(m_parent_format,

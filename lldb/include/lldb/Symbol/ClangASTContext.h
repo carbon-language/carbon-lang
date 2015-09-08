@@ -40,7 +40,15 @@ class ClangASTContext : public TypeSystem
 public:
     typedef void (*CompleteTagDeclCallback)(void *baton, clang::TagDecl *);
     typedef void (*CompleteObjCInterfaceDeclCallback)(void *baton, clang::ObjCInterfaceDecl *);
-    
+
+    //------------------------------------------------------------------
+    // llvm casting support
+    //------------------------------------------------------------------
+    static bool classof(const TypeSystem *ts)
+    {
+        return ts->getKind() == TypeSystem::eKindClang;
+    }
+
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
@@ -482,12 +490,6 @@ public:
     // TypeSystem methods
     //------------------------------------------------------------------
     
-    ClangASTContext*
-    AsClangASTContext() override
-    {
-        return this;
-    }
-
     DWARFASTParser *
     GetDWARFParser () override;
 
@@ -532,7 +534,7 @@ public:
     static bool
     IsClangType (const CompilerType &ct)
     {
-        return (ct.GetTypeSystem()->AsClangASTContext() != nullptr);
+        return llvm::dyn_cast_or_null<ClangASTContext>(ct.GetTypeSystem()) != nullptr;
     }
 
     //----------------------------------------------------------------------
@@ -1049,7 +1051,9 @@ public:
     static clang::QualType
     GetQualType (const CompilerType& type)
     {
-        if (type && type.GetTypeSystem()->AsClangASTContext())
+        // Make sure we have a clang type before making a clang::QualType
+        ClangASTContext *ast = llvm::dyn_cast_or_null<ClangASTContext>(type.GetTypeSystem());
+        if (ast)
             return clang::QualType::getFromOpaquePtr(type.GetOpaqueQualType());
         return clang::QualType();
     }
@@ -1057,7 +1061,9 @@ public:
     static clang::QualType
     GetCanonicalQualType (const CompilerType& type)
     {
-        if (type && type.GetTypeSystem()->AsClangASTContext())
+        // Make sure we have a clang type before making a clang::QualType
+        ClangASTContext *ast = llvm::dyn_cast_or_null<ClangASTContext>(type.GetTypeSystem());
+        if (ast)
             return clang::QualType::getFromOpaquePtr(type.GetOpaqueQualType()).getCanonicalType();
         return clang::QualType();
     }

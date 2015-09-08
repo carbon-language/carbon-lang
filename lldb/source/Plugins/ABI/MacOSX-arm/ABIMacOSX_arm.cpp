@@ -423,13 +423,7 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
     
     if (!clang_type)
         return return_valobj_sp;
-    
-    ClangASTContext* ast = clang_type.GetTypeSystem()->AsClangASTContext();
-    clang::ASTContext *ast_context = ast ? ast->getASTContext() : nullptr;
-    if (!ast_context)
-        return return_valobj_sp;
 
-    //value.SetContext (Value::eContextTypeClangType, clang_type.GetOpaqueQualType());
     value.SetCompilerType (clang_type);
             
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();

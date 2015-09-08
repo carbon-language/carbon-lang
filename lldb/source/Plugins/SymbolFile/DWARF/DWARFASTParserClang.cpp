@@ -1597,8 +1597,7 @@ public:
     bool
     Finalize()
     {
-        ClangASTContext* ast = m_class_opaque_type.GetTypeSystem()->AsClangASTContext();
-        assert(ast);
+        ClangASTContext *ast = llvm::cast<ClangASTContext>(m_class_opaque_type.GetTypeSystem());
         return ast->AddObjCClassProperty (m_class_opaque_type,
                                           m_property_name,
                                           m_property_opaque_type,
@@ -2360,7 +2359,7 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
     BitfieldInfo last_field_info;
 
     ModuleSP module_sp = parent_die.GetDWARF()->GetObjectFile()->GetModule();
-    ClangASTContext* ast = class_clang_type.GetTypeSystem()->AsClangASTContext();
+    ClangASTContext *ast = llvm::dyn_cast_or_null<ClangASTContext>(class_clang_type.GetTypeSystem());
     if (ast == nullptr)
         return 0;
 

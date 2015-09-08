@@ -15,7 +15,7 @@ using namespace lldb_private;
 bool
 CompilerDeclContext::IsClang () const
 {
-    return IsValid() && m_type_system->AsClangASTContext() != nullptr;
+    return IsValid() && m_type_system->getKind() == TypeSystem::eKindClang;
 }
 
 ConstString

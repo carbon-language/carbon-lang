@@ -529,11 +529,15 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::NSArrayISyntheticFrontEnd (
     m_items (0),
     m_data_ptr (0)
 {
-    if (valobj_sp && valobj_sp->GetCompilerType().IsValid())
+    if (valobj_sp)
     {
-        ClangASTContext *ast = valobj_sp->GetCompilerType().GetTypeSystem()->AsClangASTContext();
-        if (ast)
-            m_id_type = CompilerType(ast->getASTContext(), ast->getASTContext()->ObjCBuiltinIdTy);
+        CompilerType type = valobj_sp->GetCompilerType();
+        if (type)
+        {
+            ClangASTContext *ast = valobj_sp->GetExecutionContextRef().GetTargetSP()->GetScratchClangASTContext();
+            if (ast)
+                m_id_type = CompilerType(ast->getASTContext(), ast->getASTContext()->ObjCBuiltinIdTy);
+        }
     }
 }
 

@@ -285,7 +285,8 @@ ParseLangArgs (LangOptions &Opts, InputKind IK, const char* triple)
 }
 
 
-ClangASTContext::ClangASTContext (const char *target_triple) :   
+ClangASTContext::ClangASTContext (const char *target_triple) :
+    TypeSystem (TypeSystem::eKindClang),
     m_target_triple (),
     m_ast_ap (),
     m_language_options_ap (),
@@ -1118,7 +1119,7 @@ ClangASTContext::CopyType (ASTContext *dst_ast,
                            CompilerType src)
 {
     FileSystemOptions file_system_options;
-    ClangASTContext *src_ast = src.GetTypeSystem()->AsClangASTContext();
+    ClangASTContext *src_ast = llvm::dyn_cast_or_null<ClangASTContext>(src.GetTypeSystem());
     if (src_ast == nullptr)
         return CompilerType();
     FileManager file_manager (file_system_options);
@@ -1151,8 +1152,8 @@ ClangASTContext::AreTypesSame (CompilerType type1,
                                CompilerType type2,
                                bool ignore_qualifiers)
 {
-    TypeSystem *ast = type1.GetTypeSystem();
-    if (!ast->AsClangASTContext() || ast != type2.GetTypeSystem())
+    ClangASTContext *ast = llvm::dyn_cast_or_null<ClangASTContext>(type1.GetTypeSystem());
+    if (!ast || ast != type2.GetTypeSystem())
         return false;
 
     if (type1.GetOpaqueQualType() == type2.GetOpaqueQualType())
@@ -1167,7 +1168,7 @@ ClangASTContext::AreTypesSame (CompilerType type1,
         type2_qual = type2_qual.getUnqualifiedType();
     }
     
-    return ast->AsClangASTContext()->getASTContext()->hasSameType (type1_qual, type2_qual);
+    return ast->getASTContext()->hasSameType (type1_qual, type2_qual);
 }
 
 CompilerType
@@ -3767,19 +3768,21 @@ ClangASTContext::GetTypeQualifiers(void* type)
 CompilerType
 ClangASTContext::AddConstModifier (const CompilerType& type)
 {
-    if (type && type.GetTypeSystem()->AsClangASTContext())
+    if (type && llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem()))
     {
+        // Make sure this type is a clang AST type
         clang::QualType result(GetQualType(type));
         result.addConst();
         return CompilerType (type.GetTypeSystem(), result.getAsOpaquePtr());
     }
+
     return CompilerType();
 }
 
 CompilerType
 ClangASTContext::AddRestrictModifier (const CompilerType& type)
 {
-    if (type && type.GetTypeSystem()->AsClangASTContext())
+    if (type && llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem()))
     {
         clang::QualType result(GetQualType(type));
         result.getQualifiers().setRestrict (true);
@@ -3791,7 +3794,7 @@ ClangASTContext::AddRestrictModifier (const CompilerType& type)
 CompilerType
 ClangASTContext::AddVolatileModifier (const CompilerType& type)
 {
-    if (type && type.GetTypeSystem()->AsClangASTContext())
+    if (type && llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem()))
     {
         clang::QualType result(GetQualType(type));
         result.getQualifiers().setVolatile (true);
@@ -4094,7 +4097,7 @@ ClangASTContext::GetLValueReferenceType (const CompilerType& type)
 {
     if (type)
     {
-        ClangASTContext* ast = type.GetTypeSystem()->AsClangASTContext();
+        ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
         if (ast)
             return CompilerType(ast->getASTContext(), ast->getASTContext()->getLValueReferenceType(GetQualType(type)));
     }
@@ -4106,7 +4109,7 @@ ClangASTContext::GetRValueReferenceType (const CompilerType& type)
 {
     if (type)
     {
-        ClangASTContext* ast = type.GetTypeSystem()->AsClangASTContext();
+        ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
         if (ast)
             return CompilerType(ast->getASTContext(), ast->getASTContext()->getRValueReferenceType(GetQualType(type)));
     }
@@ -4128,7 +4131,7 @@ ClangASTContext::CreateTypedefType (const CompilerType& type,
 {
     if (type && typedef_name && typedef_name[0])
     {
-        ClangASTContext* ast = type.GetTypeSystem()->AsClangASTContext();
+        ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
         if (!ast)
             return CompilerType();
         clang::ASTContext* clang_ast = ast->getASTContext();
@@ -4201,7 +4204,7 @@ ClangASTContext::GetTypedefedType (void* type)
 CompilerType
 ClangASTContext::RemoveFastQualifiers (const CompilerType& type)
 {
-    if (type && type.GetTypeSystem()->AsClangASTContext())
+    if (type && llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem()))
     {
         clang::QualType qual_type(GetQualType(type));
         qual_type.getQualifiers().removeFastQualifiers();
@@ -6959,7 +6962,7 @@ ClangASTContext::AddFieldToRecordType (const CompilerType& type, const char *nam
 {
     if (!type.IsValid() || !field_clang_type.IsValid())
         return nullptr;
-    ClangASTContext* ast = type.GetTypeSystem()->AsClangASTContext();
+    ClangASTContext *ast = llvm::dyn_cast_or_null<ClangASTContext>(type.GetTypeSystem());
     if (!ast)
         return nullptr;
     clang::ASTContext* clang_ast = ast->getASTContext();
@@ -7049,9 +7052,10 @@ ClangASTContext::AddFieldToRecordType (const CompilerType& type, const char *nam
 void
 ClangASTContext::BuildIndirectFields (const CompilerType& type)
 {
-    ClangASTContext* ast = nullptr;
-    if (type)
-        ast = type.GetTypeSystem()->AsClangASTContext();
+    if (!type)
+        return;
+
+    ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
     if (!ast)
         return;
 
@@ -7160,12 +7164,19 @@ ClangASTContext::BuildIndirectFields (const CompilerType& type)
 void
 ClangASTContext::SetIsPacked (const CompilerType& type)
 {
-    clang::RecordDecl *record_decl = GetAsRecordDecl(type);
+    if (type)
+    {
+        ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
+        if (ast)
+        {
+            clang::RecordDecl *record_decl = GetAsRecordDecl(type);
     
-    if (!record_decl)
-        return;
+            if (!record_decl)
+                return;
     
-    record_decl->addAttr(clang::PackedAttr::CreateImplicit(*type.GetTypeSystem()->AsClangASTContext()->getASTContext()));
+            record_decl->addAttr(clang::PackedAttr::CreateImplicit(*ast->getASTContext()));
+        }
+    }
 }
 
 clang::VarDecl *
@@ -7177,7 +7188,7 @@ ClangASTContext::AddVariableToRecordType (const CompilerType& type, const char *
     
     if (!type.IsValid() || !var_type.IsValid())
         return nullptr;
-    ClangASTContext* ast = type.GetTypeSystem()->AsClangASTContext();
+    ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
     if (!ast)
         return nullptr;
     
@@ -7460,7 +7471,7 @@ ClangASTContext::SetBaseClassesForClassType (void* type, clang::CXXBaseSpecifier
 bool
 ClangASTContext::SetObjCSuperClass (const CompilerType& type, const CompilerType &superclass_clang_type)
 {
-    ClangASTContext* ast = type.GetTypeSystem()->AsClangASTContext();
+    ClangASTContext *ast = llvm::dyn_cast_or_null<ClangASTContext>(type.GetTypeSystem());
     if (!ast)
         return false;
     clang::ASTContext* clang_ast = ast->getASTContext();
@@ -7490,7 +7501,7 @@ ClangASTContext::AddObjCClassProperty (const CompilerType& type,
 {
     if (!type || !property_clang_type.IsValid() || property_name == nullptr || property_name[0] == '\0')
         return false;
-    ClangASTContext* ast = type.GetTypeSystem()->AsClangASTContext();
+    ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
     if (!ast)
         return false;
     clang::ASTContext* clang_ast = ast->getASTContext();
@@ -7695,8 +7706,11 @@ ClangASTContext::AddMethodToObjCObjectType (const CompilerType& type,
     
     if (class_interface_decl == nullptr)
         return nullptr;
-    clang::ASTContext* ast = type.GetTypeSystem()->AsClangASTContext()->getASTContext();
-    
+    ClangASTContext *lldb_ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
+    if (lldb_ast == nullptr)
+        return nullptr;
+    clang::ASTContext *ast = lldb_ast->getASTContext();
+
     const char *selector_start = ::strchr (name, ' ');
     if (selector_start == nullptr)
         return nullptr;
@@ -7917,8 +7931,11 @@ ClangASTContext::CompleteTagDeclarationDefinition (const CompilerType& type)
         clang::QualType qual_type (GetQualType(type));
         if (qual_type.isNull())
             return false;
-        clang::ASTContext* ast = type.GetTypeSystem()->AsClangASTContext()->getASTContext();
-        
+        ClangASTContext *lldb_ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
+        if (lldb_ast == nullptr)
+            return false;
+        clang::ASTContext *ast = lldb_ast->getASTContext();
+
         clang::CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
         
         if (cxx_record_decl)
@@ -8033,7 +8050,7 @@ ClangASTContext::CreateMemberPointerType (const CompilerType& type, const Compil
 {
     if (type && pointee_type.IsValid() && type.GetTypeSystem() == pointee_type.GetTypeSystem())
     {
-        ClangASTContext* ast = type.GetTypeSystem()->AsClangASTContext();
+        ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
         if (!ast)
             return CompilerType();
         return CompilerType (ast->getASTContext(),
@@ -8934,13 +8951,9 @@ ClangASTContext::DeclContextGetMetaData (const CompilerDeclContext &dc, const vo
 clang::ASTContext *
 ClangASTContext::DeclContextGetClangASTContext (const CompilerDeclContext &dc)
 {
-    TypeSystem *type_system = dc.GetTypeSystem();
-    if (type_system)
-    {
-        ClangASTContext *ast = type_system->AsClangASTContext();
-        if (ast)
-            return ast->getASTContext();
-    }
+    ClangASTContext *ast = llvm::dyn_cast_or_null<ClangASTContext>(dc.GetTypeSystem());
+    if (ast)
+        return ast->getASTContext();
     return nullptr;
 }
 

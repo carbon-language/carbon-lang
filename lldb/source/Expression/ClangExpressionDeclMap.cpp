@@ -194,19 +194,23 @@ ClangExpressionDeclMap::AddPersistentVariable
 {
     assert (m_parser_vars.get());
 
+    ClangASTContext *ast = llvm::dyn_cast_or_null<ClangASTContext>(parser_type.GetTypeSystem());
+    if (ast == nullptr)
+        return false;
+
     if (m_parser_vars->m_materializer && is_result)
     {
         Error err;
 
         ExecutionContext &exe_ctx = m_parser_vars->m_exe_ctx;
         Target *target = exe_ctx.GetTargetPtr();
-        if (target == NULL)
+        if (target == nullptr)
             return false;
 
         ClangASTContext *context(target->GetScratchClangASTContext());
 
         TypeFromUser user_type(m_ast_importer->DeportType(context->getASTContext(),
-                                                          parser_type.GetTypeSystem()->AsClangASTContext()->getASTContext(),
+                                                          ast->getASTContext(),
                                                           parser_type.GetOpaqueQualType()),
                                context);
 
@@ -247,7 +251,7 @@ ClangExpressionDeclMap::AddPersistentVariable
     ClangASTContext *context(target->GetScratchClangASTContext());
 
     TypeFromUser user_type(m_ast_importer->DeportType(context->getASTContext(),
-                                                      parser_type.GetTypeSystem()->AsClangASTContext()->getASTContext(),
+                                                      ast->getASTContext(),
                                                       parser_type.GetOpaqueQualType()),
                            context);
 

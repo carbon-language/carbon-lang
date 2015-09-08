@@ -1889,15 +1889,12 @@ ClangASTSource::AddNamespace (NameSearchContext &context, ClangASTImporter::Name
 CompilerType
 ClangASTSource::GuardedCopyType (const CompilerType &src_type)
 {
-    if (!ClangASTContext::IsClangType(src_type))
+    ClangASTContext *src_ast = llvm::dyn_cast_or_null<ClangASTContext>(src_type.GetTypeSystem());
+    if (src_ast == nullptr)
         return CompilerType();
-    
+
     ClangASTMetrics::RegisterLLDBImport();
 
-    ClangASTContext* src_ast = src_type.GetTypeSystem()->AsClangASTContext();
-    if (!src_ast)
-        return CompilerType();
-    
     SetImportInProgress(true);
 
     QualType copied_qual_type = m_ast_importer->CopyType (m_ast_context, src_ast->getASTContext(), ClangASTContext::GetQualType(src_type));
@@ -1920,7 +1917,7 @@ NameSearchContext::AddVarDecl(const CompilerType &type)
     if (!type.IsValid())
         return NULL;
 
-    ClangASTContext* lldb_ast = type.GetTypeSystem()->AsClangASTContext();
+    ClangASTContext* lldb_ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
     if (!lldb_ast)
         return NULL;
     
@@ -1952,7 +1949,7 @@ NameSearchContext::AddFunDecl (const CompilerType &type, bool extern_c)
     if (m_function_types.count(type))
         return NULL;
     
-    ClangASTContext* lldb_ast = type.GetTypeSystem()->AsClangASTContext();
+    ClangASTContext* lldb_ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
     if (!lldb_ast)
         return NULL;
 
