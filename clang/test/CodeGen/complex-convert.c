@@ -31,6 +31,8 @@ void foo(signed char sc, unsigned char uc, signed long long sll,
   // CHECK: alloca i[[CHSIZE]], align [[CHALIGN:[0-9]+]]
   // CHECK: alloca i[[LLSIZE]], align [[LLALIGN:[0-9]+]]
 
+  // CHECK: store i64 %ull,
+
   sc1 = csc;
   // CHECK: %[[VAR1:[A-Za-z0-9.]+]] = getelementptr inbounds { i[[CHSIZE]], i[[CHSIZE]]  }, { i[[CHSIZE]], i[[CHSIZE]]  }* %[[CSC:[A-Za-z0-9.]+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
   // CHECK-NEXT: %[[VAR2:[A-Za-z0-9.]+]] = load i[[CHSIZE]], i[[CHSIZE]]* %[[VAR1]]
