@@ -35,4 +35,28 @@ v_mul_i32_i24_e64 v1, v2, 100
 v_add_i32_e32 v1, s[0:1], v2, v3
 // CHECK: error: invalid operand for instruction
 
+v_addc_u32_e32 v1, vcc, v2, v3, s[2:3]
+// CHECK: error: invalid operand for instruction
+
+v_addc_u32_e32 v1, s[0:1], v2, v3, s[2:3]
+// CHECK: error: invalid operand for instruction
+
+v_addc_u32_e32 v1, vcc, v2, v3, -1
+// CHECK: error: invalid operand for instruction
+
+v_addc_u32_e32 v1, vcc, v2, v3, 123
+// CHECK: error: invalid operand for instruction
+
+v_addc_u32_e32 v1, vcc, v2, v3, s0
+// CHECK: error: invalid operand for instruction
+
+v_addc_u32_e32 v1, -1, v2, v3, s0
+// CHECK: error: invalid operand for instruction
+
+v_addc_u32_e64 v1, s[0:1], v2, v3, 123
+// CHECK: error: invalid operand for instruction
+
+v_addc_u32 v1, s[0:1], v2, v3, 123
+// CHECK: error: invalid operand for instruction
+
 // TODO: Constant bus restrictions

@@ -281,3 +281,13 @@ def VCSrc_64 : RegisterOperand<VS_64> {
   let OperandType = "OPERAND_REG_INLINE_C";
   let ParserMatchClass = RegImmMatcher<"VCSrc64">;
 }
+
+//===----------------------------------------------------------------------===//
+//  SCSrc_* Operands with an SGPR or an inline constant
+//===----------------------------------------------------------------------===//
+
+def SCSrc_64 : RegisterOperand<SReg_64> {
+  let OperandNamespace = "AMDGPU";
+  let OperandType = "OPERAND_REG_INLINE_C";
+  let ParserMatchClass = RegImmMatcher<"SCSrc64">;
+}

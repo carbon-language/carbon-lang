@@ -1507,7 +1507,7 @@ let isCommutable = 1 in {
 defm V_MADAK_F32 : VOP2MADK <vop2<0x21, 0x18>, "v_madak_f32">;
 } // End isCommutable = 1
 
-let isCommutable = 1, Defs = [VCC] in { // Carry-out goes to VCC
+let isCommutable = 1 in {
 // No patterns so that the scalar instructions are always selected.
 // The scalar versions will be replaced with vector when needed later.
 
@@ -1522,19 +1522,17 @@ defm V_SUBREV_I32 : VOP2bInst <vop2<0x27, 0x1b>, "v_subrev_i32",
   VOP2b_I32_I1_I32_I32, null_frag, "v_sub_i32"
 >;
 
-let Uses = [VCC] in { // Carry-in comes from VCC
 defm V_ADDC_U32 : VOP2bInst <vop2<0x28, 0x1c>, "v_addc_u32",
-  VOP2b_I32_I1_I32_I32_VCC
+  VOP2b_I32_I1_I32_I32_I1
 >;
 defm V_SUBB_U32 : VOP2bInst <vop2<0x29, 0x1d>, "v_subb_u32",
-  VOP2b_I32_I1_I32_I32_VCC
+  VOP2b_I32_I1_I32_I32_I1
 >;
 defm V_SUBBREV_U32 : VOP2bInst <vop2<0x2a, 0x1e>, "v_subbrev_u32",
-  VOP2b_I32_I1_I32_I32_VCC, null_frag, "v_subb_u32"
+  VOP2b_I32_I1_I32_I32_I1, null_frag, "v_subb_u32"
 >;
 
-} // End Uses = [VCC]
-} // End isCommutable = 1, Defs = [VCC]
+} // End isCommutable = 1
 
 defm V_READLANE_B32 : VOP2SI_3VI_m <
   vop3 <0x001, 0x289>,

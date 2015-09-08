@@ -215,6 +215,10 @@ public:
            (isReg() && isRegClass(AMDGPU::SReg_64RegClassID));
   }
 
+  bool isSCSrc64() const {
+    return (isReg() && isRegClass(AMDGPU::SReg_64RegClassID)) || isInlineImm();
+  }
+
   bool isVCSrc32() const {
     return isInlineImm() || (isReg() && isRegClass(AMDGPU::VS_32RegClassID));
   }
