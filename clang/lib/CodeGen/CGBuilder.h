@@ -225,7 +225,7 @@ public:
                                  CharUnits EltSize,
                                  const llvm::Twine &Name = "") {
     return Address(CreateInBoundsGEP(Addr.getElementType(), Addr.getPointer(),
-                                     {getSize(Index)}, Name),
+                                     getSize(Index), Name),
                    Addr.getAlignment().alignmentAtOffset(Index * EltSize));
   }
 
@@ -239,7 +239,7 @@ public:
   Address CreateConstGEP(Address Addr, uint64_t Index, CharUnits EltSize,
                          const llvm::Twine &Name = "") {
     return Address(CreateGEP(Addr.getElementType(), Addr.getPointer(),
-                             {getSize(Index)}, Name),
+                             getSize(Index), Name),
                    Addr.getAlignment().alignmentAtOffset(Index * EltSize));
   }
 
