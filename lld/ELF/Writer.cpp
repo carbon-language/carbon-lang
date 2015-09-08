@@ -182,9 +182,11 @@ private:
 // The writer writes a SymbolTable result to a file.
 template <class ELFT> class Writer {
 public:
-  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+  typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
+  typedef typename ELFFile<ELFT>::Elf_Phdr Elf_Phdr;
+  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   Writer(SymbolTable *T) : SymTable(*T, StringTable), DynamicSec(StringTable) {}
   void run();
 
@@ -252,8 +254,7 @@ void OutputSection<ELFT>::addChunk(SectionChunk<ELFT> *C) {
 }
 
 template <class ELFT>
-static typename llvm::object::ELFFile<ELFT>::uintX_t
-getSymVA(DefinedRegular<ELFT> *DR) {
+static typename ELFFile<ELFT>::uintX_t getSymVA(DefinedRegular<ELFT> *DR) {
   const SectionChunk<ELFT> *SC = &DR->Section;
   OutputSection<ELFT> *OS = SC->getOutputSection();
   return OS->getVA() + SC->getOutputSectionOff() + DR->Sym.st_value;
@@ -530,7 +531,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 // Visits all sections to assign incremental, non-overlapping RVAs and
 // file offsets.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
-  SizeOfHeaders = RoundUpToAlignment(sizeof(Elf_Ehdr_Impl<ELFT>), PageSize);
+  SizeOfHeaders = RoundUpToAlignment(sizeof(Elf_Ehdr), PageSize);
   uintX_t VA = 0x1000; // The first page is kept unmapped.
   uintX_t FileOff = SizeOfHeaders;
 
@@ -553,13 +554,13 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
 
   // Add space for section headers.
   SectionHeaderOff = FileOff;
-  FileOff += getNumSections() * sizeof(Elf_Shdr_Impl<ELFT>);
+  FileOff += getNumSections() * sizeof(Elf_Shdr);
   FileSize = SizeOfHeaders + RoundUpToAlignment(FileOff - SizeOfHeaders, 8);
 }
 
 template <class ELFT> void Writer<ELFT>::writeHeader() {
   uint8_t *Buf = Buffer->getBufferStart();
-  auto *EHdr = reinterpret_cast<Elf_Ehdr_Impl<ELFT> *>(Buf);
+  auto *EHdr = reinterpret_cast<Elf_Ehdr *>(Buf);
   EHdr->e_ident[EI_MAG0] = 0x7F;
   EHdr->e_ident[EI_MAG1] = 0x45;
   EHdr->e_ident[EI_MAG2] = 0x4C;
@@ -577,16 +578,16 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
   EHdr->e_entry = 0x401000;
-  EHdr->e_phoff = sizeof(Elf_Ehdr_Impl<ELFT>);
+  EHdr->e_phoff = sizeof(Elf_Ehdr);
   EHdr->e_shoff = SectionHeaderOff;
-  EHdr->e_ehsize = sizeof(Elf_Ehdr_Impl<ELFT>);
-  EHdr->e_phentsize = sizeof(Elf_Phdr_Impl<ELFT>);
+  EHdr->e_ehsize = sizeof(Elf_Ehdr);
+  EHdr->e_phentsize = sizeof(Elf_Phdr);
   EHdr->e_phnum = 1;
-  EHdr->e_shentsize = sizeof(Elf_Shdr_Impl<ELFT>);
+  EHdr->e_shentsize = sizeof(Elf_Shdr);
   EHdr->e_shnum = getNumSections();
   EHdr->e_shstrndx = StringTable.getSectionIndex();
 
-  auto PHdrs = reinterpret_cast<Elf_Phdr_Impl<ELFT> *>(Buf + EHdr->e_phoff);
+  auto PHdrs = reinterpret_cast<Elf_Phdr *>(Buf + EHdr->e_phoff);
   PHdrs->p_type = PT_LOAD;
   PHdrs->p_flags = PF_R | PF_X;
   PHdrs->p_offset = 0x0000;
@@ -596,7 +597,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   PHdrs->p_memsz = FileSize;
   PHdrs->p_align = 0x4000;
 
-  auto SHdrs = reinterpret_cast<Elf_Shdr_Impl<ELFT> *>(Buf + EHdr->e_shoff);
+  auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
   // First entry is null.
   ++SHdrs;
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
