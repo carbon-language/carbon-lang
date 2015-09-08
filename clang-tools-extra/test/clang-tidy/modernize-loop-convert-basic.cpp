@@ -291,7 +291,7 @@ void f() {
          I != E; ++I) {
     }
     // CHECK-MESSAGES: :[[@LINE-4]]:5: warning: use range-based for loop instead
-    // CHECK-FIXES: for (auto && int_ptr : int_ptrs) {
+    // CHECK-FIXES: for (auto int_ptr : int_ptrs) {
   }
 
   // This container uses an iterator where the derefence type is a typedef of
@@ -564,14 +564,23 @@ struct DerefByValue {
   unsigned operator[](int);
 };
 
-void DerefByValueTest() {
+void derefByValueTest() {
   DerefByValue DBV;
   for (unsigned i = 0, e = DBV.size(); i < e; ++i) {
     printf("%d\n", DBV[i]);
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto && elem : DBV) {
+  // CHECK-FIXES: for (auto elem : DBV) {
+  // CHECK-FIXES-NEXT: printf("%d\n", elem);
 
+  for (unsigned i = 0, e = DBV.size(); i < e; ++i) {
+    auto f = [DBV, i]() {};
+    printf("%d\n", DBV[i]);
+  }
+  // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto elem : DBV) {
+  // CHECK-FIXES-NEXT: auto f = [DBV, elem]() {};
+  // CHECK-FIXES-NEXT: printf("%d\n", elem);
 }
 
 } // namespace PseudoArray

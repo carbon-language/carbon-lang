@@ -25,22 +25,27 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 
 private:
+  struct RangeDescriptor {
+    bool ContainerNeedsDereference;
+    bool DerefByValue;
+    bool IsTriviallyCopyable;
+    bool DerefByConstRef;
+  };
+
   void doConversion(ASTContext *Context, const VarDecl *IndexVar,
                     const VarDecl *MaybeContainer, StringRef ContainerString,
                     const UsageResult &Usages, const DeclStmt *AliasDecl,
                     bool AliasUseRequired, bool AliasFromForInit,
-                    const ForStmt *TheLoop, bool ContainerNeedsDereference,
-                    bool DerefByValue, bool DerefByConstRef);
+                    const ForStmt *TheLoop, RangeDescriptor Descriptor);
 
   StringRef checkRejections(ASTContext *Context, const Expr *ContainerExpr,
                             const ForStmt *TheLoop);
 
   void findAndVerifyUsages(ASTContext *Context, const VarDecl *LoopVar,
                            const VarDecl *EndVar, const Expr *ContainerExpr,
-                           const Expr *BoundExpr,
-                           bool ContainerNeedsDereference, bool DerefByValue,
-                           bool DerefByConstRef, const ForStmt *TheLoop,
-                           LoopFixerKind FixerKind);
+                           const Expr *BoundExpr, const ForStmt *TheLoop,
+                           LoopFixerKind FixerKind, RangeDescriptor Descriptor);
+
   std::unique_ptr<TUTrackingInfo> TUInfo;
   Confidence::Level MinConfidence;
 };

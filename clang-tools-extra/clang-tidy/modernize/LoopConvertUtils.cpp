@@ -349,11 +349,13 @@ static bool isAliasDecl(ASTContext *Context, const Decl *TheDecl,
 
   // Check that the declared type is the same as (or a reference to) the
   // container type.
-  QualType DeclarationType = VDecl->getType();
-  if (DeclarationType->isReferenceType())
-    DeclarationType = DeclarationType.getNonReferenceType();
   QualType InitType = Init->getType();
-  if (!Context->hasSameUnqualifiedType(DeclarationType, InitType))
+  QualType DeclarationType = VDecl->getType();
+  if (!DeclarationType.isNull() && DeclarationType->isReferenceType())
+    DeclarationType = DeclarationType.getNonReferenceType();
+
+  if (InitType.isNull() || DeclarationType.isNull() ||
+      !Context->hasSameUnqualifiedType(DeclarationType, InitType))
     return false;
 
   switch (Init->getStmtClass()) {
