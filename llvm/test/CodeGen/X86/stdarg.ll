@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s -check-prefix=CHECK
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
 
 %struct.__va_list_tag = type { i32, i32, i8*, i8* }
 
@@ -10,7 +10,7 @@ entry:
 ; CHECK: testb %al, %al
 
 ; These test for specific offsets, which is very fragile. Still, the test needs
-; to ensure that va_list is correctly handled by both x86-64 and x32.
+; to ensure that va_list has the correct element types.
 ;
 ; CHECK-DAG: movq {{.*}}, 192(%rsp)
 ; CHECK-DAG: movq {{.*}}, 184(%rsp)
