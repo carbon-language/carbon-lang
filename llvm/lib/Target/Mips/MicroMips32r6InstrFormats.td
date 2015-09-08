@@ -224,6 +224,36 @@ class POOL32A_LSA_FM<bits<6> funct> : MipsR6Inst {
   let Inst{5-0}   = funct;
 }
 
+class SB32_SH32_STORE_FM_MMR6<bits<6> op> {
+  bits<5> rt;
+  bits<21> addr;
+  bits<5> base = addr{20-16};
+  bits<16> offset = addr{15-0};
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = base;
+  let Inst{15-0}  = offset;
+}
+
+class POOL32C_STORE_EVA_FM_MMR6<bits<3> funct> {
+  bits<5> rt;
+  bits<21> addr;
+  bits<5> base = addr{20-16};
+  bits<9> offset = addr{8-0};
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0b011000;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = base;
+  let Inst{15-12} = 0b1010;
+  let Inst{11-9}  = funct;
+  let Inst{8-0}   = offset;
+}
+
 class CMP_BRANCH_1R_RT_OFF16_FM_MMR6<bits<6> funct> : MipsR6Inst {
   bits<5> rt;
   bits<16> offset;

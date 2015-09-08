@@ -11,6 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+def mem_mm_9 : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops GPR32, simm9);
+  let EncoderMethod = "getMemEncodingMMImm9";
+  let ParserMatchClass = MipsMemAsmOperand;
+  let OperandType = "OPERAND_MEMORY";
+}
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Encodings
@@ -91,6 +99,11 @@ class SQRT_S_MMR6_ENC : POOL32F_MATH_FM_MMR6<"sqrt.s", 0, 0b00101000>;
 class SQRT_D_MMR6_ENC : POOL32F_MATH_FM_MMR6<"sqrt.d", 1, 0b00101000>;
 class RSQRT_S_MMR6_ENC : POOL32F_MATH_FM_MMR6<"rsqrt.s", 0, 0b00001000>;
 class RSQRT_D_MMR6_ENC : POOL32F_MATH_FM_MMR6<"rsqrt.d", 1, 0b00001000>;
+class SB_MMR6_ENC : SB32_SH32_STORE_FM_MMR6<0b000110>;
+class SBE_MMR6_ENC : POOL32C_STORE_EVA_FM_MMR6<0b100>;
+class SCE_MMR6_ENC : POOL32C_STORE_EVA_FM_MMR6<0b110>;
+class SH_MMR6_ENC : SB32_SH32_STORE_FM_MMR6<0b001110>;
+class SHE_MMR6_ENC : POOL32C_STORE_EVA_FM_MMR6<0b101>;
 
 class CMP_CBR_RT_Z_MMR6_DESC_BASE<string instr_asm, DAGOperand opnd,
                                   RegisterOperand GPROpnd>
@@ -605,6 +618,25 @@ class RSQRT_S_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"rsqrt.s", FGR32Opnd,
 class RSQRT_D_MMR6_DESC : ABSS_FT_MMR6_DESC_BASE<"rsqrt.d", FGR32Opnd,
                                                   AFGR64Opnd, II_TRUNC>;
 
+class STORE_MMR6_DESC_BASE<string opstr, DAGOperand RO>
+    : Store<opstr, RO>, MMR6Arch<opstr> {
+  let DecoderMethod = "DecodeMemMMImm16";
+}
+class SB_MMR6_DESC : STORE_MMR6_DESC_BASE<"sb", GPR32Opnd>;
+
+class STORE_EVA_MMR6_DESC_BASE<string instr_asm, RegisterOperand RO>
+    : MMR6Arch<instr_asm>, MipsR6Inst {
+  dag OutOperandList = (outs);
+  dag InOperandList = (ins RO:$rt, mem_mm_9:$addr);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $addr");
+  string DecoderMethod = "DecodeStoreEvaOpMM";
+  bit mayStore = 1;
+}
+class SBE_MMR6_DESC : STORE_EVA_MMR6_DESC_BASE<"sbe", GPR32Opnd>;
+class SCE_MMR6_DESC : STORE_EVA_MMR6_DESC_BASE<"sce", GPR32Opnd>;
+class SH_MMR6_DESC : STORE_MMR6_DESC_BASE<"sh", GPR32Opnd>;
+class SHE_MMR6_DESC : STORE_EVA_MMR6_DESC_BASE<"she", GPR32Opnd>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -788,6 +820,11 @@ def RSQRT_S_MMR6 : StdMMR6Rel, RSQRT_S_MMR6_ENC, RSQRT_S_MMR6_DESC,
                    ISA_MICROMIPS32R6;
 def RSQRT_D_MMR6 : StdMMR6Rel, RSQRT_D_MMR6_ENC, RSQRT_D_MMR6_DESC,
                    ISA_MICROMIPS32R6;
+def SB_MMR6 : StdMMR6Rel, SB_MMR6_DESC, SB_MMR6_ENC, ISA_MICROMIPS32R6;
+def SBE_MMR6 : StdMMR6Rel, SBE_MMR6_DESC, SBE_MMR6_ENC, ISA_MICROMIPS32R6;
+def SCE_MMR6 : StdMMR6Rel, SCE_MMR6_DESC, SCE_MMR6_ENC, ISA_MICROMIPS32R6;
+def SH_MMR6 : StdMMR6Rel, SH_MMR6_DESC, SH_MMR6_ENC, ISA_MICROMIPS32R6;
+def SHE_MMR6 : StdMMR6Rel, SHE_MMR6_DESC, SHE_MMR6_ENC, ISA_MICROMIPS32R6;
 }
 
 //===----------------------------------------------------------------------===//

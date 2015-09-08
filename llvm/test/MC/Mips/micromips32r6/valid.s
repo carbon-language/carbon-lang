@@ -163,4 +163,9 @@
   lhu16 $3, 4($16)         # CHECK: lhu16 $3, 4($16)    # encoding: [0x29,0x82]
   lbu16 $3, 4($17)         # CHECK: lbu16 $3, 4($17)    # encoding: [0x09,0x94]
   lbu16 $3, -1($17)        # CHECK: lbu16 $3, -1($17)   # encoding: [0x09,0x9f]
+  sb  $4, 6($5)            # CHECK: sb  $4, 6($5)       # encoding: [0x18,0x85,0x00,0x06]
+  sbe $4, 6($5)            # CHECK: sbe $4, 6($5)       # encoding: [0x60,0x85,0xa8,0x06]
+  sce $4, 6($5)            # CHECK: sce $4, 6($5)       # encoding: [0x60,0x85,0xac,0x06]
+  sh $4, 6($5)             # CHECK: sh $4, 6($5)        # encoding: [0x38,0x85,0x00,0x06]
+  she $4, 6($5)            # CHECK: she $4, 6($5)       # encoding: [0x60,0x85,0xaa,0x06]
 
