@@ -61,7 +61,7 @@ The most important flags are::
   mutate_depth                       	5	Apply this number of consecutive mutations to each input.
   timeout                            	1200	Timeout in seconds (if positive). If one unit runs more than this number of seconds the process will abort.
   help                               	0	Print help.
-  save_minimized_corpus              	0	If 1, the minimized corpus is saved into the first input directory
+  save_minimized_corpus              	0	If 1, the minimized corpus is saved into the first input directory. Example: ./fuzzer -save_minimized_corpus=1 NEW_EMPTY_DIR OLD_CORPUS
   jobs                               	0	Number of jobs to run. If jobs >= 1 we spawn this number of jobs in separate worker processes with stdout/stderr redirected to fuzz-JOB.log.
   workers                            	0	Number of simultaneous worker processes to run the jobs. If zero, "min(jobs,NumberOfCpuCores()/2)" is used.
   sync_command                       	0	Execute an external command "<sync_command> <test_corpus>" to synchronize the test corpus.
