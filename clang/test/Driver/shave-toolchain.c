@@ -26,3 +26,7 @@
 // RUN: -ffunction-sections 2>&1 | FileCheck %s -check-prefix=PASSTHRU_OPTIONS
 // PASSTHRU_OPTIONS: "-g" "-fno-inline-functions" "-fno-inline-functions-called-once"
 // PASSTHRU_OPTIONS: "-Os" "-Wall" "-MF" "dep.d" "-ffunction-sections"
+
+// RUN: %clang -target shave -c %s -o foo.o -### -MD -MF dep.d 2>&1 \
+// RUN:   | FileCheck %s -check-prefix=MDMF
+// MDMF: "-S" "-MD" "-MF" "dep.d" "-MT" "foo.o"

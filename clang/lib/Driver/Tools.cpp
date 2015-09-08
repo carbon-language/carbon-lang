@@ -9669,15 +9669,27 @@ void tools::SHAVE::Compiler::ConstructJob(Compilation &C, const JobAction &JA,
   // Append all -I, -iquote, -isystem paths, defines/undefines,
   // 'f' flags, optimize flags, and warning options.
   // These are spelled the same way in clang and moviCompile.
-  Args.AddAllArgs(CmdArgs,
-                  {options::OPT_I_Group, options::OPT_clang_i_Group,
-                   options::OPT_D, options::OPT_U,
-                   options::OPT_f_Group,
-                   options::OPT_f_clang_Group,
-                   options::OPT_g_Group,
-                   options::OPT_M_Group,
-                   options::OPT_O_Group,
-                   options::OPT_W_Group});
+  Args.AddAllArgs(CmdArgs, {options::OPT_I_Group, options::OPT_clang_i_Group,
+                            options::OPT_D, options::OPT_U,
+                            options::OPT_f_Group, options::OPT_f_clang_Group,
+                            options::OPT_g_Group, options::OPT_M_Group,
+                            options::OPT_O_Group, options::OPT_W_Group});
+
+  // If we're producing a dependency file, and assembly is the final action,
+  // then the name of the target in the dependency file should be the '.o'
+  // file, not the '.s' file produced by this step. For example, instead of
+  //  /tmp/mumble.s: mumble.c .../someheader.h
+  // the filename on the lefthand side should be "mumble.o"
+  if (Args.getLastArg(options::OPT_MF) && !Args.getLastArg(options::OPT_MT) &&
+      C.getActions().size() == 1 &&
+      C.getActions()[0]->getKind() == Action::AssembleJobClass) {
+    Arg *A = Args.getLastArg(options::OPT_o);
+    if (A) {
+      CmdArgs.push_back("-MT");
+      CmdArgs.push_back(Args.MakeArgString(A->getValue()));
+    }
+  }
+
   CmdArgs.push_back("-fno-exceptions"); // Always do this even if unspecified.
 
   CmdArgs.push_back(II.getFilename());
