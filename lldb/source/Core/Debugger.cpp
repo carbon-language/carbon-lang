@@ -421,7 +421,11 @@ Debugger::Terminate ()
 
     // Clear our master list of debugger objects
     Mutex::Locker locker (GetDebuggerListMutex ());
-    GetDebuggerList().clear();
+    auto& debuggers = GetDebuggerList();
+    for (const auto& debugger: debuggers)
+        debugger->Clear();
+
+    debuggers.clear();
 }
 
 void
