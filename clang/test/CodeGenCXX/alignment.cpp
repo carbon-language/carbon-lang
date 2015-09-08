@@ -142,6 +142,7 @@ namespace test0 {
     // CHECK: [[C_P:%.*]] = alloca [[C:%.*]], align 16
     __attribute__((aligned(16))) C c;
 
+    // CHECK: [[CALL:%.*]] = call i32 @_Z10int_sourcev()
     // CHECK: [[T0:%.*]] = bitcast [[C]]* [[C_P]] to i8*
     // CHECK: [[T1:%.*]] = getelementptr inbounds i8, i8* [[T0]], i64 8
     // CHECK: [[B_P:%.*]] = bitcast i8* [[T1]] to [[B]]*
