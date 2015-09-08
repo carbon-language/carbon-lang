@@ -94,15 +94,12 @@ public:
   }
 
   FunctionPass *createTargetRegisterAllocator(bool) override;
-  void addFastRegAlloc(FunctionPass *RegAllocPass) override;
-  void addOptimizedRegAlloc(FunctionPass *RegAllocPass) override;
 
   void addIRPasses() override;
   bool addPreISel() override;
   bool addInstSelector() override;
   bool addILPOpts() override;
   void addPreRegAlloc() override;
-  void addRegAllocPasses(bool Optimized);
   void addPostRegAlloc() override;
   void addPreSched2() override;
   void addPreEmitPass() override;
@@ -122,16 +119,6 @@ WebAssemblyTargetMachine::createPassConfig(PassManagerBase &PM) {
 
 FunctionPass *WebAssemblyPassConfig::createTargetRegisterAllocator(bool) {
   return nullptr; // No reg alloc
-}
-
-void WebAssemblyPassConfig::addFastRegAlloc(FunctionPass *RegAllocPass) {
-  assert(!RegAllocPass && "WebAssembly uses no regalloc!");
-  addRegAllocPasses(false);
-}
-
-void WebAssemblyPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
-  assert(!RegAllocPass && "WebAssembly uses no regalloc!");
-  addRegAllocPasses(true);
 }
 
 //===----------------------------------------------------------------------===//
@@ -163,28 +150,6 @@ bool WebAssemblyPassConfig::addInstSelector() {
 bool WebAssemblyPassConfig::addILPOpts() { return true; }
 
 void WebAssemblyPassConfig::addPreRegAlloc() {}
-
-void WebAssemblyPassConfig::addRegAllocPasses(bool Optimized) {
-  // This is list is derived from the regalloc pass list used in
-  // addFastRegAlloc and addOptimizedRegAlloc in lib/CodeGen/Passes.cpp. We
-  // don't run the actual register allocator, but we do run the passes which
-  // lower SSA form, so after these passes are complete, we have non-SSA
-  // virtual registers.
-
-  if (Optimized) {
-    addPass(&ProcessImplicitDefsID);
-    addPass(&LiveVariablesID);
-    addPass(&MachineLoopInfoID);
-  }
-
-  addPass(&PHIEliminationID);
-  addPass(&TwoAddressInstructionPassID, false);
-
-  if (Optimized) {
-    addPass(&RegisterCoalescerID);
-    addPass(&MachineSchedulerID);
-  }
-}
 
 void WebAssemblyPassConfig::addPostRegAlloc() {
   // FIXME: the following passes dislike virtual registers. Disable them for now
