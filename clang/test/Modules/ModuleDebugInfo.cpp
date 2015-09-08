@@ -5,11 +5,11 @@
 
 // Modules:
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -x objective-c++ -std=c++11 -g -fmodules -fmodule-format=obj -fimplicit-module-maps -DMODULES -fmodules-cache-path=%t %s -I %S/Inputs -I %t -emit-llvm -o %t.ll -mllvm -debug-only=pchcontainer &>%t-mod.ll
+// RUN: %clang_cc1 -triple %itanium_abi_triple -x objective-c++ -std=c++11 -g -fmodules -fmodule-format=obj -fimplicit-module-maps -DMODULES -fmodules-cache-path=%t %s -I %S/Inputs -I %t -emit-llvm -o %t.ll -mllvm -debug-only=pchcontainer &>%t-mod.ll
 // RUN: cat %t-mod.ll | FileCheck %s
 
 // PCH:
-// RUN: %clang_cc1 -x c++ -std=c++11 -emit-pch -fmodule-format=obj -I %S/Inputs -o %t.pch %S/Inputs/DebugCXX.h -mllvm -debug-only=pchcontainer &>%t-pch.ll
+// RUN: %clang_cc1 -triple %itanium_abi_triple -x c++ -std=c++11 -emit-pch -fmodule-format=obj -I %S/Inputs -o %t.pch %S/Inputs/DebugCXX.h -mllvm -debug-only=pchcontainer &>%t-pch.ll
 // RUN: cat %t-pch.ll | FileCheck %s
 
 #ifdef MODULES
