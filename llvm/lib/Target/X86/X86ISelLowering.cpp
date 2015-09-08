@@ -4671,9 +4671,9 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     SmallVector<uint64_t, 32> RawMask;
     if (MaskNode->getOpcode() == ISD::BUILD_VECTOR) {
       // If we have a build-vector, then things are easy.
-      EVT MaskVT = MaskNode.getValueType();
-      assert(MaskVT.isInteger() &&
-             MaskVT.getVectorNumElements() == VT.getVectorNumElements());
+      assert(MaskNode.getValueType().isInteger() &&
+             MaskNode.getValueType().getVectorNumElements() ==
+             VT.getVectorNumElements());
 
       for (unsigned i = 0; i < MaskNode->getNumOperands(); ++i) {
         SDValue Op = MaskNode->getOperand(i);
