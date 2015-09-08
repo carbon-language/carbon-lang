@@ -21,10 +21,8 @@ namespace fuzzer {
 
 static long GetEpoch(const std::string &Path) {
   struct stat St;
-  if (stat(Path.c_str(), &St)) {
-    Printf("Can not stat: %s; exiting\n", Path.c_str());
-    exit(1);
-  }
+  if (stat(Path.c_str(), &St))
+    return 0;  // Can't stat, be conservative.
   return St.st_mtime;
 }
 
