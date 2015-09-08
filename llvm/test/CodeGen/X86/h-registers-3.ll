@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86    | grep mov | count 1
 ; RUN: llc < %s -march=x86-64 | grep mov | count 1
+; RUN: llc < %s -mtriple=x86_64-linux-gnux32 | grep mov | count 1
 
 define zeroext i8 @foo() nounwind ssp {
 entry:

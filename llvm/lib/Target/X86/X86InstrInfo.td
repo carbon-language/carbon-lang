@@ -341,18 +341,21 @@ def vy64xmem : X86VMemOperand<VR256X, "printi64mem", X86MemVY64XOperand>;
 def vz32mem  : X86VMemOperand<VR512,  "printi32mem", X86MemVZ32Operand>;
 def vz64mem  : X86VMemOperand<VR512,  "printi64mem", X86MemVZ64Operand>;
 
-// A version of i8mem for use on x86-64 that uses GR64_NOREX instead of
-// plain GR64, so that it doesn't potentially require a REX prefix.
-def i8mem_NOREX : Operand<i64> {
+// A version of i8mem for use on x86-64 and x32 that uses a NOREX GPR instead
+// of a plain GPR, so that it doesn't potentially require a REX prefix.
+def ptr_rc_norex : PointerLikeRegClass<2>;
+def ptr_rc_norex_nosp : PointerLikeRegClass<3>;
+
+def i8mem_NOREX : Operand<iPTR> {
   let PrintMethod = "printi8mem";
-  let MIOperandInfo = (ops GR64_NOREX, i8imm, GR64_NOREX_NOSP, i32imm, i8imm);
+  let MIOperandInfo = (ops ptr_rc_norex, i8imm, ptr_rc_norex_nosp, i32imm, i8imm);
   let ParserMatchClass = X86Mem8AsmOperand;
   let OperandType = "OPERAND_MEMORY";
 }
 
 // GPRs available for tailcall.
 // It represents GR32_TC, GR64_TC or GR64_TCW64.
-def ptr_rc_tailcall : PointerLikeRegClass<2>;
+def ptr_rc_tailcall : PointerLikeRegClass<4>;
 
 // Special i32mem for addresses of load folding tail calls. These are not
 // allowed to use callee-saved registers since they must be scheduled

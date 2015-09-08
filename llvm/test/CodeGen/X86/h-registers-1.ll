@@ -1,4 +1,5 @@
 ; RUN: llc -mattr=-bmi < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc -mattr=-bmi < %s -mtriple=x86_64-linux-gnux32 | FileCheck %s
 
 ; LLVM creates virtual registers for values live across blocks
 ; based on the type of the value. Make sure that the extracts

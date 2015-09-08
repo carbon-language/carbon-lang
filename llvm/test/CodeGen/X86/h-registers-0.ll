@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mattr=-bmi -mtriple=x86_64-linux | FileCheck %s -check-prefix=X86-64
+; RUN: llc < %s -mattr=-bmi -mtriple=x86_64-linux-gnux32 | FileCheck %s -check-prefix=X86-64
 ; RUN: llc < %s -mattr=-bmi -mtriple=x86_64-win32 | FileCheck %s -check-prefix=WIN64
 ; RUN: llc < %s -mattr=-bmi -march=x86    | FileCheck %s -check-prefix=X86-32
 
