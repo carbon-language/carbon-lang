@@ -23,7 +23,7 @@ _start:
 # CHECK-NEXT:   Type: Executable (0x2)
 # CHECK-NEXT:   Machine: EM_386 (0x3)
 # CHECK-NEXT:   Version: 1
-# CHECK-NEXT:   Entry: 0x1000
+# CHECK-NEXT:   Entry: 0x401000
 # CHECK-NEXT:   ProgramHeaderOffset: 0x34
 # CHECK-NEXT:   SectionHeaderOffset: 0x1058
 # CHECK-NEXT:   Flags [ (0x0)
