@@ -181,9 +181,9 @@ MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
         Twine("Could not get the member for symbol ") + Sym->getName());
   Archive::child_iterator It = *ItOrErr;
 
-  if (!Seen.insert(It->getChildOffset()).second) {
+  if (!Seen.insert(It->getChildOffset()).second)
     return MemoryBufferRef();
-  }
+
   ErrorOr<MemoryBufferRef> Ret = It->getMemoryBufferRef();
   error(Ret, Twine("Could not get the buffer for the member defining symbol ") +
                  Sym->getName());
