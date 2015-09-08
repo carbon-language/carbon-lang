@@ -474,6 +474,12 @@ public:
   ///
   virtual bool isDynamic(OpenMPScheduleClauseKind ScheduleKind) const;
 
+  virtual void emitForDispatchInit(CodeGenFunction &CGF, SourceLocation Loc,
+                                   OpenMPScheduleClauseKind SchedKind,
+                                   unsigned IVSize, bool IVSigned,
+                                   bool Ordered, llvm::Value *UB,
+                                   llvm::Value *Chunk = nullptr);
+
   /// \brief Call the appropriate runtime routine to initialize it before start
   /// of loop.
   ///
@@ -498,11 +504,6 @@ public:
   /// \param Chunk Value of the chunk for the static_chunked scheduled loop.
   /// For the default (nullptr) value, the chunk 1 will be used.
   ///
-  virtual void emitForDispatchInit(CodeGenFunction &CGF, SourceLocation Loc,
-                                   OpenMPScheduleClauseKind SchedKind,
-                                   unsigned IVSize, bool IVSigned,
-                                   bool Ordered, llvm::Value *UB,
-                                   llvm::Value *Chunk = nullptr);
   virtual void emitForStaticInit(CodeGenFunction &CGF, SourceLocation Loc,
                                  OpenMPScheduleClauseKind SchedKind,
                                  unsigned IVSize, bool IVSigned, bool Ordered,

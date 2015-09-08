@@ -1865,7 +1865,7 @@ void CodeGenFunction::EmitCXXAggrConstructorCall(
 /// \param ctor the constructor to call for each element
 /// \param numElements the number of elements in the array;
 ///   may be zero
-/// \param arrayBegin a T*, where T is the type constructed by ctor
+/// \param arrayBase a T*, where T is the type constructed by ctor
 /// \param zeroInitialize true if each element should be
 ///   zero-initialized before it is constructed
 void CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,

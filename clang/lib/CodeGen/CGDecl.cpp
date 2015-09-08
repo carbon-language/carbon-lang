@@ -1463,7 +1463,7 @@ void CodeGenFunction::emitDestroy(Address addr, QualType type,
 ///
 /// \param begin - a type* denoting the first element of the array
 /// \param end - a type* denoting one past the end of the array
-/// \param type - the element type of the array
+/// \param elementType - the element type of the array
 /// \param destroyer - the function to call to destroy elements
 /// \param useEHCleanup - whether to push an EH cleanup to destroy
 ///   the remaining elements in case the destruction of a single
