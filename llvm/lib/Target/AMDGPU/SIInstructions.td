@@ -479,6 +479,7 @@ let hasSideEffects = 1 in {
 def S_BARRIER : SOPP <0x0000000a, (ins), "s_barrier",
   [(int_AMDGPU_barrier_local)]
 > {
+  let SchedRW = [WriteBarrier];
   let simm16 = 0;
   let mayLoad = 1;
   let mayStore = 1;

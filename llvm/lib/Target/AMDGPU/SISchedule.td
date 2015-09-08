@@ -17,6 +17,7 @@ def WriteLDS    : SchedWrite;
 def WriteSALU   : SchedWrite;
 def WriteSMEM   : SchedWrite;
 def WriteVMEM   : SchedWrite;
+def WriteBarrier : SchedWrite;
 
 // Vector ALU instructions
 def Write32Bit         : SchedWrite;
@@ -64,6 +65,7 @@ multiclass SICommonWriteRes {
   def : HWWriteRes<WriteSALU,    [HWSALU],     1>;
   def : HWWriteRes<WriteSMEM,    [HWLGKM],    10>; // XXX: Guessed ???
   def : HWWriteRes<WriteVMEM,    [HWVMEM],   450>; // 300 - 600
+  def : HWWriteRes<WriteBarrier, [HWBranch], 500>; // XXX: Guessed ???
 
   def : HWVALUWriteRes<Write32Bit,         1>;
   def : HWVALUWriteRes<WriteQuarterRate32, 4>;
