@@ -17,8 +17,7 @@ using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf2;
 
-SymbolTable::SymbolTable() : EntrySym(nullptr) {
-}
+SymbolTable::SymbolTable() {}
 
 void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   File->parse();
@@ -33,8 +32,6 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
 }
 
 template <class ELFT> void SymbolTable::init() {
-  if (EntrySym)
-    return;
   EntrySym = new (Alloc) Undefined<ELFT>("_start", Undefined<ELFT>::Synthetic);
   resolve<ELFT>(EntrySym);
 }

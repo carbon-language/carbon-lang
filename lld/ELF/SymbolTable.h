@@ -55,7 +55,7 @@ public:
   }
 
   SymbolBody *getEntrySym() const {
-    return EntrySym;
+    return EntrySym->getReplacement();
   }
 
 private:
@@ -78,7 +78,7 @@ private:
 
   std::vector<std::unique_ptr<SharedFileBase>> SharedFiles;
 
-  SymbolBody *EntrySym;
+  SymbolBody *EntrySym = nullptr;
 };
 
 } // namespace elf2

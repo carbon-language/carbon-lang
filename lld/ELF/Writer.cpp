@@ -577,8 +577,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.getFirstELF());
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
-  EHdr->e_entry = getSymVA(
-      cast<DefinedRegular<ELFT>>(Symtab.getEntrySym()->getReplacement()));
+  EHdr->e_entry = getSymVA(cast<DefinedRegular<ELFT>>(Symtab.getEntrySym()));
   EHdr->e_phoff = sizeof(Elf_Ehdr);
   EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_ehsize = sizeof(Elf_Ehdr);
