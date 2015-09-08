@@ -740,7 +740,7 @@ void AArch64TargetLowering::computeKnownBitsForTargetNode(
     break;
   }
   case ISD::INTRINSIC_W_CHAIN: {
-   ConstantSDNode *CN = cast<ConstantSDNode>(Op->getOperand(1));
+    ConstantSDNode *CN = cast<ConstantSDNode>(Op->getOperand(1));
     Intrinsic::ID IntID = static_cast<Intrinsic::ID>(CN->getZExtValue());
     switch (IntID) {
     default: return;
