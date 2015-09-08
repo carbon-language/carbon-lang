@@ -184,11 +184,6 @@ private:
   StringTableSection<ELFT::Is64Bits> StringTable;
 
   SymbolTableSection<ELFT> SymTable;
-
-  void addOutputSection(OutputSectionBase<ELFT::Is64Bits> *Sec) {
-    OutputSections.push_back(Sec);
-    Sec->setSectionIndex(OutputSections.size());
-  }
 };
 } // anonymous namespace
 
@@ -428,6 +423,13 @@ static bool cmpAlign(const DefinedCommon<ELFT> *A,
   return A->MaxAlignment > B->MaxAlignment;
 }
 
+template <bool Is64Bits>
+static bool compSec(OutputSectionBase<Is64Bits> *A,
+                    OutputSectionBase<Is64Bits> *B) {
+  // Place SHF_ALLOC sections first.
+  return (A->getFlags() & SHF_ALLOC) && !(B->getFlags() & SHF_ALLOC);
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT> *> Map;
@@ -438,7 +440,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     if (!Sec) {
       Sec = new (CAlloc.Allocate())
           OutputSection<ELFT>(Key.Name, Key.sh_type, Key.sh_flags);
-      addOutputSection(Sec);
+      OutputSections.push_back(Sec);
     }
     return Sec;
   };
@@ -485,13 +487,14 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   }
 
   BSSSec->setSize(Off);
-}
 
-template <bool Is64Bits>
-static bool compSec(OutputSectionBase<Is64Bits> *A,
-                    OutputSectionBase<Is64Bits> *B) {
-  // Place SHF_ALLOC sections first.
-  return (A->getFlags() & SHF_ALLOC) && !(B->getFlags() & SHF_ALLOC);
+  OutputSections.push_back(&SymTable);
+  OutputSections.push_back(&StringTable);
+
+  std::stable_sort(OutputSections.begin(), OutputSections.end(),
+                   compSec<ELFT::Is64Bits>);
+  for (unsigned I = 0, N = OutputSections.size(); I < N; ++I)
+    OutputSections[I]->setSectionIndex(I + 1);
 }
 
 // Visits all sections to assign incremental, non-overlapping RVAs and
@@ -501,11 +504,6 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   uintX_t VA = 0x1000; // The first page is kept unmapped.
   uintX_t FileOff = SizeOfHeaders;
 
-  std::stable_sort(OutputSections.begin(), OutputSections.end(),
-                   compSec<ELFT::Is64Bits>);
-
-  addOutputSection(&SymTable);
-  addOutputSection(&StringTable);
   StringTableIndex = OutputSections.size();
   SymTable.setStringTableIndex(StringTableIndex);
 
