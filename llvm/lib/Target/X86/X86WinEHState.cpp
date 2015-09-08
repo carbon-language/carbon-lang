@@ -179,6 +179,8 @@ bool WinEHStatePass::runOnFunction(Function &F) {
   WinEHFuncInfo &FuncInfo =
       *(MMI ? &MMI->getWinEHFuncInfo(&F) : FuncInfoPtr.get());
 
+  FuncInfo.EHRegNode = RegNode;
+
   switch (Personality) {
   default: llvm_unreachable("unexpected personality function");
   case EHPersonality::MSVC_CXX:
@@ -494,9 +496,12 @@ void WinEHStatePass::addCXXStateStoresToFunclet(Value *ParentRegNode,
 
     // Insert calls to llvm.x86.seh.restoreframe at catchret destinations.
     if (auto *CR = dyn_cast<CatchReturnInst>(BB.getTerminator())) {
-      //llvm::errs() << "BB: " << BB << '\n';
-      //llvm::errs() << "CR->getSuccessor(): " << *CR->getSuccessor() << '\n';
-      IRBuilder<> Builder(CR->getSuccessor()->begin());
+      Instruction *Start = CR->getSuccessor()->begin();
+      assert(!isa<PHINode>(Start) &&
+             "winehprepare failed to demote phi after catchret");
+      if (match(Start, m_Intrinsic<Intrinsic::x86_seh_restoreframe>()))
+        continue;
+      IRBuilder<> Builder(Start);
       Builder.CreateCall(RestoreFrame, {});
     }
   }

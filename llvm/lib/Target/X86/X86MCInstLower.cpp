@@ -531,7 +531,8 @@ ReSimplify:
     break;
   }
 
-  case X86::CATCHRET: {
+  case X86::CATCHRET:
+  case X86::CATCHRET64: {
     OutMI = MCInst();
     OutMI.setOpcode(getRetOpcode(AsmPrinter.getSubtarget()));
     break;

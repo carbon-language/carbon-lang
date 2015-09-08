@@ -19,6 +19,7 @@
 #include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
+class AllocaInst;
 class BasicBlock;
 class Constant;
 class Function;
@@ -156,6 +157,8 @@ struct WinEHFuncInfo {
   /// localescape index of the 32-bit EH registration node. Set by
   /// WinEHStatePass and used indirectly by SEH filter functions of the parent.
   int EHRegNodeEscapeIndex = INT_MAX;
+  const AllocaInst *EHRegNode = nullptr;
+  int EHRegNodeFrameIndex = INT_MAX;
 
   WinEHFuncInfo() {}
 };

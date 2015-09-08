@@ -280,6 +280,12 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       for (WinEHHandlerType &H : TBME.HandlerArray)
         if (const auto *BB = dyn_cast<BasicBlock>(H.Handler))
           H.HandlerMBB = MBBMap[BB];
+    // If there's an explicit EH registration node on the stack, record its
+    // frame index.
+    if (EHInfo.EHRegNode && EHInfo.EHRegNode->getParent()->getParent() == Fn) {
+      assert(StaticAllocaMap.count(EHInfo.EHRegNode));
+      EHInfo.EHRegNodeFrameIndex = StaticAllocaMap[EHInfo.EHRegNode];
+    }
   }
 
   // Copy the state numbers to LandingPadInfo for the current function, which

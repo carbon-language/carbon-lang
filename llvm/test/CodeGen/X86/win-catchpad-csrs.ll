@@ -1,0 +1,136 @@
+; RUN: llc -mtriple=i686-pc-windows-msvc < %s | FileCheck --check-prefix=X86 %s
+; RUN: llc -mtriple=x86_64-pc-windows-msvc < %s | FileCheck --check-prefix=X64 %s
+
+%rtti.TypeDescriptor2 = type { i8**, i8*, [3 x i8] }
+%eh.CatchableType = type { i32, i8*, i32, i32, i32, i32, i8* }
+%eh.CatchableTypeArray.1 = type { i32, [1 x %eh.CatchableType*] }
+%eh.ThrowInfo = type { i32, i8*, i8*, i8* }
+%eh.CatchHandlerType = type { i32, i8* }
+
+$"\01??_R0H@8" = comdat any
+
+@"\01??_7type_info@@6B@" = external constant i8*
+@"\01??_R0H@8" = linkonce_odr global %rtti.TypeDescriptor2 { i8** @"\01??_7type_info@@6B@", i8* null, [3 x i8] c".H\00" }, comdat
+
+@llvm.eh.handlertype.H.0 = private unnamed_addr constant %eh.CatchHandlerType { i32 0, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*) }, section "llvm.metadata"
+@llvm.eh.handlertype.H.1 = private unnamed_addr constant %eh.CatchHandlerType { i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*) }, section "llvm.metadata"
+
+declare i32 @getint()
+declare void @useints(...)
+declare void @f(i32 %p)
+declare i32 @__CxxFrameHandler3(...)
+
+define i32 @try_catch_catch() personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
+entry:
+  %a = call i32 @getint()
+  %b = call i32 @getint()
+  %c = call i32 @getint()
+  %d = call i32 @getint()
+  call void (...) @useints(i32 %a, i32 %b, i32 %c, i32 %d)
+  invoke void @f(i32 1)
+          to label %try.cont unwind label %catch.dispatch
+
+catch.dispatch:                                   ; preds = %entry
+  %0 = catchpad [%eh.CatchHandlerType* @llvm.eh.handlertype.H.0, i8* null]
+          to label %catch unwind label %catchendblock
+
+catch:
+  invoke void @f(i32 2)
+          to label %invoke.cont.2 unwind label %catchendblock
+
+invoke.cont.2:                                    ; preds = %catch
+  catchret %0 to label %try.cont
+
+try.cont:                                         ; preds = %entry, %invoke.cont.2, %invoke.cont.3
+  ret i32 0
+
+catchendblock:                                    ; preds = %catch,
+  catchendpad unwind to caller
+}
+
+; X86-LABEL: _try_catch_catch:
+; X86: pushl %ebp
+; X86: movl %esp, %ebp
+; X86: pushl %ebx
+; X86: pushl %edi
+; X86: pushl %esi
+; X86: subl ${{[0-9]+}}, %esp
+; X86: calll _getint
+; X86: calll _getint
+; X86: calll _getint
+; X86: calll _getint
+; X86: calll _useints
+; X86: movl $0, -{{[0-9]+}}(%ebp)
+; X86: movl $1, (%esp)
+; X86: calll _f
+; X86: [[contbb:LBB0_[0-9]+]]:
+; X86: movl -{{[0-9]+}}(%ebp), %esp
+; X86: addl ${{[0-9]+}}, %esp
+; X86: popl %esi
+; X86: popl %edi
+; X86: popl %ebx
+; X86: popl %ebp
+; X86: retl
+
+; X86: [[catch1bb:LBB0_[0-9]+]]: # %catch{{$}}
+; X86-NOT: pushl
+; X86: addl $12, %ebp
+; X86: subl $16, %esp
+; X86: movl $1, -{{[0-9]+}}(%ebp)
+; X86: movl $2, (%esp)
+; X86: calll _f
+; X86: movl $[[contbb]], %eax
+; X86-NEXT: addl $16, %esp
+; X86-NOT: popl
+; X86-NEXT: retl
+
+; X86: L__ehtable$try_catch_catch:
+; X86: $handlerMap$0$try_catch_catch:
+; X86:   .long   0
+; X86:   .long   "??_R0H@8"
+; X86:   .long   0
+; X86:   .long   [[catch1bb]]
+
+; X64-LABEL: try_catch_catch:
+; X64: pushq %rbp
+; X64: .seh_pushreg 5
+; X64: pushq %rsi
+; X64: .seh_pushreg 6
+; X64: pushq %rdi
+; X64: .seh_pushreg 7
+; X64: pushq %rbx
+; X64: .seh_pushreg 3
+; X64: subq $40, %rsp
+; X64: .seh_stackalloc 40
+; X64: leaq 32(%rsp), %rbp
+; X64: .seh_setframe 5, 32
+; X64: callq getint
+; X64: callq getint
+; X64: callq getint
+; X64: callq getint
+; X64: callq useints
+; X64: movl $1, %ecx
+; X64: callq f
+; X64: [[contbb:\.LBB0_[0-9]+]]:
+; X64: addq $40, %rsp
+; X64: popq %rbp
+; X64: retq
+
+; X64: [[catch1bb:\.LBB0_[0-9]+]]: # %catch{{$}}
+; X64: movq %rdx, 16(%rsp)
+; X64: pushq %rbp
+; X64: movq %rdx, %rbp
+; X64: subq $32, %rsp
+; X64: movl $2, %ecx
+; X64: callq f
+; X64: leaq [[contbb]](%rip), %rax
+; X64: addq $32, %rsp
+; X64: popq %rbp
+; X64: retq
+
+; X64: $handlerMap$0$try_catch_catch:
+; X64:   .long   0
+; X64:   .long   "??_R0H@8"@IMGREL
+; X64:   .long   0
+; X64:   .long   [[catch1bb]]@IMGREL
+; X64:   .long   56

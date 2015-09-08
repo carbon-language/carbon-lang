@@ -473,12 +473,20 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
           OS.EmitValue(create32bitRef(HT.Handler), 4);
 
         if (shouldEmitPersonality) {
-          MCSymbol *ParentFrameOffset =
-              Asm->OutContext.getOrCreateParentFrameOffsetSymbol(
-                  GlobalValue::getRealLinkageName(HT.Handler->getName()));
-          const MCSymbolRefExpr *ParentFrameOffsetRef = MCSymbolRefExpr::create(
-              ParentFrameOffset, Asm->OutContext);
-          OS.EmitValue(ParentFrameOffsetRef, 4); // ParentFrameOffset
+          if (FuncInfo.CatchHandlerParentFrameObjOffset.empty()) {
+            // With the new IR, this is always 16 + 8 + getMaxCallFrameSize().
+            // Keep this in sync with X86FrameLowering::emitPrologue.
+            int ParentFrameOffset =
+                16 + 8 + MF->getFrameInfo()->getMaxCallFrameSize();
+            OS.EmitIntValue(ParentFrameOffset, 4); // ParentFrameOffset
+          } else {
+            MCSymbol *ParentFrameOffset =
+                Asm->OutContext.getOrCreateParentFrameOffsetSymbol(
+                    GlobalValue::getRealLinkageName(HT.Handler->getName()));
+            const MCSymbolRefExpr *ParentFrameOffsetRef =
+                MCSymbolRefExpr::create(ParentFrameOffset, Asm->OutContext);
+            OS.EmitValue(ParentFrameOffsetRef, 4); // ParentFrameOffset
+          }
         }
       }
     }
