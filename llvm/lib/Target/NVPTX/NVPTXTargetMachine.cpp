@@ -176,6 +176,7 @@ void NVPTXPassConfig::addIRPasses() {
   disablePass(&MachineCopyPropagationID);
   disablePass(&TailDuplicateID);
 
+  addPass(createNVVMReflectPass());
   addPass(createNVPTXImageOptimizerPass());
   addPass(createNVPTXAssignValidGlobalNamesPass());
   addPass(createGenericToNVVMPass());
