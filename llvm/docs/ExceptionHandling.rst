@@ -715,7 +715,7 @@ all of the new IR instructions:
 
   invoke.cont.3:                                    ; preds = %catch.body
     %9 = load i32, i32* %e, align 4
-    catchret %catch label %return
+    catchret %catch to label %return
 
   catchend:                                         ; preds = %lpad.catch, %catch.body
     catchendpad unwind label %lpad.terminate
