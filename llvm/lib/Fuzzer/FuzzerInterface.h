@@ -81,6 +81,8 @@ class MutationDispatcher {
   size_t Mutate_AddWordFromDictionary(uint8_t *Data, size_t Size,
                                       size_t MaxSize);
 
+  size_t Mutate_ChangeASCIIInteger(uint8_t *Data, size_t Size, size_t MaxSize);
+
   /// Applies one of the above mutations.
   /// Returns the new size of data which could be up to MaxSize.
   size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize);

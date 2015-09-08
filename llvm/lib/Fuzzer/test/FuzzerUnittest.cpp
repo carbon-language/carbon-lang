@@ -282,6 +282,37 @@ TEST(FuzzerMutate, AddWordFromDictionary2) {
   TestAddWordFromDictionary(&MutationDispatcher::Mutate, 1 << 15);
 }
 
+void TestChangeASCIIInteger(Mutator M, int NumIter) {
+  FuzzerRandomLibc Rand(0);
+  MutationDispatcher MD(Rand);
+
+  uint8_t CH0[8] = {'1', '2', '3', '4', '5', '6', '7', '7'};
+  uint8_t CH1[8] = {'1', '2', '3', '4', '5', '6', '7', '9'};
+  uint8_t CH2[8] = {'2', '4', '6', '9', '1', '3', '5', '6'};
+  uint8_t CH3[8] = {'0', '6', '1', '7', '2', '8', '3', '9'};
+  int FoundMask = 0;
+  for (int i = 0; i < NumIter; i++) {
+    uint8_t T[8] = {'1', '2', '3', '4', '5', '6', '7', '8'};
+    size_t NewSize = (MD.*M)(T, 8, 8);
+    /**/ if (NewSize == 8 && !memcmp(CH0, T, 8)) FoundMask |= 1 << 0;
+    else if (NewSize == 8 && !memcmp(CH1, T, 8)) FoundMask |= 1 << 1;
+    else if (NewSize == 8 && !memcmp(CH2, T, 8)) FoundMask |= 1 << 2;
+    else if (NewSize == 8 && !memcmp(CH3, T, 8)) FoundMask |= 1 << 3;
+    else if (NewSize == 8)                       FoundMask |= 1 << 4;
+  }
+  EXPECT_EQ(FoundMask, 31);
+}
+
+TEST(FuzzerMutate, ChangeASCIIInteger1) {
+  TestChangeASCIIInteger(&MutationDispatcher::Mutate_ChangeASCIIInteger,
+                         1 << 15);
+}
+
+TEST(FuzzerMutate, ChangeASCIIInteger2) {
+  TestChangeASCIIInteger(&MutationDispatcher::Mutate, 1 << 15);
+}
+
+
 TEST(FuzzerDictionary, ParseOneDictionaryEntry) {
   Unit U;
   EXPECT_FALSE(ParseOneDictionaryEntry("", &U));

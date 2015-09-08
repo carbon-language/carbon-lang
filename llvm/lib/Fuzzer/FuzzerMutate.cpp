@@ -29,6 +29,7 @@ struct MutationDispatcher::Impl {
     Mutators.push_back(&MutationDispatcher::Mutate_ChangeByte);
     Mutators.push_back(&MutationDispatcher::Mutate_ChangeBit);
     Mutators.push_back(&MutationDispatcher::Mutate_ShuffleBytes);
+    Mutators.push_back(&MutationDispatcher::Mutate_ChangeASCIIInteger);
   }
   void AddWordToDictionary(const uint8_t *Word, size_t Size) {
     if (Dictionary.empty()) {
@@ -114,6 +115,39 @@ size_t MutationDispatcher::Mutate_AddWordFromDictionary(uint8_t *Data,
   memmove(Data + Idx + Word.size(), Data + Idx, Size - Idx);
   memcpy(Data + Idx, Word.data(), Word.size());
   return Size + Word.size();
+}
+
+size_t MutationDispatcher::Mutate_ChangeASCIIInteger(uint8_t *Data, size_t Size,
+                                                     size_t MaxSize) {
+  size_t B = Rand(Size);
+  while (B < Size && !isdigit(Data[B])) B++;
+  if (B == Size) return 0;
+  size_t E = B;
+  while (E < Size && isdigit(Data[E])) E++;
+  assert(B < E);
+  // now we have digits in [B, E).
+  // strtol and friends don't accept non-zero-teminated data, parse it manually.
+  uint64_t Val = Data[B] - '0';
+  for (size_t i = B + 1; i < E; i++)
+    Val = Val * 10 + Data[i] - '0';
+
+  // Mutate the integer value.
+  switch(Rand(5)) {
+    case 0: Val++; break;
+    case 1: Val--; break;
+    case 2: Val /= 2; break;
+    case 3: Val *= 2; break;
+    case 4: Val = Rand(Val * Val); break;
+    default: assert(0);
+  }
+  // Just replace the bytes with the new ones, don't bother moving bytes.
+  for (size_t i = B; i < E; i++) {
+    size_t Idx = E + B - i - 1;
+    assert(Idx >= B && Idx < E);
+    Data[Idx] = (Val % 10) + '0';
+    Val /= 10;
+  }
+  return Size;
 }
 
 // Mutates Data in place, returns new size.
