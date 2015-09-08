@@ -4112,6 +4112,14 @@
 // CHECK:  encoding: [0x62,0x61,0x2d,0x40,0x69,0xb2,0xc0,0xdf,0xff,0xff]
           vpunpckhwd -8256(%rdx), %zmm26, %zmm30
 
+// CHECK: kunpckdq %k4, %k6, %k4
+// CHECK:  encoding: [0xc4,0xe1,0xcc,0x4b,0xe4]
+          kunpckdq %k4, %k6, %k4
+
+// CHECK: kunpckwd %k6, %k5, %k5
+// CHECK:  encoding: [0xc5,0xd4,0x4b,0xee]
+          kunpckwd %k6, %k5, %k5
+
 // CHECK: ktestd %k3, %k3
 // CHECK:  encoding: [0xc4,0xe1,0xf9,0x99,0xdb]
           ktestd %k3, %k3

@@ -2054,24 +2054,24 @@ def : Pat<(xor (xor VK1:$src1, VK1:$src2), (i1 1)),
                              (COPY_TO_REGCLASS VK1:$src2, VK16)), VK1)>;
 
 // Mask unpacking
-multiclass avx512_mask_unpck<bits<8> opc, string OpcodeStr,
-                           RegisterClass KRC> {
-  let Predicates = [HasAVX512] in
-    def rr : I<opc, MRMSrcReg, (outs KRC:$dst), (ins KRC:$src1, KRC:$src2),
-               !strconcat(OpcodeStr,
-                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+multiclass avx512_mask_unpck<string Suffix,RegisterClass KRC, ValueType VT,
+                             RegisterClass KRCSrc, Predicate prd> {
+  let Predicates = [prd] in {
+    def rr : I<0x4b, MRMSrcReg, (outs KRC:$dst),
+               (ins KRC:$src1, KRC:$src2),
+               "kunpck"#Suffix#"\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+               VEX_4V, VEX_L;
+
+    def : Pat<(VT (concat_vectors KRCSrc:$src1, KRCSrc:$src2)),
+              (!cast<Instruction>(NAME##rr)
+                        (COPY_TO_REGCLASS KRCSrc:$src2, KRC),
+                        (COPY_TO_REGCLASS KRCSrc:$src1, KRC))>;
+  }
 }
 
-multiclass avx512_mask_unpck_bw<bits<8> opc, string OpcodeStr> {
-  defm BW : avx512_mask_unpck<opc, !strconcat(OpcodeStr, "bw"), VK16>,
-                            VEX_4V, VEX_L, PD;
-}
-
-defm KUNPCK : avx512_mask_unpck_bw<0x4b, "kunpck">;
-def : Pat<(v16i1 (concat_vectors (v8i1 VK8:$src1), (v8i1 VK8:$src2))),
-          (KUNPCKBWrr (COPY_TO_REGCLASS VK8:$src2, VK16),
-                  (COPY_TO_REGCLASS VK8:$src1, VK16))>;
-
+defm KUNPCKBW : avx512_mask_unpck<"bw", VK16, v16i1, VK8, HasAVX512>, PD;
+defm KUNPCKWD : avx512_mask_unpck<"wd", VK32, v32i1, VK16, HasBWI>, PS;
+defm KUNPCKDQ : avx512_mask_unpck<"dq", VK64, v64i1, VK32, HasBWI>, PS, VEX_W;
 
 multiclass avx512_mask_unpck_int<string IntName, string InstName> {
   let Predicates = [HasAVX512] in
