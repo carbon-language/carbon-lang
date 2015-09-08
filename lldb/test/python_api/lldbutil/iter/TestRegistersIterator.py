@@ -18,7 +18,6 @@ class RegistersIteratorTestCase(TestBase):
         # Find the line number to break inside main().
         self.line1 = line_number('main.cpp', '// Set break point at this line.')
 
-    @expectedFailureFreeBSD # llvm.org/pr14600 - Exception state registers not supported on FreeBSD
     @python_api_test
     def test_iter_registers(self):
         """Test iterator works correctly for lldbutil.iter_registers()."""
