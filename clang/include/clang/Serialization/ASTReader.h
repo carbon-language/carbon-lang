@@ -1117,6 +1117,10 @@ private:
                                  SmallVectorImpl<ImportedModule> &Loaded,
                                  const ModuleFile *ImportedBy,
                                  unsigned ClientLoadCapabilities);
+  static ASTReadResult ReadOptionsBlock(
+      llvm::BitstreamCursor &Stream, unsigned ClientLoadCapabilities,
+      bool AllowCompatibleConfigurationMismatch, ASTReaderListener &Listener,
+      std::string &SuggestedPredefines);
   ASTReadResult ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities);
   bool ParseLineTable(ModuleFile &F, const RecordData &Record);
   bool ReadSourceManagerBlock(ModuleFile &F);
@@ -1689,7 +1693,7 @@ public:
   /// ReadBlockAbbrevs - Enter a subblock of the specified BlockID with the
   /// specified cursor.  Read the abbreviations that are at the top of the block
   /// and then leave the cursor pointing into the block.
-  bool ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor, unsigned BlockID);
+  static bool ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor, unsigned BlockID);
 
   /// \brief Finds all the visible declarations with a given name.
   /// The current implementation of this method just loads the entire

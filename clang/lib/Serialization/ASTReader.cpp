@@ -1350,10 +1350,8 @@ SourceLocation ASTReader::getImportLocation(ModuleFile *F) {
 /// specified cursor.  Read the abbreviations that are at the top of the block
 /// and then leave the cursor pointing into the block.
 bool ASTReader::ReadBlockAbbrevs(BitstreamCursor &Cursor, unsigned BlockID) {
-  if (Cursor.EnterSubBlock(BlockID)) {
-    Error("malformed block record in AST file");
-    return Failure;
-  }
+  if (Cursor.EnterSubBlock(BlockID))
+    return true;
 
   while (true) {
     uint64_t Offset = Cursor.GetCurrentBitNo();
@@ -2059,6 +2057,86 @@ static bool isDiagnosedResult(ASTReader::ASTReadResult ARR, unsigned Caps) {
   llvm_unreachable("unknown ASTReadResult");
 }
 
+ASTReader::ASTReadResult ASTReader::ReadOptionsBlock(
+    BitstreamCursor &Stream, unsigned ClientLoadCapabilities,
+    bool AllowCompatibleConfigurationMismatch, ASTReaderListener &Listener,
+    std::string &SuggestedPredefines) {
+  if (Stream.EnterSubBlock(OPTIONS_BLOCK_ID))
+    return Failure;
+
+  // Read all of the records in the options block.
+  RecordData Record;
+  ASTReadResult Result = Success;
+  while (1) {
+    llvm::BitstreamEntry Entry = Stream.advance();
+    
+    switch (Entry.Kind) {
+    case llvm::BitstreamEntry::Error:
+    case llvm::BitstreamEntry::SubBlock:
+      return Failure;
+
+    case llvm::BitstreamEntry::EndBlock:
+      return Result;
+
+    case llvm::BitstreamEntry::Record:
+      // The interesting case.
+      break;
+    }
+
+    // Read and process a record.
+    Record.clear();
+    switch ((OptionsRecordTypes)Stream.readRecord(Entry.ID, Record)) {
+    case LANGUAGE_OPTIONS: {
+      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch) == 0;
+      if (ParseLanguageOptions(Record, Complain, Listener,
+                               AllowCompatibleConfigurationMismatch))
+        Result = ConfigurationMismatch;
+      break;
+    }
+
+    case TARGET_OPTIONS: {
+      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch) == 0;
+      if (ParseTargetOptions(Record, Complain, Listener,
+                             AllowCompatibleConfigurationMismatch))
+        Result = ConfigurationMismatch;
+      break;
+    }
+
+    case DIAGNOSTIC_OPTIONS: {
+      bool Complain = (ClientLoadCapabilities & ARR_OutOfDate) == 0;
+      if (!AllowCompatibleConfigurationMismatch &&
+          ParseDiagnosticOptions(Record, Complain, Listener))
+        return OutOfDate;
+      break;
+    }
+
+    case FILE_SYSTEM_OPTIONS: {
+      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch) == 0;
+      if (!AllowCompatibleConfigurationMismatch &&
+          ParseFileSystemOptions(Record, Complain, Listener))
+        Result = ConfigurationMismatch;
+      break;
+    }
+
+    case HEADER_SEARCH_OPTIONS: {
+      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch) == 0;
+      if (!AllowCompatibleConfigurationMismatch &&
+          ParseHeaderSearchOptions(Record, Complain, Listener))
+        Result = ConfigurationMismatch;
+      break;
+    }
+
+    case PREPROCESSOR_OPTIONS:
+      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch) == 0;
+      if (!AllowCompatibleConfigurationMismatch &&
+          ParsePreprocessorOptions(Record, Complain, Listener,
+                                   SuggestedPredefines))
+        Result = ConfigurationMismatch;
+      break;
+    }
+  }
+}
+
 ASTReader::ASTReadResult
 ASTReader::ReadControlBlock(ModuleFile &F,
                             SmallVectorImpl<ImportedModule> &Loaded,
@@ -2070,12 +2148,6 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     Error("malformed block record in AST file");
     return Failure;
   }
-
-  // Should we allow the configuration of the module file to differ from the
-  // configuration of the current translation unit in a compatible way?
-  //
-  // FIXME: Allow this for files explicitly specified with -include-pch too.
-  bool AllowCompatibleConfigurationMismatch = F.Kind == MK_ExplicitModule;
 
   // Read all of the records and blocks in the control block.
   RecordData Record;
@@ -2141,6 +2213,36 @@ ASTReader::ReadControlBlock(ModuleFile &F,
         if (Stream.SkipBlock() || // Skip with the main cursor
             // Read the abbreviations
             ReadBlockAbbrevs(F.InputFilesCursor, INPUT_FILES_BLOCK_ID)) {
+          Error("malformed block record in AST file");
+          return Failure;
+        }
+        continue;
+
+      case OPTIONS_BLOCK_ID:
+        // If we're reading the first module for this group, check its options
+        // are compatible with ours. For modules it imports, no further checking
+        // is required, because we checked them when we built it.
+        if (Listener && !ImportedBy) {
+          // Should we allow the configuration of the module file to differ from
+          // the configuration of the current translation unit in a compatible
+          // way?
+          //
+          // FIXME: Allow this for files explicitly specified with -include-pch.
+          bool AllowCompatibleConfigurationMismatch =
+              F.Kind == MK_ExplicitModule;
+
+          auto Result = ReadOptionsBlock(Stream, ClientLoadCapabilities,
+                                         AllowCompatibleConfigurationMismatch,
+                                         *Listener, SuggestedPredefines);
+          if (Result == Failure) {
+            Error("malformed block record in AST file");
+            return Result;
+          }
+
+          if (!DisableValidation && Result != Success &&
+              (Result != ConfigurationMismatch || !AllowConfigurationMismatch))
+            return Result;
+        } else if (Stream.SkipBlock()) {
           Error("malformed block record in AST file");
           return Failure;
         }
@@ -2242,68 +2344,6 @@ ASTReader::ReadControlBlock(ModuleFile &F,
         case Success: break;
         }
       }
-      break;
-    }
-
-    case LANGUAGE_OPTIONS: {
-      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch) == 0;
-      // FIXME: The &F == *ModuleMgr.begin() check is wrong for modules.
-      if (Listener && &F == *ModuleMgr.begin() &&
-          ParseLanguageOptions(Record, Complain, *Listener,
-                               AllowCompatibleConfigurationMismatch) &&
-          !DisableValidation && !AllowConfigurationMismatch)
-        return ConfigurationMismatch;
-      break;
-    }
-
-    case TARGET_OPTIONS: {
-      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
-      if (Listener && &F == *ModuleMgr.begin() &&
-          ParseTargetOptions(Record, Complain, *Listener,
-                             AllowCompatibleConfigurationMismatch) &&
-          !DisableValidation && !AllowConfigurationMismatch)
-        return ConfigurationMismatch;
-      break;
-    }
-
-    case DIAGNOSTIC_OPTIONS: {
-      bool Complain = (ClientLoadCapabilities & ARR_OutOfDate)==0;
-      if (Listener && &F == *ModuleMgr.begin() &&
-          !AllowCompatibleConfigurationMismatch &&
-          ParseDiagnosticOptions(Record, Complain, *Listener) &&
-          !DisableValidation)
-        return OutOfDate;
-      break;
-    }
-
-    case FILE_SYSTEM_OPTIONS: {
-      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
-      if (Listener && &F == *ModuleMgr.begin() &&
-          !AllowCompatibleConfigurationMismatch &&
-          ParseFileSystemOptions(Record, Complain, *Listener) &&
-          !DisableValidation && !AllowConfigurationMismatch)
-        return ConfigurationMismatch;
-      break;
-    }
-
-    case HEADER_SEARCH_OPTIONS: {
-      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
-      if (Listener && &F == *ModuleMgr.begin() &&
-          !AllowCompatibleConfigurationMismatch &&
-          ParseHeaderSearchOptions(Record, Complain, *Listener) &&
-          !DisableValidation && !AllowConfigurationMismatch)
-        return ConfigurationMismatch;
-      break;
-    }
-
-    case PREPROCESSOR_OPTIONS: {
-      bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
-      if (Listener && &F == *ModuleMgr.begin() &&
-          !AllowCompatibleConfigurationMismatch &&
-          ParsePreprocessorOptions(Record, Complain, *Listener,
-                                   SuggestedPredefines) &&
-          !DisableValidation && !AllowConfigurationMismatch)
-        return ConfigurationMismatch;
       break;
     }
 
@@ -4080,36 +4120,51 @@ bool ASTReader::readASTFileControlBlock(
   bool NeedsSystemInputFiles = Listener.needsSystemInputFileVisitation();
   bool NeedsImports = Listener.needsImportVisitation();
   BitstreamCursor InputFilesCursor;
-  if (NeedsInputFiles) {
-    InputFilesCursor = Stream;
-    if (SkipCursorToBlock(InputFilesCursor, INPUT_FILES_BLOCK_ID))
-      return true;
 
-    // Read the abbreviations
-    while (true) {
-      uint64_t Offset = InputFilesCursor.GetCurrentBitNo();
-      unsigned Code = InputFilesCursor.ReadCode();
-
-      // We expect all abbrevs to be at the start of the block.
-      if (Code != llvm::bitc::DEFINE_ABBREV) {
-        InputFilesCursor.JumpToBit(Offset);
-        break;
-      }
-      InputFilesCursor.ReadAbbrevRecord();
-    }
-  }
-  
-  // Scan for ORIGINAL_FILE inside the control block.
   RecordData Record;
   std::string ModuleDir;
   while (1) {
-    llvm::BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
-    if (Entry.Kind == llvm::BitstreamEntry::EndBlock)
+    llvm::BitstreamEntry Entry = Stream.advance();
+
+    switch (Entry.Kind) {
+    case llvm::BitstreamEntry::SubBlock: {
+      switch (Entry.ID) {
+      case OPTIONS_BLOCK_ID: {
+        std::string IgnoredSuggestedPredefines;
+        if (ReadOptionsBlock(Stream, ARR_ConfigurationMismatch | ARR_OutOfDate,
+                             /*AllowCompatibleConfigurationMismatch*/ false,
+                             Listener, IgnoredSuggestedPredefines) != Success)
+          return true;
+        break;
+      }
+
+      case INPUT_FILES_BLOCK_ID:
+        InputFilesCursor = Stream;
+        if (Stream.SkipBlock() ||
+            (NeedsInputFiles &&
+             ReadBlockAbbrevs(InputFilesCursor, INPUT_FILES_BLOCK_ID)))
+          return true;
+        break;
+
+      default:
+        if (Stream.SkipBlock())
+          return true;
+        break;
+      }
+
+      continue;
+    }
+
+    case llvm::BitstreamEntry::EndBlock:
       return false;
-    
-    if (Entry.Kind != llvm::BitstreamEntry::Record)
+
+    case llvm::BitstreamEntry::Error:
       return true;
-    
+
+    case llvm::BitstreamEntry::Record:
+      break;
+    }
+
     Record.clear();
     StringRef Blob;
     unsigned RecCode = Stream.readRecord(Entry.ID, Record, &Blob);
@@ -4136,41 +4191,6 @@ bool ASTReader::readASTFileControlBlock(
       Listener.ReadModuleMapFile(Path);
       break;
     }
-    case LANGUAGE_OPTIONS:
-      if (ParseLanguageOptions(Record, false, Listener,
-                               /*AllowCompatibleConfigurationMismatch*/false))
-        return true;
-      break;
-
-    case TARGET_OPTIONS:
-      if (ParseTargetOptions(Record, false, Listener,
-                             /*AllowCompatibleConfigurationMismatch*/ false))
-        return true;
-      break;
-
-    case DIAGNOSTIC_OPTIONS:
-      if (ParseDiagnosticOptions(Record, false, Listener))
-        return true;
-      break;
-
-    case FILE_SYSTEM_OPTIONS:
-      if (ParseFileSystemOptions(Record, false, Listener))
-        return true;
-      break;
-
-    case HEADER_SEARCH_OPTIONS:
-      if (ParseHeaderSearchOptions(Record, false, Listener))
-        return true;
-      break;
-
-    case PREPROCESSOR_OPTIONS: {
-      std::string IgnoredSuggestedPredefines;
-      if (ParsePreprocessorOptions(Record, false, Listener,
-                                   IgnoredSuggestedPredefines))
-        return true;
-      break;
-    }
-
     case INPUT_FILE_OFFSETS: {
       if (!NeedsInputFiles)
         break;

@@ -233,7 +233,14 @@ namespace clang {
       /// to create this AST file.
       ///
       /// This block is part of the control block.
-      INPUT_FILES_BLOCK_ID
+      INPUT_FILES_BLOCK_ID,
+
+      /// \brief The block of configuration options, used to check that
+      /// a module is being used in a configuration compatible with the
+      /// configuration in which it was built.
+      ///
+      /// This block is part of the control block.
+      OPTIONS_BLOCK_ID,
     };
 
     /// \brief Record types that occur within the control block.
@@ -244,59 +251,63 @@ namespace clang {
 
       /// \brief Record code for the list of other AST files imported by
       /// this AST file.
-      IMPORTS = 2,
+      IMPORTS,
 
+      /// \brief Record code for the original file that was used to
+      /// generate the AST file, including both its file ID and its
+      /// name.
+      ORIGINAL_FILE,
+      
+      /// \brief The directory that the PCH was originally created in.
+      ORIGINAL_PCH_DIR,
+
+      /// \brief Record code for file ID of the file or buffer that was used to
+      /// generate the AST file.
+      ORIGINAL_FILE_ID,
+
+      /// \brief Offsets into the input-files block where input files
+      /// reside.
+      INPUT_FILE_OFFSETS,
+
+      /// \brief Record code for the module name.
+      MODULE_NAME,
+
+      /// \brief Record code for the module map file that was used to build this
+      /// AST file.
+      MODULE_MAP_FILE,
+
+      /// \brief Record code for the signature that identifiers this AST file.
+      SIGNATURE,
+
+      /// \brief Record code for the module build directory.
+      MODULE_DIRECTORY,
+    };
+
+    /// \brief Record types that occur within the options block inside
+    /// the control block.
+    enum OptionsRecordTypes {
       /// \brief Record code for the language options table.
       ///
       /// The record with this code contains the contents of the
       /// LangOptions structure. We serialize the entire contents of
       /// the structure, and let the reader decide which options are
       /// actually important to check.
-      LANGUAGE_OPTIONS = 3,
+      LANGUAGE_OPTIONS = 1,
 
       /// \brief Record code for the target options table.
-      TARGET_OPTIONS = 4,
-
-      /// \brief Record code for the original file that was used to
-      /// generate the AST file, including both its file ID and its
-      /// name.
-      ORIGINAL_FILE = 5,
-      
-      /// \brief The directory that the PCH was originally created in.
-      ORIGINAL_PCH_DIR = 6,
-
-      /// \brief Record code for file ID of the file or buffer that was used to
-      /// generate the AST file.
-      ORIGINAL_FILE_ID = 7,
-
-      /// \brief Offsets into the input-files block where input files
-      /// reside.
-      INPUT_FILE_OFFSETS = 8,
+      TARGET_OPTIONS,
 
       /// \brief Record code for the diagnostic options table.
-      DIAGNOSTIC_OPTIONS = 9,
+      DIAGNOSTIC_OPTIONS,
 
       /// \brief Record code for the filesystem options table.
-      FILE_SYSTEM_OPTIONS = 10,
+      FILE_SYSTEM_OPTIONS,
 
       /// \brief Record code for the headers search options table.
-      HEADER_SEARCH_OPTIONS = 11,
+      HEADER_SEARCH_OPTIONS,
 
       /// \brief Record code for the preprocessor options table.
-      PREPROCESSOR_OPTIONS = 12,
-
-      /// \brief Record code for the module name.
-      MODULE_NAME = 13,
-
-      /// \brief Record code for the module map file that was used to build this
-      /// AST file.
-      MODULE_MAP_FILE = 14,
-
-      /// \brief Record code for the signature that identifiers this AST file.
-      SIGNATURE = 15,
-
-      /// \brief Record code for the module build directory.
-      MODULE_DIRECTORY = 16,
+      PREPROCESSOR_OPTIONS,
     };
 
     /// \brief Record types that occur within the input-files block

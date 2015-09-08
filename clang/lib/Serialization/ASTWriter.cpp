@@ -881,12 +881,14 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(MODULE_DIRECTORY);
   RECORD(MODULE_MAP_FILE);
   RECORD(IMPORTS);
-  RECORD(LANGUAGE_OPTIONS);
-  RECORD(TARGET_OPTIONS);
   RECORD(ORIGINAL_FILE);
   RECORD(ORIGINAL_PCH_DIR);
   RECORD(ORIGINAL_FILE_ID);
   RECORD(INPUT_FILE_OFFSETS);
+
+  BLOCK(OPTIONS_BLOCK);
+  RECORD(LANGUAGE_OPTIONS);
+  RECORD(TARGET_OPTIONS);
   RECORD(DIAGNOSTIC_OPTIONS);
   RECORD(FILE_SYSTEM_OPTIONS);
   RECORD(HEADER_SEARCH_OPTIONS);
@@ -1288,6 +1290,9 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
     Stream.EmitRecord(IMPORTS, Record);
   }
 
+  // Write the options block.
+  Stream.EnterSubblock(OPTIONS_BLOCK_ID, 4);
+
   // Language options.
   Record.clear();
   const LangOptions &LangOpts = Context.getLangOpts();
@@ -1426,6 +1431,9 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   AddString(PPOpts.ImplicitPTHInclude, Record);
   Record.push_back(static_cast<unsigned>(PPOpts.ObjCXXARCStandardLibrary));
   Stream.EmitRecord(PREPROCESSOR_OPTIONS, Record);
+
+  // Leave the options block.
+  Stream.ExitBlock();
 
   // Original file name and file ID
   SourceManager &SM = Context.getSourceManager();
