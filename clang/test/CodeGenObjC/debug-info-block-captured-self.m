@@ -53,13 +53,13 @@ typedef enum {
 // CHECK: define internal void {{.*}}_block_invoke{{.*}}
 // CHECK:        %[[MEM1:.*]] = alloca i8*, align 8
 // CHECK-NEXT:   %[[MEM2:.*]] = alloca i8*, align 8
+// CHECK-NEXT:   [[DBGADDR:%.*]] = alloca [[BLOCK_T:<{.*}>]]*, align 8
 // CHECK:        store i8* [[BLOCK_DESC:%.*]], i8** %[[MEM1]], align 8
 // CHECK:        %[[TMP0:.*]] = load i8*, i8** %[[MEM1]]
 // CHECK:        call void @llvm.dbg.value(metadata i8* %[[TMP0]], i64 0, metadata ![[BDMD:[0-9]+]], metadata !{{.*}})
 // CHECK:        call void @llvm.dbg.declare(metadata i8* [[BLOCK_DESC]], metadata ![[BDMD:[0-9]+]], metadata !{{.*}})
-// CHECK:        %[[TMP1:.*]] = bitcast
-// CHECK-NEXT:   store
-// CHECK:        call void @llvm.dbg.declare(metadata <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** {{[^,]*}}, metadata ![[SELF:.*]], metadata !{{.*}})
+// CHECK:        store [[BLOCK_T]]* {{%.*}}, [[BLOCK_T]]** [[DBGADDR]], align 8
+// CHECK:        call void @llvm.dbg.declare(metadata [[BLOCK_T]]** [[DBGADDR]], metadata ![[SELF:.*]], metadata !{{.*}})
 // make sure we are still in the same function
 // CHECK: define {{.*}}__copy_helper_block_
 // Metadata

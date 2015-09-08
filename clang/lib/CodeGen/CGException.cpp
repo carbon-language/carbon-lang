@@ -340,16 +340,16 @@ namespace {
 // differs from EmitAnyExprToMem only in that, if a final copy-ctor
 // call is required, an exception within that copy ctor causes
 // std::terminate to be invoked.
-void CodeGenFunction::EmitAnyExprToExn(const Expr *e, llvm::Value *addr) {
+void CodeGenFunction::EmitAnyExprToExn(const Expr *e, Address addr) {
   // Make sure the exception object is cleaned up if there's an
   // exception during initialization.
-  pushFullExprCleanup<FreeException>(EHCleanup, addr);
+  pushFullExprCleanup<FreeException>(EHCleanup, addr.getPointer());
   EHScopeStack::stable_iterator cleanup = EHStack.stable_begin();
 
   // __cxa_allocate_exception returns a void*;  we need to cast this
   // to the appropriate type for the object.
   llvm::Type *ty = ConvertTypeForMem(e->getType())->getPointerTo();
-  llvm::Value *typedAddr = Builder.CreateBitCast(addr, ty);
+  Address typedAddr = Builder.CreateBitCast(addr, ty);
 
   // FIXME: this isn't quite right!  If there's a final unelided call
   // to a copy constructor, then according to [except.terminate]p1 we
@@ -362,19 +362,20 @@ void CodeGenFunction::EmitAnyExprToExn(const Expr *e, llvm::Value *addr) {
                    /*IsInit*/ true);
 
   // Deactivate the cleanup block.
-  DeactivateCleanupBlock(cleanup, cast<llvm::Instruction>(typedAddr));
+  DeactivateCleanupBlock(cleanup,
+                         cast<llvm::Instruction>(typedAddr.getPointer()));
 }
 
-llvm::Value *CodeGenFunction::getExceptionSlot() {
+Address CodeGenFunction::getExceptionSlot() {
   if (!ExceptionSlot)
     ExceptionSlot = CreateTempAlloca(Int8PtrTy, "exn.slot");
-  return ExceptionSlot;
+  return Address(ExceptionSlot, getPointerAlign());
 }
 
-llvm::Value *CodeGenFunction::getEHSelectorSlot() {
+Address CodeGenFunction::getEHSelectorSlot() {
   if (!EHSelectorSlot)
     EHSelectorSlot = CreateTempAlloca(Int32Ty, "ehselector.slot");
-  return EHSelectorSlot;
+  return Address(EHSelectorSlot, CharUnits::fromQuantity(4));
 }
 
 llvm::Value *CodeGenFunction::getExceptionFromSlot() {
@@ -626,7 +627,7 @@ CodeGenFunction::getMSVCDispatchBlock(EHScopeStack::stable_iterator SI) {
     DispatchBlock = getTerminateHandler();
   else
     DispatchBlock = createBasicBlock();
-  CGBuilderTy Builder(DispatchBlock);
+  CGBuilderTy Builder(*this, DispatchBlock);
 
   switch (EHS.getKind()) {
   case EHScope::Catch:
@@ -879,7 +880,7 @@ static llvm::BasicBlock *emitMSVCCatchDispatchBlock(CodeGenFunction &CGF,
     // block is the block for the enclosing EH scope.
     if (I + 1 == E) {
       NextBlock = CGF.createBasicBlock("catchendblock");
-      CGBuilderTy(NextBlock).CreateCatchEndPad(
+      CGBuilderTy(CGF, NextBlock).CreateCatchEndPad(
           CGF.getEHDispatchBlock(CatchScope.getEnclosingEHScope()));
     } else {
       NextBlock = CGF.createBasicBlock("catch.dispatch");
@@ -1098,7 +1099,7 @@ namespace {
         CGF.createBasicBlock("finally.cleanup.cont");
 
       llvm::Value *ShouldEndCatch =
-        CGF.Builder.CreateLoad(ForEHVar, "finally.endcatch");
+        CGF.Builder.CreateFlagLoad(ForEHVar, "finally.endcatch");
       CGF.Builder.CreateCondBr(ShouldEndCatch, EndCatchBB, CleanupContBB);
       CGF.EmitBlock(EndCatchBB);
       CGF.EmitRuntimeCallOrInvoke(EndCatchFn); // catch-all, so might throw
@@ -1141,13 +1142,13 @@ namespace {
         llvm::BasicBlock *ContBB = CGF.createBasicBlock("finally.cont");
 
         llvm::Value *ShouldRethrow =
-          CGF.Builder.CreateLoad(ForEHVar, "finally.shouldthrow");
+          CGF.Builder.CreateFlagLoad(ForEHVar, "finally.shouldthrow");
         CGF.Builder.CreateCondBr(ShouldRethrow, RethrowBB, ContBB);
 
         CGF.EmitBlock(RethrowBB);
         if (SavedExnVar) {
           CGF.EmitRuntimeCallOrInvoke(RethrowFn,
-                                      CGF.Builder.CreateLoad(SavedExnVar));
+            CGF.Builder.CreateAlignedLoad(SavedExnVar, CGF.getPointerAlign()));
         } else {
           CGF.EmitRuntimeCallOrInvoke(RethrowFn);
         }
@@ -1222,7 +1223,7 @@ void CodeGenFunction::FinallyInfo::enter(CodeGenFunction &CGF,
 
   // Whether the finally block is being executed for EH purposes.
   ForEHVar = CGF.CreateTempAlloca(CGF.Builder.getInt1Ty(), "finally.for-eh");
-  CGF.Builder.CreateStore(CGF.Builder.getFalse(), ForEHVar);
+  CGF.Builder.CreateFlagStore(false, ForEHVar);
 
   // Enter a normal cleanup which will perform the @finally block.
   CGF.EHStack.pushCleanup<PerformFinally>(NormalCleanup, body,
@@ -1260,11 +1261,11 @@ void CodeGenFunction::FinallyInfo::exit(CodeGenFunction &CGF) {
     // If we need to remember the exception pointer to rethrow later, do so.
     if (SavedExnVar) {
       if (!exn) exn = CGF.getExceptionFromSlot();
-      CGF.Builder.CreateStore(exn, SavedExnVar);
+      CGF.Builder.CreateAlignedStore(exn, SavedExnVar, CGF.getPointerAlign());
     }
 
     // Tell the cleanups in the finally block that we're do this for EH.
-    CGF.Builder.CreateStore(CGF.Builder.getTrue(), ForEHVar);
+    CGF.Builder.CreateFlagStore(true, ForEHVar);
 
     // Thread a jump through the finally cleanup.
     CGF.EmitBranchThroughCleanup(RethrowDest);
@@ -1433,13 +1434,13 @@ struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
   CodeGenFunction &ParentCGF;
   const VarDecl *ParentThis;
   SmallVector<const VarDecl *, 4> Captures;
-  llvm::Value *SEHCodeSlot = nullptr;
+  Address SEHCodeSlot = Address::invalid();
   CaptureFinder(CodeGenFunction &ParentCGF, const VarDecl *ParentThis)
       : ParentCGF(ParentCGF), ParentThis(ParentThis) {}
 
   // Return true if we need to do any capturing work.
   bool foundCaptures() {
-    return !Captures.empty() || SEHCodeSlot;
+    return !Captures.empty() || SEHCodeSlot.isValid();
   }
 
   void Visit(const Stmt *S) {
@@ -1478,7 +1479,7 @@ struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
       // This is the simple case where we are the outermost finally. All we
       // have to do here is make sure we escape this and recover it in the
       // outlined handler.
-      if (!SEHCodeSlot)
+      if (!SEHCodeSlot.isValid())
         SEHCodeSlot = ParentCGF.SEHCodeSlotStack.back();
       break;
     }
@@ -1486,11 +1487,11 @@ struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
 };
 }
 
-llvm::Value *CodeGenFunction::recoverAddrOfEscapedLocal(
-    CodeGenFunction &ParentCGF, llvm::Value *ParentVar, llvm::Value *ParentFP) {
+Address CodeGenFunction::recoverAddrOfEscapedLocal(
+    CodeGenFunction &ParentCGF, Address ParentVar, llvm::Value *ParentFP) {
   llvm::CallInst *RecoverCall = nullptr;
-  CGBuilderTy Builder(AllocaInsertPt);
-  if (auto *ParentAlloca = dyn_cast<llvm::AllocaInst>(ParentVar)) {
+  CGBuilderTy Builder(*this, AllocaInsertPt);
+  if (auto *ParentAlloca = dyn_cast<llvm::AllocaInst>(ParentVar.getPointer())) {
     // Mark the variable escaped if nobody else referenced it and compute the
     // localescape index.
     auto InsertPair = ParentCGF.EscapedLocals.insert(
@@ -1510,7 +1511,7 @@ llvm::Value *CodeGenFunction::recoverAddrOfEscapedLocal(
     // Just clone the existing localrecover call, but tweak the FP argument to
     // use our FP value. All other arguments are constants.
     auto *ParentRecover =
-        cast<llvm::IntrinsicInst>(ParentVar->stripPointerCasts());
+        cast<llvm::IntrinsicInst>(ParentVar.getPointer()->stripPointerCasts());
     assert(ParentRecover->getIntrinsicID() == llvm::Intrinsic::localrecover &&
            "expected alloca or localrecover in parent LocalDeclMap");
     RecoverCall = cast<llvm::CallInst>(ParentRecover->clone());
@@ -1520,9 +1521,9 @@ llvm::Value *CodeGenFunction::recoverAddrOfEscapedLocal(
 
   // Bitcast the variable, rename it, and insert it in the local decl map.
   llvm::Value *ChildVar =
-      Builder.CreateBitCast(RecoverCall, ParentVar->getType());
-  ChildVar->setName(ParentVar->getName());
-  return ChildVar;
+      Builder.CreateBitCast(RecoverCall, ParentVar.getType());
+  ChildVar->setName(ParentVar.getName());
+  return Address(ChildVar, ParentVar.getAlignment());
 }
 
 void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
@@ -1548,7 +1549,7 @@ void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
     // EH registration is passed in as the EBP physical register.  We can
     // recover that with llvm.frameaddress(1), and adjust that to recover the
     // parent's true frame pointer.
-    CGBuilderTy Builder(AllocaInsertPt);
+    CGBuilderTy Builder(CGM, AllocaInsertPt);
     EntryEBP = Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::frameaddress), {Builder.getInt32(1)});
     llvm::Function *RecoverFPIntrin =
@@ -1583,13 +1584,13 @@ void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
     auto I = ParentCGF.LocalDeclMap.find(VD);
     if (I == ParentCGF.LocalDeclMap.end())
       continue;
-    llvm::Value *ParentVar = I->second;
 
-    LocalDeclMap[VD] =
-        recoverAddrOfEscapedLocal(ParentCGF, ParentVar, ParentFP);
+    Address ParentVar = I->second;
+    setAddrOfLocalVar(VD,
+                  recoverAddrOfEscapedLocal(ParentCGF, ParentVar, ParentFP));
   }
 
-  if (Finder.SEHCodeSlot) {
+  if (Finder.SEHCodeSlot.isValid()) {
     SEHCodeSlotStack.push_back(
         recoverAddrOfEscapedLocal(ParentCGF, Finder.SEHCodeSlot, ParentFP));
   }
@@ -1727,7 +1728,7 @@ void CodeGenFunction::EmitSEHExceptionCodeSave(CodeGenFunction &ParentCGF,
     // load the pointer.
     SEHInfo = Builder.CreateConstInBoundsGEP1_32(Int8Ty, EntryEBP, -20);
     SEHInfo = Builder.CreateBitCast(SEHInfo, Int8PtrTy->getPointerTo());
-    SEHInfo = Builder.CreateLoad(Int8PtrTy, SEHInfo);
+    SEHInfo = Builder.CreateAlignedLoad(Int8PtrTy, SEHInfo, getPointerAlign());
     SEHCodeSlotStack.push_back(recoverAddrOfEscapedLocal(
         ParentCGF, ParentCGF.SEHCodeSlotStack.back(), ParentFP));
   }
@@ -1743,8 +1744,8 @@ void CodeGenFunction::EmitSEHExceptionCodeSave(CodeGenFunction &ParentCGF,
   llvm::Type *PtrsTy = llvm::StructType::get(RecordTy, CGM.VoidPtrTy, nullptr);
   llvm::Value *Ptrs = Builder.CreateBitCast(SEHInfo, PtrsTy->getPointerTo());
   llvm::Value *Rec = Builder.CreateStructGEP(PtrsTy, Ptrs, 0);
-  Rec = Builder.CreateLoad(Rec);
-  llvm::Value *Code = Builder.CreateLoad(Rec);
+  Rec = Builder.CreateAlignedLoad(Rec, getPointerAlign());
+  llvm::Value *Code = Builder.CreateAlignedLoad(Rec, getIntAlign());
   assert(!SEHCodeSlotStack.empty() && "emitting EH code outside of __except");
   Builder.CreateStore(Code, SEHCodeSlotStack.back());
 }
@@ -1760,7 +1761,7 @@ llvm::Value *CodeGenFunction::EmitSEHExceptionInfo() {
 
 llvm::Value *CodeGenFunction::EmitSEHExceptionCode() {
   assert(!SEHCodeSlotStack.empty() && "emitting EH code outside of __except");
-  return Builder.CreateLoad(Int32Ty, SEHCodeSlotStack.back());
+  return Builder.CreateLoad(SEHCodeSlotStack.back());
 }
 
 llvm::Value *CodeGenFunction::EmitSEHAbnormalTermination() {

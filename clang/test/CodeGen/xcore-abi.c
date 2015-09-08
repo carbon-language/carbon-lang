@@ -33,7 +33,7 @@ void testva (int n, ...) {
   f(v1);
   // CHECK: [[I:%[a-z0-9]+]] = load i8*, i8** [[AP]]
   // CHECK: [[P:%[a-z0-9]+]] = bitcast i8* [[I]] to i8**
-  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8, i8* [[I]], i32 4
+  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr inbounds i8, i8* [[I]], i32 4
   // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[V1:%[a-z0-9]+]] = load i8*, i8** [[P]]
   // CHECK: store i8* [[V1]], i8** [[V:%[a-z0-9]+]], align 4
@@ -43,7 +43,7 @@ void testva (int n, ...) {
   char v2 = va_arg (ap, char); // expected-warning{{second argument to 'va_arg' is of promotable type 'char'}}
   f(&v2);
   // CHECK: [[I:%[a-z0-9]+]] = load i8*, i8** [[AP]]
-  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8, i8* [[I]], i32 4
+  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr inbounds i8, i8* [[I]], i32 4
   // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[V1:%[a-z0-9]+]] = load i8, i8* [[I]]
   // CHECK: store i8 [[V1]], i8* [[V:%[a-z0-9]+]], align 1
@@ -53,7 +53,7 @@ void testva (int n, ...) {
   f(&v3);
   // CHECK: [[I:%[a-z0-9]+]] = load i8*, i8** [[AP]]
   // CHECK: [[P:%[a-z0-9]+]] = bitcast i8* [[I]] to i32*
-  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8, i8* [[I]], i32 4
+  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr inbounds i8, i8* [[I]], i32 4
   // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[V1:%[a-z0-9]+]] = load i32, i32* [[P]]
   // CHECK: store i32 [[V1]], i32* [[V:%[a-z0-9]+]], align 4
@@ -64,7 +64,7 @@ void testva (int n, ...) {
   f(&v4);
   // CHECK: [[I:%[a-z0-9]+]] = load i8*, i8** [[AP]]
   // CHECK: [[P:%[a-z0-9]+]] = bitcast i8* [[I]] to i64*
-  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8, i8* [[I]], i32 8
+  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr inbounds i8, i8* [[I]], i32 8
   // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[V1:%[a-z0-9]+]] = load i64, i64* [[P]]
   // CHECK: store i64 [[V1]], i64* [[V:%[a-z0-9]+]], align 4
@@ -76,7 +76,7 @@ void testva (int n, ...) {
   // CHECK: [[I:%[a-z0-9]+]] = load i8*, i8** [[AP]]
   // CHECK: [[I2:%[a-z0-9]+]] = bitcast i8* [[I]] to %struct.x**
   // CHECK: [[P:%[a-z0-9]+]] = load %struct.x*, %struct.x** [[I2]]
-  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8, i8* [[I]], i32 4
+  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr inbounds i8, i8* [[I]], i32 4
   // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[V1:%[a-z0-9]+]] = bitcast %struct.x* [[V:%[a-z0-9]+]] to i8*
   // CHECK: [[P1:%[a-z0-9]+]] = bitcast %struct.x* [[P]] to i8*
@@ -89,7 +89,7 @@ void testva (int n, ...) {
   // CHECK: [[I:%[a-z0-9]+]] = load i8*, i8** [[AP]]
   // CHECK: [[I2:%[a-z0-9]+]] = bitcast i8* [[I]] to [4 x i32]**
   // CHECK: [[P:%[a-z0-9]+]] = load [4 x i32]*, [4 x i32]** [[I2]]
-  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8, i8* [[I]], i32 4
+  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr inbounds i8, i8* [[I]], i32 4
   // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[V1:%[a-z0-9]+]] = bitcast [4 x i32]* [[V0:%[a-z0-9]+]] to i8*
   // CHECK: [[P1:%[a-z0-9]+]] = bitcast [4 x i32]* [[P]] to i8*
@@ -104,7 +104,7 @@ void testva (int n, ...) {
   f(&v7);
   // CHECK: [[I:%[a-z0-9]+]] = load i8*, i8** [[AP]]
   // CHECK: [[P:%[a-z0-9]+]] = bitcast i8* [[I]] to double*
-  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr i8, i8* [[I]], i32 8
+  // CHECK: [[IN:%[a-z0-9]+]] = getelementptr inbounds i8, i8* [[I]], i32 8
   // CHECK: store i8* [[IN]], i8** [[AP]]
   // CHECK: [[V1:%[a-z0-9]+]] = load double, double* [[P]]
   // CHECK: store double [[V1]], double* [[V:%[a-z0-9]+]], align 4

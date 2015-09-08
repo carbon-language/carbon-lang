@@ -26,7 +26,7 @@ D::D() {}  // Forces vftable emission.
 // CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01?f@D@@$4PPPPPPPM@A@AEXXZ"
 // CHECK: %[[ECX:.*]] = load %struct.D*, %struct.D** %{{.*}}
 // CHECK: %[[ECX_i8:.*]] = bitcast %struct.D* %[[ECX]] to i8*
-// CHECK: %[[VTORDISP_PTR_i8:.*]] = getelementptr i8, i8* %[[ECX_i8]], i32 -4
+// CHECK: %[[VTORDISP_PTR_i8:.*]] = getelementptr inbounds i8, i8* %[[ECX_i8]], i32 -4
 // CHECK: %[[VTORDISP_PTR:.*]] = bitcast i8* %[[VTORDISP_PTR_i8]] to i32*
 // CHECK: %[[VTORDISP:.*]] = load i32, i32* %[[VTORDISP_PTR]]
 // CHECK: %[[VTORDISP_NEG:.*]] = sub i32 0, %[[VTORDISP]]
@@ -37,7 +37,7 @@ D::D() {}  // Forces vftable emission.
 // CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01?f@D@@$4PPPPPPPI@3AEXXZ"
 // CHECK: %[[ECX:.*]] = load %struct.D*, %struct.D** %{{.*}}
 // CHECK: %[[ECX_i8:.*]] = bitcast %struct.D* %[[ECX]] to i8*
-// CHECK: %[[VTORDISP_PTR_i8:.*]] = getelementptr i8, i8* %[[ECX_i8]], i32 -8
+// CHECK: %[[VTORDISP_PTR_i8:.*]] = getelementptr inbounds i8, i8* %[[ECX_i8]], i32 -8
 // CHECK: %[[VTORDISP_PTR:.*]] = bitcast i8* %[[VTORDISP_PTR_i8]] to i32*
 // CHECK: %[[VTORDISP:.*]] = load i32, i32* %[[VTORDISP_PTR]]
 // CHECK: %[[VTORDISP_NEG:.*]] = sub i32 0, %[[VTORDISP]]
@@ -66,7 +66,7 @@ G::G() {}  // Forces vftable emission.
 // CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01?f@E@@$R4BA@M@PPPPPPPM@7AEXXZ"(i8*)
 // CHECK: %[[ECX:.*]] = load %struct.E*, %struct.E** %{{.*}}
 // CHECK: %[[ECX_i8:.*]] = bitcast %struct.E* %[[ECX]] to i8*
-// CHECK: %[[VTORDISP_PTR_i8:.*]] = getelementptr i8, i8* %[[ECX_i8]], i32 -4
+// CHECK: %[[VTORDISP_PTR_i8:.*]] = getelementptr inbounds i8, i8* %[[ECX_i8]], i32 -4
 // CHECK: %[[VTORDISP_PTR:.*]] = bitcast i8* %[[VTORDISP_PTR_i8]] to i32*
 // CHECK: %[[VTORDISP:.*]] = load i32, i32* %[[VTORDISP_PTR]]
 // CHECK: %[[VTORDISP_NEG:.*]] = sub i32 0, %[[VTORDISP]]

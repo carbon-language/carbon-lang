@@ -117,7 +117,7 @@ struct s30 f30() {}
 struct s31 { char x; };
 void f31(struct s31 s) { }
 // CHECK: define void @f31(i64 %s.coerce)
-// CHECK: %s = alloca %struct.s31, align 8
+// CHECK: %s = alloca %struct.s31, align 1
 // CHECK: trunc i64 %s.coerce to i8
 // CHECK: store i8 %{{.*}},
 
@@ -273,10 +273,10 @@ typedef struct s38 s38_no_align;
 __attribute__ ((noinline))
 int f38(int i, s38_no_align s1, s38_no_align s2) {
 // CHECK: define i32 @f38(i32 %i, i64 %s1.coerce, i64 %s2.coerce)
-// CHECK: %s1 = alloca %struct.s38, align 8
-// CHECK: %s2 = alloca %struct.s38, align 8
-// CHECK: store i64 %s1.coerce, i64* %{{.*}}, align 8
-// CHECK: store i64 %s2.coerce, i64* %{{.*}}, align 8
+// CHECK: %s1 = alloca %struct.s38, align 4
+// CHECK: %s2 = alloca %struct.s38, align 4
+// CHECK: store i64 %s1.coerce, i64* %{{.*}}, align 4
+// CHECK: store i64 %s2.coerce, i64* %{{.*}}, align 4
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 1
@@ -297,10 +297,10 @@ __attribute__ ((noinline))
 int f38_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
               int i9, s38_no_align s1, s38_no_align s2) {
 // CHECK: define i32 @f38_stack(i32 %i, i32 %i2, i32 %i3, i32 %i4, i32 %i5, i32 %i6, i32 %i7, i32 %i8, i32 %i9, i64 %s1.coerce, i64 %s2.coerce)
-// CHECK: %s1 = alloca %struct.s38, align 8
-// CHECK: %s2 = alloca %struct.s38, align 8
-// CHECK: store i64 %s1.coerce, i64* %{{.*}}, align 8
-// CHECK: store i64 %s2.coerce, i64* %{{.*}}, align 8
+// CHECK: %s1 = alloca %struct.s38, align 4
+// CHECK: %s2 = alloca %struct.s38, align 4
+// CHECK: store i64 %s1.coerce, i64* %{{.*}}, align 4
+// CHECK: store i64 %s2.coerce, i64* %{{.*}}, align 4
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 1
@@ -381,10 +381,10 @@ typedef struct s40 s40_no_align;
 __attribute__ ((noinline))
 int f40(int i, s40_no_align s1, s40_no_align s2) {
 // CHECK: define i32 @f40(i32 %i, [2 x i64] %s1.coerce, [2 x i64] %s2.coerce)
-// CHECK: %s1 = alloca %struct.s40, align 8
-// CHECK: %s2 = alloca %struct.s40, align 8
-// CHECK: store [2 x i64] %s1.coerce, [2 x i64]* %{{.*}}, align 8
-// CHECK: store [2 x i64] %s2.coerce, [2 x i64]* %{{.*}}, align 8
+// CHECK: %s1 = alloca %struct.s40, align 4
+// CHECK: %s2 = alloca %struct.s40, align 4
+// CHECK: store [2 x i64] %s1.coerce, [2 x i64]* %{{.*}}, align 4
+// CHECK: store [2 x i64] %s2.coerce, [2 x i64]* %{{.*}}, align 4
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 1
@@ -405,10 +405,10 @@ __attribute__ ((noinline))
 int f40_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
               int i9, s40_no_align s1, s40_no_align s2) {
 // CHECK: define i32 @f40_stack(i32 %i, i32 %i2, i32 %i3, i32 %i4, i32 %i5, i32 %i6, i32 %i7, i32 %i8, i32 %i9, [2 x i64] %s1.coerce, [2 x i64] %s2.coerce)
-// CHECK: %s1 = alloca %struct.s40, align 8
-// CHECK: %s2 = alloca %struct.s40, align 8
-// CHECK: store [2 x i64] %s1.coerce, [2 x i64]* %{{.*}}, align 8
-// CHECK: store [2 x i64] %s2.coerce, [2 x i64]* %{{.*}}, align 8
+// CHECK: %s1 = alloca %struct.s40, align 4
+// CHECK: %s2 = alloca %struct.s40, align 4
+// CHECK: store [2 x i64] %s1.coerce, [2 x i64]* %{{.*}}, align 4
+// CHECK: store [2 x i64] %s2.coerce, [2 x i64]* %{{.*}}, align 4
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 1
@@ -629,7 +629,7 @@ float test_hfa(int n, ...) {
 // CHECK: [[CURLIST:%.*]] = load i8*, i8** [[THELIST]]
 
   // HFA is not indirect, so occupies its full 16 bytes on the stack.
-// CHECK: [[NEXTLIST:%.*]] = getelementptr i8, i8* [[CURLIST]], i32 16
+// CHECK: [[NEXTLIST:%.*]] = getelementptr inbounds i8, i8* [[CURLIST]], i64 16
 // CHECK: store i8* [[NEXTLIST]], i8** [[THELIST]]
 
 // CHECK: bitcast i8* [[CURLIST]] to %struct.HFA*
@@ -656,12 +656,11 @@ float test_toobig_hfa(int n, ...) {
 
   // TooBigHFA is not actually an HFA, so gets passed indirectly. Only 8 bytes
   // of stack consumed.
-// CHECK: [[NEXTLIST:%.*]] = getelementptr i8, i8* [[CURLIST]], i32 8
+// CHECK: [[NEXTLIST:%.*]] = getelementptr inbounds i8, i8* [[CURLIST]], i64 8
 // CHECK: store i8* [[NEXTLIST]], i8** [[THELIST]]
 
-// CHECK: [[HFAPTRPTR:%.*]] = bitcast i8* [[CURLIST]] to i8**
-// CHECK: [[HFAPTR:%.*]] = load i8*, i8** [[HFAPTRPTR]]
-// CHECK: bitcast i8* [[HFAPTR]] to %struct.TooBigHFA*
+// CHECK: [[HFAPTRPTR:%.*]] = bitcast i8* [[CURLIST]] to %struct.TooBigHFA**
+// CHECK: [[HFAPTR:%.*]] = load %struct.TooBigHFA*, %struct.TooBigHFA** [[HFAPTRPTR]]
   __builtin_va_list thelist;
   __builtin_va_start(thelist, n);
   struct TooBigHFA h = __builtin_va_arg(thelist, struct TooBigHFA);
@@ -679,12 +678,12 @@ int32x4_t test_hva(int n, ...) {
 
   // HVA is not indirect, so occupies its full 16 bytes on the stack. but it
   // must be properly aligned.
-// CHECK: [[ALIGN0:%.*]] = getelementptr i8, i8* [[CURLIST]], i32 15
-// CHECK: [[ALIGN1:%.*]] = ptrtoint i8* [[ALIGN0]] to i64
+// CHECK: [[ALIGN0:%.*]] = ptrtoint i8* [[CURLIST]] to i64
+// CHECK: [[ALIGN1:%.*]] = add i64 [[ALIGN0]], 15
 // CHECK: [[ALIGN2:%.*]] = and i64 [[ALIGN1]], -16
 // CHECK: [[ALIGNED_LIST:%.*]] = inttoptr i64 [[ALIGN2]] to i8*
 
-// CHECK: [[NEXTLIST:%.*]] = getelementptr i8, i8* [[ALIGNED_LIST]], i32 32
+// CHECK: [[NEXTLIST:%.*]] = getelementptr inbounds i8, i8* [[ALIGNED_LIST]], i64 32
 // CHECK: store i8* [[NEXTLIST]], i8** [[THELIST]]
 
 // CHECK: bitcast i8* [[ALIGNED_LIST]] to %struct.HVA*
@@ -705,12 +704,11 @@ int32x4_t test_toobig_hva(int n, ...) {
 
   // TooBigHVA is not actually an HVA, so gets passed indirectly. Only 8 bytes
   // of stack consumed.
-// CHECK: [[NEXTLIST:%.*]] = getelementptr i8, i8* [[CURLIST]], i32 8
+// CHECK: [[NEXTLIST:%.*]] = getelementptr inbounds i8, i8* [[CURLIST]], i64 8
 // CHECK: store i8* [[NEXTLIST]], i8** [[THELIST]]
 
-// CHECK: [[HVAPTRPTR:%.*]] = bitcast i8* [[CURLIST]] to i8**
-// CHECK: [[HVAPTR:%.*]] = load i8*, i8** [[HVAPTRPTR]]
-// CHECK: bitcast i8* [[HVAPTR]] to %struct.TooBigHVA*
+// CHECK: [[HVAPTRPTR:%.*]] = bitcast i8* [[CURLIST]] to %struct.TooBigHVA**
+// CHECK: [[HVAPTR:%.*]] = load %struct.TooBigHVA*, %struct.TooBigHVA** [[HVAPTRPTR]]
   __builtin_va_list thelist;
   __builtin_va_start(thelist, n);
   struct TooBigHVA h = __builtin_va_arg(thelist, struct TooBigHVA);

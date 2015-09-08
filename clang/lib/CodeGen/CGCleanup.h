@@ -15,6 +15,8 @@
 #define LLVM_CLANG_LIB_CODEGEN_CGCLEANUP_H
 
 #include "EHScopeStack.h"
+
+#include "Address.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -305,8 +307,14 @@ public:
   bool isLifetimeMarker() const { return CleanupBits.IsLifetimeMarker; }
   void setLifetimeMarker() { CleanupBits.IsLifetimeMarker = true; }
 
-  llvm::AllocaInst *getActiveFlag() const { return ActiveFlag; }
-  void setActiveFlag(llvm::AllocaInst *Var) { ActiveFlag = Var; }
+  bool hasActiveFlag() const { return ActiveFlag != nullptr; }
+  Address getActiveFlag() const {
+    return Address(ActiveFlag, CharUnits::One());
+  }
+  void setActiveFlag(Address Var) {
+    assert(Var.getAlignment().isOne());
+    ActiveFlag = cast<llvm::AllocaInst>(Var.getPointer());
+  }
 
   void setTestFlagInNormalCleanup() {
     CleanupBits.TestFlagInNormalCleanup = true;

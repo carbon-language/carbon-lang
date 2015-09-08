@@ -57,9 +57,9 @@ private:
                                      unsigned Alignment = 0) {
     llvm::Constant *Zeros[] = {llvm::ConstantInt::get(SizeTy, 0),
                                llvm::ConstantInt::get(SizeTy, 0)};
-    auto *ConstStr = CGM.GetAddrOfConstantCString(Str, Name.c_str());
-    return llvm::ConstantExpr::getGetElementPtr(ConstStr->getValueType(),
-                                                ConstStr, Zeros);
+    auto ConstStr = CGM.GetAddrOfConstantCString(Str, Name.c_str());
+    return llvm::ConstantExpr::getGetElementPtr(ConstStr.getElementType(),
+                                                ConstStr.getPointer(), Zeros);
  }
 
   void emitDeviceStubBody(CodeGenFunction &CGF, FunctionArgList &Args);
@@ -121,7 +121,7 @@ void CGNVCUDARuntime::emitDeviceStubBody(CodeGenFunction &CGF,
   std::vector<llvm::Type *> ArgTypes;
   for (FunctionArgList::const_iterator I = Args.begin(), E = Args.end();
        I != E; ++I) {
-    llvm::Value *V = CGF.GetAddrOfLocalVar(*I);
+    llvm::Value *V = CGF.GetAddrOfLocalVar(*I).getPointer();
     ArgValues.push_back(V);
     assert(isa<llvm::PointerType>(V->getType()) && "Arg type not PointerType");
     ArgTypes.push_back(cast<llvm::PointerType>(V->getType())->getElementType());
@@ -173,7 +173,7 @@ llvm::Function *CGNVCUDARuntime::makeRegisterKernelsFn() {
       llvm::GlobalValue::InternalLinkage, "__cuda_register_kernels", &TheModule);
   llvm::BasicBlock *EntryBB =
       llvm::BasicBlock::Create(Context, "entry", RegisterKernelsFunc);
-  CGBuilderTy Builder(Context);
+  CGBuilderTy Builder(CGM, Context);
   Builder.SetInsertPoint(EntryBB);
 
   // void __cudaRegisterFunction(void **, const char *, char *, const char *,
@@ -230,7 +230,7 @@ llvm::Function *CGNVCUDARuntime::makeModuleCtorFunction() {
       llvm::GlobalValue::InternalLinkage, "__cuda_module_ctor", &TheModule);
   llvm::BasicBlock *CtorEntryBB =
       llvm::BasicBlock::Create(Context, "entry", ModuleCtorFunc);
-  CGBuilderTy CtorBuilder(Context);
+  CGBuilderTy CtorBuilder(CGM, Context);
 
   CtorBuilder.SetInsertPoint(CtorEntryBB);
 
@@ -267,7 +267,8 @@ llvm::Function *CGNVCUDARuntime::makeModuleCtorFunction() {
     llvm::GlobalVariable *GpuBinaryHandle = new llvm::GlobalVariable(
         TheModule, VoidPtrPtrTy, false, llvm::GlobalValue::InternalLinkage,
         llvm::ConstantPointerNull::get(VoidPtrPtrTy), "__cuda_gpubin_handle");
-    CtorBuilder.CreateStore(RegisterFatbinCall, GpuBinaryHandle, false);
+    CtorBuilder.CreateAlignedStore(RegisterFatbinCall, GpuBinaryHandle,
+                                   CGM.getPointerAlign());
 
     // Call __cuda_register_kernels(GpuBinaryHandle);
     CtorBuilder.CreateCall(RegisterKernelsFunc, RegisterFatbinCall);
@@ -300,12 +301,13 @@ llvm::Function *CGNVCUDARuntime::makeModuleDtorFunction() {
       llvm::GlobalValue::InternalLinkage, "__cuda_module_dtor", &TheModule);
   llvm::BasicBlock *DtorEntryBB =
       llvm::BasicBlock::Create(Context, "entry", ModuleDtorFunc);
-  CGBuilderTy DtorBuilder(Context);
+  CGBuilderTy DtorBuilder(CGM, Context);
   DtorBuilder.SetInsertPoint(DtorEntryBB);
 
   for (llvm::GlobalVariable *GpuBinaryHandle : GpuBinaryHandles) {
-    DtorBuilder.CreateCall(UnregisterFatbinFunc,
-                           DtorBuilder.CreateLoad(GpuBinaryHandle, false));
+    auto HandleValue =
+      DtorBuilder.CreateAlignedLoad(GpuBinaryHandle, CGM.getPointerAlign());
+    DtorBuilder.CreateCall(UnregisterFatbinFunc, HandleValue);
   }
 
   DtorBuilder.CreateRetVoid();

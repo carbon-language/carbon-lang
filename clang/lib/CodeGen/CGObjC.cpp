@@ -37,9 +37,8 @@ static RValue AdjustObjCObjectType(CodeGenFunction &CGF,
 
 /// Given the address of a variable of pointer type, find the correct
 /// null to store into it.
-static llvm::Constant *getNullForVariable(llvm::Value *addr) {
-  llvm::Type *type =
-    cast<llvm::PointerType>(addr->getType())->getElementType();
+static llvm::Constant *getNullForVariable(Address addr) {
+  llvm::Type *type = addr.getElementType();
   return llvm::ConstantPointerNull::get(cast<llvm::PointerType>(type));
 }
 
@@ -47,7 +46,7 @@ static llvm::Constant *getNullForVariable(llvm::Value *addr) {
 llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E)
 {
   llvm::Constant *C = 
-      CGM.getObjCRuntime().GenerateConstantString(E->getString());
+      CGM.getObjCRuntime().GenerateConstantString(E->getString()).getPointer();
   // FIXME: This bitcast should just be made an invariant on the Runtime.
   return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
 }
@@ -84,16 +83,15 @@ CodeGenFunction::EmitObjCBoxedExpr(const ObjCBoxedExpr *E) {
   if (ValueType->isObjCBoxableRecordType()) {
     // Emit CodeGen for first parameter
     // and cast value to correct type
-    llvm::Value *Temporary = CreateMemTemp(SubExpr->getType());
+    Address Temporary = CreateMemTemp(SubExpr->getType());
     EmitAnyExprToMem(SubExpr, Temporary, Qualifiers(), /*isInit*/ true);
-    llvm::Value *BitCast = Builder.CreateBitCast(Temporary,
-                                                 ConvertType(ArgQT));
-    Args.add(RValue::get(BitCast), ArgQT);
+    Address BitCast = Builder.CreateBitCast(Temporary, ConvertType(ArgQT));
+    Args.add(RValue::get(BitCast.getPointer()), ArgQT);
 
     // Create char array to store type encoding
     std::string Str;
     getContext().getObjCEncodingForType(ValueType, Str);
-    llvm::GlobalVariable *GV = CGM.GetAddrOfConstantCString(Str);
+    llvm::Constant *GV = CGM.GetAddrOfConstantCString(Str).getPointer();
     
     // Cast type encoding to correct type
     const ParmVarDecl *EncodingDecl = BoxingMethod->parameters()[1];
@@ -131,8 +129,8 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
                                    ArrayType::Normal, /*IndexTypeQuals=*/0);
 
   // Allocate the temporary array(s).
-  llvm::AllocaInst *Objects = CreateMemTemp(ElementArrayType, "objects");
-  llvm::AllocaInst *Keys = nullptr;
+  Address Objects = CreateMemTemp(ElementArrayType, "objects");
+  Address Keys = Address::invalid();
   if (DLE)
     Keys = CreateMemTemp(ElementArrayType, "keys");
   
@@ -148,9 +146,9 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
     if (ALE) {
       // Emit the element and store it to the appropriate array slot.
       const Expr *Rhs = ALE->getElement(i);
-      LValue LV = LValue::MakeAddr(
-          Builder.CreateStructGEP(Objects->getAllocatedType(), Objects, i),
-          ElementType, Context.getTypeAlignInChars(Rhs->getType()), Context);
+      LValue LV = MakeAddrLValue(
+          Builder.CreateConstArrayGEP(Objects, i, getPointerSize()),
+          ElementType, AlignmentSource::Decl);
 
       llvm::Value *value = EmitScalarExpr(Rhs);
       EmitStoreThroughLValue(RValue::get(value), LV, true);
@@ -160,17 +158,17 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
     } else {      
       // Emit the key and store it to the appropriate array slot.
       const Expr *Key = DLE->getKeyValueElement(i).Key;
-      LValue KeyLV = LValue::MakeAddr(
-          Builder.CreateStructGEP(Keys->getAllocatedType(), Keys, i),
-          ElementType, Context.getTypeAlignInChars(Key->getType()), Context);
+      LValue KeyLV = MakeAddrLValue(
+          Builder.CreateConstArrayGEP(Keys, i, getPointerSize()),
+          ElementType, AlignmentSource::Decl);
       llvm::Value *keyValue = EmitScalarExpr(Key);
       EmitStoreThroughLValue(RValue::get(keyValue), KeyLV, /*isInit=*/true);
 
       // Emit the value and store it to the appropriate array slot.
       const Expr *Value = DLE->getKeyValueElement(i).Value;
-      LValue ValueLV = LValue::MakeAddr(
-          Builder.CreateStructGEP(Objects->getAllocatedType(), Objects, i),
-          ElementType, Context.getTypeAlignInChars(Value->getType()), Context);
+      LValue ValueLV = MakeAddrLValue(
+          Builder.CreateConstArrayGEP(Objects, i, getPointerSize()),
+          ElementType, AlignmentSource::Decl);
       llvm::Value *valueValue = EmitScalarExpr(Value);
       EmitStoreThroughLValue(RValue::get(valueValue), ValueLV, /*isInit=*/true);
       if (TrackNeededObjects) {
@@ -185,11 +183,11 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
   ObjCMethodDecl::param_const_iterator PI = MethodWithObjects->param_begin();
   const ParmVarDecl *argDecl = *PI++;
   QualType ArgQT = argDecl->getType().getUnqualifiedType();
-  Args.add(RValue::get(Objects), ArgQT);
+  Args.add(RValue::get(Objects.getPointer()), ArgQT);
   if (DLE) {
     argDecl = *PI++;
     ArgQT = argDecl->getType().getUnqualifiedType();
-    Args.add(RValue::get(Keys), ArgQT);
+    Args.add(RValue::get(Keys.getPointer()), ArgQT);
   }
   argDecl = *PI;
   ArgQT = argDecl->getType().getUnqualifiedType();
@@ -404,10 +402,8 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
            "delegate init calls should only be marked in ARC");
 
     // Do an unsafe store of null into self.
-    llvm::Value *selfAddr =
-      LocalDeclMap[cast<ObjCMethodDecl>(CurCodeDecl)->getSelfDecl()];
-    assert(selfAddr && "no self entry for a delegate init call?");
-
+    Address selfAddr =
+      GetAddrOfLocalVar(cast<ObjCMethodDecl>(CurCodeDecl)->getSelfDecl());
     Builder.CreateStore(getNullForVariable(selfAddr), selfAddr);
   }
 
@@ -434,14 +430,13 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
   // For delegate init calls in ARC, implicitly store the result of
   // the call back into self.  This takes ownership of the value.
   if (isDelegateInit) {
-    llvm::Value *selfAddr =
-      LocalDeclMap[cast<ObjCMethodDecl>(CurCodeDecl)->getSelfDecl()];
+    Address selfAddr =
+      GetAddrOfLocalVar(cast<ObjCMethodDecl>(CurCodeDecl)->getSelfDecl());
     llvm::Value *newSelf = result.getScalarVal();
 
     // The delegate return type isn't necessarily a matching type; in
     // fact, it's quite likely to be 'id'.
-    llvm::Type *selfTy =
-      cast<llvm::PointerType>(selfAddr->getType())->getElementType();
+    llvm::Type *selfTy = selfAddr.getElementType();
     newSelf = Builder.CreateBitCast(newSelf, selfTy);
 
     Builder.CreateStore(newSelf, selfAddr);
@@ -536,19 +531,19 @@ static void emitStructGetterCall(CodeGenFunction &CGF, ObjCIvarDecl *ivar,
                                  bool isAtomic, bool hasStrong) {
   ASTContext &Context = CGF.getContext();
 
-  llvm::Value *src =
-    CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), CGF.LoadObjCSelf(),
-                          ivar, 0).getAddress();
+  Address src =
+    CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), CGF.LoadObjCSelf(), ivar, 0)
+       .getAddress();
 
   // objc_copyStruct (ReturnValue, &structIvar, 
   //                  sizeof (Type of Ivar), isAtomic, false);
   CallArgList args;
 
-  llvm::Value *dest = CGF.Builder.CreateBitCast(CGF.ReturnValue, CGF.VoidPtrTy);
-  args.add(RValue::get(dest), Context.VoidPtrTy);
+  Address dest = CGF.Builder.CreateBitCast(CGF.ReturnValue, CGF.VoidPtrTy);
+  args.add(RValue::get(dest.getPointer()), Context.VoidPtrTy);
 
   src = CGF.Builder.CreateBitCast(src, CGF.VoidPtrTy);
-  args.add(RValue::get(src), Context.VoidPtrTy);
+  args.add(RValue::get(src.getPointer()), Context.VoidPtrTy);
 
   CharUnits size = CGF.getContext().getTypeSizeInChars(ivar->getType());
   args.add(RValue::get(CGF.CGM.getSize(size)), Context.getSizeType());
@@ -812,8 +807,8 @@ static void emitCPPObjectAtomicGetterCall(CodeGenFunction &CGF,
   
   // The 2nd argument is the address of the ivar.
   llvm::Value *ivarAddr = 
-  CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), 
-                        CGF.LoadObjCSelf(), ivar, 0).getAddress();
+    CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), 
+                          CGF.LoadObjCSelf(), ivar, 0).getPointer();
   ivarAddr = CGF.Builder.CreateBitCast(ivarAddr, CGF.Int8PtrTy);
   args.add(RValue::get(ivarAddr), CGF.getContext().VoidPtrTy);
   
@@ -843,7 +838,7 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
     }
     else {
       ObjCIvarDecl *ivar = propImpl->getPropertyIvarDecl();
-      emitCPPObjectAtomicGetterCall(*this, ReturnValue, 
+      emitCPPObjectAtomicGetterCall(*this, ReturnValue.getPointer(), 
                                     ivar, AtomicHelperFn);
     }
     return;
@@ -873,10 +868,9 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
     bitcastType = bitcastType->getPointerTo(); // addrspace 0 okay
 
     // Perform an atomic load.  This does not impose ordering constraints.
-    llvm::Value *ivarAddr = LV.getAddress();
+    Address ivarAddr = LV.getAddress();
     ivarAddr = Builder.CreateBitCast(ivarAddr, bitcastType);
     llvm::LoadInst *load = Builder.CreateLoad(ivarAddr, "load");
-    load->setAlignment(strategy.getIvarAlignment().getQuantity());
     load->setAtomic(llvm::Unordered);
 
     // Store that value into the return address.  Doing this with a
@@ -901,7 +895,7 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
     // FIXME: Can't this be simpler? This might even be worse than the
     // corresponding gcc code.
     llvm::Value *cmd =
-      Builder.CreateLoad(LocalDeclMap[getterMethod->getCmdDecl()], "cmd");
+      Builder.CreateLoad(GetAddrOfLocalVar(getterMethod->getCmdDecl()), "cmd");
     llvm::Value *self = Builder.CreateBitCast(LoadObjCSelf(), VoidPtrTy);
     llvm::Value *ivarOffset =
       EmitIvarOffset(classImpl->getClassInterface(), ivar);
@@ -952,8 +946,7 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
     switch (getEvaluationKind(ivarType)) {
     case TEK_Complex: {
       ComplexPairTy pair = EmitLoadOfComplex(LV, SourceLocation());
-      EmitStoreOfComplex(pair,
-                         MakeNaturalAlignAddrLValue(ReturnValue, ivarType),
+      EmitStoreOfComplex(pair, MakeAddrLValue(ReturnValue, ivarType),
                          /*init*/ true);
       return;
     }
@@ -966,7 +959,7 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
     case TEK_Scalar: {
       llvm::Value *value;
       if (propType->isReferenceType()) {
-        value = LV.getAddress();
+        value = LV.getAddress().getPointer();
       } else {
         // We want to load and autoreleaseReturnValue ARC __weak ivars.
         if (LV.getQuals().getObjCLifetime() == Qualifiers::OCL_Weak) {
@@ -1006,7 +999,7 @@ static void emitStructSetterCall(CodeGenFunction &CGF, ObjCMethodDecl *OMD,
   // The first argument is the address of the ivar.
   llvm::Value *ivarAddr = CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(),
                                                 CGF.LoadObjCSelf(), ivar, 0)
-    .getAddress();
+    .getPointer();
   ivarAddr = CGF.Builder.CreateBitCast(ivarAddr, CGF.Int8PtrTy);
   args.add(RValue::get(ivarAddr), CGF.getContext().VoidPtrTy);
 
@@ -1014,7 +1007,7 @@ static void emitStructSetterCall(CodeGenFunction &CGF, ObjCMethodDecl *OMD,
   ParmVarDecl *argVar = *OMD->param_begin();
   DeclRefExpr argRef(argVar, false, argVar->getType().getNonReferenceType(), 
                      VK_LValue, SourceLocation());
-  llvm::Value *argAddr = CGF.EmitLValue(&argRef).getAddress();
+  llvm::Value *argAddr = CGF.EmitLValue(&argRef).getPointer();
   argAddr = CGF.Builder.CreateBitCast(argAddr, CGF.Int8PtrTy);
   args.add(RValue::get(argAddr), CGF.getContext().VoidPtrTy);
 
@@ -1052,7 +1045,7 @@ static void emitCPPObjectAtomicSetterCall(CodeGenFunction &CGF,
   // The first argument is the address of the ivar.
   llvm::Value *ivarAddr = 
     CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), 
-                          CGF.LoadObjCSelf(), ivar, 0).getAddress();
+                          CGF.LoadObjCSelf(), ivar, 0).getPointer();
   ivarAddr = CGF.Builder.CreateBitCast(ivarAddr, CGF.Int8PtrTy);
   args.add(RValue::get(ivarAddr), CGF.getContext().VoidPtrTy);
   
@@ -1060,7 +1053,7 @@ static void emitCPPObjectAtomicSetterCall(CodeGenFunction &CGF,
   ParmVarDecl *argVar = *OMD->param_begin();
   DeclRefExpr argRef(argVar, false, argVar->getType().getNonReferenceType(), 
                      VK_LValue, SourceLocation());
-  llvm::Value *argAddr = CGF.EmitLValue(&argRef).getAddress();
+  llvm::Value *argAddr = CGF.EmitLValue(&argRef).getPointer();
   argAddr = CGF.Builder.CreateBitCast(argAddr, CGF.Int8PtrTy);
   args.add(RValue::get(argAddr), CGF.getContext().VoidPtrTy);
   
@@ -1135,29 +1128,27 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
     if (strategy.getIvarSize().isZero())
       return;
 
-    llvm::Value *argAddr = LocalDeclMap[*setterMethod->param_begin()];
+    Address argAddr = GetAddrOfLocalVar(*setterMethod->param_begin());
 
     LValue ivarLValue =
       EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), ivar, /*quals*/ 0);
-    llvm::Value *ivarAddr = ivarLValue.getAddress();
+    Address ivarAddr = ivarLValue.getAddress();
 
     // Currently, all atomic accesses have to be through integer
     // types, so there's no point in trying to pick a prettier type.
     llvm::Type *bitcastType =
       llvm::Type::getIntNTy(getLLVMContext(),
                             getContext().toBits(strategy.getIvarSize()));
-    bitcastType = bitcastType->getPointerTo(); // addrspace 0 okay
 
     // Cast both arguments to the chosen operation type.
-    argAddr = Builder.CreateBitCast(argAddr, bitcastType);
-    ivarAddr = Builder.CreateBitCast(ivarAddr, bitcastType);
+    argAddr = Builder.CreateElementBitCast(argAddr, bitcastType);
+    ivarAddr = Builder.CreateElementBitCast(ivarAddr, bitcastType);
 
     // This bitcast load is likely to cause some nasty IR.
     llvm::Value *load = Builder.CreateLoad(argAddr);
 
     // Perform an atomic store.  There are no memory ordering requirements.
     llvm::StoreInst *store = Builder.CreateStore(load, ivarAddr);
-    store->setAlignment(strategy.getIvarAlignment().getQuantity());
     store->setAtomic(llvm::Unordered);
     return;
   }
@@ -1189,13 +1180,14 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
     // Emit objc_setProperty((id) self, _cmd, offset, arg,
     //                       <is-atomic>, <is-copy>).
     llvm::Value *cmd =
-      Builder.CreateLoad(LocalDeclMap[setterMethod->getCmdDecl()]);
+      Builder.CreateLoad(GetAddrOfLocalVar(setterMethod->getCmdDecl()));
     llvm::Value *self =
       Builder.CreateBitCast(LoadObjCSelf(), VoidPtrTy);
     llvm::Value *ivarOffset =
       EmitIvarOffset(classImpl->getClassInterface(), ivar);
-    llvm::Value *arg = LocalDeclMap[*setterMethod->param_begin()];
-    arg = Builder.CreateBitCast(Builder.CreateLoad(arg, "arg"), VoidPtrTy);
+    Address argAddr = GetAddrOfLocalVar(*setterMethod->param_begin());
+    llvm::Value *arg = Builder.CreateLoad(argAddr, "arg");
+    arg = Builder.CreateBitCast(arg, VoidPtrTy);
 
     CallArgList args;
     args.add(RValue::get(self), getContext().getObjCIdType());
@@ -1328,7 +1320,7 @@ namespace {
 
 /// Like CodeGenFunction::destroyARCStrong, but do it with a call.
 static void destroyARCStrongWithStore(CodeGenFunction &CGF,
-                                      llvm::Value *addr,
+                                      Address addr,
                                       QualType type) {
   llvm::Value *null = getNullForVariable(addr);
   CGF.EmitARCStoreStrongCall(addr, null, /*ignored*/ true);
@@ -1458,7 +1450,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   // Fast enumeration state.
   QualType StateTy = CGM.getObjCFastEnumerationStateType();
-  llvm::AllocaInst *StatePtr = CreateMemTemp(StateTy, "state.ptr");
+  Address StatePtr = CreateMemTemp(StateTy, "state.ptr");
   EmitNullInitialization(StatePtr, StateTy);
 
   // Number of elements in the items array.
@@ -1477,7 +1469,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     getContext().getConstantArrayType(getContext().getObjCIdType(),
                                       llvm::APInt(32, NumItems),
                                       ArrayType::Normal, 0);
-  llvm::Value *ItemsPtr = CreateMemTemp(ItemsTy, "items.ptr");
+  Address ItemsPtr = CreateMemTemp(ItemsTy, "items.ptr");
 
   // Emit the collection pointer.  In ARC, we do a retain.
   llvm::Value *Collection;
@@ -1498,14 +1490,16 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   CallArgList Args;
 
   // The first argument is a temporary of the enumeration-state type.
-  Args.add(RValue::get(StatePtr), getContext().getPointerType(StateTy));
+  Args.add(RValue::get(StatePtr.getPointer()),
+           getContext().getPointerType(StateTy));
 
   // The second argument is a temporary array with space for NumItems
   // pointers.  We'll actually be loading elements from the array
   // pointer written into the control state; this buffer is so that
   // collections that *aren't* backed by arrays can still queue up
   // batches of elements.
-  Args.add(RValue::get(ItemsPtr), getContext().getPointerType(ItemsTy));
+  Args.add(RValue::get(ItemsPtr.getPointer()),
+           getContext().getPointerType(ItemsTy));
 
   // The third argument is the capacity of that temporary array.
   llvm::Type *UnsignedLongLTy = ConvertType(getContext().UnsignedLongTy);
@@ -1542,13 +1536,14 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   // Save the initial mutations value.  This is the value at an
   // address that was written into the state object by
   // countByEnumeratingWithState:objects:count:.
-  llvm::Value *StateMutationsPtrPtr = Builder.CreateStructGEP(
-      StatePtr->getAllocatedType(), StatePtr, 2, "mutationsptr.ptr");
-  llvm::Value *StateMutationsPtr = Builder.CreateLoad(StateMutationsPtrPtr,
-                                                      "mutationsptr");
+  Address StateMutationsPtrPtr = Builder.CreateStructGEP(
+      StatePtr, 2, 2 * getPointerSize(), "mutationsptr.ptr");
+  llvm::Value *StateMutationsPtr
+    = Builder.CreateLoad(StateMutationsPtrPtr, "mutationsptr");
 
   llvm::Value *initialMutations =
-    Builder.CreateLoad(StateMutationsPtr, "forcoll.initial-mutations");
+    Builder.CreateAlignedLoad(StateMutationsPtr, getPointerAlign(),
+                              "forcoll.initial-mutations");
 
   // Start looping.  This is the point we return to whenever we have a
   // fresh, non-empty batch of objects.
@@ -1570,7 +1565,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   // refreshes.
   StateMutationsPtr = Builder.CreateLoad(StateMutationsPtrPtr, "mutationsptr");
   llvm::Value *currentMutations
-    = Builder.CreateLoad(StateMutationsPtr, "statemutations");
+    = Builder.CreateAlignedLoad(StateMutationsPtr, getPointerAlign(),
+                                "statemutations");
 
   llvm::BasicBlock *WasMutatedBB = createBasicBlock("forcoll.mutated");
   llvm::BasicBlock *WasNotMutatedBB = createBasicBlock("forcoll.notmutated");
@@ -1623,15 +1619,16 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   // Fetch the buffer out of the enumeration state.
   // TODO: this pointer should actually be invariant between
   // refreshes, which would help us do certain loop optimizations.
-  llvm::Value *StateItemsPtr = Builder.CreateStructGEP(
-      StatePtr->getAllocatedType(), StatePtr, 1, "stateitems.ptr");
+  Address StateItemsPtr = Builder.CreateStructGEP(
+      StatePtr, 1, getPointerSize(), "stateitems.ptr");
   llvm::Value *EnumStateItems =
     Builder.CreateLoad(StateItemsPtr, "stateitems");
 
   // Fetch the value at the current index from the buffer.
   llvm::Value *CurrentItemPtr =
     Builder.CreateGEP(EnumStateItems, index, "currentitem.ptr");
-  llvm::Value *CurrentItem = Builder.CreateLoad(CurrentItemPtr);
+  llvm::Value *CurrentItem =
+    Builder.CreateAlignedLoad(CurrentItemPtr, getPointerAlign());
 
   // Cast that value to the right type.
   CurrentItem = Builder.CreateBitCast(CurrentItem, convertedElementType,
@@ -1838,7 +1835,7 @@ static llvm::Value *emitARCValueOperation(CodeGenFunction &CGF,
 /// Perform an operation having the following signature:
 ///   i8* (i8**)
 static llvm::Value *emitARCLoadOperation(CodeGenFunction &CGF,
-                                         llvm::Value *addr,
+                                         Address addr,
                                          llvm::Constant *&fn,
                                          StringRef fnName) {
   if (!fn) {
@@ -1848,16 +1845,15 @@ static llvm::Value *emitARCLoadOperation(CodeGenFunction &CGF,
   }
 
   // Cast the argument to 'id*'.
-  llvm::Type *origType = addr->getType();
+  llvm::Type *origType = addr.getElementType();
   addr = CGF.Builder.CreateBitCast(addr, CGF.Int8PtrPtrTy);
 
   // Call the function.
-  llvm::Value *result = CGF.EmitNounwindRuntimeCall(fn, addr);
+  llvm::Value *result = CGF.EmitNounwindRuntimeCall(fn, addr.getPointer());
 
   // Cast the result back to a dereference of the original type.
-  if (origType != CGF.Int8PtrPtrTy)
-    result = CGF.Builder.CreateBitCast(result,
-                        cast<llvm::PointerType>(origType)->getElementType());
+  if (origType != CGF.Int8PtrTy)
+    result = CGF.Builder.CreateBitCast(result, origType);
 
   return result;
 }
@@ -1865,13 +1861,12 @@ static llvm::Value *emitARCLoadOperation(CodeGenFunction &CGF,
 /// Perform an operation having the following signature:
 ///   i8* (i8**, i8*)
 static llvm::Value *emitARCStoreOperation(CodeGenFunction &CGF,
-                                          llvm::Value *addr,
+                                          Address addr,
                                           llvm::Value *value,
                                           llvm::Constant *&fn,
                                           StringRef fnName,
                                           bool ignored) {
-  assert(cast<llvm::PointerType>(addr->getType())->getElementType()
-           == value->getType());
+  assert(addr.getElementType() == value->getType());
 
   if (!fn) {
     llvm::Type *argTypes[] = { CGF.Int8PtrPtrTy, CGF.Int8PtrTy };
@@ -1884,7 +1879,7 @@ static llvm::Value *emitARCStoreOperation(CodeGenFunction &CGF,
   llvm::Type *origType = value->getType();
 
   llvm::Value *args[] = {
-    CGF.Builder.CreateBitCast(addr, CGF.Int8PtrPtrTy),
+    CGF.Builder.CreateBitCast(addr.getPointer(), CGF.Int8PtrPtrTy),
     CGF.Builder.CreateBitCast(value, CGF.Int8PtrTy)
   };
   llvm::CallInst *result = CGF.EmitNounwindRuntimeCall(fn, args);
@@ -1897,11 +1892,11 @@ static llvm::Value *emitARCStoreOperation(CodeGenFunction &CGF,
 /// Perform an operation having the following signature:
 ///   void (i8**, i8**)
 static void emitARCCopyOperation(CodeGenFunction &CGF,
-                                 llvm::Value *dst,
-                                 llvm::Value *src,
+                                 Address dst,
+                                 Address src,
                                  llvm::Constant *&fn,
                                  StringRef fnName) {
-  assert(dst->getType() == src->getType());
+  assert(dst.getType() == src.getType());
 
   if (!fn) {
     llvm::Type *argTypes[] = { CGF.Int8PtrPtrTy, CGF.Int8PtrPtrTy };
@@ -1912,8 +1907,8 @@ static void emitARCCopyOperation(CodeGenFunction &CGF,
   }
 
   llvm::Value *args[] = {
-    CGF.Builder.CreateBitCast(dst, CGF.Int8PtrPtrTy),
-    CGF.Builder.CreateBitCast(src, CGF.Int8PtrPtrTy)
+    CGF.Builder.CreateBitCast(dst.getPointer(), CGF.Int8PtrPtrTy),
+    CGF.Builder.CreateBitCast(src.getPointer(), CGF.Int8PtrPtrTy)
   };
   CGF.EmitNounwindRuntimeCall(fn, args);
 }
@@ -2050,12 +2045,10 @@ void CodeGenFunction::EmitARCRelease(llvm::Value *value,
 /// At -O1 and above, just load and call objc_release.
 ///
 ///   call void \@objc_storeStrong(i8** %addr, i8* null)
-void CodeGenFunction::EmitARCDestroyStrong(llvm::Value *addr,
+void CodeGenFunction::EmitARCDestroyStrong(Address addr,
                                            ARCPreciseLifetime_t precise) {
   if (CGM.getCodeGenOpts().OptimizationLevel == 0) {
-    llvm::PointerType *addrTy = cast<llvm::PointerType>(addr->getType());
-    llvm::Value *null = llvm::ConstantPointerNull::get(
-                          cast<llvm::PointerType>(addrTy->getElementType()));
+    llvm::Value *null = getNullForVariable(addr);
     EmitARCStoreStrongCall(addr, null, /*ignored*/ true);
     return;
   }
@@ -2066,11 +2059,10 @@ void CodeGenFunction::EmitARCDestroyStrong(llvm::Value *addr,
 
 /// Store into a strong object.  Always calls this:
 ///   call void \@objc_storeStrong(i8** %addr, i8* %value)
-llvm::Value *CodeGenFunction::EmitARCStoreStrongCall(llvm::Value *addr,
+llvm::Value *CodeGenFunction::EmitARCStoreStrongCall(Address addr,
                                                      llvm::Value *value,
                                                      bool ignored) {
-  assert(cast<llvm::PointerType>(addr->getType())->getElementType()
-           == value->getType());
+  assert(addr.getElementType() == value->getType());
 
   llvm::Constant *&fn = CGM.getARCEntrypoints().objc_storeStrong;
   if (!fn) {
@@ -2081,7 +2073,7 @@ llvm::Value *CodeGenFunction::EmitARCStoreStrongCall(llvm::Value *addr,
   }
 
   llvm::Value *args[] = {
-    Builder.CreateBitCast(addr, Int8PtrPtrTy),
+    Builder.CreateBitCast(addr.getPointer(), Int8PtrPtrTy),
     Builder.CreateBitCast(value, Int8PtrTy)
   };
   EmitNounwindRuntimeCall(fn, args);
@@ -2184,14 +2176,14 @@ CodeGenFunction::EmitARCRetainAutoreleaseNonBlock(llvm::Value *value) {
 
 /// i8* \@objc_loadWeak(i8** %addr)
 /// Essentially objc_autorelease(objc_loadWeakRetained(addr)).
-llvm::Value *CodeGenFunction::EmitARCLoadWeak(llvm::Value *addr) {
+llvm::Value *CodeGenFunction::EmitARCLoadWeak(Address addr) {
   return emitARCLoadOperation(*this, addr,
                               CGM.getARCEntrypoints().objc_loadWeak,
                               "objc_loadWeak");
 }
 
 /// i8* \@objc_loadWeakRetained(i8** %addr)
-llvm::Value *CodeGenFunction::EmitARCLoadWeakRetained(llvm::Value *addr) {
+llvm::Value *CodeGenFunction::EmitARCLoadWeakRetained(Address addr) {
   return emitARCLoadOperation(*this, addr,
                               CGM.getARCEntrypoints().objc_loadWeakRetained,
                               "objc_loadWeakRetained");
@@ -2199,7 +2191,7 @@ llvm::Value *CodeGenFunction::EmitARCLoadWeakRetained(llvm::Value *addr) {
 
 /// i8* \@objc_storeWeak(i8** %addr, i8* %value)
 /// Returns %value.
-llvm::Value *CodeGenFunction::EmitARCStoreWeak(llvm::Value *addr,
+llvm::Value *CodeGenFunction::EmitARCStoreWeak(Address addr,
                                                llvm::Value *value,
                                                bool ignored) {
   return emitARCStoreOperation(*this, addr, value,
@@ -2211,7 +2203,7 @@ llvm::Value *CodeGenFunction::EmitARCStoreWeak(llvm::Value *addr,
 /// Returns %value.  %addr is known to not have a current weak entry.
 /// Essentially equivalent to:
 ///   *addr = nil; objc_storeWeak(addr, value);
-void CodeGenFunction::EmitARCInitWeak(llvm::Value *addr, llvm::Value *value) {
+void CodeGenFunction::EmitARCInitWeak(Address addr, llvm::Value *value) {
   // If we're initializing to null, just write null to memory; no need
   // to get the runtime involved.  But don't do this if optimization
   // is enabled, because accounting for this would make the optimizer
@@ -2229,7 +2221,7 @@ void CodeGenFunction::EmitARCInitWeak(llvm::Value *addr, llvm::Value *value) {
 
 /// void \@objc_destroyWeak(i8** %addr)
 /// Essentially objc_storeWeak(addr, nil).
-void CodeGenFunction::EmitARCDestroyWeak(llvm::Value *addr) {
+void CodeGenFunction::EmitARCDestroyWeak(Address addr) {
   llvm::Constant *&fn = CGM.getARCEntrypoints().objc_destroyWeak;
   if (!fn) {
     llvm::FunctionType *fnType =
@@ -2240,13 +2232,13 @@ void CodeGenFunction::EmitARCDestroyWeak(llvm::Value *addr) {
   // Cast the argument to 'id*'.
   addr = Builder.CreateBitCast(addr, Int8PtrPtrTy);
 
-  EmitNounwindRuntimeCall(fn, addr);
+  EmitNounwindRuntimeCall(fn, addr.getPointer());
 }
 
 /// void \@objc_moveWeak(i8** %dest, i8** %src)
 /// Disregards the current value in %dest.  Leaves %src pointing to nothing.
 /// Essentially (objc_copyWeak(dest, src), objc_destroyWeak(src)).
-void CodeGenFunction::EmitARCMoveWeak(llvm::Value *dst, llvm::Value *src) {
+void CodeGenFunction::EmitARCMoveWeak(Address dst, Address src) {
   emitARCCopyOperation(*this, dst, src,
                        CGM.getARCEntrypoints().objc_moveWeak,
                        "objc_moveWeak");
@@ -2255,7 +2247,7 @@ void CodeGenFunction::EmitARCMoveWeak(llvm::Value *dst, llvm::Value *src) {
 /// void \@objc_copyWeak(i8** %dest, i8** %src)
 /// Disregards the current value in %dest.  Essentially
 ///   objc_release(objc_initWeak(dest, objc_readWeakRetained(src)))
-void CodeGenFunction::EmitARCCopyWeak(llvm::Value *dst, llvm::Value *src) {
+void CodeGenFunction::EmitARCCopyWeak(Address dst, Address src) {
   emitARCCopyOperation(*this, dst, src,
                        CGM.getARCEntrypoints().objc_copyWeak,
                        "objc_copyWeak");
@@ -2332,19 +2324,19 @@ void CodeGenFunction::EmitObjCMRRAutoreleasePoolPop(llvm::Value *Arg) {
 }
 
 void CodeGenFunction::destroyARCStrongPrecise(CodeGenFunction &CGF,
-                                              llvm::Value *addr,
+                                              Address addr,
                                               QualType type) {
   CGF.EmitARCDestroyStrong(addr, ARCPreciseLifetime);
 }
 
 void CodeGenFunction::destroyARCStrongImprecise(CodeGenFunction &CGF,
-                                                llvm::Value *addr,
+                                                Address addr,
                                                 QualType type) {
   CGF.EmitARCDestroyStrong(addr, ARCImpreciseLifetime);
 }
 
 void CodeGenFunction::destroyARCWeak(CodeGenFunction &CGF,
-                                     llvm::Value *addr,
+                                     Address addr,
                                      QualType type) {
   CGF.EmitARCDestroyWeak(addr);
 }
@@ -3046,7 +3038,8 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
   CharUnits Alignment
     = getContext().getTypeAlignInChars(TheCXXConstructExpr->getType());
   EmitAggExpr(TheCXXConstructExpr, 
-              AggValueSlot::forAddr(DV.getScalarVal(), Alignment, Qualifiers(),
+              AggValueSlot::forAddr(Address(DV.getScalarVal(), Alignment),
+                                    Qualifiers(),
                                     AggValueSlot::IsDestructed,
                                     AggValueSlot::DoesNotNeedGCBarriers,
                                     AggValueSlot::IsNotAliased));

@@ -48,11 +48,14 @@ protected:
     : CGM(CGM), MangleCtx(CGM.getContext().createMangleContext()) {}
 
 protected:
-  ImplicitParamDecl *&getThisDecl(CodeGenFunction &CGF) {
+  ImplicitParamDecl *getThisDecl(CodeGenFunction &CGF) {
     return CGF.CXXABIThisDecl;
   }
-  llvm::Value *&getThisValue(CodeGenFunction &CGF) {
+  llvm::Value *getThisValue(CodeGenFunction &CGF) {
     return CGF.CXXABIThisValue;
+  }
+  Address getThisAddress(CodeGenFunction &CGF) {
+    return Address(CGF.CXXABIThisValue, CGF.CXXABIThisAlignment);
   }
 
   /// Issue a diagnostic about unsupported features in the ABI.
@@ -76,6 +79,12 @@ protected:
 
   virtual bool requiresArrayCookie(const CXXDeleteExpr *E, QualType eltType);
   virtual bool requiresArrayCookie(const CXXNewExpr *E);
+
+  /// Determine whether there's something special about the rules of
+  /// the ABI tell us that 'this' is a complete object within the
+  /// given function.  Obvious common logic like being defined on a
+  /// final class will have been taken care of by the caller.
+  virtual bool isThisCompleteObject(GlobalDecl GD) const = 0;
 
 public:
 
@@ -135,13 +144,14 @@ public:
   /// pointer.  Apply the this-adjustment and set 'This' to the
   /// adjusted value.
   virtual llvm::Value *EmitLoadOfMemberFunctionPointer(
-      CodeGenFunction &CGF, const Expr *E, llvm::Value *&This,
-      llvm::Value *MemPtr, const MemberPointerType *MPT);
+      CodeGenFunction &CGF, const Expr *E, Address This,
+      llvm::Value *&ThisPtrForCall, llvm::Value *MemPtr,
+      const MemberPointerType *MPT);
 
   /// Calculate an l-value from an object and a data member pointer.
   virtual llvm::Value *
   EmitMemberDataPointerAddress(CodeGenFunction &CGF, const Expr *E,
-                               llvm::Value *Base, llvm::Value *MemPtr,
+                               Address Base, llvm::Value *MemPtr,
                                const MemberPointerType *MPT);
 
   /// Perform a derived-to-base, base-to-derived, or bitcast member
@@ -212,7 +222,7 @@ protected:
 public:
   virtual void emitVirtualObjectDelete(CodeGenFunction &CGF,
                                        const CXXDeleteExpr *DE,
-                                       llvm::Value *Ptr, QualType ElementType,
+                                       Address Ptr, QualType ElementType,
                                        const CXXDestructorDecl *Dtor) = 0;
   virtual void emitRethrow(CodeGenFunction &CGF, bool isNoReturn) = 0;
   virtual void emitThrow(CodeGenFunction &CGF, const CXXThrowExpr *E) = 0;
@@ -235,26 +245,26 @@ public:
                                          QualType SrcRecordTy) = 0;
   virtual void EmitBadTypeidCall(CodeGenFunction &CGF) = 0;
   virtual llvm::Value *EmitTypeid(CodeGenFunction &CGF, QualType SrcRecordTy,
-                                  llvm::Value *ThisPtr,
+                                  Address ThisPtr,
                                   llvm::Type *StdTypeInfoPtrTy) = 0;
 
   virtual bool shouldDynamicCastCallBeNullChecked(bool SrcIsPtr,
                                                   QualType SrcRecordTy) = 0;
 
   virtual llvm::Value *
-  EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
+  EmitDynamicCastCall(CodeGenFunction &CGF, Address Value,
                       QualType SrcRecordTy, QualType DestTy,
                       QualType DestRecordTy, llvm::BasicBlock *CastEnd) = 0;
 
   virtual llvm::Value *EmitDynamicCastToVoid(CodeGenFunction &CGF,
-                                             llvm::Value *Value,
+                                             Address Value,
                                              QualType SrcRecordTy,
                                              QualType DestTy) = 0;
 
   virtual bool EmitBadCastCall(CodeGenFunction &CGF) = 0;
 
   virtual llvm::Value *GetVirtualBaseClassOffset(CodeGenFunction &CGF,
-                                                 llvm::Value *This,
+                                                 Address This,
                                                  const CXXRecordDecl *ClassDecl,
                                         const CXXRecordDecl *BaseClassDecl) = 0;
 
@@ -297,10 +307,9 @@ public:
   /// Perform ABI-specific "this" argument adjustment required prior to
   /// a call of a virtual function.
   /// The "VirtualCall" argument is true iff the call itself is virtual.
-  virtual llvm::Value *
+  virtual Address
   adjustThisArgumentForVirtualFunctionCall(CodeGenFunction &CGF, GlobalDecl GD,
-                                           llvm::Value *This,
-                                           bool VirtualCall) {
+                                           Address This, bool VirtualCall) {
     return This;
   }
 
@@ -340,7 +349,7 @@ public:
   virtual void EmitDestructorCall(CodeGenFunction &CGF,
                                   const CXXDestructorDecl *DD, CXXDtorType Type,
                                   bool ForVirtualBase, bool Delegating,
-                                  llvm::Value *This) = 0;
+                                  Address This) = 0;
 
   /// Emits the VTable definitions required for the given record type.
   virtual void emitVTableDefinitions(CodeGenVTables &CGVT,
@@ -368,14 +377,14 @@ public:
   /// Build a virtual function pointer in the ABI-specific way.
   virtual llvm::Value *getVirtualFunctionPointer(CodeGenFunction &CGF,
                                                  GlobalDecl GD,
-                                                 llvm::Value *This,
+                                                 Address This,
                                                  llvm::Type *Ty,
                                                  SourceLocation Loc) = 0;
 
   /// Emit the ABI-specific virtual destructor call.
   virtual llvm::Value *
   EmitVirtualDestructorCall(CodeGenFunction &CGF, const CXXDestructorDecl *Dtor,
-                            CXXDtorType DtorType, llvm::Value *This,
+                            CXXDtorType DtorType, Address This,
                             const CXXMemberCallExpr *CE) = 0;
 
   virtual void adjustCallArgsForDestructorThunk(CodeGenFunction &CGF,
@@ -391,11 +400,11 @@ public:
                                GlobalDecl GD, bool ReturnAdjustment) = 0;
 
   virtual llvm::Value *performThisAdjustment(CodeGenFunction &CGF,
-                                             llvm::Value *This,
+                                             Address This,
                                              const ThisAdjustment &TA) = 0;
 
   virtual llvm::Value *performReturnAdjustment(CodeGenFunction &CGF,
-                                               llvm::Value *Ret,
+                                               Address Ret,
                                                const ReturnAdjustment &RA) = 0;
 
   virtual void EmitReturnFromThunk(CodeGenFunction &CGF,
@@ -432,11 +441,11 @@ public:
   ///   always a size_t
   /// \param ElementType - the base element allocated type,
   ///   i.e. the allocated type after stripping all array types
-  virtual llvm::Value *InitializeArrayCookie(CodeGenFunction &CGF,
-                                             llvm::Value *NewPtr,
-                                             llvm::Value *NumElements,
-                                             const CXXNewExpr *expr,
-                                             QualType ElementType);
+  virtual Address InitializeArrayCookie(CodeGenFunction &CGF,
+                                        Address NewPtr,
+                                        llvm::Value *NumElements,
+                                        const CXXNewExpr *expr,
+                                        QualType ElementType);
 
   /// Reads the array cookie associated with the given pointer,
   /// if it has one.
@@ -451,7 +460,7 @@ public:
   ///   function
   /// \param CookieSize - an out parameter which will be initialized
   ///   with the size of the cookie, or zero if there is no cookie
-  virtual void ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *Ptr,
+  virtual void ReadArrayCookie(CodeGenFunction &CGF, Address Ptr,
                                const CXXDeleteExpr *expr,
                                QualType ElementType, llvm::Value *&NumElements,
                                llvm::Value *&AllocPtr, CharUnits &CookieSize);
@@ -474,8 +483,7 @@ protected:
   /// Other parameters are as above.
   ///
   /// \return a size_t
-  virtual llvm::Value *readArrayCookieImpl(CodeGenFunction &IGF,
-                                           llvm::Value *ptr,
+  virtual llvm::Value *readArrayCookieImpl(CodeGenFunction &IGF, Address ptr,
                                            CharUnits cookieSize);
 
 public:

@@ -269,7 +269,7 @@ int long_double_int_overflow(long double ld) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: store x86_fp80 %[[F]], x86_fp80* %[[ALLOCA:.*]], !nosanitize
+  // CHECK-UBSAN: store x86_fp80 %[[F]], x86_fp80* %[[ALLOCA:.*]], align 16, !nosanitize
   // CHECK-UBSAN: %[[ARG:.*]] = ptrtoint x86_fp80* %[[ALLOCA]] to i64
   // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1300]] to i8*), i64 %[[ARG]]
 

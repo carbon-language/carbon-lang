@@ -73,10 +73,12 @@ CGCXXABI::ConvertMemberPointerType(const MemberPointerType *MPT) {
 }
 
 llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(
-    CodeGenFunction &CGF, const Expr *E, llvm::Value *&This,
+    CodeGenFunction &CGF, const Expr *E, Address This,
+    llvm::Value *&ThisPtrForCall,
     llvm::Value *MemPtr, const MemberPointerType *MPT) {
   ErrorUnsupportedABI(CGF, "calls through member pointers");
 
+  ThisPtrForCall = This.getPointer();
   const FunctionProtoType *FPT = 
     MPT->getPointeeType()->getAs<FunctionProtoType>();
   const CXXRecordDecl *RD = 
@@ -88,10 +90,11 @@ llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(
 
 llvm::Value *
 CGCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF, const Expr *E,
-                                       llvm::Value *Base, llvm::Value *MemPtr,
+                                       Address Base, llvm::Value *MemPtr,
                                        const MemberPointerType *MPT) {
   ErrorUnsupportedABI(CGF, "loads of member pointers");
-  llvm::Type *Ty = CGF.ConvertType(MPT->getPointeeType())->getPointerTo();
+  llvm::Type *Ty = CGF.ConvertType(MPT->getPointeeType())
+                         ->getPointerTo(Base.getAddressSpace());
   return llvm::Constant::getNullValue(Ty);
 }
 
@@ -159,13 +162,24 @@ void CGCXXABI::buildThisParam(CodeGenFunction &CGF, FunctionArgList &params) {
                                 &CGM.getContext().Idents.get("this"),
                                 MD->getThisType(CGM.getContext()));
   params.push_back(ThisDecl);
-  getThisDecl(CGF) = ThisDecl;
+  CGF.CXXABIThisDecl = ThisDecl;
+
+  // Compute the presumed alignment of 'this', which basically comes
+  // down to whether we know it's a complete object or not.
+  auto &Layout = CGF.getContext().getASTRecordLayout(MD->getParent());
+  if (MD->getParent()->getNumVBases() == 0 || // avoid vcall in common case
+      MD->getParent()->hasAttr<FinalAttr>() ||
+      !isThisCompleteObject(CGF.CurGD)) {
+    CGF.CXXABIThisAlignment = Layout.getAlignment();
+  } else {
+    CGF.CXXABIThisAlignment = Layout.getNonVirtualAlignment();
+  }
 }
 
 void CGCXXABI::EmitThisParam(CodeGenFunction &CGF) {
   /// Initialize the 'this' slot.
   assert(getThisDecl(CGF) && "no 'this' variable for function");
-  getThisValue(CGF)
+  CGF.CXXABIThisValue
     = CGF.Builder.CreateLoad(CGF.GetAddrOfLocalVar(getThisDecl(CGF)),
                              "this");
 }
@@ -186,14 +200,14 @@ CharUnits CGCXXABI::getArrayCookieSizeImpl(QualType elementType) {
   return CharUnits::Zero();
 }
 
-llvm::Value *CGCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
-                                             llvm::Value *NewPtr,
-                                             llvm::Value *NumElements,
-                                             const CXXNewExpr *expr,
-                                             QualType ElementType) {
+Address CGCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
+                                        Address NewPtr,
+                                        llvm::Value *NumElements,
+                                        const CXXNewExpr *expr,
+                                        QualType ElementType) {
   // Should never be called.
   ErrorUnsupportedABI(CGF, "array cookie initialization");
-  return nullptr;
+  return Address::invalid();
 }
 
 bool CGCXXABI::requiresArrayCookie(const CXXDeleteExpr *expr,
@@ -215,31 +229,30 @@ bool CGCXXABI::requiresArrayCookie(const CXXNewExpr *expr) {
   return expr->getAllocatedType().isDestructedType();
 }
 
-void CGCXXABI::ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *ptr,
+void CGCXXABI::ReadArrayCookie(CodeGenFunction &CGF, Address ptr,
                                const CXXDeleteExpr *expr, QualType eltTy,
                                llvm::Value *&numElements,
                                llvm::Value *&allocPtr, CharUnits &cookieSize) {
   // Derive a char* in the same address space as the pointer.
-  unsigned AS = ptr->getType()->getPointerAddressSpace();
-  llvm::Type *charPtrTy = CGF.Int8Ty->getPointerTo(AS);
-  ptr = CGF.Builder.CreateBitCast(ptr, charPtrTy);
+  ptr = CGF.Builder.CreateElementBitCast(ptr, CGF.Int8Ty);
 
   // If we don't need an array cookie, bail out early.
   if (!requiresArrayCookie(expr, eltTy)) {
-    allocPtr = ptr;
+    allocPtr = ptr.getPointer();
     numElements = nullptr;
     cookieSize = CharUnits::Zero();
     return;
   }
 
   cookieSize = getArrayCookieSizeImpl(eltTy);
-  allocPtr = CGF.Builder.CreateConstInBoundsGEP1_64(ptr,
-                                                    -cookieSize.getQuantity());
-  numElements = readArrayCookieImpl(CGF, allocPtr, cookieSize);
+  Address allocAddr =
+    CGF.Builder.CreateConstInBoundsByteGEP(ptr, -cookieSize);
+  allocPtr = allocAddr.getPointer();
+  numElements = readArrayCookieImpl(CGF, allocAddr, cookieSize);
 }
 
 llvm::Value *CGCXXABI::readArrayCookieImpl(CodeGenFunction &CGF,
-                                           llvm::Value *ptr,
+                                           Address ptr,
                                            CharUnits cookieSize) {
   ErrorUnsupportedABI(CGF, "reading a new[] cookie");
   return llvm::ConstantInt::get(CGF.SizeTy, 0);

@@ -162,7 +162,7 @@ C::C() { foo(); }
 // WIN32-NOT:  load
 // WIN32:      bitcast %"struct.crash_on_partial_destroy::C"* %{{.*}} to i8*
 // WIN32-NOT:  load
-// WIN32:      getelementptr inbounds i8, i8* %{{.*}}, i64 4
+// WIN32:      getelementptr inbounds i8, i8* %{{.*}}, i32 4
 // WIN32-NOT:  load
 // WIN32:      bitcast i8* %{{.*}} to %"struct.crash_on_partial_destroy::A"*
 // WIN32:      call x86_thiscallcc void @"\01??1A@crash_on_partial_destroy@@UAE@XZ"

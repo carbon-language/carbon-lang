@@ -152,8 +152,8 @@ namespace test3 {
   void e(A *x) {
     // CHECK-LABEL: define void @_ZN5test31eEPNS_1AE(
     // CHECK: icmp eq {{.*}}, null
-    // CHECK: getelementptr {{.*}}, i64 -8
-    // CHECK: getelementptr {{.*}}, i64 4
+    // CHECK: getelementptr {{.*}}, i32 -8
+    // CHECK: getelementptr {{.*}}, i32 4
     // CHECK: bitcast {{.*}} to i32*
     // CHECK: load
     // CHECK: invoke {{.*}} @_ZN5test31AD1Ev
@@ -164,8 +164,8 @@ namespace test3 {
   void f(A (*x)[20]) {
     // CHECK-LABEL: define void @_ZN5test31fEPA20_NS_1AE(
     // CHECK: icmp eq {{.*}}, null
-    // CHECK: getelementptr {{.*}}, i64 -8
-    // CHECK: getelementptr {{.*}}, i64 4
+    // CHECK: getelementptr {{.*}}, i32 -8
+    // CHECK: getelementptr {{.*}}, i32 4
     // CHECK: bitcast {{.*}} to i32*
     // CHECK: load
     // CHECK: invoke {{.*}} @_ZN5test31AD1Ev
@@ -223,8 +223,8 @@ namespace test4 {
 
   void e(A *x) {
     // CHECK-LABEL: define void @_ZN5test41eEPNS_1AE(
-    // CHECK: [[ALLOC:%.*]] = getelementptr inbounds {{.*}}, i64 -8
-    // CHECK: getelementptr inbounds {{.*}}, i64 4
+    // CHECK: [[ALLOC:%.*]] = getelementptr inbounds {{.*}}, i32 -8
+    // CHECK: getelementptr inbounds {{.*}}, i32 4
     // CHECK: bitcast
     // CHECK: [[T0:%.*]] = load i32, i32*
     // CHECK: [[T1:%.*]] = mul i32 4, [[T0]]
@@ -235,8 +235,8 @@ namespace test4 {
 
   void f(A (*x)[20]) {
     // CHECK-LABEL: define void @_ZN5test41fEPA20_NS_1AE(
-    // CHECK: [[ALLOC:%.*]] = getelementptr inbounds {{.*}}, i64 -8
-    // CHECK: getelementptr inbounds {{.*}}, i64 4
+    // CHECK: [[ALLOC:%.*]] = getelementptr inbounds {{.*}}, i32 -8
+    // CHECK: getelementptr inbounds {{.*}}, i32 4
     // CHECK: bitcast
     // CHECK: [[T0:%.*]] = load i32, i32*
     // CHECK: [[T1:%.*]] = mul i32 4, [[T0]]
@@ -293,7 +293,7 @@ namespace test7 {
 
   // CHECK-LABEL: define void @_ZN5test74testEv() {{.*}} personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   void test() {
-    // CHECK:      [[T0:%.*]] = load atomic i8, i8* bitcast (i32* @_ZGVZN5test74testEvE1x to i8*) acquire, align 1
+    // CHECK:      [[T0:%.*]] = load atomic i8, i8* bitcast (i32* @_ZGVZN5test74testEvE1x to i8*) acquire, align 4
     // CHECK-NEXT: [[T1:%.*]] = and i8 [[T0]], 1
     // CHECK-NEXT: [[T2:%.*]] = icmp eq i8 [[T1]], 0
     // CHECK-NEXT: br i1 [[T2]]
@@ -328,7 +328,7 @@ namespace test8 {
 
   // CHECK-LABEL: define void @_ZN5test84testEv() {{.*}} personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   void test() {
-    // CHECK:      [[T0:%.*]] = load atomic i8, i8* bitcast (i32* @_ZGVZN5test84testEvE1x to i8*) acquire, align 1
+    // CHECK:      [[T0:%.*]] = load atomic i8, i8* bitcast (i32* @_ZGVZN5test84testEvE1x to i8*) acquire, align 4
     // CHECK-NEXT: [[T1:%.*]] = and i8 [[T0]], 1
     // CHECK-NEXT: [[T2:%.*]] = icmp eq i8 [[T1]], 0
     // CHECK-NEXT: br i1 [[T2]]
@@ -388,7 +388,7 @@ namespace test9 {
 // CHECK-NEXT: store i32 16, i32* [[T0]]
 // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds i32, i32* [[T0]], i32 1
 // CHECK-NEXT: store i32 [[N]], i32* [[T1]]
-// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds i8, i8* [[ALLOC]], i64 16
+// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds i8, i8* [[ALLOC]], i32 16
 // CHECK-NEXT: bitcast i8* [[T0]] to [[TEST9]]*
 //   Array allocation follows.
 
@@ -400,8 +400,8 @@ namespace test9 {
 // CHECK-NEXT: [[T0:%.*]] = icmp eq [[TEST9]]* [[BEGIN]], null
 // CHECK-NEXT: br i1 [[T0]],
 // CHECK:      [[T0:%.*]] = bitcast [[TEST9]]* [[BEGIN]] to i8*
-// CHECK-NEXT: [[ALLOC:%.*]] = getelementptr inbounds i8, i8* [[T0]], i64 -16
-// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds i8, i8* [[ALLOC]], i64 4
+// CHECK-NEXT: [[ALLOC:%.*]] = getelementptr inbounds i8, i8* [[T0]], i32 -16
+// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds i8, i8* [[ALLOC]], i32 4
 // CHECK-NEXT: [[T1:%.*]] = bitcast i8* [[T0]] to i32*
 // CHECK-NEXT: [[N:%.*]] = load i32, i32* [[T1]]
 // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[TEST9]], [[TEST9]]* [[BEGIN]], i32 [[N]]

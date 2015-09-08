@@ -15,6 +15,7 @@
 #define LLVM_CLANG_LIB_CODEGEN_CODEGENMODULE_H
 
 #include "CGVTables.h"
+#include "CodeGenTypeCache.h"
 #include "CodeGenTypes.h"
 #include "SanitizerMetadata.h"
 #include "clang/AST/Attr.h"
@@ -30,7 +31,6 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueHandle.h"
 
@@ -79,6 +79,7 @@ class CoverageSourceInfo;
 
 namespace CodeGen {
 
+class BlockByrefHelpers;
 class CallArgList;
 class CodeGenFunction;
 class CodeGenTBAA;
@@ -106,54 +107,6 @@ struct OrderGlobalInits {
     return std::tie(priority, lex_order) <
            std::tie(RHS.priority, RHS.lex_order);
   }
-};
-
-struct CodeGenTypeCache {
-  /// void
-  llvm::Type *VoidTy;
-
-  /// i8, i16, i32, and i64
-  llvm::IntegerType *Int8Ty, *Int16Ty, *Int32Ty, *Int64Ty;
-  /// float, double
-  llvm::Type *FloatTy, *DoubleTy;
-
-  /// int
-  llvm::IntegerType *IntTy;
-
-  /// intptr_t, size_t, and ptrdiff_t, which we assume are the same size.
-  union {
-    llvm::IntegerType *IntPtrTy;
-    llvm::IntegerType *SizeTy;
-    llvm::IntegerType *PtrDiffTy;
-  };
-
-  /// void* in address space 0
-  union {
-    llvm::PointerType *VoidPtrTy;
-    llvm::PointerType *Int8PtrTy;
-  };
-
-  /// void** in address space 0
-  union {
-    llvm::PointerType *VoidPtrPtrTy;
-    llvm::PointerType *Int8PtrPtrTy;
-  };
-
-  /// The width of a pointer into the generic address space.
-  unsigned char PointerWidthInBits;
-
-  /// The size and alignment of a pointer into the generic address
-  /// space.
-  union {
-    unsigned char PointerAlignInBytes;
-    unsigned char PointerSizeInBytes;
-    unsigned char SizeSizeInBytes; // sizeof(size_t)
-  };
-
-  llvm::CallingConv::ID RuntimeCC;
-  llvm::CallingConv::ID getRuntimeCC() const { return RuntimeCC; }
-  llvm::CallingConv::ID BuiltinCC;
-  llvm::CallingConv::ID getBuiltinCC() const { return BuiltinCC; }
 };
 
 struct RREntrypoints {
@@ -735,13 +688,28 @@ public:
                                                QualType CatchHandlerType);
 
   /// Get the address of a uuid descriptor .
-  llvm::Constant *GetAddrOfUuidDescriptor(const CXXUuidofExpr* E);
+  ConstantAddress GetAddrOfUuidDescriptor(const CXXUuidofExpr* E);
 
   /// Get the address of the thunk for the given global decl.
   llvm::Constant *GetAddrOfThunk(GlobalDecl GD, const ThunkInfo &Thunk);
 
   /// Get a reference to the target of VD.
-  llvm::Constant *GetWeakRefReference(const ValueDecl *VD);
+  ConstantAddress GetWeakRefReference(const ValueDecl *VD);
+
+  /// Returns the assumed alignment of an opaque pointer to the given class.
+  CharUnits getClassPointerAlignment(const CXXRecordDecl *CD);
+
+  /// Returns the assumed alignment of a virtual base of a class.
+  CharUnits getVBaseAlignment(CharUnits DerivedAlign,
+                              const CXXRecordDecl *Derived,
+                              const CXXRecordDecl *VBase);
+
+  /// Given a class pointer with an actual known alignment, and the
+  /// expected alignment of an object at a dynamic offset w.r.t that
+  /// pointer, return the alignment to assume at the offset.
+  CharUnits getDynamicOffsetAlignment(CharUnits ActualAlign,
+                                      const CXXRecordDecl *Class,
+                                      CharUnits ExpectedTargetAlign);
 
   CharUnits
   computeNonVirtualBaseClassOffset(const CXXRecordDecl *DerivedClass,
@@ -755,36 +723,7 @@ public:
                                CastExpr::path_const_iterator PathBegin,
                                CastExpr::path_const_iterator PathEnd);
 
-  /// A pair of helper functions for a __block variable.
-  class ByrefHelpers : public llvm::FoldingSetNode {
-  public:
-    llvm::Constant *CopyHelper;
-    llvm::Constant *DisposeHelper;
-
-    /// The alignment of the field.  This is important because
-    /// different offsets to the field within the byref struct need to
-    /// have different helper functions.
-    CharUnits Alignment;
-
-    ByrefHelpers(CharUnits alignment) : Alignment(alignment) {}
-    ByrefHelpers(const ByrefHelpers &) = default;
-    virtual ~ByrefHelpers();
-
-    void Profile(llvm::FoldingSetNodeID &id) const {
-      id.AddInteger(Alignment.getQuantity());
-      profileImpl(id);
-    }
-    virtual void profileImpl(llvm::FoldingSetNodeID &id) const = 0;
-
-    virtual bool needsCopy() const { return true; }
-    virtual void emitCopy(CodeGenFunction &CGF,
-                          llvm::Value *dest, llvm::Value *src) = 0;
-
-    virtual bool needsDispose() const { return true; }
-    virtual void emitDispose(CodeGenFunction &CGF, llvm::Value *field) = 0;
-  };
-
-  llvm::FoldingSet<ByrefHelpers> ByrefHelpersCache;
+  llvm::FoldingSet<BlockByrefHelpers> ByrefHelpersCache;
 
   /// Fetches the global unique block count.
   int getUniqueBlockCount() { return ++Block.GlobalUniqueCount; }
@@ -799,23 +738,23 @@ public:
   llvm::Constant *GetAddrOfGlobalBlock(const BlockExpr *BE, const char *);
   
   /// Return a pointer to a constant CFString object for the given string.
-  llvm::Constant *GetAddrOfConstantCFString(const StringLiteral *Literal);
+  ConstantAddress GetAddrOfConstantCFString(const StringLiteral *Literal);
 
   /// Return a pointer to a constant NSString object for the given string. Or a
   /// user defined String object as defined via
   /// -fconstant-string-class=class_name option.
-  llvm::GlobalVariable *GetAddrOfConstantString(const StringLiteral *Literal);
+  ConstantAddress GetAddrOfConstantString(const StringLiteral *Literal);
 
   /// Return a constant array for the given string.
   llvm::Constant *GetConstantArrayFromStringLiteral(const StringLiteral *E);
 
   /// Return a pointer to a constant array for the given string literal.
-  llvm::GlobalVariable *
+  ConstantAddress
   GetAddrOfConstantStringFromLiteral(const StringLiteral *S,
                                      StringRef Name = ".str");
 
   /// Return a pointer to a constant array for the given ObjCEncodeExpr node.
-  llvm::GlobalVariable *
+  ConstantAddress
   GetAddrOfConstantStringFromObjCEncode(const ObjCEncodeExpr *);
 
   /// Returns a pointer to a character array containing the literal and a
@@ -823,18 +762,17 @@ public:
   ///
   /// \param GlobalName If provided, the name to use for the global (if one is
   /// created).
-  llvm::GlobalVariable *
+  ConstantAddress
   GetAddrOfConstantCString(const std::string &Str,
-                           const char *GlobalName = nullptr,
-                           unsigned Alignment = 0);
+                           const char *GlobalName = nullptr);
 
   /// Returns a pointer to a constant global variable for the given file-scope
   /// compound literal expression.
-  llvm::Constant *GetAddrOfConstantCompoundLiteral(const CompoundLiteralExpr*E);
+  ConstantAddress GetAddrOfConstantCompoundLiteral(const CompoundLiteralExpr*E);
 
   /// \brief Returns a pointer to a global variable representing a temporary
   /// with static or thread storage duration.
-  llvm::Constant *GetAddrOfGlobalTemporary(const MaterializeTemporaryExpr *E,
+  ConstantAddress GetAddrOfGlobalTemporary(const MaterializeTemporaryExpr *E,
                                            const Expr *Inner);
 
   /// \brief Retrieve the record type that describes the state of an

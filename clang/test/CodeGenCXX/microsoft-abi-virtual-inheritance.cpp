@@ -91,7 +91,7 @@ B::~B() {
   // CHECK2: %[[B:.*]] = bitcast i8* %[[B_i8]] to %struct.B*
   // CHECK2: call x86_thiscallcc void @"\01??1B@@UAE@XZ"(%struct.B* %[[B]])
   // CHECK2: %[[THIS_i8:.*]] = bitcast %struct.B* %[[THIS]] to i8*
-  // CHECK2: %[[VBASE_i8:.*]] = getelementptr inbounds i8, i8* %[[THIS_i8]], i64 8
+  // CHECK2: %[[VBASE_i8:.*]] = getelementptr inbounds i8, i8* %[[THIS_i8]], i32 8
   // CHECK2: %[[VBASE:.*]] = bitcast i8* %[[VBASE_i8]] to %struct.VBase*
   // CHECK2: call x86_thiscallcc void @"\01??1VBase@@UAE@XZ"(%struct.VBase* %[[VBASE]])
   // CHECK2: ret
@@ -290,7 +290,7 @@ D::~D() {
   // CHECK: store %"struct.diamond::D"* %[[THIS]], %"struct.diamond::D"** %[[THIS_VAL:.*]], align 4
   // CHECK: %[[THIS:.*]] = load %"struct.diamond::D"*, %"struct.diamond::D"** %[[THIS_VAL]]
   // CHECK: %[[D_i8:.*]] = bitcast %"struct.diamond::D"* %[[THIS]] to i8*
-  // CHECK: %[[C_i8:.*]] = getelementptr inbounds i8, i8* %[[D_i8]], i64 4
+  // CHECK: %[[C_i8:.*]] = getelementptr inbounds i8, i8* %[[D_i8]], i32 4
   // CHECK: %[[C:.*]] = bitcast i8* %[[C_i8]] to %"struct.diamond::C"*
   // CHECK: %[[C_i8:.*]] = bitcast %"struct.diamond::C"* %[[C]] to i8*
   // CHECK: %[[ARG_i8:.*]] = getelementptr i8, i8* %{{.*}}, i32 16

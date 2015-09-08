@@ -39,7 +39,7 @@ class OMPExecutableDirective;
 class VarDecl;
 
 namespace CodeGen {
-
+class Address;
 class CodeGenFunction;
 class CodeGenModule;
 
@@ -184,7 +184,9 @@ private:
   /// \brief Map of flags and corresponding default locations.
   typedef llvm::DenseMap<unsigned, llvm::Value *> OpenMPDefaultLocMapTy;
   OpenMPDefaultLocMapTy OpenMPDefaultLocMap;
-  llvm::Value *getOrCreateDefaultLocation(OpenMPLocationFlags Flags);
+  Address getOrCreateDefaultLocation(OpenMPLocationFlags Flags);
+
+public:
   /// \brief Describes ident structure that describes a source location.
   /// All descriptions are taken from
   /// http://llvm.org/svn/llvm-project/openmp/trunk/runtime/src/kmp.h
@@ -225,6 +227,7 @@ private:
     /// and a pair of line numbers that delimit the construct.
     IdentField_PSource
   };
+private:
   llvm::StructType *IdentTy;
   /// \brief Map for SourceLocation and OpenMP runtime library debug locations.
   typedef llvm::DenseMap<unsigned, llvm::Value *> OpenMPDebugLocMapTy;
@@ -321,8 +324,7 @@ private:
 
   /// \brief Emits address of the word in a memory where current thread id is
   /// stored.
-  virtual llvm::Value *emitThreadIDAddress(CodeGenFunction &CGF,
-                                           SourceLocation Loc);
+  virtual Address emitThreadIDAddress(CodeGenFunction &CGF, SourceLocation Loc);
 
   /// \brief Gets thread id value for the current thread.
   ///
@@ -346,7 +348,7 @@ private:
   /// \param CopyCtor Pointer to a global copy function for \a VD.
   /// \param Dtor Pointer to a global destructor function for \a VD.
   /// \param Loc Location of threadprivate declaration.
-  void emitThreadPrivateVarInit(CodeGenFunction &CGF, llvm::Value *VDAddr,
+  void emitThreadPrivateVarInit(CodeGenFunction &CGF, Address VDAddr,
                                 llvm::Value *Ctor, llvm::Value *CopyCtor,
                                 llvm::Value *Dtor, SourceLocation Loc);
 
@@ -403,8 +405,7 @@ public:
   ///
   virtual void emitParallelCall(CodeGenFunction &CGF, SourceLocation Loc,
                                 llvm::Value *OutlinedFn,
-                                llvm::Value *CapturedStruct,
-                                const Expr *IfCond);
+                                Address CapturedStruct, const Expr *IfCond);
 
   /// \brief Emits a critical region.
   /// \param CriticalName Name of the critical region.
@@ -497,11 +498,17 @@ public:
   /// \param Chunk Value of the chunk for the static_chunked scheduled loop.
   /// For the default (nullptr) value, the chunk 1 will be used.
   ///
-  virtual void emitForInit(CodeGenFunction &CGF, SourceLocation Loc,
-                           OpenMPScheduleClauseKind SchedKind, unsigned IVSize,
-                           bool IVSigned, bool Ordered, llvm::Value *IL,
-                           llvm::Value *LB, llvm::Value *UB, llvm::Value *ST,
-                           llvm::Value *Chunk = nullptr);
+  virtual void emitForDispatchInit(CodeGenFunction &CGF, SourceLocation Loc,
+                                   OpenMPScheduleClauseKind SchedKind,
+                                   unsigned IVSize, bool IVSigned,
+                                   bool Ordered, llvm::Value *UB,
+                                   llvm::Value *Chunk = nullptr);
+  virtual void emitForStaticInit(CodeGenFunction &CGF, SourceLocation Loc,
+                                 OpenMPScheduleClauseKind SchedKind,
+                                 unsigned IVSize, bool IVSigned, bool Ordered,
+                                 Address IL, Address LB,
+                                 Address UB, Address ST,
+                                 llvm::Value *Chunk = nullptr);
 
   /// \brief Call the appropriate runtime routine to notify that we finished
   /// iteration of the ordered loop with the dynamic scheduling.
@@ -539,8 +546,8 @@ public:
   /// returned.
   virtual llvm::Value *emitForNext(CodeGenFunction &CGF, SourceLocation Loc,
                                    unsigned IVSize, bool IVSigned,
-                                   llvm::Value *IL, llvm::Value *LB,
-                                   llvm::Value *UB, llvm::Value *ST);
+                                   Address IL, Address LB,
+                                   Address UB, Address ST);
 
   /// \brief Emits call to void __kmpc_push_num_threads(ident_t *loc, kmp_int32
   /// global_tid, kmp_int32 num_threads) to generate code for 'num_threads'
@@ -562,10 +569,10 @@ public:
   /// \param VDAddr Address of the global variable \a VD.
   /// \param Loc Location of the reference to threadprivate var.
   /// \return Address of the threadprivate variable for the current thread.
-  virtual llvm::Value *getAddrOfThreadPrivate(CodeGenFunction &CGF,
-                                              const VarDecl *VD,
-                                              llvm::Value *VDAddr,
-                                              SourceLocation Loc);
+  virtual Address getAddrOfThreadPrivate(CodeGenFunction &CGF,
+                                         const VarDecl *VD,
+                                         Address VDAddr,
+                                         SourceLocation Loc);
 
   /// \brief Emit a code for initialization of threadprivate variable. It emits
   /// a call to runtime library which adds initial value to the newly created
@@ -576,7 +583,7 @@ public:
   /// \param Loc Location of threadprivate declaration.
   /// \param PerformInit true if initialization expression is not constant.
   virtual llvm::Function *
-  emitThreadPrivateVarDefinition(const VarDecl *VD, llvm::Value *VDAddr,
+  emitThreadPrivateVarDefinition(const VarDecl *VD, Address VDAddr,
                                  SourceLocation Loc, bool PerformInit,
                                  CodeGenFunction *CGF = nullptr);
 
@@ -632,7 +639,7 @@ public:
   virtual void emitTaskCall(
       CodeGenFunction &CGF, SourceLocation Loc, const OMPExecutableDirective &D,
       bool Tied, llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
-      llvm::Value *TaskFunction, QualType SharedsTy, llvm::Value *Shareds,
+      llvm::Value *TaskFunction, QualType SharedsTy, Address Shareds,
       const Expr *IfCond, ArrayRef<const Expr *> PrivateVars,
       ArrayRef<const Expr *> PrivateCopies,
       ArrayRef<const Expr *> FirstprivateVars,

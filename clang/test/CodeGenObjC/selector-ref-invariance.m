@@ -3,7 +3,7 @@
 // rdar://6027699
 
 void test(id x) {
-// CHECK: load i8*, i8** @OBJC_SELECTOR_REFERENCES_, !invariant.load
+// CHECK: load i8*, i8** @OBJC_SELECTOR_REFERENCES_, align 8, !invariant.load
 // CHECK: @objc_msgSend
   [x foo];
 }

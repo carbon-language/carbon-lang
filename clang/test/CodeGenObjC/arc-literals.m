@@ -47,10 +47,10 @@ void test_array(id a, id b) {
   // CHECK: call i8* @objc_retain(i8*
 
   // Constructing the array
-  // CHECK:      [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[OBJECTS:%[A-Za-z0-9]+]], i32 0, i32 0
+  // CHECK:      [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[OBJECTS:%[A-Za-z0-9]+]], i64 0, i64 0
   // CHECK-NEXT: [[V0:%.*]] = load i8*, i8** [[A]],
   // CHECK-NEXT: store i8* [[V0]], i8** [[T0]]
-  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[OBJECTS]], i32 0, i32 1
+  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[OBJECTS]], i64 0, i64 1
   // CHECK-NEXT: [[V1:%.*]] = load i8*, i8** [[B]],
   // CHECK-NEXT: store i8* [[V1]], i8** [[T0]]
 
@@ -83,16 +83,16 @@ void test_dictionary(id k1, id o1, id k2, id o2) {
   // CHECK: call i8* @objc_retain(i8*
 
   // Constructing the arrays
-  // CHECK:      [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[KEYS:%[A-Za-z0-9]+]], i32 0, i32 0
+  // CHECK:      [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[KEYS:%[A-Za-z0-9]+]], i64 0, i64 0
   // CHECK-NEXT: [[V0:%.*]] = load i8*, i8** [[K1]],
   // CHECK-NEXT: store i8* [[V0]], i8** [[T0]]
-  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[OBJECTS:%[A-Za-z0-9]+]], i32 0, i32 0
+  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[OBJECTS:%[A-Za-z0-9]+]], i64 0, i64 0
   // CHECK-NEXT: [[V1:%.*]] = load i8*, i8** [[O1]],
   // CHECK-NEXT: store i8* [[V1]], i8** [[T0]]
-  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[KEYS]], i32 0, i32 1
+  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[KEYS]], i64 0, i64 1
   // CHECK-NEXT: [[V2:%.*]] = load i8*, i8** [[K2]],
   // CHECK-NEXT: store i8* [[V2]], i8** [[T0]]
-  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[OBJECTS]], i32 0, i32 1
+  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[OBJECTS]], i64 0, i64 1
   // CHECK-NEXT: [[V3:%.*]] = load i8*, i8** [[O2]],
   // CHECK-NEXT: store i8* [[V3]], i8** [[T0]]
 
@@ -128,7 +128,7 @@ void test_property(B *b) {
   // Retain parameter
   // CHECK: call i8* @objc_retain
 
-  // CHECK:      [[T0:%.*]] = getelementptr inbounds [1 x i8*], [1 x i8*]* [[OBJECTS:%.*]], i32 0, i32 0
+  // CHECK:      [[T0:%.*]] = getelementptr inbounds [1 x i8*], [1 x i8*]* [[OBJECTS:%.*]], i64 0, i64 0
 
   // Invoke 'prop'
   // CHECK:      [[SEL:%.*]] = load i8*, i8** @OBJC_SELECTOR_REFERENCES

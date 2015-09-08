@@ -49,7 +49,8 @@ class AggExprEmitter : public StmtVisitor<AggExprEmitter> {
     if (!shouldUseDestForReturnSlot())
       return ReturnValueSlot();
 
-    return ReturnValueSlot(Dest.getAddr(), Dest.isVolatile(), IsResultUnused);
+    return ReturnValueSlot(Dest.getAddress(), Dest.isVolatile(),
+                           IsResultUnused);
   }
 
   AggValueSlot EnsureSlot(QualType T) {
@@ -77,14 +78,13 @@ public:
 
   /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
   void EmitFinalDestCopy(QualType type, const LValue &src);
-  void EmitFinalDestCopy(QualType type, RValue src,
-                         CharUnits srcAlignment = CharUnits::Zero());
+  void EmitFinalDestCopy(QualType type, RValue src);
   void EmitCopy(QualType type, const AggValueSlot &dest,
                 const AggValueSlot &src);
 
   void EmitMoveFromReturnSlot(const Expr *E, RValue Src);
 
-  void EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
+  void EmitArrayInit(Address DestPtr, llvm::ArrayType *AType,
                      QualType elementType, InitListExpr *E);
 
   AggValueSlot::NeedsGCBarriers_t needsGC(QualType T) {
@@ -199,7 +199,7 @@ public:
   //  case Expr::ChooseExprClass:
   void VisitCXXThrowExpr(const CXXThrowExpr *E) { CGF.EmitCXXThrowExpr(E); }
   void VisitAtomicExpr(AtomicExpr *E) {
-    CGF.EmitAtomicExpr(E, EnsureSlot(E->getType()).getAddr());
+    CGF.EmitAtomicExpr(E, EnsureSlot(E->getType()).getAddress());
   }
 };
 }  // end anonymous namespace.
@@ -259,17 +259,14 @@ void AggExprEmitter::EmitMoveFromReturnSlot(const Expr *E, RValue src) {
   }
 
   // Otherwise, copy from there to the destination.
-  assert(Dest.getAddr() != src.getAggregateAddr());
-  std::pair<CharUnits, CharUnits> typeInfo = 
-    CGF.getContext().getTypeInfoInChars(E->getType());
-  EmitFinalDestCopy(E->getType(), src, typeInfo.second);
+  assert(Dest.getPointer() != src.getAggregatePointer());
+  EmitFinalDestCopy(E->getType(), src);
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
-void AggExprEmitter::EmitFinalDestCopy(QualType type, RValue src,
-                                       CharUnits srcAlign) {
+void AggExprEmitter::EmitFinalDestCopy(QualType type, RValue src) {
   assert(src.isAggregate() && "value must be aggregate value!");
-  LValue srcLV = CGF.MakeAddrLValue(src.getAggregateAddr(), type, srcAlign);
+  LValue srcLV = CGF.MakeAddrLValue(src.getAggregateAddress(), type);
   EmitFinalDestCopy(type, srcLV);
 }
 
@@ -298,8 +295,8 @@ void AggExprEmitter::EmitCopy(QualType type, const AggValueSlot &dest,
     CharUnits sz = CGF.getContext().getTypeSizeInChars(type);
     llvm::Value *size = llvm::ConstantInt::get(CGF.SizeTy, sz.getQuantity());
     CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF,
-                                                      dest.getAddr(),
-                                                      src.getAddr(),
+                                                      dest.getAddress(),
+                                                      src.getAddress(),
                                                       size);
     return;
   }
@@ -307,9 +304,8 @@ void AggExprEmitter::EmitCopy(QualType type, const AggValueSlot &dest,
   // If the result of the assignment is used, copy the LHS there also.
   // It's volatile if either side is.  Use the minimum alignment of
   // the two sides.
-  CGF.EmitAggregateCopy(dest.getAddr(), src.getAddr(), type,
-                        dest.isVolatile() || src.isVolatile(),
-                        std::min(dest.getAlignment(), src.getAlignment()));
+  CGF.EmitAggregateCopy(dest.getAddress(), src.getAddress(), type,
+                        dest.isVolatile() || src.isVolatile());
 }
 
 /// \brief Emit the initializer for a std::initializer_list initialized with a
@@ -321,7 +317,7 @@ AggExprEmitter::VisitCXXStdInitializerListExpr(CXXStdInitializerListExpr *E) {
   ASTContext &Ctx = CGF.getContext();
   LValue Array = CGF.EmitLValue(E->getSubExpr());
   assert(Array.isSimple() && "initializer_list array not a simple lvalue");
-  llvm::Value *ArrayPtr = Array.getAddress();
+  Address ArrayPtr = Array.getAddress();
 
   const ConstantArrayType *ArrayType =
       Ctx.getAsConstantArrayType(E->getSubExpr()->getType());
@@ -344,13 +340,12 @@ AggExprEmitter::VisitCXXStdInitializerListExpr(CXXStdInitializerListExpr *E) {
   }
 
   AggValueSlot Dest = EnsureSlot(E->getType());
-  LValue DestLV = CGF.MakeAddrLValue(Dest.getAddr(), E->getType(),
-                                     Dest.getAlignment());
+  LValue DestLV = CGF.MakeAddrLValue(Dest.getAddress(), E->getType());
   LValue Start = CGF.EmitLValueForFieldInitialization(DestLV, *Field);
   llvm::Value *Zero = llvm::ConstantInt::get(CGF.PtrDiffTy, 0);
   llvm::Value *IdxStart[] = { Zero, Zero };
   llvm::Value *ArrayStart =
-      Builder.CreateInBoundsGEP(ArrayPtr, IdxStart, "arraystart");
+      Builder.CreateInBoundsGEP(ArrayPtr.getPointer(), IdxStart, "arraystart");
   CGF.EmitStoreThroughLValue(RValue::get(ArrayStart), Start);
   ++Field;
 
@@ -367,7 +362,7 @@ AggExprEmitter::VisitCXXStdInitializerListExpr(CXXStdInitializerListExpr *E) {
     // End pointer.
     llvm::Value *IdxEnd[] = { Zero, Size };
     llvm::Value *ArrayEnd =
-        Builder.CreateInBoundsGEP(ArrayPtr, IdxEnd, "arrayend");
+        Builder.CreateInBoundsGEP(ArrayPtr.getPointer(), IdxEnd, "arrayend");
     CGF.EmitStoreThroughLValue(RValue::get(ArrayEnd), EndOrLength);
   } else if (Ctx.hasSameType(Field->getType(), Ctx.getSizeType())) {
     // Length.
@@ -402,7 +397,7 @@ static bool isTrivialFiller(Expr *E) {
 }
 
 /// \brief Emit initialization of an array from an initializer list.
-void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
+void AggExprEmitter::EmitArrayInit(Address DestPtr, llvm::ArrayType *AType,
                                    QualType elementType, InitListExpr *E) {
   uint64_t NumInitElements = E->getNumInits();
 
@@ -414,13 +409,17 @@ void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
   llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, 0);
   llvm::Value *indices[] = { zero, zero };
   llvm::Value *begin =
-    Builder.CreateInBoundsGEP(DestPtr, indices, "arrayinit.begin");
+    Builder.CreateInBoundsGEP(DestPtr.getPointer(), indices, "arrayinit.begin");
+
+  CharUnits elementSize = CGF.getContext().getTypeSizeInChars(elementType);
+  CharUnits elementAlign =
+    DestPtr.getAlignment().alignmentOfArrayElement(elementSize);
 
   // Exception safety requires us to destroy all the
   // already-constructed members if an initializer throws.
   // For that, we'll need an EH cleanup.
   QualType::DestructionKind dtorKind = elementType.isDestructedType();
-  llvm::AllocaInst *endOfInit = nullptr;
+  Address endOfInit = Address::invalid();
   EHScopeStack::stable_iterator cleanup;
   llvm::Instruction *cleanupDominator = nullptr;
   if (CGF.needsEHCleanup(dtorKind)) {
@@ -428,10 +427,11 @@ void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
     // directly, but the control flow can get so varied here that it
     // would actually be quite complex.  Therefore we go through an
     // alloca.
-    endOfInit = CGF.CreateTempAlloca(begin->getType(),
+    endOfInit = CGF.CreateTempAlloca(begin->getType(), CGF.getPointerAlign(),
                                      "arrayinit.endOfInit");
     cleanupDominator = Builder.CreateStore(begin, endOfInit);
     CGF.pushIrregularPartialArrayCleanup(begin, endOfInit, elementType,
+                                         elementAlign,
                                          CGF.getDestroyer(dtorKind));
     cleanup = CGF.EHStack.stable_begin();
 
@@ -458,10 +458,11 @@ void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
       // Tell the cleanup that it needs to destroy up to this
       // element.  TODO: some of these stores can be trivially
       // observed to be unnecessary.
-      if (endOfInit) Builder.CreateStore(element, endOfInit);
+      if (endOfInit.isValid()) Builder.CreateStore(element, endOfInit);
     }
 
-    LValue elementLV = CGF.MakeAddrLValue(element, elementType);
+    LValue elementLV =
+      CGF.MakeAddrLValue(Address(element, elementAlign), elementType);
     EmitInitializationToLValue(E->getInit(i), elementLV);
   }
 
@@ -482,7 +483,7 @@ void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
     // Advance to the start of the rest of the array.
     if (NumInitElements) {
       element = Builder.CreateInBoundsGEP(element, one, "arrayinit.start");
-      if (endOfInit) Builder.CreateStore(element, endOfInit);
+      if (endOfInit.isValid()) Builder.CreateStore(element, endOfInit);
     }
 
     // Compute the end of the array.
@@ -500,7 +501,8 @@ void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
     currentElement->addIncoming(element, entryBB);
 
     // Emit the actual filler expression.
-    LValue elementLV = CGF.MakeAddrLValue(currentElement, elementType);
+    LValue elementLV =
+      CGF.MakeAddrLValue(Address(currentElement, elementAlign), elementType);
     if (filler)
       EmitInitializationToLValue(filler, elementLV);
     else
@@ -511,7 +513,7 @@ void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
       Builder.CreateInBoundsGEP(currentElement, one, "arrayinit.next");
 
     // Tell the EH cleanup that we finished with the last element.
-    if (endOfInit) Builder.CreateStore(nextElement, endOfInit);
+    if (endOfInit.isValid()) Builder.CreateStore(nextElement, endOfInit);
 
     // Leave the loop if we're done.
     llvm::Value *done = Builder.CreateICmpEQ(nextElement, end,
@@ -596,9 +598,8 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
 
     // GCC union extension
     QualType Ty = E->getSubExpr()->getType();
-    QualType PtrTy = CGF.getContext().getPointerType(Ty);
-    llvm::Value *CastPtr = Builder.CreateBitCast(Dest.getAddr(),
-                                                 CGF.ConvertType(PtrTy));
+    Address CastPtr =
+      Builder.CreateElementBitCast(Dest.getAddress(), CGF.ConvertType(Ty));
     EmitInitializationToLValue(E->getSubExpr(),
                                CGF.MakeAddrLValue(CastPtr, Ty));
     break;
@@ -649,13 +650,13 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
         // Zero-initialize.  (Strictly speaking, we only need to intialize
         // the padding at the end, but this is simpler.)
         if (!Dest.isZeroed())
-          CGF.EmitNullInitialization(Dest.getAddr(), atomicType);
+          CGF.EmitNullInitialization(Dest.getAddress(), atomicType);
 
         // Build a GEP to refer to the subobject.
-        llvm::Value *valueAddr =
-            CGF.Builder.CreateStructGEP(nullptr, valueDest.getAddr(), 0);
+        Address valueAddr =
+            CGF.Builder.CreateStructGEP(valueDest.getAddress(), 0,
+                                        CharUnits());
         valueDest = AggValueSlot::forAddr(valueAddr,
-                                          valueDest.getAlignment(),
                                           valueDest.getQualifiers(),
                                           valueDest.isExternallyDestructed(),
                                           valueDest.requiresGCollection(),
@@ -673,8 +674,8 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
       CGF.CreateAggTemp(atomicType, "atomic-to-nonatomic.temp");
     CGF.EmitAggExpr(E->getSubExpr(), atomicSlot);
 
-    llvm::Value *valueAddr =
-        Builder.CreateStructGEP(nullptr, atomicSlot.getAddr(), 0);
+    Address valueAddr =
+      Builder.CreateStructGEP(atomicSlot.getAddress(), 0, CharUnits());
     RValue rvalue = RValue::getAggregate(valueAddr, atomicSlot.isVolatile());
     return EmitFinalDestCopy(valueType, rvalue);
   }
@@ -959,15 +960,15 @@ void AggExprEmitter::VisitChooseExpr(const ChooseExpr *CE) {
 }
 
 void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
-  llvm::Value *ArgValue = CGF.EmitVAListRef(VE->getSubExpr());
-  llvm::Value *ArgPtr = CGF.EmitVAArg(ArgValue, VE->getType());
+  Address ArgValue = CGF.EmitVAListRef(VE->getSubExpr());
+  Address ArgPtr = CGF.EmitVAArg(ArgValue, VE->getType());
 
-  if (!ArgPtr) {
+  if (!ArgPtr.isValid()) {
     // If EmitVAArg fails, we fall back to the LLVM instruction.
-    llvm::Value *Val =
-        Builder.CreateVAArg(ArgValue, CGF.ConvertType(VE->getType()));
+    llvm::Value *Val = Builder.CreateVAArg(ArgValue.getPointer(),
+                                           CGF.ConvertType(VE->getType()));
     if (!Dest.isIgnored())
-      Builder.CreateStore(Val, Dest.getAddr());
+      Builder.CreateStore(Val, Dest.getAddress());
     return;
   }
 
@@ -987,7 +988,7 @@ void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
 
   // Push that destructor we promised.
   if (!wasExternallyDestructed)
-    CGF.EmitCXXTemporary(E->getTemporary(), E->getType(), Dest.getAddr());
+    CGF.EmitCXXTemporary(E->getTemporary(), E->getType(), Dest.getAddress());
 }
 
 void
@@ -1011,13 +1012,13 @@ void AggExprEmitter::VisitExprWithCleanups(ExprWithCleanups *E) {
 void AggExprEmitter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
   QualType T = E->getType();
   AggValueSlot Slot = EnsureSlot(T);
-  EmitNullInitializationToLValue(CGF.MakeAddrLValue(Slot.getAddr(), T));
+  EmitNullInitializationToLValue(CGF.MakeAddrLValue(Slot.getAddress(), T));
 }
 
 void AggExprEmitter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
   QualType T = E->getType();
   AggValueSlot Slot = EnsureSlot(T);
-  EmitNullInitializationToLValue(CGF.MakeAddrLValue(Slot.getAddr(), T));
+  EmitNullInitializationToLValue(CGF.MakeAddrLValue(Slot.getAddress(), T));
 }
 
 /// isSimpleZero - If emitting this value will obviously just cause a store of
@@ -1135,8 +1136,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
   AggValueSlot Dest = EnsureSlot(E->getType());
 
-  LValue DestLV = CGF.MakeAddrLValue(Dest.getAddr(), E->getType(),
-                                     Dest.getAlignment());
+  LValue DestLV = CGF.MakeAddrLValue(Dest.getAddress(), E->getType());
 
   // Handle initialization of an array.
   if (E->getType()->isArrayType()) {
@@ -1146,12 +1146,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     QualType elementType =
         CGF.getContext().getAsArrayType(E->getType())->getElementType();
 
-    llvm::PointerType *APType =
-      cast<llvm::PointerType>(Dest.getAddr()->getType());
-    llvm::ArrayType *AType =
-      cast<llvm::ArrayType>(APType->getElementType());
-
-    EmitArrayInit(Dest.getAddr(), AType, elementType, E);
+    auto AType = cast<llvm::ArrayType>(Dest.getAddress().getElementType());
+    EmitArrayInit(Dest.getAddress(), AType, elementType, E);
     return;
   }
 
@@ -1175,7 +1171,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   RecordDecl *record = E->getType()->castAs<RecordType>()->getDecl();
 
   // Prepare a 'this' for CXXDefaultInitExprs.
-  CodeGenFunction::FieldConstructionScope FCS(CGF, Dest.getAddr());
+  CodeGenFunction::FieldConstructionScope FCS(CGF, Dest.getAddress());
 
   if (record->isUnion()) {
     // Only initialize one field of a union. The field itself is
@@ -1253,9 +1249,10 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       assert(LV.isSimple());
       if (CGF.needsEHCleanup(dtorKind)) {
         if (!cleanupDominator)
-          cleanupDominator = CGF.Builder.CreateLoad(
+          cleanupDominator = CGF.Builder.CreateAlignedLoad(
               CGF.Int8Ty,
-              llvm::Constant::getNullValue(CGF.Int8PtrTy)); // placeholder
+              llvm::Constant::getNullValue(CGF.Int8PtrTy),
+              CharUnits::One()); // placeholder
 
         CGF.pushDestroy(EHCleanup, LV.getAddress(), field->getType(),
                         CGF.getDestroyer(dtorKind), false);
@@ -1268,7 +1265,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     // else, clean it up for -O0 builds and general tidiness.
     if (!pushedCleanup && LV.isSimple()) 
       if (llvm::GetElementPtrInst *GEP =
-            dyn_cast<llvm::GetElementPtrInst>(LV.getAddress()))
+            dyn_cast<llvm::GetElementPtrInst>(LV.getPointer()))
         if (GEP->use_empty())
           GEP->eraseFromParent();
   }
@@ -1286,8 +1283,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 void AggExprEmitter::VisitDesignatedInitUpdateExpr(DesignatedInitUpdateExpr *E) {
   AggValueSlot Dest = EnsureSlot(E->getType());
 
-  LValue DestLV = CGF.MakeAddrLValue(Dest.getAddr(), E->getType(),
-                                     Dest.getAlignment());
+  LValue DestLV = CGF.MakeAddrLValue(Dest.getAddress(), E->getType());
   EmitInitializationToLValue(E->getBase(), DestLV);
   VisitInitListExpr(E->getUpdater());
 }
@@ -1357,7 +1353,7 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
                                      CodeGenFunction &CGF) {
   // If the slot is already known to be zeroed, nothing to do.  Don't mess with
   // volatile stores.
-  if (Slot.isZeroed() || Slot.isVolatile() || Slot.getAddr() == nullptr)
+  if (Slot.isZeroed() || Slot.isVolatile() || !Slot.getAddress().isValid())
     return;
 
   // C++ objects with a user-declared constructor don't need zero'ing.
@@ -1370,26 +1366,22 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
     }
 
   // If the type is 16-bytes or smaller, prefer individual stores over memset.
-  std::pair<CharUnits, CharUnits> TypeInfo =
-    CGF.getContext().getTypeInfoInChars(E->getType());
-  if (TypeInfo.first <= CharUnits::fromQuantity(16))
+  CharUnits Size = CGF.getContext().getTypeSizeInChars(E->getType());
+  if (Size <= CharUnits::fromQuantity(16))
     return;
 
   // Check to see if over 3/4 of the initializer are known to be zero.  If so,
   // we prefer to emit memset + individual stores for the rest.
   CharUnits NumNonZeroBytes = GetNumNonZeroBytesInInit(E, CGF);
-  if (NumNonZeroBytes*4 > TypeInfo.first)
+  if (NumNonZeroBytes*4 > Size)
     return;
   
   // Okay, it seems like a good idea to use an initial memset, emit the call.
-  llvm::Constant *SizeVal = CGF.Builder.getInt64(TypeInfo.first.getQuantity());
-  CharUnits Align = TypeInfo.second;
+  llvm::Constant *SizeVal = CGF.Builder.getInt64(Size.getQuantity());
 
-  llvm::Value *Loc = Slot.getAddr();
-  
-  Loc = CGF.Builder.CreateBitCast(Loc, CGF.Int8PtrTy);
-  CGF.Builder.CreateMemSet(Loc, CGF.Builder.getInt8(0), SizeVal, 
-                           Align.getQuantity(), false);
+  Address Loc = Slot.getAddress();  
+  Loc = CGF.Builder.CreateElementBitCast(Loc, CGF.Int8Ty);
+  CGF.Builder.CreateMemSet(Loc, CGF.Builder.getInt8(0), SizeVal, false);
   
   // Tell the AggExprEmitter that the slot is known zero.
   Slot.setZeroed();
@@ -1405,7 +1397,7 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
 void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot) {
   assert(E && hasAggregateEvaluationKind(E->getType()) &&
          "Invalid aggregate expression to emit");
-  assert((Slot.getAddr() != nullptr || Slot.isIgnored()) &&
+  assert((Slot.getAddress().isValid() || Slot.isIgnored()) &&
          "slot has bits but no address");
 
   // Optimize the slot if possible.
@@ -1416,7 +1408,7 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot) {
 
 LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
   assert(hasAggregateEvaluationKind(E->getType()) && "Invalid argument!");
-  llvm::Value *Temp = CreateMemTemp(E->getType());
+  Address Temp = CreateMemTemp(E->getType());
   LValue LV = MakeAddrLValue(Temp, E->getType());
   EmitAggExpr(E, AggValueSlot::forLValue(LV, AggValueSlot::IsNotDestructed,
                                          AggValueSlot::DoesNotNeedGCBarriers,
@@ -1424,10 +1416,9 @@ LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
   return LV;
 }
 
-void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
-                                        llvm::Value *SrcPtr, QualType Ty,
+void CodeGenFunction::EmitAggregateCopy(Address DestPtr,
+                                        Address SrcPtr, QualType Ty,
                                         bool isVolatile,
-                                        CharUnits alignment,
                                         bool isAssignment) {
   assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
 
@@ -1458,16 +1449,15 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // implementation handles this case safely.  If there is a libc that does not
   // safely handle this, we can add a target hook.
 
-  // Get data size and alignment info for this aggregate. If this is an
-  // assignment don't copy the tail padding. Otherwise copying it is fine.
+  // Get data size info for this aggregate. If this is an assignment,
+  // don't copy the tail padding, because we might be assigning into a
+  // base subobject where the tail padding is claimed.  Otherwise,
+  // copying it is fine.
   std::pair<CharUnits, CharUnits> TypeInfo;
   if (isAssignment)
     TypeInfo = getContext().getTypeInfoDataSizeInChars(Ty);
   else
     TypeInfo = getContext().getTypeInfoInChars(Ty);
-
-  if (alignment.isZero())
-    alignment = TypeInfo.second;
 
   llvm::Value *SizeVal = nullptr;
   if (TypeInfo.first.isZero()) {
@@ -1511,15 +1501,8 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // we need to use a different call here.  We use isVolatile to indicate when
   // either the source or the destination is volatile.
 
-  llvm::PointerType *DPT = cast<llvm::PointerType>(DestPtr->getType());
-  llvm::Type *DBP =
-    llvm::Type::getInt8PtrTy(getLLVMContext(), DPT->getAddressSpace());
-  DestPtr = Builder.CreateBitCast(DestPtr, DBP);
-
-  llvm::PointerType *SPT = cast<llvm::PointerType>(SrcPtr->getType());
-  llvm::Type *SBP =
-    llvm::Type::getInt8PtrTy(getLLVMContext(), SPT->getAddressSpace());
-  SrcPtr = Builder.CreateBitCast(SrcPtr, SBP);
+  DestPtr = Builder.CreateElementBitCast(DestPtr, Int8Ty);
+  SrcPtr = Builder.CreateElementBitCast(SrcPtr, Int8Ty);
 
   // Don't do any of the memmove_collectable tests if GC isn't set.
   if (CGM.getLangOpts().getGC() == LangOptions::NonGC) {
@@ -1542,11 +1525,11 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
     }
   }
 
+  auto Inst = Builder.CreateMemCpy(DestPtr, SrcPtr, SizeVal, isVolatile);
+
   // Determine the metadata to describe the position of any padding in this
   // memcpy, as well as the TBAA tags for the members of the struct, in case
   // the optimizer wishes to expand it in to scalar memory operations.
-  llvm::MDNode *TBAAStructTag = CGM.getTBAAStructInfo(Ty);
-
-  Builder.CreateMemCpy(DestPtr, SrcPtr, SizeVal, alignment.getQuantity(),
-                       isVolatile, /*TBAATag=*/nullptr, TBAAStructTag);
+  if (llvm::MDNode *TBAAStructTag = CGM.getTBAAStructInfo(Ty))
+    Inst->setMetadata(llvm::LLVMContext::MD_tbaa_struct, TBAAStructTag);
 }

@@ -16,7 +16,7 @@ void test0() {
 // CHECK:      [[A:%.*]] = alloca [[BYREF:%.*]], align 8
 // CHECK-NEXT: [[TEMP:%.*]] = alloca [[AGG]], align 4
 // CHECK:      [[RESULT:%.*]] = call i32 @makeAgg()
-// CHECK-NEXT: [[T0:%.*]] = getelementptr [[AGG]], [[AGG]]* [[TEMP]], i32 0, i32 0
+// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[AGG]], [[AGG]]* [[TEMP]], i32 0, i32 0
 // CHECK-NEXT: store i32 [[RESULT]], i32* [[T0]]
 //   Check that we properly assign into the forwarding pointer.
 // CHECK-NEXT: [[A_FORWARDING:%.*]] = getelementptr inbounds [[BYREF]], [[BYREF]]* [[A]], i32 0, i32 1
@@ -42,7 +42,7 @@ void test1() {
 // CHECK-NEXT: [[B:%.*]] = alloca [[B_BYREF:%.*]], align 8
 // CHECK-NEXT: [[TEMP:%.*]] = alloca [[AGG]], align 4
 // CHECK:      [[RESULT:%.*]] = call i32 @makeAgg()
-// CHECK-NEXT: [[T0:%.*]] = getelementptr [[AGG]], [[AGG]]* [[TEMP]], i32 0, i32 0
+// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[AGG]], [[AGG]]* [[TEMP]], i32 0, i32 0
 // CHECK-NEXT: store i32 [[RESULT]], i32* [[T0]]
 //   Check that we properly assign into the forwarding pointer, first for b:
 // CHECK-NEXT: [[B_FORWARDING:%.*]] = getelementptr inbounds [[B_BYREF]], [[B_BYREF]]* [[B]], i32 0, i32 1

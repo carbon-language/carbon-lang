@@ -33,7 +33,7 @@ void f() {
 // and a descriptor pointer).
 
 // Test 1
-// CHECK: Inline instruction for block variable layout: 0x0320
+// CHECK: Inline block variable layout: 0x0320, BL_STRONG:3, BL_BYREF:2, BL_OPERATOR:0
     void (^b)() = ^{
         byref_int = sh + ch+ch1+ch2 ;
         x(bar);
@@ -44,7 +44,7 @@ void f() {
     b();
 
 // Test 2
-// CHECK: Inline instruction for block variable layout: 0x0331
+// CHECK: Inline block variable layout: 0x0331, BL_STRONG:3, BL_BYREF:3, BL_WEAK:1, BL_OPERATOR:0
     void (^c)() = ^{
         byref_int = sh + ch+ch1+ch2 ;
         x(bar);
@@ -65,7 +65,7 @@ void g() {
   unsigned int i;
   NSString *y;
   NSString *z;
-// CHECK: Inline instruction for block variable layout: 0x0401
+// CHECK: Inline block variable layout: 0x0401, BL_STRONG:4, BL_WEAK:1, BL_OPERATOR:0
   void (^c)() = ^{
    int j = i + bletch;
    x(foo);
@@ -110,7 +110,7 @@ void h() {
 block variable layout: BL_NON_OBJECT_WORD:1, BL_UNRETAINE:1, BL_NON_OBJECT_WORD:1, 
                        BL_UNRETAINE:1, BL_NON_OBJECT_WORD:3, BL_BYREF:1, BL_OPERATOR:0
 */
-// CHECK: block variable layout: BL_BYREF:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_OPERATOR:0
+// CHECK: Block variable layout: BL_BYREF:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_OPERATOR:0
   void (^c)() = ^{
     x(s2.ui.o1);
     x(u2.o1);
@@ -125,7 +125,7 @@ void arr1() {
     __unsafe_unretained id unsafe_unretained_var[4];
  } imported_s;
 
-// CHECK: block variable layout: BL_UNRETAINED:4, BL_OPERATOR:0
+// CHECK: Block variable layout: BL_UNRETAINED:4, BL_OPERATOR:0
     void (^c)() = ^{
         x(imported_s.unsafe_unretained_var[2]);
     };    
@@ -140,7 +140,7 @@ void arr2() {
     __unsafe_unretained id unsafe_unretained_var[4];
  } imported_s;
 
-// CHECK: block variable layout: BL_NON_OBJECT_WORD:1, BL_UNRETAINED:4, BL_OPERATOR:0
+// CHECK: Block variable layout: BL_NON_OBJECT_WORD:1, BL_UNRETAINED:4, BL_OPERATOR:0
     void (^c)() = ^{
         x(imported_s.unsafe_unretained_var[2]);
     };    
@@ -155,7 +155,7 @@ void arr3() {
     __unsafe_unretained id unsafe_unretained_var[0];
  } imported_s;
 
-// CHECK: block variable layout: BL_OPERATOR:0
+// CHECK: Block variable layout: BL_OPERATOR:0
     void (^c)() = ^{
       int i = imported_s.a;
     };    
@@ -181,7 +181,7 @@ void arr4() {
     } f4[2][2];
   } captured_s;
 
-// CHECK: block variable layout: BL_UNRETAINED:3, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_OPERATOR:0
+// CHECK: Block variable layout: BL_UNRETAINED:3, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_OPERATOR:0
   void (^c)() = ^{
       id i = captured_s.f0.s_f1;
   };
@@ -199,7 +199,7 @@ void bf1() {
     int flag4: 24;
   } s;
 
-// CHECK:  block variable layout: BL_OPERATOR:0
+// CHECK:  Block variable layout: BL_OPERATOR:0
   int (^c)() = ^{
       return s.flag;
   };
@@ -212,7 +212,7 @@ void bf2() {
     int flag : 1;
   } s;
 
-// CHECK: block variable layout: BL_OPERATOR:0
+// CHECK: Block variable layout: BL_OPERATOR:0
   int (^c)() = ^{
       return s.flag;
   };
@@ -243,7 +243,7 @@ void bf3() {
         unsigned int _filler : 32;
     } _flags;
 
-// CHECK: block variable layout: BL_OPERATOR:0
+// CHECK: Block variable layout: BL_OPERATOR:0
   unsigned char (^c)() = ^{
       return _flags._draggedNodesAreDeletable;
   };
@@ -278,7 +278,7 @@ void bf4() {
         unsigned int _filler : 32;
     } _flags;
 
-// CHECK:  block variable layout: BL_OPERATOR:0
+// CHECK:  Block variable layout: BL_OPERATOR:0
   unsigned char (^c)() = ^{
       return _flags._draggedNodesAreDeletable;
   };
@@ -296,7 +296,7 @@ void bf5() {
         unsigned char flag1 : 1;
     } _flags;
 
-// CHECK:  block variable layout: BL_OPERATOR:0
+// CHECK:  Block variable layout: BL_OPERATOR:0
   unsigned char (^c)() = ^{
       return _flags.flag;
   };
@@ -313,7 +313,7 @@ void bf6() {
         unsigned char flag1 : 1;
     } _flags;
 
-// CHECK: block variable layout: BL_OPERATOR:0
+// CHECK: Block variable layout: BL_OPERATOR:0
   unsigned char (^c)() = ^{
       return _flags.flag;
   };
@@ -329,7 +329,7 @@ void Test7() {
     __weak id wid9, wid10, wid11, wid12;
     __weak id wid13, wid14, wid15, wid16;
     const id bar = (id) opaque_id();
-// CHECK: block variable layout: BL_STRONG:1, BL_WEAK:16, BL_OPERATOR:0
+// CHECK: Block variable layout: BL_STRONG:1, BL_WEAK:16, BL_OPERATOR:0
     void (^b)() = ^{
       x(bar);
       x(wid1);
@@ -364,7 +364,7 @@ __weak id wid;
     __weak id w9, w10, w11, w12;
     __weak id w13, w14, w15, w16;
     const id bar = (id) opaque_id();
-// CHECK: block variable layout: BL_STRONG:1, BL_WEAK:16, BL_WEAK:16, BL_WEAK:1, BL_OPERATOR:0
+// CHECK: Block variable layout: BL_STRONG:1, BL_WEAK:16, BL_WEAK:16, BL_WEAK:1, BL_OPERATOR:0
     void (^b)() = ^{
       x(bar);
       x(wid1);

@@ -275,8 +275,8 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S) {
 /// EmitCompoundStmt - Emit a compound statement {..} node.  If GetLast is true,
 /// this captures the expression result of the last sub-statement and returns it
 /// (for use by the statement expression extension).
-llvm::Value* CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
-                                               AggValueSlot AggSlot) {
+Address CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
+                                          AggValueSlot AggSlot) {
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),S.getLBracLoc(),
                              "LLVM IR generation of compound statement ('{}')");
 
@@ -286,7 +286,7 @@ llvm::Value* CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLa
   return EmitCompoundStmtWithoutScope(S, GetLast, AggSlot);
 }
 
-llvm::Value*
+Address
 CodeGenFunction::EmitCompoundStmtWithoutScope(const CompoundStmt &S,
                                               bool GetLast,
                                               AggValueSlot AggSlot) {
@@ -295,7 +295,7 @@ CodeGenFunction::EmitCompoundStmtWithoutScope(const CompoundStmt &S,
        E = S.body_end()-GetLast; I != E; ++I)
     EmitStmt(*I);
 
-  llvm::Value *RetAlloca = nullptr;
+  Address RetAlloca = Address::invalid();
   if (GetLast) {
     // We have to special case labels here.  They are statements, but when put
     // at the end of a statement expression, they yield the value of their
@@ -909,10 +909,9 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
   if (RV.isScalar()) {
     Builder.CreateStore(RV.getScalarVal(), ReturnValue);
   } else if (RV.isAggregate()) {
-    EmitAggregateCopy(ReturnValue, RV.getAggregateAddr(), Ty);
+    EmitAggregateCopy(ReturnValue, RV.getAggregateAddress(), Ty);
   } else {
-    EmitStoreOfComplex(RV.getComplexVal(),
-                       MakeNaturalAlignAddrLValue(ReturnValue, Ty),
+    EmitStoreOfComplex(RV.getComplexVal(), MakeAddrLValue(ReturnValue, Ty),
                        /*init*/ true);
   }
   EmitBranchThroughCleanup(ReturnBlock);
@@ -953,8 +952,8 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     // If there is an NRVO flag for this variable, set it to 1 into indicate
     // that the cleanup code should not destroy the variable.
     if (llvm::Value *NRVOFlag = NRVOFlags[S.getNRVOCandidate()])
-      Builder.CreateStore(Builder.getTrue(), NRVOFlag);
-  } else if (!ReturnValue || (RV && RV->getType()->isVoidType())) {
+      Builder.CreateFlagStore(Builder.getTrue(), NRVOFlag);
+  } else if (!ReturnValue.isValid() || (RV && RV->getType()->isVoidType())) {
     // Make sure not to return anything, but evaluate the expression
     // for side effects.
     if (RV)
@@ -972,19 +971,16 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
       Builder.CreateStore(EmitScalarExpr(RV), ReturnValue);
       break;
     case TEK_Complex:
-      EmitComplexExprIntoLValue(RV,
-                     MakeNaturalAlignAddrLValue(ReturnValue, RV->getType()),
+      EmitComplexExprIntoLValue(RV, MakeAddrLValue(ReturnValue, RV->getType()),
                                 /*isInit*/ true);
       break;
-    case TEK_Aggregate: {
-      CharUnits Alignment = getContext().getTypeAlignInChars(RV->getType());
-      EmitAggExpr(RV, AggValueSlot::forAddr(ReturnValue, Alignment,
+    case TEK_Aggregate:
+      EmitAggExpr(RV, AggValueSlot::forAddr(ReturnValue,
                                             Qualifiers(),
                                             AggValueSlot::IsDestructed,
                                             AggValueSlot::DoesNotNeedGCBarriers,
                                             AggValueSlot::IsNotAliased));
       break;
-    }
     }
   }
 
@@ -1640,12 +1636,12 @@ CodeGenFunction::EmitAsmInputLValue(const TargetInfo::ConstraintInfo &Info,
         Arg = Builder.CreateLoad(Builder.CreateBitCast(InputValue.getAddress(),
                                                        Ty));
       } else {
-        Arg = InputValue.getAddress();
+        Arg = InputValue.getPointer();
         ConstraintStr += '*';
       }
     }
   } else {
-    Arg = InputValue.getAddress();
+    Arg = InputValue.getPointer();
     ConstraintStr += '*';
   }
 
@@ -1816,8 +1812,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
             << OutExpr->getType() << OutputConstraint;
       }
     } else {
-      ArgTypes.push_back(Dest.getAddress()->getType());
-      Args.push_back(Dest.getAddress());
+      ArgTypes.push_back(Dest.getAddress().getType());
+      Args.push_back(Dest.getPointer());
       Constraints += "=*";
       Constraints += OutputConstraint;
       ReadOnly = ReadNone = false;
@@ -2049,8 +2045,8 @@ LValue CodeGenFunction::InitCapturedStruct(const CapturedStmt &S) {
   QualType RecordTy = getContext().getRecordType(RD);
 
   // Initialize the captured struct.
-  LValue SlotLV = MakeNaturalAlignAddrLValue(
-      CreateMemTemp(RecordTy, "agg.captured"), RecordTy);
+  LValue SlotLV =
+    MakeAddrLValue(CreateMemTemp(RecordTy, "agg.captured"), RecordTy);
 
   RecordDecl::field_iterator CurField = RD->field_begin();
   for (CapturedStmt::const_capture_init_iterator I = S.capture_init_begin(),
@@ -2081,13 +2077,12 @@ CodeGenFunction::EmitCapturedStmt(const CapturedStmt &S, CapturedRegionKind K) {
   delete CGF.CapturedStmtInfo;
 
   // Emit call to the helper function.
-  EmitCallOrInvoke(F, CapStruct.getAddress());
+  EmitCallOrInvoke(F, CapStruct.getPointer());
 
   return F;
 }
 
-llvm::Value *
-CodeGenFunction::GenerateCapturedStmtArgument(const CapturedStmt &S) {
+Address CodeGenFunction::GenerateCapturedStmtArgument(const CapturedStmt &S) {
   LValue CapStruct = InitCapturedStruct(S);
   return CapStruct.getAddress();
 }
@@ -2126,8 +2121,7 @@ CodeGenFunction::GenerateCapturedStmtFunction(const CapturedStmt &S) {
                 CD->getLocation(),
                 CD->getBody()->getLocStart());
   // Set the context parameter in CapturedStmtInfo.
-  llvm::Value *DeclPtr = LocalDeclMap[CD->getContextParam()];
-  assert(DeclPtr && "missing context parameter for CapturedStmt");
+  Address DeclPtr = GetAddrOfLocalVar(CD->getContextParam());
   CapturedStmtInfo->setContextValue(Builder.CreateLoad(DeclPtr));
 
   // Initialize variable-length arrays.

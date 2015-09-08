@@ -30,7 +30,7 @@ namespace test2 {
     // CHECK:      [[NEW:%.*]] = call noalias i8* @_Znaj(i32 44)
     // CHECK-NEXT: [[T0:%.*]] = bitcast i8* [[NEW]] to i32*
     // CHECK-NEXT: store i32 10, i32* [[T0]]
-    // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds i8, i8* [[NEW]], i64 4
+    // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds i8, i8* [[NEW]], i32 4
     // CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to [[A]]*
     // CHECK-NEXT: ret [[A]]* [[T2]]
     return ::new A[10];
@@ -44,7 +44,7 @@ namespace test2 {
     // CHECK-NEXT: [[T1:%.*]] = icmp eq [[A]]* [[T0]], null
     // CHECK-NEXT: br i1 [[T1]],
     // CHECK:      [[T2:%.*]] = bitcast [[A]]* [[T0]] to i8*
-    // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i8, i8* [[T2]], i64 -4
+    // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i8, i8* [[T2]], i32 -4
     // CHECK-NEXT: [[T4:%.*]] = bitcast i8* [[T3]] to i32*
     // CHECK-NEXT: [[T5:%.*]] = load i32, i32* [[T4]]
     // CHECK-NEXT: call void @_ZdaPv(i8* [[T3]])

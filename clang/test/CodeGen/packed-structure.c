@@ -25,7 +25,7 @@ int s0_load_x(struct s0 *a) { return a->x; }
 // with align 1 (in 2363.1 at least).
 //
 // CHECK-FUNCTIONS-LABEL: define i32 @s0_load_y
-// CHECK-FUNCTIONS: [[s0_load_y:%.*]] = load i32, i32* {{.*}}, align 1
+// CHECK-FUNCTIONS: [[s0_load_y:%.*]] = load i32, i32* {{.*}}, align 4
 // CHECK-FUNCTIONS: ret i32 [[s0_load_y]]
 int s0_load_y(struct s0 *a) { return a->y; }
 // CHECK-FUNCTIONS-LABEL: define void @s0_copy
@@ -95,6 +95,6 @@ int s3_1 = __alignof(((struct s3*) 0)->anInt);
 // CHECK-FUNCTIONS-LABEL: define i32 @test3(
 int test3(struct s3 *ptr) {
   // CHECK-FUNCTIONS:      [[PTR:%.*]] = getelementptr inbounds {{%.*}}, {{%.*}}* {{%.*}}, i32 0, i32 1
-  // CHECK-FUNCTIONS-NEXT: load i32, i32* [[PTR]], align 1
+  // CHECK-FUNCTIONS-NEXT: load i32, i32* [[PTR]], align 2
   return ptr->anInt;
 }

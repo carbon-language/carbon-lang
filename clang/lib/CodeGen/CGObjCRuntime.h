@@ -116,11 +116,16 @@ public:
   /// this compilation unit with the runtime library.
   virtual llvm::Function *ModuleInitFunction() = 0;
 
-  /// Get a selector for the specified name and type values. The
-  /// return value should have the LLVM type for pointer-to
+  /// Get a selector for the specified name and type values.
+  /// The result should have the LLVM type for ASTContext::getObjCSelType().
+  virtual llvm::Value *GetSelector(CodeGenFunction &CGF, Selector Sel) = 0;
+
+  /// Get the address of a selector for the specified name and type values.
+  /// This is a rarely-used language extension, but sadly it exists.
+  ///
+  /// The result should have the LLVM type for a pointer to
   /// ASTContext::getObjCSelType().
-  virtual llvm::Value *GetSelector(CodeGenFunction &CGF,
-                                   Selector Sel, bool lval=false) = 0;
+  virtual Address GetAddrOfSelector(CodeGenFunction &CGF, Selector Sel) = 0;
 
   /// Get a typed selector.
   virtual llvm::Value *GetSelector(CodeGenFunction &CGF,
@@ -133,7 +138,7 @@ public:
   virtual llvm::Constant *GetEHType(QualType T) = 0;
 
   /// Generate a constant string object.
-  virtual llvm::Constant *GenerateConstantString(const StringLiteral *) = 0;
+  virtual ConstantAddress GenerateConstantString(const StringLiteral *) = 0;
   
   /// Generate a category.  A category contains a list of methods (and
   /// accompanying metadata) and a list of protocols.
@@ -238,17 +243,17 @@ public:
                              const ObjCAtThrowStmt &S,
                              bool ClearInsertionPoint=true) = 0;
   virtual llvm::Value *EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
-                                        llvm::Value *AddrWeakObj) = 0;
+                                        Address AddrWeakObj) = 0;
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
-                                  llvm::Value *src, llvm::Value *dest) = 0;
+                                  llvm::Value *src, Address dest) = 0;
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
-                                    llvm::Value *src, llvm::Value *dest,
+                                    llvm::Value *src, Address dest,
                                     bool threadlocal=false) = 0;
   virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
-                                  llvm::Value *src, llvm::Value *dest,
+                                  llvm::Value *src, Address dest,
                                   llvm::Value *ivarOffset) = 0;
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
-                                        llvm::Value *src, llvm::Value *dest) = 0;
+                                        llvm::Value *src, Address dest) = 0;
 
   virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                       QualType ObjectTy,
@@ -259,8 +264,8 @@ public:
                                       const ObjCInterfaceDecl *Interface,
                                       const ObjCIvarDecl *Ivar) = 0;
   virtual void EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
-                                        llvm::Value *DestPtr,
-                                        llvm::Value *SrcPtr,
+                                        Address DestPtr,
+                                        Address SrcPtr,
                                         llvm::Value *Size) = 0;
   virtual llvm::Constant *BuildGCBlockLayout(CodeGen::CodeGenModule &CGM,
                                   const CodeGen::CGBlockInfo &blockInfo) = 0;

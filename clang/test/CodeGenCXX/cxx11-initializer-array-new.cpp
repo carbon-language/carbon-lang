@@ -28,7 +28,7 @@ void *p = new S[2][3]{ { 1, 2, 3 }, { 4, 5, 6 } };
 //
 // { 4, 5, 6 }
 //
-// CHECK: %[[S_1:.*]] = getelementptr inbounds [3 x %[[S]]], [3 x %[[S]]]* %[[S_0]], i32 1
+// CHECK: %[[S_1:.*]] = getelementptr inbounds [3 x %[[S]]], [3 x %[[S]]]* %[[S_0]], i64 1
 //
 // CHECK: %[[S_1_0:.*]] = getelementptr inbounds [3 x %[[S]]], [3 x %[[S]]]* %[[S_1]], i64 0, i64 0
 // CHECK: call void @_ZN1SC1Ei(%[[S]]* %[[S_1_0]], i32 4)
@@ -72,7 +72,7 @@ void *q = new S[n][3]{ { 1, 2, 3 }, { 4, 5, 6 } };
 //
 // { 4, 5, 6 }
 //
-// CHECK: %[[S_1:.*]] = getelementptr inbounds [3 x %[[S]]], [3 x %[[S]]]* %[[S_0]], i32 1
+// CHECK: %[[S_1:.*]] = getelementptr inbounds [3 x %[[S]]], [3 x %[[S]]]* %[[S_0]], i64 1
 //
 // CHECK: %[[S_1_0:.*]] = getelementptr inbounds [3 x %[[S]]], [3 x %[[S]]]* %[[S_1]], i64 0, i64 0
 // CHECK: call void @_ZN1SC1Ei(%[[S]]* %[[S_1_0]], i32 4)
@@ -83,7 +83,7 @@ void *q = new S[n][3]{ { 1, 2, 3 }, { 4, 5, 6 } };
 //
 // And the rest.
 //
-// CHECK: %[[S_2:.*]] = getelementptr inbounds [3 x %[[S]]], [3 x %[[S]]]* %[[S_1]], i32 1
+// CHECK: %[[S_2:.*]] = getelementptr inbounds [3 x %[[S]]], [3 x %[[S]]]* %[[S_1]], i64 1
 // CHECK: %[[S_2_AS_S:.*]] = bitcast [3 x %[[S]]]* %[[S_2]] to %[[S]]*
 //
 // CHECK: %[[REST:.*]] = sub i64 %[[ELTS]], 6
@@ -135,7 +135,7 @@ void *r = new T[n][3]{ { 1, 2, 3 }, { 4, 5, 6 } };
 //
 // { 4, 5, 6 }
 //
-// CHECK: %[[T_1:.*]] = getelementptr inbounds [3 x %[[T]]], [3 x %[[T]]]* %[[T_0]], i32 1
+// CHECK: %[[T_1:.*]] = getelementptr inbounds [3 x %[[T]]], [3 x %[[T]]]* %[[T_0]], i64 1
 //
 // CHECK: %[[T_1_0:.*]] = getelementptr inbounds [3 x %[[T]]], [3 x %[[T]]]* %[[T_1]], i64 0, i64 0
 // CHECK: %[[T_1_0_0:.*]] = getelementptr inbounds %[[T]], %[[T]]* %[[T_1_0]], i32 0, i32 0
@@ -149,7 +149,7 @@ void *r = new T[n][3]{ { 1, 2, 3 }, { 4, 5, 6 } };
 //
 // And the rest gets memset to 0.
 //
-// CHECK: %[[T_2:.*]] = getelementptr inbounds [3 x %[[T]]], [3 x %[[T]]]* %[[T_1]], i32 1
+// CHECK: %[[T_2:.*]] = getelementptr inbounds [3 x %[[T]]], [3 x %[[T]]]* %[[T_1]], i64 1
 // CHECK: %[[T_2_AS_T:.*]] = bitcast [3 x %[[T]]]* %[[T_2]] to %[[T]]*
 //
 // CHECK: %[[SIZE:.*]] = sub i64 %{{.*}}, 24

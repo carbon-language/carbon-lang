@@ -11,31 +11,30 @@ int main() {
   NSString *strong;
   unsigned long long eightByte = 0x8001800181818181ull;
   // Test1
-// CHECK: block variable layout: BL_NON_OBJECT_WORD:3, BL_STRONG:1, BL_OPERATOR:0
+  // CHECK: Inline block variable layout: 0x0100, BL_STRONG:1, BL_OPERATOR:0
   void (^block1)() = ^{ printf("%#llx", eightByte); NSLog(@"%@", strong); };
 
   // Test2
   int i = 1;
-// CHECK:  block variable layout: BL_NON_OBJECT_WORD:3, BL_STRONG:1, BL_OPERATOR:0
+  // CHECK: Inline block variable layout: 0x0100, BL_STRONG:1, BL_OPERATOR:0
   void (^block2)() = ^{ printf("%#llx, %d", eightByte, i); NSLog(@"%@", strong); };
 
   //  Test3
   char ch = 'a';
-// CHECK: block variable layout: BL_NON_OBJECT_WORD:3, BL_STRONG:1, BL_OPERATOR:0
+  // CHECK: Inline block variable layout: 0x0100, BL_STRONG:1, BL_OPERATOR:0
   void (^block3)() = ^{ printf("%c %#llx", ch, eightByte); NSLog(@"%@", strong); };
 
   // Test4
   unsigned long fourByte = 0x8001ul;
-// block variable layout: BL_NON_OBJECT_WORD:1, BL_STRONG:1, BL_OPERATOR:0
-// CHECK: Inline instruction for block variable layout: 0x0100
+  // CHECK: Inline block variable layout: 0x0100, BL_STRONG:1, BL_OPERATOR:0
   void (^block4)() = ^{ printf("%c %#lx", ch, fourByte); NSLog(@"%@", strong); };
 
   // Test5
-// CHECK: block variable layout: BL_NON_OBJECT_WORD:3, BL_STRONG:1, BL_OPERATOR:0
+  // CHECK: Inline block variable layout: 0x0100, BL_STRONG:1, BL_OPERATOR:0
   void (^block5)() = ^{ NSLog(@"%@", strong); printf("%c %#llx", ch, eightByte); };
 
   // Test6
-// CHECK: block variable layout: BL_OPERATOR:0
+  // CHECK: Block variable layout: BL_OPERATOR:0
   void (^block6)() = ^{ printf("%#llx", eightByte); };
 }
 

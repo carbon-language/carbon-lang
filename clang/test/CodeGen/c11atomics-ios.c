@@ -103,21 +103,21 @@ void testStruct(_Atomic(S) *fp) {
 
 // CHECK-NEXT: [[P:%.*]] = load [[S]]*, [[S]]** [[FP]]
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]], [[S]]* [[P]], i32 0, i32 0
-// CHECK-NEXT: store i16 1, i16* [[T0]], align 2
+// CHECK-NEXT: store i16 1, i16* [[T0]], align 8
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]], [[S]]* [[P]], i32 0, i32 1
 // CHECK-NEXT: store i16 2, i16* [[T0]], align 2
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]], [[S]]* [[P]], i32 0, i32 2
-// CHECK-NEXT: store i16 3, i16* [[T0]], align 2
+// CHECK-NEXT: store i16 3, i16* [[T0]], align 4
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]], [[S]]* [[P]], i32 0, i32 3
 // CHECK-NEXT: store i16 4, i16* [[T0]], align 2
   __c11_atomic_init(fp, (S){1,2,3,4});
 
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]], [[S]]* [[X]], i32 0, i32 0
-// CHECK-NEXT: store i16 1, i16* [[T0]], align 2
+// CHECK-NEXT: store i16 1, i16* [[T0]], align 8
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]], [[S]]* [[X]], i32 0, i32 1
 // CHECK-NEXT: store i16 2, i16* [[T0]], align 2
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]], [[S]]* [[X]], i32 0, i32 2
-// CHECK-NEXT: store i16 3, i16* [[T0]], align 2
+// CHECK-NEXT: store i16 3, i16* [[T0]], align 4
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]], [[S]]* [[X]], i32 0, i32 3
 // CHECK-NEXT: store i16 4, i16* [[T0]], align 2
   _Atomic(S) x = (S){1,2,3,4};
@@ -157,29 +157,29 @@ void testPromotedStruct(_Atomic(PS) *fp) {
 // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 8, i32 8, i1 false)
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[APS]], [[APS]]* [[P]], i32 0, i32 0
 // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[PS]], [[PS]]* [[T0]], i32 0, i32 0
-// CHECK-NEXT: store i16 1, i16* [[T1]], align 2
+// CHECK-NEXT: store i16 1, i16* [[T1]], align 8
 // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[PS]], [[PS]]* [[T0]], i32 0, i32 1
 // CHECK-NEXT: store i16 2, i16* [[T1]], align 2
 // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[PS]], [[PS]]* [[T0]], i32 0, i32 2
-// CHECK-NEXT: store i16 3, i16* [[T1]], align 2
+// CHECK-NEXT: store i16 3, i16* [[T1]], align 4
   __c11_atomic_init(fp, (PS){1,2,3});
 
 // CHECK-NEXT: [[T0:%.*]] = bitcast [[APS]]* [[X]] to i8*
 // CHECK-NEXT: call void @llvm.memset.p0i8.i32(i8* [[T0]], i8 0, i32 8, i32 8, i1 false)
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[APS]], [[APS]]* [[X]], i32 0, i32 0
 // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[PS]], [[PS]]* [[T0]], i32 0, i32 0
-// CHECK-NEXT: store i16 1, i16* [[T1]], align 2
+// CHECK-NEXT: store i16 1, i16* [[T1]], align 8
 // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[PS]], [[PS]]* [[T0]], i32 0, i32 1
 // CHECK-NEXT: store i16 2, i16* [[T1]], align 2
 // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[PS]], [[PS]]* [[T0]], i32 0, i32 2
-// CHECK-NEXT: store i16 3, i16* [[T1]], align 2
+// CHECK-NEXT: store i16 3, i16* [[T1]], align 4
   _Atomic(PS) x = (PS){1,2,3};
 
 // CHECK-NEXT: [[T0:%.*]] = load [[APS]]*, [[APS]]** [[FP]]
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[APS]]* [[T0]] to i64*
 // CHECK-NEXT: [[T2:%.*]] = load atomic i64, i64* [[T1]] seq_cst, align 8
 // CHECK-NEXT: [[T3:%.*]] = bitcast [[APS]]* [[TMP0]] to i64*
-// CHECK-NEXT: store i64 [[T2]], i64* [[T3]], align 2
+// CHECK-NEXT: store i64 [[T2]], i64* [[T3]], align 8
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[APS]], [[APS]]* [[TMP0]], i32 0, i32 0
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[PS]]* [[F]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = bitcast [[PS]]* [[T0]] to i8*

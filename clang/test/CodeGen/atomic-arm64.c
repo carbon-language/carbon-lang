@@ -21,7 +21,7 @@ extern _Atomic(void*) a_pointer;
 extern _Atomic(pointer_pair_t) a_pointer_pair;
 extern _Atomic(pointer_quad_t) a_pointer_quad;
 
-// CHECK:    define void @test0()
+// CHECK-LABEL:define void @test0()
 // CHECK:      [[TEMP:%.*]] = alloca i8, align 1
 // CHECK-NEXT: store i8 1, i8* [[TEMP]]
 // CHECK-NEXT: [[T0:%.*]] = load i8, i8* [[TEMP]], align 1
@@ -30,7 +30,7 @@ void test0() {
   __c11_atomic_store(&a_bool, 1, memory_order_seq_cst);
 }
 
-// CHECK:    define void @test1()
+// CHECK-LABEL:define void @test1()
 // CHECK:      [[TEMP:%.*]] = alloca float, align 4
 // CHECK-NEXT: store float 3.000000e+00, float* [[TEMP]]
 // CHECK-NEXT: [[T0:%.*]] = bitcast float* [[TEMP]] to i32*
@@ -40,7 +40,7 @@ void test1() {
   __c11_atomic_store(&a_float, 3, memory_order_seq_cst);
 }
 
-// CHECK:    define void @test2()
+// CHECK-LABEL:define void @test2()
 // CHECK:      [[TEMP:%.*]] = alloca i8*, align 8
 // CHECK-NEXT: store i8* @a_bool, i8** [[TEMP]]
 // CHECK-NEXT: [[T0:%.*]] = bitcast i8** [[TEMP]] to i64*
@@ -50,18 +50,18 @@ void test2() {
   __c11_atomic_store(&a_pointer, &a_bool, memory_order_seq_cst);
 }
 
-// CHECK:    define void @test3(
+// CHECK-LABEL:define void @test3(
 // CHECK:      [[PAIR:%.*]] = alloca [[PAIR_T:%.*]], align 8
 // CHECK-NEXT: [[TEMP:%.*]] = alloca [[PAIR_T]], align 8
 // CHECK:      llvm.memcpy
 // CHECK-NEXT: [[T0:%.*]] = bitcast [[PAIR_T]]* [[TEMP]] to i128*
-// CHECK-NEXT: [[T1:%.*]] = load i128, i128* [[T0]], align 16
+// CHECK-NEXT: [[T1:%.*]] = load i128, i128* [[T0]], align 8
 // CHECK-NEXT: store atomic i128 [[T1]], i128* bitcast ([[PAIR_T]]* @a_pointer_pair to i128*) seq_cst, align 16
 void test3(pointer_pair_t pair) {
   __c11_atomic_store(&a_pointer_pair, pair, memory_order_seq_cst);
 }
 
-// CHECK:    define void @test4([[QUAD_T:%.*]]*
+// CHECK-LABEL:define void @test4(
 // CHECK:      [[TEMP:%.*]] = alloca [[QUAD_T:%.*]], align 8
 // CHECK-NEXT: [[T0:%.*]] = bitcast [[QUAD_T]]* [[TEMP]] to i8*
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[QUAD_T]]* {{%.*}} to i8*

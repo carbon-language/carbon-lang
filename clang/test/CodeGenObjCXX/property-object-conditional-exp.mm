@@ -24,10 +24,10 @@ extern "C" bool CGRectIsEmpty(CGRect);
 
 // CHECK: [[SRC:%.*]] = call { i8*, i32 } bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
 // CHECK-NEXT: bitcast
-// CHECK-NEXT:getelementptr { i8*, i32 }, { i8*, i32 }* [[SRC:%.*]]
+// CHECK-NEXT:getelementptr inbounds { i8*, i32 }, { i8*, i32 }* [[SRC:%.*]]
 // CHECK-NEXT:extractvalue
 // CHECK-NEXT:store
-// CHECK-NEXT:getelementptr { i8*, i32 }, { i8*, i32 }* [[SRC:%.*]]
+// CHECK-NEXT:getelementptr inbounds { i8*, i32 }, { i8*, i32 }* [[SRC:%.*]]
 // CHECK-NEXT:extractvalue
 // CHECK-NEXT:store
   dataRect = CGRectIsEmpty(virtualBounds) ? self.bounds : virtualBounds;

@@ -132,9 +132,9 @@ int f_variable(char *f, ...) {
   while ((c = *f++)) switch (c) {
 
 // CHECK: %[[CUR:[^ ]+]] = load i8*, i8** %ap
-// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr i8, i8* %[[CUR]], i32 8
+// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr inbounds i8, i8* %[[CUR]], i64 8
 // CHECK-DAG: store i8* %[[NXT]], i8** %ap
-// CHECK-DAG: %[[EXT:[^ ]+]] = getelementptr i8, i8* %[[CUR]], i32 4
+// CHECK-DAG: %[[EXT:[^ ]+]] = getelementptr inbounds i8, i8* %[[CUR]], i64 4
 // CHECK-DAG: %[[ADR:[^ ]+]] = bitcast i8* %[[EXT]] to i32*
 // CHECK-DAG: load i32, i32* %[[ADR]]
 // CHECK: br
@@ -143,7 +143,7 @@ int f_variable(char *f, ...) {
     break;
 
 // CHECK: %[[CUR:[^ ]+]] = load i8*, i8** %ap
-// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr i8, i8* %[[CUR]], i32 8
+// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr inbounds i8, i8* %[[CUR]], i64 8
 // CHECK-DAG: store i8* %[[NXT]], i8** %ap
 // CHECK-DAG: %[[ADR:[^ ]+]] = bitcast i8* %[[CUR]] to i64*
 // CHECK-DAG: load i64, i64* %[[ADR]]
@@ -153,7 +153,7 @@ int f_variable(char *f, ...) {
     break;
 
 // CHECK: %[[CUR:[^ ]+]] = load i8*, i8** %ap
-// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr i8, i8* %[[CUR]], i32 8
+// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr inbounds i8, i8* %[[CUR]], i64 8
 // CHECK-DAG: store i8* %[[NXT]], i8** %ap
 // CHECK-DAG: %[[ADR:[^ ]+]] = bitcast i8* %[[CUR]] to %struct.tiny*
 // CHECK: br
@@ -162,7 +162,7 @@ int f_variable(char *f, ...) {
     break;
 
 // CHECK: %[[CUR:[^ ]+]] = load i8*, i8** %ap
-// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr i8, i8* %[[CUR]], i32 16
+// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr inbounds i8, i8* %[[CUR]], i64 16
 // CHECK-DAG: store i8* %[[NXT]], i8** %ap
 // CHECK-DAG: %[[ADR:[^ ]+]] = bitcast i8* %[[CUR]] to %struct.small*
 // CHECK: br
@@ -171,7 +171,7 @@ int f_variable(char *f, ...) {
     break;
 
 // CHECK: %[[CUR:[^ ]+]] = load i8*, i8** %ap
-// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr i8, i8* %[[CUR]], i32 8
+// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr inbounds i8, i8* %[[CUR]], i64 8
 // CHECK-DAG: store i8* %[[NXT]], i8** %ap
 // CHECK-DAG: %[[IND:[^ ]+]] = bitcast i8* %[[CUR]] to %struct.medium**
 // CHECK-DAG: %[[ADR:[^ ]+]] = load %struct.medium*, %struct.medium** %[[IND]]

@@ -17,6 +17,7 @@
 #define LLVM_CLANG_CODEGEN_CGFUNCTIONINFO_H
 
 #include "clang/AST/CanonicalType.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/FoldingSet.h"
 #include <cassert>
@@ -126,7 +127,7 @@ public:
   static ABIArgInfo getIgnore() {
     return ABIArgInfo(Ignore);
   }
-  static ABIArgInfo getIndirect(unsigned Alignment, bool ByVal = true,
+  static ABIArgInfo getIndirect(CharUnits Alignment, bool ByVal = true,
                                 bool Realign = false,
                                 llvm::Type *Padding = nullptr) {
     auto AI = ABIArgInfo(Indirect);
@@ -137,7 +138,7 @@ public:
     AI.setPaddingType(Padding);
     return AI;
   }
-  static ABIArgInfo getIndirectInReg(unsigned Alignment, bool ByVal = true,
+  static ABIArgInfo getIndirectInReg(CharUnits Alignment, bool ByVal = true,
                                      bool Realign = false) {
     auto AI = getIndirect(Alignment, ByVal, Realign);
     AI.setInReg(true);
@@ -211,20 +212,20 @@ public:
   }
 
   // Indirect accessors
-  unsigned getIndirectAlign() const {
+  CharUnits getIndirectAlign() const {
     assert(isIndirect() && "Invalid kind!");
-    return IndirectAlign;
+    return CharUnits::fromQuantity(IndirectAlign);
   }
-  void setIndirectAlign(unsigned IA) {
+  void setIndirectAlign(CharUnits IA) {
     assert(isIndirect() && "Invalid kind!");
-    IndirectAlign = IA;
+    IndirectAlign = IA.getQuantity();
   }
 
   bool getIndirectByVal() const {
     assert(isIndirect() && "Invalid kind!");
     return IndirectByVal;
   }
-  void setIndirectByVal(unsigned IBV) {
+  void setIndirectByVal(bool IBV) {
     assert(isIndirect() && "Invalid kind!");
     IndirectByVal = IBV;
   }
@@ -370,6 +371,7 @@ class CGFunctionInfo : public llvm::FoldingSetNode {
   /// The struct representing all arguments passed in memory.  Only used when
   /// passing non-trivial types with inalloca.  Not part of the profile.
   llvm::StructType *ArgStruct;
+  unsigned ArgStructAlign;
 
   unsigned NumArgs;
   ArgInfo *getArgsBuffer() {
@@ -463,7 +465,13 @@ public:
 
   /// \brief Get the struct type used to represent all the arguments in memory.
   llvm::StructType *getArgStruct() const { return ArgStruct; }
-  void setArgStruct(llvm::StructType *Ty) { ArgStruct = Ty; }
+  CharUnits getArgStructAlignment() const {
+    return CharUnits::fromQuantity(ArgStructAlign);
+  }
+  void setArgStruct(llvm::StructType *Ty, CharUnits Align) {
+    ArgStruct = Ty;
+    ArgStructAlign = Align.getQuantity();
+  }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     ID.AddInteger(getASTCallingConvention());

@@ -16,10 +16,10 @@
 #define LLVM_CLANG_LIB_CODEGEN_CGVALUE_H
 
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/CharUnits.h"
 #include "clang/AST/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Type.h"
+#include "Address.h"
 
 namespace llvm {
   class Constant;
@@ -37,6 +37,10 @@ namespace CodeGen {
 /// address of an aggregate value in memory.
 class RValue {
   enum Flavor { Scalar, Complex, Aggregate };
+
+  // The shift to make to an aggregate's alignment to make it look
+  // like a pointer.
+  enum { AggAlignShift = 4 };
 
   // Stores first value and flavor.
   llvm::PointerIntPair<llvm::Value *, 2, Flavor> V1;
@@ -63,9 +67,19 @@ public:
   }
 
   /// getAggregateAddr() - Return the Value* of the address of the aggregate.
-  llvm::Value *getAggregateAddr() const {
+  Address getAggregateAddress() const {
+    assert(isAggregate() && "Not an aggregate!");
+    auto align = reinterpret_cast<uintptr_t>(V2.getPointer()) >> AggAlignShift;
+    return Address(V1.getPointer(), CharUnits::fromQuantity(align));
+  }
+  llvm::Value *getAggregatePointer() const {
     assert(isAggregate() && "Not an aggregate!");
     return V1.getPointer();
+  }
+
+  static RValue getIgnored() {
+    // FIXME: should we make this a more explicit state?
+    return get(nullptr);
   }
 
   static RValue get(llvm::Value *V) {
@@ -89,11 +103,14 @@ public:
   // FIXME: Aggregate rvalues need to retain information about whether they are
   // volatile or not.  Remove default to find all places that probably get this
   // wrong.
-  static RValue getAggregate(llvm::Value *V, bool Volatile = false) {
+  static RValue getAggregate(Address addr, bool isVolatile = false) {
     RValue ER;
-    ER.V1.setPointer(V);
+    ER.V1.setPointer(addr.getPointer());
     ER.V1.setInt(Aggregate);
-    ER.V2.setInt(Volatile);
+
+    auto align = static_cast<uintptr_t>(addr.getAlignment().getQuantity());
+    ER.V2.setPointer(reinterpret_cast<llvm::Value*>(align << AggAlignShift));
+    ER.V2.setInt(isVolatile);
     return ER;
   }
 };
@@ -102,6 +119,32 @@ public:
 enum ARCPreciseLifetime_t {
   ARCImpreciseLifetime, ARCPreciseLifetime
 };
+
+/// The source of the alignment of an l-value; an expression of
+/// confidence in the alignment actually matching the estimate.
+enum class AlignmentSource {
+  /// The l-value was an access to a declared entity or something
+  /// equivalently strong, like the address of an array allocated by a
+  /// language runtime.
+  Decl,
+
+  /// The l-value was considered opaque, so the alignment was
+  /// determined from a type, but that type was an explicitly-aligned
+  /// typedef.
+  AttributedType,
+
+  /// The l-value was considered opaque, so the alignment was
+  /// determined from a type.
+  Type
+};
+
+/// Given that the base address has the given alignment source, what's
+/// our confidence in the alignment of the field?
+static inline AlignmentSource getFieldAlignmentSource(AlignmentSource Source) {
+  // For now, we don't distinguish fields of opaque pointers from
+  // top-level declarations, but maybe we should.
+  return AlignmentSource::Decl;
+}
 
 /// LValue - This represents an lvalue references.  Because C/C++ allow
 /// bitfields, this is not a simple LLVM pointer, it may be a pointer plus a
@@ -157,6 +200,8 @@ class LValue {
   // to make the default bitfield pattern all-zeroes.
   bool ImpreciseLifetime : 1;
 
+  unsigned AlignSource : 2;
+
   Expr *BaseIvarExp;
 
   /// Used by struct-path-aware TBAA.
@@ -169,13 +214,16 @@ class LValue {
 
 private:
   void Initialize(QualType Type, Qualifiers Quals,
-                  CharUnits Alignment,
+                  CharUnits Alignment, AlignmentSource AlignSource,
                   llvm::MDNode *TBAAInfo = nullptr) {
+    assert((!Alignment.isZero() || Type->isIncompleteType()) &&
+           "initializing l-value with zero alignment!");
     this->Type = Type;
     this->Quals = Quals;
     this->Alignment = Alignment.getQuantity();
     assert(this->Alignment == Alignment.getQuantity() &&
            "Alignment exceeds allowed max!");
+    this->AlignSource = unsigned(AlignSource);
 
     // Initialize Objective-C flags.
     this->Ivar = this->ObjIsArray = this->NonGC = this->GlobalObjCRef = false;
@@ -261,29 +309,50 @@ public:
   CharUnits getAlignment() const { return CharUnits::fromQuantity(Alignment); }
   void setAlignment(CharUnits A) { Alignment = A.getQuantity(); }
 
+  AlignmentSource getAlignmentSource() const {
+    return AlignmentSource(AlignSource);
+  }
+  void setAlignmentSource(AlignmentSource Source) {
+    AlignSource = unsigned(Source);
+  }
+
   // simple lvalue
-  llvm::Value *getAddress() const { assert(isSimple()); return V; }
-  void setAddress(llvm::Value *address) {
+  llvm::Value *getPointer() const {
     assert(isSimple());
-    V = address;
+    return V;
+  }
+  Address getAddress() const { return Address(getPointer(), getAlignment()); }
+  void setAddress(Address address) {
+    assert(isSimple());
+    V = address.getPointer();
+    Alignment = address.getAlignment().getQuantity();
   }
 
   // vector elt lvalue
-  llvm::Value *getVectorAddr() const { assert(isVectorElt()); return V; }
+  Address getVectorAddress() const {
+    return Address(getVectorPointer(), getAlignment());
+  }
+  llvm::Value *getVectorPointer() const { assert(isVectorElt()); return V; }
   llvm::Value *getVectorIdx() const { assert(isVectorElt()); return VectorIdx; }
 
   // extended vector elements.
-  llvm::Value *getExtVectorAddr() const { assert(isExtVectorElt()); return V; }
+  Address getExtVectorAddress() const {
+    return Address(getExtVectorPointer(), getAlignment());
+  }
+  llvm::Value *getExtVectorPointer() const {
+    assert(isExtVectorElt());
+    return V;
+  }
   llvm::Constant *getExtVectorElts() const {
     assert(isExtVectorElt());
     return VectorElts;
   }
 
   // bitfield lvalue
-  llvm::Value *getBitFieldAddr() const {
-    assert(isBitField());
-    return V;
+  Address getBitFieldAddress() const {
+    return Address(getBitFieldPointer(), getAlignment());
   }
+  llvm::Value *getBitFieldPointer() const { assert(isBitField()); return V; }
   const CGBitFieldInfo &getBitFieldInfo() const {
     assert(isBitField());
     return *BitFieldInfo;
@@ -292,37 +361,40 @@ public:
   // global register lvalue
   llvm::Value *getGlobalReg() const { assert(isGlobalReg()); return V; }
 
-  static LValue MakeAddr(llvm::Value *address, QualType type,
-                         CharUnits alignment, ASTContext &Context,
+  static LValue MakeAddr(Address address, QualType type,
+                         ASTContext &Context,
+                         AlignmentSource alignSource,
                          llvm::MDNode *TBAAInfo = nullptr) {
     Qualifiers qs = type.getQualifiers();
     qs.setObjCGCAttr(Context.getObjCGCAttrKind(type));
 
     LValue R;
     R.LVType = Simple;
-    assert(address->getType()->isPointerTy());
-    R.V = address;
-    R.Initialize(type, qs, alignment, TBAAInfo);
+    assert(address.getPointer()->getType()->isPointerTy());
+    R.V = address.getPointer();
+    R.Initialize(type, qs, address.getAlignment(), alignSource, TBAAInfo);
     return R;
   }
 
-  static LValue MakeVectorElt(llvm::Value *Vec, llvm::Value *Idx,
-                              QualType type, CharUnits Alignment) {
+  static LValue MakeVectorElt(Address vecAddress, llvm::Value *Idx,
+                              QualType type, AlignmentSource alignSource) {
     LValue R;
     R.LVType = VectorElt;
-    R.V = Vec;
+    R.V = vecAddress.getPointer();
     R.VectorIdx = Idx;
-    R.Initialize(type, type.getQualifiers(), Alignment);
+    R.Initialize(type, type.getQualifiers(), vecAddress.getAlignment(),
+                 alignSource);
     return R;
   }
 
-  static LValue MakeExtVectorElt(llvm::Value *Vec, llvm::Constant *Elts,
-                                 QualType type, CharUnits Alignment) {
+  static LValue MakeExtVectorElt(Address vecAddress, llvm::Constant *Elts,
+                                 QualType type, AlignmentSource alignSource) {
     LValue R;
     R.LVType = ExtVectorElt;
-    R.V = Vec;
+    R.V = vecAddress.getPointer();
     R.VectorElts = Elts;
-    R.Initialize(type, type.getQualifiers(), Alignment);
+    R.Initialize(type, type.getQualifiers(), vecAddress.getAlignment(),
+                 alignSource);
     return R;
   }
 
@@ -332,29 +404,28 @@ public:
   /// bit-field refers to.
   /// \param Info - The information describing how to perform the bit-field
   /// access.
-  static LValue MakeBitfield(llvm::Value *Addr,
+  static LValue MakeBitfield(Address Addr,
                              const CGBitFieldInfo &Info,
-                             QualType type, CharUnits Alignment) {
+                             QualType type,
+                             AlignmentSource alignSource) {
     LValue R;
     R.LVType = BitField;
-    R.V = Addr;
+    R.V = Addr.getPointer();
     R.BitFieldInfo = &Info;
-    R.Initialize(type, type.getQualifiers(), Alignment);
+    R.Initialize(type, type.getQualifiers(), Addr.getAlignment(), alignSource);
     return R;
   }
 
-  static LValue MakeGlobalReg(llvm::Value *Reg,
-                              QualType type,
-                              CharUnits Alignment) {
+  static LValue MakeGlobalReg(Address Reg, QualType type) {
     LValue R;
     R.LVType = GlobalReg;
-    R.V = Reg;
-    R.Initialize(type, type.getQualifiers(), Alignment);
+    R.V = Reg.getPointer();
+    R.Initialize(type, type.getQualifiers(), Reg.getAlignment(),
+                 AlignmentSource::Decl);
     return R;
   }
 
   RValue asAggregateRValue() const {
-    // FIMXE: Alignment
     return RValue::getAggregate(getAddress(), isVolatileQualified());
   }
 };
@@ -407,7 +478,7 @@ public:
   /// ignored - Returns an aggregate value slot indicating that the
   /// aggregate value is being ignored.
   static AggValueSlot ignored() {
-    return forAddr(nullptr, CharUnits(), Qualifiers(), IsNotDestructed,
+    return forAddr(Address::invalid(), Qualifiers(), IsNotDestructed,
                    DoesNotNeedGCBarriers, IsNotAliased);
   }
 
@@ -421,15 +492,20 @@ public:
   ///   for calling destructors on this object
   /// \param needsGC - true if the slot is potentially located
   ///   somewhere that ObjC GC calls should be emitted for
-  static AggValueSlot forAddr(llvm::Value *addr, CharUnits align,
+  static AggValueSlot forAddr(Address addr,
                               Qualifiers quals,
                               IsDestructed_t isDestructed,
                               NeedsGCBarriers_t needsGC,
                               IsAliased_t isAliased,
                               IsZeroed_t isZeroed = IsNotZeroed) {
     AggValueSlot AV;
-    AV.Addr = addr;
-    AV.Alignment = align.getQuantity();
+    if (addr.isValid()) {
+      AV.Addr = addr.getPointer();
+      AV.Alignment = addr.getAlignment().getQuantity();
+    } else {
+      AV.Addr = nullptr;
+      AV.Alignment = 0;
+    }
     AV.Quals = quals;
     AV.DestructedFlag = isDestructed;
     AV.ObjCGCFlag = needsGC;
@@ -443,7 +519,7 @@ public:
                                 NeedsGCBarriers_t needsGC,
                                 IsAliased_t isAliased,
                                 IsZeroed_t isZeroed = IsNotZeroed) {
-    return forAddr(LV.getAddress(), LV.getAlignment(),
+    return forAddr(LV.getAddress(),
                    LV.getQuals(), isDestructed, needsGC, isAliased, isZeroed);
   }
 
@@ -471,9 +547,13 @@ public:
   NeedsGCBarriers_t requiresGCollection() const {
     return NeedsGCBarriers_t(ObjCGCFlag);
   }
-  
-  llvm::Value *getAddr() const {
+
+  llvm::Value *getPointer() const {
     return Addr;
+  }
+
+  Address getAddress() const {
+    return Address(Addr, getAlignment());
   }
 
   bool isIgnored() const {
@@ -488,9 +568,12 @@ public:
     return IsAliased_t(AliasedFlag);
   }
 
-  // FIXME: Alignment?
   RValue asRValue() const {
-    return RValue::getAggregate(getAddr(), isVolatile());
+    if (isIgnored()) {
+      return RValue::getIgnored();
+    } else {
+      return RValue::getAggregate(getAddress(), isVolatile());
+    }
   }
 
   void setZeroed(bool V = true) { ZeroedFlag = V; }

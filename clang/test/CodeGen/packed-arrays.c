@@ -64,10 +64,12 @@ int f0_b(struct s0 *a) {
   return *(a->x + 1);
 }
 
+// Note that 'y' still causes struct s1 to be four-byte aligned.
+
 // Note that we are incompatible with GCC on this example.
 // 
 // CHECK-LABEL: define i32 @f1_a
-// CHECK:   load i32, i32* %{{.*}}, align 1
+// CHECK:   load i32, i32* %{{.*}}, align 4
 // CHECK: }
 // CHECK-LABEL: define i32 @f1_b
 // CHECK:   load i32, i32* %{{.*}}, align 4
@@ -79,7 +81,7 @@ int f0_b(struct s0 *a) {
 // CHECK:   load i32, i32* %{{.*}}, align 4
 // CHECK: }
 // CHECK-LABEL: define i32 @f1_d
-// CHECK:   load i32, i32* %{{.*}}, align 1
+// CHECK:   load i32, i32* %{{.*}}, align 4
 // CHECK: }
 int f1_a(struct s1 *a) {
   return a->x[1];

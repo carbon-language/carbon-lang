@@ -81,7 +81,7 @@ int main() {
     // LAMBDA: call void [[INNER_LAMBDA:@.+]](%{{.+}}* [[ARG]])
     // LAMBDA: call void @__kmpc_for_static_fini(
 
-    // LAMBDA: [[G_PRIV_REF:%.+]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[RED_LIST]], i32 0, i32 0
+    // LAMBDA: [[G_PRIV_REF:%.+]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[RED_LIST]], i64 0, i64 0
     // LAMBDA: [[BITCAST:%.+]] = bitcast double* [[G_PRIVATE_ADDR]] to i8*
     // LAMBDA: store i8* [[BITCAST]], i8** [[G_PRIV_REF]],
     // LAMBDA: call i32 @__kmpc_reduce(
@@ -143,7 +143,7 @@ int main() {
     // BLOCKS: call void {{%.+}}(i8
     // BLOCKS: call void @__kmpc_for_static_fini(
 
-    // BLOCKS: [[G_PRIV_REF:%.+]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[RED_LIST]], i32 0, i32 0
+    // BLOCKS: [[G_PRIV_REF:%.+]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[RED_LIST]], i64 0, i64 0
     // BLOCKS: [[BITCAST:%.+]] = bitcast double* [[G_PRIVATE_ADDR]] to i8*
     // BLOCKS: store i8* [[BITCAST]], i8** [[G_PRIV_REF]],
     // BLOCKS: call i32 @__kmpc_reduce(
@@ -243,16 +243,16 @@ int main() {
 
 // void *RedList[<n>] = {<ReductionVars>[0], ..., <ReductionVars>[<n>-1]};
 
-// CHECK: [[T_VAR_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i32 0, i32 0
+// CHECK: [[T_VAR_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i64 0, i64 0
 // CHECK: [[BITCAST:%.+]] = bitcast float* [[T_VAR_PRIV]] to i8*
 // CHECK: store i8* [[BITCAST]], i8** [[T_VAR_PRIV_REF]],
-// CHECK: [[VAR_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i32 0, i32 1
+// CHECK: [[VAR_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i64 0, i64 1
 // CHECK: [[BITCAST:%.+]] = bitcast [[S_FLOAT_TY]]* [[VAR_PRIV]] to i8*
 // CHECK: store i8* [[BITCAST]], i8** [[VAR_PRIV_REF]],
-// CHECK: [[VAR1_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i32 0, i32 2
+// CHECK: [[VAR1_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i64 0, i64 2
 // CHECK: [[BITCAST:%.+]] = bitcast [[S_FLOAT_TY]]* [[VAR1_PRIV]] to i8*
 // CHECK: store i8* [[BITCAST]], i8** [[VAR1_PRIV_REF]],
-// CHECK: [[T_VAR1_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i32 0, i32 3
+// CHECK: [[T_VAR1_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i64 0, i64 3
 // CHECK: [[BITCAST:%.+]] = bitcast float* [[T_VAR1_PRIV]] to i8*
 // CHECK: store i8* [[BITCAST]], i8** [[T_VAR1_PRIV_REF]],
 
@@ -392,38 +392,38 @@ int main() {
 // }
 // CHECK: define internal void [[REDUCTION_FUNC]](i8*, i8*)
 // t_var_lhs = (float*)lhs[0];
-// CHECK: [[T_VAR_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS:%.+]], i32 0, i32 0
+// CHECK: [[T_VAR_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS:%.+]], i64 0, i64 0
 // CHECK: [[T_VAR_RHS_VOID:%.+]] = load i8*, i8** [[T_VAR_RHS_REF]],
 // CHECK: [[T_VAR_RHS:%.+]] = bitcast i8* [[T_VAR_RHS_VOID]] to float*
 // t_var_rhs = (float*)rhs[0];
-// CHECK: [[T_VAR_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS:%.+]], i32 0, i32 0
+// CHECK: [[T_VAR_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS:%.+]], i64 0, i64 0
 // CHECK: [[T_VAR_LHS_VOID:%.+]] = load i8*, i8** [[T_VAR_LHS_REF]],
 // CHECK: [[T_VAR_LHS:%.+]] = bitcast i8* [[T_VAR_LHS_VOID]] to float*
 
 // var_lhs = (S<float>*)lhs[1];
-// CHECK: [[VAR_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i32 0, i32 1
+// CHECK: [[VAR_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i64 0, i64 1
 // CHECK: [[VAR_RHS_VOID:%.+]] = load i8*, i8** [[VAR_RHS_REF]],
 // CHECK: [[VAR_RHS:%.+]] = bitcast i8* [[VAR_RHS_VOID]] to [[S_FLOAT_TY]]*
 // var_rhs = (S<float>*)rhs[1];
-// CHECK: [[VAR_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i32 0, i32 1
+// CHECK: [[VAR_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i64 0, i64 1
 // CHECK: [[VAR_LHS_VOID:%.+]] = load i8*, i8** [[VAR_LHS_REF]],
 // CHECK: [[VAR_LHS:%.+]] = bitcast i8* [[VAR_LHS_VOID]] to [[S_FLOAT_TY]]*
 
 // var1_lhs = (S<float>*)lhs[2];
-// CHECK: [[VAR1_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i32 0, i32 2
+// CHECK: [[VAR1_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i64 0, i64 2
 // CHECK: [[VAR1_RHS_VOID:%.+]] = load i8*, i8** [[VAR1_RHS_REF]],
 // CHECK: [[VAR1_RHS:%.+]] = bitcast i8* [[VAR1_RHS_VOID]] to [[S_FLOAT_TY]]*
 // var1_rhs = (S<float>*)rhs[2];
-// CHECK: [[VAR1_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i32 0, i32 2
+// CHECK: [[VAR1_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i64 0, i64 2
 // CHECK: [[VAR1_LHS_VOID:%.+]] = load i8*, i8** [[VAR1_LHS_REF]],
 // CHECK: [[VAR1_LHS:%.+]] = bitcast i8* [[VAR1_LHS_VOID]] to [[S_FLOAT_TY]]*
 
 // t_var1_lhs = (float*)lhs[3];
-// CHECK: [[T_VAR1_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i32 0, i32 3
+// CHECK: [[T_VAR1_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i64 0, i64 3
 // CHECK: [[T_VAR1_RHS_VOID:%.+]] = load i8*, i8** [[T_VAR1_RHS_REF]],
 // CHECK: [[T_VAR1_RHS:%.+]] = bitcast i8* [[T_VAR1_RHS_VOID]] to float*
 // t_var1_rhs = (float*)rhs[3];
-// CHECK: [[T_VAR1_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i32 0, i32 3
+// CHECK: [[T_VAR1_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i64 0, i64 3
 // CHECK: [[T_VAR1_LHS_VOID:%.+]] = load i8*, i8** [[T_VAR1_LHS_REF]],
 // CHECK: [[T_VAR1_LHS:%.+]] = bitcast i8* [[T_VAR1_LHS_VOID]] to float*
 
@@ -516,16 +516,16 @@ int main() {
 
 // void *RedList[<n>] = {<ReductionVars>[0], ..., <ReductionVars>[<n>-1]};
 
-// CHECK: [[T_VAR_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i32 0, i32 0
+// CHECK: [[T_VAR_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i64 0, i64 0
 // CHECK: [[BITCAST:%.+]] = bitcast i{{[0-9]+}}* [[T_VAR_PRIV]] to i8*
 // CHECK: store i8* [[BITCAST]], i8** [[T_VAR_PRIV_REF]],
-// CHECK: [[VAR_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i32 0, i32 1
+// CHECK: [[VAR_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i64 0, i64 1
 // CHECK: [[BITCAST:%.+]] = bitcast [[S_INT_TY]]* [[VAR_PRIV]] to i8*
 // CHECK: store i8* [[BITCAST]], i8** [[VAR_PRIV_REF]],
-// CHECK: [[VAR1_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i32 0, i32 2
+// CHECK: [[VAR1_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i64 0, i64 2
 // CHECK: [[BITCAST:%.+]] = bitcast [[S_INT_TY]]* [[VAR1_PRIV]] to i8*
 // CHECK: store i8* [[BITCAST]], i8** [[VAR1_PRIV_REF]],
-// CHECK: [[T_VAR1_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i32 0, i32 3
+// CHECK: [[T_VAR1_PRIV_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST]], i64 0, i64 3
 // CHECK: [[BITCAST:%.+]] = bitcast i{{[0-9]+}}* [[T_VAR1_PRIV]] to i8*
 // CHECK: store i8* [[BITCAST]], i8** [[T_VAR1_PRIV_REF]],
 
@@ -634,38 +634,38 @@ int main() {
 // }
 // CHECK: define internal void [[REDUCTION_FUNC]](i8*, i8*)
 // t_var_lhs = (i{{[0-9]+}}*)lhs[0];
-// CHECK: [[T_VAR_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS:%.+]], i32 0, i32 0
+// CHECK: [[T_VAR_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS:%.+]], i64 0, i64 0
 // CHECK: [[T_VAR_RHS_VOID:%.+]] = load i8*, i8** [[T_VAR_RHS_REF]],
 // CHECK: [[T_VAR_RHS:%.+]] = bitcast i8* [[T_VAR_RHS_VOID]] to i{{[0-9]+}}*
 // t_var_rhs = (i{{[0-9]+}}*)rhs[0];
-// CHECK: [[T_VAR_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS:%.+]], i32 0, i32 0
+// CHECK: [[T_VAR_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS:%.+]], i64 0, i64 0
 // CHECK: [[T_VAR_LHS_VOID:%.+]] = load i8*, i8** [[T_VAR_LHS_REF]],
 // CHECK: [[T_VAR_LHS:%.+]] = bitcast i8* [[T_VAR_LHS_VOID]] to i{{[0-9]+}}*
 
 // var_lhs = (S<i{{[0-9]+}}>*)lhs[1];
-// CHECK: [[VAR_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i32 0, i32 1
+// CHECK: [[VAR_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i64 0, i64 1
 // CHECK: [[VAR_RHS_VOID:%.+]] = load i8*, i8** [[VAR_RHS_REF]],
 // CHECK: [[VAR_RHS:%.+]] = bitcast i8* [[VAR_RHS_VOID]] to [[S_INT_TY]]*
 // var_rhs = (S<i{{[0-9]+}}>*)rhs[1];
-// CHECK: [[VAR_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i32 0, i32 1
+// CHECK: [[VAR_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i64 0, i64 1
 // CHECK: [[VAR_LHS_VOID:%.+]] = load i8*, i8** [[VAR_LHS_REF]],
 // CHECK: [[VAR_LHS:%.+]] = bitcast i8* [[VAR_LHS_VOID]] to [[S_INT_TY]]*
 
 // var1_lhs = (S<i{{[0-9]+}}>*)lhs[2];
-// CHECK: [[VAR1_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i32 0, i32 2
+// CHECK: [[VAR1_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i64 0, i64 2
 // CHECK: [[VAR1_RHS_VOID:%.+]] = load i8*, i8** [[VAR1_RHS_REF]],
 // CHECK: [[VAR1_RHS:%.+]] = bitcast i8* [[VAR1_RHS_VOID]] to [[S_INT_TY]]*
 // var1_rhs = (S<i{{[0-9]+}}>*)rhs[2];
-// CHECK: [[VAR1_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i32 0, i32 2
+// CHECK: [[VAR1_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i64 0, i64 2
 // CHECK: [[VAR1_LHS_VOID:%.+]] = load i8*, i8** [[VAR1_LHS_REF]],
 // CHECK: [[VAR1_LHS:%.+]] = bitcast i8* [[VAR1_LHS_VOID]] to [[S_INT_TY]]*
 
 // t_var1_lhs = (i{{[0-9]+}}*)lhs[3];
-// CHECK: [[T_VAR1_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i32 0, i32 3
+// CHECK: [[T_VAR1_RHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_RHS]], i64 0, i64 3
 // CHECK: [[T_VAR1_RHS_VOID:%.+]] = load i8*, i8** [[T_VAR1_RHS_REF]],
 // CHECK: [[T_VAR1_RHS:%.+]] = bitcast i8* [[T_VAR1_RHS_VOID]] to i{{[0-9]+}}*
 // t_var1_rhs = (i{{[0-9]+}}*)rhs[3];
-// CHECK: [[T_VAR1_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i32 0, i32 3
+// CHECK: [[T_VAR1_LHS_REF:%.+]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[RED_LIST_LHS]], i64 0, i64 3
 // CHECK: [[T_VAR1_LHS_VOID:%.+]] = load i8*, i8** [[T_VAR1_LHS_REF]],
 // CHECK: [[T_VAR1_LHS:%.+]] = bitcast i8* [[T_VAR1_LHS_VOID]] to i{{[0-9]+}}*
 

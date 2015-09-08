@@ -102,8 +102,11 @@ static RValue PerformReturnAdjustment(CodeGenFunction &CGF,
     CGF.EmitBlock(AdjustNotNull);
   }
 
-  ReturnValue = CGF.CGM.getCXXABI().performReturnAdjustment(CGF, ReturnValue,
-                                                            Thunk.Return);
+  auto ClassDecl = ResultType->getPointeeType()->getAsCXXRecordDecl();
+  auto ClassAlign = CGF.CGM.getClassPointerAlignment(ClassDecl);
+  ReturnValue = CGF.CGM.getCXXABI().performReturnAdjustment(CGF,
+                                            Address(ReturnValue, ClassAlign),
+                                            Thunk.Return);
 
   if (NullCheckValue) {
     CGF.Builder.CreateBr(AdjustEnd);
@@ -171,11 +174,11 @@ CodeGenFunction::GenerateVarArgsThunk(llvm::Function *Fn,
 
   // Find the first store of "this", which will be to the alloca associated
   // with "this".
-  llvm::Value *ThisPtr = &*AI;
+  Address ThisPtr(&*AI, CGM.getClassPointerAlignment(MD->getParent()));
   llvm::BasicBlock *EntryBB = Fn->begin();
   llvm::Instruction *ThisStore =
       std::find_if(EntryBB->begin(), EntryBB->end(), [&](llvm::Instruction &I) {
-    return isa<llvm::StoreInst>(I) && I.getOperand(0) == ThisPtr;
+    return isa<llvm::StoreInst>(I) && I.getOperand(0) == ThisPtr.getPointer();
   });
   assert(ThisStore && "Store of this should be in entry block?");
   // Adjust "this", if necessary.
@@ -235,6 +238,17 @@ void CodeGenFunction::StartThunk(llvm::Function *Fn, GlobalDecl GD,
   // Since we didn't pass a GlobalDecl to StartFunction, do this ourselves.
   CGM.getCXXABI().EmitInstanceFunctionProlog(*this);
   CXXThisValue = CXXABIThisValue;
+  CurCodeDecl = MD;
+  CurFuncDecl = MD;
+}
+
+void CodeGenFunction::FinishThunk() {
+  // Clear these to restore the invariants expected by
+  // StartFunction/FinishFunction.
+  CurCodeDecl = nullptr;
+  CurFuncDecl = nullptr;
+
+  FinishFunction();
 }
 
 void CodeGenFunction::EmitCallAndReturnForThunk(llvm::Value *Callee,
@@ -244,9 +258,10 @@ void CodeGenFunction::EmitCallAndReturnForThunk(llvm::Value *Callee,
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(CurGD.getDecl());
 
   // Adjust the 'this' pointer if necessary
-  llvm::Value *AdjustedThisPtr = Thunk ? CGM.getCXXABI().performThisAdjustment(
-                                             *this, LoadCXXThis(), Thunk->This)
-                                       : LoadCXXThis();
+  llvm::Value *AdjustedThisPtr =
+    Thunk ? CGM.getCXXABI().performThisAdjustment(
+                          *this, LoadCXXThisAddress(), Thunk->This)
+          : LoadCXXThis();
 
   if (CurFnInfo->usesInAlloca()) {
     // We don't handle return adjusting thunks, because they require us to call
@@ -321,7 +336,7 @@ void CodeGenFunction::EmitCallAndReturnForThunk(llvm::Value *Callee,
   // Disable the final ARC autorelease.
   AutoreleaseResult = false;
 
-  FinishFunction();
+  FinishThunk();
 }
 
 void CodeGenFunction::EmitMustTailThunk(const CXXMethodDecl *MD,
@@ -346,9 +361,8 @@ void CodeGenFunction::EmitMustTailThunk(const CXXMethodDecl *MD,
     Args[ThisArgNo] = AdjustedThisPtr;
   } else {
     assert(ThisAI.isInAlloca() && "this is passed directly or inalloca");
-    llvm::Value *ThisAddr = GetAddrOfLocalVar(CXXABIThisDecl);
-    llvm::Type *ThisType =
-        cast<llvm::PointerType>(ThisAddr->getType())->getElementType();
+    Address ThisAddr = GetAddrOfLocalVar(CXXABIThisDecl);
+    llvm::Type *ThisType = ThisAddr.getElementType();
     if (ThisType != AdjustedThisPtr->getType())
       AdjustedThisPtr = Builder.CreateBitCast(AdjustedThisPtr, ThisType);
     Builder.CreateStore(AdjustedThisPtr, ThisAddr);

@@ -515,7 +515,7 @@ void test19() {
 
   // CHECK-NEXT: [[CALL:%.*]] = call i8* @test19_helper()
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[CALL]]) [[NUW]]
-  // CHECK-NEXT: [[SLOT:%.*]] = getelementptr inbounds [5 x i8*], [5 x i8*]* [[X]], i32 0, i64 2
+  // CHECK-NEXT: [[SLOT:%.*]] = getelementptr inbounds [5 x i8*], [5 x i8*]* [[X]], i64 0, i64 2
   // CHECK-NEXT: [[T0:%.*]] = load i8*, i8** [[SLOT]]
   // CHECK-NEXT: store i8* [[T1]], i8** [[SLOT]]
   // CHECK-NEXT: call void @objc_release(i8* [[T0]]) [[NUW]]
@@ -556,7 +556,7 @@ void test20(unsigned n) {
   // Zero-initialize.
   // CHECK-NEXT: [[T0:%.*]] = bitcast i8** [[VLA]] to i8*
   // CHECK-NEXT: [[T1:%.*]] = mul nuw i64 [[DIM]], 8
-  // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 [[T1]], i32 8, i1 false)
+  // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 [[T1]], i32 16, i1 false)
 
   // Destroy.
   // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds i8*, i8** [[VLA]], i64 [[DIM]]
@@ -599,7 +599,7 @@ void test21(unsigned n) {
   // CHECK-NEXT: [[T0:%.*]] = bitcast [3 x i8*]* [[VLA]] to i8*
   // CHECK-NEXT: [[T1:%.*]] = mul nuw i64 2, [[DIM]]
   // CHECK-NEXT: [[T2:%.*]] = mul nuw i64 [[T1]], 24
-  // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 [[T2]], i32 8, i1 false)
+  // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 [[T2]], i32 16, i1 false)
 
   // Destroy.
   // CHECK-NEXT: [[T0:%.*]] = mul nuw i64 2, [[DIM]]

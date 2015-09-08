@@ -24,16 +24,13 @@ using namespace clang;
 using namespace CodeGen;
 
 static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
-                         llvm::Constant *DeclPtr) {
+                         ConstantAddress DeclPtr) {
   assert(D.hasGlobalStorage() && "VarDecl must have global storage!");
   assert(!D.getType()->isReferenceType() && 
          "Should not call EmitDeclInit on a reference!");
   
-  ASTContext &Context = CGF.getContext();
-
-  CharUnits alignment = Context.getDeclAlign(&D);
   QualType type = D.getType();
-  LValue lv = CGF.MakeAddrLValue(DeclPtr, type, alignment);
+  LValue lv = CGF.MakeAddrLValue(DeclPtr, type);
 
   const Expr *Init = D.getInit();
   switch (CGF.getEvaluationKind(type)) {
@@ -64,7 +61,7 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
 /// Emit code to cause the destruction of the given variable with
 /// static storage duration.
 static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
-                            llvm::Constant *addr) {
+                            ConstantAddress addr) {
   CodeGenModule &CGM = CGF.CGM;
 
   // FIXME:  __attribute__((cleanup)) ?
@@ -99,7 +96,7 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
 
     function = CGM.getAddrOfCXXStructor(dtor, StructorType::Complete);
     argument = llvm::ConstantExpr::getBitCast(
-        addr, CGF.getTypes().ConvertType(type)->getPointerTo());
+        addr.getPointer(), CGF.getTypes().ConvertType(type)->getPointerTo());
 
   // Otherwise, the standard logic requires a helper function.
   } else {
@@ -162,25 +159,26 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
     DeclPtr = llvm::ConstantExpr::getAddrSpaceCast(DeclPtr, PTy);
   }
 
+  ConstantAddress DeclAddr(DeclPtr, getContext().getDeclAlign(&D));
+
   if (!T->isReferenceType()) {
     if (getLangOpts().OpenMP && D.hasAttr<OMPThreadPrivateDeclAttr>())
       (void)CGM.getOpenMPRuntime().emitThreadPrivateVarDefinition(
-          &D, DeclPtr, D.getAttr<OMPThreadPrivateDeclAttr>()->getLocation(),
+          &D, DeclAddr, D.getAttr<OMPThreadPrivateDeclAttr>()->getLocation(),
           PerformInit, this);
     if (PerformInit)
-      EmitDeclInit(*this, D, DeclPtr);
+      EmitDeclInit(*this, D, DeclAddr);
     if (CGM.isTypeConstant(D.getType(), true))
       EmitDeclInvariant(*this, D, DeclPtr);
     else
-      EmitDeclDestroy(*this, D, DeclPtr);
+      EmitDeclDestroy(*this, D, DeclAddr);
     return;
   }
 
   assert(PerformInit && "cannot have constant initializer which needs "
          "destruction for reference");
-  unsigned Alignment = getContext().getDeclAlign(&D).getQuantity();
   RValue RV = EmitReferenceBindingToExpr(Init);
-  EmitStoreOfScalar(RV.getScalarVal(), DeclPtr, false, Alignment, T);
+  EmitStoreOfScalar(RV.getScalarVal(), DeclAddr, false, T);
 }
 
 /// Create a stub function, suitable for being passed to atexit,
@@ -498,7 +496,7 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
 void
 CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                            ArrayRef<llvm::Function *> Decls,
-                                           llvm::GlobalVariable *Guard) {
+                                           Address Guard) {
   {
     auto NL = ApplyDebugLocation::CreateEmpty(*this);
     StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
@@ -507,7 +505,7 @@ CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
     auto AL = ApplyDebugLocation::CreateArtificial(*this);
 
     llvm::BasicBlock *ExitBlock = nullptr;
-    if (Guard) {
+    if (Guard.isValid()) {
       // If we have a guard variable, check whether we've already performed
       // these initializations. This happens for TLS initialization functions.
       llvm::Value *GuardVal = Builder.CreateLoad(Guard);
@@ -572,9 +570,10 @@ void CodeGenFunction::GenerateCXXGlobalDtorsFunc(llvm::Function *Fn,
 }
 
 /// generateDestroyHelper - Generates a helper function which, when
-/// invoked, destroys the given object.
+/// invoked, destroys the given object.  The address of the object
+/// should be in global memory.
 llvm::Function *CodeGenFunction::generateDestroyHelper(
-    llvm::Constant *addr, QualType type, Destroyer *destroyer,
+    Address addr, QualType type, Destroyer *destroyer,
     bool useEHCleanupForArray, const VarDecl *VD) {
   FunctionArgList args;
   ImplicitParamDecl dst(getContext(), nullptr, SourceLocation(), nullptr,

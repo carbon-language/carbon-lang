@@ -26,7 +26,7 @@ int main() {
   }
 #endif
 #ifdef THROW
-  // THROW: store i32 42, i32* %[[mem_for_throw:.*]]
+  // THROW: store i32 42, i32* %[[mem_for_throw:.*]], align 4
   // THROW: %[[cast:.*]] = bitcast i32* %[[mem_for_throw]] to i8*
   // THROW: call void @_CxxThrowException(i8* %[[cast]], %eh.ThrowInfo* @_TI1H)
   throw int(42);
