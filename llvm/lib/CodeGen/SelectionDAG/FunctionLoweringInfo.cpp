@@ -212,6 +212,22 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   // also creates the initial PHI MachineInstrs, though none of the input
   // operands are populated.
   for (BB = Fn->begin(); BB != EB; ++BB) {
+    // Don't create MachineBasicBlocks for imaginary EH pad blocks. These blocks
+    // are really data, and no instructions can live here.
+    if (BB->isEHPad()) {
+      const Instruction *I = BB->getFirstNonPHI();
+      if (!isa<LandingPadInst>(I))
+        MMI.setHasEHFunclets(true);
+      if (isa<CatchPadInst>(I) || isa<CatchEndPadInst>(I) ||
+          isa<CleanupEndPadInst>(I)) {
+        assert(&*BB->begin() == I &&
+               "WinEHPrepare failed to remove PHIs from imaginary BBs");
+        continue;
+      } else if (!isa<LandingPadInst>(I)) {
+        llvm_unreachable("unhandled EH pad in MBB graph");
+      }
+    }
+
     MachineBasicBlock *MBB = mf.CreateMachineBasicBlock(BB);
     MBBMap[BB] = MBB;
     MF->push_back(MBB);
@@ -252,9 +268,9 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   // Mark landing pad blocks.
   SmallVector<const LandingPadInst *, 4> LPads;
   for (BB = Fn->begin(); BB != EB; ++BB) {
-    if (BB->isEHPad())
-      MBBMap[BB]->setIsEHPad();
     const Instruction *FNP = BB->getFirstNonPHI();
+    if (BB->isEHPad() && !isa<CatchPadInst>(FNP) && !isa<CatchEndPadInst>(FNP))
+      MBBMap[BB]->setIsEHPad();
     if (const auto *LPI = dyn_cast<LandingPadInst>(FNP))
       LPads.push_back(LPI);
   }

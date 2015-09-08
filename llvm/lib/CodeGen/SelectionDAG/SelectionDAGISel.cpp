@@ -1153,6 +1153,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     BasicBlock::const_iterator BI = End;
 
     FuncInfo->MBB = FuncInfo->MBBMap[LLVMBB];
+    if (!FuncInfo->MBB)
+      continue; // Some blocks like catchpads have no code or MBB.
     FuncInfo->InsertPt = FuncInfo->MBB->getFirstNonPHI();
 
     // Setup an EH landing-pad block.

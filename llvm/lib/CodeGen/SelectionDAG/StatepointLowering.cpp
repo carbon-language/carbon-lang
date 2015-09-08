@@ -283,7 +283,7 @@ static void removeDuplicatesGCPtrs(SmallVectorImpl<const Value *> &Bases,
 /// call node. Also update NodeMap so that getValue(statepoint) will
 /// reference lowered call result
 static SDNode *
-lowerCallFromStatepoint(ImmutableStatepoint ISP, MachineBasicBlock *LandingPad,
+lowerCallFromStatepoint(ImmutableStatepoint ISP, const BasicBlock *EHPadBB,
                         SelectionDAGBuilder &Builder,
                         SmallVectorImpl<SDValue> &PendingExports) {
 
@@ -316,7 +316,7 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, MachineBasicBlock *LandingPad,
   SDValue ReturnValue, CallEndVal;
   std::tie(ReturnValue, CallEndVal) = Builder.lowerCallOperands(
       ISP.getCallSite(), ImmutableStatepoint::CallArgsBeginPos,
-      ISP.getNumCallArgs(), ActualCallee, DefTy, LandingPad,
+      ISP.getNumCallArgs(), ActualCallee, DefTy, EHPadBB,
       false /* IsPatchPoint */);
 
   SDNode *CallEnd = CallEndVal.getNode();
@@ -626,7 +626,7 @@ void SelectionDAGBuilder::visitStatepoint(const CallInst &CI) {
 }
 
 void SelectionDAGBuilder::LowerStatepoint(
-    ImmutableStatepoint ISP, MachineBasicBlock *LandingPad /*=nullptr*/) {
+    ImmutableStatepoint ISP, const BasicBlock *EHPadBB /*= nullptr*/) {
   // The basic scheme here is that information about both the original call and
   // the safepoint is encoded in the CallInst.  We create a temporary call and
   // lower it, then reverse engineer the calling sequence.
@@ -666,7 +666,7 @@ void SelectionDAGBuilder::LowerStatepoint(
 
   // Get call node, we will replace it later with statepoint
   SDNode *CallNode =
-      lowerCallFromStatepoint(ISP, LandingPad, *this, PendingExports);
+      lowerCallFromStatepoint(ISP, EHPadBB, *this, PendingExports);
 
   // Construct the actual GC_TRANSITION_START, STATEPOINT, and GC_TRANSITION_END
   // nodes with all the appropriate arguments and return values.

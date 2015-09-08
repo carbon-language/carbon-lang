@@ -29,7 +29,6 @@ $"\01??_R0H@8" = comdat any
 
 declare void @f(i32 %p, i32* %l)
 declare i32 @__CxxFrameHandler3(...)
-declare void @barrier()
 
 define i32 @try_catch_catch() personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
@@ -42,10 +41,6 @@ catch.dispatch:                                   ; preds = %entry
           to label %catch unwind label %catch.dispatch.2
 
 catch:                                            ; preds = %catch.dispatch
-  ; FIXME: Remove this barrier once we add more real register allocation barriers.
-  invoke void @barrier()
-          to label %barrier.split unwind label %catchendblock
-barrier.split:
   invoke void @f(i32 2, i32* %local)
           to label %invoke.cont.2 unwind label %catchendblock
 
@@ -83,7 +78,6 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: [[catch1bb:LBB0_[0-9]+]]: # %catch{{$}}
 ; X86: addl $12, %ebp
 ; X86: subl $8, %esp
-; X86: calll _barrier
 ; X86: movl $1, -{{[0-9]+}}(%ebp)
 ; X86: leal -[[local_offs]](%ebp), %[[addr_reg:[a-z]+]]
 ; X86-DAG: movl %[[addr_reg]], 4(%esp)
