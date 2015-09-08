@@ -290,6 +290,10 @@ namespace __sanitizer {
       return 0;
   }
 
+#if SANITIZER_LINUX || SANITIZER_FREEBSD
+unsigned struct_ElfW_Phdr_sz = sizeof(ElfW(Phdr));
+#endif
+
 #if (SANITIZER_LINUX || SANITIZER_FREEBSD) && !SANITIZER_ANDROID
   int glob_nomatch = GLOB_NOMATCH;
   int glob_altdirfunc = GLOB_ALTDIRFUNC;

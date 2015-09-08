@@ -1092,6 +1092,8 @@ static int msan_dl_iterate_phdr_cb(__sanitizer_dl_phdr_info *info, SIZE_T size,
                                    void *data) {
   if (info) {
     __msan_unpoison(info, size);
+    if (info->dlpi_phdr && info->dlpi_phnum)
+      __msan_unpoison(info->dlpi_phdr, struct_ElfW_Phdr_sz * info->dlpi_phnum);
     if (info->dlpi_name)
       __msan_unpoison(info->dlpi_name, REAL(strlen)(info->dlpi_name) + 1);
   }
