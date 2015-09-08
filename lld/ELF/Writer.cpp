@@ -124,9 +124,10 @@ class SymbolTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
 public:
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
-  SymbolTableSection(SymbolTable &Table, llvm::StringTableBuilder &Builder)
+  SymbolTableSection(SymbolTable &Table,
+                     StringTableSection<ELFT::Is64Bits> &StrTabSec)
       : OutputSectionBase<ELFT::Is64Bits>(".symtab", SHT_SYMTAB, 0),
-        Table(Table), Builder(Builder) {
+        Table(Table), Builder(StrTabSec.StrTabBuilder), StrTabSec(StrTabSec) {
     typedef OutputSectionBase<ELFT::Is64Bits> Base;
     typename Base::HeaderT &Header = this->Header;
 
@@ -139,9 +140,8 @@ public:
 
   void finalize() override {
     this->Header.sh_size = (NumVisible + 1) * sizeof(Elf_Sym);
+    this->Header.sh_link = StrTabSec.getSectionIndex();
   }
-
-  void setStringTableIndex(uint32_t Index) { this->Header.sh_link = Index; }
 
   void writeTo(uint8_t *Buf) override;
 
@@ -153,6 +153,7 @@ public:
 private:
   SymbolTable &Table;
   llvm::StringTableBuilder &Builder;
+  const StringTableSection<ELFT::Is64Bits> &StrTabSec;
 };
 
 // The writer writes a SymbolTable result to a file.
@@ -161,7 +162,7 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  Writer(SymbolTable *T) : SymTable(*T, StringTable.StrTabBuilder) {}
+  Writer(SymbolTable *T) : SymTable(*T, StringTable) {}
   void run();
 
 private:
@@ -180,7 +181,6 @@ private:
   uintX_t SizeOfHeaders;
   uintX_t SectionHeaderOff;
 
-  unsigned StringTableIndex;
   StringTableSection<ELFT::Is64Bits> StringTable;
 
   SymbolTableSection<ELFT> SymTable;
@@ -504,9 +504,6 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   uintX_t VA = 0x1000; // The first page is kept unmapped.
   uintX_t FileOff = SizeOfHeaders;
 
-  StringTableIndex = OutputSections.size();
-  SymTable.setStringTableIndex(StringTableIndex);
-
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
     StringTable.add(Sec->getName());
     Sec->finalize();
@@ -557,7 +554,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_phnum = 1;
   EHdr->e_shentsize = sizeof(Elf_Shdr_Impl<ELFT>);
   EHdr->e_shnum = getNumSections();
-  EHdr->e_shstrndx = StringTableIndex;
+  EHdr->e_shstrndx = StringTable.getSectionIndex();
 
   auto PHdrs = reinterpret_cast<Elf_Phdr_Impl<ELFT> *>(Buf + EHdr->e_phoff);
   PHdrs->p_type = PT_LOAD;
