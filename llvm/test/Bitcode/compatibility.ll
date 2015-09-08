@@ -700,6 +700,9 @@ define void @typesystem() {
   ret void
 }
 
+declare void @llvm.token(token)
+; CHECK: declare void @llvm.token(token)
+
 ;; Inline Assembler Expressions
 define void @inlineasm(i32 %arg) {
   call i32 asm "bswap $0", "=r,r"(i32 %arg)
@@ -758,6 +761,100 @@ exc:
   ; CHECK: unreachable
 
   ret void
+}
+
+define i32 @instructions.win_eh.1() personality i32 -3 {
+entry:
+  %arg1 = alloca i32
+  %arg2 = alloca i32
+  invoke void @f.ccc() to label %normal unwind label %catchpad1
+  invoke void @f.ccc() to label %normal unwind label %catchpad2
+  invoke void @f.ccc() to label %normal unwind label %catchpad3
+
+catchpad1:
+  catchpad [] to label %normal unwind label %exn.1
+  ; CHECK: catchpad [] to label %normal unwind label %exn.1
+
+catchpad2:
+  catchpad [i32* %arg1] to label %normal unwind label %exn.2
+  ; CHECK: catchpad [i32* %arg1] to label %normal unwind label %exn.2
+
+catchpad3:
+  catchpad [i32* %arg1, i32* %arg2] to label %normal unwind label %exn.3
+  ; CHECK: catchpad [i32* %arg1, i32* %arg2] to label %normal unwind label %exn.3
+
+exn.1:
+  catchendpad unwind label %terminate.1
+  ; CHECK: catchendpad unwind label %terminate.1
+
+exn.2:
+  catchendpad unwind to caller
+  ; CHECK: catchendpad unwind to caller
+
+exn.3:
+  catchendpad unwind label %cleanuppad1
+  ; CHECK: catchendpad unwind label %cleanuppad1
+
+cleanuppad1:
+  %clean.1 = cleanuppad []
+  ; CHECK: %clean.1 = cleanuppad []
+  invoke void @f.ccc() to label %normal unwind label %cleanupendpad1
+
+cleanupendpad1:
+  cleanupendpad %clean.1 unwind label %terminate.2
+  ; CHECK: cleanupendpad %clean.1 unwind label %terminate.2
+
+terminate.1:
+  terminatepad [] unwind to caller
+  ; CHECK: terminatepad [] unwind to caller
+
+terminate.2:
+  terminatepad [i32* %arg1] unwind label %normal.pre
+  ; CHECK: terminatepad [i32* %arg1] unwind label %normal.pre
+
+normal.pre:
+  terminatepad [i32* %arg1, i32* %arg2] unwind to caller
+  ; CHECK: terminatepad [i32* %arg1, i32* %arg2] unwind to caller
+
+normal:
+  ret i32 0
+}
+
+define i32 @instructions.win_eh.2() personality i32 -4 {
+entry:
+  invoke void @f.ccc() to label %invoke.cont unwind label %catchpad
+
+invoke.cont:
+  invoke void @f.ccc() to label %continue unwind label %cleanup
+
+cleanup:
+  %clean = cleanuppad []
+  ; CHECK: %clean = cleanuppad []
+  cleanupret %clean unwind to caller
+  ; CHECK: cleanupret %clean unwind to caller
+
+catchpad:
+  %catch = catchpad [] to label %body unwind label %catchend
+  ; CHECK: %catch = catchpad [] to label %body unwind label %catchend
+
+body:
+  invoke void @f.ccc() to label %continue unwind label %catchend
+  catchret %catch to label %return
+  ; CHECK: catchret %catch to label %return
+
+return:
+  ret i32 0
+
+catchend:
+  catchendpad unwind label %terminate
+  ; CHECK: catchendpad unwind label %terminate
+
+terminate:
+  terminatepad [] unwind to caller
+  ; CHECK: terminatepad [] unwind to caller
+
+continue:
+  ret i32 0
 }
 
 ; Instructions -- Binary Operations
@@ -1211,9 +1308,6 @@ define void @misc.metadata() {
   call void @f1(), !srcloc !14
   ret void
 }
-
-declare void @llvm.tokenfoo(token)
-; CHECK: declare void @llvm.tokenfoo(token)
 
 ; CHECK: attributes #0 = { alignstack=4 }
 ; CHECK: attributes #1 = { alignstack=8 }
