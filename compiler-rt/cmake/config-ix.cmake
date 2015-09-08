@@ -121,8 +121,8 @@ macro(test_target_arch arch def)
   endif()
   if(${CAN_TARGET_${arch}})
     list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
-  elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "${arch}" AND
-         COMPILER_RT_HAS_EXPLICIT_TEST_TARGET_TRIPLE)
+  elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "${arch}" AND
+         COMPILER_RT_HAS_EXPLICIT_DEFAULT_TARGET_TRIPLE)
     # Bail out if we cannot target the architecture we plan to test.
     message(FATAL_ERROR "Cannot compile for ${arch}:\n${TARGET_${arch}_OUTPUT}")
   endif()
@@ -169,8 +169,7 @@ endif()
 
 # Generate the COMPILER_RT_SUPPORTED_ARCH list.
 if(ANDROID)
-  # Can't rely on LLVM_NATIVE_ARCH in cross-compilation.
-  # Examine compiler output instead.
+  # Examine compiler output to determine target architecture.
   detect_target_arch()
   set(COMPILER_RT_OS_SUFFIX "-android")
 elseif(NOT APPLE) # Supported archs for Apple platforms are generated later
@@ -202,7 +201,7 @@ elseif(NOT APPLE) # Supported archs for Apple platforms are generated later
     # clang's default CPU's. In the 64-bit case, we must also specify the ABI
     # since the default ABI differs between gcc and clang.
     # FIXME: Ideally, we would build the N32 library too.
-    if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "mipsel|mips64el")
+    if("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "mipsel|mips64el")
       # regex for mipsel, mips64el
       test_target_arch(mipsel "" "-mips32r2" "--target=mipsel-linux-gnu")
       test_target_arch(mips64el "" "-mips64r2" "-mabi=n64")
@@ -210,11 +209,11 @@ elseif(NOT APPLE) # Supported archs for Apple platforms are generated later
       test_target_arch(mips "" "-mips32r2" "--target=mips-linux-gnu")
       test_target_arch(mips64 "" "-mips64r2" "-mabi=n64")
     endif()
-  elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "arm")
+  elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "arm")
     test_target_arch(arm "" "-march=armv7-a")
-  elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "aarch32")
+  elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "aarch32")
     test_target_arch(aarch32 "" "-march=armv8-a")
-  elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "aarch64")
+  elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "aarch64")
     test_target_arch(aarch64 "" "-march=armv8-a")
   endif()
   set(COMPILER_RT_OS_SUFFIX "")
