@@ -1433,7 +1433,7 @@ namespace {
 struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
   CodeGenFunction &ParentCGF;
   const VarDecl *ParentThis;
-  SmallVector<const VarDecl *, 4> Captures;
+  llvm::SmallSetVector<const VarDecl *, 4> Captures;
   Address SEHCodeSlot = Address::invalid();
   CaptureFinder(CodeGenFunction &ParentCGF, const VarDecl *ParentThis)
       : ParentCGF(ParentCGF), ParentThis(ParentThis) {}
@@ -1454,17 +1454,17 @@ struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
   void VisitDeclRefExpr(const DeclRefExpr *E) {
     // If this is already a capture, just make sure we capture 'this'.
     if (E->refersToEnclosingVariableOrCapture()) {
-      Captures.push_back(ParentThis);
+      Captures.insert(ParentThis);
       return;
     }
 
     const auto *D = dyn_cast<VarDecl>(E->getDecl());
     if (D && D->isLocalVarDeclOrParm() && D->hasLocalStorage())
-      Captures.push_back(D);
+      Captures.insert(D);
   }
 
   void VisitCXXThisExpr(const CXXThisExpr *E) {
-    Captures.push_back(ParentThis);
+    Captures.insert(ParentThis);
   }
 
   void VisitCallExpr(const CallExpr *E) {

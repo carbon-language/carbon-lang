@@ -230,4 +230,34 @@ int except_return(void) {
 // CHECK: %[[r:[^ ]*]] = load i32, i32* %[[rv]]
 // CHECK: ret i32 %[[r]]
 
+
+// PR 24751: don't assert if a variable is used twice in a __finally block.
+// Also, make sure we don't do redundant work to capture/project it.
+void finally_capture_twice(int x) {
+  __try {
+  } __finally {
+    int y = x;
+    int z = x;
+  }
+}
+//  
+// CHECK-LABEL: define void @finally_capture_twice(
+// CHECK:         [[X:%.*]] = alloca i32, align 4
+// CHECK:         call void (...) @llvm.localescape(i32* [[X]])
+// CHECK-NEXT:    store i32 {{.*}}, i32* [[X]], align 4
+// CHECK-NEXT:    [[LOCAL:%.*]] = call i8* @llvm.localaddress()
+// CHECK-NEXT:    call void [[FINALLY:@.*]](i8{{ zeroext | }}0, i8* [[LOCAL]])
+// CHECK:       define internal void [[FINALLY]](
+// CHECK:         [[LOCAL:%.*]] = call i8* @llvm.localrecover(
+// CHECK:         [[X:%.*]] = bitcast i8* [[LOCAL]] to i32*
+// CHECK-NEXT:    [[Y:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[Z:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    store i8*
+// CHECK-NEXT:    store i8
+// CHECK-NEXT:    [[T0:%.*]] = load i32, i32* [[X]], align 4
+// CHECK-NEXT:    store i32 [[T0]], i32* [[Y]], align 4
+// CHECK-NEXT:    [[T0:%.*]] = load i32, i32* [[X]], align 4
+// CHECK-NEXT:    store i32 [[T0]], i32* [[Z]], align 4
+// CHECK-NEXT:    ret void
+
 // CHECK: attributes #[[NOINLINE]] = { {{.*noinline.*}} }
