@@ -1,6 +1,7 @@
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
 # RUN: lld -flavor gnu2 %t -o %t2
-# RUN: llvm-readobj -file-headers -sections -program-headers %t2 | FileCheck %s
+# RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
+# RUN:   | FileCheck %s
 # REQUIRES: x86
 
 # exits with return code 42 on linux
@@ -23,7 +24,7 @@ _start:
 # CHECK-NEXT:   Type: Executable (0x2)
 # CHECK-NEXT:   Machine: EM_X86_64 (0x3E)
 # CHECK-NEXT:   Version: 1
-# CHECK-NEXT:   Entry: 0x401000
+# CHECK-NEXT:   Entry: [[ENTRY:0x[0-9A-F]+]]
 # CHECK-NEXT:   ProgramHeaderOffset: 0x40
 # CHECK-NEXT:   SectionHeaderOffset: 0x1070
 # CHECK-NEXT:   Flags [ (0x0)
@@ -125,6 +126,26 @@ _start:
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 1
 # CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:   }
+# CHECK-NEXT: ]
+# CHECK-NEXT: Symbols [
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name:  (0)
+# CHECK-NEXT:     Value: 0x0
+# CHECK-NEXT:     Size: 0
+# CHECK-NEXT:     Binding: Local (0x0)
+# CHECK-NEXT:     Type: None (0x0)
+# CHECK-NEXT:     Other: 0
+# CHECK-NEXT:     Section: Undefined (0x0)
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: _start (7)
+# CHECK-NEXT:     Value: [[ENTRY]]
+# CHECK-NEXT:     Size: 0
+# CHECK-NEXT:     Binding: Global (0x1)
+# CHECK-NEXT:     Type: None (0x0)
+# CHECK-NEXT:     Other: 0
+# CHECK-NEXT:     Section: .text (0x1)
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
 # CHECK-NEXT: ProgramHeaders [

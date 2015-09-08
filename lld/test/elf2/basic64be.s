@@ -28,7 +28,7 @@ _start:
 # CHECK-NEXT:   Type: Executable (0x2)
 # CHECK-NEXT:   Machine: EM_PPC64 (0x15)
 # CHECK-NEXT:   Version: 1
-# CHECK-NEXT:   Entry: 0x401000
+# CHECK-NEXT:   Entry: 0x100C
 # CHECK-NEXT:   ProgramHeaderOffset: 0x40
 # CHECK-NEXT:   SectionHeaderOffset: 0x1088
 # CHECK-NEXT:   Flags [ (0x0)

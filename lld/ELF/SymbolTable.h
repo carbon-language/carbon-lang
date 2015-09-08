@@ -54,6 +54,10 @@ public:
     return SharedFiles;
   }
 
+  SymbolBody *getEntrySym() const {
+    return EntrySym;
+  }
+
 private:
   Symbol *insert(SymbolBody *New);
   template <class ELFT> void addELFFile(ELFFileBase *File);
@@ -73,6 +77,8 @@ private:
   std::vector<std::unique_ptr<ObjectFileBase>> ObjectFiles;
 
   std::vector<std::unique_ptr<SharedFileBase>> SharedFiles;
+
+  SymbolBody *EntrySym;
 };
 
 } // namespace elf2
