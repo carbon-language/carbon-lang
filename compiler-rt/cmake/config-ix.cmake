@@ -173,7 +173,7 @@ if(ANDROID)
   detect_target_arch()
   set(COMPILER_RT_OS_SUFFIX "-android")
 elseif(NOT APPLE) # Supported archs for Apple platforms are generated later
-  if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
+  if("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "i[2-6]86|x86|amd64")
     if(NOT MSVC)
       test_target_arch(x86_64 "" "-m64")
       # FIXME: We build runtimes for both i686 and i386, as "clang -m32" may
@@ -188,27 +188,24 @@ elseif(NOT APPLE) # Supported archs for Apple platforms are generated later
         test_target_arch(x86_64 "" "")
       endif()
     endif()
-  elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
+  elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "powerpc")
     TEST_BIG_ENDIAN(HOST_IS_BIG_ENDIAN)
     if(HOST_IS_BIG_ENDIAN)
       test_target_arch(powerpc64 "" "-m64")
     else()
       test_target_arch(powerpc64le "" "-m64")
     endif()
-  elseif("${LLVM_NATIVE_ARCH}" STREQUAL "Mips")
+  elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "mipsel|mips64el")
     # Gcc doesn't accept -m32/-m64 so we do the next best thing and use
     # -mips32r2/-mips64r2. We don't use -mips1/-mips3 because we want to match
     # clang's default CPU's. In the 64-bit case, we must also specify the ABI
     # since the default ABI differs between gcc and clang.
     # FIXME: Ideally, we would build the N32 library too.
-    if("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "mipsel|mips64el")
-      # regex for mipsel, mips64el
-      test_target_arch(mipsel "" "-mips32r2" "--target=mipsel-linux-gnu")
-      test_target_arch(mips64el "" "-mips64r2" "-mabi=n64")
-    else()
-      test_target_arch(mips "" "-mips32r2" "--target=mips-linux-gnu")
-      test_target_arch(mips64 "" "-mips64r2" "-mabi=n64")
-    endif()
+    test_target_arch(mipsel "" "-mips32r2" "--target=mipsel-linux-gnu")
+    test_target_arch(mips64el "" "-mips64r2" "-mabi=n64")
+  elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "mips")
+    test_target_arch(mips "" "-mips32r2" "--target=mips-linux-gnu")
+    test_target_arch(mips64 "" "-mips64r2" "-mabi=n64")
   elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "arm")
     test_target_arch(arm "" "-march=armv7-a")
   elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "aarch32")
@@ -523,7 +520,7 @@ endif()
 # message with -msse3. But check_c_compiler_flags() checks only for
 # compiler error messages. Therefore COMPILER_RT_HAS_MSSE3_FLAG turns out to be
 # true on Mips, so we make it false here.
-if("${LLVM_NATIVE_ARCH}" STREQUAL "Mips")
+if("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "mips")
   set(COMPILER_RT_HAS_MSSE3_FLAG FALSE)
 endif()
 
