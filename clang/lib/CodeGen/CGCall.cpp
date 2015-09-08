@@ -2259,6 +2259,18 @@ static llvm::Value *emitAutoreleaseOfResult(CodeGenFunction &CGF,
 
 /// Heuristically search for a dominating store to the return-value slot.
 static llvm::StoreInst *findDominatingStoreToReturnValue(CodeGenFunction &CGF) {
+  // Check if a User is a store which pointerOperand is the ReturnValue.
+  // We are looking for stores to the ReturnValue, not for stores of the
+  // ReturnValue to some other location.
+  auto GetStoreIfValid = [&CGF](llvm::User *U) -> llvm::StoreInst * {
+    auto *SI = dyn_cast<llvm::StoreInst>(U);
+    if (!SI || SI->getPointerOperand() != CGF.ReturnValue.getPointer())
+      return nullptr;
+    // These aren't actually possible for non-coerced returns, and we
+    // only care about non-coerced returns on this code path.
+    assert(!SI->isAtomic() && !SI->isVolatile());
+    return SI;
+  };
   // If there are multiple uses of the return-value slot, just check
   // for something immediately preceding the IP.  Sometimes this can
   // happen with how we generate implicit-returns; it can also happen
@@ -2287,21 +2299,12 @@ static llvm::StoreInst *findDominatingStoreToReturnValue(CodeGenFunction &CGF) {
       break;
     }
 
-    llvm::StoreInst *store = dyn_cast<llvm::StoreInst>(I);
-    if (!store) return nullptr;
-    if (store->getPointerOperand() != CGF.ReturnValue.getPointer())
-      return nullptr;
-    assert(!store->isAtomic() && !store->isVolatile()); // see below
-    return store;
+    return GetStoreIfValid(I);
   }
 
   llvm::StoreInst *store =
-    dyn_cast<llvm::StoreInst>(CGF.ReturnValue.getPointer()->user_back());
+      GetStoreIfValid(CGF.ReturnValue.getPointer()->user_back());
   if (!store) return nullptr;
-
-  // These aren't actually possible for non-coerced returns, and we
-  // only care about non-coerced returns on this code path.
-  assert(!store->isAtomic() && !store->isVolatile());
 
   // Now do a first-and-dirty dominance check: just walk up the
   // single-predecessors chain from the current insertion point.
