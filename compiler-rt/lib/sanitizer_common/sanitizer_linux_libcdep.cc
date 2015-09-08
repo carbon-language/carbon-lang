@@ -214,7 +214,7 @@ void InitTlsSize() {
 
 #if (defined(__x86_64__) || defined(__i386__) || defined(__mips__) \
     || defined(__aarch64__)) \
-    && SANITIZER_LINUX
+    && SANITIZER_LINUX && !SANITIZER_ANDROID
 // sizeof(struct thread) from glibc.
 static atomic_uintptr_t kThreadDescriptorSize;
 

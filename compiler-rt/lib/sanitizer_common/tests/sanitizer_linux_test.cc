@@ -195,7 +195,7 @@ TEST(SanitizerCommon, SetEnvTest) {
   EXPECT_EQ(0, getenv(kEnvName));
 }
 
-#if defined(__x86_64__) || defined(__i386__)
+#if (defined(__x86_64__) || defined(__i386__)) && !SANITIZER_ANDROID
 void *thread_self_offset_test_func(void *arg) {
   bool result =
       *(uptr *)((char *)ThreadSelf() + ThreadSelfOffset()) == ThreadSelf();
