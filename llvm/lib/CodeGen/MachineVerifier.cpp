@@ -236,6 +236,8 @@ namespace {
     void verifyLiveRange(const LiveRange&, unsigned, unsigned LaneMask = 0);
 
     void verifyStackFrame();
+
+    void verifySlotIndexes() const;
   };
 
   struct MachineVerifierPass : public MachineFunctionPass {
@@ -273,6 +275,19 @@ void MachineFunction::verify(Pass *p, const char *Banner) const {
     .runOnMachineFunction(const_cast<MachineFunction&>(*this));
 }
 
+void MachineVerifier::verifySlotIndexes() const {
+  if (Indexes == nullptr)
+    return;
+
+  // Ensure the IdxMBB list is sorted by slot indexes.
+  SlotIndex Last;
+  for (SlotIndexes::MBBIndexIterator I = Indexes->MBBIndexBegin(),
+       E = Indexes->MBBIndexEnd(); I != E; ++I) {
+    assert(!Last.isValid() || I->first > Last);
+    Last = I->first;
+  }
+}
+
 bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
   foundErrors = 0;
 
@@ -294,6 +309,8 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
     LiveStks = PASS->getAnalysisIfAvailable<LiveStacks>();
     Indexes = PASS->getAnalysisIfAvailable<SlotIndexes>();
   }
+
+  verifySlotIndexes();
 
   visitMachineFunctionBefore();
   for (MachineFunction::const_iterator MFI = MF.begin(), MFE = MF.end();
