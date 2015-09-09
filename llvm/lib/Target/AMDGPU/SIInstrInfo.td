@@ -1448,15 +1448,15 @@ multiclass VOP3SI_2_m <vop op, dag outs, dag ins, string asm,
 // instead of an implicit VCC as in the VOP2b format.
 multiclass VOP3b_2_3_m <vop op, dag outs, dag ins, string asm,
                         list<dag> pattern, string opName, string revOp,
-                        bit HasMods = 1, bit useSGPRInput = 0,
+                        bit HasMods = 1, bit useSrc2Input = 0,
                         bit UseFullOp = 0> {
   def "" : VOP3_Pseudo <outs, ins, pattern, opName>;
 
   def _si : VOP3b_Real_si <op.SI3, outs, ins, asm, opName>,
-            VOP3DisableFields<1, useSGPRInput, HasMods>;
+            VOP3DisableFields<1, useSrc2Input, HasMods>;
 
   def _vi : VOP3b_Real_vi <op.VI3, outs, ins, asm, opName>,
-            VOP3DisableFields<1, useSGPRInput, HasMods>;
+            VOP3DisableFields<1, useSrc2Input, HasMods>;
 }
 
 multiclass VOP3_C_m <vop op, dag outs, dag ins, string asm,
@@ -1858,7 +1858,7 @@ multiclass VOP3b_Helper <vop op, RegisterClass vrc, RegisterOperand arc,
            InputModsNoDefault:$src2_modifiers, arc:$src2,
            ClampMod:$clamp, omod:$omod),
   opName#" $vdst, $sdst, $src0_modifiers, $src1_modifiers, $src2_modifiers"#"$clamp"#"$omod", pattern,
-  opName, opName, 1, 0, 1
+  opName, opName, 1, 1, 1
 >;
 
 multiclass VOP3b_64 <vop3 op, string opName, list<dag> pattern> :
