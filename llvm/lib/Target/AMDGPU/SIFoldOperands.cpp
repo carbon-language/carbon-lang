@@ -245,6 +245,27 @@ static void foldOperand(MachineOperand &OpToFold, MachineInstr *UseMI,
     }
   }
 
+  // Special case for REG_SEQUENCE: We can't fold literals into
+  // REG_SEQUENCE instructions, so we have to fold them into the
+  // uses of REG_SEQUENCE.
+  if (UseMI->getOpcode() == AMDGPU::REG_SEQUENCE) {
+    unsigned RegSeqDstReg = UseMI->getOperand(0).getReg();
+    unsigned RegSeqDstSubReg = UseMI->getOperand(UseOpIdx + 1).getImm();
+
+    for (MachineRegisterInfo::use_iterator
+         RSUse = MRI.use_begin(RegSeqDstReg),
+         RSE = MRI.use_end(); RSUse != RSE; ++RSUse) {
+
+      MachineInstr *RSUseMI = RSUse->getParent();
+      if (RSUse->getSubReg() != RegSeqDstSubReg)
+        continue;
+
+      foldOperand(OpToFold, RSUseMI, RSUse.getOperandNo(), FoldList,
+                  TII, TRI, MRI);
+    }
+    return;
+  }
+
   const MCInstrDesc &UseDesc = UseMI->getDesc();
 
   // Don't fold into target independent nodes.  Target independent opcodes

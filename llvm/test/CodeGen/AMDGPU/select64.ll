@@ -51,12 +51,8 @@ define void @v_select_trunc_i64_2(i32 addrspace(1)* %out, i32 %cond, i64 addrspa
 }
 
 ; CHECK-LABEL: {{^}}v_select_i64_split_imm:
-; CHECK: s_mov_b32 [[SHI:s[0-9]+]], 63
-; CHECK: s_mov_b32 [[SLO:s[0-9]+]], 0
-; CHECK-DAG: v_mov_b32_e32 [[VHI:v[0-9]+]], [[SHI]]
-; CHECK-DAG: v_mov_b32_e32 [[VLO:v[0-9]+]], [[SLO]]
-; CHECK-DAG: v_cndmask_b32_e32 {{v[0-9]+}}, [[VLO]], {{v[0-9]+}}
-; CHECK-DAG: v_cndmask_b32_e32 {{v[0-9]+}}, [[VHI]], {{v[0-9]+}}
+; CHECK-DAG: v_cndmask_b32_e32 {{v[0-9]+}}, 0, {{v[0-9]+}}
+; CHECK-DAG: v_cndmask_b32_e32 {{v[0-9]+}}, 63, {{v[0-9]+}}
 ; CHECK: s_endpgm
 define void @v_select_i64_split_imm(i64 addrspace(1)* %out, i32 %cond, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {
   %cmp = icmp ugt i32 %cond, 5

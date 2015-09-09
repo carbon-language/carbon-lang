@@ -317,10 +317,8 @@ done:
 
 ; GCN-LABEL: {{^}}test_sink_constant_max_32_bit_offset_i32:
 ; GCN: s_and_saveexec_b64
-; GCN-DAG: s_mov_b32 s{{[0-9]+}}, 3{{$}}
-; GCN-DAG: s_mov_b32 s{{[0-9]+}}, -4{{$}}
-; GCN: s_add_u32
-; GCN: s_addc_u32
+; GCN: s_add_u32 s{{[0-9]+}}, s{{[0-9]+}}, -4{{$}}
+; GCN: s_addc_u32 s{{[0-9]+}}, s{{[0-9]+}}, 3{{$}}
 ; SI: s_load_dword s{{[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0x0{{$}}
 ; GCN: s_or_b64 exec, exec
 define void @test_sink_constant_max_32_bit_offset_i32(i32 addrspace(1)* %out, i32 addrspace(2)* %in, i32 %cond) {

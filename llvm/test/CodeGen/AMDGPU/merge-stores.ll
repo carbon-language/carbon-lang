@@ -508,10 +508,8 @@ define void @merge_local_store_2_constants_i8(i8 addrspace(3)* %out) #0 {
 }
 
 ; GCN-LABEL: {{^}}merge_local_store_2_constants_i32:
-; GCN-DAG: s_movk_i32 [[SLO:s[0-9]+]], 0x1c8
-; GCN-DAG: s_movk_i32 [[SHI:s[0-9]+]], 0x7b
-; GCN-DAG: v_mov_b32_e32 v[[LO:[0-9]+]], [[SLO]]
-; GCN-DAG: v_mov_b32_e32 v[[HI:[0-9]+]], [[SHI]]
+; GCN-DAG: v_mov_b32_e32 v[[LO:[0-9]+]], 0x1c8
+; GCN-DAG: v_mov_b32_e32 v[[HI:[0-9]+]], 0x7b
 ; GCN: ds_write2_b32 v{{[0-9]+}}, v[[LO]], v[[HI]] offset1:1{{$}}
 define void @merge_local_store_2_constants_i32(i32 addrspace(3)* %out) #0 {
   %out.gep.1 = getelementptr i32, i32 addrspace(3)* %out, i32 1
