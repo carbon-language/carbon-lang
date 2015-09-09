@@ -55,7 +55,7 @@ lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stre
     options.SetStream(&stream);
     options.SetPrefixToken('u');
     
-    if (!ReadStringAndDumpToStream<StringElementType::UTF16>(options))
+    if (!StringPrinter::ReadStringAndDumpToStream<StringElementType::UTF16>(options))
     {
         stream.Printf("Summary Unavailable");
         return true;
@@ -82,7 +82,7 @@ lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stre
     options.SetStream(&stream);
     options.SetPrefixToken('U');
     
-    if (!ReadStringAndDumpToStream<StringElementType::UTF32>(options))
+    if (!StringPrinter::ReadStringAndDumpToStream<StringElementType::UTF32>(options))
     {
         stream.Printf("Summary Unavailable");
         return true;
@@ -125,11 +125,11 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     switch (wchar_size)
     {
         case 8:
-            return ReadStringAndDumpToStream<StringElementType::UTF8>(options);
+            return StringPrinter::ReadStringAndDumpToStream<StringElementType::UTF8>(options);
         case 16:
-            return ReadStringAndDumpToStream<StringElementType::UTF16>(options);
+            return StringPrinter::ReadStringAndDumpToStream<StringElementType::UTF16>(options);
         case 32:
-            return ReadStringAndDumpToStream<StringElementType::UTF32>(options);
+            return StringPrinter::ReadStringAndDumpToStream<StringElementType::UTF32>(options);
         default:
             stream.Printf("size for wchar_t is not valid");
             return true;
@@ -160,7 +160,7 @@ lldb_private::formatters::Char16SummaryProvider (ValueObject& valobj, Stream& st
     options.SetSourceSize(1);
     options.SetBinaryZeroIsTerminator(false);
     
-    return ReadBufferAndDumpToStream<StringElementType::UTF16>(options);
+    return StringPrinter::ReadBufferAndDumpToStream<StringElementType::UTF16>(options);
 }
 
 bool
@@ -186,7 +186,7 @@ lldb_private::formatters::Char32SummaryProvider (ValueObject& valobj, Stream& st
     options.SetSourceSize(1);
     options.SetBinaryZeroIsTerminator(false);
     
-    return ReadBufferAndDumpToStream<StringElementType::UTF32>(options);
+    return StringPrinter::ReadBufferAndDumpToStream<StringElementType::UTF32>(options);
 }
 
 bool
@@ -207,5 +207,5 @@ lldb_private::formatters::WCharSummaryProvider (ValueObject& valobj, Stream& str
     options.SetSourceSize(1);
     options.SetBinaryZeroIsTerminator(false);
     
-    return ReadBufferAndDumpToStream<StringElementType::UTF16>(options);
+    return StringPrinter::ReadBufferAndDumpToStream<StringElementType::UTF16>(options);
 }

@@ -1601,7 +1601,7 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                 options.SetPrefixToken(0);
                 options.SetQuote('"');
                 options.SetSourceSize(buffer_sp->GetByteSize());
-                lldb_private::formatters::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::ASCII>(options);
+                formatters::StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::ASCII>(options);
                 return !error.Fail();
             }
             

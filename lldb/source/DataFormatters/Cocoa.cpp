@@ -876,7 +876,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             options.SetNeedsZeroTermination(false);
             options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
             options.SetBinaryZeroIsTerminator(false);
-            return ReadStringAndDumpToStream<StringElementType::UTF16>(options);
+            return StringPrinter::ReadStringAndDumpToStream<StringElementType::UTF16>(options);
         }
         else
         {
@@ -889,7 +889,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             options.SetNeedsZeroTermination(false);
             options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
             options.SetBinaryZeroIsTerminator(false);
-            return ReadStringAndDumpToStream<StringElementType::ASCII>(options);
+            return StringPrinter::ReadStringAndDumpToStream<StringElementType::ASCII>(options);
         }
     }
     else if (is_inline && has_explicit_length && !is_unicode && !is_path_store && !is_mutable)
@@ -904,7 +904,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetQuote('"');
         options.SetSourceSize(explicit_length);
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
-        return ReadStringAndDumpToStream<StringElementType::ASCII> (options);
+        return StringPrinter::ReadStringAndDumpToStream<StringElementType::ASCII> (options);
     }
     else if (is_unicode)
     {
@@ -935,7 +935,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetNeedsZeroTermination(has_explicit_length == false);
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
         options.SetBinaryZeroIsTerminator(has_explicit_length == false);
-        return ReadStringAndDumpToStream<StringElementType::UTF16> (options);
+        return StringPrinter::ReadStringAndDumpToStream<StringElementType::UTF16> (options);
     }
     else if (is_path_store)
     {
@@ -953,7 +953,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetNeedsZeroTermination(has_explicit_length == false);
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
         options.SetBinaryZeroIsTerminator(has_explicit_length == false);
-        return ReadStringAndDumpToStream<StringElementType::UTF16> (options);
+        return StringPrinter::ReadStringAndDumpToStream<StringElementType::UTF16> (options);
     }
     else if (is_inline)
     {
@@ -980,9 +980,9 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
         options.SetBinaryZeroIsTerminator(!has_explicit_length);
         if (has_explicit_length)
-            return ReadStringAndDumpToStream<StringElementType::UTF8>(options);
+            return StringPrinter::ReadStringAndDumpToStream<StringElementType::UTF8>(options);
         else
-            return ReadStringAndDumpToStream<StringElementType::ASCII>(options);
+            return StringPrinter::ReadStringAndDumpToStream<StringElementType::ASCII>(options);
     }
     else
     {
@@ -999,7 +999,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetStream(&stream);
         options.SetSourceSize(explicit_length);
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
-        return ReadStringAndDumpToStream<StringElementType::ASCII>(options);
+        return StringPrinter::ReadStringAndDumpToStream<StringElementType::ASCII>(options);
     }
 }
 

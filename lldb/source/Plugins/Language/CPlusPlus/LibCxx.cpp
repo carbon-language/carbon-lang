@@ -581,15 +581,15 @@ lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Str
     switch (wchar_t_size)
     {
         case 1:
-            lldb_private::formatters::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF8>(options);
+            StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF8>(options);
             break;
             
         case 2:
-            lldb_private::formatters::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF16>(options);
+            lldb_private::formatters::StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF16>(options);
             break;
             
         case 4:
-            lldb_private::formatters::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF32>(options);
+            lldb_private::formatters::StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF32>(options);
             break;
             
         default:
@@ -630,7 +630,7 @@ lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stre
     options.SetQuote('"');
     options.SetSourceSize(size);
     options.SetBinaryZeroIsTerminator(false);
-    lldb_private::formatters::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::ASCII>(options);
+    StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::ASCII>(options);
     
     return true;
 }
