@@ -273,6 +273,11 @@ addReferencesFromStmtUnionSet(isl_union_set *USet,
   isl_union_set_free(USet);
 }
 
+__isl_give isl_union_map *
+IslNodeBuilder::getScheduleForAstNode(__isl_keep isl_ast_node *For) {
+  return IslAstInfo::getSchedule(For);
+}
+
 void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
                                             SetVector<Value *> &Values,
                                             SetVector<const Loop *> &Loops) {
@@ -287,7 +292,7 @@ void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
   for (const auto &I : OutsideLoopIterations)
     Values.insert(cast<SCEVUnknown>(I.second)->getValue());
 
-  isl_union_set *Schedule = isl_union_map_domain(IslAstInfo::getSchedule(For));
+  isl_union_set *Schedule = isl_union_map_domain(getScheduleForAstNode(For));
   addReferencesFromStmtUnionSet(Schedule, References);
 
   for (const SCEV *Expr : SCEVs) {
@@ -378,7 +383,7 @@ void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
   for (int i = 1; i < VectorWidth; i++)
     IVS[i] = Builder.CreateAdd(IVS[i - 1], ValueInc, "p_vector_iv");
 
-  isl_union_map *Schedule = IslAstInfo::getSchedule(For);
+  isl_union_map *Schedule = getScheduleForAstNode(For);
   assert(Schedule && "For statement annotation does not contain its schedule");
 
   IDToValue[IteratorID] = ValueLB;

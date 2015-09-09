@@ -24,6 +24,7 @@ using namespace llvm;
 
 struct isl_ast_node;
 struct isl_ast_build;
+struct isl_union_map;
 
 class IslNodeBuilder {
 public:
@@ -262,6 +263,19 @@ protected:
                         __isl_take isl_union_map *Schedule);
   virtual void createUser(__isl_take isl_ast_node *User);
   virtual void createBlock(__isl_take isl_ast_node *Block);
+
+  /// @brief Get the schedule for a given AST node.
+  ///
+  /// This information is used to reason about parallelism of loops or the
+  /// locality of memory accesses under a given schedule.
+  ///
+  /// @param Node The node we want to obtain the schedule for.
+  /// @return Return an isl_union_map that maps from the statements executed
+  ///         below this ast node to the scheduling vectors used to enumerate
+  ///         them.
+  ///
+  virtual __isl_give isl_union_map *
+  getScheduleForAstNode(__isl_take isl_ast_node *Node);
 };
 
 #endif
