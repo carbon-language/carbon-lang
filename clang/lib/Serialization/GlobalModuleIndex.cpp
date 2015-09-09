@@ -757,9 +757,7 @@ void GlobalModuleIndexBuilder::writeIndex(llvm::BitstreamWriter &Stream) {
     unsigned IDTableAbbrev = Stream.EmitAbbrev(Abbrev);
 
     // Write the identifier table
-    Record.clear();
-    Record.push_back(IDENTIFIER_INDEX);
-    Record.push_back(BucketOffset);
+    ArrayRef<uint64_t> Record = {IDENTIFIER_INDEX, BucketOffset};
     Stream.EmitRecordWithBlob(IDTableAbbrev, Record, IdentifierTable);
   }
 
