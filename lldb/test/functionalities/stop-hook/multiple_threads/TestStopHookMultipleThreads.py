@@ -20,7 +20,7 @@ class StopHookForMultipleThreadsTestCase(TestBase):
         self.stop_hook_multiple_threads()
 
     @dwarf_test
-    @expectedFailureFreeBSD("llvm.org/pr15037")
+    @expectedFlakeyFreeBSD("llvm.org/pr15037")
     @expectedFlakeyLinux("llvm.org/pr15037") # stop hooks sometimes fail to fire on Linux
     @expectedFailureHostWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # Can cause an indefinite hang in dotest.py on FreeBSD

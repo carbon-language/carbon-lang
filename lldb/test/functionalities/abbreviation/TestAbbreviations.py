@@ -12,7 +12,7 @@ class AbbreviationsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @expectedFailureFreeBSD("llvm.org/pr22611 thread race condition breaks prompt setting")
+    @expectedFlakeyFreeBSD("llvm.org/pr22611 thread race condition breaks prompt setting")
     def test_command_abbreviations_and_aliases (self):
         command_interpreter = self.dbg.GetCommandInterpreter()
         self.assertTrue(command_interpreter, VALID_COMMAND_INTERPRETER)
