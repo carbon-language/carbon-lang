@@ -167,6 +167,8 @@ class VirtRegRewriter : public MachineFunctionPass {
   void rewrite();
   void addMBBLiveIns();
   bool readsUndefSubreg(const MachineOperand &MO) const;
+  void addLiveInsForSubRanges(const LiveInterval &LI, unsigned PhysReg) const;
+
 public:
   static char ID;
   VirtRegRewriter() : MachineFunctionPass(ID) {}
@@ -236,10 +238,58 @@ bool VirtRegRewriter::runOnMachineFunction(MachineFunction &fn) {
   return true;
 }
 
+void VirtRegRewriter::addLiveInsForSubRanges(const LiveInterval &LI,
+                                             unsigned PhysReg) const {
+  assert(!LI.empty());
+  assert(LI.hasSubRanges());
+
+  typedef std::pair<const LiveInterval::SubRange *,
+                    LiveInterval::const_iterator> SubRangeIteratorPair;
+  SmallVector<SubRangeIteratorPair, 4> SubRanges;
+  SlotIndex First;
+  SlotIndex Last;
+  for (const LiveInterval::SubRange &SR : LI.subranges()) {
+    SubRanges.push_back(std::make_pair(&SR, SR.begin()));
+    if (!First.isValid() || SR.segments.front().start < First)
+      First = SR.segments.front().start;
+    if (!Last.isValid() || SR.segments.back().end > Last)
+      Last = SR.segments.back().end;
+  }
+
+  // Check all mbb start positions between First and Last while
+  // simulatenously advancing an iterator for each subrange.
+  for (SlotIndexes::MBBIndexIterator MBBI = Indexes->findMBBIndex(First);
+       MBBI != Indexes->MBBIndexEnd() && MBBI->first <= Last; ++MBBI) {
+    SlotIndex MBBBegin = MBBI->first;
+    // Advance all subrange iterators so that their end position is just
+    // behind MBBBegin (or the iterator is at the end).
+    unsigned LaneMask = 0;
+    for (auto &RangeIterPair : SubRanges) {
+      const LiveInterval::SubRange *SR = RangeIterPair.first;
+      LiveInterval::const_iterator &SRI = RangeIterPair.second;
+      while (SRI != SR->end() && SRI->end <= MBBBegin)
+        ++SRI;
+      if (SRI == SR->end())
+        continue;
+      if (SRI->start <= MBBBegin)
+        LaneMask |= SR->LaneMask;
+    }
+    if (LaneMask == 0)
+      continue;
+    MachineBasicBlock *MBB = MBBI->second;
+    for (MCSubRegIndexIterator SR(PhysReg, TRI); SR.isValid(); ++SR) {
+      unsigned SubReg = SR.getSubReg();
+      unsigned SubRegIndex = SR.getSubRegIndex();
+      unsigned SubRegLaneMask = TRI->getSubRegIndexLaneMask(SubRegIndex);
+      if ((SubRegLaneMask & LaneMask) != 0)
+        MBB->addLiveIn(SubReg);
+    }
+  }
+}
+
 // Compute MBB live-in lists from virtual register live ranges and their
 // assignments.
 void VirtRegRewriter::addMBBLiveIns() {
-  SmallVector<MachineBasicBlock*, 16> LiveIn;
   for (unsigned Idx = 0, IdxE = MRI->getNumVirtRegs(); Idx != IdxE; ++Idx) {
     unsigned VirtReg = TargetRegisterInfo::index2VirtReg(Idx);
     if (MRI->reg_nodbg_empty(VirtReg))
@@ -253,31 +303,18 @@ void VirtRegRewriter::addMBBLiveIns() {
     assert(PhysReg != VirtRegMap::NO_PHYS_REG && "Unmapped virtual register.");
 
     if (LI.hasSubRanges()) {
-      for (LiveInterval::SubRange &S : LI.subranges()) {
-        for (const auto &Seg : S.segments) {
-          if (!Indexes->findLiveInMBBs(Seg.start, Seg.end, LiveIn))
-            continue;
-          for (MCSubRegIndexIterator SR(PhysReg, TRI); SR.isValid(); ++SR) {
-            unsigned SubReg = SR.getSubReg();
-            unsigned SubRegIndex = SR.getSubRegIndex();
-            unsigned SubRegLaneMask = TRI->getSubRegIndexLaneMask(SubRegIndex);
-            if ((SubRegLaneMask & S.LaneMask) == 0)
-              continue;
-            for (unsigned i = 0, e = LiveIn.size(); i != e; ++i) {
-              LiveIn[i]->addLiveIn(SubReg);
-            }
-          }
-          LiveIn.clear();
-        }
-      }
+      addLiveInsForSubRanges(LI, PhysReg);
     } else {
-      // Scan the segments of LI.
-      for (const auto &Seg : LI.segments) {
-        if (!Indexes->findLiveInMBBs(Seg.start, Seg.end, LiveIn))
-          continue;
-        for (unsigned i = 0, e = LiveIn.size(); i != e; ++i)
-          LiveIn[i]->addLiveIn(PhysReg);
-        LiveIn.clear();
+      // Go over MBB begin positions and see if we have segments covering them.
+      // The following works because segments and the MBBIndex list are both
+      // sorted by slot indexes.
+      SlotIndexes::MBBIndexIterator I = Indexes->MBBIndexBegin();
+      for (const auto &Seg : LI) {
+        I = Indexes->advanceMBBIndex(I, Seg.start);
+        for (; I != Indexes->MBBIndexEnd() && I->first < Seg.end; ++I) {
+          MachineBasicBlock *MBB = I->second;
+          MBB->addLiveIn(PhysReg);
+        }
       }
     }
   }

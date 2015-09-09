@@ -541,17 +541,6 @@ namespace llvm {
       return J->second;
     }
 
-    bool findLiveInMBBs(SlotIndex start, SlotIndex end,
-                        SmallVectorImpl<MachineBasicBlock*> &mbbs) const {
-      bool resVal = false;
-      for (MBBIndexIterator itr = findMBBIndex(start);
-           itr != MBBIndexEnd() && itr->first < end; ++itr) {
-        mbbs.push_back(itr->second);
-        resVal = true;
-      }
-      return resVal;
-    }
-
     /// Returns the MBB covering the given range, or null if the range covers
     /// more than one basic block.
     MachineBasicBlock* getMBBCoveringRange(SlotIndex start, SlotIndex end) const {

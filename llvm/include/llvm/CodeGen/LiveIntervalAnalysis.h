@@ -258,11 +258,6 @@ extern cl::opt<bool> UseSegmentSetForPhysRegs;
       Indexes->replaceMachineInstrInMaps(MI, NewMI);
     }
 
-    bool findLiveInMBBs(SlotIndex Start, SlotIndex End,
-                        SmallVectorImpl<MachineBasicBlock*> &MBBs) const {
-      return Indexes->findLiveInMBBs(Start, End, MBBs);
-    }
-
     VNInfo::Allocator& getVNInfoAllocator() { return VNInfoAllocator; }
 
     void getAnalysisUsage(AnalysisUsage &AU) const override;
