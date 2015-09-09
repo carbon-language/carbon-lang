@@ -209,10 +209,6 @@ public:
         return GetTranslationUnitDecl (getASTContext());
     }
     
-    static CompilerType
-    CopyType(clang::ASTContext *dest_context, 
-             CompilerType source_type);
-    
     static clang::Decl *
     CopyDecl (clang::ASTContext *dest_context, 
               clang::ASTContext *source_context,

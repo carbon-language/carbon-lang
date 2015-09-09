@@ -1114,25 +1114,6 @@ ClangASTContext::GetTranslationUnitDecl (clang::ASTContext *ast)
     return ast->getTranslationUnitDecl();
 }
 
-CompilerType
-ClangASTContext::CopyType (ASTContext *dst_ast, 
-                           CompilerType src)
-{
-    FileSystemOptions file_system_options;
-    ClangASTContext *src_ast = llvm::dyn_cast_or_null<ClangASTContext>(src.GetTypeSystem());
-    if (src_ast == nullptr)
-        return CompilerType();
-    FileManager file_manager (file_system_options);
-    ASTImporter importer(*dst_ast, file_manager,
-                         *src_ast->getASTContext(), file_manager,
-                         false);
-    
-    QualType dst (importer.Import(GetQualType(src)));
-    
-    return CompilerType (dst_ast, dst);
-}
-
-
 clang::Decl *
 ClangASTContext::CopyDecl (ASTContext *dst_ast, 
                            ASTContext *src_ast,
