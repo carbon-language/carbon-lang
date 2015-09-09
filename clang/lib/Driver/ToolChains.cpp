@@ -2962,6 +2962,31 @@ Tool *Solaris::buildAssembler() const {
 
 Tool *Solaris::buildLinker() const { return new tools::solaris::Linker(*this); }
 
+void Solaris::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
+                                           ArgStringList &CC1Args) const {
+  if (DriverArgs.hasArg(options::OPT_nostdlibinc) ||
+      DriverArgs.hasArg(options::OPT_nostdincxx))
+    return;
+
+  // Include the support directory for things like xlocale and fudged system
+  // headers.
+  addSystemInclude(DriverArgs, CC1Args, "/usr/include/c++/v1/support/solaris");
+
+  if (GCCInstallation.isValid()) {
+    GCCVersion Version = GCCInstallation.getVersion();
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/gcc/" +
+                     Version.MajorStr + "." +
+                     Version.MinorStr +
+                     "/include/c++/" + Version.Text);
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/gcc/" + Version.MajorStr +
+                     "." + Version.MinorStr + "/include/c++/" +
+                     Version.Text + "/" +
+                     GCCInstallation.getTriple().str());
+  }
+}
+
 /// Distribution (very bare-bones at the moment).
 
 enum Distro {

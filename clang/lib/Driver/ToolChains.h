@@ -527,6 +527,10 @@ public:
 
   bool IsIntegratedAssemblerDefault() const override { return true; }
 
+  void AddClangCXXStdlibIncludeArgs(
+      const llvm::opt::ArgList &DriverArgs,
+      llvm::opt::ArgStringList &CC1Args) const override;
+
 protected:
   Tool *buildAssembler() const override;
   Tool *buildLinker() const override;

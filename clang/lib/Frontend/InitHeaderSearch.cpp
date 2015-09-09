@@ -404,10 +404,6 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
     AddGnuCPlusPlusIncludePaths("/usr/gnu/include/c++/4.4.3",
                                 "", "", "", triple);
     break;
-  case llvm::Triple::Solaris:
-    AddGnuCPlusPlusIncludePaths("/usr/gcc/4.5/include/c++/4.5.2/",
-                                "i386-pc-solaris2.11", "", "", triple);
-    break;
   default:
     break;
   }
@@ -453,11 +449,6 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
           AddUnmappedPath(P, CXXSystem, false);
         }
       }
-      // On Solaris, include the support directory for things like xlocale and
-      // fudged system headers.
-      if (triple.getOS() == llvm::Triple::Solaris) 
-        AddPath("/usr/include/c++/v1/support/solaris", CXXSystem, false);
-      
       AddPath("/usr/include/c++/v1", CXXSystem, false);
     } else {
       AddDefaultCPlusPlusIncludePaths(triple, HSOpts);
