@@ -936,8 +936,10 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                 {
                     for (size_t i=0; !binary && i<total_length; ++i)
                     {
-                        if (isprint(m_bytes[i]) == 0)
+                        if (isprint (m_bytes[i]) == 0 && isspace (m_bytes[i]) == 0)
+                        {
                             binary = true;
+                        }
                     }
                 }
                 if (binary)
