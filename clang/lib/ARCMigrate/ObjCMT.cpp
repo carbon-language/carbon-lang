@@ -2218,7 +2218,7 @@ static std::string applyEditsToTemp(const FileEntry *FE,
   SmallString<64> TempPath;
   int FD;
   if (fs::createTemporaryFile(path::filename(FE->getName()),
-                              path::extension(FE->getName()), FD,
+                              path::extension(FE->getName()).drop_front(), FD,
                               TempPath)) {
     reportDiag("Could not create file: " + TempPath.str(), Diag);
     return std::string();

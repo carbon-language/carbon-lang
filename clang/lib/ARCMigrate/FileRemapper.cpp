@@ -144,7 +144,7 @@ bool FileRemapper::flushToFile(StringRef outputPath, DiagnosticsEngine &Diag) {
       SmallString<64> tempPath;
       int fd;
       if (fs::createTemporaryFile(path::filename(origFE->getName()),
-                                  path::extension(origFE->getName()), fd,
+                                  path::extension(origFE->getName()).drop_front(), fd,
                                   tempPath))
         return report("Could not create file: " + tempPath.str(), Diag);
 
