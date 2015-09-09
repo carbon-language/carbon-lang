@@ -486,8 +486,65 @@ EmulateInstructionMIPS64::GetOpcodeForInstruction (const char *op_name)
         { "SD",         &EmulateInstructionMIPS64::Emulate_SD,          "SD rt,offset(rs)"          },
         { "LD",         &EmulateInstructionMIPS64::Emulate_LD,          "LD rt,offset(base)"        },
 
-        { "SW",         &EmulateInstructionMIPS64::Emulate_SW,          "SW rt,offset(rs)"          },
-        { "LW",         &EmulateInstructionMIPS64::Emulate_LW,          "LW rt,offset(rs)"          },
+
+
+
+        //----------------------------------------------------------------------
+        // Load/Store  instructions
+        //----------------------------------------------------------------------
+        /* Following list of emulated instructions are required by implementation of hardware watchpoint
+           for MIPS in lldb. As we just need the address accessed by instructions, we have generalised 
+           all these instructions in 2 functions depending on their addressing modes */
+
+        { "LB",         &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LB    rt, offset(base)" },
+        { "LBE",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LBE   rt, offset(base)" },
+        { "LBU",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LBU   rt, offset(base)" },
+        { "LBUE",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LBUE  rt, offset(base)" },
+        { "LDC1",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LDC1  ft, offset(base)" },
+        { "LDL",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LDL   rt, offset(base)" },
+        { "LDR",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LDR   rt, offset(base)" },
+        { "LLD",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LLD   rt, offset(base)" },
+        { "LDC2",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LDC2  rt, offset(base)" },
+        { "LDXC1",      &EmulateInstructionMIPS64::Emulate_LDST_Reg,          "LDXC1 fd, index (base)" },
+        { "LH",         &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LH    rt, offset(base)" },
+        { "LHE",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LHE   rt, offset(base)" },
+        { "LHU",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LHU   rt, offset(base)" },
+        { "LHUE",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LHUE  rt, offset(base)" },
+        { "LL",         &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LL    rt, offset(base)" },
+        { "LLE",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LLE   rt, offset(base)" },
+        { "LUXC1",      &EmulateInstructionMIPS64::Emulate_LDST_Reg,          "LUXC1 fd, index (base)" },
+        { "LW",         &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LW    rt, offset(rs)"   },
+        { "LWC1",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LWC1  ft, offset(base)" },
+        { "LWC2",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LWC2  rt, offset(base)" },
+        { "LWE",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LWE   rt, offset(base)" },
+        { "LWL",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LWL   rt, offset(base)" },
+        { "LWLE",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LWLE  rt, offset(base)" },
+        { "LWR",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LWR   rt, offset(base)" },
+        { "LWRE",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "LWRE  rt, offset(base)" },
+        { "LWXC1",      &EmulateInstructionMIPS64::Emulate_LDST_Reg,          "LWXC1 fd, index (base)" },
+
+        { "SB",         &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SB    rt, offset(base)" },
+        { "SBE",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SBE   rt, offset(base)" },
+        { "SC",         &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SC    rt, offset(base)" },
+        { "SCE",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SCE   rt, offset(base)" },
+        { "SCD",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SCD   rt, offset(base)" },
+        { "SDL",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SDL   rt, offset(base)" },
+        { "SDR",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SDR   rt, offset(base)" },
+        { "SDC1",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SDC1  ft, offset(base)" },
+        { "SDC2",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SDC2  rt, offset(base)" },
+        { "SDXC1",      &EmulateInstructionMIPS64::Emulate_LDST_Reg,          "SDXC1 fs, index (base)" },
+        { "SH",         &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SH    rt, offset(base)" },
+        { "SHE",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SHE   rt, offset(base)" },
+        { "SUXC1",      &EmulateInstructionMIPS64::Emulate_LDST_Reg,          "SUXC1 fs, index (base)" },
+        { "SW",         &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SW    rt, offset(rs)"   },
+        { "SWC1",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SWC1  ft, offset(base)" },
+        { "SWC2",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SWC2  rt, offset(base)" },
+        { "SWE",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SWE   rt, offset(base)" },
+        { "SWL",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SWL   rt, offset(base)" },
+        { "SWLE",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SWLE  rt, offset(base)" },
+        { "SWR",        &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SWR   rt, offset(base)" },
+        { "SWRE",       &EmulateInstructionMIPS64::Emulate_LDST_Imm,          "SWRE  rt, offset(base)" },
+        { "SWXC1",      &EmulateInstructionMIPS64::Emulate_LDST_Reg,          "SWXC1 fs, index (base)" },
 
         //----------------------------------------------------------------------
         // Branch instructions
@@ -746,66 +803,6 @@ EmulateInstructionMIPS64::Emulate_DADDiu (llvm::MCInst& insn)
 }
 
 bool
-EmulateInstructionMIPS64::Emulate_SW (llvm::MCInst& insn)
-{
-    bool success = false;
-    uint32_t base;
-    int64_t imm, address;
-    Context bad_vaddr_context;
-
-    base = m_reg_info->getEncodingValue (insn.getOperand(1).getReg());
-    imm = insn.getOperand(2).getImm();
-
-    RegisterInfo reg_info_base;
-    if (!GetRegisterInfo (eRegisterKindDWARF, gcc_dwarf_zero_mips64 + base, reg_info_base))
-        return false;
-
-    /* read base register */
-    address = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_zero_mips64 + base, 0, &success);
-    if (!success)
-        return false;
-
-    /* destination address */
-    address = address + imm;
-
-    /* Set the bad_vaddr register with base address used in the instruction */
-    bad_vaddr_context.type = eContextInvalid;
-    WriteRegisterUnsigned (bad_vaddr_context, eRegisterKindDWARF, gcc_dwarf_bad_mips64, address);
-
-    return true;
-}
-
-bool
-EmulateInstructionMIPS64::Emulate_LW (llvm::MCInst& insn)
-{
-    bool success = false;
-    uint32_t base;
-    int64_t imm, address;
-    Context bad_vaddr_context;
-
-    base = m_reg_info->getEncodingValue (insn.getOperand(1).getReg());
-    imm = insn.getOperand(2).getImm();
-
-    RegisterInfo reg_info_base;
-    if (!GetRegisterInfo (eRegisterKindDWARF, gcc_dwarf_zero_mips64 + base, reg_info_base))
-        return false;
-
-    /* read base register */
-    address = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_zero_mips64 + base, 0, &success);
-    if (!success)
-        return false;
-
-    /* destination address */
-    address = address + imm;
-
-    /* Set the bad_vaddr register with base address used in the instruction */
-    bad_vaddr_context.type = eContextInvalid;
-    WriteRegisterUnsigned (bad_vaddr_context, eRegisterKindDWARF, gcc_dwarf_bad_mips64, address);
-
-    return true;
-}
-
-bool
 EmulateInstructionMIPS64::Emulate_SD (llvm::MCInst& insn)
 {
     uint64_t address;
@@ -863,10 +860,31 @@ EmulateInstructionMIPS64::Emulate_SD (llvm::MCInst& insn)
 bool
 EmulateInstructionMIPS64::Emulate_LD (llvm::MCInst& insn)
 {
+    bool success =false;
     uint32_t src, base;
+    int64_t imm, address;
+    Context bad_vaddr_context;
 
     src = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
     base = m_reg_info->getEncodingValue (insn.getOperand(1).getReg());
+    imm = insn.getOperand(2).getImm();
+
+    RegisterInfo reg_info_base;
+    if (!GetRegisterInfo (eRegisterKindDWARF, gcc_dwarf_zero_mips64 + base, reg_info_base))
+        return false;
+
+    /* read base register */
+    address = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_zero_mips64 + base, 0, &success);
+    if (!success)
+        return false;
+
+    /* destination address */
+    address = address + imm;
+
+    /* Set the bad_vaddr register with base address used in the instruction */
+    bad_vaddr_context.type = eContextInvalid;
+    WriteRegisterUnsigned (bad_vaddr_context, eRegisterKindDWARF, gcc_dwarf_bad_mips64, address);
+
 
     if (base == gcc_dwarf_sp_mips64 && nonvolatile_reg_p (src))
     {
@@ -3235,6 +3253,76 @@ EmulateInstructionMIPS64::Emulate_MSA_Branch_V (llvm::MCInst& insn, bool bnz)
 
     if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, gcc_dwarf_pc_mips64, target))
         return false;
+
+    return true;
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_LDST_Imm (llvm::MCInst& insn)
+{
+    bool success = false;
+    uint32_t base;
+    int64_t imm, address;
+    Context bad_vaddr_context;
+
+    uint32_t num_operands = insn.getNumOperands();
+    base = m_reg_info->getEncodingValue (insn.getOperand(num_operands-2).getReg());
+    imm = insn.getOperand(num_operands-1).getImm();
+
+    RegisterInfo reg_info_base;
+    if (!GetRegisterInfo (eRegisterKindDWARF, gcc_dwarf_zero_mips + base, reg_info_base))
+        return false;
+
+    /* read base register */
+    address = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_zero_mips + base, 0, &success);
+    if (!success)
+        return false;
+
+    /* destination address */
+    address = address + imm;
+
+    /* Set the bad_vaddr register with base address used in the instruction */
+    bad_vaddr_context.type = eContextInvalid;
+    WriteRegisterUnsigned (bad_vaddr_context, eRegisterKindDWARF, gcc_dwarf_bad_mips, address);
+
+    return true;
+}
+
+bool
+EmulateInstructionMIPS64::Emulate_LDST_Reg (llvm::MCInst& insn)
+{
+    bool success = false;
+    uint32_t base, index;
+    int64_t address, index_address;
+    Context bad_vaddr_context;
+
+    uint32_t num_operands = insn.getNumOperands();
+    base = m_reg_info->getEncodingValue (insn.getOperand(num_operands-2).getReg());
+    index = m_reg_info->getEncodingValue (insn.getOperand(num_operands-1).getReg());
+
+    RegisterInfo reg_info_base, reg_info_index;
+    if (!GetRegisterInfo (eRegisterKindDWARF, gcc_dwarf_zero_mips + base, reg_info_base))
+        return false;
+
+    if (!GetRegisterInfo (eRegisterKindDWARF, gcc_dwarf_zero_mips + index, reg_info_index))
+        return false;
+
+    /* read base register */
+    address = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_zero_mips + base, 0, &success);
+    if (!success)
+        return false;
+
+    /* read index register */
+    index_address = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_zero_mips + index, 0, &success);
+    if (!success)
+        return false;
+
+    /* destination address */
+    address = address + index_address;
+
+    /* Set the bad_vaddr register with base address used in the instruction */
+    bad_vaddr_context.type = eContextInvalid;
+    WriteRegisterUnsigned (bad_vaddr_context, eRegisterKindDWARF, gcc_dwarf_bad_mips, address);
 
     return true;
 }

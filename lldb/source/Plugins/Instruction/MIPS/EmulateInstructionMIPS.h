@@ -131,6 +131,12 @@ protected:
     Emulate_LW (llvm::MCInst& insn);
 
     bool
+    Emulate_LDST_Imm (llvm::MCInst& insn);
+
+    bool
+    Emulate_LDST_Reg (llvm::MCInst& insn);
+
+    bool
     Emulate_BEQ (llvm::MCInst& insn);
 
     bool
