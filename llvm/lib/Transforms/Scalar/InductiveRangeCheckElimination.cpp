@@ -224,8 +224,15 @@ public:
 char InductiveRangeCheckElimination::ID = 0;
 }
 
-INITIALIZE_PASS(InductiveRangeCheckElimination, "irce",
-                "Inductive range check elimination", false, false)
+INITIALIZE_PASS_BEGIN(InductiveRangeCheckElimination, "irce",
+                      "Inductive range check elimination", false, false)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
+INITIALIZE_PASS_DEPENDENCY(LCSSA)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(BranchProbabilityInfoWrapperPass)
+INITIALIZE_PASS_END(InductiveRangeCheckElimination, "irce",
+                    "Inductive range check elimination", false, false)
 
 const char *InductiveRangeCheck::rangeCheckKindToStr(
     InductiveRangeCheck::RangeCheckKind RCK) {
