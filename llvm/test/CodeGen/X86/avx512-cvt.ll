@@ -52,14 +52,14 @@ define <4 x i64> @f32tosl(<4 x float> %a) {
 }
 
 ; CHECK-LABEL: sltof432
-; CHECK: vcvtqq2ps 
+; CHECK: vcvtqq2ps
 define <4 x float> @sltof432(<4 x i64> %a) {
   %b = sitofp <4 x i64> %a to <4 x float>
   ret <4 x float> %b
 }
 
 ; CHECK-LABEL: ultof432
-; CHECK: vcvtuqq2ps 
+; CHECK: vcvtuqq2ps
 define <4 x float> @ultof432(<4 x i64> %a) {
   %b = uitofp <4 x i64> %a to <4 x float>
   ret <4 x float> %b
@@ -279,12 +279,14 @@ define i32 @float_to_int(float %x) {
    ret i32 %res
 }
 
-; CHECK-LABEL: uitof64
-; CHECK: vcvtudq2pd
-; CHECK: vextracti64x4
-; CHECK: vcvtudq2pd
-; CHECK: ret
 define <16 x double> @uitof64(<16 x i32> %a) nounwind {
+; CHECK-LABEL: uitof64:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtudq2pd %ymm0, %zmm2
+; CHECK-NEXT:    vextracti32x8 $1, %zmm0, %ymm0
+; CHECK-NEXT:    vcvtudq2pd %ymm0, %zmm1
+; CHECK-NEXT:    vmovaps %zmm2, %zmm0
+; CHECK-NEXT:    retq 
   %b = uitofp <16 x i32> %a to <16 x double>
   ret <16 x double> %b
 }
@@ -407,7 +409,7 @@ define <8 x double> @sitofp_8i1_double(<8 x double> %a) {
 }
 
 ; CHECK-LABEL: @uitofp_16i8
-; CHECK:  vpmovzxbd  
+; CHECK:  vpmovzxbd
 ; CHECK: vcvtudq2ps
 define <16 x float> @uitofp_16i8(<16 x i8>%a) {
   %b = uitofp <16 x i8> %a to <16 x float>
