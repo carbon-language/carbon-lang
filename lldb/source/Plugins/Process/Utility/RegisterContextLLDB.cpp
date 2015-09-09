@@ -634,27 +634,29 @@ bool
 RegisterContextLLDB::CheckIfLoopingStack ()
 {
     // If we have a bad stack setup, we can get the same CFA value multiple times -- or even
-    // more devious, we can actually oscillate between two CFA values.  Detect that here and
+    // more devious, we can actually oscillate between two CFA values. Detect that here and
     // break out to avoid a possible infinite loop in lldb trying to unwind the stack.
-    addr_t next_frame_cfa;
-    addr_t next_next_frame_cfa = LLDB_INVALID_ADDRESS;
-    if (GetNextFrame().get() && GetNextFrame()->GetCFA(next_frame_cfa))
+    // To detect when we have the same CFA value multiple times, we compare the CFA of the current
+    // frame with the 2nd next frame because in some specail case (e.g. signal hanlders, hand
+    // written assembly without ABI compiance) we can have 2 frames with the same CFA (in theory we
+    // can have arbitrary number of frames with the same CFA, but more then 2 is very very unlikely)
+
+    RegisterContextLLDB::SharedPtr next_frame = GetNextFrame();
+    if (next_frame)
     {
-        if (next_frame_cfa == m_cfa)
+        RegisterContextLLDB::SharedPtr next_next_frame = next_frame->GetNextFrame();
+        addr_t next_next_frame_cfa = LLDB_INVALID_ADDRESS;
+        if (next_next_frame && next_next_frame->GetCFA(next_next_frame_cfa))
         {
-            // We have a loop in the stack unwind
-            return true;
-        }
-        if (GetNextFrame()->GetNextFrame().get() && GetNextFrame()->GetNextFrame()->GetCFA(next_next_frame_cfa)
-            && next_next_frame_cfa == m_cfa)
-        {
-            // We have a loop in the stack unwind
-            return true; 
+            if (next_next_frame_cfa == m_cfa)
+            {
+                // We have a loop in the stack unwind
+                return true; 
+            }
         }
     }
     return false;
 }
-
 
 bool
 RegisterContextLLDB::IsFrameZero () const
