@@ -94,6 +94,12 @@ Language::GetFormatters ()
     return nullptr;
 }
 
+std::vector<ConstString>
+Language::GetPossibleFormattersMatches (ValueObject& valobj, lldb::DynamicValueType use_dynamic)
+{
+    return {};
+}
+
 struct language_name_pair {
     const char *name;
     LanguageType type;

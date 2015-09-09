@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <functional>
+#include <vector>
 
 // Other libraries and framework includes
 // Project includes
@@ -22,11 +23,10 @@
 
 namespace lldb_private {
     
-    class Language :
-    public PluginInterface
-    {
-    public:
-        
+class Language :
+public PluginInterface
+{
+public:
     ~Language() override;
     
     static Language*
@@ -41,6 +41,9 @@ namespace lldb_private {
     
     virtual lldb::TypeCategoryImplSP
     GetFormatters ();
+
+    virtual std::vector<ConstString>
+    GetPossibleFormattersMatches (ValueObject& valobj, lldb::DynamicValueType use_dynamic);
 
     // These are accessors for general information about the Languages lldb knows about:
     
@@ -70,16 +73,16 @@ namespace lldb_private {
     LanguageIsPascal (lldb::LanguageType language);
     
 
-    protected:
-        //------------------------------------------------------------------
-        // Classes that inherit from Language can see and modify these
-        //------------------------------------------------------------------
-        
-        Language();
-    private:
-        
-        DISALLOW_COPY_AND_ASSIGN (Language);
-    };
+protected:
+    //------------------------------------------------------------------
+    // Classes that inherit from Language can see and modify these
+    //------------------------------------------------------------------
+    
+    Language();
+private:
+    
+    DISALLOW_COPY_AND_ASSIGN (Language);
+};
     
 } // namespace lldb_private
 

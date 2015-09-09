@@ -264,6 +264,9 @@ public:
 
 private:
     
+    static std::vector<lldb::LanguageType>
+    GetCandidateLanguages (ValueObject& valobj);
+    
     static void
     GetPossibleMatches (ValueObject& valobj,
                         CompilerType clang_type,

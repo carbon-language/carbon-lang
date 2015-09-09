@@ -135,10 +135,13 @@ public:
     ObjCLanguage () = default;
     
     lldb::LanguageType
-    GetLanguageType () const
+    GetLanguageType () const override
     {
         return lldb::eLanguageTypeObjC;
     }
+    
+    std::vector<ConstString>
+    GetPossibleFormattersMatches (ValueObject& valobj, lldb::DynamicValueType use_dynamic) override;
     
     //------------------------------------------------------------------
     // Static Functions
@@ -183,10 +186,10 @@ public:
     // PluginInterface protocol
     //------------------------------------------------------------------
     virtual ConstString
-    GetPluginName();
+    GetPluginName() override;
     
     virtual uint32_t
-    GetPluginVersion();
+    GetPluginVersion() override;
 };
     
 } // namespace lldb_private

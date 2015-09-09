@@ -12,6 +12,9 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/ValueObject.h"
+#include "lldb/Symbol/CompilerType.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -297,4 +300,38 @@ ObjCLanguage::MethodName::GetFullNames (std::vector<ConstString> &names, bool ap
         }
     }
     return names.size();
+}
+
+std::vector<ConstString>
+ObjCLanguage::GetPossibleFormattersMatches (ValueObject& valobj, lldb::DynamicValueType use_dynamic)
+{
+    std::vector<ConstString> result;
+    
+    if (use_dynamic == lldb::eNoDynamicValues)
+        return result;
+    
+    CompilerType compiler_type(valobj.GetCompilerType());
+    
+    const bool check_cpp = false;
+    const bool check_objc = true;
+    bool canBeObjCDynamic = compiler_type.IsPossibleDynamicType(nullptr, check_cpp, check_objc);
+    
+    if (canBeObjCDynamic)
+    {
+        do {
+            lldb::ProcessSP process_sp = valobj.GetProcessSP();
+            if (!process_sp)
+                break;
+            ObjCLanguageRuntime* runtime = process_sp->GetObjCLanguageRuntime();
+            if (runtime == nullptr)
+                break;
+            ObjCLanguageRuntime::ClassDescriptorSP objc_class_sp (runtime->GetClassDescriptor(valobj));
+            if (!objc_class_sp)
+                break;
+            if (ConstString name = objc_class_sp->GetClassName())
+                result.push_back(name);
+        } while (false);
+    }
+    
+    return result;
 }

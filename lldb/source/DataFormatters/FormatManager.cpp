@@ -270,41 +270,22 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
                                true); // this is not exactly the usual meaning of stripping typedefs
         }
     }
-    bool canBeObjCDynamic = clang_type.IsPossibleDynamicType (NULL,
-                                                              false, // no C
-                                                              true);  // yes ObjC
     
-    if (canBeObjCDynamic)
+    for (lldb::LanguageType language_type : GetCandidateLanguages(valobj))
     {
-        if (use_dynamic != lldb::eNoDynamicValues)
+        if (Language* language = Language::FindPlugin(language_type))
         {
-            do
+            for (ConstString candidate : language->GetPossibleFormattersMatches(valobj, use_dynamic))
             {
-                lldb::ProcessSP process_sp = valobj.GetProcessSP();
-                if (!process_sp)
-                    break;
-                ObjCLanguageRuntime* runtime = process_sp->GetObjCLanguageRuntime();
-                if (runtime == nullptr)
-                    break;
-                ObjCLanguageRuntime::ClassDescriptorSP objc_class_sp (runtime->GetClassDescriptor(valobj));
-                if (!objc_class_sp)
-                    break;
-                ConstString name (objc_class_sp->GetClassName());
-                entries.push_back({name,reason | lldb_private::eFormatterChoiceCriterionDynamicObjCDiscovery,did_strip_ptr,did_strip_ref,did_strip_typedef});
-            } while (false);
+                entries.push_back({candidate,
+                                   reason | lldb_private::eFormatterChoiceCriterionLanguagePlugin,
+                                   did_strip_ptr,
+                                   did_strip_ref,
+                                   did_strip_typedef});
+            }
         }
-        
-        CompilerType non_ptr_type = clang_type.GetPointeeType();
-        GetPossibleMatches(valobj,
-                           non_ptr_type,
-                           reason | lldb_private::eFormatterChoiceCriterionStrippedPointerReference,
-                           use_dynamic,
-                           entries,
-                           true,
-                           did_strip_ref,
-                           did_strip_typedef);
     }
-    
+        
     // try to strip typedef chains
     if (clang_type.IsTypedefType())
     {
@@ -666,8 +647,8 @@ FormatManager::GetTypeForCache (ValueObject& valobj,
     return ConstString();
 }
 
-static std::vector<lldb::LanguageType>
-GetCandidateLanguages (ValueObject& valobj)
+std::vector<lldb::LanguageType>
+FormatManager::GetCandidateLanguages (ValueObject& valobj)
 {
     lldb::LanguageType lang_type = valobj.GetObjectRuntimeLanguage();
     switch (lang_type)
