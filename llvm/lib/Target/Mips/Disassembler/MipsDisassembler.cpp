@@ -345,6 +345,11 @@ static DecodeStatus DecodeLiSimm7(MCInst &Inst,
                                   uint64_t Address,
                                   const void *Decoder);
 
+static DecodeStatus DecodePOOL16BEncodedField(MCInst &Inst,
+                                              unsigned Value,
+                                              uint64_t Address,
+                                              const void *Decoder);
+
 static DecodeStatus DecodeSimm4(MCInst &Inst,
                                 unsigned Value,
                                 uint64_t Address,
@@ -1782,6 +1787,14 @@ static DecodeStatus DecodeLiSimm7(MCInst &Inst,
     Inst.addOperand(MCOperand::createImm(-1));
   else
     Inst.addOperand(MCOperand::createImm(Value));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodePOOL16BEncodedField(MCInst &Inst,
+                                              unsigned Value,
+                                              uint64_t Address,
+                                              const void *Decoder) {
+  Inst.addOperand(MCOperand::createImm(Value == 0x0 ? 8 : Value));
   return MCDisassembler::Success;
 }
 

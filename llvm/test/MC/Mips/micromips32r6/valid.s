@@ -172,4 +172,11 @@
   lwe $4, 6($5)            # CHECK: lwe $4, 6($5)       # encoding: [0x60,0x85,0x6e,0x06]
   lw $4, 6($5)             # CHECK: lw $4, 6($5)        # encoding: [0xfc,0x85,0x00,0x06]
   lui $6, 17767            # CHECK: lui $6, 17767       # encoding: [0x10,0xc0,0x45,0x67]
+  addu16 $6, $17, $4       # CHECK: addu16 $6, $17, $4  # encoding: [0x04,0xcc]
+  and16 $16, $2            # CHECK: and16 $16, $2       # encoding: [0x44,0x21]
+  andi16 $4, $5, 8         # CHECK: andi16 $4, $5, 8    # encoding: [0x2e,0x56]
+  not16 $4, $7             # CHECK: not16 $4, $7        # encoding: [0x46,0x70]
+  or16 $3, $7              # CHECK: or16 $3, $7         # encoding: [0x45,0xf9]
+  sll16 $3, $6, 8          # CHECK: sll16 $3, $6, 8     # encoding: [0x25,0xe0]
+  srl16 $3, $6, 8          # CHECK: srl16 $3, $6, 8     # encoding: [0x25,0xe1]
 
