@@ -95,7 +95,7 @@ dnl **************************************************************************
 dnl * Create the output files
 dnl **************************************************************************
 
-dnl Let ISL's configure generate isl_config.h and gitversion.h
+dnl Let ISL's configure generate isl_config.h
 AC_CONFIG_SUBDIRS(lib/External/isl)
 AC_CONFIG_COMMANDS_POST([
   dnl Configure ISL with small integer optimization, but do not add the
