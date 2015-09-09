@@ -11,6 +11,7 @@ declare i32 @i32_binary(i32, i32)
 declare i64 @i64_nullary()
 declare float @float_nullary()
 declare double @double_nullary()
+declare void @void_nullary()
 
 ; CHECK-LABEL: (func $call_i32_nullary
 ; CHECK-NEXT: (result i32)
@@ -50,6 +51,15 @@ define float @call_float_nullary() {
 define double @call_double_nullary() {
   %r = call double @double_nullary()
   ret double %r
+}
+
+; CHECK-LABEL: (func $call_void_nullary
+; CHECK-NEXT: (setlocal @0 (global $void_nullary))
+; CHECK-NEXT: (call @0)
+; CHECK-NEXT: (return)
+define void @call_void_nullary() {
+  call void @void_nullary()
+  ret void
 }
 
 ; CHECK-LABEL: (func $call_i32_unary

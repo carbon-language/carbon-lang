@@ -23,14 +23,16 @@ def : I<(outs), (ins i64imm:$amt1, i64imm:$amt2),
 
 multiclass CALL<WebAssemblyRegClass vt> {
   def CALL_#vt : I<(outs vt:$dst), (ins Int32:$callee, variable_ops),
-                   [(set vt:$dst, (WebAssemblycall Int32:$callee))]>;
+                   [(set vt:$dst, (WebAssemblycall1 Int32:$callee))]>;
 }
 let Uses = [SP32, SP64], isCall = 1 in {
   defm : CALL<Int32>;
   defm : CALL<Int64>;
   defm : CALL<Float32>;
   defm : CALL<Float64>;
-  // FIXME: void.
+
+  def CALL_VOID : I<(outs), (ins Int32:$callee, variable_ops),
+                    [(WebAssemblycall0 Int32:$callee)]>;
 } // Uses = [SP32,SP64], isCall = 1
 
 /*

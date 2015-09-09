@@ -28,7 +28,8 @@ def HasSIMD128 : Predicate<"Subtarget->hasSIMD128()">,
 def SDT_WebAssemblyCallSeqStart : SDCallSeqStart<[SDTCisVT<0, iPTR>]>;
 def SDT_WebAssemblyCallSeqEnd :
     SDCallSeqEnd<[SDTCisVT<0, iPTR>, SDTCisVT<1, iPTR>]>;
-def SDT_WebAssemblyCall     : SDTypeProfile<1, -1, [SDTCisPtrTy<1>]>;
+def SDT_WebAssemblyCall0    : SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>;
+def SDT_WebAssemblyCall1    : SDTypeProfile<1, -1, [SDTCisPtrTy<1>]>;
 def SDT_WebAssemblyArgument : SDTypeProfile<1, 1, [SDTCisVT<1, i32>]>;
 def SDT_WebAssemblyReturn   : SDTypeProfile<0, -1, []>;
 def SDT_WebAssemblyWrapper  : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
@@ -44,9 +45,12 @@ def WebAssemblycallseq_start :
 def WebAssemblycallseq_end :
     SDNode<"ISD::CALLSEQ_END", SDT_WebAssemblyCallSeqEnd,
            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
-def WebAssemblycall      : SDNode<"WebAssemblyISD::CALL",
-                                  SDT_WebAssemblyCall,
-                                  [SDNPHasChain, SDNPVariadic]>;
+def WebAssemblycall0 : SDNode<"WebAssemblyISD::CALL0",
+                              SDT_WebAssemblyCall0,
+                              [SDNPHasChain, SDNPVariadic]>;
+def WebAssemblycall1 : SDNode<"WebAssemblyISD::CALL1",
+                              SDT_WebAssemblyCall1,
+                              [SDNPHasChain, SDNPVariadic]>;
 def WebAssemblyargument : SDNode<"WebAssemblyISD::ARGUMENT",
                                  SDT_WebAssemblyArgument>;
 def WebAssemblyreturn   : SDNode<"WebAssemblyISD::RETURN",

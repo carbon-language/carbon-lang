@@ -261,7 +261,9 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
     Tys.push_back(In.VT);
   Tys.push_back(MVT::Other);
   SDVTList TyList = DAG.getVTList(Tys);
-  SDValue Res = DAG.getNode(WebAssemblyISD::CALL, DL, TyList, Ops);
+  SDValue Res =
+      DAG.getNode(Ins.empty() ? WebAssemblyISD::CALL0 : WebAssemblyISD::CALL1,
+                  DL, TyList, Ops);
   if (Ins.empty()) {
     Chain = Res;
   } else {
