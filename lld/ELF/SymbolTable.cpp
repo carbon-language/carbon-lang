@@ -59,18 +59,18 @@ template <class ELFT> void SymbolTable::addELFFile(ELFFileBase *File) {
 
 void SymbolTable::addELFFile(ELFFileBase *File) {
   switch (File->getELFKind()) {
-    case ELF32LEKind:
-      addELFFile<ELF32LE>(File);
-      break;
-    case ELF32BEKind:
-      addELFFile<ELF32BE>(File);
-      break;
-    case ELF64LEKind:
-      addELFFile<ELF64LE>(File);
-      break;
-    case ELF64BEKind:
-      addELFFile<ELF64BE>(File);
-      break;
+  case ELF32LEKind:
+    addELFFile<ELF32LE>(File);
+    break;
+  case ELF32BEKind:
+    addELFFile<ELF32BE>(File);
+    break;
+  case ELF64LEKind:
+    addELFFile<ELF64LE>(File);
+    break;
+  case ELF64BEKind:
+    addELFFile<ELF64BE>(File);
+    break;
   }
 }
 
