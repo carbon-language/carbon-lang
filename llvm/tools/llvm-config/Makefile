@@ -65,6 +65,8 @@ $(ObjDir)/BuildVariables.inc: $(BUILDVARIABLES_SRCPATH) Makefile $(ObjDir)/.dir
 	  >> temp.sed
 	$(Verb) $(ECHO) 's/@LLVM_TARGETS_BUILT@/$(subst /,\/,$(TARGETS_TO_BUILD))/' \
 	  >> temp.sed
+	$(Verb) $(ECHO) 's/@LLVM_BUILD_SYSTEM@/autoconf/' \
+	  >> temp.sed
 	$(Verb) $(SED) -f temp.sed < $< > $@
 	$(Verb) $(RM) temp.sed
 

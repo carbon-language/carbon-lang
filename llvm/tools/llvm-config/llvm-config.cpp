@@ -157,6 +157,7 @@ Options:\n\
   --host-target     Target triple used to configure LLVM.\n\
   --build-mode      Print build mode of LLVM tree (e.g. Debug or Release).\n\
   --assertion-mode  Print assertion mode of LLVM tree (ON or OFF).\n\
+  --build-system    Print the build system used to build LLVM (autoconf or cmake).\n\
 Typical components:\n\
   all               All LLVM libraries (default).\n\
   engine            Either a native JIT or a bitcode interpreter.\n";
@@ -323,6 +324,8 @@ int main(int argc, char **argv) {
 #else
         OS << "ON\n";
 #endif
+      } else if (Arg == "--build-system") {
+        OS << LLVM_BUILD_SYSTEM << '\n';
       } else if (Arg == "--obj-root") {
         OS << ActivePrefix << '\n';
       } else if (Arg == "--src-root") {
