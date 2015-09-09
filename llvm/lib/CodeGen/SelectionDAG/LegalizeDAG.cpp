@@ -1095,7 +1095,8 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
       break;
     }
     case TargetLowering::Expand:
-      if (!TLI.isLoadExtLegal(ISD::EXTLOAD, Node->getValueType(0), SrcVT)) {
+      EVT DestVT = Node->getValueType(0);
+      if (!TLI.isLoadExtLegal(ISD::EXTLOAD, DestVT, SrcVT)) {
         // If the source type is not legal, see if there is a legal extload to
         // an intermediate type that we can then extend further.
         EVT LoadVT = TLI.getRegisterType(SrcVT.getSimpleVT());
@@ -1112,6 +1113,23 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
               ISD::getExtForLoadExtType(SrcVT.isFloatingPoint(), ExtType);
           Value = DAG.getNode(ExtendOp, dl, Node->getValueType(0), Load);
           Chain = Load.getValue(1);
+          break;
+        }
+
+        // Handle the special case of fp16 extloads. EXTLOAD doesn't have the
+        // normal undefined upper bits behavior to allow using an in-reg extend
+        // with the illegal FP type, so load as an integer and do the
+        // from-integer conversion.
+        if (SrcVT.getScalarType() == MVT::f16) {
+          EVT ISrcVT = SrcVT.changeTypeToInteger();
+          EVT IDestVT = DestVT.changeTypeToInteger();
+          EVT LoadVT = TLI.getRegisterType(IDestVT.getSimpleVT());
+
+          SDValue Result = DAG.getExtLoad(ISD::ZEXTLOAD, dl, LoadVT,
+                                          Chain, Ptr, ISrcVT,
+                                          LD->getMemOperand());
+          Value = DAG.getNode(ISD::FP16_TO_FP, dl, DestVT, Result);
+          Chain = Result.getValue(1);
           break;
         }
       }
