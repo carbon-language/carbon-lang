@@ -20,6 +20,9 @@
 #include <sys/mount.h>
 #include <linux/magic.h>
 #endif
+#if defined(__NetBSD__)
+#include <sys/statvfs.h>
+#endif
 
 // lldb Includes
 #include "lldb/Core/Error.h"
@@ -213,6 +216,12 @@ FileSystem::Readlink(const FileSpec &src, FileSpec &dst)
     return error;
 }
 
+#if defined(__NetBSD__)
+static bool IsLocal(const struct statvfs& info)
+{
+    return (info.f_flag & MNT_LOCAL) != 0;
+}
+#else
 static bool IsLocal(const struct statfs& info)
 {
 #ifdef __linux__
@@ -230,7 +239,19 @@ static bool IsLocal(const struct statfs& info)
     return (info.f_flags & MNT_LOCAL) != 0;
 #endif
 }
+#endif
 
+#if defined(__NetBSD__)
+bool
+FileSystem::IsLocal(const FileSpec &spec)
+{
+    struct statvfs statfs_info;
+    std::string path (spec.GetPath());
+    if (statvfs(path.c_str(), &statfs_info) == 0)
+        return ::IsLocal(statfs_info);
+    return false;
+}
+#else
 bool
 FileSystem::IsLocal(const FileSpec &spec)
 {
@@ -240,3 +261,4 @@ FileSystem::IsLocal(const FileSpec &spec)
         return ::IsLocal(statfs_info);
     return false;
 }
+#endif
