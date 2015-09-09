@@ -46,6 +46,7 @@ public:
   void printMachODysymtab() override;
   void printMachOSegment() override;
   void printMachOIndirectSymbols() override;
+  void printMachOLinkerOptions () override;
 
 private:
   template<class MachHeader>
@@ -787,6 +788,25 @@ void MachODumper::printMachOIndirectSymbols() {
         DictScope Group(W, "Entry");
         W.printNumber("Entry Index", i);
         W.printHex("Symbol Index", Obj->getIndirectSymbolTableEntry(DLC, i));
+      }
+    }
+  }
+}
+
+void MachODumper::printMachOLinkerOptions() {
+  for (const auto &Load : Obj->load_commands()) {
+    if (Load.C.cmd == MachO::LC_LINKER_OPTION) {
+      MachO::linker_option_command LOLC = Obj->getLinkerOptionLoadCommand(Load);
+      DictScope Group(W, "Linker Options");
+      W.printNumber("Size", LOLC.cmdsize);
+      ListScope D(W, "Strings");
+      uint64_t DataSize = LOLC.cmdsize - sizeof(MachO::linker_option_command);
+      const char *P = Load.Ptr + sizeof(MachO::linker_option_command);
+      StringRef Data(P, DataSize);
+      for (unsigned i = 0; i < LOLC.count; ++i) {
+        std::pair<StringRef,StringRef> Split = Data.split('\0');
+        W.printString("Value", Split.first);
+        Data = Split.second;
       }
     }
   }
