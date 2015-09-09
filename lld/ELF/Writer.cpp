@@ -37,6 +37,8 @@ namespace {
 // non-overlapping file offsets and VAs.
 template <bool Is64Bits> class OutputSectionBase {
 public:
+  typedef
+      typename std::conditional<Is64Bits, Elf64_Dyn, Elf32_Dyn>::type Elf_Dyn;
   typedef typename std::conditional<Is64Bits, uint64_t, uint32_t>::type uintX_t;
   typedef
       typename std::conditional<Is64Bits, Elf64_Shdr, Elf32_Shdr>::type HeaderT;
@@ -48,7 +50,7 @@ public:
     Header.sh_flags = sh_flags;
   }
   void setVA(uintX_t VA) { Header.sh_addr = VA; }
-  uintX_t getVA() { return Header.sh_addr; }
+  uintX_t getVA() const { return Header.sh_addr; }
   void setFileOffset(uintX_t Off) { Header.sh_offset = Off; }
   template <endianness E>
   void writeHeaderTo(typename ELFFile<ELFType<E, Is64Bits>>::Elf_Shdr *SHdr);
@@ -105,7 +107,9 @@ public:
   llvm::StringTableBuilder StrTabBuilder;
 
   typedef typename OutputSectionBase<Is64Bits>::uintX_t uintX_t;
-  StringTableSection() : OutputSectionBase<Is64Bits>(".strtab", SHT_STRTAB, 0) {
+  StringTableSection(bool Dynamic)
+      : OutputSectionBase<Is64Bits>(Dynamic ? ".dynstr" : ".strtab", SHT_STRTAB,
+                                    Dynamic ? SHF_ALLOC : 0) {
     this->Header.sh_addralign = 1;
   }
 
@@ -158,25 +162,44 @@ private:
 
 template <bool Is64Bits>
 class DynamicSection final : public OutputSectionBase<Is64Bits> {
+  typedef OutputSectionBase<Is64Bits> Base;
+  typedef typename Base::HeaderT HeaderT;
+  typedef typename Base::Elf_Dyn Elf_Dyn;
+
 public:
-  DynamicSection(const StringTableSection<Is64Bits> &StrTabSec)
+  DynamicSection(const StringTableSection<Is64Bits> &DynStrSec)
       : OutputSectionBase<Is64Bits>(".dynamic", SHT_DYNAMIC,
                                     SHF_ALLOC | SHF_WRITE),
-        StrTabSec(StrTabSec) {
-    typedef OutputSectionBase<Is64Bits> Base;
+        DynStrSec(DynStrSec) {
     typename Base::HeaderT &Header = this->Header;
     Header.sh_addralign = Is64Bits ? 8 : 4;
     Header.sh_entsize = Is64Bits ? 16 : 8;
+
+    unsigned NumEntries = 0;
+
+    ++NumEntries; // DT_STRTAB
+    ++NumEntries; // DT_NULL
+
+    Header.sh_size = NumEntries * Header.sh_entsize;
   }
 
   void finalize() override {
-    this->Header.sh_link = StrTabSec.getSectionIndex();
+    this->Header.sh_link = DynStrSec.getSectionIndex();
   }
 
-  void writeTo(uint8_t *Buf) override {}
+  void writeTo(uint8_t *Buf) override {
+    auto *P = reinterpret_cast<Elf_Dyn *>(Buf);
+
+    P->d_tag = DT_STRTAB;
+    P->d_un.d_ptr = DynStrSec.getVA();
+    ++P;
+
+    P->d_tag = DT_NULL;
+    P->d_un.d_val = 0;
+  }
 
 private:
-  const StringTableSection<Is64Bits> &StrTabSec;
+  const StringTableSection<Is64Bits> &DynStrSec;
 };
 
 // The writer writes a SymbolTable result to a file.
@@ -187,7 +210,9 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
   typedef typename ELFFile<ELFT>::Elf_Phdr Elf_Phdr;
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  Writer(SymbolTable *T) : SymTable(*T, StringTable), DynamicSec(StringTable) {}
+  Writer(SymbolTable *T)
+      : StrTabSec(false), DynStrSec(true), SymTable(*T, StrTabSec),
+        DynamicSec(DynStrSec) {}
   void run();
 
 private:
@@ -206,7 +231,8 @@ private:
   uintX_t SizeOfHeaders;
   uintX_t SectionHeaderOff;
 
-  StringTableSection<ELFT::Is64Bits> StringTable;
+  StringTableSection<ELFT::Is64Bits> StrTabSec;
+  StringTableSection<ELFT::Is64Bits> DynStrSec;
 
   SymbolTableSection<ELFT> SymTable;
 
@@ -488,7 +514,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   OutputSection<ELFT> *BSSSec = SymTable.BSSSec;
   // FIXME: Try to avoid the extra walk over all global symbols.
   unsigned &NumVisible = SymTable.NumVisible;
-  llvm::StringTableBuilder &Builder = StringTable.StrTabBuilder;
+  llvm::StringTableBuilder &Builder = StrTabSec.StrTabBuilder;
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
   for (auto &P : Symtab.getSymbols()) {
     StringRef Name = P.first;
@@ -515,12 +541,14 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   BSSSec->setSize(Off);
 
   OutputSections.push_back(&SymTable);
-  OutputSections.push_back(&StringTable);
+  OutputSections.push_back(&StrTabSec);
 
   const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
       Symtab.getSharedFiles();
-  if (!SharedFiles.empty())
+  if (!SharedFiles.empty()) {
     OutputSections.push_back(&DynamicSec);
+    OutputSections.push_back(&DynStrSec);
+  }
 
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
                    compSec<ELFT::Is64Bits>);
@@ -536,7 +564,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   uintX_t FileOff = SizeOfHeaders;
 
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
-    StringTable.add(Sec->getName());
+    StrTabSec.add(Sec->getName());
     Sec->finalize();
 
     uintX_t Align = Sec->getAlign();
@@ -605,13 +633,13 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_phnum = NumSegments;
   EHdr->e_shentsize = sizeof(Elf_Shdr);
   EHdr->e_shnum = getNumSections();
-  EHdr->e_shstrndx = StringTable.getSectionIndex();
+  EHdr->e_shstrndx = StrTabSec.getSectionIndex();
 
   auto PHdrs = reinterpret_cast<Elf_Phdr *>(Buf + EHdr->e_phoff);
   PHdrs->p_type = PT_LOAD;
   PHdrs->p_flags = PF_R | PF_X;
   PHdrs->p_offset = 0x0000;
-  PHdrs->p_vaddr = 0x400000;
+  PHdrs->p_vaddr = 0x1000;
   PHdrs->p_paddr = PHdrs->p_vaddr;
   PHdrs->p_filesz = FileSize;
   PHdrs->p_memsz = FileSize;
@@ -624,8 +652,8 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
     PHdrs->p_offset = DynamicSec.getFileOff();
     PHdrs->p_vaddr = DynamicSec.getVA();
     PHdrs->p_paddr = PHdrs->p_vaddr;
-    PHdrs->p_filesz = 0;
-    PHdrs->p_memsz = 0;
+    PHdrs->p_filesz = DynamicSec.getSize();
+    PHdrs->p_memsz = DynamicSec.getSize();
     PHdrs->p_align = DynamicSec.getAlign();
   }
 
@@ -633,7 +661,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   // First entry is null.
   ++SHdrs;
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
-    Sec->setNameOffset(StringTable.getFileOff(Sec->getName()));
+    Sec->setNameOffset(StrTabSec.getFileOff(Sec->getName()));
     Sec->template writeHeaderTo<ELFT::TargetEndianness>(SHdrs++);
   }
 }
