@@ -67,6 +67,8 @@
 // CHECK:      DynamicSection [
 // CHECK-NEXT:   Tag        Type                 Name/Value
 // CHECK-NEXT:   0x00000005 STRTAB               [[DYNSTRADDR]]
+// CHECK-NEXT:   0x0000000A STRSZ
+// CHECK-NEXT:   0x00000001 NEEDED               SharedLibrary ({{.*}}/Inputs/i686-simple-library.so)
 // CHECK-NEXT:   0x00000000 NULL                 0x0
 // CHECK-NEXT: ]
 

@@ -167,10 +167,10 @@ class DynamicSection final : public OutputSectionBase<Is64Bits> {
   typedef typename Base::Elf_Dyn Elf_Dyn;
 
 public:
-  DynamicSection(const StringTableSection<Is64Bits> &DynStrSec)
+  DynamicSection(SymbolTable &SymTab, StringTableSection<Is64Bits> &DynStrSec)
       : OutputSectionBase<Is64Bits>(".dynamic", SHT_DYNAMIC,
                                     SHF_ALLOC | SHF_WRITE),
-        DynStrSec(DynStrSec) {
+        DynStrSec(DynStrSec), SymTab(SymTab) {
     typename Base::HeaderT &Header = this->Header;
     Header.sh_addralign = Is64Bits ? 8 : 4;
     Header.sh_entsize = Is64Bits ? 16 : 8;
@@ -178,6 +178,14 @@ public:
     unsigned NumEntries = 0;
 
     ++NumEntries; // DT_STRTAB
+    ++NumEntries; // DT_STRSZ
+
+    const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
+        SymTab.getSharedFiles();
+    for (const std::unique_ptr<SharedFileBase> &File : SharedFiles)
+      DynStrSec.add(File->getName());
+    NumEntries += SharedFiles.size();
+
     ++NumEntries; // DT_NULL
 
     Header.sh_size = NumEntries * Header.sh_entsize;
@@ -194,12 +202,26 @@ public:
     P->d_un.d_ptr = DynStrSec.getVA();
     ++P;
 
+    P->d_tag = DT_STRSZ;
+    P->d_un.d_val = DynStrSec.StrTabBuilder.data().size();
+    ++P;
+
+    const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
+        SymTab.getSharedFiles();
+    for (const std::unique_ptr<SharedFileBase> &File : SharedFiles) {
+      P->d_tag = DT_NEEDED;
+      P->d_un.d_val = DynStrSec.getFileOff(File->getName());
+      ++P;
+    }
+
     P->d_tag = DT_NULL;
     P->d_un.d_val = 0;
+    ++P;
   }
 
 private:
-  const StringTableSection<Is64Bits> &DynStrSec;
+  StringTableSection<Is64Bits> &DynStrSec;
+  SymbolTable &SymTab;
 };
 
 // The writer writes a SymbolTable result to a file.
@@ -212,7 +234,7 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   Writer(SymbolTable *T)
       : StrTabSec(false), DynStrSec(true), SymTable(*T, StrTabSec),
-        DynamicSec(DynStrSec) {}
+        DynamicSec(*T, DynStrSec) {}
   void run();
 
 private:
@@ -638,7 +660,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   auto PHdrs = reinterpret_cast<Elf_Phdr *>(Buf + EHdr->e_phoff);
   PHdrs->p_type = PT_LOAD;
   PHdrs->p_flags = PF_R | PF_X;
-  PHdrs->p_offset = 0x0000;
+  PHdrs->p_offset = 0x1000;
   PHdrs->p_vaddr = 0x1000;
   PHdrs->p_paddr = PHdrs->p_vaddr;
   PHdrs->p_filesz = FileSize;
