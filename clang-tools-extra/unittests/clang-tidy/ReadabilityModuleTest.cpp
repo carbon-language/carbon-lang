@@ -457,6 +457,27 @@ TEST(BracesAroundStatementsCheck, Macros) {
                     "int main() {\n"
                     "  FOR(;;)\n"
                     "}");
+  EXPECT_EQ("#define DO_IT ++i\n"
+            "int i = 0;\n"
+            "int main() {\n"
+            "  if (false) {\n"
+            "    DO_IT;\n"
+            "  } else if (1 == 2) {\n"
+            "    DO_IT;\n"
+            "  } else {\n"
+            "    DO_IT;\n"
+            "}\n"
+            "}",
+            runCheckOnCode<BracesAroundStatementsCheck>("#define DO_IT ++i\n"
+                                                        "int i = 0;\n"
+                                                        "int main() {\n"
+                                                        "  if (false)\n"
+                                                        "    DO_IT;\n"
+                                                        "  else if (1 == 2)\n"
+                                                        "    DO_IT;\n"
+                                                        "  else\n"
+                                                        "    DO_IT;\n"
+                                                        "}"));
 }
 
 } // namespace test
