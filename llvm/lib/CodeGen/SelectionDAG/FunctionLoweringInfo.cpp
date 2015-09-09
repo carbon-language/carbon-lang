@@ -287,21 +287,31 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
     addSEHHandlersForLPads(LPads);
   }
 
+  // Calculate state numbers if we haven't already.
   WinEHFuncInfo &EHInfo = MMI.getWinEHFuncInfo(&fn);
   if (Personality == EHPersonality::MSVC_CXX) {
-    // Calculate state numbers and then map from funclet BBs to MBBs.
     const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
     calculateWinCXXEHStateNumbers(WinEHParentFn, EHInfo);
+  } else {
+    const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
+    calculateSEHStateNumbers(WinEHParentFn, EHInfo);
+  }
+
+    // Map all BB references in the EH data to MBBs.
     for (WinEHTryBlockMapEntry &TBME : EHInfo.TryBlockMap)
       for (WinEHHandlerType &H : TBME.HandlerArray)
-        if (const auto *BB = dyn_cast<BasicBlock>(H.Handler))
-          H.HandlerMBB = MBBMap[BB];
-    // If there's an explicit EH registration node on the stack, record its
-    // frame index.
-    if (EHInfo.EHRegNode && EHInfo.EHRegNode->getParent()->getParent() == Fn) {
-      assert(StaticAllocaMap.count(EHInfo.EHRegNode));
-      EHInfo.EHRegNodeFrameIndex = StaticAllocaMap[EHInfo.EHRegNode];
+        if (const auto *BB =
+                dyn_cast<BasicBlock>(H.Handler.get<const Value *>()))
+          H.Handler = MBBMap[BB];
+    for (SEHUnwindMapEntry &UME : EHInfo.SEHUnwindMap) {
+      const BasicBlock *BB = UME.Handler.get<const BasicBlock *>();
+      UME.Handler = MBBMap[BB];
     }
+  // If there's an explicit EH registration node on the stack, record its
+  // frame index.
+  if (EHInfo.EHRegNode && EHInfo.EHRegNode->getParent()->getParent() == Fn) {
+    assert(StaticAllocaMap.count(EHInfo.EHRegNode));
+    EHInfo.EHRegNodeFrameIndex = StaticAllocaMap[EHInfo.EHRegNode];
   }
 
   // Copy the state numbers to LandingPadInfo for the current function, which

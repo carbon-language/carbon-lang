@@ -68,9 +68,10 @@ private:
   void unlinkExceptionRegistration(IRBuilder<> &Builder);
   void addCXXStateStores(Function &F, WinEHFuncInfo &FuncInfo);
   void addSEHStateStores(Function &F, WinEHFuncInfo &FuncInfo);
-  void addCXXStateStoresToFunclet(Value *ParentRegNode, WinEHFuncInfo &FuncInfo,
-                                  Function &F, int BaseState);
+  void addStateStoresToFunclet(Value *ParentRegNode, WinEHFuncInfo &FuncInfo,
+                               Function &F, int BaseState);
   void insertStateNumberStore(Value *ParentRegNode, Instruction *IP, int State);
+  void insertRestoreFrame(BasicBlock *BB);
 
   Value *emitEHLSDA(IRBuilder<> &Builder, Function *F);
 
@@ -91,6 +92,7 @@ private:
   Function *FrameRecover = nullptr;
   Function *FrameAddress = nullptr;
   Function *FrameEscape = nullptr;
+  Function *RestoreFrame = nullptr;
 
   // Per-function state
   EHPersonality Personality = EHPersonality::Unknown;
@@ -123,6 +125,8 @@ bool WinEHStatePass::doInitialization(Module &M) {
   FrameEscape = Intrinsic::getDeclaration(TheModule, Intrinsic::localescape);
   FrameRecover = Intrinsic::getDeclaration(TheModule, Intrinsic::localrecover);
   FrameAddress = Intrinsic::getDeclaration(TheModule, Intrinsic::frameaddress);
+  RestoreFrame =
+      Intrinsic::getDeclaration(TheModule, Intrinsic::x86_seh_restoreframe);
   return false;
 }
 
@@ -414,7 +418,7 @@ void WinEHStatePass::addCXXStateStores(Function &F, WinEHFuncInfo &FuncInfo) {
   calculateWinCXXEHStateNumbers(&F, FuncInfo);
 
   // The base state for the parent is -1.
-  addCXXStateStoresToFunclet(RegNode, FuncInfo, F, -1);
+  addStateStoresToFunclet(RegNode, FuncInfo, F, -1);
 
   // Set up RegNodeEscapeIndex
   int RegNodeEscapeIndex = escapeRegNode(F);
@@ -434,7 +438,7 @@ void WinEHStatePass::addCXXStateStores(Function &F, WinEHFuncInfo &FuncInfo) {
         FrameRecover, {FI8, ParentFP, Builder.getInt32(RegNodeEscapeIndex)});
     RecoveredRegNode =
         Builder.CreateBitCast(RecoveredRegNode, RegNodeTy->getPointerTo(0));
-    addCXXStateStoresToFunclet(RecoveredRegNode, FuncInfo, *Handler, BaseState);
+    addStateStoresToFunclet(RecoveredRegNode, FuncInfo, *Handler, BaseState);
   }
 }
 
@@ -470,11 +474,17 @@ int WinEHStatePass::escapeRegNode(Function &F) {
   return Args.size() - 1;
 }
 
-void WinEHStatePass::addCXXStateStoresToFunclet(Value *ParentRegNode,
-                                                WinEHFuncInfo &FuncInfo,
-                                                Function &F, int BaseState) {
-  Function *RestoreFrame =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::x86_seh_restoreframe);
+void WinEHStatePass::insertRestoreFrame(BasicBlock *BB) {
+  Instruction *Start = BB->getFirstInsertionPt();
+  if (match(Start, m_Intrinsic<Intrinsic::x86_seh_restoreframe>()))
+    return;
+  IRBuilder<> Builder(Start);
+  Builder.CreateCall(RestoreFrame, {});
+}
+
+void WinEHStatePass::addStateStoresToFunclet(Value *ParentRegNode,
+                                             WinEHFuncInfo &FuncInfo,
+                                             Function &F, int BaseState) {
   // Iterate all the instructions and emit state number stores.
   for (BasicBlock &BB : F) {
     for (Instruction &I : BB) {
@@ -494,16 +504,14 @@ void WinEHStatePass::addCXXStateStoresToFunclet(Value *ParentRegNode,
       }
     }
 
-    // Insert calls to llvm.x86.seh.restoreframe at catchret destinations.
-    if (auto *CR = dyn_cast<CatchReturnInst>(BB.getTerminator())) {
-      Instruction *Start = CR->getSuccessor()->begin();
-      assert(!isa<PHINode>(Start) &&
-             "winehprepare failed to demote phi after catchret");
-      if (match(Start, m_Intrinsic<Intrinsic::x86_seh_restoreframe>()))
-        continue;
-      IRBuilder<> Builder(Start);
-      Builder.CreateCall(RestoreFrame, {});
-    }
+    // Insert calls to llvm.x86.seh.restoreframe at catchret destinations.  In
+    // SEH, insert them before the catchret.
+    // FIXME: We should probably do this as part of catchret lowering in the
+    // DAG.
+    if (auto *CR = dyn_cast<CatchReturnInst>(BB.getTerminator()))
+      insertRestoreFrame(Personality == EHPersonality::MSVC_X86SEH
+                             ? CR->getParent()
+                             : CR->getSuccessor());
   }
 }
 
@@ -518,6 +526,23 @@ void WinEHStatePass::addSEHStateStores(Function &F, WinEHFuncInfo &FuncInfo) {
   // too much trouble.
   int RegNodeEscapeIndex = escapeRegNode(F);
   FuncInfo.EHRegNodeEscapeIndex = RegNodeEscapeIndex;
+
+  // If this funciton uses the new EH IR, use the explicit state numbering
+  // algorithm and return early.
+  bool UsesLPads = false;
+  for (BasicBlock &BB : F) {
+    if (BB.isLandingPad()) {
+      UsesLPads = true;
+      break;
+    }
+  }
+  if (!UsesLPads) {
+    calculateSEHStateNumbers(&F, FuncInfo);
+    addStateStoresToFunclet(RegNode, FuncInfo, F, -1);
+    return;
+  }
+  // FIXME: Delete the rest of this code and clean things up when new EH is
+  // done.
 
   // Iterate all the instructions and emit state number stores.
   int CurState = 0;

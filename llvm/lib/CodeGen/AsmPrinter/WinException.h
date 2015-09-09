@@ -36,7 +36,7 @@ class LLVM_LIBRARY_VISIBILITY WinException : public EHStreamer {
   /// True if this is a 64-bit target and we should use image relative offsets.
   bool useImageRel32 = false;
 
-  void emitCSpecificHandlerTable();
+  void emitCSpecificHandlerTable(const MachineFunction *MF);
 
   /// Emit the EH table data for 32-bit and 64-bit functions using
   /// the __CxxFrameHandler3 personality.

@@ -1989,7 +1989,6 @@ void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
   // and catchendpads for successors.
   MachineBasicBlock *Return = FuncInfo.MBBMap[I.getSuccessor(0)];
   const BasicBlock *EHPadBB = I.getSuccessor(1);
-  bool IsLandingPad = EHPadBB->isLandingPad();
 
   const Value *Callee(I.getCalledValue());
   const Function *Fn = dyn_cast<Function>(Callee);
@@ -2025,16 +2024,26 @@ void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
   // Catchpads are conditional branches that add real MBB destinations and
   // continue the loop. EH "end" pads are not real BBs and simply continue.
   SmallVector<MachineBasicBlock *, 1> UnwindDests;
+  bool IsMSVCCXX = classifyEHPersonality(FuncInfo.Fn->getPersonalityFn()) ==
+                   EHPersonality::MSVC_CXX;
   while (EHPadBB) {
     const Instruction *Pad = EHPadBB->getFirstNonPHI();
-    if (isa<CleanupPadInst>(Pad) || isa<LandingPadInst>(Pad)) {
-      assert(FuncInfo.MBBMap[EHPadBB]);
-      // Stop on cleanup pads and landingpads.
+    if (isa<LandingPadInst>(Pad)) {
+      // Stop on landingpads. They are not funclets.
       UnwindDests.push_back(FuncInfo.MBBMap[EHPadBB]);
+      break;
+    } else if (isa<CleanupPadInst>(Pad) || isa<LandingPadInst>(Pad)) {
+      // Stop on cleanup pads. Cleanups are always funclet entries for all known
+      // personalities.
+      UnwindDests.push_back(FuncInfo.MBBMap[EHPadBB]);
+      UnwindDests.back()->setIsEHFuncletEntry();
       break;
     } else if (const auto *CPI = dyn_cast<CatchPadInst>(Pad)) {
       // Add the catchpad handler to the possible destinations.
       UnwindDests.push_back(FuncInfo.MBBMap[CPI->getNormalDest()]);
+      // In MSVC C++, catchblocks are funclets and need prologues.
+      if (IsMSVCCXX)
+        UnwindDests.back()->setIsEHFuncletEntry();
       EHPadBB = CPI->getUnwindDest();
     } else if (const auto *CEPI = dyn_cast<CatchEndPadInst>(Pad)) {
       EHPadBB = CEPI->getUnwindDest();
@@ -2043,13 +2052,11 @@ void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
     }
   }
 
-  // Update successor info
+  // Update successor info.
   // FIXME: The weights for catchpads will be wrong.
   addSuccessorWithWeight(InvokeMBB, Return);
-  for (auto *UnwindDest : UnwindDests) {
+  for (MachineBasicBlock *UnwindDest : UnwindDests) {
     UnwindDest->setIsEHPad();
-    if (!IsLandingPad)
-      UnwindDest->setIsEHFuncletEntry();
     addSuccessorWithWeight(InvokeMBB, UnwindDest);
   }
 

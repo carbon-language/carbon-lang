@@ -16880,6 +16880,16 @@ SDValue X86TargetLowering::LowerCATCHRET(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
 
   MVT PtrVT = getPointerTy(DAG.getDataLayout());
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  if (isAsynchronousEHPersonality(
+          classifyEHPersonality(MF.getFunction()->getPersonalityFn()))) {
+    // For SEH, codegen catchret as a branch for now.
+    // FIXME: Insert something to restore the frame.
+    return DAG.getNode(ISD::BR, DL, MVT::Other, Chain, Dest);
+  }
+
+
   unsigned ReturnReg = (PtrVT == MVT::i64 ? X86::RAX : X86::EAX);
 
   // Load the address of the destination block.

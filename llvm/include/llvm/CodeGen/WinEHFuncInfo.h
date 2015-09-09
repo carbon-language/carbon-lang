@@ -14,9 +14,10 @@
 #ifndef LLVM_CODEGEN_WINEHFUNCINFO_H
 #define LLVM_CODEGEN_WINEHFUNCINFO_H
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/TinyPtrVector.h"
-#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 class AllocaInst;
@@ -120,17 +121,32 @@ struct WinEHUnwindMapEntry {
   const Value *Cleanup;
 };
 
+typedef PointerUnion<const BasicBlock *, MachineBasicBlock *> MBBOrBasicBlock;
+typedef PointerUnion<const Value *, MachineBasicBlock *> ValueOrMBB;
+
+/// Similar to WinEHUnwindMapEntry, but supports SEH filters.
+struct SEHUnwindMapEntry {
+  /// If unwinding continues through this handler, transition to the handler at
+  /// this state. This indexes into SEHUnwindMap.
+  int ToState = -1;
+
+  /// Holds the filter expression function.
+  const Function *Filter = nullptr;
+
+  /// Holds the __except or __finally basic block.
+  MBBOrBasicBlock Handler;
+};
+
 struct WinEHHandlerType {
   int Adjectives;
   GlobalVariable *TypeDescriptor;
   int CatchObjRecoverIdx;
-  const Value *Handler;
-  MachineBasicBlock *HandlerMBB;
+  ValueOrMBB Handler;
 };
 
 struct WinEHTryBlockMapEntry {
-  int TryLow;
-  int TryHigh;
+  int TryLow = -1;
+  int TryHigh = -1;
   int CatchHigh = -1;
   SmallVector<WinEHHandlerType, 1> HandlerArray;
 };
@@ -147,6 +163,7 @@ struct WinEHFuncInfo {
   DenseMap<const Function *, int> HandlerBaseState;
   SmallVector<WinEHUnwindMapEntry, 4> UnwindMap;
   SmallVector<WinEHTryBlockMapEntry, 4> TryBlockMap;
+  SmallVector<SEHUnwindMapEntry, 4> SEHUnwindMap;
   SmallVector<std::pair<MCSymbol *, int>, 4> IPToStateList;
   int UnwindHelpFrameIdx = INT_MAX;
   int UnwindHelpFrameOffset = -1;
@@ -169,5 +186,7 @@ struct WinEHFuncInfo {
 void calculateWinCXXEHStateNumbers(const Function *ParentFn,
                                    WinEHFuncInfo &FuncInfo);
 
+void calculateSEHStateNumbers(const Function *ParentFn,
+                              WinEHFuncInfo &FuncInfo);
 }
 #endif // LLVM_CODEGEN_WINEHFUNCINFO_H
