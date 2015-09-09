@@ -2605,8 +2605,8 @@ Value *InnerLoopVectorizer::getOrCreateTripCount(Loop *L) {
 
   IRBuilder<> Builder(L->getLoopPreheader()->getTerminator());
   // Find the loop boundaries.
-  const SCEV *ExitCount = SE->getBackedgeTakenCount(OrigLoop);
-  assert(ExitCount != SE->getCouldNotCompute() && "Invalid loop count");
+  const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(OrigLoop);
+  assert(BackedgeTakenCount != SE->getCouldNotCompute() && "Invalid loop count");
 
   Type *IdxTy = Legal->getWidestInductionType();
   
@@ -2615,14 +2615,15 @@ Value *InnerLoopVectorizer::getOrCreateTripCount(Loop *L) {
   // compare. The only way that we get a backedge taken count is that the
   // induction variable was signed and as such will not overflow. In such a case
   // truncation is legal.
-  if (ExitCount->getType()->getPrimitiveSizeInBits() >
+  if (BackedgeTakenCount->getType()->getPrimitiveSizeInBits() >
       IdxTy->getPrimitiveSizeInBits())
-    ExitCount = SE->getTruncateOrNoop(ExitCount, IdxTy);
-
-  const SCEV *BackedgeTakeCount = SE->getNoopOrZeroExtend(ExitCount, IdxTy);
+    BackedgeTakenCount = SE->getTruncateOrNoop(BackedgeTakenCount, IdxTy);
+  BackedgeTakenCount = SE->getNoopOrZeroExtend(BackedgeTakenCount, IdxTy);
+  
   // Get the total trip count from the count by adding 1.
-  ExitCount = SE->getAddExpr(BackedgeTakeCount,
-                             SE->getConstant(BackedgeTakeCount->getType(), 1));
+  const SCEV *ExitCount =
+    SE->getAddExpr(BackedgeTakenCount,
+                   SE->getConstant(BackedgeTakenCount->getType(), 1));
 
   const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
 
