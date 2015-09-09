@@ -4508,26 +4508,6 @@ define <8 x float>@test_int_x86_avx512_mask_rndscale_ps_256(<8 x float> %x0, <8 
   ret <8 x float> %res2
 }
 
-declare <4 x float> @llvm.x86.avx512.mask.vextractf32x4.256(<8 x float>, i32, <4 x float>, i8)
-
-define <4 x float>@test_int_x86_avx512_mask_vextractf32x4_256(<8 x float> %x0, <4 x float> %x2, i8 %x3) {
-; CHECK-LABEL: test_int_x86_avx512_mask_vextractf32x4_256:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vextractf32x4 $1, %ymm0, %xmm1 {%k1}
-; CHECK-NEXT:    vextractf32x4 $1, %ymm0, %xmm2 {%k1} {z}
-; CHECK-NEXT:    vextractf32x4 $1, %ymm0, %xmm0
-; CHECK-NEXT:    vaddps %xmm2, %xmm1, %xmm1
-; CHECK-NEXT:    vaddps %xmm1, %xmm0, %xmm0
-; CHECK-NEXT:    retq
-  %res  = call <4 x float> @llvm.x86.avx512.mask.vextractf32x4.256(<8 x float> %x0, i32 1, <4 x float> %x2, i8 %x3)
-  %res1 = call <4 x float> @llvm.x86.avx512.mask.vextractf32x4.256(<8 x float> %x0, i32 1, <4 x float> zeroinitializer, i8 %x3)
-  %res2 = call <4 x float> @llvm.x86.avx512.mask.vextractf32x4.256(<8 x float> %x0, i32 1, <4 x float> zeroinitializer, i8 -1)
-  %res3 = fadd <4 x float> %res, %res1
-  %res4 = fadd <4 x float> %res2, %res3
-  ret <4 x float> %res4
-}
-
 declare <2 x double> @llvm.x86.avx512.mask.getmant.pd.128(<2 x double>, i32, <2 x double>, i8)
 
 define <2 x double>@test_int_x86_avx512_mask_getmant_pd_128(<2 x double> %x0, <2 x double> %x2, i8 %x3) {

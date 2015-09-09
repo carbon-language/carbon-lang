@@ -12,24 +12,14 @@ define <16 x float> @test1(<16 x float> %x, float* %br, float %y) nounwind {
   ret <16 x float> %rrr3
 }
 
+;CHECK-LABEL: test2:
+;KNL: vinsertf32x4 $0
+;SKX: vinsertf64x2 $0
+;CHECK: vextractf32x4 $3
+;KNL: vinsertf32x4 $3
+;SKX: vinsertf64x2 $3
+;CHECK: ret
 define <8 x double> @test2(<8 x double> %x, double* %br, double %y) nounwind {
-; KNL-LABEL: test2:
-; KNL:       ## BB#0:
-; KNL-NEXT:    vmovhpd (%rdi), %xmm0, %xmm2
-; KNL-NEXT:    vinsertf32x4 $0, %xmm2, %zmm0, %zmm0
-; KNL-NEXT:    vextractf32x4 $3, %zmm0, %xmm2
-; KNL-NEXT:    vmovsd %xmm1, %xmm2, %xmm1
-; KNL-NEXT:    vinsertf32x4 $3, %xmm1, %zmm0, %zmm0
-; KNL-NEXT:    retq
-;
-; SKX-LABEL: test2:
-; SKX:       ## BB#0:
-; SKX-NEXT:    vmovhpd (%rdi), %xmm0, %xmm2
-; SKX-NEXT:    vinsertf64x2 $0, %xmm2, %zmm0, %zmm0
-; SKX-NEXT:    vextractf64x2 $3, %zmm0, %xmm2
-; SKX-NEXT:    vmovsd %xmm1, %xmm2, %xmm1
-; SKX-NEXT:    vinsertf64x2 $3, %xmm1, %zmm0, %zmm0
-; SKX-NEXT:    retq
   %rrr = load double, double* %br
   %rrr2 = insertelement <8 x double> %x, double %rrr, i32 1
   %rrr3 = insertelement <8 x double> %rrr2, double %y, i32 6
@@ -46,22 +36,12 @@ define <16 x float> @test3(<16 x float> %x) nounwind {
   ret <16 x float> %rrr2
 }
 
+;CHECK-LABEL: test4:
+;CHECK: vextracti32x4 $2
+;KNL: vinserti32x4 $0
+;SKX: vinserti64x2 $0
+;CHECK: ret
 define <8 x i64> @test4(<8 x i64> %x) nounwind {
-; KNL-LABEL: test4:
-; KNL:       ## BB#0:
-; KNL-NEXT:    vextracti32x4 $2, %zmm0, %xmm1
-; KNL-NEXT:    vmovq %xmm1, %rax
-; KNL-NEXT:    vpinsrq $1, %rax, %xmm0, %xmm1
-; KNL-NEXT:    vinserti32x4 $0, %xmm1, %zmm0, %zmm0
-; KNL-NEXT:    retq
-;
-; SKX-LABEL: test4:
-; SKX:       ## BB#0:
-; SKX-NEXT:    vextracti64x2 $2, %zmm0, %xmm1
-; SKX-NEXT:    vmovq %xmm1, %rax
-; SKX-NEXT:    vpinsrq $1, %rax, %xmm0, %xmm1
-; SKX-NEXT:    vinserti64x2 $0, %xmm1, %zmm0, %zmm0
-; SKX-NEXT:    retq
   %eee = extractelement <8 x i64> %x, i32 4
   %rrr2 = insertelement <8 x i64> %x, i64 %eee, i32 1
   ret <8 x i64> %rrr2
@@ -162,7 +142,7 @@ define i64 @test12(<16 x i64>%a, <16 x i64>%b, i64 %a1, i64 %b1) {
 ;CHECK: andl    $1, %eax
 ;CHECK: kmovw   %eax, %k0
 ;CHECK: movw    $-4
-;CHECK: korw
+;CHECK: korw    
 define i16 @test13(i32 %a, i32 %b) {
   %cmp_res = icmp ult i32 %a, %b
   %maskv = insertelement <16 x i1> <i1 true, i1 false, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true>, i1 %cmp_res, i32 0
