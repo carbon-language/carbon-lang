@@ -31,6 +31,7 @@ class EnumOsType( object ):
                 "Darwin",
                 "FreeBSD",
                 "Linux", 
+                "NetBSD",
                 "Windows" ]
     class __metaclass__( type ):
 #++---------------------------------------------------------------------------
@@ -71,6 +72,8 @@ def determine_os_type():
         eOSType = EnumOsType.FreeBSD
     elif (strOS.startswith("linux")):
         eOSType = EnumOsType.Linux
+    elif (strOS.startswith("netbsd")):
+        eOSType = EnumOsType.NetBSD
     elif strOS == "win32":
         eOSType = EnumOsType.Windows
 
