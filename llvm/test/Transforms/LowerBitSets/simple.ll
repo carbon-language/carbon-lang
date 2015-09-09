@@ -26,15 +26,15 @@ target datalayout = "e-p:32:32"
 !4 = !{!"bitset2", i32* @c, i32 0}
 ; CHECK-NODISCARD-DAG: !{!"bitset2", i32* @c, i32 0}
 
-; Offset 0, 4 byte alignment
-!5 = !{!"bitset3", i32* @a, i32 0}
-; CHECK-NODISCARD-DAG: !{!"bitset3", i32* @a, i32 0}
-!6 = !{!"bitset3", i32* @c, i32 0}
-; CHECK-NODISCARD-DAG: !{!"bitset3", i32* @c, i32 0}
-
 ; Entries whose second operand is null (the result of a global being DCE'd)
 ; should be ignored.
-!7 = !{!"bitset2", null, i32 0}
+!5 = !{!"bitset2", null, i32 0}
+
+; Offset 0, 4 byte alignment
+!6 = !{!"bitset3", i32* @a, i32 0}
+; CHECK-NODISCARD-DAG: !{!"bitset3", i32* @a, i32 0}
+!7 = !{!"bitset3", i32* @c, i32 0}
+; CHECK-NODISCARD-DAG: !{!"bitset3", i32* @c, i32 0}
 
 !llvm.bitsets = !{ !0, !1, !2, !3, !4, !5, !6, !7 }
 

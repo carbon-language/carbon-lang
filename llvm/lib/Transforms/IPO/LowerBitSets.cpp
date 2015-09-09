@@ -938,7 +938,7 @@ bool LowerBitSets::buildBitSets() {
     for (unsigned I = 0, E = BitSetNM->getNumOperands(); I != E; ++I) {
       MDNode *Op = BitSetNM->getOperand(I);
       verifyBitSetMDNode(Op);
-      BitSetIdIndices[Op] = I;
+      BitSetIdIndices[Op->getOperand(0)] = I;
     }
   }
 
@@ -988,18 +988,36 @@ bool LowerBitSets::buildBitSets() {
   if (GlobalClasses.empty())
     return false;
 
-  // For each disjoint set we found...
+  // Build a list of disjoint sets ordered by their maximum BitSetNM index
+  // for determinism.
+  std::vector<std::pair<GlobalClassesTy::iterator, unsigned>> Sets;
   for (GlobalClassesTy::iterator I = GlobalClasses.begin(),
                                  E = GlobalClasses.end();
        I != E; ++I) {
     if (!I->isLeader()) continue;
-
     ++NumBitSetDisjointSets;
 
+    unsigned MaxIndex = 0;
+    for (GlobalClassesTy::member_iterator MI = GlobalClasses.member_begin(I);
+         MI != GlobalClasses.member_end(); ++MI) {
+      if ((*MI).is<Metadata *>())
+        MaxIndex = std::max(MaxIndex, BitSetIdIndices[MI->get<Metadata *>()]);
+    }
+    Sets.emplace_back(I, MaxIndex);
+  }
+  std::sort(Sets.begin(), Sets.end(),
+            [](const std::pair<GlobalClassesTy::iterator, unsigned> &S1,
+               const std::pair<GlobalClassesTy::iterator, unsigned> &S2) {
+              return S1.second < S2.second;
+            });
+
+  // For each disjoint set we found...
+  for (const auto &S : Sets) {
     // Build the list of bitsets in this disjoint set.
     std::vector<Metadata *> BitSets;
     std::vector<GlobalObject *> Globals;
-    for (GlobalClassesTy::member_iterator MI = GlobalClasses.member_begin(I);
+    for (GlobalClassesTy::member_iterator MI =
+             GlobalClasses.member_begin(S.first);
          MI != GlobalClasses.member_end(); ++MI) {
       if ((*MI).is<Metadata *>())
         BitSets.push_back(MI->get<Metadata *>());
