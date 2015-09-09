@@ -653,7 +653,7 @@ DataExtractor::GetMaxU32 (offset_t *offset_ptr, size_t byte_size) const
     case 2: return GetU16(offset_ptr); break;
     case 4: return GetU32(offset_ptr); break;
     default:
-        assert("GetMaxU32 unhandled case!" == NULL);
+        assert(false && "GetMaxU32 unhandled case!");
         break;
     }
     return 0;
@@ -679,7 +679,7 @@ DataExtractor::GetMaxU64 (offset_t *offset_ptr, size_t size) const
     case 4: return GetU32(offset_ptr); break;
     case 8: return GetU64(offset_ptr); break;
     default:
-        assert("GetMax64 unhandled case!" == NULL);
+        assert(false && "GetMax64 unhandled case!");
         break;
     }
     return 0;
@@ -695,7 +695,7 @@ DataExtractor::GetMaxU64_unchecked (offset_t *offset_ptr, size_t size) const
         case 4: return GetU32_unchecked (offset_ptr); break;
         case 8: return GetU64_unchecked (offset_ptr); break;
         default:
-            assert("GetMax64 unhandled case!" == NULL);
+            assert(false && "GetMax64 unhandled case!");
             break;
     }
     return 0;
@@ -711,7 +711,7 @@ DataExtractor::GetMaxS64 (offset_t *offset_ptr, size_t size) const
     case 4: return (int32_t)GetU32(offset_ptr); break;
     case 8: return (int64_t)GetU64(offset_ptr); break;
     default:
-        assert("GetMax64 unhandled case!" == NULL);
+        assert(false && "GetMax64 unhandled case!");
         break;
     }
     return 0;

@@ -3196,6 +3196,7 @@ ClangASTContext::IsPossibleDynamicType (void* type, CompilerType *dynamic_pointe
                     case clang::BuiltinType::OCLImage2dArray:
                     case clang::BuiltinType::OCLImage3d:
                     case clang::BuiltinType::OCLSampler:
+                    case clang::BuiltinType::OMPArraySection:
                         break;
                 }
                     break;
@@ -4525,6 +4526,7 @@ ClangASTContext::GetFormat (void* type)
             case clang::BuiltinType::OCLImage2dArray:
             case clang::BuiltinType::OCLImage3d:
             case clang::BuiltinType::OCLSampler:
+            case clang::BuiltinType::OMPArraySection:
                 return lldb::eFormatHex;
         }
             break;
@@ -4822,6 +4824,7 @@ ClangASTContext::GetBasicTypeEnumeration (void* type)
                 case clang::BuiltinType::OCLImage2dArray:
                 case clang::BuiltinType::OCLImage3d:
                 case clang::BuiltinType::OCLSampler:
+                case clang::BuiltinType::OMPArraySection:
                     return eBasicTypeOther;
             }
         }
@@ -5426,6 +5429,7 @@ ClangASTContext::GetNumPointeeChildren (clang::QualType type)
             case clang::BuiltinType::ARCUnbridgedCast:
             case clang::BuiltinType::PseudoObject:
             case clang::BuiltinType::BuiltinFn:
+            case clang::BuiltinType::OMPArraySection:
                 return 1;
         }
             break;
