@@ -587,7 +587,13 @@ static bool outputSectionHasPHDR(OutputSectionBase<ELFT::Is64Bits> *Sec) {
 // Visits all sections to assign incremental, non-overlapping RVAs and
 // file offsets.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
-  uintX_t VA = 0x1000; // The first page is kept unmapped.
+  // On linux x86_64 mmap of the first 15 pages fails, so the smallest value
+  // that can be used in here is 0x10000.
+  // If using 2MB pages, the smallest page aligned address that works is
+  // 0x200000, but it looks like every OS uses 4k pages for executables.
+  // FIXME: This is architecture and OS dependent.
+  uintX_t VA = 0x10000;
+
   uintX_t FileOff = sizeof(Elf_Ehdr);
 
   // Reserve space for PHDRs.

@@ -28,7 +28,7 @@ _start:
 # CHECK-NEXT:   Type: Executable (0x2)
 # CHECK-NEXT:   Machine: EM_PPC64 (0x15)
 # CHECK-NEXT:   Version: 1
-# CHECK-NEXT:   Entry: 0x2000
+# CHECK-NEXT:   Entry: 0x11000
 # CHECK-NEXT:   ProgramHeaderOffset: 0x40
 # CHECK-NEXT:   SectionHeaderOffset: 0x2078
 # CHECK-NEXT:   Flags [ (0x0)
@@ -63,7 +63,7 @@ _start:
 # CHECK-NEXT:       SHF_ALLOC (0x2)
 # CHECK-NEXT:       SHF_EXECINSTR (0x4)
 # CHECK-NEXT:     ]
-# CHECK-NEXT:     Address: 0x1000
+# CHECK-NEXT:     Address: 0x10000
 # CHECK-NEXT:     Offset: 0x1000
 # CHECK-NEXT:     Size: 12
 # CHECK-NEXT:     Link: 0
@@ -79,7 +79,7 @@ _start:
 # CHECK-NEXT:       SHF_ALLOC (0x2)
 # CHECK-NEXT:       SHF_WRITE (0x1)
 # CHECK-NEXT:     ]
-# CHECK-NEXT:     Address: 0x100C
+# CHECK-NEXT:     Address: 0x1000C
 # CHECK-NEXT:     Offset: 0x100C
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Link: 0
@@ -95,7 +95,7 @@ _start:
 # CHECK-NEXT:       SHF_ALLOC (0x2)
 # CHECK-NEXT:       SHF_WRITE (0x1)
 # CHECK-NEXT:     ]
-# CHECK-NEXT:     Address: 0x100C
+# CHECK-NEXT:     Address: 0x1000C
 # CHECK-NEXT:     Offset: 0x100C
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Link: 0
@@ -111,7 +111,7 @@ _start:
 # CHECK-NEXT:       SHF_ALLOC (0x2)
 # CHECK-NEXT:       SHF_WRITE (0x1)
 # CHECK-NEXT:     ]
-# CHECK-NEXT:     Address: 0x2000
+# CHECK-NEXT:     Address: 0x11000
 # CHECK-NEXT:     Offset: 0x2000
 # CHECK-NEXT:     Size: 24
 # CHECK-NEXT:     Link: 0
@@ -152,8 +152,8 @@ _start:
 # CHECK-NEXT:  ProgramHeader {
 # CHECK-NEXT:    Type: PT_LOAD (0x1)
 # CHECK-NEXT:    Offset: 0x1000
-# CHECK-NEXT:    VirtualAddress: 0x1000
-# CHECK-NEXT:    PhysicalAddress: 0x1000
+# CHECK-NEXT:    VirtualAddress: 0x10000
+# CHECK-NEXT:    PhysicalAddress: 0x10000
 # CHECK-NEXT:    FileSize: 12
 # CHECK-NEXT:    MemSize: 12
 # CHECK-NEXT:    Flags [ (0x5)
@@ -165,8 +165,8 @@ _start:
 # CHECK-NEXT:  ProgramHeader {
 # CHECK-NEXT:    Type: PT_LOAD (0x1)
 # CHECK-NEXT:    Offset: 0x2000
-# CHECK-NEXT:    VirtualAddress: 0x2000
-# CHECK-NEXT:    PhysicalAddress: 0x2000
+# CHECK-NEXT:    VirtualAddress: 0x11000
+# CHECK-NEXT:    PhysicalAddress: 0x11000
 # CHECK-NEXT:    FileSize: 24
 # CHECK-NEXT:    MemSize: 24
 # CHECK-NEXT:    Flags [ (0x6)

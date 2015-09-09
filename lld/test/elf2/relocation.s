@@ -21,9 +21,9 @@ bar:
 
 // R_X86_64_32
 // CHECK: bar:
-// CHECK:    1000: ba 00 10 00 00 movl $4096, %edx
+// CHECK:  10000: ba 00 00 01 00 movl $65536, %edx
 
 // CHECK: e8 04 00 00 00  callq   4
 
 // Also check that symbols match.
-// CHECK: 000000000001000         .text           00000000 bar
+// CHECK: 0000000000010000         .text           00000000 bar
