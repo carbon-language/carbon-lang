@@ -1517,8 +1517,8 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                  I != section_headers.end(); ++I)
             {
                 static ConstString g_sect_name_gnu_debuglink (".gnu_debuglink");
-                const ELFSectionHeaderInfo &header = *I;
-                const uint64_t section_size = header.sh_type == SHT_NOBITS ? 0 : header.sh_size;
+                const ELFSectionHeaderInfo &sheader = *I;
+                const uint64_t section_size = sheader.sh_type == SHT_NOBITS ? 0 : sheader.sh_size;
                 ConstString name(shstr_data.PeekCStr(I->sh_name));
 
                 I->section_name = name;
@@ -1526,23 +1526,33 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                 if (arch_spec.GetMachine() == llvm::Triple::mips || arch_spec.GetMachine() == llvm::Triple::mipsel
                     || arch_spec.GetMachine() == llvm::Triple::mips64 || arch_spec.GetMachine() == llvm::Triple::mips64el)
                 {
-                    if (header.sh_type == SHT_MIPS_ABIFLAGS)
+                    uint32_t arch_flags = arch_spec.GetFlags ();
+                    DataExtractor data;
+                    if (sheader.sh_type == SHT_MIPS_ABIFLAGS)
                     {
-                        DataExtractor data;
-                        if (section_size && (data.SetData (object_data, header.sh_offset, section_size) == section_size))
+                        
+                        if (section_size && (data.SetData (object_data, sheader.sh_offset, section_size) == section_size))
                         {
                             lldb::offset_t ase_offset = 12; // MIPS ABI Flags Version: 0
-                            uint32_t arch_flags = arch_spec.GetFlags ();
                             arch_flags |= data.GetU32 (&ase_offset);
-                            arch_spec.SetFlags (arch_flags);
                         }
                     }
+                    // Settings appropriate ArchSpec ABI Flags
+                    if (header.e_flags & llvm::ELF::EF_MIPS_ABI2)
+                    {   
+                        arch_flags |= lldb_private::ArchSpec::eMIPSABI_N32;
+                    }
+                    else if (header.e_flags & llvm::ELF::EF_MIPS_ABI_O32)
+                    {
+                         arch_flags |= lldb_private::ArchSpec::eMIPSABI_O32;       
+                    }
+                    arch_spec.SetFlags (arch_flags);
                 }
 
                 if (name == g_sect_name_gnu_debuglink)
                 {
                     DataExtractor data;
-                    if (section_size && (data.SetData (object_data, header.sh_offset, section_size) == section_size))
+                    if (section_size && (data.SetData (object_data, sheader.sh_offset, section_size) == section_size))
                     {
                         lldb::offset_t gnu_debuglink_offset = 0;
                         gnu_debuglink_file = data.GetCStr (&gnu_debuglink_offset);
@@ -1552,7 +1562,7 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                 }
 
                 // Process ELF note section entries.
-                bool is_note_header = (header.sh_type == SHT_NOTE);
+                bool is_note_header = (sheader.sh_type == SHT_NOTE);
 
                 // The section header ".note.android.ident" is stored as a
                 // PROGBITS type header but it is actually a note header.
@@ -1564,7 +1574,7 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                 {
                     // Allow notes to refine module info.
                     DataExtractor data;
-                    if (section_size && (data.SetData (object_data, header.sh_offset, section_size) == section_size))
+                    if (section_size && (data.SetData (object_data, sheader.sh_offset, section_size) == section_size))
                     {
                         Error error = RefineModuleDetailsFromNote (data, arch_spec, uuid);
                         if (error.Fail ())

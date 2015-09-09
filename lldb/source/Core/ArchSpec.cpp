@@ -602,7 +602,15 @@ ArchSpec::GetAddressByteSize() const
 {
     const CoreDefinition *core_def = FindCoreDefinition (m_core);
     if (core_def)
-        return core_def->addr_byte_size;
+    { 
+       if (core_def->machine == llvm::Triple::mips64 || core_def->machine == llvm::Triple::mips64el)
+       {  
+          // For N32/O32 applications Address size is 4 bytes.
+          if (m_flags & (eMIPSABI_N32 | eMIPSABI_O32))
+              return 4;
+       }
+       return core_def->addr_byte_size;
+    }
     return 0;
 }
 
