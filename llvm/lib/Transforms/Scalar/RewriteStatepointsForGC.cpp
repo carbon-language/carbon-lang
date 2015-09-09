@@ -258,6 +258,13 @@ static bool order_by_name(llvm::Value *a, llvm::Value *b) {
   }
 }
 
+// Return the name of the value suffixed with the provided value, or if the
+// value didn't have a name, the default value specified.
+static std::string suffixed_name_or(Value *V, StringRef Suffix,
+                                    StringRef DefaultName) {
+  return V->hasName() ? (V->getName() + Suffix).str() : DefaultName.str();
+}
+
 // Conservatively identifies any definitions which might be live at the
 // given instruction. The  analysis is performed immediately before the
 // given instruction. Values defined by that instruction are not considered
@@ -798,8 +805,8 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     // effect the result.  TODO: We could use a worklist here and make this run
     // much faster.
     for (auto Pair : states) {
-      Value *v = Pair.first;
-      assert(!isKnownBaseResult(v) && "why did it get added?");
+      Value *BDV = Pair.first;
+      assert(!isKnownBaseResult(BDV) && "why did it get added?");
 
       // Given an input value for the current instruction, return a BDVState
       // instance which represents the BDV of that value.
@@ -809,29 +816,29 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
       };
 
       MeetBDVStates calculateMeet;
-      if (SelectInst *select = dyn_cast<SelectInst>(v)) {
+      if (SelectInst *select = dyn_cast<SelectInst>(BDV)) {
         calculateMeet.meetWith(getStateForInput(select->getTrueValue()));
         calculateMeet.meetWith(getStateForInput(select->getFalseValue()));
-      } else if (PHINode *Phi = dyn_cast<PHINode>(v)) {
+      } else if (PHINode *Phi = dyn_cast<PHINode>(BDV)) {
         for (Value *Val : Phi->incoming_values())
           calculateMeet.meetWith(getStateForInput(Val));
-      } else if (auto *EE = dyn_cast<ExtractElementInst>(v)) {
+      } else if (auto *EE = dyn_cast<ExtractElementInst>(BDV)) {
         // The 'meet' for an extractelement is slightly trivial, but it's still
         // useful in that it drives us to conflict if our input is.
         calculateMeet.meetWith(getStateForInput(EE->getVectorOperand()));
       } else {
         // Given there's a inherent type mismatch between the operands, will
         // *always* produce Conflict.
-        auto *IE = cast<InsertElementInst>(v);
+        auto *IE = cast<InsertElementInst>(BDV);
         calculateMeet.meetWith(getStateForInput(IE->getOperand(0)));
         calculateMeet.meetWith(getStateForInput(IE->getOperand(1)));
       }
 
-      BDVState oldState = states[v];
+      BDVState oldState = states[BDV];
       BDVState newState = calculateMeet.getResult();
       if (oldState != newState) {
         progress = true;
-        states[v] = newState;
+        states[BDV] = newState;
       }
     }
 
@@ -888,28 +895,24 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
         BasicBlock *BB = I->getParent();
         int NumPreds = std::distance(pred_begin(BB), pred_end(BB));
         assert(NumPreds > 0 && "how did we reach here");
-        std::string Name = I->hasName() ?
-           (I->getName() + ".base").str() : "base_phi";
+        std::string Name = suffixed_name_or(I, ".base", "base_phi");
         return PHINode::Create(I->getType(), NumPreds, Name, I);
       } else if (SelectInst *Sel = dyn_cast<SelectInst>(I)) {
         // The undef will be replaced later
         UndefValue *Undef = UndefValue::get(Sel->getType());
-        std::string Name = I->hasName() ?
-          (I->getName() + ".base").str() : "base_select";
+        std::string Name = suffixed_name_or(I, ".base", "base_select");
         return SelectInst::Create(Sel->getCondition(), Undef,
                                   Undef, Name, Sel);
       } else if (auto *EE = dyn_cast<ExtractElementInst>(I)) {
         UndefValue *Undef = UndefValue::get(EE->getVectorOperand()->getType());
-        std::string Name = I->hasName() ?
-          (I->getName() + ".base").str() : "base_ee";
+        std::string Name = suffixed_name_or(I, ".base", "base_ee");
         return ExtractElementInst::Create(Undef, EE->getIndexOperand(), Name,
                                           EE);
       } else {
         auto *IE = cast<InsertElementInst>(I);
         UndefValue *VecUndef = UndefValue::get(IE->getOperand(0)->getType());
         UndefValue *ScalarUndef = UndefValue::get(IE->getOperand(1)->getType());
-        std::string Name = I->hasName() ?
-          (I->getName() + ".base").str() : "base_ie";
+        std::string Name = suffixed_name_or(I, ".base", "base_ie");
         return InsertElementInst::Create(VecUndef, ScalarUndef,
                                          IE->getOperand(2), Name, IE);
       }
@@ -1112,13 +1115,11 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     Value *base = Pair.second.getBase();
     assert(BDV && base);
 
-    std::string fromstr =
-      cache.count(BDV) ? (cache[BDV]->hasName() ? cache[BDV]->getName() : "")
-                     : "none";
+    std::string fromstr = cache.count(BDV) ? cache[BDV]->getName() : "none";
     DEBUG(dbgs() << "Updating base value cache"
-          << " for: " << (BDV->hasName() ? BDV->getName() : "")
+          << " for: " << BDV->getName()
           << " from: " << fromstr
-          << " to: " << (base->hasName() ? base->getName() : "") << "\n");
+          << " to: " << base->getName() << "\n");
 
     if (cache.count(BDV)) {
       // Once we transition from the BDV relation being store in the cache to
@@ -1328,8 +1329,7 @@ static void CreateGCRelocates(ArrayRef<llvm::Value *> LiveVariables,
     // only specify a debug name if we can give a useful one
     CallInst *Reloc = Builder.CreateCall(
         GCRelocateDecl, {StatepointToken, BaseIdx, LiveIdx},
-        LiveVariables[i]->hasName() ? LiveVariables[i]->getName() + ".relocated"
-                                    : "");
+        suffixed_name_or(LiveVariables[i], ".relocated", ""));
     // Trick CodeGen into thinking there are lots of free registers at this
     // fake call.
     Reloc->setCallingConv(CallingConv::Cold);
@@ -1578,8 +1578,9 @@ insertRelocationStores(iterator_range<Value::user_iterator> GCRelocs,
     assert(RelocatedValue->getNextNode() && "Should always have one since it's not a terminator");
     IRBuilder<> Builder(RelocatedValue->getNextNode());
     Value *CastedRelocatedValue =
-        Builder.CreateBitCast(RelocatedValue, cast<AllocaInst>(Alloca)->getAllocatedType(),
-        RelocatedValue->hasName() ? RelocatedValue->getName() + ".casted" : "");
+      Builder.CreateBitCast(RelocatedValue,
+                            cast<AllocaInst>(Alloca)->getAllocatedType(),
+                            suffixed_name_or(RelocatedValue, ".casted", ""));
 
     StoreInst *Store = new StoreInst(CastedRelocatedValue, Alloca);
     Store->insertAfter(cast<Instruction>(CastedRelocatedValue));
