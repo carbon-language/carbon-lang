@@ -19,6 +19,7 @@ function(llvm_create_cross_target_internal target_name toochain buildtype)
   add_custom_command(OUTPUT ${LLVM_${target_name}_BUILD}/CMakeCache.txt
     COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}"
         ${CROSS_TOOLCHAIN_FLAGS_${target_name}} ${CMAKE_SOURCE_DIR}
+        -DLLVM_TARGET_IS_CROSSCOMPILE_HOST=TRUE
     WORKING_DIRECTORY ${LLVM_${target_name}_BUILD}
     DEPENDS ${LLVM_${target_name}_BUILD}
     COMMENT "Configuring ${target_name} LLVM...")
@@ -43,6 +44,7 @@ function(llvm_create_cross_target_internal target_name toochain buildtype)
     execute_process(COMMAND ${CMAKE_COMMAND} ${build_type_flags}
         -G "${CMAKE_GENERATOR}" -DLLVM_TARGETS_TO_BUILD=${LLVM_TARGETS_TO_BUILD}
         ${CROSS_TOOLCHAIN_FLAGS_${target_name}} ${CMAKE_SOURCE_DIR}
+        -DLLVM_TARGET_IS_CROSSCOMPILE_HOST=TRUE
       WORKING_DIRECTORY ${LLVM_${target_name}_BUILD} )
   endif(NOT IS_DIRECTORY ${LLVM_${target_name}_BUILD})
 
