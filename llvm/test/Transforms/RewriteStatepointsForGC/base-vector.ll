@@ -59,7 +59,7 @@ entry:
 ; CHECK: extractelement
 ; CHECK: statepoint
 ; CHECK: gc.relocate
-; CHECK-DAG: ; (%ptr, %obj)
+; CHECK-DAG: (%obj, %obj)
    %safepoint_token = call i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
   ret i64 addrspace(1)* %obj
 }
@@ -79,6 +79,88 @@ entry:
    %safepoint_token = call i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
   ret i64 addrspace(1)* %obj
 }
+
+declare void @use(i64 addrspace(1)*)
+
+; When we can optimize an extractelement from a known
+; index and avoid introducing new base pointer instructions
+define void @test5(i1 %cnd, i64 addrspace(1)* %obj)
+    gc "statepoint-example" {
+; CHECK-LABEL: @test5
+; CHECK: gc.relocate
+; CHECK-DAG: (%obj, %bdv)
+entry:
+  %gep = getelementptr i64, i64 addrspace(1)* %obj, i64 1
+  %vec = insertelement <2 x i64 addrspace(1)*> undef, i64 addrspace(1)* %gep, i32 0
+  %bdv = extractelement <2 x i64 addrspace(1)*> %vec, i32 0
+  %safepoint_token = call i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  call void @use(i64 addrspace(1)* %bdv)
+  ret void
+}
+
+; When we fundementally have to duplicate
+define void @test6(i1 %cnd, i64 addrspace(1)* %obj, i64 %idx)
+    gc "statepoint-example" {
+; CHECK-LABEL: @test6
+; CHECK: %gep = getelementptr i64, i64 addrspace(1)* %obj, i64 1
+; CHECK: %vec.base = insertelement <2 x i64 addrspace(1)*> undef, i64 addrspace(1)* %obj, i32 0, !is_base_value !0
+; CHECK: %vec = insertelement <2 x i64 addrspace(1)*> undef, i64 addrspace(1)* %gep, i32 0
+; CHECK: %bdv.base = extractelement <2 x i64 addrspace(1)*> %vec.base, i64 %idx, !is_base_value !0
+; CHECK:  %bdv = extractelement <2 x i64 addrspace(1)*> %vec, i64 %idx
+; CHECK: gc.statepoint
+; CHECK: gc.relocate
+; CHECK-DAG: (%bdv.base, %bdv)
+entry:
+  %gep = getelementptr i64, i64 addrspace(1)* %obj, i64 1
+  %vec = insertelement <2 x i64 addrspace(1)*> undef, i64 addrspace(1)* %gep, i32 0
+  %bdv = extractelement <2 x i64 addrspace(1)*> %vec, i64 %idx
+  %safepoint_token = call i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  call void @use(i64 addrspace(1)* %bdv)
+  ret void
+}
+
+; A more complicated example involving vector and scalar bases.
+; This is derived from a failing test case when we didn't have correct
+; insertelement handling.
+define i64 addrspace(1)* @test7(i1 %cnd, i64 addrspace(1)* %obj, 
+                                i64 addrspace(1)* %obj2)
+    gc "statepoint-example" {
+; CHECK-LABEL: @test7
+entry:
+  %vec = insertelement <2 x i64 addrspace(1)*> undef, i64 addrspace(1)* %obj2, i32 0
+  br label %merge1
+merge1:
+; CHECK-LABEL: merge1:
+; CHECK: vec2.base
+; CHECK: vec2
+; CHECK: gep
+; CHECK: vec3.base
+; CHECK: vec3
+  %vec2 = phi <2 x i64 addrspace(1)*> [ %vec, %entry ], [ %vec3, %merge1 ]
+  %gep = getelementptr i64, i64 addrspace(1)* %obj2, i64 1
+  %vec3 = insertelement <2 x i64 addrspace(1)*> undef, i64 addrspace(1)* %gep, i32 0
+  br i1 %cnd, label %merge1, label %next1
+next1:
+; CHECK-LABEL: next1:
+; CHECK: bdv.base = 
+; CHECK: bdv = 
+  %bdv = extractelement <2 x i64 addrspace(1)*> %vec2, i32 0
+  br label %merge
+merge:
+; CHECK-LABEL: merge:
+; CHECK: %objb.base
+; CHECK: %objb
+; CHECK: gc.statepoint
+; CHECK: gc.relocate
+; CHECK-DAG: (%objb.base, %objb)
+
+  %objb = phi i64 addrspace(1)* [ %obj, %next1 ], [ %bdv, %merge ]
+  br i1 %cnd, label %merge, label %next
+next:
+  %safepoint_token = call i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  ret i64 addrspace(1)* %objb
+}
+
 
 declare void @do_safepoint()
 
