@@ -1233,11 +1233,6 @@ public:
     TypeSystem*
     GetTypeSystemForLanguage (lldb::LanguageType language);
     
-    CompilerType
-    GetBasicType (lldb::LanguageType language,
-                  lldb::BasicType basic_type,
-                  size_t size = 0);
-    
     ClangASTImporter *
     GetClangASTImporter();
     
