@@ -14,7 +14,7 @@ DWARFMappedHash::ExtractDIEArray (const DIEInfoArray &die_info_array, DIEArray &
 {
     const size_t count = die_info_array.size();
     for (size_t i=0; i<count; ++i)
-        die_offsets.push_back (die_info_array[i].offset);
+        die_offsets.emplace_back(die_info_array[i].cu_offset, die_info_array[i].offset);
 }
 
 void
@@ -39,7 +39,7 @@ DWARFMappedHash::ExtractDIEArray (const DIEInfoArray &die_info_array,
                     tag_matches = tag == DW_TAG_structure_type || tag == DW_TAG_class_type;
             }
             if (tag_matches)
-                die_offsets.push_back (die_info_array[i].offset);
+                die_offsets.emplace_back(die_info_array[i].cu_offset, die_info_array[i].offset);
         }
     }
 }
@@ -69,7 +69,7 @@ DWARFMappedHash::ExtractDIEArray (const DIEInfoArray &die_info_array,
                     tag_matches = tag == DW_TAG_structure_type || tag == DW_TAG_class_type;
             }
             if (tag_matches)
-                die_offsets.push_back (die_info_array[i].offset);
+                die_offsets.emplace_back(die_info_array[i].cu_offset, die_info_array[i].offset);
         }
     }
 }
@@ -92,19 +92,19 @@ DWARFMappedHash::ExtractClassOrStructDIEArray (const DIEInfoArray &die_info_arra
                     // We found the one true definition for this class, so
                     // only return that
                     die_offsets.clear();                        
-                    die_offsets.push_back (die_info_array[i].offset);
+                    die_offsets.emplace_back(die_info_array[i].cu_offset, die_info_array[i].offset);
                     return;
                 }
                 else
                 {
                     // Put the one true definition as the first entry so it
                     // matches first
-                    die_offsets.insert (die_offsets.begin(), die_info_array[i].offset);
+                    die_offsets.emplace(die_offsets.begin(), die_info_array[i].cu_offset, die_info_array[i].offset);
                 }
             }
             else
             {
-                die_offsets.push_back (die_info_array[i].offset);
+                die_offsets.emplace_back(die_info_array[i].cu_offset, die_info_array[i].offset);
             }
         }
     }
@@ -120,7 +120,7 @@ DWARFMappedHash::ExtractTypesFromDIEArray (const DIEInfoArray &die_info_array,
     for (size_t i=0; i<count; ++i)
     {
         if ((die_info_array[i].type_flags & type_flag_mask) == type_flag_value)
-            die_offsets.push_back (die_info_array[i].offset);
+            die_offsets.emplace_back(die_info_array[i].cu_offset, die_info_array[i].offset);
     }
 }
 
@@ -141,6 +141,7 @@ DWARFMappedHash::GetAtomTypeName (uint16_t atom)
 }
 
 DWARFMappedHash::DIEInfo::DIEInfo () :
+    cu_offset (DW_INVALID_OFFSET),
     offset (DW_INVALID_OFFSET),
     tag (0),
     type_flags (0),
@@ -148,7 +149,12 @@ DWARFMappedHash::DIEInfo::DIEInfo () :
 {
 }
 
-DWARFMappedHash::DIEInfo::DIEInfo (dw_offset_t o, dw_tag_t t, uint32_t f, uint32_t h) :
+DWARFMappedHash::DIEInfo::DIEInfo (dw_offset_t c,
+                                   dw_offset_t o,
+                                   dw_tag_t t,
+                                   uint32_t f,
+                                   uint32_t h) :
+    cu_offset (c),
     offset (o),
     tag (t),
     type_flags (f),

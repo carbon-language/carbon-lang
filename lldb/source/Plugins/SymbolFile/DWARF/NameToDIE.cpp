@@ -18,6 +18,7 @@
 #include "DWARFDebugInfo.h"
 #include "DWARFDebugInfoEntry.h"
 #include "SymbolFileDWARF.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -29,9 +30,9 @@ NameToDIE::Finalize()
 }
 
 void
-NameToDIE::Insert (const ConstString& name, uint32_t die_offset)
+NameToDIE::Insert (const ConstString& name, const DIERef& die_ref)
 {
-    m_map.Append(name.GetCString(), die_offset);
+    m_map.Append(name.GetCString(), die_ref);
 }
 
 size_t
@@ -47,17 +48,15 @@ NameToDIE::Find (const RegularExpression& regex, DIEArray &info_array) const
 }
 
 size_t
-NameToDIE::FindAllEntriesForCompileUnit (uint32_t cu_offset, 
-                                         uint32_t cu_end_offset, 
-                                         DIEArray &info_array) const
+NameToDIE::FindAllEntriesForCompileUnit (dw_offset_t cu_offset, DIEArray &info_array) const
 {
     const size_t initial_size = info_array.size();
     const uint32_t size = m_map.GetSize();
     for (uint32_t i=0; i<size; ++i)
     {
-        const uint32_t die_offset = m_map.GetValueAtIndexUnchecked(i);
-        if (cu_offset < die_offset && die_offset < cu_end_offset)
-            info_array.push_back (die_offset);
+        const DIERef& die_ref = m_map.GetValueAtIndexUnchecked(i);
+        if (cu_offset == die_ref.cu_offset)
+            info_array.push_back (die_ref);
     }
     return info_array.size() - initial_size;
 }
@@ -69,18 +68,18 @@ NameToDIE::Dump (Stream *s)
     for (uint32_t i=0; i<size; ++i)
     {
         const char *cstr = m_map.GetCStringAtIndex(i);
-        s->Printf("%p: {0x%8.8x} \"%s\"\n", (const void *)cstr, m_map.GetValueAtIndexUnchecked(i), cstr);
+        const DIERef& die_ref = m_map.GetValueAtIndexUnchecked(i);
+        s->Printf("%p: {0x%8.8x/0x%8.8x} \"%s\"\n", cstr, die_ref.cu_offset, die_ref.die_offset, cstr);
     }
 }
 
 void
-NameToDIE::ForEach (std::function <bool(const char *name, uint32_t die_offset)> const &callback) const
+NameToDIE::ForEach (std::function <bool(const char *name, const DIERef& die_ref)> const &callback) const
 {
     const uint32_t size = m_map.GetSize();
     for (uint32_t i=0; i<size; ++i)
     {
-        if (!callback(m_map.GetCStringAtIndexUnchecked(i),
-                      m_map.GetValueAtIndexUnchecked (i)))
+        if (!callback(m_map.GetCStringAtIndexUnchecked(i), m_map.GetValueAtIndexUnchecked (i)))
             break;
     }
 }

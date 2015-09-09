@@ -1,4 +1,5 @@
 add_lldb_library(lldbPluginSymbolFileDWARF
+  DIERef.cpp
   DWARFAbbreviationDeclaration.cpp
   DWARFASTParserClang.cpp
   DWARFAttribute.cpp
@@ -26,6 +27,7 @@ add_lldb_library(lldbPluginSymbolFileDWARF
   LogChannelDWARF.cpp
   NameToDIE.cpp
   SymbolFileDWARF.cpp
+  SymbolFileDWARFDwo.cpp
   SymbolFileDWARFDebugMap.cpp
   UniqueDWARFASTType.cpp
   )

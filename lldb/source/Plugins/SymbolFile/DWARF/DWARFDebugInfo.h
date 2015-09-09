@@ -36,18 +36,13 @@ public:
     DWARFDebugInfo();
     void SetDwarfData(SymbolFileDWARF* dwarf2Data);
 
-    DWARFDIE
-    LookupAddress(const dw_addr_t address,
-                  const dw_offset_t cu_offset);    // Can be valid (find in .debug_aranges), or DW_INVALID_OFFSET if we need to search manually
-
     size_t GetNumCompileUnits();
     bool ContainsCompileUnit (const DWARFCompileUnit *cu) const;
     DWARFCompileUnit* GetCompileUnitAtIndex (uint32_t idx);
     DWARFCompileUnit* GetCompileUnit (dw_offset_t cu_offset, uint32_t* idx_ptr = NULL);
-    DWARFCompileUnit* GetCompileUnitContainingDIE (dw_offset_t die_offset);
+    DWARFCompileUnit* GetCompileUnitContainingDIE (const DIERef& die_ref);
 
-    DWARFDIE GetDIE (dw_offset_t die_offset);
-    DWARFDIE GetDIEContainingOffset (dw_offset_t die_offset);
+    DWARFDIE GetDIE (const DIERef& die_ref);
 
     void Dump(lldb_private::Stream *s, const uint32_t die_offset, const uint32_t recurse_depth);
     static void Parse(SymbolFileDWARF* parser, Callback callback, void* userData);

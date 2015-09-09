@@ -150,7 +150,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
         //
         //        }
 
-        Type *type_ptr = dwarf->m_die_to_type.lookup (die.GetDIE());
+        Type *type_ptr = dwarf->GetDIEToType().lookup (die.GetDIE());
         TypeList* type_list = dwarf->GetTypeList();
         if (type_ptr == NULL)
         {
@@ -186,7 +186,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                 case DW_TAG_unspecified_type:
                 {
                     // Set a bit that lets us know that we are currently parsing this
-                    dwarf->m_die_to_type[die.GetDIE()] = DIE_IS_BEING_PARSED;
+                    dwarf->GetDIEToType()[die.GetDIE()] = DIE_IS_BEING_PARSED;
 
                     const size_t num_attributes = die.GetAttributes (attributes);
                     uint32_t encoding = 0;
@@ -220,7 +220,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                         break;
                                     case DW_AT_byte_size:   byte_size = form_value.Unsigned(); break;
                                     case DW_AT_encoding:    encoding = form_value.Unsigned(); break;
-                                    case DW_AT_type:        encoding_uid = form_value.Reference(); break;
+                                    case DW_AT_type:        encoding_uid = DIERef(form_value).GetUID(); break;
                                     default:
                                     case DW_AT_sibling:
                                         break;
@@ -355,7 +355,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                              clang_type,
                                              resolve_state));
 
-                    dwarf->m_die_to_type[die.GetDIE()] = type_sp.get();
+                    dwarf->GetDIEToType()[die.GetDIE()] = type_sp.get();
 
                     //                  Type* encoding_type = GetUniquedTypeForDIEOffset(encoding_uid, type_sp, NULL, 0, 0, false);
                     //                  if (encoding_type != NULL)
@@ -373,7 +373,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                 case DW_TAG_class_type:
                 {
                     // Set a bit that lets us know that we are currently parsing this
-                    dwarf->m_die_to_type[die.GetDIE()] = DIE_IS_BEING_PARSED;
+                    dwarf->GetDIEToType()[die.GetDIE()] = DIE_IS_BEING_PARSED;
                     bool byte_size_valid = false;
 
                     LanguageType class_language = eLanguageTypeUnknown;
@@ -471,7 +471,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                         type_sp = unique_ast_entry_ap->m_type_sp;
                         if (type_sp)
                         {
-                            dwarf->m_die_to_type[die.GetDIE()] = type_sp.get();
+                            dwarf->GetDIEToType()[die.GetDIE()] = type_sp.get();
                             return type_sp;
                         }
                     }
@@ -554,7 +554,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                 // We found a real definition for this type elsewhere
                                 // so lets use it and cache the fact that we found
                                 // a complete type for this die
-                                dwarf->m_die_to_type[die.GetDIE()] = type_sp.get();
+                                dwarf->GetDIEToType()[die.GetDIE()] = type_sp.get();
                                 return type_sp;
                             }
                         }
@@ -612,13 +612,13 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                             // We found a real definition for this type elsewhere
                             // so lets use it and cache the fact that we found
                             // a complete type for this die
-                            dwarf->m_die_to_type[die.GetDIE()] = type_sp.get();
+                            dwarf->GetDIEToType()[die.GetDIE()] = type_sp.get();
                             return type_sp;
                         }
                     }
                     assert (tag_decl_kind != -1);
                     bool clang_type_was_created = false;
-                    clang_type.SetCompilerType(&m_ast, dwarf->m_forward_decl_die_to_clang_type.lookup (die.GetDIE()));
+                    clang_type.SetCompilerType(&m_ast, dwarf->GetForwardDeclDieToClangType().lookup (die.GetDIE()));
                     if (!clang_type)
                     {
                         clang::DeclContext *decl_ctx = GetClangDeclContextContainingDIE (die, nullptr);
@@ -766,21 +766,20 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                             // will automatically call the SymbolFile virtual function
                             // "SymbolFileDWARF::CompleteType(Type *)"
                             // When the definition needs to be defined.
-                            dwarf->m_forward_decl_die_to_clang_type[die.GetDIE()] = clang_type.GetOpaqueQualType();
-                            dwarf->m_forward_decl_clang_type_to_die[ClangASTContext::RemoveFastQualifiers(clang_type).GetOpaqueQualType()] = die.GetDIE();
+                            dwarf->GetForwardDeclDieToClangType()[die.GetDIE()] = clang_type.GetOpaqueQualType();
+                            dwarf->GetForwardDeclClangTypeToDie()[ClangASTContext::RemoveFastQualifiers(clang_type).GetOpaqueQualType()] = die.GetDIERef();
                             m_ast.SetHasExternalStorage (clang_type.GetOpaqueQualType(), true);
                         }
                     }
-
                 }
                     break;
 
                 case DW_TAG_enumeration_type:
                 {
                     // Set a bit that lets us know that we are currently parsing this
-                    dwarf->m_die_to_type[die.GetDIE()] = DIE_IS_BEING_PARSED;
+                    dwarf->GetDIEToType()[die.GetDIE()] = DIE_IS_BEING_PARSED;
 
-                    lldb::user_id_t encoding_uid = DW_INVALID_OFFSET;
+                    DWARFFormValue encoding_form;
 
                     const size_t num_attributes = die.GetAttributes (attributes);
                     if (num_attributes > 0)
@@ -801,7 +800,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                         type_name_cstr = form_value.AsCString();
                                         type_name_const_str.SetCString(type_name_cstr);
                                         break;
-                                    case DW_AT_type:            encoding_uid = form_value.Reference(); break;
+                                    case DW_AT_type:            encoding_form = form_value; break;
                                     case DW_AT_byte_size:       byte_size = form_value.Unsigned(); break;
                                     case DW_AT_accessibility:   break; //accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
                                     case DW_AT_declaration:     break; //is_forward_declaration = form_value.Boolean(); break;
@@ -824,12 +823,12 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                         DEBUG_PRINTF ("0x%8.8" PRIx64 ": %s (\"%s\")\n", die.GetID(), DW_TAG_value_to_name(tag), type_name_cstr);
 
                         CompilerType enumerator_clang_type;
-                        clang_type.SetCompilerType (&m_ast, dwarf->m_forward_decl_die_to_clang_type.lookup (die.GetDIE()));
+                        clang_type.SetCompilerType (&m_ast, dwarf->GetForwardDeclDieToClangType().lookup (die.GetDIE()));
                         if (!clang_type)
                         {
-                            if (encoding_uid != DW_INVALID_OFFSET)
+                            if (encoding_form.IsValid())
                             {
-                                Type *enumerator_type = dwarf->ResolveTypeUID(encoding_uid);
+                                Type *enumerator_type = dwarf->ResolveTypeUID(DIERef(encoding_form).GetUID());
                                 if (enumerator_type)
                                     enumerator_clang_type = enumerator_type->GetFullCompilerType ();
                             }
@@ -856,7 +855,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                                  type_name_const_str,
                                                  byte_size,
                                                  NULL,
-                                                 encoding_uid,
+                                                 DIERef(encoding_form).GetUID(),
                                                  Type::eEncodingIsUID,
                                                  &decl,
                                                  clang_type,
@@ -880,18 +879,17 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                 case DW_TAG_subroutine_type:
                 {
                     // Set a bit that lets us know that we are currently parsing this
-                    dwarf->m_die_to_type[die.GetDIE()] = DIE_IS_BEING_PARSED;
+                    dwarf->GetDIEToType()[die.GetDIE()] = DIE_IS_BEING_PARSED;
 
-                    //const char *mangled = NULL;
-                    dw_offset_t type_die_offset = DW_INVALID_OFFSET;
+                    DWARFFormValue type_die_form;
                     bool is_variadic = false;
                     bool is_inline = false;
                     bool is_static = false;
                     bool is_virtual = false;
                     bool is_explicit = false;
                     bool is_artificial = false;
-                    dw_offset_t specification_die_offset = DW_INVALID_OFFSET;
-                    dw_offset_t abstract_origin_die_offset = DW_INVALID_OFFSET;
+                    DWARFFormValue specification_die_form;
+                    DWARFFormValue abstract_origin_die_form;
                     dw_offset_t object_pointer_die_offset = DW_INVALID_OFFSET;
 
                     unsigned type_quals = 0;
@@ -919,7 +917,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
 
                                     case DW_AT_linkage_name:
                                     case DW_AT_MIPS_linkage_name:   break; // mangled = form_value.AsCString(&dwarf->get_debug_str_data()); break;
-                                    case DW_AT_type:                type_die_offset = form_value.Reference(); break;
+                                    case DW_AT_type:                type_die_form = form_value; break;
                                     case DW_AT_accessibility:       accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
                                     case DW_AT_declaration:         break; // is_forward_declaration = form_value.Boolean(); break;
                                     case DW_AT_inline:              is_inline = form_value.Boolean(); break;
@@ -939,11 +937,11 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                         break;
 
                                     case DW_AT_specification:
-                                        specification_die_offset = form_value.Reference();
+                                        specification_die_form = form_value;
                                         break;
 
                                     case DW_AT_abstract_origin:
-                                        abstract_origin_die_offset = form_value.Reference();
+                                        abstract_origin_die_form = form_value;
                                         break;
 
                                     case DW_AT_object_pointer:
@@ -996,8 +994,8 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                     CompilerType return_clang_type;
                     Type *func_type = NULL;
 
-                    if (type_die_offset != DW_INVALID_OFFSET)
-                        func_type = dwarf->ResolveTypeUID(type_die_offset);
+                    if (type_die_form.IsValid())
+                        func_type = dwarf->ResolveTypeUID(DIERef(type_die_form).GetUID());
 
                     if (func_type)
                         return_clang_type = func_type->GetForwardCompilerType ();
@@ -1113,12 +1111,12 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                         if (debug_map_symfile)
                                         {
                                             class_symfile = debug_map_symfile->GetSymbolFileByOSOIndex(SymbolFileDWARFDebugMap::GetOSOIndexFromUserID(class_type->GetID()));
-                                            class_type_die = class_symfile->DebugInfo()->GetDIE (class_type->GetID());
+                                            class_type_die = class_symfile->DebugInfo()->GetDIE (DIERef(class_type->GetID()));
                                         }
                                         else
                                         {
                                             class_symfile = dwarf;
-                                            class_type_die = dwarf->DebugInfo()->GetDIE (class_type->GetID());
+                                            class_type_die = dwarf->DebugInfo()->GetDIE (DIERef(class_type->GetID()));
                                         }
                                         if (class_type_die)
                                         {
@@ -1134,7 +1132,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                             // like having stuff added to them after their definitions are
                                             // complete...
 
-                                            type_ptr = dwarf->m_die_to_type[die.GetDIE()];
+                                            type_ptr = dwarf->GetDIEToType()[die.GetDIE()];
                                             if (type_ptr && type_ptr != DIE_IS_BEING_PARSED)
                                             {
                                                 type_sp = type_ptr->shared_from_this();
@@ -1143,7 +1141,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                         }
                                     }
 
-                                    if (specification_die_offset != DW_INVALID_OFFSET)
+                                    if (specification_die_form.IsValid())
                                     {
                                         // We have a specification which we are going to base our function
                                         // prototype off of, so we need this type to be completed so that the
@@ -1152,7 +1150,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                         class_type->GetForwardCompilerType ();
                                         // If we have a specification, then the function type should have been
                                         // made with the specification and not with this die.
-                                        DWARFDIE spec_die = dwarf->DebugInfo()->GetDIE(specification_die_offset);
+                                        DWARFDIE spec_die = dwarf->DebugInfo()->GetDIE(DIERef(specification_die_form));
                                         clang::DeclContext *spec_clang_decl_ctx = GetClangDeclContextForDIE (spec_die);
                                         if (spec_clang_decl_ctx)
                                         {
@@ -1160,13 +1158,13 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                         }
                                         else
                                         {
-                                            dwarf->GetObjectFile()->GetModule()->ReportWarning ("0x%8.8" PRIx64 ": DW_AT_specification(0x%8.8x) has no decl\n",
+                                            dwarf->GetObjectFile()->GetModule()->ReportWarning ("0x%8.8" PRIx64 ": DW_AT_specification(0x%8.8" PRIx64 ") has no decl\n",
                                                                                                 die.GetID(),
-                                                                                                specification_die_offset);
+                                                                                                specification_die_form.Reference());
                                         }
                                         type_handled = true;
                                     }
-                                    else if (abstract_origin_die_offset != DW_INVALID_OFFSET)
+                                    else if (abstract_origin_die_form.IsValid())
                                     {
                                         // We have a specification which we are going to base our function
                                         // prototype off of, so we need this type to be completed so that the
@@ -1174,7 +1172,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                         // clang decl context.
                                         class_type->GetForwardCompilerType ();
 
-                                        DWARFDIE abs_die = dwarf->DebugInfo()->GetDIE (abstract_origin_die_offset);
+                                        DWARFDIE abs_die = dwarf->DebugInfo()->GetDIE (DIERef(abstract_origin_die_form));
                                         clang::DeclContext *abs_clang_decl_ctx = GetClangDeclContextForDIE (abs_die);
                                         if (abs_clang_decl_ctx)
                                         {
@@ -1182,9 +1180,9 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                         }
                                         else
                                         {
-                                            dwarf->GetObjectFile()->GetModule()->ReportWarning ("0x%8.8" PRIx64 ": DW_AT_abstract_origin(0x%8.8x) has no decl\n",
+                                            dwarf->GetObjectFile()->GetModule()->ReportWarning ("0x%8.8" PRIx64 ": DW_AT_abstract_origin(0x%8.8" PRIx64 ") has no decl\n",
                                                                                                 die.GetID(),
-                                                                                                abstract_origin_die_offset);
+                                                                                                abstract_origin_die_form.Reference());
                                         }
                                         type_handled = true;
                                     }
@@ -1264,10 +1262,10 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                                 // class hasn't been asked to complete itself through the
                                                 // clang::ExternalASTSource protocol, so we need to just have the
                                                 // class complete itself and do things the right way, then our
-                                                // DIE should then have an entry in the dwarf->m_die_to_type map. First
-                                                // we need to modify the dwarf->m_die_to_type so it doesn't think we are
+                                                // DIE should then have an entry in the dwarf->GetDIEToType() map. First
+                                                // we need to modify the dwarf->GetDIEToType() so it doesn't think we are
                                                 // trying to parse this DIE anymore...
-                                                dwarf->m_die_to_type[die.GetDIE()] = NULL;
+                                                dwarf->GetDIEToType()[die.GetDIE()] = NULL;
 
                                                 // Now we get the full type to force our class type to complete itself
                                                 // using the clang::ExternalASTSource protocol which will parse all
@@ -1275,7 +1273,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                                 class_type->GetFullCompilerType ();
 
                                                 // The type for this DIE should have been filled in the function call above
-                                                type_ptr = dwarf->m_die_to_type[die.GetDIE()];
+                                                type_ptr = dwarf->GetDIEToType()[die.GetDIE()];
                                                 if (type_ptr && type_ptr != DIE_IS_BEING_PARSED)
                                                 {
                                                     type_sp = type_ptr->shared_from_this();
@@ -1352,9 +1350,9 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                 case DW_TAG_array_type:
                 {
                     // Set a bit that lets us know that we are currently parsing this
-                    dwarf->m_die_to_type[die.GetDIE()] = DIE_IS_BEING_PARSED;
+                    dwarf->GetDIEToType()[die.GetDIE()] = DIE_IS_BEING_PARSED;
 
-                    lldb::user_id_t type_die_offset = DW_INVALID_OFFSET;
+                    DWARFFormValue type_die_form;
                     int64_t first_index = 0;
                     uint32_t byte_stride = 0;
                     uint32_t bit_stride = 0;
@@ -1379,7 +1377,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                         type_name_const_str.SetCString(type_name_cstr);
                                         break;
 
-                                    case DW_AT_type:            type_die_offset = form_value.Reference(); break;
+                                    case DW_AT_type:            type_die_form = form_value; break;
                                     case DW_AT_byte_size:       break; // byte_size = form_value.Unsigned(); break;
                                     case DW_AT_byte_stride:     byte_stride = form_value.Unsigned(); break;
                                     case DW_AT_bit_stride:      bit_stride = form_value.Unsigned(); break;
@@ -1403,7 +1401,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
 
                         DEBUG_PRINTF ("0x%8.8" PRIx64 ": %s (\"%s\")\n", die.GetID(), DW_TAG_value_to_name(tag), type_name_cstr);
 
-                        Type *element_type = dwarf->ResolveTypeUID(type_die_offset);
+                        Type *element_type = dwarf->ResolveTypeUID(DIERef(type_die_form).GetUID());
 
                         if (element_type)
                         {
@@ -1440,7 +1438,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                                      empty_name,
                                                      array_element_bit_stride / 8,
                                                      NULL,
-                                                     type_die_offset,
+                                                     DIERef(type_die_form).GetUID(),
                                                      Type::eEncodingIsUID,
                                                      &decl,
                                                      clang_type,
@@ -1453,8 +1451,8 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
 
                 case DW_TAG_ptr_to_member_type:
                 {
-                    dw_offset_t type_die_offset = DW_INVALID_OFFSET;
-                    dw_offset_t containing_type_die_offset = DW_INVALID_OFFSET;
+                    DWARFFormValue type_die_form;
+                    DWARFFormValue containing_type_die_form;
 
                     const size_t num_attributes = die.GetAttributes (attributes);
 
@@ -1468,15 +1466,15 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                 switch (attr)
                                 {
                                     case DW_AT_type:
-                                        type_die_offset = form_value.Reference(); break;
+                                        type_die_form = form_value; break;
                                     case DW_AT_containing_type:
-                                        containing_type_die_offset = form_value.Reference(); break;
+                                        containing_type_die_form = form_value; break;
                                 }
                             }
                         }
                         
-                        Type *pointee_type = dwarf->ResolveTypeUID(type_die_offset);
-                        Type *class_type = dwarf->ResolveTypeUID(containing_type_die_offset);
+                        Type *pointee_type = dwarf->ResolveTypeUID(DIERef(type_die_form).GetUID());
+                        Type *class_type = dwarf->ResolveTypeUID(DIERef(containing_type_die_form).GetUID());
                         
                         CompilerType pointee_clang_type = pointee_type->GetForwardCompilerType ();
                         CompilerType class_clang_type = class_type->GetLayoutCompilerType ();
@@ -1532,7 +1530,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                 // We are ready to put this type into the uniqued list up at the module level
                 type_list->Insert (type_sp);
                 
-                dwarf->m_die_to_type[die.GetDIE()] = type_sp.get();
+                dwarf->GetDIEToType()[die.GetDIE()] = type_sp.get();
             }
         }
         else if (type_ptr != DIE_IS_BEING_PARSED)
@@ -1654,8 +1652,7 @@ DWARFASTParserClang::ParseTemplateDIE (const DWARFDIE &die,
                         case DW_AT_type:
                             if (attributes.ExtractFormValueAtIndex(i, form_value))
                             {
-                                const dw_offset_t type_die_offset = form_value.Reference();
-                                lldb_type = die.ResolveTypeUID(type_die_offset);
+                                lldb_type = die.ResolveTypeUID(DIERef(form_value).GetUID());
                                 if (lldb_type)
                                     clang_type = lldb_type->GetForwardCompilerType ();
                             }
@@ -1855,8 +1852,8 @@ DWARFASTParserClang::CompleteTypeFromDWARF (const DWARFDIE &die,
                                 const size_t num_matches = method_die_offsets.size();
                                 for (size_t i=0; i<num_matches; ++i)
                                 {
-                                    const dw_offset_t die_offset = method_die_offsets[i];
-                                    DWARFDIE method_die = debug_info->GetDIE (die_offset);
+                                    const DIERef& die_ref = method_die_offsets[i];
+                                    DWARFDIE method_die = debug_info->GetDIE (die_ref);
 
                                     if (method_die)
                                         method_die.ResolveType ();
@@ -2310,7 +2307,7 @@ DWARFASTParserClang::ParseFunctionFromDWARF (const SymbolContext& sc,
 
             SymbolFileDWARF *dwarf = die.GetDWARF();
             // Supply the type _only_ if it has already been parsed
-            Type *func_type = dwarf->m_die_to_type.lookup (die.GetDIE());
+            Type *func_type = dwarf->GetDIEToType().lookup (die.GetDIE());
 
             assert(func_type == NULL || func_type != DIE_IS_BEING_PARSED);
 
@@ -2386,7 +2383,7 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
 
 
                     bool is_artificial = false;
-                    lldb::user_id_t encoding_uid = LLDB_INVALID_UID;
+                    DWARFFormValue encoding_form;
                     AccessType accessibility = eAccessNone;
                     uint32_t member_byte_offset = UINT32_MAX;
                     size_t byte_size = 0;
@@ -2406,7 +2403,7 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
                                 case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                                 case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                                 case DW_AT_name:        name = form_value.AsCString(); break;
-                                case DW_AT_type:        encoding_uid = form_value.Reference(); break;
+                                case DW_AT_type:        encoding_form = form_value; break;
                                 case DW_AT_bit_offset:  bit_offset = form_value.Unsigned(); break;
                                 case DW_AT_bit_size:    bit_size = form_value.Unsigned(); break;
                                 case DW_AT_byte_size:   byte_size = form_value.Unsigned(); break;
@@ -2545,7 +2542,7 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
                     // Handle static members
                     if (is_external && member_byte_offset == UINT32_MAX)
                     {
-                        Type *var_type = die.ResolveTypeUID(encoding_uid);
+                        Type *var_type = die.ResolveTypeUID(DIERef(encoding_form).GetUID());
 
                         if (var_type)
                         {
@@ -2561,7 +2558,7 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
 
                     if (is_artificial == false)
                     {
-                        Type *member_type = die.ResolveTypeUID(encoding_uid);
+                        Type *member_type = die.ResolveTypeUID(DIERef(encoding_form).GetUID());
 
                         clang::FieldDecl *field_decl = NULL;
                         if (tag == DW_TAG_member)
@@ -2712,7 +2709,7 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
                                                 module_sp->ReportError ("0x%8.8" PRIx64 ": DW_TAG_member '%s' refers to type 0x%8.8" PRIx64 " which extends beyond the bounds of 0x%8.8" PRIx64,
                                                                         die.GetID(),
                                                                         name,
-                                                                        encoding_uid,
+                                                                        encoding_form.Reference(),
                                                                         parent_die.GetID());
                                             }
 
@@ -2737,11 +2734,11 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
                                     module_sp->ReportError ("0x%8.8" PRIx64 ": DW_TAG_member '%s' refers to type 0x%8.8" PRIx64 " which was unable to be parsed",
                                                             die.GetID(),
                                                             name,
-                                                            encoding_uid);
+                                                            encoding_form.Reference());
                                 else
                                     module_sp->ReportError ("0x%8.8" PRIx64 ": DW_TAG_member refers to type 0x%8.8" PRIx64 " which was unable to be parsed",
                                                             die.GetID(),
-                                                            encoding_uid);
+                                                            encoding_form.Reference());
                             }
                         }
 
@@ -2792,7 +2789,7 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
                 {
                     Declaration decl;
                     DWARFExpression location(die.GetCU());
-                    lldb::user_id_t encoding_uid = LLDB_INVALID_UID;
+                    DWARFFormValue encoding_form;
                     AccessType accessibility = default_accessibility;
                     bool is_virtual = false;
                     bool is_base_of_class = true;
@@ -2809,7 +2806,7 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
                                 case DW_AT_decl_file:   decl.SetFile(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(form_value.Unsigned())); break;
                                 case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                                 case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
-                                case DW_AT_type:        encoding_uid = form_value.Reference(); break;
+                                case DW_AT_type:        encoding_form = form_value; break;
                                 case DW_AT_data_member_location:
                                     if (form_value.BlockData())
                                     {
@@ -2861,12 +2858,12 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
                         }
                     }
 
-                    Type *base_class_type = die.ResolveTypeUID(encoding_uid);
+                    Type *base_class_type = die.ResolveTypeUID(DIERef(encoding_form).GetUID());
                     if (base_class_type == NULL)
                     {
                         module_sp->ReportError("0x%8.8x: DW_TAG_inheritance failed to resolve the base class at 0x%8.8" PRIx64 " from enclosing type 0x%8.8x. \nPlease file a bug and attach the file at the start of this error message",
                                                die.GetOffset(),
-                                               encoding_uid,
+                                               encoding_form.Reference(),
                                                parent_die.GetOffset());
                         break;
                     }
@@ -2942,7 +2939,7 @@ DWARFASTParserClang::ParseChildParameters (const SymbolContext& sc,
                 {
                     const char *name = NULL;
                     Declaration decl;
-                    dw_offset_t param_type_die_offset = DW_INVALID_OFFSET;
+                    DWARFFormValue param_type_die_form;
                     bool is_artificial = false;
                     // one of None, Auto, Register, Extern, Static, PrivateExtern
 
@@ -2961,7 +2958,7 @@ DWARFASTParserClang::ParseChildParameters (const SymbolContext& sc,
                                 case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                                 case DW_AT_name:        name = form_value.AsCString();
                                     break;
-                                case DW_AT_type:        param_type_die_offset = form_value.Reference(); break;
+                                case DW_AT_type:        param_type_die_form = form_value; break;
                                 case DW_AT_artificial:  is_artificial = form_value.Boolean(); break;
                                 case DW_AT_location:
                                     //                          if (form_value.BlockData())
@@ -3006,7 +3003,7 @@ DWARFASTParserClang::ParseChildParameters (const SymbolContext& sc,
                                     // being in the formal parameter DIE...
                                     if (name == NULL || ::strcmp(name, "this")==0)
                                     {
-                                        Type *this_type = die.ResolveTypeUID (param_type_die_offset);
+                                        Type *this_type = die.ResolveTypeUID (DIERef(param_type_die_form).GetUID());
                                         if (this_type)
                                         {
                                             uint32_t encoding_mask = this_type->GetEncodingMask();
@@ -3049,7 +3046,7 @@ DWARFASTParserClang::ParseChildParameters (const SymbolContext& sc,
 
                     if (!skip)
                     {
-                        Type *type = die.ResolveTypeUID(param_type_die_offset);
+                        Type *type = die.ResolveTypeUID(DIERef(param_type_die_form).GetUID());
                         if (type)
                         {
                             function_param_types.push_back (type->GetForwardCompilerType ());
@@ -3471,7 +3468,7 @@ DWARFASTParserClang::CopyUniqueClassMethodTypes (const DWARFDIE &src_class_die,
                                  src_die.GetOffset(), dst_die.GetOffset());
             }
 
-            Type *src_child_type = dst_die.GetDWARF()->m_die_to_type[src_die.GetDIE()];
+            Type *src_child_type = dst_die.GetDWARF()->GetDIEToType()[src_die.GetDIE()];
             if (src_child_type)
             {
                 if (log)
@@ -3479,7 +3476,7 @@ DWARFASTParserClang::CopyUniqueClassMethodTypes (const DWARFDIE &src_class_die,
                                  static_cast<void*>(src_child_type),
                                  src_child_type->GetID(),
                                  src_die.GetOffset(), dst_die.GetOffset());
-                dst_die.GetDWARF()->m_die_to_type[dst_die.GetDIE()] = src_child_type;
+                dst_die.GetDWARF()->GetDIEToType()[dst_die.GetDIE()] = src_child_type;
             }
             else
             {
@@ -3522,7 +3519,7 @@ DWARFASTParserClang::CopyUniqueClassMethodTypes (const DWARFDIE &src_class_die,
                             log->Printf ("warning: tried to unique decl context from 0x%8.8x for 0x%8.8x, but none was found", src_die.GetOffset(), dst_die.GetOffset());
                     }
 
-                    Type *src_child_type = dst_die.GetDWARF()->m_die_to_type[src_die.GetDIE()];
+                    Type *src_child_type = dst_die.GetDWARF()->GetDIEToType()[src_die.GetDIE()];
                     if (src_child_type)
                     {
                         if (log)
@@ -3531,7 +3528,7 @@ DWARFASTParserClang::CopyUniqueClassMethodTypes (const DWARFDIE &src_class_die,
                                          src_child_type->GetID(),
                                          src_die.GetOffset(),
                                          dst_die.GetOffset());
-                        dst_die.GetDWARF()->m_die_to_type[dst_die.GetDIE()] = src_child_type;
+                        dst_die.GetDWARF()->GetDIEToType()[dst_die.GetDIE()] = src_child_type;
                     }
                     else
                     {
@@ -3581,7 +3578,7 @@ DWARFASTParserClang::CopyUniqueClassMethodTypes (const DWARFDIE &src_class_die,
                         log->Printf ("warning: tried to unique decl context from 0x%8.8x for 0x%8.8x, but none was found", src_die.GetOffset(), dst_die.GetOffset());
                 }
                 
-                Type *src_child_type = dst_die.GetDWARF()->m_die_to_type[src_die.GetDIE()];
+                Type *src_child_type = dst_die.GetDWARF()->GetDIEToType()[src_die.GetDIE()];
                 if (src_child_type)
                 {
                     if (log)
@@ -3589,7 +3586,7 @@ DWARFASTParserClang::CopyUniqueClassMethodTypes (const DWARFDIE &src_class_die,
                                      static_cast<void*>(src_child_type),
                                      src_child_type->GetID(),
                                      src_die.GetOffset(), dst_die.GetOffset());
-                    dst_die.GetDWARF()->m_die_to_type[dst_die.GetDIE()] = src_child_type;
+                    dst_die.GetDWARF()->GetDIEToType()[dst_die.GetDIE()] = src_child_type;
                 }
                 else
                 {

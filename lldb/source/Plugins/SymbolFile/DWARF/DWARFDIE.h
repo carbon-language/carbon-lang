@@ -13,6 +13,7 @@
 #include "lldb/lldb-types.h"
 #include "lldb/Core/dwarf.h"
 
+struct DIERef;
 class DWARFASTParser;
 class DWARFAttributes;
 class DWARFCompileUnit;
@@ -94,6 +95,9 @@ public:
     {
         return m_die;
     }
+
+    DIERef
+    GetDIERef() const;
 
     lldb_private::TypeSystem *
     GetTypeSystem () const;
@@ -231,6 +235,9 @@ public:
 
     uint64_t
     GetAttributeValueAsReference (const dw_attr_t attr, uint64_t fail_value) const;
+
+    uint64_t
+    GetAttributeValueAsAddress (const dw_attr_t attr, uint64_t fail_value) const;
 
     size_t
     GetAttributes (DWARFAttributes &attributes, uint32_t depth = 0) const;

@@ -368,7 +368,7 @@ public:
     ///     The list of sections contained in this object file.
     //------------------------------------------------------------------
     virtual SectionList *
-    GetSectionList ();
+    GetSectionList (bool update_module_section_list = true);
 
     virtual void
     CreateSections (SectionList &unified_section_list) = 0;

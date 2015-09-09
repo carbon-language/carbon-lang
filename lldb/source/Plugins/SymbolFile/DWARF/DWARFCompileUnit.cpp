@@ -28,6 +28,7 @@
 #include "LogChannelDWARF.h"
 #include "NameToDIE.h"
 #include "SymbolFileDWARF.h"
+#include "SymbolFileDWARFDwo.h"
 #include "SymbolFileDWARFDebugMap.h"
 
 using namespace lldb;
@@ -54,9 +55,14 @@ DWARFCompileUnit::DWARFCompileUnit(SymbolFileDWARF* dwarf2Data) :
     m_producer_version_update (0),
     m_language_type (eLanguageTypeUnknown),
     m_is_dwarf64    (false),
-    m_is_optimized  (eLazyBoolCalculate)
+    m_is_optimized  (eLazyBoolCalculate),
+    m_addr_base (0),
+    m_base_obj_offset (DW_INVALID_OFFSET)
 {
 }
+
+DWARFCompileUnit::~DWARFCompileUnit()
+{}
 
 void
 DWARFCompileUnit::Clear()
@@ -74,6 +80,8 @@ DWARFCompileUnit::Clear()
     m_language_type = eLanguageTypeUnknown;
     m_is_dwarf64    = false;
     m_is_optimized  = eLazyBoolCalculate;
+    m_addr_base     = 0;
+    m_base_obj_offset = DW_INVALID_OFFSET;
 }
 
 bool
@@ -131,6 +139,9 @@ DWARFCompileUnit::ClearDIEs(bool keep_compile_unit_die)
         if (keep_compile_unit_die)
             m_die_array.push_back(tmp_array.front());
     }
+
+    if (m_dwo_symbol_file)
+        m_dwo_symbol_file->GetCompileUnit()->ClearDIEs(keep_compile_unit_die);
 }
 
 //----------------------------------------------------------------------
@@ -192,12 +203,12 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
         const bool null_die = die.IsNULL();
         if (depth == 0)
         {
-            uint64_t base_addr = die.GetAttributeValueAsUnsigned(m_dwarf2Data, this, DW_AT_low_pc, LLDB_INVALID_ADDRESS);
-            if (base_addr == LLDB_INVALID_ADDRESS)
-                base_addr = die.GetAttributeValueAsUnsigned(m_dwarf2Data, this, DW_AT_entry_pc, 0);
-            SetBaseAddress (base_addr);
             if (initial_die_array_size == 0)
-                AddDIE (die);
+                AddCompileUnitDIE(die);
+            uint64_t base_addr = die.GetAttributeValueAsAddress(m_dwarf2Data, this, DW_AT_low_pc, LLDB_INVALID_ADDRESS);
+            if (base_addr == LLDB_INVALID_ADDRESS)
+                base_addr = die.GetAttributeValueAsAddress(m_dwarf2Data, this, DW_AT_entry_pc, 0);
+            SetBaseAddress (base_addr);
             if (cu_die_only)
                 return 1;
         }
@@ -287,9 +298,83 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
         verbose_log->PutCString (strm.GetString().c_str());
     }
 
-    return m_die_array.size();
+    if (!m_dwo_symbol_file)
+        return m_die_array.size();
+
+    DWARFCompileUnit* dwo_cu = m_dwo_symbol_file->GetCompileUnit();
+    size_t dwo_die_count = dwo_cu->ExtractDIEsIfNeeded(cu_die_only);
+    return m_die_array.size() + dwo_die_count - 1; // We have 2 CU die, but we waht to count it only as one
 }
 
+void
+DWARFCompileUnit::AddCompileUnitDIE(DWARFDebugInfoEntry& die)
+{
+    assert (m_die_array.empty() && "Compile unit DIE already added");
+    AddDIE(die);
+    
+    DWARFDebugInfoEntry& cu_die = m_die_array.front();
+
+    const char* dwo_name = cu_die.GetAttributeValueAsString(m_dwarf2Data,
+                                                            this,
+                                                            DW_AT_GNU_dwo_name,
+                                                            nullptr);
+    if (!dwo_name)
+        return;
+
+    FileSpec dwo_file(dwo_name, true);
+    if (dwo_file.IsRelative())
+    {
+        const char* comp_dir = cu_die.GetAttributeValueAsString(m_dwarf2Data,
+                                                                this,
+                                                                DW_AT_comp_dir,
+                                                                nullptr);
+        if (!comp_dir)
+            return;
+
+        dwo_file.SetFile(comp_dir, true);
+        dwo_file.AppendPathComponent(dwo_name);
+    }
+
+    if (!dwo_file.Exists())
+        return;
+
+    DataBufferSP dwo_file_data_sp;
+    lldb::offset_t dwo_file_data_offset = 0;
+    ObjectFileSP dwo_obj_file = ObjectFile::FindPlugin(m_dwarf2Data->GetObjectFile()->GetModule(),
+                                                       &dwo_file,
+                                                       0 /* file_offset */,
+                                                       dwo_file.GetByteSize(),
+                                                       dwo_file_data_sp,
+                                                       dwo_file_data_offset);
+    if (dwo_obj_file == nullptr)
+        return;
+
+    std::unique_ptr<SymbolFileDWARFDwo> dwo_symbol_file(new SymbolFileDWARFDwo(dwo_obj_file, this));
+
+    DWARFCompileUnit* dwo_cu = dwo_symbol_file->GetCompileUnit();
+    if (!dwo_cu)
+        return; // Can't fetch the compile unit from the dwo file.
+
+    DWARFDIE dwo_cu_die = dwo_cu->GetCompileUnitDIEOnly();
+    if (!dwo_cu_die.IsValid())
+        return; // Can't fetch the compile unit DIE from the dwo file.
+
+    uint64_t main_dwo_id = cu_die.GetAttributeValueAsUnsigned(m_dwarf2Data,
+                                                              this,
+                                                              DW_AT_GNU_dwo_id,
+                                                              0);
+    uint64_t sub_dwo_id = dwo_cu_die.GetAttributeValueAsUnsigned(DW_AT_GNU_dwo_id, 0);
+    if (main_dwo_id != sub_dwo_id)
+        return; // The 2 dwo ID isn't match. Don't use the dwo file as it belongs to a differectn compilation.
+
+    m_dwo_symbol_file = std::move(dwo_symbol_file);
+    
+    dw_addr_t addr_base = cu_die.GetAttributeValueAsUnsigned(m_dwarf2Data,
+                                                             this,
+                                                             DW_AT_GNU_addr_base,
+                                                             0);
+    dwo_cu->SetAddrBase(addr_base, m_offset);
+}
 
 dw_offset_t
 DWARFCompileUnit::GetAbbrevOffset() const
@@ -380,10 +465,11 @@ DWARFCompileUnit::SetDefaultAddressSize(uint8_t addr_size)
 lldb::user_id_t
 DWARFCompileUnit::GetID () const
 {
+    dw_offset_t local_id = m_base_obj_offset != DW_INVALID_OFFSET ? m_base_obj_offset : m_offset;
     if (m_dwarf2Data)
-        return m_dwarf2Data->MakeUserID(GetOffset());
+        return m_dwarf2Data->MakeUserID(local_id);
     else
-        return GetOffset();
+        return local_id;
 }
 
 void
@@ -509,6 +595,17 @@ DWARFCompileUnit::GetFunctionAranges ()
         const DWARFDebugInfoEntry* die = DIEPtr();
         if (die)
             die->BuildFunctionAddressRangeTable (m_dwarf2Data, this, m_func_aranges_ap.get());
+
+        if (m_dwo_symbol_file)
+        {
+            DWARFCompileUnit* dwo_cu = m_dwo_symbol_file->GetCompileUnit();
+            const DWARFDebugInfoEntry* dwo_die = dwo_cu->DIEPtr();
+            if (dwo_die)
+                dwo_die->BuildFunctionAddressRangeTable (m_dwo_symbol_file.get(),
+                                                         dwo_cu,
+                                                         m_func_aranges_ap.get());
+        }
+        
         const bool minimize = false;
         m_func_aranges_ap->Sort(minimize);
     }
@@ -550,6 +647,9 @@ DWARFCompileUnit::GetDIE (dw_offset_t die_offset)
 {
     if (die_offset != DW_INVALID_OFFSET)
     {
+        if (m_dwo_symbol_file)
+            return m_dwo_symbol_file->GetCompileUnit()->GetDIE(die_offset);
+
         if (ContainsDIEOffset(die_offset))
         {
             ExtractDIEsIfNeeded (false);
@@ -563,7 +663,9 @@ DWARFCompileUnit::GetDIE (dw_offset_t die_offset)
         }
         else
         {
-            return m_dwarf2Data->DebugInfo()->GetDIE (die_offset);
+            // Don't specify the compile unit offset as we don't know it because the DIE belongs to
+            // a different compile unit in the same symbol file.
+            return m_dwarf2Data->DebugInfo()->GetDIE (DIERef(die_offset));
         }
     }
     return DWARFDIE(); // Not found
@@ -609,8 +711,7 @@ DWARFCompileUnit::AppendDIEsWithTag (const dw_tag_t tag, DWARFDIECollection& die
 
 
 void
-DWARFCompileUnit::Index (const uint32_t cu_idx,
-                         NameToDIE& func_basenames,
+DWARFCompileUnit::Index (NameToDIE& func_basenames,
                          NameToDIE& func_fullnames,
                          NameToDIE& func_methods,
                          NameToDIE& func_selectors,
@@ -619,9 +720,6 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                          NameToDIE& types,
                          NameToDIE& namespaces)
 {
-    DWARFFormValue::FixedFormSizes fixed_form_sizes =
-        DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize(), m_is_dwarf64);
-
     Log *log (LogChannelDWARF::GetLogIfAll (DWARF_LOG_LOOKUPS));
     
     if (log)
@@ -632,9 +730,57 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
     }
 
     const LanguageType cu_language = GetLanguageType();
+    DWARFFormValue::FixedFormSizes fixed_form_sizes =
+        DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize(), m_is_dwarf64);
+    
+    IndexPrivate(this,
+                 cu_language,
+                 fixed_form_sizes,
+                 GetOffset(),
+                 func_basenames,
+                 func_fullnames,
+                 func_methods,
+                 func_selectors,
+                 objc_class_selectors,
+                 globals,
+                 types,
+                 namespaces);
+
+    SymbolFileDWARFDwo* dwo_symbol_file = GetDwoSymbolFile();
+    if (dwo_symbol_file)
+    {
+        IndexPrivate(dwo_symbol_file->GetCompileUnit(),
+                     cu_language,
+                     fixed_form_sizes,
+                     GetOffset(),
+                     func_basenames,
+                     func_fullnames,
+                     func_methods,
+                     func_selectors,
+                     objc_class_selectors,
+                     globals,
+                     types,
+                     namespaces);
+    }
+}
+
+void
+DWARFCompileUnit::IndexPrivate (DWARFCompileUnit* dwarf_cu,
+                                const LanguageType cu_language,
+                                const DWARFFormValue::FixedFormSizes& fixed_form_sizes,
+                                const dw_offset_t cu_offset,
+                                NameToDIE& func_basenames,
+                                NameToDIE& func_fullnames,
+                                NameToDIE& func_methods,
+                                NameToDIE& func_selectors,
+                                NameToDIE& objc_class_selectors,
+                                NameToDIE& globals,
+                                NameToDIE& types,
+                                NameToDIE& namespaces)
+{
     DWARFDebugInfoEntry::const_iterator pos;
-    DWARFDebugInfoEntry::const_iterator begin = m_die_array.begin();
-    DWARFDebugInfoEntry::const_iterator end = m_die_array.end();
+    DWARFDebugInfoEntry::const_iterator begin = dwarf_cu->m_die_array.begin();
+    DWARFDebugInfoEntry::const_iterator end = dwarf_cu->m_die_array.end();
     for (pos = begin; pos != end; ++pos)
     {
         const DWARFDebugInfoEntry &die = *pos;
@@ -672,8 +818,8 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
         bool has_location = false;
         bool is_global_or_static_variable = false;
         
-        dw_offset_t specification_die_offset = DW_INVALID_OFFSET;
-        const size_t num_attributes = die.GetAttributes(this, fixed_form_sizes, attributes);
+        DWARFFormValue specification_die_form;
+        const size_t num_attributes = die.GetAttributes(dwarf_cu, fixed_form_sizes, attributes);
         if (num_attributes > 0)
         {
             for (uint32_t i=0; i<num_attributes; ++i)
@@ -763,7 +909,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                     
                 case DW_AT_specification:
                     if (attributes.ExtractFormValueAtIndex(i, form_value))
-                        specification_die_offset = form_value.Reference();
+                        specification_die_form = form_value;
                     break;
                 }
             }
@@ -783,15 +929,15 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                         ConstString objc_selector_name (objc_method.GetSelector());
                         ConstString objc_fullname_no_category_name (objc_method.GetFullNameWithoutCategory(true));
                         ConstString objc_class_name_no_category (objc_method.GetClassName());
-                        func_fullnames.Insert (ConstString(name), die.GetOffset());
+                        func_fullnames.Insert (ConstString(name), DIERef(cu_offset, die.GetOffset()));
                         if (objc_class_name_with_category)
-                            objc_class_selectors.Insert(objc_class_name_with_category, die.GetOffset());
+                            objc_class_selectors.Insert(objc_class_name_with_category, DIERef(cu_offset, die.GetOffset()));
                         if (objc_class_name_no_category && objc_class_name_no_category != objc_class_name_with_category)
-                            objc_class_selectors.Insert(objc_class_name_no_category, die.GetOffset());
+                            objc_class_selectors.Insert(objc_class_name_no_category, DIERef(cu_offset, die.GetOffset()));
                         if (objc_selector_name)
-                            func_selectors.Insert (objc_selector_name, die.GetOffset());
+                            func_selectors.Insert (objc_selector_name, DIERef(cu_offset, die.GetOffset()));
                         if (objc_fullname_no_category_name)
-                            func_fullnames.Insert (objc_fullname_no_category_name, die.GetOffset());
+                            func_fullnames.Insert (objc_fullname_no_category_name, DIERef(cu_offset, die.GetOffset()));
                     }
                     // If we have a mangled name, then the DW_AT_name attribute
                     // is usually the method name without the class or any parameters
@@ -806,9 +952,9 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                         }
                         else
                         {
-                            if (specification_die_offset != DW_INVALID_OFFSET)
+                            if (specification_die_form.IsValid())
                             {
-                                DWARFDIE specification_die = m_dwarf2Data->DebugInfo()->GetDIE (specification_die_offset);
+                                DWARFDIE specification_die = dwarf_cu->GetSymbolFileDWARF()->DebugInfo()->GetDIE (DIERef(specification_die_form));
                                 if (specification_die.GetParent().IsStructOrClass())
                                     is_method = true;
                             }
@@ -817,12 +963,12 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
 
 
                     if (is_method)
-                        func_methods.Insert (ConstString(name), die.GetOffset());
+                        func_methods.Insert (ConstString(name), DIERef(cu_offset, die.GetOffset()));
                     else
-                        func_basenames.Insert (ConstString(name), die.GetOffset());
+                        func_basenames.Insert (ConstString(name), DIERef(cu_offset, die.GetOffset()));
 
                     if (!is_method && !mangled_cstr && !objc_method.IsValid(true))
-                        func_fullnames.Insert (ConstString(name), die.GetOffset());
+                        func_fullnames.Insert (ConstString(name), DIERef(cu_offset, die.GetOffset()));
                 }
                 if (mangled_cstr)
                 {
@@ -833,10 +979,10 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                     if (name != mangled_cstr && ((mangled_cstr[0] == '_') || (name && ::strcmp(name, mangled_cstr) != 0)))
                     {
                         Mangled mangled (ConstString(mangled_cstr), true);
-                        func_fullnames.Insert (mangled.GetMangledName(), die.GetOffset());
+                        func_fullnames.Insert (mangled.GetMangledName(), DIERef(cu_offset, die.GetOffset()));
                         ConstString demangled = mangled.GetDemangledName(cu_language);
                         if (demangled)
-                            func_fullnames.Insert (demangled, die.GetOffset());
+                            func_fullnames.Insert (demangled, DIERef(cu_offset, die.GetOffset()));
                     }
                 }
             }
@@ -846,7 +992,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
             if (has_address)
             {
                 if (name)
-                    func_basenames.Insert (ConstString(name), die.GetOffset());
+                    func_basenames.Insert (ConstString(name), DIERef(cu_offset, die.GetOffset()));
                 if (mangled_cstr)
                 {
                     // Make sure our mangled name isn't the same string table entry
@@ -856,14 +1002,14 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                     if (name != mangled_cstr && ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0)))
                     {
                         Mangled mangled (ConstString(mangled_cstr), true);
-                        func_fullnames.Insert (mangled.GetMangledName(), die.GetOffset());
+                        func_fullnames.Insert (mangled.GetMangledName(), DIERef(cu_offset, die.GetOffset()));
                         ConstString demangled = mangled.GetDemangledName(cu_language);
                         if (demangled)
-                            func_fullnames.Insert (demangled, die.GetOffset());
+                            func_fullnames.Insert (demangled, DIERef(cu_offset, die.GetOffset()));
                     }
                 }
                 else
-                    func_fullnames.Insert (ConstString(name), die.GetOffset());
+                    func_fullnames.Insert (ConstString(name), DIERef(cu_offset, die.GetOffset()));
             }
             break;
         
@@ -879,19 +1025,19 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
         case DW_TAG_unspecified_type:
             if (name && is_declaration == false)
             {
-                types.Insert (ConstString(name), die.GetOffset());
+                types.Insert (ConstString(name), DIERef(cu_offset, die.GetOffset()));
             }
             break;
 
         case DW_TAG_namespace:
             if (name)
-                namespaces.Insert (ConstString(name), die.GetOffset());
+                namespaces.Insert (ConstString(name), DIERef(cu_offset, die.GetOffset()));
             break;
 
         case DW_TAG_variable:
             if (name && has_location && is_global_or_static_variable)
             {
-                globals.Insert (ConstString(name), die.GetOffset());
+                globals.Insert (ConstString(name), DIERef(cu_offset, die.GetOffset()));
                 // Be sure to include variables by their mangled and demangled
                 // names if they have any since a variable can have a basename
                 // "i", a mangled named "_ZN12_GLOBAL__N_11iE" and a demangled 
@@ -904,10 +1050,10 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                 if (mangled_cstr && name != mangled_cstr && ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0)))
                 {
                     Mangled mangled (ConstString(mangled_cstr), true);
-                    globals.Insert (mangled.GetMangledName(), die.GetOffset());
+                    globals.Insert (mangled.GetMangledName(), DIERef(cu_offset, die.GetOffset()));
                     ConstString demangled = mangled.GetDemangledName(cu_language);
                     if (demangled)
-                        globals.Insert (demangled, die.GetOffset());
+                        globals.Insert (demangled, DIERef(cu_offset, die.GetOffset()));
                 }
             }
             break;
@@ -1096,4 +1242,19 @@ DWARFCompileUnit::GetTypeSystem ()
         return m_dwarf2Data->GetTypeSystemForLanguage(GetLanguageType());
     else
         return nullptr;
+}
+
+void
+DWARFCompileUnit::SetUserData(void *d)
+{
+    m_user_data = d;
+    if (m_dwo_symbol_file)
+        m_dwo_symbol_file->GetCompileUnit()->SetUserData(d);
+}
+
+void
+DWARFCompileUnit::SetAddrBase(dw_addr_t addr_base, dw_offset_t base_obj_offset)
+{
+    m_addr_base = addr_base;
+    m_base_obj_offset = base_obj_offset;
 }

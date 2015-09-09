@@ -10,56 +10,50 @@
 #ifndef SymbolFileDWARF_NameToDIE_h_
 #define SymbolFileDWARF_NameToDIE_h_
 
-#include "lldb/Core/UniqueCStringMap.h"
-
 #include <functional>
 
+#include "lldb/Core/dwarf.h"
+#include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/lldb-defines.h"
+#include "DIERef.h"
 
 class SymbolFileDWARF;
-
-typedef std::vector<uint32_t> DIEArray;
 
 class NameToDIE
 {
 public:
-    NameToDIE () :   
+    NameToDIE () :
         m_map()
     {
     }
-    
+
     ~NameToDIE ()
     {
     }
-    
+
     void
     Dump (lldb_private::Stream *s);
 
     void
-    Insert (const lldb_private::ConstString& name, uint32_t die_offset);
+    Insert (const lldb_private::ConstString& name, const DIERef& die_ref);
 
     void
     Finalize();
 
     size_t
-    Find (const lldb_private::ConstString &name, 
-          DIEArray &info_array) const;
+    Find (const lldb_private::ConstString &name, DIEArray &info_array) const;
     
     size_t
-    Find (const lldb_private::RegularExpression& regex, 
-          DIEArray &info_array) const;
+    Find (const lldb_private::RegularExpression& regex, DIEArray &info_array) const;
 
     size_t
-    FindAllEntriesForCompileUnit (uint32_t cu_offset, 
-                                  uint32_t cu_end_offset, 
-                                  DIEArray &info_array) const;
+    FindAllEntriesForCompileUnit (dw_offset_t cu_offset, DIEArray &info_array) const;
 
     void
-    ForEach (std::function <bool(const char *name, uint32_t die_offset)> const &callback) const;
+    ForEach (std::function <bool(const char *name, const DIERef& die_ref)> const &callback) const;
 
 protected:
-    lldb_private::UniqueCStringMap<uint32_t> m_map;
-
+    lldb_private::UniqueCStringMap<DIERef> m_map;
 };
 
 #endif  // SymbolFileDWARF_NameToDIE_h_

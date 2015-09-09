@@ -65,6 +65,7 @@ class SymbolFileDWARF : public lldb_private::SymbolFile, public lldb_private::Us
 {
 public:
     friend class SymbolFileDWARFDebugMap;
+    friend class SymbolFileDWARFDwo;
     friend class DebugMapModule;
     friend class DWARFCompileUnit;
     friend class DWARFASTParserClang;
@@ -265,7 +266,7 @@ public:
     const DWARFDebugRanges*
     DebugRanges() const;
 
-    const lldb_private::DWARFDataExtractor&
+    virtual const lldb_private::DWARFDataExtractor&
     GetCachedSectionData (uint32_t got_flag, 
                           lldb::SectionType sect_type, 
                           lldb_private::DWARFDataExtractor &data);
@@ -311,7 +312,14 @@ public:
     static DWARFDIE
     GetParentSymbolContextDIE(const DWARFDIE &die);
 
+    virtual lldb::CompUnitSP
+    ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx);
+
 protected:
+    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb_private::Type *> DIEToTypePtr;
+    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::VariableSP> DIEToVariableSP;
+    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::clang_type_t> DIEToClangType;
+    typedef llvm::DenseMap<lldb::clang_type_t, DIERef> ClangTypeToDIE;
 
     enum
     {
@@ -343,11 +351,7 @@ protected:
 
     DISALLOW_COPY_AND_ASSIGN (SymbolFileDWARF);
 
-    lldb::CompUnitSP
-    ParseCompileUnit (DWARFCompileUnit* dwarf_cu,
-                      uint32_t cu_idx);
-
-    DWARFCompileUnit*
+    virtual DWARFCompileUnit*
     GetDWARFCompileUnit (lldb_private::CompileUnit *comp_unit);
 
     DWARFCompileUnit*
@@ -401,7 +405,7 @@ protected:
 
     // Given a die_offset, figure out the symbol context representing that die.
     bool
-    ResolveFunction (dw_offset_t offset,
+    ResolveFunction (const DIERef& die_ref,
                      bool include_inlines,
                      lldb_private::SymbolContextList& sc_list);
 
@@ -451,11 +455,6 @@ protected:
     lldb::TypeSP
     GetTypeForDIE (const DWARFDIE &die);
 
-    uint32_t
-    FindTypes (std::vector<dw_offset_t> die_offsets,
-               uint32_t max_matches,
-               lldb_private::TypeList& types);
-
     void
     Index();
     
@@ -472,12 +471,10 @@ protected:
     GetDebugMapSymfile ();
 
     DWARFDIE
-    FindBlockContainingSpecification (dw_offset_t func_die_offset,
-                                      dw_offset_t spec_block_die_offset);
+    FindBlockContainingSpecification (const DIERef& func_die_ref, dw_offset_t spec_block_die_offset);
 
     DWARFDIE
-    FindBlockContainingSpecification (const DWARFDIE &die,
-                                      dw_offset_t spec_block_die_offset);
+    FindBlockContainingSpecification (const DWARFDIE &die, dw_offset_t spec_block_die_offset);
     
     UniqueDWARFASTTypeMap &
     GetUniqueDWARFASTTypeMap ();
@@ -486,7 +483,7 @@ protected:
     UserIDMatches (lldb::user_id_t uid) const
     {
         const lldb::user_id_t high_uid = uid & 0xffffffff00000000ull;
-        if (high_uid)
+        if (high_uid != 0 && GetID() != 0)
             return high_uid == GetID();
         return true;
     }
@@ -525,6 +522,18 @@ protected:
     
     void
     UpdateExternalModuleListIfNeeded();
+
+    virtual DIEToTypePtr&
+    GetDIEToType() { return m_die_to_type; }
+
+    virtual DIEToVariableSP&
+    GetDIEToVariable() { return m_die_to_variable_sp; }
+    
+    virtual DIEToClangType&
+    GetForwardDeclDieToClangType() { return m_forward_decl_die_to_clang_type; }
+
+    virtual ClangTypeToDIE&
+    GetForwardDeclClangTypeToDie() { return m_forward_decl_clang_type_to_die; }
 
     lldb::ModuleWP                        m_debug_map_module_wp;
     SymbolFileDWARFDebugMap *             m_debug_map_symfile;
@@ -571,10 +580,6 @@ protected:
 
     std::unique_ptr<DWARFDebugRanges>     m_ranges;
     UniqueDWARFASTTypeMap m_unique_ast_type_map;
-    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb_private::Type *> DIEToTypePtr;
-    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::VariableSP> DIEToVariableSP;
-    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::clang_type_t> DIEToClangType;
-    typedef llvm::DenseMap<lldb::clang_type_t, const DWARFDebugInfoEntry *> ClangTypeToDIE;
     DIEToTypePtr m_die_to_type;
     DIEToVariableSP m_die_to_variable_sp;
     DIEToClangType m_forward_decl_die_to_clang_type;

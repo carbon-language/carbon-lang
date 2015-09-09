@@ -708,6 +708,9 @@
 		6D55BAEE1A8CD0B200A70529 /* PlatformAndroidRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D55BAEB1A8CD08C00A70529 /* PlatformAndroidRemoteGDBServer.cpp */; };
 		6D762BEE1B1605D2006C929D /* LLDBServerUtilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D762BEC1B1605CD006C929D /* LLDBServerUtilities.cpp */; };
 		6D86CEA01B440F8500A7FBFA /* CommandObjectBugreport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D86CE9E1B440F6B00A7FBFA /* CommandObjectBugreport.cpp */; };
+		6D95DC001B9DC057000E318A /* DIERef.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D95DBFD1B9DC057000E318A /* DIERef.cpp */; };
+		6D95DC011B9DC057000E318A /* HashedNameToDIE.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D95DBFE1B9DC057000E318A /* HashedNameToDIE.cpp */; };
+		6D95DC021B9DC057000E318A /* SymbolFileDWARFDwo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D95DBFF1B9DC057000E318A /* SymbolFileDWARFDwo.cpp */; };
 		8C2D6A53197A1EAF006989C9 /* MemoryHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */; };
 		8C2D6A5E197A250F006989C9 /* MemoryHistoryASan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */; };
 		8CCB017E19BA28A80009FD44 /* ThreadCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CCB017A19BA283D0009FD44 /* ThreadCollection.cpp */; };
@@ -2385,6 +2388,11 @@
 		6D762BED1B1605CD006C929D /* LLDBServerUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LLDBServerUtilities.h; path = "tools/lldb-server/LLDBServerUtilities.h"; sourceTree = "<group>"; };
 		6D86CE9E1B440F6B00A7FBFA /* CommandObjectBugreport.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectBugreport.cpp; path = source/Commands/CommandObjectBugreport.cpp; sourceTree = "<group>"; };
 		6D86CE9F1B440F6B00A7FBFA /* CommandObjectBugreport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CommandObjectBugreport.h; path = source/Commands/CommandObjectBugreport.h; sourceTree = "<group>"; };
+		6D95DBFD1B9DC057000E318A /* DIERef.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DIERef.cpp; sourceTree = "<group>"; };
+		6D95DBFE1B9DC057000E318A /* HashedNameToDIE.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HashedNameToDIE.cpp; sourceTree = "<group>"; };
+		6D95DBFF1B9DC057000E318A /* SymbolFileDWARFDwo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SymbolFileDWARFDwo.cpp; sourceTree = "<group>"; };
+		6D95DC031B9DC06F000E318A /* DIERef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DIERef.h; sourceTree = "<group>"; };
+		6D95DC041B9DC06F000E318A /* SymbolFileDWARFDwo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SymbolFileDWARFDwo.h; sourceTree = "<group>"; };
 		8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MemoryHistory.cpp; path = source/Target/MemoryHistory.cpp; sourceTree = "<group>"; };
 		8C2D6A54197A1EBE006989C9 /* MemoryHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MemoryHistory.h; path = include/lldb/Target/MemoryHistory.h; sourceTree = "<group>"; };
 		8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MemoryHistoryASan.cpp; sourceTree = "<group>"; };
@@ -3115,6 +3123,11 @@
 		260C89B210F57C5600BB2B04 /* DWARF */ = {
 			isa = PBXGroup;
 			children = (
+				6D95DC031B9DC06F000E318A /* DIERef.h */,
+				6D95DC041B9DC06F000E318A /* SymbolFileDWARFDwo.h */,
+				6D95DBFD1B9DC057000E318A /* DIERef.cpp */,
+				6D95DBFE1B9DC057000E318A /* HashedNameToDIE.cpp */,
+				6D95DBFF1B9DC057000E318A /* SymbolFileDWARFDwo.cpp */,
 				260C89B310F57C5600BB2B04 /* DWARFAbbreviationDeclaration.cpp */,
 				260C89B410F57C5600BB2B04 /* DWARFAbbreviationDeclaration.h */,
 				269DDD451B8FD01A00D0DBD8 /* DWARFASTParser.h */,
@@ -6258,6 +6271,7 @@
 				2689005C13353E0400698AC0 /* ValueObjectVariable.cpp in Sources */,
 				264A58EE1A7DBCAD00A6B1B0 /* OptionValueFormatEntity.cpp in Sources */,
 				8C2D6A53197A1EAF006989C9 /* MemoryHistory.cpp in Sources */,
+				6D95DC021B9DC057000E318A /* SymbolFileDWARFDwo.cpp in Sources */,
 				942612F71B95000000EF842E /* LanguageCategory.cpp in Sources */,
 				2689005D13353E0400698AC0 /* VMRange.cpp in Sources */,
 				2689005E13353E0E00698AC0 /* ClangASTSource.cpp in Sources */,
@@ -6319,6 +6333,7 @@
 				2689008313353E2200698AC0 /* CommandObjectMultiword.cpp in Sources */,
 				2689008413353E2200698AC0 /* CommandObjectRegexCommand.cpp in Sources */,
 				2689008513353E2200698AC0 /* CommandReturnObject.cpp in Sources */,
+				6D95DC001B9DC057000E318A /* DIERef.cpp in Sources */,
 				3FDFE53519A29327009756A7 /* HostInfoBase.cpp in Sources */,
 				26474CBE18D0CB2D0073DEBA /* RegisterContextMach_i386.cpp in Sources */,
 				2689008613353E2200698AC0 /* Options.cpp in Sources */,
@@ -6487,6 +6502,7 @@
 				26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */,
 				264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */,
 				EB8375E71B553DE800BA907D /* ThreadPlanCallFunctionUsingABI.cpp in Sources */,
+				6D95DC011B9DC057000E318A /* HashedNameToDIE.cpp in Sources */,
 				2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */,
 				26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */,
 				3FDFED0B19B7C8DE009756A7 /* HostThreadMacOSX.mm in Sources */,

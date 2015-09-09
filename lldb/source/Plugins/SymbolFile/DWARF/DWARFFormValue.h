@@ -93,6 +93,7 @@ public:
     void                SetSigned(int64_t sval) { m_value.value.sval = sval; }
     const char*         AsCString() const;
     dw_addr_t           Address() const;
+    bool                IsValid() const { return m_form != 0; }
     bool                SkipValue(const lldb_private::DWARFDataExtractor& debug_info_data, lldb::offset_t *offset_ptr) const;
     static bool         SkipValue(const dw_form_t form, const lldb_private::DWARFDataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu);
     static bool         IsBlockForm(const dw_form_t form);

@@ -72,6 +72,7 @@
 #include "DWARFFormValue.h"
 #include "DWARFLocationList.h"
 #include "LogChannelDWARF.h"
+#include "SymbolFileDWARFDwo.h"
 #include "SymbolFileDWARFDebugMap.h"
 
 #include <map>
@@ -917,7 +918,11 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx)
         }
         else
         {
-            if (GetDebugMapSymfile ())
+            if (dwarf_cu->GetSymbolFileDWARF() != this)
+            {
+                return dwarf_cu->GetSymbolFileDWARF()->ParseCompileUnit(dwarf_cu, cu_idx);
+            }
+            else if (GetDebugMapSymfile ())
             {
                 // Let the debug map create the compile unit
                 cu_sp = m_debug_map_symfile->GetCompileUnit(this);
@@ -1386,7 +1391,7 @@ SymbolFileDWARF::GetDeclContextForUID (lldb::user_id_t type_uid)
         DWARFDebugInfo* debug_info = DebugInfo();
         if (debug_info)
         {
-            DWARFDIE die = debug_info->GetDIE(type_uid);
+            DWARFDIE die = debug_info->GetDIE(DIERef(type_uid));
             if (die)
             {
                 DWARFASTParser *dwarf_ast = die.GetDWARFParser();
@@ -1406,7 +1411,7 @@ SymbolFileDWARF::GetDeclContextContainingUID (lldb::user_id_t type_uid)
         DWARFDebugInfo* debug_info = DebugInfo();
         if (debug_info)
         {
-            DWARFDIE die = debug_info->GetDIE(type_uid);
+            DWARFDIE die = debug_info->GetDIE(DIERef(type_uid));
             if (die)
             {
                 DWARFASTParser *dwarf_ast = die.GetDWARFParser();
@@ -1427,7 +1432,7 @@ SymbolFileDWARF::ResolveTypeUID (lldb::user_id_t type_uid)
         DWARFDebugInfo* debug_info = DebugInfo();
         if (debug_info)
         {
-            DWARFDIE type_die = debug_info->GetDIE (type_uid);
+            DWARFDIE type_die = debug_info->GetDIE (DIERef(type_uid));
             if (type_die)
             {
                 const bool assert_not_being_parsed = true;
@@ -1493,7 +1498,7 @@ bool
 SymbolFileDWARF::HasForwardDeclForClangType (const CompilerType &clang_type)
 {
     CompilerType clang_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(clang_type);
-    return m_forward_decl_clang_type_to_die.lookup (clang_type_no_qualifiers.GetOpaqueQualType()) != nullptr;
+    return GetForwardDeclClangTypeToDie().count (clang_type_no_qualifiers.GetOpaqueQualType());
 }
 
 
@@ -1502,8 +1507,8 @@ SymbolFileDWARF::CompleteType (CompilerType &clang_type)
 {
     // We have a struct/union/class/enum that needs to be fully resolved.
     CompilerType clang_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(clang_type);
-    const DWARFDebugInfoEntry* die = m_forward_decl_clang_type_to_die.lookup (clang_type_no_qualifiers.GetOpaqueQualType());
-    if (die == NULL)
+    auto die_it = GetForwardDeclClangTypeToDie().find (clang_type_no_qualifiers.GetOpaqueQualType());
+    if (die_it == GetForwardDeclClangTypeToDie().end())
     {
         // We have already resolved this type...
         return true;
@@ -1512,11 +1517,12 @@ SymbolFileDWARF::CompleteType (CompilerType &clang_type)
     // map in case anyone child members or other types require this type to get resolved.
     // The type will get resolved when all of the calls to SymbolFileDWARF::ResolveClangOpaqueTypeDefinition
     // are done.
-    m_forward_decl_clang_type_to_die.erase (clang_type_no_qualifiers.GetOpaqueQualType());
+    GetForwardDeclClangTypeToDie().erase (clang_type_no_qualifiers.GetOpaqueQualType());
 
     DWARFDebugInfo* debug_info = DebugInfo();
-    DWARFDIE dwarf_die (debug_info->GetCompileUnitContainingDIE (die->GetOffset()), die);
-    Type *type = m_die_to_type.lookup (die);
+    
+    DWARFDIE dwarf_die = debug_info->GetDIE(die_it->getSecond());
+    Type *type = GetDIEToType().lookup (dwarf_die.GetDIE());
 
     Log *log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_DEBUG_INFO|DWARF_LOG_TYPE_COMPLETION));
     if (log)
@@ -1537,7 +1543,7 @@ SymbolFileDWARF::ResolveType (const DWARFDIE &die, bool assert_not_being_parsed)
 {
     if (die)
     {
-        Type *type = m_die_to_type.lookup (die.GetDIE());
+        Type *type = GetDIEToType().lookup (die.GetDIE());
 
         if (type == NULL)
             type = GetTypeForDIE (die).get();
@@ -1623,8 +1629,7 @@ SymbolFileDWARF::UpdateExternalModuleListIfNeeded()
     m_fetched_external_modules = true;
     
     DWARFDebugInfo * debug_info = DebugInfo();
-    debug_info->GetNumCompileUnits();
-    
+
     const uint32_t num_compile_units = GetNumCompileUnits();
     for (uint32_t cu_idx = 0; cu_idx < num_compile_units; ++cu_idx)
     {
@@ -2000,8 +2005,7 @@ SymbolFileDWARF::Index ()
 
             bool clear_dies = dwarf_cu->ExtractDIEsIfNeeded (false) > 1;
 
-            dwarf_cu->Index (cu_idx,
-                             m_function_basename_index,
+            dwarf_cu->Index (m_function_basename_index,
                              m_function_fullname_index,
                              m_function_method_index,
                              m_function_selector_index,
@@ -2127,8 +2131,8 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const CompilerDec
         bool done = false;
         for (size_t i=0; i<num_die_matches && !done; ++i)
         {
-            const dw_offset_t die_offset = die_offsets[i];
-            DWARFDIE die = debug_info->GetDIE (die_offset);
+            const DIERef& die_ref = die_offsets[i];
+            DWARFDIE die = debug_info->GetDIE (die_ref);
 
             if (die)
             {
@@ -2169,7 +2173,7 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const CompilerDec
                 if (m_using_apple_tables)
                 {
                     GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_names accelerator table had bad die 0x%8.8x for '%s')\n",
-                                                                               die_offset, name.GetCString());
+                                                                               die_ref.die_offset, name.GetCString());
                 }
             }
         }
@@ -2215,7 +2219,7 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
     const uint32_t original_size = variables.GetSize();
 
     DIEArray die_offsets;
-    
+
     if (m_using_apple_tables)
     {
         if (m_apple_names_ap.get())
@@ -2244,8 +2248,8 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
         DWARFDebugInfo* debug_info = DebugInfo();
         for (size_t i=0; i<num_matches; ++i)
         {
-            const dw_offset_t die_offset = die_offsets[i];
-            DWARFDIE die = debug_info->GetDIE (die_offset);
+            const DIERef& die_ref = die_offsets[i];
+            DWARFDIE die = debug_info->GetDIE (die_ref);
             
             if (die)
             {
@@ -2261,7 +2265,7 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
                 if (m_using_apple_tables)
                 {
                     GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_names accelerator table had bad die 0x%8.8x for regex '%s')\n",
-                                                                               die_offset, regex.GetText());
+                                                                               die_ref.die_offset, regex.GetText());
                 }
             }            
         }
@@ -2273,11 +2277,11 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
 
 
 bool
-SymbolFileDWARF::ResolveFunction (dw_offset_t die_offset,
+SymbolFileDWARF::ResolveFunction (const DIERef& die_ref,
                                   bool include_inlines,
                                   SymbolContextList& sc_list)
 {
-    DWARFDIE die = DebugInfo()->GetDIE (die_offset);
+    DWARFDIE die = DebugInfo()->GetDIE (die_ref);
     return ResolveFunction (die, include_inlines, sc_list);
 }
     
@@ -2397,10 +2401,7 @@ SymbolFileDWARF::ParseFunctions (const DIEArray &die_offsets,
     if (num_matches)
     {
         for (size_t i=0; i<num_matches; ++i)
-        {
-            const dw_offset_t die_offset = die_offsets[i];
-            ResolveFunction (die_offset, include_inlines, sc_list);
-        }
+            ResolveFunction (die_offsets[i], include_inlines, sc_list);
     }
 }
 
@@ -2493,8 +2494,8 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                 num_matches = m_apple_names_ap->FindByName (name_cstr, die_offsets);
                 for (uint32_t i = 0; i < num_matches; i++)
                 {
-                    const dw_offset_t die_offset = die_offsets[i];
-                    DWARFDIE die = info->GetDIE (die_offset);
+                    const DIERef& die_ref = die_offsets[i];
+                    DWARFDIE die = info->GetDIE (die_ref);
                     if (die)
                     {
                         if (!DIEInDeclContext(parent_decl_ctx, die))
@@ -2509,7 +2510,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     else
                     {
                         GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_names accelerator table had bad die 0x%8.8x for '%s')", 
-                                                                                   die_offset, name_cstr);
+                                                                                   die_ref.die_offset, name_cstr);
                     }                                    
                 }
             }
@@ -2525,8 +2526,8 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                 
                 for (uint32_t i = 0; i < num_matches; i++)
                 {
-                    const dw_offset_t die_offset = die_offsets[i];
-                    DWARFDIE die = info->GetDIE (die_offset);
+                    const DIERef& die_ref = die_offsets[i];
+                    DWARFDIE die = info->GetDIE (die_ref);
                     if (die)
                     {
                         const char *die_name = die.GetName();
@@ -2542,7 +2543,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     else
                     {
                         GetObjectFile()->GetModule()->ReportError ("the DWARF debug information has been modified (.apple_names accelerator table had bad die 0x%8.8x for '%s')",
-                                                                   die_offset, name_cstr);
+                                                                   die_ref.die_offset, name_cstr);
                     }                                    
                 }
                 die_offsets.clear();
@@ -2559,8 +2560,8 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                 
                 for (uint32_t i = 0; i < num_matches; i++)
                 {
-                    const dw_offset_t die_offset = die_offsets[i];
-                    DWARFDIE die = info->GetDIE (die_offset);
+                    const DIERef& die_ref = die_offsets[i];
+                    DWARFDIE die = info->GetDIE (die_ref);
                     if (die)
                     {
                         if (!DIEInDeclContext(parent_decl_ctx, die))
@@ -2609,7 +2610,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                                         else
                                         {
                                             GetObjectFile()->GetModule()->ReportWarning ("function at die offset 0x%8.8x had no function type",
-                                                                                         die_offset);
+                                                                                         die_ref.die_offset);
                                         }
                                     }
                                 }
@@ -2621,7 +2622,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     else
                     {
                         GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_names accelerator table had bad die 0x%8.8x for '%s')",
-                                                                                   die_offset, name_cstr);
+                                                                                   die_ref.die_offset, name_cstr);
                     }                                    
                 }
                 die_offsets.clear();
@@ -2856,8 +2857,8 @@ SymbolFileDWARF::FindTypes (const SymbolContext& sc,
         DWARFDebugInfo* debug_info = DebugInfo();
         for (size_t i=0; i<num_die_matches; ++i)
         {
-            const dw_offset_t die_offset = die_offsets[i];
-            DWARFDIE die = debug_info->GetDIE (die_offset);
+            const DIERef& die_ref = die_offsets[i];
+            DWARFDIE die = debug_info->GetDIE (die_ref);
 
             if (die)
             {
@@ -2878,7 +2879,7 @@ SymbolFileDWARF::FindTypes (const SymbolContext& sc,
                 if (m_using_apple_tables)
                 {
                     GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_types accelerator table had bad die 0x%8.8x for '%s')\n",
-                                                                               die_offset, name.GetCString());
+                                                                               die_ref.die_offset, name.GetCString());
                 }
             }            
 
@@ -2960,8 +2961,8 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
             DWARFDebugInfo* debug_info = DebugInfo();
             for (size_t i=0; i<num_matches; ++i)
             {
-                const dw_offset_t die_offset = die_offsets[i];
-                DWARFDIE die = debug_info->GetDIE (die_offset);
+                const DIERef& die_ref = die_offsets[i];
+                DWARFDIE die = debug_info->GetDIE (die_ref);
 
                 if (die)
                 {
@@ -2981,7 +2982,7 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
                     if (m_using_apple_tables)
                     {
                         GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_namespaces accelerator table had bad die 0x%8.8x for '%s')\n",
-                                                                   die_offset, name.GetCString());
+                                                                   die_ref.die_offset, name.GetCString());
                     }
                 }            
 
@@ -3001,42 +3002,13 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
     return namespace_decl_ctx;
 }
 
-uint32_t
-SymbolFileDWARF::FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_matches, TypeList& types)
-{
-    // Remember how many sc_list are in the list before we search in case
-    // we are appending the results to a variable list.
-    uint32_t original_size = types.GetSize();
-
-    const uint32_t num_die_offsets = die_offsets.size();
-    // Parse all of the types we found from the pubtypes matches
-    uint32_t i;
-    uint32_t num_matches = 0;
-    for (i = 0; i < num_die_offsets; ++i)
-    {
-        Type *matching_type = ResolveTypeUID (die_offsets[i]);
-        if (matching_type)
-        {
-            // We found a type pointer, now find the shared pointer form our type list
-            types.InsertUnique (matching_type->shared_from_this());
-            ++num_matches;
-            if (num_matches >= max_matches)
-                break;
-        }
-    }
-
-    // Return the number of variable that were appended to the list
-    return types.GetSize() - original_size;
-}
-
-
 TypeSP
 SymbolFileDWARF::GetTypeForDIE (const DWARFDIE &die)
 {
     TypeSP type_sp;
     if (die)
     {
-        Type *type_ptr = m_die_to_type.lookup (die.GetDIE());
+        Type *type_ptr = GetDIEToType().lookup (die.GetDIE());
         if (type_ptr == NULL)
         {
             CompileUnit* lldb_cu = GetCompUnitForDWARFCompUnit(die.GetCU());
@@ -3195,8 +3167,8 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDIE &die,
         DWARFDebugInfo* debug_info = DebugInfo();
         for (size_t i=0; i<num_matches; ++i)
         {
-            const dw_offset_t die_offset = die_offsets[i];
-            DWARFDIE type_die = debug_info->GetDIE (die_offset);
+            const DIERef& die_ref = die_offsets[i];
+            DWARFDIE type_die = debug_info->GetDIE (die_ref);
             
             if (type_die)
             {
@@ -3233,7 +3205,7 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDIE &die,
                                           type_cu->GetID());
                             
                             if (die)
-                                m_die_to_type[die.GetDIE()] = resolved_type;
+                                GetDIEToType()[die.GetDIE()] = resolved_type;
                             type_sp = resolved_type->shared_from_this();
                             break;
                         }
@@ -3245,7 +3217,7 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDIE &die,
                 if (m_using_apple_tables)
                 {
                     GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_types accelerator table had bad die 0x%8.8x for '%s')\n",
-                                                               die_offset, type_name.GetCString());
+                                                               die_ref.die_offset, type_name.GetCString());
                 }
             }            
             
@@ -3419,8 +3391,8 @@ SymbolFileDWARF::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &
                 DWARFDebugInfo* debug_info = DebugInfo();
                 for (size_t i=0; i<num_matches; ++i)
                 {
-                    const dw_offset_t die_offset = die_offsets[i];
-                    DWARFDIE type_die = debug_info->GetDIE (die_offset);
+                    const DIERef& die_ref = die_offsets[i];
+                    DWARFDIE type_die = debug_info->GetDIE (die_ref);
                     
                     if (type_die)
                     {
@@ -3503,7 +3475,7 @@ SymbolFileDWARF::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &
                         if (m_using_apple_tables)
                         {
                             GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_types accelerator table had bad die 0x%8.8x for '%s')\n",
-                                                                                       die_offset, type_name.GetCString());
+                                                                                       die_ref.die_offset, type_name.GetCString());
                         }
                     }            
                     
@@ -3646,9 +3618,9 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
         
         if (sc.function)
         {
-            DWARFDIE function_die = info->GetDIE(sc.function->GetID());
+            DWARFDIE function_die = info->GetDIE(DIERef(sc.function->GetID()));
             
-            const dw_addr_t func_lo_pc = function_die.GetAttributeValueAsUnsigned (DW_AT_low_pc, LLDB_INVALID_ADDRESS);
+            const dw_addr_t func_lo_pc = function_die.GetAttributeValueAsAddress (DW_AT_low_pc, LLDB_INVALID_ADDRESS);
             if (func_lo_pc != LLDB_INVALID_ADDRESS)
             {
                 const size_t num_variables = ParseVariables(sc, function_die.GetFirstChild(), func_lo_pc, true, true);
@@ -3695,7 +3667,6 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
                         Index ();
 
                     m_global_index.FindAllEntriesForCompileUnit (dwarf_cu->GetOffset(), 
-                                                                 dwarf_cu->GetNextCompileUnitOffset(), 
                                                                  die_offsets);
                 }
 
@@ -3705,8 +3676,8 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
                     DWARFDebugInfo* debug_info = DebugInfo();
                     for (size_t i=0; i<num_matches; ++i)
                     {
-                        const dw_offset_t die_offset = die_offsets[i];
-                        DWARFDIE die = debug_info->GetDIE (die_offset);
+                        const DIERef& die_ref = die_offsets[i];
+                        DWARFDIE die = debug_info->GetDIE (die_ref);
                         if (die)
                         {
                             VariableSP var_sp (ParseVariableDIE(sc, die, LLDB_INVALID_ADDRESS));
@@ -3720,7 +3691,7 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
                         {
                             if (m_using_apple_tables)
                             {
-                                GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_names accelerator table had bad die 0x%8.8x)\n", die_offset);
+                                GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_names accelerator table had bad die 0x%8.8x)\n", die_ref.die_offset);
                             }
                         }            
 
@@ -3741,11 +3712,14 @@ SymbolFileDWARF::ParseVariableDIE
     const lldb::addr_t func_low_pc
 )
 {
+    if (die.GetDWARF() != this)
+        return die.GetDWARF()->ParseVariableDIE(sc, die, func_low_pc);
+
     VariableSP var_sp;
     if (!die)
         return var_sp;
 
-    var_sp = m_die_to_variable_sp[die.GetDIE()];
+    var_sp = GetDIEToVariable()[die.GetDIE()];
     if (var_sp)
         return var_sp;  // Already been parsed!
     
@@ -3764,7 +3738,7 @@ SymbolFileDWARF::ParseVariableDIE
             const char *mangled = NULL;
             Declaration decl;
             uint32_t i;
-            lldb::user_id_t type_uid = LLDB_INVALID_UID;
+            DWARFFormValue type_die_form;
             DWARFExpression location(die.GetCU());
             bool is_external = false;
             bool is_artificial = false;
@@ -3788,7 +3762,7 @@ SymbolFileDWARF::ParseVariableDIE
                     case DW_AT_name:        name = form_value.AsCString(); break;
                     case DW_AT_linkage_name:
                     case DW_AT_MIPS_linkage_name: mangled = form_value.AsCString(); break;
-                    case DW_AT_type:        type_uid = form_value.Reference(); break;
+                    case DW_AT_type:        type_die_form = form_value; break;
                     case DW_AT_external:    is_external = form_value.Boolean(); break;
                     case DW_AT_const_value:
                         // If we have already found a DW_AT_location attribute, ignore this attribute.
@@ -4063,7 +4037,7 @@ SymbolFileDWARF::ParseVariableDIE
 
             if (symbol_context_scope)
             {
-                SymbolFileTypeSP type_sp(new SymbolFileType(*this, type_uid));
+                SymbolFileTypeSP type_sp(new SymbolFileType(*this, DIERef(type_die_form).GetUID()));
                 
                 if (const_value.Form() && type_sp && type_sp->GetType())
                     location.CopyOpcodeData(const_value.Unsigned(), type_sp->GetType()->GetByteSize(), die.GetCU()->GetAddressByteSize());
@@ -4094,20 +4068,20 @@ SymbolFileDWARF::ParseVariableDIE
         // was missing vital information to be able to be displayed in the debugger
         // (missing location due to optimization, etc)) so we don't re-parse
         // this DIE over and over later...
-        m_die_to_variable_sp[die.GetDIE()] = var_sp;
+        GetDIEToVariable()[die.GetDIE()] = var_sp;
     }
     return var_sp;
 }
 
 
 DWARFDIE
-SymbolFileDWARF::FindBlockContainingSpecification (dw_offset_t func_die_offset, 
+SymbolFileDWARF::FindBlockContainingSpecification (const DIERef& func_die_ref,
                                                    dw_offset_t spec_block_die_offset)
 {
     // Give the concrete function die specified by "func_die_offset", find the 
     // concrete block whose DW_AT_specification or DW_AT_abstract_origin points
     // to "spec_block_die_offset"
-    return FindBlockContainingSpecification (DebugInfo()->GetDIE (func_die_offset), spec_block_die_offset);
+    return FindBlockContainingSpecification (DebugInfo()->GetDIE (func_die_ref), spec_block_die_offset);
 }
 
 
@@ -4166,7 +4140,7 @@ SymbolFileDWARF::ParseVariables (const SymbolContext& sc,
         dw_tag_t tag = die.Tag();
 
         // Check to see if we have already parsed this variable or constant?
-        VariableSP var_sp = m_die_to_variable_sp[die.GetDIE()];
+        VariableSP var_sp = GetDIEToVariable()[die.GetDIE()];
         if (var_sp)
         {
             if (cc_variable_list)
@@ -4219,7 +4193,7 @@ SymbolFileDWARF::ParseVariables (const SymbolContext& sc,
                                     // a concrete block counterpart in the current function. We need
                                     // to find the concrete block so we can correctly add the 
                                     // variable to it
-                                    const DWARFDIE concrete_block_die = FindBlockContainingSpecification (sc.function->GetID(),
+                                    const DWARFDIE concrete_block_die = FindBlockContainingSpecification (DIERef(sc.function->GetID()),
                                                                                                           sc_parent_die.GetOffset());
                                     if (concrete_block_die)
                                         block = sc.function->GetBlock(true).FindBlockByID(concrete_block_die.GetID());
@@ -4324,5 +4298,3 @@ SymbolFileDWARF::GetDebugMapSymfile ()
     }
     return m_debug_map_symfile;
 }
-
-

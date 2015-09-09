@@ -52,13 +52,14 @@ public:
 
     struct DIEInfo
     {
+        dw_offset_t cu_offset;
         dw_offset_t offset;  // The DIE offset
         dw_tag_t tag;
         uint32_t type_flags; // Any flags for this DIEInfo
         uint32_t qualified_name_hash; // A 32 bit hash of the fully qualified name
 
         DIEInfo ();
-        DIEInfo (dw_offset_t o, dw_tag_t t, uint32_t f, uint32_t h);
+        DIEInfo (dw_offset_t c, dw_offset_t o, dw_tag_t t, uint32_t f, uint32_t h);
     };
 
     struct Atom
@@ -178,7 +179,7 @@ public:
         Result
         GetHashDataForName (const char *name,
                             lldb::offset_t* hash_data_offset_ptr,
-                            Pair &pair) const;
+                            Pair &pair) const override;
 
         const lldb_private::DWARFDataExtractor &m_data;
         const lldb_private::DWARFDataExtractor &m_string_table;
@@ -200,8 +201,6 @@ protected:
                      const uint32_t qualified_name_hash,
                      DIEArray &die_offsets);
 
-    
-
     static void
     ExtractClassOrStructDIEArray (const DIEInfoArray &die_info_array,
                                   bool return_implementation_only_if_available,
@@ -216,6 +215,5 @@ protected:
     static const char *
     GetAtomTypeName (uint16_t atom);
 };
-
 
 #endif  // SymbolFileDWARF_HashedNameToDIE_h_

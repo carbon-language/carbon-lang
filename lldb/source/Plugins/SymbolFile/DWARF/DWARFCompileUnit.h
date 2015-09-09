@@ -13,9 +13,10 @@
 #include "lldb/lldb-enumerations.h"
 #include "DWARFDebugInfoEntry.h"
 #include "DWARFDIE.h"
-#include "SymbolFileDWARF.h"
 
 class NameToDIE;
+class SymbolFileDWARF;
+class SymbolFileDWARFDwo;
 
 class DWARFCompileUnit
 {
@@ -30,6 +31,7 @@ public:
     };
 
     DWARFCompileUnit(SymbolFileDWARF* dwarf2Data);
+    ~DWARFCompileUnit();
 
     bool        Extract(const lldb_private::DWARFDataExtractor &debug_info, lldb::offset_t *offset_ptr);
     size_t      ExtractDIEsIfNeeded (bool cu_die_only);
@@ -51,10 +53,12 @@ public:
     dw_offset_t GetAbbrevOffset() const;
     uint8_t     GetAddressByteSize() const { return m_addr_size; }
     dw_addr_t   GetBaseAddress() const { return m_base_addr; }
-    dw_addr_t   GetAddrBase() const { return 0; } // TODO: Read out DW_AT_addr_base from the parent compile unit
+    dw_addr_t   GetAddrBase() const { return m_addr_base; }
+    void        SetAddrBase(dw_addr_t addr_base, dw_offset_t base_obj_offset);
     void        ClearDIEs(bool keep_compile_unit_die);
     void        BuildAddressRangeTable (SymbolFileDWARF* dwarf2Data,
                                         DWARFDebugAranges* debug_aranges);
+
 
     lldb_private::TypeSystem *
                 GetTypeSystem();
@@ -96,6 +100,9 @@ public:
             m_die_array.reserve(GetDebugInfoSize() / 24);
         m_die_array.push_back(die);
     }
+    
+    void
+    AddCompileUnitDIE (DWARFDebugInfoEntry& die);
 
     bool
     HasDIEsParsed () const
@@ -125,10 +132,7 @@ public:
     }
 
     void
-    SetUserData(void *d)
-    {
-        m_user_data = d;
-    }
+    SetUserData(void *d);
 
     bool
     Supports_DW_AT_APPLE_objc_complete_type ();
@@ -140,8 +144,7 @@ public:
     Supports_unnamed_objc_bitfields ();
 
     void
-    Index (const uint32_t cu_idx,
-           NameToDIE& func_basenames,
+    Index (NameToDIE& func_basenames,
            NameToDIE& func_fullnames,
            NameToDIE& func_methods,
            NameToDIE& func_selectors,
@@ -183,8 +186,21 @@ public:
     bool
     GetIsOptimized ();
 
+    SymbolFileDWARFDwo*
+    GetDwoSymbolFile() const
+    {
+        return m_dwo_symbol_file.get();
+    }
+
+    dw_offset_t
+    GetBaseObjOffset() const
+    {
+        return m_base_obj_offset;
+    }
+
 protected:
     SymbolFileDWARF*    m_dwarf2Data;
+    std::unique_ptr<SymbolFileDWARFDwo> m_dwo_symbol_file;
     const DWARFAbbreviationDeclarationSet *m_abbrevs;
     void *              m_user_data;
     DWARFDebugInfoEntry::collection m_die_array;    // The compile unit debug information entry item
@@ -201,9 +217,27 @@ protected:
     lldb::LanguageType  m_language_type;
     bool                m_is_dwarf64;
     lldb_private::LazyBool m_is_optimized;
-    
+    dw_addr_t           m_addr_base;       // Value of DW_AT_addr_base
+    dw_offset_t         m_base_obj_offset; // If this is a dwo compile unit this is the offset of
+                                           // the base compile unit in the main object file
+
     void
     ParseProducerInfo ();
+
+    static void
+    IndexPrivate (DWARFCompileUnit* dwarf_cu,
+                  const lldb::LanguageType cu_language,
+                  const DWARFFormValue::FixedFormSizes& fixed_form_sizes,
+                  const dw_offset_t cu_offset,
+                  NameToDIE& func_basenames,
+                  NameToDIE& func_fullnames,
+                  NameToDIE& func_methods,
+                  NameToDIE& func_selectors,
+                  NameToDIE& objc_class_selectors,
+                  NameToDIE& globals,
+                  NameToDIE& types,
+                  NameToDIE& namespaces);
+
 private:
 
     const DWARFDebugInfoEntry*
