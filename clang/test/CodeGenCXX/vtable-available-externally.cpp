@@ -184,10 +184,10 @@ void f() {
 }  // Test8
 
 namespace Test9 {
-// all virtual functions are outline, so we can assume that it will
-// be generated in translation unit where foo is defined
-// CHECK-TEST9: @_ZTVN5Test91AE = available_externally unnamed_addr constant
-// CHECK-TEST9: @_ZTVN5Test91BE = available_externally unnamed_addr constant
+// All virtual functions are outline, so we can assume that it will
+// be generated in translation unit where foo is defined.
+// CHECK-TEST9-DAG: @_ZTVN5Test91AE = available_externally unnamed_addr constant
+// CHECK-TEST9-DAG: @_ZTVN5Test91BE = available_externally unnamed_addr constant
 struct A {
   virtual void foo();
   virtual void bar();
@@ -210,22 +210,22 @@ void g() {
 namespace Test10 {
 
 // because A's key function is defined here, vtable is generated in this TU
-// CHECK-TEST10: @_ZTVN6Test101AE = unnamed_addr constant
+// CHECK-TEST10-DAG: @_ZTVN6Test101AE = unnamed_addr constant
 struct A {
   virtual void foo();
   virtual void bar();
 };
 void A::foo() {}
 
-// Because key function is inline we will generate vtable as linkonce_odr
-// CHECK-TEST10: @_ZTVN6Test101DE = linkonce_odr unnamed_addr constant
+// Because key function is inline we will generate vtable as linkonce_odr.
+// CHECK-TEST10-DAG: @_ZTVN6Test101DE = linkonce_odr unnamed_addr constant
 struct D : A {
   void bar();
 };
 inline void D::bar() {}
 
-// because B has outline key function then we can refer to
-// CHECK-TEST10: @_ZTVN6Test101BE = available_externally unnamed_addr constant
+// Because B has outline all virtual functions, we can refer to them.
+// CHECK-TEST10-DAG: @_ZTVN6Test101BE = available_externally unnamed_addr constant
 struct B : A {
   void foo();
   void bar();
@@ -233,8 +233,8 @@ struct B : A {
 
 // C's key function (car) is outline, but C has inline virtual function so we
 // can't guarantee that we will be able to refer to bar from name
-// so (at the moment) we can't emit vtable available_externally
-// CHECK-TEST10: @_ZTVN6Test101CE = external unnamed_addr constant
+// so (at the moment) we can't emit vtable available_externally.
+// CHECK-TEST10-DAG: @_ZTVN6Test101CE = external unnamed_addr constant
 struct C : A {
   void bar() {}               // defined in body - not key function
   virtual inline void gar();  // inline in body - not key function
@@ -242,7 +242,7 @@ struct C : A {
 };
 
 // no key function, vtable will be generated everywhere it will be used
-// CHECK-TEST10: @_ZTVN6Test101EE = linkonce_odr unnamed_addr constant
+// CHECK-TEST10-DAG: @_ZTVN6Test101EE = linkonce_odr unnamed_addr constant
 struct E : A {};
 
 void g(A& a) {
@@ -364,5 +364,4 @@ void test() {
   d->f();
 }
 }
-
 

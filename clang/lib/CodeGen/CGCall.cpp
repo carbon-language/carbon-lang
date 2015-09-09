@@ -1417,7 +1417,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     if (const FunctionDecl *Fn = dyn_cast<FunctionDecl>(TargetDecl)) {
       const FunctionProtoType *FPT = Fn->getType()->getAs<FunctionProtoType>();
-      if (FPT && FPT->isNothrow(getContext()))
+      if (FPT && !isUnresolvedExceptionSpec(FPT->getExceptionSpecType()) &&
+          FPT->isNothrow(getContext()))
         FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
       // Don't use [[noreturn]] or _Noreturn for a call to a virtual function.
       // These attributes are not inherited by overloads.

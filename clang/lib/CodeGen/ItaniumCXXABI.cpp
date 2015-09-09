@@ -243,10 +243,24 @@ public:
   void emitVTableDefinitions(CodeGenVTables &CGVT,
                              const CXXRecordDecl *RD) override;
 
+  bool isVirtualOffsetNeededForVTableField(CodeGenFunction &CGF,
+                                           CodeGenFunction::VPtr Vptr) override;
+
+  bool doStructorsInitializeVPtrs(const CXXRecordDecl *VTableClass) override {
+    return true;
+  }
+
+  llvm::Constant *
+  getVTableAddressPoint(BaseSubobject Base,
+                        const CXXRecordDecl *VTableClass) override;
+
   llvm::Value *getVTableAddressPointInStructor(
       CodeGenFunction &CGF, const CXXRecordDecl *VTableClass,
-      BaseSubobject Base, const CXXRecordDecl *NearestVBase,
-      bool &NeedsVirtualOffset) override;
+      BaseSubobject Base, const CXXRecordDecl *NearestVBase) override;
+
+  llvm::Value *getVTableAddressPointInStructorWithVTT(
+      CodeGenFunction &CGF, const CXXRecordDecl *VTableClass,
+      BaseSubobject Base, const CXXRecordDecl *NearestVBase);
 
   llvm::Constant *
   getVTableAddressPointForConstExpr(BaseSubobject Base,
@@ -267,7 +281,7 @@ public:
 
   void emitVirtualInheritanceTables(const CXXRecordDecl *RD) override;
 
-  bool canEmitAvailableExternallyVTable(const CXXRecordDecl *RD) const override;
+  bool canSpeculativelyEmitVTable(const CXXRecordDecl *RD) const override;
 
   void setThunkLinkage(llvm::Function *Thunk, bool ForVTable, GlobalDecl GD,
                        bool ReturnAdjustment) override {
@@ -1459,41 +1473,29 @@ void ItaniumCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
   CGM.EmitVTableBitSetEntries(VTable, VTLayout);
 }
 
-llvm::Value *ItaniumCXXABI::getVTableAddressPointInStructor(
-    CodeGenFunction &CGF, const CXXRecordDecl *VTableClass, BaseSubobject Base,
-    const CXXRecordDecl *NearestVBase, bool &NeedsVirtualOffset) {
-  bool NeedsVTTParam = CGM.getCXXABI().NeedsVTTParameter(CGF.CurGD);
-  NeedsVirtualOffset = (NeedsVTTParam && NearestVBase);
-
-  llvm::Value *VTableAddressPoint;
-  if (NeedsVTTParam && (Base.getBase()->getNumVBases() || NearestVBase)) {
-    // Get the secondary vpointer index.
-    uint64_t VirtualPointerIndex =
-        CGM.getVTables().getSecondaryVirtualPointerIndex(VTableClass, Base);
-
-    /// Load the VTT.
-    llvm::Value *VTT = CGF.LoadCXXVTT();
-    if (VirtualPointerIndex)
-      VTT = CGF.Builder.CreateConstInBoundsGEP1_64(VTT, VirtualPointerIndex);
-
-    // And load the address point from the VTT.
-    VTableAddressPoint = CGF.Builder.CreateAlignedLoad(VTT, CGF.getPointerAlign());
-  } else {
-    llvm::Constant *VTable =
-        CGM.getCXXABI().getAddrOfVTable(VTableClass, CharUnits());
-    uint64_t AddressPoint = CGM.getItaniumVTableContext()
-                                .getVTableLayout(VTableClass)
-                                .getAddressPoint(Base);
-    VTableAddressPoint =
-        CGF.Builder.CreateConstInBoundsGEP2_64(VTable, 0, AddressPoint);
-  }
-
-  return VTableAddressPoint;
+bool ItaniumCXXABI::isVirtualOffsetNeededForVTableField(
+    CodeGenFunction &CGF, CodeGenFunction::VPtr Vptr) {
+  if (Vptr.NearestVBase == nullptr)
+    return false;
+  return NeedsVTTParameter(CGF.CurGD);
 }
 
-llvm::Constant *ItaniumCXXABI::getVTableAddressPointForConstExpr(
-    BaseSubobject Base, const CXXRecordDecl *VTableClass) {
-  auto *VTable = getAddrOfVTable(VTableClass, CharUnits());
+llvm::Value *ItaniumCXXABI::getVTableAddressPointInStructor(
+    CodeGenFunction &CGF, const CXXRecordDecl *VTableClass, BaseSubobject Base,
+    const CXXRecordDecl *NearestVBase) {
+
+  if ((Base.getBase()->getNumVBases() || NearestVBase != nullptr) &&
+      NeedsVTTParameter(CGF.CurGD)) {
+    return getVTableAddressPointInStructorWithVTT(CGF, VTableClass, Base,
+                                                  NearestVBase);
+  }
+  return getVTableAddressPoint(Base, VTableClass);
+}
+
+llvm::Constant *
+ItaniumCXXABI::getVTableAddressPoint(BaseSubobject Base,
+                                     const CXXRecordDecl *VTableClass) {
+  llvm::GlobalValue *VTable = getAddrOfVTable(VTableClass, CharUnits());
 
   // Find the appropriate vtable within the vtable group.
   uint64_t AddressPoint = CGM.getItaniumVTableContext()
@@ -1506,6 +1508,30 @@ llvm::Constant *ItaniumCXXABI::getVTableAddressPointForConstExpr(
 
   return llvm::ConstantExpr::getInBoundsGetElementPtr(VTable->getValueType(),
                                                       VTable, Indices);
+}
+
+llvm::Value *ItaniumCXXABI::getVTableAddressPointInStructorWithVTT(
+    CodeGenFunction &CGF, const CXXRecordDecl *VTableClass, BaseSubobject Base,
+    const CXXRecordDecl *NearestVBase) {
+  assert((Base.getBase()->getNumVBases() || NearestVBase != nullptr) &&
+         NeedsVTTParameter(CGF.CurGD) && "This class doesn't have VTT");
+
+  // Get the secondary vpointer index.
+  uint64_t VirtualPointerIndex =
+      CGM.getVTables().getSecondaryVirtualPointerIndex(VTableClass, Base);
+
+  /// Load the VTT.
+  llvm::Value *VTT = CGF.LoadCXXVTT();
+  if (VirtualPointerIndex)
+    VTT = CGF.Builder.CreateConstInBoundsGEP1_64(VTT, VirtualPointerIndex);
+
+  // And load the address point from the VTT.
+  return CGF.Builder.CreateAlignedLoad(VTT, CGF.getPointerAlign());
+}
+
+llvm::Constant *ItaniumCXXABI::getVTableAddressPointForConstExpr(
+    BaseSubobject Base, const CXXRecordDecl *VTableClass) {
+  return getVTableAddressPoint(Base, VTableClass);
 }
 
 llvm::GlobalVariable *ItaniumCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
@@ -1583,8 +1609,7 @@ void ItaniumCXXABI::emitVirtualInheritanceTables(const CXXRecordDecl *RD) {
   VTables.EmitVTTDefinition(VTT, CGM.getVTableLinkage(RD), RD);
 }
 
-bool ItaniumCXXABI::canEmitAvailableExternallyVTable(
-    const CXXRecordDecl *RD) const {
+bool ItaniumCXXABI::canSpeculativelyEmitVTable(const CXXRecordDecl *RD) const {
   // We don't emit available_externally vtables if we are in -fapple-kext mode
   // because kext mode does not permit devirtualization.
   if (CGM.getLangOpts().AppleKext)
