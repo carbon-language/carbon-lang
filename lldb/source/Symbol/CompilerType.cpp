@@ -42,6 +42,10 @@ CompilerType::CompilerType (clang::ASTContext *ast,
     m_type (qual_type.getAsOpaquePtr()),
     m_type_system (ClangASTContext::GetASTContext(ast))
 {
+#ifdef LLDB_CONFIGURATION_DEBUG
+    if (m_type)
+        assert(m_type_system != nullptr);
+#endif
 }
 
 CompilerType::~CompilerType()
