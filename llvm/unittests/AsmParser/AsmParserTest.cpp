@@ -99,6 +99,10 @@ TEST(AsmParserTest, TypeAndConstantValueParsing) {
   ASSERT_TRUE(V);
   ASSERT_TRUE(isa<BlockAddress>(V));
 
+  V = parseConstantValue("i8** undef", Error, M);
+  ASSERT_TRUE(V);
+  ASSERT_TRUE(isa<UndefValue>(V));
+
   EXPECT_FALSE(parseConstantValue("duble 3.25", Error, M));
   EXPECT_EQ(Error.getMessage(), "expected type");
 

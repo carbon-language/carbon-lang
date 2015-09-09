@@ -4228,6 +4228,7 @@ bool LLParser::parseConstantValue(Type *Ty, Constant *&C) {
   switch (ID.Kind) {
   case ValID::t_APSInt:
   case ValID::t_APFloat:
+  case ValID::t_Undef:
   case ValID::t_Constant:
   case ValID::t_ConstantStruct:
   case ValID::t_PackedConstantStruct: {
