@@ -474,8 +474,10 @@ endif
 # files by replacing all .c files with .d.
 #----------------------------------------------------------------------
 PREREQS := $(OBJECTS:.o=.d)
+DWOS := $(OBJECTS:.o=.dwo)
 ifneq "$(DYLIB_NAME)" ""
 	DYLIB_PREREQS := $(DYLIB_OBJECTS:.o=.d)
+	DYLIB_DWOS := $(DYLIB_OBJECTS:.o=.dwo)
 endif
 
 #----------------------------------------------------------------------
@@ -533,10 +535,10 @@ endif
 dsym:	$(DSYM)
 all:	$(EXE) $(DSYM)
 clean::
-	$(RM) $(OBJECTS) $(PREREQS) $(PREREQS:.d=.d.tmp) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS)
+	$(RM) $(OBJECTS) $(PREREQS) $(PREREQS:.d=.d.tmp) $(DWOS) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS)
 ifneq "$(DYLIB_NAME)" ""
 	$(RM) -r $(DYLIB_FILENAME).dSYM
-	$(RM) $(DYLIB_OBJECTS) $(DYLIB_PREREQS) $(DYLIB_PREREQS:.d=.d.tmp) $(DYLIB_FILENAME) $(DYLIB_FILENAME).debug
+	$(RM) $(DYLIB_OBJECTS) $(DYLIB_PREREQS) $(DYLIB_PREREQS:.d=.d.tmp) $(DYLIB_DWOS) $(DYLIB_FILENAME) $(DYLIB_FILENAME).debug
 endif
 ifneq "$(DSYM)" ""
 	$(RM) -r "$(DSYM)"
