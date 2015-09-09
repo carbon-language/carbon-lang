@@ -1586,7 +1586,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
   if (const auto *RefTy = RetTy->getAs<ReferenceType>()) {
     QualType PTy = RefTy->getPointeeType();
-    if (!PTy->isIncompleteType() && PTy->isConstantSizeType())
+    if (getCXXABI().isTypeInfoCalculable(PTy) && PTy->isConstantSizeType())
       RetAttrs.addDereferenceableAttr(getContext().getTypeSizeInChars(PTy)
                                         .getQuantity());
     else if (getContext().getTargetAddressSpace(PTy) == 0)
@@ -1698,7 +1698,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     if (const auto *RefTy = ParamType->getAs<ReferenceType>()) {
       QualType PTy = RefTy->getPointeeType();
-      if (!PTy->isIncompleteType() && PTy->isConstantSizeType())
+      if (getCXXABI().isTypeInfoCalculable(PTy) && PTy->isConstantSizeType())
         Attrs.addDereferenceableAttr(getContext().getTypeSizeInChars(PTy)
                                        .getQuantity());
       else if (getContext().getTargetAddressSpace(PTy) == 0)

@@ -745,4 +745,10 @@ void foo_fun() {
   // CHECK: store i8* bitcast (void (%class.CA*)* @"\01?OnHelp@CA@@QAEXXZ" to i8*), i8**
   f func = (f)&CA::OnHelp;
 }
+namespace PR24703 {
+struct S;
+
+void f(int S::*&p) {}
+// CHECK-LABEL: define void @"\01?f@PR24703@@YAXAAPQS@1@H@Z"(
+}
 
