@@ -59,8 +59,8 @@ internal:
 // CHECK-NEXT:   SHF_ALLOC (0x2)
 // CHECK-NEXT:   SHF_WRITE (0x1)
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x1004
-// CHECK-NEXT: Offset: 0x1004
+// CHECK-NEXT: Address: 0x2000
+// CHECK-NEXT: Offset: 0x2000
 // CHECK-NEXT: Size: 4
 
 // CHECK:      Name: foobar
@@ -68,7 +68,7 @@ internal:
 // CHECK-NEXT: Flags [
 // CHECK-NEXT:   SHF_ALLOC
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x1008
+// CHECK-NEXT: Address: 0x3000
 
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
@@ -118,7 +118,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: common (34)
-// CHECK-NEXT:     Value: 0x1004
+// CHECK-NEXT:     Value: 0x2000
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: Object (0x1)
@@ -127,7 +127,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed
-// CHECK-NEXT:     Value: 0x1008
+// CHECK-NEXT:     Value: 0x3000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: None
@@ -136,7 +136,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: protected
-// CHECK-NEXT:     Value: 0x1010
+// CHECK-NEXT:     Value: 0x3008
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
@@ -145,7 +145,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed3
-// CHECK-NEXT:     Value: 0x1010
+// CHECK-NEXT:     Value: 0x3008
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
@@ -154,7 +154,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed2
-// CHECK-NEXT:     Value: 0x100C
+// CHECK-NEXT:     Value: 0x3004
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None

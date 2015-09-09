@@ -26,4 +26,4 @@ bar:
 // CHECK: e8 04 00 00 00  callq   4
 
 // Also check that symbols match.
-// CHECK: 0000000000001000         .text           00000000 bar
+// CHECK: 000000000001000         .text           00000000 bar

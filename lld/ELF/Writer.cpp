@@ -250,8 +250,9 @@ private:
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
   uintX_t FileSize;
-  uintX_t SizeOfHeaders;
+  uintX_t ProgramHeaderOff;
   uintX_t SectionHeaderOff;
+  unsigned NumPhdrs;
 
   StringTableSection<ELFT::Is64Bits> StrTabSec;
   StringTableSection<ELFT::Is64Bits> DynStrSec;
@@ -578,16 +579,33 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     OutputSections[I]->setSectionIndex(I + 1);
 }
 
+template <class ELFT>
+static bool outputSectionHasPHDR(OutputSectionBase<ELFT::Is64Bits> *Sec) {
+  return (Sec->getSize() != 0) && (Sec->getFlags() & SHF_ALLOC);
+}
+
 // Visits all sections to assign incremental, non-overlapping RVAs and
 // file offsets.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
-  SizeOfHeaders = RoundUpToAlignment(sizeof(Elf_Ehdr), PageSize);
   uintX_t VA = 0x1000; // The first page is kept unmapped.
-  uintX_t FileOff = SizeOfHeaders;
+  uintX_t FileOff = sizeof(Elf_Ehdr);
 
+  // Reserve space for PHDRs.
+  ProgramHeaderOff = FileOff;
+  FileOff = RoundUpToAlignment(FileOff, PageSize);
+
+  NumPhdrs = 0;
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
     StrTabSec.add(Sec->getName());
     Sec->finalize();
+
+    // Since each output section gets its own PHDR, align each output section to
+    // a page.
+    if (outputSectionHasPHDR<ELFT>(Sec)) {
+      ++NumPhdrs;
+      VA = RoundUpToAlignment(VA, PageSize);
+      FileOff = RoundUpToAlignment(FileOff, PageSize);
+    }
 
     uintX_t Align = Sec->getAlign();
     uintX_t Size = Sec->getSize();
@@ -600,15 +618,19 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       FileOff += RoundUpToAlignment(Size, Align);
   }
 
+  // Add a PHDR for the dynamic table.
+  if (!SymTable.getSymTable().getSharedFiles().empty())
+    ++NumPhdrs;
+
   FileOff += OffsetToAlignment(FileOff, ELFT::Is64Bits ? 8 : 4);
 
   // Add space for section headers.
   SectionHeaderOff = FileOff;
   FileOff += getNumSections() * sizeof(Elf_Shdr);
-  FileSize = SizeOfHeaders + RoundUpToAlignment(FileOff - SizeOfHeaders, 8);
+  FileSize = FileOff;
 }
 
-static uint32_t convertSectionFlagsToSegmentFlags(uint64_t Flags) {
+static uint32_t convertSectionFlagsToPHDRFlags(uint64_t Flags) {
   uint32_t Ret = PF_R;
   if (Flags & SHF_WRITE)
     Ret |= PF_W;
@@ -635,42 +657,41 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
 
   // FIXME: Generalize the segment construction similar to how we create
   // output sections.
-  unsigned NumSegments = 1;
   const SymbolTable &Symtab = SymTable.getSymTable();
-  const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
-      Symtab.getSharedFiles();
-  bool HasDynamicSegment = !SharedFiles.empty();
-  if (HasDynamicSegment)
-    NumSegments++;
+  bool HasDynamicSegment = !Symtab.getSharedFiles().empty();
 
   EHdr->e_type = ET_EXEC;
   auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.getFirstELF());
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
   EHdr->e_entry = getSymVA(cast<DefinedRegular<ELFT>>(Symtab.getEntrySym()));
-  EHdr->e_phoff = sizeof(Elf_Ehdr);
+  EHdr->e_phoff = ProgramHeaderOff;
   EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_ehsize = sizeof(Elf_Ehdr);
   EHdr->e_phentsize = sizeof(Elf_Phdr);
-  EHdr->e_phnum = NumSegments;
+  EHdr->e_phnum = NumPhdrs;
   EHdr->e_shentsize = sizeof(Elf_Shdr);
   EHdr->e_shnum = getNumSections();
   EHdr->e_shstrndx = StrTabSec.getSectionIndex();
 
   auto PHdrs = reinterpret_cast<Elf_Phdr *>(Buf + EHdr->e_phoff);
-  PHdrs->p_type = PT_LOAD;
-  PHdrs->p_flags = PF_R | PF_X;
-  PHdrs->p_offset = 0x1000;
-  PHdrs->p_vaddr = 0x1000;
-  PHdrs->p_paddr = PHdrs->p_vaddr;
-  PHdrs->p_filesz = FileSize;
-  PHdrs->p_memsz = FileSize;
-  PHdrs->p_align = 0x4000;
+  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
+    if (!outputSectionHasPHDR<ELFT>(Sec))
+      continue;
+    PHdrs->p_type = PT_LOAD;
+    PHdrs->p_flags = convertSectionFlagsToPHDRFlags(Sec->getFlags());
+    PHdrs->p_offset = Sec->getFileOff();
+    PHdrs->p_vaddr = Sec->getVA();
+    PHdrs->p_paddr = PHdrs->p_vaddr;
+    PHdrs->p_filesz = Sec->getType() == SHT_NOBITS ? 0 : Sec->getSize();
+    PHdrs->p_memsz = Sec->getSize();
+    PHdrs->p_align = PageSize;
+    ++PHdrs;
+  }
 
   if (HasDynamicSegment) {
-    PHdrs++;
     PHdrs->p_type = PT_DYNAMIC;
-    PHdrs->p_flags = convertSectionFlagsToSegmentFlags(DynamicSec.getFlags());
+    PHdrs->p_flags = convertSectionFlagsToPHDRFlags(DynamicSec.getFlags());
     PHdrs->p_offset = DynamicSec.getFileOff();
     PHdrs->p_vaddr = DynamicSec.getVA();
     PHdrs->p_paddr = PHdrs->p_vaddr;
