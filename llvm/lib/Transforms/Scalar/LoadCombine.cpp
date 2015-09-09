@@ -56,7 +56,7 @@ class LoadCombine : public BasicBlockPass {
 
 public:
   LoadCombine() : BasicBlockPass(ID), C(nullptr), AA(nullptr) {
-    initializeSROAPass(*PassRegistry::getPassRegistry());
+    initializeLoadCombinePass(*PassRegistry::getPassRegistry());
   }
   
   using llvm::Pass::doInitialization;
