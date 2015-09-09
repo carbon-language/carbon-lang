@@ -16,10 +16,14 @@
 #include "polly/Options.h"
 #include "polly/ScopDetection.h"
 #include "polly/Support/ScopHelper.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/RegionInfo.h"
+#include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/CommandLine.h"
@@ -309,8 +313,11 @@ bool IndependentBlocks::areAllBlocksIndependent(const Region *R) const {
 void IndependentBlocks::getAnalysisUsage(AnalysisUsage &AU) const {
   // FIXME: If we set preserves cfg, the cfg only passes do not need to
   // be "addPreserved"?
+  AU.addPreserved<AAResultsWrapperPass>();
+  AU.addPreserved<BasicAAWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
   AU.addPreserved<DominanceFrontier>();
+  AU.addPreserved<GlobalsAAWrapperPass>();
   AU.addPreserved<PostDominatorTree>();
   AU.addRequired<RegionInfoPass>();
   AU.addPreserved<RegionInfoPass>();
@@ -318,6 +325,7 @@ void IndependentBlocks::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LoopInfoWrapperPass>();
   AU.addRequired<ScalarEvolutionWrapperPass>();
   AU.addPreserved<ScalarEvolutionWrapperPass>();
+  AU.addPreserved<SCEVAAWrapperPass>();
   AU.addRequired<ScopDetection>();
   AU.addPreserved<ScopDetection>();
 }

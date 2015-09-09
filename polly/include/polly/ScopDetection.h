@@ -49,6 +49,7 @@
 
 #include "polly/ScopDetectionDiagnostic.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Pass.h"
 #include <map>
@@ -68,7 +69,6 @@ class SCEVAddRecExpr;
 class SCEVUnknown;
 class CallInst;
 class Instruction;
-class AliasAnalysis;
 class Value;
 }
 

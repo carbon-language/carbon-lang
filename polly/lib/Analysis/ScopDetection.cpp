@@ -1064,7 +1064,7 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
   if (!DetectUnprofitable && LI->empty())
     return false;
 
-  AA = &getAnalysis<AliasAnalysis>();
+  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   Region *TopRegion = RI->getTopLevelRegion();
 
@@ -1129,7 +1129,7 @@ void ScopDetection::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<ScalarEvolutionWrapperPass>();
   // We also need AA and RegionInfo when we are verifying analysis.
-  AU.addRequiredTransitive<AliasAnalysis>();
+  AU.addRequiredTransitive<AAResultsWrapperPass>();
   AU.addRequiredTransitive<RegionInfoPass>();
   AU.setPreservesAll();
 }
@@ -1157,7 +1157,7 @@ Pass *polly::createScopDetectionPass() { return new ScopDetection(); }
 INITIALIZE_PASS_BEGIN(ScopDetection, "polly-detect",
                       "Polly - Detect static control parts (SCoPs)", false,
                       false);
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis);
+INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);

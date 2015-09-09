@@ -2354,13 +2354,13 @@ void ScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<ScalarEvolutionWrapperPass>();
   AU.addRequired<ScopDetection>();
   AU.addRequired<TempScopInfo>();
-  AU.addRequired<AliasAnalysis>();
+  AU.addRequired<AAResultsWrapperPass>();
   AU.setPreservesAll();
 }
 
 bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  AliasAnalysis &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
   ScopDetection &SD = getAnalysis<ScopDetection>();
   ScalarEvolution &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
@@ -2397,7 +2397,7 @@ Pass *polly::createScopInfoPass() { return new ScopInfo(); }
 INITIALIZE_PASS_BEGIN(ScopInfo, "polly-scops",
                       "Polly - Create polyhedral description of Scops", false,
                       false);
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis);
+INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);

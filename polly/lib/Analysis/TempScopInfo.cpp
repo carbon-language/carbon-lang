@@ -385,7 +385,7 @@ bool TempScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   Function *F = R->getEntry()->getParent();
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  AA = &getAnalysis<AliasAnalysis>();
+  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
   TD = &F->getParent()->getDataLayout();
   ZeroOffset = SE->getConstant(TD->getIntPtrType(F->getContext()), 0);
 
@@ -400,7 +400,7 @@ void TempScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredTransitive<ScalarEvolutionWrapperPass>();
   AU.addRequiredTransitive<ScopDetection>();
   AU.addRequiredID(IndependentBlocksID);
-  AU.addRequired<AliasAnalysis>();
+  AU.addRequired<AAResultsWrapperPass>();
   AU.setPreservesAll();
 }
 
@@ -422,7 +422,7 @@ Pass *polly::createTempScopInfoPass() { return new TempScopInfo(); }
 INITIALIZE_PASS_BEGIN(TempScopInfo, "polly-analyze-ir",
                       "Polly - Analyse the LLVM-IR in the detected regions",
                       false, false);
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis);
+INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);
