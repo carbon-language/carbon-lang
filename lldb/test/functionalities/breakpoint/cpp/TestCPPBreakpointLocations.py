@@ -8,7 +8,7 @@ import lldb
 from lldbtest import *
 import lldbutil
 
-class TestCPPBreakpoints(TestBase):
+class TestCPPBreakpointLocations(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 

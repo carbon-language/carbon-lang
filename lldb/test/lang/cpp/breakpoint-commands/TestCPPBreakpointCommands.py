@@ -7,7 +7,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class CPPBreakpointTestCase(TestBase):
+class CPPBreakpointCommandsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
