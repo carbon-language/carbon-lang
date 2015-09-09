@@ -1062,43 +1062,6 @@ define i8 @test85(i32 %a) {
 ; CHECK: [[CST:%.*]] = trunc i32 [[SHR]] to i8
 }
 
-define i16 @test86(i16 %v) {
-  %a = sext i16 %v to i32
-  %s = ashr i32 %a, 4
-  %t = trunc i32 %s to i16
-  ret i16 %t
-
-; CHECK-LABEL: @test86(
-; CHECK:  [[ASHR:%.*]] = ashr i16 %v, 4
-; CHECK-NEXT: ret i16 [[ASHR]]
-}
-
-define i16 @test87(i16 %v) {
-  %c = sext i16 %v to i32
-  %m = mul nsw i32 %c, 16
-  %a = ashr i32 %m, 16
-  %t = trunc i32 %a to i16
-  ret i16 %t
-
-; CHECK-LABEL: @test87(
-; CHECK:  [[ASHR:%.*]] = ashr i16 %v, 12
-; CHECK-NEXT: ret i16 [[ASHR]]
-}
-
-define i16 @test88(i16 %v) {
-  %a = sext i16 %v to i32
-  %s = ashr i32 %a, 18
-  %t = trunc i32 %s to i16
-  ret i16 %t
-
-; Do not optimize to ashr i16 (shift by 18)
-; CHECK-LABEL: @test88(
-; CHECK: [[SEXT:%.*]] = sext i16 %v to i32
-; CHECK-NEXT: [[ASHR:%.*]] = ashr i32 [[SEXT]], 18
-; CHECK-NEXT: [[TRUNC:%.*]] = trunc i32 [[ASHR]] to i16
-; CHECK-NEXT: ret i16 [[TRUNC]]
-}
-
 ; Overflow on a float to int or int to float conversion is undefined (PR21130).
 
 define i8 @overflow_fptosi() {
