@@ -632,10 +632,10 @@ public:
   /// and with a hint for the number of cases that will be added (for efficient
   /// allocation).
   SwitchInst *CreateSwitch(Value *V, BasicBlock *Dest, unsigned NumCases = 10,
-                           MDNode *BranchWeights = nullptr) {
-    // TODO: Add unpredictable metadata for a switch.
+                           MDNode *BranchWeights = nullptr,
+                           MDNode *Unpredictable = nullptr) {
     return Insert(addBranchMetadata(SwitchInst::Create(V, Dest, NumCases),
-                                    BranchWeights, nullptr));
+                                    BranchWeights, Unpredictable));
   }
 
   /// \brief Create an indirect branch instruction with the specified address
