@@ -3770,8 +3770,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     // fall through
   case NEON::BI__builtin_neon_vld1_lane_v: {
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
-    Ty = llvm::PointerType::getUnqual(VTy->getElementType());
-    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    PtrOp0 = Builder.CreateElementBitCast(PtrOp0, VTy->getElementType());
     Value *Ld = Builder.CreateLoad(PtrOp0);
     return Builder.CreateInsertElement(Ops[1], Ld, Ops[2], "vld1_lane");
   }
