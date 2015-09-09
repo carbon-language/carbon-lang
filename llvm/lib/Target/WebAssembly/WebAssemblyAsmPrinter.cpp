@@ -269,28 +269,32 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OS << "(setlocal @" << TargetRegisterInfo::virtReg2Index(Reg) << ' ';
   }
 
-  OS << '(' << OpcodeName(TII, MI);
-  for (const MachineOperand &MO : MI->uses())
-    switch (MO.getType()) {
-    default:
-      llvm_unreachable("unexpected machine operand type");
-    case MachineOperand::MO_Register: {
-      if (MO.isImplicit())
-        continue;
-      unsigned Reg = MO.getReg();
-      OS << " @" << TargetRegisterInfo::virtReg2Index(Reg);
-    } break;
-    case MachineOperand::MO_Immediate: {
-      OS << ' ' << MO.getImm();
-    } break;
-    case MachineOperand::MO_FPImmediate: {
-      OS << ' ' << toString(MO.getFPImm()->getValueAPF());
-    } break;
-    case MachineOperand::MO_GlobalAddress: {
-      OS << ' ' << toSymbol(MO.getGlobal()->getName());
-    } break;
-    }
-  OS << ')';
+  if (MI->getOpcode() == WebAssembly::COPY) {
+    OS << '@' << TargetRegisterInfo::virtReg2Index(MI->getOperand(1).getReg());
+  } else {
+    OS << '(' << OpcodeName(TII, MI);
+    for (const MachineOperand &MO : MI->uses())
+      switch (MO.getType()) {
+      default:
+        llvm_unreachable("unexpected machine operand type");
+      case MachineOperand::MO_Register: {
+        if (MO.isImplicit())
+          continue;
+        unsigned Reg = MO.getReg();
+        OS << " @" << TargetRegisterInfo::virtReg2Index(Reg);
+      } break;
+      case MachineOperand::MO_Immediate: {
+        OS << ' ' << MO.getImm();
+      } break;
+      case MachineOperand::MO_FPImmediate: {
+        OS << ' ' << toString(MO.getFPImm()->getValueAPF());
+      } break;
+      case MachineOperand::MO_GlobalAddress: {
+        OS << ' ' << toSymbol(MO.getGlobal()->getName());
+      } break;
+      }
+    OS << ')';
+  }
 
   if (NumDefs != 0)
     OS << ')';
