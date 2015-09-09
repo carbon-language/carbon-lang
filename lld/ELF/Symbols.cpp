@@ -50,22 +50,20 @@ template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
 
   if (L != R)
     return -1;
-
   if (!L.first || !L.second)
     return 1;
   if (isCommon()) {
-    if (Other->isCommon()) {
-      auto *ThisC = cast<DefinedCommon<ELFT>>(this);
-      auto *OtherC = cast<DefinedCommon<ELFT>>(Other);
-      typename DefinedCommon<ELFT>::uintX_t MaxAlign =
-          std::max(ThisC->MaxAlignment, OtherC->MaxAlignment);
-      if (ThisC->Sym.st_size >= OtherC->Sym.st_size) {
-        ThisC->MaxAlignment = MaxAlign;
-        return 1;
-      }
-      OtherC->MaxAlignment = MaxAlign;
+    if (!Other->isCommon())
       return -1;
+    auto *ThisC = cast<DefinedCommon<ELFT>>(this);
+    auto *OtherC = cast<DefinedCommon<ELFT>>(Other);
+    typename DefinedCommon<ELFT>::uintX_t MaxAlign =
+        std::max(ThisC->MaxAlignment, OtherC->MaxAlignment);
+    if (ThisC->Sym.st_size >= OtherC->Sym.st_size) {
+      ThisC->MaxAlignment = MaxAlign;
+      return 1;
     }
+    OtherC->MaxAlignment = MaxAlign;
     return -1;
   }
   if (Other->isCommon())
