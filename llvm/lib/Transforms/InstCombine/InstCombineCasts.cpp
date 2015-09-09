@@ -21,8 +21,8 @@ using namespace PatternMatch;
 
 #define DEBUG_TYPE "instcombine"
 
-/// DecomposeSimpleLinearExpr - Analyze 'Val', seeing if it is a simple linear
-/// expression.  If so, decompose it, returning some value X, such that Val is
+/// Analyze 'Val', seeing if it is a simple linear expression.
+/// If so, decompose it, returning some value X, such that Val is
 /// X*Scale+Offset.
 ///
 static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
@@ -76,8 +76,8 @@ static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
   return Val;
 }
 
-/// PromoteCastOfAllocation - If we find a cast of an allocation instruction,
-/// try to eliminate the cast by moving the type information into the alloc.
+/// If we find a cast of an allocation instruction, try to eliminate the cast by
+/// moving the type information into the alloc.
 Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
                                                    AllocaInst &AI) {
   PointerType *PTy = cast<PointerType>(CI.getType());
@@ -154,9 +154,8 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   return ReplaceInstUsesWith(CI, New);
 }
 
-/// EvaluateInDifferentType - Given an expression that
-/// CanEvaluateTruncated or CanEvaluateSExtd returns true for, actually
-/// insert the code to evaluate the expression.
+/// Given an expression that CanEvaluateTruncated or CanEvaluateSExtd returns
+/// true for, actually insert the code to evaluate the expression.
 Value *InstCombiner::EvaluateInDifferentType(Value *V, Type *Ty,
                                              bool isSigned) {
   if (Constant *C = dyn_cast<Constant>(V)) {
@@ -261,9 +260,9 @@ isEliminableCastPair(const CastInst *CI, ///< First cast instruction
   return Instruction::CastOps(Res);
 }
 
-/// ShouldOptimizeCast - Return true if the cast from "V to Ty" actually
-/// results in any code being generated and is interesting to optimize out. If
-/// the cast can be eliminated by some other simple transformation, we prefer
+/// Return true if the cast from "V to Ty" actually results in any code being
+/// generated and is interesting to optimize out.
+/// If the cast can be eliminated by some other simple transformation, we prefer
 /// to do the simplification first.
 bool InstCombiner::ShouldOptimizeCast(Instruction::CastOps opc, const Value *V,
                                       Type *Ty) {
@@ -318,9 +317,9 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
   return nullptr;
 }
 
-/// CanEvaluateTruncated - Return true if we can evaluate the specified
-/// expression tree as type Ty instead of its larger type, and arrive with the
-/// same value.  This is used by code that tries to eliminate truncates.
+/// Return true if we can evaluate the specified expression tree as type Ty
+/// instead of its larger type, and arrive with the same value.
+/// This is used by code that tries to eliminate truncates.
 ///
 /// Ty will always be a type smaller than V.  We should return true if trunc(V)
 /// can be computed by computing V in the smaller type.  If V is an instruction,
@@ -532,8 +531,8 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   return nullptr;
 }
 
-/// transformZExtICmp - Transform (zext icmp) to bitwise / integer operations
-/// in order to eliminate the icmp.
+/// Transform (zext icmp) to bitwise / integer operations in order to eliminate
+/// the icmp.
 Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
                                              bool DoXform) {
   // If we are just checking for a icmp eq of a single bit and zext'ing it
@@ -657,8 +656,8 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
   return nullptr;
 }
 
-/// CanEvaluateZExtd - Determine if the specified value can be computed in the
-/// specified wider type and produce the same low bits.  If not, return false.
+/// Determine if the specified value can be computed in the specified wider type
+/// and produce the same low bits. If not, return false.
 ///
 /// If this function returns true, it can also return a non-zero number of bits
 /// (in BitsToClear) which indicates that the value it computes is correct for
@@ -917,8 +916,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   return nullptr;
 }
 
-/// transformSExtICmp - Transform (sext icmp) to bitwise / integer operations
-/// in order to eliminate the icmp.
+/// Transform (sext icmp) to bitwise / integer operations to eliminate the icmp.
 Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
   Value *Op0 = ICI->getOperand(0), *Op1 = ICI->getOperand(1);
   ICmpInst::Predicate Pred = ICI->getPredicate();
@@ -1005,11 +1003,10 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
   return nullptr;
 }
 
-/// CanEvaluateSExtd - Return true if we can take the specified value
-/// and return it as type Ty without inserting any new casts and without
-/// changing the value of the common low bits.  This is used by code that tries
-/// to promote integer operations to a wider types will allow us to eliminate
-/// the extension.
+/// Return true if we can take the specified value and return it as type Ty
+/// without inserting any new casts and without changing the value of the common
+/// low bits.  This is used by code that tries to promote integer operations to
+/// a wider types will allow us to eliminate the extension.
 ///
 /// This function works on both vectors and scalars.
 ///
@@ -1169,7 +1166,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
 }
 
 
-/// FitsInFPType - Return a Constant* for the specified FP constant if it fits
+/// Return a Constant* for the specified floating-point constant if it fits
 /// in the specified FP type without changing its value.
 static Constant *FitsInFPType(ConstantFP *CFP, const fltSemantics &Sem) {
   bool losesInfo;
@@ -1180,7 +1177,7 @@ static Constant *FitsInFPType(ConstantFP *CFP, const fltSemantics &Sem) {
   return nullptr;
 }
 
-/// LookThroughFPExtensions - If this is an fp extension instruction, look
+/// If this is a floating-point extension instruction, look
 /// through it until we get the source value.
 static Value *LookThroughFPExtensions(Value *V) {
   if (Instruction *I = dyn_cast<Instruction>(V))
@@ -1509,9 +1506,9 @@ Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
   return CastInst::CreateIntegerCast(P, Ty, /*isSigned=*/false);
 }
 
-/// OptimizeVectorResize - This input value (which is known to have vector type)
-/// is being zero extended or truncated to the specified vector type.  Try to
-/// replace it with a shuffle (and vector/vector bitcast) if possible.
+/// This input value (which is known to have vector type) is being zero extended
+/// or truncated to the specified vector type.
+/// Try to replace it with a shuffle (and vector/vector bitcast) if possible.
 ///
 /// The source and destination vector types may have different element types.
 static Instruction *OptimizeVectorResize(Value *InVal, VectorType *DestTy,
@@ -1574,8 +1571,8 @@ static unsigned getTypeSizeIndex(unsigned Value, Type *Ty) {
   return Value / Ty->getPrimitiveSizeInBits();
 }
 
-/// CollectInsertionElements - V is a value which is inserted into a vector of
-/// VecEltTy.  Look through the value to see if we can decompose it into
+/// V is a value which is inserted into a vector of VecEltTy.
+/// Look through the value to see if we can decompose it into
 /// insertions into the vector.  See the example in the comment for
 /// OptimizeIntegerToVectorInsertions for the pattern this handles.
 /// The type of V is always a non-zero multiple of VecEltTy's size.
@@ -1679,8 +1676,8 @@ static bool CollectInsertionElements(Value *V, unsigned Shift,
 }
 
 
-/// OptimizeIntegerToVectorInsertions - If the input is an 'or' instruction, we
-/// may be doing shifts and ors to assemble the elements of the vector manually.
+/// If the input is an 'or' instruction, we may be doing shifts and ors to
+/// assemble the elements of the vector manually.
 /// Try to rip the code out and replace it with insertelements.  This is to
 /// optimize code like this:
 ///
@@ -1719,8 +1716,8 @@ static Value *OptimizeIntegerToVectorInsertions(BitCastInst &CI,
 }
 
 
-/// OptimizeIntToFloatBitCast - See if we can optimize an integer->float/double
-/// bitcast.  The various long double bitcasts can't get in here.
+/// See if we can optimize an integer->float/double bitcast.
+/// The various long double bitcasts can't get in here.
 static Instruction *OptimizeIntToFloatBitCast(BitCastInst &CI, InstCombiner &IC,
                                               const DataLayout &DL) {
   Value *Src = CI.getOperand(0);
