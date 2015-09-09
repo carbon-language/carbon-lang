@@ -20,6 +20,7 @@ class ThreadSpecificBreakTestCase(TestBase):
         self.buildDsym()
         self.do_thread_specific_break()
 
+    @skipIfFreeBSD # test frequently times out or hangs
     @expectedFailureFreeBSD('llvm.org/pr18522') # hits break in another thread in testrun
     @python_api_test
     @dwarf_test
