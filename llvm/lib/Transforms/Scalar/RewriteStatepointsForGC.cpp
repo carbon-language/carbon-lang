@@ -21,6 +21,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Dominators.h"
@@ -661,7 +662,6 @@ static raw_ostream &operator<<(raw_ostream &OS, const BDVState &State) {
 #endif
 
 namespace {
-typedef DenseMap<Value *, BDVState> ConflictStateMapTy;
 // Values of type BDVState form a lattice, and this is a helper
 // class that implementes the meet operation.  The meat of the meet
 // operation is implemented in MeetBDVStates::pureMeet
@@ -761,14 +761,17 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
 
   // Once populated, will contain a mapping from each potentially non-base BDV
   // to a lattice value (described above) which corresponds to that BDV.
-  ConflictStateMapTy states;
-  // Recursively fill in all phis & selects reachable from the initial one
-  // for which we don't already know a definite base value for
+  // We use the order of insertion (DFS over the def/use graph) to provide a
+  // stable deterministic ordering for visiting DenseMaps (which are unordered)
+  // below.  This is important for deterministic compilation.
+  MapVector<Value *, BDVState> states;
+
+  // Recursively fill in all base defining values reachable from the initial
+  // one for which we don't already know a definite base value for
   /* scope */ {
-    DenseSet<Value *> Visited;
     SmallVector<Value*, 16> Worklist;
     Worklist.push_back(def);
-    Visited.insert(def);
+    states.insert(std::make_pair(def, BDVState()));
     while (!Worklist.empty()) {
       Value *Current = Worklist.pop_back_val();
       assert(!isKnownBaseResult(Current) && "why did it get added?");
@@ -781,7 +784,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
           return;
         assert(isExpectedBDVType(Base) && "the only non-base values "
                "we see should be base defining values");
-        if (Visited.insert(Base).second)
+        if (states.insert(std::make_pair(Base, BDVState())).second)
           Worklist.push_back(Base);
       };
       if (PHINode *Phi = dyn_cast<PHINode>(Current)) {
@@ -798,12 +801,6 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
                isa<InsertElementInst>(Current));
         llvm_unreachable("unimplemented instruction case");
       }
-    }
-    // The frontier of visited instructions are the ones we might need to
-    // duplicate, so fill in the starting state for the optimistic algorithm
-    // that follows.
-    for (Value *BDV : Visited) {
-      states[BDV] = BDVState();
     }
   }
 
@@ -830,7 +827,10 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     size_t oldSize = states.size();
 #endif
     progress = false;
-    // We're only changing keys in this loop, thus safe to keep iterators
+    // We're only changing values in this loop, thus safe to keep iterators.
+    // Since this is computing a fixed point, the order of visit does not
+    // effect the result.  TODO: We could use a worklist here and make this run
+    // much faster.
     for (auto Pair : states) {
       Value *v = Pair.first;
       assert(!isKnownBaseResult(v) && "why did it get added?");
@@ -856,7 +856,6 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
         calculateMeet.meetWith(getStateForInput(EE->getVectorOperand()));
       }
 
-
       BDVState oldState = states[v];
       BDVState newState = calculateMeet.getResult();
       if (oldState != newState) {
@@ -877,20 +876,10 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
 #endif
   
   // Insert Phis for all conflicts
-  // We want to keep naming deterministic in the loop that follows, so
-  // sort the keys before iteration.  This is useful in allowing us to
-  // write stable tests. Note that there is no invalidation issue here.
-  SmallVector<Value *, 16> Keys;
-  Keys.reserve(states.size());
-  for (auto Pair : states) {
-    Value *V = Pair.first;
-    Keys.push_back(V);
-  }
-  std::sort(Keys.begin(), Keys.end(), order_by_name);
   // TODO: adjust naming patterns to avoid this order of iteration dependency
-  for (Value *V : Keys) {
-    Instruction *I = cast<Instruction>(V);
-    BDVState State = states[I];
+  for (auto Pair : states) {
+    Instruction *I = cast<Instruction>(Pair.first);
+    BDVState State = Pair.second;
     assert(!isKnownBaseResult(I) && "why did it get added?");
     assert(!State.isUnknown() && "Optimistic algorithm didn't complete!");
 
@@ -974,7 +963,9 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     return Base;
   };
 
-  // Fixup all the inputs of the new PHIs
+  // Fixup all the inputs of the new PHIs.  Visit order needs to be
+  // deterministic and predictable because we're naming newly created
+  // instructions.
   for (auto Pair : states) {
     Instruction *v = cast<Instruction>(Pair.first);
     BDVState state = Pair.second;
@@ -1059,18 +1050,18 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   // Keys we sorted above for this purpose.  Note that we are papering over a
   // bigger problem with the algorithm above - it's visit order is not
   // deterministic.  A larger change is needed to fix this.
-  for (auto Key : Keys) {
-    Value *V = Key;
-    auto State = states[Key];
+  for (auto Pair : states) {
+    auto *BDV = Pair.first;
+    auto State = Pair.second;
     Value *Base = State.getBase();
-    assert(V && Base);
-    assert(!isKnownBaseResult(V) && "why did it get added?");
+    assert(BDV && Base);
+    assert(!isKnownBaseResult(BDV) && "why did it get added?");
     assert(isKnownBaseResult(Base) &&
            "must be something we 'know' is a base pointer");
     if (!State.isConflict())
       continue;
 
-    ReverseMap[Base] = V;
+    ReverseMap[Base] = BDV;
     if (auto *BaseI = dyn_cast<Instruction>(Base)) {
       NewInsts.insert(BaseI);
       Worklist.insert(BaseI);
@@ -1113,26 +1104,26 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   // Cache all of our results so we can cheaply reuse them
   // NOTE: This is actually two caches: one of the base defining value
   // relation and one of the base pointer relation!  FIXME
-  for (auto item : states) {
-    Value *v = item.first;
-    Value *base = item.second.getBase();
-    assert(v && base);
+  for (auto Pair : states) {
+    auto *BDV = Pair.first;
+    Value *base = Pair.second.getBase();
+    assert(BDV && base);
 
     std::string fromstr =
-      cache.count(v) ? (cache[v]->hasName() ? cache[v]->getName() : "")
+      cache.count(BDV) ? (cache[BDV]->hasName() ? cache[BDV]->getName() : "")
                      : "none";
     DEBUG(dbgs() << "Updating base value cache"
-          << " for: " << (v->hasName() ? v->getName() : "")
+          << " for: " << (BDV->hasName() ? BDV->getName() : "")
           << " from: " << fromstr
           << " to: " << (base->hasName() ? base->getName() : "") << "\n");
 
-    if (cache.count(v)) {
+    if (cache.count(BDV)) {
       // Once we transition from the BDV relation being store in the cache to
       // the base relation being stored, it must be stable
-      assert((!isKnownBaseResult(cache[v]) || cache[v] == base) &&
+      assert((!isKnownBaseResult(cache[BDV]) || cache[BDV] == base) &&
              "base relation should be stable");
     }
-    cache[v] = base;
+    cache[BDV] = base;
   }
   assert(cache.find(def) != cache.end());
   return cache[def];
