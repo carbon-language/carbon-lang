@@ -651,6 +651,12 @@ std::vector<lldb::LanguageType>
 FormatManager::GetCandidateLanguages (ValueObject& valobj)
 {
     lldb::LanguageType lang_type = valobj.GetObjectRuntimeLanguage();
+    return GetCandidateLanguages(lang_type);
+}
+
+std::vector<lldb::LanguageType>
+FormatManager::GetCandidateLanguages (lldb::LanguageType lang_type)
+{
     switch (lang_type)
     {
         case lldb::eLanguageTypeC:

@@ -570,7 +570,7 @@ lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Str
     // std::wstring::size() is measured in 'characters', not bytes
     auto wchar_t_size = valobj.GetTargetSP()->GetScratchClangASTContext()->GetBasicType(lldb::eBasicTypeWChar).GetByteSize(nullptr);
     
-    ReadBufferAndDumpToStreamOptions options(valobj);
+    StringPrinter::ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(extractor);
     options.SetStream(&stream);
     options.SetPrefixToken('L');
@@ -581,15 +581,15 @@ lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Str
     switch (wchar_t_size)
     {
         case 1:
-            StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF8>(options);
+            StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringPrinter::StringElementType::UTF8>(options);
             break;
             
         case 2:
-            lldb_private::formatters::StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF16>(options);
+            lldb_private::formatters::StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringPrinter::StringElementType::UTF16>(options);
             break;
             
         case 4:
-            lldb_private::formatters::StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF32>(options);
+            lldb_private::formatters::StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringPrinter::StringElementType::UTF32>(options);
             break;
             
         default:
@@ -623,14 +623,14 @@ lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stre
         size = std::min<decltype(size)>(size, valobj.GetTargetSP()->GetMaximumSizeOfStringSummary());
     location_sp->GetPointeeData(extractor, 0, size);
     
-    ReadBufferAndDumpToStreamOptions options(valobj);
+    StringPrinter::ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(extractor);
     options.SetStream(&stream);
     options.SetPrefixToken(0);
     options.SetQuote('"');
     options.SetSourceSize(size);
     options.SetBinaryZeroIsTerminator(false);
-    StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::ASCII>(options);
+    StringPrinter::ReadBufferAndDumpToStream<StringPrinter::StringElementType::ASCII>(options);
     
     return true;
 }

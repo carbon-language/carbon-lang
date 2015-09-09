@@ -1595,13 +1595,13 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                                   0,
                                   (custom_format == eFormatVectorOfChar) ||
                                   (custom_format == eFormatCharArray));
-                lldb_private::formatters::ReadBufferAndDumpToStreamOptions options(*this);
+                lldb_private::formatters::StringPrinter::ReadBufferAndDumpToStreamOptions options(*this);
                 options.SetData(DataExtractor(buffer_sp, lldb::eByteOrderInvalid, 8)); // none of this matters for a string - pass some defaults
                 options.SetStream(&s);
                 options.SetPrefixToken(0);
                 options.SetQuote('"');
                 options.SetSourceSize(buffer_sp->GetByteSize());
-                formatters::StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::ASCII>(options);
+                formatters::StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringPrinter::StringElementType::ASCII>(options);
                 return !error.Fail();
             }
             

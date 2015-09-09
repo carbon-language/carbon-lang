@@ -19,300 +19,339 @@
 namespace lldb_private {
     namespace formatters
     {
-        
-        enum class StringElementType {
-            ASCII,
-            UTF8,
-            UTF16,
-            UTF32
-        };
-        
-        class ReadStringAndDumpToStreamOptions
-        {
-        public:
-            
-            ReadStringAndDumpToStreamOptions () :
-            m_location(0),
-            m_process_sp(),
-            m_stream(NULL),
-            m_prefix_token(0),
-            m_quote('"'),
-            m_source_size(0),
-            m_needs_zero_termination(true),
-            m_escape_non_printables(true),
-            m_ignore_max_length(false),
-            m_zero_is_terminator(true)
-            {
-            }
-            
-            ReadStringAndDumpToStreamOptions (ValueObject& valobj);
-            
-            ReadStringAndDumpToStreamOptions&
-            SetLocation (uint64_t l)
-            {
-                m_location = l;
-                return *this;
-            }
-            
-            uint64_t
-            GetLocation () const
-            {
-                return m_location;
-            }
-            
-            ReadStringAndDumpToStreamOptions&
-            SetProcessSP (lldb::ProcessSP p)
-            {
-                m_process_sp = p;
-                return *this;
-            }
-            
-            lldb::ProcessSP
-            GetProcessSP () const
-            {
-                return m_process_sp;
-            }
-            
-            ReadStringAndDumpToStreamOptions&
-            SetStream (Stream* s)
-            {
-                m_stream = s;
-                return *this;
-            }
-            
-            Stream*
-            GetStream () const
-            {
-                return m_stream;
-            }
-            
-            ReadStringAndDumpToStreamOptions&
-            SetPrefixToken (char p)
-            {
-                m_prefix_token = p;
-                return *this;
-            }
-            
-            char
-            GetPrefixToken () const
-            {
-                return m_prefix_token;
-            }
-            
-            ReadStringAndDumpToStreamOptions&
-            SetQuote (char q)
-            {
-                m_quote = q;
-                return *this;
-            }
-            
-            char
-            GetQuote () const
-            {
-                return m_quote;
-            }
-            
-            ReadStringAndDumpToStreamOptions&
-            SetSourceSize (uint32_t s)
-            {
-                m_source_size = s;
-                return *this;
-            }
-            
-            uint32_t
-            GetSourceSize () const
-            {
-                return m_source_size;
-            }
-            
-            ReadStringAndDumpToStreamOptions&
-            SetNeedsZeroTermination (bool z)
-            {
-                m_needs_zero_termination = z;
-                return *this;
-            }
-            
-            bool
-            GetNeedsZeroTermination () const
-            {
-                return m_needs_zero_termination;
-            }
-            
-            ReadStringAndDumpToStreamOptions&
-            SetBinaryZeroIsTerminator (bool e)
-            {
-                m_zero_is_terminator = e;
-                return *this;
-            }
-            
-            bool
-            GetBinaryZeroIsTerminator () const
-            {
-                return m_zero_is_terminator;
-            }
-            
-            ReadStringAndDumpToStreamOptions&
-            SetEscapeNonPrintables (bool e)
-            {
-                m_escape_non_printables = e;
-                return *this;
-            }
-            
-            bool
-            GetEscapeNonPrintables () const
-            {
-                return m_escape_non_printables;
-            }
-            
-            ReadStringAndDumpToStreamOptions&
-            SetIgnoreMaxLength (bool e)
-            {
-                m_ignore_max_length = e;
-                return *this;
-            }
-            
-            bool
-            GetIgnoreMaxLength () const
-            {
-                return m_ignore_max_length;
-            }
-            
-        private:
-            uint64_t m_location;
-            lldb::ProcessSP m_process_sp;
-            Stream* m_stream;
-            char m_prefix_token;
-            char m_quote;
-            uint32_t m_source_size;
-            bool m_needs_zero_termination;
-            bool m_escape_non_printables;
-            bool m_ignore_max_length;
-            bool m_zero_is_terminator;
-        };
-        
-        class ReadBufferAndDumpToStreamOptions
-        {
-        public:
-            
-            ReadBufferAndDumpToStreamOptions () :
-            m_data(),
-            m_stream(NULL),
-            m_prefix_token(0),
-            m_quote('"'),
-            m_source_size(0),
-            m_escape_non_printables(true),
-            m_zero_is_terminator(true)
-            {
-            }
-            
-            ReadBufferAndDumpToStreamOptions (ValueObject& valobj);
-            
-            ReadBufferAndDumpToStreamOptions (const ReadStringAndDumpToStreamOptions& options);
-            
-            ReadBufferAndDumpToStreamOptions&
-            SetData (DataExtractor d)
-            {
-                m_data = d;
-                return *this;
-            }
-            
-            lldb_private::DataExtractor
-            GetData () const
-            {
-                return m_data;
-            }
-            
-            ReadBufferAndDumpToStreamOptions&
-            SetStream (Stream* s)
-            {
-                m_stream = s;
-                return *this;
-            }
-            
-            Stream*
-            GetStream () const
-            {
-                return m_stream;
-            }
-            
-            ReadBufferAndDumpToStreamOptions&
-            SetPrefixToken (char p)
-            {
-                m_prefix_token = p;
-                return *this;
-            }
-            
-            char
-            GetPrefixToken () const
-            {
-                return m_prefix_token;
-            }
-            
-            ReadBufferAndDumpToStreamOptions&
-            SetQuote (char q)
-            {
-                m_quote = q;
-                return *this;
-            }
-            
-            char
-            GetQuote () const
-            {
-                return m_quote;
-            }
-            
-            ReadBufferAndDumpToStreamOptions&
-            SetSourceSize (uint32_t s)
-            {
-                m_source_size = s;
-                return *this;
-            }
-            
-            uint32_t
-            GetSourceSize () const
-            {
-                return m_source_size;
-            }
-            
-            ReadBufferAndDumpToStreamOptions&
-            SetEscapeNonPrintables (bool e)
-            {
-                m_escape_non_printables = e;
-                return *this;
-            }
-            
-            bool
-            GetEscapeNonPrintables () const
-            {
-                return m_escape_non_printables;
-            }
-            
-            ReadBufferAndDumpToStreamOptions&
-            SetBinaryZeroIsTerminator (bool e)
-            {
-                m_zero_is_terminator = e;
-                return *this;
-            }
-            
-            bool
-            GetBinaryZeroIsTerminator () const
-            {
-                return m_zero_is_terminator;
-            }
-            
-        private:
-            DataExtractor m_data;
-            Stream* m_stream;
-            char m_prefix_token;
-            char m_quote;
-            uint32_t m_source_size;
-            bool m_escape_non_printables;
-            bool m_zero_is_terminator;
-        };
-        
         class StringPrinter
         {
         public:
+
+            enum class StringElementType
+            {
+                ASCII,
+                UTF8,
+                UTF16,
+                UTF32
+            };
+            
+            enum class GetPrintableElementType
+            {
+                ASCII,
+                UTF8
+            };
+            
+            class ReadStringAndDumpToStreamOptions
+            {
+            public:
+                
+                ReadStringAndDumpToStreamOptions () :
+                m_location(0),
+                m_process_sp(),
+                m_stream(NULL),
+                m_prefix_token(0),
+                m_quote('"'),
+                m_source_size(0),
+                m_needs_zero_termination(true),
+                m_escape_non_printables(true),
+                m_ignore_max_length(false),
+                m_zero_is_terminator(true),
+                m_language_type(lldb::eLanguageTypeUnknown)
+                {
+                }
+                
+                ReadStringAndDumpToStreamOptions (ValueObject& valobj);
+                
+                ReadStringAndDumpToStreamOptions&
+                SetLocation (uint64_t l)
+                {
+                    m_location = l;
+                    return *this;
+                }
+                
+                uint64_t
+                GetLocation () const
+                {
+                    return m_location;
+                }
+                
+                ReadStringAndDumpToStreamOptions&
+                SetProcessSP (lldb::ProcessSP p)
+                {
+                    m_process_sp = p;
+                    return *this;
+                }
+                
+                lldb::ProcessSP
+                GetProcessSP () const
+                {
+                    return m_process_sp;
+                }
+                
+                ReadStringAndDumpToStreamOptions&
+                SetStream (Stream* s)
+                {
+                    m_stream = s;
+                    return *this;
+                }
+                
+                Stream*
+                GetStream () const
+                {
+                    return m_stream;
+                }
+                
+                ReadStringAndDumpToStreamOptions&
+                SetPrefixToken (char p)
+                {
+                    m_prefix_token = p;
+                    return *this;
+                }
+                
+                char
+                GetPrefixToken () const
+                {
+                    return m_prefix_token;
+                }
+                
+                ReadStringAndDumpToStreamOptions&
+                SetQuote (char q)
+                {
+                    m_quote = q;
+                    return *this;
+                }
+                
+                char
+                GetQuote () const
+                {
+                    return m_quote;
+                }
+                
+                ReadStringAndDumpToStreamOptions&
+                SetSourceSize (uint32_t s)
+                {
+                    m_source_size = s;
+                    return *this;
+                }
+                
+                uint32_t
+                GetSourceSize () const
+                {
+                    return m_source_size;
+                }
+                
+                ReadStringAndDumpToStreamOptions&
+                SetNeedsZeroTermination (bool z)
+                {
+                    m_needs_zero_termination = z;
+                    return *this;
+                }
+                
+                bool
+                GetNeedsZeroTermination () const
+                {
+                    return m_needs_zero_termination;
+                }
+                
+                ReadStringAndDumpToStreamOptions&
+                SetBinaryZeroIsTerminator (bool e)
+                {
+                    m_zero_is_terminator = e;
+                    return *this;
+                }
+                
+                bool
+                GetBinaryZeroIsTerminator () const
+                {
+                    return m_zero_is_terminator;
+                }
+                
+                ReadStringAndDumpToStreamOptions&
+                SetEscapeNonPrintables (bool e)
+                {
+                    m_escape_non_printables = e;
+                    return *this;
+                }
+                
+                bool
+                GetEscapeNonPrintables () const
+                {
+                    return m_escape_non_printables;
+                }
+                
+                ReadStringAndDumpToStreamOptions&
+                SetIgnoreMaxLength (bool e)
+                {
+                    m_ignore_max_length = e;
+                    return *this;
+                }
+                
+                bool
+                GetIgnoreMaxLength () const
+                {
+                    return m_ignore_max_length;
+                }
+                
+                ReadStringAndDumpToStreamOptions&
+                SetLanguage (lldb::LanguageType l)
+                {
+                    m_language_type = l;
+                    return *this;
+                }
+                
+                lldb::LanguageType
+                GetLanguage () const
+                
+                {
+                    return m_language_type;
+                }
+                
+            private:
+                uint64_t m_location;
+                lldb::ProcessSP m_process_sp;
+                Stream* m_stream;
+                char m_prefix_token;
+                char m_quote;
+                uint32_t m_source_size;
+                bool m_needs_zero_termination;
+                bool m_escape_non_printables;
+                bool m_ignore_max_length;
+                bool m_zero_is_terminator;
+                lldb::LanguageType m_language_type;
+            };
+            
+            class ReadBufferAndDumpToStreamOptions
+            {
+            public:
+                
+                ReadBufferAndDumpToStreamOptions () :
+                m_data(),
+                m_stream(NULL),
+                m_prefix_token(0),
+                m_quote('"'),
+                m_source_size(0),
+                m_escape_non_printables(true),
+                m_zero_is_terminator(true),
+                m_language_type(lldb::eLanguageTypeUnknown)
+                {
+                }
+                
+                ReadBufferAndDumpToStreamOptions (ValueObject& valobj);
+                
+                ReadBufferAndDumpToStreamOptions (const ReadStringAndDumpToStreamOptions& options);
+                
+                ReadBufferAndDumpToStreamOptions&
+                SetData (DataExtractor d)
+                {
+                    m_data = d;
+                    return *this;
+                }
+                
+                lldb_private::DataExtractor
+                GetData () const
+                {
+                    return m_data;
+                }
+                
+                ReadBufferAndDumpToStreamOptions&
+                SetStream (Stream* s)
+                {
+                    m_stream = s;
+                    return *this;
+                }
+                
+                Stream*
+                GetStream () const
+                {
+                    return m_stream;
+                }
+                
+                ReadBufferAndDumpToStreamOptions&
+                SetPrefixToken (char p)
+                {
+                    m_prefix_token = p;
+                    return *this;
+                }
+                
+                char
+                GetPrefixToken () const
+                {
+                    return m_prefix_token;
+                }
+                
+                ReadBufferAndDumpToStreamOptions&
+                SetQuote (char q)
+                {
+                    m_quote = q;
+                    return *this;
+                }
+                
+                char
+                GetQuote () const
+                {
+                    return m_quote;
+                }
+                
+                ReadBufferAndDumpToStreamOptions&
+                SetSourceSize (uint32_t s)
+                {
+                    m_source_size = s;
+                    return *this;
+                }
+                
+                uint32_t
+                GetSourceSize () const
+                {
+                    return m_source_size;
+                }
+                
+                ReadBufferAndDumpToStreamOptions&
+                SetEscapeNonPrintables (bool e)
+                {
+                    m_escape_non_printables = e;
+                    return *this;
+                }
+                
+                bool
+                GetEscapeNonPrintables () const
+                {
+                    return m_escape_non_printables;
+                }
+                
+                ReadBufferAndDumpToStreamOptions&
+                SetBinaryZeroIsTerminator (bool e)
+                {
+                    m_zero_is_terminator = e;
+                    return *this;
+                }
+                
+                bool
+                GetBinaryZeroIsTerminator () const
+                {
+                    return m_zero_is_terminator;
+                }
+                
+                ReadBufferAndDumpToStreamOptions&
+                SetLanguage (lldb::LanguageType l)
+                {
+                    m_language_type = l;
+                    return *this;
+                }
+                
+                lldb::LanguageType
+                GetLanguage () const
+                
+                {
+                    return m_language_type;
+                }
+                
+            private:
+                DataExtractor m_data;
+                Stream* m_stream;
+                char m_prefix_token;
+                char m_quote;
+                uint32_t m_source_size;
+                bool m_escape_non_printables;
+                bool m_zero_is_terminator;
+                lldb::LanguageType m_language_type;
+            };
+
             // I can't use a std::unique_ptr for this because the Deleter is a template argument there
             // and I want the same type to represent both pointers I want to free and pointers I don't need
             // to free - which is what this class essentially is
@@ -321,7 +360,6 @@ namespace lldb_private {
             struct StringPrinterBufferPointer
             {
             public:
-                
                 typedef std::function<void(const T*)> Deleter;
                 
                 StringPrinterBufferPointer (std::nullptr_t ptr) :
@@ -394,6 +432,12 @@ namespace lldb_private {
                 size_t m_size;
                 Deleter m_deleter;
             };
+            
+            typedef std::function<StringPrinter::StringPrinterBufferPointer<uint8_t,char,size_t>(uint8_t*, uint8_t*, uint8_t*&)> EscapingHelper;
+            typedef std::function<EscapingHelper(GetPrintableElementType)> EscapingHelperGenerator;
+            
+            static EscapingHelper
+            GetDefaultEscapingHelper (GetPrintableElementType elem_type);
             
             template <StringElementType element_type>
             static bool
