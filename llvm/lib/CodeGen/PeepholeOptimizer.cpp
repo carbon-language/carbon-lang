@@ -43,7 +43,7 @@
 // - Optimize Loads:
 //
 //     Loads that can be folded into a later instruction. A load is foldable
-//     if it loads to virtual registers and the virtual register defined has 
+//     if it loads to virtual registers and the virtual register defined has
 //     a single use.
 //
 // - Optimize Copies and Bitcast (more generally, target specific copies):
@@ -781,7 +781,7 @@ public:
   /// This source defines the whole definition, i.e.,
   /// (TrackReg, TrackSubReg) = (dst, dstSubIdx).
   ///
-  /// The second and subsequent calls will return false, has there is only one
+  /// The second and subsequent calls will return false, as there is only one
   /// rewritable source.
   ///
   /// \return True if a rewritable source has been found, false otherwise.
@@ -789,9 +789,9 @@ public:
   virtual bool getNextRewritableSource(unsigned &SrcReg, unsigned &SrcSubReg,
                                        unsigned &TrackReg,
                                        unsigned &TrackSubReg) {
-    // If CurrentSrcIdx == 1, this means this function has already been
-    // called once. CopyLike has one defintiion and one argument, thus,
-    // there is nothing else to rewrite.
+    // If CurrentSrcIdx == 1, this means this function has already been called
+    // once. CopyLike has one definition and one argument, thus, there is
+    // nothing else to rewrite.
     if (!CopyLike.isCopy() || CurrentSrcIdx == 1)
       return false;
     // This is the first call to getNextRewritableSource.
@@ -847,7 +847,7 @@ public:
         continue;
       }
 
-      // TODO: remove once multiple srcs w/ coaslescable copies are supported.
+      // TODO: Remove once multiple srcs w/ coalescable copies are supported.
       if (!HandleMultipleSources)
         break;
 
@@ -1007,7 +1007,7 @@ public:
     // partial definition.
     TrackReg = MODef.getReg();
     if (MODef.getSubReg())
-      // Bails if we have to compose sub-register indices.
+      // Bail if we have to compose sub-register indices.
       return false;
     TrackSubReg = (unsigned)CopyLike.getOperand(3).getImm();
     return true;
@@ -1048,7 +1048,7 @@ public:
     CurrentSrcIdx = 1;
     const MachineOperand &MOExtractedReg = CopyLike.getOperand(1);
     SrcReg = MOExtractedReg.getReg();
-    // If we have to compose sub-register indices, bails out.
+    // If we have to compose sub-register indices, bail out.
     if (MOExtractedReg.getSubReg())
       return false;
 
@@ -1126,7 +1126,7 @@ public:
     }
     const MachineOperand &MOInsertedReg = CopyLike.getOperand(CurrentSrcIdx);
     SrcReg = MOInsertedReg.getReg();
-    // If we have to compose sub-register indices, bails out.
+    // If we have to compose sub-register indices, bail out.
     if ((SrcSubReg = MOInsertedReg.getSubReg()))
       return false;
 
@@ -1136,7 +1136,7 @@ public:
 
     const MachineOperand &MODef = CopyLike.getOperand(0);
     TrackReg = MODef.getReg();
-    // If we have to compose sub-registers, bails.
+    // If we have to compose sub-registers, bail.
     return MODef.getSubReg() == 0;
   }
 
@@ -1188,7 +1188,7 @@ static CopyRewriter *getCopyRewriter(MachineInstr &MI,
 /// the same register bank.
 /// New copies issued by this optimization are register allocator
 /// friendly. This optimization does not remove any copy as it may
-/// overconstraint the register allocator, but replaces some operands
+/// overconstrain the register allocator, but replaces some operands
 /// when possible.
 /// \pre isCoalescableCopy(*MI) is true.
 /// \return True, when \p MI has been rewritten. False otherwise.
@@ -1204,7 +1204,7 @@ bool PeepholeOptimizer::optimizeCoalescableCopy(MachineInstr *MI) {
   bool Changed = false;
   // Get the right rewriter for the current copy.
   std::unique_ptr<CopyRewriter> CpyRewriter(getCopyRewriter(*MI, *TII, *MRI));
-  // If none exists, bails out.
+  // If none exists, bail out.
   if (!CpyRewriter)
     return false;
   // Rewrite each rewritable source.
@@ -1261,7 +1261,7 @@ bool PeepholeOptimizer::optimizeUncoalescableCopy(
   SmallVector<TargetInstrInfo::RegSubRegPair, 4> RewritePairs;
   // Get the right rewriter for the current copy.
   std::unique_ptr<CopyRewriter> CpyRewriter(getCopyRewriter(*MI, *TII, *MRI));
-  // If none exists, bails out.
+  // If none exists, bail out.
   if (!CpyRewriter)
     return false;
 
@@ -1512,7 +1512,7 @@ ValueTrackerResult ValueTracker::getNextSourceFromCopy() {
 
   if (Def->getOperand(DefIdx).getSubReg() != DefSubReg)
     // If we look for a different subreg, it means we want a subreg of src.
-    // Bails as we do not support composing subreg yet.
+    // Bails as we do not support composing subregs yet.
     return ValueTrackerResult();
   // Otherwise, we want the whole source.
   const MachineOperand &Src = Def->getOperand(1);
@@ -1531,7 +1531,7 @@ ValueTrackerResult ValueTracker::getNextSourceFromBitcast() {
     return ValueTrackerResult();
   if (Def->getOperand(DefIdx).getSubReg() != DefSubReg)
     // If we look for a different subreg, it means we want a subreg of the src.
-    // Bails as we do not support composing subreg yet.
+    // Bails as we do not support composing subregs yet.
     return ValueTrackerResult();
 
   unsigned SrcIdx = Def->getNumOperands();
@@ -1555,7 +1555,7 @@ ValueTrackerResult ValueTracker::getNextSourceFromRegSequence() {
          "Invalid definition");
 
   if (Def->getOperand(DefIdx).getSubReg())
-    // If we are composing subreg, bails out.
+    // If we are composing subregs, bail out.
     // The case we are checking is Def.<subreg> = REG_SEQUENCE.
     // This should almost never happen as the SSA property is tracked at
     // the register level (as opposed to the subreg level).
@@ -1586,7 +1586,7 @@ ValueTrackerResult ValueTracker::getNextSourceFromRegSequence() {
   for (auto &RegSeqInput : RegSeqInputRegs) {
     if (RegSeqInput.SubIdx == DefSubReg) {
       if (RegSeqInput.SubReg)
-        // Bails if we have to compose sub registers.
+        // Bail if we have to compose sub registers.
         return ValueTrackerResult();
 
       return ValueTrackerResult(RegSeqInput.Reg, RegSeqInput.SubReg);
@@ -1604,7 +1604,7 @@ ValueTrackerResult ValueTracker::getNextSourceFromInsertSubreg() {
          "Invalid definition");
 
   if (Def->getOperand(DefIdx).getSubReg())
-    // If we are composing subreg, bails out.
+    // If we are composing subreg, bail out.
     // Same remark as getNextSourceFromRegSequence.
     // I.e., this may be turned into an assert.
     return ValueTrackerResult();
@@ -1635,7 +1635,7 @@ ValueTrackerResult ValueTracker::getNextSourceFromInsertSubreg() {
   const MachineOperand &MODef = Def->getOperand(DefIdx);
   // If the result register (Def) and the base register (v0) do not
   // have the same register class or if we have to compose
-  // subregisters, bails out.
+  // subregisters, bail out.
   if (MRI.getRegClass(MODef.getReg()) != MRI.getRegClass(BaseReg.Reg) ||
       BaseReg.SubReg)
     return ValueTrackerResult();
@@ -1658,7 +1658,7 @@ ValueTrackerResult ValueTracker::getNextSourceFromExtractSubreg() {
   // We are looking at:
   // Def = EXTRACT_SUBREG v0, sub0
 
-  // Bails if we have to compose sub registers.
+  // Bail if we have to compose sub registers.
   // Indeed, if DefSubReg != 0, we would have to compose it with sub0.
   if (DefSubReg)
     return ValueTrackerResult();
@@ -1672,7 +1672,7 @@ ValueTrackerResult ValueTracker::getNextSourceFromExtractSubreg() {
   if (!TII->getExtractSubregInputs(*Def, DefIdx, ExtractSubregInputReg))
     return ValueTrackerResult();
 
-  // Bails if we have to compose sub registers.
+  // Bail if we have to compose sub registers.
   // Likewise, if v0.subreg != 0, we would have to compose v0.subreg with sub0.
   if (ExtractSubregInputReg.SubReg)
     return ValueTrackerResult();
@@ -1685,13 +1685,13 @@ ValueTrackerResult ValueTracker::getNextSourceFromSubregToReg() {
   // We are looking at:
   // Def = SUBREG_TO_REG Imm, v0, sub0
 
-  // Bails if we have to compose sub registers.
+  // Bail if we have to compose sub registers.
   // If DefSubReg != sub0, we would have to check that all the bits
   // we track are included in sub0 and if yes, we would have to
   // determine the right subreg in v0.
   if (DefSubReg != Def->getOperand(3).getImm())
     return ValueTrackerResult();
-  // Bails if we have to compose sub registers.
+  // Bail if we have to compose sub registers.
   // Likewise, if v0.subreg != 0, we would have to compose it with sub0.
   if (Def->getOperand(2).getSubReg())
     return ValueTrackerResult();
@@ -1705,8 +1705,8 @@ ValueTrackerResult ValueTracker::getNextSourceFromPHI() {
   assert(Def->isPHI() && "Invalid definition");
   ValueTrackerResult Res;
 
-  // If we look for a different subreg, bails as we do not
-  // support composing subreg yet.
+  // If we look for a different subreg, bail as we do not support composing
+  // subregs yet.
   if (Def->getOperand(0).getSubReg() != DefSubReg)
     return ValueTrackerResult();
 
@@ -1731,7 +1731,7 @@ ValueTrackerResult ValueTracker::getNextSourceImpl() {
   if (Def->isBitcast())
     return getNextSourceFromBitcast();
   // All the remaining cases involve "complex" instructions.
-  // Bails if we did not ask for the advanced tracking.
+  // Bail if we did not ask for the advanced tracking.
   if (!UseAdvancedTracking)
     return ValueTrackerResult();
   if (Def->isRegSequence() || Def->isRegSequenceLike())
