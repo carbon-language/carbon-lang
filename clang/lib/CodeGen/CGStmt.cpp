@@ -16,6 +16,7 @@
 #include "CodeGenModule.h"
 #include "TargetInfo.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/LoopHint.h"
@@ -25,6 +26,8 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/MDBuilder.h"
+
 using namespace clang;
 using namespace CodeGen;
 
@@ -1516,6 +1519,22 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   // Emit continuation.
   EmitBlock(SwitchExit.getBlock(), true);
   incrementProfileCounter(&S);
+
+  // If the switch has a condition wrapped by __builtin_unpredictable,
+  // create metadata that specifies that the switch is unpredictable.
+  // Don't bother if not optimizing because that metadata would not be used.
+  if (CGM.getCodeGenOpts().OptimizationLevel != 0) {
+    if (const CallExpr *Call = dyn_cast<CallExpr>(S.getCond())) {
+      const Decl *TargetDecl = Call->getCalleeDecl();
+      if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(TargetDecl)) {
+        if (FD->getBuiltinID() == Builtin::BI__builtin_unpredictable) {
+          llvm::MDBuilder MDHelper(getLLVMContext());
+          SwitchInsn->setMetadata(llvm::LLVMContext::MD_unpredictable,
+                                  MDHelper.createUnpredictable());
+        }
+      }
+    }
+  }
 
   if (SwitchWeights) {
     assert(SwitchWeights->size() == 1 + SwitchInsn->getNumCases() &&
