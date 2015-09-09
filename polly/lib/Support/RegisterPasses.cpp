@@ -62,7 +62,7 @@ static cl::opt<PassPositionChoice> PassPosition(
     cl::values(
         clEnumValN(POSITION_EARLY, "early", "Before everything"),
         clEnumValN(POSITION_AFTER_LOOPOPT, "after-loopopt",
-                   "After the loop optimizer (but within the inline zycle)"),
+                   "After the loop optimizer (but within the inline cycle)"),
         clEnumValN(POSITION_BEFORE_VECTORIZER, "before-vectorizer",
                    "Right before the vectorizer"),
         clEnumValEnd),
