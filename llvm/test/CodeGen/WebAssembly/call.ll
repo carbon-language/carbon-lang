@@ -7,6 +7,7 @@ target triple = "wasm32-unknown-unknown"
 
 declare i32 @i32_nullary()
 declare i32 @i32_unary(i32)
+declare i32 @i32_binary(i32, i32)
 declare i64 @i64_nullary()
 declare float @float_nullary()
 declare double @double_nullary()
@@ -59,6 +60,18 @@ define double @call_double_nullary() {
 ; CHECK-NEXT: (return @2)
 define i32 @call_i32_unary(i32 %a) {
   %r = call i32 @i32_unary(i32 %a)
+  ret i32 %r
+}
+
+; CHECK-LABEL: (func $call_i32_binary
+; CHECK-NEXT: (param i32) (param i32) (result i32)
+; CHECK-NEXT: (setlocal @0 (argument 1))
+; CHECK-NEXT: (setlocal @1 (argument 0))
+; CHECK-NEXT: (setlocal @2 (global $i32_binary))
+; CHECK-NEXT: (setlocal @3 (call @2 @1 @0))
+; CHECK-NEXT: (return @3)
+define i32 @call_i32_binary(i32 %a, i32 %b) {
+  %r = call i32 @i32_binary(i32 %a, i32 %b)
   ret i32 %r
 }
 
