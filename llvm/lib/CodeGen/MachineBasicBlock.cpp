@@ -28,6 +28,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -277,8 +278,10 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
   if (!livein_empty()) {
     if (Indexes) OS << '\t';
     OS << "    Live Ins:";
-    for (unsigned LI : make_range(livein_begin(), livein_end())) {
-      OS << ' ' << PrintReg(LI, TRI);
+    for (const auto &LI : make_range(livein_begin(), livein_end())) {
+      OS << ' ' << PrintReg(LI.PhysReg, TRI);
+      if (LI.LaneMask != ~0u)
+        OS << format(":%08X", LI.LaneMask);
     }
     OS << '\n';
   }
@@ -321,15 +324,43 @@ void MachineBasicBlock::printAsOperand(raw_ostream &OS,
   OS << "BB#" << getNumber();
 }
 
-void MachineBasicBlock::removeLiveIn(MCPhysReg Reg) {
-  LiveInVector::iterator I = std::find(LiveIns.begin(), LiveIns.end(), Reg);
-  if (I != LiveIns.end())
+void MachineBasicBlock::removeLiveIn(MCPhysReg Reg, unsigned LaneMask) {
+  LiveInVector::iterator I = std::find_if(
+      LiveIns.begin(), LiveIns.end(),
+      [Reg] (const RegisterMaskPair &LI) { return LI.PhysReg == Reg; });
+  if (I == LiveIns.end())
+    return;
+
+  I->LaneMask &= ~LaneMask;
+  if (I->LaneMask == 0)
     LiveIns.erase(I);
 }
 
-bool MachineBasicBlock::isLiveIn(MCPhysReg Reg) const {
-  livein_iterator I = std::find(livein_begin(), livein_end(), Reg);
-  return I != livein_end();
+bool MachineBasicBlock::isLiveIn(MCPhysReg Reg, unsigned LaneMask) const {
+  livein_iterator I = std::find_if(
+      LiveIns.begin(), LiveIns.end(),
+      [Reg] (const RegisterMaskPair &LI) { return LI.PhysReg == Reg; });
+  return I != livein_end() && (I->LaneMask & LaneMask) != 0;
+}
+
+void MachineBasicBlock::sortUniqueLiveIns() {
+  std::sort(LiveIns.begin(), LiveIns.end(),
+            [](const RegisterMaskPair &LI0, const RegisterMaskPair &LI1) {
+              return LI0.PhysReg < LI1.PhysReg;
+            });
+  // Liveins are sorted by physreg now we can merge their lanemasks.
+  LiveInVector::const_iterator I = LiveIns.begin();
+  LiveInVector::const_iterator J;
+  LiveInVector::iterator Out = LiveIns.begin();
+  for (; I != LiveIns.end(); ++Out, I = J) {
+    unsigned PhysReg = I->PhysReg;
+    unsigned LaneMask = I->LaneMask;
+    for (J = std::next(I); J != LiveIns.end() && J->PhysReg == PhysReg; ++J)
+      LaneMask |= J->LaneMask;
+    Out->PhysReg = PhysReg;
+    Out->LaneMask = LaneMask;
+  }
+  LiveIns.erase(Out, LiveIns.end());
 }
 
 unsigned
@@ -803,7 +834,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
         i->getOperand(ni+1).setMBB(NMBB);
 
   // Inherit live-ins from the successor
-  for (unsigned LI : Succ->liveins())
+  for (const auto &LI : Succ->liveins())
     NMBB->addLiveIn(LI);
 
   // Update LiveVariables.

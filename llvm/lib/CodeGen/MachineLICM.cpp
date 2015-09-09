@@ -534,8 +534,8 @@ void MachineLICM::HoistRegionPostRA() {
     // Conservatively treat live-in's as an external def.
     // FIXME: That means a reload that're reused in successor block(s) will not
     // be LICM'ed.
-    for (unsigned LI : BB->liveins()) {
-      for (MCRegAliasIterator AI(LI, TRI, true); AI.isValid(); ++AI)
+    for (const auto &LI : BB->liveins()) {
+      for (MCRegAliasIterator AI(LI.PhysReg, TRI, true); AI.isValid(); ++AI)
         PhysRegDefs.set(*AI);
     }
 

@@ -120,10 +120,10 @@ namespace {
     // Return a bitmask of FP registers in block's live-in list.
     static unsigned calcLiveInMask(MachineBasicBlock *MBB) {
       unsigned Mask = 0;
-      for (unsigned LI : MBB->liveins()) {
-        if (LI < X86::FP0 || LI > X86::FP6)
+      for (const auto &LI : MBB->liveins()) {
+        if (LI.PhysReg < X86::FP0 || LI.PhysReg > X86::FP6)
           continue;
-        Mask |= 1 << (LI - X86::FP0);
+        Mask |= 1 << (LI.PhysReg - X86::FP0);
       }
       return Mask;
     }

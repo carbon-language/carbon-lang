@@ -799,9 +799,9 @@ void RAFast::AllocateBasicBlock() {
   MachineBasicBlock::iterator MII = MBB->begin();
 
   // Add live-in registers as live.
-  for (unsigned LI : MBB->liveins())
-    if (MRI->isAllocatable(LI))
-      definePhysReg(MII, LI, regReserved);
+  for (const auto &LI : MBB->liveins())
+    if (MRI->isAllocatable(LI.PhysReg))
+      definePhysReg(MII, LI.PhysReg, regReserved);
 
   SmallVector<unsigned, 8> VirtDead;
   SmallVector<MachineInstr*, 32> Coalesced;

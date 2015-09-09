@@ -210,16 +210,15 @@ bool HexagonCFGOptimizer::runOnMachineFunction(MachineFunction &Fn) {
               // The live-in to LayoutSucc is now all values live-in to
               // JumpAroundTarget.
               //
-              std::vector<unsigned> OrigLiveIn(LayoutSucc->livein_begin(),
-                                               LayoutSucc->livein_end());
-              std::vector<unsigned> NewLiveIn(JumpAroundTarget->livein_begin(),
-                                              JumpAroundTarget->livein_end());
-              for (unsigned i = 0; i < OrigLiveIn.size(); ++i) {
-                LayoutSucc->removeLiveIn(OrigLiveIn[i]);
-              }
-              for (unsigned i = 0; i < NewLiveIn.size(); ++i) {
-                LayoutSucc->addLiveIn(NewLiveIn[i]);
-              }
+              std::vector<MachineBasicBlock::RegisterMaskPair> OrigLiveIn(
+                  LayoutSucc->livein_begin(), LayoutSucc->livein_end());
+              std::vector<MachineBasicBlock::RegisterMaskPair> NewLiveIn(
+                  JumpAroundTarget->livein_begin(),
+                  JumpAroundTarget->livein_end());
+              for (const auto &OrigLI : OrigLiveIn)
+                LayoutSucc->removeLiveIn(OrigLI.PhysReg);
+              for (const auto &NewLI : NewLiveIn)
+                LayoutSucc->addLiveIn(NewLI);
             }
           }
         }

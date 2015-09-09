@@ -375,8 +375,8 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
 
   // This is the entry block.
   if (MBB->pred_empty()) {
-    for (unsigned LI : MBB->liveins()) {
-      for (int rx : regIndices(LI)) {
+    for (const auto &LI : MBB->liveins()) {
+      for (int rx : regIndices(LI.PhysReg)) {
         // Treat function live-ins as if they were defined just before the first
         // instruction.  Usually, function arguments are set up immediately
         // before the call.

@@ -31,9 +31,12 @@ using namespace llvm;
 #define DEBUG_TYPE "reg-scavenging"
 
 /// setUsed - Set the register units of this register as used.
-void RegScavenger::setRegUsed(unsigned Reg) {
-  for (MCRegUnitIterator RUI(Reg, TRI); RUI.isValid(); ++RUI)
-    RegUnitsAvailable.reset(*RUI);
+void RegScavenger::setRegUsed(unsigned Reg, unsigned LaneMask) {
+  for (MCRegUnitMaskIterator RUI(Reg, TRI); RUI.isValid(); ++RUI) {
+    unsigned UnitMask = (*RUI).second;
+    if (UnitMask == 0 || (LaneMask & UnitMask) != 0)
+      RegUnitsAvailable.reset((*RUI).first);
+  }
 }
 
 void RegScavenger::initRegState() {
@@ -50,8 +53,8 @@ void RegScavenger::initRegState() {
     return;
 
   // Live-in registers are in use.
-  for (unsigned LI : MBB->liveins())
-    setRegUsed(LI);
+  for (const auto &LI : MBB->liveins())
+    setRegUsed(LI.PhysReg, LI.LaneMask);
 
   // Pristine CSRs are also unavailable.
   const MachineFunction &MF = *MBB->getParent();

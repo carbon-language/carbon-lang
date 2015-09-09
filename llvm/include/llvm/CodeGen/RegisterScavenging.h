@@ -152,7 +152,7 @@ public:
   }
 
   /// Tell the scavenger a register is used.
-  void setRegUsed(unsigned Reg);
+  void setRegUsed(unsigned Reg, unsigned LaneMask = ~0u);
 private:
   /// Returns true if a register is reserved. It is never "unused".
   bool isReserved(unsigned Reg) const { return MRI->isReserved(Reg); }

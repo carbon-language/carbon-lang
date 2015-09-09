@@ -1885,7 +1885,7 @@ void ARMFrameLowering::adjustForSegmentedStacks(
   for (int Idx = 0; Idx < NbAddedBlocks; ++Idx)
     BeforePrologueRegion.insert(AddedBlocks[Idx]);
 
-  for (unsigned LI : PrologueMBB.liveins()) {
+  for (const auto &LI : PrologueMBB.liveins()) {
     for (MachineBasicBlock *PredBB : BeforePrologueRegion)
       PredBB->addLiveIn(LI);
   }

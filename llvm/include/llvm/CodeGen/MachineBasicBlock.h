@@ -62,6 +62,20 @@ private:
 };
 
 class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
+public:
+  /// Pair of physical register and lane mask.
+  /// This is not simply a std::pair typedef because the members should be named
+  /// clearly as they both have an integer type.
+  struct RegisterMaskPair {
+  public:
+    MCPhysReg PhysReg;
+    unsigned LaneMask;
+
+    RegisterMaskPair(MCPhysReg PhysReg, unsigned LaneMask)
+        : PhysReg(PhysReg), LaneMask(LaneMask) {}
+  };
+
+protected:
   typedef ilist<MachineInstr> Instructions;
   Instructions Insts;
   const BasicBlock *BB;
@@ -80,7 +94,7 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
   typedef std::vector<uint32_t>::const_iterator const_weight_iterator;
 
   /// Keep track of the physical registers that are livein of the basicblock.
-  typedef std::vector<MCPhysReg> LiveInVector;
+  typedef std::vector<RegisterMaskPair> LiveInVector;
   LiveInVector LiveIns;
 
   /// Alignment of the basic block. Zero if the basic block does not need to be
@@ -314,15 +328,17 @@ public:
   /// Adds the specified register as a live in. Note that it is an error to add
   /// the same register to the same set more than once unless the intention is
   /// to call sortUniqueLiveIns after all registers are added.
-  void addLiveIn(MCPhysReg PhysReg) { LiveIns.push_back(PhysReg); }
+  void addLiveIn(MCPhysReg PhysReg, unsigned LaneMask = ~0u) {
+    LiveIns.push_back(RegisterMaskPair(PhysReg, LaneMask));
+  }
+  void addLiveIn(const RegisterMaskPair &RegMaskPair) {
+    LiveIns.push_back(RegMaskPair);
+  }
 
   /// Sorts and uniques the LiveIns vector. It can be significantly faster to do
   /// this than repeatedly calling isLiveIn before calling addLiveIn for every
   /// LiveIn insertion.
-  void sortUniqueLiveIns() {
-    std::sort(LiveIns.begin(), LiveIns.end());
-    LiveIns.erase(std::unique(LiveIns.begin(), LiveIns.end()), LiveIns.end());
-  }
+  void sortUniqueLiveIns();
 
   /// Add PhysReg as live in to this block, and ensure that there is a copy of
   /// PhysReg to a virtual register of class RC. Return the virtual register
@@ -330,10 +346,10 @@ public:
   unsigned addLiveIn(MCPhysReg PhysReg, const TargetRegisterClass *RC);
 
   /// Remove the specified register from the live in set.
-  void removeLiveIn(MCPhysReg Reg);
+  void removeLiveIn(MCPhysReg Reg, unsigned LaneMask = ~0u);
 
   /// Return true if the specified register is in the live in set.
-  bool isLiveIn(MCPhysReg Reg) const;
+  bool isLiveIn(MCPhysReg Reg, unsigned LaneMask = ~0u) const;
 
   // Iteration support for live in sets.  These sets are kept in sorted
   // order by their register number.

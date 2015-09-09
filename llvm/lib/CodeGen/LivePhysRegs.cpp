@@ -128,8 +128,8 @@ void LivePhysRegs::dump() const {
 
 /// Add live-in registers of basic block \p MBB to \p LiveRegs.
 static void addLiveIns(LivePhysRegs &LiveRegs, const MachineBasicBlock &MBB) {
-  for (unsigned LI : MBB.liveins())
-    LiveRegs.addReg(LI);
+  for (const auto &LI : MBB.liveins())
+    LiveRegs.addReg(LI.PhysReg);
 }
 
 /// Add pristine registers to the given \p LiveRegs. This function removes

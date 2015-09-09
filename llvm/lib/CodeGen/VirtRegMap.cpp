@@ -277,13 +277,7 @@ void VirtRegRewriter::addLiveInsForSubRanges(const LiveInterval &LI,
     if (LaneMask == 0)
       continue;
     MachineBasicBlock *MBB = MBBI->second;
-    for (MCSubRegIndexIterator SR(PhysReg, TRI); SR.isValid(); ++SR) {
-      unsigned SubReg = SR.getSubReg();
-      unsigned SubRegIndex = SR.getSubRegIndex();
-      unsigned SubRegLaneMask = TRI->getSubRegIndexLaneMask(SubRegIndex);
-      if ((SubRegLaneMask & LaneMask) != 0)
-        MBB->addLiveIn(SubReg);
-    }
+    MBB->addLiveIn(PhysReg, LaneMask);
   }
 }
 

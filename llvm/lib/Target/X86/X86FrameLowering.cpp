@@ -1591,7 +1591,7 @@ void X86FrameLowering::adjustForSegmentedStacks(
   // The MOV R10, RAX needs to be in a different block, since the RET we emit in
   // allocMBB needs to be last (terminating) instruction.
 
-  for (unsigned LI : PrologueMBB.liveins()) {
+  for (const auto &LI : PrologueMBB.liveins()) {
     allocMBB->addLiveIn(LI);
     checkMBB->addLiveIn(LI);
   }
@@ -1863,7 +1863,7 @@ void X86FrameLowering::adjustForHiPEPrologue(
     MachineBasicBlock *stackCheckMBB = MF.CreateMachineBasicBlock();
     MachineBasicBlock *incStackMBB = MF.CreateMachineBasicBlock();
 
-    for (unsigned LI : PrologueMBB.liveins()) {
+    for (const auto &LI : PrologueMBB.liveins()) {
       stackCheckMBB->addLiveIn(LI);
       incStackMBB->addLiveIn(LI);
     }

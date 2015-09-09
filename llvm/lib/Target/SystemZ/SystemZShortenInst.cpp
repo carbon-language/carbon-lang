@@ -168,9 +168,8 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
   unsigned LiveLow = 0;
   unsigned LiveHigh = 0;
   for (auto SI = MBB.succ_begin(), SE = MBB.succ_end(); SI != SE; ++SI) {
-    for (auto LI = (*SI)->livein_begin(), LE = (*SI)->livein_end();
-         LI != LE; ++LI) {
-      unsigned Reg = *LI;
+    for (const auto &LI : (*SI)->liveins()) {
+      unsigned Reg = LI.PhysReg;
       assert(Reg < SystemZ::NUM_TARGET_REGS && "Invalid register number");
       LiveLow |= LowGPRs[Reg];
       LiveHigh |= HighGPRs[Reg];

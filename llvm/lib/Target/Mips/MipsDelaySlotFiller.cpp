@@ -355,8 +355,8 @@ void RegDefsUses::addLiveOut(const MachineBasicBlock &MBB,
   for (MachineBasicBlock::const_succ_iterator SI = MBB.succ_begin(),
        SE = MBB.succ_end(); SI != SE; ++SI)
     if (*SI != &SuccBB)
-      for (unsigned LI : (*SI)->liveins())
-        Uses.set(LI);
+      for (const auto &LI : (*SI)->liveins())
+        Uses.set(LI.PhysReg);
 }
 
 bool RegDefsUses::update(const MachineInstr &MI, unsigned Begin, unsigned End) {

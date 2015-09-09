@@ -524,8 +524,8 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
   if (MRI->isSSA()) {
     // If this block has allocatable physical registers live-in, check that
     // it is an entry block or landing pad.
-    for (unsigned LI : MBB->liveins()) {
-      if (isAllocatable(LI) && !MBB->isEHPad() &&
+    for (const auto &LI : MBB->liveins()) {
+      if (isAllocatable(LI.PhysReg) && !MBB->isEHPad() &&
           MBB != MBB->getParent()->begin()) {
         report("MBB has allocable live-in, but isn't entry or landing-pad.", MBB);
       }
@@ -694,12 +694,12 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
   }
 
   regsLive.clear();
-  for (unsigned LI : MBB->liveins()) {
-    if (!TargetRegisterInfo::isPhysicalRegister(LI)) {
+  for (const auto &LI : MBB->liveins()) {
+    if (!TargetRegisterInfo::isPhysicalRegister(LI.PhysReg)) {
       report("MBB live-in list contains non-physical register", MBB);
       continue;
     }
-    for (MCSubRegIterator SubRegs(LI, TRI, /*IncludeSelf=*/true);
+    for (MCSubRegIterator SubRegs(LI.PhysReg, TRI, /*IncludeSelf=*/true);
          SubRegs.isValid(); ++SubRegs)
       regsLive.insert(*SubRegs);
   }
