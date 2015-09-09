@@ -2770,7 +2770,7 @@ DWARFExpression::Evaluate
                                 return false;
                             }
                         }
-                        else if (!stack.empty())
+                        else
                         {
                             // If this is the second or later piece there should be a value on the stack
                             if (pieces.GetBuffer().GetByteSize() != op_piece_offset)
