@@ -6958,18 +6958,6 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
                     LoopContinuePredicate->getSuccessor(0) != L->getHeader()))
     return true;
 
-  // Check conditions due to any @llvm.assume intrinsics.
-  for (auto &AssumeVH : AC.assumptions()) {
-    if (!AssumeVH)
-      continue;
-    auto *CI = cast<CallInst>(AssumeVH);
-    if (!DT.dominates(CI, Latch->getTerminator()))
-      continue;
-
-    if (isImpliedCond(Pred, LHS, RHS, CI->getArgOperand(0), false))
-      return true;
-  }
-
   struct ClearWalkingBEDominatingCondsOnExit {
     ScalarEvolution &SE;
 
@@ -6981,13 +6969,25 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
     }
   };
 
-  // We don't want more than one activation of the following loop on the stack
+  // We don't want more than one activation of the following loops on the stack
   // -- that can lead to O(n!) time complexity.
   if (WalkingBEDominatingConds)
     return false;
 
   WalkingBEDominatingConds = true;
   ClearWalkingBEDominatingCondsOnExit ClearOnExit(*this);
+
+  // Check conditions due to any @llvm.assume intrinsics.
+  for (auto &AssumeVH : AC.assumptions()) {
+    if (!AssumeVH)
+      continue;
+    auto *CI = cast<CallInst>(AssumeVH);
+    if (!DT.dominates(CI, Latch->getTerminator()))
+      continue;
+
+    if (isImpliedCond(Pred, LHS, RHS, CI->getArgOperand(0), false))
+      return true;
+  }
 
   // If the loop is not reachable from the entry block, we risk running into an
   // infinite loop as we walk up into the dom tree.  These loops do not matter
