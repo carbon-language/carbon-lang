@@ -295,17 +295,6 @@ DWARFDebugInfo::GetDIE(dw_offset_t die_offset)
     return DWARFDIE();    // Not found
 }
 
-DWARFDIE
-DWARFDebugInfo::GetDIEContainingOffset (dw_offset_t die_offset)
-{
-    DWARFCompileUnit *cu = GetCompileUnitContainingDIE(die_offset);
-    if (cu)
-        return cu->GetDIEContainingOffset (die_offset);
-
-    return DWARFDIE();    // Not found
-
-}
-
 //----------------------------------------------------------------------
 // Parse
 //

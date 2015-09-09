@@ -1526,13 +1526,9 @@ SymbolFileDWARF::CompleteType (CompilerType &clang_type)
                                                                   dwarf_die.GetTagAsCString(),
                                                                   type->GetName().AsCString());
     assert (clang_type);
-    DWARFAttributes attributes;
-
-
     DWARFASTParser *dwarf_ast = dwarf_die.GetDWARFParser();
     if (dwarf_ast)
         return dwarf_ast->CompleteTypeFromDWARF (dwarf_die, type, clang_type);
-
     return false;
 }
 

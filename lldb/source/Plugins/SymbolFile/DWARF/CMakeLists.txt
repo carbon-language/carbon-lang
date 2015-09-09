@@ -22,6 +22,7 @@ add_lldb_library(lldbPluginSymbolFileDWARF
   DWARFFormValue.cpp
   DWARFLocationDescription.cpp
   DWARFLocationList.cpp
+  HashedNameToDIE.cpp
   LogChannelDWARF.cpp
   NameToDIE.cpp
   SymbolFileDWARF.cpp

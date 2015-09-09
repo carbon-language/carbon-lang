@@ -569,46 +569,6 @@ DWARFCompileUnit::GetDIE (dw_offset_t die_offset)
     return DWARFDIE(); // Not found
 }
 
-//----------------------------------------------------------------------
-// GetDIEPtrContainingOffset()
-//
-// Get the DIE (Debug Information Entry) that contains the specified
-// .debug_info offset.
-//----------------------------------------------------------------------
-DWARFDIE
-DWARFCompileUnit::GetDIEContainingOffset(dw_offset_t die_offset)
-{
-    if (die_offset != DW_INVALID_OFFSET)
-    {
-        if (ContainsDIEOffset(die_offset))
-        {
-
-            ExtractDIEsIfNeeded (false);
-            DWARFDebugInfoEntry::iterator end = m_die_array.end();
-            DWARFDebugInfoEntry::iterator pos = lower_bound(m_die_array.begin(), end, die_offset, CompareDIEOffset);
-            if (pos != end)
-            {
-                if (die_offset >= (*pos).GetOffset())
-                {
-                    DWARFDebugInfoEntry::iterator next = pos + 1;
-                    if (next != end)
-                    {
-                        if (die_offset < (*next).GetOffset())
-                            return DWARFDIE(this, &(*pos));
-                    }
-                }
-            }
-        }
-        else
-        {
-            return m_dwarf2Data->DebugInfo()->GetDIEContainingOffset (die_offset);
-        }
-    }
-    return DWARFDIE(); // Not found
-}
-
-
-
 size_t
 DWARFCompileUnit::AppendDIEsWithTag (const dw_tag_t tag, DWARFDIECollection& dies, uint32_t depth) const
 {

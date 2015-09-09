@@ -106,9 +106,6 @@ public:
     DWARFDIE
     GetDIE (dw_offset_t die_offset);
 
-    DWARFDIE
-    GetDIEContainingOffset (dw_offset_t die_offset);
-
     static uint8_t
     GetAddressByteSize(const DWARFCompileUnit* cu);
 

@@ -57,23 +57,6 @@ public:
     typedef offset_collection::iterator         offset_collection_iterator;
     typedef offset_collection::const_iterator   offset_collection_const_iterator;
 
-    struct CompareState
-    {
-        CompareState() :
-            die_offset_pairs()
-        {
-            assert(sizeof(dw_offset_t)*2 == sizeof(uint64_t));
-        }
-
-        bool AddTypePair(dw_offset_t a, dw_offset_t b)
-        {
-            uint64_t a_b_offsets = (uint64_t)a << 32 | (uint64_t)b;
-            // Return true if this type was inserted, false otherwise
-            return die_offset_pairs.insert(a_b_offsets).second;
-        }
-        std::set< uint64_t > die_offset_pairs;
-    };
-
                 DWARFDebugInfoEntry():
                     m_offset        (DW_INVALID_OFFSET),
                     m_parent_idx    (0),
@@ -224,22 +207,6 @@ public:
                     DWARFCompileUnit* cu,
                     const DWARFAttributes& attributes,
                     std::string &storage) const;
-
-//    static int  Compare(
-//                    SymbolFileDWARF* dwarf2Data,
-//                    dw_offset_t a_die_offset,
-//                    dw_offset_t b_die_offset,
-//                    CompareState &compare_state,
-//                    bool compare_siblings,
-//                    bool compare_children);
-//
-//    static int Compare(
-//                    SymbolFileDWARF* dwarf2Data,
-//                    DWARFCompileUnit* a_cu, const DWARFDebugInfoEntry* a_die,
-//                    DWARFCompileUnit* b_cu, const DWARFDebugInfoEntry* b_die,
-//                    CompareState &compare_state,
-//                    bool compare_siblings,
-//                    bool compare_children);
 
     static bool OffsetLessThan (
                     const DWARFDebugInfoEntry& a,
