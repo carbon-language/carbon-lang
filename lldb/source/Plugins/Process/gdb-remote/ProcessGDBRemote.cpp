@@ -56,6 +56,7 @@
 #include "lldb/Interpreter/OptionGroupUInt64.h"
 #include "lldb/Interpreter/Property.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/ABI.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/TargetList.h"
@@ -513,6 +514,35 @@ ProcessGDBRemote::ParsePythonTargetDefinition(const FileSpec &target_definition_
     return false;
 }
 
+// If the remote stub didn't give us eh_frame or DWARF register numbers for a register,
+// see if the ABI can provide them.
+// DWARF and eh_frame register numbers are defined as a part of the ABI.
+static void
+AugmentRegisterInfoViaABI (RegisterInfo &reg_info, ConstString reg_name, ABISP abi_sp)
+{
+    if (reg_info.kinds[eRegisterKindEHFrame] == LLDB_INVALID_REGNUM
+        || reg_info.kinds[eRegisterKindDWARF] == LLDB_INVALID_REGNUM)
+    {
+        if (abi_sp)
+        {
+            RegisterInfo abi_reg_info;
+            if (abi_sp->GetRegisterInfoByName (reg_name, abi_reg_info))
+            {
+                if (reg_info.kinds[eRegisterKindEHFrame] == LLDB_INVALID_REGNUM
+                    && abi_reg_info.kinds[eRegisterKindEHFrame] != LLDB_INVALID_REGNUM)
+                {
+                    reg_info.kinds[eRegisterKindEHFrame] = abi_reg_info.kinds[eRegisterKindEHFrame];
+                }
+                if (reg_info.kinds[eRegisterKindDWARF] == LLDB_INVALID_REGNUM
+                    && abi_reg_info.kinds[eRegisterKindDWARF] != LLDB_INVALID_REGNUM)
+                {
+                    reg_info.kinds[eRegisterKindDWARF] = abi_reg_info.kinds[eRegisterKindDWARF];
+                }
+            }
+        }
+    }
+}
+
 static size_t
 SplitCommaSeparatedRegisterNumberString(const llvm::StringRef &comma_separated_regiter_numbers, std::vector<uint32_t> &regnums, int base)
 {
@@ -714,6 +744,8 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                     invalidate_regs.push_back(LLDB_INVALID_REGNUM);
                     reg_info.invalidate_regs = invalidate_regs.data();
                 }
+
+                AugmentRegisterInfoViaABI (reg_info, reg_name, GetABI ());
 
                 m_register_info.AddRegister(reg_info, reg_name, alt_name, set_name);
             }
@@ -4273,7 +4305,7 @@ struct GdbServerTargetInfo
 };
     
 bool
-ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemoteDynamicRegisterInfo &dyn_reg_info)
+ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemoteDynamicRegisterInfo &dyn_reg_info, ABISP abi_sp)
 {
     if (!feature_node)
         return false;
@@ -4281,7 +4313,7 @@ ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemot
     uint32_t prev_reg_num = 0;
     uint32_t reg_offset = 0;
 
-    feature_node.ForEachChildElementWithName("reg", [&target_info, &dyn_reg_info, &prev_reg_num, &reg_offset](const XMLNode &reg_node) -> bool {
+    feature_node.ForEachChildElementWithName("reg", [&target_info, &dyn_reg_info, &prev_reg_num, &reg_offset, &abi_sp](const XMLNode &reg_node) -> bool {
         std::string gdb_group;
         std::string gdb_type;
         ConstString reg_name;
@@ -4444,6 +4476,7 @@ ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemot
         }
         
         ++prev_reg_num;
+        AugmentRegisterInfoViaABI (reg_info, reg_name, abi_sp);
         dyn_reg_info.AddRegister(reg_info, reg_name, alt_name, set_name);
         
         return true; // Keep iterating through all "reg" elements
@@ -4539,7 +4572,7 @@ ProcessGDBRemote::GetGDBServerRegisterInfo ()
             
             if (feature_node)
             {
-                ParseRegisters(feature_node, target_info, this->m_register_info);
+                ParseRegisters(feature_node, target_info, this->m_register_info, GetABI());
             }
             
             for (const auto &include : target_info.includes)
@@ -4557,7 +4590,7 @@ ProcessGDBRemote::GetGDBServerRegisterInfo ()
                 XMLNode include_feature_node = include_xml_document.GetRootElement("feature");
                 if (include_feature_node)
                 {
-                    ParseRegisters(include_feature_node, target_info, this->m_register_info);
+                    ParseRegisters(include_feature_node, target_info, this->m_register_info, GetABI());
                 }
             }
             this->m_register_info.Finalize(GetTarget().GetArchitecture());
