@@ -886,7 +886,7 @@ static bool checkRippleForAdd(const APInt &Op0KnownZero,
   return Op0ZeroPosition >= Op1OnePosition;
 }
 
-/// WillNotOverflowSignedAdd - Return true if we can prove that:
+/// Return true if we can prove that:
 ///    (sext (add LHS, RHS))  === (add (sext LHS), (sext RHS))
 /// This basically requires proving that the add in the original type would not
 /// overflow to change the sign bit or have a carry out.

@@ -22,9 +22,9 @@ using namespace PatternMatch;
 
 #define DEBUG_TYPE "instcombine"
 
-/// CheapToScalarize - Return true if the value is cheaper to scalarize than it
-/// is to leave as a vector operation.  isConstant indicates whether we're
-/// extracting one known element.  If false we're extracting a variable index.
+/// Return true if the value is cheaper to scalarize than it is to leave as a
+/// vector operation. isConstant indicates whether we're extracting one known
+/// element. If false we're extracting a variable index.
 static bool CheapToScalarize(Value *V, bool isConstant) {
   if (Constant *C = dyn_cast<Constant>(V)) {
     if (isConstant) return true;
@@ -275,9 +275,8 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
   return nullptr;
 }
 
-/// CollectSingleShuffleElements - If V is a shuffle of values that ONLY returns
-/// elements from either LHS or RHS, return the shuffle mask and true.
-/// Otherwise, return false.
+/// If V is a shuffle of values that ONLY returns elements from either LHS or
+/// RHS, return the shuffle mask and true. Otherwise, return false.
 static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
                                          SmallVectorImpl<Constant*> &Mask) {
   assert(LHS->getType() == RHS->getType() &&

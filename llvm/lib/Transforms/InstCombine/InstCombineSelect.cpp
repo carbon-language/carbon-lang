@@ -67,7 +67,7 @@ static Value *generateMinMaxSelectPattern(InstCombiner::BuilderTy *Builder,
   return Builder->CreateSelect(Builder->CreateICmp(Pred, A, B), A, B);
 }
 
-/// GetSelectFoldableOperands - We want to turn code that looks like this:
+/// We want to turn code that looks like this:
 ///   %C = or %A, %B
 ///   %D = select %cond, %C, %A
 /// into:
@@ -96,8 +96,8 @@ static unsigned GetSelectFoldableOperands(Instruction *I) {
   }
 }
 
-/// GetSelectFoldableConstant - For the same transformation as the previous
-/// function, return the identity constant that goes into the select.
+/// For the same transformation as the previous function, return the identity
+/// constant that goes into the select.
 static Constant *GetSelectFoldableConstant(Instruction *I) {
   switch (I->getOpcode()) {
   default: llvm_unreachable("This cannot happen!");
@@ -116,7 +116,7 @@ static Constant *GetSelectFoldableConstant(Instruction *I) {
   }
 }
 
-/// FoldSelectOpOp - Here we have (select c, TI, FI), and we know that TI and FI
+/// Here we have (select c, TI, FI), and we know that TI and FI
 /// have the same opcode and only one use each.  Try to simplify this.
 Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
                                           Instruction *FI) {
@@ -203,8 +203,8 @@ static bool isSelect01(Constant *C1, Constant *C2) {
          C2I->isOne() || C2I->isAllOnesValue();
 }
 
-/// FoldSelectIntoOp - Try fold the select into one of the operands to
-/// facilitate further optimization.
+/// Try to fold the select into one of the operands to allow further
+/// optimization.
 Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
                                             Value *FalseVal) {
   // See the comment above GetSelectFoldableOperands for a description of the
@@ -282,7 +282,7 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
   return nullptr;
 }
 
-/// foldSelectICmpAndOr - We want to turn:
+/// We want to turn:
 ///   (select (icmp eq (and X, C1), 0), Y, (or Y, C2))
 /// into:
 ///   (or (shl (and X, C1), C3), y)
@@ -400,9 +400,7 @@ static Value *foldSelectCttzCtlz(ICmpInst *ICI, Value *TrueVal, Value *FalseVal,
   return nullptr;
 }
 
-/// visitSelectInstWithICmp - Visit a SelectInst that has an
-/// ICmpInst as its first operand.
-///
+/// Visit a SelectInst that has an ICmpInst as its first operand.
 Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
                                                    ICmpInst *ICI) {
   bool Changed = false;
@@ -601,10 +599,9 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
 }
 
 
-/// CanSelectOperandBeMappingIntoPredBlock - SI is a select whose condition is a
-/// PHI node (but the two may be in different blocks).  See if the true/false
-/// values (V) are live in all of the predecessor blocks of the PHI.  For
-/// example, cases like this cannot be mapped:
+/// SI is a select whose condition is a PHI node (but the two may be in
+/// different blocks). See if the true/false values (V) are live in all of the
+/// predecessor blocks of the PHI. For example, cases like this can't be mapped:
 ///
 ///   X = phi [ C1, BB1], [C2, BB2]
 ///   Y = add
@@ -638,7 +635,7 @@ static bool CanSelectOperandBeMappingIntoPredBlock(const Value *V,
   return false;
 }
 
-/// FoldSPFofSPF - We have an SPF (e.g. a min or max) of an SPF of the form:
+/// We have an SPF (e.g. a min or max) of an SPF of the form:
 ///   SPF2(SPF1(A, B), C)
 Instruction *InstCombiner::FoldSPFofSPF(Instruction *Inner,
                                         SelectPatternFlavor SPF1,
@@ -751,10 +748,10 @@ Instruction *InstCombiner::FoldSPFofSPF(Instruction *Inner,
   return nullptr;
 }
 
-/// foldSelectICmpAnd - If one of the constants is zero (we know they can't
-/// both be) and we have an icmp instruction with zero, and we have an 'and'
-/// with the non-constant value and a power of two we can turn the select
-/// into a shift on the result of the 'and'.
+/// If one of the constants is zero (we know they can't both be) and we have an
+/// icmp instruction with zero, and we have an 'and' with the non-constant value
+/// and a power of two we can turn the select into a shift on the result of the
+/// 'and'.
 static Value *foldSelectICmpAnd(const SelectInst &SI, ConstantInt *TrueVal,
                                 ConstantInt *FalseVal,
                                 InstCombiner::BuilderTy *Builder) {

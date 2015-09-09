@@ -22,9 +22,9 @@ using namespace PatternMatch;
 #define DEBUG_TYPE "instcombine"
 
 
-/// simplifyValueKnownNonZero - The specific integer value is used in a context
-/// where it is known to be non-zero.  If this allows us to simplify the
-/// computation, do so and return the new operand, otherwise return null.
+/// The specific integer value is used in a context where it is known to be
+/// non-zero.  If this allows us to simplify the computation, do so and return
+/// the new operand, otherwise return null.
 static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC,
                                         Instruction &CxtI) {
   // If V has multiple uses, then we would have to do more analysis to determine
@@ -76,8 +76,7 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC,
 }
 
 
-/// MultiplyOverflows - True if the multiply can not be expressed in an int
-/// this size.
+/// True if the multiply can not be expressed in an int this size.
 static bool MultiplyOverflows(const APInt &C1, const APInt &C2, APInt &Product,
                               bool IsSigned) {
   bool Overflow;
@@ -713,8 +712,7 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
   return Changed ? &I : nullptr;
 }
 
-/// SimplifyDivRemOfSelect - Try to fold a divide or remainder of a select
-/// instruction.
+/// Try to fold a divide or remainder of a select instruction.
 bool InstCombiner::SimplifyDivRemOfSelect(BinaryOperator &I) {
   SelectInst *SI = cast<SelectInst>(I.getOperand(1));
 
