@@ -57,4 +57,17 @@ z1:
 z2:
         .quad   ds2
 
+# Test subtractor relocations.
+# rtdyld-check: *{8}z3 = z4 - z5
+z3:
+        .quad  z4 - z5
+
+        .section        __DATA,_tmp1
+z4:
+        .byte 1
+
+        .section        __DATA,_tmp2
+z5:
+        .byte 1
+
 .subsections_via_symbols
