@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include <function>
 #include <map>
 #include <vector>
 
