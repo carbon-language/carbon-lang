@@ -204,7 +204,7 @@ void WebAssemblyAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   } else {
     assert(false && "Only integer and floating-point constants are supported");
   }
-  OS << ") ;; align " << Align << "\n";
+  OS << ") ;; align " << Align;
   OutStreamer->EmitRawText(OS.str());
 }
 
@@ -236,19 +236,20 @@ void WebAssemblyAsmPrinter::EmitFunctionBodyStart() {
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
   const Function *F = MF->getFunction();
-  for (const Argument &A : F->args())
-    OS << " (param " << toString(A.getType(), hasAddr64) << ')';
   const Type *Rt = F->getReturnType();
-  if (!Rt->isVoidTy())
-    OS << " (result " << toString(Rt, hasAddr64) << ')';
-  OS << '\n';
-  OutStreamer->EmitRawText(OS.str());
+  if (!Rt->isVoidTy() || !F->arg_empty()) {
+    for (const Argument &A : F->args())
+      OS << " (param " << toString(A.getType(), hasAddr64) << ')';
+    if (!Rt->isVoidTy())
+      OS << " (result " << toString(Rt, hasAddr64) << ')';
+    OutStreamer->EmitRawText(OS.str());
+  }
 }
 
 void WebAssemblyAsmPrinter::EmitFunctionBodyEnd() {
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
-  OS << ") ;; end func " << toSymbol(CurrentFnSym->getName()) << '\n';
+  OS << ") ;; end func " << toSymbol(CurrentFnSym->getName());
   OutStreamer->EmitRawText(OS.str());
 }
 
@@ -298,8 +299,6 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   if (NumDefs != 0)
     OS << ')';
-
-  OS << '\n';
 
   OutStreamer->EmitRawText(OS.str());
 }
