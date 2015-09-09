@@ -366,8 +366,16 @@ public:
   ValidatorResult visitUnknown(const SCEVUnknown *Expr) {
     Value *V = Expr->getValue();
 
-    if (!(Expr->getType()->isIntegerTy() || Expr->getType()->isPointerTy())) {
-      DEBUG(dbgs() << "INVALID: UnknownExpr is not an integer or pointer type");
+    // TODO: FIXME: IslExprBuilder is not capable of producing valid code
+    //              for arbitrary pointer expressions at the moment. Until
+    //              this is fixed we disallow pointer expressions completely.
+    if (Expr->getType()->isPointerTy()) {
+      DEBUG(dbgs() << "INVALID: UnknownExpr is a pointer type [FIXME]");
+      return ValidatorResult(SCEVType::INVALID);
+    }
+
+    if (!Expr->getType()->isIntegerTy()) {
+      DEBUG(dbgs() << "INVALID: UnknownExpr is not an integer");
       return ValidatorResult(SCEVType::INVALID);
     }
 

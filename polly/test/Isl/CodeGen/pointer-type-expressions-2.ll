@@ -2,6 +2,11 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen -S < %s | FileCheck %s -check-prefix=CODEGEN
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
+; TODO: FIXME: IslExprBuilder is not capable of producing valid code
+;              for arbitrary pointer expressions at the moment. Until
+;              this is fixed we disallow pointer expressions completely.
+; XFAIL: *
+
 define void @foo(i8* %start, i8* %end) {
 entry:
   %A = alloca i32

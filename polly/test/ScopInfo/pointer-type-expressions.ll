@@ -1,5 +1,10 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s | FileCheck %s
 
+; TODO: FIXME: IslExprBuilder is not capable of producing valid code
+;              for arbitrary pointer expressions at the moment. Until
+;              this is fixed we disallow pointer expressions completely.
+; XFAIL: *
+
 ; void f(int a[], int N, float *P) {
 ;   int i;
 ;   for (i = 0; i < N; ++i)
