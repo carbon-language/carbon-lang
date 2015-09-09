@@ -273,9 +273,22 @@ shouldExtendReceiverForInnerPointerMessage(const ObjCMessageExpr *message) {
   // receiver is loaded from a variable with precise lifetime.
   case ObjCMessageExpr::Instance: {
     const Expr *receiver = message->getInstanceReceiver();
+
+    // Look through OVEs.
+    if (auto opaque = dyn_cast<OpaqueValueExpr>(receiver)) {
+      if (opaque->getSourceExpr())
+        receiver = opaque->getSourceExpr()->IgnoreParens();
+    }
+
     const ImplicitCastExpr *ice = dyn_cast<ImplicitCastExpr>(receiver);
     if (!ice || ice->getCastKind() != CK_LValueToRValue) return true;
     receiver = ice->getSubExpr()->IgnoreParens();
+
+    // Look through OVEs.
+    if (auto opaque = dyn_cast<OpaqueValueExpr>(receiver)) {
+      if (opaque->getSourceExpr())
+        receiver = opaque->getSourceExpr()->IgnoreParens();
+    }
 
     // Only __strong variables.
     if (receiver->getType().getObjCLifetime() != Qualifiers::OCL_Strong)
