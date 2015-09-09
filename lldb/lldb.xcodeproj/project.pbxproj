@@ -5937,10 +5937,10 @@
 			inputPaths = (
 				"$(LLVM_SOURCE_DIR)",
 				"$(LLVM_BUILD_DIR)",
+				"$(LLVM_BUILD_DIR)/archives.txt",
 			);
 			name = "Build llvm and clang";
 			outputPaths = (
-				"$(LLVM_BUILD_DIR)/libllvmclang.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -7333,7 +7333,8 @@
 					"$(inherited)",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-framework",
 					Foundation,
 					"-framework",
@@ -7405,7 +7406,8 @@
 					"$(inherited)",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-framework",
 					Foundation,
 					"-framework",
@@ -7795,7 +7797,8 @@
 					"$(inherited)",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-framework",
 					Foundation,
 					"-framework",
@@ -8087,7 +8090,8 @@
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
 					"-lxml2",
@@ -8101,7 +8105,8 @@
 					Security,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-lxml2",
 					"-framework",
 					Foundation,
@@ -8158,7 +8163,8 @@
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
 					"-lxml2",
@@ -8172,7 +8178,8 @@
 					Security,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-lxml2",
 					"-framework",
 					Foundation,
@@ -8229,7 +8236,8 @@
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
 					"-lxml2",
@@ -8243,7 +8251,8 @@
 					Security,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-lxml2",
 					"-framework",
 					Foundation,
@@ -8506,7 +8515,8 @@
 					"$(inherited)",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-framework",
 					Foundation,
 					"-framework",
@@ -8636,7 +8646,8 @@
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
 					"-lxml2",
@@ -8650,7 +8661,8 @@
 					Security,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-lxml2",
 					"-framework",
 					Foundation,
@@ -8791,7 +8803,8 @@
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
 					"-lxml2",
@@ -8805,7 +8818,8 @@
 					Security,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-lxml2",
 					"-framework",
 					Foundation,
@@ -8858,7 +8872,8 @@
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
 					"-lxml2",
@@ -8872,7 +8887,8 @@
 					Security,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-lxml2",
 					"-framework",
 					Foundation,
@@ -8922,7 +8938,8 @@
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
 					"-lxml2",
@@ -8936,7 +8953,8 @@
 					Security,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-lxml2",
 					"-framework",
 					Foundation,
@@ -8988,7 +9006,8 @@
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-L/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/config",
 					"-lpython2.7",
 					"-lxml2",
@@ -9002,7 +9021,8 @@
 					Security,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
 					"-lxml2",
 					"-framework",
 					Foundation,

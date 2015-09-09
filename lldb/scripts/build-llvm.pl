@@ -17,9 +17,7 @@ use Digest::MD5 qw(md5_hex);
 
 our $llvm_srcroot = $ENV{SCRIPT_INPUT_FILE_0};
 our $llvm_dstroot = $ENV{SCRIPT_INPUT_FILE_1};
-
-our $llvm_clang_outfile = $ENV{SCRIPT_OUTPUT_FILE_0};
-our ($llvm_clang_basename, $llvm_clang_dirname) = fileparse ($llvm_clang_outfile);
+our $archive_filelist_file = $ENV{SCRIPT_INPUT_FILE_2};
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
@@ -34,6 +32,8 @@ my $os_release = 11;
 my $original_env_path = $ENV{PATH};
 
 my $common_configure_options = "--disable-terminfo";
+
+print "warning: remove this prior to checkin";
 
 our %llvm_config_info = (
     'Debug'         => { configure_options => '--disable-optimized --disable-assertions --enable-cxx11 --enable-libcpp', make_options => 'DEBUG_SYMBOLS=1'},
@@ -93,13 +93,6 @@ else
     }
 }
 
-# If our output file already exists then we need not generate it again.
-if (-e $llvm_clang_outfile)
-{
-    exit 0;
-}
-
-
 # Get our options
 
 our $debug = 1;
@@ -136,6 +129,19 @@ sub build_llvm
             push(@llvm_md5_strings, `cd '$repo'; git diff`);
         }
     }
+    
+    print "opening archive file...\n";
+    open my $archive_fh, '>', $archive_filelist_file or die "Can't open $! for writing...\n";
+
+    print "opening /tmp/a.txt file...\n";
+    open my $ffffh, '>', "/tmp/a.txt" or die "Can't open $! for writing...\n";
+    foreach my $aaa (@llvm_md5_strings)
+    {
+        print $ffffh $aaa;
+    }
+    close ($ffffh);
+    
+    my @archive_filelist_files;
     #print "LLVM MD5 will be generated from:\n";
     #print @llvm_md5_strings;
     my $llvm_hex_digest = md5_hex(@llvm_md5_strings);
@@ -152,7 +158,7 @@ sub build_llvm
         my $save_arch_digest = 1;
         my $arch_digest_file = "$llvm_dstroot_arch/md5";
 
-        my $llvm_dstroot_arch_archive = "$llvm_dstroot_arch/$llvm_clang_basename";
+        my $llvm_dstroot_arch_archive = "$llvm_dstroot_arch/archives.txt";
         print "LLVM architecture root for ${arch} exists at '$llvm_dstroot_arch'...";
         if (-e $llvm_dstroot_arch)
         {
@@ -319,13 +325,13 @@ sub build_llvm
             }
             do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus clang-only VERBOSE=1 $llvm_config_href->{make_options} PROJECT_NAME='llvm' $extra_make_flags", "making llvm and clang", 1);
             do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus tools-only VERBOSE=1 $llvm_config_href->{make_options} PROJECT_NAME='llvm' $extra_make_flags EDIS_VERSION=1", "making libedis", 1);
-            # Combine all .o files from a bunch of static libraries from llvm
-            # and clang into a single .a file.
-            create_single_llvm_archive_for_arch ($llvm_dstroot_arch, 1);
         }
 
+        append_all_archive_files ($llvm_dstroot_arch, 1, $archive_fh);
         ++$arch_idx;
     }
+    
+    close($archive_fh);
 }
 
 #----------------------------------------------------------------------
@@ -386,60 +392,16 @@ sub do_command
     }
 }
 
-sub create_single_llvm_archive_for_arch
+sub append_all_archive_files
 {
     my $arch_dstroot = shift;
     my $split_into_objects = shift;
-    my @object_dirs;
-    my $object_dir;
-    my $tmp_dir = $arch_dstroot;
-    my $arch_output_file = "$arch_dstroot/$llvm_clang_basename";
-    -e $arch_output_file and return;
-    my $files = "$arch_dstroot/files.txt";
-    open (FILES, ">$files") or die "Can't open $! for writing...\n";
-    
-    our @archive_files = glob "$arch_dstroot/$llvm_configuration/lib/*.a";
-    
+    my $fh = shift;
+    our @archive_files = glob "$arch_dstroot/$llvm_configuration/lib/*.a";    
     for my $archive_fullpath (@archive_files)
     {
-        if (-e $archive_fullpath)
-        {
-            if ($split_into_objects)
-            {
-                my ($archive_file, $archive_dir, $archive_ext) = fileparse($archive_fullpath, ('.a'));
-                $object_dir = "$tmp_dir/$archive_file";
-                push @object_dirs, $object_dir;
-
-                do_command ("cd '$tmp_dir'; mkdir '$archive_file'; cd '$archive_file'; ar -x $archive_fullpath");
-
-                my @objects = bsd_glob("$object_dir/*.o");
-                foreach my $object (@objects)
-                {
-                    my ($o_file, $o_dir) = fileparse($object);
-                    my $new_object = "$object_dir/${archive_file}-$o_file";
-                    print FILES "$new_object\n";
-                    do_command ("mv '$object' '$new_object'");
-                }
-            }
-            else
-            {
-                # just add the .a files into the file list
-                print FILES "$archive_fullpath\n";
-            }
-        }
-        else
-        {
-            print "warning: archive doesn't exist: '$archive_fullpath'\n";
-        }
+        print $fh "$archive_fullpath\n";
     }
-    close (FILES);
-    do_command ("libtool -static -o '$arch_output_file' -filelist '$files'");
-
-    foreach $object_dir (@object_dirs)
-    {
-        do_command ("rm -rf '$object_dir'");
-    }
-    do_command ("rm -rf '$files'");
 }
 
 build_llvm();
