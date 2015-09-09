@@ -922,6 +922,22 @@ class CACHE_PREF_FM_MM<bits<6> op, bits<4> funct> : MMArch {
   let Inst{11-0}  = offset;
 }
 
+class CACHE_PREFE_FM_MM<bits<6> op, bits<3> funct> : MMArch {
+  bits<21> addr;
+  bits<5> hint;
+  bits<5> base = addr{20-16};
+  bits<9> offset = addr{8-0};
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = hint;
+  let Inst{20-16} = base;
+  let Inst{15-12} = 0xA;
+  let Inst{11-9} = funct;
+  let Inst{8-0}  = offset;
+}
+
 class BARRIER_FM_MM<bits<5> op> : MMArch {
   bits<32> Inst;
 

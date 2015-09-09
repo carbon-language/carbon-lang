@@ -11,14 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-def mem_mm_9 : Operand<i32> {
-  let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops GPR32, simm9);
-  let EncoderMethod = "getMemEncodingMMImm9";
-  let ParserMatchClass = MipsMemAsmOperand;
-  let OperandType = "OPERAND_MEMORY";
-}
-
 //===----------------------------------------------------------------------===//
 //
 // Instruction Encodings

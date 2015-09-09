@@ -105,6 +105,14 @@ def mem_mm_gp_imm7_lsl2 : Operand<i32> {
   let EncoderMethod = "getMemEncodingMMGPImm7Lsl2";
 }
 
+def mem_mm_9 : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops GPR32, simm9);
+  let EncoderMethod = "getMemEncodingMMImm9";
+  let ParserMatchClass = MipsMemAsmOperand;
+  let OperandType = "OPERAND_MEMORY";
+}
+
 def mem_mm_12 : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops GPR32, simm12);
@@ -859,6 +867,13 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                  CACHE_PREF_FM_MM<0x08, 0x6>;
   def PREF_MM  : MMRel, CacheOp<"pref", mem_mm_12>,
                  CACHE_PREF_FM_MM<0x18, 0x2>;
+  }
+
+  let DecoderMethod = "DecodePrefeOpMM" in {
+    def PREFE_MM  : MMRel, CacheOp<"prefe", mem_mm_9>,
+                 CACHE_PREFE_FM_MM<0x18, 0x2>;
+    def CACHEE_MM : MMRel, CacheOp<"cachee", mem_mm_9>,
+                 CACHE_PREFE_FM_MM<0x18, 0x3>;
   }
   def SSNOP_MM : MMRel, Barrier<"ssnop">, BARRIER_FM_MM<0x1>;
   def EHB_MM   : MMRel, Barrier<"ehb">, BARRIER_FM_MM<0x3>;

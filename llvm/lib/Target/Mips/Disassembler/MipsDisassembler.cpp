@@ -261,6 +261,11 @@ static DecodeStatus DecodeStoreEvaOpMM(MCInst &Inst,
                                        uint64_t Address,
                                        const void *Decoder);
 
+static DecodeStatus DecodePrefeOpMM(MCInst &Inst,
+                                    unsigned Insn,
+                                    uint64_t Address,
+                                    const void *Decoder);
+
 static DecodeStatus DecodeSyncI(MCInst &Inst,
                                 unsigned Insn,
                                 uint64_t Address,
@@ -1140,6 +1145,23 @@ static DecodeStatus DecodeCacheOpMM(MCInst &Inst,
                                     uint64_t Address,
                                     const void *Decoder) {
   int Offset = SignExtend32<12>(Insn & 0xfff);
+  unsigned Base = fieldFromInstruction(Insn, 16, 5);
+  unsigned Hint = fieldFromInstruction(Insn, 21, 5);
+
+  Base = getReg(Decoder, Mips::GPR32RegClassID, Base);
+
+  Inst.addOperand(MCOperand::createReg(Base));
+  Inst.addOperand(MCOperand::createImm(Offset));
+  Inst.addOperand(MCOperand::createImm(Hint));
+
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodePrefeOpMM(MCInst &Inst,
+                                    unsigned Insn,
+                                    uint64_t Address,
+                                    const void *Decoder) {
+  int Offset = SignExtend32<9>(Insn & 0x1ff);
   unsigned Base = fieldFromInstruction(Insn, 16, 5);
   unsigned Hint = fieldFromInstruction(Insn, 21, 5);
 
