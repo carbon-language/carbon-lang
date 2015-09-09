@@ -886,7 +886,7 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
         Thread *thread = exe_ctx.GetThreadPtr();
         if (sb_frame.GetThread().GetThreadID() != thread->GetID())
         {
-            log->Printf("SBThread(%p)::StepOutOfFrame passed a frame from another thread (0x" PRIx64 " vrs. 0x" PRIx64 ", returning.",
+            log->Printf("SBThread(%p)::StepOutOfFrame passed a frame from another thread (0x%" PRIx64 " vrs. 0x%" PRIx64 ", returning.",
                         static_cast<void*>(exe_ctx.GetThreadPtr()),
                         sb_frame.GetThread().GetThreadID(),
                         thread->GetID());
