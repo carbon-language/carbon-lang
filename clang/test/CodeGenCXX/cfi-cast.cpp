@@ -107,3 +107,19 @@ void vcp(void *p) {
   // CHECK-UCAST-STRICT: [[P:%[^ ]*]] = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"1C")
   static_cast<C*>(p);
 }
+
+// CHECK-UCAST-LABEL: define void @_Z3bcpP1B
+// CHECK-UCAST-STRICT-LABEL: define void @_Z3bcpP1B
+void bcp(B *p) {
+  // CHECK-UCAST: [[P:%[^ ]*]] = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"1A")
+  // CHECK-UCAST-STRICT: [[P:%[^ ]*]] = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"1C")
+  (C *)p;
+}
+
+// CHECK-UCAST-LABEL: define void @_Z8bcp_callP1B
+// CHECK-UCAST-STRICT-LABEL: define void @_Z8bcp_callP1B
+void bcp_call(B *p) {
+  // CHECK-UCAST: [[P:%[^ ]*]] = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"1A")
+  // CHECK-UCAST-STRICT: [[P:%[^ ]*]] = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"1C")
+  ((C *)p)->f();
+}

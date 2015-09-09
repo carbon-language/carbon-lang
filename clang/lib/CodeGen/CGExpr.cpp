@@ -820,6 +820,14 @@ Address CodeGenFunction::EmitPointerWithAlignment(const Expr *E,
                          getNaturalPointeeTypeAlignment(E->getType(), Source));
         }
 
+        if (SanOpts.has(SanitizerKind::CFIUnrelatedCast)) {
+          if (auto PT = E->getType()->getAs<PointerType>())
+            EmitVTablePtrCheckForCast(PT->getPointeeType(), Addr.getPointer(),
+                                      /*MayBeNull=*/true,
+                                      CodeGenFunction::CFITCK_UnrelatedCast,
+                                      CE->getLocStart());
+        }
+
         return Builder.CreateBitCast(Addr, ConvertType(E->getType()));
       }
       break;
