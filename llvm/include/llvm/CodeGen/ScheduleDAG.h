@@ -20,11 +20,11 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
-  class AliasAnalysis;
   class SUnit;
   class MachineConstantPool;
   class MachineFunction;

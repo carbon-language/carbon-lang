@@ -122,6 +122,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/TypeBasedAliasAnalysis.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
@@ -269,25 +270,6 @@ public:
 };
 }
 
-// Register this pass...
-char TypeBasedAliasAnalysis::ID = 0;
-INITIALIZE_AG_PASS(TypeBasedAliasAnalysis, AliasAnalysis, "tbaa",
-                   "Type-Based Alias Analysis", false, true, false)
-
-ImmutablePass *llvm::createTypeBasedAliasAnalysisPass() {
-  return new TypeBasedAliasAnalysis();
-}
-
-bool TypeBasedAliasAnalysis::doInitialization(Module &M) {
-  InitializeAliasAnalysis(this, &M.getDataLayout());
-  return true;
-}
-
-void TypeBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesAll();
-  AliasAnalysis::getAnalysisUsage(AU);
-}
-
 /// Check the first operand of the tbaa tag node, if it is a MDNode, we treat
 /// it as struct-path aware TBAA format, otherwise, we treat it as scalar TBAA
 /// format.
@@ -297,145 +279,36 @@ static bool isStructPathTBAA(const MDNode *MD) {
   return isa<MDNode>(MD->getOperand(0)) && MD->getNumOperands() >= 3;
 }
 
-/// Aliases - Test whether the type represented by A may alias the
-/// type represented by B.
-bool TypeBasedAliasAnalysis::Aliases(const MDNode *A, const MDNode *B) const {
-  // Make sure that both MDNodes are struct-path aware.
-  if (isStructPathTBAA(A) && isStructPathTBAA(B))
-    return PathAliases(A, B);
-
-  // Keep track of the root node for A and B.
-  TBAANode RootA, RootB;
-
-  // Climb the tree from A to see if we reach B.
-  for (TBAANode T(A);;) {
-    if (T.getNode() == B)
-      // B is an ancestor of A.
-      return true;
-
-    RootA = T;
-    T = T.getParent();
-    if (!T.getNode())
-      break;
-  }
-
-  // Climb the tree from B to see if we reach A.
-  for (TBAANode T(B);;) {
-    if (T.getNode() == A)
-      // A is an ancestor of B.
-      return true;
-
-    RootB = T;
-    T = T.getParent();
-    if (!T.getNode())
-      break;
-  }
-
-  // Neither node is an ancestor of the other.
-
-  // If they have different roots, they're part of different potentially
-  // unrelated type systems, so we must be conservative.
-  if (RootA.getNode() != RootB.getNode())
-    return true;
-
-  // If they have the same root, then we've proved there's no alias.
-  return false;
-}
-
-/// Test whether the struct-path tag represented by A may alias the
-/// struct-path tag represented by B.
-bool TypeBasedAliasAnalysis::PathAliases(const MDNode *A,
-                                         const MDNode *B) const {
-  // Verify that both input nodes are struct-path aware.
-  assert(isStructPathTBAA(A) && "MDNode A is not struct-path aware.");
-  assert(isStructPathTBAA(B) && "MDNode B is not struct-path aware.");
-
-  // Keep track of the root node for A and B.
-  TBAAStructTypeNode RootA, RootB;
-  TBAAStructTagNode TagA(A), TagB(B);
-
-  // TODO: We need to check if AccessType of TagA encloses AccessType of
-  // TagB to support aggregate AccessType. If yes, return true.
-
-  // Start from the base type of A, follow the edge with the correct offset in
-  // the type DAG and adjust the offset until we reach the base type of B or
-  // until we reach the Root node.
-  // Compare the adjusted offset once we have the same base.
-
-  // Climb the type DAG from base type of A to see if we reach base type of B.
-  const MDNode *BaseA = TagA.getBaseType();
-  const MDNode *BaseB = TagB.getBaseType();
-  uint64_t OffsetA = TagA.getOffset(), OffsetB = TagB.getOffset();
-  for (TBAAStructTypeNode T(BaseA);;) {
-    if (T.getNode() == BaseB)
-      // Base type of A encloses base type of B, check if the offsets match.
-      return OffsetA == OffsetB;
-
-    RootA = T;
-    // Follow the edge with the correct offset, OffsetA will be adjusted to
-    // be relative to the field type.
-    T = T.getParent(OffsetA);
-    if (!T.getNode())
-      break;
-  }
-
-  // Reset OffsetA and climb the type DAG from base type of B to see if we reach
-  // base type of A.
-  OffsetA = TagA.getOffset();
-  for (TBAAStructTypeNode T(BaseB);;) {
-    if (T.getNode() == BaseA)
-      // Base type of B encloses base type of A, check if the offsets match.
-      return OffsetA == OffsetB;
-
-    RootB = T;
-    // Follow the edge with the correct offset, OffsetB will be adjusted to
-    // be relative to the field type.
-    T = T.getParent(OffsetB);
-    if (!T.getNode())
-      break;
-  }
-
-  // Neither node is an ancestor of the other.
-
-  // If they have different roots, they're part of different potentially
-  // unrelated type systems, so we must be conservative.
-  if (RootA.getNode() != RootB.getNode())
-    return true;
-
-  // If they have the same root, then we've proved there's no alias.
-  return false;
-}
-
-AliasResult TypeBasedAliasAnalysis::alias(const MemoryLocation &LocA,
-                                          const MemoryLocation &LocB) {
+AliasResult TypeBasedAAResult::alias(const MemoryLocation &LocA,
+                                     const MemoryLocation &LocB) {
   if (!EnableTBAA)
-    return AliasAnalysis::alias(LocA, LocB);
+    return AAResultBase::alias(LocA, LocB);
 
   // Get the attached MDNodes. If either value lacks a tbaa MDNode, we must
   // be conservative.
   const MDNode *AM = LocA.AATags.TBAA;
   if (!AM)
-    return AliasAnalysis::alias(LocA, LocB);
+    return AAResultBase::alias(LocA, LocB);
   const MDNode *BM = LocB.AATags.TBAA;
   if (!BM)
-    return AliasAnalysis::alias(LocA, LocB);
+    return AAResultBase::alias(LocA, LocB);
 
   // If they may alias, chain to the next AliasAnalysis.
   if (Aliases(AM, BM))
-    return AliasAnalysis::alias(LocA, LocB);
+    return AAResultBase::alias(LocA, LocB);
 
   // Otherwise return a definitive result.
   return NoAlias;
 }
 
-bool TypeBasedAliasAnalysis::pointsToConstantMemory(const MemoryLocation &Loc,
-                                                    bool OrLocal) {
+bool TypeBasedAAResult::pointsToConstantMemory(const MemoryLocation &Loc,
+                                               bool OrLocal) {
   if (!EnableTBAA)
-    return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
+    return AAResultBase::pointsToConstantMemory(Loc, OrLocal);
 
   const MDNode *M = Loc.AATags.TBAA;
   if (!M)
-    return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
+    return AAResultBase::pointsToConstantMemory(Loc, OrLocal);
 
   // If this is an "immutable" type, we can assume the pointer is pointing
   // to constant memory.
@@ -443,13 +316,13 @@ bool TypeBasedAliasAnalysis::pointsToConstantMemory(const MemoryLocation &Loc,
       (isStructPathTBAA(M) && TBAAStructTagNode(M).TypeIsImmutable()))
     return true;
 
-  return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
+  return AAResultBase::pointsToConstantMemory(Loc, OrLocal);
 }
 
 FunctionModRefBehavior
-TypeBasedAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
+TypeBasedAAResult::getModRefBehavior(ImmutableCallSite CS) {
   if (!EnableTBAA)
-    return AliasAnalysis::getModRefBehavior(CS);
+    return AAResultBase::getModRefBehavior(CS);
 
   FunctionModRefBehavior Min = FMRB_UnknownModRefBehavior;
 
@@ -460,19 +333,18 @@ TypeBasedAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
         (isStructPathTBAA(M) && TBAAStructTagNode(M).TypeIsImmutable()))
       Min = FMRB_OnlyReadsMemory;
 
-  return FunctionModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
+  return FunctionModRefBehavior(AAResultBase::getModRefBehavior(CS) & Min);
 }
 
-FunctionModRefBehavior
-TypeBasedAliasAnalysis::getModRefBehavior(const Function *F) {
+FunctionModRefBehavior TypeBasedAAResult::getModRefBehavior(const Function *F) {
   // Functions don't have metadata. Just chain to the next implementation.
-  return AliasAnalysis::getModRefBehavior(F);
+  return AAResultBase::getModRefBehavior(F);
 }
 
-ModRefInfo TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
-                                                 const MemoryLocation &Loc) {
+ModRefInfo TypeBasedAAResult::getModRefInfo(ImmutableCallSite CS,
+                                            const MemoryLocation &Loc) {
   if (!EnableTBAA)
-    return AliasAnalysis::getModRefInfo(CS, Loc);
+    return AAResultBase::getModRefInfo(CS, Loc);
 
   if (const MDNode *L = Loc.AATags.TBAA)
     if (const MDNode *M =
@@ -480,13 +352,13 @@ ModRefInfo TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       if (!Aliases(L, M))
         return MRI_NoModRef;
 
-  return AliasAnalysis::getModRefInfo(CS, Loc);
+  return AAResultBase::getModRefInfo(CS, Loc);
 }
 
-ModRefInfo TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
-                                                 ImmutableCallSite CS2) {
+ModRefInfo TypeBasedAAResult::getModRefInfo(ImmutableCallSite CS1,
+                                            ImmutableCallSite CS2) {
   if (!EnableTBAA)
-    return AliasAnalysis::getModRefInfo(CS1, CS2);
+    return AAResultBase::getModRefInfo(CS1, CS2);
 
   if (const MDNode *M1 =
           CS1.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
@@ -495,7 +367,7 @@ ModRefInfo TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
       if (!Aliases(M1, M2))
         return MRI_NoModRef;
 
-  return AliasAnalysis::getModRefInfo(CS1, CS2);
+  return AAResultBase::getModRefInfo(CS1, CS2);
 }
 
 bool MDNode::isTBAAVtableAccess() const {
@@ -604,3 +476,147 @@ void Instruction::getAAMetadata(AAMDNodes &N, bool Merge) const {
     N.NoAlias = getMetadata(LLVMContext::MD_noalias);
 }
 
+/// Aliases - Test whether the type represented by A may alias the
+/// type represented by B.
+bool TypeBasedAAResult::Aliases(const MDNode *A, const MDNode *B) const {
+  // Make sure that both MDNodes are struct-path aware.
+  if (isStructPathTBAA(A) && isStructPathTBAA(B))
+    return PathAliases(A, B);
+
+  // Keep track of the root node for A and B.
+  TBAANode RootA, RootB;
+
+  // Climb the tree from A to see if we reach B.
+  for (TBAANode T(A);;) {
+    if (T.getNode() == B)
+      // B is an ancestor of A.
+      return true;
+
+    RootA = T;
+    T = T.getParent();
+    if (!T.getNode())
+      break;
+  }
+
+  // Climb the tree from B to see if we reach A.
+  for (TBAANode T(B);;) {
+    if (T.getNode() == A)
+      // A is an ancestor of B.
+      return true;
+
+    RootB = T;
+    T = T.getParent();
+    if (!T.getNode())
+      break;
+  }
+
+  // Neither node is an ancestor of the other.
+
+  // If they have different roots, they're part of different potentially
+  // unrelated type systems, so we must be conservative.
+  if (RootA.getNode() != RootB.getNode())
+    return true;
+
+  // If they have the same root, then we've proved there's no alias.
+  return false;
+}
+
+/// Test whether the struct-path tag represented by A may alias the
+/// struct-path tag represented by B.
+bool TypeBasedAAResult::PathAliases(const MDNode *A, const MDNode *B) const {
+  // Verify that both input nodes are struct-path aware.
+  assert(isStructPathTBAA(A) && "MDNode A is not struct-path aware.");
+  assert(isStructPathTBAA(B) && "MDNode B is not struct-path aware.");
+
+  // Keep track of the root node for A and B.
+  TBAAStructTypeNode RootA, RootB;
+  TBAAStructTagNode TagA(A), TagB(B);
+
+  // TODO: We need to check if AccessType of TagA encloses AccessType of
+  // TagB to support aggregate AccessType. If yes, return true.
+
+  // Start from the base type of A, follow the edge with the correct offset in
+  // the type DAG and adjust the offset until we reach the base type of B or
+  // until we reach the Root node.
+  // Compare the adjusted offset once we have the same base.
+
+  // Climb the type DAG from base type of A to see if we reach base type of B.
+  const MDNode *BaseA = TagA.getBaseType();
+  const MDNode *BaseB = TagB.getBaseType();
+  uint64_t OffsetA = TagA.getOffset(), OffsetB = TagB.getOffset();
+  for (TBAAStructTypeNode T(BaseA);;) {
+    if (T.getNode() == BaseB)
+      // Base type of A encloses base type of B, check if the offsets match.
+      return OffsetA == OffsetB;
+
+    RootA = T;
+    // Follow the edge with the correct offset, OffsetA will be adjusted to
+    // be relative to the field type.
+    T = T.getParent(OffsetA);
+    if (!T.getNode())
+      break;
+  }
+
+  // Reset OffsetA and climb the type DAG from base type of B to see if we reach
+  // base type of A.
+  OffsetA = TagA.getOffset();
+  for (TBAAStructTypeNode T(BaseB);;) {
+    if (T.getNode() == BaseA)
+      // Base type of B encloses base type of A, check if the offsets match.
+      return OffsetA == OffsetB;
+
+    RootB = T;
+    // Follow the edge with the correct offset, OffsetB will be adjusted to
+    // be relative to the field type.
+    T = T.getParent(OffsetB);
+    if (!T.getNode())
+      break;
+  }
+
+  // Neither node is an ancestor of the other.
+
+  // If they have different roots, they're part of different potentially
+  // unrelated type systems, so we must be conservative.
+  if (RootA.getNode() != RootB.getNode())
+    return true;
+
+  // If they have the same root, then we've proved there's no alias.
+  return false;
+}
+
+TypeBasedAAResult TypeBasedAA::run(Function &F, AnalysisManager<Function> *AM) {
+  return TypeBasedAAResult(AM->getResult<TargetLibraryAnalysis>(F));
+}
+
+char TypeBasedAA::PassID;
+
+char TypeBasedAAWrapperPass::ID = 0;
+INITIALIZE_PASS_BEGIN(TypeBasedAAWrapperPass, "tbaa",
+                      "Type-Based Alias Analysis", false, true)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_END(TypeBasedAAWrapperPass, "tbaa", "Type-Based Alias Analysis",
+                    false, true)
+
+ImmutablePass *llvm::createTypeBasedAAWrapperPass() {
+  return new TypeBasedAAWrapperPass();
+}
+
+TypeBasedAAWrapperPass::TypeBasedAAWrapperPass() : ImmutablePass(ID) {
+  initializeTypeBasedAAWrapperPassPass(*PassRegistry::getPassRegistry());
+}
+
+bool TypeBasedAAWrapperPass::doInitialization(Module &M) {
+  Result.reset(new TypeBasedAAResult(
+      getAnalysis<TargetLibraryInfoWrapperPass>().getTLI()));
+  return false;
+}
+
+bool TypeBasedAAWrapperPass::doFinalization(Module &M) {
+  Result.reset();
+  return false;
+}
+
+void TypeBasedAAWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  AU.addRequired<TargetLibraryInfoWrapperPass>();
+}

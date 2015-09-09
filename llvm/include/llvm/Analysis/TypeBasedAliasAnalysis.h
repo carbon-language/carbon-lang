@@ -22,50 +22,72 @@
 
 namespace llvm {
 
-/// TypeBasedAliasAnalysis - This is a simple alias analysis
-/// implementation that uses TypeBased to answer queries.
-class TypeBasedAliasAnalysis : public ImmutablePass, public AliasAnalysis {
+/// A simple AA result that uses TBAA metadata to answer queries.
+class TypeBasedAAResult : public AAResultBase<TypeBasedAAResult> {
+  friend AAResultBase<TypeBasedAAResult>;
+
 public:
-  static char ID; // Class identification, replacement for typeinfo
-  TypeBasedAliasAnalysis() : ImmutablePass(ID) {
-    initializeTypeBasedAliasAnalysisPass(*PassRegistry::getPassRegistry());
-  }
+  explicit TypeBasedAAResult(const TargetLibraryInfo &TLI)
+      : AAResultBase(TLI) {}
+  TypeBasedAAResult(TypeBasedAAResult &&Arg) : AAResultBase(std::move(Arg)) {}
 
-  bool doInitialization(Module &M) override;
+  /// Handle invalidation events from the new pass manager.
+  ///
+  /// By definition, this result is stateless and so remains valid.
+  bool invalidate(Function &, const PreservedAnalyses &) { return false; }
 
-  /// getAdjustedAnalysisPointer - This method is used when a pass implements
-  /// an analysis interface through multiple inheritance.  If needed, it
-  /// should override this to adjust the this pointer as needed for the
-  /// specified pass info.
-  void *getAdjustedAnalysisPointer(const void *PI) override {
-    if (PI == &AliasAnalysis::ID)
-      return (AliasAnalysis *)this;
-    return this;
-  }
-
-  bool Aliases(const MDNode *A, const MDNode *B) const;
-  bool PathAliases(const MDNode *A, const MDNode *B) const;
+  AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB);
+  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal);
+  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS);
+  FunctionModRefBehavior getModRefBehavior(const Function *F);
+  ModRefInfo getModRefInfo(ImmutableCallSite CS, const MemoryLocation &Loc);
+  ModRefInfo getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2);
 
 private:
+  bool Aliases(const MDNode *A, const MDNode *B) const;
+  bool PathAliases(const MDNode *A, const MDNode *B) const;
+};
+
+/// Analysis pass providing a never-invalidated alias analysis result.
+class TypeBasedAA {
+public:
+  typedef TypeBasedAAResult Result;
+
+  /// \brief Opaque, unique identifier for this analysis pass.
+  static void *ID() { return (void *)&PassID; }
+
+  TypeBasedAAResult run(Function &F, AnalysisManager<Function> *AM);
+
+  /// \brief Provide access to a name for this pass for debugging purposes.
+  static StringRef name() { return "TypeBasedAA"; }
+
+private:
+  static char PassID;
+};
+
+/// Legacy wrapper pass to provide the TypeBasedAAResult object.
+class TypeBasedAAWrapperPass : public ImmutablePass {
+  std::unique_ptr<TypeBasedAAResult> Result;
+
+public:
+  static char ID;
+
+  TypeBasedAAWrapperPass();
+
+  TypeBasedAAResult &getResult() { return *Result; }
+  const TypeBasedAAResult &getResult() const { return *Result; }
+
+  bool doInitialization(Module &M) override;
+  bool doFinalization(Module &M) override;
   void getAnalysisUsage(AnalysisUsage &AU) const override;
-  AliasResult alias(const MemoryLocation &LocA,
-                    const MemoryLocation &LocB) override;
-  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal) override;
-  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
-  FunctionModRefBehavior getModRefBehavior(const Function *F) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS,
-                           const MemoryLocation &Loc) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS1,
-                           ImmutableCallSite CS2) override;
 };
 
 //===--------------------------------------------------------------------===//
 //
-// createTypeBasedAliasAnalysisPass - This pass implements metadata-based
+// createTypeBasedAAWrapperPass - This pass implements metadata-based
 // type-based alias analysis.
 //
-ImmutablePass *createTypeBasedAliasAnalysisPass();
-
+ImmutablePass *createTypeBasedAAWrapperPass();
 }
 
 #endif

@@ -54,12 +54,12 @@ PreserveAlignmentAssumptions("preserve-alignment-assumptions-during-inlining",
   cl::desc("Convert align attributes to assumptions during inlining."));
 
 bool llvm::InlineFunction(CallInst *CI, InlineFunctionInfo &IFI,
-                          bool InsertLifetime) {
-  return InlineFunction(CallSite(CI), IFI, InsertLifetime);
+                          AAResults *CalleeAAR, bool InsertLifetime) {
+  return InlineFunction(CallSite(CI), IFI, CalleeAAR, InsertLifetime);
 }
 bool llvm::InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI,
-                          bool InsertLifetime) {
-  return InlineFunction(CallSite(II), IFI, InsertLifetime);
+                          AAResults *CalleeAAR, bool InsertLifetime) {
+  return InlineFunction(CallSite(II), IFI, CalleeAAR, InsertLifetime);
 }
 
 namespace {
@@ -490,7 +490,7 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
 /// parameters with noalias metadata specifying the new scope, and tag all
 /// non-derived loads, stores and memory intrinsics with the new alias scopes.
 static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
-                                  const DataLayout &DL, AliasAnalysis *AA) {
+                                  const DataLayout &DL, AAResults *CalleeAAR) {
   if (!EnableNoAliasConversion)
     return;
 
@@ -575,8 +575,8 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
           continue;
 
         IsFuncCall = true;
-        if (AA) {
-          FunctionModRefBehavior MRB = AA->getModRefBehavior(ICS);
+        if (CalleeAAR) {
+          FunctionModRefBehavior MRB = CalleeAAR->getModRefBehavior(ICS);
           if (MRB == FMRB_OnlyAccessesArgumentPointees ||
               MRB == FMRB_OnlyReadsArgumentPointees)
             IsArgMemOnlyCall = true;
@@ -1011,7 +1011,7 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
 /// exists in the instruction stream.  Similarly this will inline a recursive
 /// function by one level.
 bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
-                          bool InsertLifetime) {
+                          AAResults *CalleeAAR, bool InsertLifetime) {
   Instruction *TheCall = CS.getInstruction();
   assert(TheCall->getParent() && TheCall->getParent()->getParent() &&
          "Instruction not in function!");
@@ -1136,7 +1136,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     CloneAliasScopeMetadata(CS, VMap);
 
     // Add noalias metadata if necessary.
-    AddAliasScopeMetadata(CS, VMap, DL, IFI.AA);
+    AddAliasScopeMetadata(CS, VMap, DL, CalleeAAR);
 
     // FIXME: We could register any cloned assumptions instead of clearing the
     // whole function's cache.

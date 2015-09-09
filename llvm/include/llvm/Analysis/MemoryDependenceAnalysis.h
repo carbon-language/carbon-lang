@@ -28,7 +28,6 @@ namespace llvm {
   class FunctionPass;
   class Instruction;
   class CallSite;
-  class AliasAnalysis;
   class AssumptionCache;
   class MemoryDependenceAnalysis;
   class PredIteratorCache;

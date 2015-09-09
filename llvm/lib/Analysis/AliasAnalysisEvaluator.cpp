@@ -59,7 +59,7 @@ namespace {
     }
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<AliasAnalysis>();
+      AU.addRequired<AAResultsWrapperPass>();
       AU.setPreservesAll();
     }
 
@@ -83,7 +83,7 @@ namespace {
 char AAEval::ID = 0;
 INITIALIZE_PASS_BEGIN(AAEval, "aa-eval",
                 "Exhaustive Alias Analysis Precision Evaluator", false, true)
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
 INITIALIZE_PASS_END(AAEval, "aa-eval",
                 "Exhaustive Alias Analysis Precision Evaluator", false, true)
 
@@ -142,7 +142,7 @@ static inline bool isInterestingPointer(Value *V) {
 
 bool AAEval::runOnFunction(Function &F) {
   const DataLayout &DL = F.getParent()->getDataLayout();
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  AliasAnalysis &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
 
   SetVector<Value *> Pointers;
   SetVector<CallSite> CallSites;

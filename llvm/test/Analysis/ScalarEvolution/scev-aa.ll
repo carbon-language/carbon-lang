@@ -1,4 +1,4 @@
-; RUN: opt < %s -scev-aa -aa-eval -print-all-alias-modref-info \
+; RUN: opt -disable-output < %s -disable-basicaa -scev-aa -aa-eval -print-all-alias-modref-info \
 ; RUN:   2>&1 | FileCheck %s
 
 ; At the time of this writing, -basicaa misses the example of the form

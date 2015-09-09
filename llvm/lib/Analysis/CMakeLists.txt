@@ -1,6 +1,5 @@
 add_llvm_library(LLVMAnalysis
   AliasAnalysis.cpp
-  AliasAnalysisCounter.cpp
   AliasAnalysisEvaluator.cpp
   AliasSetTracker.cpp
   Analysis.cpp
@@ -48,7 +47,6 @@ add_llvm_library(LLVMAnalysis
   MemoryDependenceAnalysis.cpp
   MemoryLocation.cpp
   ModuleDebugInfoPrinter.cpp
-  NoAliasAnalysis.cpp
   ObjCARCAliasAnalysis.cpp
   ObjCARCAnalysisUtils.cpp
   ObjCARCInstKind.cpp

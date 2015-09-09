@@ -20,13 +20,13 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/ValueHandle.h"
 #include <vector>
 
 namespace llvm {
 
-class AliasAnalysis;
 class LoadInst;
 class StoreInst;
 class VAArgInst;

@@ -24,6 +24,7 @@
 #define LLVM_ANALYSIS_OBJCARCALIASANALYSIS_H
 
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
@@ -35,35 +36,64 @@ namespace objcarc {
 /// TODO: This class could be generalized to know about other ObjC-specific
 /// tricks. Such as knowing that ivars in the non-fragile ABI are non-aliasing
 /// even though their offsets are dynamic.
-class ObjCARCAliasAnalysis : public ImmutablePass, public AliasAnalysis {
+class ObjCARCAAResult : public AAResultBase<ObjCARCAAResult> {
+  friend AAResultBase<ObjCARCAAResult>;
+
+  const DataLayout &DL;
+
 public:
-  static char ID; // Class identification, replacement for typeinfo
-  ObjCARCAliasAnalysis() : ImmutablePass(ID) {
-    initializeObjCARCAliasAnalysisPass(*PassRegistry::getPassRegistry());
-  }
+  explicit ObjCARCAAResult(const DataLayout &DL, const TargetLibraryInfo &TLI)
+      : AAResultBase(TLI), DL(DL) {}
+  ObjCARCAAResult(ObjCARCAAResult &&Arg)
+      : AAResultBase(std::move(Arg)), DL(Arg.DL) {}
+
+  /// Handle invalidation events from the new pass manager.
+  ///
+  /// By definition, this result is stateless and so remains valid.
+  bool invalidate(Function &, const PreservedAnalyses &) { return false; }
+
+  AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB);
+  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal);
+
+  using AAResultBase::getModRefBehavior;
+  FunctionModRefBehavior getModRefBehavior(const Function *F);
+
+  using AAResultBase::getModRefInfo;
+  ModRefInfo getModRefInfo(ImmutableCallSite CS, const MemoryLocation &Loc);
+};
+
+/// Analysis pass providing a never-invalidated alias analysis result.
+class ObjCARCAA {
+public:
+  typedef ObjCARCAAResult Result;
+
+  /// \brief Opaque, unique identifier for this analysis pass.
+  static void *ID() { return (void *)&PassID; }
+
+  ObjCARCAAResult run(Function &F, AnalysisManager<Function> *AM);
+
+  /// \brief Provide access to a name for this pass for debugging purposes.
+  static StringRef name() { return "ObjCARCAA"; }
 
 private:
+  static char PassID;
+};
+
+/// Legacy wrapper pass to provide the ObjCARCAAResult object.
+class ObjCARCAAWrapperPass : public ImmutablePass {
+  std::unique_ptr<ObjCARCAAResult> Result;
+
+public:
+  static char ID;
+
+  ObjCARCAAWrapperPass();
+
+  ObjCARCAAResult &getResult() { return *Result; }
+  const ObjCARCAAResult &getResult() const { return *Result; }
+
   bool doInitialization(Module &M) override;
-
-  /// This method is used when a pass implements an analysis interface through
-  /// multiple inheritance.  If needed, it should override this to adjust the
-  /// this pointer as needed for the specified pass info.
-  void *getAdjustedAnalysisPointer(const void *PI) override {
-    if (PI == &AliasAnalysis::ID)
-      return static_cast<AliasAnalysis *>(this);
-    return this;
-  }
-
+  bool doFinalization(Module &M) override;
   void getAnalysisUsage(AnalysisUsage &AU) const override;
-  AliasResult alias(const MemoryLocation &LocA,
-                    const MemoryLocation &LocB) override;
-  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal) override;
-  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
-  FunctionModRefBehavior getModRefBehavior(const Function *F) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS,
-                           const MemoryLocation &Loc) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS1,
-                           ImmutableCallSite CS2) override;
 };
 
 } // namespace objcarc

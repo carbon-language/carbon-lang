@@ -25,9 +25,16 @@
 
 namespace llvm {
 
-/// GlobalsModRef - The actual analysis pass.
-class GlobalsModRef : public ModulePass, public AliasAnalysis {
+/// An alias analysis result set for globals.
+///
+/// This focuses on handling aliasing properties of globals and interprocedural
+/// function call mod/ref information.
+class GlobalsAAResult : public AAResultBase<GlobalsAAResult> {
+  friend AAResultBase<GlobalsAAResult>;
+
   class FunctionInfo;
+
+  const DataLayout &DL;
 
   /// The globals that do not have their addresses taken.
   SmallPtrSet<const GlobalValue *, 8> NonAddressTakenGlobals;
@@ -45,11 +52,11 @@ class GlobalsModRef : public ModulePass, public AliasAnalysis {
 
   /// Handle to clear this analysis on deletion of values.
   struct DeletionCallbackHandle final : CallbackVH {
-    GlobalsModRef &GMR;
+    GlobalsAAResult &GAR;
     std::list<DeletionCallbackHandle>::iterator I;
 
-    DeletionCallbackHandle(GlobalsModRef &GMR, Value *V)
-        : CallbackVH(V), GMR(GMR) {}
+    DeletionCallbackHandle(GlobalsAAResult &GAR, Value *V)
+        : CallbackVH(V), GAR(GAR) {}
 
     void deleted() override;
   };
@@ -60,56 +67,31 @@ class GlobalsModRef : public ModulePass, public AliasAnalysis {
   /// could perform to the memory utilization here if this becomes a problem.
   std::list<DeletionCallbackHandle> Handles;
 
+  explicit GlobalsAAResult(const DataLayout &DL, const TargetLibraryInfo &TLI);
+
 public:
-  static char ID;
-  GlobalsModRef();
+  GlobalsAAResult(GlobalsAAResult &&Arg);
 
-  bool runOnModule(Module &M) override {
-    InitializeAliasAnalysis(this, &M.getDataLayout());
-
-    // Find non-addr taken globals.
-    AnalyzeGlobals(M);
-
-    // Propagate on CG.
-    AnalyzeCallGraph(getAnalysis<CallGraphWrapperPass>().getCallGraph(), M);
-    return false;
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AliasAnalysis::getAnalysisUsage(AU);
-    AU.addRequired<CallGraphWrapperPass>();
-    AU.setPreservesAll(); // Does not transform code
-  }
-
-  /// getAdjustedAnalysisPointer - This method is used when a pass implements
-  /// an analysis interface through multiple inheritance.  If needed, it
-  /// should override this to adjust the this pointer as needed for the
-  /// specified pass info.
-  void *getAdjustedAnalysisPointer(AnalysisID PI) override {
-    if (PI == &AliasAnalysis::ID)
-      return (AliasAnalysis *)this;
-    return this;
-  }
+  static GlobalsAAResult analyzeModule(Module &M, const TargetLibraryInfo &TLI,
+                                       CallGraph &CG);
 
   //------------------------------------------------
   // Implement the AliasAnalysis API
   //
-  AliasResult alias(const MemoryLocation &LocA,
-                    const MemoryLocation &LocB) override;
+  AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB);
 
-  using AliasAnalysis::getModRefInfo;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS,
-                           const MemoryLocation &Loc) override;
+  using AAResultBase::getModRefInfo;
+  ModRefInfo getModRefInfo(ImmutableCallSite CS, const MemoryLocation &Loc);
 
   /// getModRefBehavior - Return the behavior of the specified function if
   /// called from the specified call site.  The call site may be null in which
   /// case the most generic behavior of this function should be returned.
-  FunctionModRefBehavior getModRefBehavior(const Function *F) override;
+  FunctionModRefBehavior getModRefBehavior(const Function *F);
 
   /// getModRefBehavior - Return the behavior of the specified function if
   /// called from the specified call site.  The call site may be null in which
   /// case the most generic behavior of this function should be returned.
-  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
+  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS);
 
 private:
   FunctionInfo *getFunctionInfo(const Function *F);
@@ -125,13 +107,46 @@ private:
   bool isNonEscapingGlobalNoAlias(const GlobalValue *GV, const Value *V);
 };
 
+/// Analysis pass providing a never-invalidated alias analysis result.
+class GlobalsAA {
+public:
+  typedef GlobalsAAResult Result;
+
+  /// \brief Opaque, unique identifier for this analysis pass.
+  static void *ID() { return (void *)&PassID; }
+
+  GlobalsAAResult run(Module &M, AnalysisManager<Module> *AM);
+
+  /// \brief Provide access to a name for this pass for debugging purposes.
+  static StringRef name() { return "GlobalsAA"; }
+
+private:
+  static char PassID;
+};
+
+/// Legacy wrapper pass to provide the GlobalsAAResult object.
+class GlobalsAAWrapperPass : public ModulePass {
+  std::unique_ptr<GlobalsAAResult> Result;
+
+public:
+  static char ID;
+
+  GlobalsAAWrapperPass();
+
+  GlobalsAAResult &getResult() { return *Result; }
+  const GlobalsAAResult &getResult() const { return *Result; }
+
+  bool runOnModule(Module &M) override;
+  bool doFinalization(Module &M) override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+};
+
 //===--------------------------------------------------------------------===//
 //
-// createGlobalsModRefPass - This pass provides alias and mod/ref info for
+// createGlobalsAAWrapperPass - This pass provides alias and mod/ref info for
 // global values that do not have their addresses taken.
 //
-Pass *createGlobalsModRefPass();
-
+ModulePass *createGlobalsAAWrapperPass();
 }
 
 #endif

@@ -20,66 +20,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 using namespace llvm;
 
-// Register this pass...
-char ScalarEvolutionAliasAnalysis::ID = 0;
-INITIALIZE_AG_PASS_BEGIN(ScalarEvolutionAliasAnalysis, AliasAnalysis, "scev-aa",
-                         "ScalarEvolution-based Alias Analysis", false, true,
-                         false)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
-INITIALIZE_AG_PASS_END(ScalarEvolutionAliasAnalysis, AliasAnalysis, "scev-aa",
-                       "ScalarEvolution-based Alias Analysis", false, true,
-                       false)
-
-FunctionPass *llvm::createScalarEvolutionAliasAnalysisPass() {
-  return new ScalarEvolutionAliasAnalysis();
-}
-
-void ScalarEvolutionAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequiredTransitive<ScalarEvolutionWrapperPass>();
-  AU.setPreservesAll();
-  AliasAnalysis::getAnalysisUsage(AU);
-}
-
-bool ScalarEvolutionAliasAnalysis::runOnFunction(Function &F) {
-  InitializeAliasAnalysis(this, &F.getParent()->getDataLayout());
-  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
-  return false;
-}
-
-/// Given an expression, try to find a base value.
-///
-/// Returns null if none was found.
-Value *ScalarEvolutionAliasAnalysis::GetBaseValue(const SCEV *S) {
-  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
-    // In an addrec, assume that the base will be in the start, rather
-    // than the step.
-    return GetBaseValue(AR->getStart());
-  } else if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(S)) {
-    // If there's a pointer operand, it'll be sorted at the end of the list.
-    const SCEV *Last = A->getOperand(A->getNumOperands() - 1);
-    if (Last->getType()->isPointerTy())
-      return GetBaseValue(Last);
-  } else if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
-    // This is a leaf node.
-    return U->getValue();
-  }
-  // No Identified object found.
-  return nullptr;
-}
-
-AliasResult ScalarEvolutionAliasAnalysis::alias(const MemoryLocation &LocA,
-                                                const MemoryLocation &LocB) {
+AliasResult SCEVAAResult::alias(const MemoryLocation &LocA,
+                                const MemoryLocation &LocB) {
   // If either of the memory references is empty, it doesn't matter what the
   // pointer values are. This allows the code below to ignore this special
   // case.
   if (LocA.Size == 0 || LocB.Size == 0)
     return NoAlias;
 
-  // This is ScalarEvolutionAliasAnalysis. Get the SCEVs!
-  const SCEV *AS = SE->getSCEV(const_cast<Value *>(LocA.Ptr));
-  const SCEV *BS = SE->getSCEV(const_cast<Value *>(LocB.Ptr));
+  // This is SCEVAAResult. Get the SCEVs!
+  const SCEV *AS = SE.getSCEV(const_cast<Value *>(LocA.Ptr));
+  const SCEV *BS = SE.getSCEV(const_cast<Value *>(LocB.Ptr));
 
   // If they evaluate to the same expression, it's a MustAlias.
   if (AS == BS)
@@ -87,20 +41,20 @@ AliasResult ScalarEvolutionAliasAnalysis::alias(const MemoryLocation &LocA,
 
   // If something is known about the difference between the two addresses,
   // see if it's enough to prove a NoAlias.
-  if (SE->getEffectiveSCEVType(AS->getType()) ==
-      SE->getEffectiveSCEVType(BS->getType())) {
-    unsigned BitWidth = SE->getTypeSizeInBits(AS->getType());
+  if (SE.getEffectiveSCEVType(AS->getType()) ==
+      SE.getEffectiveSCEVType(BS->getType())) {
+    unsigned BitWidth = SE.getTypeSizeInBits(AS->getType());
     APInt ASizeInt(BitWidth, LocA.Size);
     APInt BSizeInt(BitWidth, LocB.Size);
 
     // Compute the difference between the two pointers.
-    const SCEV *BA = SE->getMinusSCEV(BS, AS);
+    const SCEV *BA = SE.getMinusSCEV(BS, AS);
 
     // Test whether the difference is known to be great enough that memory of
     // the given sizes don't overlap. This assumes that ASizeInt and BSizeInt
     // are non-zero, which is special-cased above.
-    if (ASizeInt.ule(SE->getUnsignedRange(BA).getUnsignedMin()) &&
-        (-BSizeInt).uge(SE->getUnsignedRange(BA).getUnsignedMax()))
+    if (ASizeInt.ule(SE.getUnsignedRange(BA).getUnsignedMin()) &&
+        (-BSizeInt).uge(SE.getUnsignedRange(BA).getUnsignedMax()))
       return NoAlias;
 
     // Folding the subtraction while preserving range information can be tricky
@@ -108,13 +62,13 @@ AliasResult ScalarEvolutionAliasAnalysis::alias(const MemoryLocation &LocA,
     // and try again to see if things fold better that way.
 
     // Compute the difference between the two pointers.
-    const SCEV *AB = SE->getMinusSCEV(AS, BS);
+    const SCEV *AB = SE.getMinusSCEV(AS, BS);
 
     // Test whether the difference is known to be great enough that memory of
     // the given sizes don't overlap. This assumes that ASizeInt and BSizeInt
     // are non-zero, which is special-cased above.
-    if (BSizeInt.ule(SE->getUnsignedRange(AB).getUnsignedMin()) &&
-        (-ASizeInt).uge(SE->getUnsignedRange(AB).getUnsignedMax()))
+    if (BSizeInt.ule(SE.getUnsignedRange(AB).getUnsignedMin()) &&
+        (-ASizeInt).uge(SE.getUnsignedRange(AB).getUnsignedMax()))
       return NoAlias;
   }
 
@@ -133,5 +87,62 @@ AliasResult ScalarEvolutionAliasAnalysis::alias(const MemoryLocation &LocA,
       return NoAlias;
 
   // Forward the query to the next analysis.
-  return AliasAnalysis::alias(LocA, LocB);
+  return AAResultBase::alias(LocA, LocB);
+}
+
+/// Given an expression, try to find a base value.
+///
+/// Returns null if none was found.
+Value *SCEVAAResult::GetBaseValue(const SCEV *S) {
+  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
+    // In an addrec, assume that the base will be in the start, rather
+    // than the step.
+    return GetBaseValue(AR->getStart());
+  } else if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(S)) {
+    // If there's a pointer operand, it'll be sorted at the end of the list.
+    const SCEV *Last = A->getOperand(A->getNumOperands() - 1);
+    if (Last->getType()->isPointerTy())
+      return GetBaseValue(Last);
+  } else if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
+    // This is a leaf node.
+    return U->getValue();
+  }
+  // No Identified object found.
+  return nullptr;
+}
+
+SCEVAAResult SCEVAA::run(Function &F, AnalysisManager<Function> *AM) {
+  return SCEVAAResult(AM->getResult<TargetLibraryAnalysis>(F),
+                      AM->getResult<ScalarEvolutionAnalysis>(F));
+}
+
+char SCEVAA::PassID;
+
+char SCEVAAWrapperPass::ID = 0;
+INITIALIZE_PASS_BEGIN(SCEVAAWrapperPass, "scev-aa",
+                      "ScalarEvolution-based Alias Analysis", false, true)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_END(SCEVAAWrapperPass, "scev-aa",
+                    "ScalarEvolution-based Alias Analysis", false, true)
+
+FunctionPass *llvm::createSCEVAAWrapperPass() {
+  return new SCEVAAWrapperPass();
+}
+
+SCEVAAWrapperPass::SCEVAAWrapperPass() : FunctionPass(ID) {
+  initializeSCEVAAWrapperPassPass(*PassRegistry::getPassRegistry());
+}
+
+bool SCEVAAWrapperPass::runOnFunction(Function &F) {
+  Result.reset(
+      new SCEVAAResult(getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(),
+                       getAnalysis<ScalarEvolutionWrapperPass>().getSE()));
+  return false;
+}
+
+void SCEVAAWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  AU.addRequired<ScalarEvolutionWrapperPass>();
+  AU.addRequired<TargetLibraryInfoWrapperPass>();
 }

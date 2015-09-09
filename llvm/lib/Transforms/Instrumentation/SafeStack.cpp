@@ -221,7 +221,7 @@ public:
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<AliasAnalysis>();
+    AU.addRequired<AAResultsWrapperPass>();
   }
 
   virtual bool doInitialization(Module &M) {
@@ -513,7 +513,7 @@ void SafeStack::moveDynamicAllocasToUnsafeStack(
 }
 
 bool SafeStack::runOnFunction(Function &F) {
-  auto AA = &getAnalysis<AliasAnalysis>();
+  auto AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
 
   DEBUG(dbgs() << "[SafeStack] Function: " << F.getName() << "\n");
 

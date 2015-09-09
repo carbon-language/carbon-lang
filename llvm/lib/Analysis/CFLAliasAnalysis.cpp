@@ -33,7 +33,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstVisitor.h"
@@ -53,18 +53,11 @@ using namespace llvm;
 
 #define DEBUG_TYPE "cfl-aa"
 
-// -- Setting up/registering CFLAA pass -- //
-char CFLAliasAnalysis::ID = 0;
-
-INITIALIZE_AG_PASS(CFLAliasAnalysis, AliasAnalysis, "cfl-aa",
-                   "CFL-Based AA implementation", false, true, false)
-
-ImmutablePass *llvm::createCFLAliasAnalysisPass() {
-  return new CFLAliasAnalysis();
-}
+CFLAAResult::CFLAAResult(const TargetLibraryInfo &TLI) : AAResultBase(TLI) {}
+CFLAAResult::CFLAAResult(CFLAAResult &&Arg) : AAResultBase(std::move(Arg)) {}
 
 // \brief Information we have about a function and would like to keep around
-struct CFLAliasAnalysis::FunctionInfo {
+struct CFLAAResult::FunctionInfo {
   StratifiedSets<Value *> Sets;
   // Lots of functions have < 4 returns. Adjust as necessary.
   SmallVector<Value *, 4> ReturnedValues;
@@ -72,22 +65,6 @@ struct CFLAliasAnalysis::FunctionInfo {
   FunctionInfo(StratifiedSets<Value *> &&S, SmallVector<Value *, 4> &&RV)
       : Sets(std::move(S)), ReturnedValues(std::move(RV)) {}
 };
-
-CFLAliasAnalysis::CFLAliasAnalysis() : ImmutablePass(ID) {
-  initializeCFLAliasAnalysisPass(*PassRegistry::getPassRegistry());
-}
-
-CFLAliasAnalysis::~CFLAliasAnalysis() {}
-
-void CFLAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
-  AliasAnalysis::getAnalysisUsage(AU);
-}
-
-void *CFLAliasAnalysis::getAdjustedAnalysisPointer(const void *ID) {
-  if (ID == &AliasAnalysis::ID)
-    return (AliasAnalysis *)this;
-  return this;
-}
 
 // Try to go from a Value* to a Function*. Never returns nullptr.
 static Optional<Function *> parentFunctionOfValue(Value *);
@@ -177,11 +154,11 @@ struct Edge {
 
 // \brief Gets the edges our graph should have, based on an Instruction*
 class GetEdgesVisitor : public InstVisitor<GetEdgesVisitor, void> {
-  CFLAliasAnalysis &AA;
+  CFLAAResult &AA;
   SmallVectorImpl<Edge> &Output;
 
 public:
-  GetEdgesVisitor(CFLAliasAnalysis &AA, SmallVectorImpl<Edge> &Output)
+  GetEdgesVisitor(CFLAAResult &AA, SmallVectorImpl<Edge> &Output)
       : AA(AA), Output(Output) {}
 
   void visitInstruction(Instruction &) {
@@ -669,12 +646,10 @@ static Optional<StratifiedAttr> valueToAttrIndex(Value *Val);
 static EdgeType flipWeight(EdgeType);
 
 // Gets edges of the given Instruction*, writing them to the SmallVector*.
-static void argsToEdges(CFLAliasAnalysis &, Instruction *,
-                        SmallVectorImpl<Edge> &);
+static void argsToEdges(CFLAAResult &, Instruction *, SmallVectorImpl<Edge> &);
 
 // Gets edges of the given ConstantExpr*, writing them to the SmallVector*.
-static void argsToEdges(CFLAliasAnalysis &, ConstantExpr *,
-                        SmallVectorImpl<Edge> &);
+static void argsToEdges(CFLAAResult &, ConstantExpr *, SmallVectorImpl<Edge> &);
 
 // Gets the "Level" that one should travel in StratifiedSets
 // given an EdgeType.
@@ -682,13 +657,13 @@ static Level directionOfEdgeType(EdgeType);
 
 // Builds the graph needed for constructing the StratifiedSets for the
 // given function
-static void buildGraphFrom(CFLAliasAnalysis &, Function *,
+static void buildGraphFrom(CFLAAResult &, Function *,
                            SmallVectorImpl<Value *> &, NodeMapT &, GraphT &);
 
 // Gets the edges of a ConstantExpr as if it was an Instruction. This
 // function also acts on any nested ConstantExprs, adding the edges
 // of those to the given SmallVector as well.
-static void constexprToEdges(CFLAliasAnalysis &, ConstantExpr &,
+static void constexprToEdges(CFLAAResult &, ConstantExpr &,
                              SmallVectorImpl<Edge> &);
 
 // Given an Instruction, this will add it to the graph, along with any
@@ -697,7 +672,7 @@ static void constexprToEdges(CFLAliasAnalysis &, ConstantExpr &,
 //   %0 = load i16* getelementptr ([1 x i16]* @a, 0, 0), align 2
 // addInstructionToGraph would add both the `load` and `getelementptr`
 // instructions to the graph appropriately.
-static void addInstructionToGraph(CFLAliasAnalysis &, Instruction &,
+static void addInstructionToGraph(CFLAAResult &, Instruction &,
                                   SmallVectorImpl<Value *> &, NodeMapT &,
                                   GraphT &);
 
@@ -777,7 +752,7 @@ static EdgeType flipWeight(EdgeType Initial) {
   llvm_unreachable("Incomplete coverage of EdgeType enum");
 }
 
-static void argsToEdges(CFLAliasAnalysis &Analysis, Instruction *Inst,
+static void argsToEdges(CFLAAResult &Analysis, Instruction *Inst,
                         SmallVectorImpl<Edge> &Output) {
   assert(hasUsefulEdges(Inst) &&
          "Expected instructions to have 'useful' edges");
@@ -785,7 +760,7 @@ static void argsToEdges(CFLAliasAnalysis &Analysis, Instruction *Inst,
   v.visit(Inst);
 }
 
-static void argsToEdges(CFLAliasAnalysis &Analysis, ConstantExpr *CE,
+static void argsToEdges(CFLAAResult &Analysis, ConstantExpr *CE,
                         SmallVectorImpl<Edge> &Output) {
   assert(hasUsefulEdges(CE) && "Expected constant expr to have 'useful' edges");
   GetEdgesVisitor v(Analysis, Output);
@@ -804,7 +779,7 @@ static Level directionOfEdgeType(EdgeType Weight) {
   llvm_unreachable("Incomplete switch coverage");
 }
 
-static void constexprToEdges(CFLAliasAnalysis &Analysis,
+static void constexprToEdges(CFLAAResult &Analysis,
                              ConstantExpr &CExprToCollapse,
                              SmallVectorImpl<Edge> &Results) {
   SmallVector<ConstantExpr *, 4> Worklist;
@@ -834,7 +809,7 @@ static void constexprToEdges(CFLAliasAnalysis &Analysis,
   }
 }
 
-static void addInstructionToGraph(CFLAliasAnalysis &Analysis, Instruction &Inst,
+static void addInstructionToGraph(CFLAAResult &Analysis, Instruction &Inst,
                                   SmallVectorImpl<Value *> &ReturnedValues,
                                   NodeMapT &Map, GraphT &Graph) {
   const auto findOrInsertNode = [&Map, &Graph](Value *Val) {
@@ -897,7 +872,7 @@ static void addInstructionToGraph(CFLAliasAnalysis &Analysis, Instruction &Inst,
 // buy us much that we don't already have. I'd like to add interprocedural
 // analysis prior to this however, in case that somehow requires the graph
 // produced by this for efficient execution
-static void buildGraphFrom(CFLAliasAnalysis &Analysis, Function *Fn,
+static void buildGraphFrom(CFLAAResult &Analysis, Function *Fn,
                            SmallVectorImpl<Value *> &ReturnedValues,
                            NodeMapT &Map, GraphT &Graph) {
   for (auto &Bb : Fn->getBasicBlockList())
@@ -928,7 +903,7 @@ static bool canSkipAddingToSets(Value *Val) {
 }
 
 // Builds the graph + StratifiedSets for a function.
-CFLAliasAnalysis::FunctionInfo CFLAliasAnalysis::buildSetsFrom(Function *Fn) {
+CFLAAResult::FunctionInfo CFLAAResult::buildSetsFrom(Function *Fn) {
   NodeMapT Map;
   GraphT Graph;
   SmallVector<Value *, 4> ReturnedValues;
@@ -1014,7 +989,7 @@ CFLAliasAnalysis::FunctionInfo CFLAliasAnalysis::buildSetsFrom(Function *Fn) {
   return FunctionInfo(Builder.build(), std::move(ReturnedValues));
 }
 
-void CFLAliasAnalysis::scan(Function *Fn) {
+void CFLAAResult::scan(Function *Fn) {
   auto InsertPair = Cache.insert(std::make_pair(Fn, Optional<FunctionInfo>()));
   (void)InsertPair;
   assert(InsertPair.second &&
@@ -1025,12 +1000,12 @@ void CFLAliasAnalysis::scan(Function *Fn) {
   Handles.push_front(FunctionHandle(Fn, this));
 }
 
-void CFLAliasAnalysis::evict(Function *Fn) { Cache.erase(Fn); }
+void CFLAAResult::evict(Function *Fn) { Cache.erase(Fn); }
 
 /// \brief Ensures that the given function is available in the cache.
 /// Returns the appropriate entry from the cache.
-const Optional<CFLAliasAnalysis::FunctionInfo> &
-CFLAliasAnalysis::ensureCached(Function *Fn) {
+const Optional<CFLAAResult::FunctionInfo> &
+CFLAAResult::ensureCached(Function *Fn) {
   auto Iter = Cache.find(Fn);
   if (Iter == Cache.end()) {
     scan(Fn);
@@ -1041,8 +1016,8 @@ CFLAliasAnalysis::ensureCached(Function *Fn) {
   return Iter->second;
 }
 
-AliasResult CFLAliasAnalysis::query(const MemoryLocation &LocA,
-                                    const MemoryLocation &LocB) {
+AliasResult CFLAAResult::query(const MemoryLocation &LocA,
+                               const MemoryLocation &LocB) {
   auto *ValA = const_cast<Value *>(LocA.Ptr);
   auto *ValB = const_cast<Value *>(LocB.Ptr);
 
@@ -1108,7 +1083,37 @@ AliasResult CFLAliasAnalysis::query(const MemoryLocation &LocA,
   return NoAlias;
 }
 
-bool CFLAliasAnalysis::doInitialization(Module &M) {
-  InitializeAliasAnalysis(this, &M.getDataLayout());
-  return true;
+CFLAAResult CFLAA::run(Function &F, AnalysisManager<Function> *AM) {
+  return CFLAAResult(AM->getResult<TargetLibraryAnalysis>(F));
+}
+
+char CFLAA::PassID;
+
+char CFLAAWrapperPass::ID = 0;
+INITIALIZE_PASS_BEGIN(CFLAAWrapperPass, "cfl-aa", "CFL-Based Alias Analysis",
+                      false, true)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_END(CFLAAWrapperPass, "cfl-aa", "CFL-Based Alias Analysis",
+                    false, true)
+
+ImmutablePass *llvm::createCFLAAWrapperPass() { return new CFLAAWrapperPass(); }
+
+CFLAAWrapperPass::CFLAAWrapperPass() : ImmutablePass(ID) {
+  initializeCFLAAWrapperPassPass(*PassRegistry::getPassRegistry());
+}
+
+bool CFLAAWrapperPass::doInitialization(Module &M) {
+  Result.reset(
+      new CFLAAResult(getAnalysis<TargetLibraryInfoWrapperPass>().getTLI()));
+  return false;
+}
+
+bool CFLAAWrapperPass::doFinalization(Module &M) {
+  Result.reset();
+  return false;
+}
+
+void CFLAAWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  AU.addRequired<TargetLibraryInfoWrapperPass>();
 }

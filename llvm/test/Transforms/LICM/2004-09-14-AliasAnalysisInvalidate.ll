@@ -1,4 +1,4 @@
-; RUN: opt < %s -globalsmodref-aa -licm -disable-output
+; RUN: opt < %s -globals-aa -licm -disable-output
 
 @PL_regcomp_parse = internal global i8* null		; <i8**> [#uses=2]
 

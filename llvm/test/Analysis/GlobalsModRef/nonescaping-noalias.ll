@@ -1,4 +1,4 @@
-; RUN: opt < %s -globalsmodref-aa -gvn -S | FileCheck %s
+; RUN: opt < %s -globals-aa -gvn -S | FileCheck %s
 ;
 ; This tests the safe no-alias conclusions of GMR -- when there is
 ; a non-escaping global as one indentified underlying object and some pointer

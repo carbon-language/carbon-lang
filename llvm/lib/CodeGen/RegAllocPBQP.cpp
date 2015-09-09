@@ -497,8 +497,8 @@ void PBQPRAConstraintList::anchor() {}
 
 void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
   au.setPreservesCFG();
-  au.addRequired<AliasAnalysis>();
-  au.addPreserved<AliasAnalysis>();
+  au.addRequired<AAResultsWrapperPass>();
+  au.addPreserved<AAResultsWrapperPass>();
   au.addRequired<SlotIndexes>();
   au.addPreserved<SlotIndexes>();
   au.addRequired<LiveIntervals>();

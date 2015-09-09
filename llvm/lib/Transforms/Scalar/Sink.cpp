@@ -48,7 +48,7 @@ namespace {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       FunctionPass::getAnalysisUsage(AU);
-      AU.addRequired<AliasAnalysis>();
+      AU.addRequired<AAResultsWrapperPass>();
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfoWrapperPass>();
       AU.addPreserved<DominatorTreeWrapperPass>();
@@ -66,7 +66,7 @@ char Sinking::ID = 0;
 INITIALIZE_PASS_BEGIN(Sinking, "sink", "Code sinking", false, false)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
 INITIALIZE_PASS_END(Sinking, "sink", "Code sinking", false, false)
 
 FunctionPass *llvm::createSinkingPass() { return new Sinking(); }
@@ -99,7 +99,7 @@ bool Sinking::AllUsesDominatedByBlock(Instruction *Inst,
 bool Sinking::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  AA = &getAnalysis<AliasAnalysis>();
+  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
 
   bool MadeChange, EverMadeChange = false;
 

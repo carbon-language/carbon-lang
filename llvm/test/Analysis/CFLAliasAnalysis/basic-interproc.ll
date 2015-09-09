@@ -1,7 +1,7 @@
 ; This testcase ensures that CFL AA gives conservative answers on variables
 ; that involve arguments.
 
-; RUN: opt < %s -cfl-aa -aa-eval -print-may-aliases -disable-output 2>&1 | FileCheck %s
+; RUN: opt < %s -disable-basicaa -cfl-aa -aa-eval -print-may-aliases -disable-output 2>&1 | FileCheck %s
 
 ; CHECK:     Function: test
 ; CHECK: 2 Total Alias Queries Performed

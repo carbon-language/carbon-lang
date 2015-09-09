@@ -19,6 +19,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/ilist.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/DAGCombine.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
@@ -31,7 +32,6 @@
 
 namespace llvm {
 
-class AliasAnalysis;
 class MachineConstantPoolValue;
 class MachineFunction;
 class MDNode;

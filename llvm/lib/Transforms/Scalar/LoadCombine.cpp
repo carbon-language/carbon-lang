@@ -16,6 +16,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
+#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/TargetFolder.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
@@ -223,7 +224,7 @@ bool LoadCombine::runOnBasicBlock(BasicBlock &BB) {
   if (skipOptnoneFunction(BB))
     return false;
 
-  AA = &getAnalysis<AliasAnalysis>();
+  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
 
   IRBuilder<true, TargetFolder> TheBuilder(
       BB.getContext(), TargetFolder(BB.getModule()->getDataLayout()));
@@ -262,8 +263,8 @@ bool LoadCombine::runOnBasicBlock(BasicBlock &BB) {
 void LoadCombine::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
 
-  AU.addRequired<AliasAnalysis>();
-  AU.addPreserved<AliasAnalysis>();
+  AU.addRequired<AAResultsWrapperPass>();
+  AU.addPreserved<GlobalsAAWrapperPass>();
 }
 
 char LoadCombine::ID = 0;
@@ -274,7 +275,8 @@ BasicBlockPass *llvm::createLoadCombinePass() {
 
 INITIALIZE_PASS_BEGIN(LoadCombine, "load-combine", "Combine Adjacent Loads",
                       false, false)
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(GlobalsAAWrapperPass)
 INITIALIZE_PASS_END(LoadCombine, "load-combine", "Combine Adjacent Loads",
                     false, false)
 

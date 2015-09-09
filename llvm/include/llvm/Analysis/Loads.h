@@ -14,11 +14,11 @@
 #ifndef LLVM_ANALYSIS_LOADS_H
 #define LLVM_ANALYSIS_LOADS_H
 
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/BasicBlock.h"
 
 namespace llvm {
 
-class AliasAnalysis;
 class DataLayout;
 class MDNode;
 

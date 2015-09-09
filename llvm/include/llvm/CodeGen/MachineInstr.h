@@ -23,6 +23,7 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugLoc.h"
@@ -34,7 +35,6 @@
 namespace llvm {
 
 template <typename T> class SmallVectorImpl;
-class AliasAnalysis;
 class TargetInstrInfo;
 class TargetRegisterClass;
 class TargetRegisterInfo;

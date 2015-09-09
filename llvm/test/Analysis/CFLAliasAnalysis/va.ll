@@ -1,4 +1,4 @@
-; RUN: opt < %s -cfl-aa -aa-eval -print-may-aliases -disable-output 2>&1 | FileCheck %s
+; RUN: opt < %s -disable-basicaa -cfl-aa -aa-eval -print-may-aliases -disable-output 2>&1 | FileCheck %s
 
 ; CHECK-LABEL: Function: test1
 ; CHECK: 0 no alias responses

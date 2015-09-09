@@ -23,14 +23,26 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Pass.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
+class AssumptionCache;
+class DominatorTree;
+class LoopInfo;
 
-/// This is the primary alias analysis implementation.
-struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
-  static char ID; // Class identification, replacement for typeinfo
+/// This is the AA result object for the basic, local, and stateless alias
+/// analysis. It implements the AA query interface in an entirely stateless
+/// manner. As one consequence, it is never invalidated. While it does retain
+/// some storage, that is used as an optimization and not to preserve
+/// information from query to query.
+class BasicAAResult : public AAResultBase<BasicAAResult> {
+  friend AAResultBase<BasicAAResult>;
+
+  const DataLayout &DL;
+  AssumptionCache &AC;
+  DominatorTree *DT;
+  LoopInfo *LI;
 
 #ifndef NDEBUG
   static const Function *getParent(const Value *V) {
@@ -52,23 +64,34 @@ struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
   }
 #endif
 
-  BasicAliasAnalysis() : ImmutablePass(ID) {
-    initializeBasicAliasAnalysisPass(*PassRegistry::getPassRegistry());
-  }
+public:
+  BasicAAResult(const DataLayout &DL, const TargetLibraryInfo &TLI,
+                AssumptionCache &AC, DominatorTree *DT = nullptr,
+                LoopInfo *LI = nullptr)
+      : AAResultBase(TLI), DL(DL), AC(AC), DT(DT), LI(LI) {}
 
-  bool doInitialization(Module &M) override;
+  BasicAAResult(const BasicAAResult &Arg)
+      : AAResultBase(Arg), DL(Arg.DL), AC(Arg.AC), DT(Arg.DT), LI(Arg.LI) {}
+  BasicAAResult(BasicAAResult &&Arg)
+      : AAResultBase(std::move(Arg)), DL(Arg.DL), AC(Arg.AC), DT(Arg.DT),
+        LI(Arg.LI) {}
 
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<AliasAnalysis>();
-    AU.addRequired<AssumptionCacheTracker>();
-    AU.addRequired<TargetLibraryInfoWrapperPass>();
-  }
+  /// Handle invalidation events from the new pass manager.
+  ///
+  /// By definition, this result is stateless and so remains valid.
+  bool invalidate(Function &, const PreservedAnalyses &) { return false; }
 
-  AliasResult alias(const MemoryLocation &LocA,
-                    const MemoryLocation &LocB) override {
-    assert(AliasCache.empty() && "AliasCache must be cleared after use!");
+  AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB) {
     assert(notDifferentParent(LocA.Ptr, LocB.Ptr) &&
            "BasicAliasAnalysis doesn't support interprocedural queries.");
+
+    // If we have a directly cached entry for these locations, we have recursed
+    // through this once, so just return the cached results. Notably, when this
+    // happens, we don't clear the cache.
+    auto CacheIt = AliasCache.find(LocPair(LocA, LocB));
+    if (CacheIt != AliasCache.end())
+      return CacheIt->second;
+
     AliasResult Alias = aliasCheck(LocA.Ptr, LocA.Size, LocA.AATags, LocB.Ptr,
                                    LocB.Size, LocB.AATags);
     // AliasCache rarely has more than 1 or 2 elements, always use
@@ -80,33 +103,22 @@ struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
     return Alias;
   }
 
-  ModRefInfo getModRefInfo(ImmutableCallSite CS,
-                           const MemoryLocation &Loc) override;
+  ModRefInfo getModRefInfo(ImmutableCallSite CS, const MemoryLocation &Loc);
 
-  ModRefInfo getModRefInfo(ImmutableCallSite CS1,
-                           ImmutableCallSite CS2) override;
+  ModRefInfo getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2);
 
   /// Chases pointers until we find a (constant global) or not.
-  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal) override;
+  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal);
 
   /// Get the location associated with a pointer argument of a callsite.
-  ModRefInfo getArgModRefInfo(ImmutableCallSite CS, unsigned ArgIdx) override;
+  ModRefInfo getArgModRefInfo(ImmutableCallSite CS, unsigned ArgIdx);
 
   /// Returns the behavior when calling the given call site.
-  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
+  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS);
 
   /// Returns the behavior when calling the given function. For use when the
   /// call site is not known.
-  FunctionModRefBehavior getModRefBehavior(const Function *F) override;
-
-  /// This method is used when a pass implements an analysis interface through
-  /// multiple inheritance.  If needed, it should override this to adjust the
-  /// this pointer as needed for the specified pass info.
-  void *getAdjustedAnalysisPointer(const void *ID) override {
-    if (ID == &AliasAnalysis::ID)
-      return (AliasAnalysis *)this;
-    return this;
-  }
+  FunctionModRefBehavior getModRefBehavior(const Function *F);
 
 private:
   // A linear transformation of a Value; this class represents ZExt(SExt(V,
@@ -181,8 +193,7 @@ private:
   bool
   constantOffsetHeuristic(const SmallVectorImpl<VariableGEPIndex> &VarIndices,
                           uint64_t V1Size, uint64_t V2Size, int64_t BaseOffset,
-                          const DataLayout *DL, AssumptionCache *AC,
-                          DominatorTree *DT);
+                          AssumptionCache *AC, DominatorTree *DT);
 
   bool isValueEqualInPotentialCycles(const Value *V1, const Value *V2);
 
@@ -206,13 +217,47 @@ private:
                          const Value *V2, uint64_t V2Size, AAMDNodes V2AATag);
 };
 
-//===--------------------------------------------------------------------===//
-//
-// createBasicAliasAnalysisPass - This pass implements the stateless alias
-// analysis.
-//
-ImmutablePass *createBasicAliasAnalysisPass();
+/// Analysis pass providing a never-invalidated alias analysis result.
+class BasicAA {
+public:
+  typedef BasicAAResult Result;
 
+  /// \brief Opaque, unique identifier for this analysis pass.
+  static void *ID() { return (void *)&PassID; }
+
+  BasicAAResult run(Function &F, AnalysisManager<Function> *AM);
+
+  /// \brief Provide access to a name for this pass for debugging purposes.
+  static StringRef name() { return "BasicAliasAnalysis"; }
+
+private:
+  static char PassID;
+};
+
+/// Legacy wrapper pass to provide the BasicAAResult object.
+class BasicAAWrapperPass : public FunctionPass {
+  std::unique_ptr<BasicAAResult> Result;
+
+  virtual void anchor();
+
+public:
+  static char ID;
+
+  BasicAAWrapperPass() : FunctionPass(ID) {}
+
+  BasicAAResult &getResult() { return *Result; }
+  const BasicAAResult &getResult() const { return *Result; }
+
+  bool runOnFunction(Function &F) override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+};
+
+FunctionPass *createBasicAAWrapperPass();
+
+/// A helper for the legacy pass manager to create a \c BasicAAResult object
+/// populated to the best of our ability for a particular function when inside
+/// of a \c ModulePass or a \c CallGraphSCCPass.
+BasicAAResult createLegacyPMBasicAAResult(Pass &P, Function &F);
 }
 
 #endif

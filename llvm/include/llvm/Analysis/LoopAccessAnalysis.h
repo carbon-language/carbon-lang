@@ -29,7 +29,6 @@ namespace llvm {
 
 class Value;
 class DataLayout;
-class AliasAnalysis;
 class ScalarEvolution;
 class Loop;
 class SCEV;

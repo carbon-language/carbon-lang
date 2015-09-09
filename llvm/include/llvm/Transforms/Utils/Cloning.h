@@ -20,6 +20,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/IR/ValueMap.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
@@ -44,7 +45,6 @@ class DataLayout;
 class Loop;
 class LoopInfo;
 class AllocaInst;
-class AliasAnalysis;
 class AssumptionCacheTracker;
 class DominatorTree;
 
@@ -202,14 +202,12 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
 class InlineFunctionInfo {
 public:
   explicit InlineFunctionInfo(CallGraph *cg = nullptr,
-                              AliasAnalysis *AA = nullptr,
                               AssumptionCacheTracker *ACT = nullptr)
-      : CG(cg), AA(AA), ACT(ACT) {}
+      : CG(cg), ACT(ACT) {}
 
   /// CG - If non-null, InlineFunction will update the callgraph to reflect the
   /// changes it makes.
   CallGraph *CG;
-  AliasAnalysis *AA;
   AssumptionCacheTracker *ACT;
 
   /// StaticAllocas - InlineFunction fills this in with all static allocas that
@@ -237,11 +235,11 @@ public:
 /// function by one level.
 ///
 bool InlineFunction(CallInst *C, InlineFunctionInfo &IFI,
-                    bool InsertLifetime = true);
+                    AAResults *CalleeAAR = nullptr, bool InsertLifetime = true);
 bool InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI,
-                    bool InsertLifetime = true);
+                    AAResults *CalleeAAR = nullptr, bool InsertLifetime = true);
 bool InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
-                    bool InsertLifetime = true);
+                    AAResults *CalleeAAR = nullptr, bool InsertLifetime = true);
 
 /// \brief Clones a loop \p OrigLoop.  Returns the loop and the blocks in \p
 /// Blocks.

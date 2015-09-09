@@ -24,9 +24,12 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/InstIterator.h"
@@ -51,7 +54,7 @@ STATISTIC(NumAnnotated, "Number of attributes added to library functions");
 namespace {
   struct FunctionAttrs : public CallGraphSCCPass {
     static char ID; // Pass identification, replacement for typeid
-    FunctionAttrs() : CallGraphSCCPass(ID), AA(nullptr) {
+    FunctionAttrs() : CallGraphSCCPass(ID) {
       initializeFunctionAttrsPass(*PassRegistry::getPassRegistry());
     }
 
@@ -134,13 +137,12 @@ namespace {
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
-      AU.addRequired<AliasAnalysis>();
+      AU.addRequired<AssumptionCacheTracker>();
       AU.addRequired<TargetLibraryInfoWrapperPass>();
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
   private:
-    AliasAnalysis *AA;
     TargetLibraryInfo *TLI;
   };
 }
@@ -148,7 +150,7 @@ namespace {
 char FunctionAttrs::ID = 0;
 INITIALIZE_PASS_BEGIN(FunctionAttrs, "functionattrs",
                 "Deduce function attributes", false, false)
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(CallGraphWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(FunctionAttrs, "functionattrs",
@@ -177,7 +179,15 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
       // memory and give up.
       return false;
 
-    FunctionModRefBehavior MRB = AA->getModRefBehavior(F);
+    // We need to manually construct BasicAA directly in order to disable its
+    // use of other function analyses.
+    BasicAAResult BAR(createLegacyPMBasicAAResult(*this, *F));
+
+    // Construct our own AA results for this function. We do this manually to
+    // work around the limitations of the legacy pass manager.
+    AAResults AAR(createLegacyPMAAResults(*this, *F, BAR));
+
+    FunctionModRefBehavior MRB = AAR.getModRefBehavior(F);
     if (MRB == FMRB_DoesNotAccessMemory)
       // Already perfect!
       continue;
@@ -204,7 +214,7 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
         // Ignore calls to functions in the same SCC.
         if (CS.getCalledFunction() && SCCNodes.count(CS.getCalledFunction()))
           continue;
-        FunctionModRefBehavior MRB = AA->getModRefBehavior(CS);
+        FunctionModRefBehavior MRB = AAR.getModRefBehavior(CS);
         // If the call doesn't access arbitrary memory, we may be able to
         // figure out something.
         if (AliasAnalysis::onlyAccessesArgPointees(MRB)) {
@@ -220,7 +230,7 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
                 I->getAAMetadata(AAInfo);
 
                 MemoryLocation Loc(Arg, MemoryLocation::UnknownSize, AAInfo);
-                if (!AA->pointsToConstantMemory(Loc, /*OrLocal=*/true)) {
+                if (!AAR.pointsToConstantMemory(Loc, /*OrLocal=*/true)) {
                   if (MRB & MRI_Mod)
                     // Writes non-local memory.  Give up.
                     return false;
@@ -243,20 +253,20 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
         // Ignore non-volatile loads from local memory. (Atomic is okay here.)
         if (!LI->isVolatile()) {
           MemoryLocation Loc = MemoryLocation::get(LI);
-          if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
+          if (AAR.pointsToConstantMemory(Loc, /*OrLocal=*/true))
             continue;
         }
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // Ignore non-volatile stores to local memory. (Atomic is okay here.)
         if (!SI->isVolatile()) {
           MemoryLocation Loc = MemoryLocation::get(SI);
-          if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
+          if (AAR.pointsToConstantMemory(Loc, /*OrLocal=*/true))
             continue;
         }
       } else if (VAArgInst *VI = dyn_cast<VAArgInst>(I)) {
         // Ignore vaargs on local memory.
         MemoryLocation Loc = MemoryLocation::get(VI);
-        if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
+        if (AAR.pointsToConstantMemory(Loc, /*OrLocal=*/true))
           continue;
       }
 
@@ -1848,7 +1858,6 @@ bool FunctionAttrs::annotateLibraryCalls(const CallGraphSCC &SCC) {
 }
 
 bool FunctionAttrs::runOnSCC(CallGraphSCC &SCC) {
-  AA = &getAnalysis<AliasAnalysis>();
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   bool Changed = annotateLibraryCalls(SCC);

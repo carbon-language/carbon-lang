@@ -35,7 +35,7 @@ char PAEval::ID = 0;
 PAEval::PAEval() : FunctionPass(ID) {}
 
 void PAEval::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<AliasAnalysis>();
+  AU.addRequired<AAResultsWrapperPass>();
 }
 
 static StringRef getName(Value *V) {
@@ -65,7 +65,7 @@ bool PAEval::runOnFunction(Function &F) {
   }
 
   ProvenanceAnalysis PA;
-  PA.setAA(&getAnalysis<AliasAnalysis>());
+  PA.setAA(&getAnalysis<AAResultsWrapperPass>().getAAResults());
   const DataLayout &DL = F.getParent()->getDataLayout();
 
   for (Value *V1 : Values) {
@@ -89,6 +89,6 @@ FunctionPass *llvm::createPAEvalPass() { return new PAEval(); }
 
 INITIALIZE_PASS_BEGIN(PAEval, "pa-eval",
                       "Evaluate ProvenanceAnalysis on all pairs", false, true)
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
 INITIALIZE_PASS_END(PAEval, "pa-eval",
                     "Evaluate ProvenanceAnalysis on all pairs", false, true)

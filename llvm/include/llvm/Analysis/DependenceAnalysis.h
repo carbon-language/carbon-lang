@@ -42,11 +42,11 @@
 
 #include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
-  class AliasAnalysis;
   class Loop;
   class LoopInfo;
   class ScalarEvolution;

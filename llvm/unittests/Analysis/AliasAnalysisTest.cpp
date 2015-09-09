@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/BasicAliasAnalysis.h"
-#include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "gtest/gtest.h"
 
@@ -23,49 +23,27 @@ namespace {
 
 class AliasAnalysisTest : public testing::Test {
 protected:
-  AliasAnalysisTest() : M("AliasAnalysisTBAATest", C) {}
-
-  // This is going to check that calling getModRefInfo without a location, and
-  // with a default location, first, doesn't crash, and second, gives the right
-  // answer.
-  void CheckModRef(Instruction *I, ModRefInfo Result) {
-    static char ID;
-    class CheckModRefTestPass : public FunctionPass {
-    public:
-      CheckModRefTestPass(Instruction *I, ModRefInfo Result)
-          : FunctionPass(ID), ExpectResult(Result), I(I) {}
-      static int initialize() {
-        PassInfo *PI = new PassInfo("CheckModRef testing pass", "", &ID,
-                                    nullptr, true, true);
-        PassRegistry::getPassRegistry()->registerPass(*PI, false);
-        initializeAliasAnalysisAnalysisGroup(*PassRegistry::getPassRegistry());
-        initializeBasicAliasAnalysisPass(*PassRegistry::getPassRegistry());
-        return 0;
-      }
-      void getAnalysisUsage(AnalysisUsage &AU) const override {
-        AU.setPreservesAll();
-        AU.addRequiredTransitive<AliasAnalysis>();
-      }
-      bool runOnFunction(Function &) override {
-        AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-        EXPECT_EQ(AA.getModRefInfo(I, MemoryLocation()), ExpectResult);
-        EXPECT_EQ(AA.getModRefInfo(I), ExpectResult);
-        return false;
-      }
-      ModRefInfo ExpectResult;
-      Instruction *I;
-    };
-    static int initialize = CheckModRefTestPass::initialize();
-    (void)initialize;
-    CheckModRefTestPass *P = new CheckModRefTestPass(I, Result);
-    legacy::PassManager PM;
-    PM.add(createBasicAliasAnalysisPass());
-    PM.add(P);
-    PM.run(M);
-  }
-
   LLVMContext C;
   Module M;
+  TargetLibraryInfoImpl TLII;
+  TargetLibraryInfo TLI;
+  std::unique_ptr<AssumptionCache> AC;
+  std::unique_ptr<BasicAAResult> BAR;
+  std::unique_ptr<AAResults> AAR;
+
+  AliasAnalysisTest() : M("AliasAnalysisTest", C), TLI(TLII) {}
+
+  AAResults &getAAResults(Function &F) {
+    // Reset the Function AA results first to clear out any references.
+    AAR.reset(new AAResults());
+
+    // Build the various AA results and register them.
+    AC.reset(new AssumptionCache(F));
+    BAR.reset(new BasicAAResult(M.getDataLayout(), TLI, *AC));
+    AAR->addAAResult(*BAR);
+
+    return *AAR;
+  }
 };
 
 TEST_F(AliasAnalysisTest, getModRefInfo) {
@@ -92,13 +70,21 @@ TEST_F(AliasAnalysisTest, getModRefInfo) {
 
   ReturnInst::Create(C, nullptr, BB);
 
+  auto &AA = getAAResults(*F);
+
   // Check basic results
-  CheckModRef(Store1, MRI_Mod);
-  CheckModRef(Load1, MRI_Ref);
-  CheckModRef(Add1, MRI_NoModRef);
-  CheckModRef(VAArg1, MRI_ModRef);
-  CheckModRef(CmpXChg1, MRI_ModRef);
-  CheckModRef(AtomicRMW, MRI_ModRef);
+  EXPECT_EQ(AA.getModRefInfo(Store1, MemoryLocation()), MRI_Mod);
+  EXPECT_EQ(AA.getModRefInfo(Store1), MRI_Mod);
+  EXPECT_EQ(AA.getModRefInfo(Load1, MemoryLocation()), MRI_Ref);
+  EXPECT_EQ(AA.getModRefInfo(Load1), MRI_Ref);
+  EXPECT_EQ(AA.getModRefInfo(Add1, MemoryLocation()), MRI_NoModRef);
+  EXPECT_EQ(AA.getModRefInfo(Add1), MRI_NoModRef);
+  EXPECT_EQ(AA.getModRefInfo(VAArg1, MemoryLocation()), MRI_ModRef);
+  EXPECT_EQ(AA.getModRefInfo(VAArg1), MRI_ModRef);
+  EXPECT_EQ(AA.getModRefInfo(CmpXChg1, MemoryLocation()), MRI_ModRef);
+  EXPECT_EQ(AA.getModRefInfo(CmpXChg1), MRI_ModRef);
+  EXPECT_EQ(AA.getModRefInfo(AtomicRMW, MemoryLocation()), MRI_ModRef);
+  EXPECT_EQ(AA.getModRefInfo(AtomicRMW), MRI_ModRef);
 }
 
 } // end anonymous namspace

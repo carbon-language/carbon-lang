@@ -13,11 +13,14 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/IVUsers.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/StackProtector.h"
@@ -49,13 +52,16 @@ void MachineFunctionPass::getAnalysisUsage(AnalysisUsage &AU) const {
   // passes explicitly. This does not include setPreservesCFG,
   // because CodeGen overloads that to mean preserving the MachineBasicBlock
   // CFG in addition to the LLVM IR CFG.
-  AU.addPreserved<AliasAnalysis>();
+  AU.addPreserved<BasicAAWrapperPass>();
   AU.addPreserved<DominanceFrontier>();
   AU.addPreserved<DominatorTreeWrapperPass>();
+  AU.addPreserved<AAResultsWrapperPass>();
+  AU.addPreserved<GlobalsAAWrapperPass>();
   AU.addPreserved<IVUsers>();
   AU.addPreserved<LoopInfoWrapperPass>();
   AU.addPreserved<MemoryDependenceAnalysis>();
   AU.addPreserved<ScalarEvolutionWrapperPass>();
+  AU.addPreserved<SCEVAAWrapperPass>();
   AU.addPreserved<StackProtector>();
 
   FunctionPass::getAnalysisUsage(AU);

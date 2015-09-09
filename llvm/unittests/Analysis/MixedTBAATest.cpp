@@ -68,7 +68,7 @@ TEST_F(MixedTBAATest, MixedTBAA) {
   // because the AA eval pass only runs one test per store-pair.
   const char* args[] = { "MixedTBAATest", "-evaluate-aa-metadata" };
   cl::ParseCommandLineOptions(sizeof(args) / sizeof(const char*), args);
-  PM.add(createTypeBasedAliasAnalysisPass());
+  PM.add(createTypeBasedAAWrapperPass());
   PM.add(createAAEvalPass());
   PM.run(M);
 }

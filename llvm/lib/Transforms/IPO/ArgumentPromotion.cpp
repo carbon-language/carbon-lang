@@ -34,8 +34,11 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CallGraphSCCPass.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/CallSite.h"
@@ -63,7 +66,8 @@ namespace {
   ///
   struct ArgPromotion : public CallGraphSCCPass {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<AliasAnalysis>();
+      AU.addRequired<AssumptionCacheTracker>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
@@ -81,7 +85,8 @@ namespace {
     bool isDenselyPacked(Type *type, const DataLayout &DL);
     bool canPaddingBeAccessed(Argument *Arg);
     CallGraphNode *PromoteArguments(CallGraphNode *CGN);
-    bool isSafeToPromoteArgument(Argument *Arg, bool isByVal) const;
+    bool isSafeToPromoteArgument(Argument *Arg, bool isByVal,
+                                 AAResults &AAR) const;
     CallGraphNode *DoPromotion(Function *F,
                               SmallPtrSetImpl<Argument*> &ArgsToPromote,
                               SmallPtrSetImpl<Argument*> &ByValArgsToTransform);
@@ -97,8 +102,9 @@ namespace {
 char ArgPromotion::ID = 0;
 INITIALIZE_PASS_BEGIN(ArgPromotion, "argpromotion",
                 "Promote 'by reference' arguments to scalars", false, false)
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(CallGraphWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(ArgPromotion, "argpromotion",
                 "Promote 'by reference' arguments to scalars", false, false)
 
@@ -237,6 +243,14 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   
   const DataLayout &DL = F->getParent()->getDataLayout();
 
+  // We need to manually construct BasicAA directly in order to disable its use
+  // of other function analyses.
+  BasicAAResult BAR(createLegacyPMBasicAAResult(*this, *F));
+
+  // Construct our own AA results for this function. We do this manually to
+  // work around the limitations of the legacy pass manager.
+  AAResults AAR(createLegacyPMAAResults(*this, *F, BAR));
+
   // Check to see which arguments are promotable.  If an argument is promotable,
   // add it to ArgsToPromote.
   SmallPtrSet<Argument*, 8> ArgsToPromote;
@@ -315,7 +329,7 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
     }
     
     // Otherwise, see if we can promote the pointer to its value.
-    if (isSafeToPromoteArgument(PtrArg, PtrArg->hasByValOrInAllocaAttr()))
+    if (isSafeToPromoteArgument(PtrArg, PtrArg->hasByValOrInAllocaAttr(), AAR))
       ArgsToPromote.insert(PtrArg);
   }
 
@@ -416,7 +430,8 @@ static void MarkIndicesSafe(const ArgPromotion::IndicesVector &ToMark,
 /// elements of the aggregate in order to avoid exploding the number of
 /// arguments passed in.
 bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
-                                           bool isByValOrInAlloca) const {
+                                           bool isByValOrInAlloca,
+                                           AAResults &AAR) const {
   typedef std::set<IndicesVector> GEPIndicesSet;
 
   // Quick exit for unused arguments
@@ -505,7 +520,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
         // TODO: This runs the above loop over and over again for dead GEPs
         // Couldn't we just do increment the UI iterator earlier and erase the
         // use?
-        return isSafeToPromoteArgument(Arg, isByValOrInAlloca);
+        return isSafeToPromoteArgument(Arg, isByValOrInAlloca, AAR);
       }
 
       // Ensure that all of the indices are constants.
@@ -562,8 +577,6 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
   // blocks we know to be transparent to the load.
   SmallPtrSet<BasicBlock*, 16> TranspBlocks;
 
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-
   for (unsigned i = 0, e = Loads.size(); i != e; ++i) {
     // Check to see if the load is invalidated from the start of the block to
     // the load itself.
@@ -571,7 +584,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
     BasicBlock *BB = Load->getParent();
 
     MemoryLocation Loc = MemoryLocation::get(Load);
-    if (AA.canInstructionRangeModRef(BB->front(), *Load, Loc, MRI_Mod))
+    if (AAR.canInstructionRangeModRef(BB->front(), *Load, Loc, MRI_Mod))
       return false;  // Pointer is invalidated!
 
     // Now check every path from the entry block to the load for transparency.
@@ -579,7 +592,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
     // loading block.
     for (BasicBlock *P : predecessors(BB)) {
       for (BasicBlock *TranspBB : inverse_depth_first_ext(P, TranspBlocks))
-        if (AA.canBasicBlockModify(*TranspBB, Loc))
+        if (AAR.canBasicBlockModify(*TranspBB, Loc))
           return false;
     }
   }

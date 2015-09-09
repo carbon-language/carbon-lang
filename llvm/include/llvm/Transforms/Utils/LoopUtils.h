@@ -15,11 +15,11 @@
 #define LLVM_TRANSFORMS_UTILS_LOOPUTILS_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IRBuilder.h"
 
 namespace llvm {
-class AliasAnalysis;
 class AliasSet;
 class AliasSetTracker;
 class AssumptionCache;

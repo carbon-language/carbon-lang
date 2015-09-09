@@ -17,6 +17,7 @@
 #include "StatepointLowering.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
@@ -30,7 +31,6 @@
 namespace llvm {
 
 class AddrSpaceCastInst;
-class AliasAnalysis;
 class AllocaInst;
 class BasicBlock;
 class BitCastInst;

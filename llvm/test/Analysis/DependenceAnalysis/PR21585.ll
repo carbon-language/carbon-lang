@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -basicaa -globalsmodref-aa -da | FileCheck %s
+; RUN: opt < %s -analyze -basicaa -globals-aa -da | FileCheck %s
 define void @i32_subscript(i32* %a) {
 entry:
   br label %for.body

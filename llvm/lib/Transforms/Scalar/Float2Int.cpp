@@ -20,6 +20,7 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
@@ -61,7 +62,7 @@ namespace {
     bool runOnFunction(Function &F) override;
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
-      AU.addPreserved<AliasAnalysis>();
+      AU.addPreserved<GlobalsAAWrapperPass>();
     }
 
     void findRoots(Function &F, SmallPtrSet<Instruction*,8> &Roots);
@@ -84,7 +85,9 @@ namespace {
 }
 
 char Float2Int::ID = 0;
-INITIALIZE_PASS(Float2Int, "float2int", "Float to int", false, false)
+INITIALIZE_PASS_BEGIN(Float2Int, "float2int", "Float to int", false, false)
+INITIALIZE_PASS_DEPENDENCY(GlobalsAAWrapperPass)
+INITIALIZE_PASS_END(Float2Int, "float2int", "Float to int", false, false)
 
 // Given a FCmp predicate, return a matching ICmp predicate if one
 // exists, otherwise return BAD_ICMP_PREDICATE.

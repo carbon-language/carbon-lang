@@ -226,6 +226,10 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
   // including this pass itself.
   initializeCodeGen(*PassRegistry::getPassRegistry());
 
+  // Also register alias analysis passes required by codegen passes.
+  initializeBasicAAWrapperPassPass(*PassRegistry::getPassRegistry());
+  initializeAAResultsWrapperPassPass(*PassRegistry::getPassRegistry());
+
   // Substitute Pseudo Pass IDs for real ones.
   substitutePass(&EarlyTailDuplicateID, &TailDuplicateID);
   substitutePass(&PostRAMachineLICMID, &MachineLICMID);
@@ -381,10 +385,10 @@ void TargetPassConfig::addIRPasses() {
   // BasicAliasAnalysis wins if they disagree. This is intended to help
   // support "obvious" type-punning idioms.
   if (UseCFLAA)
-    addPass(createCFLAliasAnalysisPass());
-  addPass(createTypeBasedAliasAnalysisPass());
-  addPass(createScopedNoAliasAAPass());
-  addPass(createBasicAliasAnalysisPass());
+    addPass(createCFLAAWrapperPass());
+  addPass(createTypeBasedAAWrapperPass());
+  addPass(createScopedNoAliasAAWrapperPass());
+  addPass(createBasicAAWrapperPass());
 
   // Before running any passes, run the verifier to determine if the input
   // coming from the front-end and/or optimizer is valid.

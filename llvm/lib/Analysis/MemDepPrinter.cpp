@@ -49,7 +49,7 @@ namespace {
     void print(raw_ostream &OS, const Module * = nullptr) const override;
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequiredTransitive<AliasAnalysis>();
+      AU.addRequiredTransitive<AAResultsWrapperPass>();
       AU.addRequiredTransitive<MemoryDependenceAnalysis>();
       AU.setPreservesAll();
     }

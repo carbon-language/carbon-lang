@@ -153,10 +153,9 @@ void PassManagerBuilder::addInitialAliasAnalysisPasses(
   // BasicAliasAnalysis wins if they disagree. This is intended to help
   // support "obvious" type-punning idioms.
   if (UseCFLAA)
-    PM.add(createCFLAliasAnalysisPass());
-  PM.add(createTypeBasedAliasAnalysisPass());
-  PM.add(createScopedNoAliasAAPass());
-  PM.add(createBasicAliasAnalysisPass());
+    PM.add(createCFLAAWrapperPass());
+  PM.add(createTypeBasedAAWrapperPass());
+  PM.add(createScopedNoAliasAAWrapperPass());
 }
 
 void PassManagerBuilder::populateFunctionPassManager(
@@ -227,7 +226,7 @@ void PassManagerBuilder::populateModulePassManager(
     // We add a module alias analysis pass here. In part due to bugs in the
     // analysis infrastructure this "works" in that the analysis stays alive
     // for the entire SCC pass run below.
-    MPM.add(createGlobalsModRefPass());
+    MPM.add(createGlobalsAAWrapperPass());
 
   // Start of CallGraph SCC passes.
   if (!DisableUnitAtATime)
@@ -360,7 +359,7 @@ void PassManagerBuilder::populateModulePassManager(
     // this to work. Fortunately, it is trivial to preserve AliasAnalysis
     // (doing nothing preserves it as it is required to be conservatively
     // correct in the face of IR changes).
-    MPM.add(createGlobalsModRefPass());
+    MPM.add(createGlobalsAAWrapperPass());
 
   if (RunFloat2Int)
     MPM.add(createFloat2IntPass());
@@ -519,7 +518,7 @@ void PassManagerBuilder::addLTOOptimizationPasses(legacy::PassManagerBase &PM) {
 
   // Run a few AA driven optimizations here and now, to cleanup the code.
   PM.add(createFunctionAttrsPass()); // Add nocapture.
-  PM.add(createGlobalsModRefPass()); // IP alias analysis.
+  PM.add(createGlobalsAAWrapperPass()); // IP alias analysis.
 
   PM.add(createLICMPass());                 // Hoist loop invariants.
   if (EnableMLSM)

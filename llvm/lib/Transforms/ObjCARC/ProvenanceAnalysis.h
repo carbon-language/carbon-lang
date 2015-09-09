@@ -26,10 +26,10 @@
 #define LLVM_LIB_TRANSFORMS_OBJCARC_PROVENANCEANALYSIS_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 
 namespace llvm {
   class Value;
-  class AliasAnalysis;
   class DataLayout;
   class PHINode;
   class SelectInst;

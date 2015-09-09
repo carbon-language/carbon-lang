@@ -26,47 +26,19 @@
 
 namespace llvm {
 
-class CFLAliasAnalysis : public ImmutablePass, public AliasAnalysis {
+class CFLAAResult : public AAResultBase<CFLAAResult> {
+  friend AAResultBase<CFLAAResult>;
+
   struct FunctionInfo;
 
-  struct FunctionHandle final : public CallbackVH {
-    FunctionHandle(Function *Fn, CFLAliasAnalysis *CFLAA)
-        : CallbackVH(Fn), CFLAA(CFLAA) {
-      assert(Fn != nullptr);
-      assert(CFLAA != nullptr);
-    }
-
-    void deleted() override { removeSelfFromCache(); }
-    void allUsesReplacedWith(Value *) override { removeSelfFromCache(); }
-
-  private:
-    CFLAliasAnalysis *CFLAA;
-
-    void removeSelfFromCache() {
-      assert(CFLAA != nullptr);
-      auto *Val = getValPtr();
-      CFLAA->evict(cast<Function>(Val));
-      setValPtr(nullptr);
-    }
-  };
-
-  /// \brief Cached mapping of Functions to their StratifiedSets.
-  /// If a function's sets are currently being built, it is marked
-  /// in the cache as an Optional without a value. This way, if we
-  /// have any kind of recursion, it is discernable from a function
-  /// that simply has empty sets.
-  DenseMap<Function *, Optional<FunctionInfo>> Cache;
-  std::forward_list<FunctionHandle> Handles;
-
 public:
-  static char ID;
+  explicit CFLAAResult(const TargetLibraryInfo &TLI);
+  CFLAAResult(CFLAAResult &&Arg);
 
-  CFLAliasAnalysis();
-  ~CFLAliasAnalysis() override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
-
-  void *getAdjustedAnalysisPointer(const void *ID) override;
+  /// Handle invalidation events from the new pass manager.
+  ///
+  /// By definition, this result is stateless and so remains valid.
+  bool invalidate(Function &, const PreservedAnalyses &) { return false; }
 
   /// \brief Inserts the given Function into the cache.
   void scan(Function *Fn);
@@ -79,8 +51,7 @@ public:
 
   AliasResult query(const MemoryLocation &LocA, const MemoryLocation &LocB);
 
-  AliasResult alias(const MemoryLocation &LocA,
-                    const MemoryLocation &LocB) override {
+  AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB) {
     if (LocA.Ptr == LocB.Ptr) {
       if (LocA.Size == LocB.Size) {
         return MustAlias;
@@ -96,29 +67,92 @@ public:
     // one Value tied to a Function, and neither GlobalValues nor ConstantExprs
     // are.
     if (isa<Constant>(LocA.Ptr) && isa<Constant>(LocB.Ptr)) {
-      return AliasAnalysis::alias(LocA, LocB);
+      return AAResultBase::alias(LocA, LocB);
     }
 
     AliasResult QueryResult = query(LocA, LocB);
     if (QueryResult == MayAlias)
-      return AliasAnalysis::alias(LocA, LocB);
+      return AAResultBase::alias(LocA, LocB);
 
     return QueryResult;
   }
 
-  bool doInitialization(Module &M) override;
+private:
+  struct FunctionHandle final : public CallbackVH {
+    FunctionHandle(Function *Fn, CFLAAResult *Result)
+        : CallbackVH(Fn), Result(Result) {
+      assert(Fn != nullptr);
+      assert(Result != nullptr);
+    }
+
+    void deleted() override { removeSelfFromCache(); }
+    void allUsesReplacedWith(Value *) override { removeSelfFromCache(); }
+
+  private:
+    CFLAAResult *Result;
+
+    void removeSelfFromCache() {
+      assert(Result != nullptr);
+      auto *Val = getValPtr();
+      Result->evict(cast<Function>(Val));
+      setValPtr(nullptr);
+    }
+  };
+
+  /// \brief Cached mapping of Functions to their StratifiedSets.
+  /// If a function's sets are currently being built, it is marked
+  /// in the cache as an Optional without a value. This way, if we
+  /// have any kind of recursion, it is discernable from a function
+  /// that simply has empty sets.
+  DenseMap<Function *, Optional<FunctionInfo>> Cache;
+  std::forward_list<FunctionHandle> Handles;
+
+  FunctionInfo buildSetsFrom(Function *F);
+};
+
+/// Analysis pass providing a never-invalidated alias analysis result.
+///
+/// FIXME: We really should refactor CFL to use the analysis more heavily, and
+/// in particular to leverage invalidation to trigger re-computation of sets.
+class CFLAA {
+public:
+  typedef CFLAAResult Result;
+
+  /// \brief Opaque, unique identifier for this analysis pass.
+  static void *ID() { return (void *)&PassID; }
+
+  CFLAAResult run(Function &F, AnalysisManager<Function> *AM);
+
+  /// \brief Provide access to a name for this pass for debugging purposes.
+  static StringRef name() { return "CFLAA"; }
 
 private:
-  FunctionInfo buildSetsFrom(Function *F);
+  static char PassID;
+};
+
+/// Legacy wrapper pass to provide the CFLAAResult object.
+class CFLAAWrapperPass : public ImmutablePass {
+  std::unique_ptr<CFLAAResult> Result;
+
+public:
+  static char ID;
+
+  CFLAAWrapperPass();
+
+  CFLAAResult &getResult() { return *Result; }
+  const CFLAAResult &getResult() const { return *Result; }
+
+  bool doInitialization(Module &M) override;
+  bool doFinalization(Module &M) override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
 //===--------------------------------------------------------------------===//
 //
-// createCFLAliasAnalysisPass - This pass implements a set-based approach to
+// createCFLAAWrapperPass - This pass implements a set-based approach to
 // alias analysis.
 //
-ImmutablePass *createCFLAliasAnalysisPass();
-
+ImmutablePass *createCFLAAWrapperPass();
 }
 
 #endif

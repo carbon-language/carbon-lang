@@ -32,16 +32,10 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
-  // createNoAAPass - This pass implements a "I don't know" alias analysis.
-  //
-  ImmutablePass *createNoAAPass();
-
-  //===--------------------------------------------------------------------===//
-  //
-  // createObjCARCAliasAnalysisPass - This pass implements ObjC-ARC-based
+  // createObjCARCAAWrapperPass - This pass implements ObjC-ARC-based
   // alias analysis.
   //
-  ImmutablePass *createObjCARCAliasAnalysisPass();
+  ImmutablePass *createObjCARCAAWrapperPass();
 
   FunctionPass *createPAEvalPass();
 

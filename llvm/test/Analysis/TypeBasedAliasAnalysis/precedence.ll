@@ -1,9 +1,9 @@
-; RUN: opt -basicaa -tbaa -gvn -instcombine -S < %s | FileCheck %s --check-prefix=TBAA
-; RUN: opt -tbaa -basicaa -gvn -instcombine -S < %s | FileCheck %s --check-prefix=BASICAA
+; RUN: opt -tbaa -disable-basicaa -gvn -instcombine -S < %s | FileCheck %s --check-prefix=TBAA
+; RUN: opt -tbaa -gvn -instcombine -S < %s | FileCheck %s --check-prefix=BASICAA
 
 ; According to the TBAA metadata the load and store don't alias. However,
-; according to the actual code, they do. The order of the alias analysis
-; passes should determine which of these takes precedence.
+; according to the actual code, they do. Disabling basicaa shows the raw TBAA
+; results.
 
 target datalayout = "e-p:64:64:64"
 

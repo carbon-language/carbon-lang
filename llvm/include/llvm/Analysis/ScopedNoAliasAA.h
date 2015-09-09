@@ -22,52 +22,71 @@
 
 namespace llvm {
 
-/// ScopedNoAliasAA - This is a simple alias analysis
-/// implementation that uses scoped-noalias metadata to answer queries.
-class ScopedNoAliasAA : public ImmutablePass, public AliasAnalysis {
+/// A simple AA result which uses scoped-noalias metadata to answer queries.
+class ScopedNoAliasAAResult : public AAResultBase<ScopedNoAliasAAResult> {
+  friend AAResultBase<ScopedNoAliasAAResult>;
+
 public:
-  static char ID; // Class identification, replacement for typeinfo
-  ScopedNoAliasAA() : ImmutablePass(ID) {
-    initializeScopedNoAliasAAPass(*PassRegistry::getPassRegistry());
-  }
+  explicit ScopedNoAliasAAResult(const TargetLibraryInfo &TLI)
+      : AAResultBase(TLI) {}
+  ScopedNoAliasAAResult(ScopedNoAliasAAResult &&Arg)
+      : AAResultBase(std::move(Arg)) {}
 
-  bool doInitialization(Module &M) override;
+  /// Handle invalidation events from the new pass manager.
+  ///
+  /// By definition, this result is stateless and so remains valid.
+  bool invalidate(Function &, const PreservedAnalyses &) { return false; }
 
-  /// getAdjustedAnalysisPointer - This method is used when a pass implements
-  /// an analysis interface through multiple inheritance.  If needed, it
-  /// should override this to adjust the this pointer as needed for the
-  /// specified pass info.
-  void *getAdjustedAnalysisPointer(const void *PI) override {
-    if (PI == &AliasAnalysis::ID)
-      return (AliasAnalysis *)this;
-    return this;
-  }
+  AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB);
+  ModRefInfo getModRefInfo(ImmutableCallSite CS, const MemoryLocation &Loc);
+  ModRefInfo getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2);
 
-protected:
+private:
   bool mayAliasInScopes(const MDNode *Scopes, const MDNode *NoAlias) const;
   void collectMDInDomain(const MDNode *List, const MDNode *Domain,
                          SmallPtrSetImpl<const MDNode *> &Nodes) const;
+};
+
+/// Analysis pass providing a never-invalidated alias analysis result.
+class ScopedNoAliasAA {
+public:
+  typedef ScopedNoAliasAAResult Result;
+
+  /// \brief Opaque, unique identifier for this analysis pass.
+  static void *ID() { return (void *)&PassID; }
+
+  ScopedNoAliasAAResult run(Function &F, AnalysisManager<Function> *AM);
+
+  /// \brief Provide access to a name for this pass for debugging purposes.
+  static StringRef name() { return "ScopedNoAliasAA"; }
 
 private:
+  static char PassID;
+};
+
+/// Legacy wrapper pass to provide the ScopedNoAliasAAResult object.
+class ScopedNoAliasAAWrapperPass : public ImmutablePass {
+  std::unique_ptr<ScopedNoAliasAAResult> Result;
+
+public:
+  static char ID;
+
+  ScopedNoAliasAAWrapperPass();
+
+  ScopedNoAliasAAResult &getResult() { return *Result; }
+  const ScopedNoAliasAAResult &getResult() const { return *Result; }
+
+  bool doInitialization(Module &M) override;
+  bool doFinalization(Module &M) override;
   void getAnalysisUsage(AnalysisUsage &AU) const override;
-  AliasResult alias(const MemoryLocation &LocA,
-                    const MemoryLocation &LocB) override;
-  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal) override;
-  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
-  FunctionModRefBehavior getModRefBehavior(const Function *F) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS,
-                           const MemoryLocation &Loc) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS1,
-                           ImmutableCallSite CS2) override;
 };
 
 //===--------------------------------------------------------------------===//
 //
-// createScopedNoAliasAAPass - This pass implements metadata-based
+// createScopedNoAliasAAWrapperPass - This pass implements metadata-based
 // scoped noalias analysis.
 //
-ImmutablePass *createScopedNoAliasAAPass();
-
+ImmutablePass *createScopedNoAliasAAWrapperPass();
 }
 
 #endif

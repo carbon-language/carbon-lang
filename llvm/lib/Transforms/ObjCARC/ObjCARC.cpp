@@ -29,7 +29,7 @@ using namespace llvm::objcarc;
 /// initializeObjCARCOptsPasses - Initialize all passes linked into the
 /// ObjCARCOpts library.
 void llvm::initializeObjCARCOpts(PassRegistry &Registry) {
-  initializeObjCARCAliasAnalysisPass(Registry);
+  initializeObjCARCAAWrapperPassPass(Registry);
   initializeObjCARCAPElimPass(Registry);
   initializeObjCARCExpandPass(Registry);
   initializeObjCARCContractPass(Registry);

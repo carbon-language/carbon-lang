@@ -58,7 +58,7 @@ INITIALIZE_PASS_END(ProcessImplicitDefs, "processimpdefs",
 
 void ProcessImplicitDefs::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
-  AU.addPreserved<AliasAnalysis>();
+  AU.addPreserved<AAResultsWrapperPass>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
