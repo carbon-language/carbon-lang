@@ -17,16 +17,16 @@ define void @select() {
   ; CHECK: cost of 1 {{.*}} select
   %v6 = select i1 undef, double undef, double undef
 
-  ; Vector values - check for vectors that have a high cost because they end up
-  ; scalarized.
-  ; CHECK: cost of 320 {{.*}} select
+  ; CHECK: cost of 16 {{.*}} select
   %v13b = select <16 x i1>  undef, <16 x i16> undef, <16 x i16> undef
 
-  ; CHECK: cost of 160 {{.*}} select
+  ; CHECK: cost of 8 {{.*}} select
   %v15b = select <8 x i1>  undef, <8 x i32> undef, <8 x i32> undef
-  ; CHECK: cost of 320 {{.*}} select
+  ; CHECK: cost of 16 {{.*}} select
   %v15c = select <16 x i1>  undef, <16 x i32> undef, <16 x i32> undef
 
+  ; Vector values - check for vectors of i64s that have a high cost because
+  ; they end up scalarized.
   ; CHECK: cost of 80 {{.*}} select
   %v16a = select <4 x i1> undef, <4 x i64> undef, <4 x i64> undef
   ; CHECK: cost of 160 {{.*}} select
@@ -34,5 +34,5 @@ define void @select() {
   ; CHECK: cost of 320 {{.*}} select
   %v16c = select <16 x i1> undef, <16 x i64> undef, <16 x i64> undef
 
-    ret void
+  ret void
 }

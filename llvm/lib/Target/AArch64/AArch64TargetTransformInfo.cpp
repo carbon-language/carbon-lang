@@ -380,15 +380,16 @@ int AArch64TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
                                        Type *CondTy) {
 
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
-  // We don't lower vector selects well that are wider than the register width.
+  // We don't lower some vector selects well that are wider than the register
+  // width.
   if (ValTy->isVectorTy() && ISD == ISD::SELECT) {
     // We would need this many instructions to hide the scalarization happening.
     const int AmortizationCost = 20;
     static const TypeConversionCostTblEntry<MVT::SimpleValueType>
     VectorSelectTbl[] = {
-      { ISD::SELECT, MVT::v16i1, MVT::v16i16, 16 * AmortizationCost },
-      { ISD::SELECT, MVT::v8i1, MVT::v8i32, 8 * AmortizationCost },
-      { ISD::SELECT, MVT::v16i1, MVT::v16i32, 16 * AmortizationCost },
+      { ISD::SELECT, MVT::v16i1, MVT::v16i16, 16 },
+      { ISD::SELECT, MVT::v8i1, MVT::v8i32, 8 },
+      { ISD::SELECT, MVT::v16i1, MVT::v16i32, 16 },
       { ISD::SELECT, MVT::v4i1, MVT::v4i64, 4 * AmortizationCost },
       { ISD::SELECT, MVT::v8i1, MVT::v8i64, 8 * AmortizationCost },
       { ISD::SELECT, MVT::v16i1, MVT::v16i64, 16 * AmortizationCost }
