@@ -5876,8 +5876,26 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     if (D.getDeclSpec().isConstexprSpecified())
       NewVD->setConstexpr(true);
 
-    if (D.getDeclSpec().isConceptSpecified())
+    if (D.getDeclSpec().isConceptSpecified()) {
       NewVD->setConcept(true);
+
+      // C++ Concepts TS [dcl.spec.concept]p2: A concept definition shall not
+      // be declared with the thread_local, inline, friend, or constexpr
+      // specifiers, [...]
+      if (D.getDeclSpec().getThreadStorageClassSpec() == TSCS_thread_local) {
+        Diag(D.getDeclSpec().getThreadStorageClassSpecLoc(),
+             diag::err_concept_decl_invalid_specifiers)
+            << 0 << 0;
+        NewVD->setInvalidDecl(true);
+      }
+
+      if (D.getDeclSpec().isConstexprSpecified()) {
+        Diag(D.getDeclSpec().getConstexprSpecLoc(),
+             diag::err_concept_decl_invalid_specifiers)
+            << 0 << 3;
+        NewVD->setInvalidDecl(true);
+      }
+    }
   }
 
   // Set the lexical context. If the declarator has a C++ scope specifier, the
@@ -7502,6 +7520,30 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       // C++ Concepts TS [dcl.spec.concept]p2: Every concept definition is
       // implicity defined to be a constexpr declaration (implicitly inline)
       NewFD->setImplicitlyInline();
+
+      // C++ Concepts TS [dcl.spec.concept]p2: A concept definition shall not
+      // be declared with the thread_local, inline, friend, or constexpr
+      // specifiers, [...]
+      if (isInline) {
+        Diag(D.getDeclSpec().getInlineSpecLoc(),
+             diag::err_concept_decl_invalid_specifiers)
+            << 1 << 1;
+        NewFD->setInvalidDecl(true);
+      }
+
+      if (isFriend) {
+        Diag(D.getDeclSpec().getFriendSpecLoc(),
+             diag::err_concept_decl_invalid_specifiers)
+            << 1 << 2;
+        NewFD->setInvalidDecl(true);
+      }
+
+      if (isConstexpr) {
+        Diag(D.getDeclSpec().getConstexprSpecLoc(),
+             diag::err_concept_decl_invalid_specifiers)
+            << 1 << 3;
+        NewFD->setInvalidDecl(true);
+      }
     }
 
     // If __module_private__ was specified, mark the function accordingly.

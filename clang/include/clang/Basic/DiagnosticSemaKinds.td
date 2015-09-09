@@ -1980,6 +1980,9 @@ def err_var_concept_not_initialized : Error<
   "variable concept declaration must be initialized">;
 def err_function_concept_exception_spec : Error<
   "function concept cannot have exception specification">;
+def err_concept_decl_invalid_specifiers : Error<
+  "%select{variable|function}0 concept cannot be declared "
+  "'%select{thread_local|inline|friend|constexpr}1'">;
 
 // C++11 char16_t/char32_t
 def warn_cxx98_compat_unicode_type : Warning<
