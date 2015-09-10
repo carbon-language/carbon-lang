@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple x86_64-apple-darwin %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
+// RUN: llvm-mc -triple x86_64-apple-darwin %s -filetype=obj -o - | llvm-readobj -file-headers -s -sd -r -t -macho-segment -macho-dysymtab -macho-indirect-symbols | FileCheck %s
 
 .tdata
 _a$tlv$init:
@@ -21,154 +21,171 @@ _foo:
 	 call	*(%rdi) # returns &a in %rax
 	 ret
 
-// CHECK: ('cputype', 16777223)
-// CHECK: ('cpusubtype', 3)
-// CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 3)
-// CHECK: ('load_commands_size', 416)
-// CHECK: ('flag', 0)
-// CHECK: ('reserved', 0)
-// CHECK: ('load_commands', [
-// CHECK:   # Load Command 0
-// CHECK:  (('command', 25)
-// CHECK:   ('size', 312)
-// CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:   ('vm_addr', 0)
-// CHECK:   ('vm_size', 38)
-// CHECK:   ('file_offset', 448)
-// CHECK:   ('file_size', 38)
-// CHECK:   ('maxprot', 7)
-// CHECK:   ('initprot', 7)
-// CHECK:   ('num_sections', 3)
-// CHECK:   ('flags', 0)
-// CHECK:   ('sections', [
-// CHECK:     # Section 0
-// CHECK:    (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 0)
-// CHECK:     ('size', 10)
-// CHECK:     ('offset', 448)
-// CHECK:     ('alignment', 4)
-// CHECK:     ('reloc_offset', 488)
-// CHECK:     ('num_reloc', 1)
-// CHECK:     ('flags', 0x80000400)
-// CHECK:     ('reserved1', 0)
-// CHECK:     ('reserved2', 0)
-// CHECK:     ('reserved3', 0)
-// CHECK:    ),
-// CHECK:   ('_relocations', [
-// CHECK:     # Relocation 0
-// CHECK:     (('word-0', 0x3),
-// CHECK:      ('word-1', 0x9d000001)),
-// CHECK:   ])
-// CHECK:   ('_section_data', '488b3d00 000000ff 17c3')
-// CHECK:     # Section 1
-// CHECK:    (('section_name', '__thread_data\x00\x00\x00')
-// CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 10)
-// CHECK:     ('size', 4)
-// CHECK:     ('offset', 458)
-// CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 0)
-// CHECK:     ('num_reloc', 0)
-// CHECK:     ('flags', 0x11)
-// CHECK:     ('reserved1', 0)
-// CHECK:     ('reserved2', 0)
-// CHECK:     ('reserved3', 0)
-// CHECK:    ),
-// CHECK:   ('_relocations', [
-// CHECK:   ])
-// CHECK:   ('_section_data', '04000000')
-// CHECK:     # Section 2
-// CHECK:    (('section_name', '__thread_vars\x00\x00\x00')
-// CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 14)
-// CHECK:     ('size', 24)
-// CHECK:     ('offset', 462)
-// CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 496)
-// CHECK:     ('num_reloc', 2)
-// CHECK:     ('flags', 0x13)
-// CHECK:     ('reserved1', 0)
-// CHECK:     ('reserved2', 0)
-// CHECK:     ('reserved3', 0)
-// CHECK:    ),
-// CHECK:   ('_relocations', [
-// CHECK:     # Relocation 0
-// CHECK:     (('word-0', 0x10),
-// CHECK:      ('word-1', 0xe000000)),
-// CHECK:     # Relocation 1
-// CHECK:     (('word-0', 0x0),
-// CHECK:      ('word-1', 0xe000003)),
-// CHECK:   ])
-// CHECK:   ('_section_data', '00000000 00000000 00000000 00000000 00000000 00000000')
-// CHECK:   ])
-// CHECK:  ),
-// CHECK:   # Load Command 1
-// CHECK:  (('command', 2)
-// CHECK:   ('size', 24)
-// CHECK:   ('symoff', 512)
-// CHECK:   ('nsyms', 4)
-// CHECK:   ('stroff', 576)
-// CHECK:   ('strsize', 40)
-// CHECK:   ('_string_data', '\x00_a$tlv$init\x00__tlv_bootstrap\x00_foo\x00_a\x00\x00\x00\x00')
-// CHECK:   ('_symbols', [
-// CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 1)
-// CHECK:     ('n_type', 0xe)
-// CHECK:     ('n_sect', 2)
-// CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 10)
-// CHECK:     ('_string', '_a$tlv$init')
-// CHECK:    ),
-// CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 34)
-// CHECK:     ('n_type', 0xf)
-// CHECK:     ('n_sect', 3)
-// CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 14)
-// CHECK:     ('_string', '_a')
-// CHECK:    ),
-// CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 29)
-// CHECK:     ('n_type', 0xf)
-// CHECK:     ('n_sect', 1)
-// CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 0)
-// CHECK:     ('_string', '_foo')
-// CHECK:    ),
-// CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 13)
-// CHECK:     ('n_type', 0x1)
-// CHECK:     ('n_sect', 0)
-// CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 0)
-// CHECK:     ('_string', '__tlv_bootstrap')
-// CHECK:    ),
-// CHECK:   ])
-// CHECK:  ),
-// CHECK:   # Load Command 2
-// CHECK:  (('command', 11)
-// CHECK:   ('size', 80)
-// CHECK:   ('ilocalsym', 0)
-// CHECK:   ('nlocalsym', 1)
-// CHECK:   ('iextdefsym', 1)
-// CHECK:   ('nextdefsym', 2)
-// CHECK:   ('iundefsym', 3)
-// CHECK:   ('nundefsym', 1)
-// CHECK:   ('tocoff', 0)
-// CHECK:   ('ntoc', 0)
-// CHECK:   ('modtaboff', 0)
-// CHECK:   ('nmodtab', 0)
-// CHECK:   ('extrefsymoff', 0)
-// CHECK:   ('nextrefsyms', 0)
-// CHECK:   ('indirectsymoff', 0)
-// CHECK:   ('nindirectsyms', 0)
-// CHECK:   ('extreloff', 0)
-// CHECK:   ('nextrel', 0)
-// CHECK:   ('locreloff', 0)
-// CHECK:   ('nlocrel', 0)
-// CHECK:   ('_indirect_symbols', [
-// CHECK:   ])
-// CHECK:  ),
-// CHECK: ])
+// CHECK: File: <stdin>
+// CHECK: Format: Mach-O 64-bit x86-64
+// CHECK: Arch: x86_64
+// CHECK: AddressSize: 64bit
+// CHECK: MachHeader {
+// CHECK:   Magic: Magic64 (0xFEEDFACF)
+// CHECK:   CpuType: X86-64 (0x1000007)
+// CHECK:   CpuSubType: CPU_SUBTYPE_X86_64_ALL (0x3)
+// CHECK:   FileType: Relocatable (0x1)
+// CHECK:   NumOfLoadCommands: 3
+// CHECK:   SizeOfLoadCommands: 416
+// CHECK:   Flags [ (0x0)
+// CHECK:   ]
+// CHECK:   Reserved: 0x0
+// CHECK: }
+// CHECK: Sections [
+// CHECK:   Section {
+// CHECK:     Index: 0
+// CHECK:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Address: 0x0
+// CHECK:     Size: 0xA
+// CHECK:     Offset: 448
+// CHECK:     Alignment: 4
+// CHECK:     RelocationOffset: 0x1E8
+// CHECK:     RelocationCount: 1
+// CHECK:     Type: 0x0
+// CHECK:     Attributes [ (0x800004)
+// CHECK:       PureInstructions (0x800000)
+// CHECK:       SomeInstructions (0x4)
+// CHECK:     ]
+// CHECK:     Reserved1: 0x0
+// CHECK:     Reserved2: 0x0
+// CHECK:     Reserved3: 0x0
+// CHECK:     SectionData (
+// CHECK:       0000: 488B3D00 000000FF 17C3               |H.=.......|
+// CHECK:     )
+// CHECK:   }
+// CHECK:   Section {
+// CHECK:     Index: 1
+// CHECK:     Name: __thread_data (5F 5F 74 68 72 65 61 64 5F 64 61 74 61 00 00 00)
+// CHECK:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Address: 0xA
+// CHECK:     Size: 0x4
+// CHECK:     Offset: 458
+// CHECK:     Alignment: 0
+// CHECK:     RelocationOffset: 0x0
+// CHECK:     RelocationCount: 0
+// CHECK:     Type: 0x11
+// CHECK:     Attributes [ (0x0)
+// CHECK:     ]
+// CHECK:     Reserved1: 0x0
+// CHECK:     Reserved2: 0x0
+// CHECK:     Reserved3: 0x0
+// CHECK:     SectionData (
+// CHECK:       0000: 04000000                             |....|
+// CHECK:     )
+// CHECK:   }
+// CHECK:   Section {
+// CHECK:     Index: 2
+// CHECK:     Name: __thread_vars (5F 5F 74 68 72 65 61 64 5F 76 61 72 73 00 00 00)
+// CHECK:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Address: 0xE
+// CHECK:     Size: 0x18
+// CHECK:     Offset: 462
+// CHECK:     Alignment: 0
+// CHECK:     RelocationOffset: 0x1F0
+// CHECK:     RelocationCount: 2
+// CHECK:     Type: 0x13
+// CHECK:     Attributes [ (0x0)
+// CHECK:     ]
+// CHECK:     Reserved1: 0x0
+// CHECK:     Reserved2: 0x0
+// CHECK:     Reserved3: 0x0
+// CHECK:     SectionData (
+// CHECK:       0000: 00000000 00000000 00000000 00000000  |................|
+// CHECK:       0010: 00000000 00000000                    |........|
+// CHECK:     )
+// CHECK:   }
+// CHECK: ]
+// CHECK: Relocations [
+// CHECK:   Section __text {
+// CHECK:     0x3 1 2 1 X86_64_RELOC_TLV 0 _a
+// CHECK:   }
+// CHECK:   Section __thread_vars {
+// CHECK:     0x10 0 3 1 X86_64_RELOC_UNSIGNED 0 _a$tlv$init
+// CHECK:     0x0 0 3 1 X86_64_RELOC_UNSIGNED 0 __tlv_bootstrap
+// CHECK:   }
+// CHECK: ]
+// CHECK: Symbols [
+// CHECK:   Symbol {
+// CHECK:     Name: _a$tlv$init (1)
+// CHECK:     Type: Section (0xE)
+// CHECK:     Section: __thread_data (0x2)
+// CHECK:     RefType: UndefinedNonLazy (0x0)
+// CHECK:     Flags [ (0x0)
+// CHECK:     ]
+// CHECK:     Value: 0xA
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: _a (34)
+// CHECK:     Extern
+// CHECK:     Type: Section (0xE)
+// CHECK:     Section: __thread_vars (0x3)
+// CHECK:     RefType: UndefinedNonLazy (0x0)
+// CHECK:     Flags [ (0x0)
+// CHECK:     ]
+// CHECK:     Value: 0xE
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: _foo (29)
+// CHECK:     Extern
+// CHECK:     Type: Section (0xE)
+// CHECK:     Section: __text (0x1)
+// CHECK:     RefType: UndefinedNonLazy (0x0)
+// CHECK:     Flags [ (0x0)
+// CHECK:     ]
+// CHECK:     Value: 0x0
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: __tlv_bootstrap (13)
+// CHECK:     Extern
+// CHECK:     Type: Undef (0x0)
+// CHECK:     Section:  (0x0)
+// CHECK:     RefType: UndefinedNonLazy (0x0)
+// CHECK:     Flags [ (0x0)
+// CHECK:     ]
+// CHECK:     Value: 0x0
+// CHECK:   }
+// CHECK: ]
+// CHECK: Indirect Symbols {
+// CHECK:   Number: 0
+// CHECK:   Symbols [
+// CHECK:   ]
+// CHECK: }
+// CHECK: Segment {
+// CHECK:   Cmd: LC_SEGMENT_64
+// CHECK:   Name: 
+// CHECK:   Size: 312
+// CHECK:   vmaddr: 0x0
+// CHECK:   vmsize: 0x26
+// CHECK:   fileoff: 448
+// CHECK:   filesize: 38
+// CHECK:   maxprot: rwx
+// CHECK:   initprot: rwx
+// CHECK:   nsects: 3
+// CHECK:   flags: 0x0
+// CHECK: }
+// CHECK: Dysymtab {
+// CHECK:   ilocalsym: 0
+// CHECK:   nlocalsym: 1
+// CHECK:   iextdefsym: 1
+// CHECK:   nextdefsym: 2
+// CHECK:   iundefsym: 3
+// CHECK:   nundefsym: 1
+// CHECK:   tocoff: 0
+// CHECK:   ntoc: 0
+// CHECK:   modtaboff: 0
+// CHECK:   nmodtab: 0
+// CHECK:   extrefsymoff: 0
+// CHECK:   nextrefsyms: 0
+// CHECK:   indirectsymoff: 0
+// CHECK:   nindirectsyms: 0
+// CHECK:   extreloff: 0
+// CHECK:   nextrel: 0
+// CHECK:   locreloff: 0
+// CHECK:   nlocrel: 0
+// CHECK: }

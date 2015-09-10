@@ -1,122 +1,131 @@
-// RUN: llvm-mc -triple x86_64-apple-darwin10 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
+// RUN: llvm-mc -triple x86_64-apple-darwin10 %s -filetype=obj -o - | llvm-readobj -file-headers -s -sd -r -t -macho-segment -macho-dysymtab -macho-indirect-symbols | FileCheck %s
 _g:
 LFB2:
 	.section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support
 _g.eh:
 	.quad	LFB2-.
 
-// CHECK:      ('cputype', 16777223)
-// CHECK-NEXT: ('cpusubtype', 3)
-// CHECK-NEXT: ('filetype', 1)
-// CHECK-NEXT: ('num_load_commands', 4)
-// CHECK-NEXT: ('load_commands_size', 352)
-// CHECK-NEXT: ('flag', 0)
-// CHECK-NEXT: ('reserved', 0)
-// CHECK-NEXT: ('load_commands', [
-// CHECK-NEXT:   # Load Command 0
-// CHECK-NEXT:  (('command', 25)
-// CHECK-NEXT:   ('size', 232)
-// CHECK-NEXT:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:   ('vm_addr', 0)
-// CHECK-NEXT:   ('vm_size', 8)
-// CHECK-NEXT:   ('file_offset', 384)
-// CHECK-NEXT:   ('file_size', 8)
-// CHECK-NEXT:   ('maxprot', 7)
-// CHECK-NEXT:   ('initprot', 7)
-// CHECK-NEXT:   ('num_sections', 2)
-// CHECK-NEXT:   ('flags', 0)
-// CHECK-NEXT:   ('sections', [
-// CHECK-NEXT:    # Section 0
-// CHECK-NEXT:   (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:    ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:    ('address', 0)
-// CHECK-NEXT:    ('size', 0)
-// CHECK-NEXT:    ('offset', 384)
-// CHECK-NEXT:    ('alignment', 0)
-// CHECK-NEXT:    ('reloc_offset', 0)
-// CHECK-NEXT:    ('num_reloc', 0)
-// CHECK-NEXT:    ('flags', 0x80000000)
-// CHECK-NEXT:    ('reserved1', 0)
-// CHECK-NEXT:    ('reserved2', 0)
-// CHECK-NEXT:    ('reserved3', 0)
-// CHECK-NEXT:   ),
-// CHECK-NEXT:  ('_relocations', [
-// CHECK-NEXT:  ])
-// CHECK-NEXT:  ('_section_data', '')
-// CHECK-NEXT:    # Section 1
-// CHECK-NEXT:   (('section_name', '__eh_frame\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:    ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:    ('address', 0)
-// CHECK-NEXT:    ('size', 8)
-// CHECK-NEXT:    ('offset', 384)
-// CHECK-NEXT:    ('alignment', 0)
-// CHECK-NEXT:    ('reloc_offset', 392)
-// CHECK-NEXT:    ('num_reloc', 2)
-// CHECK-NEXT:    ('flags', 0x6800000b)
-// CHECK-NEXT:    ('reserved1', 0)
-// CHECK-NEXT:    ('reserved2', 0)
-// CHECK-NEXT:    ('reserved3', 0)
-// CHECK-NEXT:   ),
-// CHECK-NEXT:  ('_relocations', [
-// CHECK-NEXT:    # Relocation 0
-// CHECK-NEXT:    (('word-0', 0x0),
-// CHECK-NEXT:     ('word-1', 0x5e000001)),
-// CHECK-NEXT:    # Relocation 1
-// CHECK-NEXT:    (('word-0', 0x0),
-// CHECK-NEXT:     ('word-1', 0xe000000)),
-// CHECK-NEXT:  ])
-// CHECK-NEXT:  ('_section_data', '00000000 00000000')
-// CHECK-NEXT:  ])
-// CHECK-NEXT: ),
-// CHECK:       # Load Command 2
-// CHECK-NEXT: (('command', 2)
-// CHECK-NEXT:  ('size', 24)
-// CHECK-NEXT:  ('symoff', 408)
-// CHECK-NEXT:  ('nsyms', 2)
-// CHECK-NEXT:  ('stroff', 440)
-// CHECK-NEXT:  ('strsize', 12)
-// CHECK-NEXT:  ('_string_data', '\x00_g.eh\x00_g\x00\x00\x00')
-// CHECK-NEXT:  ('_symbols', [
-// CHECK-NEXT:    # Symbol 0
-// CHECK-NEXT:   (('n_strx', 7)
-// CHECK-NEXT:    ('n_type', 0xe)
-// CHECK-NEXT:    ('n_sect', 1)
-// CHECK-NEXT:    ('n_desc', 0)
-// CHECK-NEXT:    ('n_value', 0)
-// CHECK-NEXT:    ('_string', '_g')
-// CHECK-NEXT:   ),
-// CHECK-NEXT:    # Symbol 1
-// CHECK-NEXT:   (('n_strx', 1)
-// CHECK-NEXT:    ('n_type', 0xe)
-// CHECK-NEXT:    ('n_sect', 2)
-// CHECK-NEXT:    ('n_desc', 0)
-// CHECK-NEXT:    ('n_value', 0)
-// CHECK-NEXT:    ('_string', '_g.eh')
-// CHECK-NEXT:   ),
-// CHECK-NEXT:  ])
-// CHECK-NEXT: ),
-// CHECK-NEXT:  # Load Command 3
-// CHECK-NEXT: (('command', 11)
-// CHECK-NEXT:  ('size', 80)
-// CHECK-NEXT:  ('ilocalsym', 0)
-// CHECK-NEXT:  ('nlocalsym', 2)
-// CHECK-NEXT:  ('iextdefsym', 2)
-// CHECK-NEXT:  ('nextdefsym', 0)
-// CHECK-NEXT:  ('iundefsym', 2)
-// CHECK-NEXT:  ('nundefsym', 0)
-// CHECK-NEXT:  ('tocoff', 0)
-// CHECK-NEXT:  ('ntoc', 0)
-// CHECK-NEXT:  ('modtaboff', 0)
-// CHECK-NEXT:  ('nmodtab', 0)
-// CHECK-NEXT:  ('extrefsymoff', 0)
-// CHECK-NEXT:  ('nextrefsyms', 0)
-// CHECK-NEXT:  ('indirectsymoff', 0)
-// CHECK-NEXT:  ('nindirectsyms', 0)
-// CHECK-NEXT:  ('extreloff', 0)
-// CHECK-NEXT:  ('nextrel', 0)
-// CHECK-NEXT:  ('locreloff', 0)
-// CHECK-NEXT:  ('nlocrel', 0)
-// CHECK-NEXT:  ('_indirect_symbols', [
-// CHECK-NEXT:  ])
-// CHECK-NEXT: ),
-// CHECK-NEXT:])
+// CHECK: File: <stdin>
+// CHECK: Format: Mach-O 64-bit x86-64
+// CHECK: Arch: x86_64
+// CHECK: AddressSize: 64bit
+// CHECK: MachHeader {
+// CHECK:   Magic: Magic64 (0xFEEDFACF)
+// CHECK:   CpuType: X86-64 (0x1000007)
+// CHECK:   CpuSubType: CPU_SUBTYPE_X86_64_ALL (0x3)
+// CHECK:   FileType: Relocatable (0x1)
+// CHECK:   NumOfLoadCommands: 4
+// CHECK:   SizeOfLoadCommands: 352
+// CHECK:   Flags [ (0x0)
+// CHECK:   ]
+// CHECK:   Reserved: 0x0
+// CHECK: }
+// CHECK: Sections [
+// CHECK:   Section {
+// CHECK:     Index: 0
+// CHECK:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Address: 0x0
+// CHECK:     Size: 0x0
+// CHECK:     Offset: 384
+// CHECK:     Alignment: 0
+// CHECK:     RelocationOffset: 0x0
+// CHECK:     RelocationCount: 0
+// CHECK:     Type: 0x0
+// CHECK:     Attributes [ (0x800000)
+// CHECK:       PureInstructions (0x800000)
+// CHECK:     ]
+// CHECK:     Reserved1: 0x0
+// CHECK:     Reserved2: 0x0
+// CHECK:     Reserved3: 0x0
+// CHECK:     SectionData (
+// CHECK:     )
+// CHECK:   }
+// CHECK:   Section {
+// CHECK:     Index: 1
+// CHECK:     Name: __eh_frame (5F 5F 65 68 5F 66 72 61 6D 65 00 00 00 00 00 00)
+// CHECK:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Address: 0x0
+// CHECK:     Size: 0x8
+// CHECK:     Offset: 384
+// CHECK:     Alignment: 0
+// CHECK:     RelocationOffset: 0x188
+// CHECK:     RelocationCount: 2
+// CHECK:     Type: 0xB
+// CHECK:     Attributes [ (0x680000)
+// CHECK:       LiveSupport (0x80000)
+// CHECK:       NoTOC (0x400000)
+// CHECK:       StripStaticSyms (0x200000)
+// CHECK:     ]
+// CHECK:     Reserved1: 0x0
+// CHECK:     Reserved2: 0x0
+// CHECK:     Reserved3: 0x0
+// CHECK:     SectionData (
+// CHECK:       0000: 00000000 00000000                    |........|
+// CHECK:     )
+// CHECK:   }
+// CHECK: ]
+// CHECK: Relocations [
+// CHECK:   Section __eh_frame {
+// CHECK:     0x0 0 3 1 X86_64_RELOC_SUBTRACTOR 0 _g.eh
+// CHECK:     0x0 0 3 1 X86_64_RELOC_UNSIGNED 0 _g
+// CHECK:   }
+// CHECK: ]
+// CHECK: Symbols [
+// CHECK:   Symbol {
+// CHECK:     Name: _g (7)
+// CHECK:     Type: Section (0xE)
+// CHECK:     Section: __text (0x1)
+// CHECK:     RefType: UndefinedNonLazy (0x0)
+// CHECK:     Flags [ (0x0)
+// CHECK:     ]
+// CHECK:     Value: 0x0
+// CHECK:   }
+// CHECK:   Symbol {
+// CHECK:     Name: _g.eh (1)
+// CHECK:     Type: Section (0xE)
+// CHECK:     Section: __eh_frame (0x2)
+// CHECK:     RefType: UndefinedNonLazy (0x0)
+// CHECK:     Flags [ (0x0)
+// CHECK:     ]
+// CHECK:     Value: 0x0
+// CHECK:   }
+// CHECK: ]
+// CHECK: Indirect Symbols {
+// CHECK:   Number: 0
+// CHECK:   Symbols [
+// CHECK:   ]
+// CHECK: }
+// CHECK: Segment {
+// CHECK:   Cmd: LC_SEGMENT_64
+// CHECK:   Name: 
+// CHECK:   Size: 232
+// CHECK:   vmaddr: 0x0
+// CHECK:   vmsize: 0x8
+// CHECK:   fileoff: 384
+// CHECK:   filesize: 8
+// CHECK:   maxprot: rwx
+// CHECK:   initprot: rwx
+// CHECK:   nsects: 2
+// CHECK:   flags: 0x0
+// CHECK: }
+// CHECK: Dysymtab {
+// CHECK:   ilocalsym: 0
+// CHECK:   nlocalsym: 2
+// CHECK:   iextdefsym: 2
+// CHECK:   nextdefsym: 0
+// CHECK:   iundefsym: 2
+// CHECK:   nundefsym: 0
+// CHECK:   tocoff: 0
+// CHECK:   ntoc: 0
+// CHECK:   modtaboff: 0
+// CHECK:   nmodtab: 0
+// CHECK:   extrefsymoff: 0
+// CHECK:   nextrefsyms: 0
+// CHECK:   indirectsymoff: 0
+// CHECK:   nindirectsyms: 0
+// CHECK:   extreloff: 0
+// CHECK:   nextrel: 0
+// CHECK:   locreloff: 0
+// CHECK:   nlocrel: 0
+// CHECK: }

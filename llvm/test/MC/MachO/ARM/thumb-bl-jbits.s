@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -triple=thumbv7-apple-darwin -filetype=obj -o - < %s | macho-dump --dump-section-data | FileCheck %s
+@ RUN: llvm-mc -triple=thumbv7-apple-darwin -filetype=obj -o - < %s | llvm-readobj -s -sd | FileCheck %s
 .thumb
 .thumb_func t
 t:	nop
@@ -11,9 +11,17 @@ t:	nop
 .thumb_func b
 b:
 	bl	t
-# CHECK: '_section_data', 'c3f7fcf5'
 # We are checking that the branch and link instruction which is:
 #	bl	#-4441096
 # has it displacement encoded correctly with respect to the J1 and J2 bits when
 # the branch is assembled with a label not a displacement.
 # rdar://10149689
+
+# CHECK: Section {
+# CHECK:   Index: 2
+# CHECK:   Name: __branch (5F 5F 62 72 61 6E 63 68 00 00 00 00 00 00 00 00)
+# CHECK:   Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+# CHECK:   SectionData (
+# CHECK:     0000: C3F7FCF5                             |....|
+# CHECK:   )
+# CHECK: }

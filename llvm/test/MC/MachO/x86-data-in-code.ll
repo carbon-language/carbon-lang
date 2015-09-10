@@ -1,9 +1,8 @@
-; RUN: llc -O0 -mtriple=x86_64-apple-darwin -filetype=obj -o - %s | macho-dump | FileCheck %s
+; RUN: llc -O0 -mtriple=x86_64-apple-darwin -filetype=obj -o - %s | llvm-readobj -macho-data-in-code | FileCheck %s
 
 ; There should not be a data-in-code load command (type 0x29) for x86_64
 ; jump tables, even though they are in the text section.
-; CHECK: 'num_load_commands'
-; CHECK-NOT: (('command', 41)
+; CHECK-NOT: DataInCode {
 
 define void @foo(i32* %ptr) nounwind ssp {
   %tmp = load i32, i32* %ptr, align 4

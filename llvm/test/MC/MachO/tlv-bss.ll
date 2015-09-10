@@ -1,11 +1,16 @@
-; RUN: llc -O0 -mtriple=x86_64-apple-darwin12 -filetype=obj -o - %s | macho-dump | FileCheck %s
+; RUN: llc -O0 -mtriple=x86_64-apple-darwin12 -filetype=obj -o - %s | llvm-readobj -s | FileCheck %s
 ; Test that we emit weak_odr thread_locals correctly into the thread_bss section
 ; PR15972
 
-; CHECK: __thread_bss
-; CHECK: 'size', 8
-; CHECK: 'alignment', 3
-; CHECK: __thread_vars
+; CHECK: Section {
+; CHECK:   Index: 1
+; CHECK:   Name: __thread_bss (5F 5F 74 68 72 65 61 64 5F 62 73 73 00 00 00 00)
+; CHECK:   Size: 0x8
+; CHECK:   Alignment: 3
+; CHECK: }
+; CHECK: Section {
+; CHECK:   Index: 2
+; CHECK:   Name: __thread_vars (5F 5F 74 68 72 65 61 64 5F 76 61 72 73 00 00 00)
 
 ; Generated from this C++ source
 ; template<class T>

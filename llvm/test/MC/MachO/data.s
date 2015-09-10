@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | macho-dump | FileCheck %s
+// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | llvm-readobj -file-headers -s -macho-segment | FileCheck %s
 
         .data
         .ascii "hello"
@@ -14,54 +14,67 @@
         .short 0                // 50
         .p2alignw 3, 0xABCD, 5  // 50
 
-// CHECK: ('cputype', 7)
-// CHECK: ('cpusubtype', 3)
-// CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 2)
-// CHECK: ('load_commands_size', 208)
-// CHECK: ('flag', 0)
-// CHECK: ('load_commands', [
-// CHECK:   # Load Command 0
-// CHECK:  (('command', 1)
-// CHECK:   ('size', 192)
-// CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:   ('vm_addr', 0)
-// CHECK:   ('vm_size', 50)
-// CHECK:   ('file_offset', 236)
-// CHECK:   ('file_size', 50)
-// CHECK:   ('maxprot', 7)
-// CHECK:   ('initprot', 7)
-// CHECK:   ('num_sections', 2)
-// CHECK:   ('flags', 0)
-// CHECK:   ('sections', [
-// CHECK:     # Section 0
-// CHECK:    (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 0)
-// CHECK:     ('size', 0)
-// CHECK:     ('offset', 236)
-// CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 0)
-// CHECK:     ('num_reloc', 0)
-// CHECK:     ('flags', 0x80000000)
-// CHECK:     ('reserved1', 0)
-// CHECK:     ('reserved2', 0)
-// CHECK:    ),
-// CHECK:     # Section 1
-// CHECK:    (('section_name', '__data\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 0)
-// CHECK:     ('size', 50)
-// CHECK:     ('offset', 236)
-// CHECK:     ('alignment', 3)
-// CHECK:     ('reloc_offset', 0)
-// CHECK:     ('num_reloc', 0)
-// CHECK:     ('flags', 0x0)
-// CHECK:     ('reserved1', 0)
-// CHECK:     ('reserved2', 0)
-// CHECK:    ),
-// CHECK:   ])
-// CHECK:  ),
-// CHECK: ])
-
 // FIXME: Dump contents, so we can check those too.
+
+// CHECK: File: <stdin>
+// CHECK: Format: Mach-O 32-bit i386
+// CHECK: Arch: i386
+// CHECK: AddressSize: 32bit
+// CHECK: MachHeader {
+// CHECK:   Magic: Magic (0xFEEDFACE)
+// CHECK:   CpuType: X86 (0x7)
+// CHECK:   CpuSubType: CPU_SUBTYPE_I386_ALL (0x3)
+// CHECK:   FileType: Relocatable (0x1)
+// CHECK:   NumOfLoadCommands: 2
+// CHECK:   SizeOfLoadCommands: 208
+// CHECK:   Flags [ (0x0)
+// CHECK:   ]
+// CHECK: }
+// CHECK: Sections [
+// CHECK:   Section {
+// CHECK:     Index: 0
+// CHECK:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Address: 0x0
+// CHECK:     Size: 0x0
+// CHECK:     Offset: 236
+// CHECK:     Alignment: 0
+// CHECK:     RelocationOffset: 0x0
+// CHECK:     RelocationCount: 0
+// CHECK:     Type: 0x0
+// CHECK:     Attributes [ (0x800000)
+// CHECK:       PureInstructions (0x800000)
+// CHECK:     ]
+// CHECK:     Reserved1: 0x0
+// CHECK:     Reserved2: 0x0
+// CHECK:   }
+// CHECK:   Section {
+// CHECK:     Index: 1
+// CHECK:     Name: __data (5F 5F 64 61 74 61 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Address: 0x0
+// CHECK:     Size: 0x32
+// CHECK:     Offset: 236
+// CHECK:     Alignment: 3
+// CHECK:     RelocationOffset: 0x0
+// CHECK:     RelocationCount: 0
+// CHECK:     Type: 0x0
+// CHECK:     Attributes [ (0x0)
+// CHECK:     ]
+// CHECK:     Reserved1: 0x0
+// CHECK:     Reserved2: 0x0
+// CHECK:   }
+// CHECK: ]
+// CHECK: Segment {
+// CHECK:   Cmd: LC_SEGMENT
+// CHECK:   Name: 
+// CHECK:   Size: 192
+// CHECK:   vmaddr: 0x0
+// CHECK:   vmsize: 0x32
+// CHECK:   fileoff: 236
+// CHECK:   filesize: 50
+// CHECK:   maxprot: rwx
+// CHECK:   initprot: rwx
+// CHECK:   nsects: 2
+// CHECK:   flags: 0x0
+// CHECK: }

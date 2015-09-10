@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
+// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | llvm-readobj -file-headers -s -sd -r -macho-segment -macho-version-min | FileCheck %s
 
 	.section	__TEXT,__text,regular,pure_instructions
 Leh_func_begin0:
@@ -7,64 +7,81 @@ Ltmp3:
 Ltmp4 = Leh_func_begin0-Ltmp3
 	.long	Ltmp4
 
-// CHECK:      ('cputype', 7)
-// CHECK-NEXT: ('cpusubtype', 3)
-// CHECK-NEXT: ('filetype', 1)
-// CHECK-NEXT: ('num_load_commands', 2)
-// CHECK-NEXT: ('load_commands_size', 208)
-// CHECK-NEXT: ('flag', 0)
-// CHECK-NEXT: ('load_commands', [
-// CHECK-NEXT:   # Load Command 0
-// CHECK-NEXT:  (('command', 1)
-// CHECK-NEXT:   ('size', 192)
-// CHECK-NEXT:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:   ('vm_addr', 0)
-// CHECK-NEXT:   ('vm_size', 4)
-// CHECK-NEXT:   ('file_offset', 236)
-// CHECK-NEXT:   ('file_size', 4)
-// CHECK-NEXT:   ('maxprot', 7)
-// CHECK-NEXT:   ('initprot', 7)
-// CHECK-NEXT:   ('num_sections', 2)
-// CHECK-NEXT:   ('flags', 0)
-// CHECK-NEXT:   ('sections', [
-// CHECK-NEXT:     # Section 0
-// CHECK-NEXT:    (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:     ('address', 0)
-// CHECK-NEXT:     ('size', 0)
-// CHECK-NEXT:     ('offset', 236)
-// CHECK-NEXT:     ('alignment', 0)
-// CHECK-NEXT:     ('reloc_offset', 0)
-// CHECK-NEXT:     ('num_reloc', 0)
-// CHECK-NEXT:     ('flags', 0x80000000)
-// CHECK-NEXT:     ('reserved1', 0)
-// CHECK-NEXT:     ('reserved2', 0)
-// CHECK-NEXT:    ),
-// CHECK-NEXT:   ('_relocations', [
-// CHECK-NEXT:   ])
-// CHECK-NEXT:   ('_section_data', '')
-// CHECK-NEXT:     # Section 1
-// CHECK-NEXT:    (('section_name', '__eh_frame\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK-NEXT:     ('address', 0)
-// CHECK-NEXT:     ('size', 4)
-// CHECK-NEXT:     ('offset', 236)
-// CHECK-NEXT:     ('alignment', 0)
-// CHECK-NEXT:     ('reloc_offset', 0)
-// CHECK-NEXT:     ('num_reloc', 0)
-// CHECK-NEXT:     ('flags', 0x6800000b)
-// CHECK-NEXT:     ('reserved1', 0)
-// CHECK-NEXT:     ('reserved2', 0)
-// CHECK-NEXT:    ),
-// CHECK-NEXT:   ('_relocations', [
-// CHECK-NEXT:   ])
-// CHECK-NEXT:   ('_section_data', '00000000')
-// CHECK-NEXT:   ])
-// CHECK-NEXT:  ),
-// CHECK-NEXT:   # Load Command 1
-// CHECK-NEXT:  (('command', 36)
-// CHECK-NEXT:   ('size', 16)
-// CHECK-NEXT:   ('version, 589824)
-// CHECK-NEXT:   ('sdk, 0)
-// CHECK-NEXT:  ),
-// CHECK-NEXT: ])
+// CHECK: File: <stdin>
+// CHECK-NEXT: Format: Mach-O 32-bit i386
+// CHECK-NEXT: Arch: i386
+// CHECK-NEXT: AddressSize: 32bit
+// CHECK-NEXT: MachHeader {
+// CHECK-NEXT:   Magic: Magic (0xFEEDFACE)
+// CHECK-NEXT:   CpuType: X86 (0x7)
+// CHECK-NEXT:   CpuSubType: CPU_SUBTYPE_I386_ALL (0x3)
+// CHECK-NEXT:   FileType: Relocatable (0x1)
+// CHECK-NEXT:   NumOfLoadCommands: 2
+// CHECK-NEXT:   SizeOfLoadCommands: 208
+// CHECK-NEXT:   Flags [ (0x0)
+// CHECK-NEXT:   ]
+// CHECK-NEXT: }
+// CHECK-NEXT: Sections [
+// CHECK-NEXT:   Section {
+// CHECK-NEXT:     Index: 0
+// CHECK-NEXT:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+// CHECK-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Size: 0x0
+// CHECK-NEXT:     Offset: 236
+// CHECK-NEXT:     Alignment: 0
+// CHECK-NEXT:     RelocationOffset: 0x0
+// CHECK-NEXT:     RelocationCount: 0
+// CHECK-NEXT:     Type: 0x0
+// CHECK-NEXT:     Attributes [ (0x800000)
+// CHECK-NEXT:       PureInstructions (0x800000)
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Reserved1: 0x0
+// CHECK-NEXT:     Reserved2: 0x0
+// CHECK-NEXT:     SectionData (
+// CHECK-NEXT:     )
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Section {
+// CHECK-NEXT:     Index: 1
+// CHECK-NEXT:     Name: __eh_frame (5F 5F 65 68 5F 66 72 61 6D 65 00 00 00 00 00 00)
+// CHECK-NEXT:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Size: 0x4
+// CHECK-NEXT:     Offset: 236
+// CHECK-NEXT:     Alignment: 0
+// CHECK-NEXT:     RelocationOffset: 0x0
+// CHECK-NEXT:     RelocationCount: 0
+// CHECK-NEXT:     Type: 0xB
+// CHECK-NEXT:     Attributes [ (0x680000)
+// CHECK-NEXT:       LiveSupport (0x80000)
+// CHECK-NEXT:       NoTOC (0x400000)
+// CHECK-NEXT:       StripStaticSyms (0x200000)
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Reserved1: 0x0
+// CHECK-NEXT:     Reserved2: 0x0
+// CHECK-NEXT:     SectionData (
+// CHECK-NEXT:       0000: 00000000                             |....|
+// CHECK-NEXT:     )
+// CHECK-NEXT:   }
+// CHECK-NEXT: ]
+// CHECK-NEXT: Relocations [
+// CHECK-NEXT: ]
+// CHECK-NEXT: Segment {
+// CHECK-NEXT:   Cmd: LC_SEGMENT
+// CHECK-NEXT:   Name: 
+// CHECK-NEXT:   Size: 192
+// CHECK-NEXT:   vmaddr: 0x0
+// CHECK-NEXT:   vmsize: 0x4
+// CHECK-NEXT:   fileoff: 236
+// CHECK-NEXT:   filesize: 4
+// CHECK-NEXT:   maxprot: rwx
+// CHECK-NEXT:   initprot: rwx
+// CHECK-NEXT:   nsects: 2
+// CHECK-NEXT:   flags: 0x0
+// CHECK-NEXT: }
+// CHECK-NEXT: MinVersion {
+// CHECK-NEXT:   Cmd: LC_VERSION_MIN_MACOSX
+// CHECK-NEXT:   Size: 16
+// CHECK-NEXT:   Version: 9.0
+// CHECK-NEXT:   SDK: n/a
+// CHECK-NEXT: }

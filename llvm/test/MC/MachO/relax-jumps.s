@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
+// RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | llvm-readobj -s -sd | FileCheck %s
 
 // FIXME: This is a horrible way of checking the output, we need an llvm-mc
 // based 'otool'. Use:
@@ -9,10 +9,6 @@
 //    otool -tvr $f.as.o | tail +2 > $f.as.dump &&
 //    diff $f.{as,mc}.dump)
 // to examine the results in a more sensible fashion.
-
-// CHECK: ('_section_data', '90
-// CHECK: 0f8432ff ffff0f82 e6000000 0f8726ff ffff0f8f da000000 0f881aff ffff0f83 ce000000 0f890eff ffff90
-// CHECK: 9031c0')
 
 L1:
         .space 200, 0x90
@@ -29,3 +25,12 @@ L1:
 L2:
 
         xorl %eax, %eax
+
+// CHECK: SectionData (
+// CHECK:   00C0: 90909090 90909090 0F8432FF FFFF0F82  |..........2.....|
+// CHECK:   00D0: E6000000 0F8726FF FFFF0F8F DA000000  |......&.........|
+// CHECK:   00E0: 0F881AFF FFFF0F83 CE000000 0F890EFF  |................|
+// CHECK:   00F0: FFFF9090 90909090 90909090 90909090  |................|
+// CHECK:   01A0: 90909090 90909090 90909090 90909090  |................|
+// CHECK:   01B0: 90909090 90909090 909031C0           |..........1.|
+// CHECK: )

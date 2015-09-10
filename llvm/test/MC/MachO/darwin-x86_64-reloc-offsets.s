@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple x86_64-apple-darwin10 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
+// RUN: llvm-mc -triple x86_64-apple-darwin10 %s -filetype=obj -o - | llvm-readobj -file-headers -s -sd -r -t -macho-segment -macho-dysymtab -macho-indirect-symbols | FileCheck %s
 
         .data
 
@@ -114,230 +114,178 @@ L1:
  	movl  %eax, L1 + 3(%rip)
  	movl  %eax, L1 + 4(%rip)
 
-// CHECK: ('cputype', 16777223)
-// CHECK: ('cpusubtype', 3)
-// CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 4)
-// CHECK: ('load_commands_size', 352)
-// CHECK: ('flag', 0)
-// CHECK: ('reserved', 0)
-// CHECK: ('load_commands', [
-// CHECK:   # Load Command 0
-// CHECK:  (('command', 25)
-// CHECK:   ('size', 232)
-// CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:   ('vm_addr', 0)
-// CHECK:   ('vm_size', 358)
-// CHECK:   ('file_offset', 384)
-// CHECK:   ('file_size', 358)
-// CHECK:   ('maxprot', 7)
-// CHECK:   ('initprot', 7)
-// CHECK:   ('num_sections', 2)
-// CHECK:   ('flags', 0)
-// CHECK:   ('sections', [
-// CHECK:     # Section 0
-// CHECK:    (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 0)
-// CHECK:     ('size', 318)
-// CHECK:     ('offset', 384)
-// CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 744)
-// CHECK:     ('num_reloc', 42)
-// CHECK:     ('flags', 0x80000400)
-// CHECK:     ('reserved1', 0)
-// CHECK:     ('reserved2', 0)
-// CHECK:     ('reserved3', 0)
-// CHECK:    ),
-// CHECK:   ('_relocations', [
-// CHECK:     # Relocation 0
-// CHECK:     (('word-0', 0x13a),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 1
-// CHECK:     (('word-0', 0x134),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 2
-// CHECK:     (('word-0', 0x12e),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 3
-// CHECK:     (('word-0', 0x128),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 4
-// CHECK:     (('word-0', 0x122),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 5
-// CHECK:     (('word-0', 0x11c),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 6
-// CHECK:     (('word-0', 0x116),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 7
-// CHECK:     (('word-0', 0x10c),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 8
-// CHECK:     (('word-0', 0x102),
-// CHECK:      ('word-1', 0x6d000000)),
-// CHECK:     # Relocation 9
-// CHECK:     (('word-0', 0xf8),
-// CHECK:      ('word-1', 0x7d000000)),
-// CHECK:     # Relocation 10
-// CHECK:     (('word-0', 0xee),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 11
-// CHECK:     (('word-0', 0xe4),
-// CHECK:      ('word-1', 0x8d000000)),
-// CHECK:     # Relocation 12
-// CHECK:     (('word-0', 0xdd),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 13
-// CHECK:     (('word-0', 0xd6),
-// CHECK:      ('word-1', 0x6d000000)),
-// CHECK:     # Relocation 14
-// CHECK:     (('word-0', 0xd0),
-// CHECK:      ('word-1', 0x15000002)),
-// CHECK:     # Relocation 15
-// CHECK:     (('word-0', 0xca),
-// CHECK:      ('word-1', 0x15000002)),
-// CHECK:     # Relocation 16
-// CHECK:     (('word-0', 0xc4),
-// CHECK:      ('word-1', 0x15000002)),
-// CHECK:     # Relocation 17
-// CHECK:     (('word-0', 0xbe),
-// CHECK:      ('word-1', 0x15000002)),
-// CHECK:     # Relocation 18
-// CHECK:     (('word-0', 0xb8),
-// CHECK:      ('word-1', 0x15000002)),
-// CHECK:     # Relocation 19
-// CHECK:     (('word-0', 0xb2),
-// CHECK:      ('word-1', 0x15000002)),
-// CHECK:     # Relocation 20
-// CHECK:     (('word-0', 0xac),
-// CHECK:      ('word-1', 0x15000002)),
-// CHECK:     # Relocation 21
-// CHECK:     (('word-0', 0xa2),
-// CHECK:      ('word-1', 0x15000002)),
-// CHECK:     # Relocation 22
-// CHECK:     (('word-0', 0x98),
-// CHECK:      ('word-1', 0x65000002)),
-// CHECK:     # Relocation 23
-// CHECK:     (('word-0', 0x8e),
-// CHECK:      ('word-1', 0x75000002)),
-// CHECK:     # Relocation 24
-// CHECK:     (('word-0', 0x84),
-// CHECK:      ('word-1', 0x15000002)),
-// CHECK:     # Relocation 25
-// CHECK:     (('word-0', 0x7a),
-// CHECK:      ('word-1', 0x85000002)),
-// CHECK:     # Relocation 26
-// CHECK:     (('word-0', 0x73),
-// CHECK:      ('word-1', 0x15000002)),
-// CHECK:     # Relocation 27
-// CHECK:     (('word-0', 0x6c),
-// CHECK:      ('word-1', 0x65000002)),
-// CHECK:     # Relocation 28
-// CHECK:     (('word-0', 0x66),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 29
-// CHECK:     (('word-0', 0x60),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 30
-// CHECK:     (('word-0', 0x5a),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 31
-// CHECK:     (('word-0', 0x54),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 32
-// CHECK:     (('word-0', 0x4e),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 33
-// CHECK:     (('word-0', 0x48),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 34
-// CHECK:     (('word-0', 0x42),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 35
-// CHECK:     (('word-0', 0x38),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 36
-// CHECK:     (('word-0', 0x2e),
-// CHECK:      ('word-1', 0x6d000000)),
-// CHECK:     # Relocation 37
-// CHECK:     (('word-0', 0x24),
-// CHECK:      ('word-1', 0x7d000000)),
-// CHECK:     # Relocation 38
-// CHECK:     (('word-0', 0x1a),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 39
-// CHECK:     (('word-0', 0x10),
-// CHECK:      ('word-1', 0x8d000000)),
-// CHECK:     # Relocation 40
-// CHECK:     (('word-0', 0x9),
-// CHECK:      ('word-1', 0x1d000000)),
-// CHECK:     # Relocation 41
-// CHECK:     (('word-0', 0x2),
-// CHECK:      ('word-1', 0x6d000000)),
-// CHECK:   ])
-// CHECK:   ('_section_data', 'c605ffff ffff12c6 05000000 0012c705 fcffffff 78563412 c705fdff ffff7856 3412c705 feffffff 78563412 c705ffff ffff7856 3412c705 00000000 78563412 88050000 00008805 01000000 89050000 00008905 01000000 89050200 00008905 03000000 89050400 0000c605 dd000000 12c605d7 00000012 c705cc00 00007856 3412c705 c3000000 78563412 c705ba00 00007856 3412c705 b1000000 78563412 c705a800 00007856 34128805 9e000000 88059900 00008905 92000000 89058d00 00008905 88000000 89058300 00008905 7e000000 c6050300 000012c6 05040000 0012c705 00000000 78563412 c7050100 00007856 3412c705 02000000 78563412 c7050300 00007856 3412c705 04000000 78563412 88050400 00008805 05000000 89050400 00008905 05000000 89050600 00008905 07000000 89050800 0000')
-// CHECK:     # Section 1
-// CHECK:    (('section_name', '__data\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-// CHECK:     ('address', 318)
-// CHECK:     ('size', 40)
-// CHECK:     ('offset', 702)
-// CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 0)
-// CHECK:     ('num_reloc', 0)
-// CHECK:     ('flags', 0x0)
-// CHECK:     ('reserved1', 0)
-// CHECK:     ('reserved2', 0)
-// CHECK:     ('reserved3', 0)
-// CHECK:    ),
-// CHECK:   ('_relocations', [
-// CHECK:   ])
-// CHECK:   ('_section_data', '00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000')
-// CHECK:   ])
-// CHECK:  ),
-// CHECK:   # Load Command 2
-// CHECK:  (('command', 2)
-// CHECK:   ('size', 24)
-// CHECK:   ('symoff', 1080)
-// CHECK:   ('nsyms', 1)
-// CHECK:   ('stroff', 1096)
-// CHECK:   ('strsize', 4)
-// CHECK:   ('_string_data', '\x00_d\x00')
-// CHECK:   ('_symbols', [
-// CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 1)
-// CHECK:     ('n_type', 0xe)
-// CHECK:     ('n_sect', 2)
-// CHECK:     ('n_desc', 0)
-// CHECK:     ('n_value', 350)
-// CHECK:     ('_string', '_d')
-// CHECK:    ),
-// CHECK:   ])
-// CHECK:  ),
-// CHECK:   # Load Command 3
-// CHECK:  (('command', 11)
-// CHECK:   ('size', 80)
-// CHECK:   ('ilocalsym', 0)
-// CHECK:   ('nlocalsym', 1)
-// CHECK:   ('iextdefsym', 1)
-// CHECK:   ('nextdefsym', 0)
-// CHECK:   ('iundefsym', 1)
-// CHECK:   ('nundefsym', 0)
-// CHECK:   ('tocoff', 0)
-// CHECK:   ('ntoc', 0)
-// CHECK:   ('modtaboff', 0)
-// CHECK:   ('nmodtab', 0)
-// CHECK:   ('extrefsymoff', 0)
-// CHECK:   ('nextrefsyms', 0)
-// CHECK:   ('indirectsymoff', 0)
-// CHECK:   ('nindirectsyms', 0)
-// CHECK:   ('extreloff', 0)
-// CHECK:   ('nextrel', 0)
-// CHECK:   ('locreloff', 0)
-// CHECK:   ('nlocrel', 0)
-// CHECK:   ('_indirect_symbols', [
-// CHECK:   ])
-// CHECK:  ),
-// CHECK: ])
+// CHECK: File: <stdin>
+// CHECK: Format: Mach-O 64-bit x86-64
+// CHECK: Arch: x86_64
+// CHECK: AddressSize: 64bit
+// CHECK: MachHeader {
+// CHECK:   Magic: Magic64 (0xFEEDFACF)
+// CHECK:   CpuType: X86-64 (0x1000007)
+// CHECK:   CpuSubType: CPU_SUBTYPE_X86_64_ALL (0x3)
+// CHECK:   FileType: Relocatable (0x1)
+// CHECK:   NumOfLoadCommands: 4
+// CHECK:   SizeOfLoadCommands: 352
+// CHECK:   Flags [ (0x0)
+// CHECK:   ]
+// CHECK:   Reserved: 0x0
+// CHECK: }
+// CHECK: Sections [
+// CHECK:   Section {
+// CHECK:     Index: 0
+// CHECK:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Address: 0x0
+// CHECK:     Size: 0x13E
+// CHECK:     Offset: 384
+// CHECK:     Alignment: 0
+// CHECK:     RelocationOffset: 0x2E8
+// CHECK:     RelocationCount: 42
+// CHECK:     Type: 0x0
+// CHECK:     Attributes [ (0x800004)
+// CHECK:       PureInstructions (0x800000)
+// CHECK:       SomeInstructions (0x4)
+// CHECK:     ]
+// CHECK:     Reserved1: 0x0
+// CHECK:     Reserved2: 0x0
+// CHECK:     Reserved3: 0x0
+// CHECK:     SectionData (
+// CHECK:       0000: C605FFFF FFFF12C6 05000000 0012C705  |................|
+// CHECK:       0010: FCFFFFFF 78563412 C705FDFF FFFF7856  |....xV4.......xV|
+// CHECK:       0020: 3412C705 FEFFFFFF 78563412 C705FFFF  |4.......xV4.....|
+// CHECK:       0030: FFFF7856 3412C705 00000000 78563412  |..xV4.......xV4.|
+// CHECK:       0040: 88050000 00008805 01000000 89050000  |................|
+// CHECK:       0050: 00008905 01000000 89050200 00008905  |................|
+// CHECK:       0060: 03000000 89050400 0000C605 DD000000  |................|
+// CHECK:       0070: 12C605D7 00000012 C705CC00 00007856  |..............xV|
+// CHECK:       0080: 3412C705 C3000000 78563412 C705BA00  |4.......xV4.....|
+// CHECK:       0090: 00007856 3412C705 B1000000 78563412  |..xV4.......xV4.|
+// CHECK:       00A0: C705A800 00007856 34128805 9E000000  |......xV4.......|
+// CHECK:       00B0: 88059900 00008905 92000000 89058D00  |................|
+// CHECK:       00C0: 00008905 88000000 89058300 00008905  |................|
+// CHECK:       00D0: 7E000000 C6050300 000012C6 05040000  |~...............|
+// CHECK:       00E0: 0012C705 00000000 78563412 C7050100  |........xV4.....|
+// CHECK:       00F0: 00007856 3412C705 02000000 78563412  |..xV4.......xV4.|
+// CHECK:       0100: C7050300 00007856 3412C705 04000000  |......xV4.......|
+// CHECK:       0110: 78563412 88050400 00008805 05000000  |xV4.............|
+// CHECK:       0120: 89050400 00008905 05000000 89050600  |................|
+// CHECK:       0130: 00008905 07000000 89050800 0000      |..............|
+// CHECK:     )
+// CHECK:   }
+// CHECK:   Section {
+// CHECK:     Index: 1
+// CHECK:     Name: __data (5F 5F 64 61 74 61 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+// CHECK:     Address: 0x13E
+// CHECK:     Size: 0x28
+// CHECK:     Offset: 702
+// CHECK:     Alignment: 0
+// CHECK:     RelocationOffset: 0x0
+// CHECK:     RelocationCount: 0
+// CHECK:     Type: 0x0
+// CHECK:     Attributes [ (0x0)
+// CHECK:     ]
+// CHECK:     Reserved1: 0x0
+// CHECK:     Reserved2: 0x0
+// CHECK:     Reserved3: 0x0
+// CHECK:     SectionData (
+// CHECK:       0000: 00000000 00000000 00000000 00000000  |................|
+// CHECK:       0010: 00000000 00000000 00000000 00000000  |................|
+// CHECK:       0020: 00000000 00000000                    |........|
+// CHECK:     )
+// CHECK:   }
+// CHECK: ]
+// CHECK: Relocations [
+// CHECK:   Section __text {
+// CHECK:     0x13A 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x134 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x12E 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x128 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x122 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x11C 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x116 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x10C 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x102 1 2 1 X86_64_RELOC_SIGNED_1 0 _d
+// CHECK:     0xF8 1 2 1 X86_64_RELOC_SIGNED_2 0 _d
+// CHECK:     0xEE 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0xE4 1 2 1 X86_64_RELOC_SIGNED_4 0 _d
+// CHECK:     0xDD 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0xD6 1 2 1 X86_64_RELOC_SIGNED_1 0 _d
+// CHECK:     0xD0 1 2 0 X86_64_RELOC_SIGNED 0 __data
+// CHECK:     0xCA 1 2 0 X86_64_RELOC_SIGNED 0 __data
+// CHECK:     0xC4 1 2 0 X86_64_RELOC_SIGNED 0 __data
+// CHECK:     0xBE 1 2 0 X86_64_RELOC_SIGNED 0 __data
+// CHECK:     0xB8 1 2 0 X86_64_RELOC_SIGNED 0 __data
+// CHECK:     0xB2 1 2 0 X86_64_RELOC_SIGNED 0 __data
+// CHECK:     0xAC 1 2 0 X86_64_RELOC_SIGNED 0 __data
+// CHECK:     0xA2 1 2 0 X86_64_RELOC_SIGNED 0 __data
+// CHECK:     0x98 1 2 0 X86_64_RELOC_SIGNED_1 0 __data
+// CHECK:     0x8E 1 2 0 X86_64_RELOC_SIGNED_2 0 __data
+// CHECK:     0x84 1 2 0 X86_64_RELOC_SIGNED 0 __data
+// CHECK:     0x7A 1 2 0 X86_64_RELOC_SIGNED_4 0 __data
+// CHECK:     0x73 1 2 0 X86_64_RELOC_SIGNED 0 __data
+// CHECK:     0x6C 1 2 0 X86_64_RELOC_SIGNED_1 0 __data
+// CHECK:     0x66 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x60 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x5A 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x54 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x4E 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x48 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x42 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x38 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x2E 1 2 1 X86_64_RELOC_SIGNED_1 0 _d
+// CHECK:     0x24 1 2 1 X86_64_RELOC_SIGNED_2 0 _d
+// CHECK:     0x1A 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x10 1 2 1 X86_64_RELOC_SIGNED_4 0 _d
+// CHECK:     0x9 1 2 1 X86_64_RELOC_SIGNED 0 _d
+// CHECK:     0x2 1 2 1 X86_64_RELOC_SIGNED_1 0 _d
+// CHECK:   }
+// CHECK: ]
+// CHECK: Symbols [
+// CHECK:   Symbol {
+// CHECK:     Name: _d (1)
+// CHECK:     Type: Section (0xE)
+// CHECK:     Section: __data (0x2)
+// CHECK:     RefType: UndefinedNonLazy (0x0)
+// CHECK:     Flags [ (0x0)
+// CHECK:     ]
+// CHECK:     Value: 0x15E
+// CHECK:   }
+// CHECK: ]
+// CHECK: Indirect Symbols {
+// CHECK:   Number: 0
+// CHECK:   Symbols [
+// CHECK:   ]
+// CHECK: }
+// CHECK: Segment {
+// CHECK:   Cmd: LC_SEGMENT_64
+// CHECK:   Name: 
+// CHECK:   Size: 232
+// CHECK:   vmaddr: 0x0
+// CHECK:   vmsize: 0x166
+// CHECK:   fileoff: 384
+// CHECK:   filesize: 358
+// CHECK:   maxprot: rwx
+// CHECK:   initprot: rwx
+// CHECK:   nsects: 2
+// CHECK:   flags: 0x0
+// CHECK: }
+// CHECK: Dysymtab {
+// CHECK:   ilocalsym: 0
+// CHECK:   nlocalsym: 1
+// CHECK:   iextdefsym: 1
+// CHECK:   nextdefsym: 0
+// CHECK:   iundefsym: 1
+// CHECK:   nundefsym: 0
+// CHECK:   tocoff: 0
+// CHECK:   ntoc: 0
+// CHECK:   modtaboff: 0
+// CHECK:   nmodtab: 0
+// CHECK:   extrefsymoff: 0
+// CHECK:   nextrefsyms: 0
+// CHECK:   indirectsymoff: 0
+// CHECK:   nindirectsyms: 0
+// CHECK:   extreloff: 0
+// CHECK:   nextrel: 0
+// CHECK:   locreloff: 0
+// CHECK:   nlocrel: 0
+// CHECK: }
