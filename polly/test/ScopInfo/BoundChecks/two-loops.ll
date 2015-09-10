@@ -1,6 +1,9 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s | FileCheck %s
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-ast -analyze < %s | FileCheck %s --check-prefix=AST
 ;
+; This only works after the post-dominator tree has fixed.
+; XFAIL: *
+;
 ;    void exception() __attribute__((noreturn));
 ;
 ;    void foo(long n, float A[100]) {
