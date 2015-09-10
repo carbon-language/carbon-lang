@@ -315,3 +315,44 @@ define <2 x double>@test_int_x86_avx512_mask_range_sd(<2 x double> %x0, <2 x dou
   %res2 = fadd <2 x double> %res, %res1
   ret <2 x double> %res2
 }
+
+
+declare <2 x double> @llvm.x86.avx512.mask.vextractf64x2.512(<8 x double>, i32, <2 x double>, i8)
+
+define <2 x double>@test_int_x86_avx512_mask_vextractf64x2_512(<8 x double> %x0, <2 x double> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_vextractf64x2_512:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vextractf64x2 $1, %zmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vextractf64x2 $1, %zmm0, %xmm2 {%k1} {z}
+; CHECK-NEXT:    vextractf64x2 $1, %zmm0, %xmm0
+; CHECK-NEXT:    vaddpd %xmm0, %xmm1, %xmm0
+; CHECK-NEXT:    vaddpd %xmm0, %xmm2, %xmm0
+; CHECK-NEXT:    retq
+  %res = call <2 x double> @llvm.x86.avx512.mask.vextractf64x2.512(<8 x double> %x0,i32 1, <2 x double> %x2, i8 %x3)
+  %res2 = call <2 x double> @llvm.x86.avx512.mask.vextractf64x2.512(<8 x double> %x0,i32 1, <2 x double> zeroinitializer, i8 %x3)
+  %res1 = call <2 x double> @llvm.x86.avx512.mask.vextractf64x2.512(<8 x double> %x0,i32 1, <2 x double> zeroinitializer, i8 -1)
+  %res3 = fadd <2 x double> %res, %res1
+  %res4 = fadd <2 x double> %res2, %res3
+  ret <2 x double> %res4
+}
+
+declare <8 x float> @llvm.x86.avx512.mask.vextractf32x8.512(<16 x float>, i32, <8 x float>, i8)
+
+define <8 x float>@test_int_x86_avx512_mask_vextractf32x8(<16 x float> %x0, <8 x float> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_vextractf32x8:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vextractf32x8 $1, %zmm0, %ymm1 {%k1}
+; CHECK-NEXT:    vextractf32x8 $1, %zmm0, %ymm2 {%k1} {z}
+; CHECK-NEXT:    vextractf32x8 $1, %zmm0, %ymm0
+; CHECK-NEXT:    vaddps %ymm0, %ymm1, %ymm0
+; CHECK-NEXT:    vaddps %ymm0, %ymm2, %ymm0
+; CHECK-NEXT:    retq
+  %res  = call <8 x float> @llvm.x86.avx512.mask.vextractf32x8.512(<16 x float> %x0,i32 1, <8 x float> %x2, i8 %x3)
+  %res2 = call <8 x float> @llvm.x86.avx512.mask.vextractf32x8.512(<16 x float> %x0,i32 1, <8 x float> zeroinitializer, i8 %x3)
+  %res1 = call <8 x float> @llvm.x86.avx512.mask.vextractf32x8.512(<16 x float> %x0,i32 1, <8 x float> zeroinitializer, i8 -1)
+  %res3 = fadd <8 x float> %res, %res1
+  %res4 = fadd <8 x float> %res2, %res3
+  ret <8 x float> %res4
+}
