@@ -14,7 +14,7 @@
 using namespace llvm;
 
 namespace llvm {
-void PrintTo(const BranchProbability &P, ::std::ostream *os) {
+void PrintTo(BranchProbability P, ::std::ostream *os) {
   *os << P.getNumerator() << "/" << P.getDenominator();
 }
 }

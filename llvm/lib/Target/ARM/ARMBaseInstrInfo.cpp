@@ -1640,7 +1640,7 @@ bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
 bool ARMBaseInstrInfo::
 isProfitableToIfCvt(MachineBasicBlock &MBB,
                     unsigned NumCycles, unsigned ExtraPredCycles,
-                    const BranchProbability &Probability) const {
+                    BranchProbability Probability) const {
   if (!NumCycles)
     return false;
 
@@ -1682,7 +1682,7 @@ isProfitableToIfCvt(MachineBasicBlock &TMBB,
                     unsigned TCycles, unsigned TExtra,
                     MachineBasicBlock &FMBB,
                     unsigned FCycles, unsigned FExtra,
-                    const BranchProbability &Probability) const {
+                    BranchProbability Probability) const {
   if (!TCycles || !FCycles)
     return false;
 

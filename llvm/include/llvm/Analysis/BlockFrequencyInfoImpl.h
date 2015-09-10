@@ -84,7 +84,7 @@ public:
   /// \brief Add another mass.
   ///
   /// Adds another mass, saturating at \a isFull() rather than overflowing.
-  BlockMass &operator+=(const BlockMass &X) {
+  BlockMass &operator+=(BlockMass X) {
     uint64_t Sum = Mass + X.Mass;
     Mass = Sum < Mass ? UINT64_MAX : Sum;
     return *this;
@@ -94,23 +94,23 @@ public:
   ///
   /// Subtracts another mass, saturating at \a isEmpty() rather than
   /// undeflowing.
-  BlockMass &operator-=(const BlockMass &X) {
+  BlockMass &operator-=(BlockMass X) {
     uint64_t Diff = Mass - X.Mass;
     Mass = Diff > Mass ? 0 : Diff;
     return *this;
   }
 
-  BlockMass &operator*=(const BranchProbability &P) {
+  BlockMass &operator*=(BranchProbability P) {
     Mass = P.scale(Mass);
     return *this;
   }
 
-  bool operator==(const BlockMass &X) const { return Mass == X.Mass; }
-  bool operator!=(const BlockMass &X) const { return Mass != X.Mass; }
-  bool operator<=(const BlockMass &X) const { return Mass <= X.Mass; }
-  bool operator>=(const BlockMass &X) const { return Mass >= X.Mass; }
-  bool operator<(const BlockMass &X) const { return Mass < X.Mass; }
-  bool operator>(const BlockMass &X) const { return Mass > X.Mass; }
+  bool operator==(BlockMass X) const { return Mass == X.Mass; }
+  bool operator!=(BlockMass X) const { return Mass != X.Mass; }
+  bool operator<=(BlockMass X) const { return Mass <= X.Mass; }
+  bool operator>=(BlockMass X) const { return Mass >= X.Mass; }
+  bool operator<(BlockMass X) const { return Mass < X.Mass; }
+  bool operator>(BlockMass X) const { return Mass > X.Mass; }
 
   /// \brief Convert to scaled number.
   ///
@@ -122,20 +122,20 @@ public:
   raw_ostream &print(raw_ostream &OS) const;
 };
 
-inline BlockMass operator+(const BlockMass &L, const BlockMass &R) {
+inline BlockMass operator+(BlockMass L, BlockMass R) {
   return BlockMass(L) += R;
 }
-inline BlockMass operator-(const BlockMass &L, const BlockMass &R) {
+inline BlockMass operator-(BlockMass L, BlockMass R) {
   return BlockMass(L) -= R;
 }
-inline BlockMass operator*(const BlockMass &L, const BranchProbability &R) {
+inline BlockMass operator*(BlockMass L, BranchProbability R) {
   return BlockMass(L) *= R;
 }
-inline BlockMass operator*(const BranchProbability &L, const BlockMass &R) {
+inline BlockMass operator*(BranchProbability L, BlockMass R) {
   return BlockMass(R) *= L;
 }
 
-inline raw_ostream &operator<<(raw_ostream &OS, const BlockMass &X) {
+inline raw_ostream &operator<<(raw_ostream &OS, BlockMass X) {
   return X.print(OS);
 }
 

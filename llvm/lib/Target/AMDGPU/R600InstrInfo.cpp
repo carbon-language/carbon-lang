@@ -922,7 +922,7 @@ bool
 R600InstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
                                    unsigned NumCyles,
                                    unsigned ExtraPredCycles,
-                                   const BranchProbability &Probability) const{
+                                   BranchProbability Probability) const{
   return true;
 }
 
@@ -933,14 +933,14 @@ R600InstrInfo::isProfitableToIfCvt(MachineBasicBlock &TMBB,
                                    MachineBasicBlock &FMBB,
                                    unsigned NumFCycles,
                                    unsigned ExtraFCycles,
-                                   const BranchProbability &Probability) const {
+                                   BranchProbability Probability) const {
   return true;
 }
 
 bool
 R600InstrInfo::isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
                                          unsigned NumCyles,
-                                         const BranchProbability &Probability)
+                                         BranchProbability Probability)
                                          const {
   return true;
 }

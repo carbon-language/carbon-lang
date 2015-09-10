@@ -132,13 +132,13 @@ public:
 
   bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
                            unsigned ExtraPredCycles,
-                           const BranchProbability &Probability) const override;
+                           BranchProbability Probability) const override;
 
   bool isProfitableToIfCvt(MachineBasicBlock &TMBB,
                            unsigned NumTCycles, unsigned ExtraTCycles,
                            MachineBasicBlock &FMBB,
                            unsigned NumFCycles, unsigned ExtraFCycles,
-                           const BranchProbability &Probability) const override;
+                           BranchProbability Probability) const override;
 
   bool isPredicated(const MachineInstr *MI) const override;
   bool isPredicated(unsigned Opcode) const;
@@ -155,7 +155,7 @@ public:
   ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
 
   bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
-                           const BranchProbability &Probability) const override;
+                                 BranchProbability Probability) const override;
 
   DFAPacketizer *
   CreateTargetScheduleState(const TargetSubtargetInfo &STI) const override;

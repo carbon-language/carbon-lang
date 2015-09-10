@@ -514,7 +514,7 @@ bool SystemZInstrInfo::isPredicable(MachineInstr *MI) const {
 bool SystemZInstrInfo::
 isProfitableToIfCvt(MachineBasicBlock &MBB,
                     unsigned NumCycles, unsigned ExtraPredCycles,
-                    const BranchProbability &Probability) const {
+                    BranchProbability Probability) const {
   // For now only convert single instructions.
   return NumCycles == 1;
 }
@@ -524,7 +524,7 @@ isProfitableToIfCvt(MachineBasicBlock &TMBB,
                     unsigned NumCyclesT, unsigned ExtraPredCyclesT,
                     MachineBasicBlock &FMBB,
                     unsigned NumCyclesF, unsigned ExtraPredCyclesF,
-                    const BranchProbability &Probability) const {
+                    BranchProbability Probability) const {
   // For now avoid converting mutually-exclusive cases.
   return false;
 }

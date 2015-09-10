@@ -1474,7 +1474,7 @@ bool PPCInstrInfo::isProfitableToIfCvt(MachineBasicBlock &TMBB,
                      unsigned NumT, unsigned ExtraT,
                      MachineBasicBlock &FMBB,
                      unsigned NumF, unsigned ExtraF,
-                     const BranchProbability &Probability) const {
+                     BranchProbability Probability) const {
   return !(MBBDefinesCTR(TMBB) && MBBDefinesCTR(FMBB));
 }
 

@@ -1063,7 +1063,7 @@ HexagonInstrInfo::
 isProfitableToIfCvt(MachineBasicBlock &MBB,
                     unsigned NumCycles,
                     unsigned ExtraPredCycles,
-                    const BranchProbability &Probability) const {
+                    BranchProbability Probability) const {
   return true;
 }
 
@@ -1076,7 +1076,7 @@ isProfitableToIfCvt(MachineBasicBlock &TMBB,
                     MachineBasicBlock &FMBB,
                     unsigned NumFCycles,
                     unsigned ExtraFCycles,
-                    const BranchProbability &Probability) const {
+                    BranchProbability Probability) const {
   return true;
 }
 
@@ -1185,7 +1185,7 @@ bool HexagonInstrInfo::ReverseBranchCondition(
 
 bool HexagonInstrInfo::
 isProfitableToDupForIfCvt(MachineBasicBlock &MBB,unsigned NumInstrs,
-                          const BranchProbability &Probability) const {
+                          BranchProbability Probability) const {
   return (NumInstrs <= 4);
 }
 

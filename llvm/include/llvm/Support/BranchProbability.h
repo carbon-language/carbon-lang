@@ -30,9 +30,10 @@ class BranchProbability {
   uint32_t D;
 
 public:
-  BranchProbability(uint32_t n, uint32_t d) : N(n), D(d) {
-    assert(d > 0 && "Denominator cannot be 0!");
-    assert(n <= d && "Probability cannot be bigger than 1!");
+  BranchProbability(uint32_t Numerator, uint32_t Denominator)
+      : N(Numerator), D(Denominator) {
+    assert(D > 0 && "Denominator cannot be 0!");
+    assert(N <= D && "Probability cannot be bigger than 1!");
   }
 
   static BranchProbability getZero() { return BranchProbability(0, 1); }
@@ -80,7 +81,7 @@ public:
   bool operator>=(BranchProbability RHS) const { return !(*this < RHS); }
 };
 
-inline raw_ostream &operator<<(raw_ostream &OS, const BranchProbability &Prob) {
+inline raw_ostream &operator<<(raw_ostream &OS, BranchProbability Prob) {
   return Prob.print(OS);
 }
 

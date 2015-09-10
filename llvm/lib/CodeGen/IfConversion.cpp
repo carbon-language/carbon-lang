@@ -190,10 +190,10 @@ namespace {
   private:
     bool ReverseBranchCondition(BBInfo &BBI);
     bool ValidSimple(BBInfo &TrueBBI, unsigned &Dups,
-                     const BranchProbability &Prediction) const;
+                     BranchProbability Prediction) const;
     bool ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
                        bool FalseBranch, unsigned &Dups,
-                       const BranchProbability &Prediction) const;
+                       BranchProbability Prediction) const;
     bool ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
                       unsigned &Dups1, unsigned &Dups2) const;
     void ScanInstructions(BBInfo &BBI);
@@ -218,7 +218,7 @@ namespace {
 
     bool MeetIfcvtSizeLimit(MachineBasicBlock &BB,
                             unsigned Cycle, unsigned Extra,
-                            const BranchProbability &Prediction) const {
+                            BranchProbability Prediction) const {
       return Cycle > 0 && TII->isProfitableToIfCvt(BB, Cycle, Extra,
                                                    Prediction);
     }
@@ -227,7 +227,7 @@ namespace {
                             unsigned TCycle, unsigned TExtra,
                             MachineBasicBlock &FBB,
                             unsigned FCycle, unsigned FExtra,
-                            const BranchProbability &Prediction) const {
+                            BranchProbability Prediction) const {
       return TCycle > 0 && FCycle > 0 &&
         TII->isProfitableToIfCvt(TBB, TCycle, TExtra, FBB, FCycle, FExtra,
                                  Prediction);
@@ -474,7 +474,7 @@ static inline MachineBasicBlock *getNextBlock(MachineBasicBlock *BB) {
 /// number of instructions that the ifcvt would need to duplicate if performed
 /// in Dups.
 bool IfConverter::ValidSimple(BBInfo &TrueBBI, unsigned &Dups,
-                              const BranchProbability &Prediction) const {
+                              BranchProbability Prediction) const {
   Dups = 0;
   if (TrueBBI.IsBeingAnalyzed || TrueBBI.IsDone)
     return false;
@@ -501,7 +501,7 @@ bool IfConverter::ValidSimple(BBInfo &TrueBBI, unsigned &Dups,
 /// if performed in 'Dups'.
 bool IfConverter::ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
                                 bool FalseBranch, unsigned &Dups,
-                                const BranchProbability &Prediction) const {
+                                BranchProbability Prediction) const {
   Dups = 0;
   if (TrueBBI.IsBeingAnalyzed || TrueBBI.IsDone)
     return false;

@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineCombinerPattern.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/Support/BranchProbability.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
@@ -38,7 +39,6 @@ class SelectionDAG;
 class ScheduleDAG;
 class TargetRegisterClass;
 class TargetRegisterInfo;
-class BranchProbability;
 class TargetSubtargetInfo;
 class TargetSchedModel;
 class DFAPacketizer;
@@ -511,7 +511,7 @@ public:
   virtual
   bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
                            unsigned ExtraPredCycles,
-                           const BranchProbability &Probability) const {
+                           BranchProbability Probability) const {
     return false;
   }
 
@@ -526,7 +526,7 @@ public:
                       unsigned NumTCycles, unsigned ExtraTCycles,
                       MachineBasicBlock &FMBB,
                       unsigned NumFCycles, unsigned ExtraFCycles,
-                      const BranchProbability &Probability) const {
+                      BranchProbability Probability) const {
     return false;
   }
 
@@ -538,7 +538,7 @@ public:
   /// will be properly predicted.
   virtual bool
   isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
-                            const BranchProbability &Probability) const {
+                            BranchProbability Probability) const {
     return false;
   }
 

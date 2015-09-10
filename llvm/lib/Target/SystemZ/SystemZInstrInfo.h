@@ -159,12 +159,12 @@ public:
   bool isPredicable(MachineInstr *MI) const override;
   bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
                            unsigned ExtraPredCycles,
-                           const BranchProbability &Probability) const override;
+                           BranchProbability Probability) const override;
   bool isProfitableToIfCvt(MachineBasicBlock &TMBB,
                            unsigned NumCyclesT, unsigned ExtraPredCyclesT,
                            MachineBasicBlock &FMBB,
                            unsigned NumCyclesF, unsigned ExtraPredCyclesF,
-                           const BranchProbability &Probability) const override;
+                           BranchProbability Probability) const override;
   bool PredicateInstruction(MachineInstr *MI,
                             ArrayRef<MachineOperand> Pred) const override;
   void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,

@@ -37,13 +37,13 @@ public:
 
   /// \brief Multiplies with a branch probability. The computation will never
   /// overflow.
-  BlockFrequency &operator*=(const BranchProbability &Prob);
-  const BlockFrequency operator*(const BranchProbability &Prob) const;
+  BlockFrequency &operator*=(BranchProbability Prob);
+  const BlockFrequency operator*(BranchProbability Prob) const;
 
   /// \brief Divide by a non-zero branch probability using saturating
   /// arithmetic.
-  BlockFrequency &operator/=(const BranchProbability &Prob);
-  BlockFrequency operator/(const BranchProbability &Prob) const;
+  BlockFrequency &operator/=(BranchProbability Prob);
+  BlockFrequency operator/(BranchProbability Prob) const;
 
   /// \brief Adds another block frequency using saturating arithmetic.
   BlockFrequency &operator+=(const BlockFrequency &Freq);
