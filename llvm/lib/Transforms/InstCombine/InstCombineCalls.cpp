@@ -1537,7 +1537,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
   unsigned ArgNo = 0;
   for (Value *V : CS.args()) {
     if (!CS.paramHasAttr(ArgNo+1, Attribute::NonNull) &&
-        isKnownNonNull(V)) {
+        isKnownNonNullAt(V, CS.getInstruction(), DT, TLI)) {
       AttributeSet AS = CS.getAttributes();
       AS = AS.addAttribute(CS.getInstruction()->getContext(), ArgNo+1,
                            Attribute::NonNull);
