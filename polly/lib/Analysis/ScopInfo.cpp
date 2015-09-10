@@ -1601,13 +1601,17 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
         // adjust the dimensionality accordingly. Lastly, if we leave a loop
         // and enter a new one we need to drop the old constraints.
         int SuccBBLoopDepth = getRelativeLoopDepth(SuccBBLoop);
-        assert(std::abs(BBLoopDepth - SuccBBLoopDepth) <= 1);
+        unsigned LoopDepthDiff = std::abs(BBLoopDepth - SuccBBLoopDepth);
         if (BBLoopDepth > SuccBBLoopDepth) {
-          CondSet = isl_set_project_out(CondSet, isl_dim_set, BBLoopDepth, 1);
+          CondSet = isl_set_project_out(CondSet, isl_dim_set,
+                                        isl_set_n_dim(CondSet) - LoopDepthDiff,
+                                        LoopDepthDiff);
         } else if (SuccBBLoopDepth > BBLoopDepth) {
+          assert(LoopDepthDiff == 1);
           CondSet = isl_set_add_dims(CondSet, isl_dim_set, 1);
           CondSet = addDomainDimId(CondSet, SuccBBLoopDepth, SuccBBLoop);
         } else if (BBLoopDepth >= 0) {
+          assert(LoopDepthDiff <= 1);
           CondSet = isl_set_project_out(CondSet, isl_dim_set, BBLoopDepth, 1);
           CondSet = isl_set_add_dims(CondSet, isl_dim_set, 1);
           CondSet = addDomainDimId(CondSet, SuccBBLoopDepth, SuccBBLoop);
@@ -1714,15 +1718,19 @@ void Scop::propagateDomainConstraints(Region *R, LoopInfo &LI,
           PredBBLoop = PredBBLoop->getParentLoop();
 
         int PredBBLoopDepth = getRelativeLoopDepth(PredBBLoop);
-        assert(std::abs(BBLoopDepth - PredBBLoopDepth) <= 1);
+        unsigned LoopDepthDiff = std::abs(BBLoopDepth - PredBBLoopDepth);
         if (BBLoopDepth < PredBBLoopDepth)
-          PredBBDom =
-              isl_set_project_out(PredBBDom, isl_dim_set, PredBBLoopDepth, 1);
-        else if (PredBBLoopDepth < BBLoopDepth)
+          PredBBDom = isl_set_project_out(
+              PredBBDom, isl_dim_set, isl_set_n_dim(PredBBDom) - LoopDepthDiff,
+              LoopDepthDiff);
+        else if (PredBBLoopDepth < BBLoopDepth) {
+          assert(LoopDepthDiff == 1);
           PredBBDom = isl_set_add_dims(PredBBDom, isl_dim_set, 1);
-        else if (BBLoop != PredBBLoop && BBLoopDepth >= 0)
+        } else if (BBLoop != PredBBLoop && BBLoopDepth >= 0) {
+          assert(LoopDepthDiff <= 1);
           PredBBDom = isl_set_drop_constraints_involving_dims(
               PredBBDom, isl_dim_set, BBLoopDepth, 1);
+        }
       }
 
       PredDom = isl_set_union(PredDom, PredBBDom);
