@@ -782,17 +782,15 @@ public:
 
   void visitAddRecExpr(const SCEVAddRecExpr *Numerator) {
     const SCEV *StartQ, *StartR, *StepQ, *StepR;
-    assert(Numerator->isAffine() && "Numerator should be affine");
+    if (!Numerator->isAffine())
+      return cannotDivide(Numerator);
     divide(SE, Numerator->getStart(), Denominator, &StartQ, &StartR);
     divide(SE, Numerator->getStepRecurrence(SE), Denominator, &StepQ, &StepR);
     // Bail out if the types do not match.
     Type *Ty = Denominator->getType();
     if (Ty != StartQ->getType() || Ty != StartR->getType() ||
-        Ty != StepQ->getType() || Ty != StepR->getType()) {
-      Quotient = Zero;
-      Remainder = Numerator;
-      return;
-    }
+        Ty != StepQ->getType() || Ty != StepR->getType())
+      return cannotDivide(Numerator);
     Quotient = SE.getAddRecExpr(StartQ, StepQ, Numerator->getLoop(),
                                 Numerator->getNoWrapFlags());
     Remainder = SE.getAddRecExpr(StartR, StepR, Numerator->getLoop(),
@@ -808,11 +806,8 @@ public:
       divide(SE, Op, Denominator, &Q, &R);
 
       // Bail out if types do not match.
-      if (Ty != Q->getType() || Ty != R->getType()) {
-        Quotient = Zero;
-        Remainder = Numerator;
-        return;
-      }
+      if (Ty != Q->getType() || Ty != R->getType())
+        return cannotDivide(Numerator);
 
       Qs.push_back(Q);
       Rs.push_back(R);
@@ -835,11 +830,8 @@ public:
     bool FoundDenominatorTerm = false;
     for (const SCEV *Op : Numerator->operands()) {
       // Bail out if types do not match.
-      if (Ty != Op->getType()) {
-        Quotient = Zero;
-        Remainder = Numerator;
-        return;
-      }
+      if (Ty != Op->getType())
+        return cannotDivide(Numerator);
 
       if (FoundDenominatorTerm) {
         Qs.push_back(Op);
@@ -855,11 +847,8 @@ public:
       }
 
       // Bail out if types do not match.
-      if (Ty != Q->getType()) {
-        Quotient = Zero;
-        Remainder = Numerator;
-        return;
-      }
+      if (Ty != Q->getType())
+        return cannotDivide(Numerator);
 
       FoundDenominatorTerm = true;
       Qs.push_back(Q);
@@ -874,11 +863,8 @@ public:
       return;
     }
 
-    if (!isa<SCEVUnknown>(Denominator)) {
-      Quotient = Zero;
-      Remainder = Numerator;
-      return;
-    }
+    if (!isa<SCEVUnknown>(Denominator))
+      return cannotDivide(Numerator);
 
     // The Remainder is obtained by replacing Denominator by 0 in Numerator.
     ValueToValueMap RewriteMap;
@@ -898,15 +884,12 @@ public:
     // Quotient is (Numerator - Remainder) divided by Denominator.
     const SCEV *Q, *R;
     const SCEV *Diff = SE.getMinusSCEV(Numerator, Remainder);
-    if (sizeOfSCEV(Diff) > sizeOfSCEV(Numerator)) {
-      // This SCEV does not seem to simplify: fail the division here.
-      Quotient = Zero;
-      Remainder = Numerator;
-      return;
-    }
+    // This SCEV does not seem to simplify: fail the division here.
+    if (sizeOfSCEV(Diff) > sizeOfSCEV(Numerator))
+      return cannotDivide(Numerator);
     divide(SE, Diff, Denominator, &Q, &R);
-    assert(R == Zero &&
-           "(Numerator - Remainder) should evenly divide Denominator");
+    if (R != Zero)
+      return cannotDivide(Numerator);
     Quotient = Q;
   }
 
@@ -917,8 +900,15 @@ private:
     Zero = SE.getConstant(Denominator->getType(), 0);
     One = SE.getConstant(Denominator->getType(), 1);
 
-    // By default, we don't know how to divide Expr by Denominator.
-    // Providing the default here simplifies the rest of the code.
+    // We generally do not know how to divide Expr by Denominator. We
+    // initialize the division to a "cannot divide" state to simplify the rest
+    // of the code.
+    cannotDivide(Numerator);
+  }
+
+  // Convenience function for giving up on the division. We set the quotient to
+  // be equal to zero and the remainder to be equal to the numerator.
+  void cannotDivide(const SCEV *Numerator) {
     Quotient = Zero;
     Remainder = Numerator;
   }
