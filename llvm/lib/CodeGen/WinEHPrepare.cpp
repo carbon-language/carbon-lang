@@ -3245,14 +3245,15 @@ void WinEHPrepare::colorFunclets(Function &F,
     } else {
       // Note that this is a member of the given color.
       FuncletBlocks[Color].insert(Visiting);
-      TerminatorInst *Terminator = Visiting->getTerminator();
-      if (isa<CleanupReturnInst>(Terminator) ||
-          isa<CatchReturnInst>(Terminator) ||
-          isa<CleanupEndPadInst>(Terminator)) {
-        // These block's successors have already been queued with the parent
-        // color.
-        continue;
-      }
+    }
+
+    TerminatorInst *Terminator = Visiting->getTerminator();
+    if (isa<CleanupReturnInst>(Terminator) ||
+        isa<CatchReturnInst>(Terminator) ||
+        isa<CleanupEndPadInst>(Terminator)) {
+      // These blocks' successors have already been queued with the parent
+      // color.
+      continue;
     }
     for (BasicBlock *Succ : successors(Visiting)) {
       if (isa<CatchEndPadInst>(Succ->getFirstNonPHI())) {
