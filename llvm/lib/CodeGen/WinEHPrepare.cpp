@@ -2993,11 +2993,8 @@ static const BasicBlock *getEHPadFromPredecessor(const BasicBlock *BB) {
   const TerminatorInst *TI = BB->getTerminator();
   if (isa<InvokeInst>(TI))
     return nullptr;
-  if (isa<CatchPadInst>(TI) || isa<CatchEndPadInst>(TI) ||
-      isa<TerminatePadInst>(TI))
+  if (TI->isEHPad())
     return BB;
-  if (auto *CEPI = dyn_cast<CleanupEndPadInst>(TI))
-    return CEPI->getCleanupPad()->getParent();
   return cast<CleanupReturnInst>(TI)->getCleanupPad()->getParent();
 }
 
@@ -3111,6 +3108,14 @@ static void calculateExplicitSEHStateNumbers(WinEHFuncInfo &FuncInfo,
     for (const BasicBlock *PredBlock : predecessors(&BB))
       if ((PredBlock = getEHPadFromPredecessor(PredBlock)))
         calculateExplicitSEHStateNumbers(FuncInfo, *PredBlock, CleanupState);
+  } else if (isa<CleanupEndPadInst>(FirstNonPHI)) {
+    // Anything unwinding through CleanupEndPadInst is in ParentState.
+    FuncInfo.EHPadStateMap[FirstNonPHI] = ParentState;
+    DEBUG(dbgs() << "Assigning state #" << ParentState << " to BB "
+                 << BB.getName() << '\n');
+    for (const BasicBlock *PredBlock : predecessors(&BB))
+      if ((PredBlock = getEHPadFromPredecessor(PredBlock)))
+        calculateExplicitSEHStateNumbers(FuncInfo, *PredBlock, ParentState);
   } else if (isa<TerminatePadInst>(FirstNonPHI)) {
     report_fatal_error("Not yet implemented!");
   } else {
