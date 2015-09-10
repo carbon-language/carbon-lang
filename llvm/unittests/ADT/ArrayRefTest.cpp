@@ -124,4 +124,20 @@ TEST(ArrayRefTest, InitializerList) {
   ArgTest12({1, 2});
 }
 
+// Test that makeArrayRef works on ArrayRef (no-op)
+TEST(ArrayRefTest, makeArrayRef) {
+  static const int A1[] = {1, 2, 3, 4, 5, 6, 7, 8};
+
+  // No copy expected for non-const ArrayRef (true no-op)
+  ArrayRef<int> AR1(A1);
+  ArrayRef<int> &AR1Ref = makeArrayRef(AR1);
+  EXPECT_EQ(&AR1, &AR1Ref);
+
+  // A copy is expected for non-const ArrayRef (thin copy)
+  const ArrayRef<int> AR2(A1);
+  const ArrayRef<int> &AR2Ref = makeArrayRef(AR2);
+  EXPECT_NE(&AR2Ref, &AR2);
+  EXPECT_TRUE(AR2.equals(AR2Ref));
+}
+
 } // end anonymous namespace
