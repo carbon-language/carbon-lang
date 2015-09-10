@@ -18,6 +18,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
+#include <string>
 
 namespace fuzzer {
 
@@ -161,6 +163,10 @@ class UserSuppliedFuzzer {
 
 /// Runs the fuzzing with the UserSuppliedFuzzer.
 int FuzzerDriver(int argc, char **argv, UserSuppliedFuzzer &USF);
+
+/// More C++-ish interface.
+int FuzzerDriver(const std::vector<std::string> &Args, UserSuppliedFuzzer &USF);
+int FuzzerDriver(const std::vector<std::string> &Args, UserCallback Callback);
 
 }  // namespace fuzzer
 
