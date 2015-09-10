@@ -119,15 +119,21 @@ __kmp_affinity_cmp_Address_child_num(const void *a, const void *b)
 }
 
 
-/** A structure for holding machine-specific hierarchy info to be computed once at init. */
+/** A structure for holding machine-specific hierarchy info to be computed once at init.
+    This structure represents a mapping of threads to the actual machine hierarchy, or to
+    our best guess at what the hierarchy might be, for the purpose of performing an
+    efficient barrier.  In the worst case, when there is no machine hierarchy information,
+    it produces a tree suitable for a barrier, similar to the tree used in the hyper barrier. */
 class hierarchy_info {
 public:
     /** Good default values for number of leaves and branching factor, given no affinity information.
 	Behaves a bit like hyper barrier. */
     static const kmp_uint32 maxLeaves=4;
     static const kmp_uint32 minBranch=4;
-    /** Typical levels are threads/core, cores/package or socket, packages/node, nodes/machine,
-        etc.  We don't want to get specific with nomenclature */
+    /** Number of levels in the hierarchy. Typical levels are threads/core, cores/package
+	or socket, packages/node, nodes/machine, etc.  We don't want to get specific with
+	nomenclature.  When the machine is oversubscribed we add levels to duplicate the
+	hierarchy, doubling the thread capacity of the hierarchy each time we add a level. */
     kmp_uint32 maxLevels;
 
     /** This is specifically the depth of the machine configuration hierarchy, in terms of the
@@ -227,6 +233,7 @@ public:
 
     }
 
+    // Resize the hierarchy if nproc changes to something larger than before
     void resize(kmp_uint32 nproc)
     {
         kmp_int8 bool_result = KMP_COMPARE_AND_STORE_ACQ8(&resizing, 0, 1);
@@ -237,13 +244,23 @@ public:
         KMP_DEBUG_ASSERT(bool_result!=0);
         KMP_DEBUG_ASSERT(nproc > base_num_threads);
 
-        // Calculate new max_levels
+        // Calculate new maxLevels
         kmp_uint32 old_sz = skipPerLevel[depth-1];
-        kmp_uint32 incs = 0, old_maxLevels= maxLevels;
+        kmp_uint32 incs = 0, old_maxLevels = maxLevels;
+	// First see if old maxLevels is enough to contain new size
+        for (kmp_uint32 i=depth; i<maxLevels && nproc>old_sz; ++i) {
+            skipPerLevel[i] = 2*skipPerLevel[i-1];
+            old_sz *= 2;
+            depth++;
+        }
+	if (nproc <= old_sz) // enough space already
+	    return;
+	// Not enough space, need to expand hierarchy
         while (nproc > old_sz) {
             old_sz *=2;
             incs++;
-        }
+	    depth++;
+	}
         maxLevels += incs;
 
         // Resize arrays

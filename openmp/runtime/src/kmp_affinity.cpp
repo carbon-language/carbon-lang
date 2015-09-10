@@ -32,15 +32,12 @@ void __kmp_get_hierarchy(kmp_uint32 nproc, kmp_bstate_t *thr_bar) {
     // The test below is true if affinity is available, but set to "none". Need to init on first use of hierarchical barrier.
     if (TCR_1(machine_hierarchy.uninitialized))
         machine_hierarchy.init(NULL, nproc);
-    // Adjust the hierarchy in case num threads exceeds original
-    if (nproc > machine_hierarchy.base_num_threads)
-        machine_hierarchy.resize(nproc);
 
     depth = machine_hierarchy.depth;
     KMP_DEBUG_ASSERT(depth > 0);
-    // The loop below adjusts the depth in the case of a resize
-    while (nproc > machine_hierarchy.skipPerLevel[depth-1])
-        depth++;
+    // Adjust the hierarchy in case num threads exceeds original
+    if (nproc > machine_hierarchy.skipPerLevel[depth-1])
+        machine_hierarchy.resize(nproc);
 
     thr_bar->depth = depth;
     thr_bar->base_leaf_kids = (kmp_uint8)machine_hierarchy.numPerLevel[0]-1;
