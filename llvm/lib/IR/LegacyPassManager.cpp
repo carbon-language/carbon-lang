@@ -729,9 +729,7 @@ void PMTopLevelManager::addImmutablePass(ImmutablePass *P) {
   // fast lookup.
   const PassInfo *PassInf = findAnalysisPassInfo(AID);
   assert(PassInf && "Expected all immutable passes to be initialized");
-  const std::vector<const PassInfo*> &ImmPI =
-    PassInf->getInterfacesImplemented();
-  for (const PassInfo *ImmPI : ImmPI)
+  for (const PassInfo *ImmPI : PassInf->getInterfacesImplemented())
     ImmutablePassMap[ImmPI->getTypeInfo()] = P;
 }
 
