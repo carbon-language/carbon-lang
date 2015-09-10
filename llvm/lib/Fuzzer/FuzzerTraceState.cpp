@@ -67,36 +67,33 @@
   clang  -fPIC -c -g -O2 -std=c++11 Fuzzer*.cpp
   clang++ -O0 -std=c++11 -fsanitize-coverage=edge,trace-cmp \
     -fsanitize=dataflow \
-    test/dfsan/DFSanSimpleCmpTest.cpp Fuzzer*.o
-  ./a.out
+    test/SimpleCmpTest.cpp Fuzzer*.o
+  ./a.out -use_traces=1
 )
 */
 
+#include "FuzzerDFSan.h"
 #include "FuzzerInternal.h"
-#include <sanitizer/dfsan_interface.h>
 
 #include <algorithm>
 #include <cstring>
 #include <unordered_map>
 
+#if !LLVM_FUZZER_SUPPORTS_DFSAN
+// Stubs for dfsan for platforms where dfsan does not exist and weak
+// functions don't work.
 extern "C" {
-__attribute__((weak))
-dfsan_label dfsan_create_label(const char *desc, void *userdata);
-__attribute__((weak))
-void dfsan_set_label(dfsan_label label, void *addr, size_t size);
-__attribute__((weak))
-void dfsan_add_label(dfsan_label label, void *addr, size_t size);
-__attribute__((weak))
-const struct dfsan_label_info *dfsan_get_label_info(dfsan_label label);
-__attribute__((weak))
-dfsan_label dfsan_read_label(const void *addr, size_t size);
+dfsan_label dfsan_create_label(const char *desc, void *userdata) { return 0; }
+void dfsan_set_label(dfsan_label label, void *addr, size_t size) {}
+void dfsan_add_label(dfsan_label label, void *addr, size_t size) {}
+const struct dfsan_label_info *dfsan_get_label_info(dfsan_label label) {
+  return nullptr;
+}
+dfsan_label dfsan_read_label(const void *addr, size_t size) { return 0; }
 }  // extern "C"
+#endif  // !LLVM_FUZZER_SUPPORTS_DFSAN
 
 namespace fuzzer {
-
-static bool ReallyHaveDFSan() {
-  return &dfsan_create_label != nullptr;
-}
 
 // These values are copied from include/llvm/IR/InstrTypes.h.
 // We do not include the LLVM headers here to remain independent.
