@@ -1807,7 +1807,7 @@ void CodeGenFunction::EnterSEHTryStmt(const SEHTryStmt &S) {
       HelperCGF.GenerateSEHFilterFunction(*this, *Except);
   llvm::Constant *OpaqueFunc =
       llvm::ConstantExpr::getBitCast(FilterFunc, Int8PtrTy);
-  CatchScope->setHandler(0, OpaqueFunc, createBasicBlock("__except"));
+  CatchScope->setHandler(0, OpaqueFunc, createBasicBlock("__except.ret"));
 }
 
 void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S) {
@@ -1847,6 +1847,18 @@ void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S) {
   EHStack.popCatch();
 
   EmitBlockAfterUses(ExceptBB);
+
+  if (CGM.getCodeGenOpts().NewMSEH) {
+    // __except blocks don't get outlined into funclets, so immediately do a
+    // catchret.
+    llvm::BasicBlock *CatchPadBB = ExceptBB->getSinglePredecessor();
+    assert(CatchPadBB && "only ExceptBB pred should be catchpad");
+    llvm::CatchPadInst *CPI =
+        cast<llvm::CatchPadInst>(CatchPadBB->getFirstNonPHI());
+    ExceptBB = createBasicBlock("__except");
+    Builder.CreateCatchRet(CPI, ExceptBB);
+    EmitBlock(ExceptBB);
+  }
 
   // On Win64, the exception pointer is the exception code. Copy it to the slot.
   if (CGM.getTarget().getTriple().getArch() != llvm::Triple::x86) {
