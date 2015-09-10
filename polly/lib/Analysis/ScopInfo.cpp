@@ -1554,6 +1554,15 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
     }
 
     BasicBlock *BB = getRegionNodeBasicBlock(RN);
+    TerminatorInst *TI = BB->getTerminator();
+
+    // Unreachable instructions do not have successors so we can skip them.
+    if (isa<UnreachableInst>(TI)) {
+      // Assume unreachables only in error blocks.
+      assert(isErrorBlock(*BB));
+      continue;
+    }
+
     isl_set *Domain = DomainMap[BB];
     DEBUG(dbgs() << "\tVisit: " << BB->getName() << " : " << Domain << "\n");
     assert(Domain && "Due to reverse post order traversal of the region all "
@@ -1569,7 +1578,7 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
     // exit node, hence the single entry node domain is the condition set. For
     // basic blocks we use the helper function buildConditionSets.
     SmallVector<isl_set *, 2> ConditionSets;
-    BranchInst *BI = cast<BranchInst>(BB->getTerminator());
+    BranchInst *BI = cast<BranchInst>(TI);
     if (RN->isSubRegion())
       ConditionSets.push_back(isl_set_copy(Domain));
     else
@@ -1738,6 +1747,13 @@ void Scop::propagateDomainConstraints(Region *R, LoopInfo &LI,
 
     // Under the union of all predecessor conditions we can reach this block.
     Domain = isl_set_intersect(Domain, PredDom);
+
+    // Add assumptions for error blocks.
+    if (isErrorBlock(*BB)) {
+      IsOptimized = true;
+      isl_set *DomPar = isl_set_params(isl_set_copy(Domain));
+      addAssumption(isl_set_complement(DomPar));
+    }
   }
 }
 
@@ -2435,7 +2451,7 @@ bool Scop::restrictDomains(__isl_take isl_union_set *Domain) {
 ScalarEvolution *Scop::getSE() const { return SE; }
 
 bool Scop::isTrivialBB(BasicBlock *BB, TempScop &tempScop) {
-  if (tempScop.getAccessFunctions(BB))
+  if (tempScop.getAccessFunctions(BB) && !isErrorBlock(*BB))
     return false;
 
   return true;

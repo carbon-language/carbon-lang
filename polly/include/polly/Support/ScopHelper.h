@@ -99,5 +99,19 @@ llvm::Value *expandCodeFor(Scop &S, llvm::ScalarEvolution &SE,
                            const llvm::DataLayout &DL, const char *Name,
                            const llvm::SCEV *E, llvm::Type *Ty,
                            llvm::Instruction *IP);
+
+/// @brief Check if the block is a error block.
+///
+/// A error block is currently any block that fullfills at least one of
+/// the following conditions:
+///
+///  - It is terminated by an unreachable instruction
+///  - It contains a call to a function named:
+///     + __ubsan_handle_out_of_bounds
+///
+/// @param BB The block to check.
+///
+/// @return True if the block is a error block, false otherwise.
+bool isErrorBlock(llvm::BasicBlock &BB);
 }
 #endif

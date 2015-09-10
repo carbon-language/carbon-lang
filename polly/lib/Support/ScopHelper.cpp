@@ -331,3 +331,17 @@ Value *polly::expandCodeFor(Scop &S, ScalarEvolution &SE, const DataLayout &DL,
   ScopExpander Expander(S.getRegion(), SE, DL, Name);
   return Expander.expandCodeFor(E, Ty, IP);
 }
+
+bool polly::isErrorBlock(BasicBlock &BB) {
+
+  for (Instruction &Inst : BB)
+    if (CallInst *CI = dyn_cast<CallInst>(&Inst))
+      if (Function *F = CI->getCalledFunction())
+        if (F->getName().equals("__ubsan_handle_out_of_bounds"))
+          return true;
+
+  if (isa<UnreachableInst>(BB.getTerminator()))
+    return true;
+
+  return false;
+}

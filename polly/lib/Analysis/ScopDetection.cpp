@@ -896,14 +896,17 @@ bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
       return false;
   }
 
-  for (BasicBlock *BB : CurRegion.blocks())
+  for (BasicBlock *BB : CurRegion.blocks()) {
+    // Do not check exception blocks as we will never include them in the SCoP.
+    if (isErrorBlock(*BB))
+      continue;
+
     if (!isValidCFG(*BB, Context) && !KeepGoing)
       return false;
-
-  for (BasicBlock *BB : CurRegion.blocks())
     for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; ++I)
       if (!isValidInstruction(*I, Context) && !KeepGoing)
         return false;
+  }
 
   if (!hasAffineMemoryAccesses(Context))
     return false;
