@@ -493,8 +493,12 @@ bool ToolChain::AddFastMathRuntimeIfAvailable(const ArgList &Args,
 
 SanitizerMask ToolChain::getSupportedSanitizers() const {
   // Return sanitizers which don't require runtime support and are not
-  // platform or architecture-dependent.
+  // platform dependent.
   using namespace SanitizerKind;
-  return (Undefined & ~Vptr & ~Function) | (CFI & ~CFIICall) | CFICastStrict |
-         UnsignedIntegerOverflow | LocalBounds;
+  SanitizerMask Res = (Undefined & ~Vptr & ~Function) | (CFI & ~CFIICall) |
+                      CFICastStrict | UnsignedIntegerOverflow | LocalBounds;
+  if (getTriple().getArch() == llvm::Triple::x86 ||
+      getTriple().getArch() == llvm::Triple::x86_64)
+    Res |= CFIICall;
+  return Res;
 }
