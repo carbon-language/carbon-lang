@@ -1,4 +1,4 @@
-//===- MIRParser.h - MIR serialization format parser ----------------------===//
+//===- MIRParser.h - MIR serialization format parser ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -37,7 +37,7 @@ class MIRParser : public MachineFunctionInitializer {
 public:
   MIRParser(std::unique_ptr<MIRParserImpl> Impl);
   MIRParser(const MIRParser &) = delete;
-  ~MIRParser();
+  ~MIRParser() override;
 
   /// Parse the optional LLVM IR module that's embedded in the MIR file.
   ///
@@ -78,4 +78,4 @@ createMIRParser(std::unique_ptr<MemoryBuffer> Contents, LLVMContext &Context);
 
 } // end namespace llvm
 
-#endif
+#endif // LLVM_CODEGEN_MIRPARSER_MIRPARSER_H

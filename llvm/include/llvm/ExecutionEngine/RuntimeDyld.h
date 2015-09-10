@@ -69,7 +69,8 @@ public:
     virtual object::OwningBinary<object::ObjectFile>
     getObjectForDebug(const object::ObjectFile &Obj) const = 0;
 
-    uint64_t getSectionLoadAddress(const object::SectionRef &Sec) const;
+    uint64_t
+    getSectionLoadAddress(const object::SectionRef &Sec) const override;
 
   protected:
     virtual void anchor();
@@ -252,4 +253,4 @@ private:
 
 } // end namespace llvm
 
-#endif
+#endif // LLVM_EXECUTIONENGINE_RUNTIMEDYLD_H

@@ -536,9 +536,9 @@ class buffer_ostream : public raw_svector_ostream {
 
 public:
   buffer_ostream(raw_ostream &OS) : raw_svector_ostream(Buffer), OS(OS) {}
-  ~buffer_ostream() { OS << str(); }
+  ~buffer_ostream() override { OS << str(); }
 };
 
 } // end llvm namespace
 
-#endif
+#endif // LLVM_SUPPORT_RAW_OSTREAM_H

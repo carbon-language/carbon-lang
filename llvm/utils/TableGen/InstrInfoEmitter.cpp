@@ -1,4 +1,4 @@
-//===- InstrInfoEmitter.cpp - Generate a Instruction Set Desc. ------------===//
+//===- InstrInfoEmitter.cpp - Generate a Instruction Set Desc. --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,7 +11,6 @@
 // instruction set for the code generator.
 //
 //===----------------------------------------------------------------------===//
-
 
 #include "CodeGenDAGPatterns.h"
 #include "CodeGenSchedule.h"
@@ -26,6 +25,7 @@
 #include <cstdio>
 #include <map>
 #include <vector>
+
 using namespace llvm;
 
 namespace {
@@ -70,7 +70,7 @@ private:
   void EmitOperandInfo(raw_ostream &OS, OperandInfoMapTy &OperandInfoIDs);
   std::vector<std::string> GetOperandInfo(const CodeGenInstruction &Inst);
 };
-} // End anonymous namespace
+} // end anonymous namespace
 
 static void PrintDefList(const std::vector<Record*> &Uses,
                          unsigned Num, raw_ostream &OS) {
@@ -190,7 +190,6 @@ void InstrInfoEmitter::EmitOperandInfo(raw_ostream &OS,
   }
 }
 
-
 /// Initialize data structures for generating operand name mappings.
 /// 
 /// \param Operands [out] A map used to generate the OpName enum with operand
@@ -257,9 +256,9 @@ void InstrInfoEmitter::emitOperandNameMappings(raw_ostream &OS,
 
   OS << "OPERAND_LAST";
   OS << "\n};\n";
-  OS << "} // End namespace OpName\n";
-  OS << "} // End namespace " << Namespace << "\n";
-  OS << "} // End namespace llvm\n";
+  OS << "} // end namespace OpName\n";
+  OS << "} // end namespace " << Namespace << "\n";
+  OS << "} // end namespace llvm\n";
   OS << "#endif //GET_INSTRINFO_OPERAND_ENUM\n";
 
   OS << "#ifdef GET_INSTRINFO_NAMED_OPS\n";
@@ -298,8 +297,8 @@ void InstrInfoEmitter::emitOperandNameMappings(raw_ostream &OS,
     OS << "  return -1;\n";
   }
   OS << "}\n";
-  OS << "} // End namespace " << Namespace << "\n";
-  OS << "} // End namespace llvm\n";
+  OS << "} // end namespace " << Namespace << "\n";
+  OS << "} // end namespace llvm\n";
   OS << "#endif //GET_INSTRINFO_NAMED_OPS\n";
 
 }
@@ -328,9 +327,9 @@ void InstrInfoEmitter::emitOperandTypesEnum(raw_ostream &OS,
   }
 
   OS << "  OPERAND_TYPE_LIST_END" << "\n};\n";
-  OS << "} // End namespace OpTypes\n";
-  OS << "} // End namespace " << Namespace << "\n";
-  OS << "} // End namespace llvm\n";
+  OS << "} // end namespace OpTypes\n";
+  OS << "} // end namespace " << Namespace << "\n";
+  OS << "} // end namespace llvm\n";
   OS << "#endif // GET_INSTRINFO_OPERAND_TYPES_ENUM\n";
 }
 
@@ -419,7 +418,7 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
      << TargetName << "InstrNameIndices, " << TargetName << "InstrNameData, "
      << NumberedInstructions.size() << ");\n}\n\n";
 
-  OS << "} // End llvm namespace \n";
+  OS << "} // end llvm namespace \n";
 
   OS << "#endif // GET_INSTRINFO_MC_DESC\n\n";
 
@@ -432,9 +431,9 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "struct " << ClassName << " : public TargetInstrInfo {\n"
      << "  explicit " << ClassName
      << "(int CFSetupOpcode = -1, int CFDestroyOpcode = -1);\n"
-     << "  virtual ~" << ClassName << "();\n"
+     << "  ~" << ClassName << "() override {}\n"
      << "};\n";
-  OS << "} // End llvm namespace \n";
+  OS << "} // end llvm namespace \n";
 
   OS << "#endif // GET_INSTRINFO_HEADER\n\n";
 
@@ -450,9 +449,8 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
      << "  : TargetInstrInfo(CFSetupOpcode, CFDestroyOpcode) {\n"
      << "  InitMCInstrInfo(" << TargetName << "Insts, " << TargetName
      << "InstrNameIndices, " << TargetName << "InstrNameData, "
-     << NumberedInstructions.size() << ");\n}\n"
-     << ClassName << "::~" << ClassName << "() {}\n";
-  OS << "} // End llvm namespace \n";
+     << NumberedInstructions.size() << ");\n}\n";
+  OS << "} // end llvm namespace \n";
 
   OS << "#endif // GET_INSTRINFO_CTOR_DTOR\n\n";
 
@@ -596,9 +594,9 @@ void InstrInfoEmitter::emitEnums(raw_ostream &OS) {
     OS << "    " << Class.Name << "\t= " << Num++ << ",\n";
   OS << "    SCHED_LIST_END = " << SchedModels.numInstrSchedClasses() << "\n";
   OS << "  };\n";
-  OS << "} // End Sched namespace\n";
-  OS << "} // End " << Namespace << " namespace\n";
-  OS << "} // End llvm namespace \n";
+  OS << "} // end Sched namespace\n";
+  OS << "} // end " << Namespace << " namespace\n";
+  OS << "} // end llvm namespace \n";
 
   OS << "#endif // GET_INSTRINFO_ENUM\n\n";
 }
@@ -610,4 +608,4 @@ void EmitInstrInfo(RecordKeeper &RK, raw_ostream &OS) {
   EmitMapTable(RK, OS);
 }
 
-} // End llvm namespace
+} // end llvm namespace
