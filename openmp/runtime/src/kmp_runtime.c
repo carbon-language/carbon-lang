@@ -3986,8 +3986,13 @@ __kmp_unregister_root_current_thread( int gtid )
    kmp_task_team_t *   task_team = thread->th.th_task_team;
 
    // we need to wait for the proxy tasks before finishing the thread
-   if ( task_team != NULL && task_team->tt.tt_found_proxy_tasks )
+   if ( task_team != NULL && task_team->tt.tt_found_proxy_tasks ) {
+#if OMPT_SUPPORT
+        // the runtime is shutting down so we won't report any events
+        thread->th.ompt_thread_info.state = ompt_state_undefined;
+#endif
         __kmp_task_team_wait(thread, team, NULL );
+   }
 #endif
 
     __kmp_reset_root(gtid, root);
