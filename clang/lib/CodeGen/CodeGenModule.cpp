@@ -2165,8 +2165,10 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   if (getLangOpts().CPlusPlus && getLangOpts().CUDAIsDevice
       && D->hasAttr<CUDASharedAttr>()) {
     if (InitExpr) {
-      Error(D->getLocation(),
-            "__shared__ variable cannot have an initialization.");
+      const auto *C = dyn_cast<CXXConstructExpr>(InitExpr);
+      if (C == nullptr || !C->getConstructor()->hasTrivialBody())
+        Error(D->getLocation(),
+              "__shared__ variable cannot have an initialization.");
     }
     Init = llvm::UndefValue::get(getTypes().ConvertType(ASTTy));
   } else if (!InitExpr) {
