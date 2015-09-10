@@ -686,6 +686,10 @@ void PMTopLevelManager::schedulePass(Pass *P) {
 /// passes and all pass managers. If desired pass is not found
 /// then return NULL.
 Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
+  // For immutable passes we have a direct mapping from ID to pass, so check
+  // that first.
+  if (Pass *P = ImmutablePassMap.lookup(AID))
+    return P;
 
   // Check pass managers
   for (PMDataManager *PassManager : PassManagers)
@@ -696,24 +700,6 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
   for (PMDataManager *IndirectPassManager : IndirectPassManagers)
     if (Pass *P = IndirectPassManager->findAnalysisPass(AID, false))
       return P;
-
-  // Check the immutable passes. Iterate in reverse order so that we find
-  // the most recently registered passes first.
-  for (auto I = ImmutablePasses.rbegin(), E = ImmutablePasses.rend(); I != E;
-       ++I) {
-    AnalysisID PI = (*I)->getPassID();
-    if (PI == AID)
-      return *I;
-
-    // If Pass not found then check the interfaces implemented by Immutable Pass
-    const PassInfo *PassInf = findAnalysisPassInfo(PI);
-    assert(PassInf && "Expected all immutable passes to be initialized");
-    const std::vector<const PassInfo*> &ImmPI =
-      PassInf->getInterfacesImplemented();
-    for (const PassInfo *PI : ImmPI)
-      if (PI->getTypeInfo() == AID)
-        return *I;
-  }
 
   return nullptr;
 }
@@ -727,6 +713,26 @@ const PassInfo *PMTopLevelManager::findAnalysisPassInfo(AnalysisID AID) const {
            "The pass info pointer changed for an analysis ID!");
 
   return PI;
+}
+
+void PMTopLevelManager::addImmutablePass(ImmutablePass *P) {
+  P->initializePass();
+  ImmutablePasses.push_back(P);
+
+  // Add this pass to the map from its analysis ID. We clobber any prior runs
+  // of the pass in the map so that the last one added is the one found when
+  // doing lookups.
+  AnalysisID AID = P->getPassID();
+  ImmutablePassMap[AID] = P;
+
+  // Also add any interfaces implemented by the immutable pass to the map for
+  // fast lookup.
+  const PassInfo *PassInf = findAnalysisPassInfo(AID);
+  assert(PassInf && "Expected all immutable passes to be initialized");
+  const std::vector<const PassInfo*> &ImmPI =
+    PassInf->getInterfacesImplemented();
+  for (const PassInfo *ImmPI : ImmPI)
+    ImmutablePassMap[ImmPI->getTypeInfo()] = P;
 }
 
 // Print passes managed by this top level manager.

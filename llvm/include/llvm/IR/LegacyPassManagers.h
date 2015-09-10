@@ -204,10 +204,7 @@ public:
   virtual ~PMTopLevelManager();
 
   /// Add immutable pass and initialize it.
-  inline void addImmutablePass(ImmutablePass *P) {
-    P->initializePass();
-    ImmutablePasses.push_back(P);
-  }
+  void addImmutablePass(ImmutablePass *P);
 
   inline SmallVectorImpl<ImmutablePass *>& getImmutablePasses() {
     return ImmutablePasses;
@@ -252,6 +249,9 @@ private:
 
   /// Immutable passes are managed by top level manager.
   SmallVector<ImmutablePass *, 16> ImmutablePasses;
+
+  /// Map from ID to immutable passes.
+  SmallDenseMap<AnalysisID, ImmutablePass *, 8> ImmutablePassMap;
 
   DenseMap<Pass *, AnalysisUsage *> AnUsageMap;
 
