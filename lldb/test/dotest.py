@@ -997,7 +997,7 @@ def setupSysPath():
 
     if lldbtest_config.lldbExec and not is_exe(lldbtest_config.lldbExec):
         print "'{}' is not a path to a valid executable".format(lldbtest_config.lldbExec)
-        del lldbtest_config.lldbExec
+        lldbtest_config.lldbExec = None
 
     if not lldbtest_config.lldbExec:
         print "The 'lldb' executable cannot be located.  Some of the tests may not be run as a result."
