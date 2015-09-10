@@ -452,12 +452,17 @@ bool DSAStackTy::isOpenMPLocal(VarDecl *D, StackTy::reverse_iterator Iter) {
 
 /// \brief Build a variable declaration for OpenMP loop iteration variable.
 static VarDecl *buildVarDecl(Sema &SemaRef, SourceLocation Loc, QualType Type,
-                             StringRef Name) {
+                             StringRef Name, const AttrVec *Attrs = nullptr) {
   DeclContext *DC = SemaRef.CurContext;
   IdentifierInfo *II = &SemaRef.PP.getIdentifierTable().get(Name);
   TypeSourceInfo *TInfo = SemaRef.Context.getTrivialTypeSourceInfo(Type, Loc);
   VarDecl *Decl =
       VarDecl::Create(SemaRef.Context, DC, Loc, Loc, II, Type, TInfo, SC_None);
+  if (Attrs) {
+    for (specific_attr_iterator<AlignedAttr> I(Attrs->begin()), E(Attrs->end());
+         I != E; ++I)
+      Decl->addAttr(*I);
+  }
   Decl->setImplicit();
   return Decl;
 }
@@ -723,9 +728,9 @@ void Sema::EndOpenMPDSABlock(Stmt *CurDirective) {
             // by the address of the new private variable in CodeGen. This new
             // variable is not added to IdResolver, so the code in the OpenMP
             // region uses original variable for proper diagnostics.
-            auto *VDPrivate =
-                buildVarDecl(*this, DE->getExprLoc(), Type.getUnqualifiedType(),
-                             VD->getName());
+            auto *VDPrivate = buildVarDecl(
+                *this, DE->getExprLoc(), Type.getUnqualifiedType(),
+                VD->getName(), VD->hasAttrs() ? &VD->getAttrs() : nullptr);
             ActOnUninitializedDecl(VDPrivate, /*TypeMayContainAuto=*/false);
             if (VDPrivate->isInvalidDecl())
               continue;
@@ -2732,6 +2737,8 @@ public:
         NewVD->setPreviousDeclInSameBlockScope(
             VD->isPreviousDeclInSameBlockScope());
         VD->getDeclContext()->addHiddenDecl(NewVD);
+        if (VD->hasAttrs())
+          NewVD->setAttrs(VD->getAttrs());
         transformedLocalDecl(VD, NewVD);
         return NewVD;
       }
@@ -2911,7 +2918,9 @@ Expr *OpenMPIterationSpaceChecker::BuildCounterVar() const {
 Expr *OpenMPIterationSpaceChecker::BuildPrivateCounterVar() const {
   if (Var && !Var->isInvalidDecl()) {
     auto Type = Var->getType().getNonReferenceType();
-    auto *PrivateVar = buildVarDecl(SemaRef, DefaultLoc, Type, Var->getName());
+    auto *PrivateVar =
+        buildVarDecl(SemaRef, DefaultLoc, Type, Var->getName(),
+                     Var->hasAttrs() ? &Var->getAttrs() : nullptr);
     if (PrivateVar->isInvalidDecl())
       return nullptr;
     return buildDeclRefExpr(SemaRef, PrivateVar, Type, DefaultLoc);
@@ -5658,7 +5667,8 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
     // IdResolver, so the code in the OpenMP region uses original variable for
     // proper diagnostics.
     Type = Type.getUnqualifiedType();
-    auto VDPrivate = buildVarDecl(*this, DE->getExprLoc(), Type, VD->getName());
+    auto VDPrivate = buildVarDecl(*this, DE->getExprLoc(), Type, VD->getName(),
+                                  VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     ActOnUninitializedDecl(VDPrivate, /*TypeMayContainAuto=*/false);
     if (VDPrivate->isInvalidDecl())
       continue;
@@ -5861,7 +5871,8 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     }
 
     Type = Type.getUnqualifiedType();
-    auto VDPrivate = buildVarDecl(*this, ELoc, Type, VD->getName());
+    auto VDPrivate = buildVarDecl(*this, ELoc, Type, VD->getName(),
+                                  VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     // Generate helper private variable and initialize it with the value of the
     // original variable. The address of the original variable is replaced by
     // the address of the new private variable in the CodeGen. This new variable
@@ -6017,11 +6028,13 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
     //  operator for the class type.
     Type = Context.getBaseElementType(Type).getNonReferenceType();
     auto *SrcVD = buildVarDecl(*this, DE->getLocStart(),
-                               Type.getUnqualifiedType(), ".lastprivate.src");
+                               Type.getUnqualifiedType(), ".lastprivate.src",
+                               VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     auto *PseudoSrcExpr = buildDeclRefExpr(
         *this, SrcVD, Type.getUnqualifiedType(), DE->getExprLoc());
     auto *DstVD =
-        buildVarDecl(*this, DE->getLocStart(), Type, ".lastprivate.dst");
+        buildVarDecl(*this, DE->getLocStart(), Type, ".lastprivate.dst",
+                     VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     auto *PseudoDstExpr =
         buildDeclRefExpr(*this, DstVD, Type, DE->getExprLoc());
     // For arrays generate assignment operation for single element and replace
@@ -6403,8 +6416,10 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
       }
     }
     Type = Type.getNonLValueExprType(Context).getUnqualifiedType();
-    auto *LHSVD = buildVarDecl(*this, ELoc, Type, ".reduction.lhs");
-    auto *RHSVD = buildVarDecl(*this, ELoc, Type, VD->getName());
+    auto *LHSVD = buildVarDecl(*this, ELoc, Type, ".reduction.lhs",
+                               VD->hasAttrs() ? &VD->getAttrs() : nullptr);
+    auto *RHSVD = buildVarDecl(*this, ELoc, Type, VD->getName(),
+                               VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     // Add initializer for private variable.
     Expr *Init = nullptr;
     switch (BOK) {
@@ -6670,7 +6685,8 @@ OMPClause *Sema::ActOnOpenMPLinearClause(
     }
 
     // Build private copy of original var.
-    auto *Private = buildVarDecl(*this, ELoc, QType, VD->getName());
+    auto *Private = buildVarDecl(*this, ELoc, QType, VD->getName(),
+                                 VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     auto *PrivateRef = buildDeclRefExpr(
         *this, Private, DE->getType().getUnqualifiedType(), DE->getExprLoc());
     // Build var to save initial value.
@@ -6922,12 +6938,14 @@ OMPClause *Sema::ActOnOpenMPCopyinClause(ArrayRef<Expr *> VarList,
     //  copyin clause requires an accessible, unambiguous copy assignment
     //  operator for the class type.
     auto ElemType = Context.getBaseElementType(Type).getNonReferenceType();
-    auto *SrcVD = buildVarDecl(*this, DE->getLocStart(),
-                               ElemType.getUnqualifiedType(), ".copyin.src");
+    auto *SrcVD =
+        buildVarDecl(*this, DE->getLocStart(), ElemType.getUnqualifiedType(),
+                     ".copyin.src", VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     auto *PseudoSrcExpr = buildDeclRefExpr(
         *this, SrcVD, ElemType.getUnqualifiedType(), DE->getExprLoc());
     auto *DstVD =
-        buildVarDecl(*this, DE->getLocStart(), ElemType, ".copyin.dst");
+        buildVarDecl(*this, DE->getLocStart(), ElemType, ".copyin.dst",
+                     VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     auto *PseudoDstExpr =
         buildDeclRefExpr(*this, DstVD, ElemType, DE->getExprLoc());
     // For arrays generate assignment operation for single element and replace
@@ -7047,11 +7065,13 @@ OMPClause *Sema::ActOnOpenMPCopyprivateClause(ArrayRef<Expr *> VarList,
     Type = Context.getBaseElementType(Type.getNonReferenceType())
                .getUnqualifiedType();
     auto *SrcVD =
-        buildVarDecl(*this, DE->getLocStart(), Type, ".copyprivate.src");
+        buildVarDecl(*this, DE->getLocStart(), Type, ".copyprivate.src",
+                     VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     auto *PseudoSrcExpr =
         buildDeclRefExpr(*this, SrcVD, Type, DE->getExprLoc());
     auto *DstVD =
-        buildVarDecl(*this, DE->getLocStart(), Type, ".copyprivate.dst");
+        buildVarDecl(*this, DE->getLocStart(), Type, ".copyprivate.dst",
+                     VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     auto *PseudoDstExpr =
         buildDeclRefExpr(*this, DstVD, Type, DE->getExprLoc());
     auto AssignmentOp = BuildBinOp(/*S=*/nullptr, DE->getExprLoc(), BO_Assign,

@@ -8,7 +8,7 @@
 #ifndef HEADER
 #define HEADER
 
-volatile int g = 1212;
+volatile int g __attribute__((aligned(128))) = 1212;
 
 template <class T>
 struct S {
@@ -30,10 +30,10 @@ template <typename T>
 T tmain() {
   T t;
   S<T> test;
-  T t_var = T(), t_var1;
+  T t_var __attribute__((aligned(128))) = T(), t_var1 __attribute__((aligned(128)));
   T vec[] = {1, 2};
-  S<T> s_arr[] = {1, 2};
-  S<T> var(3), var1;
+  S<T> s_arr[]  = {1, 2};
+  S<T> var __attribute__((aligned(128))) (3), var1 __attribute__((aligned(128)));
 #pragma omp parallel reduction(+:t_var) reduction(&:var) reduction(&& : var1) reduction(min: t_var1)
   {
     vec[0] = t_var;
@@ -59,9 +59,9 @@ int main() {
     // LAMBDA: [[RED_LIST:%.+]] = alloca [1 x i8*],
 
     // LAMBDA: [[G_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[G_REF_ADDR:%.+]]
-    // LAMBDA: store i{{[0-9]+}} 0, i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
+    // LAMBDA: store i{{[0-9]+}} 0, i{{[0-9]+}}* [[G_PRIVATE_ADDR]], align 128
     g = 1;
-    // LAMBDA: store i{{[0-9]+}} 1, i{{[0-9]+}}* [[G_PRIVATE_ADDR]],
+    // LAMBDA: store i{{[0-9]+}} 1, i{{[0-9]+}}* [[G_PRIVATE_ADDR]], align 128
     // LAMBDA: [[G_PRIVATE_ADDR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
     // LAMBDA: store i{{[0-9]+}}* [[G_PRIVATE_ADDR]], i{{[0-9]+}}** [[G_PRIVATE_ADDR_REF]]
     // LAMBDA: call void [[INNER_LAMBDA:@.+]](%{{.+}}* [[ARG]])
@@ -114,9 +114,9 @@ int main() {
     // BLOCKS: [[RED_LIST:%.+]] = alloca [1 x i8*],
 
     // BLOCKS: [[G_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[G_REF_ADDR:%.+]]
-    // BLOCKS: store i{{[0-9]+}} 0, i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
+    // BLOCKS: store i{{[0-9]+}} 0, i{{[0-9]+}}* [[G_PRIVATE_ADDR]], align 128
     g = 1;
-    // BLOCKS: store i{{[0-9]+}} 1, i{{[0-9]+}}* [[G_PRIVATE_ADDR]],
+    // BLOCKS: store i{{[0-9]+}} 1, i{{[0-9]+}}* [[G_PRIVATE_ADDR]], align 128
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
     // BLOCKS: i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
@@ -435,10 +435,10 @@ int main() {
 // CHECK: ret
 //
 // CHECK: define internal void [[TMAIN_MICROTASK]](i{{[0-9]+}}* noalias [[GTID_ADDR:%.+]], i{{[0-9]+}}* noalias %{{.+}},
-// CHECK: [[T_VAR_PRIV:%.+]] = alloca i{{[0-9]+}},
-// CHECK: [[VAR_PRIV:%.+]] = alloca [[S_INT_TY]],
-// CHECK: [[VAR1_PRIV:%.+]] = alloca [[S_INT_TY]],
-// CHECK: [[T_VAR1_PRIV:%.+]] = alloca i{{[0-9]+}},
+// CHECK: [[T_VAR_PRIV:%.+]] = alloca i{{[0-9]+}}, align 128
+// CHECK: [[VAR_PRIV:%.+]] = alloca [[S_INT_TY]], align 128
+// CHECK: [[VAR1_PRIV:%.+]] = alloca [[S_INT_TY]], align 128
+// CHECK: [[T_VAR1_PRIV:%.+]] = alloca i{{[0-9]+}}, align 128
 
 // Reduction list for runtime.
 // CHECK: [[RED_LIST:%.+]] = alloca [4 x i8*],

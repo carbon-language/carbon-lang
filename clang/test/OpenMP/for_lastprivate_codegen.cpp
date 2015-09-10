@@ -18,7 +18,7 @@ struct S {
   ~S() {}
 };
 
-volatile int g = 1212;
+volatile int g __attribute__((aligned(128)))= 1212;
 volatile int &g1 = g;
 float f;
 char cnt;
@@ -32,10 +32,10 @@ char cnt;
 template <typename T>
 T tmain() {
   S<T> test;
-  T t_var = T();
-  T vec[] = {1, 2};
-  S<T> s_arr[] = {1, 2};
-  S<T> &var = test;
+  T t_var __attribute__((aligned(128))) = T();
+  T vec[] __attribute__((aligned(128))) = {1, 2};
+  S<T> s_arr[] __attribute__((aligned(128))) = {1, 2};
+  S<T> &var __attribute__((aligned(128))) = test;
 #pragma omp parallel
 #pragma omp for lastprivate(t_var, vec, s_arr, var)
   for (int i = 0; i < 2; ++i) {
@@ -69,7 +69,7 @@ int main() {
     // LAMBDA: alloca i{{[0-9]+}},
     // LAMBDA: alloca i{{[0-9]+}},
     // LAMBDA: alloca i{{[0-9]+}},
-    // LAMBDA: [[G_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}},
+    // LAMBDA: [[G_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}}, align 128
     // LAMBDA: [[GTID_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** %{{.+}}
     // LAMBDA: [[GTID:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[GTID_REF]]
     // LAMBDA: call {{.+}} @__kmpc_for_static_init_4(%{{.+}}* @{{.+}}, i32 [[GTID]], i32 34, i32* [[IS_LAST_ADDR:%.+]], i32* %{{.+}}, i32* %{{.+}}, i32* %{{.+}}, i32 1, i32 1)
@@ -122,7 +122,7 @@ int main() {
     // BLOCKS: alloca i{{[0-9]+}},
     // BLOCKS: alloca i{{[0-9]+}},
     // BLOCKS: alloca i{{[0-9]+}},
-    // BLOCKS: [[G_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}},
+    // BLOCKS: [[G_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}}, align 128
     // BLOCKS: [[GTID_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** %{{.+}}
     // BLOCKS: [[GTID:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[GTID_REF]]
     // BLOCKS: call {{.+}} @__kmpc_for_static_init_4(%{{.+}}* @{{.+}}, i32 [[GTID]], i32 34, i32* [[IS_LAST_ADDR:%.+]], i32* %{{.+}}, i32* %{{.+}}, i32* %{{.+}}, i32 1, i32 1)
@@ -402,10 +402,10 @@ int main() {
 // CHECK: alloca i{{[0-9]+}},
 // CHECK: alloca i{{[0-9]+}},
 // CHECK: alloca i{{[0-9]+}},
-// CHECK: [[T_VAR_PRIV:%.+]] = alloca i{{[0-9]+}},
-// CHECK: [[VEC_PRIV:%.+]] = alloca [2 x i{{[0-9]+}}],
-// CHECK: [[S_ARR_PRIV:%.+]] = alloca [2 x [[S_INT_TY]]],
-// CHECK: [[VAR_PRIV:%.+]] = alloca [[S_INT_TY]],
+// CHECK: [[T_VAR_PRIV:%.+]] = alloca i{{[0-9]+}}, align 128
+// CHECK: [[VEC_PRIV:%.+]] = alloca [2 x i{{[0-9]+}}], align 128
+// CHECK: [[S_ARR_PRIV:%.+]] = alloca [2 x [[S_INT_TY]]], align 128
+// CHECK: [[VAR_PRIV:%.+]] = alloca [[S_INT_TY]], align 128
 // CHECK: [[VAR_PRIV_REF:%.+]] = alloca [[S_INT_TY]]*,
 // CHECK: store i{{[0-9]+}}* [[GTID_ADDR]], i{{[0-9]+}}** [[GTID_ADDR_REF:%.+]]
 

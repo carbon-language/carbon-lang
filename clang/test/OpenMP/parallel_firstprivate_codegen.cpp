@@ -16,7 +16,7 @@ struct St {
   ~St() {}
 };
 
-volatile int g = 1212;
+volatile int g __attribute__((aligned(128))) = 1212;
 
 template <class T>
 struct S {
@@ -36,10 +36,10 @@ struct S {
 template <typename T>
 T tmain() {
   S<T> test;
-  T t_var = T();
-  T vec[] = {1, 2};
-  S<T> s_arr[] = {1, 2};
-  S<T> var(3);
+  T t_var __attribute__((aligned(128))) = T();
+  T vec[] __attribute__((aligned(128))) = {1, 2};
+  S<T> s_arr[] __attribute__((aligned(128))) = {1, 2};
+  S<T> var __attribute__((aligned(128))) (3);
 #pragma omp parallel firstprivate(t_var, vec, s_arr, var)
   {
     vec[0] = t_var;
@@ -61,7 +61,7 @@ int main() {
 #pragma omp parallel firstprivate(g)
   {
     // LAMBDA: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* noalias %{{.+}}, i32* noalias %{{.+}}, i32* dereferenceable(4) %{{.+}})
-    // LAMBDA: [[G_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}},
+    // LAMBDA: [[G_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}}, align 128
     // LAMBDA: [[G_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[G_REF_ADDR:%.+]]
     // LAMBDA: [[G_VAL:%.+]] = load volatile i{{[0-9]+}}, i{{[0-9]+}}* [[G_REF]]
     // LAMBDA: store i{{[0-9]+}} [[G_VAL]], i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
@@ -93,10 +93,10 @@ int main() {
 #pragma omp parallel firstprivate(g)
   {
     // BLOCKS: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* noalias %{{.+}}, i32* noalias %{{.+}}, i32* dereferenceable(4) %{{.+}})
-    // BLOCKS: [[G_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}},
+    // BLOCKS: [[G_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}}, align 128
     // BLOCKS: [[G_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[G_REF_ADDR:%.+]]
-    // BLOCKS: [[G_VAL:%.+]] = load volatile i{{[0-9]+}}, i{{[0-9]+}}* [[G_REF]]
-    // BLOCKS: store i{{[0-9]+}} [[G_VAL]], i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
+    // BLOCKS: [[G_VAL:%.+]] = load volatile i{{[0-9]+}}, i{{[0-9]+}}* [[G_REF]],
+    // BLOCKS: store i{{[0-9]+}} [[G_VAL]], i{{[0-9]+}}* [[G_PRIVATE_ADDR]],
     // BLOCKS: call {{.*}}i32 @__kmpc_cancel_barrier(
     g = 1;
     // BLOCKS: store i{{[0-9]+}} 1, i{{[0-9]+}}* [[G_PRIVATE_ADDR]],
@@ -185,10 +185,10 @@ int main() {
 // CHECK: ret
 //
 // CHECK: define internal {{.*}}void [[TMAIN_MICROTASK]](i{{[0-9]+}}* noalias [[GTID_ADDR:%.+]], i{{[0-9]+}}* noalias %{{.+}}, [2 x i32]* dereferenceable(8) %{{.+}}, i32* dereferenceable(4) %{{.+}}, [2 x [[S_INT_TY]]]* dereferenceable(8) %{{.+}}, [[S_INT_TY]]* dereferenceable(4) %{{.+}})
-// CHECK: [[T_VAR_PRIV:%.+]] = alloca i{{[0-9]+}},
-// CHECK: [[VEC_PRIV:%.+]] = alloca [2 x i{{[0-9]+}}],
-// CHECK: [[S_ARR_PRIV:%.+]] = alloca [2 x [[S_INT_TY]]],
-// CHECK: [[VAR_PRIV:%.+]] = alloca [[S_INT_TY]],
+// CHECK: [[T_VAR_PRIV:%.+]] = alloca i{{[0-9]+}}, align 128
+// CHECK: [[VEC_PRIV:%.+]] = alloca [2 x i{{[0-9]+}}], align 128
+// CHECK: [[S_ARR_PRIV:%.+]] = alloca [2 x [[S_INT_TY]]], align 128
+// CHECK: [[VAR_PRIV:%.+]] = alloca [[S_INT_TY]], align 128
 // CHECK: store i{{[0-9]+}}* [[GTID_ADDR]], i{{[0-9]+}}** [[GTID_ADDR_ADDR:%.+]],
 
 // CHECK: [[VEC_REF:%.+]] = load [2 x i{{[0-9]+}}]*, [2 x i{{[0-9]+}}]** %

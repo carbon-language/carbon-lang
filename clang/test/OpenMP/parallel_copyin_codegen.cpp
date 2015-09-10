@@ -17,7 +17,7 @@
 #ifndef HEADER
 #define HEADER
 
-volatile int g = 1212;
+volatile int g __attribute__((aligned(128))) = 1212;
 #pragma omp threadprivate(g)
 
 template <class T>
@@ -58,10 +58,10 @@ template <typename T>
 T tmain() {
   S<T> test;
   test = S<T>();
-  static T t_var = 333;
-  static T vec[] = {3, 3};
-  static S<T> s_arr[] = {1, 2};
-  static S<T> var(3);
+  static T t_var __attribute__((aligned(128))) = 333;
+  static T vec[] __attribute__((aligned(128))) = {3, 3};
+  static S<T> s_arr[] __attribute__((aligned(128))) = {1, 2};
+  static S<T> var __attribute__((aligned(128))) (3);
 #pragma omp threadprivate(t_var, vec, s_arr, var)
 #pragma omp parallel copyin(t_var, vec, s_arr, var)
   {
@@ -103,8 +103,8 @@ int main() {
     // LAMBDA: icmp ne i{{[0-9]+}} ptrtoint (i{{[0-9]+}}* [[G]] to i{{[0-9]+}}), %{{.+}}
     // LAMBDA: br i1 %{{.+}}, label %[[NOT_MASTER:.+]], label %[[DONE:.+]]
     // LAMBDA: [[NOT_MASTER]]
-    // LAMBDA: load i{{[0-9]+}}, i{{[0-9]+}}* [[G]],
-    // LAMBDA: store volatile i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* %{{.+}},
+    // LAMBDA: load i{{[0-9]+}}, i{{[0-9]+}}* [[G]], align 128
+    // LAMBDA: store volatile i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* %{{.+}}, align 128
     // LAMBDA: [[DONE]]
 
     // TLS-LAMBDA-DAG: [[G_CAPTURE_SRC:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** %
@@ -115,7 +115,7 @@ int main() {
     // TLS-LAMBDA: br i1 %{{.+}}, label %[[NOT_MASTER:.+]], label %[[DONE:.+]]
     // TLS-LAMBDA: [[NOT_MASTER]]
     // TLS-LAMBDA: load i{{[0-9]+}}, i{{[0-9]+}}* [[G_CAPTURE_SRC]],
-    // TLS-LAMBDA: store volatile i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* [[G_CAPTURE_DST]],
+    // TLS-LAMBDA: store volatile i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* [[G_CAPTURE_DST]], align 128
     // TLS-LAMBDA: [[DONE]]
 
     // LAMBDA: call {{.*}}i32 @__kmpc_cancel_barrier(
@@ -130,7 +130,7 @@ int main() {
       // LAMBDA: [[ARG_PTR:%.+]] = load %{{.+}}*, %{{.+}}** [[ARG_PTR_REF]]
 
       // TLS-LAMBDA: [[G_CAPTURE_DST:%.+]] = call i{{[0-9]+}}* [[G_CTOR]]()
-      // TLS-LAMBDA: store volatile i{{[0-9]+}} 2, i{{[0-9]+}}* [[G_CAPTURE_DST]]
+      // TLS-LAMBDA: store volatile i{{[0-9]+}} 2, i{{[0-9]+}}* [[G_CAPTURE_DST]], align 128
     }();
   }
   }();
@@ -164,8 +164,8 @@ int main() {
     // BLOCKS: icmp ne i{{[0-9]+}} ptrtoint (i{{[0-9]+}}* [[G]] to i{{[0-9]+}}), %{{.+}}
     // BLOCKS: br i1 %{{.+}}, label %[[NOT_MASTER:.+]], label %[[DONE:.+]]
     // BLOCKS: [[NOT_MASTER]]
-    // BLOCKS: load i{{[0-9]+}}, i{{[0-9]+}}* [[G]],
-    // BLOCKS: store volatile i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* %{{.+}},
+    // BLOCKS: load i{{[0-9]+}}, i{{[0-9]+}}* [[G]], align 128
+    // BLOCKS: store volatile i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* %{{.+}}, align 128
     // BLOCKS: [[DONE]]
 
     // TLS-BLOCKS-DAG: [[G_CAPTURE_SRC:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** %
@@ -176,7 +176,7 @@ int main() {
     // TLS-BLOCKS: br i1 %{{.+}}, label %[[NOT_MASTER:.+]], label %[[DONE:.+]]
     // TLS-BLOCKS: [[NOT_MASTER]]
     // TLS-BLOCKS: load i{{[0-9]+}}, i{{[0-9]+}}* [[G_CAPTURE_SRC]],
-    // TLS-BLOCKS: store volatile i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* [[G_CAPTURE_DST]],
+    // TLS-BLOCKS: store volatile i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* [[G_CAPTURE_DST]], align 128
     // TLS-BLOCKS: [[DONE]]
 
     // BLOCKS: call {{.*}}i32 @__kmpc_cancel_barrier(
@@ -381,8 +381,8 @@ int main() {
 // CHECK: icmp ne i{{[0-9]+}} ptrtoint (i{{[0-9]+}}* [[TMAIN_T_VAR]] to i{{[0-9]+}}), %{{.+}}
 // CHECK: br i1 %{{.+}}, label %[[NOT_MASTER:.+]], label %[[DONE:.+]]
 // CHECK: [[NOT_MASTER]]
-// CHECK: load i{{[0-9]+}}, i{{[0-9]+}}* [[TMAIN_T_VAR]],
-// CHECK: store i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* %{{.+}},
+// CHECK: load i{{[0-9]+}}, i{{[0-9]+}}* [[TMAIN_T_VAR]], align 128
+// CHECK: store i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* %{{.+}}, align 128
 
 // TLS-CHECK: [[MASTER_REF:%.+]] = load i32*, i32** %
 // TLS-CHECK: [[MASTER_REF1:%.+]] = load [2 x i32]*, [2 x i32]** %
@@ -393,8 +393,8 @@ int main() {
 // TLS-CHECK: icmp ne i{{[0-9]+}} [[MASTER_LONG]], ptrtoint (i{{[0-9]+}}* [[TMAIN_T_VAR]] to i{{[0-9]+}})
 // TLS-CHECK: br i1 %{{.+}}, label %[[NOT_MASTER:.+]], label %[[DONE:.+]]
 // TLS-CHECK: [[NOT_MASTER]]
-// TLS-CHECK: [[MASTER_VAL:%.+]] = load i32, i32* [[MASTER_REF]]
-// TLS-CHECK: store i32 [[MASTER_VAL]], i32* [[TMAIN_T_VAR]]
+// TLS-CHECK: [[MASTER_VAL:%.+]] = load i32, i32* [[MASTER_REF]],
+// TLS-CHECK: store i32 [[MASTER_VAL]], i32* [[TMAIN_T_VAR]], align 128
 
 // threadprivate_vec = vec;
 // CHECK: call {{.*}}i8* @__kmpc_threadprivate_cached({{.+}} [[TMAIN_VEC]]
