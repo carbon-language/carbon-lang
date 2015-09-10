@@ -473,4 +473,36 @@ void __ubsan::__ubsan_handle_nonnull_arg_abort(NonNullArgData *Data) {
   Die();
 }
 
+static void handleCFIBadIcall(CFIBadIcallData *Data, ValueHandle Function,
+                              ReportOptions Opts) {
+  SourceLocation Loc = Data->Loc.acquire();
+  if (ignoreReport(Loc, Opts))
+    return;
+
+  ScopedReport R(Opts, Loc);
+
+  Diag(Loc, DL_Error, "control flow integrity check for type %0 failed during "
+                      "indirect function call")
+      << Data->Type;
+
+  SymbolizedStackHolder FLoc(getSymbolizedLocation(Function));
+  const char *FName = FLoc.get()->info.function;
+  if (!FName)
+    FName = "(unknown)";
+  Diag(FLoc, DL_Note, "%0 defined here") << FName;
+}
+
+void __ubsan::__ubsan_handle_cfi_bad_icall(CFIBadIcallData *Data,
+                                           ValueHandle Function) {
+  GET_REPORT_OPTIONS(false);
+  handleCFIBadIcall(Data, Function, Opts);
+}
+
+void __ubsan::__ubsan_handle_cfi_bad_icall_abort(CFIBadIcallData *Data,
+                                                 ValueHandle Function) {
+  GET_REPORT_OPTIONS(true);
+  handleCFIBadIcall(Data, Function, Opts);
+  Die();
+}
+
 #endif  // CAN_SANITIZE_UB

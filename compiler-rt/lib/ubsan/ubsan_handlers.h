@@ -148,6 +148,14 @@ struct NonNullArgData {
 /// \brief Handle passing null pointer to function with nonnull attribute.
 RECOVERABLE(nonnull_arg, NonNullArgData *Data)
 
+struct CFIBadIcallData {
+  SourceLocation Loc;
+  const TypeDescriptor &Type;
+};
+
+/// \brief Handle control flow integrity failure for indirect function calls.
+RECOVERABLE(cfi_bad_icall, CFIBadIcallData *Data, ValueHandle Function)
+
 }
 
 #endif // UBSAN_HANDLERS_H
