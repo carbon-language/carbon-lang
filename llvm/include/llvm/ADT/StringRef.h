@@ -474,7 +474,7 @@ namespace llvm {
     /// Split into substrings around the occurrences of a separator string.
     ///
     /// Each substring is stored in \p A. If \p MaxSplit is >= 0, at most
-    /// \p MaxSplit splits are done and consequently <= \p MaxSplit
+    /// \p MaxSplit splits are done and consequently <= \p MaxSplit + 1
     /// elements are added to A.
     /// If \p KeepEmpty is false, empty strings are not added to \p A. They
     /// still count when considering \p MaxSplit
@@ -492,7 +492,7 @@ namespace llvm {
     /// Split into substrings around the occurrences of a separator character.
     ///
     /// Each substring is stored in \p A. If \p MaxSplit is >= 0, at most
-    /// \p MaxSplit splits are done and consequently <= \p MaxSplit
+    /// \p MaxSplit splits are done and consequently <= \p MaxSplit + 1
     /// elements are added to A.
     /// If \p KeepEmpty is false, empty strings are not added to \p A. They
     /// still count when considering \p MaxSplit
