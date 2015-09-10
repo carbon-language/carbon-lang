@@ -103,7 +103,7 @@ struct GraphSession {
   bool TryFindProgram(StringRef Names, std::string &ProgramPath) {
     raw_string_ostream Log(LogBuffer);
     SmallVector<StringRef, 8> parts;
-    Names.split(parts, "|");
+    Names.split(parts, '|');
     for (auto Name : parts) {
       if (ErrorOr<std::string> P = sys::findProgramByName(Name)) {
         ProgramPath = *P;

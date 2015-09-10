@@ -109,10 +109,10 @@ void NVVMReflect::setVarMap() {
   for (unsigned i = 0, e = ReflectList.size(); i != e; ++i) {
     DEBUG(dbgs() << "Option : "  << ReflectList[i] << "\n");
     SmallVector<StringRef, 4> NameValList;
-    StringRef(ReflectList[i]).split(NameValList, ",");
+    StringRef(ReflectList[i]).split(NameValList, ',');
     for (unsigned j = 0, ej = NameValList.size(); j != ej; ++j) {
       SmallVector<StringRef, 2> NameValPair;
-      NameValList[j].split(NameValPair, "=");
+      NameValList[j].split(NameValPair, '=');
       assert(NameValPair.size() == 2 && "name=val expected");
       std::stringstream ValStream(NameValPair[1]);
       int Val;

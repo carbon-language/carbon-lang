@@ -3265,7 +3265,7 @@ static void getIntOperandsFromRegisterString(StringRef RegString,
                                              SelectionDAG *CurDAG, SDLoc DL,
                                              std::vector<SDValue>& Ops) {
   SmallVector<StringRef, 5> Fields;
-  RegString.split(Fields, ":");
+  RegString.split(Fields, ':');
 
   if (Fields.size() > 1) {
     bool AllIntFields = true;
@@ -3631,7 +3631,7 @@ SDNode *ARMDAGToDAGISel::SelectWriteRegister(SDNode *N){
   }
 
   SmallVector<StringRef, 5> Fields;
-  StringRef(SpecialReg).split(Fields, "_", 1, false);
+  StringRef(SpecialReg).split(Fields, '_', 1, false);
   std::string Reg = Fields[0].str();
   StringRef Flags = Fields.size() == 2 ? Fields[1] : "";
 

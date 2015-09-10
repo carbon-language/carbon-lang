@@ -56,7 +56,7 @@ static inline bool isEnabled(StringRef Feature) {
 ///
 static void Split(std::vector<std::string> &V, StringRef S) {
   SmallVector<StringRef, 3> Tmp;
-  S.split(Tmp, ",", -1, false /* KeepEmpty */);
+  S.split(Tmp, ',', -1, false /* KeepEmpty */);
   V.assign(Tmp.begin(), Tmp.end());
 }
 

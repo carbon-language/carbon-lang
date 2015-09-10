@@ -2283,7 +2283,7 @@ AArch64DAGToDAGISel::SelectCVTFixedPosOperand(SDValue N, SDValue &FixedPos,
 // into a single value to be used in the MRS/MSR instruction.
 static int getIntOperandFromRegisterString(StringRef RegString) {
   SmallVector<StringRef, 5> Fields;
-  RegString.split(Fields, ":");
+  RegString.split(Fields, ':');
 
   if (Fields.size() == 1)
     return -1;

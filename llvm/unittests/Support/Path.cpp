@@ -158,7 +158,7 @@ TEST(Support, RelativePathIterator) {
   PathComponents ExpectedPathComponents;
   PathComponents ActualPathComponents;
 
-  StringRef(Path).split(ExpectedPathComponents, "/");
+  StringRef(Path).split(ExpectedPathComponents, '/');
 
   for (path::const_iterator I = path::begin(Path), E = path::end(Path); I != E;
        ++I) {
@@ -178,7 +178,7 @@ TEST(Support, RelativePathDotIterator) {
   PathComponents ExpectedPathComponents;
   PathComponents ActualPathComponents;
 
-  StringRef(Path).split(ExpectedPathComponents, "/");
+  StringRef(Path).split(ExpectedPathComponents, '/');
 
   for (path::const_iterator I = path::begin(Path), E = path::end(Path); I != E;
        ++I) {
@@ -198,7 +198,7 @@ TEST(Support, AbsolutePathIterator) {
   PathComponents ExpectedPathComponents;
   PathComponents ActualPathComponents;
 
-  StringRef(Path).split(ExpectedPathComponents, "/");
+  StringRef(Path).split(ExpectedPathComponents, '/');
 
   // The root path will also be a component when iterating
   ExpectedPathComponents[0] = "/";
@@ -221,7 +221,7 @@ TEST(Support, AbsolutePathDotIterator) {
   PathComponents ExpectedPathComponents;
   PathComponents ActualPathComponents;
 
-  StringRef(Path).split(ExpectedPathComponents, "/");
+  StringRef(Path).split(ExpectedPathComponents, '/');
 
   // The root path will also be a component when iterating
   ExpectedPathComponents[0] = "/";

@@ -697,7 +697,7 @@ StringRef sys::getHostCPUName() {
     if (Lines[I].startswith("features")) {
       size_t Pos = Lines[I].find(":");
       if (Pos != StringRef::npos) {
-        Lines[I].drop_front(Pos + 1).split(CPUFeatures, " ");
+        Lines[I].drop_front(Pos + 1).split(CPUFeatures, ' ');
         break;
       }
     }
@@ -840,7 +840,7 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
   // Look for the CPU features.
   for (unsigned I = 0, E = Lines.size(); I != E; ++I)
     if (Lines[I].startswith("Features")) {
-      Lines[I].split(CPUFeatures, " ");
+      Lines[I].split(CPUFeatures, ' ');
       break;
     }
 

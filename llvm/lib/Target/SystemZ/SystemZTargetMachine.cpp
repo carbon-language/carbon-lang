@@ -32,7 +32,7 @@ static bool UsesVectorABI(StringRef CPU, StringRef FS) {
     VectorABI = false;
 
   SmallVector<StringRef, 3> Features;
-  FS.split(Features, ",", -1, false /* KeepEmpty */);
+  FS.split(Features, ',', -1, false /* KeepEmpty */);
   for (auto &Feature : Features) {
     if (Feature == "vector" || Feature == "+vector")
       VectorABI = true;

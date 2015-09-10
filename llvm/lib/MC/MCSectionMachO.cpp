@@ -177,7 +177,7 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
   TAAParsed = false;
 
   SmallVector<StringRef, 5> SplitSpec;
-  Spec.split(SplitSpec, ",");
+  Spec.split(SplitSpec, ',');
   // Remove leading and trailing whitespace.
   auto GetEmptyOrTrim = [&SplitSpec](size_t Idx) -> StringRef {
     return SplitSpec.size() > Idx ? SplitSpec[Idx].trim() : StringRef();
@@ -235,7 +235,7 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
 
   // The attribute list is a '+' separated list of attributes.
   SmallVector<StringRef, 1> SectionAttrs;
-  Attrs.split(SectionAttrs, "+", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
+  Attrs.split(SectionAttrs, '+', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
 
   for (StringRef &SectionAttr : SectionAttrs) {
     auto AttrDescriptorI = std::find_if(
