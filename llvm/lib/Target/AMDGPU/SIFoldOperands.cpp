@@ -189,6 +189,7 @@ static bool tryAddToFoldList(std::vector<FoldCandidate> &FoldList,
 static void foldOperand(MachineOperand &OpToFold, MachineInstr *UseMI,
                         unsigned UseOpIdx,
                         std::vector<FoldCandidate> &FoldList,
+                        SmallVectorImpl<MachineInstr *> &CopiesToReplace,
                         const SIInstrInfo *TII, const SIRegisterInfo &TRI,
                         MachineRegisterInfo &MRI) {
   const MachineOperand &UseOp = UseMI->getOperand(UseOpIdx);
@@ -242,6 +243,7 @@ static void foldOperand(MachineOperand &OpToFold, MachineInstr *UseMI,
         return;
 
       UseMI->setDesc(TII->get(MovOp));
+      CopiesToReplace.push_back(UseMI);
     }
   }
 
@@ -261,7 +263,7 @@ static void foldOperand(MachineOperand &OpToFold, MachineInstr *UseMI,
         continue;
 
       foldOperand(OpToFold, RSUseMI, RSUse.getOperandNo(), FoldList,
-                  TII, TRI, MRI);
+                  CopiesToReplace, TII, TRI, MRI);
     }
     return;
   }
@@ -328,6 +330,12 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
            OpToFold.getSubReg()))
         continue;
 
+
+      // We need mutate the operands of new mov instructions to add implicit
+      // uses of EXEC, but adding them invalidates the use_iterator, so defer
+      // this.
+      SmallVector<MachineInstr *, 4> CopiesToReplace;
+
       std::vector<FoldCandidate> FoldList;
       for (MachineRegisterInfo::use_iterator
            Use = MRI.use_begin(MI.getOperand(0).getReg()), E = MRI.use_end();
@@ -336,8 +344,12 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
         MachineInstr *UseMI = Use->getParent();
 
         foldOperand(OpToFold, UseMI, Use.getOperandNo(), FoldList,
-                    TII, TRI, MRI);
+                    CopiesToReplace, TII, TRI, MRI);
       }
+
+      // Make sure we add EXEC uses to any new v_mov instructions created.
+      for (MachineInstr *Copy : CopiesToReplace)
+        Copy->addImplicitDefUseOperands(MF);
 
       for (FoldCandidate &Fold : FoldList) {
         if (updateOperand(Fold, TRI)) {
