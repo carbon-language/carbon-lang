@@ -283,7 +283,7 @@ bool SIShrinkInstructions::runOnMachineFunction(MachineFunction &MF) {
       }
 
       // We can shrink this instruction
-      DEBUG(dbgs() << "Shrinking "; MI.dump(); dbgs() << '\n';);
+      DEBUG(dbgs() << "Shrinking " << MI);
 
       MachineInstrBuilder Inst32 =
           BuildMI(MBB, I, MI.getDebugLoc(), TII->get(Op32));

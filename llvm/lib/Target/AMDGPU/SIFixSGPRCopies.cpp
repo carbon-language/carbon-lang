@@ -215,10 +215,8 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
                                                       I != E; ++I) {
       MachineInstr &MI = *I;
       if (MI.getOpcode() == AMDGPU::COPY && isVGPRToSGPRCopy(MI, TRI, MRI)) {
-        DEBUG(dbgs() << "Fixing VGPR -> SGPR copy:\n");
-        DEBUG(MI.print(dbgs()));
+        DEBUG(dbgs() << "Fixing VGPR -> SGPR copy: " << MI);
         TII->moveToVALU(MI);
-
       }
 
       switch (MI.getOpcode()) {
