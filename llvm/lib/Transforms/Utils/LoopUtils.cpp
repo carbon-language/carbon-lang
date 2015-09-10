@@ -98,6 +98,7 @@ bool RecurrenceDescriptor::getSourceExtensionKind(
 
   SmallVector<Instruction *, 8> Worklist;
   bool FoundOneOperand = false;
+  unsigned DstSize = RT->getPrimitiveSizeInBits();
   Worklist.push_back(Exit);
 
   // Traverse the instructions in the reduction expression, beginning with the
@@ -120,11 +121,16 @@ bool RecurrenceDescriptor::getSourceExtensionKind(
 
       // If the operand is not in Visited, it is not a reduction operation, but
       // it does feed into one. Make sure it is either a single-use sign- or
-      // zero-extend of the recurrence type.
+      // zero-extend instruction.
       CastInst *Cast = dyn_cast<CastInst>(J);
       bool IsSExtInst = isa<SExtInst>(J);
-      if (!Cast || !Cast->hasOneUse() || Cast->getSrcTy() != RT ||
-          !(isa<ZExtInst>(J) || IsSExtInst))
+      if (!Cast || !Cast->hasOneUse() || !(isa<ZExtInst>(J) || IsSExtInst))
+        return false;
+
+      // Ensure the source type of the extend is no larger than the reduction
+      // type. It is not necessary for the types to be identical.
+      unsigned SrcSize = Cast->getSrcTy()->getPrimitiveSizeInBits();
+      if (SrcSize > DstSize)
         return false;
 
       // Furthermore, ensure that all such extends are of the same kind.
@@ -136,9 +142,11 @@ bool RecurrenceDescriptor::getSourceExtensionKind(
         IsSigned = IsSExtInst;
       }
 
-      // Lastly, add the sign- or zero-extend to CI so that we can avoid
-      // accounting for it in the cost model.
-      CI.insert(Cast);
+      // Lastly, if the source type of the extend matches the reduction type,
+      // add the extend to CI so that we can avoid accounting for it in the
+      // cost model.
+      if (SrcSize == DstSize)
+        CI.insert(Cast);
     }
   }
   return true;
