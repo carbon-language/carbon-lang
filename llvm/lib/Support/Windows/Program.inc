@@ -251,6 +251,14 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
     return false;
   }
 
+  // can_execute may succeed by looking at Program + ".exe". CreateProcessW
+  // will implicitly add the .exe if we provide a command line without an
+  // executable path, but since we use an explicit executable, we have to add
+  // ".exe" ourselves.
+  SmallString<64> ProgramStorage;
+  if (!sys::fs::exists(Program))
+    Program = Twine(Program + ".exe").toStringRef(ProgramStorage);
+
   // Windows wants a command line, not an array of args, to pass to the new
   // process.  We have to concatenate them all, while quoting the args that
   // have embedded spaces (or are empty).
