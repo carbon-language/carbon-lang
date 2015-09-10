@@ -54,7 +54,7 @@ int main (int argc, char **argv) {
 // CHECK:       define internal {{.*}}void [[OMP_OUTLINED]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i32* dereferenceable(4) [[ARGC_ADDR:%[^)]+]])
 // CHECK-SAME:       #[[FN_ATTRS:[0-9]+]]
 // CHECK:       store i32* [[ARGC_ADDR]], i32** [[ARGC_PTR_ADDR:%.+]],
-// CHECK-NEXT:  [[ARGC_REF:%.+]] = load i32*, i32** [[ARGC_PTR_ADDR]]
+// CHECK:       [[ARGC_REF:%.+]] = load i32*, i32** [[ARGC_PTR_ADDR]]
 // CHECK-NEXT:  [[ARGC:%.+]] = load i32, i32* [[ARGC_REF]]
 // CHECK-NEXT:  invoke {{.*}}void [[FOO:@.+foo.+]](i32{{[ ]?[a-z]*}} [[ARGC]])
 // CHECK:       call {{.+}} @__kmpc_cancel_barrier(
