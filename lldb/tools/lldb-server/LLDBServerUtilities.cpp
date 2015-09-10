@@ -42,7 +42,7 @@ LLDBServerUtilities::SetupLogging(const std::string& log_file,
     }
 
     SmallVector<StringRef, 32> channel_array;
-    log_channels.split(channel_array, ":");
+    log_channels.split(channel_array, ":", /*MaxSplit*/ -1, /*KeepEmpty*/ false);
     for (auto channel_with_categories : channel_array)
     {
         StreamString error_stream;
