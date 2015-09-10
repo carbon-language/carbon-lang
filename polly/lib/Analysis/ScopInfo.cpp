@@ -2568,10 +2568,9 @@ int Scop::getRelativeLoopDepth(const Loop *L) const {
   return L->getLoopDepth() - OuterLoop->getLoopDepth();
 }
 
-void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
-                                    AccFuncSetType &Functions,
-                                    Region *NonAffineSubRegion,
-                                    bool IsExitBlock) {
+void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
+                                AccFuncSetType &Functions,
+                                Region *NonAffineSubRegion, bool IsExitBlock) {
 
   // PHI nodes that are in the exit block of the region, hence if IsExitBlock is
   // true, are not modeled as ordinary PHI nodes as they are not part of the
@@ -2632,8 +2631,8 @@ void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
   }
 }
 
-bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
-                                          Region *NonAffineSubRegion) {
+bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
+                                      Region *NonAffineSubRegion) {
   bool canSynthesizeInst = canSynthesize(Inst, LI, SE, R);
   if (isIgnoredIntrinsic(Inst))
     return false;
@@ -2712,8 +2711,8 @@ bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
 extern MapInsnToMemAcc InsnToMemAcc;
 
 IRAccess
-TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
-                            const ScopDetection::BoxedLoopsSetTy *BoxedLoops) {
+ScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
+                        const ScopDetection::BoxedLoopsSetTy *BoxedLoops) {
   unsigned Size;
   Type *SizeType;
   Value *Val;
@@ -2769,7 +2768,7 @@ TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
                   Subscripts, Sizes, Val);
 }
 
-void TempScopInfo::buildAccessFunctions(Region &R, Region &SR) {
+void ScopInfo::buildAccessFunctions(Region &R, Region &SR) {
 
   if (SD->isNonAffineSubRegion(&SR, &R)) {
     for (BasicBlock *BB : SR.blocks())
@@ -2784,9 +2783,9 @@ void TempScopInfo::buildAccessFunctions(Region &R, Region &SR) {
       buildAccessFunctions(R, *I->getNodeAs<BasicBlock>());
 }
 
-void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
-                                        Region *NonAffineSubRegion,
-                                        bool IsExitBlock) {
+void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
+                                    Region *NonAffineSubRegion,
+                                    bool IsExitBlock) {
   AccFuncSetType Functions;
   Loop *L = LI->getLoopFor(&BB);
 
@@ -2829,7 +2828,7 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
   Accs.insert(Accs.end(), Functions.begin(), Functions.end());
 }
 
-TempScop *TempScopInfo::buildTempScop(Region &R) {
+TempScop *ScopInfo::buildTempScop(Region &R) {
   TempScop *TScop = new TempScop(R, AccFuncMap);
 
   buildAccessFunctions(R, R);
@@ -2847,69 +2846,32 @@ TempScop *TempScopInfo::buildTempScop(Region &R) {
   return TScop;
 }
 
-TempScop *TempScopInfo::getTempScop() const { return TempScopOfRegion; }
+TempScop *ScopInfo::getTempScop() const { return TempScopOfRegion; }
 
-void TempScopInfo::print(raw_ostream &OS, const Module *) const {
+void ScopInfo::print(raw_ostream &OS, const Module *) const {
   if (TempScopOfRegion)
     TempScopOfRegion->print(OS, SE, LI);
+
+  if (scop)
+    scop->print(OS);
+  else
+    OS << "Invalid Scop!\n";
 }
 
-bool TempScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
-  SD = &getAnalysis<ScopDetection>();
-
-  if (!SD->isMaxRegionInScop(*R))
-    return false;
-
-  Function *F = R->getEntry()->getParent();
-  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
-  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
-  TD = &F->getParent()->getDataLayout();
-  ZeroOffset = SE->getConstant(TD->getIntPtrType(F->getContext()), 0);
-
-  assert(!TempScopOfRegion && "Build the TempScop only once");
-  TempScopOfRegion = buildTempScop(*R);
-
-  return false;
-}
-
-void TempScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequiredTransitive<LoopInfoWrapperPass>();
-  AU.addRequiredTransitive<ScalarEvolutionWrapperPass>();
-  AU.addRequiredTransitive<ScopDetection>();
-  AU.addRequiredID(IndependentBlocksID);
-  AU.addRequired<AAResultsWrapperPass>();
-  AU.setPreservesAll();
-}
-
-TempScopInfo::~TempScopInfo() { clear(); }
-
-void TempScopInfo::clear() {
+void ScopInfo::clear() {
   AccFuncMap.clear();
   if (TempScopOfRegion)
     delete TempScopOfRegion;
   TempScopOfRegion = nullptr;
+
+  if (scop) {
+    delete scop;
+    scop = 0;
+  }
 }
 
 //===----------------------------------------------------------------------===//
-// TempScop information extraction pass implement
-char TempScopInfo::ID = 0;
-
-Pass *polly::createTempScopInfoPass() { return new TempScopInfo(); }
-
-INITIALIZE_PASS_BEGIN(TempScopInfo, "polly-analyze-ir",
-                      "Polly - Analyse the LLVM-IR in the detected regions",
-                      false, false);
-INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass);
-INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
-INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);
-INITIALIZE_PASS_END(TempScopInfo, "polly-analyze-ir",
-                    "Polly - Analyse the LLVM-IR in the detected regions",
-                    false, false)
-
-//===----------------------------------------------------------------------===//
-ScopInfo::ScopInfo() : RegionPass(ID), scop(0) {
+ScopInfo::ScopInfo() : RegionPass(ID), TempScopOfRegion(nullptr), scop(0) {
   ctx = isl_ctx_alloc();
   isl_options_set_on_error(ctx, ISL_ON_ERROR_ABORT);
 }
@@ -2920,32 +2882,41 @@ ScopInfo::~ScopInfo() {
 }
 
 void ScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequiredID(IndependentBlocksID);
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<RegionInfoPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addRequired<ScalarEvolutionWrapperPass>();
-  AU.addRequired<ScopDetection>();
-  AU.addRequired<TempScopInfo>();
+  AU.addRequiredTransitive<ScalarEvolutionWrapperPass>();
+  AU.addRequiredTransitive<ScopDetection>();
   AU.addRequired<AAResultsWrapperPass>();
   AU.setPreservesAll();
 }
 
 bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
-  LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  AliasAnalysis &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
-  ScopDetection &SD = getAnalysis<ScopDetection>();
-  ScalarEvolution &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
-  DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  SD = &getAnalysis<ScopDetection>();
 
-  TempScop *tempScop = getAnalysis<TempScopInfo>().getTempScop();
+  if (!SD->isMaxRegionInScop(*R))
+    return false;
+
+  Function *F = R->getEntry()->getParent();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
+  TD = &F->getParent()->getDataLayout();
+  DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  ZeroOffset = SE->getConstant(TD->getIntPtrType(F->getContext()), 0);
+
+  assert(!TempScopOfRegion && "Build the TempScop only once");
+  TempScopOfRegion = buildTempScop(*R);
 
   // This region is no Scop.
-  if (!tempScop) {
+  if (!TempScopOfRegion) {
     scop = nullptr;
     return false;
   }
 
-  scop = Scop::createFromTempScop(*tempScop, LI, SE, SD, AA, DT, ctx);
+  scop =
+      Scop::createFromTempScop(*TempScopOfRegion, *LI, *SE, *SD, *AA, DT, ctx);
 
   DEBUG(scop->print(dbgs()));
 
@@ -2974,7 +2945,6 @@ INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);
-INITIALIZE_PASS_DEPENDENCY(TempScopInfo);
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_END(ScopInfo, "polly-scops",
                     "Polly - Create polyhedral description of Scops", false,

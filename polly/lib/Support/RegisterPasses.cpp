@@ -154,7 +154,6 @@ void initializePollyPasses(PassRegistry &Registry) {
   initializePollyCanonicalizePass(Registry);
   initializeScopDetectionPass(Registry);
   initializeScopInfoPass(Registry);
-  initializeTempScopInfoPass(Registry);
 }
 
 /// @brief Register Polly passes such that they form a polyhedral optimizer.

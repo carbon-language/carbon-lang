@@ -42,7 +42,6 @@ llvm::Pass *createScopInfoPass();
 llvm::Pass *createIslAstInfoPass();
 llvm::Pass *createCodeGenerationPass();
 llvm::Pass *createIslScheduleOptimizerPass();
-llvm::Pass *createTempScopInfoPass();
 
 extern char &IndependentBlocksID;
 extern char &CodePreparationID;
@@ -74,7 +73,6 @@ struct PollyForcePassLinking {
     polly::createIslAstInfoPass();
     polly::createCodeGenerationPass();
     polly::createIslScheduleOptimizerPass();
-    polly::createTempScopInfoPass();
   }
 } PollyForcePassLinking; // Force link by creating a global definition.
 }

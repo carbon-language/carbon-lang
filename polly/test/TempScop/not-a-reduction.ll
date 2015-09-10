@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-analyze-ir -analyze < %s 2>&1 | not FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s 2>&1 | not FileCheck %s
 
 ;#define TYPE float
 ;#define NUM 4
@@ -47,4 +47,5 @@ bb8:                                              ; preds = %bb3
   ret void
 }
 
-; CHECK:     Reduction
+; Match any reduction type except "[Reduction Type: NONE]"
+; CHECK:     [Reduction Type: {{[^N].*}}]

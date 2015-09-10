@@ -1399,7 +1399,7 @@ class TempScop {
   // Access function of bbs.
   AccFuncMapType &AccFuncMap;
 
-  friend class TempScopInfo;
+  friend class ScopInfo;
 
   explicit TempScop(Region &r, AccFuncMapType &accFuncMap)
       : R(r), AccFuncMap(accFuncMap) {}
@@ -1442,14 +1442,14 @@ public:
 };
 
 typedef std::map<const Region *, TempScop *> TempScopMapType;
-//===----------------------------------------------------------------------===//
-/// @brief The Function Pass to extract temporary information for Static control
-///        part in llvm function.
+
+///===---------------------------------------------------------------------===//
+/// @brief Build the Polly IR (Scop and ScopStmt) on a Region.
 ///
-class TempScopInfo : public RegionPass {
+class ScopInfo : public RegionPass {
   //===-------------------------------------------------------------------===//
-  TempScopInfo(const TempScopInfo &) = delete;
-  const TempScopInfo &operator=(const TempScopInfo &) = delete;
+  ScopInfo(const ScopInfo &) = delete;
+  const ScopInfo &operator=(const ScopInfo &) = delete;
 
   // The ScalarEvolution to help building Scop.
   ScalarEvolution *SE;
@@ -1475,6 +1475,10 @@ class TempScopInfo : public RegionPass {
 
   // The TempScop for this region.
   TempScop *TempScopOfRegion;
+
+  // The Scop
+  Scop *scop;
+  isl_ctx *ctx;
 
   // Clear the context.
   void clear();
@@ -1535,46 +1539,13 @@ class TempScopInfo : public RegionPass {
 
 public:
   static char ID;
-  explicit TempScopInfo() : RegionPass(ID), TempScopOfRegion(nullptr) {}
-  ~TempScopInfo();
+  explicit ScopInfo();
+  ~ScopInfo();
 
   /// @brief Get the temporay Scop information in LLVM IR for this region.
   ///
   /// @return The Scop information in LLVM IR represent.
   TempScop *getTempScop() const;
-
-  /// @name RegionPass interface
-  //@{
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual void releaseMemory() { clear(); }
-  virtual bool runOnRegion(Region *R, RGPassManager &RGM);
-  virtual void print(raw_ostream &OS, const Module *) const;
-  //@}
-};
-
-///===---------------------------------------------------------------------===//
-/// @brief Build the Polly IR (Scop and ScopStmt) on a Region.
-///
-class ScopInfo : public RegionPass {
-  //===-------------------------------------------------------------------===//
-  ScopInfo(const ScopInfo &) = delete;
-  const ScopInfo &operator=(const ScopInfo &) = delete;
-
-  // The Scop
-  Scop *scop;
-  isl_ctx *ctx;
-
-  void clear() {
-    if (scop) {
-      delete scop;
-      scop = 0;
-    }
-  }
-
-public:
-  static char ID;
-  explicit ScopInfo();
-  ~ScopInfo();
 
   /// @brief Try to build the Polly IR of static control part on the current
   ///        SESE-Region.
@@ -1590,12 +1561,7 @@ public:
   virtual bool runOnRegion(Region *R, RGPassManager &RGM);
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   virtual void releaseMemory() { clear(); }
-  virtual void print(raw_ostream &OS, const Module *) const {
-    if (scop)
-      scop->print(OS);
-    else
-      OS << "Invalid Scop!\n";
-  }
+  virtual void print(raw_ostream &OS, const Module *) const;
   //@}
 };
 
@@ -1603,7 +1569,6 @@ public:
 
 namespace llvm {
 class PassRegistry;
-void initializeTempScopInfoPass(llvm::PassRegistry &);
 void initializeScopInfoPass(llvm::PassRegistry &);
 }
 

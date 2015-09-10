@@ -186,7 +186,6 @@ public:
     // FIXME: We do not yet add regions for the newly generated code to the
     //        region tree.
     AU.addPreserved<RegionInfoPass>();
-    AU.addPreserved<TempScopInfo>();
     AU.addPreserved<ScopInfo>();
     AU.addPreservedID(IndependentBlocksID);
   }
