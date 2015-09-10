@@ -22,13 +22,13 @@ entry:
   br label %for.cond
 
 ; CHECK-LABEL: polly.merge_new_and_old:
-; CHECK:         %x.addr.0.merge = phi i32 [ %x.addr.0.final_reload, %polly.merge ], [ %x.addr.0, %for.cond ]
+; CHECK:         %x.addr.0.merge = phi i32 [ %x.addr.0.final_reload, %polly.merge20 ], [ %x.addr.0, %for.cond ]
 ; CHECK:         ret i32 %x.addr.0.merge
 
 ; CHECK-LABEL: polly.start:
 ; CHECK-NEXT:    store i32 %x, i32* %x.addr.0.phiops
 
-; CHECK-LABEL: polly.merge:
+; CHECK-LABEL: polly.merge20:
 ; CHECK:         %x.addr.0.final_reload = load i32, i32* %x.addr.0.s2a
 
 for.cond:                                         ; preds = %for.inc4, %entry
@@ -40,14 +40,31 @@ for.cond:                                         ; preds = %for.inc4, %entry
   %cmp = icmp slt i64 %indvars.iv, %tmp
   br i1 %cmp, label %for.body, label %for.end6
 
-; CHECK-LABEL: polly.stmt.for.cond{{[0-9]*}}:
-; CHECK:         %x.addr.0.phiops.reload[[R1:[0-9]*]] = load i32, i32* %x.addr.0.phiops
-; CHECK:         store i32 %x.addr.0.phiops.reload[[R1]], i32* %x.addr.0.s2a
-
 for.body:                                         ; preds = %for.cond
 ; CHECK-LABEL: polly.stmt.for.body:
 ; CHECK:         %x.addr.0.s2a.reload[[R2:[0-9]*]] = load i32, i32* %x.addr.0.s2a
 ; CHECK:         store i32 %x.addr.0.s2a.reload[[R2]], i32* %x.addr.1.phiops
+  br label %for.cond1
+
+for.cond1:                                        ; preds = %for.inc, %for.body
+; CHECK-LABEL: polly.stmt.for.cond1:
+; CHECK:         %x.addr.1.phiops.reload = load i32, i32* %x.addr.1.phiops
+; CHECK:         store i32 %x.addr.1.phiops.reload, i32* %x.addr.1.s2a[[R6:[0-9]*]]
+; CHECK:         store i32 %x.addr.1.phiops.reload, i32* %x.addr.1.lcssa.phiops
+  %x.addr.1 = phi i32 [ %x.addr.0, %for.body ], [ %add, %for.inc ]
+  %j.0 = phi i32 [ 3, %for.body ], [ %inc, %for.inc ]
+  %exitcond = icmp ne i32 %j.0, %N
+  br i1 %exitcond, label %for.body3, label %for.end
+
+for.inc:                                          ; preds = %for.body3
+; CHECK-LABEL: polly.stmt.for.inc:
+; CHECK:         %x.addr.1.s2a.reload[[R3:[0-9]*]] = load i32, i32* %x.addr.1.s2a
+; CHECK:         %p_add = add nsw i32 %x.addr.1.s2a.reload[[R3]], %tmp1_p_scalar_
+; CHECK:         store i32 %p_add, i32* %x.addr.1.phiops
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
+  %tmp1 = load i32, i32* %arrayidx, align 4
+  %add = add nsw i32 %x.addr.1, %tmp1
+  %inc = add nsw i32 %j.0, 1
   br label %for.cond1
 
 for.end:                                          ; preds = %for.cond1
@@ -64,29 +81,8 @@ for.inc4:                                         ; preds = %for.end
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   br label %for.cond
 
-for.cond1:                                        ; preds = %for.inc, %for.body
-; CHECK-LABEL: polly.stmt.for.cond1:
-; CHECK:         %x.addr.1.phiops.reload = load i32, i32* %x.addr.1.phiops
-; CHECK:         store i32 %x.addr.1.phiops.reload, i32* %x.addr.1.s2a[[R6:[0-9]*]]
-; CHECK:         store i32 %x.addr.1.phiops.reload, i32* %x.addr.1.lcssa.phiops
-  %x.addr.1 = phi i32 [ %x.addr.0, %for.body ], [ %add, %for.inc ]
-  %j.0 = phi i32 [ 3, %for.body ], [ %inc, %for.inc ]
-  %exitcond = icmp ne i32 %j.0, %N
-  br i1 %exitcond, label %for.body3, label %for.end
-
 for.body3:                                        ; preds = %for.cond1
   br label %for.inc
-
-for.inc:                                          ; preds = %for.body3
-; CHECK-LABEL: polly.stmt.for.inc:
-; CHECK:         %x.addr.1.s2a.reload[[R3:[0-9]*]] = load i32, i32* %x.addr.1.s2a
-; CHECK:         %p_add = add nsw i32 %x.addr.1.s2a.reload[[R3]], %tmp1_p_scalar_
-; CHECK:         store i32 %p_add, i32* %x.addr.1.phiops
-  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
-  %tmp1 = load i32, i32* %arrayidx, align 4
-  %add = add nsw i32 %x.addr.1, %tmp1
-  %inc = add nsw i32 %j.0, 1
-  br label %for.cond1
 
 for.end6:                                         ; preds = %for.cond
   ret i32 %x.addr.0

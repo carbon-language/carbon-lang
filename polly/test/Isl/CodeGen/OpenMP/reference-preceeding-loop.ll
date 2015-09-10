@@ -4,21 +4,17 @@
 
 ; - Test the case where scalar evolution references a loop that is outside
 ;   of the scop, but does not contain the scop.
-; - Test the case where two parallel subfunctions are created.
 
-; AST: if (symbol >= p_2 + 1) {
-; AST-NEXT:   #pragma simd
-; AST-NEXT:   #pragma omp parallel for
-; AST-NEXT:   for (int c0 = 0; c0 < p_0 + symbol; c0 += 1)
-; AST-NEXT:     Stmt_while_body(c0);
-; AST-NEXT: } else
-; AST-NEXT:   #pragma simd
-; AST-NEXT:   #pragma omp parallel for
-; AST-NEXT:   for (int c0 = 0; c0 <= p_0 + p_2; c0 += 1)
-; AST-NEXT:     Stmt_while_body(c0);
+; AST:         {
+; AST-NEXT:    Stmt_while_body(0);
+; AST-NEXT:    #pragma simd
+; AST-NEXT:    #pragma omp parallel for
+; AST-NEXT:    for (int c0 = 1; c0 < p_0 + symbol; c0 += 1)
+; AST-NEXT:      Stmt_while_body(c0);
+; AST-NEXT:    }
 
 ; IR: @update_model_polly_subfn
-; IR: @update_model_polly_subfn_1
+; IR-NOT: @update_model_polly_subfn_1
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

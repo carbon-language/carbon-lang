@@ -36,8 +36,10 @@
 ; CHECK-DAG:               i0 <= 1023
 ; CHECK:                };
 ; CHECK-NEXT:        Schedule :=
-; CHECK-NEXT:            [b] -> { Stmt_bb10__TO__bb18[i0] -> [i0, 3] };
-; CHECK-NEXT:        ReadAccess := [Reduction Type: NONE] [Scalar: 1]
+; TODO: We build a complicated representation of the domain that will also complicate the schedule.
+;       Once the domain is as simple as shown above this test should fail and this TODO can be removed.
+; CHECK-NOT:            [b] -> { Stmt_bb10__TO__bb18[i0] -> [i0, 3] };
+; CHECK:             ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK-NEXT:            [b] -> { Stmt_bb10__TO__bb18[i0] -> MemRef_x_1__phi[] }
 ; CHECK-NOT:   [Scalar: 1]
 ;

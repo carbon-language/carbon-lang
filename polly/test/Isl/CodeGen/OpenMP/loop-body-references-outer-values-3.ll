@@ -8,8 +8,9 @@
 ; but %call is a parameter of the SCoP and we need to make sure its value is
 ; properly forwarded to the subfunction.
 
+; AST: Stmt_for_body(0);
 ; AST: #pragma omp parallel for
-; AST: for (int c0 = 0; c0 < cols; c0 += 1)
+; AST: for (int c0 = 1; c0 < cols; c0 += 1)
 ; AST:   Stmt_for_body(c0);
 
 ; IR: @foo_polly_subfn
@@ -38,8 +39,9 @@ end:
 ; Another variation of this test case, now with even more of the index
 ; expression defined outside of the scop.
 
+; AST: Stmt_for_body(0);
 ; AST: #pragma omp parallel for
-; AST: for (int c0 = 0; c0 < cols; c0 += 1)
+; AST: for (int c0 = 1; c0 < cols; c0 += 1)
 ; AST:   Stmt_for_body(c0);
 
 ; IR: @bar_polly_subfn

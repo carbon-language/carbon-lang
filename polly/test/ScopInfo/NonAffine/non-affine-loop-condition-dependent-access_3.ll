@@ -46,7 +46,7 @@
 ; INNERMOST:                [p_0, p_1, p_2] -> { Stmt_bb16[i0] -> MemRef_A[i0] };
 ; INNERMOST:      Stmt_bb26
 ; INNERMOST:            Domain :=
-; INNERMOST:                [p_0, p_1, p_2] -> { Stmt_bb26[] };
+; INNERMOST:                [p_0, p_1, p_2] -> { Stmt_bb26[] :  p_0 >= 0 };
 ; INNERMOST:            Schedule :=
 ; INNERMOST:                [p_0, p_1, p_2] -> { Stmt_bb26[] -> [1, 0] };
 ; INNERMOST:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]

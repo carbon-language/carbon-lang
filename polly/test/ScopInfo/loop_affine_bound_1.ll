@@ -16,7 +16,7 @@ entry:
   %2 = or i64 %0, 3                               ; <i64> [#uses=1]
   %3 = add nsw i64 %2, %1                         ; <i64> [#uses=1]
   %4 = icmp sgt i64 %3, 0                         ; <i1> [#uses=1]
-  br i1 %4, label %bb.nph8, label %return
+  br i1 true, label %bb.nph8, label %return
 
 bb1:                                              ; preds = %bb2.preheader, %bb1
   %indvar = phi i64 [ 0, %bb2.preheader ], [ %indvar.next, %bb1 ] ; <i64> [#uses=2]
@@ -55,18 +55,18 @@ return:                                           ; preds = %bb3, %entry
 ; CHECK:   Stmt_bb1
 ; CHECK:         Domain :=
 ; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] :
-; CHECK-DAG:             i0 >= 0
+; CHECK-DAG:             i0 >= 1
 ; CHECK-DAG:          and
 ; CHECK-DAG:             i0 <= 2 + 4N + 7M
 ; CHECK-DAG:          and
 ; CHECK-DAG:             i1 >= 0
 ; CHECK-DAG:          and
 ; CHECK-DAG:             i1 <= 1 + 5N - i0
+; CHECK-DAG:                     Stmt_bb1[0, i1] :
+; CHECK-DAG:             i1 >= 0
 ; CHECK-DAG:          and
-; CHECK-DAG:             i0 <= 1 + 5N
+; CHECK-DAG:             i1 <= 1 + 5N
 ; CHECK:               }
-; CHECK:         Schedule :=
-; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] -> [i0, i1] };
 ; CHECK:         MustWriteAccess := [Reduction Type: NONE]
 ; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] -> MemRef_a[129i0 + 128i1] };
 ; CHECK: }

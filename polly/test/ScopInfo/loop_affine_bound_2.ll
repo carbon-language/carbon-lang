@@ -73,8 +73,6 @@ return:                                           ; preds = %bb3, %entry
 ; CHECK-DAG:                  i1 >= 0
 ; CHECK-DAG:                and
 ; CHECK-DAG:                  i1 <= 10 + 5N - 6M - 4i0
-; CHECK-DAG:                and
-; CHECK-DAG:                  4i0 <= 10 + 5N - 6M
 ; CHECK-DAG:                }
 ; CHECK:         Schedule :=
 ; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] -> [i0, i1]

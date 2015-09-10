@@ -659,9 +659,6 @@ private:
 
   /// Build the statement.
   //@{
-  void addConditionsToDomain(TempScop &tempScop, const Region &CurRegion);
-  void addLoopBoundsToDomain(TempScop &tempScop);
-  void addLoopTripCountToDomain(const Loop *L);
   void buildDomain(TempScop &tempScop, const Region &CurRegion);
 
   /// @brief Create the accesses for instructions in @p Block.
@@ -1018,6 +1015,14 @@ private:
                                   AliasAnalysis &AA, DominatorTree &DT,
                                   isl_ctx *ctx);
 
+  /// @brief Add loop carried constraints to the header blocks of loops.
+  ///
+  /// @param LI The LoopInfo analysis.
+  /// @param SD The ScopDetection analysis to identify non-affine sub-regions.
+  /// @param DT The dominator tree of the current function.
+  void addLoopBoundsToHeaderDomains(LoopInfo &LI, ScopDetection &SD,
+                                    DominatorTree &DT);
+
   /// @brief Compute the branching constraints for each basic block in @p R.
   ///
   /// @param R  The region we currently build branching conditions for.
@@ -1026,6 +1031,15 @@ private:
   /// @param DT The dominator tree of the current function.
   void buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
                                          ScopDetection &SD, DominatorTree &DT);
+
+  /// @brief Propagate the domain constraints through the region @p R.
+  ///
+  /// @param R  The region we currently build branching conditions for.
+  /// @param LI The LoopInfo analysis to obtain the number of iterators.
+  /// @param SD The ScopDetection analysis to identify non-affine sub-regions.
+  /// @param DT The dominator tree of the current function.
+  void propagateDomainConstraints(Region *R, LoopInfo &LI, ScopDetection &SD,
+                                  DominatorTree &DT);
 
   /// @brief Compute the domain for each basic block in @p R.
   ///

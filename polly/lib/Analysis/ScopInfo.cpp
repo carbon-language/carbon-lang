@@ -769,6 +769,68 @@ void ScopStmt::realignParams() {
   Domain = isl_set_align_params(Domain, Parent.getParamSpace());
 }
 
+/// @brief Add @p BSet to the set @p User if @p BSet is bounded.
+static isl_stat collectBoundedParts(__isl_take isl_basic_set *BSet,
+                                    void *User) {
+  isl_set **BoundedParts = static_cast<isl_set **>(User);
+  if (isl_basic_set_is_bounded(BSet))
+    *BoundedParts = isl_set_union(*BoundedParts, isl_set_from_basic_set(BSet));
+  else
+    isl_basic_set_free(BSet);
+  return isl_stat_ok;
+}
+
+/// @brief Return the bounded parts of @p S.
+static __isl_give isl_set *collectBoundedParts(__isl_take isl_set *S) {
+  isl_set *BoundedParts = isl_set_empty(isl_set_get_space(S));
+  isl_set_foreach_basic_set(S, collectBoundedParts, &BoundedParts);
+  isl_set_free(S);
+  return BoundedParts;
+}
+
+/// @brief Compute the (un)bounded parts of @p S wrt. to dimension @p Dim.
+///
+/// @returns A separation of @p S into first an unbounded then a bounded subset,
+///          both with regards to the dimension @p Dim.
+static std::pair<__isl_give isl_set *, __isl_give isl_set *>
+partitionSetParts(__isl_take isl_set *S, unsigned Dim) {
+
+  for (unsigned u = 0, e = isl_set_n_dim(S); u < e; u++)
+    S = isl_set_lower_bound_si(S, isl_dim_set, u, 0);
+
+  unsigned NumDimsS = isl_set_n_dim(S);
+  isl_set *OnlyDimS = isl_set_copy(S);
+
+  // Remove dimensions that are greater than Dim as they are not interesting.
+  assert(NumDimsS >= Dim + 1);
+  OnlyDimS =
+      isl_set_project_out(OnlyDimS, isl_dim_set, Dim + 1, NumDimsS - Dim - 1);
+
+  // Create artificial parametric upper bounds for dimensions smaller than Dim
+  // as we are not interested in them.
+  OnlyDimS = isl_set_insert_dims(OnlyDimS, isl_dim_param, 0, Dim);
+  for (unsigned u = 0; u < Dim; u++) {
+    isl_constraint *C = isl_inequality_alloc(
+        isl_local_space_from_space(isl_set_get_space(OnlyDimS)));
+    C = isl_constraint_set_coefficient_si(C, isl_dim_param, u, 1);
+    C = isl_constraint_set_coefficient_si(C, isl_dim_set, u, -1);
+    OnlyDimS = isl_set_add_constraint(OnlyDimS, C);
+  }
+
+  // Collect all bounded parts of OnlyDimS.
+  isl_set *BoundedParts = collectBoundedParts(OnlyDimS);
+
+  // Create the dimensions greater than Dim again.
+  BoundedParts = isl_set_insert_dims(BoundedParts, isl_dim_set, Dim + 1,
+                                     NumDimsS - Dim - 1);
+
+  // Remove the artificial upper bound parameters again.
+  BoundedParts = isl_set_remove_dims(BoundedParts, isl_dim_param, 0, Dim);
+
+  isl_set *UnboundedParts = isl_set_subtract(S, isl_set_copy(BoundedParts));
+  return std::make_pair(UnboundedParts, BoundedParts);
+}
+
 static __isl_give isl_set *buildConditionSet(ICmpInst::Predicate Pred,
                                              isl_pw_aff *L, isl_pw_aff *R) {
   switch (Pred) {
@@ -841,121 +903,12 @@ buildConditionSets(Scop &S, BranchInst *BI, Loop *L, __isl_keep isl_set *Domain,
       isl_set_intersect(AlternativeCondSet, isl_set_copy(Domain))));
 }
 
-void ScopStmt::addLoopTripCountToDomain(const Loop *L) {
-
-  int RelativeLoopDimension = getParent()->getRelativeLoopDepth(L);
-  assert(RelativeLoopDimension >= 0 &&
-         "Expected relative loop depth of L to be non-negative");
-  unsigned loopDimension = RelativeLoopDimension;
-
-  ScalarEvolution *SE = getParent()->getSE();
-  isl_space *DomSpace = isl_set_get_space(Domain);
-
-  isl_space *MapSpace = isl_space_map_from_set(isl_space_copy(DomSpace));
-  isl_multi_aff *LoopMAff = isl_multi_aff_identity(MapSpace);
-  isl_aff *LoopAff = isl_multi_aff_get_aff(LoopMAff, loopDimension);
-  LoopAff = isl_aff_add_constant_si(LoopAff, 1);
-  LoopMAff = isl_multi_aff_set_aff(LoopMAff, loopDimension, LoopAff);
-  isl_map *TranslationMap = isl_map_from_multi_aff(LoopMAff);
-
-  BasicBlock *ExitingBB = L->getExitingBlock();
-  assert(ExitingBB && "Loop has more than one exiting block");
-
-  BranchInst *Term = dyn_cast<BranchInst>(ExitingBB->getTerminator());
-  assert(Term && Term->isConditional() && "Terminator is not conditional");
-
-  const SCEV *LHS = nullptr;
-  const SCEV *RHS = nullptr;
-  Value *Cond = Term->getCondition();
-  CmpInst::Predicate Pred = CmpInst::Predicate::BAD_ICMP_PREDICATE;
-
-  ICmpInst *CondICmpInst = dyn_cast<ICmpInst>(Cond);
-  ConstantInt *CondConstant = dyn_cast<ConstantInt>(Cond);
-  if (CondICmpInst) {
-    LHS = SE->getSCEVAtScope(CondICmpInst->getOperand(0), L);
-    RHS = SE->getSCEVAtScope(CondICmpInst->getOperand(1), L);
-    Pred = CondICmpInst->getPredicate();
-  } else if (CondConstant) {
-    LHS = SE->getConstant(CondConstant);
-    RHS = SE->getConstant(ConstantInt::getTrue(SE->getContext()));
-    Pred = CmpInst::Predicate::ICMP_EQ;
-  } else {
-    llvm_unreachable("Condition is neither a ConstantInt nor a ICmpInst");
-  }
-
-  if (!L->contains(Term->getSuccessor(0)))
-    Pred = ICmpInst::getInversePredicate(Pred);
-  Comparison Comp(LHS, RHS, Pred);
-
-  isl_pw_aff *LPWA = getPwAff(Comp.getLHS());
-  isl_pw_aff *RPWA = getPwAff(Comp.getRHS());
-
-  isl_set *CondSet = buildConditionSet(Comp.getPred(), LPWA, RPWA);
-  isl_map *ForwardMap = isl_map_lex_le(isl_space_copy(DomSpace));
-  for (unsigned i = 0; i < isl_set_n_dim(Domain); i++)
-    if (i != loopDimension)
-      ForwardMap = isl_map_equate(ForwardMap, isl_dim_in, i, isl_dim_out, i);
-
-  ForwardMap = isl_map_apply_range(ForwardMap, isl_map_copy(TranslationMap));
-  isl_set *CondDom = isl_set_subtract(isl_set_copy(Domain), CondSet);
-  isl_set *ForwardCond = isl_set_apply(CondDom, isl_map_copy(ForwardMap));
-  isl_set *ForwardDomain = isl_set_apply(isl_set_copy(Domain), ForwardMap);
-  ForwardCond = isl_set_gist(ForwardCond, ForwardDomain);
-  Domain = isl_set_subtract(Domain, ForwardCond);
-
-  isl_map_free(TranslationMap);
-  isl_space_free(DomSpace);
-}
-
-void ScopStmt::addLoopBoundsToDomain(TempScop &tempScop) {
-  isl_space *Space;
-  isl_local_space *LocalSpace;
-
-  Space = isl_set_get_space(Domain);
-  LocalSpace = isl_local_space_from_space(Space);
-
-  ScalarEvolution *SE = getParent()->getSE();
-  for (int i = 0, e = getNumIterators(); i != e; ++i) {
-    isl_aff *Zero = isl_aff_zero_on_domain(isl_local_space_copy(LocalSpace));
-    isl_pw_aff *IV =
-        isl_pw_aff_from_aff(isl_aff_set_coefficient_si(Zero, isl_dim_in, i, 1));
-
-    // 0 <= IV.
-    isl_set *LowerBound = isl_pw_aff_nonneg_set(isl_pw_aff_copy(IV));
-    Domain = isl_set_intersect(Domain, LowerBound);
-
-    // IV <= LatchExecutions.
-    const Loop *L = getLoopForDimension(i);
-    const SCEV *LatchExecutions = SE->getBackedgeTakenCount(L);
-    if (!isa<SCEVCouldNotCompute>(LatchExecutions)) {
-      isl_pw_aff *UpperBound = getPwAff(LatchExecutions);
-      isl_set *UpperBoundSet = isl_pw_aff_le_set(IV, UpperBound);
-      Domain = isl_set_intersect(Domain, UpperBoundSet);
-    } else {
-      // If SCEV cannot provide a loop trip count, we compute it with ISL. If
-      // the domain remains unbounded, make the assumed context infeasible
-      // as code generation currently does not expect unbounded loops.
-      addLoopTripCountToDomain(L);
-      isl_pw_aff_free(IV);
-      if (!isl_set_dim_has_upper_bound(Domain, isl_dim_set, i))
-        Parent.addAssumption(isl_set_empty(Parent.getParamSpace()));
-    }
-  }
-
-  isl_local_space_free(LocalSpace);
-}
-
 void ScopStmt::buildDomain(TempScop &tempScop, const Region &CurRegion) {
-  isl_space *Space;
   isl_id *Id;
-
-  Space = isl_space_set_alloc(getIslCtx(), 0, getNumIterators());
 
   Id = isl_id_alloc(getIslCtx(), getBaseName(), this);
 
-  Domain = isl_set_universe(Space);
-  addLoopBoundsToDomain(tempScop);
-  Domain = isl_set_intersect(Domain, getParent()->getDomainConditions(this));
+  Domain = getParent()->getDomainConditions(this);
   Domain = isl_set_coalesce(Domain);
   Domain = isl_set_set_tuple_id(Domain, Id);
 }
@@ -1533,6 +1486,8 @@ void Scop::buildDomains(Region *R, LoopInfo &LI, ScopDetection &SD,
   DomainMap[EntryBB] = S;
 
   buildDomainsWithBranchConstraints(R, LI, SD, DT);
+  addLoopBoundsToHeaderDomains(LI, SD, DT);
+  propagateDomainConstraints(R, LI, SD, DT);
 }
 
 void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
@@ -1636,6 +1591,232 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
       DEBUG(dbgs() << "\tSet SuccBB: " << SuccBB->getName() << " : " << Domain
                    << "\n");
     }
+  }
+}
+
+/// @brief Return the domain for @p BB wrt @p DomainMap.
+///
+/// This helper function will lookup @p BB in @p DomainMap but also handle the
+/// case where @p BB is contained in a non-affine subregion using the region
+/// tree obtained by @p RI.
+static __isl_give isl_set *
+getDomainForBlock(BasicBlock *BB, DenseMap<BasicBlock *, isl_set *> &DomainMap,
+                  RegionInfo &RI) {
+  auto DIt = DomainMap.find(BB);
+  if (DIt != DomainMap.end())
+    return isl_set_copy(DIt->getSecond());
+
+  Region *R = RI.getRegionFor(BB);
+  while (R->getEntry() == BB)
+    R = R->getParent();
+  return getDomainForBlock(R->getEntry(), DomainMap, RI);
+}
+
+void Scop::propagateDomainConstraints(Region *R, LoopInfo &LI,
+                                      ScopDetection &SD, DominatorTree &DT) {
+  // Iterate over the region R and propagate the domain constrains from the
+  // predecessors to the current node. In contrast to the
+  // buildDomainsWithBranchConstraints function, this one will pull the domain
+  // information from the predecessors instead of pushing it to the successors.
+  // Additionally, we assume the domains to be already present in the domain
+  // map here. However, we iterate again in reverse post order so we know all
+  // predecessors have been visited before a block or non-affine subregion is
+  // visited.
+
+  // The set of boxed loops (loops in non-affine subregions) for this SCoP.
+  auto &BoxedLoops = *SD.getBoxedLoops(&getRegion());
+
+  ReversePostOrderTraversal<Region *> RTraversal(R);
+  for (auto *RN : RTraversal) {
+
+    // Recurse for affine subregions but go on for basic blocks and non-affine
+    // subregions.
+    if (RN->isSubRegion()) {
+      Region *SubRegion = RN->getNodeAs<Region>();
+      if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
+        propagateDomainConstraints(SubRegion, LI, SD, DT);
+        continue;
+      }
+    }
+
+    BasicBlock *BB = getRegionNodeBasicBlock(RN);
+    Loop *BBLoop = getRegionNodeLoop(RN, LI);
+    int BBLoopDepth = getRelativeLoopDepth(BBLoop);
+
+    isl_set *&Domain = DomainMap[BB];
+    assert(Domain && "Due to reverse post order traversal of the region all "
+                     "predecessor of the current region node should have been "
+                     "visited and a domain for this region node should have "
+                     "been set.");
+
+    isl_set *PredDom = isl_set_empty(isl_set_get_space(Domain));
+    for (auto *PredBB : predecessors(BB)) {
+
+      // Skip backedges
+      if (DT.dominates(BB, PredBB))
+        continue;
+
+      isl_set *PredBBDom = nullptr;
+
+      // Handle the SCoP entry block with its outside predecessors.
+      if (!getRegion().contains(PredBB))
+        PredBBDom = isl_set_universe(isl_set_get_space(PredDom));
+
+      if (!PredBBDom) {
+        // Determine the loop depth of the predecessor and adjust its domain to
+        // the domain of the current block. This can mean we have to:
+        //  o) Drop a dimension if this block is the exit of a loop, not the
+        //     header of a new loop and the predecessor was part of the loop.
+        //  o) Add an unconstrainted new dimension if this block is the header
+        //     of a loop and the predecessor is not part of it.
+        //  o) Drop the information about the innermost loop dimension when the
+        //     predecessor and the current block are surrounded by different
+        //     loops in the same depth.
+        PredBBDom = getDomainForBlock(PredBB, DomainMap, *R->getRegionInfo());
+        Loop *PredBBLoop = LI.getLoopFor(PredBB);
+        while (BoxedLoops.count(PredBBLoop))
+          PredBBLoop = PredBBLoop->getParentLoop();
+
+        int PredBBLoopDepth = getRelativeLoopDepth(PredBBLoop);
+        assert(std::abs(BBLoopDepth - PredBBLoopDepth) <= 1);
+        if (BBLoopDepth < PredBBLoopDepth)
+          PredBBDom =
+              isl_set_project_out(PredBBDom, isl_dim_set, PredBBLoopDepth, 1);
+        else if (PredBBLoopDepth < BBLoopDepth)
+          PredBBDom = isl_set_add_dims(PredBBDom, isl_dim_set, 1);
+        else if (BBLoop != PredBBLoop && BBLoopDepth >= 0)
+          PredBBDom = isl_set_drop_constraints_involving_dims(
+              PredBBDom, isl_dim_set, BBLoopDepth, 1);
+      }
+
+      PredDom = isl_set_union(PredDom, PredBBDom);
+    }
+
+    // Under the union of all predecessor conditions we can reach this block.
+    Domain = isl_set_intersect(Domain, PredDom);
+  }
+}
+
+/// @brief Create a map from SetSpace -> SetSpace where the dimensions @p Dim
+///        is incremented by one and all other dimensions are equal, e.g.,
+///             [i0, i1, i2, i3] -> [i0, i1, i2 + 1, i3]
+///        if @p Dim is 2 and @p SetSpace has 4 dimensions.
+static __isl_give isl_map *
+createNextIterationMap(__isl_take isl_space *SetSpace, unsigned Dim) {
+  auto *MapSpace = isl_space_map_from_set(SetSpace);
+  auto *NextIterationMap = isl_map_universe(isl_space_copy(MapSpace));
+  for (unsigned u = 0; u < isl_map_n_in(NextIterationMap); u++)
+    if (u != Dim)
+      NextIterationMap =
+          isl_map_equate(NextIterationMap, isl_dim_in, u, isl_dim_out, u);
+  auto *C = isl_constraint_alloc_equality(isl_local_space_from_space(MapSpace));
+  C = isl_constraint_set_constant_si(C, 1);
+  C = isl_constraint_set_coefficient_si(C, isl_dim_in, Dim, 1);
+  C = isl_constraint_set_coefficient_si(C, isl_dim_out, Dim, -1);
+  NextIterationMap = isl_map_add_constraint(NextIterationMap, C);
+  return NextIterationMap;
+}
+
+/// @brief Add @p L & all children to @p Loops if they are not in @p BoxedLoops.
+static inline void
+addLoopAndSubloops(Loop *L, SmallVectorImpl<Loop *> &Loops,
+                   const ScopDetection::BoxedLoopsSetTy &BoxedLoops) {
+  if (BoxedLoops.count(L))
+    return;
+
+  Loops.push_back(L);
+  for (Loop *Subloop : *L)
+    addLoopAndSubloops(Subloop, Loops, BoxedLoops);
+}
+
+/// @brief Add loops in @p R to @p RegionLoops if they are not in @p BoxedLoops.
+static inline void
+collectLoopsInRegion(Region &R, LoopInfo &LI,
+                     SmallVector<Loop *, 8> &RegionLoops,
+                     const ScopDetection::BoxedLoopsSetTy &BoxedLoops) {
+
+  SmallVector<Loop *, 8> Loops(LI.begin(), LI.end());
+  while (!Loops.empty()) {
+    Loop *L = Loops.pop_back_val();
+
+    if (R.contains(L))
+      addLoopAndSubloops(L, RegionLoops, BoxedLoops);
+    else if (L->contains(R.getEntry()))
+      Loops.append(L->begin(), L->end());
+  }
+}
+
+/// @brief Create a set from @p Space with @p Dim fixed to 0.
+static __isl_give isl_set *
+createFirstIterationDomain(__isl_take isl_space *Space, unsigned Dim) {
+  auto *Domain = isl_set_universe(Space);
+  Domain = isl_set_fix_si(Domain, isl_dim_set, Dim, 0);
+  return Domain;
+}
+
+void Scop::addLoopBoundsToHeaderDomains(LoopInfo &LI, ScopDetection &SD,
+                                        DominatorTree &DT) {
+  // We iterate over all loops in the SCoP, create the condition set under which
+  // we will take the back edge, and then apply these restrictions to the
+  // header.
+
+  Region &R = getRegion();
+  SmallVector<Loop *, 8> RegionLoops;
+  collectLoopsInRegion(R, LI, RegionLoops, *SD.getBoxedLoops(&R));
+
+  while (!RegionLoops.empty()) {
+    Loop *L = RegionLoops.pop_back_val();
+    int LoopDepth = getRelativeLoopDepth(L);
+    assert(LoopDepth >= 0 && "Loop in region should have at least depth one");
+
+    BasicBlock *LatchBB = L->getLoopLatch();
+    assert(LatchBB && "TODO implement multiple exit loop handling");
+
+    isl_set *LatchBBDom = DomainMap[LatchBB];
+    isl_set *BackedgeCondition = nullptr;
+
+    BasicBlock *HeaderBB = L->getHeader();
+
+    BranchInst *BI = cast<BranchInst>(LatchBB->getTerminator());
+    if (BI->isUnconditional())
+      BackedgeCondition = isl_set_copy(LatchBBDom);
+    else {
+      SmallVector<isl_set *, 2> ConditionSets;
+      int idx = BI->getSuccessor(0) != HeaderBB;
+      buildConditionSets(*this, BI, L, LatchBBDom, ConditionSets);
+
+      // Free the non back edge condition set as we do not need it.
+      isl_set_free(ConditionSets[1 - idx]);
+
+      BackedgeCondition = ConditionSets[idx];
+    }
+
+    isl_set *&HeaderBBDom = DomainMap[HeaderBB];
+    isl_set *FirstIteration =
+        createFirstIterationDomain(isl_set_get_space(HeaderBBDom), LoopDepth);
+
+    isl_map *NextIterationMap =
+        createNextIterationMap(isl_set_get_space(HeaderBBDom), LoopDepth);
+
+    int LatchLoopDepth = getRelativeLoopDepth(LI.getLoopFor(LatchBB));
+    assert(LatchLoopDepth >= LoopDepth);
+    BackedgeCondition =
+        isl_set_project_out(BackedgeCondition, isl_dim_set, LoopDepth + 1,
+                            LatchLoopDepth - LoopDepth);
+
+    auto Parts = partitionSetParts(BackedgeCondition, LoopDepth);
+
+    // If a loop has an unbounded back edge condition part (here Parts.first)
+    // we do not want to assume the header will even be executed for the first
+    // iteration of an execution that will lead to an infinite loop. While it
+    // would not be wrong to do so, it does not seem helpful.
+    FirstIteration = isl_set_subtract(FirstIteration, Parts.first);
+
+    BackedgeCondition = isl_set_apply(Parts.second, NextIterationMap);
+    BackedgeCondition = isl_set_union(BackedgeCondition, FirstIteration);
+    BackedgeCondition = isl_set_coalesce(BackedgeCondition);
+
+    HeaderBBDom = isl_set_intersect(HeaderBBDom, BackedgeCondition);
   }
 }
 

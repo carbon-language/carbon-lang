@@ -5,10 +5,9 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 ; SCALAR: if (1)
 ; SCALAR:     {
-; SCALAR:       for (int c0 = 0; c0 <= -Scalar0.val + 99; c0 += 1)
+; SCALAR:       Stmt_for_1(0);
+; SCALAR:       for (int c0 = 1; c0 <= -Scalar0.val + 99; c0 += 1)
 ; SCALAR:         Stmt_for_1(c0);
-; SCALAR:       if (Scalar0.val >= 100)
-; SCALAR:         Stmt_for_1(0);
 ; SCALAR:     }
 
 ; SCALAR: if (1)

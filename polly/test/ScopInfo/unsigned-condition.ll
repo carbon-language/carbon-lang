@@ -38,7 +38,11 @@ return:
 ; CHECK:  Stmt_store
 ; CHECK:        Domain :=
 ; CHECK:            [P, N] -> { Stmt_store[i0] :
-; CHECK:              i0 >= 0 and i0 <= -1 + N and P >= 42
+; CHECK-DAG:          i0 >= 0
+; CHECK-DAG:        and
+; CHECK-DAG:          i0 <= -1 + N
+; CHECK-DAG:        and
+; CHECK-DAG:          P >= 42
 ; CHECK:                   };
 ; CHECK:        Schedule :=
 ; CHECK:            [P, N] -> { Stmt_store[i0] -> [i0] };
