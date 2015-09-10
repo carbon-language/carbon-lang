@@ -135,13 +135,15 @@ sub build_llvm
     # }
     # close ($md5_data_file);
     
-    my @llvm_dstroot_archs;
     #print "LLVM MD5 will be generated from:\n";
     #print @llvm_md5_strings;
     my $llvm_hex_digest = md5_hex(@llvm_md5_strings);
     my $did_make = 0;
     
     #print "llvm MD5: $llvm_hex_digest\n";
+
+    my @archive_dirs;
+
     foreach my $arch (@archs)
     {
         my $llvm_dstroot_arch = "${llvm_dstroot}/${arch}";
@@ -152,6 +154,9 @@ sub build_llvm
         my $is_arm = $arch =~ /^arm/;
         my $save_arch_digest = 1;
         my $arch_digest_file = "$llvm_dstroot_arch/md5";
+        my $llvm_dstroot_arch_archive_dir = "$llvm_dstroot_arch/$llvm_configuration/lib";
+        
+        push @archive_dirs, $llvm_dstroot_arch_archive_dir;
 
         print "LLVM architecture root for ${arch} exists at '$llvm_dstroot_arch'...";
         if (-e $llvm_dstroot_arch)
@@ -192,7 +197,7 @@ sub build_llvm
                         # make the final archive to make sure we don't need to rebuild
                         my $archive_filelist_file_modtime = (stat($archive_filelist_file))[9];
                         
-                        our @archive_files = glob "$llvm_dstroot_arch/$llvm_configuration/lib/*.a";
+                        our @archive_files = glob "$llvm_dstroot_arch_archive_dir/*.a";
                         
                         for my $llvm_lib (@archive_files)
                         {
@@ -312,7 +317,6 @@ sub build_llvm
             do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus tools-only VERBOSE=1 $llvm_config_href->{make_options} PROJECT_NAME='llvm' $extra_make_flags EDIS_VERSION=1", "making libedis", 1);
             
         }
-        push(@llvm_dstroot_archs, $llvm_dstroot_arch);
 
         ++$arch_idx;
     }
@@ -322,9 +326,9 @@ sub build_llvm
     if ($did_make)
     {
         open my $fh, '>', $archive_filelist_file or die "Can't open $! for writing...\n";
-        foreach my $llvm_dstroot_arch (@llvm_dstroot_archs)
+        foreach my $archive_dir (@archive_dirs)
         {
-            append_all_archive_files ($llvm_dstroot_arch, $fh);
+            append_all_archive_files ($archive_dir, $fh);
         }
         close($fh);
     }
@@ -390,13 +394,14 @@ sub do_command
 
 sub append_all_archive_files
 {
-    my $arch_dstroot = shift;
-    my $fh = shift;
-    our @archive_files = glob "$arch_dstroot/$llvm_configuration/lib/*.a";    
-    for my $archive_fullpath (@archive_files)
-    {
-        print $fh "$archive_fullpath\n";
-    }
+   my $archive_dir = shift;
+   my $fh = shift;
+
+   our @archive_files = glob "$archive_dir/*.a";    
+   for my $archive_fullpath (@archive_files)
+   {
+       print $fh "$archive_fullpath\n";
+   }
 }
 
 build_llvm();
