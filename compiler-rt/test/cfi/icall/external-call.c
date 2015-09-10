@@ -2,6 +2,10 @@
 // RUN: %t1 c 1 2>&1 | FileCheck --check-prefix=CFI %s
 // RUN: %t1 s 2 2>&1 | FileCheck --check-prefix=CFI %s
 
+// This test uses jump tables containing PC-relative references to external
+// symbols, which the Mach-O object writer does not currently support.
+// XFAIL: darwin
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
