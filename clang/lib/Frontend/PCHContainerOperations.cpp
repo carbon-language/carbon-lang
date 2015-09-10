@@ -16,6 +16,7 @@
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/raw_ostream.h"
 #include "clang/Lex/ModuleLoader.h"
+
 using namespace clang;
 
 namespace {
@@ -36,7 +37,7 @@ public:
                            std::shared_ptr<PCHBuffer> Buffer)
       : Buffer(Buffer), OS(OS) {}
 
-  virtual ~RawPCHContainerGenerator() {}
+  ~RawPCHContainerGenerator() override = default;
 
   void HandleTranslationUnit(ASTContext &Ctx) override {
     if (Buffer->IsComplete) {
@@ -49,7 +50,8 @@ public:
     Buffer->Data = std::move(Empty);
   }
 };
-}
+
+} // anonymous namespace
 
 std::unique_ptr<ASTConsumer> RawPCHContainerWriter::CreatePCHContainerGenerator(
     DiagnosticsEngine &Diags, const HeaderSearchOptions &HSO,

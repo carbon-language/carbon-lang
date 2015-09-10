@@ -30,6 +30,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/TargetRegistry.h"
 #include <memory>
+
 using namespace clang;
 
 #define DEBUG_TYPE "pchcontainer"
@@ -139,7 +140,7 @@ public:
     CodeGenOpts.SplitDwarfFile = OutputFileName;
   }
 
-  virtual ~PCHContainerGenerator() {}
+  ~PCHContainerGenerator() override = default;
 
   void Initialize(ASTContext &Context) override {
     assert(!Ctx && "initialized multiple times");
@@ -254,7 +255,7 @@ public:
   }
 };
 
-} // namespace
+} // anonymous namespace
 
 std::unique_ptr<ASTConsumer>
 ObjectFilePCHContainerWriter::CreatePCHContainerGenerator(
@@ -290,5 +291,4 @@ void ObjectFilePCHContainerReader::ExtractPCH(
   // As a fallback, treat the buffer as a raw AST.
   StreamFile.init((const unsigned char *)Buffer.getBufferStart(),
                   (const unsigned char *)Buffer.getBufferEnd());
-  return;
 }

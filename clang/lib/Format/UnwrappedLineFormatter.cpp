@@ -606,7 +606,7 @@ public:
 
   /// \brief Puts all tokens into a single line.
   unsigned formatLine(const AnnotatedLine &Line, unsigned FirstIndent,
-                      bool DryRun) {
+                      bool DryRun) override {
     unsigned Penalty = 0;
     LineState State = Indenter->getInitialState(FirstIndent, &Line, DryRun);
     while (State.NextToken) {
@@ -629,7 +629,7 @@ public:
   /// \brief Formats the line by finding the best line breaks with line lengths
   /// below the column limit.
   unsigned formatLine(const AnnotatedLine &Line, unsigned FirstIndent,
-                      bool DryRun) {
+                      bool DryRun) override {
     LineState State = Indenter->getInitialState(FirstIndent, &Line, DryRun);
 
     // If the ObjC method declaration does not fit on a line, we should format
@@ -791,7 +791,7 @@ private:
   llvm::SpecificBumpPtrAllocator<StateNode> Allocator;
 };
 
-} // namespace
+} // anonymous namespace
 
 unsigned
 UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
