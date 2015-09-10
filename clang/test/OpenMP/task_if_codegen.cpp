@@ -21,14 +21,14 @@ int Arg;
 
 // CHECK-LABEL: define void @{{.+}}gtid_test
 void gtid_test() {
-// CHECK:  call void {{.+}} @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{.+}} 1, {{.+}}* [[GTID_TEST_REGION1:@.+]] to void
+// CHECK:  call void {{.+}} @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{.+}} 0, {{.+}}* [[GTID_TEST_REGION1:@.+]] to void
 #pragma omp parallel
 #pragma omp task if (task: false)
   gtid_test();
 // CHECK: ret void
 }
 
-// CHECK: define internal void [[GTID_TEST_REGION1]](i32* [[GTID_PARAM:%.+]], i
+// CHECK: define internal void [[GTID_TEST_REGION1]](i32* noalias [[GTID_PARAM:%.+]], i
 // CHECK: store i32* [[GTID_PARAM]], i32** [[GTID_ADDR_REF:%.+]],
 // CHECK: [[GTID_ADDR:%.+]] = load i32*, i32** [[GTID_ADDR_REF]]
 // CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_ADDR]]

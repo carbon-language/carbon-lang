@@ -2033,7 +2033,10 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     const Expr *Init = VD->getAnyInitializer(VD);
     if (Init && !isa<ParmVarDecl>(VD) && VD->getType()->isReferenceType() &&
         VD->isUsableInConstantExpressions(getContext()) &&
-        VD->checkInitIsICE()) {
+        VD->checkInitIsICE() &&
+        // Do not emit if it is private OpenMP variable.
+        !(E->refersToEnclosingVariableOrCapture() && CapturedStmtInfo &&
+          LocalDeclMap.count(VD))) {
       llvm::Constant *Val =
         CGM.EmitConstantValue(*VD->evaluateValue(), VD->getType(), this);
       assert(Val && "failed to emit reference constant expression");

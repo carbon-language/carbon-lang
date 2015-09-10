@@ -119,14 +119,13 @@ void simple(float *a, float *b, float *c, float *d) {
 
 // Init linear private var.
 // CHECK: [[LIN_VAR:%.+]] = load i32*, i32** %
-// CHECK-NEXT: [[LIN_LOAD:%.+]] = load i32, i32* [[LIN_VAR]]
+// CHECK: [[LIN_LOAD:%.+]] = load i32, i32* [[LIN_VAR]]
 // CHECK-NEXT: store i32 [[LIN_LOAD]], i32* [[LIN_START:%[^,]+]]
 // Remember linear step.
 // CHECK: [[CALL_VAL:%.+]] = invoke
 // CHECK: store i64 [[CALL_VAL]], i64* [[LIN_STEP:%[^,]+]]
 
-// CHECK: [[GLIN_VAR:%.+]] = load double**, double*** %
-// CHECK-NEXT: [[GLIN_LOAD:%.+]] = load double*, double** [[GLIN_VAR]]
+// CHECK: [[GLIN_LOAD:%.+]] = load double*, double** [[GLIN_VAR:%.+]],
 // CHECK-NEXT: store double* [[GLIN_LOAD]], double** [[GLIN_START:%[^,]+]]
 
 // CHECK: call void @__kmpc_for_static_init_8u(%ident_t* {{[^,]+}}, i32 %{{[^,]+}}, i32 34, i32* %{{[^,]+}}, i64* [[LB:%[^,]+]], i64* [[UB:%[^,]+]], i64* [[STRIDE:%[^,]+]], i64 1, i64 1)
@@ -179,11 +178,9 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK: call void @__kmpc_for_static_fini(%ident_t* {{.+}}, i32 %{{.+}})
 //
 // Linear start and step are used to calculate final value of the linear variables.
-// CHECK: [[LIN_VAR:%.+]] = load i32*, i32** %
 // CHECK: [[LINSTART:.+]] = load i32, i32* [[LIN_START]]
 // CHECK: [[LINSTEP:.+]] = load i64, i64* [[LIN_STEP]]
 // CHECK: store i32 {{.+}}, i32* [[LIN_VAR]],
-// CHECK: [[GLIN_VAR:%.+]] = load double**, double*** %
 // CHECK: [[GLINSTART:.+]] = load double*, double** [[GLIN_START]]
 // CHECK: store double* {{.*}}[[GLIN_VAR]]
 // CHECK: call void @__kmpc_barrier(%ident_t* {{.+}}, i32 %{{.+}})

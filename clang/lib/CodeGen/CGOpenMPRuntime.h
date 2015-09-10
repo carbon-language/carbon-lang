@@ -405,7 +405,8 @@ public:
   ///
   virtual void emitParallelCall(CodeGenFunction &CGF, SourceLocation Loc,
                                 llvm::Value *OutlinedFn,
-                                Address CapturedStruct, const Expr *IfCond);
+                                ArrayRef<llvm::Value *> CapturedVars,
+                                const Expr *IfCond);
 
   /// \brief Emits a critical region.
   /// \param CriticalName Name of the critical region.

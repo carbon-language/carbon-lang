@@ -75,7 +75,7 @@ int main() {
     // LAMBDA: store double 2.0{{.+}}, double* [[G_REF]]
 
     // LAMBDA: store double* %{{.+}}, double** %{{.+}},
-    // LAMBDA: define internal i32 [[TASK_ENTRY]](i32, %{{.+}}*)
+    // LAMBDA: define internal i32 [[TASK_ENTRY]](i32, %{{.+}}* noalias)
     g = 1;
     // LAMBDA: store double 1.0{{.+}}, double* %{{.+}},
     // LAMBDA: call void [[INNER_LAMBDA]](%
@@ -110,7 +110,7 @@ int main() {
     // BLOCKS: ret
 
     // BLOCKS: store double* %{{.+}}, double** %{{.+}},
-    // BLOCKS: define internal i32 [[TASK_ENTRY]](i32, %{{.+}}*)
+    // BLOCKS: define internal i32 [[TASK_ENTRY]](i32, %{{.+}}* noalias)
     g = 1;
     // BLOCKS: store double 1.0{{.+}}, double* %{{.+}},
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
@@ -241,7 +241,7 @@ int main() {
 // CHECK: store [2 x i32]* [[PRIV_VEC]], [2 x i32]** [[ARG4]],
 // CHECK: ret void
 
-// CHECK: define internal i32 [[TASK_ENTRY]](i32, [[KMP_TASK_MAIN_TY]]*)
+// CHECK: define internal i32 [[TASK_ENTRY]](i32, [[KMP_TASK_MAIN_TY]]* noalias)
 
 // CHECK: [[PRIV_VAR_ADDR:%.+]] = alloca [[S_DOUBLE_TY]]*,
 // CHECK: [[PRIV_T_VAR_ADDR:%.+]] = alloca i32*,
@@ -263,7 +263,7 @@ int main() {
 
 // CHECK: ret
 
-// CHECK: define internal i32 [[DESTRUCTORS]](i32, [[KMP_TASK_MAIN_TY]]*)
+// CHECK: define internal i32 [[DESTRUCTORS]](i32, [[KMP_TASK_MAIN_TY]]* noalias)
 // CHECK: [[PRIVATES:%.+]] = getelementptr inbounds [[KMP_TASK_MAIN_TY]], [[KMP_TASK_MAIN_TY]]* [[RES_KMP_TASK:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 1
 // CHECK: [[PRIVATE_VAR_REF:%.+]] = getelementptr inbounds [[PRIVATES_MAIN_TY]], [[PRIVATES_MAIN_TY]]* [[PRIVATES]], i{{.+}} 0, i{{.+}} 0
 // CHECK: [[PRIVATE_S_ARR_REF:%.+]] = getelementptr inbounds [[PRIVATES_MAIN_TY]], [[PRIVATES_MAIN_TY]]* [[PRIVATES]], i{{.+}} 0, i{{.+}} 1
@@ -376,7 +376,7 @@ int main() {
 // CHECK: store [[S_INT_TY]]* [[PRIV_VAR]], [[S_INT_TY]]** [[ARG4]],
 // CHECK: ret void
 
-// CHECK: define internal i32 [[TASK_ENTRY]](i32, [[KMP_TASK_TMAIN_TY]]*)
+// CHECK: define internal i32 [[TASK_ENTRY]](i32, [[KMP_TASK_TMAIN_TY]]* noalias)
 
 // CHECK: [[PRIV_T_VAR_ADDR:%.+]] = alloca i32*,
 // CHECK: [[PRIV_VEC_ADDR:%.+]] = alloca [2 x i32]*,
@@ -398,7 +398,7 @@ int main() {
 
 // CHECK: ret
 
-// CHECK: define internal i32 [[DESTRUCTORS]](i32, [[KMP_TASK_TMAIN_TY]]*)
+// CHECK: define internal i32 [[DESTRUCTORS]](i32, [[KMP_TASK_TMAIN_TY]]* noalias)
 // CHECK: [[PRIVATES:%.+]] = getelementptr inbounds [[KMP_TASK_TMAIN_TY]], [[KMP_TASK_TMAIN_TY]]* [[RES_KMP_TASK:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 1
 // CHECK: [[PRIVATE_S_ARR_REF:%.+]] = getelementptr inbounds [[PRIVATES_TMAIN_TY]], [[PRIVATES_TMAIN_TY]]* [[PRIVATES]], i{{.+}} 0, i{{.+}} 2
 // CHECK: [[PRIVATE_VAR_REF:%.+]] = getelementptr inbounds [[PRIVATES_TMAIN_TY]], [[PRIVATES_TMAIN_TY]]* [[PRIVATES]], i{{.+}} 0, i{{.+}} 3
