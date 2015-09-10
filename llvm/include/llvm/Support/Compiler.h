@@ -189,7 +189,7 @@
 /// 3.4 supported this but is buggy in various cases and produces unimplemented
 /// errors, just use it in GCC 4.0 and later.
 #if __has_attribute(always_inline) || LLVM_GNUC_PREREQ(4, 0, 0)
-#define LLVM_ATTRIBUTE_ALWAYS_INLINE inline __attribute__((always_inline))
+#define LLVM_ATTRIBUTE_ALWAYS_INLINE __attribute__((always_inline))
 #elif defined(_MSC_VER)
 #define LLVM_ATTRIBUTE_ALWAYS_INLINE __forceinline
 #else
