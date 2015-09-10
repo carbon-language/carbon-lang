@@ -82,6 +82,12 @@ static void dumpSectionMemory(const SectionEntry &S, StringRef State) {
 void RuntimeDyldImpl::resolveRelocations() {
   MutexGuard locked(lock);
 
+  // Print out the sections prior to relocation.
+  DEBUG(
+    for (int i = 0, e = Sections.size(); i != e; ++i)
+      dumpSectionMemory(Sections[i], "before relocations");
+  );
+
   // First, resolve relocations associated with external symbols.
   resolveExternalSymbols();
 
@@ -94,11 +100,16 @@ void RuntimeDyldImpl::resolveRelocations() {
     uint64_t Addr = Sections[i].LoadAddress;
     DEBUG(dbgs() << "Resolving relocations Section #" << i << "\t"
                  << format("%p", (uintptr_t)Addr) << "\n");
-    DEBUG(dumpSectionMemory(Sections[i], "before relocations"));
     resolveRelocationList(Relocations[i], Addr);
-    DEBUG(dumpSectionMemory(Sections[i], "after relocations"));
     Relocations.erase(i);
   }
+
+  // Print out sections after relocation.
+  DEBUG(
+    for (int i = 0, e = Sections.size(); i != e; ++i)
+      dumpSectionMemory(Sections[i], "after relocations");
+  );
+
 }
 
 void RuntimeDyldImpl::mapSectionAddress(const void *LocalAddress,
