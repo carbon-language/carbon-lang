@@ -46,6 +46,22 @@ The Basics
    perform badly with confronted with such structures.  The only exception to 
    this guidance is that a unified return block with high in-degree is fine.
 
+Use of allocas
+^^^^^^^^^^^^^^
+
+An alloca instruction can be used to represent a function scoped stack slot, 
+but can also represent dynamic frame expansion.  When representing function 
+scoped variables or locations, placing alloca instructions at the beginning of 
+the entry block should be preferred.   In particular, place them before any 
+call instructions. Call instructions might get inlined and replaced with 
+multiple basic blocks. The end result is that a following alloca instruction 
+would no longer be in the entry basic block afterward.
+
+The SROA (Scalar Replacement Of Aggregates) and Mem2Reg passes only attempt
+to eliminate alloca instructions that are in the entry basic block.  Given 
+SSA is the canonical form expected by much of the optimizer; if allocas can 
+not be eliminated by Mem2Reg or SROA, the optimizer is likely to be less 
+effective than it could be.
 
 Avoid loads and stores of large aggregate type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -78,6 +94,31 @@ width.  When it does so, it will default to using sign extension (sext)
 operations for safety.  If your source language provides information about 
 the range of the index, you may wish to manually extend indices to machine 
 register width using a zext instruction.
+
+When to specify alignment
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+LLVM will always generate correct code if you don’t specify alignment, but may
+generate inefficient code.  For example, if you are targeting MIPS (or older 
+ARM ISAs) then the hardware does not handle unaligned loads and stores, and 
+so you will enter a trap-and-emulate path if you do a load or store with 
+lower-than-natural alignment.  To avoid this, LLVM will emit a slower 
+sequence of loads, shifts and masks (or load-right + load-left on MIPS) for 
+all cases where the load / store does not have a sufficiently high alignment 
+in the IR.
+
+The alignment is used to guarantee the alignment on allocas and globals, 
+though in most cases this is unnecessary (most targets have a sufficiently 
+high default alignment that they’ll be fine).  It is also used to provide a 
+contract to the back end saying ‘either this load/store has this alignment, or
+it is undefined behavior’.  This means that the back end is free to emit 
+instructions that rely on that alignment (and mid-level optimizers are free to 
+perform transforms that require that alignment).  For x86, it doesn’t make 
+much difference, as almost all instructions are alignment-independent.  For 
+MIPS, it can make a big difference.
+
+Note that if your loads and stores are atomic, the backend will be unable to 
+lower an under aligned access into a sequence of natively aligned accesses.  
+As a result, alignment is mandatory for atomic loads and stores.
 
 Other Things to Consider
 ^^^^^^^^^^^^^^^^^^^^^^^^
