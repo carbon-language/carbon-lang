@@ -3423,11 +3423,17 @@ static bool EliminateDeadSwitchCases(SwitchInst *SI, AssumptionCache *AC,
   }
 
   // If we can prove that the cases must cover all possible values, the 
-  // default destination becomes dead and we can remove it.
+  // default destination becomes dead and we can remove it.  If we know some 
+  // of the bits in the value, we can use that to more precisely compute the
+  // number of possible unique case values.
   bool HasDefault =
     !isa<UnreachableInst>(SI->getDefaultDest()->getFirstNonPHIOrDbg());
-  if (HasDefault && Bits < 64 /* avoid overflow */ &&  
-      SI->getNumCases() == (1ULL << Bits)) {
+  const unsigned NumUnknownBits = Bits - 
+    (KnownZero.Or(KnownOne)).countPopulation();
+  assert(0 <= NumUnknownBits && NumUnknownBits <= Bits);
+  if (HasDefault && DeadCases.empty() &&
+      NumUnknownBits < 64 /* avoid overflow */ &&  
+      SI->getNumCases() == (1ULL << NumUnknownBits)) {
     DEBUG(dbgs() << "SimplifyCFG: switch default is dead.\n");
     BasicBlock *NewDefault = SplitBlockPredecessors(SI->getDefaultDest(),
                                                     SI->getParent(), "");
