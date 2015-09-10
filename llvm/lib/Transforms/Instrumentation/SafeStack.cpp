@@ -220,11 +220,11 @@ public:
     initializeSafeStackPass(*PassRegistry::getPassRegistry());
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired<AAResultsWrapperPass>();
   }
 
-  bool doInitialization(Module &M) override {
+  virtual bool doInitialization(Module &M) {
     DL = &M.getDataLayout();
 
     StackPtrTy = Type::getInt8PtrTy(M.getContext());
@@ -235,7 +235,8 @@ public:
     return false;
   }
 
-  bool runOnFunction(Function &F) override;
+  bool runOnFunction(Function &F);
+
 }; // class SafeStack
 
 Constant *SafeStack::getOrCreateUnsafeStackPtr(Module &M) {

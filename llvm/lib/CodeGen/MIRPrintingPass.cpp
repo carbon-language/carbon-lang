@@ -40,7 +40,7 @@ struct MIRPrintingPass : public MachineFunctionPass {
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
-  bool runOnMachineFunction(MachineFunction &MF) override {
+  virtual bool runOnMachineFunction(MachineFunction &MF) override {
     std::string Str;
     raw_string_ostream StrOS(Str);
     printMIR(StrOS, MF);
@@ -48,7 +48,7 @@ struct MIRPrintingPass : public MachineFunctionPass {
     return false;
   }
 
-  bool doFinalization(Module &M) override {
+  virtual bool doFinalization(Module &M) override {
     printMIR(OS, M);
     OS << MachineFunctions;
     return false;

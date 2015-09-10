@@ -507,7 +507,7 @@ public:
   explicit raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {
     SetUnbuffered();
   }
-  ~raw_svector_ostream() override = default;
+  ~raw_svector_ostream() override {}
 
   void flush() = delete;
 
@@ -536,9 +536,9 @@ class buffer_ostream : public raw_svector_ostream {
 
 public:
   buffer_ostream(raw_ostream &OS) : raw_svector_ostream(Buffer), OS(OS) {}
-  ~buffer_ostream() override { OS << str(); }
+  ~buffer_ostream() { OS << str(); }
 };
 
 } // end llvm namespace
 
-#endif // LLVM_SUPPORT_RAW_OSTREAM_H
+#endif

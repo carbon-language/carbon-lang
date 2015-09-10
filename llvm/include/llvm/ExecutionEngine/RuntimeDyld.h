@@ -69,8 +69,7 @@ public:
     virtual object::OwningBinary<object::ObjectFile>
     getObjectForDebug(const object::ObjectFile &Obj) const = 0;
 
-    uint64_t
-    getSectionLoadAddress(const object::SectionRef &Sec) const override;
+    uint64_t getSectionLoadAddress(const object::SectionRef &Sec) const;
 
   protected:
     virtual void anchor();
@@ -96,7 +95,7 @@ public:
   /// \brief Memory Management.
   class MemoryManager {
   public:
-    virtual ~MemoryManager() = default;
+    virtual ~MemoryManager() {}
 
     /// Allocate a memory block of (at least) the given size suitable for
     /// executable code. The SectionID is a unique identifier assigned by the
@@ -158,7 +157,7 @@ public:
   /// \brief Symbol resolution.
   class SymbolResolver {
   public:
-    virtual ~SymbolResolver() = default;
+    virtual ~SymbolResolver() {}
 
     /// This method returns the address of the specified function or variable.
     /// It is used to resolve symbols during module linking.
@@ -253,4 +252,4 @@ private:
 
 } // end namespace llvm
 
-#endif // LLVM_EXECUTIONENGINE_RUNTIMEDYLD_H
+#endif

@@ -58,7 +58,7 @@ public:
   RecTyKind getRecTyKind() const { return Kind; }
 
   RecTy(RecTyKind K) : Kind(K) {}
-  virtual ~RecTy() = default;
+  virtual ~RecTy() {}
 
   virtual std::string getAsString() const = 0;
   void print(raw_ostream &OS) const { OS << getAsString(); }
@@ -267,7 +267,7 @@ protected:
   explicit Init(InitKind K) : Kind(K) {}
 
 public:
-  virtual ~Init() = default;
+  virtual ~Init() {}
 
   /// isComplete - This virtual method should be overridden by values that may
   /// not be completely specified yet.
@@ -366,7 +366,7 @@ class TypedInit : public Init {
 
 protected:
   explicit TypedInit(InitKind K, RecTy *T) : Init(K), Ty(T) {}
-  ~TypedInit() override {
+  ~TypedInit() {
     // If this is a DefInit we need to delete the RecordRecTy.
     if (getKind() == IK_DefInit)
       delete Ty;
@@ -1587,6 +1587,6 @@ Init *QualifyName(Record &CurRec, MultiClass *CurMultiClass,
 Init *QualifyName(Record &CurRec, MultiClass *CurMultiClass,
                   const std::string &Name, const std::string &Scoper);
 
-} // end llvm namespace
+} // End llvm namespace
 
-#endif // LLVM_TABLEGEN_RECORD_H
+#endif
