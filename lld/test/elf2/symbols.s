@@ -51,7 +51,7 @@ internal:
 // CHECK-NEXT:   SHF_ALLOC
 // CHECK-NEXT:   SHF_EXECINSTR
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x10000
+// CHECK-NEXT: Address: 0x11000
 
 // CHECK:      Name: .bss (14)
 // CHECK-NEXT: Type: SHT_NOBITS (0x8)
@@ -59,7 +59,7 @@ internal:
 // CHECK-NEXT:   SHF_ALLOC (0x2)
 // CHECK-NEXT:   SHF_WRITE (0x1)
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x11000
+// CHECK-NEXT: Address: 0x12000
 // CHECK-NEXT: Offset: 0x2000
 // CHECK-NEXT: Size: 4
 
@@ -68,7 +68,7 @@ internal:
 // CHECK-NEXT: Flags [
 // CHECK-NEXT:   SHF_ALLOC
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x12000
+// CHECK-NEXT: Address: 0x13000
 
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
@@ -82,7 +82,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: _start
-// CHECK-NEXT:     Value: 0x10000
+// CHECK-NEXT:     Value: 0x11000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: Function
@@ -109,7 +109,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: foo
-// CHECK-NEXT:     Value: 0x10000
+// CHECK-NEXT:     Value: 0x11000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Weak (0x2)
 // CHECK-NEXT:     Type: Object
@@ -118,7 +118,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: common (34)
-// CHECK-NEXT:     Value: 0x11000
+// CHECK-NEXT:     Value: 0x12000
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: Object (0x1)
@@ -127,7 +127,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed
-// CHECK-NEXT:     Value: 0x12000
+// CHECK-NEXT:     Value: 0x13000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: None
@@ -136,7 +136,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: protected
-// CHECK-NEXT:     Value: 0x12008
+// CHECK-NEXT:     Value: 0x13008
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
@@ -145,7 +145,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed3
-// CHECK-NEXT:     Value: 0x12008
+// CHECK-NEXT:     Value: 0x13008
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
@@ -154,7 +154,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed2
-// CHECK-NEXT:     Value: 0x12004
+// CHECK-NEXT:     Value: 0x13004
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None

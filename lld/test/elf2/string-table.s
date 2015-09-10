@@ -23,7 +23,7 @@ hidden:
 // CHECK-NEXT: Flags [
 // CHECK-NEXT:  SHF_ALLOC
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x10000
+// CHECK-NEXT: Address: 0x11000
 
 // CHECK:      Name: foobar
 // CHECK-NEXT: Type: SHT_PROGBITS

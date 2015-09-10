@@ -29,6 +29,13 @@ using namespace lld::elf2;
 
 static const int PageSize = 4096;
 
+// On linux x86_64 mmap of the first 15 pages fails, so the smallest value
+// that can be used in here is 0x10000.
+// If using 2MB pages, the smallest page aligned address that works is
+// 0x200000, but it looks like every OS uses 4k pages for executables.
+// FIXME: This is architecture and OS dependent.
+static const int VAStart = 0x10000;
+
 namespace {
 // OutputSection represents a section in an output file. It's a
 // container of chunks. OutputSection and Chunk are 1:N relationship.
@@ -587,20 +594,22 @@ static bool outputSectionHasPHDR(OutputSectionBase<ELFT::Is64Bits> *Sec) {
 // Visits all sections to assign incremental, non-overlapping RVAs and
 // file offsets.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
-  // On linux x86_64 mmap of the first 15 pages fails, so the smallest value
-  // that can be used in here is 0x10000.
-  // If using 2MB pages, the smallest page aligned address that works is
-  // 0x200000, but it looks like every OS uses 4k pages for executables.
-  // FIXME: This is architecture and OS dependent.
-  uintX_t VA = 0x10000;
+  uintX_t VA = VAStart;
+  uintX_t FileOff = 0;
 
-  uintX_t FileOff = sizeof(Elf_Ehdr);
+  FileOff += sizeof(Elf_Ehdr);
+  VA += sizeof(Elf_Ehdr);
 
   // Reserve space for PHDRs.
   ProgramHeaderOff = FileOff;
   FileOff = RoundUpToAlignment(FileOff, PageSize);
+  VA = RoundUpToAlignment(VA, PageSize);
 
   NumPhdrs = 0;
+  // Add a PHDR for the elf header and program headers. Some dynamic linkers
+  // (musl at least) require them to be covered by a PT_LOAD.
+  ++NumPhdrs;
+
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
     StrTabSec.add(Sec->getName());
     Sec->finalize();
@@ -681,6 +690,16 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_shstrndx = StrTabSec.getSectionIndex();
 
   auto PHdrs = reinterpret_cast<Elf_Phdr *>(Buf + EHdr->e_phoff);
+  PHdrs->p_type = PT_LOAD;
+  PHdrs->p_flags = PF_R;
+  PHdrs->p_offset = 0;
+  PHdrs->p_vaddr = VAStart;
+  PHdrs->p_paddr = PHdrs->p_vaddr;
+  PHdrs->p_filesz = ProgramHeaderOff + NumPhdrs * sizeof(Elf_Phdr);
+  PHdrs->p_memsz = PHdrs->p_filesz;
+  PHdrs->p_align = PageSize;
+  ++PHdrs;
+
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
     if (!outputSectionHasPHDR<ELFT>(Sec))
       continue;
