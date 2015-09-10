@@ -2,10 +2,9 @@
 
 define void @test_stnp_v4i64(<4 x i64>* %p, <4 x i64> %v) #0 {
 ; CHECK-LABEL: test_stnp_v4i64:
-; CHECK-NEXT:  add x[[PTR:[0-9]+]], x0, #16
 ; CHECK-NEXT:  mov d[[HI1:[0-9]+]], v1[1]
 ; CHECK-NEXT:  mov d[[HI0:[0-9]+]], v0[1]
-; CHECK-NEXT:  stnp d1, d[[HI1]], [x[[PTR]]]
+; CHECK-NEXT:  stnp d1, d[[HI1]], [x0, #16]
 ; CHECK-NEXT:  stnp d0, d[[HI0]], [x0]
 ; CHECK-NEXT:  ret
   store <4 x i64> %v, <4 x i64>* %p, align 1, !nontemporal !0
@@ -123,9 +122,8 @@ define void @test_stnp_i64(i64* %p, i64 %v) #0 {
 
 define void @test_stnp_v2f64_offset(<2 x double>* %p, <2 x double> %v) #0 {
 ; CHECK-LABEL: test_stnp_v2f64_offset:
-; CHECK-NEXT:  add x[[PTR:[0-9]+]], x0, #16
 ; CHECK-NEXT:  mov d[[HI:[0-9]+]], v0[1]
-; CHECK-NEXT:  stnp d0, d[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  stnp d0, d[[HI]], [x0, #16]
 ; CHECK-NEXT:  ret
   %tmp0 = getelementptr <2 x double>, <2 x double>* %p, i32 1
   store <2 x double> %v, <2 x double>* %tmp0, align 1, !nontemporal !0
@@ -134,9 +132,8 @@ define void @test_stnp_v2f64_offset(<2 x double>* %p, <2 x double> %v) #0 {
 
 define void @test_stnp_v2f64_offset_neg(<2 x double>* %p, <2 x double> %v) #0 {
 ; CHECK-LABEL: test_stnp_v2f64_offset_neg:
-; CHECK-NEXT:  sub x[[PTR:[0-9]+]], x0, #16
 ; CHECK-NEXT:  mov d[[HI:[0-9]+]], v0[1]
-; CHECK-NEXT:  stnp d0, d[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  stnp d0, d[[HI]], [x0, #-16]
 ; CHECK-NEXT:  ret
   %tmp0 = getelementptr <2 x double>, <2 x double>* %p, i32 -1
   store <2 x double> %v, <2 x double>* %tmp0, align 1, !nontemporal !0
@@ -145,9 +142,8 @@ define void @test_stnp_v2f64_offset_neg(<2 x double>* %p, <2 x double> %v) #0 {
 
 define void @test_stnp_v2f32_offset(<2 x float>* %p, <2 x float> %v) #0 {
 ; CHECK-LABEL: test_stnp_v2f32_offset:
-; CHECK-NEXT:  add x[[PTR:[0-9]+]], x0, #8
 ; CHECK-NEXT:  mov s[[HI:[0-9]+]], v0[1]
-; CHECK-NEXT:  stnp s0, s[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  stnp s0, s[[HI]], [x0, #8]
 ; CHECK-NEXT:  ret
   %tmp0 = getelementptr <2 x float>, <2 x float>* %p, i32 1
   store <2 x float> %v, <2 x float>* %tmp0, align 1, !nontemporal !0
@@ -156,9 +152,8 @@ define void @test_stnp_v2f32_offset(<2 x float>* %p, <2 x float> %v) #0 {
 
 define void @test_stnp_v2f32_offset_neg(<2 x float>* %p, <2 x float> %v) #0 {
 ; CHECK-LABEL: test_stnp_v2f32_offset_neg:
-; CHECK-NEXT:  sub x[[PTR:[0-9]+]], x0, #8
 ; CHECK-NEXT:  mov s[[HI:[0-9]+]], v0[1]
-; CHECK-NEXT:  stnp s0, s[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  stnp s0, s[[HI]], [x0, #-8]
 ; CHECK-NEXT:  ret
   %tmp0 = getelementptr <2 x float>, <2 x float>* %p, i32 -1
   store <2 x float> %v, <2 x float>* %tmp0, align 1, !nontemporal !0
@@ -167,9 +162,8 @@ define void @test_stnp_v2f32_offset_neg(<2 x float>* %p, <2 x float> %v) #0 {
 
 define void @test_stnp_i64_offset(i64* %p, i64 %v) #0 {
 ; CHECK-LABEL: test_stnp_i64_offset:
-; CHECK-NEXT:  add x[[PTR:[0-9]+]], x0, #8
 ; CHECK-NEXT:  ubfx x[[HI:[0-9]+]], x1, #0, #32
-; CHECK-NEXT:  stnp w1, w[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  stnp w1, w[[HI]], [x0, #8]
 ; CHECK-NEXT:  ret
   %tmp0 = getelementptr i64, i64* %p, i32 1
   store i64 %v, i64* %tmp0, align 1, !nontemporal !0
@@ -178,12 +172,169 @@ define void @test_stnp_i64_offset(i64* %p, i64 %v) #0 {
 
 define void @test_stnp_i64_offset_neg(i64* %p, i64 %v) #0 {
 ; CHECK-LABEL: test_stnp_i64_offset_neg:
-; CHECK-NEXT:  sub x[[PTR:[0-9]+]], x0, #8
 ; CHECK-NEXT:  ubfx x[[HI:[0-9]+]], x1, #0, #32
-; CHECK-NEXT:  stnp w1, w[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  stnp w1, w[[HI]], [x0, #-8]
 ; CHECK-NEXT:  ret
   %tmp0 = getelementptr i64, i64* %p, i32 -1
   store i64 %v, i64* %tmp0, align 1, !nontemporal !0
+  ret void
+}
+
+define void @test_stnp_v4f32_invalid_offset_4(i8* %p, <4 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v4f32_invalid_offset_4:
+; CHECK-NEXT:  add x[[PTR:[0-9]+]], x0, #4
+; CHECK-NEXT:  mov d[[HI:[0-9]+]], v0[1]
+; CHECK-NEXT:  stnp d0, d[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  ret
+  %tmp0 = getelementptr i8, i8* %p, i32 4
+  %tmp1 = bitcast i8* %tmp0 to <4 x float>*
+  store <4 x float> %v, <4 x float>* %tmp1, align 1, !nontemporal !0
+  ret void
+}
+
+define void @test_stnp_v4f32_invalid_offset_neg_4(i8* %p, <4 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v4f32_invalid_offset_neg_4:
+; CHECK-NEXT:  sub x[[PTR:[0-9]+]], x0, #4
+; CHECK-NEXT:  mov d[[HI:[0-9]+]], v0[1]
+; CHECK-NEXT:  stnp d0, d[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  ret
+  %tmp0 = getelementptr i8, i8* %p, i32 -4
+  %tmp1 = bitcast i8* %tmp0 to <4 x float>*
+  store <4 x float> %v, <4 x float>* %tmp1, align 1, !nontemporal !0
+  ret void
+}
+
+define void @test_stnp_v4f32_invalid_offset_512(i8* %p, <4 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v4f32_invalid_offset_512:
+; CHECK-NEXT:  add x[[PTR:[0-9]+]], x0, #512
+; CHECK-NEXT:  mov d[[HI:[0-9]+]], v0[1]
+; CHECK-NEXT:  stnp d0, d[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  ret
+  %tmp0 = getelementptr i8, i8* %p, i32 512
+  %tmp1 = bitcast i8* %tmp0 to <4 x float>*
+  store <4 x float> %v, <4 x float>* %tmp1, align 1, !nontemporal !0
+  ret void
+}
+
+define void @test_stnp_v4f32_offset_504(i8* %p, <4 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v4f32_offset_504:
+; CHECK-NEXT:  mov d[[HI:[0-9]+]], v0[1]
+; CHECK-NEXT:  stnp d0, d[[HI]], [x0, #504]
+; CHECK-NEXT:  ret
+  %tmp0 = getelementptr i8, i8* %p, i32 504
+  %tmp1 = bitcast i8* %tmp0 to <4 x float>*
+  store <4 x float> %v, <4 x float>* %tmp1, align 1, !nontemporal !0
+  ret void
+}
+
+define void @test_stnp_v4f32_invalid_offset_508(i8* %p, <4 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v4f32_invalid_offset_508:
+; CHECK-NEXT:  add x[[PTR:[0-9]+]], x0, #508
+; CHECK-NEXT:  mov d[[HI:[0-9]+]], v0[1]
+; CHECK-NEXT:  stnp d0, d[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  ret
+  %tmp0 = getelementptr i8, i8* %p, i32 508
+  %tmp1 = bitcast i8* %tmp0 to <4 x float>*
+  store <4 x float> %v, <4 x float>* %tmp1, align 1, !nontemporal !0
+  ret void
+}
+
+define void @test_stnp_v4f32_invalid_offset_neg_520(i8* %p, <4 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v4f32_invalid_offset_neg_520:
+; CHECK-NEXT:  sub x[[PTR:[0-9]+]], x0, #520
+; CHECK-NEXT:  mov d[[HI:[0-9]+]], v0[1]
+; CHECK-NEXT:  stnp d0, d[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  ret
+  %tmp0 = getelementptr i8, i8* %p, i32 -520
+  %tmp1 = bitcast i8* %tmp0 to <4 x float>*
+  store <4 x float> %v, <4 x float>* %tmp1, align 1, !nontemporal !0
+  ret void
+}
+
+define void @test_stnp_v4f32_offset_neg_512(i8* %p, <4 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v4f32_offset_neg_512:
+; CHECK-NEXT:  mov d[[HI:[0-9]+]], v0[1]
+; CHECK-NEXT:  stnp d0, d[[HI]], [x0, #-512]
+; CHECK-NEXT:  ret
+  %tmp0 = getelementptr i8, i8* %p, i32 -512
+  %tmp1 = bitcast i8* %tmp0 to <4 x float>*
+  store <4 x float> %v, <4 x float>* %tmp1, align 1, !nontemporal !0
+  ret void
+}
+
+
+define void @test_stnp_v2f32_invalid_offset_256(i8* %p, <2 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v2f32_invalid_offset_256:
+; CHECK-NEXT:  add x[[PTR:[0-9]+]], x0, #256
+; CHECK-NEXT:  mov s[[HI:[0-9]+]], v0[1]
+; CHECK-NEXT:  stnp s0, s[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  ret
+  %tmp0 = getelementptr i8, i8* %p, i32 256
+  %tmp1 = bitcast i8* %tmp0 to <2 x float>*
+  store <2 x float> %v, <2 x float>* %tmp1, align 1, !nontemporal !0
+  ret void
+}
+
+define void @test_stnp_v2f32_offset_252(i8* %p, <2 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v2f32_offset_252:
+; CHECK-NEXT:  mov s[[HI:[0-9]+]], v0[1]
+; CHECK-NEXT:  stnp s0, s[[HI]], [x0, #252]
+; CHECK-NEXT:  ret
+  %tmp0 = getelementptr i8, i8* %p, i32 252
+  %tmp1 = bitcast i8* %tmp0 to <2 x float>*
+  store <2 x float> %v, <2 x float>* %tmp1, align 1, !nontemporal !0
+  ret void
+}
+
+define void @test_stnp_v2f32_invalid_offset_neg_260(i8* %p, <2 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v2f32_invalid_offset_neg_260:
+; CHECK-NEXT:  sub x[[PTR:[0-9]+]], x0, #260
+; CHECK-NEXT:  mov s[[HI:[0-9]+]], v0[1]
+; CHECK-NEXT:  stnp s0, s[[HI]], [x[[PTR]]]
+; CHECK-NEXT:  ret
+  %tmp0 = getelementptr i8, i8* %p, i32 -260
+  %tmp1 = bitcast i8* %tmp0 to <2 x float>*
+  store <2 x float> %v, <2 x float>* %tmp1, align 1, !nontemporal !0
+  ret void
+}
+
+define void @test_stnp_v2f32_offset_neg_256(i8* %p, <2 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v2f32_offset_neg_256:
+; CHECK-NEXT:  mov s[[HI:[0-9]+]], v0[1]
+; CHECK-NEXT:  stnp s0, s[[HI]], [x0, #-256]
+; CHECK-NEXT:  ret
+  %tmp0 = getelementptr i8, i8* %p, i32 -256
+  %tmp1 = bitcast i8* %tmp0 to <2 x float>*
+  store <2 x float> %v, <2 x float>* %tmp1, align 1, !nontemporal !0
+  ret void
+}
+
+declare void @dummy(<4 x float>*)
+
+define void @test_stnp_v4f32_offset_alloca(<4 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v4f32_offset_alloca:
+; CHECK:       mov x29, sp
+; CHECK:       mov x[[PTR:[0-9]+]], sp
+; CHECK-NEXT:  stnp d0, d{{.*}}, [x[[PTR]]]
+; CHECK-NEXT:  mov x0, sp
+; CHECK-NEXT:  bl _dummy
+  %tmp0 = alloca <4 x float>
+  store <4 x float> %v, <4 x float>* %tmp0, align 1, !nontemporal !0
+  call void @dummy(<4 x float>* %tmp0)
+  ret void
+}
+
+define void @test_stnp_v4f32_offset_alloca_2(<4 x float> %v) #0 {
+; CHECK-LABEL: test_stnp_v4f32_offset_alloca_2:
+; CHECK:       mov x29, sp
+; CHECK:       mov x[[PTR:[0-9]+]], sp
+; CHECK-NEXT:  stnp d0, d{{.*}}, [x[[PTR]], #16]
+; CHECK-NEXT:  mov x0, sp
+; CHECK-NEXT:  bl _dummy
+  %tmp0 = alloca <4 x float>, i32 2
+  %tmp1 = getelementptr <4 x float>, <4 x float>* %tmp0, i32 1
+  store <4 x float> %v, <4 x float>* %tmp1, align 1, !nontemporal !0
+  call void @dummy(<4 x float>* %tmp0)
   ret void
 }
 
