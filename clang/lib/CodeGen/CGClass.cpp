@@ -1984,14 +1984,12 @@ void CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                              bool ForVirtualBase,
                                              bool Delegating, Address This,
                                              const CXXConstructExpr *E) {
-  const CXXRecordDecl *ClassDecl = D->getParent();
-
   // C++11 [class.mfct.non-static]p2:
   //   If a non-static member function of a class X is called for an object that
   //   is not of type X, or of a type derived from X, the behavior is undefined.
   // FIXME: Provide a source location here.
   EmitTypeCheck(CodeGenFunction::TCK_ConstructorCall, SourceLocation(),
-                This.getPointer(), getContext().getRecordType(ClassDecl));
+                This.getPointer(), getContext().getRecordType(D->getParent()));
 
   if (D->isTrivial() && D->isDefaultConstructor()) {
     assert(E->getNumArgs() == 0 && "trivial default ctor with args");
@@ -2007,7 +2005,7 @@ void CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
     const Expr *Arg = E->getArg(0);
     QualType SrcTy = Arg->getType();
     Address Src = EmitLValue(Arg).getAddress();
-    QualType DestTy = getContext().getTypeDeclType(ClassDecl);
+    QualType DestTy = getContext().getTypeDeclType(D->getParent());
     EmitAggregateCopyCtor(This, Src, DestTy, SrcTy);
     return;
   }
@@ -2030,48 +2028,6 @@ void CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
   const CGFunctionInfo &Info =
       CGM.getTypes().arrangeCXXConstructorCall(Args, D, Type, ExtraArgs);
   EmitCall(Info, Callee, ReturnValueSlot(), Args, D);
-
-  // Generate vtable assumptions if we're constructing a complete object
-  // with a vtable.  We don't do this for base subobjects for two reasons:
-  // first, it's incorrect for classes with virtual bases, and second, we're
-  // about to overwrite the vptrs anyway.
-  // We also have to make sure if we can refer to vtable:
-  // - If vtable is external then it's safe to use it (for available_externally
-  //   CGVTables will make sure if it can emit it).
-  // - Otherwise we can refer to vtable if it's safe to speculatively emit.
-  // FIXME: If vtable is used by ctor/dtor, we are always safe to refer to it.
-  if (CGM.getCodeGenOpts().OptimizationLevel > 0 &&
-      ClassDecl->isDynamicClass() && Type != Ctor_Base &&
-      (CGM.getVTables().isVTableExternal(ClassDecl) ||
-       CGM.getCXXABI().canSpeculativelyEmitVTable(ClassDecl)))
-    EmitVTableAssumptionLoads(ClassDecl, This);
-}
-
-void CodeGenFunction::EmitVTableAssumptionLoad(const VPtr &Vptr, Address This) {
-  llvm::Value *VTableGlobal =
-      CGM.getCXXABI().getVTableAddressPoint(Vptr.Base, Vptr.VTableClass);
-  if (!VTableGlobal)
-    return;
-
-  // We can just use the base offset in the complete class.
-  CharUnits NonVirtualOffset = Vptr.Base.getBaseOffset();
-
-  if (!NonVirtualOffset.isZero())
-    This =
-        ApplyNonVirtualAndVirtualOffset(*this, This, NonVirtualOffset, nullptr,
-                                        Vptr.VTableClass, Vptr.NearestVBase);
-
-  llvm::Value *VPtrValue = GetVTablePtr(This, VTableGlobal->getType());
-  llvm::Value *Cmp =
-      Builder.CreateICmpEQ(VPtrValue, VTableGlobal, "cmp.vtables");
-  Builder.CreateAssumption(Cmp);
-}
-
-void CodeGenFunction::EmitVTableAssumptionLoads(const CXXRecordDecl *ClassDecl,
-                                                Address This) {
-  if (CGM.getCXXABI().doStructorsInitializeVPtrs(ClassDecl))
-    for (const VPtr &Vptr : getVTablePointers(ClassDecl))
-      EmitVTableAssumptionLoad(Vptr, This);
 }
 
 void
@@ -2237,12 +2193,24 @@ void CodeGenFunction::PushDestructorCleanup(QualType T, Address Addr) {
   PushDestructorCleanup(D, Addr);
 }
 
-void CodeGenFunction::InitializeVTablePointer(const VPtr &Vptr) {
+void
+CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
+                                         const CXXRecordDecl *NearestVBase,
+                                         CharUnits OffsetFromNearestVBase,
+                                         const CXXRecordDecl *VTableClass) {
+  const CXXRecordDecl *RD = Base.getBase();
+
+  // Don't initialize the vtable pointer if the class is marked with the
+  // 'novtable' attribute.
+  if ((RD == VTableClass || RD == NearestVBase) &&
+      VTableClass->hasAttr<MSNoVTableAttr>())
+    return;
+
   // Compute the address point.
+  bool NeedsVirtualOffset;
   llvm::Value *VTableAddressPoint =
       CGM.getCXXABI().getVTableAddressPointInStructor(
-          *this, Vptr.VTableClass, Vptr.Base, Vptr.NearestVBase);
-
+          *this, VTableClass, Base, NearestVBase, NeedsVirtualOffset);
   if (!VTableAddressPoint)
     return;
 
@@ -2250,25 +2218,27 @@ void CodeGenFunction::InitializeVTablePointer(const VPtr &Vptr) {
   llvm::Value *VirtualOffset = nullptr;
   CharUnits NonVirtualOffset = CharUnits::Zero();
 
-  if (CGM.getCXXABI().isVirtualOffsetNeededForVTableField(*this, Vptr)) {
+  if (NeedsVirtualOffset) {
     // We need to use the virtual base offset offset because the virtual base
     // might have a different offset in the most derived class.
-
-    VirtualOffset = CGM.getCXXABI().GetVirtualBaseClassOffset(
-        *this, LoadCXXThisAddress(), Vptr.VTableClass, Vptr.NearestVBase);
-    NonVirtualOffset = Vptr.OffsetFromNearestVBase;
+    VirtualOffset =
+      CGM.getCXXABI().GetVirtualBaseClassOffset(*this, LoadCXXThisAddress(),
+                                                VTableClass, NearestVBase);
+    NonVirtualOffset = OffsetFromNearestVBase;
   } else {
     // We can just use the base offset in the complete class.
-    NonVirtualOffset = Vptr.Base.getBaseOffset();
+    NonVirtualOffset = Base.getBaseOffset();
   }
 
   // Apply the offsets.
   Address VTableField = LoadCXXThisAddress();
 
   if (!NonVirtualOffset.isZero() || VirtualOffset)
-    VTableField = ApplyNonVirtualAndVirtualOffset(
-        *this, VTableField, NonVirtualOffset, VirtualOffset, Vptr.VTableClass,
-        Vptr.NearestVBase);
+    VTableField = ApplyNonVirtualAndVirtualOffset(*this, VTableField,
+                                                  NonVirtualOffset,
+                                                  VirtualOffset,
+                                                  VTableClass,
+                                                  NearestVBase);
 
   // Finally, store the address point. Use the same LLVM types as the field to
   // support optimization.
@@ -2278,36 +2248,23 @@ void CodeGenFunction::InitializeVTablePointer(const VPtr &Vptr) {
           ->getPointerTo();
   VTableField = Builder.CreateBitCast(VTableField, VTablePtrTy->getPointerTo());
   VTableAddressPoint = Builder.CreateBitCast(VTableAddressPoint, VTablePtrTy);
-
   llvm::StoreInst *Store = Builder.CreateStore(VTableAddressPoint, VTableField);
   CGM.DecorateInstruction(Store, CGM.getTBAAInfoForVTablePtr());
 }
 
-CodeGenFunction::VPtrsVector
-CodeGenFunction::getVTablePointers(const CXXRecordDecl *VTableClass) {
-  CodeGenFunction::VPtrsVector VPtrsResult;
-  VisitedVirtualBasesSetTy VBases;
-  getVTablePointers(BaseSubobject(VTableClass, CharUnits::Zero()),
-                    /*NearestVBase=*/nullptr,
-                    /*OffsetFromNearestVBase=*/CharUnits::Zero(),
-                    /*BaseIsNonVirtualPrimaryBase=*/false, VTableClass, VBases,
-                    VPtrsResult);
-  return VPtrsResult;
-}
-
-void CodeGenFunction::getVTablePointers(BaseSubobject Base,
-                                        const CXXRecordDecl *NearestVBase,
-                                        CharUnits OffsetFromNearestVBase,
-                                        bool BaseIsNonVirtualPrimaryBase,
-                                        const CXXRecordDecl *VTableClass,
-                                        VisitedVirtualBasesSetTy &VBases,
-                                        VPtrsVector &Vptrs) {
+void
+CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
+                                          const CXXRecordDecl *NearestVBase,
+                                          CharUnits OffsetFromNearestVBase,
+                                          bool BaseIsNonVirtualPrimaryBase,
+                                          const CXXRecordDecl *VTableClass,
+                                          VisitedVirtualBasesSetTy& VBases) {
   // If this base is a non-virtual primary base the address point has already
   // been set.
   if (!BaseIsNonVirtualPrimaryBase) {
     // Initialize the vtable pointer for this base.
-    VPtr Vptr = {Base, NearestVBase, OffsetFromNearestVBase, VTableClass};
-    Vptrs.push_back(Vptr);
+    InitializeVTablePointer(Base, NearestVBase, OffsetFromNearestVBase,
+                            VTableClass);
   }
 
   const CXXRecordDecl *RD = Base.getBase();
@@ -2345,10 +2302,11 @@ void CodeGenFunction::getVTablePointers(BaseSubobject Base,
       BaseDeclIsNonVirtualPrimaryBase = Layout.getPrimaryBase() == BaseDecl;
     }
 
-    getVTablePointers(
-        BaseSubobject(BaseDecl, BaseOffset),
-        I.isVirtual() ? BaseDecl : NearestVBase, BaseOffsetFromNearestVBase,
-        BaseDeclIsNonVirtualPrimaryBase, VTableClass, VBases, Vptrs);
+    InitializeVTablePointers(BaseSubobject(BaseDecl, BaseOffset),
+                             I.isVirtual() ? BaseDecl : NearestVBase,
+                             BaseOffsetFromNearestVBase,
+                             BaseDeclIsNonVirtualPrimaryBase,
+                             VTableClass, VBases);
   }
 }
 
@@ -2358,9 +2316,11 @@ void CodeGenFunction::InitializeVTablePointers(const CXXRecordDecl *RD) {
     return;
 
   // Initialize the vtable pointers for this class and all of its bases.
-  if (CGM.getCXXABI().doStructorsInitializeVPtrs(RD))
-    for (const VPtr &Vptr : getVTablePointers(RD))
-      InitializeVTablePointer(Vptr);
+  VisitedVirtualBasesSetTy VBases;
+  InitializeVTablePointers(BaseSubobject(RD, CharUnits::Zero()),
+                           /*NearestVBase=*/nullptr,
+                           /*OffsetFromNearestVBase=*/CharUnits::Zero(),
+                           /*BaseIsNonVirtualPrimaryBase=*/false, RD, VBases);
 
   if (RD->getNumVBases())
     CGM.getCXXABI().initializeHiddenVirtualInheritanceMembers(*this, RD);

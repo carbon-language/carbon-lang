@@ -1,9 +1,5 @@
-// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o %t
-// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o %t.opt -O1 -disable-llvm-optzns
-// RUN: FileCheck %s < %t
-// RUN: FileCheck %s < %t.opt
-// RUN: FileCheck --check-prefix=CHECK-NONOPT %s < %t
-// RUN: FileCheck --check-prefix=CHECK-OPT %s < %t.opt
+// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o - -O1 -disable-llvm-optzns | FileCheck %s
 
 namespace Test1 {
 
@@ -384,25 +380,13 @@ D::~D() {}
 
 /**** The following has to go at the end of the file ****/
 
-// checking without opt
-// CHECK-NONOPT-LABEL: define internal void @_ZThn8_N6Test4B12_GLOBAL__N_11C1fEv(
-// CHECK-NONOPT-NOT: comdat
-
 // This is from Test5:
-// CHECK-NONOPT-LABEL: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
+// CHECK-LABEL: define internal void @_ZThn8_N6Test4B12_GLOBAL__N_11C1fEv(
+// CHECK-NOT: comdat
+// CHECK-LABEL: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
 
 // This is from Test10:
-// CHECK-NONOPT-LABEL: define linkonce_odr void @_ZN6Test101C3fooEv
-// CHECK-NONOPT-LABEL: define linkonce_odr void @_ZThn8_N6Test101C3fooEv
-
-// Checking with opt
-// CHECK-OPT-LABEL: define internal void @_ZThn8_N6Test4B12_GLOBAL__N_11C1fEv(%"struct.Test4B::(anonymous namespace)::C"* %this) unnamed_addr #0 align 2
-
-// This is from Test5:
-// CHECK-OPT-LABEL: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
-
-// This is from Test10:
-// CHECK-OPT-LABEL: define linkonce_odr void @_ZN6Test101C3fooEv
-// CHECK-OPT-LABEL: define linkonce_odr void @_ZThn8_N6Test101C3fooEv
+// CHECK-LABEL: define linkonce_odr void @_ZN6Test101C3fooEv
+// CHECK-LABEL: define linkonce_odr void @_ZThn8_N6Test101C3fooEv
 
 // CHECK: attributes [[NUW]] = { nounwind uwtable{{.*}} }

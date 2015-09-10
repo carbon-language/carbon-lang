@@ -696,7 +696,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
 static bool shouldEmitAvailableExternallyVTable(const CodeGenModule &CGM,
                                                 const CXXRecordDecl *RD) {
   return CGM.getCodeGenOpts().OptimizationLevel > 0 &&
-         CGM.getCXXABI().canSpeculativelyEmitVTable(RD);
+            CGM.getCXXABI().canEmitAvailableExternallyVTable(RD);
 }
 
 /// Compute the required linkage of the v-table for the given class.
@@ -846,11 +846,11 @@ bool CodeGenVTables::isVTableExternal(const CXXRecordDecl *RD) {
 /// we define that v-table?
 static bool shouldEmitVTableAtEndOfTranslationUnit(CodeGenModule &CGM,
                                                    const CXXRecordDecl *RD) {
-  // If vtable is internal then it has to be done.
+  // If vtable is internal then it has to be done
   if (!CGM.getVTables().isVTableExternal(RD))
     return true;
 
-  // If it's external then maybe we will need it as available_externally.
+  // If it's external then maybe we will need it as available_externally
   return shouldEmitAvailableExternallyVTable(CGM, RD);
 }
 
