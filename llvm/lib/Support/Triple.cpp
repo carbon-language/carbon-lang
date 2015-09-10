@@ -572,14 +572,27 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
 /// This stores the string representation and parses the various pieces into
 /// enum members.
 Triple::Triple(const Twine &Str)
-    : Data(Str.str()),
-      Arch(parseArch(getArchName())),
-      SubArch(parseSubArch(getArchName())),
-      Vendor(parseVendor(getVendorName())),
-      OS(parseOS(getOSName())),
-      Environment(parseEnvironment(getEnvironmentName())),
-      ObjectFormat(parseFormat(getEnvironmentName())) {
-  if (ObjectFormat == Triple::UnknownObjectFormat)
+    : Data(Str.str()), Arch(UnknownArch), SubArch(NoSubArch),
+      Vendor(UnknownVendor), OS(UnknownOS), Environment(UnknownEnvironment),
+      ObjectFormat(UnknownObjectFormat) {
+  // Do minimal parsing by hand here.
+  SmallVector<StringRef, 4> Components;
+  StringRef(Data).split(Components, '-', /*MaxSplit*/ 3);
+  if (Components.size() > 0) {
+    Arch = parseArch(Components[0]);
+    SubArch = parseSubArch(Components[0]);
+    if (Components.size() > 1) {
+      Vendor = parseVendor(Components[1]);
+      if (Components.size() > 2) {
+        OS = parseOS(Components[2]);
+        if (Components.size() > 3) {
+          Environment = parseEnvironment(Components[3]);
+          ObjectFormat = parseFormat(Components[3]);
+        }
+      }
+    }
+  }
+  if (ObjectFormat == UnknownObjectFormat)
     ObjectFormat = getDefaultFormat(*this);
 }
 
