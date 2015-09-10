@@ -724,6 +724,16 @@ static std::string getRegisterName(const TargetRegisterInfo *TRI,
   return StringRef(TRI->getName(Reg)).lower();
 }
 
+/// Return true if the parsed machine operands contain a given machine operand.
+static bool isImplicitOperandIn(const MachineOperand &ImplicitOperand,
+                                ArrayRef<ParsedMachineOperand> Operands) {
+  for (const auto &I : Operands) {
+    if (ImplicitOperand.isIdenticalTo(I.Operand))
+      return true;
+  }
+  return false;
+}
+
 bool MIParser::verifyImplicitOperands(ArrayRef<ParsedMachineOperand> Operands,
                                       const MCInstrDesc &MCID) {
   if (MCID.isCall())
@@ -744,46 +754,13 @@ bool MIParser::verifyImplicitOperands(ArrayRef<ParsedMachineOperand> Operands,
 
   const auto *TRI = MF.getSubtarget().getRegisterInfo();
   assert(TRI && "Expected target register info");
-  size_t I = ImplicitOperands.size(), J = Operands.size();
-  while (I) {
-    --I;
-    if (J) {
-      --J;
-      const auto &ImplicitOperand = ImplicitOperands[I];
-      const auto &Operand = Operands[J].Operand;
-      if (ImplicitOperand.isIdenticalTo(Operand))
-        continue;
-      if (Operand.isReg() && Operand.isImplicit()) {
-        // Check if this implicit register is a subregister of an explicit
-        // register operand.
-        bool IsImplicitSubRegister = false;
-        for (size_t K = 0, E = Operands.size(); K < E; ++K) {
-          const auto &Op = Operands[K].Operand;
-          if (Op.isReg() && !Op.isImplicit() &&
-              TRI->isSubRegister(Op.getReg(), Operand.getReg())) {
-            IsImplicitSubRegister = true;
-            break;
-          }
-        }
-        if (IsImplicitSubRegister)
-          continue;
-        return error(Operands[J].Begin,
-                     Twine("expected an implicit register operand '") +
-                         printImplicitRegisterFlag(ImplicitOperand) + " %" +
-                         getRegisterName(TRI, ImplicitOperand.getReg()) + "'");
-      }
-    }
-    // TODO: Fix source location when Operands[J].end is right before '=', i.e:
-    // insead of reporting an error at this location:
-    //            %eax = MOV32r0
-    //                 ^
-    // report the error at the following location:
-    //            %eax = MOV32r0
-    //                          ^
-    return error(J < Operands.size() ? Operands[J].End : Token.location(),
+  for (const auto &I : ImplicitOperands) {
+    if (isImplicitOperandIn(I, Operands))
+      continue;
+    return error(Operands.empty() ? Token.location() : Operands.back().End,
                  Twine("missing implicit register operand '") +
-                     printImplicitRegisterFlag(ImplicitOperands[I]) + " %" +
-                     getRegisterName(TRI, ImplicitOperands[I].getReg()) + "'");
+                     printImplicitRegisterFlag(I) + " %" +
+                     getRegisterName(TRI, I.getReg()) + "'");
   }
   return false;
 }
