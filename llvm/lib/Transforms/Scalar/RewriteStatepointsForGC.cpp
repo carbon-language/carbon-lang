@@ -956,16 +956,16 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   // deterministic and predictable because we're naming newly created
   // instructions.
   for (auto Pair : states) {
-    Instruction *v = cast<Instruction>(Pair.first);
+    Instruction *BDV = cast<Instruction>(Pair.first);
     BDVState state = Pair.second;
 
-    assert(!isKnownBaseResult(v) && "why did it get added?");
+    assert(!isKnownBaseResult(BDV) && "why did it get added?");
     assert(!state.isUnknown() && "Optimistic algorithm didn't complete!");
     if (!state.isConflict())
       continue;
 
     if (PHINode *basephi = dyn_cast<PHINode>(state.getBase())) {
-      PHINode *phi = cast<PHINode>(v);
+      PHINode *phi = cast<PHINode>(BDV);
       unsigned NumPHIValues = phi->getNumIncomingValues();
       for (unsigned i = 0; i < NumPHIValues; i++) {
         Value *InVal = phi->getIncomingValue(i);
@@ -1008,7 +1008,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
       }
       assert(basephi->getNumIncomingValues() == NumPHIValues);
     } else if (SelectInst *BaseSel = dyn_cast<SelectInst>(state.getBase())) {
-      SelectInst *Sel = cast<SelectInst>(v);
+      SelectInst *Sel = cast<SelectInst>(BDV);
       // Operand 1 & 2 are true, false path respectively. TODO: refactor to
       // something more safe and less hacky.
       for (int i = 1; i <= 2; i++) {
@@ -1019,14 +1019,14 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
         BaseSel->setOperand(i, Base);
       }
     } else if (auto *BaseEE = dyn_cast<ExtractElementInst>(state.getBase())) {
-      Value *InVal = cast<ExtractElementInst>(v)->getVectorOperand();
+      Value *InVal = cast<ExtractElementInst>(BDV)->getVectorOperand();
       // Find the instruction which produces the base for each input.  We may
       // need to insert a bitcast.
       Value *Base = getBaseForInput(InVal, BaseEE);
       BaseEE->setOperand(0, Base);
     } else {
       auto *BaseIE = cast<InsertElementInst>(state.getBase());
-      auto *BdvIE = cast<InsertElementInst>(v);
+      auto *BdvIE = cast<InsertElementInst>(BDV);
       auto UpdateOperand = [&](int OperandIdx) {
         Value *InVal = BdvIE->getOperand(OperandIdx);
         Value *Base = findBaseOrBDV(InVal, cache);
