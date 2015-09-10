@@ -24,6 +24,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/CallSite.h"
@@ -1511,6 +1512,7 @@ namespace {
   struct SCCP : public FunctionPass {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<TargetLibraryInfoWrapperPass>();
+      AU.addPreserved<GlobalsAAWrapperPass>();
     }
     static char ID; // Pass identification, replacement for typeid
     SCCP() : FunctionPass(ID) {

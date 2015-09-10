@@ -17,6 +17,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/DemandedBits.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/InstIterator.h"
@@ -45,6 +46,7 @@ struct BDCE : public FunctionPass {
   void getAnalysisUsage(AnalysisUsage& AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<DemandedBits>();
+    AU.addPreserved<GlobalsAAWrapperPass>();
   }
 };
 }
