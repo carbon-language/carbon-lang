@@ -96,7 +96,7 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  ret i32 0
 // CHECK-DEBUG-NEXT:  }
 
-// CHECK:       define internal {{.*}}void [[OMP_OUTLINED]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i8*** dereferenceable(8) %argc)
+// CHECK:       define internal {{.*}}void [[OMP_OUTLINED]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i8*** dereferenceable({{4|8}}) %argc)
 // CHECK:       store i8*** %argc, i8**** [[ARGC_PTR_ADDR:%.+]],
 // CHECK-NEXT:  [[ARGC_REF:%.+]] = load i8***, i8**** [[ARGC_PTR_ADDR]]
 // CHECK-NEXT:  [[ARGC:%.+]] = load i8**, i8*** [[ARGC_REF]]
@@ -106,7 +106,7 @@ int main (int argc, char **argv) {
 // CHECK:       call {{.*}}void @{{.+terminate.*|abort}}(
 // CHECK-NEXT:  unreachable
 // CHECK-NEXT:  }
-// CHECK-DEBUG:       define internal void [[OMP_OUTLINED]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i8*** dereferenceable(8) %argc)
+// CHECK-DEBUG:       define internal void [[OMP_OUTLINED]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i8*** dereferenceable({{4|8}}) %argc)
 // CHECK-DEBUG:       store i8*** %argc, i8**** [[ARGC_PTR_ADDR:%.+]],
 // CHECK-DEBUG:  [[ARGC_REF:%.+]] = load i8***, i8**** [[ARGC_PTR_ADDR]]
 // CHECK-DEBUG-NEXT:  [[ARGC:%.+]] = load i8**, i8*** [[ARGC_REF]]
