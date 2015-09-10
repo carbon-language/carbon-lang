@@ -111,8 +111,6 @@ namespace {
 template <bool Is64Bits>
 class StringTableSection final : public OutputSectionBase<Is64Bits> {
 public:
-  llvm::StringTableBuilder StrTabBuilder;
-
   typedef typename OutputSectionBase<Is64Bits>::uintX_t uintX_t;
   StringTableSection(bool Dynamic)
       : OutputSectionBase<Is64Bits>(Dynamic ? ".dynstr" : ".strtab", SHT_STRTAB,
@@ -121,13 +119,17 @@ public:
   }
 
   void add(StringRef S) { StrTabBuilder.add(S); }
-  size_t getFileOff(StringRef S) { return StrTabBuilder.getOffset(S); }
+  size_t getFileOff(StringRef S) const { return StrTabBuilder.getOffset(S); }
+  StringRef data() const { return StrTabBuilder.data(); }
   void writeTo(uint8_t *Buf) override;
 
   void finalize() override {
     StrTabBuilder.finalize(StringTableBuilder::ELF);
     this->Header.sh_size = StrTabBuilder.data().size();
   }
+
+private:
+  llvm::StringTableBuilder StrTabBuilder;
 };
 
 template <class ELFT>
@@ -138,7 +140,7 @@ public:
   SymbolTableSection(SymbolTable &Table,
                      StringTableSection<ELFT::Is64Bits> &StrTabSec)
       : OutputSectionBase<ELFT::Is64Bits>(".symtab", SHT_SYMTAB, 0),
-        Table(Table), Builder(StrTabSec.StrTabBuilder), StrTabSec(StrTabSec) {
+        Table(Table), StrTabSec(StrTabSec) {
     typedef OutputSectionBase<ELFT::Is64Bits> Base;
     typename Base::HeaderT &Header = this->Header;
 
@@ -158,13 +160,17 @@ public:
 
   const SymbolTable &getSymTable() { return Table; }
 
+  void addSymbol(StringRef Name) {
+    StrTabSec.add(Name);
+    ++NumVisible;
+  }
+
   OutputSection<ELFT> *BSSSec = nullptr;
-  unsigned NumVisible = 0;
 
 private:
   SymbolTable &Table;
-  llvm::StringTableBuilder &Builder;
-  const StringTableSection<ELFT::Is64Bits> &StrTabSec;
+  StringTableSection<ELFT::Is64Bits> &StrTabSec;
+  unsigned NumVisible = 0;
 };
 
 template <bool Is64Bits>
@@ -210,7 +216,7 @@ public:
     ++P;
 
     P->d_tag = DT_STRSZ;
-    P->d_un.d_val = DynStrSec.StrTabBuilder.data().size();
+    P->d_un.d_val = DynStrSec.data().size();
     ++P;
 
     const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
@@ -397,7 +403,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     const Elf_Sym &InputSym = cast<ELFSymbolBody<ELFT>>(Body)->Sym;
 
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
-    ESym->st_name = Builder.getOffset(Name);
+    ESym->st_name = StrTabSec.getFileOff(Name);
 
     const SectionChunk<ELFT> *Section = nullptr;
     OutputSection<ELFT> *Out = nullptr;
@@ -543,8 +549,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   SymTable.BSSSec = getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
   OutputSection<ELFT> *BSSSec = SymTable.BSSSec;
   // FIXME: Try to avoid the extra walk over all global symbols.
-  unsigned &NumVisible = SymTable.NumVisible;
-  llvm::StringTableBuilder &Builder = StrTabSec.StrTabBuilder;
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
   for (auto &P : Symtab.getSymbols()) {
     StringRef Name = P.first;
@@ -553,8 +557,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       CommonSymbols.push_back(C);
     if (!includeInSymtab(*Body))
       continue;
-    NumVisible++;
-    Builder.add(Name);
+    SymTable.addSymbol(Name);
   }
 
   // Sort the common symbols by alignment as an heuristic to pack them better.
