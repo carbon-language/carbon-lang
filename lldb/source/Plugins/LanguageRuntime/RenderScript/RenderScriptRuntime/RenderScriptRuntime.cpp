@@ -538,7 +538,14 @@ RenderScriptRuntime::LoadModule(const lldb::ModuleSP &module_sp)
         for (const auto &rs_module : m_rsmodules)
         {
             if (rs_module->m_module == module_sp)
+            {
+                // Check if the user has enabled automatically breaking on
+                // all RS kernels.
+                if (m_breakAllKernels)
+                    BreakOnModuleKernels(rs_module);
+
                 return false;
+            }
         }
         bool module_loaded = false;
         switch (GetModuleKind(module_sp))
@@ -809,6 +816,73 @@ RenderScriptRuntime::DumpKernels(Stream &strm) const
     strm.IndentLess();
 }
 
+// Set breakpoints on every kernel found in RS module
+void
+RenderScriptRuntime::BreakOnModuleKernels(const RSModuleDescriptorSP rsmodule_sp)
+{
+    for (const auto &kernel : rsmodule_sp->m_kernels)
+    {
+        // Don't set breakpoint on 'root' kernel
+        if (strcmp(kernel.m_name.AsCString(), "root") == 0)
+            continue;
+
+        CreateKernelBreakpoint(kernel.m_name);
+    }
+}
+
+// Method is internally called by the 'kernel breakpoint all' command to
+// enable or disable breaking on all kernels.
+//
+// When do_break is true we want to enable this functionality.
+// When do_break is false we want to disable it.
+void
+RenderScriptRuntime::SetBreakAllKernels(bool do_break, TargetSP target)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    InitSearchFilter(target);
+
+    // Set breakpoints on all the kernels
+    if (do_break && !m_breakAllKernels)
+    {
+        m_breakAllKernels = true;
+
+        for (const auto &module : m_rsmodules)
+            BreakOnModuleKernels(module);
+
+        if (log)
+            log->Printf("RenderScriptRuntime::SetBreakAllKernels(True)"
+                        "- breakpoints set on all currently loaded kernels");
+    }
+    else if (!do_break && m_breakAllKernels) // Breakpoints won't be set on any new kernels.
+    {
+        m_breakAllKernels = false;
+
+        if (log)
+            log->Printf("RenderScriptRuntime::SetBreakAllKernels(False) - breakpoints no longer automatically set");
+    }
+}
+
+// Given the name of a kernel this function creates a breakpoint using our
+// own breakpoint resolver, and returns the Breakpoint shared pointer.
+BreakpointSP
+RenderScriptRuntime::CreateKernelBreakpoint(const ConstString& name)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    if (!m_filtersp)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::CreateKernelBreakpoint - Error: No breakpoint search filter set");
+        return nullptr;
+    }
+
+    BreakpointResolverSP resolver_sp(new RSBreakpointResolver(nullptr, name));
+    BreakpointSP bp = GetProcess()->GetTarget().CreateBreakpoint(m_filtersp, resolver_sp, false, false, false);
+
+    return bp;
+}
+
 void
 RenderScriptRuntime::AttemptBreakpointAtKernelName(Stream &strm, const char* name, Error& error, TargetSP target)
 {
@@ -818,12 +892,10 @@ RenderScriptRuntime::AttemptBreakpointAtKernelName(Stream &strm, const char* nam
         return;
     }
 
-    SearchFilterSP filter_sp(new SearchFilterForUnconstrainedSearches(target));
+    InitSearchFilter(target);
 
     ConstString kernel_name(name);
-    BreakpointResolverSP resolver_sp(new RSBreakpointResolver(nullptr, kernel_name));
-
-    BreakpointSP bp = target->CreateBreakpoint(filter_sp, resolver_sp, false, false, false);
+    BreakpointSP bp = CreateKernelBreakpoint(kernel_name);
     if (bp)
         bp->GetDescription(&strm, lldb::eDescriptionLevelInitial, false);
 
@@ -1029,18 +1101,18 @@ class CommandObjectRenderScriptRuntimeKernelList : public CommandObjectParsed
     }
 };
 
-class CommandObjectRenderScriptRuntimeKernelBreakpoint : public CommandObjectParsed
+class CommandObjectRenderScriptRuntimeKernelBreakpointSet : public CommandObjectParsed
 {
   private:
   public:
-    CommandObjectRenderScriptRuntimeKernelBreakpoint(CommandInterpreter &interpreter)
-        : CommandObjectParsed(interpreter, "renderscript kernel breakpoint",
-                              "Sets a breakpoint on a renderscript kernel.", "renderscript kernel breakpoint <kernel_name>",
+    CommandObjectRenderScriptRuntimeKernelBreakpointSet(CommandInterpreter &interpreter)
+        : CommandObjectParsed(interpreter, "renderscript kernel breakpoint set",
+                              "Sets a breakpoint on a renderscript kernel.", "renderscript kernel breakpoint set <kernel_name>",
                               eCommandRequiresProcess | eCommandProcessMustBeLaunched | eCommandProcessMustBePaused)
     {
     }
 
-    ~CommandObjectRenderScriptRuntimeKernelBreakpoint() {}
+    ~CommandObjectRenderScriptRuntimeKernelBreakpointSet() {}
 
     bool
     DoExecute(Args &command, CommandReturnObject &result)
@@ -1070,6 +1142,77 @@ class CommandObjectRenderScriptRuntimeKernelBreakpoint : public CommandObjectPar
         result.SetStatus(eReturnStatusFailed);
         return false;
     }
+};
+
+class CommandObjectRenderScriptRuntimeKernelBreakpointAll : public CommandObjectParsed
+{
+  private:
+  public:
+    CommandObjectRenderScriptRuntimeKernelBreakpointAll(CommandInterpreter &interpreter)
+        : CommandObjectParsed(interpreter, "renderscript kernel breakpoint all",
+                              "Automatically sets a breakpoint on all renderscript kernels that are or will be loaded.\n"
+                              "Disabling option means breakpoints will no longer be set on any kernels loaded in the future, "
+                              "but does not remove currently set breakpoints.",
+                              "renderscript kernel breakpoint all <enable/disable>",
+                              eCommandRequiresProcess | eCommandProcessMustBeLaunched | eCommandProcessMustBePaused)
+    {
+    }
+
+    ~CommandObjectRenderScriptRuntimeKernelBreakpointAll() {}
+
+    bool
+    DoExecute(Args &command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        if (argc != 1)
+        {
+            result.AppendErrorWithFormat("'%s' takes 1 argument of 'enable' or 'disable'", m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+
+        RenderScriptRuntime *runtime =
+          static_cast<RenderScriptRuntime *>(m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript));
+
+        bool do_break = false;
+        const char* argument = command.GetArgumentAtIndex(0);
+        if (strcmp(argument, "enable") == 0)
+        {
+            do_break = true;
+            result.AppendMessage("Breakpoints will be set on all kernels.");
+        }
+        else if (strcmp(argument, "disable") == 0)
+        {
+            do_break = false;
+            result.AppendMessage("Breakpoints will not be set on any new kernels.");
+        }
+        else
+        {
+            result.AppendErrorWithFormat("Argument must be either 'enable' or 'disable'");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+
+        runtime->SetBreakAllKernels(do_break, m_exe_ctx.GetTargetSP());
+
+        result.SetStatus(eReturnStatusSuccessFinishResult);
+        return true;
+    }
+};
+
+class CommandObjectRenderScriptRuntimeKernelBreakpoint : public CommandObjectMultiword
+{
+  private:
+  public:
+    CommandObjectRenderScriptRuntimeKernelBreakpoint(CommandInterpreter &interpreter)
+        : CommandObjectMultiword(interpreter, "renderscript kernel", "Commands that generate breakpoints on renderscript kernels.",
+                                 nullptr)
+    {
+        LoadSubCommand("set", CommandObjectSP(new CommandObjectRenderScriptRuntimeKernelBreakpointSet(interpreter)));
+        LoadSubCommand("all", CommandObjectSP(new CommandObjectRenderScriptRuntimeKernelBreakpointAll(interpreter)));
+    }
+
+    ~CommandObjectRenderScriptRuntimeKernelBreakpoint() {}
 };
 
 class CommandObjectRenderScriptRuntimeKernel : public CommandObjectMultiword
@@ -1172,7 +1315,8 @@ RenderScriptRuntime::Initiate()
 }
 
 RenderScriptRuntime::RenderScriptRuntime(Process *process)
-    : lldb_private::CPPLanguageRuntime(process), m_initiated(false), m_debuggerPresentFlagged(false)
+    : lldb_private::CPPLanguageRuntime(process), m_initiated(false), m_debuggerPresentFlagged(false),
+      m_breakAllKernels(false)
 {
     ModulesDidLoad(process->GetTarget().GetImages());
 }

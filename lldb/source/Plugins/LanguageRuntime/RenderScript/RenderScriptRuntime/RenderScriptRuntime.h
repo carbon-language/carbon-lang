@@ -200,6 +200,8 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
 
     void AttemptBreakpointAtKernelName(Stream &strm, const char *name, Error &error, lldb::TargetSP target);
 
+    void SetBreakAllKernels(bool do_break, lldb::TargetSP target);
+
     void Status(Stream &strm) const;
 
     virtual size_t GetAlternateManglings(const ConstString &mangled, std::vector<ConstString> &alternates) {
@@ -213,10 +215,20 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     void Initiate();
     
   protected:
+
+    void InitSearchFilter(lldb::TargetSP target)
+    {
+        if (!m_filtersp)
+            m_filtersp.reset(new SearchFilterForUnconstrainedSearches(target));
+    }
     
     void FixupScriptDetails(lldb_renderscript::RSModuleDescriptorSP rsmodule_sp);
 
     void LoadRuntimeHooks(lldb::ModuleSP module, ModuleKind kind);
+
+    lldb::BreakpointSP CreateKernelBreakpoint(const ConstString& name);
+
+    void BreakOnModuleKernels(const lldb_renderscript::RSModuleDescriptorSP rsmodule_sp);
     
     struct RuntimeHook;
     typedef void (RenderScriptRuntime::*CaptureStateFn)(RuntimeHook* hook_info, ExecutionContext &context);  // Please do this!
@@ -257,8 +269,11 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     std::map<lldb::addr_t, lldb_renderscript::RSModuleDescriptorSP> m_scriptMappings;
     std::map<lldb::addr_t, RuntimeHookSP> m_runtimeHooks;
 
+    lldb::SearchFilterSP m_filtersp; // Needed to create breakpoints through Target API
+
     bool m_initiated;
     bool m_debuggerPresentFlagged;
+    bool m_breakAllKernels;
     static const HookDefn s_runtimeHookDefns[];
     static const size_t s_runtimeHookCount;
 
