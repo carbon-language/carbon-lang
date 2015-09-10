@@ -98,7 +98,7 @@ int main (int argc, char **argv) {
 
 // CHECK:       define internal {{.*}}void [[OMP_OUTLINED]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i8*** dereferenceable({{4|8}}) %argc)
 // CHECK:       store i8*** %argc, i8**** [[ARGC_PTR_ADDR:%.+]],
-// CHECK-NEXT:  [[ARGC_REF:%.+]] = load i8***, i8**** [[ARGC_PTR_ADDR]]
+// CHECK:       [[ARGC_REF:%.+]] = load i8***, i8**** [[ARGC_PTR_ADDR]]
 // CHECK-NEXT:  [[ARGC:%.+]] = load i8**, i8*** [[ARGC_REF]]
 // CHECK-NEXT:  invoke {{.*}}void [[FOO1:@.+foo.+]](i8** [[ARGC]])
 // CHECK:       call {{.+}} @__kmpc_cancel_barrier(
@@ -108,7 +108,7 @@ int main (int argc, char **argv) {
 // CHECK-NEXT:  }
 // CHECK-DEBUG:       define internal void [[OMP_OUTLINED]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i8*** dereferenceable({{4|8}}) %argc)
 // CHECK-DEBUG:       store i8*** %argc, i8**** [[ARGC_PTR_ADDR:%.+]],
-// CHECK-DEBUG:  [[ARGC_REF:%.+]] = load i8***, i8**** [[ARGC_PTR_ADDR]]
+// CHECK-DEBUG:       [[ARGC_REF:%.+]] = load i8***, i8**** [[ARGC_PTR_ADDR]]
 // CHECK-DEBUG-NEXT:  [[ARGC:%.+]] = load i8**, i8*** [[ARGC_REF]]
 // CHECK-DEBUG-NEXT:  invoke void [[FOO1:@.+foo.+]](i8** [[ARGC]])
 // CHECK-DEBUG:       call {{.+}} @__kmpc_cancel_barrier(
