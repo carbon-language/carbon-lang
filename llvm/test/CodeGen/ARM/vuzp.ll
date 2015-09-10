@@ -286,6 +286,18 @@ entry:
   ret <4 x i32> %0
 }
 
+define void @vuzp_rev_shufflemask_vtrn(<2 x i32>* %A, <2 x i32>* %B, <4 x i32>* %C) {
+entry:
+  ; CHECK-LABEL: vuzp_rev_shufflemask_vtrn
+  ; CHECK-NOT: vtrn
+  ; CHECK: vuzp
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %0 = shufflevector <2 x i32> %tmp1, <2 x i32> %tmp2, <4 x i32> <i32 1, i32 3, i32 0, i32 2>
+  store <4 x i32> %0, <4 x i32>* %C
+  ret void
+}
+
 define <8 x i8> @vuzp_trunc(<8 x i8> %in0, <8 x i8> %in1, <8 x i32> %cmp0, <8 x i32> %cmp1) {
 ; In order to create the select we need to truncate the vcgt result from a vector of i32 to a vector of i8.
 ; This results in a build_vector with mismatched types. We will generate two vmovn.i32 instructions to

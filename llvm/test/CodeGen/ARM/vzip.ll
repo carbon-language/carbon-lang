@@ -295,3 +295,13 @@ entry:
   ret <4 x i32> %0
 }
 
+define void @vzip_undef_rev_shufflemask_vtrn(<2 x i32>* %A, <4 x i32>* %B) {
+entry:
+  ; CHECK-LABEL: vzip_undef_rev_shufflemask_vtrn
+  ; CHECK-NOT: vtrn
+  ; CHECK: vzip
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %0 = shufflevector <2 x i32> %tmp1, <2 x i32> undef, <4 x i32> <i32 1, i32 1, i32 0, i32 0>
+  store <4 x i32> %0, <4 x i32>* %B
+  ret void
+}

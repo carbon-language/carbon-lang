@@ -5050,10 +5050,16 @@ static bool isVTRNMask(ArrayRef<int> M, EVT VT, unsigned &WhichResult) {
   if (M.size() != NumElts && M.size() != NumElts*2)
     return false;
 
-  // If the mask is twice as long as the result then we need to check the upper
-  // and lower parts of the mask
+  // If the mask is twice as long as the input vector then we need to check the
+  // upper and lower parts of the mask with a matching value for WhichResult
+  // FIXME: A mask with only even values will be rejected in case the first
+  // element is undefined, e.g. [-1, 4, 2, 6] will be rejected, because only
+  // M[0] is used to determine WhichResult
   for (unsigned i = 0; i < M.size(); i += NumElts) {
-    WhichResult = M[i] == 0 ? 0 : 1;
+    if (M.size() == NumElts * 2)
+      WhichResult = i / NumElts;
+    else
+      WhichResult = M[i] == 0 ? 0 : 1;
     for (unsigned j = 0; j < NumElts; j += 2) {
       if ((M[i+j] >= 0 && (unsigned) M[i+j] != j + WhichResult) ||
           (M[i+j+1] >= 0 && (unsigned) M[i+j+1] != j + NumElts + WhichResult))
@@ -5080,7 +5086,10 @@ static bool isVTRN_v_undef_Mask(ArrayRef<int> M, EVT VT, unsigned &WhichResult){
     return false;
 
   for (unsigned i = 0; i < M.size(); i += NumElts) {
-    WhichResult = M[i] == 0 ? 0 : 1;
+    if (M.size() == NumElts * 2)
+      WhichResult = i / NumElts;
+    else
+      WhichResult = M[i] == 0 ? 0 : 1;
     for (unsigned j = 0; j < NumElts; j += 2) {
       if ((M[i+j] >= 0 && (unsigned) M[i+j] != j + WhichResult) ||
           (M[i+j+1] >= 0 && (unsigned) M[i+j+1] != j + WhichResult))
