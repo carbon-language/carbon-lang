@@ -57,8 +57,6 @@ our @llvm_repositories = (
     abs_path("$llvm_srcroot/projects/compiler-rt")
 );
 
-print @llvm_repositories;
-
 if (-e "$llvm_srcroot/lib")
 {
     print "Using existing llvm sources in: '$llvm_srcroot'\n";
@@ -129,10 +127,6 @@ sub build_llvm
             push(@llvm_md5_strings, `cd '$repo'; git diff`);
         }
     }
-    
-    print "REMOVE THIS START\n";
-    print @llvm_md5_strings;
-    print "REMOVE THIS END\n";
     
     # open my $md5_data_file, '>', "/tmp/a.txt" or die "Can't open $! for writing...\n";
     # foreach my $md5_string (@llvm_md5_strings)
