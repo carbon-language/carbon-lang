@@ -483,7 +483,7 @@ __kmp_itt_barrier_object(
 
         // Master thread increases b_arrived by KMP_BARRIER_STATE_BUMP each time. Divide b_arrived
         // by KMP_BARRIER_STATE_BUMP to get plain barrier counter.
-        kmp_uint counter = team->t.t_bar[ bt ].b_arrived / KMP_BARRIER_STATE_BUMP + delta;
+        kmp_uint64 counter = team->t.t_bar[ bt ].b_arrived / KMP_BARRIER_STATE_BUMP + delta;
         // Now form the barrier id. Encode barrier type (bt) in barrier id too, so barriers of
         // different types do not have the same ids.
         KMP_BUILD_ASSERT( sizeof( kmp_team_t ) >= bs_last_barrier );
@@ -498,7 +498,7 @@ __kmp_itt_barrier_object(
                     + bt
             );
         KMP_ITT_DEBUG_LOCK();
-        KMP_ITT_DEBUG_PRINT( "[bar obj] type=%d, counter=%d, object=%p\n", bt, counter, object );
+        KMP_ITT_DEBUG_PRINT( "[bar obj] type=%d, counter=%lld, object=%p\n", bt, counter, object );
 
         if ( set_name ) {
             ident_t const * loc  = NULL;

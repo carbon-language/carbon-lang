@@ -1680,7 +1680,7 @@ union KMP_ALIGN_CACHE kmp_barrier_team_union {
     double       b_align;        /* use worst case alignment */
     char         b_pad[ CACHE_LINE ];
     struct {
-        kmp_uint     b_arrived;       /* STATE => task reached synch point. */
+        kmp_uint64   b_arrived;       /* STATE => task reached synch point. */
 #if USE_DEBUGGER
         // The following two fields are indended for the debugger solely. Only master of the team accesses
         // these fields: the first one is increased by 1 when master arrives to a barrier, the

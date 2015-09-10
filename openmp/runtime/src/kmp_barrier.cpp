@@ -64,7 +64,7 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
     // We now perform a linear reduction to signal that all of the threads have arrived.
     if (!KMP_MASTER_TID(tid)) {
         KA_TRACE(20, ("__kmp_linear_barrier_gather: T#%d(%d:%d) releasing T#%d(%d:%d)"
-                      "arrived(%p): %u => %u\n", gtid, team->t.t_id, tid,
+                      "arrived(%p): %llu => %llu\n", gtid, team->t.t_id, tid,
                       __kmp_gtid_from_tid(0, team), team->t.t_id, 0, &thr_bar->b_arrived,
                       thr_bar->b_arrived, thr_bar->b_arrived + KMP_BARRIER_STATE_BUMP));
         // Mark arrival to master thread
@@ -77,7 +77,7 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
         register int nproc = this_thr->th.th_team_nproc;
         register int i;
         // Don't have to worry about sleep bit here or atomic since team setting
-        register kmp_uint new_state = team_bar->b_arrived + KMP_BARRIER_STATE_BUMP;
+        register kmp_uint64 new_state = team_bar->b_arrived + KMP_BARRIER_STATE_BUMP;
 
         // Collect all the worker team member threads.
         for (i=1; i<nproc; ++i) {
@@ -87,7 +87,7 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
                 KMP_CACHE_PREFETCH(&other_threads[i+1]->th.th_bar[bt].bb.b_arrived);
 #endif /* KMP_CACHE_MANAGE */
             KA_TRACE(20, ("__kmp_linear_barrier_gather: T#%d(%d:%d) wait T#%d(%d:%d) "
-                          "arrived(%p) == %u\n", gtid, team->t.t_id, tid,
+                          "arrived(%p) == %llu\n", gtid, team->t.t_id, tid,
                             __kmp_gtid_from_tid(i, team), team->t.t_id, i,
                             &other_threads[i]->th.th_bar[bt].bb.b_arrived, new_state));
 
@@ -111,7 +111,7 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
         }
         // Don't have to worry about sleep bit here or atomic since team setting
         team_bar->b_arrived = new_state;
-        KA_TRACE(20, ("__kmp_linear_barrier_gather: T#%d(%d:%d) set team %d arrived(%p) = %u\n",
+        KA_TRACE(20, ("__kmp_linear_barrier_gather: T#%d(%d:%d) set team %d arrived(%p) = %llu\n",
                       gtid, team->t.t_id, tid, team->t.t_id, &team_bar->b_arrived, new_state));
     }
     KA_TRACE(20, ("__kmp_linear_barrier_gather: T#%d(%d:%d) exit for barrier type %d\n",
@@ -227,7 +227,7 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid, 
     register kmp_uint32 branch_factor = 1 << branch_bits;
     register kmp_uint32 child;
     register kmp_uint32 child_tid;
-    register kmp_uint new_state;
+    register kmp_uint64 new_state;
 
     KA_TRACE(20, ("__kmp_tree_barrier_gather: T#%d(%d:%d) enter for barrier type %d\n",
                   gtid, team->t.t_id, tid, bt));
@@ -254,7 +254,7 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid, 
                 KMP_CACHE_PREFETCH(&other_threads[child_tid+1]->th.th_bar[bt].bb.b_arrived);
 #endif /* KMP_CACHE_MANAGE */
             KA_TRACE(20, ("__kmp_tree_barrier_gather: T#%d(%d:%d) wait T#%d(%d:%u) "
-                          "arrived(%p) == %u\n", gtid, team->t.t_id, tid,
+                          "arrived(%p) == %llu\n", gtid, team->t.t_id, tid,
                             __kmp_gtid_from_tid(child_tid, team), team->t.t_id, child_tid,
                             &child_bar->b_arrived, new_state));
             // Wait for child to arrive
@@ -284,7 +284,7 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid, 
         register kmp_int32 parent_tid = (tid - 1) >> branch_bits;
 
         KA_TRACE(20, ("__kmp_tree_barrier_gather: T#%d(%d:%d) releasing T#%d(%d:%d) "
-                      "arrived(%p): %u => %u\n", gtid, team->t.t_id, tid,
+                      "arrived(%p): %llu => %llu\n", gtid, team->t.t_id, tid,
                       __kmp_gtid_from_tid(parent_tid, team), team->t.t_id, parent_tid,
                       &thr_bar->b_arrived, thr_bar->b_arrived,
                       thr_bar->b_arrived + KMP_BARRIER_STATE_BUMP));
@@ -300,7 +300,7 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid, 
             team->t.t_bar[bt].b_arrived = new_state;
         else
             team->t.t_bar[bt].b_arrived += KMP_BARRIER_STATE_BUMP;
-        KA_TRACE(20, ("__kmp_tree_barrier_gather: T#%d(%d:%d) set team %d arrived(%p) = %u\n",
+        KA_TRACE(20, ("__kmp_tree_barrier_gather: T#%d(%d:%d) set team %d arrived(%p) = %llu\n",
                       gtid, team->t.t_id, tid, team->t.t_id,
                       &team->t.t_bar[bt].b_arrived, team->t.t_bar[bt].b_arrived));
     }
@@ -420,7 +420,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
     register kmp_team_t *team = this_thr->th.th_team;
     register kmp_bstate_t *thr_bar = &this_thr->th.th_bar[bt].bb;
     register kmp_info_t **other_threads = team->t.t_threads;
-    register kmp_uint new_state = KMP_BARRIER_UNUSED_STATE;
+    register kmp_uint64 new_state = KMP_BARRIER_UNUSED_STATE;
     register kmp_uint32 num_threads = this_thr->th.th_team_nproc;
     register kmp_uint32 branch_bits = __kmp_barrier_gather_branch_bits[bt];
     register kmp_uint32 branch_factor = 1 << branch_bits;
@@ -450,7 +450,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
             register kmp_int32 parent_tid = tid & ~((1 << (level + branch_bits)) -1);
 
             KA_TRACE(20, ("__kmp_hyper_barrier_gather: T#%d(%d:%d) releasing T#%d(%d:%d) "
-                          "arrived(%p): %u => %u\n", gtid, team->t.t_id, tid,
+                          "arrived(%p): %llu => %llu\n", gtid, team->t.t_id, tid,
                           __kmp_gtid_from_tid(parent_tid, team), team->t.t_id, parent_tid,
                           &thr_bar->b_arrived, thr_bar->b_arrived,
                           thr_bar->b_arrived + KMP_BARRIER_STATE_BUMP));
@@ -478,7 +478,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
                 KMP_CACHE_PREFETCH(&other_threads[next_child_tid]->th.th_bar[bt].bb.b_arrived);
 #endif /* KMP_CACHE_MANAGE */
             KA_TRACE(20, ("__kmp_hyper_barrier_gather: T#%d(%d:%d) wait T#%d(%d:%u) "
-                          "arrived(%p) == %u\n", gtid, team->t.t_id, tid,
+                          "arrived(%p) == %llu\n", gtid, team->t.t_id, tid,
                           __kmp_gtid_from_tid(child_tid, team), team->t.t_id, child_tid,
                           &child_bar->b_arrived, new_state));
             // Wait for child to arrive
@@ -507,7 +507,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
             team->t.t_bar[bt].b_arrived += KMP_BARRIER_STATE_BUMP;
         else
             team->t.t_bar[bt].b_arrived = new_state;
-        KA_TRACE(20, ("__kmp_hyper_barrier_gather: T#%d(%d:%d) set team %d arrived(%p) = %u\n",
+        KA_TRACE(20, ("__kmp_hyper_barrier_gather: T#%d(%d:%d) set team %d arrived(%p) = %llu\n",
                       gtid, team->t.t_id, tid, team->t.t_id,
                       &team->t.t_bar[bt].b_arrived, team->t.t_bar[bt].b_arrived));
     }
@@ -759,7 +759,7 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
         new_state = (kmp_uint64)team->t.t_bar[bt].b_arrived + KMP_BARRIER_STATE_BUMP;
         if (__kmp_dflt_blocktime == KMP_MAX_BLOCKTIME && thr_bar->use_oncore_barrier) {
             if (thr_bar->leaf_kids) { // First, wait for leaf children to check-in on my b_arrived flag
-                kmp_uint64 leaf_state = KMP_MASTER_TID(tid) ? thr_bar->b_arrived | thr_bar->leaf_state : (kmp_uint64)team->t.t_bar[bt].b_arrived | thr_bar->leaf_state;
+                kmp_uint64 leaf_state = KMP_MASTER_TID(tid) ? thr_bar->b_arrived | thr_bar->leaf_state : team->t.t_bar[bt].b_arrived | thr_bar->leaf_state;
                 kmp_flag_64 flag(&thr_bar->b_arrived, leaf_state);
                 flag.wait(this_thr, FALSE
                           USE_ITT_BUILD_ARG(itt_sync_obj) );
@@ -781,7 +781,7 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
                     register kmp_info_t *child_thr = other_threads[child_tid];
                     register kmp_bstate_t *child_bar = &child_thr->th.th_bar[bt].bb;
                     KA_TRACE(20, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) wait T#%d(%d:%d) "
-                                  "arrived(%p) == %u\n",
+                                  "arrived(%p) == %llu\n",
                                   gtid, team->t.t_id, tid, __kmp_gtid_from_tid(child_tid, team),
                                   team->t.t_id, child_tid, &child_bar->b_arrived, new_state));
                     kmp_flag_64 flag(&child_bar->b_arrived, new_state);
@@ -804,7 +804,7 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
                     register kmp_info_t *child_thr = other_threads[child_tid];
                     register kmp_bstate_t *child_bar = &child_thr->th.th_bar[bt].bb;
                     KA_TRACE(20, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) wait T#%d(%d:%d) "
-                                  "arrived(%p) == %u\n",
+                                  "arrived(%p) == %llu\n",
                                   gtid, team->t.t_id, tid, __kmp_gtid_from_tid(child_tid, team),
                                   team->t.t_id, child_tid, &child_bar->b_arrived, new_state));
                     kmp_flag_64 flag(&child_bar->b_arrived, new_state);
@@ -824,7 +824,7 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
 
     if (!KMP_MASTER_TID(tid)) { // worker threads release parent in hierarchy
         KA_TRACE(20, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) releasing T#%d(%d:%d) "
-                      "arrived(%p): %u => %u\n", gtid, team->t.t_id, tid,
+                      "arrived(%p): %llu => %llu\n", gtid, team->t.t_id, tid,
                       __kmp_gtid_from_tid(thr_bar->parent_tid, team), team->t.t_id, thr_bar->parent_tid,
                       &thr_bar->b_arrived, thr_bar->b_arrived, thr_bar->b_arrived+KMP_BARRIER_STATE_BUMP));
         /* Mark arrival to parent: After performing this write, a worker thread may not assume that
@@ -835,14 +835,14 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
             flag.release();
         }
         else { // Leaf does special release on the "offset" bits of parent's b_arrived flag
-            thr_bar->b_arrived = (kmp_uint64)team->t.t_bar[bt].b_arrived + KMP_BARRIER_STATE_BUMP;
+            thr_bar->b_arrived = team->t.t_bar[bt].b_arrived + KMP_BARRIER_STATE_BUMP;
             kmp_flag_oncore flag(&thr_bar->parent_bar->b_arrived, thr_bar->offset);
             flag.set_waiter(other_threads[thr_bar->parent_tid]);
             flag.release();
         }
     } else { // Master thread needs to update the team's b_arrived value
-        team->t.t_bar[bt].b_arrived = (kmp_uint32)new_state;
-        KA_TRACE(20, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) set team %d arrived(%p) = %u\n",
+        team->t.t_bar[bt].b_arrived = new_state;
+        KA_TRACE(20, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) set team %d arrived(%p) = %llu\n",
                       gtid, team->t.t_id, tid, team->t.t_id, &team->t.t_bar[bt].b_arrived, team->t.t_bar[bt].b_arrived));
     }
     // Is the team access below unsafe or just technically invalid?
