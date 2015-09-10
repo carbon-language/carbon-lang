@@ -50,6 +50,7 @@ List of clang-tidy Checks
    readability-else-after-return
    readability-function-size
    readability-identifier-naming
+   readability-inconsistent-declaration-parameter-name
    readability-named-parameter
    readability-redundant-smartptr-get
    readability-redundant-string-cstr
