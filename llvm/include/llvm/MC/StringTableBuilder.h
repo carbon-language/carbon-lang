@@ -48,16 +48,17 @@ public:
 
   /// \brief Get the offest of a string in the string table. Can only be used
   /// after the table is finalized.
-  size_t getOffset(StringRef s) {
+  size_t getOffset(StringRef s) const {
     assert(isFinalized());
-    assert(StringIndexMap.count(s) && "String is not in table!");
-    return StringIndexMap[s];
+    auto I = StringIndexMap.find(s);
+    assert(I != StringIndexMap.end() && "String is not in table!");
+    return I->second;
   }
 
   void clear();
 
 private:
-  bool isFinalized() {
+  bool isFinalized() const {
     return !StringTable.empty();
   }
 };
