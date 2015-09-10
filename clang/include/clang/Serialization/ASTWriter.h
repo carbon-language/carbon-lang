@@ -84,6 +84,7 @@ class ASTWriter : public ASTDeserializationListener,
 public:
   typedef SmallVector<uint64_t, 64> RecordData;
   typedef SmallVectorImpl<uint64_t> RecordDataImpl;
+  typedef ArrayRef<uint64_t> RecordDataRef;
 
   friend class ASTDeclWriter;
   friend class ASTStmtWriter;
@@ -756,7 +757,7 @@ public:
   void AddPath(StringRef Path, RecordDataImpl &Record);
 
   /// \brief Emit the current record with the given path as a blob.
-  void EmitRecordWithPath(unsigned Abbrev, RecordDataImpl &Record,
+  void EmitRecordWithPath(unsigned Abbrev, RecordDataRef Record,
                           StringRef Path);
 
   /// \brief Add a version tuple to the given record

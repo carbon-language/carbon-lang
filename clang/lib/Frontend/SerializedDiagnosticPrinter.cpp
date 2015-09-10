@@ -51,6 +51,7 @@ public:
  
 typedef SmallVector<uint64_t, 64> RecordData;
 typedef SmallVectorImpl<uint64_t> RecordDataImpl;
+typedef ArrayRef<uint64_t> RecordDataRef;
 
 class SDiagsWriter;
   
@@ -393,13 +394,9 @@ unsigned SDiagsWriter::getEmitFile(const char *FileName){
   
   // Lazily generate the record for the file.
   entry = State->Files.size();
-  RecordData Record;
-  Record.push_back(RECORD_FILENAME);
-  Record.push_back(entry);
-  Record.push_back(0); // For legacy.
-  Record.push_back(0); // For legacy.
   StringRef Name(FileName);
-  Record.push_back(Name.size());
+  RecordData::value_type Record[] = {RECORD_FILENAME, entry, 0 /* For legacy */,
+                                     0 /* For legacy */, Name.size()};
   State->Stream.EmitRecordWithBlob(State->Abbrevs.get(RECORD_FILENAME), Record,
                                    Name);
 
@@ -531,14 +528,11 @@ void SDiagsWriter::EmitBlockInfoBlock() {
 
 void SDiagsWriter::EmitMetaBlock() {
   llvm::BitstreamWriter &Stream = State->Stream;
-  RecordData &Record = State->Record;
   AbbreviationMap &Abbrevs = State->Abbrevs;
 
   Stream.EnterSubblock(BLOCK_META, 3);
-  Record.clear();
-  Record.push_back(RECORD_VERSION);
-  Record.push_back(VersionNumber);
-  Stream.EmitRecordWithAbbrev(Abbrevs.get(RECORD_VERSION), Record);  
+  RecordData::value_type Record[] = {RECORD_VERSION, VersionNumber};
+  Stream.EmitRecordWithAbbrev(Abbrevs.get(RECORD_VERSION), Record);
   Stream.ExitBlock();
 }
 
@@ -548,11 +542,8 @@ unsigned SDiagsWriter::getEmitCategory(unsigned int category) {
 
   // We use a local version of 'Record' so that we can be generating
   // another record when we lazily generate one for the category entry.
-  RecordData Record;
-  Record.push_back(RECORD_CATEGORY);
-  Record.push_back(category);
   StringRef catName = DiagnosticIDs::getCategoryNameFromID(category);
-  Record.push_back(catName.size());
+  RecordData::value_type Record[] = {RECORD_CATEGORY, category, catName.size()};
   State->Stream.EmitRecordWithBlob(State->Abbrevs.get(RECORD_CATEGORY), Record,
                                    catName);
   
@@ -581,10 +572,8 @@ unsigned SDiagsWriter::getEmitDiagnosticFlag(StringRef FlagName) {
     entry.second = FlagName;
     
     // Lazily emit the string in a separate record.
-    RecordData Record;
-    Record.push_back(RECORD_DIAG_FLAG);
-    Record.push_back(entry.first);
-    Record.push_back(FlagName.size());
+    RecordData::value_type Record[] = {RECORD_DIAG_FLAG, entry.first,
+                                       FlagName.size()};
     State->Stream.EmitRecordWithBlob(State->Abbrevs.get(RECORD_DIAG_FLAG),
                                      Record, FlagName);
   }
@@ -844,17 +833,9 @@ std::error_code SDiagsMerger::visitEndOfDiagnostic() {
 std::error_code
 SDiagsMerger::visitSourceRangeRecord(const serialized_diags::Location &Start,
                                      const serialized_diags::Location &End) {
-  RecordData Record;
-  Record.push_back(RECORD_SOURCE_RANGE);
-  Record.push_back(FileLookup[Start.FileID]);
-  Record.push_back(Start.Line);
-  Record.push_back(Start.Col);
-  Record.push_back(Start.Offset);
-  Record.push_back(FileLookup[End.FileID]);
-  Record.push_back(End.Line);
-  Record.push_back(End.Col);
-  Record.push_back(End.Offset);
-
+  RecordData::value_type Record[] = {
+      RECORD_SOURCE_RANGE, FileLookup[Start.FileID], Start.Line, Start.Col,
+      Start.Offset, FileLookup[End.FileID], End.Line, End.Col, End.Offset};
   Writer.State->Stream.EmitRecordWithAbbrev(
       Writer.State->Abbrevs.get(RECORD_SOURCE_RANGE), Record);
   return std::error_code();
@@ -863,19 +844,13 @@ SDiagsMerger::visitSourceRangeRecord(const serialized_diags::Location &Start,
 std::error_code SDiagsMerger::visitDiagnosticRecord(
     unsigned Severity, const serialized_diags::Location &Location,
     unsigned Category, unsigned Flag, StringRef Message) {
-  RecordData MergedRecord;
-  MergedRecord.push_back(RECORD_DIAG);
-  MergedRecord.push_back(Severity);
-  MergedRecord.push_back(FileLookup[Location.FileID]);
-  MergedRecord.push_back(Location.Line);
-  MergedRecord.push_back(Location.Col);
-  MergedRecord.push_back(Location.Offset);
-  MergedRecord.push_back(CategoryLookup[Category]);
-  MergedRecord.push_back(Flag ? DiagFlagLookup[Flag] : 0);
-  MergedRecord.push_back(Message.size());
+  RecordData::value_type Record[] = {
+      RECORD_DIAG, Severity, FileLookup[Location.FileID], Location.Line,
+      Location.Col, Location.Offset, CategoryLookup[Category],
+      Flag ? DiagFlagLookup[Flag] : 0, Message.size()};
 
   Writer.State->Stream.EmitRecordWithBlob(
-      Writer.State->Abbrevs.get(RECORD_DIAG), MergedRecord, Message);
+      Writer.State->Abbrevs.get(RECORD_DIAG), Record, Message);
   return std::error_code();
 }
 
@@ -883,17 +858,10 @@ std::error_code
 SDiagsMerger::visitFixitRecord(const serialized_diags::Location &Start,
                                const serialized_diags::Location &End,
                                StringRef Text) {
-  RecordData Record;
-  Record.push_back(RECORD_FIXIT);
-  Record.push_back(FileLookup[Start.FileID]);
-  Record.push_back(Start.Line);
-  Record.push_back(Start.Col);
-  Record.push_back(Start.Offset);
-  Record.push_back(FileLookup[End.FileID]);
-  Record.push_back(End.Line);
-  Record.push_back(End.Col);
-  Record.push_back(End.Offset);
-  Record.push_back(Text.size());
+  RecordData::value_type Record[] = {RECORD_FIXIT, FileLookup[Start.FileID],
+                                     Start.Line, Start.Col, Start.Offset,
+                                     FileLookup[End.FileID], End.Line, End.Col,
+                                     End.Offset, Text.size()};
 
   Writer.State->Stream.EmitRecordWithBlob(
       Writer.State->Abbrevs.get(RECORD_FIXIT), Record, Text);
