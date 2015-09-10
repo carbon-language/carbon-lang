@@ -543,6 +543,13 @@ else(UNIX)
   endif(NOT DEFINED CMAKE_INSTALL_RPATH)
 endif()
 
+if(APPLE AND DARWIN_LTO_LIBRARY)
+  set(CMAKE_EXE_LINKER_FLAGS
+    "${CMAKE_EXE_LINKER_FLAGS} -Wl,-lto_library -Wl,${DARWIN_LTO_LIBRARY}")
+  set(CMAKE_SHARED_LINKER_FLAGS
+    "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-lto_library -Wl,${DARWIN_LTO_LIBRARY}")
+endif()
+
 # Work around a broken bfd ld behavior. When linking a binary with a
 # foo.so library, it will try to find any library that foo.so uses and
 # check its symbols. This is wasteful (the check was done when foo.so
