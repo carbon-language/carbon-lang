@@ -59,7 +59,7 @@ public:
   virtual const VarDecl *getThreadIDVariable() const = 0;
 
   /// \brief Emit the captured statement body.
-  virtual void EmitBody(CodeGenFunction &CGF, const Stmt *S) override;
+  void EmitBody(CodeGenFunction &CGF, const Stmt *S) override;
 
   /// \brief Get an LValue for the current ThreadID variable.
   /// \return LValue for thread id variable. This LValue always has type int32*.
@@ -156,7 +156,7 @@ public:
       return OuterRegionInfo->getContextValue();
     llvm_unreachable("No context value for inlined OpenMP region");
   }
-  virtual void setContextValue(llvm::Value *V) override {
+  void setContextValue(llvm::Value *V) override {
     if (OuterRegionInfo) {
       OuterRegionInfo->setContextValue(V);
       return;
@@ -229,7 +229,7 @@ public:
   }
 };
 
-} // namespace
+} // anonymous namespace
 
 static LValue emitLoadOfPointerLValue(CodeGenFunction &CGF, Address PtrAddr,
                                       QualType Ty) {
@@ -1286,7 +1286,7 @@ public:
     CGF.EmitRuntimeCall(Callee, Args);
   }
 };
-} // namespace
+} // anonymous namespace
 
 void CGOpenMPRuntime::emitCriticalRegion(CodeGenFunction &CGF,
                                          StringRef CriticalName,
@@ -1834,7 +1834,7 @@ enum KmpTaskTFields {
   /// \brief Function with call of destructors for private variables.
   KmpTaskTDestructors,
 };
-} // namespace
+} // anonymous namespace
 
 void CGOpenMPRuntime::emitKmpRoutineEntryT(QualType KmpInt32Ty) {
   if (!KmpRoutineEntryPtrTy) {
@@ -1869,7 +1869,7 @@ struct PrivateHelpersTy {
   const VarDecl *PrivateElemInit;
 };
 typedef std::pair<CharUnits /*Align*/, PrivateHelpersTy> PrivateDataTy;
-} // namespace
+} // anonymous namespace
 
 static RecordDecl *
 createPrivatesRecordDecl(CodeGenModule &CGM,
@@ -2910,4 +2910,3 @@ void CGOpenMPRuntime::emitCancelCall(CodeGenFunction &CGF, SourceLocation Loc,
     }
   }
 }
-
