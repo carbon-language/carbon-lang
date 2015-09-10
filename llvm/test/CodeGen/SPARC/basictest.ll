@@ -71,12 +71,12 @@ define i64 @signed_multiply_32x32_64(i32 %a, i32 %b) {
 }
 
 ; CHECK-LABEL: unsigned_multiply_32x32_64:
-; CHECK: umul %o0, %o1, %o2
-; CHECK: rd %y, %o2
 ;FIXME: the smul in the output is totally redundant and should not there.
-; CHECK: smul %o0, %o1, %o1
+; CHECK: smul %o0, %o1, %o2
+; CHECK: umul %o0, %o1, %o0
+; CHECK: rd %y, %o0
 ; CHECK: retl
-; CHECK: mov      %o2, %o0
+; CHECK: mov      %o2, %o1
 define i64 @unsigned_multiply_32x32_64(i32 %a, i32 %b) {
   %xa = zext i32 %a to i64
   %xb = zext i32 %b to i64

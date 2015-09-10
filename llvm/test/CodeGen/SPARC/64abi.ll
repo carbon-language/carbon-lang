@@ -1,19 +1,19 @@
 ; RUN: llc < %s -march=sparcv9 -disable-sparc-delay-filler -disable-sparc-leaf-proc | FileCheck %s
 
-; CHECK: intarg
+; CHECK-LABEL: intarg:
 ; The save/restore frame is not strictly necessary here, but we would need to
 ; refer to %o registers instead.
 ; CHECK: save %sp, -128, %sp
+; CHECK: ldx [%fp+2231], [[R2:%[gilo][0-7]]]
+; CHECK: ld [%fp+2227], [[R1:%[gilo][0-7]]]
 ; CHECK: stb %i0, [%i4]
 ; CHECK: stb %i1, [%i4]
 ; CHECK: sth %i2, [%i4]
 ; CHECK: st  %i3, [%i4]
 ; CHECK: stx %i4, [%i4]
 ; CHECK: st  %i5, [%i4]
-; CHECK: ld [%fp+2227], [[R:%[gilo][0-7]]]
-; CHECK: st  [[R]], [%i4]
-; CHECK: ldx [%fp+2231], [[R:%[gilo][0-7]]]
-; CHECK: stx [[R]], [%i4]
+; CHECK: st  [[R1]], [%i4]
+; CHECK: stx [[R2]], [%i4]
 ; CHECK: restore
 define void @intarg(i8  %a0,   ; %i0
                     i8  %a1,   ; %i1
@@ -37,14 +37,14 @@ define void @intarg(i8  %a0,   ; %i0
   ret void
 }
 
-; CHECK: call_intarg
+; CHECK-LABEL: call_intarg:
 ; 16 saved + 8 args.
 ; CHECK: save %sp, -192, %sp
 ; Sign-extend and store the full 64 bits.
 ; CHECK: sra %i0, 0, [[R:%[gilo][0-7]]]
-; CHECK: stx [[R]], [%sp+2223]
 ; Use %o0-%o5 for outgoing arguments
 ; CHECK: mov 5, %o5
+; CHECK: stx [[R]], [%sp+2223]
 ; CHECK: call intarg
 ; CHECK-NOT: add %sp
 ; CHECK: restore
@@ -53,13 +53,13 @@ define void @call_intarg(i32 %i0, i8* %i1) {
   ret void
 }
 
-; CHECK: floatarg
+; CHECK-LABEL: floatarg:
 ; CHECK: save %sp, -128, %sp
+; CHECK: ld [%fp+2307], [[F:%f[0-9]+]]
 ; CHECK: fstod %f1,
 ; CHECK: faddd %f2,
 ; CHECK: faddd %f4,
 ; CHECK: faddd %f6,
-; CHECK: ld [%fp+2307], [[F:%f[0-9]+]]
 ; CHECK: fadds %f31, [[F]]
 define double @floatarg(float %a0,    ; %f1
                         double %a1,   ; %d2
@@ -89,12 +89,12 @@ define double @floatarg(float %a0,    ; %f1
   ret double %s17
 }
 
-; CHECK: call_floatarg
+; CHECK-LABEL: call_floatarg:
 ; CHECK: save %sp, -272, %sp
-; Store 4 bytes, right-aligned in slot.
-; CHECK: st %f1, [%sp+2307]
 ; Store 8 bytes in full slot.
 ; CHECK: std %f2, [%sp+2311]
+; Store 4 bytes, right-aligned in slot.
+; CHECK: st %f1, [%sp+2307]
 ; CHECK: fmovd %f2, %f4
 ; CHECK: call floatarg
 ; CHECK-NOT: add %sp
@@ -109,12 +109,12 @@ define void @call_floatarg(float %f1, double %d2, float %f5, double *%p) {
   ret void
 }
 
-; CHECK: mixedarg
+; CHECK-LABEL: mixedarg:
+; CHECK: ldx [%fp+2247]
+; CHECK: ldx [%fp+2231]
 ; CHECK: fstod %f3
 ; CHECK: faddd %f6
 ; CHECK: faddd %f16
-; CHECK: ldx [%fp+2231]
-; CHECK: ldx [%fp+2247]
 define void @mixedarg(i8 %a0,      ; %i0
                       float %a1,   ; %f3
                       i16 %a2,     ; %i2
@@ -133,7 +133,7 @@ define void @mixedarg(i8 %a0,      ; %i0
   ret void
 }
 
-; CHECK: call_mixedarg
+; CHECK-LABEL: call_mixedarg:
 ; CHECK: stx %i2, [%sp+2247]
 ; CHECK: stx %i0, [%sp+2223]
 ; CHECK: fmovd %f2, %f6
@@ -157,7 +157,7 @@ define void @call_mixedarg(i64 %i0, double %f2, i16* %i2) {
 
 ; The inreg attribute is used to indicate 32-bit sized struct elements that
 ; share an 8-byte slot.
-; CHECK: inreg_fi
+; CHECK-LABEL: inreg_fi:
 ; CHECK: fstoi %f1
 ; CHECK: srlx %i0, 32, [[R:%[gilo][0-7]]]
 ; CHECK: sub [[R]],
@@ -168,7 +168,7 @@ define i32 @inreg_fi(i32 inreg %a0,     ; high bits of %i0
   ret i32 %rv
 }
 
-; CHECK: call_inreg_fi
+; CHECK-LABEL: call_inreg_fi:
 ; Allocate space for 6 arguments, even when only 2 are used.
 ; CHECK: save %sp, -176, %sp
 ; CHECK: sllx %i1, 32, %o0
@@ -179,7 +179,7 @@ define void @call_inreg_fi(i32* %p, i32 %i1, float %f5) {
   ret void
 }
 
-; CHECK: inreg_ff
+; CHECK-LABEL: inreg_ff:
 ; CHECK: fsubs %f0, %f1, %f0
 define float @inreg_ff(float inreg %a0,   ; %f0
                        float inreg %a1) { ; %f1
@@ -187,7 +187,7 @@ define float @inreg_ff(float inreg %a0,   ; %f0
   ret float %rv
 }
 
-; CHECK: call_inreg_ff
+; CHECK-LABEL: call_inreg_ff:
 ; CHECK: fmovs %f3, %f0
 ; CHECK: fmovs %f5, %f1
 ; CHECK: call inreg_ff
@@ -196,7 +196,7 @@ define void @call_inreg_ff(i32* %p, float %f3, float %f5) {
   ret void
 }
 
-; CHECK: inreg_if
+; CHECK-LABEL: inreg_if:
 ; CHECK: fstoi %f0
 ; CHECK: sub %i0
 define i32 @inreg_if(float inreg %a0, ; %f0
@@ -206,7 +206,7 @@ define i32 @inreg_if(float inreg %a0, ; %f0
   ret i32 %rv
 }
 
-; CHECK: call_inreg_if
+; CHECK-LABEL: call_inreg_if:
 ; CHECK: fmovs %f3, %f0
 ; CHECK: mov %i2, %o0
 ; CHECK: call inreg_if
@@ -216,7 +216,7 @@ define void @call_inreg_if(i32* %p, float %f3, i32 %i2) {
 }
 
 ; The frontend shouldn't do this. Just pass i64 instead.
-; CHECK: inreg_ii
+; CHECK-LABEL: inreg_ii:
 ; CHECK: srlx %i0, 32, [[R:%[gilo][0-7]]]
 ; CHECK: sub %i0, [[R]], %i0
 define i32 @inreg_ii(i32 inreg %a0,   ; high bits of %i0
@@ -225,7 +225,7 @@ define i32 @inreg_ii(i32 inreg %a0,   ; high bits of %i0
   ret i32 %rv
 }
 
-; CHECK: call_inreg_ii
+; CHECK-LABEL: call_inreg_ii:
 ; CHECK: srl %i2, 0, [[R2:%[gilo][0-7]]]
 ; CHECK: sllx %i1, 32, [[R1:%[gilo][0-7]]]
 ; CHECK: or [[R1]], [[R2]], %o0
@@ -236,7 +236,7 @@ define void @call_inreg_ii(i32* %p, i32 %i1, i32 %i2) {
 }
 
 ; Structs up to 32 bytes in size can be returned in registers.
-; CHECK: ret_i64_pair
+; CHECK-LABEL: ret_i64_pair:
 ; CHECK: ldx [%i2], %i0
 ; CHECK: ldx [%i3], %i1
 define { i64, i64 } @ret_i64_pair(i32 %a0, i32 %a1, i64* %p, i64* %q) {
@@ -248,7 +248,7 @@ define { i64, i64 } @ret_i64_pair(i32 %a0, i32 %a1, i64* %p, i64* %q) {
   ret { i64, i64 } %rv2
 }
 
-; CHECK: call_ret_i64_pair
+; CHECK-LABEL: call_ret_i64_pair:
 ; CHECK: call ret_i64_pair
 ; CHECK: stx %o0, [%i0]
 ; CHECK: stx %o1, [%i0]
@@ -263,7 +263,7 @@ define void @call_ret_i64_pair(i64* %i0) {
 }
 
 ; This is not a C struct, the i32 member uses 8 bytes, but the float only 4.
-; CHECK: ret_i32_float_pair
+; CHECK-LABEL: ret_i32_float_pair:
 ; CHECK: ld [%i2], %i0
 ; CHECK: ld [%i3], %f2
 define { i32, float } @ret_i32_float_pair(i32 %a0, i32 %a1,
@@ -276,7 +276,7 @@ define { i32, float } @ret_i32_float_pair(i32 %a0, i32 %a1,
   ret { i32, float } %rv2
 }
 
-; CHECK: call_ret_i32_float_pair
+; CHECK-LABEL: call_ret_i32_float_pair:
 ; CHECK: call ret_i32_float_pair
 ; CHECK: st %o0, [%i0]
 ; CHECK: st %f2, [%i1]
@@ -291,10 +291,10 @@ define void @call_ret_i32_float_pair(i32* %i0, float* %i1) {
 }
 
 ; This is a C struct, each member uses 4 bytes.
-; CHECK: ret_i32_float_packed
+; CHECK-LABEL: ret_i32_float_packed:
 ; CHECK: ld [%i2], [[R:%[gilo][0-7]]]
-; CHECK: sllx [[R]], 32, %i0
 ; CHECK: ld [%i3], %f1
+; CHECK: sllx [[R]], 32, %i0
 define inreg { i32, float } @ret_i32_float_packed(i32 %a0, i32 %a1,
                                                   i32* %p, float* %q) {
   %r1 = load i32, i32* %p
@@ -305,7 +305,7 @@ define inreg { i32, float } @ret_i32_float_packed(i32 %a0, i32 %a1,
   ret { i32, float } %rv2
 }
 
-; CHECK: call_ret_i32_float_packed
+; CHECK-LABEL: call_ret_i32_float_packed:
 ; CHECK: call ret_i32_float_packed
 ; CHECK: srlx %o0, 32, [[R:%[gilo][0-7]]]
 ; CHECK: st [[R]], [%i0]
@@ -322,7 +322,7 @@ define void @call_ret_i32_float_packed(i32* %i0, float* %i1) {
 
 ; The C frontend should use i64 to return { i32, i32 } structs, but verify that
 ; we don't miscompile thi case where both struct elements are placed in %i0.
-; CHECK: ret_i32_packed
+; CHECK-LABEL: ret_i32_packed:
 ; CHECK: ld [%i2], [[R1:%[gilo][0-7]]]
 ; CHECK: ld [%i3], [[R2:%[gilo][0-7]]]
 ; CHECK: sllx [[R2]], 32, [[R3:%[gilo][0-7]]]
@@ -337,7 +337,7 @@ define inreg { i32, i32 } @ret_i32_packed(i32 %a0, i32 %a1,
   ret { i32, i32 } %rv2
 }
 
-; CHECK: call_ret_i32_packed
+; CHECK-LABEL: call_ret_i32_packed:
 ; CHECK: call ret_i32_packed
 ; CHECK: srlx %o0, 32, [[R:%[gilo][0-7]]]
 ; CHECK: st [[R]], [%i0]
@@ -353,31 +353,31 @@ define void @call_ret_i32_packed(i32* %i0, i32* %i1) {
 }
 
 ; The return value must be sign-extended to 64 bits.
-; CHECK: ret_sext
+; CHECK-LABEL: ret_sext:
 ; CHECK: sra %i0, 0, %i0
 define signext i32 @ret_sext(i32 %a0) {
   ret i32 %a0
 }
 
-; CHECK: ret_zext
+; CHECK-LABEL: ret_zext:
 ; CHECK: srl %i0, 0, %i0
 define zeroext i32 @ret_zext(i32 %a0) {
   ret i32 %a0
 }
 
-; CHECK: ret_nosext
+; CHECK-LABEL: ret_nosext:
 ; CHECK-NOT: sra
 define signext i32 @ret_nosext(i32 signext %a0) {
   ret i32 %a0
 }
 
-; CHECK: ret_nozext
+; CHECK-LABEL: ret_nozext:
 ; CHECK-NOT: srl
 define signext i32 @ret_nozext(i32 signext %a0) {
   ret i32 %a0
 }
 
-; CHECK-LABEL: test_register_directive
+; CHECK-LABEL: test_register_directive:
 ; CHECK:       .register %g2, #scratch
 ; CHECK:       .register %g3, #scratch
 ; CHECK:       add %i0, 2, %g2
@@ -391,7 +391,7 @@ entry:
   ret i32 %2
 }
 
-; CHECK-LABEL: test_large_stack
+; CHECK-LABEL: test_large_stack:
 
 ; CHECK:       sethi 16, %g1
 ; CHECK:       xor %g1, -176, %g1
@@ -412,7 +412,7 @@ entry:
 
 declare i32 @use_buf(i32, i8*)
 
-; CHECK-LABEL: test_fp128_args
+; CHECK-LABEL: test_fp128_args:
 ; CHECK-DAG:   std %f0, [%fp+{{.+}}]
 ; CHECK-DAG:   std %f2, [%fp+{{.+}}]
 ; CHECK-DAG:   std %f6, [%fp+{{.+}}]
@@ -428,7 +428,7 @@ entry:
 
 declare i64 @receive_fp128(i64 %a, ...)
 
-; CHECK-LABEL: test_fp128_variable_args
+; CHECK-LABEL: test_fp128_variable_args:
 ; CHECK-DAG:   std %f4, [%sp+[[Offset0:[0-9]+]]]
 ; CHECK-DAG:   std %f6, [%sp+[[Offset1:[0-9]+]]]
 ; CHECK-DAG:   ldx [%sp+[[Offset0]]], %o2
@@ -440,7 +440,7 @@ entry:
   ret i64 %0
 }
 
-; CHECK-LABEL: test_call_libfunc
+; CHECK-LABEL: test_call_libfunc:
 ; CHECK:       st %f1, [%fp+[[Offset0:[0-9]+]]]
 ; CHECK:       fmovs %f3, %f1
 ; CHECK:       call cosf

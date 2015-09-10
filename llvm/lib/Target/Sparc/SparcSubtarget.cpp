@@ -81,3 +81,7 @@ int SparcSubtarget::getAdjustedFrameSize(int frameSize) const {
   }
   return frameSize;
 }
+
+bool SparcSubtarget::enableMachineScheduler() const {
+  return true;
+}

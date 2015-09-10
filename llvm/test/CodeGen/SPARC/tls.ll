@@ -103,10 +103,10 @@ entry:
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_PC22 _GLOBAL_OFFSET_TABLE_ 0x4
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_PC10 _GLOBAL_OFFSET_TABLE_ 0x8
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDO_HIX22 local_symbol 0x0
-; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDO_LOX10 local_symbol 0x0
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDM_HI22 local_symbol 0x0
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDM_LO10 local_symbol 0x0
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDM_ADD local_symbol 0x0
+; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDO_LOX10 local_symbol 0x0
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDM_CALL local_symbol 0x0
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDO_ADD local_symbol 0x0
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_PC22 _GLOBAL_OFFSET_TABLE_ 0x4
