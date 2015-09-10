@@ -910,6 +910,24 @@ def post_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
   return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f32;
 }]>;
 
+// nontemporal store fragments.
+def nontemporalstore : PatFrag<(ops node:$val, node:$ptr),
+                               (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->isNonTemporal();
+}]>;
+
+def alignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
+                                      (nontemporalstore node:$val, node:$ptr), [{
+  StoreSDNode *St = cast<StoreSDNode>(N);
+  return St->getAlignment() >= St->getMemoryVT().getStoreSize();
+}]>;
+
+def unalignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
+                                        (nontemporalstore node:$val, node:$ptr), [{
+  StoreSDNode *St = cast<StoreSDNode>(N);
+  return St->getAlignment() < St->getMemoryVT().getStoreSize();
+}]>;
+
 // setcc convenience fragments.
 def setoeq : PatFrag<(ops node:$lhs, node:$rhs),
                      (setcc node:$lhs, node:$rhs, SETOEQ)>;
