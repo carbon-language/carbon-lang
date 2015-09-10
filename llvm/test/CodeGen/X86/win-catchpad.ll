@@ -76,6 +76,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: retl
 
 ; X86: [[catch1bb:LBB0_[0-9]+]]: # %catch{{$}}
+; X86: pushl %ebp
 ; X86: addl $12, %ebp
 ; X86: subl $8, %esp
 ; X86: movl $1, -{{[0-9]+}}(%ebp)
@@ -85,9 +86,11 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: calll _f
 ; X86: movl $[[contbb]], %eax
 ; X86-NEXT: addl $8, %esp
+; X86-NEXT: popl %ebp
 ; X86-NEXT: retl
 
 ; X86: [[catch2bb:LBB0_[0-9]+]]: # %catch.2{{$}}
+; X86: pushl %ebp
 ; X86: addl $12, %ebp
 ; X86: subl $8, %esp
 ; X86: movl $1, -{{[0-9]+}}(%ebp)
@@ -97,6 +100,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: calll _f
 ; X86: movl $[[contbb]], %eax
 ; X86-NEXT: addl $8, %esp
+; X86-NEXT: popl %ebp
 ; X86-NEXT: retl
 
 ; X86: L__ehtable$try_catch_catch:
