@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -analyze -polly-scops -polly-detect-unprofitable -polly-detect-unprofitable -polly-detect-unprofitable < %s | FileCheck %s
+; RUN: opt %loadPolly -analyze -polly-scops -polly-detect-unprofitable < %s | FileCheck %s
 ;
 ; void consequences(int *A, int bool_cond, int lhs, int rhs) {
 ;

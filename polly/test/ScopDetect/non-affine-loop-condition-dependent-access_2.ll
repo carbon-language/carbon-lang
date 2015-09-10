@@ -6,7 +6,7 @@
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=ALLOWNONAFFINELOOPS
 ; RUN: opt %loadPolly -basicaa -polly-detect -polly-allow-nonaffine \
 ; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true \
-; RUN:     -polly-detect-unprofitable -polly-detect-unprofitable -analyze < %s \
+; RUN:     -polly-detect-unprofitable -analyze < %s \
 ; RUN:     | FileCheck %s --check-prefix=ALLOWNONAFFINELOOPSANDACCESSES
 ;
 ; Here we have a non-affine loop (in the context of the loop nest)

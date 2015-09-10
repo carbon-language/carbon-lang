@@ -1,6 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect-unprofitable -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect-unprofitable -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s
-
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s
 
 ;  foo(float *A, long n, long k) {
 ;    if (true)

@@ -1,9 +1,7 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-parallel -polly-parallel-force -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-parallel -polly-parallel-force -polly-codegen -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-parallel -polly-parallel-force -polly-codegen -S -verify-dom-info < %s | FileCheck %s -check-prefix=IR
 
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-parallel -polly-parallel-force -polly-import-jscop -polly-import-jscop-dir=%S -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST-STRIDE4
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-parallel -polly-parallel-force -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen -S < %s | FileCheck %s -check-prefix=IR-STRIDE4
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-parallel -polly-parallel-force -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen -S < %s | FileCheck %s -check-prefix=IR-STRIDE4
 
 ; This extensive test case tests the creation of the full set of OpenMP calls

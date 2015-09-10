@@ -1,5 +1,4 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-independent -S < %s | FileCheck %s -check-prefix=SCALARACCESS
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-independent -S < %s | FileCheck %s -check-prefix=SCALARACCESS
 
 ; void f(long A[], int N, int *init_ptr) {
 ;   long i, j;
