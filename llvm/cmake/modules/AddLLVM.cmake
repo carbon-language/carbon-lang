@@ -640,11 +640,12 @@ function(export_executable_symbols target)
   endif()
 endfunction()
 
-
-set (LLVM_TOOLCHAIN_TOOLS
-  llvm-ar
-  llvm-objdump
-  )
+if(NOT LLVM_TOOLCHAIN_TOOLS)
+  set (LLVM_TOOLCHAIN_TOOLS
+    llvm-ar
+    llvm-objdump
+    )
+endif()
 
 macro(add_llvm_tool name)
   if( NOT LLVM_BUILD_TOOLS )
