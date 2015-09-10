@@ -399,16 +399,16 @@ public:
 
   /// EmitRecord - Emit the specified record to the stream, using an abbrev if
   /// we have one to compress the output.
-  template<typename uintty>
-  void EmitRecord(unsigned Code, SmallVectorImpl<uintty> &Vals,
-                  unsigned Abbrev = 0) {
+  template <typename Container>
+  void EmitRecord(unsigned Code, const Container &Vals, unsigned Abbrev = 0) {
     if (!Abbrev) {
       // If we don't have an abbrev to use, emit this in its fully unabbreviated
       // form.
+      auto Count = static_cast<uint32_t>(makeArrayRef(Vals).size());
       EmitCode(bitc::UNABBREV_RECORD);
       EmitVBR(Code, 6);
-      EmitVBR(static_cast<uint32_t>(Vals.size()), 6);
-      for (unsigned i = 0, e = static_cast<unsigned>(Vals.size()); i != e; ++i)
+      EmitVBR(Count, 6);
+      for (unsigned i = 0, e = Count; i != e; ++i)
         EmitVBR64(Vals[i], 6);
       return;
     }
