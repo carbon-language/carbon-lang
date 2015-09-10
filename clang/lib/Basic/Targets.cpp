@@ -30,7 +30,6 @@
 #include "llvm/Support/TargetParser.h"
 #include <algorithm>
 #include <memory>
-
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -740,7 +739,7 @@ namespace {
 template <typename Target>
 class WebAssemblyOSTargetInfo : public OSTargetInfo<Target> {
   void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
-                    MacroBuilder &Builder) const final {
+                    MacroBuilder &Builder) const override final {
     // A common platform macro.
     if (Opts.POSIXThreads)
       Builder.defineMacro("_REENTRANT");
@@ -750,7 +749,7 @@ class WebAssemblyOSTargetInfo : public OSTargetInfo<Target> {
   }
 
   // As an optimization, group static init code together in a section.
-  const char *getStaticInitSectionSpecifier() const final {
+  const char *getStaticInitSectionSpecifier() const override final {
     return ".text.__startup";
   }
 
@@ -7012,13 +7011,13 @@ private:
       Features["simd128"] = true;
     return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
   }
-  bool hasFeature(StringRef Feature) const final {
+  bool hasFeature(StringRef Feature) const override final {
     return llvm::StringSwitch<bool>(Feature)
         .Case("simd128", SIMDLevel >= SIMD128)
         .Default(false);
   }
   bool handleTargetFeatures(std::vector<std::string> &Features,
-                            DiagnosticsEngine &Diags) final {
+                            DiagnosticsEngine &Diags) override final {
     for (const auto &Feature : Features) {
       if (Feature == "+simd128") {
         SIMDLevel = std::max(SIMDLevel, SIMD128);
@@ -7035,7 +7034,7 @@ private:
     }
     return true;
   }
-  bool setCPU(const std::string &Name) final {
+  bool setCPU(const std::string &Name) override final {
     return llvm::StringSwitch<bool>(Name)
               .Case("mvp",           true)
               .Case("bleeding-edge", true)
@@ -7043,32 +7042,32 @@ private:
               .Default(false);
   }
   void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const final {
+                         unsigned &NumRecords) const override final {
     Records = BuiltinInfo;
     NumRecords = clang::WebAssembly::LastTSBuiltin - Builtin::FirstTSBuiltin;
   }
-  BuiltinVaListKind getBuiltinVaListKind() const final {
+  BuiltinVaListKind getBuiltinVaListKind() const override final {
     // TODO: Implement va_list properly.
     return VoidPtrBuiltinVaList;
   }
   void getGCCRegNames(const char *const *&Names,
-                      unsigned &NumNames) const final {
+                      unsigned &NumNames) const override final {
     Names = nullptr;
     NumNames = 0;
   }
   void getGCCRegAliases(const GCCRegAlias *&Aliases,
-                        unsigned &NumAliases) const final {
+                        unsigned &NumAliases) const override final {
     Aliases = nullptr;
     NumAliases = 0;
   }
   bool
   validateAsmConstraint(const char *&Name,
-                        TargetInfo::ConstraintInfo &Info) const final {
+                        TargetInfo::ConstraintInfo &Info) const override final {
     return false;
   }
-  const char *getClobbers() const final { return ""; }
-  bool isCLZForZeroUndef() const final { return false; }
-  bool hasInt128Type() const final { return true; }
+  const char *getClobbers() const override final { return ""; }
+  bool isCLZForZeroUndef() const override final { return false; }
+  bool hasInt128Type() const override final { return true; }
 };
 
 const Builtin::Info WebAssemblyTargetInfo::BuiltinInfo[] = {

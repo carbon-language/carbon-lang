@@ -923,7 +923,7 @@ public:
                  const llvm::opt::ArgList &Args);
   ~SHAVEToolChain() override;
 
-  Tool *SelectTool(const JobAction &JA) const override;
+  virtual Tool *SelectTool(const JobAction &JA) const override;
 
 protected:
   Tool *getTool(Action::ActionClass AC) const override;
@@ -960,4 +960,4 @@ private:
 } // end namespace driver
 } // end namespace clang
 
-#endif // LLVM_CLANG_LIB_DRIVER_TOOLCHAINS_H
+#endif
