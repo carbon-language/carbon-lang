@@ -3430,7 +3430,7 @@ static bool EliminateDeadSwitchCases(SwitchInst *SI, AssumptionCache *AC,
     !isa<UnreachableInst>(SI->getDefaultDest()->getFirstNonPHIOrDbg());
   const unsigned NumUnknownBits = Bits - 
     (KnownZero.Or(KnownOne)).countPopulation();
-  assert(0 <= NumUnknownBits && NumUnknownBits <= Bits);
+  assert(NumUnknownBits <= Bits);
   if (HasDefault && DeadCases.empty() &&
       NumUnknownBits < 64 /* avoid overflow */ &&  
       SI->getNumCases() == (1ULL << NumUnknownBits)) {
