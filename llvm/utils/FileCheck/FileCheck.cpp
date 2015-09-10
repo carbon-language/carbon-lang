@@ -399,15 +399,15 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
     TmpStr = RegExStr;
 
     unsigned InsertOffset = 0;
-    for (unsigned i = 0, e = VariableUses.size(); i != e; ++i) {
+    for (const auto &VariableUse : VariableUses) {
       std::string Value;
 
-      if (VariableUses[i].first[0] == '@') {
-        if (!EvaluateExpression(VariableUses[i].first, Value))
+      if (VariableUse.first[0] == '@') {
+        if (!EvaluateExpression(VariableUse.first, Value))
           return StringRef::npos;
       } else {
         StringMap<StringRef>::iterator it =
-          VariableTable.find(VariableUses[i].first);
+            VariableTable.find(VariableUse.first);
         // If the variable is undefined, return an error.
         if (it == VariableTable.end())
           return StringRef::npos;
@@ -417,7 +417,7 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
       }
 
       // Plop it into the regex at the adjusted offset.
-      TmpStr.insert(TmpStr.begin()+VariableUses[i].second+InsertOffset,
+      TmpStr.insert(TmpStr.begin() + VariableUse.second + InsertOffset,
                     Value.begin(), Value.end());
       InsertOffset += Value.size();
     }
@@ -436,11 +436,9 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
   StringRef FullMatch = MatchInfo[0];
 
   // If this defines any variables, remember their values.
-  for (std::map<StringRef, unsigned>::const_iterator I = VariableDefs.begin(),
-                                                     E = VariableDefs.end();
-       I != E; ++I) {
-    assert(I->second < MatchInfo.size() && "Internal paren error");
-    VariableTable[I->first] = MatchInfo[I->second];
+  for (const auto &VariableDef : VariableDefs) {
+    assert(VariableDef.second < MatchInfo.size() && "Internal paren error");
+    VariableTable[VariableDef.first] = MatchInfo[VariableDef.second];
   }
 
   MatchLen = FullMatch.size();
@@ -470,10 +468,10 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
   // If this was a regular expression using variables, print the current
   // variable values.
   if (!VariableUses.empty()) {
-    for (unsigned i = 0, e = VariableUses.size(); i != e; ++i) {
+    for (const auto &VariableUse : VariableUses) {
       SmallString<256> Msg;
       raw_svector_ostream OS(Msg);
-      StringRef Var = VariableUses[i].first;
+      StringRef Var = VariableUse.first;
       if (Var[0] == '@') {
         std::string Value;
         if (EvaluateExpression(Var, Value)) {
@@ -761,9 +759,7 @@ static StringRef FindFirstCandidateMatch(StringRef &Buffer,
   CheckTy = Check::CheckNone;
   CheckLoc = StringRef::npos;
 
-  for (prefix_iterator I = CheckPrefixes.begin(), E = CheckPrefixes.end();
-       I != E; ++I) {
-    StringRef Prefix(*I);
+  for (StringRef Prefix : CheckPrefixes) {
     size_t PrefixLoc = Buffer.find(Prefix);
 
     if (PrefixLoc == StringRef::npos)
@@ -1146,9 +1142,7 @@ bool CheckString::CheckSame(const SourceMgr &SM, StringRef Buffer) const {
 bool CheckString::CheckNot(const SourceMgr &SM, StringRef Buffer,
                            const std::vector<const Pattern *> &NotStrings,
                            StringMap<StringRef> &VariableTable) const {
-  for (unsigned ChunkNo = 0, e = NotStrings.size();
-       ChunkNo != e; ++ChunkNo) {
-    const Pattern *Pat = NotStrings[ChunkNo];
+  for (const Pattern *Pat : NotStrings) {
     assert((Pat->getCheckTy() == Check::CheckNot) && "Expect CHECK-NOT!");
 
     size_t MatchLen = 0;
@@ -1176,10 +1170,7 @@ size_t CheckString::CheckDag(const SourceMgr &SM, StringRef Buffer,
   size_t LastPos = 0;
   size_t StartPos = LastPos;
 
-  for (unsigned ChunkNo = 0, e = DagNotStrings.size();
-       ChunkNo != e; ++ChunkNo) {
-    const Pattern &Pat = DagNotStrings[ChunkNo];
-
+  for (const Pattern &Pat : DagNotStrings) {
     assert((Pat.getCheckTy() == Check::CheckDAG ||
             Pat.getCheckTy() == Check::CheckNot) &&
            "Invalid CHECK-DAG or CHECK-NOT!");
@@ -1253,10 +1244,7 @@ static bool ValidateCheckPrefix(StringRef CheckPrefix) {
 static bool ValidateCheckPrefixes() {
   StringSet<> PrefixSet;
 
-  for (prefix_iterator I = CheckPrefixes.begin(), E = CheckPrefixes.end();
-       I != E; ++I) {
-    StringRef Prefix(*I);
-
+  for (StringRef Prefix : CheckPrefixes) {
     // Reject empty prefixes.
     if (Prefix == "")
       return false;
