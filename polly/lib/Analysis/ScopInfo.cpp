@@ -903,7 +903,7 @@ buildConditionSets(Scop &S, BranchInst *BI, Loop *L, __isl_keep isl_set *Domain,
       isl_set_intersect(AlternativeCondSet, isl_set_copy(Domain))));
 }
 
-void ScopStmt::buildDomain(TempScop &tempScop, const Region &CurRegion) {
+void ScopStmt::buildDomain() {
   isl_id *Id;
 
   Id = isl_id_alloc(getIslCtx(), getBaseName(), this);
@@ -968,8 +968,8 @@ void ScopStmt::deriveAssumptions(BasicBlock *Block) {
       deriveAssumptionsFromGEP(GEP);
 }
 
-ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
-                   Region &R, SmallVectorImpl<Loop *> &Nest)
+ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, Region &R,
+                   SmallVectorImpl<Loop *> &Nest)
     : Parent(parent), BB(nullptr), R(&R), Build(nullptr),
       NestLoops(Nest.size()) {
   // Setup the induction variables.
@@ -978,7 +978,7 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
 
   BaseName = getIslCompatibleName("Stmt_", R.getNameStr(), "");
 
-  buildDomain(tempScop, CurRegion);
+  buildDomain();
 
   BasicBlock *EntryBB = R.getEntry();
   for (BasicBlock *Block : R.blocks()) {
@@ -989,8 +989,8 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
     checkForReductions();
 }
 
-ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
-                   BasicBlock &bb, SmallVectorImpl<Loop *> &Nest)
+ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, BasicBlock &bb,
+                   SmallVectorImpl<Loop *> &Nest)
     : Parent(parent), BB(&bb), R(nullptr), Build(nullptr),
       NestLoops(Nest.size()) {
   // Setup the induction variables.
@@ -999,7 +999,7 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
 
   BaseName = getIslCompatibleName("Stmt_", &bb, "");
 
-  buildDomain(tempScop, CurRegion);
+  buildDomain();
   buildAccesses(tempScop, BB);
   deriveAssumptions(BB);
   if (DetectReductions)
@@ -2449,16 +2449,15 @@ mapToDimension(__isl_take isl_union_set *Domain, int N) {
 }
 
 ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
-                            const Region &CurRegion,
                             SmallVectorImpl<Loop *> &NestLoops) {
   ScopStmt *Stmt;
   if (BB) {
-    Stmts.emplace_back(*this, tempScop, CurRegion, *BB, NestLoops);
+    Stmts.emplace_back(*this, tempScop, *BB, NestLoops);
     Stmt = &Stmts.back();
     StmtMap[BB] = Stmt;
   } else {
     assert(R && "Either basic block or a region expected.");
-    Stmts.emplace_back(*this, tempScop, CurRegion, *R, NestLoops);
+    Stmts.emplace_back(*this, tempScop, *R, NestLoops);
     Stmt = &Stmts.back();
     for (BasicBlock *BB : R->blocks())
       StmtMap[BB] = Stmt;
@@ -2468,12 +2467,11 @@ ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
 
 __isl_give isl_schedule *
 Scop::buildBBScopStmt(BasicBlock *BB, TempScop &tempScop,
-                      const Region &CurRegion,
                       SmallVectorImpl<Loop *> &NestLoops) {
   if (isTrivialBB(BB, tempScop))
     return nullptr;
 
-  auto *Stmt = addScopStmt(BB, nullptr, tempScop, CurRegion, NestLoops);
+  auto *Stmt = addScopStmt(BB, nullptr, tempScop, NestLoops);
   auto *Domain = Stmt->getDomain();
   return isl_schedule_from_domain(isl_union_set_from_set(Domain));
 }
@@ -2484,7 +2482,7 @@ __isl_give isl_schedule *Scop::buildScop(TempScop &tempScop,
                                          LoopInfo &LI, ScopDetection &SD) {
   if (SD.isNonAffineSubRegion(&CurRegion, &getRegion())) {
     auto *Stmt = addScopStmt(nullptr, const_cast<Region *>(&CurRegion),
-                             tempScop, CurRegion, NestLoops);
+                             tempScop, NestLoops);
     auto *Domain = Stmt->getDomain();
     return isl_schedule_from_domain(isl_union_set_from_set(Domain));
   }
@@ -2505,8 +2503,8 @@ __isl_give isl_schedule *Scop::buildScop(TempScop &tempScop,
       StmtSchedule =
           buildScop(tempScop, *I->getNodeAs<Region>(), NestLoops, LI, SD);
     } else {
-      StmtSchedule = buildBBScopStmt(I->getNodeAs<BasicBlock>(), tempScop,
-                                     CurRegion, NestLoops);
+      StmtSchedule =
+          buildBBScopStmt(I->getNodeAs<BasicBlock>(), tempScop, NestLoops);
     }
     Schedule = combineInSequence(Schedule, StmtSchedule);
   }

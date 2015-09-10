@@ -589,11 +589,11 @@ public:
   const ScopStmt &operator=(const ScopStmt &) = delete;
 
   /// Create the ScopStmt from a BasicBlock.
-  ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
-           BasicBlock &bb, SmallVectorImpl<Loop *> &NestLoops);
+  ScopStmt(Scop &parent, TempScop &tempScop, BasicBlock &bb,
+           SmallVectorImpl<Loop *> &NestLoops);
 
   /// Create an overapproximating ScopStmt for the region @p R.
-  ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion, Region &R,
+  ScopStmt(Scop &parent, TempScop &tempScop, Region &R,
            SmallVectorImpl<Loop *> &NestLoops);
 
 private:
@@ -659,7 +659,7 @@ private:
 
   /// Build the statement.
   //@{
-  void buildDomain(TempScop &tempScop, const Region &CurRegion);
+  void buildDomain();
 
   /// @brief Create the accesses for instructions in @p Block.
   ///
@@ -1084,10 +1084,8 @@ private:
   /// @param BB         The basic block we build the statement for (or null)
   /// @param R          The region we build the statement for (or null).
   /// @param tempScop   The temp SCoP we use as model.
-  /// @param CurRegion  The SCoP region.
   /// @param NestLoops  A vector of all surrounding loops.
   ScopStmt *addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
-                        const Region &CurRegion,
                         SmallVectorImpl<Loop *> &NestLoops);
 
   /// @brief Create the ScopStmt for a BasicBlock and return its schedule.
@@ -1096,12 +1094,10 @@ private:
   ///
   /// @param BB         The basic block we build the statement for.
   /// @param tempScop   The temp SCoP we use as model.
-  /// @param CurRegion  The SCoP region.
   /// @param NestLoops  A vector of all surrounding loops.
   ///
   /// @return The ScopStmt's schedule.
   __isl_give isl_schedule *buildBBScopStmt(BasicBlock *BB, TempScop &tempScop,
-                                           const Region &CurRegion,
                                            SmallVectorImpl<Loop *> &NestLoops);
 
   /// @brief Build Scop and ScopStmts from a given TempScop.
