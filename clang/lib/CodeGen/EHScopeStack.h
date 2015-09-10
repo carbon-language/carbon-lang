@@ -334,9 +334,9 @@ public:
   /// Pops a terminate handler off the stack.
   void popTerminate();
 
-  void pushCatchEnd(llvm::BasicBlock *CatchEndBlockBB);
+  void pushPadEnd(llvm::BasicBlock *PadEndBB);
 
-  void popCatchEnd();
+  void popPadEnd();
 
   // Returns true iff the current scope is either empty or contains only
   // lifetime markers, i.e. no real cleanup code

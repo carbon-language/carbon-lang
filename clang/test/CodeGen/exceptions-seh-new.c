@@ -182,8 +182,12 @@ int basic_finally(int g) {
 // CHECK: [[cleanuppad]]
 // CHECK: %[[padtoken:[^ ]*]] = cleanuppad []
 // CHECK: %[[fp:[^ ]*]] = call i8* @llvm.localaddress()
-// CHECK: call void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 1, i8* %[[fp]])
+// CHECK: invoke void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 1, i8* %[[fp]])
+// CHECK:     to label %[[cleanupcont:[^ ]*]] unwind label %[[cleanupend:[^ ]*]]
+// CHECK: [[cleanupcont]]
 // CHECK: cleanupret %[[padtoken]] unwind to caller
+// CHECK: [[cleanupend]]
+// CHECK: cleanupendpad %[[padtoken]] unwind to caller
 
 // CHECK: define internal void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} %abnormal_termination, i8* %frame_pointer)
 // CHECK:   call i8* @llvm.localrecover(i8* bitcast (i32 (i32)* @basic_finally to i8*), i8* %frame_pointer, i32 0)

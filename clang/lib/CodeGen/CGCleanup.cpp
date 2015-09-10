@@ -262,10 +262,10 @@ void EHScopeStack::pushTerminate() {
   InnermostEHScope = stable_begin();
 }
 
-void EHScopeStack::pushCatchEnd(llvm::BasicBlock *CatchEndBlockBB) {
-  char *Buffer = allocate(EHCatchEndScope::getSize());
-  auto *CES = new (Buffer) EHCatchEndScope(InnermostEHScope);
-  CES->setCachedEHDispatchBlock(CatchEndBlockBB);
+void EHScopeStack::pushPadEnd(llvm::BasicBlock *PadEndBB) {
+  char *Buffer = allocate(EHPadEndScope::getSize());
+  auto *CES = new (Buffer) EHPadEndScope(InnermostEHScope);
+  CES->setCachedEHDispatchBlock(PadEndBB);
   InnermostEHScope = stable_begin();
 }
 
