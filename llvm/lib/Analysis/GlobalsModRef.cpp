@@ -789,7 +789,12 @@ GlobalsAAResult::GlobalsAAResult(const DataLayout &DL,
     : AAResultBase(TLI), DL(DL) {}
 
 GlobalsAAResult::GlobalsAAResult(GlobalsAAResult &&Arg)
-    : AAResultBase(std::move(Arg)), DL(Arg.DL) {}
+    : AAResultBase(std::move(Arg)), DL(Arg.DL),
+      NonAddressTakenGlobals(std::move(Arg.NonAddressTakenGlobals)),
+      IndirectGlobals(std::move(Arg.IndirectGlobals)),
+      AllocsForIndirectGlobals(std::move(Arg.AllocsForIndirectGlobals)),
+      FunctionInfos(std::move(Arg.FunctionInfos)),
+      Handles(std::move(Arg.Handles)) {}
 
 /*static*/ GlobalsAAResult
 GlobalsAAResult::analyzeModule(Module &M, const TargetLibraryInfo &TLI,
