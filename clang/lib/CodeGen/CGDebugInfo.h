@@ -366,8 +366,11 @@ private:
   llvm::DIType *EmitTypeForVarWithBlocksAttr(const VarDecl *VD,
                                              uint64_t *OffSet);
 
-  /// Get context info for the decl.
-  llvm::DIScope *getContextDescriptor(const Decl *Decl);
+  /// Get context info for the DeclContext of \p Decl.
+  llvm::DIScope *getDeclContextDescriptor(const Decl *D);
+  /// Get context info for a given DeclContext \p Decl.
+  llvm::DIScope *getContextDescriptor(const Decl *Context,
+                                      llvm::DIScope *Default);
 
   llvm::DIScope *getCurrentContextDescriptor(const Decl *Decl);
 
