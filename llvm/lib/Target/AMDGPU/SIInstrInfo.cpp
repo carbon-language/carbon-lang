@@ -82,6 +82,7 @@ bool SIInstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
   switch (MI->getOpcode()) {
   case AMDGPU::V_MOV_B32_e32:
   case AMDGPU::V_MOV_B32_e64:
+  case AMDGPU::V_MOV_B64_PSEUDO:
     return true;
   default:
     return false;
@@ -996,9 +997,6 @@ bool SIInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
           AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src2));
       }
 
-      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(Opc,
-                                                      AMDGPU::OpName::src2));
-      // ChangingToImmediate adds Src2 back to the instruction.
       Src2->ChangeToImmediate(Imm);
 
       removeModOperands(*UseMI);

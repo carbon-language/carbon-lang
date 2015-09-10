@@ -611,15 +611,13 @@ class VINTRPCommon <dag outs, dag ins, string asm, list<dag> pattern> :
 // Vector I/O operations
 //===----------------------------------------------------------------------===//
 
-let Uses = [EXEC] in {
-
 class DS <dag outs, dag ins, string asm, list<dag> pattern> :
     InstSI <outs, ins, asm, pattern> {
 
   let LGKM_CNT = 1;
   let DS = 1;
   let UseNamedOperandTable = 1;
-  let Uses = [M0];
+  let Uses = [M0, EXEC];
 
   // Most instruction load and store data, so set this as the default.
   let mayLoad = 1;
@@ -636,6 +634,7 @@ class MUBUF <dag outs, dag ins, string asm, list<dag> pattern> :
   let VM_CNT = 1;
   let EXP_CNT = 1;
   let MUBUF = 1;
+  let Uses = [EXEC];
 
   let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
@@ -649,6 +648,7 @@ class MTBUF <dag outs, dag ins, string asm, list<dag> pattern> :
   let VM_CNT = 1;
   let EXP_CNT = 1;
   let MTBUF = 1;
+  let Uses = [EXEC];
 
   let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
@@ -678,9 +678,7 @@ class MIMG <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let VM_CNT = 1;
   let EXP_CNT = 1;
   let MIMG = 1;
+  let Uses = [EXEC];
 
   let hasSideEffects = 0; // XXX ????
 }
-
-
-} // End Uses = [EXEC]

@@ -1367,7 +1367,7 @@ defm V_RSQ_CLAMP_F64 : VOP1InstSI <vop1<0x32>, "v_rsq_clamp_f64",
 // VINTRP Instructions
 //===----------------------------------------------------------------------===//
 
-let Uses = [M0] in {
+let Uses = [M0, EXEC] in {
 
 // FIXME: Specify SchedRW for VINTRP insturctions.
 
@@ -1412,7 +1412,7 @@ defm V_INTERP_MOV_F32 : VINTRP_m <
   [(set f32:$dst, (AMDGPUinterp_mov (i32 imm:$src0), (i32 imm:$attr_chan),
                                     (i32 imm:$attr)))]>;
 
-} // End Uses = [M0]
+} // End Uses = [M0, EXEC]
 
 //===----------------------------------------------------------------------===//
 // VOP2 Instructions
@@ -1769,7 +1769,7 @@ let SchedRW = [WriteDouble, WriteSALU] in {
 defm V_DIV_SCALE_F64 : VOP3b_64 <vop3<0x16e, 0x1e1>, "v_div_scale_f64", []>;
 } // let SchedRW = [WriteDouble]
 
-let isCommutable = 1, Uses = [VCC] in {
+let isCommutable = 1, Uses = [VCC, EXEC] in {
 
 let SchedRW = [WriteFloatFMA] in {
 // v_div_fmas_f32:
@@ -1793,7 +1793,7 @@ defm V_DIV_FMAS_F64 : VOP3_VCC_Inst <vop3<0x170, 0x1e3>, "v_div_fmas_f64",
 >;
 
 } // End SchedRW = [WriteDouble]
-} // End isCommutable = 1
+} // End isCommutable = 1, Uses = [VCC, EXEC]
 
 //def V_MSAD_U8 : VOP3_U8 <0x00000171, "v_msad_u8", []>;
 //def V_QSAD_U8 : VOP3_U8 <0x00000172, "v_qsad_u8", []>;
@@ -1842,7 +1842,7 @@ def V_CNDMASK_B64_PSEUDO : VOP3Common <(outs VReg_64:$dst),
   (ins VSrc_64:$src0, VSrc_64:$src1, SSrc_64:$src2), "", []
 >;
 
-let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let hasSideEffects = 0, mayLoad = 0, mayStore = 0, Uses = [EXEC] in {
 // 64-bit vector move instruction.  This is mainly used by the SIFoldOperands
 // pass to enable folding of inline immediates.
 def V_MOV_B64_PSEUDO : InstSI <(outs VReg_64:$dst), (ins VSrc_64:$src0), "", []>;
@@ -1984,7 +1984,7 @@ def SI_INDIRECT_DST_V16 : SI_INDIRECT_DST<VReg_512>;
 
 multiclass SI_SPILL_SGPR <RegisterClass sgpr_class> {
 
-  let UseNamedOperandTable = 1 in {
+  let UseNamedOperandTable = 1, Uses = [EXEC] in {
     def _SAVE : InstSI <
       (outs),
       (ins sgpr_class:$src, i32imm:$frame_idx, SReg_128:$scratch_rsrc,
@@ -2016,7 +2016,7 @@ defm SI_SPILL_S256 : SI_SPILL_SGPR <SReg_256>;
 defm SI_SPILL_S512 : SI_SPILL_SGPR <SReg_512>;
 
 multiclass SI_SPILL_VGPR <RegisterClass vgpr_class> {
-  let UseNamedOperandTable = 1, VGPRSpill = 1 in {
+  let UseNamedOperandTable = 1, VGPRSpill = 1, Uses = [EXEC] in {
     def _SAVE : InstSI <
       (outs),
       (ins vgpr_class:$src, i32imm:$frame_idx, SReg_128:$scratch_rsrc,
