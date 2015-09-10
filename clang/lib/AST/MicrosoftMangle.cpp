@@ -161,8 +161,6 @@ public:
   void mangleSEHFinallyBlock(const NamedDecl *EnclosingDecl,
                              raw_ostream &Out) override;
   void mangleStringLiteral(const StringLiteral *SL, raw_ostream &Out) override;
-  void mangleCXXVTableBitSet(const CXXRecordDecl *RD,
-                             raw_ostream &Out) override;
   bool getNextDiscriminator(const NamedDecl *ND, unsigned &disc) {
     // Lambda closure types are already numbered.
     if (isLambda(ND))
@@ -2774,21 +2772,6 @@ void MicrosoftMangleContextImpl::mangleStringLiteral(const StringLiteral *SL,
       MangleByte(0);
 
   Mangler.getStream() << '@';
-}
-
-void MicrosoftMangleContextImpl::mangleCXXVTableBitSet(const CXXRecordDecl *RD,
-                                                       raw_ostream &Out) {
-  if (!RD->isExternallyVisible()) {
-    // This part of the identifier needs to be unique across all translation
-    // units in the linked program. The scheme fails if multiple translation
-    // units are compiled using the same relative source file path, or if
-    // multiple translation units are built from the same source file.
-    SourceManager &SM = getASTContext().getSourceManager();
-    Out << "[" << SM.getFileEntryForID(SM.getMainFileID())->getName() << "]";
-  }
-
-  MicrosoftCXXNameMangler mangler(*this, Out);
-  mangler.mangleName(RD);
 }
 
 MicrosoftMangleContext *

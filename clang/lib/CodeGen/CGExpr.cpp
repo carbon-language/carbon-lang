@@ -3780,6 +3780,29 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
     }
   }
 
+  // If we are checking indirect calls and this call is indirect, check that the
+  // function pointer is a member of the bit set for the function type.
+  if (SanOpts.has(SanitizerKind::CFIICall) &&
+      (!TargetDecl || !isa<FunctionDecl>(TargetDecl))) {
+    SanitizerScope SanScope(this);
+
+    llvm::Value *BitSetName = llvm::MetadataAsValue::get(
+        getLLVMContext(),
+        CGM.CreateMetadataIdentifierForType(QualType(FnType, 0)));
+
+    llvm::Value *CastedCallee = Builder.CreateBitCast(Callee, Int8PtrTy);
+    llvm::Value *BitSetTest =
+        Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::bitset_test),
+                           {CastedCallee, BitSetName});
+
+    llvm::Constant *StaticData[] = {
+      EmitCheckSourceLocation(E->getLocStart()),
+      EmitCheckTypeDescriptor(QualType(FnType, 0)),
+    };
+    EmitCheck(std::make_pair(BitSetTest, SanitizerKind::CFIICall),
+              "cfi_bad_icall", StaticData, CastedCallee);
+  }
+
   CallArgList Args;
   if (Chain)
     Args.add(RValue::get(Builder.CreateBitCast(Chain, CGM.VoidPtrTy)),

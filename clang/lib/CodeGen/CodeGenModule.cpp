@@ -941,6 +941,20 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD, llvm::Function *F,
   if (FD->isReplaceableGlobalAllocationFunction())
     F->addAttribute(llvm::AttributeSet::FunctionIndex,
                     llvm::Attribute::NoBuiltin);
+
+  // If we are checking indirect calls and this is not a non-static member
+  // function, emit a bit set entry for the function type.
+  if (LangOpts.Sanitize.has(SanitizerKind::CFIICall) &&
+      !(isa<CXXMethodDecl>(FD) && !cast<CXXMethodDecl>(FD)->isStatic())) {
+    llvm::NamedMDNode *BitsetsMD =
+        getModule().getOrInsertNamedMetadata("llvm.bitsets");
+
+    llvm::Metadata *BitsetOps[] = {
+        CreateMetadataIdentifierForType(FD->getType()),
+        llvm::ConstantAsMetadata::get(F),
+        llvm::ConstantAsMetadata::get(llvm::ConstantInt::get(Int64Ty, 0))};
+    BitsetsMD->addOperand(llvm::MDTuple::get(getLLVMContext(), BitsetOps));
+  }
 }
 
 void CodeGenModule::addUsedGlobal(llvm::GlobalValue *GV) {
@@ -3824,12 +3838,8 @@ llvm::Metadata *CodeGenModule::CreateMetadataIdentifierForType(QualType T) {
 
 llvm::MDTuple *CodeGenModule::CreateVTableBitSetEntry(
     llvm::GlobalVariable *VTable, CharUnits Offset, const CXXRecordDecl *RD) {
-  std::string OutName;
-  llvm::raw_string_ostream Out(OutName);
-  getCXXABI().getMangleContext().mangleCXXVTableBitSet(RD, Out);
-
   llvm::Metadata *BitsetOps[] = {
-      llvm::MDString::get(getLLVMContext(), Out.str()),
+      CreateMetadataIdentifierForType(QualType(RD->getTypeForDecl(), 0)),
       llvm::ConstantAsMetadata::get(VTable),
       llvm::ConstantAsMetadata::get(
           llvm::ConstantInt::get(Int64Ty, Offset.getQuantity()))};

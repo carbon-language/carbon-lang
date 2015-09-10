@@ -60,8 +60,8 @@ void D::h() {
 // ITANIUM: define void @_Z2afP1A
 // MS: define void @"\01?af@@YAXPEAUA@@@Z"
 void af(A *a) {
-  // ITANIUM: [[P:%[^ ]*]] = call i1 @llvm.bitset.test(i8* [[VT:%[^ ]*]], metadata !"1A")
-  // MS: [[P:%[^ ]*]] = call i1 @llvm.bitset.test(i8* [[VT:%[^ ]*]], metadata !"A@@")
+  // ITANIUM: [[P:%[^ ]*]] = call i1 @llvm.bitset.test(i8* [[VT:%[^ ]*]], metadata !"_ZTS1A")
+  // MS: [[P:%[^ ]*]] = call i1 @llvm.bitset.test(i8* [[VT:%[^ ]*]], metadata !"?AUA@@")
   // CHECK-NEXT: br i1 [[P]], label %[[CONTBB:[^ ,]*]], label %[[TRAPBB:[^ ,]*]]
   // CHECK-NEXT: {{^$}}
 
@@ -82,24 +82,24 @@ void af(A *a) {
 // ITANIUM: define internal void @_Z3df1PN12_GLOBAL__N_11DE
 // MS: define internal void @"\01?df1@@YAXPEAUD@?A@@@Z"
 void df1(D *d) {
-  // ITANIUM: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"[{{.*}}cfi-vcall.cpp]N12_GLOBAL__N_11DE")
-  // MS: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"A@@")
+  // ITANIUM: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata ![[DTYPE:[0-9]+]])
+  // MS: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"?AUA@@")
   d->f();
 }
 
 // ITANIUM: define internal void @_Z3dg1PN12_GLOBAL__N_11DE
 // MS: define internal void @"\01?dg1@@YAXPEAUD@?A@@@Z"
 void dg1(D *d) {
-  // ITANIUM: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"1B")
-  // MS: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"B@@")
+  // ITANIUM: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"_ZTS1B")
+  // MS: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"?AUB@@")
   d->g();
 }
 
 // ITANIUM: define internal void @_Z3dh1PN12_GLOBAL__N_11DE
 // MS: define internal void @"\01?dh1@@YAXPEAUD@?A@@@Z"
 void dh1(D *d) {
-  // ITANIUM: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"[{{.*}}cfi-vcall.cpp]N12_GLOBAL__N_11DE")
-  // MS: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"[{{.*}}cfi-vcall.cpp]D@?A@@")
+  // ITANIUM: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata ![[DTYPE]])
+  // MS: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata ![[DTYPE:[0-9]+]])
   d->h();
 }
 
@@ -150,8 +150,8 @@ struct D : C {
 // ITANIUM: define void @_ZN5test21fEPNS_1DE
 // MS: define void @"\01?f@test2@@YAXPEAUD@1@@Z"
 void f(D *d) {
-  // ITANIUM: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"N5test21DE")
-  // MS: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"A@test2@@")
+  // ITANIUM: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"_ZTSN5test21DE")
+  // MS: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"?AUA@test2@@")
   d->m_fn1();
 }
 
@@ -161,28 +161,28 @@ void f(D *d) {
 // MS: !llvm.bitsets = !{[[X:[^,]*(,[^,]*){8}]]}
 // ITANIUM: !llvm.bitsets = !{[[X:[^,]*(,[^,]*){14}]]}
 
-// ITANIUM-DAG: !{!"1A", [3 x i8*]* @_ZTV1A, i64 16}
-// ITANIUM-DAG: !{!"1A", [7 x i8*]* @_ZTCN12_GLOBAL__N_11DE0_1B, i64 32}
-// ITANIUM-DAG: !{!"1B", [7 x i8*]* @_ZTCN12_GLOBAL__N_11DE0_1B, i64 32}
-// ITANIUM-DAG: !{!"1A", [9 x i8*]* @_ZTCN12_GLOBAL__N_11DE8_1C, i64 64}
-// ITANIUM-DAG: !{!"1C", [9 x i8*]* @_ZTCN12_GLOBAL__N_11DE8_1C, i64 32}
-// ITANIUM-DAG: !{!"1A", [12 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 32}
-// ITANIUM-DAG: !{!"1B", [12 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 32}
-// ITANIUM-DAG: !{!"1C", [12 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 88}
-// ITANIUM-DAG: !{!"[{{.*}}cfi-vcall.cpp]N12_GLOBAL__N_11DE", [12 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 32}
-// ITANIUM-DAG: !{!"1A", [7 x i8*]* @_ZTV1B, i64 32}
-// ITANIUM-DAG: !{!"1B", [7 x i8*]* @_ZTV1B, i64 32}
-// ITANIUM-DAG: !{!"1A", [5 x i8*]* @_ZTV1C, i64 32}
-// ITANIUM-DAG: !{!"1C", [5 x i8*]* @_ZTV1C, i64 32}
-// ITANIUM-DAG: !{!"1A", [3 x i8*]* @_ZTVZ3foovE2FA, i64 16}
-// ITANIUM-DAG: !{!"[{{.*}}cfi-vcall.cpp]Z3foovE2FA", [3 x i8*]* @_ZTVZ3foovE2FA, i64 16}
+// ITANIUM-DAG: !{!"_ZTS1A", [3 x i8*]* @_ZTV1A, i64 16}
+// ITANIUM-DAG: !{!"_ZTS1A", [7 x i8*]* @_ZTCN12_GLOBAL__N_11DE0_1B, i64 32}
+// ITANIUM-DAG: !{!"_ZTS1B", [7 x i8*]* @_ZTCN12_GLOBAL__N_11DE0_1B, i64 32}
+// ITANIUM-DAG: !{!"_ZTS1A", [9 x i8*]* @_ZTCN12_GLOBAL__N_11DE8_1C, i64 64}
+// ITANIUM-DAG: !{!"_ZTS1C", [9 x i8*]* @_ZTCN12_GLOBAL__N_11DE8_1C, i64 32}
+// ITANIUM-DAG: !{!"_ZTS1A", [12 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 32}
+// ITANIUM-DAG: !{!"_ZTS1B", [12 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 32}
+// ITANIUM-DAG: !{!"_ZTS1C", [12 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 88}
+// ITANIUM-DAG: !{![[DTYPE]], [12 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 32}
+// ITANIUM-DAG: !{!"_ZTS1A", [7 x i8*]* @_ZTV1B, i64 32}
+// ITANIUM-DAG: !{!"_ZTS1B", [7 x i8*]* @_ZTV1B, i64 32}
+// ITANIUM-DAG: !{!"_ZTS1A", [5 x i8*]* @_ZTV1C, i64 32}
+// ITANIUM-DAG: !{!"_ZTS1C", [5 x i8*]* @_ZTV1C, i64 32}
+// ITANIUM-DAG: !{!"_ZTS1A", [3 x i8*]* @_ZTVZ3foovE2FA, i64 16}
+// ITANIUM-DAG: !{!{{[0-9]+}}, [3 x i8*]* @_ZTVZ3foovE2FA, i64 16}
 
-// MS-DAG: !{!"A@@", [2 x i8*]* @[[VTA]], i64 8}
-// MS-DAG: !{!"B@@", [3 x i8*]* @[[VTB]], i64 8}
-// MS-DAG: !{!"A@@", [2 x i8*]* @[[VTAinB]], i64 8}
-// MS-DAG: !{!"A@@", [2 x i8*]* @[[VTAinC]], i64 8}
-// MS-DAG: !{!"B@@", [3 x i8*]* @[[VTBinD]], i64 8}
-// MS-DAG: !{!"[{{.*}}cfi-vcall.cpp]D@?A@@", [3 x i8*]* @[[VTBinD]], i64 8}
-// MS-DAG: !{!"A@@", [2 x i8*]* @[[VTAinBinD]], i64 8}
-// MS-DAG: !{!"A@@", [2 x i8*]* @[[VTFA]], i64 8}
-// MS-DAG: !{!"[{{.*}}cfi-vcall.cpp]FA@?1??foo@@YAXXZ@", [2 x i8*]* @[[VTFA]], i64 8}
+// MS-DAG: !{!"?AUA@@", [2 x i8*]* @[[VTA]], i64 8}
+// MS-DAG: !{!"?AUB@@", [3 x i8*]* @[[VTB]], i64 8}
+// MS-DAG: !{!"?AUA@@", [2 x i8*]* @[[VTAinB]], i64 8}
+// MS-DAG: !{!"?AUA@@", [2 x i8*]* @[[VTAinC]], i64 8}
+// MS-DAG: !{!"?AUB@@", [3 x i8*]* @[[VTBinD]], i64 8}
+// MS-DAG: !{![[DTYPE]], [3 x i8*]* @[[VTBinD]], i64 8}
+// MS-DAG: !{!"?AUA@@", [2 x i8*]* @[[VTAinBinD]], i64 8}
+// MS-DAG: !{!"?AUA@@", [2 x i8*]* @[[VTFA]], i64 8}
+// MS-DAG: !{!{{[0-9]+}}, [2 x i8*]* @[[VTFA]], i64 8}

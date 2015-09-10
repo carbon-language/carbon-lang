@@ -144,9 +144,6 @@ public:
   /// across translation units so it can be used with LTO.
   virtual void mangleTypeName(QualType T, raw_ostream &) = 0;
 
-  virtual void mangleCXXVTableBitSet(const CXXRecordDecl *RD,
-                                     raw_ostream &) = 0;
-
   /// @}
 };
 

@@ -20,12 +20,14 @@ program's control flow. These schemes have been optimized for performance,
 allowing developers to enable them in release builds.
 
 To enable Clang's available CFI schemes, use the flag ``-fsanitize=cfi``.
-As currently implemented, CFI relies on link-time optimization (LTO); so it is
-required to specify ``-flto``, and the linker used must support LTO, for example
-via the `gold plugin`_. To allow the checks to be implemented efficiently,
-the program must be structured such that certain object files are compiled
-with CFI enabled, and are statically linked into the program. This may
-preclude the use of shared libraries in some cases.
+As currently implemented, all of Clang's CFI schemes (``cfi-vcall``,
+``cfi-derived-cast``, ``cfi-unrelated-cast``, ``cfi-nvcall``, ``cfi-icall``)
+rely on link-time optimization (LTO); so it is required to specify
+``-flto``, and the linker used must support LTO, for example via the `gold
+plugin`_. To allow the checks to be implemented efficiently, the program must
+be structured such that certain object files are compiled with CFI enabled,
+and are statically linked into the program. This may preclude the use of
+shared libraries in some cases.
 
 Clang currently implements forward-edge CFI for member function calls and
 bad cast checking. More schemes are under development.
@@ -122,6 +124,54 @@ undefined behavior, but it is a relatively common hack for introducing
 member functions on class instances with specific properties that works under
 most compilers and should not have security implications, so we allow it by
 default. It can be disabled with ``-fsanitize=cfi-cast-strict``.
+
+Indirect Function Call Checking
+-------------------------------
+
+This scheme checks that function calls take place using a function of the
+correct dynamic type; that is, the dynamic type of the function must match
+the static type used at the call. This CFI scheme can be enabled on its own
+using ``-fsanitize=cfi-icall``.
+
+For this scheme to work, each indirect function call in the program, other
+than calls in :ref:`blacklisted <cfi-blacklist>` functions, must call a
+function which was either compiled with ``-fsanitize=cfi-icall`` enabled,
+or whose address was taken by a function in a translation unit compiled with
+``-fsanitize=cfi-icall``.
+
+If a function in a translation unit compiled with ``-fsanitize=cfi-icall``
+takes the address of a function not compiled with ``-fsanitize=cfi-icall``,
+that address may differ from the address taken by a function in a translation
+unit not compiled with ``-fsanitize=cfi-icall``. This is technically a
+violation of the C and C++ standards, but it should not affect most programs.
+
+Each translation unit compiled with ``-fsanitize=cfi-icall`` must be
+statically linked into the program or shared library, and calls across
+shared library boundaries are handled as if the callee was not compiled with
+``-fsanitize=cfi-icall``.
+
+This scheme is currently only supported on the x86 and x86_64 architectures.
+
+``-fsanitize=cfi-icall`` and ``-fsanitize=function``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This tool is similar to ``-fsanitize=function`` in that both tools check
+the types of function calls. However, the two tools occupy different points
+on the design space; ``-fsanitize=function`` is a developer tool designed
+to find bugs in local development builds, whereas ``-fsanitize=cfi-icall``
+is a security hardening mechanism designed to be deployed in release builds.
+
+``-fsanitize=function`` has a higher space and time overhead due to a more
+complex type check at indirect call sites, as well as a need for run-time
+type information (RTTI), which may make it unsuitable for deployment. Because
+of the need for RTTI, ``-fsanitize=function`` can only be used with C++
+programs, whereas ``-fsanitize=cfi-icall`` can protect both C and C++ programs.
+
+On the other hand, ``-fsanitize=function`` conforms more closely with the C++
+standard and user expectations around interaction with shared libraries;
+the identity of function pointers is maintained, and calls across shared
+library boundaries are no different from calls within a single program or
+shared library.
 
 .. _cfi-blacklist:
 

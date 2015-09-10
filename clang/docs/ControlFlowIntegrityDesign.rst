@@ -273,3 +273,11 @@ Eliminating Bit Vector Checks for All-Ones Bit Vectors
 If the bit vector is all ones, the bit vector check is redundant; we simply
 need to check that the address is in range and well aligned. This is more
 likely to occur if the virtual tables are padded.
+
+Forward-Edge CFI for Indirect Function Calls
+============================================
+
+Sorry, no documentation yet, but see the comments at the top of
+``LowerBitSets::buildBitSetsFromFunctions`` in `LowerBitSets.cpp`_.
+
+.. _LowerBitSets.cpp: http://llvm.org/klaus/llvm/blob/master/lib/Transforms/IPO/LowerBitSets.cpp

@@ -495,6 +495,6 @@ SanitizerMask ToolChain::getSupportedSanitizers() const {
   // Return sanitizers which don't require runtime support and are not
   // platform or architecture-dependent.
   using namespace SanitizerKind;
-  return (Undefined & ~Vptr & ~Function) | CFI | CFICastStrict |
+  return (Undefined & ~Vptr & ~Function) | (CFI & ~CFIICall) | CFICastStrict |
          UnsignedIntegerOverflow | LocalBounds;
 }
