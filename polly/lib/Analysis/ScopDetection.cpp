@@ -363,16 +363,6 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
     }
   }
 
-  // Allow loop exit conditions.
-  Loop *L = LI->getLoopFor(&BB);
-  if (L && L->getExitingBlock() == &BB)
-    return true;
-
-  // Allow perfectly nested conditions.
-  Region *R = RI->getRegionFor(&BB);
-  if (R->getEntry() != &BB)
-    return invalid<ReportCondition>(Context, /*Assert=*/true, &BB);
-
   return true;
 }
 
@@ -709,66 +699,37 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
 
 bool ScopDetection::canUseISLTripCount(Loop *L,
                                        DetectionContext &Context) const {
-
-  Region &CurRegion = Context.CurRegion;
-
   // Ensure the loop has a single back edge.
   if (L->getNumBackEdges() != 1)
     return false;
 
-  // Ensure the loop has a single exiting block.
-  BasicBlock *ExitingBB = L->getExitingBlock();
-  if (!ExitingBB)
-    return false;
-
-  // Ensure the exiting block is terminated by a conditional branch.
-  BranchInst *Term = dyn_cast<BranchInst>(ExitingBB->getTerminator());
-  if (!Term || !Term->isConditional())
-    return false;
-
-  Value *Cond = Term->getCondition();
-
-  // If the terminating condition is an integer comparison, ensure that it is a
-  // comparison between a recurrence and an invariant value.
-  if (ICmpInst *I = dyn_cast<ICmpInst>(Cond)) {
-    const Value *Op0 = I->getOperand(0);
-    const Value *Op1 = I->getOperand(1);
-    const SCEV *LHS = SE->getSCEVAtScope(const_cast<Value *>(Op0), L);
-    const SCEV *RHS = SE->getSCEVAtScope(const_cast<Value *>(Op1), L);
-    if ((isa<SCEVAddRecExpr>(LHS) && !isInvariant(*Op1, CurRegion)) ||
-        (isa<SCEVAddRecExpr>(RHS) && !isInvariant(*Op0, CurRegion)))
+  // Ensure the loop has valid exiting blocks, otherwise we need to
+  // overapproximate it as a boxed loop.
+  SmallVector<BasicBlock *, 4> ExitingBlocks;
+  L->getExitingBlocks(ExitingBlocks);
+  for (BasicBlock *ExitingBB : ExitingBlocks) {
+    if (!isValidCFG(*ExitingBB, Context))
       return false;
   }
-
-  // If the terminating condition is not an integer comparison, ensure that it
-  // is a constant.
-  else if (!isa<ConstantInt>(Cond))
-    return false;
 
   // We can use ISL to compute the trip count of L.
   return true;
 }
 
 bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
-  // Is the loop count affine?
-  bool IsLoopCountAffine = false;
-  const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
-  if (!isa<SCEVCouldNotCompute>(LoopCount))
-    IsLoopCountAffine = isAffineExpr(&Context.CurRegion, LoopCount, *SE);
-  else
-    IsLoopCountAffine = canUseISLTripCount(L, Context);
-  if (IsLoopCountAffine) {
+  if (canUseISLTripCount(L, Context)) {
     Context.hasAffineLoops = true;
     return true;
   }
 
-  if (AllowNonAffineSubRegions) {
+  if (AllowNonAffineSubLoops && AllowNonAffineSubRegions) {
     Region *R = RI->getRegionFor(L->getHeader());
     if (R->contains(L))
       if (addOverApproximatedRegion(R, Context))
         return true;
   }
 
+  const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
   return invalid<ReportLoopBound>(Context, /*Assert=*/true, L, LoopCount);
 }
 

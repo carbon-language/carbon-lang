@@ -30,6 +30,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
@@ -891,6 +892,12 @@ buildConditionSets(Scop &S, BranchInst *BI, Loop *L, __isl_keep isl_set *Domain,
     LHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(0), L), Domain);
     RHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(1), L), Domain);
     ConsequenceCondSet = buildConditionSet(ICond->getPredicate(), LHS, RHS);
+
+    for (unsigned u = 0, e = isl_set_n_dim(Domain); u < e; u++) {
+      isl_id *DimId = isl_set_get_dim_id(Domain, isl_dim_set, u);
+      ConsequenceCondSet =
+          isl_set_set_dim_id(ConsequenceCondSet, isl_dim_set, u, DimId);
+    }
   }
 
   assert(ConsequenceCondSet);
@@ -968,17 +975,21 @@ void ScopStmt::deriveAssumptions(BasicBlock *Block) {
       deriveAssumptionsFromGEP(GEP);
 }
 
-ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, Region &R,
-                   SmallVectorImpl<Loop *> &Nest)
-    : Parent(parent), BB(nullptr), R(&R), Build(nullptr),
-      NestLoops(Nest.size()) {
-  // Setup the induction variables.
-  for (unsigned i = 0, e = Nest.size(); i < e; ++i)
-    NestLoops[i] = Nest[i];
+void ScopStmt::collectSurroundingLoops() {
+  for (unsigned u = 0, e = isl_set_n_dim(Domain); u < e; u++) {
+    isl_id *DimId = isl_set_get_dim_id(Domain, isl_dim_set, u);
+    NestLoops.push_back(static_cast<Loop *>(isl_id_get_user(DimId)));
+    isl_id_free(DimId);
+  }
+}
+
+ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, Region &R)
+    : Parent(parent), BB(nullptr), R(&R), Build(nullptr) {
 
   BaseName = getIslCompatibleName("Stmt_", R.getNameStr(), "");
 
   buildDomain();
+  collectSurroundingLoops();
 
   BasicBlock *EntryBB = R.getEntry();
   for (BasicBlock *Block : R.blocks()) {
@@ -989,17 +1000,13 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, Region &R,
     checkForReductions();
 }
 
-ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, BasicBlock &bb,
-                   SmallVectorImpl<Loop *> &Nest)
-    : Parent(parent), BB(&bb), R(nullptr), Build(nullptr),
-      NestLoops(Nest.size()) {
-  // Setup the induction variables.
-  for (unsigned i = 0, e = Nest.size(); i < e; ++i)
-    NestLoops[i] = Nest[i];
+ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, BasicBlock &bb)
+    : Parent(parent), BB(&bb), R(nullptr), Build(nullptr) {
 
   BaseName = getIslCompatibleName("Stmt_", &bb, "");
 
   buildDomain();
+  collectSurroundingLoops();
   buildAccesses(tempScop, BB);
   deriveAssumptions(BB);
   if (DetectReductions)
@@ -1469,7 +1476,27 @@ static inline Loop *getRegionNodeLoop(RegionNode *RN, LoopInfo &LI) {
   return L;
 }
 
+static inline unsigned getNumBlocksInRegionNode(RegionNode *RN) {
+  if (!RN->isSubRegion())
+    return 1;
+
+  unsigned NumBlocks = 0;
+  Region *R = RN->getNodeAs<Region>();
+  for (auto BB : R->blocks()) {
+    (void)BB;
+    NumBlocks++;
+  }
+  return NumBlocks;
+}
+
 ///}
+
+static inline __isl_give isl_set *addDomainDimId(__isl_take isl_set *Domain,
+                                                 unsigned Dim, Loop *L) {
+  isl_id *DimId =
+      isl_id_alloc(isl_set_get_ctx(Domain), nullptr, static_cast<void *>(L));
+  return isl_set_set_dim_id(Domain, isl_dim_set, Dim, DimId);
+}
 
 isl_set *Scop::getDomainConditions(ScopStmt *Stmt) {
   BasicBlock *BB = Stmt->isBlockStmt() ? Stmt->getBasicBlock()
@@ -1483,6 +1510,13 @@ void Scop::buildDomains(Region *R, LoopInfo &LI, ScopDetection &SD,
   auto *EntryBB = R->getEntry();
   int LD = getRelativeLoopDepth(LI.getLoopFor(EntryBB));
   auto *S = isl_set_universe(isl_space_set_alloc(getIslCtx(), 0, LD + 1));
+
+  Loop *L = LI.getLoopFor(EntryBB);
+  while (LD-- >= 0) {
+    S = addDomainDimId(S, LD + 1, L);
+    L = L->getParentLoop();
+  }
+
   DomainMap[EntryBB] = S;
 
   buildDomainsWithBranchConstraints(R, LI, SD, DT);
@@ -1572,9 +1606,11 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
           CondSet = isl_set_project_out(CondSet, isl_dim_set, BBLoopDepth, 1);
         } else if (SuccBBLoopDepth > BBLoopDepth) {
           CondSet = isl_set_add_dims(CondSet, isl_dim_set, 1);
+          CondSet = addDomainDimId(CondSet, SuccBBLoopDepth, SuccBBLoop);
         } else if (BBLoopDepth >= 0) {
           CondSet = isl_set_project_out(CondSet, isl_dim_set, BBLoopDepth, 1);
           CondSet = isl_set_add_dims(CondSet, isl_dim_set, 1);
+          CondSet = addDomainDimId(CondSet, SuccBBLoopDepth, SuccBBLoop);
         }
       }
 
@@ -1992,6 +2028,11 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   return true;
 }
 
+static Loop *getLoopSurroundingRegion(Region &R, LoopInfo &LI) {
+  Loop *L = LI.getLoopFor(R.getEntry());
+  return L ? (R.contains(L) ? L->getParentLoop() : L) : nullptr;
+}
+
 static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI,
                                         ScopDetection &SD) {
 
@@ -2032,21 +2073,18 @@ void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD,
 
   buildDomains(&R, LI, SD, DT);
 
-  SmallVector<Loop *, 8> NestLoops;
+  DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> LoopSchedules;
 
-  // Build the iteration domain, access functions and schedule functions
-  // traversing the region tree.
-  Schedule = buildScop(TempScop, getRegion(), NestLoops, LI, SD);
-  if (!Schedule)
-    Schedule = isl_schedule_empty(getParamSpace());
+  Loop *L = getLoopSurroundingRegion(R, LI);
+  LoopSchedules[L];
+  buildSchedule(&R, TempScop, LI, SD, LoopSchedules);
+  Schedule = LoopSchedules[L].first;
 
   realignParams();
   addParameterBounds();
   addUserContext();
   simplifyAssumedContext();
   buildAliasChecks(AA);
-
-  assert(NestLoops.empty() && "NestLoops not empty at top level!");
 }
 
 Scop *Scop::createFromTempScop(TempScop &TempScop, LoopInfo &LI,
@@ -2435,6 +2473,11 @@ static isl_stat mapToDimension_AddSet(__isl_take isl_set *Set, void *User) {
 // @param N      The dimension to map to.
 static __isl_give isl_multi_union_pw_aff *
 mapToDimension(__isl_take isl_union_set *Domain, int N) {
+  if (N <= 0 || isl_union_set_is_empty(Domain)) {
+    isl_union_set_free(Domain);
+    return nullptr;
+  }
+
   struct MapToDimensionDataTy Data;
   isl_space *Space;
 
@@ -2448,16 +2491,15 @@ mapToDimension(__isl_take isl_union_set *Domain, int N) {
   return isl_multi_union_pw_aff_from_union_pw_multi_aff(Data.Res);
 }
 
-ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
-                            SmallVectorImpl<Loop *> &NestLoops) {
+ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop) {
   ScopStmt *Stmt;
   if (BB) {
-    Stmts.emplace_back(*this, tempScop, *BB, NestLoops);
+    Stmts.emplace_back(*this, tempScop, *BB);
     Stmt = &Stmts.back();
     StmtMap[BB] = Stmt;
   } else {
     assert(R && "Either basic block or a region expected.");
-    Stmts.emplace_back(*this, tempScop, *R, NestLoops);
+    Stmts.emplace_back(*this, tempScop, *R);
     Stmt = &Stmts.back();
     for (BasicBlock *BB : R->blocks())
       StmtMap[BB] = Stmt;
@@ -2465,62 +2507,59 @@ ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
   return Stmt;
 }
 
-__isl_give isl_schedule *
-Scop::buildBBScopStmt(BasicBlock *BB, TempScop &tempScop,
-                      SmallVectorImpl<Loop *> &NestLoops) {
-  if (isTrivialBB(BB, tempScop))
-    return nullptr;
+void Scop::buildSchedule(
+    Region *R, TempScop &TS, LoopInfo &LI, ScopDetection &SD,
+    DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules) {
 
-  auto *Stmt = addScopStmt(BB, nullptr, tempScop, NestLoops);
-  auto *Domain = Stmt->getDomain();
-  return isl_schedule_from_domain(isl_union_set_from_set(Domain));
-}
+  ReversePostOrderTraversal<Region *> RTraversal(R);
+  for (auto *RN : RTraversal) {
 
-__isl_give isl_schedule *Scop::buildScop(TempScop &tempScop,
-                                         const Region &CurRegion,
-                                         SmallVectorImpl<Loop *> &NestLoops,
-                                         LoopInfo &LI, ScopDetection &SD) {
-  if (SD.isNonAffineSubRegion(&CurRegion, &getRegion())) {
-    auto *Stmt = addScopStmt(nullptr, const_cast<Region *>(&CurRegion),
-                             tempScop, NestLoops);
-    auto *Domain = Stmt->getDomain();
-    return isl_schedule_from_domain(isl_union_set_from_set(Domain));
-  }
-
-  Loop *L = castToLoop(CurRegion, LI);
-
-  if (L)
-    NestLoops.push_back(L);
-
-  unsigned loopDepth = NestLoops.size();
-  isl_schedule *Schedule = nullptr;
-
-  for (Region::const_element_iterator I = CurRegion.element_begin(),
-                                      E = CurRegion.element_end();
-       I != E; ++I) {
-    isl_schedule *StmtSchedule = nullptr;
-    if (I->isSubRegion()) {
-      StmtSchedule =
-          buildScop(tempScop, *I->getNodeAs<Region>(), NestLoops, LI, SD);
-    } else {
-      StmtSchedule =
-          buildBBScopStmt(I->getNodeAs<BasicBlock>(), tempScop, NestLoops);
+    if (RN->isSubRegion()) {
+      Region *SubRegion = RN->getNodeAs<Region>();
+      if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
+        buildSchedule(SubRegion, TS, LI, SD, LoopSchedules);
+        continue;
+      }
     }
-    Schedule = combineInSequence(Schedule, StmtSchedule);
+
+    Loop *L = getRegionNodeLoop(RN, LI);
+    int LD = getRelativeLoopDepth(L);
+    auto &LSchedulePair = LoopSchedules[L];
+    LSchedulePair.second += getNumBlocksInRegionNode(RN);
+
+    BasicBlock *BB = getRegionNodeBasicBlock(RN);
+    if (RN->isSubRegion() || !isTrivialBB(BB, TS)) {
+
+      ScopStmt *Stmt;
+      if (RN->isSubRegion())
+        Stmt = addScopStmt(nullptr, RN->getNodeAs<Region>(), TS);
+      else
+        Stmt = addScopStmt(BB, nullptr, TS);
+
+      auto *UDomain = isl_union_set_from_set(Stmt->getDomain());
+      auto *StmtSchedule = isl_schedule_from_domain(UDomain);
+      LSchedulePair.first =
+          combineInSequence(LSchedulePair.first, StmtSchedule);
+    }
+
+    unsigned NumVisited = LSchedulePair.second;
+    while (L && NumVisited == L->getNumBlocks()) {
+      auto *LDomain = isl_schedule_get_domain(LSchedulePair.first);
+      if (auto *MUPA = mapToDimension(LDomain, LD + 1))
+        LSchedulePair.first =
+            isl_schedule_insert_partial_schedule(LSchedulePair.first, MUPA);
+
+      auto *PL = L->getParentLoop();
+      assert(LoopSchedules.count(PL));
+      auto &PSchedulePair = LoopSchedules[PL];
+      PSchedulePair.first =
+          combineInSequence(PSchedulePair.first, LSchedulePair.first);
+      PSchedulePair.second += NumVisited;
+
+      L = PL;
+      NumVisited = PSchedulePair.second;
+    }
   }
-
-  if (!L)
-    return Schedule;
-
-  auto *Domain = isl_schedule_get_domain(Schedule);
-  if (!isl_union_set_is_empty(Domain)) {
-    auto *MUPA = mapToDimension(isl_union_set_copy(Domain), loopDepth);
-    Schedule = isl_schedule_insert_partial_schedule(Schedule, MUPA);
-  }
-  isl_union_set_free(Domain);
-
-  NestLoops.pop_back();
-  return Schedule;
 }
 
 ScopStmt *Scop::getStmtForBasicBlock(BasicBlock *BB) const {

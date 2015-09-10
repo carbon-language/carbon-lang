@@ -16,10 +16,10 @@
 ; CHECK-LABEL: polly.stmt.bb8:
 ; CHECK:       %tmp.0.phiops.reload = load i32, i32* %tmp.0.phiops
 ; CHECK:       store i32 %tmp.0.phiops.reload, i32*
-; CHECK-LABEL: polly.stmt.bb6:
-; CHECK:       store i32 3, i32* %tmp.0.phiops
 ; CHECK-LABEL: polly.stmt.bb7:
 ; CHECK:       store i32 5, i32* %tmp.0.phiops
+; CHECK-LABEL: polly.stmt.bb6:
+; CHECK:       store i32 3, i32* %tmp.0.phiops
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

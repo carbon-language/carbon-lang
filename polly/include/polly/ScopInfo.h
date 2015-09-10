@@ -589,12 +589,10 @@ public:
   const ScopStmt &operator=(const ScopStmt &) = delete;
 
   /// Create the ScopStmt from a BasicBlock.
-  ScopStmt(Scop &parent, TempScop &tempScop, BasicBlock &bb,
-           SmallVectorImpl<Loop *> &NestLoops);
+  ScopStmt(Scop &parent, TempScop &tempScop, BasicBlock &bb);
 
   /// Create an overapproximating ScopStmt for the region @p R.
-  ScopStmt(Scop &parent, TempScop &tempScop, Region &R,
-           SmallVectorImpl<Loop *> &NestLoops);
+  ScopStmt(Scop &parent, TempScop &tempScop, Region &R);
 
 private:
   /// Polyhedral description
@@ -653,13 +651,16 @@ private:
   /// @brief The isl AST build for the new generated AST.
   isl_ast_build *Build;
 
-  std::vector<Loop *> NestLoops;
+  SmallVector<Loop *, 4> NestLoops;
 
   std::string BaseName;
 
   /// Build the statement.
   //@{
   void buildDomain();
+
+  /// @brief Fill NestLoops with loops surrounding this statement.
+  void collectSurroundingLoops();
 
   /// @brief Create the accesses for instructions in @p Block.
   ///
@@ -1084,35 +1085,17 @@ private:
   /// @param BB         The basic block we build the statement for (or null)
   /// @param R          The region we build the statement for (or null).
   /// @param tempScop   The temp SCoP we use as model.
-  /// @param NestLoops  A vector of all surrounding loops.
-  ScopStmt *addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
-                        SmallVectorImpl<Loop *> &NestLoops);
+  ScopStmt *addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop);
 
-  /// @brief Create the ScopStmt for a BasicBlock and return its schedule.
+  /// @brief Build Schedule and ScopStmts from a given TempScop.
   ///
-  /// Returns null if the BB is trivial and no stmt has been created.
-  ///
-  /// @param BB         The basic block we build the statement for.
-  /// @param tempScop   The temp SCoP we use as model.
-  /// @param NestLoops  A vector of all surrounding loops.
-  ///
-  /// @return The ScopStmt's schedule.
-  __isl_give isl_schedule *buildBBScopStmt(BasicBlock *BB, TempScop &tempScop,
-                                           SmallVectorImpl<Loop *> &NestLoops);
-
-  /// @brief Build Scop and ScopStmts from a given TempScop.
-  ///
-  /// @param TempScop  The temporary scop that is translated into an actual
-  ///                  scop.
-  /// @param CurRegion The subregion of the current scop that we are currently
-  ///                  translating.
-  /// @param NestLoop  The set of loops that surround the current subregion.
-  /// @param LI        The LoopInfo object.
-  /// @param SD        The ScopDetection object.
-  __isl_give isl_schedule *buildScop(TempScop &TempScop,
-                                     const Region &CurRegion,
-                                     SmallVectorImpl<Loop *> &NestLoops,
-                                     LoopInfo &LI, ScopDetection &SD);
+  /// @param R  The current region traversed.
+  /// @param TS The temporary scop that is translated into an actual scop.
+  /// @param LI The LoopInfo object.
+  /// @param SD The ScopDetection object.
+  void buildSchedule(
+      Region *R, TempScop &TS, LoopInfo &LI, ScopDetection &SD,
+      DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules);
 
   /// @name Helper function for printing the Scop.
   ///
