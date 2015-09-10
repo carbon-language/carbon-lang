@@ -1870,7 +1870,7 @@ AST_MATCHER_P_OVERLOAD(CXXRecordDecl, isSameOrDerivedFrom, std::string,
 /// \code
 ///   class A { void func(); };
 ///   class B { void member(); };
-/// \code
+/// \endcode
 ///
 /// \c recordDecl(hasMethod(hasName("func"))) matches the declaration of \c A
 /// but not \c B.
@@ -2319,7 +2319,7 @@ AST_MATCHER_P(QualType, references, internal::Matcher<QualType>,
 ///   typedef int &int_ref;
 ///   int a;
 ///   int_ref b = a;
-/// \code
+/// \endcode
 ///
 /// \c varDecl(hasType(qualType(referenceType()))))) will not match the
 /// declaration of b but \c
@@ -3090,6 +3090,7 @@ AST_MATCHER_P(UnaryOperator, hasUnaryOperand,
 /// \code
 /// class URL { URL(string); };
 /// URL url = "a string";
+/// \endcode
 AST_MATCHER_P(CastExpr, hasSourceExpression,
               internal::Matcher<Expr>, InnerMatcher) {
   const Expr* const SubExpression = Node.getSubExpr();
@@ -3854,7 +3855,7 @@ AST_TYPE_MATCHER(TypedefType, typedefType);
 ///
 ///   template class C<int>;  // A
 ///   C<char> var;            // B
-/// \code
+/// \endcode
 ///
 /// \c templateSpecializationType() matches the type of the explicit
 /// instantiation in \c A and the type of the variable declaration in \c B.
@@ -3879,7 +3880,7 @@ AST_TYPE_MATCHER(UnaryTransformType, unaryTransformType);
 ///
 ///   C c;
 ///   S s;
-/// \code
+/// \endcode
 ///
 /// \c recordType() matches the type of the variable declarations of both \c c
 /// and \c s.
@@ -3899,7 +3900,7 @@ AST_TYPE_MATCHER(RecordType, recordType);
 ///
 ///   class C c;
 ///   N::M::D d;
-/// \code
+/// \endcode
 ///
 /// \c elaboratedType() matches the type of the variable declarations of both
 /// \c c and \c d.
@@ -3916,7 +3917,7 @@ AST_TYPE_MATCHER(ElaboratedType, elaboratedType);
 ///     }
 ///   }
 ///   N::M::D d;
-/// \code
+/// \endcode
 ///
 /// \c elaboratedType(hasQualifier(hasPrefix(specifiesNamespace(hasName("N"))))
 /// matches the type of the variable declaration of \c d.
@@ -3938,7 +3939,7 @@ AST_MATCHER_P(ElaboratedType, hasQualifier,
 ///     }
 ///   }
 ///   N::M::D d;
-/// \code
+/// \endcode
 ///
 /// \c elaboratedType(namesType(recordType(
 /// hasDeclaration(namedDecl(hasName("D")))))) matches the type of the variable
@@ -3957,7 +3958,7 @@ AST_MATCHER_P(ElaboratedType, namesType, internal::Matcher<QualType>,
 ///   void F(T t) {
 ///     int i = 1 + t;
 ///   }
-/// \code
+/// \endcode
 ///
 /// \c substTemplateTypeParmType() matches the type of 't' but not '1'
 AST_TYPE_MATCHER(SubstTemplateTypeParmType, substTemplateTypeParmType);
@@ -3972,7 +3973,7 @@ AST_TYPE_MATCHER(SubstTemplateTypeParmType, substTemplateTypeParmType);
 ///       class D {};
 ///     }
 ///   }
-/// \code
+/// \endcode
 ///
 /// \c recordDecl(hasDeclContext(namedDecl(hasName("M")))) matches the
 /// declaration of \c class \c D.
