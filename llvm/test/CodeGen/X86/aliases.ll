@@ -49,7 +49,7 @@ define i32 @foo_f() {
 @bar_p = protected alias i32* @bar
 
 ; CHECK-DAG: test2 = bar+4
-@test2 = alias getelementptr(i32, i32 *@bar, i32 1)
+@test2 = alias getelementptr(i32, i32* @bar, i32 1)
 
 ; CHECK-DAG: test3 = 42
 @test3 = alias inttoptr(i32 42 to i32*)
