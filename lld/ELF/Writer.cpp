@@ -116,7 +116,7 @@ public:
   typedef typename OutputSectionBase<Is64Bits>::uintX_t uintX_t;
   StringTableSection(bool Dynamic)
       : OutputSectionBase<Is64Bits>(Dynamic ? ".dynstr" : ".strtab", SHT_STRTAB,
-                                    Dynamic ? SHF_ALLOC : 0) {
+                                    Dynamic ? (uintX_t)SHF_ALLOC : 0) {
     this->Header.sh_addralign = 1;
   }
 
