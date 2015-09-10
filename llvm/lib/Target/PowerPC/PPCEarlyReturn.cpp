@@ -71,7 +71,14 @@ protected:
       for (MachineBasicBlock::pred_iterator PI = ReturnMBB.pred_begin(),
            PIE = ReturnMBB.pred_end(); PI != PIE; ++PI) {
         bool OtherReference = false, BlockChanged = false;
+
+        if ((*PI)->empty())
+          continue;
+        
         for (MachineBasicBlock::iterator J = (*PI)->getLastNonDebugInstr();;) {
+          if (J == (*PI)->end())
+            break;
+
           MachineInstrBuilder MIB;
           if (J->getOpcode() == PPC::B) {
             if (J->getOperand(0).getMBB() == &ReturnMBB) {

@@ -92,6 +92,8 @@ public:
 
   const SpillSlot *
   getCalleeSavedSpillSlots(unsigned &NumEntries) const override;
+
+  bool enableShrinkWrapping(const MachineFunction &MF) const override;
 };
 } // End llvm namespace
 
