@@ -275,7 +275,6 @@ add_polly_library(Polly
   Analysis/ScopInfo.cpp
   Analysis/ScopGraphPrinter.cpp
   Analysis/ScopPass.cpp
-  Analysis/TempScopInfo.cpp
   CodeGen/BlockGenerators.cpp
   ${ISL_CODEGEN_FILES}
   CodeGen/LoopGenerators.cpp
