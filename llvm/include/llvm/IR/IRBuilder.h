@@ -681,8 +681,8 @@ public:
     return Insert(CleanupReturnInst::Create(CleanupPad, UnwindBB));
   }
 
-  CatchEndPadInst *CreateCleanupEndPad(CleanupPadInst *CleanupPad,
-                                       BasicBlock *UnwindBB = nullptr) {
+  CleanupEndPadInst *CreateCleanupEndPad(CleanupPadInst *CleanupPad,
+                                         BasicBlock *UnwindBB = nullptr) {
     return Insert(CleanupEndPadInst::Create(CleanupPad, UnwindBB));
   }
 
