@@ -41,7 +41,7 @@ public:
 
   /// \brief Retrieve the string table data. Can only be used after the table
   /// is finalized.
-  StringRef data() {
+  StringRef data() const {
     assert(isFinalized());
     return StringTable;
   }
