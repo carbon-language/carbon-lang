@@ -797,7 +797,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   bool progress = true;
   while (progress) {
 #ifndef NDEBUG
-    size_t oldSize = States.size();
+    const size_t oldSize = States.size();
 #endif
     progress = false;
     // We're only changing values in this loop, thus safe to keep iterators.
@@ -842,8 +842,8 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
       }
     }
 
-    assert(oldSize <= States.size());
-    assert(oldSize == States.size() || progress);
+    assert(oldSize == States.size() &&
+           "fixed point shouldn't be adding any new nodes to state");
   }
 
 #ifndef NDEBUG
