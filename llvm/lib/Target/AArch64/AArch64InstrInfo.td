@@ -5825,6 +5825,45 @@ def : Pat<(i64 (int_aarch64_neon_srshl (i64 FPR64:$Rn), (i64 FPR64:$Rm))),
 def : Pat<(i64 (int_aarch64_neon_urshl (i64 FPR64:$Rn), (i64 FPR64:$Rm))),
           (URSHLv1i64 FPR64:$Rn, FPR64:$Rm)>;
 
+// Patterns for nontemporal/no-allocate stores.
+// We have to resort to tricks to turn a single-input store into a store pair,
+// because there is no single-input nontemporal store, only STNP.
+let Predicates = [IsLE] in {
+let AddedComplexity = 15 in {
+class NTStore128Pat<ValueType VT> :
+  Pat<(nontemporalstore (VT FPR128:$Rt),
+        (am_indexed7s64 GPR64sp:$Rn, simm7s8:$offset)),
+      (STNPDi (EXTRACT_SUBREG FPR128:$Rt, dsub),
+              (CPYi64 FPR128:$Rt, (i64 1)),
+              GPR64sp:$Rn, simm7s8:$offset)>;
+
+def : NTStore128Pat<v2i64>;
+def : NTStore128Pat<v4i32>;
+def : NTStore128Pat<v8i16>;
+def : NTStore128Pat<v16i8>;
+
+class NTStore64Pat<ValueType VT> :
+  Pat<(nontemporalstore (VT FPR64:$Rt),
+        (am_indexed7s32 GPR64sp:$Rn, simm7s4:$offset)),
+      (STNPSi (EXTRACT_SUBREG FPR64:$Rt, ssub),
+              (CPYi32 (SUBREG_TO_REG (i64 0), FPR64:$Rt, dsub), (i64 1)),
+              GPR64sp:$Rn, simm7s4:$offset)>;
+
+// FIXME: Shouldn't v1f64 loads/stores be promoted to v1i64?
+def : NTStore64Pat<v1f64>;
+def : NTStore64Pat<v1i64>;
+def : NTStore64Pat<v2i32>;
+def : NTStore64Pat<v4i16>;
+def : NTStore64Pat<v8i8>;
+
+def : Pat<(nontemporalstore GPR64:$Rt,
+            (am_indexed7s32 GPR64sp:$Rn, simm7s4:$offset)),
+          (STNPWi (EXTRACT_SUBREG GPR64:$Rt, sub_32),
+                  (EXTRACT_SUBREG (UBFMXri GPR64:$Rt, 0, 31), sub_32),
+                  GPR64sp:$Rn, simm7s4:$offset)>;
+} // AddedComplexity=10
+} // Predicates = [IsLE]
+
 // Tail call return handling. These are all compiler pseudo-instructions,
 // so no encoding information or anything like that.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [SP] in {

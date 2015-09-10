@@ -77,6 +77,21 @@ public:
   bool SelectLogicalShiftedRegister(SDValue N, SDValue &Reg, SDValue &Shift) {
     return SelectShiftedRegister(N, true, Reg, Shift);
   }
+  bool SelectAddrModeIndexed7S8(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectAddrModeIndexed7S(N, 1, Base, OffImm);
+  }
+  bool SelectAddrModeIndexed7S16(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectAddrModeIndexed7S(N, 2, Base, OffImm);
+  }
+  bool SelectAddrModeIndexed7S32(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectAddrModeIndexed7S(N, 4, Base, OffImm);
+  }
+  bool SelectAddrModeIndexed7S64(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectAddrModeIndexed7S(N, 8, Base, OffImm);
+  }
+  bool SelectAddrModeIndexed7S128(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectAddrModeIndexed7S(N, 16, Base, OffImm);
+  }
   bool SelectAddrModeIndexed8(SDValue N, SDValue &Base, SDValue &OffImm) {
     return SelectAddrModeIndexed(N, 1, Base, OffImm);
   }
@@ -164,6 +179,8 @@ public:
 private:
   bool SelectShiftedRegister(SDValue N, bool AllowROR, SDValue &Reg,
                              SDValue &Shift);
+  bool SelectAddrModeIndexed7S(SDValue N, unsigned Size, SDValue &Base,
+                               SDValue &OffImm);
   bool SelectAddrModeIndexed(SDValue N, unsigned Size, SDValue &Base,
                              SDValue &OffImm);
   bool SelectAddrModeUnscaled(SDValue N, unsigned Size, SDValue &Base,
@@ -603,6 +620,22 @@ static bool isWorthFoldingADDlow(SDValue N) {
       return false;
   }
 
+  return true;
+}
+
+/// SelectAddrModeIndexed7S - Select a "register plus scaled signed 7-bit
+/// immediate" address.  The "Size" argument is the size in bytes of the memory
+/// reference, which determines the scale.
+bool AArch64DAGToDAGISel::SelectAddrModeIndexed7S(SDValue N, unsigned Size,
+                                                  SDValue &Base,
+                                                  SDValue &OffImm) {
+  SDLoc dl(N);
+  // Base only. The address will be materialized into a register before
+  // the memory is accessed.
+  //    add x0, Xbase, #offset
+  //    stp x1, x2, [x0]
+  Base = N;
+  OffImm = CurDAG->getTargetConstant(0, dl, MVT::i64);
   return true;
 }
 
