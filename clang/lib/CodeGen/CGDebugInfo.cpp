@@ -1906,9 +1906,8 @@ llvm::DIType *CGDebugInfo::CreateType(const RValueReferenceType *Ty,
 
 llvm::DIType *CGDebugInfo::CreateType(const MemberPointerType *Ty,
                                       llvm::DIFile *U) {
-  uint64_t Size = CGM.getCXXABI().isTypeInfoCalculable(QualType(Ty, 0))
-                      ? CGM.getContext().getTypeSize(Ty)
-                      : 0;
+  uint64_t Size =
+      !Ty->isIncompleteType() ? CGM.getContext().getTypeSize(Ty) : 0;
   llvm::DIType *ClassType = getOrCreateType(QualType(Ty->getClass(), 0), U);
   if (Ty->isMemberDataPointerType())
     return DBuilder.createMemberPointerType(

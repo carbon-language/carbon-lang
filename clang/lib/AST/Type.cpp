@@ -22,6 +22,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeVisitor.h"
 #include "clang/Basic/Specifiers.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1899,6 +1900,28 @@ bool Type::isIncompleteType(NamedDecl **Def) const {
   case IncompleteArray:
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
     return true;
+  case MemberPointer: {
+    // Member pointers in the MS ABI have special behavior in
+    // RequireCompleteType: they attach a MSInheritanceAttr to the CXXRecordDecl
+    // to indicate which inheritance model to use.
+    auto *MPTy = cast<MemberPointerType>(CanonicalType);
+    const Type *ClassTy = MPTy->getClass();
+    // Member pointers with dependent class types don't get special treatment.
+    if (ClassTy->isDependentType())
+      return false;
+    const CXXRecordDecl *RD = ClassTy->getAsCXXRecordDecl();
+    ASTContext &Context = RD->getASTContext();
+    // Member pointers not in the MS ABI don't get special treatment.
+    if (!Context.getTargetInfo().getCXXABI().isMicrosoft())
+      return false;
+    // The inheritance attribute might only be present on the most recent
+    // CXXRecordDecl, use that one.
+    RD = RD->getMostRecentDecl();
+    // Nothing interesting to do if the inheritance attribute is already set.
+    if (RD->hasAttr<MSInheritanceAttr>())
+      return false;
+    return true;
+  }
   case ObjCObject:
     return cast<ObjCObjectType>(CanonicalType)->getBaseType()
              ->isIncompleteType(Def);

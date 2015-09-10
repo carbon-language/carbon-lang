@@ -117,7 +117,7 @@ CharUnits CodeGenFunction::getNaturalTypeAlignment(QualType T,
   if (Source) *Source = AlignmentSource::Type;
 
   CharUnits Alignment;
-  if (!CGM.getCXXABI().isTypeInfoCalculable(T)) {
+  if (T->isIncompleteType()) {
     Alignment = CharUnits::One(); // Shouldn't be used, but pessimistic is best.
   } else {
     // For C++ class pointees, we don't know whether we're pointing at a

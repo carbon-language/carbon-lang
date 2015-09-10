@@ -4507,8 +4507,6 @@ QualType Sema::CheckPointerToMemberOperands(ExprResult &LHS, ExprResult &RHS,
       << OpSpelling << RHSType << RHS.get()->getSourceRange();
     return QualType();
   }
-  //if (Context.getTargetInfo().getCXXABI().isMicrosoft())
-  //  RequireCompleteType(Loc, QualType(MemPtr, 0), 0);
 
   QualType Class(MemPtr->getClass(), 0);
 

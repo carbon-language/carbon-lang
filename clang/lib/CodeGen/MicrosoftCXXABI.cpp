@@ -594,17 +594,6 @@ public:
     return RD->hasAttr<MSInheritanceAttr>();
   }
 
-  bool isTypeInfoCalculable(QualType Ty) const override {
-    if (!CGCXXABI::isTypeInfoCalculable(Ty))
-      return false;
-    if (const auto *MPT = Ty->getAs<MemberPointerType>()) {
-      const CXXRecordDecl *RD = MPT->getMostRecentCXXRecordDecl();
-      if (!RD->hasAttr<MSInheritanceAttr>())
-        return false;
-    }
-    return true;
-  }
-
   llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT) override;
 
   llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
