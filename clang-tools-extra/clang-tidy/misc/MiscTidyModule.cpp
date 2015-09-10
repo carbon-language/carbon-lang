@@ -20,6 +20,7 @@
 #include "MacroRepeatedSideEffectsCheck.h"
 #include "MoveConstructorInitCheck.h"
 #include "NoexceptMoveConstructorCheck.h"
+#include "SizeofContainerCheck.h"
 #include "StaticAssertCheck.h"
 #include "SwappedArgumentsCheck.h"
 #include "UndelegatedConstructor.h"
@@ -54,6 +55,8 @@ public:
         "misc-move-constructor-init");
     CheckFactories.registerCheck<NoexceptMoveConstructorCheck>(
         "misc-noexcept-move-constructor");
+    CheckFactories.registerCheck<SizeofContainerCheck>(
+        "misc-sizeof-container");
     CheckFactories.registerCheck<StaticAssertCheck>(
         "misc-static-assert");
     CheckFactories.registerCheck<SwappedArgumentsCheck>(
