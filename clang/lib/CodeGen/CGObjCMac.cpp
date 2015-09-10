@@ -1029,6 +1029,7 @@ protected:
                                   bool IsSuper,
                                   const CallArgList &CallArgs,
                                   const ObjCMethodDecl *OMD,
+                                  const ObjCInterfaceDecl *ClassReceiver,
                                   const ObjCCommonTypesHelper &ObjCTypes);
 
   /// EmitImageInfo - Emit the image info marker used to encode some module
@@ -1833,7 +1834,7 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   return EmitMessageSend(CGF, Return, ResultType,
                          EmitSelector(CGF, Sel),
                          ObjCSuper.getPointer(), ObjCTypes.SuperPtrCTy,
-                         true, CallArgs, Method, ObjCTypes);
+                         true, CallArgs, Method, Class, ObjCTypes);
 }
 
 /// Generate code for a message send expression.
@@ -1848,7 +1849,16 @@ CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   return EmitMessageSend(CGF, Return, ResultType,
                          EmitSelector(CGF, Sel),
                          Receiver, CGF.getContext().getObjCIdType(),
-                         false, CallArgs, Method, ObjCTypes);
+                         false, CallArgs, Method, Class, ObjCTypes);
+}
+
+static bool isWeakLinkedClass(const ObjCInterfaceDecl *ID) {
+  do {
+    if (ID->isWeakImported())
+      return true;
+  } while ((ID = ID->getSuperClass()));
+
+  return false;
 }
 
 CodeGen::RValue
@@ -1861,6 +1871,7 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                  bool IsSuper,
                                  const CallArgList &CallArgs,
                                  const ObjCMethodDecl *Method,
+                                 const ObjCInterfaceDecl *ClassReceiver,
                                  const ObjCCommonTypesHelper &ObjCTypes) {
   CallArgList ActualArgs;
   if (!IsSuper)
@@ -1877,11 +1888,38 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                CGM.getContext().getCanonicalType(ResultType) &&
            "Result type mismatch!");
 
+  bool ReceiverCanBeNull = true;
+
+  // Super dispatch assumes that self is non-null; even the messenger
+  // doesn't have a null check internally.
+  if (IsSuper) {
+    ReceiverCanBeNull = false;
+
+  // If this is a direct dispatch of a class method, check whether the class,
+  // or anything in its hierarchy, was weak-linked.
+  } else if (ClassReceiver && Method && Method->isClassMethod()) {
+    ReceiverCanBeNull = isWeakLinkedClass(ClassReceiver);
+
+  // If we're emitting a method, and self is const (meaning just ARC, for now),
+  // and the receiver is a load of self, then self is a valid object.
+  } else if (auto CurMethod =
+               dyn_cast_or_null<ObjCMethodDecl>(CGF.CurCodeDecl)) {
+    auto Self = CurMethod->getSelfDecl();
+    if (Self->getType().isConstQualified()) {
+      if (auto LI = dyn_cast<llvm::LoadInst>(Arg0->stripPointerCasts())) {
+        llvm::Value *SelfAddr = CGF.GetAddrOfLocalVar(Self).getPointer();
+        if (SelfAddr == LI->getPointerOperand()) {
+          ReceiverCanBeNull = false;
+        }
+      }
+    }
+  }
+
   NullReturnState nullReturn;
 
   llvm::Constant *Fn = nullptr;
   if (CGM.ReturnSlotInterferesWithArgs(MSI.CallInfo)) {
-    if (!IsSuper) nullReturn.init(CGF, Arg0);
+    if (ReceiverCanBeNull) nullReturn.init(CGF, Arg0);
     Fn = (ObjCABI == 2) ?  ObjCTypes.getSendStretFn2(IsSuper)
       : ObjCTypes.getSendStretFn(IsSuper);
   } else if (CGM.ReturnTypeUsesFPRet(ResultType)) {
@@ -1898,22 +1936,33 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
     Fn = (ObjCABI == 2) ? ObjCTypes.getSendFn2(IsSuper)
       : ObjCTypes.getSendFn(IsSuper);
   }
-  
-  bool requiresnullCheck = false;
-  if (CGM.getLangOpts().ObjCAutoRefCount && Method)
+
+  // Emit a null-check if there's a consumed argument other than the receiver.
+  bool RequiresNullCheck = false;
+  if (ReceiverCanBeNull && CGM.getLangOpts().ObjCAutoRefCount && Method) {
     for (const auto *ParamDecl : Method->params()) {
       if (ParamDecl->hasAttr<NSConsumedAttr>()) {
         if (!nullReturn.NullBB)
           nullReturn.init(CGF, Arg0);
-        requiresnullCheck = true;
+        RequiresNullCheck = true;
         break;
       }
     }
+  }
   
+  llvm::Instruction *CallSite;
   Fn = llvm::ConstantExpr::getBitCast(Fn, MSI.MessengerType);
-  RValue rvalue = CGF.EmitCall(MSI.CallInfo, Fn, Return, ActualArgs);
+  RValue rvalue = CGF.EmitCall(MSI.CallInfo, Fn, Return, ActualArgs,
+                               nullptr, &CallSite);
+
+  // Mark the call as noreturn if the method is marked noreturn and the
+  // receiver cannot be null.
+  if (Method && Method->hasAttr<NoReturnAttr>() && !ReceiverCanBeNull) {
+    llvm::CallSite(CallSite).setDoesNotReturn();
+  }
+
   return nullReturn.complete(CGF, rvalue, ResultType, CallArgs,
-                             requiresnullCheck ? Method : nullptr);
+                             RequiresNullCheck ? Method : nullptr);
 }
 
 static Qualifiers::GC GetGCAttrTypeForType(ASTContext &Ctx, QualType FQT) {
@@ -6620,7 +6669,7 @@ CGObjCNonFragileABIMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
     : EmitMessageSend(CGF, Return, ResultType,
                       EmitSelector(CGF, Sel),
                       Receiver, CGF.getContext().getObjCIdType(),
-                      false, CallArgs, Method, ObjCTypes);
+                      false, CallArgs, Method, Class, ObjCTypes);
 }
 
 llvm::GlobalVariable *
@@ -6783,7 +6832,7 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
     : EmitMessageSend(CGF, Return, ResultType,
                       EmitSelector(CGF, Sel),
                       ObjCSuper.getPointer(), ObjCTypes.SuperPtrCTy,
-                      true, CallArgs, Method, ObjCTypes);
+                      true, CallArgs, Method, Class, ObjCTypes);
 }
 
 llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CodeGenFunction &CGF,
