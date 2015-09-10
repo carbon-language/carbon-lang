@@ -1030,6 +1030,8 @@ static bool isFuncletReturnInstr(MachineInstr *MI) {
   switch (MI->getOpcode()) {
   case X86::CATCHRET:
   case X86::CATCHRET64:
+  case X86::CLEANUPRET:
+  case X86::CLEANUPRET64:
     return true;
   default:
     return false;

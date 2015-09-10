@@ -116,13 +116,13 @@ void parseEHActions(const IntrinsicInst *II,
 // The following structs respresent the .xdata for functions using C++
 // exceptions on Windows.
 
-struct WinEHUnwindMapEntry {
-  int ToState;
-  const Value *Cleanup;
-};
-
 typedef PointerUnion<const BasicBlock *, MachineBasicBlock *> MBBOrBasicBlock;
 typedef PointerUnion<const Value *, MachineBasicBlock *> ValueOrMBB;
+
+struct WinEHUnwindMapEntry {
+  int ToState;
+  ValueOrMBB Cleanup;
+};
 
 /// Similar to WinEHUnwindMapEntry, but supports SEH filters.
 struct SEHUnwindMapEntry {

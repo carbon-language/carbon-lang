@@ -3053,7 +3053,7 @@ static void calculateExplicitCXXStateNumbers(WinEHFuncInfo &FuncInfo,
 }
 
 static int addSEHHandler(WinEHFuncInfo &FuncInfo, int ParentState,
-                          const Function *Filter, const BasicBlock *Handler) {
+                         const Function *Filter, const BasicBlock *Handler) {
   SEHUnwindMapEntry Entry;
   Entry.ToState = ParentState;
   Entry.Filter = Filter;

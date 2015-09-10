@@ -71,7 +71,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86-DAG: movl %[[addr_reg]], 4(%esp)
 ; X86-DAG: movl $1, (%esp)
 ; X86: calll _f
-; X86: [[contbb:LBB0_[0-9]+]]:
+; X86: [[contbb:Ltmp[0-9]+]]: # Block address taken
 ; X86: movl -{{[0-9]+}}(%ebp), %esp
 ; X86: retl
 
@@ -120,7 +120,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64-DAG: leaq -[[local_offs:[0-9]+]](%rbp), %rdx
 ; X64-DAG: movl $1, %ecx
 ; X64: callq f
-; X64: [[contbb:\.LBB0_[0-9]+]]:
+; X64: [[contbb:.Ltmp[0-9]+]]: # Block address taken
 ; X64: addq $48, %rsp
 ; X64: popq %rbp
 ; X64: retq

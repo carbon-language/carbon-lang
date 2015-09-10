@@ -591,8 +591,13 @@ namespace ISD {
     /// take a chain as input and return a chain.
     EH_LABEL,
 
+    /// CATCHRET - Represents a return from a catch block funclet. Used for
+    /// MSVC compatible exception handling. Takes a chain operand and a
+    /// destination basic block operand.
     CATCHRET,
 
+    /// CLEANUPRET - Represents a return from a cleanup block funclet.  Used for
+    /// MSVC compatible exception handling. Takes only a chain operand.
     CLEANUPRET,
 
     /// STACKSAVE - STACKSAVE has one operand, an input chain.  It produces a

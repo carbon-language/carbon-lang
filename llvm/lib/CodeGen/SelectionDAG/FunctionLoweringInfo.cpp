@@ -223,8 +223,6 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
         assert(&*BB->begin() == I &&
                "WinEHPrepare failed to remove PHIs from imaginary BBs");
         continue;
-      } else if (!isa<LandingPadInst>(I)) {
-        llvm_unreachable("unhandled EH pad in MBB graph");
       }
     }
 
@@ -269,7 +267,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   SmallVector<const LandingPadInst *, 4> LPads;
   for (BB = Fn->begin(); BB != EB; ++BB) {
     const Instruction *FNP = BB->getFirstNonPHI();
-    if (BB->isEHPad() && !isa<CatchPadInst>(FNP) && !isa<CatchEndPadInst>(FNP))
+    if (BB->isEHPad() && MBBMap.count(BB))
       MBBMap[BB]->setIsEHPad();
     if (const auto *LPI = dyn_cast<LandingPadInst>(FNP))
       LPads.push_back(LPI);
@@ -289,24 +287,27 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
 
   // Calculate state numbers if we haven't already.
   WinEHFuncInfo &EHInfo = MMI.getWinEHFuncInfo(&fn);
-  if (Personality == EHPersonality::MSVC_CXX) {
-    const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
+  const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
+  if (Personality == EHPersonality::MSVC_CXX)
     calculateWinCXXEHStateNumbers(WinEHParentFn, EHInfo);
-  } else {
-    const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
+  else
     calculateSEHStateNumbers(WinEHParentFn, EHInfo);
+
+  // Map all BB references in the WinEH data to MBBs.
+  for (WinEHTryBlockMapEntry &TBME : EHInfo.TryBlockMap)
+    for (WinEHHandlerType &H : TBME.HandlerArray)
+      if (const auto *BB =
+              dyn_cast<BasicBlock>(H.Handler.get<const Value *>()))
+        H.Handler = MBBMap[BB];
+  for (WinEHUnwindMapEntry &UME : EHInfo.UnwindMap)
+    if (UME.Cleanup)
+      if (const auto *BB = dyn_cast<BasicBlock>(UME.Cleanup.get<const Value *>()))
+        UME.Cleanup = MBBMap[BB];
+  for (SEHUnwindMapEntry &UME : EHInfo.SEHUnwindMap) {
+    const BasicBlock *BB = UME.Handler.get<const BasicBlock *>();
+    UME.Handler = MBBMap[BB];
   }
 
-    // Map all BB references in the EH data to MBBs.
-    for (WinEHTryBlockMapEntry &TBME : EHInfo.TryBlockMap)
-      for (WinEHHandlerType &H : TBME.HandlerArray)
-        if (const auto *BB =
-                dyn_cast<BasicBlock>(H.Handler.get<const Value *>()))
-          H.Handler = MBBMap[BB];
-    for (SEHUnwindMapEntry &UME : EHInfo.SEHUnwindMap) {
-      const BasicBlock *BB = UME.Handler.get<const BasicBlock *>();
-      UME.Handler = MBBMap[BB];
-    }
   // If there's an explicit EH registration node on the stack, record its
   // frame index.
   if (EHInfo.EHRegNode && EHInfo.EHRegNode->getParent()->getParent() == Fn) {

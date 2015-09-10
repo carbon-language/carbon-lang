@@ -159,6 +159,14 @@ def CATCHRET   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
 def CATCHRET64 : I<0xC3, RawFrm, (outs), (ins GR64:$addr),
                    "ret{q}\t# CATCHRET",
                    [(X86catchret GR64:$addr)], IIC_RET>, Sched<[WriteJumpLd]>;
+def CLEANUPRET   : I<0xC3, RawFrm, (outs), (ins),
+                   "ret{l}\t# CLEANUPRET",
+                   [(X86cleanupret)], IIC_RET>, Sched<[WriteJumpLd]>,
+		   Requires<[Not64BitMode]>;
+def CLEANUPRET64 : I<0xC3, RawFrm, (outs), (ins),
+                   "ret{q}\t# CLEANUPRET",
+                   [(X86cleanupret)], IIC_RET>, Sched<[WriteJumpLd]>,
+		   Requires<[In64BitMode]>;
 }
 
 let hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,

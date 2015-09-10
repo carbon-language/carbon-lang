@@ -316,10 +316,11 @@ void WinException::emitCSpecificHandlerTable(const MachineFunction *MF) {
 /// Retreive the MCSymbol for a GlobalValue or MachineBasicBlock. GlobalValues
 /// are used in the old WinEH scheme, and they will be removed eventually.
 static MCSymbol *getMCSymbolForMBBOrGV(AsmPrinter *Asm, ValueOrMBB Handler) {
+  if (!Handler)
+    return nullptr;
   if (Handler.is<MachineBasicBlock *>())
     return Handler.get<MachineBasicBlock *>()->getSymbol();
-  else
-    return Asm->getSymbol(cast<GlobalValue>(Handler.get<const Value *>()));
+  return Asm->getSymbol(cast<GlobalValue>(Handler.get<const Value *>()));
 }
 
 void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
@@ -404,8 +405,9 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   if (UnwindMapXData) {
     OS.EmitLabel(UnwindMapXData);
     for (const WinEHUnwindMapEntry &UME : FuncInfo.UnwindMap) {
-      OS.EmitIntValue(UME.ToState, 4);                // ToState
-      OS.EmitValue(create32bitRef(UME.Cleanup), 4);   // Action
+      MCSymbol *CleanupSym = getMCSymbolForMBBOrGV(Asm, UME.Cleanup);
+      OS.EmitIntValue(UME.ToState, 4);             // ToState
+      OS.EmitValue(create32bitRef(CleanupSym), 4); // Action
     }
   }
 
