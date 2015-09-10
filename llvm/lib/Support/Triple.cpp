@@ -624,7 +624,7 @@ std::string Triple::normalize(StringRef Str) {
 
   // Parse into components.
   SmallVector<StringRef, 4> Components;
-  Str.split(Components, "-");
+  Str.split(Components, '-');
 
   // If the first component corresponds to a known architecture, preferentially
   // use it for the architecture.  If the second component corresponds to a

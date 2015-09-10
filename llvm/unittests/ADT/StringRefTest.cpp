@@ -225,6 +225,11 @@ TEST(StringRefTest, Split2) {
   expected.push_back("a"); expected.push_back("b"); expected.push_back("c");
   StringRef("a,,b,c").split(parts, ",", 3, false);
   EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  expected.push_back("a"); expected.push_back("b"); expected.push_back("c");
+  StringRef("a,,b,c").split(parts, ',', 3, false);
+  EXPECT_TRUE(parts == expected);
 }
 
 TEST(StringRefTest, Trim) {

@@ -489,6 +489,23 @@ namespace llvm {
                StringRef Separator, int MaxSplit = -1,
                bool KeepEmpty = true) const;
 
+    /// Split into substrings around the occurrences of a separator character.
+    ///
+    /// Each substring is stored in \p A. If \p MaxSplit is >= 0, at most
+    /// \p MaxSplit splits are done and consequently <= \p MaxSplit
+    /// elements are added to A.
+    /// If \p KeepEmpty is false, empty strings are not added to \p A. They
+    /// still count when considering \p MaxSplit
+    /// An useful invariant is that
+    /// Separator.join(A) == *this if MaxSplit == -1 and KeepEmpty == true
+    ///
+    /// \param A - Where to put the substrings.
+    /// \param Separator - The string to split on.
+    /// \param MaxSplit - The maximum number of times the string is split.
+    /// \param KeepEmpty - True if empty substring should be added.
+    void split(SmallVectorImpl<StringRef> &A, char Separator, int MaxSplit = -1,
+               bool KeepEmpty = true) const;
+
     /// Split into two substrings around the last occurrence of a separator
     /// character.
     ///
