@@ -378,9 +378,7 @@ inline bool exists(const Twine &Path) {
 ///
 /// @param Path Input path.
 /// @returns True if we can execute it, false otherwise.
-inline bool can_execute(const Twine &Path) {
-  return !access(Path, AccessMode::Execute);
-}
+bool can_execute(const Twine &Path);
 
 /// @brief Can we write this file?
 ///

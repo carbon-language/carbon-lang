@@ -325,6 +325,10 @@ std::error_code access(const Twine &Path, AccessMode Mode) {
   return std::error_code();
 }
 
+bool can_execute(const Twine &Path) {
+  return !access(Path, AccessMode::Execute);
+}
+
 bool equivalent(file_status A, file_status B) {
   assert(status_known(A) && status_known(B));
   return A.fs_st_dev == B.fs_st_dev &&
