@@ -646,7 +646,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed7S(SDValue N, unsigned Size,
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       int64_t RHSC = RHS->getSExtValue();
       unsigned Scale = Log2_32(Size);
-      if ((RHSC & (Size - 1)) == 0 && RHSC >= (-0x40 << Scale) &&
+      if ((RHSC & (Size - 1)) == 0 && RHSC >= -(0x40 << Scale) &&
           RHSC < (0x40 << Scale)) {
         Base = N.getOperand(0);
         if (Base.getOpcode() == ISD::FrameIndex) {
