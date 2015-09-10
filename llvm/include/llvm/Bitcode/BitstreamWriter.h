@@ -15,6 +15,7 @@
 #ifndef LLVM_BITCODE_BITSTREAMWRITER_H
 #define LLVM_BITCODE_BITSTREAMWRITER_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -289,8 +290,8 @@ private:
   /// known to exist at the end of the record. If Code is specified, then
   /// it is the record code to emit before the Vals, which must not contain
   /// the code.
-  template<typename uintty>
-  void EmitRecordWithAbbrevImpl(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
+  template <typename uintty>
+  void EmitRecordWithAbbrevImpl(unsigned Abbrev, ArrayRef<uintty> Vals,
                                 StringRef Blob, Optional<unsigned> Code) {
     const char *BlobData = Blob.data();
     unsigned BlobLen = (unsigned) Blob.size();
@@ -412,15 +413,15 @@ public:
       return;
     }
 
-    EmitRecordWithAbbrevImpl(Abbrev, Vals, StringRef(), Code);
+    EmitRecordWithAbbrevImpl(Abbrev, makeArrayRef(Vals), StringRef(), Code);
   }
 
   /// EmitRecordWithAbbrev - Emit a record with the specified abbreviation.
   /// Unlike EmitRecord, the code for the record should be included in Vals as
   /// the first entry.
-  template<typename uintty>
-  void EmitRecordWithAbbrev(unsigned Abbrev, SmallVectorImpl<uintty> &Vals) {
-    EmitRecordWithAbbrevImpl(Abbrev, Vals, StringRef(), None);
+  template <typename Container>
+  void EmitRecordWithAbbrev(unsigned Abbrev, const Container &Vals) {
+    EmitRecordWithAbbrevImpl(Abbrev, makeArrayRef(Vals), StringRef(), None);
   }
 
   /// EmitRecordWithBlob - Emit the specified record to the stream, using an
@@ -428,29 +429,29 @@ public:
   /// specified by the pointer and length specified at the end.  In contrast to
   /// EmitRecord, this routine expects that the first entry in Vals is the code
   /// of the record.
-  template<typename uintty>
-  void EmitRecordWithBlob(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
+  template <typename Container>
+  void EmitRecordWithBlob(unsigned Abbrev, const Container &Vals,
                           StringRef Blob) {
-    EmitRecordWithAbbrevImpl(Abbrev, Vals, Blob, None);
+    EmitRecordWithAbbrevImpl(Abbrev, makeArrayRef(Vals), Blob, None);
   }
-  template<typename uintty>
-  void EmitRecordWithBlob(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
+  template <typename Container>
+  void EmitRecordWithBlob(unsigned Abbrev, const Container &Vals,
                           const char *BlobData, unsigned BlobLen) {
-    return EmitRecordWithAbbrevImpl(Abbrev, Vals, StringRef(BlobData, BlobLen),
-                                    None);
+    return EmitRecordWithAbbrevImpl(Abbrev, makeArrayRef(Vals),
+                                    StringRef(BlobData, BlobLen), None);
   }
 
   /// EmitRecordWithArray - Just like EmitRecordWithBlob, works with records
   /// that end with an array.
-  template<typename uintty>
-  void EmitRecordWithArray(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
-                          StringRef Array) {
-    EmitRecordWithAbbrevImpl(Abbrev, Vals, Array, None);
+  template <typename Container>
+  void EmitRecordWithArray(unsigned Abbrev, const Container &Vals,
+                           StringRef Array) {
+    EmitRecordWithAbbrevImpl(Abbrev, makeArrayRef(Vals), Array, None);
   }
-  template<typename uintty>
-  void EmitRecordWithArray(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
-                          const char *ArrayData, unsigned ArrayLen) {
-    return EmitRecordWithAbbrevImpl(Abbrev, Vals,
+  template <typename Container>
+  void EmitRecordWithArray(unsigned Abbrev, const Container &Vals,
+                           const char *ArrayData, unsigned ArrayLen) {
+    return EmitRecordWithAbbrevImpl(Abbrev, makeArrayRef(Vals),
                                     StringRef(ArrayData, ArrayLen), None);
   }
 
