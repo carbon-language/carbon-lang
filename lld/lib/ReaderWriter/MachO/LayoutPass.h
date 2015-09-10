@@ -48,7 +48,7 @@ public:
   /// Sorts atoms in mergedFile by content type then by command line order.
   std::error_code perform(SimpleFile &mergedFile) override;
 
-  virtual ~LayoutPass() {}
+  ~LayoutPass() override = default;
 
 private:
   // Build the followOn atoms chain as specified by the kindLayoutAfter

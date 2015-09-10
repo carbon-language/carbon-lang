@@ -75,7 +75,6 @@ const std::error_category &lld::LinkerScriptReaderCategory() {
   return o;
 }
 
-
 namespace lld {
 
 /// Temporary class to enable make_dynamic_error_code() until
@@ -83,7 +82,7 @@ namespace lld {
 /// other than error_code.
 class dynamic_error_category : public std::error_category {
 public:
-  ~dynamic_error_category() LLVM_NOEXCEPT {}
+  ~dynamic_error_category() override = default;
 
   const char *name() const LLVM_NOEXCEPT override {
     return "lld.dynamic_error";
@@ -125,4 +124,4 @@ std::error_code make_dynamic_error_code(const Twine &msg) {
   return std::error_code(categorySingleton.add(msg.str()), categorySingleton);
 }
 
-}
+} // namespace lld

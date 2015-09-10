@@ -140,7 +140,7 @@ public:
         _referenceList(referenceList), _contentType(typeUnknown),
         _permissions(permUnknown) {}
 
-  ~ELFDefinedAtom() {}
+  ~ELFDefinedAtom() override = default;
 
   const ELFFile<ELFT> &file() const override { return _owningFile; }
   StringRef name() const override { return _symbolName; }
@@ -490,4 +490,4 @@ public:
 } // end namespace elf
 } // end namespace lld
 
-#endif
+#endif // LLD_READER_WRITER_ELF_ATOMS_H

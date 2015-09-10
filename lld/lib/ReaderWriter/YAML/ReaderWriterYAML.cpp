@@ -255,7 +255,7 @@ struct RefKind {
   Reference::KindValue      value;
 };
 
-} // namespace anon
+} // anonymous namespace
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(ArchMember)
 LLVM_YAML_IS_SEQUENCE_VECTOR(const lld::Reference *)
@@ -585,16 +585,20 @@ template <> struct MappingTraits<const lld::File *> {
     const AtomVector<lld::DefinedAtom> &defined() const override {
       return _noDefinedAtoms;
     }
+
     const AtomVector<lld::UndefinedAtom> &undefined() const override {
       return _noUndefinedAtoms;
     }
-    virtual const AtomVector<lld::SharedLibraryAtom> &
+
+    const AtomVector<lld::SharedLibraryAtom> &
     sharedLibrary() const override {
       return _noSharedLibraryAtoms;
     }
+
     const AtomVector<lld::AbsoluteAtom> &absolute() const override {
       return _noAbsoluteAtoms;
     }
+
     File *find(StringRef name, bool dataSymbolOnly) override {
       for (const ArchMember &member : _members) {
         for (const lld::DefinedAtom *atom : member._content->defined()) {
@@ -614,7 +618,7 @@ template <> struct MappingTraits<const lld::File *> {
       return nullptr;
     }
 
-    virtual std::error_code
+    std::error_code
     parseAllMembers(std::vector<std::unique_ptr<File>> &result) override {
       return std::error_code();
     }
@@ -643,13 +647,16 @@ template <> struct MappingTraits<const lld::File *> {
     const AtomVector<lld::DefinedAtom> &defined() const override {
       return _definedAtoms._atoms;
     }
+
     const AtomVector<lld::UndefinedAtom> &undefined() const override {
       return _undefinedAtoms._atoms;
     }
-    virtual const AtomVector<lld::SharedLibraryAtom> &
+
+    const AtomVector<lld::SharedLibraryAtom> &
     sharedLibrary() const override {
       return _sharedLibraryAtoms._atoms;
     }
+
     const AtomVector<lld::AbsoluteAtom> &absolute() const override {
       return _absoluteAtoms._atoms;
     }
@@ -1271,7 +1278,6 @@ class NativeYamlIOTaggedDocumentHandler : public YamlIOTaggedDocumentHandler {
   }
 };
 
-
 /// Handles !archive tagged yaml documents.
 class ArchiveYamlIOTaggedDocumentHandler : public YamlIOTaggedDocumentHandler {
   bool handledDocTag(llvm::yaml::IO &io, const lld::File *&file) const override {
@@ -1282,8 +1288,6 @@ class ArchiveYamlIOTaggedDocumentHandler : public YamlIOTaggedDocumentHandler {
     return false;
   }
 };
-
-
 
 class YAMLReader : public Reader {
 public:

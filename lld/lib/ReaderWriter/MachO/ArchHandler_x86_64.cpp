@@ -30,8 +30,8 @@ using llvm::support::little64_t;
 
 class ArchHandler_x86_64 : public ArchHandler {
 public:
-           ArchHandler_x86_64();
-  virtual ~ArchHandler_x86_64();
+  ArchHandler_x86_64() = default;
+  ~ArchHandler_x86_64() override = default;
 
   const Registry::KindStrings *kindStrings() override { return _sKindStrings; }
 
@@ -95,9 +95,11 @@ public:
   bool needsCompactUnwind() override {
     return true;
   }
+
   Reference::KindValue imageOffsetKind() override {
     return imageOffset;
   }
+
   Reference::KindValue imageOffsetKindIndirect() override {
     return imageOffsetGot;
   }
@@ -227,11 +229,6 @@ private:
                              uint64_t targetAddress,
                              uint64_t inAtomAddress);
 };
-
-
-ArchHandler_x86_64::ArchHandler_x86_64() { }
-
-ArchHandler_x86_64::~ArchHandler_x86_64() { }
 
 const Registry::KindStrings ArchHandler_x86_64::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(invalid), LLD_KIND_STRING_ENTRY(branch32),
@@ -600,7 +597,6 @@ void ArchHandler_x86_64::applyFixupFinal(
   llvm_unreachable("invalid x86_64 Reference Kind");
 }
 
-
 void ArchHandler_x86_64::applyFixupRelocatable(const Reference &ref,
                                                uint8_t *loc,
                                                uint64_t fixupAddress,
@@ -799,7 +795,6 @@ void ArchHandler_x86_64::appendSectionRelocations(
   }
   llvm_unreachable("unknown x86_64 Reference Kind");
 }
-
 
 std::unique_ptr<mach_o::ArchHandler> ArchHandler::create_x86_64() {
   return std::unique_ptr<mach_o::ArchHandler>(new ArchHandler_x86_64());

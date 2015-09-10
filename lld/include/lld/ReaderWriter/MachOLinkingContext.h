@@ -32,7 +32,7 @@ class MachOFile;
 class MachOLinkingContext : public LinkingContext {
 public:
   MachOLinkingContext();
-  ~MachOLinkingContext();
+  ~MachOLinkingContext() override;
 
   enum Arch {
     arch_unknown,
@@ -373,4 +373,4 @@ private:
 
 } // end namespace lld
 
-#endif
+#endif // LLD_READER_WRITER_MACHO_LINKING_CONTEXT_H

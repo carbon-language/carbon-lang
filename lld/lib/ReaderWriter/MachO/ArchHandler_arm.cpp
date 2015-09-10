@@ -28,8 +28,8 @@ using llvm::support::little32_t;
 
 class ArchHandler_arm : public ArchHandler {
 public:
-           ArchHandler_arm();
-  virtual ~ArchHandler_arm();
+  ArchHandler_arm() = default;
+  ~ArchHandler_arm() override = default;
 
   const Registry::KindStrings *kindStrings() override { return _sKindStrings; }
 
@@ -201,10 +201,6 @@ private:
 //===----------------------------------------------------------------------===//
 //  ArchHandler_arm
 //===----------------------------------------------------------------------===//
-
-ArchHandler_arm::ArchHandler_arm() { }
-
-ArchHandler_arm::~ArchHandler_arm() { }
 
 const Registry::KindStrings ArchHandler_arm::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(invalid),
@@ -463,7 +459,6 @@ bool ArchHandler_arm::isArmMovt(uint32_t instruction) {
   return (instruction & 0x0FF00000) == 0x03400000;
 }
 
-
 uint16_t ArchHandler_arm::getWordFromThumbMov(uint32_t instruction) {
   assert(isThumbMovw(instruction) || isThumbMovt(instruction));
   uint32_t i = ((instruction & 0x00000400) >> 10);
@@ -480,7 +475,6 @@ uint16_t ArchHandler_arm::getWordFromArmMov(uint32_t instruction) {
   return (imm4 << 12) | imm12;
 }
 
-
 uint32_t ArchHandler_arm::setWordFromThumbMov(uint32_t instr, uint16_t word) {
   assert(isThumbMovw(instr) || isThumbMovt(instr));
   uint32_t imm4 = (word & 0xF000) >> 12;
@@ -496,7 +490,6 @@ uint32_t ArchHandler_arm::setWordFromArmMov(uint32_t instr, uint16_t word) {
   uint32_t imm12 = word & 0x0FFF;
   return (instr & 0xFFF0F000) | (imm4 << 16) | imm12;
 }
-
 
 uint32_t ArchHandler_arm::clearThumbBit(uint32_t value, const Atom *target) {
   // The assembler often adds one to the address of a thumb function.
@@ -1040,7 +1033,6 @@ void ArchHandler_arm::generateAtomContent(const DefinedAtom &atom,
   }
 }
 
-
 bool ArchHandler_arm::useExternalRelocationTo(const Atom &target) {
   // Undefined symbols are referenced via external relocations.
   if (isa<UndefinedAtom>(&target))
@@ -1409,7 +1401,6 @@ bool ArchHandler_arm::isThumbFunction(const DefinedAtom &atom) {
   return false;
 }
 
-
 class Thumb2ToArmShimAtom : public SimpleDefinedAtom {
 public:
   Thumb2ToArmShimAtom(MachOFile &file, StringRef targetName,
@@ -1454,7 +1445,6 @@ public:
 private:
   StringRef _name;
 };
-
 
 class ArmToThumbShimAtom : public SimpleDefinedAtom {
 public:
@@ -1509,7 +1499,6 @@ const DefinedAtom *ArchHandler_arm::createShim(MachOFile &file,
   else
     return new (file.allocator()) ArmToThumbShimAtom(file, targetName, target);
 }
-
 
 std::unique_ptr<mach_o::ArchHandler> ArchHandler::create_arm() {
   return std::unique_ptr<mach_o::ArchHandler>(new ArchHandler_arm());

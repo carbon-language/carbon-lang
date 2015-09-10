@@ -103,7 +103,6 @@ private:
   StringRef _sectionName;
 };
 
-
 class MachOTentativeDefAtom : public SimpleDefinedAtom {
 public:
   MachOTentativeDefAtom(const File &f, const StringRef name, Scope scope,
@@ -138,7 +137,7 @@ public:
                          StringRef dylibInstallName, bool weakDef)
       : SharedLibraryAtom(), _file(file), _name(name),
         _dylibInstallName(dylibInstallName) {}
-  virtual ~MachOSharedLibraryAtom() {}
+  ~MachOSharedLibraryAtom() override = default;
 
   StringRef loadName() const override { return _dylibInstallName; }
 
@@ -168,8 +167,7 @@ private:
   StringRef _dylibInstallName;
 };
 
+} // namespace mach_o
+} // namespace lld
 
-} // mach_o
-} // lld
-
-#endif
+#endif // LLD_READER_WRITER_MACHO_ATOMS_H

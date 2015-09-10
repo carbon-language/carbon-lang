@@ -104,7 +104,7 @@ namespace internal {
 /// \brief An abstract class that takes closures and runs them asynchronously.
 class Executor {
 public:
-  virtual ~Executor() {}
+  virtual ~Executor() = default;
   virtual void add(std::function<void()> func) = 0;
 };
 
@@ -166,7 +166,7 @@ public:
     }).detach();
   }
 
-  ~ThreadPoolExecutor() {
+  ~ThreadPoolExecutor() override {
     std::unique_lock<std::mutex> lock(_mutex);
     _stop = true;
     lock.unlock();
@@ -330,4 +330,4 @@ void parallel_for_each(Iterator begin, Iterator end, Func func) {
 #endif
 } // end namespace lld
 
-#endif
+#endif // LLD_CORE_PARALLEL_H

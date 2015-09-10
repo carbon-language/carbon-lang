@@ -31,8 +31,8 @@ using llvm::support::little64_t;
 
 class ArchHandler_arm64 : public ArchHandler {
 public:
-  ArchHandler_arm64();
-  virtual ~ArchHandler_arm64();
+  ArchHandler_arm64() = default;
+  ~ArchHandler_arm64() override = default;
 
   const Registry::KindStrings *kindStrings() override { return _sKindStrings; }
 
@@ -212,10 +212,6 @@ private:
   static Arm64Kind offset12KindFromInstruction(uint32_t instr);
   static uint32_t setImm12(uint32_t instr, uint32_t offset);
 };
-
-ArchHandler_arm64::ArchHandler_arm64() {}
-
-ArchHandler_arm64::~ArchHandler_arm64() {}
 
 const Registry::KindStrings ArchHandler_arm64::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(invalid),
