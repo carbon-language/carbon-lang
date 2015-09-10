@@ -13325,20 +13325,34 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
 
       EVT VT = LHSOp.getValueType();
       EVT RVT = RHSOp.getValueType();
-      if (RVT != VT) {
-        // Integer BUILD_VECTOR operands may have types larger than the element
-        // size (e.g., when the element type is not legal).  Prior to type
-        // legalization, the types may not match between the two BUILD_VECTORS.
-        // Truncate one of the operands to make them match.
-        if (RVT.getSizeInBits() > VT.getSizeInBits()) {
-          RHSOp = DAG.getNode(ISD::TRUNCATE, SDLoc(N), VT, RHSOp);
-        } else {
-          LHSOp = DAG.getNode(ISD::TRUNCATE, SDLoc(N), RVT, LHSOp);
-          VT = RVT;
-        }
+      EVT ST = VT;
+
+      if (RVT.getSizeInBits() < VT.getSizeInBits())
+        ST = RVT;
+
+      // Integer BUILD_VECTOR operands may have types larger than the element
+      // size (e.g., when the element type is not legal).  Prior to type
+      // legalization, the types may not match between the two BUILD_VECTORS.
+      // Truncate the operands to make them match.
+      if (VT.getSizeInBits() != LHS.getValueType().getScalarSizeInBits()) {
+        EVT ScalarT = LHS.getValueType().getScalarType();
+        LHSOp = DAG.getNode(ISD::TRUNCATE, SDLoc(N), ScalarT, LHSOp);
+        VT = LHSOp.getValueType();
       }
+      if (RVT.getSizeInBits() != RHS.getValueType().getScalarSizeInBits()) {
+        EVT ScalarT = RHS.getValueType().getScalarType();
+        RHSOp = DAG.getNode(ISD::TRUNCATE, SDLoc(N), ScalarT, RHSOp);
+        RVT = RHSOp.getValueType();
+      }
+
       SDValue FoldOp = DAG.getNode(N->getOpcode(), SDLoc(LHS), VT,
                                    LHSOp, RHSOp);
+
+      // We need the resulting constant to be legal if we are in a phase after
+      // legalization, so zero extend to the smallest operand type if required.
+      if (ST != VT && Level != BeforeLegalizeTypes)
+        FoldOp = DAG.getNode(ISD::ANY_EXTEND, SDLoc(LHS), ST, FoldOp);
+
       if (FoldOp.getOpcode() != ISD::UNDEF &&
           FoldOp.getOpcode() != ISD::Constant &&
           FoldOp.getOpcode() != ISD::ConstantFP)
