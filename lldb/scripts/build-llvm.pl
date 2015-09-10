@@ -9,6 +9,7 @@
 # files might contain object files with the same name.
 
 use strict;
+use Cwd 'abs_path';
 use File::Basename;
 use File::Glob ':glob';
 use File::Slurp;
@@ -33,8 +34,6 @@ my $original_env_path = $ENV{PATH};
 
 my $common_configure_options = "--disable-terminfo";
 
-print "warning: remove this prior to checkin";
-
 our %llvm_config_info = (
     'Debug'         => { configure_options => '--disable-optimized --disable-assertions --enable-cxx11 --enable-libcpp', make_options => 'DEBUG_SYMBOLS=1'},
     'Debug+Asserts' => { configure_options => '--disable-optimized --enable-assertions --enable-cxx11 --enable-libcpp' , make_options => 'DEBUG_SYMBOLS=1'},
@@ -53,11 +52,12 @@ else
     die "Unsupported LLVM configuration: '$llvm_configuration'\n";
 }
 our @llvm_repositories = (
-    "$llvm_srcroot",
-    "$llvm_srcroot/tools/clang",
-    "$llvm_srcroot/projects/compiler-rt"
+    abs_path("$llvm_srcroot"),
+    abs_path("$llvm_srcroot/tools/clang"),
+    abs_path("$llvm_srcroot/projects/compiler-rt")
 );
 
+print @llvm_repositories;
 
 if (-e "$llvm_srcroot/lib")
 {
@@ -120,8 +120,8 @@ sub build_llvm
     {
         if (-d "$repo/.svn")
         {
-            push(@llvm_md5_strings, `svn info '$repo'`);
-            push(@llvm_md5_strings, `svn diff '$repo'`);
+            push(@llvm_md5_strings, `cd '$repo'; svn info`);
+            push(@llvm_md5_strings, `cd '$repo'; svn diff`);
         }
         elsif (-d "$repo/.git")
         {
@@ -130,22 +130,23 @@ sub build_llvm
         }
     }
     
-    print "opening archive file...\n";
-    open my $archive_fh, '>', $archive_filelist_file or die "Can't open $! for writing...\n";
-
-    print "opening /tmp/a.txt file...\n";
-    open my $ffffh, '>', "/tmp/a.txt" or die "Can't open $! for writing...\n";
-    foreach my $aaa (@llvm_md5_strings)
-    {
-        print $ffffh $aaa;
-    }
-    close ($ffffh);
+    print "REMOVE THIS START\n";
+    print @llvm_md5_strings;
+    print "REMOVE THIS END\n";
     
-    my @archive_filelist_files;
+    # open my $md5_data_file, '>', "/tmp/a.txt" or die "Can't open $! for writing...\n";
+    # foreach my $md5_string (@llvm_md5_strings)
+    # {
+    #     print $md5_data_file $md5_string;
+    # }
+    # close ($md5_data_file);
+    
+    my @llvm_dstroot_archs;
     #print "LLVM MD5 will be generated from:\n";
     #print @llvm_md5_strings;
     my $llvm_hex_digest = md5_hex(@llvm_md5_strings);
-
+    my $did_make = 0;
+    
     #print "llvm MD5: $llvm_hex_digest\n";
     foreach my $arch (@archs)
     {
@@ -158,7 +159,6 @@ sub build_llvm
         my $save_arch_digest = 1;
         my $arch_digest_file = "$llvm_dstroot_arch/md5";
 
-        my $llvm_dstroot_arch_archive = "$llvm_dstroot_arch/archives.txt";
         print "LLVM architecture root for ${arch} exists at '$llvm_dstroot_arch'...";
         if (-e $llvm_dstroot_arch)
         {
@@ -192,11 +192,11 @@ sub build_llvm
                 
                 if ($do_make == 0)
                 {
-                    if (-e $llvm_dstroot_arch_archive)
+                    if (-e $archive_filelist_file)
                     {
                         # the final archive exists, check the modification times on all .a files that
                         # make the final archive to make sure we don't need to rebuild
-                        my $llvm_dstroot_arch_archive_modtime = (stat($llvm_dstroot_arch_archive))[9];
+                        my $archive_filelist_file_modtime = (stat($archive_filelist_file))[9];
                         
                         our @archive_files = glob "$llvm_dstroot_arch/$llvm_configuration/lib/*.a";
                         
@@ -204,18 +204,13 @@ sub build_llvm
                         {
                             if (-e $llvm_lib)
                             {
-                                if ($llvm_dstroot_arch_archive_modtime < (stat($llvm_lib))[9])
+                                if ($archive_filelist_file_modtime < (stat($llvm_lib))[9])
                                 {
-                                    print "'$llvm_dstroot_arch/$llvm_lib' is newer than '$llvm_dstroot_arch_archive', rebuilding...\n";
+                                    print "'$llvm_dstroot_arch/$llvm_lib' is newer than '$archive_filelist_file', rebuilding...\n";
                                     $do_make = 1;
                                     last;
                                 }
                             }
-                        }
-
-                        if ($do_make == 0)
-                        {
-                            print "LLVM architecture archive for ${arch} is '$llvm_dstroot_arch_archive' and is up to date.\n";
                         }
                     }
                     else
@@ -223,11 +218,6 @@ sub build_llvm
                         $do_make = 1;
                     }
                 }
-            }
-            
-            if ($do_make)
-            {
-                unlink($llvm_dstroot_arch_archive);
             }
         }
         else
@@ -315,6 +305,7 @@ sub build_llvm
 
         if ($do_make)
         {
+            $did_make = 1;
             # Build llvm and clang
             my $num_cpus = parallel_guess();
             print "Building clang using $num_cpus cpus ($arch)...\n";
@@ -325,13 +316,24 @@ sub build_llvm
             }
             do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus clang-only VERBOSE=1 $llvm_config_href->{make_options} PROJECT_NAME='llvm' $extra_make_flags", "making llvm and clang", 1);
             do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus tools-only VERBOSE=1 $llvm_config_href->{make_options} PROJECT_NAME='llvm' $extra_make_flags EDIS_VERSION=1", "making libedis", 1);
+            
         }
+        push(@llvm_dstroot_archs, $llvm_dstroot_arch);
 
-        append_all_archive_files ($llvm_dstroot_arch, 1, $archive_fh);
         ++$arch_idx;
     }
-    
-    close($archive_fh);
+
+    # If we did any makes update the archive filenames file with any .a files from
+    # each architectures "lib" folder...
+    if ($did_make)
+    {
+        open my $fh, '>', $archive_filelist_file or die "Can't open $! for writing...\n";
+        foreach my $llvm_dstroot_arch (@llvm_dstroot_archs)
+        {
+            append_all_archive_files ($llvm_dstroot_arch, $fh);
+        }
+        close($fh);
+    }
 }
 
 #----------------------------------------------------------------------
@@ -395,7 +397,6 @@ sub do_command
 sub append_all_archive_files
 {
     my $arch_dstroot = shift;
-    my $split_into_objects = shift;
     my $fh = shift;
     our @archive_files = glob "$arch_dstroot/$llvm_configuration/lib/*.a";    
     for my $archive_fullpath (@archive_files)
