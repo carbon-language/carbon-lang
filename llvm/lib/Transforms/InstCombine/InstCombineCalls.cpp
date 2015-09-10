@@ -1367,7 +1367,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
 
     // isKnownNonNull -> nonnull attribute
-    if (isKnownNonNull(DerivedPtr))
+    if (isKnownNonNullAt(DerivedPtr, II, DT, TLI))
       II->addAttribute(AttributeSet::ReturnIndex, Attribute::NonNull);
 
     // isDereferenceablePointer -> deref attribute
