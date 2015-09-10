@@ -1029,14 +1029,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
       auto *BdvIE = cast<InsertElementInst>(BDV);
       auto UpdateOperand = [&](int OperandIdx) {
         Value *InVal = BdvIE->getOperand(OperandIdx);
-        Value *Base = findBaseOrBDV(InVal, cache);
-        if (!isKnownBaseResult(Base)) {
-          // Either conflict or base.
-          assert(States.count(Base));
-          Base = States[Base].getBase();
-          assert(Base != nullptr && "unknown BDVState!");
-        }
-        assert(Base && "can't be null");
+        Value *Base = getBaseForInput(InVal, BaseIE);
         BaseIE->setOperand(OperandIdx, Base);
       };
       UpdateOperand(0); // vector operand
