@@ -167,6 +167,7 @@ public:
   inline bool isTargetMemoryOpcode() const;
   inline bool isTargetOpcode() const;
   inline bool isMachineOpcode() const;
+  inline bool isUndef() const;
   inline unsigned getMachineOpcode() const;
   inline const DebugLoc &getDebugLoc() const;
   inline void dump() const;
@@ -394,6 +395,9 @@ public:
   bool isTargetMemoryOpcode() const {
     return NodeType >= ISD::FIRST_TARGET_MEMORY_OPCODE;
   }
+
+  /// Return true if the type of the node type undefined.
+  bool isUndef() const { return NodeType == ISD::UNDEF; }
 
   /// Test if this node is a memory intrinsic (with valid pointer information).
   /// INTRINSIC_W_CHAIN and INTRINSIC_VOID nodes are sometimes created for
@@ -908,6 +912,9 @@ inline bool SDValue::isMachineOpcode() const {
 }
 inline unsigned SDValue::getMachineOpcode() const {
   return Node->getMachineOpcode();
+}
+inline bool SDValue::isUndef() const {
+  return Node->isUndef();
 }
 inline bool SDValue::use_empty() const {
   return !Node->hasAnyUseOfValue(ResNo);
