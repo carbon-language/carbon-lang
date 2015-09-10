@@ -1559,9 +1559,16 @@ void MergeFunctions::replaceDirectCallers(Function *Old, Function *New) {
     CallSite CS(U->getUser());
     if (CS && CS.isCallee(U)) {
       // Transfer the called function's attributes to the call site. Due to the
-      // bitcast we will 'loose' ABI changing attributes because the 'called
+      // bitcast we will 'lose' ABI changing attributes because the 'called
       // function' is no longer a Function* but the bitcast. Code that looks up
       // the attributes from the called function will fail.
+
+      // FIXME: This is not actually true, at least not anymore. The callsite
+      // will always have the same ABI affecting attributes as the callee,
+      // because otherwise the original input has UB. Note that Old and New
+      // always have matching ABI, so no attributes need to be changed.
+      // Transferring other attributes may help other optimizations, but that
+      // should be done uniformly and not in this ad-hoc way.
       auto &Context = New->getContext();
       auto NewFuncAttrs = New->getAttributes();
       auto CallSiteAttrs = CS.getAttributes();
@@ -1656,6 +1663,7 @@ void MergeFunctions::writeThunk(Function *F, Function *G) {
   CallInst *CI = Builder.CreateCall(F, Args);
   CI->setTailCall();
   CI->setCallingConv(F->getCallingConv());
+  CI->setAttributes(F->getAttributes());
   if (NewG->getReturnType()->isVoidTy()) {
     Builder.CreateRetVoid();
   } else {
