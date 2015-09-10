@@ -590,6 +590,12 @@ macro(add_llvm_executable name)
 
   add_windows_version_resource_file(ALL_FILES ${ALL_FILES})
 
+  if(XCODE)
+    # Note: the dummy.cpp source file provides no definitions. However,
+    # it forces Xcode to properly link the static library.
+    list(APPEND ALL_FILES "${LLVM_SOURCE_DIR}/cmake/dummy.cpp")
+  endif()
+
   if( EXCLUDE_FROM_ALL )
     add_executable(${name} EXCLUDE_FROM_ALL ${ALL_FILES})
   else()
