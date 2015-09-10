@@ -6253,9 +6253,13 @@ bool Sema::RequireCompleteExprType(Expr *E, TypeDiagnoser &Diagnoser){
   QualType T = E->getType();
 
   // Fast path the case where the type is already complete.
-  if (!T->isIncompleteType())
+  if (!T->isIncompleteType()) {
+    if (T->isMemberPointerType() &&
+        Context.getTargetInfo().getCXXABI().isMicrosoft())
+      RequireCompleteType(E->getExprLoc(), T, 0);
     // FIXME: The definition might not be visible.
     return false;
+  }
 
   // Incomplete array types may be completed by the initializer attached to
   // their definitions. For static data members of class templates and for
