@@ -7286,6 +7286,7 @@ __kmp_cleanup( void )
 #if KMP_AFFINITY_SUPPORTED
         __kmp_affinity_uninitialize();
 #endif /* KMP_AFFINITY_SUPPORTED */
+        __kmp_cleanup_hierarchy();
         TCW_4(__kmp_init_middle, FALSE);
     }
 
