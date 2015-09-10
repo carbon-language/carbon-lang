@@ -58,9 +58,9 @@ z2:
         .quad   ds2
 
 # Test subtractor relocations.
-# rtdyld-check: *{8}z3 = z4 - z5
+# rtdyld-check: *{8}z3 = z4 - z5 + 4
 z3:
-        .quad  z4 - z5
+        .quad  z4 - z5 + 4
 
         .section        __DATA,_tmp1
 z4:

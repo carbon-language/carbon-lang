@@ -154,12 +154,17 @@ private:
 
     unsigned Size = Obj.getAnyRelocationLength(RE);
     uint64_t Offset = RelI->getOffset();
+    uint8_t *LocalAddress = Sections[SectionID].Address + Offset;
+    unsigned NumBytes = 1 << Size;
+
     ErrorOr<StringRef> SubtrahendNameOrErr = RelI->getSymbol()->getName();
     if (auto EC = SubtrahendNameOrErr.getError())
       report_fatal_error(EC.message());
     auto SubtrahendI = GlobalSymbolTable.find(*SubtrahendNameOrErr);
     unsigned SectionBID = SubtrahendI->second.getSectionID();
     uint64_t SectionBOffset = SubtrahendI->second.getOffset();
+    int64_t Addend =
+      SignExtend64(readBytesUnaligned(LocalAddress, NumBytes), NumBytes * 8);
 
     ++RelI;
     ErrorOr<StringRef> MinuendNameOrErr = RelI->getSymbol()->getName();
@@ -169,8 +174,7 @@ private:
     unsigned SectionAID = MinuendI->second.getSectionID();
     uint64_t SectionAOffset = MinuendI->second.getOffset();
 
-    uint64_t Addend = SectionAOffset - SectionBOffset;
-    RelocationEntry R(SectionID, Offset, MachO::X86_64_RELOC_SUBTRACTOR, Addend,
+    RelocationEntry R(SectionID, Offset, MachO::X86_64_RELOC_SUBTRACTOR, (uint64_t)Addend,
                       SectionAID, SectionAOffset, SectionBID, SectionBOffset,
                       false, Size);
 
