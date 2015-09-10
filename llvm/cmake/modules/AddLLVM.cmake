@@ -593,7 +593,7 @@ macro(add_llvm_executable name)
   if(XCODE)
     # Note: the dummy.cpp source file provides no definitions. However,
     # it forces Xcode to properly link the static library.
-    list(APPEND ALL_FILES "${LLVM_SOURCE_DIR}/cmake/dummy.cpp")
+    list(APPEND ALL_FILES "${LLVM_MAIN_SRC_DIR}/cmake/dummy.cpp")
   endif()
 
   if( EXCLUDE_FROM_ALL )
