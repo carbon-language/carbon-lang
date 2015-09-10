@@ -350,17 +350,23 @@ public:
   }
 
   ValidatorResult visitSRemInstruction(Instruction *SRem, const SCEV *S) {
-    assert(SRem->getOpcode() == Instruction::SRem &&
-           "Assumed SRem instruction!");
+    // TODO: FIXME: SRem instructions in the domain description are currently
+    //              not compatible with the domain generation. Once this is
+    //              fixed we need to enable this handling again.
+    return ValidatorResult(SCEVType::INVALID);
+#if 0
+        assert(SRem->getOpcode() == Instruction::SRem &&
+               "Assumed SRem instruction!");
 
-    auto *Divisor = SRem->getOperand(1);
-    auto *CI = dyn_cast<ConstantInt>(Divisor);
-    if (!CI)
-      return visitGenericInst(SRem, S);
+        auto *Divisor = SRem->getOperand(1);
+        auto *CI = dyn_cast<ConstantInt>(Divisor);
+        if (!CI)
+          return visitGenericInst(SRem, S);
 
-    auto *Dividend = SRem->getOperand(0);
-    auto *DividendSCEV = SE.getSCEV(Dividend);
-    return visit(DividendSCEV);
+        auto *Dividend = SRem->getOperand(0);
+        auto *DividendSCEV = SE.getSCEV(Dividend);
+        return visit(DividendSCEV);
+#endif
   }
 
   ValidatorResult visitUnknown(const SCEVUnknown *Expr) {

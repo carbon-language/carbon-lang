@@ -1,6 +1,11 @@
 ; RUN: opt %loadPolly -polly-codegen -S -polly-no-early-exit \
 ; RUN:     -polly-detect-unprofitable < %s | FileCheck %s
 ;
+; TODO: The new domain generation cannot handle modulo domain constraints,
+;       hence modulo handling has been disabled completely. Once this is
+;       resolved this test should work again.
+; XFAIL: *
+;
 ;    void pos(float *A, long n) {
 ;      for (long i = 0; i < 100; i++)
 ;        A[n % 42] += 1;

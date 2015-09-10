@@ -4,6 +4,12 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen -polly-vectorizer=polly -S < %s | \
 ; RUN:     FileCheck %s
 ;
+; TODO: The new domain generation cannot handle modulo domain constraints,
+;       hence modulo handling has been disabled completely. Once this is
+;       resolved this test should work again. Until then we approximate the
+;       whole loop body.
+; XFAIL: *
+
 ;    void foo(float *A) {
 ;      for (long i = 0; i < 16; i++) {
 ;        if (i % 2)

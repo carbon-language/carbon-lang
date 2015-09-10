@@ -1,5 +1,9 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s | FileCheck %s
 ;
+; TODO: The new domain generation cannot handle modulo domain constraints,
+;       hence modulo handling has been disabled completely. Once this is
+;       resolved this test should work again.
+; XFAIL: *
 ;
 ;    void f(int *A) {
 ;      for (int i = 0; i < 1024; i++)
