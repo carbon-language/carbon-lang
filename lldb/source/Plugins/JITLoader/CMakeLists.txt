@@ -1,4 +1,1 @@
-if (CMAKE_SYSTEM_NAME MATCHES "FreeBSD" OR CMAKE_SYSTEM_NAME MATCHES "Linux"
-    OR CMAKE_SYSTEM_NAME MATCHES "Windows" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  add_subdirectory(GDB)
-endif()
+add_subdirectory(GDB)
