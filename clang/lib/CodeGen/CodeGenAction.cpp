@@ -159,7 +159,12 @@ namespace clang {
       if (LinkModule) {
         if (Linker::LinkModules(
                 M, LinkModule.get(),
-                [=](const DiagnosticInfo &DI) { linkerDiagnosticHandler(DI); }))
+                [=](const DiagnosticInfo &DI) { linkerDiagnosticHandler(DI); },
+                (LangOpts.CUDA && LangOpts.CUDAIsDevice &&
+                 LangOpts.CUDAUsesLibDevice)
+                    ? (Linker::Flags::LinkOnlyNeeded |
+                       Linker::Flags::InternalizeLinkedSymbols)
+                    : Linker::Flags::None))
           return;
       }
 
