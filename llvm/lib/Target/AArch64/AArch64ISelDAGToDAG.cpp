@@ -630,6 +630,15 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed7S(SDValue N, unsigned Size,
                                                   SDValue &Base,
                                                   SDValue &OffImm) {
   SDLoc dl(N);
+  const DataLayout &DL = CurDAG->getDataLayout();
+  const TargetLowering *TLI = getTargetLowering();
+  if (N.getOpcode() == ISD::FrameIndex) {
+    int FI = cast<FrameIndexSDNode>(N)->getIndex();
+    Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
+    OffImm = CurDAG->getTargetConstant(0, dl, MVT::i64);
+    return true;
+  }
+
   // As opposed to the (12-bit) Indexed addressing mode below, the 7-bit signed
   // selected here doesn't support labels/immediates, only base+offset.
 
@@ -640,6 +649,10 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed7S(SDValue N, unsigned Size,
       if ((RHSC & (Size - 1)) == 0 && RHSC >= (-0x40 << Scale) &&
           RHSC < (0x40 << Scale)) {
         Base = N.getOperand(0);
+        if (Base.getOpcode() == ISD::FrameIndex) {
+          int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+          Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
+        }
         OffImm = CurDAG->getTargetConstant(RHSC >> Scale, dl, MVT::i64);
         return true;
       }

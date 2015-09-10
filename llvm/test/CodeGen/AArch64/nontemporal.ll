@@ -313,9 +313,7 @@ declare void @dummy(<4 x float>*)
 
 define void @test_stnp_v4f32_offset_alloca(<4 x float> %v) #0 {
 ; CHECK-LABEL: test_stnp_v4f32_offset_alloca:
-; CHECK:       mov x29, sp
-; CHECK:       mov x[[PTR:[0-9]+]], sp
-; CHECK-NEXT:  stnp d0, d{{.*}}, [x[[PTR]]]
+; CHECK:       stnp d0, d{{.*}}, [sp]
 ; CHECK-NEXT:  mov x0, sp
 ; CHECK-NEXT:  bl _dummy
   %tmp0 = alloca <4 x float>
@@ -326,9 +324,7 @@ define void @test_stnp_v4f32_offset_alloca(<4 x float> %v) #0 {
 
 define void @test_stnp_v4f32_offset_alloca_2(<4 x float> %v) #0 {
 ; CHECK-LABEL: test_stnp_v4f32_offset_alloca_2:
-; CHECK:       mov x29, sp
-; CHECK:       mov x[[PTR:[0-9]+]], sp
-; CHECK-NEXT:  stnp d0, d{{.*}}, [x[[PTR]], #16]
+; CHECK:       stnp d0, d{{.*}}, [sp, #16]
 ; CHECK-NEXT:  mov x0, sp
 ; CHECK-NEXT:  bl _dummy
   %tmp0 = alloca <4 x float>, i32 2

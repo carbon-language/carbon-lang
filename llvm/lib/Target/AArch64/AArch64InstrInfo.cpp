@@ -2260,11 +2260,19 @@ int llvm::isAArch64FrameOffsetLegal(const MachineInstr &MI, int &Offset,
   case AArch64::LDPDi:
   case AArch64::STPXi:
   case AArch64::STPDi:
+  case AArch64::LDNPXi:
+  case AArch64::LDNPDi:
+  case AArch64::STNPXi:
+  case AArch64::STNPDi:
+    ImmIdx = 3;
     IsSigned = true;
     Scale = 8;
     break;
   case AArch64::LDPQi:
   case AArch64::STPQi:
+  case AArch64::LDNPQi:
+  case AArch64::STNPQi:
+    ImmIdx = 3;
     IsSigned = true;
     Scale = 16;
     break;
@@ -2272,6 +2280,11 @@ int llvm::isAArch64FrameOffsetLegal(const MachineInstr &MI, int &Offset,
   case AArch64::LDPSi:
   case AArch64::STPWi:
   case AArch64::STPSi:
+  case AArch64::LDNPWi:
+  case AArch64::LDNPSi:
+  case AArch64::STNPWi:
+  case AArch64::STNPSi:
+    ImmIdx = 3;
     IsSigned = true;
     Scale = 4;
     break;
