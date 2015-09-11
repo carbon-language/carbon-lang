@@ -221,6 +221,12 @@ public:
     ++NumEntries; // DT_STRTAB
     ++NumEntries; // DT_STRSZ
 
+    StringRef RPath = Config->RPath;
+    if (!RPath.empty()) {
+      ++NumEntries; // DT_RUNPATH
+      DynStrSec.add(RPath);
+    }
+
     const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
         SymTab.getSharedFiles();
     for (const std::unique_ptr<SharedFileBase> &File : SharedFiles)
@@ -250,6 +256,13 @@ public:
     P->d_tag = DT_STRSZ;
     P->d_un.d_val = DynStrSec.data().size();
     ++P;
+
+    StringRef RPath = Config->RPath;
+    if (!RPath.empty()) {
+      P->d_tag = DT_RUNPATH;
+      P->d_un.d_val = DynStrSec.getFileOff(RPath);
+      ++P;
+    }
 
     const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
         SymTab.getSharedFiles();

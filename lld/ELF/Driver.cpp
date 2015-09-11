@@ -14,6 +14,7 @@
 #include "SymbolTable.h"
 #include "Writer.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FileSystem.h"
 
 using namespace llvm;
@@ -71,6 +72,12 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   // Handle -dynamic-linker
   if (auto *Arg = Args.getLastArg(OPT_dynamic_linker))
     Config->DynamicLinker = Arg->getValue();
+
+  std::vector<StringRef> RPaths;
+  for (auto *Arg : Args.filtered(OPT_rpath))
+    RPaths.push_back(Arg->getValue());
+  if (!RPaths.empty())
+    Config->RPath = llvm::join(RPaths.begin(), RPaths.end(), ":");
 
   // Create a list of input files.
   std::vector<MemoryBufferRef> Inputs;

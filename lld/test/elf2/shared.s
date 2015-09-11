@@ -1,5 +1,5 @@
 // RUN: llvm-mc -filetype=obj -triple=i686-unknown-linux %s -o %t.o
-// RUN: lld -flavor gnu2 -dynamic-linker /lib64/ld-linux-x86-64.so.2 %t.o %p/Inputs/i686-simple-library.so -o %t
+// RUN: lld -flavor gnu2 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -rpath foo -rpath bar %t.o %p/Inputs/i686-simple-library.so -o %t
 // RUN: llvm-readobj --program-headers --dynamic-table -t -s -dyn-symbols -section-data %t | FileCheck %s
 // REQUIRES: x86
 
@@ -143,6 +143,7 @@
 // CHECK-NEXT:   0x00000006 SYMTAB               [[DYNSYMADDR]]
 // CHECK-NEXT:   0x00000005 STRTAB               [[DYNSTRADDR]]
 // CHECK-NEXT:   0x0000000A STRSZ
+// CHECK-NEXT:   0x0000001D RUNPATH              foo:bar
 // CHECK-NEXT:   0x00000001 NEEDED               SharedLibrary ({{.*}}/Inputs/i686-simple-library.so)
 // CHECK-NEXT:   0x00000000 NULL                 0x0
 // CHECK-NEXT: ]
