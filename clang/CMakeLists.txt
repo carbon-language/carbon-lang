@@ -598,7 +598,6 @@ if (CLANG_ENABLE_BOOTSTRAP)
     COMMAND ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${STAMP_DIR}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${STAMP_DIR}
-    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/bootstrap-cleared
     COMMENT "Clobberring bootstrap build and stamp directories"
     )
 
