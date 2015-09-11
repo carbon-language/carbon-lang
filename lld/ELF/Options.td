@@ -11,4 +11,4 @@ def dynamic_linker : Separate<["-"], "dynamic-linker">,
      HelpText<"Which dynamic linker to use">;
 
 def rpath : Separate<["-"], "rpath">,
-     HelpText<"Which dynamic linker to use">;
+     HelpText<"Add a DT_RUNPATH to the output">;
