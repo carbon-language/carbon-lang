@@ -88,6 +88,7 @@ typedef const struct __CFString * CFStringRef;
 #define M(x) (x)
 #define PAIR(x) @#x, [NSNumber numberWithInt:(x)]
 #define TWO(x) ((x), (x))
+#define TWO_SEP(x,y) ((x), (y))
 
 @interface I {
   NSArray *ivarArr;
@@ -118,6 +119,7 @@ typedef const struct __CFString * CFStringRef;
   id o = [arr objectAtIndex:2];
   o = [dict objectForKey:@"key"];
   o = TWO([dict objectForKey:@"key"]);
+  o = TWO_SEP([dict objectForKey:@"key"], [arr objectAtIndex:2]);
   o = [NSDictionary dictionaryWithObject:[NSDictionary dictionary] forKey:@"key"];
   NSMutableArray *marr = 0;
   NSMutableDictionary *mdict = 0;

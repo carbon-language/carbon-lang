@@ -10,9 +10,11 @@
 #ifndef LLVM_CLANG_EDIT_EDITEDSOURCE_H
 #define LLVM_CLANG_EDIT_EDITEDSOURCE_H
 
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Edit/FileOffset.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/Allocator.h"
 #include <map>
 
@@ -39,14 +41,18 @@ class EditedSource {
   typedef std::map<FileOffset, FileEdit> FileEditsTy;
   FileEditsTy FileEdits;
 
-  llvm::DenseMap<unsigned, SourceLocation> ExpansionToArgMap;
+  llvm::DenseMap<unsigned, llvm::TinyPtrVector<IdentifierInfo*>>
+    ExpansionToArgMap;
+  SmallVector<std::pair<SourceLocation, IdentifierInfo*>, 2>
+    CurrCommitMacroArgExps;
 
+  IdentifierTable IdentTable;
   llvm::BumpPtrAllocator StrAlloc;
 
 public:
   EditedSource(const SourceManager &SM, const LangOptions &LangOpts,
                const PPConditionalDirectiveRecord *PPRec = nullptr)
-    : SourceMgr(SM), LangOpts(LangOpts), PPRec(PPRec),
+    : SourceMgr(SM), LangOpts(LangOpts), PPRec(PPRec), IdentTable(LangOpts),
       StrAlloc() { }
 
   const SourceManager &getSourceManager() const { return SourceMgr; }
@@ -76,6 +82,12 @@ private:
   StringRef getSourceText(FileOffset BeginOffs, FileOffset EndOffs,
                           bool &Invalid);
   FileEditsTy::iterator getActionForOffset(FileOffset Offs);
+  void deconstructMacroArgLoc(SourceLocation Loc,
+                              SourceLocation &ExpansionLoc,
+                              IdentifierInfo *&II);
+
+  void startingCommit();
+  void finishedCommit();
 };
 
 }

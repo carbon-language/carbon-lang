@@ -23,6 +23,36 @@ void EditsReceiver::remove(CharSourceRange range) {
   replace(range, StringRef());
 }
 
+void EditedSource::deconstructMacroArgLoc(SourceLocation Loc,
+                                          SourceLocation &ExpansionLoc,
+                                          IdentifierInfo *&II) {
+  assert(SourceMgr.isMacroArgExpansion(Loc));
+  SourceLocation DefArgLoc = SourceMgr.getImmediateExpansionRange(Loc).first;
+  ExpansionLoc = SourceMgr.getImmediateExpansionRange(DefArgLoc).first;
+  SmallString<20> Buf;
+  StringRef ArgName = Lexer::getSpelling(SourceMgr.getSpellingLoc(DefArgLoc),
+                                         Buf, SourceMgr, LangOpts);
+  II = nullptr;
+  if (!ArgName.empty()) {
+    II = &IdentTable.get(ArgName);
+  }
+}
+
+void EditedSource::startingCommit() {}
+
+void EditedSource::finishedCommit() {
+  for (auto &ExpArg : CurrCommitMacroArgExps) {
+    SourceLocation ExpLoc;
+    IdentifierInfo *II;
+    std::tie(ExpLoc, II) = ExpArg;
+    auto &ArgNames = ExpansionToArgMap[ExpLoc.getRawEncoding()];
+    if (std::find(ArgNames.begin(), ArgNames.end(), II) == ArgNames.end()) {
+      ArgNames.push_back(II);
+    }
+  }
+  CurrCommitMacroArgExps.clear();
+}
+
 StringRef EditedSource::copyString(const Twine &twine) {
   SmallString<128> Data;
   return copyString(twine.toStringRef(Data));
@@ -36,15 +66,27 @@ bool EditedSource::canInsertInOffset(SourceLocation OrigLoc, FileOffset Offs) {
   }
 
   if (SourceMgr.isMacroArgExpansion(OrigLoc)) {
-    SourceLocation
-      DefArgLoc = SourceMgr.getImmediateExpansionRange(OrigLoc).first;
-    SourceLocation
-      ExpLoc = SourceMgr.getImmediateExpansionRange(DefArgLoc).first;
-    llvm::DenseMap<unsigned, SourceLocation>::iterator
-      I = ExpansionToArgMap.find(ExpLoc.getRawEncoding());
-    if (I != ExpansionToArgMap.end() && I->second != DefArgLoc)
-      return false; // Trying to write in a macro argument input that has
-                 // already been written for another argument of the same macro. 
+    IdentifierInfo *II;
+    SourceLocation ExpLoc;
+    deconstructMacroArgLoc(OrigLoc, ExpLoc, II);
+    auto I = ExpansionToArgMap.find(ExpLoc.getRawEncoding());
+    if (I != ExpansionToArgMap.end() &&
+        std::find(I->second.begin(), I->second.end(), II) != I->second.end()) {
+      // Trying to write in a macro argument input that has already been
+      // written by a previous commit for another expansion of the same macro
+      // argument name. For example:
+      //
+      // \code
+      //   #define MAC(x) ((x)+(x))
+      //   MAC(a)
+      // \endcode
+      //
+      // A commit modified the macro argument 'a' due to the first '(x)'
+      // expansion inside the macro definition, and a subsequent commit tried
+      // to modify 'a' again for the second '(x)' expansion. The edits of the
+      // second commit will be rejected.
+      return false;
+    }
   }
 
   return true;
@@ -59,11 +101,11 @@ bool EditedSource::commitInsert(SourceLocation OrigLoc,
     return true;
 
   if (SourceMgr.isMacroArgExpansion(OrigLoc)) {
-    SourceLocation
-      DefArgLoc = SourceMgr.getImmediateExpansionRange(OrigLoc).first;
-    SourceLocation
-      ExpLoc = SourceMgr.getImmediateExpansionRange(DefArgLoc).first;
-    ExpansionToArgMap[ExpLoc.getRawEncoding()] = DefArgLoc;
+    IdentifierInfo *II;
+    SourceLocation ExpLoc;
+    deconstructMacroArgLoc(OrigLoc, ExpLoc, II);
+    if (II)
+      CurrCommitMacroArgExps.emplace_back(ExpLoc, II);
   }
   
   FileEdit &FA = FileEdits[Offs];
@@ -218,6 +260,16 @@ void EditedSource::commitRemove(SourceLocation OrigLoc,
 bool EditedSource::commit(const Commit &commit) {
   if (!commit.isCommitable())
     return false;
+
+  struct CommitRAII {
+    EditedSource &Editor;
+    CommitRAII(EditedSource &Editor) : Editor(Editor) {
+      Editor.startingCommit();
+    }
+    ~CommitRAII() {
+      Editor.finishedCommit();
+    }
+  } CommitRAII(*this);
 
   for (edit::Commit::edit_iterator
          I = commit.edit_begin(), E = commit.edit_end(); I != E; ++I) {
