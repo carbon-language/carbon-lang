@@ -840,6 +840,10 @@ public:
 
   bool getWindowsSDKDir(std::string &path, int &major, int &minor) const;
   bool getWindowsSDKLibraryPath(std::string &path) const;
+  /// \brief Check if Universal CRT should be used if available
+  bool useUniversalCRT(std::string &visualStudioDir) const;
+  bool getUniversalCRTSdkDir(std::string &path, std::string &ucrtVersion) const;
+  bool getUniversalCRTLibraryPath(std::string &path) const;
   bool getVisualStudioInstallDir(std::string &path) const;
   bool getVisualStudioBinariesFolder(const char *clangProgramPath,
                                      std::string &path) const;
