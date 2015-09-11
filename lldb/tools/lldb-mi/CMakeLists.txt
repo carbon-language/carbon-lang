@@ -70,9 +70,6 @@ set(LLDB_MI_SOURCES
   MIUtilFileStd.cpp
   MIUtilMapIdToVariant.cpp
   MIUtilString.cpp
-  MIUtilSystemLinux.cpp
-  MIUtilSystemOsx.cpp
-  MIUtilSystemWindows.cpp
   MIUtilThreadBaseStd.cpp
   MIUtilVariant.cpp
   Platform.cpp

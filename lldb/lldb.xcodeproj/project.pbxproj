@@ -282,9 +282,6 @@
 		266942431A6DC2AC0063BE93 /* MIUtilFileStd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941E81A6DC2AC0063BE93 /* MIUtilFileStd.cpp */; };
 		266942441A6DC2AC0063BE93 /* MIUtilMapIdToVariant.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941EA1A6DC2AC0063BE93 /* MIUtilMapIdToVariant.cpp */; };
 		266942451A6DC2AC0063BE93 /* MIUtilString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941EE1A6DC2AC0063BE93 /* MIUtilString.cpp */; };
-		266942461A6DC2AC0063BE93 /* MIUtilSystemLinux.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941F01A6DC2AC0063BE93 /* MIUtilSystemLinux.cpp */; };
-		266942471A6DC2AC0063BE93 /* MIUtilSystemOsx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941F21A6DC2AC0063BE93 /* MIUtilSystemOsx.cpp */; };
-		266942481A6DC2AC0063BE93 /* MIUtilSystemWindows.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941F41A6DC2AC0063BE93 /* MIUtilSystemWindows.cpp */; };
 		2669424A1A6DC2AC0063BE93 /* MIUtilThreadBaseStd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941F81A6DC2AC0063BE93 /* MIUtilThreadBaseStd.cpp */; };
 		2669424B1A6DC2AC0063BE93 /* MIUtilVariant.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941FA1A6DC2AC0063BE93 /* MIUtilVariant.cpp */; };
 		2669424C1A6DC2AC0063BE93 /* Platform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941FC1A6DC2AC0063BE93 /* Platform.cpp */; };
@@ -1622,12 +1619,6 @@
 		266941ED1A6DC2AC0063BE93 /* MIUtilSingletonHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilSingletonHelper.h; path = "tools/lldb-mi/MIUtilSingletonHelper.h"; sourceTree = SOURCE_ROOT; };
 		266941EE1A6DC2AC0063BE93 /* MIUtilString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilString.cpp; path = "tools/lldb-mi/MIUtilString.cpp"; sourceTree = SOURCE_ROOT; };
 		266941EF1A6DC2AC0063BE93 /* MIUtilString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilString.h; path = "tools/lldb-mi/MIUtilString.h"; sourceTree = SOURCE_ROOT; };
-		266941F01A6DC2AC0063BE93 /* MIUtilSystemLinux.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilSystemLinux.cpp; path = "tools/lldb-mi/MIUtilSystemLinux.cpp"; sourceTree = SOURCE_ROOT; };
-		266941F11A6DC2AC0063BE93 /* MIUtilSystemLinux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilSystemLinux.h; path = "tools/lldb-mi/MIUtilSystemLinux.h"; sourceTree = SOURCE_ROOT; };
-		266941F21A6DC2AC0063BE93 /* MIUtilSystemOsx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilSystemOsx.cpp; path = "tools/lldb-mi/MIUtilSystemOsx.cpp"; sourceTree = SOURCE_ROOT; };
-		266941F31A6DC2AC0063BE93 /* MIUtilSystemOsx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilSystemOsx.h; path = "tools/lldb-mi/MIUtilSystemOsx.h"; sourceTree = SOURCE_ROOT; };
-		266941F41A6DC2AC0063BE93 /* MIUtilSystemWindows.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilSystemWindows.cpp; path = "tools/lldb-mi/MIUtilSystemWindows.cpp"; sourceTree = SOURCE_ROOT; };
-		266941F51A6DC2AC0063BE93 /* MIUtilSystemWindows.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilSystemWindows.h; path = "tools/lldb-mi/MIUtilSystemWindows.h"; sourceTree = SOURCE_ROOT; };
 		266941F81A6DC2AC0063BE93 /* MIUtilThreadBaseStd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilThreadBaseStd.cpp; path = "tools/lldb-mi/MIUtilThreadBaseStd.cpp"; sourceTree = SOURCE_ROOT; };
 		266941F91A6DC2AC0063BE93 /* MIUtilThreadBaseStd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilThreadBaseStd.h; path = "tools/lldb-mi/MIUtilThreadBaseStd.h"; sourceTree = SOURCE_ROOT; };
 		266941FA1A6DC2AC0063BE93 /* MIUtilVariant.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilVariant.cpp; path = "tools/lldb-mi/MIUtilVariant.cpp"; sourceTree = SOURCE_ROOT; };
@@ -3794,12 +3785,6 @@
 				266941ED1A6DC2AC0063BE93 /* MIUtilSingletonHelper.h */,
 				266941EE1A6DC2AC0063BE93 /* MIUtilString.cpp */,
 				266941EF1A6DC2AC0063BE93 /* MIUtilString.h */,
-				266941F01A6DC2AC0063BE93 /* MIUtilSystemLinux.cpp */,
-				266941F11A6DC2AC0063BE93 /* MIUtilSystemLinux.h */,
-				266941F21A6DC2AC0063BE93 /* MIUtilSystemOsx.cpp */,
-				266941F31A6DC2AC0063BE93 /* MIUtilSystemOsx.h */,
-				266941F41A6DC2AC0063BE93 /* MIUtilSystemWindows.cpp */,
-				266941F51A6DC2AC0063BE93 /* MIUtilSystemWindows.h */,
 				266941F81A6DC2AC0063BE93 /* MIUtilThreadBaseStd.cpp */,
 				266941F91A6DC2AC0063BE93 /* MIUtilThreadBaseStd.h */,
 				266941FA1A6DC2AC0063BE93 /* MIUtilVariant.cpp */,
@@ -6700,7 +6685,6 @@
 				266942171A6DC2AC0063BE93 /* MICmdCmdStack.cpp in Sources */,
 				266942121A6DC2AC0063BE93 /* MICmdCmdFile.cpp in Sources */,
 				2669424B1A6DC2AC0063BE93 /* MIUtilVariant.cpp in Sources */,
-				266942471A6DC2AC0063BE93 /* MIUtilSystemOsx.cpp in Sources */,
 				2669421E1A6DC2AC0063BE93 /* MICmdCommands.cpp in Sources */,
 				266942161A6DC2AC0063BE93 /* MICmdCmdMiscellanous.cpp in Sources */,
 				266942281A6DC2AC0063BE93 /* MICmnLLDBDebuggerHandleEvents.cpp in Sources */,
@@ -6708,7 +6692,6 @@
 				266942261A6DC2AC0063BE93 /* MICmnLLDBBroadcaster.cpp in Sources */,
 				266942141A6DC2AC0063BE93 /* MICmdCmdGdbSet.cpp in Sources */,
 				2669423F1A6DC2AC0063BE93 /* MIDriverMain.cpp in Sources */,
-				266942481A6DC2AC0063BE93 /* MIUtilSystemWindows.cpp in Sources */,
 				266942041A6DC2AC0063BE93 /* MICmdArgValFile.cpp in Sources */,
 				2669422D1A6DC2AC0063BE93 /* MICmnLog.cpp in Sources */,
 				2669420E1A6DC2AC0063BE93 /* MICmdCmdBreak.cpp in Sources */,
@@ -6740,7 +6723,6 @@
 				2669422B1A6DC2AC0063BE93 /* MICmnLLDBProxySBValue.cpp in Sources */,
 				2669423E1A6DC2AC0063BE93 /* MIDriverBase.cpp in Sources */,
 				2669424C1A6DC2AC0063BE93 /* Platform.cpp in Sources */,
-				266942461A6DC2AC0063BE93 /* MIUtilSystemLinux.cpp in Sources */,
 				266942021A6DC2AC0063BE93 /* MICmdArgValBase.cpp in Sources */,
 				266942091A6DC2AC0063BE93 /* MICmdArgValOptionShort.cpp in Sources */,
 				266942291A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfo.cpp in Sources */,

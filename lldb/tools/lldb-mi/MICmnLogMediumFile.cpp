@@ -10,13 +10,6 @@
 // In-house headers:
 #include "MICmnLogMediumFile.h"
 #include "MICmnResources.h"
-#if defined(_MSC_VER)
-#include "MIUtilSystemWindows.h"
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__linux__)
-#include "MIUtilSystemLinux.h"
-#elif defined(__APPLE__)
-#include "MIUtilSystemOsx.h"
-#endif // defined( _MSC_VER )
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmnLogMediumFile constructor.
@@ -29,7 +22,7 @@ CMICmnLogMediumFile::CMICmnLogMediumFile()
     : m_constThisMediumName(MIRSRC(IDS_MEDIUMFILE_NAME))
     , m_constMediumFileNameFormat("lldb-mi-%s.log")
     , m_strMediumFileName(MIRSRC(IDS_MEDIUMFILE_ERR_INVALID_PATH))
-    , m_strMediumFileDirectory(MIRSRC(IDS_MEDIUMFILE_ERR_INVALID_PATH))
+    , m_strMediumFileDirectory(".")
     , m_fileNamePath(MIRSRC(IDS_MEDIUMFILE_ERR_INVALID_PATH))
     , m_eVerbosityType(CMICmnLog::eLogVerbosity_Log)
     , m_strDate(CMIUtilDateTimeStd().GetDate())
@@ -74,10 +67,7 @@ CMICmnLogMediumFile::Instance()
 bool
 CMICmnLogMediumFile::Initialize()
 {
-    m_bInitialized = CMIUtilSystem().GetLogFilesPath(m_strMediumFileDirectory);
-    m_bInitialized &= FileFormFileNamePath();
-
-    return m_bInitialized;
+    return FileFormFileNamePath();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -216,23 +206,16 @@ CMICmnLogMediumFile::FileFormFileNamePath()
 
     m_fileNamePath = MIRSRC(IDS_MEDIUMFILE_ERR_INVALID_PATH);
 
-    if (m_strMediumFileDirectory.compare(MIRSRC(IDS_MEDIUMFILE_ERR_INVALID_PATH)) != 0)
-    {
-        CMIUtilDateTimeStd date;
-        m_strMediumFileName = CMIUtilString::Format(m_constMediumFileNameFormat.c_str(), date.GetDateTimeLogFilename().c_str());
+    CMIUtilDateTimeStd date;
+    m_strMediumFileName = CMIUtilString::Format(m_constMediumFileNameFormat.c_str(), date.GetDateTimeLogFilename().c_str());
 
 #if defined(_MSC_VER)
-        m_fileNamePath = CMIUtilString::Format("%s\\%s", m_strMediumFileDirectory.c_str(), m_strMediumFileName.c_str());
+    m_fileNamePath = CMIUtilString::Format("%s\\%s", m_strMediumFileDirectory.c_str(), m_strMediumFileName.c_str());
 #else
-        m_fileNamePath = CMIUtilString::Format("%s/%s", m_strMediumFileDirectory.c_str(), m_strMediumFileName.c_str());
+    m_fileNamePath = CMIUtilString::Format("%s/%s", m_strMediumFileDirectory.c_str(), m_strMediumFileName.c_str());
 #endif // defined ( _MSC_VER )
 
-        return MIstatus::success;
-    }
-
-    SetErrorDescription(MIRSRC(IDE_MEDIUMFILE_ERR_GET_FILE_PATHNAME_SYS));
-
-    return MIstatus::failure;
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------

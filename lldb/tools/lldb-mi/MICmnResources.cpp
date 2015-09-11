@@ -45,7 +45,6 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_MEDIUMFILE_ERR_INVALID_PATH, "<Invalid - not set>"},
     {IDS_MEDIUMFILE_ERR_FILE_HEADER, "<Invalid - header not set>"},
     {IDS_MEDIUMFILE_NAME_LOG, "File medium. %s"},
-    {IDE_MEDIUMFILE_ERR_GET_FILE_PATHNAME_SYS, "File Medium. Failed to retrieve the system/executable path for the Log file"},
     {IDE_OS_ERR_UNKNOWN, "Unknown OS error"},
     {IDE_OS_ERR_RETRIEVING, "Unabled to retrieve OS error message"},
     {IDS_DRIVERMGR_DRIVER_ERR_INIT, "Driver Manager. Driver '%s' (ID:'%s') initialise failed. %s"},
