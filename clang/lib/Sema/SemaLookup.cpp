@@ -387,6 +387,8 @@ static bool isPreferredLookupResult(Sema &S, Sema::LookupNameKind Kind,
     // If D has more default arguments, it is preferred.
     if (DMin != EMin)
       return DMin < EMin;
+    // FIXME: When we track visibility for default function arguments, check
+    // that we pick the declaration with more visible default arguments.
   }
 
   // Pick the template with more default template arguments.
@@ -394,9 +396,22 @@ static bool isPreferredLookupResult(Sema &S, Sema::LookupNameKind Kind,
     auto *ETD = cast<TemplateDecl>(EUnderlying);
     unsigned DMin = DTD->getTemplateParameters()->getMinRequiredArguments();
     unsigned EMin = ETD->getTemplateParameters()->getMinRequiredArguments();
-    // If D has more default arguments, it is preferred.
+    // If D has more default arguments, it is preferred. Note that default
+    // arguments (and their visibility) is monotonically increasing across the
+    // redeclaration chain, so this is a quick proxy for "is more recent".
     if (DMin != EMin)
       return DMin < EMin;
+    // If D has more *visible* default arguments, it is preferred. Note, an
+    // earlier default argument being visible does not imply that a later
+    // default argument is visible, so we can't just check the first one.
+    for (unsigned I = DMin, N = DTD->getTemplateParameters()->size();
+        I != N; ++I) {
+      if (!S.hasVisibleDefaultArgument(
+              ETD->getTemplateParameters()->getParam(I)) &&
+          S.hasVisibleDefaultArgument(
+              DTD->getTemplateParameters()->getParam(I)))
+        return true;
+    }
   }
 
   // For most kinds of declaration, it doesn't really matter which one we pick.
