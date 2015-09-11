@@ -29,6 +29,7 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
 
     @expectedFailureFreeBSD("llvm.org/pr19605") # fails on buildbot
     @expectedFlakeyLinux("llvm.org/pr20275")
+    @expectedFailureWindows("llvm.org/pr21765")
     @dwarf_test
     def test_with_dwarf(self):
         """Test calling std::String member function."""

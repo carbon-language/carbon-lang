@@ -16,6 +16,7 @@ class TestCppGlobalOperators(TestBase):
         self.check()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr21765")
     def test_with_dwarf_and_run_command(self):
         self.buildDwarf()
         self.check()

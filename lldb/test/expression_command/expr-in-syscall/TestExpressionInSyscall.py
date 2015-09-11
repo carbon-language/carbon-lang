@@ -18,6 +18,7 @@ class ExprSyscallTestCase(TestBase):
         self.expr_syscall()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr21765") # Also getpid() is not a function on Windows anyway
     def test_setpgid_with_dwarf(self):
         self.buildDwarf()
         self.expr_syscall()
