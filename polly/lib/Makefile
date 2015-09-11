@@ -126,7 +126,6 @@ SOURCES= Polly.cpp \
          Analysis/ScopInfo.cpp \
          Analysis/ScopGraphPrinter.cpp \
          Analysis/ScopPass.cpp \
-         Analysis/TempScopInfo.cpp \
          CodeGen/BlockGenerators.cpp \
          CodeGen/LoopGenerators.cpp \
          CodeGen/IRBuilder.cpp \
