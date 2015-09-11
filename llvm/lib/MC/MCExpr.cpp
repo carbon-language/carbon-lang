@@ -739,7 +739,7 @@ bool MCExpr::evaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
     case MCBinaryExpr::AShr: Result = LHS >> RHS; break;
     case MCBinaryExpr::Add:  Result = LHS + RHS; break;
     case MCBinaryExpr::And:  Result = LHS & RHS; break;
-    case MCBinaryExpr::Div: {
+    case MCBinaryExpr::Div:
       // Handle division by zero. gas just emits a warning and keeps going,
       // we try to be stricter.
       // FIXME: Currently the caller of this function has no way to understand
@@ -748,8 +748,8 @@ bool MCExpr::evaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
       // change this code to emit a better diagnostic.
       if (RHS == 0)
         return false;
-      Result = LHS / RHS; break;
-    }
+      Result = LHS / RHS;
+      break;
     case MCBinaryExpr::EQ:   Result = LHS == RHS; break;
     case MCBinaryExpr::GT:   Result = LHS > RHS; break;
     case MCBinaryExpr::GTE:  Result = LHS >= RHS; break;
