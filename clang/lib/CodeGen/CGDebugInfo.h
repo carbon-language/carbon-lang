@@ -397,6 +397,9 @@ private:
   llvm::DIModule *
   getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod);
 
+  /// DebugTypeExtRefs: If \p D originated in a clang module, return it.
+  llvm::DIModule *getParentModuleOrNull(const Decl *D);
+
   /// Get the type from the cache or create a new partial type if
   /// necessary.
   llvm::DICompositeType *getOrCreateLimitedType(const RecordType *Ty,
