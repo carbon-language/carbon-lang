@@ -768,3 +768,14 @@ bool g(int J::*&p, int J::*&q) { return p == q; }
 // CHECK-LABEL: @"\01?h@ReferenceToMPTWithIncompleteClass@@YAHAAPQK@1@H@Z"(
 int h(int K::*&p) { return k->*p; }
 }
+
+namespace PMFInTemplateArgument {
+template <class C, int (C::*M)(int)>
+void JSMethod();
+class A {
+  int printd(int);
+  void printd();
+};
+void A::printd() { JSMethod<A, &A::printd>(); }
+// CHECK-LABEL: @"\01??$JSMethod@VA@PMFInTemplateArgument@@$1?printd@12@AAEHH@Z@PMFInTemplateArgument@@YAXXZ"(
+}
