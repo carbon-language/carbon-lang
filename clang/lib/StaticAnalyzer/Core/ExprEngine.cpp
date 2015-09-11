@@ -769,7 +769,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::SEHTryStmtClass:
     case Stmt::SEHExceptStmtClass:
     case Stmt::SEHLeaveStmtClass:
-    case Stmt::LambdaExprClass:
     case Stmt::SEHFinallyStmtClass: {
       const ExplodedNode *node = Bldr.generateSink(S, Pred, Pred->getState());
       Engine.addAbortedBlock(node, currBldrCtx->getBlock());
@@ -1011,6 +1010,17 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       Bldr.takeNodes(Pred);
       VisitBlockExpr(cast<BlockExpr>(S), Pred, Dst);
       Bldr.addNodes(Dst);
+      break;
+
+    case Stmt::LambdaExprClass:
+      if (AMgr.options.shouldInlineLambdas()) {
+        Bldr.takeNodes(Pred);
+        VisitLambdaExpr(cast<LambdaExpr>(S), Pred, Dst);
+        Bldr.addNodes(Dst);
+      } else {
+        const ExplodedNode *node = Bldr.generateSink(S, Pred, Pred->getState());
+        Engine.addAbortedBlock(node, currBldrCtx->getBlock());
+      }
       break;
 
     case Stmt::BinaryOperatorClass: {
@@ -1853,11 +1863,35 @@ void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
     // C permits "extern void v", and if you cast the address to a valid type,
     // you can even do things with it. We simply pretend
     assert(Ex->isGLValue() || VD->getType()->isVoidType());
-    SVal V = state->getLValue(VD, Pred->getLocationContext());
+    const LocationContext *LocCtxt = Pred->getLocationContext();
+    const Decl *D = LocCtxt->getDecl();
+    const auto *MD = D ? dyn_cast<CXXMethodDecl>(D) : nullptr;
+    const auto *DeclRefEx = dyn_cast<DeclRefExpr>(Ex);
+    SVal V;
+    bool CaptureByReference = false;
+    if (AMgr.options.shouldInlineLambdas() && DeclRefEx &&
+        DeclRefEx->refersToEnclosingVariableOrCapture() && MD &&
+        MD->getParent()->isLambda()) {
+      // Lookup the field of the lambda.
+      const CXXRecordDecl *CXXRec = MD->getParent();
+      llvm::DenseMap<const VarDecl *, FieldDecl *> LambdaCaptureFields;
+      FieldDecl *LambdaThisCaptureField;
+      CXXRec->getCaptureFields(LambdaCaptureFields, LambdaThisCaptureField);
+      const FieldDecl *FD = LambdaCaptureFields[VD];
+      Loc CXXThis =
+          svalBuilder.getCXXThis(MD, LocCtxt->getCurrentStackFrame());
+      SVal CXXThisVal = state->getSVal(CXXThis);
+      V = state->getLValue(FD, CXXThisVal);
+      if (FD->getType()->isReferenceType() &&
+          !VD->getType()->isReferenceType())
+        CaptureByReference = true;
+    } else {
+      V = state->getLValue(VD, LocCtxt);
+    }
 
     // For references, the 'lvalue' is the pointer address stored in the
     // reference region.
-    if (VD->getType()->isReferenceType()) {
+    if (VD->getType()->isReferenceType() || CaptureByReference) {
       if (const MemRegion *R = V.getAsRegion())
         V = state->getSVal(R);
       else

@@ -1013,10 +1013,21 @@ MemRegionManager::getCXXBaseObjectRegion(const CXXRecordDecl *RD,
 const CXXThisRegion*
 MemRegionManager::getCXXThisRegion(QualType thisPointerTy,
                                    const LocationContext *LC) {
-  const StackFrameContext *STC = LC->getCurrentStackFrame();
-  assert(STC);
   const PointerType *PT = thisPointerTy->getAs<PointerType>();
   assert(PT);
+  // Inside the body of the operator() of a lambda a this expr might refer to an
+  // object in one of the parent location contexts.
+  const auto *D = dyn_cast<CXXMethodDecl>(LC->getDecl());
+  // FIXME: when operator() of lambda is analyzed as a top level function and
+  // 'this' refers to a this to the enclosing scope, there is no right region to
+  // return.
+  while (!LC->inTopFrame() &&
+         PT != D->getThisType(getContext())->getAs<PointerType>()) {
+    LC = LC->getParent();
+    D = dyn_cast<CXXMethodDecl>(LC->getDecl());
+  }
+  const StackFrameContext *STC = LC->getCurrentStackFrame();
+  assert(STC);
   return getSubRegion<CXXThisRegion>(PT, getStackArgumentsRegion(STC));
 }
 

@@ -299,13 +299,7 @@ namespace destructors {
   void testRecursiveFramesStart() { testRecursiveFrames(false); }
 
   void testLambdas() {
-    // This is the test we would like to write:
-    // []() { check(NoReturnDtor()); } != nullptr || check(Dtor());
-    // But currently the analyzer stops when it encounters a lambda:
-    [] {};
-    // The CFG for this now looks correct, but we still do not reach the line
-    // below.
-    clang_analyzer_warnIfReached(); // FIXME: Should warn.
+    []() { check(NoReturnDtor()); } != nullptr || check(Dtor());
   }
 
   void testGnuExpressionStatements(int v) {

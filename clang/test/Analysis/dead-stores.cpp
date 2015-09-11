@@ -174,3 +174,17 @@ int radar_13213575() {
   return radar13213575_testit<true>(5) + radar13213575_testit<false>(3);
 }
 
+//===----------------------------------------------------------------------===//
+// Dead store checking involving lambdas.
+//===----------------------------------------------------------------------===//
+
+int basicLambda(int i, int j) {
+  i = 5; // no warning
+  j = 6; // no warning
+  [i] { (void)i; }();
+  [&j] { (void)j; }();
+  i = 2;
+  j = 3;
+  return i + j;
+}
+

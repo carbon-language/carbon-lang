@@ -341,6 +341,10 @@ public:
   void VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred, 
                       ExplodedNodeSet &Dst);
 
+  /// VisitLambdaExpr - Transfer function logic for LambdaExprs.
+  void VisitLambdaExpr(const LambdaExpr *LE, ExplodedNode *Pred, 
+                       ExplodedNodeSet &Dst);
+
   /// VisitBinaryOperator - Transfer function logic for binary operators.
   void VisitBinaryOperator(const BinaryOperator* B, ExplodedNode *Pred, 
                            ExplodedNodeSet &Dst);

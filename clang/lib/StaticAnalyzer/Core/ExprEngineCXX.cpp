@@ -513,3 +513,41 @@ void ExprEngine::VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred,
   SVal V = state->getSVal(loc::MemRegionVal(R));
   Bldr.generateNode(TE, Pred, state->BindExpr(TE, LCtx, V));
 }
+
+void ExprEngine::VisitLambdaExpr(const LambdaExpr *LE, ExplodedNode *Pred,
+                                 ExplodedNodeSet &Dst) {
+  const LocationContext *LocCtxt = Pred->getLocationContext();
+
+  // Get the region of the lambda itself.
+  const MemRegion *R = svalBuilder.getRegionManager().getCXXTempObjectRegion(
+      LE, LocCtxt);
+  SVal V = loc::MemRegionVal(R);
+  
+  ProgramStateRef State = Pred->getState();
+  
+  // If we created a new MemRegion for the lambda, we should explicitly bind
+  // the captures.
+  CXXRecordDecl::field_iterator CurField = LE->getLambdaClass()->field_begin();
+  for (LambdaExpr::const_capture_init_iterator i = LE->capture_init_begin(),
+                                               e = LE->capture_init_end();
+       i != e; ++i, ++CurField) {
+    SVal Field = State->getLValue(*CurField, V);
+    SVal InitExpr = State->getSVal(*i, LocCtxt);
+    State = State->bindLoc(Field, InitExpr);
+  }
+
+  // Decay the Loc into an RValue, because there might be a
+  // MaterializeTemporaryExpr node above this one which expects the bound value
+  // to be an RValue.
+  SVal LambdaRVal = State->getSVal(R);
+
+  ExplodedNodeSet Tmp;
+  StmtNodeBuilder Bldr(Pred, Tmp, *currBldrCtx);
+  // FIXME: is this the right program point kind?
+  Bldr.generateNode(LE, Pred,
+                    State->BindExpr(LE, LocCtxt, LambdaRVal),
+                    nullptr, ProgramPoint::PostLValueKind);
+
+  // FIXME: Move all post/pre visits to ::Visit().
+  getCheckerManager().runCheckersForPostStmt(Dst, Tmp, LE, *this);
+}

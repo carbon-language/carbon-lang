@@ -325,3 +325,7 @@ bool AnalyzerOptions::shouldPrunePaths() {
 bool AnalyzerOptions::shouldConditionalizeStaticInitializers() {
   return getBooleanOption("cfg-conditional-static-initializers", true);
 }
+
+bool AnalyzerOptions::shouldInlineLambdas() {
+  return getBooleanOption("inline-lambdas", /*Default=*/true);
+}

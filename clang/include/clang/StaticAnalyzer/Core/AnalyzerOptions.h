@@ -256,6 +256,9 @@ private:
   /// \sa getMaxNodesPerTopLevelFunction
   Optional<unsigned> MaxNodesPerTopLevelFunction;
 
+  /// \sa shouldInlineLambdas
+  Optional<bool> InlineLambdas;
+
   /// A helper function that retrieves option for a given full-qualified
   /// checker name.
   /// Options for checkers can be specified via 'analyzer-config' command-line
@@ -508,6 +511,10 @@ public:
   ///
   /// This is controlled by the 'max-nodes' config option.
   unsigned getMaxNodesPerTopLevelFunction();
+
+  /// Returns true if lambdas should be inlined. Otherwise a sink node will be
+  /// generated each time a LambdaExpr is visited.
+  bool shouldInlineLambdas();
 
 public:
   AnalyzerOptions() :
