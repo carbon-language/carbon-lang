@@ -499,7 +499,7 @@ uint64_t X86FrameLowering::calculateMaxStackAlign(const MachineFunction &MF) con
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   uint64_t MaxAlign = MFI->getMaxAlignment(); // Desired stack alignment.
   unsigned StackAlign = getStackAlignment();
-  if (ForceStackAlign) {
+  if (MF.getFunction()->hasFnAttribute("stackrealign")) {
     if (MFI->hasCalls())
       MaxAlign = (StackAlign > MaxAlign) ? StackAlign : MaxAlign;
     else if (MaxAlign < SlotSize)

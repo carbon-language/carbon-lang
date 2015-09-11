@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mcpu=generic -march=x86-64 -mattr=+avx -mtriple=i686-apple-darwin10 | FileCheck %s
-; RUN: llc < %s -mcpu=generic -force-align-stack -stack-alignment=32 -march=x86-64 -mattr=+avx -mtriple=i686-apple-darwin10 | FileCheck %s -check-prefix=FORCE-ALIGN
+; RUN: llc < %s -mcpu=generic -stackrealign -stack-alignment=32 -march=x86-64 -mattr=+avx -mtriple=i686-apple-darwin10 | FileCheck %s -check-prefix=FORCE-ALIGN
 ; rdar://11496434
 
 ; no VLAs or dynamic alignment

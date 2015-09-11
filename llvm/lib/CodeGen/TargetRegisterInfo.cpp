@@ -24,14 +24,6 @@
 
 #define DEBUG_TYPE "target-reg-info"
 
-namespace llvm {
-cl::opt<bool>
-    ForceStackAlign("force-align-stack",
-                    cl::desc("Force align the stack to the minimum alignment"
-                             " needed for the function."),
-                    cl::init(false), cl::Hidden);
-} // end namespace llvm
-
 using namespace llvm;
 
 TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterInfoDesc *ID,
@@ -321,7 +313,7 @@ bool TargetRegisterInfo::needsStackRealignment(
   unsigned StackAlign = TFI->getStackAlignment();
   bool requiresRealignment = ((MFI->getMaxAlignment() > StackAlign) ||
                               F->hasFnAttribute(Attribute::StackAlignment));
-  if (ForceStackAlign || requiresRealignment) {
+  if (MF.getFunction()->hasFnAttribute("stackrealign") || requiresRealignment) {
     if (canRealignStack(MF))
       return true;
     DEBUG(dbgs() << "Can't realign function's stack: " << F->getName() << "\n");

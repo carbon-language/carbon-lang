@@ -35,8 +35,6 @@ class VirtRegMap;
 class raw_ostream;
 class LiveRegMatrix;
 
-extern cl::opt<bool> ForceStackAlign;
-
 class TargetRegisterClass {
 public:
   typedef const MCPhysReg* iterator;

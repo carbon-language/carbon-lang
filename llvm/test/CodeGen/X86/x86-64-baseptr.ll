@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=x86_64-pc-linux -force-align-stack -stack-alignment=32 < %s | FileCheck %s
-; RUN: llc -mtriple=x86_64-pc-linux-gnux32 -force-align-stack -stack-alignment=32 < %s | FileCheck -check-prefix=X32ABI %s
+; RUN: llc -mtriple=x86_64-pc-linux -stackrealign -stack-alignment=32 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux-gnux32 -stackrealign -stack-alignment=32 < %s | FileCheck -check-prefix=X32ABI %s
 ; This should run with NaCl as well ( -mtriple=x86_64-pc-nacl ) but currently doesn't due to PR22655
 
 ; Make sure the correct register gets set up as the base pointer

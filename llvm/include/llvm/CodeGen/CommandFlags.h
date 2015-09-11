@@ -182,6 +182,11 @@ OverrideStackAlignment("stack-alignment",
                        cl::desc("Override default stack alignment"),
                        cl::init(0));
 
+cl::opt<bool>
+StackRealign("stackrealign",
+             cl::desc("Force align the stack to the minimum alignment"),
+             cl::init(false));
+
 cl::opt<std::string>
 TrapFuncName("trap-func", cl::Hidden,
         cl::desc("Emit a call to trap function rather than a trap instruction"),
@@ -329,6 +334,10 @@ static inline void setFunctionAttributes(StringRef CPU, StringRef Features,
       NewAttrs = NewAttrs.addAttribute(Ctx, AttributeSet::FunctionIndex,
                                        "disable-tail-calls",
                                        toStringRef(DisableTailCalls));
+
+    if (StackRealign)
+      NewAttrs = NewAttrs.addAttribute(Ctx, AttributeSet::FunctionIndex,
+                                       "stackrealign");
 
     if (TrapFuncName.getNumOccurrences() > 0)
       for (auto &B : F)

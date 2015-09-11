@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=i686-windows | FileCheck %s -check-prefix=NORMAL
 ; RUN: llc < %s -mtriple=x86_64-windows | FileCheck %s -check-prefix=X64
-; RUN: llc < %s -mtriple=i686-windows -force-align-stack -stack-alignment=32 | FileCheck %s -check-prefix=ALIGNED 
+; RUN: llc < %s -mtriple=i686-windows -stackrealign -stack-alignment=32 | FileCheck %s -check-prefix=ALIGNED
 
 %class.Class = type { i32 }
 %struct.s = type { i64 }
