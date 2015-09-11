@@ -1738,7 +1738,7 @@ class Base(unittest2.TestCase):
         if self.__errored__:
             pairs = lldb.test_result.errors
             prefix = 'Error'
-        if self.__cleanup_errored__:
+        elif self.__cleanup_errored__:
             pairs = lldb.test_result.cleanup_errors
             prefix = 'CleanupError'
         elif self.__failed__:
