@@ -1854,6 +1854,25 @@ ObjectFileELF::CreateSections(SectionList &unified_section_list)
     }
 }
 
+// Find the arm/aarch64 mapping symbol character in the given symbol name. Maping symbols have the
+// form of "$<char>[.<any>]*". Additionally we recognize cases when the mapping symbol prefixed by
+// an arbitrary string because if a symbol prefix added to each symbol in the object file with
+// objcopy then the mapping symbols are also prefixed.
+static char
+FindArmAarch64MappingSymbol(const char* symbol_name)
+{
+    if (!symbol_name)
+        return '\0';
+
+    const char* dollar_pos = ::strchr(symbol_name, '$');
+    if (!dollar_pos || dollar_pos[1] == '\0')
+        return '\0';
+
+    if (dollar_pos[2] == '\0' || dollar_pos[2] == '.')
+        return dollar_pos[1];
+    return '\0';
+}
+
 // private
 unsigned
 ObjectFileELF::ParseSymbols (Symtab *symtab,
@@ -1999,58 +2018,54 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
         {
             if (arch.GetMachine() == llvm::Triple::arm)
             {
-                if (symbol.getBinding() == STB_LOCAL && symbol_name && symbol_name[0] == '$')
+                if (symbol.getBinding() == STB_LOCAL)
                 {
-                    // These are reserved for the specification (e.g.: mapping
-                    // symbols). We don't want to add them to the symbol table.
-
+                    char mapping_symbol = FindArmAarch64MappingSymbol(symbol_name);
                     if (symbol_type == eSymbolTypeCode)
                     {
-                        llvm::StringRef symbol_name_ref(symbol_name);
-                        if (symbol_name_ref == "$a" || symbol_name_ref.startswith("$a."))
+                        switch (mapping_symbol)
                         {
-                            // $a[.<any>]* - marks an ARM instruction sequence
-                            m_address_class_map[symbol.st_value] = eAddressClassCode;
-                        }
-                        else if (symbol_name_ref == "$b" || symbol_name_ref.startswith("$b.") ||
-                                 symbol_name_ref == "$t" || symbol_name_ref.startswith("$t."))
-                        {
-                            // $b[.<any>]* - marks a THUMB BL instruction sequence
-                            // $t[.<any>]* - marks a THUMB instruction sequence
-                            m_address_class_map[symbol.st_value] = eAddressClassCodeAlternateISA;
-                        }
-                        else if (symbol_name_ref == "$d" || symbol_name_ref.startswith("$d."))
-                        {
-                            // $d[.<any>]* - marks a data item sequence (e.g. lit pool)
-                            m_address_class_map[symbol.st_value] = eAddressClassData;
+                            case 'a':
+                                // $a[.<any>]* - marks an ARM instruction sequence
+                                m_address_class_map[symbol.st_value] = eAddressClassCode;
+                                break;
+                            case 'b':
+                            case 't':
+                                // $b[.<any>]* - marks a THUMB BL instruction sequence
+                                // $t[.<any>]* - marks a THUMB instruction sequence
+                                m_address_class_map[symbol.st_value] = eAddressClassCodeAlternateISA;
+                                break;
+                            case 'd':
+                                // $d[.<any>]* - marks a data item sequence (e.g. lit pool)
+                                m_address_class_map[symbol.st_value] = eAddressClassData;
+                                break;
                         }
                     }
-                    continue;
+                    if (mapping_symbol)
+                        continue;
                 }
             }
             else if (arch.GetMachine() == llvm::Triple::aarch64)
             {
-                if (symbol.getBinding() == STB_LOCAL && symbol_name && symbol_name[0] == '$')
+                if (symbol.getBinding() == STB_LOCAL)
                 {
-                    // These are reserved for the specification (e.g.: mapping
-                    // symbols). We don't want to add them to the symbol table.
-
+                    char mapping_symbol = FindArmAarch64MappingSymbol(symbol_name);
                     if (symbol_type == eSymbolTypeCode)
                     {
-                        llvm::StringRef symbol_name_ref(symbol_name);
-                        if (symbol_name_ref == "$x" || symbol_name_ref.startswith("$x."))
+                        switch (mapping_symbol)
                         {
-                            // $x[.<any>]* - marks an A64 instruction sequence
-                            m_address_class_map[symbol.st_value] = eAddressClassCode;
-                        }
-                        else if (symbol_name_ref == "$d" || symbol_name_ref.startswith("$d."))
-                        {
-                            // $d[.<any>]* - marks a data item sequence (e.g. lit pool)
-                            m_address_class_map[symbol.st_value] = eAddressClassData;
+                            case 'x':
+                                // $x[.<any>]* - marks an A64 instruction sequence
+                                m_address_class_map[symbol.st_value] = eAddressClassCode;
+                                break;
+                            case 'd':
+                                // $d[.<any>]* - marks a data item sequence (e.g. lit pool)
+                                m_address_class_map[symbol.st_value] = eAddressClassData;
+                                break;
                         }
                     }
-
-                    continue;
+                    if (mapping_symbol)
+                        continue;
                 }
             }
 
