@@ -128,7 +128,7 @@ for.body:                                         ; preds = %for.head
 
 for.inc:                                          ; preds = %for.body
   %indvar.next = add i64 %indvar, 1
-  %exitcond = icmp ne i64 %indvar, 1024
+  %exitcond = icmp ne i64 %indvar.next, 1024
   br i1 %exitcond, label %for.head, label %for.after
 
 for.after:                                        ; preds = %for.inc
