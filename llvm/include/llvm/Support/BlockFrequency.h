@@ -14,12 +14,12 @@
 #ifndef LLVM_SUPPORT_BLOCKFREQUENCY_H
 #define LLVM_SUPPORT_BLOCKFREQUENCY_H
 
+#include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
 class raw_ostream;
-class BranchProbability;
 
 // This class represents Block Frequency as a 64-bit value.
 class BlockFrequency {
