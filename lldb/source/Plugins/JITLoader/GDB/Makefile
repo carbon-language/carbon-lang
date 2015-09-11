@@ -1,4 +1,4 @@
-##===- source/Plugins/JITLoader/GDBJIT/Makefile ------------*- Makefile -*-===##
+##===- source/Plugins/JITLoader/GDB/Makefile ---------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #

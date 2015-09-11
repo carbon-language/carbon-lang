@@ -31,6 +31,7 @@ PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-i386 A
 	DynamicLoader/Hexagon-DYLD \
 	DynamicLoader/MacOSX-DYLD \
 	DynamicLoader/Windows-DYLD \
+	JITLoader/GDB \
 	ExpressionParser/Clang \
 	OperatingSystem/Python \
 	SystemRuntime/MacOSX \
@@ -45,21 +46,14 @@ PARALLEL_DIRS += DynamicLoader/Darwin-Kernel
 PARALLEL_DIRS += SymbolVendor/MacOSX
 #PARALLEL_DIRS += Process/MacOSX-User
 PARALLEL_DIRS += Process/mach-core
-PARALLEL_DIRS += JITLoader/GDB
 endif
 
 ifeq ($(HOST_OS),Linux)
 PARALLEL_DIRS += Process/Linux Process/POSIX
-PARALLEL_DIRS += JITLoader/GDB
-endif
-
-ifeq ($(HOST_OS),MingW)
-PARALLEL_DIRS += JITLoader/GDB
 endif
 
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
 PARALLEL_DIRS += Process/FreeBSD Process/POSIX
-PARALLEL_DIRS += JITLoader/GDB
 endif
 
 include $(LLDB_LEVEL)/Makefile
