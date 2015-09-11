@@ -773,15 +773,18 @@ entry:
 
 catchpad1:
   catchpad [] to label %normal unwind label %exn.1
-  ; CHECK: catchpad [] to label %normal unwind label %exn.1
+  ; CHECK: catchpad []
+  ; CHECK-NEXT: to label %normal unwind label %exn.1
 
 catchpad2:
   catchpad [i32* %arg1] to label %normal unwind label %exn.2
-  ; CHECK: catchpad [i32* %arg1] to label %normal unwind label %exn.2
+  ; CHECK: catchpad [i32* %arg1]
+  ; CHECK-NEXT: to label %normal unwind label %exn.2
 
 catchpad3:
   catchpad [i32* %arg1, i32* %arg2] to label %normal unwind label %exn.3
-  ; CHECK: catchpad [i32* %arg1, i32* %arg2] to label %normal unwind label %exn.3
+  ; CHECK: catchpad [i32* %arg1, i32* %arg2] 
+  ; CHECK-NEXT: to label %normal unwind label %exn.3
 
 exn.1:
   catchendpad unwind label %terminate.1
@@ -835,7 +838,8 @@ cleanup:
 
 catchpad:
   %catch = catchpad [] to label %body unwind label %catchend
-  ; CHECK: %catch = catchpad [] to label %body unwind label %catchend
+  ; CHECK: %catch = catchpad []
+  ; CHECK-NEXT: to label %body unwind label %catchend
 
 body:
   invoke void @f.ccc() to label %continue unwind label %catchend

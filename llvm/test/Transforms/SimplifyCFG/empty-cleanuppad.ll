@@ -126,7 +126,8 @@ ehcleanup.1:                                      ; preds = %catchendblock
 ; CHECK:   invoke void @g()
 ; CHECK:           to label %try.cont unwind label %catch.dispatch
 ; CHECK: catch.dispatch:
-; CHECK:   catchpad [i8* null, i8* null] to label %catch unwind label %catchendblock
+; CHECK:   catchpad [i8* null, i8* null]
+; CHECK-NEXT: to label %catch unwind label %catchendblock
 ; CHECK: catch:
 ; CHECK:   catchret
 ; CHECK: catchendblock:

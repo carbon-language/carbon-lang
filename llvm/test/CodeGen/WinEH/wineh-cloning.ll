@@ -33,7 +33,8 @@ endcatch:
 ; CHECK:   invoke void @f()
 ; CHECK:     to label %[[EntryCopy:[^ ]+]] unwind label %catch
 ; CHECK: catch:
-; CHECK:   catchpad [] to label %[[CatchCopy:[^ ]+]] unwind
+; CHECK:   catchpad []
+; CHECK-NEXT: to label %[[CatchCopy:[^ ]+]] unwind
 ; CHECK: [[CatchCopy]]:
 ; CHECK:   [[LoadX2:%[^ ]+]] = load i32, i32* [[Slot]]
 ; CHECK:   call void @h(i32 [[LoadX2]]
@@ -96,7 +97,8 @@ exit:
 ; CHECK:   invoke void @f()
 ; CHECK:     to label %[[exit:[^ ]+]] unwind
 ; CHECK: catch:
-; CHECK:   catchpad [] to label %[[shared:[^ ]+]] unwind
+; CHECK:   catchpad []
+; CHECK-NEXT: to label %[[shared:[^ ]+]] unwind
 ; CHECK: cleanup:
 ; CHECK:   cleanuppad []
 ; CHECK:   call void @f()
@@ -411,7 +413,8 @@ unreachable:
 ; CHECK-NEXT:   %cleanup = cleanuppad
 ; CHECK-NEXT:   cleanupret %cleanup unwind label %outer
 ; CHECK:      outer:
-; CHECK-NEXT:   %catch = catchpad [] to label %catch.body unwind label %endpad
+; CHECK-NEXT:   %catch = catchpad []
+; CHECK-NEXT:	      to label %catch.body unwind label %endpad
 ; CHECK:      catch.body:
 ; CHECK-NEXT:   catchret %catch to label %exit
 ; CHECK:      endpad:

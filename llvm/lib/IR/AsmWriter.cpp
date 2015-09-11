@@ -2847,7 +2847,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
         Out << ", ";
       writeOperand(CPI->getArgOperand(Op), /*PrintType=*/true);
     }
-    Out << "] to ";
+    Out << "]\n          to ";
     writeOperand(CPI->getNormalDest(), /*PrintType=*/true);
     Out << " unwind ";
     writeOperand(CPI->getUnwindDest(), /*PrintType=*/true);
