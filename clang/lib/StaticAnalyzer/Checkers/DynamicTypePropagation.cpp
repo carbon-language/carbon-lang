@@ -17,6 +17,7 @@
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/DynamicTypeMap.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 
@@ -27,6 +28,7 @@ namespace {
 class DynamicTypePropagation:
     public Checker< check::PreCall,
                     check::PostCall,
+                    check::DeadSymbols,
                     check::PostStmt<ImplicitCastExpr>,
                     check::PostStmt<CXXNewExpr> > {
   const ObjCObjectType *getObjectTypeForAllocAndNew(const ObjCMessageExpr *MsgE,
@@ -40,7 +42,21 @@ public:
   void checkPostCall(const CallEvent &Call, CheckerContext &C) const;
   void checkPostStmt(const ImplicitCastExpr *CastE, CheckerContext &C) const;
   void checkPostStmt(const CXXNewExpr *NewE, CheckerContext &C) const;
+  void checkDeadSymbols(SymbolReaper &SR, CheckerContext &C) const;
 };
+}
+
+void DynamicTypePropagation::checkDeadSymbols(SymbolReaper &SR,
+                                              CheckerContext &C) const {
+  ProgramStateRef State = C.getState();
+  DynamicTypeMapImpl TypeMap = State->get<DynamicTypeMap>();
+  for (DynamicTypeMapImpl::iterator I = TypeMap.begin(), E = TypeMap.end();
+       I != E; ++I) {
+    if (!SR.isLiveRegion(I->first)) {
+      State = State->remove<DynamicTypeMap>(I->first);
+    }
+  }
+  C.addTransition(State);
 }
 
 static void recordFixedType(const MemRegion *Region, const CXXMethodDecl *MD,
@@ -52,7 +68,7 @@ static void recordFixedType(const MemRegion *Region, const CXXMethodDecl *MD,
   QualType Ty = Ctx.getPointerType(Ctx.getRecordType(MD->getParent()));
 
   ProgramStateRef State = C.getState();
-  State = State->setDynamicTypeInfo(Region, Ty, /*CanBeSubclass=*/false);
+  State = setDynamicTypeInfo(State, Region, Ty, /*CanBeSubclass=*/false);
   C.addTransition(State);
   return;
 }
@@ -131,7 +147,7 @@ void DynamicTypePropagation::checkPostCall(const CallEvent &Call,
           return;
         QualType DynResTy =
                  C.getASTContext().getObjCObjectPointerType(QualType(ObjTy, 0));
-        C.addTransition(State->setDynamicTypeInfo(RetReg, DynResTy, false));
+        C.addTransition(setDynamicTypeInfo(State, RetReg, DynResTy, false));
         break;
       }
       case OMF_init: {
@@ -140,8 +156,8 @@ void DynamicTypePropagation::checkPostCall(const CallEvent &Call,
         const MemRegion *RecReg = Msg->getReceiverSVal().getAsRegion();
         if (!RecReg)
           return;
-        DynamicTypeInfo RecDynType = State->getDynamicTypeInfo(RecReg);
-        C.addTransition(State->setDynamicTypeInfo(RetReg, RecDynType));
+        DynamicTypeInfo RecDynType = getDynamicTypeInfo(State, RecReg);
+        C.addTransition(setDynamicTypeInfo(State, RetReg, RecDynType));
         break;
       }
       }
@@ -186,7 +202,7 @@ void DynamicTypePropagation::checkPostStmt(const ImplicitCastExpr *CastE,
   case CK_BitCast:
     // Only handle ObjCObjects for now.
     if (const Type *NewTy = getBetterObjCType(CastE, C))
-      C.addTransition(C.getState()->setDynamicTypeInfo(ToR, QualType(NewTy,0)));
+      C.addTransition(setDynamicTypeInfo(C.getState(), ToR, QualType(NewTy,0)));
     break;
   }
   return;
@@ -202,8 +218,8 @@ void DynamicTypePropagation::checkPostStmt(const CXXNewExpr *NewE,
   if (!MR)
     return;
 
-  C.addTransition(C.getState()->setDynamicTypeInfo(MR, NewE->getType(),
-                                                   /*CanBeSubclass=*/false));
+  C.addTransition(setDynamicTypeInfo(C.getState(), MR, NewE->getType(),
+                                     /*CanBeSubclass=*/false));
 }
 
 const ObjCObjectType *
@@ -254,7 +270,7 @@ DynamicTypePropagation::getBetterObjCType(const Expr *CastE,
       CastE->getType()->getAs<ObjCObjectPointerType>();
   if (!NewTy)
     return nullptr;
-  QualType OldDTy = C.getState()->getDynamicTypeInfo(ToR).getType();
+  QualType OldDTy = getDynamicTypeInfo(C.getState(), ToR).getType();
   if (OldDTy.isNull()) {
     return NewTy;
   }
@@ -279,3 +295,4 @@ DynamicTypePropagation::getBetterObjCType(const Expr *CastE,
 void ento::registerDynamicTypePropagation(CheckerManager &mgr) {
   mgr.registerChecker<DynamicTypePropagation>();
 }
+
