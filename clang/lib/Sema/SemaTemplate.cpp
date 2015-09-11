@@ -4223,9 +4223,9 @@ isNullPointerValueTemplateArgument(Sema &S, NonTypeTemplateParmDecl *Param,
   if (Arg->isValueDependent() || Arg->isTypeDependent())
     return NPV_NotNullPointer;
 
-  if (ParamType->isMemberPointerType())
-    if (S.Context.getTargetInfo().getCXXABI().isMicrosoft())
-      S.RequireCompleteType(Arg->getExprLoc(), ParamType, 0);
+  if (S.RequireCompleteType(Arg->getExprLoc(), ParamType, 0))
+    llvm_unreachable(
+        "Incomplete parameter type in isNullPointerValueTemplateArgument!");
 
   if (!S.getLangOpts().CPlusPlus11)
     return NPV_NotNullPointer;
