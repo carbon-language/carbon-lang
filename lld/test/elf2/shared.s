@@ -3,6 +3,20 @@
 // RUN: llvm-readobj --program-headers --dynamic-table -t -s -dyn-symbols %t | FileCheck %s
 // REQUIRES: x86
 
+// CHECK:        Name: .dynsym
+// CHECK-NEXT:   Type: SHT_DYNSYM
+// CHECK-NEXT:   Flags [
+// CHECK-NEXT:     SHF_ALLOC
+// CHECK-NEXT:   ]
+// CHECK-NEXT:   Address: [[DYNSYMADDR:.*]]
+// CHECK-NEXT:   Offset: 0x2000
+// CHECK-NEXT:   Size: 48
+// CHECK-NEXT:   Link: 6
+// CHECK-NEXT:   Info: 1
+// CHECK-NEXT:   AddressAlignment: 4
+// CHECK-NEXT:   EntrySize: 16
+// CHECK-NEXT: }
+
 // CHECK:        Name: .dynamic
 // CHECK-NEXT:   Type: SHT_DYNAMIC
 // CHECK-NEXT:   Flags [
@@ -96,6 +110,7 @@
 
 // CHECK:      DynamicSection [
 // CHECK-NEXT:   Tag        Type                 Name/Value
+// CHECK-NEXT:   0x00000006 SYMTAB               [[DYNSYMADDR]]
 // CHECK-NEXT:   0x00000005 STRTAB               [[DYNSTRADDR]]
 // CHECK-NEXT:   0x0000000A STRSZ
 // CHECK-NEXT:   0x00000001 NEEDED               SharedLibrary ({{.*}}/Inputs/i686-simple-library.so)

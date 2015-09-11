@@ -174,6 +174,8 @@ public:
     ++NumVisible;
   }
 
+  StringTableSection<ELFT::Is64Bits> &getStrTabSec() { return StrTabSec; }
+
 private:
   SymbolTable &Table;
   StringTableSection<ELFT::Is64Bits> &StrTabSec;
@@ -181,23 +183,25 @@ private:
   const Writer<ELFT> &W;
 };
 
-template <bool Is64Bits>
-class DynamicSection final : public OutputSectionBase<Is64Bits> {
-  typedef OutputSectionBase<Is64Bits> Base;
+template <class ELFT>
+class DynamicSection final : public OutputSectionBase<ELFT::Is64Bits> {
+  typedef OutputSectionBase<ELFT::Is64Bits> Base;
   typedef typename Base::HeaderT HeaderT;
   typedef typename Base::Elf_Dyn Elf_Dyn;
 
 public:
-  DynamicSection(SymbolTable &SymTab, StringTableSection<Is64Bits> &DynStrSec)
-      : OutputSectionBase<Is64Bits>(".dynamic", SHT_DYNAMIC,
-                                    SHF_ALLOC | SHF_WRITE),
-        DynStrSec(DynStrSec), SymTab(SymTab) {
+  DynamicSection(SymbolTable &SymTab, SymbolTableSection<ELFT> &DynSymSec)
+      : OutputSectionBase<ELFT::Is64Bits>(".dynamic", SHT_DYNAMIC,
+                                          SHF_ALLOC | SHF_WRITE),
+        DynStrSec(DynSymSec.getStrTabSec()), DynSymSec(DynSymSec),
+        SymTab(SymTab) {
     typename Base::HeaderT &Header = this->Header;
-    Header.sh_addralign = Is64Bits ? 8 : 4;
-    Header.sh_entsize = Is64Bits ? 16 : 8;
+    Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
+    Header.sh_entsize = ELFT::Is64Bits ? 16 : 8;
 
     unsigned NumEntries = 0;
 
+    ++NumEntries; // DT_SYMTAB
     ++NumEntries; // DT_STRTAB
     ++NumEntries; // DT_STRSZ
 
@@ -218,6 +222,10 @@ public:
 
   void writeTo(uint8_t *Buf) override {
     auto *P = reinterpret_cast<Elf_Dyn *>(Buf);
+
+    P->d_tag = DT_SYMTAB;
+    P->d_un.d_ptr = DynSymSec.getVA();
+    ++P;
 
     P->d_tag = DT_STRTAB;
     P->d_un.d_ptr = DynStrSec.getVA();
@@ -241,7 +249,8 @@ public:
   }
 
 private:
-  StringTableSection<Is64Bits> &DynStrSec;
+  StringTableSection<ELFT::Is64Bits> &DynStrSec;
+  SymbolTableSection<ELFT> &DynSymSec;
   SymbolTable &SymTab;
 };
 
@@ -255,7 +264,7 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   Writer(SymbolTable *T)
       : StrTabSec(false), DynStrSec(true), SymTabSec(*this, *T, StrTabSec),
-        DynSymSec(*this, *T, DynStrSec), DynamicSec(*T, DynStrSec) {}
+        DynSymSec(*this, *T, DynStrSec), DynamicSec(*T, DynSymSec) {}
   void run();
 
   const OutputSection<ELFT> &getBSS() const {
@@ -286,7 +295,7 @@ private:
   SymbolTableSection<ELFT> SymTabSec;
   SymbolTableSection<ELFT> DynSymSec;
 
-  DynamicSection<ELFT::Is64Bits> DynamicSec;
+  DynamicSection<ELFT> DynamicSec;
 
   OutputSection<ELFT> *BSSSec = nullptr;
 };
