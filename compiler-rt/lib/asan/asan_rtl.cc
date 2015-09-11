@@ -585,6 +585,7 @@ void NOINLINE __asan_set_death_callback(void (*callback)(void)) {
 // Initialize as requested from instrumented application code.
 // We use this call as a trigger to wake up ASan from deactivated state.
 void __asan_init() {
+  CheckVMASize();
   AsanActivate();
   AsanInitInternal();
 }

@@ -755,6 +755,10 @@ uptr ReadLongProcessName(/*out*/char *buf, uptr buf_len) {
   return ReadBinaryName(buf, buf_len);
 }
 
+void CheckVMASize() {
+  // Do nothing.
+}
+
 }  // namespace __sanitizer
 
 #endif  // _WIN32

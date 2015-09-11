@@ -97,6 +97,8 @@ void DecreaseTotalMmap(uptr size);
 uptr GetRSS();
 void NoHugePagesInRegion(uptr addr, uptr length);
 void DontDumpShadowMemory(uptr addr, uptr length);
+// Check if the built VMA size matches the runtime one.
+void CheckVMASize();
 
 // InternalScopedBuffer can be used instead of large stack arrays to
 // keep frame size low.
