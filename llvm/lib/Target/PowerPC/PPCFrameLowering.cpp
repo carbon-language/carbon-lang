@@ -999,7 +999,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
     PBPOffset = FFI->getObjectOffset(PBPIndex);
   }
 
-  bool IsReturnBlock = MBBI->isReturn();
+  bool IsReturnBlock = (MBBI != MBB.end() && MBBI->isReturn());
   
   if (IsReturnBlock) {
     unsigned RetOpcode = MBBI->getOpcode();
