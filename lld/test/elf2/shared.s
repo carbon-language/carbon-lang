@@ -74,12 +74,7 @@
 // CHECK-NEXT:   AddressAlignment: 1
 // CHECK-NEXT:   EntrySize: 0
 // CHECK-NEXT:   SectionData (
-// CHECK-NEXT:     0000:
-// CHECK-NEXT:     0010:
-// CHECK-NEXT:     0020:
-// CHECK-NEXT:     0030:
-// CHECK-NEXT:     0040:
-// CHECK-NEXT:   )
+// CHECK:        )
 // CHECK-NEXT: }
 
 
