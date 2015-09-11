@@ -27,7 +27,8 @@ or create a symbolic link so it updates automatically.
     </Expand>
   </Type>
   <Type Name="clang::Token">
-    <DisplayString>{(clang::tok::TokenKind)Kind}</DisplayString>
+    <DisplayString Condition="Kind != clang::tok::identifier">{(clang::tok::TokenKind)Kind}</DisplayString>
+    <DisplayString Condition="Kind == clang::tok::identifier">{{Identifier ({*(clang::IdentifierInfo *)(PtrData)})}}</DisplayString>
   </Type>
   <Type Name="clang::DeclSpec">
     <DisplayString>[{(clang::DeclSpec::SCS)StorageClassSpec}], [{(clang::TypeSpecifierType)TypeSpecType}]</DisplayString>
