@@ -1,7 +1,7 @@
 ; RUN: verify-uselistorder < %s
 
 @a = global [4 x i1] [i1 0, i1 1, i1 0, i1 1]
-@b = alias i1* getelementptr ([4 x i1], [4 x i1]* @a, i64 0, i64 2)
+@b = alias i1, getelementptr ([4 x i1], [4 x i1]* @a, i64 0, i64 2)
 
 ; Check use-list order of constants used by globals.
 @glob1 = global i5 7
@@ -10,9 +10,9 @@
 
 ; Check use-list order between variables and aliases.
 @target = global i3 zeroinitializer
-@alias1 = alias i3* @target
-@alias2 = alias i3* @target
-@alias3 = alias i3* @target
+@alias1 = alias i3, i3* @target
+@alias2 = alias i3, i3* @target
+@alias3 = alias i3, i3* @target
 @var1 = global i3* @target
 @var2 = global i3* @target
 @var3 = global i3* @target
@@ -31,9 +31,9 @@
 
 ; Same as above, but for aliases.
 @const.target = global i62 1
-@const.alias = alias i62* @const.target
-@const.alias.ptr = alias i62* @const.alias
-@const.alias.2 = alias i62* @const.target
+@const.alias = alias i62, i62* @const.target
+@const.alias.ptr = alias i62, i62* @const.alias
+@const.alias.2 = alias i62, i62* @const.target
 
 define i64 @f(i64 %f) {
 entry:

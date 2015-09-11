@@ -43,8 +43,8 @@ target datalayout = "p:32:32"
 @empty.cmp = global i1 icmp eq ([0 x i8]* @empty.1, [0 x i8]* @empty.2)
 
 ; Don't add an inbounds on @glob.a3, since it's not inbounds.
-; CHECK: @glob.a3 = alias getelementptr (i32, i32* @glob.a2, i32 1)
+; CHECK: @glob.a3 = alias i32, getelementptr (i32, i32* @glob.a2, i32 1)
 @glob = global i32 0
-@glob.a3 = alias getelementptr (i32, i32* @glob.a2, i32 1)
-@glob.a2 = alias getelementptr (i32, i32* @glob.a1, i32 1)
-@glob.a1 = alias i32* @glob
+@glob.a3 = alias i32, getelementptr (i32, i32* @glob.a2, i32 1)
+@glob.a2 = alias i32, getelementptr (i32, i32* @glob.a1, i32 1)
+@glob.a1 = alias i32, i32* @glob

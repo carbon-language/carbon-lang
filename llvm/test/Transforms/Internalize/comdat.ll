@@ -17,14 +17,14 @@ $c4 = comdat any
 ; CHECK: @c4_a = internal global i32 0, comdat($c4)
 @c4_a = internal global i32 0, comdat($c4)
 
-; CHECK: @c1_d = alias i32* @c1_c
-@c1_d = alias i32* @c1_c
+; CHECK: @c1_d = alias i32, i32* @c1_c
+@c1_d = alias i32, i32* @c1_c
 
-; CHECK: @c2_c = internal alias i32* @c2_b
-@c2_c = alias i32* @c2_b
+; CHECK: @c2_c = internal alias i32, i32* @c2_b
+@c2_c = alias i32, i32* @c2_b
 
-; CHECK: @c4 = alias i32* @c4_a
-@c4 = alias i32* @c4_a
+; CHECK: @c4 = alias i32, i32* @c4_a
+@c4 = alias i32, i32* @c4_a
 
 ; CHECK: define void @c1() comdat {
 define void @c1() comdat {

@@ -19,16 +19,16 @@ module asm "some assembly"
 ; Aliases Test
 ; CHECK: @glob1 = global i32 1
 @glob1 = global i32 1
-; CHECK: @aliased1 = alias i32* @glob1
-@aliased1 = alias i32* @glob1
-; CHECK-NEXT: @aliased2 = internal alias i32* @glob1
-@aliased2 = internal alias i32* @glob1
-; CHECK-NEXT: @aliased3 = alias i32* @glob1
-@aliased3 = external alias i32* @glob1
-; CHECK-NEXT: @aliased4 = weak alias i32* @glob1
-@aliased4 = weak alias i32* @glob1
-; CHECK-NEXT: @aliased5 = weak_odr alias i32* @glob1
-@aliased5 = weak_odr alias i32* @glob1
+; CHECK: @aliased1 = alias i32, i32* @glob1
+@aliased1 = alias i32, i32* @glob1
+; CHECK-NEXT: @aliased2 = internal alias i32, i32* @glob1
+@aliased2 = internal alias i32, i32* @glob1
+; CHECK-NEXT: @aliased3 = alias i32, i32* @glob1
+@aliased3 = external alias i32, i32* @glob1
+; CHECK-NEXT: @aliased4 = weak alias i32, i32* @glob1
+@aliased4 = weak alias i32, i32* @glob1
+; CHECK-NEXT: @aliased5 = weak_odr alias i32, i32* @glob1
+@aliased5 = weak_odr alias i32, i32* @glob1
 
 ;Parameter Attribute Test
 ; CHECK: declare void @ParamAttr1(i8 zeroext)

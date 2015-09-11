@@ -25,23 +25,23 @@
 
 @global = global i32 0
 
-@default.internal.alias = alias internal i32* @global
-; CHECK: @default.internal.alias = internal alias i32* @global
+@default.internal.alias = alias internal i32, internal i32* @global
+; CHECK: @default.internal.alias = internal alias i32, i32* @global
 
-@hidden.internal.alias = hidden alias internal i32* @global
-; CHECK: @hidden.internal.alias = internal alias i32* @global
+@hidden.internal.alias = hidden alias internal i32, internal i32* @global
+; CHECK: @hidden.internal.alias = internal alias i32, i32* @global
 
-@protected.internal.alias = protected alias internal i32* @global
-; CHECK: @protected.internal.alias = internal alias i32* @global
+@protected.internal.alias = protected alias internal i32, internal i32* @global
+; CHECK: @protected.internal.alias = internal alias i32, i32* @global
 
-@default.private.alias = alias private i32* @global
-; CHECK: @default.private.alias = private alias i32* @global
+@default.private.alias = alias private i32, private i32* @global
+; CHECK: @default.private.alias = private alias i32, i32* @global
 
-@hidden.private.alias = hidden alias private i32* @global
-; CHECK: @hidden.private.alias = private alias i32* @global
+@hidden.private.alias = hidden alias private i32, private i32* @global
+; CHECK: @hidden.private.alias = private alias i32, i32* @global
 
-@protected.private.alias = protected alias private i32* @global
-; CHECK: @protected.private.alias = private alias i32* @global
+@protected.private.alias = protected alias private i32, private i32* @global
+; CHECK: @protected.private.alias = private alias i32, i32* @global
 
 define internal void @default.internal() {
 ; CHECK: define internal void @default.internal

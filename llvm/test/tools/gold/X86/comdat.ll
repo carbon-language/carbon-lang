@@ -17,12 +17,12 @@ bb11:
 @r11 = global i32* @v1
 @r12 = global i32 (i8*)* @f1
 
-@a11 = alias i32* @v1
-@a12 = alias bitcast (i32* @v1 to i16*)
+@a11 = alias i32, i32* @v1
+@a12 = alias i16, bitcast (i32* @v1 to i16*)
 
-@a13 = alias i32 (i8*)* @f1
-@a14 = alias bitcast (i32 (i8*)* @f1 to i16*)
-@a15 = alias i16* @a14
+@a13 = alias i32 (i8*), i32 (i8*)* @f1
+@a14 = alias i16, bitcast (i32 (i8*)* @f1 to i16*)
+@a15 = alias i16, i16* @a14
 
 ; CHECK: $c1 = comdat any
 ; CHECK: $c2 = comdat any
@@ -37,17 +37,17 @@ bb11:
 
 ; CHECK: @v11 = internal global i32 41, comdat($c2)
 
-; CHECK: @a11 = alias i32* @v1{{$}}
-; CHECK: @a12 = alias bitcast (i32* @v1 to i16*)
+; CHECK: @a11 = alias i32, i32* @v1{{$}}
+; CHECK: @a12 = alias i16, bitcast (i32* @v1 to i16*)
 
-; CHECK: @a13 = alias i32 (i8*)* @f1{{$}}
-; CHECK: @a14 = alias bitcast (i32 (i8*)* @f1 to i16*)
+; CHECK: @a13 = alias i32 (i8*), i32 (i8*)* @f1{{$}}
+; CHECK: @a14 = alias i16, bitcast (i32 (i8*)* @f1 to i16*)
 
-; CHECK: @a21 = alias i32* @v11{{$}}
-; CHECK: @a22 = alias bitcast (i32* @v11 to i16*)
+; CHECK: @a21 = alias i32, i32* @v11{{$}}
+; CHECK: @a22 = alias i16, bitcast (i32* @v11 to i16*)
 
-; CHECK: @a23 = alias i32 (i8*)* @f12{{$}}
-; CHECK: @a24 = alias bitcast (i32 (i8*)* @f12 to i16*)
+; CHECK: @a23 = alias i32 (i8*), i32 (i8*)* @f12{{$}}
+; CHECK: @a24 = alias i16, bitcast (i32 (i8*)* @f12 to i16*)
 
 ; CHECK:      define weak_odr protected i32 @f1(i8*) comdat($c1) {
 ; CHECK-NEXT: bb10:

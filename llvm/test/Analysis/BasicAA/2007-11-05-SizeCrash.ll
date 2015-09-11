@@ -9,7 +9,7 @@ target triple = "x86_64-unknown-linux-gnu"
         %struct.usb_hcd = type { %struct.usb_bus, i64, [0 x i64] }
 @uhci_pci_ids = constant [1 x %struct.pci_device_id] zeroinitializer
 
-@__mod_pci_device_table = alias [1 x %struct.pci_device_id]* @uhci_pci_ids     
+@__mod_pci_device_table = alias [1 x %struct.pci_device_id], [1 x %struct.pci_device_id]* @uhci_pci_ids     
         ; <[1 x %struct.pci_device_id]*> [#uses=0]
 
 define i32 @uhci_suspend(%struct.usb_hcd* %hcd) {

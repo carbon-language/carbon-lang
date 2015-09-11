@@ -33,23 +33,23 @@
 ; CHECK: .size elem1, 4
 
 @bar = global i32 42
-@foo1 = alias i32* @bar
-@foo2 = alias i32* @bar
+@foo1 = alias i32, i32* @bar
+@foo2 = alias i32, i32* @bar
 
 %FunTy = type i32()
 
 define i32 @foo_f() {
   ret i32 0
 }
-@bar_f = weak alias %FunTy* @foo_f
+@bar_f = weak alias %FunTy, %FunTy* @foo_f
 
-@bar_i = internal alias i32* @bar
+@bar_i = internal alias i32, i32* @bar
 
-@A = alias bitcast (i32* @bar to i64*)
+@A = alias i64, bitcast (i32* @bar to i64*)
 
 @structvar = private global {i32, i32} {i32 1, i32 2}
-@elem0 = alias getelementptr({i32, i32}, {i32, i32}*  @structvar, i32 0, i32 0)
-@elem1 = alias getelementptr({i32, i32}, {i32, i32}*  @structvar, i32 0, i32 1)
+@elem0 = alias i32, getelementptr({i32, i32}, {i32, i32}*  @structvar, i32 0, i32 0)
+@elem1 = alias i32, getelementptr({i32, i32}, {i32, i32}*  @structvar, i32 0, i32 1)
 
 define i32 @test() {
 entry:

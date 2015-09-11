@@ -7,4 +7,4 @@ target datalayout = "e-p:32:32:32-p1:16:16:16-p2:32:32:32-i1:8:32-i8:8:32-i16:16
 
 @data = addrspace(2) global i32 27
 
-@illegal_alias_data = alias bitcast (i32 addrspace(2)* @data to i32 addrspace(1)*)
+@illegal_alias_data = alias i32, bitcast (i32 addrspace(2)* @data to i32 addrspace(1)*)

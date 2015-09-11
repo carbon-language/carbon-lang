@@ -3,7 +3,7 @@
 ; PR1645
 
 @__gthread_active_ptr.5335 = internal constant i8* bitcast (i32 (i32)* @__gthrw_pthread_cancel to i8*)    
-@__gthrw_pthread_cancel = weak alias i32 (i32)* @pthread_cancel
+@__gthrw_pthread_cancel = weak alias i32 (i32), i32 (i32)* @pthread_cancel
 
 
 

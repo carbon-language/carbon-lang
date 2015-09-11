@@ -219,7 +219,7 @@ define i32 @test13(i8** %esc) {
   ret i32 %1
 }
 
-@globalalias = internal alias [60 x i8]* @a
+@globalalias = internal alias [60 x i8], [60 x i8]* @a
 
 ; CHECK-LABEL: @test18(
 ; CHECK-NEXT: ret i32 60
@@ -229,7 +229,7 @@ define i32 @test18() {
   ret i32 %1
 }
 
-@globalalias2 = weak alias [60 x i8]* @a
+@globalalias2 = weak alias [60 x i8], [60 x i8]* @a
 
 ; CHECK-LABEL: @test19(
 ; CHECK: llvm.objectsize

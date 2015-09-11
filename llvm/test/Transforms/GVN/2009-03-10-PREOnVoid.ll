@@ -17,20 +17,20 @@ target triple = "i386-pc-linux-gnu"
 	%"struct.std::pair<std::_Rb_tree_iterator<std::pair<void* const, std::vector<ShadowInfo, std::allocator<ShadowInfo> > > >,bool>" = type { %"struct.std::_Rb_tree_iterator<std::pair<void* const, std::vector<ShadowInfo, std::allocator<ShadowInfo> > > >", i8 }
 	%"struct.std::pair<void* const,void*>" = type { i8*, i8* }
 
-@_ZL20__gthrw_pthread_oncePiPFvvE = weak alias i32 (i32*, void ()*)* @pthread_once		; <i32 (i32*, void ()*)*> [#uses=0]
-@_ZL27__gthrw_pthread_getspecificj = weak alias i8* (i32)* @pthread_getspecific		; <i8* (i32)*> [#uses=0]
-@_ZL27__gthrw_pthread_setspecificjPKv = weak alias i32 (i32, i8*)* @pthread_setspecific		; <i32 (i32, i8*)*> [#uses=0]
-@_ZL22__gthrw_pthread_createPmPK16__pthread_attr_sPFPvS3_ES3_ = weak alias i32 (i32*, %struct.pthread_attr_t*, i8* (i8*)*, i8*)* @pthread_create		; <i32 (i32*, %struct.pthread_attr_t*, i8* (i8*)*, i8*)*> [#uses=0]
-@_ZL22__gthrw_pthread_cancelm = weak alias i32 (i32)* @pthread_cancel		; <i32 (i32)*> [#uses=0]
-@_ZL26__gthrw_pthread_mutex_lockP15pthread_mutex_t = weak alias i32 (%struct.pthread_mutex_t*)* @pthread_mutex_lock		; <i32 (%struct.pthread_mutex_t*)*> [#uses=0]
-@_ZL29__gthrw_pthread_mutex_trylockP15pthread_mutex_t = weak alias i32 (%struct.pthread_mutex_t*)* @pthread_mutex_trylock		; <i32 (%struct.pthread_mutex_t*)*> [#uses=0]
-@_ZL28__gthrw_pthread_mutex_unlockP15pthread_mutex_t = weak alias i32 (%struct.pthread_mutex_t*)* @pthread_mutex_unlock		; <i32 (%struct.pthread_mutex_t*)*> [#uses=0]
-@_ZL26__gthrw_pthread_mutex_initP15pthread_mutex_tPK19pthread_mutexattr_t = weak alias i32 (%struct.pthread_mutex_t*, %struct.__sched_param*)* @pthread_mutex_init		; <i32 (%struct.pthread_mutex_t*, %struct.__sched_param*)*> [#uses=0]
-@_ZL26__gthrw_pthread_key_createPjPFvPvE = weak alias i32 (i32*, void (i8*)*)* @pthread_key_create		; <i32 (i32*, void (i8*)*)*> [#uses=0]
-@_ZL26__gthrw_pthread_key_deletej = weak alias i32 (i32)* @pthread_key_delete		; <i32 (i32)*> [#uses=0]
-@_ZL30__gthrw_pthread_mutexattr_initP19pthread_mutexattr_t = weak alias i32 (%struct.__sched_param*)* @pthread_mutexattr_init		; <i32 (%struct.__sched_param*)*> [#uses=0]
-@_ZL33__gthrw_pthread_mutexattr_settypeP19pthread_mutexattr_ti = weak alias i32 (%struct.__sched_param*, i32)* @pthread_mutexattr_settype		; <i32 (%struct.__sched_param*, i32)*> [#uses=0]
-@_ZL33__gthrw_pthread_mutexattr_destroyP19pthread_mutexattr_t = weak alias i32 (%struct.__sched_param*)* @pthread_mutexattr_destroy		; <i32 (%struct.__sched_param*)*> [#uses=0]
+@_ZL20__gthrw_pthread_oncePiPFvvE = weak alias i32 (i32*, void ()*), i32 (i32*, void ()*)* @pthread_once		; <i32 (i32*, void ()*)*> [#uses=0]
+@_ZL27__gthrw_pthread_getspecificj = weak alias i8* (i32), i8* (i32)* @pthread_getspecific		; <i8* (i32)*> [#uses=0]
+@_ZL27__gthrw_pthread_setspecificjPKv = weak alias i32 (i32, i8*), i32 (i32, i8*)* @pthread_setspecific		; <i32 (i32, i8*)*> [#uses=0]
+@_ZL22__gthrw_pthread_createPmPK16__pthread_attr_sPFPvS3_ES3_ = weak alias i32 (i32*, %struct.pthread_attr_t*, i8* (i8*)*, i8*), i32 (i32*, %struct.pthread_attr_t*, i8* (i8*)*, i8*)* @pthread_create		; <i32 (i32*, %struct.pthread_attr_t*, i8* (i8*)*, i8*)*> [#uses=0]
+@_ZL22__gthrw_pthread_cancelm = weak alias i32 (i32), i32 (i32)* @pthread_cancel		; <i32 (i32)*> [#uses=0]
+@_ZL26__gthrw_pthread_mutex_lockP15pthread_mutex_t = weak alias i32 (%struct.pthread_mutex_t*), i32 (%struct.pthread_mutex_t*)* @pthread_mutex_lock		; <i32 (%struct.pthread_mutex_t*)*> [#uses=0]
+@_ZL29__gthrw_pthread_mutex_trylockP15pthread_mutex_t = weak alias i32 (%struct.pthread_mutex_t*), i32 (%struct.pthread_mutex_t*)* @pthread_mutex_trylock		; <i32 (%struct.pthread_mutex_t*)*> [#uses=0]
+@_ZL28__gthrw_pthread_mutex_unlockP15pthread_mutex_t = weak alias i32 (%struct.pthread_mutex_t*), i32 (%struct.pthread_mutex_t*)* @pthread_mutex_unlock		; <i32 (%struct.pthread_mutex_t*)*> [#uses=0]
+@_ZL26__gthrw_pthread_mutex_initP15pthread_mutex_tPK19pthread_mutexattr_t = weak alias i32 (%struct.pthread_mutex_t*, %struct.__sched_param*), i32 (%struct.pthread_mutex_t*, %struct.__sched_param*)* @pthread_mutex_init		; <i32 (%struct.pthread_mutex_t*, %struct.__sched_param*)*> [#uses=0]
+@_ZL26__gthrw_pthread_key_createPjPFvPvE = weak alias i32 (i32*, void (i8*)*), i32 (i32*, void (i8*)*)* @pthread_key_create		; <i32 (i32*, void (i8*)*)*> [#uses=0]
+@_ZL26__gthrw_pthread_key_deletej = weak alias i32 (i32), i32 (i32)* @pthread_key_delete		; <i32 (i32)*> [#uses=0]
+@_ZL30__gthrw_pthread_mutexattr_initP19pthread_mutexattr_t = weak alias i32 (%struct.__sched_param*), i32 (%struct.__sched_param*)* @pthread_mutexattr_init		; <i32 (%struct.__sched_param*)*> [#uses=0]
+@_ZL33__gthrw_pthread_mutexattr_settypeP19pthread_mutexattr_ti = weak alias i32 (%struct.__sched_param*, i32), i32 (%struct.__sched_param*, i32)* @pthread_mutexattr_settype		; <i32 (%struct.__sched_param*, i32)*> [#uses=0]
+@_ZL33__gthrw_pthread_mutexattr_destroyP19pthread_mutexattr_t = weak alias i32 (%struct.__sched_param*), i32 (%struct.__sched_param*)* @pthread_mutexattr_destroy		; <i32 (%struct.__sched_param*)*> [#uses=0]
 
 declare fastcc void @_ZNSt10_Select1stISt4pairIKPvS1_EEC1Ev() nounwind readnone
 

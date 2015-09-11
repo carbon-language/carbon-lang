@@ -3,7 +3,7 @@
 @var32 = global [3 x i32] zeroinitializer
 @var64 = global [3 x i64] zeroinitializer
 @var32_align64 = global [3 x i32] zeroinitializer, align 8
-@alias = alias [3 x i32]* @var32_align64
+@alias = alias [3 x i32], [3 x i32]* @var32_align64
 
 define i64 @test_align32() {
 ; CHECK-LABEL: test_align32:

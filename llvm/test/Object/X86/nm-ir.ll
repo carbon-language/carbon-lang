@@ -27,8 +27,8 @@ module asm ".long undef_asm_sym"
 @g3 = common global i32 0
 @g4 = private global i32 42
 
-@a1 = alias i32* @g1
-@a2 = internal alias i32* @g1
+@a1 = alias i32, i32* @g1
+@a2 = internal alias i32, i32* @g1
 
 define void @f1() {
   ret void

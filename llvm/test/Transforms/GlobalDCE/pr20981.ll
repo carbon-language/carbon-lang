@@ -3,8 +3,8 @@
 $c1 = comdat any
 ; CHECK: $c1 = comdat any
 
-@a1 = linkonce_odr alias void ()* @f1
-; CHECK: @a1 = linkonce_odr alias void ()* @f1
+@a1 = linkonce_odr alias void (), void ()* @f1
+; CHECK: @a1 = linkonce_odr alias void (), void ()* @f1
 
 define linkonce_odr void @f1() comdat($c1) {
   ret void

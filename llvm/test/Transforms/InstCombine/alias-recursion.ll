@@ -7,7 +7,7 @@ target triple = "x86_64-pc-windows-msvc"
 
 @0 = constant [1 x i8*] zeroinitializer
 
-@vtbl = alias getelementptr inbounds ([1 x i8*], [1 x i8*]* @0, i32 0, i32 0)
+@vtbl = alias i8*, getelementptr inbounds ([1 x i8*], [1 x i8*]* @0, i32 0, i32 0)
 
 define i32 (%class.A*)* @test() {
 ; CHECK-LABEL: test

@@ -1,7 +1,7 @@
 ; RUN: opt < %s -instcombine -S | grep icmp
 ; PR1678
 
-@A = weak alias void ()* @B		; <void ()*> [#uses=1]
+@A = weak alias void (), void ()* @B		; <void ()*> [#uses=1]
 
 define weak void @B() {
        ret void

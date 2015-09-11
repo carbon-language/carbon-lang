@@ -17,7 +17,7 @@ define i32 @functional(i32 %a, i32 %b) {
 ; CHECK: %[[CALL:.*]] = call { i32 (i32, i32)*, i16 } @"dfs$g"(i32 %0, i16 0)
 ; CHECK: %[[XVAL:.*]] = extractvalue { i32 (i32, i32)*, i16 } %[[CALL]], 0
 ; CHECK: ret {{.*}} %[[XVAL]]
-@discardg = alias i32 (i32, i32)* (i32)* @g
+@discardg = alias i32 (i32, i32)* (i32), i32 (i32, i32)* (i32)* @g
 
 declare void @custom1(i32 %a, i32 %b)
 
@@ -83,7 +83,7 @@ define i32 (i32, i32)* @g(i32) {
 ; CHECK: %[[IVAL0:.*]] = insertvalue { i32, i16 } undef, i32 %[[CALL]], 0
 ; CHECK: %[[IVAL1:.*]] = insertvalue { i32, i16 } %[[IVAL0]], i16 0, 1
 ; CHECK: ret { i32, i16 } %[[IVAL1]]
-@adiscard = alias i32 (i32, i32)* @discard
+@adiscard = alias i32 (i32, i32), i32 (i32, i32)* @discard
 
 ; CHECK: declare void @__dfsw_custom1(i32, i32, i16, i16)
 ; CHECK: declare i32 @__dfsw_custom2(i32, i32, i16, i16, i16*)

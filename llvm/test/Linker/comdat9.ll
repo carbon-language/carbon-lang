@@ -1,13 +1,13 @@
 ; RUN: llvm-link %s -S -o - | FileCheck %s
 
 $c = comdat any
-@a = alias void ()* @f
+@a = alias void (), void ()* @f
 define internal void @f() comdat($c) {
   ret void
 }
 
 ; CHECK-DAG: $c = comdat any
-; CHECK-DAG: @a = alias void ()* @f
+; CHECK-DAG: @a = alias void (), void ()* @f
 ; CHECK-DAG: define internal void @f() comdat($c)
 
 $f2 = comdat largest

@@ -2409,6 +2409,10 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
 
   Out << "alias ";
 
+  TypePrinter.print(GA->getValueType(), Out);
+
+  Out << ", ";
+
   const Constant *Aliasee = GA->getAliasee();
 
   if (!Aliasee) {

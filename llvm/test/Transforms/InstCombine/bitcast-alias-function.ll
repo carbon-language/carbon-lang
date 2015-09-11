@@ -6,46 +6,46 @@ target datalayout = "e-p:32:32:32-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v16:16
 ; Cases that should be bitcast
 
 ; Test cast between scalars with same bit sizes
-@alias_i32_to_f32 = alias bitcast (i32 (i32)* @func_i32 to float (float)*)
+@alias_i32_to_f32 = alias float (float), bitcast (i32 (i32)* @func_i32 to float (float)*)
 
 ; Test cast between vectors with same number of elements and bit sizes
-@alias_v2i32_to_v2f32 = alias bitcast (<2 x i32> (<2 x i32>)* @func_v2i32 to <2 x float> (<2 x float>)*)
+@alias_v2i32_to_v2f32 = alias <2 x float> (<2 x float>), bitcast (<2 x i32> (<2 x i32>)* @func_v2i32 to <2 x float> (<2 x float>)*)
 
 ; Test cast from vector to scalar with same number of bits
-@alias_v2f32_to_i64 = alias bitcast (i64 (i64)* @func_i64 to <2 x float> (<2 x float>)*)
+@alias_v2f32_to_i64 = alias <2 x float> (<2 x float>), bitcast (i64 (i64)* @func_i64 to <2 x float> (<2 x float>)*)
 
 ; Test cast from scalar to vector with same number of bits
-@alias_i64_to_v2f32 = alias bitcast (<2 x float> (<2 x float>)* @func_v2f32 to i64 (i64)*)
+@alias_i64_to_v2f32 = alias i64 (i64), bitcast (<2 x float> (<2 x float>)* @func_v2f32 to i64 (i64)*)
 
 ; Test cast between vectors of pointers
-@alias_v2i32p_to_v2i64p = alias bitcast (<2 x i32*> (<2 x i32*>)* @func_v2i32p to <2 x i64*> (<2 x i64*>)*)
+@alias_v2i32p_to_v2i64p = alias <2 x i64*> (<2 x i64*>), bitcast (<2 x i32*> (<2 x i32*>)* @func_v2i32p to <2 x i64*> (<2 x i64*>)*)
 
 
 ; Cases that should be invalid and unchanged
 
 ; Test cast between scalars with different bit sizes
-@alias_i64_to_f32 = alias bitcast (i64 (i64)* @func_i64 to float (float)*)
+@alias_i64_to_f32 = alias float (float), bitcast (i64 (i64)* @func_i64 to float (float)*)
 
 ; Test cast between vectors with different bit sizes but the
 ; same number of elements
-@alias_v2i64_to_v2f32 = alias bitcast (<2 x i64> (<2 x i64>)* @func_v2i64 to <2 x float> (<2 x float>)*)
+@alias_v2i64_to_v2f32 = alias <2 x float> (<2 x float>), bitcast (<2 x i64> (<2 x i64>)* @func_v2i64 to <2 x float> (<2 x float>)*)
 
 ; Test cast between vectors with same number of bits and different
 ; numbers of elements
-@alias_v2i32_to_v4f32 = alias bitcast (<2 x i32> (<2 x i32>)* @func_v2i32 to <4 x float> (<4 x float>)*)
+@alias_v2i32_to_v4f32 = alias <4 x float> (<4 x float>), bitcast (<2 x i32> (<2 x i32>)* @func_v2i32 to <4 x float> (<4 x float>)*)
 
 ; Test cast between scalar and vector with different number of bits
-@alias_i64_to_v4f32 = alias bitcast (<4 x float> (<4 x float>)* @func_v4f32 to i64 (i64)*)
+@alias_i64_to_v4f32 = alias i64 (i64), bitcast (<4 x float> (<4 x float>)* @func_v4f32 to i64 (i64)*)
 
 ; Test cast between vector and scalar with different number of bits
-@alias_v4f32_to_i64 = alias bitcast (i64 (i64)* @func_i64 to <4 x float> (<4 x float>)*)
+@alias_v4f32_to_i64 = alias <4 x float> (<4 x float>), bitcast (i64 (i64)* @func_i64 to <4 x float> (<4 x float>)*)
 
 ; Test cast from scalar to vector of pointers with same number of bits
 ; We don't know the pointer size at this point, so this can't be done
-@alias_i64_to_v2i32p = alias bitcast (<2 x i32*> (<2 x i32*>)* @func_v2i32p to i64 (i64)*)
+@alias_i64_to_v2i32p = alias i64 (i64), bitcast (<2 x i32*> (<2 x i32*>)* @func_v2i32p to i64 (i64)*)
 
 ; Test cast between vector of pointers and scalar with different number of bits
-@alias_v4i32p_to_i64 = alias bitcast (i64 (i64)* @func_i64 to <4 x i32*> (<4 x i32*>)*)
+@alias_v4i32p_to_i64 = alias <4 x i32*> (<4 x i32*>), bitcast (i64 (i64)* @func_i64 to <4 x i32*> (<4 x i32*>)*)
 
 
 

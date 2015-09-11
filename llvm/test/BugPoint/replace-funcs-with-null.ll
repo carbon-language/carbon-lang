@@ -3,7 +3,7 @@
 ; RUN: bugpoint -load %llvmshlibdir/BugpointPasses%shlibext %s -output-prefix %t -replace-funcs-with-null -bugpoint-crash-decl-funcs -silence-passes -safe-run-llc
 ; REQUIRES: loadable_module
 
-@foo2 = alias i32 ()* @foo
+@foo2 = alias i32 (), i32 ()* @foo
 
 define i32 @foo() { ret i32 1 }
 

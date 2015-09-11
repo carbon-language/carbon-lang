@@ -17,8 +17,8 @@
 
 %class.D = type { i32, i32, i32, i32 }
 
-@_ZN1DC1Ev = alias void (%class.D*)* @_ZN1DC2Ev
-@_ZN1DC1ERKS_ = alias void (%class.D*, %class.D*)* @_ZN1DC2ERKS_
+@_ZN1DC1Ev = alias void (%class.D*), void (%class.D*)* @_ZN1DC2Ev
+@_ZN1DC1ERKS_ = alias void (%class.D*, %class.D*), void (%class.D*, %class.D*)* @_ZN1DC2ERKS_
 
 define void @_ZN1DC2Ev(%class.D* nocapture %this) unnamed_addr nounwind uwtable align 2 {
 entry:

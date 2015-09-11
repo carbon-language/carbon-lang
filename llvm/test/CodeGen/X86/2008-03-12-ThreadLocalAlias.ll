@@ -8,7 +8,7 @@ target triple = "i386-pc-linux-gnu"
 @__resp = thread_local global %struct.__res_state* @_res		; <%struct.__res_state**> [#uses=1]
 @_res = global %struct.__res_state zeroinitializer, section ".bss"		; <%struct.__res_state*> [#uses=1]
 
-@__libc_resp = hidden thread_local alias %struct.__res_state** @__resp		; <%struct.__res_state**> [#uses=2]
+@__libc_resp = hidden thread_local alias %struct.__res_state*, %struct.__res_state** @__resp		; <%struct.__res_state**> [#uses=2]
 
 define i32 @foo() {
 ; CHECK-LABEL: foo:

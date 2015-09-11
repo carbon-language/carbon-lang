@@ -1,7 +1,7 @@
 ; RUN: opt -S -globalopt < %s | FileCheck %s
 
 @_Z17in_custom_section = internal global i8 42, section "CUSTOM"
-@in_custom_section = internal dllexport alias i8* @_Z17in_custom_section
+@in_custom_section = internal dllexport alias i8, i8* @_Z17in_custom_section
 
 ; CHECK: @in_custom_section = internal dllexport global i8 42, section "CUSTOM"
 

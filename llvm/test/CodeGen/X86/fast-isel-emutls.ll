@@ -15,7 +15,7 @@ entry:
 ; CHECK-NEXT: calll __emutls_get_address@PLT
 ; CHECK-NEXT: movl (%eax), %eax
 
-@alias = internal alias i32* @v
+@alias = internal alias i32, i32* @v
 define i32 @f_alias() nounwind {
 entry:
           %t = load i32, i32* @v

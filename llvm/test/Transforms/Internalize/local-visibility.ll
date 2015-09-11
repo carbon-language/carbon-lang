@@ -10,10 +10,10 @@
 ; CHECK: @protected.variable = internal global i32 0
 @protected.variable = protected global i32 0
 
-; CHECK: @hidden.alias = internal alias  i32* @global
-@hidden.alias = hidden alias i32* @global
-; CHECK: @protected.alias = internal alias i32* @global
-@protected.alias = protected alias i32* @global
+; CHECK: @hidden.alias = internal alias  i32,  i32* @global
+@hidden.alias = hidden alias i32, i32* @global
+; CHECK: @protected.alias = internal alias i32, i32* @global
+@protected.alias = protected alias i32, i32* @global
 
 ; CHECK: define internal void @hidden.function() {
 define hidden void @hidden.function() {

@@ -7,10 +7,10 @@ target triple = "x86_64-unknown-linux-gnu"
 module asm ".symver f1,f@@version1"
 
 ; CHECK: @"dfs$f2" = alias {{.*}} @"dfs$f1"
-@f2 = alias void ()* @f1
+@f2 = alias void (), void ()* @f1
 
 ; CHECK: @"dfs$g2" = alias {{.*}} @"dfs$g1"
-@g2 = alias bitcast (void (i8*)* @g1 to void (i16*)*)
+@g2 = alias void (i16*), bitcast (void (i8*)* @g1 to void (i16*)*)
 
 ; CHECK: define void @"dfs$f1"
 define void @f1() {

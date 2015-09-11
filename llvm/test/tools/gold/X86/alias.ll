@@ -9,5 +9,5 @@
 ; CHECK-NEXT: @b = global i32 1
 ; CHECK-NOT: alias
 
-@a = weak alias i32* @b
+@a = weak alias i32, i32* @b
 @b = global i32 1

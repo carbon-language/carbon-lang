@@ -20,7 +20,7 @@
 @.str51 = external constant [45 x i8]             ; <[45 x i8]*> [#uses=1]
 @__PRETTY_FUNCTION__._ZNK4llvm7VarInit12getFieldInitERNS_6RecordEPKNS_9RecordValERKSs = external constant [116 x i8] ; <[116 x i8]*> [#uses=1]
 
-@_ZN4llvm9RecordValC1ERKSsPNS_5RecTyEj = alias void (%"class.llvm::RecordVal"*, %"class.std::basic_string"*, %"struct.llvm::Init"*, i32)* @_ZN4llvm9RecordValC2ERKSsPNS_5RecTyEj ; <void (%"class.llvm::RecordVal"*, %"class.std::basic_string"*, %"struct.llvm::Init"*, i32)*> [#uses=0]
+@_ZN4llvm9RecordValC1ERKSsPNS_5RecTyEj = alias void (%"class.llvm::RecordVal"*, %"class.std::basic_string"*, %"struct.llvm::Init"*, i32), void (%"class.llvm::RecordVal"*, %"class.std::basic_string"*, %"struct.llvm::Init"*, i32)* @_ZN4llvm9RecordValC2ERKSsPNS_5RecTyEj ; <void (%"class.llvm::RecordVal"*, %"class.std::basic_string"*, %"struct.llvm::Init"*, i32)*> [#uses=0]
 
 declare i8* @__dynamic_cast(i8*, i8*, i8*, i32)
 
