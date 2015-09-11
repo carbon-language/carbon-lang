@@ -3,7 +3,7 @@
 # RUN:   /opt:lldicf /verbose %t.obj > %t.log 2>&1
 # RUN: FileCheck %s < %t.log
 
-# CHECK-NOT: Replaced bar
+# CHECK: Replaced bar
 
 ---
 header:

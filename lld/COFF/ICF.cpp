@@ -7,7 +7,31 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Implements ICF (Identical COMDAT Folding)
+// Identical COMDAT Folding is a feature to merge COMDAT sections not by
+// name (which is regular COMDAT handling) but by contents. If two COMDAT
+// sections have the same data, relocations, attributes, etc., then the two
+// are considered identical and merged by the linker. This optimization
+// makes outputs smaller.
+//
+// ICF is theoretically a problem of reducing graphs by merging as many
+// isomorphic subgraphs as possible, if we consider sections as vertices and
+// relocations as edges. This may be a bit more complicated problem than you
+// might think. The order of processing sections matters since merging two
+// sections can make other sections, whose relocations now point to the
+// section, mergeable. Graphs may contain cycles, which is common in COFF.
+// We need a sophisticated algorithm to do this properly and efficiently.
+//
+// What we do in this file is this. We first compute strongly connected
+// components of the graphs to get acyclic graphs. Then, we remove SCCs whose
+// outdegree is zero from the graphs and try to merge them. This operation
+// makes other SCCs to have outdegree zero, so we repeat the process until
+// all SCCs are removed.
+//
+// This algorithm is different from what GNU gold does which is described in
+// http://research.google.com/pubs/pub36912.html. I don't know which is
+// faster, this or Gold's, in practice. It'd be interesting to implement the
+// other algorithm to compare. Note that the gold's algorithm cannot handle
+// cycles, so we need to tweak it, though.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,6 +39,10 @@
 #include "Symbols.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <functional>
 #include <tuple>
 #include <unordered_set>
 #include <vector>
@@ -37,14 +65,155 @@ struct Equals {
 
 } // anonymous namespace
 
-uint64_t SectionChunk::getHash() const {
-  return hash_combine(getPermissions(),
-                      hash_value(SectionName),
-                      NumRelocs,
-                      uint32_t(Header->SizeOfRawData),
-                      std::distance(Relocs.end(), Relocs.begin()),
-                      Checksum);
+// Invoke Fn for each live COMDAT successor sections of SC.
+static void forEach(SectionChunk *SC, std::function<void(SectionChunk *)> Fn) {
+  for (SectionChunk *C : SC->children())
+    Fn(C);
+  for (SymbolBody *B : SC->symbols()) {
+    if (auto *D = dyn_cast<DefinedRegular>(B)) {
+      SectionChunk *C = D->getChunk();
+      if (C->isCOMDAT() && C->isLive())
+        Fn(C);
+    }
+  }
 }
+
+typedef std::vector<Component *>::iterator ComponentIterator;
+
+// Try to merge two SCCs, A and B. A and B are likely to be isomorphic
+// because all sections have the same hash values.
+static void tryMerge(std::vector<SectionChunk *> &A,
+                     std::vector<SectionChunk *> &B) {
+  // Assume that relocation targets are the same.
+  size_t End = A.size();
+  for (size_t I = 0; I != End; ++I) {
+    assert(B[I] == B[I]->Ptr);
+    B[I]->Ptr = A[I];
+  }
+  for (size_t I = 0; I != End; ++I) {
+    if (A[I]->equals(B[I]))
+      continue;
+    // If we reach here, the assumption was wrong. Reset the pointers
+    // to the original values and terminate the comparison.
+    for (size_t I = 0; I != End; ++I)
+      B[I]->Ptr = B[I];
+    return;
+  }
+  // If we reach here, the assumption was correct. Actually replace them.
+  for (size_t I = 0; I != End; ++I)
+    B[I]->replaceWith(A[I]);
+}
+
+// Try to merge components. All components given to this function are
+// guaranteed to have the same number of members.
+static void doUniquefy(ComponentIterator Begin, ComponentIterator End) {
+  // Sort component members by hash value.
+  for (auto It = Begin; It != End; ++It) {
+    Component *SCC = *It;
+    auto Comp = [](SectionChunk *A, SectionChunk *B) {
+      return A->getHash() < B->getHash();
+    };
+    std::sort(SCC->Members.begin(), SCC->Members.end(), Comp);
+  }
+
+  // Merge as much component members as possible.
+  for (auto It = Begin; It != End;) {
+    Component *SCC = *It;
+    auto Bound = std::partition(It + 1, End, [&](Component *C) {
+      for (size_t I = 0, E = SCC->Members.size(); I != E; ++I)
+        if (SCC->Members[I]->getHash() != C->Members[I]->getHash())
+          return false;
+      return true;
+    });
+
+    // Components [I, Bound) are likely to have the same members
+    // because all members have the same hash values. Verify that.
+    for (auto I = It + 1; I != Bound; ++I)
+      tryMerge(SCC->Members, (*I)->Members);
+    It = Bound;
+  }
+}
+
+static void uniquefy(ComponentIterator Begin, ComponentIterator End) {
+  for (auto It = Begin; It != End;) {
+    Component *SCC = *It;
+    size_t Size = SCC->Members.size();
+    auto Bound = std::partition(It + 1, End, [&](Component *C) {
+      return C->Members.size() == Size;
+    });
+    doUniquefy(It, Bound);
+    It = Bound;
+  }
+}
+
+// Returns strongly connected components of the graph formed by Chunks.
+// Chunks (a list of Live COMDAT sections) are considred as vertices,
+// and their relocations or association are considered as edges.
+static std::vector<Component *>
+getSCC(const std::vector<SectionChunk *> &Chunks) {
+  std::vector<Component *> Ret;
+  std::vector<SectionChunk *> V;
+  uint32_t Idx;
+
+  std::function<void(SectionChunk *)> StrongConnect = [&](SectionChunk *SC) {
+    SC->Index = SC->LowLink = Idx++;
+    size_t Curr = V.size();
+    V.push_back(SC);
+    SC->OnStack = true;
+
+    forEach(SC, [&](SectionChunk *C) {
+      if (C->Index == 0) {
+        StrongConnect(C);
+        SC->LowLink = std::min(SC->LowLink, C->LowLink);
+      } else if (C->OnStack) {
+        SC->LowLink = std::min(SC->LowLink, C->Index);
+      }
+    });
+
+    if (SC->LowLink != SC->Index)
+      return;
+    auto *SCC = new Component(
+        std::vector<SectionChunk *>(V.begin() + Curr, V.end()));
+    for (size_t I = Curr, E = V.size(); I != E; ++I) {
+      V[I]->OnStack = false;
+      V[I]->SCC = SCC;
+    }
+    Ret.push_back(SCC);
+    V.erase(V.begin() + Curr, V.end());
+  };
+
+  for (SectionChunk *SC : Chunks) {
+    if (SC->Index == 0) {
+      Idx = 1;
+      StrongConnect(SC);
+    }
+  }
+
+  for (Component *SCC : Ret) {
+    for (SectionChunk *SC : SCC->Members) {
+      forEach(SC, [&](SectionChunk *C) {
+        if (SCC == C->SCC)
+          return;
+        ++SCC->Outdegree;
+        C->SCC->Predecessors.push_back(SCC);
+      });
+    }
+  }
+  return Ret;
+}
+
+uint64_t SectionChunk::getHash() const {
+  if (Hash == 0) {
+    Hash = hash_combine(getPermissions(),
+                        hash_value(SectionName),
+                        NumRelocs,
+                        uint32_t(Header->SizeOfRawData),
+                        std::distance(Relocs.end(), Relocs.begin()),
+                        Checksum);
+  }
+  return Hash;
+}
+
 
 // Returns true if this and a given chunk are identical COMDAT sections.
 bool SectionChunk::equals(const SectionChunk *X) const {
@@ -90,28 +259,6 @@ bool SectionChunk::equals(const SectionChunk *X) const {
   return std::equal(Relocs.begin(), Relocs.end(), X->Relocs.begin(), Eq);
 }
 
-static void link(SectionChunk *From, SectionChunk *To) {
-  ++From->Outdegree;
-  To->Ins.push_back(From);
-}
-
-typedef std::vector<SectionChunk *>::iterator ChunkIterator;
-
-static void uniquefy(ChunkIterator Begin, ChunkIterator End) {
-  std::unordered_set<SectionChunk *, Hasher, Equals> Set;
-  for (auto It = Begin; It != End; ++It) {
-    SectionChunk *SC = *It;
-    auto P = Set.insert(SC);
-    bool Inserted = P.second;
-    if (Inserted)
-      continue;
-    SectionChunk *Existing = *P.first;
-    SC->replaceWith(Existing);
-    for (SectionChunk *In : SC->Ins)
-      --In->Outdegree;
-  }
-}
-
 // Merge identical COMDAT sections.
 // Two sections are considered the same if their section headers,
 // contents and relocations are all the same.
@@ -122,26 +269,19 @@ void doICF(const std::vector<Chunk *> &Chunks) {
       if (SC->isCOMDAT() && SC->isLive())
         SChunks.push_back(SC);
 
-  // Initialize SectionChunks' outdegrees and in-chunk lists.
-  for (SectionChunk *SC : SChunks) {
-    for (SectionChunk *C : SC->children())
-      link(SC, C);
-    for (SymbolBody *B : SC->symbols())
-      if (auto *D = dyn_cast<DefinedRegular>(B))
-        link(SC, D->getChunk());
-  }
+  std::vector<Component *> Components = getSCC(SChunks);
 
-  // By merging two sections, more sections can become mergeable
-  // because two originally different relocations can now point to
-  // the same section. We process sections whose outdegree is zero
-  // first to deal with that.
-  auto Pred = [](SectionChunk *SC) { return SC->Outdegree > 0; };
-  for (;;) {
-    auto Bound = std::partition(SChunks.begin(), SChunks.end(), Pred);
-    if (Bound == SChunks.end())
-      return;
-    uniquefy(Bound, SChunks.end());
-    SChunks.erase(Bound, SChunks.end());
+  while (Components.size() > 0) {
+    auto Bound = std::partition(Components.begin(), Components.end(),
+                                [](Component *SCC) { return SCC->Outdegree > 0; });
+    uniquefy(Bound, Components.end());
+
+    for (auto It = Bound, E = Components.end(); It != E; ++It) {
+      Component *SCC = *It;
+      for (Component *Pred : SCC->Predecessors)
+        --Pred->Outdegree;
+    }
+    Components.erase(Bound, Components.end());
   }
 }
 
