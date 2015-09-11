@@ -99,7 +99,7 @@ const char *const ErrorMessages[] = {
     "Nullable pointer is returned from a function that is expected to return a "
     "non-null value",
     "Nullable pointer is dereferenced",
-    "Nullable pointer is passed to a calle that requires a non-null argument"};
+    "Nullable pointer is passed to a callee that requires a non-null argument"};
 
 class NullabilityChecker
     : public Checker<check::Bind, check::PreCall, check::PreStmt<ReturnStmt>,
