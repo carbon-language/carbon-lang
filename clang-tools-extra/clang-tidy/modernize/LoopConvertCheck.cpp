@@ -381,6 +381,20 @@ static bool usagesReturnRValues(const UsageResult &Usages) {
   return true;
 }
 
+/// \brief Returns true if the container is const-qualified.
+static bool containerIsConst(const Expr *ContainerExpr, bool Dereference) {
+  if (const auto *VDec = getReferencedVariable(ContainerExpr)) {
+    QualType CType = VDec->getType();
+    if (Dereference) {
+      if (!CType->isPointerType())
+        return false;
+      CType = CType->getPointeeType();
+    }
+    return CType.isConstQualified();
+  }
+  return false;
+}
+
 LoopConvertCheck::LoopConvertCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context), TUInfo(new TUTrackingInfo),
       MinConfidence(StringSwitch<Confidence::Level>(
@@ -401,6 +415,11 @@ void LoopConvertCheck::doConversion(
     StringRef ContainerString, const UsageResult &Usages,
     const DeclStmt *AliasDecl, bool AliasUseRequired, bool AliasFromForInit,
     const ForStmt *TheLoop, RangeDescriptor Descriptor) {
+  // If there aren't any usages, converting the loop would generate an unused
+  // variable warning.
+  if (Usages.size() == 0)
+    return;
+
   auto Diag = diag(TheLoop->getForLoc(), "use range-based for loop instead");
 
   std::string VarName;
@@ -436,11 +455,23 @@ void LoopConvertCheck::doConversion(
     VarName = Namer.createIndexName();
     // First, replace all usages of the array subscript expression with our new
     // variable.
-    for (const auto &I : Usages) {
-      std::string ReplaceText = I.IsArrow ? VarName + "." : VarName;
+    for (const auto &Usage : Usages) {
+      std::string ReplaceText;
+      if (Usage.Expression) {
+        // If this is an access to a member through the arrow operator, after
+        // the replacement it must be accessed through the '.' operator.
+        ReplaceText = Usage.Kind == Usage::UK_MemberThroughArrow ? VarName + "."
+                                                                 : VarName;
+      } else {
+        // The Usage expression is only null in case of lambda captures (which
+        // are VarDecl). If the index is captured by value, add '&' to capture
+        // by reference instead.
+        ReplaceText =
+            Usage.Kind == Usage::UK_CaptureByCopy ? "&" + VarName : VarName;
+      }
       TUInfo->getReplacedVars().insert(std::make_pair(TheLoop, IndexVar));
       Diag << FixItHint::CreateReplacement(
-          CharSourceRange::getTokenRange(I.Range), ReplaceText);
+          CharSourceRange::getTokenRange(Usage.Range), ReplaceText);
     }
   }
 
@@ -537,16 +568,24 @@ void LoopConvertCheck::findAndVerifyUsages(
   if (FixerKind == LFK_Array) {
     // The array being indexed by IndexVar was discovered during traversal.
     ContainerExpr = Finder.getContainerIndexed()->IgnoreParenImpCasts();
+
     // Very few loops are over expressions that generate arrays rather than
     // array variables. Consider loops over arrays that aren't just represented
     // by a variable to be risky conversions.
     if (!getReferencedVariable(ContainerExpr) &&
         !isDirectMemberExpr(ContainerExpr))
       ConfidenceLevel.lowerTo(Confidence::CL_Risky);
+
+    // Use 'const' if the array is const.
+    if (containerIsConst(ContainerExpr, Descriptor.ContainerNeedsDereference))
+      Descriptor.DerefByConstRef = true;
+
   } else if (FixerKind == LFK_PseudoArray) {
     if (!Descriptor.DerefByValue && !Descriptor.DerefByConstRef) {
       const UsageResult &Usages = Finder.getUsages();
-      if (usagesAreConst(Usages)) {
+      if (usagesAreConst(Usages) ||
+          containerIsConst(ContainerExpr,
+                           Descriptor.ContainerNeedsDereference)) {
         Descriptor.DerefByConstRef = true;
       } else if (usagesReturnRValues(Usages)) {
         // If the index usages (dereference, subscript, at) return RValues,
@@ -558,7 +597,7 @@ void LoopConvertCheck::findAndVerifyUsages(
           if (!U.Expression || U.Expression->getType().isNull())
             continue;
           QualType Type = U.Expression->getType().getCanonicalType();
-          if (U.IsArrow) {
+          if (U.Kind == Usage::UK_MemberThroughArrow) {
             if (!Type->isPointerType())
               continue;
             Type = Type->getPointeeType();
@@ -625,6 +664,7 @@ void LoopConvertCheck::check(const MatchFinder::MatchResult &Result) {
   // expression the loop variable is being tested against instead.
   const auto *EndCall = Nodes.getStmtAs<CXXMemberCallExpr>(EndCallName);
   const auto *BoundExpr = Nodes.getStmtAs<Expr>(ConditionBoundName);
+
   // If the loop calls end()/size() after each iteration, lower our confidence
   // level.
   if (FixerKind != LFK_Array && !EndVar)

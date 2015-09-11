@@ -560,7 +560,7 @@ bool ForLoopIndexUseVisitor::TraverseMemberExpr(MemberExpr *Member) {
     // If something complicated is happening (i.e. the next token isn't an
     // arrow), give up on making this work.
     if (!ArrowLoc.isInvalid()) {
-      addUsage(Usage(ResultExpr, /*IsArrow=*/true,
+      addUsage(Usage(ResultExpr, Usage::UK_MemberThroughArrow,
                      SourceRange(Base->getExprLoc(), ArrowLoc)));
       return true;
     }
@@ -762,7 +762,10 @@ bool ForLoopIndexUseVisitor::TraverseLambdaCapture(LambdaExpr *LE,
       // FIXME: if the index is captured, it will count as an usage and the
       // alias (if any) won't work, because it is only used in case of having
       // exactly one usage.
-      addUsage(Usage(nullptr, false, C->getLocation()));
+      addUsage(Usage(nullptr,
+                     C->getCaptureKind() == LCK_ByCopy ? Usage::UK_CaptureByCopy
+                                                       : Usage::UK_CaptureByRef,
+                     C->getLocation()));
     }
   }
   return VisitorBase::TraverseLambdaCapture(LE, C);

@@ -59,8 +59,9 @@ struct X {
 };
 
 template<typename ElemType>
-class dependent{
+class dependent {
  public:
+  dependent<ElemType>();
   struct iterator_base {
     const ElemType& operator*()const;
     iterator_base& operator ++();

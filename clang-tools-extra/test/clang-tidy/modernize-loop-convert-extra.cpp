@@ -14,10 +14,9 @@ void f() {
     int b = arr[i][a];
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & elem : arr) {
+  // CHECK-FIXES: for (auto & elem : arr)
   // CHECK-FIXES-NEXT: int a = 0;
   // CHECK-FIXES-NEXT: int b = elem[a];
-  // CHECK-FIXES-NEXT: }
 
   for (int j = 0; j < M; ++j) {
     int a = 0;
@@ -121,7 +120,7 @@ void aliasing() {
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto alias : IntArr)
-  // CHECK-FIXES-NEXT: if (alias) {
+  // CHECK-FIXES-NEXT: if (alias)
 
   for (unsigned i = 0; i < N; ++i) {
     while (int alias = IntArr[i]) {
@@ -130,7 +129,7 @@ void aliasing() {
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto alias : IntArr)
-  // CHECK-FIXES-NEXT: while (alias) {
+  // CHECK-FIXES-NEXT: while (alias)
 
   for (unsigned i = 0; i < N; ++i) {
     switch (int alias = IntArr[i]) {
@@ -140,7 +139,7 @@ void aliasing() {
   }
   // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto alias : IntArr)
-  // CHECK-FIXES-NEXT: switch (alias) {
+  // CHECK-FIXES-NEXT: switch (alias)
 
   for (unsigned i = 0; i < N; ++i) {
     for (int alias = IntArr[i]; alias < N; ++alias) {
@@ -149,7 +148,7 @@ void aliasing() {
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto alias : IntArr)
-  // CHECK-FIXES-NEXT: for (; alias < N; ++alias) {
+  // CHECK-FIXES-NEXT: for (; alias < N; ++alias)
 
   for (unsigned i = 0; i < N; ++i) {
     for (unsigned j = 0; int alias = IntArr[i]; ++j) {
@@ -158,14 +157,14 @@ void aliasing() {
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto alias : IntArr)
-  // CHECK-FIXES-NEXT: for (unsigned j = 0; alias; ++j) {
+  // CHECK-FIXES-NEXT: for (unsigned j = 0; alias; ++j)
 
   struct IntRef { IntRef(const int& i); };
   for (int i = 0; i < N; ++i) {
     IntRef Int(IntArr[i]);
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & elem : IntArr) {
+  // CHECK-FIXES: for (auto & elem : IntArr)
   // CHECK-FIXES-NEXT: IntRef Int(elem);
 }
 
@@ -288,7 +287,7 @@ void macroConflict() {
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & DEFs_it : DEFs)
-  // CHECK-FIXES-NEXT: if (DEFs_it == DEF) {
+  // CHECK-FIXES-NEXT: if (DEFs_it == DEF)
   // CHECK-FIXES-NEXT: printf("I found %d\n", DEFs_it);
 }
 
@@ -315,8 +314,8 @@ void typeConflict() {
   T Vals;
   // Using the name "Val", although it is the name of an existing struct, is
   // safe in this loop since it will only exist within this scope.
-  for (T::iterator it = Vals.begin(), e = Vals.end(); it != e; ++it) {
-  }
+  for (T::iterator it = Vals.begin(), e = Vals.end(); it != e; ++it)
+    (void) *it;
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & Val : Vals)
 
@@ -333,8 +332,8 @@ void typeConflict() {
   U TDs;
   // Naming the variable "TD" within this loop is safe because the typedef
   // was never used within the loop.
-  for (U::iterator it = TDs.begin(), e = TDs.end(); it != e; ++it) {
-  }
+  for (U::iterator it = TDs.begin(), e = TDs.end(); it != e; ++it)
+    (void) *it;
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & TD : TDs)
 
@@ -342,8 +341,9 @@ void typeConflict() {
   for (U::iterator it = TDs.begin(), e = TDs.end(); it != e; ++it) {
     TD V;
     V.x = 5;
+    (void) *it;
   }
-  // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
+  // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & TDs_it : TDs)
   // CHECK-FIXES-NEXT: TD V;
   // CHECK-FIXES-NEXT: V.x = 5;
@@ -456,8 +456,8 @@ void f() {
     }
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & elem : NestT) {
-  // CHECK-FIXES-NEXT: for (T::iterator TI = (elem).begin(), TE = (elem).end(); TI != TE; ++TI) {
+  // CHECK-FIXES: for (auto & elem : NestT)
+  // CHECK-FIXES-NEXT: for (T::iterator TI = (elem).begin(), TE = (elem).end(); TI != TE; ++TI)
   // CHECK-FIXES-NEXT: printf("%d", *TI);
 
   // The inner loop is also convertible.
@@ -468,8 +468,8 @@ void f() {
     }
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & elem : NestS) {
-  // CHECK-FIXES-NEXT: for (S::const_iterator SI = (elem).begin(), SE = (elem).end(); SI != SE; ++SI) {
+  // CHECK-FIXES: for (const auto & elem : NestS)
+  // CHECK-FIXES-NEXT: for (S::const_iterator SI = (elem).begin(), SE = (elem).end(); SI != SE; ++SI)
   // CHECK-FIXES-NEXT: printf("%d", *SI);
 
   for (Nested<S>::const_iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
@@ -480,7 +480,7 @@ void f() {
     }
   }
   // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & s : NestS) {
+  // CHECK-FIXES: for (const auto & s : NestS)
 
   for (Nested<S>::iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
     S &s = *I;
@@ -490,7 +490,7 @@ void f() {
     }
   }
   // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & s : NestS) {
+  // CHECK-FIXES: for (auto & s : NestS)
 
   Foo foo;
   for (Nested<S>::const_iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
@@ -501,7 +501,7 @@ void f() {
     }
   }
   // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & s : NestS) {
+  // CHECK-FIXES: for (const auto & s : NestS)
 
   for (Nested<S>::iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
     S &s = *I;
@@ -511,7 +511,7 @@ void f() {
     }
   }
   // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & s : NestS) {
+  // CHECK-FIXES: for (auto & s : NestS)
 
 }
 
@@ -623,7 +623,7 @@ void f() {
     printf("Fibonacci number is %d\n", *it);
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & elem : v) {
+  // CHECK-FIXES: for (auto & elem : v)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", elem);
 
   for (dependent<int>::iterator it(v.begin());
@@ -631,7 +631,7 @@ void f() {
     printf("Fibonacci number is %d\n", *it);
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & elem : v) {
+  // CHECK-FIXES: for (auto & elem : v)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", elem);
 
   doublyDependent<int, int> intmap;
@@ -684,6 +684,9 @@ void different_type() {
 
 namespace Macros {
 
+#define TWO_PARAM(x, y) if (x == y) {}
+#define THREE_PARAM(x, y, z) if (x == y) {z;}
+
 const int N = 10;
 int arr[N];
 
@@ -692,12 +695,28 @@ void messing_with_macros() {
     printf("Value: %d\n", arr[i]);
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & elem : arr) {
+  // CHECK-FIXES: for (auto & elem : arr)
   // CHECK-FIXES-NEXT:  printf("Value: %d\n", elem);
 
   for (int i = 0; i < N; ++i) {
     printf("Value: %d\n", CONT arr[i]);
   }
+
+  // FIXME: Right now, clang-tidy does not allow to make insertions in several
+  // arguments of the same macro call. The following code:
+  // \code
+  //   for (int i = 0; i < N; ++i) {
+  //    TWO_PARAM(arr[i], arr[i]);
+  //    THREE_PARAM(arr[i], arr[i], arr[i]);
+  //   }
+  // \endcode
+  // Should be converted to this:
+  // \code
+  //   for (auto & elem : arr) {
+  //    TWO_PARAM(elem, elem);
+  //    THREE_PARAM(elem, elem, elem);
+  //   }
+  // \endcode
 }
 
 } // namespace Macros
@@ -708,12 +727,14 @@ template <class Container>
 void set_union(Container &container) {
   for (typename Container::const_iterator SI = container.begin(),
        SE = container.end(); SI != SE; ++SI) {
+    (void) *SI;
   }
+
   S s;
-  for (S::iterator SI = s.begin(), SE = s.end(); SI != SE; ++SI) {
-  }
+  for (S::iterator SI = s.begin(), SE = s.end(); SI != SE; ++SI)
+    (void) *SI;
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto & elem : s) {
+  // CHECK-FIXES: for (auto & elem : s)
 }
 
 void template_instantiation() {
@@ -735,7 +756,7 @@ void capturesIndex() {
     auto F1 = [Arr, I]() { int R1 = Arr[I] + 1; };
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : Arr)
-  // CHECK-FIXES-NEXT: auto F1 = [Arr, elem]() { int R1 = elem + 1; };
+  // CHECK-FIXES-NEXT: auto F1 = [Arr, &elem]() { int R1 = elem + 1; };
 
   for (int I = 0; I < N; ++I)
     auto F2 = [Arr, &I]() { int R2 = Arr[I] + 3; };
@@ -749,8 +770,7 @@ void capturesIndex() {
     auto F3 = [&Arr, I]() { int R3 = Arr[I]; };
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : Arr)
-  // CHECK-FIXES-NEXT: auto F3 = [&Arr, elem]() { int R3 = elem; };
-  // FIXME: this does two copies instead of one. Capture elem by ref?
+  // CHECK-FIXES-NEXT: auto F3 = [&Arr, &elem]() { int R3 = elem; };
 
 
   for (int I = 0; I < N; ++I)
@@ -764,8 +784,7 @@ void capturesIndex() {
     auto F5 = [&Arr, I]() { int &R5 = Arr[I]; };
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : Arr)
-  // CHECK-FIXES-NEXT: auto F5 = [&Arr, elem]() { int &R5 = elem; };
-  // FIXME: this does one copy instead of none. Capture elem by ref?
+  // CHECK-FIXES-NEXT: auto F5 = [&Arr, &elem]() { int &R5 = elem; };
 
 
   for (int I = 0; I < N; ++I)
@@ -782,10 +801,9 @@ void capturesIndex() {
   }
   // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : Arr)
-  // CHECK-FIXES-NEXT: auto F = [Arr, elem](int k) {
+  // CHECK-FIXES-NEXT: auto F = [Arr, &elem](int k)
   // CHECK-FIXES-NEXT: printf("%d\n", elem + k);
-  // CHECK-FIXES-NEXT: };
-  // CHECK-FIXES-NEXT: F(elem);
+  // CHECK-FIXES: F(elem);
 }
 
 void implicitCapture() {
@@ -815,7 +833,7 @@ void implicitCapture() {
   }
   // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : Arr)
-  // CHECK-FIXES-NEXT: auto G3 = [&]() {
+  // CHECK-FIXES-NEXT: auto G3 = [&]()
   // CHECK-FIXES-NEXT: int R3 = elem;
   // CHECK-FIXES-NEXT: int J3 = elem + R3;
 
@@ -826,7 +844,7 @@ void implicitCapture() {
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : Arr)
-  // CHECK-FIXES-NEXT: auto G4 = [=]() {
+  // CHECK-FIXES-NEXT: auto G4 = [=]()
   // CHECK-FIXES-NEXT: int R4 = elem + 5;
 
   // Alias by value.
@@ -838,7 +856,7 @@ void implicitCapture() {
   }
   // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto R5 : Arr)
-  // CHECK-FIXES-NEXT: auto G5 = [&]() {
+  // CHECK-FIXES-NEXT: auto G5 = [&]()
   // CHECK-FIXES: int J5 = 8 + R5;
 
   // Alias by reference.
@@ -850,7 +868,7 @@ void implicitCapture() {
   }
   // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & R6 : Arr)
-  // CHECK-FIXES-NEXT: auto G6 = [&]() {
+  // CHECK-FIXES-NEXT: auto G6 = [&]()
   // CHECK-FIXES: int J6 = -1 + R6;
 }
 
@@ -881,6 +899,30 @@ void iterators() {
   for (dependent<int>::const_iterator I = dep.begin(), E = dep.end();
        I != E; ++I)
     auto H5 = [=]() { int R = *I; };
+}
+
+void captureByValue() {
+  // When the index is captured by value, we should replace this by a capture
+  // by reference. This avoids extra copies.
+  // FIXME: this could change semantics on array or pseudoarray loops if the
+  // container is captured by copy.
+  const int N = 10;
+  int Arr[N];
+  dependent<int> Dep;
+
+  for (int I = 0; I < N; ++I) {
+    auto C1 = [&Arr, I]() { if (Arr[I] == 1); };
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : Arr)
+  // CHECK-FIXES-NEXT: auto C1 = [&Arr, &elem]() { if (elem == 1); };
+
+  for (unsigned I = 0; I < Dep.size(); ++I) {
+    auto C2 = [&Dep, I]() { if (Dep[I] == 2); };
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : Dep)
+  // CHECK-FIXES-NEXT: auto C2 = [&Dep, &elem]() { if (elem == 2); };
 }
 
 } // namespace Lambdas

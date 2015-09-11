@@ -27,9 +27,9 @@ public:
 private:
   struct RangeDescriptor {
     bool ContainerNeedsDereference;
+    bool DerefByConstRef;
     bool DerefByValue;
     bool IsTriviallyCopyable;
-    bool DerefByConstRef;
   };
 
   void doConversion(ASTContext *Context, const VarDecl *IndexVar,

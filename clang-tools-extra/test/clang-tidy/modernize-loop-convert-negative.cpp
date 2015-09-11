@@ -290,7 +290,6 @@ const int N = 6;
 dependent<int> v;
 dependent<int> *pv;
 
-transparent<dependent<int>> cv;
 int Sum = 0;
 
 // Checks for the Index start and end:
@@ -473,3 +472,41 @@ void complexContainer() {
 }
 
 } // namespace NegativeMultiEndCall
+
+namespace NoUsages {
+
+const int N = 6;
+int arr[N] = {1, 2, 3, 4, 5, 6};
+S s;
+dependent<int> v;
+int Count = 0;
+
+void foo();
+
+void f() {
+  for (int I = 0; I < N; ++I) {}
+  for (int I = 0; I < N; ++I)
+    printf("Hello world\n");
+  for (int I = 0; I < N; ++I)
+    ++Count;
+  for (int I = 0; I < N; ++I)
+    foo();
+
+  for (S::iterator I = s.begin(), E = s.end(); I != E; ++I) {}
+  for (S::iterator I = s.begin(), E = s.end(); I != E; ++I)
+    printf("Hello world\n");
+  for (S::iterator I = s.begin(), E = s.end(); I != E; ++I)
+    ++Count;
+  for (S::iterator I = s.begin(), E = s.end(); I != E; ++I)
+    foo();
+
+  for (int I = 0; I < v.size(); ++I) {}
+  for (int I = 0; I < v.size(); ++I)
+    printf("Hello world\n");
+  for (int I = 0; I < v.size(); ++I)
+    ++Count;
+  for (int I = 0; I < v.size(); ++I)
+    foo();
+}
+
+} // namespace NoUsages
