@@ -476,8 +476,6 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       Out = &W.getBSS();
       break;
     case SymbolBody::UndefinedKind:
-      if (!Body->isWeak())
-        error(Twine("undefined symbol: ") + Name);
     case SymbolBody::DefinedAbsoluteKind:
     case SymbolBody::SharedKind:
       break;
@@ -614,6 +612,9 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   for (auto &P : Symtab.getSymbols()) {
     StringRef Name = P.first;
     SymbolBody *Body = P.second->Body;
+    if (Body->isStrongUndefined())
+      error(Twine("undefined symbol: ") + Name);
+
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
     if (!includeInSymtab(*Body))
