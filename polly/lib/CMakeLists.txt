@@ -267,6 +267,10 @@ set (ISL_FILES
     External/isl/imath/imrat.c
     )
 
+set(POLLY_HEADER_FILES)
+if (MSVC_IDE OR XCODE)
+  file(GLOB_RECURSE POLLY_HEADER_FILES "${POLLY_SOURCE_DIR}/include/polly/*.h")
+endif ()
 
 add_polly_library(Polly
   Analysis/DependenceInfo.cpp
@@ -296,6 +300,7 @@ add_polly_library(Polly
   Transform/IndependentBlocks.cpp
   Transform/ScheduleOptimizer.cpp
   ${ISL_FILES}
+  ${POLLY_HEADER_FILES}
   )
 
 # ISL requires at least C99 to compile. gcc < 5.0 use -std=gnu89 as default.
