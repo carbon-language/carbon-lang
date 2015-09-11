@@ -114,7 +114,8 @@ public:
   typedef typename OutputSectionBase<Is64Bits>::uintX_t uintX_t;
   StringTableSection(bool Dynamic)
       : OutputSectionBase<Is64Bits>(Dynamic ? ".dynstr" : ".strtab", SHT_STRTAB,
-                                    Dynamic ? (uintX_t)SHF_ALLOC : 0) {
+                                    Dynamic ? (uintX_t)SHF_ALLOC : 0),
+        Dynamic(Dynamic) {
     this->Header.sh_addralign = 1;
   }
 
@@ -128,7 +129,10 @@ public:
     this->Header.sh_size = StrTabBuilder.data().size();
   }
 
+  bool isDynamic() const { return Dynamic; }
+
 private:
+  const bool Dynamic;
   llvm::StringTableBuilder StrTabBuilder;
 };
 
@@ -141,7 +145,10 @@ public:
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
   SymbolTableSection(Writer<ELFT> &W, SymbolTable &Table,
                      StringTableSection<ELFT::Is64Bits> &StrTabSec)
-      : OutputSectionBase<ELFT::Is64Bits>(".symtab", SHT_SYMTAB, 0),
+      : OutputSectionBase<ELFT::Is64Bits>(
+            StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
+            StrTabSec.isDynamic() ? SHT_DYNSYM : SHT_SYMTAB,
+            StrTabSec.isDynamic() ? (uintX_t)SHF_ALLOC : 0),
         Table(Table), StrTabSec(StrTabSec), W(W) {
     typedef OutputSectionBase<ELFT::Is64Bits> Base;
     typename Base::HeaderT &Header = this->Header;
@@ -247,8 +254,8 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Phdr Elf_Phdr;
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   Writer(SymbolTable *T)
-      : StrTabSec(false), DynStrSec(true), SymTable(*this, *T, StrTabSec),
-        DynamicSec(*T, DynStrSec) {}
+      : StrTabSec(false), DynStrSec(true), SymTabSec(*this, *T, StrTabSec),
+        DynSymSec(*this, *T, DynStrSec), DynamicSec(*T, DynStrSec) {}
   void run();
 
   const OutputSection<ELFT> &getBSS() const {
@@ -276,7 +283,8 @@ private:
   StringTableSection<ELFT::Is64Bits> StrTabSec;
   StringTableSection<ELFT::Is64Bits> DynStrSec;
 
-  SymbolTableSection<ELFT> SymTable;
+  SymbolTableSection<ELFT> SymTabSec;
+  SymbolTableSection<ELFT> DynSymSec;
 
   DynamicSection<ELFT::Is64Bits> DynamicSec;
 
@@ -541,7 +549,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     return Sec;
   };
 
-  const SymbolTable &Symtab = SymTable.getSymTable();
+  const SymbolTable &Symtab = SymTabSec.getSymTable();
   for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.getObjectFiles()) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     for (SectionChunk<ELFT> *C : File.getChunks()) {
@@ -554,6 +562,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     }
   }
 
+  const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
+      Symtab.getSharedFiles();
   BSSSec = getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
   // FIXME: Try to avoid the extra walk over all global symbols.
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
@@ -564,7 +574,13 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       CommonSymbols.push_back(C);
     if (!includeInSymtab(*Body))
       continue;
-    SymTable.addSymbol(Name);
+    SymTabSec.addSymbol(Name);
+
+    // FIXME: This adds way too much to the dynamic symbol table. We only
+    // need to add the symbols use by dynamic relocations when producing
+    // an executable (ignoring --export-dynamic).
+    if (!SharedFiles.empty())
+      DynSymSec.addSymbol(Name);
   }
 
   // Sort the common symbols by alignment as an heuristic to pack them better.
@@ -580,12 +596,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   BSSSec->setSize(Off);
 
-  OutputSections.push_back(&SymTable);
+  OutputSections.push_back(&SymTabSec);
   OutputSections.push_back(&StrTabSec);
 
-  const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
-      Symtab.getSharedFiles();
   if (!SharedFiles.empty()) {
+    OutputSections.push_back(&DynSymSec);
     OutputSections.push_back(&DynamicSec);
     OutputSections.push_back(&DynStrSec);
   }
@@ -644,7 +659,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   }
 
   // Add a PHDR for the dynamic table.
-  if (!SymTable.getSymTable().getSharedFiles().empty())
+  if (!SymTabSec.getSymTable().getSharedFiles().empty())
     ++NumPhdrs;
 
   FileOff += OffsetToAlignment(FileOff, ELFT::Is64Bits ? 8 : 4);
@@ -682,7 +697,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
 
   // FIXME: Generalize the segment construction similar to how we create
   // output sections.
-  const SymbolTable &Symtab = SymTable.getSymTable();
+  const SymbolTable &Symtab = SymTabSec.getSymTable();
   bool HasDynamicSegment = !Symtab.getSharedFiles().empty();
 
   EHdr->e_type = ET_EXEC;
