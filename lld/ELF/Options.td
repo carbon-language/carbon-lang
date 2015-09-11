@@ -12,3 +12,6 @@ def dynamic_linker : Separate<["-"], "dynamic-linker">,
 
 def rpath : Separate<["-"], "rpath">,
      HelpText<"Add a DT_RUNPATH to the output">;
+
+def shared : Flag<["-"], "shared">,
+     HelpText<"Build a shared object">;

@@ -311,6 +311,10 @@ private:
     return !SymTabSec.getSymTable().getSharedFiles().empty() &&
            !Config->DynamicLinker.empty();
   }
+  bool needsDynamicSections() const {
+    return !SymTabSec.getSymTable().getSharedFiles().empty() || Config->Shared;
+  }
+  unsigned getVAStart() const { return Config->Shared ? 0 : VAStart; }
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
   llvm::SpecificBumpPtrAllocator<OutputSection<ELFT>> CAlloc;
@@ -604,8 +608,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     }
   }
 
-  const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
-      Symtab.getSharedFiles();
   BSSSec = getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
   // FIXME: Try to avoid the extra walk over all global symbols.
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
@@ -624,7 +626,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     // FIXME: This adds way too much to the dynamic symbol table. We only
     // need to add the symbols use by dynamic relocations when producing
     // an executable (ignoring --export-dynamic).
-    if (!SharedFiles.empty())
+    if (needsDynamicSections())
       DynSymSec.addSymbol(Name);
   }
 
@@ -644,7 +646,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   OutputSections.push_back(&SymTabSec);
   OutputSections.push_back(&StrTabSec);
 
-  if (!SharedFiles.empty()) {
+  if (needsDynamicSections()) {
     if (needsInterpSection())
       OutputSections.push_back(&InterpSec);
     OutputSections.push_back(&DynSymSec);
@@ -666,7 +668,7 @@ static bool outputSectionHasPHDR(OutputSectionBase<ELFT::Is64Bits> *Sec) {
 // Visits all sections to assign incremental, non-overlapping RVAs and
 // file offsets.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
-  uintX_t VA = VAStart;
+  uintX_t VA = getVAStart();
   uintX_t FileOff = 0;
 
   FileOff += sizeof(Elf_Ehdr);
@@ -711,7 +713,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   }
 
   // Add a PHDR for the dynamic table.
-  if (!SymTabSec.getSymTable().getSharedFiles().empty())
+  if (needsDynamicSections())
     ++NumPhdrs;
 
   FileOff += OffsetToAlignment(FileOff, ELFT::Is64Bits ? 8 : 4);
@@ -762,13 +764,13 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   // FIXME: Generalize the segment construction similar to how we create
   // output sections.
   const SymbolTable &Symtab = SymTabSec.getSymTable();
-  bool HasDynamicSegment = !Symtab.getSharedFiles().empty();
 
-  EHdr->e_type = ET_EXEC;
+  EHdr->e_type = Config->Shared ? ET_DYN : ET_EXEC;
   auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.getFirstELF());
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
-  EHdr->e_entry = getSymVA(cast<DefinedRegular<ELFT>>(Symtab.getEntrySym()));
+  SymbolBody *Entry = Symtab.getEntrySym();
+  EHdr->e_entry = Entry ? getSymVA(cast<DefinedRegular<ELFT>>(Entry)) : 0;
   EHdr->e_phoff = ProgramHeaderOff;
   EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_ehsize = sizeof(Elf_Ehdr);
@@ -788,7 +790,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   PHdrs->p_type = PT_LOAD;
   PHdrs->p_flags = PF_R;
   PHdrs->p_offset = 0;
-  PHdrs->p_vaddr = VAStart;
+  PHdrs->p_vaddr = getVAStart();
   PHdrs->p_paddr = PHdrs->p_vaddr;
   PHdrs->p_filesz = ProgramHeaderOff + NumPhdrs * sizeof(Elf_Phdr);
   PHdrs->p_memsz = PHdrs->p_filesz;
@@ -809,7 +811,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
     ++PHdrs;
   }
 
-  if (HasDynamicSegment) {
+  if (needsDynamicSections()) {
     PHdrs->p_type = PT_DYNAMIC;
     setValuesFromSection<ELFT>(*PHdrs, DynamicSec);
   }

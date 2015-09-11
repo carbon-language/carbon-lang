@@ -19,6 +19,7 @@ struct Configuration {
   llvm::StringRef OutputFile;
   llvm::StringRef DynamicLinker;
   std::string RPath;
+  bool Shared = false;
 };
 
 extern Configuration *Config;

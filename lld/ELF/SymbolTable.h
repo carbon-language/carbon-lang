@@ -55,6 +55,8 @@ public:
   }
 
   SymbolBody *getEntrySym() const {
+    if (!EntrySym)
+      return nullptr;
     return EntrySym->getReplacement();
   }
 

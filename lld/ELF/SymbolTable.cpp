@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SymbolTable.h"
+#include "Config.h"
 #include "Error.h"
 #include "Symbols.h"
 
@@ -32,6 +33,8 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
 }
 
 template <class ELFT> void SymbolTable::init() {
+  if (Config->Shared)
+    return;
   EntrySym = new (Alloc) Undefined<ELFT>("_start", Undefined<ELFT>::Synthetic);
   resolve<ELFT>(EntrySym);
 }

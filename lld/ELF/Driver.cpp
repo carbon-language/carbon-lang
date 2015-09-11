@@ -79,6 +79,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (!RPaths.empty())
     Config->RPath = llvm::join(RPaths.begin(), RPaths.end(), ":");
 
+  if (Args.hasArg(OPT_shared))
+    Config->Shared = true;
+
   // Create a list of input files.
   std::vector<MemoryBufferRef> Inputs;
 
