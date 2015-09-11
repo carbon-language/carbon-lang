@@ -71,6 +71,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginObjectFilePECOFF.a \
 	lldbPluginOSPython.a \
 	lldbPluginPlatformGDB.a \
+	lldbPluginProcessElfCore.a \
 	lldbPluginProcessGDBRemote.a \
 	lldbPluginSymbolFileDWARF.a \
 	lldbPluginSymbolFileSymtab.a \
@@ -124,26 +125,22 @@ ifeq ($(HOST_OS),Darwin)
               lldbPluginSymbolVendorMacOSX.a \
               lldbPluginProcessDarwin.a \
               lldbPluginProcessMachCore.a \
-              lldbPluginProcessElfCore.a \
               lldbPluginJITLoaderGDB.a
 endif
 
 ifeq ($(HOST_OS),Linux)
   USEDLIBS += lldbPluginProcessLinux.a \
               lldbPluginProcessPOSIX.a \
-              lldbPluginProcessElfCore.a \
               lldbPluginJITLoaderGDB.a
 endif
 
 ifeq ($(HOST_OS),MingW)
-  USEDLIBS += lldbPluginProcessElfCore.a \
-              lldbPluginJITLoaderGDB.a
+  USEDLIBS += lldbPluginJITLoaderGDB.a
 endif
 
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
   USEDLIBS += lldbPluginProcessPOSIX.a \
               lldbPluginProcessFreeBSD.a \
-              lldbPluginProcessElfCore.a \
               lldbPluginJITLoaderGDB.a
 endif
 

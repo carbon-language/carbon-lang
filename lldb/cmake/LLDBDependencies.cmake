@@ -89,7 +89,6 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
   list(APPEND LLDB_USED_LIBS
     lldbPluginProcessLinux
     lldbPluginProcessPOSIX
-    lldbPluginProcessElfCore
    )
 endif ()
 
@@ -98,7 +97,6 @@ if ( CMAKE_SYSTEM_NAME MATCHES "FreeBSD" )
   list(APPEND LLDB_USED_LIBS
     lldbPluginProcessFreeBSD
     lldbPluginProcessPOSIX
-    lldbPluginProcessElfCore
     )
 endif ()
 
