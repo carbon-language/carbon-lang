@@ -870,7 +870,8 @@ bool ExprEngine::shouldInlineCall(const CallEvent &Call, const Decl *D,
   // Do not inline large functions too many times.
   if ((Engine.FunctionSummaries->getNumTimesInlined(D) >
        Opts.getMaxTimesInlineLarge()) &&
-      CalleeCFG->getNumBlockIDs() > 13) {
+       CalleeCFG->getNumBlockIDs() >=
+       Opts.getMinCFGSizeTreatFunctionsAsLarge()) {
     NumReachedInlineCountMax++;
     return false;
   }

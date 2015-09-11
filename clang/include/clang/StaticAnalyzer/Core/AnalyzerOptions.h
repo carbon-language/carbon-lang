@@ -253,6 +253,9 @@ private:
   /// \sa getMaxTimesInlineLarge
   Optional<unsigned> MaxTimesInlineLarge;
 
+  /// \sa getMinCFGSizeTreatFunctionsAsLarge
+  Optional<unsigned> MinCFGSizeTreatFunctionsAsLarge;
+
   /// \sa getMaxNodesPerTopLevelFunction
   Optional<unsigned> MaxNodesPerTopLevelFunction;
 
@@ -504,6 +507,13 @@ public:
   ///
   /// This is controlled by the 'max-times-inline-large' config option.
   unsigned getMaxTimesInlineLarge();
+
+  /// Returns the number of basic blocks a function needs to have to be
+  /// considered large for the 'max-times-inline-large' config option.
+  ///
+  /// This is controlled by the 'min-cfg-size-treat-functions-as-large' config
+  /// option.
+  unsigned getMinCFGSizeTreatFunctionsAsLarge();
 
   /// Returns the maximum number of nodes the analyzer can generate while
   /// exploring a top level function (for each exploded graph).
