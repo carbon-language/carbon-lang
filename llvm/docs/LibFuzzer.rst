@@ -439,6 +439,10 @@ Trophies
 
 * ICU: http://bugs.icu-project.org/trac/ticket/11838
 
+* Freetype: https://savannah.nongnu.org/search/?words=LibFuzzer&type_of_search=bugs&Search=Search&exact=1#options
+
+* Linux Kernel's BPF verifier: https://github.com/iovisor/bpf-fuzzer
+
 * LLVM:
 
   * Clang: https://llvm.org/bugs/show_bug.cgi?id=23057
