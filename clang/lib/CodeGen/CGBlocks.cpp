@@ -221,7 +221,7 @@ namespace {
       return left.Alignment > right.Alignment;
 
     auto getPrefOrder = [](const BlockLayoutChunk &chunk) {
-      if (chunk.Capture->isByRef())
+      if (chunk.Capture && chunk.Capture->isByRef())
         return 1;
       if (chunk.Lifetime == Qualifiers::OCL_Strong)
         return 0;
