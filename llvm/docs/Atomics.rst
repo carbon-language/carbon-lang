@@ -446,7 +446,7 @@ It is often easiest for backends to use AtomicExpandPass to lower some of the
 atomic constructs. Here are some lowerings it can do:
 
 * cmpxchg -> loop with load-linked/store-conditional
-  by overriding ``hasLoadLinkedStoreConditional()``, ``emitLoadLinked()``,
+  by overriding ``shouldExpandAtomicCmpXchgInIR()``, ``emitLoadLinked()``,
   ``emitStoreConditional()``
 * large loads/stores -> ll-sc/cmpxchg
   by overriding ``shouldExpandAtomicStoreInIR()``/``shouldExpandAtomicLoadInIR()``

@@ -2499,9 +2499,12 @@ Value *HexagonTargetLowering::emitStoreConditional(IRBuilder<> &Builder,
   return Ext;
 }
 
-bool HexagonTargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
+TargetLowering::AtomicExpansionKind
+HexagonTargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
   // Do not expand loads and stores that don't exceed 64 bits.
-  return LI->getType()->getPrimitiveSizeInBits() > 64;
+  return LI->getType()->getPrimitiveSizeInBits() > 64
+             ? AtomicExpansionKind::LLSC
+             : AtomicExpansionKind::None;
 }
 
 bool HexagonTargetLowering::shouldExpandAtomicStoreInIR(StoreInst *SI) const {

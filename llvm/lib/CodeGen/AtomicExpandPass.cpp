@@ -46,7 +46,7 @@ namespace {
   private:
     bool bracketInstWithFences(Instruction *I, AtomicOrdering Order,
                                bool IsStore, bool IsLoad);
-    bool expandAtomicLoad(LoadInst *LI);
+    bool tryExpandAtomicLoad(LoadInst *LI);
     bool expandAtomicLoadToLL(LoadInst *LI);
     bool expandAtomicLoadToCmpXchg(LoadInst *LI);
     bool expandAtomicStore(StoreInst *SI);
@@ -109,7 +109,7 @@ bool AtomicExpand::runOnFunction(Function &F) {
         FenceOrdering = RMWI->getOrdering();
         RMWI->setOrdering(Monotonic);
         IsStore = IsLoad = true;
-      } else if (CASI && !TLI->hasLoadLinkedStoreConditional() &&
+      } else if (CASI && !TLI->shouldExpandAtomicCmpXchgInIR(CASI) &&
                  (isAtLeastRelease(CASI->getSuccessOrdering()) ||
                   isAtLeastAcquire(CASI->getSuccessOrdering()))) {
         // If a compare and swap is lowered to LL/SC, we can do smarter fence
@@ -127,8 +127,8 @@ bool AtomicExpand::runOnFunction(Function &F) {
       }
     }
 
-    if (LI && TLI->shouldExpandAtomicLoadInIR(LI)) {
-      MadeChange |= expandAtomicLoad(LI);
+    if (LI) {
+      MadeChange |= tryExpandAtomicLoad(LI);
     } else if (SI && TLI->shouldExpandAtomicStoreInIR(SI)) {
       MadeChange |= expandAtomicStore(SI);
     } else if (RMWI) {
@@ -142,7 +142,7 @@ bool AtomicExpand::runOnFunction(Function &F) {
       } else {
         MadeChange |= tryExpandAtomicRMW(RMWI);
       }
-    } else if (CASI && TLI->hasLoadLinkedStoreConditional()) {
+    } else if (CASI && TLI->shouldExpandAtomicCmpXchgInIR(CASI)) {
       MadeChange |= expandAtomicCmpXchg(CASI);
     }
   }
@@ -170,11 +170,18 @@ bool AtomicExpand::bracketInstWithFences(Instruction *I, AtomicOrdering Order,
   return (LeadingFence || TrailingFence);
 }
 
-bool AtomicExpand::expandAtomicLoad(LoadInst *LI) {
-  if (TLI->hasLoadLinkedStoreConditional())
+bool AtomicExpand::tryExpandAtomicLoad(LoadInst *LI) {
+  switch (TLI->shouldExpandAtomicLoadInIR(LI)) {
+  case TargetLoweringBase::AtomicExpansionKind::None:
+    return false;
+  case TargetLoweringBase::AtomicExpansionKind::LLSC: {
     return expandAtomicLoadToLL(LI);
-  else
+  }
+  case TargetLoweringBase::AtomicExpansionKind::CmpXChg: {
     return expandAtomicLoadToCmpXchg(LI);
+  }
+  }
+  llvm_unreachable("Unhandled case in tryExpandAtomicLoad");
 }
 
 bool AtomicExpand::expandAtomicLoadToLL(LoadInst *LI) {
@@ -243,11 +250,6 @@ bool AtomicExpand::tryExpandAtomicRMW(AtomicRMWInst *AI) {
   case TargetLoweringBase::AtomicExpansionKind::None:
     return false;
   case TargetLoweringBase::AtomicExpansionKind::LLSC: {
-    assert(TLI->hasLoadLinkedStoreConditional() &&
-           "TargetLowering requested we expand AtomicRMW instruction into "
-           "load-linked/store-conditional combos, but such instructions aren't "
-           "supported");
-
     return expandAtomicRMWToLLSC(AI);
   }
   case TargetLoweringBase::AtomicExpansionKind::CmpXChg: {
@@ -503,11 +505,8 @@ bool AtomicExpand::isIdempotentRMW(AtomicRMWInst* RMWI) {
 }
 
 bool AtomicExpand::simplifyIdempotentRMW(AtomicRMWInst* RMWI) {
-  if (auto ResultingLoad = TLI->lowerIdempotentRMWIntoFencedLoad(RMWI)) {
-    if (TLI->shouldExpandAtomicLoadInIR(ResultingLoad))
-      expandAtomicLoad(ResultingLoad);
-    return true;
-  }
+  if (auto ResultingLoad = TLI->lowerIdempotentRMWIntoFencedLoad(RMWI))
+    return tryExpandAtomicLoad(ResultingLoad);
   return false;
 }
 

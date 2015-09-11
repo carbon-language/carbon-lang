@@ -9492,19 +9492,21 @@ bool AArch64TargetLowering::shouldExpandAtomicStoreInIR(StoreInst *SI) const {
 // Loads and stores less than 128-bits are already atomic; ones above that
 // are doomed anyway, so defer to the default libcall and blame the OS when
 // things go wrong.
-bool AArch64TargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
+TargetLowering::AtomicExpansionKind
+AArch64TargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
   unsigned Size = LI->getType()->getPrimitiveSizeInBits();
-  return Size == 128;
+  return Size == 128 ? AtomicExpansionKind::LLSC : AtomicExpansionKind::None;
 }
 
 // For the real atomic operations, we have ldxr/stxr up to 128 bits,
-TargetLoweringBase::AtomicExpansionKind
+TargetLowering::AtomicExpansionKind
 AArch64TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
   unsigned Size = AI->getType()->getPrimitiveSizeInBits();
   return Size <= 128 ? AtomicExpansionKind::LLSC : AtomicExpansionKind::None;
 }
 
-bool AArch64TargetLowering::hasLoadLinkedStoreConditional() const {
+bool AArch64TargetLowering::shouldExpandAtomicCmpXchgInIR(
+    AtomicCmpXchgInst *AI) const {
   return true;
 }
 
