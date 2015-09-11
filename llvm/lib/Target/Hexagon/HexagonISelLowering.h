@@ -218,9 +218,9 @@ bool isPositiveHalfWord(SDNode *N);
         Value *Addr, AtomicOrdering Ord) const override;
     bool shouldExpandAtomicLoadInIR(LoadInst *LI) const override;
     bool shouldExpandAtomicStoreInIR(StoreInst *SI) const override;
-    AtomicRMWExpansionKind shouldExpandAtomicRMWInIR(AtomicRMWInst *AI)
-        const override {
-      return AtomicRMWExpansionKind::LLSC;
+    AtomicExpansionKind
+    shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const override {
+      return AtomicExpansionKind::LLSC;
     }
   };
 } // end namespace llvm

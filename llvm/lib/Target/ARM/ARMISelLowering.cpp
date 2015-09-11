@@ -11534,12 +11534,12 @@ bool ARMTargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
 
 // For the real atomic operations, we have ldrex/strex up to 32 bits,
 // and up to 64 bits on the non-M profiles
-TargetLoweringBase::AtomicRMWExpansionKind
+TargetLoweringBase::AtomicExpansionKind
 ARMTargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
   unsigned Size = AI->getType()->getPrimitiveSizeInBits();
   return (Size <= (Subtarget->isMClass() ? 32U : 64U))
-             ? AtomicRMWExpansionKind::LLSC
-             : AtomicRMWExpansionKind::None;
+             ? AtomicExpansionKind::LLSC
+             : AtomicExpansionKind::None;
 }
 
 // This has so far only been implemented for MachO.

@@ -240,9 +240,9 @@ static void createCmpXchgInstFun(IRBuilder<> &Builder, Value *Addr,
 
 bool AtomicExpand::tryExpandAtomicRMW(AtomicRMWInst *AI) {
   switch (TLI->shouldExpandAtomicRMWInIR(AI)) {
-  case TargetLoweringBase::AtomicRMWExpansionKind::None:
+  case TargetLoweringBase::AtomicExpansionKind::None:
     return false;
-  case TargetLoweringBase::AtomicRMWExpansionKind::LLSC: {
+  case TargetLoweringBase::AtomicExpansionKind::LLSC: {
     assert(TLI->hasLoadLinkedStoreConditional() &&
            "TargetLowering requested we expand AtomicRMW instruction into "
            "load-linked/store-conditional combos, but such instructions aren't "
@@ -250,7 +250,7 @@ bool AtomicExpand::tryExpandAtomicRMW(AtomicRMWInst *AI) {
 
     return expandAtomicRMWToLLSC(AI);
   }
-  case TargetLoweringBase::AtomicRMWExpansionKind::CmpXChg: {
+  case TargetLoweringBase::AtomicExpansionKind::CmpXChg: {
     return expandAtomicRMWToCmpXchg(AI, createCmpXchgInstFun);
   }
   }

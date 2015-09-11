@@ -9498,11 +9498,10 @@ bool AArch64TargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
 }
 
 // For the real atomic operations, we have ldxr/stxr up to 128 bits,
-TargetLoweringBase::AtomicRMWExpansionKind
+TargetLoweringBase::AtomicExpansionKind
 AArch64TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
   unsigned Size = AI->getType()->getPrimitiveSizeInBits();
-  return Size <= 128 ? AtomicRMWExpansionKind::LLSC
-                     : AtomicRMWExpansionKind::None;
+  return Size <= 128 ? AtomicExpansionKind::LLSC : AtomicExpansionKind::None;
 }
 
 bool AArch64TargetLowering::hasLoadLinkedStoreConditional() const {

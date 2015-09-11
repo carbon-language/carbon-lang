@@ -128,7 +128,7 @@ public:
   /// because different targets have different levels of support for these
   /// atomic RMW instructions, and also have different options w.r.t. what they
   /// should expand to.
-  enum class AtomicRMWExpansionKind {
+  enum class AtomicExpansionKind {
     None,      // Don't expand the instruction.
     LLSC,      // Expand the instruction into loadlinked/storeconditional; used
                // by ARM/AArch64. Implies `hasLoadLinkedStoreConditional`
@@ -1120,9 +1120,8 @@ public:
 
   /// Returns how the IR-level AtomicExpand pass should expand the given
   /// AtomicRMW, if at all. Default is to never expand.
-  virtual AtomicRMWExpansionKind
-  shouldExpandAtomicRMWInIR(AtomicRMWInst *) const {
-    return AtomicRMWExpansionKind::None;
+  virtual AtomicExpansionKind shouldExpandAtomicRMWInIR(AtomicRMWInst *) const {
+    return AtomicExpansionKind::None;
   }
 
   /// On some platforms, an AtomicRMW that never actually modifies the value
