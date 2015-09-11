@@ -1258,39 +1258,40 @@ LOADING CHECKERS:
  -load-plugin [plugin library]
 ENDTEXT
 
-  # Query clang for list of checkers that are enabled.
+  if (defined $Clang && -x $Clang) {
+    # Query clang for list of checkers that are enabled.
 
-  # create a list to load the plugins via the 'Xclang' command line
-  # argument
-  my @PluginLoadCommandline_xclang;
-  foreach my $param ( @{$Options{PluginsToLoad}} ) {
-    push ( @PluginLoadCommandline_xclang, "-Xclang" );
-    push ( @PluginLoadCommandline_xclang, "-load" );
-    push ( @PluginLoadCommandline_xclang, "-Xclang" );
-    push ( @PluginLoadCommandline_xclang, $param );
-  }
+    # create a list to load the plugins via the 'Xclang' command line
+    # argument
+    my @PluginLoadCommandline_xclang;
+    foreach my $param ( @{$Options{PluginsToLoad}} ) {
+      push ( @PluginLoadCommandline_xclang, "-Xclang" );
+      push ( @PluginLoadCommandline_xclang, "-load" );
+      push ( @PluginLoadCommandline_xclang, "-Xclang" );
+      push ( @PluginLoadCommandline_xclang, $param );
+    }
 
-  my %EnabledCheckers;
-  foreach my $lang ("c", "objective-c", "objective-c++", "c++") {
-    my $ExecLine = join(' ', qq/"$Clang"/, @PluginLoadCommandline_xclang, "--analyze", "-x", $lang, "-", "-###", "2>&1", "|");
-    open(PS, $ExecLine);
-    while (<PS>) {
-      foreach my $val (split /\s+/) {
-        $val =~ s/\"//g;
-        if ($val =~ /-analyzer-checker\=([^\s]+)/) {
-          $EnabledCheckers{$1} = 1;
+    my %EnabledCheckers;
+    foreach my $lang ("c", "objective-c", "objective-c++", "c++") {
+      my $ExecLine = join(' ', qq/"$Clang"/, @PluginLoadCommandline_xclang, "--analyze", "-x", $lang, "-", "-###", "2>&1", "|");
+      open(PS, $ExecLine);
+      while (<PS>) {
+        foreach my $val (split /\s+/) {
+          $val =~ s/\"//g;
+          if ($val =~ /-analyzer-checker\=([^\s]+)/) {
+            $EnabledCheckers{$1} = 1;
+          }
         }
       }
     }
-  }
 
-  # Query clang for complete list of checkers.
-  my @PluginLoadCommandline;
-  foreach my $param ( @{$Options{PluginsToLoad}} ) {
-    push ( @PluginLoadCommandline, "-load" );
-    push ( @PluginLoadCommandline, $param );
-  }
-  if (defined $Clang && -x $Clang) {
+    # Query clang for complete list of checkers.
+    my @PluginLoadCommandline;
+    foreach my $param ( @{$Options{PluginsToLoad}} ) {
+      push ( @PluginLoadCommandline, "-load" );
+      push ( @PluginLoadCommandline, $param );
+    }
+
     my $ExecLine = join(' ', qq/"$Clang"/, "-cc1", @PluginLoadCommandline, "-analyzer-checker-help", "2>&1", "|");
     open(PS, $ExecLine);
     my $foundCheckers = 0;
@@ -1634,6 +1635,7 @@ if (!@ARGV) {
 }
 
 ProcessArgs(\@ARGV);
+# All arguments are now shifted from @ARGV. The rest is a build command, if any.
 
 if (!@ARGV and !$RequestDisplayHelp) {
   ErrorDiag("No build command specified.\n\n");
@@ -1642,9 +1644,9 @@ if (!@ARGV and !$RequestDisplayHelp) {
 
 # Find 'clang'
 if (!defined $Options{AnalyzerDiscoveryMethod}) {
-  $Clang = Cwd::realpath("$RealBin/bin/clang");
+  $Clang = Cwd::realpath("$RealBin/bin/clang") if (-d "$RealBin/bin/clang");
   if (!defined $Clang || ! -x $Clang) {
-    $Clang = Cwd::realpath("$RealBin/clang");
+    $Clang = Cwd::realpath("$RealBin/clang") if (-d "$RealBin/clang");
   }
   if (!defined $Clang || ! -x $Clang) {
     if (!$RequestDisplayHelp && !$ForceDisplayHelp) {
