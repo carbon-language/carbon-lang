@@ -355,7 +355,7 @@ private:
   ///        sum[i+j] = sum[i] + 3;
   ///
   /// Here not all iterations access the same memory location, but iterations
-  /// for which j = 0 holds do. After lifing the equality check in ScopInfo,
+  /// for which j = 0 holds do. After lifting the equality check in ScopInfo,
   /// subsequent transformations do not only need check if a statement is
   /// reduction like, but they also need to verify that that the reduction
   /// property is only exploited for statement instances that load from and
@@ -369,7 +369,7 @@ private:
   /// @brief The value associated with this memory access.
   ///
   ///  - For real memory accesses it is the loaded result or the stored value.
-  ///  - For straigt line scalar accesses it is the access instruction itself.
+  ///  - For straight line scalar accesses it is the access instruction itself.
   ///  - For PHI operand accesses it is the operand value.
   ///
   Value *AccessValue;
@@ -1466,7 +1466,7 @@ class ScopInfo : public RegionPass {
   // Clear the context.
   void clear();
 
-  // Build the temprory information of Region R, where R must be a valid part
+  // Build the temporary information of Region R, where R must be a valid part
   // of Scop.
   TempScop *buildTempScop(Region &R);
 
