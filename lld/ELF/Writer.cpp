@@ -111,6 +111,20 @@ private:
 
 namespace {
 template <bool Is64Bits>
+class InterpSection final : public OutputSectionBase<Is64Bits> {
+public:
+  InterpSection()
+      : OutputSectionBase<Is64Bits>(".interp", SHT_PROGBITS, SHF_ALLOC) {
+    this->Header.sh_size = Config->DynamicLinker.size() + 1;
+    this->Header.sh_addralign = 1;
+  }
+
+  void writeTo(uint8_t *Buf) override {
+    memcpy(Buf, Config->DynamicLinker.data(), Config->DynamicLinker.size());
+  }
+};
+
+template <bool Is64Bits>
 class StringTableSection final : public OutputSectionBase<Is64Bits> {
 public:
   typedef typename OutputSectionBase<Is64Bits>::uintX_t uintX_t;
@@ -169,7 +183,7 @@ public:
 
   void writeTo(uint8_t *Buf) override;
 
-  const SymbolTable &getSymTable() { return Table; }
+  const SymbolTable &getSymTable() const { return Table; }
 
   void addSymbol(StringRef Name) {
     StrTabSec.add(Name);
@@ -280,6 +294,10 @@ private:
   void openFile(StringRef OutputPath);
   void writeHeader();
   void writeSections();
+  bool needsInterpSection() const {
+    return !SymTabSec.getSymTable().getSharedFiles().empty() &&
+           !Config->DynamicLinker.empty();
+  }
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
   llvm::SpecificBumpPtrAllocator<OutputSection<ELFT>> CAlloc;
@@ -298,6 +316,8 @@ private:
   SymbolTableSection<ELFT> DynSymSec;
 
   DynamicSection<ELFT> DynamicSec;
+
+  InterpSection<ELFT::Is64Bits> InterpSec;
 
   OutputSection<ELFT> *BSSSec = nullptr;
 };
@@ -611,6 +631,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   OutputSections.push_back(&StrTabSec);
 
   if (!SharedFiles.empty()) {
+    if (needsInterpSection())
+      OutputSections.push_back(&InterpSec);
     OutputSections.push_back(&DynSymSec);
     OutputSections.push_back(&DynamicSec);
     OutputSections.push_back(&DynStrSec);
@@ -642,6 +664,11 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   VA = RoundUpToAlignment(VA, PageSize);
 
   NumPhdrs = 0;
+
+  // Add a PHDR for PT_INTERP.
+  if (needsInterpSection())
+    ++NumPhdrs;
+
   // Add a PHDR for the elf header and program headers. Some dynamic linkers
   // (musl at least) require them to be covered by a PT_LOAD.
   ++NumPhdrs;
@@ -692,6 +719,18 @@ static uint32_t convertSectionFlagsToPHDRFlags(uint64_t Flags) {
   return Ret;
 }
 
+template <class ELFT>
+static void setValuesFromSection(typename ELFFile<ELFT>::Elf_Phdr &P,
+                                 OutputSectionBase<ELFT::Is64Bits> &S) {
+  P.p_flags = convertSectionFlagsToPHDRFlags(S.getFlags());
+  P.p_offset = S.getFileOff();
+  P.p_vaddr = S.getVA();
+  P.p_paddr = P.p_vaddr;
+  P.p_filesz = S.getSize();
+  P.p_memsz = P.p_filesz;
+  P.p_align = S.getAlign();
+}
+
 template <class ELFT> void Writer<ELFT>::writeHeader() {
   uint8_t *Buf = Buffer->getBufferStart();
   auto *EHdr = reinterpret_cast<Elf_Ehdr *>(Buf);
@@ -726,6 +765,12 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_shstrndx = StrTabSec.getSectionIndex();
 
   auto PHdrs = reinterpret_cast<Elf_Phdr *>(Buf + EHdr->e_phoff);
+  if (needsInterpSection()) {
+    PHdrs->p_type = PT_INTERP;
+    setValuesFromSection<ELFT>(*PHdrs, InterpSec);
+    ++PHdrs;
+  }
+
   PHdrs->p_type = PT_LOAD;
   PHdrs->p_flags = PF_R;
   PHdrs->p_offset = 0;
@@ -752,13 +797,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
 
   if (HasDynamicSegment) {
     PHdrs->p_type = PT_DYNAMIC;
-    PHdrs->p_flags = convertSectionFlagsToPHDRFlags(DynamicSec.getFlags());
-    PHdrs->p_offset = DynamicSec.getFileOff();
-    PHdrs->p_vaddr = DynamicSec.getVA();
-    PHdrs->p_paddr = PHdrs->p_vaddr;
-    PHdrs->p_filesz = DynamicSec.getSize();
-    PHdrs->p_memsz = DynamicSec.getSize();
-    PHdrs->p_align = DynamicSec.getAlign();
+    setValuesFromSection<ELFT>(*PHdrs, DynamicSec);
   }
 
   auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);

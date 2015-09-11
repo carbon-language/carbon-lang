@@ -68,6 +68,10 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (Config->OutputFile.empty())
     error("-o must be specified.");
 
+  // Handle -dynamic-linker
+  if (auto *Arg = Args.getLastArg(OPT_dynamic_linker))
+    Config->DynamicLinker = Arg->getValue();
+
   // Create a list of input files.
   std::vector<MemoryBufferRef> Inputs;
 

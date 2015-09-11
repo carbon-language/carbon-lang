@@ -17,6 +17,7 @@ namespace elf2 {
 
 struct Configuration {
   llvm::StringRef OutputFile;
+  llvm::StringRef DynamicLinker;
 };
 
 extern Configuration *Config;
