@@ -148,7 +148,9 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
 }
 
 llvm::DIScope *CGDebugInfo::getDeclContextDescriptor(const Decl *D) {
-  return getContextDescriptor(cast<Decl>(D->getDeclContext()), TheCU);
+  llvm::DIScope *Mod = getParentModuleOrNull(D);
+  return getContextDescriptor(cast<Decl>(D->getDeclContext()),
+                              Mod ? Mod : TheCU);
 }
 
 llvm::DIScope *CGDebugInfo::getContextDescriptor(const Decl *Context,
@@ -1448,6 +1450,9 @@ void CGDebugInfo::completeRequiredType(const RecordDecl *RD) {
     if (CXXDecl->isDynamicClass())
       return;
 
+  if (DebugTypeExtRefs && RD->isFromASTFile())
+    return;
+
   QualType Ty = CGM.getContext().getRecordType(RD);
   llvm::DIType *T = getTypeOrNull(Ty);
   if (T && T->isForwardDecl())
@@ -1669,9 +1674,9 @@ CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod) {
       TheCU->getSourceLanguage(), internString(Mod.ModuleName),
       internString(Mod.Path), TheCU->getProducer(), true, StringRef(), 0,
       internString(Mod.ASTFile), llvm::DIBuilder::FullDebug, Mod.Signature);
-  llvm::DIModule *M =
-      DIB.createModule(CU, Mod.ModuleName, ConfigMacros, internString(Mod.Path),
-                       internString(CGM.getHeaderSearchOpts().Sysroot));
+  llvm::DIModule *M = DIB.createModule(
+      CU, Mod.ModuleName, ConfigMacros, internString(Mod.Path),
+      internString(CGM.getHeaderSearchOpts().Sysroot));
   DIB.finalize();
   ModRef.reset(M);
   return M;
@@ -2081,9 +2086,16 @@ llvm::DIType *CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile *Unit) {
   if (auto *T = getTypeOrNull(Ty))
     return T;
 
+  llvm::DIType *Res = nullptr;
+  if (DebugTypeExtRefs)
+    // Make a forward declaration of an external type.
+    Res = getTypeExtRefOrNull(Ty, Unit);
+
   // Otherwise create the type.
-  llvm::DIType *Res = CreateTypeNode(Ty, Unit);
-  void *TyPtr = Ty.getAsOpaquePtr();
+  if (!Res)
+    Res = CreateTypeNode(Ty, Unit);
+
+  void* TyPtr = Ty.getAsOpaquePtr();
 
   // And update the type cache.
   TypeCache[TyPtr].reset(Res);
@@ -2113,6 +2125,123 @@ ObjCInterfaceDecl *CGDebugInfo::getObjCInterfaceDecl(QualType Ty) {
   default:
     return nullptr;
   }
+}
+
+llvm::DIModule *CGDebugInfo::getParentModuleOrNull(const Decl *D) {
+  if (!DebugTypeExtRefs || !D || !D->isFromASTFile())
+    return nullptr;
+
+  llvm::DIModule *ModuleRef = nullptr;
+  auto *Reader = CGM.getContext().getExternalSource();
+  auto Idx = D->getOwningModuleID();
+  auto Info = Reader->getSourceDescriptor(Idx);
+  if (Info)
+    ModuleRef = getOrCreateModuleRef(*Info);
+  return ModuleRef;
+}
+
+llvm::DIType *CGDebugInfo::getTypeExtRefOrNull(QualType Ty, llvm::DIFile *F,
+                                               bool Anchored) {
+  assert(DebugTypeExtRefs && "module debugging only");
+  Decl *TyDecl = nullptr;
+  StringRef Name;
+  SmallString<256> UID;
+  unsigned Tag = 0;
+
+  // Handle all types that have a declaration.
+  switch (Ty->getTypeClass()) {
+  case Type::Typedef: {
+    TyDecl = cast<TypedefType>(Ty)->getDecl();
+    if (!TyDecl->isFromASTFile())
+      return nullptr;
+
+    // A typedef will anchor a type in the module.
+    if (auto *TD = dyn_cast<TypedefDecl>(TyDecl)) {
+      // This is a working around the fact that LLVM does not allow
+      // typedefs to be forward declarations.
+      QualType Ty = TD->getUnderlyingType();
+      Ty = UnwrapTypeForDebugInfo(Ty, CGM.getContext());
+      if (auto *AnchoredTy = getTypeExtRefOrNull(Ty, F, /*Anchored=*/true)) {
+        TypeCache[Ty.getAsOpaquePtr()].reset(AnchoredTy);
+        SourceLocation Loc = TD->getLocation();
+        return DBuilder.createTypedef(AnchoredTy, TD->getName(),
+                                      getOrCreateFile(Loc), getLineNumber(Loc),
+                                      getDeclContextDescriptor(TD));
+      }
+    }
+    break;
+  }
+
+  case Type::Record: {
+    TyDecl = cast<RecordType>(Ty)->getDecl();
+    if (!TyDecl->isFromASTFile())
+      return nullptr;
+
+    if (auto *CTSD = dyn_cast<ClassTemplateSpecializationDecl>(TyDecl))
+      if (!CTSD->isExplicitInstantiationOrSpecialization() && !Anchored)
+        // We may not assume that this type made it into the module.
+        return nullptr;
+    // C++ classes and template instantiations.
+    if (auto *RD = dyn_cast<CXXRecordDecl>(TyDecl)) {
+      if (!RD->getDefinition())
+        return nullptr;
+      Tag = getTagForRecord(RD);
+      UID =
+          getUniqueTagTypeName(cast<TagType>(RD->getTypeForDecl()), CGM, TheCU);
+      Name = getClassName(RD);
+    } else if (auto *RD = dyn_cast<RecordDecl>(TyDecl)) {
+      // C-style structs.
+      if (!RD->getDefinition())
+        return nullptr;
+      Tag = getTagForRecord(RD);
+      Name = getClassName(RD);
+    }
+    break;
+  }
+
+  case Type::Enum: {
+    TyDecl = cast<EnumType>(Ty)->getDecl();
+    if (!TyDecl->isFromASTFile())
+      return nullptr;
+
+    if (auto *ED = dyn_cast<EnumDecl>(TyDecl)) {
+      if (!ED->getDefinition())
+        return nullptr;
+      Tag = llvm::dwarf::DW_TAG_enumeration_type;
+      if ((TheCU->getSourceLanguage() == llvm::dwarf::DW_LANG_C_plus_plus) ||
+          (TheCU->getSourceLanguage() == llvm::dwarf::DW_LANG_ObjC_plus_plus)) {
+        UID = getUniqueTagTypeName(cast<TagType>(ED->getTypeForDecl()), CGM,
+                                   TheCU);
+        Name = ED->getName();
+      }
+    }
+    break;
+  }
+
+  case Type::ObjCInterface: {
+    TyDecl = cast<ObjCInterfaceType>(Ty)->getDecl();
+    if (!TyDecl->isFromASTFile())
+      return nullptr;
+
+    if (auto *ID = dyn_cast<ObjCInterfaceDecl>(TyDecl)) {
+      if (!ID->getDefinition())
+        return nullptr;
+      Tag = llvm::dwarf::DW_TAG_structure_type;
+      Name = ID->getName();
+    }
+    break;
+  }
+
+  default:
+    return nullptr;
+  }
+
+  if (Tag && !Name.empty()) {
+    assert(TyDecl);
+    auto *Ctx = getDeclContextDescriptor(TyDecl);
+    return DBuilder.createForwardDecl(Tag, Name, Ctx, F, 0, 0, 0, 0, UID);
+  } else
+    return nullptr;
 }
 
 llvm::DIType *CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile *Unit) {
@@ -2325,8 +2454,10 @@ void CGDebugInfo::collectFunctionDeclProps(GlobalDecl GD, llvm::DIFile *Unit,
         dyn_cast_or_null<NamespaceDecl>(FD->getDeclContext()))
       FDContext = getOrCreateNameSpace(NSDecl);
     else if (const RecordDecl *RDecl =
-             dyn_cast_or_null<RecordDecl>(FD->getDeclContext()))
-      FDContext = getContextDescriptor(RDecl, TheCU);
+             dyn_cast_or_null<RecordDecl>(FD->getDeclContext())) {
+      llvm::DIScope *Mod = getParentModuleOrNull(RDecl);
+      FDContext = getContextDescriptor(RDecl, Mod ? Mod : TheCU);
+    }
     // Collect template parameters.
     TParamsArray = CollectFunctionTemplateParams(FD, Unit);
   }
@@ -2374,7 +2505,9 @@ void CGDebugInfo::collectVarDeclProps(const VarDecl *VD, llvm::DIFile *&Unit,
   // outside the class by putting it in the global scope.
   if (DC->isRecord())
     DC = CGM.getContext().getTranslationUnitDecl();
-  VDContext = getContextDescriptor(cast<Decl>(DC), TheCU);
+
+ llvm::DIScope *Mod = getParentModuleOrNull(VD);
+ VDContext = getContextDescriptor(cast<Decl>(DC), Mod ? Mod : TheCU);
 }
 
 llvm::DISubprogram *
@@ -3299,7 +3432,8 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
 llvm::DIScope *CGDebugInfo::getCurrentContextDescriptor(const Decl *D) {
   if (!LexicalBlockStack.empty())
     return LexicalBlockStack.back();
-  return getContextDescriptor(D, TheCU);
+  llvm::DIScope *Mod = getParentModuleOrNull(D);
+  return getContextDescriptor(D, Mod ? Mod : TheCU);
 }
 
 void CGDebugInfo::EmitUsingDirective(const UsingDirectiveDecl &UD) {

@@ -397,6 +397,15 @@ private:
   llvm::DIModule *
   getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod);
 
+  /// DebugTypeExtRefs: If \p D originated in a clang module, return it.
+  llvm::DIModule *getParentModuleOrNull(const Decl *D);
+
+  /// Return a forward declaration of an external type, if this type
+  /// came from a clang module.  If \p Anchored is true, template
+  /// types will be assumed to have been instantiated in the module.
+  llvm::DIType *getTypeExtRefOrNull(QualType Ty, llvm::DIFile *F,
+                                    bool Anchored = false);
+
   /// Get the type from the cache or create a new partial type if
   /// necessary.
   llvm::DICompositeType *getOrCreateLimitedType(const RecordType *Ty,
