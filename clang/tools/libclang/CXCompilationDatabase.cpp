@@ -111,6 +111,16 @@ clang_CompileCommand_getDirectory(CXCompileCommand CCmd)
   return cxstring::createRef(cmd->Directory.c_str());
 }
 
+CXString
+clang_CompileCommand_getFilename(CXCompileCommand CCmd)
+{
+  if (!CCmd)
+    return cxstring::createNull();
+
+  CompileCommand *cmd = static_cast<CompileCommand *>(CCmd);
+  return cxstring::createRef(cmd->Filename.c_str());
+}
+
 unsigned
 clang_CompileCommand_getNumArgs(CXCompileCommand CCmd)
 {

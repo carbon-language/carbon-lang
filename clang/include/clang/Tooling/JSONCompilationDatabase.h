@@ -99,13 +99,14 @@ private:
   /// failed.
   bool parse(std::string &ErrorMessage);
 
-  // Tuple (directory, commandline) where 'commandline' points to the
+  // Tuple (directory, filename, commandline) where 'commandline' points to the
   // corresponding scalar nodes in the YAML stream.
   // If the command line contains a single argument, it is a shell-escaped
   // command line.
   // Otherwise, each entry in the command line vector is a literal
   // argument to the compiler.
-  typedef std::pair<llvm::yaml::ScalarNode *,
+  typedef std::tuple<llvm::yaml::ScalarNode *,
+                     llvm::yaml::ScalarNode *,
                     std::vector<llvm::yaml::ScalarNode *>> CompileCommandRef;
 
   /// \brief Converts the given array of CompileCommandRefs to CompileCommands.

@@ -126,6 +126,12 @@ CINDEX_LINKAGE CXString
 clang_CompileCommand_getDirectory(CXCompileCommand);
 
 /**
+ * \brief Get the filename associated with the CompileCommand.
+ */
+CINDEX_LINKAGE CXString
+clang_CompileCommand_getFilename(CXCompileCommand);
+
+/**
  * \brief Get the number of arguments in the compiler invocation.
  *
  */

@@ -299,13 +299,15 @@ FixedCompilationDatabase(Twine Directory, ArrayRef<std::string> CommandLine) {
   std::vector<std::string> ToolCommandLine(1, "clang-tool");
   ToolCommandLine.insert(ToolCommandLine.end(),
                          CommandLine.begin(), CommandLine.end());
-  CompileCommands.emplace_back(Directory, std::move(ToolCommandLine));
+  CompileCommands.emplace_back(Directory, StringRef(),
+                               std::move(ToolCommandLine));
 }
 
 std::vector<CompileCommand>
 FixedCompilationDatabase::getCompileCommands(StringRef FilePath) const {
   std::vector<CompileCommand> Result(CompileCommands);
   Result[0].CommandLine.push_back(FilePath);
+  Result[0].Filename = FilePath;
   return Result;
 }
 
