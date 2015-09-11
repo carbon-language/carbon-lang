@@ -22,6 +22,7 @@ class ChangeValueAPITestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.change_value_api(self.exe_name)
 
+    @expectedFailureWindows("llvm.org/pr24772")
     @python_api_test
     @dwarf_test
     def test_change_value_with_dwarf(self):

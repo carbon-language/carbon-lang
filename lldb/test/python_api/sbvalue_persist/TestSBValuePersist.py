@@ -20,6 +20,7 @@ class SBValuePersistTestCase(TestBase):
         self.doTest()
 
     @python_api_test
+    @expectedFailureWindows("llvm.org/pr24772")
     @dwarf_test
     def test_with_dwarf(self):
         """Test SBValue::Persist"""
