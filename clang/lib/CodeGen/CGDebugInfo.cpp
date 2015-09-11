@@ -1638,9 +1638,9 @@ llvm::DIType *CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
 llvm::DIModule *
 CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod) {
-  auto it = ModuleRefCache.find(Mod.Signature);
-  if (it != ModuleRefCache.end())
-    return it->second;
+  auto &ModRef = ModuleRefCache[Mod.Signature];
+  if (ModRef)
+    return cast<llvm::DIModule>(ModRef);
 
   // Macro definitions that were defined with "-D" on the command line.
   SmallString<128> ConfigMacros;
@@ -1669,12 +1669,12 @@ CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod) {
       TheCU->getSourceLanguage(), internString(Mod.ModuleName),
       internString(Mod.Path), TheCU->getProducer(), true, StringRef(), 0,
       internString(Mod.ASTFile), llvm::DIBuilder::FullDebug, Mod.Signature);
-  llvm::DIModule *ModuleRef =
+  llvm::DIModule *M =
       DIB.createModule(CU, Mod.ModuleName, ConfigMacros, internString(Mod.Path),
                        internString(CGM.getHeaderSearchOpts().Sysroot));
   DIB.finalize();
-  ModuleRefCache.insert(std::make_pair(Mod.Signature, ModuleRef));
-  return ModuleRef;
+  ModRef.reset(M);
+  return M;
 }
 
 llvm::DIType *CGDebugInfo::CreateTypeDefinition(const ObjCInterfaceType *Ty,

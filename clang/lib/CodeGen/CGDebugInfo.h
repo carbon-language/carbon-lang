@@ -84,7 +84,7 @@ class CGDebugInfo {
   llvm::SmallVector<ObjCInterfaceCacheEntry, 32> ObjCInterfaceCache;
 
   /// Cache of references to AST files such as PCHs or modules.
-  llvm::DenseMap<uint64_t, llvm::DIModule *> ModuleRefCache;
+  llvm::DenseMap<uint64_t, llvm::TrackingMDRef> ModuleRefCache;
 
   /// List of interfaces we want to keep even if orphaned.
   std::vector<void *> RetainedTypes;
