@@ -1998,7 +1998,7 @@ unsigned DwarfLinker::shouldKeepDIE(const DWARFDebugInfoEntryMinimal &DIE,
 /// back to lookForDIEsToKeep while adding TF_DependencyWalk to the
 /// TraversalFlags to inform it that it's not doing the primary DIE
 /// tree walk.
-void DwarfLinker::keepDIEAndDenpendencies(const DWARFDebugInfoEntryMinimal &DIE,
+void DwarfLinker::keepDIEAndDenpendencies(const DWARFDebugInfoEntryMinimal &Die,
                                           CompileUnit::DIEInfo &MyInfo,
                                           const DebugMapObject &DMO,
                                           CompileUnit &CU, bool UseODR) {
@@ -2017,8 +2017,8 @@ void DwarfLinker::keepDIEAndDenpendencies(const DWARFDebugInfoEntryMinimal &DIE,
   // Then we need to mark all the DIEs referenced by this DIE's
   // attributes as kept.
   DataExtractor Data = Unit.getDebugInfoExtractor();
-  const auto *Abbrev = DIE.getAbbreviationDeclarationPtr();
-  uint32_t Offset = DIE.getOffset() + getULEB128Size(Abbrev->getCode());
+  const auto *Abbrev = Die.getAbbreviationDeclarationPtr();
+  uint32_t Offset = Die.getOffset() + getULEB128Size(Abbrev->getCode());
 
   // Mark all DIEs referenced through atttributes as kept.
   for (const auto &AttrSpec : Abbrev->attributes()) {
@@ -2032,7 +2032,7 @@ void DwarfLinker::keepDIEAndDenpendencies(const DWARFDebugInfoEntryMinimal &DIE,
     Val.extractValue(Data, &Offset, &Unit);
     CompileUnit *ReferencedCU;
     if (const auto *RefDIE =
-            resolveDIEReference(Val, Unit, DIE, ReferencedCU)) {
+            resolveDIEReference(Val, Unit, Die, ReferencedCU)) {
       uint32_t RefIdx = ReferencedCU->getOrigUnit().getDIEIndex(RefDIE);
       CompileUnit::DIEInfo &Info = ReferencedCU->getInfo(RefIdx);
       // If the referenced DIE has a DeclContext that has already been
@@ -2067,10 +2067,10 @@ void DwarfLinker::keepDIEAndDenpendencies(const DWARFDebugInfoEntryMinimal &DIE,
 /// also called, but during these dependency walks the file order is
 /// not respected. The TF_DependencyWalk flag tells us which kind of
 /// traversal we are currently doing.
-void DwarfLinker::lookForDIEsToKeep(const DWARFDebugInfoEntryMinimal &DIE,
+void DwarfLinker::lookForDIEsToKeep(const DWARFDebugInfoEntryMinimal &Die,
                                     const DebugMapObject &DMO, CompileUnit &CU,
                                     unsigned Flags) {
-  unsigned Idx = CU.getOrigUnit().getDIEIndex(&DIE);
+  unsigned Idx = CU.getOrigUnit().getDIEIndex(&Die);
   CompileUnit::DIEInfo &MyInfo = CU.getInfo(Idx);
   bool AlreadyKept = MyInfo.Keep;
 
@@ -2083,12 +2083,12 @@ void DwarfLinker::lookForDIEsToKeep(const DWARFDebugInfoEntryMinimal &DIE,
   // We must not call shouldKeepDIE while called from keepDIEAndDenpendencies,
   // because it would screw up the relocation finding logic.
   if (!(Flags & TF_DependencyWalk))
-    Flags = shouldKeepDIE(DIE, CU, MyInfo, Flags);
+    Flags = shouldKeepDIE(Die, CU, MyInfo, Flags);
 
   // If it is a newly kept DIE mark it as well as all its dependencies as kept.
   if (!AlreadyKept && (Flags & TF_Keep)) {
     bool UseOdr = (Flags & TF_DependencyWalk) ? (Flags & TF_ODR) : CU.hasODR();
-    keepDIEAndDenpendencies(DIE, MyInfo, DMO, CU, UseOdr);
+    keepDIEAndDenpendencies(Die, MyInfo, DMO, CU, UseOdr);
   }
   // The TF_ParentWalk flag tells us that we are currently walking up
   // the parent chain of a required DIE, and we don't want to mark all
@@ -2096,13 +2096,13 @@ void DwarfLinker::lookForDIEsToKeep(const DWARFDebugInfoEntryMinimal &DIE,
   // DW_TAG_namespace node in the parent chain). There are however a
   // set of DIE types for which we want to ignore that directive and still
   // walk their children.
-  if (dieNeedsChildrenToBeMeaningful(DIE.getTag()))
+  if (dieNeedsChildrenToBeMeaningful(Die.getTag()))
     Flags &= ~TF_ParentWalk;
 
-  if (!DIE.hasChildren() || (Flags & TF_ParentWalk))
+  if (!Die.hasChildren() || (Flags & TF_ParentWalk))
     return;
 
-  for (auto *Child = DIE.getFirstChild(); Child && !Child->isNULL();
+  for (auto *Child = Die.getFirstChild(); Child && !Child->isNULL();
        Child = Child->getSibling())
     lookForDIEsToKeep(*Child, DMO, CU, Flags);
 }
