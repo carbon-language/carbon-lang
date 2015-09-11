@@ -9716,13 +9716,14 @@ void tools::SHAVE::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   assert(Output.getType() == types::TY_Object);
 
   CmdArgs.push_back("-no6thSlotCompression");
-  CmdArgs.push_back("-cv:myriad2"); // Chip Version ?
+  CmdArgs.push_back("-cv:myriad2"); // Chip Version
   CmdArgs.push_back("-noSPrefixing");
   CmdArgs.push_back("-a"); // Mystery option.
-  for (auto Arg : Args.filtered(options::OPT_I)) {
-    Arg->claim();
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA, options::OPT_Xassembler);
+  for (const Arg *A : Args.filtered(options::OPT_I, options::OPT_isystem)) {
+    A->claim();
     CmdArgs.push_back(
-        Args.MakeArgString(std::string("-i:") + Arg->getValue(0)));
+        Args.MakeArgString(std::string("-i:") + A->getValue(0)));
   }
   CmdArgs.push_back("-elf"); // Output format.
   CmdArgs.push_back(II.getFilename());

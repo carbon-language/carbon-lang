@@ -8,10 +8,11 @@
 // As such, we test only for a trailing quote in its rendering.
 // The same goes for "moviAsm".
 
-// RUN: %clang -target shave -c -### %s -Icommon 2>&1 \
+// RUN: %clang -target shave -c -### %s -isystem somewhere -Icommon -Wa,-yippee 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=MOVICOMPILE
-// MOVICOMPILE: moviCompile" "-DMYRIAD2" "-mcpu=myriad2" "-S" "-I" "common"
-// MOVICOMPILE: moviAsm" "-no6thSlotCompression" "-cv:myriad2" "-noSPrefixing" "-a" "-i:common" "-elf"
+// MOVICOMPILE: moviCompile" "-DMYRIAD2" "-mcpu=myriad2" "-S" "-isystem" "somewhere" "-I" "common"
+// MOVICOMPILE: moviAsm" "-no6thSlotCompression" "-cv:myriad2" "-noSPrefixing" "-a"
+// MOVICOMPILE: "-yippee" "-i:somewhere" "-i:common" "-elf"
 
 // RUN: %clang -target shave -c -### %s -DEFINE_ME -UNDEFINE_ME 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=DEFINES
