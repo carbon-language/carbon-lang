@@ -150,7 +150,7 @@ CODEGENOPT(UseRegisterSizedBitfieldAccess , 1, 0)
 CODEGENOPT(VerifyModule      , 1, 1) ///< Control whether the module should be run
                                      ///< through the LLVM Verifier.
 
-CODEGENOPT(StackRealignment  , 1, 0) ///< Control whether to permit stack
+CODEGENOPT(StackRealignment  , 1, 0) ///< Control whether to force stack
                                      ///< realignment.
 CODEGENOPT(UseInitArray      , 1, 0) ///< Control whether to use .init_array or
                                      ///< .ctors.

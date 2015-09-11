@@ -4326,14 +4326,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Translate -mstackrealign
   if (Args.hasFlag(options::OPT_mstackrealign, options::OPT_mno_stackrealign,
-                   false)) {
-    CmdArgs.push_back("-backend-option");
-    CmdArgs.push_back("-force-align-stack");
-  }
-  if (!Args.hasFlag(options::OPT_mno_stackrealign, options::OPT_mstackrealign,
-                    false)) {
+                   false))
     CmdArgs.push_back(Args.MakeArgString("-mstackrealign"));
-  }
 
   if (Args.hasArg(options::OPT_mstack_alignment)) {
     StringRef alignment = Args.getLastArgValue(options::OPT_mstack_alignment);

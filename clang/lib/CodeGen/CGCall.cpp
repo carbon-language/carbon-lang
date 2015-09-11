@@ -1494,8 +1494,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     FuncAttrs.addAttribute("stack-protector-buffer-size",
                            llvm::utostr(CodeGenOpts.SSPBufferSize));
 
-    if (!CodeGenOpts.StackRealignment)
-      FuncAttrs.addAttribute("no-realign-stack");
+    if (CodeGenOpts.StackRealignment)
+      FuncAttrs.addAttribute("stackrealign");
 
     // Add target-cpu and target-features attributes to functions. If
     // we have a decl for the function and it has a target attribute then
