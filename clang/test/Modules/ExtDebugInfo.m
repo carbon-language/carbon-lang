@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// Test that only forward declarations are emitted for types dfined in modules.
+// Test that only forward declarations are emitted for types defined in modules.
 
 // Modules:
 // RUN: %clang_cc1 -x objective-c -g -dwarf-ext-refs -fmodules \
@@ -23,7 +23,10 @@ int foo(ObjCClass *c) {
   return [c property];
 }
 
-// CHECK: !DICompositeType(tag: DW_TAG_structure_type,
+// CHECK-NOT: !DICompositeType(tag: DW_TAG_structure_type,
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "ObjCClass",
 // CHECK-SAME:             scope: ![[MOD:[0-9]+]],
 // CHECK-SAME:             flags: DIFlagFwdDecl)
+// CHECK-NOT: !DICompositeType(tag: DW_TAG_structure_type,
 // CHECK: ![[MOD]] = !DIModule(scope: null, name: {{.*}}DebugObjC
+// CHECK-NOT: !DICompositeType(tag: DW_TAG_structure_type,
