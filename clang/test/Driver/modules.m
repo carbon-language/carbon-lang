@@ -37,3 +37,13 @@
 // CHECK-MODULE-MAP-FILES: "-fmodules"
 // CHECK-MODULE-MAP-FILES: "-fmodule-map-file=foo.map"
 // CHECK-MODULE-MAP-FILES: "-fmodule-map-file=bar.map"
+
+// RUN: %clang -fmodules -fmodule-file=foo.pcm -fmodule-file=bar.pcm -### %s 2>&1 | FileCheck -check-prefix=CHECK-MODULE-FILES %s
+// CHECK-MODULE-FILES: "-fmodules"
+// CHECK-MODULE-FILES: "-fmodule-file=foo.pcm"
+// CHECK-MODULE-FILES: "-fmodule-file=bar.pcm"
+
+// RUN: %clang -fno-modules -fmodule-file=foo.pcm -fmodule-file=bar.pcm -### %s 2>&1 | FileCheck -check-prefix=CHECK-NO-MODULE-FILES %s
+// CHECK-NO-MODULE-FILES-NOT: "-fmodules"
+// CHECK-NO-MODULE-FILES-NOT: "-fmodule-file=foo.pcm"
+// CHECK-NO-MODULE-FILES-NOT: "-fmodule-file=bar.pcm"

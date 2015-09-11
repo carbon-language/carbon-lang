@@ -4461,7 +4461,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_fmodule_map_file);
 
   // -fmodule-file can be used to specify files containing precompiled modules.
-  Args.AddAllArgs(CmdArgs, options::OPT_fmodule_file);
+  if (HaveModules)
+    Args.AddAllArgs(CmdArgs, options::OPT_fmodule_file);
+  else
+    Args.ClaimAllArgs(options::OPT_fmodule_file);
 
   // -fmodule-cache-path specifies where our implicitly-built module files
   // should be written.
