@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-pc-linux -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK0
-// RUN: %clang_cc1 -triple x86_64-pc-linux -O1 -disable-llvm-optzns -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK1
+// RUN: %clang_cc1 -triple x86_64-pc-linux -emit-llvm %s -o - | FileCheck %s
 
 extern void foo_alias (void) __asm ("foo");
 inline void foo (void) {
@@ -25,7 +24,7 @@ extern inline __attribute__((__always_inline__, __gnu_inline__)) void *memchr(vo
 
 void f(void) {
   foo();
-  int x = abs(0);
+  abs(0);
   strrchr_foo("", '.');
   prefetch();
   memchr("", '.', 0);
@@ -33,10 +32,9 @@ void f(void) {
 
 // CHECK-LABEL: define void @f()
 // CHECK: call void @foo()
-// CHECK: call i32 @abs(
+// CHECK: call i32 @abs(i32 0)
 // CHECK: call i8* @strrchr(
-// CHECK0: call void @llvm.prefetch(
-// CHECK1: call void @prefetch.alwaysinline(
+// CHECK: call void @llvm.prefetch(
 // CHECK: call i8* @memchr(
 // CHECK: ret void
 
