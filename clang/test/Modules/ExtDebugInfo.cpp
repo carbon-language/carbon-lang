@@ -71,4 +71,4 @@ char _anchor = anon_enum + conflicting_uid;
 
 // CHECK: !DIGlobalVariable(name: "anon_enum", {{.*}}, type: ![[ANON_ENUM]]
 
-// CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration, scope: !0, entity: !"_ZTSN8DebugCXX6StructE", line: 21)
+// CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration, scope: !0, entity: !"_ZTSN8DebugCXX6StructE", line: [[@LINE-53]])
