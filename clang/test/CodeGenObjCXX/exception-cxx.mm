@@ -5,7 +5,7 @@ namespace test0 {
   void foo() {
     try {
       throw 0;
-    } catch (...) {
+    } catch (int e) {
       return;
     }
   }

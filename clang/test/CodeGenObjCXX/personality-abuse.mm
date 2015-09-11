@@ -11,7 +11,7 @@ void *abuse_personality_func() {
 void foo() {
   try {
     throw 0;
-  } catch (...) {
+  } catch (int e) {
     return;
   }
 }
