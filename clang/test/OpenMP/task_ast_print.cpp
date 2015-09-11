@@ -87,8 +87,8 @@ int main(int argc, char **argv) {
 #pragma omp threadprivate(a)
   Enum ee;
 // CHECK: Enum ee;
-#pragma omp task untied mergeable depend(out:argv[1], (arr)[0:]) if(task: argc > 0)
-  // CHECK-NEXT: #pragma omp task untied mergeable depend(out : argv[1],(arr)[0:]) if(task: argc > 0)
+#pragma omp task untied mergeable depend(out:argv[:a][1], (arr)[0:]) if(task: argc > 0)
+  // CHECK-NEXT: #pragma omp task untied mergeable depend(out : argv[:a][1],(arr)[0:]) if(task: argc > 0)
   a = 2;
 // CHECK-NEXT: a = 2;
 #pragma omp task default(none), private(argc, b) firstprivate(argv) if (argc > 0) final(a > 0) depend(inout : a, argv[:argc],arr[:a])
