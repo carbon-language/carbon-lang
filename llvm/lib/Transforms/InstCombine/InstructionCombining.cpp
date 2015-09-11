@@ -847,7 +847,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   NewPN->takeName(PN);
 
   // If we are going to have to insert a new computation, do so right before the
-  // predecessors terminator.
+  // predecessor's terminator.
   if (NonConstBB)
     Builder->SetInsertPoint(NonConstBB->getTerminator());
 
