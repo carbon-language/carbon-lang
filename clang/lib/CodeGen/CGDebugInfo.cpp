@@ -1480,14 +1480,8 @@ static bool shouldOmitDefinition(CodeGenOptions::DebugInfoKind DebugKind,
                                  const RecordDecl *RD,
                                  const LangOptions &LangOpts) {
   // Does the type exist in an imported clang module?
-  if (DebugTypeExtRefs && RD->isFromASTFile()) {
-    if (auto *CTSD = dyn_cast<ClassTemplateSpecializationDecl>(RD))
-      if (CTSD->isExplicitInstantiationOrSpecialization())
-        // We may not assume that this type made it into the module.
-        return true;
-    if (RD->getDefinition())
+  if (DebugTypeExtRefs && RD->isFromASTFile() && RD->getDefinition())
       return true;
-  }
 
   if (DebugKind > CodeGenOptions::LimitedDebugInfo)
     return false;
