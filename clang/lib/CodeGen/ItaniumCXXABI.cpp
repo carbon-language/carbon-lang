@@ -3311,6 +3311,9 @@ static StructorCodegen getCodegenToUse(CodeGenModule &CGM,
   if (MD->getParent()->getNumVBases())
     return StructorCodegen::Emit;
 
+  if (MD->hasAttr<AlwaysInlineAttr>())
+    return StructorCodegen::Emit;
+
   GlobalDecl AliasDecl;
   if (const auto *DD = dyn_cast<CXXDestructorDecl>(MD)) {
     AliasDecl = GlobalDecl(DD, Dtor_Complete);

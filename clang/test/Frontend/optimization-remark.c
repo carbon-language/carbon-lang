@@ -32,6 +32,8 @@
 // CHECK-NOT: !llvm.dbg.cu = !{
 
 int foo(int x, int y) __attribute__((always_inline));
+// expected-remark@+2 {{foo.alwaysinline should always be inlined}}
+// expected-remark@+1 {{foo.alwaysinline inlined into foo}}
 int foo(int x, int y) { return x + y; }
 
 float foz(int x, int y) __attribute__((noinline));
@@ -45,7 +47,7 @@ int bar(int j) {
 // expected-remark@+5 {{foz will not be inlined into bar}}
 // expected-remark@+4 {{foz should never be inlined}}
 // expected-remark@+3 {{foz will not be inlined into bar}}
-// expected-remark@+2 {{foo should always be inlined}}
-// expected-remark@+1 {{foo inlined into bar}}
+// expected-remark@+2 {{foo.alwaysinline should always be inlined}}
+// expected-remark@+1 {{foo.alwaysinline inlined into bar}}
   return foo(j, j - 2) * foz(j - 2, j);
 }

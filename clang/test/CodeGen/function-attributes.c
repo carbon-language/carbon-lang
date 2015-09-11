@@ -25,8 +25,8 @@ void f6(signed short x) { }
 
 void f7(unsigned short x) { }
 
-// CHECK-LABEL: define void @f8()
-// CHECK: [[AI:#[0-9]+]]
+// CHECK: define void @f8()
+// CHECK: [[NUW:#[0-9]+]]
 // CHECK: {
 void __attribute__((always_inline)) f8(void) { }
 
@@ -129,7 +129,6 @@ void f20(void) {
 }
 
 // CHECK: attributes [[NUW]] = { nounwind optsize readnone{{.*}} }
-// CHECK: attributes [[AI]] = { alwaysinline nounwind optsize readnone{{.*}} }
 // CHECK: attributes [[ALIGN]] = { nounwind optsize readnone alignstack=16{{.*}} }
 // CHECK: attributes [[RT]] = { nounwind optsize returns_twice{{.*}} }
 // CHECK: attributes [[NR]] = { noreturn nounwind optsize }

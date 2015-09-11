@@ -1557,7 +1557,7 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     // -fapple-kext must inline any call to this dtor into
     // the caller's body.
     if (getLangOpts().AppleKext)
-      CurFn->addFnAttr(llvm::Attribute::AlwaysInline);
+      CGM.AddAlwaysInlineFunction(CurFn);
 
     break;
   }
