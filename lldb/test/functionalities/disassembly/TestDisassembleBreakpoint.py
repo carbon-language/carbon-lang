@@ -19,6 +19,7 @@ class DisassemblyTestCase(TestBase):
         self.disassemble_breakpoint ()
 
     @dwarf_test
+    @expectedFailureWindows # Function name prints fully demangled instead of name-only
     def test_with_dwarf (self):
         self.buildDwarf ()
         self.disassemble_breakpoint ()
