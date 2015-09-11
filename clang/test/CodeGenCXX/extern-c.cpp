@@ -59,10 +59,10 @@ extern "C" {
 
   // CHECK-NOT: @unused
   // CHECK-NOT: @duplicate_internal
-  // CHECK: @internal_var = internal alias i32* @_Z12internal_var
+  // CHECK: @internal_var = internal alias i32, i32* @_Z12internal_var
   // CHECK-NOT: @unused
   // CHECK-NOT: @duplicate_internal
-  // CHECK: @internal_fn = internal alias i32 ()* @_Z11internal_fnv
+  // CHECK: @internal_fn = internal alias i32 (), i32 ()* @_Z11internal_fnv
   // CHECK-NOT: @unused
   // CHECK-NOT: @duplicate_internal
 }

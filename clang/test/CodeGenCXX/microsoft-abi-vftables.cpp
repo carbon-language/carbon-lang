@@ -9,7 +9,7 @@ struct S {
 } s;
 
 // RTTI-DAG: [[VTABLE_S:@.*]] = private unnamed_addr constant [2 x i8*] [i8* bitcast ({{.*}} @"\01??_R4S@@6B@" to i8*), i8* bitcast ({{.*}} @"\01??_GS@@UAEPAXI@Z" to i8*)], comdat($"\01??_7S@@6B@")
-// RTTI-DAG: @"\01??_7S@@6B@" = unnamed_addr alias getelementptr inbounds ([2 x i8*], [2 x i8*]* [[VTABLE_S]], i32 0, i32 1)
+// RTTI-DAG: @"\01??_7S@@6B@" = unnamed_addr alias i8*, getelementptr inbounds ([2 x i8*], [2 x i8*]* [[VTABLE_S]], i32 0, i32 1)
 
 // NO-RTTI-DAG: @"\01??_7S@@6B@" = linkonce_odr unnamed_addr constant [1 x i8*] [i8* bitcast ({{.*}} @"\01??_GS@@UAEPAXI@Z" to i8*)]
 
@@ -26,7 +26,7 @@ struct __declspec(dllexport) V {
 } v;
 
 // RTTI-DAG: [[VTABLE_V:@.*]] = private unnamed_addr constant [2 x i8*] [i8* bitcast ({{.*}} @"\01??_R4V@@6B@" to i8*), i8* bitcast ({{.*}} @"\01??_GV@@UAEPAXI@Z" to i8*)], comdat($"\01??_7V@@6B@")
-// RTTI-DAG: @"\01??_7V@@6B@" = dllexport unnamed_addr alias getelementptr inbounds ([2 x i8*], [2 x i8*]* [[VTABLE_V]], i32 0, i32 1)
+// RTTI-DAG: @"\01??_7V@@6B@" = dllexport unnamed_addr alias i8*, getelementptr inbounds ([2 x i8*], [2 x i8*]* [[VTABLE_V]], i32 0, i32 1)
 
 // NO-RTTI-DAG: @"\01??_7V@@6B@" = weak_odr dllexport unnamed_addr constant [1 x i8*] [i8* bitcast ({{.*}} @"\01??_GV@@UAEPAXI@Z" to i8*)]
 
@@ -36,7 +36,7 @@ struct W {
 } w;
 }
 // RTTI-DAG: [[VTABLE_W:@.*]] = private unnamed_addr constant [2 x i8*] [i8* bitcast ({{.*}} @"\01??_R4W@?A@@6B@" to i8*), i8* bitcast ({{.*}} @"\01??_GW@?A@@UAEPAXI@Z" to i8*)]
-// RTTI-DAG: @"\01??_7W@?A@@6B@" = internal unnamed_addr alias getelementptr inbounds ([2 x i8*], [2 x i8*]* [[VTABLE_W]], i32 0, i32 1)
+// RTTI-DAG: @"\01??_7W@?A@@6B@" = internal unnamed_addr alias i8*, getelementptr inbounds ([2 x i8*], [2 x i8*]* [[VTABLE_W]], i32 0, i32 1)
 
 // NO-RTTI-DAG: @"\01??_7W@?A@@6B@" = internal unnamed_addr constant [1 x i8*] [i8* bitcast ({{.*}} @"\01??_GW@?A@@UAEPAXI@Z" to i8*)]
 

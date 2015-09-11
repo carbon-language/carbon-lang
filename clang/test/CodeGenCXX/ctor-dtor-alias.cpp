@@ -15,7 +15,7 @@ namespace test1 {
 // weak_odr constructors and destructors.
 
 // CHECK1: @_ZN5test16foobarIvEC1Ev = weak_odr alias void {{.*}} @_ZN5test16foobarIvEC2Ev
-// CHECK1: @_ZN5test16foobarIvED1Ev = weak_odr alias void (%"struct.test1::foobar"*)* @_ZN5test16foobarIvED2Ev
+// CHECK1: @_ZN5test16foobarIvED1Ev = weak_odr alias void (%"struct.test1::foobar"*), void (%"struct.test1::foobar"*)* @_ZN5test16foobarIvED2Ev
 // CHECK1: define weak_odr void @_ZN5test16foobarIvEC2Ev({{.*}} comdat($_ZN5test16foobarIvEC5Ev)
 // CHECK1: define weak_odr void @_ZN5test16foobarIvED2Ev({{.*}} comdat($_ZN5test16foobarIvED5Ev)
 // CHECK1: define weak_odr void @_ZN5test16foobarIvED0Ev({{.*}} comdat($_ZN5test16foobarIvED5Ev)

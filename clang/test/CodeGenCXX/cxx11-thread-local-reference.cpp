@@ -5,7 +5,7 @@ int &f();
 // CHECK: @r = thread_local global i32* null
 thread_local int &r = f();
 
-// CHECK: @_ZTH1r = alias void ()* @__tls_init
+// CHECK: @_ZTH1r = alias void (), void ()* @__tls_init
 
 int &g() { return r; }
 

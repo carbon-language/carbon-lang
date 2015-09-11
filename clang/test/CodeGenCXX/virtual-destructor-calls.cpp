@@ -17,7 +17,7 @@ struct B : A {
 // CHECK: @_ZN1BD1Ev = alias {{.*}} @_ZN1BD2Ev
 
 // (aliases from C)
-// CHECK: @_ZN1CD2Ev = alias bitcast {{.*}} @_ZN1BD2Ev
+// CHECK: @_ZN1CD2Ev = alias {{.*}}, bitcast {{.*}} @_ZN1BD2Ev
 // CHECK: @_ZN1CD1Ev = alias {{.*}} @_ZN1CD2Ev
 
 // Base dtor: actually calls A's base dtor.

@@ -45,10 +45,10 @@ int e = V<int>::m;
 
 // CHECK: @llvm.global_ctors = appending global {{.*}} @[[GLOBAL_INIT:[^ ]*]]
 
-// CHECK: @_ZTH1a = alias void ()* @__tls_init
-// CHECK: @_ZTHL1d = internal alias void ()* @__tls_init
-// CHECK: @_ZTHN1U1mE = alias void ()* @__tls_init
-// CHECK: @_ZTHN1VIiE1mE = linkonce_odr alias void ()* @__tls_init
+// CHECK: @_ZTH1a = alias void (), void ()* @__tls_init
+// CHECK: @_ZTHL1d = internal alias void (), void ()* @__tls_init
+// CHECK: @_ZTHN1U1mE = alias void (), void ()* @__tls_init
+// CHECK: @_ZTHN1VIiE1mE = linkonce_odr alias void (), void ()* @__tls_init
 
 
 // Individual variable initialization functions:
