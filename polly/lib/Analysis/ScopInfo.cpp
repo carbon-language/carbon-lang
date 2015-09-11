@@ -738,9 +738,8 @@ void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
   Domain = NewDomain;
 }
 
-void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
-                             bool isApproximated) {
-  AccFuncSetType *AFS = tempScop.getAccessFunctions(Block);
+void ScopStmt::buildAccesses(BasicBlock *Block, bool isApproximated) {
+  AccFuncSetType *AFS = Parent.getAccessFunctions(Block);
   if (!AFS)
     return;
 
@@ -983,7 +982,7 @@ void ScopStmt::collectSurroundingLoops() {
   }
 }
 
-ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, Region &R)
+ScopStmt::ScopStmt(Scop &parent, Region &R)
     : Parent(parent), BB(nullptr), R(&R), Build(nullptr) {
 
   BaseName = getIslCompatibleName("Stmt_", R.getNameStr(), "");
@@ -993,21 +992,21 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, Region &R)
 
   BasicBlock *EntryBB = R.getEntry();
   for (BasicBlock *Block : R.blocks()) {
-    buildAccesses(tempScop, Block, Block != EntryBB);
+    buildAccesses(Block, Block != EntryBB);
     deriveAssumptions(Block);
   }
   if (DetectReductions)
     checkForReductions();
 }
 
-ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, BasicBlock &bb)
+ScopStmt::ScopStmt(Scop &parent, BasicBlock &bb)
     : Parent(parent), BB(&bb), R(nullptr), Build(nullptr) {
 
   BaseName = getIslCompatibleName("Stmt_", &bb, "");
 
   buildDomain();
   collectSurroundingLoops();
-  buildAccesses(tempScop, BB);
+  buildAccesses(BB);
   deriveAssumptions(BB);
   if (DetectReductions)
     checkForReductions();
@@ -2085,14 +2084,14 @@ static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI,
   return MaxLD - MinLD + 1;
 }
 
-Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, DominatorTree &DT,
+Scop::Scop(Region &R, AccFuncMapType &AccFuncMap,
+           ScalarEvolution &ScalarEvolution, DominatorTree &DT,
            isl_ctx *Context, unsigned MaxLoopDepth)
-    : DT(DT), SE(&ScalarEvolution), R(R), IsOptimized(false),
-      HasSingleExitEdge(R.getExitingBlock()), MaxLoopDepth(MaxLoopDepth),
-      IslCtx(Context), Affinator(this) {}
+    : DT(DT), SE(&ScalarEvolution), R(R), AccFuncMap(AccFuncMap),
+      IsOptimized(false), HasSingleExitEdge(R.getExitingBlock()),
+      MaxLoopDepth(MaxLoopDepth), IslCtx(Context), Affinator(this) {}
 
-void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD,
-                            AliasAnalysis &AA) {
+void Scop::init(LoopInfo &LI, ScopDetection &SD, AliasAnalysis &AA) {
   buildContext();
 
   buildDomains(&R, LI, SD, DT);
@@ -2101,7 +2100,7 @@ void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD,
 
   Loop *L = getLoopSurroundingRegion(R, LI);
   LoopSchedules[L];
-  buildSchedule(&R, TempScop, LI, SD, LoopSchedules);
+  buildSchedule(&R, LI, SD, LoopSchedules);
   Schedule = LoopSchedules[L].first;
 
   realignParams();
@@ -2109,18 +2108,6 @@ void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD,
   addUserContext();
   simplifyAssumedContext();
   buildAliasChecks(AA);
-}
-
-Scop *Scop::createFromTempScop(TempScop &TempScop, LoopInfo &LI,
-                               ScalarEvolution &SE, ScopDetection &SD,
-                               AliasAnalysis &AA, DominatorTree &DT,
-                               isl_ctx *ctx) {
-  auto &R = TempScop.getMaxRegion();
-  auto MaxLoopDepth = getMaxLoopDepthInRegion(R, LI, SD);
-  auto S = new Scop(R, SE, DT, ctx, MaxLoopDepth);
-  S->initFromTempScop(TempScop, LI, SD, AA);
-
-  return S;
 }
 
 Scop::~Scop() {
@@ -2450,8 +2437,8 @@ bool Scop::restrictDomains(__isl_take isl_union_set *Domain) {
 
 ScalarEvolution *Scop::getSE() const { return SE; }
 
-bool Scop::isTrivialBB(BasicBlock *BB, TempScop &tempScop) {
-  if (tempScop.getAccessFunctions(BB) && !isErrorBlock(*BB))
+bool Scop::isTrivialBB(BasicBlock *BB) {
+  if (getAccessFunctions(BB) && !isErrorBlock(*BB))
     return false;
 
   return true;
@@ -2515,15 +2502,15 @@ mapToDimension(__isl_take isl_union_set *Domain, int N) {
   return isl_multi_union_pw_aff_from_union_pw_multi_aff(Data.Res);
 }
 
-ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop) {
+ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R) {
   ScopStmt *Stmt;
   if (BB) {
-    Stmts.emplace_back(*this, tempScop, *BB);
+    Stmts.emplace_back(*this, *BB);
     Stmt = &Stmts.back();
     StmtMap[BB] = Stmt;
   } else {
     assert(R && "Either basic block or a region expected.");
-    Stmts.emplace_back(*this, tempScop, *R);
+    Stmts.emplace_back(*this, *R);
     Stmt = &Stmts.back();
     for (BasicBlock *BB : R->blocks())
       StmtMap[BB] = Stmt;
@@ -2532,7 +2519,7 @@ ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop) {
 }
 
 void Scop::buildSchedule(
-    Region *R, TempScop &TS, LoopInfo &LI, ScopDetection &SD,
+    Region *R, LoopInfo &LI, ScopDetection &SD,
     DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules) {
 
   ReversePostOrderTraversal<Region *> RTraversal(R);
@@ -2541,7 +2528,7 @@ void Scop::buildSchedule(
     if (RN->isSubRegion()) {
       Region *SubRegion = RN->getNodeAs<Region>();
       if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
-        buildSchedule(SubRegion, TS, LI, SD, LoopSchedules);
+        buildSchedule(SubRegion, LI, SD, LoopSchedules);
         continue;
       }
     }
@@ -2552,13 +2539,13 @@ void Scop::buildSchedule(
     LSchedulePair.second += getNumBlocksInRegionNode(RN);
 
     BasicBlock *BB = getRegionNodeBasicBlock(RN);
-    if (RN->isSubRegion() || !isTrivialBB(BB, TS)) {
+    if (RN->isSubRegion() || !isTrivialBB(BB)) {
 
       ScopStmt *Stmt;
       if (RN->isSubRegion())
-        Stmt = addScopStmt(nullptr, RN->getNodeAs<Region>(), TS);
+        Stmt = addScopStmt(nullptr, RN->getNodeAs<Region>());
       else
-        Stmt = addScopStmt(BB, nullptr, TS);
+        Stmt = addScopStmt(BB, nullptr);
 
       auto *UDomain = isl_union_set_from_set(Stmt->getDomain());
       auto *StmtSchedule = isl_schedule_from_domain(UDomain);
@@ -2593,18 +2580,16 @@ ScopStmt *Scop::getStmtForBasicBlock(BasicBlock *BB) const {
   return StmtMapIt->second;
 }
 
-//===----------------------------------------------------------------------===//
-// TempScop implementation
-TempScop::~TempScop() {}
-
-void TempScop::print(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI) const {
+void Scop::printIRAccesses(raw_ostream &OS, ScalarEvolution *SE,
+                           LoopInfo *LI) const {
   OS << "Scop: " << R.getNameStr() << "\n";
 
-  printDetail(OS, SE, LI, &R, 0);
+  printIRAccessesDetail(OS, SE, LI, &R, 0);
 }
 
-void TempScop::printDetail(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI,
-                           const Region *CurR, unsigned ind) const {
+void Scop::printIRAccessesDetail(raw_ostream &OS, ScalarEvolution *SE,
+                                 LoopInfo *LI, const Region *CurR,
+                                 unsigned ind) const {
   // FIXME: Print other details rather than memory accesses.
   for (const auto &CurBlock : CurR->blocks()) {
     AccFuncMapType::const_iterator AccSetIt = AccFuncMap.find(CurBlock);
@@ -2891,8 +2876,9 @@ void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
   Accs.insert(Accs.end(), Functions.begin(), Functions.end());
 }
 
-TempScop *ScopInfo::buildTempScop(Region &R) {
-  TempScop *TScop = new TempScop(R, AccFuncMap);
+Scop *ScopInfo::buildScop(Region &R, DominatorTree &DT) {
+  unsigned MaxLoopDepth = getMaxLoopDepthInRegion(R, *LI, *SD);
+  Scop *S = new Scop(R, AccFuncMap, *SE, DT, ctx, MaxLoopDepth);
 
   buildAccessFunctions(R, R);
 
@@ -2906,27 +2892,22 @@ TempScop *ScopInfo::buildTempScop(Region &R) {
   if (!R.getExitingBlock())
     buildAccessFunctions(R, *R.getExit(), nullptr, /* IsExitBlock */ true);
 
-  return TScop;
+  S->init(*LI, *SD, *AA);
+  return S;
 }
 
-TempScop *ScopInfo::getTempScop() const { return TempScopOfRegion; }
-
 void ScopInfo::print(raw_ostream &OS, const Module *) const {
-  if (TempScopOfRegion)
-    TempScopOfRegion->print(OS, SE, LI);
-
-  if (scop)
-    scop->print(OS);
-  else
+  if (!scop) {
     OS << "Invalid Scop!\n";
+    return;
+  }
+
+  scop->printIRAccesses(OS, SE, LI);
+  scop->print(OS);
 }
 
 void ScopInfo::clear() {
   AccFuncMap.clear();
-  if (TempScopOfRegion)
-    delete TempScopOfRegion;
-  TempScopOfRegion = nullptr;
-
   if (scop) {
     delete scop;
     scop = 0;
@@ -2934,7 +2915,7 @@ void ScopInfo::clear() {
 }
 
 //===----------------------------------------------------------------------===//
-ScopInfo::ScopInfo() : RegionPass(ID), TempScopOfRegion(nullptr), scop(0) {
+ScopInfo::ScopInfo() : RegionPass(ID), scop(0) {
   ctx = isl_ctx_alloc();
   isl_options_set_on_error(ctx, ISL_ON_ERROR_ABORT);
 }
@@ -2969,17 +2950,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   ZeroOffset = SE->getConstant(TD->getIntPtrType(F->getContext()), 0);
 
-  assert(!TempScopOfRegion && "Build the TempScop only once");
-  TempScopOfRegion = buildTempScop(*R);
-
-  // This region is no Scop.
-  if (!TempScopOfRegion) {
-    scop = nullptr;
-    return false;
-  }
-
-  scop =
-      Scop::createFromTempScop(*TempScopOfRegion, *LI, *SE, *SD, *AA, DT, ctx);
+  scop = buildScop(*R, DT);
 
   DEBUG(scop->print(dbgs()));
 

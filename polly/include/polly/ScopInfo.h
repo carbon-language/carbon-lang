@@ -63,7 +63,6 @@ class IRAccess;
 class Scop;
 class ScopStmt;
 class ScopInfo;
-class TempScop;
 class Comparison;
 class SCEVAffFunc;
 
@@ -589,10 +588,10 @@ public:
   const ScopStmt &operator=(const ScopStmt &) = delete;
 
   /// Create the ScopStmt from a BasicBlock.
-  ScopStmt(Scop &parent, TempScop &tempScop, BasicBlock &bb);
+  ScopStmt(Scop &parent, BasicBlock &bb);
 
   /// Create an overapproximating ScopStmt for the region @p R.
-  ScopStmt(Scop &parent, TempScop &tempScop, Region &R);
+  ScopStmt(Scop &parent, Region &R);
 
 private:
   /// Polyhedral description
@@ -664,14 +663,12 @@ private:
 
   /// @brief Create the accesses for instructions in @p Block.
   ///
-  /// @param tempScop       The template SCoP.
   /// @param Block          The basic block for which accesses should be
   ///                       created.
   /// @param isApproximated Flag to indicate blocks that might not be executed,
   ///                       hence for which write accesses need to be modeled as
   ///                       may-write accesses.
-  void buildAccesses(TempScop &tempScop, BasicBlock *Block,
-                     bool isApproximated = false);
+  void buildAccesses(BasicBlock *Block, bool isApproximated = false);
 
   /// @brief Detect and mark reductions in the ScopStmt
   void checkForReductions();
@@ -896,6 +893,9 @@ private:
   /// The underlying Region.
   Region &R;
 
+  // Access function of bbs.
+  AccFuncMapType &AccFuncMap;
+
   /// Flag to indicate that the scheduler actually optimized the SCoP.
   bool IsOptimized;
 
@@ -1001,20 +1001,12 @@ private:
   /// group to ensure the SCoP is executed in an alias free environment.
   MinMaxVectorPairVectorTy MinMaxAliasGroups;
 
-  /// @brief Scop constructor; used by static createFromTempScop
-  Scop(Region &R, ScalarEvolution &SE, DominatorTree &DT, isl_ctx *ctx,
-       unsigned MaxLoopDepth);
+  /// @brief Scop constructor; invoked from ScopInfo::buildScop.
+  Scop(Region &R, AccFuncMapType &AccFuncMap, ScalarEvolution &SE,
+       DominatorTree &DT, isl_ctx *ctx, unsigned MaxLoopDepth);
 
-  /// @brief Initialize this ScopInfo using a TempScop object.
-  void initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD,
-                        AliasAnalysis &AA);
-
-  /// Create the static control part with a region, max loop depth of this
-  /// region and parameters used in this region.
-  static Scop *createFromTempScop(TempScop &TempScop, LoopInfo &LI,
-                                  ScalarEvolution &SE, ScopDetection &SD,
-                                  AliasAnalysis &AA, DominatorTree &DT,
-                                  isl_ctx *ctx);
+  /// @brief Initialize this ScopInfo .
+  void init(LoopInfo &LI, ScopDetection &SD, AliasAnalysis &AA);
 
   /// @brief Add loop carried constraints to the header blocks of loops.
   ///
@@ -1057,10 +1049,9 @@ private:
   /// it does not need to be represented as a polyhedral statement.
   ///
   /// @param BB The basic block to check
-  /// @param tempScop TempScop returning further information regarding the Scop.
   ///
   /// @return True if the basic block is trivial, otherwise false.
-  static bool isTrivialBB(BasicBlock *BB, TempScop &tempScop);
+  bool isTrivialBB(BasicBlock *BB);
 
   /// @brief Add parameter constraints to @p C that imply a non-empty domain.
   __isl_give isl_set *addNonEmptyDomainConstraints(__isl_take isl_set *C) const;
@@ -1084,17 +1075,15 @@ private:
   ///
   /// @param BB         The basic block we build the statement for (or null)
   /// @param R          The region we build the statement for (or null).
-  /// @param tempScop   The temp SCoP we use as model.
-  ScopStmt *addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop);
+  ScopStmt *addScopStmt(BasicBlock *BB, Region *R);
 
-  /// @brief Build Schedule and ScopStmts from a given TempScop.
+  /// @brief Build Schedule and ScopStmts.
   ///
   /// @param R  The current region traversed.
-  /// @param TS The temporary scop that is translated into an actual scop.
   /// @param LI The LoopInfo object.
   /// @param SD The ScopDetection object.
   void buildSchedule(
-      Region *R, TempScop &TS, LoopInfo &LI, ScopDetection &SD,
+      Region *R, LoopInfo &LI, ScopDetection &SD,
       DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules);
 
   /// @name Helper function for printing the Scop.
@@ -1110,6 +1099,34 @@ private:
 
 public:
   ~Scop();
+
+  /// @brief Get all access functions in a BasicBlock
+  ///
+  /// @param  BB The BasicBlock that containing the access functions.
+  ///
+  /// @return All access functions in BB
+  ///
+  AccFuncSetType *getAccessFunctions(const BasicBlock *BB) {
+    AccFuncMapType::iterator at = AccFuncMap.find(BB);
+    return at != AccFuncMap.end() ? &(at->second) : 0;
+  }
+  //@}
+
+  /// @brief Print data access information.
+  ///
+  /// @param OS The output stream the access functions is printed to.
+  /// @param SE The ScalarEvolution to help printing more details.
+  /// @param LI The LoopInfo that help printing the access functions.
+  void printIRAccesses(raw_ostream &OS, ScalarEvolution *SE,
+                       LoopInfo *LI) const;
+
+  /// @brief Print the access functions and loop bounds in this Scop.
+  ///
+  /// @param OS The output stream the access functions is printed to.
+  /// @param SE The ScalarEvolution that help printing the access functions.
+  /// @param LI The LoopInfo that help printing the access functions.
+  void printIRAccessesDetail(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI,
+                             const Region *Reg, unsigned ind) const;
 
   ScalarEvolution *getSE() const;
 
@@ -1370,62 +1387,6 @@ static inline raw_ostream &operator<<(raw_ostream &O, const Scop &scop) {
   return O;
 }
 
-//===---------------------------------------------------------------------===//
-/// @brief Scop represent with llvm objects.
-///
-/// A helper class for remembering the parameter number and the max depth in
-/// this Scop, and others context.
-class TempScop {
-  // The Region.
-  Region &R;
-
-  // Access function of bbs.
-  AccFuncMapType &AccFuncMap;
-
-  friend class ScopInfo;
-
-  explicit TempScop(Region &r, AccFuncMapType &accFuncMap)
-      : R(r), AccFuncMap(accFuncMap) {}
-
-public:
-  ~TempScop();
-
-  /// @brief Get the maximum Region contained by this Scop.
-  ///
-  /// @return The maximum Region contained by this Scop.
-  Region &getMaxRegion() const { return R; }
-
-  /// @brief Get all access functions in a BasicBlock
-  ///
-  /// @param  BB The BasicBlock that containing the access functions.
-  ///
-  /// @return All access functions in BB
-  ///
-  AccFuncSetType *getAccessFunctions(const BasicBlock *BB) {
-    AccFuncMapType::iterator at = AccFuncMap.find(BB);
-    return at != AccFuncMap.end() ? &(at->second) : 0;
-  }
-  //@}
-
-  /// @brief Print the Temporary Scop information.
-  ///
-  /// @param OS The output stream the access functions is printed to.
-  /// @param SE The ScalarEvolution that help printing Temporary Scop
-  ///           information.
-  /// @param LI The LoopInfo that help printing the access functions.
-  void print(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI) const;
-
-  /// @brief Print the access functions and loop bounds in this Scop.
-  ///
-  /// @param OS The output stream the access functions is printed to.
-  /// @param SE The ScalarEvolution that help printing the access functions.
-  /// @param LI The LoopInfo that help printing the access functions.
-  void printDetail(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI,
-                   const Region *Reg, unsigned ind) const;
-};
-
-typedef std::map<const Region *, TempScop *> TempScopMapType;
-
 ///===---------------------------------------------------------------------===//
 /// @brief Build the Polly IR (Scop and ScopStmt) on a Region.
 ///
@@ -1456,9 +1417,6 @@ class ScopInfo : public RegionPass {
   // zero scev every time when we need it.
   const SCEV *ZeroOffset;
 
-  // The TempScop for this region.
-  TempScop *TempScopOfRegion;
-
   // The Scop
   Scop *scop;
   isl_ctx *ctx;
@@ -1466,15 +1424,14 @@ class ScopInfo : public RegionPass {
   // Clear the context.
   void clear();
 
-  // Build the temporary information of Region R, where R must be a valid part
-  // of Scop.
-  TempScop *buildTempScop(Region &R);
+  // Build the SCoP for Region @p R.
+  Scop *buildScop(Region &R, DominatorTree &DT);
 
   /// @brief Build an instance of IRAccess from the Load/Store instruction.
   ///
   /// @param Inst       The Load/Store instruction that access the memory
   /// @param L          The parent loop of the instruction
-  /// @param R          The region on which we are going to build a TempScop
+  /// @param R          The region on which to build the data access dictionary.
   /// @param BoxedLoops The set of loops that are overapproximated in @p R.
   ///
   /// @return     The IRAccess to describe the access function of the
@@ -1524,11 +1481,6 @@ public:
   static char ID;
   explicit ScopInfo();
   ~ScopInfo();
-
-  /// @brief Get the temporay Scop information in LLVM IR for this region.
-  ///
-  /// @return The Scop information in LLVM IR represent.
-  TempScop *getTempScop() const;
 
   /// @brief Try to build the Polly IR of static control part on the current
   ///        SESE-Region.
