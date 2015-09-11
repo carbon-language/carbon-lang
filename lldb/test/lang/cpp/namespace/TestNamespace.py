@@ -21,6 +21,7 @@ class NamespaceTestCase(TestBase):
         self.namespace_variable_commands()
 
     # rdar://problem/8668674
+    @expectedFailureWindows("llvm.org/pr24764")
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that anonymous and named namespace variables display correctly."""

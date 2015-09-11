@@ -21,6 +21,7 @@ class CxxWCharTTestCase(TestBase):
         self.wchar_t()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24764")
     def test_with_dwarf(self):
         """Test that C++ supports wchar_t correctly."""
         self.buildDwarf()

@@ -19,6 +19,7 @@ class TestCPPBreakpointLocations(TestBase):
         self.breakpoint_id_tests ()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24764")
     def test_with_dwarf (self):
         self.buildDwarf ()
         self.breakpoint_id_tests ()

@@ -17,6 +17,7 @@ class CPPTestDiamondInheritance(TestBase):
         self.diamong_inheritace()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24764")
     def test_with_dwarf_and_run_command(self):
         """Test that virtual base classes work in when SBValue objects are used to explore the variable value"""
         self.buildDwarf()

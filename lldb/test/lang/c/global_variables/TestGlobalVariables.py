@@ -18,6 +18,7 @@ class GlobalVariablesTestCase(TestBase):
         self.global_variables()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24764")
     def test_with_dwarf(self):
         """Test 'frame variable --scope --no-args' which omits args and shows scopes."""
         self.buildDwarf()

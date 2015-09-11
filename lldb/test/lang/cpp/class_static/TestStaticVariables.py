@@ -20,6 +20,7 @@ class StaticVariableTestCase(TestBase):
         self.buildDsym()
         self.static_variable_commands()
 
+    @expectedFailureWindows("llvm.org/pr24764")
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that file and class static variables display correctly."""
