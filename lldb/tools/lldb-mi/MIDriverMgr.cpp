@@ -300,7 +300,7 @@ CMIDriverMgr::DriverMainLoop()
     }
     else
     {
-        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
+        const CMIUtilString errMsg(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET));
         CMICmnStreamStdout::Instance().Write(errMsg, true);
         return MIstatus::failure;
     }
@@ -327,7 +327,7 @@ CMIDriverMgr::DriverParseArgs(const int argc, const char *argv[], FILE *vpStdOut
 {
     if (m_pDriverCurrent == nullptr)
     {
-        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
+        const CMIUtilString errMsg(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET));
         CMICmnStreamStdout::Instance().Write(errMsg, true);
         return MIstatus::failure;
     }
@@ -363,7 +363,7 @@ CMIDriverMgr::DriverGetError() const
         return m_pDriverCurrent->GetError();
     else
     {
-        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
+        const CMIUtilString errMsg(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET));
         CMICmnStreamStdout::Instance().Write(errMsg, true);
     }
 
@@ -385,7 +385,7 @@ CMIDriverMgr::DriverGetName() const
         return m_pDriverCurrent->GetName();
     else
     {
-        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
+        const CMIUtilString errMsg(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET));
         CMICmnStreamStdout::Instance().Write(errMsg, true);
     }
 
@@ -408,7 +408,7 @@ CMIDriverMgr::DriverGetTheDebugger()
         pDebugger = &m_pDriverCurrent->GetTheDebugger();
     else
     {
-        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
+        const CMIUtilString errMsg(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET));
         CMICmnStreamStdout::Instance().Write(errMsg, true);
     }
 

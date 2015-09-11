@@ -106,7 +106,7 @@ CMICmnLLDBDebugSessionInfo::Shutdown()
     bOk = SharedDataDestroy();
     if (!bOk)
     {
-        errMsg = CMIUtilString::Format(MIRSRC(IDS_DBGSESSION_ERR_SHARED_DATA_RELEASE));
+        errMsg = MIRSRC(IDS_DBGSESSION_ERR_SHARED_DATA_RELEASE);
         errMsg += "\n";
     }
     m_vecActiveThreadId.clear();
