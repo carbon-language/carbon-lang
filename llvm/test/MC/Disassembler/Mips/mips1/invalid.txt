@@ -1,4 +1,4 @@
-# RUN: llvm-mc %s -triple=mips-unknown-linux -disassemble -mcpu=mips1 |& FileCheck %s
+# RUN: llvm-mc %s -triple=mips-unknown-linux -disassemble -mcpu=mips1 2>&1 | FileCheck %s
 
 # Start with a valid instruction. Otherwise llvm-mc gives up immediately.
 0x00 0x00 0x00 0x00
