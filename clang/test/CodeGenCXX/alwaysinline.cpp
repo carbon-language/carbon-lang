@@ -1,10 +1,10 @@
 // Test different kinds of alwaysinline *structor definitions.
 
-// RUN: %clang_cc1 -disable-llvm-optzns -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK
-// RUN: %clang_cc1 -disable-llvm-optzns -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK-CALL
+// RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -disable-llvm-optzns -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK
+// RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -disable-llvm-optzns -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK-CALL
 
-// RUN: %clang_cc1 -mconstructor-aliases -disable-llvm-optzns -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK
-// RUN: %clang_cc1 -mconstructor-aliases -disable-llvm-optzns -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK-CALL
+// RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -mconstructor-aliases -disable-llvm-optzns -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK
+// RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -mconstructor-aliases -disable-llvm-optzns -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK-CALL
 
 struct A1 {
   __attribute__((__always_inline__)) A1() {}

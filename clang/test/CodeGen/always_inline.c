@@ -1,5 +1,5 @@
-// RUN: %clang -emit-llvm -S -o - %s | FileCheck %s
-// RUN: %clang -mllvm -disable-llvm-optzns -emit-llvm -S -o - %s | FileCheck %s --check-prefix=CHECK-NO-OPTZNS
+// RUN: %clang -target x86_64-pc-linux-gnu -emit-llvm -S -o - %s | FileCheck %s
+// RUN: %clang -target x86_64-pc-linux-gnu -mllvm -disable-llvm-optzns -emit-llvm -S -o - %s | FileCheck %s --check-prefix=CHECK-NO-OPTZNS
 
 //static int f0() { 
 static int __attribute__((always_inline)) f0() { 
