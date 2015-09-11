@@ -1,5 +1,5 @@
 ; RUN: llvm-as -o %t.bc %s
-; RUN: env LD_PRELOAD=%llvmshlibdir/LLVMgold.so %gold -plugin %llvmshlibdir/LLVMgold.so -u foo -u bar -plugin-opt jobs=2 -plugin-opt save-temps -o %t %t.bc
+; RUN: env LD_PRELOAD=%llvmshlibdir/LLVMgold.so %gold -plugin %llvmshlibdir/LLVMgold.so -u foo -u bar -plugin-opt jobs=2 -plugin-opt save-temps -m elf_x86_64 -o %t %t.bc
 ; RUN: llvm-nm %t.o0 | FileCheck --check-prefix=CHECK0 %s
 ; RUN: llvm-nm %t.o1 | FileCheck --check-prefix=CHECK1 %s
 
