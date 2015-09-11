@@ -55,6 +55,34 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
   set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${LLVM_CXX_FLAGS})
 
+  # Check LLVM_ENABLE_ASSERTIONS
+  execute_process(COMMAND "${LLVM_INSTALL_ROOT}/bin/llvm-config" --assertion-mode
+                  OUTPUT_VARIABLE LLVM_ENABLE_ASSERTIONS
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  # Copied from LLVM's HandleLLVMOptions.cmake
+  if( LLVM_ENABLE_ASSERTIONS )
+    # MSVC doesn't like _DEBUG on release builds. See PR 4379.
+    if( NOT MSVC )
+      add_definitions( -D_DEBUG )
+    endif()
+    # On non-Debug builds cmake automatically defines NDEBUG, so we
+    # explicitly undefine it:
+    if( NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" )
+      add_definitions( -UNDEBUG )
+      # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
+      foreach (flags_var_to_scrub
+          CMAKE_CXX_FLAGS_RELEASE
+          CMAKE_CXX_FLAGS_RELWITHDEBINFO
+          CMAKE_CXX_FLAGS_MINSIZEREL
+          CMAKE_C_FLAGS_RELEASE
+          CMAKE_C_FLAGS_RELWITHDEBINFO
+          CMAKE_C_FLAGS_MINSIZEREL)
+        string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
+          "${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
+      endforeach()
+    endif()
+  endif()
+
   # Make sure the isl c files are built as fPIC
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif(NOT DEFINED LLVM_MAIN_SRC_DIR)
