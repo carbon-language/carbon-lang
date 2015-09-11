@@ -19,6 +19,12 @@ struct vector {
   size_t size() const;
 };
 
+// std::bitset<> is not a container. sizeof() is reasonable for it.
+template <size_t N>
+struct bitset {
+  size_t size() const;
+};
+
 class fake_container1 {
   size_t size() const; // non-public
 };
@@ -78,9 +84,11 @@ void f() {
 
   std::fake_container1 f1;
   std::fake_container2 f2;
+  std::bitset<7> bs;
 
   a = sizeof(f1);
   a = sizeof(f2);
+  a = sizeof(bs);
 
 
   std::string arr[3];

@@ -36,6 +36,7 @@ void SizeofContainerCheck::registerMatchers(MatchFinder *Finder) {
       expr(unless(isInTemplateInstantiation()),
            expr(sizeOfExpr(has(expr(hasType(hasCanonicalType(hasDeclaration(
                     recordDecl(matchesName("^(::std::|::string)"),
+                               unless(hasName("::std::bitset")),
                                hasMethod(methodDecl(hasName("size"), isPublic(),
                                                     isConst()))))))))))
                .bind("sizeof"),
