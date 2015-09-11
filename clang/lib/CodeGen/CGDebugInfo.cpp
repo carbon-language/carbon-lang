@@ -2129,7 +2129,7 @@ ObjCInterfaceDecl *CGDebugInfo::getObjCInterfaceDecl(QualType Ty) {
 }
 
 llvm::DIModule *CGDebugInfo::getParentModuleOrNull(const Decl *D) {
-  if (!DebugTypeExtRefs || !D || !D->isFromASTFile())
+  if (!DebugTypeExtRefs || !D->isFromASTFile())
     return nullptr;
 
   llvm::DIModule *ModuleRef = nullptr;
