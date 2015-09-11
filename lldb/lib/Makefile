@@ -95,6 +95,7 @@ USEDLIBS = lldbAPI.a \
 	clangSerialization.a \
 	LLVMMCDisassembler.a \
 	LLVMProfileData.a \
+	LLVMObjCARCOpts.a \
 	lldbPluginPlatformMacOSX.a \
 	lldbPluginPlatformLinux.a \
 	lldbPluginPlatformWindows.a \
