@@ -1854,7 +1854,7 @@ ObjectFileELF::CreateSections(SectionList &unified_section_list)
     }
 }
 
-// Find the arm/aarch64 mapping symbol character in the given symbol name. Maping symbols have the
+// Find the arm/aarch64 mapping symbol character in the given symbol name. Mapping symbols have the
 // form of "$<char>[.<any>]*". Additionally we recognize cases when the mapping symbol prefixed by
 // an arbitrary string because if a symbol prefix added to each symbol in the object file with
 // objcopy then the mapping symbols are also prefixed.
