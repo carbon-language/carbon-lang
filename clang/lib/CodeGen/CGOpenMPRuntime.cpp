@@ -1848,14 +1848,15 @@ void CGOpenMPRuntime::emitKmpRoutineEntryT(QualType KmpInt32Ty) {
   }
 }
 
-static void addFieldToRecordDecl(ASTContext &C, DeclContext *DC,
-                                 QualType FieldTy) {
+static FieldDecl *addFieldToRecordDecl(ASTContext &C, DeclContext *DC,
+                                       QualType FieldTy) {
   auto *Field = FieldDecl::Create(
       C, DC, SourceLocation(), SourceLocation(), /*Id=*/nullptr, FieldTy,
       C.getTrivialTypeSourceInfo(FieldTy, SourceLocation()),
       /*BW=*/nullptr, /*Mutable=*/false, /*InitStyle=*/ICIS_NoInit);
   Field->setAccess(AS_public);
   DC->addDecl(Field);
+  return Field;
 }
 
 namespace {
@@ -1882,9 +1883,16 @@ createPrivatesRecordDecl(CodeGenModule &CGM,
     auto *RD = C.buildImplicitRecord(".kmp_privates.t");
     RD->startDefinition();
     for (auto &&Pair : Privates) {
-      auto Type = Pair.second.Original->getType();
+      auto *VD = Pair.second.Original;
+      auto Type = VD->getType();
       Type = Type.getNonReferenceType();
-      addFieldToRecordDecl(C, RD, Type);
+      auto *FD = addFieldToRecordDecl(C, RD, Type);
+      if (VD->hasAttrs()) {
+        for (specific_attr_iterator<AlignedAttr> I(VD->getAttrs().begin()),
+             E(VD->getAttrs().end());
+             I != E; ++I)
+          FD->addAttr(*I);
+      }
     }
     RD->completeDefinition();
     return RD;
@@ -2173,7 +2181,7 @@ void CGOpenMPRuntime::emitTaskCall(
   for (auto *E : PrivateVars) {
     auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
     Privates.push_back(std::make_pair(
-        C.getTypeAlignInChars(VD->getType()),
+        C.getDeclAlign(VD),
         PrivateHelpersTy(VD, cast<VarDecl>(cast<DeclRefExpr>(*I)->getDecl()),
                          /*PrivateElemInit=*/nullptr)));
     ++I;
@@ -2183,7 +2191,7 @@ void CGOpenMPRuntime::emitTaskCall(
   for (auto *E : FirstprivateVars) {
     auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
     Privates.push_back(std::make_pair(
-        C.getTypeAlignInChars(VD->getType()),
+        C.getDeclAlign(VD),
         PrivateHelpersTy(
             VD, cast<VarDecl>(cast<DeclRefExpr>(*I)->getDecl()),
             cast<VarDecl>(cast<DeclRefExpr>(*IElemInitRef)->getDecl()))));
@@ -2302,6 +2310,9 @@ void CGOpenMPRuntime::emitTaskCall(
           auto *SharedField = CapturesInfo.lookup(OriginalVD);
           auto SharedRefLValue =
               CGF.EmitLValueForField(SharedsBase, SharedField);
+          SharedRefLValue = CGF.MakeAddrLValue(
+              Address(SharedRefLValue.getPointer(), C.getDeclAlign(OriginalVD)),
+              SharedRefLValue.getType(), AlignmentSource::Decl);
           QualType Type = OriginalVD->getType();
           if (Type->isArrayType()) {
             // Initialize firstprivate array.

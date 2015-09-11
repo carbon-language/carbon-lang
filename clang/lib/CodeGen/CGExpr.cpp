@@ -2061,8 +2061,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
           }
           return MakeAddrLValue(it->second, T);
         }
-        return EmitCapturedFieldLValue(*this, CapturedStmtInfo->lookup(VD),
-                                       CapturedStmtInfo->getContextValue());
+        LValue CapLVal =
+            EmitCapturedFieldLValue(*this, CapturedStmtInfo->lookup(VD),
+                                    CapturedStmtInfo->getContextValue());
+        return MakeAddrLValue(
+            Address(CapLVal.getPointer(), getContext().getDeclAlign(VD)),
+            CapLVal.getType(), AlignmentSource::Decl);
       }
 
       assert(isa<BlockDecl>(CurCodeDecl));

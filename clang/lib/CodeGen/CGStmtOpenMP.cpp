@@ -112,7 +112,8 @@ CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S) {
         ArgAddr = EmitLoadOfReference(
             ArgAddr, ArgLVal.getType()->castAs<ReferenceType>());
       }
-      setAddrOfLocalVar(Var, ArgAddr);
+      setAddrOfLocalVar(
+          Var, Address(ArgAddr.getPointer(), getContext().getDeclAlign(Var)));
     } else {
       // If 'this' is captured, load it into CXXThisValue.
       assert(I->capturesThis());
