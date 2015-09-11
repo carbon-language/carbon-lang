@@ -588,12 +588,21 @@ if (CLANG_ENABLE_BOOTSTRAP)
   set(STAMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/bootstrap-stamps/)
   set(BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bootstrap-bins/)
 
+  # If on Darwin we need to make bootstrap depend on LTO and pass
+  # DARWIN_LTO_LIBRARY so that -flto will work using the just-built compiler
+  if(APPLE)
+    set(LTO_DEP LTO llvm-ar llvm-ranlib)
+    set(LTO_LIBRARY -DDARWIN_LTO_LIBRARY=${CMAKE_BINARY_DIR}/lib/libLTO.dylib)
+    set(LTO_AR -DCMAKE_AR=${CMAKE_BINARY_DIR}/bin/llvm-ar)
+    set(LTO_RANLIB -DCMAKE_RANLIB=${CMAKE_BINARY_DIR}/bin/llvm-ranlib)
+  endif()
+
   add_custom_target(bootstrap-clear
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/bootstrap-cleared
     )
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bootstrap-cleared
-    DEPENDS clang
+    DEPENDS clang ${LTO_DEP}
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${STAMP_DIR}
@@ -602,7 +611,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
     )
 
   ExternalProject_Add(bootstrap
-    DEPENDS clang
+    DEPENDS clang ${LTO_DEP}
     PREFIX bootstrap
     SOURCE_DIR ${CMAKE_SOURCE_DIR}
     STAMP_DIR ${STAMP_DIR}
@@ -615,6 +624,8 @@ if (CLANG_ENABLE_BOOTSTRAP)
                 ${CLANG_BOOTSTRAP_CMAKE_ARGS}
                 -DCMAKE_CXX_COMPILER=${CMAKE_BINARY_DIR}/bin/clang++
                 -DCMAKE_C_COMPILER=${CMAKE_BINARY_DIR}/bin/clang
+                -DCMAKE_ASM_COMPILER=${CMAKE_BINARY_DIR}/bin/clang
+                ${LTO_LIBRARY} ${LTO_AR} ${LTO_RANLIB}
     INSTALL_COMMAND ""
     STEP_TARGETS configure build
     ${cmake_3_4_USES_TERMINAL_OPTIONS}
