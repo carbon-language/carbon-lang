@@ -23,6 +23,7 @@ class TestCStepping(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr17932')
     @expectedFailureLinux # llvm.org/pr14437
+    @expectedFailureWindows("llvm.org/pr24777")
     @python_api_test
     @dwarf_test
     def test_with_dwarf_and_python_api(self):
