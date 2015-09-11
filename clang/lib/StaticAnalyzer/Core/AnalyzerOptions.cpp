@@ -334,5 +334,7 @@ bool AnalyzerOptions::shouldConditionalizeStaticInitializers() {
 }
 
 bool AnalyzerOptions::shouldInlineLambdas() {
-  return getBooleanOption("inline-lambdas", /*Default=*/true);
+  if (!InlineLambdas.hasValue())
+    InlineLambdas = getBooleanOption("inline-lambdas", /*Default=*/true);
+  return InlineLambdas.getValue();
 }
