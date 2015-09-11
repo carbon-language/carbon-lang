@@ -238,6 +238,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(implicitCastExpr);
   REGISTER_MATCHER(incompleteArrayType);
   REGISTER_MATCHER(initListExpr);
+  REGISTER_MATCHER(injectedClassNameType);
   REGISTER_MATCHER(innerType);
   REGISTER_MATCHER(integerLiteral);
   REGISTER_MATCHER(isAnonymous);
@@ -298,7 +299,9 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(nullStmt);
   REGISTER_MATCHER(numSelectorArgs);
   REGISTER_MATCHER(ofClass);
+  REGISTER_MATCHER(objcInterfaceDecl);
   REGISTER_MATCHER(objcMessageExpr);
+  REGISTER_MATCHER(objcObjectPointerType);
   REGISTER_MATCHER(on);
   REGISTER_MATCHER(onImplicitObjectArgument);
   REGISTER_MATCHER(operatorCallExpr);
@@ -334,6 +337,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(templateArgument);
   REGISTER_MATCHER(templateArgumentCountIs);
   REGISTER_MATCHER(templateSpecializationType);
+  REGISTER_MATCHER(templateTypeParmType);
   REGISTER_MATCHER(temporaryObjectExpr);
   REGISTER_MATCHER(thisExpr);
   REGISTER_MATCHER(throughUsingDecl);
@@ -350,6 +354,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(unaryTransformType);
   REGISTER_MATCHER(unless);
   REGISTER_MATCHER(unresolvedConstructExpr);
+  REGISTER_MATCHER(unresolvedUsingTypenameDecl);
   REGISTER_MATCHER(unresolvedUsingValueDecl);
   REGISTER_MATCHER(userDefinedLiteral);
   REGISTER_MATCHER(usingDecl);

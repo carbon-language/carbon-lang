@@ -307,6 +307,15 @@ namespaceDecl()
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('objcInterfaceDecl0')"><a name="objcInterfaceDecl0Anchor">objcInterfaceDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ObjCInterfaceDecl.html">ObjCInterfaceDecl</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="objcInterfaceDecl0"><pre>Matches Objective-C interface declarations.
+
+Example matches Foo
+  @interface Foo
+  @end
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('parmVarDecl0')"><a name="parmVarDecl0Anchor">parmVarDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ParmVarDecl.html">ParmVarDecl</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="parmVarDecl0"><pre>Matches parameter variable declarations.
 
@@ -362,6 +371,22 @@ Given
 typedefDecl()
   matches "typedef int X"
 </pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('unresolvedUsingTypenameDecl0')"><a name="unresolvedUsingTypenameDecl0Anchor">unresolvedUsingTypenameDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1UnresolvedUsingTypenameDecl.html">UnresolvedUsingTypenameDecl</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="unresolvedUsingTypenameDecl0"><pre>Matches unresolved using value declarations that involve the
+typename.
+
+Given
+  template &lt;typename T&gt;
+  struct Base { typedef T Foo; };
+
+  template&lt;typename T&gt;
+  struct S : private Base&lt;T&gt; {
+    using typename Base&lt;T&gt;::Foo;
+  };
+unresolvedUsingTypenameDecl()
+  matches using Base&lt;T&gt;::Foo </pre></td></tr>
 
 
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('unresolvedUsingValueDecl0')"><a name="unresolvedUsingValueDecl0Anchor">unresolvedUsingValueDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1UnresolvedUsingValueDecl.html">UnresolvedUsingValueDecl</a>&gt;...</td></tr>
@@ -1254,6 +1279,18 @@ incompleteArrayType()
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('injectedClassNameType0')"><a name="injectedClassNameType0Anchor">injectedClassNameType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1InjectedClassNameType.html">InjectedClassNameType</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="injectedClassNameType0"><pre>Matches injected class name types.
+
+Example matches S s, but not S&lt;T&gt; s.
+    (matcher = parmVarDecl(hasType(injectedClassNameType())))
+  template &lt;typename T&gt; struct S {
+    void f(S s);
+    void g(S&lt;T&gt; s);
+  };
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('lValueReferenceType0')"><a name="lValueReferenceType0Anchor">lValueReferenceType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1LValueReferenceType.html">LValueReferenceType</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="lValueReferenceType0"><pre>Matches lvalue reference types.
 
@@ -1281,6 +1318,21 @@ memberPointerType()
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('objcObjectPointerType0')"><a name="objcObjectPointerType0Anchor">objcObjectPointerType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ObjCObjectPointerType.html">ObjCObjectPointerType</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="objcObjectPointerType0"><pre>Matches an Objective-C object pointer type, which is different from
+a pointer type, despite being syntactically similar.
+
+Given
+  int *a;
+
+  @interface Foo
+  @end
+  Foo *f;
+pointerType()
+  matches "Foo *f", but does not match "int *a".
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('parenType0')"><a name="parenType0Anchor">parenType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ParenType.html">ParenType</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="parenType0"><pre>Matches ParenType nodes.
 
@@ -1294,14 +1346,19 @@ array_of_ptrs.
 
 
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('pointerType0')"><a name="pointerType0Anchor">pointerType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1PointerType.html">PointerType</a>&gt;...</td></tr>
-<tr><td colspan="4" class="doc" id="pointerType0"><pre>Matches pointer types.
+<tr><td colspan="4" class="doc" id="pointerType0"><pre>Matches pointer types, but does not match Objective-C object pointer
+types.
 
 Given
   int *a;
   int &amp;b = *a;
   int c = 5;
+
+  @interface Foo
+  @end
+  Foo *f;
 pointerType()
-  matches "int *a"
+  matches "int *a", but does not match "Foo *f".
 </pre></td></tr>
 
 
@@ -1379,6 +1436,15 @@ Given
 
 templateSpecializationType() matches the type of the explicit
 instantiation in A and the type of the variable declaration in B.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('templateTypeParmType0')"><a name="templateTypeParmType0Anchor">templateTypeParmType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateTypeParmType.html">TemplateTypeParmType</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="templateTypeParmType0"><pre>Matches template type parameter types.
+
+Example matches T, but not int.
+    (matcher = templateTypeParmType())
+  template &lt;typename T&gt; void f(int i);
 </pre></td></tr>
 
 
@@ -2280,7 +2346,7 @@ a substring matched by the given RegExp.
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ObjCMessageExpr.html">ObjCMessageExpr</a>&gt;</td><td class="name" onclick="toggle('numSelectorArgs0')"><a name="numSelectorArgs0Anchor">numSelectorArgs</a></td><td>unsigned N</td></tr>
 <tr><td colspan="4" class="doc" id="numSelectorArgs0"><pre>Matches when the selector has the specified number of arguments
 
- matcher = objCMessageExpr(numSelectorArgs(1));
+ matcher = objCMessageExpr(numSelectorArgs(0));
  matches self.bodyView in the code below
 
  matcher = objCMessageExpr(numSelectorArgs(2));

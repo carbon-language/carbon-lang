@@ -904,6 +904,16 @@ const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   ObjCMessageExpr> objcMessageExpr;
 
+/// \brief Matches Objective-C interface declarations.
+///
+/// Example matches Foo
+/// \code
+///   @interface Foo
+///   @end
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<
+  Decl,
+  ObjCInterfaceDecl> objcInterfaceDecl;
 
 /// \brief Matches expressions that introduce cleanups to be run at the end
 /// of the sub-expression's evaluation.
@@ -977,6 +987,25 @@ const internal::VariadicDynCastAllOfMatcher<Decl, UsingDirectiveDecl>
 const internal::VariadicDynCastAllOfMatcher<
   Decl,
   UnresolvedUsingValueDecl> unresolvedUsingValueDecl;
+
+/// \brief Matches unresolved using value declarations that involve the
+/// typename.
+///
+/// Given
+/// \code
+///   template <typename T>
+///   struct Base { typedef T Foo; };
+///
+///   template<typename T>
+///   struct S : private Base<T> {
+///     using typename Base<T>::Foo;
+///   };
+/// \endcode
+/// unresolvedUsingTypenameDecl()
+///   matches \code using Base<T>::Foo \endcode
+const internal::VariadicDynCastAllOfMatcher<
+  Decl,
+  UnresolvedUsingTypenameDecl> unresolvedUsingTypenameDecl;
 
 /// \brief Matches constructor call expressions (including implicit ones).
 ///
@@ -2282,7 +2311,7 @@ AST_MATCHER_P(QualType, asString, std::string, Name) {
 AST_MATCHER_P(
     QualType, pointsTo, internal::Matcher<QualType>,
     InnerMatcher) {
-  return (!Node.isNull() && Node->isPointerType() &&
+  return (!Node.isNull() && Node->isAnyPointerType() &&
           InnerMatcher.matches(Node->getPointeeType(), Finder, Builder));
 }
 
@@ -3754,17 +3783,37 @@ AST_TYPE_MATCHER(BlockPointerType, blockPointerType);
 ///   matches "A::* ptr"
 AST_TYPE_MATCHER(MemberPointerType, memberPointerType);
 
-/// \brief Matches pointer types.
+/// \brief Matches pointer types, but does not match Objective-C object pointer
+/// types.
 ///
 /// Given
 /// \code
 ///   int *a;
 ///   int &b = *a;
 ///   int c = 5;
+///
+///   @interface Foo
+///   @end
+///   Foo *f;
 /// \endcode
 /// pointerType()
-///   matches "int *a"
+///   matches "int *a", but does not match "Foo *f".
 AST_TYPE_MATCHER(PointerType, pointerType);
+
+/// \brief Matches an Objective-C object pointer type, which is different from
+/// a pointer type, despite being syntactically similar.
+///
+/// Given
+/// \code
+///   int *a;
+///
+///   @interface Foo
+///   @end
+///   Foo *f;
+/// \endcode
+/// pointerType()
+///   matches "Foo *f", but does not match "int *a".
+AST_TYPE_MATCHER(ObjCObjectPointerType, objcObjectPointerType);
 
 /// \brief Matches both lvalue and rvalue reference types.
 ///
@@ -3962,6 +4011,27 @@ AST_MATCHER_P(ElaboratedType, namesType, internal::Matcher<QualType>,
 ///
 /// \c substTemplateTypeParmType() matches the type of 't' but not '1'
 AST_TYPE_MATCHER(SubstTemplateTypeParmType, substTemplateTypeParmType);
+
+/// \brief Matches template type parameter types.
+///
+/// Example matches T, but not int.
+///     (matcher = templateTypeParmType())
+/// \code
+///   template <typename T> void f(int i);
+/// \endcode
+AST_TYPE_MATCHER(TemplateTypeParmType, templateTypeParmType);
+
+/// \brief Matches injected class name types.
+///
+/// Example matches S s, but not S<T> s.
+///     (matcher = parmVarDecl(hasType(injectedClassNameType())))
+/// \code
+///   template <typename T> struct S {
+///     void f(S s);
+///     void g(S<T> s);
+///   };
+/// \endcode
+AST_TYPE_MATCHER(InjectedClassNameType, injectedClassNameType);
 
 /// \brief Matches declarations whose declaration context, interpreted as a
 /// Decl, matches \c InnerMatcher.

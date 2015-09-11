@@ -924,6 +924,54 @@ TEST(TypeMatcher, MatchesClassType) {
                        varDecl(hasType(namedDecl(hasName("S"))))));
 }
 
+TEST(TypeMatcher, MatchesDeclTypes) {
+  // TypedefType -> TypedefNameDecl
+  EXPECT_TRUE(matches("typedef int I; void f(I i);",
+                      parmVarDecl(hasType(namedDecl(hasName("I"))))));
+  // ObjCObjectPointerType
+  EXPECT_TRUE(matchesObjC("@interface Foo @end void f(Foo *f);",
+                          parmVarDecl(hasType(objcObjectPointerType()))));
+  // ObjCObjectPointerType -> ObjCInterfaceType -> ObjCInterfaceDecl
+  EXPECT_TRUE(matchesObjC(
+      "@interface Foo @end void f(Foo *f);",
+      parmVarDecl(hasType(pointsTo(objcInterfaceDecl(hasName("Foo")))))));
+  // TemplateTypeParmType
+  EXPECT_TRUE(matches("template <typename T> void f(T t);",
+                      parmVarDecl(hasType(templateTypeParmType()))));
+  // TemplateTypeParmType -> TemplateTypeParmDecl
+  EXPECT_TRUE(matches("template <typename T> void f(T t);",
+                      parmVarDecl(hasType(namedDecl(hasName("T"))))));
+  // InjectedClassNameType
+  EXPECT_TRUE(matches("template <typename T> struct S {"
+                      "  void f(S s);"
+                      "};",
+                      parmVarDecl(hasType(injectedClassNameType()))));
+  EXPECT_TRUE(notMatches("template <typename T> struct S {"
+                         "  void g(S<T> s);"
+                         "};",
+                         parmVarDecl(hasType(injectedClassNameType()))));
+  // InjectedClassNameType -> CXXRecordDecl
+  EXPECT_TRUE(matches("template <typename T> struct S {"
+                      "  void f(S s);"
+                      "};",
+                      parmVarDecl(hasType(namedDecl(hasName("S"))))));
+
+  static const char Using[] = "template <typename T>"
+                              "struct Base {"
+                              "  typedef T Foo;"
+                              "};"
+                              ""
+                              "template <typename T>"
+                              "struct S : private Base<T> {"
+                              "  using typename Base<T>::Foo;"
+                              "  void f(Foo);"
+                              "};";
+  // UnresolvedUsingTypenameDecl
+  EXPECT_TRUE(matches(Using, unresolvedUsingTypenameDecl(hasName("Foo"))));
+  // UnresolvedUsingTypenameType -> UnresolvedUsingTypenameDecl
+  EXPECT_TRUE(matches(Using, parmVarDecl(hasType(namedDecl(hasName("Foo"))))));
+}
+
 TEST(Matcher, BindMatchedNodes) {
   DeclarationMatcher ClassX = has(recordDecl(hasName("::X")).bind("x"));
 
