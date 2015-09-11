@@ -67,6 +67,7 @@ CMICmnLogMediumFile::Instance()
 bool
 CMICmnLogMediumFile::Initialize()
 {
+    m_bInitialized = true;
     return FileFormFileNamePath();
 }
 
