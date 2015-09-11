@@ -30,8 +30,9 @@ int safe_div(int numerator, int denominator, int *res) {
 // CHECK:       to label %{{.*}} unwind label %[[catchpad:[^ ]*]]
 //
 // CHECK: [[catchpad]]
-// X64: %[[padtoken:[^ ]*]] = catchpad [i8* null] to label %[[exceptret:[^ ]*]] unwind label
-// X86: %[[padtoken:[^ ]*]] = catchpad [i8* bitcast (i32 ()* @"\01?filt$0@0@safe_div@@" to i8*)] to label %[[exceptret:[^ ]*]] unwind label
+// X64: %[[padtoken:[^ ]*]] = catchpad [i8* null]
+// X86: %[[padtoken:[^ ]*]] = catchpad [i8* bitcast (i32 ()* @"\01?filt$0@0@safe_div@@" to i8*)]
+// CHECK-NEXT:    to label %[[exceptret:[^ ]*]] unwind label
 //
 // CHECK: [[exceptret]]
 // CHECK: catchret %[[padtoken]] to label %[[except:[^ ]*]]
@@ -113,7 +114,8 @@ int nested_try(void) {
 // CHECK:       to label %[[cont:[^ ]*]] unwind label %[[cpad_inner:[^ ]*]]
 //
 // CHECK: [[cpad_inner]]
-// CHECK: catchpad [i8* bitcast (i32 ({{.*}})* @"\01?filt$1@0@nested_try@@" to i8*)] to label %[[exceptret_inner:[^ ]*]] unwind label %[[cpad_outer:[^ ]*]]
+// CHECK: catchpad [i8* bitcast (i32 ({{.*}})* @"\01?filt$1@0@nested_try@@" to i8*)]
+// CHECK-NEXT: to label %[[exceptret_inner:[^ ]*]] unwind label %[[cpad_outer:[^ ]*]]
 //
 // CHECK: [[exceptret_inner]]
 // CHECK: catchret {{.*}} to label %[[except_inner:[^ ]*]]
@@ -126,7 +128,8 @@ int nested_try(void) {
 // CHECK: br label %[[outer_try_cont:[^ ]*]]
 //
 // CHECK: [[cpad_outer]]
-// CHECK: catchpad [i8* bitcast (i32 ({{.*}})* @"\01?filt$0@0@nested_try@@" to i8*)] to label %[[exceptret_outer:[^ ]*]] unwind label
+// CHECK: catchpad [i8* bitcast (i32 ({{.*}})* @"\01?filt$0@0@nested_try@@" to i8*)]
+// CHECK-NEXT: to label %[[exceptret_outer:[^ ]*]] unwind label
 //
 // CHECK: [[exceptret_outer]]
 // CHECK: catchret {{.*}} to label %[[except_outer:[^ ]*]]
