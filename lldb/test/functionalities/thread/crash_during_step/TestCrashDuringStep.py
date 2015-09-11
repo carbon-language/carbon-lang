@@ -20,6 +20,7 @@ class CreateDuringStepTestCase(TestBase):
         self.crash_during_step_inst_test()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24778")
     @expectedFailureAndroid("llvm.org/pr24497", archs=['arm', 'aarch64'])
     def test_step_inst_with_dwarf(self):
         """Test thread creation during step-inst handling."""

@@ -22,6 +22,7 @@ class ReturnValueTestCase(TestBase):
         self.do_return_value()
 
     @expectedFailurei386
+    @expectedFailureWindows("llvm.org/pr24778")
     @python_api_test
     @dwarf_test
     def test_with_dwarf_python(self):

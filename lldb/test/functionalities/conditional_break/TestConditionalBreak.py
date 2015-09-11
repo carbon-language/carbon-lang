@@ -25,6 +25,7 @@ class ConditionalBreakTestCase(TestBase):
         self.buildDsym()
         self.do_conditional_break()
 
+    @expectedFailureWindows("llvm.org/pr24778")
     @python_api_test
     @dwarf_test
     def test_with_dwarf_python(self):

@@ -22,6 +22,7 @@ class SymbolAPITestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24778")
     def test_with_dwarf(self):
         """Exercise some SBSymbol and SBAddress APIs."""
         self.buildDwarf()

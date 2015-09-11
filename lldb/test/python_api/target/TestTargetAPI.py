@@ -50,6 +50,7 @@ class TargetAPITestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24778")
     def test_find_functions_with_dwarf(self):
         """Exercise SBTarget.FindFunctions() API."""
         d = {'EXE': 'b.out'}

@@ -23,6 +23,7 @@ class FrameAPITestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24778")
     def test_get_arg_vals_for_call_stack_with_dwarf(self):
         """Exercise SBFrame.GetVariables() API to get argument vals."""
         self.buildDwarf()
