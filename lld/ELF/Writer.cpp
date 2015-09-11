@@ -132,15 +132,17 @@ private:
   llvm::StringTableBuilder StrTabBuilder;
 };
 
+template <class ELFT> class Writer;
+
 template <class ELFT>
 class SymbolTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
 public:
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
-  SymbolTableSection(SymbolTable &Table,
+  SymbolTableSection(Writer<ELFT> &W, SymbolTable &Table,
                      StringTableSection<ELFT::Is64Bits> &StrTabSec)
       : OutputSectionBase<ELFT::Is64Bits>(".symtab", SHT_SYMTAB, 0),
-        Table(Table), StrTabSec(StrTabSec) {
+        Table(Table), StrTabSec(StrTabSec), W(W) {
     typedef OutputSectionBase<ELFT::Is64Bits> Base;
     typename Base::HeaderT &Header = this->Header;
 
@@ -165,12 +167,11 @@ public:
     ++NumVisible;
   }
 
-  OutputSection<ELFT> *BSSSec = nullptr;
-
 private:
   SymbolTable &Table;
   StringTableSection<ELFT::Is64Bits> &StrTabSec;
   unsigned NumVisible = 0;
+  const Writer<ELFT> &W;
 };
 
 template <bool Is64Bits>
@@ -246,9 +247,14 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Phdr Elf_Phdr;
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   Writer(SymbolTable *T)
-      : StrTabSec(false), DynStrSec(true), SymTable(*T, StrTabSec),
+      : StrTabSec(false), DynStrSec(true), SymTable(*this, *T, StrTabSec),
         DynamicSec(*T, DynStrSec) {}
   void run();
+
+  const OutputSection<ELFT> &getBSS() const {
+    assert(BSSSec);
+    return *BSSSec;
+  }
 
 private:
   void createSections();
@@ -273,6 +279,8 @@ private:
   SymbolTableSection<ELFT> SymTable;
 
   DynamicSection<ELFT::Is64Bits> DynamicSec;
+
+  OutputSection<ELFT> *BSSSec = nullptr;
 };
 } // anonymous namespace
 
@@ -406,14 +414,14 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     ESym->st_name = StrTabSec.getFileOff(Name);
 
     const SectionChunk<ELFT> *Section = nullptr;
-    OutputSection<ELFT> *Out = nullptr;
+    const OutputSection<ELFT> *Out = nullptr;
 
     switch (Body->kind()) {
     case SymbolBody::DefinedRegularKind:
       Section = &cast<DefinedRegular<ELFT>>(Body)->Section;
       break;
     case SymbolBody::DefinedCommonKind:
-      Out = BSSSec;
+      Out = &W.getBSS();
       break;
     case SymbolBody::UndefinedKind:
       if (!Body->isWeak())
@@ -546,8 +554,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     }
   }
 
-  SymTable.BSSSec = getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
-  OutputSection<ELFT> *BSSSec = SymTable.BSSSec;
+  BSSSec = getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
   // FIXME: Try to avoid the extra walk over all global symbols.
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
   for (auto &P : Symtab.getSymbols()) {
