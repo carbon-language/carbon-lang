@@ -23,13 +23,12 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/SROA.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/PtrUseVisitor.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -38,8 +37,6 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Dominators.h"
-#include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/Instructions.h"
@@ -54,6 +51,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/TimeValue.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 
@@ -63,6 +61,7 @@
 #endif
 
 using namespace llvm;
+using namespace llvm::sroa;
 
 #define DEBUG_TYPE "sroa"
 
@@ -200,7 +199,6 @@ template <typename T> struct isPodLike;
 template <> struct isPodLike<Slice> { static const bool value = true; };
 }
 
-namespace {
 /// \brief Representation of the alloca slices.
 ///
 /// This class represents the slices of an alloca which are formed by its
@@ -208,7 +206,7 @@ namespace {
 /// for the slices used and we reflect that in this structure. The uses are
 /// stored, sorted by increasing beginning offset and with unsplittable slices
 /// starting at a particular offset before splittable slices.
-class AllocaSlices {
+class llvm::sroa::AllocaSlices {
 public:
   /// \brief Construct the slices of a particular alloca.
   AllocaSlices(const DataLayout &DL, AllocaInst &AI);
@@ -248,282 +246,10 @@ public:
     std::inplace_merge(Slices.begin(), SliceI, Slices.end());
   }
 
-  // Forward declare an iterator to befriend it.
+  // Forward declare the iterator and range accessor for walking the
+  // partitions.
   class partition_iterator;
-
-  /// \brief A partition of the slices.
-  ///
-  /// An ephemeral representation for a range of slices which can be viewed as
-  /// a partition of the alloca. This range represents a span of the alloca's
-  /// memory which cannot be split, and provides access to all of the slices
-  /// overlapping some part of the partition.
-  ///
-  /// Objects of this type are produced by traversing the alloca's slices, but
-  /// are only ephemeral and not persistent.
-  class Partition {
-  private:
-    friend class AllocaSlices;
-    friend class AllocaSlices::partition_iterator;
-
-    /// \brief The beginning and ending offsets of the alloca for this
-    /// partition.
-    uint64_t BeginOffset, EndOffset;
-
-    /// \brief The start end end iterators of this partition.
-    iterator SI, SJ;
-
-    /// \brief A collection of split slice tails overlapping the partition.
-    SmallVector<Slice *, 4> SplitTails;
-
-    /// \brief Raw constructor builds an empty partition starting and ending at
-    /// the given iterator.
-    Partition(iterator SI) : SI(SI), SJ(SI) {}
-
-  public:
-    /// \brief The start offset of this partition.
-    ///
-    /// All of the contained slices start at or after this offset.
-    uint64_t beginOffset() const { return BeginOffset; }
-
-    /// \brief The end offset of this partition.
-    ///
-    /// All of the contained slices end at or before this offset.
-    uint64_t endOffset() const { return EndOffset; }
-
-    /// \brief The size of the partition.
-    ///
-    /// Note that this can never be zero.
-    uint64_t size() const {
-      assert(BeginOffset < EndOffset && "Partitions must span some bytes!");
-      return EndOffset - BeginOffset;
-    }
-
-    /// \brief Test whether this partition contains no slices, and merely spans
-    /// a region occupied by split slices.
-    bool empty() const { return SI == SJ; }
-
-    /// \name Iterate slices that start within the partition.
-    /// These may be splittable or unsplittable. They have a begin offset >= the
-    /// partition begin offset.
-    /// @{
-    // FIXME: We should probably define a "concat_iterator" helper and use that
-    // to stitch together pointee_iterators over the split tails and the
-    // contiguous iterators of the partition. That would give a much nicer
-    // interface here. We could then additionally expose filtered iterators for
-    // split, unsplit, and unsplittable splices based on the usage patterns.
-    iterator begin() const { return SI; }
-    iterator end() const { return SJ; }
-    /// @}
-
-    /// \brief Get the sequence of split slice tails.
-    ///
-    /// These tails are of slices which start before this partition but are
-    /// split and overlap into the partition. We accumulate these while forming
-    /// partitions.
-    ArrayRef<Slice *> splitSliceTails() const { return SplitTails; }
-  };
-
-  /// \brief An iterator over partitions of the alloca's slices.
-  ///
-  /// This iterator implements the core algorithm for partitioning the alloca's
-  /// slices. It is a forward iterator as we don't support backtracking for
-  /// efficiency reasons, and re-use a single storage area to maintain the
-  /// current set of split slices.
-  ///
-  /// It is templated on the slice iterator type to use so that it can operate
-  /// with either const or non-const slice iterators.
-  class partition_iterator
-      : public iterator_facade_base<partition_iterator,
-                                    std::forward_iterator_tag, Partition> {
-    friend class AllocaSlices;
-
-    /// \brief Most of the state for walking the partitions is held in a class
-    /// with a nice interface for examining them.
-    Partition P;
-
-    /// \brief We need to keep the end of the slices to know when to stop.
-    AllocaSlices::iterator SE;
-
-    /// \brief We also need to keep track of the maximum split end offset seen.
-    /// FIXME: Do we really?
-    uint64_t MaxSplitSliceEndOffset;
-
-    /// \brief Sets the partition to be empty at given iterator, and sets the
-    /// end iterator.
-    partition_iterator(AllocaSlices::iterator SI, AllocaSlices::iterator SE)
-        : P(SI), SE(SE), MaxSplitSliceEndOffset(0) {
-      // If not already at the end, advance our state to form the initial
-      // partition.
-      if (SI != SE)
-        advance();
-    }
-
-    /// \brief Advance the iterator to the next partition.
-    ///
-    /// Requires that the iterator not be at the end of the slices.
-    void advance() {
-      assert((P.SI != SE || !P.SplitTails.empty()) &&
-             "Cannot advance past the end of the slices!");
-
-      // Clear out any split uses which have ended.
-      if (!P.SplitTails.empty()) {
-        if (P.EndOffset >= MaxSplitSliceEndOffset) {
-          // If we've finished all splits, this is easy.
-          P.SplitTails.clear();
-          MaxSplitSliceEndOffset = 0;
-        } else {
-          // Remove the uses which have ended in the prior partition. This
-          // cannot change the max split slice end because we just checked that
-          // the prior partition ended prior to that max.
-          P.SplitTails.erase(
-              std::remove_if(
-                  P.SplitTails.begin(), P.SplitTails.end(),
-                  [&](Slice *S) { return S->endOffset() <= P.EndOffset; }),
-              P.SplitTails.end());
-          assert(std::any_of(P.SplitTails.begin(), P.SplitTails.end(),
-                             [&](Slice *S) {
-                               return S->endOffset() == MaxSplitSliceEndOffset;
-                             }) &&
-                 "Could not find the current max split slice offset!");
-          assert(std::all_of(P.SplitTails.begin(), P.SplitTails.end(),
-                             [&](Slice *S) {
-                               return S->endOffset() <= MaxSplitSliceEndOffset;
-                             }) &&
-                 "Max split slice end offset is not actually the max!");
-        }
-      }
-
-      // If P.SI is already at the end, then we've cleared the split tail and
-      // now have an end iterator.
-      if (P.SI == SE) {
-        assert(P.SplitTails.empty() && "Failed to clear the split slices!");
-        return;
-      }
-
-      // If we had a non-empty partition previously, set up the state for
-      // subsequent partitions.
-      if (P.SI != P.SJ) {
-        // Accumulate all the splittable slices which started in the old
-        // partition into the split list.
-        for (Slice &S : P)
-          if (S.isSplittable() && S.endOffset() > P.EndOffset) {
-            P.SplitTails.push_back(&S);
-            MaxSplitSliceEndOffset =
-                std::max(S.endOffset(), MaxSplitSliceEndOffset);
-          }
-
-        // Start from the end of the previous partition.
-        P.SI = P.SJ;
-
-        // If P.SI is now at the end, we at most have a tail of split slices.
-        if (P.SI == SE) {
-          P.BeginOffset = P.EndOffset;
-          P.EndOffset = MaxSplitSliceEndOffset;
-          return;
-        }
-
-        // If the we have split slices and the next slice is after a gap and is
-        // not splittable immediately form an empty partition for the split
-        // slices up until the next slice begins.
-        if (!P.SplitTails.empty() && P.SI->beginOffset() != P.EndOffset &&
-            !P.SI->isSplittable()) {
-          P.BeginOffset = P.EndOffset;
-          P.EndOffset = P.SI->beginOffset();
-          return;
-        }
-      }
-
-      // OK, we need to consume new slices. Set the end offset based on the
-      // current slice, and step SJ past it. The beginning offset of the
-      // partition is the beginning offset of the next slice unless we have
-      // pre-existing split slices that are continuing, in which case we begin
-      // at the prior end offset.
-      P.BeginOffset = P.SplitTails.empty() ? P.SI->beginOffset() : P.EndOffset;
-      P.EndOffset = P.SI->endOffset();
-      ++P.SJ;
-
-      // There are two strategies to form a partition based on whether the
-      // partition starts with an unsplittable slice or a splittable slice.
-      if (!P.SI->isSplittable()) {
-        // When we're forming an unsplittable region, it must always start at
-        // the first slice and will extend through its end.
-        assert(P.BeginOffset == P.SI->beginOffset());
-
-        // Form a partition including all of the overlapping slices with this
-        // unsplittable slice.
-        while (P.SJ != SE && P.SJ->beginOffset() < P.EndOffset) {
-          if (!P.SJ->isSplittable())
-            P.EndOffset = std::max(P.EndOffset, P.SJ->endOffset());
-          ++P.SJ;
-        }
-
-        // We have a partition across a set of overlapping unsplittable
-        // partitions.
-        return;
-      }
-
-      // If we're starting with a splittable slice, then we need to form
-      // a synthetic partition spanning it and any other overlapping splittable
-      // splices.
-      assert(P.SI->isSplittable() && "Forming a splittable partition!");
-
-      // Collect all of the overlapping splittable slices.
-      while (P.SJ != SE && P.SJ->beginOffset() < P.EndOffset &&
-             P.SJ->isSplittable()) {
-        P.EndOffset = std::max(P.EndOffset, P.SJ->endOffset());
-        ++P.SJ;
-      }
-
-      // Back upiP.EndOffset if we ended the span early when encountering an
-      // unsplittable slice. This synthesizes the early end offset of
-      // a partition spanning only splittable slices.
-      if (P.SJ != SE && P.SJ->beginOffset() < P.EndOffset) {
-        assert(!P.SJ->isSplittable());
-        P.EndOffset = P.SJ->beginOffset();
-      }
-    }
-
-  public:
-    bool operator==(const partition_iterator &RHS) const {
-      assert(SE == RHS.SE &&
-             "End iterators don't match between compared partition iterators!");
-
-      // The observed positions of partitions is marked by the P.SI iterator and
-      // the emptiness of the split slices. The latter is only relevant when
-      // P.SI == SE, as the end iterator will additionally have an empty split
-      // slices list, but the prior may have the same P.SI and a tail of split
-      // slices.
-      if (P.SI == RHS.P.SI &&
-          P.SplitTails.empty() == RHS.P.SplitTails.empty()) {
-        assert(P.SJ == RHS.P.SJ &&
-               "Same set of slices formed two different sized partitions!");
-        assert(P.SplitTails.size() == RHS.P.SplitTails.size() &&
-               "Same slice position with differently sized non-empty split "
-               "slice tails!");
-        return true;
-      }
-      return false;
-    }
-
-    partition_iterator &operator++() {
-      advance();
-      return *this;
-    }
-
-    Partition &operator*() { return P; }
-  };
-
-  /// \brief A forward range over the partitions of the alloca's slices.
-  ///
-  /// This accesses an iterator range over the partitions of the alloca's
-  /// slices. It computes these partitions on the fly based on the overlapping
-  /// offsets of the slices and the ability to split them. It will visit "empty"
-  /// partitions to cover regions of the alloca only accessed via split
-  /// slices.
-  iterator_range<partition_iterator> partitions() {
-    return make_range(partition_iterator(begin(), end()),
-                      partition_iterator(end(), end()));
-  }
+  iterator_range<partition_iterator> partitions();
 
   /// \brief Access the dead users for this alloca.
   ArrayRef<Instruction *> getDeadUsers() const { return DeadUsers; }
@@ -591,6 +317,280 @@ private:
   /// the alloca.
   SmallVector<Use *, 8> DeadOperands;
 };
+
+/// \brief A partition of the slices.
+///
+/// An ephemeral representation for a range of slices which can be viewed as
+/// a partition of the alloca. This range represents a span of the alloca's
+/// memory which cannot be split, and provides access to all of the slices
+/// overlapping some part of the partition.
+///
+/// Objects of this type are produced by traversing the alloca's slices, but
+/// are only ephemeral and not persistent.
+class llvm::sroa::Partition {
+private:
+  friend class AllocaSlices;
+  friend class AllocaSlices::partition_iterator;
+
+  typedef AllocaSlices::iterator iterator;
+
+  /// \brief The beginning and ending offsets of the alloca for this
+  /// partition.
+  uint64_t BeginOffset, EndOffset;
+
+  /// \brief The start end end iterators of this partition.
+  iterator SI, SJ;
+
+  /// \brief A collection of split slice tails overlapping the partition.
+  SmallVector<Slice *, 4> SplitTails;
+
+  /// \brief Raw constructor builds an empty partition starting and ending at
+  /// the given iterator.
+  Partition(iterator SI) : SI(SI), SJ(SI) {}
+
+public:
+  /// \brief The start offset of this partition.
+  ///
+  /// All of the contained slices start at or after this offset.
+  uint64_t beginOffset() const { return BeginOffset; }
+
+  /// \brief The end offset of this partition.
+  ///
+  /// All of the contained slices end at or before this offset.
+  uint64_t endOffset() const { return EndOffset; }
+
+  /// \brief The size of the partition.
+  ///
+  /// Note that this can never be zero.
+  uint64_t size() const {
+    assert(BeginOffset < EndOffset && "Partitions must span some bytes!");
+    return EndOffset - BeginOffset;
+  }
+
+  /// \brief Test whether this partition contains no slices, and merely spans
+  /// a region occupied by split slices.
+  bool empty() const { return SI == SJ; }
+
+  /// \name Iterate slices that start within the partition.
+  /// These may be splittable or unsplittable. They have a begin offset >= the
+  /// partition begin offset.
+  /// @{
+  // FIXME: We should probably define a "concat_iterator" helper and use that
+  // to stitch together pointee_iterators over the split tails and the
+  // contiguous iterators of the partition. That would give a much nicer
+  // interface here. We could then additionally expose filtered iterators for
+  // split, unsplit, and unsplittable splices based on the usage patterns.
+  iterator begin() const { return SI; }
+  iterator end() const { return SJ; }
+  /// @}
+
+  /// \brief Get the sequence of split slice tails.
+  ///
+  /// These tails are of slices which start before this partition but are
+  /// split and overlap into the partition. We accumulate these while forming
+  /// partitions.
+  ArrayRef<Slice *> splitSliceTails() const { return SplitTails; }
+};
+
+/// \brief An iterator over partitions of the alloca's slices.
+///
+/// This iterator implements the core algorithm for partitioning the alloca's
+/// slices. It is a forward iterator as we don't support backtracking for
+/// efficiency reasons, and re-use a single storage area to maintain the
+/// current set of split slices.
+///
+/// It is templated on the slice iterator type to use so that it can operate
+/// with either const or non-const slice iterators.
+class AllocaSlices::partition_iterator
+    : public iterator_facade_base<partition_iterator, std::forward_iterator_tag,
+                                  Partition> {
+  friend class AllocaSlices;
+
+  /// \brief Most of the state for walking the partitions is held in a class
+  /// with a nice interface for examining them.
+  Partition P;
+
+  /// \brief We need to keep the end of the slices to know when to stop.
+  AllocaSlices::iterator SE;
+
+  /// \brief We also need to keep track of the maximum split end offset seen.
+  /// FIXME: Do we really?
+  uint64_t MaxSplitSliceEndOffset;
+
+  /// \brief Sets the partition to be empty at given iterator, and sets the
+  /// end iterator.
+  partition_iterator(AllocaSlices::iterator SI, AllocaSlices::iterator SE)
+      : P(SI), SE(SE), MaxSplitSliceEndOffset(0) {
+    // If not already at the end, advance our state to form the initial
+    // partition.
+    if (SI != SE)
+      advance();
+  }
+
+  /// \brief Advance the iterator to the next partition.
+  ///
+  /// Requires that the iterator not be at the end of the slices.
+  void advance() {
+    assert((P.SI != SE || !P.SplitTails.empty()) &&
+           "Cannot advance past the end of the slices!");
+
+    // Clear out any split uses which have ended.
+    if (!P.SplitTails.empty()) {
+      if (P.EndOffset >= MaxSplitSliceEndOffset) {
+        // If we've finished all splits, this is easy.
+        P.SplitTails.clear();
+        MaxSplitSliceEndOffset = 0;
+      } else {
+        // Remove the uses which have ended in the prior partition. This
+        // cannot change the max split slice end because we just checked that
+        // the prior partition ended prior to that max.
+        P.SplitTails.erase(
+            std::remove_if(
+                P.SplitTails.begin(), P.SplitTails.end(),
+                [&](Slice *S) { return S->endOffset() <= P.EndOffset; }),
+            P.SplitTails.end());
+        assert(std::any_of(P.SplitTails.begin(), P.SplitTails.end(),
+                           [&](Slice *S) {
+                             return S->endOffset() == MaxSplitSliceEndOffset;
+                           }) &&
+               "Could not find the current max split slice offset!");
+        assert(std::all_of(P.SplitTails.begin(), P.SplitTails.end(),
+                           [&](Slice *S) {
+                             return S->endOffset() <= MaxSplitSliceEndOffset;
+                           }) &&
+               "Max split slice end offset is not actually the max!");
+      }
+    }
+
+    // If P.SI is already at the end, then we've cleared the split tail and
+    // now have an end iterator.
+    if (P.SI == SE) {
+      assert(P.SplitTails.empty() && "Failed to clear the split slices!");
+      return;
+    }
+
+    // If we had a non-empty partition previously, set up the state for
+    // subsequent partitions.
+    if (P.SI != P.SJ) {
+      // Accumulate all the splittable slices which started in the old
+      // partition into the split list.
+      for (Slice &S : P)
+        if (S.isSplittable() && S.endOffset() > P.EndOffset) {
+          P.SplitTails.push_back(&S);
+          MaxSplitSliceEndOffset =
+              std::max(S.endOffset(), MaxSplitSliceEndOffset);
+        }
+
+      // Start from the end of the previous partition.
+      P.SI = P.SJ;
+
+      // If P.SI is now at the end, we at most have a tail of split slices.
+      if (P.SI == SE) {
+        P.BeginOffset = P.EndOffset;
+        P.EndOffset = MaxSplitSliceEndOffset;
+        return;
+      }
+
+      // If the we have split slices and the next slice is after a gap and is
+      // not splittable immediately form an empty partition for the split
+      // slices up until the next slice begins.
+      if (!P.SplitTails.empty() && P.SI->beginOffset() != P.EndOffset &&
+          !P.SI->isSplittable()) {
+        P.BeginOffset = P.EndOffset;
+        P.EndOffset = P.SI->beginOffset();
+        return;
+      }
+    }
+
+    // OK, we need to consume new slices. Set the end offset based on the
+    // current slice, and step SJ past it. The beginning offset of the
+    // partition is the beginning offset of the next slice unless we have
+    // pre-existing split slices that are continuing, in which case we begin
+    // at the prior end offset.
+    P.BeginOffset = P.SplitTails.empty() ? P.SI->beginOffset() : P.EndOffset;
+    P.EndOffset = P.SI->endOffset();
+    ++P.SJ;
+
+    // There are two strategies to form a partition based on whether the
+    // partition starts with an unsplittable slice or a splittable slice.
+    if (!P.SI->isSplittable()) {
+      // When we're forming an unsplittable region, it must always start at
+      // the first slice and will extend through its end.
+      assert(P.BeginOffset == P.SI->beginOffset());
+
+      // Form a partition including all of the overlapping slices with this
+      // unsplittable slice.
+      while (P.SJ != SE && P.SJ->beginOffset() < P.EndOffset) {
+        if (!P.SJ->isSplittable())
+          P.EndOffset = std::max(P.EndOffset, P.SJ->endOffset());
+        ++P.SJ;
+      }
+
+      // We have a partition across a set of overlapping unsplittable
+      // partitions.
+      return;
+    }
+
+    // If we're starting with a splittable slice, then we need to form
+    // a synthetic partition spanning it and any other overlapping splittable
+    // splices.
+    assert(P.SI->isSplittable() && "Forming a splittable partition!");
+
+    // Collect all of the overlapping splittable slices.
+    while (P.SJ != SE && P.SJ->beginOffset() < P.EndOffset &&
+           P.SJ->isSplittable()) {
+      P.EndOffset = std::max(P.EndOffset, P.SJ->endOffset());
+      ++P.SJ;
+    }
+
+    // Back upiP.EndOffset if we ended the span early when encountering an
+    // unsplittable slice. This synthesizes the early end offset of
+    // a partition spanning only splittable slices.
+    if (P.SJ != SE && P.SJ->beginOffset() < P.EndOffset) {
+      assert(!P.SJ->isSplittable());
+      P.EndOffset = P.SJ->beginOffset();
+    }
+  }
+
+public:
+  bool operator==(const partition_iterator &RHS) const {
+    assert(SE == RHS.SE &&
+           "End iterators don't match between compared partition iterators!");
+
+    // The observed positions of partitions is marked by the P.SI iterator and
+    // the emptiness of the split slices. The latter is only relevant when
+    // P.SI == SE, as the end iterator will additionally have an empty split
+    // slices list, but the prior may have the same P.SI and a tail of split
+    // slices.
+    if (P.SI == RHS.P.SI && P.SplitTails.empty() == RHS.P.SplitTails.empty()) {
+      assert(P.SJ == RHS.P.SJ &&
+             "Same set of slices formed two different sized partitions!");
+      assert(P.SplitTails.size() == RHS.P.SplitTails.size() &&
+             "Same slice position with differently sized non-empty split "
+             "slice tails!");
+      return true;
+    }
+    return false;
+  }
+
+  partition_iterator &operator++() {
+    advance();
+    return *this;
+  }
+
+  Partition &operator*() { return P; }
+};
+
+/// \brief A forward range over the partitions of the alloca's slices.
+///
+/// This accesses an iterator range over the partitions of the alloca's
+/// slices. It computes these partitions on the fly based on the overlapping
+/// offsets of the slices and the ability to split them. It will visit "empty"
+/// partitions to cover regions of the alloca only accessed via split
+/// slices.
+iterator_range<AllocaSlices::partition_iterator> AllocaSlices::partitions() {
+  return make_range(partition_iterator(begin(), end()),
+                    partition_iterator(end(), end()));
 }
 
 static Value *foldSelectInst(SelectInst &SI) {
@@ -1067,110 +1067,6 @@ LLVM_DUMP_METHOD void AllocaSlices::dump(const_iterator I) const {
 LLVM_DUMP_METHOD void AllocaSlices::dump() const { print(dbgs()); }
 
 #endif // !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-
-namespace {
-/// \brief An optimization pass providing Scalar Replacement of Aggregates.
-///
-/// This pass takes allocations which can be completely analyzed (that is, they
-/// don't escape) and tries to turn them into scalar SSA values. There are
-/// a few steps to this process.
-///
-/// 1) It takes allocations of aggregates and analyzes the ways in which they
-///    are used to try to split them into smaller allocations, ideally of
-///    a single scalar data type. It will split up memcpy and memset accesses
-///    as necessary and try to isolate individual scalar accesses.
-/// 2) It will transform accesses into forms which are suitable for SSA value
-///    promotion. This can be replacing a memset with a scalar store of an
-///    integer value, or it can involve speculating operations on a PHI or
-///    select to be a PHI or select of the results.
-/// 3) Finally, this will try to detect a pattern of accesses which map cleanly
-///    onto insert and extract operations on a vector value, and convert them to
-///    this form. By doing so, it will enable promotion of vector aggregates to
-///    SSA vector values.
-class SROA : public FunctionPass {
-  LLVMContext *C;
-  DominatorTree *DT;
-  AssumptionCache *AC;
-
-  /// \brief Worklist of alloca instructions to simplify.
-  ///
-  /// Each alloca in the function is added to this. Each new alloca formed gets
-  /// added to it as well to recursively simplify unless that alloca can be
-  /// directly promoted. Finally, each time we rewrite a use of an alloca other
-  /// the one being actively rewritten, we add it back onto the list if not
-  /// already present to ensure it is re-visited.
-  SetVector<AllocaInst *, SmallVector<AllocaInst *, 16>> Worklist;
-
-  /// \brief A collection of instructions to delete.
-  /// We try to batch deletions to simplify code and make things a bit more
-  /// efficient.
-  SetVector<Instruction *, SmallVector<Instruction *, 8>> DeadInsts;
-
-  /// \brief Post-promotion worklist.
-  ///
-  /// Sometimes we discover an alloca which has a high probability of becoming
-  /// viable for SROA after a round of promotion takes place. In those cases,
-  /// the alloca is enqueued here for re-processing.
-  ///
-  /// Note that we have to be very careful to clear allocas out of this list in
-  /// the event they are deleted.
-  SetVector<AllocaInst *, SmallVector<AllocaInst *, 16>> PostPromotionWorklist;
-
-  /// \brief A collection of alloca instructions we can directly promote.
-  std::vector<AllocaInst *> PromotableAllocas;
-
-  /// \brief A worklist of PHIs to speculate prior to promoting allocas.
-  ///
-  /// All of these PHIs have been checked for the safety of speculation and by
-  /// being speculated will allow promoting allocas currently in the promotable
-  /// queue.
-  SetVector<PHINode *, SmallVector<PHINode *, 2>> SpeculatablePHIs;
-
-  /// \brief A worklist of select instructions to speculate prior to promoting
-  /// allocas.
-  ///
-  /// All of these select instructions have been checked for the safety of
-  /// speculation and by being speculated will allow promoting allocas
-  /// currently in the promotable queue.
-  SetVector<SelectInst *, SmallVector<SelectInst *, 2>> SpeculatableSelects;
-
-public:
-  SROA() : FunctionPass(ID), C(nullptr), DT(nullptr) {
-    initializeSROAPass(*PassRegistry::getPassRegistry());
-  }
-  bool runOnFunction(Function &F) override;
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
-
-  const char *getPassName() const override { return "SROA"; }
-  static char ID;
-
-private:
-  friend class PHIOrSelectSpeculator;
-  friend class AllocaSliceRewriter;
-
-  bool presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS);
-  AllocaInst *rewritePartition(AllocaInst &AI, AllocaSlices &AS,
-                               AllocaSlices::Partition &P);
-  bool splitAlloca(AllocaInst &AI, AllocaSlices &AS);
-  bool runOnAlloca(AllocaInst &AI);
-  void clobberUse(Use &U);
-  void deleteDeadInstructions(SmallPtrSetImpl<AllocaInst *> &DeletedAllocas);
-  bool promoteAllocas(Function &F);
-};
-}
-
-char SROA::ID = 0;
-
-FunctionPass *llvm::createSROAPass() {
-  return new SROA();
-}
-
-INITIALIZE_PASS_BEGIN(SROA, "sroa", "Scalar Replacement Of Aggregates", false,
-                      false)
-INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_END(SROA, "sroa", "Scalar Replacement Of Aggregates", false,
-                    false)
 
 /// Walk the range of a partitioning looking for a common type to cover this
 /// sequence of slices.
@@ -1825,8 +1721,8 @@ static Value *convertValue(const DataLayout &DL, IRBuilderTy &IRB, Value *V,
 ///
 /// This function is called to test each entry in a partition which is slated
 /// for a single slice.
-static bool isVectorPromotionViableForSlice(AllocaSlices::Partition &P,
-                                            const Slice &S, VectorType *Ty,
+static bool isVectorPromotionViableForSlice(Partition &P, const Slice &S,
+                                            VectorType *Ty,
                                             uint64_t ElementSize,
                                             const DataLayout &DL) {
   // First validate the slice offsets.
@@ -1901,8 +1797,7 @@ static bool isVectorPromotionViableForSlice(AllocaSlices::Partition &P,
 /// SSA value. We only can ensure this for a limited set of operations, and we
 /// don't want to do the rewrites unless we are confident that the result will
 /// be promotable, so we have an early test here.
-static VectorType *isVectorPromotionViable(AllocaSlices::Partition &P,
-                                           const DataLayout &DL) {
+static VectorType *isVectorPromotionViable(Partition &P, const DataLayout &DL) {
   // Collect the candidate types for vector-based promotion. Also track whether
   // we have different element types.
   SmallVector<VectorType *, 4> CandidateTys;
@@ -2088,7 +1983,7 @@ static bool isIntegerWideningViableForSlice(const Slice &S,
 /// This is a quick test to check whether we can rewrite the integer loads and
 /// stores to a particular alloca into wider loads and stores and be able to
 /// promote the resulting alloca.
-static bool isIntegerWideningViable(AllocaSlices::Partition &P, Type *AllocaTy,
+static bool isIntegerWideningViable(Partition &P, Type *AllocaTy,
                                     const DataLayout &DL) {
   uint64_t SizeInBits = DL.getTypeSizeInBits(AllocaTy);
   // Don't create integer types larger than the maximum bitwidth.
@@ -2257,14 +2152,14 @@ static Value *insertVector(IRBuilderTy &IRB, Value *Old, Value *V,
   return V;
 }
 
-namespace {
 /// \brief Visitor to rewrite instructions using p particular slice of an alloca
 /// to use a new alloca.
 ///
 /// Also implements the rewriting to vector-based accesses when the partition
 /// passes the isVectorPromotionViable predicate. Most of the rewriting logic
 /// lives here.
-class AllocaSliceRewriter : public InstVisitor<AllocaSliceRewriter, bool> {
+class llvm::sroa::AllocaSliceRewriter
+    : public InstVisitor<AllocaSliceRewriter, bool> {
   // Befriend the base class so it can delegate to private visit methods.
   friend class llvm::InstVisitor<AllocaSliceRewriter, bool>;
   typedef llvm::InstVisitor<AllocaSliceRewriter, bool> Base;
@@ -3068,7 +2963,6 @@ private:
     return true;
   }
 };
-}
 
 namespace {
 /// \brief Visitor to rewrite aggregate loads and stores as scalar.
@@ -3923,7 +3817,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
 /// at enabling promotion and if it was successful queues the alloca to be
 /// promoted.
 AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
-                                   AllocaSlices::Partition &P) {
+                                   Partition &P) {
   // Try to compute a friendly type for this partition of the alloca. This
   // won't always succeed, in which case we fall back to a legal integer type
   // or an i8 array of an appropriate size.
@@ -4304,14 +4198,12 @@ bool SROA::promoteAllocas(Function &F) {
   return true;
 }
 
-bool SROA::runOnFunction(Function &F) {
-  if (skipOptnoneFunction(F))
-    return false;
-
+PreservedAnalyses SROA::runImpl(Function &F, DominatorTree &RunDT,
+                                AssumptionCache &RunAC) {
   DEBUG(dbgs() << "SROA function: " << F.getName() << "\n");
   C = &F.getContext();
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+  DT = &RunDT;
+  AC = &RunAC;
 
   BasicBlock &EntryBB = F.getEntryBlock();
   for (BasicBlock::iterator I = EntryBB.begin(), E = std::prev(EntryBB.end());
@@ -4350,12 +4242,55 @@ bool SROA::runOnFunction(Function &F) {
     PostPromotionWorklist.clear();
   } while (!Worklist.empty());
 
-  return Changed;
+  // FIXME: Even when promoting allocas we should preserve some abstract set of
+  // CFG-specific analyses.
+  return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
 
-void SROA::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<AssumptionCacheTracker>();
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<GlobalsAAWrapperPass>();
-  AU.setPreservesCFG();
+PreservedAnalyses SROA::run(Function &F, AnalysisManager<Function> *AM) {
+  return runImpl(F, AM->getResult<DominatorTreeAnalysis>(F),
+                 AM->getResult<AssumptionAnalysis>(F));
 }
+
+/// A legacy pass for the legacy pass manager that wraps the \c SROA pass.
+///
+/// This is in the llvm namespace purely to allow it to be a friend of the \c
+/// SROA pass.
+class llvm::sroa::SROALegacyPass : public FunctionPass {
+  /// The SROA implementation.
+  SROA Impl;
+
+public:
+  SROALegacyPass() : FunctionPass(ID) {
+    initializeSROALegacyPassPass(*PassRegistry::getPassRegistry());
+  }
+  bool runOnFunction(Function &F) override {
+    if (skipOptnoneFunction(F))
+      return false;
+
+    auto PA = Impl.runImpl(
+        F, getAnalysis<DominatorTreeWrapperPass>().getDomTree(),
+        getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F));
+    return !PA.areAllPreserved();
+  }
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<AssumptionCacheTracker>();
+    AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addPreserved<GlobalsAAWrapperPass>();
+    AU.setPreservesCFG();
+  }
+
+  const char *getPassName() const override { return "SROA"; }
+  static char ID;
+};
+
+char SROALegacyPass::ID = 0;
+
+FunctionPass *llvm::createSROAPass() { return new SROALegacyPass(); }
+
+INITIALIZE_PASS_BEGIN(SROALegacyPass, "sroa",
+                      "Scalar Replacement Of Aggregates", false, false)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_END(SROALegacyPass, "sroa", "Scalar Replacement Of Aggregates",
+                    false, false)

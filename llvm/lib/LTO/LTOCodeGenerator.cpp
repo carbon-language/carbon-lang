@@ -103,7 +103,7 @@ void LTOCodeGenerator::initializeLTOPasses() {
   initializeGlobalDCEPass(R);
   initializeArgPromotionPass(R);
   initializeJumpThreadingPass(R);
-  initializeSROAPass(R);
+  initializeSROALegacyPassPass(R);
   initializeSROA_DTPass(R);
   initializeSROA_SSAUpPass(R);
   initializeFunctionAttrsPass(R);
