@@ -1644,9 +1644,9 @@ if (!@ARGV and !$RequestDisplayHelp) {
 
 # Find 'clang'
 if (!defined $Options{AnalyzerDiscoveryMethod}) {
-  $Clang = Cwd::realpath("$RealBin/bin/clang") if (-d "$RealBin/bin/clang");
+  $Clang = Cwd::realpath("$RealBin/bin/clang") if (-f "$RealBin/bin/clang");
   if (!defined $Clang || ! -x $Clang) {
-    $Clang = Cwd::realpath("$RealBin/clang") if (-d "$RealBin/clang");
+    $Clang = Cwd::realpath("$RealBin/clang") if (-f "$RealBin/clang");
   }
   if (!defined $Clang || ! -x $Clang) {
     if (!$RequestDisplayHelp && !$ForceDisplayHelp) {
