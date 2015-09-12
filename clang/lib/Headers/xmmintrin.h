@@ -20,10 +20,10 @@
  *
  *===-----------------------------------------------------------------------===
  */
- 
+
 #ifndef __XMMINTRIN_H
 #define __XMMINTRIN_H
- 
+
 #include <mmintrin.h>
 
 typedef int __v4si __attribute__((__vector_size__(16)));
@@ -870,7 +870,7 @@ static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_cvtpi8_ps(__m64 __a)
 {
   __m64 __b;
-  
+
   __b = _mm_setzero_si64();
   __b = _mm_cmpgt_pi8(__b, __a);
   __b = _mm_unpacklo_pi8(__a, __b);
@@ -882,7 +882,7 @@ static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_cvtpu8_ps(__m64 __a)
 {
   __m64 __b;
-  
+
   __b = _mm_setzero_si64();
   __b = _mm_unpacklo_pi8(__a, __b);
 
@@ -893,7 +893,7 @@ static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_cvtpi32x2_ps(__m64 __a, __m64 __b)
 {
   __m128 __c;
-  
+
   __c = _mm_setzero_ps();
   __c = _mm_cvtpi32_ps(__c, __b);
   __c = _mm_movelh_ps(__c, __c);
@@ -905,11 +905,11 @@ static __inline__ __m64 __DEFAULT_FN_ATTRS
 _mm_cvtps_pi16(__m128 __a)
 {
   __m64 __b, __c;
-  
+
   __b = _mm_cvtps_pi32(__a);
   __a = _mm_movehl_ps(__a, __a);
   __c = _mm_cvtps_pi32(__a);
-  
+
   return _mm_packs_pi32(__b, __c);
 }
 
@@ -917,10 +917,10 @@ static __inline__ __m64 __DEFAULT_FN_ATTRS
 _mm_cvtps_pi8(__m128 __a)
 {
   __m64 __b, __c;
-  
+
   __b = _mm_cvtps_pi16(__a);
   __c = _mm_setzero_si64();
-  
+
   return _mm_packs_pi16(__b, __c);
 }
 

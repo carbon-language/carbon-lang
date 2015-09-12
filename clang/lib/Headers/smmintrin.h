@@ -217,15 +217,15 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
 /* Extract a single-precision float from X at index N into D.  */
 #define _MM_EXTRACT_FLOAT(D, X, N) (__extension__ ({ __v4sf __a = (__v4sf)(X); \
                                                     (D) = __a[N]; }))
-                                                    
+
 /* Or together 2 sets of indexes (X and Y) with the zeroing bits (Z) to create
    an index suitable for _mm_insert_ps.  */
 #define _MM_MK_INSERTPS_NDX(X, Y, Z) (((X) << 6) | ((Y) << 4) | (Z))
-                                           
+
 /* Extract a float from X at index N into the first index of the return.  */
 #define _MM_PICK_OUT_PS(X, N) _mm_insert_ps (_mm_setzero_ps(), (X),   \
                                              _MM_MK_INSERTPS_NDX((N), 0, 0x0e))
-                                             
+
 /* Insert int into packed integer array at index.  */
 #define _mm_insert_epi8(X, I, N) (__extension__ ({ __v16qi __a = (__v16qi)(X); \
                                                    __a[(N) & 15] = (I);             \
@@ -304,7 +304,7 @@ _mm_cvtepi8_epi64(__m128i __V)
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_cvtepi16_epi32(__m128i __V)
 {
-  return (__m128i) __builtin_ia32_pmovsxwd128((__v8hi) __V); 
+  return (__m128i) __builtin_ia32_pmovsxwd128((__v8hi) __V);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
@@ -417,7 +417,7 @@ _mm_minpos_epu16(__m128i __V)
      __builtin_ia32_pcmpestrm128((A), (LA), (B), (LB), (M))
 #define _mm_cmpestri(A, LA, B, LB, M) \
      __builtin_ia32_pcmpestri128((A), (LA), (B), (LB), (M))
-     
+
 /* SSE4.2 Packed Comparison Intrinsics and EFlag Reading.  */
 #define _mm_cmpistra(A, B, M) \
      __builtin_ia32_pcmpistria128((A), (B), (M))

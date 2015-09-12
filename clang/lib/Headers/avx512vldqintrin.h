@@ -20,7 +20,7 @@
  *
  *===-----------------------------------------------------------------------===
  */
- 
+
 #ifndef __IMMINTRIN_H
 #error "Never use <avx512vldqintrin.h> directly; include <immintrin.h> instead."
 #endif

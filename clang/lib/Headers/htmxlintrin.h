@@ -46,7 +46,7 @@ extern "C" {
 
 typedef char TM_buff_type[16];
 
-/* This macro can be used to determine whether a transaction was successfully 
+/* This macro can be used to determine whether a transaction was successfully
    started from the __TM_begin() and __TM_simple_begin() intrinsic functions
    below.  */
 #define _HTM_TBEGIN_STARTED     1

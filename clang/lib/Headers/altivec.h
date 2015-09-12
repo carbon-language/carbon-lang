@@ -137,7 +137,7 @@ static vector double __ATTRS_o_ai vec_abs(vector double __a) {
 }
 #endif
 
-/* vec_abss */ 
+/* vec_abss */
 #define __builtin_altivec_abss_v16qi vec_abss
 #define __builtin_altivec_abss_v8hi vec_abss
 #define __builtin_altivec_abss_v4si vec_abss
@@ -3651,21 +3651,21 @@ static vector float __ATTRS_o_ai vec_vmrglw(vector float __a,
 static vector bool int __ATTRS_o_ai
 vec_mergee(vector bool int __a, vector bool int __b) {
   return vec_perm(__a, __b, (vector unsigned char)
-                  (0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13, 
+                  (0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13,
                    0x08, 0x09, 0x0A, 0x0B, 0x18, 0x19, 0x1A, 0x1B));
 }
 
 static vector signed int __ATTRS_o_ai
 vec_mergee(vector signed int __a, vector signed int __b) {
   return vec_perm(__a, __b, (vector unsigned char)
-                  (0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13, 
+                  (0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13,
                    0x08, 0x09, 0x0A, 0x0B, 0x18, 0x19, 0x1A, 0x1B));
 }
 
 static vector unsigned int __ATTRS_o_ai
 vec_mergee(vector unsigned int __a, vector unsigned int __b) {
   return vec_perm(__a, __b, (vector unsigned char)
-                  (0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13, 
+                  (0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13,
                    0x08, 0x09, 0x0A, 0x0B, 0x18, 0x19, 0x1A, 0x1B));
 }
 

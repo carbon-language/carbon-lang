@@ -34,13 +34,13 @@
 ///
 /// \headerfile <x86intrin.h>
 ///
-/// \code 
+/// \code
 /// __m128i _mm_extracti_si64(__m128i x, const int len, const int idx);
-/// \endcode 
+/// \endcode
 ///
-/// \code                                                    
+/// \code
 /// This intrinsic corresponds to the \c EXTRQ instruction.
-/// \endcode 
+/// \endcode
 ///
 /// \param x
 ///    The value from which bits are extracted.
@@ -48,10 +48,10 @@
 ///    Bits [5:0] specify the length; the other bits are ignored. If bits [5:0]
 ///    are zero, the length is interpreted as 64.
 /// \param idx
-///    Bits [5:0] specify the index of the least significant bit; the other 
-///    bits are ignored. If the sum of the index and length is greater than 
-///    64, the result is undefined. If the length and index are both zero, 
-///    bits [63:0] of parameter x are extracted. If the length is zero 
+///    Bits [5:0] specify the index of the least significant bit; the other
+///    bits are ignored. If the sum of the index and length is greater than
+///    64, the result is undefined. If the length and index are both zero,
+///    bits [63:0] of parameter x are extracted. If the length is zero
 ///    but the index is non-zero, the result is undefined.
 /// \returns A 128-bit integer vector whose lower 64 bits contain the bits
 ///    extracted from the source operand.
@@ -64,21 +64,21 @@
 ///
 /// \headerfile <x86intrin.h>
 ///
-/// \code 
+/// \code
 /// This intrinsic corresponds to the \c EXTRQ instruction.
-/// \endcode 
+/// \endcode
 ///
 /// \param __x
 ///    The value from which bits are extracted.
 /// \param __y
-///    Specifies the index of the least significant bit at [13:8] 
-///    and the length at [5:0]; all other bits are ignored. 
+///    Specifies the index of the least significant bit at [13:8]
+///    and the length at [5:0]; all other bits are ignored.
 ///    If bits [5:0] are zero, the length is interpreted as 64.
-///    If the sum of the index and length is greater than 64, the result is 
-///    undefined. If the length and index are both zero, bits [63:0] of 
-///    parameter __x are extracted. If the length is zero but the index is 
-///    non-zero, the result is undefined. 
-/// \returns A 128-bit vector whose lower 64 bits contain the bits extracted 
+///    If the sum of the index and length is greater than 64, the result is
+///    undefined. If the length and index are both zero, bits [63:0] of
+///    parameter __x are extracted. If the length is zero but the index is
+///    non-zero, the result is undefined.
+/// \returns A 128-bit vector whose lower 64 bits contain the bits extracted
 ///    from the source operand.
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_extract_si64(__m128i __x, __m128i __y)
@@ -86,40 +86,40 @@ _mm_extract_si64(__m128i __x, __m128i __y)
   return (__m128i)__builtin_ia32_extrq((__v2di)__x, (__v16qi)__y);
 }
 
-/// \brief Inserts bits of a specified length from the source integer vector 
-///    y into the lower 64 bits of the destination integer vector x at the 
+/// \brief Inserts bits of a specified length from the source integer vector
+///    y into the lower 64 bits of the destination integer vector x at the
 ///    index idx and of the length len.
 ///
 /// \headerfile <x86intrin.h>
 ///
-/// \code 
+/// \code
 /// __m128i _mm_inserti_si64(__m128i x, __m128i y, const int len,
 /// const int idx);
-/// \endcode 
+/// \endcode
 ///
-/// \code 
+/// \code
 /// This intrinsic corresponds to the \c INSERTQ instruction.
-/// \endcode 
+/// \endcode
 ///
 /// \param x
-///    The destination operand where bits will be inserted. The inserted bits 
-///    are defined by the length len and by the index idx specifying the least 
+///    The destination operand where bits will be inserted. The inserted bits
+///    are defined by the length len and by the index idx specifying the least
 ///    significant bit.
 /// \param y
-///    The source operand containing the bits to be extracted. The extracted 
+///    The source operand containing the bits to be extracted. The extracted
 ///    bits are the least significant bits of operand y of length len.
 /// \param len
 ///    Bits [5:0] specify the length; the other bits are ignored. If bits [5:0]
 ///    are zero, the length is interpreted as 64.
 /// \param idx
-///    Bits [5:0] specify the index of the least significant bit; the other 
-///    bits are ignored. If the sum of the index and length is greater than 
-///    64, the result is undefined. If the length and index are both zero, 
-///    bits [63:0] of parameter y are inserted into parameter x. If the 
+///    Bits [5:0] specify the index of the least significant bit; the other
+///    bits are ignored. If the sum of the index and length is greater than
+///    64, the result is undefined. If the length and index are both zero,
+///    bits [63:0] of parameter y are inserted into parameter x. If the
 ///    length is zero but the index is non-zero, the result is undefined.
-/// \returns A 128-bit integer vector containing the original lower 64-bits 
+/// \returns A 128-bit integer vector containing the original lower 64-bits
 ///    of destination operand x with the specified bitfields replaced by the
-///    lower bits of source operand y. The upper 64 bits of the return value 
+///    lower bits of source operand y. The upper 64 bits of the return value
 ///    are undefined.
 
 #define _mm_inserti_si64(x, y, len, idx) \
@@ -127,33 +127,33 @@ _mm_extract_si64(__m128i __x, __m128i __y)
                                     (__v2di)(__m128i)(y), \
                                     (char)(len), (char)(idx)))
 
-/// \brief Inserts bits of a specified length from the source integer vector 
-///    __y into the lower 64 bits of the destination integer vector __x at 
+/// \brief Inserts bits of a specified length from the source integer vector
+///    __y into the lower 64 bits of the destination integer vector __x at
 ///    the index and of the length specified by __y.
 ///
 /// \headerfile <x86intrin.h>
 ///
-/// \code 
+/// \code
 /// This intrinsic corresponds to the \c INSERTQ instruction.
-/// \endcode 
+/// \endcode
 ///
 /// \param __x
-///    The destination operand where bits will be inserted. The inserted bits 
-///    are defined by the length and by the index of the least significant bit 
+///    The destination operand where bits will be inserted. The inserted bits
+///    are defined by the length and by the index of the least significant bit
 ///    specified by operand __y.
 /// \param __y
-///    The source operand containing the bits to be extracted. The extracted 
+///    The source operand containing the bits to be extracted. The extracted
 ///    bits are the least significant bits of operand __y with length specified
-///    by bits [69:64]. These are inserted into the destination at the index 
+///    by bits [69:64]. These are inserted into the destination at the index
 ///    specified by bits [77:72]; all other bits are ignored.
 ///    If bits [69:64] are zero, the length is interpreted as 64.
-///    If the sum of the index and length is greater than 64, the result is 
-///    undefined. If the length and index are both zero, bits [63:0] of 
+///    If the sum of the index and length is greater than 64, the result is
+///    undefined. If the length and index are both zero, bits [63:0] of
 ///    parameter __y are inserted into parameter __x. If the length
-///    is zero but the index is non-zero, the result is undefined. 
-/// \returns A 128-bit integer vector containing the original lower 64-bits 
+///    is zero but the index is non-zero, the result is undefined.
+/// \returns A 128-bit integer vector containing the original lower 64-bits
 ///    of destination operand __x with the specified bitfields replaced by the
-///    lower bits of source operand __y. The upper 64 bits of the return value 
+///    lower bits of source operand __y. The upper 64 bits of the return value
 ///    are undefined.
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
@@ -162,15 +162,15 @@ _mm_insert_si64(__m128i __x, __m128i __y)
   return (__m128i)__builtin_ia32_insertq((__v2di)__x, (__v2di)__y);
 }
 
-/// \brief Stores a 64-bit double-precision value in a 64-bit memory location. 
+/// \brief Stores a 64-bit double-precision value in a 64-bit memory location.
 ///    To minimize caching, the data is flagged as non-temporal (unlikely to be
 ///    used again soon).
 ///
 /// \headerfile <x86intrin.h>
 ///
-/// \code 
+/// \code
 /// This intrinsic corresponds to the \c MOVNTSD instruction.
-/// \endcode 
+/// \endcode
 ///
 /// \param __p
 ///    The 64-bit memory location used to store the register value.
@@ -189,9 +189,9 @@ _mm_stream_sd(double *__p, __m128d __a)
 ///
 /// \headerfile <x86intrin.h>
 ///
-/// \code 
+/// \code
 /// This intrinsic corresponds to the \c MOVNTSS instruction.
-/// \endcode 
+/// \endcode
 ///
 /// \param __p
 ///    The 32-bit memory location used to store the register value.
