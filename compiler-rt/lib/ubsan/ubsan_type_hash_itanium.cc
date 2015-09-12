@@ -193,7 +193,7 @@ struct VtablePrefix {
   std::type_info *TypeInfo;
 };
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !defined(__powerpc64__)
 bool isValidVptr(void *Vtable) {
   // Validate the memory permissions of the vtable pointer and the first
   // function pointer in the vtable. They should be r-- or r-x and r-x
@@ -218,7 +218,7 @@ bool isValidVptr(void *Vtable) {
   }
   return false;
 }
-#else  // !SANITIZER_LINUX
+#else  // !SANITIZER_LINUX || __powerpc64__
 bool isValidVptr(void *Vtable) {
   return true;
 }
