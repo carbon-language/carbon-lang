@@ -750,8 +750,9 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   // separated by a few arithmetic operations.
   BasicBlock::iterator BBI = &LI;
   AAMDNodes AATags;
-  if (Value *AvailableVal = FindAvailableLoadedValue(Op, LI.getParent(), BBI,
-                                                     6, AA, &AATags)) {
+  if (Value *AvailableVal =
+      FindAvailableLoadedValue(Op, LI.getParent(), BBI,
+                               DEF_MAX_INSTS_TO_SCAN, AA, &AATags)) {
     if (LoadInst *NLI = dyn_cast<LoadInst>(AvailableVal)) {
       unsigned KnownIDs[] = {
         LLVMContext::MD_tbaa,
@@ -822,7 +823,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       }
 
       // load (select (cond, null, P)) -> load P
-      if (isa<ConstantPointerNull>(SI->getOperand(1)) && 
+      if (isa<ConstantPointerNull>(SI->getOperand(1)) &&
           LI.getPointerAddressSpace() == 0) {
         LI.setOperand(0, SI->getOperand(2));
         return &LI;

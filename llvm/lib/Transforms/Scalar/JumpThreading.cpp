@@ -769,7 +769,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     // If we're branching on a conditional, LVI might be able to determine
     // it's value at the branch instruction.  We only handle comparisons
     // against a constant at this time.
-    // TODO: This should be extended to handle switches as well.  
+    // TODO: This should be extended to handle switches as well.
     BranchInst *CondBr = dyn_cast<BranchInst>(BB->getTerminator());
     Constant *CondConst = dyn_cast<Constant>(CondCmp->getOperand(1));
     if (CondBr && CondConst && CondBr->isConditional()) {
@@ -877,7 +877,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   BasicBlock::iterator BBIt = LI;
 
   if (Value *AvailableVal =
-        FindAvailableLoadedValue(LoadedPtr, LoadBB, BBIt, 6)) {
+        FindAvailableLoadedValue(LoadedPtr, LoadBB, BBIt)) {
     // If the value if the load is locally available within the block, just use
     // it.  This frequently occurs for reg2mem'd allocas.
     //cerr << "LOAD ELIMINATED:\n" << *BBIt << *LI << "\n";
@@ -922,7 +922,8 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
     // Scan the predecessor to see if the value is available in the pred.
     BBIt = PredBB->end();
     AAMDNodes ThisAATags;
-    Value *PredAvailable = FindAvailableLoadedValue(LoadedPtr, PredBB, BBIt, 6,
+    Value *PredAvailable = FindAvailableLoadedValue(LoadedPtr, PredBB, BBIt,
+                                                    DEF_MAX_INSTS_TO_SCAN,
                                                     nullptr, &ThisAATags);
     if (!PredAvailable) {
       OneUnavailablePred = PredBB;
