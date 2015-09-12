@@ -448,6 +448,109 @@ void CodeGenModule::Release() {
   EmitVersionIdentMetadata();
 
   EmitTargetMetadata();
+
+  RewriteAlwaysInlineFunctions();
+}
+
+void CodeGenModule::AddAlwaysInlineFunction(llvm::Function *Fn) {
+  AlwaysInlineFunctions.push_back(Fn);
+}
+
+/// Find all uses of GV that are not direct calls or invokes.
+static void FindNonDirectCallUses(llvm::GlobalValue *GV,
+                                  llvm::SmallVectorImpl<llvm::Use *> *Uses) {
+  llvm::GlobalValue::use_iterator UI = GV->use_begin(), E = GV->use_end();
+  for (; UI != E;) {
+    llvm::Use &U = *UI;
+    ++UI;
+
+    llvm::CallSite CS(U.getUser());
+    bool isDirectCall = (CS.isCall() || CS.isInvoke()) && CS.isCallee(&U);
+    if (!isDirectCall)
+      Uses->push_back(&U);
+  }
+}
+
+/// Replace a list of uses.
+static void ReplaceUsesWith(const llvm::SmallVectorImpl<llvm::Use *> &Uses,
+                            llvm::GlobalValue *V,
+                            llvm::GlobalValue *Replacement) {
+  for (llvm::Use *U : Uses) {
+    auto *C = dyn_cast<llvm::Constant>(U->getUser());
+    if (C && !isa<llvm::GlobalValue>(C))
+      C->handleOperandChange(V, Replacement, U);
+    else
+      U->set(Replacement);
+  }
+}
+
+void CodeGenModule::RewriteAlwaysInlineFunction(llvm::Function *Fn) {
+  std::string Name = Fn->getName();
+  std::string InlineName = Name + ".alwaysinline";
+  Fn->setName(InlineName);
+
+  llvm::SmallVector<llvm::Use *, 8> NonDirectCallUses;
+  Fn->removeDeadConstantUsers();
+  FindNonDirectCallUses(Fn, &NonDirectCallUses);
+  // Do not create the wrapper if there are no non-direct call uses, and we are
+  // not required to emit an external definition.
+  if (NonDirectCallUses.empty() && Fn->isDiscardableIfUnused())
+    return;
+
+  llvm::FunctionType *FT = Fn->getFunctionType();
+  llvm::LLVMContext &Ctx = getModule().getContext();
+  llvm::Function *StubFn =
+      llvm::Function::Create(FT, Fn->getLinkage(), Name, &getModule());
+  assert(StubFn->getName() == Name && "name was uniqued!");
+
+  // Insert the stub immediately after the original function. Helps with the
+  // fragile tests, among other things.
+  StubFn->removeFromParent();
+  TheModule.getFunctionList().insertAfter(Fn, StubFn);
+
+  StubFn->copyAttributesFrom(Fn);
+  StubFn->setPersonalityFn(nullptr);
+
+  // AvailableExternally functions are replaced with a declaration.
+  // Everyone else gets a wrapper that musttail-calls the original function.
+  if (Fn->hasAvailableExternallyLinkage()) {
+    StubFn->setLinkage(llvm::GlobalValue::ExternalLinkage);
+  } else {
+    llvm::BasicBlock *BB = llvm::BasicBlock::Create(Ctx, "entry", StubFn);
+    std::vector<llvm::Value *> Args;
+    for (llvm::Function::arg_iterator ai = StubFn->arg_begin();
+         ai != StubFn->arg_end(); ++ai)
+      Args.push_back(&*ai);
+    llvm::CallInst *CI = llvm::CallInst::Create(Fn, Args, "", BB);
+    CI->setCallingConv(Fn->getCallingConv());
+    CI->setTailCallKind(llvm::CallInst::TCK_MustTail);
+    CI->setAttributes(Fn->getAttributes());
+    if (FT->getReturnType()->isVoidTy())
+      llvm::ReturnInst::Create(Ctx, BB);
+    else
+      llvm::ReturnInst::Create(Ctx, CI, BB);
+  }
+
+  if (Fn->hasComdat())
+    StubFn->setComdat(Fn->getComdat());
+
+  ReplaceUsesWith(NonDirectCallUses, Fn, StubFn);
+
+  // Replace all metadata uses with the stub. This is primarily to reattach
+  // DISubprogram metadata to the stub, because that's what will be emitted in
+  // the object file.
+  if (Fn->isUsedByMetadata())
+    llvm::ValueAsMetadata::handleRAUW(Fn, StubFn);
+}
+
+void CodeGenModule::RewriteAlwaysInlineFunctions() {
+  for (llvm::Function *Fn : AlwaysInlineFunctions) {
+    RewriteAlwaysInlineFunction(Fn);
+    Fn->setLinkage(llvm::GlobalValue::InternalLinkage);
+    Fn->addFnAttr(llvm::Attribute::AlwaysInline);
+    Fn->setDLLStorageClass(llvm::GlobalVariable::DefaultStorageClass);
+    Fn->setVisibility(llvm::GlobalValue::DefaultVisibility);
+  }
 }
 
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
@@ -772,7 +875,7 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
              !F->getAttributes().hasAttribute(llvm::AttributeSet::FunctionIndex,
                                               llvm::Attribute::NoInline)) {
     // (noinline wins over always_inline, and we can't specify both in IR)
-    B.addAttribute(llvm::Attribute::AlwaysInline);
+    AddAlwaysInlineFunction(F);
   }
 
   if (D->hasAttr<ColdAttr>()) {
