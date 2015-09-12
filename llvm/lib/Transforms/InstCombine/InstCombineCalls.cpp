@@ -825,10 +825,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
            "CVTPH2PS output type should be 32-bit float vector");
 
     // Constant folding: Convert to generic half to single conversion.
-    if (auto CIZero = dyn_cast<ConstantAggregateZero>(Arg))
+    if (isa<ConstantAggregateZero>(Arg))
       return ReplaceInstUsesWith(*II, ConstantAggregateZero::get(RetType));
 
-    if (auto CIHalf = dyn_cast<ConstantDataVector>(Arg)) {
+    if (isa<ConstantDataVector>(Arg)) {
       auto VectorHalfAsShorts = Arg;
       if (RetWidth < ArgWidth) {
         SmallVector<int, 8> SubVecMask;
