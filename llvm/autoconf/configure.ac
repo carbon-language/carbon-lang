@@ -74,7 +74,7 @@ if test ${srcdir} != "." ; then
 fi
 
 dnl Quit if it is an in-source build
-if test ${srcdir} == "." ; then
+if test ${srcdir} = "." ; then
   AC_MSG_ERROR([In-source builds are not allowed. Please configure from a separate build directory!])
 fi
 
