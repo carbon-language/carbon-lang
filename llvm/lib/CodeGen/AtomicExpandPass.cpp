@@ -505,8 +505,10 @@ bool AtomicExpand::isIdempotentRMW(AtomicRMWInst* RMWI) {
 }
 
 bool AtomicExpand::simplifyIdempotentRMW(AtomicRMWInst* RMWI) {
-  if (auto ResultingLoad = TLI->lowerIdempotentRMWIntoFencedLoad(RMWI))
-    return tryExpandAtomicLoad(ResultingLoad);
+  if (auto ResultingLoad = TLI->lowerIdempotentRMWIntoFencedLoad(RMWI)) {
+    tryExpandAtomicLoad(ResultingLoad);
+    return true;
+  }
   return false;
 }
 
