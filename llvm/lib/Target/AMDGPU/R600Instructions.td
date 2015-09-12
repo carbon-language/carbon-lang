@@ -1655,7 +1655,7 @@ def : InsertVerticalPat <R600_INSERT_ELT_V4, v4f32, f32>;
 // ISel Patterns
 //===----------------------------------------------------------------------===//
 
-// CND*_INT Pattterns for f32 True / False values
+// CND*_INT Patterns for f32 True / False values
 
 class CND_INT_f32 <InstR600 cnd, CondCode cc> : Pat <
   (selectcc i32:$src0, 0, f32:$src1, f32:$src2, cc),

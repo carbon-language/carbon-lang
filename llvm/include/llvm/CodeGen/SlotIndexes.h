@@ -155,7 +155,7 @@ namespace llvm {
              "Attempt to construct index with 0 pointer.");
     }
 
-    /// Returns true if this is a valid index. Invalid indicies do
+    /// Returns true if this is a valid index. Invalid indices do
     /// not point into an index table, and cannot be compared.
     bool isValid() const {
       return lie.getPointer();

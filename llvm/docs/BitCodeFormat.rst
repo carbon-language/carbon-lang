@@ -851,7 +851,7 @@ in the *paramattr* field of module block `FUNCTION`_ records, or within the
 *attr* field of function block ``INST_INVOKE`` and ``INST_CALL`` records.
 
 Entries within ``PARAMATTR_BLOCK`` are constructed to ensure that each is unique
-(i.e., no two indicies represent equivalent attribute lists).
+(i.e., no two indices represent equivalent attribute lists).
 
 .. _PARAMATTR_CODE_ENTRY:
 
@@ -904,7 +904,7 @@ table entry, which may be referenced by 0-based index from instructions,
 constants, metadata, type symbol table entries, or other type operator records.
 
 Entries within ``TYPE_BLOCK`` are constructed to ensure that each entry is
-unique (i.e., no two indicies represent structurally equivalent types).
+unique (i.e., no two indices represent structurally equivalent types).
 
 .. _TYPE_CODE_NUMENTRY:
 .. _NUMENTRY:

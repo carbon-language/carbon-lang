@@ -897,11 +897,11 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
       if (!MI->getOperand(i).isFI())
         continue;
 
-      // Frame indicies in debug values are encoded in a target independent
+      // Frame indices in debug values are encoded in a target independent
       // way with simply the frame index and offset rather than any
       // target-specific addressing mode.
       if (MI->isDebugValue()) {
-        assert(i == 0 && "Frame indicies can only appear as the first "
+        assert(i == 0 && "Frame indices can only appear as the first "
                          "operand of a DBG_VALUE machine instruction");
         unsigned Reg;
         MachineOperand &Offset = MI->getOperand(1);

@@ -53,7 +53,7 @@ load barriers, store barriers, and safepoints.
    loads, merely loads of a particular type (in the original source
    language), or none at all.
 
-#. Analogously, a store barrier is a code fragement that runs
+#. Analogously, a store barrier is a code fragment that runs
    immediately before the machine store instruction, but after the
    computation of the value stored.  The most common use of a store
    barrier is to update a 'card table' in a generational garbage
@@ -160,7 +160,7 @@ of the call, we use the ``gc.result`` intrinsic.  To get the relocation
 of each pointer in turn, we use the ``gc.relocate`` intrinsic with the
 appropriate index.  Note that both the ``gc.relocate`` and ``gc.result`` are
 tied to the statepoint.  The combination forms a "statepoint relocation 
-sequence" and represents the entitety of a parseable call or 'statepoint'.
+sequence" and represents the entirety of a parseable call or 'statepoint'.
 
 When lowered, this example would generate the following x86 assembly:
 
@@ -271,7 +271,7 @@ statepoint.
   transitions based on the function symbols involved (e.g. a call from a
   function with GC strategy "foo" to a function with GC strategy "bar"),
   indirect calls that are also GC transitions must also be supported. This
-  requirement is the driving force behing the decision to require that GC
+  requirement is the driving force behind the decision to require that GC
   transitions are explicitly marked.
 
 Let's revisit the sample given above, this time treating the call to ``@foo``

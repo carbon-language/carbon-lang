@@ -132,19 +132,19 @@ namespace EEVT {
     /// this an other based on this information.
     bool EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP);
 
-    /// EnforceVectorEltTypeIs - 'this' is now constrainted to be a vector type
+    /// EnforceVectorEltTypeIs - 'this' is now constrained to be a vector type
     /// whose element is VT.
     bool EnforceVectorEltTypeIs(EEVT::TypeSet &VT, TreePattern &TP);
 
-    /// EnforceVectorEltTypeIs - 'this' is now constrainted to be a vector type
+    /// EnforceVectorEltTypeIs - 'this' is now constrained to be a vector type
     /// whose element is VT.
     bool EnforceVectorEltTypeIs(MVT::SimpleValueType VT, TreePattern &TP);
 
-    /// EnforceVectorSubVectorTypeIs - 'this' is now constrainted to
+    /// EnforceVectorSubVectorTypeIs - 'this' is now constrained to
     /// be a vector type VT.
     bool EnforceVectorSubVectorTypeIs(EEVT::TypeSet &VT, TreePattern &TP);
 
-    /// EnforceVectorSameNumElts - 'this' is now constrainted to
+    /// EnforceVectorSameNumElts - 'this' is now constrained to
     /// be a vector with same num elements as VT.
     bool EnforceVectorSameNumElts(EEVT::TypeSet &VT, TreePattern &TP);
 

@@ -708,7 +708,7 @@ qualified name.  Debugger users tend not to enter their search strings as
 "``a::b::c``".  So the name entered in the name table must be demangled in
 order to chop it up appropriately and additional names must be manually entered
 into the table to make it effective as a name lookup table for debuggers to
-se.
+use.
 
 All debuggers currently ignore the "``.debug_pubnames``" table as a result of
 its inconsistent and useless public-only name content making it a waste of

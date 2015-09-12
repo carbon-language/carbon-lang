@@ -357,8 +357,8 @@ bool llvm::isMemorySpaceTransferIntrinsic(Intrinsic::ID id) {
 }
 
 // consider several special intrinsics in striping pointer casts, and
-// provide an option to ignore GEP indicies for find out the base address only
-// which could be used in simple alias disambigurate.
+// provide an option to ignore GEP indices for find out the base address only
+// which could be used in simple alias disambiguation.
 const Value *
 llvm::skipPointerTransfer(const Value *V, bool ignore_GEP_indices) {
   V = V->stripPointerCasts();
@@ -379,9 +379,9 @@ llvm::skipPointerTransfer(const Value *V, bool ignore_GEP_indices) {
 }
 
 // consider several special intrinsics in striping pointer casts, and
-// - ignore GEP indicies for find out the base address only, and
+// - ignore GEP indices for find out the base address only, and
 // - tracking PHINode
-// which could be used in simple alias disambigurate.
+// which could be used in simple alias disambiguation.
 const Value *
 llvm::skipPointerTransfer(const Value *V, std::set<const Value *> &processed) {
   if (processed.find(V) != processed.end())
@@ -428,7 +428,7 @@ llvm::skipPointerTransfer(const Value *V, std::set<const Value *> &processed) {
   return V;
 }
 
-// The following are some useful utilities for debuggung
+// The following are some useful utilities for debugging
 
 BasicBlock *llvm::getParentBlock(Value *v) {
   if (BasicBlock *B = dyn_cast<BasicBlock>(v))
@@ -484,7 +484,7 @@ Instruction *llvm::getInst(Value *base, char *instName) {
   return nullptr;
 }
 
-// Dump an instruction by nane
+// Dump an instruction by name
 void llvm::dumpInst(Value *base, char *instName) {
   Instruction *I = getInst(base, instName);
   if (I)

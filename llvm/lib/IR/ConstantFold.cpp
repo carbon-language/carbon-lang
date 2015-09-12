@@ -83,7 +83,7 @@ foldConstantCastPair(
   assert(DstTy && DstTy->isFirstClassType() && "Invalid cast destination type");
   assert(CastInst::isCast(opc) && "Invalid cast opcode");
 
-  // The the types and opcodes for the two Cast constant expressions
+  // The types and opcodes for the two Cast constant expressions
   Type *SrcTy = Op->getOperand(0)->getType();
   Type *MidTy = Op->getType();
   Instruction::CastOps firstOp = Instruction::CastOps(Op->getOpcode());
@@ -1277,9 +1277,9 @@ static bool isMaybeZeroSizedType(Type *Ty) {
 }
 
 /// IdxCompare - Compare the two constants as though they were getelementptr
-/// indices.  This allows coersion of the types to be the same thing.
+/// indices.  This allows coercion of the types to be the same thing.
 ///
-/// If the two constants are the "same" (after coersion), return 0.  If the
+/// If the two constants are the "same" (after coercion), return 0.  If the
 /// first is less than the second, return -1, if the second is less than the
 /// first, return 1.  If the constants are not integral, return -2.
 ///
@@ -1999,7 +1999,7 @@ static bool isInBoundsIndices(ArrayRef<IndexTy> Idxs) {
 /// \brief Test whether a given ConstantInt is in-range for a SequentialType.
 static bool isIndexInRangeOfSequentialType(SequentialType *STy,
                                            const ConstantInt *CI) {
-  // And indicies are valid when indexing along a pointer
+  // And indices are valid when indexing along a pointer
   if (isa<PointerType>(STy))
     return true;
 

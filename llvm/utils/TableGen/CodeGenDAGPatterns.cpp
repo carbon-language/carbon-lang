@@ -350,7 +350,7 @@ bool EEVT::TypeSet::EnforceVector(TreePattern &TP) {
 
 
 /// EnforceSmallerThan - 'this' must be a smaller VT than Other. For vectors
-/// this shoud be based on the element type. Update this and other based on
+/// this should be based on the element type. Update this and other based on
 /// this information.
 bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
   if (TP.hasError())
@@ -456,7 +456,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
   return MadeChange;
 }
 
-/// EnforceVectorEltTypeIs - 'this' is now constrainted to be a vector type
+/// EnforceVectorEltTypeIs - 'this' is now constrained to be a vector type
 /// whose element is specified by VTOperand.
 bool EEVT::TypeSet::EnforceVectorEltTypeIs(MVT::SimpleValueType VT,
                                            TreePattern &TP) {
@@ -484,7 +484,7 @@ bool EEVT::TypeSet::EnforceVectorEltTypeIs(MVT::SimpleValueType VT,
   return MadeChange;
 }
 
-/// EnforceVectorEltTypeIs - 'this' is now constrainted to be a vector type
+/// EnforceVectorEltTypeIs - 'this' is now constrained to be a vector type
 /// whose element is specified by VTOperand.
 bool EEVT::TypeSet::EnforceVectorEltTypeIs(EEVT::TypeSet &VTOperand,
                                            TreePattern &TP) {
@@ -530,7 +530,7 @@ bool EEVT::TypeSet::EnforceVectorEltTypeIs(EEVT::TypeSet &VTOperand,
   return MadeChange;
 }
 
-/// EnforceVectorSubVectorTypeIs - 'this' is now constrainted to be a
+/// EnforceVectorSubVectorTypeIs - 'this' is now constrained to be a
 /// vector type specified by VTOperand.
 bool EEVT::TypeSet::EnforceVectorSubVectorTypeIs(EEVT::TypeSet &VTOperand,
                                                  TreePattern &TP) {
@@ -611,7 +611,7 @@ bool EEVT::TypeSet::EnforceVectorSubVectorTypeIs(EEVT::TypeSet &VTOperand,
   return MadeChange;
 }
 
-/// EnforceVectorSameNumElts - 'this' is now constrainted to
+/// EnforceVectorSameNumElts - 'this' is now constrained to
 /// be a vector with same num elements as VTOperand.
 bool EEVT::TypeSet::EnforceVectorSameNumElts(EEVT::TypeSet &VTOperand,
                                              TreePattern &TP) {
@@ -2815,7 +2815,7 @@ static bool InferFromPattern(CodeGenInstruction &InstInfo,
 
   if (InstInfo.mayLoad != PatInfo.mayLoad && !InstInfo.mayLoad_Unset) {
     // Allow explicitly setting mayLoad = 1, even when the pattern has no loads.
-    // Some targets translate imediates to loads.
+    // Some targets translate immediates to loads.
     if (!InstInfo.mayLoad) {
       Error = true;
       PrintError(PatDef->getLoc(), "Pattern doesn't match mayLoad = " +
@@ -3347,7 +3347,7 @@ void CodeGenDAGPatterns::VerifyInstructionFlags() {
       if (InstInfo.InferredFrom &&
           InstInfo.InferredFrom != InstInfo.TheDef &&
           InstInfo.InferredFrom != PTM.getSrcRecord())
-        PrintError(InstInfo.InferredFrom->getLoc(), "inferred from patttern");
+        PrintError(InstInfo.InferredFrom->getLoc(), "inferred from pattern");
     }
   }
   if (Errors)
@@ -3573,7 +3573,7 @@ static void CombineChildVariants(TreePatternNode *Orig,
     }
 
     // Increment indices to the next permutation by incrementing the
-    // indicies from last index backward, e.g., generate the sequence
+    // indices from last index backward, e.g., generate the sequence
     // [0, 0], [0, 1], [1, 0], [1, 1].
     int IdxsIdx;
     for (IdxsIdx = Idxs.size() - 1; IdxsIdx >= 0; --IdxsIdx) {
@@ -3724,7 +3724,7 @@ static void GenerateVariantsOf(TreePatternNode *N,
       // operands are the commutative operands, and there might be more operands
       // after those.
       assert(NC >= 3 &&
-             "Commutative intrinsic should have at least 3 childrean!");
+             "Commutative intrinsic should have at least 3 children!");
       std::vector<std::vector<TreePatternNode*> > Variants;
       Variants.push_back(ChildVariants[0]); // Intrinsic id.
       Variants.push_back(ChildVariants[2]);

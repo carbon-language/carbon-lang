@@ -27,7 +27,7 @@ Supported Instructions
 ^^^^^^^^^^^^^^
 
 Metadata is only assigned to the conditional branches. There are two extra
-operarands for the true and the false branch.
+operands for the true and the false branch.
 
 .. code-block:: llvm
 
@@ -114,12 +114,12 @@ CFG Modifications
 
 Branch Weight Metatada is not proof against CFG changes. If terminator operands'
 are changed some action should be taken. In other case some misoptimizations may
-occur due to incorrent branch prediction information.
+occur due to incorrect branch prediction information.
 
 Function Entry Counts
 =====================
 
-To allow comparing different functions durint inter-procedural analysis and
+To allow comparing different functions during inter-procedural analysis and
 optimization, ``MD_prof`` nodes can also be assigned to a function definition.
 The first operand is a string indicating the name of the associated counter.
 
