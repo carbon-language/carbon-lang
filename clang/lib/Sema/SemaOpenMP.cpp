@@ -7193,6 +7193,5 @@ OMPClause *Sema::ActOnOpenMPDeviceClause(Expr *Device, SourceLocation StartLoc,
       return nullptr;
     }
   }
-
   return new (Context) OMPDeviceClause(ValExpr, StartLoc, LParenLoc, EndLoc);
 }
