@@ -2405,6 +2405,9 @@ public:
     return getOperand(i);
   }
   void setIncomingValue(unsigned i, Value *V) {
+    assert(V && "PHI node got a null value!");
+    assert(getType() == V->getType() &&
+           "All operands to PHI node must be the same type as the PHI node!");
     setOperand(i, V);
   }
   static unsigned getOperandNumForIncomingValue(unsigned i) {
@@ -2436,16 +2439,13 @@ public:
   }
 
   void setIncomingBlock(unsigned i, BasicBlock *BB) {
+    assert(BB && "PHI node got a null basic block!");
     block_begin()[i] = BB;
   }
 
   /// addIncoming - Add an incoming value to the end of the PHI list
   ///
   void addIncoming(Value *V, BasicBlock *BB) {
-    assert(V && "PHI node got a null value!");
-    assert(BB && "PHI node got a null basic block!");
-    assert(getType() == V->getType() &&
-           "All operands to PHI node must be the same type as the PHI node!");
     if (getNumOperands() == ReservedSpace)
       growOperands();  // Get more space!
     // Initialize some new operands.
