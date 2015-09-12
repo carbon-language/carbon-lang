@@ -494,8 +494,12 @@ void CodeGenModule::RewriteAlwaysInlineFunction(llvm::Function *Fn) {
   FindNonDirectCallUses(Fn, &NonDirectCallUses);
   // Do not create the wrapper if there are no non-direct call uses, and we are
   // not required to emit an external definition.
-  if (NonDirectCallUses.empty() && Fn->isDiscardableIfUnused())
+  if (NonDirectCallUses.empty() && Fn->isDiscardableIfUnused()) {
+    // An always inline function with no wrapper cannot legitimately use the
+    // function's COMDAT symbol.
+    Fn->setComdat(nullptr);
     return;
+  }
 
   llvm::FunctionType *FT = Fn->getFunctionType();
   llvm::LLVMContext &Ctx = getModule().getContext();

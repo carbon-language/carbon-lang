@@ -33,20 +33,20 @@ void g3() {
   A3 a3;
 }
 
-// CHECK-DAG: define internal void @_ZN2A1C1Ev.alwaysinline(%struct.A1* %this) unnamed_addr #[[AI:[01-9]+]]
-// CHECK-DAG: define internal void @_ZN2A1C2Ev.alwaysinline(%struct.A1* %this) unnamed_addr #[[AI]]
-// CHECK-DAG: define internal void @_ZN2A1D1Ev.alwaysinline(%struct.A1* %this) unnamed_addr #[[AI]]
-// CHECK-DAG: define internal void @_ZN2A1D2Ev.alwaysinline(%struct.A1* %this) unnamed_addr #[[AI]]
+// CHECK-DAG: define internal void @_ZN2A1C1Ev.alwaysinline(%struct.A1* %this) unnamed_addr #[[AI:[01-9]+]] align 2 {
+// CHECK-DAG: define internal void @_ZN2A1C2Ev.alwaysinline(%struct.A1* %this) unnamed_addr #[[AI]] align 2 {
+// CHECK-DAG: define internal void @_ZN2A1D1Ev.alwaysinline(%struct.A1* %this) unnamed_addr #[[AI]] align 2 {
+// CHECK-DAG: define internal void @_ZN2A1D2Ev.alwaysinline(%struct.A1* %this) unnamed_addr #[[AI]] align 2 {
 
-// CHECK-DAG: define internal void @_ZN2A2C1Ev.alwaysinline(%struct.A2* %this) unnamed_addr #[[AIIH:[01-9]+]]
-// CHECK-DAG: define internal void @_ZN2A2C2Ev.alwaysinline(%struct.A2* %this) unnamed_addr #[[AIIH]]
-// CHECK-DAG: define internal void @_ZN2A2D1Ev.alwaysinline(%struct.A2* %this) unnamed_addr #[[AIIH]]
-// CHECK-DAG: define internal void @_ZN2A2D2Ev.alwaysinline(%struct.A2* %this) unnamed_addr #[[AIIH]]
+// CHECK-DAG: define internal void @_ZN2A2C1Ev.alwaysinline(%struct.A2* %this) unnamed_addr #[[AIIH:[01-9]+]] align 2 {
+// CHECK-DAG: define internal void @_ZN2A2C2Ev.alwaysinline(%struct.A2* %this) unnamed_addr #[[AIIH]] align 2 {
+// CHECK-DAG: define internal void @_ZN2A2D1Ev.alwaysinline(%struct.A2* %this) unnamed_addr #[[AIIH]] align 2 {
+// CHECK-DAG: define internal void @_ZN2A2D2Ev.alwaysinline(%struct.A2* %this) unnamed_addr #[[AIIH]] align 2 {
 
-// CHECK-DAG: define internal void @_ZN2A3C1Ev.alwaysinline(%struct.A3* %this) unnamed_addr #[[AIIH]]
-// CHECK-DAG: define internal void @_ZN2A3C2Ev.alwaysinline(%struct.A3* %this) unnamed_addr #[[AIIH]]
-// CHECK-DAG: define internal void @_ZN2A3D1Ev.alwaysinline(%struct.A3* %this) unnamed_addr #[[AIIH]]
-// CHECK-DAG: define internal void @_ZN2A3D2Ev.alwaysinline(%struct.A3* %this) unnamed_addr #[[AIIH]]
+// CHECK-DAG: define internal void @_ZN2A3C1Ev.alwaysinline(%struct.A3* %this) unnamed_addr #[[AIIH]] align 2 {
+// CHECK-DAG: define internal void @_ZN2A3C2Ev.alwaysinline(%struct.A3* %this) unnamed_addr #[[AIIH]] align 2 {
+// CHECK-DAG: define internal void @_ZN2A3D1Ev.alwaysinline(%struct.A3* %this) unnamed_addr #[[AIIH]] align 2 {
+// CHECK-DAG: define internal void @_ZN2A3D2Ev.alwaysinline(%struct.A3* %this) unnamed_addr #[[AIIH]] align 2 {
 
 // CHECK-DAG: attributes #[[AI]] = {{.*alwaysinline.*}}
 // CHECK-DAG: attributes #[[AIIH]] = {{.*alwaysinline.*inlinehint.*}}
