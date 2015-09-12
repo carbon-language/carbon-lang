@@ -6408,12 +6408,6 @@ static bool isAssociativeAndCommutative(const MachineInstr &Inst) {
   case X86::IMUL16rr:
   case X86::IMUL32rr:
   case X86::IMUL64rr:
-  case X86::PANDrr:
-  case X86::PORrr:
-  case X86::PXORrr:
-  case X86::VPANDrr:
-  case X86::VPORrr:
-  case X86::VPXORrr:
   // Normal min/max instructions are not commutative because of NaN and signed
   // zero semantics, but these are. Thus, there's no need to check for global
   // relaxed math; the instructions themselves have the properties we need.
