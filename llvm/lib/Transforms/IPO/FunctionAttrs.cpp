@@ -74,8 +74,6 @@ private:
   bool AddArgumentAttrs(const CallGraphSCC &SCC);
   bool IsFunctionMallocLike(Function *F, SmallPtrSet<Function *, 8> &) const;
   bool AddNoAliasAttrs(const CallGraphSCC &SCC);
-  bool ReturnsNonNull(Function *F, SmallPtrSet<Function *, 8> &,
-                      bool &Speculative) const;
   bool AddNonNullAttrs(const CallGraphSCC &SCC);
   bool annotateLibraryCalls(const CallGraphSCC &SCC);
 };
@@ -798,9 +796,14 @@ bool FunctionAttrs::AddNoAliasAttrs(const CallGraphSCC &SCC) {
 }
 
 /// Tests whether this function is known to not return null.
-bool FunctionAttrs::ReturnsNonNull(Function *F,
-                                   SmallPtrSet<Function *, 8> &SCCNodes,
-                                   bool &Speculative) const {
+///
+/// Requires that the function returns a pointer.
+///
+/// Returns true if it believes the function will not return a null, and sets
+/// \p Speculative based on whether the returned conclusion is a speculative
+/// conclusion due to SCC calls.
+static bool isReturnNonNull(Function *F, SmallPtrSet<Function *, 8> &SCCNodes,
+                            const TargetLibraryInfo &TLI, bool &Speculative) {
   assert(F->getReturnType()->isPointerTy() &&
          "nonnull only meaningful on pointer types");
   Speculative = false;
@@ -814,7 +817,7 @@ bool FunctionAttrs::ReturnsNonNull(Function *F,
     Value *RetVal = FlowsToReturn[i];
 
     // If this value is locally known to be non-null, we're good
-    if (isKnownNonNull(RetVal, TLI))
+    if (isKnownNonNull(RetVal, &TLI))
       continue;
 
     // Otherwise, we need to look upwards since we can't make any local
@@ -902,7 +905,7 @@ bool FunctionAttrs::AddNonNullAttrs(const CallGraphSCC &SCC) {
       continue;
 
     bool Speculative = false;
-    if (ReturnsNonNull(F, SCCNodes, Speculative)) {
+    if (isReturnNonNull(F, SCCNodes, *TLI, Speculative)) {
       if (!Speculative) {
         // Mark the function eagerly since we may discover a function
         // which prevents us from speculating about the entire SCC
