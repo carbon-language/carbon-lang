@@ -891,9 +891,9 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
       }
 
       // If this is "${" find the next "}" and make an identifier like "${xxx}"
-      StringRef::iterator End = std::find(String.begin() + i, String.end(),'}');
-      assert(End != String.end() && "Missing brace in operand reference!");
-      size_t EndPos = End - String.begin();
+      size_t EndPos = String.find('}', i);
+      assert(EndPos != StringRef::npos &&
+             "Missing brace in operand reference!");
       addAsmOperand(i, EndPos+1);
       Prev = EndPos + 1;
       i = EndPos;
