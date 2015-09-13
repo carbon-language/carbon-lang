@@ -58,26 +58,14 @@ struct FunctionAttrs : public CallGraphSCCPass {
     initializeFunctionAttrsPass(*PassRegistry::getPassRegistry());
   }
 
-  // runOnSCC - Analyze the SCC, performing the transformation if possible.
   bool runOnSCC(CallGraphSCC &SCC) override;
 
-  // AddReadAttrs - Deduce readonly/readnone attributes for the SCC.
   bool AddReadAttrs(const CallGraphSCC &SCC);
-
-  // AddArgumentAttrs - Deduce nocapture attributes for the SCC.
   bool AddArgumentAttrs(const CallGraphSCC &SCC);
-
-  // IsFunctionMallocLike - Does this function allocate new memory?
   bool IsFunctionMallocLike(Function *F, SmallPtrSet<Function *, 8> &) const;
-
-  // AddNoAliasAttrs - Deduce noalias attributes for the SCC.
   bool AddNoAliasAttrs(const CallGraphSCC &SCC);
-
-  /// \brief Does this function return null?
   bool ReturnsNonNull(Function *F, SmallPtrSet<Function *, 8> &,
                       bool &Speculative) const;
-
-  /// \brief Deduce nonnull attributes for the SCC.
   bool AddNonNullAttrs(const CallGraphSCC &SCC);
 
   // Utility methods used by inferPrototypeAttributes to add attributes
@@ -125,13 +113,8 @@ struct FunctionAttrs : public CallGraphSCCPass {
     }
   }
 
-  // inferPrototypeAttributes - Analyze the name and prototype of the
-  // given function and set any applicable attributes.  Returns true
-  // if any attributes were set and false otherwise.
   bool inferPrototypeAttributes(Function &F);
 
-  // annotateLibraryCalls - Adds attributes to well-known standard library
-  // call declarations.
   bool annotateLibraryCalls(const CallGraphSCC &SCC);
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -157,7 +140,7 @@ INITIALIZE_PASS_END(FunctionAttrs, "functionattrs",
 
 Pass *llvm::createFunctionAttrsPass() { return new FunctionAttrs(); }
 
-/// AddReadAttrs - Deduce readonly/readnone attributes for the SCC.
+/// Deduce readonly/readnone attributes for the SCC.
 bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
   SmallPtrSet<Function *, 8> SCCNodes;
 
@@ -316,9 +299,9 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
 }
 
 namespace {
-// For a given pointer Argument, this retains a list of Arguments of functions
-// in the same SCC that the pointer data flows into. We use this to build an
-// SCC of the arguments.
+/// For a given pointer Argument, this retains a list of Arguments of functions
+/// in the same SCC that the pointer data flows into. We use this to build an
+/// SCC of the arguments.
 struct ArgumentGraphNode {
   Argument *Definition;
   SmallVector<ArgumentGraphNode *, 4> Uses;
@@ -356,9 +339,9 @@ public:
   }
 };
 
-// This tracker checks whether callees are in the SCC, and if so it does not
-// consider that a capture, instead adding it to the "Uses" list and
-// continuing with the analysis.
+/// This tracker checks whether callees are in the SCC, and if so it does not
+/// consider that a capture, instead adding it to the "Uses" list and
+/// continuing with the analysis.
 struct ArgumentUsesTracker : public CaptureTracker {
   ArgumentUsesTracker(const SmallPtrSet<Function *, 8> &SCCNodes)
       : Captured(false), SCCNodes(SCCNodes) {}
@@ -430,7 +413,7 @@ struct GraphTraits<ArgumentGraph *> : public GraphTraits<ArgumentGraphNode *> {
 };
 }
 
-// Returns Attribute::None, Attribute::ReadOnly or Attribute::ReadNone.
+/// Returns Attribute::None, Attribute::ReadOnly or Attribute::ReadNone.
 static Attribute::AttrKind
 determinePointerReadAttrs(Argument *A,
                           const SmallPtrSet<Argument *, 8> &SCCNodes) {
@@ -535,7 +518,7 @@ determinePointerReadAttrs(Argument *A,
   return IsRead ? Attribute::ReadOnly : Attribute::ReadNone;
 }
 
-/// AddArgumentAttrs - Deduce nocapture attributes for the SCC.
+/// Deduce nocapture attributes for the SCC.
 bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
   bool Changed = false;
 
@@ -745,8 +728,10 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
   return Changed;
 }
 
-/// IsFunctionMallocLike - A function is malloc-like if it returns either null
-/// or a pointer that doesn't alias any other pointer visible to the caller.
+/// Tests whether a function is "malloc-like".
+///
+/// A function is "malloc-like" if it returns either null or a pointer that
+/// doesn't alias any other pointer visible to the caller.
 bool FunctionAttrs::IsFunctionMallocLike(
     Function *F, SmallPtrSet<Function *, 8> &SCCNodes) const {
   SmallSetVector<Value *, 8> FlowsToReturn;
@@ -810,7 +795,7 @@ bool FunctionAttrs::IsFunctionMallocLike(
   return true;
 }
 
-/// AddNoAliasAttrs - Deduce noalias attributes for the SCC.
+/// Deduce noalias attributes for the SCC.
 bool FunctionAttrs::AddNoAliasAttrs(const CallGraphSCC &SCC) {
   SmallPtrSet<Function *, 8> SCCNodes;
 
@@ -860,6 +845,7 @@ bool FunctionAttrs::AddNoAliasAttrs(const CallGraphSCC &SCC) {
   return MadeChange;
 }
 
+/// Tests whether this function is known to not return null.
 bool FunctionAttrs::ReturnsNonNull(Function *F,
                                    SmallPtrSet<Function *, 8> &SCCNodes,
                                    bool &Speculative) const {
@@ -924,6 +910,7 @@ bool FunctionAttrs::ReturnsNonNull(Function *F,
   return true;
 }
 
+/// Deduce nonnull attributes for the SCC.
 bool FunctionAttrs::AddNonNullAttrs(const CallGraphSCC &SCC) {
   SmallPtrSet<Function *, 8> SCCNodes;
 
@@ -997,9 +984,10 @@ bool FunctionAttrs::AddNonNullAttrs(const CallGraphSCC &SCC) {
   return MadeChange;
 }
 
-/// inferPrototypeAttributes - Analyze the name and prototype of the
-/// given function and set any applicable attributes.  Returns true
-/// if any attributes were set and false otherwise.
+/// Analyze the name and prototype of the given function and set any applicable
+/// attributes.
+///
+/// Returns true if any attributes were set and false otherwise.
 bool FunctionAttrs::inferPrototypeAttributes(Function &F) {
   if (F.hasFnAttribute(Attribute::OptimizeNone))
     return false;
@@ -1799,8 +1787,7 @@ bool FunctionAttrs::inferPrototypeAttributes(Function &F) {
   return true;
 }
 
-/// annotateLibraryCalls - Adds attributes to well-known standard library
-/// call declarations.
+/// Adds attributes to well-known standard library call declarations.
 bool FunctionAttrs::annotateLibraryCalls(const CallGraphSCC &SCC) {
   bool MadeChange = false;
 
