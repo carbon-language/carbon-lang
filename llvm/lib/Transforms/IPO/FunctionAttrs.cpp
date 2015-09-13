@@ -72,7 +72,6 @@ private:
 
   bool AddReadAttrs(const CallGraphSCC &SCC);
   bool AddArgumentAttrs(const CallGraphSCC &SCC);
-  bool IsFunctionMallocLike(Function *F, SmallPtrSet<Function *, 8> &) const;
   bool AddNoAliasAttrs(const CallGraphSCC &SCC);
   bool AddNonNullAttrs(const CallGraphSCC &SCC);
   bool annotateLibraryCalls(const CallGraphSCC &SCC);
@@ -682,8 +681,8 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
 ///
 /// A function is "malloc-like" if it returns either null or a pointer that
 /// doesn't alias any other pointer visible to the caller.
-bool FunctionAttrs::IsFunctionMallocLike(
-    Function *F, SmallPtrSet<Function *, 8> &SCCNodes) const {
+static bool isFunctionMallocLike(Function *F,
+                                 SmallPtrSet<Function *, 8> &SCCNodes) {
   SmallSetVector<Value *, 8> FlowsToReturn;
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
     if (ReturnInst *Ret = dyn_cast<ReturnInst>(I->getTerminator()))
@@ -777,7 +776,7 @@ bool FunctionAttrs::AddNoAliasAttrs(const CallGraphSCC &SCC) {
     if (!F->getReturnType()->isPointerTy())
       continue;
 
-    if (!IsFunctionMallocLike(F, SCCNodes))
+    if (!isFunctionMallocLike(F, SCCNodes))
       return false;
   }
 
