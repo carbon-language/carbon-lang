@@ -115,9 +115,9 @@ void ObjectFile::initializeChunks() {
     const coff_section *Sec;
     StringRef Name;
     std::error_code EC = COFFObj->getSection(I, Sec);
-    error(EC, Twine("getSection failed: ") + Name);
+    error(EC, Twine("getSection failed: #") + Twine(I));
     EC = COFFObj->getSectionName(Sec, Name);
-    error(EC, Twine("getSectionName failed: ") + Name);
+    error(EC, Twine("getSectionName failed: #") + Twine(I));
     if (Name == ".sxdata") {
       SXData = Sec;
       continue;
