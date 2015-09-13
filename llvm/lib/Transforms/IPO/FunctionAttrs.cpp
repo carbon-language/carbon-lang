@@ -77,7 +77,6 @@ private:
   bool ReturnsNonNull(Function *F, SmallPtrSet<Function *, 8> &,
                       bool &Speculative) const;
   bool AddNonNullAttrs(const CallGraphSCC &SCC);
-  bool inferPrototypeAttributes(Function &F);
   bool annotateLibraryCalls(const CallGraphSCC &SCC);
 };
 }
@@ -983,13 +982,13 @@ static void setDoesNotAlias(Function &F, unsigned n) {
 /// attributes.
 ///
 /// Returns true if any attributes were set and false otherwise.
-bool FunctionAttrs::inferPrototypeAttributes(Function &F) {
+static bool inferPrototypeAttributes(Function &F, const TargetLibraryInfo &TLI) {
   if (F.hasFnAttribute(Attribute::OptimizeNone))
     return false;
 
   FunctionType *FTy = F.getFunctionType();
   LibFunc::Func TheLibFunc;
-  if (!(TLI->getLibFunc(F.getName(), TheLibFunc) && TLI->has(TheLibFunc)))
+  if (!(TLI.getLibFunc(F.getName(), TheLibFunc) && TLI.has(TheLibFunc)))
     return false;
 
   switch (TheLibFunc) {
@@ -1792,7 +1791,7 @@ bool FunctionAttrs::annotateLibraryCalls(const CallGraphSCC &SCC) {
     Function *F = (*I)->getFunction();
 
     if (F && F->isDeclaration())
-      MadeChange |= inferPrototypeAttributes(*F);
+      MadeChange |= inferPrototypeAttributes(*F, *TLI);
   }
 
   return MadeChange;
