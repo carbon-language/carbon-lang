@@ -652,3 +652,13 @@ define <8 x double> @test_maskz_broadcast_vaddpd(<8 x double> %i, double* %j,
   %r = select <8 x i1> %mask, <8 x double> %x, <8 x double> zeroinitializer
   ret <8 x double> %r
 }
+
+; CHECK-LABEL: test_fxor
+; CHECK: vpxord
+; CHECK: ret
+define <16 x float>  @test_fxor(<16 x float> %a) {
+
+  %res = fsub <16 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %a
+  ret <16 x float>%res
+}
+
