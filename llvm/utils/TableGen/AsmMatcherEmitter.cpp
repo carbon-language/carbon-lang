@@ -847,9 +847,9 @@ void MatchableInfo::addAsmOperand(size_t Start, size_t End) {
 /// tokenizeAsmString - Tokenize a simplified assembly string.
 void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
   StringRef String = AsmString;
-  unsigned Prev = 0;
+  size_t Prev = 0;
   bool InTok = true;
-  for (unsigned i = 0, e = String.size(); i != e; ++i) {
+  for (size_t i = 0, e = String.size(); i != e; ++i) {
     switch (String[i]) {
     case '[':
     case ']':
