@@ -140,13 +140,14 @@ void DecodePALIGNRMask(MVT VT, unsigned Imm,
   }
 }
 
-/// DecodePSHUFMask - This decodes the shuffle masks for pshufd, and vpermilp*.
+/// DecodePSHUFMask - This decodes the shuffle masks for pshufw, pshufd, and vpermilp*.
 /// VT indicates the type of the vector allowing it to handle different
 /// datatypes and vector widths.
 void DecodePSHUFMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
 
   unsigned NumLanes = VT.getSizeInBits() / 128;
+  if (NumLanes == 0) NumLanes = 1;  // Handle MMX
   unsigned NumLaneElts = NumElts / NumLanes;
 
   unsigned NewImm = Imm;
@@ -191,6 +192,16 @@ void DecodePSHUFLWMask(MVT VT, unsigned Imm,
   }
 }
 
+void DecodePSWAPMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned NumHalfElts = NumElts / 2;
+
+  for (unsigned l = 0; l != NumHalfElts; ++l)
+    ShuffleMask.push_back(l + NumHalfElts);
+  for (unsigned h = 0; h != NumHalfElts; ++h)
+    ShuffleMask.push_back(h);
+}
+
 /// DecodeSHUFPMask - This decodes the shuffle masks for shufp*. VT indicates
 /// the type of the vector allowing it to handle different datatypes and vector
 /// widths.
@@ -222,7 +233,7 @@ void DecodeUNPCKHMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
   // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
   // independently on 128-bit lanes.
   unsigned NumLanes = VT.getSizeInBits() / 128;
-  if (NumLanes == 0 ) NumLanes = 1;  // Handle MMX
+  if (NumLanes == 0) NumLanes = 1;  // Handle MMX
   unsigned NumLaneElts = NumElts / NumLanes;
 
   for (unsigned l = 0; l != NumElts; l += NumLaneElts) {

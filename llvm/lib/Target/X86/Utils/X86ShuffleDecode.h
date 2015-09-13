@@ -54,6 +54,9 @@ void DecodePSHUFHWMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
 void DecodePSHUFLWMask(MVT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
+/// \brief Decodes a PSWAPD 3DNow! instruction.
+void DecodePSWAPMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
+
 /// DecodeSHUFPMask - This decodes the shuffle masks for shufp*. VT indicates
 /// the type of the vector allowing it to handle different datatypes and vector
 /// widths.
