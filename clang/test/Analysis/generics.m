@@ -435,7 +435,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>incompatibleTypesErased</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -545,7 +545,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>incompatibleTypesErased</string>
 // CHECK:   <key>issue_hash</key><string>3</string>
@@ -689,7 +689,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>incompatibleTypesErased</string>
 // CHECK:   <key>issue_hash</key><string>5</string>
@@ -939,7 +939,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSArray&lt;NSNumber *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSString *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>crossProceduralErasedTypes</string>
 // CHECK:   <key>issue_hash</key><string>1</string>
@@ -1049,7 +1049,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>incompatibleTypesErasedReverseConversion</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -1193,7 +1193,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>incompatibleTypesErasedReverseConversion</string>
 // CHECK:   <key>issue_hash</key><string>4</string>
@@ -1303,7 +1303,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>idErasedIncompatibleTypesReverseConversion</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -1447,7 +1447,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>idErasedIncompatibleTypesReverseConversion</string>
 // CHECK:   <key>issue_hash</key><string>4</string>
@@ -1591,7 +1591,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>idErasedIncompatibleTypes</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -1701,7 +1701,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>idErasedIncompatibleTypes</string>
 // CHECK:   <key>issue_hash</key><string>3</string>
@@ -1845,7 +1845,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>idErasedIncompatibleTypes</string>
 // CHECK:   <key>issue_hash</key><string>5</string>
@@ -2023,7 +2023,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSString *&apos; to incompatible type &apos;NSMutableString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>pathSensitiveInference</string>
 // CHECK:   <key>issue_hash</key><string>8</string>
@@ -2167,7 +2167,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;MutableArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>verifyAPIusage</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -2277,7 +2277,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSString *&apos; to incompatible type &apos;NSMutableString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>trustExplicitCasts</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -2455,7 +2455,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;MutableArray&lt;NSString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>subtypeOfGeneric</string>
 // CHECK:   <key>issue_hash</key><string>3</string>
@@ -2565,7 +2565,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>genericSubtypeOfGeneric</string>
 // CHECK:   <key>issue_hash</key><string>3</string>
@@ -2709,7 +2709,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>genericSubtypeOfGeneric</string>
 // CHECK:   <key>issue_hash</key><string>5</string>
@@ -2819,7 +2819,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>genericSubtypeOfGenericReverse</string>
 // CHECK:   <key>issue_hash</key><string>3</string>
@@ -2963,7 +2963,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>genericSubtypeOfGenericReverse</string>
 // CHECK:   <key>issue_hash</key><string>5</string>
@@ -3107,7 +3107,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;MutableArray&lt;NSString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSMutableString *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>inferenceFromAPI</string>
 // CHECK:   <key>issue_hash</key><string>4</string>
@@ -3251,7 +3251,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSString *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>inferenceFromAPI2</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -3395,7 +3395,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSString *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>inferenceFromAPIWithLegacyTypes</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -3539,7 +3539,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;MutableArray&lt;NSString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSMutableString *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>inferenceFromAPIWithLegacyTypes2</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -3746,7 +3746,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;MutableArray&lt;NSString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSMutableString *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>inferenceFromAPIWithLegacyTypes3</string>
 // CHECK:   <key>issue_hash</key><string>3</string>
@@ -3890,7 +3890,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;MutableArray&lt;NSString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSMutableString *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>inferenceFromAPIWithBuggyTypes</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -4034,7 +4034,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSString *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>InferenceFromAPIWithBuggyTypes2</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -4178,7 +4178,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSString *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>InferenceFromAPIWithBuggyTypes3</string>
 // CHECK:   <key>issue_hash</key><string>3</string>
@@ -4385,7 +4385,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;MutableArray&lt;NSString *&gt; *&apos; to incompatible type &apos;MutableArray&lt;NSMutableString *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>InferenceFromAPIWithBuggyTypes4</string>
 // CHECK:   <key>issue_hash</key><string>3</string>
@@ -4529,7 +4529,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>workWithProperties</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -4673,7 +4673,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>workWithProperties</string>
 // CHECK:   <key>issue_hash</key><string>4</string>
@@ -4817,7 +4817,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>workWithProperties</string>
 // CHECK:   <key>issue_hash</key><string>6</string>
@@ -4961,7 +4961,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>workWithProperties</string>
 // CHECK:   <key>issue_hash</key><string>8</string>
@@ -5139,7 +5139,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSString *&apos; to incompatible type &apos;NSMutableString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>findMethodDeclInTrackedType</string>
 // CHECK:   <key>issue_hash</key><string>4</string>
@@ -5283,7 +5283,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSString *&apos; to incompatible type &apos;NSMutableString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>findMethodDeclInTrackedType2</string>
 // CHECK:   <key>issue_hash</key><string>3</string>
@@ -5393,7 +5393,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>testAnnotatedLiterals</string>
 // CHECK:   <key>issue_hash</key><string>3</string>
@@ -5537,7 +5537,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>trackedClassVariables</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -5681,7 +5681,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>trackedClassVariables</string>
 // CHECK:   <key>issue_hash</key><string>3</string>
@@ -5825,7 +5825,7 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:    <key>description</key><string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
 // CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>alpha.osx.cocoa.ObjCGenerics</string>
+// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>nestedCollections</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
