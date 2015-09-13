@@ -484,17 +484,11 @@ struct MatchableInfo {
 
   void initialize(const AsmMatcherInfo &Info,
                   SmallPtrSetImpl<Record*> &SingletonRegisters,
-                  int AsmVariantNo, std::string &RegisterPrefix);
+                  int AsmVariantNo, StringRef RegisterPrefix);
 
   /// validate - Return true if this matchable is a valid thing to match against
   /// and perform a bunch of validity checking.
   bool validate(StringRef CommentDelimiter, bool Hack) const;
-
-  /// extractSingletonRegisterForAsmOperand - Extract singleton register,
-  /// if present, from specified token.
-  void
-  extractSingletonRegisterForAsmOperand(unsigned i, const AsmMatcherInfo &Info,
-                                        std::string &RegisterPrefix);
 
   /// findAsmOperand - Find the AsmOperand with the specified name and
   /// suboperand index.
@@ -800,9 +794,41 @@ void MatchableInfo::formTwoOperandAlias(StringRef Constraint) {
   }
 }
 
+/// extractSingletonRegisterForAsmOperand - Extract singleton register,
+/// if present, from specified token.
+static void
+extractSingletonRegisterForAsmOperand(MatchableInfo::AsmOperand &Op,
+                                      const AsmMatcherInfo &Info,
+                                      StringRef RegisterPrefix) {
+  StringRef Tok = Op.Token;
+
+  // If this token is not an isolated token, i.e., it isn't separated from
+  // other tokens (e.g. with whitespace), don't interpret it as a register name.
+  if (!Op.IsIsolatedToken)
+    return;
+
+  if (RegisterPrefix.empty()) {
+    std::string LoweredTok = Tok.lower();
+    if (const CodeGenRegister *Reg = Info.Target.getRegisterByName(LoweredTok))
+      Op.SingletonReg = Reg->TheDef;
+    return;
+  }
+
+  if (!Tok.startswith(RegisterPrefix))
+    return;
+
+  StringRef RegName = Tok.substr(RegisterPrefix.size());
+  if (const CodeGenRegister *Reg = Info.Target.getRegisterByName(RegName))
+    Op.SingletonReg = Reg->TheDef;
+
+  // If there is no register prefix (i.e. "%" in "%eax"), then this may
+  // be some random non-register token, just ignore it.
+  return;
+}
+
 void MatchableInfo::initialize(const AsmMatcherInfo &Info,
                                SmallPtrSetImpl<Record*> &SingletonRegisters,
-                               int AsmVariantNo, std::string &RegisterPrefix) {
+                               int AsmVariantNo, StringRef RegisterPrefix) {
   AsmVariantID = AsmVariantNo;
   AsmString =
     CodeGenInstruction::FlattenAsmStringVariants(AsmString, AsmVariantNo);
@@ -810,16 +836,15 @@ void MatchableInfo::initialize(const AsmMatcherInfo &Info,
   tokenizeAsmString(Info);
 
   // Compute the require features.
-  std::vector<Record*> Predicates =TheDef->getValueAsListOfDefs("Predicates");
-  for (unsigned i = 0, e = Predicates.size(); i != e; ++i)
+  for (Record *Predicate : TheDef->getValueAsListOfDefs("Predicates"))
     if (const SubtargetFeatureInfo *Feature =
-            Info.getSubtargetFeature(Predicates[i]))
+            Info.getSubtargetFeature(Predicate))
       RequiredFeatures.push_back(Feature);
 
   // Collect singleton registers, if used.
-  for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
-    extractSingletonRegisterForAsmOperand(i, Info, RegisterPrefix);
-    if (Record *Reg = AsmOperands[i].SingletonReg)
+  for (MatchableInfo::AsmOperand &Op : AsmOperands) {
+    extractSingletonRegisterForAsmOperand(Op, Info, RegisterPrefix);
+    if (Record *Reg = Op.SingletonReg)
       SingletonRegisters.insert(Reg);
   }
 
@@ -987,38 +1012,6 @@ bool MatchableInfo::validate(StringRef CommentDelimiter, bool Hack) const {
   }
 
   return true;
-}
-
-/// extractSingletonRegisterForAsmOperand - Extract singleton register,
-/// if present, from specified token.
-void MatchableInfo::
-extractSingletonRegisterForAsmOperand(unsigned OperandNo,
-                                      const AsmMatcherInfo &Info,
-                                      std::string &RegisterPrefix) {
-  StringRef Tok = AsmOperands[OperandNo].Token;
-
-  // If this token is not an isolated token, i.e., it isn't separated from
-  // other tokens (e.g. with whitespace), don't interpret it as a register name.
-  if (!AsmOperands[OperandNo].IsIsolatedToken)
-    return;
-
-  if (RegisterPrefix.empty()) {
-    std::string LoweredTok = Tok.lower();
-    if (const CodeGenRegister *Reg = Info.Target.getRegisterByName(LoweredTok))
-      AsmOperands[OperandNo].SingletonReg = Reg->TheDef;
-    return;
-  }
-
-  if (!Tok.startswith(RegisterPrefix))
-    return;
-
-  StringRef RegName = Tok.substr(RegisterPrefix.size());
-  if (const CodeGenRegister *Reg = Info.Target.getRegisterByName(RegName))
-    AsmOperands[OperandNo].SingletonReg = Reg->TheDef;
-
-  // If there is no register prefix (i.e. "%" in "%eax"), then this may
-  // be some random non-register token, just ignore it.
-  return;
 }
 
 static std::string getEnumNameForToken(StringRef Str) {
