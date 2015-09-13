@@ -60,63 +60,6 @@ struct FunctionAttrs : public CallGraphSCCPass {
 
   bool runOnSCC(CallGraphSCC &SCC) override;
 
-  bool AddReadAttrs(const CallGraphSCC &SCC);
-  bool AddArgumentAttrs(const CallGraphSCC &SCC);
-  bool IsFunctionMallocLike(Function *F, SmallPtrSet<Function *, 8> &) const;
-  bool AddNoAliasAttrs(const CallGraphSCC &SCC);
-  bool ReturnsNonNull(Function *F, SmallPtrSet<Function *, 8> &,
-                      bool &Speculative) const;
-  bool AddNonNullAttrs(const CallGraphSCC &SCC);
-
-  // Utility methods used by inferPrototypeAttributes to add attributes
-  // and maintain annotation statistics.
-
-  void setDoesNotAccessMemory(Function &F) {
-    if (!F.doesNotAccessMemory()) {
-      F.setDoesNotAccessMemory();
-      ++NumAnnotated;
-    }
-  }
-
-  void setOnlyReadsMemory(Function &F) {
-    if (!F.onlyReadsMemory()) {
-      F.setOnlyReadsMemory();
-      ++NumAnnotated;
-    }
-  }
-
-  void setDoesNotThrow(Function &F) {
-    if (!F.doesNotThrow()) {
-      F.setDoesNotThrow();
-      ++NumAnnotated;
-    }
-  }
-
-  void setDoesNotCapture(Function &F, unsigned n) {
-    if (!F.doesNotCapture(n)) {
-      F.setDoesNotCapture(n);
-      ++NumAnnotated;
-    }
-  }
-
-  void setOnlyReadsMemory(Function &F, unsigned n) {
-    if (!F.onlyReadsMemory(n)) {
-      F.setOnlyReadsMemory(n);
-      ++NumAnnotated;
-    }
-  }
-
-  void setDoesNotAlias(Function &F, unsigned n) {
-    if (!F.doesNotAlias(n)) {
-      F.setDoesNotAlias(n);
-      ++NumAnnotated;
-    }
-  }
-
-  bool inferPrototypeAttributes(Function &F);
-
-  bool annotateLibraryCalls(const CallGraphSCC &SCC);
-
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<AssumptionCacheTracker>();
@@ -126,6 +69,16 @@ struct FunctionAttrs : public CallGraphSCCPass {
 
 private:
   TargetLibraryInfo *TLI;
+
+  bool AddReadAttrs(const CallGraphSCC &SCC);
+  bool AddArgumentAttrs(const CallGraphSCC &SCC);
+  bool IsFunctionMallocLike(Function *F, SmallPtrSet<Function *, 8> &) const;
+  bool AddNoAliasAttrs(const CallGraphSCC &SCC);
+  bool ReturnsNonNull(Function *F, SmallPtrSet<Function *, 8> &,
+                      bool &Speculative) const;
+  bool AddNonNullAttrs(const CallGraphSCC &SCC);
+  bool inferPrototypeAttributes(Function &F);
+  bool annotateLibraryCalls(const CallGraphSCC &SCC);
 };
 }
 
@@ -982,6 +935,48 @@ bool FunctionAttrs::AddNonNullAttrs(const CallGraphSCC &SCC) {
   }
 
   return MadeChange;
+}
+
+static void setDoesNotAccessMemory(Function &F) {
+  if (!F.doesNotAccessMemory()) {
+    F.setDoesNotAccessMemory();
+    ++NumAnnotated;
+  }
+}
+
+static void setOnlyReadsMemory(Function &F) {
+  if (!F.onlyReadsMemory()) {
+    F.setOnlyReadsMemory();
+    ++NumAnnotated;
+  }
+}
+
+static void setDoesNotThrow(Function &F) {
+  if (!F.doesNotThrow()) {
+    F.setDoesNotThrow();
+    ++NumAnnotated;
+  }
+}
+
+static void setDoesNotCapture(Function &F, unsigned n) {
+  if (!F.doesNotCapture(n)) {
+    F.setDoesNotCapture(n);
+    ++NumAnnotated;
+  }
+}
+
+static void setOnlyReadsMemory(Function &F, unsigned n) {
+  if (!F.onlyReadsMemory(n)) {
+    F.setOnlyReadsMemory(n);
+    ++NumAnnotated;
+  }
+}
+
+static void setDoesNotAlias(Function &F, unsigned n) {
+  if (!F.doesNotAlias(n)) {
+    F.setDoesNotAlias(n);
+    ++NumAnnotated;
+  }
 }
 
 /// Analyze the name and prototype of the given function and set any applicable
