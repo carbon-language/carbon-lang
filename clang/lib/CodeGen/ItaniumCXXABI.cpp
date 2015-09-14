@@ -3354,8 +3354,7 @@ static void emitConstructorDestructorAlias(CodeGenModule &CGM,
   llvm::PointerType *AliasType = Aliasee->getType();
 
   // Create the alias with no name.
-  auto *Alias = llvm::GlobalAlias::create(
-      AliasType->getElementType(), 0, Linkage, "", Aliasee, &CGM.getModule());
+  auto *Alias = llvm::GlobalAlias::create(Linkage, "", Aliasee);
 
   // Switch any previous uses to the alias.
   if (Entry) {

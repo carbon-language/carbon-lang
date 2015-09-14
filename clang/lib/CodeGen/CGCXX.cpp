@@ -151,8 +151,8 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     return false;
 
   // Derive the type for the alias.
-  llvm::PointerType *AliasType
-    = getTypes().GetFunctionType(AliasDecl)->getPointerTo();
+  llvm::Type *AliasValueType = getTypes().GetFunctionType(AliasDecl);
+  llvm::PointerType *AliasType = AliasValueType->getPointerTo();
 
   // Find the referent.  Some aliases might require a bitcast, in
   // which case the caller is responsible for ensuring the soundness
@@ -185,8 +185,8 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     return true;
 
   // Create the alias with no name.
-  auto *Alias = llvm::GlobalAlias::create(AliasType->getElementType(), 0,
-                                          Linkage, "", Aliasee, &getModule());
+  auto *Alias = llvm::GlobalAlias::create(AliasValueType, 0, Linkage, "",
+                                          Aliasee, &getModule());
 
   // Switch any previous uses to the alias.
   if (Entry) {
