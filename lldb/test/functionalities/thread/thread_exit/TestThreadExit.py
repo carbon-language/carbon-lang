@@ -13,14 +13,12 @@ class ThreadExitTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @skipUnlessDarwin
-    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @dsym_test
     def test_with_dsym(self):
         """Test thread exit handling."""
         self.buildDsym(dictionary=self.getBuildFlags())
         self.thread_exit_test()
 
-    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @expectedFailureWindows("llvm.org/pr24681")
     @dwarf_test
