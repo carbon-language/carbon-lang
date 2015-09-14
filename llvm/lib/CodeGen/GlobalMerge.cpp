@@ -441,13 +441,13 @@ bool GlobalMerge::doMerge(const SmallVectorImpl<GlobalVariable *> &Globals,
         M, MergedTy, isConst, GlobalValue::PrivateLinkage, MergedInit,
         "_MergedGlobals", nullptr, GlobalVariable::NotThreadLocal, AddrSpace);
 
-    for (ssize_t k = i, idx = 0; k != j; k = GlobalSet.find_next(k)) {
+    for (ssize_t k = i, idx = 0; k != j; k = GlobalSet.find_next(k), ++idx) {
       GlobalValue::LinkageTypes Linkage = Globals[k]->getLinkage();
       std::string Name = Globals[k]->getName();
 
       Constant *Idx[2] = {
         ConstantInt::get(Int32Ty, 0),
-        ConstantInt::get(Int32Ty, idx++)
+        ConstantInt::get(Int32Ty, idx),
       };
       Constant *GEP =
           ConstantExpr::getInBoundsGetElementPtr(MergedTy, MergedGV, Idx);
@@ -461,9 +461,7 @@ bool GlobalMerge::doMerge(const SmallVectorImpl<GlobalVariable *> &Globals,
       // MergedGlobals variable) may be dead stripped at link time.
       if (Linkage != GlobalValue::InternalLinkage ||
           !TM->getTargetTriple().isOSBinFormatMachO()) {
-        auto *PTy = cast<PointerType>(GEP->getType());
-        GlobalAlias::create(PTy->getElementType(), PTy->getAddressSpace(),
-                            Linkage, Name, GEP, &M);
+        GlobalAlias::create(Tys[idx], AddrSpace, Linkage, Name, GEP, &M);
       }
 
       NumMerged++;

@@ -585,8 +585,8 @@ static GlobalAlias *copyGlobalAliasProto(TypeMapTy &TypeMap, Module &DstM,
                                          const GlobalAlias *SGA) {
   // If there is no linkage to be performed or we're linking from the source,
   // bring over SGA.
-  auto *PTy = cast<PointerType>(TypeMap.get(SGA->getType()));
-  return GlobalAlias::create(PTy->getElementType(), PTy->getAddressSpace(),
+  auto *Ty = TypeMap.get(SGA->getValueType());
+  return GlobalAlias::create(Ty, SGA->getType()->getPointerAddressSpace(),
                              SGA->getLinkage(), SGA->getName(), &DstM);
 }
 

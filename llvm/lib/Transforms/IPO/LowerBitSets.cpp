@@ -537,7 +537,7 @@ void LowerBitSets::buildBitSetsFromGlobalVariables(
   const DataLayout &DL = M->getDataLayout();
   for (GlobalVariable *G : Globals) {
     GlobalInits.push_back(G->getInitializer());
-    uint64_t InitSize = DL.getTypeAllocSize(G->getInitializer()->getType());
+    uint64_t InitSize = DL.getTypeAllocSize(G->getValueType());
 
     // Compute the amount of padding required.
     uint64_t Padding = NextPowerOf2(InitSize - 1) - InitSize;
@@ -553,12 +553,12 @@ void LowerBitSets::buildBitSetsFromGlobalVariables(
   if (!GlobalInits.empty())
     GlobalInits.pop_back();
   Constant *NewInit = ConstantStruct::getAnon(M->getContext(), GlobalInits);
-  auto CombinedGlobal =
+  auto *CombinedGlobal =
       new GlobalVariable(*M, NewInit->getType(), /*isConstant=*/true,
                          GlobalValue::PrivateLinkage, NewInit);
 
-  const StructLayout *CombinedGlobalLayout =
-      DL.getStructLayout(cast<StructType>(NewInit->getType()));
+  StructType *NewTy = cast<StructType>(NewInit->getType());
+  const StructLayout *CombinedGlobalLayout = DL.getStructLayout(NewTy);
 
   // Compute the offsets of the original globals within the new global.
   DenseMap<GlobalObject *, uint64_t> GlobalLayout;
@@ -580,10 +580,10 @@ void LowerBitSets::buildBitSetsFromGlobalVariables(
     if (LinkerSubsectionsViaSymbols) {
       Globals[I]->replaceAllUsesWith(CombinedGlobalElemPtr);
     } else {
-      GlobalAlias *GAlias = GlobalAlias::create(
-          Globals[I]->getType()->getElementType(),
-          Globals[I]->getType()->getAddressSpace(), Globals[I]->getLinkage(),
-          "", CombinedGlobalElemPtr, M);
+      assert(Globals[I]->getType()->getAddressSpace() == 0);
+      GlobalAlias *GAlias = GlobalAlias::create(NewTy->getElementType(I * 2), 0,
+                                                Globals[I]->getLinkage(), "",
+                                                CombinedGlobalElemPtr, M);
       GAlias->setVisibility(Globals[I]->getVisibility());
       GAlias->takeName(Globals[I]);
       Globals[I]->replaceAllUsesWith(GAlias);
@@ -818,10 +818,10 @@ void LowerBitSets::buildBitSetsFromFunctions(ArrayRef<Metadata *> BitSets,
     if (LinkerSubsectionsViaSymbols || Functions[I]->isDeclarationForLinker()) {
       Functions[I]->replaceAllUsesWith(CombinedGlobalElemPtr);
     } else {
-      GlobalAlias *GAlias = GlobalAlias::create(
-          Functions[I]->getType()->getElementType(),
-          Functions[I]->getType()->getAddressSpace(),
-          Functions[I]->getLinkage(), "", CombinedGlobalElemPtr, M);
+      assert(Functions[I]->getType()->getAddressSpace() == 0);
+      GlobalAlias *GAlias = GlobalAlias::create(Functions[I]->getValueType(), 0,
+                                                Functions[I]->getLinkage(), "",
+                                                CombinedGlobalElemPtr, M);
       GAlias->setVisibility(Functions[I]->getVisibility());
       GAlias->takeName(Functions[I]);
       Functions[I]->replaceAllUsesWith(GAlias);
