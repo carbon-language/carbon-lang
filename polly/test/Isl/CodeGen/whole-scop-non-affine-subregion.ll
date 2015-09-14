@@ -1,5 +1,8 @@
-; RUN: opt -polly-detect-unprofitable -polly-no-early-exit -polly-codegen %loadPolly < %s
-;
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit \
+; RUN: -polly-codegen -S < %s | FileCheck %s
+
+; CHECK: polly.start
+
 ;    void f(int *A) {
 ;      if (*A > 42)
 ;        *A = *A + 1;
