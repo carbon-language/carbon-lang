@@ -3769,14 +3769,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
           Triple.getOS() == llvm::Triple::Solaris)
         CmdArgs.push_back("-gdwarf-2");
       SplitDwarfArg = nullptr;
-    } else if (A->getOption().matches(options::OPT_gdwarf_2))
-      CmdArgs.push_back("-gdwarf-2");
-    else if (A->getOption().matches(options::OPT_gdwarf_3))
-      CmdArgs.push_back("-gdwarf-3");
-    else if (A->getOption().matches(options::OPT_gdwarf_4))
-      CmdArgs.push_back("-gdwarf-4");
-    else if (!A->getOption().matches(options::OPT_g0) &&
-             !A->getOption().matches(options::OPT_ggdb0)) {
+    } else if (A->getOption().matches(options::OPT_gdwarf_2) ||
+               A->getOption().matches(options::OPT_gdwarf_3) ||
+               A->getOption().matches(options::OPT_gdwarf_4)) {
+      A->render(Args, CmdArgs);
+    } else if (!A->getOption().matches(options::OPT_g0) &&
+               !A->getOption().matches(options::OPT_ggdb0)) {
       // Default is dwarf-2 for Darwin, OpenBSD, FreeBSD and Solaris.
       const llvm::Triple &Triple = getToolChain().getTriple();
       if (Triple.isOSDarwin() || Triple.getOS() == llvm::Triple::OpenBSD ||
@@ -5550,12 +5548,9 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
       if (!A->getOption().matches(options::OPT_g0))
         CmdArgs.push_back("-g");
 
-    if (Args.hasArg(options::OPT_gdwarf_2))
-      CmdArgs.push_back("-gdwarf-2");
-    if (Args.hasArg(options::OPT_gdwarf_3))
-      CmdArgs.push_back("-gdwarf-3");
-    if (Args.hasArg(options::OPT_gdwarf_4))
-      CmdArgs.push_back("-gdwarf-4");
+    if (Arg *A = Args.getLastArg(options::OPT_gdwarf_2, options::OPT_gdwarf_3,
+                                 options::OPT_gdwarf_4))
+      A->render(Args, CmdArgs);
 
     // Add the -fdebug-compilation-dir flag if needed.
     addDebugCompDirArg(Args, CmdArgs);

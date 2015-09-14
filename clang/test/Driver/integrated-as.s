@@ -26,8 +26,9 @@
 // XA_INCLUDE2: cc1as
 // XA_INCLUDE2: "-Ifoo_dir"
 
-// RUN: %clang -### -c -integrated-as %s -gdwarf-2 2>&1 | FileCheck --check-prefix=DWARF2 %s
+// RUN: %clang -### -c -integrated-as %s -gdwarf-4 -gdwarf-2 2>&1 | FileCheck --check-prefix=DWARF2 %s
 // DWARF2: "-g" "-gdwarf-2"
+// DWARF2-NOT: "-gdwarf-4"
 
 // RUN: %clang -### -c -integrated-as %s -gdwarf-3 2>&1 | FileCheck --check-prefix=DWARF3 %s
 // DWARF3: "-g" "-gdwarf-3"
