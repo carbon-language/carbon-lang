@@ -12,7 +12,6 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Target/RegisterContext.h"
-#include "RegisterContextPOSIX.h"
 #include "RegisterInfoInterface.h"
 
 class RegisterContextLinux_arm64

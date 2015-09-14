@@ -10,6 +10,7 @@
 #ifndef liblldb_RegisterContextPOSIXProcessMonitor_arm_H_
 #define liblldb_RegisterContextPOSIXProcessMonitor_arm_H_
 
+#include "RegisterContextPOSIX.h"
 #include "Plugins/Process/Utility/RegisterContextPOSIX_arm.h"
 
 class RegisterContextPOSIXProcessMonitor_arm:

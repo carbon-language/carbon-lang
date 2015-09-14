@@ -10,6 +10,7 @@
 #ifndef liblldb_RegisterContextPOSIXProcessMonitor_powerpc_H_
 #define liblldb_RegisterContextPOSIXProcessMonitor_powerpc_H_
 
+#include "RegisterContextPOSIX.h"
 #include "Plugins/Process/Utility/RegisterContextPOSIX_powerpc.h"
 
 class RegisterContextPOSIXProcessMonitor_powerpc:

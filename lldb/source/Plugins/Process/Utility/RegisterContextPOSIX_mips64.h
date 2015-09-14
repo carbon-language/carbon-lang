@@ -11,7 +11,8 @@
 #define liblldb_RegisterContextPOSIX_mips64_H_
 
 #include "lldb/Core/Log.h"
-#include "RegisterContextPOSIX.h"
+#include "lldb/Target/RegisterContext.h"
+#include "RegisterInfoInterface.h"
 #include "RegisterContext_mips.h"
 #include "lldb-mips-freebsd-register-enums.h"
 

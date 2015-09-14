@@ -11,7 +11,8 @@
 #define liblldb_RegisterContextPOSIX_powerpc_H_
 
 #include "lldb/Core/Log.h"
-#include "RegisterContextPOSIX.h"
+#include "lldb/Target/RegisterContext.h"
+#include "RegisterInfoInterface.h"
 #include "RegisterContext_powerpc.h"
 
 class ProcessMonitor;

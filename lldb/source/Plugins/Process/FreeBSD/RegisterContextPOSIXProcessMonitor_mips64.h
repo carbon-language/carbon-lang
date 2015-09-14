@@ -10,6 +10,7 @@
 #ifndef liblldb_RegisterContextPOSIXProcessMonitor_mips64_H_
 #define liblldb_RegisterContextPOSIXProcessMonitor_mips64_H_
 
+#include "RegisterContextPOSIX.h"
 #include "Plugins/Process/Utility/RegisterContextPOSIX_mips64.h"
 
 class RegisterContextPOSIXProcessMonitor_mips64:

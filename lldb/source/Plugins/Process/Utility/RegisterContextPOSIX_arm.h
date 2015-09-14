@@ -11,8 +11,9 @@
 #define liblldb_RegisterContextPOSIX_arm_H_
 
 #include "lldb/Core/Log.h"
+#include "lldb/Target/RegisterContext.h"
+#include "RegisterInfoInterface.h"
 #include "lldb-arm-register-enums.h"
-#include "RegisterContextPOSIX.h"
 
 class ProcessMonitor;
 

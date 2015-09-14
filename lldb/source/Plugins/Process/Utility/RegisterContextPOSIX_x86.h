@@ -11,9 +11,10 @@
 #define liblldb_RegisterContextPOSIX_x86_H_
 
 #include "lldb/Core/Log.h"
-#include "lldb-x86-register-enums.h"
-#include "RegisterContextPOSIX.h"
+#include "lldb/Target/RegisterContext.h"
+#include "RegisterInfoInterface.h"
 #include "RegisterContext_x86.h"
+#include "lldb-x86-register-enums.h"
 
 class ProcessMonitor;
 

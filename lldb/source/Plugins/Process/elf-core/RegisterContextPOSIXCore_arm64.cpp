@@ -10,7 +10,6 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Target/Thread.h"
-#include "Plugins/Process/Utility/RegisterContextPOSIX.h"
 #include "RegisterContextPOSIXCore_arm64.h"
 
 using namespace lldb_private;

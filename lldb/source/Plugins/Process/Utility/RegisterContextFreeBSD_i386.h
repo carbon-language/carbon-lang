@@ -10,7 +10,7 @@
 #ifndef liblldb_RegisterContextFreeBSD_i386_H_
 #define liblldb_RegisterContextFreeBSD_i386_H_
 
-#include "RegisterContextPOSIX.h"
+#include "RegisterInfoInterface.h"
 
 class RegisterContextFreeBSD_i386
   : public lldb_private::RegisterInfoInterface

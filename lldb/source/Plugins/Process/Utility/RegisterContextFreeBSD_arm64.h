@@ -10,7 +10,7 @@
 #ifndef liblldb_RegisterContextFreeBSD_arm64_H_
 #define liblldb_RegisterContextFreeBSD_arm64_H_
 
-#include "RegisterContextPOSIX.h"
+#include "RegisterInfoInterface.h"
 
 class RegisterContextFreeBSD_arm64:
     public lldb_private::RegisterInfoInterface
