@@ -10,14 +10,12 @@ class AssertingInferiorTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @skipUnlessDarwin
-    @unittest2.expectedFailure("rdar://15367233")
     def test_inferior_asserting_dsym(self):
         """Test that lldb reliably catches the inferior asserting (command)."""
         self.buildDsym()
         self.inferior_asserting()
 
     @expectedFailurei386("llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly")
-    @expectedFailureDarwin("rdar://15367233")
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
     def test_inferior_asserting_dwarf(self):
         """Test that lldb reliably catches the inferior asserting (command)."""
@@ -52,14 +50,12 @@ class AssertingInferiorTestCase(TestBase):
         self.inferior_asserting_python()
 
     @skipUnlessDarwin
-    @unittest2.expectedFailure("rdar://15367233")
     def test_inferior_asserting_expr_dsym(self):
         """Test that the lldb expression interpreter can read from the inferior after asserting (command)."""
         self.buildDsym()
         self.inferior_asserting_expr()
 
     @expectedFailurei386('llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly')
-    @unittest2.expectedFailure("rdar://15367233")
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
     def test_inferior_asserting_expr_dwarf(self):
         """Test that the lldb expression interpreter can read from the inferior after asserting (command)."""
@@ -67,14 +63,12 @@ class AssertingInferiorTestCase(TestBase):
         self.inferior_asserting_expr()
 
     @skipUnlessDarwin
-    @unittest2.expectedFailure("rdar://15367233")
     def test_inferior_asserting_step_dsym(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""
         self.buildDsym()
         self.inferior_asserting_step()
 
     @expectedFailurei386("llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly")
-    @expectedFailureDarwin("rdar://15367233")
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
     def test_inferior_asserting_step_dwarf(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""
