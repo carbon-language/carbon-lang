@@ -112,8 +112,7 @@ public:
   /// @param IsPHI          Is this a PHI node specific array info object.
   /// @param S              The scop this array object belongs to.
   ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *IslCtx,
-                const SmallVector<const SCEV *, 4> &DimensionSizes, bool IsPHI,
-                Scop *S);
+                ArrayRef<const SCEV *> DimensionSizes, bool IsPHI, Scop *S);
 
   /// @brief Destructor to free the isl id of the base pointer.
   ~ScopArrayInfo();
@@ -251,11 +250,12 @@ public:
 
   explicit IRAccess(TypeKind Type, Value *BaseAddress, const SCEV *Offset,
                     unsigned elemBytes, bool Affine,
-                    SmallVector<const SCEV *, 4> Subscripts,
-                    SmallVector<const SCEV *, 4> Sizes, Value *AccessValue)
+                    ArrayRef<const SCEV *> Subscripts,
+                    ArrayRef<const SCEV *> Sizes, Value *AccessValue)
       : BaseAddress(BaseAddress), AccessValue(AccessValue), Offset(Offset),
         ElemBytes(elemBytes), Type(Type), IsAffine(Affine), IsPHI(false),
-        Subscripts(Subscripts), Sizes(Sizes) {}
+        Subscripts(Subscripts.begin(), Subscripts.end()),
+        Sizes(Sizes.begin(), Sizes.end()) {}
 
   enum TypeKind getType() const { return Type; }
 
@@ -1291,10 +1291,10 @@ public:
   /// @param ElementType The type of the elements stored in this array.
   /// @param IsPHI       Is this ScopArrayInfo object modeling special
   ///                    PHI node storage.
-  const ScopArrayInfo *
-  getOrCreateScopArrayInfo(Value *BasePtr, Type *ElementType,
-                           const SmallVector<const SCEV *, 4> &Sizes,
-                           bool IsPHI = false);
+  const ScopArrayInfo *getOrCreateScopArrayInfo(Value *BasePtr,
+                                                Type *ElementType,
+                                                ArrayRef<const SCEV *> Sizes,
+                                                bool IsPHI = false);
 
   /// @brief Return the cached ScopArrayInfo object for @p BasePtr.
   ///

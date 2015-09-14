@@ -160,10 +160,11 @@ static const ScopArrayInfo *identifyBasePtrOriginSAI(Scop *S, Value *BasePtr) {
 }
 
 ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
-                             const SmallVector<const SCEV *, 4> &DimensionSizes,
-                             bool IsPHI, Scop *S)
+                             ArrayRef<const SCEV *> DimensionSizes, bool IsPHI,
+                             Scop *S)
     : BasePtr(BasePtr), ElementType(ElementType),
-      DimensionSizes(DimensionSizes), IsPHI(IsPHI) {
+      DimensionSizes(DimensionSizes.begin(), DimensionSizes.end()),
+      IsPHI(IsPHI) {
   std::string BasePtrName =
       getIslCompatibleName("MemRef_", BasePtr, IsPHI ? "__phi" : "");
   Id = isl_id_alloc(Ctx, BasePtrName.c_str(), this);
@@ -2155,8 +2156,7 @@ Scop::~Scop() {
 
 const ScopArrayInfo *
 Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
-                               const SmallVector<const SCEV *, 4> &Sizes,
-                               bool IsPHI) {
+                               ArrayRef<const SCEV *> Sizes, bool IsPHI) {
   auto &SAI = ScopArrayInfoMap[std::make_pair(BasePtr, IsPHI)];
   if (!SAI)
     SAI.reset(new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes, IsPHI,
