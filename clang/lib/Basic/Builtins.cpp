@@ -44,7 +44,7 @@ Builtin::Context::Context() {
 
 void Builtin::Context::initializeTarget(const TargetInfo &Target) {
   assert(NumTSRecords == 0 && "Already initialized target?");
-  Target.getTargetBuiltins(TSRecords, NumTSRecords);  
+  Target.getTargetBuiltins(TSRecords, NumTSRecords);
 }
 
 bool Builtin::Context::builtinIsSupported(const Builtin::Info &BuiltinInfo,
@@ -52,7 +52,7 @@ bool Builtin::Context::builtinIsSupported(const Builtin::Info &BuiltinInfo,
   bool BuiltinsUnsupported = LangOpts.NoBuiltin &&
                              strchr(BuiltinInfo.Attributes, 'f');
   bool MathBuiltinsUnsupported =
-    LangOpts.NoMathBuiltin && BuiltinInfo.HeaderName &&      
+    LangOpts.NoMathBuiltin && BuiltinInfo.HeaderName &&
     llvm::StringRef(BuiltinInfo.HeaderName).equals("math.h");
   bool GnuModeUnsupported = !LangOpts.GNUMode && (BuiltinInfo.Langs & GNU_LANG);
   bool MSModeUnsupported =
