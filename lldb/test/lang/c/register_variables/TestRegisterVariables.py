@@ -11,7 +11,8 @@ class RegisterVariableTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
-    @expectedFailureDarwin("llvm.org/pr20266")
+    @expectedFailureAll(
+        oslist=['macosx'], compiler='clang', compiler_version=['<', '7.0.0'])
     def test_with_dsym_and_run_command(self):
         """Test expressions on register values."""
         self.buildDsym()

@@ -15,14 +15,12 @@ class RaiseTestCase(TestBase):
 
     @skipUnlessDarwin
     @dsym_test
-    @expectedFailureDarwin("llvm.org/pr23610") # process doesn't stop at a breakpoint on the third launch
     def test_sigstop_with_dsym(self):
         self.buildDsym()
         self.signal_test('SIGSTOP', False)
         # passing of SIGSTOP is not correctly handled, so not testing that scenario: https://llvm.org/bugs/show_bug.cgi?id=23574
 
     @dwarf_test
-    @expectedFailureDarwin("llvm.org/pr23610") # process doesn't stop at a breakpoint on the third launch
     def test_sigstop_with_dwarf(self):
         self.buildDwarf()
         self.signal_test('SIGSTOP', False)

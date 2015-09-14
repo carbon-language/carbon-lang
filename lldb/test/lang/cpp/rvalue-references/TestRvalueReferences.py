@@ -11,7 +11,6 @@ class RvalueReferencesTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
     
     @skipUnlessDarwin
-    @expectedFailureClang("rdar://problem/11479676")
     @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test that rvalues are supported in the C++ expression parser"""
