@@ -30,9 +30,10 @@ if(CYGWIN OR NOT LLVM_ENABLE_PIC)
   set(LLVM_TOOL_LLVM_LTO_BUILD Off)
 endif()
 
-# Add LTO before clang, ExternalProject requires targets specified in DEPENDS
-# to exist before the call to ExternalProject_Add
+# Add LTO and llvm-ar before clang, ExternalProject requires targets specified
+# in DEPENDS to exist before the call to ExternalProject_Add.
 add_llvm_tool_subdirectory(lto)
+add_llvm_tool_subdirectory(llvm-ar)
 
 # Projects supported via LLVM_EXTERNAL_*_SOURCE_DIR need to be explicitly
 # specified.
