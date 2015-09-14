@@ -399,9 +399,8 @@ void LowerBitSets::allocateByteArrays() {
     if (LinkerSubsectionsViaSymbols) {
       BAI->ByteArray->replaceAllUsesWith(GEP);
     } else {
-      GlobalAlias *Alias =
-          GlobalAlias::create(PointerType::getUnqual(Int8Ty),
-                              GlobalValue::PrivateLinkage, "bits", GEP, M);
+      GlobalAlias *Alias = GlobalAlias::create(
+          Int8Ty, 0, GlobalValue::PrivateLinkage, "bits", GEP, M);
       BAI->ByteArray->replaceAllUsesWith(Alias);
     }
     BAI->ByteArray->eraseFromParent();
@@ -443,7 +442,7 @@ Value *LowerBitSets::createBitSetTest(IRBuilder<> &B, BitSetInfo &BSI,
       // Each use of the byte array uses a different alias. This makes the
       // backend less likely to reuse previously computed byte array addresses,
       // improving the security of the CFI mechanism based on this pass.
-      ByteArray = GlobalAlias::create(BAI->ByteArray->getType(),
+      ByteArray = GlobalAlias::create(BAI->ByteArray->getValueType(), 0,
                                       GlobalValue::PrivateLinkage, "bits_use",
                                       ByteArray, M);
     }
@@ -581,9 +580,10 @@ void LowerBitSets::buildBitSetsFromGlobalVariables(
     if (LinkerSubsectionsViaSymbols) {
       Globals[I]->replaceAllUsesWith(CombinedGlobalElemPtr);
     } else {
-      GlobalAlias *GAlias =
-          GlobalAlias::create(Globals[I]->getType(), Globals[I]->getLinkage(),
-                              "", CombinedGlobalElemPtr, M);
+      GlobalAlias *GAlias = GlobalAlias::create(
+          Globals[I]->getType()->getElementType(),
+          Globals[I]->getType()->getAddressSpace(), Globals[I]->getLinkage(),
+          "", CombinedGlobalElemPtr, M);
       GAlias->setVisibility(Globals[I]->getVisibility());
       GAlias->takeName(Globals[I]);
       Globals[I]->replaceAllUsesWith(GAlias);
@@ -818,9 +818,10 @@ void LowerBitSets::buildBitSetsFromFunctions(ArrayRef<Metadata *> BitSets,
     if (LinkerSubsectionsViaSymbols || Functions[I]->isDeclarationForLinker()) {
       Functions[I]->replaceAllUsesWith(CombinedGlobalElemPtr);
     } else {
-      GlobalAlias *GAlias = GlobalAlias::create(Functions[I]->getType(),
-                                                Functions[I]->getLinkage(), "",
-                                                CombinedGlobalElemPtr, M);
+      GlobalAlias *GAlias = GlobalAlias::create(
+          Functions[I]->getType()->getElementType(),
+          Functions[I]->getType()->getAddressSpace(),
+          Functions[I]->getLinkage(), "", CombinedGlobalElemPtr, M);
       GAlias->setVisibility(Functions[I]->getVisibility());
       GAlias->takeName(Functions[I]);
       Functions[I]->replaceAllUsesWith(GAlias);

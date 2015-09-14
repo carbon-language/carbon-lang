@@ -348,7 +348,7 @@ TEST(ConstantsTest, GEPReplaceWithConstant) {
   std::unique_ptr<Module> M(new Module("MyModule", Context));
 
   Type *IntTy = Type::getInt32Ty(Context);
-  auto *PtrTy = PointerType::get(IntTy, 0);
+  Type *PtrTy = PointerType::get(IntTy, 0);
   auto *C1 = ConstantInt::get(IntTy, 1);
   auto *Placeholder = new GlobalVariable(
       *M, IntTy, false, GlobalValue::ExternalWeakLinkage, nullptr);
@@ -361,7 +361,7 @@ TEST(ConstantsTest, GEPReplaceWithConstant) {
 
   auto *Global = new GlobalVariable(*M, PtrTy, false,
                                     GlobalValue::ExternalLinkage, nullptr);
-  auto *Alias = GlobalAlias::create(PtrTy, GlobalValue::ExternalLinkage,
+  auto *Alias = GlobalAlias::create(IntTy, 0, GlobalValue::ExternalLinkage,
                                     "alias", Global, M.get());
   Placeholder->replaceAllUsesWith(Alias);
   ASSERT_EQ(GEP, Ref->getInitializer());
