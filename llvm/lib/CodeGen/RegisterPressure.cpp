@@ -252,12 +252,7 @@ void RegPressureTracker::closeTop() {
   assert(P.LiveInRegs.empty() && "inconsistent max pressure result");
   P.LiveInRegs.reserve(LiveRegs.PhysRegs.size() + LiveRegs.VirtRegs.size());
   P.LiveInRegs.append(LiveRegs.PhysRegs.begin(), LiveRegs.PhysRegs.end());
-  for (SparseSet<unsigned>::const_iterator I =
-         LiveRegs.VirtRegs.begin(), E = LiveRegs.VirtRegs.end(); I != E; ++I)
-    P.LiveInRegs.push_back(*I);
-  std::sort(P.LiveInRegs.begin(), P.LiveInRegs.end());
-  P.LiveInRegs.erase(std::unique(P.LiveInRegs.begin(), P.LiveInRegs.end()),
-                     P.LiveInRegs.end());
+  P.LiveInRegs.append(LiveRegs.VirtRegs.begin(), LiveRegs.VirtRegs.end());
 }
 
 /// Set the boundary for the bottom of the region and summarize live outs.
@@ -270,12 +265,7 @@ void RegPressureTracker::closeBottom() {
   assert(P.LiveOutRegs.empty() && "inconsistent max pressure result");
   P.LiveOutRegs.reserve(LiveRegs.PhysRegs.size() + LiveRegs.VirtRegs.size());
   P.LiveOutRegs.append(LiveRegs.PhysRegs.begin(), LiveRegs.PhysRegs.end());
-  for (SparseSet<unsigned>::const_iterator I =
-         LiveRegs.VirtRegs.begin(), E = LiveRegs.VirtRegs.end(); I != E; ++I)
-    P.LiveOutRegs.push_back(*I);
-  std::sort(P.LiveOutRegs.begin(), P.LiveOutRegs.end());
-  P.LiveOutRegs.erase(std::unique(P.LiveOutRegs.begin(), P.LiveOutRegs.end()),
-                      P.LiveOutRegs.end());
+  P.LiveOutRegs.append(LiveRegs.VirtRegs.begin(), LiveRegs.VirtRegs.end());
 }
 
 /// Finalize the region boundaries and record live ins and live outs.
