@@ -16,8 +16,8 @@ class ConstVariableTestCase(TestBase):
         self.buildDsym()
         self.const_variable()
 
-    @expectedFailureAll(oslist=["linux"], compiler="clang")
-    @expectedFailureAll(oslist=["linux"], compiler="icc")
+    @expectedFailureAll(oslist=["freebsd", "linux"], compiler="clang")
+    @expectedFailureAll(oslist=["freebsd", "linux"], compiler="icc")
     @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     @expectedFailureWindows("llvm.org/pr24490: We shouldn't be using platform-specific names like `getpid` in tests")
     @dwarf_test
