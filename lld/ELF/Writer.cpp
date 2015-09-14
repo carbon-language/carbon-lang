@@ -704,12 +704,14 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     uintX_t Align = Sec->getAlign();
     uintX_t Size = Sec->getSize();
     if (Sec->getFlags() & SHF_ALLOC) {
+      VA = RoundUpToAlignment(VA, Align);
       Sec->setVA(VA);
-      VA += RoundUpToAlignment(Size, Align);
+      VA += Size;
     }
+    FileOff = RoundUpToAlignment(FileOff, Align);
     Sec->setFileOffset(FileOff);
     if (Sec->getType() != SHT_NOBITS)
-      FileOff += RoundUpToAlignment(Size, Align);
+      FileOff += Size;
   }
 
   // Add a PHDR for the dynamic table.

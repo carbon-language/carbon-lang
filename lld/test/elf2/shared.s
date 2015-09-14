@@ -1,9 +1,22 @@
 // RUN: llvm-mc -filetype=obj -triple=i686-unknown-linux %s -o %t.o
 // RUN: llvm-mc -filetype=obj -triple=i686-unknown-linux %p/Inputs/shared.s -o %t2.o
 // RUN: lld -flavor gnu2 -shared %t2.o -o %t2.so
+// RUN: llvm-readobj -s %t2.so | FileCheck --check-prefix=SO %s
 // RUN: lld -flavor gnu2 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -rpath foo -rpath bar %t.o %t2.so -o %t
 // RUN: llvm-readobj --program-headers --dynamic-table -t -s -dyn-symbols -section-data %t | FileCheck %s
 // REQUIRES: x86
+
+// Make sure .symtab is properly aligned.
+// SO:      Name: .symtab
+// SO-NEXT: Type: SHT_SYMTAB
+// SO-NEXT: Flags [
+// SO-NEXT: ]
+// SO-NEXT: Address:
+// SO-NEXT: Offset: 0x300C
+// SO-NEXT: Size:
+// SO-NEXT: Link:
+// SO-NEXT: Info:
+// SO-NEXT: AddressAlignment: 4
 
 // CHECK:        Name: .interp
 // CHECK-NEXT:   Type: SHT_PROGBITS
