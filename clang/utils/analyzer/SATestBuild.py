@@ -52,7 +52,7 @@ import shutil
 import time
 import plistlib
 import argparse
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call, check_output, CalledProcessError
 
 #------------------------------------------------------------------------------
 # Helper functions.
@@ -255,6 +255,15 @@ def isValidSingleInputFile(FileName):
         return True
     return False
 
+# Get the path to the SDK for the given SDK name. Returns None if
+# the path cannot be determined.
+def getSDKPath(SDKName):
+    if which("xcrun") is None:
+        return None
+
+    Cmd = "xcrun --sdk " + SDKName + " --show-sdk-path"
+    return check_output(Cmd, shell=True).rstrip()
+
 # Run analysis on a set of preprocessed files.
 def runAnalyzePreprocessed(Dir, SBOutputDir, Mode):
     if os.path.exists(os.path.join(Dir, BuildScript)):
@@ -262,7 +271,15 @@ def runAnalyzePreprocessed(Dir, SBOutputDir, Mode):
                BuildScript
         raise Exception()
 
-    CmdPrefix = Clang + " -cc1 -analyze -analyzer-output=plist -w "
+    CmdPrefix = Clang + " -cc1 "
+
+    # For now, we assume the preprocessed files should be analyzed
+    # with the OS X SDK.
+    SDKPath = getSDKPath("macosx")
+    if SDKPath is not None:
+      CmdPrefix += "-isysroot " + SDKPath + " "
+
+    CmdPrefix += "-analyze -analyzer-output=plist -w "
     CmdPrefix += "-analyzer-checker=" + Checkers +" -fcxx-exceptions -fblocks "
 
     if (Mode == 2) :
