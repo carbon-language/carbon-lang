@@ -26,7 +26,7 @@ namespace EmitInlineMethods {
   };
 }
 
-// CHECK-DAG: define internal i32 @_ZN1SIiE1gEv.alwaysinline() #[[ALWAYS_INLINE:.*]] align
+// CHECK-DAG: define internal {{.*}}i32 @_ZN1SIiE1gEv.alwaysinline() #[[ALWAYS_INLINE:.*]] align
 int a = S<int>::g();
 
 int b = h();
