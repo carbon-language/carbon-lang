@@ -173,3 +173,34 @@ namespace test3 {
     // invoke void @_ZN5test31BD1Ev(
   }
 }
+
+namespace test4 {
+  struct A { A(unsigned i); ~A(); };
+  void test() {
+    A v[2][3] = { { A(0), A(1), A(2) }, { A(3), A(4), A(5) } };
+  }
+}
+// CHECK-LABEL: define void @_ZN5test44testEv()
+// CHECK:       [[ARRAY:%.*]] = alloca [2 x [3 x [[A:%.*]]]], align
+// CHECK:       [[A0:%.*]] = getelementptr inbounds [2 x [3 x [[A]]]], [2 x [3 x [[A]]]]* [[ARRAY]], i64 0, i64 0
+// CHECK-NEXT:  store [3 x [[A]]]* [[A0]],
+// CHECK-NEXT:  [[A00:%.*]] = getelementptr inbounds [3 x [[A]]], [3 x [[A]]]* [[A0]], i64 0, i64 0
+// CHECK-NEXT:  store [[A]]* [[A00]],
+// CHECK-NEXT:  invoke void @_ZN5test41AC1Ej([[A]]* [[A00]], i32 0)
+// CHECK:       [[A01:%.*]] = getelementptr inbounds [[A]], [[A]]* [[A00]], i64 1
+// CHECK-NEXT:  store [[A]]* [[A01]],
+// CHECK-NEXT:  invoke void @_ZN5test41AC1Ej([[A]]* [[A01]], i32 1)
+// CHECK:       [[A02:%.*]] = getelementptr inbounds [[A]], [[A]]* [[A01]], i64 1
+// CHECK-NEXT:  store [[A]]* [[A02]],
+// CHECK-NEXT:  invoke void @_ZN5test41AC1Ej([[A]]* [[A02]], i32 2)
+// CHECK:       [[A1:%.*]] = getelementptr inbounds [3 x [[A]]], [3 x [[A]]]* [[A0]], i64 1
+// CHECK-NEXT:  store [3 x [[A]]]* [[A1]],
+// CHECK-NEXT:  [[A10:%.*]] = getelementptr inbounds [3 x [[A]]], [3 x [[A]]]* [[A1]], i64 0, i64 0
+// CHECK-NEXT:  store [[A]]* [[A10]],
+// CHECK-NEXT:  invoke void @_ZN5test41AC1Ej([[A]]* [[A10]], i32 3)
+// CHECK:       [[A11:%.*]] = getelementptr inbounds [[A]], [[A]]* [[A10]], i64 1
+// CHECK-NEXT:  store [[A]]* [[A11]],
+// CHECK-NEXT:  invoke void @_ZN5test41AC1Ej([[A]]* [[A11]], i32 4)
+// CHECK:       [[A12:%.*]] = getelementptr inbounds [[A]], [[A]]* [[A11]], i64 1
+// CHECK-NEXT:  store [[A]]* [[A12]],
+// CHECK-NEXT:  invoke void @_ZN5test41AC1Ej([[A]]* [[A12]], i32 5)

@@ -1535,9 +1535,9 @@ static void emitPartialArrayDestroy(CodeGenFunction &CGF,
   }
 
   if (arrayDepth) {
-    llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, arrayDepth+1);
+    llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, 0);
 
-    SmallVector<llvm::Value*,4> gepIndices(arrayDepth, zero);
+    SmallVector<llvm::Value*,4> gepIndices(arrayDepth+1, zero);
     begin = CGF.Builder.CreateInBoundsGEP(begin, gepIndices, "pad.arraybegin");
     end = CGF.Builder.CreateInBoundsGEP(end, gepIndices, "pad.arrayend");
   }
