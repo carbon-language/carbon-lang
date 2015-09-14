@@ -1,11 +1,6 @@
 ; RUN: opt %loadPolly -polly-codegen -polly-no-early-exit \
 ; RUN:     -polly-detect-unprofitable -S < %s | FileCheck %s
 ;
-; TODO: The new domain generation cannot handle modulo domain constraints,
-;       hence modulo handling has been disabled completely. Once this is
-;       resolved this test should work again.
-; XFAIL: *
-;
 ; This will just check that we generate valid code here.
 ;
 ; CHECK: polly.start:

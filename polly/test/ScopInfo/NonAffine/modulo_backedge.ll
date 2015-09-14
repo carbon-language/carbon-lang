@@ -1,9 +1,7 @@
 ; RUN: opt %loadPolly -polly-scops -polly-detect-unprofitable -analyze < %s | FileCheck %s
 ;
-; TODO: The new domain generation cannot handle modulo domain constraints,
-;       hence modulo handling has been disabled completely. Once this is
-;       resolved this test should work again.
-; CHECK-NOT: Access
+; CHECK: Domain :=
+; CHECK:   { Stmt_for_body[i0] : i0 <= 6 and i0 >= 0 };
 ;
 ;    void foo(float *A) {
 ;      for (long i = 1;; i++) {
