@@ -6962,9 +6962,9 @@ void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     if (getToolChain().getDriver().CCCIsCXX())
       getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
     CmdArgs.push_back("-lgcc_s");
+    CmdArgs.push_back("-lc");
     if (!Args.hasArg(options::OPT_shared)) {
       CmdArgs.push_back("-lgcc");
-      CmdArgs.push_back("-lc");
       CmdArgs.push_back("-lm");
     }
   }

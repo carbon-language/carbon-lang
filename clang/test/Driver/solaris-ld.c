@@ -14,3 +14,20 @@
 // CHECK: "{{.*}}/usr/gcc/4.8/lib/gcc/sparc-sun-solaris2.11/4.8.2{{/|\\\\}}crtbegin.o"
 // CHECK: "{{.*}}/usr/gcc/4.8/lib/gcc/sparc-sun-solaris2.11/4.8.2{{/|\\\\}}crtend.o"
 // CHECK: "{{.*}}/usr/lib/crtn.o"
+// CHECK "-lc"
+// CHECK "-lgcc_s"
+// CHECK "-lgcc"
+// CHECK "-lm"
+
+// Check the right -l flags are present with -shared
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o -shared 2>&1 \
+// RUN:     --target=sparc-sun-solaris2.11 \
+// RUN:     --gcc-toolchain="" \
+// RUN:     --sysroot=%S/Inputs/sparc-sun-solaris2.11 \
+// RUN:   | FileCheck --check-prefix=CHECK-SHARED %s
+
+// CHECK-SHARED: ld{{.*}}"
+// CHECK-SHARED "-lc"
+// CHECK-SHARED "-lgcc_s"
+// CHECK-SHARED-NOT "-lgcc"
+// CHECK-SHARED-NOT: "-lm"
