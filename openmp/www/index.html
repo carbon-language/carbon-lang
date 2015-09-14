@@ -159,19 +159,31 @@
   </ul>
 
   <p>
-     Next:
+     Note that for an in-tree build, you should check out openmp to llvm/projects.
   </p>
-  
+
+  <p>In-tree build:</p>
   <ul>
-    <li><code>cd openmp/runtime</code></li>
-    <li><code>make compiler=gcc</code></li>
+    <li><code>cd where-you-want-to-live</code></li>
+    <li>Check out openmp into llvm/projects</li>
+    <li><code>cd where-you-want-to-build</code></li>
+    <li><code>mkdir build &amp;&amp; cd build</code></li>
+    <li><code>cmake path/to/llvm -DCMAKE_C_COMPILER=&lt;C compiler&gt; -DCMAKE_CXX_COMPILER=&lt;C++ compiler&gt;</code></li>
+    <li><code>make omp</code></li>
+  </ul>
+
+  <p>Out-of-tree build:</p>
+  <ul>
+    <li><code>cd where-you-want-to-live</code></li>
+    <li>Check out openmp</li>
+    <li><code>cd where-you-want-to-live/openmp/runtime</code></li>
+    <li><code>mkdir build &amp;&amp; cd build</code></li>
+    <li><code>cmake path/to/openmp -DCMAKE_C_COMPILER=&lt;C compiler&gt; -DCMAKE_CXX_COMPILER=&lt;C++ compiler&gt;</code></li>
+    <li><code>make</code></li>
   </ul>
   
   <p>Full details of how to build are in the
-    <a href="README.txt">README.txt</a>
-    which also describes a CMake based build system which may be more
-    convenient on some platforms and for porting to new platforms than
-    the make and Perl based system.
+    <a href="README.txt">README.txt</a> and Build_With_CMake.txt (inside the runtime/ subdirectory)
   </p>
 
   <!--=====================================================================-->

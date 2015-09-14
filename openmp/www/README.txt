@@ -23,77 +23,35 @@ www.doxygen.org.
 
 How to Build the LLVM* OpenMP* Runtime Library
 ==============================================
+In-tree build:
 
-The library can be built either using Cmake, or using a makefile that
-in turn invokes various Perl scripts. For porting, non X86
-architectures, and for those already familiar with Cmake that may be
-an easier route to take than the one described here.
+$ cd where-you-want-to-live
+Check out openmp into llvm/projects
+$ cd where-you-want-to-build
+$ mkdir build && cd build
+$ cmake path/to/llvm -DCMAKE_C_COMPILER=<C compiler> -DCMAKE_CXX_COMPILER=<C++ compiler>
+$ make omp
 
-Building with CMake
-===================
-The runtime/Build_With_CMake.txt file has a description of how to
-build with Cmake.
+Out-of-tree build:
 
-Building with the Makefile
-==========================
-The Makefile at the top-level will attempt to detect what it needs to
-build the LLVM* OpenMP* Runtime Library.  To see the default settings, 
-type:
+$ cd where-you-want-to-live
+Check out openmp
+$ cd where-you-want-to-live/openmp/runtime
+$ mkdir build && cd build
+$ cmake path/to/openmp -DCMAKE_C_COMPILER=<C compiler> -DCMAKE_CXX_COMPILER=<C++ compiler>
+$ make
 
-make info
+For details about building, please look at Build_With_CMake.txt
 
-You can change the Makefile's behavior with the following options:
-
-omp_root:    The path to the top-level directory containing the top-level
-	     Makefile.  By default, this will take on the value of the 
-	     current working directory.
-
-omp_os:      Operating system.  By default, the build will attempt to 
-	     detect this. Currently supports "linux", "freebsd", "macos", and
-	     "windows".
-
-arch:        Architecture. By default, the build will attempt to 
-	     detect this if not specified by the user. Currently 
-	     supported values are
-                 "32" for IA-32 architecture 
-                 "32e" for Intel(R) 64 architecture
-                 "mic" for Intel(R) Many Integrated Core Architecture
-                 "arm" for ARM* architecture
-                 "aarch64" for Aarch64 (64-bit ARM) architecture
-                 "ppc64" for IBM(R) Power architecture (big endian)
-                 "ppc64le" for IBM(R) Power architecture (little endian)
-
-             If "mic" is specified then "icc" will be used as the
-	     compiler, and appropriate k1om binutils will be used. The
-	     necessary packages must be installed on the build machine
-	     for this to be possible (but an Intel(R) Xeon Phi(TM)
-	     coprocessor card is not required to build the library).
-
-compiler:    Which compiler to use for the build.  Defaults to "icc" 
-	     or "icl" depending on the value of omp_os. Also supports 
-	     some versions of "gcc"* when omp_os is "linux". The selected 
-	     compiler should be installed and in the user's path. The 
-	     corresponding Fortran compiler should also be in the path. 
-	     See "Supported RTL Build Configurations" below for more 
-	     information on compiler versions.
-
-mode:        Library mode: default is "release".  Also supports "debug".
-
-jobs:        The number of parallel jobs for the underlying call to make.
-         This value is sent as the parameter to the -j flag for make.
-         This value defaults to "1", but can be set to any positive integer.
-
-To use any of the options above, simple add <option_name>=<value>.  For 
-example, if you want to build with gcc instead of icc, type:
-
-make compiler=gcc
-
-On OS X* machines, it is possible to build universal (or fat) libraries which
-include both IA-32 architecture and Intel(R) 64 architecture objects in a
-single archive; just build the 32 and 32e libraries separately, then invoke 
-make again with a special argument as follows:
-
-make compiler=clang build_args=fat
+Architectures Supported
+=======================
+* IA-32 architecture 
+* Intel(R) 64 architecture
+* Intel(R) Many Integrated Core Architecture
+* ARM* architecture
+* Aarch64 (64-bit ARM) architecture
+* IBM(R) Power architecture (big endian)
+* IBM(R) Power architecture (little endian)
 
 Supported RTL Build Configurations
 ==================================
@@ -112,7 +70,7 @@ Intel(R) Many Integrated Core Architecture
 
 (1) On IA-32 architecture and Intel(R) 64, icc/icl versions 12.x are 
     supported (12.1 is recommended).
-(2) GCC* version 4.6.2 is supported.
+(2) GCC* version 4.7 is supported.
 (3) For icc on OS X*, OS X* version 10.5.8 is supported.
 (4) Intel(R) Many Integrated Core Architecture not supported.
 (5) On Intel(R) Many Integrated Core Architecture, icc/icl versions 13.0 
