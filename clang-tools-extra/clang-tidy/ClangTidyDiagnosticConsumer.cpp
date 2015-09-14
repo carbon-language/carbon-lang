@@ -56,8 +56,7 @@ protected:
       Error.Notes.push_back(TidyMessage);
       return;
     }
-    assert(Error.Message.Message.empty() &&
-           "Overwriting a diagnostic message");
+    assert(Error.Message.Message.empty() && "Overwriting a diagnostic message");
     Error.Message = TidyMessage;
   }
 
