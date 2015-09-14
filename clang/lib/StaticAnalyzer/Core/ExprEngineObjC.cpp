@@ -186,8 +186,11 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
 
         // Generate a transition to non-Nil state.
         if (notNilState != State) {
+          bool HasTag = Pred->getLocation().getTag();
           Pred = Bldr.generateNode(ME, Pred, notNilState);
-          assert(Pred && "Should have cached out already!");
+          assert((Pred || HasTag) && "Should have cached out already!");
+          if (!Pred)
+            continue;
         }
       }
     } else {
