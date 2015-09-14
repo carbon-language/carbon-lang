@@ -185,27 +185,19 @@ namespace llvm {
 
     /// getNextPredecessor - Returns the value of the NextPredecessor
     /// field.
-    const Dependence *getNextPredecessor() const {
-      return NextPredecessor;
-    }
+    const Dependence *getNextPredecessor() const { return NextPredecessor; }
 
     /// getNextSuccessor - Returns the value of the NextSuccessor
     /// field.
-    const Dependence *getNextSuccessor() const {
-      return NextSuccessor;
-    }
+    const Dependence *getNextSuccessor() const { return NextSuccessor; }
 
     /// setNextPredecessor - Sets the value of the NextPredecessor
     /// field.
-    void setNextPredecessor(const Dependence *pred) {
-      NextPredecessor = pred;
-    }
+    void setNextPredecessor(const Dependence *pred) { NextPredecessor = pred; }
 
     /// setNextSuccessor - Sets the value of the NextSuccessor
     /// field.
-    void setNextSuccessor(const Dependence *succ) {
-      NextSuccessor = succ;
-    }
+    void setNextSuccessor(const Dependence *succ) { NextSuccessor = succ; }
 
     /// dump - For debugging purposes, dumps a dependence to OS.
     ///

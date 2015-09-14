@@ -91,7 +91,7 @@ public:
   ///
   Value *PHITranslateWithInsertion(BasicBlock *CurBB, BasicBlock *PredBB,
                                    const DominatorTree &DT,
-                                   SmallVectorImpl<Instruction*> &NewInsts);
+                                   SmallVectorImpl<Instruction *> &NewInsts);
 
   void dump() const;
 
@@ -111,7 +111,7 @@ private:
   ///
   Value *InsertPHITranslatedSubExpr(Value *InVal, BasicBlock *CurBB,
                                     BasicBlock *PredBB, const DominatorTree &DT,
-                                    SmallVectorImpl<Instruction*> &NewInsts);
+                                    SmallVectorImpl<Instruction *> &NewInsts);
 
   /// AddAsInput - If the specified value is an instruction, add it as an input.
   Value *AddAsInput(Value *V) {
