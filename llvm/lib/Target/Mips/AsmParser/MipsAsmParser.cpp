@@ -143,33 +143,20 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool ParseDirective(AsmToken DirectiveID) override;
 
-  MipsAsmParser::OperandMatchResultTy parseMemOperand(OperandVector &Operands);
-
-  MipsAsmParser::OperandMatchResultTy
+  OperandMatchResultTy parseMemOperand(OperandVector &Operands);
+  OperandMatchResultTy
   matchAnyRegisterNameWithoutDollar(OperandVector &Operands,
                                     StringRef Identifier, SMLoc S);
-
-  MipsAsmParser::OperandMatchResultTy
-  matchAnyRegisterWithoutDollar(OperandVector &Operands, SMLoc S);
-
-  MipsAsmParser::OperandMatchResultTy parseAnyRegister(OperandVector &Operands);
-
-  MipsAsmParser::OperandMatchResultTy parseImm(OperandVector &Operands);
-
-  MipsAsmParser::OperandMatchResultTy parseJumpTarget(OperandVector &Operands);
-
-  MipsAsmParser::OperandMatchResultTy parseInvNum(OperandVector &Operands);
-
-  MipsAsmParser::OperandMatchResultTy parseLSAImm(OperandVector &Operands);
-
-  MipsAsmParser::OperandMatchResultTy
-  parseRegisterPair (OperandVector &Operands);
-
-  MipsAsmParser::OperandMatchResultTy
-  parseMovePRegPair(OperandVector &Operands);
-
-  MipsAsmParser::OperandMatchResultTy
-  parseRegisterList (OperandVector  &Operands);
+  OperandMatchResultTy matchAnyRegisterWithoutDollar(OperandVector &Operands,
+                                                     SMLoc S);
+  OperandMatchResultTy parseAnyRegister(OperandVector &Operands);
+  OperandMatchResultTy parseImm(OperandVector &Operands);
+  OperandMatchResultTy parseJumpTarget(OperandVector &Operands);
+  OperandMatchResultTy parseInvNum(OperandVector &Operands);
+  OperandMatchResultTy parseLSAImm(OperandVector &Operands);
+  OperandMatchResultTy parseRegisterPair(OperandVector &Operands);
+  OperandMatchResultTy parseMovePRegPair(OperandVector &Operands);
+  OperandMatchResultTy parseRegisterList(OperandVector &Operands);
 
   bool searchSymbolAlias(OperandVector &Operands);
 
