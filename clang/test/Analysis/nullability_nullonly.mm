@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.nullability.NullPassedToNonnull,alpha.nullability.NullReturnedFromNonnull -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,nullability.NullPassedToNonnull,nullability.NullReturnedFromNonnull -verify %s
 
 int getRandom();
 
