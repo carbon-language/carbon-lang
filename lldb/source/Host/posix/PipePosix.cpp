@@ -36,9 +36,9 @@ int PipePosix::kInvalidDescriptor = -1;
 
 enum PIPES { READ, WRITE }; // Constants 0 and 1 for READ and WRITE
 
-// pipe2 is supported by Linux, FreeBSD v10 and higher.
+// pipe2 is supported by a limited set of platforms
 // TODO: Add more platforms that support pipe2.
-#if defined(__linux__) || (defined(__FreeBSD__) && __FreeBSD__ >= 10)
+#if defined(__linux__) || (defined(__FreeBSD__) && __FreeBSD__ >= 10) || defined(__NetBSD__)
 #define PIPE2_SUPPORTED 1
 #else
 #define PIPE2_SUPPORTED 0
