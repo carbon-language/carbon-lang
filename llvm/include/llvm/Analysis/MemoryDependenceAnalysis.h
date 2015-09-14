@@ -96,6 +96,7 @@ namespace llvm {
     typedef PointerIntPair<Instruction*, 2, DepType> PairTy;
     PairTy Value;
     explicit MemDepResult(PairTy V) : Value(V) {}
+
   public:
     MemDepResult() : Value(nullptr, Invalid) {}
 
@@ -163,6 +164,7 @@ namespace llvm {
     bool operator!=(const MemDepResult &M) const { return Value != M.Value; }
     bool operator<(const MemDepResult &M) const { return Value < M.Value; }
     bool operator>(const MemDepResult &M) const { return Value > M.Value; }
+
   private:
     friend class MemoryDependenceAnalysis;
     /// Dirty - Entries with this marker occur in a LocalDeps map or
@@ -189,6 +191,7 @@ namespace llvm {
   class NonLocalDepEntry {
     BasicBlock *BB;
     MemDepResult Result;
+
   public:
     NonLocalDepEntry(BasicBlock *bb, MemDepResult result)
       : BB(bb), Result(result) {}
@@ -214,6 +217,7 @@ namespace llvm {
   class NonLocalDepResult {
     NonLocalDepEntry Entry;
     Value *Address;
+
   public:
     NonLocalDepResult(BasicBlock *bb, MemDepResult result, Value *address)
       : Entry(bb, result), Address(address) {}
@@ -260,6 +264,7 @@ namespace llvm {
 
   public:
     typedef std::vector<NonLocalDepEntry> NonLocalDepInfo;
+
   private:
     /// ValueIsLoadPair - This is a pair<Value*, bool> where the bool is true if
     /// the dependence is a read only dependence, false if read/write.
@@ -300,7 +305,6 @@ namespace llvm {
     typedef DenseMap<Instruction*,
                      SmallPtrSet<ValueIsLoadPair, 4> > ReverseNonLocalPtrDepTy;
     ReverseNonLocalPtrDepTy ReverseNonLocalPtrDeps;
-
 
     /// PerInstNLInfo - This is the instruction we keep for each cached access
     /// that we have for an instruction.  The pointer is an owning pointer and
@@ -362,7 +366,6 @@ namespace llvm {
     /// removed.  Clients must copy this data if they want it around longer than
     /// that.
     const NonLocalDepInfo &getNonLocalCallDependency(CallSite QueryCS);
-
 
     /// getNonLocalPointerDependency - Perform a full dependency query for an
     /// access to the QueryInst's specified memory location, returning the set
@@ -442,7 +445,6 @@ namespace llvm {
     /// verifyRemoved - Verify that the specified instruction does not occur
     /// in our internal data structures.
     void verifyRemoved(Instruction *Inst) const;
-
   };
 
 } // End llvm namespace

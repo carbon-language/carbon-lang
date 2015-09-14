@@ -48,6 +48,7 @@ class PHITransAddr {
 
   /// InstInputs - The inputs for our symbolic address.
   SmallVector<Instruction*, 4> InstInputs;
+
 public:
   PHITransAddr(Value *addr, const DataLayout &DL, AssumptionCache *AC)
       : Addr(addr), DL(DL), TLI(nullptr), AC(AC) {
@@ -98,6 +99,7 @@ public:
   /// structure is valid, it returns true.  If invalid, it prints errors and
   /// returns false.
   bool Verify() const;
+
 private:
   Value *PHITranslateSubExpr(Value *V, BasicBlock *CurBB, BasicBlock *PredBB,
                              const DominatorTree *DT);
@@ -118,7 +120,6 @@ private:
       InstInputs.push_back(VI);
     return V;
   }
-
 };
 
 } // end namespace llvm

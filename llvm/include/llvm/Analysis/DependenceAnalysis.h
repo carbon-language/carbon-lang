@@ -210,12 +210,12 @@ namespace llvm {
     /// dump - For debugging purposes, dumps a dependence to OS.
     ///
     void dump(raw_ostream &OS) const;
+
   private:
     Instruction *Src, *Dst;
     const Dependence *NextPredecessor, *NextSuccessor;
     friend class DependenceAnalysis;
   };
-
 
   /// FullDependence - This class represents a dependence between two memory
   /// references in a function. It contains detailed information about the
@@ -285,12 +285,12 @@ namespace llvm {
     friend class DependenceAnalysis;
   };
 
-
   /// DependenceAnalysis - This class is the main dependence-analysis driver.
   ///
   class DependenceAnalysis : public FunctionPass {
     void operator=(const DependenceAnalysis &) = delete;
     DependenceAnalysis(const DependenceAnalysis &) = delete;
+
   public:
     /// depends - Tests for a dependence between the Src and Dst instructions.
     /// Returns NULL if no dependence; otherwise, returns a Dependence (or a
@@ -400,6 +400,7 @@ namespace llvm {
       const SCEV *B;
       const SCEV *C;
       const Loop *AssociatedLoop;
+
     public:
       /// isEmpty - Return true if the constraint is of kind Empty.
       bool isEmpty() const { return Kind == Empty; }
@@ -465,7 +466,6 @@ namespace llvm {
       /// out to OS.
       void dump(raw_ostream &OS) const;
     };
-
 
     /// establishNestingLevels - Examines the loop nesting of the Src and Dst
     /// instructions and establishes their shared loops. Sets the variables
@@ -819,7 +819,6 @@ namespace llvm {
                                const SCEV *Delta) const;
 
     /// testBounds - Returns true iff the current bounds are plausible.
-    ///
     bool testBounds(unsigned char DirKind,
                     unsigned Level,
                     BoundInfo *Bound,

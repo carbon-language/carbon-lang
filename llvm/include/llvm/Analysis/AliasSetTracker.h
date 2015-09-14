@@ -42,6 +42,7 @@ class AliasSet : public ilist_node<AliasSet> {
     AliasSet *AS;
     uint64_t Size;
     AAMDNodes AAInfo;
+
   public:
     PointerRec(Value *V)
       : Val(V), PrevInList(nullptr), NextInList(nullptr), AS(nullptr), Size(0),
@@ -190,6 +191,7 @@ public:
   class iterator : public std::iterator<std::forward_iterator_tag,
                                         PointerRec, ptrdiff_t> {
     PointerRec *CurNode;
+
   public:
     explicit iterator(PointerRec *CN = nullptr) : CurNode(CN) {}
 
@@ -282,7 +284,6 @@ inline raw_ostream& operator<<(raw_ostream &OS, const AliasSet &AS) {
   return OS;
 }
 
-
 class AliasSetTracker {
   /// CallbackVH - A CallbackVH to arrange for AliasSetTracker to be
   /// notified whenever a Value is deleted.
@@ -290,6 +291,7 @@ class AliasSetTracker {
     AliasSetTracker *AST;
     void deleted() override;
     void allUsesReplacedWith(Value *) override;
+
   public:
     ASTCallbackVH(Value *V, AliasSetTracker *AST = nullptr);
     ASTCallbackVH &operator=(Value *V);
@@ -397,7 +399,6 @@ public:
   /// request.
   ///
   void copyValue(Value *From, Value *To);
-
 
   typedef ilist<AliasSet>::iterator iterator;
   typedef ilist<AliasSet>::const_iterator const_iterator;

@@ -44,8 +44,10 @@ namespace llvm {
 class AbstractLatticeFunction {
 public:
   typedef void *LatticeVal;
+
 private:
   LatticeVal UndefVal, OverdefinedVal, UntrackedVal;
+
 public:
   AbstractLatticeFunction(LatticeVal undefVal, LatticeVal overdefinedVal,
                           LatticeVal untrackedVal) {
@@ -108,7 +110,6 @@ public:
   virtual void PrintValue(LatticeVal V, raw_ostream &OS);
 };
 
-
 /// SparseSolver - This class is a general purpose solver for Sparse Conditional
 /// Propagation with a programmable lattice function.
 ///
@@ -133,6 +134,7 @@ class SparseSolver {
 
   SparseSolver(const SparseSolver&) = delete;
   void operator=(const SparseSolver&) = delete;
+
 public:
   explicit SparseSolver(AbstractLatticeFunction *Lattice)
     : LatticeFunc(Lattice) {}
@@ -198,7 +200,6 @@ private:
   void visitInst(Instruction &I);
   void visitPHINode(PHINode &I);
   void visitTerminatorInst(TerminatorInst &TI);
-
 };
 
 } // end namespace llvm

@@ -83,6 +83,7 @@ public:
 class CallGraphSCC {
   void *Context; // The CGPassManager object that is vending this.
   std::vector<CallGraphNode*> Nodes;
+
 public:
   CallGraphSCC(void *context) : Context(context) {}
 
