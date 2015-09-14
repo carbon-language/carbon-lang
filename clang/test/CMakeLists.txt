@@ -58,7 +58,8 @@ set(CLANG_TEST_PARAMS
 if( NOT CLANG_BUILT_STANDALONE )
   list(APPEND CLANG_TEST_DEPS
     llvm-config
-    llc opt FileCheck count not llvm-symbolizer llvm-profdata llvm-objdump
+    FileCheck count not
+    llc opt llvm-symbolizer llvm-profdata llvm-objdump
     )
 endif()
 
