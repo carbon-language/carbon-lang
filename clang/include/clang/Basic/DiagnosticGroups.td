@@ -32,6 +32,7 @@ def AutoImport : DiagGroup<"auto-import">;
 def GNUBinaryLiteral : DiagGroup<"gnu-binary-literal">;
 def GNUCompoundLiteralInitializer : DiagGroup<"gnu-compound-literal-initializer">;
 def BitFieldConstantConversion : DiagGroup<"bitfield-constant-conversion">;
+def BitFieldWidth : DiagGroup<"bitfield-width">;
 def ConstantConversion :
   DiagGroup<"constant-conversion", [ BitFieldConstantConversion ] >;
 def LiteralConversion : DiagGroup<"literal-conversion">;

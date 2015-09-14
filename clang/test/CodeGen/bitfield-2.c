@@ -237,7 +237,7 @@ unsigned long long test_5() {
 /***/
 
 struct s6 {
-  _Bool f0 : 2;
+  unsigned f0 : 2;
 };
 
 struct s6 g6 = { 0xF };
