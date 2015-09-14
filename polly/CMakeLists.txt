@@ -188,15 +188,32 @@ file( GLOB_RECURSE islfiles lib/External/isl/*.h lib/External/isl/*.c
                    lib/External/isl/include/isl/*.h lib/External/isl/imath/*.h
                    lib/External/isl/imath/*.c)
 list( REMOVE_ITEM files ${jsonfiles} ${islfiles})
-add_custom_command( OUTPUT formatting COMMAND
-  CLANG_FORMAT=${LLVM_BINARY_DIR}/bin/clang-format
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/check_format.sh ${files})
-add_custom_target(polly-check-format DEPENDS formatting)
+
+set(check_format_depends)
+set(update_format_depends)
+set(i 0)
+foreach (file IN LISTS files)
+  add_custom_command(OUTPUT polly-check-format${i}
+    COMMAND clang-format -style=llvm ${file} | diff -u ${file} -
+    VERBATIM
+    COMMENT "Checking format of ${file}..."
+  )
+  list(APPEND check_format_depends "polly-check-format${i}")
+
+  add_custom_command(OUTPUT polly-update-format${i}
+    COMMAND clang-format -i -style=llvm ${file}
+    VERBATIM
+    COMMENT "Updating format of ${file}..."
+  )
+  list(APPEND update_format_depends "polly-update-format${i}")
+
+  math(EXPR i ${i}+1)
+endforeach ()
+
+add_custom_target(polly-check-format DEPENDS ${check_format_depends})
 set_target_properties(polly-check-format PROPERTIES FOLDER "Polly")
-add_custom_command( OUTPUT formatting-update COMMAND
-  CLANG_FORMAT=${LLVM_BINARY_DIR}/bin/clang-format
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/update_format.sh ${files})
-add_custom_target(polly-update-format DEPENDS formatting-update)
+
+add_custom_target(polly-update-format DEPENDS ${update_format_depends})
 set_target_properties(polly-update-format PROPERTIES FOLDER "Polly")
 
 # Set the variable POLLY_LINK_LIBS in the llvm/tools/ dir.
