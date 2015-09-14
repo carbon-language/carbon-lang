@@ -2208,6 +2208,9 @@ public:
   /// redeclaration time if the decl is static.
   bool isStaticMember();
 
+  /// Returns true if this declares a constructor or a destructor.
+  bool isCtorOrDtor();
+
   void setRedeclaration(bool Val) { Redeclaration = Val; }
   bool isRedeclaration() const { return Redeclaration; }
 };

@@ -5,6 +5,7 @@
 // RUN: FileCheck --check-prefix DTORS %s < %t
 // RUN: FileCheck --check-prefix DTORS2 %s < %t
 // RUN: FileCheck --check-prefix DTORS3 %s < %t
+// RUN: FileCheck --check-prefix DTORS4 %s < %t
 //
 // RUN: %clang_cc1 -emit-llvm %s -o - -mconstructor-aliases -triple=x86_64-pc-win32 -fno-rtti | FileCheck --check-prefix DTORS-X64 %s
 
@@ -407,9 +408,7 @@ B::B(short *a) {}
 // CHECK:               (%"struct.test1::B"* returned %this, i32* %a, i32 %is_most_derived)
 // CHECK: define %"struct.test1::B"* @"\01??0B@test1@@QAA@PBDZZ"
 // CHECK:               (%"struct.test1::B"* returned %this, i32 %is_most_derived, i8* %a, ...)
-
-// FIXME: This should be x86_thiscallcc.  MSVC ignores explicit CCs on structors.
-// CHECK: define %"struct.test1::B"* @"\01??0B@test1@@QAA@PAF@Z"
+// CHECK: define x86_thiscallcc %"struct.test1::B"* @"\01??0B@test1@@QAE@PAF@Z"
 // CHECK:               (%"struct.test1::B"* returned %this, i16* %a, i32 %is_most_derived)
 
 void construct_b() {
@@ -458,3 +457,18 @@ void *getA() {
 // CHECK:               (%"struct.(anonymous namespace)::A"* %this, i32 %should_call_delete)
 // CHECK: define internal x86_thiscallcc void @"\01??1A@?A@@UAE@XZ"
 // CHECK:               (%"struct.(anonymous namespace)::A"* %this)
+
+// Check that we correctly transform __stdcall to __thiscall for ctors and
+// dtors.
+class G {
+ public:
+  __stdcall G() {};
+// DTORS4: define linkonce_odr x86_thiscallcc %class.G* @"\01??0G@@QAE@XZ"
+  __stdcall ~G() {};
+// DTORS4: define linkonce_odr x86_thiscallcc void @"\01??1G@@QAE@XZ"
+};
+
+extern void testG() {
+  G g;
+}
+

@@ -2375,6 +2375,9 @@ def err_cconv_varargs : Error<
 def warn_cconv_varargs : Warning<
   "%0 calling convention ignored on variadic function">,
   InGroup<IgnoredAttributes>;
+def warn_cconv_structors : Warning<
+  "%0 calling convention ignored on constructor/destructor">,
+  InGroup<IgnoredAttributes>;
 def err_regparm_mismatch : Error<"function declared with regparm(%0) "
   "attribute was previously declared "
   "%plural{0:without the regparm|:with the regparm(%1)}1 attribute">;

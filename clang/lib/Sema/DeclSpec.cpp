@@ -351,6 +351,11 @@ bool Declarator::isStaticMember() {
               getName().OperatorFunctionId.Operator));
 }
 
+bool Declarator::isCtorOrDtor() {
+  return (getName().getKind() == UnqualifiedId::IK_ConstructorName) ||
+         (getName().getKind() == UnqualifiedId::IK_DestructorName);
+}
+
 bool DeclSpec::hasTagDefinition() const {
   if (!TypeSpecOwned)
     return false;

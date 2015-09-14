@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++14 -triple i686-pc-win32 -fms-extensions -verify %s
+// RUN: %clang_cc1 -std=c++14 -triple i686-pc-win32 -fms-extensions -DMSABI -verify %s
 // RUN: %clang_cc1 -std=c++14 -triple i686-pc-mingw32 -verify %s
 // RUN: %clang_cc1 -std=c++14 -triple i686-pc-mingw32 -fms-extensions -verify %s
 
@@ -74,6 +74,11 @@ struct S {
 
   static void            static_member_variadic_default(int x, ...);
   static void __cdecl    static_member_variadic_cdecl(int x, ...);
+
+  // Structors can't be other than default in MS ABI environment
+#ifdef MSABI
+  __vectorcall S(); // expected-warning {{vectorcall calling convention ignored on constructor/destructor}}
+#endif
 };
 
 void __cdecl    S::member_default1() {} // expected-error {{function declared 'cdecl' here was previously declared without calling convention}}
