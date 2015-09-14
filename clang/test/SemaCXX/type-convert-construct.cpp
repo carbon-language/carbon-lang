@@ -5,6 +5,8 @@ void f() {
   int v2 = typeof(int)(1,2); // expected-error {{excess elements in scalar initializer}}
   typedef int arr[];
   int v3 = arr(); // expected-error {{array types cannot be value-initialized}}
+  typedef void fn_ty();
+  fn_ty(); // expected-error {{function types cannot be value-initialized}}
   int v4 = int();
   int v5 = int; // expected-error {{expected '(' for function-style cast or type construction}}
   typedef int T;
