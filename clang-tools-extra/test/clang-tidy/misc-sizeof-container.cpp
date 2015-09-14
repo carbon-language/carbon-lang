@@ -65,19 +65,14 @@ void f() {
 
   int a = 42 + sizeof(s1);
 // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: sizeof() doesn't return the size of the container; did you mean .size()? [misc-sizeof-container]
-// CHECK-FIXES: int a = 42 + s1.size();
   a = 123 * sizeof(s2);
 // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: sizeof() doesn't return the size
-// CHECK-FIXES: a = 123 * s2.size();
   a = 45 + sizeof(s2 + "asdf");
 // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: sizeof() doesn't return the size
-// CHECK-FIXES: a = 45 + (s2 + "asdf").size();
   a = sizeof(v);
 // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: sizeof() doesn't return the size
-// CHECK-FIXES: a = v.size();
   a = sizeof(std::vector<int>{});
 // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: sizeof() doesn't return the size
-// CHECK-FIXES: a = std::vector<int>{}.size();
 
   a = sizeof(a);
   a = sizeof(int);
