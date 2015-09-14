@@ -1898,7 +1898,6 @@ void Scop::addLoopBoundsToHeaderDomains(LoopInfo &LI, ScopDetection &SD,
 
     HeaderBBDom = isl_set_apply(Parts.second, NextIterationMap);
     HeaderBBDom = isl_set_coalesce(isl_set_union(HeaderBBDom, FirstIteration));
-
   }
 }
 
