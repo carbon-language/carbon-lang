@@ -12,6 +12,7 @@ add_lldb_library(lldbSymbol
   DWARFCallFrameInfo.cpp
   Function.cpp
   FuncUnwinders.cpp
+  GoASTContext.cpp
   LineEntry.cpp
   LineTable.cpp
   ObjectFile.cpp

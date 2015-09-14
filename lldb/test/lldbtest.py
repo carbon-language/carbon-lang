@@ -893,6 +893,21 @@ def skipUnlessDarwin(func):
     """Decorate the item to skip tests that should be skipped on any non Darwin platform."""
     return skipUnlessPlatform(getDarwinOSTriples())(func)
 
+def skipUnlessGoInstalled(func):
+    """Decorate the item to skip tests when no Go compiler is available."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@skipIfGcc can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        self = args[0]
+        compiler = self.getGoCompilerVersion()
+        if not compiler:
+            self.skipTest("skipping because go compiler not found")
+        else:
+            func(*args, **kwargs)
+    return wrapper
+
 def getPlatform():
     """Returns the target platform which the tests are running on."""
     platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
@@ -1868,6 +1883,18 @@ class Base(unittest2.TestCase):
                 version = m.group(1)
         return version
 
+    def getGoCompilerVersion(self):
+        """ Returns a string that represents the go compiler version, or None if go is not found.
+        """
+        compiler = which("go")
+        if compiler:
+            version_output = system([[compiler, "version"]])[0]
+            for line in version_output.split(os.linesep):
+                m = re.search('go version (devel|go\\S+)', line)
+                if m:
+                    return m.group(1)
+        return None
+
     def platformIsDarwin(self):
         """Returns true if the OS triple for the selected platform is any valid apple OS"""
         return platformIsDarwin()
@@ -2052,6 +2079,11 @@ class Base(unittest2.TestCase):
             dictionary = append_android_envs(dictionary)
         if not module.buildDwarf(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build binary with dwarf")
+
+    def buildGo(self):
+        """Build the default go binary.
+        """
+        system([[which('go'), 'build -gcflags "-N -l" -o a.out main.go']])
 
     def signBinary(self, binary_path):
         if sys.platform.startswith("darwin"):

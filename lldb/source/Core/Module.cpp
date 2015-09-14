@@ -25,6 +25,7 @@
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
+#include "lldb/Symbol/GoASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/SymbolVendor.h"
@@ -148,6 +149,7 @@ Module::Module (const ModuleSpec &module_spec) :
     m_objfile_sp (),
     m_symfile_ap (),
     m_ast (new ClangASTContext),
+    m_go_ast(),
     m_source_mappings (),
     m_sections_ap(),
     m_did_load_objfile (false),
@@ -252,6 +254,7 @@ Module::Module(const FileSpec& file_spec,
     m_objfile_sp (),
     m_symfile_ap (),
     m_ast (new ClangASTContext),
+    m_go_ast(),
     m_source_mappings (),
     m_sections_ap(),
     m_did_load_objfile (false),
@@ -298,6 +301,7 @@ Module::Module () :
     m_objfile_sp (),
     m_symfile_ap (),
     m_ast (new ClangASTContext),
+    m_go_ast(),
     m_source_mappings (),
     m_sections_ap(),
     m_did_load_objfile (false),
@@ -420,7 +424,22 @@ Module::GetUUID()
 TypeSystem *
 Module::GetTypeSystemForLanguage (LanguageType language)
 {
-    if (language != eLanguageTypeSwift)
+    if (language == eLanguageTypeGo)
+    {
+        Mutex::Locker locker (m_mutex);
+        if (!m_go_ast)
+        {
+            ObjectFile * objfile = GetObjectFile();
+            ArchSpec object_arch;
+            if (objfile && objfile->GetArchitecture(object_arch))
+            {
+                m_go_ast.reset(new GoASTContext);
+                m_go_ast->SetAddressByteSize(object_arch.GetAddressByteSize());
+            }
+        }
+        return m_go_ast.get();
+    }
+    else if (language != eLanguageTypeSwift)
     {
         // For now assume all languages except swift use the ClangASTContext for types
         return &GetClangASTContext();

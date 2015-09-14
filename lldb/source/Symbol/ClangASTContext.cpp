@@ -3021,7 +3021,7 @@ ClangASTContext::IsObjCClassType (const CompilerType& type)
 bool
 ClangASTContext::IsObjCObjectOrInterfaceType (const CompilerType& type)
 {
-    if (type)
+    if (IsClangType(type))
         return GetCanonicalQualType(type)->isObjCObjectOrInterfaceType();
     return false;
 }
@@ -3269,12 +3269,14 @@ ClangASTContext::GetCXXClassName (const CompilerType& type, std::string &class_n
     if (type)
     {
         clang::QualType qual_type (GetCanonicalQualType(type));
-        
-        clang::CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
-        if (cxx_record_decl)
+        if (!qual_type.isNull())
         {
-            class_name.assign (cxx_record_decl->getIdentifier()->getNameStart());
-            return true;
+            clang::CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+            if (cxx_record_decl)
+            {
+                class_name.assign(cxx_record_decl->getIdentifier()->getNameStart());
+                return true;
+            }
         }
     }
     class_name.clear();
@@ -3289,7 +3291,7 @@ ClangASTContext::IsCXXClassType (const CompilerType& type)
         return false;
     
     clang::QualType qual_type (GetCanonicalQualType(type));
-    if (qual_type->getAsCXXRecordDecl() != nullptr)
+    if (!qual_type.isNull() && qual_type->getAsCXXRecordDecl() != nullptr)
         return true;
     return false;
 }
@@ -3313,8 +3315,8 @@ ClangASTContext::IsObjCObjectPointerType (const CompilerType& type, CompilerType
         return false;
 
     clang::QualType qual_type (GetCanonicalQualType(type));
-    
-    if (qual_type->isObjCObjectPointerType())
+
+    if (!qual_type.isNull() && qual_type->isObjCObjectPointerType())
     {
         if (class_type_ptr)
         {
@@ -3750,7 +3752,7 @@ ClangASTContext::GetTypeQualifiers(void* type)
 CompilerType
 ClangASTContext::AddConstModifier (const CompilerType& type)
 {
-    if (type && llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem()))
+    if (IsClangType(type))
     {
         // Make sure this type is a clang AST type
         clang::QualType result(GetQualType(type));
@@ -3764,7 +3766,7 @@ ClangASTContext::AddConstModifier (const CompilerType& type)
 CompilerType
 ClangASTContext::AddRestrictModifier (const CompilerType& type)
 {
-    if (type && llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem()))
+    if (IsClangType(type))
     {
         clang::QualType result(GetQualType(type));
         result.getQualifiers().setRestrict (true);
@@ -3776,7 +3778,7 @@ ClangASTContext::AddRestrictModifier (const CompilerType& type)
 CompilerType
 ClangASTContext::AddVolatileModifier (const CompilerType& type)
 {
-    if (type && llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem()))
+    if (IsClangType(type))
     {
         clang::QualType result(GetQualType(type));
         result.getQualifiers().setVolatile (true);
@@ -4077,11 +4079,10 @@ ClangASTContext::GetMemberFunctionAtIndex (void* type, size_t idx)
 CompilerType
 ClangASTContext::GetLValueReferenceType (const CompilerType& type)
 {
-    if (type)
+    if (IsClangType(type))
     {
         ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
-        if (ast)
-            return CompilerType(ast->getASTContext(), ast->getASTContext()->getLValueReferenceType(GetQualType(type)));
+        return CompilerType(ast->getASTContext(), ast->getASTContext()->getLValueReferenceType(GetQualType(type)));
     }
     return CompilerType();
 }
@@ -4089,11 +4090,10 @@ ClangASTContext::GetLValueReferenceType (const CompilerType& type)
 CompilerType
 ClangASTContext::GetRValueReferenceType (const CompilerType& type)
 {
-    if (type)
+    if (IsClangType(type))
     {
         ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
-        if (ast)
-            return CompilerType(ast->getASTContext(), ast->getASTContext()->getRValueReferenceType(GetQualType(type)));
+        return CompilerType(ast->getASTContext(), ast->getASTContext()->getRValueReferenceType(GetQualType(type)));
     }
     return CompilerType();
 }
@@ -4186,7 +4186,7 @@ ClangASTContext::GetTypedefedType (void* type)
 CompilerType
 ClangASTContext::RemoveFastQualifiers (const CompilerType& type)
 {
-    if (type && llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem()))
+    if (IsClangType(type))
     {
         clang::QualType qual_type(GetQualType(type));
         qual_type.getQualifiers().removeFastQualifiers();

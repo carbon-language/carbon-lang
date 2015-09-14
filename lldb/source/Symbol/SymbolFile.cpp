@@ -93,7 +93,10 @@ SymbolFile::GetClangASTContext ()
 TypeSystem *
 SymbolFile::GetTypeSystemForLanguage (lldb::LanguageType language)
 {
-    return m_obj_file->GetModule()->GetTypeSystemForLanguage (language);
+    TypeSystem *type_system = m_obj_file->GetModule()->GetTypeSystemForLanguage(language);
+    if (type_system)
+        type_system->SetSymbolFile(this);
+    return type_system;
 }
 
 uint32_t

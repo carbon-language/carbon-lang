@@ -1119,7 +1119,8 @@ protected:
     lldb::SymbolVendorUP        m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
     std::vector<lldb::SymbolVendorUP> m_old_symfiles; ///< If anyone calls Module::SetSymbolFileFileSpec() and changes the symbol file,
                                                       ///< we need to keep all old symbol files around in case anyone has type references to them
-    lldb::ClangASTContextUP     m_ast;          ///< The AST context for this module.
+    lldb::ClangASTContextUP     m_ast;          ///< The Clang AST context for this module.
+    lldb::GoASTContextUP        m_go_ast;       ///< The Go AST context for this module.
     PathMappingList             m_source_mappings; ///< Module specific source remappings for when you have debug info for a module that doesn't match where the sources currently are
     lldb::SectionListUP         m_sections_ap; ///< Unified section list for module that is used by the ObjectFile and and ObjectFile instances for the debug info
 

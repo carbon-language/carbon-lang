@@ -49,6 +49,7 @@
 
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/CompileUnit.h"
+#include "lldb/Symbol/GoASTContext.h"
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
@@ -507,10 +508,18 @@ TypeSystem *
 SymbolFileDWARF::GetTypeSystemForLanguage (LanguageType language)
 {
     SymbolFileDWARFDebugMap * debug_map_symfile = GetDebugMapSymfile ();
+    TypeSystem *type_system;
     if (debug_map_symfile)
-        return debug_map_symfile->GetTypeSystemForLanguage (language);
+    {
+        type_system = debug_map_symfile->GetTypeSystemForLanguage(language);
+    }
     else
-        return m_obj_file->GetModule()->GetTypeSystemForLanguage (language);
+    {
+        type_system = m_obj_file->GetModule()->GetTypeSystemForLanguage(language);
+        if (type_system)
+            type_system->SetSymbolFile(this);
+    }
+    return type_system;
 }
 
 void

@@ -69,6 +69,7 @@ public:
     friend class DebugMapModule;
     friend class DWARFCompileUnit;
     friend class DWARFASTParserClang;
+    friend class DWARFASTParserGo;
 
     //------------------------------------------------------------------
     // Static Functions
