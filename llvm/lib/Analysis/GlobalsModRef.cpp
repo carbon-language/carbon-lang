@@ -195,34 +195,34 @@ private:
 void GlobalsAAResult::DeletionCallbackHandle::deleted() {
   Value *V = getValPtr();
   if (auto *F = dyn_cast<Function>(V))
-    GAR.FunctionInfos.erase(F);
+    GAR->FunctionInfos.erase(F);
 
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    if (GAR.NonAddressTakenGlobals.erase(GV)) {
+    if (GAR->NonAddressTakenGlobals.erase(GV)) {
       // This global might be an indirect global.  If so, remove it and
       // remove any AllocRelatedValues for it.
-      if (GAR.IndirectGlobals.erase(GV)) {
+      if (GAR->IndirectGlobals.erase(GV)) {
         // Remove any entries in AllocsForIndirectGlobals for this global.
-        for (auto I = GAR.AllocsForIndirectGlobals.begin(),
-                  E = GAR.AllocsForIndirectGlobals.end();
+        for (auto I = GAR->AllocsForIndirectGlobals.begin(),
+                  E = GAR->AllocsForIndirectGlobals.end();
              I != E; ++I)
           if (I->second == GV)
-            GAR.AllocsForIndirectGlobals.erase(I);
+            GAR->AllocsForIndirectGlobals.erase(I);
       }
 
       // Scan the function info we have collected and remove this global
       // from all of them.
-      for (auto &FIPair : GAR.FunctionInfos)
+      for (auto &FIPair : GAR->FunctionInfos)
         FIPair.second.eraseModRefInfoForGlobal(*GV);
     }
   }
 
   // If this is an allocation related to an indirect global, remove it.
-  GAR.AllocsForIndirectGlobals.erase(V);
+  GAR->AllocsForIndirectGlobals.erase(V);
 
   // And clear out the handle.
   setValPtr(nullptr);
-  GAR.Handles.erase(I);
+  GAR->Handles.erase(I);
   // This object is now destroyed!
 }
 
@@ -794,7 +794,13 @@ GlobalsAAResult::GlobalsAAResult(GlobalsAAResult &&Arg)
       IndirectGlobals(std::move(Arg.IndirectGlobals)),
       AllocsForIndirectGlobals(std::move(Arg.AllocsForIndirectGlobals)),
       FunctionInfos(std::move(Arg.FunctionInfos)),
-      Handles(std::move(Arg.Handles)) {}
+      Handles(std::move(Arg.Handles)) {
+  // Update the parent for each DeletionCallbackHandle.
+  for (auto &H : Handles) {
+    assert(H.GAR == &Arg);
+    H.GAR = this;
+  }
+}
 
 /*static*/ GlobalsAAResult
 GlobalsAAResult::analyzeModule(Module &M, const TargetLibraryInfo &TLI,

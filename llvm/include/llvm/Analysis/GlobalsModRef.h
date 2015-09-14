@@ -52,11 +52,11 @@ class GlobalsAAResult : public AAResultBase<GlobalsAAResult> {
 
   /// Handle to clear this analysis on deletion of values.
   struct DeletionCallbackHandle final : CallbackVH {
-    GlobalsAAResult &GAR;
+    GlobalsAAResult *GAR;
     std::list<DeletionCallbackHandle>::iterator I;
 
     DeletionCallbackHandle(GlobalsAAResult &GAR, Value *V)
-        : CallbackVH(V), GAR(GAR) {}
+        : CallbackVH(V), GAR(&GAR) {}
 
     void deleted() override;
   };
