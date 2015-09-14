@@ -1242,8 +1242,7 @@ private:
     /// applied to the entry point of the function to get the linked address.
     ///
     /// \returns the root of the cloned tree or null if nothing was selected.
-    DIE *cloneDIE(RelocationManager &RelocMgr,
-                  const DWARFDebugInfoEntryMinimal &InputDIE, CompileUnit &U,
+    DIE *cloneDIE(const DWARFDebugInfoEntryMinimal &InputDIE, CompileUnit &U,
                   int64_t PCOffset, uint32_t OutOffset, unsigned Flags);
 
     /// Construct the output DIE tree by cloning the DIEs we
@@ -2564,8 +2563,8 @@ shouldSkipAttribute(DWARFAbbreviationDeclaration::AttributeSpec AttrSpec,
 }
 
 DIE *DwarfLinker::DIECloner::cloneDIE(
-    RelocationManager &RelocMgr, const DWARFDebugInfoEntryMinimal &InputDIE,
-    CompileUnit &Unit, int64_t PCOffset, uint32_t OutOffset, unsigned Flags) {
+    const DWARFDebugInfoEntryMinimal &InputDIE, CompileUnit &Unit,
+    int64_t PCOffset, uint32_t OutOffset, unsigned Flags) {
   DWARFUnit &U = Unit.getOrigUnit();
   unsigned Idx = U.getDIEIndex(&InputDIE);
   CompileUnit::DIEInfo &Info = Unit.getInfo(Idx);
@@ -2703,8 +2702,7 @@ DIE *DwarfLinker::DIECloner::cloneDIE(
   // Recursively clone children.
   for (auto *Child = InputDIE.getFirstChild(); Child && !Child->isNULL();
        Child = Child->getSibling()) {
-    if (DIE *Clone =
-            cloneDIE(RelocMgr, *Child, Unit, PCOffset, OutOffset, Flags)) {
+    if (DIE *Clone = cloneDIE(*Child, Unit, PCOffset, OutOffset, Flags)) {
       Die->addChild(Clone);
       OutOffset = Clone->getOffset() + Clone->getSize();
     }
@@ -3080,8 +3078,8 @@ void DwarfLinker::DIECloner::cloneAllCompileUnits(
   for (auto &CurrentUnit : CompileUnits) {
     const auto *InputDIE = CurrentUnit.getOrigUnit().getUnitDIE();
     CurrentUnit.setStartOffset(Linker.OutputDebugInfoSize);
-    DIE *OutputDIE = cloneDIE(RelocMgr, *InputDIE, CurrentUnit,
-                              0 /* PC offset */, 11 /* Unit Header size */, 0);
+    DIE *OutputDIE = cloneDIE(*InputDIE, CurrentUnit, 0 /* PC offset */,
+                              11 /* Unit Header size */, 0);
     CurrentUnit.setOutputUnitDIE(OutputDIE);
     Linker.OutputDebugInfoSize = CurrentUnit.computeNextUnitOffset();
     if (Linker.Options.NoOutput)
