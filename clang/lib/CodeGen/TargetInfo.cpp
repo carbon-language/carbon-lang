@@ -624,7 +624,6 @@ ABIArgInfo WebAssemblyABIInfo::classifyArgumentType(QualType Ty) const {
     // though watch out for things like bitfields.
     if (const Type *SeltTy = isSingleElementStruct(Ty, getContext()))
       return ABIArgInfo::getDirect(CGT.ConvertType(QualType(SeltTy, 0)));
-    return getNaturalAlignIndirect(Ty);
   }
 
   // Otherwise just do the default thing.
