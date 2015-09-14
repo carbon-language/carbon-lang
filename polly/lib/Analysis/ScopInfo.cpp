@@ -1663,6 +1663,15 @@ getDomainForBlock(BasicBlock *BB, DenseMap<BasicBlock *, isl_set *> &DomainMap,
   return getDomainForBlock(R->getEntry(), DomainMap, RI);
 }
 
+static bool containsErrorBlock(RegionNode *RN) {
+  if (!RN->isSubRegion())
+    return isErrorBlock(*RN->getNodeAs<BasicBlock>());
+  for (BasicBlock *BB : RN->getNodeAs<Region>()->blocks())
+    if (isErrorBlock(*BB))
+      return true;
+  return false;
+}
+
 void Scop::propagateDomainConstraints(Region *R, LoopInfo &LI,
                                       ScopDetection &SD, DominatorTree &DT) {
   // Iterate over the region R and propagate the domain constrains from the
@@ -1751,7 +1760,7 @@ void Scop::propagateDomainConstraints(Region *R, LoopInfo &LI,
     Domain = isl_set_intersect(Domain, PredDom);
 
     // Add assumptions for error blocks.
-    if (isErrorBlock(*BB)) {
+    if (containsErrorBlock(RN)) {
       IsOptimized = true;
       isl_set *DomPar = isl_set_params(isl_set_copy(Domain));
       addAssumption(isl_set_complement(DomPar));

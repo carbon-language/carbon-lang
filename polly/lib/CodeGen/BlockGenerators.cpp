@@ -1032,9 +1032,17 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
   // region control flow by hand after all blocks have been copied.
   for (BasicBlock *BB : SeenBlocks) {
 
-    BranchInst *BI = cast<BranchInst>(BB->getTerminator());
-
     BasicBlock *BBCopy = BlockMap[BB];
+    TerminatorInst *TI = BB->getTerminator();
+    if (isa<UnreachableInst>(TI)) {
+      while (!BBCopy->empty())
+        BBCopy->begin()->eraseFromParent();
+      new UnreachableInst(BBCopy->getContext(), BBCopy);
+      continue;
+    }
+
+    BranchInst *BI = cast<BranchInst>(TI);
+
     Instruction *BICopy = BBCopy->getTerminator();
 
     ValueMapT &RegionMap = RegionMaps[BBCopy];
