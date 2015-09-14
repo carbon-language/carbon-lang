@@ -406,12 +406,17 @@ void NullabilityChecker::reportBugIfPreconditionHolds(
 /// Cleaning up the program state.
 void NullabilityChecker::checkDeadSymbols(SymbolReaper &SR,
                                           CheckerContext &C) const {
+  if (!SR.hasDeadSymbols())
+    return;
+
   ProgramStateRef State = C.getState();
   NullabilityMapTy Nullabilities = State->get<NullabilityMap>();
   for (NullabilityMapTy::iterator I = Nullabilities.begin(),
                                   E = Nullabilities.end();
        I != E; ++I) {
-    if (!SR.isLiveRegion(I->first)) {
+    const auto *Region = I->first->getAs<SymbolicRegion>();
+    assert(Region && "Non-symbolic region is tracked.");
+    if (SR.isDead(Region->getSymbol())) {
       State = State->remove<NullabilityMap>(I->first);
     }
   }
