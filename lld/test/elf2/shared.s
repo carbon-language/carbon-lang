@@ -6,6 +6,38 @@
 // RUN: llvm-readobj --program-headers --dynamic-table -t -s -dyn-symbols -section-data %t | FileCheck %s
 // REQUIRES: x86
 
+
+// test that .hash is linked to .dynsym
+// SO:        Index: 4
+// SO-NEXT:   Name: .dynsym
+// SO-NEXT:   Type: SHT_DYNSYM
+// SO-NEXT:   Flags [
+// SO-NEXT:     SHF_ALLOC
+// SO-NEXT:   ]
+// SO-NEXT:   Address:
+// SO-NEXT:   Offset:
+// SO-NEXT:   Size:
+// SO-NEXT:   Link:
+// SO-NEXT:   Info:
+// SO-NEXT:   AddressAlignment: 4
+// SO-NEXT:   EntrySize: 16
+// SO-NEXT: }
+// SO-NEXT: Section {
+// SO-NEXT:   Index: 5
+// SO-NEXT:   Name: .hash
+// SO-NEXT:   Type: SHT_HASH
+// SO-NEXT:   Flags [
+// SO-NEXT:     SHF_ALLOC
+// SO-NEXT:   ]
+// SO-NEXT:   Address:
+// SO-NEXT:   Offset:
+// SO-NEXT:   Size: 0
+// SO-NEXT:   Link: 4
+// SO-NEXT:   Info: 0
+// SO-NEXT:   AddressAlignment: 4
+// SO-NEXT:   EntrySize: 4
+// SO-NEXT: }
+
 // Make sure .symtab is properly aligned.
 // SO:      Name: .symtab
 // SO-NEXT: Type: SHT_SYMTAB

@@ -200,6 +200,28 @@ private:
 };
 
 template <class ELFT>
+class HashTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
+  typedef typename ELFFile<ELFT>::Elf_Word Elf_Word;
+
+public:
+  HashTableSection(const SymbolTableSection<ELFT> &DynSymSec)
+      : OutputSectionBase<ELFT::Is64Bits>(".hash", SHT_HASH, SHF_ALLOC),
+        DynSymSec(DynSymSec) {
+    this->Header.sh_entsize = sizeof(Elf_Word);
+    this->Header.sh_addralign = sizeof(Elf_Word);
+  }
+
+  void finalize() override {
+    this->Header.sh_link = DynSymSec.getSectionIndex();
+  }
+
+  void writeTo(uint8_t *Buf) override {}
+
+private:
+  const SymbolTableSection<ELFT> &DynSymSec;
+};
+
+template <class ELFT>
 class DynamicSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef OutputSectionBase<ELFT::Is64Bits> Base;
   typedef typename Base::HeaderT HeaderT;
@@ -293,7 +315,8 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   Writer(SymbolTable *T)
       : StrTabSec(false), DynStrSec(true), SymTabSec(*this, *T, StrTabSec),
-        DynSymSec(*this, *T, DynStrSec), DynamicSec(*T, DynSymSec) {}
+        DynSymSec(*this, *T, DynStrSec), DynamicSec(*T, DynSymSec),
+        HashSec(DynSymSec) {}
   void run();
 
   const OutputSection<ELFT> &getBSS() const {
@@ -333,6 +356,8 @@ private:
   SymbolTableSection<ELFT> DynSymSec;
 
   DynamicSection<ELFT> DynamicSec;
+
+  HashTableSection<ELFT> HashSec;
 
   InterpSection<ELFT::Is64Bits> InterpSec;
 
@@ -650,6 +675,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     if (needsInterpSection())
       OutputSections.push_back(&InterpSec);
     OutputSections.push_back(&DynSymSec);
+    OutputSections.push_back(&HashSec);
     OutputSections.push_back(&DynamicSec);
     OutputSections.push_back(&DynStrSec);
   }
