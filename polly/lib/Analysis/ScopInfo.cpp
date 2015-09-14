@@ -1518,6 +1518,9 @@ void Scop::buildDomains(Region *R, LoopInfo &LI, ScopDetection &SD,
 
   DomainMap[EntryBB] = S;
 
+  if (SD.isNonAffineSubRegion(R, R))
+    return;
+
   buildDomainsWithBranchConstraints(R, LI, SD, DT);
   addLoopBoundsToHeaderDomains(LI, SD, DT);
   propagateDomainConstraints(R, LI, SD, DT);
@@ -2532,6 +2535,15 @@ ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R) {
 void Scop::buildSchedule(
     Region *R, LoopInfo &LI, ScopDetection &SD,
     DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules) {
+
+  if (SD.isNonAffineSubRegion(R, &getRegion())) {
+    auto *Stmt = addScopStmt(nullptr, R);
+    auto *UDomain = isl_union_set_from_set(Stmt->getDomain());
+    auto *StmtSchedule = isl_schedule_from_domain(UDomain);
+    auto &LSchedulePair = LoopSchedules[nullptr];
+    LSchedulePair.first = StmtSchedule;
+    return;
+  }
 
   ReversePostOrderTraversal<Region *> RTraversal(R);
   for (auto *RN : RTraversal) {
