@@ -11,13 +11,12 @@ class ConstVariableTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
-    @unittest2.expectedFailure(13314878)
     def test_with_dsym_and_run_command(self):
         """Test interpreted and JITted expressions on constant values."""
         self.buildDsym()
         self.const_variable()
 
-    @expectedFailureClang('13314878') # This test works with gcc, but fails with newer version of clang on Linux due to a clang issue. Fails for icc as well. Bug number TDB.
+    @expectedFailureAll(oslist=["linux"], compiler=["clang", "icc"])
     @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     @expectedFailureWindows("llvm.org/pr24490: We shouldn't be using platform-specific names like `getpid` in tests")
     @dwarf_test

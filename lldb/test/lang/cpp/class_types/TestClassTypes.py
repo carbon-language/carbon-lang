@@ -63,7 +63,6 @@ class ClassTypesTestCase(TestBase):
     # rdar://problem/8557478
     # test/class_types test failures: runCmd: expr this->m_c_int
     @dsym_test
-    @expectedFailureDarwin(16362674)
     def test_with_dsym_and_constructor_name(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDsym()
@@ -73,7 +72,6 @@ class ClassTypesTestCase(TestBase):
     # test/class_types test failures: runCmd: expr this->m_c_int
     @dwarf_test
     @expectedFailureFreeBSD('llvm.org/pr14540')
-    @expectedFailureDarwin(16362674)
     def test_with_dwarf_and_constructor_name (self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDwarf()
