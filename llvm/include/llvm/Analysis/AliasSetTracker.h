@@ -48,7 +48,7 @@ class AliasSet : public ilist_node<AliasSet> {
         AAInfo(DenseMapInfo<AAMDNodes>::getEmptyKey()) {}
 
     Value *getValue() const { return Val; }
-    
+
     PointerRec *getNext() const { return NextInList; }
     bool hasAliasSet() const { return AS != nullptr; }
 
@@ -156,7 +156,7 @@ class AliasSet : public ilist_node<AliasSet> {
     assert(i < UnknownInsts.size());
     return UnknownInsts[i];
   }
-  
+
 public:
   /// Accessors...
   bool isRef() const { return Access & RefAccess; }
@@ -347,7 +347,7 @@ public:
   bool remove(Instruction *I);
   void remove(AliasSet &AS);
   bool removeUnknown(Instruction *I);
-  
+
   void clear();
 
   /// getAliasSets - Return the alias sets that are active.

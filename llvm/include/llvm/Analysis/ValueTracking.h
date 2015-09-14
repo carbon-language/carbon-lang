@@ -126,12 +126,12 @@ namespace llvm {
                        bool LookThroughSExt = false,
                        unsigned Depth = 0);
 
-  /// CannotBeNegativeZero - Return true if we can prove that the specified FP 
+  /// CannotBeNegativeZero - Return true if we can prove that the specified FP
   /// value is never equal to -0.0.
   ///
   bool CannotBeNegativeZero(const Value *V, unsigned Depth = 0);
 
-  /// CannotBeOrderedLessThanZero - Return true if we can prove that the 
+  /// CannotBeOrderedLessThanZero - Return true if we can prove that the
   /// specified FP value is either a NaN or never less than 0.0.
   ///
   bool CannotBeOrderedLessThanZero(const Value *V, unsigned Depth = 0);
@@ -142,7 +142,7 @@ namespace llvm {
   /// i16 0xF0F0, double 0.0 etc.  If the value can't be handled with a repeated
   /// byte store (e.g. i16 0x1234), return null.
   Value *isBytewiseValue(Value *V);
-    
+
   /// FindInsertedValue - Given an aggregrate and an sequence of indices, see if
   /// the scalar value indexed is already around as a register, for example if
   /// it were inserted directly into the aggregrate.
@@ -164,7 +164,7 @@ namespace llvm {
     return GetPointerBaseWithConstantOffset(const_cast<Value *>(Ptr), Offset,
                                             DL);
   }
-  
+
   /// getConstantStringInfo - This function computes the length of a
   /// null-terminated C string pointed to by V.  If successful, it returns true
   /// and returns the string in Str.  If unsuccessful, it returns false.  This
@@ -245,7 +245,7 @@ namespace llvm {
                                           const Instruction *CtxI = nullptr,
                                           const DominatorTree *DT = nullptr,
                                           const TargetLibraryInfo *TLI = nullptr);
-  
+
   /// isSafeToSpeculativelyExecute - Return true if the instruction does not
   /// have any effects besides calculating the result and does not have
   /// undefined behavior.

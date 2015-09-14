@@ -62,8 +62,8 @@ Intrinsic::ID getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI);
 /// pointer.
 unsigned getGEPInductionOperand(const GetElementPtrInst *Gep);
 
-/// \brief If the argument is a GEP, then returns the operand identified by 
-/// getGEPInductionOperand. However, if there is some other non-loop-invariant 
+/// \brief If the argument is a GEP, then returns the operand identified by
+/// getGEPInductionOperand. However, if there is some other non-loop-invariant
 /// operand, it returns that instead.
 Value *stripGetElementPtr(Value *Ptr, ScalarEvolution *SE, Loop *Lp);
 

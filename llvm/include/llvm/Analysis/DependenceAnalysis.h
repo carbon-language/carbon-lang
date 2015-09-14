@@ -71,7 +71,7 @@ namespace llvm {
   class Dependence {
   protected:
     Dependence(const Dependence &) = default;
-    
+
     // FIXME: When we move to MSVC 2015 as the base compiler for Visual Studio
     // support, uncomment this line to allow a defaulted move constructor for
     // Dependence. Currently, FullDependence relies on the copy constructor, but
@@ -188,25 +188,25 @@ namespace llvm {
     const Dependence *getNextPredecessor() const {
       return NextPredecessor;
     }
-    
+
     /// getNextSuccessor - Returns the value of the NextSuccessor
     /// field.
     const Dependence *getNextSuccessor() const {
       return NextSuccessor;
     }
-    
+
     /// setNextPredecessor - Sets the value of the NextPredecessor
     /// field.
     void setNextPredecessor(const Dependence *pred) {
       NextPredecessor = pred;
     }
-    
+
     /// setNextSuccessor - Sets the value of the NextSuccessor
     /// field.
     void setNextSuccessor(const Dependence *succ) {
       NextSuccessor = succ;
     }
-    
+
     /// dump - For debugging purposes, dumps a dependence to OS.
     ///
     void dump(raw_ostream &OS) const;
@@ -534,10 +534,10 @@ namespace llvm {
     /// in LoopNest.
     bool isLoopInvariant(const SCEV *Expression, const Loop *LoopNest) const;
 
-    /// Makes sure all subscript pairs share the same integer type by 
+    /// Makes sure all subscript pairs share the same integer type by
     /// sign-extending as necessary.
     /// Sign-extending a subscript is safe because getelementptr assumes the
-    /// array subscripts are signed. 
+    /// array subscripts are signed.
     void unifySubscriptType(ArrayRef<Subscript *> Pairs);
 
     /// removeMatchingExtensions - Examines a subscript pair.

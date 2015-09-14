@@ -30,7 +30,7 @@ class CallGraphNode;
 class CallGraph;
 class PMStack;
 class CallGraphSCC;
-  
+
 class CallGraphSCCPass : public Pass {
 public:
   explicit CallGraphSCCPass(char &pid) : Pass(PT_CallGraphSCC, pid) {}
@@ -79,24 +79,24 @@ public:
   void getAnalysisUsage(AnalysisUsage &Info) const override;
 };
 
-/// CallGraphSCC - This is a single SCC that a CallGraphSCCPass is run on. 
+/// CallGraphSCC - This is a single SCC that a CallGraphSCCPass is run on.
 class CallGraphSCC {
   void *Context; // The CGPassManager object that is vending this.
   std::vector<CallGraphNode*> Nodes;
 public:
   CallGraphSCC(void *context) : Context(context) {}
-  
+
   void initialize(CallGraphNode*const*I, CallGraphNode*const*E) {
     Nodes.assign(I, E);
   }
-  
+
   bool isSingular() const { return Nodes.size() == 1; }
   unsigned size() const { return Nodes.size(); }
-  
+
   /// ReplaceNode - This informs the SCC and the pass manager that the specified
   /// Old node has been deleted, and New is to be used in its place.
   void ReplaceNode(CallGraphNode *Old, CallGraphNode *New);
-  
+
   typedef std::vector<CallGraphNode*>::const_iterator iterator;
   iterator begin() const { return Nodes.begin(); }
   iterator end() const { return Nodes.end(); }

@@ -370,7 +370,7 @@ namespace llvm {
     ///
     /// Warning: For a volatile query instruction, the dependencies will be
     /// accurate, and thus usable for reordering, but it is never legal to
-    /// remove the query instruction.  
+    /// remove the query instruction.
     ///
     /// This method assumes the pointer has a "NonLocal" dependency within
     /// QueryInst's parent basic block.
@@ -398,7 +398,7 @@ namespace llvm {
     /// location depends.  If isLoad is true, this routine ignores may-aliases
     /// with read-only operations.  If isLoad is false, this routine ignores
     /// may-aliases with reads from read-only locations. If possible, pass
-    /// the query instruction as well; this function may take advantage of 
+    /// the query instruction as well; this function may take advantage of
     /// the metadata annotated to the query instruction to refine the result.
     ///
     /// Note that this is an uncached query, and thus may be inefficient.
