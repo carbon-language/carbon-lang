@@ -314,9 +314,8 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Phdr Elf_Phdr;
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   Writer(SymbolTable *T)
-      : StrTabSec(false), DynStrSec(true), SymTabSec(*this, *T, StrTabSec),
-        DynSymSec(*this, *T, DynStrSec), DynamicSec(*T, DynSymSec),
-        HashSec(DynSymSec) {}
+      : SymTabSec(*this, *T, StrTabSec), DynSymSec(*this, *T, DynStrSec),
+        DynamicSec(*T, DynSymSec), HashSec(DynSymSec) {}
   void run();
 
   const OutputSection<ELFT> &getBSS() const {
@@ -349,8 +348,8 @@ private:
   uintX_t SectionHeaderOff;
   unsigned NumPhdrs;
 
-  StringTableSection<ELFT::Is64Bits> StrTabSec;
-  StringTableSection<ELFT::Is64Bits> DynStrSec;
+  StringTableSection<ELFT::Is64Bits> StrTabSec = { /*dynamic=*/false };
+  StringTableSection<ELFT::Is64Bits> DynStrSec = { /*dynamic=*/true };
 
   SymbolTableSection<ELFT> SymTabSec;
   SymbolTableSection<ELFT> DynSymSec;
