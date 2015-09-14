@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/DataFormatters/CoreMedia.h"
+#include "CoreMedia.h"
 
 #include "lldb/Core/Flags.h"
 #include "lldb/Symbol/TypeSystem.h"

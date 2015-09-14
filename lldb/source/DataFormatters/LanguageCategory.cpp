@@ -50,7 +50,7 @@ LanguageCategory::Get (ValueObject& valobj,
     if (type_name)
     {
         if (m_format_cache.GetFormat(type_name, format_sp))
-            return true;
+            return format_sp.get() != nullptr;
     }
     bool result = m_category_sp->Get(valobj, matches, format_sp);
     if (type_name && (!format_sp || !format_sp->NonCacheable()))
@@ -76,7 +76,7 @@ LanguageCategory::Get (ValueObject& valobj,
     if (type_name)
     {
         if (m_format_cache.GetSummary(type_name, format_sp))
-            return true;
+            return format_sp.get() != nullptr;
     }
     bool result = m_category_sp->Get(valobj, matches, format_sp);
     if (type_name && (!format_sp || !format_sp->NonCacheable()))
@@ -102,7 +102,7 @@ LanguageCategory::Get (ValueObject& valobj,
     if (type_name)
     {
         if (m_format_cache.GetSynthetic(type_name, format_sp))
-            return true;
+            return format_sp.get() != nullptr;
     }
     bool result = m_category_sp->Get(valobj, matches, format_sp);
     if (type_name && (!format_sp || !format_sp->NonCacheable()))
@@ -128,7 +128,7 @@ LanguageCategory::Get (ValueObject& valobj,
     if (type_name)
     {
         if (m_format_cache.GetValidator(type_name, format_sp))
-            return true;
+            return format_sp.get() != nullptr;
     }
     bool result = m_category_sp->Get(valobj, matches, format_sp);
     if (type_name && (!format_sp || !format_sp->NonCacheable()))

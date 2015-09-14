@@ -140,6 +140,9 @@ public:
         return lldb::eLanguageTypeObjC;
     }
     
+    lldb::TypeCategoryImplSP
+    GetFormatters () override;
+    
     std::vector<ConstString>
     GetPossibleFormattersMatches (ValueObject& valobj, lldb::DynamicValueType use_dynamic) override;
     

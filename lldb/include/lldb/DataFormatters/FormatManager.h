@@ -290,13 +290,7 @@ private:
     
     ConstString m_default_category_name;
     ConstString m_system_category_name;
-    ConstString m_objc_category_name;
-    ConstString m_corefoundation_category_name;
-    ConstString m_coregraphics_category_name;
-    ConstString m_coreservices_category_name;
     ConstString m_vectortypes_category_name;
-    ConstString m_appkit_category_name;
-    ConstString m_coremedia_category_name;
     
     HardcodedFormatterFinders<TypeFormatImpl> m_hardcoded_formats;
     HardcodedFormatterFinders<TypeSummaryImpl> m_hardcoded_summaries;
@@ -321,19 +315,17 @@ private:
         return m_categories_map;
     }
     
-    // WARNING: these are temporary functions that setup formatters
-    // while a few of these actually should be globally available and setup by LLDB itself
-    // most would actually belong to the users' lldbinit file or to some other form of configurable
-    // storage
+    // These functions are meant to initialize formatters that are very low-level/global in nature
+    // and do not naturally belong in any language. The intent is that most formatters go in
+    // language-specific categories. Eventually, the runtimes should also be allowed to vend their
+    // own formatters, and then one could put formatters that depend on specific library load events
+    // in the language runtimes, on an as-needed basis
     void
     LoadSystemFormatters ();
     
     void
-    LoadObjCFormatters ();
+    LoadVectorFormatters ();
 
-    void
-    LoadCoreMediaFormatters ();
-    
     void
     LoadHardcodedFormatters ();
 };
