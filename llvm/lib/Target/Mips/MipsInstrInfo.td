@@ -451,6 +451,14 @@ def MipsMemAsmOperand : AsmOperandClass {
   let ParserMethod = "parseMemOperand";
 }
 
+def MipsMemSimm9AsmOperand : AsmOperandClass {
+  let Name = "MemOffsetSimm9";
+  let SuperClasses = [MipsMemAsmOperand];
+  let RenderMethod = "addMemOperands";
+  let ParserMethod = "parseMemOperand";
+  let PredicateMethod = "isMemWithSimmOffset<9>";
+}
+
 def MipsMemSimm11AsmOperand : AsmOperandClass {
   let Name = "MemOffsetSimm11";
   let SuperClasses = [MipsMemAsmOperand];
@@ -501,6 +509,7 @@ def mem_msa : mem_generic {
 def mem_simm9 : mem_generic {
   let MIOperandInfo = (ops ptr_rc, simm9);
   let EncoderMethod = "getMemEncoding";
+  let ParserMatchClass = MipsMemSimm9AsmOperand;
 }
 
 def mem_simm11 : mem_generic {

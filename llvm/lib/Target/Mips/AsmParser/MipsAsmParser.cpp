@@ -944,9 +944,6 @@ public:
     return isMem() && dyn_cast<MCConstantExpr>(getMemOff());
   }
   template <unsigned Bits> bool isMemWithSimmOffset() const {
-    return isMem() && isConstantMemOff() && isInt<Bits>(getConstantMemOff());
-  }
-  template <unsigned Bits> bool isMemWithSimmOffsetGPR() const {
     return isMem() && isConstantMemOff() && isInt<Bits>(getConstantMemOff())
       && getMemBase()->isGPRAsmReg();
   }

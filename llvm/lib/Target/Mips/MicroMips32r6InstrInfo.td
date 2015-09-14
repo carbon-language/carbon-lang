@@ -187,26 +187,6 @@ class CVT_S_L_MMR6_ENC : POOL32F_CVT_DS_FM<"cvt.s.l", 2, 0b1101101>;
 
 //===----------------------------------------------------------------------===//
 //
-// Operand Definitions
-//
-//===----------------------------------------------------------------------===//
-
-def MipsMemSimm9GPRAsmOperand : AsmOperandClass {
-  let Name = "MemOffsetSimm9GPR";
-  let SuperClasses = [MipsMemAsmOperand];
-  let RenderMethod = "addMemOperands";
-  let ParserMethod = "parseMemOperand";
-  let PredicateMethod = "isMemWithSimmOffsetGPR<9>";
-}
-
-def mem_simm9gpr : mem_generic {
-  let MIOperandInfo = (ops ptr_rc, simm9);
-  let EncoderMethod = "getMemEncoding";
-  let ParserMatchClass = MipsMemSimm9GPRAsmOperand;
-}
-
-//===----------------------------------------------------------------------===//
-//
 // Instruction Descriptions
 //
 //===----------------------------------------------------------------------===//
@@ -407,7 +387,7 @@ class SWE_MMR6_DESC_BASE<string opstr, DAGOperand RO, DAGOperand MO,
   let mayStore = 1;
 }
 class SW_MMR6_DESC : Store<"sw", GPR32Opnd>;
-class SWE_MMR6_DESC : SWE_MMR6_DESC_BASE<"swe", GPR32Opnd, mem_simm9gpr>;
+class SWE_MMR6_DESC : SWE_MMR6_DESC_BASE<"swe", GPR32Opnd, mem_simm9>;
 
 /// Floating Point Instructions
 class FARITH_MMR6_DESC_BASE<string instr_asm, RegisterOperand RC,
