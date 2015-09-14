@@ -271,6 +271,22 @@ private:
   // Get the alignment operand for a NEON VLD or VST instruction.
   SDValue GetVLDSTAlign(SDValue Align, SDLoc dl, unsigned NumVecs,
                         bool is64BitVector);
+
+  /// Returns the number of instructions required to materialize the given
+  /// constant in a register, or 3 if a literal pool load is needed.
+  unsigned ConstantMaterializationCost(unsigned Val) const;
+
+  /// Checks if N is a multiplication by a constant where we can extract out a
+  /// power of two from the constant so that it can be used in a shift, but only
+  /// if it simplifies the materialization of the constant. Returns true if it
+  /// is, and assigns to PowerOfTwo the power of two that should be extracted
+  /// out and to NewMulConst the new constant to be multiplied by.
+  bool canExtractShiftFromMul(const SDValue &N, unsigned MaxShift,
+                              unsigned &PowerOfTwo, SDValue &NewMulConst) const;
+
+  /// Replace N with M in CurDAG, in a way that also ensures that M gets
+  /// selected when N would have been selected.
+  void replaceDAGValue(const SDValue &N, SDValue M);
 };
 }
 
@@ -464,12 +480,82 @@ bool ARMDAGToDAGISel::isShifterOpProfitable(const SDValue &Shift,
          (ShAmt == 2 || (Subtarget->isSwift() && ShAmt == 1));
 }
 
+unsigned ARMDAGToDAGISel::ConstantMaterializationCost(unsigned Val) const {
+  if (Subtarget->isThumb()) {
+    if (Val <= 255) return 1;                               // MOV
+    if (Subtarget->hasV6T2Ops() && Val <= 0xffff) return 1; // MOVW
+    if (~Val <= 255) return 2;                              // MOV + MVN
+    if (ARM_AM::isThumbImmShiftedVal(Val)) return 2;        // MOV + LSL
+  } else {
+    if (ARM_AM::getSOImmVal(Val) != -1) return 1;           // MOV
+    if (ARM_AM::getSOImmVal(~Val) != -1) return 1;          // MVN
+    if (Subtarget->hasV6T2Ops() && Val <= 0xffff) return 1; // MOVW
+    if (ARM_AM::isSOImmTwoPartVal(Val)) return 2;           // two instrs
+  }
+  if (Subtarget->useMovt(*MF)) return 2; // MOVW + MOVT
+  return 3; // Literal pool load
+}
+
+bool ARMDAGToDAGISel::canExtractShiftFromMul(const SDValue &N,
+                                             unsigned MaxShift,
+                                             unsigned &PowerOfTwo,
+                                             SDValue &NewMulConst) const {
+  assert(N.getOpcode() == ISD::MUL);
+  assert(MaxShift > 0);
+
+  // If the multiply is used in more than one place then changing the constant
+  // will make other uses incorrect, so don't.
+  if (!N.hasOneUse()) return false;
+  // Check if the multiply is by a constant
+  ConstantSDNode *MulConst = dyn_cast<ConstantSDNode>(N.getOperand(1));
+  if (!MulConst) return false;
+  // If the constant is used in more than one place then modifying it will mean
+  // we need to materialize two constants instead of one, which is a bad idea.
+  if (!MulConst->hasOneUse()) return false;
+  unsigned MulConstVal = MulConst->getZExtValue();
+  if (MulConstVal == 0) return false;
+
+  // Find the largest power of 2 that MulConstVal is a multiple of
+  PowerOfTwo = MaxShift;
+  while ((MulConstVal % (1 << PowerOfTwo)) != 0) {
+    --PowerOfTwo;
+    if (PowerOfTwo == 0) return false;
+  }
+
+  // Only optimise if the new cost is better
+  unsigned NewMulConstVal = MulConstVal / (1 << PowerOfTwo);
+  NewMulConst = CurDAG->getConstant(NewMulConstVal, SDLoc(N), MVT::i32);
+  unsigned OldCost = ConstantMaterializationCost(MulConstVal);
+  unsigned NewCost = ConstantMaterializationCost(NewMulConstVal);
+  return NewCost < OldCost;
+}
+
+void ARMDAGToDAGISel::replaceDAGValue(const SDValue &N, SDValue M) {
+  CurDAG->RepositionNode(N.getNode(), M.getNode());
+  CurDAG->ReplaceAllUsesWith(N, M);
+}
+
 bool ARMDAGToDAGISel::SelectImmShifterOperand(SDValue N,
                                               SDValue &BaseReg,
                                               SDValue &Opc,
                                               bool CheckProfitability) {
   if (DisableShifterOp)
     return false;
+
+  // If N is a multiply-by-constant and it's profitable to extract a shift and
+  // use it in a shifted operand do so.
+  if (N.getOpcode() == ISD::MUL) {
+    unsigned PowerOfTwo = 0;
+    SDValue NewMulConst;
+    if (canExtractShiftFromMul(N, 31, PowerOfTwo, NewMulConst)) {
+      replaceDAGValue(N.getOperand(1), NewMulConst);
+      BaseReg = N;
+      Opc = CurDAG->getTargetConstant(ARM_AM::getSORegOpc(ARM_AM::lsl,
+                                                          PowerOfTwo),
+                                      SDLoc(N), MVT::i32);
+      return true;
+    }
+  }
 
   ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOpcode());
 
@@ -652,6 +738,18 @@ bool ARMDAGToDAGISel::SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset,
       } else {
         ShOpcVal = ARM_AM::no_shift;
       }
+    }
+  }
+
+  // If Offset is a multiply-by-constant and it's profitable to extract a shift
+  // and use it in a shifted operand do so.
+  if (Offset.getOpcode() == ISD::MUL) {
+    unsigned PowerOfTwo = 0;
+    SDValue NewMulConst;
+    if (canExtractShiftFromMul(Offset, 31, PowerOfTwo, NewMulConst)) {
+      replaceDAGValue(Offset.getOperand(1), NewMulConst);
+      ShAmt = PowerOfTwo;
+      ShOpcVal = ARM_AM::lsl;
     }
   }
 
@@ -1311,6 +1409,17 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue N,
       else {
         ShAmt = 0;
       }
+    }
+  }
+
+  // If OffReg is a multiply-by-constant and it's profitable to extract a shift
+  // and use it in a shifted operand do so.
+  if (OffReg.getOpcode() == ISD::MUL) {
+    unsigned PowerOfTwo = 0;
+    SDValue NewMulConst;
+    if (canExtractShiftFromMul(OffReg, 3, PowerOfTwo, NewMulConst)) {
+      replaceDAGValue(OffReg.getOperand(1), NewMulConst);
+      ShAmt = PowerOfTwo;
     }
   }
 
@@ -2392,25 +2501,8 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   }
   case ISD::Constant: {
     unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
-    bool UseCP = true;
-    if (Subtarget->useMovt(*MF))
-      // Thumb2-aware targets have the MOVT instruction, so all immediates can
-      // be done with MOV + MOVT, at worst.
-      UseCP = false;
-    else {
-      if (Subtarget->isThumb()) {
-        UseCP = (Val > 255 &&                                  // MOV
-                 ~Val > 255 &&                                 // MOV + MVN
-                 !ARM_AM::isThumbImmShiftedVal(Val) &&         // MOV + LSL
-                 !(Subtarget->hasV6T2Ops() && Val <= 0xffff)); // MOVW
-      } else
-        UseCP = (ARM_AM::getSOImmVal(Val) == -1 &&             // MOV
-                 ARM_AM::getSOImmVal(~Val) == -1 &&            // MVN
-                 !ARM_AM::isSOImmTwoPartVal(Val) &&            // two instrs.
-                 !(Subtarget->hasV6T2Ops() && Val <= 0xffff)); // MOVW
-    }
-
-    if (UseCP) {
+    // If we can't materialize the constant we need to use a literal pool
+    if (ConstantMaterializationCost(Val) > 2) {
       SDValue CPIdx = CurDAG->getTargetConstantPool(
           ConstantInt::get(Type::getInt32Ty(*CurDAG->getContext()), Val),
           TLI->getPointerTy(CurDAG->getDataLayout()));
