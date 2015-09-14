@@ -136,6 +136,11 @@ public:
   };
 
   NullabilityChecksFilter Filter;
+  // When set to false no nullability information will be tracked in
+  // NullabilityMap. It is possible to catch errors like passing a null pointer
+  // to a callee that expects nonnull argument without the information that is
+  // stroed in the NullabilityMap. This is an optimization.
+  DefaultBool NeedTracking;
 
 private:
   class NullabilityBugVisitor
@@ -188,6 +193,11 @@ private:
     }
     BR.emitReport(std::move(R));
   }
+
+  /// If an SVal wraps a region that should be tracked, it will return a pointer
+  /// to the wrapped region. Otherwise it will return a nullptr.
+  const SymbolicRegion *getTrackRegion(SVal Val,
+                                       bool CheckSuperRegion = false) const;
 };
 
 class NullabilityState {
@@ -246,10 +256,11 @@ static NullConstraint getNullConstraint(DefinedOrUnknownSVal Val,
   return NullConstraint::Unknown;
 }
 
-// If an SVal wraps a region that should be tracked, it will return a pointer
-// to the wrapped region. Otherwise it will return a nullptr.
-static const SymbolicRegion *getTrackRegion(SVal Val,
-                                            bool CheckSuperRegion = false) {
+const SymbolicRegion *
+NullabilityChecker::getTrackRegion(SVal Val, bool CheckSuperRegion) const {
+  if (!NeedTracking)
+    return nullptr;
+
   auto RegionSVal = Val.getAs<loc::MemRegionVal>();
   if (!RegionSVal)
     return nullptr;
@@ -941,15 +952,21 @@ void NullabilityChecker::printState(raw_ostream &Out, ProgramStateRef State,
   }
 }
 
-#define REGISTER_CHECKER(name)                                                 \
+#define REGISTER_CHECKER(name, trackingRequired)                               \
   void ento::register##name##Checker(CheckerManager &mgr) {                    \
     NullabilityChecker *checker = mgr.registerChecker<NullabilityChecker>();   \
     checker->Filter.Check##name = true;                                        \
     checker->Filter.CheckName##name = mgr.getCurrentCheckName();               \
+    checker->NeedTracking = checker->NeedTracking || trackingRequired;         \
   }
 
-REGISTER_CHECKER(NullPassedToNonnull)
-REGISTER_CHECKER(NullReturnedFromNonnull)
-REGISTER_CHECKER(NullableDereferenced)
-REGISTER_CHECKER(NullablePassedToNonnull)
-REGISTER_CHECKER(NullableReturnedFromNonnull)
+// The checks are likely to be turned on by default and it is possible to do
+// them without tracking any nullability related information. As an optimization
+// no nullability information will be tracked when only these two checks are
+// enables.
+REGISTER_CHECKER(NullPassedToNonnull, false)
+REGISTER_CHECKER(NullReturnedFromNonnull, false)
+
+REGISTER_CHECKER(NullableDereferenced, true)
+REGISTER_CHECKER(NullablePassedToNonnull, true)
+REGISTER_CHECKER(NullableReturnedFromNonnull, true)

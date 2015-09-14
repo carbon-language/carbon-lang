@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core.nullability -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.nullability -verify %s
 
 #define nil 0
 #define BOOL int

@@ -19,7 +19,7 @@ def Core : Package<"core">;
 def CoreBuiltin : Package<"builtin">, InPackage<Core>;
 def CoreUninitialized  : Package<"uninitialized">, InPackage<Core>;
 def CoreAlpha : Package<"core">, InPackage<Alpha>, Hidden;
-def Nullability : Package<"nullability">, InPackage<CoreAlpha>, Hidden;
+def Nullability : Package<"nullability">, InPackage<Alpha>, Hidden;
 
 def Cplusplus : Package<"cplusplus">;
 def CplusplusAlpha : Package<"cplusplus">, InPackage<Alpha>, Hidden;
@@ -153,7 +153,7 @@ def NullableReturnedFromNonnullChecker : Checker<"NullablePassedToNonnull">,
   HelpText<"Warns when a nullable pointer is returned from a function that has _Nonnull return type.">,
   DescFile<"NullabilityChecker.cpp">;
 
-} // end "alpha.core.nullability"
+} // end "alpha.nullability"
 
 //===----------------------------------------------------------------------===//
 // Evaluate "builtin" functions.
