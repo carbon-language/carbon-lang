@@ -1734,8 +1734,9 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
         C->setSelectionKind(llvm::Comdat::Largest);
     }
     VFTable = llvm::GlobalAlias::create(
-        cast<llvm::PointerType>(VTableGEP->getType()), VFTableLinkage,
-        VFTableName.str(), VTableGEP, &CGM.getModule());
+        cast<llvm::SequentialType>(VTableGEP->getType())->getElementType(),
+        /*AddressSpace=*/0, VFTableLinkage, VFTableName.str(), VTableGEP,
+        &CGM.getModule());
     VFTable->setUnnamedAddr(true);
   } else {
     // We don't need a GlobalAlias to be a symbol for the VTable if we won't
