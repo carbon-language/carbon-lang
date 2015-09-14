@@ -2114,7 +2114,7 @@ emitTaskPrivateMappingFunction(CodeGenModule &CGM, SourceLocation Loc,
       ".omp_task_privates_map.", &CGM.getModule());
   CGM.SetLLVMFunctionAttributes(/*D=*/nullptr, TaskPrivatesMapFnInfo,
                                 TaskPrivatesMap);
-  CGM.AddAlwaysInlineFunction(TaskPrivatesMap);
+  TaskPrivatesMap->addFnAttr(llvm::Attribute::AlwaysInline);
   CodeGenFunction CGF(CGM);
   CGF.disableDebugInfo();
   CGF.StartFunction(GlobalDecl(), C.VoidTy, TaskPrivatesMap,

@@ -489,8 +489,6 @@ private:
   /// MDNodes.
   llvm::DenseMap<QualType, llvm::Metadata *> MetadataIdMap;
 
-  llvm::SmallVector<llvm::Function*, 8> AlwaysInlineFunctions;
-
 public:
   CodeGenModule(ASTContext &C, const HeaderSearchOptions &headersearchopts,
                 const PreprocessorOptions &ppopts,
@@ -1133,8 +1131,6 @@ public:
   /// \breif Get the declaration of std::terminate for the platform.
   llvm::Constant *getTerminateFn();
 
-  void AddAlwaysInlineFunction(llvm::Function *Fn);
-
 private:
   llvm::Constant *
   GetOrCreateLLVMFunction(StringRef MangledName, llvm::Type *Ty, GlobalDecl D,
@@ -1229,12 +1225,6 @@ private:
 
   /// Emits target specific Metadata for global declarations.
   void EmitTargetMetadata();
-
-  /// Replaces alwaysinline functions with a pair of internal xxx.inlinefunction
-  /// for direct calls, and a stub for indirect calls, and rewrites all uses of
-  /// those.
-  void RewriteAlwaysInlineFunctions();
-  void RewriteAlwaysInlineFunction(llvm::Function *Fn);
 
   /// Emit the llvm.gcov metadata used to tell LLVM where to emit the .gcno and
   /// .gcda files in a way that persists in .bc files.
