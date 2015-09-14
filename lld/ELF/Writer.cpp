@@ -177,7 +177,7 @@ public:
   }
 
   void finalize() override {
-    this->Header.sh_size = (NumVisible + 1) * sizeof(Elf_Sym);
+    this->Header.sh_size = getNumSymbols() * sizeof(Elf_Sym);
     this->Header.sh_link = StrTabSec.getSectionIndex();
   }
 
@@ -191,6 +191,7 @@ public:
   }
 
   StringTableSection<ELFT::Is64Bits> &getStrTabSec() { return StrTabSec; }
+  unsigned getNumSymbols() const { return NumVisible + 1; }
 
 private:
   SymbolTable &Table;
@@ -204,21 +205,71 @@ class HashTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename ELFFile<ELFT>::Elf_Word Elf_Word;
 
 public:
-  HashTableSection(const SymbolTableSection<ELFT> &DynSymSec)
+  HashTableSection(SymbolTableSection<ELFT> &DynSymSec)
       : OutputSectionBase<ELFT::Is64Bits>(".hash", SHT_HASH, SHF_ALLOC),
         DynSymSec(DynSymSec) {
     this->Header.sh_entsize = sizeof(Elf_Word);
     this->Header.sh_addralign = sizeof(Elf_Word);
   }
 
-  void finalize() override {
-    this->Header.sh_link = DynSymSec.getSectionIndex();
+  void addSymbol(StringRef Name) {
+    DynSymSec.addSymbol(Name);
+    Hashes.push_back(hash(Name));
   }
 
-  void writeTo(uint8_t *Buf) override {}
+  void finalize() override {
+    this->Header.sh_link = DynSymSec.getSectionIndex();
+
+    assert(DynSymSec.getNumSymbols() == Hashes.size() + 1);
+    unsigned NumEntries = 2;                 // nbucket and nchain.
+    NumEntries += DynSymSec.getNumSymbols(); // The chain entries.
+
+    // Create as many buckets as there are symbols.
+    // FIXME: This is simplistic. We can try to optimize it, but implementing
+    // support for SHT_GNU_HASH is probably even more profitable.
+    NumEntries += DynSymSec.getNumSymbols();
+    this->Header.sh_size = NumEntries * sizeof(Elf_Word);
+  }
+
+  void writeTo(uint8_t *Buf) override {
+    unsigned NumSymbols = DynSymSec.getNumSymbols();
+    auto *P = reinterpret_cast<Elf_Word *>(Buf);
+    *P++ = NumSymbols; // nbucket
+    *P++ = NumSymbols; // nchain
+
+    std::vector<uint32_t> Buckets;
+    Buckets.resize(NumSymbols);
+    std::vector<uint32_t> Chains;
+    Chains.resize(NumSymbols);
+
+    for (unsigned I = 1; I < NumSymbols; ++I) {
+      uint32_t Hash = Hashes[I - 1] % NumSymbols;
+      Chains[I] = Buckets[Hash];
+      Buckets[Hash] = I;
+    }
+
+    for (uint32_t V : Buckets)
+      *P++ = V;
+    for (uint32_t V : Chains)
+      *P++ = V;
+  }
+
+  SymbolTableSection<ELFT> &getDynSymSec() { return DynSymSec; }
 
 private:
-  const SymbolTableSection<ELFT> &DynSymSec;
+  uint32_t hash(StringRef Name) {
+    uint32_t H = 0;
+    for (char C : Name) {
+      H = (H << 4) + C;
+      uint32_t G = H & 0xf0000000;
+      if (G)
+        H ^= G >> 24;
+      H &= ~G;
+    }
+    return H;
+  }
+  SymbolTableSection<ELFT> &DynSymSec;
+  std::vector<uint32_t> Hashes;
 };
 
 template <class ELFT>
@@ -228,11 +279,11 @@ class DynamicSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename Base::Elf_Dyn Elf_Dyn;
 
 public:
-  DynamicSection(SymbolTable &SymTab, SymbolTableSection<ELFT> &DynSymSec)
+  DynamicSection(SymbolTable &SymTab, HashTableSection<ELFT> &HashSec)
       : OutputSectionBase<ELFT::Is64Bits>(".dynamic", SHT_DYNAMIC,
                                           SHF_ALLOC | SHF_WRITE),
-        DynStrSec(DynSymSec.getStrTabSec()), DynSymSec(DynSymSec),
-        SymTab(SymTab) {
+        HashSec(HashSec), DynSymSec(HashSec.getDynSymSec()),
+        DynStrSec(DynSymSec.getStrTabSec()), SymTab(SymTab) {
     typename Base::HeaderT &Header = this->Header;
     Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
     Header.sh_entsize = ELFT::Is64Bits ? 16 : 8;
@@ -242,6 +293,7 @@ public:
     ++NumEntries; // DT_SYMTAB
     ++NumEntries; // DT_STRTAB
     ++NumEntries; // DT_STRSZ
+    ++NumEntries; // DT_HASH
 
     StringRef RPath = Config->RPath;
     if (!RPath.empty()) {
@@ -279,6 +331,10 @@ public:
     P->d_un.d_val = DynStrSec.data().size();
     ++P;
 
+    P->d_tag = DT_HASH;
+    P->d_un.d_ptr = HashSec.getVA();
+    ++P;
+
     StringRef RPath = Config->RPath;
     if (!RPath.empty()) {
       P->d_tag = DT_RUNPATH;
@@ -300,8 +356,9 @@ public:
   }
 
 private:
-  StringTableSection<ELFT::Is64Bits> &DynStrSec;
+  HashTableSection<ELFT> &HashSec;
   SymbolTableSection<ELFT> &DynSymSec;
+  StringTableSection<ELFT::Is64Bits> &DynStrSec;
   SymbolTable &SymTab;
 };
 
@@ -315,7 +372,7 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   Writer(SymbolTable *T)
       : SymTabSec(*this, *T, StrTabSec), DynSymSec(*this, *T, DynStrSec),
-        DynamicSec(*T, DynSymSec), HashSec(DynSymSec) {}
+        HashSec(DynSymSec), DynamicSec(*T, HashSec) {}
   void run();
 
   const OutputSection<ELFT> &getBSS() const {
@@ -354,9 +411,9 @@ private:
   SymbolTableSection<ELFT> SymTabSec;
   SymbolTableSection<ELFT> DynSymSec;
 
-  DynamicSection<ELFT> DynamicSec;
-
   HashTableSection<ELFT> HashSec;
+
+  DynamicSection<ELFT> DynamicSec;
 
   InterpSection<ELFT::Is64Bits> InterpSec;
 
@@ -651,7 +708,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     // need to add the symbols use by dynamic relocations when producing
     // an executable (ignoring --export-dynamic).
     if (needsDynamicSections())
-      DynSymSec.addSymbol(Name);
+      HashSec.addSymbol(Name);
   }
 
   // Sort the common symbols by alignment as an heuristic to pack them better.

@@ -3,40 +3,8 @@
 // RUN: lld -flavor gnu2 -shared %t2.o -o %t2.so
 // RUN: llvm-readobj -s %t2.so | FileCheck --check-prefix=SO %s
 // RUN: lld -flavor gnu2 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -rpath foo -rpath bar %t.o %t2.so -o %t
-// RUN: llvm-readobj --program-headers --dynamic-table -t -s -dyn-symbols -section-data %t | FileCheck %s
+// RUN: llvm-readobj --program-headers --dynamic-table -t -s -dyn-symbols -section-data -hash-table %t | FileCheck %s
 // REQUIRES: x86
-
-
-// test that .hash is linked to .dynsym
-// SO:        Index: 4
-// SO-NEXT:   Name: .dynsym
-// SO-NEXT:   Type: SHT_DYNSYM
-// SO-NEXT:   Flags [
-// SO-NEXT:     SHF_ALLOC
-// SO-NEXT:   ]
-// SO-NEXT:   Address:
-// SO-NEXT:   Offset:
-// SO-NEXT:   Size:
-// SO-NEXT:   Link:
-// SO-NEXT:   Info:
-// SO-NEXT:   AddressAlignment: 4
-// SO-NEXT:   EntrySize: 16
-// SO-NEXT: }
-// SO-NEXT: Section {
-// SO-NEXT:   Index: 5
-// SO-NEXT:   Name: .hash
-// SO-NEXT:   Type: SHT_HASH
-// SO-NEXT:   Flags [
-// SO-NEXT:     SHF_ALLOC
-// SO-NEXT:   ]
-// SO-NEXT:   Address:
-// SO-NEXT:   Offset:
-// SO-NEXT:   Size: 0
-// SO-NEXT:   Link: 4
-// SO-NEXT:   Info: 0
-// SO-NEXT:   AddressAlignment: 4
-// SO-NEXT:   EntrySize: 4
-// SO-NEXT: }
 
 // Make sure .symtab is properly aligned.
 // SO:      Name: .symtab
@@ -44,7 +12,7 @@
 // SO-NEXT: Flags [
 // SO-NEXT: ]
 // SO-NEXT: Address:
-// SO-NEXT: Offset: 0x300C
+// SO-NEXT: Offset: 0x400C
 // SO-NEXT: Size:
 // SO-NEXT: Link:
 // SO-NEXT: Info:
@@ -68,7 +36,9 @@
 // CHECK-NEXT:   )
 // CHECK-NEXT: }
 
-// CHECK:        Name: .dynsym
+// test that .hash is linked to .dynsym
+// CHECK:        Index: 5
+// CHECK-NEXT:   Name: .dynsym
 // CHECK-NEXT:   Type: SHT_DYNSYM
 // CHECK-NEXT:   Flags [
 // CHECK-NEXT:     SHF_ALLOC
@@ -86,6 +56,21 @@
 // CHECK-NEXT:     0020:
 // CHECK-NEXT:   )
 // CHECK-NEXT: }
+// CHECK-NEXT: Section {
+// CHECK-NEXT:   Index: 6
+// CHECK-NEXT:    Name: .hash
+// CHECK-NEXT:    Type: SHT_HASH
+// CHECK-NEXT:    Flags [
+// CHECK-NEXT:      SHF_ALLOC
+// CHECK-NEXT:    ]
+// CHECK-NEXT:    Address: [[HASHADDR:.*]]
+// CHECK-NEXT:    Offset:
+// CHECK-NEXT:    Size:
+// CHECK-NEXT:    Link: 5
+// CHECK-NEXT:    Info: 0
+// CHECK-NEXT:    AddressAlignment: 4
+// CHECK-NEXT:    EntrySize: 4
+
 
 // CHECK:        Name: .dynamic
 // CHECK-NEXT:   Type: SHT_DYNAMIC
@@ -101,10 +86,7 @@
 // CHECK-NEXT:   AddressAlignment: [[ALIGN:.*]]
 // CHECK-NEXT:   EntrySize: 8
 // CHECK-NEXT:   SectionData (
-// CHECK-NEXT:     0000:
-// CHECK-NEXT:     0010:
-// CHECK-NEXT:     0020:
-// CHECK-NEXT:   )
+// CHECK:        )
 // CHECK-NEXT: }
 
 // CHECK:        Index: [[DYNSTR]]
@@ -190,6 +172,7 @@
 // CHECK-NEXT:   0x00000006 SYMTAB               [[DYNSYMADDR]]
 // CHECK-NEXT:   0x00000005 STRTAB               [[DYNSTRADDR]]
 // CHECK-NEXT:   0x0000000A STRSZ
+// CHECK-NEXT:   0x00000004 HASH                 [[HASHADDR]]
 // CHECK-NEXT:   0x0000001D RUNPATH              foo:bar
 // CHECK-NEXT:   0x00000001 NEEDED               SharedLibrary ({{.*}}2.so)
 // CHECK-NEXT:   0x00000000 NULL                 0x0
@@ -219,6 +202,13 @@
 // CHECK-NEXT:     PF_W
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Alignment: [[ALIGN]]
+// CHECK-NEXT: }
+
+// CHECK:      HashTable {
+// CHECK-NEXT:   Num Buckets: 3
+// CHECK-NEXT:   Num Chains: 3
+// CHECK-NEXT:   Buckets: [2, 0, 1]
+// CHECK-NEXT:   Chains: [0, 0, 0]
 // CHECK-NEXT: }
 
 .global _start
