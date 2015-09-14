@@ -69,8 +69,11 @@ SymbolFileDWARFDwo::ParseCompileUnit(DWARFCompileUnit* dwarf_cu, uint32_t cu_idx
 DWARFCompileUnit*
 SymbolFileDWARFDwo::GetCompileUnit()
 {
-    assert(GetNumCompileUnits() == 1 && "Only dwo files with 1 compile unit is supported");
-    return DebugInfo()->GetCompileUnitAtIndex(0);
+    // Only dwo files with 1 compile unit is supported
+    if (GetNumCompileUnits() == 1)
+        return DebugInfo()->GetCompileUnitAtIndex(0);
+    else
+        return nullptr;
 }
 
 DWARFCompileUnit*
