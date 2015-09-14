@@ -3322,6 +3322,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-analyzer-checker=security.insecureAPI.mktemp");
       CmdArgs.push_back("-analyzer-checker=security.insecureAPI.mkstemp");
       CmdArgs.push_back("-analyzer-checker=security.insecureAPI.vfork");
+
+      // Default nullability checks.
+      CmdArgs.push_back("-analyzer-checker=nullability.NullPassedToNonnull");
+      CmdArgs.push_back(
+          "-analyzer-checker=nullability.NullReturnedFromNonnull");
     }
 
     // Set the output format. The default is plist, for (lame) historical
