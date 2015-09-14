@@ -53,6 +53,7 @@ set(LLVM_TEST_DEPENDS
           llvm-split
           llvm-symbolizer
           llvm-tblgen
+          macho-dump
           opt
           FileCheck
           count
