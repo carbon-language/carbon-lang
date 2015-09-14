@@ -395,15 +395,10 @@ int main(int argc, char **argv) {
   // construct the Triple object.
   Triple TheTriple(TripleName);
 
-  if (InputFilename != "-" && !sys::fs::exists(InputFilename)) {
-    errs() << ProgName << ": '" << InputFilename << "': "
-           << "No such file\n";
-    return 1;
-  }
   ErrorOr<std::unique_ptr<MemoryBuffer>> BufferPtr =
       MemoryBuffer::getFileOrSTDIN(InputFilename);
   if (std::error_code EC = BufferPtr.getError()) {
-    errs() << ProgName << ": " << EC.message() << '\n';
+    errs() << InputFilename << ": " << EC.message() << '\n';
     return 1;
   }
   MemoryBuffer *Buffer = BufferPtr->get();
