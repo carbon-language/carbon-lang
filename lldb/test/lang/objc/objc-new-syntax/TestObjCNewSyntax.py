@@ -16,7 +16,8 @@ class ObjCNewSyntaxTestCase(TestBase):
 
     @skipUnlessDarwin
     @dsym_test
-    @expectedFailureDarwin # expr -- @((char*)"Hello world" + 6) cannot box a string value because NSString has not been declared
+    @expectedFailureAll(
+        oslist=['macosx'], compiler='clang', compiler_version=['<', '7.0.0'])
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
@@ -25,7 +26,8 @@ class ObjCNewSyntaxTestCase(TestBase):
     @skipIfFreeBSD
     @skipIfLinux
     @skipIfWindows
-    @expectedFailureDarwin # expr -- @((char*)"Hello world" + 6) cannot box a string value because NSString has not been declared
+    @expectedFailureAll(
+        oslist=['macosx'], compiler='clang', compiler_version=['<', '7.0.0'])
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()
