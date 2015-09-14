@@ -65,15 +65,16 @@ public:
   };
 
 protected:
-  GlobalValue(PointerType *Ty, ValueTy VTy, Use *Ops, unsigned NumOps,
-              LinkageTypes Linkage, const Twine &Name)
-      : Constant(Ty, VTy, Ops, NumOps), Linkage(Linkage),
-        Visibility(DefaultVisibility), UnnamedAddr(0),
-        DllStorageClass(DefaultStorageClass),
+  GlobalValue(Type *Ty, ValueTy VTy, Use *Ops, unsigned NumOps,
+              LinkageTypes Linkage, const Twine &Name, unsigned AddressSpace)
+      : Constant(PointerType::get(Ty, AddressSpace), VTy, Ops, NumOps),
+        ValueType(Ty), Linkage(Linkage), Visibility(DefaultVisibility),
+        UnnamedAddr(0), DllStorageClass(DefaultStorageClass),
         ThreadLocal(NotThreadLocal), IntID((Intrinsic::ID)0U), Parent(nullptr) {
     setName(Name);
   }
 
+  Type *ValueType;
   // Note: VC++ treats enums as signed, so an extra bit is required to prevent
   // Linkage and Visibility from turning into negative values.
   LinkageTypes Linkage : 5;   // The linkage of this global
@@ -184,7 +185,7 @@ public:
   /// Global values are always pointers.
   PointerType *getType() const { return cast<PointerType>(User::getType()); }
 
-  Type *getValueType() const { return getType()->getElementType(); }
+  Type *getValueType() const { return ValueType; }
 
   static LinkageTypes getLinkOnceLinkage(bool ODR) {
     return ODR ? LinkOnceODRLinkage : LinkOnceAnyLinkage;

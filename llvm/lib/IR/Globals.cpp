@@ -234,8 +234,8 @@ void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
 GlobalAlias::GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Link,
                          const Twine &Name, Constant *Aliasee,
                          Module *ParentModule)
-    : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalAliasVal,
-                  &Op<0>(), 1, Link, Name) {
+    : GlobalValue(Ty, Value::GlobalAliasVal, &Op<0>(), 1, Link, Name,
+                  AddressSpace) {
   Op<0>() = Aliasee;
 
   if (ParentModule)
