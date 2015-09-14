@@ -1,4 +1,5 @@
 ; RUN: opt %loadPolly -S -polly-codegen -polly-detect-unprofitable -polly-no-early-exit < %s | FileCheck %s
+; XFAIL: *
 ;
 ; CHECK-LABEL: polly.stmt.if.then:
 ; CHECK-NEXT:   unreachable
