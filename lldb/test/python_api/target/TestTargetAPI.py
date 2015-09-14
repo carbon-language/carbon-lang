@@ -76,7 +76,6 @@ class TargetAPITestCase(TestBase):
     @skipUnlessDarwin
     @python_api_test
     @dsym_test
-    @expectedFailureDarwin("llvm.org/pr20273")
     def test_launch_new_process_and_redirect_stdout_with_dsym(self):
         """Exercise SBTaget.Launch() API."""
         self.buildDsym()
@@ -84,7 +83,6 @@ class TargetAPITestCase(TestBase):
 
     @python_api_test
     @dwarf_test
-    @expectedFailureDarwin("llvm.org/pr20273")
     def test_launch_new_process_and_redirect_stdout_with_dwarf(self):
         """Exercise SBTarget.Launch() API."""
         self.buildDwarf()
