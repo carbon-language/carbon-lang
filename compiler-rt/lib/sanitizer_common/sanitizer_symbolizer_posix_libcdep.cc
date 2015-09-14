@@ -194,29 +194,53 @@ class Addr2LineProcess : public SymbolizerProcess {
   const char *module_name() const { return module_name_; }
 
  private:
-  bool ReachedEndOfOutput(const char *buffer, uptr length) const override {
-    // Output should consist of two lines.
-    int num_lines = 0;
-    for (uptr i = 0; i < length; ++i) {
-      if (buffer[i] == '\n')
-        num_lines++;
-      if (num_lines >= 2)
-        return true;
-    }
-    return false;
-  }
-
   void GetArgV(const char *path_to_binary,
                const char *(&argv)[kArgVMax]) const override {
     int i = 0;
     argv[i++] = path_to_binary;
-    argv[i++] = "-Cfe";
+    argv[i++] = "-iCfe";
     argv[i++] = module_name_;
     argv[i++] = nullptr;
   }
 
+  bool ReachedEndOfOutput(const char *buffer, uptr length) const override;
+
+  bool ReadFromSymbolizer(char *buffer, uptr max_length) override {
+    if (!SymbolizerProcess::ReadFromSymbolizer(buffer, max_length))
+      return false;
+    // We should cut out output_terminator_ at the end of given buffer,
+    // appended by addr2line to mark the end of its meaningful output.
+    // We cannot scan buffer from it's beginning, because it is legal for it
+    // to start with output_terminator_ in case given offset is invalid. So,
+    // scanning from second character.
+    char *garbage = internal_strstr(buffer + 1, output_terminator_);
+    // This should never be NULL since buffer must end up with
+    // output_terminator_.
+    CHECK(garbage);
+    // Trim the buffer.
+    garbage[0] = '\0';
+    return true;
+  }
+
   const char *module_name_;  // Owned, leaked.
+  static const char output_terminator_[];
 };
+
+const char Addr2LineProcess::output_terminator_[] = "??\n??:0\n";
+
+bool Addr2LineProcess::ReachedEndOfOutput(const char *buffer,
+                                          uptr length) const {
+  const size_t kTerminatorLen = sizeof(output_terminator_) - 1;
+  // Skip, if we read just kTerminatorLen bytes, because Addr2Line output
+  // should consist at least of two pairs of lines:
+  // 1. First one, corresponding to given offset to be symbolized
+  // (may be equal to output_terminator_, if offset is not valid).
+  // 2. Second one for output_terminator_, itself to mark the end of output.
+  if (length <= kTerminatorLen) return false;
+  // Addr2Line output should end up with output_terminator_.
+  return !internal_memcmp(buffer + length - kTerminatorLen,
+                          output_terminator_, kTerminatorLen);
+}
 
 class Addr2LinePool : public SymbolizerTool {
  public:
@@ -254,15 +278,18 @@ class Addr2LinePool : public SymbolizerTool {
       addr2line_pool_.push_back(addr2line);
     }
     CHECK_EQ(0, internal_strcmp(module_name, addr2line->module_name()));
-    char buffer_[kBufferSize];
-    internal_snprintf(buffer_, kBufferSize, "0x%zx\n", module_offset);
-    return addr2line->SendCommand(buffer_);
+    char buffer[kBufferSize];
+    internal_snprintf(buffer, kBufferSize, "0x%zx\n0x%zx\n",
+                      module_offset, dummy_address_);
+    return addr2line->SendCommand(buffer);
   }
 
-  static const uptr kBufferSize = 32;
+  static const uptr kBufferSize = 64;
   const char *addr2line_path_;
   LowLevelAllocator *allocator_;
   InternalMmapVector<Addr2LineProcess*> addr2line_pool_;
+  static const uptr dummy_address_ =
+      FIRST_32_SECOND_64(UINT32_MAX, UINT64_MAX);
 };
 
 #if SANITIZER_SUPPORTS_WEAK_HOOKS

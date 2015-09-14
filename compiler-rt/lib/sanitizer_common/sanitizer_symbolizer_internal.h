@@ -88,10 +88,11 @@ class SymbolizerProcess {
     UNIMPLEMENTED();
   }
 
+  virtual bool ReadFromSymbolizer(char *buffer, uptr max_length);
+
  private:
   bool Restart();
   const char *SendCommandImpl(const char *command);
-  bool ReadFromSymbolizer(char *buffer, uptr max_length);
   bool WriteToSymbolizer(const char *buffer, uptr length);
   bool StartSymbolizerSubprocess();
 
