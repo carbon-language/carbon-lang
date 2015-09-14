@@ -4,10 +4,10 @@
 ;       hence modulo handling has been disabled completely. Once this is
 ;       resolved this test should work again. Until then we approximate the
 ;       whole loop body.
-; CHECK: Stmt_for_body__TO__if_end
+;
 ; CHECK:   Domain :=
 ; CHECK:       { Stmt_for_body__TO__if_end[i0] : i0 <= 15 and i0 >= 0 };
-
+;
 ;
 ;    void foo(float *A) {
 ;      for (long i = 0; i < 16; i++) {

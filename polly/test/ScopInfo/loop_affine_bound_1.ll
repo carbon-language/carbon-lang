@@ -55,7 +55,7 @@ return:                                           ; preds = %bb3, %entry
 ; CHECK:   Stmt_bb1
 ; CHECK:         Domain :=
 ; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] :
-; CHECK-DAG:             i0 >= 1
+; CHECK-DAG:             i0 >= 0
 ; CHECK-DAG:          and
 ; CHECK-DAG:             i0 <= 2 + 4N + 7M
 ; CHECK-DAG:          and
@@ -63,6 +63,8 @@ return:                                           ; preds = %bb3, %entry
 ; CHECK-DAG:          and
 ; CHECK-DAG:             i1 <= 1 + 5N - i0
 ; CHECK-DAG:                     Stmt_bb1[0, i1] :
+; CHECK-DAG:             7M <= -3 - 4N
+; CHECK-DAG:          and
 ; CHECK-DAG:             i1 >= 0
 ; CHECK-DAG:          and
 ; CHECK-DAG:             i1 <= 1 + 5N

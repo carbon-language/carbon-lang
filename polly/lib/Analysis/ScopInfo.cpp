@@ -796,10 +796,10 @@ static std::pair<__isl_give isl_set *, __isl_give isl_set *>
 partitionSetParts(__isl_take isl_set *S, unsigned Dim) {
 
   for (unsigned u = 0, e = isl_set_n_dim(S); u < e; u++)
-    S = isl_set_lower_bound_si(S, isl_dim_set, u, 0);
+    S = isl_set_lower_bound_si(S, isl_dim_set, u, u == Dim ? -1 : 0);
 
   unsigned NumDimsS = isl_set_n_dim(S);
-  isl_set *OnlyDimS = isl_set_copy(S);
+  isl_set *OnlyDimS = S;
 
   // Remove dimensions that are greater than Dim as they are not interesting.
   assert(NumDimsS >= Dim + 1);
@@ -827,7 +827,7 @@ partitionSetParts(__isl_take isl_set *S, unsigned Dim) {
   // Remove the artificial upper bound parameters again.
   BoundedParts = isl_set_remove_dims(BoundedParts, isl_dim_param, 0, Dim);
 
-  isl_set *UnboundedParts = isl_set_subtract(S, isl_set_copy(BoundedParts));
+  isl_set *UnboundedParts = isl_set_complement(isl_set_copy(BoundedParts));
   return std::make_pair(UnboundedParts, BoundedParts);
 }
 
@@ -1863,19 +1863,30 @@ void Scop::addLoopBoundsToHeaderDomains(LoopInfo &LI, ScopDetection &SD,
         isl_set_project_out(BackedgeCondition, isl_dim_set, LoopDepth + 1,
                             LatchLoopDepth - LoopDepth);
 
-    auto Parts = partitionSetParts(BackedgeCondition, LoopDepth);
+    isl_map *ForwardMap = isl_map_lex_le(isl_set_get_space(HeaderBBDom));
+    for (int i = 0; i < LoopDepth; i++)
+      ForwardMap = isl_map_equate(ForwardMap, isl_dim_in, i, isl_dim_out, i);
+
+    isl_set *BackedgeConditionComplement =
+        isl_set_complement(BackedgeCondition);
+    BackedgeConditionComplement = isl_set_lower_bound_si(
+        BackedgeConditionComplement, isl_dim_set, LoopDepth, 0);
+    BackedgeConditionComplement =
+        isl_set_apply(BackedgeConditionComplement, ForwardMap);
+    HeaderBBDom = isl_set_subtract(HeaderBBDom, BackedgeConditionComplement);
+
+    auto Parts = partitionSetParts(HeaderBBDom, LoopDepth);
 
     // If a loop has an unbounded back edge condition part (here Parts.first)
     // we do not want to assume the header will even be executed for the first
     // iteration of an execution that will lead to an infinite loop. While it
     // would not be wrong to do so, it does not seem helpful.
+    // TODO: Use the unbounded part to build runtime assumptions.
     FirstIteration = isl_set_subtract(FirstIteration, Parts.first);
 
-    BackedgeCondition = isl_set_apply(Parts.second, NextIterationMap);
-    BackedgeCondition = isl_set_union(BackedgeCondition, FirstIteration);
-    BackedgeCondition = isl_set_coalesce(BackedgeCondition);
+    HeaderBBDom = isl_set_apply(Parts.second, NextIterationMap);
+    HeaderBBDom = isl_set_coalesce(isl_set_union(HeaderBBDom, FirstIteration));
 
-    HeaderBBDom = isl_set_intersect(HeaderBBDom, BackedgeCondition);
   }
 }
 

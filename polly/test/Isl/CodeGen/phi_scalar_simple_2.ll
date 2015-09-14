@@ -24,13 +24,13 @@ entry:
   br label %for.cond
 
 ; CHECK-LABEL: polly.merge_new_and_old:
-; CHECK:         %x.addr.0.merge = phi i32 [ %x.addr.0.final_reload, %polly.merge ], [ %x.addr.0, %for.cond ]
+; CHECK:         %x.addr.0.merge = phi i32 [ %x.addr.0.final_reload, %polly.merge21 ], [ %x.addr.0, %for.cond ]
 ; CHECK:         ret i32 %x.addr.0.merge
 
 ; CHECK-LABEL: polly.start:
 ; CHECK-NEXT:    store i32 %x, i32* %x.addr.0.phiops
 
-; CHECK-LABEL: polly.merge:
+; CHECK-LABEL: polly.merge21:
 ; CHECK:         %x.addr.0.final_reload = load i32, i32* %x.addr.0.s2a
 
 for.cond:                                         ; preds = %for.inc5, %entry
@@ -41,10 +41,6 @@ for.cond:                                         ; preds = %for.inc5, %entry
   %x.addr.0 = phi i32 [ %x, %entry ], [ %x.addr.1, %for.inc5 ]
   %cmp = icmp slt i64 %indvars.iv, %tmp
   br i1 %cmp, label %for.body, label %for.end7
-
-; CHECK-LABEL: polly.stmt.for.cond{{[0-9]*}}:
-; CHECK:         %x.addr.0.phiops.reload[[R1:[0-9]*]] = load i32, i32* %x.addr.0.phiops
-; CHECK:         store i32 %x.addr.0.phiops.reload[[R1]], i32* %x.addr.0.s2a
 
 for.body:                                         ; preds = %for.cond
 ; CHECK-LABEL: polly.stmt.for.body:

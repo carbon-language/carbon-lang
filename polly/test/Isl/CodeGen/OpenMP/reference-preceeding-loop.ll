@@ -6,11 +6,12 @@
 ;   of the scop, but does not contain the scop.
 
 ; AST:         {
-; AST-NEXT:    Stmt_while_body(0);
 ; AST-NEXT:    #pragma simd
 ; AST-NEXT:    #pragma omp parallel for
-; AST-NEXT:    for (int c0 = 1; c0 < p_0 + symbol; c0 += 1)
+; AST-NEXT:    for (int c0 = 0; c0 < p_0 + symbol; c0 += 1)
 ; AST-NEXT:      Stmt_while_body(c0);
+; AST-NEXT:    if (p_0 + symbol <= 0)
+; AST-NEXT:      Stmt_while_body(0);
 ; AST-NEXT:    }
 
 ; IR: @update_model_polly_subfn
