@@ -237,10 +237,8 @@ public:
     *P++ = NumSymbols; // nbucket
     *P++ = NumSymbols; // nchain
 
-    std::vector<uint32_t> Buckets;
-    Buckets.resize(NumSymbols);
-    std::vector<uint32_t> Chains;
-    Chains.resize(NumSymbols);
+    std::vector<uint32_t> Buckets(NumSymbols);
+    std::vector<uint32_t> Chains(NumSymbols);
 
     for (unsigned I = 1; I < NumSymbols; ++I) {
       uint32_t Hash = Hashes[I - 1] % NumSymbols;
