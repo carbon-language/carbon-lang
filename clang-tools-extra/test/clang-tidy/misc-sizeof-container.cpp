@@ -25,6 +25,12 @@ struct bitset {
   size_t size() const;
 };
 
+// std::array<> is, well, an array. sizeof() is reasonable for it.
+template <typename T, size_t N>
+struct array {
+  size_t size() const;
+};
+
 class fake_container1 {
   size_t size() const; // non-public
 };
@@ -82,13 +88,15 @@ void f() {
   g(s2);
   g(v);
 
-  std::fake_container1 f1;
-  std::fake_container2 f2;
-  std::bitset<7> bs;
+  std::fake_container1 fake1;
+  std::fake_container2 fake2;
+  std::bitset<7> std_bitset;
+  std::array<int, 3> std_array;
 
-  a = sizeof(f1);
-  a = sizeof(f2);
-  a = sizeof(bs);
+  a = sizeof(fake1);
+  a = sizeof(fake2);
+  a = sizeof(std_bitset);
+  a = sizeof(std_array);
 
 
   std::string arr[3];
