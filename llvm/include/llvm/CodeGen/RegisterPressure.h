@@ -333,7 +333,9 @@ public:
 
   /// Get the register set pressure at the current position, which may be less
   /// than the pressure across the traversed region.
-  std::vector<unsigned> &getRegSetPressureAtPos() { return CurrSetPressure; }
+  const std::vector<unsigned> &getRegSetPressureAtPos() const {
+    return CurrSetPressure;
+  }
 
   void discoverLiveOut(unsigned Reg);
   void discoverLiveIn(unsigned Reg);
