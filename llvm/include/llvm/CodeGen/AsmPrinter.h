@@ -236,7 +236,7 @@ public:
   /// Print assembly representations of the jump tables used by the current
   /// function to the current output stream.
   ///
-  void EmitJumpTableInfo();
+  virtual void EmitJumpTableInfo();
 
   /// Emit the control variable for an emulated TLS variable.
   virtual void EmitEmulatedTLSControlVariable(const GlobalVariable *GV,
