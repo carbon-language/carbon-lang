@@ -16,6 +16,7 @@ class DriverBatchModeTest (TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @skipUnlessDarwin
+    @skipIfRemote # test not remote-ready llvm.org/pr24813
     @dsym_test
     def test_driver_batch_mode_with_dsym(self):
         """Test that the lldb driver's batch mode works correctly."""
@@ -24,6 +25,7 @@ class DriverBatchModeTest (TestBase):
         self.batch_mode ()
 
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfRemote # test not remote-ready llvm.org/pr24813
     @dwarf_test
     def test_driver_batch_mode_with_dwarf(self):
         """Test that the lldb driver's batch mode works correctly."""
