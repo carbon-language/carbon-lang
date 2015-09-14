@@ -24,6 +24,7 @@ struct CoverageViewOptions {
   bool ShowLineStatsOrRegionMarkers;
   bool ShowExpandedRegions;
   bool ShowFunctionInstantiations;
+  bool ShowFullFilenames;
 
   /// \brief Change the output's stream color if the colors are enabled.
   ColoredRawOstream colored_ostream(raw_ostream &OS,

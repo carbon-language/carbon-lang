@@ -20,7 +20,7 @@ using namespace llvm;
 namespace {
 /// \brief Helper struct which prints trimmed and aligned columns.
 struct Column {
-  enum TrimKind { NoTrim, LeftTrim, RightTrim };
+  enum TrimKind { NoTrim, WidthTrim, LeftTrim, RightTrim };
 
   enum AlignmentKind { LeftAlignment, RightAlignment };
 
@@ -30,7 +30,7 @@ struct Column {
   AlignmentKind Alignment;
 
   Column(StringRef Str, unsigned Width)
-      : Str(Str), Width(Width), Trim(NoTrim), Alignment(LeftAlignment) {}
+      : Str(Str), Width(Width), Trim(WidthTrim), Alignment(LeftAlignment) {}
 
   Column &set(TrimKind Value) {
     Trim = Value;
@@ -44,6 +44,7 @@ struct Column {
 
   void render(raw_ostream &OS) const;
 };
+
 raw_ostream &operator<<(raw_ostream &OS, const Column &Value) {
   Value.render(OS);
   return OS;
@@ -64,6 +65,9 @@ void Column::render(raw_ostream &OS) const {
 
   switch (Trim) {
   case NoTrim:
+    OS << Str;
+    break;
+  case WidthTrim:
     OS << Str.substr(0, Width);
     break;
   case LeftTrim:
@@ -84,8 +88,8 @@ static Column column(StringRef Str, unsigned Width, const T &Value) {
   return Column(Str, Width).set(Value);
 }
 
-static const unsigned FileReportColumns[] = {25, 10, 8, 8, 10, 10};
-static const unsigned FunctionReportColumns[] = {25, 10, 8, 8, 10, 8, 8};
+static size_t FileReportColumns[] = {25, 10, 8, 8, 10, 10};
+static size_t FunctionReportColumns[] = {25, 10, 8, 8, 10, 8, 8};
 
 /// \brief Prints a horizontal divider which spans across the given columns.
 template <typename T, size_t N>
@@ -108,8 +112,9 @@ static raw_ostream::Colors determineCoveragePercentageColor(const T &Info) {
 }
 
 void CoverageReport::render(const FileCoverageSummary &File, raw_ostream &OS) {
-  OS << column(File.Name, FileReportColumns[0], Column::LeftTrim)
-     << format("%*u", FileReportColumns[1], (unsigned)File.RegionCoverage.NumRegions);
+  OS << column(File.Name, FileReportColumns[0], Column::NoTrim)
+     << format("%*u", FileReportColumns[1],
+               (unsigned)File.RegionCoverage.NumRegions);
   Options.colored_ostream(OS, File.RegionCoverage.isFullyCovered()
                                   ? raw_ostream::GREEN
                                   : raw_ostream::RED)
@@ -191,6 +196,15 @@ void CoverageReport::renderFunctionReports(ArrayRef<std::string> Files,
 }
 
 void CoverageReport::renderFileReports(raw_ostream &OS) {
+  // Adjust column widths to accomodate long paths and names.
+  for (StringRef Filename : Coverage->getUniqueSourceFiles()) {
+    FileReportColumns[0] = std::max(FileReportColumns[0], Filename.size());
+    for (const auto &F : Coverage->getCoveredFunctions(Filename)) {
+      FunctionReportColumns[0] =
+          std::max(FunctionReportColumns[0], F.Name.size());
+    }
+  }
+
   OS << column("Filename", FileReportColumns[0])
      << column("Regions", FileReportColumns[1], Column::RightAlignment)
      << column("Miss", FileReportColumns[2], Column::RightAlignment)
@@ -200,6 +214,7 @@ void CoverageReport::renderFileReports(raw_ostream &OS) {
      << "\n";
   renderDivider(FileReportColumns, OS);
   OS << "\n";
+
   FileCoverageSummary Totals("TOTAL");
   for (StringRef Filename : Coverage->getUniqueSourceFiles()) {
     FileCoverageSummary Summary(Filename);
