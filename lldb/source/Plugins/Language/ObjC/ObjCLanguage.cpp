@@ -9,6 +9,8 @@
 
 #include "ObjCLanguage.h"
 
+#include <mutex>
+
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
