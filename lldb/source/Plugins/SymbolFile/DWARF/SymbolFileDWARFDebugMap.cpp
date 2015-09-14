@@ -1574,7 +1574,6 @@ SymbolFileDWARFDebugMap::AddOSOARanges (SymbolFileDWARF* dwarf2Data, DWARFDebugA
                 const FileRangeMap::Entry* entry = file_range_map.GetEntryAtIndex(idx);
                 if (entry)
                 {
-                    printf ("[0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ")\n", entry->GetRangeBase(), entry->GetRangeEnd());
                     debug_aranges->AppendRange(dwarf2Data->GetID(), entry->GetRangeBase(), entry->GetRangeEnd());
                     num_line_entries_added++;
                 }
