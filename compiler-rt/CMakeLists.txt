@@ -311,5 +311,5 @@ add_subdirectory(lib)
 
 if(COMPILER_RT_INCLUDE_TESTS)
   add_subdirectory(unittests)
+  add_subdirectory(test)
 endif()
-add_subdirectory(test)
