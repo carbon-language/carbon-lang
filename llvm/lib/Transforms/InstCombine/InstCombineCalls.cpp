@@ -1583,8 +1583,8 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
   // checks on their arguments.
   unsigned ArgNo = 0;
   for (Value *V : CS.args()) {
-    if (!CS.paramHasAttr(ArgNo+1, Attribute::NonNull) &&
-        isKnownNonNull(V)) {
+    if (V->getType()->isPointerTy() && !CS.paramHasAttr(ArgNo+1, Attribute::NonNull) &&
+        isKnownNonNullAt(V, CS.getInstruction(), DT, TLI)) {
       AttributeSet AS = CS.getAttributes();
       AS = AS.addAttribute(CS.getInstruction()->getContext(), ArgNo+1,
                            Attribute::NonNull);

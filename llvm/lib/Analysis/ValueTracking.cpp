@@ -3220,6 +3220,8 @@ bool llvm::mayBeMemoryDependent(const Instruction &I) {
 
 /// Return true if we know that the specified value is never null.
 bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
+  assert(V->getType()->isPointerTy() && "V must be pointer type");
+
   // Alloca never returns null, malloc might.
   if (isa<AllocaInst>(V)) return true;
 
@@ -3252,6 +3254,8 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
 static bool isKnownNonNullFromDominatingCondition(const Value *V,
                                                   const Instruction *CtxI,
                                                   const DominatorTree *DT) {
+  assert(V->getType()->isPointerTy() && "V must be pointer type");
+
   unsigned NumUsesExplored = 0;
   for (auto U : V->users()) {
     // Avoid massive lists
