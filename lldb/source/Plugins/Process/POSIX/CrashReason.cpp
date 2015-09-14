@@ -28,11 +28,12 @@ GetCrashReasonForSIGSEGV(const siginfo_t& info)
 
     switch (info.si_code)
     {
+#ifdef SI_KERNEL
     case SI_KERNEL:
-        // Linux will occasionally send spurious SI_KERNEL codes.
-        // (this is poorly documented in sigaction)
+        // Some platforms will occasionally send nonstandard spurious SI_KERNEL codes.
         // One way to get this is via unaligned SIMD loads.
         return CrashReason::eInvalidAddress; // for lack of anything better
+#endif
     case SEGV_MAPERR:
         return CrashReason::eInvalidAddress;
     case SEGV_ACCERR:
