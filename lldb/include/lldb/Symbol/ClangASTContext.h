@@ -529,7 +529,7 @@ public:
     static bool
     IsClangType (const CompilerType &ct)
     {
-        return llvm::dyn_cast_or_null<ClangASTContext>(ct.GetTypeSystem()) != nullptr;
+        return llvm::dyn_cast_or_null<ClangASTContext>(ct.GetTypeSystem()) != nullptr && ct.GetOpaqueQualType() != nullptr;
     }
 
     //----------------------------------------------------------------------
