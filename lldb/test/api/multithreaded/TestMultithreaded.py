@@ -30,6 +30,7 @@ class SBBreakpointCallbackCase(TestBase):
 
     @skipIfRemote
     @skipIfNoSBHeaders
+    @expectedFlakeyFreeBSD
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["x86_64"])
     @expectedFailureWindows("llvm.org/pr24538") # clang-cl does not support throw or catch
     def test_sb_api_listener_event_description(self):
@@ -40,6 +41,7 @@ class SBBreakpointCallbackCase(TestBase):
 
     @skipIfRemote
     @skipIfNoSBHeaders
+    @expectedFlakeyFreeBSD
     @expectedFlakeyLinux # Driver occasionally returns '1' as exit status
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["x86_64"])
     @expectedFailureWindows("llvm.org/pr24538") # clang-cl does not support throw or catch
@@ -54,6 +56,7 @@ class SBBreakpointCallbackCase(TestBase):
 
     @skipIfRemote
     @skipIfNoSBHeaders
+    @expectedFlakeyFreeBSD
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.8"], archs=["x86_64"])
     @expectedFailureWindows("llvm.org/pr24538") # clang-cl does not support throw or catch
     def test_sb_api_listener_resume(self):
