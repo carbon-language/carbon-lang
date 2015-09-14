@@ -144,8 +144,8 @@ ClangExpressionDeclMap::DidParse()
              ++pvar_index)
         {
             ExpressionVariableSP pvar_sp(m_parser_vars->m_persistent_vars->GetVariableAtIndex(pvar_index));
-            if (pvar_sp)
-                llvm::cast<ClangExpressionVariable>(pvar_sp.get())->DisableParserVars(GetParserID());
+            if (ClangExpressionVariable *clang_var = llvm::dyn_cast<ClangExpressionVariable>(pvar_sp.get()))
+                clang_var->DisableParserVars(GetParserID());
         }
 
         DisableParserVars();
