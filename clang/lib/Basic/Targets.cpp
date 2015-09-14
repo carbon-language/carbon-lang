@@ -7069,6 +7069,19 @@ private:
   const char *getClobbers() const final { return ""; }
   bool isCLZForZeroUndef() const final { return false; }
   bool hasInt128Type() const final { return true; }
+  IntType getIntTypeByWidth(unsigned BitWidth,
+                            bool IsSigned) const final {
+    // WebAssembly prefers long long for explicitly 64-bit integers.
+    return BitWidth == 64 ? (IsSigned ? SignedLongLong : UnsignedLongLong)
+                          : TargetInfo::getIntTypeByWidth(BitWidth, IsSigned);
+  }
+  IntType getLeastIntTypeByWidth(unsigned BitWidth,
+                                 bool IsSigned) const final {
+    // WebAssembly uses long long for int_least64_t and int_fast64_t.
+    return BitWidth == 64
+               ? (IsSigned ? SignedLongLong : UnsignedLongLong)
+               : TargetInfo::getLeastIntTypeByWidth(BitWidth, IsSigned);
+  }
 };
 
 const Builtin::Info WebAssemblyTargetInfo::BuiltinInfo[] = {
