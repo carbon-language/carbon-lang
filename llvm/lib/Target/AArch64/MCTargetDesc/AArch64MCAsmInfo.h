@@ -20,7 +20,7 @@
 namespace llvm {
 class MCStreamer;
 class Target;
-class TargetTuple;
+class Triple;
 
 struct AArch64MCAsmInfoDarwin : public MCAsmInfoDarwin {
   explicit AArch64MCAsmInfoDarwin();
@@ -30,7 +30,7 @@ struct AArch64MCAsmInfoDarwin : public MCAsmInfoDarwin {
 };
 
 struct AArch64MCAsmInfoELF : public MCAsmInfoELF {
-  explicit AArch64MCAsmInfoELF(const TargetTuple &TT);
+  explicit AArch64MCAsmInfoELF(const Triple &T);
 };
 
 } // namespace llvm

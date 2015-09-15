@@ -10,7 +10,7 @@
 #include "AArch64.h"
 #include "AArch64RegisterInfo.h"
 #include "MCTargetDesc/AArch64FixupKinds.h"
-#include "llvm/ADT/TargetTuple.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCELFObjectWriter.h"
@@ -521,23 +521,23 @@ void ELFAArch64AsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
 
 MCAsmBackend *llvm::createAArch64leAsmBackend(const Target &T,
                                               const MCRegisterInfo &MRI,
-                                              const TargetTuple &TT,
+                                              const Triple &TheTriple,
                                               StringRef CPU) {
-  if (TT.isOSBinFormatMachO())
+  if (TheTriple.isOSBinFormatMachO())
     return new DarwinAArch64AsmBackend(T, MRI);
 
-  assert(TT.isOSBinFormatELF() && "Expect either MachO or ELF target");
-  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TT.getOS());
+  assert(TheTriple.isOSBinFormatELF() && "Expect either MachO or ELF target");
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
   return new ELFAArch64AsmBackend(T, OSABI, /*IsLittleEndian=*/true);
 }
 
 MCAsmBackend *llvm::createAArch64beAsmBackend(const Target &T,
                                               const MCRegisterInfo &MRI,
-                                              const TargetTuple &TT,
+                                              const Triple &TheTriple,
                                               StringRef CPU) {
-  assert(TT.isOSBinFormatELF() &&
+  assert(TheTriple.isOSBinFormatELF() &&
          "Big endian is only supported for ELF targets!");
-  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TT.getOS());
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
   return new ELFAArch64AsmBackend(T, OSABI,
                                   /*IsLittleEndian=*/false);
 }

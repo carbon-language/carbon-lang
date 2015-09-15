@@ -1068,8 +1068,8 @@ unsigned X86AsmInstrumentation::GetFrameRegGeneric(const MCContext &Ctx,
 X86AsmInstrumentation *
 CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
                             const MCContext &Ctx, const MCSubtargetInfo &STI) {
-  const TargetTuple &TT = STI.getTargetTuple();
-  const bool hasCompilerRTSupport = TT.isOSLinux();
+  Triple T(STI.getTargetTriple());
+  const bool hasCompilerRTSupport = T.isOSLinux();
   if (ClAsanInstrumentAssembly && hasCompilerRTSupport &&
       MCOptions.SanitizeAddress) {
     if (STI.getFeatureBits()[X86::Mode32Bit] != 0)

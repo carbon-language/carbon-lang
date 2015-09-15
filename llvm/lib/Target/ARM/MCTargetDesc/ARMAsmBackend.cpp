@@ -779,49 +779,45 @@ static MachO::CPUSubTypeARM getMachOSubTypeFromArch(StringRef Arch) {
 
 MCAsmBackend *llvm::createARMAsmBackend(const Target &T,
                                         const MCRegisterInfo &MRI,
-                                        const TargetTuple &TT, StringRef CPU,
+                                        const Triple &TheTriple, StringRef CPU,
                                         bool isLittle) {
-  switch (TT.getObjectFormat()) {
+  switch (TheTriple.getObjectFormat()) {
   default:
     llvm_unreachable("unsupported object format");
-  case TargetTuple::MachO: {
-    MachO::CPUSubTypeARM CS = getMachOSubTypeFromArch(TT.getArchName());
-    return new ARMAsmBackendDarwin(T, TT, CS);
+  case Triple::MachO: {
+    MachO::CPUSubTypeARM CS = getMachOSubTypeFromArch(TheTriple.getArchName());
+    return new ARMAsmBackendDarwin(T, TheTriple, CS);
   }
-  case TargetTuple::COFF:
-    assert(TT.isOSWindows() && "non-Windows ARM COFF is not supported");
-    return new ARMAsmBackendWinCOFF(T, TT);
-  case TargetTuple::ELF:
-    assert(TT.isOSBinFormatELF() && "using ELF for non-ELF target");
-    uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TT.getOS());
-    return new ARMAsmBackendELF(T, TT, OSABI, isLittle);
+  case Triple::COFF:
+    assert(TheTriple.isOSWindows() && "non-Windows ARM COFF is not supported");
+    return new ARMAsmBackendWinCOFF(T, TheTriple);
+  case Triple::ELF:
+    assert(TheTriple.isOSBinFormatELF() && "using ELF for non-ELF target");
+    uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
+    return new ARMAsmBackendELF(T, TheTriple, OSABI, isLittle);
   }
 }
 
 MCAsmBackend *llvm::createARMLEAsmBackend(const Target &T,
                                           const MCRegisterInfo &MRI,
-                                          const TargetTuple &TT,
-                                          StringRef CPU) {
+                                          const Triple &TT, StringRef CPU) {
   return createARMAsmBackend(T, MRI, TT, CPU, true);
 }
 
 MCAsmBackend *llvm::createARMBEAsmBackend(const Target &T,
                                           const MCRegisterInfo &MRI,
-                                          const TargetTuple &TT,
-                                          StringRef CPU) {
+                                          const Triple &TT, StringRef CPU) {
   return createARMAsmBackend(T, MRI, TT, CPU, false);
 }
 
 MCAsmBackend *llvm::createThumbLEAsmBackend(const Target &T,
                                             const MCRegisterInfo &MRI,
-                                            const TargetTuple &TT,
-                                            StringRef CPU) {
+                                            const Triple &TT, StringRef CPU) {
   return createARMAsmBackend(T, MRI, TT, CPU, true);
 }
 
 MCAsmBackend *llvm::createThumbBEAsmBackend(const Target &T,
                                             const MCRegisterInfo &MRI,
-                                            const TargetTuple &TT,
-                                            StringRef CPU) {
+                                            const Triple &TT, StringRef CPU) {
   return createARMAsmBackend(T, MRI, TT, CPU, false);
 }

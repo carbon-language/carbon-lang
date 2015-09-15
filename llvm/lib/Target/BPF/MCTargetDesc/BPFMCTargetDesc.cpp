@@ -40,19 +40,18 @@ static MCInstrInfo *createBPFMCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createBPFMCRegisterInfo(const TargetTuple &TT) {
+static MCRegisterInfo *createBPFMCRegisterInfo(const Triple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitBPFMCRegisterInfo(X, BPF::R11 /* RAReg doesn't exist */);
   return X;
 }
 
-static MCSubtargetInfo *createBPFMCSubtargetInfo(const TargetTuple &TT,
+static MCSubtargetInfo *createBPFMCSubtargetInfo(const Triple &TT,
                                                  StringRef CPU, StringRef FS) {
   return createBPFMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
-static MCCodeGenInfo *createBPFMCCodeGenInfo(const TargetTuple &TT,
-                                             Reloc::Model RM,
+static MCCodeGenInfo *createBPFMCCodeGenInfo(const Triple &TT, Reloc::Model RM,
                                              CodeModel::Model CM,
                                              CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -60,13 +59,14 @@ static MCCodeGenInfo *createBPFMCCodeGenInfo(const TargetTuple &TT,
   return X;
 }
 
-static MCStreamer *createBPFMCStreamer(const TargetTuple &TT, MCContext &Ctx,
-                                       MCAsmBackend &MAB, raw_pwrite_stream &OS,
-                                       MCCodeEmitter *Emitter, bool RelaxAll) {
+static MCStreamer *createBPFMCStreamer(const Triple &T,
+                                       MCContext &Ctx, MCAsmBackend &MAB,
+                                       raw_pwrite_stream &OS, MCCodeEmitter *Emitter,
+                                       bool RelaxAll) {
   return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
 }
 
-static MCInstPrinter *createBPFMCInstPrinter(const TargetTuple &TT,
+static MCInstPrinter *createBPFMCInstPrinter(const Triple &T,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
                                              const MCInstrInfo &MII,

@@ -174,8 +174,9 @@ public:
 
 MCAsmBackend *llvm::createAMDGPUAsmBackend(const Target &T,
                                            const MCRegisterInfo &MRI,
-                                           const TargetTuple &TT,
-                                           StringRef CPU) {
+                                           const Triple &TT, StringRef CPU) {
+  Triple TargetTriple(TT);
+
   // Use 64-bit ELF for amdgcn
-  return new ELFAMDGPUAsmBackend(T, TT.getArch() == TargetTuple::amdgcn);
+  return new ELFAMDGPUAsmBackend(T, TargetTriple.getArch() == Triple::amdgcn);
 }

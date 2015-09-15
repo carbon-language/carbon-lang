@@ -31,7 +31,7 @@ class MCSubtargetInfo;
 class MCTargetStreamer;
 class StringRef;
 class Target;
-class TargetTuple;
+class Triple;
 class raw_ostream;
 class raw_pwrite_stream;
 
@@ -44,10 +44,10 @@ MCCodeEmitter *createAArch64MCCodeEmitter(const MCInstrInfo &MCII,
                                           MCContext &Ctx);
 MCAsmBackend *createAArch64leAsmBackend(const Target &T,
                                         const MCRegisterInfo &MRI,
-                                        const TargetTuple &TT, StringRef CPU);
+                                        const Triple &TT, StringRef CPU);
 MCAsmBackend *createAArch64beAsmBackend(const Target &T,
                                         const MCRegisterInfo &MRI,
-                                        const TargetTuple &TT, StringRef CPU);
+                                        const Triple &TT, StringRef CPU);
 
 MCObjectWriter *createAArch64ELFObjectWriter(raw_pwrite_stream &OS,
                                              uint8_t OSABI,

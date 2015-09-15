@@ -17,7 +17,7 @@
 #include "MipsMCNaCl.h"
 #include "MipsMCTargetDesc.h"
 #include "MipsTargetStreamer.h"
-#include "llvm/ADT/TargetTuple.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -43,10 +43,9 @@ using namespace llvm;
 
 /// Select the Mips CPU for the given triple and cpu name.
 /// FIXME: Merge with the copy in MipsSubtarget.cpp
-StringRef MIPS_MC::selectMipsCPU(const TargetTuple &TT, StringRef CPU) {
+StringRef MIPS_MC::selectMipsCPU(const Triple &TT, StringRef CPU) {
   if (CPU.empty() || CPU == "generic") {
-    if (TT.getArch() == TargetTuple::mips ||
-        TT.getArch() == TargetTuple::mipsel)
+    if (TT.getArch() == Triple::mips || TT.getArch() == Triple::mipsel)
       CPU = "mips32";
     else
       CPU = "mips64";
@@ -60,20 +59,20 @@ static MCInstrInfo *createMipsMCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createMipsMCRegisterInfo(const TargetTuple &TT) {
+static MCRegisterInfo *createMipsMCRegisterInfo(const Triple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitMipsMCRegisterInfo(X, Mips::RA);
   return X;
 }
 
-static MCSubtargetInfo *createMipsMCSubtargetInfo(const TargetTuple &TT,
+static MCSubtargetInfo *createMipsMCSubtargetInfo(const Triple &TT,
                                                   StringRef CPU, StringRef FS) {
   CPU = MIPS_MC::selectMipsCPU(TT, CPU);
   return createMipsMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
 static MCAsmInfo *createMipsMCAsmInfo(const MCRegisterInfo &MRI,
-                                      const TargetTuple &TT) {
+                                      const Triple &TT) {
   MCAsmInfo *MAI = new MipsMCAsmInfo(TT);
 
   unsigned SP = MRI.getDwarfRegNum(Mips::SP, true);
@@ -83,8 +82,7 @@ static MCAsmInfo *createMipsMCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCCodeGenInfo *createMipsMCCodeGenInfo(const TargetTuple &TT,
-                                              Reloc::Model RM,
+static MCCodeGenInfo *createMipsMCCodeGenInfo(const Triple &TT, Reloc::Model RM,
                                               CodeModel::Model CM,
                                               CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -96,7 +94,7 @@ static MCCodeGenInfo *createMipsMCCodeGenInfo(const TargetTuple &TT,
   return X;
 }
 
-static MCInstPrinter *createMipsMCInstPrinter(const TargetTuple &T,
+static MCInstPrinter *createMipsMCInstPrinter(const Triple &T,
                                               unsigned SyntaxVariant,
                                               const MCAsmInfo &MAI,
                                               const MCInstrInfo &MII,
@@ -104,7 +102,7 @@ static MCInstPrinter *createMipsMCInstPrinter(const TargetTuple &T,
   return new MipsInstPrinter(MAI, MII, MRI);
 }
 
-static MCStreamer *createMCStreamer(const TargetTuple &T, MCContext &Context,
+static MCStreamer *createMCStreamer(const Triple &T, MCContext &Context,
                                     MCAsmBackend &MAB, raw_pwrite_stream &OS,
                                     MCCodeEmitter *Emitter, bool RelaxAll) {
   MCStreamer *S;

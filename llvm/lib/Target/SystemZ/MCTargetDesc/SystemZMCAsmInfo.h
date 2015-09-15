@@ -14,11 +14,11 @@
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
-class TargetTuple;
+class Triple;
 
 class SystemZMCAsmInfo : public MCAsmInfoELF {
 public:
-  explicit SystemZMCAsmInfo(const TargetTuple &TT);
+  explicit SystemZMCAsmInfo(const Triple &TT);
 };
 
 } // end namespace llvm

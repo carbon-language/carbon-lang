@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86MCAsmInfo.h"
-#include "llvm/ADT/TargetTuple.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -41,8 +41,8 @@ MarkedJTDataRegions("mark-data-regions", cl::init(false),
 
 void X86MCAsmInfoDarwin::anchor() { }
 
-X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const TargetTuple &TT) {
-  bool is64Bit = TT.getArch() == TargetTuple::x86_64;
+X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &T) {
+  bool is64Bit = T.getArch() == Triple::x86_64;
   if (is64Bit)
     PointerSize = CalleeSaveStackSlotSize = 8;
 
@@ -69,7 +69,7 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const TargetTuple &TT) {
   // old assembler lacks some directives
   // FIXME: this should really be a check on the assembler characteristics
   // rather than OS version
-  if (TT.isMacOSX() && TT.isMacOSXVersionLT(10, 6))
+  if (T.isMacOSX() && T.isMacOSXVersionLT(10, 6))
     HasWeakDefCanBeHiddenDirective = false;
 
   // Assume ld64 is new enough that the abs-ified FDE relocs may be used
@@ -80,14 +80,15 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const TargetTuple &TT) {
   UseIntegratedAssembler = true;
 }
 
-X86_64MCAsmInfoDarwin::X86_64MCAsmInfoDarwin(const TargetTuple &TT)
-    : X86MCAsmInfoDarwin(TT) {}
+X86_64MCAsmInfoDarwin::X86_64MCAsmInfoDarwin(const Triple &Triple)
+  : X86MCAsmInfoDarwin(Triple) {
+}
 
 void X86ELFMCAsmInfo::anchor() { }
 
-X86ELFMCAsmInfo::X86ELFMCAsmInfo(const TargetTuple &TT) {
-  bool is64Bit = TT.getArch() == TargetTuple::x86_64;
-  bool isX32 = TT.getEnvironment() == TargetTuple::GNUX32;
+X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
+  bool is64Bit = T.getArch() == Triple::x86_64;
+  bool isX32 = T.getEnvironment() == Triple::GNUX32;
 
   // For ELF, x86-64 pointer size depends on the ABI.
   // For x86-64 without the x32 ABI, pointer size is 8. For x86 and for x86-64
@@ -125,8 +126,8 @@ X86_64MCAsmInfoDarwin::getExprForPersonalitySymbol(const MCSymbol *Sym,
 
 void X86MCAsmInfoMicrosoft::anchor() { }
 
-X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const TargetTuple &TT) {
-  if (TT.getArch() == TargetTuple::x86_64) {
+X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
+  if (Triple.getArch() == Triple::x86_64) {
     PrivateGlobalPrefix = ".L";
     PrivateLabelPrefix = ".L";
     PointerSize = 8;
@@ -151,9 +152,9 @@ X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const TargetTuple &TT) {
 
 void X86MCAsmInfoGNUCOFF::anchor() { }
 
-X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const TargetTuple &TT) {
-  assert(TT.isOSWindows() && "Windows is the only supported COFF target");
-  if (TT.getArch() == TargetTuple::x86_64) {
+X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
+  assert(Triple.isOSWindows() && "Windows is the only supported COFF target");
+  if (Triple.getArch() == Triple::x86_64) {
     PrivateGlobalPrefix = ".L";
     PrivateLabelPrefix = ".L";
     PointerSize = 8;

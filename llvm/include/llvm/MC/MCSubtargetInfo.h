@@ -14,7 +14,6 @@
 #ifndef LLVM_MC_MCSUBTARGETINFO_H
 #define LLVM_MC_MCSUBTARGETINFO_H
 
-#include "llvm/ADT/TargetTuple.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include <string>
@@ -28,10 +27,10 @@ class StringRef;
 /// MCSubtargetInfo - Generic base class for all target subtargets.
 ///
 class MCSubtargetInfo {
-  TargetTuple TheTargetTuple;                 // Target triple
-  std::string CPU;                            // CPU being targeted.
+  Triple TargetTriple;                        // Target triple
+  std::string CPU; // CPU being targeted.
   ArrayRef<SubtargetFeatureKV> ProcFeatures;  // Processor feature list
-  ArrayRef<SubtargetFeatureKV> ProcDesc;      // Processor descriptions
+  ArrayRef<SubtargetFeatureKV> ProcDesc;  // Processor descriptions
 
   // Scheduler machine model
   const SubtargetInfoKV *ProcSchedModels;
@@ -51,7 +50,7 @@ class MCSubtargetInfo {
 
 public:
   MCSubtargetInfo(const MCSubtargetInfo &) = default;
-  MCSubtargetInfo(const TargetTuple &TT, StringRef CPU, StringRef FS,
+  MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS,
                   ArrayRef<SubtargetFeatureKV> PF,
                   ArrayRef<SubtargetFeatureKV> PD,
                   const SubtargetInfoKV *ProcSched,
@@ -59,8 +58,8 @@ public:
                   const MCReadAdvanceEntry *RA, const InstrStage *IS,
                   const unsigned *OC, const unsigned *FP);
 
-  /// getTargetTuple - Return the target triple string.
-  const TargetTuple &getTargetTuple() const { return TheTargetTuple; }
+  /// getTargetTriple - Return the target triple string.
+  const Triple &getTargetTriple() const { return TargetTriple; }
 
   /// getCPU - Return the CPU string.
   StringRef getCPU() const {

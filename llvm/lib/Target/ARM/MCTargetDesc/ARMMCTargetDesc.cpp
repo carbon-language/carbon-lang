@@ -15,7 +15,7 @@
 #include "ARMMCAsmInfo.h"
 #include "ARMMCTargetDesc.h"
 #include "InstPrinter/ARMInstPrinter.h"
-#include "llvm/ADT/TargetTuple.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrAnalysis.h"
@@ -130,16 +130,16 @@ static bool getARMLoadDeprecationInfo(MCInst &MI, const MCSubtargetInfo &STI,
 #define GET_SUBTARGETINFO_MC_DESC
 #include "ARMGenSubtargetInfo.inc"
 
-std::string ARM_MC::ParseARMTargetTuple(const TargetTuple &TT, StringRef CPU) {
-  bool isThumb = TT.getArch() == TargetTuple::thumb ||
-                 TT.getArch() == TargetTuple::thumbeb;
+std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
+  bool isThumb =
+      TT.getArch() == Triple::thumb || TT.getArch() == Triple::thumbeb;
 
   bool NoCPU = CPU == "generic" || CPU.empty();
   std::string ARMArchFeature;
   switch (TT.getSubArch()) {
   default:
     llvm_unreachable("invalid sub-architecture for ARM");
-  case TargetTuple::ARMSubArch_v8:
+  case Triple::ARMSubArch_v8:
     if (NoCPU)
       // v8a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSPThumb2,
       //      FeatureMP, FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone,
@@ -150,7 +150,7 @@ std::string ARM_MC::ParseARMTargetTuple(const TargetTuple &TT, StringRef CPU) {
       // Use CPU to figure out the exact features
       ARMArchFeature = "+v8";
     break;
-  case TargetTuple::ARMSubArch_v8_1a:
+  case Triple::ARMSubArch_v8_1a:
     if (NoCPU)
       // v8.1a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSPThumb2,
       //      FeatureMP, FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone,
@@ -161,7 +161,7 @@ std::string ARM_MC::ParseARMTargetTuple(const TargetTuple &TT, StringRef CPU) {
       // Use CPU to figure out the exact features
       ARMArchFeature = "+v8.1a";
     break;
-  case TargetTuple::ARMSubArch_v7m:
+  case Triple::ARMSubArch_v7m:
     isThumb = true;
     if (NoCPU)
       // v7m: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureMClass
@@ -170,7 +170,7 @@ std::string ARM_MC::ParseARMTargetTuple(const TargetTuple &TT, StringRef CPU) {
       // Use CPU to figure out the exact features.
       ARMArchFeature = "+v7";
     break;
-  case TargetTuple::ARMSubArch_v7em:
+  case Triple::ARMSubArch_v7em:
     if (NoCPU)
       // v7em: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureDSPThumb2,
       //       FeatureT2XtPk, FeatureMClass
@@ -179,7 +179,7 @@ std::string ARM_MC::ParseARMTargetTuple(const TargetTuple &TT, StringRef CPU) {
       // Use CPU to figure out the exact features.
       ARMArchFeature = "+v7";
     break;
-  case TargetTuple::ARMSubArch_v7s:
+  case Triple::ARMSubArch_v7s:
     if (NoCPU)
       // v7s: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureHasRAS
       //      Swift
@@ -188,7 +188,7 @@ std::string ARM_MC::ParseARMTargetTuple(const TargetTuple &TT, StringRef CPU) {
       // Use CPU to figure out the exact features.
       ARMArchFeature = "+v7";
     break;
-  case TargetTuple::ARMSubArch_v7:
+  case Triple::ARMSubArch_v7:
     // v7 CPUs have lots of different feature sets. If no CPU is specified,
     // then assume v7a (e.g. cortex-a8) feature set. Otherwise, return
     // the "minimum" feature set and use CPU string to figure out the exact
@@ -200,13 +200,13 @@ std::string ARM_MC::ParseARMTargetTuple(const TargetTuple &TT, StringRef CPU) {
       // Use CPU to figure out the exact features.
       ARMArchFeature = "+v7";
     break;
-  case TargetTuple::ARMSubArch_v6t2:
+  case Triple::ARMSubArch_v6t2:
     ARMArchFeature = "+v6t2";
     break;
-  case TargetTuple::ARMSubArch_v6k:
+  case Triple::ARMSubArch_v6k:
     ARMArchFeature = "+v6k";
     break;
-  case TargetTuple::ARMSubArch_v6m:
+  case Triple::ARMSubArch_v6m:
     isThumb = true;
     if (NoCPU)
       // v6m: FeatureNoARM, FeatureMClass
@@ -214,19 +214,19 @@ std::string ARM_MC::ParseARMTargetTuple(const TargetTuple &TT, StringRef CPU) {
     else
       ARMArchFeature = "+v6";
     break;
-  case TargetTuple::ARMSubArch_v6:
+  case Triple::ARMSubArch_v6:
     ARMArchFeature = "+v6";
     break;
-  case TargetTuple::ARMSubArch_v5te:
+  case Triple::ARMSubArch_v5te:
     ARMArchFeature = "+v5te";
     break;
-  case TargetTuple::ARMSubArch_v5:
+  case Triple::ARMSubArch_v5:
     ARMArchFeature = "+v5t";
     break;
-  case TargetTuple::ARMSubArch_v4t:
+  case Triple::ARMSubArch_v4t:
     ARMArchFeature = "+v4t";
     break;
-  case TargetTuple::NoSubArch:
+  case Triple::NoSubArch:
     break;
   }
 
@@ -247,9 +247,9 @@ std::string ARM_MC::ParseARMTargetTuple(const TargetTuple &TT, StringRef CPU) {
   return ARMArchFeature;
 }
 
-MCSubtargetInfo *ARM_MC::createARMMCSubtargetInfo(const TargetTuple &TT,
+MCSubtargetInfo *ARM_MC::createARMMCSubtargetInfo(const Triple &TT,
                                                   StringRef CPU, StringRef FS) {
-  std::string ArchFS = ARM_MC::ParseARMTargetTuple(TT, CPU);
+  std::string ArchFS = ARM_MC::ParseARMTriple(TT, CPU);
   if (!FS.empty()) {
     if (!ArchFS.empty())
       ArchFS = (Twine(ArchFS) + "," + FS).str();
@@ -266,23 +266,23 @@ static MCInstrInfo *createARMMCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createARMMCRegisterInfo(const TargetTuple &TT) {
+static MCRegisterInfo *createARMMCRegisterInfo(const Triple &Triple) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitARMMCRegisterInfo(X, ARM::LR, 0, 0, ARM::PC);
   return X;
 }
 
 static MCAsmInfo *createARMMCAsmInfo(const MCRegisterInfo &MRI,
-                                     const TargetTuple &TT) {
+                                     const Triple &TheTriple) {
   MCAsmInfo *MAI;
-  if (TT.isOSDarwin() || TT.isOSBinFormatMachO())
-    MAI = new ARMMCAsmInfoDarwin(TT);
-  else if (TT.isWindowsMSVCEnvironment())
+  if (TheTriple.isOSDarwin() || TheTriple.isOSBinFormatMachO())
+    MAI = new ARMMCAsmInfoDarwin(TheTriple);
+  else if (TheTriple.isWindowsMSVCEnvironment())
     MAI = new ARMCOFFMCAsmInfoMicrosoft();
-  else if (TT.isOSWindows())
+  else if (TheTriple.isOSWindows())
     MAI = new ARMCOFFMCAsmInfoGNU();
   else
-    MAI = new ARMELFMCAsmInfo(TT);
+    MAI = new ARMELFMCAsmInfo(TheTriple);
 
   unsigned Reg = MRI.getDwarfRegNum(ARM::SP, true);
   MAI->addInitialFrameState(MCCFIInstruction::createDefCfa(nullptr, Reg, 0));
@@ -290,8 +290,7 @@ static MCAsmInfo *createARMMCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCCodeGenInfo *createARMMCCodeGenInfo(const TargetTuple &TT,
-                                             Reloc::Model RM,
+static MCCodeGenInfo *createARMMCCodeGenInfo(const Triple &TT, Reloc::Model RM,
                                              CodeModel::Model CM,
                                              CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -303,11 +302,11 @@ static MCCodeGenInfo *createARMMCCodeGenInfo(const TargetTuple &TT,
   return X;
 }
 
-static MCStreamer *createELFStreamer(const TargetTuple &TT, MCContext &Ctx,
+static MCStreamer *createELFStreamer(const Triple &T, MCContext &Ctx,
                                      MCAsmBackend &MAB, raw_pwrite_stream &OS,
                                      MCCodeEmitter *Emitter, bool RelaxAll) {
   return createARMELFStreamer(Ctx, MAB, OS, Emitter, false,
-                              TT.getArch() == TargetTuple::thumb);
+                              T.getArch() == Triple::thumb);
 }
 
 static MCStreamer *createARMMachOStreamer(MCContext &Ctx, MCAsmBackend &MAB,
@@ -317,7 +316,7 @@ static MCStreamer *createARMMachOStreamer(MCContext &Ctx, MCAsmBackend &MAB,
   return createMachOStreamer(Ctx, MAB, OS, Emitter, false, DWARFMustBeAtTheEnd);
 }
 
-static MCInstPrinter *createARMMCInstPrinter(const TargetTuple &TT,
+static MCInstPrinter *createARMMCInstPrinter(const Triple &T,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
                                              const MCInstrInfo &MII,
@@ -327,7 +326,7 @@ static MCInstPrinter *createARMMCInstPrinter(const TargetTuple &TT,
   return nullptr;
 }
 
-static MCRelocationInfo *createARMMCRelocationInfo(const TargetTuple &TT,
+static MCRelocationInfo *createARMMCRelocationInfo(const Triple &TT,
                                                    MCContext &Ctx) {
   if (TT.isOSBinFormatMachO())
     return createARMMachORelocationInfo(Ctx);

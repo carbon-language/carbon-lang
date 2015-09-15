@@ -411,31 +411,27 @@ void MipsAsmBackend::processFixupValue(const MCAssembler &Asm,
 // MCAsmBackend
 MCAsmBackend *llvm::createMipsAsmBackendEL32(const Target &T,
                                              const MCRegisterInfo &MRI,
-                                             const TargetTuple &TT,
-                                             StringRef CPU) {
+                                             const Triple &TT, StringRef CPU) {
   return new MipsAsmBackend(T, TT.getOS(), /*IsLittle*/ true,
                             /*Is64Bit*/ false);
 }
 
 MCAsmBackend *llvm::createMipsAsmBackendEB32(const Target &T,
                                              const MCRegisterInfo &MRI,
-                                             const TargetTuple &TT,
-                                             StringRef CPU) {
+                                             const Triple &TT, StringRef CPU) {
   return new MipsAsmBackend(T, TT.getOS(), /*IsLittle*/ false,
                             /*Is64Bit*/ false);
 }
 
 MCAsmBackend *llvm::createMipsAsmBackendEL64(const Target &T,
                                              const MCRegisterInfo &MRI,
-                                             const TargetTuple &TT,
-                                             StringRef CPU) {
+                                             const Triple &TT, StringRef CPU) {
   return new MipsAsmBackend(T, TT.getOS(), /*IsLittle*/ true, /*Is64Bit*/ true);
 }
 
 MCAsmBackend *llvm::createMipsAsmBackendEB64(const Target &T,
                                              const MCRegisterInfo &MRI,
-                                             const TargetTuple &TT,
-                                             StringRef CPU) {
+                                             const Triple &TT, StringRef CPU) {
   return new MipsAsmBackend(T, TT.getOS(), /*IsLittle*/ false,
                             /*Is64Bit*/ true);
 }

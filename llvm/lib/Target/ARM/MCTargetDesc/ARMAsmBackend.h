@@ -23,7 +23,7 @@ class ARMAsmBackend : public MCAsmBackend {
   bool isThumbMode;    // Currently emitting Thumb code.
   bool IsLittleEndian; // Big or little endian.
 public:
-  ARMAsmBackend(const Target &T, const TargetTuple &TT, bool IsLittle)
+  ARMAsmBackend(const Target &T, const Triple &TT, bool IsLittle)
       : MCAsmBackend(), STI(ARM_MC::createARMMCSubtargetInfo(TT, "", "")),
         isThumbMode(TT.getArchName().startswith("thumb")),
         IsLittleEndian(IsLittle) {}
