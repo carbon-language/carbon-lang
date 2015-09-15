@@ -38,6 +38,7 @@ class CheckerDocumentation : public Checker< check::PreStmt<ReturnStmt>,
                                        check::PostStmt<DeclStmt>,
                                        check::PreObjCMessage,
                                        check::PostObjCMessage,
+                                       check::ObjCMessageNil,
                                        check::PreCall,
                                        check::PostCall,
                                        check::BranchCondition,
@@ -94,6 +95,15 @@ public:
   ///
   /// check::PostObjCMessage
   void checkPostObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const {}
+
+  /// \brief Visit an Objective-C message whose receiver is nil.
+  ///
+  /// This will be called when the analyzer core processes a method call whose
+  /// receiver is definitely nil. In this case, check{Pre/Post}ObjCMessage and
+  /// check{Pre/Post}Call will not be called.
+  ///
+  /// check::ObjCMessageNil
+  void checkObjCMessageNil(const ObjCMethodCall &M, CheckerContext &C) const {}
 
   /// \brief Pre-visit an abstract "call" event.
   ///

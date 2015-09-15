@@ -93,6 +93,12 @@ public:
   StringRef getName() const { return Name; }
 };
 
+enum class ObjCMessageVisitKind {
+  Pre,
+  Post,
+  MessageNil
+};
+
 class CheckerManager {
   const LangOptions LangOpts;
   AnalyzerOptionsRef AOptions;
@@ -211,7 +217,7 @@ public:
                                     const ExplodedNodeSet &Src,
                                     const ObjCMethodCall &msg,
                                     ExprEngine &Eng) {
-    runCheckersForObjCMessage(/*isPreVisit=*/true, Dst, Src, msg, Eng);
+    runCheckersForObjCMessage(ObjCMessageVisitKind::Pre, Dst, Src, msg, Eng);
   }
 
   /// \brief Run checkers for post-visiting obj-c messages.
@@ -220,12 +226,22 @@ public:
                                      const ObjCMethodCall &msg,
                                      ExprEngine &Eng,
                                      bool wasInlined = false) {
-    runCheckersForObjCMessage(/*isPreVisit=*/false, Dst, Src, msg, Eng,
+    runCheckersForObjCMessage(ObjCMessageVisitKind::Post, Dst, Src, msg, Eng,
                               wasInlined);
   }
 
+  /// \brief Run checkers for visiting an obj-c message to nil.
+  void runCheckersForObjCMessageNil(ExplodedNodeSet &Dst,
+                                    const ExplodedNodeSet &Src,
+                                    const ObjCMethodCall &msg,
+                                    ExprEngine &Eng) {
+    runCheckersForObjCMessage(ObjCMessageVisitKind::MessageNil, Dst, Src, msg,
+                              Eng);
+  }
+
+
   /// \brief Run checkers for visiting obj-c messages.
-  void runCheckersForObjCMessage(bool isPreVisit,
+  void runCheckersForObjCMessage(ObjCMessageVisitKind visitKind,
                                  ExplodedNodeSet &Dst,
                                  const ExplodedNodeSet &Src,
                                  const ObjCMethodCall &msg, ExprEngine &Eng,
@@ -457,6 +473,8 @@ public:
   void _registerForPreObjCMessage(CheckObjCMessageFunc checkfn);
   void _registerForPostObjCMessage(CheckObjCMessageFunc checkfn);
 
+  void _registerForObjCMessageNil(CheckObjCMessageFunc checkfn);
+
   void _registerForPreCall(CheckCallFunc checkfn);
   void _registerForPostCall(CheckCallFunc checkfn);
 
@@ -557,8 +575,14 @@ private:
   const CachedStmtCheckers &getCachedStmtCheckersFor(const Stmt *S,
                                                      bool isPreVisit);
 
+  /// Returns the checkers that have registered for callbacks of the
+  /// given \p Kind.
+  const std::vector<CheckObjCMessageFunc> &
+  getObjCMessageCheckers(ObjCMessageVisitKind Kind);
+
   std::vector<CheckObjCMessageFunc> PreObjCMessageCheckers;
   std::vector<CheckObjCMessageFunc> PostObjCMessageCheckers;
+  std::vector<CheckObjCMessageFunc> ObjCMessageNilCheckers;
 
   std::vector<CheckCallFunc> PreCallCheckers;
   std::vector<CheckCallFunc> PostCallCheckers;

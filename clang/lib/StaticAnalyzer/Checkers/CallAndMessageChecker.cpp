@@ -40,6 +40,7 @@ class CallAndMessageChecker
   : public Checker< check::PreStmt<CallExpr>,
                     check::PreStmt<CXXDeleteExpr>,
                     check::PreObjCMessage,
+                    check::ObjCMessageNil,
                     check::PreCall > {
   mutable std::unique_ptr<BugType> BT_call_null;
   mutable std::unique_ptr<BugType> BT_call_undef;
@@ -60,6 +61,12 @@ public:
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
   void checkPreStmt(const CXXDeleteExpr *DE, CheckerContext &C) const;
   void checkPreObjCMessage(const ObjCMethodCall &msg, CheckerContext &C) const;
+
+  /// Fill in the return value that results from messaging nil based on the
+  /// return type and architecture and diagnose if the return value will be
+  /// garbage.
+  void checkObjCMessageNil(const ObjCMethodCall &msg, CheckerContext &C) const;
+
   void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
 
 private:
@@ -471,20 +478,12 @@ void CallAndMessageChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
       C.emitReport(std::move(R));
     }
     return;
-  } else {
-    // Bifurcate the state into nil and non-nil ones.
-    DefinedOrUnknownSVal receiverVal = recVal.castAs<DefinedOrUnknownSVal>();
-
-    ProgramStateRef state = C.getState();
-    ProgramStateRef notNilState, nilState;
-    std::tie(notNilState, nilState) = state->assume(receiverVal);
-
-    // Handle receiver must be nil.
-    if (nilState && !notNilState) {
-      HandleNilReceiver(C, state, msg);
-      return;
-    }
   }
+}
+
+void CallAndMessageChecker::checkObjCMessageNil(const ObjCMethodCall &msg,
+                                                CheckerContext &C) const {
+  HandleNilReceiver(C, C.getState(), msg);
 }
 
 void CallAndMessageChecker::emitNilReceiverBug(CheckerContext &C,

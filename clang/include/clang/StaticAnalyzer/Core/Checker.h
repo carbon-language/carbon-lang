@@ -131,6 +131,21 @@ public:
   }
 };
 
+class ObjCMessageNil {
+  template <typename CHECKER>
+  static void _checkObjCMessage(void *checker, const ObjCMethodCall &msg,
+                                CheckerContext &C) {
+    ((const CHECKER *)checker)->checkObjCMessageNil(msg, C);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForObjCMessageNil(
+     CheckerManager::CheckObjCMessageFunc(checker, _checkObjCMessage<CHECKER>));
+  }
+};
+
 class PostObjCMessage {
   template <typename CHECKER>
   static void _checkObjCMessage(void *checker, const ObjCMethodCall &msg,

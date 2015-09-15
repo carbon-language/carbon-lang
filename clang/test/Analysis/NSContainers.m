@@ -24,6 +24,8 @@ typedef struct _NSZone NSZone;
 @interface NSObject <NSObject> {}
 - (id)init;
 + (id)alloc;
+
+- (id)mutableCopy;
 @end
 
 typedef struct {
@@ -292,3 +294,20 @@ void testArrayCategory(NSMutableArray *arr) {
   [arr addObject:0 safe:1]; // no-warning
 }
 
+@interface MyView : NSObject
+-(NSArray *)subviews;
+@end
+
+void testNoReportWhenReceiverNil(NSMutableArray *array, int b) {
+  // Don't warn about adding nil to a container when the receiver is also
+  // definitely nil.
+  if (array == 0) {
+    [array addObject:0]; // no-warning
+  }
+
+  MyView *view = b ? [[MyView alloc] init] : 0;
+  NSMutableArray *subviews = [[view subviews] mutableCopy];
+  // When view is nil, subviews is also nil so there should be no warning
+  // here either.
+  [subviews addObject:view]; // no-warning
+}
