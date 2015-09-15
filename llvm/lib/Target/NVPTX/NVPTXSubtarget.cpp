@@ -46,9 +46,8 @@ NVPTXSubtarget &NVPTXSubtarget::initializeSubtargetDependencies(StringRef CPU,
 NVPTXSubtarget::NVPTXSubtarget(const Triple &TT, const std::string &CPU,
                                const std::string &FS,
                                const NVPTXTargetMachine &TM)
-    : NVPTXGenSubtargetInfo(TargetTuple(TT), CPU, FS), PTXVersion(0),
-      SmVersion(20), TM(TM), InstrInfo(),
-      TLInfo(TM, initializeSubtargetDependencies(CPU, FS)), TSInfo(),
+    : NVPTXGenSubtargetInfo(TT, CPU, FS), PTXVersion(0), SmVersion(20), TM(TM),
+      InstrInfo(), TLInfo(TM, initializeSubtargetDependencies(CPU, FS)),
       FrameLowering() {}
 
 bool NVPTXSubtarget::hasImageHandles() const {

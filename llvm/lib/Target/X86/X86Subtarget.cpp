@@ -290,7 +290,7 @@ X86Subtarget &X86Subtarget::initializeSubtargetDependencies(StringRef CPU,
 X86Subtarget::X86Subtarget(const Triple &TT, const std::string &CPU,
                            const std::string &FS, const X86TargetMachine &TM,
                            unsigned StackAlignOverride)
-    : X86GenSubtargetInfo(TargetTuple(TT), CPU, FS), X86ProcFamily(Others),
+    : X86GenSubtargetInfo(TT, CPU, FS), X86ProcFamily(Others),
       PICStyle(PICStyles::None), TargetTriple(TT),
       StackAlignOverride(StackAlignOverride),
       In64BitMode(TargetTriple.getArch() == Triple::x86_64),

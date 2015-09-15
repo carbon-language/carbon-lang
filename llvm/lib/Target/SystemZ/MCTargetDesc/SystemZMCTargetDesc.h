@@ -23,7 +23,7 @@ class MCRegisterInfo;
 class MCSubtargetInfo;
 class StringRef;
 class Target;
-class TargetTuple;
+class Triple;
 class raw_pwrite_stream;
 class raw_ostream;
 
@@ -85,7 +85,7 @@ MCCodeEmitter *createSystemZMCCodeEmitter(const MCInstrInfo &MCII,
 
 MCAsmBackend *createSystemZMCAsmBackend(const Target &T,
                                         const MCRegisterInfo &MRI,
-                                        const TargetTuple &TT, StringRef CPU);
+                                        const Triple &TT, StringRef CPU);
 
 MCObjectWriter *createSystemZObjectWriter(raw_pwrite_stream &OS, uint8_t OSABI);
 } // end namespace llvm

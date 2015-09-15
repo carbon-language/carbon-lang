@@ -32,7 +32,7 @@ class MCRelocationInfo;
 class MCTargetStreamer;
 class StringRef;
 class Target;
-class TargetTuple;
+class Triple;
 class raw_ostream;
 class raw_pwrite_stream;
 
@@ -40,11 +40,11 @@ extern Target TheARMLETarget, TheThumbLETarget;
 extern Target TheARMBETarget, TheThumbBETarget;
 
 namespace ARM_MC {
-std::string ParseARMTargetTuple(const TargetTuple &TT, StringRef CPU);
+std::string ParseARMTriple(const Triple &TT, StringRef CPU);
 
 /// Create a ARM MCSubtargetInfo instance. This is exposed so Asm parser, etc.
 /// do not need to go through TargetRegistry.
-MCSubtargetInfo *createARMMCSubtargetInfo(const TargetTuple &TT, StringRef CPU,
+MCSubtargetInfo *createARMMCSubtargetInfo(const Triple &TT, StringRef CPU,
                                           StringRef FS);
 }
 
@@ -65,22 +65,22 @@ MCCodeEmitter *createARMBEMCCodeEmitter(const MCInstrInfo &MCII,
                                         MCContext &Ctx);
 
 MCAsmBackend *createARMAsmBackend(const Target &T, const MCRegisterInfo &MRI,
-                                  const TargetTuple &TT, StringRef CPU,
+                                  const Triple &TT, StringRef CPU,
                                   bool IsLittleEndian);
 
 MCAsmBackend *createARMLEAsmBackend(const Target &T, const MCRegisterInfo &MRI,
-                                    const TargetTuple &TT, StringRef CPU);
+                                    const Triple &TT, StringRef CPU);
 
 MCAsmBackend *createARMBEAsmBackend(const Target &T, const MCRegisterInfo &MRI,
-                                    const TargetTuple &TT, StringRef CPU);
+                                    const Triple &TT, StringRef CPU);
 
 MCAsmBackend *createThumbLEAsmBackend(const Target &T,
                                       const MCRegisterInfo &MRI,
-                                      const TargetTuple &TT, StringRef CPU);
+                                      const Triple &TT, StringRef CPU);
 
 MCAsmBackend *createThumbBEAsmBackend(const Target &T,
                                       const MCRegisterInfo &MRI,
-                                      const TargetTuple &TT, StringRef CPU);
+                                      const Triple &TT, StringRef CPU);
 
 // Construct a PE/COFF machine code streamer which will generate a PE/COFF
 // object file.

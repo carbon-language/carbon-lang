@@ -295,10 +295,10 @@ public:
                const MCTargetOptions &Options)
       : MCTargetAsmParser(Options), STI(STI), MII(MII) {
     // Check for 64-bit vs. 32-bit pointer mode.
-    const TargetTuple &TT = STI.getTargetTuple();
-    IsPPC64 = (TT.getArch() == TargetTuple::ppc64 ||
-               TT.getArch() == TargetTuple::ppc64le);
-    IsDarwin = TT.isMacOSX();
+    Triple TheTriple(STI.getTargetTriple());
+    IsPPC64 = (TheTriple.getArch() == Triple::ppc64 ||
+               TheTriple.getArch() == Triple::ppc64le);
+    IsDarwin = TheTriple.isMacOSX();
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }

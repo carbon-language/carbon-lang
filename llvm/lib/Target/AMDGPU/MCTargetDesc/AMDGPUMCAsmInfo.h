@@ -17,7 +17,7 @@
 #include "llvm/MC/MCAsmInfoELF.h"
 namespace llvm {
 
-class TargetTuple;
+class Triple;
 
 // If you need to create another MCAsmInfo class, which inherits from MCAsmInfo,
 // you will need to make sure your new class sets PrivateGlobalPrefix to
@@ -26,7 +26,7 @@ class TargetTuple;
 // with 'L' as a local symbol.
 class AMDGPUMCAsmInfo : public MCAsmInfoELF {
 public:
-  explicit AMDGPUMCAsmInfo(const TargetTuple &TT);
+  explicit AMDGPUMCAsmInfo(const Triple &TT);
 };
 } // namespace llvm
 #endif

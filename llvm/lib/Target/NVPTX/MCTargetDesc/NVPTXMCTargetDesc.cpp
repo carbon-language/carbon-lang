@@ -37,7 +37,7 @@ static MCInstrInfo *createNVPTXMCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createNVPTXMCRegisterInfo(const TargetTuple &TT) {
+static MCRegisterInfo *createNVPTXMCRegisterInfo(const Triple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   // PTX does not have a return address register.
   InitNVPTXMCRegisterInfo(X, 0);
@@ -45,11 +45,11 @@ static MCRegisterInfo *createNVPTXMCRegisterInfo(const TargetTuple &TT) {
 }
 
 static MCSubtargetInfo *
-createNVPTXMCSubtargetInfo(const TargetTuple &TT, StringRef CPU, StringRef FS) {
+createNVPTXMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   return createNVPTXMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
-static MCCodeGenInfo *createNVPTXMCCodeGenInfo(const TargetTuple &TT,
+static MCCodeGenInfo *createNVPTXMCCodeGenInfo(const Triple &TT,
                                                Reloc::Model RM,
                                                CodeModel::Model CM,
                                                CodeGenOpt::Level OL) {
@@ -61,7 +61,7 @@ static MCCodeGenInfo *createNVPTXMCCodeGenInfo(const TargetTuple &TT,
   return X;
 }
 
-static MCInstPrinter *createNVPTXMCInstPrinter(const TargetTuple &T,
+static MCInstPrinter *createNVPTXMCInstPrinter(const Triple &T,
                                                unsigned SyntaxVariant,
                                                const MCAsmInfo &MAI,
                                                const MCInstrInfo &MII,

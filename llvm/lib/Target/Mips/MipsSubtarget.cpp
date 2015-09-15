@@ -62,16 +62,16 @@ void MipsSubtarget::anchor() { }
 MipsSubtarget::MipsSubtarget(const Triple &TT, const std::string &CPU,
                              const std::string &FS, bool little,
                              const MipsTargetMachine &TM)
-    : MipsGenSubtargetInfo(TargetTuple(TT), CPU, FS),
-      MipsArchVersion(MipsDefault), IsLittle(little), IsSoftFloat(false),
-      IsSingleFloat(false), IsFPXX(false), NoABICalls(false), IsFP64bit(false),
-      UseOddSPReg(true), IsNaN2008bit(false), IsGP64bit(false), HasVFPU(false),
-      HasCnMips(false), HasMips3_32(false), HasMips3_32r2(false),
-      HasMips4_32(false), HasMips4_32r2(false), HasMips5_32r2(false),
-      InMips16Mode(false), InMips16HardFloat(Mips16HardFloat),
-      InMicroMipsMode(false), HasDSP(false), HasDSPR2(false),
-      AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16), HasMSA(false),
-      UseTCCInDIV(false), HasEVA(false), TM(TM), TargetTriple(TT), TSInfo(),
+    : MipsGenSubtargetInfo(TT, CPU, FS), MipsArchVersion(MipsDefault),
+      IsLittle(little), IsSoftFloat(false), IsSingleFloat(false), IsFPXX(false),
+      NoABICalls(false), IsFP64bit(false), UseOddSPReg(true),
+      IsNaN2008bit(false), IsGP64bit(false), HasVFPU(false), HasCnMips(false),
+      HasMips3_32(false), HasMips3_32r2(false), HasMips4_32(false),
+      HasMips4_32r2(false), HasMips5_32r2(false), InMips16Mode(false),
+      InMips16HardFloat(Mips16HardFloat), InMicroMipsMode(false), HasDSP(false),
+      HasDSPR2(false), AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
+      HasMSA(false), UseTCCInDIV(false), HasEVA(false), TM(TM),
+      TargetTriple(TT), TSInfo(),
       InstrInfo(
           MipsInstrInfo::create(initializeSubtargetDependencies(CPU, FS, TM))),
       FrameLowering(MipsFrameLowering::create(*this)),
@@ -142,8 +142,7 @@ CodeGenOpt::Level MipsSubtarget::getOptLevelToEnablePostRAScheduler() const {
 MipsSubtarget &
 MipsSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS,
                                                const TargetMachine &TM) {
-  std::string CPUName =
-      MIPS_MC::selectMipsCPU(TargetTuple(TM.getTargetTriple()), CPU);
+  std::string CPUName = MIPS_MC::selectMipsCPU(TM.getTargetTriple(), CPU);
 
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);

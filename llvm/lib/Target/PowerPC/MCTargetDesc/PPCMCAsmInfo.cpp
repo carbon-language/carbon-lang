@@ -12,13 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCMCAsmInfo.h"
-#include "llvm/ADT/TargetTuple.h"
+#include "llvm/ADT/Triple.h"
 
 using namespace llvm;
 
 void PPCMCAsmInfoDarwin::anchor() { }
 
-PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit, const TargetTuple &TT) {
+PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit, const Triple& T) {
   if (is64Bit) {
     PointerSize = CalleeSaveStackSlotSize = 8;
   }
@@ -36,7 +36,7 @@ PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit, const TargetTuple &TT) {
   // The installed assembler for OSX < 10.6 lacks some directives.
   // FIXME: this should really be a check on the assembler characteristics
   // rather than OS version
-  if (TT.isMacOSX() && TT.isMacOSXVersionLT(10, 6))
+  if (T.isMacOSX() && T.isMacOSXVersionLT(10, 6))
     HasWeakDefCanBeHiddenDirective = false;
 
   UseIntegratedAssembler = true;
@@ -44,7 +44,7 @@ PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit, const TargetTuple &TT) {
 
 void PPCELFMCAsmInfo::anchor() { }
 
-PPCELFMCAsmInfo::PPCELFMCAsmInfo(bool is64Bit, const TargetTuple &TT) {
+PPCELFMCAsmInfo::PPCELFMCAsmInfo(bool is64Bit, const Triple& T) {
   // FIXME: This is not always needed. For example, it is not needed in the
   // v2 abi.
   NeedsLocalForSize = true;
@@ -52,7 +52,7 @@ PPCELFMCAsmInfo::PPCELFMCAsmInfo(bool is64Bit, const TargetTuple &TT) {
   if (is64Bit) {
     PointerSize = CalleeSaveStackSlotSize = 8;
   }
-  IsLittleEndian = TT.getArch() == TargetTuple::ppc64le;
+  IsLittleEndian = T.getArch() == Triple::ppc64le;
 
   // ".comm align is in bytes but .align is pow-2."
   AlignmentIsInBytes = false;

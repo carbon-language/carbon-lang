@@ -48,7 +48,7 @@ class TargetSubtargetInfo : public MCSubtargetInfo {
   TargetSubtargetInfo() = delete;
 
 protected: // Can only create subclasses...
-  TargetSubtargetInfo(const TargetTuple &TT, StringRef CPU, StringRef FS,
+  TargetSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS,
                       ArrayRef<SubtargetFeatureKV> PF,
                       ArrayRef<SubtargetFeatureKV> PD,
                       const SubtargetInfoKV *ProcSched,

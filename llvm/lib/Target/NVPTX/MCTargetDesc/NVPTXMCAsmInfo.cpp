@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "NVPTXMCAsmInfo.h"
-#include "llvm/ADT/TargetTuple.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
@@ -25,8 +25,8 @@ static cl::opt<bool> CompileForDebugging("debug-compile",
 
 void NVPTXMCAsmInfo::anchor() {}
 
-NVPTXMCAsmInfo::NVPTXMCAsmInfo(const TargetTuple &TT) {
-  if (TT.getArch() == TargetTuple::nvptx64) {
+NVPTXMCAsmInfo::NVPTXMCAsmInfo(const Triple &TheTriple) {
+  if (TheTriple.getArch() == Triple::nvptx64) {
     PointerSize = CalleeSaveStackSlotSize = 8;
   }
 

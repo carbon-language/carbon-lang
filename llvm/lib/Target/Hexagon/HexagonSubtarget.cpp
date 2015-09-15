@@ -72,7 +72,7 @@ HexagonSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS) {
 
 HexagonSubtarget::HexagonSubtarget(const Triple &TT, StringRef CPU,
                                    StringRef FS, const TargetMachine &TM)
-    : HexagonGenSubtargetInfo(TargetTuple(TT), CPU, FS), CPUString(CPU),
+    : HexagonGenSubtargetInfo(TT, CPU, FS), CPUString(CPU),
       InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM, *this),
       FrameLowering() {
 

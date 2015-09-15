@@ -15,7 +15,6 @@
 #define LLVM_TARGET_TARGETMACHINE_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/TargetTuple.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Pass.h"
@@ -117,8 +116,6 @@ public:
   const Target &getTarget() const { return TheTarget; }
 
   const Triple &getTargetTriple() const { return TargetTriple; }
-  // FIXME: Return a reference once we store a TargetTuple
-  const TargetTuple getTargetTuple() const { return TargetTuple(TargetTriple); }
   StringRef getTargetCPU() const { return TargetCPU; }
   StringRef getTargetFeatureString() const { return TargetFS; }
 

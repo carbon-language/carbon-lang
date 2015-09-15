@@ -15,8 +15,8 @@ using namespace llvm;
 namespace {
 class ARMAsmBackendWinCOFF : public ARMAsmBackend {
 public:
-  ARMAsmBackendWinCOFF(const Target &T, const TargetTuple &TT)
-      : ARMAsmBackend(T, TT, true) {}
+  ARMAsmBackendWinCOFF(const Target &T, const Triple &TheTriple)
+      : ARMAsmBackend(T, TheTriple, true) {}
   MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
     return createARMWinCOFFObjectWriter(OS, /*Is64Bit=*/false);
   }

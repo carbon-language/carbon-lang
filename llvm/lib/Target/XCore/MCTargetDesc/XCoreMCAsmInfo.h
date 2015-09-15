@@ -17,13 +17,13 @@
 #include "llvm/MC/MCAsmInfoELF.h"
 
 namespace llvm {
-class TargetTuple;
+class Triple;
 
 class XCoreMCAsmInfo : public MCAsmInfoELF {
   void anchor() override;
 
 public:
-  explicit XCoreMCAsmInfo(const TargetTuple &TT);
+  explicit XCoreMCAsmInfo(const Triple &TT);
 };
 
 } // namespace llvm

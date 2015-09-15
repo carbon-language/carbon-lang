@@ -37,19 +37,18 @@ static MCInstrInfo *createMSP430MCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createMSP430MCRegisterInfo(const TargetTuple &TT) {
+static MCRegisterInfo *createMSP430MCRegisterInfo(const Triple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitMSP430MCRegisterInfo(X, MSP430::PC);
   return X;
 }
 
-static MCSubtargetInfo *createMSP430MCSubtargetInfo(const TargetTuple &TT,
-                                                    StringRef CPU,
-                                                    StringRef FS) {
+static MCSubtargetInfo *
+createMSP430MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   return createMSP430MCSubtargetInfoImpl(TT, CPU, FS);
 }
 
-static MCCodeGenInfo *createMSP430MCCodeGenInfo(const TargetTuple &TT,
+static MCCodeGenInfo *createMSP430MCCodeGenInfo(const Triple &TT,
                                                 Reloc::Model RM,
                                                 CodeModel::Model CM,
                                                 CodeGenOpt::Level OL) {
@@ -58,7 +57,7 @@ static MCCodeGenInfo *createMSP430MCCodeGenInfo(const TargetTuple &TT,
   return X;
 }
 
-static MCInstPrinter *createMSP430MCInstPrinter(const TargetTuple &T,
+static MCInstPrinter *createMSP430MCInstPrinter(const Triple &T,
                                                 unsigned SyntaxVariant,
                                                 const MCAsmInfo &MAI,
                                                 const MCInstrInfo &MII,
