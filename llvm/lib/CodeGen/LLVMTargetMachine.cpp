@@ -170,7 +170,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(
   switch (FileType) {
   case CGFT_AssemblyFile: {
     MCInstPrinter *InstPrinter = getTarget().createMCInstPrinter(
-        getTargetTriple(), MAI.getAssemblerDialect(), MAI, MII, MRI);
+        getTargetTuple(), MAI.getAssemblerDialect(), MAI, MII, MRI);
 
     // Create a code emitter if asked to show the encoding.
     MCCodeEmitter *MCE = nullptr;
@@ -199,7 +199,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(
     // Don't waste memory on names of temp labels.
     Context->setUseNamesOnTempLabels(false);
 
-    Triple T(getTargetTriple().str());
+    TargetTuple T(Triple(getTargetTriple().str()));
     AsmStreamer.reset(getTarget().createMCObjectStreamer(
         T, *Context, *MAB, Out, MCE, STI, Options.MCOptions.MCRelaxAll,
         /*DWARFMustBeAtTheEnd*/ true));
@@ -250,10 +250,10 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM, MCContext *&Ctx,
   if (!MCE || !MAB)
     return true;
 
-  const Triple &T = getTargetTriple();
+  const TargetTuple &TT = getTargetTuple();
   const MCSubtargetInfo &STI = *getMCSubtargetInfo();
   std::unique_ptr<MCStreamer> AsmStreamer(getTarget().createMCObjectStreamer(
-      T, *Ctx, *MAB, Out, MCE, STI, Options.MCOptions.MCRelaxAll,
+      TT, *Ctx, *MAB, Out, MCE, STI, Options.MCOptions.MCRelaxAll,
       /*DWARFMustBeAtTheEnd*/ true));
 
   // Create the AsmPrinter, which takes ownership of AsmStreamer if successful.

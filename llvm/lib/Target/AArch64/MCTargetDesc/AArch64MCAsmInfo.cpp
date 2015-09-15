@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64MCAsmInfo.h"
-#include "llvm/ADT/Triple.h"
+#include "llvm/ADT/TargetTuple.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
@@ -69,8 +69,8 @@ const MCExpr *AArch64MCAsmInfoDarwin::getExprForPersonalitySymbol(
   return MCBinaryExpr::createSub(Res, PC, Context);
 }
 
-AArch64MCAsmInfoELF::AArch64MCAsmInfoELF(const Triple &T) {
-  if (T.getArch() == Triple::aarch64_be)
+AArch64MCAsmInfoELF::AArch64MCAsmInfoELF(const TargetTuple &T) {
+  if (T.getArch() == TargetTuple::aarch64_be)
     IsLittleEndian = false;
 
   // We prefer NEON instructions to be printed in the short form.

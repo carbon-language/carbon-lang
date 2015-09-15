@@ -16,16 +16,15 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
-#include "llvm/ADT/Triple.h"
+#include "llvm/ADT/TargetTuple.h"
 
 namespace llvm {
 class Target;
-class Triple;
 
 class BPFMCAsmInfo : public MCAsmInfo {
 public:
-  explicit BPFMCAsmInfo(const Triple &TT) {
-    if (TT.getArch() == Triple::bpfeb)
+  explicit BPFMCAsmInfo(const TargetTuple &TT) {
+    if (TT.getArch() == TargetTuple::bpfeb)
       IsLittleEndian = false;
 
     PrivateGlobalPrefix = ".L";

@@ -309,8 +309,9 @@ unsigned PPCMCCodeEmitter::getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
   // Return the thread-pointer register's encoding.
   Fixups.push_back(MCFixup::create(0, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_nofixup));
-  const Triple &TT = STI.getTargetTriple();
-  bool isPPC64 = TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le;
+  const TargetTuple &TT = STI.getTargetTuple();
+  bool isPPC64 = TT.getArch() == TargetTuple::ppc64 ||
+                 TT.getArch() == TargetTuple::ppc64le;
   return CTX.getRegisterInfo()->getEncodingValue(isPPC64 ? PPC::X13 : PPC::R2);
 }
 

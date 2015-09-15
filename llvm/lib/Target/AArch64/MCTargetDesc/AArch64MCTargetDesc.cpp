@@ -40,28 +40,29 @@ static MCInstrInfo *createAArch64MCInstrInfo() {
   return X;
 }
 
-static MCSubtargetInfo *
-createAArch64MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
+static MCSubtargetInfo *createAArch64MCSubtargetInfo(const TargetTuple &TT,
+                                                     StringRef CPU,
+                                                     StringRef FS) {
   if (CPU.empty())
     CPU = "generic";
 
   return createAArch64MCSubtargetInfoImpl(TT, CPU, FS);
 }
 
-static MCRegisterInfo *createAArch64MCRegisterInfo(const Triple &Triple) {
+static MCRegisterInfo *createAArch64MCRegisterInfo(const TargetTuple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitAArch64MCRegisterInfo(X, AArch64::LR);
   return X;
 }
 
 static MCAsmInfo *createAArch64MCAsmInfo(const MCRegisterInfo &MRI,
-                                         const Triple &TheTriple) {
+                                         const TargetTuple &TT) {
   MCAsmInfo *MAI;
-  if (TheTriple.isOSBinFormatMachO())
+  if (TT.isOSBinFormatMachO())
     MAI = new AArch64MCAsmInfoDarwin();
   else {
-    assert(TheTriple.isOSBinFormatELF() && "Only expect Darwin or ELF");
-    MAI = new AArch64MCAsmInfoELF(TheTriple);
+    assert(TT.isOSBinFormatELF() && "Only expect Darwin or ELF");
+    MAI = new AArch64MCAsmInfoELF(TT);
   }
 
   // Initial state of the frame pointer is SP.
@@ -72,7 +73,7 @@ static MCAsmInfo *createAArch64MCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCCodeGenInfo *createAArch64MCCodeGenInfo(const Triple &TT,
+static MCCodeGenInfo *createAArch64MCCodeGenInfo(const TargetTuple &TT,
                                                  Reloc::Model RM,
                                                  CodeModel::Model CM,
                                                  CodeGenOpt::Level OL) {
@@ -104,7 +105,7 @@ static MCCodeGenInfo *createAArch64MCCodeGenInfo(const Triple &TT,
   return X;
 }
 
-static MCInstPrinter *createAArch64MCInstPrinter(const Triple &T,
+static MCInstPrinter *createAArch64MCInstPrinter(const TargetTuple &TT,
                                                  unsigned SyntaxVariant,
                                                  const MCAsmInfo &MAI,
                                                  const MCInstrInfo &MII,
@@ -117,7 +118,7 @@ static MCInstPrinter *createAArch64MCInstPrinter(const Triple &T,
   return nullptr;
 }
 
-static MCStreamer *createELFStreamer(const Triple &T, MCContext &Ctx,
+static MCStreamer *createELFStreamer(const TargetTuple &TT, MCContext &Ctx,
                                      MCAsmBackend &TAB, raw_pwrite_stream &OS,
                                      MCCodeEmitter *Emitter, bool RelaxAll) {
   return createAArch64ELFStreamer(Ctx, TAB, OS, Emitter, RelaxAll);

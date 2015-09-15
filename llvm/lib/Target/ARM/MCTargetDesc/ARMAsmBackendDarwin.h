@@ -18,7 +18,7 @@ namespace {
 class ARMAsmBackendDarwin : public ARMAsmBackend {
 public:
   const MachO::CPUSubTypeARM Subtype;
-  ARMAsmBackendDarwin(const Target &T, const Triple &TT,
+  ARMAsmBackendDarwin(const Target &T, const TargetTuple &TT,
                       MachO::CPUSubTypeARM st)
       : ARMAsmBackend(T, TT, /* IsLittleEndian */ true), Subtype(st) {
     HasDataInCodeSupport = true;

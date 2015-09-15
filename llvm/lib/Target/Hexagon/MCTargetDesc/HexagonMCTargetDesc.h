@@ -27,7 +27,7 @@ class MCObjectWriter;
 class MCRegisterInfo;
 class MCSubtargetInfo;
 class Target;
-class Triple;
+class TargetTuple;
 class StringRef;
 class raw_ostream;
 class raw_pwrite_stream;
@@ -44,7 +44,7 @@ MCCodeEmitter *createHexagonMCCodeEmitter(MCInstrInfo const &MCII,
 
 MCAsmBackend *createHexagonAsmBackend(Target const &T,
                                       MCRegisterInfo const &MRI,
-                                      const Triple &TT, StringRef CPU);
+                                      const TargetTuple &TT, StringRef CPU);
 
 MCObjectWriter *createHexagonELFObjectWriter(raw_pwrite_stream &OS,
                                              uint8_t OSABI, StringRef CPU);

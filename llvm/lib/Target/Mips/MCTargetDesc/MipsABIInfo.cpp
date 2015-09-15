@@ -47,7 +47,7 @@ unsigned MipsABIInfo::GetCalleeAllocdArgSizeInBytes(CallingConv::ID CC) const {
   llvm_unreachable("Unhandled ABI");
 }
 
-MipsABIInfo MipsABIInfo::computeTargetABI(const Triple &TT, StringRef CPU,
+MipsABIInfo MipsABIInfo::computeTargetABI(const TargetTuple &TT, StringRef CPU,
                                           const MCTargetOptions &Options) {
   if (Options.getABIName().startswith("o32"))
     return MipsABIInfo::O32();
@@ -64,7 +64,8 @@ MipsABIInfo MipsABIInfo::computeTargetABI(const Triple &TT, StringRef CPU,
   // used and not shared in a couple of other places. This needs unifying
   // at some level.
   if (CPU.empty() || CPU == "generic") {
-    if (TT.getArch() == Triple::mips || TT.getArch() == Triple::mipsel)
+    if (TT.getArch() == TargetTuple::mips ||
+        TT.getArch() == TargetTuple::mipsel)
       CPU = "mips32";
     else
       CPU = "mips64";

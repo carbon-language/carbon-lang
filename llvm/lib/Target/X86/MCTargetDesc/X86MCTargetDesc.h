@@ -28,7 +28,7 @@ class MCSubtargetInfo;
 class MCRelocationInfo;
 class MCStreamer;
 class Target;
-class Triple;
+class TargetTuple;
 class StringRef;
 class raw_ostream;
 class raw_pwrite_stream;
@@ -52,15 +52,15 @@ namespace N86 {
 }
 
 namespace X86_MC {
-std::string ParseX86Triple(const Triple &TT);
+std::string ParseX86TargetTuple(const TargetTuple &TT);
 
-unsigned getDwarfRegFlavour(const Triple &TT, bool isEH);
+unsigned getDwarfRegFlavour(const TargetTuple &TT, bool isEH);
 
 void InitLLVM2SEHRegisterMapping(MCRegisterInfo *MRI);
 
 /// Create a X86 MCSubtargetInfo instance. This is exposed so Asm parser, etc.
 /// do not need to go through TargetRegistry.
-MCSubtargetInfo *createX86MCSubtargetInfo(const Triple &TT, StringRef CPU,
+MCSubtargetInfo *createX86MCSubtargetInfo(const TargetTuple &TT, StringRef CPU,
                                           StringRef FS);
 }
 
@@ -69,9 +69,9 @@ MCCodeEmitter *createX86MCCodeEmitter(const MCInstrInfo &MCII,
                                       MCContext &Ctx);
 
 MCAsmBackend *createX86_32AsmBackend(const Target &T, const MCRegisterInfo &MRI,
-                                     const Triple &TT, StringRef CPU);
+                                     const TargetTuple &TT, StringRef CPU);
 MCAsmBackend *createX86_64AsmBackend(const Target &T, const MCRegisterInfo &MRI,
-                                     const Triple &TT, StringRef CPU);
+                                     const TargetTuple &TT, StringRef CPU);
 
 /// Construct an X86 Windows COFF machine code streamer which will generate
 /// PE/COFF format object files.

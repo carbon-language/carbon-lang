@@ -34,7 +34,7 @@ MCRelocationInfo::createExprForCAPIVariantKind(const MCExpr *SubExpr,
   return SubExpr;
 }
 
-MCRelocationInfo *llvm::createMCRelocationInfo(const Triple &TT,
+MCRelocationInfo *llvm::createMCRelocationInfo(const TargetTuple &TT,
                                                MCContext &Ctx) {
   return new MCRelocationInfo(Ctx);
 }

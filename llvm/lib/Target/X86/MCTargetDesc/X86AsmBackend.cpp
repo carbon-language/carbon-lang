@@ -771,36 +771,36 @@ public:
 
 MCAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
                                            const MCRegisterInfo &MRI,
-                                           const Triple &TheTriple,
+                                           const TargetTuple &TT,
                                            StringRef CPU) {
-  if (TheTriple.isOSBinFormatMachO())
+  if (TT.isOSBinFormatMachO())
     return new DarwinX86_32AsmBackend(T, MRI, CPU);
 
-  if (TheTriple.isOSWindows() && !TheTriple.isOSBinFormatELF())
+  if (TT.isOSWindows() && !TT.isOSBinFormatELF())
     return new WindowsX86AsmBackend(T, false, CPU);
 
-  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TT.getOS());
   return new ELFX86_32AsmBackend(T, OSABI, CPU);
 }
 
 MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
                                            const MCRegisterInfo &MRI,
-                                           const Triple &TheTriple,
+                                           const TargetTuple &TT,
                                            StringRef CPU) {
-  if (TheTriple.isOSBinFormatMachO()) {
+  if (TT.isOSBinFormatMachO()) {
     MachO::CPUSubTypeX86 CS =
-        StringSwitch<MachO::CPUSubTypeX86>(TheTriple.getArchName())
+        StringSwitch<MachO::CPUSubTypeX86>(TT.getArchName())
             .Case("x86_64h", MachO::CPU_SUBTYPE_X86_64_H)
             .Default(MachO::CPU_SUBTYPE_X86_64_ALL);
     return new DarwinX86_64AsmBackend(T, MRI, CPU, CS);
   }
 
-  if (TheTriple.isOSWindows() && !TheTriple.isOSBinFormatELF())
+  if (TT.isOSWindows() && !TT.isOSBinFormatELF())
     return new WindowsX86AsmBackend(T, true, CPU);
 
-  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TT.getOS());
 
-  if (TheTriple.getEnvironment() == Triple::GNUX32)
+  if (TT.getEnvironment() == TargetTuple::GNUX32)
     return new ELFX86_X32AsmBackend(T, OSABI, CPU);
   return new ELFX86_64AsmBackend(T, OSABI, CPU);
 }

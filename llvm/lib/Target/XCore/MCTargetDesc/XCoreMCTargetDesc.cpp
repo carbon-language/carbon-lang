@@ -40,19 +40,19 @@ static MCInstrInfo *createXCoreMCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createXCoreMCRegisterInfo(const Triple &TT) {
+static MCRegisterInfo *createXCoreMCRegisterInfo(const TargetTuple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitXCoreMCRegisterInfo(X, XCore::LR);
   return X;
 }
 
 static MCSubtargetInfo *
-createXCoreMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
+createXCoreMCSubtargetInfo(const TargetTuple &TT, StringRef CPU, StringRef FS) {
   return createXCoreMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
 static MCAsmInfo *createXCoreMCAsmInfo(const MCRegisterInfo &MRI,
-                                       const Triple &TT) {
+                                       const TargetTuple &TT) {
   MCAsmInfo *MAI = new XCoreMCAsmInfo(TT);
 
   // Initial state of the frame pointer is SP.
@@ -62,7 +62,7 @@ static MCAsmInfo *createXCoreMCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCCodeGenInfo *createXCoreMCCodeGenInfo(const Triple &TT,
+static MCCodeGenInfo *createXCoreMCCodeGenInfo(const TargetTuple &TT,
                                                Reloc::Model RM,
                                                CodeModel::Model CM,
                                                CodeGenOpt::Level OL) {
@@ -80,7 +80,7 @@ static MCCodeGenInfo *createXCoreMCCodeGenInfo(const Triple &TT,
   return X;
 }
 
-static MCInstPrinter *createXCoreMCInstPrinter(const Triple &T,
+static MCInstPrinter *createXCoreMCInstPrinter(const TargetTuple &T,
                                                unsigned SyntaxVariant,
                                                const MCAsmInfo &MAI,
                                                const MCInstrInfo &MII,

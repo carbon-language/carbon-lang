@@ -477,8 +477,8 @@ int main(int argc, char **argv) {
 
   MCInstPrinter *IP = nullptr;
   if (FileType == OFT_AssemblyFile) {
-    IP = TheTarget->createMCInstPrinter(Triple(TripleName), OutputAsmVariant,
-                                        *MAI, *MCII, *MRI);
+    IP = TheTarget->createMCInstPrinter(TargetTuple(Triple(TripleName)),
+                                        OutputAsmVariant, *MAI, *MCII, *MRI);
 
     // Set the display preference for hex vs. decimal immediates.
     IP->setPrintImmHex(PrintImmHex);
@@ -510,8 +510,8 @@ int main(int argc, char **argv) {
 
     MCCodeEmitter *CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, Ctx);
     MCAsmBackend *MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, MCPU);
-    Str.reset(TheTarget->createMCObjectStreamer(TheTriple, Ctx, *MAB, *OS, CE,
-                                                *STI, RelaxAll,
+    Str.reset(TheTarget->createMCObjectStreamer(TargetTuple(TheTriple), Ctx,
+                                                *MAB, *OS, CE, *STI, RelaxAll,
                                                 /*DWARFMustBeAtTheEnd*/ false));
     if (NoExecStack)
       Str->InitSections(true);

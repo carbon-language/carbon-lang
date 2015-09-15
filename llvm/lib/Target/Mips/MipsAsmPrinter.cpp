@@ -693,11 +693,12 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // clean anyhow.
   // FIXME: For ifunc related functions we could iterate over and look
   // for a feature string that doesn't match the default one.
-  const Triple &TT = TM.getTargetTriple();
+  TargetTuple TT(TargetTuple(TM.getTargetTriple()));
   StringRef CPU = MIPS_MC::selectMipsCPU(TT, TM.getTargetCPU());
   StringRef FS = TM.getTargetFeatureString();
   const MipsTargetMachine &MTM = static_cast<const MipsTargetMachine &>(TM);
-  const MipsSubtarget STI(TT, CPU, FS, MTM.isLittleEndian(), MTM);
+  const MipsSubtarget STI(TM.getTargetTriple(), CPU, FS, MTM.isLittleEndian(),
+                          MTM);
 
   bool IsABICalls = STI.isABICalls();
   const MipsABIInfo &ABI = MTM.getABI();

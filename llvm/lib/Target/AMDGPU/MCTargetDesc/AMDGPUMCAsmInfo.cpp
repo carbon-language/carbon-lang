@@ -11,7 +11,7 @@
 #include "AMDGPUMCAsmInfo.h"
 
 using namespace llvm;
-AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(const Triple &TT) : MCAsmInfoELF() {
+AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(const TargetTuple &TT) : MCAsmInfoELF() {
   HasSingleParameterDotFile = false;
   //===------------------------------------------------------------------===//
   MaxInstLength = 16;
