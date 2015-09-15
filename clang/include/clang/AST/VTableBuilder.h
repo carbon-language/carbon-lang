@@ -122,7 +122,7 @@ public:
   }
 
   const CXXRecordDecl *getRTTIDecl() const {
-    assert(getKind() == CK_RTTI && "Invalid component kind!");
+    assert(isRTTIKind() && "Invalid component kind!");
     return reinterpret_cast<CXXRecordDecl *>(getPointer());
   }
 
@@ -153,6 +153,8 @@ public:
     return isFunctionPointerKind(getKind());
   }
 
+  bool isRTTIKind() const { return isRTTIKind(getKind()); }
+
 private:
   static bool isFunctionPointerKind(Kind ComponentKind) {
     return isUsedFunctionPointerKind(ComponentKind) ||
@@ -166,6 +168,9 @@ private:
     return ComponentKind == CK_CompleteDtorPointer ||
            ComponentKind == CK_DeletingDtorPointer;
   }
+  static bool isRTTIKind(Kind ComponentKind) {
+    return ComponentKind == CK_RTTI;
+  }
 
   VTableComponent(Kind ComponentKind, CharUnits Offset) {
     assert((ComponentKind == CK_VCallOffset ||
@@ -178,7 +183,7 @@ private:
   }
 
   VTableComponent(Kind ComponentKind, uintptr_t Ptr) {
-    assert((ComponentKind == CK_RTTI || isFunctionPointerKind(ComponentKind)) &&
+    assert((isRTTIKind(ComponentKind) || isFunctionPointerKind(ComponentKind)) &&
            "Invalid component kind!");
 
     assert((Ptr & 7) == 0 && "Pointer not sufficiently aligned!");

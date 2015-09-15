@@ -1354,21 +1354,27 @@ public:
   void EmitInitializerForField(FieldDecl *Field, LValue LHS, Expr *Init,
                                ArrayRef<VarDecl *> ArrayIndexes);
 
-  /// InitializeVTablePointer - Initialize the vtable pointer of the given
-  /// subobject.
-  ///
-  void InitializeVTablePointer(BaseSubobject Base,
-                               const CXXRecordDecl *NearestVBase,
-                               CharUnits OffsetFromNearestVBase,
-                               const CXXRecordDecl *VTableClass);
+  /// Struct with all informations about dynamic [sub]class needed to set vptr.
+  struct VPtr {
+    BaseSubobject Base;
+    const CXXRecordDecl *NearestVBase;
+    CharUnits OffsetFromNearestVBase;
+    const CXXRecordDecl *VTableClass;
+  };
+
+  /// Initialize the vtable pointer of the given subobject.
+  void InitializeVTablePointer(const VPtr &vptr);
+
+  typedef llvm::SmallVector<VPtr, 4> VPtrsVector;
 
   typedef llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBasesSetTy;
-  void InitializeVTablePointers(BaseSubobject Base,
-                                const CXXRecordDecl *NearestVBase,
-                                CharUnits OffsetFromNearestVBase,
-                                bool BaseIsNonVirtualPrimaryBase,
-                                const CXXRecordDecl *VTableClass,
-                                VisitedVirtualBasesSetTy& VBases);
+  VPtrsVector getVTablePointers(const CXXRecordDecl *VTableClass);
+
+  void getVTablePointers(BaseSubobject Base, const CXXRecordDecl *NearestVBase,
+                         CharUnits OffsetFromNearestVBase,
+                         bool BaseIsNonVirtualPrimaryBase,
+                         const CXXRecordDecl *VTableClass,
+                         VisitedVirtualBasesSetTy &VBases, VPtrsVector &vptrs);
 
   void InitializeVTablePointers(const CXXRecordDecl *ClassDecl);
 
@@ -1836,9 +1842,17 @@ public:
   // they are substantially the same.
   void EmitDelegatingCXXConstructorCall(const CXXConstructorDecl *Ctor,
                                         const FunctionArgList &Args);
+
   void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type,
                               bool ForVirtualBase, bool Delegating,
                               Address This, const CXXConstructExpr *E);
+
+  /// Emit assumption load for all bases. Requires to be be called only on
+  /// most-derived class and not under construction of the object.
+  void EmitVTableAssumptionLoads(const CXXRecordDecl *ClassDecl, Address This);
+
+  /// Emit assumption that vptr load == global vtable.
+  void EmitVTableAssumptionLoad(const VPtr &vptr, Address This);
 
   void EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
                                       Address This, Address Src,
