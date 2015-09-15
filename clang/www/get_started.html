@@ -76,6 +76,14 @@ follows:</p>
     <li><tt>cd ../..</tt></li>
   </ul>
   </li>
+  <li>Checkout libcxx: (only required to build and run Compiler-RT tests on OS X, optional otherwise)
+  <ul>
+    <li><tt>cd llvm/projects</tt></li>
+    <li><tt>svn co http://llvm.org/svn/llvm-project/libcxx/trunk
+        libcxx</tt></li>
+    <li><tt>cd ../..</tt></li>
+  </ul>
+  </li>
   <li>Build LLVM and Clang:
   <ul>
     <li><tt>mkdir build</tt> (in-tree build is not supported)</li>
