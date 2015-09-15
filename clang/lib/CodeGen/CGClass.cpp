@@ -1344,6 +1344,13 @@ namespace {
 
 }
 
+static bool isInitializerOfDynamicClass(const CXXCtorInitializer *BaseInit) {
+  const Type *BaseType = BaseInit->getBaseClass();
+  const auto *BaseClassDecl =
+          cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
+  return BaseClassDecl->isDynamicClass();
+}
+
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
@@ -1367,9 +1374,13 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
     assert(BaseCtorContinueBB);
   }
 
+  bool BaseVPtrsInitialized = false;
   // Virtual base initializers first.
   for (; B != E && (*B)->isBaseInitializer() && (*B)->isBaseVirtual(); B++) {
+    CXXCtorInitializer *BaseInit = *B;
     EmitBaseInitializer(*this, ClassDecl, *B, CtorType);
+    BaseVPtrsInitialized |= BaseInitializerUsesThis(getContext(),
+                                                    BaseInit->getInit());
   }
 
   if (BaseCtorContinueBB) {
@@ -1382,7 +1393,14 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
   for (; B != E && (*B)->isBaseInitializer(); B++) {
     assert(!(*B)->isBaseVirtual());
     EmitBaseInitializer(*this, ClassDecl, *B, CtorType);
+    BaseVPtrsInitialized |= isInitializerOfDynamicClass(*B);
   }
+
+  // Pointer to this requires to be passed through invariant.group.barrier
+  // only if we've initialized any base vptrs.
+  if (CGM.getCodeGenOpts().StrictVTablePointers &&
+      CGM.getCodeGenOpts().OptimizationLevel > 0 && BaseVPtrsInitialized)
+    CXXThisValue = Builder.CreateInvariantGroupBarrier(LoadCXXThis());
 
   InitializeVTablePointers(ClassDecl);
 
@@ -1468,11 +1486,14 @@ FieldHasTrivialDestructorBody(ASTContext &Context,
 /// any vtable pointers before calling this destructor.
 static bool CanSkipVTablePointerInitialization(CodeGenFunction &CGF,
                                                const CXXDestructorDecl *Dtor) {
+  const CXXRecordDecl *ClassDecl = Dtor->getParent();
+  if (!ClassDecl->isDynamicClass())
+    return true;
+
   if (!Dtor->hasTrivialBody())
     return false;
 
   // Check the fields.
-  const CXXRecordDecl *ClassDecl = Dtor->getParent();
   for (const auto *Field : ClassDecl->fields())
     if (!FieldHasTrivialDestructorBody(CGF.getContext(), Field))
       return false;
@@ -1543,8 +1564,14 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     EnterDtorCleanups(Dtor, Dtor_Base);
 
     // Initialize the vtable pointers before entering the body.
-    if (!CanSkipVTablePointerInitialization(*this, Dtor))
-        InitializeVTablePointers(Dtor->getParent());
+    if (!CanSkipVTablePointerInitialization(*this, Dtor)) {
+      // Insert the llvm.invariant.group.barrier intrinsic before initializing
+      // the vptrs to cancel any previous assumptions we might have made.
+      if (CGM.getCodeGenOpts().StrictVTablePointers &&
+          CGM.getCodeGenOpts().OptimizationLevel > 0)
+        CXXThisValue = Builder.CreateInvariantGroupBarrier(LoadCXXThis());
+      InitializeVTablePointers(Dtor->getParent());
+    }
 
     if (isTryBody)
       EmitStmt(cast<CXXTryStmt>(Body)->getTryBlock());
