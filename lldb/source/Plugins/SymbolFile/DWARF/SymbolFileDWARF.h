@@ -152,6 +152,9 @@ public:
     ResolveType (const DWARFDIE &die,
                  bool assert_not_being_parsed = true);
 
+    lldb_private::CompilerDecl
+    GetDeclForUID (lldb::user_id_t uid) override;
+
     lldb_private::CompilerDeclContext
     GetDeclContextForUID (lldb::user_id_t uid) override;
 

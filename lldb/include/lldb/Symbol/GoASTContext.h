@@ -44,8 +44,34 @@ class GoASTContext : public TypeSystem
     }
 
     //----------------------------------------------------------------------
+    // CompilerDecl functions
+    //----------------------------------------------------------------------
+    virtual ConstString
+    DeclGetName (void *opaque_decl) override
+    {
+        return ConstString();
+    }
+
+    virtual lldb::VariableSP
+    DeclGetVariable (void *opaque_decl) override
+    {
+        return lldb::VariableSP();
+    }
+
+    virtual void
+    DeclLinkToObject (void *opaque_decl, std::shared_ptr<void> object) override
+    {
+    }
+
+    //----------------------------------------------------------------------
     // CompilerDeclContext functions
     //----------------------------------------------------------------------
+    
+    virtual std::vector<void *>
+    DeclContextFindDeclByName (void *opaque_decl_ctx, ConstString name) override
+    {
+        return std::vector<void *>();
+    }
 
     virtual bool
     DeclContextIsStructUnionOrClass(void *opaque_decl_ctx) override

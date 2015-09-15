@@ -16,6 +16,8 @@ class TestCppNsImport(TestBase):
         self.buildDsym()
         self.check()
 
+    # This test is expected to fail because DW_TAG_imported_declaration and DW_TAG_imported_module are not parsed in SymbolFileDWARF
+    @expectedFailureAll
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Tests imported namespaces in C++."""
@@ -45,6 +47,8 @@ class TestCppNsImport(TestBase):
         # Break on main function
         break_0 = target.BreakpointCreateBySourceRegex("// break 0", src_file_spec)
         self.assertTrue(break_0.IsValid() and break_0.GetNumLocations() >= 1, VALID_BREAKPOINT)
+        break_1 = target.BreakpointCreateBySourceRegex("// break 1", src_file_spec)
+        self.assertTrue(break_1.IsValid() and break_1.GetNumLocations() >= 1, VALID_BREAKPOINT)
 
         # Launch the process
         args = None
@@ -72,6 +76,35 @@ class TestCppNsImport(TestBase):
         test_result = frame.EvaluateExpression("anon")
         self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 2, "anon = 2")
 
+        test_result = frame.EvaluateExpression("global")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 4, "global = 4")
+
+        test_result = frame.EvaluateExpression("fun_var")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 9, "fun_var = 9")
+
+        test_result = frame.EvaluateExpression("not_imported")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 35, "not_imported = 35")
+
+        test_result = frame.EvaluateExpression("imported")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 99, "imported = 99")
+
+        test_result = frame.EvaluateExpression("single")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 3, "single = 3")
+
+        # Continue to second breakpoint
+        process.Continue()
+
+        # Get the thread of the process
+        self.assertTrue(process.GetState() == lldb.eStateStopped, PROCESS_STOPPED)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
+
+        # Get current fream of the thread at the breakpoint
+        frame = thread.GetSelectedFrame()
+
+        # Test function inside namespace
+        test_result = frame.EvaluateExpression("fun_var")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 5, "fun_var = 5")
+        
 
 if __name__ == '__main__':
     import atexit

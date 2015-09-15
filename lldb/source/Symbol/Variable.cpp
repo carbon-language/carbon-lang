@@ -15,9 +15,12 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Symbol/Block.h"
+#include "lldb/Symbol/CompilerDecl.h"
+#include "lldb/Symbol/CompilerDeclContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolContext.h"
+#include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ABI.h"
@@ -88,6 +91,13 @@ Variable::GetName() const
         return name;
     return m_name;
 }
+
+ConstString
+Variable::GetUnqualifiedName() const
+{
+    return m_name;
+}
+
 
 bool
 Variable::NameMatches (const ConstString &name) const
@@ -230,6 +240,22 @@ Variable::MemorySize() const
     return sizeof(Variable);
 }
 
+CompilerDeclContext
+Variable::GetDeclContext ()
+{
+    Type *type = GetType();
+    return type->GetSymbolFile()->GetDeclContextContainingUID(GetID());
+}
+
+CompilerDecl
+Variable::GetDecl ()
+{
+    Type *type = GetType();
+    CompilerDecl decl = type->GetSymbolFile()->GetDeclForUID(GetID());
+    if (decl)
+        decl.GetTypeSystem()->DeclLinkToObject(decl.GetOpaqueDecl(), shared_from_this());
+    return decl;
+}
 
 void
 Variable::CalculateSymbolContext (SymbolContext *sc)

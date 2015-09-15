@@ -507,8 +507,23 @@ public:
                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets);
 
     //----------------------------------------------------------------------
+    // CompilerDecl override functions
+    //----------------------------------------------------------------------
+    lldb::VariableSP
+    DeclGetVariable (void *opaque_decl) override;
+
+    void
+    DeclLinkToObject (void *opaque_decl, std::shared_ptr<void> object) override;
+    
+    ConstString
+    DeclGetName (void *opaque_decl) override;
+
+    //----------------------------------------------------------------------
     // CompilerDeclContext override functions
     //----------------------------------------------------------------------
+    
+    std::vector<void *>
+    DeclContextFindDeclByName (void *opaque_decl_ctx, ConstString name);
 
     bool
     DeclContextIsStructUnionOrClass (void *opaque_decl_ctx) override;
@@ -1070,6 +1085,17 @@ public:
                             int tag_decl_kind,
                             const ClangASTContext::TemplateParameterInfos &template_param_infos);
 
+    clang::BlockDecl *
+    CreateBlockDeclaration (clang::DeclContext *ctx);
+
+    clang::UsingDirectiveDecl *
+    CreateUsingDirectiveDeclaration (clang::DeclContext *decl_ctx, clang::NamespaceDecl *ns_decl);
+
+    clang::UsingDecl *
+    CreateUsingDeclaration (clang::DeclContext *current_decl_ctx, clang::NamedDecl *target);
+
+    clang::VarDecl *
+    CreateVariableDeclaration (clang::DeclContext *decl_context, const char *name, clang::QualType type);
 protected:
     static clang::QualType
     GetQualType (void *type)
@@ -1110,6 +1136,7 @@ protected:
     uint32_t                                        m_pointer_byte_size;
     bool                                            m_ast_owned;
     bool                                            m_can_evaluate_expressions;
+    std::map<void *, std::shared_ptr<void>>         m_decl_objects;
 
 private:
     //------------------------------------------------------------------

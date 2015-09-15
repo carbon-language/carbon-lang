@@ -51,6 +51,12 @@ class DWARFASTParserGo : public DWARFASTParser
         return lldb_private::CompilerDeclContext();
     }
 
+    virtual lldb_private::CompilerDecl
+    GetDeclForUIDFromDWARF (const DWARFDIE &die) override
+    {
+        return lldb_private::CompilerDecl();
+    }
+
   private:
     size_t ParseChildParameters(const lldb_private::SymbolContext &sc, const DWARFDIE &parent_die, bool &is_variadic,
                                 std::vector<lldb_private::CompilerType> &function_param_types);

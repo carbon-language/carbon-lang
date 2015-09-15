@@ -48,6 +48,9 @@ public:
                            lldb_private::Type *type,
                            lldb_private::CompilerType &clang_type) override;
 
+    virtual lldb_private::CompilerDecl
+    GetDeclForUIDFromDWARF (const DWARFDIE &die) override;
+
     virtual lldb_private::CompilerDeclContext
     GetDeclContextForUIDFromDWARF (const DWARFDIE &die) override;
 
@@ -82,6 +85,9 @@ protected:
         llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> base_offsets;
         llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> vbase_offsets;
     };
+
+    clang::BlockDecl *
+    ResolveBlockDIE (const DWARFDIE &die);
 
     clang::NamespaceDecl *
     ResolveNamespaceDIE (const DWARFDIE &die);
@@ -136,6 +142,12 @@ protected:
                            uint32_t enumerator_byte_size,
                            const DWARFDIE &parent_die);
 
+    lldb_private::Type *
+    GetTypeForDIE (const DWARFDIE &die);
+
+    clang::Decl *
+    GetClangDeclForDIE (const DWARFDIE &die);
+
     clang::DeclContext *
     GetClangDeclContextForDIE (const DWARFDIE &die);
 
@@ -156,11 +168,18 @@ protected:
     LinkDeclContextToDIE (clang::DeclContext *decl_ctx,
                           const DWARFDIE &die);
 
+    void
+    LinkDeclToDIE (clang::Decl *decl, const DWARFDIE &die);
+
     typedef llvm::SmallPtrSet<const DWARFDebugInfoEntry *, 4> DIEPointerSet;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;
     typedef llvm::DenseMap<const clang::DeclContext *, DIEPointerSet> DeclContextToDIEMap;
+    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::Decl *> DIEToDeclMap;
+    typedef llvm::DenseMap<const clang::Decl *, DIEPointerSet> DeclToDIEMap;
 
     lldb_private::ClangASTContext &m_ast;
+    DIEToDeclMap m_die_to_decl;
+    DeclToDIEMap m_decl_to_die;
     DIEToDeclContextMap m_die_to_decl_ctx;
     DeclContextToDIEMap m_decl_ctx_to_die;
     RecordDeclToLayoutMap m_record_decl_to_layout_map;

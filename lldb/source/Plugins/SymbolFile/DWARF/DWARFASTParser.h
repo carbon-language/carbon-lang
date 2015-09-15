@@ -12,6 +12,7 @@
 
 #include "DWARFDefines.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Symbol/CompilerDecl.h"
 #include "lldb/Symbol/CompilerDeclContext.h"
 
 class DWARFDIE;
@@ -27,7 +28,6 @@ public:
                         lldb_private::Log *log,
                         bool *type_is_new_ptr) = 0;
 
-
     virtual lldb_private::Function *
     ParseFunctionFromDWARF (const lldb_private::SymbolContext& sc,
                             const DWARFDIE &die) = 0;
@@ -37,12 +37,14 @@ public:
                            lldb_private::Type *type,
                            lldb_private::CompilerType &clang_type) = 0;
 
+    virtual lldb_private::CompilerDecl
+    GetDeclForUIDFromDWARF (const DWARFDIE &die) = 0;
+
     virtual lldb_private::CompilerDeclContext
     GetDeclContextForUIDFromDWARF (const DWARFDIE &die) = 0;
 
     virtual lldb_private::CompilerDeclContext
     GetDeclContextContainingUIDFromDWARF (const DWARFDIE &die) = 0;
-
 };
 
 #endif  // SymbolFileDWARF_DWARFASTParser_h_

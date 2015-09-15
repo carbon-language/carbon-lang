@@ -8,9 +8,24 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Symbol/CompilerDeclContext.h"
+#include "lldb/Symbol/CompilerDecl.h"
 #include "lldb/Symbol/TypeSystem.h"
+#include <vector>
 
 using namespace lldb_private;
+
+std::vector<CompilerDecl>
+CompilerDeclContext::FindDeclByName (ConstString name)
+{
+    std::vector<CompilerDecl> found_decls;
+    if (IsValid())
+    {
+        std::vector<void *> found_opaque_decls = m_type_system->DeclContextFindDeclByName(m_opaque_decl_ctx, name);
+        for (void *opaque_decl : found_opaque_decls)
+            found_decls.push_back(CompilerDecl(m_type_system, opaque_decl));
+    }
+    return found_decls;
+}
 
 bool
 CompilerDeclContext::IsClang () const

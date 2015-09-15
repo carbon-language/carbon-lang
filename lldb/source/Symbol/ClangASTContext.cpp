@@ -1756,6 +1756,82 @@ ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *d
 }
 
 
+clang::BlockDecl *
+ClangASTContext::CreateBlockDeclaration (clang::DeclContext *ctx)
+{
+    if (ctx != nullptr)
+    {
+        clang::BlockDecl *decl = clang::BlockDecl::Create(*getASTContext(), ctx, clang::SourceLocation());
+        ctx->addDecl(decl);
+        return decl;
+    }
+    return nullptr;
+}
+
+clang::UsingDirectiveDecl *
+ClangASTContext::CreateUsingDirectiveDeclaration (clang::DeclContext *decl_ctx, clang::NamespaceDecl *ns_decl)
+{
+    if (decl_ctx != nullptr && ns_decl != nullptr)
+    {
+        // TODO: run LCA between decl_tx and ns_decl
+        clang::UsingDirectiveDecl *using_decl = clang::UsingDirectiveDecl::Create(*getASTContext(),
+            decl_ctx,
+            clang::SourceLocation(),
+            clang::SourceLocation(),
+            clang::NestedNameSpecifierLoc(),
+            clang::SourceLocation(),
+            ns_decl,
+            GetTranslationUnitDecl(getASTContext()));
+        decl_ctx->addDecl(using_decl);
+        return using_decl;
+    }
+    return nullptr;
+}
+
+clang::UsingDecl *
+ClangASTContext::CreateUsingDeclaration (clang::DeclContext *current_decl_ctx, clang::NamedDecl *target)
+{
+    if (current_decl_ctx != nullptr && target != nullptr)
+    {
+        clang::UsingDecl *using_decl = clang::UsingDecl::Create(*getASTContext(),
+            current_decl_ctx,
+            clang::SourceLocation(),
+            clang::NestedNameSpecifierLoc(),
+            clang::DeclarationNameInfo(),
+            false);
+        clang::UsingShadowDecl *shadow_decl = clang::UsingShadowDecl::Create(*getASTContext(),
+            current_decl_ctx,
+            clang::SourceLocation(),
+            using_decl,
+            target);
+        using_decl->addShadowDecl(shadow_decl);
+        current_decl_ctx->addDecl(using_decl);
+        return using_decl;
+    }
+    return nullptr;
+}
+
+clang::VarDecl *
+ClangASTContext::CreateVariableDeclaration (clang::DeclContext *decl_context, const char *name, clang::QualType type)
+{
+    if (decl_context != nullptr)
+    {
+        clang::VarDecl *var_decl = clang::VarDecl::Create(*getASTContext(),
+            decl_context,
+            clang::SourceLocation(),
+            clang::SourceLocation(),
+            name && name[0] ? &getASTContext()->Idents.getOwn(name) : nullptr,
+            type,
+            nullptr,
+            clang::SC_None);
+        var_decl->setAccess(clang::AS_public);
+        decl_context->addDecl(var_decl);
+        decl_context->makeDeclVisibleInContext(var_decl);
+        return var_decl;
+    }
+    return nullptr;
+}
+
 #pragma mark Function Types
 
 FunctionDecl *
@@ -8818,8 +8894,93 @@ ClangASTContext::LayoutRecordType(void *baton,
 }
 
 //----------------------------------------------------------------------
+// CompilerDecl override functions
+//----------------------------------------------------------------------
+lldb::VariableSP
+ClangASTContext::DeclGetVariable (void *opaque_decl)
+{
+    if (llvm::dyn_cast<clang::VarDecl>((clang::Decl *)opaque_decl))
+    {
+        auto decl_search_it = m_decl_objects.find(opaque_decl);
+        if (decl_search_it != m_decl_objects.end())
+            return std::static_pointer_cast<Variable>(decl_search_it->second);
+    }
+    return VariableSP();
+}
+
+void
+ClangASTContext::DeclLinkToObject (void *opaque_decl, std::shared_ptr<void> object)
+{
+    if (m_decl_objects.find(opaque_decl) == m_decl_objects.end())
+        m_decl_objects.insert(std::make_pair(opaque_decl, object));
+}
+
+ConstString
+ClangASTContext::DeclGetName (void *opaque_decl)
+{
+    if (opaque_decl)
+    {
+        clang::NamedDecl *nd = llvm::dyn_cast<NamedDecl>((clang::Decl*)opaque_decl);
+        if (nd != nullptr)
+            return ConstString(nd->getName());
+    }
+    return ConstString();
+}
+
+//----------------------------------------------------------------------
 // CompilerDeclContext functions
 //----------------------------------------------------------------------
+
+std::vector<void *>
+ClangASTContext::DeclContextFindDeclByName(void *opaque_decl_ctx, ConstString name)
+{
+    std::vector<void *> found_decls;
+    if (opaque_decl_ctx)
+    {
+        DeclContext *root_decl_ctx = (DeclContext *)opaque_decl_ctx;
+        std::set<DeclContext *> searched;
+        std::multimap<DeclContext *, DeclContext *> search_queue;
+
+        for (clang::DeclContext *decl_context = root_decl_ctx; decl_context != nullptr && found_decls.empty(); decl_context = decl_context->getParent())
+        {
+            search_queue.insert(std::make_pair(decl_context, decl_context));
+
+            for (auto it = search_queue.find(decl_context); it != search_queue.end(); it++)
+            {
+                searched.insert(it->second);
+                for (clang::Decl *child : it->second->decls())
+                {
+                    if (clang::NamedDecl *nd = llvm::dyn_cast<clang::NamedDecl>(child))
+                    {
+                        IdentifierInfo *ii = nd->getIdentifier();
+                        if (ii != nullptr && ii->getName().equals(name.AsCString(nullptr)))
+                            found_decls.push_back(nd);
+                    }
+                    else if (clang::UsingDirectiveDecl *ud = llvm::dyn_cast<clang::UsingDirectiveDecl>(child))
+                    {
+                        clang::DeclContext *from = ud->getCommonAncestor();
+                        if (searched.find(ud->getNominatedNamespace()) == searched.end())
+                            search_queue.insert(std::make_pair(from, ud->getNominatedNamespace()));
+                    }
+                    else if (clang::UsingDecl *ud = llvm::dyn_cast<clang::UsingDecl>(child))
+                    {
+                        for (clang::UsingShadowDecl *usd : ud->shadows())
+                        {
+                            clang::Decl *target = usd->getTargetDecl();
+                            if (clang::NamedDecl *nd = llvm::dyn_cast<clang::NamedDecl>(target))
+                            {
+                                IdentifierInfo *ii = nd->getIdentifier();
+                                if (ii != nullptr && ii->getName().equals(name.AsCString(nullptr)))
+                                    found_decls.push_back(nd);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return found_decls;
+}
 
 bool
 ClangASTContext::DeclContextIsStructUnionOrClass (void *opaque_decl_ctx)

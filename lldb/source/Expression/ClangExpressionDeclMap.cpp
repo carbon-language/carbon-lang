@@ -28,6 +28,7 @@
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/CompilerDecl.h"
 #include "lldb/Symbol/CompilerDeclContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
@@ -1035,6 +1036,9 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
     // doesn't start with our phony prefix of '$'
     Target *target = m_parser_vars->m_exe_ctx.GetTargetPtr();
     StackFrame *frame = m_parser_vars->m_exe_ctx.GetFramePtr();
+    SymbolContext sym_ctx;
+    if (frame != nullptr)
+        sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction|lldb::eSymbolContextBlock);
     if (name_unique_cstr[0] == '$' && !namespace_decl)
     {
         static ConstString g_lldb_class_name ("$__lldb_class");
@@ -1046,7 +1050,6 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (frame == NULL)
                 return;
 
-            SymbolContext sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction|lldb::eSymbolContextBlock);
 
             // Find the block that defines the function represented by "sym_ctx"
             Block *function_block = sym_ctx.GetFunctionBlock();
@@ -1352,24 +1355,30 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
 
         if (frame && !namespace_decl)
         {
-            valobj = frame->GetValueForVariableExpressionPath(name_unique_cstr,
-                                                              eNoDynamicValues,
-                                                              StackFrame::eExpressionPathOptionCheckPtrVsMember |
-                                                              StackFrame::eExpressionPathOptionsNoFragileObjcIvar |
-                                                              StackFrame::eExpressionPathOptionsNoSyntheticChildren |
-                                                              StackFrame::eExpressionPathOptionsNoSyntheticArrayRange,
-                                                              var,
-                                                              err);
+            CompilerDeclContext compiler_decl_context = sym_ctx.block != nullptr ? sym_ctx.block->GetDeclContext() : CompilerDeclContext();
 
-            // If we found a variable in scope, no need to pull up function names
-            if (err.Success() && var)
+            if (compiler_decl_context)
             {
-                AddOneVariable(context, var, valobj, current_id);
-                context.m_found.variable = true;
-                return;
+                // Make sure that the variables are parsed so that we have the declarations
+                VariableListSP vars = frame->GetInScopeVariableList(true);
+                for (size_t i = 0; i < vars->GetSize(); i++)
+                    vars->GetVariableAtIndex(i)->GetDecl();
+
+                // Search for declarations matching the name
+                std::vector<CompilerDecl> found_decls = compiler_decl_context.FindDeclByName(name);
+                for (CompilerDecl decl : found_decls)
+                {
+                    var = decl.GetAsVariable();
+                    if (var)
+                    {
+                        valobj = ValueObjectVariable::Create(frame, var);
+                        AddOneVariable(context, var, valobj, current_id);
+                        context.m_found.variable = true;
+                        return;
+                    }
+                }
             }
         }
-
         if (target)
         {
             var = FindGlobalVariable (*target,

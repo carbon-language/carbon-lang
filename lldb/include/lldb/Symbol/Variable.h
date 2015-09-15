@@ -1,4 +1,5 @@
-//===-- Variable.h ----------------------------------------------*- C++ -*-===//
+//===-- Variable.h ----------------------------------------------*- C++
+//-*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,6 +11,7 @@
 #ifndef liblldb_Variable_h_
 #define liblldb_Variable_h_
 
+#include <memory>
 #include <vector>
 
 #include "lldb/lldb-private.h"
@@ -21,7 +23,8 @@
 
 namespace lldb_private {
 
-class Variable : public UserID
+class Variable : public UserID,
+    public std::enable_shared_from_this<Variable>
 {
 public:
     //------------------------------------------------------------------
@@ -58,6 +61,9 @@ public:
 
     ConstString
     GetName() const;
+
+    ConstString
+    GetUnqualifiedName() const;
 
     SymbolContextScope *
     GetSymbolContextScope() const
@@ -167,6 +173,11 @@ public:
                   StringList &matches,
                   bool &word_complete);
 
+    CompilerDeclContext
+    GetDeclContext ();
+
+    CompilerDecl
+    GetDecl ();
 protected:
     ConstString m_name;                 // The basename of the variable (no namespaces)
     Mangled m_mangled;                  // The mangled name of the variable

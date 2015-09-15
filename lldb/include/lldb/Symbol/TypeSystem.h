@@ -98,8 +98,23 @@ public:
     }
 
     //----------------------------------------------------------------------
+    // CompilerDecl functions
+    //----------------------------------------------------------------------
+    virtual ConstString
+    DeclGetName (void *opaque_decl) = 0;
+
+    virtual lldb::VariableSP
+    DeclGetVariable (void *opaque_decl) = 0;
+
+    virtual void
+    DeclLinkToObject (void *opaque_decl, std::shared_ptr<void> object) = 0;
+
+    //----------------------------------------------------------------------
     // CompilerDeclContext functions
     //----------------------------------------------------------------------
+    
+    virtual std::vector<void *>
+    DeclContextFindDeclByName (void *opaque_decl_ctx, ConstString name) = 0;
 
     virtual bool
     DeclContextIsStructUnionOrClass (void *opaque_decl_ctx) = 0;

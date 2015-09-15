@@ -13,6 +13,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Symbol/CompilerType.h"
+#include "lldb/Symbol/CompilerDecl.h"
 #include "lldb/Symbol/CompilerDeclContext.h"
 
 #include "lldb/Symbol/Type.h"
@@ -130,6 +131,7 @@ public:
     virtual size_t          ParseVariablesForContext (const SymbolContext& sc) = 0;
     virtual Type*           ResolveTypeUID (lldb::user_id_t type_uid) = 0;
     virtual bool            CompleteType (CompilerType &clang_type) = 0;
+    virtual CompilerDecl    GetDeclForUID (lldb::user_id_t uid) { return CompilerDecl(); }
     virtual CompilerDeclContext GetDeclContextForUID (lldb::user_id_t uid) { return CompilerDeclContext(); }
     virtual CompilerDeclContext GetDeclContextContainingUID (lldb::user_id_t uid) { return CompilerDeclContext(); }
     virtual uint32_t        ResolveSymbolContext (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc) = 0;

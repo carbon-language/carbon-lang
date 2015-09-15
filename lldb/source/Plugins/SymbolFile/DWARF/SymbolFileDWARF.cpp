@@ -48,6 +48,8 @@
 #include "lldb/Interpreter/OptionValueProperties.h"
 
 #include "lldb/Symbol/Block.h"
+#include "lldb/Symbol/CompilerDecl.h"
+#include "lldb/Symbol/CompilerDeclContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -1389,6 +1391,26 @@ SymbolFileDWARF::ClassOrStructIsVirtual (const DWARFDIE &parent_die)
         }
     }
     return false;
+}
+
+CompilerDecl
+SymbolFileDWARF::GetDeclForUID (lldb::user_id_t type_uid)
+{
+    if (UserIDMatches(type_uid))
+    {
+        DWARFDebugInfo* debug_info = DebugInfo();
+        if (debug_info)
+        {
+            DWARFDIE die = debug_info->GetDIE(DIERef(type_uid));
+            if (die)
+            {
+                DWARFASTParser *dwarf_ast = die.GetDWARFParser();
+                if (dwarf_ast)
+                    return dwarf_ast->GetDeclForUIDFromDWARF(die);
+            }
+        }
+    }
+    return CompilerDecl();
 }
 
 CompilerDeclContext
@@ -3057,6 +3079,8 @@ SymbolFileDWARF::GetDeclContextDIEContainingDIE (const DWARFDIE &orig_die)
                     case DW_TAG_structure_type:
                     case DW_TAG_union_type:
                     case DW_TAG_class_type:
+                    case DW_TAG_lexical_block:
+                    case DW_TAG_subprogram:
                         return die;
                         
                     default:
@@ -3741,6 +3765,7 @@ SymbolFileDWARF::ParseVariableDIE
     {
         DWARFAttributes attributes;
         const size_t num_attributes = die.GetAttributes(attributes);
+        DWARFDIE spec_die;
         if (num_attributes > 0)
         {
             const char *name = NULL;
@@ -3862,7 +3887,13 @@ SymbolFileDWARF::ParseVariableDIE
                             }
                         }
                         break;
-
+                    case DW_AT_specification:
+                    {
+                        DWARFDebugInfo* debug_info = DebugInfo();
+                        if (debug_info)
+                            spec_die = debug_info->GetDIE(DIERef(form_value));
+                        break;
+                    }
                     case DW_AT_artificial:      is_artificial = form_value.Boolean(); break;
                     case DW_AT_accessibility:   break; //accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
                     case DW_AT_declaration:
@@ -3874,7 +3905,6 @@ SymbolFileDWARF::ParseVariableDIE
                     default:
                     case DW_AT_abstract_origin:
                     case DW_AT_sibling:
-                    case DW_AT_specification:
                         break;
                     }
                 }
@@ -4078,6 +4108,8 @@ SymbolFileDWARF::ParseVariableDIE
         // (missing location due to optimization, etc)) so we don't re-parse
         // this DIE over and over later...
         GetDIEToVariable()[die.GetDIE()] = var_sp;
+        if (spec_die)
+            GetDIEToVariable()[spec_die.GetDIE()] = var_sp;
     }
     return var_sp;
 }

@@ -61,6 +61,7 @@ class   CommandObject;
 class   CommandReturnObject;
 class   Communication;
 class   CompactUnwindInfo;
+class   CompilerDecl;
 class   CompilerDeclContext;
 class   CompilerType;
 class   CompileUnit;
