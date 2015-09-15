@@ -3895,7 +3895,7 @@ static SDValue tryBuildVectorShuffle(SelectionDAG &DAG,
       GS.addUndef();
     } else {
       GS.add(SDValue(), ResidueOps.size());
-      ResidueOps.push_back(Op);
+      ResidueOps.push_back(BVN->getOperand(I));
     }
   }
 
