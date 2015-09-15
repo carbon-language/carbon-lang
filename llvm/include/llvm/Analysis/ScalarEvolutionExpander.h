@@ -117,9 +117,10 @@ namespace llvm {
 
     /// \brief Return true for expressions that may incur non-trivial cost to
     /// evaluate at runtime.
-    /// 'At' is an optional parameter which specifies point in code where user
-    /// is going to expand this expression. Sometimes this knowledge can lead to
-    /// a more accurate cost estimation.
+    ///
+    /// At is an optional parameter which specifies point in code where user is
+    /// going to expand this expression. Sometimes this knowledge can lead to a
+    /// more accurate cost estimation.
     bool isHighCostExpansion(const SCEV *Expr, Loop *L,
                              const Instruction *At = nullptr) {
       SmallPtrSet<const SCEV *, 8> Processed;
@@ -197,12 +198,14 @@ namespace llvm {
 
     void setChainedPhi(PHINode *PN) { ChainedPhis.insert(PN); }
 
-    /// \brief Try to find LLVM IR value for 'S' available at the point 'At'.
-    // 'L' is a hint which tells in which loop to look for the suitable value.
-    // On success return value which is equivalent to the expanded 'S' at point
-    // 'At'. Return nullptr if value was not found.
-    // Note that this function does not perform exhaustive search. I.e if it
-    // didn't find any value it does not mean that there is no such value.
+    /// \brief Try to find LLVM IR value for S available at the point At.
+    ///
+    /// L is a hint which tells in which loop to look for the suitable value.
+    /// On success return value which is equivalent to the expanded S at point
+    /// At. Return nullptr if value was not found.
+    ///
+    /// Note that this function does not perform an exhaustive search. I.e if it
+    /// didn't find any value it does not mean that there is no such value.
     Value *findExistingExpansion(const SCEV *S, const Instruction *At, Loop *L);
 
   private:
