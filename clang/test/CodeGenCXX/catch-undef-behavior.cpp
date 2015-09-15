@@ -1,9 +1,8 @@
-// RUN: %clang_cc1 -std=c++11 -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-divide-by-zero,shift-base,shift-exponent,unreachable,return,vla-bound,alignment,null,vptr,object-size,float-cast-overflow,bool,enum,array-bounds,function -fsanitize-recover=signed-integer-overflow,integer-divide-by-zero,float-divide-by-zero,shift-base,shift-exponent,vla-bound,alignment,null,vptr,object-size,float-cast-overflow,bool,enum,array-bounds,function -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-divide-by-zero,shift-base,shift-exponent,unreachable,return,vla-bound,alignment,null,vptr,object-size,float-cast-overflow,bool,enum,array-bounds,function -fsanitize-recover=signed-integer-overflow,integer-divide-by-zero,float-divide-by-zero,shift-base,shift-exponent,vla-bound,alignment,null,vptr,object-size,float-cast-overflow,bool,enum,array-bounds,function -emit-llvm %s -o - -triple x86_64-linux-gnu | opt -instnamer -S | FileCheck %s
 // RUN: %clang_cc1 -std=c++11 -fsanitize=vptr,address -fsanitize-recover=vptr,address -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-ASAN
 // RUN: %clang_cc1 -std=c++11 -fsanitize=vptr -fsanitize-recover=vptr -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=DOWNCAST-NULL
 // RUN: %clang_cc1 -std=c++11 -fsanitize=function -emit-llvm %s -o - -triple x86_64-linux-gnux32 | FileCheck %s --check-prefix=CHECK-X32
 // RUN: %clang_cc1 -std=c++11 -fsanitize=function -emit-llvm %s -o - -triple i386-linux-gnu | FileCheck %s --check-prefix=CHECK-X86
-// REQUIRES: asserts
 
 struct S {
   double d;
@@ -369,15 +368,15 @@ void downcast_pointer(B *b) {
   (void) static_cast<C*>(b);
   // Alignment check from EmitTypeCheck(TCK_DowncastPointer, ...)
   // CHECK: [[SUB:%[.a-z0-9]*]] = getelementptr i8, i8* {{.*}}, i64 -16
-  // CHECK-NEXT: [[C:%[0-9]*]] = bitcast i8* [[SUB]] to %class.C*
+  // CHECK-NEXT: [[C:%.+]] = bitcast i8* [[SUB]] to %class.C*
   // null check goes here
-  // CHECK: [[FROM_PHI:%[0-9]*]] = phi %class.C* [ [[C]], {{.*}} ], {{.*}}
+  // CHECK: [[FROM_PHI:%.+]] = phi %class.C* [ [[C]], {{.*}} ], {{.*}}
   // Objectsize check goes here
-  // CHECK: [[C_INT:%[0-9]*]] = ptrtoint %class.C* [[FROM_PHI]] to i64
-  // CHECK-NEXT: [[MASKED:%[0-9]*]] = and i64 [[C_INT]], 15
-  // CHECK-NEXT: [[TEST:%[0-9]*]] = icmp eq i64 [[MASKED]], 0
+  // CHECK: [[C_INT:%.+]] = ptrtoint %class.C* [[FROM_PHI]] to i64
+  // CHECK-NEXT: [[MASKED:%.+]] = and i64 [[C_INT]], 15
+  // CHECK-NEXT: [[TEST:%.+]] = icmp eq i64 [[MASKED]], 0
   // AND the alignment test with the objectsize test.
-  // CHECK-NEXT: [[AND:%[0-9]*]] = and i1 {{.*}}, [[TEST]]
+  // CHECK-NEXT: [[AND:%.+]] = and i1 {{.*}}, [[TEST]]
   // CHECK-NEXT: br i1 [[AND]]
 }
 
@@ -386,13 +385,13 @@ void downcast_reference(B &b) {
   (void) static_cast<C&>(b);
   // Alignment check from EmitTypeCheck(TCK_DowncastReference, ...)
   // CHECK:      [[SUB:%[.a-z0-9]*]] = getelementptr i8, i8* {{.*}}, i64 -16
-  // CHECK-NEXT: [[C:%[0-9]*]] = bitcast i8* [[SUB]] to %class.C*
+  // CHECK-NEXT: [[C:%.+]] = bitcast i8* [[SUB]] to %class.C*
   // Objectsize check goes here
-  // CHECK:      [[C_INT:%[0-9]*]] = ptrtoint %class.C* [[C]] to i64
-  // CHECK-NEXT: [[MASKED:%[0-9]*]] = and i64 [[C_INT]], 15
-  // CHECK-NEXT: [[TEST:%[0-9]*]] = icmp eq i64 [[MASKED]], 0
+  // CHECK:      [[C_INT:%.+]] = ptrtoint %class.C* [[C]] to i64
+  // CHECK-NEXT: [[MASKED:%.+]] = and i64 [[C_INT]], 15
+  // CHECK-NEXT: [[TEST:%.+]] = icmp eq i64 [[MASKED]], 0
   // AND the alignment test with the objectsize test.
-  // CHECK:      [[AND:%[0-9]*]] = and i1 {{.*}}, [[TEST]]
+  // CHECK:      [[AND:%.+]] = and i1 {{.*}}, [[TEST]]
   // CHECK-NEXT: br i1 [[AND]]
 }
 
@@ -400,18 +399,18 @@ void downcast_reference(B &b) {
 // CHECK-X32: @_Z22indirect_function_callPFviE({{.*}} prologue <{ i32, i8* }> <{ i32 1413875435, i8* bitcast ({ i8*, i8* }* @_ZTIFvPFviEE to i8*) }>
 // CHECK-X86: @_Z22indirect_function_callPFviE({{.*}} prologue <{ i32, i8* }> <{ i32 1413875435, i8* bitcast ({ i8*, i8* }* @_ZTIFvPFviEE to i8*) }>
 void indirect_function_call(void (*p)(int)) {
-  // CHECK: [[PTR:%[0-9]*]] = bitcast void (i32)* {{.*}} to <{ i32, i8* }>*
+  // CHECK: [[PTR:%.+]] = bitcast void (i32)* {{.*}} to <{ i32, i8* }>*
 
   // Signature check
-  // CHECK-NEXT: [[SIGPTR:%[0-9]*]] = getelementptr <{ i32, i8* }>, <{ i32, i8* }>* [[PTR]], i32 0, i32 0
-  // CHECK-NEXT: [[SIG:%[0-9]*]] = load i32, i32* [[SIGPTR]]
-  // CHECK-NEXT: [[SIGCMP:%[0-9]*]] = icmp eq i32 [[SIG]], 1413876459
+  // CHECK-NEXT: [[SIGPTR:%.+]] = getelementptr <{ i32, i8* }>, <{ i32, i8* }>* [[PTR]], i32 0, i32 0
+  // CHECK-NEXT: [[SIG:%.+]] = load i32, i32* [[SIGPTR]]
+  // CHECK-NEXT: [[SIGCMP:%.+]] = icmp eq i32 [[SIG]], 1413876459
   // CHECK-NEXT: br i1 [[SIGCMP]]
 
   // RTTI pointer check
-  // CHECK: [[RTTIPTR:%[0-9]*]] = getelementptr <{ i32, i8* }>, <{ i32, i8* }>* [[PTR]], i32 0, i32 1
-  // CHECK-NEXT: [[RTTI:%[0-9]*]] = load i8*, i8** [[RTTIPTR]]
-  // CHECK-NEXT: [[RTTICMP:%[0-9]*]] = icmp eq i8* [[RTTI]], bitcast ({ i8*, i8* }* @_ZTIFviE to i8*)
+  // CHECK: [[RTTIPTR:%.+]] = getelementptr <{ i32, i8* }>, <{ i32, i8* }>* [[PTR]], i32 0, i32 1
+  // CHECK-NEXT: [[RTTI:%.+]] = load i8*, i8** [[RTTIPTR]]
+  // CHECK-NEXT: [[RTTICMP:%.+]] = icmp eq i8* [[RTTI]], bitcast ({ i8*, i8* }* @_ZTIFviE to i8*)
   // CHECK-NEXT: br i1 [[RTTICMP]]
   p(42);
 }
