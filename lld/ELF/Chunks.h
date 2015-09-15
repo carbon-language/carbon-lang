@@ -21,9 +21,9 @@ template <class ELFT> class OutputSection;
 
 // A chunk corresponding a section of an input file.
 template <class ELFT> class SectionChunk {
-  typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
-  typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
-  typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
