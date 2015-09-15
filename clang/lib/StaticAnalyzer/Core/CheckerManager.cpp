@@ -240,6 +240,7 @@ CheckerManager::getObjCMessageCheckers(ObjCMessageVisitKind Kind) {
   case ObjCMessageVisitKind::MessageNil:
     return ObjCMessageNilCheckers;
   }
+  llvm_unreachable("Unknown Kind");
 }
 namespace {
   // FIXME: This has all the same signatures as CheckObjCMessageContext.
