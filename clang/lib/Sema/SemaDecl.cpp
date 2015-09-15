@@ -12626,29 +12626,36 @@ ExprResult Sema::VerifyBitField(SourceLocation FieldLoc,
   }
 
   if (!FieldTy->isDependentType()) {
-    bool UseMSBitfieldSemantics =
-        IsMsStruct || Context.getTargetInfo().getCXXABI().isMicrosoft();
-    bool UseStorageSize = getLangOpts().CPlusPlus && UseMSBitfieldSemantics;
-    uint64_t TypeWidth = UseStorageSize ? Context.getTypeSize(FieldTy)
-                                        : Context.getIntWidth(FieldTy);
-    if (Value.ugt(TypeWidth)) {
-      if (!getLangOpts().CPlusPlus || UseMSBitfieldSemantics) {
-        if (FieldName)
-          return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_width)
-            << FieldName << (unsigned)Value.getZExtValue() 
-            << (unsigned)TypeWidth;
-        
-        return Diag(FieldLoc, diag::err_anon_bitfield_width_exceeds_type_width)
-          << (unsigned)Value.getZExtValue() << (unsigned)TypeWidth;
-      }
-      
+    uint64_t TypeStorageSize = Context.getTypeSize(FieldTy);
+    uint64_t TypeWidth = Context.getIntWidth(FieldTy);
+    bool BitfieldIsOverwide = Value.ugt(TypeWidth);
+
+    // Over-wide bitfields are an error in C or when using the MSVC bitfield
+    // ABI.
+    bool CStdConstraintViolation =
+        BitfieldIsOverwide && !getLangOpts().CPlusPlus;
+    bool MSBitfieldViolation =
+        Value.ugt(TypeStorageSize) &&
+        (IsMsStruct || Context.getTargetInfo().getCXXABI().isMicrosoft());
+    if (CStdConstraintViolation || MSBitfieldViolation) {
+      unsigned DiagWidth =
+          CStdConstraintViolation ? TypeWidth : TypeStorageSize;
+      if (FieldName)
+        return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_width)
+               << FieldName << (unsigned)Value.getZExtValue() << DiagWidth;
+
+      return Diag(FieldLoc, diag::err_anon_bitfield_width_exceeds_type_width)
+             << (unsigned)Value.getZExtValue() << DiagWidth;
+    }
+
+    if (BitfieldIsOverwide) {
       if (FieldName)
         Diag(FieldLoc, diag::warn_bitfield_width_exceeds_type_width)
-          << FieldName << (unsigned)Value.getZExtValue() 
-          << (unsigned)TypeWidth;
+            << FieldName << (unsigned)Value.getZExtValue()
+            << (unsigned)TypeWidth;
       else
         Diag(FieldLoc, diag::warn_anon_bitfield_width_exceeds_type_width)
-          << (unsigned)Value.getZExtValue() << (unsigned)TypeWidth;        
+            << (unsigned)Value.getZExtValue() << (unsigned)TypeWidth;
     }
   }
 

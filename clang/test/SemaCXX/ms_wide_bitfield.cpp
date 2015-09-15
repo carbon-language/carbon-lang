@@ -4,7 +4,7 @@ struct A {
   char a : 9; // expected-error{{width of bit-field 'a' (9 bits) exceeds width of its type (8 bits)}}
   int b : 33; // expected-error{{width of bit-field 'b' (33 bits) exceeds width of its type (32 bits)}}
   bool c : 9; // expected-error{{width of bit-field 'c' (9 bits) exceeds width of its type (8 bits)}}
-  bool d : 3;
+  bool d : 3; // expected-warning{{width of bit-field 'd' (3 bits) exceeds the width of its type; value will be truncated to 1 bit}}
 };
 
 int a[sizeof(A) == 1 ? 1 : -1];
