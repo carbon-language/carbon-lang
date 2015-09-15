@@ -11,11 +11,12 @@
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Expression/ClangUtilityFunction.h"
+#include "lldb/Expression/UtilityFunction.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Target.h"
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/Constants.h"
@@ -52,8 +53,14 @@ bool
 DynamicCheckerFunctions::Install(Stream &error_stream,
                                  ExecutionContext &exe_ctx)
 {
-    m_valid_pointer_check.reset(new ClangUtilityFunction(g_valid_pointer_check_text,
-                                                         VALID_POINTER_CHECK_NAME));
+    Error error;
+    m_valid_pointer_check.reset(exe_ctx.GetTargetRef().GetUtilityFunctionForLanguage(g_valid_pointer_check_text,
+                                                                                     lldb::eLanguageTypeC,
+                                                                                     VALID_POINTER_CHECK_NAME,
+                                                                                     error));
+    if (error.Fail())
+        return false;
+        
     if (!m_valid_pointer_check->Install(error_stream, exe_ctx))
         return false;
 

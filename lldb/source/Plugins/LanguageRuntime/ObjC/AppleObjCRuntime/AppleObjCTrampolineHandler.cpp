@@ -22,9 +22,9 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/Value.h"
-#include "lldb/Expression/ClangExpression.h"
-#include "lldb/Expression/ClangFunction.h"
-#include "lldb/Expression/ClangUtilityFunction.h"
+#include "lldb/Expression/UserExpression.h"
+#include "lldb/Expression/FunctionCaller.h"
+#include "lldb/Expression/UtilityFunction.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Symbol.h"
@@ -741,10 +741,10 @@ lldb::addr_t
 AppleObjCTrampolineHandler::SetupDispatchFunction (Thread &thread, ValueList &dispatch_values)
 {
     ExecutionContext exe_ctx (thread.shared_from_this());
-    Address impl_code_address;
     StreamString errors;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     lldb::addr_t args_addr = LLDB_INVALID_ADDRESS;
+    FunctionCaller *impl_function_caller = nullptr;
 
     // Scope for mutex locker:
     {
@@ -752,38 +752,23 @@ AppleObjCTrampolineHandler::SetupDispatchFunction (Thread &thread, ValueList &di
         
         // First stage is to make the ClangUtility to hold our injected function:
 
-    #define USE_BUILTIN_FUNCTION 0  // Define this to 1 and we will use the get_implementation function found in the target.
-                        // This is useful for debugging additions to the get_impl function 'cause you don't have
-                        // to bother with string-ifying the code into g_lookup_implementation_function_code.
-        
-        if (USE_BUILTIN_FUNCTION)
-        {
-            ConstString our_utility_function_name("__lldb_objc_find_implementation_for_selector");
-            SymbolContextList sc_list;
-            
-            exe_ctx.GetTargetRef().GetImages().FindSymbolsWithNameAndType (our_utility_function_name, eSymbolTypeCode, sc_list);
-            if (sc_list.GetSize() == 1)
-            {
-                SymbolContext sc;
-                sc_list.GetContextAtIndex(0, sc);
-                if (sc.symbol != NULL)
-                    impl_code_address = sc.symbol->GetAddress();
-                    
-                //lldb::addr_t addr = impl_code_address.GetOpcodeLoadAddress (exe_ctx.GetTargetPtr());
-                //printf ("Getting address for our_utility_function: 0x%" PRIx64 ".\n", addr);
-            }
-            else
-            {
-                //printf ("Could not find implementation function address.\n");
-                return args_addr;
-            }
-        }
-        else if (!m_impl_code.get())
+        if (!m_impl_code.get())
         {
             if (g_lookup_implementation_function_code != NULL)
             {
-                m_impl_code.reset (new ClangUtilityFunction (g_lookup_implementation_function_code,
-                                                             g_lookup_implementation_function_name));
+                Error error;
+                m_impl_code.reset (exe_ctx.GetTargetRef().GetUtilityFunctionForLanguage (g_lookup_implementation_function_code,
+                                                                                         eLanguageTypeObjC,
+                                                                                         g_lookup_implementation_function_name,
+                                                                                         error));
+                if (error.Fail())
+                {
+                    if (log)
+                        log->Printf ("Failed to get Utility Function for implementation lookup: %s.", error.AsCString());
+                    m_impl_code.reset();
+                    return args_addr;
+                }
+                
                 if (!m_impl_code->Install(errors, exe_ctx))
                 {
                     if (log)
@@ -800,42 +785,25 @@ AppleObjCTrampolineHandler::SetupDispatchFunction (Thread &thread, ValueList &di
                 return LLDB_INVALID_ADDRESS;
             }
             
-            impl_code_address.Clear();
-            impl_code_address.SetOffset(m_impl_code->StartAddress());
+
+            // Next make the runner function for our implementation utility function.
+            ClangASTContext *clang_ast_context = thread.GetProcess()->GetTarget().GetScratchClangASTContext();
+            CompilerType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
+            Error error;
+            
+            impl_function_caller = m_impl_code->MakeFunctionCaller(clang_void_ptr_type,
+                                                                   dispatch_values,
+                                                                   error);
+            if (error.Fail())
+            {
+                if (log)
+                    log->Printf ("Error getting function caller for dispatch lookup: \"%s\".", error.AsCString());
+                return args_addr;
+            }
         }
         else
         {
-            impl_code_address.Clear();
-            impl_code_address.SetOffset(m_impl_code->StartAddress());
-        }
-
-        // Next make the runner function for our implementation utility function.
-        if (!m_impl_function.get())
-        {
-            ClangASTContext *clang_ast_context = thread.GetProcess()->GetTarget().GetScratchClangASTContext();
-            CompilerType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
-            m_impl_function.reset(new ClangFunction (thread,
-                                                     clang_void_ptr_type,
-                                                     impl_code_address,
-                                                     dispatch_values,
-                                                     "objc-dispatch-lookup"));
-            
-            errors.Clear();        
-            unsigned num_errors = m_impl_function->CompileFunction(errors);
-            if (num_errors)
-            {
-                if (log)
-                    log->Printf ("Error compiling function: \"%s\".", errors.GetData());
-                return args_addr;
-            }
-            
-            errors.Clear();
-            if (!m_impl_function->WriteFunctionWrapper(exe_ctx, errors))
-            {
-                if (log)
-                    log->Printf ("Error Inserting function: \"%s\".", errors.GetData());
-                return args_addr;
-            }
+            impl_function_caller = m_impl_code->GetFunctionCaller();
         }
     }
     
@@ -845,7 +813,7 @@ AppleObjCTrampolineHandler::SetupDispatchFunction (Thread &thread, ValueList &di
     // if other threads were calling into here, but actually it isn't because we allocate a new args structure for
     // this call by passing args_addr = LLDB_INVALID_ADDRESS...
 
-    if (!m_impl_function->WriteFunctionArguments (exe_ctx, args_addr, impl_code_address, dispatch_values, errors))
+    if (impl_function_caller->WriteFunctionArguments (exe_ctx, args_addr, dispatch_values, errors))
     {
         if (log)
             log->Printf ("Error writing function arguments: \"%s\".", errors.GetData());
@@ -1169,8 +1137,8 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
     return ret_plan_sp;
 }
 
-ClangFunction *
-AppleObjCTrampolineHandler::GetLookupImplementationWrapperFunction ()
+FunctionCaller *
+AppleObjCTrampolineHandler::GetLookupImplementationFunctionCaller ()
 {
-    return m_impl_function.get();
+    return m_impl_code->GetFunctionCaller();
 }

@@ -8,7 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "AppleObjCClassDescriptorV2.h"
+
 #include "lldb/Core/Log.h"
+#include "lldb/Expression/FunctionCaller.h"
 
 using namespace lldb;
 using namespace lldb_private;

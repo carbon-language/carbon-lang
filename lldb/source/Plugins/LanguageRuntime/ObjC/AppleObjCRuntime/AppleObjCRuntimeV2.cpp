@@ -28,8 +28,8 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObjectVariable.h"
-#include "lldb/Expression/ClangFunction.h"
-#include "lldb/Expression/ClangUtilityFunction.h"
+#include "lldb/Expression/FunctionCaller.h"
+#include "lldb/Expression/UtilityFunction.h"
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandObjectMultiword.h"
@@ -348,11 +348,9 @@ ExtractRuntimeGlobalSymbol (Process* process,
 AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
                                         const ModuleSP &objc_module_sp) :
     AppleObjCRuntime (process),
-    m_get_class_info_function(),
     m_get_class_info_code(),
     m_get_class_info_args (LLDB_INVALID_ADDRESS),
     m_get_class_info_args_mutex (Mutex::eMutexTypeNormal),
-    m_get_shared_cache_class_info_function(),
     m_get_shared_cache_class_info_code(),
     m_get_shared_cache_class_info_args (LLDB_INVALID_ADDRESS),
     m_get_shared_cache_class_info_args_mutex (Mutex::eMutexTypeNormal),
@@ -722,7 +720,7 @@ AppleObjCRuntimeV2::CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bo
     return resolver_sp;
 }
 
-ClangUtilityFunction *
+UtilityFunction *
 AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
 {
     char check_function_code[2048];
@@ -780,7 +778,8 @@ AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
     
     assert (len < (int)sizeof(check_function_code));
 
-    return new ClangUtilityFunction(check_function_code, name);
+    Error error;
+    return GetTargetRef().GetUtilityFunctionForLanguage(check_function_code, eLanguageTypeObjC, name, error);
 }
 
 size_t
@@ -1248,75 +1247,74 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
     CompilerType clang_uint32_t_type = ast->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 32);
     CompilerType clang_void_pointer_type = ast->GetBasicType(eBasicTypeVoid).GetPointerType();
     
+    ValueList arguments;
+    FunctionCaller *get_class_info_function = nullptr;
+
     if (!m_get_class_info_code.get())
     {
-        m_get_class_info_code.reset (new ClangUtilityFunction (g_get_dynamic_class_info_body,
-                                                               g_get_dynamic_class_info_name));
-        
-        errors.Clear();
-        
-        if (!m_get_class_info_code->Install(errors, exe_ctx))
+        Error error;
+        m_get_class_info_code.reset (GetTargetRef().GetUtilityFunctionForLanguage (g_get_dynamic_class_info_body,
+                                                                                   eLanguageTypeObjC,
+                                                                                   g_get_dynamic_class_info_name,
+                                                                                   error));
+        if (error.Fail())
         {
             if (log)
-                log->Printf ("Failed to install implementation lookup: %s.", errors.GetData());
+                log->Printf ("Failed to get Utility Function for implementation lookup: %s", error.AsCString());
             m_get_class_info_code.reset();
         }
-    }
-    
-    if (m_get_class_info_code.get())
-        function_address.SetOffset(m_get_class_info_code->StartAddress());
-    else
-        return false;
-    
-    ValueList arguments;
-    
-    // Next make the runner function for our implementation utility function.
-    if (!m_get_class_info_function.get())
-    {
+        else
+        {
+            errors.Clear();
+            
+            if (!m_get_class_info_code->Install(errors, exe_ctx))
+            {
+                if (log)
+                    log->Printf ("Failed to install implementation lookup: %s.", errors.GetData());
+                m_get_class_info_code.reset();
+            }
+        }
+        if (!m_get_class_info_code.get())
+            return false;
+        
+        // Next make the runner function for our implementation utility function.
         Value value;
         value.SetValueType (Value::eValueTypeScalar);
-//        value.SetContext (Value::eContextTypeClangType, clang_void_pointer_type);
         value.SetCompilerType (clang_void_pointer_type);
         arguments.PushValue (value);
         arguments.PushValue (value);
         
         value.SetValueType (Value::eValueTypeScalar);
-//        value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
         value.SetCompilerType (clang_uint32_t_type);
         arguments.PushValue (value);
         
-        m_get_class_info_function.reset(new ClangFunction (*m_process,
-                                                           clang_uint32_t_type,
-                                                           function_address,
-                                                           arguments,
-                                                           "objc-v2-isa-to-descriptor"));
+        get_class_info_function = m_get_class_info_code->MakeFunctionCaller(clang_uint32_t_type,
+                                                                            arguments,
+                                                                            error);
         
-        if (m_get_class_info_function.get() == NULL)
-            return false;
-        
-        errors.Clear();
-        
-        unsigned num_errors = m_get_class_info_function->CompileFunction(errors);
-        if (num_errors)
+        if (error.Fail())
         {
             if (log)
-                log->Printf ("Error compiling function: \"%s\".", errors.GetData());
-            return false;
-        }
-        
-        errors.Clear();
-        
-        if (!m_get_class_info_function->WriteFunctionWrapper(exe_ctx, errors))
-        {
-            if (log)
-                log->Printf ("Error Inserting function: \"%s\".", errors.GetData());
+                log->Printf("Failed to make function caller for implementation lookup: %s.", error.AsCString());
             return false;
         }
     }
     else
     {
-        arguments = m_get_class_info_function->GetArgumentValues ();
+        get_class_info_function = m_get_class_info_code->GetFunctionCaller();
+        if (!get_class_info_function)
+        {
+            if (log)
+                log->Printf ("Failed to get implementation lookup function caller: %s.", errors.GetData());
+            return false;
+        }
+        arguments = get_class_info_function->GetArgumentValues();
     }
+    
+    
+    
+    
+    errors.Clear();
     
     const uint32_t class_info_byte_size = addr_size + 4;
     const uint32_t class_infos_byte_size = num_classes * class_info_byte_size;
@@ -1339,9 +1337,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
     errors.Clear();
     
     // Write our function arguments into the process so we can run our function
-    if (m_get_class_info_function->WriteFunctionArguments (exe_ctx,
+    if (get_class_info_function->WriteFunctionArguments (exe_ctx,
                                                            m_get_class_info_args,
-                                                           function_address,
                                                            arguments,
                                                            errors))
     {
@@ -1361,11 +1358,11 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
         errors.Clear();
         
         // Run the function
-        ExpressionResults results = m_get_class_info_function->ExecuteFunction (exe_ctx,
-                                                                               &m_get_class_info_args,
-                                                                               options,
-                                                                               errors,
-                                                                               return_value);
+        ExpressionResults results = get_class_info_function->ExecuteFunction (exe_ctx,
+                                                                              &m_get_class_info_args,
+                                                                              options,
+                                                                              errors,
+                                                                              return_value);
         
         if (results == eExpressionCompleted)
         {
@@ -1502,31 +1499,38 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     CompilerType clang_uint32_t_type = ast->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 32);
     CompilerType clang_void_pointer_type = ast->GetBasicType(eBasicTypeVoid).GetPointerType();
     
+    ValueList arguments;
+    FunctionCaller *get_shared_cache_class_info_function = nullptr;
+    
     if (!m_get_shared_cache_class_info_code.get())
     {
-        m_get_shared_cache_class_info_code.reset (new ClangUtilityFunction (g_get_shared_cache_class_info_body,
-                                                                            g_get_shared_cache_class_info_name));
-        
-        errors.Clear();
-        
-        if (!m_get_shared_cache_class_info_code->Install(errors, exe_ctx))
+        Error error;
+        m_get_shared_cache_class_info_code.reset (GetTargetRef().GetUtilityFunctionForLanguage (g_get_shared_cache_class_info_body,
+                                                                                                eLanguageTypeObjC,
+                                                                                                g_get_shared_cache_class_info_name,
+                                                                                                error));
+        if (error.Fail())
         {
             if (log)
-                log->Printf ("Failed to install implementation lookup: %s.", errors.GetData());
+                log->Printf ("Failed to get Utility function for implementation lookup: %s.", error.AsCString());
             m_get_shared_cache_class_info_code.reset();
         }
-    }
+        else
+        {
+            errors.Clear();
+            
+            if (!m_get_shared_cache_class_info_code->Install(errors, exe_ctx))
+            {
+                if (log)
+                    log->Printf ("Failed to install implementation lookup: %s.", errors.GetData());
+                m_get_shared_cache_class_info_code.reset();
+            }
+        }
+        
+        if (!m_get_shared_cache_class_info_code.get())
+            return DescriptorMapUpdateResult::Fail();
     
-    if (m_get_shared_cache_class_info_code.get())
-        function_address.SetOffset(m_get_shared_cache_class_info_code->StartAddress());
-    else
-        return DescriptorMapUpdateResult::Fail();
-    
-    ValueList arguments;
-    
-    // Next make the runner function for our implementation utility function.
-    if (!m_get_shared_cache_class_info_function.get())
-    {
+        // Next make the function caller for our implementation utility function.
         Value value;
         value.SetValueType (Value::eValueTypeScalar);
         //value.SetContext (Value::eContextTypeClangType, clang_void_pointer_type);
@@ -1539,38 +1543,23 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
         value.SetCompilerType (clang_uint32_t_type);
         arguments.PushValue (value);
         
-        m_get_shared_cache_class_info_function.reset(new ClangFunction (*m_process,
-                                                                        clang_uint32_t_type,
-                                                                        function_address,
-                                                                        arguments,
-                                                                        "objc-isa-to-descriptor-shared-cache"));
+        get_shared_cache_class_info_function = m_get_shared_cache_class_info_code->MakeFunctionCaller(clang_uint32_t_type,
+                                                                                                      arguments,
+                                                                                                      error);
         
-        if (m_get_shared_cache_class_info_function.get() == NULL)
+        if (get_shared_cache_class_info_function == nullptr)
             return DescriptorMapUpdateResult::Fail();
-        
-        errors.Clear();
-        
-        unsigned num_errors = m_get_shared_cache_class_info_function->CompileFunction(errors);
-        if (num_errors)
-        {
-            if (log)
-                log->Printf ("Error compiling function: \"%s\".", errors.GetData());
-            return DescriptorMapUpdateResult::Fail();
-        }
-        
-        errors.Clear();
-        
-        if (!m_get_shared_cache_class_info_function->WriteFunctionWrapper(exe_ctx, errors))
-        {
-            if (log)
-                log->Printf ("Error Inserting function: \"%s\".", errors.GetData());
-            return DescriptorMapUpdateResult::Fail();
-        }
+    
     }
     else
     {
-        arguments = m_get_shared_cache_class_info_function->GetArgumentValues ();
+        get_shared_cache_class_info_function = m_get_shared_cache_class_info_code->GetFunctionCaller();
+        if (get_shared_cache_class_info_function == nullptr)
+            return DescriptorMapUpdateResult::Fail();
+        arguments = get_shared_cache_class_info_function->GetArgumentValues();
     }
+    
+    errors.Clear();
     
     const uint32_t class_info_byte_size = addr_size + 4;
     const uint32_t class_infos_byte_size = num_classes * class_info_byte_size;
@@ -1594,11 +1583,10 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     errors.Clear();
     
     // Write our function arguments into the process so we can run our function
-    if (m_get_shared_cache_class_info_function->WriteFunctionArguments (exe_ctx,
-                                                                        m_get_shared_cache_class_info_args,
-                                                                        function_address,
-                                                                        arguments,
-                                                                        errors))
+    if (get_shared_cache_class_info_function->WriteFunctionArguments (exe_ctx,
+                                                                      m_get_shared_cache_class_info_args,
+                                                                      arguments,
+                                                                      errors))
     {
         EvaluateExpressionOptions options;
         options.SetUnwindOnError(true);
@@ -1616,11 +1604,11 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
         errors.Clear();
         
         // Run the function
-        ExpressionResults results = m_get_shared_cache_class_info_function->ExecuteFunction (exe_ctx,
-                                                                                            &m_get_shared_cache_class_info_args,
-                                                                                            options,
-                                                                                            errors,
-                                                                                            return_value);
+        ExpressionResults results = get_shared_cache_class_info_function->ExecuteFunction (exe_ctx,
+                                                                                           &m_get_shared_cache_class_info_args,
+                                                                                           options,
+                                                                                           errors,
+                                                                                           return_value);
         
         if (results == eExpressionCompleted)
         {

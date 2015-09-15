@@ -1,4 +1,4 @@
-//===-- ClangExpressionParser.h ---------------------------------*- C++ -*-===//
+//===-- ExpressionParser.h --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_ClangExpressionParser_h_
-#define liblldb_ClangExpressionParser_h_
+#ifndef liblldb_ExpressionParser_h_
+#define liblldb_ExpressionParser_h_
 
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Error.h"
-#include "lldb/Expression/ExpressionParser.h"
 #include "lldb/Expression/IRForTarget.h"
 
 #include <string>
@@ -26,16 +25,12 @@ namespace lldb_private
 class IRExecutionUnit;
     
 //----------------------------------------------------------------------
-/// @class ClangExpressionParser ClangExpressionParser.h "lldb/Expression/ClangExpressionParser.h"
-/// @brief Encapsulates an instance of Clang that can parse expressions.
+/// @class ExpressionParser ExpressionParser.h "lldb/Expression/ExpressionParser.h"
+/// @brief Encapsulates an instance of a compiler that can parse expressions.
 ///
-/// ClangExpressionParser is responsible for preparing an instance of
-/// ClangExpression for execution.  ClangExpressionParser uses ClangExpression
-/// as a glorified parameter list, performing the required parsing and
-/// conversion to formats (DWARF bytecode, or JIT compiled machine code)
-/// that can be executed.
+/// ExpressionParser is the base class for llvm based Expression parsers.
 //----------------------------------------------------------------------
-class ClangExpressionParser : public ExpressionParser
+class ExpressionParser
 {
 public:
     //------------------------------------------------------------------
@@ -51,14 +46,18 @@ public:
     /// @param[in] expr
     ///     The expression to be parsed.
     //------------------------------------------------------------------
-    ClangExpressionParser (ExecutionContextScope *exe_scope,
+    ExpressionParser (ExecutionContextScope *exe_scope,
                            Expression &expr,
-                           bool generate_debug_info);
+                           bool generate_debug_info) :
+        m_expr(expr),
+        m_generate_debug_info(generate_debug_info)
+        {
+        }
     
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    ~ClangExpressionParser () override;
+    virtual ~ExpressionParser () {};
     
     //------------------------------------------------------------------
     /// Parse a single expression and convert it to IR using Clang.  Don't
@@ -71,8 +70,8 @@ public:
     ///     The number of errors encountered during parsing.  0 means
     ///     success.
     //------------------------------------------------------------------
-    unsigned
-    Parse (Stream &stream) override;
+    virtual unsigned
+    Parse (Stream &stream) = 0;
     
     //------------------------------------------------------------------
     /// Ready an already-parsed expression for execution, possibly
@@ -93,14 +92,9 @@ public:
     /// @param[in] exe_ctx
     ///     The execution context to write the function into.
     ///
-    /// @param[out] evaluated_statically
+    /// @param[out] can_interpret
     ///     Set to true if the expression could be interpreted statically;
     ///     untouched otherwise.
-    ///
-    /// @param[out] const_result
-    ///     If the result of the expression is constant, and the
-    ///     expression has no side effects, this is set to the result of the 
-    ///     expression.
     ///
     /// @param[in] execution_policy
     ///     Determines whether the expression must be JIT-compiled, must be
@@ -111,27 +105,25 @@ public:
     ///     An error code indicating the success or failure of the operation.
     ///     Test with Success().
     //------------------------------------------------------------------
-    Error
+    virtual Error
     PrepareForExecution (lldb::addr_t &func_addr,
                          lldb::addr_t &func_end,
                          std::shared_ptr<IRExecutionUnit> &execution_unit_sp,
                          ExecutionContext &exe_ctx,
                          bool &can_interpret,
-                         lldb_private::ExecutionPolicy execution_policy) override;
+                         lldb_private::ExecutionPolicy execution_policy) = 0;
         
-private:
-    std::unique_ptr<llvm::LLVMContext>       m_llvm_context;         ///< The LLVM context to generate IR into
-    std::unique_ptr<clang::FileManager>      m_file_manager;         ///< The Clang file manager object used by the compiler
-    std::unique_ptr<clang::CompilerInstance> m_compiler;             ///< The Clang compiler used to parse expressions into IR
-    std::unique_ptr<clang::Builtin::Context> m_builtin_context;      ///< Context for Clang built-ins
-    std::unique_ptr<clang::SelectorTable>    m_selector_table;       ///< Selector table for Objective-C methods
-    std::unique_ptr<clang::CodeGenerator>    m_code_generator;       ///< The Clang object that generates IR
+    bool
+    GetGenerateDebugInfo () const
+    {
+        return m_generate_debug_info;
+    }
     
-    class LLDBPreprocessorCallbacks;
-    LLDBPreprocessorCallbacks               *m_pp_callbacks;         ///< Called when the preprocessor encounters module imports
-    std::unique_ptr<ClangASTContext>         m_ast_context;
+protected:
+    Expression &                       m_expr;                       ///< The expression to be parsed
+    bool                               m_generate_debug_info;
 };
     
 }
 
-#endif  // liblldb_ClangExpressionParser_h_
+#endif  // liblldb_ExpressionParser_h_

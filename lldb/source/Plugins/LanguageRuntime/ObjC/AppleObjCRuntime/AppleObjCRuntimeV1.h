@@ -102,7 +102,7 @@ public:
                               TypeAndOrName &class_type_or_name, 
                               Address &address);
 
-    virtual ClangUtilityFunction *
+    virtual UtilityFunction *
     CreateObjectChecker (const char *);
 
     //------------------------------------------------------------------

@@ -19,7 +19,7 @@
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Expression/ClangASTSource.h"
-#include "lldb/Expression/ClangExpression.h"
+#include "lldb/Expression/ClangExpressionHelper.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangModulesDeclVendor.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
@@ -37,6 +37,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
 #include "clang/CodeGen/CodeGenAction.h"
@@ -108,7 +109,7 @@ public:
     }
     
     virtual void moduleImport(SourceLocation import_location,
-                              ModuleIdPath path,
+                              clang::ModuleIdPath path,
                               const clang::Module * /*null*/)
     {
         std::vector<ConstString> string_path;
@@ -149,9 +150,9 @@ public:
 //===----------------------------------------------------------------------===//
 
 ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
-                                              ClangExpression &expr,
+                                              Expression &expr,
                                               bool generate_debug_info) :
-    m_expr (expr),
+    ExpressionParser (exe_scope, expr, generate_debug_info),
     m_compiler (),
     m_code_generator (),
     m_pp_callbacks(nullptr)
@@ -255,7 +256,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     m_compiler->getLangOpts().WChar = true;
     m_compiler->getLangOpts().Blocks = true;
     m_compiler->getLangOpts().DebuggerSupport = true; // Features specifically for debugger clients
-    if (expr.DesiredResultType() == ClangExpression::eResultTypeId)
+    if (expr.DesiredResultType() == Expression::eResultTypeId)
         m_compiler->getLangOpts().DebuggerCastResultToId = true;
 
     m_compiler->getLangOpts().CharIsSigned =
@@ -346,7 +347,8 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     
     ast_context->InitBuiltinTypes(m_compiler->getTarget());
 
-    ClangExpressionDeclMap *decl_map = m_expr.DeclMap();
+    ClangExpressionHelper *type_system_helper = dyn_cast<ClangExpressionHelper>(m_expr.GetTypeSystemHelper());
+    ClangExpressionDeclMap *decl_map = type_system_helper->DeclMap();
 
     if (decl_map)
     {
@@ -430,9 +432,11 @@ ClangExpressionParser::Parse (Stream &stream)
 
     diag_buf->BeginSourceFile(m_compiler->getLangOpts(), &m_compiler->getPreprocessor());
 
-    ASTConsumer *ast_transformer = m_expr.ASTTransformer(m_code_generator.get());
+    ClangExpressionHelper *type_system_helper = dyn_cast<ClangExpressionHelper>(m_expr.GetTypeSystemHelper());
 
-    if (ClangExpressionDeclMap *decl_map = m_expr.DeclMap())
+    ASTConsumer *ast_transformer = type_system_helper->ASTTransformer(m_code_generator.get());
+
+    if (ClangExpressionDeclMap *decl_map = type_system_helper->DeclMap())
         decl_map->InstallCodeGenerator(m_code_generator.get());
 
     if (ast_transformer)
@@ -479,7 +483,7 @@ ClangExpressionParser::Parse (Stream &stream)
 
     if (!num_errors)
     {
-        if (m_expr.DeclMap() && !m_expr.DeclMap()->ResolveUnknownTypes())
+        if (type_system_helper->DeclMap() && !type_system_helper->DeclMap()->ResolveUnknownTypes())
         {
             stream.Printf("error: Couldn't infer the type of a variable\n");
             num_errors++;
@@ -552,7 +556,8 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
                                                  exe_ctx.GetTargetSP(),
                                                  m_compiler->getTargetOpts().Features));
 
-    ClangExpressionDeclMap *decl_map = m_expr.DeclMap(); // result can be NULL
+    ClangExpressionHelper *type_system_helper = dyn_cast<ClangExpressionHelper>(m_expr.GetTypeSystemHelper());
+    ClangExpressionDeclMap *decl_map = type_system_helper->DeclMap(); // result can be NULL
 
     if (decl_map)
     {
@@ -639,12 +644,4 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
     }
 
     return err;
-}
-
-bool
-ClangExpressionParser::GetGenerateDebugInfo () const
-{
-    if (m_compiler)
-        return m_compiler->getCodeGenOpts().getDebugInfo() == CodeGenOptions::FullDebugInfo;
-    return false;
 }

@@ -66,7 +66,7 @@ public:
     DidPush();
     
     static bool
-    PreResumeInitializeClangFunction(void *myself);
+    PreResumeInitializeFunctionCaller(void *myself);
 
     virtual bool
     WillStop();
@@ -82,7 +82,7 @@ protected:
 	
 private:
     bool
-    InitializeClangFunction ();
+    InitializeFunctionCaller ();
 
 	//------------------------------------------------------------------
 	// For AppleThreadPlanStepThroughObjCTrampoline only
@@ -96,7 +96,7 @@ private:
     lldb::ThreadPlanSP m_func_sp;       // This is the function call plan.  We fill it at start, then set it
                                         // to NULL when this plan is done.  That way we know to go to:
     lldb::ThreadPlanSP m_run_to_sp;     // The plan that runs to the target.
-    ClangFunction *m_impl_function;  // This is a pointer to a impl function that 
+    FunctionCaller *m_impl_function;  // This is a pointer to a impl function that
                                      // is owned by the client that pushes this plan.
     bool m_stop_others;
 };

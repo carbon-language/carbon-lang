@@ -21,9 +21,8 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Value.h"
-#include "lldb/Expression/ClangExpression.h"
-#include "lldb/Expression/ClangFunction.h"
-#include "lldb/Expression/ClangUtilityFunction.h"
+#include "lldb/Expression/FunctionCaller.h"
+#include "lldb/Expression/UtilityFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -101,8 +100,7 @@ extern \"C\"                                                                    
 
 AppleGetQueuesHandler::AppleGetQueuesHandler (Process *process) :
     m_process (process),
-    m_get_queues_function (),
-    m_get_queues_impl_code (),
+    m_get_queues_impl_code_up (),
     m_get_queues_function_mutex(),
     m_get_queues_return_buffer_addr (LLDB_INVALID_ADDRESS),
     m_get_queues_retbuffer_mutex()
@@ -156,6 +154,8 @@ AppleGetQueuesHandler::SetupGetQueuesFunction (Thread &thread, ValueList &get_qu
     StreamString errors;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYSTEM_RUNTIME));
     lldb::addr_t args_addr = LLDB_INVALID_ADDRESS;
+    
+    FunctionCaller *get_queues_caller = nullptr;
 
     // Scope for mutex locker:
     {
@@ -163,43 +163,27 @@ AppleGetQueuesHandler::SetupGetQueuesFunction (Thread &thread, ValueList &get_qu
         
         // First stage is to make the ClangUtility to hold our injected function:
 
-#define USE_BUILTIN_FUNCTION 0  // Define this to 1 and we will use the get_implementation function found in the target.
-                                // This is useful for debugging additions to the get_impl function 'cause you don't have
-                                // to bother with string-ifying the code into g_get_current_queues_function_code.
-        
-        if (USE_BUILTIN_FUNCTION)
-        {
-            ConstString our_utility_function_name("__lldb_backtrace_recording_get_current_queues");
-            SymbolContextList sc_list;
-            
-            exe_ctx.GetTargetRef().GetImages().FindSymbolsWithNameAndType (our_utility_function_name, eSymbolTypeCode, sc_list);
-            if (sc_list.GetSize() == 1)
-            {
-                SymbolContext sc;
-                sc_list.GetContextAtIndex(0, sc);
-                if (sc.symbol != NULL)
-                    impl_code_address = sc.symbol->GetAddress();
-                    
-                //lldb::addr_t addr = impl_code_address.GetOpcodeLoadAddress (exe_ctx.GetTargetPtr());
-                //printf ("Getting address for our_utility_function: 0x%" PRIx64 ".\n", addr);
-            }
-            else
-            {
-                //printf ("Could not find queues introspection function address.\n");
-                return args_addr;
-            }
-        }
-        else if (!m_get_queues_impl_code.get())
+        if (!m_get_queues_impl_code_up.get())
         {
             if (g_get_current_queues_function_code != NULL)
             {
-                m_get_queues_impl_code.reset (new ClangUtilityFunction (g_get_current_queues_function_code,
-                                                             g_get_current_queues_function_name));
-                if (!m_get_queues_impl_code->Install(errors, exe_ctx))
+                Error error;
+                m_get_queues_impl_code_up.reset (exe_ctx.GetTargetRef().GetUtilityFunctionForLanguage(g_get_current_queues_function_code,
+                                                                                                          eLanguageTypeC,
+                                                                                                          g_get_current_queues_function_name,
+                                                                                                          error));
+                if (error.Fail())
+                {
+                    if (log)
+                        log->Printf ("Failed to get UtilityFunction for queues introspection: %s.", error.AsCString());
+                    return args_addr;
+                }
+                
+                if (!m_get_queues_impl_code_up->Install(errors, exe_ctx))
                 {
                     if (log)
                         log->Printf ("Failed to install queues introspection: %s.", errors.GetData());
-                    m_get_queues_impl_code.reset();
+                    m_get_queues_impl_code_up.reset();
                     return args_addr;
                 }
             }
@@ -210,43 +194,20 @@ AppleGetQueuesHandler::SetupGetQueuesFunction (Thread &thread, ValueList &get_qu
                 errors.Printf ("No queues introspection code found.");
                 return LLDB_INVALID_ADDRESS;
             }
-            
-            impl_code_address.Clear();
-            impl_code_address.SetOffset(m_get_queues_impl_code->StartAddress());
         }
-        else
-        {
-            impl_code_address.Clear();
-            impl_code_address.SetOffset(m_get_queues_impl_code->StartAddress());
-        }
-
+        
         // Next make the runner function for our implementation utility function.
-        if (!m_get_queues_function.get())
+        ClangASTContext *clang_ast_context = thread.GetProcess()->GetTarget().GetScratchClangASTContext();
+        CompilerType get_queues_return_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
+        Error error;
+        get_queues_caller = m_get_queues_impl_code_up->MakeFunctionCaller (get_queues_return_type,
+                                                                       get_queues_arglist,
+                                                                       error);
+        if (error.Fail())
         {
-            ClangASTContext *clang_ast_context = thread.GetProcess()->GetTarget().GetScratchClangASTContext();
-            CompilerType get_queues_return_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
-            m_get_queues_function.reset(new ClangFunction (thread,
-                                                     get_queues_return_type,
-                                                     impl_code_address,
-                                                     get_queues_arglist,
-                                                     "queue-fetch-queues"));
-            
-            errors.Clear();        
-            unsigned num_errors = m_get_queues_function->CompileFunction(errors);
-            if (num_errors)
-            {
-                if (log)
-                    log->Printf ("Error compiling get-queues function: \"%s\".", errors.GetData());
-                return args_addr;
-            }
-            
-            errors.Clear();
-            if (!m_get_queues_function->WriteFunctionWrapper(exe_ctx, errors))
-            {
-                if (log)
-                    log->Printf ("Error Inserting get-queues function: \"%s\".", errors.GetData());
-                return args_addr;
-            }
+            if (log)
+                log->Printf ("Could not get function caller for get-queues function: %s.", error.AsCString());
+            return args_addr;
         }
     }
     
@@ -256,7 +217,7 @@ AppleGetQueuesHandler::SetupGetQueuesFunction (Thread &thread, ValueList &get_qu
     // if other threads were calling into here, but actually it isn't because we allocate a new args structure for
     // this call by passing args_addr = LLDB_INVALID_ADDRESS...
 
-    if (!m_get_queues_function->WriteFunctionArguments (exe_ctx, args_addr, impl_code_address, get_queues_arglist, errors))
+    if (!get_queues_caller->WriteFunctionArguments (exe_ctx, args_addr, get_queues_arglist, errors))
     {
         if (log)
             log->Printf ("Error writing get-queues function arguments: \"%s\".", errors.GetData());
@@ -360,9 +321,17 @@ AppleGetQueuesHandler::GetCurrentQueues (Thread &thread, addr_t page_to_free, ui
 
     addr_t args_addr = SetupGetQueuesFunction (thread, argument_values);
 
-    if (m_get_queues_function == NULL)
+    if (!m_get_queues_impl_code_up)
     {
-        error.SetErrorString ("Unable to compile function to call __introspection_dispatch_get_queues");
+        error.SetErrorString ("Unable to compile __introspection_dispatch_get_queues.");
+        return return_value;
+    }
+    
+    FunctionCaller *get_queues_caller = m_get_queues_impl_code_up->GetFunctionCaller();
+    
+    if (get_queues_caller == NULL)
+    {
+        error.SetErrorString ("Unable to get caller for call __introspection_dispatch_get_queues");
         return return_value;
     }
 
@@ -378,7 +347,7 @@ AppleGetQueuesHandler::GetCurrentQueues (Thread &thread, addr_t page_to_free, ui
 
     ExpressionResults func_call_ret;
     Value results;
-    func_call_ret =  m_get_queues_function->ExecuteFunction (exe_ctx, &args_addr, options, errors, results);
+    func_call_ret =  get_queues_caller->ExecuteFunction (exe_ctx, &args_addr, options, errors, results);
     if (func_call_ret != eExpressionCompleted || !error.Success())
     {
         if (log)

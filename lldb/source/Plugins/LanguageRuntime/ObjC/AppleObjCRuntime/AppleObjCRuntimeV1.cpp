@@ -21,8 +21,8 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
-#include "lldb/Expression/ClangFunction.h"
-#include "lldb/Expression/ClangUtilityFunction.h"
+#include "lldb/Expression/FunctionCaller.h"
+#include "lldb/Expression/UtilityFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -143,7 +143,7 @@ struct BufStruct {
     char contents[2048];
 };
 
-ClangUtilityFunction *
+UtilityFunction *
 AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
 {
     std::unique_ptr<BufStruct> buf(new BufStruct);
@@ -170,7 +170,8 @@ AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
                     "}                                                                      \n",
                     name) < (int)sizeof(buf->contents));
 
-    return new ClangUtilityFunction(buf->contents, name);
+    Error error;
+    return GetTargetRef().GetUtilityFunctionForLanguage(buf->contents, eLanguageTypeObjC, name, error);
 }
 
 AppleObjCRuntimeV1::ClassDescriptorV1::ClassDescriptorV1 (ValueObject &isa_pointer)

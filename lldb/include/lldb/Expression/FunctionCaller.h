@@ -1,4 +1,4 @@
-//===-- ClangFunction.h -----------------------------------------*- C++ -*-===//
+//===-- FunctionCaller.h -----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_ClangFunction_h_
-#define liblldb_ClangFunction_h_
+#ifndef liblldb_FunctionCaller_h_
+#define liblldb_FunctionCaller_h_
 
 // C Includes
 // C++ Includes
@@ -21,7 +21,8 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectList.h"
-#include "lldb/Expression/ClangExpression.h"
+#include "lldb/Expression/Expression.h"
+#include "lldb/Expression/ExpressionParser.h"
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/Target/Process.h"
 
@@ -32,10 +33,10 @@ class ASTStructExtractor;
 class ClangExpressionParser;
 
 //----------------------------------------------------------------------
-/// @class ClangFunction ClangFunction.h "lldb/Expression/ClangFunction.h"
+/// @class FunctionCaller FunctionCaller.h "lldb/Expression/FunctionCaller.h"
 /// @brief Encapsulates a function that can be called.
 ///
-/// A given ClangFunction object can handle a single function signature.
+/// A given FunctionCaller object can handle a single function signature.
 /// Once constructed, it can set up any number of concurrent calls to
 /// functions with that signature.
 ///
@@ -46,7 +47,7 @@ class ClangExpressionParser;
 /// struct with the written arguments.  This method lets Clang handle the
 /// vagaries of function calling conventions.
 ///
-/// The simplest use of the ClangFunction is to construct it with a
+/// The simplest use of the FunctionCaller is to construct it with a
 /// function representative of the signature you want to use, then call
 /// ExecuteFunction(ExecutionContext &, Stream &, Value &).
 ///
@@ -64,34 +65,9 @@ class ClangExpressionParser;
 /// Any of the methods that take arg_addr_ptr can be passed NULL, and the
 /// argument space will be managed for you.
 //----------------------------------------------------------------------    
-class ClangFunction : public ClangExpression
+class FunctionCaller : public Expression
 {
-    friend class ASTStructExtractor;
 public:
-    //------------------------------------------------------------------
-    /// Constructor
-    ///
-    /// @param[in] exe_scope
-    ///     An execution context scope that gets us at least a target and 
-    ///     process.
-    ///
-    /// @param[in] function_ptr
-    ///     The default function to be called.  Can be overridden using
-    ///     WriteFunctionArguments().
-    ///
-    /// @param[in] ast_context
-    ///     The AST context to evaluate argument types in.
-    ///
-    /// @param[in] arg_value_list
-    ///     The default values to use when calling this function.  Can
-    ///     be overridden using WriteFunctionArguments().
-    //------------------------------------------------------------------  
-    ClangFunction (ExecutionContextScope &exe_scope,
-                   Function &function_ptr, 
-                   ClangASTContext *ast_context, 
-                   const ValueList &arg_value_list,
-                   const char *name);
-    
     //------------------------------------------------------------------
     /// Constructor
     ///
@@ -113,7 +89,7 @@ public:
     ///     The default values to use when calling this function.  Can
     ///     be overridden using WriteFunctionArguments().
     //------------------------------------------------------------------
-    ClangFunction (ExecutionContextScope &exe_scope,
+    FunctionCaller (ExecutionContextScope &exe_scope,
                    const CompilerType &return_type,
                    const Address& function_address, 
                    const ValueList &arg_value_list,
@@ -122,7 +98,7 @@ public:
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    ~ClangFunction() override;
+    ~FunctionCaller() override;
 
     //------------------------------------------------------------------
     /// Compile the wrapper function
@@ -133,8 +109,8 @@ public:
     /// @return
     ///     The number of errors.
     //------------------------------------------------------------------
-    unsigned
-    CompileFunction (Stream &errors);
+    virtual unsigned
+    CompileFunction (Stream &errors) = 0;
     
     //------------------------------------------------------------------
     /// Insert the default function wrapper and its default argument struct  
@@ -208,10 +184,7 @@ public:
     /// @param[in,out] args_addr_ref
     ///     The address of the structure to write the arguments into.  May
     ///     be LLDB_INVALID_ADDRESS; if it is, a new structure is allocated
-    ///     and args_addr_ref is pointed to it.
-    ///
-    /// @param[in] function_address
-    ///     The address of the function to call.
+    ///     and args_addr_ref is pointed at it.
     ///
     /// @param[in] arg_values
     ///     The values of the function's arguments.
@@ -224,12 +197,11 @@ public:
     //------------------------------------------------------------------
     bool WriteFunctionArguments (ExecutionContext &exe_ctx, 
                                  lldb::addr_t &args_addr_ref, 
-                                 Address function_address, 
-                                 ValueList &arg_values, 
+                                 ValueList &arg_values,
                                  Stream &errors);
 
     //------------------------------------------------------------------
-    /// Run the function this ClangFunction was created with.
+    /// Run the function this FunctionCaller was created with.
     ///
     /// This is the full version.
     ///
@@ -263,7 +235,7 @@ public:
                     Value &results);
     
     //------------------------------------------------------------------
-    /// Get a thread plan to run the function this ClangFunction was created with.
+    /// Get a thread plan to run the function this FunctionCaller was created with.
     ///
     /// @param[in] exe_ctx
     ///     The execution context to insert the function and its arguments
@@ -351,16 +323,6 @@ public:
     }
     
     //------------------------------------------------------------------
-    /// Return the object that the parser should use when resolving external
-    /// values.  May be NULL if everything should be self-contained.
-    //------------------------------------------------------------------
-    ClangExpressionDeclMap *
-    DeclMap() override
-    {
-        return NULL;
-    }
-    
-    //------------------------------------------------------------------
     /// Return the object that the parser should use when registering
     /// local variables.  May be NULL if the Expression doesn't care.
     //------------------------------------------------------------------
@@ -369,17 +331,6 @@ public:
     {
         return NULL;
     }
-    
-    //------------------------------------------------------------------
-    /// Return the object that the parser should allow to access ASTs.
-    /// May be NULL if the ASTs do not need to be transformed.
-    ///
-    /// @param[in] passthrough
-    ///     The ASTConsumer that the returned transformer should send
-    ///     the ASTs to after transformation.
-    //------------------------------------------------------------------
-    clang::ASTConsumer *
-    ASTTransformer(clang::ASTConsumer *passthrough) override;
     
     //------------------------------------------------------------------
     /// Return true if validation code should be inserted into the
@@ -406,15 +357,18 @@ public:
     {
         return m_arg_values;
     }
-private:
+protected:
     //------------------------------------------------------------------
-    // For ClangFunction only
+    // For FunctionCaller only
     //------------------------------------------------------------------
 
     // Note: the parser needs to be destructed before the execution unit, so
     // declare the execution unit first.
     std::shared_ptr<IRExecutionUnit> m_execution_unit_sp;
-    std::unique_ptr<ClangExpressionParser> m_parser;                 ///< The parser responsible for compiling the function.
+    std::unique_ptr<ExpressionParser> m_parser;                     ///< The parser responsible for compiling the function.
+                                                                    ///< This will get made in CompileFunction, so it is
+                                                                    ///< safe to access it after that.
+
     lldb::ModuleWP                  m_jit_module_wp;
     std::string                     m_name;                         ///< The name of this clang function - for debugging purposes.
     
@@ -447,4 +401,4 @@ private:
 
 } // Namespace lldb_private
 
-#endif // liblldb_ClangFunction_h_
+#endif // liblldb_FunctionCaller_h_

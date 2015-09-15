@@ -28,7 +28,6 @@ namespace lldb_private
 {
 
 class ClangExpressionDeclMap;
-class ClangUtilityFunction;
 class ExecutionContext;
 class Stream;
 
@@ -77,8 +76,8 @@ public:
     
     bool DoCheckersExplainStop (lldb::addr_t addr, Stream &message);
     
-    std::unique_ptr<ClangUtilityFunction> m_valid_pointer_check;
-    std::unique_ptr<ClangUtilityFunction> m_objc_object_check;
+    std::unique_ptr<UtilityFunction> m_valid_pointer_check;
+    std::unique_ptr<UtilityFunction> m_objc_object_check;
 };
 
 //----------------------------------------------------------------------

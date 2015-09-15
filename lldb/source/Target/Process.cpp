@@ -18,7 +18,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamFile.h"
-#include "lldb/Expression/ClangUserExpression.h"
+#include "lldb/Expression/UserExpression.h"
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/Host.h"
@@ -1917,6 +1917,7 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                 expr_options.SetIgnoreBreakpoints(true);
                 expr_options.SetExecutionPolicy(eExecutionPolicyAlways);
                 expr_options.SetResultIsInternal(true);
+                expr_options.SetLanguage(eLanguageTypeC_plus_plus);
                 
                 StreamString expr;
                 expr.Printf(R"(
@@ -1939,12 +1940,12 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                                         )";
                 lldb::ValueObjectSP result_valobj_sp;
                 Error expr_error;
-                ClangUserExpression::Evaluate (exe_ctx,
-                                               expr_options,
-                                               expr.GetData(),
-                                               prefix,
-                                               result_valobj_sp,
-                                               expr_error);
+                UserExpression::Evaluate (exe_ctx,
+                                          expr_options,
+                                          expr.GetData(),
+                                          prefix,
+                                          result_valobj_sp,
+                                          expr_error);
                 if (expr_error.Success())
                 {
                     error = result_valobj_sp->GetError();
@@ -2044,17 +2045,19 @@ Process::UnloadImage (uint32_t image_token)
                         expr_options.SetUnwindOnError(true);
                         expr_options.SetIgnoreBreakpoints(true);
                         expr_options.SetExecutionPolicy(eExecutionPolicyAlways);
+                        expr_options.SetLanguage(eLanguageTypeC_plus_plus);
+                        
                         StreamString expr;
                         expr.Printf("dlclose ((void *)0x%" PRIx64 ")", image_addr);
                         const char *prefix = "extern \"C\" int dlclose(void* handle);\n";
                         lldb::ValueObjectSP result_valobj_sp;
                         Error expr_error;
-                        ClangUserExpression::Evaluate (exe_ctx,
-                                                       expr_options,
-                                                       expr.GetData(),
-                                                       prefix,
-                                                       result_valobj_sp,
-                                                       expr_error);
+                        UserExpression::Evaluate (exe_ctx,
+                                                  expr_options,
+                                                  expr.GetData(),
+                                                  prefix,
+                                                  result_valobj_sp,
+                                                  expr_error);
                         if (result_valobj_sp->GetError().Success())
                         {
                             Scalar scalar;

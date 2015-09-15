@@ -33,7 +33,7 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
-#include "lldb/Expression/ClangUserExpression.h"
+#include "lldb/Expression/UserExpression.h"
 #include "lldb/Expression/ClangModulesDeclVendor.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
@@ -46,6 +46,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
@@ -1891,40 +1892,101 @@ Target::ImageSearchPathsChanged
         target->SetExecutableModule (exe_module_sp, true);
 }
 
+TypeSystem *
+Target::GetScratchTypeSystemForLanguage (lldb::LanguageType language, bool create_on_demand)
+{
+    if (Language::LanguageIsC(language)
+       || Language::LanguageIsObjC(language)
+       || Language::LanguageIsCPlusPlus(language)
+       || language == eLanguageTypeUnknown)
+        return GetScratchClangASTContext(create_on_demand);
+    else
+        return NULL;
+}
+
+UserExpression *
+Target::GetUserExpressionForLanguage(const char *expr,
+                             const char *expr_prefix,
+                             lldb::LanguageType language,
+                             Expression::ResultType desired_type,
+                             Error &error)
+{
+    TypeSystem *type_system = GetScratchTypeSystemForLanguage (language);
+    UserExpression *user_expr = nullptr;
+    
+    if (!type_system)
+    {
+        error.SetErrorStringWithFormat("Could not find type system for language: %s", Language::GetNameForLanguageType(language));
+        return nullptr;
+    }
+    
+    user_expr = type_system->GetUserExpression(expr, expr_prefix, language, desired_type);
+    if (!user_expr)
+        error.SetErrorStringWithFormat("Could not create an expression for language %s", Language::GetNameForLanguageType(language));
+    
+    return user_expr;
+}
+
+FunctionCaller *
+Target::GetFunctionCallerForLanguage (lldb::LanguageType language,
+                                      const CompilerType &return_type,
+                                      const Address& function_address,
+                                      const ValueList &arg_value_list,
+                                      const char *name,
+                                      Error &error)
+{
+    TypeSystem *type_system = GetScratchTypeSystemForLanguage (language);
+    FunctionCaller *persistent_fn = nullptr;
+    
+    if (!type_system)
+    {
+        error.SetErrorStringWithFormat("Could not find type system for language: %s", Language::GetNameForLanguageType(language));
+        return persistent_fn;
+    }
+    
+    persistent_fn = type_system->GetFunctionCaller (return_type, function_address, arg_value_list, name);
+    if (!persistent_fn)
+        error.SetErrorStringWithFormat("Could not create an expression for language %s", Language::GetNameForLanguageType(language));
+    
+    return persistent_fn;
+}
+
+UtilityFunction *
+Target::GetUtilityFunctionForLanguage (const char *text,
+                                       lldb::LanguageType language,
+                                       const char *name,
+                                       Error &error)
+{
+    TypeSystem *type_system = GetScratchTypeSystemForLanguage (language);
+    UtilityFunction *utility_fn = nullptr;
+    
+    if (!type_system)
+    {
+        error.SetErrorStringWithFormat("Could not find type system for language: %s", Language::GetNameForLanguageType(language));
+        return utility_fn;
+    }
+    
+    utility_fn = type_system->GetUtilityFunction (text, name);
+    if (!utility_fn)
+        error.SetErrorStringWithFormat("Could not create an expression for language %s", Language::GetNameForLanguageType(language));
+    
+    return utility_fn;
+}
+
+
 ClangASTContext *
 Target::GetScratchClangASTContext(bool create_on_demand)
 {
     // Now see if we know the target triple, and if so, create our scratch AST context:
     if (m_scratch_ast_context_ap.get() == NULL && m_arch.IsValid() && create_on_demand)
     {
-        m_scratch_ast_context_ap.reset (new ClangASTContext(m_arch.GetTriple().str().c_str()));
+        m_scratch_ast_context_ap.reset (new ClangASTContextForExpressions(*this));
         m_scratch_ast_source_ap.reset (new ClangASTSource(shared_from_this()));
         m_scratch_ast_source_ap->InstallASTContext(m_scratch_ast_context_ap->getASTContext());
         llvm::IntrusiveRefCntPtr<clang::ExternalASTSource> proxy_ast_source(m_scratch_ast_source_ap->CreateProxy());
         m_scratch_ast_context_ap->SetExternalSource(proxy_ast_source);
     }
     return m_scratch_ast_context_ap.get();
-}
-
-TypeSystem*
-Target::GetTypeSystemForLanguage (lldb::LanguageType language)
-{
-    switch (language)
-    {
-        case lldb::eLanguageTypeC:
-        case lldb::eLanguageTypeC11:
-        case lldb::eLanguageTypeC89:
-        case lldb::eLanguageTypeC99:
-        case lldb::eLanguageTypeC_plus_plus:
-        case lldb::eLanguageTypeC_plus_plus_03:
-        case lldb::eLanguageTypeC_plus_plus_11:
-        case lldb::eLanguageTypeC_plus_plus_14:
-        case lldb::eLanguageTypeObjC:
-        case lldb::eLanguageTypeObjC_plus_plus:
-            return GetScratchClangASTContext(true);
-        default:
-            return nullptr;
-    }
 }
 
 ClangASTImporter *
@@ -2067,12 +2129,12 @@ Target::EvaluateExpression
     {
         const char *prefix = GetExpressionPrefixContentsAsCString();
         Error error;
-        execution_results = ClangUserExpression::Evaluate (exe_ctx, 
-                                                           options,
-                                                           expr_cstr,
-                                                           prefix, 
-                                                           result_valobj_sp,
-                                                           error);
+        execution_results = UserExpression::Evaluate (exe_ctx,
+                                                      options,
+                                                      expr_cstr,
+                                                      prefix,
+                                                      result_valobj_sp,
+                                                      error);
     }
     
     m_suppress_stop_hooks = old_suppress_value;

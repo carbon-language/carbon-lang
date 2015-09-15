@@ -24,6 +24,7 @@
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/UserSettingsController.h"
+#include "lldb/Expression/Expression.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/PathMappingList.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
@@ -1227,11 +1228,46 @@ public:
     PathMappingList &
     GetImageSearchPathList ();
     
+    TypeSystem *
+    GetScratchTypeSystemForLanguage (lldb::LanguageType language, bool create_on_demand = true);
+    
+    // Creates a UserExpression for the given language, the rest of the parameters have the
+    // same meaning as for the UserExpression constructor.
+    // Returns a new-ed object which the caller owns.
+    
+    UserExpression *
+    GetUserExpressionForLanguage(const char *expr,
+                                 const char *expr_prefix,
+                                 lldb::LanguageType language,
+                                 Expression::ResultType desired_type,
+                                 Error &error);
+    
+    // Creates a FunctionCaller for the given language, the rest of the parameters have the
+    // same meaning as for the FunctionCaller constructor.  Since a FunctionCaller can't be
+    // IR Interpreted, it makes no sense to call this with an ExecutionContextScope that lacks
+    // a Process.
+    // Returns a new-ed object which the caller owns.
+    
+    FunctionCaller *
+    GetFunctionCallerForLanguage (lldb::LanguageType language,
+                                  const CompilerType &return_type,
+                                  const Address& function_address,
+                                  const ValueList &arg_value_list,
+                                  const char *name,
+                                  Error &error);
+    
+    // Creates a UtilityFunction for the given language, the rest of the parameters have the
+    // same meaning as for the UtilityFunction constructor.
+    // Returns a new-ed object which the caller owns.
+    
+    UtilityFunction *
+    GetUtilityFunctionForLanguage (const char *expr,
+                                   lldb::LanguageType language,
+                                   const char *name,
+                                   Error &error);
+
     ClangASTContext *
     GetScratchClangASTContext(bool create_on_demand=true);
-    
-    TypeSystem*
-    GetTypeSystemForLanguage (lldb::LanguageType language);
     
     ClangASTImporter *
     GetClangASTImporter();

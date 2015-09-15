@@ -18,11 +18,10 @@
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/Core/Error.h"
-#include "lldb/Expression/ClangFunction.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/CompilerType.h"
 
-// This class will insert a ClangUtilityFunction into the inferior process for
+// This class will insert a UtilityFunction into the inferior process for
 // calling libBacktraceRecording's __introspection_dispatch_queue_get_pending_items()
 // function.  The function in the inferior will return a struct by value
 // with these members:
@@ -38,7 +37,7 @@
 // space (items_buffer_size in size) which must be mach_vm_deallocate'd by
 // lldb.  count is the number of items that were stored in the buffer.
 //
-// The AppleGetPendingItemsHandler object should persist so that the ClangUtilityFunction
+// The AppleGetPendingItemsHandler object should persist so that the UtilityFunction
 // can be reused multiple times.
 
 namespace lldb_private
@@ -107,8 +106,7 @@ private:
     static const char *g_get_pending_items_function_code;
 
     lldb_private::Process *m_process;
-    std::unique_ptr<ClangFunction> m_get_pending_items_function;
-    std::unique_ptr<ClangUtilityFunction> m_get_pending_items_impl_code;
+    std::unique_ptr<UtilityFunction> m_get_pending_items_impl_code;
     Mutex m_get_pending_items_function_mutex;
 
     lldb::addr_t m_get_pending_items_return_buffer_addr;

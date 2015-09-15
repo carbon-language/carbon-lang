@@ -23,7 +23,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObject.h"
-#include "lldb/Expression/ClangUserExpression.h"
+#include "lldb/Expression/UserExpression.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
@@ -770,12 +770,13 @@ protected:
                     expr_options.SetIgnoreBreakpoints(true);
                     ValueObjectSP result_value_sp;
                     Error error;
-                    result_code = ClangUserExpression::Evaluate (exe_ctx,
-                                                                 expr_options,
-                                                                 wp_sp->GetConditionText(),
-                                                                 NULL,
-                                                                 result_value_sp,
-                                                                 error);
+                    result_code = UserExpression::Evaluate (exe_ctx,
+                                                            expr_options,
+                                                            wp_sp->GetConditionText(),
+                                                            NULL,
+                                                            result_value_sp,
+                                                            error);
+                                                            
                     if (result_code == eExpressionCompleted)
                     {
                         if (result_value_sp)

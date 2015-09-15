@@ -39,7 +39,7 @@ public:
                               TypeAndOrName &class_type_or_name, 
                               Address &address);
     
-    virtual ClangUtilityFunction *
+    virtual UtilityFunction *
     CreateObjectChecker (const char *);
 
 
@@ -299,22 +299,20 @@ private:
     
     friend class ClassDescriptorV2;
 
-    std::unique_ptr<ClangFunction>            m_get_class_info_function;
-    std::unique_ptr<ClangUtilityFunction>     m_get_class_info_code;
+    std::unique_ptr<UtilityFunction>        m_get_class_info_code;
     lldb::addr_t                            m_get_class_info_args;
     Mutex                                   m_get_class_info_args_mutex;
 
-    std::unique_ptr<ClangFunction>            m_get_shared_cache_class_info_function;
-    std::unique_ptr<ClangUtilityFunction>     m_get_shared_cache_class_info_code;
+    std::unique_ptr<UtilityFunction>        m_get_shared_cache_class_info_code;
     lldb::addr_t                            m_get_shared_cache_class_info_args;
     Mutex                                   m_get_shared_cache_class_info_args_mutex;
 
-    std::unique_ptr<DeclVendor>               m_decl_vendor_ap;
+    std::unique_ptr<DeclVendor>             m_decl_vendor_ap;
     lldb::addr_t                            m_isa_hash_table_ptr;
     HashTableSignature                      m_hash_signature;
     bool                                    m_has_object_getClass;
     bool                                    m_loaded_objc_opt;
-    std::unique_ptr<NonPointerISACache>       m_non_pointer_isa_cache_ap;
+    std::unique_ptr<NonPointerISACache>     m_non_pointer_isa_cache_ap;
     std::unique_ptr<TaggedPointerVendor>    m_tagged_pointer_vendor_ap;
     EncodingToTypeSP                        m_encoding_to_type_sp;
     bool                                    m_noclasses_warning_emitted;

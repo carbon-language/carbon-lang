@@ -15,8 +15,8 @@
 #include "AppleObjCTrampolineHandler.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
-#include "lldb/Expression/ClangExpression.h"
-#include "lldb/Expression/ClangFunction.h"
+#include "lldb/Expression/FunctionCaller.h"
+#include "lldb/Expression/UtilityFunction.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/ThreadPlanRunToAddress.h"
@@ -67,11 +67,11 @@ AppleThreadPlanStepThroughObjCTrampoline::DidPush ()
 {
     // Setting up the memory space for the called function text might require allocations,
     // i.e. a nested function call.  This needs to be done as a PreResumeAction.
-    m_thread.GetProcess()->AddPreResumeAction (PreResumeInitializeClangFunction, (void *) this);
+    m_thread.GetProcess()->AddPreResumeAction (PreResumeInitializeFunctionCaller, (void *) this);
 }
 
 bool
-AppleThreadPlanStepThroughObjCTrampoline::InitializeClangFunction ()
+AppleThreadPlanStepThroughObjCTrampoline::InitializeFunctionCaller ()
 {
     if (!m_func_sp)
     {
@@ -82,7 +82,7 @@ AppleThreadPlanStepThroughObjCTrampoline::InitializeClangFunction ()
         {
             return false;
         }
-        m_impl_function = m_trampoline_handler->GetLookupImplementationWrapperFunction();
+        m_impl_function = m_trampoline_handler->GetLookupImplementationFunctionCaller();
         ExecutionContext exc_ctx;
         EvaluateExpressionOptions options;
         options.SetUnwindOnError(true);
@@ -100,10 +100,10 @@ AppleThreadPlanStepThroughObjCTrampoline::InitializeClangFunction ()
 }
 
 bool
-AppleThreadPlanStepThroughObjCTrampoline::PreResumeInitializeClangFunction(void *void_myself)
+AppleThreadPlanStepThroughObjCTrampoline::PreResumeInitializeFunctionCaller(void *void_myself)
 {
     AppleThreadPlanStepThroughObjCTrampoline *myself = static_cast<AppleThreadPlanStepThroughObjCTrampoline *>(void_myself);
-    return myself->InitializeClangFunction();
+    return myself->InitializeFunctionCaller();
 }
 
 void

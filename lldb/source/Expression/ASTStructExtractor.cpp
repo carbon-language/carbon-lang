@@ -28,7 +28,7 @@ using namespace lldb_private;
 
 ASTStructExtractor::ASTStructExtractor(ASTConsumer *passthrough,
                                        const char *struct_name,
-                                       ClangFunction &function) :
+                                       ClangFunctionCaller &function) :
     m_ast_context (NULL),
     m_passthrough (passthrough),
     m_passthrough_sema (NULL),

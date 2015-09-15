@@ -69,14 +69,20 @@
 #include "lldb/Core/ThreadSafeDenseMap.h"
 #include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/Expression/ASTDumper.h"
+#include "lldb/Expression/ASTResultSynthesizer.h"
+#include "lldb/Expression/ClangExpressionDeclMap.h"
+#include "lldb/Expression/ClangUserExpression.h"
+#include "lldb/Expression/ClangFunctionCaller.h"
+#include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangExternalASTSourceCallbacks.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/VerifyDecl.h"
 #include "lldb/Target/ExecutionContext.h"
-#include "lldb/Target/Process.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
+#include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 
 #include "Plugins/SymbolFile/DWARF/DWARFASTParserClang.h"
 
@@ -8942,3 +8948,49 @@ ClangASTContext::DeclContextGetClangASTContext (const CompilerDeclContext &dc)
     return nullptr;
 }
 
+ClangASTContextForExpressions::ClangASTContextForExpressions (Target &target) :
+    ClangASTContext (target.GetArchitecture().GetTriple().getTriple().c_str()),
+    m_target_wp(target.shared_from_this())
+{
+}
+
+UserExpression *
+ClangASTContextForExpressions::GetUserExpression (const char *expr,
+                   const char *expr_prefix,
+                   lldb::LanguageType language,
+                   Expression::ResultType desired_type)
+{
+    TargetSP target_sp = m_target_wp.lock();
+    if (!target_sp)
+        return nullptr;
+    
+    return new ClangUserExpression(*target_sp.get(), expr, expr_prefix, language, desired_type);
+}
+
+FunctionCaller *
+ClangASTContextForExpressions::GetFunctionCaller (const CompilerType &return_type,
+                                                  const Address& function_address,
+                                                  const ValueList &arg_value_list,
+                                                  const char *name)
+{
+    TargetSP target_sp = m_target_wp.lock();
+    if (!target_sp)
+        return nullptr;
+    
+   Process *process = target_sp->GetProcessSP().get();
+   if (!process)
+       return nullptr;
+   
+   return new ClangFunctionCaller (*process, return_type, function_address, arg_value_list, name);
+}
+
+UtilityFunction *
+ClangASTContextForExpressions::GetUtilityFunction (const char *text,
+                                                   const char *name)
+{
+     TargetSP target_sp = m_target_wp.lock();
+    if (!target_sp)
+        return nullptr;
+    
+    return new ClangUtilityFunction(*target_sp.get(), text, name);
+}

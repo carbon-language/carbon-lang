@@ -1,4 +1,4 @@
-//===-- ClangExpression.h ---------------------------------------*- C++ -*-===//
+//===-- Expression.h --------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_ClangExpression_h_
-#define liblldb_ClangExpression_h_
+#ifndef liblldb_Expression_h_
+#define liblldb_Expression_h_
 
 // C Includes
 // C++ Includes
@@ -22,22 +22,23 @@
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
-#include "lldb/Target/Process.h"
+#include "lldb/Expression/ExpressionTypeSystemHelper.h"
 
 namespace lldb_private {
 
 class RecordingMemoryManager;
 
 //----------------------------------------------------------------------
-/// @class ClangExpression ClangExpression.h "lldb/Expression/ClangExpression.h"
-/// @brief Encapsulates a single expression for use with Clang
+/// @class Expression Expression.h "lldb/Expression/Expression.h"
+/// @brief Encapsulates a single expression for use in lldb
 ///
 /// LLDB uses expressions for various purposes, notably to call functions
-/// and as a backend for the expr command.  ClangExpression encapsulates
+/// and as a backend for the expr command.  Expression encapsulates
 /// the objects needed to parse and interpret or JIT an expression.  It
-/// uses the Clang parser to produce LLVM IR from the expression.
+/// uses the expression parser appropriate to the language of the expression
+/// to produce LLVM IR from the expression.
 //----------------------------------------------------------------------
-class ClangExpression
+class Expression
 {
 public:
     enum ResultType {
@@ -45,17 +46,14 @@ public:
         eResultTypeId
     };
     
-    ClangExpression () :
-        m_jit_process_wp(),
-        m_jit_start_addr (LLDB_INVALID_ADDRESS),
-        m_jit_end_addr (LLDB_INVALID_ADDRESS)
-    {
-    }
-
+    Expression (Target &target);
+    
+    Expression (ExecutionContextScope &exe_scope);
+    
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    virtual ~ClangExpression ()
+    virtual ~Expression ()
     {
     }
     
@@ -83,24 +81,6 @@ public:
     {
         return lldb::eLanguageTypeUnknown;
     }
-    
-    //------------------------------------------------------------------
-    /// Return the object that the parser should use when resolving external
-    /// values.  May be NULL if everything should be self-contained.
-    //------------------------------------------------------------------
-    virtual ClangExpressionDeclMap *
-    DeclMap () = 0;
-    
-    //------------------------------------------------------------------
-    /// Return the object that the parser should allow to access ASTs.
-    /// May be NULL if the ASTs do not need to be transformed.
-    ///
-    /// @param[in] passthrough
-    ///     The ASTConsumer that the returned transformer should send
-    ///     the ASTs to after transformation.
-    //------------------------------------------------------------------
-    virtual clang::ASTConsumer *
-    ASTTransformer (clang::ASTConsumer *passthrough) = 0;
     
     //------------------------------------------------------------------
     /// Return the desired result type of the function, or 
@@ -139,10 +119,17 @@ public:
     {
         return m_jit_start_addr;
     }
+    
+    virtual ExpressionTypeSystemHelper *
+    GetTypeSystemHelper ()
+    {
+        return nullptr;
+    }
 
 protected:
 
-    lldb::ProcessWP m_jit_process_wp;
+    lldb::TargetWP  m_target_wp;            /// Expression's always have to have a target...
+    lldb::ProcessWP m_jit_process_wp;       /// An expression might have a process, but it doesn't need to (e.g. calculator mode.)
     lldb::addr_t    m_jit_start_addr;       ///< The address of the JITted function within the JIT allocation.  LLDB_INVALID_ADDRESS if invalid.
     lldb::addr_t    m_jit_end_addr;         ///< The address of the JITted function within the JIT allocation.  LLDB_INVALID_ADDRESS if invalid.
 
@@ -150,4 +137,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ClangExpression_h_
+#endif  // liblldb_Expression_h_

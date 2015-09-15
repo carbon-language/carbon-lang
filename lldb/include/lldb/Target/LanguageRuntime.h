@@ -97,6 +97,12 @@ public:
     {
         return m_process;
     }
+    
+    Target&
+    GetTargetRef()
+    {
+        return m_process->GetTarget();
+    }
 
     virtual lldb::BreakpointResolverSP
     CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp) = 0;

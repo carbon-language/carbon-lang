@@ -13,7 +13,7 @@
 #include "clang/Sema/SemaConsumer.h"
 #include "lldb/Core/ClangForward.h"
 #include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
-#include "lldb/Expression/ClangFunction.h"
+#include "lldb/Expression/ClangFunctionCaller.h"
 
 namespace lldb_private {
     
@@ -21,9 +21,9 @@ namespace lldb_private {
 /// @class ASTStructExtractor ASTStructExtractor.h "lldb/Expression/ASTStructExtractor.h"
 /// @brief Extracts and describes the argument structure for a wrapped function.
 ///
-/// This pass integrates with ClangFunction, which calls functions with custom
+/// This pass integrates with ClangFunctionCaller, which calls functions with custom
 /// sets of arguments.  To avoid having to implement the full calling convention
-/// for the target's architecture, ClangFunction writes a simple wrapper
+/// for the target's architecture, ClangFunctionCaller writes a simple wrapper
 /// function that takes a pointer to an argument structure that contains room
 /// for the address of the function to be called, the values of all its
 /// arguments, and room for the function's return value.
@@ -49,12 +49,12 @@ public:
     ///
     /// @param[in] function
     ///     The caller object whose members should be populated with information
-    ///     about the argument struct.  ClangFunction friends ASTStructExtractor
+    ///     about the argument struct.  ClangFunctionCaller friends ASTStructExtractor
     ///     for this purpose.
     //----------------------------------------------------------------------
     ASTStructExtractor(clang::ASTConsumer *passthrough,
                        const char *struct_name,
-                       ClangFunction &function);
+                       ClangFunctionCaller &function);
     
     //----------------------------------------------------------------------
     /// Destructor
@@ -148,7 +148,7 @@ private:
     clang::Sema                    *m_sema;                 ///< The Sema to use.
     clang::Action                  *m_action;               ///< The Sema to use, cast to an Action so it's usable.
     
-    ClangFunction                  &m_function;             ///< The function to populate with information about the argument structure.
+    ClangFunctionCaller            &m_function;             ///< The function to populate with information about the argument structure.
     std::string                     m_struct_name;          ///< The name of the structure to extract.
 };
     

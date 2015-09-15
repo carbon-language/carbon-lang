@@ -1109,6 +1109,7 @@ protected:
     void *                                          m_callback_baton;
     uint32_t                                        m_pointer_byte_size;
     bool                                            m_ast_owned;
+    bool                                            m_can_evaluate_expressions;
 
 private:
     //------------------------------------------------------------------
@@ -1116,6 +1117,31 @@ private:
     //------------------------------------------------------------------
     ClangASTContext(const ClangASTContext&);
     const ClangASTContext& operator=(const ClangASTContext&);
+};
+
+class ClangASTContextForExpressions : public ClangASTContext
+{
+public:
+    ClangASTContextForExpressions (Target &target);
+    
+    virtual ~ClangASTContextForExpressions () {}
+    
+    UserExpression *
+    GetUserExpression (const char *expr,
+                       const char *expr_prefix,
+                       lldb::LanguageType language,
+                       Expression::ResultType desired_type) override;
+    
+    FunctionCaller *
+    GetFunctionCaller (const CompilerType &return_type,
+                       const Address& function_address,
+                       const ValueList &arg_value_list,
+                       const char *name) override;
+    
+    UtilityFunction *
+    GetUtilityFunction(const char *text, const char *name) override;
+private:
+    lldb::TargetWP m_target_wp;
 };
 
 } // namespace lldb_private

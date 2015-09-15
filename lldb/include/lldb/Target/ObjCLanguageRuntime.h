@@ -30,7 +30,7 @@ class CommandObjectObjC_ClassTable_Dump;
 
 namespace lldb_private {
     
-class ClangUtilityFunction;
+class UtilityFunction;
 
 class ObjCLanguageRuntime :
     public LanguageRuntime
@@ -289,7 +289,7 @@ public:
     lldb::TypeSP
     LookupInCompleteClassCache (ConstString &name);
     
-    virtual ClangUtilityFunction *
+    virtual UtilityFunction *
     CreateObjectChecker (const char *) = 0;
     
     virtual ObjCRuntimeVersions

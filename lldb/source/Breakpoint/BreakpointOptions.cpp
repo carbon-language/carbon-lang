@@ -20,7 +20,6 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/ThreadSpec.h"
-#include "lldb/Expression/ClangUserExpression.h"
 
 using namespace lldb;
 using namespace lldb_private;

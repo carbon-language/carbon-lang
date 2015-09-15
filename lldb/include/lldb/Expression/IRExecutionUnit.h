@@ -26,7 +26,6 @@
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
-#include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/IRMemoryMap.h"
 #include "lldb/Host/Mutex.h"

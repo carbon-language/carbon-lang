@@ -742,7 +742,7 @@ class Process :
     public ExecutionContextScope,
     public PluginInterface
 {
-    friend class ClangFunction;     // For WaitForStateChangeEventsPrivate
+    friend class FunctionCaller;     // For WaitForStateChangeEventsPrivate
     friend class Debugger;          // For PopProcessIOHandler and ProcessIOHandlerIsActive
     friend class ProcessEventData;
     friend class StopInfo;

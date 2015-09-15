@@ -22,9 +22,8 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Value.h"
-#include "lldb/Expression/ClangExpression.h"
-#include "lldb/Expression/ClangFunction.h"
-#include "lldb/Expression/ClangUtilityFunction.h"
+#include "lldb/Expression/FunctionCaller.h"
+#include "lldb/Expression/UtilityFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -101,7 +100,6 @@ extern \"C\"                                                                    
 
 AppleGetItemInfoHandler::AppleGetItemInfoHandler (Process *process) :
     m_process (process),
-    m_get_item_info_function (),
     m_get_item_info_impl_code (),
     m_get_item_info_function_mutex(),
     m_get_item_info_return_buffer_addr (LLDB_INVALID_ADDRESS),
@@ -140,49 +138,33 @@ lldb::addr_t
 AppleGetItemInfoHandler::SetupGetItemInfoFunction (Thread &thread, ValueList &get_item_info_arglist)
 {
     ExecutionContext exe_ctx (thread.shared_from_this());
-    Address impl_code_address;
     StreamString errors;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYSTEM_RUNTIME));
     lldb::addr_t args_addr = LLDB_INVALID_ADDRESS;
+    FunctionCaller *get_item_info_caller = nullptr;
 
     // Scope for mutex locker:
     {
         Mutex::Locker locker(m_get_item_info_function_mutex);
         
-        // First stage is to make the ClangUtility to hold our injected function:
+        // First stage is to make the UtilityFunction to hold our injected function:
 
-#define USE_BUILTIN_FUNCTION 0  // Define this to 1 and we will use the get_implementation function found in the target.
-                                // This is useful for debugging additions to the get_impl function 'cause you don't have
-                                // to bother with string-ifying the code into g_get_item_info_function_code.
-        
-        if (USE_BUILTIN_FUNCTION)
-        {
-            ConstString our_utility_function_name("__lldb_backtrace_recording_get_item_info");
-            SymbolContextList sc_list;
-            
-            exe_ctx.GetTargetRef().GetImages().FindSymbolsWithNameAndType (our_utility_function_name, eSymbolTypeCode, sc_list);
-            if (sc_list.GetSize() == 1)
-            {
-                SymbolContext sc;
-                sc_list.GetContextAtIndex(0, sc);
-                if (sc.symbol != NULL)
-                    impl_code_address = sc.symbol->GetAddress();
-                    
-                //lldb::addr_t addr = impl_code_address.GetOpcodeLoadAddress (exe_ctx.GetTargetPtr());
-                //printf ("Getting address for our_utility_function: 0x%" PRIx64 ".\n", addr);
-            }
-            else
-            {
-                //printf ("Could not find queues introspection function address.\n");
-                return args_addr;
-            }
-        }
-        else if (!m_get_item_info_impl_code.get())
+        if (!m_get_item_info_impl_code.get())
         {
             if (g_get_item_info_function_code != NULL)
             {
-                m_get_item_info_impl_code.reset (new ClangUtilityFunction (g_get_item_info_function_code,
-                                                             g_get_item_info_function_name));
+                Error error;
+                m_get_item_info_impl_code.reset(exe_ctx.GetTargetRef().GetUtilityFunctionForLanguage (g_get_item_info_function_code,
+                                                                                                      eLanguageTypeObjC,
+                                                                                                      g_get_item_info_function_name,
+                                                                                                      error));
+                if (error.Fail())
+                {
+                    if (log)
+                        log->Printf ("Failed to get utility function: %s.", error.AsCString());
+                    return args_addr;
+                }
+                
                 if (!m_get_item_info_impl_code->Install(errors, exe_ctx))
                 {
                     if (log)
@@ -198,41 +180,32 @@ AppleGetItemInfoHandler::SetupGetItemInfoFunction (Thread &thread, ValueList &ge
                 errors.Printf ("No get-item-info introspection code found.");
                 return LLDB_INVALID_ADDRESS;
             }
+
+            // Next make the runner function for our implementation utility function.
+            Error error;
             
-            impl_code_address.Clear();
-            impl_code_address.SetOffset(m_get_item_info_impl_code->StartAddress());
+            TypeSystem *type_system = thread.GetProcess()->GetTarget().GetScratchTypeSystemForLanguage(eLanguageTypeC);
+            CompilerType get_item_info_return_type = type_system->GetBasicTypeFromAST(eBasicTypeVoid).GetPointerType();
+            
+            get_item_info_caller = m_get_item_info_impl_code->MakeFunctionCaller(get_item_info_return_type,
+                                                                                 get_item_info_arglist,
+                                                                                 error);
+            if (error.Fail())
+            {
+                if (log)
+                    log->Printf ("Error Inserting get-item-info function: \"%s\".", error.AsCString());
+                return args_addr;
+            }
         }
         else
         {
-            impl_code_address.Clear();
-            impl_code_address.SetOffset(m_get_item_info_impl_code->StartAddress());
-        }
-
-        // Next make the runner function for our implementation utility function.
-        if (!m_get_item_info_function.get())
-        {
-            ClangASTContext *clang_ast_context = thread.GetProcess()->GetTarget().GetScratchClangASTContext();
-            CompilerType get_item_info_return_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
-            m_get_item_info_function.reset(new ClangFunction (thread,
-                                                     get_item_info_return_type,
-                                                     impl_code_address,
-                                                     get_item_info_arglist,
-                                                     "queue-bt-item-info"));
-            
-            errors.Clear();        
-            unsigned num_errors = m_get_item_info_function->CompileFunction(errors);
-            if (num_errors)
+            // If it's already made, then we can just retrieve the caller:
+            get_item_info_caller = m_get_item_info_impl_code->GetFunctionCaller();
+            if (!get_item_info_caller)
             {
                 if (log)
-                    log->Printf ("Error compiling get-item-info function: \"%s\".", errors.GetData());
-                return args_addr;
-            }
-            
-            errors.Clear();
-            if (!m_get_item_info_function->WriteFunctionWrapper(exe_ctx, errors))
-            {
-                if (log)
-                    log->Printf ("Error Inserting get-item-info function: \"%s\".", errors.GetData());
+                    log->Printf ("Failed to get get-item-info introspection caller.");
+                m_get_item_info_impl_code.reset();
                 return args_addr;
             }
         }
@@ -244,7 +217,7 @@ AppleGetItemInfoHandler::SetupGetItemInfoFunction (Thread &thread, ValueList &ge
     // if other threads were calling into here, but actually it isn't because we allocate a new args structure for
     // this call by passing args_addr = LLDB_INVALID_ADDRESS...
 
-    if (!m_get_item_info_function->WriteFunctionArguments (exe_ctx, args_addr, impl_code_address, get_item_info_arglist, errors))
+    if (!get_item_info_caller->WriteFunctionArguments (exe_ctx, args_addr, get_item_info_arglist, errors))
     {
         if (log)
             log->Printf ("Error writing get-item-info function arguments: \"%s\".", errors.GetData());
@@ -364,7 +337,7 @@ AppleGetItemInfoHandler::GetItemInfo (Thread &thread, uint64_t item, addr_t page
     options.SetTryAllThreads (false);
     thread.CalculateExecutionContext (exe_ctx);
 
-    if (m_get_item_info_function == NULL)
+    if (!m_get_item_info_impl_code)
     {
         error.SetErrorString ("Unable to compile function to call __introspection_dispatch_queue_item_get_info");
         return return_value;
@@ -373,7 +346,16 @@ AppleGetItemInfoHandler::GetItemInfo (Thread &thread, uint64_t item, addr_t page
 
     ExpressionResults func_call_ret;
     Value results;
-    func_call_ret =  m_get_item_info_function->ExecuteFunction (exe_ctx, &args_addr, options, errors, results);
+    FunctionCaller *func_caller = m_get_item_info_impl_code->GetFunctionCaller();
+    if (!func_caller)
+    {
+        if (log)
+            log->Printf ("Could not retrieve function caller for __introspection_dispatch_queue_item_get_info.");
+        error.SetErrorString("Could not retrieve function caller for __introspection_dispatch_queue_item_get_info.");
+        return return_value;
+    }
+    
+    func_call_ret =  func_caller->ExecuteFunction (exe_ctx, &args_addr, options, errors, results);
     if (func_call_ret != eExpressionCompleted || !error.Success())
     {
         if (log)

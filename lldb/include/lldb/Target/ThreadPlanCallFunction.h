@@ -92,7 +92,7 @@ public:
         return m_function_sp;
     }
     
-    // Classes that derive from ClangFunction, and implement
+    // Classes that derive from FunctionCaller, and implement
     // their own WillPop methods should call this so that the
     // thread state gets restored if the plan gets discarded.
     void

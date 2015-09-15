@@ -40,29 +40,15 @@ using namespace lldb_private;
 /// @param[in] name
 ///     The name of the function, as used in the text.
 //------------------------------------------------------------------
-ClangUtilityFunction::ClangUtilityFunction (const char *text, 
+ClangUtilityFunction::ClangUtilityFunction (ExecutionContextScope &exe_scope,
+                                            const char *text,
                                             const char *name) :
-    ClangExpression (),
-    m_expr_decl_map (),
-    m_execution_unit_sp (),
-    m_jit_module_wp (),
-    m_function_text (ExpressionSourceCode::g_expression_prefix),
-    m_function_name (name)
+    UtilityFunction (exe_scope, text, name)
 {
-    if (text && text[0])
-        m_function_text.append (text);
 }
 
 ClangUtilityFunction::~ClangUtilityFunction ()
 {
-    lldb::ProcessSP process_sp (m_jit_process_wp.lock());
-    if (process_sp)
-    {
-        lldb::ModuleSP jit_module_sp (m_jit_module_wp.lock());
-        if (jit_module_sp)
-            process_sp->GetTarget().GetImages().Remove(jit_module_sp);
-    }
-    
 }
 
 //------------------------------------------------------------------
@@ -113,9 +99,9 @@ ClangUtilityFunction::Install (Stream &error_stream,
     
     bool keep_result_in_memory = false;
     
-    m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory, exe_ctx));
+    ResetDeclMap(exe_ctx, keep_result_in_memory);
     
-    if (!m_expr_decl_map->WillParse(exe_ctx, NULL))
+    if (!DeclMap()->WillParse(exe_ctx, NULL))
     {
         error_stream.PutCString ("error: current process state is unsuitable for expression parsing\n");
         return false;
@@ -130,7 +116,7 @@ ClangUtilityFunction::Install (Stream &error_stream,
     {
         error_stream.Printf ("error: %d errors parsing expression\n", num_errors);
         
-        m_expr_decl_map.reset();
+        ResetDeclMap();
         
         return false;
     }
@@ -176,9 +162,9 @@ ClangUtilityFunction::Install (Stream &error_stream,
                     m_function_text.c_str());
 #endif
 
-    m_expr_decl_map->DidParse();
+    DeclMap()->DidParse();
     
-    m_expr_decl_map.reset();
+    ResetDeclMap();
     
     if (jit_error.Success())
     {
@@ -195,4 +181,8 @@ ClangUtilityFunction::Install (Stream &error_stream,
     }
 }
 
-
+void
+ClangUtilityFunction::ClangUtilityFunctionHelper::ResetDeclMap(ExecutionContext &exe_ctx, bool keep_result_in_memory)
+{
+    m_expr_decl_map_up.reset(new ClangExpressionDeclMap(keep_result_in_memory, exe_ctx));
+}

@@ -14,6 +14,7 @@
 #include <string>
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
+#include "lldb/Expression/Expression.h"
 #include "lldb/Symbol/CompilerDeclContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Type.h"
@@ -438,6 +439,31 @@ public:
     
     virtual bool
     IsReferenceType (void *type, CompilerType *pointee_type, bool* is_rvalue) = 0;
+    
+    virtual UserExpression *
+    GetUserExpression (const char *expr,
+                       const char *expr_prefix,
+                       lldb::LanguageType language,
+                       Expression::ResultType desired_type)
+    {
+        return nullptr;
+    }
+    
+    virtual FunctionCaller *
+    GetFunctionCaller (const CompilerType &return_type,
+                       const Address& function_address,
+                       const ValueList &arg_value_list,
+                       const char *name)
+    {
+        return nullptr;
+    }
+    
+    virtual UtilityFunction *
+    GetUtilityFunction(const char *text, const char *name)
+    {
+        return nullptr;
+    }
+    
 protected:
     const LLVMCastKind m_kind; // Support for llvm casting
     SymbolFile *m_sym_file;

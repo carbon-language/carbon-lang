@@ -30,7 +30,7 @@ public:
                                   Address &function,
                                   llvm::ArrayRef<lldb::addr_t> args,
                                   const EvaluateExpressionOptions &options,
-                                  lldb::ClangUserExpressionSP &user_expression_sp);
+                                  lldb::UserExpressionSP &user_expression_sp);
     
     ~ThreadPlanCallUserExpression() override;
 
@@ -60,7 +60,7 @@ public:
     
 protected:
 private:
-    lldb::ClangUserExpressionSP m_user_expression_sp;    // This is currently just used to ensure the
+    lldb::UserExpressionSP m_user_expression_sp;    // This is currently just used to ensure the
                                                          // User expression the initiated this ThreadPlan
                                                          // lives as long as the thread plan does.
     bool m_manage_materialization = false;

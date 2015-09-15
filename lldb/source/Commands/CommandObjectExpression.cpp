@@ -17,8 +17,7 @@
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
-#include "lldb/Expression/ClangUserExpression.h"
-#include "lldb/Expression/ClangFunction.h"
+#include "lldb/Expression/UserExpression.h"
 #include "lldb/Expression/DWARFExpression.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/StringConvert.h"
@@ -345,7 +344,7 @@ CommandObjectExpression::EvaluateExpression
             }
             else
             {
-                if (result_valobj_sp->GetError().GetError() == ClangUserExpression::kNoResult)
+                if (result_valobj_sp->GetError().GetError() == UserExpression::kNoResult)
                 {
                     if (format != eFormatVoid && m_interpreter.GetDebugger().GetNotifyVoid())
                     {

@@ -17,8 +17,6 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/StreamString.h"
-#include "lldb/Expression/ClangFunction.h"
-#include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"

@@ -35,8 +35,8 @@ public:
     GetStepThroughDispatchPlan (Thread &thread, 
                                 bool stop_others);
     
-    ClangFunction *
-    GetLookupImplementationWrapperFunction ();
+    FunctionCaller *
+    GetLookupImplementationFunctionCaller ();
     
     bool 
     AddrIsMsgForward (lldb::addr_t addr) const
@@ -198,8 +198,7 @@ private:
     MsgsendMap m_msgSend_map;
     lldb::ProcessWP m_process_wp;
     lldb::ModuleSP m_objc_module_sp;
-    std::unique_ptr<ClangFunction> m_impl_function;
-    std::unique_ptr<ClangUtilityFunction> m_impl_code;
+    std::unique_ptr<UtilityFunction> m_impl_code;
     Mutex m_impl_function_mutex;
     lldb::addr_t m_impl_fn_addr;
     lldb::addr_t m_impl_stret_fn_addr;

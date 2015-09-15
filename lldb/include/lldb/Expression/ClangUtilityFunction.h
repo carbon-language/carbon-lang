@@ -22,7 +22,8 @@
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
-#include "lldb/Expression/ClangExpression.h"
+#include "lldb/Expression/ClangExpressionHelper.h"
+#include "lldb/Expression/UtilityFunction.h"
 
 namespace lldb_private 
 {
@@ -34,11 +35,57 @@ namespace lldb_private
 /// LLDB uses expressions for various purposes, notably to call functions
 /// and as a backend for the expr command.  ClangUtilityFunction encapsulates
 /// a self-contained function meant to be used from other code.  Utility
-/// functions can perform error-checking for ClangUserExpressions, 
+/// functions can perform error-checking for ClangUserExpressions, or can
+/// simply provide a way to push a function into the target for the debugger to
+/// call later on.
 //----------------------------------------------------------------------
-class ClangUtilityFunction : public ClangExpression
+class ClangUtilityFunction : public UtilityFunction
 {
 public:
+    class ClangUtilityFunctionHelper : public ClangExpressionHelper
+    {
+    public:
+        ClangUtilityFunctionHelper ()
+        {
+        }
+        
+        ~ClangUtilityFunctionHelper() override {}
+        
+        //------------------------------------------------------------------
+        /// Return the object that the parser should use when resolving external
+        /// values.  May be NULL if everything should be self-contained.
+        //------------------------------------------------------------------
+        ClangExpressionDeclMap *
+        DeclMap() override
+        {
+            return m_expr_decl_map_up.get();
+        }
+        
+        void
+        ResetDeclMap()
+        {
+            m_expr_decl_map_up.reset();
+        }
+        
+        void
+        ResetDeclMap (ExecutionContext & exe_ctx, bool keep_result_in_memory);
+
+        //------------------------------------------------------------------
+        /// Return the object that the parser should allow to access ASTs.
+        /// May be NULL if the ASTs do not need to be transformed.
+        ///
+        /// @param[in] passthrough
+        ///     The ASTConsumer that the returned transformer should send
+        ///     the ASTs to after transformation.
+        //------------------------------------------------------------------
+        clang::ASTConsumer *
+        ASTTransformer(clang::ASTConsumer *passthrough) override
+        {
+            return nullptr;
+        }
+    private:
+        std::unique_ptr<ClangExpressionDeclMap> m_expr_decl_map_up;
+    };
     //------------------------------------------------------------------
     /// Constructor
     ///
@@ -48,129 +95,41 @@ public:
     /// @param[in] name
     ///     The name of the function, as used in the text.
     //------------------------------------------------------------------
-    ClangUtilityFunction (const char *text, 
+    ClangUtilityFunction (ExecutionContextScope &exe_scope,
+                          const char *text,
                           const char *name);
     
     ~ClangUtilityFunction() override;
+    
+    ExpressionTypeSystemHelper *
+    GetTypeSystemHelper () override
+    {
+        return &m_type_system_helper;
+    }
 
-    //------------------------------------------------------------------
-    /// Install the utility function into a process
-    ///
-    /// @param[in] error_stream
-    ///     A stream to print parse errors and warnings to.
-    ///
-    /// @param[in] exe_ctx
-    ///     The execution context to install the utility function to.
-    ///
-    /// @return
-    ///     True on success (no errors); false otherwise.
-    //------------------------------------------------------------------
-    bool
-    Install (Stream &error_stream, ExecutionContext &exe_ctx);
-    
-    //------------------------------------------------------------------
-    /// Check whether the given PC is inside the function
-    ///
-    /// Especially useful if the function dereferences NULL to indicate a failed
-    /// assert.
-    ///
-    /// @param[in] pc
-    ///     The program counter to check.
-    ///
-    /// @return
-    ///     True if the program counter falls within the function's bounds;
-    ///     false if not (or the function is not JIT compiled)
-    //------------------------------------------------------------------
-    bool
-    ContainsAddress (lldb::addr_t address)
-    {
-        // nothing is both >= LLDB_INVALID_ADDRESS and < LLDB_INVALID_ADDRESS,
-        // so this always returns false if the function is not JIT compiled yet
-        return (address >= m_jit_start_addr && address < m_jit_end_addr);
-    }
-    
-    
-    //------------------------------------------------------------------
-    /// Return the string that the parser should parse.  Must be a full
-    /// translation unit.
-    //------------------------------------------------------------------
-    const char *
-    Text() override
-    {
-        return m_function_text.c_str();
-    }
-    
-    //------------------------------------------------------------------
-    /// Return the function name that should be used for executing the
-    /// expression.  Text() should contain the definition of this
-    /// function.
-    //------------------------------------------------------------------
-    const char *
-    FunctionName() override
-    {
-        return m_function_name.c_str();
-    }
-    
-    //------------------------------------------------------------------
-    /// Return the object that the parser should use when resolving external
-    /// values.  May be NULL if everything should be self-contained.
-    //------------------------------------------------------------------
     ClangExpressionDeclMap *
-    DeclMap() override
+    DeclMap()
     {
-        return m_expr_decl_map.get();
+        return m_type_system_helper.DeclMap();
+    }
+
+    void
+    ResetDeclMap ()
+    {
+        m_type_system_helper.ResetDeclMap();
     }
     
-    //------------------------------------------------------------------
-    /// Return the object that the parser should use when registering
-    /// local variables.  May be NULL if the Expression doesn't care.
-    //------------------------------------------------------------------
-    ExpressionVariableList *
-    LocalVariables ()
+    void
+    ResetDeclMap (ExecutionContext & exe_ctx, bool keep_result_in_memory)
     {
-        return NULL;
+        m_type_system_helper.ResetDeclMap(exe_ctx, keep_result_in_memory);
     }
     
-    //------------------------------------------------------------------
-    /// Return the object that the parser should allow to access ASTs.
-    /// May be NULL if the ASTs do not need to be transformed.
-    ///
-    /// @param[in] passthrough
-    ///     The ASTConsumer that the returned transformer should send
-    ///     the ASTs to after transformation.
-    //------------------------------------------------------------------
-    clang::ASTConsumer *
-    ASTTransformer(clang::ASTConsumer *passthrough) override
-    {
-        return NULL;
-    }
-    
-    //------------------------------------------------------------------
-    /// Return true if validation code should be inserted into the
-    /// expression.
-    //------------------------------------------------------------------
     bool
-    NeedsValidation() override
-    {
-        return false;
-    }
-    
-    //------------------------------------------------------------------
-    /// Return true if external variables in the expression should be
-    /// resolved.
-    //------------------------------------------------------------------
-    bool
-    NeedsVariableResolution() override
-    {
-        return false;
-    }
+    Install (Stream &error_stream, ExecutionContext &exe_ctx) override;
     
 private:
-    std::unique_ptr<ClangExpressionDeclMap>  m_expr_decl_map;    ///< The map to use when parsing and materializing the expression.
-    std::shared_ptr<IRExecutionUnit>         m_execution_unit_sp;
-    lldb::ModuleWP                           m_jit_module_wp;
-    std::string                              m_function_text;    ///< The text of the function.  Must be a well-formed translation unit.
-    std::string                              m_function_name;    ///< The name of the function.
+    ClangUtilityFunctionHelper  m_type_system_helper;    ///< The map to use when parsing and materializing the expression.
 };
 
 } // namespace lldb_private

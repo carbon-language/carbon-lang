@@ -1,4 +1,4 @@
-//===-- AppleObjCRuntime.cpp --------------------------------------*- C++ -*-===//
+//===-- AppleObjCRuntime.cpp -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -22,7 +22,8 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/StreamString.h"
-#include "lldb/Expression/ClangFunction.h"
+#include "lldb/Core/ValueObject.h"
+#include "lldb/Expression/FunctionCaller.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -38,6 +39,10 @@ using namespace lldb;
 using namespace lldb_private;
 
 #define PO_FUNCTION_TIMEOUT_USEC 15*1000*1000
+
+AppleObjCRuntime::~AppleObjCRuntime()
+{
+}
 
 AppleObjCRuntime::AppleObjCRuntime(Process *process) :
     ObjCLanguageRuntime (process),
@@ -135,16 +140,36 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     }
     
     // Now we're ready to call the function:
-    ClangFunction func (*exe_ctx.GetBestExecutionContextScope(),
-                        return_clang_type, 
-                        *function_address, 
-                        arg_value_list,
-                        "objc-object-description");
-
-    StreamString error_stream;
     
+    StreamString error_stream;
     lldb::addr_t wrapper_struct_addr = LLDB_INVALID_ADDRESS;
-    func.InsertFunction(exe_ctx, wrapper_struct_addr, error_stream);
+
+    if (!m_print_object_caller_up)
+    {
+        Error error;
+         m_print_object_caller_up.reset(exe_scope->CalculateTarget()->GetFunctionCallerForLanguage (eLanguageTypeObjC,
+                                                                                                    return_clang_type,
+                                                                                                    *function_address,
+                                                                                                    arg_value_list,
+                                                                                                    "objc-object-description",
+                                                                                                    error));
+        if (error.Fail())
+        {
+            m_print_object_caller_up.reset();
+            strm.Printf("Could not get function runner to call print for debugger function: %s.", error.AsCString());
+            return false;
+        }
+        m_print_object_caller_up->InsertFunction(exe_ctx, wrapper_struct_addr, error_stream);
+    }
+    else
+    {
+        m_print_object_caller_up->WriteFunctionArguments(exe_ctx,
+                                                         wrapper_struct_addr,
+                                                         arg_value_list,
+                                                         error_stream);
+    }
+
+    
 
     EvaluateExpressionOptions options;
     options.SetUnwindOnError(true);
@@ -153,11 +178,11 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     options.SetIgnoreBreakpoints(true);
     options.SetTimeoutUsec(PO_FUNCTION_TIMEOUT_USEC);
     
-    ExpressionResults results = func.ExecuteFunction (exe_ctx, 
-                                                     &wrapper_struct_addr,
-                                                     options,
-                                                     error_stream, 
-                                                     ret);
+    ExpressionResults results = m_print_object_caller_up->ExecuteFunction (exe_ctx,
+                                                                           &wrapper_struct_addr,
+                                                                           options,
+                                                                           error_stream,
+                                                                           ret);
     if (results != eExpressionCompleted)
     {
         strm.Printf("Error evaluating Print Object function: %d.\n", results);
