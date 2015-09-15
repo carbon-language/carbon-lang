@@ -5824,9 +5824,39 @@ QualType ASTReader::GetType(TypeID ID) {
     case PREDEF_TYPE_IMAGE1D_BUFF_ID: T = Context.OCLImage1dBufferTy; break;
     case PREDEF_TYPE_IMAGE2D_ID:    T = Context.OCLImage2dTy;       break;
     case PREDEF_TYPE_IMAGE2D_ARR_ID: T = Context.OCLImage2dArrayTy; break;
+    case PREDEF_TYPE_IMAGE2D_DEP_ID:
+      T = Context.OCLImage2dDepthTy;
+      break;
+    case PREDEF_TYPE_IMAGE2D_ARR_DEP_ID:
+      T = Context.OCLImage2dArrayDepthTy;
+      break;
+    case PREDEF_TYPE_IMAGE2D_MSAA_ID:
+      T = Context.OCLImage2dMSAATy;
+      break;
+    case PREDEF_TYPE_IMAGE2D_ARR_MSAA_ID:
+      T = Context.OCLImage2dArrayMSAATy;
+      break;
+    case PREDEF_TYPE_IMAGE2D_MSAA_DEP_ID:
+      T = Context.OCLImage2dMSAADepthTy;
+      break;
+    case PREDEF_TYPE_IMAGE2D_ARR_MSAA_DEPTH_ID:
+      T = Context.OCLImage2dArrayMSAADepthTy;
+      break;
     case PREDEF_TYPE_IMAGE3D_ID:    T = Context.OCLImage3dTy;       break;
     case PREDEF_TYPE_SAMPLER_ID:    T = Context.OCLSamplerTy;       break;
     case PREDEF_TYPE_EVENT_ID:      T = Context.OCLEventTy;         break;
+    case PREDEF_TYPE_CLK_EVENT_ID:
+      T = Context.OCLClkEventTy;
+      break;
+    case PREDEF_TYPE_QUEUE_ID:
+      T = Context.OCLQueueTy;
+      break;
+    case PREDEF_TYPE_NDRANGE_ID:
+      T = Context.OCLNDRangeTy;
+      break;
+    case PREDEF_TYPE_RESERVE_ID_ID:
+      T = Context.OCLReserveIDTy;
+      break;
     case PREDEF_TYPE_AUTO_DEDUCT:   T = Context.getAutoDeductType(); break;
         
     case PREDEF_TYPE_AUTO_RREF_DEDUCT: 

@@ -160,6 +160,12 @@ BUILTIN_TYPE(OCLImage1dArray, OCLImage1dArrayTy)
 BUILTIN_TYPE(OCLImage1dBuffer, OCLImage1dBufferTy)
 BUILTIN_TYPE(OCLImage2d, OCLImage2dTy)
 BUILTIN_TYPE(OCLImage2dArray, OCLImage2dArrayTy)
+BUILTIN_TYPE(OCLImage2dDepth, OCLImage2dDepthTy)
+BUILTIN_TYPE(OCLImage2dArrayDepth, OCLImage2dArrayDepthTy)
+BUILTIN_TYPE(OCLImage2dMSAA, OCLImage2dMSAATy)
+BUILTIN_TYPE(OCLImage2dArrayMSAA, OCLImage2dArrayMSAATy)
+BUILTIN_TYPE(OCLImage2dMSAADepth, OCLImage2dMSAADepthTy)
+BUILTIN_TYPE(OCLImage2dArrayMSAADepth, OCLImage2dArrayMSAADepthTy)
 BUILTIN_TYPE(OCLImage3d, OCLImage3dTy)
 
 // OpenCL sampler_t.
@@ -167,6 +173,18 @@ BUILTIN_TYPE(OCLSampler, OCLSamplerTy)
 
 // OpenCL event_t.
 BUILTIN_TYPE(OCLEvent, OCLEventTy)
+
+// OpenCL clk_event_t.
+BUILTIN_TYPE(OCLClkEvent, OCLClkEventTy)
+
+// OpenCL queue_t.
+BUILTIN_TYPE(OCLQueue, OCLQueueTy)
+
+// OpenCL ndrange_t.
+BUILTIN_TYPE(OCLNDRange, OCLNDRangeTy)
+
+// OpenCL reserve_id_t.
+BUILTIN_TYPE(OCLReserveID, OCLReserveIDTy)
 
 // This represents the type of an expression whose type is
 // totally unknown, e.g. 'T::foo'.  It is permitted for this to

@@ -26,6 +26,9 @@ OPENCLEXT(cl_khr_local_int32_extended_atomics)
 OPENCLEXT(cl_khr_byte_addressable_store)
 OPENCLEXT(cl_khr_3d_image_writes)
 
+// OpenCL 2.0
+OPENCLEXT(cl_khr_gl_msaa_sharing)
+
 // Clang Extensions.
 OPENCLEXT(cl_clang_storage_class_specifiers)
 

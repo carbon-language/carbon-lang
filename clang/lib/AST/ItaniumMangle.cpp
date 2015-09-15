@@ -2028,9 +2028,39 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::OCLImage1dBuffer: Out << "17ocl_image1dbuffer"; break;
   case BuiltinType::OCLImage2d: Out << "11ocl_image2d"; break;
   case BuiltinType::OCLImage2dArray: Out << "16ocl_image2darray"; break;
+  case BuiltinType::OCLImage2dDepth:
+    Out << "16ocl_image2ddepth";
+    break;
+  case BuiltinType::OCLImage2dArrayDepth:
+    Out << "21ocl_image2darraydepth";
+    break;
+  case BuiltinType::OCLImage2dMSAA:
+    Out << "15ocl_image2dmsaa";
+    break;
+  case BuiltinType::OCLImage2dArrayMSAA:
+    Out << "20ocl_image2darraymsaa";
+    break;
+  case BuiltinType::OCLImage2dMSAADepth:
+    Out << "20ocl_image2dmsaadepth";
+    break;
+  case BuiltinType::OCLImage2dArrayMSAADepth:
+    Out << "35ocl_image2darraymsaadepth";
+    break;
   case BuiltinType::OCLImage3d: Out << "11ocl_image3d"; break;
   case BuiltinType::OCLSampler: Out << "11ocl_sampler"; break;
   case BuiltinType::OCLEvent: Out << "9ocl_event"; break;
+  case BuiltinType::OCLClkEvent:
+    Out << "12ocl_clkevent";
+    break;
+  case BuiltinType::OCLQueue:
+    Out << "9ocl_queue";
+    break;
+  case BuiltinType::OCLNDRange:
+    Out << "11ocl_ndrange";
+    break;
+  case BuiltinType::OCLReserveID:
+    Out << "13ocl_reserveid";
+    break;
   }
 }
 

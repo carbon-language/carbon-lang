@@ -213,6 +213,18 @@ void Sema::Initialize() {
     addImplicitTypedef("sampler_t", Context.OCLSamplerTy);
     addImplicitTypedef("event_t", Context.OCLEventTy);
     if (getLangOpts().OpenCLVersion >= 200) {
+      addImplicitTypedef("image2d_depth_t", Context.OCLImage2dDepthTy);
+      addImplicitTypedef("image2d_array_depth_t",
+                         Context.OCLImage2dArrayDepthTy);
+      addImplicitTypedef("image2d_msaa_t", Context.OCLImage2dMSAATy);
+      addImplicitTypedef("image2d_array_msaa_t", Context.OCLImage2dArrayMSAATy);
+      addImplicitTypedef("image2d_msaa_depth_t", Context.OCLImage2dMSAADepthTy);
+      addImplicitTypedef("image2d_array_msaa_depth_t",
+                         Context.OCLImage2dArrayMSAADepthTy);
+      addImplicitTypedef("clk_event_t", Context.OCLClkEventTy);
+      addImplicitTypedef("queue_t", Context.OCLQueueTy);
+      addImplicitTypedef("ndrange_t", Context.OCLNDRangeTy);
+      addImplicitTypedef("reserve_id_t", Context.OCLReserveIDTy);
       addImplicitTypedef("atomic_int", Context.getAtomicType(Context.IntTy));
       addImplicitTypedef("atomic_uint",
                          Context.getAtomicType(Context.UnsignedIntTy));

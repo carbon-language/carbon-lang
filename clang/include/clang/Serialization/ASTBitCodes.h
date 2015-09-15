@@ -770,14 +770,34 @@ namespace clang {
       PREDEF_TYPE_IMAGE2D_ID    = 40,
       /// \brief OpenCL 2d image array type.
       PREDEF_TYPE_IMAGE2D_ARR_ID = 41,
+      /// \brief OpenCL 2d image depth type.
+      PREDEF_TYPE_IMAGE2D_DEP_ID = 42,
+      /// \brief OpenCL 2d image array depth type.
+      PREDEF_TYPE_IMAGE2D_ARR_DEP_ID = 43,
+      /// \brief OpenCL 2d image MSAA type.
+      PREDEF_TYPE_IMAGE2D_MSAA_ID = 44,
+      /// \brief OpenCL 2d image array MSAA type.
+      PREDEF_TYPE_IMAGE2D_ARR_MSAA_ID = 45,
+      /// \brief OpenCL 2d image MSAA depth type.
+      PREDEF_TYPE_IMAGE2D_MSAA_DEP_ID = 46,
+      /// \brief OpenCL 2d image array MSAA depth type.
+      PREDEF_TYPE_IMAGE2D_ARR_MSAA_DEPTH_ID = 47,
       /// \brief OpenCL 3d image type.
-      PREDEF_TYPE_IMAGE3D_ID    = 42,
+      PREDEF_TYPE_IMAGE3D_ID    = 48,
       /// \brief OpenCL event type.
-      PREDEF_TYPE_EVENT_ID      = 43,
+      PREDEF_TYPE_EVENT_ID      = 49,
+      /// \brief OpenCL clk event type.
+      PREDEF_TYPE_CLK_EVENT_ID  = 50,
       /// \brief OpenCL sampler type.
-      PREDEF_TYPE_SAMPLER_ID    = 44,
+      PREDEF_TYPE_SAMPLER_ID    = 51,
+      /// \brief OpenCL queue type.
+      PREDEF_TYPE_QUEUE_ID      = 52,
+      /// \brief OpenCL ndrange type.
+      PREDEF_TYPE_NDRANGE_ID    = 53,
+      /// \brief OpenCL reserve_id type.
+      PREDEF_TYPE_RESERVE_ID_ID = 54,
       /// \brief The placeholder type for OpenMP array section.
-      PREDEF_TYPE_OMP_ARRAY_SECTION = 45,
+      PREDEF_TYPE_OMP_ARRAY_SECTION = 55
     };
 
     /// \brief The number of predefined type IDs that are reserved for

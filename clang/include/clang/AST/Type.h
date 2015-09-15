@@ -1683,17 +1683,27 @@ public:
   bool isNullPtrType() const;                   // C++0x nullptr_t
   bool isAtomicType() const;                    // C11 _Atomic()
 
-  bool isImage1dT() const;                      // OpenCL image1d_t
-  bool isImage1dArrayT() const;                 // OpenCL image1d_array_t
-  bool isImage1dBufferT() const;                // OpenCL image1d_buffer_t
-  bool isImage2dT() const;                      // OpenCL image2d_t
-  bool isImage2dArrayT() const;                 // OpenCL image2d_array_t
-  bool isImage3dT() const;                      // OpenCL image3d_t
+  bool isImage1dT() const;               // OpenCL image1d_t
+  bool isImage1dArrayT() const;          // OpenCL image1d_array_t
+  bool isImage1dBufferT() const;         // OpenCL image1d_buffer_t
+  bool isImage2dT() const;               // OpenCL image2d_t
+  bool isImage2dArrayT() const;          // OpenCL image2d_array_t
+  bool isImage2dDepthT() const;          // OpenCL image_2d_depth_t
+  bool isImage2dArrayDepthT() const;     // OpenCL image_2d_array_depth_t
+  bool isImage2dMSAAT() const;           // OpenCL image_2d_msaa_t
+  bool isImage2dArrayMSAAT() const;      // OpenCL image_2d_array_msaa_t
+  bool isImage2dMSAATDepth() const;      // OpenCL image_2d_msaa_depth_t
+  bool isImage2dArrayMSAATDepth() const; // OpenCL image_2d_array_msaa_depth_t
+  bool isImage3dT() const;               // OpenCL image3d_t
 
   bool isImageType() const;                     // Any OpenCL image type
 
   bool isSamplerT() const;                      // OpenCL sampler_t
   bool isEventT() const;                        // OpenCL event_t
+  bool isClkEventT() const;                     // OpenCL clk_event_t
+  bool isQueueT() const;                        // OpenCL queue_t
+  bool isNDRangeT() const;                      // OpenCL ndrange_t
+  bool isReserveIDT() const;                    // OpenCL reserve_id_t
 
   bool isOpenCLSpecificType() const;            // Any OpenCL specific type
 
@@ -5354,6 +5364,30 @@ inline bool Type::isImage2dArrayT() const {
   return isSpecificBuiltinType(BuiltinType::OCLImage2dArray);
 }
 
+inline bool Type::isImage2dDepthT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage2dDepth);
+}
+
+inline bool Type::isImage2dArrayDepthT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage2dArrayDepth);
+}
+
+inline bool Type::isImage2dMSAAT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage2dMSAA);
+}
+
+inline bool Type::isImage2dArrayMSAAT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage2dArrayMSAA);
+}
+
+inline bool Type::isImage2dMSAATDepth() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage2dMSAADepth);
+}
+
+inline bool Type::isImage2dArrayMSAATDepth() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage2dArrayMSAADepth);
+}
+
 inline bool Type::isImage3dT() const {
   return isSpecificBuiltinType(BuiltinType::OCLImage3d);
 }
@@ -5366,14 +5400,33 @@ inline bool Type::isEventT() const {
   return isSpecificBuiltinType(BuiltinType::OCLEvent);
 }
 
+inline bool Type::isClkEventT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLClkEvent);
+}
+
+inline bool Type::isQueueT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLQueue);
+}
+
+inline bool Type::isNDRangeT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLNDRange);
+}
+
+inline bool Type::isReserveIDT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLReserveID);
+}
+
 inline bool Type::isImageType() const {
-  return isImage3dT() ||
-         isImage2dT() || isImage2dArrayT() ||
-         isImage1dT() || isImage1dArrayT() || isImage1dBufferT();
+  return isImage3dT() || isImage2dT() || isImage2dArrayT() ||
+         isImage2dDepthT() || isImage2dArrayDepthT() || isImage2dMSAAT() ||
+         isImage2dArrayMSAAT() || isImage2dMSAATDepth() ||
+         isImage2dArrayMSAATDepth() || isImage1dT() || isImage1dArrayT() ||
+         isImage1dBufferT();
 }
 
 inline bool Type::isOpenCLSpecificType() const {
-  return isSamplerT() || isEventT() || isImageType();
+  return isSamplerT() || isEventT() || isImageType() || isClkEventT() ||
+         isQueueT() || isNDRangeT() || isReserveIDT();
 }
 
 inline bool Type::isTemplateTypeParmType() const {

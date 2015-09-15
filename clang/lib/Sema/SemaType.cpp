@@ -1397,6 +1397,13 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
               << Result << "cl_khr_fp64";
           declarator.setInvalidType(true);
         }
+      } else if (!S.getOpenCLOptions().cl_khr_gl_msaa_sharing &&
+                 (Result->isImage2dMSAAT() || Result->isImage2dArrayMSAAT() ||
+                  Result->isImage2dArrayMSAATDepth() ||
+                  Result->isImage2dMSAATDepth())) {
+        S.Diag(DS.getTypeSpecTypeLoc(), diag::err_type_requires_extension)
+            << Result << "cl_khr_gl_msaa_sharing";
+        declarator.setInvalidType(true);
       }
     }
 

@@ -65,8 +65,18 @@ class CGDebugInfo {
   llvm::DIType *OCLImage1dBufferDITy = nullptr;
   llvm::DIType *OCLImage2dDITy = nullptr;
   llvm::DIType *OCLImage2dArrayDITy = nullptr;
+  llvm::DIType *OCLImage2dDepthDITy = nullptr;
+  llvm::DIType *OCLImage2dArrayDepthDITy = nullptr;
+  llvm::DIType *OCLImage2dMSAADITy = nullptr;
+  llvm::DIType *OCLImage2dArrayMSAADITy = nullptr;
+  llvm::DIType *OCLImage2dMSAADepthDITy = nullptr;
+  llvm::DIType *OCLImage2dArrayMSAADepthDITy = nullptr;
   llvm::DIType *OCLImage3dDITy = nullptr;
   llvm::DIType *OCLEventDITy = nullptr;
+  llvm::DIType *OCLClkEventDITy = nullptr;
+  llvm::DIType *OCLQueueDITy = nullptr;
+  llvm::DIType *OCLNDRangeDITy = nullptr;
+  llvm::DIType *OCLReserveIDDITy = nullptr;
 
   /// Cache of previously constructed Types.
   llvm::DenseMap<const void *, llvm::TrackingMDRef> TypeCache;

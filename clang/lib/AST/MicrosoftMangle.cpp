@@ -1593,9 +1593,39 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T, Qualifiers,
   case BuiltinType::OCLImage1dBuffer: Out << "PAUocl_image1dbuffer@@"; break;
   case BuiltinType::OCLImage2d: Out << "PAUocl_image2d@@"; break;
   case BuiltinType::OCLImage2dArray: Out << "PAUocl_image2darray@@"; break;
+  case BuiltinType::OCLImage2dDepth:
+    Out << "PAUocl_image2ddepth@@";
+    break;
+  case BuiltinType::OCLImage2dArrayDepth:
+    Out << "PAUocl_image2darraydepth@@";
+    break;
+  case BuiltinType::OCLImage2dMSAA:
+    Out << "PAUocl_image2dmsaa@@";
+    break;
+  case BuiltinType::OCLImage2dArrayMSAA:
+    Out << "PAUocl_image2darraymsaa@@";
+    break;
+  case BuiltinType::OCLImage2dMSAADepth:
+    Out << "PAUocl_image2dmsaadepth@@";
+    break;
+  case BuiltinType::OCLImage2dArrayMSAADepth:
+    Out << "PAUocl_image2darraymsaadepth@@";
+    break;
   case BuiltinType::OCLImage3d: Out << "PAUocl_image3d@@"; break;
   case BuiltinType::OCLSampler: Out << "PAUocl_sampler@@"; break;
   case BuiltinType::OCLEvent: Out << "PAUocl_event@@"; break;
+  case BuiltinType::OCLClkEvent:
+    Out << "PAUocl_clkevent@@";
+    break;
+  case BuiltinType::OCLQueue:
+    Out << "PAUocl_queue@@";
+    break;
+  case BuiltinType::OCLNDRange:
+    Out << "PAUocl_ndrange@@";
+    break;
+  case BuiltinType::OCLReserveID:
+    Out << "PAUocl_reserveid@@";
+    break;
 
   case BuiltinType::NullPtr: Out << "$$T"; break;
 

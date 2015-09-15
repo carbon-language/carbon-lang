@@ -2530,9 +2530,29 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
   case OCLImage1dBuffer:  return "image1d_buffer_t";
   case OCLImage2d:        return "image2d_t";
   case OCLImage2dArray:   return "image2d_array_t";
+  case OCLImage2dDepth:
+    return "image2d_depth_t";
+  case OCLImage2dArrayDepth:
+    return "image2d_array_depth_t";
+  case OCLImage2dMSAA:
+    return "image2d_msaa_t";
+  case OCLImage2dArrayMSAA:
+    return "image2d_array_msaa_t";
+  case OCLImage2dMSAADepth:
+    return "image2d_msaa_depth_t";
+  case OCLImage2dArrayMSAADepth:
+    return "image2d_array_msaa_depth_t";
   case OCLImage3d:        return "image3d_t";
   case OCLSampler:        return "sampler_t";
   case OCLEvent:          return "event_t";
+  case OCLClkEvent:
+    return "clk_event_t";
+  case OCLQueue:
+    return "queue_t";
+  case OCLNDRange:
+    return "event_t";
+  case OCLReserveID:
+    return "reserve_id_t";
   case OMPArraySection:   return "<OpenMP array section type>";
   }
   
@@ -3434,9 +3454,19 @@ bool Type::canHaveNullability() const {
     case BuiltinType::OCLImage1dBuffer:
     case BuiltinType::OCLImage2d:
     case BuiltinType::OCLImage2dArray:
+    case BuiltinType::OCLImage2dDepth:
+    case BuiltinType::OCLImage2dArrayDepth:
+    case BuiltinType::OCLImage2dMSAA:
+    case BuiltinType::OCLImage2dArrayMSAA:
+    case BuiltinType::OCLImage2dMSAADepth:
+    case BuiltinType::OCLImage2dArrayMSAADepth:
     case BuiltinType::OCLImage3d:
     case BuiltinType::OCLSampler:
     case BuiltinType::OCLEvent:
+    case BuiltinType::OCLClkEvent:
+    case BuiltinType::OCLQueue:
+    case BuiltinType::OCLNDRange:
+    case BuiltinType::OCLReserveID:
     case BuiltinType::BuiltinFn:
     case BuiltinType::NullPtr:
     case BuiltinType::OMPArraySection:
