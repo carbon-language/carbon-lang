@@ -1,6 +1,7 @@
 ; Tests to ensure that we are not placing backedge safepoints in
 ; loops which are clearly finite.
-;; RUN: opt %s -place-safepoints -S | FileCheck %s
+;; RUN: opt %s -place-safepoints -spp-counted-loop-trip-width=32 -S | FileCheck %s
+;; RUN: opt %s -place-safepoints -spp-counted-loop-trip-width=64 -S | FileCheck %s -check-prefix=COUNTED-64
 
 
 ; A simple counted loop with trivially known range
@@ -63,6 +64,61 @@ loop:
   %counter = phi i8 [ 0 , %entry ], [ %counter.inc , %loop ]
   %counter.inc = add nsw i8 %counter, 1
   %counter.cmp = icmp slt i8 %counter.inc, %upper
+  br i1 %counter.cmp, label %loop, label %exit
+
+exit:
+  ret void
+}
+
+; The range is a 64 bit value
+define void @test4(i64 %upper) gc "statepoint-example" {
+; CHECK-LABEL: test4
+; CHECK-LABEL: entry
+; CHECK: statepoint
+; CHECK-LABEL: loop
+; CHECK: statepoint
+
+; COUNTED-64-LABEL: test4
+; COUNTED-64-LABEL: entry
+; COUNTED-64: statepoint
+; COUNTED-64-LABEL: loop
+; COUNTED-64-NOT: statepoint
+
+entry:
+  br label %loop
+
+loop:
+  %counter = phi i64 [ 0 , %entry ], [ %counter.inc , %loop ]
+  %counter.inc = add i64 %counter, 1
+  %counter.cmp = icmp slt i64 %counter.inc, %upper
+  br i1 %counter.cmp, label %loop, label %exit
+
+exit:
+  ret void
+}
+
+; This loop can run infinitely (for %upper == INT64_MAX) so it needs a
+; safepoint.
+define void @test5(i64 %upper) gc "statepoint-example" {
+; CHECK-LABEL: test5
+; CHECK-LABEL: entry
+; CHECK: statepoint
+; CHECK-LABEL: loop
+; CHECK: statepoint
+
+; COUNTED-64-LABEL: test5
+; COUNTED-64-LABEL: entry
+; COUNTED-64: statepoint
+; COUNTED-64-LABEL: loop
+; COUNTED-64: statepoint
+
+entry:
+  br label %loop
+
+loop:
+  %counter = phi i64 [ 0 , %entry ], [ %counter.inc , %loop ]
+  %counter.inc = add i64 %counter, 1
+  %counter.cmp = icmp sle i64 %counter.inc, %upper
   br i1 %counter.cmp, label %loop, label %exit
 
 exit:

@@ -96,8 +96,10 @@ using namespace llvm;
 static cl::opt<bool> AllBackedges("spp-all-backedges", cl::Hidden,
                                   cl::init(false));
 
-/// If true, do not place backedge safepoints in counted loops.
-static cl::opt<bool> SkipCounted("spp-counted", cl::Hidden, cl::init(true));
+/// How narrow does the trip count of a loop have to be to have to be considered
+/// "counted"?  Counted loops do not get safepoints at backedges.
+static cl::opt<int> CountedLoopTripWidth("spp-counted-loop-trip-width",
+                                         cl::Hidden, cl::init(32));
 
 // If true, split the backedge of a loop when placing the safepoint, otherwise
 // split the latch block itself.  Both are useful to support for
@@ -255,18 +257,12 @@ static bool containsUnconditionalCallSafepoint(Loop *L, BasicBlock *Header,
 /// conservatism in the analysis.
 static bool mustBeFiniteCountedLoop(Loop *L, ScalarEvolution *SE,
                                     BasicBlock *Pred) {
-  // Only used when SkipCounted is off
-  const unsigned upperTripBound = 8192;
-
   // A conservative bound on the loop as a whole.
   const SCEV *MaxTrips = SE->getMaxBackedgeTakenCount(L);
-  if (MaxTrips != SE->getCouldNotCompute()) {
-    if (SE->getUnsignedRange(MaxTrips).getUnsignedMax().ult(upperTripBound))
-      return true;
-    if (SkipCounted &&
-        SE->getUnsignedRange(MaxTrips).getUnsignedMax().isIntN(32))
-      return true;
-  }
+  if (MaxTrips != SE->getCouldNotCompute() &&
+      SE->getUnsignedRange(MaxTrips).getUnsignedMax().isIntN(
+          CountedLoopTripWidth))
+    return true;
 
   // If this is a conditional branch to the header with the alternate path
   // being outside the loop, we can ask questions about the execution frequency
@@ -275,13 +271,10 @@ static bool mustBeFiniteCountedLoop(Loop *L, ScalarEvolution *SE,
     // This returns an exact expression only.  TODO: We really only need an
     // upper bound here, but SE doesn't expose that.
     const SCEV *MaxExec = SE->getExitCount(L, Pred);
-    if (MaxExec != SE->getCouldNotCompute()) {
-      if (SE->getUnsignedRange(MaxExec).getUnsignedMax().ult(upperTripBound))
+    if (MaxExec != SE->getCouldNotCompute() &&
+        SE->getUnsignedRange(MaxExec).getUnsignedMax().isIntN(
+            CountedLoopTripWidth))
         return true;
-      if (SkipCounted &&
-          SE->getUnsignedRange(MaxExec).getUnsignedMax().isIntN(32))
-        return true;
-    }
   }
 
   return /* not finite */ false;
