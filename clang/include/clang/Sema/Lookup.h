@@ -240,7 +240,7 @@ public:
     // If a using-shadow declaration is hidden, it's never visible, not
     // even to redeclaration lookup.
     // FIXME: Should this apply to typedefs and namespace aliases too?
-    if (isa<UsingShadowDecl>(ND))
+    if (isa<UsingShadowDecl>(ND) && LookupKind != Sema::LookupUsingDeclName)
       return false;
     return (AllowHidden &&
             (AllowHiddenInternal || ND->isExternallyVisible())) ||

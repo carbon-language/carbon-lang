@@ -8,6 +8,7 @@ namespace UsingDecl {
 namespace UsingDecl {
   using ::using_decl_type;
   using ::using_decl_var;
+  using ::merged;
 }
 
 namespace X {
