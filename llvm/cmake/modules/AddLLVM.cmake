@@ -1023,28 +1023,28 @@ function(add_lit_testsuites project directory)
   endif()
 endfunction()
 
-function(add_llvm_tool_symlink name target)
+function(add_llvm_tool_symlink name dest)
   if(UNIX)
     set(LLVM_LINK_OR_COPY create_symlink)
-    set(target_binary "${target}${CMAKE_EXECUTABLE_SUFFIX}")
+    set(dest_binary "${dest}${CMAKE_EXECUTABLE_SUFFIX}")
   else()
     set(LLVM_LINK_OR_COPY copy)
-    set(target_binary "${LLVM_RUNTIME_OUTPUT_INTDIR}/${target}${CMAKE_EXECUTABLE_SUFFIX}")
+    set(dest_binary "${LLVM_RUNTIME_OUTPUT_INTDIR}/${dest}${CMAKE_EXECUTABLE_SUFFIX}")
   endif()
 
   set(output_path "${LLVM_RUNTIME_OUTPUT_INTDIR}/${name}${CMAKE_EXECUTABLE_SUFFIX}")
 
   add_custom_command(OUTPUT ${output_path}
-                     COMMAND ${CMAKE_COMMAND} -E ${LLVM_LINK_OR_COPY} "${target_binary}" "${output_path}"
-                     DEPENDS ${target})
+                     COMMAND ${CMAKE_COMMAND} -E ${LLVM_LINK_OR_COPY} "${dest_binary}" "${output_path}"
+                     DEPENDS ${dest})
 
   add_custom_target(${name} ALL DEPENDS ${output_path})
   set_target_properties(${name} PROPERTIES FOLDER Tools)
 
-  # MAke sure the parent tool is a toolchain tool, otherwise exclude this tool
-  list(FIND LLVM_TOOLCHAIN_TOOLS ${target} LLVM_IS_${target}_TOOLCHAIN_TOOL)
-  if (NOT LLVM_IS_${target}_TOOLCHAIN_TOOL GREATER -1)
-    set(LLVM_IS_${name}_TOOLCHAIN_TOOL ${LLVM_IS_${target}_TOOLCHAIN_TOOL})
+  # Make sure the parent tool is a toolchain tool, otherwise exclude this tool
+  list(FIND LLVM_TOOLCHAIN_TOOLS ${dest} LLVM_IS_${dest}_TOOLCHAIN_TOOL)
+  if (NOT LLVM_IS_${dest}_TOOLCHAIN_TOOL GREATER -1)
+    set(LLVM_IS_${name}_TOOLCHAIN_TOOL ${LLVM_IS_${dest}_TOOLCHAIN_TOOL})
   else()
     list(FIND LLVM_TOOLCHAIN_TOOLS ${name} LLVM_IS_${name}_TOOLCHAIN_TOOL)
   endif()
@@ -1054,7 +1054,7 @@ function(add_llvm_tool_symlink name target)
   if (LLVM_IS_${name}_TOOLCHAIN_TOOL GREATER -1 OR NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     if( LLVM_BUILD_TOOLS )
       install(SCRIPT ${CMAKE_SOURCE_DIR}/cmake/modules/install_symlink.cmake
-              CODE "install_symlink(${name} ${target})"
+              CODE "install_symlink(${name} ${dest})"
               COMPONENT ${name})
 
       if (NOT CMAKE_CONFIGURATION_TYPES)
