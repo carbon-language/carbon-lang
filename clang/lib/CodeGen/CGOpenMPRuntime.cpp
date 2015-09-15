@@ -45,14 +45,16 @@ public:
 
   CGOpenMPRegionInfo(const CapturedStmt &CS,
                      const CGOpenMPRegionKind RegionKind,
-                     const RegionCodeGenTy &CodeGen, OpenMPDirectiveKind Kind)
+                     const RegionCodeGenTy &CodeGen, OpenMPDirectiveKind Kind,
+                     bool HasCancel)
       : CGCapturedStmtInfo(CS, CR_OpenMP), RegionKind(RegionKind),
-        CodeGen(CodeGen), Kind(Kind) {}
+        CodeGen(CodeGen), Kind(Kind), HasCancel(HasCancel) {}
 
   CGOpenMPRegionInfo(const CGOpenMPRegionKind RegionKind,
-                     const RegionCodeGenTy &CodeGen, OpenMPDirectiveKind Kind)
+                     const RegionCodeGenTy &CodeGen, OpenMPDirectiveKind Kind,
+                     bool HasCancel)
       : CGCapturedStmtInfo(CR_OpenMP), RegionKind(RegionKind), CodeGen(CodeGen),
-        Kind(Kind) {}
+        Kind(Kind), HasCancel(HasCancel) {}
 
   /// \brief Get a variable or parameter for storing global thread id
   /// inside OpenMP construct.
@@ -69,6 +71,8 @@ public:
 
   OpenMPDirectiveKind getDirectiveKind() const { return Kind; }
 
+  bool hasCancel() const { return HasCancel; }
+
   static bool classof(const CGCapturedStmtInfo *Info) {
     return Info->getKind() == CR_OpenMP;
   }
@@ -77,6 +81,7 @@ protected:
   CGOpenMPRegionKind RegionKind;
   const RegionCodeGenTy &CodeGen;
   OpenMPDirectiveKind Kind;
+  bool HasCancel;
 };
 
 /// \brief API for captured statement code generation in OpenMP constructs.
@@ -84,8 +89,9 @@ class CGOpenMPOutlinedRegionInfo : public CGOpenMPRegionInfo {
 public:
   CGOpenMPOutlinedRegionInfo(const CapturedStmt &CS, const VarDecl *ThreadIDVar,
                              const RegionCodeGenTy &CodeGen,
-                             OpenMPDirectiveKind Kind)
-      : CGOpenMPRegionInfo(CS, ParallelOutlinedRegion, CodeGen, Kind),
+                             OpenMPDirectiveKind Kind, bool HasCancel)
+      : CGOpenMPRegionInfo(CS, ParallelOutlinedRegion, CodeGen, Kind,
+                           HasCancel),
         ThreadIDVar(ThreadIDVar) {
     assert(ThreadIDVar != nullptr && "No ThreadID in OpenMP region.");
   }
@@ -114,8 +120,8 @@ public:
   CGOpenMPTaskOutlinedRegionInfo(const CapturedStmt &CS,
                                  const VarDecl *ThreadIDVar,
                                  const RegionCodeGenTy &CodeGen,
-                                 OpenMPDirectiveKind Kind)
-      : CGOpenMPRegionInfo(CS, TaskOutlinedRegion, CodeGen, Kind),
+                                 OpenMPDirectiveKind Kind, bool HasCancel)
+      : CGOpenMPRegionInfo(CS, TaskOutlinedRegion, CodeGen, Kind, HasCancel),
         ThreadIDVar(ThreadIDVar) {
     assert(ThreadIDVar != nullptr && "No ThreadID in OpenMP region.");
   }
@@ -147,8 +153,9 @@ class CGOpenMPInlinedRegionInfo : public CGOpenMPRegionInfo {
 public:
   CGOpenMPInlinedRegionInfo(CodeGenFunction::CGCapturedStmtInfo *OldCSI,
                             const RegionCodeGenTy &CodeGen,
-                            OpenMPDirectiveKind Kind)
-      : CGOpenMPRegionInfo(InlinedRegion, CodeGen, Kind), OldCSI(OldCSI),
+                            OpenMPDirectiveKind Kind, bool HasCancel)
+      : CGOpenMPRegionInfo(InlinedRegion, CodeGen, Kind, HasCancel),
+        OldCSI(OldCSI),
         OuterRegionInfo(dyn_cast_or_null<CGOpenMPRegionInfo>(OldCSI)) {}
   // \brief Retrieve the value of the context parameter.
   llvm::Value *getContextValue() const override {
@@ -214,11 +221,11 @@ public:
   /// a list of functions used for code generation of implicitly inlined
   /// regions.
   InlinedOpenMPRegionRAII(CodeGenFunction &CGF, const RegionCodeGenTy &CodeGen,
-                          OpenMPDirectiveKind Kind)
+                          OpenMPDirectiveKind Kind, bool HasCancel)
       : CGF(CGF) {
     // Start emission for the construct.
-    CGF.CapturedStmtInfo =
-        new CGOpenMPInlinedRegionInfo(CGF.CapturedStmtInfo, CodeGen, Kind);
+    CGF.CapturedStmtInfo = new CGOpenMPInlinedRegionInfo(
+        CGF.CapturedStmtInfo, CodeGen, Kind, HasCancel);
   }
   ~InlinedOpenMPRegionRAII() {
     // Restore original CapturedStmtInfo only if we're done with code emission.
@@ -309,7 +316,15 @@ llvm::Value *CGOpenMPRuntime::emitParallelOutlinedFunction(
          "thread id variable must be of type kmp_int32 *");
   const CapturedStmt *CS = cast<CapturedStmt>(D.getAssociatedStmt());
   CodeGenFunction CGF(CGM, true);
-  CGOpenMPOutlinedRegionInfo CGInfo(*CS, ThreadIDVar, CodeGen, InnermostKind);
+  bool HasCancel = false;
+  if (auto *OPD = dyn_cast<OMPParallelDirective>(&D))
+    HasCancel = OPD->hasCancel();
+  else if (auto *OPSD = dyn_cast<OMPParallelSectionsDirective>(&D))
+    HasCancel = OPSD->hasCancel();
+  else if (auto *OPFD = dyn_cast<OMPParallelForDirective>(&D))
+    HasCancel = OPFD->hasCancel();
+  CGOpenMPOutlinedRegionInfo CGInfo(*CS, ThreadIDVar, CodeGen, InnermostKind,
+                                    HasCancel);
   CodeGenFunction::CGCapturedStmtRAII CapInfoRAII(CGF, &CGInfo);
   return CGF.GenerateOpenMPCapturedStmtFunction(*CS);
 }
@@ -322,7 +337,8 @@ llvm::Value *CGOpenMPRuntime::emitTaskOutlinedFunction(
   auto *CS = cast<CapturedStmt>(D.getAssociatedStmt());
   CodeGenFunction CGF(CGM, true);
   CGOpenMPTaskOutlinedRegionInfo CGInfo(*CS, ThreadIDVar, CodeGen,
-                                        InnermostKind);
+                                        InnermostKind,
+                                        cast<OMPTaskDirective>(D).hasCancel());
   CodeGenFunction::CGCapturedStmtRAII CapInfoRAII(CGF, &CGInfo);
   return CGF.GenerateCapturedStmtFunction(*CS);
 }
@@ -1550,8 +1566,8 @@ void CGOpenMPRuntime::emitOrderedRegion(CodeGenFunction &CGF,
 }
 
 void CGOpenMPRuntime::emitBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
-                                      OpenMPDirectiveKind Kind,
-                                      bool CheckForCancel) {
+                                      OpenMPDirectiveKind Kind, bool EmitChecks,
+                                      bool ForceSimpleCall) {
   // Build call __kmpc_cancel_barrier(loc, thread_id);
   // Build call __kmpc_barrier(loc, thread_id);
   OpenMPLocationFlags Flags = OMP_IDENT_KMPC;
@@ -1571,16 +1587,19 @@ void CGOpenMPRuntime::emitBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
   }
   // Build call __kmpc_cancel_barrier(loc, thread_id) or __kmpc_barrier(loc,
   // thread_id);
+  auto *OMPRegionInfo =
+      dyn_cast_or_null<CGOpenMPRegionInfo>(CGF.CapturedStmtInfo);
+  // Do not emit barrier call in the single directive emitted in some rare cases
+  // for sections directives.
+  if (OMPRegionInfo && OMPRegionInfo->getDirectiveKind() == OMPD_single)
+    return;
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc, Flags),
                          getThreadID(CGF, Loc)};
-  if (auto *OMPRegionInfo =
-          dyn_cast_or_null<CGOpenMPRegionInfo>(CGF.CapturedStmtInfo)) {
-    auto CancelDestination =
-        CGF.getOMPCancelDestination(OMPRegionInfo->getDirectiveKind());
-    if (CancelDestination.isValid()) {
+  if (OMPRegionInfo) {
+    if (!ForceSimpleCall && OMPRegionInfo->hasCancel()) {
       auto *Result = CGF.EmitRuntimeCall(
           createRuntimeFunction(OMPRTL__kmpc_cancel_barrier), Args);
-      if (CheckForCancel) {
+      if (EmitChecks) {
         // if (__kmpc_cancel_barrier()) {
         //   exit from construct;
         // }
@@ -1590,6 +1609,8 @@ void CGOpenMPRuntime::emitBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
         CGF.Builder.CreateCondBr(Cmp, ExitBB, ContBB);
         CGF.EmitBlock(ExitBB);
         //   exit from construct;
+        auto CancelDestination =
+            CGF.getOMPCancelDestination(OMPRegionInfo->getDirectiveKind());
         CGF.EmitBranchThroughCleanup(CancelDestination);
         CGF.EmitBlock(ContBB, /*IsFinished=*/true);
       }
@@ -2825,8 +2846,9 @@ void CGOpenMPRuntime::emitTaskwaitCall(CodeGenFunction &CGF,
 
 void CGOpenMPRuntime::emitInlinedDirective(CodeGenFunction &CGF,
                                            OpenMPDirectiveKind InnerKind,
-                                           const RegionCodeGenTy &CodeGen) {
-  InlinedOpenMPRegionRAII Region(CGF, CodeGen, InnerKind);
+                                           const RegionCodeGenTy &CodeGen,
+                                           bool HasCancel) {
+  InlinedOpenMPRegionRAII Region(CGF, CodeGen, InnerKind, HasCancel);
   CGF.CapturedStmtInfo->EmitBody(CGF, /*S=*/nullptr);
 }
 
@@ -2862,9 +2884,9 @@ void CGOpenMPRuntime::emitCancellationPointCall(
   // global_tid, kmp_int32 cncl_kind);
   if (auto *OMPRegionInfo =
           dyn_cast_or_null<CGOpenMPRegionInfo>(CGF.CapturedStmtInfo)) {
-    auto CancelDest =
-        CGF.getOMPCancelDestination(OMPRegionInfo->getDirectiveKind());
-    if (CancelDest.isValid()) {
+    if (OMPRegionInfo->getDirectiveKind() == OMPD_single)
+      return;
+    if (OMPRegionInfo->hasCancel()) {
       llvm::Value *Args[] = {
           emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc),
           CGF.Builder.getInt32(getCancellationKind(CancelRegion))};
@@ -2881,8 +2903,10 @@ void CGOpenMPRuntime::emitCancellationPointCall(
       CGF.Builder.CreateCondBr(Cmp, ExitBB, ContBB);
       CGF.EmitBlock(ExitBB);
       // __kmpc_cancel_barrier();
-      emitBarrierCall(CGF, Loc, OMPD_unknown, /*CheckForCancel=*/false);
+      emitBarrierCall(CGF, Loc, OMPD_unknown, /*EmitChecks=*/false);
       // exit from construct;
+      auto CancelDest =
+          CGF.getOMPCancelDestination(OMPRegionInfo->getDirectiveKind());
       CGF.EmitBranchThroughCleanup(CancelDest);
       CGF.EmitBlock(ContBB, /*IsFinished=*/true);
     }
@@ -2895,29 +2919,29 @@ void CGOpenMPRuntime::emitCancelCall(CodeGenFunction &CGF, SourceLocation Loc,
   // kmp_int32 cncl_kind);
   if (auto *OMPRegionInfo =
           dyn_cast_or_null<CGOpenMPRegionInfo>(CGF.CapturedStmtInfo)) {
+    if (OMPRegionInfo->getDirectiveKind() == OMPD_single)
+      return;
+    llvm::Value *Args[] = {
+        emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc),
+        CGF.Builder.getInt32(getCancellationKind(CancelRegion))};
+    // Ignore return result until untied tasks are supported.
+    auto *Result =
+        CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_cancel), Args);
+    // if (__kmpc_cancel()) {
+    //  __kmpc_cancel_barrier();
+    //   exit from construct;
+    // }
+    auto *ExitBB = CGF.createBasicBlock(".cancel.exit");
+    auto *ContBB = CGF.createBasicBlock(".cancel.continue");
+    auto *Cmp = CGF.Builder.CreateIsNotNull(Result);
+    CGF.Builder.CreateCondBr(Cmp, ExitBB, ContBB);
+    CGF.EmitBlock(ExitBB);
+    // __kmpc_cancel_barrier();
+    emitBarrierCall(CGF, Loc, OMPD_unknown, /*EmitChecks=*/false);
+    // exit from construct;
     auto CancelDest =
         CGF.getOMPCancelDestination(OMPRegionInfo->getDirectiveKind());
-    if (CancelDest.isValid()) {
-      llvm::Value *Args[] = {
-          emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc),
-          CGF.Builder.getInt32(getCancellationKind(CancelRegion))};
-      // Ignore return result until untied tasks are supported.
-      auto *Result =
-          CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_cancel), Args);
-      // if (__kmpc_cancel()) {
-      //  __kmpc_cancel_barrier();
-      //   exit from construct;
-      // }
-      auto *ExitBB = CGF.createBasicBlock(".cancel.exit");
-      auto *ContBB = CGF.createBasicBlock(".cancel.continue");
-      auto *Cmp = CGF.Builder.CreateIsNotNull(Result);
-      CGF.Builder.CreateCondBr(Cmp, ExitBB, ContBB);
-      CGF.EmitBlock(ExitBB);
-      // __kmpc_cancel_barrier();
-      emitBarrierCall(CGF, Loc, OMPD_unknown, /*CheckForCancel=*/false);
-      // exit from construct;
-      CGF.EmitBranchThroughCleanup(CancelDest);
-      CGF.EmitBlock(ContBB, /*IsFinished=*/true);
-    }
+    CGF.EmitBranchThroughCleanup(CancelDest);
+    CGF.EmitBlock(ContBB, /*IsFinished=*/true);
   }
 }

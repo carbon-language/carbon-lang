@@ -84,7 +84,7 @@ int main() {
     // LAMBDA: store i{{[0-9]+}}* [[G_PRIVATE_ADDR]], i{{[0-9]+}}** [[G_PRIVATE_ADDR_REF]]
     // LAMBDA: call void [[INNER_LAMBDA:@.+]](%{{.+}}* [[ARG]])
     // LAMBDA: call void @__kmpc_end_single(
-    // LAMBDA: call i32 @__kmpc_cancel_barrier(
+    // LAMBDA: call void @__kmpc_barrier(
     [&]() {
       // LAMBDA: define {{.+}} void [[INNER_LAMBDA]](%{{.+}}* [[ARG_PTR:%.+]])
       // LAMBDA: store %{{.+}}* [[ARG_PTR]], %{{.+}}** [[ARG_PTR_REF:%.+]],
@@ -119,7 +119,7 @@ int main() {
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
     // BLOCKS: call void {{%.+}}(i8
     // BLOCKS: call void @__kmpc_end_single(
-    // BLOCKS: call i32 @__kmpc_cancel_barrier(
+    // BLOCKS: call void @__kmpc_barrier(
     ^{
       // BLOCKS: define {{.+}} void {{@.+}}(i8*
       g = 2;
@@ -242,8 +242,8 @@ int main() {
 
 // CHECK: call void @__kmpc_end_single(
 
-// CHECK: call i32 @__kmpc_cancel_barrier(%{{.+}}* [[SINGLE_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
-// CHECK: call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
+// CHECK: call void @__kmpc_barrier(%{{.+}}* [[SINGLE_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
+// CHECK: call void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
 // CHECK: ret void
 #endif
 

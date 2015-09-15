@@ -303,7 +303,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK: [[A_PRIV_VAL:%.+]] = load i32, i32* [[A_PRIV]],
 // CHECK-NEXT: store i32 [[A_PRIV_VAL]], i32* %{{.+}},
 // CHECK-NEXT: br label
-// CHECK: call i32 @__kmpc_cancel_barrier(%ident_t* {{.+}}, i32 %{{.+}})
+// CHECK: call void @__kmpc_barrier(%ident_t* {{.+}}, i32 %{{.+}})
   }
   int R;
   #pragma omp parallel
@@ -354,7 +354,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK: [[RED:%.+]] = mul nsw i32 %{{.+}}, [[R_PRIV_VAL]]
 // CHECK-NEXT: store i32 [[RED]], i32* %{{.+}},
 // CHECK-NEXT: call void @__kmpc_end_reduce(
-// CHECK: call i32 @__kmpc_cancel_barrier(%ident_t* {{.+}}, i32 %{{.+}})
+// CHECK: call void @__kmpc_barrier(%ident_t* {{.+}}, i32 %{{.+}})
   }
 }
 

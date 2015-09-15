@@ -98,6 +98,7 @@ private:
     SourceLocation ConstructLoc;
     bool OrderedRegion;
     bool NowaitRegion;
+    bool CancelRegion;
     unsigned CollapseNumber;
     SourceLocation InnerTeamsRegionLoc;
     SharingMapTy(OpenMPDirectiveKind DKind, DeclarationNameInfo Name,
@@ -105,12 +106,12 @@ private:
         : SharingMap(), AlignedMap(), LCVSet(), DefaultAttr(DSA_unspecified),
           Directive(DKind), DirectiveName(std::move(Name)), CurScope(CurScope),
           ConstructLoc(Loc), OrderedRegion(false), NowaitRegion(false),
-          CollapseNumber(1), InnerTeamsRegionLoc() {}
+          CancelRegion(false), CollapseNumber(1), InnerTeamsRegionLoc() {}
     SharingMapTy()
         : SharingMap(), AlignedMap(), LCVSet(), DefaultAttr(DSA_unspecified),
           Directive(OMPD_unknown), DirectiveName(), CurScope(nullptr),
           ConstructLoc(), OrderedRegion(false), NowaitRegion(false),
-          CollapseNumber(1), InnerTeamsRegionLoc() {}
+          CancelRegion(false), CollapseNumber(1), InnerTeamsRegionLoc() {}
   };
 
   typedef SmallVector<SharingMapTy, 64> StackTy;
@@ -250,6 +251,16 @@ public:
     if (Stack.size() > 2)
       return Stack[Stack.size() - 2].NowaitRegion;
     return false;
+  }
+  /// \brief Marks parent region as cancel region.
+  void setParentCancelRegion(bool Cancel = true) {
+    if (Stack.size() > 2)
+      Stack[Stack.size() - 2].CancelRegion =
+          Stack[Stack.size() - 2].CancelRegion || Cancel;
+  }
+  /// \brief Return true if current region has inner cancel construct.
+  bool isCancelRegion() const {
+    return Stack.back().CancelRegion;
   }
 
   /// \brief Set collapse value for the region.
@@ -1901,10 +1912,12 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
       // construct-type-clause.
       NestingProhibited =
           !((CancelRegion == OMPD_parallel && ParentRegion == OMPD_parallel) ||
-            (CancelRegion == OMPD_for && ParentRegion == OMPD_for) ||
+            (CancelRegion == OMPD_for &&
+             (ParentRegion == OMPD_for || ParentRegion == OMPD_parallel_for)) ||
             (CancelRegion == OMPD_taskgroup && ParentRegion == OMPD_task) ||
             (CancelRegion == OMPD_sections &&
-             (ParentRegion == OMPD_section || ParentRegion == OMPD_sections)));
+             (ParentRegion == OMPD_section || ParentRegion == OMPD_sections ||
+              ParentRegion == OMPD_parallel_sections)));
     } else if (CurrentRegion == OMPD_master) {
       // OpenMP [2.16, Nesting of Regions]
       // A master region may not be closely nested inside a worksharing,
@@ -2275,8 +2288,8 @@ StmtResult Sema::ActOnOpenMPParallelDirective(ArrayRef<OMPClause *> Clauses,
 
   getCurFunction()->setHasBranchProtectedScope();
 
-  return OMPParallelDirective::Create(Context, StartLoc, EndLoc, Clauses,
-                                      AStmt);
+  return OMPParallelDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt,
+                                      DSAStack->isCancelRegion());
 }
 
 namespace {
@@ -3741,7 +3754,7 @@ StmtResult Sema::ActOnOpenMPForDirective(
 
   getCurFunction()->setHasBranchProtectedScope();
   return OMPForDirective::Create(Context, StartLoc, EndLoc, NestedLoopCount,
-                                 Clauses, AStmt, B);
+                                 Clauses, AStmt, B, DSAStack->isCancelRegion());
 }
 
 StmtResult Sema::ActOnOpenMPForSimdDirective(
@@ -3822,6 +3835,8 @@ StmtResult Sema::ActOnOpenMPSectionsDirective(ArrayRef<OMPClause *> Clauses,
                diag::err_omp_sections_substmt_not_section);
         return StmtError();
       }
+      cast<OMPSectionDirective>(SectionStmt)
+          ->setHasCancel(DSAStack->isCancelRegion());
     }
   } else {
     Diag(AStmt->getLocStart(), diag::err_omp_sections_not_compound_stmt);
@@ -3830,8 +3845,8 @@ StmtResult Sema::ActOnOpenMPSectionsDirective(ArrayRef<OMPClause *> Clauses,
 
   getCurFunction()->setHasBranchProtectedScope();
 
-  return OMPSectionsDirective::Create(Context, StartLoc, EndLoc, Clauses,
-                                      AStmt);
+  return OMPSectionsDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt,
+                                      DSAStack->isCancelRegion());
 }
 
 StmtResult Sema::ActOnOpenMPSectionDirective(Stmt *AStmt,
@@ -3843,8 +3858,10 @@ StmtResult Sema::ActOnOpenMPSectionDirective(Stmt *AStmt,
   assert(isa<CapturedStmt>(AStmt) && "Captured statement expected");
 
   getCurFunction()->setHasBranchProtectedScope();
+  DSAStack->setParentCancelRegion(DSAStack->isCancelRegion());
 
-  return OMPSectionDirective::Create(Context, StartLoc, EndLoc, AStmt);
+  return OMPSectionDirective::Create(Context, StartLoc, EndLoc, AStmt,
+                                     DSAStack->isCancelRegion());
 }
 
 StmtResult Sema::ActOnOpenMPSingleDirective(ArrayRef<OMPClause *> Clauses,
@@ -3946,7 +3963,8 @@ StmtResult Sema::ActOnOpenMPParallelForDirective(
 
   getCurFunction()->setHasBranchProtectedScope();
   return OMPParallelForDirective::Create(Context, StartLoc, EndLoc,
-                                         NestedLoopCount, Clauses, AStmt, B);
+                                         NestedLoopCount, Clauses, AStmt, B,
+                                         DSAStack->isCancelRegion());
 }
 
 StmtResult Sema::ActOnOpenMPParallelForSimdDirective(
@@ -4031,6 +4049,8 @@ Sema::ActOnOpenMPParallelSectionsDirective(ArrayRef<OMPClause *> Clauses,
                diag::err_omp_parallel_sections_substmt_not_section);
         return StmtError();
       }
+      cast<OMPSectionDirective>(SectionStmt)
+          ->setHasCancel(DSAStack->isCancelRegion());
     }
   } else {
     Diag(AStmt->getLocStart(),
@@ -4040,8 +4060,8 @@ Sema::ActOnOpenMPParallelSectionsDirective(ArrayRef<OMPClause *> Clauses,
 
   getCurFunction()->setHasBranchProtectedScope();
 
-  return OMPParallelSectionsDirective::Create(Context, StartLoc, EndLoc,
-                                              Clauses, AStmt);
+  return OMPParallelSectionsDirective::Create(
+      Context, StartLoc, EndLoc, Clauses, AStmt, DSAStack->isCancelRegion());
 }
 
 StmtResult Sema::ActOnOpenMPTaskDirective(ArrayRef<OMPClause *> Clauses,
@@ -4060,7 +4080,8 @@ StmtResult Sema::ActOnOpenMPTaskDirective(ArrayRef<OMPClause *> Clauses,
 
   getCurFunction()->setHasBranchProtectedScope();
 
-  return OMPTaskDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt);
+  return OMPTaskDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt,
+                                  DSAStack->isCancelRegion());
 }
 
 StmtResult Sema::ActOnOpenMPTaskyieldDirective(SourceLocation StartLoc,
@@ -4899,6 +4920,7 @@ StmtResult Sema::ActOnOpenMPCancelDirective(SourceLocation StartLoc,
     Diag(StartLoc, diag::err_omp_parent_cancel_region_ordered) << 1;
     return StmtError();
   }
+  DSAStack->setParentCancelRegion(/*Cancel=*/true);
   return OMPCancelDirective::Create(Context, StartLoc, EndLoc, CancelRegion);
 }
 

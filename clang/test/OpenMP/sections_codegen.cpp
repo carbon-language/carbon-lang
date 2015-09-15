@@ -95,8 +95,8 @@ int main() {
 // CHECK:       call void @__kmpc_end_single(
 // CHECK-NEXT:  br label %[[END]]
 // CHECK:       [[END]]
-// CHECK-NEXT:  call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_SINGLE_LOC]],
-// CHECK:  call i32 @__kmpc_cancel_barrier(
+// CHECK-NEXT:  call void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_SINGLE_LOC]],
+// CHECK:  call void @__kmpc_barrier(
 // CHECK:  ret
 // CHECK:       [[TERM_LPAD]]
 // CHECK:       call void @__clang_call_terminate(i8*

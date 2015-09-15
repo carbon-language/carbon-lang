@@ -454,12 +454,15 @@ public:
   /// \brief Emit an implicit/explicit barrier for OpenMP threads.
   /// \param Kind Directive for which this implicit barrier call must be
   /// generated. Must be OMPD_barrier for explicit barrier generation.
-  /// \param CheckForCancel true if check for possible cancellation must be
-  /// performed, false otherwise.
+  /// \param EmitChecks true if need to emit checks for cancellation barriers.
+  /// \param ForceSimpleCall true simple barrier call must be emitted, false if
+  /// runtime class decides which one to emit (simple or with cancellation
+  /// checks).
   ///
   virtual void emitBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
                                OpenMPDirectiveKind Kind,
-                               bool CheckForCancel = true);
+                               bool EmitChecks = true,
+                               bool ForceSimpleCall = false);
 
   /// \brief Check if the specified \a ScheduleKind is static non-chunked.
   /// This kind of worksharing directive is emitted without outer loop.
@@ -654,9 +657,12 @@ public:
   /// \param InnermostKind Kind of innermost directive (for simple directives it
   /// is a directive itself, for combined - its innermost directive).
   /// \param CodeGen Code generation sequence for the \a D directive.
+  /// \param HasCancel true if region has inner cancel directive, false
+  /// otherwise.
   virtual void emitInlinedDirective(CodeGenFunction &CGF,
                                     OpenMPDirectiveKind InnermostKind,
-                                    const RegionCodeGenTy &CodeGen);
+                                    const RegionCodeGenTy &CodeGen,
+                                    bool HasCancel = false);
   /// \brief Emit a code for reduction clause. Next code should be emitted for
   /// reduction:
   /// \code

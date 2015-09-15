@@ -118,8 +118,8 @@ int main() {
     // TLS-LAMBDA: store volatile i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* [[G_CAPTURE_DST]], align 128
     // TLS-LAMBDA: [[DONE]]
 
-    // LAMBDA: call {{.*}}i32 @__kmpc_cancel_barrier(
-    // TLS-LAMBDA: call {{.*}}i32 @__kmpc_cancel_barrier(
+    // LAMBDA: call {{.*}}void @__kmpc_barrier(
+    // TLS-LAMBDA: call {{.*}}void @__kmpc_barrier(
     g = 1;
     // LAMBDA: call{{.*}} void [[INNER_LAMBDA:@.+]](%{{.+}}*
     // TLS-LAMBDA: call{{.*}} void [[INNER_LAMBDA:@.+]](%{{.+}}*
@@ -179,8 +179,8 @@ int main() {
     // TLS-BLOCKS: store volatile i{{[0-9]+}} %{{.+}}, i{{[0-9]+}}* [[G_CAPTURE_DST]], align 128
     // TLS-BLOCKS: [[DONE]]
 
-    // BLOCKS: call {{.*}}i32 @__kmpc_cancel_barrier(
-    // TLS-BLOCKS: call {{.*}}i32 @__kmpc_cancel_barrier(
+    // BLOCKS: call {{.*}}void @__kmpc_barrier(
+    // TLS-BLOCKS: call {{.*}}void @__kmpc_barrier(
     g = 1;
     // BLOCKS: store volatile i{{[0-9]+}} 1, i{{[0-9]+}}*
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
@@ -309,12 +309,12 @@ int main() {
 
 // TLS-CHECK: call {{.*}} [[S_FLOAT_TY_COPY_ASSIGN]]([[S_FLOAT_TY]]* {{.*}}[[VAR]], [[S_FLOAT_TY]]* {{.*}}[[MASTER_REF4]])
 
-// CHECK: call {{.*}}i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
+// CHECK: call {{.*}}void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // CHECK: ret void
 
 // TLS-CHECK: [[GTID_ADDR:%.+]] = load i32*, i32** [[GTID_ADDR_ADDR]],
 // TLS-CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_ADDR]],
-// TLS-CHECK: call {{.*}}i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
+// TLS-CHECK: call {{.*}}void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // TLS-CHECK: ret void
 
 // CHECK: define internal {{.*}}void [[MAIN_MICROTASK1]](i{{[0-9]+}}* noalias [[GTID_ADDR:%.+]], i{{[0-9]+}}* noalias %{{.+}})
@@ -345,12 +345,12 @@ int main() {
 // TLS-CHECK: store i32 [[MASTER_VAL]], i32* [[T_VAR]]
 // TLS-CHECK: [[DONE]]
 
-// CHECK: call {{.*}}i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
+// CHECK: call {{.*}}void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // CHECK: ret void
 
 // TLS-CHECK: [[GTID_ADDR:%.+]] = load i32*, i32** [[GTID_ADDR_ADDR]],
 // TLS-CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_ADDR]],
-// TLS-CHECK: call {{.*}}i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
+// TLS-CHECK: call {{.*}}void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // TLS-CHECK: ret void
 
 // CHECK: define {{.*}} i{{[0-9]+}} [[TMAIN_INT]]()
@@ -430,12 +430,12 @@ int main() {
 
 // TLS-CHECK: call {{.*}} [[S_INT_TY_COPY_ASSIGN]]([[S_INT_TY]]* {{.*}}[[TMAIN_VAR]], [[S_INT_TY]]* {{.*}}[[MASTER_REF3]])
 
-// CHECK: call {{.*}}i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
+// CHECK: call {{.*}}void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // CHECK: ret void
 
 // TLS-CHECK: [[GTID_ADDR:%.+]] = load i32*, i32** [[GTID_ADDR_ADDR]],
 // TLS-CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_ADDR]],
-// TLS-CHECK: call {{.*}}i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
+// TLS-CHECK: call {{.*}}void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // TLS-CHECK: ret void
 
 // CHECK: define internal {{.*}}void [[TMAIN_MICROTASK1]](i{{[0-9]+}}* noalias [[GTID_ADDR:%.+]], i{{[0-9]+}}* noalias %{{.+}})
@@ -466,12 +466,12 @@ int main() {
 // TLS-CHECK: store i32 [[MASTER_VAL]], i32* [[TMAIN_T_VAR]]
 // TLS-CHECK: [[DONE]]
 
-// CHECK: call {{.*}}i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
+// CHECK: call {{.*}}void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // CHECK: ret void
 
 // TLS-CHECK: [[GTID_ADDR:%.+]] = load i32*, i32** [[GTID_ADDR_ADDR]],
 // TLS-CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_ADDR]],
-// TLS-CHECK: call {{.*}}i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
+// TLS-CHECK: call {{.*}}void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // TLS-CHECK: ret void
 
 #endif

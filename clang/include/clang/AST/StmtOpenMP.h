@@ -230,6 +230,10 @@ public:
 /// variables 'c' and 'd'.
 ///
 class OMPParallelDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  /// \brief true if the construct has inner cancel directive.
+  bool HasCancel;
+
   /// \brief Build directive with the given start and end location.
   ///
   /// \param StartLoc Starting location of the directive (directive keyword).
@@ -238,7 +242,8 @@ class OMPParallelDirective : public OMPExecutableDirective {
   OMPParallelDirective(SourceLocation StartLoc, SourceLocation EndLoc,
                        unsigned NumClauses)
       : OMPExecutableDirective(this, OMPParallelDirectiveClass, OMPD_parallel,
-                               StartLoc, EndLoc, NumClauses, 1) {}
+                               StartLoc, EndLoc, NumClauses, 1),
+        HasCancel(false) {}
 
   /// \brief Build an empty directive.
   ///
@@ -247,7 +252,11 @@ class OMPParallelDirective : public OMPExecutableDirective {
   explicit OMPParallelDirective(unsigned NumClauses)
       : OMPExecutableDirective(this, OMPParallelDirectiveClass, OMPD_parallel,
                                SourceLocation(), SourceLocation(), NumClauses,
-                               1) {}
+                               1),
+        HasCancel(false) {}
+
+  /// \brief Set cancel state.
+  void setHasCancel(bool Has) { HasCancel = Has; }
 
 public:
   /// \brief Creates directive with a list of \a Clauses.
@@ -257,10 +266,11 @@ public:
   /// \param EndLoc Ending Location of the directive.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement associated with the directive.
+  /// \param HasCancel true if this directive has inner cancel directive.
   ///
   static OMPParallelDirective *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
-         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt);
+         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt, bool HasCancel);
 
   /// \brief Creates an empty directive with the place for \a N clauses.
   ///
@@ -269,6 +279,9 @@ public:
   ///
   static OMPParallelDirective *CreateEmpty(const ASTContext &C,
                                            unsigned NumClauses, EmptyShell);
+
+  /// \brief Return true if current directive has inner cancel directive.
+  bool hasCancel() const { return HasCancel; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPParallelDirectiveClass;
@@ -732,6 +745,10 @@ public:
 ///
 class OMPForDirective : public OMPLoopDirective {
   friend class ASTStmtReader;
+
+  /// \brief true if current directive has inner cancel directive.
+  bool HasCancel;
+
   /// \brief Build directive with the given start and end location.
   ///
   /// \param StartLoc Starting location of the directive kind.
@@ -742,7 +759,8 @@ class OMPForDirective : public OMPLoopDirective {
   OMPForDirective(SourceLocation StartLoc, SourceLocation EndLoc,
                   unsigned CollapsedNum, unsigned NumClauses)
       : OMPLoopDirective(this, OMPForDirectiveClass, OMPD_for, StartLoc, EndLoc,
-                         CollapsedNum, NumClauses) {}
+                         CollapsedNum, NumClauses),
+        HasCancel(false) {}
 
   /// \brief Build an empty directive.
   ///
@@ -751,7 +769,11 @@ class OMPForDirective : public OMPLoopDirective {
   ///
   explicit OMPForDirective(unsigned CollapsedNum, unsigned NumClauses)
       : OMPLoopDirective(this, OMPForDirectiveClass, OMPD_for, SourceLocation(),
-                         SourceLocation(), CollapsedNum, NumClauses) {}
+                         SourceLocation(), CollapsedNum, NumClauses),
+        HasCancel(false) {}
+
+  /// \brief Set cancel state.
+  void setHasCancel(bool Has) { HasCancel = Has; }
 
 public:
   /// \brief Creates directive with a list of \a Clauses.
@@ -763,12 +785,13 @@ public:
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
   /// \param Exprs Helper expressions for CodeGen.
+  /// \param HasCancel true if current directive has inner cancel directive.
   ///
   static OMPForDirective *Create(const ASTContext &C, SourceLocation StartLoc,
                                  SourceLocation EndLoc, unsigned CollapsedNum,
                                  ArrayRef<OMPClause *> Clauses,
-                                 Stmt *AssociatedStmt,
-                                 const HelperExprs &Exprs);
+                                 Stmt *AssociatedStmt, const HelperExprs &Exprs,
+                                 bool HasCancel);
 
   /// \brief Creates an empty directive with the place
   /// for \a NumClauses clauses.
@@ -779,6 +802,9 @@ public:
   ///
   static OMPForDirective *CreateEmpty(const ASTContext &C, unsigned NumClauses,
                                       unsigned CollapsedNum, EmptyShell);
+
+  /// \brief Return true if current directive has inner cancel directive.
+  bool hasCancel() const { return HasCancel; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPForDirectiveClass;
@@ -861,6 +887,10 @@ public:
 ///
 class OMPSectionsDirective : public OMPExecutableDirective {
   friend class ASTStmtReader;
+
+  /// \brief true if current directive has inner cancel directive.
+  bool HasCancel;
+
   /// \brief Build directive with the given start and end location.
   ///
   /// \param StartLoc Starting location of the directive kind.
@@ -870,7 +900,8 @@ class OMPSectionsDirective : public OMPExecutableDirective {
   OMPSectionsDirective(SourceLocation StartLoc, SourceLocation EndLoc,
                        unsigned NumClauses)
       : OMPExecutableDirective(this, OMPSectionsDirectiveClass, OMPD_sections,
-                               StartLoc, EndLoc, NumClauses, 1) {}
+                               StartLoc, EndLoc, NumClauses, 1),
+        HasCancel(false) {}
 
   /// \brief Build an empty directive.
   ///
@@ -879,7 +910,11 @@ class OMPSectionsDirective : public OMPExecutableDirective {
   explicit OMPSectionsDirective(unsigned NumClauses)
       : OMPExecutableDirective(this, OMPSectionsDirectiveClass, OMPD_sections,
                                SourceLocation(), SourceLocation(), NumClauses,
-                               1) {}
+                               1),
+        HasCancel(false) {}
+
+  /// \brief Set cancel state.
+  void setHasCancel(bool Has) { HasCancel = Has; }
 
 public:
   /// \brief Creates directive with a list of \a Clauses.
@@ -889,10 +924,11 @@ public:
   /// \param EndLoc Ending Location of the directive.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param HasCancel true if current directive has inner directive.
   ///
   static OMPSectionsDirective *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
-         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt);
+         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt, bool HasCancel);
 
   /// \brief Creates an empty directive with the place for \a NumClauses
   /// clauses.
@@ -902,6 +938,9 @@ public:
   ///
   static OMPSectionsDirective *CreateEmpty(const ASTContext &C,
                                            unsigned NumClauses, EmptyShell);
+
+  /// \brief Return true if current directive has inner cancel directive.
+  bool hasCancel() const { return HasCancel; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPSectionsDirectiveClass;
@@ -916,6 +955,10 @@ public:
 ///
 class OMPSectionDirective : public OMPExecutableDirective {
   friend class ASTStmtReader;
+
+  /// \brief true if current directive has inner cancel directive.
+  bool HasCancel;
+
   /// \brief Build directive with the given start and end location.
   ///
   /// \param StartLoc Starting location of the directive kind.
@@ -923,13 +966,15 @@ class OMPSectionDirective : public OMPExecutableDirective {
   ///
   OMPSectionDirective(SourceLocation StartLoc, SourceLocation EndLoc)
       : OMPExecutableDirective(this, OMPSectionDirectiveClass, OMPD_section,
-                               StartLoc, EndLoc, 0, 1) {}
+                               StartLoc, EndLoc, 0, 1),
+        HasCancel(false) {}
 
   /// \brief Build an empty directive.
   ///
   explicit OMPSectionDirective()
       : OMPExecutableDirective(this, OMPSectionDirectiveClass, OMPD_section,
-                               SourceLocation(), SourceLocation(), 0, 1) {}
+                               SourceLocation(), SourceLocation(), 0, 1),
+        HasCancel(false) {}
 
 public:
   /// \brief Creates directive.
@@ -938,17 +983,24 @@ public:
   /// \param StartLoc Starting location of the directive kind.
   /// \param EndLoc Ending Location of the directive.
   /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param HasCancel true if current directive has inner directive.
   ///
   static OMPSectionDirective *Create(const ASTContext &C,
                                      SourceLocation StartLoc,
                                      SourceLocation EndLoc,
-                                     Stmt *AssociatedStmt);
+                                     Stmt *AssociatedStmt, bool HasCancel);
 
   /// \brief Creates an empty directive.
   ///
   /// \param C AST context.
   ///
   static OMPSectionDirective *CreateEmpty(const ASTContext &C, EmptyShell);
+
+  /// \brief Set cancel state.
+  void setHasCancel(bool Has) { HasCancel = Has; }
+
+  /// \brief Return true if current directive has inner cancel directive.
+  bool hasCancel() const { return HasCancel; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPSectionDirectiveClass;
@@ -1133,6 +1185,10 @@ public:
 ///
 class OMPParallelForDirective : public OMPLoopDirective {
   friend class ASTStmtReader;
+
+  /// \brief true if current region has inner cancel directive.
+  bool HasCancel;
+
   /// \brief Build directive with the given start and end location.
   ///
   /// \param StartLoc Starting location of the directive kind.
@@ -1143,7 +1199,8 @@ class OMPParallelForDirective : public OMPLoopDirective {
   OMPParallelForDirective(SourceLocation StartLoc, SourceLocation EndLoc,
                           unsigned CollapsedNum, unsigned NumClauses)
       : OMPLoopDirective(this, OMPParallelForDirectiveClass, OMPD_parallel_for,
-                         StartLoc, EndLoc, CollapsedNum, NumClauses) {}
+                         StartLoc, EndLoc, CollapsedNum, NumClauses),
+        HasCancel(false) {}
 
   /// \brief Build an empty directive.
   ///
@@ -1153,7 +1210,11 @@ class OMPParallelForDirective : public OMPLoopDirective {
   explicit OMPParallelForDirective(unsigned CollapsedNum, unsigned NumClauses)
       : OMPLoopDirective(this, OMPParallelForDirectiveClass, OMPD_parallel_for,
                          SourceLocation(), SourceLocation(), CollapsedNum,
-                         NumClauses) {}
+                         NumClauses),
+        HasCancel(false) {}
+
+  /// \brief Set cancel state.
+  void setHasCancel(bool Has) { HasCancel = Has; }
 
 public:
   /// \brief Creates directive with a list of \a Clauses.
@@ -1165,11 +1226,12 @@ public:
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
   /// \param Exprs Helper expressions for CodeGen.
+  /// \param HasCancel true if current directive has inner cancel directive.
   ///
   static OMPParallelForDirective *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
          unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
-         Stmt *AssociatedStmt, const HelperExprs &Exprs);
+         Stmt *AssociatedStmt, const HelperExprs &Exprs, bool HasCancel);
 
   /// \brief Creates an empty directive with the place
   /// for \a NumClauses clauses.
@@ -1182,6 +1244,9 @@ public:
                                               unsigned NumClauses,
                                               unsigned CollapsedNum,
                                               EmptyShell);
+
+  /// \brief Return true if current directive has inner cancel directive.
+  bool hasCancel() const { return HasCancel; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPParallelForDirectiveClass;
@@ -1268,6 +1333,10 @@ public:
 ///
 class OMPParallelSectionsDirective : public OMPExecutableDirective {
   friend class ASTStmtReader;
+
+  /// \brief true if current directive has inner cancel directive.
+  bool HasCancel;
+
   /// \brief Build directive with the given start and end location.
   ///
   /// \param StartLoc Starting location of the directive kind.
@@ -1278,7 +1347,8 @@ class OMPParallelSectionsDirective : public OMPExecutableDirective {
                                unsigned NumClauses)
       : OMPExecutableDirective(this, OMPParallelSectionsDirectiveClass,
                                OMPD_parallel_sections, StartLoc, EndLoc,
-                               NumClauses, 1) {}
+                               NumClauses, 1),
+        HasCancel(false) {}
 
   /// \brief Build an empty directive.
   ///
@@ -1287,7 +1357,11 @@ class OMPParallelSectionsDirective : public OMPExecutableDirective {
   explicit OMPParallelSectionsDirective(unsigned NumClauses)
       : OMPExecutableDirective(this, OMPParallelSectionsDirectiveClass,
                                OMPD_parallel_sections, SourceLocation(),
-                               SourceLocation(), NumClauses, 1) {}
+                               SourceLocation(), NumClauses, 1),
+        HasCancel(false) {}
+
+  /// \brief Set cancel state.
+  void setHasCancel(bool Has) { HasCancel = Has; }
 
 public:
   /// \brief Creates directive with a list of \a Clauses.
@@ -1297,10 +1371,11 @@ public:
   /// \param EndLoc Ending Location of the directive.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param HasCancel true if current directive has inner cancel directive.
   ///
   static OMPParallelSectionsDirective *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
-         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt);
+         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt, bool HasCancel);
 
   /// \brief Creates an empty directive with the place for \a NumClauses
   /// clauses.
@@ -1310,6 +1385,9 @@ public:
   ///
   static OMPParallelSectionsDirective *
   CreateEmpty(const ASTContext &C, unsigned NumClauses, EmptyShell);
+
+  /// \brief Return true if current directive has inner cancel directive.
+  bool hasCancel() const { return HasCancel; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPParallelSectionsDirectiveClass;
@@ -1326,6 +1404,9 @@ public:
 ///
 class OMPTaskDirective : public OMPExecutableDirective {
   friend class ASTStmtReader;
+  /// \brief true if this directive has inner cancel directive.
+  bool HasCancel;
+
   /// \brief Build directive with the given start and end location.
   ///
   /// \param StartLoc Starting location of the directive kind.
@@ -1335,7 +1416,8 @@ class OMPTaskDirective : public OMPExecutableDirective {
   OMPTaskDirective(SourceLocation StartLoc, SourceLocation EndLoc,
                    unsigned NumClauses)
       : OMPExecutableDirective(this, OMPTaskDirectiveClass, OMPD_task, StartLoc,
-                               EndLoc, NumClauses, 1) {}
+                               EndLoc, NumClauses, 1),
+        HasCancel(false) {}
 
   /// \brief Build an empty directive.
   ///
@@ -1344,7 +1426,11 @@ class OMPTaskDirective : public OMPExecutableDirective {
   explicit OMPTaskDirective(unsigned NumClauses)
       : OMPExecutableDirective(this, OMPTaskDirectiveClass, OMPD_task,
                                SourceLocation(), SourceLocation(), NumClauses,
-                               1) {}
+                               1),
+        HasCancel(false) {}
+
+  /// \brief Set cancel state.
+  void setHasCancel(bool Has) { HasCancel = Has; }
 
 public:
   /// \brief Creates directive with a list of \a Clauses.
@@ -1354,11 +1440,12 @@ public:
   /// \param EndLoc Ending Location of the directive.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param HasCancel true, if current directive has inner cancel directive.
   ///
   static OMPTaskDirective *Create(const ASTContext &C, SourceLocation StartLoc,
                                   SourceLocation EndLoc,
                                   ArrayRef<OMPClause *> Clauses,
-                                  Stmt *AssociatedStmt);
+                                  Stmt *AssociatedStmt, bool HasCancel);
 
   /// \brief Creates an empty directive with the place for \a NumClauses
   /// clauses.
@@ -1368,6 +1455,9 @@ public:
   ///
   static OMPTaskDirective *CreateEmpty(const ASTContext &C, unsigned NumClauses,
                                        EmptyShell);
+
+  /// \brief Return true if current directive has inner cancel directive.
+  bool hasCancel() const { return HasCancel; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPTaskDirectiveClass;
