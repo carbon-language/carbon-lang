@@ -20,7 +20,7 @@ Example usage for git/svn users:
 
   git diff -U0 HEAD^ | clang-tidy-diff.py -p1
   svn diff --diff-cmd=diff -x-U0 | \
-      clang-tidy-diff.py -fix -checks=-*,misc-use-override
+      clang-tidy-diff.py -fix -checks=-*,modernize-use-override
 
 """
 
