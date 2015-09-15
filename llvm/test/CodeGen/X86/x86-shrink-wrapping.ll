@@ -667,3 +667,33 @@ for.body:                                         ; preds = %for.body, %entry
 if.end:
   ret void
 }
+
+; Another infinite loop test this time with a body bigger than just one block.
+; CHECK-LABEL: infiniteloop2
+; CHECK: retq
+define void @infiniteloop2() {
+entry:
+  br i1 undef, label %if.then, label %if.end
+
+if.then:
+  %ptr = alloca i32, i32 4
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %sum.03 = phi i32 [ 0, %if.then ], [ %add, %body1 ], [ 1, %body2]
+  %call = tail call i32 asm "movl $$1, $0", "=r,~{ebx}"()
+  %add = add nsw i32 %call, %sum.03
+  store i32 %add, i32* %ptr
+  br i1 undef, label %body1, label %body2
+
+body1:
+  tail call void asm sideeffect "nop", "~{ebx}"()
+  br label %for.body
+
+body2:
+  tail call void asm sideeffect "nop", "~{ebx}"()
+  br label %for.body
+
+if.end:
+  ret void
+}
