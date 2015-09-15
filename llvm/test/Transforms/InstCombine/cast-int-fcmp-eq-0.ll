@@ -10,8 +10,8 @@ define i1 @i32_cast_cmp_oeq_int_0_uitofp(i32 %i) {
 }
 
 ; CHECK-LABEL: @i32_cast_cmp_oeq_int_n0_uitofp(
-; CHECK: uitofp
-; CHECK: fcmp oeq
+; CHECK-NEXT: icmp eq i32 %i, 0
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_oeq_int_n0_uitofp(i32 %i) {
   %f = uitofp i32 %i to float
   %cmp = fcmp oeq float %f, -0.0
@@ -28,8 +28,8 @@ define i1 @i32_cast_cmp_oeq_int_0_sitofp(i32 %i) {
 }
 
 ; CHECK-LABEL: @i32_cast_cmp_oeq_int_n0_sitofp(
-; CHECK: sitofp
-; CHECK: fcmp oeq
+; CHECK-NEXT: icmp eq i32 %i, 0
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_oeq_int_n0_sitofp(i32 %i) {
   %f = sitofp i32 %i to float
   %cmp = fcmp oeq float %f, -0.0
@@ -46,8 +46,8 @@ define i1 @i32_cast_cmp_one_int_0_uitofp(i32 %i) {
 }
 
 ; CHECK-LABEL: @i32_cast_cmp_one_int_n0_uitofp(
-; CHECK: uitofp
-; CHECK: fcmp one
+; CHECK-NEXT: icmp ne i32 %i, 0
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_one_int_n0_uitofp(i32 %i) {
   %f = uitofp i32 %i to float
   %cmp = fcmp one float %f, -0.0
@@ -64,8 +64,8 @@ define i1 @i32_cast_cmp_one_int_0_sitofp(i32 %i) {
 }
 
 ; CHECK-LABEL: @i32_cast_cmp_one_int_n0_sitofp(
-; CHECK: sitofp
-; CHECK: fcmp one
+; CHECK-NEXT: icmp ne i32 %i, 0
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_one_int_n0_sitofp(i32 %i) {
   %f = sitofp i32 %i to float
   %cmp = fcmp one float %f, -0.0
@@ -82,8 +82,8 @@ define i1 @i32_cast_cmp_ueq_int_0_uitofp(i32 %i) {
 }
 
 ; CHECK-LABEL: @i32_cast_cmp_ueq_int_n0_uitofp(
-; CHECK: uitofp
-; CHECK: fcmp ueq
+; CHECK-NEXT: icmp eq i32 %i, 0
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_ueq_int_n0_uitofp(i32 %i) {
   %f = uitofp i32 %i to float
   %cmp = fcmp ueq float %f, -0.0
@@ -100,8 +100,8 @@ define i1 @i32_cast_cmp_ueq_int_0_sitofp(i32 %i) {
 }
 
 ; CHECK-LABEL: @i32_cast_cmp_ueq_int_n0_sitofp(
-; CHECK: sitofp
-; CHECK: fcmp ueq
+; CHECK-NEXT: icmp eq i32 %i, 0
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_ueq_int_n0_sitofp(i32 %i) {
   %f = sitofp i32 %i to float
   %cmp = fcmp ueq float %f, -0.0
@@ -118,8 +118,8 @@ define i1 @i32_cast_cmp_une_int_0_uitofp(i32 %i) {
 }
 
 ; CHECK-LABEL: @i32_cast_cmp_une_int_n0_uitofp(
-; CHECK: uitofp
-; CHECK: fcmp une
+; CHECK-NEXT: icmp ne i32 %i, 0
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_une_int_n0_uitofp(i32 %i) {
   %f = uitofp i32 %i to float
   %cmp = fcmp une float %f, -0.0
@@ -136,8 +136,8 @@ define i1 @i32_cast_cmp_une_int_0_sitofp(i32 %i) {
 }
 
 ; CHECK-LABEL: @i32_cast_cmp_une_int_n0_sitofp(
-; CHECK: sitofp
-; CHECK: fcmp une
+; CHECK-NEXT: icmp ne i32 %i, 0
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_une_int_n0_sitofp(i32 %i) {
   %f = sitofp i32 %i to float
   %cmp = fcmp une float %f, -0.0
@@ -154,8 +154,8 @@ define i1 @i32_cast_cmp_ogt_int_0_uitofp(i32 %i) {
 }
 
 ; CHECK-LABEL: @i32_cast_cmp_ogt_int_n0_uitofp(
-; CHECK: uitofp
-; CHECK: fcmp ogt
+; CHECK: icmp ne i32 %i, 0
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_ogt_int_n0_uitofp(i32 %i) {
   %f = uitofp i32 %i to float
   %cmp = fcmp ogt float %f, -0.0
@@ -172,8 +172,8 @@ define i1 @i32_cast_cmp_ogt_int_0_sitofp(i32 %i) {
 }
 
 ; CHECK-LABEL: @i32_cast_cmp_ogt_int_n0_sitofp(
-; CHECK: sitofp
-; CHECK: fcmp ogt
+; CHECK: icmp sgt i32 %i, 0
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_ogt_int_n0_sitofp(i32 %i) {
   %f = sitofp i32 %i to float
   %cmp = fcmp ogt float %f, -0.0
@@ -261,12 +261,13 @@ define i1 @i32_cast_cmp_oeq_int_0_uitofp_ppcf128(i32 %i) {
   ret i1 %cmp
 }
 
-; CHECK-LABEL: @i32_cast_cmp_oeq_int_i24max_uitofp(
-; CHECK: uitofp
-; CHECK: fcmp oeq
+; Since 0xFFFFFF fits in a float, and one less and 
+; one more than it also fits without rounding, the 
+; test can be optimized to an integer compare.
 
-; XCHECK: icmp eq i32 %i, 16777215
-; XCHECK-NEXT: ret
+; CHECK-LABEL: @i32_cast_cmp_oeq_int_i24max_uitofp(
+; CHECK: icmp eq i32 %i, 16777215
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_oeq_int_i24max_uitofp(i32 %i) {
   %f = uitofp i32 %i to float
   %cmp = fcmp oeq float %f, 0x416FFFFFE0000000
@@ -274,16 +275,17 @@ define i1 @i32_cast_cmp_oeq_int_i24max_uitofp(i32 %i) {
 }
 
 ; CHECK-LABEL: @i32_cast_cmp_oeq_int_i24max_sitofp(
-; CHECK: sitofp
-; CHECK: fcmp oeq
-
-; XCHECK: icmp eq i32 %i, 16777215
-; XCHECK-NEXT: ret
+; CHECK: icmp eq i32 %i, 16777215
+; CHECK-NEXT: ret
 define i1 @i32_cast_cmp_oeq_int_i24max_sitofp(i32 %i) {
   %f = sitofp i32 %i to float
   %cmp = fcmp oeq float %f, 0x416FFFFFE0000000
   ret i1 %cmp
 }
+
+; Though 0x1000000 fits in a float, one more than it 
+; would round to it too, hence a single integer comparison 
+; does not suffice.
 
 ; CHECK-LABEL: @i32_cast_cmp_oeq_int_i24maxp1_uitofp(
 ; CHECK: uitofp
@@ -319,10 +321,18 @@ define i1 @i32_cast_cmp_oeq_int_i32umax_uitofp(i32 %i) {
   ret i1 %cmp
 }
 
+; 32-bit unsigned integer cannot possibly round up to 1<<33
+; CHECK-LABEL: @i32_cast_cmp_oeq_int_big_uitofp(
+; CHECK-NEXT: ret i1 false
+define i1 @i32_cast_cmp_oeq_int_big_uitofp(i32 %i) {
+  %f = uitofp i32 %i to float
+  %cmp = fcmp oeq float %f, 0x4200000000000000
+  ret i1 %cmp
+}
+
+; 32-bit signed integer cannot possibly round up to 1<<32
 ; CHECK-LABEL: @i32_cast_cmp_oeq_int_i32umax_sitofp(
-; CHECK: sitofp
-; CHECK: fcmp oeq
-; CHECK-NEXT: ret
+; CHECK-NEXT: ret i1 false
 define i1 @i32_cast_cmp_oeq_int_i32umax_sitofp(i32 %i) {
   %f = sitofp i32 %i to float
   %cmp = fcmp oeq float %f, 0x41F0000000000000
@@ -379,10 +389,9 @@ define i1 @i32_cast_cmp_oeq_int_negi32umax_uitofp(i32 %i) {
   ret i1 %cmp
 }
 
+; 32-bit signed integer cannot possibly round to -1<<32
 ; CHECK-LABEL: @i32_cast_cmp_oeq_int_negi32umax_sitofp(
-; CHECK: sitofp
-; CHECK: fcmp oeq
-; CHECK-NEXT: ret
+; CHECK-NEXT: ret i1 false
 define i1 @i32_cast_cmp_oeq_int_negi32umax_sitofp(i32 %i) {
   %f = sitofp i32 %i to float
   %cmp = fcmp oeq float %f, 0xC1F0000000000000
@@ -450,5 +459,32 @@ define i1 @i32_cast_cmp_une_half_uitofp(i32 %i) {
 define i1 @i32_cast_cmp_une_half_sitofp(i32 %i) {
   %f = sitofp i32 %i to float
   %cmp = fcmp une float %f, 0.5
+  ret i1 %cmp
+}
+
+; CHECK-LABEL: @i32_cast_cmp_oeq_int_inf_uitofp(
+; CHECK-NEXT: ret i1 false
+define i1 @i32_cast_cmp_oeq_int_inf_uitofp(i32 %i) {
+  %f = uitofp i32 %i to float
+  %cmp = fcmp oeq float %f, 0x7FF0000000000000
+  ret i1 %cmp
+}
+
+; CHECK-LABEL: @i32_cast_cmp_oeq_int_inf_sitofp(
+; CHECK-NEXT: ret i1 false
+define i1 @i32_cast_cmp_oeq_int_inf_sitofp(i32 %i) {
+  %f = sitofp i32 %i to float
+  %cmp = fcmp oeq float %f, 0x7FF0000000000000
+  ret i1 %cmp
+}
+
+; An i128 could round to an IEEE single-precision infinity.
+; CHECK-LABEL: @i128_cast_cmp_oeq_int_inf_uitofp(
+; CHECK: uitofp
+; CHECK: fcmp oeq
+; CHECK-NEXT: ret
+define i1 @i128_cast_cmp_oeq_int_inf_uitofp(i128 %i) {
+  %f = uitofp i128 %i to float
+  %cmp = fcmp oeq float %f, 0x7FF0000000000000
   ret i1 %cmp
 }

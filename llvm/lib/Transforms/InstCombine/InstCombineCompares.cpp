@@ -3734,15 +3734,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
 
   IntegerType *IntTy = cast<IntegerType>(LHSI->getOperand(0)->getType());
 
-  // Check to see that the input is converted from an integer type that is small
-  // enough that preserves all bits.  TODO: check here for "known" sign bits.
-  // This would allow us to handle (fptosi (x >>s 62) to float) if x is i64 f.e.
-  unsigned InputSize = IntTy->getScalarSizeInBits();
-
-  // If this is a uitofp instruction, we need an extra bit to hold the sign.
   bool LHSUnsigned = isa<UIToFPInst>(LHSI);
-  if (LHSUnsigned)
-    ++InputSize;
 
   if (I.isEquality()) {
     FCmpInst::Predicate P = I.getPredicate();
@@ -3769,13 +3761,30 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
     // equality compares as integer?
   }
 
-  // Comparisons with zero are a special case where we know we won't lose
-  // information.
-  bool IsCmpZero = RHS.isPosZero();
+  // Check to see that the input is converted from an integer type that is small
+  // enough that preserves all bits.  TODO: check here for "known" sign bits.
+  // This would allow us to handle (fptosi (x >>s 62) to float) if x is i64 f.e.
+  unsigned InputSize = IntTy->getScalarSizeInBits();
 
-  // If the conversion would lose info, don't hack on this.
-  if ((int)InputSize > MantissaWidth && !IsCmpZero)
-    return nullptr;
+  // Following test does NOT adjust InputSize downwards for signed inputs, 
+  // because the most negative value still requires all the mantissa bits 
+  // to distinguish it from one less than that value.
+  if ((int)InputSize > MantissaWidth) {
+    // Conversion would lose accuracy. Check if loss can impact comparison.
+    int Exp = ilogb(RHS);
+    if (Exp == APFloat::IEK_Inf) {
+      int MaxExponent = ilogb(APFloat::getLargest(RHS.getSemantics()));
+      if (MaxExponent < (int)InputSize - !LHSUnsigned) 
+        // Conversion could create infinity.
+        return nullptr;
+    } else {
+      // Note that if RHS is zero or NaN, then Exp is negative 
+      // and first condition is trivially false.
+      if (MantissaWidth <= Exp && Exp <= (int)InputSize - !LHSUnsigned) 
+        // Conversion could affect comparison.
+        return nullptr;
+    }
+  }
 
   // Otherwise, we can potentially simplify the comparison.  We know that it
   // will always come through as an integer value and we know the constant is
