@@ -80,6 +80,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-zero-length"
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 int main()
 {

@@ -54,7 +54,7 @@ void test_comparisons()
 
 #if defined(__clang__)
 #pragma clang diagnostic push
-#pragma diagnostic ignored "-Wnull-conversion"
+#pragma clang diagnostic ignored "-Wnull-conversion"
 #endif
 void test_nullptr_conversions() {
     {
