@@ -490,6 +490,9 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
           support::endian::write32le(Location,
                                      SymVA + (RI.r_addend - (P + Offset)));
           break;
+        case llvm::ELF::R_X86_64_64:
+          support::endian::write64le(Location, SymVA + RI.r_addend);
+          break;
         case llvm::ELF::R_X86_64_32:
           support::endian::write32le(Location, SymVA + RI.r_addend);
           break;

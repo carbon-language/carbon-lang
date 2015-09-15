@@ -1,6 +1,6 @@
 // RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %s -o %t
 // RUN: lld -flavor gnu2 %t -o %t2
-// RUN: llvm-objdump -d %t2 | FileCheck %s
+// RUN: llvm-objdump -s -d %t2 | FileCheck %s
 // REQUIRES: x86
 
 
@@ -24,13 +24,21 @@ lulz:
 // CHECK-NEXT:   11009:  90  nop
 
 
-.global bar
 .section       .text2,"ax",@progbits
-bar:
-  movl $bar, %edx // R_X86_64_32
+.global R_X86_64_32
+R_X86_64_32:
+  movl $R_X86_64_32, %edx
 
 // FIXME: this would be far more self evident if llvm-objdump printed
 // constants in hex.
 // CHECK: Disassembly of section .text2:
-// CHECK-NEXT: bar:
+// CHECK-NEXT: R_X86_64_32:
 // CHECK-NEXT:  12000: {{.*}} movl $73728, %edx
+
+.section .R_X86_64_64,"a",@progbits
+.global R_X86_64_64
+R_X86_64_64:
+ .quad R_X86_64_64
+
+// CHECK:      Contents of section .R_X86_64_64:
+// CHECK-NEXT:   13000 00300100 00000000
