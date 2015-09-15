@@ -17,7 +17,7 @@
 // isomorphic subgraphs as possible, if we consider sections as vertices and
 // relocations as edges. This may be a bit more complicated problem than you
 // might think. The order of processing sections matters since merging two
-// sections can make other sections, whose relocations now point to the
+// sections can make other sections, whose relocations now point to the same
 // section, mergeable. Graphs may contain cycles, which is common in COFF.
 // We need a sophisticated algorithm to do this properly and efficiently.
 //
