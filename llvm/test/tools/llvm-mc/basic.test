@@ -1,2 +1,4 @@
 # RUN: not llvm-mc %t.blah -o %t2 2>&1 | FileCheck --check-prefix=ENOENT %s
+# REQUIRES: native
+
 # ENOENT: {{.*}}.blah: {{[Nn]}}o such file or directory
