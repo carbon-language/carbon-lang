@@ -71,8 +71,8 @@
 //
 // Limitations and TODO items:
 //
-// 1) We only considers n-ary adds for now. This should be extended and
-// generalized.
+// 1) We only considers n-ary adds and muls for now. This should be extended
+// and generalized.
 //
 //===----------------------------------------------------------------------===//
 
@@ -145,12 +145,23 @@ private:
                                               unsigned I, Value *LHS,
                                               Value *RHS, Type *IndexedType);
 
-  // Reassociate Add for better CSE.
-  Instruction *tryReassociateAdd(BinaryOperator *I);
-  // A helper function for tryReassociateAdd. LHS and RHS are explicitly passed.
-  Instruction *tryReassociateAdd(Value *LHS, Value *RHS, Instruction *I);
-  // Rewrites I to LHS + RHS if LHS is computed already.
-  Instruction *tryReassociatedAdd(const SCEV *LHS, Value *RHS, Instruction *I);
+  // Reassociate binary operators for better CSE.
+  Instruction *tryReassociateBinaryOp(BinaryOperator *I);
+
+  // A helper function for tryReassociateBinaryOp. LHS and RHS are explicitly
+  // passed.
+  Instruction *tryReassociateBinaryOp(Value *LHS, Value *RHS,
+                                      BinaryOperator *I);
+  // Rewrites I to (LHS op RHS) if LHS is computed already.
+  Instruction *tryReassociatedBinaryOp(const SCEV *LHS, Value *RHS,
+                                       BinaryOperator *I);
+
+  // Tries to match Op1 and Op2 by using V.
+  bool matchTernaryOp(BinaryOperator *I, Value *V, Value *&Op1, Value *&Op2);
+
+  // Gets SCEV for (LHS op RHS).
+  const SCEV *getBinarySCEV(BinaryOperator *I, const SCEV *LHS,
+                            const SCEV *RHS);
 
   // Returns the closest dominator of \c Dominatee that computes
   // \c CandidateExpr. Returns null if not found.
@@ -219,6 +230,7 @@ static bool isPotentiallyNaryReassociable(Instruction *I) {
   switch (I->getOpcode()) {
   case Instruction::Add:
   case Instruction::GetElementPtr:
+  case Instruction::Mul:
     return true;
   default:
     return false;
@@ -276,7 +288,8 @@ bool NaryReassociate::doOneIteration(Function &F) {
 Instruction *NaryReassociate::tryReassociate(Instruction *I) {
   switch (I->getOpcode()) {
   case Instruction::Add:
-    return tryReassociateAdd(cast<BinaryOperator>(I));
+  case Instruction::Mul:
+    return tryReassociateBinaryOp(cast<BinaryOperator>(I));
   case Instruction::GetElementPtr:
     return tryReassociateGEP(cast<GetElementPtrInst>(I));
   default:
@@ -453,47 +466,87 @@ GetElementPtrInst *NaryReassociate::tryReassociateGEPAtIndex(
   return NewGEP;
 }
 
-Instruction *NaryReassociate::tryReassociateAdd(BinaryOperator *I) {
+Instruction *NaryReassociate::tryReassociateBinaryOp(BinaryOperator *I) {
   Value *LHS = I->getOperand(0), *RHS = I->getOperand(1);
-  if (auto *NewI = tryReassociateAdd(LHS, RHS, I))
+  if (auto *NewI = tryReassociateBinaryOp(LHS, RHS, I))
     return NewI;
-  if (auto *NewI = tryReassociateAdd(RHS, LHS, I))
+  if (auto *NewI = tryReassociateBinaryOp(RHS, LHS, I))
     return NewI;
   return nullptr;
 }
 
-Instruction *NaryReassociate::tryReassociateAdd(Value *LHS, Value *RHS,
-                                                Instruction *I) {
+Instruction *NaryReassociate::tryReassociateBinaryOp(Value *LHS, Value *RHS,
+                                                     BinaryOperator *I) {
   Value *A = nullptr, *B = nullptr;
-  // To be conservative, we reassociate I only when it is the only user of A+B.
-  if (LHS->hasOneUse() && match(LHS, m_Add(m_Value(A), m_Value(B)))) {
-    // I = (A + B) + RHS
-    //   = (A + RHS) + B or (B + RHS) + A
+  // To be conservative, we reassociate I only when it is the only user of (A op
+  // B).
+  if (LHS->hasOneUse() && matchTernaryOp(I, LHS, A, B)) {
+    // I = (A op B) op RHS
+    //   = (A op RHS) op B or (B op RHS) op A
     const SCEV *AExpr = SE->getSCEV(A), *BExpr = SE->getSCEV(B);
     const SCEV *RHSExpr = SE->getSCEV(RHS);
     if (BExpr != RHSExpr) {
-      if (auto *NewI = tryReassociatedAdd(SE->getAddExpr(AExpr, RHSExpr), B, I))
+      if (auto *NewI =
+              tryReassociatedBinaryOp(getBinarySCEV(I, AExpr, RHSExpr), B, I))
         return NewI;
     }
     if (AExpr != RHSExpr) {
-      if (auto *NewI = tryReassociatedAdd(SE->getAddExpr(BExpr, RHSExpr), A, I))
+      if (auto *NewI =
+              tryReassociatedBinaryOp(getBinarySCEV(I, BExpr, RHSExpr), A, I))
         return NewI;
     }
   }
   return nullptr;
 }
 
-Instruction *NaryReassociate::tryReassociatedAdd(const SCEV *LHSExpr,
-                                                 Value *RHS, Instruction *I) {
+Instruction *NaryReassociate::tryReassociatedBinaryOp(const SCEV *LHSExpr,
+                                                      Value *RHS,
+                                                      BinaryOperator *I) {
   // Look for the closest dominator LHS of I that computes LHSExpr, and replace
-  // I with LHS + RHS.
+  // I with LHS op RHS.
   auto *LHS = findClosestMatchingDominator(LHSExpr, I);
   if (LHS == nullptr)
     return nullptr;
 
-  Instruction *NewI = BinaryOperator::CreateAdd(LHS, RHS, "", I);
+  Instruction *NewI = nullptr;
+  switch (I->getOpcode()) {
+  case Instruction::Add:
+    NewI = BinaryOperator::CreateAdd(LHS, RHS, "", I);
+    break;
+  case Instruction::Mul:
+    NewI = BinaryOperator::CreateMul(LHS, RHS, "", I);
+    break;
+  default:
+    llvm_unreachable("Unexpected instruction.");
+  }
   NewI->takeName(I);
   return NewI;
+}
+
+bool NaryReassociate::matchTernaryOp(BinaryOperator *I, Value *V, Value *&Op1,
+                                     Value *&Op2) {
+  switch (I->getOpcode()) {
+  case Instruction::Add:
+    return match(V, m_Add(m_Value(Op1), m_Value(Op2)));
+  case Instruction::Mul:
+    return match(V, m_Mul(m_Value(Op1), m_Value(Op2)));
+  default:
+    llvm_unreachable("Unexpected instruction.");
+  }
+  return false;
+}
+
+const SCEV *NaryReassociate::getBinarySCEV(BinaryOperator *I, const SCEV *LHS,
+                                           const SCEV *RHS) {
+  switch (I->getOpcode()) {
+  case Instruction::Add:
+    return SE->getAddExpr(LHS, RHS);
+  case Instruction::Mul:
+    return SE->getMulExpr(LHS, RHS);
+  default:
+    llvm_unreachable("Unexpected instruction.");
+  }
+  return nullptr;
 }
 
 Instruction *
