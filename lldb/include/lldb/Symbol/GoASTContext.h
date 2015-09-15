@@ -70,7 +70,7 @@ class GoASTContext : public TypeSystem
     // Creating Types
     //----------------------------------------------------------------------
 
-    CompilerType CreateArrayType(const ConstString &name, const CompilerType &element_type, int64_t length);
+    CompilerType CreateArrayType(const ConstString &name, const CompilerType &element_type, uint64_t length);
 
     CompilerType CreateBaseType(int go_kind, const ConstString &type_name_const_str, uint64_t byte_size);
 

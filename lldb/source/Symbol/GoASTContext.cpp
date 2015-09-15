@@ -140,20 +140,20 @@ class GoElem : public GoType
 class GoArray : public GoElem
 {
   public:
-    GoArray(const ConstString &name, int64_t length, const CompilerType &elem)
+    GoArray(const ConstString &name, uint64_t length, const CompilerType &elem)
         : GoElem(KIND_ARRAY, name, elem)
         , m_length(length)
     {
     }
 
-    int64_t
+    uint64_t
     GetLength() const
     {
         return m_length;
     }
 
   private:
-    int64_t m_length;
+    uint64_t m_length;
     GoArray(const GoArray &) = delete;
     const GoArray &operator=(const GoArray &) = delete;
 };
@@ -311,14 +311,7 @@ GoASTContext::IsArrayType(void *type, CompilerType *element_type, uint64_t *size
     GoArray *array = static_cast<GoType *>(type)->GetArray();
     if (array)
     {
-        if (array->GetLength() == -1)
-        {
-            if (is_incomplete)
-            {
-                *is_incomplete = true;
-            }
-        }
-        else if (size)
+        if (size)
         {
             *size = array->GetLength();
         }
@@ -1297,7 +1290,7 @@ GoASTContext::DumpTypeDescription(void *type, Stream *s)
 }
 
 CompilerType
-GoASTContext::CreateArrayType(const ConstString &name, const CompilerType &element_type, int64_t length)
+GoASTContext::CreateArrayType(const ConstString &name, const CompilerType &element_type, uint64_t length)
 {
     GoType *type = new GoArray(name, length, element_type);
     (*m_types)[name].reset(type);
