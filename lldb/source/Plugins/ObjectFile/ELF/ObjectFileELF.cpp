@@ -1097,16 +1097,35 @@ ObjectFileELF::GetImageInfoAddress(Target *target)
             addr_t offset = i * dynsym_hdr->sh_entsize + GetAddressByteSize();
             return Address(dynsym_section_sp, offset);
         }
-        else if (symbol.d_tag == DT_MIPS_RLD_MAP && target)
+        // MIPS executables uses DT_MIPS_RLD_MAP_REL to support PIE. DT_MIPS_RLD_MAP exists in non-PIE.
+        else if ((symbol.d_tag == DT_MIPS_RLD_MAP || symbol.d_tag == DT_MIPS_RLD_MAP_REL) && target)
         {
             addr_t offset = i * dynsym_hdr->sh_entsize + GetAddressByteSize();
             addr_t dyn_base = dynsym_section_sp->GetLoadBaseAddress(target);
             if (dyn_base == LLDB_INVALID_ADDRESS)
                 return Address();
-            Address addr;
+
             Error error;
-            if (target->ReadPointerFromMemory(dyn_base + offset, false, error, addr))
-                return addr;
+            if (symbol.d_tag == DT_MIPS_RLD_MAP)
+            {
+                // DT_MIPS_RLD_MAP tag stores an absolute address of the debug pointer.
+                Address addr;
+                if (target->ReadPointerFromMemory(dyn_base + offset, false, error, addr))
+                    return addr;
+            }
+            if (symbol.d_tag == DT_MIPS_RLD_MAP_REL)
+            {
+                // DT_MIPS_RLD_MAP_REL tag stores the offset to the debug pointer, relative to the address of the tag.
+                uint64_t rel_offset;
+                rel_offset = target->ReadUnsignedIntegerFromMemory(dyn_base + offset, false, GetAddressByteSize(), UINT64_MAX, error);
+                if (error.Success() && rel_offset != UINT64_MAX)
+                {
+                    Address addr;
+                    addr_t debug_ptr_address = dyn_base + (offset - GetAddressByteSize()) + rel_offset;
+                    addr.SetOffset (debug_ptr_address);
+                    return addr;
+                }
+            }
         }
     }
 
