@@ -967,13 +967,14 @@ bool CallAnalyzer::analyzeBlock(BasicBlock *BB,
     if (isa<ExtractElementInst>(I) || I->getType()->isVectorTy())
       ++NumVectorInstructions;
 
-    // If the instruction is floating point, and the target says this operation is
-    // expensive or the function has the "use-soft-float" attribute, this may
-    // eventually become a library call.  Treat the cost as such.
+    // If the instruction is floating point, and the target says this operation
+    // is expensive or the function has the "use-soft-float" attribute, this may
+    // eventually become a library call. Treat the cost as such.
     if (I->getType()->isFloatingPointTy()) {
       bool hasSoftFloatAttr = false;
 
-      // If the function has the "use-soft-float" attribute, mark it as expensive.
+      // If the function has the "use-soft-float" attribute, mark it as
+      // expensive.
       if (F.hasFnAttribute("use-soft-float")) {
         Attribute Attr = F.getFnAttribute("use-soft-float");
         StringRef Val = Attr.getValueAsString();
