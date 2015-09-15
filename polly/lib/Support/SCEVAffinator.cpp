@@ -27,7 +27,8 @@ using namespace llvm;
 using namespace polly;
 
 SCEVAffinator::SCEVAffinator(Scop *S)
-    : S(S), Ctx(S->getIslCtx()), R(S->getRegion()), SE(*S->getSE()) {}
+    : S(S), Ctx(S->getIslCtx()), R(S->getRegion()), SE(*S->getSE()),
+      TD(R.getEntry()->getParent()->getParent()->getDataLayout()) {}
 
 SCEVAffinator::~SCEVAffinator() {
   for (const auto &CachedPair : CachedExpressions)
@@ -48,6 +49,94 @@ __isl_give isl_pw_aff *SCEVAffinator::getPwAff(const SCEV *Expr,
   S->addParams(getParamsInAffineExpr(&R, Expr, SE));
 
   return visit(Expr);
+}
+
+__isl_give isl_set *
+SCEVAffinator::getWrappingContext(SCEV::NoWrapFlags Flags, Type *ExprType,
+                                  __isl_keep isl_pw_aff *PWA,
+                                  __isl_take isl_set *ExprDomain) const {
+  // If the SCEV flags do contain NSW (no signed wrap) then PWA already
+  // represents Expr in modulo semantic (it is not allowed to overflow), thus we
+  // are done. Otherwise, we will compute:
+  //   PWA = ((PWA + 2^(n-1)) mod (2 ^ n)) - 2^(n-1)
+  // whereas n is the number of bits of the Expr, hence:
+  //   n = bitwidth(ExprType)
+
+  if (Flags & SCEV::FlagNSW)
+    return nullptr;
+
+  isl_pw_aff *PWAMod = addModuloSemantic(isl_pw_aff_copy(PWA), ExprType);
+  if (isl_pw_aff_is_equal(PWA, PWAMod)) {
+    isl_pw_aff_free(PWAMod);
+    return nullptr;
+  }
+
+  PWA = isl_pw_aff_copy(PWA);
+
+  auto *NotEqualSet = isl_pw_aff_ne_set(PWA, PWAMod);
+  NotEqualSet = isl_set_intersect(NotEqualSet, isl_set_copy(ExprDomain));
+  NotEqualSet = isl_set_gist_params(NotEqualSet, S->getContext());
+  NotEqualSet = isl_set_params(NotEqualSet);
+  return NotEqualSet;
+}
+
+__isl_give isl_set *SCEVAffinator::getWrappingContext() const {
+
+  isl_set *WrappingCtx = isl_set_empty(S->getParamSpace());
+
+  for (const auto &CachedPair : CachedExpressions) {
+    const SCEV *Expr = CachedPair.first.first;
+    SCEV::NoWrapFlags Flags;
+
+    switch (Expr->getSCEVType()) {
+    case scAddExpr:
+      Flags = cast<SCEVAddExpr>(Expr)->getNoWrapFlags();
+      break;
+    case scMulExpr:
+      Flags = cast<SCEVMulExpr>(Expr)->getNoWrapFlags();
+      break;
+    case scAddRecExpr:
+      Flags = cast<SCEVAddRecExpr>(Expr)->getNoWrapFlags();
+      break;
+    default:
+      continue;
+    }
+
+    isl_pw_aff *PWA = CachedPair.second;
+    BasicBlock *BB = CachedPair.first.second;
+    isl_set *ExprDomain = BB ? S->getDomainConditions(BB) : nullptr;
+
+    isl_set *WPWACtx =
+        getWrappingContext(Flags, Expr->getType(), PWA, ExprDomain);
+    isl_set_free(ExprDomain);
+
+    WrappingCtx = WPWACtx ? isl_set_union(WrappingCtx, WPWACtx) : WrappingCtx;
+  }
+
+  return WrappingCtx;
+}
+
+__isl_give isl_pw_aff *
+SCEVAffinator::addModuloSemantic(__isl_take isl_pw_aff *PWA,
+                                 Type *ExprType) const {
+  unsigned Width = TD.getTypeStoreSizeInBits(ExprType);
+  isl_ctx *Ctx = isl_pw_aff_get_ctx(PWA);
+
+  isl_val *ModVal = isl_val_int_from_ui(Ctx, Width);
+  ModVal = isl_val_2exp(ModVal);
+
+  isl_val *AddVal = isl_val_int_from_ui(Ctx, Width - 1);
+  AddVal = isl_val_2exp(AddVal);
+
+  isl_set *Domain = isl_pw_aff_domain(isl_pw_aff_copy(PWA));
+
+  isl_pw_aff *AddPW = isl_pw_aff_val_on_domain(Domain, AddVal);
+
+  PWA = isl_pw_aff_add(PWA, isl_pw_aff_copy(AddPW));
+  PWA = isl_pw_aff_mod_val(PWA, ModVal);
+  PWA = isl_pw_aff_sub(PWA, AddPW);
+
+  return PWA;
 }
 
 __isl_give isl_pw_aff *SCEVAffinator::visit(const SCEV *Expr) {
@@ -75,6 +164,11 @@ __isl_give isl_pw_aff *SCEVAffinator::visit(const SCEV *Expr) {
   }
 
   PWA = SCEVVisitor<SCEVAffinator, isl_pw_aff *>::visit(Expr);
+
+  // For compile time reasons we need to simplify the PWA before we cache and
+  // return it.
+  PWA = isl_pw_aff_coalesce(PWA);
+
   CachedExpressions[Key] = PWA;
   return isl_pw_aff_copy(PWA);
 }
@@ -125,8 +219,6 @@ __isl_give isl_pw_aff *SCEVAffinator::visitAddExpr(const SCEVAddExpr *Expr) {
     Sum = isl_pw_aff_add(Sum, NextSummand);
   }
 
-  // TODO: Check for NSW and NUW.
-
   return Sum;
 }
 
@@ -167,7 +259,6 @@ SCEVAffinator::visitAddRecExpr(const SCEVAddRecExpr *Expr) {
         isl_aff_zero_on_domain(LocalSpace), isl_dim_in, loopDimension, 1);
     isl_pw_aff *LPwAff = isl_pw_aff_from_aff(LAff);
 
-    // TODO: Do we need to check for NSW and NUW?
     return isl_pw_aff_mul(Step, LPwAff);
   }
 

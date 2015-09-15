@@ -1248,6 +1248,12 @@ isl_set *Scop::addNonEmptyDomainConstraints(isl_set *C) const {
   return isl_set_intersect_params(C, DomainContext);
 }
 
+void Scop::buildBoundaryContext() {
+  BoundaryContext = Affinator.getWrappingContext();
+  BoundaryContext = isl_set_complement(BoundaryContext);
+  BoundaryContext = isl_set_gist_params(BoundaryContext, getContext());
+}
+
 void Scop::addUserContext() {
   if (UserContextStr.empty())
     return;
@@ -1328,7 +1334,16 @@ void Scop::realignParams() {
     Stmt.realignParams();
 }
 
-void Scop::simplifyAssumedContext() {
+static __isl_give isl_set *
+simplifyAssumptionContext(__isl_take isl_set *AssumptionContext,
+                          const Scop &S) {
+  isl_set *DomainParameters = isl_union_set_params(S.getDomains());
+  AssumptionContext = isl_set_gist_params(AssumptionContext, DomainParameters);
+  AssumptionContext = isl_set_gist_params(AssumptionContext, S.getContext());
+  return AssumptionContext;
+}
+
+void Scop::simplifyContexts() {
   // The parameter constraints of the iteration domains give us a set of
   // constraints that need to hold for all cases where at least a single
   // statement iteration is executed in the whole scop. We now simplify the
@@ -1357,9 +1372,8 @@ void Scop::simplifyAssumedContext() {
   //   we assume that the condition m <= 0 or (m >= 1 and p >= 0) holds as
   //   otherwise we would access out of bound data. Now, knowing that code is
   //   only executed for the case m >= 0, it is sufficient to assume p >= 0.
-  AssumedContext =
-      isl_set_gist_params(AssumedContext, isl_union_set_params(getDomains()));
-  AssumedContext = isl_set_gist_params(AssumedContext, getContext());
+  AssumedContext = simplifyAssumptionContext(AssumedContext, *this);
+  BoundaryContext = simplifyAssumptionContext(BoundaryContext, *this);
 }
 
 /// @brief Add the minimal/maximal access in @p Set to @p User.
@@ -2118,7 +2132,8 @@ Scop::Scop(Region &R, AccFuncMapType &AccFuncMap,
            isl_ctx *Context, unsigned MaxLoopDepth)
     : DT(DT), SE(&ScalarEvolution), R(R), AccFuncMap(AccFuncMap),
       IsOptimized(false), HasSingleExitEdge(R.getExitingBlock()),
-      MaxLoopDepth(MaxLoopDepth), IslCtx(Context), Affinator(this) {}
+      MaxLoopDepth(MaxLoopDepth), IslCtx(Context), Affinator(this),
+      BoundaryContext(nullptr) {}
 
 void Scop::init(LoopInfo &LI, ScopDetection &SD, AliasAnalysis &AA) {
   buildContext();
@@ -2135,13 +2150,15 @@ void Scop::init(LoopInfo &LI, ScopDetection &SD, AliasAnalysis &AA) {
   realignParams();
   addParameterBounds();
   addUserContext();
-  simplifyAssumedContext();
+  buildBoundaryContext();
+  simplifyContexts();
   buildAliasChecks(AA);
 }
 
 Scop::~Scop() {
   isl_set_free(Context);
   isl_set_free(AssumedContext);
+  isl_set_free(BoundaryContext);
   isl_schedule_free(Schedule);
 
   for (auto It : DomainMap)
@@ -2180,6 +2197,9 @@ std::string Scop::getContextStr() const { return stringFromIslObj(Context); }
 std::string Scop::getAssumedContextStr() const {
   return stringFromIslObj(AssumedContext);
 }
+std::string Scop::getBoundaryContextStr() const {
+  return stringFromIslObj(BoundaryContext);
+}
 
 std::string Scop::getNameStr() const {
   std::string ExitName, EntryName;
@@ -2209,6 +2229,9 @@ __isl_give isl_set *Scop::getAssumedContext() const {
 
 __isl_give isl_set *Scop::getRuntimeCheckContext() const {
   isl_set *RuntimeCheckContext = getAssumedContext();
+  RuntimeCheckContext =
+      isl_set_intersect(RuntimeCheckContext, getBoundaryContext());
+  RuntimeCheckContext = simplifyAssumptionContext(RuntimeCheckContext, *this);
   return RuntimeCheckContext;
 }
 
@@ -2223,6 +2246,10 @@ bool Scop::hasFeasibleRuntimeContext() const {
 void Scop::addAssumption(__isl_take isl_set *Set) {
   AssumedContext = isl_set_intersect(AssumedContext, Set);
   AssumedContext = isl_set_coalesce(AssumedContext);
+}
+
+__isl_give isl_set *Scop::getBoundaryContext() const {
+  return isl_set_copy(BoundaryContext);
 }
 
 void Scop::printContext(raw_ostream &OS) const {
@@ -2242,6 +2269,14 @@ void Scop::printContext(raw_ostream &OS) const {
   }
 
   OS.indent(4) << getAssumedContextStr() << "\n";
+
+  OS.indent(4) << "Boundary Context:\n";
+  if (!BoundaryContext) {
+    OS.indent(4) << "n/a\n\n";
+    return;
+  }
+
+  OS.indent(4) << getBoundaryContextStr() << "\n";
 
   for (const SCEV *Parameter : Parameters) {
     int Dim = ParameterIds.find(Parameter)->second;

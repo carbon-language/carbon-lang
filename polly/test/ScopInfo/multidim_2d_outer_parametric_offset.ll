@@ -10,7 +10,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; }
 
 ; CHECK:  Assumed Context:
-; CHECK:  [m, p] -> {  : }
+; CHECK:  [m, p] -> {  : p <= 9223372036854775708 }
 ; CHECK:  p0: %m
 ; CHECK:  p1: %p
 ; CHECK:  Statements {

@@ -7,7 +7,11 @@
 ; CHECK:    Region: %bb2---%bb24
 ; CHECK:    Max Loop Depth:  1
 ; CHECK:    Context:
-; CHECK:    [N] -> {  : N >= -2147483648 and N <= 2147483647 }
+; CHECK:    [N] -> {  :
+; CHECK-DAG:         N >= -2147483648
+; CHECK-DAG:       and
+; CHECK-DAG:         N <= 2147483647
+; CHECK:           }
 ; CHECK:    Assumed Context:
 ; CHECK:    [N] -> {  :  }
 ; CHECK:    p0: %N

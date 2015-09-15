@@ -28,7 +28,7 @@ exit:
 
 ; Check that we transform this into a pointer difference.
 
-; CODEGEN: %0 = ptrtoint i8* %end to i64
-; CODEGEN: %1 = ptrtoint i8* %start to i64
-; CODEGEN: %2 = sub i64 %0, %1
+; CODEGEN: %[[r0:[._a-zA-Z0-9]]] = ptrtoint i8* %end to i64
+; CODEGEN: %[[r1:[._a-zA-Z0-9]]] = ptrtoint i8* %start to i64
+; CODEGEN: %[[r2:[._a-zA-Z0-9]]] = sub i64 %[[r0]], %[[r1]]
 

@@ -9,7 +9,11 @@
 ; INNERMOST:    Region: %bb9---%bb18
 ; INNERMOST:    Max Loop Depth:  1
 ; INNERMOST:    Context:
-; INNERMOST:    [p_0] -> {  : p_0 >= -2199023255552 and p_0 <= 2199023254528 }
+; INNERMOST:    [p_0] -> {  :
+; INNERMOST-DAG:   p_0 >= -2199023255552
+; INNERMOST-DAG:    and 
+; INNERMOST-DAG:   p_0 <= 2199023254528
+; INNERMOST:             }
 ; INNERMOST:    Assumed Context:
 ; INNERMOST:    [p_0] -> {  :  }
 ; INNERMOST:    p0: {0,+,(sext i32 %N to i64)}<%bb3>

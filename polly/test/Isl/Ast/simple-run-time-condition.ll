@@ -18,7 +18,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; cause any code to be executed are not generated.
 
 ; CHECK: if (
-; CHECK: (o >= 1 && q <= 0 && m + q >= 0)
+; CHECK: (o >= 1 && n + p <= 9223372036854775808 && q <= 0 && m + q >= 0)
 ; CHECK: ||
 ; CHECK; (o <= 0 && m + q >= 100 && q <= 100)
 ; CHECK: )

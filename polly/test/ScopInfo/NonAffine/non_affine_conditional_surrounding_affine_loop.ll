@@ -10,7 +10,11 @@
 ; INNERMOST:    Region: %bb9---%bb17
 ; INNERMOST:    Max Loop Depth:  1
 ; INNERMOST:    Context:
-; INNERMOST:    [N] -> {  : N >= -2147483648 and N <= 2147483647 }
+; INNERMOST:    [N] -> {  :
+; INNERMOST-DAG:          N >= -2147483648
+; INNERMOST-DAG:       and
+; INNERMOST-DAG:          N <= 2147483647
+; INNERMOST            }
 ; INNERMOST:    Assumed Context:
 ; INNERMOST:    [N] -> {  :  }
 ; INNERMOST:    p0: %N

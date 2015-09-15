@@ -35,6 +35,7 @@ struct isl_schedule;
 namespace llvm {
 class Region;
 class BasicBlock;
+class DataLayout;
 class ScalarEvolution;
 }
 
@@ -57,6 +58,14 @@ public:
   __isl_give isl_pw_aff *getPwAff(const llvm::SCEV *E,
                                   llvm::BasicBlock *BB = nullptr);
 
+  /// @brief Compute the context in which integer wrapping is happending.
+  ///
+  /// This context contains all parameter configurations for which we
+  /// know that the wrapping and non-wrapping expressions are different.
+  ///
+  /// @returns The context in which integer wrapping is happening.
+  __isl_give isl_set *getWrappingContext() const;
+
 private:
   /// @brief Key to identify cached expressions.
   using CacheKey = std::pair<const llvm::SCEV *, llvm::BasicBlock *>;
@@ -70,6 +79,27 @@ private:
   const llvm::Region &R;
   llvm::ScalarEvolution &SE;
   llvm::BasicBlock *BB;
+
+  /// @brief Target data for element size computing.
+  const llvm::DataLayout &TD;
+
+  /// @brief Compute the non-wrapping version of @p PWA for type @p ExprType.
+  ///
+  /// @param PWA  The piece-wise affine function that might wrap.
+  /// @param Type The type of the SCEV that was translated to @p PWA.
+  ///
+  /// @returns The expr @p PWA modulo the size constraints of @p ExprType.
+  __isl_give isl_pw_aff *addModuloSemantic(__isl_take isl_pw_aff *PWA,
+                                           llvm::Type *ExprType) const;
+
+  /// @brief Compute the context in which integer wrapping for @p PWA happens.
+  ///
+  /// @returns The context in which integer wrapping happens or nullptr if
+  /// empty.
+  __isl_give isl_set *getWrappingContext(llvm::SCEV::NoWrapFlags Flags,
+                                         llvm::Type *ExprType,
+                                         __isl_keep isl_pw_aff *PWA,
+                                         __isl_keep isl_set *ExprDomain) const;
 
   __isl_give isl_pw_aff *visit(const llvm::SCEV *E);
   __isl_give isl_pw_aff *visitConstant(const llvm::SCEVConstant *E);

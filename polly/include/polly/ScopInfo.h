@@ -950,6 +950,17 @@ private:
   /// this scop and that need to be code generated as a run-time test.
   isl_set *AssumedContext;
 
+  /// @brief The boundary assumptions under which this scop was built.
+  ///
+  /// The boundary context is similar to the assumed context as it contains
+  /// constraints over the parameters we assume to be true. However, the
+  /// boundary context is less useful for dependence analysis and
+  /// simplification purposes as it contains only constraints that affect the
+  /// boundaries of the parameter ranges. As these constraints can become quite
+  /// complex, the boundary context and the assumed context are separated as a
+  /// meassure to save compile time.
+  isl_set *BoundaryContext;
+
   /// @brief The schedule of the SCoP
   ///
   /// The schedule of the SCoP describes the execution order of the statements
@@ -1059,14 +1070,17 @@ private:
   /// @brief Build the Context of the Scop.
   void buildContext();
 
+  /// @brief Build the BoundaryContext based on the wrapping of expressions.
+  void buildBoundaryContext();
+
   /// @brief Add user provided parameter constraints to context.
   void addUserContext();
 
   /// @brief Add the bounds of the parameters to the context.
   void addParameterBounds();
 
-  /// @brief Simplify the assumed context.
-  void simplifyAssumedContext();
+  /// @brief Simplify the assumed and boundary context.
+  void simplifyContexts();
 
   /// @brief Create a new SCoP statement for either @p BB or @p R.
   ///
@@ -1240,6 +1254,11 @@ public:
   ///            to hold.
   void addAssumption(__isl_take isl_set *Set);
 
+  /// @brief Get the boundary context for this Scop.
+  ///
+  /// @return The boundary context of this Scop.
+  __isl_give isl_set *getBoundaryContext() const;
+
   /// @brief Build the alias checks for this SCoP.
   void buildAliasChecks(AliasAnalysis &AA);
 
@@ -1258,6 +1277,9 @@ public:
 
   /// @brief Get an isl string representing the assumed context.
   std::string getAssumedContextStr() const;
+
+  /// @brief Get an isl string representing the boundary context.
+  std::string getBoundaryContextStr() const;
 
   /// @brief Return the stmt for the given @p BB or nullptr if none.
   ScopStmt *getStmtForBasicBlock(BasicBlock *BB) const;

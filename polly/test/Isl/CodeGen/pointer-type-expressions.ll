@@ -46,6 +46,7 @@ return:
 ; CHECK:     Stmt_store(c0);
 ; CHECK: }
 
-; CODEGEN:   %0 = bitcast float* %P to i8*
-; CODEGEN:   %1 = icmp ule i8* %0, inttoptr (i64 -1 to i8*)
+; CODEGEN:   %[[R0:[0-9]*]] = bitcast float* %P to i8*
+; CODEGEN:   %[[R1:[0-9]*]] = bitcast float* %P to i8*
+; CODEGEN-NEXT:   icmp ule i8* %[[R1]], inttoptr (i64 -1 to i8*)
 

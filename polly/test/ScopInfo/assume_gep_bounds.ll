@@ -20,6 +20,8 @@
 ; CHECK-DAG:                    p <= 30
 ; CHECK-DAG:                     and
 ; CHECK-DAG:                    m <= 20
+; CHECK-DAG:                     and
+; CHECK-DAG:                    p <= 2305843009213694582 - 600n - 30m
 ; CHECK:                   }
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"

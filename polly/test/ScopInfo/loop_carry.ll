@@ -45,8 +45,6 @@ bb2:                                              ; preds = %bb, %entry
   ret i64 0
 }
 
-; CHECK: Context:
-; CHECK: [n] -> { : }
 ; CHECK:     Statements {
 ; CHECK:     	Stmt_bb
 ; CHECK:             Domain :=
