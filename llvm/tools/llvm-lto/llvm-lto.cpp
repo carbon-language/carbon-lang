@@ -36,10 +36,6 @@ OptLevel("O",
          cl::ZeroOrMore,
          cl::init('2'));
 
-static cl::opt<bool> DisableVerify(
-    "disable-verify", cl::init(false),
-    cl::desc("Do not run the verifier during the optimization pipeline"));
-
 static cl::opt<bool>
 DisableInline("disable-inlining", cl::init(false),
   cl::desc("Do not run the inliner pass"));
@@ -252,7 +248,7 @@ int main(int argc, char **argv) {
 
   if (!OutputFilename.empty()) {
     std::string ErrorInfo;
-    if (!CodeGen.optimize(DisableVerify, DisableInline, DisableGVNLoadPRE,
+    if (!CodeGen.optimize(DisableInline, DisableGVNLoadPRE,
                           DisableLTOVectorization, ErrorInfo)) {
       errs() << argv[0] << ": error optimizing the code: " << ErrorInfo << "\n";
       return 1;
@@ -289,7 +285,7 @@ int main(int argc, char **argv) {
 
     std::string ErrorInfo;
     const char *OutputName = nullptr;
-    if (!CodeGen.compile_to_file(&OutputName, DisableVerify, DisableInline,
+    if (!CodeGen.compile_to_file(&OutputName, DisableInline,
                                  DisableGVNLoadPRE, DisableLTOVectorization,
                                  ErrorInfo)) {
       errs() << argv[0]

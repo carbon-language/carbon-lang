@@ -43,16 +43,6 @@ static cl::opt<bool>
 DisableLTOVectorization("disable-lto-vectorization", cl::init(false),
   cl::desc("Do not run loop or slp vectorization during LTO"));
 
-#ifdef NDEBUG
-static bool VerifyByDefault = false;
-#else
-static bool VerifyByDefault = true;
-#endif
-
-static cl::opt<bool> DisableVerify(
-    "disable-llvm-verifier", cl::init(!VerifyByDefault),
-    cl::desc("Don't run the LLVM verifier during the optimization pipeline"));
-
 // Holds most recent error string.
 // *** Not thread safe ***
 static std::string sLastErrorString;
@@ -331,9 +321,8 @@ bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
 const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
   maybeParseOptions(cg);
   LibLTOCodeGenerator *CG = unwrap(cg);
-  CG->NativeObjectFile =
-      CG->compile(DisableVerify, DisableInline, DisableGVNLoadPRE,
-                  DisableLTOVectorization, sLastErrorString);
+  CG->NativeObjectFile = CG->compile(DisableInline, DisableGVNLoadPRE,
+                                     DisableLTOVectorization, sLastErrorString);
   if (!CG->NativeObjectFile)
     return nullptr;
   *length = CG->NativeObjectFile->getBufferSize();
@@ -342,8 +331,9 @@ const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
 
 bool lto_codegen_optimize(lto_code_gen_t cg) {
   maybeParseOptions(cg);
-  return !unwrap(cg)->optimize(DisableVerify, DisableInline, DisableGVNLoadPRE,
-                               DisableLTOVectorization, sLastErrorString);
+  return !unwrap(cg)->optimize(DisableInline,
+                               DisableGVNLoadPRE, DisableLTOVectorization,
+                               sLastErrorString);
 }
 
 const void *lto_codegen_compile_optimized(lto_code_gen_t cg, size_t *length) {
@@ -359,7 +349,7 @@ const void *lto_codegen_compile_optimized(lto_code_gen_t cg, size_t *length) {
 bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
   maybeParseOptions(cg);
   return !unwrap(cg)->compile_to_file(
-      name, DisableVerify, DisableInline, DisableGVNLoadPRE,
+      name, DisableInline, DisableGVNLoadPRE,
       DisableLTOVectorization, sLastErrorString);
 }
 
