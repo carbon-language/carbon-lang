@@ -11,6 +11,7 @@ class TestGoASTContext(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
+    @skipIfRemote # Not remote test suit ready
     @skipUnlessGoInstalled
     def test_with_dsym_and_python_api(self):
         """Test GoASTContext dwarf parsing."""
