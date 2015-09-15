@@ -477,14 +477,19 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
         SymbolBody *Body = File->getSymbolBody(SymIndex);
         if (!Body)
           continue;
-        // Skip unsupported for now.
-        auto *DR = dyn_cast<DefinedRegular<ELFT>>(Body);
-        if (!DR)
+
+        uintX_t SymVA;
+        if (auto *DR = dyn_cast<DefinedRegular<ELFT>>(Body))
+          SymVA = getSymVA<ELFT>(DR);
+        else if (auto *DA = dyn_cast<DefinedAbsolute<ELFT>>(Body))
+          SymVA = DA->Sym.st_value;
+        else
+          // Skip unsupported for now.
           continue;
+
         uintX_t Offset = RI.r_offset;
         uint32_t Type = RI.getType(EObj->isMips64EL());
         uintX_t P = this->getVA() + C->getOutputSectionOff();
-        uintX_t SymVA = getSymVA<ELFT>(DR);
         uint8_t *Location = Base + Offset;
         switch (Type) {
         case llvm::ELF::R_X86_64_PC32:
