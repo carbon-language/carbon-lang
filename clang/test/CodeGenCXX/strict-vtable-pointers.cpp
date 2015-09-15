@@ -2,6 +2,7 @@
 // RUN: FileCheck --check-prefix=CHECK-CTORS %s < %t.ll
 // RUN: FileCheck --check-prefix=CHECK-NEW %s < %t.ll
 // RUN: FileCheck --check-prefix=CHECK-DTORS %s < %t.ll
+// RUN: FileCheck --check-prefix=CHECK-LINK-REQ %s < %t.ll
 
 typedef __typeof__(sizeof(0)) size_t;
 void *operator new(size_t, void*) throw();
@@ -191,3 +192,11 @@ struct DynamicFromStatic;
 // CHECK-DTORS-LABEL: define linkonce_odr void @_ZN14DynamicDerivedD2Ev
 // CHECK-DTORS-NOT: call i8* @llvm.invariant.group.barrier(
 // CHECK-DTORS-LABEL: }
+
+
+// CHECK-LINK-REQ: !llvm.module.flags = !{![[FIRST:.*]], ![[SEC:.*]]{{.*}}}
+
+// CHECK-LINK-REQ: ![[FIRST]] = !{i32 1, !"StrictVTablePointers", i32 1}
+// CHECK-LINK-REQ: ![[SEC]] = !{i32 3, !"StrictVTablePointersRequirement", ![[META:.*]]}
+// CHECK-LINK-REQ: ![[META]] = !{!"StrictVTablePointers", i32 1}
+
