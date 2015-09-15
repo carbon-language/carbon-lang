@@ -296,8 +296,8 @@ void e() {
 namespace test9 {
 
 struct S {
-  __attribute__((visibility("hidden"))) S();
-  virtual void doStuff();
+  S();
+  __attribute__((visibility("hidden"))) virtual void doStuff();
 };
 
 // CHECK9-LABEL: define void @_ZN5test94testEv()
