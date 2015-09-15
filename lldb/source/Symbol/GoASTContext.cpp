@@ -903,6 +903,7 @@ GoASTContext::GetBitSize(void *type, ExecutionContextScope *exe_scope)
         default:
             assert(false);
     }
+    return 0;
 }
 
 lldb::Encoding
@@ -1172,6 +1173,7 @@ size_t
 GoASTContext::ConvertStringToFloatValue(void *type, const char *s, uint8_t *dst, size_t dst_size)
 {
     assert(false);
+    return 0;
 }
 //----------------------------------------------------------------------
 // Dumping types
