@@ -199,6 +199,7 @@ DW_OP_value_to_name (uint32_t val)
     case 0x99: return "DW_OP_call4";
     case 0x9a: return "DW_OP_call_ref";
     case 0xfb: return "DW_OP_GNU_addr_index";
+    case 0xfc: return "DW_OP_GNU_const_index";
 //    case DW_OP_APPLE_array_ref: return "DW_OP_APPLE_array_ref";
 //    case DW_OP_APPLE_extern: return "DW_OP_APPLE_extern";
     case DW_OP_APPLE_uninit: return "DW_OP_APPLE_uninit";
@@ -637,6 +638,9 @@ DWARFExpression::DumpLocation (Stream *s, lldb::offset_t offset, lldb::offset_t 
         case DW_OP_GNU_addr_index:                                          // 0xfb
             s->Printf("DW_OP_GNU_addr_index(0x%" PRIx64 ")", m_data.GetULEB128(&offset));
             break;
+        case DW_OP_GNU_const_index:                                         // 0xfc
+            s->Printf("DW_OP_GNU_const_index(0x%" PRIx64 ")", m_data.GetULEB128(&offset));
+            break;
         case DW_OP_GNU_push_tls_address:
             s->PutCString("DW_OP_GNU_push_tls_address");  // 0xe0
             break;
@@ -1040,9 +1044,10 @@ GetOpcodeDataSize (const DataExtractor &data, const lldb::offset_t data_offset, 
         case DW_OP_regx:        // 0x90 1 ULEB128 register
         case DW_OP_fbreg:       // 0x91 1 SLEB128 offset
         case DW_OP_piece:       // 0x93 1 ULEB128 size of piece addressed
-        case DW_OP_GNU_addr_index: // 0xfb 1 ULEB128 index
+        case DW_OP_GNU_addr_index:  // 0xfb 1 ULEB128 index
+        case DW_OP_GNU_const_index: // 0xfc 1 ULEB128 index
             data.Skip_LEB128(&offset); 
-            return offset - data_offset;   
+            return offset - data_offset;
             
             // All opcodes that have a 2 ULEB (signed or unsigned) arguments
         case DW_OP_bregx:       // 0x92 2 ULEB128 register followed by SLEB128 offset
@@ -3022,7 +3027,7 @@ DWARFExpression::Evaluate
                 if (!dwarf_cu)
                 {
                     if (error_ptr)
-                        error_ptr->SetErrorString ("DW_OP_GNU_addr_index found without a compile being specified");
+                        error_ptr->SetErrorString ("DW_OP_GNU_addr_index found without a compile unit being specified");
                     return false;
                 }
                 uint64_t index = opcodes.GetULEB128(&offset);
@@ -3032,6 +3037,43 @@ DWARFExpression::Evaluate
                 uint64_t value = dwarf_cu->GetSymbolFileDWARF()->get_debug_addr_data().GetMaxU64(&offset, index_size);
                 stack.push_back(Scalar(value));
                 stack.back().SetValueType(Value::eValueTypeFileAddress);
+            }
+            break;
+
+        //----------------------------------------------------------------------
+        // OPCODE: DW_OP_GNU_const_index
+        // OPERANDS: 1
+        //      ULEB128: index to the .debug_addr section
+        // DESCRIPTION: Pushes an constant with the size of a machine address to
+        // the stack from the .debug_addr section with the base address specified
+        // by the DW_AT_addr_base attribute and the 0 based index is the ULEB128
+        // encoded index.
+        //----------------------------------------------------------------------
+        case DW_OP_GNU_const_index:
+            {
+                if (!dwarf_cu)
+                {
+                    if (error_ptr)
+                        error_ptr->SetErrorString ("DW_OP_GNU_const_index found without a compile unit being specified");
+                    return false;
+                }
+                uint64_t index = opcodes.GetULEB128(&offset);
+                uint32_t index_size = dwarf_cu->GetAddressByteSize();
+                dw_offset_t addr_base = dwarf_cu->GetAddrBase();
+                lldb::offset_t offset = addr_base + index * index_size;
+                const DWARFDataExtractor& debug_addr = dwarf_cu->GetSymbolFileDWARF()->get_debug_addr_data();
+                switch (index_size)
+                {
+                    case 4:
+                        stack.push_back(Scalar(debug_addr.GetU32(&offset)));
+                        break;
+                    case 8:
+                        stack.push_back(Scalar(debug_addr.GetU64(&offset)));
+                        break;
+                    default:
+                        assert(false && "Unhandled index size");
+                        return false;
+                }
             }
             break;
 

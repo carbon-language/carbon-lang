@@ -442,7 +442,7 @@ protected:
     DataExtractor m_data;                       ///< A data extractor capable of reading opcode bytes
     DWARFCompileUnit* m_dwarf_cu;               ///< The DWARF compile unit this expression belongs to. It is used
                                                 ///< to evaluate values indexing into the .debug_addr section (e.g.
-                                                ///< DW_OP_GNU_addr_index
+                                                ///< DW_OP_GNU_addr_index, DW_OP_GNU_const_index)
     lldb::RegisterKind m_reg_kind;              ///< One of the defines that starts with LLDB_REGKIND_
     lldb::addr_t m_loclist_slide;               ///< A value used to slide the location list offsets so that 
                                                 ///< they are relative to the object that owns the location list

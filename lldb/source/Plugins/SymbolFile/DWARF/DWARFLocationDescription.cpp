@@ -150,6 +150,7 @@ print_dwarf_exp_op (Stream &s,
         case DW_OP_regx:
             size = 128; break;
         case DW_OP_GNU_addr_index:
+        case DW_OP_GNU_const_index:
             size = 128; break;
         default:
             s.Printf("UNKNOWN ONE-OPERAND OPCODE, #%u", opcode);
