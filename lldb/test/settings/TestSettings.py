@@ -165,7 +165,7 @@ class SettingsCommandTestCase(TestBase):
         self.expect("settings show auto-confirm", SETTING_MSG("auto-confirm"),
             startstr = "auto-confirm (boolean) = false")
 
-    @skipUnlessArch(['x86-64', 'i386', 'i686'])
+    @skipUnlessArch(['x86_64', 'i386', 'i686'])
     def test_disassembler_settings(self):
         """Test that user options for the disassembler take effect."""
         self.buildDefault()
@@ -449,7 +449,7 @@ class SettingsCommandTestCase(TestBase):
                 SETTING_MSG("disassembly-format"),
                 substrs = [ 'disassembly-format (format-string) = "foo "'])
         self.runCmd("settings clear disassembly-format", check=False)
-        
+
     def test_all_settings_exist (self):
         self.expect ("settings show",
                      substrs = [ "auto-confirm",

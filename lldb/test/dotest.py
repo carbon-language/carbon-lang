@@ -20,15 +20,20 @@ Type:
 for available options.
 """
 
+import atexit
 import commands
+import importlib
 import os
 import dotest_args
 import errno
 import platform
 import progress
 import signal
+import socket
 import subprocess
 import sys
+import test_results
+from test_results import EventBuilder
 import inspect
 import unittest2
 import lldbtest_config
@@ -250,6 +255,14 @@ num_threads = None
 output_on_success = False
 no_multiprocess_test_runner = False
 test_runner_name = None
+
+# Test results handling globals
+results_filename = None
+results_port = None
+results_file_object = None
+results_formatter_name = None
+results_formatter_object = None
+results_formatter_options = None
 
 def usage(parser):
     parser.print_help()
@@ -497,6 +510,10 @@ def parseOptionsAndInitTestdirs():
     global output_on_success
     global no_multiprocess_test_runner
     global test_runner_name
+    global results_filename
+    global results_formatter_name
+    global results_formatter_options
+    global results_port
 
     do_help = False
 
@@ -782,6 +799,24 @@ def parseOptionsAndInitTestdirs():
     if args.test_runner_name:
         test_runner_name = args.test_runner_name
 
+    # Capture test results-related args.
+    if args.results_file:
+        results_filename = args.results_file
+
+    if args.results_port:
+        results_port = args.results_port
+
+    if args.results_file and args.results_port:
+        sys.stderr.write(
+            "only one of --results-file and --results-port should "
+            "be specified\n")
+        usage(args)
+
+    if args.results_formatter:
+        results_formatter_name = args.results_formatter
+    if args.results_formatter_options:
+        results_formatter_options = args.results_formatter_options
+
     if args.lldb_platform_name:
         lldb_platform_name = args.lldb_platform_name
     if args.lldb_platform_url:
@@ -885,6 +920,85 @@ def getXcodeOutputPaths(lldbRootDirectory):
             result.append(outputPath)
 
     return result
+
+
+def createSocketToLocalPort(port):
+    def socket_closer(s):
+        """Close down an opened socket properly."""
+        s.shutdown(socket.SHUT_RDWR)
+        s.close()
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect(("localhost", port))
+    return (sock, lambda: socket_closer(sock))
+
+
+def setupTestResults():
+    """Sets up test results-related objects based on arg settings."""
+    global results_filename
+    global results_file_object
+    global results_formatter_name
+    global results_formatter_object
+    global results_formatter_options
+    global results_port
+
+    default_formatter_name = None
+    cleanup_func = None
+
+    if results_filename:
+        # Open the results file for writing.
+        results_file_object = open(results_filename, "w")
+        cleanup_func = results_file_object.close
+        default_formatter_name = "test_results.XunitFormatter"
+    elif results_port:
+        # Connect to the specified localhost port.
+        results_file_object, cleanup_func = createSocketToLocalPort(
+            results_port)
+        default_formatter_name = "test_results.RawPickledFormatter"
+
+    if results_file_object:
+        # We care about the formatter.  Choose user-specified or, if
+        # none specified, use the default for the output type.
+        if results_formatter_name:
+            formatter_name = results_formatter_name
+        else:
+            formatter_name = default_formatter_name
+
+        # Create an instance of the class.  First figure out the package/module.
+        components = formatter_name.split(".")
+        module = importlib.import_module(".".join(components[:-1]))
+
+        # Create the class name we need to load.
+        clazz = getattr(module, components[-1])
+
+        # Handle formatter options for the results formatter class.
+        formatter_arg_parser = clazz.arg_parser()
+        if results_formatter_options and len(results_formatter_options) > 0:
+            import shlex
+            split_options = shlex.split(results_formatter_options)
+        else:
+            split_options = []
+
+        formatter_options = formatter_arg_parser.parse_args(split_options)
+
+        # Create the TestResultsFormatter given the processed options.
+        results_formatter_object = clazz(results_file_object, formatter_options)
+
+        # Start the results formatter session - we'll only have one
+        # during a given dotest process invocation.
+        results_formatter_object.begin_session()
+
+        def shutdown_formatter():
+            # Tell the formatter to write out anything it may have
+            # been saving until the very end (e.g. xUnit results
+            # can't complete its output until this point).
+            results_formatter_object.end_session()
+
+            # And now close out the output file-like object.
+            cleanup_func()
+
+        atexit.register(shutdown_formatter)
+
 
 def getOutputPaths(lldbRootDirectory):
     """
@@ -1293,13 +1407,20 @@ if __name__ == "__main__":
     #
     parseOptionsAndInitTestdirs()
 
+    # Setup test results (test results formatter and output handling).
+    setupTestResults()
+
     # If we are running as the multiprocess test runner, kick off the
     # multiprocess test runner here.
     if isMultiprocessTestRunner():
         import dosep
         dosep.main(output_on_success, num_threads, multiprocess_test_subdir,
-                   test_runner_name)
+                   test_runner_name, results_formatter_object)
         raise Exception("should never get here")
+    elif is_inferior_test_runner:
+        # Shut off Ctrl-C processing in inferiors.  The parallel
+        # test runner handles this more holistically.
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     setupSysPath()
     setupCrashInfoHook()
@@ -1653,6 +1774,7 @@ if __name__ == "__main__":
                             self.progressbar = progress.ProgressWithEvents(stdout=self.stream,start=0,end=suite.countTestCases(),width=width-10)
                         except:
                             self.progressbar = None
+                    self.results_formatter = results_formatter_object
 
                 def _config_string(self, test):
                   compiler = getattr(test, "getCompiler", None)
@@ -1729,12 +1851,18 @@ if __name__ == "__main__":
                     if self.showAll:
                         self.stream.write(self.fmt % self.counter)
                     super(LLDBTestResult, self).startTest(test)
+                    if self.results_formatter:
+                        self.results_formatter.process_event(
+                            EventBuilder.event_for_start(test))
 
                 def addSuccess(self, test):
                     global parsable
                     super(LLDBTestResult, self).addSuccess(test)
                     if parsable:
                         self.stream.write("PASS: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+                    if self.results_formatter:
+                        self.results_formatter.process_event(
+                            EventBuilder.event_for_success(test))
 
                 def addError(self, test, err):
                     global sdir_has_content
@@ -1746,6 +1874,9 @@ if __name__ == "__main__":
                         method()
                     if parsable:
                         self.stream.write("FAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+                    if self.results_formatter:
+                        self.results_formatter.process_event(
+                            EventBuilder.event_for_error(test, err))
 
                 def addCleanupError(self, test, err):
                     global sdir_has_content
@@ -1757,6 +1888,10 @@ if __name__ == "__main__":
                         method()
                     if parsable:
                         self.stream.write("CLEANUP ERROR: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+                    if self.results_formatter:
+                        self.results_formatter.process_event(
+                            EventBuilder.event_for_cleanup_error(
+                                test, err))
 
                 def addFailure(self, test, err):
                     global sdir_has_content
@@ -1776,6 +1911,10 @@ if __name__ == "__main__":
                                 failuresPerCategory[category] = failuresPerCategory[category] + 1
                             else:
                                 failuresPerCategory[category] = 1
+                    if self.results_formatter:
+                        self.results_formatter.process_event(
+                            EventBuilder.event_for_failure(test, err))
+
 
                 def addExpectedFailure(self, test, err, bugnumber):
                     global sdir_has_content
@@ -1787,6 +1926,10 @@ if __name__ == "__main__":
                         method(err, bugnumber)
                     if parsable:
                         self.stream.write("XFAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+                    if self.results_formatter:
+                        self.results_formatter.process_event(
+                            EventBuilder.event_for_expected_failure(
+                            test, err, bugnumber))
 
                 def addSkip(self, test, reason):
                     global sdir_has_content
@@ -1798,6 +1941,9 @@ if __name__ == "__main__":
                         method()
                     if parsable:
                         self.stream.write("UNSUPPORTED: LLDB (%s) :: %s (%s) \n" % (self._config_string(test), str(test), reason))
+                    if self.results_formatter:
+                        self.results_formatter.process_event(
+                            EventBuilder.event_for_skip(test, reason))
 
                 def addUnexpectedSuccess(self, test, bugnumber):
                     global sdir_has_content
@@ -1809,6 +1955,11 @@ if __name__ == "__main__":
                         method(bugnumber)
                     if parsable:
                         self.stream.write("XPASS: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+                    if self.results_formatter:
+                        self.results_formatter.process_event(
+                            EventBuilder.event_for_unexpected_success(
+                                test, bugnumber))
+
 
             if parsable:
                 v = 0

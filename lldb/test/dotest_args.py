@@ -140,6 +140,31 @@ def create_parser():
               ' multiprocessing-pool, serial, threading, threading-pool')
     )
 
+    # Test results support.
+    group = parser.add_argument_group('Test results options')
+    group.add_argument(
+        '--results-file',
+        action='store',
+        help=('Specifies the file where test results will be written '
+              'according to the results-formatter class used'))
+    group.add_argument(
+        '--results-port',
+        action='store',
+        type=int,
+        help=('Specifies the localhost port to which the results '
+              'formatted output should be sent'))
+    group.add_argument(
+        '--results-formatter',
+        action='store',
+        help=('Specifies the full package/module/class name used to translate '
+              'test events into some kind of meaningful report, written to '
+              'the designated output results file-like object'))
+    group.add_argument(
+        '--results-formatter-options',
+        action='store',
+        help=('Specify comma-separated options to pass to the formatter. '
+              'Use --results-formatter-options="--option1[,--option2[,...]]" '
+              'syntax.  Note the "=" is critical, and don\'t use whitespace.'))
     # Remove the reference to our helper function
     del X
 
