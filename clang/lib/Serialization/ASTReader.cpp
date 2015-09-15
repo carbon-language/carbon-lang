@@ -5781,9 +5781,14 @@ QualType ASTReader::GetType(TypeID ID) {
   if (Index < NUM_PREDEF_TYPE_IDS) {
     QualType T;
     switch ((PredefinedTypeIDs)Index) {
-    case PREDEF_TYPE_NULL_ID: return QualType();
-    case PREDEF_TYPE_VOID_ID: T = Context.VoidTy; break;
-    case PREDEF_TYPE_BOOL_ID: T = Context.BoolTy; break;
+    case PREDEF_TYPE_NULL_ID:
+      return QualType();
+    case PREDEF_TYPE_VOID_ID:
+      T = Context.VoidTy;
+      break;
+    case PREDEF_TYPE_BOOL_ID:
+      T = Context.BoolTy;
+      break;
 
     case PREDEF_TYPE_CHAR_U_ID:
     case PREDEF_TYPE_CHAR_S_ID:
@@ -5791,39 +5796,105 @@ QualType ASTReader::GetType(TypeID ID) {
       T = Context.CharTy;
       break;
 
-    case PREDEF_TYPE_UCHAR_ID:      T = Context.UnsignedCharTy;     break;
-    case PREDEF_TYPE_USHORT_ID:     T = Context.UnsignedShortTy;    break;
-    case PREDEF_TYPE_UINT_ID:       T = Context.UnsignedIntTy;      break;
-    case PREDEF_TYPE_ULONG_ID:      T = Context.UnsignedLongTy;     break;
-    case PREDEF_TYPE_ULONGLONG_ID:  T = Context.UnsignedLongLongTy; break;
-    case PREDEF_TYPE_UINT128_ID:    T = Context.UnsignedInt128Ty;   break;
-    case PREDEF_TYPE_SCHAR_ID:      T = Context.SignedCharTy;       break;
-    case PREDEF_TYPE_WCHAR_ID:      T = Context.WCharTy;            break;
-    case PREDEF_TYPE_SHORT_ID:      T = Context.ShortTy;            break;
-    case PREDEF_TYPE_INT_ID:        T = Context.IntTy;              break;
-    case PREDEF_TYPE_LONG_ID:       T = Context.LongTy;             break;
-    case PREDEF_TYPE_LONGLONG_ID:   T = Context.LongLongTy;         break;
-    case PREDEF_TYPE_INT128_ID:     T = Context.Int128Ty;           break;
-    case PREDEF_TYPE_HALF_ID:       T = Context.HalfTy;             break;
-    case PREDEF_TYPE_FLOAT_ID:      T = Context.FloatTy;            break;
-    case PREDEF_TYPE_DOUBLE_ID:     T = Context.DoubleTy;           break;
-    case PREDEF_TYPE_LONGDOUBLE_ID: T = Context.LongDoubleTy;       break;
-    case PREDEF_TYPE_OVERLOAD_ID:   T = Context.OverloadTy;         break;
-    case PREDEF_TYPE_BOUND_MEMBER:  T = Context.BoundMemberTy;      break;
-    case PREDEF_TYPE_PSEUDO_OBJECT: T = Context.PseudoObjectTy;     break;
-    case PREDEF_TYPE_DEPENDENT_ID:  T = Context.DependentTy;        break;
-    case PREDEF_TYPE_UNKNOWN_ANY:   T = Context.UnknownAnyTy;       break;
-    case PREDEF_TYPE_NULLPTR_ID:    T = Context.NullPtrTy;          break;
-    case PREDEF_TYPE_CHAR16_ID:     T = Context.Char16Ty;           break;
-    case PREDEF_TYPE_CHAR32_ID:     T = Context.Char32Ty;           break;
-    case PREDEF_TYPE_OBJC_ID:       T = Context.ObjCBuiltinIdTy;    break;
-    case PREDEF_TYPE_OBJC_CLASS:    T = Context.ObjCBuiltinClassTy; break;
-    case PREDEF_TYPE_OBJC_SEL:      T = Context.ObjCBuiltinSelTy;   break;
-    case PREDEF_TYPE_IMAGE1D_ID:    T = Context.OCLImage1dTy;       break;
-    case PREDEF_TYPE_IMAGE1D_ARR_ID: T = Context.OCLImage1dArrayTy; break;
-    case PREDEF_TYPE_IMAGE1D_BUFF_ID: T = Context.OCLImage1dBufferTy; break;
-    case PREDEF_TYPE_IMAGE2D_ID:    T = Context.OCLImage2dTy;       break;
-    case PREDEF_TYPE_IMAGE2D_ARR_ID: T = Context.OCLImage2dArrayTy; break;
+    case PREDEF_TYPE_UCHAR_ID:
+      T = Context.UnsignedCharTy;
+      break;
+    case PREDEF_TYPE_USHORT_ID:
+      T = Context.UnsignedShortTy;
+      break;
+    case PREDEF_TYPE_UINT_ID:
+      T = Context.UnsignedIntTy;
+      break;
+    case PREDEF_TYPE_ULONG_ID:
+      T = Context.UnsignedLongTy;
+      break;
+    case PREDEF_TYPE_ULONGLONG_ID:
+      T = Context.UnsignedLongLongTy;
+      break;
+    case PREDEF_TYPE_UINT128_ID:
+      T = Context.UnsignedInt128Ty;
+      break;
+    case PREDEF_TYPE_SCHAR_ID:
+      T = Context.SignedCharTy;
+      break;
+    case PREDEF_TYPE_WCHAR_ID:
+      T = Context.WCharTy;
+      break;
+    case PREDEF_TYPE_SHORT_ID:
+      T = Context.ShortTy;
+      break;
+    case PREDEF_TYPE_INT_ID:
+      T = Context.IntTy;
+      break;
+    case PREDEF_TYPE_LONG_ID:
+      T = Context.LongTy;
+      break;
+    case PREDEF_TYPE_LONGLONG_ID:
+      T = Context.LongLongTy;
+      break;
+    case PREDEF_TYPE_INT128_ID:
+      T = Context.Int128Ty;
+      break;
+    case PREDEF_TYPE_HALF_ID:
+      T = Context.HalfTy;
+      break;
+    case PREDEF_TYPE_FLOAT_ID:
+      T = Context.FloatTy;
+      break;
+    case PREDEF_TYPE_DOUBLE_ID:
+      T = Context.DoubleTy;
+      break;
+    case PREDEF_TYPE_LONGDOUBLE_ID:
+      T = Context.LongDoubleTy;
+      break;
+    case PREDEF_TYPE_OVERLOAD_ID:
+      T = Context.OverloadTy;
+      break;
+    case PREDEF_TYPE_BOUND_MEMBER:
+      T = Context.BoundMemberTy;
+      break;
+    case PREDEF_TYPE_PSEUDO_OBJECT:
+      T = Context.PseudoObjectTy;
+      break;
+    case PREDEF_TYPE_DEPENDENT_ID:
+      T = Context.DependentTy;
+      break;
+    case PREDEF_TYPE_UNKNOWN_ANY:
+      T = Context.UnknownAnyTy;
+      break;
+    case PREDEF_TYPE_NULLPTR_ID:
+      T = Context.NullPtrTy;
+      break;
+    case PREDEF_TYPE_CHAR16_ID:
+      T = Context.Char16Ty;
+      break;
+    case PREDEF_TYPE_CHAR32_ID:
+      T = Context.Char32Ty;
+      break;
+    case PREDEF_TYPE_OBJC_ID:
+      T = Context.ObjCBuiltinIdTy;
+      break;
+    case PREDEF_TYPE_OBJC_CLASS:
+      T = Context.ObjCBuiltinClassTy;
+      break;
+    case PREDEF_TYPE_OBJC_SEL:
+      T = Context.ObjCBuiltinSelTy;
+      break;
+    case PREDEF_TYPE_IMAGE1D_ID:
+      T = Context.OCLImage1dTy;
+      break;
+    case PREDEF_TYPE_IMAGE1D_ARR_ID:
+      T = Context.OCLImage1dArrayTy;
+      break;
+    case PREDEF_TYPE_IMAGE1D_BUFF_ID:
+      T = Context.OCLImage1dBufferTy;
+      break;
+    case PREDEF_TYPE_IMAGE2D_ID:
+      T = Context.OCLImage2dTy;
+      break;
+    case PREDEF_TYPE_IMAGE2D_ARR_ID:
+      T = Context.OCLImage2dArrayTy;
+      break;
     case PREDEF_TYPE_IMAGE2D_DEP_ID:
       T = Context.OCLImage2dDepthTy;
       break;
@@ -5842,9 +5913,15 @@ QualType ASTReader::GetType(TypeID ID) {
     case PREDEF_TYPE_IMAGE2D_ARR_MSAA_DEPTH_ID:
       T = Context.OCLImage2dArrayMSAADepthTy;
       break;
-    case PREDEF_TYPE_IMAGE3D_ID:    T = Context.OCLImage3dTy;       break;
-    case PREDEF_TYPE_SAMPLER_ID:    T = Context.OCLSamplerTy;       break;
-    case PREDEF_TYPE_EVENT_ID:      T = Context.OCLEventTy;         break;
+    case PREDEF_TYPE_IMAGE3D_ID:
+      T = Context.OCLImage3dTy;
+      break;
+    case PREDEF_TYPE_SAMPLER_ID:
+      T = Context.OCLSamplerTy;
+      break;
+    case PREDEF_TYPE_EVENT_ID:
+      T = Context.OCLEventTy;
+      break;
     case PREDEF_TYPE_CLK_EVENT_ID:
       T = Context.OCLClkEventTy;
       break;
@@ -5857,10 +5934,12 @@ QualType ASTReader::GetType(TypeID ID) {
     case PREDEF_TYPE_RESERVE_ID_ID:
       T = Context.OCLReserveIDTy;
       break;
-    case PREDEF_TYPE_AUTO_DEDUCT:   T = Context.getAutoDeductType(); break;
-        
-    case PREDEF_TYPE_AUTO_RREF_DEDUCT: 
-      T = Context.getAutoRRefDeductType(); 
+    case PREDEF_TYPE_AUTO_DEDUCT:
+      T = Context.getAutoDeductType();
+      break;
+
+    case PREDEF_TYPE_AUTO_RREF_DEDUCT:
+      T = Context.getAutoRRefDeductType();
       break;
 
     case PREDEF_TYPE_ARC_UNBRIDGED_CAST:

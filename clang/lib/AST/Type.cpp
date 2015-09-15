@@ -2490,46 +2490,85 @@ const char *Type::getTypeClassName() const {
 
 StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
   switch (getKind()) {
-  case Void:              return "void";
-  case Bool:              return Policy.Bool ? "bool" : "_Bool";
-  case Char_S:            return "char";
-  case Char_U:            return "char";
-  case SChar:             return "signed char";
-  case Short:             return "short";
-  case Int:               return "int";
-  case Long:              return "long";
-  case LongLong:          return "long long";
-  case Int128:            return "__int128";
-  case UChar:             return "unsigned char";
-  case UShort:            return "unsigned short";
-  case UInt:              return "unsigned int";
-  case ULong:             return "unsigned long";
-  case ULongLong:         return "unsigned long long";
-  case UInt128:           return "unsigned __int128";
-  case Half:              return Policy.Half ? "half" : "__fp16";
-  case Float:             return "float";
-  case Double:            return "double";
-  case LongDouble:        return "long double";
+  case Void:
+    return "void";
+  case Bool:
+    return Policy.Bool ? "bool" : "_Bool";
+  case Char_S:
+    return "char";
+  case Char_U:
+    return "char";
+  case SChar:
+    return "signed char";
+  case Short:
+    return "short";
+  case Int:
+    return "int";
+  case Long:
+    return "long";
+  case LongLong:
+    return "long long";
+  case Int128:
+    return "__int128";
+  case UChar:
+    return "unsigned char";
+  case UShort:
+    return "unsigned short";
+  case UInt:
+    return "unsigned int";
+  case ULong:
+    return "unsigned long";
+  case ULongLong:
+    return "unsigned long long";
+  case UInt128:
+    return "unsigned __int128";
+  case Half:
+    return Policy.Half ? "half" : "__fp16";
+  case Float:
+    return "float";
+  case Double:
+    return "double";
+  case LongDouble:
+    return "long double";
   case WChar_S:
-  case WChar_U:           return Policy.MSWChar ? "__wchar_t" : "wchar_t";
-  case Char16:            return "char16_t";
-  case Char32:            return "char32_t";
-  case NullPtr:           return "nullptr_t";
-  case Overload:          return "<overloaded function type>";
-  case BoundMember:       return "<bound member function type>";
-  case PseudoObject:      return "<pseudo-object type>";
-  case Dependent:         return "<dependent type>";
-  case UnknownAny:        return "<unknown type>";
-  case ARCUnbridgedCast:  return "<ARC unbridged cast type>";
-  case BuiltinFn:         return "<builtin fn type>";
-  case ObjCId:            return "id";
-  case ObjCClass:         return "Class";
-  case ObjCSel:           return "SEL";
-  case OCLImage1d:        return "image1d_t";
-  case OCLImage1dArray:   return "image1d_array_t";
-  case OCLImage1dBuffer:  return "image1d_buffer_t";
-  case OCLImage2d:        return "image2d_t";
-  case OCLImage2dArray:   return "image2d_array_t";
+  case WChar_U:
+    return Policy.MSWChar ? "__wchar_t" : "wchar_t";
+  case Char16:
+    return "char16_t";
+  case Char32:
+    return "char32_t";
+  case NullPtr:
+    return "nullptr_t";
+  case Overload:
+    return "<overloaded function type>";
+  case BoundMember:
+    return "<bound member function type>";
+  case PseudoObject:
+    return "<pseudo-object type>";
+  case Dependent:
+    return "<dependent type>";
+  case UnknownAny:
+    return "<unknown type>";
+  case ARCUnbridgedCast:
+    return "<ARC unbridged cast type>";
+  case BuiltinFn:
+    return "<builtin fn type>";
+  case ObjCId:
+    return "id";
+  case ObjCClass:
+    return "Class";
+  case ObjCSel:
+    return "SEL";
+  case OCLImage1d:
+    return "image1d_t";
+  case OCLImage1dArray:
+    return "image1d_array_t";
+  case OCLImage1dBuffer:
+    return "image1d_buffer_t";
+  case OCLImage2d:
+    return "image2d_t";
+  case OCLImage2dArray:
+    return "image2d_array_t";
   case OCLImage2dDepth:
     return "image2d_depth_t";
   case OCLImage2dArrayDepth:
@@ -2542,9 +2581,12 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
     return "image2d_msaa_depth_t";
   case OCLImage2dArrayMSAADepth:
     return "image2d_array_msaa_depth_t";
-  case OCLImage3d:        return "image3d_t";
-  case OCLSampler:        return "sampler_t";
-  case OCLEvent:          return "event_t";
+  case OCLImage3d:
+    return "image3d_t";
+  case OCLSampler:
+    return "sampler_t";
+  case OCLEvent:
+    return "event_t";
   case OCLClkEvent:
     return "clk_event_t";
   case OCLQueue:
@@ -2553,9 +2595,10 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
     return "event_t";
   case OCLReserveID:
     return "reserve_id_t";
-  case OMPArraySection:   return "<OpenMP array section type>";
+  case OMPArraySection:
+    return "<OpenMP array section type>";
   }
-  
+
   llvm_unreachable("Invalid builtin type.");
 }
 
