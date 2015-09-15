@@ -10,6 +10,8 @@
 #ifndef liblldb_CompilerDeclContext_h_
 #define liblldb_CompilerDeclContext_h_
 
+#include <vector>
+
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ConstString.h"
 
