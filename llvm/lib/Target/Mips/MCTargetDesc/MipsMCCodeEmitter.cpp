@@ -777,7 +777,7 @@ getMemEncodingMMImm9(const MCInst &MI, unsigned OpNo,
   assert(MI.getOperand(OpNo).isReg());
   unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo), Fixups,
                                        STI) << 16;
-  unsigned OffBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups, STI);
+  unsigned OffBits = getMachineOpValue(MI, MI.getOperand(OpNo + 1), Fixups, STI);
 
   return (OffBits & 0x1FF) | RegBits;
 }

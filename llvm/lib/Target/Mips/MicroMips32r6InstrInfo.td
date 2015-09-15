@@ -71,6 +71,8 @@ class SUB_MMR6_ENC : ARITH_FM_MMR6<"sub", 0x190>;
 class SUBU_MMR6_ENC : ARITH_FM_MMR6<"subu", 0x1d0>;
 class SW_MMR6_ENC : SW32_FM_MMR6<"sw", 0x3e>;
 class SWE_MMR6_ENC : POOL32C_SWE_FM_MMR6<"swe", 0x18, 0xa, 0x7>;
+class PREFE_MMR6_ENC : POOL32C_ST_EVA_FM_MMR6<0b011000, 0b010>;
+class CACHEE_MMR6_ENC : POOL32C_ST_EVA_FM_MMR6<0b011000, 0b011>;
 class XOR_MMR6_ENC : ARITH_FM_MMR6<"xor", 0x310>;
 class XORI_MMR6_ENC : ADDI_FM_MMR6<"xori", 0x1c>;
 class ABS_S_MMR6_ENC : POOL32F_ABS_FM_MMR6<"abs.s", 0, 0b0001101>;
@@ -261,6 +263,16 @@ class CACHE_HINT_MMR6_DESC<string instr_asm, Operand MemOpnd,
 
 class CACHE_MMR6_DESC : CACHE_HINT_MMR6_DESC<"cache", mem_mm_12, GPR32Opnd>;
 class PREF_MMR6_DESC : CACHE_HINT_MMR6_DESC<"pref", mem_mm_12, GPR32Opnd>;
+
+class PREFE_CACHEE_MMR6_DESC_BASE<string instr_asm, Operand MemOpnd,
+                                  RegisterOperand GPROpnd> :
+                                  CACHE_HINT_MMR6_DESC<instr_asm, MemOpnd,
+                                  GPROpnd> {
+  string DecoderMethod = "DecodePrefeOpMM";
+}
+
+class PREFE_MMR6_DESC : PREFE_CACHEE_MMR6_DESC_BASE<"prefe", mem_mm_9, GPR32Opnd>;
+class CACHEE_MMR6_DESC : PREFE_CACHEE_MMR6_DESC_BASE<"cachee", mem_mm_9, GPR32Opnd>;
 
 class CLO_CLZ_MMR6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
     : MMR6Arch<instr_asm> {
@@ -741,6 +753,8 @@ def SELNEZ_MMR6 : R6MMR6Rel, SELNEZ_MMR6_ENC, SELNEZ_MMR6_DESC,
 def SLL_MMR6 : StdMMR6Rel, SLL_MMR6_DESC, SLL_MMR6_ENC, ISA_MICROMIPS32R6;
 def SUB_MMR6 : StdMMR6Rel, SUB_MMR6_DESC, SUB_MMR6_ENC, ISA_MICROMIPS32R6;
 def SUBU_MMR6 : StdMMR6Rel, SUBU_MMR6_DESC, SUBU_MMR6_ENC, ISA_MICROMIPS32R6;
+def PREFE_MMR6 : R6MMR6Rel, PREFE_MMR6_ENC, PREFE_MMR6_DESC, ISA_MICROMIPS32R6;
+def CACHEE_MMR6 : R6MMR6Rel, CACHEE_MMR6_ENC, CACHEE_MMR6_DESC, ISA_MICROMIPS32R6;
 def XOR_MMR6 : StdMMR6Rel, XOR_MMR6_DESC, XOR_MMR6_ENC, ISA_MICROMIPS32R6;
 def XORI_MMR6 : StdMMR6Rel, XORI_MMR6_DESC, XORI_MMR6_ENC, ISA_MICROMIPS32R6;
 let DecoderMethod = "DecodeMemMMImm16" in {

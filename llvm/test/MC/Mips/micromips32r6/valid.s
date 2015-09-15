@@ -179,4 +179,6 @@
   or16 $3, $7              # CHECK: or16 $3, $7         # encoding: [0x45,0xf9]
   sll16 $3, $6, 8          # CHECK: sll16 $3, $6, 8     # encoding: [0x25,0xe0]
   srl16 $3, $6, 8          # CHECK: srl16 $3, $6, 8     # encoding: [0x25,0xe1]
+  prefe 1, 8($5)           # CHECK: prefe 1, 8($5)      # encoding: [0x60,0x25,0xa4,0x08]
+  cachee 1, 8($5)          # CHECK: cachee 1, 8($5)     # encoding: [0x60,0x25,0xa6,0x08]
 
