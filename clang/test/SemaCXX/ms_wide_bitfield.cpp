@@ -3,8 +3,8 @@
 struct A {
   char a : 9; // expected-error{{width of bit-field 'a' (9 bits) exceeds width of its type (8 bits)}}
   int b : 33; // expected-error{{width of bit-field 'b' (33 bits) exceeds width of its type (32 bits)}}
-  bool c : 9; // expected-error{{width of bit-field 'c' (9 bits) exceeds width of its type (1 bit)}}
-  bool d : 3; // expected-error{{width of bit-field 'd' (3 bits) exceeds width of its type (1 bit)}}
+  bool c : 9; // expected-error{{width of bit-field 'c' (9 bits) exceeds width of its type (8 bits)}}
+  bool d : 3;
 };
 
 int a[sizeof(A) == 1 ? 1 : -1];

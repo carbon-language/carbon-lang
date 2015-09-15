@@ -12626,11 +12626,14 @@ ExprResult Sema::VerifyBitField(SourceLocation FieldLoc,
   }
 
   if (!FieldTy->isDependentType()) {
-    uint64_t TypeWidth = Context.getIntWidth(FieldTy);
+    bool UseMSBitfieldSemantics =
+        IsMsStruct || Context.getTargetInfo().getCXXABI().isMicrosoft();
+    bool UseStorageSize = getLangOpts().CPlusPlus && UseMSBitfieldSemantics;
+    uint64_t TypeWidth = UseStorageSize ? Context.getTypeSize(FieldTy)
+                                        : Context.getIntWidth(FieldTy);
     if (Value.ugt(TypeWidth)) {
-      if (!getLangOpts().CPlusPlus || IsMsStruct ||
-          Context.getTargetInfo().getCXXABI().isMicrosoft()) {
-        if (FieldName) 
+      if (!getLangOpts().CPlusPlus || UseMSBitfieldSemantics) {
+        if (FieldName)
           return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_width)
             << FieldName << (unsigned)Value.getZExtValue() 
             << (unsigned)TypeWidth;
