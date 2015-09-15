@@ -237,19 +237,14 @@ public:
     *P++ = NumSymbols; // nbucket
     *P++ = NumSymbols; // nchain
 
-    std::vector<uint32_t> Buckets(NumSymbols);
-    std::vector<uint32_t> Chains(NumSymbols);
+    Elf_Word *Buckets = P;
+    Elf_Word *Chains = P + NumSymbols;
 
     for (unsigned I = 1; I < NumSymbols; ++I) {
       uint32_t Hash = Hashes[I - 1] % NumSymbols;
       Chains[I] = Buckets[Hash];
       Buckets[Hash] = I;
     }
-
-    for (uint32_t V : Buckets)
-      *P++ = V;
-    for (uint32_t V : Chains)
-      *P++ = V;
   }
 
   SymbolTableSection<ELFT> &getDynSymSec() { return DynSymSec; }
