@@ -1339,3 +1339,14 @@ struct __declspec(dllimport) DerivedFromExplicitlyImportInstantiatedTemplate : p
 template <typename T> struct ExplicitInstantiationDeclTemplateBase { void func() {} };
 extern template struct ExplicitInstantiationDeclTemplateBase<int>;
 struct __declspec(dllimport) DerivedFromExplicitInstantiationDeclTemplateBase : public ExplicitInstantiationDeclTemplateBase<int> {};
+
+//===----------------------------------------------------------------------===//
+// Lambdas
+//===----------------------------------------------------------------------===//
+// The MS ABI doesn't provide a stable mangling for lambdas, so they can't be imported or exported.
+#ifdef MS
+// expected-error@+4{{lambda cannot be declared 'dllimport'}}
+#else
+// expected-warning@+2{{'dllimport' attribute ignored on inline function}}
+#endif
+auto Lambda = []() __declspec(dllimport) -> bool { return true; };

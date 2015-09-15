@@ -2274,6 +2274,8 @@ def err_attribute_dll_not_extern : Error<
   "%q0 must have external linkage when declared %q1">;
 def err_attribute_dll_thread_local : Error<
   "%q0 cannot be thread local when declared %q1">;
+def err_attribute_dll_lambda : Error<
+  "lambda cannot be declared %0">;
 def warn_attribute_invalid_on_definition : Warning<
   "'%0' attribute cannot be specified on a definition">,
   InGroup<IgnoredAttributes>;

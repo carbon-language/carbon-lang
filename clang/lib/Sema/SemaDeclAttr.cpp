@@ -4335,6 +4335,14 @@ static void handleDLLAttr(Sema &S, Decl *D, const AttributeList &A) {
     }
   }
 
+  if (auto *MD = dyn_cast<CXXMethodDecl>(D)) {
+    if (S.Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+        MD->getParent()->isLambda()) {
+      S.Diag(A.getRange().getBegin(), diag::err_attribute_dll_lambda) << A.getName();
+      return;
+    }
+  }
+
   unsigned Index = A.getAttributeSpellingListIndex();
   Attr *NewAttr = A.getKind() == AttributeList::AT_DLLExport
                       ? (Attr *)S.mergeDLLExportAttr(D, A.getRange(), Index)

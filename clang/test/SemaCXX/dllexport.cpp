@@ -1083,3 +1083,12 @@ template<typename T> template<typename U> __declspec(dllexport) constexpr int CT
 #endif // __has_feature(cxx_variable_templates)
 
 // FIXME: Precedence rules seem to be different for classes.
+
+//===----------------------------------------------------------------------===//
+// Lambdas
+//===----------------------------------------------------------------------===//
+// The MS ABI doesn't provide a stable mangling for lambdas, so they can't be imported or exported.
+#ifdef MS
+// expected-error@+2{{lambda cannot be declared 'dllexport'}}
+#endif
+auto Lambda = []() __declspec(dllexport) -> bool { return true; };
