@@ -4557,12 +4557,13 @@ public:
 } // end anonymous namespace
 
 /// Evaluate an expression as an lvalue. This can be legitimately called on
-/// expressions which are not glvalues, in two cases:
+/// expressions which are not glvalues, in three cases:
 ///  * function designators in C, and
 ///  * "extern void" objects
+///  * @selector() expressions in Objective-C
 static bool EvaluateLValue(const Expr *E, LValue &Result, EvalInfo &Info) {
   assert(E->isGLValue() || E->getType()->isFunctionType() ||
-         E->getType()->isVoidType());
+         E->getType()->isVoidType() || isa<ObjCSelectorExpr>(E));
   return LValueExprEvaluator(Info, Result).Visit(E);
 }
 
