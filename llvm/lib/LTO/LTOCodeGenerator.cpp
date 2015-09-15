@@ -265,20 +265,24 @@ LTOCodeGenerator::compileOptimized(std::string &ErrMsg) {
   return std::move(*BufferOrErr);
 }
 
-bool LTOCodeGenerator::compile_to_file(const char **Name, bool DisableInline,
+bool LTOCodeGenerator::compile_to_file(const char **Name, bool DisableVerify,
+                                       bool DisableInline,
                                        bool DisableGVNLoadPRE,
                                        bool DisableVectorization,
                                        std::string &ErrMsg) {
-  if (!optimize(DisableInline, DisableGVNLoadPRE, DisableVectorization, ErrMsg))
+  if (!optimize(DisableVerify, DisableInline, DisableGVNLoadPRE,
+                DisableVectorization, ErrMsg))
     return false;
 
   return compileOptimizedToFile(Name, ErrMsg);
 }
 
 std::unique_ptr<MemoryBuffer>
-LTOCodeGenerator::compile(bool DisableInline, bool DisableGVNLoadPRE,
-                          bool DisableVectorization, std::string &ErrMsg) {
-  if (!optimize(DisableInline, DisableGVNLoadPRE, DisableVectorization, ErrMsg))
+LTOCodeGenerator::compile(bool DisableVerify, bool DisableInline,
+                          bool DisableGVNLoadPRE, bool DisableVectorization,
+                          std::string &ErrMsg) {
+  if (!optimize(DisableVerify, DisableInline, DisableGVNLoadPRE,
+                DisableVectorization, ErrMsg))
     return nullptr;
 
   return compileOptimized(ErrMsg);
@@ -459,7 +463,8 @@ void LTOCodeGenerator::applyScopeRestrictions() {
 }
 
 /// Optimize merged modules using various IPO passes
-bool LTOCodeGenerator::optimize(bool DisableInline, bool DisableGVNLoadPRE,
+bool LTOCodeGenerator::optimize(bool DisableVerify, bool DisableInline,
+                                bool DisableGVNLoadPRE,
                                 bool DisableVectorization,
                                 std::string &ErrMsg) {
   if (!this->determineTarget(ErrMsg))
@@ -486,8 +491,8 @@ bool LTOCodeGenerator::optimize(bool DisableInline, bool DisableGVNLoadPRE,
     PMB.Inliner = createFunctionInliningPass();
   PMB.LibraryInfo = new TargetLibraryInfoImpl(TargetTriple);
   PMB.OptLevel = OptLevel;
-  PMB.VerifyInput = true;
-  PMB.VerifyOutput = true;
+  PMB.VerifyInput = !DisableVerify;
+  PMB.VerifyOutput = !DisableVerify;
 
   PMB.populateLTOPassManager(passes);
 
