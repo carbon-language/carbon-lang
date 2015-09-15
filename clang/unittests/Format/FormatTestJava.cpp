@@ -397,7 +397,6 @@ TEST_F(FormatTestJava, AssertKeyword) {
   verifyFormat("assert a && b;");
 }
 
-
 TEST_F(FormatTestJava, PackageDeclarations) {
   verifyFormat("package some.really.loooooooooooooooooooooong.package;",
                getStyleWithColumns(50));
