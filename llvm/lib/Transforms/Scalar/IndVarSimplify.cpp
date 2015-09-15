@@ -508,8 +508,8 @@ Value *IndVarSimplify::ExpandSCEVIfNeeded(SCEVExpander &Rewriter, const SCEV *S,
                                           Type *ResultTy) {
   // Before expanding S into an expensive LLVM expression, see if we can use an
   // already existing value as the expansion for S.
-  if (Value *RetValue = Rewriter.findExistingExpansion(S, InsertPt, L))
-    return RetValue;
+  if (Value *ExistingValue = Rewriter.findExistingExpansion(S, InsertPt, L))
+    return ExistingValue;
 
   // We didn't find anything, fall back to using SCEVExpander.
   return Rewriter.expandCodeFor(S, ResultTy, InsertPt);
