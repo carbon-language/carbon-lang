@@ -56,3 +56,6 @@ ELF-I386:      _ZTS1A: 1A
 ELF-I386-NEXT: _ZTV1A[0]: 0
 ELF-I386-NEXT: _ZTV1A[4]: _ZTI1A
 ELF-I386-NEXT: _ZTV1A[8]: _ZN1A1fEv
+
+RUN: not llvm-cxxdump %t.blah 2>&1 | FileCheck --check-prefix=ENOENT %s
+ENOENT: {{.*}}.blah: {{[Nn]}}o such file or directory

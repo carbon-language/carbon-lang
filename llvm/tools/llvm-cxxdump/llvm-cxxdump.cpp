@@ -499,12 +499,6 @@ static void dumpArchive(const Archive *Arc) {
 }
 
 static void dumpInput(StringRef File) {
-  // If file isn't stdin, check that it exists.
-  if (File != "-" && !sys::fs::exists(File)) {
-    reportError(File, cxxdump_error::file_not_found);
-    return;
-  }
-
   // Attempt to open the binary.
   ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(File);
   if (std::error_code EC = BinaryOrErr.getError()) {
