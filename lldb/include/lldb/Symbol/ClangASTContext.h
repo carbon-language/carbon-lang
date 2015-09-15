@@ -523,7 +523,7 @@ public:
     //----------------------------------------------------------------------
     
     std::vector<void *>
-    DeclContextFindDeclByName (void *opaque_decl_ctx, ConstString name);
+    DeclContextFindDeclByName (void *opaque_decl_ctx, ConstString name) override;
 
     bool
     DeclContextIsStructUnionOrClass (void *opaque_decl_ctx) override;
