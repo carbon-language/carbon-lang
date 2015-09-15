@@ -729,7 +729,8 @@ isl_map *ScopStmt::getSchedule() const {
 }
 
 __isl_give isl_pw_aff *ScopStmt::getPwAff(const SCEV *E) {
-  return getParent()->getPwAff(E, Domain);
+  return getParent()->getPwAff(E, isBlockStmt() ? getBasicBlock()
+                                                : getRegion()->getEntry());
 }
 
 void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
@@ -888,9 +889,10 @@ buildConditionSets(Scop &S, BranchInst *BI, Loop *L, __isl_keep isl_set *Domain,
            "Condition of exiting branch was neither constant nor ICmp!");
 
     ScalarEvolution &SE = *S.getSE();
+    BasicBlock *BB = BI->getParent();
     isl_pw_aff *LHS, *RHS;
-    LHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(0), L), Domain);
-    RHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(1), L), Domain);
+    LHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(0), L), BB);
+    RHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(1), L), BB);
     ConsequenceCondSet = buildConditionSet(ICond->getPredicate(), LHS, RHS);
 
     for (unsigned u = 0, e = isl_set_n_dim(Domain); u < e; u++) {
@@ -1500,6 +1502,11 @@ static inline __isl_give isl_set *addDomainDimId(__isl_take isl_set *Domain,
 isl_set *Scop::getDomainConditions(ScopStmt *Stmt) {
   BasicBlock *BB = Stmt->isBlockStmt() ? Stmt->getBasicBlock()
                                        : Stmt->getRegion()->getEntry();
+  return getDomainConditions(BB);
+}
+
+isl_set *Scop::getDomainConditions(BasicBlock *BB) {
+  assert(DomainMap.count(BB) && "Requested BB did not have a domain");
   return isl_set_copy(DomainMap[BB]);
 }
 
@@ -2321,8 +2328,8 @@ void Scop::dump() const { print(dbgs()); }
 
 isl_ctx *Scop::getIslCtx() const { return IslCtx; }
 
-__isl_give isl_pw_aff *Scop::getPwAff(const SCEV *E, isl_set *Domain) {
-  return Affinator.getPwAff(E, Domain);
+__isl_give isl_pw_aff *Scop::getPwAff(const SCEV *E, BasicBlock *BB) {
+  return Affinator.getPwAff(E, BB);
 }
 
 __isl_give isl_union_set *Scop::getDomains() const {

@@ -34,6 +34,7 @@ struct isl_schedule;
 
 namespace llvm {
 class Region;
+class BasicBlock;
 class ScalarEvolution;
 }
 
@@ -49,16 +50,16 @@ public:
 
   /// @brief Translate a SCEV to an isl_pw_aff.
   ///
-  /// @param E      The expression that is translated.
-  /// @param Domain The domain in which @p E is executed.
+  /// @param E  he expression that is translated.
+  /// @param BB The block in which @p E is executed.
   ///
   /// @returns The isl representation of the SCEV @p E in @p Domain.
   __isl_give isl_pw_aff *getPwAff(const llvm::SCEV *E,
-                                  __isl_keep isl_set *Domain = nullptr);
+                                  llvm::BasicBlock *BB = nullptr);
 
 private:
   /// @brief Key to identify cached expressions.
-  using CacheKey = std::pair<const llvm::SCEV *, isl_set *>;
+  using CacheKey = std::pair<const llvm::SCEV *, llvm::BasicBlock *>;
 
   /// @brief Map to remembered cached expressions.
   llvm::DenseMap<CacheKey, isl_pw_aff *> CachedExpressions;
@@ -68,7 +69,7 @@ private:
   unsigned NumIterators;
   const llvm::Region &R;
   llvm::ScalarEvolution &SE;
-  isl_set *Domain;
+  llvm::BasicBlock *BB;
 
   __isl_give isl_pw_aff *visit(const llvm::SCEV *E);
   __isl_give isl_pw_aff *visitConstant(const llvm::SCEVConstant *E);

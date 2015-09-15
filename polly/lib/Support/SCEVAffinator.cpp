@@ -30,19 +30,19 @@ SCEVAffinator::SCEVAffinator(Scop *S)
     : S(S), Ctx(S->getIslCtx()), R(S->getRegion()), SE(*S->getSE()) {}
 
 SCEVAffinator::~SCEVAffinator() {
-  for (const auto &CachedPair : CachedExpressions) {
+  for (const auto &CachedPair : CachedExpressions)
     isl_pw_aff_free(CachedPair.second);
-    isl_set_free(CachedPair.first.second);
-  }
 }
 
 __isl_give isl_pw_aff *SCEVAffinator::getPwAff(const SCEV *Expr,
-                                               isl_set *Domain) {
-  this->Domain = Domain;
+                                               BasicBlock *BB) {
+  this->BB = BB;
 
-  if (Domain)
-    NumIterators = isl_set_n_dim(Domain);
-  else
+  if (BB) {
+    auto *DC = S->getDomainConditions(BB);
+    NumIterators = isl_set_n_dim(DC);
+    isl_set_free(DC);
+  } else
     NumIterators = 0;
 
   S->addParams(getParamsInAffineExpr(&R, Expr, SE));
@@ -52,12 +52,10 @@ __isl_give isl_pw_aff *SCEVAffinator::getPwAff(const SCEV *Expr,
 
 __isl_give isl_pw_aff *SCEVAffinator::visit(const SCEV *Expr) {
 
-  auto Key = std::make_pair(Expr, isl_set_copy(Domain));
+  auto Key = std::make_pair(Expr, BB);
   isl_pw_aff *PWA = CachedExpressions[Key];
-  if (PWA) {
-    isl_set_free(Domain);
+  if (PWA)
     return isl_pw_aff_copy(PWA);
-  }
 
   // In case the scev is a valid parameter, we do not further analyze this
   // expression, but create a new parameter in the isl_pw_aff. This allows us

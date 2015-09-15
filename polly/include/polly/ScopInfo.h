@@ -1325,16 +1325,20 @@ public:
 
   /// @brief Compute the isl representation for the SCEV @p
   ///
-  /// @param Domain An (optional) domain in which the isl_pw_aff is computed.
-  ///               SCEVs known to not reference any loops in the SCoP can be
-  ///               passed without a @p Domain.
-  __isl_give isl_pw_aff *getPwAff(const SCEV *E,
-                                  __isl_keep isl_set *Domain = nullptr);
+  /// @param BB An (optional) basic block in which the isl_pw_aff is computed.
+  ///           SCEVs known to not reference any loops in the SCoP can be
+  ///           passed without a @p BB.
+  __isl_give isl_pw_aff *getPwAff(const SCEV *E, BasicBlock *BB = nullptr);
 
   /// @brief Return the non-loop carried conditions on the domain of @p Stmt.
   ///
   /// @param Stmt The statement for which the conditions should be returned.
   __isl_give isl_set *getDomainConditions(ScopStmt *Stmt);
+
+  /// @brief Return the non-loop carried conditions on the domain of @p BB.
+  ///
+  /// @param BB The block for which the conditions should be returned.
+  __isl_give isl_set *getDomainConditions(BasicBlock *BB);
 
   /// @brief Get a union set containing the iteration domains of all statements.
   __isl_give isl_union_set *getDomains() const;
