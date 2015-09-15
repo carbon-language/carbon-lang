@@ -42,3 +42,6 @@
  * float64.cvt_unsigned[int64]: convert an unsigned 64-bit integer to a 64-bit float
  * float64.reinterpret[int64]: reinterpret the bits of a 64-bit integer as a 64-bit float
  */
+
+def WRAP_I64_I32 : I<(outs Int32:$dst), (ins Int64:$src),
+                     [(set Int32:$dst, (trunc Int64:$src))]>;
