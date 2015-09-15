@@ -143,7 +143,7 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
     // Variant type data which can be assigned and retrieved across all command instances
     template <typename T> bool SharedDataAdd(const CMIUtilString &vKey, const T &vData);
     template <typename T> bool SharedDataRetrieve(const CMIUtilString &vKey, T &vwData);
-    bool SharedDataDestroy();
+    void SharedDataDestroy();
 
     //  Common command required functionality
     bool AccessPath(const CMIUtilString &vPath, bool &vwbYesAccessible);

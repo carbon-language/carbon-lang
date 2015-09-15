@@ -99,16 +99,9 @@ CMICmnLLDBDebugSessionInfo::Shutdown()
     if (!m_bInitialized)
         return MIstatus::success;
 
-    bool bOk = MIstatus::success;
-    CMIUtilString errMsg;
-
     // Tidy up
-    bOk = SharedDataDestroy();
-    if (!bOk)
-    {
-        errMsg = MIRSRC(IDS_DBGSESSION_ERR_SHARED_DATA_RELEASE);
-        errMsg += "\n";
-    }
+    SharedDataDestroy();
+
     m_vecActiveThreadId.clear();
     CMICmnLLDBDebugSessionInfoVarObj::VarObjClear();
 
@@ -125,18 +118,15 @@ CMICmnLLDBDebugSessionInfo::Shutdown()
 //          stopped i.e. application shutdown.
 // Type:    Method.
 // Args:    None.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
+// Return:  None.
 // Throws:  None.
 //--
-bool
+void
 CMICmnLLDBDebugSessionInfo::SharedDataDestroy()
 {
     m_mapIdToSessionData.Clear();
     m_vecVarObj.clear();
     m_mapBrkPtIdToBrkPtInfo.clear();
-
-    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
