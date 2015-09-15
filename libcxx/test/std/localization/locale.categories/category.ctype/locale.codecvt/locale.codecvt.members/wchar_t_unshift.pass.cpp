@@ -28,7 +28,7 @@ int main()
     std::locale l = std::locale::classic();
     std::vector<F::extern_type> to(3);
     const F& f = std::use_facet<F>(l);
-    std::mbstate_t mbs = {0};
+    std::mbstate_t mbs = {};
     F::extern_type* to_next = 0;
     assert(f.unshift(mbs, to.data(), to.data() + to.size(), to_next) == F::ok);
     assert(to_next == to.data());

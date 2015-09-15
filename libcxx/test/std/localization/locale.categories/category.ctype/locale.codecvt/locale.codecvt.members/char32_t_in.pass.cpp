@@ -28,7 +28,7 @@ int main()
     const char from[] = "some text";
     F::intern_type to[9];
     const F& f = std::use_facet<F>(l);
-    std::mbstate_t mbs = {0};
+    std::mbstate_t mbs = {};
     const char* from_next = 0;
     F::intern_type* to_next = 0;
     assert(f.in(mbs, from, from + 9, from_next,

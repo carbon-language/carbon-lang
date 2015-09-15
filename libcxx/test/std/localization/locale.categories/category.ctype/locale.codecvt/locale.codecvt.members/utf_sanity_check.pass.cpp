@@ -30,7 +30,7 @@ int main()
     const F32_8& f32_8 = std::use_facet<F32_8>(std::locale::classic());
     const F32_16& f32_16 = std::use_facet<F32_16>(l);
     const F16_8& f16_8 = std::use_facet<F16_8>(std::locale::classic());
-    std::mbstate_t mbs = {0};
+    std::mbstate_t mbs = {};
     F32_8::intern_type* c32p;
     F16_8::intern_type* c16p;
     F32_8::extern_type* c8p;

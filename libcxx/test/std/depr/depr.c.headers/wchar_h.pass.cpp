@@ -34,7 +34,7 @@
 
 int main()
 {
-    mbstate_t mb = {0};
+    mbstate_t mb = {};
     size_t s = 0;
     tm *tm = 0;
     wint_t w = 0;

@@ -26,7 +26,7 @@ int main()
     std::locale l = std::locale::classic();
     std::vector<char> to(3);
     const F& f = std::use_facet<F>(l);
-    std::mbstate_t mbs = {0};
+    std::mbstate_t mbs = {};
     char* to_next = 0;
     assert(f.unshift(mbs, to.data(), to.data() + to.size(), to_next) == F::noconv);
     assert(to_next == to.data());

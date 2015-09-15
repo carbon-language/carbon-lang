@@ -29,7 +29,7 @@ int main()
     const std::basic_string<F::intern_type> expected(from.begin(), from.end());
     std::basic_string<F::intern_type> to(from.size(), F::intern_type());
     const F& f = std::use_facet<F>(l);
-    std::mbstate_t mbs = {0};
+    std::mbstate_t mbs = {};
     const F::extern_type* from_next = 0;
     F::intern_type* to_next = 0;
     F::result r = f.in(mbs, from.data(), from.data() + from.size(), from_next,

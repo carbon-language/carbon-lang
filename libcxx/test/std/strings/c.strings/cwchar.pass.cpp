@@ -30,7 +30,7 @@
 
 int main()
 {
-    std::mbstate_t mb = {0};
+    std::mbstate_t mb = {};
     std::size_t s = 0;
     std::tm *tm = 0;
     std::wint_t w = 0;
