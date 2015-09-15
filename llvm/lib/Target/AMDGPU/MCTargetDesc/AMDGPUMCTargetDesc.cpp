@@ -44,18 +44,19 @@ static MCInstrInfo *createAMDGPUMCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createAMDGPUMCRegisterInfo(const Triple &TT) {
+static MCRegisterInfo *createAMDGPUMCRegisterInfo(const TargetTuple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitAMDGPUMCRegisterInfo(X, 0);
   return X;
 }
 
-static MCSubtargetInfo *
-createAMDGPUMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
+static MCSubtargetInfo *createAMDGPUMCSubtargetInfo(const TargetTuple &TT,
+                                                    StringRef CPU,
+                                                    StringRef FS) {
   return createAMDGPUMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
-static MCCodeGenInfo *createAMDGPUMCCodeGenInfo(const Triple &TT,
+static MCCodeGenInfo *createAMDGPUMCCodeGenInfo(const TargetTuple &TT,
                                                 Reloc::Model RM,
                                                 CodeModel::Model CM,
                                                 CodeGenOpt::Level OL) {
@@ -64,7 +65,7 @@ static MCCodeGenInfo *createAMDGPUMCCodeGenInfo(const Triple &TT,
   return X;
 }
 
-static MCInstPrinter *createAMDGPUMCInstPrinter(const Triple &T,
+static MCInstPrinter *createAMDGPUMCInstPrinter(const TargetTuple &T,
                                                 unsigned SyntaxVariant,
                                                 const MCAsmInfo &MAI,
                                                 const MCInstrInfo &MII,

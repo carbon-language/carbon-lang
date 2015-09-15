@@ -17,13 +17,13 @@
 #include "llvm/MC/MCAsmInfoELF.h"
 
 namespace llvm {
-class Triple;
+class TargetTuple;
 
 class MipsMCAsmInfo : public MCAsmInfoELF {
   void anchor() override;
 
 public:
-  explicit MipsMCAsmInfo(const Triple &TheTriple);
+  explicit MipsMCAsmInfo(const TargetTuple &TT);
 };
 
 } // namespace llvm

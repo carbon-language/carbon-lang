@@ -375,8 +375,8 @@ public:
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
                 const MCInstrInfo &MII, const MCTargetOptions &Options)
       : MCTargetAsmParser(Options), STI(sti),
-        ABI(MipsABIInfo::computeTargetABI(Triple(sti.getTargetTriple()),
-                                          sti.getCPU(), Options)) {
+        ABI(MipsABIInfo::computeTargetABI(sti.getTargetTuple(), sti.getCPU(),
+                                          Options)) {
     MCAsmParserExtension::Initialize(parser);
 
     parser.addAliasForDirective(".asciiz", ".asciz");
@@ -402,9 +402,9 @@ public:
     IsPicEnabled =
         (getContext().getObjectFileInfo()->getRelocM() == Reloc::PIC_);
 
-    Triple TheTriple(sti.getTargetTriple());
-    if ((TheTriple.getArch() == Triple::mips) ||
-        (TheTriple.getArch() == Triple::mips64))
+    const TargetTuple &TT = sti.getTargetTuple();
+    if ((TT.getArch() == TargetTuple::mips) ||
+        (TT.getArch() == TargetTuple::mips64))
       IsLittleEndian = false;
     else
       IsLittleEndian = true;

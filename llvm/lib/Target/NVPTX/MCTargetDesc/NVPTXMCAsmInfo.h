@@ -18,13 +18,13 @@
 
 namespace llvm {
 class Target;
-class Triple;
+class TargetTuple;
 
 class NVPTXMCAsmInfo : public MCAsmInfo {
   virtual void anchor();
 
 public:
-  explicit NVPTXMCAsmInfo(const Triple &TheTriple);
+  explicit NVPTXMCAsmInfo(const TargetTuple &TT);
 };
 } // namespace llvm
 

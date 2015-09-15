@@ -46,14 +46,15 @@ MCInstrInfo *llvm::createHexagonMCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createHexagonMCRegisterInfo(const Triple &TT) {
+static MCRegisterInfo *createHexagonMCRegisterInfo(const TargetTuple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitHexagonMCRegisterInfo(X, Hexagon::R0);
   return X;
 }
 
-static MCSubtargetInfo *
-createHexagonMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
+static MCSubtargetInfo *createHexagonMCSubtargetInfo(const TargetTuple &TT,
+                                                     StringRef CPU,
+                                                     StringRef FS) {
   return createHexagonMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
@@ -138,7 +139,7 @@ public:
 }
 
 static MCAsmInfo *createHexagonMCAsmInfo(const MCRegisterInfo &MRI,
-                                         const Triple &TT) {
+                                         const TargetTuple &TT) {
   MCAsmInfo *MAI = new HexagonMCAsmInfo(TT);
 
   // VirtualFP = (R30 + #0).
@@ -149,7 +150,7 @@ static MCAsmInfo *createHexagonMCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCCodeGenInfo *createHexagonMCCodeGenInfo(const Triple &TT,
+static MCCodeGenInfo *createHexagonMCCodeGenInfo(const TargetTuple &TT,
                                                  Reloc::Model RM,
                                                  CodeModel::Model CM,
                                                  CodeGenOpt::Level OL) {
@@ -160,7 +161,7 @@ static MCCodeGenInfo *createHexagonMCCodeGenInfo(const Triple &TT,
   return X;
 }
 
-static MCInstPrinter *createHexagonMCInstPrinter(const Triple &T,
+static MCInstPrinter *createHexagonMCInstPrinter(const TargetTuple &TT,
                                                  unsigned SyntaxVariant,
                                                  const MCAsmInfo &MAI,
                                                  const MCInstrInfo &MII,
@@ -178,7 +179,7 @@ static MCTargetStreamer *createMCAsmTargetStreamer(MCStreamer &S,
   return new HexagonTargetAsmStreamer(S,  OS, IsVerboseAsm, *InstPrint);
 }
 
-static MCStreamer *createMCStreamer(Triple const &T, MCContext &Context,
+static MCStreamer *createMCStreamer(const TargetTuple &TT, MCContext &Context,
                                     MCAsmBackend &MAB, raw_pwrite_stream &OS,
                                     MCCodeEmitter *Emitter, bool RelaxAll) {
   return createHexagonELFStreamer(Context, MAB, OS, Emitter);

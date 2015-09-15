@@ -17,7 +17,7 @@
 using namespace llvm;
 
 namespace llvm {
-class Triple;
+class TargetTuple;
 }
 
 // This function tries to add a symbolic operand in place of the immediate
@@ -188,7 +188,8 @@ void MCExternalSymbolizer::tryAddingPcLoadReferenceComment(raw_ostream &cStream,
 }
 
 namespace llvm {
-MCSymbolizer *createMCSymbolizer(const Triple &TT, LLVMOpInfoCallback GetOpInfo,
+MCSymbolizer *createMCSymbolizer(const TargetTuple &TT,
+                                 LLVMOpInfoCallback GetOpInfo,
                                  LLVMSymbolLookupCallback SymbolLookUp,
                                  void *DisInfo, MCContext *Ctx,
                                  std::unique_ptr<MCRelocationInfo> &&RelInfo) {

@@ -19,6 +19,7 @@
 #include "AArch64InstrInfo.h"
 #include "AArch64RegisterInfo.h"
 #include "AArch64SelectionDAGInfo.h"
+#include "llvm/ADT/TargetTuple.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <string>
@@ -97,6 +98,8 @@ public:
     return &getInstrInfo()->getRegisterInfo();
   }
   const Triple &getTargetTriple() const { return TargetTriple; }
+  // FIXME: Return a references once our member is a TargetTuple.
+  const TargetTuple getTargetTuple() const { return TargetTuple(TargetTriple); }
   bool enableMachineScheduler() const override { return true; }
   bool enablePostRAScheduler() const override {
     return isCortexA53() || isCortexA57();

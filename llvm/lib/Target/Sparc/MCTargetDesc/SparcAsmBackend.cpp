@@ -267,10 +267,11 @@ namespace {
   };
 
   class ELFSparcAsmBackend : public SparcAsmBackend {
-    Triple::OSType OSType;
+    TargetTuple::OSType OSType;
+
   public:
-    ELFSparcAsmBackend(const Target &T, Triple::OSType OSType) :
-      SparcAsmBackend(T), OSType(OSType) { }
+    ELFSparcAsmBackend(const Target &T, TargetTuple::OSType OSType)
+        : SparcAsmBackend(T), OSType(OSType) {}
 
     void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                     uint64_t Value, bool IsPCRel) const override {
@@ -299,6 +300,7 @@ namespace {
 
 MCAsmBackend *llvm::createSparcAsmBackend(const Target &T,
                                           const MCRegisterInfo &MRI,
-                                          const Triple &TT, StringRef CPU) {
+                                          const TargetTuple &TT,
+                                          StringRef CPU) {
   return new ELFSparcAsmBackend(T, TT.getOS());
 }

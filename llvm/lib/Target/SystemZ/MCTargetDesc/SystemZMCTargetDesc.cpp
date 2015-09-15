@@ -132,7 +132,7 @@ unsigned SystemZMC::getFirstReg(unsigned Reg) {
 }
 
 static MCAsmInfo *createSystemZMCAsmInfo(const MCRegisterInfo &MRI,
-                                         const Triple &TT) {
+                                         const TargetTuple &TT) {
   MCAsmInfo *MAI = new SystemZMCAsmInfo(TT);
   MCCFIInstruction Inst =
       MCCFIInstruction::createDefCfa(nullptr,
@@ -148,18 +148,19 @@ static MCInstrInfo *createSystemZMCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createSystemZMCRegisterInfo(const Triple &TT) {
+static MCRegisterInfo *createSystemZMCRegisterInfo(const TargetTuple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitSystemZMCRegisterInfo(X, SystemZ::R14D);
   return X;
 }
 
-static MCSubtargetInfo *
-createSystemZMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
+static MCSubtargetInfo *createSystemZMCSubtargetInfo(const TargetTuple &TT,
+                                                     StringRef CPU,
+                                                     StringRef FS) {
   return createSystemZMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
-static MCCodeGenInfo *createSystemZMCCodeGenInfo(const Triple &TT,
+static MCCodeGenInfo *createSystemZMCCodeGenInfo(const TargetTuple &TT,
                                                  Reloc::Model RM,
                                                  CodeModel::Model CM,
                                                  CodeGenOpt::Level OL) {
@@ -207,7 +208,7 @@ static MCCodeGenInfo *createSystemZMCCodeGenInfo(const Triple &TT,
   return X;
 }
 
-static MCInstPrinter *createSystemZMCInstPrinter(const Triple &T,
+static MCInstPrinter *createSystemZMCInstPrinter(const TargetTuple &T,
                                                  unsigned SyntaxVariant,
                                                  const MCAsmInfo &MAI,
                                                  const MCInstrInfo &MII,

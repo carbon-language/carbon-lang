@@ -358,7 +358,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   // FIXME: There is a bit of code duplication with addPassesToEmitFile.
   if (Opts.OutputType == AssemblerInvocation::FT_Asm) {
     MCInstPrinter *IP = TheTarget->createMCInstPrinter(
-        llvm::Triple(Opts.Triple), Opts.OutputAsmVariant, *MAI, *MCII, *MRI);
+        llvm::TargetTuple(llvm::Triple(Opts.Triple)), Opts.OutputAsmVariant,
+        *MAI, *MCII, *MRI);
     MCCodeEmitter *CE = nullptr;
     MCAsmBackend *MAB = nullptr;
     if (Opts.ShowEncoding) {
@@ -382,10 +383,10 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     MCCodeEmitter *CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, Ctx);
     MCAsmBackend *MAB = TheTarget->createMCAsmBackend(*MRI, Opts.Triple,
                                                       Opts.CPU);
-    Triple T(Opts.Triple);
-    Str.reset(TheTarget->createMCObjectStreamer(T, Ctx, *MAB, *Out, CE, *STI,
-                                                Opts.RelaxAll,
-                                                /*DWARFMustBeAtTheEnd*/ true));
+    Triple TT(Opts.Triple);
+    Str.reset(TheTarget->createMCObjectStreamer(
+        llvm::TargetTuple(TT), Ctx, *MAB, *Out, CE, *STI, Opts.RelaxAll,
+        /*DWARFMustBeAtTheEnd*/ true));
     Str.get()->InitSections(Opts.NoExecStack);
   }
 

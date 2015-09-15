@@ -51,9 +51,9 @@ static MCInstrInfo *createPPCMCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createPPCMCRegisterInfo(const Triple &TT) {
-  bool isPPC64 =
-      (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le);
+static MCRegisterInfo *createPPCMCRegisterInfo(const TargetTuple &TT) {
+  bool isPPC64 = (TT.getArch() == TargetTuple::ppc64 ||
+                  TT.getArch() == TargetTuple::ppc64le);
   unsigned Flavour = isPPC64 ? 0 : 1;
   unsigned RA = isPPC64 ? PPC::LR8 : PPC::LR;
 
@@ -62,21 +62,21 @@ static MCRegisterInfo *createPPCMCRegisterInfo(const Triple &TT) {
   return X;
 }
 
-static MCSubtargetInfo *createPPCMCSubtargetInfo(const Triple &TT,
+static MCSubtargetInfo *createPPCMCSubtargetInfo(const TargetTuple &TT,
                                                  StringRef CPU, StringRef FS) {
   return createPPCMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
 static MCAsmInfo *createPPCMCAsmInfo(const MCRegisterInfo &MRI,
-                                     const Triple &TheTriple) {
-  bool isPPC64 = (TheTriple.getArch() == Triple::ppc64 ||
-                  TheTriple.getArch() == Triple::ppc64le);
+                                     const TargetTuple &TT) {
+  bool isPPC64 = (TT.getArch() == TargetTuple::ppc64 ||
+                  TT.getArch() == TargetTuple::ppc64le);
 
   MCAsmInfo *MAI;
-  if (TheTriple.isOSDarwin())
-    MAI = new PPCMCAsmInfoDarwin(isPPC64, TheTriple);
+  if (TT.isOSDarwin())
+    MAI = new PPCMCAsmInfoDarwin(isPPC64, TT);
   else
-    MAI = new PPCELFMCAsmInfo(isPPC64, TheTriple);
+    MAI = new PPCELFMCAsmInfo(isPPC64, TT);
 
   // Initial state of the frame pointer is R1.
   unsigned Reg = isPPC64 ? PPC::X1 : PPC::R1;
@@ -87,7 +87,8 @@ static MCAsmInfo *createPPCMCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCCodeGenInfo *createPPCMCCodeGenInfo(const Triple &TT, Reloc::Model RM,
+static MCCodeGenInfo *createPPCMCCodeGenInfo(const TargetTuple &TT,
+                                             Reloc::Model RM,
                                              CodeModel::Model CM,
                                              CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -99,8 +100,8 @@ static MCCodeGenInfo *createPPCMCCodeGenInfo(const Triple &TT, Reloc::Model RM,
       RM = Reloc::Static;
   }
   if (CM == CodeModel::Default) {
-    if (!TT.isOSDarwin() &&
-        (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le))
+    if (!TT.isOSDarwin() && (TT.getArch() == TargetTuple::ppc64 ||
+                             TT.getArch() == TargetTuple::ppc64le))
       CM = CodeModel::Medium;
   }
   X->initMCCodeGenInfo(RM, CM, OL);
@@ -225,18 +226,18 @@ static MCTargetStreamer *createAsmTargetStreamer(MCStreamer &S,
 
 static MCTargetStreamer *
 createObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
-  const Triple &TT = STI.getTargetTriple();
+  const TargetTuple &TT = STI.getTargetTuple();
   if (TT.isOSBinFormatELF())
     return new PPCTargetELFStreamer(S);
   return new PPCTargetMachOStreamer(S);
 }
 
-static MCInstPrinter *createPPCMCInstPrinter(const Triple &T,
+static MCInstPrinter *createPPCMCInstPrinter(const TargetTuple &TT,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
                                              const MCInstrInfo &MII,
                                              const MCRegisterInfo &MRI) {
-  return new PPCInstPrinter(MAI, MII, MRI, T.isOSDarwin());
+  return new PPCInstPrinter(MAI, MII, MRI, TT.isOSDarwin());
 }
 
 extern "C" void LLVMInitializePowerPCTargetMC() {

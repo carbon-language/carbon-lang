@@ -13,16 +13,16 @@
 
 #include "SparcMCAsmInfo.h"
 #include "SparcMCExpr.h"
-#include "llvm/ADT/Triple.h"
+#include "llvm/ADT/TargetTuple.h"
 #include "llvm/MC/MCStreamer.h"
 
 using namespace llvm;
 
 void SparcELFMCAsmInfo::anchor() {}
 
-SparcELFMCAsmInfo::SparcELFMCAsmInfo(const Triple &TheTriple) {
-  bool isV9 = (TheTriple.getArch() == Triple::sparcv9);
-  IsLittleEndian = (TheTriple.getArch() == Triple::sparcel);
+SparcELFMCAsmInfo::SparcELFMCAsmInfo(const TargetTuple &TT) {
+  bool isV9 = (TT.getArch() == TargetTuple::sparcv9);
+  IsLittleEndian = (TT.getArch() == TargetTuple::sparcel);
 
   if (isV9) {
     PointerSize = CalleeSaveStackSlotSize = 8;

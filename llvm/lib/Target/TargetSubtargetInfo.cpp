@@ -20,7 +20,7 @@ using namespace llvm;
 // TargetSubtargetInfo Class
 //
 TargetSubtargetInfo::TargetSubtargetInfo(
-    const Triple &TT, StringRef CPU, StringRef FS,
+    const TargetTuple &TT, StringRef CPU, StringRef FS,
     ArrayRef<SubtargetFeatureKV> PF, ArrayRef<SubtargetFeatureKV> PD,
     const SubtargetInfoKV *ProcSched, const MCWriteProcResEntry *WPR,
     const MCWriteLatencyEntry *WL, const MCReadAdvanceEntry *RA,

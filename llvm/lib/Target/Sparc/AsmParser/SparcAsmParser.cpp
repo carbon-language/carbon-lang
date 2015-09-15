@@ -77,7 +77,7 @@ class SparcAsmParser : public MCTargetAsmParser {
   bool parseDirectiveWord(unsigned Size, SMLoc L);
 
   bool is64Bit() const {
-    return STI.getTargetTriple().getArch() == Triple::sparcv9;
+    return STI.getTargetTuple().getArch() == TargetTuple::sparcv9;
   }
 
   void expandSET(MCInst &Inst, SMLoc IDLoc,

@@ -604,8 +604,8 @@ static int linkAndVerify() {
 
   std::unique_ptr<MCInstrInfo> MII(TheTarget->createMCInstrInfo());
 
-  std::unique_ptr<MCInstPrinter> InstPrinter(
-      TheTarget->createMCInstPrinter(Triple(TripleName), 0, *MAI, *MII, *MRI));
+  std::unique_ptr<MCInstPrinter> InstPrinter(TheTarget->createMCInstPrinter(
+      TargetTuple(Triple(TripleName)), 0, *MAI, *MII, *MRI));
 
   // Load any dylibs requested on the command line.
   loadDylibs();

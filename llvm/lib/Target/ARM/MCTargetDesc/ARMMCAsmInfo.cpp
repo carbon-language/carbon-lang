@@ -12,16 +12,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMMCAsmInfo.h"
-#include "llvm/ADT/Triple.h"
+#include "llvm/ADT/TargetTuple.h"
 #include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 
 void ARMMCAsmInfoDarwin::anchor() { }
 
-ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin(const Triple &TheTriple) {
-  if ((TheTriple.getArch() == Triple::armeb) ||
-      (TheTriple.getArch() == Triple::thumbeb))
+ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin(const TargetTuple &TT) {
+  if ((TT.getArch() == TargetTuple::armeb) ||
+      (TT.getArch() == TargetTuple::thumbeb))
     IsLittleEndian = false;
 
   Data64bitsDirective = nullptr;
@@ -40,9 +40,9 @@ ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin(const Triple &TheTriple) {
 
 void ARMELFMCAsmInfo::anchor() { }
 
-ARMELFMCAsmInfo::ARMELFMCAsmInfo(const Triple &TheTriple) {
-  if ((TheTriple.getArch() == Triple::armeb) ||
-      (TheTriple.getArch() == Triple::thumbeb))
+ARMELFMCAsmInfo::ARMELFMCAsmInfo(const TargetTuple &TT) {
+  if ((TT.getArch() == TargetTuple::armeb) ||
+      (TT.getArch() == TargetTuple::thumbeb))
     IsLittleEndian = false;
 
   // ".comm align is in bytes but .align is pow-2."
@@ -56,9 +56,9 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo(const Triple &TheTriple) {
   SupportsDebugInformation = true;
 
   // Exceptions handling
-  switch (TheTriple.getOS()) {
-  case Triple::Bitrig:
-  case Triple::NetBSD:
+  switch (TT.getOS()) {
+  case TargetTuple::Bitrig:
+  case TargetTuple::NetBSD:
     ExceptionsType = ExceptionHandling::DwarfCFI;
     break;
   default:

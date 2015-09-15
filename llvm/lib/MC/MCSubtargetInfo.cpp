@@ -9,7 +9,7 @@
 
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Triple.h"
+#include "llvm/ADT/TargetTuple.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/raw_ostream.h"
@@ -37,12 +37,12 @@ void MCSubtargetInfo::setDefaultFeatures(StringRef CPU) {
 }
 
 MCSubtargetInfo::MCSubtargetInfo(
-    const Triple &TT, StringRef C, StringRef FS,
+    const TargetTuple &TT, StringRef C, StringRef FS,
     ArrayRef<SubtargetFeatureKV> PF, ArrayRef<SubtargetFeatureKV> PD,
     const SubtargetInfoKV *ProcSched, const MCWriteProcResEntry *WPR,
     const MCWriteLatencyEntry *WL, const MCReadAdvanceEntry *RA,
     const InstrStage *IS, const unsigned *OC, const unsigned *FP)
-    : TargetTriple(TT), CPU(C), ProcFeatures(PF), ProcDesc(PD),
+    : TheTargetTuple(TT), CPU(C), ProcFeatures(PF), ProcDesc(PD),
       ProcSchedModels(ProcSched), WriteProcResTable(WPR), WriteLatencyTable(WL),
       ReadAdvanceTable(RA), Stages(IS), OperandCycles(OC), ForwardingPaths(FP) {
   InitMCProcessorInfo(CPU, FS);

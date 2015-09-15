@@ -27,5 +27,5 @@ void XCoreSubtarget::anchor() { }
 
 XCoreSubtarget::XCoreSubtarget(const Triple &TT, const std::string &CPU,
                                const std::string &FS, const TargetMachine &TM)
-    : XCoreGenSubtargetInfo(TT, CPU, FS), InstrInfo(), FrameLowering(*this),
-      TLInfo(TM, *this), TSInfo() {}
+    : XCoreGenSubtargetInfo(TargetTuple(TT), CPU, FS), InstrInfo(),
+      FrameLowering(*this), TLInfo(TM, *this), TSInfo() {}

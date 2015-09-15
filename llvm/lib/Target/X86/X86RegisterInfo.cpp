@@ -50,8 +50,8 @@ EnableBasePointer("x86-use-base-pointer", cl::Hidden, cl::init(true),
 
 X86RegisterInfo::X86RegisterInfo(const Triple &TT)
     : X86GenRegisterInfo((TT.isArch64Bit() ? X86::RIP : X86::EIP),
-                         X86_MC::getDwarfRegFlavour(TT, false),
-                         X86_MC::getDwarfRegFlavour(TT, true),
+                         X86_MC::getDwarfRegFlavour(TargetTuple(TT), false),
+                         X86_MC::getDwarfRegFlavour(TargetTuple(TT), true),
                          (TT.isArch64Bit() ? X86::RIP : X86::EIP)) {
   X86_MC::InitLLVM2SEHRegisterMapping(this);
 

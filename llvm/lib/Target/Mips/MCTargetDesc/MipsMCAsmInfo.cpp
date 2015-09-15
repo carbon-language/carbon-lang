@@ -12,19 +12,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsMCAsmInfo.h"
-#include "llvm/ADT/Triple.h"
+#include "llvm/ADT/TargetTuple.h"
 
 using namespace llvm;
 
 void MipsMCAsmInfo::anchor() { }
 
-MipsMCAsmInfo::MipsMCAsmInfo(const Triple &TheTriple) {
-  if ((TheTriple.getArch() == Triple::mips) ||
-      (TheTriple.getArch() == Triple::mips64))
+MipsMCAsmInfo::MipsMCAsmInfo(const TargetTuple &TT) {
+  if ((TT.getArch() == TargetTuple::mips) ||
+      (TT.getArch() == TargetTuple::mips64))
     IsLittleEndian = false;
 
-  if ((TheTriple.getArch() == Triple::mips64el) ||
-      (TheTriple.getArch() == Triple::mips64)) {
+  if ((TT.getArch() == TargetTuple::mips64el) ||
+      (TT.getArch() == TargetTuple::mips64)) {
     PointerSize = CalleeSaveStackSlotSize = 8;
   }
 

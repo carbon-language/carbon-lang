@@ -28,7 +28,7 @@ class MCObjectWriter;
 class MCRegisterInfo;
 class MCSubtargetInfo;
 class Target;
-class Triple;
+class TargetTuple;
 class raw_pwrite_stream;
 class raw_ostream;
 
@@ -44,7 +44,7 @@ MCCodeEmitter *createSIMCCodeEmitter(const MCInstrInfo &MCII,
                                      MCContext &Ctx);
 
 MCAsmBackend *createAMDGPUAsmBackend(const Target &T, const MCRegisterInfo &MRI,
-                                     const Triple &TT, StringRef CPU);
+                                     const TargetTuple &TT, StringRef CPU);
 
 MCObjectWriter *createAMDGPUELFObjectWriter(bool Is64Bit,
                                             raw_pwrite_stream &OS);

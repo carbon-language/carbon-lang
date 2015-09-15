@@ -10,7 +10,7 @@
 #ifndef LLVM_MC_MCELFOBJECTWRITER_H
 #define LLVM_MC_MCELFOBJECTWRITER_H
 
-#include "llvm/ADT/Triple.h"
+#include "llvm/ADT/TargetTuple.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ELF.h"
 #include <vector>
@@ -50,17 +50,17 @@ protected:
                           bool IsN64=false);
 
 public:
-  static uint8_t getOSABI(Triple::OSType OSType) {
+  static uint8_t getOSABI(TargetTuple::OSType OSType) {
     switch (OSType) {
-      case Triple::CloudABI:
-        return ELF::ELFOSABI_CLOUDABI;
-      case Triple::PS4:
-      case Triple::FreeBSD:
-        return ELF::ELFOSABI_FREEBSD;
-      case Triple::Linux:
-        return ELF::ELFOSABI_LINUX;
-      default:
-        return ELF::ELFOSABI_NONE;
+    case TargetTuple::CloudABI:
+      return ELF::ELFOSABI_CLOUDABI;
+    case TargetTuple::PS4:
+    case TargetTuple::FreeBSD:
+      return ELF::ELFOSABI_FREEBSD;
+    case TargetTuple::Linux:
+      return ELF::ELFOSABI_LINUX;
+    default:
+      return ELF::ELFOSABI_NONE;
     }
   }
 

@@ -558,7 +558,7 @@ void ARMAsmPrinter::emitAttributes() {
   const Triple &TT = TM.getTargetTriple();
   StringRef CPU = TM.getTargetCPU();
   StringRef FS = TM.getTargetFeatureString();
-  std::string ArchFS = ARM_MC::ParseARMTriple(TT, CPU);
+  std::string ArchFS = ARM_MC::ParseARMTargetTuple(TargetTuple(TT), CPU);
   if (!FS.empty()) {
     if (!ArchFS.empty())
       ArchFS = (Twine(ArchFS) + "," + FS).str();

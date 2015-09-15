@@ -16,7 +16,7 @@
 #define LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSASMBACKEND_H
 
 #include "MCTargetDesc/MipsFixupKinds.h"
-#include "llvm/ADT/Triple.h"
+#include "llvm/ADT/TargetTuple.h"
 #include "llvm/MC/MCAsmBackend.h"
 
 namespace llvm {
@@ -27,12 +27,12 @@ class Target;
 class MCObjectWriter;
 
 class MipsAsmBackend : public MCAsmBackend {
-  Triple::OSType OSType;
+  TargetTuple::OSType OSType;
   bool IsLittle; // Big or little endian
   bool Is64Bit;  // 32 or 64 bit words
 
 public:
-  MipsAsmBackend(const Target &T, Triple::OSType OSType, bool IsLittle,
+  MipsAsmBackend(const Target &T, TargetTuple::OSType OSType, bool IsLittle,
                  bool Is64Bit)
       : MCAsmBackend(), OSType(OSType), IsLittle(IsLittle), Is64Bit(Is64Bit) {}
 

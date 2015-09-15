@@ -15,7 +15,7 @@
 #include "InstPrinter/X86ATTInstPrinter.h"
 #include "InstPrinter/X86IntelInstPrinter.h"
 #include "X86MCAsmInfo.h"
-#include "llvm/ADT/Triple.h"
+#include "llvm/ADT/TargetTuple.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -42,11 +42,11 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_MC_DESC
 #include "X86GenSubtargetInfo.inc"
 
-std::string X86_MC::ParseX86Triple(const Triple &TT) {
+std::string X86_MC::ParseX86TargetTuple(const TargetTuple &TT) {
   std::string FS;
-  if (TT.getArch() == Triple::x86_64)
+  if (TT.getArch() == TargetTuple::x86_64)
     FS = "+64bit-mode,-32bit-mode,-16bit-mode";
-  else if (TT.getEnvironment() != Triple::CODE16)
+  else if (TT.getEnvironment() != TargetTuple::CODE16)
     FS = "-64bit-mode,+32bit-mode,-16bit-mode";
   else
     FS = "-64bit-mode,-32bit-mode,+16bit-mode";
@@ -54,8 +54,8 @@ std::string X86_MC::ParseX86Triple(const Triple &TT) {
   return FS;
 }
 
-unsigned X86_MC::getDwarfRegFlavour(const Triple &TT, bool isEH) {
-  if (TT.getArch() == Triple::x86_64)
+unsigned X86_MC::getDwarfRegFlavour(const TargetTuple &TT, bool isEH) {
+  if (TT.getArch() == TargetTuple::x86_64)
     return DWARFFlavour::X86_64;
 
   if (TT.isOSDarwin())
@@ -74,9 +74,9 @@ void X86_MC::InitLLVM2SEHRegisterMapping(MCRegisterInfo *MRI) {
   }
 }
 
-MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(const Triple &TT,
+MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(const TargetTuple &TT,
                                                   StringRef CPU, StringRef FS) {
-  std::string ArchFS = X86_MC::ParseX86Triple(TT);
+  std::string ArchFS = X86_MC::ParseX86TargetTuple(TT);
   if (!FS.empty()) {
     if (!ArchFS.empty())
       ArchFS = (Twine(ArchFS) + "," + FS).str();
@@ -97,8 +97,8 @@ static MCInstrInfo *createX86MCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createX86MCRegisterInfo(const Triple &TT) {
-  unsigned RA = (TT.getArch() == Triple::x86_64)
+static MCRegisterInfo *createX86MCRegisterInfo(const TargetTuple &TT) {
+  unsigned RA = (TT.getArch() == TargetTuple::x86_64)
                     ? X86::RIP  // Should have dwarf #16.
                     : X86::EIP; // Should have dwarf #8.
 
@@ -110,27 +110,26 @@ static MCRegisterInfo *createX86MCRegisterInfo(const Triple &TT) {
 }
 
 static MCAsmInfo *createX86MCAsmInfo(const MCRegisterInfo &MRI,
-                                     const Triple &TheTriple) {
-  bool is64Bit = TheTriple.getArch() == Triple::x86_64;
+                                     const TargetTuple &TT) {
+  bool is64Bit = TT.getArch() == TargetTuple::x86_64;
 
   MCAsmInfo *MAI;
-  if (TheTriple.isOSBinFormatMachO()) {
+  if (TT.isOSBinFormatMachO()) {
     if (is64Bit)
-      MAI = new X86_64MCAsmInfoDarwin(TheTriple);
+      MAI = new X86_64MCAsmInfoDarwin(TT);
     else
-      MAI = new X86MCAsmInfoDarwin(TheTriple);
-  } else if (TheTriple.isOSBinFormatELF()) {
+      MAI = new X86MCAsmInfoDarwin(TT);
+  } else if (TT.isOSBinFormatELF()) {
     // Force the use of an ELF container.
-    MAI = new X86ELFMCAsmInfo(TheTriple);
-  } else if (TheTriple.isWindowsMSVCEnvironment() ||
-             TheTriple.isWindowsCoreCLREnvironment()) {
-    MAI = new X86MCAsmInfoMicrosoft(TheTriple);
-  } else if (TheTriple.isOSCygMing() ||
-             TheTriple.isWindowsItaniumEnvironment()) {
-    MAI = new X86MCAsmInfoGNUCOFF(TheTriple);
+    MAI = new X86ELFMCAsmInfo(TT);
+  } else if (TT.isWindowsMSVCEnvironment() ||
+             TT.isWindowsCoreCLREnvironment()) {
+    MAI = new X86MCAsmInfoMicrosoft(TT);
+  } else if (TT.isOSCygMing() || TT.isWindowsItaniumEnvironment()) {
+    MAI = new X86MCAsmInfoGNUCOFF(TT);
   } else {
     // The default is ELF.
-    MAI = new X86ELFMCAsmInfo(TheTriple);
+    MAI = new X86ELFMCAsmInfo(TT);
   }
 
   // Initialize initial frame state.
@@ -152,12 +151,13 @@ static MCAsmInfo *createX86MCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCCodeGenInfo *createX86MCCodeGenInfo(const Triple &TT, Reloc::Model RM,
+static MCCodeGenInfo *createX86MCCodeGenInfo(const TargetTuple &TT,
+                                             Reloc::Model RM,
                                              CodeModel::Model CM,
                                              CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
 
-  bool is64Bit = TT.getArch() == Triple::x86_64;
+  bool is64Bit = TT.getArch() == TargetTuple::x86_64;
 
   if (RM == Reloc::Default) {
     // Darwin defaults to PIC in 64 bit mode and dynamic-no-pic in 32 bit mode.
@@ -201,7 +201,7 @@ static MCCodeGenInfo *createX86MCCodeGenInfo(const Triple &TT, Reloc::Model RM,
   return X;
 }
 
-static MCInstPrinter *createX86MCInstPrinter(const Triple &T,
+static MCInstPrinter *createX86MCInstPrinter(const TargetTuple &TT,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
                                              const MCInstrInfo &MII,
@@ -213,14 +213,14 @@ static MCInstPrinter *createX86MCInstPrinter(const Triple &T,
   return nullptr;
 }
 
-static MCRelocationInfo *createX86MCRelocationInfo(const Triple &TheTriple,
+static MCRelocationInfo *createX86MCRelocationInfo(const TargetTuple &TT,
                                                    MCContext &Ctx) {
-  if (TheTriple.isOSBinFormatMachO() && TheTriple.getArch() == Triple::x86_64)
+  if (TT.isOSBinFormatMachO() && TT.getArch() == TargetTuple::x86_64)
     return createX86_64MachORelocationInfo(Ctx);
-  else if (TheTriple.isOSBinFormatELF())
+  else if (TT.isOSBinFormatELF())
     return createX86_64ELFRelocationInfo(Ctx);
   // Default to the stock relocation info.
-  return llvm::createMCRelocationInfo(TheTriple, Ctx);
+  return llvm::createMCRelocationInfo(TT, Ctx);
 }
 
 static MCInstrAnalysis *createX86MCInstrAnalysis(const MCInstrInfo *Info) {
