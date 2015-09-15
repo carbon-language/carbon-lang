@@ -51,6 +51,12 @@ protected:
     ClangTypeToDIE&
     GetForwardDeclClangTypeToDie() override;
 
+    lldb::TypeSP
+    FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &die_decl_ctx) override;
+
+    SymbolFileDWARF*
+    GetBaseSymbolFile();
+
     lldb::ObjectFileSP m_obj_file_sp;
     DWARFCompileUnit* m_base_dwarf_cu;
 };

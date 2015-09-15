@@ -186,8 +186,11 @@ DWARFDIE::GetID () const
 
         if (m_cu)
         {
-            assert ((id&0xffffffff00000000ull) == 0 || m_cu->GetOffset() == 0);
-            id |= ((lldb::user_id_t)m_cu->GetOffset()) << 32;
+            lldb::user_id_t cu_id = ((lldb::user_id_t)m_cu->GetID())<<32;
+            assert ((id&0xffffffff00000000ull) == 0 ||
+                    (cu_id&0xffffffff00000000ll) == 0 ||
+                    (id&0xffffffff00000000ull) == (cu_id&0xffffffff00000000ll));
+            id |= cu_id;
         }
         return id;
     }

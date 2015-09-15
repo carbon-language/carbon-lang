@@ -23,6 +23,7 @@ SymbolFileDWARFDwo::SymbolFileDWARFDwo(ObjectFileSP objfile, DWARFCompileUnit* d
     m_obj_file_sp(objfile),
     m_base_dwarf_cu(dwarf_cu)
 {
+    SetID(((lldb::user_id_t)dwarf_cu->GetOffset())<<32);
 }
 
 const lldb_private::DWARFDataExtractor&
@@ -63,7 +64,7 @@ lldb::CompUnitSP
 SymbolFileDWARFDwo::ParseCompileUnit(DWARFCompileUnit* dwarf_cu, uint32_t cu_idx)
 {
     assert(GetCompileUnit() == dwarf_cu && "SymbolFileDWARFDwo::ParseCompileUnit called with incompatible compile unit");
-    return m_base_dwarf_cu->GetSymbolFileDWARF()->ParseCompileUnit(m_base_dwarf_cu, UINT32_MAX);
+    return GetBaseSymbolFile()->ParseCompileUnit(m_base_dwarf_cu, UINT32_MAX);
 }
 
 DWARFCompileUnit*
@@ -85,23 +86,35 @@ SymbolFileDWARFDwo::GetDWARFCompileUnit(lldb_private::CompileUnit *comp_unit)
 SymbolFileDWARF::DIEToTypePtr&
 SymbolFileDWARFDwo::GetDIEToType()
 {
-    return m_base_dwarf_cu->GetSymbolFileDWARF()->GetDIEToType();
+    return GetBaseSymbolFile()->GetDIEToType();
 }
 
 SymbolFileDWARF::DIEToVariableSP&
 SymbolFileDWARFDwo::GetDIEToVariable()
 {
-    return m_base_dwarf_cu->GetSymbolFileDWARF()->GetDIEToVariable();
+    return GetBaseSymbolFile()->GetDIEToVariable();
 }
 
 SymbolFileDWARF::DIEToClangType&
 SymbolFileDWARFDwo::GetForwardDeclDieToClangType()
 {
-    return m_base_dwarf_cu->GetSymbolFileDWARF()->GetForwardDeclDieToClangType();
+    return GetBaseSymbolFile()->GetForwardDeclDieToClangType();
 }
 
 SymbolFileDWARF::ClangTypeToDIE&
 SymbolFileDWARFDwo::GetForwardDeclClangTypeToDie()
 {
-    return m_base_dwarf_cu->GetSymbolFileDWARF()->GetForwardDeclClangTypeToDie();
+    return GetBaseSymbolFile()->GetForwardDeclClangTypeToDie();
+}
+
+lldb::TypeSP
+SymbolFileDWARFDwo::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &die_decl_ctx)
+{
+    return GetBaseSymbolFile()->FindDefinitionTypeForDWARFDeclContext(die_decl_ctx);
+}
+
+SymbolFileDWARF*
+SymbolFileDWARFDwo::GetBaseSymbolFile()
+{
+    return m_base_dwarf_cu->GetSymbolFileDWARF();
 }

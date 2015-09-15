@@ -433,7 +433,7 @@ protected:
                    bool include_inlines,
                    lldb_private::SymbolContextList& sc_list);
 
-    lldb::TypeSP
+    virtual lldb::TypeSP
     FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &die_decl_ctx);
 
     lldb::TypeSP
