@@ -1915,7 +1915,7 @@ static DecodeStatus DecodeRegListOperand(MCInst &Inst,
                                          uint64_t Address,
                                          const void *Decoder) {
   unsigned Regs[] = {Mips::S0, Mips::S1, Mips::S2, Mips::S3, Mips::S4, Mips::S5,
-                     Mips::S6, Mips::FP};
+                     Mips::S6, Mips::S7, Mips::FP};
   unsigned RegNum;
 
   unsigned RegLst = fieldFromInstruction(Insn, 21, 5);
