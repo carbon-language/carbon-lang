@@ -3392,14 +3392,13 @@ static void emitConstructorDestructorAlias(CodeGenModule &CGM,
     return;
 
   auto *Aliasee = cast<llvm::GlobalValue>(CGM.GetAddrOfGlobal(TargetDecl));
-  llvm::PointerType *AliasType = Aliasee->getType();
 
   // Create the alias with no name.
   auto *Alias = llvm::GlobalAlias::create(Linkage, "", Aliasee);
 
   // Switch any previous uses to the alias.
   if (Entry) {
-    assert(Entry->getType() == AliasType &&
+    assert(Entry->getType() == Aliasee->getType() &&
            "declaration exists with different type");
     Alias->takeName(Entry);
     Entry->replaceAllUsesWith(Alias);
