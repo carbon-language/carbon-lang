@@ -1213,74 +1213,74 @@ enum
 
 enum 
 {
-    gdb_gpr_x0 = 0,
-    gdb_gpr_x1,
-    gdb_gpr_x2,
-    gdb_gpr_x3,
-    gdb_gpr_x4,
-    gdb_gpr_x5,
-    gdb_gpr_x6,
-    gdb_gpr_x7,
-    gdb_gpr_x8,
-    gdb_gpr_x9,
-    gdb_gpr_x10,
-    gdb_gpr_x11,
-    gdb_gpr_x12,
-    gdb_gpr_x13,
-    gdb_gpr_x14,
-    gdb_gpr_x15,
-    gdb_gpr_x16,
-    gdb_gpr_x17,
-    gdb_gpr_x18,
-    gdb_gpr_x19,
-    gdb_gpr_x20,
-    gdb_gpr_x21,
-    gdb_gpr_x22,
-    gdb_gpr_x23,
-    gdb_gpr_x24,
-    gdb_gpr_x25,
-    gdb_gpr_x26,
-    gdb_gpr_x27,
-    gdb_gpr_x28,
-    gdb_gpr_fp,    // x29
-    gdb_gpr_lr,    // x30
-    gdb_gpr_sp,    // sp aka xsp
-    gdb_gpr_pc,
-    gdb_gpr_cpsr,
-    gdb_vfp_v0,
-    gdb_vfp_v1,
-    gdb_vfp_v2,
-    gdb_vfp_v3,
-    gdb_vfp_v4,
-    gdb_vfp_v5,
-    gdb_vfp_v6,
-    gdb_vfp_v7,
-    gdb_vfp_v8,
-    gdb_vfp_v9,
-    gdb_vfp_v10,
-    gdb_vfp_v11,
-    gdb_vfp_v12,
-    gdb_vfp_v13,
-    gdb_vfp_v14,
-    gdb_vfp_v15,
-    gdb_vfp_v16,
-    gdb_vfp_v17,
-    gdb_vfp_v18,
-    gdb_vfp_v19,
-    gdb_vfp_v20,
-    gdb_vfp_v21,
-    gdb_vfp_v22,
-    gdb_vfp_v23,
-    gdb_vfp_v24,
-    gdb_vfp_v25,
-    gdb_vfp_v26,
-    gdb_vfp_v27,
-    gdb_vfp_v28,
-    gdb_vfp_v29,
-    gdb_vfp_v30,
-    gdb_vfp_v31,
-    gdb_vfp_fpsr,
-    gdb_vfp_fpcr
+    debugserver_gpr_x0 = 0,
+    debugserver_gpr_x1,
+    debugserver_gpr_x2,
+    debugserver_gpr_x3,
+    debugserver_gpr_x4,
+    debugserver_gpr_x5,
+    debugserver_gpr_x6,
+    debugserver_gpr_x7,
+    debugserver_gpr_x8,
+    debugserver_gpr_x9,
+    debugserver_gpr_x10,
+    debugserver_gpr_x11,
+    debugserver_gpr_x12,
+    debugserver_gpr_x13,
+    debugserver_gpr_x14,
+    debugserver_gpr_x15,
+    debugserver_gpr_x16,
+    debugserver_gpr_x17,
+    debugserver_gpr_x18,
+    debugserver_gpr_x19,
+    debugserver_gpr_x20,
+    debugserver_gpr_x21,
+    debugserver_gpr_x22,
+    debugserver_gpr_x23,
+    debugserver_gpr_x24,
+    debugserver_gpr_x25,
+    debugserver_gpr_x26,
+    debugserver_gpr_x27,
+    debugserver_gpr_x28,
+    debugserver_gpr_fp,    // x29
+    debugserver_gpr_lr,    // x30
+    debugserver_gpr_sp,    // sp aka xsp
+    debugserver_gpr_pc,
+    debugserver_gpr_cpsr,
+    debugserver_vfp_v0,
+    debugserver_vfp_v1,
+    debugserver_vfp_v2,
+    debugserver_vfp_v3,
+    debugserver_vfp_v4,
+    debugserver_vfp_v5,
+    debugserver_vfp_v6,
+    debugserver_vfp_v7,
+    debugserver_vfp_v8,
+    debugserver_vfp_v9,
+    debugserver_vfp_v10,
+    debugserver_vfp_v11,
+    debugserver_vfp_v12,
+    debugserver_vfp_v13,
+    debugserver_vfp_v14,
+    debugserver_vfp_v15,
+    debugserver_vfp_v16,
+    debugserver_vfp_v17,
+    debugserver_vfp_v18,
+    debugserver_vfp_v19,
+    debugserver_vfp_v20,
+    debugserver_vfp_v21,
+    debugserver_vfp_v22,
+    debugserver_vfp_v23,
+    debugserver_vfp_v24,
+    debugserver_vfp_v25,
+    debugserver_vfp_v26,
+    debugserver_vfp_v27,
+    debugserver_vfp_v28,
+    debugserver_vfp_v29,
+    debugserver_vfp_v30,
+    debugserver_vfp_v31,
+    debugserver_vfp_fpsr,
+    debugserver_vfp_fpcr
 };
 
 const char *g_contained_x0[] {"x0", NULL };
@@ -1351,8 +1351,8 @@ const char *g_invalidate_x28[] {"x28", "w28", NULL };
 // register offset, encoding, format and native register. This ensures that
 // the register state structures are defined correctly and have the correct
 // sizes and offsets.
-#define DEFINE_GPR_IDX(idx, reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 8, GPR_OFFSET_IDX(idx) , dwarf_##reg, dwarf_##reg, gen, gdb_gpr_##reg, NULL, g_invalidate_x##idx }
-#define DEFINE_GPR_NAME(reg, alt, gen)     { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 8, GPR_OFFSET_NAME(reg), dwarf_##reg, dwarf_##reg, gen, gdb_gpr_##reg, NULL, NULL }
+#define DEFINE_GPR_IDX(idx, reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 8, GPR_OFFSET_IDX(idx) , dwarf_##reg, dwarf_##reg, gen, debugserver_gpr_##reg, NULL, g_invalidate_x##idx }
+#define DEFINE_GPR_NAME(reg, alt, gen)     { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 8, GPR_OFFSET_NAME(reg), dwarf_##reg, dwarf_##reg, gen, debugserver_gpr_##reg, NULL, NULL }
 #define DEFINE_PSEUDO_GPR_IDX(idx, reg)    { e_regSetGPR, gpr_##reg, #reg, NULL, Uint, Hex, 4, 0, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_x##idx, g_invalidate_x##idx }
 
 //_STRUCT_ARM_THREAD_STATE64
@@ -1407,7 +1407,7 @@ DNBArchMachARM64::g_gpr_registers[] =
     // in armv7 we specify that writing to the CPSR should invalidate r8-12, sp, lr.
     // this should be specified for arm64 too even though debugserver is only used for
     // userland debugging.
-    { e_regSetGPR, gpr_cpsr, "cpsr", "flags", Uint, Hex, 4, GPR_OFFSET_NAME(cpsr), dwarf_elr_mode, dwarf_elr_mode, INVALID_NUB_REGNUM, gdb_gpr_cpsr, NULL, NULL },
+    { e_regSetGPR, gpr_cpsr, "cpsr", "flags", Uint, Hex, 4, GPR_OFFSET_NAME(cpsr), dwarf_elr_mode, dwarf_elr_mode, INVALID_NUB_REGNUM, debugserver_gpr_cpsr, NULL, NULL },
 
     DEFINE_PSEUDO_GPR_IDX ( 0,  w0), 
     DEFINE_PSEUDO_GPR_IDX ( 1,  w1), 
@@ -1515,7 +1515,7 @@ const char *g_invalidate_v31[] {"v31", "d31", "s31", NULL };
 #define EXC_OFFSET(reg)      (offsetof (DNBArchMachARM64::EXC, reg)  + offsetof (DNBArchMachARM64::Context, exc))
 
 //#define FLOAT_FORMAT Float
-#define DEFINE_VFP_V_IDX(idx) { e_regSetVFP, vfp_v##idx, "v" #idx, "q" #idx, Vector, VectorOfUInt8, 16, VFP_V_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_v##idx, INVALID_NUB_REGNUM, gdb_vfp_v##idx, NULL, g_invalidate_v##idx }
+#define DEFINE_VFP_V_IDX(idx) { e_regSetVFP, vfp_v##idx, "v" #idx, "q" #idx, Vector, VectorOfUInt8, 16, VFP_V_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_v##idx, INVALID_NUB_REGNUM, debugserver_vfp_v##idx, NULL, g_invalidate_v##idx }
 #define DEFINE_PSEUDO_VFP_S_IDX(idx) { e_regSetVFP, vfp_s##idx, "s" #idx, NULL, IEEE754, Float, 4, 0, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_v##idx, g_invalidate_v##idx }
 #define DEFINE_PSEUDO_VFP_D_IDX(idx) { e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, Float, 8, 0, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_v##idx, g_invalidate_v##idx }
 

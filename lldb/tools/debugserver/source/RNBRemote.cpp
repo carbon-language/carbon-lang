@@ -1163,7 +1163,7 @@ json_string_quote_metachars (const std::string &s)
 
 typedef struct register_map_entry
 {
-    uint32_t        gdb_regnum; // gdb register number
+    uint32_t        debugserver_regnum; // debugserver register number
     uint32_t        offset;     // Offset in bytes into the register context data with no padding between register values
     DNBRegisterInfo nub_info;   // debugnub register info
     std::vector<uint32_t> value_regnums;
@@ -1230,7 +1230,7 @@ RNBRemote::InitializeRegisters (bool force)
                     reg_sets[set].registers[reg]        // DNBRegisterInfo
                 };
 
-                name_to_regnum[reg_entry.nub_info.name] = reg_entry.gdb_regnum;
+                name_to_regnum[reg_entry.nub_info.name] = reg_entry.debugserver_regnum;
 
                 if (reg_entry.nub_info.value_regs == NULL)
                 {
@@ -1810,8 +1810,8 @@ RNBRemote::HandlePacket_qRegisterInfo (const char *p)
         if (reg_set_info && reg_entry->nub_info.set < num_reg_sets)
             ostrm << "set:" << reg_set_info[reg_entry->nub_info.set].name << ';';
 
-        if (reg_entry->nub_info.reg_gcc != INVALID_NUB_REGNUM)
-            ostrm << "ehframe:" << std::dec << reg_entry->nub_info.reg_gcc << ';';
+        if (reg_entry->nub_info.reg_ehframe != INVALID_NUB_REGNUM)
+            ostrm << "ehframe:" << std::dec << reg_entry->nub_info.reg_ehframe << ';';
 
         if (reg_entry->nub_info.reg_dwarf != INVALID_NUB_REGNUM)
             ostrm << "dwarf:" << std::dec << reg_entry->nub_info.reg_dwarf << ';';
@@ -2525,7 +2525,7 @@ register_value_in_hex_fixed_width (std::ostream& ostrm,
 
 
 void
-gdb_regnum_with_fixed_width_hex_register_value (std::ostream& ostrm,
+debugserver_regnum_with_fixed_width_hex_register_value (std::ostream& ostrm,
                                                 nub_process_t pid,
                                                 nub_thread_t tid,
                                                 const register_map_entry_t* reg,
@@ -2536,7 +2536,7 @@ gdb_regnum_with_fixed_width_hex_register_value (std::ostream& ostrm,
     // as ASCII for the register value.
     if (reg != NULL)
     {
-        ostrm << RAWHEX8(reg->gdb_regnum) << ':';
+        ostrm << RAWHEX8(reg->debugserver_regnum) << ':';
         register_value_in_hex_fixed_width (ostrm, pid, tid, reg, reg_value_ptr);
         ostrm << ';';
     }
@@ -2791,7 +2791,7 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
                     if (!DNBThreadGetRegisterValueByID (pid, tid, g_reg_entries[reg].nub_info.set, g_reg_entries[reg].nub_info.reg, &reg_value))
                         continue;
 
-                    gdb_regnum_with_fixed_width_hex_register_value (ostrm, pid, tid, &g_reg_entries[reg], &reg_value);
+                    debugserver_regnum_with_fixed_width_hex_register_value (ostrm, pid, tid, &g_reg_entries[reg], &reg_value);
                 }
             }
         }
@@ -4780,8 +4780,8 @@ GenerateTargetXMLRegister (std::ostringstream &s,
     XMLAttributeString(s, "encoding", lldb_encoding, default_lldb_encoding);
     XMLAttributeString(s, "format", lldb_format, default_lldb_format);
     XMLAttributeUnsignedDecimal(s, "group_id", reg.nub_info.set);
-    if (reg.nub_info.reg_gcc != INVALID_NUB_REGNUM)
-        XMLAttributeUnsignedDecimal(s, "ehframe_regnum", reg.nub_info.reg_gcc);
+    if (reg.nub_info.reg_ehframe != INVALID_NUB_REGNUM)
+        XMLAttributeUnsignedDecimal(s, "ehframe_regnum", reg.nub_info.reg_ehframe);
     if (reg.nub_info.reg_dwarf != INVALID_NUB_REGNUM)
         XMLAttributeUnsignedDecimal(s, "dwarf_regnum", reg.nub_info.reg_dwarf);
 
@@ -5171,7 +5171,7 @@ RNBRemote::GetJSONThreadsInfo(bool threads_with_valid_stop_info_only)
                                 continue;
 
                             std::ostringstream reg_num;
-                            reg_num << std::dec << g_reg_entries[reg].gdb_regnum;
+                            reg_num << std::dec << g_reg_entries[reg].debugserver_regnum;
                             // Encode native byte ordered bytes as hex ascii
                             registers_dict_sp->AddBytesAsHexASCIIString(reg_num.str(), reg_value.value.v_uint8, g_reg_entries[reg].nub_info.size);
                         }

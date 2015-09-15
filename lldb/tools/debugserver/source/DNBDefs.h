@@ -208,10 +208,10 @@ struct DNBRegisterInfo
     uint16_t    format;         // Default format for display (DNBRegisterFormat),
     uint32_t    size;           // Size in bytes of the register
     uint32_t    offset;         // Offset from the beginning of the register context
-    uint32_t    reg_gcc;        // GCC register number (INVALID_NUB_REGNUM when none)
+    uint32_t    reg_ehframe;    // eh_frame register number (INVALID_NUB_REGNUM when none)
     uint32_t    reg_dwarf;      // DWARF register number (INVALID_NUB_REGNUM when none)
     uint32_t    reg_generic;    // Generic register number (INVALID_NUB_REGNUM when none)
-    uint32_t    reg_gdb;        // The GDB register number (INVALID_NUB_REGNUM when none)
+    uint32_t    reg_debugserver;// The debugserver register number we'll use over gdb-remote protocol (INVALID_NUB_REGNUM when none)
     const char **value_regs;    // If this register is a part of other registers, list the register names terminated by NULL
     const char **update_regs;   // If modifying this register will invalidate other registers, list the register names terminated by NULL
 };
