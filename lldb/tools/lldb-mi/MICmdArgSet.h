@@ -60,7 +60,7 @@ class CMICmdArgSet : public CMICmnBase
   public:
     /* ctor */ CMICmdArgSet();
 
-    void Add(const CMICmdArgValBase &vArg);
+    void Add(CMICmdArgValBase *vArg);
     bool GetArg(const CMIUtilString &vArgName, CMICmdArgValBase *&vpArg) const;
     const SetCmdArgs_t &GetArgsThatAreMissing() const;
     const SetCmdArgs_t &GetArgsThatInvalid() const;

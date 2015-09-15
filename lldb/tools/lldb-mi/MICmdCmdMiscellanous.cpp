@@ -171,11 +171,11 @@ CMICmdCmdListThreadGroups::~CMICmdCmdListThreadGroups()
 bool
 CMICmdCmdListThreadGroups::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgNamedAvailable, false, true)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgNamedAvailable, false, true));
     m_setCmdArgs.Add(
-        *(new CMICmdArgValOptionLong(m_constStrArgNamedRecurse, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValListOfN(m_constStrArgNamedGroup, false, true, CMICmdArgValListBase::eArgValType_Number)));
-    m_setCmdArgs.Add(*(new CMICmdArgValThreadGrp(m_constStrArgNamedThreadGroup, false, true)));
+        new CMICmdArgValOptionLong(m_constStrArgNamedRecurse, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValListOfN(m_constStrArgNamedGroup, false, true, CMICmdArgValListBase::eArgValType_Number));
+    m_setCmdArgs.Add(new CMICmdArgValThreadGrp(m_constStrArgNamedThreadGroup, false, true));
     return ParseValidateCmdOptions();
 }
 
@@ -430,8 +430,8 @@ CMICmdCmdInterpreterExec::~CMICmdCmdInterpreterExec()
 bool
 CMICmdCmdInterpreterExec::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedInterpreter, true, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedCommand, true, true, true)));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgNamedInterpreter, true, true));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgNamedCommand, true, true, true));
     return ParseValidateCmdOptions();
 }
 

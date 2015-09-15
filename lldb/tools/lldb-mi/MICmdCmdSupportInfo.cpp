@@ -58,7 +58,7 @@ CMICmdCmdSupportInfoMiCmdQuery::~CMICmdCmdSupportInfoMiCmdQuery()
 bool
 CMICmdCmdSupportInfoMiCmdQuery::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgCmdName, true, true)));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgCmdName, true, true));
     return ParseValidateCmdOptions();
 }
 

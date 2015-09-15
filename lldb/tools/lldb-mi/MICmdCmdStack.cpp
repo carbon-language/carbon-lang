@@ -74,8 +74,8 @@ CMICmdCmdStackInfoDepth::~CMICmdCmdStackInfoDepth()
 bool
 CMICmdCmdStackInfoDepth::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgMaxDepth, false, false)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgMaxDepth, false, false));
     return ParseValidateCmdOptions();
 }
 
@@ -300,9 +300,9 @@ CMICmdCmdStackListFrames::~CMICmdCmdStackListFrames()
 bool
 CMICmdCmdStackListFrames::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgFrameLow, false, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgFrameHigh, false, true)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgFrameLow, false, true));
+    m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgFrameHigh, false, true));
     return ParseValidateCmdOptions();
 }
 
@@ -481,10 +481,10 @@ CMICmdCmdStackListArguments::~CMICmdCmdStackListArguments()
 bool
 CMICmdCmdStackListArguments::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValPrintValues(m_constStrArgPrintValues, true, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgFrameLow, false, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgFrameHigh, false, true)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValPrintValues(m_constStrArgPrintValues, true, true));
+    m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgFrameLow, false, true));
+    m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgFrameHigh, false, true));
     return ParseValidateCmdOptions();
 }
 
@@ -666,9 +666,9 @@ CMICmdCmdStackListLocals::~CMICmdCmdStackListLocals()
 bool
 CMICmdCmdStackListLocals::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValPrintValues(m_constStrArgPrintValues, true, true)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValPrintValues(m_constStrArgPrintValues, true, true));
     return ParseValidateCmdOptions();
 }
 
@@ -829,9 +829,9 @@ CMICmdCmdStackListVariables::~CMICmdCmdStackListVariables()
 bool
 CMICmdCmdStackListVariables::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValPrintValues(m_constStrArgPrintValues, true, true)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValPrintValues(m_constStrArgPrintValues, true, true));
     return ParseValidateCmdOptions();
 }
 
@@ -988,7 +988,7 @@ CMICmdCmdStackSelectFrame::~CMICmdCmdStackSelectFrame()
 bool
 CMICmdCmdStackSelectFrame::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgFrame, true, false)));
+    m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgFrame, true, false));
     return ParseValidateCmdOptions();
 }
 

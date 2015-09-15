@@ -68,7 +68,7 @@ CMICmdCmdGdbInfo::~CMICmdCmdGdbInfo()
 bool
 CMICmdCmdGdbInfo::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedPrint, true, true)));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgNamedPrint, true, true));
     return ParseValidateCmdOptions();
 }
 

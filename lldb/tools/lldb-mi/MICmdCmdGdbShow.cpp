@@ -77,9 +77,9 @@ bool
 CMICmdCmdGdbShow::ParseArgs()
 {
     m_setCmdArgs.Add(
-        *(new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
+        new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
     m_setCmdArgs.Add(
-        *(new CMICmdArgValListOfN(m_constStrArgNamedGdbOption, true, true, CMICmdArgValListBase::eArgValType_StringAnything)));
+        new CMICmdArgValListOfN(m_constStrArgNamedGdbOption, true, true, CMICmdArgValListBase::eArgValType_StringAnything));
     return ParseValidateCmdOptions();
 }
 

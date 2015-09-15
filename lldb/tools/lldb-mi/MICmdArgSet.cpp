@@ -94,10 +94,9 @@ CMICmdArgSet::IsArgsPresentButNotHandledByCmd() const
 // Throws:  None.
 //--
 void
-CMICmdArgSet::Add(const CMICmdArgValBase &vArg)
+CMICmdArgSet::Add(CMICmdArgValBase *vArg)
 {
-    CMICmdArgValBase *pArg = const_cast<CMICmdArgValBase *>(&vArg);
-    m_setCmdArgs.push_back(pArg);
+    m_setCmdArgs.push_back(vArg);
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -169,25 +168,25 @@ CMICmdArgSet::Validate(const CMIUtilString &vStrMiCmd, CMICmdArgContext &vwCmdAr
     SetCmdArgs_t::const_iterator it = m_setCmdArgs.begin();
     while (it != m_setCmdArgs.end())
     {
-        const CMICmdArgValBase *pArg(*it);
+        CMICmdArgValBase *pArg = *it;
 
-        if (!const_cast<CMICmdArgValBase *>(pArg)->Validate(vwCmdArgsText))
+        if (!pArg->Validate(vwCmdArgsText))
         {
             if (pArg->GetFound())
             {
                 if (pArg->GetIsMissingOptions())
-                    m_setCmdArgsMissingInfo.push_back(const_cast<CMICmdArgValBase *>(pArg));
+                    m_setCmdArgsMissingInfo.push_back(pArg);
                 else if (!pArg->GetValid())
-                    m_setCmdArgsThatNotValid.push_back(const_cast<CMICmdArgValBase *>(pArg));
+                    m_setCmdArgsThatNotValid.push_back(pArg);
             }
             else if (pArg->GetIsMandatory())
-                m_setCmdArgsThatAreMissing.push_back(const_cast<CMICmdArgValBase *>(pArg));
+                m_setCmdArgsThatAreMissing.push_back(pArg);
         }
 
         if (pArg->GetFound() && !pArg->GetIsHandledByCmd())
         {
             m_bIsArgsPresentButNotHandledByCmd = true;
-            m_setCmdArgsNotHandledByCmd.push_back(const_cast<CMICmdArgValBase *>(pArg));
+            m_setCmdArgsNotHandledByCmd.push_back(pArg);
         }
 
         // Next

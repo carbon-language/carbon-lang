@@ -90,9 +90,9 @@ CMICmdCmdDataEvaluateExpression::~CMICmdCmdDataEvaluateExpression()
 bool
 CMICmdCmdDataEvaluateExpression::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgFrame, false, false, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgExpr, true, true, true, true)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgFrame, false, false, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgExpr, true, true, true, true));
     return ParseValidateCmdOptions();
 }
 
@@ -277,13 +277,13 @@ CMICmdCmdDataDisassemble::~CMICmdCmdDataDisassemble()
 bool
 CMICmdCmdDataDisassemble::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(
-        *(new CMICmdArgValOptionShort(m_constStrArgAddrStart, true, true, CMICmdArgValListBase::eArgValType_StringQuotedNumber, 1)));
+        new CMICmdArgValOptionShort(m_constStrArgAddrStart, true, true, CMICmdArgValListBase::eArgValType_StringQuotedNumber, 1));
     m_setCmdArgs.Add(
-        *(new CMICmdArgValOptionShort(m_constStrArgAddrEnd, true, true, CMICmdArgValListBase::eArgValType_StringQuotedNumber, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValConsume(m_constStrArgConsume, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgMode, true, true)));
+        new CMICmdArgValOptionShort(m_constStrArgAddrEnd, true, true, CMICmdArgValListBase::eArgValType_StringQuotedNumber, 1));
+    m_setCmdArgs.Add(new CMICmdArgValConsume(m_constStrArgConsume, true));
+    m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgMode, true, true));
     return ParseValidateCmdOptions();
 }
 
@@ -506,11 +506,11 @@ CMICmdCmdDataReadMemoryBytes::~CMICmdCmdDataReadMemoryBytes()
 bool
 CMICmdCmdDataReadMemoryBytes::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgByteOffset, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgAddrExpr, true, true, true, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgNumBytes, true, true)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValOptionShort(m_constStrArgByteOffset, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgAddrExpr, true, true, true, true));
+    m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgNumBytes, true, true));
     return ParseValidateCmdOptions();
 }
 
@@ -822,8 +822,8 @@ CMICmdCmdDataListRegisterNames::~CMICmdCmdDataListRegisterNames()
 bool
 CMICmdCmdDataListRegisterNames::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThreadGroup, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValListOfN(m_constStrArgRegNo, false, false, CMICmdArgValListBase::eArgValType_Number)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThreadGroup, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
+    m_setCmdArgs.Add(new CMICmdArgValListOfN(m_constStrArgRegNo, false, false, CMICmdArgValListBase::eArgValType_Number));
     return ParseValidateCmdOptions();
 }
 
@@ -1012,10 +1012,10 @@ CMICmdCmdDataListRegisterValues::~CMICmdCmdDataListRegisterValues()
 bool
 CMICmdCmdDataListRegisterValues::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgSkip, false, false)));
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgFormat, true, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValListOfN(m_constStrArgRegNo, false, true, CMICmdArgValListBase::eArgValType_Number)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgSkip, false, false));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgFormat, true, true));
+    m_setCmdArgs.Add(new CMICmdArgValListOfN(m_constStrArgRegNo, false, true, CMICmdArgValListBase::eArgValType_Number));
     return ParseValidateCmdOptions();
 }
 
@@ -1322,10 +1322,10 @@ CMICmdCmdDataWriteMemoryBytes::~CMICmdCmdDataWriteMemoryBytes()
 bool
 CMICmdCmdDataWriteMemoryBytes::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgAddr, true, true, false, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgContents, true, true, true, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgCount, false, true, false, true)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgAddr, true, true, false, true));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgContents, true, true, true, true));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgCount, false, true, false, true));
     return ParseValidateCmdOptions();
 }
 
@@ -1444,12 +1444,12 @@ CMICmdCmdDataWriteMemory::~CMICmdCmdDataWriteMemory()
 bool
 CMICmdCmdDataWriteMemory::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgOffset, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgAddr, true, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgD, true, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgNumber, true, true)));
-    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgContents, true, true)));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValOptionShort(m_constStrArgOffset, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgAddr, true, true));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgD, true, true));
+    m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgNumber, true, true));
+    m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgContents, true, true));
     return ParseValidateCmdOptions();
 }
 
@@ -1587,7 +1587,7 @@ CMICmdCmdDataInfoLine::~CMICmdCmdDataInfoLine()
 bool
 CMICmdCmdDataInfoLine::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgLocation, true, true)));
+    m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgLocation, true, true));
     return ParseValidateCmdOptions();
 }
 

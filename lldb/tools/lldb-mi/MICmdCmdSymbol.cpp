@@ -60,7 +60,7 @@ CMICmdCmdSymbolListLines::~CMICmdCmdSymbolListLines()
 bool
 CMICmdCmdSymbolListLines::ParseArgs()
 {
-    m_setCmdArgs.Add(*(new CMICmdArgValFile(m_constStrArgNameFile, true, true)));
+    m_setCmdArgs.Add(new CMICmdArgValFile(m_constStrArgNameFile, true, true));
     return ParseValidateCmdOptions();
 }
 
