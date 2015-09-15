@@ -916,7 +916,6 @@ void ScopStmt::buildDomain() {
   Id = isl_id_alloc(getIslCtx(), getBaseName(), this);
 
   Domain = getParent()->getDomainConditions(this);
-  Domain = isl_set_coalesce(Domain);
   Domain = isl_set_set_tuple_id(Domain, Id);
 }
 
@@ -1758,7 +1757,7 @@ void Scop::propagateDomainConstraints(Region *R, LoopInfo &LI,
     }
 
     // Under the union of all predecessor conditions we can reach this block.
-    Domain = isl_set_intersect(Domain, PredDom);
+    Domain = isl_set_coalesce(isl_set_intersect(Domain, PredDom));
 
     // Add assumptions for error blocks.
     if (containsErrorBlock(RN)) {
