@@ -14,6 +14,7 @@
 #include "Symbols.h"
 #include "SymbolTable.h"
 
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/StringTableBuilder.h"
@@ -499,9 +500,16 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
         case llvm::ELF::R_X86_64_64:
           support::endian::write64le(Location, SymVA + RI.r_addend);
           break;
-        case llvm::ELF::R_X86_64_32:
-          support::endian::write32le(Location, SymVA + RI.r_addend);
+        case llvm::ELF::R_X86_64_32: {
+          APInt VA(64, SymVA);
+          APInt Addend(64, RI.r_addend, true);
+          APInt Result64 = VA + Addend;
+          APInt Result = Result64.trunc(32);
+          if (Result.zext(64) != Result64)
+            error("Relocation out of range");
+          support::endian::write32le(Location, Result.getZExtValue());
           break;
+        }
         default:
           llvm::errs() << Twine("unrecognized reloc ") + Twine(Type) << '\n';
           break;
