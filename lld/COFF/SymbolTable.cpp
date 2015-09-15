@@ -411,7 +411,7 @@ std::vector<ObjectFile *> SymbolTable::createLTOObjects(LTOCodeGenerator *CG) {
     CG->addModule(BitcodeFiles[I]->getModule());
 
   std::string ErrMsg;
-  if (!CG->optimize(false, false, false, ErrMsg))
+  if (!CG->optimize(false, false, false, false, ErrMsg))
     error(ErrMsg);
 
   Objs.resize(Config->LTOJobs);
