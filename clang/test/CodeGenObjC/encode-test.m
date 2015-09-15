@@ -177,3 +177,6 @@ const char g13[] = @encode(__typeof__(*test_class));
 const char g14[] = @encode(__typeof__(*test_id));
 // CHECK: constant [14 x i8] c"{objc_class=}\00"
 // CHECK: constant [15 x i8] c"{objc_object=}\00"
+
+// CHECK: @g15 = constant [2 x i8] c":\00"
+const char g15[] = @encode(SEL);
