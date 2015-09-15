@@ -21,6 +21,7 @@ class Triple;
 
 class SparcELFMCAsmInfo : public MCAsmInfoELF {
   void anchor() override;
+
 public:
   explicit SparcELFMCAsmInfo(const Triple &TheTriple);
   const MCExpr*
