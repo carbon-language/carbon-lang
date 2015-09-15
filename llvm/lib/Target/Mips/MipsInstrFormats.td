@@ -132,7 +132,7 @@ class PseudoSE<dag outs, dag ins, list<dag> pattern,
 // These are aliases that require C++ handling to convert to the target
 // instruction, while InstAliases can be handled directly by tblgen.
 class MipsAsmPseudoInst<dag outs, dag ins, string asmstr>:
-  MipsInst<outs, ins, asmstr, [], IIPseudo, Pseudo> {
+  MipsInst<outs, ins, asmstr, [], IIPseudo, Pseudo>, PredicateControl {
   let isPseudo = 1;
   let Pattern = [];
 }

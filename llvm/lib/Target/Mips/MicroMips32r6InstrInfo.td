@@ -899,5 +899,6 @@ def SRL16_MMR6 : StdMMR6Rel, SRL16_MMR6_DESC, SRL16_MMR6_ENC,
 def : MipsInstAlias<"ei", (EI_MMR6 ZERO), 1>, ISA_MICROMIPS32R6;
 def : MipsInstAlias<"nop", (SLL_MMR6 ZERO, ZERO, 0), 1>, ISA_MICROMIPS32R6;
 def B_MMR6_Pseudo : MipsAsmPseudoInst<(outs), (ins brtarget_mm:$offset),
-                                      !strconcat("b", "\t$offset")>,
-                    MicroMipsR6Inst16;
+                                      !strconcat("b", "\t$offset")> {
+  string DecoderNamespace = "MicroMipsR6";
+}

@@ -1817,6 +1817,14 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   case Mips::BLEU:
   case Mips::BGEU:
   case Mips::BGTU:
+  case Mips::BLTL:
+  case Mips::BLEL:
+  case Mips::BGEL:
+  case Mips::BGTL:
+  case Mips::BLTUL:
+  case Mips::BLEUL:
+  case Mips::BGEUL:
+  case Mips::BGTUL:
   case Mips::SDivMacro:
   case Mips::UDivMacro:
   case Mips::DSDivMacro:
@@ -1876,6 +1884,14 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
   case Mips::BLEU:
   case Mips::BGEU:
   case Mips::BGTU:
+  case Mips::BLTL:
+  case Mips::BLEL:
+  case Mips::BGEL:
+  case Mips::BGTL:
+  case Mips::BLTUL:
+  case Mips::BLEUL:
+  case Mips::BGEUL:
+  case Mips::BGTUL:
     return expandCondBranches(Inst, IDLoc, Instructions);
   case Mips::SDivMacro:
     return expandDiv(Inst, IDLoc, Instructions, false, true);
@@ -2568,38 +2584,50 @@ bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
   const MCExpr *OffsetExpr = Inst.getOperand(2).getExpr();
 
   unsigned ZeroSrcOpcode, ZeroTrgOpcode;
-  bool ReverseOrderSLT, IsUnsigned, AcceptsEquality;
+  bool ReverseOrderSLT, IsUnsigned, IsLikely, AcceptsEquality;
 
   switch (PseudoOpcode) {
   case Mips::BLT:
   case Mips::BLTU:
+  case Mips::BLTL:
+  case Mips::BLTUL:
     AcceptsEquality = false;
     ReverseOrderSLT = false;
-    IsUnsigned = (PseudoOpcode == Mips::BLTU);
+    IsUnsigned = ((PseudoOpcode == Mips::BLTU) || (PseudoOpcode == Mips::BLTUL));
+    IsLikely = ((PseudoOpcode == Mips::BLTL) || (PseudoOpcode == Mips::BLTUL));
     ZeroSrcOpcode = Mips::BGTZ;
     ZeroTrgOpcode = Mips::BLTZ;
     break;
   case Mips::BLE:
   case Mips::BLEU:
+  case Mips::BLEL:
+  case Mips::BLEUL:
     AcceptsEquality = true;
     ReverseOrderSLT = true;
-    IsUnsigned = (PseudoOpcode == Mips::BLEU);
+    IsUnsigned = ((PseudoOpcode == Mips::BLEU) || (PseudoOpcode == Mips::BLEUL));
+    IsLikely = ((PseudoOpcode == Mips::BLEL) || (PseudoOpcode == Mips::BLEUL));
     ZeroSrcOpcode = Mips::BGEZ;
     ZeroTrgOpcode = Mips::BLEZ;
     break;
   case Mips::BGE:
   case Mips::BGEU:
+  case Mips::BGEL:
+  case Mips::BGEUL:
     AcceptsEquality = true;
     ReverseOrderSLT = false;
-    IsUnsigned = (PseudoOpcode == Mips::BGEU);
+    IsUnsigned = ((PseudoOpcode == Mips::BGEU) || (PseudoOpcode == Mips::BGEUL));
+    IsLikely = ((PseudoOpcode == Mips::BGEL) || (PseudoOpcode == Mips::BGEUL));
     ZeroSrcOpcode = Mips::BLEZ;
     ZeroTrgOpcode = Mips::BGEZ;
     break;
   case Mips::BGT:
   case Mips::BGTU:
+  case Mips::BGTL:
+  case Mips::BGTUL:
     AcceptsEquality = false;
     ReverseOrderSLT = true;
-    IsUnsigned = (PseudoOpcode == Mips::BGTU);
+    IsUnsigned = ((PseudoOpcode == Mips::BGTU) || (PseudoOpcode == Mips::BGTUL));
+    IsLikely = ((PseudoOpcode == Mips::BGTL) || (PseudoOpcode == Mips::BGTUL));
     ZeroSrcOpcode = Mips::BLTZ;
     ZeroTrgOpcode = Mips::BGTZ;
     break;
@@ -2752,7 +2780,10 @@ bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
   SetInst.addOperand(MCOperand::createReg(ReverseOrderSLT ? SrcReg : TrgReg));
   Instructions.push_back(SetInst);
 
-  BranchInst.setOpcode(AcceptsEquality ? Mips::BEQ : Mips::BNE);
+  if (!IsLikely)
+    BranchInst.setOpcode(AcceptsEquality ? Mips::BEQ : Mips::BNE);
+  else
+    BranchInst.setOpcode(AcceptsEquality ? Mips::BEQL : Mips::BNEL);
   BranchInst.addOperand(MCOperand::createReg(ATRegNum));
   BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
   BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));

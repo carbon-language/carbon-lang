@@ -1757,24 +1757,38 @@ def BLTU : CondBranchPseudo<"bltu">;
 def BLEU : CondBranchPseudo<"bleu">;
 def BGEU : CondBranchPseudo<"bgeu">;
 def BGTU : CondBranchPseudo<"bgtu">;
+def BLTL : CondBranchPseudo<"bltl">, ISA_MIPS2_NOT_32R6_64R6;
+def BLEL : CondBranchPseudo<"blel">, ISA_MIPS2_NOT_32R6_64R6;
+def BGEL : CondBranchPseudo<"bgel">, ISA_MIPS2_NOT_32R6_64R6;
+def BGTL : CondBranchPseudo<"bgtl">, ISA_MIPS2_NOT_32R6_64R6;
+def BLTUL: CondBranchPseudo<"bltul">, ISA_MIPS2_NOT_32R6_64R6;
+def BLEUL: CondBranchPseudo<"bleul">, ISA_MIPS2_NOT_32R6_64R6;
+def BGEUL: CondBranchPseudo<"bgeul">, ISA_MIPS2_NOT_32R6_64R6;
+def BGTUL: CondBranchPseudo<"bgtul">, ISA_MIPS2_NOT_32R6_64R6;
+
+// FIXME: Predicates are removed because instructions are matched regardless of
+// predicates, because PredicateControl was not in the hierarchy. This was
+// done to emit more precise error message from expansion function.
+// Once the tablegen-erated errors are made better, this needs to be fixed and
+// predicates needs to be restored.
 
 def SDivMacro : MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
-                                  "div\t$rs, $rt">, ISA_MIPS1_NOT_32R6_64R6;
+                                  "div\t$rs, $rt">; //, ISA_MIPS1_NOT_32R6_64R6;
 
 def UDivMacro : MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
-                                  "divu\t$rs, $rt">, ISA_MIPS1_NOT_32R6_64R6;
+                                  "divu\t$rs, $rt">; //, ISA_MIPS1_NOT_32R6_64R6;
 
 def DSDivMacro : MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
-                                   "ddiv\t$rs, $rt">, ISA_MIPS64_NOT_64R6;
+                                   "ddiv\t$rs, $rt">; //, ISA_MIPS64_NOT_64R6;
 
 def DUDivMacro : MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
-                                   "ddivu\t$rs, $rt">, ISA_MIPS64_NOT_64R6;
+                                   "ddivu\t$rs, $rt">; //, ISA_MIPS64_NOT_64R6;
 
 def Ulhu : MipsAsmPseudoInst<(outs GPR32Opnd:$rt), (ins mem:$addr),
-                             "ulhu\t$rt, $addr">, ISA_MIPS1_NOT_32R6_64R6;
+                             "ulhu\t$rt, $addr">; //, ISA_MIPS1_NOT_32R6_64R6;
 
 def Ulw : MipsAsmPseudoInst<(outs GPR32Opnd:$rt), (ins mem:$addr),
-                            "ulw\t$rt, $addr">, ISA_MIPS1_NOT_32R6_64R6;
+                            "ulw\t$rt, $addr">; //, ISA_MIPS1_NOT_32R6_64R6;
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions

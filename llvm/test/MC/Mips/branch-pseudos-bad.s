@@ -19,3 +19,20 @@ local_label:
 # CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
   bgtu $7, $8, local_label
 # CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+
+  bltl $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bltul $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  blel $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bleul $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bgel $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bgeul $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bgtl $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bgtul $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
