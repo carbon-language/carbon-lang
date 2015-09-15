@@ -312,9 +312,7 @@ GoASTContext::IsArrayType(void *type, CompilerType *element_type, uint64_t *size
     if (array)
     {
         if (size)
-        {
             *size = array->GetLength();
-        }
         if (element_type)
             *element_type = array->GetElementType();
         return true;
