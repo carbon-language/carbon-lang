@@ -34,133 +34,91 @@
 using namespace lldb;
 using namespace lldb_private;
 
-enum gcc_dwarf_regnums
+enum dwarf_regnums
 {
-    gcc_dwarf_r0 = 0,
-    gcc_dwarf_r1,
-    gcc_dwarf_r2,
-    gcc_dwarf_r3,
-    gcc_dwarf_r4,
-    gcc_dwarf_r5,
-    gcc_dwarf_r6,
-    gcc_dwarf_r7,
-    gcc_dwarf_r8,
-    gcc_dwarf_r9,
-    gcc_dwarf_r10,
-    gcc_dwarf_r11,
-    gcc_dwarf_r12,
-    gcc_dwarf_r13,
-    gcc_dwarf_r14,
-    gcc_dwarf_r15,
-    gcc_dwarf_r16,
-    gcc_dwarf_r17,
-    gcc_dwarf_r18,
-    gcc_dwarf_r19,
-    gcc_dwarf_r20,
-    gcc_dwarf_r21,
-    gcc_dwarf_r22,
-    gcc_dwarf_r23,
-    gcc_dwarf_r24,
-    gcc_dwarf_r25,
-    gcc_dwarf_r26,
-    gcc_dwarf_r27,
-    gcc_dwarf_r28,
-    gcc_dwarf_r29,
-    gcc_dwarf_r30,
-    gcc_dwarf_r31,
-    gcc_dwarf_sr,
-    gcc_dwarf_lo,
-    gcc_dwarf_hi,
-    gcc_dwarf_bad,
-    gcc_dwarf_cause,
-    gcc_dwarf_pc
-};
-
-enum gdb_regnums
-{
-    gdb_r0 = 0,
-    gdb_r1,
-    gdb_r2,
-    gdb_r3,
-    gdb_r4,
-    gdb_r5,
-    gdb_r6,
-    gdb_r7,
-    gdb_r8,
-    gdb_r9,
-    gdb_r10,
-    gdb_r11,
-    gdb_r12,
-    gdb_r13,
-    gdb_r14,
-    gdb_r15,
-    gdb_r16,
-    gdb_r17,
-    gdb_r18,
-    gdb_r19,
-    gdb_r20,
-    gdb_r21,
-    gdb_r22,
-    gdb_r23,
-    gdb_r24,
-    gdb_r25,
-    gdb_r26,
-    gdb_r27,
-    gdb_r28,
-    gdb_r29,
-    gdb_r30,
-    gdb_r31,
-    gdb_sr,
-    gdb_lo,
-    gdb_hi,
-    gdb_bad,
-    gdb_cause,
-    gdb_pc
+    dwarf_r0 = 0,
+    dwarf_r1,
+    dwarf_r2,
+    dwarf_r3,
+    dwarf_r4,
+    dwarf_r5,
+    dwarf_r6,
+    dwarf_r7,
+    dwarf_r8,
+    dwarf_r9,
+    dwarf_r10,
+    dwarf_r11,
+    dwarf_r12,
+    dwarf_r13,
+    dwarf_r14,
+    dwarf_r15,
+    dwarf_r16,
+    dwarf_r17,
+    dwarf_r18,
+    dwarf_r19,
+    dwarf_r20,
+    dwarf_r21,
+    dwarf_r22,
+    dwarf_r23,
+    dwarf_r24,
+    dwarf_r25,
+    dwarf_r26,
+    dwarf_r27,
+    dwarf_r28,
+    dwarf_r29,
+    dwarf_r30,
+    dwarf_r31,
+    dwarf_sr,
+    dwarf_lo,
+    dwarf_hi,
+    dwarf_bad,
+    dwarf_cause,
+    dwarf_pc
 };
 
 static const RegisterInfo
 g_register_infos_mips64[] =
 {
-   //  NAME      ALT    SZ OFF ENCODING        FORMAT        EH_FRAME                DWARF                 GENERIC                   STABS         LLDB NATIVE       VALUE REGS  INVALIDATE REGS
-  //  ========  ======  == === =============  =================== ============ ===================== ==================== =================     ====================== ========== ===============
-    { "r0"    , "zero", 8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r0,      gcc_dwarf_r0,           LLDB_INVALID_REGNUM,        gdb_r0,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r1"    , "AT",   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r1,      gcc_dwarf_r1,           LLDB_INVALID_REGNUM,        gdb_r1,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r2"    , "v0",   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r2,      gcc_dwarf_r2,           LLDB_INVALID_REGNUM,        gdb_r2,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r3"    , "v1",   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r3,      gcc_dwarf_r3,           LLDB_INVALID_REGNUM,        gdb_r3,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r4"    , "arg1", 8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r4,      gcc_dwarf_r4,           LLDB_REGNUM_GENERIC_ARG1,   gdb_r4,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r5"    , "arg2", 8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r5,      gcc_dwarf_r5,           LLDB_REGNUM_GENERIC_ARG2,   gdb_r5,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r6"    , "arg3", 8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r6,      gcc_dwarf_r6,           LLDB_REGNUM_GENERIC_ARG3,   gdb_r6,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r7"    , "arg4", 8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r7,      gcc_dwarf_r7,           LLDB_REGNUM_GENERIC_ARG4,   gdb_r7,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r8"    , "arg5", 8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r8,      gcc_dwarf_r8,           LLDB_REGNUM_GENERIC_ARG5,   gdb_r8,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r9"    , "arg6", 8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r9,      gcc_dwarf_r9,           LLDB_REGNUM_GENERIC_ARG6,   gdb_r9,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r10"   , "arg7", 8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r10,     gcc_dwarf_r10,          LLDB_REGNUM_GENERIC_ARG7,   gdb_r10,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r11"   , "arg8", 8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r11,     gcc_dwarf_r11,          LLDB_REGNUM_GENERIC_ARG8,   gdb_r11,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r12"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r12,     gcc_dwarf_r12,          LLDB_INVALID_REGNUM,        gdb_r12,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r13"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r13,     gcc_dwarf_r13,          LLDB_INVALID_REGNUM,        gdb_r13,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r14"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r14,     gcc_dwarf_r14,          LLDB_INVALID_REGNUM,        gdb_r14,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r15"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r15,     gcc_dwarf_r15,          LLDB_INVALID_REGNUM,        gdb_r15,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r16"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r16,     gcc_dwarf_r16,          LLDB_INVALID_REGNUM,        gdb_r16,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r17"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r17,     gcc_dwarf_r17,          LLDB_INVALID_REGNUM,        gdb_r17,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r18"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r18,     gcc_dwarf_r18,          LLDB_INVALID_REGNUM,        gdb_r18,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r19"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r19,     gcc_dwarf_r19,          LLDB_INVALID_REGNUM,        gdb_r19,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r20"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r20,     gcc_dwarf_r20,          LLDB_INVALID_REGNUM,        gdb_r20,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r21"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r21,     gcc_dwarf_r21,          LLDB_INVALID_REGNUM,        gdb_r21,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r22"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r22,     gcc_dwarf_r22,          LLDB_INVALID_REGNUM,        gdb_r22,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r23"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r23,     gcc_dwarf_r23,          LLDB_INVALID_REGNUM,        gdb_r23,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r24"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r24,     gcc_dwarf_r24,          LLDB_INVALID_REGNUM,        gdb_r24,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r25"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r25,     gcc_dwarf_r25,          LLDB_INVALID_REGNUM,        gdb_r25,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r26"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r26,     gcc_dwarf_r26,          LLDB_INVALID_REGNUM,        gdb_r26,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r27"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r27,     gcc_dwarf_r27,          LLDB_INVALID_REGNUM,        gdb_r27,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r28"   , "gp",   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r28,     gcc_dwarf_r28,          LLDB_INVALID_REGNUM,        gdb_r28,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r29"   , "sp",   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r29,     gcc_dwarf_r29,          LLDB_REGNUM_GENERIC_SP,     gdb_r29,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r30"   , "fp",   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r30,     gcc_dwarf_r30,          LLDB_REGNUM_GENERIC_FP,     gdb_r30,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "r31"   , "ra",   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r31,     gcc_dwarf_r31,          LLDB_REGNUM_GENERIC_RA,     gdb_r31,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "sr"    , NULL,   4,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_sr,      gcc_dwarf_sr,           LLDB_REGNUM_GENERIC_FLAGS,  gdb_sr,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "lo"    , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_lo,      gcc_dwarf_lo,           LLDB_INVALID_REGNUM,        gdb_lo,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "hi"    , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_hi,      gcc_dwarf_hi,           LLDB_INVALID_REGNUM,        gdb_hi,     LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "bad"   , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_bad,     gcc_dwarf_bad,          LLDB_INVALID_REGNUM,        gdb_bad,    LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "cause" , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_cause,   gcc_dwarf_cause,        LLDB_INVALID_REGNUM,        gdb_cause,  LLDB_INVALID_REGNUM },  NULL,      NULL},
-    { "pc"    , NULL,   8,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_pc,      gcc_dwarf_pc,           LLDB_REGNUM_GENERIC_PC,     gdb_pc,     LLDB_INVALID_REGNUM },  NULL,      NULL},
+   //  NAME      ALT    SZ OFF ENCODING        FORMAT         EH_FRAME           DWARF                   GENERIC                     PROCESS PLUGIN          LLDB NATIVE            VALUE REGS INVALIDATE REGS
+  //  ========  ======  == === =============  ==========     =============      =================       ====================        =================       ====================    ========== ===============
+    { "r0"    , "zero", 8,  0, eEncodingUint, eFormatHex,  {     dwarf_r0,          dwarf_r0,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r1"    , "AT",   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r1,          dwarf_r1,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r2"    , "v0",   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r2,          dwarf_r2,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r3"    , "v1",   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r3,          dwarf_r3,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r4"    , "arg1", 8,  0, eEncodingUint, eFormatHex,  {     dwarf_r4,          dwarf_r4,           LLDB_REGNUM_GENERIC_ARG1,   LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r5"    , "arg2", 8,  0, eEncodingUint, eFormatHex,  {     dwarf_r5,          dwarf_r5,           LLDB_REGNUM_GENERIC_ARG2,   LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r6"    , "arg3", 8,  0, eEncodingUint, eFormatHex,  {     dwarf_r6,          dwarf_r6,           LLDB_REGNUM_GENERIC_ARG3,   LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r7"    , "arg4", 8,  0, eEncodingUint, eFormatHex,  {     dwarf_r7,          dwarf_r7,           LLDB_REGNUM_GENERIC_ARG4,   LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r8"    , "arg5", 8,  0, eEncodingUint, eFormatHex,  {     dwarf_r8,          dwarf_r8,           LLDB_REGNUM_GENERIC_ARG5,   LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r9"    , "arg6", 8,  0, eEncodingUint, eFormatHex,  {     dwarf_r9,          dwarf_r9,           LLDB_REGNUM_GENERIC_ARG6,   LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r10"   , "arg7", 8,  0, eEncodingUint, eFormatHex,  {     dwarf_r10,         dwarf_r10,          LLDB_REGNUM_GENERIC_ARG7,   LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r11"   , "arg8", 8,  0, eEncodingUint, eFormatHex,  {     dwarf_r11,         dwarf_r11,          LLDB_REGNUM_GENERIC_ARG8,   LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r12"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r12,         dwarf_r12,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r13"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r13,         dwarf_r13,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r14"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r14,         dwarf_r14,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r15"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r15,         dwarf_r15,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r16"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r16,         dwarf_r16,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r17"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r17,         dwarf_r17,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r18"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r18,         dwarf_r18,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r19"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r19,         dwarf_r19,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r20"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r20,         dwarf_r20,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r21"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r21,         dwarf_r21,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r22"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r22,         dwarf_r22,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r23"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r23,         dwarf_r23,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r24"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r24,         dwarf_r24,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r25"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r25,         dwarf_r25,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r26"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r26,         dwarf_r26,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r27"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r27,         dwarf_r27,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r28"   , "gp",   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r28,         dwarf_r28,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r29"   , "sp",   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r29,         dwarf_r29,          LLDB_REGNUM_GENERIC_SP,     LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r30"   , "fp",   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r30,         dwarf_r30,          LLDB_REGNUM_GENERIC_FP,     LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "r31"   , "ra",   8,  0, eEncodingUint, eFormatHex,  {     dwarf_r31,         dwarf_r31,          LLDB_REGNUM_GENERIC_RA,     LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "sr"    , NULL,   4,  0, eEncodingUint, eFormatHex,  {     dwarf_sr,          dwarf_sr,           LLDB_REGNUM_GENERIC_FLAGS,  LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "lo"    , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_lo,          dwarf_lo,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "hi"    , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_hi,          dwarf_hi,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "bad"   , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_bad,         dwarf_bad,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "cause" , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_cause,       dwarf_cause,        LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
+    { "pc"    , NULL,   8,  0, eEncodingUint, eFormatHex,  {     dwarf_pc,          dwarf_pc,           LLDB_REGNUM_GENERIC_PC,     LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM },  NULL,      NULL},
 };
 
 static const uint32_t k_num_register_infos = llvm::array_lengthof(g_register_infos_mips64);
@@ -761,17 +719,17 @@ ABISysV_mips64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     UnwindPlan::RowSP row(new UnwindPlan::Row);
 
     // Our Call Frame Address is the stack pointer value
-    row->GetCFAValue().SetIsRegisterPlusOffset(gcc_dwarf_r29, 0);
+    row->GetCFAValue().SetIsRegisterPlusOffset(dwarf_r29, 0);
 
     // The previous PC is in the RA
-    row->SetRegisterLocationToRegister(gcc_dwarf_pc, gcc_dwarf_r31, true);
+    row->SetRegisterLocationToRegister(dwarf_pc, dwarf_r31, true);
     unwind_plan.AppendRow (row);
 
     // All other registers are the same.
 
     unwind_plan.SetSourceName ("mips64 at-func-entry default");
     unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
-    unwind_plan.SetReturnAddressRegister(gcc_dwarf_r31);
+    unwind_plan.SetReturnAddressRegister(dwarf_r31);
     return true;
 }
 
@@ -783,9 +741,9 @@ ABISysV_mips64::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 
     UnwindPlan::RowSP row(new UnwindPlan::Row);
 
-    row->GetCFAValue().SetIsRegisterPlusOffset(gcc_dwarf_r29, 0);
+    row->GetCFAValue().SetIsRegisterPlusOffset(dwarf_r29, 0);
 
-    row->SetRegisterLocationToRegister(gcc_dwarf_pc, gcc_dwarf_r31, true);
+    row->SetRegisterLocationToRegister(dwarf_pc, dwarf_r31, true);
 
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("mips64 default unwind plan");

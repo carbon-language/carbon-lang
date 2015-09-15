@@ -99,7 +99,7 @@ DynamicRegisterInfo::SetRegisterInfo(const StructuredData::Dictionary &dict, con
             return 0;
         }
 
-        // { 'name':'rcx'       , 'bitsize' :  64, 'offset' :  16, 'encoding':'uint'  , 'format':'hex'         , 'set': 0, 'gcc' : 2,
+        // { 'name':'rcx'       , 'bitsize' :  64, 'offset' :  16, 'encoding':'uint'  , 'format':'hex'         , 'set': 0, 'ehframe' : 2,
         // 'dwarf' : 2, 'generic':'arg4', 'alt-name':'arg4', },
         RegisterInfo reg_info;
         std::vector<uint32_t> value_regs;
@@ -325,13 +325,11 @@ DynamicRegisterInfo::SetRegisterInfo(const StructuredData::Dictionary &dict, con
 
         // Fill in the register numbers
         reg_info.kinds[lldb::eRegisterKindLLDB] = i;
-        reg_info.kinds[lldb::eRegisterKindStabs] = i;
+        reg_info.kinds[lldb::eRegisterKindProcessPlugin] = i;
         uint32_t eh_frame_regno = LLDB_INVALID_REGNUM;
         reg_info_dict->GetValueForKeyAsInteger("gcc", eh_frame_regno, LLDB_INVALID_REGNUM);
         if (eh_frame_regno == LLDB_INVALID_REGNUM)
             reg_info_dict->GetValueForKeyAsInteger("ehframe", eh_frame_regno, LLDB_INVALID_REGNUM);
-        if (eh_frame_regno == LLDB_INVALID_REGNUM)
-            reg_info_dict->GetValueForKeyAsInteger("eh_frame", eh_frame_regno, LLDB_INVALID_REGNUM);
         reg_info.kinds[lldb::eRegisterKindEHFrame] = eh_frame_regno;
         reg_info_dict->GetValueForKeyAsInteger("dwarf", reg_info.kinds[lldb::eRegisterKindDWARF], LLDB_INVALID_REGNUM);
         std::string generic_str;
@@ -709,12 +707,12 @@ DynamicRegisterInfo::Dump () const
                  m_regs[i].byte_offset,
                  m_regs[i].encoding,
                  FormatManager::GetFormatAsCString (m_regs[i].format));
-        if (m_regs[i].kinds[eRegisterKindStabs] != LLDB_INVALID_REGNUM)
-            s.Printf(", gdb = %3u", m_regs[i].kinds[eRegisterKindStabs]);
+        if (m_regs[i].kinds[eRegisterKindProcessPlugin] != LLDB_INVALID_REGNUM)
+            s.Printf(", process plugin = %3u", m_regs[i].kinds[eRegisterKindProcessPlugin]);
         if (m_regs[i].kinds[eRegisterKindDWARF] != LLDB_INVALID_REGNUM)
             s.Printf(", dwarf = %3u", m_regs[i].kinds[eRegisterKindDWARF]);
         if (m_regs[i].kinds[eRegisterKindEHFrame] != LLDB_INVALID_REGNUM)
-            s.Printf(", gcc = %3u", m_regs[i].kinds[eRegisterKindEHFrame]);
+            s.Printf(", ehframe = %3u", m_regs[i].kinds[eRegisterKindEHFrame]);
         if (m_regs[i].kinds[eRegisterKindGeneric] != LLDB_INVALID_REGNUM)
             s.Printf(", generic = %3u", m_regs[i].kinds[eRegisterKindGeneric]);
         if (m_regs[i].alt_name)

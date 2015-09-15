@@ -640,7 +640,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                         LLDB_INVALID_REGNUM, // eh_frame reg num
                         LLDB_INVALID_REGNUM, // DWARF reg num
                         LLDB_INVALID_REGNUM, // generic reg num
-                        reg_num,             // stabs reg num
+                        reg_num,             // process plugin reg num
                         reg_num           // native register number
                     },
                     NULL,
@@ -4310,10 +4310,10 @@ ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemot
     if (!feature_node)
         return false;
     
-    uint32_t prev_reg_num = 0;
+    uint32_t cur_reg_num = 0;
     uint32_t reg_offset = 0;
 
-    feature_node.ForEachChildElementWithName("reg", [&target_info, &dyn_reg_info, &prev_reg_num, &reg_offset, &abi_sp](const XMLNode &reg_node) -> bool {
+    feature_node.ForEachChildElementWithName("reg", [&target_info, &dyn_reg_info, &cur_reg_num, &reg_offset, &abi_sp](const XMLNode &reg_node) -> bool {
         std::string gdb_group;
         std::string gdb_type;
         ConstString reg_name;
@@ -4333,14 +4333,14 @@ ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemot
                 LLDB_INVALID_REGNUM, // eh_frame reg num
                 LLDB_INVALID_REGNUM, // DWARF reg num
                 LLDB_INVALID_REGNUM, // generic reg num
-                prev_reg_num,        // stabs reg num
-                prev_reg_num         // native register number
+                cur_reg_num,        // process plugin reg num
+                cur_reg_num         // native register number
             },
             NULL,
             NULL
         };
         
-        reg_node.ForEachAttribute([&target_info, &gdb_group, &gdb_type, &reg_name, &alt_name, &set_name, &value_regs, &invalidate_regs, &encoding_set, &format_set, &reg_info, &prev_reg_num, &reg_offset](const llvm::StringRef &name, const llvm::StringRef &value) -> bool {
+        reg_node.ForEachAttribute([&target_info, &gdb_group, &gdb_type, &reg_name, &alt_name, &set_name, &value_regs, &invalidate_regs, &encoding_set, &format_set, &reg_info, &cur_reg_num, &reg_offset](const llvm::StringRef &name, const llvm::StringRef &value) -> bool {
             if (name == "name")
             {
                 reg_name.SetString(value);
@@ -4362,9 +4362,7 @@ ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemot
                 const uint32_t regnum = StringConvert::ToUInt32(value.data(), LLDB_INVALID_REGNUM, 0);
                 if (regnum != LLDB_INVALID_REGNUM)
                 {
-                    reg_info.kinds[eRegisterKindStabs] = regnum;
-                    reg_info.kinds[eRegisterKindLLDB] = regnum;
-                    prev_reg_num = regnum;
+                    reg_info.kinds[eRegisterKindProcessPlugin] = regnum;
                 }
             }
             else if (name == "offset")
@@ -4475,7 +4473,7 @@ ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemot
             reg_info.invalidate_regs = invalidate_regs.data();
         }
         
-        ++prev_reg_num;
+        ++cur_reg_num;
         AugmentRegisterInfoViaABI (reg_info, reg_name, abi_sp);
         dyn_reg_info.AddRegister(reg_info, reg_name, alt_name, set_name);
         

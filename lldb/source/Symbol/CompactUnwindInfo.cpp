@@ -693,7 +693,7 @@ enum x86_64_eh_regnum {
 };
 
 // Convert the compact_unwind_info.h register numbering scheme
-// to eRegisterKindGCC (eh_frame) register numbering scheme.
+// to eRegisterKindEHFrame (eh_frame) register numbering scheme.
 uint32_t
 translate_to_eh_frame_regnum_x86_64 (uint32_t unwind_regno)
 {
@@ -976,7 +976,7 @@ enum i386_eh_regnum {
 };
 
 // Convert the compact_unwind_info.h register numbering scheme
-// to eRegisterKindGCC (eh_frame) register numbering scheme.
+// to eRegisterKindEHFrame (eh_frame) register numbering scheme.
 uint32_t
 translate_to_eh_frame_regnum_i386 (uint32_t unwind_regno)
 {

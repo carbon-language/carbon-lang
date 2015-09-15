@@ -111,131 +111,51 @@ enum
     fpu_fooff = fpu_dp
 };
 
-enum gcc_dwarf_regnums
+enum ehframe_dwarf_regnums
 {
-    gcc_dwarf_gpr_rax = 0,
-    gcc_dwarf_gpr_rdx,
-    gcc_dwarf_gpr_rcx,
-    gcc_dwarf_gpr_rbx,
-    gcc_dwarf_gpr_rsi,
-    gcc_dwarf_gpr_rdi,
-    gcc_dwarf_gpr_rbp,
-    gcc_dwarf_gpr_rsp,
-    gcc_dwarf_gpr_r8,
-    gcc_dwarf_gpr_r9,
-    gcc_dwarf_gpr_r10,
-    gcc_dwarf_gpr_r11,
-    gcc_dwarf_gpr_r12,
-    gcc_dwarf_gpr_r13,
-    gcc_dwarf_gpr_r14,
-    gcc_dwarf_gpr_r15,
-    gcc_dwarf_gpr_rip,
-    gcc_dwarf_fpu_xmm0,
-    gcc_dwarf_fpu_xmm1,
-    gcc_dwarf_fpu_xmm2,
-    gcc_dwarf_fpu_xmm3,
-    gcc_dwarf_fpu_xmm4,
-    gcc_dwarf_fpu_xmm5,
-    gcc_dwarf_fpu_xmm6,
-    gcc_dwarf_fpu_xmm7,
-    gcc_dwarf_fpu_xmm8,
-    gcc_dwarf_fpu_xmm9,
-    gcc_dwarf_fpu_xmm10,
-    gcc_dwarf_fpu_xmm11,
-    gcc_dwarf_fpu_xmm12,
-    gcc_dwarf_fpu_xmm13,
-    gcc_dwarf_fpu_xmm14,
-    gcc_dwarf_fpu_xmm15,
-    gcc_dwarf_fpu_stmm0,
-    gcc_dwarf_fpu_stmm1,
-    gcc_dwarf_fpu_stmm2,
-    gcc_dwarf_fpu_stmm3,
-    gcc_dwarf_fpu_stmm4,
-    gcc_dwarf_fpu_stmm5,
-    gcc_dwarf_fpu_stmm6,
-    gcc_dwarf_fpu_stmm7
+    ehframe_dwarf_gpr_rax = 0,
+    ehframe_dwarf_gpr_rdx,
+    ehframe_dwarf_gpr_rcx,
+    ehframe_dwarf_gpr_rbx,
+    ehframe_dwarf_gpr_rsi,
+    ehframe_dwarf_gpr_rdi,
+    ehframe_dwarf_gpr_rbp,
+    ehframe_dwarf_gpr_rsp,
+    ehframe_dwarf_gpr_r8,
+    ehframe_dwarf_gpr_r9,
+    ehframe_dwarf_gpr_r10,
+    ehframe_dwarf_gpr_r11,
+    ehframe_dwarf_gpr_r12,
+    ehframe_dwarf_gpr_r13,
+    ehframe_dwarf_gpr_r14,
+    ehframe_dwarf_gpr_r15,
+    ehframe_dwarf_gpr_rip,
+    ehframe_dwarf_fpu_xmm0,
+    ehframe_dwarf_fpu_xmm1,
+    ehframe_dwarf_fpu_xmm2,
+    ehframe_dwarf_fpu_xmm3,
+    ehframe_dwarf_fpu_xmm4,
+    ehframe_dwarf_fpu_xmm5,
+    ehframe_dwarf_fpu_xmm6,
+    ehframe_dwarf_fpu_xmm7,
+    ehframe_dwarf_fpu_xmm8,
+    ehframe_dwarf_fpu_xmm9,
+    ehframe_dwarf_fpu_xmm10,
+    ehframe_dwarf_fpu_xmm11,
+    ehframe_dwarf_fpu_xmm12,
+    ehframe_dwarf_fpu_xmm13,
+    ehframe_dwarf_fpu_xmm14,
+    ehframe_dwarf_fpu_xmm15,
+    ehframe_dwarf_fpu_stmm0,
+    ehframe_dwarf_fpu_stmm1,
+    ehframe_dwarf_fpu_stmm2,
+    ehframe_dwarf_fpu_stmm3,
+    ehframe_dwarf_fpu_stmm4,
+    ehframe_dwarf_fpu_stmm5,
+    ehframe_dwarf_fpu_stmm6,
+    ehframe_dwarf_fpu_stmm7
 
 };
-
-enum gdb_regnums
-{
-    gdb_gpr_rax     =   0,
-    gdb_gpr_rbx     =   1,
-    gdb_gpr_rcx     =   2,
-    gdb_gpr_rdx     =   3,
-    gdb_gpr_rsi     =   4,
-    gdb_gpr_rdi     =   5,
-    gdb_gpr_rbp     =   6,
-    gdb_gpr_rsp     =   7,
-    gdb_gpr_r8      =   8,
-    gdb_gpr_r9      =   9,
-    gdb_gpr_r10     =  10,
-    gdb_gpr_r11     =  11,
-    gdb_gpr_r12     =  12,
-    gdb_gpr_r13     =  13,
-    gdb_gpr_r14     =  14,
-    gdb_gpr_r15     =  15,
-    gdb_gpr_rip     =  16,
-    gdb_gpr_rflags  =  17,
-    gdb_gpr_cs      =  18,
-    gdb_gpr_ss      =  19,
-    gdb_gpr_ds      =  20,
-    gdb_gpr_es      =  21,
-    gdb_gpr_fs      =  22,
-    gdb_gpr_gs      =  23,
-    gdb_fpu_stmm0   =  24,
-    gdb_fpu_stmm1   =  25,
-    gdb_fpu_stmm2   =  26,
-    gdb_fpu_stmm3   =  27,
-    gdb_fpu_stmm4   =  28,
-    gdb_fpu_stmm5   =  29,
-    gdb_fpu_stmm6   =  30,
-    gdb_fpu_stmm7   =  31,
-    gdb_fpu_fctrl   =  32,  gdb_fpu_fcw = gdb_fpu_fctrl,
-    gdb_fpu_fstat   =  33,  gdb_fpu_fsw = gdb_fpu_fstat,
-    gdb_fpu_ftag    =  34,  gdb_fpu_ftw = gdb_fpu_ftag,
-    gdb_fpu_fiseg   =  35,  gdb_fpu_cs  = gdb_fpu_fiseg,
-    gdb_fpu_fioff   =  36,  gdb_fpu_ip  = gdb_fpu_fioff,
-    gdb_fpu_foseg   =  37,  gdb_fpu_ds  = gdb_fpu_foseg,
-    gdb_fpu_fooff   =  38,  gdb_fpu_dp  = gdb_fpu_fooff,
-    gdb_fpu_fop     =  39,
-    gdb_fpu_xmm0    =  40,
-    gdb_fpu_xmm1    =  41,
-    gdb_fpu_xmm2    =  42,
-    gdb_fpu_xmm3    =  43,
-    gdb_fpu_xmm4    =  44,
-    gdb_fpu_xmm5    =  45,
-    gdb_fpu_xmm6    =  46,
-    gdb_fpu_xmm7    =  47,
-    gdb_fpu_xmm8    =  48,
-    gdb_fpu_xmm9    =  49,
-    gdb_fpu_xmm10   =  50,
-    gdb_fpu_xmm11   =  51,
-    gdb_fpu_xmm12   =  52,
-    gdb_fpu_xmm13   =  53,
-    gdb_fpu_xmm14   =  54,
-    gdb_fpu_xmm15   =  55,
-    gdb_fpu_mxcsr   =  56
-};
-
-RegisterContextDarwin_x86_64::RegisterContextDarwin_x86_64 (Thread &thread, uint32_t concrete_frame_idx) :
-    RegisterContext (thread, concrete_frame_idx),
-    gpr(),
-    fpu(),
-    exc()
-{
-    uint32_t i;
-    for (i=0; i<kNumErrors; i++)
-    {
-        gpr_errs[i] = -1;
-        fpu_errs[i] = -1;
-        exc_errs[i] = -1;
-    }
-}
-
-RegisterContextDarwin_x86_64::~RegisterContextDarwin_x86_64()
-{
-}
 
 #define GPR_OFFSET(reg) (LLVM_EXTENSION offsetof (RegisterContextDarwin_x86_64::GPR, reg))
 #define FPU_OFFSET(reg) (LLVM_EXTENSION offsetof (RegisterContextDarwin_x86_64::FPU, reg) + sizeof (RegisterContextDarwin_x86_64::GPR))
@@ -247,7 +167,7 @@ RegisterContextDarwin_x86_64::~RegisterContextDarwin_x86_64()
 // sizes and offsets.
 #define DEFINE_GPR(reg, alt)    #reg, alt, sizeof(((RegisterContextDarwin_x86_64::GPR *)NULL)->reg), GPR_OFFSET(reg), eEncodingUint, eFormatHex
 #define DEFINE_FPU_UINT(reg)    #reg, NULL, sizeof(((RegisterContextDarwin_x86_64::FPU *)NULL)->reg), FPU_OFFSET(reg), eEncodingUint, eFormatHex
-#define DEFINE_FPU_VECT(reg, i) #reg#i, NULL, sizeof(((RegisterContextDarwin_x86_64::FPU *)NULL)->reg[i].bytes), FPU_OFFSET(reg[i]), eEncodingVector, eFormatVectorOfUInt8, { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i, LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i }, NULL, NULL
+#define DEFINE_FPU_VECT(reg, i) #reg#i, NULL, sizeof(((RegisterContextDarwin_x86_64::FPU *)NULL)->reg[i].bytes), FPU_OFFSET(reg[i]), eEncodingVector, eFormatVectorOfUInt8, { ehframe_dwarf_fpu_##reg##i, ehframe_dwarf_fpu_##reg##i, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, fpu_##reg##i }, NULL, NULL
 #define DEFINE_EXC(reg)         #reg, NULL, sizeof(((RegisterContextDarwin_x86_64::EXC *)NULL)->reg), EXC_OFFSET(reg), eEncodingUint, eFormatHex
 
 #define REG_CONTEXT_SIZE (sizeof (RegisterContextDarwin_x86_64::GPR) + sizeof (RegisterContextDarwin_x86_64::FPU) + sizeof (RegisterContextDarwin_x86_64::EXC))
@@ -255,39 +175,39 @@ RegisterContextDarwin_x86_64::~RegisterContextDarwin_x86_64()
 // General purpose registers for 64 bit
 static RegisterInfo g_register_infos[] =
 {
-//  Macro auto defines most stuff   EH_FRAME               DWARF                GENERIC                    STABS                LLDB                VALUE REGS    INVALIDATE REGS
-//  =============================== ====================== ===================  ========================== ==================== =================== ==========    ===============
-    { DEFINE_GPR (rax   , NULL)     , { gcc_dwarf_gpr_rax  , gcc_dwarf_gpr_rax  , LLDB_INVALID_REGNUM      , gdb_gpr_rax        , gpr_rax       },       NULL,              NULL},
-    { DEFINE_GPR (rbx   , NULL)     , { gcc_dwarf_gpr_rbx  , gcc_dwarf_gpr_rbx  , LLDB_INVALID_REGNUM      , gdb_gpr_rbx        , gpr_rbx       },       NULL,              NULL},
-    { DEFINE_GPR (rcx   , NULL)     , { gcc_dwarf_gpr_rcx  , gcc_dwarf_gpr_rcx  , LLDB_INVALID_REGNUM      , gdb_gpr_rcx        , gpr_rcx       },       NULL,              NULL},
-    { DEFINE_GPR (rdx   , NULL)     , { gcc_dwarf_gpr_rdx  , gcc_dwarf_gpr_rdx  , LLDB_INVALID_REGNUM      , gdb_gpr_rdx        , gpr_rdx       },       NULL,              NULL},
-    { DEFINE_GPR (rdi   , NULL)     , { gcc_dwarf_gpr_rdi  , gcc_dwarf_gpr_rdi  , LLDB_INVALID_REGNUM      , gdb_gpr_rdi        , gpr_rdi       },       NULL,              NULL},
-    { DEFINE_GPR (rsi   , NULL)     , { gcc_dwarf_gpr_rsi  , gcc_dwarf_gpr_rsi  , LLDB_INVALID_REGNUM      , gdb_gpr_rsi        , gpr_rsi       },       NULL,              NULL},
-    { DEFINE_GPR (rbp   , "fp")     , { gcc_dwarf_gpr_rbp  , gcc_dwarf_gpr_rbp  , LLDB_REGNUM_GENERIC_FP   , gdb_gpr_rbp        , gpr_rbp       },       NULL,              NULL},
-    { DEFINE_GPR (rsp   , "sp")     , { gcc_dwarf_gpr_rsp  , gcc_dwarf_gpr_rsp  , LLDB_REGNUM_GENERIC_SP   , gdb_gpr_rsp        , gpr_rsp       },       NULL,              NULL},
-    { DEFINE_GPR (r8    , NULL)     , { gcc_dwarf_gpr_r8   , gcc_dwarf_gpr_r8   , LLDB_INVALID_REGNUM      , gdb_gpr_r8         , gpr_r8        },       NULL,              NULL},
-    { DEFINE_GPR (r9    , NULL)     , { gcc_dwarf_gpr_r9   , gcc_dwarf_gpr_r9   , LLDB_INVALID_REGNUM      , gdb_gpr_r9         , gpr_r9        },       NULL,              NULL},
-    { DEFINE_GPR (r10   , NULL)     , { gcc_dwarf_gpr_r10  , gcc_dwarf_gpr_r10  , LLDB_INVALID_REGNUM      , gdb_gpr_r10        , gpr_r10       },       NULL,              NULL},
-    { DEFINE_GPR (r11   , NULL)     , { gcc_dwarf_gpr_r11  , gcc_dwarf_gpr_r11  , LLDB_INVALID_REGNUM      , gdb_gpr_r11        , gpr_r11       },       NULL,              NULL},
-    { DEFINE_GPR (r12   , NULL)     , { gcc_dwarf_gpr_r12  , gcc_dwarf_gpr_r12  , LLDB_INVALID_REGNUM      , gdb_gpr_r12        , gpr_r12       },       NULL,              NULL},
-    { DEFINE_GPR (r13   , NULL)     , { gcc_dwarf_gpr_r13  , gcc_dwarf_gpr_r13  , LLDB_INVALID_REGNUM      , gdb_gpr_r13        , gpr_r13       },       NULL,              NULL},
-    { DEFINE_GPR (r14   , NULL)     , { gcc_dwarf_gpr_r14  , gcc_dwarf_gpr_r14  , LLDB_INVALID_REGNUM      , gdb_gpr_r14        , gpr_r14       },       NULL,              NULL},
-    { DEFINE_GPR (r15   , NULL)     , { gcc_dwarf_gpr_r15  , gcc_dwarf_gpr_r15  , LLDB_INVALID_REGNUM      , gdb_gpr_r15        , gpr_r15       },       NULL,              NULL},
-    { DEFINE_GPR (rip   , "pc")     , { gcc_dwarf_gpr_rip  , gcc_dwarf_gpr_rip  , LLDB_REGNUM_GENERIC_PC   , gdb_gpr_rip        , gpr_rip       },       NULL,              NULL},
-    { DEFINE_GPR (rflags, "flags")  , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_REGNUM_GENERIC_FLAGS, gdb_gpr_rflags     , gpr_rflags    },       NULL,              NULL},
-    { DEFINE_GPR (cs    , NULL)     , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_gpr_cs         , gpr_cs        },       NULL,              NULL},
-    { DEFINE_GPR (fs    , NULL)     , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_gpr_fs         , gpr_fs        },       NULL,              NULL},
-    { DEFINE_GPR (gs    , NULL)     , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_gpr_gs         , gpr_gs        },       NULL,              NULL},
+//  Macro auto defines most stuff   EH_FRAME                    DWARF                    GENERIC                    PROCESS PLUGIN       LLDB                VALUE REGS    INVALIDATE REGS
+//  =============================== ======================      ===================      ========================== ==================== =================== ==========    ===============
+    { DEFINE_GPR (rax   , NULL)     , { ehframe_dwarf_gpr_rax  , ehframe_dwarf_gpr_rax  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_rax       },       NULL,              NULL},
+    { DEFINE_GPR (rbx   , NULL)     , { ehframe_dwarf_gpr_rbx  , ehframe_dwarf_gpr_rbx  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_rbx       },       NULL,              NULL},
+    { DEFINE_GPR (rcx   , NULL)     , { ehframe_dwarf_gpr_rcx  , ehframe_dwarf_gpr_rcx  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_rcx       },       NULL,              NULL},
+    { DEFINE_GPR (rdx   , NULL)     , { ehframe_dwarf_gpr_rdx  , ehframe_dwarf_gpr_rdx  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_rdx       },       NULL,              NULL},
+    { DEFINE_GPR (rdi   , NULL)     , { ehframe_dwarf_gpr_rdi  , ehframe_dwarf_gpr_rdi  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_rdi       },       NULL,              NULL},
+    { DEFINE_GPR (rsi   , NULL)     , { ehframe_dwarf_gpr_rsi  , ehframe_dwarf_gpr_rsi  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_rsi       },       NULL,              NULL},
+    { DEFINE_GPR (rbp   , "fp")     , { ehframe_dwarf_gpr_rbp  , ehframe_dwarf_gpr_rbp  , LLDB_REGNUM_GENERIC_FP   , LLDB_INVALID_REGNUM, gpr_rbp       },       NULL,              NULL},
+    { DEFINE_GPR (rsp   , "sp")     , { ehframe_dwarf_gpr_rsp  , ehframe_dwarf_gpr_rsp  , LLDB_REGNUM_GENERIC_SP   , LLDB_INVALID_REGNUM, gpr_rsp       },       NULL,              NULL},
+    { DEFINE_GPR (r8    , NULL)     , { ehframe_dwarf_gpr_r8   , ehframe_dwarf_gpr_r8   , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_r8        },       NULL,              NULL},
+    { DEFINE_GPR (r9    , NULL)     , { ehframe_dwarf_gpr_r9   , ehframe_dwarf_gpr_r9   , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_r9        },       NULL,              NULL},
+    { DEFINE_GPR (r10   , NULL)     , { ehframe_dwarf_gpr_r10  , ehframe_dwarf_gpr_r10  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_r10       },       NULL,              NULL},
+    { DEFINE_GPR (r11   , NULL)     , { ehframe_dwarf_gpr_r11  , ehframe_dwarf_gpr_r11  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_r11       },       NULL,              NULL},
+    { DEFINE_GPR (r12   , NULL)     , { ehframe_dwarf_gpr_r12  , ehframe_dwarf_gpr_r12  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_r12       },       NULL,              NULL},
+    { DEFINE_GPR (r13   , NULL)     , { ehframe_dwarf_gpr_r13  , ehframe_dwarf_gpr_r13  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_r13       },       NULL,              NULL},
+    { DEFINE_GPR (r14   , NULL)     , { ehframe_dwarf_gpr_r14  , ehframe_dwarf_gpr_r14  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_r14       },       NULL,              NULL},
+    { DEFINE_GPR (r15   , NULL)     , { ehframe_dwarf_gpr_r15  , ehframe_dwarf_gpr_r15  , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_r15       },       NULL,              NULL},
+    { DEFINE_GPR (rip   , "pc")     , { ehframe_dwarf_gpr_rip  , ehframe_dwarf_gpr_rip  , LLDB_REGNUM_GENERIC_PC   , LLDB_INVALID_REGNUM, gpr_rip       },       NULL,              NULL},
+    { DEFINE_GPR (rflags, "flags")  , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_REGNUM_GENERIC_FLAGS, LLDB_INVALID_REGNUM, gpr_rflags    },       NULL,              NULL},
+    { DEFINE_GPR (cs    , NULL)     , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_cs        },       NULL,              NULL},
+    { DEFINE_GPR (fs    , NULL)     , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_fs        },       NULL,              NULL},
+    { DEFINE_GPR (gs    , NULL)     , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, gpr_gs        },       NULL,              NULL},
 
-    { DEFINE_FPU_UINT(fcw)          , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_fpu_fcw        , fpu_fcw       },       NULL,              NULL},
-    { DEFINE_FPU_UINT(fsw)          , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_fpu_fsw        , fpu_fsw       },       NULL,              NULL},
-    { DEFINE_FPU_UINT(ftw)          , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_fpu_ftw        , fpu_ftw       },       NULL,              NULL},
-    { DEFINE_FPU_UINT(fop)          , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_fpu_fop        , fpu_fop       },       NULL,              NULL},
-    { DEFINE_FPU_UINT(ip)           , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_fpu_ip         , fpu_ip        },       NULL,              NULL},
-    { DEFINE_FPU_UINT(cs)           , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_fpu_cs         , fpu_cs        },       NULL,              NULL},
-    { DEFINE_FPU_UINT(dp)           , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_fpu_dp         , fpu_dp        },       NULL,              NULL},
-    { DEFINE_FPU_UINT(ds)           , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_fpu_ds         , fpu_ds        },       NULL,              NULL},
-    { DEFINE_FPU_UINT(mxcsr)        , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , gdb_fpu_mxcsr      , fpu_mxcsr     },       NULL,              NULL},
+    { DEFINE_FPU_UINT(fcw)          , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, fpu_fcw       },       NULL,              NULL},
+    { DEFINE_FPU_UINT(fsw)          , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, fpu_fsw       },       NULL,              NULL},
+    { DEFINE_FPU_UINT(ftw)          , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, fpu_ftw       },       NULL,              NULL},
+    { DEFINE_FPU_UINT(fop)          , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, fpu_fop       },       NULL,              NULL},
+    { DEFINE_FPU_UINT(ip)           , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, fpu_ip        },       NULL,              NULL},
+    { DEFINE_FPU_UINT(cs)           , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, fpu_cs        },       NULL,              NULL},
+    { DEFINE_FPU_UINT(dp)           , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, fpu_dp        },       NULL,              NULL},
+    { DEFINE_FPU_UINT(ds)           , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, fpu_ds        },       NULL,              NULL},
+    { DEFINE_FPU_UINT(mxcsr)        , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, fpu_mxcsr     },       NULL,              NULL},
     { DEFINE_FPU_UINT(mxcsrmask)    , { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM, fpu_mxcsrmask },       NULL,              NULL},
     { DEFINE_FPU_VECT(stmm,0)   },
     { DEFINE_FPU_VECT(stmm,1)   },
@@ -320,6 +240,25 @@ static RegisterInfo g_register_infos[] =
 };
 
 static size_t k_num_register_infos = llvm::array_lengthof(g_register_infos);
+
+RegisterContextDarwin_x86_64::RegisterContextDarwin_x86_64 (Thread &thread, uint32_t concrete_frame_idx) :
+    RegisterContext (thread, concrete_frame_idx),
+    gpr(),
+    fpu(),
+    exc()
+{
+    uint32_t i;
+    for (i=0; i<kNumErrors; i++)
+    {
+        gpr_errs[i] = -1;
+        fpu_errs[i] = -1;
+        exc_errs[i] = -1;
+    }
+}
+
+RegisterContextDarwin_x86_64::~RegisterContextDarwin_x86_64()
+{
+}
 
 
 void
@@ -923,112 +862,47 @@ RegisterContextDarwin_x86_64::ConvertRegisterKindToRegisterNumber (lldb::Registe
     {
         switch (reg)
         {
-        case gcc_dwarf_gpr_rax:  return gpr_rax;
-        case gcc_dwarf_gpr_rdx:  return gpr_rdx;
-        case gcc_dwarf_gpr_rcx:  return gpr_rcx;
-        case gcc_dwarf_gpr_rbx:  return gpr_rbx;
-        case gcc_dwarf_gpr_rsi:  return gpr_rsi;
-        case gcc_dwarf_gpr_rdi:  return gpr_rdi;
-        case gcc_dwarf_gpr_rbp:  return gpr_rbp;
-        case gcc_dwarf_gpr_rsp:  return gpr_rsp;
-        case gcc_dwarf_gpr_r8:   return gpr_r8;
-        case gcc_dwarf_gpr_r9:   return gpr_r9;
-        case gcc_dwarf_gpr_r10:  return gpr_r10;
-        case gcc_dwarf_gpr_r11:  return gpr_r11;
-        case gcc_dwarf_gpr_r12:  return gpr_r12;
-        case gcc_dwarf_gpr_r13:  return gpr_r13;
-        case gcc_dwarf_gpr_r14:  return gpr_r14;
-        case gcc_dwarf_gpr_r15:  return gpr_r15;
-        case gcc_dwarf_gpr_rip:  return gpr_rip;
-        case gcc_dwarf_fpu_xmm0: return fpu_xmm0;
-        case gcc_dwarf_fpu_xmm1: return fpu_xmm1;
-        case gcc_dwarf_fpu_xmm2: return fpu_xmm2;
-        case gcc_dwarf_fpu_xmm3: return fpu_xmm3;
-        case gcc_dwarf_fpu_xmm4: return fpu_xmm4;
-        case gcc_dwarf_fpu_xmm5: return fpu_xmm5;
-        case gcc_dwarf_fpu_xmm6: return fpu_xmm6;
-        case gcc_dwarf_fpu_xmm7: return fpu_xmm7;
-        case gcc_dwarf_fpu_xmm8: return fpu_xmm8;
-        case gcc_dwarf_fpu_xmm9: return fpu_xmm9;
-        case gcc_dwarf_fpu_xmm10: return fpu_xmm10;
-        case gcc_dwarf_fpu_xmm11: return fpu_xmm11;
-        case gcc_dwarf_fpu_xmm12: return fpu_xmm12;
-        case gcc_dwarf_fpu_xmm13: return fpu_xmm13;
-        case gcc_dwarf_fpu_xmm14: return fpu_xmm14;
-        case gcc_dwarf_fpu_xmm15: return fpu_xmm15;
-        case gcc_dwarf_fpu_stmm0: return fpu_stmm0;
-        case gcc_dwarf_fpu_stmm1: return fpu_stmm1;
-        case gcc_dwarf_fpu_stmm2: return fpu_stmm2;
-        case gcc_dwarf_fpu_stmm3: return fpu_stmm3;
-        case gcc_dwarf_fpu_stmm4: return fpu_stmm4;
-        case gcc_dwarf_fpu_stmm5: return fpu_stmm5;
-        case gcc_dwarf_fpu_stmm6: return fpu_stmm6;
-        case gcc_dwarf_fpu_stmm7: return fpu_stmm7;
-        default:
-            break;
-        }
-    }
-    else if (kind == eRegisterKindStabs)
-    {
-        switch (reg)
-        {
-        case gdb_gpr_rax     : return gpr_rax;
-        case gdb_gpr_rbx     : return gpr_rbx;
-        case gdb_gpr_rcx     : return gpr_rcx;
-        case gdb_gpr_rdx     : return gpr_rdx;
-        case gdb_gpr_rsi     : return gpr_rsi;
-        case gdb_gpr_rdi     : return gpr_rdi;
-        case gdb_gpr_rbp     : return gpr_rbp;
-        case gdb_gpr_rsp     : return gpr_rsp;
-        case gdb_gpr_r8      : return gpr_r8;
-        case gdb_gpr_r9      : return gpr_r9;
-        case gdb_gpr_r10     : return gpr_r10;
-        case gdb_gpr_r11     : return gpr_r11;
-        case gdb_gpr_r12     : return gpr_r12;
-        case gdb_gpr_r13     : return gpr_r13;
-        case gdb_gpr_r14     : return gpr_r14;
-        case gdb_gpr_r15     : return gpr_r15;
-        case gdb_gpr_rip     : return gpr_rip;
-        case gdb_gpr_rflags  : return gpr_rflags;
-        case gdb_gpr_cs      : return gpr_cs;
-        case gdb_gpr_ss      : return gpr_gs;   // HACK: For now for "ss", just copy what is in "gs"
-        case gdb_gpr_ds      : return gpr_gs;   // HACK: For now for "ds", just copy what is in "gs"
-        case gdb_gpr_es      : return gpr_gs;   // HACK: For now for "es", just copy what is in "gs"
-        case gdb_gpr_fs      : return gpr_fs;
-        case gdb_gpr_gs      : return gpr_gs;
-        case gdb_fpu_stmm0   : return fpu_stmm0;
-        case gdb_fpu_stmm1   : return fpu_stmm1;
-        case gdb_fpu_stmm2   : return fpu_stmm2;
-        case gdb_fpu_stmm3   : return fpu_stmm3;
-        case gdb_fpu_stmm4   : return fpu_stmm4;
-        case gdb_fpu_stmm5   : return fpu_stmm5;
-        case gdb_fpu_stmm6   : return fpu_stmm6;
-        case gdb_fpu_stmm7   : return fpu_stmm7;
-        case gdb_fpu_fctrl   : return fpu_fctrl;
-        case gdb_fpu_fstat   : return fpu_fstat;
-        case gdb_fpu_ftag    : return fpu_ftag;
-        case gdb_fpu_fiseg   : return fpu_fiseg;
-        case gdb_fpu_fioff   : return fpu_fioff;
-        case gdb_fpu_foseg   : return fpu_foseg;
-        case gdb_fpu_fooff   : return fpu_fooff;
-        case gdb_fpu_fop     : return fpu_fop;
-        case gdb_fpu_xmm0    : return fpu_xmm0;
-        case gdb_fpu_xmm1    : return fpu_xmm1;
-        case gdb_fpu_xmm2    : return fpu_xmm2;
-        case gdb_fpu_xmm3    : return fpu_xmm3;
-        case gdb_fpu_xmm4    : return fpu_xmm4;
-        case gdb_fpu_xmm5    : return fpu_xmm5;
-        case gdb_fpu_xmm6    : return fpu_xmm6;
-        case gdb_fpu_xmm7    : return fpu_xmm7;
-        case gdb_fpu_xmm8    : return fpu_xmm8;
-        case gdb_fpu_xmm9    : return fpu_xmm9;
-        case gdb_fpu_xmm10   : return fpu_xmm10;
-        case gdb_fpu_xmm11   : return fpu_xmm11;
-        case gdb_fpu_xmm12   : return fpu_xmm12;
-        case gdb_fpu_xmm13   : return fpu_xmm13;
-        case gdb_fpu_xmm14   : return fpu_xmm14;
-        case gdb_fpu_xmm15   : return fpu_xmm15;
-        case gdb_fpu_mxcsr   : return fpu_mxcsr;
+        case ehframe_dwarf_gpr_rax:  return gpr_rax;
+        case ehframe_dwarf_gpr_rdx:  return gpr_rdx;
+        case ehframe_dwarf_gpr_rcx:  return gpr_rcx;
+        case ehframe_dwarf_gpr_rbx:  return gpr_rbx;
+        case ehframe_dwarf_gpr_rsi:  return gpr_rsi;
+        case ehframe_dwarf_gpr_rdi:  return gpr_rdi;
+        case ehframe_dwarf_gpr_rbp:  return gpr_rbp;
+        case ehframe_dwarf_gpr_rsp:  return gpr_rsp;
+        case ehframe_dwarf_gpr_r8:   return gpr_r8;
+        case ehframe_dwarf_gpr_r9:   return gpr_r9;
+        case ehframe_dwarf_gpr_r10:  return gpr_r10;
+        case ehframe_dwarf_gpr_r11:  return gpr_r11;
+        case ehframe_dwarf_gpr_r12:  return gpr_r12;
+        case ehframe_dwarf_gpr_r13:  return gpr_r13;
+        case ehframe_dwarf_gpr_r14:  return gpr_r14;
+        case ehframe_dwarf_gpr_r15:  return gpr_r15;
+        case ehframe_dwarf_gpr_rip:  return gpr_rip;
+        case ehframe_dwarf_fpu_xmm0: return fpu_xmm0;
+        case ehframe_dwarf_fpu_xmm1: return fpu_xmm1;
+        case ehframe_dwarf_fpu_xmm2: return fpu_xmm2;
+        case ehframe_dwarf_fpu_xmm3: return fpu_xmm3;
+        case ehframe_dwarf_fpu_xmm4: return fpu_xmm4;
+        case ehframe_dwarf_fpu_xmm5: return fpu_xmm5;
+        case ehframe_dwarf_fpu_xmm6: return fpu_xmm6;
+        case ehframe_dwarf_fpu_xmm7: return fpu_xmm7;
+        case ehframe_dwarf_fpu_xmm8: return fpu_xmm8;
+        case ehframe_dwarf_fpu_xmm9: return fpu_xmm9;
+        case ehframe_dwarf_fpu_xmm10: return fpu_xmm10;
+        case ehframe_dwarf_fpu_xmm11: return fpu_xmm11;
+        case ehframe_dwarf_fpu_xmm12: return fpu_xmm12;
+        case ehframe_dwarf_fpu_xmm13: return fpu_xmm13;
+        case ehframe_dwarf_fpu_xmm14: return fpu_xmm14;
+        case ehframe_dwarf_fpu_xmm15: return fpu_xmm15;
+        case ehframe_dwarf_fpu_stmm0: return fpu_stmm0;
+        case ehframe_dwarf_fpu_stmm1: return fpu_stmm1;
+        case ehframe_dwarf_fpu_stmm2: return fpu_stmm2;
+        case ehframe_dwarf_fpu_stmm3: return fpu_stmm3;
+        case ehframe_dwarf_fpu_stmm4: return fpu_stmm4;
+        case ehframe_dwarf_fpu_stmm5: return fpu_stmm5;
+        case ehframe_dwarf_fpu_stmm6: return fpu_stmm6;
+        case ehframe_dwarf_fpu_stmm7: return fpu_stmm7;
         default:
             break;
         }

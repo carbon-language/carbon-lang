@@ -52,18 +52,18 @@ enum RegisterIndex
 // Array of all register information supported by Windows x86
 RegisterInfo g_register_infos[] =
 {
-//  Macro auto defines most stuff   GCC                     DWARF                GENERIC                    GDB                   LLDB               VALUE REGS    INVALIDATE REGS
+//  Macro auto defines most stuff   eh_frame                DWARF                GENERIC                    GDB                   LLDB               VALUE REGS    INVALIDATE REGS
 //  ==============================  ======================= ===================  =========================  ===================   =================  ==========    ===============
-    { DEFINE_GPR(eax,    nullptr),  { gcc_eax_i386,         dwarf_eax_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_eax_i386   },  nullptr,      nullptr},
-    { DEFINE_GPR(ebx,    nullptr),  { gcc_ebx_i386,         dwarf_ebx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_ebx_i386   },  nullptr,      nullptr},
-    { DEFINE_GPR(ecx,    nullptr),  { gcc_ecx_i386,         dwarf_ecx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_ecx_i386   },  nullptr,      nullptr},
-    { DEFINE_GPR(edx,    nullptr),  { gcc_edx_i386,         dwarf_edx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_edx_i386   },  nullptr,      nullptr},
-    { DEFINE_GPR(edi,    nullptr),  { gcc_edi_i386,         dwarf_edi_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_edi_i386   },  nullptr,      nullptr},
-    { DEFINE_GPR(esi,    nullptr),  { gcc_esi_i386,         dwarf_esi_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_esi_i386   },  nullptr,      nullptr},
-    { DEFINE_GPR(ebp,    "fp"),     { gcc_ebp_i386,         dwarf_ebp_i386,      LLDB_REGNUM_GENERIC_FP,    LLDB_INVALID_REGNUM,  lldb_ebp_i386   },  nullptr,      nullptr},
-    { DEFINE_GPR(esp,    "sp"),     { gcc_esp_i386,         dwarf_esp_i386,      LLDB_REGNUM_GENERIC_SP,    LLDB_INVALID_REGNUM,  lldb_esp_i386   },  nullptr,      nullptr},
-    { DEFINE_GPR(eip,    "pc"),     { gcc_eip_i386,         dwarf_eip_i386,      LLDB_REGNUM_GENERIC_PC,    LLDB_INVALID_REGNUM,  lldb_eip_i386   },  nullptr,      nullptr},
-    { DEFINE_GPR_BIN(eflags, "flags"), { gcc_eflags_i386,   dwarf_eflags_i386,   LLDB_REGNUM_GENERIC_FLAGS, LLDB_INVALID_REGNUM,  lldb_eflags_i386},  nullptr,      nullptr},
+    { DEFINE_GPR(eax,    nullptr),  { ehframe_eax_i386,     dwarf_eax_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_eax_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(ebx,    nullptr),  { ehframe_ebx_i386,     dwarf_ebx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_ebx_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(ecx,    nullptr),  { ehframe_ecx_i386,     dwarf_ecx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_ecx_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(edx,    nullptr),  { ehframe_edx_i386,     dwarf_edx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_edx_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(edi,    nullptr),  { ehframe_edi_i386,     dwarf_edi_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_edi_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(esi,    nullptr),  { ehframe_esi_i386,     dwarf_esi_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM,  lldb_esi_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(ebp,    "fp"),     { ehframe_ebp_i386,     dwarf_ebp_i386,      LLDB_REGNUM_GENERIC_FP,    LLDB_INVALID_REGNUM,  lldb_ebp_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(esp,    "sp"),     { ehframe_esp_i386,     dwarf_esp_i386,      LLDB_REGNUM_GENERIC_SP,    LLDB_INVALID_REGNUM,  lldb_esp_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR(eip,    "pc"),     { ehframe_eip_i386,     dwarf_eip_i386,      LLDB_REGNUM_GENERIC_PC,    LLDB_INVALID_REGNUM,  lldb_eip_i386   },  nullptr,      nullptr},
+    { DEFINE_GPR_BIN(eflags, "flags"), { ehframe_eflags_i386, dwarf_eflags_i386,   LLDB_REGNUM_GENERIC_FLAGS, LLDB_INVALID_REGNUM,  lldb_eflags_i386},  nullptr,      nullptr},
 };
 
 // Array of lldb register numbers used to define the set of all General Purpose Registers

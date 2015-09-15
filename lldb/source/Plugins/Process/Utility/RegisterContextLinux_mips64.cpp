@@ -12,7 +12,7 @@
 #include <vector>
 #include <stddef.h>
 
-// For eh_frame, stabs and DWARF Register numbers
+// For eh_frame and DWARF Register numbers
 #include "RegisterContextLinux_mips64.h"
 
 // For GP and FP buffers

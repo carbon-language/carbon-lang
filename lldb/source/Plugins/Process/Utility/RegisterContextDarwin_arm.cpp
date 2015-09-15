@@ -34,8 +34,8 @@
 #endif
 
 // Project includes
-#include "ARM_Stabs_Registers.h"
 #include "ARM_DWARF_Registers.h"
+#include "Utility/ARM_ehframe_Registers.h"
 
 #include "llvm/ADT/STLExtras.h"
 
@@ -172,89 +172,69 @@ enum
 };
 
 
-RegisterContextDarwin_arm::RegisterContextDarwin_arm(Thread &thread, uint32_t concrete_frame_idx) :
-    RegisterContext(thread, concrete_frame_idx),
-    gpr(),
-    fpu(),
-    exc()
-{
-    uint32_t i;
-    for (i=0; i<kNumErrors; i++)
-    {
-        gpr_errs[i] = -1;
-        fpu_errs[i] = -1;
-        exc_errs[i] = -1;
-    }
-}
-
-RegisterContextDarwin_arm::~RegisterContextDarwin_arm()
-{
-}
-
-
 #define GPR_OFFSET(idx) ((idx) * 4)
 #define FPU_OFFSET(idx) ((idx) * 4 + sizeof (RegisterContextDarwin_arm::GPR))
 #define EXC_OFFSET(idx) ((idx) * 4 + sizeof (RegisterContextDarwin_arm::GPR) + sizeof (RegisterContextDarwin_arm::FPU))
 #define DBG_OFFSET(reg) ((LLVM_EXTENSION offsetof (RegisterContextDarwin_arm::DBG, reg) + sizeof (RegisterContextDarwin_arm::GPR) + sizeof (RegisterContextDarwin_arm::FPU) + sizeof (RegisterContextDarwin_arm::EXC)))
 
-#define DEFINE_DBG(reg, i)  #reg, NULL, sizeof(((RegisterContextDarwin_arm::DBG *)NULL)->reg[i]), DBG_OFFSET(reg[i]), eEncodingUint, eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, dbg_##reg##i }, NULL, NULL
+#define DEFINE_DBG(reg, i)  #reg, NULL, sizeof(((RegisterContextDarwin_arm::DBG *)NULL)->reg[i]), DBG_OFFSET(reg[i]), eEncodingUint, eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM }, NULL, NULL
 #define REG_CONTEXT_SIZE (sizeof (RegisterContextDarwin_arm::GPR) + sizeof (RegisterContextDarwin_arm::FPU) + sizeof (RegisterContextDarwin_arm::EXC))
 
 static RegisterInfo g_register_infos[] = {
 // General purpose registers
-//  NAME        ALT     SZ  OFFSET              ENCODING        FORMAT          EH_FRAME                DWARF               GENERIC                     STABS                   LLDB NATIVE   VALUE REGS    INVALIDATE REGS
+//  NAME        ALT     SZ  OFFSET              ENCODING        FORMAT          EH_FRAME                DWARF               GENERIC                     PROCESS PLUGIN          LLDB NATIVE   VALUE REGS    INVALIDATE REGS
 //  ======      ======= ==  =============       =============   ============    ===============         ===============     =========================   =====================   ============= ==========    ===============
-{   "r0",       NULL,   4,  GPR_OFFSET(0),      eEncodingUint,  eFormatHex,     { gcc_r0,               dwarf_r0,           LLDB_INVALID_REGNUM,        gdb_arm_r0,             gpr_r0      },      NULL,              NULL},
-{   "r1",       NULL,   4,  GPR_OFFSET(1),      eEncodingUint,  eFormatHex,     { gcc_r1,               dwarf_r1,           LLDB_INVALID_REGNUM,        gdb_arm_r1,             gpr_r1      },      NULL,              NULL},
-{   "r2",       NULL,   4,  GPR_OFFSET(2),      eEncodingUint,  eFormatHex,     { gcc_r2,               dwarf_r2,           LLDB_INVALID_REGNUM,        gdb_arm_r2,             gpr_r2      },      NULL,              NULL},
-{   "r3",       NULL,   4,  GPR_OFFSET(3),      eEncodingUint,  eFormatHex,     { gcc_r3,               dwarf_r3,           LLDB_INVALID_REGNUM,        gdb_arm_r3,             gpr_r3      },      NULL,              NULL},
-{   "r4",       NULL,   4,  GPR_OFFSET(4),      eEncodingUint,  eFormatHex,     { gcc_r4,               dwarf_r4,           LLDB_INVALID_REGNUM,        gdb_arm_r4,             gpr_r4      },      NULL,              NULL},
-{   "r5",       NULL,   4,  GPR_OFFSET(5),      eEncodingUint,  eFormatHex,     { gcc_r5,               dwarf_r5,           LLDB_INVALID_REGNUM,        gdb_arm_r5,             gpr_r5      },      NULL,              NULL},
-{   "r6",       NULL,   4,  GPR_OFFSET(6),      eEncodingUint,  eFormatHex,     { gcc_r6,               dwarf_r6,           LLDB_INVALID_REGNUM,        gdb_arm_r6,             gpr_r6      },      NULL,              NULL},
-{   "r7",       NULL,   4,  GPR_OFFSET(7),      eEncodingUint,  eFormatHex,     { gcc_r7,               dwarf_r7,           LLDB_REGNUM_GENERIC_FP,     gdb_arm_r7,             gpr_r7      },      NULL,              NULL},
-{   "r8",       NULL,   4,  GPR_OFFSET(8),      eEncodingUint,  eFormatHex,     { gcc_r8,               dwarf_r8,           LLDB_INVALID_REGNUM,        gdb_arm_r8,             gpr_r8      },      NULL,              NULL},
-{   "r9",       NULL,   4,  GPR_OFFSET(9),      eEncodingUint,  eFormatHex,     { gcc_r9,               dwarf_r9,           LLDB_INVALID_REGNUM,        gdb_arm_r9,             gpr_r9      },      NULL,              NULL},
-{   "r10",      NULL,   4,  GPR_OFFSET(10),     eEncodingUint,  eFormatHex,     { gcc_r10,              dwarf_r10,          LLDB_INVALID_REGNUM,        gdb_arm_r10,            gpr_r10     },      NULL,              NULL},
-{   "r11",      NULL,   4,  GPR_OFFSET(11),     eEncodingUint,  eFormatHex,     { gcc_r11,              dwarf_r11,          LLDB_INVALID_REGNUM,        gdb_arm_r11,            gpr_r11     },      NULL,              NULL},
-{   "r12",      NULL,   4,  GPR_OFFSET(12),     eEncodingUint,  eFormatHex,     { gcc_r12,              dwarf_r12,          LLDB_INVALID_REGNUM,        gdb_arm_r12,            gpr_r12     },      NULL,              NULL},
-{   "sp",       "r13",  4,  GPR_OFFSET(13),     eEncodingUint,  eFormatHex,     { gcc_sp,               dwarf_sp,           LLDB_REGNUM_GENERIC_SP,     gdb_arm_sp,             gpr_sp      },      NULL,              NULL},
-{   "lr",       "r14",  4,  GPR_OFFSET(14),     eEncodingUint,  eFormatHex,     { gcc_lr,               dwarf_lr,           LLDB_REGNUM_GENERIC_RA,     gdb_arm_lr,             gpr_lr      },      NULL,              NULL},
-{   "pc",       "r15",  4,  GPR_OFFSET(15),     eEncodingUint,  eFormatHex,     { gcc_pc,               dwarf_pc,           LLDB_REGNUM_GENERIC_PC,     gdb_arm_pc,             gpr_pc      },      NULL,              NULL},
-{   "cpsr",     "psr",  4,  GPR_OFFSET(16),     eEncodingUint,  eFormatHex,     { gcc_cpsr,             dwarf_cpsr,         LLDB_REGNUM_GENERIC_FLAGS,  gdb_arm_cpsr,           gpr_cpsr    },      NULL,              NULL},
+{   "r0",       NULL,   4,  GPR_OFFSET(0),      eEncodingUint,  eFormatHex,     { ehframe_r0,               dwarf_r0,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r0      },      NULL,              NULL},
+{   "r1",       NULL,   4,  GPR_OFFSET(1),      eEncodingUint,  eFormatHex,     { ehframe_r1,               dwarf_r1,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r1      },      NULL,              NULL},
+{   "r2",       NULL,   4,  GPR_OFFSET(2),      eEncodingUint,  eFormatHex,     { ehframe_r2,               dwarf_r2,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r2      },      NULL,              NULL},
+{   "r3",       NULL,   4,  GPR_OFFSET(3),      eEncodingUint,  eFormatHex,     { ehframe_r3,               dwarf_r3,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r3      },      NULL,              NULL},
+{   "r4",       NULL,   4,  GPR_OFFSET(4),      eEncodingUint,  eFormatHex,     { ehframe_r4,               dwarf_r4,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r4      },      NULL,              NULL},
+{   "r5",       NULL,   4,  GPR_OFFSET(5),      eEncodingUint,  eFormatHex,     { ehframe_r5,               dwarf_r5,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r5      },      NULL,              NULL},
+{   "r6",       NULL,   4,  GPR_OFFSET(6),      eEncodingUint,  eFormatHex,     { ehframe_r6,               dwarf_r6,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r6      },      NULL,              NULL},
+{   "r7",       NULL,   4,  GPR_OFFSET(7),      eEncodingUint,  eFormatHex,     { ehframe_r7,               dwarf_r7,           LLDB_REGNUM_GENERIC_FP,     LLDB_INVALID_REGNUM,    gpr_r7      },      NULL,              NULL},
+{   "r8",       NULL,   4,  GPR_OFFSET(8),      eEncodingUint,  eFormatHex,     { ehframe_r8,               dwarf_r8,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r8      },      NULL,              NULL},
+{   "r9",       NULL,   4,  GPR_OFFSET(9),      eEncodingUint,  eFormatHex,     { ehframe_r9,               dwarf_r9,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r9      },      NULL,              NULL},
+{   "r10",      NULL,   4,  GPR_OFFSET(10),     eEncodingUint,  eFormatHex,     { ehframe_r10,              dwarf_r10,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r10     },      NULL,              NULL},
+{   "r11",      NULL,   4,  GPR_OFFSET(11),     eEncodingUint,  eFormatHex,     { ehframe_r11,              dwarf_r11,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r11     },      NULL,              NULL},
+{   "r12",      NULL,   4,  GPR_OFFSET(12),     eEncodingUint,  eFormatHex,     { ehframe_r12,              dwarf_r12,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    gpr_r12     },      NULL,              NULL},
+{   "sp",       "r13",  4,  GPR_OFFSET(13),     eEncodingUint,  eFormatHex,     { ehframe_sp,               dwarf_sp,           LLDB_REGNUM_GENERIC_SP,     LLDB_INVALID_REGNUM,    gpr_sp      },      NULL,              NULL},
+{   "lr",       "r14",  4,  GPR_OFFSET(14),     eEncodingUint,  eFormatHex,     { ehframe_lr,               dwarf_lr,           LLDB_REGNUM_GENERIC_RA,     LLDB_INVALID_REGNUM,    gpr_lr      },      NULL,              NULL},
+{   "pc",       "r15",  4,  GPR_OFFSET(15),     eEncodingUint,  eFormatHex,     { ehframe_pc,               dwarf_pc,           LLDB_REGNUM_GENERIC_PC,     LLDB_INVALID_REGNUM,    gpr_pc      },      NULL,              NULL},
+{   "cpsr",     "psr",  4,  GPR_OFFSET(16),     eEncodingUint,  eFormatHex,     { ehframe_cpsr,             dwarf_cpsr,         LLDB_REGNUM_GENERIC_FLAGS,  LLDB_INVALID_REGNUM,    gpr_cpsr    },      NULL,              NULL},
 
-{   "s0",       NULL,   4,  FPU_OFFSET(0),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s0,           LLDB_INVALID_REGNUM,        gdb_arm_s0,             fpu_s0      },      NULL,              NULL},
-{   "s1",       NULL,   4,  FPU_OFFSET(1),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s1,           LLDB_INVALID_REGNUM,        gdb_arm_s1,             fpu_s1      },      NULL,              NULL},
-{   "s2",       NULL,   4,  FPU_OFFSET(2),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s2,           LLDB_INVALID_REGNUM,        gdb_arm_s2,             fpu_s2      },      NULL,              NULL},
-{   "s3",       NULL,   4,  FPU_OFFSET(3),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s3,           LLDB_INVALID_REGNUM,        gdb_arm_s3,             fpu_s3      },      NULL,              NULL},
-{   "s4",       NULL,   4,  FPU_OFFSET(4),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s4,           LLDB_INVALID_REGNUM,        gdb_arm_s4,             fpu_s4      },      NULL,              NULL},
-{   "s5",       NULL,   4,  FPU_OFFSET(5),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s5,           LLDB_INVALID_REGNUM,        gdb_arm_s5,             fpu_s5      },      NULL,              NULL},
-{   "s6",       NULL,   4,  FPU_OFFSET(6),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s6,           LLDB_INVALID_REGNUM,        gdb_arm_s6,             fpu_s6      },      NULL,              NULL},
-{   "s7",       NULL,   4,  FPU_OFFSET(7),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s7,           LLDB_INVALID_REGNUM,        gdb_arm_s7,             fpu_s7      },      NULL,              NULL},
-{   "s8",       NULL,   4,  FPU_OFFSET(8),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s8,           LLDB_INVALID_REGNUM,        gdb_arm_s8,             fpu_s8      },      NULL,              NULL},
-{   "s9",       NULL,   4,  FPU_OFFSET(9),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s9,           LLDB_INVALID_REGNUM,        gdb_arm_s9,             fpu_s9      },      NULL,              NULL},
-{   "s10",      NULL,   4,  FPU_OFFSET(10),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s10,          LLDB_INVALID_REGNUM,        gdb_arm_s10,            fpu_s10     },      NULL,              NULL},
-{   "s11",      NULL,   4,  FPU_OFFSET(11),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s11,          LLDB_INVALID_REGNUM,        gdb_arm_s11,            fpu_s11     },      NULL,              NULL},
-{   "s12",      NULL,   4,  FPU_OFFSET(12),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s12,          LLDB_INVALID_REGNUM,        gdb_arm_s12,            fpu_s12     },      NULL,              NULL},
-{   "s13",      NULL,   4,  FPU_OFFSET(13),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s13,          LLDB_INVALID_REGNUM,        gdb_arm_s13,            fpu_s13     },      NULL,              NULL},
-{   "s14",      NULL,   4,  FPU_OFFSET(14),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s14,          LLDB_INVALID_REGNUM,        gdb_arm_s14,            fpu_s14     },      NULL,              NULL},
-{   "s15",      NULL,   4,  FPU_OFFSET(15),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s15,          LLDB_INVALID_REGNUM,        gdb_arm_s15,            fpu_s15     },      NULL,              NULL},
-{   "s16",      NULL,   4,  FPU_OFFSET(16),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s16,          LLDB_INVALID_REGNUM,        gdb_arm_s16,            fpu_s16     },      NULL,              NULL},
-{   "s17",      NULL,   4,  FPU_OFFSET(17),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s17,          LLDB_INVALID_REGNUM,        gdb_arm_s17,            fpu_s17     },      NULL,              NULL},
-{   "s18",      NULL,   4,  FPU_OFFSET(18),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s18,          LLDB_INVALID_REGNUM,        gdb_arm_s18,            fpu_s18     },      NULL,              NULL},
-{   "s19",      NULL,   4,  FPU_OFFSET(19),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s19,          LLDB_INVALID_REGNUM,        gdb_arm_s19,            fpu_s19     },      NULL,              NULL},
-{   "s20",      NULL,   4,  FPU_OFFSET(20),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s20,          LLDB_INVALID_REGNUM,        gdb_arm_s20,            fpu_s20     },      NULL,              NULL},
-{   "s21",      NULL,   4,  FPU_OFFSET(21),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s21,          LLDB_INVALID_REGNUM,        gdb_arm_s21,            fpu_s21     },      NULL,              NULL},
-{   "s22",      NULL,   4,  FPU_OFFSET(22),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s22,          LLDB_INVALID_REGNUM,        gdb_arm_s22,            fpu_s22     },      NULL,              NULL},
-{   "s23",      NULL,   4,  FPU_OFFSET(23),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s23,          LLDB_INVALID_REGNUM,        gdb_arm_s23,            fpu_s23     },      NULL,              NULL},
-{   "s24",      NULL,   4,  FPU_OFFSET(24),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s24,          LLDB_INVALID_REGNUM,        gdb_arm_s24,            fpu_s24     },      NULL,              NULL},
-{   "s25",      NULL,   4,  FPU_OFFSET(25),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s25,          LLDB_INVALID_REGNUM,        gdb_arm_s25,            fpu_s25     },      NULL,              NULL},
-{   "s26",      NULL,   4,  FPU_OFFSET(26),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s26,          LLDB_INVALID_REGNUM,        gdb_arm_s26,            fpu_s26     },      NULL,              NULL},
-{   "s27",      NULL,   4,  FPU_OFFSET(27),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s27,          LLDB_INVALID_REGNUM,        gdb_arm_s27,            fpu_s27     },      NULL,              NULL},
-{   "s28",      NULL,   4,  FPU_OFFSET(28),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s28,          LLDB_INVALID_REGNUM,        gdb_arm_s28,            fpu_s28     },      NULL,              NULL},
-{   "s29",      NULL,   4,  FPU_OFFSET(29),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s29,          LLDB_INVALID_REGNUM,        gdb_arm_s29,            fpu_s29     },      NULL,              NULL},
-{   "s30",      NULL,   4,  FPU_OFFSET(30),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s30,          LLDB_INVALID_REGNUM,        gdb_arm_s30,            fpu_s30     },      NULL,              NULL},
-{   "s31",      NULL,   4,  FPU_OFFSET(31),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s31,          LLDB_INVALID_REGNUM,        gdb_arm_s31,            fpu_s31     },      NULL,              NULL},
-{   "fpscr",    NULL,   4,  FPU_OFFSET(32),     eEncodingUint,  eFormatHex,     { LLDB_INVALID_REGNUM,  LLDB_INVALID_REGNUM,LLDB_INVALID_REGNUM,        gdb_arm_fpscr,          fpu_fpscr   },      NULL,              NULL},
+{   "s0",       NULL,   4,  FPU_OFFSET(0),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s0,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s0      },      NULL,              NULL},
+{   "s1",       NULL,   4,  FPU_OFFSET(1),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s1,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s1      },      NULL,              NULL},
+{   "s2",       NULL,   4,  FPU_OFFSET(2),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s2,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s2      },      NULL,              NULL},
+{   "s3",       NULL,   4,  FPU_OFFSET(3),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s3,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s3      },      NULL,              NULL},
+{   "s4",       NULL,   4,  FPU_OFFSET(4),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s4,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s4      },      NULL,              NULL},
+{   "s5",       NULL,   4,  FPU_OFFSET(5),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s5,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s5      },      NULL,              NULL},
+{   "s6",       NULL,   4,  FPU_OFFSET(6),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s6,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s6      },      NULL,              NULL},
+{   "s7",       NULL,   4,  FPU_OFFSET(7),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s7,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s7      },      NULL,              NULL},
+{   "s8",       NULL,   4,  FPU_OFFSET(8),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s8,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s8      },      NULL,              NULL},
+{   "s9",       NULL,   4,  FPU_OFFSET(9),      eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s9,           LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s9      },      NULL,              NULL},
+{   "s10",      NULL,   4,  FPU_OFFSET(10),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s10,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s10     },      NULL,              NULL},
+{   "s11",      NULL,   4,  FPU_OFFSET(11),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s11,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s11     },      NULL,              NULL},
+{   "s12",      NULL,   4,  FPU_OFFSET(12),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s12,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s12     },      NULL,              NULL},
+{   "s13",      NULL,   4,  FPU_OFFSET(13),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s13,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s13     },      NULL,              NULL},
+{   "s14",      NULL,   4,  FPU_OFFSET(14),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s14,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s14     },      NULL,              NULL},
+{   "s15",      NULL,   4,  FPU_OFFSET(15),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s15,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s15     },      NULL,              NULL},
+{   "s16",      NULL,   4,  FPU_OFFSET(16),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s16,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s16     },      NULL,              NULL},
+{   "s17",      NULL,   4,  FPU_OFFSET(17),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s17,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s17     },      NULL,              NULL},
+{   "s18",      NULL,   4,  FPU_OFFSET(18),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s18,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s18     },      NULL,              NULL},
+{   "s19",      NULL,   4,  FPU_OFFSET(19),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s19,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s19     },      NULL,              NULL},
+{   "s20",      NULL,   4,  FPU_OFFSET(20),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s20,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s20     },      NULL,              NULL},
+{   "s21",      NULL,   4,  FPU_OFFSET(21),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s21,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s21     },      NULL,              NULL},
+{   "s22",      NULL,   4,  FPU_OFFSET(22),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s22,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s22     },      NULL,              NULL},
+{   "s23",      NULL,   4,  FPU_OFFSET(23),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s23,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s23     },      NULL,              NULL},
+{   "s24",      NULL,   4,  FPU_OFFSET(24),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s24,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s24     },      NULL,              NULL},
+{   "s25",      NULL,   4,  FPU_OFFSET(25),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s25,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s25     },      NULL,              NULL},
+{   "s26",      NULL,   4,  FPU_OFFSET(26),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s26,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s26     },      NULL,              NULL},
+{   "s27",      NULL,   4,  FPU_OFFSET(27),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s27,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s27     },      NULL,              NULL},
+{   "s28",      NULL,   4,  FPU_OFFSET(28),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s28,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s28     },      NULL,              NULL},
+{   "s29",      NULL,   4,  FPU_OFFSET(29),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s29,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s29     },      NULL,              NULL},
+{   "s30",      NULL,   4,  FPU_OFFSET(30),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s30,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s30     },      NULL,              NULL},
+{   "s31",      NULL,   4,  FPU_OFFSET(31),     eEncodingIEEE754,eFormatFloat,  { LLDB_INVALID_REGNUM,  dwarf_s31,          LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_s31     },      NULL,              NULL},
+{   "fpscr",    NULL,   4,  FPU_OFFSET(32),     eEncodingUint,  eFormatHex,     { LLDB_INVALID_REGNUM,  LLDB_INVALID_REGNUM,LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    fpu_fpscr   },      NULL,              NULL},
 
 {   "exception",NULL,   4,  EXC_OFFSET(0),      eEncodingUint,  eFormatHex,     { LLDB_INVALID_REGNUM,  LLDB_INVALID_REGNUM,LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    exc_exception },    NULL,              NULL},
 {   "fsr",      NULL,   4,  EXC_OFFSET(1),      eEncodingUint,  eFormatHex,     { LLDB_INVALID_REGNUM,  LLDB_INVALID_REGNUM,LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    exc_fsr       },    NULL,              NULL},
@@ -402,6 +382,26 @@ g_exc_regnums[] =
 };
 
 static size_t k_num_register_infos = llvm::array_lengthof(g_register_infos);
+
+RegisterContextDarwin_arm::RegisterContextDarwin_arm(Thread &thread, uint32_t concrete_frame_idx) :
+    RegisterContext(thread, concrete_frame_idx),
+    gpr(),
+    fpu(),
+    exc()
+{
+    uint32_t i;
+    for (i=0; i<kNumErrors; i++)
+    {
+        gpr_errs[i] = -1;
+        fpu_errs[i] = -1;
+        exc_errs[i] = -1;
+    }
+}
+
+RegisterContextDarwin_arm::~RegisterContextDarwin_arm()
+{
+}
+
 
 void
 RegisterContextDarwin_arm::InvalidateAllRegisters ()
@@ -944,23 +944,23 @@ RegisterContextDarwin_arm::ConvertRegisterKindToRegisterNumber (lldb::RegisterKi
     {
         switch (reg)
         {
-        case gcc_r0:    return gpr_r0;
-        case gcc_r1:    return gpr_r1;
-        case gcc_r2:    return gpr_r2;
-        case gcc_r3:    return gpr_r3;
-        case gcc_r4:    return gpr_r4;
-        case gcc_r5:    return gpr_r5;
-        case gcc_r6:    return gpr_r6;
-        case gcc_r7:    return gpr_r7;
-        case gcc_r8:    return gpr_r8;
-        case gcc_r9:    return gpr_r9;
-        case gcc_r10:   return gpr_r10;
-        case gcc_r11:   return gpr_r11;
-        case gcc_r12:   return gpr_r12;
-        case gcc_sp:    return gpr_sp;
-        case gcc_lr:    return gpr_lr;
-        case gcc_pc:    return gpr_pc;
-        case gcc_cpsr:  return gpr_cpsr;
+        case ehframe_r0:    return gpr_r0;
+        case ehframe_r1:    return gpr_r1;
+        case ehframe_r2:    return gpr_r2;
+        case ehframe_r3:    return gpr_r3;
+        case ehframe_r4:    return gpr_r4;
+        case ehframe_r5:    return gpr_r5;
+        case ehframe_r6:    return gpr_r6;
+        case ehframe_r7:    return gpr_r7;
+        case ehframe_r8:    return gpr_r8;
+        case ehframe_r9:    return gpr_r9;
+        case ehframe_r10:   return gpr_r10;
+        case ehframe_r11:   return gpr_r11;
+        case ehframe_r12:   return gpr_r12;
+        case ehframe_sp:    return gpr_sp;
+        case ehframe_lr:    return gpr_lr;
+        case ehframe_pc:    return gpr_pc;
+        case ehframe_cpsr:  return gpr_cpsr;
         }
     }
     else if (kind == eRegisterKindLLDB)

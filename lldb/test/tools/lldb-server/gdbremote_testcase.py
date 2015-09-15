@@ -548,7 +548,7 @@ class GdbRemoteTestCaseBase(TestBase):
         "encoding",
         "format",
         "set",
-        "gcc",
+        "ehframe",
         "dwarf",
         "generic",
         "container-regs",

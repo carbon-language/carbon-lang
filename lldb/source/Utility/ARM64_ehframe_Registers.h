@@ -1,4 +1,4 @@
-//===-- ARM64_gdb_Registers.h -------------------------------------*- C++ -*-===//
+//===-- ARM64_ehframe_Registers.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef utility_ARM64_Stabs_Registers_h_
-#define utility_ARM64_Stabs_Registers_h_
+#ifndef utility_ARM64_ehframe_Registers_h_
+#define utility_ARM64_ehframe_Registers_h_
 
-// The register numbers used in the stabs debug format (sometimes called "gdb" numbers in lldb sources).
-// lldb can't read stabs and I don't think anyone serious is still generating it;
-// we should remove all of this from our register structures some day.
+// The register numbers used in the eh_frame unwind information.
+// Should be the same as DWARF register numbers.
 
-namespace arm64_gcc {
+namespace arm64_ehframe {
     
 enum
 {
@@ -92,5 +91,5 @@ enum
 
 }
 
-#endif // utility_ARM64_Stabs_Registers_h_
+#endif // utility_ARM64_ehframe_Registers_h_
 

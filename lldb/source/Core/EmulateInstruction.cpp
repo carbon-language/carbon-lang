@@ -642,10 +642,10 @@ EmulateInstruction::GetBestRegisterKindAndNumber (const RegisterInfo *reg_info,
         return true;
     }
 
-    reg_num = reg_info->kinds[eRegisterKindStabs];
+    reg_num = reg_info->kinds[eRegisterKindProcessPlugin];
     if (reg_num != LLDB_INVALID_REGNUM)
     {
-        reg_kind = eRegisterKindStabs;
+        reg_kind = eRegisterKindProcessPlugin;
         return true;
     }
     return false;

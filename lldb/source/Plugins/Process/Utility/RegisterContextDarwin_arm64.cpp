@@ -36,30 +36,10 @@
 #endif
 
 // Project includes
-#include "ARM64_Stabs_Registers.h"
 #include "ARM64_DWARF_Registers.h"
 
 using namespace lldb;
 using namespace lldb_private;
-
-RegisterContextDarwin_arm64::RegisterContextDarwin_arm64(Thread &thread, uint32_t concrete_frame_idx) :
-    RegisterContext(thread, concrete_frame_idx),
-    gpr(),
-    fpu(),
-    exc()
-{
-    uint32_t i;
-    for (i=0; i<kNumErrors; i++)
-    {
-        gpr_errs[i] = -1;
-        fpu_errs[i] = -1;
-        exc_errs[i] = -1;
-    }
-}
-
-RegisterContextDarwin_arm64::~RegisterContextDarwin_arm64()
-{
-}
 
 
 #define GPR_OFFSET(idx) ((idx) * 8)
@@ -71,7 +51,7 @@ RegisterContextDarwin_arm64::~RegisterContextDarwin_arm64()
 #define EXC_OFFSET_NAME(reg) (LLVM_EXTENSION offsetof (RegisterContextDarwin_arm64::EXC, reg) + sizeof (RegisterContextDarwin_arm64::GPR) + sizeof (RegisterContextDarwin_arm64::FPU))
 #define DBG_OFFSET_NAME(reg) (LLVM_EXTENSION offsetof (RegisterContextDarwin_arm64::DBG, reg) + sizeof (RegisterContextDarwin_arm64::GPR) + sizeof (RegisterContextDarwin_arm64::FPU) + sizeof (RegisterContextDarwin_arm64::EXC))
 
-#define DEFINE_DBG(reg, i)  #reg, NULL, sizeof(((RegisterContextDarwin_arm64::DBG *)NULL)->reg[i]), DBG_OFFSET_NAME(reg[i]), eEncodingUint, eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, dbg_##reg##i }, NULL, NULL
+#define DEFINE_DBG(reg, i)  #reg, NULL, sizeof(((RegisterContextDarwin_arm64::DBG *)NULL)->reg[i]), DBG_OFFSET_NAME(reg[i]), eEncodingUint, eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM }, NULL, NULL
 #define REG_CONTEXT_SIZE (sizeof (RegisterContextDarwin_arm64::GPR) + sizeof (RegisterContextDarwin_arm64::FPU) + sizeof (RegisterContextDarwin_arm64::EXC))
 
 //-----------------------------------------------------------------------------
@@ -172,6 +152,26 @@ g_exc_regnums[] =
 };
 
 static size_t k_num_register_infos = llvm::array_lengthof(g_register_infos_arm64);
+
+RegisterContextDarwin_arm64::RegisterContextDarwin_arm64(Thread &thread, uint32_t concrete_frame_idx) :
+    RegisterContext(thread, concrete_frame_idx),
+    gpr(),
+    fpu(),
+    exc()
+{
+    uint32_t i;
+    for (i=0; i<kNumErrors; i++)
+    {
+        gpr_errs[i] = -1;
+        fpu_errs[i] = -1;
+        exc_errs[i] = -1;
+    }
+}
+
+RegisterContextDarwin_arm64::~RegisterContextDarwin_arm64()
+{
+}
+
 
 void
 RegisterContextDarwin_arm64::InvalidateAllRegisters ()
@@ -774,40 +774,40 @@ RegisterContextDarwin_arm64::ConvertRegisterKindToRegisterNumber (RegisterKind k
     {
         switch (reg)
         {
-        case arm64_gcc::x0:  return gpr_x0;
-        case arm64_gcc::x1:  return gpr_x1;
-        case arm64_gcc::x2:  return gpr_x2;
-        case arm64_gcc::x3:  return gpr_x3;
-        case arm64_gcc::x4:  return gpr_x4;
-        case arm64_gcc::x5:  return gpr_x5;
-        case arm64_gcc::x6:  return gpr_x6;
-        case arm64_gcc::x7:  return gpr_x7;
-        case arm64_gcc::x8:  return gpr_x8;
-        case arm64_gcc::x9:  return gpr_x9;
-        case arm64_gcc::x10: return gpr_x10;
-        case arm64_gcc::x11: return gpr_x11;
-        case arm64_gcc::x12: return gpr_x12;
-        case arm64_gcc::x13: return gpr_x13;
-        case arm64_gcc::x14: return gpr_x14;
-        case arm64_gcc::x15: return gpr_x15;
-        case arm64_gcc::x16: return gpr_x16;
-        case arm64_gcc::x17: return gpr_x17;
-        case arm64_gcc::x18: return gpr_x18;
-        case arm64_gcc::x19: return gpr_x19;
-        case arm64_gcc::x20: return gpr_x20;
-        case arm64_gcc::x21: return gpr_x21;
-        case arm64_gcc::x22: return gpr_x22;
-        case arm64_gcc::x23: return gpr_x23;
-        case arm64_gcc::x24: return gpr_x24;
-        case arm64_gcc::x25: return gpr_x25;
-        case arm64_gcc::x26: return gpr_x26;
-        case arm64_gcc::x27: return gpr_x27;
-        case arm64_gcc::x28: return gpr_x28;
-        case arm64_gcc::fp:   return gpr_fp;
-        case arm64_gcc::sp:   return gpr_sp;
-        case arm64_gcc::lr:   return gpr_lr;
-        case arm64_gcc::pc:   return gpr_pc;
-        case arm64_gcc::cpsr: return gpr_cpsr;
+        case arm64_ehframe::x0:  return gpr_x0;
+        case arm64_ehframe::x1:  return gpr_x1;
+        case arm64_ehframe::x2:  return gpr_x2;
+        case arm64_ehframe::x3:  return gpr_x3;
+        case arm64_ehframe::x4:  return gpr_x4;
+        case arm64_ehframe::x5:  return gpr_x5;
+        case arm64_ehframe::x6:  return gpr_x6;
+        case arm64_ehframe::x7:  return gpr_x7;
+        case arm64_ehframe::x8:  return gpr_x8;
+        case arm64_ehframe::x9:  return gpr_x9;
+        case arm64_ehframe::x10: return gpr_x10;
+        case arm64_ehframe::x11: return gpr_x11;
+        case arm64_ehframe::x12: return gpr_x12;
+        case arm64_ehframe::x13: return gpr_x13;
+        case arm64_ehframe::x14: return gpr_x14;
+        case arm64_ehframe::x15: return gpr_x15;
+        case arm64_ehframe::x16: return gpr_x16;
+        case arm64_ehframe::x17: return gpr_x17;
+        case arm64_ehframe::x18: return gpr_x18;
+        case arm64_ehframe::x19: return gpr_x19;
+        case arm64_ehframe::x20: return gpr_x20;
+        case arm64_ehframe::x21: return gpr_x21;
+        case arm64_ehframe::x22: return gpr_x22;
+        case arm64_ehframe::x23: return gpr_x23;
+        case arm64_ehframe::x24: return gpr_x24;
+        case arm64_ehframe::x25: return gpr_x25;
+        case arm64_ehframe::x26: return gpr_x26;
+        case arm64_ehframe::x27: return gpr_x27;
+        case arm64_ehframe::x28: return gpr_x28;
+        case arm64_ehframe::fp:   return gpr_fp;
+        case arm64_ehframe::sp:   return gpr_sp;
+        case arm64_ehframe::lr:   return gpr_lr;
+        case arm64_ehframe::pc:   return gpr_pc;
+        case arm64_ehframe::cpsr: return gpr_cpsr;
         }
     }
     else if (kind == eRegisterKindLLDB)

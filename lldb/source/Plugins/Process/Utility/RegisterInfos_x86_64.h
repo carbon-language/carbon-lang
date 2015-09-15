@@ -44,7 +44,7 @@
 
 #define DR_SIZE sizeof(((DBG*)NULL)->dr[0])
 
-// RegisterKind: EHFrame, DWARF, Generic, Stabs, LLDB
+// RegisterKind: EHFrame, DWARF, Generic, Process Plugin, LLDB
 
 // Note that the size and offset will be updated by platform-specific classes.
 #define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)    \
@@ -58,25 +58,25 @@
 #define DEFINE_FP_ST(reg, i)                                       \
     { #reg#i, NULL, FP_SIZE, LLVM_EXTENSION FPR_OFFSET(stmm[i]),   \
       eEncodingVector, eFormatVectorOfUInt8,                       \
-      { gcc_dwarf_st##i##_x86_64, gcc_dwarf_st##i##_x86_64, LLDB_INVALID_REGNUM, gdb_st##i##_x86_64, lldb_st##i##_x86_64 }, \
+      { dwarf_st##i##_x86_64, dwarf_st##i##_x86_64, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_st##i##_x86_64 }, \
       NULL, NULL }
 
 #define DEFINE_FP_MM(reg, i)                                                \
     { #reg#i, NULL, sizeof(uint64_t), LLVM_EXTENSION FPR_OFFSET(stmm[i]),   \
       eEncodingUint, eFormatHex,                                            \
-      { gcc_dwarf_mm##i##_x86_64, gcc_dwarf_mm##i##_x86_64, LLDB_INVALID_REGNUM, gdb_st##i##_x86_64, lldb_mm##i##_x86_64 }, \
+      { dwarf_mm##i##_x86_64, dwarf_mm##i##_x86_64, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_mm##i##_x86_64 }, \
       NULL, NULL }
 
 #define DEFINE_XMM(reg, i)                                         \
     { #reg#i, NULL, XMM_SIZE, LLVM_EXTENSION FPR_OFFSET(reg[i]),   \
       eEncodingVector, eFormatVectorOfUInt8,                       \
-      { gcc_dwarf_##reg##i##_x86_64, gcc_dwarf_##reg##i##_x86_64, LLDB_INVALID_REGNUM, gdb_##reg##i##_x86_64, lldb_##reg##i##_x86_64}, \
+      { dwarf_##reg##i##_x86_64, dwarf_##reg##i##_x86_64, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_##reg##i##_x86_64}, \
       NULL, NULL }
 
 #define DEFINE_YMM(reg, i)                                                          \
     { #reg#i, NULL, YMM_SIZE, LLVM_EXTENSION YMM_OFFSET(i),                         \
       eEncodingVector, eFormatVectorOfUInt8,                                        \
-      { gcc_dwarf_##reg##i##h_x86_64, gcc_dwarf_##reg##i##h_x86_64, LLDB_INVALID_REGNUM, gdb_##reg##i##h_x86_64, lldb_##reg##i##_x86_64 }, \
+      { dwarf_##reg##i##h_x86_64, dwarf_##reg##i##h_x86_64, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_##reg##i##_x86_64 }, \
       NULL, NULL }
 
 #define DEFINE_DR(reg, i)                                               \
@@ -100,31 +100,31 @@
 static RegisterInfo
 g_register_infos_x86_64[] =
 {
-    // General purpose registers.           EH_Frame,                   DWARF,                Generic,                Stabs
-    DEFINE_GPR(rax,    NULL,    gcc_dwarf_rax_x86_64,    gcc_dwarf_rax_x86_64,    LLDB_INVALID_REGNUM,       gdb_rax_x86_64),
-    DEFINE_GPR(rbx,    NULL,    gcc_dwarf_rbx_x86_64,    gcc_dwarf_rbx_x86_64,    LLDB_INVALID_REGNUM,       gdb_rbx_x86_64),
-    DEFINE_GPR(rcx,    "arg4",  gcc_dwarf_rcx_x86_64,    gcc_dwarf_rcx_x86_64,    LLDB_REGNUM_GENERIC_ARG4,  gdb_rcx_x86_64),
-    DEFINE_GPR(rdx,    "arg3",  gcc_dwarf_rdx_x86_64,    gcc_dwarf_rdx_x86_64,    LLDB_REGNUM_GENERIC_ARG3,  gdb_rdx_x86_64),
-    DEFINE_GPR(rdi,    "arg1",  gcc_dwarf_rdi_x86_64,    gcc_dwarf_rdi_x86_64,    LLDB_REGNUM_GENERIC_ARG1,  gdb_rdi_x86_64),
-    DEFINE_GPR(rsi,    "arg2",  gcc_dwarf_rsi_x86_64,    gcc_dwarf_rsi_x86_64,    LLDB_REGNUM_GENERIC_ARG2,  gdb_rsi_x86_64),
-    DEFINE_GPR(rbp,    "fp",    gcc_dwarf_rbp_x86_64,    gcc_dwarf_rbp_x86_64,    LLDB_REGNUM_GENERIC_FP,    gdb_rbp_x86_64),
-    DEFINE_GPR(rsp,    "sp",    gcc_dwarf_rsp_x86_64,    gcc_dwarf_rsp_x86_64,    LLDB_REGNUM_GENERIC_SP,    gdb_rsp_x86_64),
-    DEFINE_GPR(r8,     "arg5",  gcc_dwarf_r8_x86_64,     gcc_dwarf_r8_x86_64,     LLDB_REGNUM_GENERIC_ARG5,  gdb_r8_x86_64),
-    DEFINE_GPR(r9,     "arg6",  gcc_dwarf_r9_x86_64,     gcc_dwarf_r9_x86_64,     LLDB_REGNUM_GENERIC_ARG6,  gdb_r9_x86_64),
-    DEFINE_GPR(r10,    NULL,    gcc_dwarf_r10_x86_64,    gcc_dwarf_r10_x86_64,    LLDB_INVALID_REGNUM,       gdb_r10_x86_64),
-    DEFINE_GPR(r11,    NULL,    gcc_dwarf_r11_x86_64,    gcc_dwarf_r11_x86_64,    LLDB_INVALID_REGNUM,       gdb_r11_x86_64),
-    DEFINE_GPR(r12,    NULL,    gcc_dwarf_r12_x86_64,    gcc_dwarf_r12_x86_64,    LLDB_INVALID_REGNUM,       gdb_r12_x86_64),
-    DEFINE_GPR(r13,    NULL,    gcc_dwarf_r13_x86_64,    gcc_dwarf_r13_x86_64,    LLDB_INVALID_REGNUM,       gdb_r13_x86_64),
-    DEFINE_GPR(r14,    NULL,    gcc_dwarf_r14_x86_64,    gcc_dwarf_r14_x86_64,    LLDB_INVALID_REGNUM,       gdb_r14_x86_64),
-    DEFINE_GPR(r15,    NULL,    gcc_dwarf_r15_x86_64,    gcc_dwarf_r15_x86_64,    LLDB_INVALID_REGNUM,       gdb_r15_x86_64),
-    DEFINE_GPR(rip,    "pc",    gcc_dwarf_rip_x86_64,    gcc_dwarf_rip_x86_64,    LLDB_REGNUM_GENERIC_PC,    gdb_rip_x86_64),
-    DEFINE_GPR(rflags, "flags", gcc_dwarf_rflags_x86_64, gcc_dwarf_rflags_x86_64, LLDB_REGNUM_GENERIC_FLAGS, gdb_rflags_x86_64),
-    DEFINE_GPR(cs,     NULL,    gcc_dwarf_cs_x86_64,     gcc_dwarf_cs_x86_64,     LLDB_INVALID_REGNUM,       gdb_cs_x86_64),
-    DEFINE_GPR(fs,     NULL,    gcc_dwarf_fs_x86_64,     gcc_dwarf_fs_x86_64,     LLDB_INVALID_REGNUM,       gdb_fs_x86_64),
-    DEFINE_GPR(gs,     NULL,    gcc_dwarf_gs_x86_64,     gcc_dwarf_gs_x86_64,     LLDB_INVALID_REGNUM,       gdb_gs_x86_64),
-    DEFINE_GPR(ss,     NULL,    gcc_dwarf_ss_x86_64,     gcc_dwarf_ss_x86_64,     LLDB_INVALID_REGNUM,       gdb_ss_x86_64),
-    DEFINE_GPR(ds,     NULL,    gcc_dwarf_ds_x86_64,     gcc_dwarf_ds_x86_64,     LLDB_INVALID_REGNUM,       gdb_ds_x86_64),
-    DEFINE_GPR(es,     NULL,    gcc_dwarf_es_x86_64,     gcc_dwarf_es_x86_64,     LLDB_INVALID_REGNUM,       gdb_es_x86_64),
+    // General purpose registers.           EH_Frame,                   DWARF,                Generic,                Process Plugin
+    DEFINE_GPR(rax,    NULL,        dwarf_rax_x86_64,        dwarf_rax_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(rbx,    NULL,        dwarf_rbx_x86_64,        dwarf_rbx_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(rcx,    "arg4",      dwarf_rcx_x86_64,        dwarf_rcx_x86_64,    LLDB_REGNUM_GENERIC_ARG4,  LLDB_INVALID_REGNUM),
+    DEFINE_GPR(rdx,    "arg3",      dwarf_rdx_x86_64,        dwarf_rdx_x86_64,    LLDB_REGNUM_GENERIC_ARG3,  LLDB_INVALID_REGNUM),
+    DEFINE_GPR(rdi,    "arg1",      dwarf_rdi_x86_64,        dwarf_rdi_x86_64,    LLDB_REGNUM_GENERIC_ARG1,  LLDB_INVALID_REGNUM),
+    DEFINE_GPR(rsi,    "arg2",      dwarf_rsi_x86_64,        dwarf_rsi_x86_64,    LLDB_REGNUM_GENERIC_ARG2,  LLDB_INVALID_REGNUM),
+    DEFINE_GPR(rbp,    "fp",        dwarf_rbp_x86_64,        dwarf_rbp_x86_64,    LLDB_REGNUM_GENERIC_FP,    LLDB_INVALID_REGNUM),
+    DEFINE_GPR(rsp,    "sp",        dwarf_rsp_x86_64,        dwarf_rsp_x86_64,    LLDB_REGNUM_GENERIC_SP,    LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r8,     "arg5",      dwarf_r8_x86_64,         dwarf_r8_x86_64,     LLDB_REGNUM_GENERIC_ARG5,  LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r9,     "arg6",      dwarf_r9_x86_64,         dwarf_r9_x86_64,     LLDB_REGNUM_GENERIC_ARG6,  LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r10,    NULL,        dwarf_r10_x86_64,        dwarf_r10_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r11,    NULL,        dwarf_r11_x86_64,        dwarf_r11_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r12,    NULL,        dwarf_r12_x86_64,        dwarf_r12_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r13,    NULL,        dwarf_r13_x86_64,        dwarf_r13_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r14,    NULL,        dwarf_r14_x86_64,        dwarf_r14_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r15,    NULL,        dwarf_r15_x86_64,        dwarf_r15_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(rip,    "pc",        dwarf_rip_x86_64,        dwarf_rip_x86_64,    LLDB_REGNUM_GENERIC_PC,    LLDB_INVALID_REGNUM),
+    DEFINE_GPR(rflags, "flags",     dwarf_rflags_x86_64,     dwarf_rflags_x86_64, LLDB_REGNUM_GENERIC_FLAGS, LLDB_INVALID_REGNUM),
+    DEFINE_GPR(cs,     NULL,        dwarf_cs_x86_64,         dwarf_cs_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(fs,     NULL,        dwarf_fs_x86_64,         dwarf_fs_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(gs,     NULL,        dwarf_gs_x86_64,         dwarf_gs_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(ss,     NULL,        dwarf_ss_x86_64,         dwarf_ss_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(ds,     NULL,        dwarf_ds_x86_64,         dwarf_ds_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(es,     NULL,        dwarf_es_x86_64,         dwarf_es_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
 
     DEFINE_GPR_PSEUDO_32(eax, rax),
     DEFINE_GPR_PSEUDO_32(ebx, rbx),
@@ -179,16 +179,16 @@ g_register_infos_x86_64[] =
     DEFINE_GPR_PSEUDO_8L(r14l, r14),
     DEFINE_GPR_PSEUDO_8L(r15l, r15),
 
-    // i387 Floating point registers. EH_frame,                                  DWARF,               Generic,          Stabs
-    DEFINE_FPR(fctrl,     fctrl,          gcc_dwarf_fctrl_x86_64, gcc_dwarf_fctrl_x86_64, LLDB_INVALID_REGNUM, gdb_fctrl_x86_64),
-    DEFINE_FPR(fstat,     fstat,          gcc_dwarf_fstat_x86_64, gcc_dwarf_fstat_x86_64, LLDB_INVALID_REGNUM, gdb_fstat_x86_64),
-    DEFINE_FPR(ftag,      ftag,           LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_ftag_x86_64),
-    DEFINE_FPR(fop,       fop,            LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_fop_x86_64),
-    DEFINE_FPR(fiseg,     ptr.i386_.fiseg, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_fiseg_x86_64),
-    DEFINE_FPR(fioff,     ptr.i386_.fioff, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_fioff_x86_64),
-    DEFINE_FPR(foseg,     ptr.i386_.foseg, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_foseg_x86_64),
-    DEFINE_FPR(fooff,     ptr.i386_.fooff, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_fooff_x86_64),
-    DEFINE_FPR(mxcsr,     mxcsr,          gcc_dwarf_mxcsr_x86_64, gcc_dwarf_mxcsr_x86_64, LLDB_INVALID_REGNUM, gdb_mxcsr_x86_64),
+    // i387 Floating point registers. EH_frame,                                  DWARF,               Generic,          Process Plugin
+    DEFINE_FPR(fctrl,     fctrl,              dwarf_fctrl_x86_64,     dwarf_fctrl_x86_64, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(fstat,     fstat,              dwarf_fstat_x86_64,     dwarf_fstat_x86_64, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(ftag,      ftag,           LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(fop,       fop,            LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(fiseg,     ptr.i386_.fiseg, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(fioff,     ptr.i386_.fioff, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(foseg,     ptr.i386_.foseg, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(fooff,     ptr.i386_.fooff, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(mxcsr,     mxcsr,              dwarf_mxcsr_x86_64,     dwarf_mxcsr_x86_64, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
     DEFINE_FPR(mxcsrmask, mxcsrmask,      LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
 
     // FP registers.

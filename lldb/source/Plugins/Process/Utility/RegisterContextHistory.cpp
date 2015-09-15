@@ -55,7 +55,7 @@ RegisterContext (thread, concrete_frame_idx),
     m_pc_reg_info.kinds[eRegisterKindEHFrame] = LLDB_INVALID_REGNUM;
     m_pc_reg_info.kinds[eRegisterKindDWARF] = LLDB_INVALID_REGNUM;
     m_pc_reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_PC;
-    m_pc_reg_info.kinds[eRegisterKindStabs] = LLDB_INVALID_REGNUM;
+    m_pc_reg_info.kinds[eRegisterKindProcessPlugin] = LLDB_INVALID_REGNUM;
     m_pc_reg_info.kinds[eRegisterKindLLDB] = LLDB_INVALID_REGNUM;
 }
 

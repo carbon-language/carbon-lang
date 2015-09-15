@@ -52,31 +52,31 @@
     { #name, NULL, FPR_SIZE(reg), FPR_OFFSET(reg), eEncodingUint,   \
       eFormatHex, { kind1, kind2, kind3, kind4, lldb_##name##_i386 }, NULL, NULL }
 
-// RegisterKind: EHFrame, DWARF, Generic, Stabs, LLDB
+// RegisterKind: EHFrame, DWARF, Generic, Process Plugin, LLDB
 
 #define DEFINE_FP_ST(reg, i)                                       \
     { #reg#i, NULL, FP_SIZE, LLVM_EXTENSION FPR_OFFSET(stmm[i]),    \
       eEncodingVector, eFormatVectorOfUInt8,                       \
-      { gcc_st##i##_i386, dwarf_st##i##_i386, LLDB_INVALID_REGNUM, gdb_st##i##_i386, lldb_st##i##_i386 }, \
+      { ehframe_st##i##_i386, dwarf_st##i##_i386, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_st##i##_i386 }, \
       NULL, NULL }
 
 #define DEFINE_FP_MM(reg, i)                                                \
     { #reg#i, NULL, sizeof(uint64_t), LLVM_EXTENSION FPR_OFFSET(stmm[i]),   \
       eEncodingUint, eFormatHex,                                            \
-      { gcc_mm##i##_i386, dwarf_mm##i##_i386, LLDB_INVALID_REGNUM, gdb_mm##i##_i386, lldb_mm##i##_i386 }, \
+      { ehframe_mm##i##_i386, dwarf_mm##i##_i386, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_mm##i##_i386 }, \
       NULL, NULL }
 
 #define DEFINE_XMM(reg, i)                                         \
     { #reg#i, NULL, XMM_SIZE, LLVM_EXTENSION FPR_OFFSET(reg[i]),   \
       eEncodingVector, eFormatVectorOfUInt8,                       \
-      { gcc_##reg##i##_i386, dwarf_##reg##i##_i386, LLDB_INVALID_REGNUM, gdb_##reg##i##_i386, lldb_##reg##i##_i386}, \
+      { ehframe_##reg##i##_i386, dwarf_##reg##i##_i386, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_##reg##i##_i386}, \
       NULL, NULL }
 
 // I believe the YMM registers use dwarf_xmm_%_i386 register numbers and then differentiate based on register size.
 #define DEFINE_YMM(reg, i)                                         \
     { #reg#i, NULL, YMM_SIZE, LLVM_EXTENSION YMM_OFFSET(i),        \
       eEncodingVector, eFormatVectorOfUInt8,                       \
-      { LLDB_INVALID_REGNUM, dwarf_xmm##i##_i386, LLDB_INVALID_REGNUM, gdb_##reg##i##h_i386, lldb_##reg##i##_i386 }, \
+      { LLDB_INVALID_REGNUM, dwarf_xmm##i##_i386, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, lldb_##reg##i##_i386 }, \
       NULL, NULL }
 
 #define DEFINE_DR(reg, i)                                               \
@@ -98,22 +98,22 @@ static RegisterInfo
 g_register_infos_i386[] =
 {
     // General purpose registers.
-    DEFINE_GPR(eax,    NULL,    gcc_eax_i386,        dwarf_eax_i386,      LLDB_INVALID_REGNUM,       gdb_eax_i386),
-    DEFINE_GPR(ebx,    NULL,    gcc_ebx_i386,        dwarf_ebx_i386,      LLDB_INVALID_REGNUM,       gdb_ebx_i386),
-    DEFINE_GPR(ecx,    NULL,    gcc_ecx_i386,        dwarf_ecx_i386,      LLDB_INVALID_REGNUM,       gdb_ecx_i386),
-    DEFINE_GPR(edx,    NULL,    gcc_edx_i386,        dwarf_edx_i386,      LLDB_INVALID_REGNUM,       gdb_edx_i386),
-    DEFINE_GPR(edi,    NULL,    gcc_edi_i386,        dwarf_edi_i386,      LLDB_INVALID_REGNUM,       gdb_edi_i386),
-    DEFINE_GPR(esi,    NULL,    gcc_esi_i386,        dwarf_esi_i386,      LLDB_INVALID_REGNUM,       gdb_esi_i386),
-    DEFINE_GPR(ebp,    "fp",    gcc_ebp_i386,        dwarf_ebp_i386,      LLDB_REGNUM_GENERIC_FP,    gdb_ebp_i386),
-    DEFINE_GPR(esp,    "sp",    gcc_esp_i386,        dwarf_esp_i386,      LLDB_REGNUM_GENERIC_SP,    gdb_esp_i386),
-    DEFINE_GPR(eip,    "pc",    gcc_eip_i386,        dwarf_eip_i386,      LLDB_REGNUM_GENERIC_PC,    gdb_eip_i386),
-    DEFINE_GPR(eflags, "flags", gcc_eflags_i386,     dwarf_eflags_i386,   LLDB_REGNUM_GENERIC_FLAGS, gdb_eflags_i386),
-    DEFINE_GPR(cs,     NULL,    LLDB_INVALID_REGNUM, dwarf_cs_i386,       LLDB_INVALID_REGNUM,       gdb_cs_i386),
-    DEFINE_GPR(fs,     NULL,    LLDB_INVALID_REGNUM, dwarf_fs_i386,       LLDB_INVALID_REGNUM,       gdb_fs_i386),
-    DEFINE_GPR(gs,     NULL,    LLDB_INVALID_REGNUM, dwarf_gs_i386,       LLDB_INVALID_REGNUM,       gdb_gs_i386),
-    DEFINE_GPR(ss,     NULL,    LLDB_INVALID_REGNUM, dwarf_ss_i386,       LLDB_INVALID_REGNUM,       gdb_ss_i386),
-    DEFINE_GPR(ds,     NULL,    LLDB_INVALID_REGNUM, dwarf_ds_i386,       LLDB_INVALID_REGNUM,       gdb_ds_i386),
-    DEFINE_GPR(es,     NULL,    LLDB_INVALID_REGNUM, dwarf_es_i386,       LLDB_INVALID_REGNUM,       gdb_es_i386),
+    DEFINE_GPR(eax,    NULL,    ehframe_eax_i386,    dwarf_eax_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(ebx,    NULL,    ehframe_ebx_i386,    dwarf_ebx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(ecx,    NULL,    ehframe_ecx_i386,    dwarf_ecx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(edx,    NULL,    ehframe_edx_i386,    dwarf_edx_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(edi,    NULL,    ehframe_edi_i386,    dwarf_edi_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(esi,    NULL,    ehframe_esi_i386,    dwarf_esi_i386,      LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(ebp,    "fp",    ehframe_ebp_i386,    dwarf_ebp_i386,      LLDB_REGNUM_GENERIC_FP,    LLDB_INVALID_REGNUM),
+    DEFINE_GPR(esp,    "sp",    ehframe_esp_i386,    dwarf_esp_i386,      LLDB_REGNUM_GENERIC_SP,    LLDB_INVALID_REGNUM),
+    DEFINE_GPR(eip,    "pc",    ehframe_eip_i386,    dwarf_eip_i386,      LLDB_REGNUM_GENERIC_PC,    LLDB_INVALID_REGNUM),
+    DEFINE_GPR(eflags, "flags", ehframe_eflags_i386, dwarf_eflags_i386,   LLDB_REGNUM_GENERIC_FLAGS, LLDB_INVALID_REGNUM),
+    DEFINE_GPR(cs,     NULL,    LLDB_INVALID_REGNUM, dwarf_cs_i386,       LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(fs,     NULL,    LLDB_INVALID_REGNUM, dwarf_fs_i386,       LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(gs,     NULL,    LLDB_INVALID_REGNUM, dwarf_gs_i386,       LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(ss,     NULL,    LLDB_INVALID_REGNUM, dwarf_ss_i386,       LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(ds,     NULL,    LLDB_INVALID_REGNUM, dwarf_ds_i386,       LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(es,     NULL,    LLDB_INVALID_REGNUM, dwarf_es_i386,       LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
 
     DEFINE_GPR_PSEUDO_16(ax,  eax),
     DEFINE_GPR_PSEUDO_16(bx,  ebx),
@@ -133,15 +133,15 @@ g_register_infos_i386[] =
     DEFINE_GPR_PSEUDO_8L(dl,  edx),
 
     // i387 Floating point registers.
-    DEFINE_FPR(fctrl,     fctrl,          LLDB_INVALID_REGNUM, dwarf_fctrl_i386,    LLDB_INVALID_REGNUM, gdb_fctrl_i386),
-    DEFINE_FPR(fstat,     fstat,          LLDB_INVALID_REGNUM, dwarf_fstat_i386,    LLDB_INVALID_REGNUM, gdb_fstat_i386),
-    DEFINE_FPR(ftag,      ftag,           LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_ftag_i386),
-    DEFINE_FPR(fop,       fop,            LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fop_i386),
-    DEFINE_FPR(fiseg,     ptr.i386_.fiseg, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fiseg_i386),
-    DEFINE_FPR(fioff,     ptr.i386_.fioff, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fioff_i386),
-    DEFINE_FPR(foseg,     ptr.i386_.foseg, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_foseg_i386),
-    DEFINE_FPR(fooff,     ptr.i386_.fooff, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fooff_i386),
-    DEFINE_FPR(mxcsr,     mxcsr,          LLDB_INVALID_REGNUM, dwarf_mxcsr_i386,    LLDB_INVALID_REGNUM, gdb_mxcsr_i386),
+    DEFINE_FPR(fctrl,     fctrl,          LLDB_INVALID_REGNUM, dwarf_fctrl_i386,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(fstat,     fstat,          LLDB_INVALID_REGNUM, dwarf_fstat_i386,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(ftag,      ftag,           LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(fop,       fop,            LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(fiseg,     ptr.i386_.fiseg, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(fioff,     ptr.i386_.fioff, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(foseg,     ptr.i386_.foseg, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(fooff,     ptr.i386_.fooff, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
+    DEFINE_FPR(mxcsr,     mxcsr,          LLDB_INVALID_REGNUM, dwarf_mxcsr_i386,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
     DEFINE_FPR(mxcsrmask, mxcsrmask,      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
 
     // FP registers.

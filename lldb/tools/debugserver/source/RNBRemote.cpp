@@ -1811,7 +1811,7 @@ RNBRemote::HandlePacket_qRegisterInfo (const char *p)
             ostrm << "set:" << reg_set_info[reg_entry->nub_info.set].name << ';';
 
         if (reg_entry->nub_info.reg_gcc != INVALID_NUB_REGNUM)
-            ostrm << "gcc:" << std::dec << reg_entry->nub_info.reg_gcc << ';';
+            ostrm << "ehframe:" << std::dec << reg_entry->nub_info.reg_gcc << ';';
 
         if (reg_entry->nub_info.reg_dwarf != INVALID_NUB_REGNUM)
             ostrm << "dwarf:" << std::dec << reg_entry->nub_info.reg_dwarf << ';';
@@ -4781,7 +4781,7 @@ GenerateTargetXMLRegister (std::ostringstream &s,
     XMLAttributeString(s, "format", lldb_format, default_lldb_format);
     XMLAttributeUnsignedDecimal(s, "group_id", reg.nub_info.set);
     if (reg.nub_info.reg_gcc != INVALID_NUB_REGNUM)
-        XMLAttributeUnsignedDecimal(s, "gcc_regnum", reg.nub_info.reg_gcc);
+        XMLAttributeUnsignedDecimal(s, "ehframe_regnum", reg.nub_info.reg_gcc);
     if (reg.nub_info.reg_dwarf != INVALID_NUB_REGNUM)
         XMLAttributeUnsignedDecimal(s, "dwarf_regnum", reg.nub_info.reg_dwarf);
 

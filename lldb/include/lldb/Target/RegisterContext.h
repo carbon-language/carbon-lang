@@ -92,8 +92,8 @@ public:
     ///
     /// There may be multiple ways to enumerate the registers for a given
     /// architecture.  ABI references will specify one to be used with
-    /// DWARF, the register numberings from stabs (aka "gdb"), there may
-    /// be a variation used for eh_frame (aka "gcc") unwind instructions (e.g. on Darwin),
+    /// DWARF, the register numberings from process plugin, there may
+    /// be a variation used for eh_frame unwind instructions (e.g. on Darwin),
     /// and so on.  Register 5 by itself is meaningless - RegisterKind
     /// enumeration tells you what context that number should be translated as.
     ///

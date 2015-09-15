@@ -1302,7 +1302,7 @@ WriteRegisterCallback (EmulateInstruction *instruction, void *baton,
                        const EmulateInstruction::Context &context,
                        const RegisterInfo *reg_info, const RegisterValue &reg_value)
 {
-    if (reg_info->kinds[lldb::eRegisterKindDWARF] == gcc_dwarf_bad_mips64)
+    if (reg_info->kinds[lldb::eRegisterKindDWARF] == dwarf_bad_mips64)
     {
         EmulatorBaton* emulator_baton = static_cast<EmulatorBaton*>(baton);
         emulator_baton->m_watch_hit_addr = reg_value.GetAsUInt64 ();

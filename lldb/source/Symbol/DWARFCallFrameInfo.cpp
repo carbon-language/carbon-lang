@@ -535,7 +535,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
                         // We only keep enough register locations around to
                         // unwind what is in our thread, and these are organized
                         // by the register index in that state, so we need to convert our
-                        // GCC register number from the EH frame info, to a register index
+                        // eh_frame register number from the EH frame info, to a register index
 
                         if (unwind_plan.IsValidRowIndex(0) && unwind_plan.GetRowAtIndex(0)->GetRegisterInfo(reg_num, reg_location))
                             row->SetRegisterInfo (reg_num, reg_location);
