@@ -258,7 +258,7 @@ RValue CodeGenFunction::EmitCXXMemberOrOperatorMemberCallExpr(
   } else {
     if (SanOpts.has(SanitizerKind::CFINVCall) &&
         MD->getParent()->isDynamicClass()) {
-      llvm::Value *VTable = GetVTablePtr(This, Int8PtrTy);
+      llvm::Value *VTable = GetVTablePtr(This, Int8PtrTy, MD->getParent());
       EmitVTablePtrCheckForCall(MD, VTable, CFITCK_NVCall, CE->getLocStart());
     }
 

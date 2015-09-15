@@ -1277,7 +1277,8 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(Address Addr, bool Volatile,
     llvm::MDNode *TBAAPath = CGM.getTBAAStructTagInfo(TBAABaseType, TBAAInfo,
                                                       TBAAOffset);
     if (TBAAPath)
-      CGM.DecorateInstruction(Load, TBAAPath, false/*ConvertTypeToTag*/);
+      CGM.DecorateInstructionWithTBAA(Load, TBAAPath,
+                                      false /*ConvertTypeToTag*/);
   }
 
   bool NeedsBoolCheck =
@@ -1391,7 +1392,8 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, Address Addr,
     llvm::MDNode *TBAAPath = CGM.getTBAAStructTagInfo(TBAABaseType, TBAAInfo,
                                                       TBAAOffset);
     if (TBAAPath)
-      CGM.DecorateInstruction(Store, TBAAPath, false/*ConvertTypeToTag*/);
+      CGM.DecorateInstructionWithTBAA(Store, TBAAPath,
+                                      false /*ConvertTypeToTag*/);
   }
 }
 
@@ -3115,7 +3117,7 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
         else
           tbaa = CGM.getTBAAInfo(type);
         if (tbaa)
-          CGM.DecorateInstruction(load, tbaa);
+          CGM.DecorateInstructionWithTBAA(load, tbaa);
       }
 
       mayAlias = false;

@@ -1380,7 +1380,8 @@ public:
 
   /// GetVTablePtr - Return the Value of the vtable pointer member pointed
   /// to by This.
-  llvm::Value *GetVTablePtr(Address This, llvm::Type *Ty);
+  llvm::Value *GetVTablePtr(Address This, llvm::Type *VTableTy,
+                            const CXXRecordDecl *VTableClass);
 
   enum CFITypeCheckKind {
     CFITCK_VCall,

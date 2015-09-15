@@ -658,9 +658,13 @@ public:
   /// is the same as the type. For struct-path aware TBAA, the tag
   /// is different from the type: base type, access type and offset.
   /// When ConvertTypeToTag is true, we create a tag based on the scalar type.
-  void DecorateInstruction(llvm::Instruction *Inst,
-                           llvm::MDNode *TBAAInfo,
-                           bool ConvertTypeToTag = true);
+  void DecorateInstructionWithTBAA(llvm::Instruction *Inst,
+                                   llvm::MDNode *TBAAInfo,
+                                   bool ConvertTypeToTag = true);
+
+  /// Adds !invariant.barrier !tag to instruction
+  void DecorateInstructionWithInvariantGroup(llvm::Instruction *I,
+                                             const CXXRecordDecl *RD);
 
   /// Emit the given number of characters as a value of type size_t.
   llvm::ConstantInt *getSize(CharUnits numChars);

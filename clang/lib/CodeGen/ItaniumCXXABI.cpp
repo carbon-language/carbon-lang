@@ -584,7 +584,7 @@ llvm::Value *ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(
     CGF.CGM.getDynamicOffsetAlignment(ThisAddr.getAlignment(), RD,
                                       CGF.getPointerAlign());
   llvm::Value *VTable =
-    CGF.GetVTablePtr(Address(This, VTablePtrAlign), VTableTy);
+    CGF.GetVTablePtr(Address(This, VTablePtrAlign), VTableTy, RD);
 
   // Apply the offset.
   llvm::Value *VTableOffset = FnAsInt;
@@ -1012,7 +1012,10 @@ void ItaniumCXXABI::emitVirtualObjectDelete(CodeGenFunction &CGF,
     // to pass to the deallocation function.
 
     // Grab the vtable pointer as an intptr_t*.
-    llvm::Value *VTable = CGF.GetVTablePtr(Ptr, CGF.IntPtrTy->getPointerTo());
+    auto *ClassDecl =
+        cast<CXXRecordDecl>(ElementType->getAs<RecordType>()->getDecl());
+    llvm::Value *VTable =
+        CGF.GetVTablePtr(Ptr, CGF.IntPtrTy->getPointerTo(), ClassDecl);
 
     // Track back to entry -2 and pull out the offset there.
     llvm::Value *OffsetPtr = CGF.Builder.CreateConstInBoundsGEP1_64(
@@ -1211,8 +1214,10 @@ llvm::Value *ItaniumCXXABI::EmitTypeid(CodeGenFunction &CGF,
                                        QualType SrcRecordTy,
                                        Address ThisPtr,
                                        llvm::Type *StdTypeInfoPtrTy) {
+  auto *ClassDecl =
+      cast<CXXRecordDecl>(SrcRecordTy->getAs<RecordType>()->getDecl());
   llvm::Value *Value =
-      CGF.GetVTablePtr(ThisPtr, StdTypeInfoPtrTy->getPointerTo());
+      CGF.GetVTablePtr(ThisPtr, StdTypeInfoPtrTy->getPointerTo(), ClassDecl);
 
   // Load the type info.
   Value = CGF.Builder.CreateConstInBoundsGEP1_64(Value, -1ULL);
@@ -1275,8 +1280,11 @@ llvm::Value *ItaniumCXXABI::EmitDynamicCastToVoid(CodeGenFunction &CGF,
       CGF.ConvertType(CGF.getContext().getPointerDiffType());
   llvm::Type *DestLTy = CGF.ConvertType(DestTy);
 
+  auto *ClassDecl =
+      cast<CXXRecordDecl>(SrcRecordTy->getAs<RecordType>()->getDecl());
   // Get the vtable pointer.
-  llvm::Value *VTable = CGF.GetVTablePtr(ThisAddr, PtrDiffLTy->getPointerTo());
+  llvm::Value *VTable = CGF.GetVTablePtr(ThisAddr, PtrDiffLTy->getPointerTo(),
+      ClassDecl);
 
   // Get the offset-to-top from the vtable.
   llvm::Value *OffsetToTop =
@@ -1305,7 +1313,7 @@ ItaniumCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
                                          Address This,
                                          const CXXRecordDecl *ClassDecl,
                                          const CXXRecordDecl *BaseClassDecl) {
-  llvm::Value *VTablePtr = CGF.GetVTablePtr(This, CGM.Int8PtrTy);
+  llvm::Value *VTablePtr = CGF.GetVTablePtr(This, CGM.Int8PtrTy, ClassDecl);
   CharUnits VBaseOffsetOffset =
       CGM.getItaniumVTableContext().getVirtualBaseOffsetOffset(ClassDecl,
                                                                BaseClassDecl);
@@ -1591,10 +1599,11 @@ llvm::Value *ItaniumCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
                                                       SourceLocation Loc) {
   GD = GD.getCanonicalDecl();
   Ty = Ty->getPointerTo()->getPointerTo();
-  llvm::Value *VTable = CGF.GetVTablePtr(This, Ty);
+  auto *MethodDecl = cast<CXXMethodDecl>(GD.getDecl());
+  llvm::Value *VTable = CGF.GetVTablePtr(This, Ty, MethodDecl->getParent());
 
   if (CGF.SanOpts.has(SanitizerKind::CFIVCall))
-    CGF.EmitVTablePtrCheckForCall(cast<CXXMethodDecl>(GD.getDecl()), VTable,
+    CGF.EmitVTablePtrCheckForCall(MethodDecl, VTable,
                                   CodeGenFunction::CFITCK_VCall, Loc);
 
   uint64_t VTableIndex = CGM.getItaniumVTableContext().getMethodVTableIndex(GD);

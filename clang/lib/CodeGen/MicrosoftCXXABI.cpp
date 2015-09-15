@@ -1831,7 +1831,9 @@ llvm::Value *MicrosoftCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
   Ty = Ty->getPointerTo()->getPointerTo();
   Address VPtr =
       adjustThisArgumentForVirtualFunctionCall(CGF, GD, This, true);
-  llvm::Value *VTable = CGF.GetVTablePtr(VPtr, Ty);
+
+  auto *MethodDecl = cast<CXXMethodDecl>(GD.getDecl());
+  llvm::Value *VTable = CGF.GetVTablePtr(VPtr, Ty, MethodDecl->getParent());
 
   MicrosoftVTableContext::MethodVFTableLocation ML =
       CGM.getMicrosoftVTableContext().getMethodVFTableLocation(GD);
@@ -1958,7 +1960,8 @@ llvm::Function *MicrosoftCXXABI::EmitVirtualMemPtrThunk(
   // Load the vfptr and then callee from the vftable.  The callee should have
   // adjusted 'this' so that the vfptr is at offset zero.
   llvm::Value *VTable = CGF.GetVTablePtr(
-      getThisAddress(CGF), ThunkTy->getPointerTo()->getPointerTo());
+      getThisAddress(CGF), ThunkTy->getPointerTo()->getPointerTo(), MD->getParent());
+
   llvm::Value *VFuncPtr =
       CGF.Builder.CreateConstInBoundsGEP1_64(VTable, ML.Index, "vfn");
   llvm::Value *Callee =

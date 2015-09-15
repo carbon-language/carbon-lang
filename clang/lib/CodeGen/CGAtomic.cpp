@@ -1246,7 +1246,7 @@ llvm::Value *AtomicInfo::EmitAtomicLoadOp(llvm::AtomicOrdering AO,
   if (IsVolatile)
     Load->setVolatile(true);
   if (LVal.getTBAAInfo())
-    CGF.CGM.DecorateInstruction(Load, LVal.getTBAAInfo());
+    CGF.CGM.DecorateInstructionWithTBAA(Load, LVal.getTBAAInfo());
   return Load;
 }
 
@@ -1769,7 +1769,7 @@ void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue dest,
     if (IsVolatile)
       store->setVolatile(true);
     if (dest.getTBAAInfo())
-      CGM.DecorateInstruction(store, dest.getTBAAInfo());
+      CGM.DecorateInstructionWithTBAA(store, dest.getTBAAInfo());
     return;
   }
 

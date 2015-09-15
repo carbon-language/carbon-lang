@@ -25,6 +25,7 @@
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Metadata.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -2087,7 +2088,8 @@ void CodeGenFunction::EmitVTableAssumptionLoad(const VPtr &Vptr, Address This) {
         ApplyNonVirtualAndVirtualOffset(*this, This, NonVirtualOffset, nullptr,
                                         Vptr.VTableClass, Vptr.NearestVBase);
 
-  llvm::Value *VPtrValue = GetVTablePtr(This, VTableGlobal->getType());
+  llvm::Value *VPtrValue =
+      GetVTablePtr(This, VTableGlobal->getType(), Vptr.VTableClass);
   llvm::Value *Cmp =
       Builder.CreateICmpEQ(VPtrValue, VTableGlobal, "cmp.vtables");
   Builder.CreateAssumption(Cmp);
@@ -2306,7 +2308,10 @@ void CodeGenFunction::InitializeVTablePointer(const VPtr &Vptr) {
   VTableAddressPoint = Builder.CreateBitCast(VTableAddressPoint, VTablePtrTy);
 
   llvm::StoreInst *Store = Builder.CreateStore(VTableAddressPoint, VTableField);
-  CGM.DecorateInstruction(Store, CGM.getTBAAInfoForVTablePtr());
+  CGM.DecorateInstructionWithTBAA(Store, CGM.getTBAAInfoForVTablePtr());
+  if (CGM.getCodeGenOpts().OptimizationLevel > 0 &&
+      CGM.getCodeGenOpts().StrictVTablePointers)
+    CGM.DecorateInstructionWithInvariantGroup(Store, Vptr.VTableClass);
 }
 
 CodeGenFunction::VPtrsVector
@@ -2393,10 +2398,16 @@ void CodeGenFunction::InitializeVTablePointers(const CXXRecordDecl *RD) {
 }
 
 llvm::Value *CodeGenFunction::GetVTablePtr(Address This,
-                                           llvm::Type *Ty) {
-  Address VTablePtrSrc = Builder.CreateElementBitCast(This, Ty);
+                                           llvm::Type *VTableTy,
+                                           const CXXRecordDecl *RD) {
+  Address VTablePtrSrc = Builder.CreateElementBitCast(This, VTableTy);
   llvm::Instruction *VTable = Builder.CreateLoad(VTablePtrSrc, "vtable");
-  CGM.DecorateInstruction(VTable, CGM.getTBAAInfoForVTablePtr());
+  CGM.DecorateInstructionWithTBAA(VTable, CGM.getTBAAInfoForVTablePtr());
+
+  if (CGM.getCodeGenOpts().OptimizationLevel > 0 &&
+      CGM.getCodeGenOpts().StrictVTablePointers)
+    CGM.DecorateInstructionWithInvariantGroup(VTable, RD);
+
   return VTable;
 }
 
@@ -2481,7 +2492,8 @@ void CodeGenFunction::EmitVTablePtrCheckForCast(QualType T,
   }
 
   llvm::Value *VTable =
-    GetVTablePtr(Address(Derived, getPointerAlign()), Int8PtrTy);
+    GetVTablePtr(Address(Derived, getPointerAlign()), Int8PtrTy, ClassDecl);
+
   EmitVTablePtrCheck(ClassDecl, VTable, TCK, Loc);
 
   if (MayBeNull) {
