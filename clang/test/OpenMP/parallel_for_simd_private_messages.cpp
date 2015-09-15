@@ -175,6 +175,10 @@ int main(int argc, char **argv) {
 #pragma omp parallel for simd private(i)
   for (int k = 0; k < argc; ++k)
     ++k;
+  static int m;
+#pragma omp parallel for simd private(m) // OK
+  for (int k = 0; k < argc; ++k)
+    m = k + 3;
 
   return 0;
 }

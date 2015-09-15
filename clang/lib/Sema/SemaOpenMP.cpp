@@ -538,7 +538,7 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D, bool FromParent) {
     // in a Construct, C/C++, predetermined, p.7]
     //  Variables with static storage duration that are declared in a scope
     //  inside the construct are shared.
-    if (D->isStaticDataMember() || D->isStaticLocal()) {
+    if (D->isStaticDataMember()) {
       DSAVarData DVarTemp =
           hasDSA(D, isOpenMPPrivate, MatchesAlways(), FromParent);
       if (DVarTemp.CKind != OMPC_unknown && DVarTemp.RefExpr)

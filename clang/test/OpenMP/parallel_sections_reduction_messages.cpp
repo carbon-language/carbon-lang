@@ -361,6 +361,11 @@ int main(int argc, char **argv) {
   {
     foo();
   }
+  static int m;
+#pragma omp parallel sections reduction(+ : m) // OK
+  {
+    foo();
+  }
 
   return tmain(argc) + tmain(fl); // expected-note {{in instantiation of function template specialization 'tmain<int>' requested here}} expected-note {{in instantiation of function template specialization 'tmain<float>' requested here}}
 }

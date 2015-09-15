@@ -303,6 +303,10 @@ int main(int argc, char **argv) {
 #pragma omp for firstprivate(B::x) // expected-error {{threadprivate or thread local variable cannot be firstprivate}}
   for (i = 0; i < argc; ++i)
     foo();
+  static int si;
+#pragma omp for firstprivate(si) // OK
+  for (i = 0; i < argc; ++i)
+    si = i + 1;
 
   return foomain<S4, S5>(argc, argv); // expected-note {{in instantiation of function template specialization 'foomain<S4, S5>' requested here}}
 }

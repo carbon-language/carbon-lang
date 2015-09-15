@@ -252,6 +252,10 @@ int main(int argc, char **argv) {
 #pragma omp parallel for firstprivate(i) // expected-note {{defined as firstprivate}}
   for (i = 0; i < argc; ++i) // expected-error {{loop iteration variable in the associated loop of 'omp parallel for' directive may not be firstprivate, predetermined as private}}
     foo();
+  static int si;
+#pragma omp parallel for firstprivate(si) // OK
+  for (i = 0; i < argc; ++i)
+    si = i + 1;
 
   return foomain<S4, S5>(argc, argv); // expected-note {{in instantiation of function template specialization 'foomain<S4, S5>' requested here}}
 }

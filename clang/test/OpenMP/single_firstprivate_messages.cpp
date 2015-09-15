@@ -242,6 +242,9 @@ int main(int argc, char **argv) {
 #pragma omp parallel reduction(+ : i) // expected-note {{defined as reduction}}
 #pragma omp single firstprivate(i)    // expected-error {{firstprivate variable must be shared}}
   foo();
+  static int t;
+#pragma omp single firstprivate(t)    // OK
+  foo();
 
   return foomain<S4, S5>(argc, argv); // expected-note {{in instantiation of function template specialization 'foomain<S4, S5>' requested here}}
 }

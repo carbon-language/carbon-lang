@@ -175,6 +175,10 @@ int main(int argc, char **argv) {
 #pragma omp for simd private(i)
   for (int k = 0; k < argc; ++k)
     ++k;
+  static int m;
+#pragma omp for simd private(m)
+  for (int k = 0; k < argc; ++k)
+    m = k + 2;
 
   return 0;
 }

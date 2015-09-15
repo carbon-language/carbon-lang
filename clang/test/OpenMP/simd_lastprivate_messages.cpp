@@ -213,5 +213,9 @@ int main(int argc, char **argv) {
 #pragma omp simd lastprivate(j)
   for (i = 0; i < argc; ++i)
     foo();
+  static int t;
+#pragma omp simd lastprivate(t) // OK
+  for (i = 0; i < argc; ++i)
+    foo();
   return 0;
 }

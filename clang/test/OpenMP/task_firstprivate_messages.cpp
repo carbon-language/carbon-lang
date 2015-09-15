@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
   S5 g(5);
   int i;
   int &j = i;
+  static int m;
 #pragma omp task firstprivate                               // expected-error {{expected '(' after 'firstprivate'}}
 #pragma omp task firstprivate(                              // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
 #pragma omp task firstprivate()                             // expected-error {{expected expression}}
@@ -93,6 +94,7 @@ int main(int argc, char **argv) {
 #pragma omp task shared(i)
 #pragma omp task firstprivate(i)
 #pragma omp task firstprivate(j)
+#pragma omp task firstprivate(m) // OK
   foo();
 
   return 0;

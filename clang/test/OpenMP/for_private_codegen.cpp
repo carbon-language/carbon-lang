@@ -39,24 +39,36 @@ T tmain() {
 }
 
 int main() {
+  static int svar;
 #ifdef LAMBDA
   // LAMBDA: [[G:@.+]] = global double
   // LAMBDA-LABEL: @main
   // LAMBDA: call{{.*}} void [[OUTER_LAMBDA:@.+]](
   [&]() {
+  static float sfvar;
   // LAMBDA: define{{.*}} internal{{.*}} void [[OUTER_LAMBDA]](
   // LAMBDA: call {{.*}}void {{.+}} @__kmpc_fork_call({{.+}}, i32 0, {{.+}}* [[OMP_REGION:@.+]] to {{.+}})
 #pragma omp parallel
-#pragma omp for private(g, g1)
+#pragma omp for private(g, g1, svar, sfvar)
   for (int i = 0; i < 2; ++i) {
     // LAMBDA: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* noalias %{{.+}}, i32* noalias %{{.+}})
     // LAMBDA: [[G_PRIVATE_ADDR:%.+]] = alloca double,
+    // LAMBDA: [[SVAR_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}},
+    // LAMBDA: [[SFVAR_PRIVATE_ADDR:%.+]] = alloca float,
     g = 1;
     g1 = 1;
+    svar = 3;
+    sfvar = 4.0;
     // LAMBDA: call {{.*}}void @__kmpc_for_static_init_4(
     // LAMBDA: store double 1.0{{.+}}, double* [[G_PRIVATE_ADDR]],
+    // LAMBDA: store i{{[0-9]+}} 3, i{{[0-9]+}}* [[SVAR_PRIVATE_ADDR]],
+    // LAMBDA: store float 4.0{{.+}}, float* [[SFVAR_PRIVATE_ADDR]],
     // LAMBDA: [[G_PRIVATE_ADDR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
     // LAMBDA: store double* [[G_PRIVATE_ADDR]], double** [[G_PRIVATE_ADDR_REF]]
+    // LAMBDA: [[SVAR_PRIVATE_ADDR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 1
+    // LAMBDA: store i{{[0-9]+}}* [[SVAR_PRIVATE_ADDR]], i{{[0-9]+}}** [[SVAR_PRIVATE_ADDR_REF]]
+    // LAMBDA: [[SFVAR_PRIVATE_ADDR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 2
+    // LAMBDA: store float* [[SFVAR_PRIVATE_ADDR]], float** [[SFVAR_PRIVATE_ADDR_REF]]
     // LAMBDA: call{{.*}} void [[INNER_LAMBDA:@.+]](%{{.+}}* [[ARG]])
     // LAMBDA: call {{.*}}void @__kmpc_for_static_fini(
     [&]() {
@@ -64,10 +76,18 @@ int main() {
       // LAMBDA: store %{{.+}}* [[ARG_PTR]], %{{.+}}** [[ARG_PTR_REF:%.+]],
       g = 2;
       g1 = 2;
+      svar = 4;
+      sfvar = 8.0;
       // LAMBDA: [[ARG_PTR:%.+]] = load %{{.+}}*, %{{.+}}** [[ARG_PTR_REF]]
       // LAMBDA: [[G_PTR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG_PTR]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
       // LAMBDA: [[G_REF:%.+]] = load double*, double** [[G_PTR_REF]]
       // LAMBDA: store double 2.0{{.+}}, double* [[G_REF]]
+      // LAMBDA: [[SVAR_PTR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG_PTR]], i{{[0-9]+}} 0, i{{[0-9]+}} 1
+      // LAMBDA: [[SVAR_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[SVAR_PTR_REF]]
+      // LAMBDA: store i{{[0-9]+}} 4, i{{[0-9]+}}* [[SVAR_REF]]
+      // LAMBDA: [[SFVAR_PTR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG_PTR]], i{{[0-9]+}} 0, i{{[0-9]+}} 2
+      // LAMBDA: [[SFVAR_REF:%.+]] = load float*, float** [[SFVAR_PTR_REF]]
+      // LAMBDA: store float 8.0{{.+}}, float* [[SFVAR_REF]]
     }();
   }
   }();
@@ -77,29 +97,50 @@ int main() {
   // BLOCKS-LABEL: @main
   // BLOCKS: call {{.*}}void {{%.+}}(i8
   ^{
+  static float sfvar;
   // BLOCKS: define{{.*}} internal{{.*}} void {{.+}}(i8*
   // BLOCKS: call {{.*}}void {{.+}} @__kmpc_fork_call({{.+}}, i32 0, {{.+}}* [[OMP_REGION:@.+]] to {{.+}})
 #pragma omp parallel
-#pragma omp for private(g, g1)
+#pragma omp for private(g, g1, svar, sfvar)
   for (int i = 0; i < 2; ++i) {
     // BLOCKS: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* noalias %{{.+}}, i32* noalias %{{.+}})
     // BLOCKS: [[G_PRIVATE_ADDR:%.+]] = alloca double,
+    // BLOCKS: [[SVAR_PRIVATE_ADDR:%.+]] = alloca i{{[0-9]+}},
+    // BLOCKS: [[SFVAR_PRIVATE_ADDR:%.+]] = alloca float,
     g = 1;
     g1 = 1;
+    svar = 2;
+    sfvar = 3.0;
     // BLOCKS: call {{.*}}void @__kmpc_for_static_init_4(
     // BLOCKS: store double 1.0{{.+}}, double* [[G_PRIVATE_ADDR]],
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
+    // BLOCKS: store i{{[0-9]+}} 2, i{{[0-9]+}}* [[SVAR_PRIVATE_ADDR]],
+    // BLOCKS-NOT: [[SVAR]]{{[[^:word:]]}}
+    // BLOCKS: store float 3.0{{.+}}, float* [[SFVAR_PRIVATE_ADDR]],
+    // BLOCKS-NOT: [[SFVAR]]{{[[^:word:]]}}
     // BLOCKS: double* [[G_PRIVATE_ADDR]]
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
+    // BLOCKS: i{{[0-9]+}}* [[SVAR_PRIVATE_ADDR]]
+    // BLOCKS-NOT: [[SVAR]]{{[[^:word:]]}}
+    // BLOCKS: float* [[SFVAR_PRIVATE_ADDR]]
+    // BLOCKS-NOT: [[SFVAR]]{{[[^:word:]]}}
     // BLOCKS: call {{.*}}void {{%.+}}(i8
     // BLOCKS: call {{.*}}void @__kmpc_for_static_fini(
     ^{
       // BLOCKS: define {{.+}} void {{@.+}}(i8*
       g = 2;
       g1 = 2;
+      svar = 4;
+      sfvar = 9.0;
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
       // BLOCKS: store double 2.0{{.+}}, double*
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
+      // BLOCKS-NOT: [[SVAR]]{{[[^:word:]]}}
+      // BLOCKS: store i{{[0-9]+}} 4, i{{[0-9]+}}*
+      // BLOCKS-NOT: [[SVAR]]{{[[^:word:]]}}
+      // BLOCKS-NOT: [[SFVAR]]{{[[^:word:]]}}
+      // BLOCKS: store float 9.0{{.+}}, float*
+      // BLOCKS-NOT: [[SFVAR]]{{[[^:word:]]}}
       // BLOCKS: ret
     }();
   }
@@ -112,7 +153,7 @@ int main() {
   S<float> s_arr[] = {1, 2};
   S<float> &var = test;
 #pragma omp parallel
-#pragma omp for private(t_var, vec, s_arr, s_arr, var, var)
+#pragma omp for private(t_var, vec, s_arr, s_arr, var, var, svar)
   for (int i = 0; i < 2; ++i) {
     vec[i] = t_var;
     s_arr[i] = var;
@@ -142,6 +183,7 @@ int main() {
 // CHECK-NOT: alloca [2 x [[S_FLOAT_TY]]],
 // CHECK: [[VAR_PRIV:%.+]] = alloca [[S_FLOAT_TY]],
 // CHECK-NOT: alloca [[S_FLOAT_TY]],
+// CHECK: [[S_VAR_PRIV:%.+]] = alloca i{{[0-9]+}},
 // CHECK: store i{{[0-9]+}}* [[GTID_ADDR]], i{{[0-9]+}}** [[GTID_ADDR_REF:%.+]]
 // CHECK-NOT: [[T_VAR_PRIV]]
 // CHECK-NOT: [[VEC_PRIV]]

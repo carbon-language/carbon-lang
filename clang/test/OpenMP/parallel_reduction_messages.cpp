@@ -243,6 +243,9 @@ int main(int argc, char **argv) {
   for (int i = 0; i < 10; ++i)
 #pragma omp parallel reduction(+ : fl)
     foo();
+  static int m;
+#pragma omp parallel reduction(+ : m) // OK
+  m++;
 
   return tmain(argc) + tmain(fl); // expected-note {{in instantiation of function template specialization 'tmain<int>' requested here}} expected-note {{in instantiation of function template specialization 'tmain<float>' requested here}}
 }

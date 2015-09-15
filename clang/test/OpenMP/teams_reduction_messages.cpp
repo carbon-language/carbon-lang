@@ -310,6 +310,10 @@ int main(int argc, char **argv) {
 #pragma omp target
 #pragma omp teams reduction(+ : fl)
     foo();
+  static int m;
+#pragma omp target
+#pragma omp teams reduction(+ : m) // OK
+  foo();
 
   return tmain(argc) + tmain(fl); // expected-note {{in instantiation of function template specialization 'tmain<int>' requested here}} expected-note {{in instantiation of function template specialization 'tmain<float>' requested here}}
 }

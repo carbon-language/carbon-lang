@@ -353,6 +353,10 @@ int main(int argc, char **argv) {
 #pragma omp for simd reduction(+ : fl)      // expected-error {{reduction variable must be shared}}
   for (int i = 0; i < 10; ++i)
     foo();
+  static int m;
+#pragma omp for simd reduction(+ : m)
+  for (int i = 0; i < 10; ++i)
+    m++;
 
   return tmain(argc) + tmain(fl); // expected-note {{in instantiation of function template specialization 'tmain<int>' requested here}} expected-note {{in instantiation of function template specialization 'tmain<float>' requested here}}
 }

@@ -62,6 +62,7 @@ int main(int argc, char **argv) {
   S5 g(5);
   int i;
   int &j = i;
+  static int m;
   #pragma omp parallel firstprivate // expected-error {{expected '(' after 'firstprivate'}}
   #pragma omp parallel firstprivate ( // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp parallel firstprivate () // expected-error {{expected expression}}
@@ -84,6 +85,7 @@ int main(int argc, char **argv) {
   #pragma omp parallel shared(i)
   #pragma omp parallel firstprivate(i)
   #pragma omp parallel firstprivate(j)
+  #pragma omp parallel firstprivate(m)
   foo();
 
   return 0;

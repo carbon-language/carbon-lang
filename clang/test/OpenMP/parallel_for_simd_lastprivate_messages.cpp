@@ -231,5 +231,9 @@ int main(int argc, char **argv) {
 #pragma omp parallel for simd lastprivate(n) firstprivate(n) // OK
   for (i = 0; i < argc; ++i)
     foo();
+  static int si;
+#pragma omp parallel for simd lastprivate(si) // OK
+  for (i = 0; i < argc; ++i)
+    si = i + 3;
   return foomain<S4, S5>(argc, argv); // expected-note {{in instantiation of function template specialization 'foomain<S4, S5>' requested here}}
 }

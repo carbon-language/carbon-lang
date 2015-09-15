@@ -300,6 +300,10 @@ int main(int argc, char **argv) {
 #pragma omp for simd firstprivate(i)       // expected-error {{firstprivate variable must be shared}}
   for (i = 0; i < argc; ++i)
     foo();
+  static int si;
+#pragma omp for simd firstprivate(si)
+  for (i = 0; i < argc; ++i)
+    si = i + 1;
 
   return foomain<S4, S5>(argc, argv); // expected-note {{in instantiation of function template specialization 'foomain<S4, S5>' requested here}}
 }

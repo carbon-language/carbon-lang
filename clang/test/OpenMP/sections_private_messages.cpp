@@ -206,6 +206,11 @@ int main(int argc, char **argv) {
   {
     foo();
   }
+  static int m;
+#pragma omp sections private(m)
+  {
+    foo();
+  }
 
   return 0;
 }

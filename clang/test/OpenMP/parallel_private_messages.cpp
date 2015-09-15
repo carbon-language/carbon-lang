@@ -84,6 +84,9 @@ int main(int argc, char **argv) {
     #pragma omp parallel private(i)
     foo();
   }
+  static int m;
+  #pragma omp parallel private(m) // OK
+  foo();
 
   return 0;
 }
