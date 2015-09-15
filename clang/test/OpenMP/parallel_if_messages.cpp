@@ -28,7 +28,7 @@ int tmain(T argc, S **argv) {
   #pragma omp parallel if(parallel : argc)
   #pragma omp parallel if(parallel : argc) if (for:argc) // expected-error {{directive name modifier 'for' is not allowed for '#pragma omp parallel'}}
   #pragma omp parallel if(parallel : argc) if (parallel:argc) // expected-error {{directive '#pragma omp parallel' cannot contain more than one 'if' clause with 'parallel' name modifier}}
-  #pragma omp parallel if(parallel : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
+  #pragma omp parallel if(parallel : argc) if (argc) // expected-error {{no more 'if' clause is allowed}} expected-note {{previous clause with directive name modifier specified here}}
   foo();
 
   return 0;
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
   #pragma omp parallel if(parallel : argc)
   #pragma omp parallel if(parallel : argc) if (for:argc) // expected-error {{directive name modifier 'for' is not allowed for '#pragma omp parallel'}}
   #pragma omp parallel if(parallel : argc) if (parallel:argc)  // expected-error {{directive '#pragma omp parallel' cannot contain more than one 'if' clause with 'parallel' name modifier}}
-  #pragma omp parallel if(parallel : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
+  #pragma omp parallel if(parallel : argc) if (argc) // expected-error {{no more 'if' clause is allowed}} expected-note {{previous clause with directive name modifier specified here}}
   foo();
 
   return tmain(argc, argv);

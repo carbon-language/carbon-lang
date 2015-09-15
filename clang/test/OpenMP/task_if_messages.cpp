@@ -27,7 +27,7 @@ int tmain(T argc, S **argv) {
   #pragma omp task if(task : argc)
   #pragma omp task if(task : argc) if (for:argc) // expected-error {{directive name modifier 'for' is not allowed for '#pragma omp task'}}
   #pragma omp task if(task : argc) if (task:argc) // expected-error {{directive '#pragma omp task' cannot contain more than one 'if' clause with 'task' name modifier}}
-  #pragma omp task if(task : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
+  #pragma omp task if(task : argc) if (argc) // expected-error {{no more 'if' clause is allowed}} expected-note {{previous clause with directive name modifier specified here}}
   foo();
 
   return 0;
@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
   #pragma omp task if(task : argc)
   #pragma omp task if(task : argc) if (for:argc) // expected-error {{directive name modifier 'for' is not allowed for '#pragma omp task'}}
   #pragma omp task if(task : argc) if (task:argc) // expected-error {{directive '#pragma omp task' cannot contain more than one 'if' clause with 'task' name modifier}}
-  #pragma omp task if(task : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
+  #pragma omp task if(task : argc) if (argc) // expected-error {{no more 'if' clause is allowed}} expected-note {{previous clause with directive name modifier specified here}}
   foo();
 
   return tmain(argc, argv);

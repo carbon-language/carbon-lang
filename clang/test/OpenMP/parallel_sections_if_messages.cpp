@@ -75,7 +75,7 @@ int tmain(T argc, S **argv) {
   {
     foo();
   }
-  #pragma omp parallel sections if(parallel : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
+  #pragma omp parallel sections if(parallel : argc) if (argc) // expected-error {{no more 'if' clause is allowed}} expected-note {{previous clause with directive name modifier specified here}}
   {
     foo();
   }
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
   {
     foo();
   }
-  #pragma omp parallel sections if(parallel : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
+  #pragma omp parallel sections if(parallel : argc) if (argc) // expected-error {{no more 'if' clause is allowed}} expected-note {{previous clause with directive name modifier specified here}}
   {
     foo();
   }

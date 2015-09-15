@@ -2015,6 +2015,7 @@ static bool checkIfClauses(Sema &S, OpenMPDirectiveKind Kind,
   unsigned NamedModifiersNumber = 0;
   SmallVector<const OMPIfClause *, OMPC_unknown + 1> FoundNameModifiers(
       OMPD_unknown + 1);
+  SmallVector<SourceLocation, 4> NameModifierLoc;
   for (const auto *C : Clauses) {
     if (const auto *IC = dyn_cast_or_null<OMPIfClause>(C)) {
       // At most one if clause without a directive-name-modifier can appear on
@@ -2025,8 +2026,10 @@ static bool checkIfClauses(Sema &S, OpenMPDirectiveKind Kind,
             << getOpenMPDirectiveName(Kind) << getOpenMPClauseName(OMPC_if)
             << (CurNM != OMPD_unknown) << getOpenMPDirectiveName(CurNM);
         ErrorFound = true;
-      } else if (CurNM != OMPD_unknown)
+      } else if (CurNM != OMPD_unknown) {
+        NameModifierLoc.push_back(IC->getNameModifierLoc());
         ++NamedModifiersNumber;
+      }
       FoundNameModifiers[CurNM] = IC;
       if (CurNM == OMPD_unknown)
         continue;
@@ -2078,6 +2081,9 @@ static bool checkIfClauses(Sema &S, OpenMPDirectiveKind Kind,
       S.Diag(FoundNameModifiers[OMPD_unknown]->getCondition()->getLocStart(),
              diag::err_omp_unnamed_if_clause)
           << (TotalAllowedNum > 1) << Values;
+    }
+    for (auto Loc : NameModifierLoc) {
+      S.Diag(Loc, diag::note_omp_previous_named_if_clause);
     }
     ErrorFound = true;
   }

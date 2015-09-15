@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   #pragma omp target data if(target data : argc)
   #pragma omp target data if(target data : argc) if (for:argc) // expected-error {{directive name modifier 'for' is not allowed for '#pragma omp target data'}}
   #pragma omp target data if(target data : argc) if (target data:argc) // expected-error {{directive '#pragma omp target data' cannot contain more than one 'if' clause with 'target data' name modifier}}
-  #pragma omp target data if(target data : argc) if (argc) // expected-error {{no more 'if' clause is allowed}}
+  #pragma omp target data if(target data : argc) if (argc) // expected-error {{no more 'if' clause is allowed}} expected-note {{previous clause with directive name modifier specified here}}
   foo();
 
   return 0;
