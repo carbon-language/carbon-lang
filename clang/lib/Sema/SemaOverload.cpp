@@ -896,6 +896,11 @@ Sema::CheckOverload(Scope *S, FunctionDecl *New, const LookupResult &Old,
       OldD = cast<UsingShadowDecl>(OldD)->getTargetDecl();
     }
 
+    // A using-declaration does not conflict with another declaration
+    // if one of them is hidden.
+    if ((OldIsUsingDecl || NewIsUsingDecl) && !isVisible(*I))
+      continue;
+
     // If either declaration was introduced by a using declaration,
     // we'll need to use slightly different rules for matching.
     // Essentially, these rules are the normal rules, except that
