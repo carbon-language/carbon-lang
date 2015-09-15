@@ -559,7 +559,7 @@ class CACHE_HINT_DESC<string instr_asm, Operand MemOpnd,
   dag InOperandList = (ins MemOpnd:$addr, uimm5:$hint);
   string AsmString = !strconcat(instr_asm, "\t$hint, $addr");
   list<dag> Pattern = [];
-  string DecoderMethod = "DecodeCacheOpR6";
+  string DecoderMethod = "DecodeCacheeOp_CacheOpR6";
 }
 
 class CACHE_DESC : CACHE_HINT_DESC<"cache", mem_simm9, GPR32Opnd>;

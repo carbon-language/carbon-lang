@@ -64,7 +64,7 @@ a:
         bovc     $0, $0, 4       # CHECK: bovc $zero, $zero, 4 # encoding: [0x20,0x00,0x00,0x01]
         bovc     $2, $0, 4       # CHECK: bovc $2, $zero, 4    # encoding: [0x20,0x40,0x00,0x01]
         bovc     $4, $2, 4       # CHECK: bovc $4, $2, 4      # encoding: [0x20,0x82,0x00,0x01]
-        cache      1, 8($5)         # CHECK: cache 1, 8($5)         # encoding: [0x7c,0xa1,0x04,0x25]
+        cache    1, 8($5)        # CHECK: cache 1, 8($5)         # encoding: [0x7c,0xa1,0x04,0x25]
         class.d $f2, $f4         # CHECK: class.d $f2, $f4       # encoding: [0x46,0x20,0x20,0x9b]
         class.s $f2, $f4         # CHECK: class.s $f2, $f4       # encoding: [0x46,0x00,0x20,0x9b]
         clo     $11,$a1          # CHECK: clo $11, $5            # encoding: [0x00,0xa0,0x58,0x51]

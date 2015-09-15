@@ -206,6 +206,8 @@ def IsLE           :  Predicate<"Subtarget->isLittle()">;
 def IsBE           :  Predicate<"!Subtarget->isLittle()">;
 def IsNotNaCl    :    Predicate<"!Subtarget->isTargetNaCl()">;
 def UseTCCInDIV    :  AssemblerPredicate<"FeatureUseTCCInDIV">;
+def HasEVA       :    Predicate<"Subtarget->hasEVA()">,
+                      AssemblerPredicate<"FeatureEVA,FeatureMips32r2">;
 
 //===----------------------------------------------------------------------===//
 // Mips GPR size adjectives.
@@ -261,6 +263,11 @@ class ISA_MICROMIPS32R6 {
 }
 class ISA_MICROMIPS64R6 {
   list<Predicate> InsnPredicates = [HasMicroMips64r6];
+}
+
+class INSN_EVA { list<Predicate> InsnPredicates = [HasEVA]; }
+class INSN_EVA_NOT_32R6_64R6 {
+  list<Predicate> InsnPredicates = [NotMips32r6, NotMips64r6, HasEVA];
 }
 
 // The portions of MIPS-III that were also added to MIPS32
@@ -2007,6 +2014,10 @@ include "MipsDSPInstrInfo.td"
 // MSA
 include "MipsMSAInstrFormats.td"
 include "MipsMSAInstrInfo.td"
+
+// EVA
+include "MipsEVAInstrFormats.td"
+include "MipsEVAInstrInfo.td"
 
 // Micromips
 include "MicroMipsInstrFormats.td"

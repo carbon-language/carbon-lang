@@ -133,6 +133,9 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
   // UseTCCInDIV -- Enables the use of trapping in the assembler.
   bool UseTCCInDIV;
 
+  // HasEVA -- supports EVA ASE.
+  bool HasEVA;
+
   InstrItineraryData InstrItins;
 
   // We can override the determination of whether we are in mips16 mode
@@ -235,6 +238,7 @@ public:
   bool hasDSP() const { return HasDSP; }
   bool hasDSPR2() const { return HasDSPR2; }
   bool hasMSA() const { return HasMSA; }
+  bool hasEVA() const { return HasEVA; }
   bool useSmallSection() const { return UseSmallSection; }
 
   bool hasStandardEncoding() const { return !inMips16Mode(); }

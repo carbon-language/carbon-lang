@@ -40,7 +40,7 @@ a:
         bltzall   $6,488               # CHECK: bltzall $6, 488      # encoding: [0x04,0xd2,0x00,0x7a]
         bltzl     $s1,-9964            # CHECK: bltzl $17, -9964     # encoding: [0x06,0x22,0xf6,0x45]
         bnel      $gp,$s4,5107         # CHECK: bnel $gp, $20, 5107  # encoding: [0x57,0x94,0x04,0xfc]
-        cache     1, 8($5)             # CHECK: cache 1, 8($5)   # encoding: [0xbc,0xa1,0x00,0x08]
+        cache     1, 8($5)             # CHECK: cache 1, 8($5)       # encoding: [0xbc,0xa1,0x00,0x08]
         c.ngl.d   $f29,$f29
         c.ngle.d  $f0,$f16
         c.sf.d    $f30,$f0

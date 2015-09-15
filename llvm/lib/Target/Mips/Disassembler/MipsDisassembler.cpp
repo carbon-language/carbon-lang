@@ -241,15 +241,20 @@ static DecodeStatus DecodeMem(MCInst &Inst,
                               uint64_t Address,
                               const void *Decoder);
 
+static DecodeStatus DecodeMemEVA(MCInst &Inst,
+                                 unsigned Insn,
+                                 uint64_t Address,
+                                 const void *Decoder);
+
 static DecodeStatus DecodeCacheOp(MCInst &Inst,
                               unsigned Insn,
                               uint64_t Address,
                               const void *Decoder);
 
-static DecodeStatus DecodeCacheOpR6(MCInst &Inst,
-                                    unsigned Insn,
-                                    uint64_t Address,
-                                    const void *Decoder);
+static DecodeStatus DecodeCacheeOp_CacheOpR6(MCInst &Inst,
+                                             unsigned Insn,
+                                             uint64_t Address,
+                                             const void *Decoder);
 
 static DecodeStatus DecodeCacheOpMM(MCInst &Inst,
                                     unsigned Insn,
@@ -1116,10 +1121,30 @@ static DecodeStatus DecodeMem(MCInst &Inst,
   Reg = getReg(Decoder, Mips::GPR32RegClassID, Reg);
   Base = getReg(Decoder, Mips::GPR32RegClassID, Base);
 
-  if(Inst.getOpcode() == Mips::SC ||
-     Inst.getOpcode() == Mips::SCD){
+  if (Inst.getOpcode() == Mips::SC ||
+      Inst.getOpcode() == Mips::SCD)
     Inst.addOperand(MCOperand::createReg(Reg));
-  }
+
+  Inst.addOperand(MCOperand::createReg(Reg));
+  Inst.addOperand(MCOperand::createReg(Base));
+  Inst.addOperand(MCOperand::createImm(Offset));
+
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeMemEVA(MCInst &Inst,
+                                 unsigned Insn,
+                                 uint64_t Address,
+                                 const void *Decoder) {
+  int Offset = SignExtend32<9>(Insn >> 7);
+  unsigned Reg = fieldFromInstruction(Insn, 16, 5);
+  unsigned Base = fieldFromInstruction(Insn, 21, 5);
+
+  Reg = getReg(Decoder, Mips::GPR32RegClassID, Reg);
+  Base = getReg(Decoder, Mips::GPR32RegClassID, Base);
+
+   if (Inst.getOpcode() == Mips::SCE)
+     Inst.addOperand(MCOperand::createReg(Reg));
 
   Inst.addOperand(MCOperand::createReg(Reg));
   Inst.addOperand(MCOperand::createReg(Base));
@@ -1179,11 +1204,11 @@ static DecodeStatus DecodePrefeOpMM(MCInst &Inst,
   return MCDisassembler::Success;
 }
 
-static DecodeStatus DecodeCacheOpR6(MCInst &Inst,
-                                    unsigned Insn,
-                                    uint64_t Address,
-                                    const void *Decoder) {
-  int Offset = fieldFromInstruction(Insn, 7, 9);
+static DecodeStatus DecodeCacheeOp_CacheOpR6(MCInst &Inst,
+                                             unsigned Insn,
+                                             uint64_t Address,
+                                             const void *Decoder) {
+  int Offset = SignExtend32<9>(Insn >> 7);
   unsigned Hint = fieldFromInstruction(Insn, 16, 5);
   unsigned Base = fieldFromInstruction(Insn, 21, 5);
 

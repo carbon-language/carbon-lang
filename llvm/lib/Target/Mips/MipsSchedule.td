@@ -69,20 +69,27 @@ def II_EXT              : InstrItinClass; // Any EXT instruction
 def II_FLOOR            : InstrItinClass;
 def II_INS              : InstrItinClass; // Any INS instruction
 def II_LB               : InstrItinClass;
+def II_LBE              : InstrItinClass;
 def II_LBU              : InstrItinClass;
+def II_LBUE             : InstrItinClass;
 def II_LD               : InstrItinClass;
 def II_LDC1             : InstrItinClass;
 def II_LDL              : InstrItinClass;
 def II_LDR              : InstrItinClass;
 def II_LDXC1            : InstrItinClass;
 def II_LH               : InstrItinClass;
+def II_LHE              : InstrItinClass;
 def II_LHU              : InstrItinClass;
+def II_LHUE             : InstrItinClass;
 def II_LUI              : InstrItinClass;
 def II_LUXC1            : InstrItinClass;
 def II_LW               : InstrItinClass;
+def II_LWE              : InstrItinClass;
 def II_LWC1             : InstrItinClass;
 def II_LWL              : InstrItinClass;
+def II_LWLE             : InstrItinClass;
 def II_LWR              : InstrItinClass;
+def II_LWRE             : InstrItinClass;
 def II_LWU              : InstrItinClass;
 def II_LWXC1            : InstrItinClass;
 def II_MADD             : InstrItinClass;
@@ -134,6 +141,7 @@ def II_ROTRV            : InstrItinClass;
 def II_ROUND            : InstrItinClass;
 def II_SAVE             : InstrItinClass;
 def II_SB               : InstrItinClass;
+def II_SBE              : InstrItinClass;
 def II_SD               : InstrItinClass;
 def II_SDC1             : InstrItinClass;
 def II_SDL              : InstrItinClass;
@@ -144,6 +152,7 @@ def II_SEH              : InstrItinClass;
 def II_SEQ_SNE          : InstrItinClass; // seq and sne
 def II_SEQI_SNEI        : InstrItinClass; // seqi and snei
 def II_SH               : InstrItinClass;
+def II_SHE              : InstrItinClass;
 def II_SLL              : InstrItinClass;
 def II_SLLV             : InstrItinClass;
 def II_SLTI_SLTIU       : InstrItinClass; // slti and sltiu
@@ -159,9 +168,12 @@ def II_SUB_D            : InstrItinClass;
 def II_SUB_S            : InstrItinClass;
 def II_SUXC1            : InstrItinClass;
 def II_SW               : InstrItinClass;
+def II_SWE              : InstrItinClass;
 def II_SWC1             : InstrItinClass;
 def II_SWL              : InstrItinClass;
+def II_SWLE             : InstrItinClass;
 def II_SWR              : InstrItinClass;
+def II_SWRE             : InstrItinClass;
 def II_SWXC1            : InstrItinClass;
 def II_TRUNC            : InstrItinClass;
 def II_XOR              : InstrItinClass;
