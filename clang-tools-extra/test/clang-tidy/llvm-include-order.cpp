@@ -1,7 +1,5 @@
 // RUN: %python %S/check_clang_tidy.py %s llvm-include-order %t -- -isystem %S/Inputs/Headers
 
-// FIXME: Investigating.
-
 // CHECK-MESSAGES: [[@LINE+2]]:1: warning: #includes are not sorted properly
 #include "j.h"
 #include "gtest/foo.h"
