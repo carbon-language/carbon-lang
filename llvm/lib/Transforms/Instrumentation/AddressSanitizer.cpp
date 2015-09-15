@@ -1187,6 +1187,14 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
     // Do not instrument globals from special LLVM sections.
     if (Section.find("__llvm") != StringRef::npos) return false;
 
+    // Do not instrument function pointers to initialization and termination
+    // routines: dynamic linker will not properly handle redzones.
+    if (Section.startswith(".preinit_array") ||
+        Section.startswith(".init_array") ||
+        Section.startswith(".fini_array")) {
+      return false;
+    }
+
     // Callbacks put into the CRT initializer/terminator sections
     // should not be instrumented.
     // See https://code.google.com/p/address-sanitizer/issues/detail?id=305
