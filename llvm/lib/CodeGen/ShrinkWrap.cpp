@@ -309,6 +309,14 @@ void ShrinkWrap::updateSaveRestorePoints(MachineBasicBlock &MBB) {
         }
       }
       else {
+        // If the loop does not exit, there is no point in looking
+        // for a post-dominator outside the loop.
+        SmallVector<MachineBasicBlock*, 4> ExitBlocks;
+        MLI->getLoopFor(Restore)->getExitingBlocks(ExitBlocks);
+        if (ExitBlocks.empty()) {
+          Restore = nullptr;
+          break;
+        }
         // Push Restore outside of this loop if immediate post-dominator is
         // different from restore block. If immediate post-dominator is not
         // different, bail out. 
