@@ -62,7 +62,7 @@ bool Builtin::Context::builtinIsSupported(const Builtin::Info &BuiltinInfo,
          !GnuModeUnsupported && !MSModeUnsupported && !ObjCUnsupported;
 }
 
-/// InitializeBuiltins - Mark the identifiers for all the builtins with their
+/// initializeBuiltins - Mark the identifiers for all the builtins with their
 /// appropriate builtin ID # and mark any non-portable builtin identifiers as
 /// such.
 void Builtin::Context::initializeBuiltins(IdentifierTable &Table,
