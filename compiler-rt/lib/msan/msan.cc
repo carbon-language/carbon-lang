@@ -375,12 +375,13 @@ void __msan_init() {
   msan_init_is_running = 1;
   SanitizerToolName = "MemorySanitizer";
 
-  CheckVMASize();
-
   InitTlsSize();
 
   CacheBinaryName();
   InitializeFlags();
+
+  CheckVMASize();
+
   __sanitizer_set_report_path(common_flags()->log_path);
 
   InitializeInterceptors();
