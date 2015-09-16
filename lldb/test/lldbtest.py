@@ -889,6 +889,10 @@ def skipIfHostWindows(func):
     """Decorate the item to skip tests that should be skipped on Windows."""
     return skipIfHostPlatform(["windows"])(func)
 
+def skipUnlessWindows(func):
+    """Decorate the item to skip tests that should be skipped on any non-Windows platform."""
+    return skipUnlessPlatform(["windows"])(func)
+
 def skipUnlessDarwin(func):
     """Decorate the item to skip tests that should be skipped on any non Darwin platform."""
     return skipUnlessPlatform(getDarwinOSTriples())(func)
