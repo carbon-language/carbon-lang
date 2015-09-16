@@ -251,6 +251,13 @@ void Writer::markLive() {
   // as we push, so sections never appear twice in the list.
   SmallVector<SectionChunk *, 256> Worklist;
 
+  // COMDAT section chunks are dead by default. Add non-COMDAT chunks.
+  for (Chunk *C : Symtab->getChunks())
+    if (auto *SC = dyn_cast<SectionChunk>(C))
+      if (SC->isLive())
+        Worklist.push_back(SC);
+
+  // Add GC root chunks.
   for (Undefined *U : Config->GCRoot) {
     auto *D = dyn_cast<DefinedRegular>(U->repl());
     if (!D || D->isLive())
@@ -258,13 +265,7 @@ void Writer::markLive() {
     D->markLive();
     Worklist.push_back(D->getChunk());
   }
-  for (Chunk *C : Symtab->getChunks()) {
-    auto *SC = dyn_cast<SectionChunk>(C);
-    if (!SC || SC->isCOMDAT() || SC->isLive())
-      continue;
-    SC->markLive();
-    Worklist.push_back(SC);
-  }
+
   while (!Worklist.empty()) {
     SectionChunk *SC = Worklist.pop_back_val();
     assert(SC->isLive() && "We mark as live when pushing onto the worklist!");
@@ -305,13 +306,11 @@ void Writer::createSections() {
   // First, bin chunks by name.
   std::map<StringRef, std::vector<Chunk *>> Map;
   for (Chunk *C : Symtab->getChunks()) {
-    if (Config->DoGC) {
-      auto *SC = dyn_cast<SectionChunk>(C);
-      if (SC && !SC->isLive()) {
-        if (Config->Verbose)
-          SC->printDiscardedMessage();
-        continue;
-      }
+    auto *SC = dyn_cast<SectionChunk>(C);
+    if (SC && !SC->isLive()) {
+      if (Config->Verbose)
+        SC->printDiscardedMessage();
+      continue;
     }
     Map[C->getSectionName()].push_back(C);
   }

@@ -38,6 +38,9 @@ SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H)
   unsigned Shift = (Header->Characteristics >> 20) & 0xF;
   if (Shift > 0)
     Align = uint32_t(1) << (Shift - 1);
+
+  // Only COMDAT sections are subject of dead-stripping.
+  Live = !isCOMDAT();
 }
 
 static void add16(uint8_t *P, int16_t V) { write16le(P, read16le(P) + V); }

@@ -10,6 +10,7 @@
 #ifndef LLD_COFF_CHUNKS_H
 #define LLD_COFF_CHUNKS_H
 
+#include "Config.h"
 #include "InputFiles.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -160,9 +161,9 @@ public:
   void setSymbol(DefinedRegular *S) { if (!Sym) Sym = S; }
 
   // Used by the garbage collector.
-  bool isLive() { return Live; }
+  bool isLive() { return !Config->DoGC || Live; }
   void markLive() {
-    assert(!Live && "Cannot mark an already live section!");
+    assert(!isLive() && "Cannot mark an already live section!");
     Live = true;
   }
 
@@ -198,7 +199,7 @@ private:
   size_t NumRelocs;
 
   // Used by the garbage collector.
-  bool Live = false;
+  bool Live;
 
   // Used for ICF (Identical COMDAT Folding)
   void replaceWith(SectionChunk *Other);
