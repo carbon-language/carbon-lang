@@ -1,8 +1,9 @@
 // RUN: %clang_cc1 -fsanitize=memory -fsanitize-memory-use-after-dtor -disable-llvm-optzns -std=c++11 -triple=x86_64-pc-linux -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -O1 -fsanitize=memory -fsanitize-memory-use-after-dtor -disable-llvm-optzns -std=c++11 -triple=x86_64-pc-linux -emit-llvm -o - %s | FileCheck %s
 
-// Only the last dtor of a class invokes the sanitizing callback
-// Sanitizing callback emited prior to base class dtor invocations
+// Base dtor poisons members
+// Complete dtor poisons vtable ptr after destroying members and
+// virtual bases
 
 class Base {
  public:
@@ -28,6 +29,7 @@ class Derived : public Base {
 
 Derived d;
 
+// Invoke base destructor. No vtable pointer to poison.
 // CHECK-LABEL: define {{.*}}DerivedD1Ev
 // CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: call void {{.*}}DerivedD2Ev
@@ -40,6 +42,7 @@ Derived d;
 // CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: ret void
 
+// Invokes base destructor, and poison vtable pointer.
 // CHECK-LABEL: define {{.*}}BaseD1Ev
 // CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: call void {{.*}}BaseD2Ev
@@ -52,14 +55,17 @@ Derived d;
 // CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: ret void
 
+// Poison members and vtable ptr.
 // CHECK-LABEL: define {{.*}}BaseD2Ev
 // CHECK: call void @__sanitizer_dtor_callback
+// CHECK: call void @__sanitizer_dtor_callback{{.*}}i64 8
 // CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: ret void
 
+// Poison members and destroy non-virtual base.
 // CHECK-LABEL: define {{.*}}DerivedD2Ev
 // CHECK: call void @__sanitizer_dtor_callback
 // CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: call void {{.*}}BaseD2Ev
-// CHECK-NOT: call void @__sanitizer_dtor_callback
+// CHECK: call void @__sanitizer_dtor_callback{{.*}}i64 8
 // CHECK: ret void

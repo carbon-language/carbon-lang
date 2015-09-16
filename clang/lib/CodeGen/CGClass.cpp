@@ -1676,11 +1676,27 @@ namespace {
     }
   };
 
-  class SanitizeDtor final : public EHScopeStack::Cleanup {
+ static void EmitSanitizerDtorCallback(CodeGenFunction &CGF, llvm::Value *Ptr,
+             CharUnits::QuantityType PoisonSize) {
+   // Pass in void pointer and size of region as arguments to runtime
+   // function
+   llvm::Value *Args[] = {CGF.Builder.CreateBitCast(Ptr, CGF.VoidPtrTy),
+                          llvm::ConstantInt::get(CGF.SizeTy, PoisonSize)};
+
+   llvm::Type *ArgTypes[] = {CGF.VoidPtrTy, CGF.SizeTy};
+
+   llvm::FunctionType *FnType =
+       llvm::FunctionType::get(CGF.VoidTy, ArgTypes, false);
+   llvm::Value *Fn =
+       CGF.CGM.CreateRuntimeFunction(FnType, "__sanitizer_dtor_callback");
+   CGF.EmitNounwindRuntimeCall(Fn, Args);
+ }
+
+  class SanitizeDtorMembers final : public EHScopeStack::Cleanup {
     const CXXDestructorDecl *Dtor;
 
   public:
-    SanitizeDtor(const CXXDestructorDecl *Dtor) : Dtor(Dtor) {}
+    SanitizeDtorMembers(const CXXDestructorDecl *Dtor) : Dtor(Dtor) {}
 
     // Generate function call for handling object poisoning.
     // Disables tail call elimination, to prevent the current stack frame
@@ -1712,11 +1728,11 @@ namespace {
           // Currently on the last field, and it must be poisoned with the
           // current block.
           if (fieldIndex == Layout.getFieldCount() - 1) {
-            PoisonBlock(CGF, startIndex, Layout.getFieldCount());
+            PoisonMembers(CGF, startIndex, Layout.getFieldCount());
           }
         } else if (startIndex >= 0) {
           // No longer within a block of memory to poison, so poison the block
-          PoisonBlock(CGF, startIndex, fieldIndex);
+          PoisonMembers(CGF, startIndex, fieldIndex);
           // Re-set the start index
           startIndex = -1;
         }
@@ -1729,7 +1745,7 @@ namespace {
     ///     start poisoning (inclusive)
     /// \param layoutEndOffset index of the ASTRecordLayout field to
     ///     end poisoning (exclusive)
-    void PoisonBlock(CodeGenFunction &CGF, unsigned layoutStartOffset,
+    void PoisonMembers(CodeGenFunction &CGF, unsigned layoutStartOffset,
                      unsigned layoutEndOffset) {
       ASTContext &Context = CGF.getContext();
       const ASTRecordLayout &Layout =
@@ -1760,20 +1776,30 @@ namespace {
       if (PoisonSize == 0)
         return;
 
-      // Pass in void pointer and size of region as arguments to runtime
-      // function
-      llvm::Value *Args[] = {CGF.Builder.CreateBitCast(OffsetPtr, CGF.VoidPtrTy),
-                             llvm::ConstantInt::get(CGF.SizeTy, PoisonSize)};
-
-      llvm::Type *ArgTypes[] = {CGF.VoidPtrTy, CGF.SizeTy};
-
-      llvm::FunctionType *FnType =
-          llvm::FunctionType::get(CGF.VoidTy, ArgTypes, false);
-      llvm::Value *Fn =
-          CGF.CGM.CreateRuntimeFunction(FnType, "__sanitizer_dtor_callback");
-      CGF.EmitNounwindRuntimeCall(Fn, Args);
+      EmitSanitizerDtorCallback(CGF, OffsetPtr, PoisonSize);
     }
   };
+
+ class SanitizeDtorVTable final : public EHScopeStack::Cleanup {
+    const CXXDestructorDecl *Dtor;
+
+  public:
+    SanitizeDtorVTable(const CXXDestructorDecl *Dtor) : Dtor(Dtor) {}
+
+    // Generate function call for handling vtable pointer poisoning.
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
+      assert(Dtor->getParent()->isDynamicClass());
+      ASTContext &Context = CGF.getContext();
+      // Poison vtable and vtable ptr if they exist for this class.
+      llvm::Value *VTablePtr = CGF.LoadCXXThis();
+
+      CharUnits::QuantityType PoisonSize =
+          Context.toCharUnitsFromBits(CGF.PointerWidthInBits).getQuantity();
+      // Pass in void pointer and size of region as arguments to runtime
+      // function
+      EmitSanitizerDtorCallback(CGF, VTablePtr, PoisonSize);
+    }
+ };
 }
 
 /// \brief Emit all code that comes at the end of class's
@@ -1808,6 +1834,12 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
 
   // The complete-destructor phase just destructs all the virtual bases.
   if (DtorType == Dtor_Complete) {
+    // Poison the vtable pointer such that access after the base
+    // and member destructors are invoked is invalid.
+    if (CGM.getCodeGenOpts().SanitizeMemoryUseAfterDtor &&
+        SanOpts.has(SanitizerKind::Memory) && ClassDecl->getNumVBases() &&
+        ClassDecl->isPolymorphic())
+      EHStack.pushCleanup<SanitizeDtorVTable>(NormalAndEHCleanup, DD);
 
     // We push them in the forward order so that they'll be popped in
     // the reverse order.
@@ -1828,6 +1860,12 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
   }
 
   assert(DtorType == Dtor_Base);
+  // Poison the vtable pointer if it has no virtual bases, but inherits
+  // virtual functions.
+  if (CGM.getCodeGenOpts().SanitizeMemoryUseAfterDtor &&
+      SanOpts.has(SanitizerKind::Memory) && !ClassDecl->getNumVBases() &&
+      ClassDecl->isPolymorphic())
+    EHStack.pushCleanup<SanitizeDtorVTable>(NormalAndEHCleanup, DD);
 
   // Destroy non-virtual bases.
   for (const auto &Base : ClassDecl->bases()) {
@@ -1850,7 +1888,7 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
   // invoked, and before the base class destructor runs, is invalid.
   if (CGM.getCodeGenOpts().SanitizeMemoryUseAfterDtor &&
       SanOpts.has(SanitizerKind::Memory))
-    EHStack.pushCleanup<SanitizeDtor>(NormalAndEHCleanup, DD);
+    EHStack.pushCleanup<SanitizeDtorMembers>(NormalAndEHCleanup, DD);
 
   // Destroy direct fields.
   for (const auto *Field : ClassDecl->fields()) {
