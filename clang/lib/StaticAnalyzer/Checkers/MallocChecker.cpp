@@ -1592,7 +1592,7 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
   if (!CheckKind.hasValue())
     return;
 
-  if (ExplodedNode *N = C.generateSink()) {
+  if (ExplodedNode *N = C.generateErrorNode()) {
     if (!BT_BadFree[*CheckKind])
       BT_BadFree[*CheckKind].reset(
           new BugType(CheckNames[*CheckKind], "Bad free", "Memory Error"));
@@ -1637,7 +1637,7 @@ void MallocChecker::ReportFreeAlloca(CheckerContext &C, SVal ArgVal,
   else
     return;
 
-  if (ExplodedNode *N = C.generateSink()) {
+  if (ExplodedNode *N = C.generateErrorNode()) {
     if (!BT_FreeAlloca[*CheckKind])
       BT_FreeAlloca[*CheckKind].reset(
           new BugType(CheckNames[*CheckKind], "Free alloca()", "Memory Error"));
@@ -1661,7 +1661,7 @@ void MallocChecker::ReportMismatchedDealloc(CheckerContext &C,
   if (!ChecksEnabled[CK_MismatchedDeallocatorChecker])
     return;
 
-  if (ExplodedNode *N = C.generateSink()) {
+  if (ExplodedNode *N = C.generateErrorNode()) {
     if (!BT_MismatchedDealloc)
       BT_MismatchedDealloc.reset(
           new BugType(CheckNames[CK_MismatchedDeallocatorChecker],
@@ -1720,7 +1720,7 @@ void MallocChecker::ReportOffsetFree(CheckerContext &C, SVal ArgVal,
   if (!CheckKind.hasValue())
     return;
 
-  ExplodedNode *N = C.generateSink();
+  ExplodedNode *N = C.generateErrorNode();
   if (!N)
     return;
 
@@ -1774,7 +1774,7 @@ void MallocChecker::ReportUseAfterFree(CheckerContext &C, SourceRange Range,
   if (!CheckKind.hasValue())
     return;
 
-  if (ExplodedNode *N = C.generateSink()) {
+  if (ExplodedNode *N = C.generateErrorNode()) {
     if (!BT_UseFree[*CheckKind])
       BT_UseFree[*CheckKind].reset(new BugType(
           CheckNames[*CheckKind], "Use-after-free", "Memory Error"));
@@ -1801,7 +1801,7 @@ void MallocChecker::ReportDoubleFree(CheckerContext &C, SourceRange Range,
   if (!CheckKind.hasValue())
     return;
 
-  if (ExplodedNode *N = C.generateSink()) {
+  if (ExplodedNode *N = C.generateErrorNode()) {
     if (!BT_DoubleFree[*CheckKind])
       BT_DoubleFree[*CheckKind].reset(
           new BugType(CheckNames[*CheckKind], "Double free", "Memory Error"));
@@ -1829,7 +1829,7 @@ void MallocChecker::ReportDoubleDelete(CheckerContext &C, SymbolRef Sym) const {
   if (!CheckKind.hasValue())
     return;
 
-  if (ExplodedNode *N = C.generateSink()) {
+  if (ExplodedNode *N = C.generateErrorNode()) {
     if (!BT_DoubleDelete)
       BT_DoubleDelete.reset(new BugType(CheckNames[CK_NewDeleteChecker],
                                         "Double delete", "Memory Error"));
@@ -1856,7 +1856,7 @@ void MallocChecker::ReportUseZeroAllocated(CheckerContext &C,
   if (!CheckKind.hasValue())
     return;
 
-  if (ExplodedNode *N = C.generateSink()) {
+  if (ExplodedNode *N = C.generateErrorNode()) {
     if (!BT_UseZerroAllocated[*CheckKind])
       BT_UseZerroAllocated[*CheckKind].reset(new BugType(
           CheckNames[*CheckKind], "Use of zero allocated", "Memory Error"));
@@ -2150,10 +2150,12 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   ExplodedNode *N = C.getPredecessor();
   if (!Errors.empty()) {
     static CheckerProgramPointTag Tag("MallocChecker", "DeadSymbolsLeak");
-    N = C.addTransition(C.getState(), C.getPredecessor(), &Tag);
-    for (SmallVectorImpl<SymbolRef>::iterator
+    N = C.generateNonFatalErrorNode(C.getState(), &Tag);
+    if (N) {
+      for (SmallVectorImpl<SymbolRef>::iterator
            I = Errors.begin(), E = Errors.end(); I != E; ++I) {
-      reportLeak(*I, N, C);
+        reportLeak(*I, N, C);
+      }
     }
   }
 

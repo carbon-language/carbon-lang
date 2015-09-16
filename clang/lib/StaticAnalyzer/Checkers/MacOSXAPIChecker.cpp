@@ -62,7 +62,7 @@ void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
   if (!R || !isa<StackSpaceRegion>(R->getMemorySpace()))
     return;
 
-  ExplodedNode *N = C.generateSink(state);
+  ExplodedNode *N = C.generateErrorNode(state);
   if (!N)
     return;
 

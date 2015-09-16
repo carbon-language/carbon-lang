@@ -97,7 +97,7 @@ private:
 
 void CallAndMessageChecker::emitBadCall(BugType *BT, CheckerContext &C,
                                         const Expr *BadE) {
-  ExplodedNode *N = C.generateSink();
+  ExplodedNode *N = C.generateErrorNode();
   if (!N)
     return;
 
@@ -169,7 +169,7 @@ bool CallAndMessageChecker::uninitRefOrPointer(CheckerContext &C,
     const ProgramStateRef State = C.getState();
     const SVal PSV = State->getSVal(SValMemRegion);
     if (PSV.isUndef()) {
-      if (ExplodedNode *N = C.generateSink()) {
+      if (ExplodedNode *N = C.generateErrorNode()) {
         LazyInit_BT(BD, BT);
         auto R = llvm::make_unique<BugReport>(*BT, Message, N);
         R->addRange(ArgRange);
@@ -200,7 +200,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
     return true;
 
   if (V.isUndef()) {
-    if (ExplodedNode *N = C.generateSink()) {
+    if (ExplodedNode *N = C.generateErrorNode()) {
       LazyInit_BT(BD, BT);
 
       // Generate a report for this bug.
@@ -265,7 +265,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
                              D->getStore());
 
     if (F.Find(D->getRegion())) {
-      if (ExplodedNode *N = C.generateSink()) {
+      if (ExplodedNode *N = C.generateErrorNode()) {
         LazyInit_BT(BD, BT);
         SmallString<512> Str;
         llvm::raw_svector_ostream os(Str);
@@ -338,7 +338,7 @@ void CallAndMessageChecker::checkPreStmt(const CXXDeleteExpr *DE,
   SVal Arg = C.getSVal(DE->getArgument());
   if (Arg.isUndef()) {
     StringRef Desc;
-    ExplodedNode *N = C.generateSink();
+    ExplodedNode *N = C.generateErrorNode();
     if (!N)
       return;
     if (!BT_cxx_delete_undef)
@@ -395,7 +395,7 @@ void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
     // the function.
     unsigned Params = FD->getNumParams();
     if (Call.getNumArgs() < Params) {
-      ExplodedNode *N = C.generateSink();
+      ExplodedNode *N = C.generateErrorNode();
       if (!N)
         return;
 
@@ -443,7 +443,7 @@ void CallAndMessageChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
                                                 CheckerContext &C) const {
   SVal recVal = msg.getReceiverSVal();
   if (recVal.isUndef()) {
-    if (ExplodedNode *N = C.generateSink()) {
+    if (ExplodedNode *N = C.generateErrorNode()) {
       BugType *BT = nullptr;
       switch (msg.getMessageKind()) {
       case OCM_Message:
@@ -559,7 +559,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
             Ctx.LongDoubleTy == CanRetTy ||
             Ctx.LongLongTy == CanRetTy ||
             Ctx.UnsignedLongLongTy == CanRetTy)))) {
-      if (ExplodedNode *N = C.generateSink(state, nullptr, &Tag))
+      if (ExplodedNode *N = C.generateErrorNode(state, &Tag))
         emitNilReceiverBug(C, Msg, N);
       return;
     }

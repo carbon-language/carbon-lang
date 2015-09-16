@@ -60,7 +60,7 @@ void PointerSubChecker::checkPreStmt(const BinaryOperator *B,
   if (isa<SymbolicRegion>(BaseLR) || isa<SymbolicRegion>(BaseRR))
     return;
 
-  if (ExplodedNode *N = C.addTransition()) {
+  if (ExplodedNode *N = C.generateNonFatalErrorNode()) {
     if (!BT)
       BT.reset(
           new BuiltinBug(this, "Pointer subtraction",

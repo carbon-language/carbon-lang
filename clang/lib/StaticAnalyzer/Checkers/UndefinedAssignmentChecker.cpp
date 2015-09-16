@@ -46,7 +46,7 @@ void UndefinedAssignmentChecker::checkBind(SVal location, SVal val,
     if (C.getCalleeName(EnclosingFunctionDecl) == "swap")
       return;
 
-  ExplodedNode *N = C.generateSink();
+  ExplodedNode *N = C.generateErrorNode();
 
   if (!N)
     return;

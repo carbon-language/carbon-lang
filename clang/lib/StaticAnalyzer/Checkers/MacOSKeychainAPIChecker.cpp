@@ -255,7 +255,7 @@ void MacOSKeychainAPIChecker::
                                     CheckerContext &C) const {
   ProgramStateRef State = C.getState();
   State = State->remove<AllocatedData>(AP.first);
-  ExplodedNode *N = C.addTransition(State);
+  ExplodedNode *N = C.generateNonFatalErrorNode(State);
 
   if (!N)
     return;
@@ -301,7 +301,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
           // Remove the value from the state. The new symbol will be added for
           // tracking when the second allocator is processed in checkPostStmt().
           State = State->remove<AllocatedData>(V);
-          ExplodedNode *N = C.addTransition(State);
+          ExplodedNode *N = C.generateNonFatalErrorNode(State);
           if (!N)
             return;
           initBugType();
@@ -364,7 +364,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     if (isEnclosingFunctionParam(ArgExpr))
       return;
 
-    ExplodedNode *N = C.addTransition(State);
+    ExplodedNode *N = C.generateNonFatalErrorNode(State);
     if (!N)
       return;
     initBugType();
@@ -430,7 +430,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   // report a bad call to free.
   if (State->assume(ArgSVal.castAs<DefinedSVal>(), false) &&
       !definitelyDidnotReturnError(AS->Region, State, C.getSValBuilder())) {
-    ExplodedNode *N = C.addTransition(State);
+    ExplodedNode *N = C.generateNonFatalErrorNode(State);
     if (!N)
       return;
     initBugType();
@@ -584,7 +584,9 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
   }
 
   static CheckerProgramPointTag Tag(this, "DeadSymbolsLeak");
-  ExplodedNode *N = C.addTransition(C.getState(), C.getPredecessor(), &Tag);
+  ExplodedNode *N = C.generateNonFatalErrorNode(C.getState(), &Tag);
+  if (!N)
+    return;
 
   // Generate the error reports.
   for (const auto P : Errors)

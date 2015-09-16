@@ -1386,7 +1386,9 @@ char* reallocButNoMalloc(struct HasPtr *a, int c, int size) {
   int *s;
   char *b = realloc(a->p, size);
   char *m = realloc(a->p, size); // expected-warning {{Attempt to free released memory}}
-  return a->p;
+  // We don't expect a use-after-free for a->P here because the warning above
+  // is a sink.
+  return a->p; // no-warning
 }
 
 // We should not warn in this case since the caller will presumably free a->p in all cases.

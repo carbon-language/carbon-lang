@@ -499,7 +499,9 @@ void NullabilityChecker::checkPreStmt(const ReturnStmt *S,
       Nullness == NullConstraint::IsNull &&
       StaticNullability == Nullability::Nonnull) {
     static CheckerProgramPointTag Tag(this, "NullReturnedFromNonnull");
-    ExplodedNode *N = C.generateSink(State, C.getPredecessor(), &Tag);
+    ExplodedNode *N = C.generateErrorNode(State, &Tag);
+    if (!N)
+      return;
     reportBugIfPreconditionHolds(ErrorKind::NilReturnedToNonnull, N, nullptr, C,
                                  RetExpr);
     return;
@@ -569,7 +571,9 @@ void NullabilityChecker::checkPreCall(const CallEvent &Call,
     if (Filter.CheckNullPassedToNonnull && Nullness == NullConstraint::IsNull &&
         ArgStaticNullability != Nullability::Nonnull &&
         ParamNullability == Nullability::Nonnull) {
-      ExplodedNode *N = C.generateSink(State);
+      ExplodedNode *N = C.generateErrorNode(State);
+      if (!N)
+        return;
       reportBugIfPreconditionHolds(ErrorKind::NilPassedToNonnull, N, nullptr, C,
                                    ArgExpr);
       return;
@@ -891,7 +895,9 @@ void NullabilityChecker::checkBind(SVal L, SVal V, const Stmt *S,
       ValNullability != Nullability::Nonnull &&
       LocNullability == Nullability::Nonnull) {
     static CheckerProgramPointTag Tag(this, "NullPassedToNonnull");
-    ExplodedNode *N = C.generateSink(State, C.getPredecessor(), &Tag);
+    ExplodedNode *N = C.generateErrorNode(State, &Tag);
+    if (!N)
+      return;
     reportBugIfPreconditionHolds(ErrorKind::NilAssignedToNonnull, N, nullptr, C,
                                  S);
     return;

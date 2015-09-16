@@ -32,7 +32,7 @@ namespace {
 
 void BoolAssignmentChecker::emitReport(ProgramStateRef state,
                                        CheckerContext &C) const {
-  if (ExplodedNode *N = C.addTransition(state)) {
+  if (ExplodedNode *N = C.generateNonFatalErrorNode(state)) {
     if (!BT)
       BT.reset(new BuiltinBug(this, "Assignment of a non-Boolean value"));
     C.emitReport(llvm::make_unique<BugReport>(*BT, BT->getDescription(), N));

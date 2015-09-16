@@ -51,7 +51,7 @@ void PointerArithChecker::checkPreStmt(const BinaryOperator *B,
   if (isa<VarRegion>(LR) || isa<CodeTextRegion>(LR) ||
       isa<CompoundLiteralRegion>(LR)) {
 
-    if (ExplodedNode *N = C.addTransition()) {
+    if (ExplodedNode *N = C.generateNonFatalErrorNode()) {
       if (!BT)
         BT.reset(
             new BuiltinBug(this, "Dangerous pointer arithmetic",

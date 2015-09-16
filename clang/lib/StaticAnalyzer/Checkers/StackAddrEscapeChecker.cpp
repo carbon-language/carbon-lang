@@ -94,7 +94,7 @@ SourceRange StackAddrEscapeChecker::genName(raw_ostream &os, const MemRegion *R,
 
 void StackAddrEscapeChecker::EmitStackError(CheckerContext &C, const MemRegion *R,
                                           const Expr *RetE) const {
-  ExplodedNode *N = C.generateSink();
+  ExplodedNode *N = C.generateErrorNode();
 
   if (!N)
     return;
@@ -211,7 +211,7 @@ void StackAddrEscapeChecker::checkEndFunction(CheckerContext &Ctx) const {
     return;
 
   // Generate an error node.
-  ExplodedNode *N = Ctx.addTransition(state);
+  ExplodedNode *N = Ctx.generateNonFatalErrorNode(state);
   if (!N)
     return;
 

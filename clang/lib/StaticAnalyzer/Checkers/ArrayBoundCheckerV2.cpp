@@ -182,7 +182,7 @@ void ArrayBoundCheckerV2::reportOOB(CheckerContext &checkerContext,
                                     ProgramStateRef errorState,
                                     OOB_Kind kind) const {
 
-  ExplodedNode *errorNode = checkerContext.generateSink(errorState);
+  ExplodedNode *errorNode = checkerContext.generateErrorNode(errorState);
   if (!errorNode)
     return;
 

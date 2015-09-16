@@ -140,7 +140,7 @@ void NilArgChecker::warnIfNilExpr(const Expr *E,
   ProgramStateRef State = C.getState();
   if (State->isNull(C.getSVal(E)).isConstrainedTrue()) {
 
-    if (ExplodedNode *N = C.generateSink()) {
+    if (ExplodedNode *N = C.generateErrorNode()) {
       generateBugReport(N, Msg, E->getSourceRange(), E, C);
     }
 
@@ -157,7 +157,7 @@ void NilArgChecker::warnIfNilArg(CheckerContext &C,
   if (!State->isNull(msg.getArgSVal(Arg)).isConstrainedTrue())
       return;
 
-  if (ExplodedNode *N = C.generateSink()) {
+  if (ExplodedNode *N = C.generateErrorNode()) {
     SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
 
@@ -489,14 +489,15 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
   if (SourceSize == TargetSize)
     return;
 
-  // Generate an error.  Only generate a sink if 'SourceSize < TargetSize';
-  // otherwise generate a regular node.
+  // Generate an error.  Only generate a sink error node
+  // if 'SourceSize < TargetSize'; otherwise generate a non-fatal error node.
   //
   // FIXME: We can actually create an abstract "CFNumber" object that has
   //  the bits initialized to the provided values.
   //
-  if (ExplodedNode *N = SourceSize < TargetSize ? C.generateSink()
-                                                : C.addTransition()) {
+  ExplodedNode *N = SourceSize < TargetSize ? C.generateErrorNode()
+                                            : C.generateNonFatalErrorNode();
+  if (N) {
     SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
 
@@ -589,7 +590,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
   std::tie(stateTrue, stateFalse) = state->assume(ArgIsNull);
 
   if (stateTrue && !stateFalse) {
-    ExplodedNode *N = C.generateSink(stateTrue);
+    ExplodedNode *N = C.generateErrorNode(stateTrue);
     if (!N)
       return;
 
@@ -656,7 +657,7 @@ void ClassReleaseChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
   if (!(S == releaseS || S == retainS || S == autoreleaseS || S == drainS))
     return;
 
-  if (ExplodedNode *N = C.addTransition()) {
+  if (ExplodedNode *N = C.generateNonFatalErrorNode()) {
     SmallString<200> buf;
     llvm::raw_svector_ostream os(buf);
 
@@ -800,7 +801,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
 
     // Generate only one error node to use for all bug reports.
     if (!errorNode.hasValue())
-      errorNode = C.addTransition();
+      errorNode = C.generateNonFatalErrorNode();
 
     if (!errorNode.getValue())
       continue;
@@ -1025,7 +1026,7 @@ void ObjCLoopChecker::checkPostStmt(const ObjCForCollectionStmt *FCS,
   }
 
   if (!State)
-    C.generateSink();
+    C.generateSink(C.getState(), C.getPredecessor());
   else if (State != C.getState())
     C.addTransition(State);
 }

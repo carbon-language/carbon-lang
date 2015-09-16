@@ -77,7 +77,7 @@ void UnixAPIChecker::ReportOpenBug(CheckerContext &C,
                                    ProgramStateRef State,
                                    const char *Msg,
                                    SourceRange SR) const {
-  ExplodedNode *N = C.generateSink(State);
+  ExplodedNode *N = C.generateErrorNode(State);
   if (!N)
     return;
 
@@ -182,7 +182,7 @@ void UnixAPIChecker::CheckPthreadOnce(CheckerContext &C,
   if (!R || !isa<StackSpaceRegion>(R->getMemorySpace()))
     return;
 
-  ExplodedNode *N = C.generateSink(state);
+  ExplodedNode *N = C.generateErrorNode(state);
   if (!N)
     return;
 
@@ -231,7 +231,7 @@ bool UnixAPIChecker::ReportZeroByteAllocation(CheckerContext &C,
                                               ProgramStateRef falseState,
                                               const Expr *arg,
                                               const char *fn_name) const {
-  ExplodedNode *N = C.generateSink(falseState);
+  ExplodedNode *N = C.generateErrorNode(falseState);
   if (!N)
     return false;
 

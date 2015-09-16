@@ -62,7 +62,7 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
   if (X.isUndef()) {
     // Generate a sink node, which implicitly marks both outgoing branches as
     // infeasible.
-    ExplodedNode *N = Ctx.generateSink();
+    ExplodedNode *N = Ctx.generateErrorNode();
     if (N) {
       if (!BT)
         BT.reset(new BuiltinBug(

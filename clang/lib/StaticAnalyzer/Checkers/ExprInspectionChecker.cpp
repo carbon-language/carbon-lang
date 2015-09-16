@@ -86,8 +86,7 @@ static const char *getArgumentValueString(const CallExpr *CE,
 
 void ExprInspectionChecker::analyzerEval(const CallExpr *CE,
                                          CheckerContext &C) const {
-  ExplodedNode *N = C.getPredecessor();
-  const LocationContext *LC = N->getLocationContext();
+  const LocationContext *LC = C.getPredecessor()->getLocationContext();
 
   // A specific instantiation of an inlined function may have more constrained
   // values than can generally be assumed. Skip the check.
@@ -97,24 +96,28 @@ void ExprInspectionChecker::analyzerEval(const CallExpr *CE,
   if (!BT)
     BT.reset(new BugType(this, "Checking analyzer assumptions", "debug"));
 
+  ExplodedNode *N = C.generateNonFatalErrorNode();
+  if (!N)
+    return;
   C.emitReport(
       llvm::make_unique<BugReport>(*BT, getArgumentValueString(CE, C), N));
 }
 
 void ExprInspectionChecker::analyzerWarnIfReached(const CallExpr *CE,
                                                   CheckerContext &C) const {
-  ExplodedNode *N = C.getPredecessor();
 
   if (!BT)
     BT.reset(new BugType(this, "Checking analyzer assumptions", "debug"));
 
+  ExplodedNode *N = C.generateNonFatalErrorNode();
+  if (!N)
+    return;
   C.emitReport(llvm::make_unique<BugReport>(*BT, "REACHABLE", N));
 }
 
 void ExprInspectionChecker::analyzerCheckInlined(const CallExpr *CE,
                                                  CheckerContext &C) const {
-  ExplodedNode *N = C.getPredecessor();
-  const LocationContext *LC = N->getLocationContext();
+  const LocationContext *LC = C.getPredecessor()->getLocationContext();
 
   // An inlined function could conceivably also be analyzed as a top-level
   // function. We ignore this case and only emit a message (TRUE or FALSE)
@@ -127,6 +130,9 @@ void ExprInspectionChecker::analyzerCheckInlined(const CallExpr *CE,
   if (!BT)
     BT.reset(new BugType(this, "Checking analyzer assumptions", "debug"));
 
+  ExplodedNode *N = C.generateNonFatalErrorNode();
+  if (!N)
+    return;
   C.emitReport(
       llvm::make_unique<BugReport>(*BT, getArgumentValueString(CE, C), N));
 }

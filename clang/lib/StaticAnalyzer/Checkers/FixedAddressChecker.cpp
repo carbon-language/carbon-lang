@@ -50,7 +50,7 @@ void FixedAddressChecker::checkPreStmt(const BinaryOperator *B,
   if (!RV.isConstant() || RV.isZeroConstant())
     return;
 
-  if (ExplodedNode *N = C.addTransition()) {
+  if (ExplodedNode *N = C.generateNonFatalErrorNode()) {
     if (!BT)
       BT.reset(
           new BuiltinBug(this, "Use fixed address",

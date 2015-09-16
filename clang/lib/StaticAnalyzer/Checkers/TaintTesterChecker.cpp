@@ -48,7 +48,7 @@ void TaintTesterChecker::checkPostStmt(const Expr *E,
     return;
 
   if (State->isTainted(E, C.getLocationContext())) {
-    if (ExplodedNode *N = C.addTransition()) {
+    if (ExplodedNode *N = C.generateNonFatalErrorNode()) {
       initBugType();
       auto report = llvm::make_unique<BugReport>(*BT, "tainted",N);
       report->addRange(E->getSourceRange());

@@ -143,7 +143,7 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
       if (!stateNotNull) {
         // Generate an error node.  Check for a null node in case
         // we cache out.
-        if (ExplodedNode *errorNode = C.generateSink(stateNull)) {
+        if (ExplodedNode *errorNode = C.generateErrorNode(stateNull)) {
 
           std::unique_ptr<BugReport> R;
           if (haveAttrNonNull)
@@ -161,7 +161,7 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
         // Always return.  Either we cached out or we just emitted an error.
         return;
       }
-      if (ExplodedNode *N = C.generateSink(stateNull)) {
+      if (ExplodedNode *N = C.generateSink(stateNull, C.getPredecessor())) {
         ImplicitNullDerefEvent event = {
             V, false, N, &C.getBugReporter(),
             /*IsDirectDereference=*/haveRefTypeParam};

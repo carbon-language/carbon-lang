@@ -229,7 +229,7 @@ ProgramStateRef CStringChecker::checkNonNull(CheckerContext &C,
     if (!Filter.CheckCStringNullArg)
       return nullptr;
 
-    ExplodedNode *N = C.generateSink(stateNull);
+    ExplodedNode *N = C.generateErrorNode(stateNull);
     if (!N)
       return nullptr;
 
@@ -292,7 +292,7 @@ ProgramStateRef CStringChecker::CheckLocation(CheckerContext &C,
   ProgramStateRef StInBound = state->assumeInBound(Idx, Size, true);
   ProgramStateRef StOutBound = state->assumeInBound(Idx, Size, false);
   if (StOutBound && !StInBound) {
-    ExplodedNode *N = C.generateSink(StOutBound);
+    ExplodedNode *N = C.generateErrorNode(StOutBound);
     if (!N)
       return nullptr;
 
@@ -525,7 +525,7 @@ ProgramStateRef CStringChecker::CheckOverlap(CheckerContext &C,
 
 void CStringChecker::emitOverlapBug(CheckerContext &C, ProgramStateRef state,
                                   const Stmt *First, const Stmt *Second) const {
-  ExplodedNode *N = C.generateSink(state);
+  ExplodedNode *N = C.generateErrorNode(state);
   if (!N)
     return;
 
@@ -585,7 +585,7 @@ ProgramStateRef CStringChecker::checkAdditionOverflow(CheckerContext &C,
 
     if (stateOverflow && !stateOkay) {
       // We have an overflow. Emit a bug report.
-      ExplodedNode *N = C.generateSink(stateOverflow);
+      ExplodedNode *N = C.generateErrorNode(stateOverflow);
       if (!N)
         return nullptr;
 
@@ -706,7 +706,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
       if (!Filter.CheckCStringNotNullTerm)
         return UndefinedVal();
 
-      if (ExplodedNode *N = C.addTransition(state)) {
+      if (ExplodedNode *N = C.generateNonFatalErrorNode(state)) {
         if (!BT_NotCString)
           BT_NotCString.reset(new BuiltinBug(
               Filter.CheckNameCStringNotNullTerm, categories::UnixAPI,
@@ -766,7 +766,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
     if (!Filter.CheckCStringNotNullTerm)
       return UndefinedVal();
 
-    if (ExplodedNode *N = C.addTransition(state)) {
+    if (ExplodedNode *N = C.generateNonFatalErrorNode(state)) {
       if (!BT_NotCString)
         BT_NotCString.reset(new BuiltinBug(
             Filter.CheckNameCStringNotNullTerm, categories::UnixAPI,

@@ -50,7 +50,7 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
         return;
 
     // Generate an error node.
-    ExplodedNode *N = C.generateSink();
+    ExplodedNode *N = C.generateErrorNode();
     if (!N)
       return;
 

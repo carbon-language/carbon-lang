@@ -131,7 +131,7 @@ void CastSizeChecker::checkPreStmt(const CastExpr *CE,CheckerContext &C) const {
   if (evenFlexibleArraySize(Ctx, regionSize, typeSize, ToPointeeTy))
     return;
 
-  if (ExplodedNode *errorNode = C.generateSink()) {
+  if (ExplodedNode *errorNode = C.generateErrorNode()) {
     if (!BT)
       BT.reset(new BuiltinBug(this, "Cast region with wrong size.",
                                     "Cast a region whose size is not a multiple"

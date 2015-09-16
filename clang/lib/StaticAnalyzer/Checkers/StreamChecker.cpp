@@ -271,7 +271,7 @@ void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
   if (x >= 0 && x <= 2)
     return;
 
-  if (ExplodedNode *N = C.addTransition(state)) {
+  if (ExplodedNode *N = C.generateNonFatalErrorNode(state)) {
     if (!BT_illegalwhence)
       BT_illegalwhence.reset(
           new BuiltinBug(this, "Illegal whence argument",
@@ -349,7 +349,7 @@ ProgramStateRef StreamChecker::CheckNullStream(SVal SV, ProgramStateRef state,
   std::tie(stateNotNull, stateNull) = CM.assumeDual(state, *DV);
 
   if (!stateNotNull && stateNull) {
-    if (ExplodedNode *N = C.generateSink(stateNull)) {
+    if (ExplodedNode *N = C.generateErrorNode(stateNull)) {
       if (!BT_nullfp)
         BT_nullfp.reset(new BuiltinBug(this, "NULL stream pointer",
                                        "Stream pointer might be NULL."));
@@ -378,7 +378,7 @@ ProgramStateRef StreamChecker::CheckDoubleClose(const CallExpr *CE,
   // Check: Double close a File Descriptor could cause undefined behaviour.
   // Conforming to man-pages
   if (SS->isClosed()) {
-    ExplodedNode *N = C.generateSink();
+    ExplodedNode *N = C.generateErrorNode();
     if (N) {
       if (!BT_doubleclose)
         BT_doubleclose.reset(new BuiltinBug(
@@ -406,7 +406,7 @@ void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
       continue;
 
     if (SS->isOpened()) {
-      ExplodedNode *N = C.generateSink();
+      ExplodedNode *N = C.generateErrorNode();
       if (N) {
         if (!BT_ResourceLeak)
           BT_ResourceLeak.reset(new BuiltinBug(

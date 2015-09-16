@@ -91,7 +91,7 @@ DereferenceChecker::AddDerefSource(raw_ostream &os,
 void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
                                    CheckerContext &C, bool IsBind) const {
   // Generate an error node.
-  ExplodedNode *N = C.generateSink(State);
+  ExplodedNode *N = C.generateErrorNode(State);
   if (!N)
     return;
 
@@ -184,7 +184,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
                                        CheckerContext &C) const {
   // Check for dereference of an undefined value.
   if (l.isUndef()) {
-    if (ExplodedNode *N = C.generateSink()) {
+    if (ExplodedNode *N = C.generateErrorNode()) {
       if (!BT_undef)
         BT_undef.reset(
             new BuiltinBug(this, "Dereference of undefined pointer value"));
@@ -219,7 +219,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
     // Otherwise, we have the case where the location could either be
     // null or not-null.  Record the error node as an "implicit" null
     // dereference.
-    if (ExplodedNode *N = C.generateSink(nullState)) {
+    if (ExplodedNode *N = C.generateSink(nullState, C.getPredecessor())) {
       ImplicitNullDerefEvent event = {l, isLoad, N, &C.getBugReporter(),
                                       /*IsDirectDereference=*/false};
       dispatchEvent(event);
@@ -257,7 +257,7 @@ void DereferenceChecker::checkBind(SVal L, SVal V, const Stmt *S,
 
     // At this point the value could be either null or non-null.
     // Record this as an "implicit" null dereference.
-    if (ExplodedNode *N = C.generateSink(StNull)) {
+    if (ExplodedNode *N = C.generateSink(StNull, C.getPredecessor())) {
       ImplicitNullDerefEvent event = {V, /*isLoad=*/true, N,
                                       &C.getBugReporter(),
                                       /*IsDirectDereference=*/false};

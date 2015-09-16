@@ -139,7 +139,7 @@ void ObjCContainersChecker::checkPreStmt(const CallExpr *CE,
     ProgramStateRef StInBound = State->assumeInBound(Idx, *Size, true, T);
     ProgramStateRef StOutBound = State->assumeInBound(Idx, *Size, false, T);
     if (StOutBound && !StInBound) {
-      ExplodedNode *N = C.generateSink(StOutBound);
+      ExplodedNode *N = C.generateErrorNode(StOutBound);
       if (!N)
         return;
       initBugType();

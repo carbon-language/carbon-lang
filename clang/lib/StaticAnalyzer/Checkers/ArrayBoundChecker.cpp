@@ -62,7 +62,7 @@ void ArrayBoundChecker::checkLocation(SVal l, bool isLoad, const Stmt* LoadS,
   ProgramStateRef StInBound = state->assumeInBound(Idx, NumElements, true);
   ProgramStateRef StOutBound = state->assumeInBound(Idx, NumElements, false);
   if (StOutBound && !StInBound) {
-    ExplodedNode *N = C.generateSink(StOutBound);
+    ExplodedNode *N = C.generateErrorNode(StOutBound);
     if (!N)
       return;
 

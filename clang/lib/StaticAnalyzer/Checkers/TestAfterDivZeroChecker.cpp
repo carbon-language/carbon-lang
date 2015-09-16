@@ -167,7 +167,7 @@ bool TestAfterDivZeroChecker::hasDivZeroMap(SVal Var,
 }
 
 void TestAfterDivZeroChecker::reportBug(SVal Val, CheckerContext &C) const {
-  if (ExplodedNode *N = C.generateSink(C.getState())) {
+  if (ExplodedNode *N = C.generateErrorNode(C.getState())) {
     if (!DivZeroBug)
       DivZeroBug.reset(new BuiltinBug(this, "Division by zero"));
 

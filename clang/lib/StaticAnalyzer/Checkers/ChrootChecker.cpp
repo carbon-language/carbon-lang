@@ -140,7 +140,7 @@ void ChrootChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
   void *const* k = C.getState()->FindGDM(ChrootChecker::getTag());
   if (k)
     if (isRootChanged((intptr_t) *k))
-      if (ExplodedNode *N = C.addTransition()) {
+      if (ExplodedNode *N = C.generateNonFatalErrorNode()) {
         if (!BT_BreakJail)
           BT_BreakJail.reset(new BuiltinBug(
               this, "Break out of jail", "No call of chdir(\"/\") immediately "

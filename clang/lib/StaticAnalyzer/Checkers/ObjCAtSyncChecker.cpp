@@ -43,7 +43,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
 
   // Uninitialized value used for the mutex?
   if (V.getAs<UndefinedVal>()) {
-    if (ExplodedNode *N = C.generateSink()) {
+    if (ExplodedNode *N = C.generateErrorNode()) {
       if (!BT_undef)
         BT_undef.reset(new BuiltinBug(this, "Uninitialized value used as mutex "
                                             "for @synchronized"));
@@ -66,7 +66,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
     if (!notNullState) {
       // Generate an error node.  This isn't a sink since
       // a null mutex just means no synchronization occurs.
-      if (ExplodedNode *N = C.addTransition(nullState)) {
+      if (ExplodedNode *N = C.generateNonFatalErrorNode(nullState)) {
         if (!BT_null)
           BT_null.reset(new BuiltinBug(
               this, "Nil value used as mutex for @synchronized() "

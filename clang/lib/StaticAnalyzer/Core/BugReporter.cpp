@@ -3224,6 +3224,11 @@ void BugReporter::Register(BugType *BT) {
 
 void BugReporter::emitReport(std::unique_ptr<BugReport> R) {
   if (const ExplodedNode *E = R->getErrorNode()) {
+    // An error node must either be a sink or have a tag, otherwise
+    // it could get reclaimed before the path diagnostic is created.
+    assert((E->isSink() || E->getLocation().getTag()) &&
+            "Error node must either be a sink or have a tag");
+
     const AnalysisDeclContext *DeclCtx =
         E->getLocationContext()->getAnalysisDeclContext();
     // The source of autosynthesized body can be handcrafted AST or a model

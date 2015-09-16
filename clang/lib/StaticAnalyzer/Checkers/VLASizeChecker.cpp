@@ -46,7 +46,7 @@ void VLASizeChecker::reportBug(VLASize_Kind Kind,
                                ProgramStateRef State,
                                CheckerContext &C) const {
   // Generate an error node.
-  ExplodedNode *N = C.generateSink(State);
+  ExplodedNode *N = C.generateErrorNode(State);
   if (!N)
     return;
 
