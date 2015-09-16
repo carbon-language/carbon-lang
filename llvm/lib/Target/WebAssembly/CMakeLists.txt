@@ -12,6 +12,7 @@ add_public_tablegen_target(WebAssemblyCommonTableGen)
 add_llvm_target(WebAssemblyCodeGen
   Relooper.cpp
   WebAssemblyAsmPrinter.cpp
+  WebAssemblyCFGStackify.cpp
   WebAssemblyFastISel.cpp
   WebAssemblyFrameLowering.cpp
   WebAssemblyISelDAGToDAG.cpp

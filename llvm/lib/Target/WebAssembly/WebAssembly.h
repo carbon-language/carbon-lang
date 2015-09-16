@@ -26,6 +26,8 @@ class FunctionPass;
 FunctionPass *createWebAssemblyISelDag(WebAssemblyTargetMachine &TM,
                                        CodeGenOpt::Level OptLevel);
 
+FunctionPass *createWebAssemblyCFGStackify();
+
 } // end namespace llvm
 
 #endif

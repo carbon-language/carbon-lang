@@ -30,6 +30,7 @@ def SDT_WebAssemblyCallSeqEnd :
     SDCallSeqEnd<[SDTCisVT<0, iPTR>, SDTCisVT<1, iPTR>]>;
 def SDT_WebAssemblyCall0    : SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>;
 def SDT_WebAssemblyCall1    : SDTypeProfile<1, -1, [SDTCisPtrTy<1>]>;
+def SDT_WebAssemblySwitch   : SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>;
 def SDT_WebAssemblyArgument : SDTypeProfile<1, 1, [SDTCisVT<1, i32>]>;
 def SDT_WebAssemblyReturn   : SDTypeProfile<0, -1, []>;
 def SDT_WebAssemblyWrapper  : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
@@ -51,6 +52,9 @@ def WebAssemblycall0 : SDNode<"WebAssemblyISD::CALL0",
 def WebAssemblycall1 : SDNode<"WebAssemblyISD::CALL1",
                               SDT_WebAssemblyCall1,
                               [SDNPHasChain, SDNPVariadic]>;
+def WebAssemblyswitch : SDNode<"WebAssemblyISD::SWITCH",
+                               SDT_WebAssemblySwitch,
+                               [SDNPHasChain, SDNPVariadic]>;
 def WebAssemblyargument : SDNode<"WebAssemblyISD::ARGUMENT",
                                  SDT_WebAssemblyArgument>;
 def WebAssemblyreturn   : SDNode<"WebAssemblyISD::RETURN",
@@ -69,6 +73,8 @@ def WebAssemblywrapper  : SDNode<"WebAssemblyISD::Wrapper",
  * set_local: set the current value of a local variable
 */
 
+def bb_op : Operand<OtherVT>;
+def tjumptable_op : Operand<iPTR>;
 def global : Operand<iPTR>;
 
 //===----------------------------------------------------------------------===//
@@ -96,9 +102,11 @@ def Immediate_F32 : I<(outs Float32:$res), (ins f32imm:$imm),
 def Immediate_F64 : I<(outs Float64:$res), (ins f64imm:$imm),
                       [(set Float64:$res, fpimm:$imm)]>;
 
-// Special types of immediates.
+// Special types of immediates. FIXME: Hard-coded as 32-bit for now.
 def GLOBAL : I<(outs Int32:$dst), (ins global:$addr),
                [(set Int32:$dst, (WebAssemblywrapper tglobaladdr:$addr))]>;
+def JUMP_TABLE : I<(outs Int32:$dst), (ins tjumptable_op:$addr),
+                   [(set Int32:$dst, (WebAssemblywrapper tjumptable:$addr))]>;
 
 //===----------------------------------------------------------------------===//
 // Additional sets of instructions.

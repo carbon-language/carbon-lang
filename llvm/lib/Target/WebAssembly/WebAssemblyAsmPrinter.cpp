@@ -73,6 +73,7 @@ private:
 
   void EmitGlobalVariable(const GlobalVariable *GV) override;
 
+  void EmitJumpTableInfo() override;
   void EmitConstantPool() override;
   void EmitFunctionEntryLabel() override;
   void EmitFunctionBodyStart() override;
@@ -213,6 +214,10 @@ void WebAssemblyAsmPrinter::EmitConstantPool() {
          "WebAssembly disables constant pools");
 }
 
+void WebAssemblyAsmPrinter::EmitJumpTableInfo() {
+  // Nothing to do; jump tables are incorporated into the instruction stream.
+}
+
 void WebAssemblyAsmPrinter::EmitFunctionEntryLabel() {
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
@@ -292,6 +297,9 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       } break;
       case MachineOperand::MO_GlobalAddress: {
         OS << ' ' << toSymbol(MO.getGlobal()->getName());
+      } break;
+      case MachineOperand::MO_MachineBasicBlock: {
+        OS << ' ' << toSymbol(MO.getMBB()->getSymbol()->getName());
       } break;
       }
     OS << ')';

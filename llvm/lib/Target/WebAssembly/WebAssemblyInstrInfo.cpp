@@ -37,3 +37,89 @@ void WebAssemblyInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   BuildMI(MBB, I, DL, get(WebAssembly::COPY), DestReg)
       .addReg(SrcReg, KillSrc ? RegState::Kill : 0);
 }
+
+// Branch analysis.
+bool WebAssemblyInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
+                                         MachineBasicBlock *&TBB,
+                                         MachineBasicBlock *&FBB,
+                                         SmallVectorImpl<MachineOperand> &Cond,
+                                         bool AllowModify) const {
+  bool HaveCond = false;
+  for (MachineInstr &MI : iterator_range<MachineBasicBlock::instr_iterator>(
+           MBB.getFirstInstrTerminator(), MBB.instr_end())) {
+    switch (MI.getOpcode()) {
+    default:
+      // Unhandled instruction; bail out.
+      return true;
+    case WebAssembly::BRIF:
+      if (HaveCond)
+        return true;
+      Cond.push_back(MI.getOperand(1));
+      TBB = MI.getOperand(0).getMBB();
+      HaveCond = true;
+      break;
+    case WebAssembly::BR:
+      if (!HaveCond)
+        TBB = MI.getOperand(0).getMBB();
+      else
+        FBB = MI.getOperand(0).getMBB();
+      break;
+    }
+    if (MI.isBarrier())
+      break;
+  }
+
+  return false;
+}
+
+unsigned WebAssemblyInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+  MachineBasicBlock::instr_iterator I = MBB.instr_end();
+  unsigned Count = 0;
+
+  while (I != MBB.instr_begin()) {
+    --I;
+    if (I->isDebugValue())
+      continue;
+    if (!I->isTerminator())
+      break;
+    // Remove the branch.
+    I->eraseFromParent();
+    I = MBB.instr_end();
+    ++Count;
+  }
+
+  return Count;
+}
+
+unsigned WebAssemblyInstrInfo::InsertBranch(
+    MachineBasicBlock &MBB, MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+    ArrayRef<MachineOperand> Cond, DebugLoc DL) const {
+  assert(Cond.size() <= 1);
+
+  if (Cond.empty()) {
+    if (!TBB)
+      return 0;
+
+    BuildMI(&MBB, DL, get(WebAssembly::BR)).addMBB(TBB);
+    return 1;
+  }
+
+  BuildMI(&MBB, DL, get(WebAssembly::BRIF))
+      .addMBB(TBB)
+      .addOperand(Cond[0]);
+  if (!FBB)
+    return 1;
+
+  BuildMI(&MBB, DL, get(WebAssembly::BR)).addMBB(FBB);
+  return 2;
+}
+
+bool WebAssemblyInstrInfo::ReverseBranchCondition(
+    SmallVectorImpl<MachineOperand> &Cond) const {
+  assert(Cond.size() == 1);
+
+  // TODO: Add branch reversal here... And re-enable MachineBlockPlacementID
+  // when we do.
+
+  return true;
+}

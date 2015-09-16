@@ -1,8 +1,5 @@
 ; RUN: llc < %s -asm-verbose=false | FileCheck %s
 
-; This test depends on branching support, which is not yet checked in.
-; XFAIL: *
-
 ; Test that phis are lowered.
 
 target datalayout = "e-p:32:32-i64:64-n32:64-S128"
@@ -29,7 +26,7 @@ done:
 ; Swap phis.
 
 ; CHECK-LABEL: test1
-; CHECK: BB0_1:
+; CHECK: BB1_1:
 ; CHECK: (setlocal [[REG0:@.*]] [[REG1:@.*]])
 ; CHECK: (setlocal [[REG1]] [[REG2:@.*]])
 ; CHECK: (setlocal [[REG2]] [[REG0]])

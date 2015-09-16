@@ -20,6 +20,7 @@
 #include "WebAssemblyTargetObjectFile.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -114,6 +115,7 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   computeRegisterProperties(Subtarget->getRegisterInfo());
 
   setOperationAction(ISD::GlobalAddress, MVTPtr, Custom);
+  setOperationAction(ISD::JumpTable, MVTPtr, Custom);
 
   for (auto T : {MVT::f32, MVT::f64}) {
     // Don't expand the floating-point types to constant pools.
@@ -152,6 +154,14 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVTPtr, Expand);
+
+  // Expand these forms; we pattern-match the forms that we can handle in isel.
+  for (auto T : {MVT::i32, MVT::i64, MVT::f32, MVT::f64})
+    for (auto Op : {ISD::BR_CC, ISD::SELECT_CC})
+      setOperationAction(Op, T, Expand);
+
+  // We have custom switch handling.
+  setOperationAction(ISD::BR_JT, MVT::Other, Custom);
 
   // WebAssembly doesn't have:
   //  - Floating-point extending loads.
@@ -365,6 +375,10 @@ SDValue WebAssemblyTargetLowering::LowerOperation(SDValue Op,
     return SDValue();
   case ISD::GlobalAddress:
     return LowerGlobalAddress(Op, DAG);
+  case ISD::JumpTable:
+    return LowerJumpTable(Op, DAG);
+  case ISD::BR_JT:
+    return LowerBR_JT(Op, DAG);
   }
 }
 
@@ -380,6 +394,43 @@ SDValue WebAssemblyTargetLowering::LowerGlobalAddress(SDValue Op,
     fail(DL, DAG, "WebAssembly only expects the 0 address space");
   return DAG.getNode(WebAssemblyISD::Wrapper, DL, VT,
                      DAG.getTargetGlobalAddress(GA->getGlobal(), DL, VT));
+}
+
+SDValue WebAssemblyTargetLowering::LowerJumpTable(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  // There's no need for a Wrapper node because we always incorporate a jump
+  // table operand into a SWITCH instruction, rather than ever materializing
+  // it in a register.
+  const JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
+  return DAG.getTargetJumpTable(JT->getIndex(), Op.getValueType(),
+                                JT->getTargetFlags());
+}
+
+SDValue WebAssemblyTargetLowering::LowerBR_JT(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Chain = Op.getOperand(0);
+  const auto *JT = cast<JumpTableSDNode>(Op.getOperand(1));
+  SDValue Index = Op.getOperand(2);
+  assert(JT->getTargetFlags() == 0 && "WebAssembly doesn't set target flags");
+
+  SmallVector<SDValue, 8> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Index);
+
+  MachineJumpTableInfo *MJTI = DAG.getMachineFunction().getJumpTableInfo();
+  const auto &MBBs = MJTI->getJumpTables()[JT->getIndex()].MBBs;
+
+  // TODO: For now, we just pick something arbitrary for a default case for now.
+  // We really want to sniff out the guard and put in the real default case (and
+  // delete the guard).
+  Ops.push_back(DAG.getBasicBlock(MBBs[0]));
+
+  // Add an operand for each case.
+  for (auto MBB : MBBs)
+    Ops.push_back(DAG.getBasicBlock(MBB));
+
+  return DAG.getNode(WebAssemblyISD::SWITCH, DL, MVT::Other, Ops);
 }
 
 //===----------------------------------------------------------------------===//
