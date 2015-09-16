@@ -3217,49 +3217,7 @@ ClangASTContext::IsPossibleDynamicType (void* type, CompilerType *dynamic_pointe
                         if (dynamic_pointee_type)
                             dynamic_pointee_type->SetCompilerType(getASTContext(), pointee_qual_type);
                         return true;
-                        
-                    case clang::BuiltinType::NullPtr:
-                    case clang::BuiltinType::Bool:
-                    case clang::BuiltinType::Char_U:
-                    case clang::BuiltinType::UChar:
-                    case clang::BuiltinType::WChar_U:
-                    case clang::BuiltinType::Char16:
-                    case clang::BuiltinType::Char32:
-                    case clang::BuiltinType::UShort:
-                    case clang::BuiltinType::UInt:
-                    case clang::BuiltinType::ULong:
-                    case clang::BuiltinType::ULongLong:
-                    case clang::BuiltinType::UInt128:
-                    case clang::BuiltinType::Char_S:
-                    case clang::BuiltinType::SChar:
-                    case clang::BuiltinType::WChar_S:
-                    case clang::BuiltinType::Short:
-                    case clang::BuiltinType::Int:
-                    case clang::BuiltinType::Long:
-                    case clang::BuiltinType::LongLong:
-                    case clang::BuiltinType::Int128:
-                    case clang::BuiltinType::Float:
-                    case clang::BuiltinType::Double:
-                    case clang::BuiltinType::LongDouble:
-                    case clang::BuiltinType::Dependent:
-                    case clang::BuiltinType::Overload:
-                    case clang::BuiltinType::ObjCId:
-                    case clang::BuiltinType::ObjCClass:
-                    case clang::BuiltinType::ObjCSel:
-                    case clang::BuiltinType::BoundMember:
-                    case clang::BuiltinType::Half:
-                    case clang::BuiltinType::ARCUnbridgedCast:
-                    case clang::BuiltinType::PseudoObject:
-                    case clang::BuiltinType::BuiltinFn:
-                    case clang::BuiltinType::OCLEvent:
-                    case clang::BuiltinType::OCLImage1d:
-                    case clang::BuiltinType::OCLImage1dArray:
-                    case clang::BuiltinType::OCLImage1dBuffer:
-                    case clang::BuiltinType::OCLImage2d:
-                    case clang::BuiltinType::OCLImage2dArray:
-                    case clang::BuiltinType::OCLImage3d:
-                    case clang::BuiltinType::OCLSampler:
-                    case clang::BuiltinType::OMPArraySection:
+                    default:
                         break;
                 }
                     break;
@@ -4571,25 +4529,7 @@ ClangASTContext::GetFormat (void* type)
             case clang::BuiltinType::Float:         return lldb::eFormatFloat;
             case clang::BuiltinType::Double:        return lldb::eFormatFloat;
             case clang::BuiltinType::LongDouble:    return lldb::eFormatFloat;
-            case clang::BuiltinType::NullPtr:
-            case clang::BuiltinType::Overload:
-            case clang::BuiltinType::Dependent:
-            case clang::BuiltinType::ObjCId:
-            case clang::BuiltinType::ObjCClass:
-            case clang::BuiltinType::ObjCSel:
-            case clang::BuiltinType::Half:
-            case clang::BuiltinType::ARCUnbridgedCast:
-            case clang::BuiltinType::PseudoObject:
-            case clang::BuiltinType::BuiltinFn:
-            case clang::BuiltinType::OCLEvent:
-            case clang::BuiltinType::OCLImage1d:
-            case clang::BuiltinType::OCLImage1dArray:
-            case clang::BuiltinType::OCLImage1dBuffer:
-            case clang::BuiltinType::OCLImage2d:
-            case clang::BuiltinType::OCLImage2dArray:
-            case clang::BuiltinType::OCLImage3d:
-            case clang::BuiltinType::OCLSampler:
-            case clang::BuiltinType::OMPArraySection:
+            default:
                 return lldb::eFormatHex;
         }
             break;
@@ -4872,22 +4812,7 @@ ClangASTContext::GetBasicTypeEnumeration (void* type)
                 case clang::BuiltinType::ObjCId:    return eBasicTypeObjCID;
                 case clang::BuiltinType::ObjCClass: return eBasicTypeObjCClass;
                 case clang::BuiltinType::ObjCSel:   return eBasicTypeObjCSel;
-                case clang::BuiltinType::Dependent:
-                case clang::BuiltinType::Overload:
-                case clang::BuiltinType::BoundMember:
-                case clang::BuiltinType::PseudoObject:
-                case clang::BuiltinType::UnknownAny:
-                case clang::BuiltinType::BuiltinFn:
-                case clang::BuiltinType::ARCUnbridgedCast:
-                case clang::BuiltinType::OCLEvent:
-                case clang::BuiltinType::OCLImage1d:
-                case clang::BuiltinType::OCLImage1dArray:
-                case clang::BuiltinType::OCLImage1dBuffer:
-                case clang::BuiltinType::OCLImage2d:
-                case clang::BuiltinType::OCLImage2dArray:
-                case clang::BuiltinType::OCLImage3d:
-                case clang::BuiltinType::OCLSampler:
-                case clang::BuiltinType::OMPArraySection:
+                default:
                     return eBasicTypeOther;
             }
         }
@@ -5494,6 +5419,8 @@ ClangASTContext::GetNumPointeeChildren (clang::QualType type)
             case clang::BuiltinType::BuiltinFn:
             case clang::BuiltinType::OMPArraySection:
                 return 1;
+            default:
+                return 0;
         }
             break;
             
