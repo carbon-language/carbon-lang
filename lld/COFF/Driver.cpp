@@ -374,6 +374,10 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       Config->DoICF = true;
       continue;
     }
+    if (S == "noicf") {
+      Config->DoICF = false;
+      continue;
+    }
     if (StringRef(S).startswith("lldlto=")) {
       StringRef OptLevel = StringRef(S).substr(7);
       if (OptLevel.getAsInteger(10, Config->LTOOptLevel) ||
@@ -387,7 +391,7 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
         error("/opt:lldltojobs: invalid job count: " + Jobs);
       continue;
     }
-    if (S != "ref" && S != "noicf" && S != "lbr" && S != "nolbr")
+    if (S != "ref" && S != "lbr" && S != "nolbr")
       error(Twine("/opt: unknown option: ") + S);
   }
 
