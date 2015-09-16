@@ -1845,8 +1845,7 @@ void CodeGenFunction::EnterSEHTryStmt(const SEHTryStmt &S) {
       HelperCGF.GenerateSEHFilterFunction(*this, *Except);
   llvm::Constant *OpaqueFunc =
       llvm::ConstantExpr::getBitCast(FilterFunc, Int8PtrTy);
-  CatchScope->setHandler(0, CatchTypeInfo{OpaqueFunc},
-                         createBasicBlock("__except.ret"));
+  CatchScope->setHandler(0, OpaqueFunc, createBasicBlock("__except.ret"));
 }
 
 void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S) {
