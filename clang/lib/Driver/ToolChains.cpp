@@ -3761,7 +3761,7 @@ SanitizerMask Linux::getSupportedSanitizers() const {
     Res |= SanitizerKind::Leak;
   if (IsX86_64 || IsMIPS64 || IsAArch64)
     Res |= SanitizerKind::Thread;
-  if (IsX86_64 || IsMIPS64 || IsPowerPC64)
+  if (IsX86_64 || IsMIPS64 || IsPowerPC64 || IsAArch64)
     Res |= SanitizerKind::Memory;
   if (IsX86 || IsX86_64) {
     Res |= SanitizerKind::Function;
