@@ -367,6 +367,7 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     std::string S = StringRef(Arg->getValue()).lower();
     if (S == "noref") {
       Config->DoGC = false;
+      Config->DoICF = false;
       continue;
     }
     if (S == "icf" || StringRef(S).startswith("icf=")) {

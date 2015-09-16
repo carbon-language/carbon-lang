@@ -66,6 +66,7 @@ struct Configuration {
   bool NoEntry = false;
   std::string OutputFile;
   bool DoGC = true;
+  bool DoICF = true;
   bool Relocatable = true;
   bool Force = false;
   bool Debug = false;
@@ -87,9 +88,6 @@ struct Configuration {
   // Used for SafeSEH.
   DefinedRelative *SEHTable = nullptr;
   DefinedAbsolute *SEHCount = nullptr;
-
-  // True if /opt:icf is specified.
-  bool DoICF = false;
 
   // Used for /opt:lldlto=N
   unsigned LTOOptLevel = 2;
