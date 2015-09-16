@@ -2531,7 +2531,7 @@ ClangASTContext::IsArrayType (void* type,
         *size = 0;
     if (is_incomplete)
         *is_incomplete = false;
-    return 0;
+    return false;
 }
 
 bool

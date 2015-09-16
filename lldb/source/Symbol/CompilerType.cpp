@@ -78,7 +78,7 @@ CompilerType::IsArrayType (CompilerType *element_type_ptr,
         *size = 0;
     if (is_incomplete)
         *is_incomplete = false;
-    return 0;
+    return false;
 }
 
 bool
