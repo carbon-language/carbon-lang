@@ -147,6 +147,7 @@ class lld::elf2::OutputSection final
 public:
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
   typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags,
                 RelocationSection<ELFT> &RelaDynSec)
@@ -155,6 +156,16 @@ public:
 
   void addChunk(SectionChunk<ELFT> *C);
   void writeTo(uint8_t *Buf) override;
+
+  template <bool isRela>
+  void relocate(uint8_t *Buf,
+                iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels,
+                const ObjectFile<ELFT> &File, uintX_t BaseAddr);
+
+  void relocateOne(uint8_t *Buf, const Elf_Rela &Rel, uint32_t Type,
+                   uintX_t BaseAddr, uintX_t SymVA);
+  void relocateOne(uint8_t *Buf, const Elf_Rel &Rel, uint32_t Type,
+                   uintX_t BaseAddr, uintX_t SymVA);
 
 private:
   std::vector<SectionChunk<ELFT> *> Chunks;
@@ -540,61 +551,93 @@ getSymVA(const DefinedRegular<ELFT> *DR) {
   return OS->getVA() + SC->getOutputSectionOff() + DR->Sym.st_value;
 }
 
+template <class ELFT>
+void OutputSection<ELFT>::relocateOne(uint8_t *Buf, const Elf_Rel &Rel,
+                                      uint32_t Type, uintX_t BaseAddr,
+                                      uintX_t SymVA) {
+  uintX_t Offset = Rel.r_offset;
+  uint8_t *Location = Buf + Offset;
+  switch (Type) {
+  case R_386_32:
+    support::endian::write32le(Location, SymVA);
+    break;
+  default:
+    llvm::errs() << Twine("unrecognized reloc ") + Twine(Type) << '\n';
+    break;
+  }
+}
+
+template <class ELFT>
+void OutputSection<ELFT>::relocateOne(uint8_t *Buf, const Elf_Rela &Rel,
+                                      uint32_t Type, uintX_t BaseAddr,
+                                      uintX_t SymVA) {
+  uintX_t Offset = Rel.r_offset;
+  uint8_t *Location = Buf + Offset;
+  switch (Type) {
+  case R_X86_64_PC32:
+    support::endian::write32le(Location,
+                               SymVA + (Rel.r_addend - (BaseAddr + Offset)));
+    break;
+  case R_X86_64_64:
+    support::endian::write64le(Location, SymVA + Rel.r_addend);
+    break;
+  case R_X86_64_32: {
+  case R_X86_64_32S:
+    uint64_t VA = SymVA + Rel.r_addend;
+    if (Type == R_X86_64_32 && !isUInt<32>(VA))
+      error("R_X86_64_32 out of range");
+    else if (!isInt<32>(VA))
+      error("R_X86_64_32S out of range");
+
+    support::endian::write32le(Location, VA);
+    break;
+  }
+  default:
+    llvm::errs() << Twine("unrecognized reloc ") + Twine(Type) << '\n';
+    break;
+  }
+}
+
+template <class ELFT>
+template <bool isRela>
+void OutputSection<ELFT>::relocate(
+    uint8_t *Buf, iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels,
+    const ObjectFile<ELFT> &File, uintX_t BaseAddr) {
+  typedef Elf_Rel_Impl<ELFT, isRela> RelType;
+  bool IsMips64EL = File.getObj()->isMips64EL();
+  for (const RelType &RI : Rels) {
+    uint32_t SymIndex = RI.getSymbol(IsMips64EL);
+    const SymbolBody *Body = File.getSymbolBody(SymIndex);
+    if (!Body)
+      continue;
+
+    uintX_t SymVA;
+    if (auto *DR = dyn_cast<DefinedRegular<ELFT>>(Body))
+      SymVA = getSymVA<ELFT>(DR);
+    else if (auto *DA = dyn_cast<DefinedAbsolute<ELFT>>(Body))
+      SymVA = DA->Sym.st_value;
+    else
+      // Skip unsupported for now.
+      continue;
+
+    uint32_t Type = RI.getType(IsMips64EL);
+    relocateOne(Buf, RI, Type, BaseAddr, SymVA);
+  }
+}
+
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
   for (SectionChunk<ELFT> *C : Chunks) {
     C->writeTo(Buf);
     const ObjectFile<ELFT> *File = C->getFile();
     ELFFile<ELFT> *EObj = File->getObj();
     uint8_t *Base = Buf + C->getOutputSectionOff();
-
+    uintX_t BaseAddr = this->getVA() + C->getOutputSectionOff();
     // Iterate over all relocation sections that apply to this section.
     for (const Elf_Shdr *RelSec : C->RelocSections) {
-      // Only support RELA for now.
-      if (RelSec->sh_type != SHT_RELA)
-        continue;
-      for (const Elf_Rela &RI : EObj->relas(RelSec)) {
-        uint32_t SymIndex = RI.getSymbol(EObj->isMips64EL());
-        const SymbolBody *Body = File->getSymbolBody(SymIndex);
-        if (!Body)
-          continue;
-
-        uintX_t SymVA;
-        if (auto *DR = dyn_cast<DefinedRegular<ELFT>>(Body))
-          SymVA = getSymVA<ELFT>(DR);
-        else if (auto *DA = dyn_cast<DefinedAbsolute<ELFT>>(Body))
-          SymVA = DA->Sym.st_value;
-        else
-          // Skip unsupported for now.
-          continue;
-
-        uintX_t Offset = RI.r_offset;
-        uint32_t Type = RI.getType(EObj->isMips64EL());
-        uintX_t P = this->getVA() + C->getOutputSectionOff();
-        uint8_t *Location = Base + Offset;
-        switch (Type) {
-        case llvm::ELF::R_X86_64_PC32:
-          support::endian::write32le(Location,
-                                     SymVA + (RI.r_addend - (P + Offset)));
-          break;
-        case llvm::ELF::R_X86_64_64:
-          support::endian::write64le(Location, SymVA + RI.r_addend);
-          break;
-        case llvm::ELF::R_X86_64_32: {
-        case llvm::ELF::R_X86_64_32S:
-          uint64_t VA = SymVA + RI.r_addend;
-          if (Type == llvm::ELF::R_X86_64_32 && !isUInt<32>(VA))
-            error("R_X86_64_32 out of range");
-          else if (!isInt<32>(VA))
-            error("R_X86_64_32S out of range");
-
-          support::endian::write32le(Location, VA);
-          break;
-        }
-        default:
-          llvm::errs() << Twine("unrecognized reloc ") + Twine(Type) << '\n';
-          break;
-        }
-      }
+      if (RelSec->sh_type == SHT_RELA)
+        relocate(Base, EObj->relas(RelSec), *File, BaseAddr);
+      else
+        relocate(Base, EObj->rels(RelSec), *File, BaseAddr);
     }
   }
 }
