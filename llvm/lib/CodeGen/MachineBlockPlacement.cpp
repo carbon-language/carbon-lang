@@ -51,7 +51,7 @@ using namespace llvm;
 #define DEBUG_TYPE "block-placement"
 
 STATISTIC(NumCondBranches, "Number of conditional branches");
-STATISTIC(NumUncondBranches, "Number of uncondittional branches");
+STATISTIC(NumUncondBranches, "Number of unconditional branches");
 STATISTIC(CondBranchTakenFreq,
           "Potential frequency of taking conditional branches");
 STATISTIC(UncondBranchTakenFreq,
