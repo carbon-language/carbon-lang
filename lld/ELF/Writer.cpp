@@ -336,9 +336,13 @@ public:
     typename Base::HeaderT &Header = this->Header;
     Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
     Header.sh_entsize = ELFT::Is64Bits ? 16 : 8;
+  }
+
+  void finalize() override {
+    typename Base::HeaderT &Header = this->Header;
+    Header.sh_link = DynStrSec.getSectionIndex();
 
     unsigned NumEntries = 0;
-
     if (RelaDynSec.hasReocs()) {
       ++NumEntries; // DT_RELA
       ++NumEntries; // DT_RELASZ
@@ -363,10 +367,6 @@ public:
     ++NumEntries; // DT_NULL
 
     Header.sh_size = NumEntries * Header.sh_entsize;
-  }
-
-  void finalize() override {
-    this->Header.sh_link = DynStrSec.getSectionIndex();
   }
 
   void writeTo(uint8_t *Buf) override {

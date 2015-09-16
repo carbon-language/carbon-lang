@@ -44,6 +44,14 @@
 // CHECK-NEXT:  Tag                Type                 Name/Value
 // CHECK-NEXT:  0x0000000000000007 RELA                 [[RELAADDR]]
 // CHECK-NEXT:  0x0000000000000008 RELASZ               [[RELASIZE]] (bytes)
+// CHECK-NEXT:  0x0000000000000006 SYMTAB               0x12000
+// CHECK-NEXT:  0x0000000000000005 STRTAB               0x15000
+// CHECK-NEXT:  0x000000000000000A STRSZ                90 (bytes)
+// CHECK-NEXT:  0x0000000000000004 HASH                 0x13000
+// CHECK-NEXT:  0x0000000000000001 NEEDED               SharedLibrary ({{.*}}2.so)
+// CHECK-NEXT:  0x0000000000000000 NULL                 0x0
+// CHECK-NEXT: ]
+
 
 .global _start
 _start:
