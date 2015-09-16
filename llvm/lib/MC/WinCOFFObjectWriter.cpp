@@ -710,6 +710,11 @@ void WinCOFFObjectWriter::recordRelocation(
     Asm.getContext().reportFatalError(Fixup.getLoc(),
                                       Twine("symbol '") + A.getName() +
                                           "' can not be undefined");
+  if (A.isTemporary() && A.isUndefined()) {
+    Asm.getContext().reportFatalError(Fixup.getLoc(),
+                                      Twine("assembler label '") + A.getName() +
+                                          "' can not be undefined");
+  }
 
   MCSection *Section = Fragment->getParent();
 
