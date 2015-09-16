@@ -51,6 +51,12 @@ static cl::opt<bool> LegalityCheckDisabled(
     "disable-polly-legality", cl::desc("Disable polly legality check"),
     cl::Hidden, cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
+static cl::opt<bool>
+    UseReductions("polly-dependences-use-reductions",
+                  cl::desc("Exploit reductions in dependence analysis"),
+                  cl::Hidden, cl::init(true), cl::ZeroOrMore,
+                  cl::cat(PollyCategory));
+
 enum AnalysisType { VALUE_BASED_ANALYSIS, MEMORY_BASED_ANALYSIS };
 
 static cl::opt<enum AnalysisType> OptAnalysisType(
@@ -79,10 +85,11 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
   *StmtSchedule = isl_union_map_empty(Space);
 
   SmallPtrSet<const Value *, 8> ReductionBaseValues;
-  for (ScopStmt &Stmt : S)
-    for (MemoryAccess *MA : Stmt)
-      if (MA->isReductionLike())
-        ReductionBaseValues.insert(MA->getBaseAddr());
+  if (UseReductions)
+    for (ScopStmt &Stmt : S)
+      for (MemoryAccess *MA : Stmt)
+        if (MA->isReductionLike())
+          ReductionBaseValues.insert(MA->getBaseAddr());
 
   for (ScopStmt &Stmt : S) {
     for (MemoryAccess *MA : Stmt) {
