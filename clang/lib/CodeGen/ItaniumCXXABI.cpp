@@ -179,10 +179,10 @@ public:
   void EmitFundamentalRTTIDescriptor(QualType Type);
   void EmitFundamentalRTTIDescriptors();
   llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) override;
-  llvm::Constant *
+  CatchTypeInfo
   getAddrOfCXXCatchHandlerType(QualType Ty,
                                QualType CatchHandlerType) override {
-    return getAddrOfRTTIDescriptor(Ty);
+    return CatchTypeInfo{getAddrOfRTTIDescriptor(Ty), 0};
   }
 
   bool shouldTypeidBeNullChecked(bool IsDeref, QualType SrcRecordTy) override;

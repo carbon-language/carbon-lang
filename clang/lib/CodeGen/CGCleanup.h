@@ -33,6 +33,13 @@ namespace CodeGen {
 class CodeGenModule;
 class CodeGenFunction;
 
+/// The MS C++ ABI needs a pointer to RTTI data plus some flags to describe the
+/// type of a catch handler, so we use this wrapper.
+struct CatchTypeInfo {
+  llvm::Constant *RTTI;
+  unsigned Flags;
+};
+
 /// A protected scope for zero-cost EH handling.
 class EHScope {
   llvm::BasicBlock *CachedLandingPad;
@@ -153,12 +160,12 @@ public:
   struct Handler {
     /// A type info value, or null (C++ null, not an LLVM null pointer)
     /// for a catch-all.
-    llvm::Constant *Type;
+    CatchTypeInfo Type;
 
     /// The catch handler for this type.
     llvm::BasicBlock *Block;
 
-    bool isCatchAll() const { return Type == nullptr; }
+    bool isCatchAll() const { return Type.RTTI == nullptr; }
   };
 
 private:
@@ -188,10 +195,16 @@ public:
   }
 
   void setCatchAllHandler(unsigned I, llvm::BasicBlock *Block) {
-    setHandler(I, /*catchall*/ nullptr, Block);
+    setHandler(I, CatchTypeInfo{nullptr, 0}, Block);
   }
 
   void setHandler(unsigned I, llvm::Constant *Type, llvm::BasicBlock *Block) {
+    assert(I < getNumHandlers());
+    getHandlers()[I].Type = CatchTypeInfo{Type, 0};
+    getHandlers()[I].Block = Block;
+  }
+
+  void setHandler(unsigned I, CatchTypeInfo Type, llvm::BasicBlock *Block) {
     assert(I < getNumHandlers());
     getHandlers()[I].Type = Type;
     getHandlers()[I].Block = Block;

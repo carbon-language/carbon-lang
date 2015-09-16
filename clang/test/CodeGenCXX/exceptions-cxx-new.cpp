@@ -17,7 +17,7 @@ void test_catch() {
 // CHECK:         to label %[[NORMAL:.*]] unwind label %[[CATCH_INT:.*]]
 
 // CHECK: [[CATCH_INT]]
-// CHECK:   %[[CATCHPAD_INT:.*]] = catchpad [{{.*}} @llvm.eh.handlertype.H.0, i8* null]
+// CHECK:   %[[CATCHPAD_INT:.*]] = catchpad [%rtti.TypeDescriptor2* @"\01??_R0H@8", i32 0, i8* null]
 // CHECK:         to label %[[CATCH_INT_HANDLER:.*]] unwind label %[[CATCH_DOUBLE:.*]]
 
 // CHECK: [[CATCH_INT_HANDLER]]
@@ -34,7 +34,7 @@ void test_catch() {
 // CHECK:   ret void
 
 // CHECK: [[CATCH_DOUBLE]]
-// CHECK:   %[[CATCHPAD_DOUBLE:.*]] = catchpad [{{.*}} @llvm.eh.handlertype.N.0, i8* null]
+// CHECK:   %[[CATCHPAD_DOUBLE:.*]] = catchpad [%rtti.TypeDescriptor2* @"\01??_R0N@8", i32 0, i8* null]
 // CHECK:           to label %[[CATCH_DOUBLE_HANDLER:.*]] unwind label %[[CATCHENDPAD]]
 
 // CHECK: [[CATCH_DOUBLE_HANDLER]]

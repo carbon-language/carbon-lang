@@ -3808,12 +3808,6 @@ llvm::Constant *CodeGenModule::EmitUuidofInitializer(StringRef Uuid) {
   return llvm::ConstantStruct::getAnon(Fields);
 }
 
-llvm::Constant *
-CodeGenModule::getAddrOfCXXCatchHandlerType(QualType Ty,
-                                            QualType CatchHandlerType) {
-  return getCXXABI().getAddrOfCXXCatchHandlerType(Ty, CatchHandlerType);
-}
-
 llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty,
                                                        bool ForEH) {
   // Return a bogus pointer if RTTI is disabled, unless it's for EH.

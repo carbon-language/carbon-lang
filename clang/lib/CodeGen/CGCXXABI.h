@@ -37,6 +37,7 @@ class MangleContext;
 namespace CodeGen {
 class CodeGenFunction;
 class CodeGenModule;
+struct CatchTypeInfo;
 
 /// \brief Implements C++ ABI-specific code generation functions.
 class CGCXXABI {
@@ -236,8 +237,9 @@ public:
                                       llvm::Value *Exn);
 
   virtual llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) = 0;
-  virtual llvm::Constant *
+  virtual CatchTypeInfo
   getAddrOfCXXCatchHandlerType(QualType Ty, QualType CatchHandlerType) = 0;
+  virtual CatchTypeInfo getCatchAllTypeInfo();
 
   virtual bool shouldTypeidBeNullChecked(bool IsDeref,
                                          QualType SrcRecordTy) = 0;

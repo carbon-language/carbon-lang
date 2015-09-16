@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGCXXABI.h"
+#include "CGCleanup.h"
 #include "CGVTables.h"
 #include "CodeGenModule.h"
 #include "CodeGenTypes.h"
@@ -105,8 +106,13 @@ public:
                                                    const VPtrInfo *Info);
 
   llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) override;
-  llvm::Constant *
+  CatchTypeInfo
   getAddrOfCXXCatchHandlerType(QualType Ty, QualType CatchHandlerType) override;
+
+  /// MSVC needs an extra flag to indicate a catchall.
+  CatchTypeInfo getCatchAllTypeInfo() override {
+    return CatchTypeInfo{nullptr, 0x40};
+  }
 
   bool shouldTypeidBeNullChecked(bool IsDeref, QualType SrcRecordTy) override;
   void EmitBadTypeidCall(CodeGenFunction &CGF) override;
@@ -926,7 +932,7 @@ void MicrosoftCXXABI::emitBeginCatch(CodeGenFunction &CGF,
     llvm::Value *Args[2] = {Exn, ParamAddr.getPointer()};
     CGF.EmitNounwindRuntimeCall(BeginCatch, Args);
   } else {
-    CPI->setArgOperand(1, var.getObjectAddress(CGF).getPointer());
+    CPI->setArgOperand(2, var.getObjectAddress(CGF).getPointer());
   }
   CGF.EHStack.pushCleanup<CallEndCatchMSVC>(NormalCleanup, CPI);
   CGF.EmitAutoVarCleanups(var);
@@ -3687,7 +3693,7 @@ static QualType decomposeTypeForEH(ASTContext &Context, QualType T,
   return T;
 }
 
-llvm::Constant *
+CatchTypeInfo
 MicrosoftCXXABI::getAddrOfCXXCatchHandlerType(QualType Type,
                                               QualType CatchHandlerType) {
   // TypeDescriptors for exceptions never have qualified pointer types,
@@ -3706,28 +3712,8 @@ MicrosoftCXXABI::getAddrOfCXXCatchHandlerType(QualType Type,
   if (IsReference)
     Flags |= 8;
 
-  SmallString<256> MangledName;
-  {
-    llvm::raw_svector_ostream Out(MangledName);
-    getMangleContext().mangleCXXCatchHandlerType(Type, Flags, Out);
-  }
-
-  if (llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(MangledName))
-    return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);
-
-  llvm::Constant *Fields[] = {
-      llvm::ConstantInt::get(CGM.IntTy, Flags), // Flags
-      getAddrOfRTTIDescriptor(Type),            // TypeDescriptor
-  };
-  llvm::StructType *CatchHandlerTypeType = getCatchHandlerTypeType();
-  auto *Var = new llvm::GlobalVariable(
-      CGM.getModule(), CatchHandlerTypeType, /*Constant=*/true,
-      llvm::GlobalValue::PrivateLinkage,
-      llvm::ConstantStruct::get(CatchHandlerTypeType, Fields),
-      StringRef(MangledName));
-  Var->setUnnamedAddr(true);
-  Var->setSection("llvm.metadata");
-  return Var;
+  return CatchTypeInfo{getAddrOfRTTIDescriptor(Type)->stripPointerCasts(),
+                       Flags};
 }
 
 /// \brief Gets a TypeDescriptor.  Returns a llvm::Constant * rather than a

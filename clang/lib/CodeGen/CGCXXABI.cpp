@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGCXXABI.h"
+#include "CGCleanup.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -320,4 +321,8 @@ CGCXXABI::emitTerminateForUnexpectedException(CodeGenFunction &CGF,
                                               llvm::Value *Exn) {
   // Just call std::terminate and ignore the violating exception.
   return CGF.EmitNounwindRuntimeCall(CGF.CGM.getTerminateFn());
+}
+
+CatchTypeInfo CGCXXABI::getCatchAllTypeInfo() {
+  return CatchTypeInfo{nullptr, 0};
 }

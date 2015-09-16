@@ -554,16 +554,16 @@ void CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
       QualType CaughtType = CGM.getContext().getUnqualifiedArrayType(
           C->getCaughtType().getNonReferenceType(), CaughtTypeQuals);
 
-      llvm::Constant *TypeInfo = nullptr;
+      CatchTypeInfo TypeInfo{nullptr, 0};
       if (CaughtType->isObjCObjectPointerType())
-        TypeInfo = CGM.getObjCRuntime().GetEHType(CaughtType);
+        TypeInfo.RTTI = CGM.getObjCRuntime().GetEHType(CaughtType);
       else
-        TypeInfo =
-            CGM.getAddrOfCXXCatchHandlerType(CaughtType, C->getCaughtType());
+        TypeInfo = CGM.getCXXABI().getAddrOfCXXCatchHandlerType(
+            CaughtType, C->getCaughtType());
       CatchScope->setHandler(I, TypeInfo, Handler);
     } else {
       // No exception decl indicates '...', a catch-all.
-      CatchScope->setCatchAllHandler(I, Handler);
+      CatchScope->setHandler(I, CGM.getCXXABI().getCatchAllTypeInfo(), Handler);
     }
   }
 }
@@ -807,18 +807,20 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
     EHCatchScope &catchScope = cast<EHCatchScope>(*I);
     for (unsigned hi = 0, he = catchScope.getNumHandlers(); hi != he; ++hi) {
       EHCatchScope::Handler handler = catchScope.getHandler(hi);
+      assert(handler.Type.Flags == 0 &&
+             "landingpads do not support catch handler flags");
 
       // If this is a catch-all, register that and abort.
-      if (!handler.Type) {
+      if (!handler.Type.RTTI) {
         assert(!hasCatchAll);
         hasCatchAll = true;
         goto done;
       }
 
       // Check whether we already have a handler for this type.
-      if (catchTypes.insert(handler.Type).second)
+      if (catchTypes.insert(handler.Type.RTTI).second)
         // If not, add it directly to the landingpad.
-        LPadInst->addClause(handler.Type);
+        LPadInst->addClause(handler.Type.RTTI);
     }
   }
 
@@ -881,10 +883,9 @@ static llvm::BasicBlock *emitMSVCCatchDispatchBlock(CodeGenFunction &CGF,
   for (unsigned I = 0, E = CatchScope.getNumHandlers(); I < E; ++I) {
     const EHCatchScope::Handler &Handler = CatchScope.getHandler(I);
 
-    llvm::Value *TypeValue = Handler.Type;
-    assert(TypeValue != nullptr || Handler.isCatchAll());
-    if (!TypeValue)
-      TypeValue = llvm::Constant::getNullValue(CGF.VoidPtrTy);
+    CatchTypeInfo TypeInfo = Handler.Type;
+    if (!TypeInfo.RTTI)
+      TypeInfo.RTTI = llvm::Constant::getNullValue(CGF.VoidPtrTy);
 
     // If this is the last handler, we're at the end, and the next
     // block is the block for the enclosing EH scope.
@@ -897,11 +898,12 @@ static llvm::BasicBlock *emitMSVCCatchDispatchBlock(CodeGenFunction &CGF,
     }
 
     if (EHPersonality::get(CGF).isMSVCXXPersonality()) {
-      CGF.Builder.CreateCatchPad(
-          Handler.Block, NextBlock,
-          {TypeValue, llvm::Constant::getNullValue(CGF.VoidPtrTy)});
+      CGF.Builder.CreateCatchPad(Handler.Block, NextBlock,
+                                 {TypeInfo.RTTI,
+                                  CGF.Builder.getInt32(TypeInfo.Flags),
+                                  llvm::Constant::getNullValue(CGF.VoidPtrTy)});
     } else {
-      CGF.Builder.CreateCatchPad(Handler.Block, NextBlock, {TypeValue});
+      CGF.Builder.CreateCatchPad(Handler.Block, NextBlock, {TypeInfo.RTTI});
     }
 
     // Otherwise we need to emit and continue at that block.
@@ -948,7 +950,9 @@ static llvm::BasicBlock *emitCatchDispatchBlock(CodeGenFunction &CGF,
     assert(i < e && "ran off end of handlers!");
     const EHCatchScope::Handler &handler = catchScope.getHandler(i);
 
-    llvm::Value *typeValue = handler.Type;
+    llvm::Value *typeValue = handler.Type.RTTI;
+    assert(handler.Type.Flags == 0 &&
+           "landingpads do not support catch handler flags");
     assert(typeValue && "fell into catch-all case!");
     typeValue = CGF.Builder.CreateBitCast(typeValue, CGF.Int8PtrTy);
 
@@ -1841,7 +1845,8 @@ void CodeGenFunction::EnterSEHTryStmt(const SEHTryStmt &S) {
       HelperCGF.GenerateSEHFilterFunction(*this, *Except);
   llvm::Constant *OpaqueFunc =
       llvm::ConstantExpr::getBitCast(FilterFunc, Int8PtrTy);
-  CatchScope->setHandler(0, OpaqueFunc, createBasicBlock("__except.ret"));
+  CatchScope->setHandler(0, CatchTypeInfo{OpaqueFunc},
+                         createBasicBlock("__except.ret"));
 }
 
 void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S) {
