@@ -14,7 +14,6 @@
 #include "Symbols.h"
 #include "SymbolTable.h"
 
-#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/StringTableBuilder.h"
@@ -502,18 +501,13 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
           break;
         case llvm::ELF::R_X86_64_32: {
         case llvm::ELF::R_X86_64_32S:
-          APInt VA(64, SymVA);
-          APInt Addend(64, RI.r_addend, true);
-          APInt Result64 = VA + Addend;
-          APInt Result = Result64.trunc(32);
-          if (Type == llvm::ELF::R_X86_64_32) {
-            if (Result.zext(64) != Result64)
-              error("Relocation out of range");
-          } else
-            if (Result.sext(64) != Result64)
-              error("R_X86_64_32S out of range");
+          uint64_t VA = SymVA + RI.r_addend;
+          if (Type == llvm::ELF::R_X86_64_32 && !isUInt<32>(VA))
+            error("R_X86_64_32 out of range");
+          else if (!isInt<32>(VA))
+            error("R_X86_64_32S out of range");
 
-          support::endian::write32le(Location, Result.getZExtValue());
+          support::endian::write32le(Location, VA);
           break;
         }
         default:
