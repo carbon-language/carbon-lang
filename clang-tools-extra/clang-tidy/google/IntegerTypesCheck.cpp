@@ -36,7 +36,7 @@ void IntegerTypesCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
 void IntegerTypesCheck::registerMatchers(MatchFinder *Finder) {
   // Find all TypeLocs. The relevant Style Guide rule only applies to C++.
   if (getLangOpts().CPlusPlus)
-    Finder->addMatcher(typeLoc().bind("tl"), this);
+    Finder->addMatcher(typeLoc(loc(isInteger())).bind("tl"), this);
 }
 
 void IntegerTypesCheck::check(const MatchFinder::MatchResult &Result) {
