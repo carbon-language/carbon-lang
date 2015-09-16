@@ -131,7 +131,7 @@ public:
 
   ArrayRef<SectionChunk<ELFT> *> getChunks() { return Chunks; }
 
-  SymbolBody *getSymbolBody(uint32_t SymbolIndex) {
+  const SymbolBody *getSymbolBody(uint32_t SymbolIndex) const {
     uint32_t FirstNonLocal = this->Symtab->sh_info;
     if (SymbolIndex < FirstNonLocal)
       return nullptr;

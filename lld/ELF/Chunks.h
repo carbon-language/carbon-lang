@@ -38,7 +38,7 @@ public:
 
   StringRef getSectionName() const;
   const Elf_Shdr *getSectionHdr() const { return Header; }
-  ObjectFile<ELFT> *getFile() { return File; }
+  const ObjectFile<ELFT> *getFile() const { return File; }
 
   // The writer sets and uses the addresses.
   uintX_t getOutputSectionOff() const { return OutputSectionOff; }
