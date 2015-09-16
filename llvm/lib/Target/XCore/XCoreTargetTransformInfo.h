@@ -37,7 +37,7 @@ class XCoreTTIImpl : public BasicTTIImplBase<XCoreTTIImpl> {
   const XCoreTargetLowering *getTLI() const { return TLI; }
 
 public:
-  explicit XCoreTTIImpl(const XCoreTargetMachine *TM, Function &F)
+  explicit XCoreTTIImpl(const XCoreTargetMachine *TM, const Function &F)
       : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl()),
         TLI(ST->getTargetLowering()) {}
 

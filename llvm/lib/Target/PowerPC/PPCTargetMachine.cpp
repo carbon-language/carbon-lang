@@ -373,6 +373,7 @@ void PPCPassConfig::addPreEmitPass() {
 }
 
 TargetIRAnalysis PPCTargetMachine::getTargetIRAnalysis() {
-  return TargetIRAnalysis(
-      [this](Function &F) { return TargetTransformInfo(PPCTTIImpl(this, F)); });
+  return TargetIRAnalysis([this](const Function &F) {
+    return TargetTransformInfo(PPCTTIImpl(this, F));
+  });
 }

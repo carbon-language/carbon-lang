@@ -808,7 +808,7 @@ class BasicTTIImpl : public BasicTTIImplBase<BasicTTIImpl> {
   const TargetLoweringBase *getTLI() const { return TLI; }
 
 public:
-  explicit BasicTTIImpl(const TargetMachine *ST, Function &F);
+  explicit BasicTTIImpl(const TargetMachine *ST, const Function &F);
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   BasicTTIImpl(const BasicTTIImpl &Arg)

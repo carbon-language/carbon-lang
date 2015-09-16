@@ -203,7 +203,7 @@ public:
 } // namespace
 
 TargetIRAnalysis AArch64TargetMachine::getTargetIRAnalysis() {
-  return TargetIRAnalysis([this](Function &F) {
+  return TargetIRAnalysis([this](const Function &F) {
     return TargetTransformInfo(AArch64TTIImpl(this, F));
   });
 }

@@ -165,7 +165,7 @@ TargetPassConfig *SystemZTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 TargetIRAnalysis SystemZTargetMachine::getTargetIRAnalysis() {
-  return TargetIRAnalysis([this](Function &F) {
+  return TargetIRAnalysis([this](const Function &F) {
     return TargetTransformInfo(SystemZTTIImpl(this, F));
   });
 }

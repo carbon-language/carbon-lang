@@ -37,7 +37,7 @@ class PPCTTIImpl : public BasicTTIImplBase<PPCTTIImpl> {
   const PPCTargetLowering *getTLI() const { return TLI; }
 
 public:
-  explicit PPCTTIImpl(const PPCTargetMachine *TM, Function &F)
+  explicit PPCTTIImpl(const PPCTargetMachine *TM, const Function &F)
       : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
         TLI(ST->getTargetLowering()) {}
 

@@ -225,8 +225,9 @@ ARMBaseTargetMachine::getSubtargetImpl(const Function &F) const {
 }
 
 TargetIRAnalysis ARMBaseTargetMachine::getTargetIRAnalysis() {
-  return TargetIRAnalysis(
-      [this](Function &F) { return TargetTransformInfo(ARMTTIImpl(this, F)); });
+  return TargetIRAnalysis([this](const Function &F) {
+    return TargetTransformInfo(ARMTTIImpl(this, F));
+  });
 }
 
 

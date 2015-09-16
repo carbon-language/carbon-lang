@@ -28,7 +28,7 @@ class SystemZTTIImpl : public BasicTTIImplBase<SystemZTTIImpl> {
   const SystemZTargetLowering *getTLI() const { return TLI; }
 
 public:
-  explicit SystemZTTIImpl(const SystemZTargetMachine *TM, Function &F)
+  explicit SystemZTTIImpl(const SystemZTargetMachine *TM, const Function &F)
       : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
         TLI(ST->getTargetLowering()) {}
 

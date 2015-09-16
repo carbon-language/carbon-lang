@@ -233,7 +233,7 @@ void MipsPassConfig::addPreRegAlloc() {
 }
 
 TargetIRAnalysis MipsTargetMachine::getTargetIRAnalysis() {
-  return TargetIRAnalysis([this](Function &F) {
+  return TargetIRAnalysis([this](const Function &F) {
     if (Subtarget->allowMixed16_32()) {
       DEBUG(errs() << "No Target Transform Info Pass Added\n");
       // FIXME: This is no longer necessary as the TTI returned is per-function.

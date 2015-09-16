@@ -861,7 +861,7 @@ public:
   ///
   /// The callback will be called with a particular function for which the TTI
   /// is needed and must return a TTI object for that function.
-  TargetIRAnalysis(std::function<Result(Function &)> TTICallback);
+  TargetIRAnalysis(std::function<Result(const Function &)> TTICallback);
 
   // Value semantics. We spell out the constructors for MSVC.
   TargetIRAnalysis(const TargetIRAnalysis &Arg)
@@ -877,7 +877,7 @@ public:
     return *this;
   }
 
-  Result run(Function &F);
+  Result run(const Function &F);
 
 private:
   static char PassID;
@@ -892,10 +892,10 @@ private:
   /// the analysis and thus use a function_ref which would be lighter weight.
   /// This may also be less error prone as the callback is likely to reference
   /// the external TargetMachine, and that reference needs to never dangle.
-  std::function<Result(Function &)> TTICallback;
+  std::function<Result(const Function &)> TTICallback;
 
   /// \brief Helper function used as the callback in the default constructor.
-  static Result getDefaultTTI(Function &F);
+  static Result getDefaultTTI(const Function &F);
 };
 
 /// \brief Wrapper pass for TargetTransformInfo.
@@ -919,7 +919,7 @@ public:
 
   explicit TargetTransformInfoWrapperPass(TargetIRAnalysis TIRA);
 
-  TargetTransformInfo &getTTI(Function &F);
+  TargetTransformInfo &getTTI(const Function &F);
 };
 
 /// \brief Create an analysis pass wrapper around a TTI object.

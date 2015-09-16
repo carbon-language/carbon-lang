@@ -344,16 +344,16 @@ TargetTransformInfo::Concept::~Concept() {}
 TargetIRAnalysis::TargetIRAnalysis() : TTICallback(&getDefaultTTI) {}
 
 TargetIRAnalysis::TargetIRAnalysis(
-    std::function<Result(Function &)> TTICallback)
+    std::function<Result(const Function &)> TTICallback)
     : TTICallback(TTICallback) {}
 
-TargetIRAnalysis::Result TargetIRAnalysis::run(Function &F) {
+TargetIRAnalysis::Result TargetIRAnalysis::run(const Function &F) {
   return TTICallback(F);
 }
 
 char TargetIRAnalysis::PassID;
 
-TargetIRAnalysis::Result TargetIRAnalysis::getDefaultTTI(Function &F) {
+TargetIRAnalysis::Result TargetIRAnalysis::getDefaultTTI(const Function &F) {
   return Result(F.getParent()->getDataLayout());
 }
 
@@ -377,7 +377,7 @@ TargetTransformInfoWrapperPass::TargetTransformInfoWrapperPass(
       *PassRegistry::getPassRegistry());
 }
 
-TargetTransformInfo &TargetTransformInfoWrapperPass::getTTI(Function &F) {
+TargetTransformInfo &TargetTransformInfoWrapperPass::getTTI(const Function &F) {
   TTI = TIRA.run(F);
   return *TTI;
 }

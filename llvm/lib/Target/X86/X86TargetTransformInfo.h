@@ -39,7 +39,7 @@ class X86TTIImpl : public BasicTTIImplBase<X86TTIImpl> {
   const X86TargetLowering *getTLI() const { return TLI; }
 
 public:
-  explicit X86TTIImpl(const X86TargetMachine *TM, Function &F)
+  explicit X86TTIImpl(const X86TargetMachine *TM, const Function &F)
       : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
         TLI(ST->getTargetLowering()) {}
 

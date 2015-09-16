@@ -36,7 +36,7 @@ class HexagonTTIImpl : public BasicTTIImplBase<HexagonTTIImpl> {
   const HexagonTargetLowering *getTLI() const { return TLI; }
 
 public:
-  explicit HexagonTTIImpl(const HexagonTargetMachine *TM, Function &F)
+  explicit HexagonTTIImpl(const HexagonTargetMachine *TM, const Function &F)
       : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
         TLI(ST->getTargetLowering()) {}
 

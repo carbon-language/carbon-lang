@@ -156,7 +156,7 @@ public:
 } // End of anonymous namespace
 
 TargetIRAnalysis AMDGPUTargetMachine::getTargetIRAnalysis() {
-  return TargetIRAnalysis([this](Function &F) {
+  return TargetIRAnalysis([this](const Function &F) {
     return TargetTransformInfo(
         AMDGPUTTIImpl(this, F.getParent()->getDataLayout()));
   });

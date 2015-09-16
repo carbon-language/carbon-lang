@@ -138,7 +138,7 @@ HexagonTargetMachine::getSubtargetImpl(const Function &F) const {
 }
 
 TargetIRAnalysis HexagonTargetMachine::getTargetIRAnalysis() {
-  return TargetIRAnalysis([this](Function &F) {
+  return TargetIRAnalysis([this](const Function &F) {
     return TargetTransformInfo(HexagonTTIImpl(this, F));
   });
 }
