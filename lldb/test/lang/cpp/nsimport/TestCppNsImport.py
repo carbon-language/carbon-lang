@@ -16,8 +16,6 @@ class TestCppNsImport(TestBase):
         self.buildDsym()
         self.check()
 
-    # This test is expected to fail because DW_TAG_imported_declaration and DW_TAG_imported_module are not parsed in SymbolFileDWARF
-    @expectedFailureAll
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Tests imported namespaces in C++."""
