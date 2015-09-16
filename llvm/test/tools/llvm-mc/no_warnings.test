@@ -1,6 +1,5 @@
 # RUN: llvm-mc --no-warn %s 2>&1 | FileCheck %s
 # XFAIL: hexagon
-# REQUIRES: default_triple
 
 # CHECK-NOT: warning:
 .warning
