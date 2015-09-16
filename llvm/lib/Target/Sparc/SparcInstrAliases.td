@@ -250,6 +250,7 @@ defm : int_cond_alias<"n",    0b0000>;
 defm : int_cond_alias<"ne",   0b1001>;
 defm : int_cond_alias<"nz",   0b1001>; // same as ne
 defm : int_cond_alias<"e",    0b0001>;
+defm : int_cond_alias<"eq",    0b0001>; // same as e
 defm : int_cond_alias<"z",    0b0001>; // same as e
 defm : int_cond_alias<"g",    0b1010>;
 defm : int_cond_alias<"le",   0b0010>;

@@ -64,6 +64,10 @@
         ! CHECK-NEXT:         ! fixup A - offset: 0, value: .BB0, kind: fixup_sparc_br22
         bz .BB0
 
+        ! CHECK: be .BB0      ! encoding: [0x02,0b10AAAAAA,A,A]
+        ! CHECK-NEXT:         ! fixup A - offset: 0, value: .BB0, kind: fixup_sparc_br22
+        beq .BB0
+
         ! CHECK: bg .BB0      ! encoding: [0x14,0b10AAAAAA,A,A]
         ! CHECK-NEXT:         ! fixup A - offset: 0, value: .BB0, kind: fixup_sparc_br22
         bg .BB0
