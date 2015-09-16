@@ -11,8 +11,9 @@ define void @bar(i32 %a, i32 %b, i32 %c) {
   call void @foo(i32 %1)
   %2 = mul i32 %a, %b
   %3 = mul i32 %2, %c
-; CHECK: mul i32 [[BASE]], %b
+; CHECK: [[RESULT:%[a-zA-Z0-9]+]] = mul i32 [[BASE]], %b
   call void @foo(i32 %3)
+; CHECK-NEXT: call void @foo(i32 [[RESULT]])
   ret void
 }
 
