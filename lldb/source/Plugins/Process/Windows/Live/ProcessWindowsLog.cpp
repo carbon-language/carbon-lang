@@ -96,26 +96,32 @@ ProcessWindowsLog::DisableLog(const char **args, Stream *feedback_strm)
     {
         uint32_t flag_bits = 0;
 
-        flag_bits = log->GetMask().Get();
-        for (; args[0]; args++)
+        if (args[0] != nullptr)
         {
-            const char *arg = args[0];
-            uint32_t bits = GetFlagBits(arg);
+            flag_bits = log->GetMask().Get();
+            for (; args[0]; args++)
+            {
+                const char *arg = args[0];
+                uint32_t bits = GetFlagBits(arg);
 
-            if (bits)
-            {
-                flag_bits &= ~bits;
-            }
-            else
-            {
-                feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
-                ListLogCategories(feedback_strm);
+                if (bits)
+                {
+                    flag_bits &= ~bits;
+                }
+                else
+                {
+                    feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
+                    ListLogCategories(feedback_strm);
+                }
             }
         }
 
         log->GetMask().Reset(flag_bits);
         if (flag_bits == 0)
+        {
             g_log_enabled = false;
+            log->SetStream(lldb::StreamSP());
+        }
     }
 
     return;
