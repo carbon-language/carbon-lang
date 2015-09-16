@@ -3,8 +3,8 @@
 # RUN:   /opt:lldicf /verbose %t.obj > %t.log 2>&1
 # RUN: FileCheck %s < %t.log
 
-# TODO: LLD should be able to merge foo and bar.
-# CHECK-NOT: Replaced bar
+# CHECK: Selected foo
+# CHECK:   Removed bar
 
 ---
 header:

@@ -113,16 +113,6 @@ protected:
 
 class SectionChunk;
 
-// A container of SectionChunks. Used by ICF to store computation
-// results of strongly connected components. You can ignore this
-// unless you are interested in ICF.
-struct Component {
-  Component(std::vector<SectionChunk *> V) : Members(V) {}
-  std::vector<SectionChunk *> Members;
-  std::vector<Component *> Predecessors;
-  int Outdegree = 0;
-};
-
 // A chunk corresponding a section of an input file.
 class SectionChunk : public Chunk {
 public:
@@ -187,21 +177,21 @@ public:
   // Used for ICF (Identical COMDAT Folding)
   void replaceWith(SectionChunk *Other);
   uint64_t getHash() const;
-  bool equals(const SectionChunk *Other) const;
+  static bool equalsVertex(const SectionChunk *A, const SectionChunk *B);
+  static bool equalsEdge(const SectionChunk *Au, const SectionChunk *B);
 
   // A pointer pointing to a replacement for this chunk.
   // Initially it points to "this" object. If this chunk is merged
   // with other chunk by ICF, it points to another chunk,
   // and this chunk is considrered as dead.
   SectionChunk *Ptr;
-  uint32_t Index = 0;
-  uint32_t LowLink = 0;
-  bool OnStack = false;
-  Component *SCC = nullptr;
+  std::vector<SectionChunk *> Successors;
+  void initSuccessors();
 
   // The CRC of the contents as described in the COFF spec 4.5.5.
   // Auxiliary Format 5: Section Definitions. Used for ICF.
   uint32_t Checksum = 0;
+  uint64_t GroupID;
   mutable uint64_t Hash = 0;
 
 private:

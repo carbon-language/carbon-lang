@@ -14,24 +14,32 @@
 // makes outputs smaller.
 //
 // ICF is theoretically a problem of reducing graphs by merging as many
-// isomorphic subgraphs as possible, if we consider sections as vertices and
+// identical subgraphs as possible, if we consider sections as vertices and
 // relocations as edges. This may be a bit more complicated problem than you
 // might think. The order of processing sections matters since merging two
 // sections can make other sections, whose relocations now point to the same
 // section, mergeable. Graphs may contain cycles, which is common in COFF.
 // We need a sophisticated algorithm to do this properly and efficiently.
 //
-// What we do in this file is this. We first compute strongly connected
-// components of the graphs to get acyclic graphs. Then, we remove SCCs whose
-// outdegree is zero from the graphs and try to merge them. This operation
-// makes other SCCs to have outdegree zero, so we repeat the process until
-// all SCCs are removed.
+// What we do in this file is this. We split sections into groups. Sections
+// in the same group are considered identical.
 //
-// This algorithm is different from what GNU gold does which is described in
-// http://research.google.com/pubs/pub36912.html. I don't know which is
-// faster, this or Gold's, in practice. It'd be interesting to implement the
-// other algorithm to compare. Note that the gold's algorithm cannot handle
-// cycles, so we need to tweak it, though.
+// First, all sections are grouped by their "constant" values. Constant
+// values are values that never change by ICF, such as section contents,
+// section name, number of relocations, type and offset of each relocation,
+// etc. Because we do not care about relocation targets in this spep, two
+// sections in the same group may be actually not identical, but at least
+// two sections in different groups can never be identical.
+//
+// Then, we try to split each group by relocation targets. Relocations are
+// considered identical if and only if the relocation targets are in the
+// same group. Splitting a group may make more groups to be splittable,
+// because two relocations that were previously considered identical might
+// now point to different groups. We repeat this step until the convergence
+// is obtained.
+//
+// This algorithm is so-called "optimistic" algorithm described in
+// http://research.google.com/pubs/pub36912.html.
 //
 //===----------------------------------------------------------------------===//
 
@@ -51,156 +59,6 @@ using namespace llvm;
 
 namespace lld {
 namespace coff {
-namespace {
-
-struct Hasher {
-  size_t operator()(const SectionChunk *C) const { return C->getHash(); }
-};
-
-struct Equals {
-  bool operator()(const SectionChunk *A, const SectionChunk *B) const {
-    return A->equals(B);
-  }
-};
-
-} // anonymous namespace
-
-// Invoke Fn for each live COMDAT successor sections of SC.
-static void forEach(SectionChunk *SC, std::function<void(SectionChunk *)> Fn) {
-  for (SectionChunk *C : SC->children())
-    Fn(C);
-  for (SymbolBody *B : SC->symbols()) {
-    if (auto *D = dyn_cast<DefinedRegular>(B)) {
-      SectionChunk *C = D->getChunk();
-      if (C->isCOMDAT() && C->isLive())
-        Fn(C);
-    }
-  }
-}
-
-typedef std::vector<Component *>::iterator ComponentIterator;
-
-// Try to merge two SCCs, A and B. A and B are likely to be isomorphic
-// because all sections have the same hash values.
-static void tryMerge(std::vector<SectionChunk *> &A,
-                     std::vector<SectionChunk *> &B) {
-  // Assume that relocation targets are the same.
-  size_t End = A.size();
-  for (size_t I = 0; I != End; ++I) {
-    assert(B[I] == B[I]->Ptr);
-    B[I]->Ptr = A[I];
-  }
-  for (size_t I = 0; I != End; ++I) {
-    if (A[I]->equals(B[I]))
-      continue;
-    // If we reach here, the assumption was wrong. Reset the pointers
-    // to the original values and terminate the comparison.
-    for (size_t I = 0; I != End; ++I)
-      B[I]->Ptr = B[I];
-    return;
-  }
-  // If we reach here, the assumption was correct. Actually replace them.
-  for (size_t I = 0; I != End; ++I)
-    B[I]->replaceWith(A[I]);
-}
-
-// Try to merge components. All components given to this function are
-// guaranteed to have the same number of members.
-static void doUniquefy(ComponentIterator Begin, ComponentIterator End) {
-  // Sort component members by hash value.
-  for (auto It = Begin; It != End; ++It) {
-    Component *SCC = *It;
-    auto Comp = [](SectionChunk *A, SectionChunk *B) {
-      return A->getHash() < B->getHash();
-    };
-    std::sort(SCC->Members.begin(), SCC->Members.end(), Comp);
-  }
-
-  // Merge as much component members as possible.
-  for (auto It = Begin; It != End;) {
-    Component *SCC = *It;
-    auto Bound = std::partition(It + 1, End, [&](Component *C) {
-      for (size_t I = 0, E = SCC->Members.size(); I != E; ++I)
-        if (SCC->Members[I]->getHash() != C->Members[I]->getHash())
-          return false;
-      return true;
-    });
-
-    // Components [I, Bound) are likely to have the same members
-    // because all members have the same hash values. Verify that.
-    for (auto I = It + 1; I != Bound; ++I)
-      tryMerge(SCC->Members, (*I)->Members);
-    It = Bound;
-  }
-}
-
-static void uniquefy(ComponentIterator Begin, ComponentIterator End) {
-  for (auto It = Begin; It != End;) {
-    Component *SCC = *It;
-    size_t Size = SCC->Members.size();
-    auto Bound = std::partition(It + 1, End, [&](Component *C) {
-      return C->Members.size() == Size;
-    });
-    doUniquefy(It, Bound);
-    It = Bound;
-  }
-}
-
-// Returns strongly connected components of the graph formed by Chunks.
-// Chunks (a list of Live COMDAT sections) are considred as vertices,
-// and their relocations or association are considered as edges.
-static std::vector<Component *>
-getSCC(const std::vector<SectionChunk *> &Chunks) {
-  std::vector<Component *> Ret;
-  std::vector<SectionChunk *> V;
-  uint32_t Idx;
-
-  std::function<void(SectionChunk *)> StrongConnect = [&](SectionChunk *SC) {
-    SC->Index = SC->LowLink = Idx++;
-    size_t Curr = V.size();
-    V.push_back(SC);
-    SC->OnStack = true;
-
-    forEach(SC, [&](SectionChunk *C) {
-      if (C->Index == 0) {
-        StrongConnect(C);
-        SC->LowLink = std::min(SC->LowLink, C->LowLink);
-      } else if (C->OnStack) {
-        SC->LowLink = std::min(SC->LowLink, C->Index);
-      }
-    });
-
-    if (SC->LowLink != SC->Index)
-      return;
-    auto *SCC = new Component(
-        std::vector<SectionChunk *>(V.begin() + Curr, V.end()));
-    for (size_t I = Curr, E = V.size(); I != E; ++I) {
-      V[I]->OnStack = false;
-      V[I]->SCC = SCC;
-    }
-    Ret.push_back(SCC);
-    V.erase(V.begin() + Curr, V.end());
-  };
-
-  for (SectionChunk *SC : Chunks) {
-    if (SC->Index == 0) {
-      Idx = 1;
-      StrongConnect(SC);
-    }
-  }
-
-  for (Component *SCC : Ret) {
-    for (SectionChunk *SC : SCC->Members) {
-      forEach(SC, [&](SectionChunk *C) {
-        if (SCC == C->SCC)
-          return;
-        ++SCC->Outdegree;
-        C->SCC->Predecessors.push_back(SCC);
-      });
-    }
-  }
-  return Ret;
-}
 
 uint64_t SectionChunk::getHash() const {
   if (Hash == 0) {
@@ -214,74 +72,143 @@ uint64_t SectionChunk::getHash() const {
   return Hash;
 }
 
+void SectionChunk::initSuccessors() {
+  Successors = AssocChildren;
+  for (const coff_relocation &R : Relocs) {
+    SymbolBody *B = File->getSymbolBody(R.SymbolTableIndex)->repl();
+    if (auto D = dyn_cast<DefinedRegular>(B))
+      Successors.push_back(D->getChunk());
+  }
+}
 
-// Returns true if this and a given chunk are identical COMDAT sections.
-bool SectionChunk::equals(const SectionChunk *X) const {
-  // Compare headers
-  if (getPermissions() != X->getPermissions())
+bool SectionChunk::equalsVertex(const SectionChunk *A, const SectionChunk *B) {
+  if (A->getPermissions() != B->getPermissions() ||
+      A->SectionName != B->SectionName ||
+      A->Header->SizeOfRawData != B->Header->SizeOfRawData ||
+      A->NumRelocs != B->NumRelocs ||
+      A->Checksum != B->Checksum ||
+      A->AssocChildren.size() != B->AssocChildren.size() ||
+      A->getContents() != B->getContents()) {
     return false;
-  if (SectionName != X->SectionName)
-    return false;
-  if (Header->SizeOfRawData != X->Header->SizeOfRawData)
-    return false;
-  if (NumRelocs != X->NumRelocs)
-    return false;
-  if (Checksum != X->Checksum)
-    return false;
+  }
 
-  // Compare data
-  if (getContents() != X->getContents())
-    return false;
-
-  // Compare associative sections
-  if (AssocChildren.size() != X->AssocChildren.size())
-    return false;
-  for (size_t I = 0, E = AssocChildren.size(); I != E; ++I)
-    if (AssocChildren[I]->Ptr != X->AssocChildren[I]->Ptr)
+  for (size_t I = 0, E = A->AssocChildren.size(); I != E; ++I)
+    if (A->AssocChildren[I]->GroupID != B->AssocChildren[I]->GroupID)
       return false;
 
   // Compare relocations
   auto Eq = [&](const coff_relocation &R1, const coff_relocation &R2) {
-    if (R1.Type != R2.Type)
+    if (R1.Type != R2.Type ||
+        R1.VirtualAddress != R2.VirtualAddress) {
       return false;
-    if (R1.VirtualAddress != R2.VirtualAddress)
-      return false;
-    SymbolBody *B1 = File->getSymbolBody(R1.SymbolTableIndex)->repl();
-    SymbolBody *B2 = X->File->getSymbolBody(R2.SymbolTableIndex)->repl();
+    }
+    SymbolBody *B1 = A->File->getSymbolBody(R1.SymbolTableIndex)->repl();
+    SymbolBody *B2 = B->File->getSymbolBody(R2.SymbolTableIndex)->repl();
     if (B1 == B2)
       return true;
     auto *D1 = dyn_cast<DefinedRegular>(B1);
     auto *D2 = dyn_cast<DefinedRegular>(B2);
-    return (D1 && D2 &&
-            D1->getValue() == D2->getValue() &&
-            D1->getChunk() == D2->getChunk());
+    return D1 && D2 &&
+           D1->getValue() == D2->getValue() &&
+           D1->getChunk()->GroupID == D2->getChunk()->GroupID;
   };
-  return std::equal(Relocs.begin(), Relocs.end(), X->Relocs.begin(), Eq);
+  return std::equal(A->Relocs.begin(), A->Relocs.end(), B->Relocs.begin(), Eq);
+}
+
+bool SectionChunk::equalsEdge(const SectionChunk *A, const SectionChunk *B) {
+  assert(A->Successors.size() == B->Successors.size());
+  return std::equal(A->Successors.begin(), A->Successors.end(),
+                    B->Successors.begin(),
+                    [](const SectionChunk *X, const SectionChunk *Y) {
+                      return X->GroupID == Y->GroupID;
+                    });
+}
+
+typedef std::vector<SectionChunk *>::iterator ChunkIterator;
+typedef bool (*Comparator)(const SectionChunk *, const SectionChunk *);
+static uint64_t NextID = 0;
+
+static bool partition(ChunkIterator Begin, ChunkIterator End, Comparator Eq) {
+  bool R = false;
+  for (auto It = Begin;;) {
+    SectionChunk *Head = *It;
+    auto Bound = std::partition(It + 1, End, [&](SectionChunk *SC) {
+      return Eq(Head, SC);
+    });
+    if (Bound == End)
+      return R;
+    size_t ID = NextID++;
+    std::for_each(It, Bound, [&](SectionChunk *SC) { SC->GroupID = ID; });
+    It = Bound;
+    R = true;
+  }
+}
+
+static bool forEachGroup(std::vector<SectionChunk *> &SChunks,
+                         Comparator Eq) {
+  bool R = false;
+  for (auto It = SChunks.begin(), End = SChunks.end(); It != End;) {
+    SectionChunk *Head = *It;
+    auto Bound = std::find_if(It + 1, End, [&](SectionChunk *SC) {
+      return SC->GroupID != Head->GroupID;
+    });
+    if (partition(It, Bound, Eq))
+      R = true;
+    It = Bound;
+  }
+  return R;
 }
 
 // Merge identical COMDAT sections.
 // Two sections are considered the same if their section headers,
 // contents and relocations are all the same.
 void doICF(const std::vector<Chunk *> &Chunks) {
+  if (Config->Verbose)
+    llvm::outs() << "\nICF\n";
+
+  // Collect only mergeable sections.
   std::vector<SectionChunk *> SChunks;
-  for (Chunk *C : Chunks)
-    if (auto *SC = dyn_cast<SectionChunk>(C))
-      if (SC->isCOMDAT() && SC->isLive())
+  for (Chunk *C : Chunks) {
+    if (auto *SC = dyn_cast<SectionChunk>(C)) {
+      bool Writable = SC->getPermissions() & llvm::COFF::IMAGE_SCN_MEM_WRITE;
+      if (SC->isCOMDAT() && SC->isLive() && !Writable) {
         SChunks.push_back(SC);
-
-  std::vector<Component *> Components = getSCC(SChunks);
-
-  while (Components.size() > 0) {
-    auto Bound = std::partition(Components.begin(), Components.end(),
-                                [](Component *SCC) { return SCC->Outdegree > 0; });
-    uniquefy(Bound, Components.end());
-
-    for (auto It = Bound, E = Components.end(); It != E; ++It) {
-      Component *SCC = *It;
-      for (Component *Pred : SCC->Predecessors)
-        --Pred->Outdegree;
+        SC->GroupID = SC->getHash() | (uint64_t(1) << 63);
+      } else {
+        SC->GroupID = NextID++;
+      }
     }
-    Components.erase(Bound, Components.end());
+  }
+
+  std::sort(SChunks.begin(), SChunks.end(),
+            [](SectionChunk *A, SectionChunk *B) {
+              return A->GroupID < B->GroupID;
+            });
+
+  // Split groups until we get a convergence.
+  for (SectionChunk *SC : SChunks)
+    SC->initSuccessors();
+  forEachGroup(SChunks, SectionChunk::equalsVertex);
+  while (forEachGroup(SChunks, SectionChunk::equalsEdge));
+
+  // Merge sections in the same group.
+  for (auto It = SChunks.begin(), End = SChunks.end(); It != End;) {
+    SectionChunk *Head = *It;
+    auto Bound = std::find_if(It + 1, End, [&](SectionChunk *SC) {
+      return Head->GroupID != SC->GroupID;
+    });
+    if (std::distance(It, Bound) == 1) {
+      It = Bound;
+      continue;
+    }
+    if (Config->Verbose)
+      llvm::outs() << "Selected " << Head->getDebugName() << "\n";
+    for (++It; It != Bound; ++It) {
+      SectionChunk *SC = *It;
+      if (Config->Verbose)
+        llvm::outs() << "  Removed " << SC->getDebugName() << "\n";
+      SC->replaceWith(Head);
+    }
   }
 }
 
