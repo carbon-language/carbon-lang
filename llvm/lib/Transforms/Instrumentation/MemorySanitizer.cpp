@@ -120,6 +120,16 @@ using namespace llvm;
 
 #define DEBUG_TYPE "msan"
 
+// VMA size definition for architecture that support multiple sizes.
+// AArch64 has 3 VMA sizes: 39, 42 and 48.
+#ifndef SANITIZER_AARCH64_VMA
+# define SANITIZER_AARCH64_VMA 39
+#else
+# if SANITIZER_AARCH64_VMA != 39 && SANITIZER_AARCH64_VMA != 42
+#  error "invalid SANITIZER_AARCH64_VMA size"
+# endif
+#endif
+
 static const unsigned kOriginSize = 4;
 static const unsigned kMinOriginAlignment = 4;
 static const unsigned kShadowTLSAlignment = 8;
@@ -244,6 +254,21 @@ static const MemoryMapParams Linux_PowerPC64_MemoryMapParams = {
   0x1C0000000000,  // OriginBase
 };
 
+// aarch64 Linux
+static const MemoryMapParams Linux_AArch64_MemoryMapParams = {
+#if SANITIZER_AARCH64_VMA == 39
+  0x007C00000000,  // AndMask
+  0x000100000000,  // XorMask
+  0x004000000000,  // ShadowBase
+  0x004300000000,  // OriginBase
+#elif SANITIZER_AARCH64_VMA == 42
+  0x03E000000000,  // AndMask
+  0x001000000000,  // XorMask
+  0x010000000000,  // ShadowBase
+  0x012000000000,  // OriginBase
+#endif
+};
+
 // i386 FreeBSD
 static const MemoryMapParams FreeBSD_I386_MemoryMapParams = {
   0x000180000000,  // AndMask
@@ -273,6 +298,11 @@ static const PlatformMemoryMapParams Linux_MIPS_MemoryMapParams = {
 static const PlatformMemoryMapParams Linux_PowerPC_MemoryMapParams = {
   NULL,
   &Linux_PowerPC64_MemoryMapParams,
+};
+
+static const PlatformMemoryMapParams Linux_ARM_MemoryMapParams = {
+  NULL,
+  &Linux_AArch64_MemoryMapParams,
 };
 
 static const PlatformMemoryMapParams FreeBSD_X86_MemoryMapParams = {
@@ -495,6 +525,10 @@ bool MemorySanitizer::doInitialization(Module &M) {
         case Triple::ppc64:
         case Triple::ppc64le:
           MapParams = Linux_PowerPC_MemoryMapParams.bits64;
+          break;
+        case Triple::aarch64:
+        case Triple::aarch64_be:
+          MapParams = Linux_ARM_MemoryMapParams.bits64;
           break;
         default:
           report_fatal_error("unsupported architecture");
