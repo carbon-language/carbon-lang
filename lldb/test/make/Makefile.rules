@@ -73,11 +73,12 @@ endif
 # tests from Visual Studio, the environment variable isn't inherited
 # all the way down to the process spawned for make.
 #----------------------------------------------------------------------
-ifeq "$(OS)" ""
-	OS = $(shell uname -s)
+HOST_OS = $(shell uname -s)
+ifeq "$(HOST_OS)" "windows32"
+	HOST_OS = Windows_NT
 endif
-ifeq "$(OS)" "windows32"
-	OS = Windows_NT
+ifeq "$(OS)" ""
+	OS = $(HOST_OS)
 endif
 
 #----------------------------------------------------------------------
@@ -485,7 +486,7 @@ endif
 # the compiler -MM option. The -M option will list all system headers,
 # and the -MM option will list all non-system dependencies.
 #----------------------------------------------------------------------
-ifeq "$(OS)" "Windows_NT"
+ifeq "$(HOST_OS)" "Windows_NT"
 	JOIN_CMD = &
 	QUOTE = "
 else
