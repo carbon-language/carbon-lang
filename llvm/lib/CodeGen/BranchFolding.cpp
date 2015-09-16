@@ -168,8 +168,7 @@ bool BranchFolder::OptimizeImpDefsBlock(MachineBasicBlock *MBB) {
     if (!TII->isUnpredicatedTerminator(I))
       return false;
     // See if it uses any of the implicitly defined registers.
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = I->getOperand(i);
+    for (const MachineOperand &MO : I->operands()) {
       if (!MO.isReg() || !MO.isUse())
         continue;
       unsigned Reg = MO.getReg();
@@ -213,12 +212,12 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
 
   // Fix CFG.  The later algorithms expect it to be right.
   bool MadeChange = false;
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; I++) {
-    MachineBasicBlock *MBB = I, *TBB = nullptr, *FBB = nullptr;
+  for (MachineBasicBlock &MBB : MF) {
+    MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
     SmallVector<MachineOperand, 4> Cond;
-    if (!TII->AnalyzeBranch(*MBB, TBB, FBB, Cond, true))
-      MadeChange |= MBB->CorrectExtraCFGEdges(TBB, FBB, !Cond.empty());
-    MadeChange |= OptimizeImpDefsBlock(MBB);
+    if (!TII->AnalyzeBranch(MBB, TBB, FBB, Cond, true))
+      MadeChange |= MBB.CorrectExtraCFGEdges(TBB, FBB, !Cond.empty());
+    MadeChange |= OptimizeImpDefsBlock(&MBB);
   }
 
   bool MadeChangeThisIteration = true;
@@ -240,12 +239,9 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
 
   // Walk the function to find jump tables that are live.
   BitVector JTIsLive(JTI->getJumpTables().size());
-  for (MachineFunction::iterator BB = MF.begin(), E = MF.end();
-       BB != E; ++BB) {
-    for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
-         I != E; ++I)
-      for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
-        MachineOperand &Op = I->getOperand(op);
+  for (const MachineBasicBlock &BB : MF) {
+    for (const MachineInstr &I : BB)
+      for (const MachineOperand &Op : I.operands()) {
         if (!Op.isJTI()) continue;
 
         // Remember that this JT is live.
@@ -921,12 +917,11 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
 
   // First find blocks with no successors.
   MergePotentials.clear();
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end();
-       I != E && MergePotentials.size() < TailMergeThreshold; ++I) {
-    if (TriedMerging.count(I))
-      continue;
-    if (I->succ_empty())
-      MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(I), I));
+  for (MachineBasicBlock &MBB : MF) {
+    if (MergePotentials.size() == TailMergeThreshold)
+      break;
+    if (!TriedMerging.count(&MBB) && MBB.succ_empty())
+      MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(&MBB), &MBB));
   }
 
   // If this is a large problem, avoid visiting the same basic blocks
@@ -965,10 +960,10 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
     MachineBasicBlock *IBB = I;
     MachineBasicBlock *PredBB = std::prev(I);
     MergePotentials.clear();
-    for (MachineBasicBlock::pred_iterator P = I->pred_begin(),
-           E2 = I->pred_end();
-         P != E2 && MergePotentials.size() < TailMergeThreshold; ++P) {
-      MachineBasicBlock *PBB = *P;
+    for (MachineBasicBlock *PBB : I->predecessors()) {
+      if (MergePotentials.size() == TailMergeThreshold)
+        break;
+
       if (TriedMerging.count(PBB))
         continue;
 
@@ -1031,7 +1026,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
                               NewCond, dl);
         }
 
-        MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(PBB), *P));
+        MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(PBB), PBB));
       }
     }
 
@@ -1475,10 +1470,8 @@ ReoptimizeBlock:
     if (!MBB->isEHPad()) {
       // Check all the predecessors of this block.  If one of them has no fall
       // throughs, move this block right after it.
-      for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-           E = MBB->pred_end(); PI != E; ++PI) {
+      for (MachineBasicBlock *PredBB : MBB->predecessors()) {
         // Analyze the branch at the end of the pred.
-        MachineBasicBlock *PredBB = *PI;
         MachineFunction::iterator PredFallthrough = PredBB; ++PredFallthrough;
         MachineBasicBlock *PredTBB = nullptr, *PredFBB = nullptr;
         SmallVector<MachineOperand, 4> PredCond;
@@ -1511,10 +1504,8 @@ ReoptimizeBlock:
 
     if (!CurFallsThru) {
       // Check all successors to see if we can move this block before it.
-      for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-           E = MBB->succ_end(); SI != E; ++SI) {
+      for (MachineBasicBlock *SuccBB : MBB->successors()) {
         // Analyze the branch at the end of the block before the succ.
-        MachineBasicBlock *SuccBB = *SI;
         MachineFunction::iterator SuccPrev = SuccBB; --SuccPrev;
 
         // If this block doesn't already fall-through to that successor, and if
@@ -1568,12 +1559,9 @@ bool BranchFolder::HoistCommonCode(MachineFunction &MF) {
 /// its 'true' successor.
 static MachineBasicBlock *findFalseBlock(MachineBasicBlock *BB,
                                          MachineBasicBlock *TrueBB) {
-  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
-         E = BB->succ_end(); SI != E; ++SI) {
-    MachineBasicBlock *SuccBB = *SI;
+  for (MachineBasicBlock *SuccBB : BB->successors())
     if (SuccBB != TrueBB)
       return SuccBB;
-  }
   return nullptr;
 }
 
@@ -1605,8 +1593,7 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
   if (!TII->isUnpredicatedTerminator(Loc))
     return MBB->end();
 
-  for (unsigned i = 0, e = Loc->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = Loc->getOperand(i);
+  for (const MachineOperand &MO : Loc->operands()) {
     if (!MO.isReg())
       continue;
     unsigned Reg = MO.getReg();
@@ -1639,8 +1626,7 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
     --PI;
 
   bool IsDef = false;
-  for (unsigned i = 0, e = PI->getNumOperands(); !IsDef && i != e; ++i) {
-    const MachineOperand &MO = PI->getOperand(i);
+  for (const MachineOperand &MO : PI->operands()) {
     // If PI has a regmask operand, it is probably a call. Separate away.
     if (MO.isRegMask())
       return Loc;
@@ -1649,8 +1635,10 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
     unsigned Reg = MO.getReg();
     if (!Reg)
       continue;
-    if (Uses.count(Reg))
+    if (Uses.count(Reg)) {
       IsDef = true;
+      break;
+    }
   }
   if (!IsDef)
     // The condition setting instruction is not just before the conditional
@@ -1670,8 +1658,7 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
 
   // Find out what registers are live. Note this routine is ignoring other live
   // registers which are only used by instructions in successor blocks.
-  for (unsigned i = 0, e = PI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = PI->getOperand(i);
+  for (const MachineOperand &MO : PI->operands()) {
     if (!MO.isReg())
       continue;
     unsigned Reg = MO.getReg();
@@ -1750,8 +1737,7 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
       break;
 
     bool IsSafe = true;
-    for (unsigned i = 0, e = TIB->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = TIB->getOperand(i);
+    for (MachineOperand &MO : TIB->operands()) {
       // Don't attempt to hoist instructions with register masks.
       if (MO.isRegMask()) {
         IsSafe = false;
@@ -1806,8 +1792,7 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
       break;
 
     // Remove kills from LocalDefsSet, these registers had short live ranges.
-    for (unsigned i = 0, e = TIB->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = TIB->getOperand(i);
+    for (const MachineOperand &MO : TIB->operands()) {
       if (!MO.isReg() || !MO.isUse() || !MO.isKill())
         continue;
       unsigned Reg = MO.getReg();
@@ -1822,8 +1807,7 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
     }
 
     // Track local defs so we can update liveins.
-    for (unsigned i = 0, e = TIB->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = TIB->getOperand(i);
+    for (const MachineOperand &MO : TIB->operands()) {
       if (!MO.isReg() || !MO.isDef() || MO.isDead())
         continue;
       unsigned Reg = MO.getReg();
