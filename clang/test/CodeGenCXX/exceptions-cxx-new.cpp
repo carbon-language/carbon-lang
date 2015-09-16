@@ -77,7 +77,6 @@ void test_cleanup() {
 
 
 // CHECK-LABEL: define {{.*}} void @"\01??1Cleanup@@QAE@XZ"(
-// CHECK: entry:
 // CHECK:   invoke i32 @"\01?f@@YAHH@Z"(i32 -1)
 // CHECK:           to label %[[LEAVE_FUNC:.*]] unwind label %[[TERMINATE:.*]]
 
