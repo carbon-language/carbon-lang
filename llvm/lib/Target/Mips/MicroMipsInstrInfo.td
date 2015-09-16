@@ -484,6 +484,10 @@ class LoadWordIndexedScaledMM<string opstr, RegisterOperand RO,
   InstSE<(outs RO:$rd), (ins PtrRC:$base, PtrRC:$index),
          !strconcat(opstr, "\t$rd, ${index}(${base})"), [], Itin, FrmFI>;
 
+class PrefetchIndexed<string opstr> :
+  InstSE<(outs), (ins PtrRC:$base, PtrRC:$index, uimm5:$hint),
+         !strconcat(opstr, "\t$hint, ${index}(${base})"), [], NoItinerary, FrmOther>;
+
 class AddImmUPC<string opstr, RegisterOperand RO> :
   InstSE<(outs RO:$rs), (ins simm23_lsl2:$imm),
          !strconcat(opstr, "\t$rs, $imm"), [], NoItinerary, FrmR>;
@@ -713,6 +717,18 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
     def SW_MM  : Store<"sw", GPR32Opnd>, MMRel, LW_FM_MM<0x3e>;
   }
 
+  let DecoderMethod = "DecodeMemMMImm9" in {
+    def LBE_MM  : Load<"lbe", GPR32Opnd>, POOL32C_LHUE_FM_MM<0x18, 0x6, 0x4>;
+    def LBuE_MM : Load<"lbue", GPR32Opnd>, POOL32C_LHUE_FM_MM<0x18, 0x6, 0x0>;
+    def LHE_MM  : Load<"lhe", GPR32Opnd>, POOL32C_LHUE_FM_MM<0x18, 0x6, 0x5>;
+    def LHuE_MM : Load<"lhue", GPR32Opnd>, POOL32C_LHUE_FM_MM<0x18, 0x6, 0x1>;
+    def LWE_MM  : Load<"lwe", GPR32Opnd>, POOL32C_LHUE_FM_MM<0x18, 0x6, 0x7>;
+    def SBE_MM  : Store<"sbe", GPR32Opnd>, POOL32C_LHUE_FM_MM<0x18, 0xa, 0x4>;
+    def SHE_MM  : Store<"she", GPR32Opnd>, POOL32C_LHUE_FM_MM<0x18, 0xa, 0x5>;
+    def SWE_MM  : StoreMemory<"swe", GPR32Opnd, mem_simm9gpr>,
+                  POOL32C_LHUE_FM_MM<0x18, 0xa, 0x7>;
+  }
+
   def LWXS_MM : LoadWordIndexedScaledMM<"lwxs", GPR32Opnd>, LWXS_FM_MM<0x118>;
 
   def LWU_MM : LoadMM<"lwu", GPR32Opnd, zextloadi32, II_LWU>, LL_FM_MM<0xe>;
@@ -890,6 +906,8 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
 
   def SDBBP_MM : MMRel, SYS_FT<"sdbbp">, SDBBP_FM_MM;
   def RDHWR_MM : MMRel, ReadHardware<GPR32Opnd, HWRegsOpnd>, RDHWR_FM_MM;
+
+  def PREFX_MM : PrefetchIndexed<"prefx">, POOL32F_PREFX_FM_MM<0x15, 0x1A0>;
 }
 
 let Predicates = [InMicroMips] in {

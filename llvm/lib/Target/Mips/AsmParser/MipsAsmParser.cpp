@@ -947,6 +947,10 @@ public:
     return isMem() && isConstantMemOff() && isInt<Bits>(getConstantMemOff())
       && getMemBase()->isGPRAsmReg();
   }
+  template <unsigned Bits> bool isMemWithSimmOffsetGPR() const {
+    return isMem() && isConstantMemOff() && isInt<Bits>(getConstantMemOff()) &&
+           getMemBase()->isGPRAsmReg();
+  }
   bool isMemWithGRPMM16Base() const {
     return isMem() && getMemBase()->isMM16AsmReg();
   }
@@ -1758,6 +1762,7 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
         if (Imm < 0 || Imm > 60 || (Imm % 4 != 0))
           return Error(IDLoc, "immediate operand value out of range");
         break;
+      case Mips::PREFX_MM:
       case Mips::CACHE:
       case Mips::PREF:
         Opnd = Inst.getOperand(2);

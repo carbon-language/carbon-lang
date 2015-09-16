@@ -41,6 +41,7 @@
 # CHECK-EL:    tlbwr                      # encoding: [0x00,0x00,0x7c,0x33]
 # CHECK-EL:    prefe 1, 8($5)             # encoding: [0x25,0x60,0x08,0xa4]
 # CHECK-EL:    cachee 1, 8($5)            # encoding: [0x25,0x60,0x08,0xa6]
+# CHECK-EL:    prefx 1, $3($5)            # encoding: [0x65,0x54,0xa0,0x09]
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
@@ -76,6 +77,7 @@
 # CHECK-EB:   tlbwr                       # encoding: [0x00,0x00,0x33,0x7c]
 # CHECK-EB:   prefe 1, 8($5)              # encoding: [0x60,0x25,0xa4,0x08]
 # CHECK-EB:   cachee 1, 8($5)             # encoding: [0x60,0x25,0xa6,0x08]
+# CHECK-EB:   prefx 1, $3($5)             # encoding: [0x54,0x65,0x09,0xa0]
 
     sdbbp
     sdbbp 34
@@ -106,3 +108,4 @@
     tlbwr
     prefe 1, 8($5)
     cachee 1, 8($5)
+    prefx 1, $3($5)

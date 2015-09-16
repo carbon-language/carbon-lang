@@ -78,3 +78,4 @@
   break 7, 1024     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   break 1024, 1024  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   wait 1024         # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  prefx 33, $8($5) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range

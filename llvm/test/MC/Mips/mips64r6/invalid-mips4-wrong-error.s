@@ -8,4 +8,3 @@
         .set noat
         bc2tl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
         bc2fl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
-        prefx 0,$2($31)         # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction

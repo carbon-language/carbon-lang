@@ -389,6 +389,22 @@ class LW_FM_MM<bits<6> op> : MMArch {
   let Inst{15-0}  = addr{15-0};
 }
 
+class POOL32C_LHUE_FM_MM<bits<6> op, bits<4> fmt, bits<3> funct> : MMArch {
+  bits<5> rt;
+  bits<21> addr;
+  bits<5> base = addr{20-16};
+  bits<9> offset = addr{8-0};
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = base;
+  let Inst{15-12} = fmt;
+  let Inst{11-9} = funct;
+  let Inst{8-0}  = offset;
+}
+
 class LWL_FM_MM<bits<4> funct> {
   bits<5> rt;
   bits<21> addr;
@@ -936,6 +952,21 @@ class CACHE_PREFE_FM_MM<bits<6> op, bits<3> funct> : MMArch {
   let Inst{15-12} = 0xA;
   let Inst{11-9} = funct;
   let Inst{8-0}  = offset;
+}
+
+class POOL32F_PREFX_FM_MM<bits<6> op, bits<9> funct> : MMArch {
+  bits<5> index;
+  bits<5> base;
+  bits<5> hint;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = index;
+  let Inst{20-16} = base;
+  let Inst{15-11} = hint;
+  let Inst{10-9}  = 0x0;
+  let Inst{8-0}   = funct;
 }
 
 class BARRIER_FM_MM<bits<5> op> : MMArch {
