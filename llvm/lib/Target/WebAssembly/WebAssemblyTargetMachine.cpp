@@ -107,7 +107,7 @@ public:
 } // end anonymous namespace
 
 TargetIRAnalysis WebAssemblyTargetMachine::getTargetIRAnalysis() {
-  return TargetIRAnalysis([this](Function &F) {
+  return TargetIRAnalysis([this](const Function &F) {
     return TargetTransformInfo(WebAssemblyTTIImpl(this, F));
   });
 }
