@@ -17,7 +17,7 @@ class TestCppNsImport(TestBase):
         self.check()
 
     @dwarf_test
-    @expectedFailureGcc(None, ['>', '4.9.0'])
+    @expectedFailureGcc(None, ['>=', '4.9'])
     def test_with_dwarf_and_run_command(self):
         """Tests imported namespaces in C++."""
         self.buildDwarf()
