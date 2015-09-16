@@ -26,6 +26,7 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
         self.buildDsym()
         self.call_function()
 
+    @expectedFlakeyFreeBSD("llvm.org/pr19605")
     @expectedFlakeyLinux("llvm.org/pr20275")
     @expectedFailureWindows("llvm.org/pr21765")
     @dwarf_test
