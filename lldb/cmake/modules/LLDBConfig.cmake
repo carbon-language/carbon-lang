@@ -258,3 +258,20 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
         endif()
     endif()
 endif()
+
+# Figure out if lldb could use lldb-server.  If so, then we'll
+# ensure we build lldb-server when an lldb target is being built.
+if ( ( CMAKE_SYSTEM_NAME MATCHES "Linux" ) OR
+     ( CMAKE_SYSTEM_NAME MATCHES "Darwin" ) )
+    set(LLDB_CAN_USE_LLDB_SERVER 1)
+else()
+    set(LLDB_CAN_USE_LLDB_SERVER 0)
+endif()
+
+# Figure out if lldb could use debugserver.  If so, then we'll
+# ensure we build debugserver when we build lldb.
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
+    set(LLDB_CAN_USE_DEBUGSERVER 1)
+else()
+    set(LLDB_CAN_USE_DEBUGSERVER 0)
+endif()
