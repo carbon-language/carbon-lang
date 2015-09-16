@@ -10,6 +10,7 @@
 #include "SymbolFileDWARFDwo.h"
 
 #include "lldb/Core/Section.h"
+#include "lldb/Expression/DWARFExpression.h"
 #include "lldb/Symbol/ObjectFile.h"
 
 #include "DWARFCompileUnit.h"
@@ -117,4 +118,10 @@ SymbolFileDWARF*
 SymbolFileDWARFDwo::GetBaseSymbolFile()
 {
     return m_base_dwarf_cu->GetSymbolFileDWARF();
+}
+
+DWARFExpression::LocationListFormat
+SymbolFileDWARFDwo::GetLocationListFormat() const
+{
+    return DWARFExpression::SplitDwarfLocationList;
 }

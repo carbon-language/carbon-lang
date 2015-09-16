@@ -42,6 +42,13 @@ class ClangExpressionVariableList;
 class DWARFExpression
 {
 public:
+    enum LocationListFormat : uint8_t
+    {
+        NonLocationList,        // Not a location list
+        RegularLocationList,    // Location list format used in non-split dwarf files
+        SplitDwarfLocationList, // Location list format used in split dwarf files
+    };
+
     //------------------------------------------------------------------
     /// Constructor
     //------------------------------------------------------------------
@@ -401,6 +408,24 @@ public:
                             lldb::addr_t address,
                             ABI *abi);
 
+    static size_t
+    LocationListSize(const DWARFCompileUnit* dwarf_cu,
+                     const DataExtractor& debug_loc_data,
+                     lldb::offset_t offset);
+
+    static bool
+    PrintDWARFExpression(Stream &s,
+                         const DataExtractor& data,
+                         int address_size,
+                         int dwarf_ref_size,
+                         bool location_expression);
+
+    static void
+    PrintDWARFLocationList(Stream &s,
+                           const DWARFCompileUnit* cu,
+                           const DataExtractor& debug_loc_data,
+                           lldb::offset_t offset);
+
 protected:
     //------------------------------------------------------------------
     /// Pretty-prints the location expression to a stream
@@ -434,6 +459,13 @@ protected:
                  lldb::offset_t &offset, 
                  lldb::offset_t &len);
 
+    static bool
+    AddressRangeForLocationListEntry(const DWARFCompileUnit* dwarf_cu,
+                                     const DataExtractor& debug_loc_data,
+                                     lldb::offset_t* offset_ptr,
+                                     lldb::addr_t& low_pc,
+                                     lldb::addr_t& high_pc);
+
     //------------------------------------------------------------------
     /// Classes that inherit from DWARFExpression can see and modify these
     //------------------------------------------------------------------
@@ -447,7 +479,6 @@ protected:
     lldb::addr_t m_loclist_slide;               ///< A value used to slide the location list offsets so that 
                                                 ///< they are relative to the object that owns the location list
                                                 ///< (the function for frame base and variable location lists)
-
 };
 
 } // namespace lldb_private

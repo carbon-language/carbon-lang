@@ -72,7 +72,6 @@
 #include "DWARFDeclContext.h"
 #include "DWARFDIECollection.h"
 #include "DWARFFormValue.h"
-#include "DWARFLocationList.h"
 #include "LogChannelDWARF.h"
 #include "SymbolFileDWARFDwo.h"
 #include "SymbolFileDWARFDebugMap.h"
@@ -3874,10 +3873,10 @@ SymbolFileDWARF::ParseVariableDIE
                             }
                             else
                             {
-                                const DWARFDataExtractor&    debug_loc_data = get_debug_loc_data();
+                                const DWARFDataExtractor& debug_loc_data = get_debug_loc_data();
                                 const dw_offset_t debug_loc_offset = form_value.Unsigned();
 
-                                size_t loc_list_length = DWARFLocationList::Size(debug_loc_data, debug_loc_offset);
+                                size_t loc_list_length = DWARFExpression::LocationListSize(die.GetCU(), debug_loc_data, debug_loc_offset);
                                 if (loc_list_length > 0)
                                 {
                                     location.CopyOpcodeData(module, debug_loc_data, debug_loc_offset, loc_list_length);
@@ -4338,4 +4337,10 @@ SymbolFileDWARF::GetDebugMapSymfile ()
         }
     }
     return m_debug_map_symfile;
+}
+
+DWARFExpression::LocationListFormat
+SymbolFileDWARF::GetLocationListFormat() const
+{
+    return DWARFExpression::RegularLocationList;
 }

@@ -460,8 +460,6 @@
 		268900C413353E5F00698AC0 /* DWARFDefines.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89CF10F57C5600BB2B04 /* DWARFDefines.cpp */; };
 		268900C513353E5F00698AC0 /* DWARFDIECollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89D110F57C5600BB2B04 /* DWARFDIECollection.cpp */; };
 		268900C613353E5F00698AC0 /* DWARFFormValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89D310F57C5600BB2B04 /* DWARFFormValue.cpp */; };
-		268900C713353E5F00698AC0 /* DWARFLocationDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89D510F57C5600BB2B04 /* DWARFLocationDescription.cpp */; };
-		268900C813353E5F00698AC0 /* DWARFLocationList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89D710F57C5600BB2B04 /* DWARFLocationList.cpp */; };
 		268900C913353E5F00698AC0 /* NameToDIE.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618D9EA12406FE600F2B8FE /* NameToDIE.cpp */; };
 		268900CA13353E5F00698AC0 /* SymbolFileDWARF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89D910F57C5600BB2B04 /* SymbolFileDWARF.cpp */; };
 		268900CB13353E5F00698AC0 /* LogChannelDWARF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26109B3B1155D70100CC3529 /* LogChannelDWARF.cpp */; };
@@ -744,15 +742,15 @@
 		9443B123140C26AB0013457C /* SBData.h in Headers */ = {isa = PBXBuildFile; fileRef = 9443B120140C18A90013457C /* SBData.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		945215DF17F639EE00521C0B /* ValueObjectPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945215DE17F639EE00521C0B /* ValueObjectPrinter.cpp */; };
 		9452573A16262D0200325455 /* SBDeclaration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9452573916262D0200325455 /* SBDeclaration.cpp */; };
-		945261BF1B9A11FC00BF138D /* CxxStringTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261B31B9A11E800BF138D /* CxxStringTypes.cpp */; settings = {ASSET_TAGS = (); }; };
-		945261C01B9A11FC00BF138D /* LibCxx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261B51B9A11E800BF138D /* LibCxx.cpp */; settings = {ASSET_TAGS = (); }; };
-		945261C11B9A11FC00BF138D /* LibCxxInitializerList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261B71B9A11E800BF138D /* LibCxxInitializerList.cpp */; settings = {ASSET_TAGS = (); }; };
-		945261C21B9A11FC00BF138D /* LibCxxList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261B81B9A11E800BF138D /* LibCxxList.cpp */; settings = {ASSET_TAGS = (); }; };
-		945261C31B9A11FC00BF138D /* LibCxxMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261B91B9A11E800BF138D /* LibCxxMap.cpp */; settings = {ASSET_TAGS = (); }; };
-		945261C41B9A11FC00BF138D /* LibCxxUnorderedMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261BA1B9A11E800BF138D /* LibCxxUnorderedMap.cpp */; settings = {ASSET_TAGS = (); }; };
-		945261C51B9A11FC00BF138D /* LibCxxVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261BB1B9A11E800BF138D /* LibCxxVector.cpp */; settings = {ASSET_TAGS = (); }; };
-		945261C61B9A11FC00BF138D /* LibStdcpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261BC1B9A11E800BF138D /* LibStdcpp.cpp */; settings = {ASSET_TAGS = (); }; };
-		945261C81B9A14D300BF138D /* CXXFunctionPointer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261C71B9A14D300BF138D /* CXXFunctionPointer.cpp */; settings = {ASSET_TAGS = (); }; };
+		945261BF1B9A11FC00BF138D /* CxxStringTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261B31B9A11E800BF138D /* CxxStringTypes.cpp */; };
+		945261C01B9A11FC00BF138D /* LibCxx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261B51B9A11E800BF138D /* LibCxx.cpp */; };
+		945261C11B9A11FC00BF138D /* LibCxxInitializerList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261B71B9A11E800BF138D /* LibCxxInitializerList.cpp */; };
+		945261C21B9A11FC00BF138D /* LibCxxList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261B81B9A11E800BF138D /* LibCxxList.cpp */; };
+		945261C31B9A11FC00BF138D /* LibCxxMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261B91B9A11E800BF138D /* LibCxxMap.cpp */; };
+		945261C41B9A11FC00BF138D /* LibCxxUnorderedMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261BA1B9A11E800BF138D /* LibCxxUnorderedMap.cpp */; };
+		945261C51B9A11FC00BF138D /* LibCxxVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261BB1B9A11E800BF138D /* LibCxxVector.cpp */; };
+		945261C61B9A11FC00BF138D /* LibStdcpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261BC1B9A11E800BF138D /* LibStdcpp.cpp */; };
+		945261C81B9A14D300BF138D /* CXXFunctionPointer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261C71B9A14D300BF138D /* CXXFunctionPointer.cpp */; };
 		945759671534941F005A9070 /* PlatformPOSIX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945759651534941F005A9070 /* PlatformPOSIX.cpp */; };
 		945E8D80152F6AB40019BCCD /* StreamGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945E8D7F152F6AB40019BCCD /* StreamGDBRemote.cpp */; };
 		9461569A14E358A6003A195C /* SBTypeFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568A14E35621003A195C /* SBTypeFilter.cpp */; };
@@ -767,13 +765,13 @@
 		9475C18F14E5F858001BFC6D /* SBTypeNameSpecifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 9475C18C14E5F826001BFC6D /* SBTypeNameSpecifier.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		947A1D641616476B0017C8D1 /* CommandObjectPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 947A1D621616476A0017C8D1 /* CommandObjectPlugin.cpp */; };
 		949ADF031406F648004833E1 /* ValueObjectConstResultImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949ADF021406F648004833E1 /* ValueObjectConstResultImpl.cpp */; };
-		949EEDA01BA74B6D008C63CF /* CoreMedia.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EED9E1BA74B64008C63CF /* CoreMedia.cpp */; settings = {ASSET_TAGS = (); }; };
-		949EEDA31BA76577008C63CF /* Cocoa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDA11BA76571008C63CF /* Cocoa.cpp */; settings = {ASSET_TAGS = (); }; };
-		949EEDAE1BA7671C008C63CF /* CF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDAC1BA76719008C63CF /* CF.cpp */; settings = {ASSET_TAGS = (); }; };
-		949EEDAF1BA76729008C63CF /* NSArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDA41BA765B5008C63CF /* NSArray.cpp */; settings = {ASSET_TAGS = (); }; };
-		949EEDB11BA7672D008C63CF /* NSDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDA51BA765B5008C63CF /* NSDictionary.cpp */; settings = {ASSET_TAGS = (); }; };
-		949EEDB21BA76731008C63CF /* NSIndexPath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDA61BA765B5008C63CF /* NSIndexPath.cpp */; settings = {ASSET_TAGS = (); }; };
-		949EEDB31BA76736008C63CF /* NSSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDA71BA765B5008C63CF /* NSSet.cpp */; settings = {ASSET_TAGS = (); }; };
+		949EEDA01BA74B6D008C63CF /* CoreMedia.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EED9E1BA74B64008C63CF /* CoreMedia.cpp */; };
+		949EEDA31BA76577008C63CF /* Cocoa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDA11BA76571008C63CF /* Cocoa.cpp */; };
+		949EEDAE1BA7671C008C63CF /* CF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDAC1BA76719008C63CF /* CF.cpp */; };
+		949EEDAF1BA76729008C63CF /* NSArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDA41BA765B5008C63CF /* NSArray.cpp */; };
+		949EEDB11BA7672D008C63CF /* NSDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDA51BA765B5008C63CF /* NSDictionary.cpp */; };
+		949EEDB21BA76731008C63CF /* NSIndexPath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDA61BA765B5008C63CF /* NSIndexPath.cpp */; };
+		949EEDB31BA76736008C63CF /* NSSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949EEDA71BA765B5008C63CF /* NSSet.cpp */; };
 		94A5B3971AB9FE8D00A5EE7F /* EmulateInstructionMIPS64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A5B3951AB9FE8300A5EE7F /* EmulateInstructionMIPS64.cpp */; };
 		94B638531B8F8E6C004FE1E4 /* Language.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B638521B8F8E6C004FE1E4 /* Language.cpp */; };
 		94B6385D1B8FB178004FE1E4 /* CPlusPlusLanguage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B6385B1B8FB174004FE1E4 /* CPlusPlusLanguage.cpp */; };
@@ -1264,10 +1262,6 @@
 		260C89D210F57C5600BB2B04 /* DWARFDIECollection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFDIECollection.h; sourceTree = "<group>"; };
 		260C89D310F57C5600BB2B04 /* DWARFFormValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DWARFFormValue.cpp; sourceTree = "<group>"; };
 		260C89D410F57C5600BB2B04 /* DWARFFormValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFFormValue.h; sourceTree = "<group>"; };
-		260C89D510F57C5600BB2B04 /* DWARFLocationDescription.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DWARFLocationDescription.cpp; sourceTree = "<group>"; };
-		260C89D610F57C5600BB2B04 /* DWARFLocationDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFLocationDescription.h; sourceTree = "<group>"; };
-		260C89D710F57C5600BB2B04 /* DWARFLocationList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DWARFLocationList.cpp; sourceTree = "<group>"; };
-		260C89D810F57C5600BB2B04 /* DWARFLocationList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFLocationList.h; sourceTree = "<group>"; };
 		260C89D910F57C5600BB2B04 /* SymbolFileDWARF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SymbolFileDWARF.cpp; sourceTree = "<group>"; };
 		260C89DA10F57C5600BB2B04 /* SymbolFileDWARF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SymbolFileDWARF.h; sourceTree = "<group>"; };
 		260C89DB10F57C5600BB2B04 /* SymbolFileDWARFDebugMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SymbolFileDWARFDebugMap.cpp; sourceTree = "<group>"; };
@@ -3187,10 +3181,6 @@
 				260C89D210F57C5600BB2B04 /* DWARFDIECollection.h */,
 				260C89D310F57C5600BB2B04 /* DWARFFormValue.cpp */,
 				260C89D410F57C5600BB2B04 /* DWARFFormValue.h */,
-				260C89D510F57C5600BB2B04 /* DWARFLocationDescription.cpp */,
-				260C89D610F57C5600BB2B04 /* DWARFLocationDescription.h */,
-				260C89D710F57C5600BB2B04 /* DWARFLocationList.cpp */,
-				260C89D810F57C5600BB2B04 /* DWARFLocationList.h */,
 				26A0DA4D140F721D006DA411 /* HashedNameToDIE.h */,
 				26109B3B1155D70100CC3529 /* LogChannelDWARF.cpp */,
 				26109B3C1155D70100CC3529 /* LogChannelDWARF.h */,
@@ -6424,9 +6414,7 @@
 				3FDFE53119A292F0009756A7 /* HostInfoPosix.cpp in Sources */,
 				233B007D1960C9F90090E598 /* ProcessInfo.cpp in Sources */,
 				3FDFE52C19A2917A009756A7 /* HostInfoMacOSX.mm in Sources */,
-				268900C713353E5F00698AC0 /* DWARFLocationDescription.cpp in Sources */,
 				26BC17B118C7F4CB00D2196D /* ThreadElfCore.cpp in Sources */,
-				268900C813353E5F00698AC0 /* DWARFLocationList.cpp in Sources */,
 				268900C913353E5F00698AC0 /* NameToDIE.cpp in Sources */,
 				268900CA13353E5F00698AC0 /* SymbolFileDWARF.cpp in Sources */,
 				268900CB13353E5F00698AC0 /* LogChannelDWARF.cpp in Sources */,

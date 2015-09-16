@@ -25,8 +25,6 @@
 #include "DWARFDeclContext.h"
 #include "DWARFDIECollection.h"
 #include "DWARFFormValue.h"
-#include "DWARFLocationDescription.h"
-#include "DWARFLocationList.h"
 #include "DWARFDebugRanges.h"
 #include "SymbolFileDWARF.h"
 #include "SymbolFileDWARFDwo.h"
@@ -555,7 +553,7 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
                             const DWARFDataExtractor &debug_loc_data = dwarf2Data->get_debug_loc_data();
                             const dw_offset_t debug_loc_offset = form_value.Unsigned();
 
-                            size_t loc_list_length = DWARFLocationList::Size(debug_loc_data, debug_loc_offset);
+                            size_t loc_list_length = DWARFExpression::LocationListSize(cu, debug_loc_data, debug_loc_offset);
                             if (loc_list_length > 0)
                             {
                                 frame_base->SetOpcodeData(module, debug_loc_data, debug_loc_offset, loc_list_length);
@@ -801,7 +799,11 @@ DWARFDebugInfoEntry::DumpAttribute
                 // Location description is inlined in data in the form value
                 DWARFDataExtractor locationData(debug_info_data, (*offset_ptr) - form_value.Unsigned(), form_value.Unsigned());
                 if ( verbose ) s.PutCString(" ( ");
-                print_dwarf_expression (s, locationData, DWARFCompileUnit::GetAddressByteSize(cu), 4, false);
+                DWARFExpression::PrintDWARFExpression(s,
+                                                      locationData,
+                                                      DWARFCompileUnit::GetAddressByteSize(cu),
+                                                      4,
+                                                      false);
                 if ( verbose ) s.PutCString(" )");
             }
             else
@@ -814,7 +816,10 @@ DWARFDebugInfoEntry::DumpAttribute
                 {
                     if ( !verbose )
                         form_value.Dump(s);
-                    DWARFLocationList::Dump(s, cu, dwarf2Data->get_debug_loc_data(), debug_loc_offset);
+                    DWARFExpression::PrintDWARFLocationList(s,
+                                                            cu,
+                                                            dwarf2Data->get_debug_loc_data(),
+                                                            debug_loc_offset);
                 }
                 else
                 {

@@ -38,6 +38,9 @@ public:
     DWARFCompileUnit*
     GetDWARFCompileUnit(lldb_private::CompileUnit *comp_unit) override;
 
+    lldb_private::DWARFExpression::LocationListFormat
+    GetLocationListFormat() const override;
+
 protected:
     DIEToTypePtr&
     GetDIEToType() override;
