@@ -4,7 +4,9 @@
 
 // RUN: %clangxx_msan %s -O2 -fsanitize=memory -fsanitize-memory-use-after-dtor -o %t && MSAN_OPTIONS=poison_in_dtor=1 %run %t >%t.out 2>&1
 
-// TODO Success pending on resolution of 596
+// TODO Success pending on resolution of
+// https://github.com/google/sanitizers/issues/596
+
 // XFAIL: *
 
 #include <assert.h>
