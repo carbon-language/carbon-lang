@@ -162,6 +162,10 @@ public:
     lldb_private::CompilerDeclContext
     GetDeclContextContainingUID (lldb::user_id_t uid) override;
 
+    void
+    ParseDeclsForContext (lldb_private::CompilerDeclContext decl_ctx) override;
+    
+
     uint32_t
     ResolveSymbolContext (const lldb_private::Address& so_addr,
                           uint32_t resolve_scope,

@@ -35,6 +35,9 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 
+#include <map>
+#include <vector>
+
 //#define ENABLE_DEBUG_PRINTF // COMMENT OUT THIS LINE PRIOR TO CHECKIN
 
 #ifdef ENABLE_DEBUG_PRINTF
@@ -2039,6 +2042,15 @@ DWARFASTParserClang::CompleteTypeFromDWARF (const DWARFDIE &die,
     return false;
 }
 
+std::vector<DWARFDIE>
+DWARFASTParserClang::GetDIEForDeclContext (lldb_private::CompilerDeclContext decl_context) 
+{
+    std::vector<DWARFDIE> result;
+    for (auto it = m_decl_ctx_to_die.find((clang::DeclContext *)decl_context.GetOpaqueDeclContext()); it != m_decl_ctx_to_die.end(); it++)
+        result.push_back(it->second);
+    return result;
+}
+
 CompilerDecl
 DWARFASTParserClang::GetDeclForUIDFromDWARF (const DWARFDIE &die)
 {
@@ -3213,6 +3225,9 @@ DWARFASTParserClang::GetClangDeclForDIE (const DWARFDIE &die)
     if (!die)
         return nullptr;
 
+    if (die.GetReferencedDIE(DW_AT_specification))
+        return GetClangDeclForDIE(die.GetReferencedDIE(DW_AT_specification));
+
     clang::Decl *decl = m_die_to_decl[die.GetDIE()];
     if (decl != nullptr)
         return decl;
@@ -3261,8 +3276,8 @@ DWARFASTParserClang::GetClangDeclForDIE (const DWARFDIE &die)
                 if (imported_decl)
                 {
                     clang::DeclContext *decl_context = ClangASTContext::DeclContextGetAsDeclContext(dwarf->GetDeclContextContainingUID(die.GetID()));
-                    if (clang::NamespaceDecl *clang_imported_decl = llvm::dyn_cast<clang::NamespaceDecl>((clang::DeclContext *)imported_decl.GetOpaqueDeclContext()))
-                        decl = m_ast.CreateUsingDirectiveDeclaration(decl_context, clang_imported_decl);
+                    if (clang::NamespaceDecl *ns_decl = ClangASTContext::DeclContextGetAsNamespaceDecl(imported_decl))
+                        decl = m_ast.CreateUsingDirectiveDeclaration(decl_context, ns_decl);
                 }
             }
             break;
@@ -3431,7 +3446,8 @@ DWARFASTParserClang::LinkDeclContextToDIE (clang::DeclContext *decl_ctx, const D
 {
     m_die_to_decl_ctx[die.GetDIE()] = decl_ctx;
     // There can be many DIEs for a single decl context
-    m_decl_ctx_to_die[decl_ctx].insert(die.GetDIE());
+    //m_decl_ctx_to_die[decl_ctx].insert(die.GetDIE());
+    m_decl_ctx_to_die.insert(std::make_pair(decl_ctx, die));
 }
 
 bool

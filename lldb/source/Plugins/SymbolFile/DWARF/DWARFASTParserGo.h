@@ -12,6 +12,7 @@
 
 #include "DWARFDefines.h"
 #include "DWARFASTParser.h"
+#include "DWARFDIE.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -55,6 +56,12 @@ class DWARFASTParserGo : public DWARFASTParser
     GetDeclForUIDFromDWARF (const DWARFDIE &die) override
     {
         return lldb_private::CompilerDecl();
+    }
+
+    virtual std::vector<DWARFDIE>
+    GetDIEForDeclContext (lldb_private::CompilerDeclContext decl_context) override
+    {
+        return std::vector<DWARFDIE>();
     }
 
   private:

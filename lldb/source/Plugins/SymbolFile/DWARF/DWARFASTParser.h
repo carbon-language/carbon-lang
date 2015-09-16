@@ -45,6 +45,9 @@ public:
 
     virtual lldb_private::CompilerDeclContext
     GetDeclContextContainingUIDFromDWARF (const DWARFDIE &die) = 0;
+
+    virtual std::vector<DWARFDIE>
+    GetDIEForDeclContext (lldb_private::CompilerDeclContext decl_context) = 0;
 };
 
 #endif  // SymbolFileDWARF_DWARFASTParser_h_

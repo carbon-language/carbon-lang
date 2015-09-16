@@ -1351,7 +1351,6 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
     {
         ValueObjectSP valobj;
         VariableSP var;
-        Error err;
 
         if (frame && !namespace_decl)
         {
@@ -1366,17 +1365,21 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
 
                 // Search for declarations matching the name
                 std::vector<CompilerDecl> found_decls = compiler_decl_context.FindDeclByName(name);
+                
+                bool variable_found = false;
                 for (CompilerDecl decl : found_decls)
                 {
                     var = decl.GetAsVariable();
                     if (var)
                     {
+                        variable_found = true;
                         valobj = ValueObjectVariable::Create(frame, var);
                         AddOneVariable(context, var, valobj, current_id);
                         context.m_found.variable = true;
-                        return;
                     }
                 }
+                if (variable_found)
+                    return;
             }
         }
         if (target)

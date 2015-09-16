@@ -1730,24 +1730,6 @@ ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *d
                 // BAD!!!
             }
         }
-        
-
-        if (namespace_decl)
-        {
-            // If we make it here, we are creating the anonymous namespace decl
-            // for the first time, so we need to do the using directive magic
-            // like SEMA does
-            UsingDirectiveDecl* using_directive_decl = UsingDirectiveDecl::Create (*ast, 
-                                                                                   decl_ctx, 
-                                                                                   SourceLocation(),
-                                                                                   SourceLocation(),
-                                                                                   NestedNameSpecifierLoc(),
-                                                                                   SourceLocation(),
-                                                                                   namespace_decl,
-                                                                                   decl_ctx);
-            using_directive_decl->setImplicit();
-            decl_ctx->addDecl(using_directive_decl);
-        }
     }
 #ifdef LLDB_CONFIGURATION_DEBUG
     VerifyDecl(namespace_decl);
@@ -1768,12 +1750,29 @@ ClangASTContext::CreateBlockDeclaration (clang::DeclContext *ctx)
     return nullptr;
 }
 
+clang::DeclContext *
+FindLCABetweenDecls(clang::DeclContext *left, clang::DeclContext *right, clang::DeclContext *root)
+{
+    if (root == nullptr)
+        return nullptr;
+
+    std::set<clang::DeclContext *> path_left;
+    for (clang::DeclContext *d = left; d != nullptr; d = d->getParent())
+        path_left.insert(d);
+
+    for (clang::DeclContext *d = right; d != nullptr; d = d->getParent())
+        if (path_left.find(d) != path_left.end())
+            return d;
+
+    return nullptr;
+}
+
 clang::UsingDirectiveDecl *
 ClangASTContext::CreateUsingDirectiveDeclaration (clang::DeclContext *decl_ctx, clang::NamespaceDecl *ns_decl)
 {
     if (decl_ctx != nullptr && ns_decl != nullptr)
     {
-        // TODO: run LCA between decl_tx and ns_decl
+        clang::TranslationUnitDecl *translation_unit = (clang::TranslationUnitDecl *)GetTranslationUnitDecl(getASTContext());
         clang::UsingDirectiveDecl *using_decl = clang::UsingDirectiveDecl::Create(*getASTContext(),
             decl_ctx,
             clang::SourceLocation(),
@@ -1781,7 +1780,7 @@ ClangASTContext::CreateUsingDirectiveDeclaration (clang::DeclContext *decl_ctx, 
             clang::NestedNameSpecifierLoc(),
             clang::SourceLocation(),
             ns_decl,
-            GetTranslationUnitDecl(getASTContext()));
+            FindLCABetweenDecls(decl_ctx, ns_decl, translation_unit));
         decl_ctx->addDecl(using_decl);
         return using_decl;
     }
@@ -1826,7 +1825,6 @@ ClangASTContext::CreateVariableDeclaration (clang::DeclContext *decl_context, co
             clang::SC_None);
         var_decl->setAccess(clang::AS_public);
         decl_context->addDecl(var_decl);
-        decl_context->makeDeclVisibleInContext(var_decl);
         return var_decl;
     }
     return nullptr;
@@ -8867,6 +8865,7 @@ ClangASTContext::DeclContextFindDeclByName(void *opaque_decl_ctx, ConstString na
         DeclContext *root_decl_ctx = (DeclContext *)opaque_decl_ctx;
         std::set<DeclContext *> searched;
         std::multimap<DeclContext *, DeclContext *> search_queue;
+        SymbolFile *symbol_file = GetSymbolFile();
 
         for (clang::DeclContext *decl_context = root_decl_ctx; decl_context != nullptr && found_decls.empty(); decl_context = decl_context->getParent())
         {
@@ -8875,15 +8874,11 @@ ClangASTContext::DeclContextFindDeclByName(void *opaque_decl_ctx, ConstString na
             for (auto it = search_queue.find(decl_context); it != search_queue.end(); it++)
             {
                 searched.insert(it->second);
+                symbol_file->ParseDeclsForContext(CompilerDeclContext(this, it->second));
+
                 for (clang::Decl *child : it->second->decls())
                 {
-                    if (clang::NamedDecl *nd = llvm::dyn_cast<clang::NamedDecl>(child))
-                    {
-                        IdentifierInfo *ii = nd->getIdentifier();
-                        if (ii != nullptr && ii->getName().equals(name.AsCString(nullptr)))
-                            found_decls.push_back(nd);
-                    }
-                    else if (clang::UsingDirectiveDecl *ud = llvm::dyn_cast<clang::UsingDirectiveDecl>(child))
+                    if (clang::UsingDirectiveDecl *ud = llvm::dyn_cast<clang::UsingDirectiveDecl>(child))
                     {
                         clang::DeclContext *from = ud->getCommonAncestor();
                         if (searched.find(ud->getNominatedNamespace()) == searched.end())
@@ -8901,6 +8896,12 @@ ClangASTContext::DeclContextFindDeclByName(void *opaque_decl_ctx, ConstString na
                                     found_decls.push_back(nd);
                             }
                         }
+                    }
+                    else if (clang::NamedDecl *nd = llvm::dyn_cast<clang::NamedDecl>(child))
+                    {
+                        IdentifierInfo *ii = nd->getIdentifier();
+                        if (ii != nullptr && ii->getName().equals(name.AsCString(nullptr)))
+                            found_decls.push_back(nd);
                     }
                 }
             }

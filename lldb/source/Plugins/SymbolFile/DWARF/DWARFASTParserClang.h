@@ -51,6 +51,9 @@ public:
     virtual lldb_private::CompilerDecl
     GetDeclForUIDFromDWARF (const DWARFDIE &die) override;
 
+    virtual std::vector<DWARFDIE>
+    GetDIEForDeclContext (lldb_private::CompilerDeclContext decl_context) override;
+
     virtual lldb_private::CompilerDeclContext
     GetDeclContextForUIDFromDWARF (const DWARFDIE &die) override;
 
@@ -173,7 +176,8 @@ protected:
 
     typedef llvm::SmallPtrSet<const DWARFDebugInfoEntry *, 4> DIEPointerSet;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;
-    typedef llvm::DenseMap<const clang::DeclContext *, DIEPointerSet> DeclContextToDIEMap;
+    //typedef llvm::DenseMap<const clang::DeclContext *, DIEPointerSet> DeclContextToDIEMap;
+    typedef std::multimap<const clang::DeclContext *, const DWARFDIE> DeclContextToDIEMap;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::Decl *> DIEToDeclMap;
     typedef llvm::DenseMap<const clang::Decl *, DIEPointerSet> DeclToDIEMap;
 

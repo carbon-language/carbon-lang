@@ -1392,6 +1392,18 @@ SymbolFileDWARF::ClassOrStructIsVirtual (const DWARFDIE &parent_die)
     return false;
 }
 
+void
+SymbolFileDWARF::ParseDeclsForContext (CompilerDeclContext decl_ctx)
+{
+    TypeSystem *type_system = decl_ctx.GetTypeSystem();
+    DWARFASTParser *ast_parser = type_system->GetDWARFParser();
+    std::vector<DWARFDIE> decl_ctx_die_list = ast_parser->GetDIEForDeclContext(decl_ctx);
+
+    for (DWARFDIE decl_ctx_die : decl_ctx_die_list)
+        for (DWARFDIE decl = decl_ctx_die.GetFirstChild(); decl; decl = decl.GetSibling())
+            ast_parser->GetDeclForUIDFromDWARF(decl);
+}
+
 CompilerDecl
 SymbolFileDWARF::GetDeclForUID (lldb::user_id_t type_uid)
 {

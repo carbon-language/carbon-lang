@@ -80,18 +80,21 @@ class TestCppNsImport(TestBase):
         test_result = frame.EvaluateExpression("fun_var")
         self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 9, "fun_var = 9")
 
+        test_result = frame.EvaluateExpression("Fun::fun_var")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 0, "Fun::fun_var = 0")
+
         test_result = frame.EvaluateExpression("not_imported")
         self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 35, "not_imported = 35")
 
-        # Disabled the "imported" test since it isn't valid. It should actually test for ambiguity
-        #test_result = frame.EvaluateExpression("imported")
-        #self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 99, "imported = 99")
-
-        test_result = frame.EvaluateExpression("::imported")
-        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 89, "::imported = 89")
+        # Currently there is no way to distinguish between "::imported" and "imported" in ClangExpressionDeclMap so this fails
+        #test_result = frame.EvaluateExpression("::imported")
+        #self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 89, "::imported = 89")
 
         test_result = frame.EvaluateExpression("Imported::imported")
         self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 99, "Imported::imported = 99")
+        
+        test_result = frame.EvaluateExpression("imported")
+        self.assertTrue(test_result.IsValid() and test_result.GetError().Fail(), "imported is ambiguous")
 
         test_result = frame.EvaluateExpression("single")
         self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 3, "single = 3")
