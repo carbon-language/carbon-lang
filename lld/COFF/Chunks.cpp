@@ -207,13 +207,10 @@ bool SectionChunk::isCOMDAT() const {
 }
 
 void SectionChunk::printDiscardedMessage() const {
-  if (this == Ptr) {
-    // Removed by dead-stripping.
-    llvm::dbgs() << "Discarded " << Sym->getName() << "\n";
-  } else {
-    // Removed by ICF.
-    llvm::dbgs() << "Replaced " << Sym->getName() << "\n";
-  }
+  // Removed by dead-stripping. If it's removed by ICF, ICF already
+  // printed out the name, so don't repeat that here.
+  if (Sym && this == Ptr)
+    llvm::outs() << "Discarded " << Sym->getName() << "\n";
 }
 
 StringRef SectionChunk::getDebugName() {
