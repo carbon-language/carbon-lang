@@ -8394,8 +8394,11 @@ ScalarEvolution::ScalarEvolution(ScalarEvolution &&Arg)
 ScalarEvolution::~ScalarEvolution() {
   // Iterate through all the SCEVUnknown instances and call their
   // destructors, so that they release their references to their values.
-  for (SCEVUnknown *U = FirstUnknown; U; U = U->Next)
-    U->~SCEVUnknown();
+  for (SCEVUnknown *U = FirstUnknown; U;) {
+    SCEVUnknown *Tmp = U;
+    U = U->Next;
+    Tmp->~SCEVUnknown();
+  }
   FirstUnknown = nullptr;
 
   ValueExprMap.clear();
