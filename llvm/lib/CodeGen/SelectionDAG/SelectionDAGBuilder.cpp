@@ -80,7 +80,7 @@ LimitFPPrecision("limit-float-precision",
                  cl::init(0));
 
 static cl::opt<bool>
-EnableFMFInDAG("enable-fmf-dag", cl::init(false), cl::Hidden,
+EnableFMFInDAG("enable-fmf-dag", cl::init(true), cl::Hidden,
                 cl::desc("Enable fast-math-flags for DAG nodes"));
 
 // Limit the width of DAG chains. This is important in general to prevent
@@ -2347,6 +2347,10 @@ void SelectionDAGBuilder::visitFCmp(const User &I) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
   ISD::CondCode Condition = getFCmpCondCode(predicate);
+  
+  // FIXME: Fcmp instructions have fast-math-flags in IR, so we should use them.
+  // FIXME: We should propagate the fast-math-flags to the DAG node itself for
+  // further optimization, but currently FMF is only applicable to binary nodes.
   if (TM.Options.NoNaNsFPMath)
     Condition = getFCmpCodeWithoutNaN(Condition);
   EVT DestVT = DAG.getTargetLoweringInfo().getValueType(DAG.getDataLayout(),
@@ -3629,6 +3633,8 @@ getF32Constant(SelectionDAG &DAG, unsigned Flt, SDLoc dl) {
 
 static SDValue getLimitedPrecisionExp2(SDValue t0, SDLoc dl,
                                        SelectionDAG &DAG) {
+  // TODO: What fast-math-flags should be set on the floating-point nodes?
+
   //   IntegerPartOfX = ((int32_t)(t0);
   SDValue IntegerPartOfX = DAG.getNode(ISD::FP_TO_SINT, dl, MVT::i32, t0);
 
@@ -3727,6 +3733,8 @@ static SDValue expandExp(SDLoc dl, SDValue Op, SelectionDAG &DAG,
     //
     //   #define LOG2OFe 1.4426950f
     //   t0 = Op * LOG2OFe
+
+    // TODO: What fast-math-flags should be set here?
     SDValue t0 = DAG.getNode(ISD::FMUL, dl, MVT::f32, Op,
                              getF32Constant(DAG, 0x3fb8aa3b, dl));
     return getLimitedPrecisionExp2(t0, dl, DAG);
@@ -3740,6 +3748,9 @@ static SDValue expandExp(SDLoc dl, SDValue Op, SelectionDAG &DAG,
 /// limited-precision mode.
 static SDValue expandLog(SDLoc dl, SDValue Op, SelectionDAG &DAG,
                          const TargetLowering &TLI) {
+ 
+  // TODO: What fast-math-flags should be set on the floating-point nodes?
+
   if (Op.getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
     SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op);
@@ -3836,6 +3847,9 @@ static SDValue expandLog(SDLoc dl, SDValue Op, SelectionDAG &DAG,
 /// limited-precision mode.
 static SDValue expandLog2(SDLoc dl, SDValue Op, SelectionDAG &DAG,
                           const TargetLowering &TLI) {
+  
+  // TODO: What fast-math-flags should be set on the floating-point nodes?
+
   if (Op.getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
     SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op);
@@ -3931,6 +3945,9 @@ static SDValue expandLog2(SDLoc dl, SDValue Op, SelectionDAG &DAG,
 /// limited-precision mode.
 static SDValue expandLog10(SDLoc dl, SDValue Op, SelectionDAG &DAG,
                            const TargetLowering &TLI) {
+
+  // TODO: What fast-math-flags should be set on the floating-point nodes?
+
   if (Op.getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
     SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op);
@@ -4040,6 +4057,7 @@ static SDValue expandPow(SDLoc dl, SDValue LHS, SDValue RHS,
     }
   }
 
+  // TODO: What fast-math-flags should be set on the FMUL node?
   if (IsExp10) {
     // Put the exponent in the right bit position for later addition to the
     // final result:
@@ -4083,6 +4101,8 @@ static SDValue ExpandPowI(SDLoc DL, SDValue LHS, SDValue RHS,
       // the benefit of being both really simple and much better than a libcall.
       SDValue Res;  // Logically starts equal to 1.0
       SDValue CurSquare = LHS;
+      // TODO: Intrinsics should have fast-math-flags that propagate to these
+      // nodes.
       while (Val) {
         if (Val & 1) {
           if (Res.getNode())
@@ -4736,6 +4756,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                                getValue(I.getArgOperand(1)),
                                getValue(I.getArgOperand(2))));
     } else {
+      // TODO: Intrinsic calls should have fast-math-flags.
       SDValue Mul = DAG.getNode(ISD::FMUL, sdl,
                                 getValue(I.getArgOperand(0)).getValueType(),
                                 getValue(I.getArgOperand(0)),

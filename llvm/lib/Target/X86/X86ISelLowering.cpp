@@ -12229,6 +12229,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
                   MachinePointerInfo::getConstantPool(DAG.getMachineFunction()),
                   false, false, false, 16);
   SDValue XR2F = DAG.getBitcast(MVT::v2f64, Unpck1);
+  // TODO: Are there any fast-math-flags to propagate here?
   SDValue Sub = DAG.getNode(ISD::FSUB, dl, MVT::v2f64, XR2F, CLod1);
   SDValue Result;
 
@@ -12278,6 +12279,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op,
                   DAG.getBitcast(MVT::v2f64, Or), DAG.getIntPtrConstant(0, dl));
 
   // Subtract the bias.
+  // TODO: Are there any fast-math-flags to propagate here?
   SDValue Sub = DAG.getNode(ISD::FSUB, dl, MVT::f64, Or, Bias);
 
   // Handle final rounding.
@@ -12390,6 +12392,7 @@ static SDValue lowerUINT_TO_FP_vXi32(SDValue Op, SelectionDAG &DAG,
 
   //     float4 fhi = (float4) hi - (0x1.0p39f + 0x1.0p23f);
   SDValue HighBitcast = DAG.getBitcast(VecFloatVT, High);
+  // TODO: Are there any fast-math-flags to propagate here?
   SDValue FHigh =
       DAG.getNode(ISD::FADD, DL, VecFloatVT, HighBitcast, VecCstFAdd);
   //     return (float4) lo + fhi;
@@ -12509,6 +12512,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
       MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), MVT::f32,
       false, false, false, 4);
   // Extend everything to 80 bits to force it to be done on x87.
+  // TODO: Are there any fast-math-flags to propagate here?
   SDValue Add = DAG.getNode(ISD::FADD, dl, MVT::f80, Fild, Fudge);
   return DAG.getNode(ISD::FP_ROUND, dl, DstVT, Add,
                      DAG.getIntPtrConstant(0, dl));
@@ -15847,8 +15851,8 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                       Mask, PassThru, Subtarget, DAG);
         }
       }
-      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
-                                              Src1,Src2),
+      // TODO: Intrinsics should have fast-math-flags to propagate.
+      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,Src1,Src2),
                                   Mask, PassThru, Subtarget, DAG);
     }
     case INTR_TYPE_2OP_MASK_RM: {
@@ -19266,6 +19270,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     SDValue Or = DAG.getNode(ISD::OR, dl, MVT::v2i64, ZExtIn,
                              DAG.getBitcast(MVT::v2i64, VBias));
     Or = DAG.getBitcast(MVT::v2f64, Or);
+    // TODO: Are there any fast-math-flags to propagate here?
     SDValue Sub = DAG.getNode(ISD::FSUB, dl, MVT::v2f64, Or, VBias);
     Results.push_back(DAG.getNode(X86ISD::VFPROUND, dl, MVT::v4f32, Sub));
     return;

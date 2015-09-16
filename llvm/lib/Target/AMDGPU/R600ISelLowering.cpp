@@ -946,6 +946,8 @@ SDValue R600TargetLowering::LowerTrig(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   SDValue Arg = Op.getOperand(0);
   SDLoc DL(Op);
+
+  // TODO: Should this propagate fast-math-flags?
   SDValue FractPart = DAG.getNode(AMDGPUISD::FRACT, DL, VT,
       DAG.getNode(ISD::FADD, DL, VT,
         DAG.getNode(ISD::FMUL, DL, VT, Arg,

@@ -415,8 +415,8 @@ SDValue VectorLegalizer::Promote(SDValue Op) {
     else
       Operands[j] = Op.getOperand(j);
   }
-
-  Op = DAG.getNode(Op.getOpcode(), dl, NVT, Operands);
+  
+  Op = DAG.getNode(Op.getOpcode(), dl, NVT, Operands, Op.getNode()->getFlags());
   if ((VT.isFloatingPoint() && NVT.isFloatingPoint()) ||
       (VT.isVector() && VT.getVectorElementType().isFloatingPoint() &&
        NVT.isVector() && NVT.getVectorElementType().isFloatingPoint()))
@@ -1001,6 +1001,7 @@ SDValue VectorLegalizer::ExpandUINT_TO_FLOAT(SDValue Op) {
 
   // Convert hi and lo to floats
   // Convert the hi part back to the upper values
+  // TODO: Can any fast-math-flags be set on these nodes?
   SDValue fHI = DAG.getNode(ISD::SINT_TO_FP, DL, Op.getValueType(), HI);
           fHI = DAG.getNode(ISD::FMUL, DL, Op.getValueType(), fHI, TWOHW);
   SDValue fLO = DAG.getNode(ISD::SINT_TO_FP, DL, Op.getValueType(), LO);
@@ -1014,6 +1015,7 @@ SDValue VectorLegalizer::ExpandFNEG(SDValue Op) {
   if (TLI.isOperationLegalOrCustom(ISD::FSUB, Op.getValueType())) {
     SDLoc DL(Op);
     SDValue Zero = DAG.getConstantFP(-0.0, DL, Op.getValueType());
+    // TODO: If FNEG had fast-math-flags, they'd get propagated to this FSUB.
     return DAG.getNode(ISD::FSUB, DL, Op.getValueType(),
                        Zero, Op.getOperand(0));
   }

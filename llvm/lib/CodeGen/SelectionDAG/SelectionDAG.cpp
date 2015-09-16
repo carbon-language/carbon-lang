@@ -397,24 +397,21 @@ static void AddNodeIDOperands(FoldingSetNodeID &ID,
     ID.AddInteger(Op.getResNo());
   }
 }
+
 /// Add logical or fast math flag values to FoldingSetNodeID value.
 static void AddNodeIDFlags(FoldingSetNodeID &ID, unsigned Opcode,
                            const SDNodeFlags *Flags) {
-  if (!Flags || !isBinOpWithFlags(Opcode))
+  if (!isBinOpWithFlags(Opcode))
     return;
 
-  unsigned RawFlags = Flags->getRawFlags();
-  // If no flags are set, do not alter the ID. We must match the ID of nodes
-  // that were created without explicitly specifying flags. This also saves time
-  // and allows a gradual increase in API usage of the optional optimization
-  // flags.
-  if (RawFlags != 0)
-    ID.AddInteger(RawFlags);
+  unsigned RawFlags = 0;
+  if (Flags)
+    RawFlags = Flags->getRawFlags();
+  ID.AddInteger(RawFlags);
 }
 
 static void AddNodeIDFlags(FoldingSetNodeID &ID, const SDNode *N) {
-  if (auto *Node = dyn_cast<BinaryWithFlagsSDNode>(N))
-    AddNodeIDFlags(ID, Node->getOpcode(), &Node->Flags);
+  AddNodeIDFlags(ID, N->getOpcode(), N->getFlags());
 }
 
 static void AddNodeIDNode(FoldingSetNodeID &ID, unsigned short OpC,
@@ -3191,8 +3188,10 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
   case ISD::FNEG:
     // -(X-Y) -> (Y-X) is unsafe because when X==Y, -0.0 != +0.0
     if (getTarget().Options.UnsafeFPMath && OpOpcode == ISD::FSUB)
+      // FIXME: FNEG has no fast-math-flags to propagate; use the FSUB's flags?
       return getNode(ISD::FSUB, DL, VT, Operand.getNode()->getOperand(1),
-                     Operand.getNode()->getOperand(0));
+                       Operand.getNode()->getOperand(0),
+                       &cast<BinaryWithFlagsSDNode>(Operand.getNode())->Flags);
     if (OpOpcode == ISD::FNEG)  // --X -> X
       return Operand.getNode()->getOperand(0);
     break;
@@ -5394,12 +5393,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
-                              ArrayRef<SDValue> Ops) {
+                              ArrayRef<SDValue> Ops, const SDNodeFlags *Flags) {
   unsigned NumOps = Ops.size();
   switch (NumOps) {
   case 0: return getNode(Opcode, DL, VT);
   case 1: return getNode(Opcode, DL, VT, Ops[0]);
-  case 2: return getNode(Opcode, DL, VT, Ops[0], Ops[1]);
+  case 2: return getNode(Opcode, DL, VT, Ops[0], Ops[1], Flags);
   case 3: return getNode(Opcode, DL, VT, Ops[0], Ops[1], Ops[2]);
   default: break;
   }
@@ -6850,6 +6849,12 @@ uint64_t SDNode::getConstantOperandVal(unsigned Num) const {
   return cast<ConstantSDNode>(OperandList[Num])->getZExtValue();
 }
 
+const SDNodeFlags *SDNode::getFlags() const {
+  if (auto *FlagsNode = dyn_cast<BinaryWithFlagsSDNode>(this))
+    return &FlagsNode->Flags;
+  return nullptr;
+}
+
 SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
   assert(N->getNumValues() == 1 &&
          "Can't unroll a vector with multiple results!");
@@ -6886,9 +6891,11 @@ SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
     }
 
     switch (N->getOpcode()) {
-    default:
-      Scalars.push_back(getNode(N->getOpcode(), dl, EltVT, Operands));
+    default: {
+      Scalars.push_back(getNode(N->getOpcode(), dl, EltVT, Operands,
+                                N->getFlags()));
       break;
+    }
     case ISD::VSELECT:
       Scalars.push_back(getNode(ISD::SELECT, dl, EltVT, Operands));
       break;

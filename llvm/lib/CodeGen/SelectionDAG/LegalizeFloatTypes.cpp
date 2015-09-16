@@ -1341,6 +1341,7 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
     break;
   }
 
+  // TODO: Are there fast-math-flags to propagate to this FADD?
   Lo = DAG.getNode(ISD::FADD, dl, VT, Hi,
                    DAG.getConstantFP(APFloat(APFloat::PPCDoubleDouble,
                                              APInt(128, Parts)),
@@ -1511,6 +1512,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_FP_TO_UINT(SDNode *N) {
     SDValue Tmp = DAG.getConstantFP(APF, dl, MVT::ppcf128);
     //  X>=2^31 ? (int)(X-2^31)+0x80000000 : (int)X
     // FIXME: generated code sucks.
+    // TODO: Are there fast-math-flags to propagate to this FSUB?
     return DAG.getSelectCC(dl, N->getOperand(0), Tmp,
                            DAG.getNode(ISD::ADD, dl, MVT::i32,
                                        DAG.getNode(ISD::FP_TO_SINT, dl, MVT::i32,
@@ -1912,8 +1914,7 @@ SDValue DAGTypeLegalizer::PromoteFloatRes_BinOp(SDNode *N) {
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
   SDValue Op0 = GetPromotedFloat(N->getOperand(0));
   SDValue Op1 = GetPromotedFloat(N->getOperand(1));
-
-  return DAG.getNode(N->getOpcode(), SDLoc(N), NVT, Op0, Op1);
+  return DAG.getNode(N->getOpcode(), SDLoc(N), NVT, Op0, Op1, N->getFlags());
 }
 
 SDValue DAGTypeLegalizer::PromoteFloatRes_FMAD(SDNode *N) {
