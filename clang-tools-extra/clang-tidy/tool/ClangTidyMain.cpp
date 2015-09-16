@@ -121,9 +121,11 @@ static cl::opt<std::string> Config(
 static cl::opt<bool> DumpConfig(
     "dump-config",
     cl::desc("Dumps configuration in the YAML format to stdout. This option\n"
-             "should be used along with a file name (and '--' if the file is\n"
+             "can be used along with a file name (and '--' if the file is\n"
              "outside of a project with configured compilation database). The\n"
-             "configuration used for this file will be printed."),
+             "configuration used for this file will be printed.\n"
+             "Use along with -checks=* to include configuration of all\n"
+             "checks.\n"),
     cl::init(false), cl::cat(ClangTidyCategory));
 
 static cl::opt<bool> EnableCheckProfile(
