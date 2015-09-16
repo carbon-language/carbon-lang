@@ -45,3 +45,9 @@
 
         ! CHECK: ld [%g2+%i5], %fsr    ! encoding: [0xc1,0x08,0x80,0x1d]
         ld [%g2 + %i5],%fsr
+
+        ! CHECK: st %fsr, [%g2+20]     ! encoding: [0xc1,0x28,0xa0,0x14]
+        st %fsr,[%g2 + 20]
+
+        ! CHECK: st %fsr, [%g2+%i5]    ! encoding: [0xc1,0x28,0x80,0x1d]
+        st %fsr,[%g2 + %i5]

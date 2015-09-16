@@ -486,6 +486,22 @@ let DecoderMethod = "DecodeStoreQFP" in
   defm STQF  : StoreA<"stq", 0b100110, 0b110110, store, QFPRegs, f128>,
                Requires<[HasV9, HasHardQuad]>;
 
+let DecoderMethod = "DecodeStoreFP" in
+  let Defs = [FSR] in {
+    let rd = 0 in {
+      def STFSRrr : F3_1<3, 0b100101, (outs MEMrr:$addr), (ins),
+                     "st %fsr, [$addr]", []>;
+      def STFSRri : F3_2<3, 0b100101, (outs MEMri:$addr), (ins),
+                     "st %fsr, [$addr]", []>;
+    }
+    let rd = 1 in {
+      def STXFSRrr : F3_1<3, 0b100101, (outs MEMrr:$addr), (ins),
+                     "stx %fsr, [$addr]", []>, Requires<[HasV9]>;
+      def STXFSRri : F3_2<3, 0b100101, (outs MEMri:$addr), (ins),
+                     "stx %fsr, [$addr]", []>, Requires<[HasV9]>;
+    }
+  }
+
 // Section B.8 - SWAP Register with Memory Instruction
 // (Atomic swap)
 let Constraints = "$val = $dst", DecoderMethod = "DecodeSWAP" in {
