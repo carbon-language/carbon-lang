@@ -104,7 +104,17 @@ LineTable::AppendLineEntryToSequence
     // here to avoid these kinds of inconsistencies. We will need tor revisit this if the DWARF line
     // tables are updated to allow multiple entries at the same address legally.
     if (!entries.empty() && entries.back().file_addr == file_addr)
+    {
+        // GCC don't use the is_prologue_end flag to mark the first instruction after the prologue.
+        // Instead of it it is issueing a line table entry for the first instruction of the prologue
+        // and one for the first instruction after the prologue. If the size of the prologue is 0
+        // instruction then the 2 line entry will have the same file address. Removing it will remove
+        // our ability to properly detect the location of the end of prologe so we set the prologue_end
+        // flag to preserve this information (setting the prologue_end flag for an entry what is after
+        // the prologue end don't have any effect)
+        entry.is_prologue_end = entry.file_idx == entries.back().file_idx;
         entries.back() = entry;
+    }
     else
         entries.push_back (entry);
 }
