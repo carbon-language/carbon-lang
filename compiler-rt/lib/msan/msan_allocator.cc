@@ -67,6 +67,16 @@ struct MsanMapUnmapCallback {
   typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, kMetadataSize,
                              DefaultSizeClassMap,
                              MsanMapUnmapCallback> PrimaryAllocator;
+#elif defined(__aarch64__)
+  static const uptr kMaxAllowedMallocSize = 2UL << 30;  // 2G
+  static const uptr kRegionSizeLog = 20;
+  static const uptr kNumRegions = SANITIZER_MMAP_RANGE_SIZE >> kRegionSizeLog;
+  typedef TwoLevelByteMap<(kNumRegions >> 12), 1 << 12> ByteMap;
+  typedef CompactSizeClassMap SizeClassMap;
+
+  typedef SizeClassAllocator32<0, SANITIZER_MMAP_RANGE_SIZE, sizeof(Metadata),
+                               SizeClassMap, kRegionSizeLog, ByteMap,
+                               MsanMapUnmapCallback> PrimaryAllocator;
 #endif
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
 typedef LargeMmapAllocator<MsanMapUnmapCallback> SecondaryAllocator;

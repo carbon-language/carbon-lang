@@ -7,10 +7,16 @@
 #include <sys/types.h>
 #include <sys/user.h>
 #include <sys/wait.h>
+#include <sys/uio.h>
 #include <unistd.h>
+#include <elf.h>
 #if __mips64
  #include <asm/ptrace.h>
  #include <sys/procfs.h>
+#endif
+#ifdef __aarch64__
+// GLIBC 2.20+ sys/user does not include asm/ptrace.h
+ #include <asm/ptrace.h>
 #endif
 
 int main(void) {
@@ -54,6 +60,26 @@ int main(void) {
     if ((elf_greg_t)fpregs[32]) // fpscr
       printf("%lx\n", (elf_greg_t)fpregs[32]);
 #endif // (__powerpc64__ || __mips64)
+
+#if (__aarch64__)
+    struct iovec regset_io;
+
+    struct user_pt_regs regs;
+    regset_io.iov_base = &regs;
+    regset_io.iov_len = sizeof(regs);
+    res = ptrace(PTRACE_GETREGSET, pid, (void*)NT_PRSTATUS, (void*)&regset_io);
+    assert(!res);
+    if (regs.pc)
+      printf("%llx\n", regs.pc);
+
+    struct user_fpsimd_state fpregs;
+    regset_io.iov_base = &fpregs;
+    regset_io.iov_len = sizeof(fpregs);
+    res = ptrace(PTRACE_GETREGSET, pid, (void*)NT_FPREGSET, (void*)&regset_io);
+    assert(!res);
+    if (fpregs.fpsr)
+      printf("%x\n", fpregs.fpsr);
+#endif // (__aarch64__)
 
     siginfo_t siginfo;
     res = ptrace(PTRACE_GETSIGINFO, pid, NULL, &siginfo);

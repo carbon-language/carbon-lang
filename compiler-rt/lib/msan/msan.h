@@ -52,6 +52,47 @@ const MappingDesc kMemoryLayout[] = {
 #define MEM_TO_SHADOW(mem) (((uptr)(mem)) & ~0x4000000000ULL)
 #define SHADOW_TO_ORIGIN(shadow) (((uptr)(shadow)) + 0x002000000000)
 
+#elif SANITIZER_LINUX && defined(__aarch64__)
+
+# if SANITIZER_AARCH64_VMA == 39
+const MappingDesc kMemoryLayout[] = {
+  {0x0000000000ULL, 0x4000000000ULL, MappingDesc::INVALID, "invalid"},
+  {0x4000000000ULL, 0x4300000000ULL, MappingDesc::SHADOW,  "shadow"},
+  {0x4300000000ULL, 0x4600000000ULL, MappingDesc::ORIGIN,  "origin"},
+  {0x4600000000ULL, 0x5500000000ULL, MappingDesc::INVALID, "invalid"},
+  {0x5500000000ULL, 0x5600000000ULL, MappingDesc::APP,     "app"},
+  {0x5600000000ULL, 0x7000000000ULL, MappingDesc::INVALID, "invalid"},
+  {0x7000000000ULL, 0x8000000000ULL, MappingDesc::APP,     "app"}
+};
+// Maps low and high app ranges to contiguous space with zero base:
+//   Low:  55 0000 0000 - 55 ffff ffff  ->  1 0000 0000 - 1 ffff ffff
+//   High: 70 0000 0000 - 7f ffff ffff  ->  0 0000 0000 - f ffff ffff
+# define LINEARIZE_MEM(mem) \
+  (((uptr)(mem) & ~0x7C00000000ULL) ^ 0x100000000ULL)
+# define MEM_TO_SHADOW(mem) (LINEARIZE_MEM((mem)) + 0x4000000000ULL)
+# define SHADOW_TO_ORIGIN(shadow) (((uptr)(shadow)) + 0x300000000ULL)
+
+# elif SANITIZER_AARCH64_VMA == 42
+const MappingDesc kMemoryLayout[] = {
+  {0x00000000000ULL, 0x10000000000ULL, MappingDesc::INVALID, "invalid"},
+  {0x10000000000ULL, 0x11b00000000ULL, MappingDesc::SHADOW,  "shadow"},
+  {0x11b00000000ULL, 0x12000000000ULL, MappingDesc::INVALID, "invalid"},
+  {0x12000000000ULL, 0x13b00000000ULL, MappingDesc::ORIGIN,  "origin"},
+  {0x13b00000000ULL, 0x2aa00000000ULL, MappingDesc::INVALID, "invalid"},
+  {0x2aa00000000ULL, 0x2ab00000000ULL, MappingDesc::APP,     "app"},
+  {0x2ab00000000ULL, 0x3f000000000ULL, MappingDesc::INVALID, "invalid"},
+  {0x3f000000000ULL, 0x40000000000ULL, MappingDesc::APP,     "app"},
+};
+// Maps low and high app ranges to contigous space with zero base:
+// 2 aa00 0000 00 - 2 ab00 0000 00: -> 1a00 0000 00 - 1aff ffff ff
+// 3 f000 0000 00 - 4 0000 0000 00: -> 0000 0000 00 - 0fff ffff ff
+# define LINEARIZE_MEM(mem) \
+  (((uptr)(mem) & ~0x3E000000000ULL) ^ 0x1000000000ULL)
+# define MEM_TO_SHADOW(mem) (LINEARIZE_MEM((mem)) + 0x10000000000ULL)
+# define SHADOW_TO_ORIGIN(shadow) (((uptr)(shadow)) + 0x2000000000ULL)
+
+# endif // SANITIZER_AARCH64_VMA
+
 #elif SANITIZER_LINUX && defined(__powerpc64__)
 
 const MappingDesc kMemoryLayout[] = {

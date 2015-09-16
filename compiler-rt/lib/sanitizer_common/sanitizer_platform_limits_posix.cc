@@ -119,7 +119,7 @@
 #if SANITIZER_LINUX || SANITIZER_FREEBSD
 # include <utime.h>
 # include <sys/ptrace.h>
-# if defined(__mips64)
+# if defined(__mips64) || defined(__aarch64__)
 #  include <asm/ptrace.h>
 # endif
 #endif
@@ -303,28 +303,42 @@ unsigned struct_ElfW_Phdr_sz = sizeof(Elf_Phdr);
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID && \
     (defined(__i386) || defined(__x86_64) || defined(__mips64) || \
-      defined(__powerpc64__))
+      defined(__powerpc64__) || defined(__aarch64__))
 #if defined(__mips64) || defined(__powerpc64__)
   unsigned struct_user_regs_struct_sz = sizeof(struct pt_regs);
   unsigned struct_user_fpregs_struct_sz = sizeof(elf_fpregset_t);
+#elif defined(__aarch64__)
+  unsigned struct_user_regs_struct_sz = sizeof(struct user_pt_regs);
+  unsigned struct_user_fpregs_struct_sz = sizeof(struct user_fpsimd_state);
 #else
   unsigned struct_user_regs_struct_sz = sizeof(struct user_regs_struct);
   unsigned struct_user_fpregs_struct_sz = sizeof(struct user_fpregs_struct);
-#endif // __mips64 || __powerpc64__
-#if defined(__x86_64) || defined(__mips64) || defined(__powerpc64__)
+#endif // __mips64 || __powerpc64__ || __aarch64__
+#if defined(__x86_64) || defined(__mips64) || defined(__powerpc64__) || \
+    defined(__aarch64__)
   unsigned struct_user_fpxregs_struct_sz = 0;
 #else
   unsigned struct_user_fpxregs_struct_sz = sizeof(struct user_fpxregs_struct);
-#endif // __x86_64 || __mips64 || __powerpc64__
+#endif // __x86_64 || __mips64 || __powerpc64__ || __aarch64__
 
   int ptrace_peektext = PTRACE_PEEKTEXT;
   int ptrace_peekdata = PTRACE_PEEKDATA;
   int ptrace_peekuser = PTRACE_PEEKUSER;
+#if defined(PT_GETREGS) && defined(PT_SETREGS)
   int ptrace_getregs = PTRACE_GETREGS;
   int ptrace_setregs = PTRACE_SETREGS;
+#else
+  int ptrace_getregs = -1;
+  int ptrace_setregs = -1;
+#endif
+#if defined(PT_GETFPREGS) && defined(PT_SETFPREGS)
   int ptrace_getfpregs = PTRACE_GETFPREGS;
   int ptrace_setfpregs = PTRACE_SETFPREGS;
-#if defined(PTRACE_GETFPXREGS) && defined(PTRACE_SETFPXREGS)
+#else
+  int ptrace_getfpregs = -1;
+  int ptrace_setfpregs = -1;
+#endif
+#if defined(PT_GETFPXREGS) && defined(PT_SETFPXREGS)
   int ptrace_getfpxregs = PTRACE_GETFPXREGS;
   int ptrace_setfpxregs = PTRACE_SETFPXREGS;
 #else

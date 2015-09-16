@@ -7,6 +7,9 @@
 // RUN: not %run %t 0m 2>&1 | FileCheck %s --check-prefix=METHOD
 // RUN: not %run %t 0f 2>&1 | FileCheck %s --check-prefix=FUNC
 // RUN: not %run %t 0v 2>&1 | FileCheck %s --check-prefix=VARIADIC
+//
+// AArch64 lacks var args instrumentation.
+// XFAIL: aarch64
 
 class C {
   int *null_;
@@ -40,19 +43,19 @@ int main(int argc, char *argv[]) {
     case 'c':
       return C(0x0, arg).value();
       // CTOR: {{.*}}nonnull-arg.cpp:[[@LINE-1]]:21: runtime error: null pointer passed as argument 2, which is declared to never be null
-      // CTOR-NEXT: {{.*}}nonnull-arg.cpp:16:31: note: nonnull attribute specified here
+      // CTOR-NEXT: {{.*}}nonnull-arg.cpp:19:31: note: nonnull attribute specified here
     case 'm':
       return C(0x0, &local).method(arg, 0x0);
       // METHOD: {{.*}}nonnull-arg.cpp:[[@LINE-1]]:36: runtime error: null pointer passed as argument 1, which is declared to never be null
-      // METHOD-NEXT: {{.*}}nonnull-arg.cpp:19:54: note: nonnull attribute specified here
+      // METHOD-NEXT: {{.*}}nonnull-arg.cpp:22:54: note: nonnull attribute specified here
     case 'f':
       return func(arg);
       // FUNC: {{.*}}nonnull-arg.cpp:[[@LINE-1]]:19: runtime error: null pointer passed as argument 1, which is declared to never be null
-      // FUNC-NEXT: {{.*}}nonnull-arg.cpp:24:16: note: nonnull attribute specified here
+      // FUNC-NEXT: {{.*}}nonnull-arg.cpp:27:16: note: nonnull attribute specified here
     case 'v':
       return variadic(42, arg);
     // VARIADIC: {{.*}}nonnull-arg.cpp:[[@LINE-1]]:27: runtime error: null pointer passed as argument 2, which is declared to never be null
-    // VARIADIC-NEXT: {{.*}}nonnull-arg.cpp:27:16: note: nonnull attribute specified here
+    // VARIADIC-NEXT: {{.*}}nonnull-arg.cpp:30:16: note: nonnull attribute specified here
   }
   return 0;
 }

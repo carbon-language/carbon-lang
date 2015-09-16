@@ -27,6 +27,9 @@ int main(void) {
 #elif defined (__powerpc64__)
   uintptr_t hint = 0x2f0000000000ULL;
   const uintptr_t app_start = 0x300000000000ULL;
+#elif defined (__aarch64__)
+  uintptr_t hint = 0x4f0000000ULL;
+  const uintptr_t app_start = 0x7000000000ULL;
 #endif
   uintptr_t p = (uintptr_t)mmap(
       (void *)hint, 4096, PROT_WRITE,
