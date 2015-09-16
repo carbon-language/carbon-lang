@@ -49,8 +49,7 @@ namespace {
     return I != Ranges.end() && I->Low <= R.Low;
   }
 
-  /// LowerSwitch Pass - Replace all SwitchInst instructions with chained branch
-  /// instructions.
+  /// Replace all SwitchInst instructions with chained branch instructions.
   class LowerSwitch : public FunctionPass {
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -139,8 +138,7 @@ bool LowerSwitch::runOnFunction(Function &F) {
   return Changed;
 }
 
-// operator<< - Used for debugging purposes.
-//
+/// Used for debugging purposes.
 static raw_ostream& operator<<(raw_ostream &O,
                                const LowerSwitch::CaseVector &C)
     LLVM_ATTRIBUTE_USED;
@@ -157,16 +155,16 @@ static raw_ostream& operator<<(raw_ostream &O,
   return O << "]";
 }
 
-// \brief Update the first occurrence of the "switch statement" BB in the PHI
-// node with the "new" BB. The other occurrences will:
-//
-// 1) Be updated by subsequent calls to this function.  Switch statements may
-// have more than one outcoming edge into the same BB if they all have the same
-// value. When the switch statement is converted these incoming edges are now
-// coming from multiple BBs.
-// 2) Removed if subsequent incoming values now share the same case, i.e.,
-// multiple outcome edges are condensed into one. This is necessary to keep the
-// number of phi values equal to the number of branches to SuccBB.
+/// \brief Update the first occurrence of the "switch statement" BB in the PHI
+/// node with the "new" BB. The other occurrences will:
+///
+/// 1) Be updated by subsequent calls to this function.  Switch statements may
+/// have more than one outcoming edge into the same BB if they all have the same
+/// value. When the switch statement is converted these incoming edges are now
+/// coming from multiple BBs.
+/// 2) Removed if subsequent incoming values now share the same case, i.e.,
+/// multiple outcome edges are condensed into one. This is necessary to keep the
+/// number of phi values equal to the number of branches to SuccBB.
 static void fixPhis(BasicBlock *SuccBB, BasicBlock *OrigBB, BasicBlock *NewBB,
                     unsigned NumMergedCases) {
   for (BasicBlock::iterator I = SuccBB->begin(), IE = SuccBB->getFirstNonPHI();
@@ -198,11 +196,11 @@ static void fixPhis(BasicBlock *SuccBB, BasicBlock *OrigBB, BasicBlock *NewBB,
   }
 }
 
-// switchConvert - Convert the switch statement into a binary lookup of
-// the case values. The function recursively builds this tree.
-// LowerBound and UpperBound are used to keep track of the bounds for Val
-// that have already been checked by a block emitted by one of the previous
-// calls to switchConvert in the call stack.
+/// Convert the switch statement into a binary lookup of the case values.
+/// The function recursively builds this tree. LowerBound and UpperBound are
+/// used to keep track of the bounds for Val that have already been checked by
+/// a block emitted by one of the previous calls to switchConvert in the call
+/// stack.
 BasicBlock *
 LowerSwitch::switchConvert(CaseItr Begin, CaseItr End, ConstantInt *LowerBound,
                            ConstantInt *UpperBound, Value *Val,
@@ -296,12 +294,10 @@ LowerSwitch::switchConvert(CaseItr Begin, CaseItr End, ConstantInt *LowerBound,
   return NewNode;
 }
 
-// newLeafBlock - Create a new leaf block for the binary lookup tree. It
-// checks if the switch's value == the case's value. If not, then it
-// jumps to the default branch. At this point in the tree, the value
-// can't be another valid case value, so the jump to the "default" branch
-// is warranted.
-//
+/// Create a new leaf block for the binary lookup tree. It checks if the
+/// switch's value == the case's value. If not, then it jumps to the default
+/// branch. At this point in the tree, the value can't be another valid case
+/// value, so the jump to the "default" branch is warranted.
 BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
                                       BasicBlock* OrigBlock,
                                       BasicBlock* Default)
@@ -362,7 +358,7 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
   return NewLeaf;
 }
 
-// Clusterify - Transform simple list of Cases into list of CaseRange's
+/// Transform simple list of Cases into list of CaseRange's.
 unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
   unsigned numCmps = 0;
 
@@ -404,9 +400,8 @@ unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
   return numCmps;
 }
 
-// processSwitchInst - Replace the specified switch instruction with a sequence
-// of chained if-then insts in a balanced binary search.
-//
+/// Replace the specified switch instruction with a sequence of chained if-then
+/// insts in a balanced binary search.
 void LowerSwitch::processSwitchInst(SwitchInst *SI,
                                     SmallPtrSetImpl<BasicBlock*> &DeleteList) {
   BasicBlock *CurBlock = SI->getParent();
