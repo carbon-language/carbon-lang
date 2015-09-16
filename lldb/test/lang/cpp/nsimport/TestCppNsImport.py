@@ -85,8 +85,15 @@ class TestCppNsImport(TestBase):
         test_result = frame.EvaluateExpression("not_imported")
         self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 35, "not_imported = 35")
 
-        test_result = frame.EvaluateExpression("imported")
-        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 99, "imported = 99")
+        # Disabled the "imported" test since it isn't valid. It should actually test for ambiguity
+        #test_result = frame.EvaluateExpression("imported")
+        #self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 99, "imported = 99")
+
+        test_result = frame.EvaluateExpression("::imported")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 89, "::imported = 89")
+
+        test_result = frame.EvaluateExpression("Imported::imported")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 99, "Imported::imported = 99")
 
         test_result = frame.EvaluateExpression("single")
         self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 3, "single = 3")
