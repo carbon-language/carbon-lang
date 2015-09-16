@@ -41,12 +41,24 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
+#include "llvm/Transforms/Utils/SSAUpdater.h"
 #include <memory>
 
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
 #define DEBUG_TYPE "winehprepare"
+
+static cl::opt<bool> DisableDemotion(
+    "disable-demotion", cl::Hidden,
+    cl::desc(
+        "Clone multicolor basic blocks but do not demote cross funclet values"),
+    cl::init(false));
+
+static cl::opt<bool> DisableCleanups(
+    "disable-cleanups", cl::Hidden,
+    cl::desc("Do not remove implausible terminators or other similar cleanups"),
+    cl::init(false));
 
 namespace {
 
@@ -3399,6 +3411,77 @@ void WinEHPrepare::cloneCommonBlocks(
       // Loop over all instructions, fixing each one as we find it...
       for (Instruction &I : *BB)
         RemapInstruction(&I, VMap, RF_IgnoreMissingEntries);
+
+    // Check to see if SuccBB has PHI nodes. If so, we need to add entries to
+    // the PHI nodes for NewBB now.
+    for (auto &BBMapping : Orig2Clone) {
+      BasicBlock *OldBlock = BBMapping.first;
+      BasicBlock *NewBlock = BBMapping.second;
+      for (BasicBlock *SuccBB : successors(NewBlock)) {
+        for (Instruction &SuccI : *SuccBB) {
+          auto *SuccPN = dyn_cast<PHINode>(&SuccI);
+          if (!SuccPN)
+            break;
+
+          // Ok, we have a PHI node.  Figure out what the incoming value was for
+          // the OldBlock.
+          int OldBlockIdx = SuccPN->getBasicBlockIndex(OldBlock);
+          if (OldBlockIdx == -1)
+            break;
+          Value *IV = SuccPN->getIncomingValue(OldBlockIdx);
+
+          // Remap the value if necessary.
+          if (auto *Inst = dyn_cast<Instruction>(IV)) {
+            ValueToValueMapTy::iterator I = VMap.find(Inst);
+            if (I != VMap.end())
+              IV = I->second;
+          }
+
+          SuccPN->addIncoming(IV, NewBlock);
+        }
+      }
+    }
+
+    for (ValueToValueMapTy::value_type VT : VMap) {
+      // If there were values defined in BB that are used outside the funclet,
+      // then we now have to update all uses of the value to use either the
+      // original value, the cloned value, or some PHI derived value.  This can
+      // require arbitrary PHI insertion, of which we are prepared to do, clean
+      // these up now.
+      SmallVector<Use *, 16> UsesToRename;
+
+      auto *OldI = dyn_cast<Instruction>(const_cast<Value *>(VT.first));
+      if (!OldI)
+        continue;
+      auto *NewI = cast<Instruction>(VT.second);
+      // Scan all uses of this instruction to see if it is used outside of its
+      // funclet, and if so, record them in UsesToRename.
+      for (Use &U : OldI->uses()) {
+        Instruction *UserI = cast<Instruction>(U.getUser());
+        BasicBlock *UserBB = UserI->getParent();
+        std::set<BasicBlock *> &ColorsForUserBB = BlockColors[UserBB];
+        assert(!ColorsForUserBB.empty());
+        if (ColorsForUserBB.size() > 1 ||
+            *ColorsForUserBB.begin() != FuncletPadBB)
+          UsesToRename.push_back(&U);
+      }
+
+      // If there are no uses outside the block, we're done with this
+      // instruction.
+      if (UsesToRename.empty())
+        continue;
+
+      // We found a use of OldI outside of the funclet.  Rename all uses of OldI
+      // that are outside its funclet to be uses of the appropriate PHI node
+      // etc.
+      SSAUpdater SSAUpdate;
+      SSAUpdate.Initialize(OldI->getType(), OldI->getName());
+      SSAUpdate.AddAvailableValue(OldI->getParent(), OldI);
+      SSAUpdate.AddAvailableValue(NewI->getParent(), NewI);
+
+      while (!UsesToRename.empty())
+        SSAUpdate.RewriteUseAfterInsertions(*UsesToRename.pop_back_val());
+    }
   }
 }
 
@@ -3429,6 +3512,11 @@ void WinEHPrepare::removeImplausibleTerminators(Function &F) {
         IsUnreachableCleanupendpad = CEPI->getCleanupPad() != CleanupPad;
       if (IsUnreachableRet || IsUnreachableCatchret ||
           IsUnreachableCleanupret || IsUnreachableCleanupendpad) {
+        // Loop through all of our successors and make sure they know that one
+        // of their predecessors is going away.
+        for (BasicBlock *SuccBB : TI->successors())
+          SuccBB->removePredecessor(BB);
+
         new UnreachableInst(BB->getContext(), TI);
         TI->eraseFromParent();
       }
@@ -3460,10 +3548,12 @@ void WinEHPrepare::verifyPreparedFunclets(Function &F) {
       report_fatal_error("Uncolored BB!");
     if (NumColors > 1)
       report_fatal_error("Multicolor BB!");
-    bool EHPadHasPHI = BB.isEHPad() && isa<PHINode>(BB.begin());
-    assert(!EHPadHasPHI && "EH Pad still has a PHI!");
-    if (EHPadHasPHI)
-      report_fatal_error("EH Pad still has a PHI!");
+    if (!DisableDemotion) {
+      bool EHPadHasPHI = BB.isEHPad() && isa<PHINode>(BB.begin());
+      assert(!EHPadHasPHI && "EH Pad still has a PHI!");
+      if (EHPadHasPHI)
+        report_fatal_error("EH Pad still has a PHI!");
+    }
   }
 }
 
@@ -3477,17 +3567,21 @@ bool WinEHPrepare::prepareExplicitEH(
   // Determine which blocks are reachable from which funclet entries.
   colorFunclets(F, EntryBlocks);
 
-  demotePHIsOnFunclets(F);
+  if (!DisableDemotion) {
+    demotePHIsOnFunclets(F);
 
-  demoteUsesBetweenFunclets(F);
+    demoteUsesBetweenFunclets(F);
 
-  demoteArgumentUses(F);
+    demoteArgumentUses(F);
+  }
 
   cloneCommonBlocks(F, EntryBlocks);
 
-  removeImplausibleTerminators(F);
+  if (!DisableCleanups) {
+    removeImplausibleTerminators(F);
 
-  cleanupPreparedFunclets(F);
+    cleanupPreparedFunclets(F);
+  }
 
   verifyPreparedFunclets(F);
 

@@ -1,0 +1,87 @@
+; RUN: opt -mtriple=x86_x64-pc-windows-msvc -S -winehprepare -disable-demotion < %s | FileCheck %s
+
+declare i32 @__CxxFrameHandler3(...)
+
+declare void @f()
+
+declare i32 @g()
+
+declare void @h(i32)
+
+; CHECK-LABEL: @test1(
+define void @test1() personality i32 (...)* @__CxxFrameHandler3 {
+entry:
+  invoke void @f()
+          to label %invoke.cont1 unwind label %left
+
+invoke.cont1:
+  invoke void @f()
+          to label %invoke.cont2 unwind label %right
+
+invoke.cont2:
+  invoke void @f()
+          to label %exit unwind label %inner
+
+left:
+  %0 = cleanuppad []
+  br label %shared
+
+right:
+  %1 = cleanuppad []
+  br label %shared
+
+shared:
+  %x = call i32 @g()
+  invoke void @f()
+          to label %shared.cont unwind label %inner
+
+shared.cont:
+  unreachable
+
+inner:
+  ; CHECK: %phi = phi i32 [ %x, %right ], [ 0, %invoke.cont2 ], [ %x.for.left, %left ]
+  %phi = phi i32 [ %x, %shared ], [ 0, %invoke.cont2 ]
+  %i = cleanuppad []
+  call void @h(i32 %phi)
+  unreachable
+
+exit:
+  unreachable
+}
+
+; CHECK-LABEL: @test2(
+define void @test2() personality i32 (...)* @__CxxFrameHandler3 {
+entry:
+  invoke void @f()
+          to label %invoke.cont unwind label %left
+
+invoke.cont:
+  invoke void @f()
+          to label %exit unwind label %right
+
+left:
+  cleanuppad []
+  br label %shared
+
+right:
+  cleanuppad []
+  br label %shared
+
+shared:
+  %x = call i32 @g()
+  invoke void @f()
+          to label %shared.cont unwind label %inner
+
+shared.cont:
+  unreachable
+
+inner:
+  ; CHECK: %x1 = phi i32 [ %x.for.left, %left ], [ %x, %right ]
+  ; CHECK: call void @h(i32 %x1)
+  %i = cleanuppad []
+  call void @h(i32 %x)
+  unreachable
+
+exit:
+  unreachable
+}
