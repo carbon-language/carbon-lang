@@ -2661,18 +2661,65 @@ GetDebuggerPropertyForPluginsOldStyle (Debugger &debugger,
     return lldb::OptionValuePropertiesSP();
 }
 
+namespace {
+
+typedef lldb::OptionValuePropertiesSP
+GetDebuggerPropertyForPluginsPtr (Debugger&, const ConstString&, const ConstString&, bool can_create);
 
 lldb::OptionValuePropertiesSP
-PluginManager::GetSettingForDynamicLoaderPlugin (Debugger &debugger, const ConstString &setting_name)
+GetSettingForPlugin (Debugger &debugger,
+                     const ConstString &setting_name,
+                     const ConstString &plugin_type_name,
+                     GetDebuggerPropertyForPluginsPtr get_debugger_property= GetDebuggerPropertyForPlugins)
 {
     lldb::OptionValuePropertiesSP properties_sp;
-    lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
-                                                                                            ConstString("dynamic-loader"),
-                                                                                            ConstString(), // not creating to so we don't need the description
-                                                                                            false));
+    lldb::OptionValuePropertiesSP plugin_type_properties_sp (get_debugger_property (debugger,
+                                                                                    plugin_type_name,
+                                                                                    ConstString(), // not creating to so we don't need the description
+                                                                                    false));
     if (plugin_type_properties_sp)
-        properties_sp = plugin_type_properties_sp->GetSubProperty (NULL, setting_name);
+        properties_sp = plugin_type_properties_sp->GetSubProperty (nullptr, setting_name);
     return properties_sp;
+}
+
+bool
+CreateSettingForPlugin (Debugger &debugger,
+                        const ConstString &plugin_type_name,
+                        const ConstString &plugin_type_desc,
+                        const lldb::OptionValuePropertiesSP &properties_sp,
+                        const ConstString &description,
+                        bool is_global_property,
+                        GetDebuggerPropertyForPluginsPtr get_debugger_property = GetDebuggerPropertyForPlugins)
+{
+    if (properties_sp)
+    {
+        lldb::OptionValuePropertiesSP plugin_type_properties_sp (get_debugger_property (
+            debugger, plugin_type_name, plugin_type_desc, true));
+        if (plugin_type_properties_sp)
+        {
+            plugin_type_properties_sp->AppendProperty (properties_sp->GetName(),
+                                                       description,
+                                                       is_global_property,
+                                                       properties_sp);
+            return true;
+        }
+    }
+    return false;
+}
+
+const char* kDynamicLoaderPluginName("dynamic-loader");
+const char* kPlatformPluginName("platform");
+const char* kProcessPluginName("process");
+const char* kSymbolFilePluginName("symbol-file");
+const char* kJITLoaderPluginName("jit-loader");
+
+}
+
+lldb::OptionValuePropertiesSP
+PluginManager::GetSettingForDynamicLoaderPlugin (Debugger &debugger,
+                                                 const ConstString &setting_name)
+{
+    return GetSettingForPlugin(debugger, setting_name, ConstString(kDynamicLoaderPluginName));
 }
 
 bool
@@ -2681,74 +2728,44 @@ PluginManager::CreateSettingForDynamicLoaderPlugin (Debugger &debugger,
                                                     const ConstString &description,
                                                     bool is_global_property)
 {
-    if (properties_sp)
-    {
-        lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
-                                                                                                ConstString("dynamic-loader"),
-                                                                                                ConstString("Settings for dynamic loader plug-ins"),
-                                                                                                true));
-        if (plugin_type_properties_sp)
-        {
-            plugin_type_properties_sp->AppendProperty (properties_sp->GetName(),
-                                                       description,
-                                                       is_global_property,
-                                                       properties_sp);
-            return true;
-        }
-    }
-    return false;
+    return CreateSettingForPlugin(debugger,
+                                  ConstString(kDynamicLoaderPluginName),
+                                  ConstString("Settings for dynamic loader plug-ins"),
+                                  properties_sp,
+                                  description,
+                                  is_global_property);
 }
 
 
 lldb::OptionValuePropertiesSP
 PluginManager::GetSettingForPlatformPlugin (Debugger &debugger, const ConstString &setting_name)
 {
-    lldb::OptionValuePropertiesSP properties_sp;
-    lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPluginsOldStyle (debugger,
-                                                                                                    ConstString("platform"),
-                                                                                                    ConstString(), // not creating to so we don't need the description
-                                                                                                    false));
-    if (plugin_type_properties_sp)
-        properties_sp = plugin_type_properties_sp->GetSubProperty (NULL, setting_name);
-    return properties_sp;
+    return GetSettingForPlugin(debugger,
+                               setting_name,
+                               ConstString(kPlatformPluginName),
+                               GetDebuggerPropertyForPluginsOldStyle);
 }
 
 bool
 PluginManager::CreateSettingForPlatformPlugin (Debugger &debugger,
-                                                    const lldb::OptionValuePropertiesSP &properties_sp,
-                                                    const ConstString &description,
-                                                    bool is_global_property)
+                                               const lldb::OptionValuePropertiesSP &properties_sp,
+                                               const ConstString &description,
+                                               bool is_global_property)
 {
-    if (properties_sp)
-    {
-        lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPluginsOldStyle (debugger,
-                                                                                                        ConstString("platform"),
-                                                                                                        ConstString("Settings for platform plug-ins"),
-                                                                                                        true));
-        if (plugin_type_properties_sp)
-        {
-            plugin_type_properties_sp->AppendProperty (properties_sp->GetName(),
-                                                       description,
-                                                       is_global_property,
-                                                       properties_sp);
-            return true;
-        }
-    }
-    return false;
+    return CreateSettingForPlugin(debugger,
+                                  ConstString(kPlatformPluginName),
+                                  ConstString("Settings for platform plug-ins"),
+                                  properties_sp,
+                                  description,
+                                  is_global_property,
+                                  GetDebuggerPropertyForPluginsOldStyle);
 }
 
 
 lldb::OptionValuePropertiesSP
 PluginManager::GetSettingForProcessPlugin (Debugger &debugger, const ConstString &setting_name)
 {
-    lldb::OptionValuePropertiesSP properties_sp;
-    lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
-                                                                                            ConstString("process"),
-                                                                                            ConstString(), // not creating to so we don't need the description
-                                                                                            false));
-    if (plugin_type_properties_sp)
-        properties_sp = plugin_type_properties_sp->GetSubProperty (NULL, setting_name);
-    return properties_sp;
+    return GetSettingForPlugin(debugger, setting_name, ConstString(kProcessPluginName));
 }
 
 bool
@@ -2757,39 +2774,19 @@ PluginManager::CreateSettingForProcessPlugin (Debugger &debugger,
                                               const ConstString &description,
                                               bool is_global_property)
 {
-    if (properties_sp)
-    {
-        lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
-                                                                                                ConstString("process"),
-                                                                                                ConstString("Settings for process plug-ins"),
-                                                                                                true));
-        if (plugin_type_properties_sp)
-        {
-            plugin_type_properties_sp->AppendProperty (properties_sp->GetName(),
-                                                       description,
-                                                       is_global_property,
-                                                       properties_sp);
-            return true;
-        }
-    }
-    return false;
+    return CreateSettingForPlugin(debugger,
+                                  ConstString(kProcessPluginName),
+                                  ConstString("Settings for process plug-ins"),
+                                  properties_sp,
+                                  description,
+                                  is_global_property);
 }
-
-
-static const char* kSymbolFilePluginName("symbol-file");
 
 lldb::OptionValuePropertiesSP
 PluginManager::GetSettingForSymbolFilePlugin (Debugger &debugger,
                                               const ConstString &setting_name)
 {
-    lldb::OptionValuePropertiesSP properties_sp;
-    lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
-                                                                                            ConstString(kSymbolFilePluginName),
-                                                                                            ConstString(), // not creating to so we don't need the description
-                                                                                            false));
-    if (plugin_type_properties_sp)
-        properties_sp = plugin_type_properties_sp->GetSubProperty (nullptr, setting_name);
-    return properties_sp;
+    return GetSettingForPlugin(debugger, setting_name, ConstString(kSymbolFilePluginName));
 }
 
 bool
@@ -2798,20 +2795,31 @@ PluginManager::CreateSettingForSymbolFilePlugin (Debugger &debugger,
                                                  const ConstString &description,
                                                  bool is_global_property)
 {
-    if (properties_sp)
-    {
-        lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
-                                                                                                ConstString(kSymbolFilePluginName),
-                                                                                                ConstString("Settings for symbol file plug-ins"),
-                                                                                                true));
-        if (plugin_type_properties_sp)
-        {
-            plugin_type_properties_sp->AppendProperty (properties_sp->GetName(),
-                                                       description,
-                                                       is_global_property,
-                                                       properties_sp);
-            return true;
-        }
-    }
-    return false;
+    return CreateSettingForPlugin(debugger,
+                                  ConstString(kSymbolFilePluginName),
+                                  ConstString("Settings for symbol file plug-ins"),
+                                  properties_sp,
+                                  description,
+                                  is_global_property);
+}
+
+lldb::OptionValuePropertiesSP
+PluginManager::GetSettingForJITLoaderPlugin (Debugger &debugger,
+                                             const ConstString &setting_name)
+{
+    return GetSettingForPlugin(debugger, setting_name, ConstString(kJITLoaderPluginName));
+}
+
+bool
+PluginManager::CreateSettingForJITLoaderPlugin (Debugger &debugger,
+                                                const lldb::OptionValuePropertiesSP &properties_sp,
+                                                const ConstString &description,
+                                                bool is_global_property)
+{
+    return CreateSettingForPlugin(debugger,
+                                  ConstString(kJITLoaderPluginName),
+                                  ConstString("Settings for JIT loader plug-ins"),
+                                  properties_sp,
+                                  description,
+                                  is_global_property);
 }

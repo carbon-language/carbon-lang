@@ -470,6 +470,16 @@ public:
                                       const lldb::OptionValuePropertiesSP &properties_sp,
                                       const ConstString &description,
                                       bool is_global_property);
+
+    static lldb::OptionValuePropertiesSP
+    GetSettingForJITLoaderPlugin (Debugger &debugger,
+                                   const ConstString &setting_name);
+
+    static bool
+    CreateSettingForJITLoaderPlugin (Debugger &debugger,
+                                     const lldb::OptionValuePropertiesSP &properties_sp,
+                                     const ConstString &description,
+                                     bool is_global_property);
 };
 
 

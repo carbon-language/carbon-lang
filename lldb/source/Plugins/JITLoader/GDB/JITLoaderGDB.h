@@ -42,6 +42,9 @@ public:
 
     JITLoaderGDB (lldb_private::Process *process);
 
+    static void
+    DebuggerInitialize(lldb_private::Debugger &debugger);
+
     virtual
     ~JITLoaderGDB ();
 

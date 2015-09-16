@@ -16,6 +16,7 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Target/Process.h"
@@ -26,6 +27,58 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+namespace {
+
+    PropertyDefinition
+    g_properties[] =
+    {
+        { "enable-jit-breakpoint", OptionValue::eTypeBoolean, true,  true , nullptr, nullptr, "Enable breakpoint on __jit_debug_register_code." },
+        {  nullptr               , OptionValue::eTypeInvalid, false, 0,     nullptr, nullptr, nullptr }
+    };
+
+    enum
+    {
+        ePropertyEnableJITBreakpoint
+    };
+
+
+    class PluginProperties : public Properties
+    {
+    public:
+        static ConstString
+        GetSettingName()
+        {
+            return JITLoaderGDB::GetPluginNameStatic();
+        }
+
+        PluginProperties()
+        {
+            m_collection_sp.reset (new OptionValueProperties(GetSettingName()));
+            m_collection_sp->Initialize(g_properties);
+        }
+
+        bool
+        GetEnableJITBreakpoint() const
+        {
+            return m_collection_sp->GetPropertyAtIndexAsBoolean(
+                nullptr,
+                ePropertyEnableJITBreakpoint,
+                g_properties[ePropertyEnableJITBreakpoint].default_uint_value != 0);
+        }
+
+    };
+
+    typedef std::shared_ptr<PluginProperties> JITLoaderGDBPropertiesSP;
+
+    static const JITLoaderGDBPropertiesSP&
+    GetGlobalPluginProperties()
+    {
+        static const auto g_settings_sp(std::make_shared<PluginProperties>());
+        return g_settings_sp;
+    }
+
+}  // anonymous namespace end
 
 //------------------------------------------------------------------
 // Debug Interface Structures
@@ -70,6 +123,19 @@ JITLoaderGDB::~JITLoaderGDB ()
         m_process->GetTarget().RemoveBreakpointByID (m_jit_break_id);
 }
 
+void
+JITLoaderGDB::DebuggerInitialize(Debugger &debugger)
+{
+    if (!PluginManager::GetSettingForJITLoaderPlugin(debugger, PluginProperties::GetSettingName()))
+    {
+        const bool is_global_setting = true;
+        PluginManager::CreateSettingForJITLoaderPlugin(debugger,
+                                                       GetGlobalPluginProperties()->GetValueProperties(),
+                                                       ConstString ("Properties for the JIT LoaderGDB plug-in."),
+                                                       is_global_setting);
+    }
+}
+
 void JITLoaderGDB::DidAttach()
 {
     Target &target = m_process->GetTarget();
@@ -88,7 +154,7 @@ void
 JITLoaderGDB::ModulesDidLoad(ModuleList &module_list)
 {
     if (!DidSetJITBreakpoint() && m_process->IsAlive())
-	SetJITBreakpoint(module_list);
+        SetJITBreakpoint(module_list);
 }
 
 //------------------------------------------------------------------
@@ -97,11 +163,13 @@ JITLoaderGDB::ModulesDidLoad(ModuleList &module_list)
 void
 JITLoaderGDB::SetJITBreakpoint(lldb_private::ModuleList &module_list)
 {
-    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_JIT_LOADER));
+    if (!GetGlobalPluginProperties()->GetEnableJITBreakpoint())
+        return;
 
     if ( DidSetJITBreakpoint() )
         return;
 
+    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_JIT_LOADER));
     if (log)
         log->Printf("JITLoaderGDB::%s looking for JIT register hook",
                     __FUNCTION__);
@@ -407,7 +475,8 @@ JITLoaderGDB::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    GetPluginDescriptionStatic(),
-                                   CreateInstance);
+                                   CreateInstance,
+                                   DebuggerInitialize);
 }
 
 void
