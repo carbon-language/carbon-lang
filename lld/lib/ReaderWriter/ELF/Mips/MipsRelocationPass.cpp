@@ -915,16 +915,6 @@ make_reject_for_shared_lib_reloc_error(const ELFLinkingContext &ctx,
 }
 
 static std::error_code
-make_external_gprel32_reloc_error(const ELFLinkingContext &ctx,
-                                  const DefinedAtom &atom,
-                                  const Reference &ref) {
-  return make_dynamic_error_code(
-      "R_MIPS_GPREL32 (12) relocation cannot be used "
-      "against external symbol " +
-      ref.target()->name() + " in file " + atom.file().path());
-}
-
-static std::error_code
 make_local_call16_reloc_error(const ELFLinkingContext &ctx,
                               const DefinedAtom &atom, const Reference &ref) {
   return make_dynamic_error_code("R_MIPS_CALL16 (11) relocation cannot be used "
@@ -939,9 +929,6 @@ RelocationPass<ELFT>::validateRelocation(const DefinedAtom &atom,
                                          const Reference &ref) const {
   if (!ref.target())
     return std::error_code();
-
-  if (ref.kindValue() == R_MIPS_GPREL32 && !isLocal(ref.target()))
-    return make_external_gprel32_reloc_error(this->_ctx, atom, ref);
 
   if (isCallReloc(ref.kindValue()) && isLocal(ref.target()))
     return make_local_call16_reloc_error(this->_ctx, atom, ref);
