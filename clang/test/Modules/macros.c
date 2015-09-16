@@ -18,7 +18,6 @@
 // expected-note@Inputs/macros_right.h:12{{expanding this definition of 'LEFT_RIGHT_DIFFERENT'}}
 // expected-note@Inputs/macros_right.h:13{{expanding this definition of 'LEFT_RIGHT_DIFFERENT2'}}
 // expected-note@Inputs/macros_left.h:14{{other definition of 'LEFT_RIGHT_DIFFERENT'}}
-// expected-note@Inputs/macros_left.h:11{{other definition of 'LEFT_RIGHT_DIFFERENT2'}}
 
 @import macros;
 
@@ -72,8 +71,13 @@ void f() {
 #  error TOP should not be visible
 #endif
 
+#undef INTEGER
+#define INTEGER int
+
 // Import left module (which also imports top)
 @import macros_left;
+
+INTEGER my_integer = 0;
 
 #ifndef LEFT
 #  error LEFT should be visible

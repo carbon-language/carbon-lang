@@ -145,8 +145,12 @@ void Preprocessor::updateModuleMacroInfo(const IdentifierInfo *II,
     NumHiddenOverrides[O] = -1;
 
   // Collect all macros that are not overridden by a visible macro.
-  llvm::SmallVector<ModuleMacro *, 16> Worklist(Leaf->second.begin(),
-                                                Leaf->second.end());
+  llvm::SmallVector<ModuleMacro *, 16> Worklist;
+  for (auto *LeafMM : Leaf->second) {
+    assert(LeafMM->getNumOverridingMacros() == 0 && "leaf macro overridden");
+    if (NumHiddenOverrides.lookup(LeafMM) == 0)
+      Worklist.push_back(LeafMM);
+  }
   while (!Worklist.empty()) {
     auto *MM = Worklist.pop_back_val();
     if (CurSubmoduleState->VisibleModules.isVisible(MM->getOwningModule())) {
