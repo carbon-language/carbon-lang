@@ -771,16 +771,18 @@ PluginManager::GetEmulateInstructionCreateCallbackForPluginName (const ConstStri
 
 struct OperatingSystemInstance
 {
-    OperatingSystemInstance() :
-        name(),
-        description(),
-        create_callback(NULL)
+    OperatingSystemInstance () :
+        name (),
+        description (),
+        create_callback (nullptr),
+        debugger_init_callback (nullptr)
     {
     }
     
     ConstString name;
     std::string description;
     OperatingSystemCreateInstance create_callback;
+    DebuggerInitializeCallback debugger_init_callback;
 };
 
 typedef std::vector<OperatingSystemInstance> OperatingSystemInstances;
@@ -800,9 +802,9 @@ GetOperatingSystemInstances ()
 }
 
 bool
-PluginManager::RegisterPlugin (const ConstString &name,
-                               const char *description,
-                               OperatingSystemCreateInstance create_callback)
+PluginManager::RegisterPlugin(const ConstString &name, const char *description,
+                              OperatingSystemCreateInstance create_callback,
+                              DebuggerInitializeCallback debugger_init_callback)
 {
     if (create_callback)
     {
@@ -812,6 +814,7 @@ PluginManager::RegisterPlugin (const ConstString &name,
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
+        instance.debugger_init_callback = debugger_init_callback;
         Mutex::Locker locker (GetOperatingSystemMutex ());
         GetOperatingSystemInstances ().push_back (instance);
     }
@@ -2579,6 +2582,16 @@ PluginManager::DebuggerInitialize (Debugger &debugger)
                 sym_file.debugger_init_callback (debugger);
         }
     }
+
+    // Initialize the OperatingSystem plugins
+    {
+        Mutex::Locker locker(GetOperatingSystemMutex());
+        for (auto &os : GetOperatingSystemInstances())
+        {
+            if (os.debugger_init_callback)
+                os.debugger_init_callback(debugger);
+        }
+    }
 }
 
 // This is the preferred new way to register plugin specific settings.  e.g.
@@ -2822,4 +2835,39 @@ PluginManager::CreateSettingForJITLoaderPlugin (Debugger &debugger,
                                   properties_sp,
                                   description,
                                   is_global_property);
+}
+
+static const char *kOperatingSystemPluginName("os");
+
+lldb::OptionValuePropertiesSP
+PluginManager::GetSettingForOperatingSystemPlugin(Debugger &debugger, const ConstString &setting_name)
+{
+    lldb::OptionValuePropertiesSP properties_sp;
+    lldb::OptionValuePropertiesSP plugin_type_properties_sp(
+        GetDebuggerPropertyForPlugins(debugger, ConstString(kOperatingSystemPluginName),
+                                      ConstString(), // not creating to so we don't need the description
+                                      false));
+    if (plugin_type_properties_sp)
+        properties_sp = plugin_type_properties_sp->GetSubProperty(nullptr, setting_name);
+    return properties_sp;
+}
+
+bool
+PluginManager::CreateSettingForOperatingSystemPlugin(Debugger &debugger,
+                                                     const lldb::OptionValuePropertiesSP &properties_sp,
+                                                     const ConstString &description, bool is_global_property)
+{
+    if (properties_sp)
+    {
+        lldb::OptionValuePropertiesSP plugin_type_properties_sp(
+            GetDebuggerPropertyForPlugins(debugger, ConstString(kOperatingSystemPluginName),
+                                          ConstString("Settings for operating system plug-ins"), true));
+        if (plugin_type_properties_sp)
+        {
+            plugin_type_properties_sp->AppendProperty(properties_sp->GetName(), description, is_global_property,
+                                                      properties_sp);
+            return true;
+        }
+    }
+    return false;
 }

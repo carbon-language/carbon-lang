@@ -117,11 +117,10 @@ public:
     //------------------------------------------------------------------
     // OperatingSystem
     //------------------------------------------------------------------
-    static bool
-    RegisterPlugin (const ConstString &name,
-                    const char *description,
-                    OperatingSystemCreateInstance create_callback);
-    
+    static bool RegisterPlugin(const ConstString &name, const char *description,
+                               OperatingSystemCreateInstance create_callback,
+                               DebuggerInitializeCallback debugger_init_callback);
+
     static bool
     UnregisterPlugin (OperatingSystemCreateInstance create_callback);
     
@@ -480,6 +479,13 @@ public:
                                      const lldb::OptionValuePropertiesSP &properties_sp,
                                      const ConstString &description,
                                      bool is_global_property);
+
+    static lldb::OptionValuePropertiesSP GetSettingForOperatingSystemPlugin(Debugger &debugger,
+                                                                            const ConstString &setting_name);
+
+    static bool CreateSettingForOperatingSystemPlugin(Debugger &debugger,
+                                                      const lldb::OptionValuePropertiesSP &properties_sp,
+                                                      const ConstString &description, bool is_global_property);
 };
 
 

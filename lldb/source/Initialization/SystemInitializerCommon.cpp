@@ -25,6 +25,7 @@
 #include "Plugins/ObjectFile/ELF/ObjectFileELF.h"
 #include "Plugins/ObjectFile/PECOFF/ObjectFilePECOFF.h"
 #include "Plugins/OperatingSystem/Python/OperatingSystemPython.h"
+#include "Plugins/OperatingSystem/Go/OperatingSystemGo.h"
 #include "Plugins/Platform/Android/PlatformAndroid.h"
 #include "Plugins/Platform/FreeBSD/PlatformFreeBSD.h"
 #include "Plugins/Platform/Kalimba/PlatformKalimba.h"
@@ -142,6 +143,7 @@ SystemInitializerCommon::Initialize()
 #ifndef LLDB_DISABLE_PYTHON
     OperatingSystemPython::Initialize();
 #endif
+    OperatingSystemGo::Initialize();
 }
 
 void
@@ -181,6 +183,7 @@ SystemInitializerCommon::Terminate()
 #ifndef LLDB_DISABLE_PYTHON
     OperatingSystemPython::Terminate();
 #endif
+    OperatingSystemGo::Terminate();
 
     Log::Terminate();
 }

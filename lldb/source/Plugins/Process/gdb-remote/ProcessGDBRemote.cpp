@@ -2044,6 +2044,10 @@ ProcessGDBRemote::SetThreadStopInfo (lldb::tid_t tid,
             if (!thread_sp->StopInfoIsUpToDate())
             {
                 thread_sp->SetStopInfo (StopInfoSP());
+                // If there's a memory thread backed by this thread, we need to use it to calcualte StopInfo.
+                ThreadSP memory_thread_sp = m_thread_list.FindThreadByProtocolID(thread_sp->GetProtocolID());
+                if (memory_thread_sp)
+                    thread_sp = memory_thread_sp;
 
                 if (exc_type != 0)
                 {

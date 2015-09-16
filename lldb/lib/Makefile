@@ -69,6 +69,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginObjectFileJIT.a \
 	lldbPluginSymbolVendorELF.a \
 	lldbPluginObjectFilePECOFF.a \
+	lldbPluginOSGo.a \
 	lldbPluginOSPython.a \
 	lldbPluginPlatformGDB.a \
 	lldbPluginProcessElfCore.a \

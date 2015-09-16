@@ -351,6 +351,7 @@ ObjectFile::GetAddressClass (addr_t file_addr)
                     case eSectionTypeZeroFill:
                     case eSectionTypeDataObjCMessageRefs:
                     case eSectionTypeDataObjCCFStrings:
+                    case eSectionTypeGoSymtab:
                         return eAddressClassData;
                     case eSectionTypeDebug:
                     case eSectionTypeDWARFDebugAbbrev:

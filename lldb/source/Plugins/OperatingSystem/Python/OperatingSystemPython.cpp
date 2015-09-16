@@ -42,9 +42,7 @@ using namespace lldb_private;
 void
 OperatingSystemPython::Initialize()
 {
-    PluginManager::RegisterPlugin (GetPluginNameStatic(),
-                                   GetPluginDescriptionStatic(),
-                                   CreateInstance);
+    PluginManager::RegisterPlugin(GetPluginNameStatic(), GetPluginDescriptionStatic(), CreateInstance, nullptr);
 }
 
 void

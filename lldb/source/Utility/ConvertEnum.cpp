@@ -107,6 +107,8 @@ lldb_private::GetSectionTypeAsCString(lldb::SectionType sect_type)
             return "eh-frame";
         case eSectionTypeCompactUnwind:
             return "compact-unwind";
+        case eSectionTypeGoSymtab:
+            return "go-symtab";
         case eSectionTypeOther:
             return "regular";
     }

@@ -108,6 +108,8 @@ StackFrameList::ResetCurrentInlinedDepth ()
     if (m_show_inlined_frames)
     {        
         GetFramesUpTo(0);
+        if (m_frames.size() == 0)
+            return;
         if (!m_frames[0]->IsInlined())
         {
             m_current_inlined_depth = UINT32_MAX;
