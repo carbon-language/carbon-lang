@@ -1789,6 +1789,7 @@ namespace {
     // Generate function call for handling vtable pointer poisoning.
     void Emit(CodeGenFunction &CGF, Flags flags) override {
       assert(Dtor->getParent()->isDynamicClass());
+      (void)Dtor;
       ASTContext &Context = CGF.getContext();
       // Poison vtable and vtable ptr if they exist for this class.
       llvm::Value *VTablePtr = CGF.LoadCXXThis();
