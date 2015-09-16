@@ -1,10 +1,13 @@
-; RUN: llc < %s -mtriple=i686-windows | FileCheck %s -check-prefix=CHECK -check-prefix=NORMAL
+; RUN: llc < %s -mtriple=i686-windows | FileCheck %s -check-prefix=CHECK 
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s -check-prefix=LINUX64
 
 declare void @param1(i32 %a)
 declare i32 @param2_ret(i32 %a, i32 %b)
 declare i64 @param2_ret64(i32 %a, i32 %b)
 declare void @param2(i32 %a, i32 %b)
 declare void @param3(i32 %a, i32 %b, i32 %c)
+declare void @param8(i64, i64, i64, i64, i64, i64, i64, i64)
+
 
 define void @test() minsize {
 ; CHECK-LABEL: test:
@@ -57,5 +60,17 @@ define void @spill(i32 inreg %a, i32 inreg %b, i32 inreg %c) minsize {
 ; CHECK: calll _spill
   %i = call i32 @param2_ret(i32 1, i32 2)
   call void @spill(i32 %a, i32 %b, i32 %c)
+  ret void
+}
+
+define void @test_linux64(i32 %size) minsize {
+; LINUX64-LABEL: test_linux64:
+; LINUX64: pushq %rbp
+; LINUX64: callq param8
+; LINUX64-NEXT: popq %rax
+; LINUX64-NEXT: popq %rcx
+
+  %a = alloca i64, i32 %size, align 8
+  call void @param8(i64 1, i64 2, i64 3, i64 4, i64 5, i64 6, i64 7, i64 8)
   ret void
 }

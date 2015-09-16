@@ -1935,6 +1935,9 @@ void X86FrameLowering::adjustForHiPEPrologue(
 bool X86FrameLowering::adjustStackWithPops(MachineBasicBlock &MBB,
     MachineBasicBlock::iterator MBBI, DebugLoc DL, int Offset) const {
 
+  if (Offset <= 0)
+    return false;
+
   if (Offset % SlotSize)
     return false;
 
@@ -1955,9 +1958,11 @@ bool X86FrameLowering::adjustStackWithPops(MachineBasicBlock &MBB,
   unsigned FoundRegs = 0;
 
   auto RegMask = Prev->getOperand(1);
-  
-  // Try to find up to NumPops free registers. 
-  for (auto Candidate : X86::GR32_NOREX_NOSPRegClass) {
+
+  auto &RegClass =
+      Is64Bit ? X86::GR64_NOREX_NOSPRegClass : X86::GR32_NOREX_NOSPRegClass;
+  // Try to find up to NumPops free registers.
+  for (auto Candidate : RegClass) {
 
     // Poor man's liveness:
     // Since we're immediately after a call, any register that is clobbered
