@@ -475,6 +475,16 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
                   HT.CatchObjRecoverIdx);
           FrameAllocOffsetRef = MCSymbolRefExpr::create(
               FrameAllocOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
+        } else if (HT.CatchObj.FrameOffset != INT_MAX) {
+          int Offset = HT.CatchObj.FrameOffset;
+          // For 32-bit, the catch object offset is relative to the end of the
+          // EH registration node. For 64-bit, it's relative to SP at the end of
+          // the prologue.
+          if (!shouldEmitPersonality) {
+            assert(FuncInfo.EHRegNodeEndOffset != INT_MAX);
+            Offset += FuncInfo.EHRegNodeEndOffset;
+          }
+          FrameAllocOffsetRef = MCConstantExpr::create(Offset, Asm->OutContext);
         } else {
           FrameAllocOffsetRef = MCConstantExpr::create(0, Asm->OutContext);
         }

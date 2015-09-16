@@ -139,8 +139,15 @@ struct SEHUnwindMapEntry {
 
 struct WinEHHandlerType {
   int Adjectives;
-  GlobalVariable *TypeDescriptor;
   int CatchObjRecoverIdx;
+  /// The CatchObj starts out life as an LLVM alloca, is turned into a frame
+  /// index, and after PEI, becomes a raw offset.
+  union {
+    const AllocaInst *Alloca;
+    int FrameOffset;
+    int FrameIndex;
+  } CatchObj = {};
+  GlobalVariable *TypeDescriptor;
   ValueOrMBB Handler;
 };
 
@@ -176,6 +183,7 @@ struct WinEHFuncInfo {
   int EHRegNodeEscapeIndex = INT_MAX;
   const AllocaInst *EHRegNode = nullptr;
   int EHRegNodeFrameIndex = INT_MAX;
+  int EHRegNodeEndOffset = INT_MAX;
 
   WinEHFuncInfo() {}
 };

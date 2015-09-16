@@ -5,15 +5,11 @@
 %eh.CatchableType = type { i32, i8*, i32, i32, i32, i32, i8* }
 %eh.CatchableTypeArray.1 = type { i32, [1 x %eh.CatchableType*] }
 %eh.ThrowInfo = type { i32, i8*, i8*, i8* }
-%eh.CatchHandlerType = type { i32, i8* }
 
 $"\01??_R0H@8" = comdat any
 
 @"\01??_7type_info@@6B@" = external constant i8*
 @"\01??_R0H@8" = linkonce_odr global %rtti.TypeDescriptor2 { i8** @"\01??_7type_info@@6B@", i8* null, [3 x i8] c".H\00" }, comdat
-
-@llvm.eh.handlertype.H.0 = private unnamed_addr constant %eh.CatchHandlerType { i32 0, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*) }, section "llvm.metadata"
-@llvm.eh.handlertype.H.1 = private unnamed_addr constant %eh.CatchHandlerType { i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*) }, section "llvm.metadata"
 
 declare i32 @getint()
 declare void @useints(...)
@@ -31,7 +27,7 @@ entry:
           to label %try.cont unwind label %catch.dispatch
 
 catch.dispatch:                                   ; preds = %entry
-  %0 = catchpad [%eh.CatchHandlerType* @llvm.eh.handlertype.H.0, i8* null]
+  %0 = catchpad [%rtti.TypeDescriptor2* @"\01??_R0H@8", i32 0, i8* null]
           to label %catch unwind label %catchendblock
 
 catch:

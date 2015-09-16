@@ -2622,22 +2622,17 @@ static void addTryBlockMapEntry(WinEHFuncInfo &FuncInfo, int TryLow,
   for (const CatchPadInst *CPI : Handlers) {
     WinEHHandlerType HT;
     Constant *TypeInfo = cast<Constant>(CPI->getArgOperand(0));
-    if (TypeInfo->isNullValue()) {
-      HT.Adjectives = 0x40;
+    if (TypeInfo->isNullValue())
       HT.TypeDescriptor = nullptr;
-    } else {
-      auto *GV = cast<GlobalVariable>(TypeInfo->stripPointerCasts());
-      // Selectors are always pointers to GlobalVariables with 'struct' type.
-      // The struct has two fields, adjectives and a type descriptor.
-      auto *CS = cast<ConstantStruct>(GV->getInitializer());
-      HT.Adjectives =
-          cast<ConstantInt>(CS->getAggregateElement(0U))->getZExtValue();
-      HT.TypeDescriptor =
-          cast<GlobalVariable>(CS->getAggregateElement(1)->stripPointerCasts());
-    }
+    else
+      HT.TypeDescriptor = cast<GlobalVariable>(TypeInfo->stripPointerCasts());
+    HT.Adjectives = cast<ConstantInt>(CPI->getArgOperand(1))->getZExtValue();
     HT.Handler = CPI->getNormalDest();
-    // FIXME: Pass CPI->getArgOperand(1).
-    HT.CatchObjRecoverIdx = -1;
+    HT.CatchObjRecoverIdx = -2;
+    if (isa<ConstantPointerNull>(CPI->getArgOperand(2)))
+      HT.CatchObj.Alloca = nullptr;
+    else
+      HT.CatchObj.Alloca = cast<AllocaInst>(CPI->getArgOperand(2));
     TBME.HandlerArray.push_back(HT);
   }
   FuncInfo.TryBlockMap.push_back(TBME);
@@ -2713,6 +2708,7 @@ void WinEHNumbering::createTryBlockMapEntry(int TryLow, int TryHigh,
     }
     HT.Handler = cast<Function>(CH->getHandlerBlockOrFunc());
     HT.CatchObjRecoverIdx = CH->getExceptionVarIndex();
+    HT.CatchObj.Alloca = nullptr;
     TBME.HandlerArray.push_back(HT);
   }
   FuncInfo.TryBlockMap.push_back(TBME);

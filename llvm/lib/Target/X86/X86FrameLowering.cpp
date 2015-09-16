@@ -2091,6 +2091,7 @@ MachineBasicBlock::iterator X86FrameLowering::restoreWin32EHFrameAndBasePtr(
   int EHRegOffset = getFrameIndexReference(MF, FI, UsedReg);
   int EHRegSize = MFI->getObjectSize(FI);
   int EndOffset = -EHRegOffset - EHRegSize;
+  FuncInfo.EHRegNodeEndOffset = EndOffset;
   assert(EndOffset >= 0 &&
          "end of registration object above normal EBP position!");
   if (UsedReg == FramePtr) {

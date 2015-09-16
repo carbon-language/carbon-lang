@@ -294,11 +294,18 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
     calculateSEHStateNumbers(WinEHParentFn, EHInfo);
 
   // Map all BB references in the WinEH data to MBBs.
-  for (WinEHTryBlockMapEntry &TBME : EHInfo.TryBlockMap)
-    for (WinEHHandlerType &H : TBME.HandlerArray)
-      if (const auto *BB =
-              dyn_cast<BasicBlock>(H.Handler.get<const Value *>()))
+  for (WinEHTryBlockMapEntry &TBME : EHInfo.TryBlockMap) {
+    for (WinEHHandlerType &H : TBME.HandlerArray) {
+      if (H.CatchObjRecoverIdx == -2 && H.CatchObj.Alloca) {
+        assert(StaticAllocaMap.count(H.CatchObj.Alloca));
+        H.CatchObj.FrameIndex = StaticAllocaMap[H.CatchObj.Alloca];
+      } else {
+        H.CatchObj.FrameIndex = INT_MAX;
+      }
+      if (const auto *BB = dyn_cast<BasicBlock>(H.Handler.get<const Value *>()))
         H.Handler = MBBMap[BB];
+    }
+  }
   for (WinEHUnwindMapEntry &UME : EHInfo.UnwindMap)
     if (UME.Cleanup)
       if (const auto *BB = dyn_cast<BasicBlock>(UME.Cleanup.get<const Value *>()))
