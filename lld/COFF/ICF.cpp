@@ -77,8 +77,6 @@ private:
 
 // Entry point to ICF.
 void doICF(const std::vector<Chunk *> &Chunks) {
-  if (Config->Verbose)
-    llvm::outs() << "\nICF\n";
   ICF(Chunks).run();
 }
 
@@ -200,8 +198,12 @@ void ICF::run() {
   }
 
   // Split groups until we get a convergence.
+  int Cnt = 1;
   forEachGroup(SChunks, equalsConstant);
-  while (forEachGroup(SChunks, equalsVariable));
+  while (forEachGroup(SChunks, equalsVariable))
+    ++Cnt;
+  if (Config->Verbose)
+    llvm::outs() << "\nICF needed " << Cnt << " iterations.\n";
 
   // Merge sections in the same group.
   for (auto It = SChunks.begin(), End = SChunks.end(); It != End;) {
