@@ -162,6 +162,7 @@
 		264A58EE1A7DBCAD00A6B1B0 /* OptionValueFormatEntity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A58ED1A7DBCAD00A6B1B0 /* OptionValueFormatEntity.cpp */; };
 		264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */; };
 		264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264D8D4F13661BD7003A368F /* UnwindAssembly.cpp */; };
+		265192C61BA8E905002F08F6 /* CompilerDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265192C51BA8E905002F08F6 /* CompilerDecl.cpp */; settings = {ASSET_TAGS = (); }; };
 		265205A813D3E3F700132FE2 /* RegisterContextKDP_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A213D3E3F700132FE2 /* RegisterContextKDP_arm.cpp */; };
 		265205AA13D3E3F700132FE2 /* RegisterContextKDP_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A413D3E3F700132FE2 /* RegisterContextKDP_i386.cpp */; };
 		265205AC13D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A613D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp */; };
@@ -1457,6 +1458,8 @@
 		264AD83911095BBD00E0B039 /* CommandObjectLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectLog.h; path = source/Commands/CommandObjectLog.h; sourceTree = "<group>"; };
 		264D8D4E13661BCC003A368F /* UnwindAssembly.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UnwindAssembly.h; path = include/lldb/Target/UnwindAssembly.h; sourceTree = "<group>"; };
 		264D8D4F13661BD7003A368F /* UnwindAssembly.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindAssembly.cpp; path = source/Target/UnwindAssembly.cpp; sourceTree = "<group>"; };
+		265192C41BA8E8F8002F08F6 /* CompilerDecl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CompilerDecl.h; path = include/lldb/Symbol/CompilerDecl.h; sourceTree = "<group>"; };
+		265192C51BA8E905002F08F6 /* CompilerDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompilerDecl.cpp; path = source/Symbol/CompilerDecl.cpp; sourceTree = "<group>"; };
 		265205A213D3E3F700132FE2 /* RegisterContextKDP_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextKDP_arm.cpp; sourceTree = "<group>"; };
 		265205A313D3E3F700132FE2 /* RegisterContextKDP_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextKDP_arm.h; sourceTree = "<group>"; };
 		265205A413D3E3F700132FE2 /* RegisterContextKDP_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextKDP_i386.cpp; sourceTree = "<group>"; };
@@ -4209,6 +4212,8 @@
 				26BC7F1410F1B8EC00F91463 /* ClangASTContext.cpp */,
 				49D8FB3713B5594900411094 /* ClangASTImporter.h */,
 				49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */,
+				265192C41BA8E8F8002F08F6 /* CompilerDecl.h */,
+				265192C51BA8E905002F08F6 /* CompilerDecl.cpp */,
 				2657AFB51B8690EC00958979 /* CompilerDeclContext.h */,
 				2657AFB61B86910100958979 /* CompilerDeclContext.cpp */,
 				49E45FA911F660DC008F7B28 /* CompilerType.h */,
@@ -6435,6 +6440,7 @@
 				268900D013353E6F00698AC0 /* Block.cpp in Sources */,
 				268900D113353E6F00698AC0 /* ClangASTContext.cpp in Sources */,
 				2613F6C81B17B82F00D4DB85 /* CxaDemangle.cpp in Sources */,
+				265192C61BA8E905002F08F6 /* CompilerDecl.cpp in Sources */,
 				268900D213353E6F00698AC0 /* CompilerType.cpp in Sources */,
 				945261C11B9A11FC00BF138D /* LibCxxInitializerList.cpp in Sources */,
 				268900D313353E6F00698AC0 /* ClangExternalASTSourceCallbacks.cpp in Sources */,
