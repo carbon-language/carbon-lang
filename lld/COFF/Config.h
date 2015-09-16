@@ -88,8 +88,8 @@ struct Configuration {
   DefinedRelative *SEHTable = nullptr;
   DefinedAbsolute *SEHCount = nullptr;
 
-  // Used for /opt:icf
-  bool ICF = false;
+  // True if /opt:icf is specified.
+  bool DoICF = false;
 
   // Used for /opt:lldlto=N
   unsigned LTOOptLevel = 2;

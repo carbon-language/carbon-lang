@@ -288,7 +288,7 @@ void Writer::markLive() {
 
 // Merge identical COMDAT sections.
 void Writer::dedupCOMDATs() {
-  if (Config->ICF)
+  if (Config->DoICF)
     doICF(Symtab->getChunks());
 }
 
