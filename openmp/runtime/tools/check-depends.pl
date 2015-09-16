@@ -105,6 +105,11 @@ sub get_deps_readelf($) {
         $tool = "readelf";
     }
 
+    # Force the readelf call to be in English. For example, when readelf
+    # is called on a french localization, it will find "Librairie partagees"
+    # instead of shared library
+    $ENV{ LANG } = "C";
+
     execute( [ $tool, "-d", $file ], -stdout => \@bulk );
     debug( @bulk, "(eof)" );
 
