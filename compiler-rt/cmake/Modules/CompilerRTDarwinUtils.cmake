@@ -49,7 +49,7 @@ function(darwin_test_archs os valid_archs)
   set(archs ${ARGN})
   message(STATUS "Finding valid architectures for ${os}...")
   set(SIMPLE_CPP ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/src.cpp)
-  file(WRITE ${SIMPLE_CPP} "#include <iostream>\nint main() { return 0; }\n")
+  file(WRITE ${SIMPLE_CPP} "#include <iostream>\nint main() { std::cout << std::endl; return 0; }\n")
 
   set(os_linker_flags)
   foreach(flag ${DARWIN_${os}_LINKFLAGS})
