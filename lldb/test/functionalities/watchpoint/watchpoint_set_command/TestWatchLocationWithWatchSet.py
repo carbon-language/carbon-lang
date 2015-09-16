@@ -21,7 +21,6 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
         self.watchlocation_using_watchpoint_set()
 
     @dwarf_test
-    @expectedFailureFreeBSD('llvm.org/pr18832')
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_watchlocation_with_dwarf_using_watchpoint_set(self):

@@ -12,7 +12,6 @@ class WatchpointSetErrorTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @expectedFailureFreeBSD('llvm.org/pr18832')
     def test_error_cases_with_watchpoint_set(self):
         """Test error cases with the 'watchpoint set' command."""
         self.buildDwarf()
