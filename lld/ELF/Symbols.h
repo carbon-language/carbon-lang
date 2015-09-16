@@ -86,7 +86,6 @@ protected:
     IsUsedInRegularObj = K != SharedKind && K != LazyKind;
   }
 
-protected:
   const unsigned SymbolKind : 8;
   const unsigned IsWeak : 1;
   unsigned MostConstrainingVisibility : 2;
