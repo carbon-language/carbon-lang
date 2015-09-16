@@ -15,3 +15,6 @@ def rpath : Separate<["-"], "rpath">,
 
 def shared : Flag<["-"], "shared">,
      HelpText<"Build a shared object">;
+
+def discard_all : Flag<["-"], "discard-all">,
+     HelpText<"Delete all local symbols">;

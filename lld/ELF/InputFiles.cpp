@@ -55,21 +55,36 @@ template <class ELFT> void ELFData<ELFT>::openELF(MemoryBufferRef MB) {
 }
 
 template <class ELFT>
-typename ELFData<ELFT>::Elf_Sym_Range ELFData<ELFT>::getNonLocalSymbols() {
+typename ELFData<ELFT>::Elf_Sym_Range
+ELFData<ELFT>::getSymbolsHelper(bool Local) {
   if (!Symtab)
     return Elf_Sym_Range(nullptr, nullptr);
-
-  ErrorOr<StringRef> StringTableOrErr =
-      ELFObj->getStringTableForSymtab(*Symtab);
-  error(StringTableOrErr.getError());
-  StringTable = *StringTableOrErr;
-
   Elf_Sym_Range Syms = ELFObj->symbols(Symtab);
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   uint32_t FirstNonLocal = Symtab->sh_info;
   if (FirstNonLocal > NumSymbols)
     error("Invalid sh_info in symbol table");
-  return llvm::make_range(Syms.begin() + FirstNonLocal, Syms.end());
+  if (!Local)
+    return llvm::make_range(Syms.begin() + FirstNonLocal, Syms.end());
+  else
+    // Skip over dummy symbol.
+    return llvm::make_range(Syms.begin() + 1, Syms.begin() + FirstNonLocal);
+}
+
+template <class ELFT>
+typename ELFData<ELFT>::Elf_Sym_Range ELFData<ELFT>::getNonLocalSymbols() {
+  if (!Symtab)
+    return Elf_Sym_Range(nullptr, nullptr);
+  ErrorOr<StringRef> StringTableOrErr =
+      ELFObj->getStringTableForSymtab(*Symtab);
+  error(StringTableOrErr.getError());
+  StringTable = *StringTableOrErr;
+  return getSymbolsHelper(false);
+}
+
+template <class ELFT>
+typename ObjectFile<ELFT>::Elf_Sym_Range ObjectFile<ELFT>::getLocalSymbols() {
+  return this->getSymbolsHelper(true);
 }
 
 template <class ELFT> void elf2::ObjectFile<ELFT>::parse() {
@@ -217,6 +232,7 @@ template <class ELFT> void SharedFile<ELFT>::parse() {
 
 namespace lld {
 namespace elf2 {
+
 template class elf2::ObjectFile<llvm::object::ELF32LE>;
 template class elf2::ObjectFile<llvm::object::ELF32BE>;
 template class elf2::ObjectFile<llvm::object::ELF64LE>;

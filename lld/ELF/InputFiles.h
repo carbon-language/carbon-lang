@@ -102,11 +102,14 @@ public:
 
   uint16_t getEMachine() const { return getObj()->getHeader()->e_machine; }
 
+  StringRef getStringTable() const { return StringTable; }
+
 protected:
   std::unique_ptr<llvm::object::ELFFile<ELFT>> ELFObj;
   const Elf_Shdr *Symtab = nullptr;
   StringRef StringTable;
   Elf_Sym_Range getNonLocalSymbols();
+  Elf_Sym_Range getSymbolsHelper(bool);
 
   void openELF(MemoryBufferRef MB);
 };
@@ -137,6 +140,8 @@ public:
       return nullptr;
     return SymbolBodies[SymbolIndex - FirstNonLocal]->getReplacement();
   }
+
+  Elf_Sym_Range getLocalSymbols();
 
 private:
   void initializeChunks();

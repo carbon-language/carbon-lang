@@ -210,6 +210,7 @@ template <class ELFT>
 class SymbolTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
 public:
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
   SymbolTableSection(Writer<ELFT> &W, SymbolTable &Table,
                      StringTableSection<ELFT::Is64Bits> &StrTabSec)
@@ -221,9 +222,6 @@ public:
     typedef OutputSectionBase<ELFT::Is64Bits> Base;
     typename Base::HeaderT &Header = this->Header;
 
-    // For now the only local symbol is going to be the one at index 0
-    Header.sh_info = 1;
-
     Header.sh_entsize = sizeof(Elf_Sym);
     Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
   }
@@ -231,15 +229,18 @@ public:
   void finalize() override {
     this->Header.sh_size = getNumSymbols() * sizeof(Elf_Sym);
     this->Header.sh_link = StrTabSec.getSectionIndex();
+    this->Header.sh_info = NumLocals + 1;
   }
 
   void writeTo(uint8_t *Buf) override;
 
   const SymbolTable &getSymTable() const { return Table; }
 
-  void addSymbol(StringRef Name) {
+  void addSymbol(StringRef Name, bool isLocal = false) {
     StrTabSec.add(Name);
     ++NumVisible;
+    if (isLocal)
+      ++NumLocals;
   }
 
   StringTableSection<ELFT::Is64Bits> &getStrTabSec() { return StrTabSec; }
@@ -249,6 +250,7 @@ private:
   SymbolTable &Table;
   StringTableSection<ELFT::Is64Bits> &StrTabSec;
   unsigned NumVisible = 0;
+  unsigned NumLocals = 0;
   const Writer<ELFT> &W;
 };
 
@@ -434,6 +436,7 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
   typedef typename ELFFile<ELFT>::Elf_Phdr Elf_Phdr;
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   Writer(SymbolTable *T)
       : SymTabSec(*this, *T, StrTabSec), DynSymSec(*this, *T, DynStrSec),
@@ -623,9 +626,28 @@ static bool includeInSymtab(const SymbolBody &B) {
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
-  uint8_t *BufStart = Buf;
-
   Buf += sizeof(Elf_Sym);
+
+  // All symbols with STB_LOCAL binding precede the weak and global symbols.
+  // .dynsym only contains global symbols.
+  if (!Config->DiscardAll && !StrTabSec.isDynamic()) {
+    for (const std::unique_ptr<ObjectFileBase> &FileB :
+         Table.getObjectFiles()) {
+      auto &File = cast<ObjectFile<ELFT>>(*FileB);
+      Elf_Sym_Range Syms = File.getLocalSymbols();
+      for (const Elf_Sym &Sym : Syms) {
+        auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
+        ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
+        ESym->st_name = (SymName) ? StrTabSec.getFileOff(*SymName) : 0;
+        ESym->st_value = Sym.st_value;
+        ESym->st_size = Sym.st_size;
+        Buf += sizeof(Elf_Sym);
+      }
+    }
+  }
+
+  uint8_t *GlobalStart = Buf;
+
   for (auto &P : Table.getSymbols()) {
     StringRef Name = P.first;
     Symbol *Sym = P.second;
@@ -686,9 +708,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   // The default hashing of StringRef produces different results on 32 and 64
   // bit systems so we sort by st_name. That is arbitrary but deterministic.
   // FIXME: Experiment with passing in a custom hashing instead.
-  auto *Syms = reinterpret_cast<Elf_Sym *>(BufStart);
-  ++Syms;
-  array_pod_sort(Syms, Syms + NumVisible, compareSym<ELFT>);
+  auto *Syms = reinterpret_cast<Elf_Sym *>(GlobalStart);
+  array_pod_sort(Syms, Syms + NumVisible - NumLocals, compareSym<ELFT>);
 }
 
 template <bool Is64Bits>
@@ -819,6 +840,14 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.getObjectFiles()) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
+    if (!Config->DiscardAll) {
+      Elf_Sym_Range Syms = File.getLocalSymbols();
+      for (const Elf_Sym &Sym : Syms) {
+        ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
+        if (SymName)
+          SymTabSec.addSymbol(*SymName, true);
+      }
+    }
     for (SectionChunk<ELFT> *C : File.getChunks()) {
       if (!C)
         continue;
