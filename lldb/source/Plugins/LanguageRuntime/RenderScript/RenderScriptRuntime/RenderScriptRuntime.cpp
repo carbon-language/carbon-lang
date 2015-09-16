@@ -838,7 +838,7 @@ RenderScriptRuntime::BreakOnModuleKernels(const RSModuleDescriptorSP rsmodule_sp
 void
 RenderScriptRuntime::SetBreakAllKernels(bool do_break, TargetSP target)
 {
-    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+    Log* log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_LANGUAGE | LIBLLDB_LOG_BREAKPOINTS));
 
     InitSearchFilter(target);
 
@@ -868,7 +868,7 @@ RenderScriptRuntime::SetBreakAllKernels(bool do_break, TargetSP target)
 BreakpointSP
 RenderScriptRuntime::CreateKernelBreakpoint(const ConstString& name)
 {
-    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+    Log* log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_LANGUAGE | LIBLLDB_LOG_BREAKPOINTS));
 
     if (!m_filtersp)
     {
@@ -879,6 +879,11 @@ RenderScriptRuntime::CreateKernelBreakpoint(const ConstString& name)
 
     BreakpointResolverSP resolver_sp(new RSBreakpointResolver(nullptr, name));
     BreakpointSP bp = GetProcess()->GetTarget().CreateBreakpoint(m_filtersp, resolver_sp, false, false, false);
+
+    // Give RS breakpoints a specific name, so the user can manipulate them as a group.
+    Error err;
+    if (!bp->AddName("RenderScriptKernel", err) && log)
+        log->Printf("RenderScriptRuntime::CreateKernelBreakpoint: Error setting break name, %s", err.AsCString());
 
     return bp;
 }
