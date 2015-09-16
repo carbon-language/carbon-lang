@@ -26,7 +26,7 @@ extern "C" void *memset(void *ptr, int value, uptr num);
 namespace __lsan {
 
 struct ChunkMetadata {
-  bool allocated : 8;  // Must be first.
+  u8 allocated : 8;  // Must be first.
   ChunkTag tag : 2;
   uptr requested_size : 54;
   u32 stack_trace_id;
