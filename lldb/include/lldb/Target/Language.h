@@ -20,6 +20,7 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/DataFormatters/FormatClasses.h"
 #include "lldb/DataFormatters/StringPrinter.h"
 
 namespace lldb_private {
@@ -42,6 +43,18 @@ public:
     
     virtual lldb::TypeCategoryImplSP
     GetFormatters ();
+    
+    virtual HardcodedFormatters::HardcodedFormatFinder
+    GetHardcodedFormats ();
+    
+    virtual HardcodedFormatters::HardcodedSummaryFinder
+    GetHardcodedSummaries ();
+
+    virtual HardcodedFormatters::HardcodedSyntheticFinder
+    GetHardcodedSynthetics ();
+    
+    virtual HardcodedFormatters::HardcodedValidatorFinder
+    GetHardcodedValidators ();
 
     virtual std::vector<ConstString>
     GetPossibleFormattersMatches (ValueObject& valobj, lldb::DynamicValueType use_dynamic);

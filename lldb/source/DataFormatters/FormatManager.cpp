@@ -15,8 +15,6 @@
 // Project includes
 
 #include "lldb/Core/Debugger.h"
-#include "lldb/DataFormatters/CXXFunctionPointer.h"
-#include "lldb/DataFormatters/VectorType.h"
 #include "lldb/DataFormatters/FormattersHelpers.h"
 #include "lldb/DataFormatters/LanguageCategory.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -686,13 +684,18 @@ lldb::TypeFormatImplSP
 FormatManager::GetHardcodedFormat (ValueObject& valobj,
                                    lldb::DynamicValueType use_dynamic)
 {
-    for (const auto& candidate: m_hardcoded_formats)
+    TypeFormatImplSP retval_sp;
+    
+    for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
     {
-        auto result = candidate(valobj,use_dynamic,*this);
-        if (result)
-            return result;
+        if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
+        {
+            if (lang_category->GetHardcoded(valobj, use_dynamic, *this, retval_sp))
+                break;
+        }
     }
-    return nullptr;
+
+    return retval_sp;
 }
 
 lldb::TypeFormatImplSP
@@ -766,13 +769,18 @@ lldb::TypeSummaryImplSP
 FormatManager::GetHardcodedSummaryFormat (ValueObject& valobj,
                                           lldb::DynamicValueType use_dynamic)
 {
-    for (const auto& candidate: m_hardcoded_summaries)
+    TypeSummaryImplSP retval_sp;
+    
+    for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
     {
-        auto result = candidate(valobj,use_dynamic,*this);
-        if (result)
-            return result;
+        if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
+        {
+            if (lang_category->GetHardcoded(valobj, use_dynamic, *this, retval_sp))
+                break;
+        }
     }
-    return nullptr;
+    
+    return retval_sp;
 }
 
 lldb::TypeSummaryImplSP
@@ -847,13 +855,18 @@ lldb::SyntheticChildrenSP
 FormatManager::GetHardcodedSyntheticChildren (ValueObject& valobj,
                                               lldb::DynamicValueType use_dynamic)
 {
-    for (const auto& candidate: m_hardcoded_synthetics)
+    SyntheticChildrenSP retval_sp;
+    
+    for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
     {
-        auto result = candidate(valobj,use_dynamic,*this);
-        if (result)
-            return result;
+        if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
+        {
+            if (lang_category->GetHardcoded(valobj, use_dynamic, *this, retval_sp))
+                break;
+        }
     }
-    return nullptr;
+    
+    return retval_sp;
 }
 
 lldb::SyntheticChildrenSP
@@ -995,13 +1008,18 @@ lldb::TypeValidatorImplSP
 FormatManager::GetHardcodedValidator (ValueObject& valobj,
                                       lldb::DynamicValueType use_dynamic)
 {
-    for (const auto& candidate: m_hardcoded_validators)
+    TypeValidatorImplSP retval_sp;
+    
+    for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
     {
-        auto result = candidate(valobj,use_dynamic,*this);
-        if (result)
-            return result;
+        if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
+        {
+            if (lang_category->GetHardcoded(valobj, use_dynamic, *this, retval_sp))
+                break;
+        }
     }
-    return nullptr;
+    
+    return retval_sp;
 }
 
 FormatManager::FormatManager() :
@@ -1013,16 +1031,10 @@ FormatManager::FormatManager() :
     m_language_categories_mutex(Mutex::eMutexTypeRecursive),
     m_default_category_name(ConstString("default")),
     m_system_category_name(ConstString("system")), 
-    m_vectortypes_category_name(ConstString("VectorTypes")),
-    m_hardcoded_formats(),
-    m_hardcoded_summaries(),
-    m_hardcoded_synthetics(),
-    m_hardcoded_validators()
-    
+    m_vectortypes_category_name(ConstString("VectorTypes"))
 {
     LoadSystemFormatters();
     LoadVectorFormatters();
-    LoadHardcodedFormatters();
     
     EnableCategory(m_vectortypes_category_name,TypeCategoryMap::Last);
     EnableCategory(m_system_category_name,TypeCategoryMap::Last);
@@ -1155,66 +1167,4 @@ FormatManager::LoadVectorFormatters()
                      "",
                      ConstString("vBool32"),
                      vector_flags);
-}
-
-void
-FormatManager::LoadHardcodedFormatters()
-{
-    {
-        // insert code to load formats here
-    }
-    {
-        // insert code to load summaries here
-        m_hardcoded_summaries.push_back(
-                                        [](lldb_private::ValueObject& valobj,
-                                            lldb::DynamicValueType,
-                                            FormatManager&) -> TypeSummaryImpl::SharedPointer {
-                                            static CXXFunctionSummaryFormat::SharedPointer formatter_sp(new CXXFunctionSummaryFormat(TypeSummaryImpl::Flags(), lldb_private::formatters::CXXFunctionPointerSummaryProvider, "Function pointer summary provider"));
-                                            if (valobj.GetCompilerType().IsFunctionPointerType())
-                                            {
-                                                return formatter_sp;
-                                            }
-                                            return nullptr;
-                                        });
-        m_hardcoded_summaries.push_back(
-                                         [](lldb_private::ValueObject& valobj,
-                                            lldb::DynamicValueType,
-                                            FormatManager& fmt_mgr) -> TypeSummaryImpl::SharedPointer {
-                                             static CXXFunctionSummaryFormat::SharedPointer formatter_sp(new CXXFunctionSummaryFormat(TypeSummaryImpl::Flags()
-                                                                                                                                      .SetCascades(true)
-                                                                                                                                      .SetDontShowChildren(true)
-                                                                                                                                      .SetHideItemNames(true)
-                                                                                                                                      .SetShowMembersOneLiner(true)
-                                                                                                                                      .SetSkipPointers(true)
-                                                                                                                                      .SetSkipReferences(false),
-                                                                                                                                      lldb_private::formatters::VectorTypeSummaryProvider,
-                                                                                                                                      "vector_type pointer summary provider"));
-                                             if (valobj.GetCompilerType().IsVectorType(nullptr, nullptr))
-                                             {
-                                                 if (fmt_mgr.GetCategory(fmt_mgr.m_vectortypes_category_name)->IsEnabled())
-                                                     return formatter_sp;
-                                             }
-                                             return nullptr;
-                                         });
-    }
-    {
-        // insert code to load synthetics here
-        m_hardcoded_synthetics.push_back(
-                                         [](lldb_private::ValueObject& valobj,
-                                            lldb::DynamicValueType,
-                                            FormatManager& fmt_mgr) -> SyntheticChildren::SharedPointer {
-                                             static CXXSyntheticChildren::SharedPointer formatter_sp(new CXXSyntheticChildren(SyntheticChildren::Flags().SetCascades(true).SetSkipPointers(true).SetSkipReferences(true).SetNonCacheable(true),
-                                                                                                                              "vector_type synthetic children",
-                                                                                                                              lldb_private::formatters::VectorTypeSyntheticFrontEndCreator));
-                                             if (valobj.GetCompilerType().IsVectorType(nullptr, nullptr))
-                                             {
-                                                 if (fmt_mgr.GetCategory(fmt_mgr.m_vectortypes_category_name)->IsEnabled())
-                                                     return formatter_sp;
-                                             }
-                                             return nullptr;
-                                         });
-    }
-    {
-        // insert code to load validators here
-    }
 }

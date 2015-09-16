@@ -17,8 +17,10 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/UniqueCStringMap.h"
+#include "lldb/DataFormatters/CXXFunctionPointer.h"
 #include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/DataFormatters/FormattersHelpers.h"
+#include "lldb/DataFormatters/VectorType.h"
 
 #include "CxxStringTypes.h"
 #include "LibCxx.h"
@@ -667,5 +669,76 @@ CPlusPlusLanguage::GetFormatters ()
         }
     });
     return g_category;
+}
+
+HardcodedFormatters::HardcodedSummaryFinder
+CPlusPlusLanguage::GetHardcodedSummaries ()
+{
+    static std::once_flag g_initialize;
+    static ConstString g_vectortypes("VectorTypes");
+    static HardcodedFormatters::HardcodedSummaryFinder g_formatters;
+    
+    std::call_once(g_initialize, [] () -> void {
+        g_formatters.push_back(
+                                        [](lldb_private::ValueObject& valobj,
+                                           lldb::DynamicValueType,
+                                           FormatManager&) -> TypeSummaryImpl::SharedPointer {
+                                            static CXXFunctionSummaryFormat::SharedPointer formatter_sp(new CXXFunctionSummaryFormat(TypeSummaryImpl::Flags(), lldb_private::formatters::CXXFunctionPointerSummaryProvider, "Function pointer summary provider"));
+                                            if (valobj.GetCompilerType().IsFunctionPointerType())
+                                            {
+                                                return formatter_sp;
+                                            }
+                                            return nullptr;
+                                        });
+        g_formatters.push_back(
+                                        [](lldb_private::ValueObject& valobj,
+                                           lldb::DynamicValueType,
+                                           FormatManager& fmt_mgr) -> TypeSummaryImpl::SharedPointer {
+                                            static CXXFunctionSummaryFormat::SharedPointer formatter_sp(new CXXFunctionSummaryFormat(TypeSummaryImpl::Flags()
+                                                                                                                                     .SetCascades(true)
+                                                                                                                                     .SetDontShowChildren(true)
+                                                                                                                                     .SetHideItemNames(true)
+                                                                                                                                     .SetShowMembersOneLiner(true)
+                                                                                                                                     .SetSkipPointers(true)
+                                                                                                                                     .SetSkipReferences(false),
+                                                                                                                                     lldb_private::formatters::VectorTypeSummaryProvider,
+                                                                                                                                     "vector_type pointer summary provider"));
+                                            if (valobj.GetCompilerType().IsVectorType(nullptr, nullptr))
+                                            {
+                                                if (fmt_mgr.GetCategory(g_vectortypes)->IsEnabled())
+                                                    return formatter_sp;
+                                            }
+                                            return nullptr;
+                                        });
+    });
+    
+    return g_formatters;
+}
+
+HardcodedFormatters::HardcodedSyntheticFinder
+CPlusPlusLanguage::GetHardcodedSynthetics ()
+{
+    static std::once_flag g_initialize;
+    static ConstString g_vectortypes("VectorTypes");
+    static HardcodedFormatters::HardcodedSyntheticFinder g_formatters;
+    
+    std::call_once(g_initialize, [] () -> void {
+        g_formatters.push_back(
+                                         [](lldb_private::ValueObject& valobj,
+                                            lldb::DynamicValueType,
+                                            FormatManager& fmt_mgr) -> SyntheticChildren::SharedPointer {
+                                             static CXXSyntheticChildren::SharedPointer formatter_sp(new CXXSyntheticChildren(SyntheticChildren::Flags().SetCascades(true).SetSkipPointers(true).SetSkipReferences(true).SetNonCacheable(true),
+                                                                                                                              "vector_type synthetic children",
+                                                                                                                              lldb_private::formatters::VectorTypeSyntheticFrontEndCreator));
+                                             if (valobj.GetCompilerType().IsVectorType(nullptr, nullptr))
+                                             {
+                                                 if (fmt_mgr.GetCategory(g_vectortypes)->IsEnabled())
+                                                     return formatter_sp;
+                                             }
+                                             return nullptr;
+                                         });
+    });
+    
+    return g_formatters;
 }
 

@@ -95,6 +95,30 @@ Language::GetFormatters ()
     return nullptr;
 }
 
+HardcodedFormatters::HardcodedFormatFinder
+Language::GetHardcodedFormats ()
+{
+    return {};
+}
+
+HardcodedFormatters::HardcodedSummaryFinder
+Language::GetHardcodedSummaries ()
+{
+    return {};
+}
+
+HardcodedFormatters::HardcodedSyntheticFinder
+Language::GetHardcodedSynthetics ()
+{
+    return {};
+}
+
+HardcodedFormatters::HardcodedValidatorFinder
+Language::GetHardcodedValidators ()
+{
+    return {};
+}
+
 std::vector<ConstString>
 Language::GetPossibleFormattersMatches (ValueObject& valobj, lldb::DynamicValueType use_dynamic)
 {

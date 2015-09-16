@@ -129,6 +129,12 @@ public:
     lldb::TypeCategoryImplSP
     GetFormatters () override;
     
+    HardcodedFormatters::HardcodedSummaryFinder
+    GetHardcodedSummaries () override;
+    
+    HardcodedFormatters::HardcodedSyntheticFinder
+    GetHardcodedSynthetics () override;
+    
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------

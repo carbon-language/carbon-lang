@@ -19,11 +19,30 @@
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
-
+#include "lldb/DataFormatters/TypeFormat.h"
+#include "lldb/DataFormatters/TypeSummary.h"
+#include "lldb/DataFormatters/TypeSynthetic.h"
+#include "lldb/DataFormatters/TypeValidator.h"
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/Type.h"
 
 namespace lldb_private {
+
+class HardcodedFormatters {
+public:
+    template <typename FormatterType>
+    using HardcodedFormatterFinder = std::function<typename FormatterType::SharedPointer (lldb_private::ValueObject&,
+                                                                                          lldb::DynamicValueType,
+                                                                                          FormatManager&)>;
+
+    template <typename FormatterType>
+    using HardcodedFormatterFinders = std::vector<HardcodedFormatterFinder<FormatterType>>;
+
+    typedef HardcodedFormatterFinders<TypeFormatImpl> HardcodedFormatFinder;
+    typedef HardcodedFormatterFinders<TypeSummaryImpl> HardcodedSummaryFinder;
+    typedef HardcodedFormatterFinders<SyntheticChildren> HardcodedSyntheticFinder;
+    typedef HardcodedFormatterFinders<TypeValidatorImpl> HardcodedValidatorFinder;
+};
 
 class FormattersMatchCandidate
 {

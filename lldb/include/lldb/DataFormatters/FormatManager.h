@@ -44,14 +44,6 @@ class FormatManager : public IFormatChangeListener
     typedef TypeCategoryMap::MapType::iterator CategoryMapIterator;
 public:
     
-    template <typename FormatterType>
-    using HardcodedFormatterFinder = std::function<typename FormatterType::SharedPointer (lldb_private::ValueObject&,
-                                                                                          lldb::DynamicValueType,
-                                                                                          FormatManager&)>;
-    
-    template <typename FormatterType>
-    using HardcodedFormatterFinders = std::vector<HardcodedFormatterFinder<FormatterType>>;
-    
     typedef std::map<lldb::LanguageType, LanguageCategory::UniquePointer> LanguageCategories;
     
     typedef TypeCategoryMap::CallbackType CategoryCallback;
@@ -292,11 +284,6 @@ private:
     ConstString m_system_category_name;
     ConstString m_vectortypes_category_name;
     
-    HardcodedFormatterFinders<TypeFormatImpl> m_hardcoded_formats;
-    HardcodedFormatterFinders<TypeSummaryImpl> m_hardcoded_summaries;
-    HardcodedFormatterFinders<SyntheticChildren> m_hardcoded_synthetics;
-    HardcodedFormatterFinders<TypeValidatorImpl> m_hardcoded_validators;
-    
     lldb::TypeFormatImplSP
     GetHardcodedFormat (ValueObject&,lldb::DynamicValueType);
     
@@ -325,9 +312,6 @@ private:
     
     void
     LoadVectorFormatters ();
-
-    void
-    LoadHardcodedFormatters ();
 };
     
 } // namespace lldb_private
