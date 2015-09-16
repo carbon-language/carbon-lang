@@ -111,10 +111,11 @@ protected:
   uint32_t Align = 1;
 };
 
-class SectionChunk;
-
 // A chunk corresponding a section of an input file.
 class SectionChunk : public Chunk {
+  // Identical COMDAT Folding feature accesses section internal data.
+  friend class ICF;
+
 public:
   class symbol_iterator : public llvm::iterator_adaptor_base<
                               symbol_iterator, const coff_relocation *,
@@ -174,25 +175,15 @@ public:
   // Allow iteration over the associated child chunks for this section.
   ArrayRef<SectionChunk *> children() const { return AssocChildren; }
 
-  // Used for ICF (Identical COMDAT Folding)
-  void replaceWith(SectionChunk *Other);
-  uint64_t getHash() const;
-  static bool equalsVertex(const SectionChunk *A, const SectionChunk *B);
-  static bool equalsEdge(const SectionChunk *Au, const SectionChunk *B);
-
   // A pointer pointing to a replacement for this chunk.
   // Initially it points to "this" object. If this chunk is merged
   // with other chunk by ICF, it points to another chunk,
   // and this chunk is considrered as dead.
   SectionChunk *Ptr;
-  std::vector<SectionChunk *> Successors;
-  void initSuccessors();
 
   // The CRC of the contents as described in the COFF spec 4.5.5.
   // Auxiliary Format 5: Section Definitions. Used for ICF.
   uint32_t Checksum = 0;
-  uint64_t GroupID;
-  mutable uint64_t Hash = 0;
 
 private:
   ArrayRef<uint8_t> getContents() const;
@@ -208,6 +199,11 @@ private:
 
   // Used by the garbage collector.
   bool Live = false;
+
+  // Used for ICF (Identical COMDAT Folding)
+  void replaceWith(SectionChunk *Other);
+  std::vector<SectionChunk *> Successors;
+  uint64_t GroupID;
 
   // Chunks are basically unnamed chunks of bytes.
   // Symbols are associated for debugging and logging purposs only.

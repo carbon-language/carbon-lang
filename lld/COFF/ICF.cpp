@@ -25,11 +25,11 @@
 // in the same group are considered identical.
 //
 // First, all sections are grouped by their "constant" values. Constant
-// values are values that never change by ICF, such as section contents,
+// values are values that are never changed by ICF, such as section contents,
 // section name, number of relocations, type and offset of each relocation,
-// etc. Because we do not care about relocation targets in this spep, two
-// sections in the same group may be actually not identical, but at least
-// two sections in different groups can never be identical.
+// etc. Because we do not care about some relocation targets in this step,
+// two sections in the same group may not be identical, but at least two
+// sections in different groups can never be identical.
 //
 // Then, we try to split each group by relocation targets. Relocations are
 // considered identical if and only if the relocation targets are in the
@@ -46,13 +46,9 @@
 #include "Chunks.h"
 #include "Symbols.h"
 #include "llvm/ADT/Hashing.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <functional>
-#include <tuple>
-#include <unordered_set>
 #include <vector>
 
 using namespace llvm;
@@ -60,28 +56,42 @@ using namespace llvm;
 namespace lld {
 namespace coff {
 
-uint64_t SectionChunk::getHash() const {
-  if (Hash == 0) {
-    Hash = hash_combine(getPermissions(),
-                        hash_value(SectionName),
-                        NumRelocs,
-                        uint32_t(Header->SizeOfRawData),
-                        std::distance(Relocs.end(), Relocs.begin()),
-                        Checksum);
-  }
-  return Hash;
+typedef std::vector<SectionChunk *>::iterator ChunkIterator;
+typedef bool (*Comparator)(const SectionChunk *, const SectionChunk *);
+
+class ICF {
+public:
+  ICF(const std::vector<Chunk *> &V) : Chunks(V) {}
+  void run();
+
+private:
+  static uint64_t getHash(SectionChunk *C);
+  static bool equalsConstant(const SectionChunk *A, const SectionChunk *B);
+  static bool equalsVariable(const SectionChunk *A, const SectionChunk *B);
+  bool forEachGroup(std::vector<SectionChunk *> &SChunks, Comparator Eq);
+  bool partition(ChunkIterator Begin, ChunkIterator End, Comparator Eq);
+
+  const std::vector<Chunk *> &Chunks;
+  uint64_t NextID = 0;
+};
+
+// Entry point to ICF.
+void doICF(const std::vector<Chunk *> &Chunks) {
+  if (Config->Verbose)
+    llvm::outs() << "\nICF\n";
+  ICF(Chunks).run();
 }
 
-void SectionChunk::initSuccessors() {
-  Successors = AssocChildren;
-  for (const coff_relocation &R : Relocs) {
-    SymbolBody *B = File->getSymbolBody(R.SymbolTableIndex)->repl();
-    if (auto D = dyn_cast<DefinedRegular>(B))
-      Successors.push_back(D->getChunk());
-  }
+uint64_t ICF::getHash(SectionChunk *C) {
+  return hash_combine(C->getPermissions(),
+                      hash_value(C->SectionName),
+                      C->NumRelocs,
+                      uint32_t(C->Header->SizeOfRawData),
+                      std::distance(C->Relocs.end(), C->Relocs.begin()),
+                      C->Checksum);
 }
 
-bool SectionChunk::equalsVertex(const SectionChunk *A, const SectionChunk *B) {
+bool ICF::equalsConstant(const SectionChunk *A, const SectionChunk *B) {
   if (A->getPermissions() != B->getPermissions() ||
       A->SectionName != B->SectionName ||
       A->Header->SizeOfRawData != B->Header->SizeOfRawData ||
@@ -115,7 +125,7 @@ bool SectionChunk::equalsVertex(const SectionChunk *A, const SectionChunk *B) {
   return std::equal(A->Relocs.begin(), A->Relocs.end(), B->Relocs.begin(), Eq);
 }
 
-bool SectionChunk::equalsEdge(const SectionChunk *A, const SectionChunk *B) {
+bool ICF::equalsVariable(const SectionChunk *A, const SectionChunk *B) {
   assert(A->Successors.size() == B->Successors.size());
   return std::equal(A->Successors.begin(), A->Successors.end(),
                     B->Successors.begin(),
@@ -124,11 +134,7 @@ bool SectionChunk::equalsEdge(const SectionChunk *A, const SectionChunk *B) {
                     });
 }
 
-typedef std::vector<SectionChunk *>::iterator ChunkIterator;
-typedef bool (*Comparator)(const SectionChunk *, const SectionChunk *);
-static uint64_t NextID = 0;
-
-static bool partition(ChunkIterator Begin, ChunkIterator End, Comparator Eq) {
+bool ICF::partition(ChunkIterator Begin, ChunkIterator End, Comparator Eq) {
   bool R = false;
   for (auto It = Begin;;) {
     SectionChunk *Head = *It;
@@ -144,8 +150,7 @@ static bool partition(ChunkIterator Begin, ChunkIterator End, Comparator Eq) {
   }
 }
 
-static bool forEachGroup(std::vector<SectionChunk *> &SChunks,
-                         Comparator Eq) {
+bool ICF::forEachGroup(std::vector<SectionChunk *> &SChunks, Comparator Eq) {
   bool R = false;
   for (auto It = SChunks.begin(), End = SChunks.end(); It != End;) {
     SectionChunk *Head = *It;
@@ -162,34 +167,41 @@ static bool forEachGroup(std::vector<SectionChunk *> &SChunks,
 // Merge identical COMDAT sections.
 // Two sections are considered the same if their section headers,
 // contents and relocations are all the same.
-void doICF(const std::vector<Chunk *> &Chunks) {
-  if (Config->Verbose)
-    llvm::outs() << "\nICF\n";
-
-  // Collect only mergeable sections.
+void ICF::run() {
+  // Collect only mergeable sections and group by hash value.
   std::vector<SectionChunk *> SChunks;
   for (Chunk *C : Chunks) {
     if (auto *SC = dyn_cast<SectionChunk>(C)) {
       bool Writable = SC->getPermissions() & llvm::COFF::IMAGE_SCN_MEM_WRITE;
       if (SC->isCOMDAT() && SC->isLive() && !Writable) {
         SChunks.push_back(SC);
-        SC->GroupID = SC->getHash() | (uint64_t(1) << 63);
+        SC->GroupID = getHash(SC) | (uint64_t(1) << 63);
       } else {
         SC->GroupID = NextID++;
       }
     }
   }
 
+  // From now on, sections in SChunks are ordered so that sections in
+  // the same group are consecutive in the vector.
   std::sort(SChunks.begin(), SChunks.end(),
             [](SectionChunk *A, SectionChunk *B) {
               return A->GroupID < B->GroupID;
             });
 
+  // Initialize chunk successors for equalsVariable.
+  for (SectionChunk *SC : SChunks) {
+    SC->Successors = SC->AssocChildren;
+    for (const coff_relocation &R : SC->Relocs) {
+      SymbolBody *B = SC->File->getSymbolBody(R.SymbolTableIndex)->repl();
+      if (auto D = dyn_cast<DefinedRegular>(B))
+        SC->Successors.push_back(D->getChunk());
+    }
+  }
+
   // Split groups until we get a convergence.
-  for (SectionChunk *SC : SChunks)
-    SC->initSuccessors();
-  forEachGroup(SChunks, SectionChunk::equalsVertex);
-  while (forEachGroup(SChunks, SectionChunk::equalsEdge));
+  forEachGroup(SChunks, equalsConstant);
+  while (forEachGroup(SChunks, equalsVariable));
 
   // Merge sections in the same group.
   for (auto It = SChunks.begin(), End = SChunks.end(); It != End;) {
