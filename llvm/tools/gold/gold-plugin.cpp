@@ -94,6 +94,11 @@ namespace options {
   static OutputType TheOutputType = OT_NORMAL;
   static unsigned OptLevel = 2;
   static unsigned Parallelism = 1;
+#ifdef NDEBUG
+  static bool DisableVerify = true;
+#else
+  static bool DisableVerify = false;
+#endif
   static std::string obj_path;
   static std::string extra_library_path;
   static std::string triple;
@@ -134,6 +139,8 @@ namespace options {
     } else if (opt.startswith("jobs=")) {
       if (StringRef(opt_ + 5).getAsInteger(10, Parallelism))
         message(LDPL_FATAL, "Invalid parallelism level: %s", opt_ + 5);
+    } else if (opt == "disable-verify") {
+      DisableVerify = true;
     } else {
       // Save this option to pass to the code generator.
       // ParseCommandLineOptions() expects argv[0] to be program name. Lazily
@@ -730,8 +737,10 @@ static void runLTOPasses(Module &M, TargetMachine &TM) {
   PassManagerBuilder PMB;
   PMB.LibraryInfo = new TargetLibraryInfoImpl(Triple(TM.getTargetTriple()));
   PMB.Inliner = createFunctionInliningPass();
+  // Unconditionally verify input since it is not verified before this
+  // point and has unknown origin.
   PMB.VerifyInput = true;
-  PMB.VerifyOutput = true;
+  PMB.VerifyOutput = !options::DisableVerify;
   PMB.LoopVectorize = true;
   PMB.SLPVectorize = true;
   PMB.OptLevel = options::OptLevel;
