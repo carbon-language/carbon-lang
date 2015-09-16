@@ -95,6 +95,7 @@ class BasicExprCommandsTestCase(TestBase):
 
     @python_api_test
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
+    @expectedFailureWindows # Test crashes
     def test_evaluate_expression_python(self):
         """Test SBFrame.EvaluateExpression() API for evaluating an expression."""
         self.buildDefault()

@@ -16,6 +16,7 @@ class SharedLibStrippedTestCase(TestBase):
         self.expr()
 
     @dwarf_test
+    @expectedFailureWindows # Test crashes
     def test_expr_with_dwarf(self):
         """Test that types work when defined in a shared library and forward-declared in the main executable"""
         self.buildDwarf()
@@ -28,6 +29,7 @@ class SharedLibStrippedTestCase(TestBase):
         self.frame_var()
 
     @dwarf_test
+    @expectedFailureWindows # Test crashes
     def test_frame_variable_with_dwarf(self):
         """Test that types work when defined in a shared library and forward-declared in the main executable"""
         self.buildDwarf()

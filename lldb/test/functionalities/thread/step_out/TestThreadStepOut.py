@@ -21,6 +21,7 @@ class ThreadStepOutTestCase(TestBase):
     @skipIfLinux                              # Test occasionally times out on the Linux build bot
     @expectedFailureLinux("llvm.org/pr23477") # Test occasionally times out on the Linux build bot
     @expectedFailureFreeBSD("llvm.org/pr18066") # inferior does not exit
+    @expectedFailureWindows # Test crashes
     @dwarf_test
     def test_step_single_thread_with_dwarf(self):
         """Test thread step out on one thread via command interpreter. """
@@ -36,6 +37,7 @@ class ThreadStepOutTestCase(TestBase):
     @skipIfLinux                              # Test occasionally times out on the Linux build bot
     @expectedFailureLinux("llvm.org/pr23477") # Test occasionally times out on the Linux build bot
     @expectedFailureFreeBSD("llvm.org/pr19347") # 2nd thread stops at breakpoint
+    @expectedFailureWindows # Test crashes
     @dwarf_test
     def test_step_all_threads_with_dwarf(self):
         """Test thread step out on all threads via command interpreter. """

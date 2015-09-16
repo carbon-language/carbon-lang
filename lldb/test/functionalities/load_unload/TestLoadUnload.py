@@ -9,6 +9,7 @@ import lldb
 from lldbtest import *
 import lldbutil
 
+@skipIfWindows # Windows doesn't have dlopen and friends, dynamic libraries work differently
 class LoadUnloadTestCase(TestBase):
 
     def getCategories (self):

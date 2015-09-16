@@ -76,6 +76,7 @@ class ThreadAPITestCase(TestBase):
 
     @expectedFailureFreeBSD # llvm.org/pr20476
     @python_api_test
+    @expectedFailureWindows # Test crashes
     @dwarf_test
     def test_step_out_of_malloc_into_function_b_with_dwarf(self):
         """Test Python SBThread.StepOut() API to step out of a malloc call where the call site is at function b()."""
