@@ -257,14 +257,17 @@ void Writer::markLive() {
       if (SC->isLive())
         Worklist.push_back(SC);
 
+  auto Enqueue = [&](SectionChunk *C) {
+    if (C->isLive())
+      return;
+    C->markLive();
+    Worklist.push_back(C);
+  };
+
   // Add GC root chunks.
-  for (Undefined *U : Config->GCRoot) {
-    auto *D = dyn_cast<DefinedRegular>(U->repl());
-    if (!D || D->isLive())
-      continue;
-    D->markLive();
-    Worklist.push_back(D->getChunk());
-  }
+  for (Undefined *U : Config->GCRoot)
+    if (auto *D = dyn_cast<DefinedRegular>(U->repl()))
+      Enqueue(D->getChunk());
 
   while (!Worklist.empty()) {
     SectionChunk *SC = Worklist.pop_back_val();
@@ -273,17 +276,11 @@ void Writer::markLive() {
     // Mark all symbols listed in the relocation table for this section.
     for (SymbolBody *S : SC->symbols())
       if (auto *D = dyn_cast<DefinedRegular>(S->repl()))
-        if (!D->isLive()) {
-          D->markLive();
-          Worklist.push_back(D->getChunk());
-        }
+        Enqueue(D->getChunk());
 
     // Mark associative sections if any.
-    for (SectionChunk *ChildSC : SC->children())
-      if (!ChildSC->isLive()) {
-        ChildSC->markLive();
-        Worklist.push_back(ChildSC);
-      }
+    for (SectionChunk *C : SC->children())
+      Enqueue(C);
   }
 }
 
@@ -434,7 +431,7 @@ size_t Writer::addEntryToStringTable(StringRef Str) {
 
 Optional<coff_symbol16> Writer::createSymbol(Defined *Def) {
   if (auto *D = dyn_cast<DefinedRegular>(Def))
-    if (!D->isLive())
+    if (!D->getChunk()->isLive())
       return None;
 
   coff_symbol16 Sym;

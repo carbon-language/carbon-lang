@@ -181,8 +181,6 @@ public:
 
   uint64_t getRVA() { return (*Data)->getRVA() + Sym->Value; }
   bool isCOMDAT() { return IsCOMDAT; }
-  bool isLive() const { return (*Data)->isLive(); }
-  void markLive() { (*Data)->markLive(); }
   SectionChunk *getChunk() { return *Data; }
   uint32_t getValue() { return Sym->Value; }
 
