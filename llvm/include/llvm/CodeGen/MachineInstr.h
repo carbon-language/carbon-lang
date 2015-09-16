@@ -64,8 +64,10 @@ public:
     NoFlags      = 0,
     FrameSetup   = 1 << 0,              // Instruction is used as a part of
                                         // function frame setup code.
-    BundledPred  = 1 << 1,              // Instruction has bundled predecessors.
-    BundledSucc  = 1 << 2               // Instruction has bundled successors.
+    FrameDestroy = 1 << 1,              // Instruction is used as a part of
+                                        // function frame destruction code.
+    BundledPred  = 1 << 2,              // Instruction has bundled predecessors.
+    BundledSucc  = 1 << 3               // Instruction has bundled successors.
   };
 private:
   const MCInstrDesc *MCID;              // Instruction descriptor.
