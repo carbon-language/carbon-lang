@@ -14,6 +14,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ConstString.h"
+#include <vector>
 
 namespace lldb_private {
 
