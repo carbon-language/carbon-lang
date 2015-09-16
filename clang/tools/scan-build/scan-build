@@ -1100,6 +1100,7 @@ sub RunBuildCommand {
 
 sub DisplayHelp {
 
+  my $ArgClangNotFoundErrMsg = shift;
 print <<ENDTEXT;
 USAGE: $Prog [options] <build command> [build options]
 
@@ -1348,6 +1349,12 @@ ENDTEXT
     }
     close PS;
   }
+  else {
+    print "  *** Could not query Clang for the list of available checkers.\n";
+    if (defined  $ArgClangNotFoundErrMsg) {
+      print "  *** Reason: $ArgClangNotFoundErrMsg\n";
+    }
+  }
 
 print <<ENDTEXT
 
@@ -1390,6 +1397,45 @@ sub ShellEscape {
   my $arg = shift || '';
   if ($arg =~ /["\s]/) { return "'" . $arg . "'"; }
   return $arg;
+}
+
+##----------------------------------------------------------------------------##
+# FindClang - searches for 'clang' executable.
+##----------------------------------------------------------------------------##
+
+sub FindClang {
+  if (!defined $Options{AnalyzerDiscoveryMethod}) {
+    $Clang = Cwd::realpath("$RealBin/bin/clang") if (-f "$RealBin/bin/clang");
+    if (!defined $Clang || ! -x $Clang) {
+      $Clang = Cwd::realpath("$RealBin/clang") if (-f "$RealBin/clang");
+    }
+    if (!defined $Clang || ! -x $Clang) {
+      return "error: Cannot find an executable 'clang' relative to" .
+             " scan-build. Consider using --use-analyzer to pick a version of" .
+             " 'clang' to use for static analysis.\n";
+    }
+  }
+  else {
+    if ($Options{AnalyzerDiscoveryMethod} =~ /^[Xx]code$/) {
+      my $xcrun = `which xcrun`;
+      chomp $xcrun;
+      if ($xcrun eq "") {
+        return "Cannot find 'xcrun' to find 'clang' for analysis.\n";
+      }
+      $Clang = `$xcrun -toolchain XcodeDefault -find clang`;
+      chomp $Clang;
+      if ($Clang eq "") {
+        return "No 'clang' executable found by 'xcrun'\n";
+      }
+    }
+    else {
+      $Clang = $Options{AnalyzerDiscoveryMethod};
+      if (!defined $Clang or not -x $Clang) {
+        return "Cannot find an executable clang at '$Options{AnalyzerDiscoveryMethod}'\n";
+      }
+    }
+  }
+  return undef;
 }
 
 ##----------------------------------------------------------------------------##
@@ -1642,44 +1688,14 @@ if (!@ARGV and !$RequestDisplayHelp) {
   $ForceDisplayHelp = 1;
 }
 
-# Find 'clang'
-if (!defined $Options{AnalyzerDiscoveryMethod}) {
-  $Clang = Cwd::realpath("$RealBin/bin/clang") if (-f "$RealBin/bin/clang");
-  if (!defined $Clang || ! -x $Clang) {
-    $Clang = Cwd::realpath("$RealBin/clang") if (-f "$RealBin/clang");
-  }
-  if (!defined $Clang || ! -x $Clang) {
-    if (!$RequestDisplayHelp && !$ForceDisplayHelp) {
-      DieDiag("error: Cannot find an executable 'clang' relative to scan-build." .
-                 "  Consider using --use-analyzer to pick a version of 'clang' to use for static analysis.\n");
-    }
-  }
-}
-else {
-  if ($Options{AnalyzerDiscoveryMethod} =~ /^[Xx]code$/) {
-    my $xcrun = `which xcrun`;
-    chomp $xcrun;
-    if ($xcrun eq "") {
-        DieDiag("Cannot find 'xcrun' to find 'clang' for analysis.\n");
-    }
-    $Clang = `$xcrun -toolchain XcodeDefault -find clang`;
-    chomp $Clang;
-    if ($Clang eq "") {
-      DieDiag("No 'clang' executable found by 'xcrun'\n");
-    }
-  }
-  else {
-    $Clang = $Options{AnalyzerDiscoveryMethod};
-    if (!defined $Clang or not -x $Clang) {
-      DieDiag("Cannot find an executable clang at '$Options{AnalyzerDiscoveryMethod}'\n");
-    }
-  }
-}
+my $ClangNotFoundErrMsg = FindClang();
 
 if ($ForceDisplayHelp || $RequestDisplayHelp) {
-  DisplayHelp();
+  DisplayHelp($ClangNotFoundErrMsg);
   exit $ForceDisplayHelp;
 }
+
+DieDiag($ClangNotFoundErrMsg) if (defined $ClangNotFoundErrMsg);
 
 $ClangCXX = $Clang;
 if ($Clang !~ /\+\+(\.exe)?$/) {
