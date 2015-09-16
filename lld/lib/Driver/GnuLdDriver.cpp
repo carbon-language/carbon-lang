@@ -540,8 +540,14 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
   if (triple.getArch() == llvm::Triple::mips ||
       triple.getArch() == llvm::Triple::mipsel ||
       triple.getArch() == llvm::Triple::mips64 ||
-      triple.getArch() == llvm::Triple::mips64el)
+      triple.getArch() == llvm::Triple::mips64el) {
     ctx->setMipsPcRelEhRel(parsedArgs.hasArg(OPT_pcrel_eh_reloc));
+    auto *hashArg = parsedArgs.getLastArg(OPT_hash_style);
+    if (hashArg && hashArg->getValue() != StringRef("sysv")) {
+      diag << "error: .gnu.hash is incompatible with the MIPS ABI\n";
+      return false;
+    }
+  }
   else {
     for (const auto *arg : parsedArgs.filtered(OPT_grp_mips_targetopts)) {
       diag << "warning: ignoring unsupported MIPS specific argument: "
