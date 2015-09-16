@@ -829,12 +829,6 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
               TFI.getFrameIndexReference(Fn, H.CatchObj.FrameIndex, UnusedReg);
       }
     }
-  } else if (MMI.hasWinEHFuncInfo(F)) {
-    WinEHFuncInfo &FuncInfo = MMI.getWinEHFuncInfo(Fn.getFunction());
-    auto I = FuncInfo.CatchHandlerParentFrameObjIdx.find(F);
-    if (I != FuncInfo.CatchHandlerParentFrameObjIdx.end())
-      FuncInfo.CatchHandlerParentFrameObjOffset[F] =
-          TFI.getFrameIndexReferenceFromSP(Fn, I->second, FrameReg);
   }
 
   // Store SPAdj at exit of a basic block.

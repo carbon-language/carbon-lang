@@ -98,24 +98,6 @@ void WinException::beginFunction(const MachineFunction *MF) {
     return;
   }
 
-  // If this was an outlined handler, we need to define the label corresponding
-  // to the offset of the parent frame relative to the stack pointer after the
-  // prologue.
-  if (F != ParentF) {
-    WinEHFuncInfo &FuncInfo = MMI->getWinEHFuncInfo(ParentF);
-    auto I = FuncInfo.CatchHandlerParentFrameObjOffset.find(F);
-    if (I != FuncInfo.CatchHandlerParentFrameObjOffset.end()) {
-      MCSymbol *HandlerTypeParentFrameOffset =
-          Asm->OutContext.getOrCreateParentFrameOffsetSymbol(
-              GlobalValue::getRealLinkageName(F->getName()));
-
-      // Emit a symbol assignment.
-      Asm->OutStreamer->EmitAssignment(
-          HandlerTypeParentFrameOffset,
-          MCConstantExpr::create(I->second, Asm->OutContext));
-    }
-  }
-
   if (shouldEmitMoves || shouldEmitPersonality)
     Asm->OutStreamer->EmitWinCFIStartProc(Asm->CurrentFnSym);
 
@@ -325,35 +307,21 @@ static MCSymbol *getMCSymbolForMBBOrGV(AsmPrinter *Asm, ValueOrMBB Handler) {
 
 void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   const Function *F = MF->getFunction();
-  const Function *ParentF = MMI->getWinEHParent(F);
   auto &OS = *Asm->OutStreamer;
-  WinEHFuncInfo &FuncInfo = MMI->getWinEHFuncInfo(ParentF);
+  WinEHFuncInfo &FuncInfo = MMI->getWinEHFuncInfo(F);
 
-  StringRef ParentLinkageName =
-      GlobalValue::getRealLinkageName(ParentF->getName());
+  StringRef FuncLinkageName = GlobalValue::getRealLinkageName(F->getName());
 
   MCSymbol *FuncInfoXData = nullptr;
   if (shouldEmitPersonality) {
-    FuncInfoXData = Asm->OutContext.getOrCreateSymbol(
-        Twine("$cppxdata$", ParentLinkageName));
+    FuncInfoXData =
+        Asm->OutContext.getOrCreateSymbol(Twine("$cppxdata$", FuncLinkageName));
     OS.EmitValue(create32bitRef(FuncInfoXData), 4);
 
-    extendIP2StateTable(MF, ParentF, FuncInfo);
-
-    if (!MMI->hasEHFunclets()) {
-      // Defer emission until we've visited the parent function and all the
-      // catch handlers.  Cleanups don't contribute to the ip2state table, so
-      // don't count them.
-      if (ParentF != F && !FuncInfo.CatchHandlerMaxState.count(F))
-        return;
-      ++FuncInfo.NumIPToStateFuncsVisited;
-      if (FuncInfo.NumIPToStateFuncsVisited !=
-          FuncInfo.CatchHandlerMaxState.size())
-        return;
-    }
+    extendIP2StateTable(MF, FuncInfo);
   } else {
-    FuncInfoXData = Asm->OutContext.getOrCreateLSDASymbol(ParentLinkageName);
-    emitEHRegistrationOffsetLabel(FuncInfo, ParentLinkageName);
+    FuncInfoXData = Asm->OutContext.getOrCreateLSDASymbol(FuncLinkageName);
+    emitEHRegistrationOffsetLabel(FuncInfo, FuncLinkageName);
   }
 
   MCSymbol *UnwindMapXData = nullptr;
@@ -361,13 +329,13 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   MCSymbol *IPToStateXData = nullptr;
   if (!FuncInfo.UnwindMap.empty())
     UnwindMapXData = Asm->OutContext.getOrCreateSymbol(
-        Twine("$stateUnwindMap$", ParentLinkageName));
+        Twine("$stateUnwindMap$", FuncLinkageName));
   if (!FuncInfo.TryBlockMap.empty())
-    TryBlockMapXData = Asm->OutContext.getOrCreateSymbol(
-        Twine("$tryMap$", ParentLinkageName));
+    TryBlockMapXData =
+        Asm->OutContext.getOrCreateSymbol(Twine("$tryMap$", FuncLinkageName));
   if (!FuncInfo.IPToStateList.empty())
-    IPToStateXData = Asm->OutContext.getOrCreateSymbol(
-        Twine("$ip2state$", ParentLinkageName));
+    IPToStateXData =
+        Asm->OutContext.getOrCreateSymbol(Twine("$ip2state$", FuncLinkageName));
 
   // FuncInfo {
   //   uint32_t           MagicNumber
@@ -423,29 +391,26 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
     SmallVector<MCSymbol *, 1> HandlerMaps;
     for (size_t I = 0, E = FuncInfo.TryBlockMap.size(); I != E; ++I) {
       WinEHTryBlockMapEntry &TBME = FuncInfo.TryBlockMap[I];
-      MCSymbol *HandlerMapXData = nullptr;
 
+      MCSymbol *HandlerMapXData = nullptr;
       if (!TBME.HandlerArray.empty())
         HandlerMapXData =
             Asm->OutContext.getOrCreateSymbol(Twine("$handlerMap$")
                                                   .concat(Twine(I))
                                                   .concat("$")
-                                                  .concat(ParentLinkageName));
-
+                                                  .concat(FuncLinkageName));
       HandlerMaps.push_back(HandlerMapXData);
 
-      int CatchHigh = TBME.CatchHigh;
-      if (CatchHigh == -1) {
-        for (WinEHHandlerType &HT : TBME.HandlerArray)
-          CatchHigh =
-              std::max(CatchHigh, FuncInfo.CatchHandlerMaxState[cast<Function>(
-                                      HT.Handler.get<const Value *>())]);
-      }
+      // TBMEs should form intervals.
+      assert(0 <= TBME.TryLow && "bad trymap interval");
+      assert(TBME.TryLow <= TBME.TryHigh && "bad trymap interval");
+      assert(TBME.TryHigh < TBME.CatchHigh && "bad trymap interval");
+      assert(TBME.CatchHigh < int(FuncInfo.UnwindMap.size()) &&
+             "bad trymap interval");
 
-      assert(TBME.TryLow <= TBME.TryHigh);
       OS.EmitIntValue(TBME.TryLow, 4);                    // TryLow
       OS.EmitIntValue(TBME.TryHigh, 4);                   // TryHigh
-      OS.EmitIntValue(CatchHigh, 4);                      // CatchHigh
+      OS.EmitIntValue(TBME.CatchHigh, 4);                 // CatchHigh
       OS.EmitIntValue(TBME.HandlerArray.size(), 4);       // NumCatches
       OS.EmitValue(create32bitRef(HandlerMapXData), 4);   // HandlerArray
     }
@@ -471,8 +436,7 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
         if (HT.CatchObjRecoverIdx >= 0) {
           MCSymbol *FrameAllocOffset =
               Asm->OutContext.getOrCreateFrameAllocSymbol(
-                  GlobalValue::getRealLinkageName(ParentF->getName()),
-                  HT.CatchObjRecoverIdx);
+                  FuncLinkageName, HT.CatchObjRecoverIdx);
           FrameAllocOffsetRef = MCSymbolRefExpr::create(
               FrameAllocOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
         } else if (HT.CatchObj.FrameOffset != INT_MAX) {
@@ -497,21 +461,11 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
         OS.EmitValue(create32bitRef(HandlerSym), 4);        // Handler
 
         if (shouldEmitPersonality) {
-          if (FuncInfo.CatchHandlerParentFrameObjOffset.empty()) {
-            // With the new IR, this is always 16 + 8 + getMaxCallFrameSize().
-            // Keep this in sync with X86FrameLowering::emitPrologue.
-            int ParentFrameOffset =
-                16 + 8 + MF->getFrameInfo()->getMaxCallFrameSize();
-            OS.EmitIntValue(ParentFrameOffset, 4); // ParentFrameOffset
-          } else {
-            MCSymbol *ParentFrameOffset =
-                Asm->OutContext.getOrCreateParentFrameOffsetSymbol(
-                    GlobalValue::getRealLinkageName(
-                        HT.Handler.get<const Value *>()->getName()));
-            const MCSymbolRefExpr *ParentFrameOffsetRef =
-                MCSymbolRefExpr::create(ParentFrameOffset, Asm->OutContext);
-            OS.EmitValue(ParentFrameOffsetRef, 4); // ParentFrameOffset
-          }
+          // With the new IR, this is always 16 + 8 + getMaxCallFrameSize().
+          // Keep this in sync with X86FrameLowering::emitPrologue.
+          int ParentFrameOffset =
+              16 + 8 + MF->getFrameInfo()->getMaxCallFrameSize();
+          OS.EmitIntValue(ParentFrameOffset, 4); // ParentFrameOffset
         }
       }
     }
@@ -531,10 +485,7 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
 }
 
 void WinException::extendIP2StateTable(const MachineFunction *MF,
-                                       const Function *ParentF,
                                        WinEHFuncInfo &FuncInfo) {
-  const Function *F = MF->getFunction();
-
   // The Itanium LSDA table sorts similar landing pads together to simplify the
   // actions table, but we don't need that.
   SmallVector<const LandingPadInfo *, 64> LandingPads;
@@ -560,14 +511,8 @@ void WinException::extendIP2StateTable(const MachineFunction *MF,
 
   // Include ip2state entries for the beginning of the main function and
   // for catch handler functions.
-  if (F == ParentF) {
-    FuncInfo.IPToStateList.push_back(std::make_pair(LastLabel, -1));
-    LastEHState = -1;
-  } else if (FuncInfo.HandlerBaseState.count(F)) {
-    FuncInfo.IPToStateList.push_back(
-        std::make_pair(LastLabel, FuncInfo.HandlerBaseState[F]));
-    LastEHState = FuncInfo.HandlerBaseState[F];
-  }
+  FuncInfo.IPToStateList.push_back(std::make_pair(LastLabel, -1));
+  LastEHState = -1;
   for (const auto &MBB : *MF) {
     for (const auto &MI : MBB) {
       if (!MI.isEHLabel()) {

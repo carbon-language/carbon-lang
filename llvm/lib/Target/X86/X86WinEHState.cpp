@@ -437,23 +437,6 @@ void WinEHStatePass::addCXXStateStores(Function &F, WinEHFuncInfo &FuncInfo) {
   // Set up RegNodeEscapeIndex
   int RegNodeEscapeIndex = escapeRegNode(F);
   FuncInfo.EHRegNodeEscapeIndex = RegNodeEscapeIndex;
-
-  // Only insert stores in catch handlers.
-  Constant *FI8 =
-      ConstantExpr::getBitCast(&F, Type::getInt8PtrTy(TheModule->getContext()));
-  for (auto P : FuncInfo.HandlerBaseState) {
-    Function *Handler = const_cast<Function *>(P.first);
-    int BaseState = P.second;
-    IRBuilder<> Builder(&Handler->getEntryBlock(),
-                        Handler->getEntryBlock().begin());
-    // FIXME: Find and reuse such a call if present.
-    Value *ParentFP = Builder.CreateCall(FrameAddress, {Builder.getInt32(1)});
-    Value *RecoveredRegNode = Builder.CreateCall(
-        FrameRecover, {FI8, ParentFP, Builder.getInt32(RegNodeEscapeIndex)});
-    RecoveredRegNode =
-        Builder.CreateBitCast(RecoveredRegNode, RegNodeTy->getPointerTo(0));
-    addStateStoresToFunclet(RecoveredRegNode, FuncInfo, *Handler, BaseState);
-  }
 }
 
 /// Escape RegNode so that we can access it from child handlers. Find the call

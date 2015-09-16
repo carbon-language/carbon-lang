@@ -159,22 +159,13 @@ struct WinEHTryBlockMapEntry {
 };
 
 struct WinEHFuncInfo {
-  DenseMap<const Function *, const LandingPadInst *> RootLPad;
-  DenseMap<const Function *, const InvokeInst *> LastInvoke;
-  DenseMap<const Function *, int> HandlerEnclosedState;
-  DenseMap<const Function *, bool> LastInvokeVisited;
   DenseMap<const Instruction *, int> EHPadStateMap;
-  DenseMap<const Function *, int> CatchHandlerParentFrameObjIdx;
-  DenseMap<const Function *, int> CatchHandlerParentFrameObjOffset;
-  DenseMap<const Function *, int> CatchHandlerMaxState;
-  DenseMap<const Function *, int> HandlerBaseState;
   SmallVector<WinEHUnwindMapEntry, 4> UnwindMap;
   SmallVector<WinEHTryBlockMapEntry, 4> TryBlockMap;
   SmallVector<SEHUnwindMapEntry, 4> SEHUnwindMap;
   SmallVector<std::pair<MCSymbol *, int>, 4> IPToStateList;
   int UnwindHelpFrameIdx = INT_MAX;
   int UnwindHelpFrameOffset = -1;
-  unsigned NumIPToStateFuncsVisited = 0;
 
   int getLastStateNumber() const { return UnwindMap.size() - 1; }
 

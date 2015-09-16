@@ -33,11 +33,11 @@ $"\01??_R0H@8" = comdat any
 define void @f() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   invoke void @may_throw(i32 1)
-          to label %invoke.cont unwind label %lpad
+          to label %invoke.cont unwind label %lpad.1
 
 invoke.cont:                                      ; preds = %entry
   invoke void @may_throw(i32 2)
-          to label %try.cont.9 unwind label %lpad.1
+          to label %try.cont.9 unwind label %lpad
 
 try.cont.9:                                       ; preds = %invoke.cont.3, %invoke.cont, %catch.7
   ; FIXME: Something about our CFG breaks TailDuplication. This empy asm blocks
@@ -46,47 +46,33 @@ try.cont.9:                                       ; preds = %invoke.cont.3, %inv
   ret void
 
 lpad:                                             ; preds = %catch, %entry
-  %0 = landingpad { i8*, i32 }
-          catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
-  %1 = extractvalue { i8*, i32 } %0, 0
-  %2 = extractvalue { i8*, i32 } %0, 1
-  br label %catch.dispatch.4
-
-lpad.1:                                           ; preds = %invoke.cont
-  %3 = landingpad { i8*, i32 }
-          catch i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*)
-  %4 = extractvalue { i8*, i32 } %3, 0
-  %5 = extractvalue { i8*, i32 } %3, 1
-  %6 = tail call i32 @llvm.eh.typeid.for(i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*)) #3
-  %matches = icmp eq i32 %5, %6
-  br i1 %matches, label %catch, label %catch.dispatch.4
-
-catch.dispatch.4:                                 ; preds = %lpad.1, %lpad
-  %exn.slot.0 = phi i8* [ %4, %lpad.1 ], [ %1, %lpad ]
-  %ehselector.slot.0 = phi i32 [ %5, %lpad.1 ], [ %2, %lpad ]
-  %.pre = tail call i32 @llvm.eh.typeid.for(i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*)) #3
-  %matches6 = icmp eq i32 %ehselector.slot.0, %.pre
-  br i1 %matches6, label %catch.7, label %eh.resume
-
-catch.7:                                          ; preds = %catch.dispatch.4
-  tail call void @llvm.eh.begincatch(i8* %exn.slot.0, i8* null) #3
-  tail call void @may_throw(i32 4)
-  tail call void @llvm.eh.endcatch() #3
-  br label %try.cont.9
+  %p1 = catchpad [%rtti.TypeDescriptor2* @"\01??_R0H@8", i32 0, i8* null]
+      to label %catch unwind label %end.inner.catch
 
 catch:                                            ; preds = %lpad.1
-  tail call void @llvm.eh.begincatch(i8* %4, i8* null) #3
   invoke void @may_throw(i32 3)
-          to label %invoke.cont.3 unwind label %lpad
+          to label %invoke.cont.3 unwind label %end.inner.catch
 
 invoke.cont.3:                                    ; preds = %catch
-  tail call void @llvm.eh.endcatch() #3
-  br label %try.cont.9
+  catchret %p1 to label %try.cont.9
+
+
+end.inner.catch:
+  catchendpad unwind label %lpad.1
+
+lpad.1:                                           ; preds = %invoke.cont
+  %p2 = catchpad [%rtti.TypeDescriptor2* @"\01??_R0H@8", i32 0, i8* null]
+      to label %catch.7 unwind label %eh.resume
+
+catch.7:
+  invoke void @may_throw(i32 4)
+          to label %invoke.cont.10 unwind label %eh.resume
+
+invoke.cont.10:
+  catchret %p2 to label %try.cont.9
 
 eh.resume:                                        ; preds = %catch.dispatch.4
-  %lpad.val = insertvalue { i8*, i32 } undef, i8* %exn.slot.0, 0
-  %lpad.val.12 = insertvalue { i8*, i32 } %lpad.val, i32 %ehselector.slot.0, 1
-  resume { i8*, i32 } %lpad.val.12
+  catchendpad unwind to caller
 }
 
 ; CHECK-LABEL: _f:
@@ -100,15 +86,13 @@ eh.resume:                                        ; preds = %catch.dispatch.4
 ; CHECK: movl $1, [[state]](%ebp)
 ; CHECK: movl $2, (%esp)
 ; CHECK: calll _may_throw
-
-; CHECK-LABEL: _f.catch:
-; CHECK: movl $4, Lf$frame_escape_{{[0-9]+.*}}
-; CHECK: movl $4, (%esp)
-; CHECK: calll _may_throw
-
-; CHECK-LABEL: _f.catch.1:
-; CHECK: movl $3, Lf$frame_escape_{{[0-9]+.*}}
+;
+; CHECK: movl $2, [[state]](%ebp)
 ; CHECK: movl $3, (%esp)
+; CHECK: calll _may_throw
+;
+; CHECK: movl $3, [[state]](%ebp)
+; CHECK: movl $4, (%esp)
 ; CHECK: calll _may_throw
 
 ; CHECK: .safeseh ___ehhandler$f

@@ -105,13 +105,16 @@ define void @use_CxxFrameHandler3() personality i32 (...)* @__CxxFrameHandler3 {
       to label %cont unwind label %catchall
 cont:
   ret void
+
 catchall:
-  %ehvals = landingpad { i8*, i32 }
-      catch i8* null
-  %ehptr = extractvalue { i8*, i32 } %ehvals, 0
-  call void @llvm.eh.begincatch(i8* %ehptr, i8* null)
-  call void @llvm.eh.endcatch()
-  br label %cont
+  %p = catchpad [i8* null, i32 64, i8* null]
+      to label %catch unwind label %endcatch
+
+catch:
+  catchret %p to label %cont
+
+endcatch:
+  catchendpad unwind to caller
 }
 
 ; CHECK-LABEL: _use_CxxFrameHandler3:

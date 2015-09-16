@@ -47,8 +47,7 @@ class LLVM_LIBRARY_VISIBILITY WinException : public EHStreamer {
   /// tables.
   void emitExceptHandlerTable(const MachineFunction *MF);
 
-  void extendIP2StateTable(const MachineFunction *MF, const Function *ParentF,
-                           WinEHFuncInfo &FuncInfo);
+  void extendIP2StateTable(const MachineFunction *MF, WinEHFuncInfo &FuncInfo);
 
   /// Emits the label used with llvm.x86.seh.recoverfp, which is used by
   /// outlined funclets.
