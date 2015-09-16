@@ -1023,6 +1023,20 @@ function(add_lit_testsuites project directory)
   endif()
 endfunction()
 
+function(llvm_install_symlink name dest)
+  install(SCRIPT ${CMAKE_SOURCE_DIR}/cmake/modules/install_symlink.cmake
+          CODE "install_symlink(${name} ${dest})"
+          COMPONENT ${name})
+
+  if (NOT CMAKE_CONFIGURATION_TYPES)
+    add_custom_target(install-${name}
+                      DEPENDS ${name} ${dest} install-${dest}
+                      COMMAND "${CMAKE_COMMAND}"
+                              -DCMAKE_INSTALL_COMPONENT=${name}
+                              -P "${CMAKE_BINARY_DIR}/cmake_install.cmake")
+  endif()
+endfunction()
+
 function(add_llvm_tool_symlink name dest)
   if(UNIX)
     set(LLVM_LINK_OR_COPY create_symlink)
@@ -1040,6 +1054,8 @@ function(add_llvm_tool_symlink name dest)
 
   add_custom_target(${name} ALL DEPENDS ${output_path})
   set_target_properties(${name} PROPERTIES FOLDER Tools)
+  set_property(DIRECTORY APPEND PROPERTY
+    ADDITIONAL_MAKE_CLEAN_FILES ${dest_binary})
 
   # Make sure the parent tool is a toolchain tool, otherwise exclude this tool
   list(FIND LLVM_TOOLCHAIN_TOOLS ${dest} LLVM_IS_${dest}_TOOLCHAIN_TOOL)
@@ -1053,17 +1069,7 @@ function(add_llvm_tool_symlink name dest)
   # tool and its parent tool are in LLVM_TOOLCHAIN_TOOLS
   if (LLVM_IS_${name}_TOOLCHAIN_TOOL GREATER -1 OR NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     if( LLVM_BUILD_TOOLS )
-      install(SCRIPT ${CMAKE_SOURCE_DIR}/cmake/modules/install_symlink.cmake
-              CODE "install_symlink(${name} ${dest})"
-              COMPONENT ${name})
-
-      if (NOT CMAKE_CONFIGURATION_TYPES)
-        add_custom_target(install-${name}
-                          DEPENDS ${name}
-                          COMMAND "${CMAKE_COMMAND}"
-                                  -DCMAKE_INSTALL_COMPONENT=${name}
-                                  -P "${CMAKE_BINARY_DIR}/cmake_install.cmake")
-      endif()
+      llvm_install_symlink(${name} ${dest})
     endif()
   endif()
 endfunction()
