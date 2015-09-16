@@ -133,6 +133,14 @@ private:
   bool prepareExplicitEH(Function &F,
                          SmallVectorImpl<BasicBlock *> &EntryBlocks);
   void colorFunclets(Function &F, SmallVectorImpl<BasicBlock *> &EntryBlocks);
+  void demotePHIsOnFunclets(Function &F);
+  void demoteUsesBetweenFunclets(Function &F);
+  void demoteArgumentUses(Function &F);
+  void cloneCommonBlocks(Function &F,
+                         SmallVectorImpl<BasicBlock *> &EntryBlocks);
+  void removeImplausibleTerminators(Function &F);
+  void cleanupPreparedFunclets(Function &F);
+  void verifyPreparedFunclets(Function &F);
 
   Triple TheTriple;
 
@@ -3288,16 +3296,7 @@ void WinEHPrepare::colorFunclets(Function &F,
   }
 }
 
-bool WinEHPrepare::prepareExplicitEH(
-    Function &F, SmallVectorImpl<BasicBlock *> &EntryBlocks) {
-  // Remove unreachable blocks.  It is not valuable to assign them a color and
-  // their existence can trick us into thinking values are alive when they are
-  // not.
-  removeUnreachableBlocks(F);
-
-  // Determine which blocks are reachable from which funclet entries.
-  colorFunclets(F, EntryBlocks);
-
+void WinEHPrepare::demotePHIsOnFunclets(Function &F) {
   // Strip PHI nodes off of EH pads.
   SmallVector<PHINode *, 16> PHINodes;
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
@@ -3324,7 +3323,9 @@ bool WinEHPrepare::prepareExplicitEH(
     PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
     PN->eraseFromParent();
   }
+}
 
+void WinEHPrepare::demoteUsesBetweenFunclets(Function &F) {
   // Turn all inter-funclet uses of a Value into loads and stores.
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
     BasicBlock *BB = FI++;
@@ -3339,11 +3340,17 @@ bool WinEHPrepare::prepareExplicitEH(
       demoteNonlocalUses(I, ColorsForBB, F);
     }
   }
+}
+
+void WinEHPrepare::demoteArgumentUses(Function &F) {
   // Also demote function parameters used in funclets.
   std::set<BasicBlock *> &ColorsForEntry = BlockColors[&F.getEntryBlock()];
   for (Argument &Arg : F.args())
     demoteNonlocalUses(&Arg, ColorsForEntry, F);
+}
 
+void WinEHPrepare::cloneCommonBlocks(
+    Function &F, SmallVectorImpl<BasicBlock *> &EntryBlocks) {
   // We need to clone all blocks which belong to multiple funclets.  Values are
   // remapped throughout the funclet to propogate both the new instructions
   // *and* the new basic blocks themselves.
@@ -3393,7 +3400,9 @@ bool WinEHPrepare::prepareExplicitEH(
       for (Instruction &I : *BB)
         RemapInstruction(&I, VMap, RF_IgnoreMissingEntries);
   }
+}
 
+void WinEHPrepare::removeImplausibleTerminators(Function &F) {
   // Remove implausible terminators and replace them with UnreachableInst.
   for (auto &Funclet : FuncletBlocks) {
     BasicBlock *FuncletPadBB = Funclet.first;
@@ -3425,7 +3434,9 @@ bool WinEHPrepare::prepareExplicitEH(
       }
     }
   }
+}
 
+void WinEHPrepare::cleanupPreparedFunclets(Function &F) {
   // Clean-up some of the mess we made by removing useles PHI nodes, trivial
   // branches, etc.
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
@@ -3438,7 +3449,9 @@ bool WinEHPrepare::prepareExplicitEH(
   // We might have some unreachable blocks after cleaning up some impossible
   // control flow.
   removeUnreachableBlocks(F);
+}
 
+void WinEHPrepare::verifyPreparedFunclets(Function &F) {
   // Recolor the CFG to verify that all is well.
   for (BasicBlock &BB : F) {
     size_t NumColors = BlockColors[&BB].size();
@@ -3452,6 +3465,31 @@ bool WinEHPrepare::prepareExplicitEH(
     if (EHPadHasPHI)
       report_fatal_error("EH Pad still has a PHI!");
   }
+}
+
+bool WinEHPrepare::prepareExplicitEH(
+    Function &F, SmallVectorImpl<BasicBlock *> &EntryBlocks) {
+  // Remove unreachable blocks.  It is not valuable to assign them a color and
+  // their existence can trick us into thinking values are alive when they are
+  // not.
+  removeUnreachableBlocks(F);
+
+  // Determine which blocks are reachable from which funclet entries.
+  colorFunclets(F, EntryBlocks);
+
+  demotePHIsOnFunclets(F);
+
+  demoteUsesBetweenFunclets(F);
+
+  demoteArgumentUses(F);
+
+  cloneCommonBlocks(F, EntryBlocks);
+
+  removeImplausibleTerminators(F);
+
+  cleanupPreparedFunclets(F);
+
+  verifyPreparedFunclets(F);
 
   BlockColors.clear();
   FuncletBlocks.clear();
