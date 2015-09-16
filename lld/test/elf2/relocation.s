@@ -35,10 +35,19 @@ R_X86_64_32:
 // CHECK-NEXT: R_X86_64_32:
 // CHECK-NEXT:  12000: {{.*}} movl $73728, %edx
 
+.section .R_X86_64_32S,"ax",@progbits
+.global R_X86_64_32S
+R_X86_64_32S:
+  movq lulz - 0x100000, %rdx
+
+// CHECK: Disassembly of section .R_X86_64_32S:
+// CHECK-NEXT: R_X86_64_32S:
+// CHECK-NEXT:  {{.*}}: {{.*}} movq -978935, %rdx
+
 .section .R_X86_64_64,"a",@progbits
 .global R_X86_64_64
 R_X86_64_64:
  .quad R_X86_64_64
 
 // CHECK:      Contents of section .R_X86_64_64:
-// CHECK-NEXT:   13000 00300100 00000000
+// CHECK-NEXT:   14000 00400100 00000000

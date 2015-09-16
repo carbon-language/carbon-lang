@@ -501,12 +501,18 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
           support::endian::write64le(Location, SymVA + RI.r_addend);
           break;
         case llvm::ELF::R_X86_64_32: {
+        case llvm::ELF::R_X86_64_32S:
           APInt VA(64, SymVA);
           APInt Addend(64, RI.r_addend, true);
           APInt Result64 = VA + Addend;
           APInt Result = Result64.trunc(32);
-          if (Result.zext(64) != Result64)
-            error("Relocation out of range");
+          if (Type == llvm::ELF::R_X86_64_32) {
+            if (Result.zext(64) != Result64)
+              error("Relocation out of range");
+          } else
+            if (Result.sext(64) != Result64)
+              error("R_X86_64_32S out of range");
+
           support::endian::write32le(Location, Result.getZExtValue());
           break;
         }
