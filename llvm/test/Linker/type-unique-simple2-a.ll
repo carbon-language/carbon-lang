@@ -1,4 +1,4 @@
-; REQUIRES: object-emission, native
+; REQUIRES: default_triple, object-emission
 ;
 ; RUN: llvm-link %s %p/type-unique-simple2-b.ll -S -o - | %llc_dwarf -filetype=obj -O0 | llvm-dwarfdump -debug-dump=info - | FileCheck %s
 ;

@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
-; REQUIRE: native
 
 ; Check for the presence of attribute optnone in the disassembly.
 

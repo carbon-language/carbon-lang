@@ -15,6 +15,8 @@
 ; RUN: llvm-lto -exported-symbol=main -exported-symbol=_main -o %T/bcsection.macho.o %T/bcsection.macho.bco
 ; RUN: llvm-nm %T/bcsection.macho.o | FileCheck %s
 
+; REQUIRES: default_triple
+
 ; CHECK: main
 define i32 @main() {
   ret i32 0

@@ -1,6 +1,7 @@
 ; RUN: llc < %s -march=ppc64
 ; RUN: llc < %s -march=ppc32
 ; RUN: llc < %s 
+; REQUIRES: default_triple
 
 define void @bitap() {
 entry:

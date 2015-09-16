@@ -1,4 +1,5 @@
 ; RUN: llc < %s
+; REQUIRES: default_triple
 
 
 declare i8* @llvm_gc_allocate(i32)

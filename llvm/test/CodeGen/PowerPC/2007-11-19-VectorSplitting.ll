@@ -2,6 +2,7 @@
 ; RUN: llc < %s -march=ppc32 -mcpu=g3
 ; RUN: llc < %s -march=ppc32 -mcpu=g5
 ; PR1811
+; REQUIRES: default_triple
 
 define void @execute_shader(<4 x float>* %OUT, <4 x float>* %IN, <4 x float>*
 %CONST) {

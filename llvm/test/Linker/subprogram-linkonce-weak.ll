@@ -1,8 +1,8 @@
-; REQUIRES: native
 ; RUN: llvm-link %s %S/Inputs/subprogram-linkonce-weak.ll -S -o %t1
 ; RUN: FileCheck %s -check-prefix=LW -check-prefix=CHECK <%t1
 ; RUN: llvm-link %S/Inputs/subprogram-linkonce-weak.ll %s -S -o %t2
 ; RUN: FileCheck %s -check-prefix=WL -check-prefix=CHECK <%t2
+; REQUIRES: default_triple
 
 ; This testcase tests the following flow:
 ;  - File A defines a linkonce version of @foo which has inlined into @bar.

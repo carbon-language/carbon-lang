@@ -1,4 +1,4 @@
-; REQUIRES: object-emission, native
+; REQUIRES: default_triple, object-emission
 
 ; RUN: llvm-link %s %p/type-unique-simple-b.ll -S -o %t
 ; RUN: cat %t | FileCheck %s -check-prefix=LINK

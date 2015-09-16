@@ -4,6 +4,7 @@
 
 ; .debug_frame is not emitted for targeting Windows x64.
 ; REQUIRES: debug_frame
+; REQUIRES: default_triple
 
 ; Function Attrs: nounwind
 define i32 @foo() #0 {

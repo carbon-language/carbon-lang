@@ -1,6 +1,7 @@
 ; RUN: llc < %s -march=ppc64
 ; RUN: llc < %s -march=ppc32
 ; RUN: llc < %s
+; REQUIRES: default_triple
 
 @qsz.b = external global i1             ; <i1*> [#uses=1]
 

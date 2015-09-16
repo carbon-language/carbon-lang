@@ -420,8 +420,10 @@
 /* Installation directory for data files */
 #cmakedefine LLVM_DATADIR "${LLVM_DATADIR}"
 
-/* Target triple LLVM will generate code for by default */
-#cmakedefine LLVM_DEFAULT_TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}"
+/* Target triple LLVM will generate code for by default
+ * Doesn't use `cmakedefine` because it is allowed to be empty.
+ */
+#define LLVM_DEFAULT_TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}"
 
 /* Installation directory for documentation */
 #cmakedefine LLVM_DOCSDIR "${LLVM_DOCSDIR}"

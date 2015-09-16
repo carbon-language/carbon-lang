@@ -1,4 +1,5 @@
 ; RUN: llc < %s
+; REQUIRES: default_triple
 
 ; Legalization test that requires scalarizing a vector.
 

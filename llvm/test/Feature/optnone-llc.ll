@@ -4,7 +4,7 @@
 ; RUN: llc -O3 -debug %s -o /dev/null 2>&1 | FileCheck %s --check-prefix=LLC-Ox
 ; RUN: llc -misched-postra -debug %s -o /dev/null 2>&1 | FileCheck %s --check-prefix=LLC-MORE
 
-; REQUIRES: asserts, native
+; REQUIRES: asserts, default_triple
 
 ; This test verifies that we don't run Machine Function optimizations
 ; on optnone functions.
