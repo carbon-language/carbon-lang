@@ -63,12 +63,6 @@ class BitstreamWriter {
   };
   std::vector<BlockInfo> BlockInfoRecords;
 
-  // BackpatchWord - Backpatch a 32-bit word in the output with the specified
-  // value.
-  void BackpatchWord(unsigned ByteNo, unsigned NewWord) {
-    support::endian::write32le(&Out[ByteNo], NewWord);
-  }
-
   void WriteByte(unsigned char Value) {
     Out.push_back(Value);
   }
@@ -104,6 +98,23 @@ public:
   //===--------------------------------------------------------------------===//
   // Basic Primitives for emitting bits to the stream.
   //===--------------------------------------------------------------------===//
+
+  /// Backpatch a 32-bit word in the output at the given bit offset
+  /// with the specified value.
+  void BackpatchWord(uint64_t BitNo, unsigned NewWord) {
+    unsigned ByteNo = BitNo / 8;
+    if ((BitNo & 7) == 0) {
+      // Already 8-bit aligned
+      support::endian::write32le(&Out[ByteNo], NewWord);
+    } else {
+      uint64_t CurDWord = support::endian::read64le(&Out[ByteNo]);
+      unsigned StartBit = BitNo & 7;
+      // Currently expect to backpatch 0-value placeholders.
+      assert(((CurDWord >> StartBit) & 0xffffffff) == 0);
+      CurDWord |= NewWord << StartBit;
+      support::endian::write64le(&Out[ByteNo], CurDWord);
+    }
+  }
 
   void Emit(uint32_t Val, unsigned NumBits) {
     assert(NumBits && NumBits <= 32 && "Invalid value size!");
@@ -234,10 +245,10 @@ public:
 
     // Compute the size of the block, in words, not counting the size field.
     unsigned SizeInWords = GetWordIndex() - B.StartSizeWord - 1;
-    unsigned ByteNo = B.StartSizeWord*4;
+    uint64_t BitNo = B.StartSizeWord * 32;
 
     // Update the block size field in the header of this sub-block.
-    BackpatchWord(ByteNo, SizeInWords);
+    BackpatchWord(BitNo, SizeInWords);
 
     // Restore the inner block's code size and abbrev table.
     CurCodeSize = B.PrevCodeSize;
