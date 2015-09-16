@@ -21,6 +21,18 @@ namespace runtime {
 
 using namespace ast_matchers;
 
+IntegerTypesCheck::IntegerTypesCheck(StringRef Name, ClangTidyContext *Context)
+    : ClangTidyCheck(Name, Context),
+      UnsignedTypePrefix(Options.get("UnsignedTypePrefix", "uint")),
+      SignedTypePrefix(Options.get("SignedTypePrefix", "int")),
+      TypeSuffix(Options.get("TypeSuffix", "")) {}
+
+void IntegerTypesCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
+  Options.store(Opts, "UnsignedTypePrefix", UnsignedTypePrefix);
+  Options.store(Opts, "SignedTypePrefix", SignedTypePrefix);
+  Options.store(Opts, "TypeSuffix", TypeSuffix);
+}
+
 void IntegerTypesCheck::registerMatchers(MatchFinder *Finder) {
   // Find all TypeLocs. The relevant Style Guide rule only applies to C++.
   if (getLangOpts().CPlusPlus)
@@ -86,7 +98,8 @@ void IntegerTypesCheck::check(const MatchFinder::MatchResult &Result) {
 
   std::string Replacement =
       ((IsSigned ? SignedTypePrefix : UnsignedTypePrefix) + Twine(Width) +
-       (AddUnderscoreT ? "_t" : "")).str();
+       TypeSuffix)
+          .str();
 
   // We don't add a fix-it as changing the type can easily break code,
   // e.g. when a function requires a 'long' argument on all platforms.
