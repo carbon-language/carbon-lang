@@ -326,17 +326,23 @@ class DynamicSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename Base::Elf_Dyn Elf_Dyn;
 
 public:
-  DynamicSection(SymbolTable &SymTab, HashTableSection<ELFT> &HashSec)
+  DynamicSection(SymbolTable &SymTab, HashTableSection<ELFT> &HashSec,
+                 RelocationSection<ELFT> &RelaDynSec)
       : OutputSectionBase<ELFT::Is64Bits>(".dynamic", SHT_DYNAMIC,
                                           SHF_ALLOC | SHF_WRITE),
         HashSec(HashSec), DynSymSec(HashSec.getDynSymSec()),
-        DynStrSec(DynSymSec.getStrTabSec()), SymTab(SymTab) {
+        DynStrSec(DynSymSec.getStrTabSec()), RelaDynSec(RelaDynSec),
+        SymTab(SymTab) {
     typename Base::HeaderT &Header = this->Header;
     Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
     Header.sh_entsize = ELFT::Is64Bits ? 16 : 8;
 
     unsigned NumEntries = 0;
 
+    if (RelaDynSec.hasReocs()) {
+      ++NumEntries; // DT_RELA
+      ++NumEntries; // DT_RELASZ
+    }
     ++NumEntries; // DT_SYMTAB
     ++NumEntries; // DT_STRTAB
     ++NumEntries; // DT_STRSZ
@@ -365,6 +371,16 @@ public:
 
   void writeTo(uint8_t *Buf) override {
     auto *P = reinterpret_cast<Elf_Dyn *>(Buf);
+
+    if (RelaDynSec.hasReocs()) {
+      P->d_tag = DT_RELA;
+      P->d_un.d_ptr = RelaDynSec.getVA();
+      ++P;
+
+      P->d_tag = DT_RELASZ;
+      P->d_un.d_val = RelaDynSec.getSize();
+      ++P;
+    }
 
     P->d_tag = DT_SYMTAB;
     P->d_un.d_ptr = DynSymSec.getVA();
@@ -406,6 +422,7 @@ private:
   HashTableSection<ELFT> &HashSec;
   SymbolTableSection<ELFT> &DynSymSec;
   StringTableSection<ELFT::Is64Bits> &DynStrSec;
+  RelocationSection<ELFT> &RelaDynSec;
   SymbolTable &SymTab;
 };
 
@@ -420,7 +437,8 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   Writer(SymbolTable *T)
       : SymTabSec(*this, *T, StrTabSec), DynSymSec(*this, *T, DynStrSec),
-        RelaDynSec(DynSymSec), HashSec(DynSymSec), DynamicSec(*T, HashSec) {}
+        RelaDynSec(DynSymSec), HashSec(DynSymSec),
+        DynamicSec(*T, HashSec, RelaDynSec) {}
   void run();
 
   const OutputSection<ELFT> &getBSS() const {

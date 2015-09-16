@@ -2,7 +2,7 @@
 // RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %p/Inputs/shared.s -o %t2.o
 // RUN: lld -flavor gnu2 -shared %t2.o -o %t2.so
 // RUN: lld -flavor gnu2 %t.o %t2.so -o %t
-// RUN: llvm-readobj -r --expand-relocs -s %t | FileCheck %s
+// RUN: llvm-readobj -dynamic-table -r --expand-relocs -s %t | FileCheck %s
 // REQUIRES: x86
 
 // CHECK:      Name: .text
@@ -21,9 +21,9 @@
 // CHECK-NEXT: Flags [
 // CHECK-NEXT:   SHF_ALLOC
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x16000
+// CHECK-NEXT: Address: [[RELAADDR:.*]]
 // CHECK-NEXT: Offset: 0x6000
-// CHECK-NEXT: Size: 24
+// CHECK-NEXT: Size: [[RELASIZE:.*]]
 // CHECK-NEXT: Link: 4
 // CHECK-NEXT: Info: 0
 // CHECK-NEXT: AddressAlignment: 8
@@ -39,6 +39,11 @@
 // CHECK-NEXT:     }
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
+
+// CHECK: DynamicSection [
+// CHECK-NEXT:  Tag                Type                 Name/Value
+// CHECK-NEXT:  0x0000000000000007 RELA                 [[RELAADDR]]
+// CHECK-NEXT:  0x0000000000000008 RELASZ               [[RELASIZE]] (bytes)
 
 .global _start
 _start:
