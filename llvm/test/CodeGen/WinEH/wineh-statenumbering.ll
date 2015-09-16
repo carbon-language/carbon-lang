@@ -82,6 +82,14 @@ unreachable.for.entry:                            ; preds = %entry
   unreachable
 }
 
+define i32 @nopads() #0 personality i32 (...)* @__CxxFrameHandler3 {
+  ret i32 0
+}
+
+; CHECK-LABEL: define i32 @nopads()
+; CHECK-NEXT: ret i32 0
+; CHECK-NOT: __ehhandler$nopads
+
 declare void @g(i32) #0
 
 declare x86_stdcallcc void @_CxxThrowException(i8*, %eh.ThrowInfo*)

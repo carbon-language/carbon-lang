@@ -252,6 +252,9 @@ public:
   bool callsUnwindInit() const { return CallsUnwindInit; }
   void setCallsUnwindInit(bool b) { CallsUnwindInit = b; }
 
+  bool hasEHFunclets() const { return HasEHFunclets; }
+  void setHasEHFunclets(bool V) { HasEHFunclets = V; }
+
   bool usesVAFloatArgument() const {
     return UsesVAFloatArgument;
   }
@@ -364,12 +367,6 @@ public:
   const std::vector<LandingPadInfo> &getLandingPads() const {
     return LandingPads;
   }
-
-  bool hasEHFunclets() const {
-    return HasEHFunclets;
-  }
-
-  void setHasEHFunclets(bool V) { HasEHFunclets = true; }
 
   /// setCallSiteLandingPad - Map the landing pad's EH symbol to the call
   /// site indexes.
