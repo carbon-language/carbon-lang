@@ -56,3 +56,43 @@ entry:
 ; CHECK-NOT: zext
 ; CHECK: ret i32 %2
 }
+
+define i1 @test4a(i32 %a) {
+; CHECK-LABEL: @test4a(
+ entry:
+; CHECK: %c = icmp slt i32 %a, 1
+; CHECK-NEXT: ret i1 %c
+  %l = ashr i32 %a, 31
+  %na = sub i32 0, %a
+  %r = lshr i32 %na, 31
+  %signum = or i32 %l, %r
+  %c = icmp slt i32 %signum, 1
+  ret i1 %c
+}
+
+define i1 @test4b(i64 %a) {
+; CHECK-LABEL: @test4b(
+ entry:
+; CHECK: %c = icmp slt i64 %a, 1
+; CHECK-NEXT: ret i1 %c
+  %l = ashr i64 %a, 63
+  %na = sub i64 0, %a
+  %r = lshr i64 %na, 63
+  %signum = or i64 %l, %r
+  %c = icmp slt i64 %signum, 1
+  ret i1 %c
+}
+
+define i1 @test4c(i64 %a) {
+; CHECK-LABEL: @test4c(
+ entry:
+; CHECK: %c = icmp slt i64 %a, 1
+; CHECK-NEXT: ret i1 %c
+  %l = ashr i64 %a, 63
+  %na = sub i64 0, %a
+  %r = lshr i64 %na, 63
+  %signum = or i64 %l, %r
+  %signum.trunc = trunc i64 %signum to i32
+  %c = icmp slt i32 %signum.trunc, 1
+  ret i1 %c
+}

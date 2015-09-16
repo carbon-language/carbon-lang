@@ -1145,6 +1145,14 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
 
   switch (LHSI->getOpcode()) {
   case Instruction::Trunc:
+    if (RHS->isOne() && RHSV.getBitWidth() > 1) {
+      // icmp slt trunc(signum(V)) 1 --> icmp slt V, 1
+      Value *V = nullptr;
+      if (ICI.getPredicate() == ICmpInst::ICMP_SLT &&
+          match(LHSI->getOperand(0), m_Signum(m_Value(V))))
+        return new ICmpInst(ICmpInst::ICMP_SLT, V,
+                            ConstantInt::get(V->getType(), 1));
+    }
     if (ICI.isEquality() && LHSI->hasOneUse()) {
       // Simplify icmp eq (trunc x to i8), 42 -> icmp eq x, 42|highbits if all
       // of the high bits truncated out of x are known.
@@ -1467,6 +1475,15 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     break;
 
   case Instruction::Or: {
+    if (RHS->isOne()) {
+      // icmp slt signum(V) 1 --> icmp slt V, 1
+      Value *V = nullptr;
+      if (ICI.getPredicate() == ICmpInst::ICMP_SLT &&
+          match(LHSI, m_Signum(m_Value(V))))
+        return new ICmpInst(ICmpInst::ICMP_SLT, V,
+                            ConstantInt::get(V->getType(), 1));
+    }
+
     if (!ICI.isEquality() || !RHS->isNullValue() || !LHSI->hasOneUse())
       break;
     Value *P, *Q;
