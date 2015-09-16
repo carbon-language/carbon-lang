@@ -196,7 +196,7 @@ public:
 
     // Fills the Result argument with the file and line information
     // corresponding to Address. Returns true on success.
-    bool getFileLineInfoForAddress(uint64_t Address, const char *CompDir, 
+    bool getFileLineInfoForAddress(uint64_t Address, const char *CompDir,
                                    DILineInfoSpecifier::FileLineInfoKind Kind,
                                    DILineInfo &Result) const;
 
@@ -247,7 +247,6 @@ private:
   const RelocAddrMap *RelocMap;
   LineTableMapTy LineTableMap;
 };
-
 }
 
 #endif
