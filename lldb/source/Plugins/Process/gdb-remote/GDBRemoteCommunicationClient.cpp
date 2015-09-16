@@ -3396,17 +3396,6 @@ GDBRemoteCommunicationClient::SetCurrentThread (uint64_t tid)
             m_curr_tid = tid;
             return true;
         }
-
-        /*
-         * Connected bare-iron target (like YAMON gdb-stub) may not have support for Hg packet.
-         * The reply from '?' packet could be as simple as 'S05'. There is no packet which can
-         * give us pid and/or tid. Assume pid=tid=1 in such cases.
-        */
-        if (!response.IsNormalResponse() && IsConnected())
-        {
-            m_curr_tid = 1;
-            return true;
-        }
     }
     return false;
 }
@@ -3431,17 +3420,6 @@ GDBRemoteCommunicationClient::SetCurrentThreadForRun (uint64_t tid)
         if (response.IsOKResponse())
         {
             m_curr_tid_run = tid;
-            return true;
-        }
-
-        /*
-         * Connected bare-iron target (like YAMON gdb-stub) may not have support for Hc packet.
-         * The reply from '?' packet could be as simple as 'S05'. There is no packet which can
-         * give us pid and/or tid. Assume pid=tid=1 in such cases.
-        */
-        if (!response.IsNormalResponse() && IsConnected())
-        {
-            m_curr_tid_run = 1;
             return true;
         }
     }
@@ -3568,17 +3546,6 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
                     ch = response.GetChar();    // Skip the command separator
                 } while (ch == ',');            // Make sure we got a comma separator
             }
-        }
-
-        /*
-         * Connected bare-iron target (like YAMON gdb-stub) may not have support for
-         * qProcessInfo, qC and qfThreadInfo packets. The reply from '?' packet could
-         * be as simple as 'S05'. There is no packet which can give us pid and/or tid.
-         * Assume pid=tid=1 in such cases.
-        */
-        if (!response.IsNormalResponse() && thread_ids.size() == 0 && IsConnected())
-        {
-            thread_ids.push_back (1);
         }
     }
     else
