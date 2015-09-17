@@ -7,8 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+extern int j;
+extern int gfunc(int i);
+extern int gfunc2(int i);
 int
-main(int argc, char const *argv[]) 
+main()
 { // FUNC_main
-    return 0;
+    int i = gfunc(j) + gfunc2(j);
+    return i == 0;
 }

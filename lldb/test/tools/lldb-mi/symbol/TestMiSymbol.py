@@ -39,6 +39,19 @@ class MiSymbolTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-symbol-list-lines main.cpp")
         self.expect("\^done,lines=\[\{pc=\"0x0*%x\",line=\"%d\"\}(,\{pc=\"0x[0-9a-f]+\",line=\"\d+\"\})+\]" % (addr, line))
 
+        # Test that -symbol-list-lines doesn't include lines from other sources
+        # by checking the first and last line, and making sure the other lines
+        # are between 30 and 39.
+        sline = line_number('symbol_list_lines_inline_test2.cpp', '// FUNC_gfunc2')
+        eline = line_number('symbol_list_lines_inline_test2.cpp', '// END_gfunc2')
+        self.runCmd("-symbol-list-lines symbol_list_lines_inline_test2.cpp")
+        self.expect("\^done,lines=\[\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}(,\{pc=\"0x[0-9a-f]+\",line=\"3\d\"\})*,\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}\]" % (sline, eline))
+        ##FIXME: This doesn't work for symbol_list_lines_inline_test.cpp due to clang bug llvm.org/pr24716
+        ##sline = line_number('symbol_list_lines_inline_test.cpp', '// FUNC_gfunc')
+        ##eline = line_number('symbol_list_lines_inline_test.cpp', '// STRUCT_s')
+        ##self.runCmd("-symbol-list-lines symbol_list_lines_inline_test.cpp")
+        ##self.expect("\^done,lines=\[\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}(,\{pc=\"0x[0-9a-f]+\",line=\"3\d\"\})*,\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}\]" % (sline, eline))
+
         # Test that -symbol-list-lines fails when file doesn't exist
         self.runCmd("-symbol-list-lines unknown_file")
         self.expect("\^error,message=\"warning: No source filenames matched 'unknown_file'\. error: no source filenames matched any command arguments \"")

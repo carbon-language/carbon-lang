@@ -55,6 +55,19 @@ CMIUtilString::CMIUtilString(const char *const *vpData)
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details: CMIUtilString constructor.
+// Type:    Method.
+// Args:    vpData  - Pointer to UTF8 text data.
+//          nLen    - Length of string.
+// Return:  None.
+// Throws:  None.
+//--
+CMIUtilString::CMIUtilString(const char *vpData, size_t nLen)
+    : std::string(vpData, nLen)
+{
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details: CMIUtilString assignment operator.
 // Type:    Method.
 // Args:    vpRhs   - Pointer to UTF8 text data.

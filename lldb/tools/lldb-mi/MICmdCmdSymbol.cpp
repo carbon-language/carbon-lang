@@ -19,6 +19,7 @@
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueList.h"
 #include "MICmnMIValueTuple.h"
+#include "MIUtilParse.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmdCmdSymbolListLines constructor.
@@ -81,6 +82,10 @@ CMICmdCmdSymbolListLines::Execute()
     CMICMDBASE_GETOPTION(pArgFile, File, m_constStrArgNameFile);
 
     const CMIUtilString &strFilePath(pArgFile->GetValue());
+    // FIXME: this won't work for header files!  To try and use existing
+    // commands to get this to work for header files would be too slow.
+    // Instead, this code should be rewritten to use APIs and/or support
+    // should be added to lldb which would work for header files.
     const CMIUtilString strCmd(CMIUtilString::Format("target modules dump line-table \"%s\"", strFilePath.AddSlashes().c_str()));
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
@@ -88,6 +93,77 @@ CMICmdCmdSymbolListLines::Execute()
     MIunused(rtn);
 
     return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Helper function for parsing the header returned from lldb for the command:
+//              target modules dump line-table <file>
+//          where the header is of the format:
+//              Line table for /path/to/file in `/path/to/module
+// Args:    input - (R) Input string to parse.
+//          file  - (W) String representing the file.
+// Return:  bool - True = input was parsed successfully, false = input could not be parsed.
+// Throws:  None.
+//--
+static bool
+ParseLLDBLineAddressHeader(const char *input, CMIUtilString &file)
+{
+    // Match LineEntry using regex.
+    static MIUtilParse::CRegexParser g_lineentry_header_regex( 
+        "^ *Line table for (.+) in `(.+)$");
+        //                 ^1=file  ^2=module
+
+    MIUtilParse::CRegexParser::Match match(3);
+
+    const bool ok = g_lineentry_header_regex.Execute(input, match);
+    if (ok)
+        file = match.GetMatchAtIndex(1);
+    return ok;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Helper function for parsing a line entry returned from lldb for the command:
+//              target modules dump line-table <file>
+//          where the line entry is of the format:
+//              0x0000000100000e70: /path/to/file:3002[:4]
+//              addr                file          line column(opt)
+// Args:    input - (R) Input string to parse.
+//          addr  - (W) String representing the pc address.
+//          file  - (W) String representing the file.
+//          line  - (W) String representing the line.
+// Return:  bool - True = input was parsed successfully, false = input could not be parsed.
+// Throws:  None.
+//--
+static bool
+ParseLLDBLineAddressEntry(const char *input, CMIUtilString &addr,
+                          CMIUtilString &file, CMIUtilString &line)
+{
+    // Note: Ambiguities arise because the column is optional, and
+    // because : can appear in filenames or as a byte in a multibyte
+    // UTF8 character.  We keep those cases to a minimum by using regex
+    // to work on the string from both the left and right, so that what
+    // is remains is assumed to be the filename.
+
+    // Match LineEntry using regex.
+    static MIUtilParse::CRegexParser g_lineentry_nocol_regex( 
+        "^ *(0x[0-9a-fA-F]+): (.+):([0-9]+)$");
+    static MIUtilParse::CRegexParser g_lineentry_col_regex( 
+        "^ *(0x[0-9a-fA-F]+): (.+):([0-9]+):[0-9]+$");
+        //  ^1=addr           ^2=f ^3=line ^4=:col(opt)
+
+    MIUtilParse::CRegexParser::Match match(5);
+
+    // First try matching the LineEntry with the column,
+    // then try without the column.
+    const bool ok = g_lineentry_col_regex.Execute(input, match) ||
+                    g_lineentry_nocol_regex.Execute(input, match);
+    if (ok)
+    {
+        addr = match.GetMatchAtIndex(1);
+        file = match.GetMatchAtIndex(2);
+        line = match.GetMatchAtIndex(3);
+    }
+    return ok;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -117,29 +193,43 @@ CMICmdCmdSymbolListLines::Acknowledge()
         const CMIUtilString strLldbMsg(m_lldbResult.GetOutput());
         const MIuint nLines(strLldbMsg.SplitLines(vecLines));
 
+        // Parse the file from the header.
+        const CMIUtilString &rWantFile(vecLines[0]);
+        CMIUtilString strWantFile;
+        if (!ParseLLDBLineAddressHeader(rWantFile.c_str(), strWantFile))
+        {
+            // Unexpected error - parsing failed.
+            // MI print "%s^error,msg=\"Command '-symbol-list-lines'. Error: Line address header is absent or has an unknown format.\""
+            const CMICmnMIValueConst miValueConst(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_SOME_ERROR), m_cmdData.strMiCmd.c_str(), "Line address header is absent or has an unknown format."));
+            const CMICmnMIValueResult miValueResult("msg", miValueConst);
+            const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult);
+            m_miResultRecord = miRecordResult;
+
+            return MIstatus::success;
+        }
+
+        // Parse the line address entries.
         CMICmnMIValueList miValueList(true);
         for (MIuint i = 1; i < nLines; ++i)
         {
             // String looks like:
             // 0x0000000100000e70: /path/to/file:3[:4]
             const CMIUtilString &rLine(vecLines[i]);
+            CMIUtilString strAddr;
+            CMIUtilString strFile;
+            CMIUtilString strLine;
 
-            // 0x0000000100000e70: /path/to/file:3[:4]
-            // ^^^^^^^^^^^^^^^^^^ -- pc
-            const size_t nAddrEndPos = rLine.find(':');
-            const CMIUtilString strAddr(rLine.substr(0, nAddrEndPos).c_str());
+            if (!ParseLLDBLineAddressEntry(rLine.c_str(), strAddr, strFile, strLine))
+                continue;
+
+            // Skip entries which don't match the desired source.
+            if (strWantFile != strFile)
+                continue;
+
             const CMICmnMIValueConst miValueConst(strAddr);
             const CMICmnMIValueResult miValueResult("pc", miValueConst);
             CMICmnMIValueTuple miValueTuple(miValueResult);
 
-            // 0x0000000100000e70: /path/to/file:3[:4]
-            //                                   ^ -- line
-            const size_t nLineOrColumnStartPos = rLine.rfind(':');
-            const CMIUtilString strLineOrColumn(rLine.substr(nLineOrColumnStartPos + 1).c_str());
-            const size_t nPathOrLineStartPos = rLine.rfind(':', nLineOrColumnStartPos - 1);
-            const size_t nPathOrLineLen = nLineOrColumnStartPos - nPathOrLineStartPos - 1;
-            const CMIUtilString strPathOrLine(rLine.substr(nPathOrLineStartPos + 1, nPathOrLineLen).c_str());
-            const CMIUtilString strLine(strPathOrLine.IsNumber() ? strPathOrLine : strLineOrColumn);
             const CMICmnMIValueConst miValueConst2(strLine);
             const CMICmnMIValueResult miValueResult2("line", miValueConst2);
             miValueTuple.Add(miValueResult2);
