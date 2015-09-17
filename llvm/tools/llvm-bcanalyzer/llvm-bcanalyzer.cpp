@@ -165,6 +165,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
       STRINGIFY_CODE(MODULE_CODE, ALIAS)
       STRINGIFY_CODE(MODULE_CODE, PURGEVALS)
       STRINGIFY_CODE(MODULE_CODE, GCNAME)
+      STRINGIFY_CODE(MODULE_CODE, VSTOFFSET)
     }
   case bitc::PARAMATTR_BLOCK_ID:
     switch (CodeID) {
@@ -266,6 +267,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     default: return nullptr;
     STRINGIFY_CODE(VST_CODE, ENTRY)
     STRINGIFY_CODE(VST_CODE, BBENTRY)
+    STRINGIFY_CODE(VST_CODE, FNENTRY)
     }
   case bitc::METADATA_ATTACHMENT_ID:
     switch(CodeID) {

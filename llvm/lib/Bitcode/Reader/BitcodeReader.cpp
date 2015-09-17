@@ -147,6 +147,7 @@ class BitcodeReader : public GVMaterializer {
   BitstreamCursor Stream;
   uint64_t NextUnreadBit = 0;
   bool SeenValueSymbolTable = false;
+  unsigned VSTOffset = 0;
 
   std::vector<Type*> TypeList;
   BitcodeReaderValueList ValueList;
@@ -370,7 +371,9 @@ private:
   std::error_code parseTypeTable();
   std::error_code parseTypeTableBody();
 
-  std::error_code parseValueSymbolTable();
+  ErrorOr<Value *> recordValue(SmallVectorImpl<uint64_t> &Record,
+                               unsigned NameIndex, Triple &TT);
+  std::error_code parseValueSymbolTable(unsigned Offset = 0);
   std::error_code parseConstants();
   std::error_code rememberAndSkipFunctionBody();
   /// Save the positions of the Metadata blocks and skip parsing the blocks.
@@ -1583,7 +1586,61 @@ std::error_code BitcodeReader::parseTypeTableBody() {
   }
 }
 
-std::error_code BitcodeReader::parseValueSymbolTable() {
+/// Associate a value with its name from the given index in the provided record.
+ErrorOr<Value *> BitcodeReader::recordValue(SmallVectorImpl<uint64_t> &Record,
+                                            unsigned NameIndex, Triple &TT) {
+  SmallString<128> ValueName;
+  if (convertToString(Record, NameIndex, ValueName))
+    return error("Invalid record");
+  unsigned ValueID = Record[0];
+  if (ValueID >= ValueList.size() || !ValueList[ValueID])
+    return error("Invalid record");
+  Value *V = ValueList[ValueID];
+
+  V->setName(StringRef(ValueName.data(), ValueName.size()));
+  auto *GO = dyn_cast<GlobalObject>(V);
+  if (GO) {
+    if (GO->getComdat() == reinterpret_cast<Comdat *>(1)) {
+      if (TT.isOSBinFormatMachO())
+        GO->setComdat(nullptr);
+      else
+        GO->setComdat(TheModule->getOrInsertComdat(V->getName()));
+    }
+  }
+  return V;
+}
+
+/// Parse the value symbol table at either the current parsing location or
+/// at the given bit offset if provided.
+std::error_code BitcodeReader::parseValueSymbolTable(unsigned Offset) {
+  uint64_t CurrentBit;
+  // Pass in the Offset to distinguish between calling for the module-level
+  // VST (where we want to jump to the VST offset) and the function-level
+  // VST (where we don't).
+  if (Offset > 0) {
+    // Save the current parsing location so we can jump back at the end
+    // of the VST read.
+    CurrentBit = Stream.GetCurrentBitNo();
+    Stream.JumpToBit(Offset * 32);
+    BitstreamEntry Entry = Stream.advance();
+    assert(Entry.Kind == BitstreamEntry::SubBlock);
+    assert(Entry.ID == bitc::VALUE_SYMTAB_BLOCK_ID);
+  }
+
+  // Compute the delta between the bitcode indices in the VST (the word offset
+  // to the word-aligned ENTER_SUBBLOCK for the function block, and that
+  // expected by the lazy reader. The reader's EnterSubBlock expects to have
+  // already read the ENTER_SUBBLOCK code (size getAbbrevIDWidth) and BlockID
+  // (size BlockIDWidth). Note that we access the stream's AbbrevID width here
+  // just before entering the VST subblock because: 1) the EnterSubBlock
+  // changes the AbbrevID width; 2) the VST block is nested within the same
+  // outer MODULE_BLOCK as the FUNCTION_BLOCKs and therefore have the same
+  // AbbrevID width before calling EnterSubBlock; and 3) when we want to
+  // jump to the FUNCTION_BLOCK using this offset later, we don't want
+  // to rely on the stream's AbbrevID width being that of the MODULE_BLOCK.
+  unsigned FuncBitcodeOffsetDelta =
+      Stream.getAbbrevIDWidth() + bitc::BlockIDWidth;
+
   if (Stream.EnterSubBlock(bitc::VALUE_SYMTAB_BLOCK_ID))
     return error("Invalid record");
 
@@ -1601,6 +1658,8 @@ std::error_code BitcodeReader::parseValueSymbolTable() {
     case BitstreamEntry::Error:
       return error("Malformed block");
     case BitstreamEntry::EndBlock:
+      if (Offset > 0)
+        Stream.JumpToBit(CurrentBit);
       return std::error_code();
     case BitstreamEntry::Record:
       // The interesting case.
@@ -1613,23 +1672,39 @@ std::error_code BitcodeReader::parseValueSymbolTable() {
     default:  // Default behavior: unknown type.
       break;
     case bitc::VST_CODE_ENTRY: {  // VST_ENTRY: [valueid, namechar x N]
-      if (convertToString(Record, 1, ValueName))
-        return error("Invalid record");
-      unsigned ValueID = Record[0];
-      if (ValueID >= ValueList.size() || !ValueList[ValueID])
-        return error("Invalid record");
-      Value *V = ValueList[ValueID];
+      ErrorOr<Value *> ValOrErr = recordValue(Record, 1, TT);
+      if (std::error_code EC = ValOrErr.getError())
+        return EC;
+      ValOrErr.get();
+      break;
+    }
+    case bitc::VST_CODE_FNENTRY: {
+      // VST_FNENTRY: [valueid, offset, namechar x N]
+      ErrorOr<Value *> ValOrErr = recordValue(Record, 2, TT);
+      if (std::error_code EC = ValOrErr.getError())
+        return EC;
+      Value *V = ValOrErr.get();
 
-      V->setName(StringRef(ValueName.data(), ValueName.size()));
-      if (auto *GO = dyn_cast<GlobalObject>(V)) {
-        if (GO->getComdat() == reinterpret_cast<Comdat *>(1)) {
-          if (TT.isOSBinFormatMachO())
-            GO->setComdat(nullptr);
-          else
-            GO->setComdat(TheModule->getOrInsertComdat(V->getName()));
-        }
+      auto *GO = dyn_cast<GlobalObject>(V);
+      if (!GO) {
+        // If this is an alias, need to get the actual Function object
+        // it aliases, in order to set up the DeferredFunctionInfo entry below.
+        auto *GA = dyn_cast<GlobalAlias>(V);
+        if (GA)
+          GO = GA->getBaseObject();
+        assert(GO);
       }
-      ValueName.clear();
+
+      uint64_t FuncWordOffset = Record[1];
+      Function *F = dyn_cast<Function>(GO);
+      assert(F);
+      uint64_t FuncBitOffset = FuncWordOffset * 32;
+      DeferredFunctionInfo[F] = FuncBitOffset + FuncBitcodeOffsetDelta;
+      // Set the NextUnreadBit to point to the last function block.
+      // Later when parsing is resumed after function materialization,
+      // we can simply skip that last function block.
+      if (FuncBitOffset > NextUnreadBit)
+        NextUnreadBit = FuncBitOffset;
       break;
     }
     case bitc::VST_CODE_BBENTRY: {
@@ -2852,9 +2927,23 @@ std::error_code BitcodeReader::parseModule(bool Resume,
           return EC;
         break;
       case bitc::VALUE_SYMTAB_BLOCK_ID:
-        if (std::error_code EC = parseValueSymbolTable())
-          return EC;
-        SeenValueSymbolTable = true;
+        if (!SeenValueSymbolTable) {
+          // Either this is an old form VST without function index and an
+          // associated VST forward declaration record (which would have caused
+          // the VST to be jumped to and parsed before it was encountered
+          // normally in the stream), or there were no function blocks to
+          // trigger an earlier parsing of the VST.
+          assert(VSTOffset == 0 || FunctionsWithBodies.empty());
+          if (std::error_code EC = parseValueSymbolTable())
+            return EC;
+          SeenValueSymbolTable = true;
+        } else {
+          // We must have had a VST forward declaration record, which caused
+          // the parser to jump to and parse the VST earlier.
+          assert(VSTOffset > 0);
+          if (Stream.SkipBlock())
+            return error("Invalid record");
+        }
         break;
       case bitc::CONSTANTS_BLOCK_ID:
         if (std::error_code EC = parseConstants())
@@ -2882,6 +2971,32 @@ std::error_code BitcodeReader::parseModule(bool Resume,
           SeenFirstFunctionBody = true;
         }
 
+        if (VSTOffset > 0) {
+          // If we have a VST forward declaration record, make sure we
+          // parse the VST now if we haven't already. It is needed to
+          // set up the DeferredFunctionInfo vector for lazy reading.
+          if (!SeenValueSymbolTable) {
+            if (std::error_code EC =
+                    BitcodeReader::parseValueSymbolTable(VSTOffset))
+              return EC;
+            SeenValueSymbolTable = true;
+            return std::error_code();
+          } else {
+            // If we have a VST forward declaration record, but have already
+            // parsed the VST (just above, when the first function body was
+            // encountered here), then we are resuming the parse after
+            // materializing functions. The NextUnreadBit points to the start
+            // of the last function block recorded in the VST (set when
+            // parsing the VST function entries). Skip it.
+            if (Stream.SkipBlock())
+              return error("Invalid record");
+            continue;
+          }
+        }
+
+        // Support older bitcode files that did not have the function
+        // index in the VST, nor a VST forward declaration record.
+        // Build the DeferredFunctionInfo vector on the fly.
         if (std::error_code EC = rememberAndSkipFunctionBody())
           return EC;
         // Suspend parsing when we reach the function bodies. Subsequent
@@ -3184,6 +3299,12 @@ std::error_code BitcodeReader::parseModule(bool Resume,
       if (Record.size() < 1 || Record[0] > ValueList.size())
         return error("Invalid record");
       ValueList.shrinkTo(Record[0]);
+      break;
+    /// MODULE_CODE_VSTOFFSET: [offset]
+    case bitc::MODULE_CODE_VSTOFFSET:
+      if (Record.size() < 1)
+        return error("Invalid record");
+      VSTOffset = Record[0];
       break;
     }
     Record.clear();
@@ -4642,6 +4763,11 @@ std::error_code BitcodeReader::findFunctionInStream(
     Function *F,
     DenseMap<Function *, uint64_t>::iterator DeferredFunctionInfoIterator) {
   while (DeferredFunctionInfoIterator->second == 0) {
+    // This is the fallback handling for the old format bitcode that
+    // didn't contain the function index in the VST. Assert if we end up
+    // here for the new format (which is the only time the VSTOffset would
+    // be non-zero).
+    assert(VSTOffset == 0);
     if (Stream.AtEndOfStream())
       return error("Could not find function in stream");
     // ParseModule will parse the next body in the stream and set its

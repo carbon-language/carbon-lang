@@ -574,10 +574,40 @@ static void writeComdats(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   }
 }
 
-// Emit top-level description of module, including target triple, inline asm,
-// descriptors for global variables, and function prototype info.
-static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
-                            BitstreamWriter &Stream) {
+/// Write a record that will eventually hold the word offset of the
+/// module-level VST. For now the offset is 0, which will be backpatched
+/// after the real VST is written. Returns the bit offset to backpatch.
+static uint64_t WriteValueSymbolTableForwardDecl(const ValueSymbolTable &VST,
+                                                 BitstreamWriter &Stream) {
+  if (VST.empty()) return 0;
+
+  // Write a placeholder value in for the offset of the real VST,
+  // which is written after the function blocks so that it can include
+  // the offset of each function. The placeholder offset will be
+  // updated when the real VST is written.
+  BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::MODULE_CODE_VSTOFFSET));
+  // Blocks are 32-bit aligned, so we can use a 32-bit word offset to
+  // hold the real VST offset. Must use fixed instead of VBR as we don't
+  // know how many VBR chunks to reserve ahead of time.
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
+  unsigned VSTOffsetAbbrev = Stream.EmitAbbrev(Abbv);
+
+  // Emit the placeholder
+  ArrayRef<unsigned> Vals = {llvm::bitc::MODULE_CODE_VSTOFFSET, 0};
+  Stream.EmitRecordWithAbbrev(VSTOffsetAbbrev, Vals);
+
+  // Compute and return the bit offset to the placeholder, which will be
+  // patched when the real VST is written. We can simply subtract the 32-bit
+  // fixed size from the current bit number to get the location to backpatch.
+  return Stream.GetCurrentBitNo() - 32;
+}
+
+/// Emit top-level description of module, including target triple, inline asm,
+/// descriptors for global variables, and function prototype info.
+/// Returns the bit offset to backpatch with the location of the real VST.
+static uint64_t WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
+                                BitstreamWriter &Stream) {
   // Emit various pieces of data attached to a module.
   if (!M->getTargetTriple().empty())
     WriteStringRecord(bitc::MODULE_CODE_TRIPLE, M->getTargetTriple(),
@@ -737,6 +767,10 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Stream.EmitRecord(bitc::MODULE_CODE_ALIAS, Vals, AbbrevToUse);
     Vals.clear();
   }
+
+  uint64_t VSTOffsetPlaceholder =
+      WriteValueSymbolTableForwardDecl(M->getValueSymbolTable(), Stream);
+  return VSTOffsetPlaceholder;
 }
 
 static uint64_t GetOptimizationFlags(const Value *V) {
@@ -2091,32 +2125,119 @@ static StringEncoding getStringEncoding(const char *Str, unsigned StrLen) {
     return SE_Fixed7;
 }
 
-// Emit names for globals/functions etc.
-static void WriteValueSymbolTable(const ValueSymbolTable &VST,
-                                  const ValueEnumerator &VE,
-                                  BitstreamWriter &Stream) {
-  if (VST.empty()) return;
+/// Emit names for globals/functions etc. The VSTOffsetPlaceholder,
+/// BitcodeStartBit and FunctionIndex are only passed for the module-level
+/// VST, where we are including a function bitcode index and need to
+/// backpatch the VST forward declaration record.
+static void WriteValueSymbolTable(
+    const ValueSymbolTable &VST, const ValueEnumerator &VE,
+    BitstreamWriter &Stream, uint64_t VSTOffsetPlaceholder = 0,
+    uint64_t BitcodeStartBit = 0,
+    DenseMap<const Function *, uint64_t> *FunctionIndex = nullptr) {
+  if (VST.empty()) {
+    // WriteValueSymbolTableForwardDecl should have returned early as
+    // well. Ensure this handling remains in sync by asserting that
+    // the placeholder offset is not set.
+    assert(VSTOffsetPlaceholder == 0);
+    return;
+  }
+
+  if (VSTOffsetPlaceholder > 0) {
+    // Get the offset of the VST we are writing, and backpatch it into
+    // the VST forward declaration record.
+    uint64_t VSTOffset = Stream.GetCurrentBitNo();
+    // The BitcodeStartBit was the stream offset of the actual bitcode
+    // (e.g. excluding any initial darwin header).
+    VSTOffset -= BitcodeStartBit;
+    assert((VSTOffset & 31) == 0 && "VST block not 32-bit aligned");
+    Stream.BackpatchWord(VSTOffsetPlaceholder, VSTOffset / 32);
+  }
+
   Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 4);
+
+  // For the module-level VST, add abbrev Ids for the VST_CODE_FNENTRY
+  // records, which are not used in the per-function VSTs.
+  unsigned FnEntry8BitAbbrev;
+  unsigned FnEntry7BitAbbrev;
+  unsigned FnEntry6BitAbbrev;
+  if (VSTOffsetPlaceholder > 0) {
+    // 8-bit fixed-width VST_FNENTRY function strings.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_FNENTRY));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));  // value id
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));  // funcoffset
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
+    FnEntry8BitAbbrev = Stream.EmitAbbrev(Abbv);
+
+    // 7-bit fixed width VST_FNENTRY function strings.
+    Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_FNENTRY));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));  // value id
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));  // funcoffset
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
+    FnEntry7BitAbbrev = Stream.EmitAbbrev(Abbv);
+
+    // 6-bit char6 VST_FNENTRY function strings.
+    Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_FNENTRY));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));  // value id
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));  // funcoffset
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
+    FnEntry6BitAbbrev = Stream.EmitAbbrev(Abbv);
+  }
 
   // FIXME: Set up the abbrev, we know how many values there are!
   // FIXME: We know if the type names can use 7-bit ascii.
   SmallVector<unsigned, 64> NameVals;
 
   for (const ValueName &Name : VST) {
-
     // Figure out the encoding to use for the name.
     StringEncoding Bits =
         getStringEncoding(Name.getKeyData(), Name.getKeyLength());
 
     unsigned AbbrevToUse = VST_ENTRY_8_ABBREV;
+    NameVals.push_back(VE.getValueID(Name.getValue()));
+
+    Function *F = dyn_cast<Function>(Name.getValue());
+    if (!F) {
+      // If value is an alias, need to get the aliased base object to
+      // see if it is a function.
+      auto *GA = dyn_cast<GlobalAlias>(Name.getValue());
+      if (GA && GA->getBaseObject())
+        F = dyn_cast<Function>(GA->getBaseObject());
+    }
 
     // VST_ENTRY:   [valueid, namechar x N]
+    // VST_FNENTRY: [valueid, funcoffset, namechar x N]
     // VST_BBENTRY: [bbid, namechar x N]
     unsigned Code;
     if (isa<BasicBlock>(Name.getValue())) {
       Code = bitc::VST_CODE_BBENTRY;
       if (Bits == SE_Char6)
         AbbrevToUse = VST_BBENTRY_6_ABBREV;
+    } else if (F && !F->isDeclaration()) {
+      // Must be the module-level VST, where we pass in the Index and
+      // have a VSTOffsetPlaceholder. The function-level VST should not
+      // contain any Function symbols.
+      assert(FunctionIndex);
+      assert(VSTOffsetPlaceholder > 0);
+
+      // Save the word offset of the function (from the start of the
+      // actual bitcode written to the stream).
+      assert(FunctionIndex->count(F) == 1);
+      uint64_t BitcodeIndex = (*FunctionIndex)[F] - BitcodeStartBit;
+      assert((BitcodeIndex & 31) == 0 && "function block not 32-bit aligned");
+      NameVals.push_back(BitcodeIndex / 32);
+
+      Code = bitc::VST_CODE_FNENTRY;
+      AbbrevToUse = FnEntry8BitAbbrev;
+      if (Bits == SE_Char6)
+        AbbrevToUse = FnEntry6BitAbbrev;
+      else if (Bits == SE_Fixed7)
+        AbbrevToUse = FnEntry7BitAbbrev;
     } else {
       Code = bitc::VST_CODE_ENTRY;
       if (Bits == SE_Char6)
@@ -2125,7 +2246,6 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
         AbbrevToUse = VST_ENTRY_7_ABBREV;
     }
 
-    NameVals.push_back(VE.getValueID(Name.getValue()));
     for (const char *P = Name.getKeyData(),
          *E = Name.getKeyData()+Name.getKeyLength(); P != E; ++P)
       NameVals.push_back((unsigned char)*P);
@@ -2173,7 +2293,13 @@ static void WriteUseListBlock(const Function *F, ValueEnumerator &VE,
 
 /// WriteFunction - Emit a function body to the module stream.
 static void WriteFunction(const Function &F, ValueEnumerator &VE,
-                          BitstreamWriter &Stream) {
+                          BitstreamWriter &Stream,
+                          DenseMap<const Function *, uint64_t> &FunctionIndex) {
+  // Save the bitcode index of the start of this function block for recording
+  // in the VST.
+  uint64_t BitcodeIndex = Stream.GetCurrentBitNo();
+  FunctionIndex[&F] = BitcodeIndex;
+
   Stream.EnterSubblock(bitc::FUNCTION_BLOCK_ID, 4);
   VE.incorporateFunction(F);
 
@@ -2421,7 +2547,8 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
 
 /// WriteModule - Emit the specified module to the bitstream.
 static void WriteModule(const Module *M, BitstreamWriter &Stream,
-                        bool ShouldPreserveUseListOrder) {
+                        bool ShouldPreserveUseListOrder,
+                        uint64_t BitcodeStartBit) {
   Stream.EnterSubblock(bitc::MODULE_BLOCK_ID, 3);
 
   SmallVector<unsigned, 1> Vals;
@@ -2448,7 +2575,7 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream,
 
   // Emit top-level description of module, including target triple, inline asm,
   // descriptors for global variables, and function prototype info.
-  WriteModuleInfo(M, VE, Stream);
+  uint64_t VSTOffsetPlaceholder = WriteModuleInfo(M, VE, Stream);
 
   // Emit constants.
   WriteModuleConstants(VE, Stream);
@@ -2459,17 +2586,18 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream,
   // Emit metadata.
   WriteModuleMetadataStore(M, Stream);
 
-  // Emit names for globals/functions etc.
-  WriteValueSymbolTable(M->getValueSymbolTable(), VE, Stream);
-
   // Emit module-level use-lists.
   if (VE.shouldPreserveUseListOrder())
     WriteUseListBlock(nullptr, VE, Stream);
 
   // Emit function bodies.
+  DenseMap<const Function *, uint64_t> FunctionIndex;
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F)
     if (!F->isDeclaration())
-      WriteFunction(*F, VE, Stream);
+      WriteFunction(*F, VE, Stream, FunctionIndex);
+
+  WriteValueSymbolTable(M->getValueSymbolTable(), VE, Stream,
+                        VSTOffsetPlaceholder, BitcodeStartBit, &FunctionIndex);
 
   Stream.ExitBlock();
 }
@@ -2560,6 +2688,11 @@ void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out,
   // Emit the module into the buffer.
   {
     BitstreamWriter Stream(Buffer);
+    // Save the start bit of the actual bitcode, in case there is space
+    // saved at the start for the darwin header above. The reader stream
+    // will start at the bitcode, and we need the offset of the VST
+    // to line up.
+    uint64_t BitcodeStartBit = Stream.GetCurrentBitNo();
 
     // Emit the file header.
     Stream.Emit((unsigned)'B', 8);
@@ -2570,7 +2703,7 @@ void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out,
     Stream.Emit(0xD, 4);
 
     // Emit the module.
-    WriteModule(M, Stream, ShouldPreserveUseListOrder);
+    WriteModule(M, Stream, ShouldPreserveUseListOrder, BitcodeStartBit);
   }
 
   if (TT.isOSDarwin())
