@@ -108,6 +108,15 @@ internal:
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: common
+// CHECK-NEXT:     Value: 0x12000
+// CHECK-NEXT:     Size: 4
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .bss
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: foo
 // CHECK-NEXT:     Value: 0x11000
 // CHECK-NEXT:     Size: 0
@@ -115,24 +124,6 @@ internal:
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: common (34)
-// CHECK-NEXT:     Value: 0x12000
-// CHECK-NEXT:     Size: 4
-// CHECK-NEXT:     Binding: Global (0x1)
-// CHECK-NEXT:     Type: Object (0x1)
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .bss
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: zed
-// CHECK-NEXT:     Value: 0x13000
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Global (0x1)
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: foobar
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: protected
@@ -144,10 +135,10 @@ internal:
 // CHECK-NEXT:     Section: foobar
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: zed3
-// CHECK-NEXT:     Value: 0x13008
-// CHECK-NEXT:     Size: 4
-// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Name: zed
+// CHECK-NEXT:     Value: 0x13000
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: foobar
@@ -156,6 +147,15 @@ internal:
 // CHECK-NEXT:     Name: zed2
 // CHECK-NEXT:     Value: 0x13004
 // CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: foobar
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: zed3
+// CHECK-NEXT:     Value: 0x13008
+// CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0

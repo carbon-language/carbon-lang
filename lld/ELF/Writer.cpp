@@ -699,8 +699,6 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     }
   }
 
-  uint8_t *GlobalStart = Buf;
-
   for (auto &P : Table.getSymbols()) {
     StringRef Name = P.first;
     Symbol *Sym = P.second;
@@ -755,14 +753,6 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
     Buf += sizeof(Elf_Sym);
   }
-
-  // The order the global symbols are in is not defined. We can use an arbitrary
-  // order, but it has to be reproducible. That is true even when cross linking.
-  // The default hashing of StringRef produces different results on 32 and 64
-  // bit systems so we sort by st_name. That is arbitrary but deterministic.
-  // FIXME: Experiment with passing in a custom hashing instead.
-  auto *Syms = reinterpret_cast<Elf_Sym *>(GlobalStart);
-  array_pod_sort(Syms, Syms + NumVisible - NumLocals, compareSym<ELFT>);
 }
 
 template <bool Is64Bits>

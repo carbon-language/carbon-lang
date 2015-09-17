@@ -14,18 +14,9 @@
 // CHECK-NEXT: Offset:
 // CHECK-NEXT: Size: 22
 
-
-// CHECK:      Name: sym4
-// CHECK-NEXT: Value: 0x11000
-// CHECK-NEXT: Size: 4
-// CHECK-NEXT: Binding: Global
-// CHECK-NEXT: Type: Object
-// CHECK-NEXT: Other: 0
-// CHECK-NEXT: Section: .bss
-
-// CHECK:      Name: sym3
-// CHECK-NEXT: Value: 0x11014
-// CHECK-NEXT: Size: 2
+// CHECK:      Name: sym1
+// CHECK-NEXT: Value: 0x11004
+// CHECK-NEXT: Size: 8
 // CHECK-NEXT: Binding: Global
 // CHECK-NEXT: Type: Object
 // CHECK-NEXT: Other: 0
@@ -39,9 +30,17 @@
 // CHECK-NEXT: Other: 0
 // CHECK-NEXT: Section: .bss
 
-// CHECK:      Name: sym1
-// CHECK-NEXT: Value: 0x11004
-// CHECK-NEXT: Size: 8
+// CHECK:      Name: sym3
+// CHECK-NEXT: Value: 0x11014
+// CHECK-NEXT: Size: 2
+// CHECK-NEXT: Binding: Global
+// CHECK-NEXT: Type: Object
+// CHECK-NEXT: Other: 0
+// CHECK-NEXT: Section: .bss
+
+// CHECK:      Name: sym4
+// CHECK-NEXT: Value: 0x11000
+// CHECK-NEXT: Size: 4
 // CHECK-NEXT: Binding: Global
 // CHECK-NEXT: Type: Object
 // CHECK-NEXT: Other: 0

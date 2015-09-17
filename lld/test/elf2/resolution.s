@@ -28,36 +28,27 @@
 // CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: RegularWeak_with_RegularWeak
+// CHECK-NEXT:     Name: CommonStrong_with_CommonStrong
 // CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Weak
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: CommonWeak_with_RegularWeak
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 20
-// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Size: 63
+// CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: UndefWeak_with_RegularWeak
+// CHECK-NEXT:     Name: CommonStrong_with_CommonWeak
 // CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 43
-// CHECK-NEXT:     Binding: Weak
-// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Size: 30
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:     Section:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: RegularStrong_with_RegularWeak
+// CHECK-NEXT:     Name: CommonStrong_with_RegularStrong
 // CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 2
+// CHECK-NEXT:     Size: 55
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
@@ -73,162 +64,18 @@
 // CHECK-NEXT:     Section:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: UndefStrong_with_RegularWeak
+// CHECK-NEXT:     Name: CommonStrong_with_UndefStrong
 // CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 45
-// CHECK-NEXT:     Binding: Weak
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: RegularWeak_with_CommonWeak
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 7
-// CHECK-NEXT:     Binding: Weak
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: CommonWeak_with_CommonWeak
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 28
-// CHECK-NEXT:     Binding: Weak
-// CHECK-NEXT:     Type: Object
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section:
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: UndefWeak_with_CommonWeak
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 48
-// CHECK-NEXT:     Binding: Weak
-// CHECK-NEXT:     Type: Object
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section:
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: RegularStrong_with_CommonWeak
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 9
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: CommonStrong_with_CommonWeak
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 30
+// CHECK-NEXT:     Size: 27
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section:
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: UndefStrong_with_CommonWeak
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 50
-// CHECK-NEXT:     Binding: Weak
-// CHECK-NEXT:     Type: Object
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section:
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: RegularWeak_with_UndefWeak
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 3
-// CHECK-NEXT:     Binding: Weak
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: CommonWeak_with_UndefWeak
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 24
-// CHECK-NEXT:     Binding: Weak
-// CHECK-NEXT:     Type: Object
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section:
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: UndefWeak_with_UndefWeak
-// CHECK-NEXT:     Value: 0x0
-// CHECK-NEXT:     Size: 15
-// CHECK-NEXT:     Binding: Weak
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: Undefined
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: RegularStrong_with_UndefWeak
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 5
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: CommonStrong_with_UndefWeak
 // CHECK-NEXT:     Value:
 // CHECK-NEXT:     Size: 26
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: Object
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section:
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: RegularWeak_with_RegularStrong
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 33
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: CommonWeak_with_RegularStrong
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 53
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: UndefWeak_with_RegularStrong
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 44
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: CommonStrong_with_RegularStrong
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 55
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: UndefStrong_with_RegularStrong
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 46
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: RegularWeak_with_CommonStrong
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 40
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
@@ -244,10 +91,46 @@
 // CHECK-NEXT:     Section:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: UndefWeak_with_CommonStrong
+// CHECK-NEXT:     Name: CommonWeak_with_CommonWeak
 // CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 49
+// CHECK-NEXT:     Size: 28
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section:
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: CommonWeak_with_RegularStrong
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 53
 // CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: CommonWeak_with_RegularWeak
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 20
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section:
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: CommonWeak_with_UndefStrong
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 25
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section:
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: CommonWeak_with_UndefWeak
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 24
+// CHECK-NEXT:     Binding: Weak
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section:
@@ -262,40 +145,22 @@
 // CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: CommonStrong_with_CommonStrong
+// CHECK-NEXT:     Name: RegularStrong_with_CommonWeak
 // CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 63
+// CHECK-NEXT:     Size: 9
 // CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: Object
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section:
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: UndefStrong_with_CommonStrong
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 51
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: Object
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section:
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: RegularWeak_with_UndefStrong
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 4
-// CHECK-NEXT:     Binding: Weak
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: CommonWeak_with_UndefStrong
+// CHECK-NEXT:     Name: RegularStrong_with_RegularWeak
 // CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 25
-// CHECK-NEXT:     Binding: Weak
-// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Size: 2
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section:
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: RegularStrong_with_UndefStrong
@@ -307,13 +172,148 @@
 // CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: CommonStrong_with_UndefStrong
+// CHECK-NEXT:     Name: RegularStrong_with_UndefWeak
 // CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size: 27
+// CHECK-NEXT:     Size: 5
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: RegularWeak_with_CommonStrong
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 40
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section:
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: RegularWeak_with_CommonWeak
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 7
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: RegularWeak_with_RegularStrong
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 33
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: RegularWeak_with_RegularWeak
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: RegularWeak_with_UndefStrong
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 4
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: RegularWeak_with_UndefWeak
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 3
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: UndefStrong_with_CommonStrong
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 51
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section:
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: UndefStrong_with_CommonWeak
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 50
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section:
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: UndefStrong_with_RegularStrong
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 46
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: UndefStrong_with_RegularWeak
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 45
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: UndefWeak_with_CommonStrong
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 49
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section:
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: UndefWeak_with_CommonWeak
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 48
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: Object
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section:
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: UndefWeak_with_RegularStrong
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 44
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: UndefWeak_with_RegularWeak
+// CHECK-NEXT:     Value:
+// CHECK-NEXT:     Size: 43
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: UndefWeak_with_UndefWeak
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 15
+// CHECK-NEXT:     Binding: Weak
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: Undefined
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
