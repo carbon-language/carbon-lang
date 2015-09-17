@@ -2,6 +2,10 @@
 // RUN:         | FileCheck %s --check-prefix=CHECK --check-prefix=X64
 // RUN: %clang_cc1 %s -triple i686-pc-win32 -fms-extensions -fnew-ms-eh -emit-llvm -o - \
 // RUN:         | FileCheck %s --check-prefix=CHECK --check-prefix=X86
+// RUN: %clang_cc1 %s -triple i686-pc-windows-gnu -fms-extensions -fnew-ms-eh -emit-llvm -o - \
+// RUN:         | FileCheck %s --check-prefix=X86-GNU
+// RUN: %clang_cc1 %s -triple x86_64-pc-windows-gnu -fms-extensions -fnew-ms-eh -emit-llvm -o - \
+// RUN:         | FileCheck %s --check-prefix=X64-GNU
 
 void try_body(int numerator, int denominator, int *myres) {
   *myres = numerator / denominator;
@@ -54,6 +58,12 @@ int safe_div(int numerator, int denominator, int *res) {
 // X86: load i32, i32*
 // X86: store i32 %{{.*}}, i32*
 // X86: ret i32 1
+
+// Mingw uses msvcrt, so it can also use _except_handler3.
+// X86-GNU-LABEL: define i32 @safe_div(i32 %numerator, i32 %denominator, i32* %res)
+// X86-GNU-SAME:      personality i8* bitcast (i32 (...)* @_except_handler3 to i8*)
+// X64-GNU-LABEL: define i32 @safe_div(i32 %numerator, i32 %denominator, i32* %res)
+// X64-GNU-SAME:      personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 
 void j(void);
 
