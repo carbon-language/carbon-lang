@@ -412,7 +412,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     Value *LHS, *RHS;
     if (matchSelectPattern(I, LHS, RHS).Flavor != SPF_UNKNOWN)
       return nullptr;
-      
+
     if (SimplifyDemandedBits(I->getOperandUse(2), DemandedMask, RHSKnownZero,
                              RHSKnownOne, Depth + 1) ||
         SimplifyDemandedBits(I->getOperandUse(1), DemandedMask, LHSKnownZero,
@@ -1236,6 +1236,15 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       // Output elements are undefined if both are undefined.  Consider things
       // like undef&0.  The result is known zero, not undef.
       UndefElts &= UndefElts2;
+      break;
+
+    // SSE4A instructions leave the upper 64-bits of the 128-bit result
+    // in an undefined state.
+    case Intrinsic::x86_sse4a_extrq:
+    case Intrinsic::x86_sse4a_extrqi:
+    case Intrinsic::x86_sse4a_insertq:
+    case Intrinsic::x86_sse4a_insertqi:
+      UndefElts |= APInt::getHighBitsSet(VWidth, VWidth / 2);
       break;
     }
     break;

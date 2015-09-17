@@ -527,6 +527,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (Changed) return II;
   }
 
+  auto SimplifyDemandedVectorEltsLow = [this](Value *Op, unsigned Width, unsigned DemandedWidth)
+  {
+    APInt UndefElts(Width, 0);
+    APInt DemandedElts = APInt::getLowBitsSet(Width, DemandedWidth);
+    return SimplifyDemandedVectorElts(Op, DemandedElts, UndefElts);
+  };
+
   switch (II->getIntrinsicID()) {
   default: break;
   case Intrinsic::objectsize: {
@@ -975,6 +982,54 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return ReplaceInstUsesWith(*II, V);
     break;
 
+  case Intrinsic::x86_sse4a_extrq: {
+    // EXTRQ uses only the lowest 64-bits of the first 128-bit vector
+    // operands and the lowest 16-bits of the second.
+    Value *Op0 = II->getArgOperand(0);
+    Value *Op1 = II->getArgOperand(1);
+    unsigned VWidth0 = Op0->getType()->getVectorNumElements();
+    unsigned VWidth1 = Op1->getType()->getVectorNumElements();
+    assert(VWidth0 == 2 && VWidth1 == 16 && "Unexpected operand sizes");
+
+    if (Value *V = SimplifyDemandedVectorEltsLow(Op0, VWidth0, 1)) {
+      II->setArgOperand(0, V);
+      return II;
+    }
+    if (Value *V = SimplifyDemandedVectorEltsLow(Op1, VWidth1, 2)) {
+      II->setArgOperand(1, V);
+      return II;
+    }
+    break;
+  }
+
+  case Intrinsic::x86_sse4a_extrqi: {
+    // EXTRQI uses only the lowest 64-bits of the first 128-bit vector
+    // operand.
+    Value *Op = II->getArgOperand(0);
+    unsigned VWidth = Op->getType()->getVectorNumElements();
+    assert(VWidth == 2 && "Unexpected operand size");
+
+    if (Value *V = SimplifyDemandedVectorEltsLow(Op, VWidth, 1)) {
+      II->setArgOperand(0, V);
+      return II;
+    }
+    break;
+  }
+
+  case Intrinsic::x86_sse4a_insertq: {
+    // INSERTQ uses only the lowest 64-bits of the first 128-bit vector
+    // operand.
+    Value *Op = II->getArgOperand(0);
+    unsigned VWidth = Op->getType()->getVectorNumElements();
+    assert(VWidth == 2 && "Unexpected operand size");
+
+    if (Value *V = SimplifyDemandedVectorEltsLow(Op, VWidth, 1)) {
+      II->setArgOperand(0, V);
+      return II;
+    }
+    break;
+  }
+
   case Intrinsic::x86_sse4a_insertqi: {
     // insertqi x, y, 64, 0 can just copy y's lower bits and leave the top
     // ones undef
@@ -1050,6 +1105,24 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           }
         }
       }
+    }
+
+    // INSERTQI uses only the lowest 64-bits of the first two 128-bit vector
+    // operands.
+    Value *Op0 = II->getArgOperand(0);
+    Value *Op1 = II->getArgOperand(1);
+    unsigned VWidth0 = Op0->getType()->getVectorNumElements();
+    unsigned VWidth1 = Op1->getType()->getVectorNumElements();
+    assert(VWidth0 == 2 && VWidth1 == 2 && "Unexpected operand sizes");
+
+    if (Value *V = SimplifyDemandedVectorEltsLow(Op0, VWidth0, 1)) {
+      II->setArgOperand(0, V);
+      return II;
+    }
+
+    if (Value *V = SimplifyDemandedVectorEltsLow(Op1, VWidth1, 1)) {
+      II->setArgOperand(1, V);
+      return II;
     }
     break;
   }
