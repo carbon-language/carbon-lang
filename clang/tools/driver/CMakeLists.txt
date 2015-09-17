@@ -79,7 +79,13 @@ set_property(DIRECTORY APPEND
   PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${clang_cl})
 
 install(TARGETS clang
-  RUNTIME DESTINATION bin)
+  RUNTIME DESTINATION bin
+  COMPONENT clang)
+add_custom_target(install-clang
+  DEPENDS clang
+  COMMAND "${CMAKE_COMMAND}"
+          -DCMAKE_INSTALL_COMPONENT=clang
+          -P "${CMAKE_BINARY_DIR}/cmake_install.cmake")
 
 # Create the clang++ and clang-cl symlinks at installation time.
 install(SCRIPT clang_symlink.cmake -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
