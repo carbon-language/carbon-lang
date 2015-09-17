@@ -42,7 +42,10 @@ namespace bitc {
 
     TYPE_BLOCK_ID_NEW,
 
-    USELIST_BLOCK_ID
+    USELIST_BLOCK_ID,
+
+    MODULE_STRTAB_BLOCK_ID,
+    FUNCTION_SUMMARY_BLOCK_ID
   };
 
 
@@ -73,6 +76,8 @@ namespace bitc {
 
     MODULE_CODE_GCNAME      = 11,  // GCNAME: [strchr x N]
     MODULE_CODE_COMDAT      = 12,  // COMDAT: [selection_kind, name]
+
+    MODULE_CODE_VSTOFFSET   = 13,  // VSTOFFSET: [offset]
   };
 
   /// PARAMATTR blocks have code for defining a parameter attribute set.
@@ -131,10 +136,11 @@ namespace bitc {
     TST_CODE_ENTRY = 1     // TST_ENTRY: [typeid, namechar x N]
   };
 
-  // The value symbol table only has one code (VST_ENTRY_CODE).
+  // Value symbol table codes.
   enum ValueSymtabCodes {
-    VST_CODE_ENTRY   = 1,  // VST_ENTRY: [valid, namechar x N]
-    VST_CODE_BBENTRY = 2   // VST_BBENTRY: [bbid, namechar x N]
+    VST_CODE_ENTRY   = 1,   // VST_ENTRY: [valueid, namechar x N]
+    VST_CODE_BBENTRY = 2,   // VST_BBENTRY: [bbid, namechar x N]
+    VST_CODE_FNENTRY = 3,   // VST_FNENTRY: [valueid, offset, namechar x N]
   };
 
   enum MetadataCodes {
