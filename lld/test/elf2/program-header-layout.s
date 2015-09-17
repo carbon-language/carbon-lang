@@ -1,6 +1,6 @@
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
 # RUN: lld -flavor gnu2 %t -o %t2
-# RUN: llvm-readobj -program-headers %t2 | FileCheck %s
+# RUN: llvm-readobj -sections -program-headers %t2 | FileCheck %s
 # REQUIRES: x86
 
 # Check that different output sections with the same flags are merged into a
@@ -17,14 +17,28 @@ _start:
 .section .b,"aw"
 .quad 2
 
+# CHECK:        Name: .r
+# CHECK-NEXT:   Type: SHT_PROGBITS
+# CHECK-NEXT:   Flags [
+# CHECK-NEXT:     SHF_ALLOC
+# CHECK-NEXT:   ]
+# CHECK-NEXT:   Address:
+# CHECK-NEXT:   Offset: 0x1000
+# CHECK-NEXT:   Size:
+# CHECK-NEXT:   Link:
+# CHECK-NEXT:   Info:
+# CHECK-NEXT:   AddressAlignment:
+# CHECK-NEXT:   EntrySize:
+# CHECK-NEXT: }
+
 # CHECK:      ProgramHeaders [
 # CHECK-NEXT:   ProgramHeader {
 # CHECK-NEXT:     Type: PT_LOAD
 # CHECK-NEXT:     Offset: 0x0
 # CHECK-NEXT:     VirtualAddress:
 # CHECK-NEXT:     PhysicalAddress:
-# CHECK-NEXT:     FileSize:
-# CHECK-NEXT:     MemSize:
+# CHECK-NEXT:     FileSize: 4104
+# CHECK-NEXT:     MemSize: 4104
 # CHECK-NEXT:     Flags [
 # CHECK-NEXT:       PF_R
 # CHECK-NEXT:     ]
