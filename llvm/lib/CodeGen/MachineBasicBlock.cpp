@@ -208,6 +208,13 @@ const MachineBasicBlock *MachineBasicBlock::getLandingPadSuccessor() const {
   return nullptr;
 }
 
+bool MachineBasicBlock::hasEHPadSuccessor() const {
+  for (const_succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I)
+    if ((*I)->isEHPad())
+      return true;
+  return false;
+}
+
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void MachineBasicBlock::dump() const {
   print(dbgs());

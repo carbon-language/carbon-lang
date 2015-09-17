@@ -976,7 +976,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
         continue;
 
       // Skip blocks which may jump to a landing pad. Can't tail merge these.
-      if (PBB->getLandingPadSuccessor())
+      if (PBB->hasEHPadSuccessor())
         continue;
 
       MachineBasicBlock *TBB = nullptr, *FBB = nullptr;

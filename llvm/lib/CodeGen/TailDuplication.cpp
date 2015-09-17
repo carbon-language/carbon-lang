@@ -673,7 +673,7 @@ TailDuplicatePass::duplicateSimpleBB(MachineBasicBlock *TailBB,
        PE = Preds.end(); PI != PE; ++PI) {
     MachineBasicBlock *PredBB = *PI;
 
-    if (PredBB->getLandingPadSuccessor())
+    if (PredBB->hasEHPadSuccessor())
       continue;
 
     if (bothUsedInPHI(*PredBB, Succs))

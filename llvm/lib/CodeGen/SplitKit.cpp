@@ -56,6 +56,7 @@ void SplitAnalysis::clear() {
 
 SlotIndex SplitAnalysis::computeLastSplitPoint(unsigned Num) {
   const MachineBasicBlock *MBB = MF.getBlockNumbered(Num);
+  // FIXME: Handle multiple EH pad successors.
   const MachineBasicBlock *LPad = MBB->getLandingPadSuccessor();
   std::pair<SlotIndex, SlotIndex> &LSP = LastSplitPoint[Num];
   SlotIndex MBBEnd = LIS.getMBBEndIdx(MBB);

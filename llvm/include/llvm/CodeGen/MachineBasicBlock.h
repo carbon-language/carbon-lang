@@ -381,6 +381,8 @@ public:
   /// return NULL.
   const MachineBasicBlock *getLandingPadSuccessor() const;
 
+  bool hasEHPadSuccessor() const;
+
   /// Returns true if this is the entry block of an EH funclet.
   bool isEHFuncletEntry() const { return IsEHFuncletEntry; }
 
