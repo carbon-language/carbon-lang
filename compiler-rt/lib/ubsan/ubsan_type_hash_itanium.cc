@@ -17,7 +17,6 @@
 #include "ubsan_type_hash.h"
 
 #include "sanitizer_common/sanitizer_common.h"
-#include "sanitizer_common/sanitizer_procmaps.h"
 
 // The following are intended to be binary compatible with the definitions
 // given in the Itanium ABI. We make no attempt to be ODR-compatible with
@@ -192,45 +191,7 @@ struct VtablePrefix {
   /// The type_info object describing the most-derived class type.
   std::type_info *TypeInfo;
 };
-
-#if SANITIZER_LINUX && !defined(__powerpc64__)
-bool isValidVptr(void *Vtable) {
-  // Validate the memory permissions of the vtable pointer and the first
-  // function pointer in the vtable. They should be r-- or r-x and r-x
-  // respectively. Only enabled for Linux; this hasn't been tested on FreeBSD,
-  // and vtables are writable on Mac (PR24782) so this won't work there.
-  uptr FirstFunctionPtr = *reinterpret_cast<uptr *>(Vtable);
-  bool ValidVtable = false, ValidFirstFunctionPtr = false;
-  MemoryMappingLayout Layout(/*cache_enabled=*/true);
-  uptr Start, End, Prot;
-  while (Layout.Next(&Start, &End, 0, 0, 0, &Prot)) {
-    if (Start <= ((uptr)Vtable) && ((uptr)Vtable) <= End &&
-        (Prot == MemoryMappingLayout::kProtectionRead ||
-         Prot == (MemoryMappingLayout::kProtectionRead |
-                  MemoryMappingLayout::kProtectionExecute)))
-      ValidVtable = true;
-    if (Start <= FirstFunctionPtr && FirstFunctionPtr <= End &&
-        Prot == (MemoryMappingLayout::kProtectionRead |
-                 MemoryMappingLayout::kProtectionExecute))
-      ValidFirstFunctionPtr = true;
-    if (ValidVtable && ValidFirstFunctionPtr)
-      return true;
-  }
-  return false;
-}
-#else  // !SANITIZER_LINUX || __powerpc64__
-bool isValidVptr(void *Vtable) {
-  return true;
-}
-#endif
-
 VtablePrefix *getVtablePrefix(void *Vtable) {
-  if (!IsAccessibleMemoryRange((uptr)Vtable, sizeof(void *)))
-    return 0;
-
-  if (!isValidVptr(Vtable))
-    return 0;
-
   VtablePrefix *Vptr = reinterpret_cast<VtablePrefix*>(Vtable);
   if (!Vptr)
     return 0;
