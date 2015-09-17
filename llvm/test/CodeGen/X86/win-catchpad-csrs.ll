@@ -66,6 +66,11 @@ catchendblock:                                    ; preds = %catch,
 ; X86: popl %ebp
 ; X86: retl
 
+; X86: [[restorebb:LBB0_[0-9]+]]:
+; X86: movl -16(%ebp), %esp
+; X86: addl $12, %ebp
+; X86: jmp [[contbb]]
+
 ; X86: [[catch1bb:LBB0_[0-9]+]]: # %catch{{$}}
 ; X86: pushl %ebp
 ; X86-NOT: pushl
@@ -76,14 +81,8 @@ catchendblock:                                    ; preds = %catch,
 ; X86: calll _f
 ; X86: addl $16, %esp
 ; X86-NEXT: popl %ebp
-; X86-NEXT: movl $[[restorebb:LBB0_[0-9]+]], %eax
+; X86-NEXT: movl $[[restorebb]], %eax
 ; X86-NEXT: retl
-
-; FIXME: Lay this out in the parent funclet.
-; X86: [[restorebb]]:
-; X86: movl -16(%ebp), %esp
-; X86: addl $12, %ebp
-; X86: jmp [[contbb]]
 
 ; X86: L__ehtable$try_catch_catch:
 ; X86: $handlerMap$0$try_catch_catch:

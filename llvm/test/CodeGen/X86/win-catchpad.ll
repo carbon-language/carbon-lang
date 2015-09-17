@@ -73,6 +73,11 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: [[contbb:LBB0_[0-9]+]]: # %try.cont
 ; X86: retl
 
+; X86: [[restorebb:LBB0_[0-9]+]]: # %invoke.cont.3
+; X86: movl -16(%ebp), %esp
+; X86: addl $12, %ebp
+; X86: jmp [[contbb]]
+
 ; X86: [[catch1bb:LBB0_[0-9]+]]: # %catch{{$}}
 ; X86: pushl %ebp
 ; X86: addl $12, %ebp
@@ -85,7 +90,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: calll _f
 ; X86-NEXT: addl $8, %esp
 ; X86-NEXT: popl %ebp
-; X86-NEXT: movl $[[restorebb:LBB0_[0-9]+]], %eax
+; X86-NEXT: movl $[[restorebb]], %eax
 ; X86-NEXT: retl
 
 ; X86: [[catch2bb:LBB0_[0-9]+]]: # %catch.2{{$}}
@@ -101,12 +106,6 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86-NEXT: popl %ebp
 ; X86-NEXT: movl $[[restorebb]], %eax
 ; X86-NEXT: retl
-
-; FIXME: We should lay this code out up with the parent function.
-; X86: [[restorebb]]:
-; X86: movl -16(%ebp), %esp
-; X86: addl $12, %ebp
-; X86: jmp [[contbb]]
 
 ; X86: L__ehtable$try_catch_catch:
 ; X86: $handlerMap$0$try_catch_catch:
