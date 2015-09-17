@@ -22,6 +22,7 @@
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/Type.h"
+#include "lldb/Symbol/TypeSystem.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/Process.h"
@@ -36,20 +37,17 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // Variable constructor
 //----------------------------------------------------------------------
-Variable::Variable 
-(
-    lldb::user_id_t uid,
-    const char *name, 
-    const char *mangled,  // The mangled or fully qualified name of the variable.
-    const lldb::SymbolFileTypeSP &symfile_type_sp,
-    ValueType scope,
-    SymbolContextScope *context,
-    Declaration* decl_ptr,
-    const DWARFExpression& location,
-    bool external,
-    bool artificial,
-    bool static_member
-) :
+Variable::Variable (lldb::user_id_t uid,
+                    const char *name,
+                    const char *mangled,  // The mangled or fully qualified name of the variable.
+                    const lldb::SymbolFileTypeSP &symfile_type_sp,
+                    ValueType scope,
+                    SymbolContextScope *context,
+                    Declaration* decl_ptr,
+                    const DWARFExpression& location,
+                    bool external,
+                    bool artificial,
+                    bool static_member) :
     UserID(uid),
     m_name(name),
     m_mangled (ConstString(mangled)),

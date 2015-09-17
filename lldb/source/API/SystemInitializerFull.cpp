@@ -24,6 +24,8 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Initialization/SystemInitializerCommon.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/GoASTContext.h"
 
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
 #include "Plugins/ABI/MacOSX-arm/ABIMacOSX_arm.h"
@@ -251,6 +253,9 @@ SystemInitializerFull::Initialize()
     llvm::InitializeAllTargetMCs();
     llvm::InitializeAllDisassemblers();
 
+    ClangASTContext::Initialize();
+    GoASTContext::Initialize();
+
     ABIMacOSX_i386::Initialize();
     ABIMacOSX_arm::Initialize();
     ABIMacOSX_arm64::Initialize();
@@ -359,6 +364,10 @@ SystemInitializerFull::Terminate()
 
     // Terminate and unload and loaded system or user LLDB plug-ins
     PluginManager::Terminate();
+
+    ClangASTContext::Terminate();
+    GoASTContext::Terminate();
+
     ABIMacOSX_i386::Terminate();
     ABIMacOSX_arm::Terminate();
     ABIMacOSX_arm64::Terminate();

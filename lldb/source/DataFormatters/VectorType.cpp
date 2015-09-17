@@ -31,7 +31,7 @@ GetCompilerTypeForFormat (lldb::Format format,
     {
         case lldb::eFormatAddressInfo:
         case lldb::eFormatPointer:
-            return type_system->GetIntTypeFromBitSize(8*type_system->GetPointerByteSize(), false);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize (eEncodingUint, 8*type_system->GetPointerByteSize());
             
         case lldb::eFormatBoolean:
             return type_system->GetBasicTypeFromAST(lldb::eBasicTypeBool);
@@ -70,37 +70,37 @@ GetCompilerTypeForFormat (lldb::Format format,
             return type_system->GetBasicTypeFromAST(lldb::eBasicTypeChar);
             
         case lldb::eFormatVectorOfFloat32:
-            return type_system->GetFloatTypeFromBitSize(32);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize(eEncodingIEEE754, 32);
             
         case lldb::eFormatVectorOfFloat64:
-            return type_system->GetFloatTypeFromBitSize(64);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize(eEncodingIEEE754, 64);
             
         case lldb::eFormatVectorOfSInt16:
-            return type_system->GetIntTypeFromBitSize(16, true);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize (eEncodingSint, 16);
             
         case lldb::eFormatVectorOfSInt32:
-            return type_system->GetIntTypeFromBitSize(32, true);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize (eEncodingSint, 32);
 
         case lldb::eFormatVectorOfSInt64:
-            return type_system->GetIntTypeFromBitSize(64, true);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize (eEncodingSint, 64);
             
         case lldb::eFormatVectorOfSInt8:
-            return type_system->GetIntTypeFromBitSize(8, true);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize (eEncodingSint, 8);
 
         case lldb::eFormatVectorOfUInt128:
-            return type_system->GetIntTypeFromBitSize(128, false);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize (eEncodingUint, 128);
 
         case lldb::eFormatVectorOfUInt16:
-            return type_system->GetIntTypeFromBitSize(16, false);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize (eEncodingUint, 16);
 
         case lldb::eFormatVectorOfUInt32:
-            return type_system->GetIntTypeFromBitSize(32, false);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize (eEncodingUint, 32);
 
         case lldb::eFormatVectorOfUInt64:
-            return type_system->GetIntTypeFromBitSize(64, false);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize (eEncodingUint, 64);
 
         case lldb::eFormatVectorOfUInt8:
-            return type_system->GetIntTypeFromBitSize(8, false);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize (eEncodingUint, 8);
             
         case lldb::eFormatDefault:
             return element_type;
@@ -113,7 +113,7 @@ GetCompilerTypeForFormat (lldb::Format format,
         case lldb::eFormatOSType:
         case lldb::eFormatVoid:
         default:
-            return type_system->GetIntTypeFromBitSize(8, false);
+            return type_system->GetBuiltinTypeForEncodingAndBitSize (eEncodingUint, 8);
     }
 }
 

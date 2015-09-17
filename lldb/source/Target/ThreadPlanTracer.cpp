@@ -135,12 +135,9 @@ ThreadPlanAssemblyTracer::GetIntPointerType()
         TargetSP target_sp (m_thread.CalculateTarget());
         if (target_sp)
         {
-            Module *exe_module = target_sp->GetExecutableModulePointer();
-        
-            if (exe_module)
-            {
-                m_intptr_type = TypeFromUser(exe_module->GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, target_sp->GetArchitecture().GetAddressByteSize() * 8));
-            }
+            TypeSystem *type_system = target_sp->GetScratchTypeSystemForLanguage(eLanguageTypeC);
+            if (type_system)
+                m_intptr_type = TypeFromUser(type_system->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, target_sp->GetArchitecture().GetAddressByteSize() * 8));
         }        
     }
     return m_intptr_type;

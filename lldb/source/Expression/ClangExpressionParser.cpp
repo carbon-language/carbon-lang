@@ -28,6 +28,7 @@
 #include "lldb/Expression/IRInterpreter.h"
 #include "lldb/Host/File.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"

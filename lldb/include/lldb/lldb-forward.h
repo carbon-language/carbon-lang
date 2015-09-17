@@ -426,6 +426,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::TypeMemberFunctionImpl> TypeMemberFunctionImplSP;
     typedef std::shared_ptr<lldb_private::TypeEnumMemberImpl> TypeEnumMemberImplSP;
     typedef std::shared_ptr<lldb_private::TypeFilterImpl> TypeFilterImplSP;
+    typedef std::shared_ptr<lldb_private::TypeSystem> TypeSystemSP;
     typedef std::shared_ptr<lldb_private::TypeFormatImpl> TypeFormatImplSP;
     typedef std::shared_ptr<lldb_private::TypeNameSpecifierImpl> TypeNameSpecifierImplSP;
     typedef std::shared_ptr<lldb_private::TypeSummaryImpl> TypeSummaryImplSP;

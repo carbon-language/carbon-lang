@@ -763,7 +763,7 @@ GetNSPathStore2Type (Target &target)
         return CompilerType();
     
     CompilerType voidstar = ast_ctx->GetBasicType(lldb::eBasicTypeVoid).GetPointerType();
-    CompilerType uint32 = ast_ctx->GetIntTypeFromBitSize(32, false);
+    CompilerType uint32 = ast_ctx->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 32);
     
     return ast_ctx->GetOrCreateStructForIdentifier(g_type_name, {
         {"isa",voidstar},

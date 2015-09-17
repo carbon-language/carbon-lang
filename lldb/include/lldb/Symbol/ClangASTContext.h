@@ -55,7 +55,28 @@ public:
     ClangASTContext (const char *triple = NULL);
 
     ~ClangASTContext() override;
-    
+
+    //------------------------------------------------------------------
+    // PluginInterface functions
+    //------------------------------------------------------------------
+    ConstString
+    GetPluginName() override;
+
+    uint32_t
+    GetPluginVersion() override;
+
+    static ConstString
+    GetPluginNameStatic ();
+
+    static lldb::TypeSystemSP
+    CreateInstance (lldb::LanguageType language, const lldb_private::ArchSpec &arch);
+
+    static void
+    Initialize ();
+
+    static void
+    Terminate ();
+
     static ClangASTContext*
     GetASTContext (clang::ASTContext* ast_ctx);
 
@@ -153,7 +174,7 @@ public:
     //------------------------------------------------------------------
     CompilerType
     GetBuiltinTypeForEncodingAndBitSize (lldb::Encoding encoding,
-                                          uint32_t bit_size);
+                                         size_t bit_size) override;
 
     static CompilerType
     GetBuiltinTypeForEncodingAndBitSize (clang::ASTContext *ast,
@@ -448,13 +469,7 @@ public:
     //------------------------------------------------------------------
     // Integer type functions
     //------------------------------------------------------------------
-    
-    CompilerType
-    GetIntTypeFromBitSize (size_t bit_size, bool is_signed) override
-    {
-        return GetIntTypeFromBitSize (getASTContext(), bit_size, is_signed);
-    }
-    
+        
     static CompilerType
     GetIntTypeFromBitSize (clang::ASTContext *ast,
                            size_t bit_size, bool is_signed);
@@ -471,12 +486,6 @@ public:
     //------------------------------------------------------------------
     // Floating point functions
     //------------------------------------------------------------------
-    
-    CompilerType
-    GetFloatTypeFromBitSize (size_t bit_size) override
-    {
-        return GetFloatTypeFromBitSize (getASTContext(), bit_size);
-    }
 
     static CompilerType
     GetFloatTypeFromBitSize (clang::ASTContext *ast,
@@ -673,7 +682,10 @@ public:
     
     bool
     IsVoidType (void *type) override;
-    
+
+    bool
+    SupportsLanguage (lldb::LanguageType language) override;
+
     static bool
     GetCXXClassName (const CompilerType& type, std::string &class_name);
     
@@ -710,15 +722,6 @@ public:
     // Creating related types
     //----------------------------------------------------------------------
     
-    static CompilerType
-    AddConstModifier (const CompilerType& type);
-    
-    static CompilerType
-    AddRestrictModifier (const CompilerType& type);
-    
-    static CompilerType
-    AddVolatileModifier (const CompilerType& type);
-    
     // Using the current type, create a new typedef to that type using "typedef_name"
     // as the name and "decl_ctx" as the decl context.
     static CompilerType
@@ -752,9 +755,6 @@ public:
     TypeMemberFunctionImpl
     GetMemberFunctionAtIndex (void *type, size_t idx) override;
     
-    static CompilerType
-    GetLValueReferenceType (const CompilerType& type);
-    
     CompilerType
     GetNonReferenceType (void *type) override;
     
@@ -763,10 +763,25 @@ public:
     
     CompilerType
     GetPointerType (void *type) override;
-    
-    static CompilerType
-    GetRValueReferenceType (const CompilerType& type);
-    
+
+    CompilerType
+    GetLValueReferenceType (void *type) override;
+
+    CompilerType
+    GetRValueReferenceType (void *type) override;
+
+    CompilerType
+    AddConstModifier (void *type) override;
+
+    CompilerType
+    AddVolatileModifier (void *type) override;
+
+    CompilerType
+    AddRestrictModifier (void *type) override;
+
+    CompilerType
+    CreateTypedef (void *type, const char *name, const CompilerDeclContext &decl_ctx) override;
+
     // If the current object represents a typedef type, get the underlying type
     CompilerType
     GetTypedefedType (void *type) override;
@@ -804,7 +819,10 @@ public:
     
     uint32_t
     GetNumChildren (void *type, bool omit_empty_base_classes) override;
-    
+
+    CompilerType
+    GetBuiltinTypeByName (const ConstString &name) override;
+
     lldb::BasicType
     GetBasicTypeEnumeration (void *type) override;
     

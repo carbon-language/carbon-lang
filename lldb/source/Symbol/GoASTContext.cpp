@@ -11,10 +11,13 @@
 #include <utility>
 #include <vector>
 
+#include "lldb/Core/Module.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/DataFormatters/StringPrinter.h"
 #include "lldb/Symbol/CompilerType.h"
+#include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/GoASTContext.h"
 #include "lldb/Symbol/Type.h"
@@ -295,6 +298,59 @@ GoASTContext::~GoASTContext()
 {
 }
 
+//------------------------------------------------------------------
+// PluginInterface functions
+//------------------------------------------------------------------
+
+ConstString
+GoASTContext::GetPluginNameStatic()
+{
+    return ConstString("go");
+}
+
+ConstString
+GoASTContext::GetPluginName()
+{
+    return GoASTContext::GetPluginNameStatic();
+}
+
+uint32_t
+GoASTContext::GetPluginVersion()
+{
+    return 1;
+}
+
+lldb::TypeSystemSP
+GoASTContext::CreateInstance (lldb::LanguageType language, const lldb_private::ArchSpec &arch)
+{
+    if (language == eLanguageTypeGo)
+    {
+        if (arch.IsValid())
+        {
+            std::shared_ptr<GoASTContext> go_ast_sp(new GoASTContext);
+            go_ast_sp->SetAddressByteSize(arch.GetAddressByteSize());
+            return go_ast_sp;
+        }
+    }
+    return lldb::TypeSystemSP();
+}
+
+
+void
+GoASTContext::Initialize()
+{
+    PluginManager::RegisterPlugin (GetPluginNameStatic(),
+                                   "AST context plug-in",
+                                   CreateInstance);
+}
+
+void
+GoASTContext::Terminate()
+{
+    PluginManager::UnregisterPlugin (CreateInstance);
+}
+
+
 //----------------------------------------------------------------------
 // Tests
 //----------------------------------------------------------------------
@@ -546,6 +602,12 @@ GoASTContext::IsVoidType(void *type)
     if (!type)
         return false;
     return static_cast<GoType *>(type)->GetGoKind() == GoType::KIND_LLDB_VOID;
+}
+
+bool
+GoASTContext::SupportsLanguage (lldb::LanguageType language)
+{
+    return language == eLanguageTypeGo;
 }
 
 //----------------------------------------------------------------------
@@ -829,11 +891,9 @@ GoASTContext::GetBasicTypeFromAST(lldb::BasicType basic_type)
     return CompilerType();
 }
 
-CompilerType GoASTContext::GetIntTypeFromBitSize (size_t bit_size, bool is_signed)
-{
-    return CompilerType();
-}
-CompilerType GoASTContext::GetFloatTypeFromBitSize (size_t bit_size)
+CompilerType
+GoASTContext::GetBuiltinTypeForEncodingAndBitSize (lldb::Encoding encoding,
+                                                   size_t bit_size)
 {
     return CompilerType();
 }
@@ -1306,7 +1366,7 @@ GoASTContext::CreateBaseType(int go_kind, const lldb_private::ConstString &name,
 }
 
 CompilerType
-GoASTContext::CreateTypedef(int kind, const ConstString &name, CompilerType impl)
+GoASTContext::CreateTypedefType(int kind, const ConstString &name, CompilerType impl)
 {
     GoType *type = new GoElem(kind, name, impl);
     (*m_types)[name].reset(type);

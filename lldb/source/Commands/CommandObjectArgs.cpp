@@ -146,8 +146,14 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
-    
-    ClangASTContext &ast_context = thread_module_sp->GetClangASTContext();
+
+    TypeSystem *type_system = thread_module_sp->GetTypeSystemForLanguage(eLanguageTypeC);
+    if (type_system == nullptr)
+    {
+        result.AppendError ("Unable to create C type system.");
+        result.SetStatus (eReturnStatusFailed);
+        return false;
+    }
     
     ValueList value_list;
     
@@ -156,7 +162,7 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
         const char *arg_type_cstr = args.GetArgumentAtIndex(arg_index);
         Value value;
         value.SetValueType(Value::eValueTypeScalar);
-        CompilerType clang_type;
+        CompilerType compiler_type;
         
         char *int_pos;
         if ((int_pos = strstr (const_cast<char*>(arg_type_cstr), "int")))
@@ -198,10 +204,9 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
+            compiler_type = type_system->GetBuiltinTypeForEncodingAndBitSize(encoding, width);
             
-            clang_type = ast_context.GetBuiltinTypeForEncodingAndBitSize(encoding, width);
-            
-            if (!clang_type.IsValid())
+            if (!compiler_type.IsValid())
             {
                 result.AppendErrorWithFormat ("Couldn't get Clang type for format %s (%s integer, width %d).\n",
                                              arg_type_cstr,
@@ -215,9 +220,9 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
         else if (strchr (arg_type_cstr, '*'))
         {
             if (!strcmp (arg_type_cstr, "void*"))
-                clang_type = ast_context.GetBasicType(eBasicTypeVoid).GetPointerType();
+                compiler_type = type_system->GetBasicTypeFromAST(eBasicTypeVoid).GetPointerType();
             else if (!strcmp (arg_type_cstr, "char*"))
-                clang_type = ast_context.GetCStringType (false);
+                compiler_type = type_system->GetBasicTypeFromAST(eBasicTypeChar).GetPointerType();
             else
             {
                 result.AppendErrorWithFormat ("Invalid format: %s.\n", arg_type_cstr);
@@ -232,7 +237,7 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
             return false;
         }
                      
-        value.SetCompilerType (clang_type);
+        value.SetCompilerType (compiler_type);
         value_list.PushValue(value);
     }
     

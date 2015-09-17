@@ -14,6 +14,7 @@
 #include <string>
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
+#include "lldb/Core/PluginInterface.h"
 #include "lldb/Expression/Expression.h"
 #include "lldb/Symbol/CompilerDeclContext.h"
 #include "clang/AST/CharUnits.h"
@@ -28,7 +29,7 @@ namespace lldb_private {
 //----------------------------------------------------------------------
 // Interface for representing the Type Systems in different languages.
 //----------------------------------------------------------------------
-class TypeSystem
+class TypeSystem : public PluginInterface
 {
 public:
     //----------------------------------------------------------------------
@@ -70,6 +71,9 @@ public:
     };
 
     LLVMCastKind getKind() const { return m_kind; }
+
+    static lldb::TypeSystemSP
+    CreateInstance (lldb::LanguageType language, const lldb_private::ArchSpec &arch);
 
     //----------------------------------------------------------------------
     // Constructors and Destructors
@@ -182,7 +186,11 @@ public:
     
     virtual bool
     IsVoidType (void *type) = 0;
-    
+
+    // TypeSystems can support more than one language
+    virtual bool
+    SupportsLanguage (lldb::LanguageType language) = 0;
+
     //----------------------------------------------------------------------
     // Type Completion
     //----------------------------------------------------------------------
@@ -245,7 +253,25 @@ public:
     
     virtual CompilerType
     GetPointerType (void *type) = 0;
-    
+
+    virtual CompilerType
+    GetLValueReferenceType (void *type);
+
+    virtual CompilerType
+    GetRValueReferenceType (void *type);
+
+    virtual CompilerType
+    AddConstModifier (void *type);
+
+    virtual CompilerType
+    AddVolatileModifier (void *type);
+
+    virtual CompilerType
+    AddRestrictModifier (void *type);
+
+    virtual CompilerType
+    CreateTypedef (void *type, const char *name, const CompilerDeclContext &decl_ctx);
+
     //----------------------------------------------------------------------
     // Exploring the type
     //----------------------------------------------------------------------
@@ -261,7 +287,10 @@ public:
     
     virtual uint32_t
     GetNumChildren (void *type, bool omit_empty_base_classes) = 0;
-    
+
+    virtual CompilerType
+    GetBuiltinTypeByName (const ConstString &name);
+
     virtual lldb::BasicType
     GetBasicTypeEnumeration (void *type) = 0;
 
@@ -417,10 +446,8 @@ public:
     GetBasicTypeFromAST (lldb::BasicType basic_type) = 0;
     
     virtual CompilerType
-    GetIntTypeFromBitSize (size_t bit_size, bool is_signed) = 0;
-    
-    virtual CompilerType
-    GetFloatTypeFromBitSize (size_t bit_size) = 0;
+    GetBuiltinTypeForEncodingAndBitSize(lldb::Encoding encoding,
+                                        size_t bit_size) = 0;
 
     virtual bool
     IsBeingDefined (void *type) = 0;

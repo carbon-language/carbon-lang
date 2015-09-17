@@ -64,6 +64,8 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/ThreadSafeDenseMap.h"
@@ -77,9 +79,11 @@
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangExternalASTSourceCallbacks.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
+#include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/VerifyDecl.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
@@ -94,6 +98,17 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace llvm;
 using namespace clang;
+
+namespace
+{
+    static inline bool ClangASTContextSupportsLanguage (lldb::LanguageType language)
+    {
+        return language == eLanguageTypeUnknown || // Clang is the default type system
+               Language::LanguageIsC (language) ||
+               Language::LanguageIsCPlusPlus (language) ||
+               Language::LanguageIsObjC (language);
+    }
+}
 
 typedef lldb_private::ThreadSafeDenseMap<clang::ASTContext *, ClangASTContext*> ClangASTMap;
 
@@ -334,6 +349,74 @@ ClangASTContext::~ClangASTContext()
     m_source_manager_ap.reset();
     m_language_options_ap.reset();
     m_ast_ap.reset();
+}
+
+ConstString
+ClangASTContext::GetPluginNameStatic()
+{
+    return ConstString("clang");
+}
+
+ConstString
+ClangASTContext::GetPluginName()
+{
+    return ClangASTContext::GetPluginNameStatic();
+}
+
+uint32_t
+ClangASTContext::GetPluginVersion()
+{
+    return 1;
+}
+
+lldb::TypeSystemSP
+ClangASTContext::CreateInstance (lldb::LanguageType language, const lldb_private::ArchSpec &arch)
+{
+    if (ClangASTContextSupportsLanguage(language))
+    {
+        std::shared_ptr<ClangASTContext> ast_sp(new ClangASTContext);
+        if (ast_sp)
+        {
+            if (arch.IsValid())
+            {
+                ArchSpec fixed_arch = arch;
+                // LLVM wants this to be set to iOS or MacOSX; if we're working on
+                // a bare-boards type image, change the triple for llvm's benefit.
+                if (fixed_arch.GetTriple().getVendor() == llvm::Triple::Apple &&
+                    fixed_arch.GetTriple().getOS() == llvm::Triple::UnknownOS)
+                {
+                    if (fixed_arch.GetTriple().getArch() == llvm::Triple::arm ||
+                        fixed_arch.GetTriple().getArch() == llvm::Triple::aarch64 ||
+                        fixed_arch.GetTriple().getArch() == llvm::Triple::thumb)
+                    {
+                        fixed_arch.GetTriple().setOS(llvm::Triple::IOS);
+                    }
+                    else
+                    {
+                        fixed_arch.GetTriple().setOS(llvm::Triple::MacOSX);
+                    }
+                }
+                ast_sp->SetArchitecture (fixed_arch);
+            }
+        }
+        return ast_sp;
+    }
+    return lldb::TypeSystemSP();
+}
+
+
+void
+ClangASTContext::Initialize()
+{
+    PluginManager::RegisterPlugin (GetPluginNameStatic(),
+                                   "clang base AST context plug-in",
+                                   CreateInstance);
+}
+
+void
+ClangASTContext::Terminate()
+{
+    PluginManager::UnregisterPlugin (CreateInstance);
 }
 
 
@@ -595,8 +678,9 @@ QualTypeMatchesBitSize(const uint64_t bit_size, ASTContext *ast, QualType qual_t
         return true;
     return false;
 }
+
 CompilerType
-ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (Encoding encoding, uint32_t bit_size)
+ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (Encoding encoding, size_t bit_size)
 {
     return ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (getASTContext(), encoding, bit_size);
 }
@@ -2132,24 +2216,6 @@ ClangASTContext::GetPointerSizedIntType (clang::ASTContext *ast, bool is_signed)
     return CompilerType();
 }
 
-CompilerType
-ClangASTContext::GetFloatTypeFromBitSize (clang::ASTContext *ast,
-                                          size_t bit_size)
-{
-    if (ast)
-    {
-        if (bit_size == ast->getTypeSize(ast->FloatTy))
-            return CompilerType(ast, ast->FloatTy);
-        else if (bit_size == ast->getTypeSize(ast->DoubleTy))
-            return CompilerType(ast, ast->DoubleTy);
-        else if (bit_size == ast->getTypeSize(ast->LongDoubleTy))
-            return CompilerType(ast, ast->LongDoubleTy);
-        else if (bit_size == ast->getTypeSize(ast->HalfTy))
-            return CompilerType(ast, ast->HalfTy);
-    }
-    return CompilerType();
-}
-
 bool
 ClangASTContext::GetCompleteDecl (clang::ASTContext *ast,
                                   clang::Decl *decl)
@@ -3302,6 +3368,12 @@ ClangASTContext::IsVoidType (void* type)
 }
 
 bool
+ClangASTContext::SupportsLanguage (lldb::LanguageType language)
+{
+    return ClangASTContextSupportsLanguage(language);
+}
+
+bool
 ClangASTContext::GetCXXClassName (const CompilerType& type, std::string &class_name)
 {
     if (type)
@@ -3788,44 +3860,6 @@ ClangASTContext::GetTypeQualifiers(void* type)
 //----------------------------------------------------------------------
 
 CompilerType
-ClangASTContext::AddConstModifier (const CompilerType& type)
-{
-    if (IsClangType(type))
-    {
-        // Make sure this type is a clang AST type
-        clang::QualType result(GetQualType(type));
-        result.addConst();
-        return CompilerType (type.GetTypeSystem(), result.getAsOpaquePtr());
-    }
-
-    return CompilerType();
-}
-
-CompilerType
-ClangASTContext::AddRestrictModifier (const CompilerType& type)
-{
-    if (IsClangType(type))
-    {
-        clang::QualType result(GetQualType(type));
-        result.getQualifiers().setRestrict (true);
-        return CompilerType (type.GetTypeSystem(), result.getAsOpaquePtr());
-    }
-    return CompilerType();
-}
-
-CompilerType
-ClangASTContext::AddVolatileModifier (const CompilerType& type)
-{
-    if (IsClangType(type))
-    {
-        clang::QualType result(GetQualType(type));
-        result.getQualifiers().setVolatile (true);
-        return CompilerType (type.GetTypeSystem(), result.getAsOpaquePtr());
-    }
-    return CompilerType();
-}
-
-CompilerType
 ClangASTContext::GetArrayElementType (void* type, uint64_t *stride)
 {
     if (type)
@@ -4115,28 +4149,6 @@ ClangASTContext::GetMemberFunctionAtIndex (void* type, size_t idx)
 }
 
 CompilerType
-ClangASTContext::GetLValueReferenceType (const CompilerType& type)
-{
-    if (IsClangType(type))
-    {
-        ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
-        return CompilerType(ast->getASTContext(), ast->getASTContext()->getLValueReferenceType(GetQualType(type)));
-    }
-    return CompilerType();
-}
-
-CompilerType
-ClangASTContext::GetRValueReferenceType (const CompilerType& type)
-{
-    if (IsClangType(type))
-    {
-        ClangASTContext *ast = llvm::dyn_cast<ClangASTContext>(type.GetTypeSystem());
-        return CompilerType(ast->getASTContext(), ast->getASTContext()->getRValueReferenceType(GetQualType(type)));
-    }
-    return CompilerType();
-}
-
-CompilerType
 ClangASTContext::GetNonReferenceType (void* type)
 {
     if (type)
@@ -4207,6 +4219,92 @@ ClangASTContext::GetPointerType (void* type)
         }
     }
     return CompilerType();
+}
+
+
+CompilerType
+ClangASTContext::GetLValueReferenceType (void *type)
+{
+    if (type)
+        return CompilerType(this, getASTContext()->getLValueReferenceType(GetQualType(type)).getAsOpaquePtr());
+    else
+        return CompilerType();
+}
+
+CompilerType
+ClangASTContext::GetRValueReferenceType (void *type)
+{
+    if (type)
+        return CompilerType(this, getASTContext()->getRValueReferenceType(GetQualType(type)).getAsOpaquePtr());
+    else
+        return CompilerType();
+}
+
+CompilerType
+ClangASTContext::AddConstModifier (void *type)
+{
+    if (type)
+    {
+        clang::QualType result(GetQualType(type));
+        result.addConst();
+        return CompilerType (this, result.getAsOpaquePtr());
+    }
+    return CompilerType();
+}
+
+CompilerType
+ClangASTContext::AddVolatileModifier (void *type)
+{
+    if (type)
+    {
+        clang::QualType result(GetQualType(type));
+        result.addVolatile();
+        return CompilerType (this, result.getAsOpaquePtr());
+    }
+    return CompilerType();
+
+}
+
+CompilerType
+ClangASTContext::AddRestrictModifier (void *type)
+{
+    if (type)
+    {
+        clang::QualType result(GetQualType(type));
+        result.addRestrict();
+        return CompilerType (this, result.getAsOpaquePtr());
+    }
+    return CompilerType();
+
+}
+
+CompilerType
+ClangASTContext::CreateTypedef (void *type, const char *typedef_name, const CompilerDeclContext &compiler_decl_ctx)
+{
+    if (type)
+    {
+        clang::ASTContext* clang_ast = getASTContext();
+        clang::QualType qual_type (GetQualType(type));
+
+        clang::DeclContext *decl_ctx = ClangASTContext::DeclContextGetAsDeclContext(compiler_decl_ctx);
+        if (decl_ctx == nullptr)
+            decl_ctx = getASTContext()->getTranslationUnitDecl();
+
+        clang::TypedefDecl *decl = clang::TypedefDecl::Create (*clang_ast,
+                                                               decl_ctx,
+                                                               clang::SourceLocation(),
+                                                               clang::SourceLocation(),
+                                                               &clang_ast->Idents.get(typedef_name),
+                                                               clang_ast->getTrivialTypeSourceInfo(qual_type));
+
+        decl->setAccess(clang::AS_public); // TODO respect proper access specifier
+
+        // Get a uniqued clang::QualType for the typedef decl type
+        return CompilerType (this, clang_ast->getTypedefType (decl).getAsOpaquePtr());
+
+    }
+    return CompilerType();
+
 }
 
 CompilerType
@@ -4767,6 +4865,12 @@ ClangASTContext::GetNumChildren (void* type, bool omit_empty_base_classes)
             break;
     }
     return num_children;
+}
+
+CompilerType
+ClangASTContext::GetBuiltinTypeByName (const ConstString &name)
+{
+    return GetBasicType (GetBasicTypeEnumeration (name));
 }
 
 lldb::BasicType

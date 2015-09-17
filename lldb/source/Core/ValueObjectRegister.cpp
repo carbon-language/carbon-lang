@@ -319,8 +319,10 @@ ValueObjectRegister::GetCompilerTypeImpl ()
             Module *exe_module = target->GetExecutableModulePointer();
             if (exe_module)
             {
-                m_clang_type = exe_module->GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize (m_reg_info.encoding, 
-                                                                                                     m_reg_info.byte_size * 8);
+                TypeSystem *type_system = exe_module->GetTypeSystemForLanguage (eLanguageTypeC);
+                if (type_system)
+                    m_clang_type = type_system->GetBuiltinTypeForEncodingAndBitSize (m_reg_info.encoding,
+                                                                                     m_reg_info.byte_size * 8);
             }
         }
     }

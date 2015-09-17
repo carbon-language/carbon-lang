@@ -20,10 +20,10 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Core/ValueObjectVariable.h"
-#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/Symtab.h"
+#include "lldb/Symbol/TypeSystem.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Target.h"
 
@@ -521,7 +521,11 @@ SBModule::FindFirstType (const char *name_cstr)
         sb_type = SBType (module_sp->FindFirstType(sc, name, exact_match));
         
         if (!sb_type.IsValid())
-            sb_type = SBType (ClangASTContext::GetBasicType (module_sp->GetClangASTContext().getASTContext(), name));
+        {
+            TypeSystem *type_system = module_sp->GetTypeSystemForLanguage(eLanguageTypeC);
+            if (type_system)
+                sb_type = SBType (type_system->GetBuiltinTypeByName(name));
+        }
     }
     return sb_type;
 }
@@ -531,7 +535,11 @@ SBModule::GetBasicType(lldb::BasicType type)
 {
     ModuleSP module_sp (GetSP ());
     if (module_sp)
-        return SBType (ClangASTContext::GetBasicType (module_sp->GetClangASTContext().getASTContext(), type));
+    {
+        TypeSystem *type_system = module_sp->GetTypeSystemForLanguage(eLanguageTypeC);
+        if (type_system)
+            return SBType (type_system->GetBasicTypeFromAST(type));
+    }
     return SBType();
 }
 
@@ -564,9 +572,13 @@ SBModule::FindTypes (const char *type)
         }
         else
         {
-            SBType sb_type(ClangASTContext::GetBasicType (module_sp->GetClangASTContext().getASTContext(), name));
-            if (sb_type.IsValid())
-                retval.Append(sb_type);
+            TypeSystem *type_system = module_sp->GetTypeSystemForLanguage(eLanguageTypeC);
+            if (type_system)
+            {
+                CompilerType compiler_type = type_system->GetBuiltinTypeByName(name);
+                if (compiler_type)
+                    retval.Append(SBType(compiler_type));
+            }
         }
     }
 

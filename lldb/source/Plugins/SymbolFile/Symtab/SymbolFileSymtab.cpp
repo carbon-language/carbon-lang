@@ -79,14 +79,6 @@ SymbolFileSymtab::~SymbolFileSymtab()
 {
 }
 
-ClangASTContext &       
-SymbolFileSymtab::GetClangASTContext ()
-{    
-    ClangASTContext &ast = m_obj_file->GetModule()->GetClangASTContext();
-    
-    return ast;
-}
-
 uint32_t
 SymbolFileSymtab::CalculateAbilities ()
 {

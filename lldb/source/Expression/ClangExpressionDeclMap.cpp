@@ -1678,7 +1678,17 @@ ClangExpressionDeclMap::GetVariableValue (VariableSP &var,
         return false;
     }
 
-    ASTContext *ast = var_type->GetClangASTContext().getASTContext();
+    ClangASTContext *clang_ast = llvm::dyn_cast_or_null<ClangASTContext>(var_type->GetForwardCompilerType().GetTypeSystem());
+
+    if (!clang_ast)
+    {
+        if (log)
+            log->PutCString("Skipped a definition because it has no Clang AST");
+        return false;
+    }
+
+
+    ASTContext *ast = clang_ast->getASTContext();
 
     if (!ast)
     {
@@ -1785,7 +1795,7 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
     if (is_reference)
         var_decl = context.AddVarDecl(pt);
     else
-        var_decl = context.AddVarDecl(ClangASTContext::GetLValueReferenceType(pt));
+        var_decl = context.AddVarDecl(pt.GetLValueReferenceType());
 
     std::string decl_name(context.m_decl_name.getAsString());
     ConstString entity_name(decl_name.c_str());
@@ -1829,7 +1839,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
         return;
     }
 
-    NamedDecl *var_decl = context.AddVarDecl(ClangASTContext::GetLValueReferenceType(parser_type));
+    NamedDecl *var_decl = context.AddVarDecl(parser_type.GetLValueReferenceType());
 
     llvm::cast<ClangExpressionVariable>(pvar_sp.get())->EnableParserVars(GetParserID());
     ClangExpressionVariable::ParserVars *parser_vars = llvm::cast<ClangExpressionVariable>(pvar_sp.get())->GetParserVars(GetParserID());
@@ -1861,8 +1871,8 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
 
     ASTContext *scratch_ast_context = target->GetScratchClangASTContext()->getASTContext();
 
-    TypeFromUser user_type (ClangASTContext::GetLValueReferenceType(ClangASTContext::GetBasicType(scratch_ast_context, eBasicTypeVoid).GetPointerType()));
-    TypeFromParser parser_type (ClangASTContext::GetLValueReferenceType(ClangASTContext::GetBasicType(m_ast_context, eBasicTypeVoid).GetPointerType()));
+    TypeFromUser user_type (ClangASTContext::GetBasicType(scratch_ast_context, eBasicTypeVoid).GetPointerType().GetLValueReferenceType());
+    TypeFromParser parser_type (ClangASTContext::GetBasicType(m_ast_context, eBasicTypeVoid).GetPointerType().GetLValueReferenceType());
     NamedDecl *var_decl = context.AddVarDecl(parser_type);
 
     std::string decl_name(context.m_decl_name.getAsString());

@@ -13,7 +13,8 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Timer.h"
-
+#include "lldb/Symbol/GoASTContext.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
 #include "Plugins/DynamicLoader/Windows-DYLD/DynamicLoaderWindowsDYLD.h"
@@ -103,6 +104,9 @@ SystemInitializerCommon::Initialize()
     process_gdb_remote::ProcessGDBRemoteLog::Initialize();
 
     // Initialize plug-ins
+    ClangASTContext::Initialize();
+    GoASTContext::Initialize();
+
     ObjectContainerBSDArchive::Initialize();
     ObjectFileELF::Initialize();
     ObjectFilePECOFF::Initialize();
@@ -165,6 +169,9 @@ SystemInitializerCommon::Terminate()
     PlatformMacOSX::Terminate();
     PlatformRemoteiOS::Terminate();
     PlatformiOSSimulator::Terminate();
+
+    ClangASTContext::Terminate();
+    GoASTContext::Terminate();
 
     EmulateInstructionARM::Terminate();
     EmulateInstructionMIPS::Terminate();

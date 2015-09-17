@@ -110,9 +110,6 @@ protected:
     lldb_private::Symtab::IndexCollection m_data_indexes;
     lldb_private::Symtab::NameToIndexMap m_objc_class_name_to_index;
     TypeMap m_objc_class_types;
-
-    lldb_private::ClangASTContext &
-    GetClangASTContext ();
     
 private:
     DISALLOW_COPY_AND_ASSIGN (SymbolFileSymtab);

@@ -495,15 +495,6 @@ SymbolFileDWARF::GetUniqueDWARFASTTypeMap ()
     return m_unique_ast_type_map;
 }
 
-ClangASTContext &
-SymbolFileDWARF::GetClangASTContext ()
-{
-    if (GetDebugMapSymfile ())
-        return m_debug_map_symfile->GetClangASTContext ();
-    else
-        return m_obj_file->GetModule()->GetClangASTContext();
-}
-
 TypeSystem *
 SymbolFileDWARF::GetTypeSystemForLanguage (LanguageType language)
 {
@@ -575,12 +566,6 @@ SymbolFileDWARF::InitializeObject()
         else
             m_apple_objc_ap.reset();
     }
-
-    // Set the symbol file to this file if we don't have a debug map symbol
-    // file as our main symbol file. This allows the clang ASTContext to complete
-    // types using this symbol file when it needs to complete classes and structures.
-    if (GetDebugMapSymfile () == nullptr)
-        GetClangASTContext().SetSymbolFile(this);
 }
 
 bool
@@ -2098,7 +2083,9 @@ SymbolFileDWARF::DeclContextMatchesThisSymbolFile (const lldb_private::CompilerD
         return true;
     }
 
-    if ((TypeSystem *)&GetClangASTContext() == decl_ctx->GetTypeSystem())
+    TypeSystem *decl_ctx_type_system = decl_ctx->GetTypeSystem();
+    TypeSystem *type_system = GetTypeSystemForLanguage(decl_ctx_type_system->GetMinimumLanguage(nullptr));
+    if (decl_ctx_type_system == type_system)
         return true;    // The type systems match, return true
     
     // The namespace AST was valid, and it does not match...

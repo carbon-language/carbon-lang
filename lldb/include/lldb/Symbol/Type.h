@@ -14,7 +14,6 @@
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/UserID.h"
-#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/Declaration.h"
 
@@ -254,9 +253,6 @@ public:
     CompilerType 
     GetForwardCompilerType ();
 
-    ClangASTContext &
-    GetClangASTContext ();
-
     static int
     Compare(const Type &a, const Type &b);
 
@@ -422,7 +418,7 @@ public:
     GetPointerType () const
     {
         if (type_sp)
-            return type_sp->GetLayoutCompilerType ().GetPointerType();
+            return type_sp->GetForwardCompilerType().GetPointerType();
         return clang_type.GetPointerType();
     }
     
@@ -430,7 +426,7 @@ public:
     GetPointeeType () const
     {
         if (type_sp)
-            return type_sp->GetFullCompilerType ().GetPointeeType();
+            return type_sp->GetForwardCompilerType ().GetPointeeType();
         return clang_type.GetPointeeType();
     }
     
@@ -438,39 +434,43 @@ public:
     GetReferenceType () const
     {
         if (type_sp)
-            return ClangASTContext::GetLValueReferenceType(type_sp->GetLayoutCompilerType ());
-        return ClangASTContext::GetLValueReferenceType(clang_type);
+            return type_sp->GetForwardCompilerType ().GetLValueReferenceType();
+        else
+            return clang_type.GetLValueReferenceType();
     }
 
     CompilerType
     GetTypedefedType () const
     {
         if (type_sp)
-            return type_sp->GetFullCompilerType ().GetTypedefedType();
-        return clang_type.GetTypedefedType();
+            return type_sp->GetForwardCompilerType ().GetTypedefedType();
+        else
+            return clang_type.GetTypedefedType();
     }
 
     CompilerType
     GetDereferencedType () const
     {
         if (type_sp)
-            return type_sp->GetFullCompilerType ().GetNonReferenceType();
-        return clang_type.GetNonReferenceType();
+            return type_sp->GetForwardCompilerType ().GetNonReferenceType();
+        else
+            return clang_type.GetNonReferenceType();
     }
     
     CompilerType
     GetUnqualifiedType () const
     {
         if (type_sp)
-            return type_sp->GetLayoutCompilerType ().GetFullyUnqualifiedType();
-        return clang_type.GetFullyUnqualifiedType();
+            return type_sp->GetForwardCompilerType ().GetFullyUnqualifiedType();
+        else
+            return clang_type.GetFullyUnqualifiedType();
     }
     
     CompilerType
     GetCanonicalType () const
     {
         if (type_sp)
-            return type_sp->GetFullCompilerType ().GetCanonicalType();
+            return type_sp->GetForwardCompilerType ().GetCanonicalType();
         return clang_type.GetCanonicalType();
     }
     

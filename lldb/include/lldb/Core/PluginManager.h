@@ -419,6 +419,22 @@ public:
     static InstrumentationRuntimeCreateInstance
     GetInstrumentationRuntimeCreateCallbackForPluginName (const ConstString &name);
 
+    //------------------------------------------------------------------
+    // TypeSystem
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const ConstString &name,
+                    const char *description,
+                    TypeSystemCreateInstance create_callback);
+
+    static bool
+    UnregisterPlugin (TypeSystemCreateInstance create_callback);
+
+    static TypeSystemCreateInstance
+    GetTypeSystemCreateCallbackAtIndex (uint32_t idx);
+
+    static TypeSystemCreateInstance
+    GetTypeSystemCreateCallbackForPluginName (const ConstString &name);
     
     //------------------------------------------------------------------
     // Some plug-ins might register a DebuggerInitializeCallback

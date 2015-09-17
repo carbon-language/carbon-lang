@@ -532,11 +532,66 @@ CompilerType::GetPointerType () const
 }
 
 CompilerType
+CompilerType::GetLValueReferenceType () const
+{
+    if (IsValid())
+        return m_type_system->GetLValueReferenceType(m_type);
+    else
+        return CompilerType();
+}
+
+CompilerType
+CompilerType::GetRValueReferenceType () const
+{
+    if (IsValid())
+        return m_type_system->GetRValueReferenceType(m_type);
+    else
+        return CompilerType();
+}
+
+CompilerType
+CompilerType::AddConstModifier () const
+{
+    if (IsValid())
+        return m_type_system->AddConstModifier(m_type);
+    else
+        return CompilerType();
+}
+
+CompilerType
+CompilerType::AddVolatileModifier () const
+{
+    if (IsValid())
+        return m_type_system->AddVolatileModifier(m_type);
+    else
+        return CompilerType();
+}
+
+CompilerType
+CompilerType::AddRestrictModifier () const
+{
+    if (IsValid())
+        return m_type_system->AddRestrictModifier(m_type);
+    else
+        return CompilerType();
+}
+
+CompilerType
+CompilerType::CreateTypedef (const char *name, const CompilerDeclContext &decl_ctx) const
+{
+    if (IsValid())
+        return m_type_system->CreateTypedef(m_type, name, decl_ctx);
+    else
+        return CompilerType();
+}
+
+CompilerType
 CompilerType::GetTypedefedType () const
 {
     if (IsValid())
         return m_type_system->GetTypedefedType(m_type);
-    return CompilerType();
+    else
+        return CompilerType();
 }
 
 //----------------------------------------------------------------------

@@ -15,6 +15,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/ModuleSpec.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/StreamString.h"
@@ -23,17 +24,16 @@
 #include "lldb/Host/Symbols.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
-#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
-#include "lldb/Symbol/GoASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
+#include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Symbol/TypeSystem.h"
 #include "lldb/Target/Language.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
-#include "lldb/Symbol/SymbolFile.h"
 #include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
 #include "Plugins/Language/ObjC/ObjCLanguage.h"
 
@@ -148,14 +148,12 @@ Module::Module (const ModuleSpec &module_spec) :
     m_object_mod_time (),
     m_objfile_sp (),
     m_symfile_ap (),
-    m_ast (new ClangASTContext),
-    m_go_ast(),
+    m_type_system_map(),
     m_source_mappings (),
     m_sections_ap(),
     m_did_load_objfile (false),
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
-    m_did_init_ast (false),
     m_file_has_changed (false),
     m_first_file_changed_log (false)
 {
@@ -253,14 +251,12 @@ Module::Module(const FileSpec& file_spec,
     m_object_mod_time (),
     m_objfile_sp (),
     m_symfile_ap (),
-    m_ast (new ClangASTContext),
-    m_go_ast(),
+    m_type_system_map(),
     m_source_mappings (),
     m_sections_ap(),
     m_did_load_objfile (false),
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
-    m_did_init_ast (false),
     m_file_has_changed (false),
     m_first_file_changed_log (false)
 {
@@ -300,14 +296,12 @@ Module::Module () :
     m_object_mod_time (),
     m_objfile_sp (),
     m_symfile_ap (),
-    m_ast (new ClangASTContext),
-    m_go_ast(),
+    m_type_system_map(),
     m_source_mappings (),
     m_sections_ap(),
     m_did_load_objfile (false),
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
-    m_did_init_ast (false),
     m_file_has_changed (false),
     m_first_file_changed_log (false)
 {
@@ -424,64 +418,26 @@ Module::GetUUID()
 TypeSystem *
 Module::GetTypeSystemForLanguage (LanguageType language)
 {
-    if (language == eLanguageTypeGo)
-    {
-        Mutex::Locker locker (m_mutex);
-        if (!m_go_ast)
-        {
-            ObjectFile * objfile = GetObjectFile();
-            ArchSpec object_arch;
-            if (objfile && objfile->GetArchitecture(object_arch))
-            {
-                m_go_ast.reset(new GoASTContext);
-                m_go_ast->SetAddressByteSize(object_arch.GetAddressByteSize());
-            }
-        }
-        return m_go_ast.get();
-    }
-    else if (language != eLanguageTypeSwift)
-    {
-        // For now assume all languages except swift use the ClangASTContext for types
-        return &GetClangASTContext();
-    }
-    return nullptr;
-}
+    Mutex::Locker locker (m_mutex);
+    TypeSystemMap::iterator pos = m_type_system_map.find(language);
+    if (pos != m_type_system_map.end())
+        return pos->second.get();
 
-ClangASTContext &
-Module::GetClangASTContext ()
-{
-    if (m_did_init_ast.load() == false)
+    for (const auto &pair : m_type_system_map)
     {
-        Mutex::Locker locker (m_mutex);
-        if (m_did_init_ast.load() == false)
+        if (pair.second && pair.second->SupportsLanguage(language))
         {
-            ObjectFile * objfile = GetObjectFile();
-            ArchSpec object_arch;
-            if (objfile && objfile->GetArchitecture(object_arch))
-            {
-                m_did_init_ast = true;
-
-                // LLVM wants this to be set to iOS or MacOSX; if we're working on
-                // a bare-boards type image, change the triple for llvm's benefit.
-                if (object_arch.GetTriple().getVendor() == llvm::Triple::Apple 
-                    && object_arch.GetTriple().getOS() == llvm::Triple::UnknownOS)
-                {
-                    if (object_arch.GetTriple().getArch() == llvm::Triple::arm || 
-                        object_arch.GetTriple().getArch() == llvm::Triple::aarch64 ||
-                        object_arch.GetTriple().getArch() == llvm::Triple::thumb)
-                    {
-                        object_arch.GetTriple().setOS(llvm::Triple::IOS);
-                    }
-                    else
-                    {
-                        object_arch.GetTriple().setOS(llvm::Triple::MacOSX);
-                    }
-                }
-                m_ast->SetArchitecture (object_arch);
-            }
+            // Add a new mapping for "language" to point to an already existing
+            // TypeSystem that supports this language
+            m_type_system_map[language] = pair.second;
+            return pair.second.get();
         }
     }
-    return *m_ast;
+
+    // Cache even if we get a shared pointer that contains null type system back
+    lldb::TypeSystemSP type_system_sp = TypeSystem::CreateInstance (language, GetArchitecture());
+    m_type_system_map[language] = type_system_sp;
+    return type_system_sp.get();
 }
 
 void

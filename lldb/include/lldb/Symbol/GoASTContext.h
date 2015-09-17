@@ -27,6 +27,28 @@ class GoASTContext : public TypeSystem
     GoASTContext();
     ~GoASTContext();
 
+    //------------------------------------------------------------------
+    // PluginInterface functions
+    //------------------------------------------------------------------
+    ConstString
+    GetPluginName() override;
+
+    uint32_t
+    GetPluginVersion() override;
+
+    static ConstString
+    GetPluginNameStatic ();
+
+    static lldb::TypeSystemSP
+    CreateInstance (lldb::LanguageType language, const lldb_private::ArchSpec &arch);
+
+    static void
+    Initialize ();
+
+    static void
+    Terminate ();
+    
+
     DWARFASTParser *GetDWARFParser() override;
 
     void
@@ -101,7 +123,7 @@ class GoASTContext : public TypeSystem
     CompilerType CreateBaseType(int go_kind, const ConstString &type_name_const_str, uint64_t byte_size);
 
     // For interface, map, chan.
-    CompilerType CreateTypedef(int kind, const ConstString &name, CompilerType impl);
+    CompilerType CreateTypedefType(int kind, const ConstString &name, CompilerType impl);
 
     CompilerType CreateVoidType(const ConstString &name);
     CompilerType CreateFunctionType(const lldb_private::ConstString &name, CompilerType *params, size_t params_count,
@@ -124,37 +146,39 @@ class GoASTContext : public TypeSystem
     static bool IsDirectIface(uint8_t kind);
     static bool IsPointerKind(uint8_t kind);
 
-    virtual bool IsArrayType(void *type, CompilerType *element_type, uint64_t *size, bool *is_incomplete) override;
+    bool IsArrayType(void *type, CompilerType *element_type, uint64_t *size, bool *is_incomplete) override;
 
-    virtual bool IsAggregateType(void *type) override;
+    bool IsAggregateType(void *type) override;
 
-    virtual bool IsCharType(void *type) override;
+    bool IsCharType(void *type) override;
 
-    virtual bool IsCompleteType(void *type) override;
+    bool IsCompleteType(void *type) override;
 
-    virtual bool IsDefined(void *type) override;
+    bool IsDefined(void *type) override;
 
-    virtual bool IsFloatingPointType(void *type, uint32_t &count, bool &is_complex) override;
+    bool IsFloatingPointType(void *type, uint32_t &count, bool &is_complex) override;
 
-    virtual bool IsFunctionType(void *type, bool *is_variadic_ptr = NULL) override;
+    bool IsFunctionType(void *type, bool *is_variadic_ptr = NULL) override;
 
-    virtual size_t GetNumberOfFunctionArguments(void *type) override;
+    size_t GetNumberOfFunctionArguments(void *type) override;
 
-    virtual CompilerType GetFunctionArgumentAtIndex(void *type, const size_t index) override;
+    CompilerType GetFunctionArgumentAtIndex(void *type, const size_t index) override;
 
-    virtual bool IsFunctionPointerType(void *type) override;
+    bool IsFunctionPointerType(void *type) override;
 
-    virtual bool IsIntegerType(void *type, bool &is_signed) override;
+    bool IsIntegerType(void *type, bool &is_signed) override;
 
-    virtual bool IsPossibleDynamicType(void *type,
+    bool IsPossibleDynamicType(void *type,
                                        CompilerType *target_type, // Can pass NULL
                                        bool check_cplusplus, bool check_objc) override;
 
-    virtual bool IsPointerType(void *type, CompilerType *pointee_type = NULL) override;
+    bool IsPointerType(void *type, CompilerType *pointee_type = NULL) override;
 
-    virtual bool IsScalarType(void *type) override;
+    bool IsScalarType(void *type) override;
 
-    virtual bool IsVoidType(void *type) override;
+    bool IsVoidType(void *type) override;
+
+    bool SupportsLanguage (lldb::LanguageType language) override;
 
     //----------------------------------------------------------------------
     // Type Completion
@@ -217,9 +241,9 @@ class GoASTContext : public TypeSystem
     virtual uint32_t GetNumChildren(void *type, bool omit_empty_base_classes) override;
 
     virtual lldb::BasicType GetBasicTypeEnumeration(void *type) override;
-    virtual CompilerType GetIntTypeFromBitSize (size_t bit_size, bool is_signed) override;
-    virtual CompilerType GetFloatTypeFromBitSize (size_t bit_size) override;
 
+    virtual CompilerType GetBuiltinTypeForEncodingAndBitSize (lldb::Encoding encoding,
+                                                              size_t bit_size) override;
 
     virtual uint32_t GetNumFields(void *type) override;
 

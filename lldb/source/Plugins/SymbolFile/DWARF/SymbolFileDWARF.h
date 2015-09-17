@@ -221,9 +221,6 @@ public:
               uint32_t type_mask,
               lldb_private::TypeList &type_list) override;
 
-    lldb_private::ClangASTContext &
-    GetClangASTContext () override;
-
     lldb_private::TypeSystem *
     GetTypeSystemForLanguage (lldb::LanguageType language) override;
 

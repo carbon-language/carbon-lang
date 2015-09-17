@@ -46,6 +46,7 @@ namespace lldb_private
     typedef lldb::MemoryHistorySP (*MemoryHistoryCreateInstance) (const lldb::ProcessSP &process_sp);
     typedef lldb::InstrumentationRuntimeType (*InstrumentationRuntimeGetType) ();
     typedef lldb::InstrumentationRuntimeSP (*InstrumentationRuntimeCreateInstance) (const lldb::ProcessSP &process_sp);
+    typedef lldb::TypeSystemSP (*TypeSystemCreateInstance) (lldb::LanguageType language, const lldb_private::ArchSpec &arch);
     typedef int (*ComparisonFunction)(const void *, const void *);
     typedef void (*DebuggerInitializeCallback)(Debugger &debugger);
 

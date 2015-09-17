@@ -2516,6 +2516,108 @@ PluginManager::GetInstrumentationRuntimeCreateCallbackForPluginName (const Const
     return NULL;
 }
 
+#pragma mark TypeSystem
+
+
+struct TypeSystemInstance
+{
+    TypeSystemInstance() :
+    name(),
+    description(),
+    create_callback(NULL)
+    {
+    }
+
+    ConstString name;
+    std::string description;
+    TypeSystemCreateInstance create_callback;
+};
+
+typedef std::vector<TypeSystemInstance> TypeSystemInstances;
+
+static Mutex &
+GetTypeSystemMutex ()
+{
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
+
+static TypeSystemInstances &
+GetTypeSystemInstances ()
+{
+    static TypeSystemInstances g_instances;
+    return g_instances;
+}
+
+bool
+PluginManager::RegisterPlugin (const ConstString &name,
+                               const char *description,
+                               TypeSystemCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        TypeSystemInstance instance;
+        assert ((bool)name);
+        instance.name = name;
+        if (description && description[0])
+            instance.description = description;
+        instance.create_callback = create_callback;
+        Mutex::Locker locker (GetTypeSystemMutex ());
+        GetTypeSystemInstances ().push_back (instance);
+    }
+    return false;
+}
+
+bool
+PluginManager::UnregisterPlugin (TypeSystemCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        Mutex::Locker locker (GetTypeSystemMutex ());
+        TypeSystemInstances &instances = GetTypeSystemInstances ();
+
+        TypeSystemInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+TypeSystemCreateInstance
+PluginManager::GetTypeSystemCreateCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetTypeSystemMutex ());
+    TypeSystemInstances &instances = GetTypeSystemInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
+    return NULL;
+}
+
+TypeSystemCreateInstance
+PluginManager::GetTypeSystemCreateCallbackForPluginName (const ConstString &name)
+{
+    if (name)
+    {
+        Mutex::Locker locker (GetTypeSystemMutex ());
+        TypeSystemInstances &instances = GetTypeSystemInstances ();
+
+        TypeSystemInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (name == pos->name)
+                return pos->create_callback;
+        }
+    }
+    return NULL;
+}
+
+
 #pragma mark PluginManager
 
 void

@@ -147,8 +147,6 @@ public:
     virtual size_t          GetTypes (lldb_private::SymbolContextScope *sc_scope,
                                       uint32_t type_mask,
                                       lldb_private::TypeList &type_list) = 0;
-    virtual ClangASTContext &
-                            GetClangASTContext ();
 
     virtual lldb_private::TypeSystem *
                             GetTypeSystemForLanguage (lldb::LanguageType language);

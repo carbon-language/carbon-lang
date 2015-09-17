@@ -272,14 +272,74 @@ public:
     TypeMemberFunctionImpl
     GetMemberFunctionAtIndex (size_t idx);
     
+    //----------------------------------------------------------------------
+    // If this type is a reference to a type (L value or R value reference),
+    // return a new type with the reference removed, else return the current
+    // type itself.
+    //----------------------------------------------------------------------
     CompilerType
     GetNonReferenceType () const;
 
+    //----------------------------------------------------------------------
+    // If this type is a pointer type, return the type that the pointer
+    // points to, else return an invalid type.
+    //----------------------------------------------------------------------
     CompilerType
     GetPointeeType () const;
     
+    //----------------------------------------------------------------------
+    // Return a new CompilerType that is a pointer to this type
+    //----------------------------------------------------------------------
     CompilerType
     GetPointerType () const;
+
+    //----------------------------------------------------------------------
+    // Return a new CompilerType that is a L value reference to this type if
+    // this type is valid and the type system supports L value references,
+    // else return an invalid type.
+    //----------------------------------------------------------------------
+    CompilerType
+    GetLValueReferenceType () const;
+
+    //----------------------------------------------------------------------
+    // Return a new CompilerType that is a R value reference to this type if
+    // this type is valid and the type system supports R value references,
+    // else return an invalid type.
+    //----------------------------------------------------------------------
+    CompilerType
+    GetRValueReferenceType () const;
+
+    //----------------------------------------------------------------------
+    // Return a new CompilerType adds a const modifier to this type if
+    // this type is valid and the type system supports const modifiers,
+    // else return an invalid type.
+    //----------------------------------------------------------------------
+    CompilerType
+    AddConstModifier () const;
+
+    //----------------------------------------------------------------------
+    // Return a new CompilerType adds a volatile modifier to this type if
+    // this type is valid and the type system supports volatile modifiers,
+    // else return an invalid type.
+    //----------------------------------------------------------------------
+    CompilerType
+    AddVolatileModifier () const;
+
+    //----------------------------------------------------------------------
+    // Return a new CompilerType adds a restrict modifier to this type if
+    // this type is valid and the type system supports restrict modifiers,
+    // else return an invalid type.
+    //----------------------------------------------------------------------
+    CompilerType
+    AddRestrictModifier () const;
+
+    //----------------------------------------------------------------------
+    // Create a typedef to this type using "name" as the name of the typedef
+    // this type is valid and the type system supports typedefs, else return
+    // an invalid type.
+    //----------------------------------------------------------------------
+    CompilerType
+    CreateTypedef (const char *name, const CompilerDeclContext &decl_ctx) const;
 
     // If the current object represents a typedef type, get the underlying type
     CompilerType

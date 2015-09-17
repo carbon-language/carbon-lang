@@ -229,7 +229,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
         if (non_ref_type.IsTypedefType())
         {
             CompilerType deffed_referenced_type = non_ref_type.GetTypedefedType();
-            deffed_referenced_type = is_rvalue_ref ? ClangASTContext::GetRValueReferenceType(deffed_referenced_type) : ClangASTContext::GetLValueReferenceType(deffed_referenced_type);
+            deffed_referenced_type = is_rvalue_ref ? deffed_referenced_type.GetRValueReferenceType() : deffed_referenced_type.GetLValueReferenceType();
             GetPossibleMatches(valobj,
                                deffed_referenced_type,
                                reason | lldb_private::eFormatterChoiceCriterionNavigatedTypedefs,

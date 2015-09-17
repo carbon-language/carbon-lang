@@ -16,6 +16,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/TypeList.h"
+#include "lldb/Symbol/TypeSystem.h"
 #include "lldb/Symbol/VariableList.h"
 
 using namespace lldb_private;
@@ -82,12 +83,6 @@ SymbolFile::GetTypeList ()
     if (m_obj_file)
         return m_obj_file->GetModule()->GetTypeList();
     return nullptr;
-}
-
-ClangASTContext &
-SymbolFile::GetClangASTContext ()
-{
-    return m_obj_file->GetModule()->GetClangASTContext();
 }
 
 TypeSystem *

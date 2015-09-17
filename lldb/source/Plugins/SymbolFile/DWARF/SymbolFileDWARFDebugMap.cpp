@@ -297,9 +297,6 @@ SymbolFileDWARFDebugMap::~SymbolFileDWARFDebugMap()
 void
 SymbolFileDWARFDebugMap::InitializeObject()
 {
-    // Set the symbol file to this file. This allows the clang ASTContext to complete
-    // types using this symbol file when it needs to complete classes and structures.
-    GetClangASTContext().SetSymbolFile(this);
 }
 
 void
