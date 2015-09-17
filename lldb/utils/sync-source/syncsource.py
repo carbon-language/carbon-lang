@@ -28,7 +28,7 @@ sys.path.append(LOCAL_LIB_PATH)
 import transfer.transfer_spec
 
 
-DOTRC_BASE_FILENAME = ".sync-sourcerc"
+DOTRC_BASE_FILENAME = ".syncsourcerc"
 
 
 class Configuration(object):

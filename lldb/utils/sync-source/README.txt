@@ -1,16 +1,16 @@
-sync-source.py
+syncsource.py
 
 OVERVIEW
 
-The sync-source.py utility transfers groups of files between
+The syncsource.py utility transfers groups of files between
 computers. The primary use case is to enable developing LLVM project
 software on one machine, transfer it efficiently to other machines ---
-possibly of other architectures --- and test it there. sync-source.py
+possibly of other architectures --- and test it there. syncsource.py
 supports configurable, named source-to-destination mappings and has a
 transfer agent plug-in architecture. The current distribution provides
 an rsync-over-ssh transfer agent.
 
-The primary benefits of using sync-source.py are:
+The primary benefits of using syncsource.py are:
 
 * Provides a simple, reliable way to get a mirror copy of primary-
   machine files onto several different destinations without concern
@@ -46,7 +46,7 @@ Requirements:
 
 * FreeBSD machine requires the same layout as the llvm machine.
 
-sync-source.py configuration in ~/.sync-sourcerc:
+syncsource.py configuration in ~/.syncsourcerc:
 
 # This is my configuration with a comment.  Configuration
 # files are JSON-based.
@@ -93,7 +93,7 @@ sync-source.py configuration in ~/.sync-sourcerc:
         #
         # By default, ".git", ".svn" and ".pyc" are added to
         # all dir-id exclusions.  The default excludes can be
-        # controlled by the sync-source.py --default-excludes
+        # controlled by the syncsource.py --default-excludes
         # option.
         #
         # Below, I have transfer of the lldb dir skip everything
@@ -210,7 +210,7 @@ sync-source.py configuration in ~/.sync-sourcerc:
     # 1. having a parent "default" blockthat points to this one,
     #    which then gets used by default, or
     # 2. using the --configuration/-c CONFIG option to
-    #    specify using this name on the sync-source.py command line.
+    #    specify using this name on the syncsource.py command line.
     {
         "name": "lldb-linux"
         "parent": "common_tot",
@@ -266,20 +266,20 @@ sync-source.py configuration in ~/.sync-sourcerc:
 
 Using it
 
-Now that we have a .sync-sourcerc file set up, we can do a transfer.
-The .sync-sourcerc file will be searched for as follows, using the
+Now that we have a .syncsourcerc file set up, we can do a transfer.
+The .syncsourcerc file will be searched for as follows, using the
 first one that is found:
 
 * First check the --rc-file RCFILE option.  If this is specified
   and doesn't exist, it will raise an error and quit.
 
-* Check if the current directory has a .sync-sourcerc file.  If so,
+* Check if the current directory has a .syncsourcerc file.  If so,
   use that.
 
-* Use the .sync-sourcerc file from the user's home directory.
+* Use the .syncsourcerc file from the user's home directory.
 
 Run the command:
-python /path/to/sync-source.rc -c {configuration-name}
+python /path/to/syncsource.rc -c {configuration-name}
 
 The -c {configuration-name} can be left off, in which case a
 configuration with the name 'default' will be used.
