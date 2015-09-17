@@ -974,4 +974,16 @@ def B_MM_Pseudo : UncondBranchMMPseudo<"b">, ISA_MICROMIPS;
 
 let Predicates = [InMicroMips] in {
 def : MipsInstAlias<"ei", (EI_MM ZERO), 1>, ISA_MIPS32R2;
+def : MipsInstAlias<"teq $rs, $rt",
+                    (TEQ_MM GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def : MipsInstAlias<"tge $rs, $rt",
+                    (TGE_MM GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def : MipsInstAlias<"tgeu $rs, $rt",
+                    (TGEU_MM GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def : MipsInstAlias<"tlt $rs, $rt",
+                    (TLT_MM GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def : MipsInstAlias<"tltu $rs, $rt",
+                    (TLTU_MM GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def : MipsInstAlias<"tne $rs, $rt",
+                    (TNE_MM GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
 }
