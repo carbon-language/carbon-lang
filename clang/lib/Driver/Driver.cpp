@@ -2262,15 +2262,14 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
       case llvm::Triple::xcore:
         TC = new toolchains::XCoreToolChain(*this, Target, Args);
         break;
-      case llvm::Triple::shave:
-        TC = new toolchains::SHAVEToolChain(*this, Target, Args);
-        break;
       case llvm::Triple::wasm32:
       case llvm::Triple::wasm64:
         TC = new toolchains::WebAssembly(*this, Target, Args);
         break;
       default:
-        if (Target.isOSBinFormatELF())
+        if (Target.getVendor() == llvm::Triple::Myriad)
+          TC = new toolchains::MyriadToolChain(*this, Target, Args);
+        else if (Target.isOSBinFormatELF())
           TC = new toolchains::Generic_ELF(*this, Target, Args);
         else if (Target.isOSBinFormatMachO())
           TC = new toolchains::MachO(*this, Target, Args);

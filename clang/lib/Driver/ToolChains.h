@@ -101,7 +101,8 @@ public:
   public:
     GCCInstallationDetector() : IsValid(false) {}
     void init(const Driver &D, const llvm::Triple &TargetTriple,
-              const llvm::opt::ArgList &Args);
+              const llvm::opt::ArgList &Args,
+              const ArrayRef<std::string> ExtraTripleAliases = {});
 
     /// \brief Check whether we detected a valid GCC install.
     bool isValid() const { return IsValid; }
@@ -918,21 +919,23 @@ public:
                            llvm::opt::ArgStringList &CmdArgs) const override;
 };
 
-/// SHAVEToolChain - A tool chain using the compiler installed by the
-/// Movidius SDK into MV_TOOLS_DIR (which we assume will be copied to llvm's
-/// installation dir) to perform all subcommands.
-class LLVM_LIBRARY_VISIBILITY SHAVEToolChain : public Generic_GCC {
+/// MyriadToolChain - A tool chain using either clang or the external compiler
+/// installed by the Movidius SDK to perform all subcommands.
+class LLVM_LIBRARY_VISIBILITY MyriadToolChain : public Generic_GCC {
 public:
-  SHAVEToolChain(const Driver &D, const llvm::Triple &Triple,
-                 const llvm::opt::ArgList &Args);
-  ~SHAVEToolChain() override;
+  MyriadToolChain(const Driver &D, const llvm::Triple &Triple,
+                  const llvm::opt::ArgList &Args);
+  ~MyriadToolChain() override;
 
   Tool *SelectTool(const JobAction &JA) const override;
+  void getCompilerSupportDir(std::string &Dir) const;
+  void getBuiltinLibDir(std::string &Dir) const;
 
 protected:
-  Tool *getTool(Action::ActionClass AC) const override;
-  Tool *buildAssembler() const override;
   Tool *buildLinker() const override;
+  bool isShaveCompilation(const llvm::Triple &T) const {
+    return T.getArch() == llvm::Triple::shave;
+  }
 
 private:
   mutable std::unique_ptr<Tool> Compiler;

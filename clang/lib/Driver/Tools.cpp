@@ -9736,3 +9736,81 @@ void tools::SHAVE::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   C.addCommand(llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Exec),
                                           CmdArgs, Inputs));
 }
+
+void tools::Myriad::Linker::ConstructJob(Compilation &C, const JobAction &JA,
+                                         const InputInfo &Output,
+                                         const InputInfoList &Inputs,
+                                         const ArgList &Args,
+                                         const char *LinkingOutput) const {
+  const auto &TC =
+      static_cast<const toolchains::MyriadToolChain &>(getToolChain());
+  const llvm::Triple &T = TC.getTriple();
+  ArgStringList CmdArgs;
+  bool UseStartfiles = !Args.hasArg(options::OPT_nostartfiles);
+
+  std::string StartFilesDir, BuiltinLibDir;
+  TC.getCompilerSupportDir(StartFilesDir);
+  TC.getBuiltinLibDir(BuiltinLibDir);
+
+  if (T.getArch() == llvm::Triple::sparc)
+    CmdArgs.push_back("-EB");
+  else // SHAVE assumes little-endian, and sparcel is expressly so.
+    CmdArgs.push_back("-EL");
+
+  // The remaining logic is mostly like gnutools::Linker::ConstructJob,
+  // but we never pass through a --sysroot option and various other bits.
+  // For example, there are no sanitizers (yet) nor gold linker.
+
+  // Eat some arguments that may be present but have no effect.
+  Args.ClaimAllArgs(options::OPT_g_Group);
+  Args.ClaimAllArgs(options::OPT_w);
+  Args.ClaimAllArgs(options::OPT_static_libgcc);
+
+  if (Args.hasArg(options::OPT_s)) // Pass the 'strip' option.
+    CmdArgs.push_back("-s");
+
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  if (UseStartfiles) {
+    // If you want startfiles, it means you want the builtin crti and crtbegin,
+    // but not crt0. Myriad link commands provide their own crt0.o as needed.
+    CmdArgs.push_back(Args.MakeArgString(StartFilesDir + "/crti.o"));
+    CmdArgs.push_back(Args.MakeArgString(StartFilesDir + "/crtbegin.o"));
+  }
+
+  Args.AddAllArgs(CmdArgs, {options::OPT_L, options::OPT_T_Group,
+                            options::OPT_e, options::OPT_s, options::OPT_t,
+                            options::OPT_Z_Flag, options::OPT_r});
+
+  // The linker doesn't use these builtin paths unless directed to,
+  // because it was not compiled for support with sysroots, nor does
+  // it have a default of little-endian with FPU.
+  CmdArgs.push_back(Args.MakeArgString("-L" + BuiltinLibDir));
+  CmdArgs.push_back(Args.MakeArgString("-L" + StartFilesDir));
+
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+
+  if (T.getOS() == llvm::Triple::RTEMS) {
+    CmdArgs.push_back("--start-group");
+    CmdArgs.push_back("-lc");
+    // You must provide your own "-L" option to enable finding these.
+    CmdArgs.push_back("-lrtemscpu");
+    CmdArgs.push_back("-lrtemsbsp");
+    CmdArgs.push_back("--end-group");
+  } else {
+    CmdArgs.push_back("-lc");
+  }
+  if (C.getDriver().CCCIsCXX())
+    CmdArgs.push_back("-lstdc++");
+  CmdArgs.push_back("-lgcc");
+  if (UseStartfiles) {
+    CmdArgs.push_back(Args.MakeArgString(StartFilesDir + "/crtend.o"));
+    CmdArgs.push_back(Args.MakeArgString(StartFilesDir + "/crtn.o"));
+  }
+
+  std::string Exec =
+      Args.MakeArgString(TC.GetProgramPath("sparc-myriad-elf-ld"));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Exec),
+                                          CmdArgs, Inputs));
+}

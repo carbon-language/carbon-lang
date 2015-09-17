@@ -1170,7 +1170,8 @@ static llvm::StringRef getGCCToolchainDir(const ArgList &Args) {
 /// necessary because the driver doesn't store the final version of the target
 /// triple.
 void Generic_GCC::GCCInstallationDetector::init(
-    const Driver &D, const llvm::Triple &TargetTriple, const ArgList &Args) {
+    const Driver &D, const llvm::Triple &TargetTriple, const ArgList &Args,
+    const ArrayRef<std::string> ExtraTripleAliases) {
   llvm::Triple BiarchVariantTriple = TargetTriple.isArch32Bit()
                                          ? TargetTriple.get64BitArchVariant()
                                          : TargetTriple.get32BitArchVariant();
@@ -1218,6 +1219,8 @@ void Generic_GCC::GCCInstallationDetector::init(
       const std::string LibDir = Prefix + Suffix.str();
       if (!llvm::sys::fs::exists(LibDir))
         continue;
+      for (const StringRef Candidate : ExtraTripleAliases) // Try these first.
+        ScanLibDirForGCCTriple(TargetTriple, Args, LibDir, Candidate);
       for (const StringRef Candidate : CandidateTripleAliases)
         ScanLibDirForGCCTriple(TargetTriple, Args, LibDir, Candidate);
     }
@@ -3920,9 +3923,33 @@ void XCoreToolChain::AddCXXStdlibLibArgs(const ArgList &Args,
   // We don't output any lib args. This is handled by xcc.
 }
 
-// SHAVEToolChain does not call Clang's C compiler.
-// We override SelectTool to avoid testing ShouldUseClangCompiler().
-Tool *SHAVEToolChain::SelectTool(const JobAction &JA) const {
+MyriadToolChain::MyriadToolChain(const Driver &D, const llvm::Triple &Triple,
+                                 const ArgList &Args)
+    : Generic_GCC(D, Triple, Args) {
+  // If a target of 'sparc-myriad-elf' is specified to clang, it wants to use
+  // 'sparc-myriad--elf' (note the unknown OS) as the canonical triple.
+  // This won't work to find gcc. Instead we give the installation detector an
+  // extra triple, which is preferable to further hacks of the logic that at
+  // present is based solely on getArch(). In particular, it would be wrong to
+  // choose the myriad installation when targeting a non-myriad sparc install.
+  switch (Triple.getArch()) {
+  default:
+    D.Diag(diag::err_target_unsupported_arch) << Triple.getArchName() << "myriad";
+  case llvm::Triple::sparc:
+  case llvm::Triple::sparcel:
+  case llvm::Triple::shave:
+    GCCInstallation.init(D, Triple, Args, {"sparc-myriad-elf"});
+  }
+}
+
+MyriadToolChain::~MyriadToolChain() {}
+
+// MyriadToolChain handles several triples:
+//  {shave,sparc{,el}}-myriad-{rtems,unknown}-elf
+Tool *MyriadToolChain::SelectTool(const JobAction &JA) const {
+  // The inherited method works fine if not targeting the SHAVE.
+  if (!isShaveCompilation(getTriple()))
+    return ToolChain::SelectTool(JA);
   switch (JA.getKind()) {
   case Action::CompileJobClass:
     if (!Compiler)
@@ -3937,30 +3964,29 @@ Tool *SHAVEToolChain::SelectTool(const JobAction &JA) const {
   }
 }
 
-SHAVEToolChain::SHAVEToolChain(const Driver &D, const llvm::Triple &Triple,
-                               const ArgList &Args)
-    : Generic_GCC(D, Triple, Args) {}
-
-SHAVEToolChain::~SHAVEToolChain() {}
-
-/// Following are methods necessary to avoid having moviClang be an abstract
-/// class.
-
-Tool *SHAVEToolChain::getTool(Action::ActionClass AC) const {
-  // SelectTool() must find a tool using the method in the superclass.
-  // There's nothing we can do if that fails.
-  llvm_unreachable("SHAVEToolChain can't getTool");
+void MyriadToolChain::getCompilerSupportDir(std::string &Dir) const {
+  // This directory contains crt{i,n,begin,end}.o as well as libgcc.
+  // These files are tied to a particular version of gcc.
+  SmallString<128> Result(GCCInstallation.getInstallPath());
+  // There are actually 4 choices: {le,be} x {fpu,nofpu}
+  // but as this toolchain is for LEON sparc, it can assume FPU.
+  if (this->getTriple().getArch() == llvm::Triple::sparcel)
+    llvm::sys::path::append(Result, "le");
+  Dir.assign(Result.str());
+}
+void MyriadToolChain::getBuiltinLibDir(std::string &Dir) const {
+  // The contents of LibDir are independent of the version of gcc.
+  // This contains libc, libg (a superset of libc), libm, libstdc++, libssp.
+  SmallString<128> Result(GCCInstallation.getParentLibPath());
+  if (this->getTriple().getArch() == llvm::Triple::sparcel)
+    llvm::sys::path::append(Result, "../sparc-myriad-elf/lib/le");
+  else
+    llvm::sys::path::append(Result, "../sparc-myriad-elf/lib");
+  Dir.assign(Result.str());
 }
 
-Tool *SHAVEToolChain::buildLinker() const {
-  // SHAVEToolChain executables can not be linked except by the vendor tools.
-  llvm_unreachable("SHAVEToolChain can't buildLinker");
-}
-
-Tool *SHAVEToolChain::buildAssembler() const {
-  // This one you'd think should be reachable since we expose an
-  // assembler to the driver, except not the way it expects.
-  llvm_unreachable("SHAVEToolChain can't buildAssembler");
+Tool *MyriadToolChain::buildLinker() const {
+  return new tools::Myriad::Linker(*this);
 }
 
 bool WebAssembly::IsMathErrnoDefault() const { return false; }

@@ -794,6 +794,23 @@ public:
 };
 } // end namespace SHAVE
 
+/// The Myriad toolchain uses tools that are in two different namespaces.
+/// The Compiler and Assembler as defined above are in the SHAVE namespace,
+/// whereas the linker, which accepts code for a mixture of Sparc and SHAVE,
+/// is in the Myriad namespace.
+namespace Myriad {
+class LLVM_LIBRARY_VISIBILITY Linker : public GnuTool {
+public:
+  Linker(const ToolChain &TC) : GnuTool("shave::Linker", "ld", TC) {}
+  bool hasIntegratedCPP() const override { return false; }
+  bool isLinkJob() const override { return true; }
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfo &Output, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
+};
+} // end namespace Myriad
+
 } // end namespace tools
 } // end namespace driver
 } // end namespace clang
