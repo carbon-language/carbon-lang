@@ -86,6 +86,8 @@ class DebuggerThread : public std::enable_shared_from_this<DebuggerThread>
                                     // exits the debugger loop and is detached from the inferior.
 
     std::atomic<DWORD> m_pid_to_detach;  // Signals the loop to detach from the process (specified by pid).
+    std::atomic<bool> m_is_shutting_down;   // Signals the debug loop to stop processing certain types of
+                                            // events that block shutdown.
     bool m_detached;  // Indicates we've detached from the inferior process and the debug loop can exit.
 
     static lldb::thread_result_t DebuggerThreadLaunchRoutine(void *data);
