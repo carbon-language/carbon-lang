@@ -739,3 +739,4 @@ __m512 test_mm512_maskz_reduce_round_ps(__mmask16 __U, __m512 __A) {
   return _mm512_maskz_reduce_round_ps(__U, __A, 4, 8); 
 }
 
+// REQUIRES: asserts
