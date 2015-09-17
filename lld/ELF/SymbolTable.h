@@ -42,6 +42,8 @@ public:
     return nullptr;
   }
 
+  bool shouldUseRela() const;
+
   const llvm::DenseMap<StringRef, Symbol *> &getSymbols() const {
     return Symtab;
   }

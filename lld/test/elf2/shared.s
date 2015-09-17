@@ -106,6 +106,15 @@
 // CHECK:        )
 // CHECK-NEXT: }
 
+// CHECK:      Name: .rel.dyn
+// CHECK-NEXT: Type: SHT_REL
+// CHECK-NEXT: Flags [
+// CHECK-NEXT:   SHF_ALLOC
+// CHECK-NEXT: ]
+// CHECK-NEXT: Address: [[RELADDR:.*]]
+// CHECK-NEXT: Offset:
+// CHECK-NEXT: Size: [[RELSIZE:.*]]
+
 
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
@@ -169,6 +178,8 @@
 
 // CHECK:      DynamicSection [
 // CHECK-NEXT:   Tag        Type                 Name/Value
+// CHECK-NEXT:   0x00000011 REL                  [[RELADDR]]
+// CHECK-NEXT:   0x00000012 RELSZ                [[RELSIZE]] (bytes)
 // CHECK-NEXT:   0x00000006 SYMTAB               [[DYNSYMADDR]]
 // CHECK-NEXT:   0x00000005 STRTAB               [[DYNSTRADDR]]
 // CHECK-NEXT:   0x0000000A STRSZ

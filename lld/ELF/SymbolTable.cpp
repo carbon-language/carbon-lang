@@ -20,6 +20,11 @@ using namespace lld::elf2;
 
 SymbolTable::SymbolTable() {}
 
+bool SymbolTable::shouldUseRela() const {
+  ELFKind K = getFirstELF()->getELFKind();
+  return K == ELF64LEKind || K == ELF64BEKind;
+}
+
 void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   File->parse();
   InputFile *FileP = File.release();

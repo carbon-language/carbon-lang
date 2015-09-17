@@ -93,34 +93,37 @@ protected:
 template <class ELFT> class SymbolTableSection;
 
 template <class ELFT> struct DynamicReloc {
-  typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
+  typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
   const SectionChunk<ELFT> &C;
-  const Elf_Rela &RI;
+  const Elf_Rel &RI;
 };
 
 template <class ELFT>
 class RelocationSection final : public OutputSectionBase<ELFT::Is64Bits> {
+  typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
 
 public:
-  RelocationSection(SymbolTableSection<ELFT> &DynSymSec)
-      : OutputSectionBase<ELFT::Is64Bits>(".rela.dyn", SHT_RELA, SHF_ALLOC),
-        DynSymSec(DynSymSec) {
-    this->Header.sh_entsize = sizeof(Elf_Rela);
+  RelocationSection(SymbolTableSection<ELFT> &DynSymSec, bool IsRela)
+      : OutputSectionBase<ELFT::Is64Bits>(IsRela ? ".rela.dyn" : ".rel.dyn",
+                                          IsRela ? SHT_RELA : SHT_REL,
+                                          SHF_ALLOC),
+        DynSymSec(DynSymSec), IsRela(IsRela) {
+    this->Header.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
     this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
   }
 
   void addReloc(const DynamicReloc<ELFT> &Reloc) { Relocs.push_back(Reloc); }
   void finalize() override {
     this->Header.sh_link = DynSymSec.getSectionIndex();
-    this->Header.sh_size = Relocs.size() * sizeof(Elf_Rela);
+    this->Header.sh_size = Relocs.size() * this->Header.sh_entsize;
   }
   void writeTo(uint8_t *Buf) override {
     auto *P = reinterpret_cast<Elf_Rela *>(Buf);
     bool IsMips64EL = Relocs[0].C.getFile()->getObj()->isMips64EL();
     for (const DynamicReloc<ELFT> &Rel : Relocs) {
       const SectionChunk<ELFT> &C = Rel.C;
-      const Elf_Rela &RI = Rel.RI;
+      const Elf_Rel &RI = Rel.RI;
       OutputSection<ELFT> *Out = C.getOutputSection();
       uint32_t SymIndex = RI.getSymbol(IsMips64EL);
       const SymbolBody *Body = C.getFile()->getSymbolBody(SymIndex);
@@ -128,16 +131,19 @@ public:
       P->r_offset = RI.r_offset + C.getOutputSectionOff() + Out->getVA();
       P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
                           RI.getType(IsMips64EL), IsMips64EL);
-      P->r_addend = RI.r_addend;
+      if (IsRela)
+        P->r_addend = static_cast<const Elf_Rela &>(RI).r_addend;
 
       ++P;
     }
   }
   bool hasRelocs() const { return !Relocs.empty(); }
+  bool isRela() const { return IsRela; }
 
 private:
   std::vector<DynamicReloc<ELFT>> Relocs;
   SymbolTableSection<ELFT> &DynSymSec;
+  const bool IsRela;
 };
 }
 
@@ -357,8 +363,8 @@ public:
 
     unsigned NumEntries = 0;
     if (RelaDynSec.hasRelocs()) {
-      ++NumEntries; // DT_RELA
-      ++NumEntries; // DT_RELASZ
+      ++NumEntries; // DT_RELA / DT_REL
+      ++NumEntries; // DT_RELASZ / DTRELSZ
     }
     ++NumEntries; // DT_SYMTAB
     ++NumEntries; // DT_STRTAB
@@ -386,11 +392,12 @@ public:
     auto *P = reinterpret_cast<Elf_Dyn *>(Buf);
 
     if (RelaDynSec.hasRelocs()) {
-      P->d_tag = DT_RELA;
+      bool IsRela = RelaDynSec.isRela();
+      P->d_tag = IsRela ? DT_RELA : DT_REL;
       P->d_un.d_ptr = RelaDynSec.getVA();
       ++P;
 
-      P->d_tag = DT_RELASZ;
+      P->d_tag = IsRela ? DT_RELASZ : DT_RELSZ;
       P->d_un.d_val = RelaDynSec.getSize();
       ++P;
     }
@@ -451,7 +458,7 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   Writer(SymbolTable *T)
       : SymTabSec(*this, *T, StrTabSec), DynSymSec(*this, *T, DynStrSec),
-        RelaDynSec(DynSymSec), HashSec(DynSymSec),
+        RelaDynSec(DynSymSec, T->shouldUseRela()), HashSec(DynSymSec),
         DynamicSec(*T, HashSec, RelaDynSec) {}
   void run();
 
@@ -462,6 +469,9 @@ public:
 
 private:
   void createSections();
+  template <bool isRela>
+  void scanRelocs(const SectionChunk<ELFT> &C,
+                  iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels);
   void scanRelocs(const SectionChunk<ELFT> &C);
   void assignAddresses();
   void openFile(StringRef OutputPath);
@@ -821,6 +831,26 @@ static bool compSec(OutputSectionBase<Is64Bits> *A,
 // * Write the dynamic relocations.
 // * Write the rest of the file.
 template <class ELFT>
+template <bool isRela>
+void Writer<ELFT>::scanRelocs(
+    const SectionChunk<ELFT> &C,
+    iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels) {
+  typedef Elf_Rel_Impl<ELFT, isRela> RelType;
+  const ObjectFile<ELFT> &File = *C.getFile();
+  bool IsMips64EL = File.getObj()->isMips64EL();
+  for (const RelType &RI : Rels) {
+    uint32_t SymIndex = RI.getSymbol(IsMips64EL);
+    const SymbolBody *Body = File.getSymbolBody(SymIndex);
+    if (!Body)
+      continue;
+    auto *S = dyn_cast<SharedSymbol<ELFT>>(Body);
+    if (!S)
+      continue;
+    RelaDynSec.addReloc({C, RI});
+  }
+}
+
+template <class ELFT>
 void Writer<ELFT>::scanRelocs(const SectionChunk<ELFT> &C) {
   const ObjectFile<ELFT> *File = C.getFile();
   ELFFile<ELFT> *EObj = File->getObj();
@@ -829,18 +859,10 @@ void Writer<ELFT>::scanRelocs(const SectionChunk<ELFT> &C) {
     return;
 
   for (const Elf_Shdr *RelSec : C.RelocSections) {
-    if (RelSec->sh_type != SHT_RELA)
-      continue;
-    for (const Elf_Rela &RI : EObj->relas(RelSec)) {
-      uint32_t SymIndex = RI.getSymbol(EObj->isMips64EL());
-      const SymbolBody *Body = File->getSymbolBody(SymIndex);
-      if (!Body)
-        continue;
-      auto *S = dyn_cast<SharedSymbol<ELFT>>(Body);
-      if (!S)
-        continue;
-      RelaDynSec.addReloc({C, RI});
-    }
+    if (RelSec->sh_type == SHT_RELA)
+      scanRelocs(C, EObj->relas(RelSec));
+    else
+      scanRelocs(C, EObj->rels(RelSec));
   }
 }
 
