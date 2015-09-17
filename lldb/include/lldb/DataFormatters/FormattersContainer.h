@@ -15,9 +15,6 @@
 #include <functional>
 
 // Other libraries and framework includes
-#include "clang/AST/DeclCXX.h"
-#include "clang/AST/Type.h"
-#include "clang/AST/DeclObjC.h"
 
 // Project includes
 #include "lldb/lldb-public.h"
