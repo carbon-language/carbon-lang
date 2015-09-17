@@ -524,7 +524,7 @@ void CodeGenModule::DecorateInstructionWithInvariantGroup(
   // Check if we have to wrap MDString in MDNode.
   if (!MetaDataNode)
     MetaDataNode = llvm::MDNode::get(getLLVMContext(), MD);
-  I->setMetadata("invariant.group", MetaDataNode);
+  I->setMetadata(llvm::LLVMContext::MD_invariant_group, MetaDataNode);
 }
 
 void CodeGenModule::Error(SourceLocation loc, StringRef message) {
