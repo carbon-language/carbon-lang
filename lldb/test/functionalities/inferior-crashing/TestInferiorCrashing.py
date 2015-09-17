@@ -74,6 +74,7 @@ class CrashingInferiorTestCase(TestBase):
 
     @skipIfFreeBSD # llvm.org/pr16684
     @expectedFailureWindows("llvm.org/pr24778")
+    @expectedFailureAndroid(archs=['aarch64'], api_levels=range(21 + 1)) # No eh_frame for sa_restorer
     def test_inferior_crashing_step_after_break_dwarf(self):
         """Test that lldb functions correctly after stepping through a crash."""
         self.buildDwarf()
