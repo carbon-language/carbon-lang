@@ -101,7 +101,7 @@ public:
         // Put the location of the spare memory into the live data of the ValueObject.
         
         m_persistent_variable_sp->m_live_sp = ValueObjectConstResult::Create (map.GetBestExecutionContextScope(),
-                                                                              llvm::cast<ClangExpressionVariable>(m_persistent_variable_sp.get())->GetTypeFromUser(),
+                                                                              m_persistent_variable_sp->GetCompilerType(),
                                                                               m_persistent_variable_sp->GetName(),
                                                                               mem,
                                                                               eAddressTypeLoad,
