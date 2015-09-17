@@ -22,7 +22,7 @@
 // CHECK-NEXT:   SHF_ALLOC
 // CHECK-NEXT: ]
 // CHECK-NEXT: Address: [[RELAADDR:.*]]
-// CHECK-NEXT: Offset: 0x4058
+// CHECK-NEXT: Offset:
 // CHECK-NEXT: Size: [[RELASIZE:.*]]
 // CHECK-NEXT: Link: 4
 // CHECK-NEXT: Info: 0
