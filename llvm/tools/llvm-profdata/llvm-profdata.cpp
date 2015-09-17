@@ -195,7 +195,9 @@ static int showSampleProfile(std::string Filename, bool ShowCounts,
     exitWithError(EC.message(), Filename);
 
   auto Reader = std::move(ReaderOrErr.get());
-  Reader->read();
+  if (std::error_code EC = Reader->read())
+    exitWithError(EC.message(), Filename);
+
   if (ShowAllFunctions || ShowFunction.empty())
     Reader->dump(OS);
   else
