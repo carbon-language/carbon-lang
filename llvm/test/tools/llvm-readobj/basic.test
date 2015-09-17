@@ -1,0 +1,2 @@
+RUN: not llvm-readobj %t.blah 2>&1 | FileCheck --check-prefix=ENOENT %s
+ENOENT: {{.*}}.blah: {{[Nn]}}o such file or directory

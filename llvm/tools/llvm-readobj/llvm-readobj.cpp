@@ -394,11 +394,6 @@ static void dumpMachOUniversalBinary(const MachOUniversalBinary *UBinary) {
 
 /// @brief Opens \a File and dumps it.
 static void dumpInput(StringRef File) {
-  // If file isn't stdin, check that it exists.
-  if (File != "-" && !sys::fs::exists(File)) {
-    reportError(File, readobj_error::file_not_found);
-    return;
-  }
 
   // Attempt to open the binary.
   ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(File);
