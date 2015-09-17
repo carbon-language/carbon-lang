@@ -1,5 +1,5 @@
 ; RUN: opt < %s -sample-profile -sample-profile-file=%S/Inputs/gcc-simple.afdo -S | FileCheck %s
-;
+; XFAIL: powerpc64-, s390x, mips-, mips64-, sparc
 ; Original code:
 ;
 ; #include <stdlib.h>
