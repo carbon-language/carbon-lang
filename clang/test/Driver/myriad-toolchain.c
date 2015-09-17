@@ -8,6 +8,15 @@
 // LINK_WITH_RTEMS: Inputs/basic_myriad_tree/lib/gcc/sparc-myriad-elf/4.8.2/crtend.o
 // LINK_WITH_RTEMS: Inputs/basic_myriad_tree/lib/gcc/sparc-myriad-elf/4.8.2/crtn.o
 
+// RUN: %clang -### -E -target sparc-myriad --sysroot=/yow %s 2>&1 \
+// RUN:   | FileCheck %s -check-prefix=SLASH_INCLUDE
+// SLASH_INCLUDE: "-isysroot" "/yow" "-internal-isystem" "/yow/include"
+
+// RUN: %clang -### -E -target sparc-myriad --sysroot=/yow %s -nostdinc 2>&1 \
+// RUN:   | FileCheck %s -check-prefix=NO_SLASH_INCLUDE
+// NO_SLASH_INCLUDE: "-isysroot" "/yow"
+// NO_SLASH_INCLUDE-NOT: "-internal-isystem" "/yow/include"
+
 // RUN: %clang -### -target what-myriad %s 2>&1 | FileCheck %s -check-prefix=BAD_ARCH
 // BAD_ARCH: the target architecture 'what' is not supported by the target 'myriad'
 

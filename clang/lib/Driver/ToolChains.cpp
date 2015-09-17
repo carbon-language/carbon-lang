@@ -3944,6 +3944,12 @@ MyriadToolChain::MyriadToolChain(const Driver &D, const llvm::Triple &Triple,
 
 MyriadToolChain::~MyriadToolChain() {}
 
+void MyriadToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
+                                                ArgStringList &CC1Args) const {
+  if (!DriverArgs.hasArg(options::OPT_nostdinc))
+    addSystemInclude(DriverArgs, CC1Args, getDriver().SysRoot + "/include");
+}
+
 // MyriadToolChain handles several triples:
 //  {shave,sparc{,el}}-myriad-{rtems,unknown}-elf
 Tool *MyriadToolChain::SelectTool(const JobAction &JA) const {

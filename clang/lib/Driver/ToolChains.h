@@ -928,6 +928,9 @@ public:
                   const llvm::opt::ArgList &Args);
   ~MyriadToolChain() override;
 
+  void
+  AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
+                            llvm::opt::ArgStringList &CC1Args) const override;
   Tool *SelectTool(const JobAction &JA) const override;
   void getCompilerSupportDir(std::string &Dir) const;
   void getBuiltinLibDir(std::string &Dir) const;
