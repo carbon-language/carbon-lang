@@ -47,11 +47,13 @@ AppleObjCRuntimeV1::AppleObjCRuntimeV1(Process *process) :
 // required for the data formatters to work
 bool
 AppleObjCRuntimeV1::GetDynamicTypeAndAddress (ValueObject &in_value,
-                                             lldb::DynamicValueType use_dynamic, 
-                                             TypeAndOrName &class_type_or_name, 
-                                             Address &address)
+                                              lldb::DynamicValueType use_dynamic,
+                                              TypeAndOrName &class_type_or_name,
+                                              Address &address,
+                                              Value::ValueType &value_type)
 {
     class_type_or_name.Clear();
+    value_type = Value::ValueType::eValueTypeScalar;
     if (CouldHaveDynamicValue(in_value))
     {
         auto class_descriptor(GetClassDescriptor(in_value));

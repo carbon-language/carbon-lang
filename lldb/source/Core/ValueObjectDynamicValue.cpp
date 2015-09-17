@@ -210,25 +210,26 @@ ValueObjectDynamicValue::UpdateValue ()
     TypeAndOrName class_type_or_name;
     Address dynamic_address;
     bool found_dynamic_type = false;
+    Value::ValueType value_type;
 
     lldb::LanguageType known_type = m_parent->GetObjectRuntimeLanguage();
     if (known_type != lldb::eLanguageTypeUnknown && known_type != lldb::eLanguageTypeC)
     {
         LanguageRuntime *runtime = process->GetLanguageRuntime (known_type);
         if (runtime)
-            found_dynamic_type = runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address);
+            found_dynamic_type = runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address, value_type);
     }
     else
     {
         LanguageRuntime *cpp_runtime = process->GetLanguageRuntime (lldb::eLanguageTypeC_plus_plus);
         if (cpp_runtime)
-            found_dynamic_type = cpp_runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address);
+            found_dynamic_type = cpp_runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address, value_type);
 
         if (!found_dynamic_type)
         {
             LanguageRuntime *objc_runtime = process->GetLanguageRuntime (lldb::eLanguageTypeObjC);
             if (objc_runtime)
-                found_dynamic_type = objc_runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address);
+                found_dynamic_type = objc_runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address, value_type);
         }
     }
 
@@ -305,9 +306,7 @@ ValueObjectDynamicValue::UpdateValue ()
     //m_value.SetContext (Value::eContextTypeClangType, corrected_type);
     m_value.SetCompilerType (m_dynamic_type_info.GetCompilerType());
 
-    // Our address is the location of the dynamic type stored in memory.  It isn't a load address,
-    // because we aren't pointing to the LOCATION that stores the pointer to us, we're pointing to us...
-    m_value.SetValueType(Value::eValueTypeScalar);
+    m_value.SetValueType(value_type);
 
     if (has_changed_type && log)
         log->Printf("[%s %p] has a new dynamic type %s", GetName().GetCString(),

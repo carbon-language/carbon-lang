@@ -376,13 +376,15 @@ bool
 AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
                                               DynamicValueType use_dynamic, 
                                               TypeAndOrName &class_type_or_name, 
-                                              Address &address)
+                                              Address &address,
+                                              Value::ValueType &value_type)
 {
     // The Runtime is attached to a particular process, you shouldn't pass in a value from another process.
     assert (in_value.GetProcessSP().get() == m_process);
     assert (m_process != NULL);
     
     class_type_or_name.Clear();
+    value_type = Value::ValueType::eValueTypeScalar;
 
     // Make sure we can have a dynamic value before starting...
     if (CouldHaveDynamicValue (in_value))

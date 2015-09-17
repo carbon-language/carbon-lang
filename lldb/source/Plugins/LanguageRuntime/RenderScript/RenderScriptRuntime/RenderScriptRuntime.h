@@ -182,7 +182,8 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     virtual bool IsVTableName(const char *name);
 
     virtual bool GetDynamicTypeAndAddress(ValueObject &in_value, lldb::DynamicValueType use_dynamic,
-                                          TypeAndOrName &class_type_or_name, Address &address);
+                                          TypeAndOrName &class_type_or_name, Address &address,
+                                          Value::ValueType &value_type);
 
     virtual bool CouldHaveDynamicValue(ValueObject &in_value);
 
