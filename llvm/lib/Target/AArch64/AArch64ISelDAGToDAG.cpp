@@ -441,7 +441,7 @@ static bool checkHighLaneIndex(SDNode *DL, SDValue &LaneOp, int &LaneIdx) {
   return true;
 }
 
-// Helper for SelectOpcV64LaneV128 - Recogzine operatinos where one operand is a
+// Helper for SelectOpcV64LaneV128 - Recognize operations where one operand is a
 // high lane extract.
 static bool checkV64LaneV128(SDValue Op0, SDValue Op1, SDValue &StdOp,
                              SDValue &LaneOp, int &LaneIdx) {
@@ -591,7 +591,7 @@ bool AArch64DAGToDAGISel::SelectArithExtendedRegister(SDValue N, SDValue &Reg,
   }
 
   // AArch64 mandates that the RHS of the operation must use the smallest
-  // register classs that could contain the size being extended from.  Thus,
+  // register class that could contain the size being extended from.  Thus,
   // if we're folding a (sext i8), we need the RHS to be a GPR32, even though
   // there might not be an actual 32-bit value in the program.  We can
   // (harmlessly) synthesize one by injected an EXTRACT_SUBREG here.
@@ -606,7 +606,7 @@ bool AArch64DAGToDAGISel::SelectArithExtendedRegister(SDValue N, SDValue &Reg,
 /// need to create a real ADD instruction from it anyway and there's no point in
 /// folding it into the mem op. Theoretically, it shouldn't matter, but there's
 /// a single pseudo-instruction for an ADRP/ADD pair so over-aggressive folding
-/// leads to duplaicated ADRP instructions.
+/// leads to duplicated ADRP instructions.
 static bool isWorthFoldingADDlow(SDValue N) {
   for (auto Use : N->uses()) {
     if (Use->getOpcode() != ISD::LOAD && Use->getOpcode() != ISD::STORE &&
@@ -931,7 +931,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeXRO(SDValue N, unsigned Size,
   if (isa<ConstantSDNode>(RHS)) {
     int64_t ImmOff = (int64_t)cast<ConstantSDNode>(RHS)->getZExtValue();
     unsigned Scale = Log2_32(Size);
-    // Skip the immediate can be seleced by load/store addressing mode.
+    // Skip the immediate can be selected by load/store addressing mode.
     // Also skip the immediate can be encoded by a single ADD (SUB is also
     // checked by using -ImmOff).
     if ((ImmOff % Size == 0 && ImmOff >= 0 && ImmOff < (0x1000 << Scale)) ||
@@ -1486,7 +1486,7 @@ static bool isBitfieldExtractOpFromAnd(SelectionDAG *CurDAG, SDNode *N,
     // The resulting code will be at least as good as the original one
     // plus it may expose more opportunities for bitfield insert pattern.
     // FIXME: Currently we limit this to the bigger pattern, because
-    // some optimizations expect AND and not UBFM
+    // some optimizations expect AND and not UBFM.
     Opd0 = N->getOperand(0);
   } else
     return false;
