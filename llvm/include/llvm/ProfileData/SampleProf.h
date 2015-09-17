@@ -32,7 +32,8 @@ enum class sampleprof_error {
   too_large,
   truncated,
   malformed,
-  unrecognized_format
+  unrecognized_format,
+  not_implemented
 };
 
 inline std::error_code make_error_code(sampleprof_error E) {

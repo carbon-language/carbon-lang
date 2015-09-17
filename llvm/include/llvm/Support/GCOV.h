@@ -30,7 +30,7 @@ class GCOVBlock;
 class FileInfo;
 
 namespace GCOV {
-enum GCOVVersion { V402, V404 };
+enum GCOVVersion { V402, V404, V704 };
 } // end GCOV namespace
 
 /// GCOVOptions - A struct for passing gcov options between functions.
@@ -88,6 +88,11 @@ public:
     if (VersionStr == "*404") {
       Cursor += 4;
       Version = GCOV::V404;
+      return true;
+    }
+    if (VersionStr == "*704") {
+      Cursor += 4;
+      Version = GCOV::V704;
       return true;
     }
     errs() << "Unexpected version: " << VersionStr << ".\n";

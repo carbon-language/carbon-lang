@@ -173,8 +173,8 @@ std::error_code SampleProfileReaderText::read() {
     // should not begin with a number.
     SmallVector<StringRef, 4> Matches;
     if (!HeadRE.match(*LineIt, &Matches)) {
-      reportParseError(LineIt.line_number(),
-                       "Expected 'mangled_name:NUM:NUM', found " + *LineIt);
+      reportError(LineIt.line_number(),
+                  "Expected 'mangled_name:NUM:NUM', found " + *LineIt);
       return sampleprof_error::malformed;
     }
     assert(Matches.size() == 4);
@@ -192,9 +192,9 @@ std::error_code SampleProfileReaderText::read() {
     // EOF or when we see the start of the next function.
     while (!LineIt.is_at_eof() && isdigit((*LineIt)[0])) {
       if (!LineSampleRE.match(*LineIt, &Matches)) {
-        reportParseError(
-            LineIt.line_number(),
-            "Expected 'NUM[.NUM]: NUM[ mangled_name:NUM]*', found " + *LineIt);
+        reportError(LineIt.line_number(),
+                    "Expected 'NUM[.NUM]: NUM[ mangled_name:NUM]*', found " +
+                        *LineIt);
         return sampleprof_error::malformed;
       }
       assert(Matches.size() == 5);
@@ -210,8 +210,8 @@ std::error_code SampleProfileReaderText::read() {
       while (CallsLine != "") {
         SmallVector<StringRef, 3> CallSample;
         if (!CallSampleRE.match(CallsLine, &CallSample)) {
-          reportParseError(LineIt.line_number(),
-                           "Expected 'mangled_name:NUM', found " + CallsLine);
+          reportError(LineIt.line_number(),
+                      "Expected 'mangled_name:NUM', found " + CallsLine);
           return sampleprof_error::malformed;
         }
         StringRef CalledFunction = CallSample[1];
@@ -243,7 +243,7 @@ template <typename T> ErrorOr<T> SampleProfileReaderBinary::readNumber() {
     EC = sampleprof_error::success;
 
   if (EC) {
-    reportParseError(0, EC.message());
+    reportError(0, EC.message());
     return EC;
   }
 
@@ -256,7 +256,7 @@ ErrorOr<StringRef> SampleProfileReaderBinary::readString() {
   StringRef Str(reinterpret_cast<const char *>(Data));
   if (Data + Str.size() + 1 > End) {
     EC = sampleprof_error::truncated;
-    reportParseError(0, EC.message());
+    reportError(0, EC.message());
     return EC;
   }
 
@@ -353,6 +353,264 @@ bool SampleProfileReaderBinary::hasFormat(const MemoryBuffer &Buffer) {
   return Magic == SPMagic();
 }
 
+bool SourceInfo::operator<(const SourceInfo &P) const {
+  if (Line != P.Line)
+    return Line < P.Line;
+  if (StartLine != P.StartLine)
+    return StartLine < P.StartLine;
+  if (Discriminator != P.Discriminator)
+    return Discriminator < P.Discriminator;
+  return FuncName < P.FuncName;
+}
+
+std::error_code SampleProfileReaderGCC::skipNextWord() {
+  uint32_t dummy;
+  if (!GcovBuffer.readInt(dummy))
+    return sampleprof_error::truncated;
+  return sampleprof_error::success;
+}
+
+template <typename T> ErrorOr<T> SampleProfileReaderGCC::readNumber() {
+  if (sizeof(T) <= sizeof(uint32_t)) {
+    uint32_t Val;
+    if (GcovBuffer.readInt(Val) && Val <= std::numeric_limits<T>::max())
+      return static_cast<T>(Val);
+  } else if (sizeof(T) <= sizeof(uint64_t)) {
+    uint64_t Val;
+    if (GcovBuffer.readInt64(Val) && Val <= std::numeric_limits<T>::max())
+      return static_cast<T>(Val);
+  }
+
+  std::error_code EC = sampleprof_error::malformed;
+  reportError(0, EC.message());
+  return EC;
+}
+
+ErrorOr<StringRef> SampleProfileReaderGCC::readString() {
+  StringRef Str;
+  if (!GcovBuffer.readString(Str))
+    return sampleprof_error::truncated;
+  return Str;
+}
+
+std::error_code SampleProfileReaderGCC::readHeader() {
+  // Read the magic identifier.
+  if (!GcovBuffer.readGCDAFormat())
+    return sampleprof_error::unrecognized_format;
+
+  // Read the version number. Note - the GCC reader does not validate this
+  // version, but the profile creator generates v704.
+  GCOV::GCOVVersion version;
+  if (!GcovBuffer.readGCOVVersion(version))
+    return sampleprof_error::unrecognized_format;
+
+  if (version != GCOV::V704)
+    return sampleprof_error::unsupported_version;
+
+  // Skip the empty integer.
+  if (std::error_code EC = skipNextWord())
+    return EC;
+
+  return sampleprof_error::success;
+}
+
+std::error_code SampleProfileReaderGCC::readSectionTag(uint32_t Expected) {
+  uint32_t Tag;
+  if (!GcovBuffer.readInt(Tag))
+    return sampleprof_error::truncated;
+
+  if (Tag != Expected)
+    return sampleprof_error::malformed;
+
+  if (std::error_code EC = skipNextWord())
+    return EC;
+
+  return sampleprof_error::success;
+}
+
+std::error_code SampleProfileReaderGCC::readNameTable() {
+  if (std::error_code EC = readSectionTag(GCOVTagAFDOFileNames))
+    return EC;
+
+  uint32_t Size;
+  if (!GcovBuffer.readInt(Size))
+    return sampleprof_error::truncated;
+
+  for (uint32_t I = 0; I < Size; ++I) {
+    StringRef Str;
+    if (!GcovBuffer.readString(Str))
+      return sampleprof_error::truncated;
+    Names.push_back(Str);
+  }
+
+  return sampleprof_error::success;
+}
+
+std::error_code SampleProfileReaderGCC::readFunctionProfiles() {
+  if (std::error_code EC = readSectionTag(GCOVTagAFDOFunction))
+    return EC;
+
+  uint32_t NumFunctions;
+  if (!GcovBuffer.readInt(NumFunctions))
+    return sampleprof_error::truncated;
+
+  SourceStack Stack;
+  for (uint32_t I = 0; I < NumFunctions; ++I)
+    if (std::error_code EC = readOneFunctionProfile(Stack, true))
+      return EC;
+
+  return sampleprof_error::success;
+}
+
+std::error_code SampleProfileReaderGCC::addSourceCount(StringRef Name,
+                                                       const SourceStack &Src,
+                                                       uint64_t Count) {
+  if (Src.size() == 0 || Src[0].Malformed())
+    return sampleprof_error::malformed;
+  FunctionSamples &FProfile = Profiles[Name];
+  FProfile.addTotalSamples(Count);
+  // FIXME(dnovillo) - Properly update inline stack for FnName.
+  FProfile.addBodySamples(Src[0].Line, Src[0].Discriminator, Count);
+  return sampleprof_error::success;
+}
+
+
+std::error_code
+SampleProfileReaderGCC::readOneFunctionProfile(const SourceStack &Stack,
+                                               bool Update) {
+  uint64_t HeadCount = 0;
+  if (Stack.size() == 0)
+    if (!GcovBuffer.readInt64(HeadCount))
+      return sampleprof_error::truncated;
+
+  uint32_t NameIdx;
+  if (!GcovBuffer.readInt(NameIdx))
+    return sampleprof_error::truncated;
+
+  StringRef Name(Names[NameIdx]);
+
+  uint32_t NumPosCounts;
+  if (!GcovBuffer.readInt(NumPosCounts))
+    return sampleprof_error::truncated;
+
+  uint32_t NumCallSites;
+  if (!GcovBuffer.readInt(NumCallSites))
+    return sampleprof_error::truncated;
+
+  if (Stack.size() == 0) {
+    FunctionSamples &FProfile = Profiles[Name];
+    FProfile.addHeadSamples(HeadCount);
+    if (FProfile.getTotalSamples() > 0)
+      Update = false;
+  }
+
+  for (uint32_t I = 0; I < NumPosCounts; ++I) {
+    uint32_t Offset;
+    if (!GcovBuffer.readInt(Offset))
+      return sampleprof_error::truncated;
+
+    uint32_t NumTargets;
+    if (!GcovBuffer.readInt(NumTargets))
+      return sampleprof_error::truncated;
+
+    uint64_t Count;
+    if (!GcovBuffer.readInt64(Count))
+      return sampleprof_error::truncated;
+
+    SourceInfo Info(Name, "", "", 0, Offset >> 16, Offset & 0xffff);
+    SourceStack NewStack;
+    NewStack.push_back(Info);
+    NewStack.insert(NewStack.end(), Stack.begin(), Stack.end());
+    if (Update)
+      addSourceCount(NewStack[NewStack.size() - 1].FuncName, NewStack, Count);
+
+    for (uint32_t J = 0; J < NumTargets; J++) {
+      uint32_t HistVal;
+      if (!GcovBuffer.readInt(HistVal))
+        return sampleprof_error::truncated;
+
+      if (HistVal != HIST_TYPE_INDIR_CALL_TOPN)
+        return sampleprof_error::malformed;
+
+      uint64_t TargetIdx;
+      if (!GcovBuffer.readInt64(TargetIdx))
+        return sampleprof_error::truncated;
+      StringRef TargetName(Names[TargetIdx]);
+
+      uint64_t TargetCount;
+      if (!GcovBuffer.readInt64(TargetCount))
+        return sampleprof_error::truncated;
+
+      if (Update) {
+        FunctionSamples &TargetProfile = Profiles[TargetName];
+        TargetProfile.addBodySamples(NewStack[0].Line,
+                                     NewStack[0].Discriminator, TargetCount);
+      }
+    }
+  }
+
+  for (uint32_t I = 0; I < NumCallSites; I++) {
+    // The offset is encoded as:
+    //   high 16 bits: line offset to the start of the function.
+    //   low 16 bits: discriminator.
+    uint32_t Offset;
+    if (!GcovBuffer.readInt(Offset))
+      return sampleprof_error::truncated;
+    SourceInfo Info(Name, "", "", 0, Offset >> 16, Offset & 0xffff);
+    SourceStack NewStack;
+    NewStack.push_back(Info);
+    NewStack.insert(NewStack.end(), Stack.begin(), Stack.end());
+    if (std::error_code EC = readOneFunctionProfile(NewStack, Update))
+      return EC;
+  }
+
+  return sampleprof_error::success;
+}
+
+std::error_code SampleProfileReaderGCC::readModuleGroup() {
+  // FIXME(dnovillo) - Module support still not implemented.
+  return sampleprof_error::not_implemented;
+}
+
+std::error_code SampleProfileReaderGCC::readWorkingSet() {
+  // FIXME(dnovillo) - Working sets still not implemented.
+  return sampleprof_error::not_implemented;
+}
+
+
+/// \brief Read a GCC AutoFDO profile.
+///
+/// This format is generated by the Linux Perf conversion tool at
+/// https://github.com/google/autofdo.
+std::error_code SampleProfileReaderGCC::read() {
+  // Read the string table.
+  if (std::error_code EC = readNameTable())
+    return EC;
+
+  // Read the source profile.
+  if (std::error_code EC = readFunctionProfiles())
+    return EC;
+
+  // FIXME(dnovillo) - Module groups and working set support are not
+  // yet implemented.
+#if 0
+  // Read the module group file.
+  if (std::error_code EC = readModuleGroup())
+    return EC;
+
+  // Read the working set.
+  if (std::error_code EC = readWorkingSet())
+    return EC;
+#endif
+
+  return sampleprof_error::success;
+}
+
+bool SampleProfileReaderGCC::hasFormat(const MemoryBuffer &Buffer) {
+  StringRef Magic(reinterpret_cast<const char *>(Buffer.getBufferStart()));
+  return Magic == "adcg*704";
+}
+
 /// \brief Prepare a memory buffer for the contents of \p Filename.
 ///
 /// \returns an error code indicating the status of the buffer.
@@ -389,6 +647,8 @@ SampleProfileReader::create(StringRef Filename, LLVMContext &C) {
   std::unique_ptr<SampleProfileReader> Reader;
   if (SampleProfileReaderBinary::hasFormat(*Buffer))
     Reader.reset(new SampleProfileReaderBinary(std::move(Buffer), C));
+  else if (SampleProfileReaderGCC::hasFormat(*Buffer))
+    Reader.reset(new SampleProfileReaderGCC(std::move(Buffer), C));
   else
     Reader.reset(new SampleProfileReaderText(std::move(Buffer), C));
 
