@@ -2073,6 +2073,24 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   Vals.clear();
 }
 
+enum StringEncoding { SE_Char6, SE_Fixed7, SE_Fixed8 };
+
+/// Determine the encoding to use for the given string name and length.
+static StringEncoding getStringEncoding(const char *Str, unsigned StrLen) {
+  bool isChar6 = true;
+  for (const char *C = Str, *E = C + StrLen; C != E; ++C) {
+    if (isChar6)
+      isChar6 = BitCodeAbbrevOp::isChar6(*C);
+    if ((unsigned char)*C & 128)
+      // don't bother scanning the rest.
+      return SE_Fixed8;
+  }
+  if (isChar6)
+    return SE_Char6;
+  else
+    return SE_Fixed7;
+}
+
 // Emit names for globals/functions etc.
 static void WriteValueSymbolTable(const ValueSymbolTable &VST,
                                   const ValueEnumerator &VE,
@@ -2087,17 +2105,8 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
   for (const ValueName &Name : VST) {
 
     // Figure out the encoding to use for the name.
-    bool is7Bit = true;
-    bool isChar6 = true;
-    for (const char *C = Name.getKeyData(), *E = C+Name.getKeyLength();
-         C != E; ++C) {
-      if (isChar6)
-        isChar6 = BitCodeAbbrevOp::isChar6(*C);
-      if ((unsigned char)*C & 128) {
-        is7Bit = false;
-        break;  // don't bother scanning the rest.
-      }
-    }
+    StringEncoding Bits =
+        getStringEncoding(Name.getKeyData(), Name.getKeyLength());
 
     unsigned AbbrevToUse = VST_ENTRY_8_ABBREV;
 
@@ -2106,13 +2115,13 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
     unsigned Code;
     if (isa<BasicBlock>(Name.getValue())) {
       Code = bitc::VST_CODE_BBENTRY;
-      if (isChar6)
+      if (Bits == SE_Char6)
         AbbrevToUse = VST_BBENTRY_6_ABBREV;
     } else {
       Code = bitc::VST_CODE_ENTRY;
-      if (isChar6)
+      if (Bits == SE_Char6)
         AbbrevToUse = VST_ENTRY_6_ABBREV;
-      else if (is7Bit)
+      else if (Bits == SE_Fixed7)
         AbbrevToUse = VST_ENTRY_7_ABBREV;
     }
 
