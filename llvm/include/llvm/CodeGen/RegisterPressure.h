@@ -31,6 +31,10 @@ struct RegisterPressure {
   /// Map of max reg pressure indexed by pressure set ID, not class ID.
   std::vector<unsigned> MaxSetPressure;
 
+  /// List of live in virtual registers or physical register units.
+  SmallVector<unsigned,8> LiveInRegs;
+  SmallVector<unsigned,8> LiveOutRegs;
+
   void dump(const TargetRegisterInfo *TRI) const;
 };
 
@@ -263,10 +267,6 @@ class RegPressureTracker {
 
   /// Set of vreg defs that start a live range.
   SparseSet<unsigned, VirtReg2IndexFunctor> UntiedDefs;
-  /// List of live in virtual registers or physical register units.
-  SmallVector<unsigned,8> LiveInRegs;
-  /// List of live out virtual registers or physical register units.
-  SmallVector<unsigned,8> LiveOutRegs;
   /// Live-through pressure.
   std::vector<unsigned> LiveThruPressure;
 
@@ -323,8 +323,6 @@ public:
     LiveThruPressure.assign(PressureSet.begin(), PressureSet.end());
   }
 
-  ArrayRef<unsigned> getLiveIn() const { return LiveInRegs; }
-  ArrayRef<unsigned> getLiveOut() const { return LiveOutRegs; }
   ArrayRef<unsigned> getLiveThru() const { return LiveThruPressure; }
 
   /// Get the resulting register pressure over the traversed region.
