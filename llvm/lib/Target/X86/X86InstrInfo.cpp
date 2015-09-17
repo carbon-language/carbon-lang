@@ -4807,8 +4807,12 @@ bool X86InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     return true;
   case X86::KSET0B:
   case X86::KSET0W: return Expand2AddrUndef(MIB, get(X86::KXORWrr));
+  case X86::KSET0D: return Expand2AddrUndef(MIB, get(X86::KXORDrr));
+  case X86::KSET0Q: return Expand2AddrUndef(MIB, get(X86::KXORQrr));
   case X86::KSET1B:
   case X86::KSET1W: return Expand2AddrUndef(MIB, get(X86::KXNORWrr));
+  case X86::KSET1D: return Expand2AddrUndef(MIB, get(X86::KXNORDrr));
+  case X86::KSET1Q: return Expand2AddrUndef(MIB, get(X86::KXNORQrr));
   case TargetOpcode::LOAD_STACK_GUARD:
     expandLoadStackGuard(MIB, *this);
     return true;

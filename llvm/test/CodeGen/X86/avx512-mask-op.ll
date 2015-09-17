@@ -361,39 +361,6 @@ define <8 x i1> @test18(i8 %a, i16 %y) {
   ret <8 x i1>%d
 }
 
-; KNL-LABEL: test19
-; KNL: movzbl  %dil, %eax
-; KNL: kmovw   %eax, %k0
-; KNL: kshiftlw        $13, %k0, %k0
-; KNL: kshiftrw        $15, %k0, %k0
-; KNL: kmovw   %k0, %eax
-; KNL: andl    $1, %eax
-; KNL: testb   %al, %al
-
-define <8 x i1> @test19(i8 %a) {
-  %b = bitcast i8 %a to <8 x i1>
-  %c = shufflevector < 8 x i1>%b, <8 x i1>undef, <8 x i32> <i32 undef, i32 2, i32 undef, i32 undef, i32 2, i32 undef, i32 2, i32 undef>
-  ret <8 x i1> %c
-}
-
-; KNL-LABEL: test20
-; KNL: movzbl  %dil, %eax
-; KNL: kmovw   %eax, %k0
-; KNL: kshiftlw        $13, %k0, %k1
-; KNL: kshiftrw        $15, %k1, %k1
-; KNL: kshiftlw        $12, %k0, %k0
-; KNL: kshiftrw        $15, %k0, %k0
-; KNL: kshiftlw        $4, %k0, %k0
-; KNL: kshiftlw        $1, %k1, %k2
-; KNL: korw    %k0, %k2, %k0
-; KNL: kshiftlw        $6, %k1, %k1
-; KNL: korw    %k1, %k0, %k1
-define <8 x i1> @test20(i8 %a, i16 %y) {
-  %b = bitcast i8 %a to <8 x i1>
-  %c = shufflevector < 8 x i1>%b, <8 x i1>undef, <8 x i32> <i32 undef, i32 2, i32 undef, i32 undef, i32 3, i32 undef, i32 2, i32 undef>
-  ret <8 x i1> %c
-}
-
 ; KNL-LABEL: test21
 ; KNL: vpand %ymm
 ; KNL: vextracti128    $1, %ymm2
