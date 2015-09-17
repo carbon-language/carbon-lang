@@ -733,8 +733,9 @@ ASTContext::ASTContext(LangOptions &LOpts, SourceManager &SM,
       SubstTemplateTemplateParmPacks(this_()),
       GlobalNestedNameSpecifier(nullptr), Int128Decl(nullptr),
       UInt128Decl(nullptr), Float128StubDecl(nullptr),
-      BuiltinVaListDecl(nullptr), ObjCIdDecl(nullptr), ObjCSelDecl(nullptr),
-      ObjCClassDecl(nullptr), ObjCProtocolClassDecl(nullptr), BOOLDecl(nullptr),
+      BuiltinVaListDecl(nullptr), BuiltinMSVaListDecl(nullptr),
+      ObjCIdDecl(nullptr), ObjCSelDecl(nullptr), ObjCClassDecl(nullptr),
+      ObjCProtocolClassDecl(nullptr), BOOLDecl(nullptr),
       CFConstantStringTypeDecl(nullptr), ObjCInstanceTypeDecl(nullptr),
       FILEDecl(nullptr), jmp_bufDecl(nullptr), sigjmp_bufDecl(nullptr),
       ucontext_tDecl(nullptr), BlockDescriptorType(nullptr),
@@ -6039,10 +6040,19 @@ ObjCInterfaceDecl *ASTContext::getObjCProtocolDecl() const {
 // __builtin_va_list Construction Functions
 //===----------------------------------------------------------------------===//
 
-static TypedefDecl *CreateCharPtrBuiltinVaListDecl(const ASTContext *Context) {
-  // typedef char* __builtin_va_list;
+static TypedefDecl *CreateCharPtrNamedVaListDecl(const ASTContext *Context,
+                                                 StringRef Name) {
+  // typedef char* __builtin[_ms]_va_list;
   QualType T = Context->getPointerType(Context->CharTy);
-  return Context->buildImplicitTypedef(T, "__builtin_va_list");
+  return Context->buildImplicitTypedef(T, Name);
+}
+
+static TypedefDecl *CreateMSVaListDecl(const ASTContext *Context) {
+  return CreateCharPtrNamedVaListDecl(Context, "__builtin_ms_va_list");
+}
+
+static TypedefDecl *CreateCharPtrBuiltinVaListDecl(const ASTContext *Context) {
+  return CreateCharPtrNamedVaListDecl(Context, "__builtin_va_list");
 }
 
 static TypedefDecl *CreateVoidPtrBuiltinVaListDecl(const ASTContext *Context) {
@@ -6376,6 +6386,13 @@ Decl *ASTContext::getVaListTagDecl() const {
     (void)getBuiltinVaListDecl();
 
   return VaListTagDecl;
+}
+
+TypedefDecl *ASTContext::getBuiltinMSVaListDecl() const {
+  if (!BuiltinMSVaListDecl)
+    BuiltinMSVaListDecl = CreateMSVaListDecl(this);
+
+  return BuiltinMSVaListDecl;
 }
 
 void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {

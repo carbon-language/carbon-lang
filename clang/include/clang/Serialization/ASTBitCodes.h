@@ -933,29 +933,29 @@ namespace clang {
     /// it is created.
     enum PredefinedDeclIDs {
       /// \brief The NULL declaration.
-      PREDEF_DECL_NULL_ID       = 0,
-      
+      PREDEF_DECL_NULL_ID = 0,
+
       /// \brief The translation unit.
       PREDEF_DECL_TRANSLATION_UNIT_ID = 1,
-      
+
       /// \brief The Objective-C 'id' type.
       PREDEF_DECL_OBJC_ID_ID = 2,
-      
+
       /// \brief The Objective-C 'SEL' type.
       PREDEF_DECL_OBJC_SEL_ID = 3,
-      
+
       /// \brief The Objective-C 'Class' type.
       PREDEF_DECL_OBJC_CLASS_ID = 4,
-            
+
       /// \brief The Objective-C 'Protocol' type.
       PREDEF_DECL_OBJC_PROTOCOL_ID = 5,
-      
+
       /// \brief The signed 128-bit integer type.
       PREDEF_DECL_INT_128_ID = 6,
 
       /// \brief The unsigned 128-bit integer type.
       PREDEF_DECL_UNSIGNED_INT_128_ID = 7,
-      
+
       /// \brief The internal 'instancetype' typedef.
       PREDEF_DECL_OBJC_INSTANCETYPE_ID = 8,
 
@@ -965,15 +965,18 @@ namespace clang {
       /// \brief The internal '__va_list_tag' struct, if any.
       PREDEF_DECL_VA_LIST_TAG = 10,
 
+      /// \brief The internal '__builtin_ms_va_list' typedef.
+      PREDEF_DECL_BUILTIN_MS_VA_LIST_ID = 11,
+
       /// \brief The extern "C" context.
-      PREDEF_DECL_EXTERN_C_CONTEXT_ID = 11,
+      PREDEF_DECL_EXTERN_C_CONTEXT_ID = 12,
     };
 
     /// \brief The number of declaration IDs that are predefined.
     ///
     /// For more information about predefined declarations, see the
     /// \c PredefinedDeclIDs type and the PREDEF_DECL_*_ID constants.
-    const unsigned int NUM_PREDEF_DECL_IDS = 12;
+    const unsigned int NUM_PREDEF_DECL_IDS = 13;
 
     /// \brief Record code for a list of local redeclarations of a declaration.
     const unsigned int LOCAL_REDECLARATIONS = 50;

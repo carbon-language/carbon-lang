@@ -85,6 +85,12 @@ namespace clang {
                                        CodeGen::Address VAListAddr,
                                        QualType Ty) const = 0;
 
+    /// Emit the target dependent code to load a value of
+    /// \arg Ty from the \c __builtin_ms_va_list pointed to by \arg VAListAddr.
+    virtual CodeGen::Address EmitMSVAArg(CodeGen::CodeGenFunction &CGF,
+                                         CodeGen::Address VAListAddr,
+                                         QualType Ty) const;
+
     virtual bool isHomogeneousAggregateBaseType(QualType Ty) const;
 
     virtual bool isHomogeneousAggregateSmallEnough(const Type *Base,

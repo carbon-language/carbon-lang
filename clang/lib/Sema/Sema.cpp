@@ -249,6 +249,12 @@ void Sema::Initialize() {
     }
   }
 
+  if (PP.getTargetInfo().hasBuiltinMSVaList()) {
+    DeclarationName MSVaList = &Context.Idents.get("__builtin_ms_va_list");
+    if (IdResolver.begin(MSVaList) == IdResolver.end())
+      PushOnScopeChains(Context.getBuiltinMSVaListDecl(), TUScope);
+  }
+
   DeclarationName BuiltinVaList = &Context.Idents.get("__builtin_va_list");
   if (IdResolver.begin(BuiltinVaList) == IdResolver.end())
     PushOnScopeChains(Context.getBuiltinVaListDecl(), TUScope);

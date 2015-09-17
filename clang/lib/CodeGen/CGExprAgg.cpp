@@ -960,8 +960,8 @@ void AggExprEmitter::VisitChooseExpr(const ChooseExpr *CE) {
 }
 
 void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
-  Address ArgValue = CGF.EmitVAListRef(VE->getSubExpr());
-  Address ArgPtr = CGF.EmitVAArg(ArgValue, VE->getType());
+  Address ArgValue = Address::invalid();
+  Address ArgPtr = CGF.EmitVAArg(VE, ArgValue);
 
   if (!ArgPtr.isValid()) {
     // If EmitVAArg fails, we fall back to the LLVM instruction.

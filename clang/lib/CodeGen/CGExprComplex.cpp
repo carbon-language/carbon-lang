@@ -1011,8 +1011,8 @@ ComplexPairTy ComplexExprEmitter::VisitInitListExpr(InitListExpr *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::VisitVAArgExpr(VAArgExpr *E) {
-  Address ArgValue = CGF.EmitVAListRef(E->getSubExpr());
-  Address ArgPtr = CGF.EmitVAArg(ArgValue, E->getType());
+  Address ArgValue = Address::invalid();
+  Address ArgPtr = CGF.EmitVAArg(E, ArgValue);
 
   if (!ArgPtr.isValid()) {
     CGF.ErrorUnsupported(E, "complex va_arg expression");

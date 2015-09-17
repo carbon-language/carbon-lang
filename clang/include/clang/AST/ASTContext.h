@@ -216,6 +216,9 @@ class ASTContext : public RefCountedBase<ASTContext> {
   /// __builtin_va_list type.
   mutable TypedefDecl *BuiltinVaListDecl;
 
+  /// The typedef for the predefined \c __builtin_ms_va_list type.
+  mutable TypedefDecl *BuiltinMSVaListDecl;
+
   /// \brief The typedef for the predefined \c id type.
   mutable TypedefDecl *ObjCIdDecl;
   
@@ -1578,6 +1581,15 @@ public:
   /// \c __va_list_tag type used to help define the \c __builtin_va_list type
   /// for some targets.
   Decl *getVaListTagDecl() const;
+
+  /// Retrieve the C type declaration corresponding to the predefined
+  /// \c __builtin_ms_va_list type.
+  TypedefDecl *getBuiltinMSVaListDecl() const;
+
+  /// Retrieve the type of the \c __builtin_ms_va_list type.
+  QualType getBuiltinMSVaListType() const {
+    return getTypeDeclType(getBuiltinMSVaListDecl());
+  }
 
   /// \brief Return a type with additional \c const, \c volatile, or
   /// \c restrict qualifiers.

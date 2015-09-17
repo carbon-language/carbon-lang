@@ -1718,6 +1718,10 @@ Address CodeGenFunction::EmitVAListRef(const Expr* E) {
   return EmitLValue(E).getAddress();
 }
 
+Address CodeGenFunction::EmitMSVAListRef(const Expr *E) {
+  return EmitLValue(E).getAddress();
+}
+
 void CodeGenFunction::EmitDeclRefExprDbgValue(const DeclRefExpr *E,
                                               llvm::Constant *Init) {
   assert (Init && "Invalid DeclRefExpr initializer!");

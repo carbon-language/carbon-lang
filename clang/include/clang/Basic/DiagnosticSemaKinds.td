@@ -7102,6 +7102,10 @@ def note_empty_body_on_separate_line : Note<
 
 def err_va_start_used_in_non_variadic_function : Error<
   "'va_start' used in function with fixed args">;
+def err_va_start_used_in_wrong_abi_function : Error<
+  "'va_start' used in %select{System V|Win64}0 ABI function">;
+def err_ms_va_start_used_in_sysv_function : Error<
+  "'__builtin_ms_va_start' used in System V ABI function">;
 def warn_second_parameter_of_va_start_not_last_named_argument : Warning<
   "second parameter of 'va_start' not last named argument">, InGroup<Varargs>;
 def warn_va_start_of_reference_type_is_undefined : Warning<
@@ -7216,6 +7220,8 @@ def err_64_bit_builtin_32_bit_tgt : Error<
   "this builtin is only available on 64-bit targets">;
 def err_ppc_builtin_only_on_pwr7 : Error<
   "this builtin is only valid on POWER7 or later CPUs">;
+def err_x86_builtin_32_bit_tgt : Error<
+  "this builtin is only available on x86-64 targets">;
 
 def err_builtin_longjmp_unsupported : Error<
   "__builtin_longjmp is not supported for the current target">;

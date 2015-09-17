@@ -1655,6 +1655,11 @@ public:
   // or the value of the expression, depending on how va_list is defined.
   Address EmitVAListRef(const Expr *E);
 
+  /// Emit a "reference" to a __builtin_ms_va_list; this is
+  /// always the value of the expression, because a __builtin_ms_va_list is a
+  /// pointer to a char.
+  Address EmitMSVAListRef(const Expr *E);
+
   /// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result will
   /// always be accessible even if no aggregate location is provided.
   RValue EmitAnyExprToTemp(const Expr *E);
@@ -1752,11 +1757,23 @@ public:
   /// to -1 in accordance with the Itanium C++ ABI.
   void EmitNullInitialization(Address DestPtr, QualType Ty);
 
-  // EmitVAArg - Generate code to get an argument from the passed in pointer
-  // and update it accordingly. The return value is a pointer to the argument.
+  /// Emits a call to an LLVM variable-argument intrinsic, either
+  /// \c llvm.va_start or \c llvm.va_end.
+  /// \param ArgValue A reference to the \c va_list as emitted by either
+  /// \c EmitVAListRef or \c EmitMSVAListRef.
+  /// \param IsStart If \c true, emits a call to \c llvm.va_start; otherwise,
+  /// calls \c llvm.va_end.
+  llvm::Value *EmitVAStartEnd(llvm::Value *ArgValue, bool IsStart);
+
+  /// Generate code to get an argument from the passed in pointer
+  /// and update it accordingly.
+  /// \param VE The \c VAArgExpr for which to generate code.
+  /// \param VAListAddr Receives a reference to the \c va_list as emitted by
+  /// either \c EmitVAListRef or \c EmitMSVAListRef.
+  /// \returns A pointer to the argument.
   // FIXME: We should be able to get rid of this method and use the va_arg
   // instruction in LLVM instead once it works well enough.
-  Address EmitVAArg(Address VAListAddr, QualType Ty);
+  Address EmitVAArg(VAArgExpr *VE, Address &VAListAddr);
 
   /// emitArrayLength - Compute the length of an array, even if it's a
   /// VLA, and drill down to the base element type.

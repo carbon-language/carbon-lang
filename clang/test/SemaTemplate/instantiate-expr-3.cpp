@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -fsyntax-only -verify %s
 
 // ---------------------------------------------------------------------
 // Imaginary literals
@@ -108,12 +108,41 @@ template<typename VaList, typename ArgType>
 struct VaArg1 {
   void f(int n, ...) {
     VaList va;
-    __builtin_va_start(va, n); // expected-error{{int}}
+    __builtin_va_start(va, n); // expected-error{{int}} expected-error{{char *}}
     for (int i = 0; i != n; ++i)
       (void)__builtin_va_arg(va, ArgType); // expected-error{{int}}
-    __builtin_va_end(va); // expected-error{{int}}
+    __builtin_va_end(va); // expected-error{{int}} expected-error{{char *}}
   }
 };
 
 template struct VaArg1<__builtin_va_list, int>;
+template struct VaArg1<__builtin_ms_va_list, int>; // expected-note{{instantiation}}
 template struct VaArg1<int, int>; // expected-note{{instantiation}}
+
+template<typename ArgType>
+struct VaArg2 {
+  void __attribute__((ms_abi)) f(int n, ...) {
+    __builtin_ms_va_list va;
+    __builtin_ms_va_start(va, n);
+    for (int i = 0; i != n; ++i)
+      (void)__builtin_va_arg(va, ArgType);
+    __builtin_ms_va_end(va);
+  }
+};
+
+template struct VaArg2<int>;
+
+template<typename VaList, typename ArgType>
+struct VaArg3 {
+  void __attribute__((ms_abi)) f(int n, ...) {
+    VaList va;
+    __builtin_ms_va_start(va, n); // expected-error{{int}} expected-error{{__va_list_tag}}
+    for (int i = 0; i != n; ++i)
+      (void)__builtin_va_arg(va, ArgType); // expected-error{{int}}
+    __builtin_ms_va_end(va); // expected-error{{int}} expected-error{{__va_list_tag}}
+  }
+};
+
+template struct VaArg3<__builtin_ms_va_list, int>;
+template struct VaArg3<__builtin_va_list, int>; // expected-note{{instantiation}}
+template struct VaArg3<int, int>; // expected-note{{instantiation}}

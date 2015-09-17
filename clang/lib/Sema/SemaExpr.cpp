@@ -11671,43 +11671,57 @@ ExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
                                 Expr *E, TypeSourceInfo *TInfo,
                                 SourceLocation RPLoc) {
   Expr *OrigExpr = E;
+  bool IsMS = false;
+
+  // It might be a __builtin_ms_va_list. (But don't ever mark a va_arg()
+  // as Microsoft ABI on an actual Microsoft platform, where
+  // __builtin_ms_va_list and __builtin_va_list are the same.)
+  if (!E->isTypeDependent() && Context.getTargetInfo().hasBuiltinMSVaList() &&
+      Context.getTargetInfo().getBuiltinVaListKind() != TargetInfo::CharPtrBuiltinVaList) {
+    QualType MSVaListType = Context.getBuiltinMSVaListType();
+    if (Context.hasSameType(MSVaListType, E->getType())) {
+      if (CheckForModifiableLvalue(E, BuiltinLoc, *this))
+        return ExprError();
+      IsMS = true;
+    }
+  }
 
   // Get the va_list type
   QualType VaListType = Context.getBuiltinVaListType();
-  if (VaListType->isArrayType()) {
-    // Deal with implicit array decay; for example, on x86-64,
-    // va_list is an array, but it's supposed to decay to
-    // a pointer for va_arg.
-    VaListType = Context.getArrayDecayedType(VaListType);
-    // Make sure the input expression also decays appropriately.
-    ExprResult Result = UsualUnaryConversions(E);
-    if (Result.isInvalid())
-      return ExprError();
-    E = Result.get();
-  } else if (VaListType->isRecordType() && getLangOpts().CPlusPlus) {
-    // If va_list is a record type and we are compiling in C++ mode,
-    // check the argument using reference binding.
-    InitializedEntity Entity
-      = InitializedEntity::InitializeParameter(Context,
-          Context.getLValueReferenceType(VaListType), false);
-    ExprResult Init = PerformCopyInitialization(Entity, SourceLocation(), E);
-    if (Init.isInvalid())
-      return ExprError();
-    E = Init.getAs<Expr>();
-  } else {
-    // Otherwise, the va_list argument must be an l-value because
-    // it is modified by va_arg.
-    if (!E->isTypeDependent() &&
-        CheckForModifiableLvalue(E, BuiltinLoc, *this))
-      return ExprError();
+  if (!IsMS) {
+    if (VaListType->isArrayType()) {
+      // Deal with implicit array decay; for example, on x86-64,
+      // va_list is an array, but it's supposed to decay to
+      // a pointer for va_arg.
+      VaListType = Context.getArrayDecayedType(VaListType);
+      // Make sure the input expression also decays appropriately.
+      ExprResult Result = UsualUnaryConversions(E);
+      if (Result.isInvalid())
+        return ExprError();
+      E = Result.get();
+    } else if (VaListType->isRecordType() && getLangOpts().CPlusPlus) {
+      // If va_list is a record type and we are compiling in C++ mode,
+      // check the argument using reference binding.
+      InitializedEntity Entity = InitializedEntity::InitializeParameter(
+          Context, Context.getLValueReferenceType(VaListType), false);
+      ExprResult Init = PerformCopyInitialization(Entity, SourceLocation(), E);
+      if (Init.isInvalid())
+        return ExprError();
+      E = Init.getAs<Expr>();
+    } else {
+      // Otherwise, the va_list argument must be an l-value because
+      // it is modified by va_arg.
+      if (!E->isTypeDependent() &&
+          CheckForModifiableLvalue(E, BuiltinLoc, *this))
+        return ExprError();
+    }
   }
 
-  if (!E->isTypeDependent() &&
-      !Context.hasSameType(VaListType, E->getType())) {
+  if (!IsMS && !E->isTypeDependent() &&
+      !Context.hasSameType(VaListType, E->getType()))
     return ExprError(Diag(E->getLocStart(),
                          diag::err_first_argument_to_va_arg_not_of_type_va_list)
       << OrigExpr->getType() << E->getSourceRange());
-  }
 
   if (!TInfo->getType()->isDependentType()) {
     if (RequireCompleteType(TInfo->getTypeLoc().getBeginLoc(), TInfo->getType(),
@@ -11749,7 +11763,7 @@ ExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
   }
 
   QualType T = TInfo->getType().getNonLValueExprType(Context);
-  return new (Context) VAArgExpr(BuiltinLoc, E, TInfo, RPLoc, T);
+  return new (Context) VAArgExpr(BuiltinLoc, E, TInfo, RPLoc, T, IsMS);
 }
 
 ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {

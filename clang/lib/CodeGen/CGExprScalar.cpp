@@ -3357,8 +3357,9 @@ Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   if (Ty->isVariablyModifiedType())
     CGF.EmitVariablyModifiedType(Ty);
 
-  Address ArgValue = CGF.EmitVAListRef(VE->getSubExpr());
-  Address ArgPtr = CGF.EmitVAArg(ArgValue, VE->getType());
+  Address ArgValue = Address::invalid();
+  Address ArgPtr = CGF.EmitVAArg(VE, ArgValue);
+
   llvm::Type *ArgTy = ConvertType(VE->getType());
 
   // If EmitVAArg fails, we fall back to the LLVM instruction.
