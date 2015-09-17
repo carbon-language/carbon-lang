@@ -26,6 +26,7 @@ add_llvm_library(LLVMCodeGen
   ExpandISelPseudos.cpp
   ExpandPostRAPseudos.cpp
   FaultMaps.cpp
+  FuncletLayout.cpp
   GCMetadata.cpp
   GCMetadataPrinter.cpp
   GCRootLowering.cpp

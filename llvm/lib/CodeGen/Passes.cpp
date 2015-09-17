@@ -582,6 +582,8 @@ void TargetPassConfig::addMachinePasses() {
 
   addPreEmitPass();
 
+  addPass(&FuncletLayoutID, false);
+
   addPass(&StackMapLivenessID, false);
 
   AddingMachinePasses = false;

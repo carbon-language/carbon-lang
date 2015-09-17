@@ -299,6 +299,7 @@ void initializeFloat2IntPass(PassRegistry&);
 void initializeLoopDistributePass(PassRegistry&);
 void initializeSjLjEHPreparePass(PassRegistry&);
 void initializeDemandedBitsPass(PassRegistry&);
+void initializeFuncletLayoutPass(PassRegistry &);
 }
 
 #endif
