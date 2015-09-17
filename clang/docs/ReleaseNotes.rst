@@ -114,6 +114,51 @@ this section should help get you past the largest hurdles of upgrading.
 
 -  ...
 
+AST Matchers
+------------
+The AST matcher functions were renamed to reflect the exact AST node names,
+which is a breaking change to AST matching code. The following matchers were
+affected:
+
+=======================	============================
+Previous Matcher Name	New Matcher Name
+=======================	============================
+recordDecl		recordDecl and cxxRecordDecl
+ctorInitializer		cxxCtorInitializer
+constructorDecl		cxxConstructorDecl
+destructorDecl		cxxDestructorDecl
+methodDecl		cxxMethodDecl
+conversionDecl		cxxConversionDecl
+memberCallExpr		cxxMemberCallExpr
+constructExpr		cxxConstructExpr
+unresolvedConstructExpr	cxxUnresolvedConstructExpr
+thisExpr		cxxThisExpr
+bindTemporaryExpr	cxxBindTemporaryExpr
+newExpr			cxxNewExpr
+deleteExpr		cxxDeleteExpr
+defaultArgExpr		cxxDefaultArgExpr
+operatorCallExpr	cxxOperatorCallExpr
+forRangeStmt		cxxForRangeStmt
+catchStmt		cxxCatchStmt
+tryStmt			cxxTryStmt
+throwExpr		cxxThrowExpr
+boolLiteral		cxxBoolLiteral
+nullPtrLiteralExpr	cxxNullPtrLiteralExpr
+reinterpretCastExpr	cxxReinterpretCastExpr
+staticCastExpr		cxxStaticCastExpr
+dynamicCastExpr		cxxDynamicCastExpr
+constCastExpr		cxxConstCastExpr
+functionalCastExpr	cxxFunctionalCastExpr
+temporaryObjectExpr	cxxTemporaryObjectExpr
+CUDAKernalCallExpr	cudaKernelCallExpr
+=======================	============================
+
+recordDecl() previously matched AST nodes of type CXXRecordDecl, but now
+matches AST nodes of type RecordDecl. If a CXXRecordDecl is required, use the
+cxxRecordDecl() matcher instead.
+
+...
+
 libclang
 --------
 
