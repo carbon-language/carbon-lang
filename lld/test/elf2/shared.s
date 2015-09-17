@@ -12,7 +12,7 @@
 // SO-NEXT: Flags [
 // SO-NEXT: ]
 // SO-NEXT: Address:
-// SO-NEXT: Offset: 0x400C
+// SO-NEXT: Offset: 0x300C
 // SO-NEXT: Size:
 // SO-NEXT: Link:
 // SO-NEXT: Info:
@@ -44,7 +44,7 @@
 // CHECK-NEXT:     SHF_ALLOC
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Address: [[DYNSYMADDR:.*]]
-// CHECK-NEXT:   Offset: 0x3000
+// CHECK-NEXT:   Offset: 0x201C
 // CHECK-NEXT:   Size: 48
 // CHECK-NEXT:   Link: [[DYNSTR:.*]]
 // CHECK-NEXT:   Info: 1
