@@ -289,7 +289,69 @@ static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
     return MemoryAccess::RT_NONE;
   }
 }
+
 //===----------------------------------------------------------------------===//
+
+/// @brief Derive the individual index expressions from a GEP instruction
+///
+/// This function optimistically assumes the GEP references into a fixed size
+/// array. If this is actually true, this function returns a list of array
+/// subscript expressions as SCEV as well as a list of integers describing
+/// the size of the individual array dimensions. Both lists have either equal
+/// length of the size list is one element shorter in case there is no known
+/// size available for the outermost array dimension.
+///
+/// @param GEP The GetElementPtr instruction to analyze.
+///
+/// @return A tuple with the subscript expressions and the dimension sizes.
+static std::tuple<std::vector<const SCEV *>, std::vector<int>>
+getIndexExpressionsFromGEP(GetElementPtrInst *GEP, ScalarEvolution &SE) {
+  std::vector<const SCEV *> Subscripts;
+  std::vector<int> Sizes;
+
+  Type *Ty = GEP->getPointerOperandType();
+
+  bool DroppedFirstDim = false;
+
+  for (long i = 1; i < GEP->getNumOperands(); i++) {
+
+    const SCEV *Expr = SE.getSCEV(GEP->getOperand(i));
+
+    if (i == 1) {
+      if (auto PtrTy = dyn_cast<PointerType>(Ty)) {
+        Ty = PtrTy->getElementType();
+      } else if (auto ArrayTy = dyn_cast<ArrayType>(Ty)) {
+        Ty = ArrayTy->getElementType();
+      } else {
+        Subscripts.clear();
+        Sizes.clear();
+        break;
+      }
+      if (auto Const = dyn_cast<SCEVConstant>(Expr))
+        if (Const->getValue()->isZero()) {
+          DroppedFirstDim = true;
+          continue;
+        }
+      Subscripts.push_back(Expr);
+      continue;
+    }
+
+    auto ArrayTy = dyn_cast<ArrayType>(Ty);
+    if (!ArrayTy) {
+      Subscripts.clear();
+      Sizes.clear();
+      break;
+    }
+
+    Subscripts.push_back(Expr);
+    if (!(DroppedFirstDim && i == 2))
+      Sizes.push_back(ArrayTy->getNumElements());
+
+    Ty = ArrayTy->getElementType();
+  }
+
+  return std::make_tuple(Subscripts, Sizes);
+}
 
 MemoryAccess::~MemoryAccess() {
   isl_id_free(Id);
@@ -561,7 +623,8 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
     AccessRelation = isl_map_flat_range_product(AccessRelation, SubscriptMap);
   }
 
-  AccessRelation = foldAccess(Access, AccessRelation, Statement);
+  if (Access.Sizes.size() > 1 && !isa<SCEVConstant>(Access.Sizes[0]))
+    AccessRelation = foldAccess(Access, AccessRelation, Statement);
 
   Space = Statement->getDomainSpace();
   AccessRelation = isl_map_set_tuple_id(
@@ -921,51 +984,6 @@ void ScopStmt::buildDomain() {
   Domain = isl_set_set_tuple_id(Domain, Id);
 }
 
-std::tuple<std::vector<const SCEV *>, std::vector<int>>
-ScopStmt::getIndexExpressionsFromGEP(GetElementPtrInst *GEP) {
-  ScalarEvolution &SE = *Parent.getSE();
-  std::vector<const SCEV *> Subscripts;
-  std::vector<int> Sizes;
-
-  Type *Ty = GEP->getPointerOperandType();
-
-  for (long i = 1; i < GEP->getNumOperands(); i++) {
-
-    const SCEV *Expr = SE.getSCEV(GEP->getOperand(i));
-
-    if (i == 1) {
-      if (auto PtrTy = dyn_cast<PointerType>(Ty)) {
-        Ty = PtrTy->getElementType();
-      } else if (auto ArrayTy = dyn_cast<ArrayType>(Ty)) {
-        Ty = ArrayTy->getElementType();
-      } else {
-        Subscripts.clear();
-        Sizes.clear();
-        break;
-      }
-      if (auto Const = dyn_cast<SCEVConstant>(Expr))
-        if (Const->getValue()->isZero())
-          continue;
-      Subscripts.push_back(Expr);
-      continue;
-    }
-
-    auto ArrayTy = dyn_cast<ArrayType>(Ty);
-    if (!ArrayTy) {
-      Subscripts.clear();
-      Sizes.clear();
-      break;
-    }
-
-    Subscripts.push_back(Expr);
-    Sizes.push_back(ArrayTy->getNumElements());
-
-    Ty = ArrayTy->getElementType();
-  }
-
-  return std::make_tuple(Subscripts, Sizes);
-}
-
 void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP) {
   int Dimension = 0;
   isl_ctx *Ctx = Parent.getIslCtx();
@@ -976,7 +994,7 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP) {
   std::vector<const SCEV *> Subscripts;
   std::vector<int> Sizes;
 
-  std::tie(Subscripts, Sizes) = getIndexExpressionsFromGEP(GEP);
+  std::tie(Subscripts, Sizes) = getIndexExpressionsFromGEP(GEP, SE);
 
   if (auto *PtrTy = dyn_cast<PointerType>(Ty)) {
     Dimension = 1;
@@ -2898,12 +2916,41 @@ ScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
     Val = Store->getValueOperand();
   }
 
-  const SCEV *AccessFunction = SE->getSCEVAtScope(getPointerOperand(*Inst), L);
+  auto Address = getPointerOperand(*Inst);
+
+  const SCEV *AccessFunction = SE->getSCEVAtScope(Address, L);
   const SCEVUnknown *BasePointer =
       dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
 
   assert(BasePointer && "Could not find base pointer");
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
+
+  if (auto *GEP = dyn_cast<GetElementPtrInst>(Address)) {
+    std::vector<const SCEV *> Subscripts;
+    std::vector<int> Sizes;
+    std::tie(Subscripts, Sizes) = getIndexExpressionsFromGEP(GEP, *SE);
+    auto BasePtr = GEP->getOperand(0);
+
+    std::vector<const SCEV *> SizesSCEV;
+
+    bool AllAffineSubcripts = true;
+    for (auto Subscript : Subscripts)
+      if (!isAffineExpr(R, Subscript, *SE)) {
+        AllAffineSubcripts = false;
+        break;
+      }
+
+    if (AllAffineSubcripts && Sizes.size() > 0) {
+      for (auto V : Sizes)
+        SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
+            IntegerType::getInt64Ty(BasePtr->getContext()), V)));
+      SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
+          IntegerType::getInt64Ty(BasePtr->getContext()), Size)));
+
+      return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, true,
+                      Subscripts, SizesSCEV, Val);
+    }
+  }
 
   auto AccItr = InsnToMemAcc.find(Inst);
   if (PollyDelinearize && AccItr != InsnToMemAcc.end())

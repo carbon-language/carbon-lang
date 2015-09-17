@@ -70,5 +70,5 @@ return:                                           ; preds = %bb3, %entry
 ; CHECK-DAG:             i1 <= 1 + 5N
 ; CHECK:               }
 ; CHECK:         MustWriteAccess := [Reduction Type: NONE]
-; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] -> MemRef_a[129i0 + 128i1] };
+; CHECK:             [N, M] -> { Stmt_bb1[i0, i1] -> MemRef_a[i1, 129i0] };
 ; CHECK: }

@@ -272,7 +272,6 @@ exit.2:
 ; VALUE:   RAW dependences:
 ; VALUE:     [p] -> {
 ; VALUE:       Stmt_S1[i0] -> Stmt_S2[-p + i0] :
-; VALUE-DAG:           p <= 190
 ; VALUE-DAG:           i0 >= p
 ; VALUE-DAG:           i0 <= 9 + p
 ; VALUE-DAG:           i0 <= 99

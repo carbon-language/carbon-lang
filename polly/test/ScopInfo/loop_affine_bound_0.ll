@@ -67,5 +67,5 @@ return:                                           ; preds = %bb.nph8, %bb3, %ent
 ; CHECK:          Schedule :=
 ; CHECK:              [N, M] -> { Stmt_bb1[i0, i1] -> [i0, i1] };
 ; CHECK:          MustWriteAccess := [Reduction Type: NONE]
-; CHECK:              [N, M] -> { Stmt_bb1[i0, i1] -> MemRef_a[i0 + 128i1] };
+; CHECK:              [N, M] -> { Stmt_bb1[i0, i1] -> MemRef_a[i1, i0] };
 ; CHECK:  }

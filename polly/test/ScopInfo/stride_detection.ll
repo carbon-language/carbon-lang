@@ -10,20 +10,13 @@
 ;             Stmt_for_body_3(32 * c0 + 4 * c2 + c4, 32 * c1 + c3);
 
 ; CHECK: polly.stmt.for.body.3:                            ; preds = %polly.loop_header18
-; CHECK:   %scevgep = getelementptr [1024 x double], [1024 x double]* %A, i64 0, i64 %21
-; CHECK:   %_p_vec_p = bitcast double* %scevgep to <1 x double>*
 ; CHECK:   %_p_splat_one = load <1 x double>, <1 x double>* %_p_vec_p, align 8, !alias.scope !1, !noalias !3, !llvm.mem.parallel_loop_access !0
-; CHECK:   %_p_splat = shufflevector <1 x double> %_p_splat_one, <1 x double> %_p_splat_one, <4 x i32> zeroinitializer
-; CHECK:   %scevgep26 = getelementptr [1024 x double], [1024 x double]* %C, i64 0, i64 %19
-; CHECK:   %vector_ptr = bitcast double* %scevgep26 to <4 x double>*
 ; CHECK:   %_p_vec_full = load <4 x double>, <4 x double>* %vector_ptr, align 8, !alias.scope !4, !noalias !5, !llvm.mem.parallel_loop_access !0
-; CHECK:   %addp_vec = fadd <4 x double> %_p_splat, %_p_vec_full
-; CHECK:   %40 = extractelement <4 x double> %addp_vec, i32 0
-; CHECK:   %41 = extractelement <4 x double> %addp_vec, i32 1
-; CHECK:   %42 = extractelement <4 x double> %addp_vec, i32 2
-; CHECK:   %43 = extractelement <4 x double> %addp_vec, i32 3
-; CHECK:   %vector_ptr27 = bitcast double* %scevgep26 to <4 x double>*
-; CHECK:   store <4 x double> %addp_vec, <4 x double>* %vector_ptr27, align 8, !alias.scope !4, !noalias !5, !llvm.mem.parallel_loop_access !0
+; CHECK:   extractelement <4 x double> %addp_vec, i32 0
+; CHECK:   extractelement <4 x double> %addp_vec, i32 1
+; CHECK:   extractelement <4 x double> %addp_vec, i32 2
+; CHECK:   extractelement <4 x double> %addp_vec, i32 3
+; CHECK:   store <4 x double> %addp_vec, <4 x double>* {{.*}}, align 8, !alias.scope !4, !noalias !5, !llvm.mem.parallel_loop_access !0
 
 define void @kernel_gemm(i32 %ni, i32 %nj, i32 %nk, [1024 x double]* %C, [1024 x double]* %A) #0 {
 entry:
