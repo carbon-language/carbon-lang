@@ -117,6 +117,9 @@ private:
     ReadExceptionRecord();
 
     void
+    ReadMiscInfo();
+
+    void
     ReadModuleList();
 
     // A thin wrapper around WinAPI's MiniDumpReadDumpStream to avoid redundant

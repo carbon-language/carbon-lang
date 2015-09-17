@@ -164,6 +164,7 @@ ProcessWinMiniDump::DoLoadCore()
     }
 
     GetTarget().SetArchitecture(DetermineArchitecture());
+    ReadMiscInfo();  // notably for process ID
     ReadModuleList();
     ReadExceptionRecord();
 
@@ -433,7 +434,8 @@ ProcessWinMiniDump::DetermineArchitecture()
 }
 
 void
-ProcessWinMiniDump::ReadExceptionRecord() {
+ProcessWinMiniDump::ReadExceptionRecord()
+{
     size_t size = 0;
     auto exception_stream_ptr = static_cast<MINIDUMP_EXCEPTION_STREAM*>(FindDumpStream(ExceptionStream, &size));
     if (exception_stream_ptr)
@@ -443,7 +445,23 @@ ProcessWinMiniDump::ReadExceptionRecord() {
 }
 
 void
-ProcessWinMiniDump::ReadModuleList() {
+ProcessWinMiniDump::ReadMiscInfo()
+{
+    size_t size = 0;
+    const auto misc_info_ptr = static_cast<MINIDUMP_MISC_INFO*>(FindDumpStream(MiscInfoStream, &size));
+    if (!misc_info_ptr || size < sizeof(MINIDUMP_MISC_INFO)) {
+        return;
+    }
+
+    if ((misc_info_ptr->Flags1 & MINIDUMP_MISC1_PROCESS_ID) != 0) {
+        // This misc info record has the process ID.
+        SetID(misc_info_ptr->ProcessId);
+    }
+}
+
+void
+ProcessWinMiniDump::ReadModuleList()
+{
     size_t size = 0;
     auto module_list_ptr = static_cast<MINIDUMP_MODULE_LIST*>(FindDumpStream(ModuleListStream, &size));
     if (!module_list_ptr || module_list_ptr->NumberOfModules == 0)

@@ -16,7 +16,7 @@ class MiniDumpTestCase(TestBase):
         """Test that lldb can read the process information from the minidump."""
         self.assertTrue(self.process, PROCESS_IS_VALID)
         self.assertEqual(self.process.GetNumThreads(), 1)
-        # TODO(amccarth):  Check the process ID.
+        self.assertEqual(self.process.GetProcessID(), 4440)
 
     def test_thread_info_in_mini_dump(self):
         """Test that lldb can read the thread information from the minidump."""
