@@ -921,6 +921,51 @@ void ScopStmt::buildDomain() {
   Domain = isl_set_set_tuple_id(Domain, Id);
 }
 
+std::tuple<std::vector<const SCEV *>, std::vector<int>>
+ScopStmt::getIndexExpressionsFromGEP(GetElementPtrInst *GEP) {
+  ScalarEvolution &SE = *Parent.getSE();
+  std::vector<const SCEV *> Subscripts;
+  std::vector<int> Sizes;
+
+  Type *Ty = GEP->getPointerOperandType();
+
+  for (long i = 1; i < GEP->getNumOperands(); i++) {
+
+    const SCEV *Expr = SE.getSCEV(GEP->getOperand(i));
+
+    if (i == 1) {
+      if (auto PtrTy = dyn_cast<PointerType>(Ty)) {
+        Ty = PtrTy->getElementType();
+      } else if (auto ArrayTy = dyn_cast<ArrayType>(Ty)) {
+        Ty = ArrayTy->getElementType();
+      } else {
+        Subscripts.clear();
+        Sizes.clear();
+        break;
+      }
+      if (auto Const = dyn_cast<SCEVConstant>(Expr))
+        if (Const->getValue()->isZero())
+          continue;
+      Subscripts.push_back(Expr);
+      continue;
+    }
+
+    auto ArrayTy = dyn_cast<ArrayType>(Ty);
+    if (!ArrayTy) {
+      Subscripts.clear();
+      Sizes.clear();
+      break;
+    }
+
+    Subscripts.push_back(Expr);
+    Sizes.push_back(ArrayTy->getNumElements());
+
+    Ty = ArrayTy->getElementType();
+  }
+
+  return std::make_tuple(Subscripts, Sizes);
+}
+
 void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP) {
   int Dimension = 0;
   isl_ctx *Ctx = Parent.getIslCtx();
@@ -928,43 +973,45 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP) {
   Type *Ty = GEP->getPointerOperandType();
   ScalarEvolution &SE = *Parent.getSE();
 
+  std::vector<const SCEV *> Subscripts;
+  std::vector<int> Sizes;
+
+  std::tie(Subscripts, Sizes) = getIndexExpressionsFromGEP(GEP);
+
   if (auto *PtrTy = dyn_cast<PointerType>(Ty)) {
     Dimension = 1;
     Ty = PtrTy->getElementType();
   }
 
-  while (auto ArrayTy = dyn_cast<ArrayType>(Ty)) {
-    unsigned int Operand = 1 + Dimension;
+  int IndexOffset = Subscripts.size() - Sizes.size();
 
-    if (GEP->getNumOperands() <= Operand)
-      break;
+  assert(IndexOffset <= 1 && "Unexpected large index offset");
 
-    const SCEV *Expr = SE.getSCEV(GEP->getOperand(Operand));
+  for (size_t i = 0; i < Sizes.size(); i++) {
+    auto Expr = Subscripts[i + IndexOffset];
+    auto Size = Sizes[i];
 
-    if (isAffineExpr(&Parent.getRegion(), Expr, SE)) {
-      isl_pw_aff *AccessOffset = getPwAff(Expr);
-      AccessOffset =
-          isl_pw_aff_set_tuple_id(AccessOffset, isl_dim_in, getDomainId());
+    if (!isAffineExpr(&Parent.getRegion(), Expr, SE))
+      continue;
 
-      isl_pw_aff *DimSize = isl_pw_aff_from_aff(isl_aff_val_on_domain(
-          isl_local_space_copy(LSpace),
-          isl_val_int_from_si(Ctx, ArrayTy->getNumElements())));
+    isl_pw_aff *AccessOffset = getPwAff(Expr);
+    AccessOffset =
+        isl_pw_aff_set_tuple_id(AccessOffset, isl_dim_in, getDomainId());
 
-      isl_set *OutOfBound = isl_pw_aff_ge_set(AccessOffset, DimSize);
-      OutOfBound = isl_set_intersect(getDomain(), OutOfBound);
-      OutOfBound = isl_set_params(OutOfBound);
-      isl_set *InBound = isl_set_complement(OutOfBound);
-      isl_set *Executed = isl_set_params(getDomain());
+    isl_pw_aff *DimSize = isl_pw_aff_from_aff(isl_aff_val_on_domain(
+        isl_local_space_copy(LSpace), isl_val_int_from_si(Ctx, Size)));
 
-      // A => B == !A or B
-      isl_set *InBoundIfExecuted =
-          isl_set_union(isl_set_complement(Executed), InBound);
+    isl_set *OutOfBound = isl_pw_aff_ge_set(AccessOffset, DimSize);
+    OutOfBound = isl_set_intersect(getDomain(), OutOfBound);
+    OutOfBound = isl_set_params(OutOfBound);
+    isl_set *InBound = isl_set_complement(OutOfBound);
+    isl_set *Executed = isl_set_params(getDomain());
 
-      Parent.addAssumption(InBoundIfExecuted);
-    }
+    // A => B == !A or B
+    isl_set *InBoundIfExecuted =
+        isl_set_union(isl_set_complement(Executed), InBound);
 
-    Dimension += 1;
-    Ty = ArrayTy->getElementType();
+    Parent.addAssumption(InBoundIfExecuted);
   }
 
   isl_local_space_free(LSpace);
