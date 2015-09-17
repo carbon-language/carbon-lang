@@ -4836,6 +4836,6 @@ bool CodeGenPrepare::splitBranchCondition(Function &F) {
 }
 
 void CodeGenPrepare::stripInvariantGroupMetadata(Instruction &I) {
-  if (auto *InvariantMD = I.getMetadata("invariant.group"))
+  if (auto *InvariantMD = I.getMetadata(LLVMContext::MD_invariant_group))
     I.dropUnknownNonDebugMetadata(InvariantMD->getMetadataID());
 }

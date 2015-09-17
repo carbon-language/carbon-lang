@@ -62,7 +62,8 @@ public:
     MD_dereferenceable = 12, // "dereferenceable"
     MD_dereferenceable_or_null = 13, // "dereferenceable_or_null"
     MD_make_implicit = 14, // "make.implicit"
-    MD_unpredictable = 15 // "unpredictable"
+    MD_unpredictable = 15, // "unpredictable"
+    MD_invariant_group = 16 // "invariant.group"
   };
 
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.

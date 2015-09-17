@@ -116,6 +116,13 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   assert(UnpredictableID == MD_unpredictable &&
          "unpredictable kind id drifted");
   (void)UnpredictableID;
+
+  // Create the 'invariant.group' metadata kind.
+  unsigned InvariantGroupId = getMDKindID("invariant.group");
+  assert(InvariantGroupId == MD_invariant_group &&
+         "invariant.group kind id drifted");
+  (void)InvariantGroupId;
+
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
