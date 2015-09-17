@@ -125,14 +125,23 @@ StringExtractor::DecodeHexU8()
 uint8_t
 StringExtractor::GetHexU8 (uint8_t fail_value, bool set_eof_on_fail)
 {
+    GetHexU8Ex(fail_value, set_eof_on_fail);
+    return fail_value;
+}
+
+bool
+StringExtractor::GetHexU8Ex (uint8_t& ch, bool set_eof_on_fail)
+{
     int byte = DecodeHexU8();
     if (byte == -1)
     {
         if (set_eof_on_fail || m_index >= m_packet.size())
             m_index = UINT64_MAX;
-        return fail_value;
+        // ch should not be changed in case of failure
+        return false;
     }
-    return (uint8_t)byte;
+    ch = (uint8_t)byte;
+    return true;
 }
 
 uint32_t

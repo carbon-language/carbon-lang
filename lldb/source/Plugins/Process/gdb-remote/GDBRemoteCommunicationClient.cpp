@@ -1262,9 +1262,13 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                         got_async_packet = true;
                         std::string inferior_stdout;
                         inferior_stdout.reserve(response.GetBytesLeft () / 2);
-                        char ch;
-                        while ((ch = response.GetHexU8()) != '\0')
-                            inferior_stdout.append(1, ch);
+
+                        uint8_t ch;
+                        while (response.GetHexU8Ex(ch))
+                        {
+                            if (ch != 0)
+                                inferior_stdout.append(1, (char)ch);
+                        }
                         process->AppendSTDOUT (inferior_stdout.c_str(), inferior_stdout.size());
                     }
                     break;

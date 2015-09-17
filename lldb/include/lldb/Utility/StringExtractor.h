@@ -115,6 +115,9 @@ public:
     GetHexU8 (uint8_t fail_value = 0, bool set_eof_on_fail = true);
 
     bool
+    GetHexU8Ex (uint8_t& ch, bool set_eof_on_fail = true);
+
+    bool
     GetNameColonValue (std::string &name, std::string &value);
 
     int32_t
