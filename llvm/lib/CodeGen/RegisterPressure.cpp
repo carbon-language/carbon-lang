@@ -58,14 +58,6 @@ LLVM_DUMP_METHOD
 void RegisterPressure::dump(const TargetRegisterInfo *TRI) const {
   dbgs() << "Max Pressure: ";
   dumpRegSetPressure(MaxSetPressure, TRI);
-  dbgs() << "Live In: ";
-  for (unsigned i = 0, e = LiveInRegs.size(); i < e; ++i)
-    dbgs() << PrintVRegOrUnit(LiveInRegs[i], TRI) << " ";
-  dbgs() << '\n';
-  dbgs() << "Live Out: ";
-  for (unsigned i = 0, e = LiveOutRegs.size(); i < e; ++i)
-    dbgs() << PrintVRegOrUnit(LiveOutRegs[i], TRI) << " ";
-  dbgs() << '\n';
 }
 
 LLVM_DUMP_METHOD
@@ -75,6 +67,14 @@ void RegPressureTracker::dump() const {
     dumpRegSetPressure(CurrSetPressure, TRI);
   }
   P.dump(TRI);
+  dbgs() << "Live In: ";
+  for (unsigned i = 0, e = LiveInRegs.size(); i < e; ++i)
+    dbgs() << PrintVRegOrUnit(LiveInRegs[i], TRI) << " ";
+  dbgs() << '\n';
+  dbgs() << "Live Out: ";
+  for (unsigned i = 0, e = LiveOutRegs.size(); i < e; ++i)
+    dbgs() << PrintVRegOrUnit(LiveOutRegs[i], TRI) << " ";
+  dbgs() << '\n';
 }
 
 void PressureDiff::dump(const TargetRegisterInfo &TRI) const {
@@ -112,16 +112,12 @@ void RegPressureTracker::decreaseRegPressure(ArrayRef<unsigned> RegUnits) {
 void IntervalPressure::reset() {
   TopIdx = BottomIdx = SlotIndex();
   MaxSetPressure.clear();
-  LiveInRegs.clear();
-  LiveOutRegs.clear();
 }
 
 /// Clear the result so it can be used for another round of pressure tracking.
 void RegionPressure::reset() {
   TopPos = BottomPos = MachineBasicBlock::const_iterator();
   MaxSetPressure.clear();
-  LiveInRegs.clear();
-  LiveOutRegs.clear();
 }
 
 /// If the current top is not less than or equal to the next index, open it.
@@ -130,7 +126,6 @@ void IntervalPressure::openTop(SlotIndex NextTop) {
   if (TopIdx <= NextTop)
     return;
   TopIdx = SlotIndex();
-  LiveInRegs.clear();
 }
 
 /// If the current top is the previous instruction (before receding), open it.
@@ -138,7 +133,6 @@ void RegionPressure::openTop(MachineBasicBlock::const_iterator PrevTop) {
   if (TopPos != PrevTop)
     return;
   TopPos = MachineBasicBlock::const_iterator();
-  LiveInRegs.clear();
 }
 
 /// If the current bottom is not greater than the previous index, open it.
@@ -146,7 +140,6 @@ void IntervalPressure::openBottom(SlotIndex PrevBottom) {
   if (BottomIdx > PrevBottom)
     return;
   BottomIdx = SlotIndex();
-  LiveInRegs.clear();
 }
 
 /// If the current bottom is the previous instr (before advancing), open it.
@@ -154,7 +147,6 @@ void RegionPressure::openBottom(MachineBasicBlock::const_iterator PrevBottom) {
   if (BottomPos != PrevBottom)
     return;
   BottomPos = MachineBasicBlock::const_iterator();
-  LiveInRegs.clear();
 }
 
 const LiveRange *RegPressureTracker::getLiveRange(unsigned Reg) const {
@@ -175,6 +167,8 @@ void RegPressureTracker::reset() {
     static_cast<IntervalPressure&>(P).reset();
   else
     static_cast<RegionPressure&>(P).reset();
+  LiveInRegs.clear();
+  LiveOutRegs.clear();
 
   LiveRegs.PhysRegs.clear();
   LiveRegs.VirtRegs.clear();
@@ -249,10 +243,10 @@ void RegPressureTracker::closeTop() {
   else
     static_cast<RegionPressure&>(P).TopPos = CurrPos;
 
-  assert(P.LiveInRegs.empty() && "inconsistent max pressure result");
-  P.LiveInRegs.reserve(LiveRegs.PhysRegs.size() + LiveRegs.VirtRegs.size());
-  P.LiveInRegs.append(LiveRegs.PhysRegs.begin(), LiveRegs.PhysRegs.end());
-  P.LiveInRegs.append(LiveRegs.VirtRegs.begin(), LiveRegs.VirtRegs.end());
+  assert(LiveInRegs.empty() && "inconsistent max pressure result");
+  LiveInRegs.reserve(LiveRegs.PhysRegs.size() + LiveRegs.VirtRegs.size());
+  LiveInRegs.append(LiveRegs.PhysRegs.begin(), LiveRegs.PhysRegs.end());
+  LiveInRegs.append(LiveRegs.VirtRegs.begin(), LiveRegs.VirtRegs.end());
 }
 
 /// Set the boundary for the bottom of the region and summarize live outs.
@@ -262,10 +256,10 @@ void RegPressureTracker::closeBottom() {
   else
     static_cast<RegionPressure&>(P).BottomPos = CurrPos;
 
-  assert(P.LiveOutRegs.empty() && "inconsistent max pressure result");
-  P.LiveOutRegs.reserve(LiveRegs.PhysRegs.size() + LiveRegs.VirtRegs.size());
-  P.LiveOutRegs.append(LiveRegs.PhysRegs.begin(), LiveRegs.PhysRegs.end());
-  P.LiveOutRegs.append(LiveRegs.VirtRegs.begin(), LiveRegs.VirtRegs.end());
+  assert(LiveOutRegs.empty() && "inconsistent max pressure result");
+  LiveOutRegs.reserve(LiveRegs.PhysRegs.size() + LiveRegs.VirtRegs.size());
+  LiveOutRegs.append(LiveRegs.PhysRegs.begin(), LiveRegs.PhysRegs.end());
+  LiveOutRegs.append(LiveRegs.VirtRegs.begin(), LiveRegs.VirtRegs.end());
 }
 
 /// Finalize the region boundaries and record live ins and live outs.
@@ -289,8 +283,8 @@ void RegPressureTracker::closeRegion() {
 void RegPressureTracker::initLiveThru(const RegPressureTracker &RPTracker) {
   LiveThruPressure.assign(TRI->getNumRegPressureSets(), 0);
   assert(isBottomClosed() && "need bottom-up tracking to intialize.");
-  for (unsigned i = 0, e = P.LiveOutRegs.size(); i < e; ++i) {
-    unsigned Reg = P.LiveOutRegs[i];
+  for (unsigned i = 0, e = LiveOutRegs.size(); i < e; ++i) {
+    unsigned Reg = LiveOutRegs[i];
     if (TargetRegisterInfo::isVirtualRegister(Reg)
         && !RPTracker.hasUntiedDef(Reg)) {
       increaseSetPressure(LiveThruPressure, MRI->getPressureSets(Reg));
@@ -431,22 +425,22 @@ void RegPressureTracker::addLiveRegs(ArrayRef<unsigned> Regs) {
 /// Add Reg to the live in set and increase max pressure.
 void RegPressureTracker::discoverLiveIn(unsigned Reg) {
   assert(!LiveRegs.contains(Reg) && "avoid bumping max pressure twice");
-  if (containsReg(P.LiveInRegs, Reg))
+  if (containsReg(LiveInRegs, Reg))
     return;
 
   // At live in discovery, unconditionally increase the high water mark.
-  P.LiveInRegs.push_back(Reg);
+  LiveInRegs.push_back(Reg);
   increaseSetPressure(P.MaxSetPressure, MRI->getPressureSets(Reg));
 }
 
 /// Add Reg to the live out set and increase max pressure.
 void RegPressureTracker::discoverLiveOut(unsigned Reg) {
   assert(!LiveRegs.contains(Reg) && "avoid bumping max pressure twice");
-  if (containsReg(P.LiveOutRegs, Reg))
+  if (containsReg(LiveOutRegs, Reg))
     return;
 
   // At live out discovery, unconditionally increase the high water mark.
-  P.LiveOutRegs.push_back(Reg);
+  LiveOutRegs.push_back(Reg);
   increaseSetPressure(P.MaxSetPressure, MRI->getPressureSets(Reg));
 }
 
@@ -483,8 +477,11 @@ bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
     SlotIdx = LIS->getInstructionIndex(CurrPos).getRegSlot();
 
   // Open the top of the region using slot indexes.
-  if (RequireIntervals && isTopClosed())
-    static_cast<IntervalPressure&>(P).openTop(SlotIdx);
+  if (isTopClosed()) {
+    if (RequireIntervals)
+      static_cast<IntervalPressure&>(P).openTop(SlotIdx);
+    LiveInRegs.clear();
+  }
 
   RegisterOperands RegOpers(TRI, MRI);
   collectOperands(CurrPos, RegOpers);
@@ -573,6 +570,7 @@ bool RegPressureTracker::advance() {
       static_cast<IntervalPressure&>(P).openBottom(SlotIdx);
     else
       static_cast<RegionPressure&>(P).openBottom(CurrPos);
+    LiveOutRegs.clear();
   }
 
   RegisterOperands RegOpers(TRI, MRI);
