@@ -70,9 +70,10 @@ public:
                     TypeCategoryMap::Position pos,
                     lldb::LanguageType lang)
     {
+        std::initializer_list<lldb::LanguageType> langs = {lang};
         EnableCategory(category_name,
                        pos,
-                       {lang});
+                       langs);
     }
     
     void
