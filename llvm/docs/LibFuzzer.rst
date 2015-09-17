@@ -237,7 +237,7 @@ to find Heartbleed with LibFuzzer::
     SSL_free(server);
   }
   EOF
-  # Build the fuzzer. 
+  # Build the fuzzer.
   clang++ -g handshake-fuzz.cc  -fsanitize=address \
     openssl-1.0.1f/libssl.a openssl-1.0.1f/libcrypto.a Fuzzer*.o
   # Run 20 independent fuzzer jobs.
@@ -454,6 +454,7 @@ Trophies
   * llvm-as: https://llvm.org/bugs/show_bug.cgi?id=24639
 
   * Disassembler:
+
     * Mips: Discovered a number of untested instructions for the Mips target
       (see valid-mips*.s in http://reviews.llvm.org/rL247405,
       http://reviews.llvm.org/rL247414, http://reviews.llvm.org/rL247416,
