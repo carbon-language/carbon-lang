@@ -3225,13 +3225,31 @@ DWARFASTParserClang::GetClangDeclForDIE (const DWARFDIE &die)
     if (!die)
         return nullptr;
 
-    if (die.GetReferencedDIE(DW_AT_specification))
-        return GetClangDeclForDIE(die.GetReferencedDIE(DW_AT_specification));
+    switch (die.Tag())
+    {
+        case DW_TAG_variable:
+        case DW_TAG_constant:
+        case DW_TAG_formal_parameter:
+        case DW_TAG_imported_declaration:
+        case DW_TAG_imported_module:
+            break;
+        default:
+            return nullptr;
+    }
 
-    clang::Decl *decl = m_die_to_decl[die.GetDIE()];
-    if (decl != nullptr)
+    DIEToDeclMap::iterator cache_pos = m_die_to_decl.find(die.GetDIE());
+    if (cache_pos != m_die_to_decl.end())
+        return cache_pos->second;
+
+    if (DWARFDIE spec_die = die.GetReferencedDIE(DW_AT_specification))
+    {
+        clang::Decl *decl = GetClangDeclForDIE(spec_die);
+        m_die_to_decl[die.GetDIE()] = decl;
+        m_decl_to_die[decl].insert(die.GetDIE());
         return decl;
+    }
 
+    clang::Decl *decl = nullptr;
     switch (die.Tag())
     {
         case DW_TAG_variable:
