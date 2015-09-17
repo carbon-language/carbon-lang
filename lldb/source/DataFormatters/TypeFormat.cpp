@@ -91,13 +91,13 @@ TypeFormatImpl_Format::FormatObject (ValueObject *valobj,
         }
         else
         {
-            CompilerType clang_type = value.GetCompilerType ();
-            if (clang_type)
+            CompilerType compiler_type = value.GetCompilerType ();
+            if (compiler_type)
             {
                 // put custom bytes to display in the DataExtractor to override the default value logic
                 if (GetFormat() == eFormatCString)
                 {
-                    lldb_private::Flags type_flags(clang_type.GetTypeInfo(NULL)); // disambiguate w.r.t. TypeFormatImpl::Flags
+                    lldb_private::Flags type_flags(compiler_type.GetTypeInfo(NULL)); // disambiguate w.r.t. TypeFormatImpl::Flags
                     if (type_flags.Test(eTypeIsPointer) && !type_flags.Test(eTypeIsObjC))
                     {
                         // if we are dumping a pointer as a c-string, get the pointee data as a string
@@ -122,7 +122,7 @@ TypeFormatImpl_Format::FormatObject (ValueObject *valobj,
                 }
                 
                 StreamString sstr;
-                clang_type.DumpTypeValue (&sstr,                         // The stream to use for display
+                compiler_type.DumpTypeValue (&sstr,                         // The stream to use for display
                                           GetFormat(),                  // Format to display this type with
                                           data,                         // Data to extract from
                                           0,                             // Byte offset into "m_data"

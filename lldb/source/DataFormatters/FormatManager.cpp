@@ -190,7 +190,7 @@ FormatManager::DisableAllCategories ()
 
 void
 FormatManager::GetPossibleMatches (ValueObject& valobj,
-                                   CompilerType clang_type,
+                                   CompilerType compiler_type,
                                    uint32_t reason,
                                    lldb::DynamicValueType use_dynamic,
                                    FormattersMatchVector& entries,
@@ -199,8 +199,8 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
                                    bool did_strip_typedef,
                                    bool root_level)
 {
-    clang_type = ClangASTContext::RemoveFastQualifiers(clang_type);
-    ConstString type_name(clang_type.GetConstTypeName());
+    compiler_type = ClangASTContext::RemoveFastQualifiers(compiler_type);
+    ConstString type_name(compiler_type.GetConstTypeName());
     if (valobj.GetBitfieldBitSize() > 0)
     {
         StreamString sstring;
@@ -211,13 +211,13 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
     }
     entries.push_back({type_name,reason,did_strip_ptr,did_strip_ref,did_strip_typedef});
 
-    ConstString display_type_name(clang_type.GetDisplayTypeName());
+    ConstString display_type_name(compiler_type.GetDisplayTypeName());
     if (display_type_name != type_name)
         entries.push_back({display_type_name,reason,did_strip_ptr,did_strip_ref,did_strip_typedef});
 
-    for (bool is_rvalue_ref = true, j = true; j && clang_type.IsReferenceType(nullptr, &is_rvalue_ref); j = false)
+    for (bool is_rvalue_ref = true, j = true; j && compiler_type.IsReferenceType(nullptr, &is_rvalue_ref); j = false)
     {
-        CompilerType non_ref_type = clang_type.GetNonReferenceType();
+        CompilerType non_ref_type = compiler_type.GetNonReferenceType();
         GetPossibleMatches(valobj,
                            non_ref_type,
                            reason | lldb_private::eFormatterChoiceCriterionStrippedPointerReference,
@@ -241,9 +241,9 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
         }
     }
     
-    if (clang_type.IsPointerType())
+    if (compiler_type.IsPointerType())
     {
-        CompilerType non_ptr_type = clang_type.GetPointeeType();
+        CompilerType non_ptr_type = compiler_type.GetPointeeType();
         GetPossibleMatches(valobj,
                            non_ptr_type,
                            reason | lldb_private::eFormatterChoiceCriterionStrippedPointerReference,
@@ -282,9 +282,9 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
     }
         
     // try to strip typedef chains
-    if (clang_type.IsTypedefType())
+    if (compiler_type.IsTypedefType())
     {
-        CompilerType deffed_type = clang_type.GetTypedefedType();
+        CompilerType deffed_type = compiler_type.GetTypedefedType();
         GetPossibleMatches(valobj,
                            deffed_type,
                            reason | lldb_private::eFormatterChoiceCriterionNavigatedTypedefs,
@@ -298,15 +298,15 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
     if (root_level)
     {
         do {
-            if (!clang_type.IsValid())
+            if (!compiler_type.IsValid())
                 break;
             
-            CompilerType unqual_clang_ast_type = clang_type.GetFullyUnqualifiedType();
-            if (!unqual_clang_ast_type.IsValid())
+            CompilerType unqual_compiler_ast_type = compiler_type.GetFullyUnqualifiedType();
+            if (!unqual_compiler_ast_type.IsValid())
                 break;
-            if (unqual_clang_ast_type.GetOpaqueQualType() != clang_type.GetOpaqueQualType())
+            if (unqual_compiler_ast_type.GetOpaqueQualType() != compiler_type.GetOpaqueQualType())
                 GetPossibleMatches (valobj,
-                                    unqual_clang_ast_type,
+                                    unqual_compiler_ast_type,
                                     reason,
                                     use_dynamic,
                                     entries,

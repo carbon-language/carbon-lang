@@ -290,7 +290,7 @@ private:
     
     static void
     GetPossibleMatches (ValueObject& valobj,
-                        CompilerType clang_type,
+                        CompilerType compiler_type,
                         uint32_t reason,
                         lldb::DynamicValueType use_dynamic,
                         FormattersMatchVector& entries,
