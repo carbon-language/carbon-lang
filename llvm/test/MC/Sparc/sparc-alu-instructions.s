@@ -91,6 +91,12 @@
         ! CHECK:  smulcc %g2, %g1, %g3            ! encoding: [0x86,0xd8,0x80,0x01]
         smulcc %g2, %g1, %g3
 
+        ! CHECK:  mulscc %g2, %g1, %g3            ! encoding: [0x87,0x20,0x80,0x01]
+        mulscc %g2, %g1, %g3
+
+        ! CHECK:  mulscc %g2, 254, %g3            ! encoding: [0x87,0x20,0xa0,0xfe]
+        mulscc %g2, 254, %g3
+
         ! CHECK:  udivcc %g2, %g1, %g3            ! encoding: [0x86,0xf0,0x80,0x01]
         udivcc %g2, %g1, %g3
 

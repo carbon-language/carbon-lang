@@ -628,6 +628,10 @@ let Defs = [Y, ICC] in {
   defm SMULCC : F3_12np<"smulcc", 0b011011>;
 }
 
+let Defs = [Y, ICC], Uses = [Y, ICC] in {
+  defm MULSCC : F3_12np<"mulscc", 0b100100>;
+}
+
 // Section B.19 - Divide Instructions, p. 115
 let Uses = [Y], Defs = [Y] in {
   defm UDIV : F3_12np<"udiv", 0b001110>;
