@@ -19,24 +19,26 @@ namespace readability {
 
 namespace {
 internal::Matcher<Expr> callToGet(internal::Matcher<Decl> OnClass) {
-  return memberCallExpr(
+  return cxxMemberCallExpr(
              on(expr(anyOf(hasType(OnClass),
-                           hasType(qualType(pointsTo(decl(OnClass).bind(
-                               "ptr_to_ptr")))))).bind("smart_pointer")),
-             unless(callee(memberExpr(hasObjectExpression(thisExpr())))),
-             callee(methodDecl(hasName("get")))).bind("redundant_get");
+                           hasType(qualType(
+                               pointsTo(decl(OnClass).bind("ptr_to_ptr"))))))
+                    .bind("smart_pointer")),
+             unless(callee(memberExpr(hasObjectExpression(cxxThisExpr())))),
+             callee(cxxMethodDecl(hasName("get"))))
+      .bind("redundant_get");
 }
 
 void registerMatchersForGetArrowStart(MatchFinder *Finder,
                                       MatchFinder::MatchCallback *Callback) {
   const auto QuacksLikeASmartptr = recordDecl(
       recordDecl().bind("duck_typing"),
-      has(methodDecl(hasName("operator->"),
-                     returns(qualType(pointsTo(type().bind("op->Type")))))),
-      has(methodDecl(hasName("operator*"),
-                     returns(qualType(references(type().bind("op*Type")))))),
-      has(methodDecl(hasName("get"),
-                     returns(qualType(pointsTo(type().bind("getType")))))));
+      has(cxxMethodDecl(hasName("operator->"),
+                        returns(qualType(pointsTo(type().bind("op->Type")))))),
+      has(cxxMethodDecl(hasName("operator*"),
+                        returns(qualType(references(type().bind("op*Type")))))),
+      has(cxxMethodDecl(hasName("get"),
+                        returns(qualType(pointsTo(type().bind("getType")))))));
 
   // Catch 'ptr.get()->Foo()'
   Finder->addMatcher(memberExpr(expr().bind("memberExpr"), isArrow(),
@@ -63,9 +65,10 @@ void registerMatchersForGetEquals(MatchFinder *Finder,
 
   // Matches against nullptr.
   Finder->addMatcher(
-      binaryOperator(anyOf(hasOperatorName("=="), hasOperatorName("!=")),
-                     hasEitherOperand(ignoringImpCasts(nullPtrLiteralExpr())),
-                     hasEitherOperand(callToGet(IsAKnownSmartptr))),
+      binaryOperator(
+          anyOf(hasOperatorName("=="), hasOperatorName("!=")),
+          hasEitherOperand(ignoringImpCasts(cxxNullPtrLiteralExpr())),
+          hasEitherOperand(callToGet(IsAKnownSmartptr))),
       Callback);
   // TODO: Catch ptr.get() == other_ptr.get()
 }

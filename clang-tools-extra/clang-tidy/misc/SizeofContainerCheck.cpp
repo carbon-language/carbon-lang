@@ -19,11 +19,12 @@ namespace tidy {
 void SizeofContainerCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
       expr(unless(isInTemplateInstantiation()),
-           expr(sizeOfExpr(has(expr(hasType(hasCanonicalType(hasDeclaration(
-                    recordDecl(matchesName("^(::std::|::string)"),
-                               unless(matchesName("^::std::(bitset|array)$")),
-                               hasMethod(methodDecl(hasName("size"), isPublic(),
-                                                    isConst()))))))))))
+           expr(sizeOfExpr(has(
+                    expr(hasType(hasCanonicalType(hasDeclaration(cxxRecordDecl(
+                        matchesName("^(::std::|::string)"),
+                        unless(matchesName("^::std::(bitset|array)$")),
+                        hasMethod(cxxMethodDecl(hasName("size"), isPublic(),
+                                                isConst()))))))))))
                .bind("sizeof"),
            // Ignore ARRAYSIZE(<array of containers>) pattern.
            unless(hasAncestor(binaryOperator(

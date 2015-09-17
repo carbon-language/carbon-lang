@@ -23,14 +23,16 @@ void MoveConstructorInitCheck::registerMatchers(MatchFinder *Finder) {
     return;
 
   Finder->addMatcher(
-    constructorDecl(unless(isImplicit()), allOf(
-      isMoveConstructor(),
-      hasAnyConstructorInitializer(
-        ctorInitializer(withInitializer(constructExpr(hasDeclaration(
-          constructorDecl(isCopyConstructor()).bind("ctor")
-          )))).bind("init")
-        )
-      )), this); 
+      cxxConstructorDecl(
+          unless(isImplicit()),
+          allOf(isMoveConstructor(),
+                hasAnyConstructorInitializer(
+                    cxxCtorInitializer(
+                        withInitializer(cxxConstructExpr(hasDeclaration(
+                            cxxConstructorDecl(isCopyConstructor())
+                                .bind("ctor")))))
+                        .bind("init")))),
+      this);
 }
 
 void MoveConstructorInitCheck::check(const MatchFinder::MatchResult &Result) {

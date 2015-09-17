@@ -23,8 +23,8 @@ void NoexceptMoveConstructorCheck::registerMatchers(MatchFinder *Finder) {
     return;
 
   Finder->addMatcher(
-      methodDecl(anyOf(constructorDecl(), hasOverloadedOperatorName("=")),
-                 unless(isImplicit()), unless(isDeleted()))
+      cxxMethodDecl(anyOf(cxxConstructorDecl(), hasOverloadedOperatorName("=")),
+                    unless(isImplicit()), unless(isDeleted()))
           .bind("decl"),
       this);
 }

@@ -258,7 +258,7 @@ StatementMatcher makeDeclWithNewMatcher() {
     unless(has(varDecl(
       anyOf(
         unless(hasInitializer(
-          ignoringParenImpCasts(newExpr())
+          ignoringParenImpCasts(cxxNewExpr())
         )),
         // FIXME: TypeLoc information is not reliable where CV qualifiers are
         // concerned so these types can't be handled for now.

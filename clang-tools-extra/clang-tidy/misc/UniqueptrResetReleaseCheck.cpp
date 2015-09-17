@@ -24,18 +24,19 @@ void UniqueptrResetReleaseCheck::registerMatchers(MatchFinder *Finder) {
     return;
 
   Finder->addMatcher(
-      memberCallExpr(
+      cxxMemberCallExpr(
           on(expr().bind("left")), callee(memberExpr().bind("reset_member")),
-          callee(methodDecl(hasName("reset"),
-                            ofClass(recordDecl(hasName("::std::unique_ptr"),
-                                               decl().bind("left_class"))))),
-          has(memberCallExpr(
+          callee(
+              cxxMethodDecl(hasName("reset"),
+                            ofClass(cxxRecordDecl(hasName("::std::unique_ptr"),
+                                                  decl().bind("left_class"))))),
+          has(cxxMemberCallExpr(
               on(expr().bind("right")),
               callee(memberExpr().bind("release_member")),
-              callee(methodDecl(
+              callee(cxxMethodDecl(
                   hasName("release"),
-                  ofClass(recordDecl(hasName("::std::unique_ptr"),
-                                     decl().bind("right_class"))))))))
+                  ofClass(cxxRecordDecl(hasName("::std::unique_ptr"),
+                                        decl().bind("right_class"))))))))
           .bind("reset_call"),
       this);
 }

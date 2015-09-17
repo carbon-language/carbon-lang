@@ -63,7 +63,7 @@ void BoolPointerImplicitConversionCheck::check(
       // bool.
       !match(findAll(callExpr(hasAnyArgument(DeclRef))), *If, *Result.Context)
            .empty() ||
-      !match(findAll(deleteExpr(has(expr(DeclRef)))), *If, *Result.Context)
+      !match(findAll(cxxDeleteExpr(has(expr(DeclRef)))), *If, *Result.Context)
            .empty())
     return;
 

@@ -21,7 +21,7 @@ namespace modernize {
 void UseOverrideCheck::registerMatchers(MatchFinder *Finder) {
   // Only register the matcher for C++11.
   if (getLangOpts().CPlusPlus11)
-    Finder->addMatcher(methodDecl(isOverride()).bind("method"), this);
+    Finder->addMatcher(cxxMethodDecl(isOverride()).bind("method"), this);
 }
 
 // Re-lex the tokens to get precise locations to insert 'override' and remove

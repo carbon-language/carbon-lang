@@ -127,7 +127,7 @@ void BracesAroundStatementsCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(whileStmt().bind("while"), this);
   Finder->addMatcher(doStmt().bind("do"), this);
   Finder->addMatcher(forStmt().bind("for"), this);
-  Finder->addMatcher(forRangeStmt().bind("for-range"), this);
+  Finder->addMatcher(cxxForRangeStmt().bind("for-range"), this);
 }
 
 void

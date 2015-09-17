@@ -59,13 +59,13 @@ static TypeMatcher nonConstValueType() {
 }
 
 DeclarationMatcher makePassByValueCtorParamMatcher() {
-  return constructorDecl(
-      forEachConstructorInitializer(ctorInitializer(
+  return cxxConstructorDecl(
+      forEachConstructorInitializer(cxxCtorInitializer(
           // Clang builds a CXXConstructExpr only when it knowns which
           // constructor will be called. In dependent contexts a ParenListExpr
           // is generated instead of a CXXConstructExpr, filtering out templates
           // automatically for us.
-          withInitializer(constructExpr(
+          withInitializer(cxxConstructExpr(
               has(declRefExpr(to(
                   parmVarDecl(hasType(qualType(
                                   // match only const-ref or a non-const value
@@ -73,9 +73,9 @@ DeclarationMatcher makePassByValueCtorParamMatcher() {
                                   // shouldn't be modified.
                                   anyOf(constRefType(), nonConstValueType()))))
                       .bind(PassByValueParamId)))),
-              hasDeclaration(constructorDecl(
+              hasDeclaration(cxxConstructorDecl(
                   isCopyConstructor(), unless(isDeleted()),
-                  hasDeclContext(recordDecl(isMoveConstructible())))))))
+                  hasDeclContext(cxxRecordDecl(isMoveConstructible())))))))
                                         .bind(PassByValueInitializerId)))
       .bind(PassByValueCtorId);
 }

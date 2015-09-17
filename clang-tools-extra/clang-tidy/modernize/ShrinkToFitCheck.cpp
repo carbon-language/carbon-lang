@@ -42,7 +42,7 @@ void ShrinkToFitCheck::registerMatchers(MatchFinder *Finder) {
       memberExpr(member(valueDecl().bind("ContainerDecl")));
   const auto ShrinkableAsDecl =
       declRefExpr(hasDeclaration(valueDecl().bind("ContainerDecl")));
-  const auto CopyCtorCall = constructExpr(
+  const auto CopyCtorCall = cxxConstructExpr(
       hasArgument(0, anyOf(ShrinkableAsMember, ShrinkableAsDecl,
                            unaryOperator(has(ShrinkableAsMember)),
                            unaryOperator(has(ShrinkableAsDecl)))));
@@ -54,11 +54,11 @@ void ShrinkToFitCheck::registerMatchers(MatchFinder *Finder) {
           has(declRefExpr(hasDeclaration(equalsBoundNode("ContainerDecl")))))));
 
   Finder->addMatcher(
-      memberCallExpr(on(hasType(namedDecl(stlShrinkableContainer()))),
-                     callee(methodDecl(hasName("swap"))),
-                     has(memberExpr(hasDescendant(CopyCtorCall))),
-                     hasArgument(0, SwapParam.bind("ContainerToShrink")),
-                     unless(isInTemplateInstantiation()))
+      cxxMemberCallExpr(on(hasType(namedDecl(stlShrinkableContainer()))),
+                        callee(cxxMethodDecl(hasName("swap"))),
+                        has(memberExpr(hasDescendant(CopyCtorCall))),
+                        hasArgument(0, SwapParam.bind("ContainerToShrink")),
+                        unless(isInTemplateInstantiation()))
           .bind("CopyAndSwapTrick"),
       this);
 }

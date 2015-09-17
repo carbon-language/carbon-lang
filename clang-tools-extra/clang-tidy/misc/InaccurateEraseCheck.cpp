@@ -25,15 +25,15 @@ void InaccurateEraseCheck::registerMatchers(MatchFinder *Finder) {
     return;
 
   const auto CheckForEndCall = hasArgument(
-      1,
-      anyOf(constructExpr(has(memberCallExpr(callee(methodDecl(hasName("end"))))
-                                  .bind("InaccEndCall"))),
-            anything()));
+      1, anyOf(cxxConstructExpr(
+                   has(cxxMemberCallExpr(callee(cxxMethodDecl(hasName("end"))))
+                           .bind("InaccEndCall"))),
+               anything()));
 
   Finder->addMatcher(
-      memberCallExpr(
+      cxxMemberCallExpr(
           on(hasType(namedDecl(matchesName("^::std::")))),
-          callee(methodDecl(hasName("erase"))), argumentCountIs(1),
+          callee(cxxMethodDecl(hasName("erase"))), argumentCountIs(1),
           hasArgument(0, has(callExpr(callee(functionDecl(matchesName(
                                           "^::std::(remove(_if)?|unique)$"))),
                                       CheckForEndCall)

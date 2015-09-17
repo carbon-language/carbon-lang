@@ -33,8 +33,8 @@ void StaticAssertCheck::registerMatchers(MatchFinder *Finder) {
     return;
 
   auto IsAlwaysFalse = expr(ignoringParenImpCasts(
-      expr(anyOf(boolLiteral(equals(false)), integerLiteral(equals(0)),
-                 nullPtrLiteralExpr(), gnuNullExpr()))
+      expr(anyOf(cxxBoolLiteral(equals(false)), integerLiteral(equals(0)),
+                 cxxNullPtrLiteralExpr(), gnuNullExpr()))
           .bind("isAlwaysFalse")));
   auto IsAlwaysFalseWithCast = ignoringParenImpCasts(anyOf(
       IsAlwaysFalse, cStyleCastExpr(has(IsAlwaysFalse)).bind("castExpr")));

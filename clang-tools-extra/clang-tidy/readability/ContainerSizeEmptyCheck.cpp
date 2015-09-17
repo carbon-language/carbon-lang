@@ -75,12 +75,13 @@ void ContainerSizeEmptyCheck::registerMatchers(MatchFinder *Finder) {
       hasParent(explicitCastExpr(hasDestinationType(isBoolType()))));
 
   Finder->addMatcher(
-      memberCallExpr(
+      cxxMemberCallExpr(
           on(expr(anyOf(hasType(namedDecl(stlContainer())),
                         hasType(pointsTo(namedDecl(stlContainer()))),
                         hasType(references(namedDecl(stlContainer())))))
                  .bind("STLObject")),
-          callee(methodDecl(hasName("size"))), WrongUse).bind("SizeCallExpr"),
+          callee(cxxMethodDecl(hasName("size"))), WrongUse)
+          .bind("SizeCallExpr"),
       this);
 }
 

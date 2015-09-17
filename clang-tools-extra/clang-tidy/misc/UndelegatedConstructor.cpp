@@ -63,10 +63,11 @@ void UndelegatedConstructorCheck::registerMatchers(MatchFinder *Finder) {
 
   Finder->addMatcher(
       compoundStmt(
-          hasParent(constructorDecl(ofClass(recordDecl().bind("parent")))),
+          hasParent(
+              cxxConstructorDecl(ofClass(cxxRecordDecl().bind("parent")))),
           forEach(ignoringTemporaryExpr(
-              constructExpr(hasDeclaration(constructorDecl(ofClass(
-                                recordDecl(baseOfBoundNode("parent"))))))
+              cxxConstructExpr(hasDeclaration(cxxConstructorDecl(ofClass(
+                                   cxxRecordDecl(baseOfBoundNode("parent"))))))
                   .bind("construct"))),
           unless(isInTemplateInstantiation())),
       this);

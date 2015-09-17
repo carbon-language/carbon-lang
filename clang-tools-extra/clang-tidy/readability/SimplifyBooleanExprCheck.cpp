@@ -75,7 +75,8 @@ const CXXBoolLiteralExpr *getBoolLiteral(const MatchFinder::MatchResult &Result,
 
 internal::Matcher<Stmt> returnsBool(bool Value, StringRef Id = "ignored") {
   auto SimpleReturnsBool =
-      returnStmt(has(boolLiteral(equals(Value)).bind(Id))).bind("returns-bool");
+      returnStmt(has(cxxBoolLiteral(equals(Value)).bind(Id)))
+          .bind("returns-bool");
   return anyOf(SimpleReturnsBool,
                compoundStmt(statementCountIs(1), has(SimpleReturnsBool)));
 }
@@ -268,11 +269,12 @@ void SimplifyBooleanExprCheck::matchBoolBinOpExpr(MatchFinder *Finder,
                                                   StringRef OperatorName,
                                                   StringRef BooleanId) {
   Finder->addMatcher(
-      binaryOperator(isExpansionInMainFile(), hasOperatorName(OperatorName),
-                     hasLHS(allOf(expr().bind(LHSId),
-                                  boolLiteral(equals(Value)).bind(BooleanId))),
-                     hasRHS(expr().bind(RHSId)),
-                     unless(hasRHS(hasDescendant(boolLiteral())))),
+      binaryOperator(
+          isExpansionInMainFile(), hasOperatorName(OperatorName),
+          hasLHS(allOf(expr().bind(LHSId),
+                       cxxBoolLiteral(equals(Value)).bind(BooleanId))),
+          hasRHS(expr().bind(RHSId)),
+          unless(hasRHS(hasDescendant(cxxBoolLiteral())))),
       this);
 }
 
@@ -284,9 +286,10 @@ void SimplifyBooleanExprCheck::matchExprBinOpBool(MatchFinder *Finder,
       binaryOperator(
           isExpansionInMainFile(), hasOperatorName(OperatorName),
           hasLHS(expr().bind(LHSId)),
-          unless(hasLHS(anyOf(boolLiteral(), hasDescendant(boolLiteral())))),
+          unless(
+              hasLHS(anyOf(cxxBoolLiteral(), hasDescendant(cxxBoolLiteral())))),
           hasRHS(allOf(expr().bind(RHSId),
-                       boolLiteral(equals(Value)).bind(BooleanId)))),
+                       cxxBoolLiteral(equals(Value)).bind(BooleanId)))),
       this);
 }
 
@@ -297,10 +300,10 @@ void SimplifyBooleanExprCheck::matchBoolCompOpExpr(MatchFinder *Finder,
   Finder->addMatcher(
       binaryOperator(isExpansionInMainFile(), hasOperatorName(OperatorName),
                      hasLHS(allOf(expr().bind(LHSId),
-                                  ignoringImpCasts(boolLiteral(equals(Value))
+                                  ignoringImpCasts(cxxBoolLiteral(equals(Value))
                                                        .bind(BooleanId)))),
                      hasRHS(expr().bind(RHSId)),
-                     unless(hasRHS(hasDescendant(boolLiteral())))),
+                     unless(hasRHS(hasDescendant(cxxBoolLiteral())))),
       this);
 }
 
@@ -310,10 +313,10 @@ void SimplifyBooleanExprCheck::matchExprCompOpBool(MatchFinder *Finder,
                                                    StringRef BooleanId) {
   Finder->addMatcher(
       binaryOperator(isExpansionInMainFile(), hasOperatorName(OperatorName),
-                     unless(hasLHS(hasDescendant(boolLiteral()))),
+                     unless(hasLHS(hasDescendant(cxxBoolLiteral()))),
                      hasLHS(expr().bind(LHSId)),
                      hasRHS(allOf(expr().bind(RHSId),
-                                  ignoringImpCasts(boolLiteral(equals(Value))
+                                  ignoringImpCasts(cxxBoolLiteral(equals(Value))
                                                        .bind(BooleanId))))),
       this);
 }
@@ -323,7 +326,7 @@ void SimplifyBooleanExprCheck::matchBoolCondition(MatchFinder *Finder,
                                                   StringRef BooleanId) {
   Finder->addMatcher(
       ifStmt(isExpansionInMainFile(),
-             hasCondition(boolLiteral(equals(Value)).bind(BooleanId)))
+             hasCondition(cxxBoolLiteral(equals(Value)).bind(BooleanId)))
           .bind(IfStmtId),
       this);
 }
@@ -333,8 +336,8 @@ void SimplifyBooleanExprCheck::matchTernaryResult(MatchFinder *Finder,
                                                   StringRef TernaryId) {
   Finder->addMatcher(
       conditionalOperator(isExpansionInMainFile(),
-                          hasTrueExpression(boolLiteral(equals(Value))),
-                          hasFalseExpression(boolLiteral(equals(!Value))))
+                          hasTrueExpression(cxxBoolLiteral(equals(Value))),
+                          hasFalseExpression(cxxBoolLiteral(equals(!Value))))
           .bind(TernaryId),
       this);
 }
@@ -363,13 +366,13 @@ void SimplifyBooleanExprCheck::matchIfAssignsBool(MatchFinder *Finder,
       hasOperatorName("="),
       hasLHS(declRefExpr(hasDeclaration(decl().bind(IfAssignObjId)))),
       hasLHS(expr().bind(IfAssignVariableId)),
-      hasRHS(boolLiteral(equals(Value)).bind(IfAssignLocId)));
+      hasRHS(cxxBoolLiteral(equals(Value)).bind(IfAssignLocId)));
   auto Then = anyOf(SimpleThen, compoundStmt(statementCountIs(1),
                                              hasAnySubstatement(SimpleThen)));
   auto SimpleElse = binaryOperator(
       hasOperatorName("="),
       hasLHS(declRefExpr(hasDeclaration(equalsBoundNode(IfAssignObjId)))),
-      hasRHS(boolLiteral(equals(!Value))));
+      hasRHS(cxxBoolLiteral(equals(!Value))));
   auto Else = anyOf(SimpleElse, compoundStmt(statementCountIs(1),
                                              hasAnySubstatement(SimpleElse)));
   if (ChainedConditionalAssignment) {
@@ -389,11 +392,11 @@ void SimplifyBooleanExprCheck::matchCompoundIfReturnsBool(MatchFinder *Finder,
                                                           bool Value,
                                                           StringRef Id) {
   Finder->addMatcher(
-      compoundStmt(
-          allOf(hasAnySubstatement(ifStmt(hasThen(returnsBool(Value)),
-                                          unless(hasElse(stmt())))),
-                hasAnySubstatement(returnStmt(has(boolLiteral(equals(!Value))))
-                                       .bind(CompoundReturnId))))
+      compoundStmt(allOf(hasAnySubstatement(ifStmt(hasThen(returnsBool(Value)),
+                                                   unless(hasElse(stmt())))),
+                         hasAnySubstatement(
+                             returnStmt(has(cxxBoolLiteral(equals(!Value))))
+                                 .bind(CompoundReturnId))))
           .bind(Id),
       this);
 }

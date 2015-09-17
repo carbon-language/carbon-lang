@@ -86,40 +86,42 @@ void RedundantStringCStrCheck::registerMatchers(
     return;
 
   Finder->addMatcher(
-      constructExpr(
-          hasDeclaration(methodDecl(hasName(StringConstructor))),
+      cxxConstructExpr(
+          hasDeclaration(cxxMethodDecl(hasName(StringConstructor))),
           argumentCountIs(2),
           // The first argument must have the form x.c_str() or p->c_str()
           // where the method is string::c_str().  We can use the copy
           // constructor of string instead (or the compiler might share
           // the string object).
-          hasArgument(
-              0, memberCallExpr(callee(memberExpr().bind("member")),
-                                callee(methodDecl(hasName(StringCStrMethod))),
-                                on(expr().bind("arg"))).bind("call")),
+          hasArgument(0, cxxMemberCallExpr(
+                             callee(memberExpr().bind("member")),
+                             callee(cxxMethodDecl(hasName(StringCStrMethod))),
+                             on(expr().bind("arg")))
+                             .bind("call")),
           // The second argument is the alloc object which must not be
           // present explicitly.
-          hasArgument(1, defaultArgExpr())),
+          hasArgument(1, cxxDefaultArgExpr())),
       this);
   Finder->addMatcher(
-      constructExpr(
+      cxxConstructExpr(
           // Implicit constructors of these classes are overloaded
           // wrt. string types and they internally make a StringRef
           // referring to the argument.  Passing a string directly to
           // them is preferred to passing a char pointer.
           hasDeclaration(
-              methodDecl(anyOf(hasName("::llvm::StringRef::StringRef"),
-                               hasName("::llvm::Twine::Twine")))),
+              cxxMethodDecl(anyOf(hasName("::llvm::StringRef::StringRef"),
+                                  hasName("::llvm::Twine::Twine")))),
           argumentCountIs(1),
           // The only argument must have the form x.c_str() or p->c_str()
           // where the method is string::c_str().  StringRef also has
           // a constructor from string which is more efficient (avoids
           // strlen), so we can construct StringRef from the string
           // directly.
-          hasArgument(
-              0, memberCallExpr(callee(memberExpr().bind("member")),
-                                callee(methodDecl(hasName(StringCStrMethod))),
-                                on(expr().bind("arg"))).bind("call"))),
+          hasArgument(0, cxxMemberCallExpr(
+                             callee(memberExpr().bind("member")),
+                             callee(cxxMethodDecl(hasName(StringCStrMethod))),
+                             on(expr().bind("arg")))
+                             .bind("call"))),
       this);
 }
 

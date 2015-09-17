@@ -22,8 +22,8 @@ using namespace clang;
 const char *MethodId = "method";
 
 DeclarationMatcher makeCandidateForOverrideAttrMatcher() {
-  return methodDecl(hasParent(recordDecl()),
+  return cxxMethodDecl(hasParent(recordDecl()),
                     isOverride(),
-                    unless(destructorDecl())).bind(MethodId);
+                    unless(cxxDestructorDecl())).bind(MethodId);
 }
 

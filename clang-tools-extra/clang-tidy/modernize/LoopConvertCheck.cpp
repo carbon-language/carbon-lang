@@ -112,7 +112,8 @@ StatementMatcher makeArrayLoopMatcher() {
 ///   - If the end iterator variable 'g' is defined, it is the same as 'f'.
 StatementMatcher makeIteratorLoopMatcher() {
   StatementMatcher BeginCallMatcher =
-      memberCallExpr(argumentCountIs(0), callee(methodDecl(hasName("begin"))))
+      cxxMemberCallExpr(argumentCountIs(0),
+                        callee(cxxMethodDecl(hasName("begin"))))
           .bind(BeginCallName);
 
   DeclarationMatcher InitDeclMatcher =
@@ -125,8 +126,8 @@ StatementMatcher makeIteratorLoopMatcher() {
   DeclarationMatcher EndDeclMatcher =
       varDecl(hasInitializer(anything())).bind(EndVarName);
 
-  StatementMatcher EndCallMatcher =
-      memberCallExpr(argumentCountIs(0), callee(methodDecl(hasName("end"))));
+  StatementMatcher EndCallMatcher = cxxMemberCallExpr(
+      argumentCountIs(0), callee(cxxMethodDecl(hasName("end"))));
 
   StatementMatcher IteratorBoundMatcher =
       expr(anyOf(ignoringParenImpCasts(
@@ -139,15 +140,15 @@ StatementMatcher makeIteratorLoopMatcher() {
       ignoringParenImpCasts(declRefExpr(to(varDecl().bind(ConditionVarName)))));
 
   StatementMatcher OverloadedNEQMatcher =
-      operatorCallExpr(hasOverloadedOperatorName("!="), argumentCountIs(2),
-                       hasArgument(0, IteratorComparisonMatcher),
-                       hasArgument(1, IteratorBoundMatcher));
+      cxxOperatorCallExpr(hasOverloadedOperatorName("!="), argumentCountIs(2),
+                          hasArgument(0, IteratorComparisonMatcher),
+                          hasArgument(1, IteratorBoundMatcher));
 
   // This matcher tests that a declaration is a CXXRecordDecl that has an
   // overloaded operator*(). If the operator*() returns by value instead of by
   // reference then the return type is tagged with DerefByValueResultName.
   internal::Matcher<VarDecl> TestDerefReturnsByValue =
-      hasType(recordDecl(hasMethod(allOf(
+      hasType(cxxRecordDecl(hasMethod(allOf(
           hasOverloadedOperatorName("*"),
           anyOf(
               // Tag the return type if it's by value.
@@ -178,7 +179,7 @@ StatementMatcher makeIteratorLoopMatcher() {
                                hasUnaryOperand(declRefExpr(
                                    to(varDecl(hasType(pointsTo(AnyType)))
                                           .bind(IncrementVarName))))),
-                 operatorCallExpr(
+                 cxxOperatorCallExpr(
                      hasOverloadedOperatorName("++"),
                      hasArgument(
                          0, declRefExpr(to(varDecl(TestDerefReturnsByValue)
@@ -229,20 +230,20 @@ StatementMatcher makePseudoArrayLoopMatcher() {
   // are also allowed.
   TypeMatcher RecordWithBeginEnd = qualType(
       anyOf(qualType(isConstQualified(),
-                     hasDeclaration(recordDecl(
-                         hasMethod(methodDecl(hasName("begin"), isConst())),
-                         hasMethod(methodDecl(hasName("end"),
-                                              isConst())))) // hasDeclaration
-                     ),                                     // qualType
+                     hasDeclaration(cxxRecordDecl(
+                         hasMethod(cxxMethodDecl(hasName("begin"), isConst())),
+                         hasMethod(cxxMethodDecl(hasName("end"),
+                                                 isConst())))) // hasDeclaration
+                     ),                                        // qualType
             qualType(unless(isConstQualified()),
                      hasDeclaration(
-                         recordDecl(hasMethod(hasName("begin")),
-                                    hasMethod(hasName("end"))))) // qualType
+                         cxxRecordDecl(hasMethod(hasName("begin")),
+                                       hasMethod(hasName("end"))))) // qualType
             ));
 
-  StatementMatcher SizeCallMatcher = memberCallExpr(
+  StatementMatcher SizeCallMatcher = cxxMemberCallExpr(
       argumentCountIs(0),
-      callee(methodDecl(anyOf(hasName("size"), hasName("length")))),
+      callee(cxxMethodDecl(anyOf(hasName("size"), hasName("length")))),
       on(anyOf(hasType(pointsTo(RecordWithBeginEnd)),
                hasType(RecordWithBeginEnd))));
 

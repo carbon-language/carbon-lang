@@ -67,13 +67,13 @@ DeclarationMatcher makeAutoPtrUsingDeclMatcher() {
 
 StatementMatcher makeTransferOwnershipExprMatcher() {
   StatementMatcher assignOperator =
-    operatorCallExpr(allOf(
+    cxxOperatorCallExpr(allOf(
       hasOverloadedOperatorName("="),
-      callee(methodDecl(ofClass(AutoPtrDecl))),
+      callee(cxxMethodDecl(ofClass(AutoPtrDecl))),
       hasArgument(1, MovableArgumentMatcher)));
 
   StatementMatcher copyCtor =
-    constructExpr(allOf(hasType(AutoPtrType),
+    cxxConstructExpr(allOf(hasType(AutoPtrType),
                         argumentCountIs(1),
                         hasArgument(0, MovableArgumentMatcher)));
 

@@ -112,10 +112,10 @@ StatementMatcher makeArrayLoopMatcher() {
 ///   - If the end iterator variable 'g' is defined, it is the same as 'f'
 StatementMatcher makeIteratorLoopMatcher() {
   StatementMatcher BeginCallMatcher =
-      memberCallExpr(
+      cxxMemberCallExpr(
         argumentCountIs(0),
         callee(
-          methodDecl(hasName("begin"))
+          cxxMethodDecl(hasName("begin"))
         )
       ).bind(BeginCallName);
 
@@ -133,8 +133,8 @@ StatementMatcher makeIteratorLoopMatcher() {
   DeclarationMatcher EndDeclMatcher =
       varDecl(hasInitializer(anything())).bind(EndVarName);
 
-  StatementMatcher EndCallMatcher =
-      memberCallExpr(argumentCountIs(0), callee(methodDecl(hasName("end"))));
+  StatementMatcher EndCallMatcher = cxxMemberCallExpr(
+      argumentCountIs(0), callee(cxxMethodDecl(hasName("end"))));
 
   StatementMatcher IteratorBoundMatcher =
       expr(anyOf(ignoringParenImpCasts(declRefExpr(to(
@@ -148,7 +148,7 @@ StatementMatcher makeIteratorLoopMatcher() {
       expr(ignoringParenImpCasts(declRefExpr(to(
           varDecl().bind(ConditionVarName)))));
 
-  StatementMatcher OverloadedNEQMatcher = operatorCallExpr(
+  StatementMatcher OverloadedNEQMatcher = cxxOperatorCallExpr(
       hasOverloadedOperatorName("!="),
       argumentCountIs(2),
       hasArgument(0, IteratorComparisonMatcher),
@@ -159,7 +159,7 @@ StatementMatcher makeIteratorLoopMatcher() {
   // reference then the return type is tagged with DerefByValueResultName.
   internal::Matcher<VarDecl> TestDerefReturnsByValue =
       hasType(
-        recordDecl(
+        cxxRecordDecl(
           hasMethod(
             allOf(
               hasOverloadedOperatorName("*"),
@@ -218,7 +218,7 @@ StatementMatcher makeIteratorLoopMatcher() {
             ))
           )
         ),
-        operatorCallExpr(
+        cxxOperatorCallExpr(
           hasOverloadedOperatorName("++"),
           hasArgument(0,
             declRefExpr(to(
@@ -276,15 +276,15 @@ StatementMatcher makePseudoArrayLoopMatcher() {
       qualType(
         isConstQualified(),
         hasDeclaration(
-          recordDecl(
+          cxxRecordDecl(
             hasMethod(
-              methodDecl(
+              cxxMethodDecl(
                 hasName("begin"),
                 isConst()
               )
             ),
             hasMethod(
-              methodDecl(
+              cxxMethodDecl(
                 hasName("end"),
                 isConst()
               )
@@ -295,7 +295,7 @@ StatementMatcher makePseudoArrayLoopMatcher() {
       qualType(
         unless(isConstQualified()),
         hasDeclaration(
-          recordDecl(
+          cxxRecordDecl(
             hasMethod(hasName("begin")),
             hasMethod(hasName("end"))
           )
@@ -304,12 +304,11 @@ StatementMatcher makePseudoArrayLoopMatcher() {
     )
   );
 
-  StatementMatcher SizeCallMatcher =
-      memberCallExpr(argumentCountIs(0),
-                     callee(methodDecl(anyOf(hasName("size"),
-                                             hasName("length")))),
-                     on(anyOf(hasType(pointsTo(RecordWithBeginEnd)),
-                              hasType(RecordWithBeginEnd))));
+  StatementMatcher SizeCallMatcher = cxxMemberCallExpr(
+      argumentCountIs(0),
+      callee(cxxMethodDecl(anyOf(hasName("size"), hasName("length")))),
+      on(anyOf(hasType(pointsTo(RecordWithBeginEnd)),
+               hasType(RecordWithBeginEnd))));
 
   StatementMatcher EndInitMatcher =
       expr(anyOf(

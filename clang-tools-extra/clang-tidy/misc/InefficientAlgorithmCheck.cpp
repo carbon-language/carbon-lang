@@ -41,16 +41,16 @@ void InefficientAlgorithmCheck::registerMatchers(MatchFinder *Finder) {
       callExpr(
           callee(functionDecl(matchesName(Algorithms))),
           hasArgument(
-              0, constructExpr(has(memberCallExpr(
-                     callee(methodDecl(hasName("begin"))),
+              0, cxxConstructExpr(has(cxxMemberCallExpr(
+                     callee(cxxMethodDecl(hasName("begin"))),
                      on(declRefExpr(
                             hasDeclaration(decl().bind("IneffContObj")),
                             anyOf(hasType(ContainerMatcher.bind("IneffCont")),
                                   hasType(pointsTo(
                                       ContainerMatcher.bind("IneffContPtr")))))
                             .bind("IneffContExpr")))))),
-          hasArgument(1, constructExpr(has(memberCallExpr(
-                             callee(methodDecl(hasName("end"))),
+          hasArgument(1, cxxConstructExpr(has(cxxMemberCallExpr(
+                             callee(cxxMethodDecl(hasName("end"))),
                              on(declRefExpr(hasDeclaration(
                                  equalsBoundNode("IneffContObj")))))))),
           hasArgument(2, expr().bind("AlgParam")),

@@ -218,20 +218,21 @@ StatementMatcher makeIteratorDeclMatcher() {
 }
 
 StatementMatcher makeDeclWithNewMatcher() {
-  return declStmt(has(varDecl()),
-                  unless(has(varDecl(anyOf(
-                      unless(hasInitializer(ignoringParenImpCasts(newExpr()))),
-                      // FIXME: TypeLoc information is not reliable where CV
-                      // qualifiers are concerned so these types can't be
-                      // handled for now.
-                      hasType(pointerType(
-                          pointee(hasCanonicalType(hasLocalQualifiers())))),
+  return declStmt(
+             has(varDecl()),
+             unless(has(varDecl(anyOf(
+                 unless(hasInitializer(ignoringParenImpCasts(cxxNewExpr()))),
+                 // FIXME: TypeLoc information is not reliable where CV
+                 // qualifiers are concerned so these types can't be
+                 // handled for now.
+                 hasType(pointerType(
+                     pointee(hasCanonicalType(hasLocalQualifiers())))),
 
-                      // FIXME: Handle function pointers. For now we ignore them
-                      // because the replacement replaces the entire type
-                      // specifier source range which includes the identifier.
-                      hasType(pointsTo(
-                          pointsTo(parenType(innerType(functionType()))))))))))
+                 // FIXME: Handle function pointers. For now we ignore them
+                 // because the replacement replaces the entire type
+                 // specifier source range which includes the identifier.
+                 hasType(pointsTo(
+                     pointsTo(parenType(innerType(functionType()))))))))))
       .bind(DeclWithNewId);
 }
 

@@ -36,7 +36,7 @@ void FunctionSizeCheck::registerMatchers(MatchFinder *Finder) {
               stmt(unless(compoundStmt()),
                    hasParent(stmt(anyOf(compoundStmt(), ifStmt(),
                                         anyOf(whileStmt(), doStmt(),
-                                              forRangeStmt(), forStmt())))))
+                                              cxxForRangeStmt(), forStmt())))))
                   .bind("stmt"))).bind("func"),
       this);
 }
