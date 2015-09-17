@@ -164,7 +164,7 @@ DataVisualization::Categories::Enable (const ConstString& category,
 {
     if (GetFormatManager().GetCategory(category)->IsEnabled())
         GetFormatManager().DisableCategory(category);
-    GetFormatManager().EnableCategory(category, pos);
+    GetFormatManager().EnableCategory(category, pos, std::initializer_list<lldb::LanguageType>());
 }
 
 void

@@ -159,8 +159,6 @@ class CategoriesDataFormatterTestCase(TestBase):
         self.runCmd("type summary add Rectangle -w Category1 --summary-string \"Category1\"")
         self.runCmd("type summary add Rectangle -w Category2 --summary-string \"Category2\"")
 
-        self.runCmd("type category list")
-
         self.runCmd("type category enable Category2")
         self.runCmd("type category enable Category1")
         
@@ -302,7 +300,7 @@ class CategoriesDataFormatterTestCase(TestBase):
         
         # check that list commands work
         self.expect("type category list",
-                substrs = ['RectangleStarCategory is enabled'])
+                substrs = ['RectangleStarCategory (enabled)'])
 
         self.expect("type summary list",
                 substrs = ['ARectangleStar'])
@@ -312,7 +310,7 @@ class CategoriesDataFormatterTestCase(TestBase):
         
         # check that list commands work
         self.expect("type category list",
-                    substrs = ['CircleCategory is not enabled'])
+                    substrs = ['CircleCategory (disabled'])
 
         self.expect("frame variable c1 r_ptr",
                     substrs = ['AShape',

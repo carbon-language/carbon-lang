@@ -32,6 +32,12 @@ namespace lldb_private {
                    bool regex = false);
         
         void
+        AddSummary(TypeCategoryImpl::SharedPointer category_sp,
+                   lldb::TypeSummaryImplSP summary_sp,
+                   ConstString type_name,
+                   bool regex = false);
+
+        void
         AddStringSummary(TypeCategoryImpl::SharedPointer category_sp,
                          const char* string,
                          ConstString type_name,

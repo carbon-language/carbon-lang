@@ -60,8 +60,33 @@ public:
     EnableCategory (const ConstString& category_name,
                     TypeCategoryMap::Position pos = TypeCategoryMap::Default)
     {
-        m_categories_map.Enable(category_name,
-                                pos);
+        EnableCategory(category_name,
+                       pos,
+                       std::initializer_list<lldb::LanguageType>());
+    }
+
+    void
+    EnableCategory (const ConstString& category_name,
+                    TypeCategoryMap::Position pos,
+                    lldb::LanguageType lang)
+    {
+        EnableCategory(category_name,
+                       pos,
+                       {lang});
+    }
+    
+    void
+    EnableCategory (const ConstString& category_name,
+                    TypeCategoryMap::Position pos = TypeCategoryMap::Default,
+                    std::initializer_list<lldb::LanguageType> langs = {})
+    {
+        TypeCategoryMap::ValueSP category_sp;
+        if (m_categories_map.Get(category_name, category_sp) && category_sp)
+        {
+            m_categories_map.Enable(category_sp, pos);
+            for (const lldb::LanguageType lang : langs)
+                category_sp->AddLanguage(lang);
+        }
     }
     
     void

@@ -99,7 +99,8 @@ namespace lldb_private {
         typedef ValidatorContainer::RegexMatchContainerSP RegexValidatorContainerSP;
         
         TypeCategoryImpl (IFormatChangeListener* clist,
-                          ConstString name);
+                          ConstString name,
+                          std::initializer_list<lldb::LanguageType> langs = {});
         
         FormatContainerSP
         GetTypeFormatsContainer ()
@@ -264,6 +265,21 @@ namespace lldb_private {
         {
             return m_name.GetCString();
         }
+
+        size_t
+        GetNumLanguages ();
+        
+        lldb::LanguageType
+        GetLanguageAtIndex (size_t idx);
+        
+        void
+        AddLanguage (lldb::LanguageType lang);
+        
+        bool
+        HasLanguage (lldb::LanguageType lang);
+        
+        std::string
+        GetDescription ();
         
         bool
         AnyMatches (ConstString type_name,
@@ -291,6 +307,8 @@ namespace lldb_private {
         
         ConstString m_name;
         
+        std::vector<lldb::LanguageType> m_languages;
+
         uint32_t m_enabled_position;
         
         void
@@ -302,6 +320,9 @@ namespace lldb_private {
             Enable(false, UINT32_MAX);
         }
         
+        bool
+        IsApplicable (ValueObject& valobj);
+
         uint32_t
         GetLastEnabledPosition ()
         {

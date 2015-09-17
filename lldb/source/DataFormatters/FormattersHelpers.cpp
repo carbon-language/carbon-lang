@@ -40,6 +40,17 @@ lldb_private::formatters::AddFormat (TypeCategoryImpl::SharedPointer category_sp
         category_sp->GetTypeFormatsContainer()->Add(type_name, format_sp);
 }
 
+void
+lldb_private::formatters::AddSummary(TypeCategoryImpl::SharedPointer category_sp,
+                                     TypeSummaryImplSP summary_sp,
+                                     ConstString type_name,
+                                     bool regex)
+{
+    if (regex)
+        category_sp->GetRegexTypeSummariesContainer()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),summary_sp);
+    else
+        category_sp->GetTypeSummariesContainer()->Add(type_name, summary_sp);
+}
 
 void
 lldb_private::formatters::AddStringSummary(TypeCategoryImpl::SharedPointer category_sp,

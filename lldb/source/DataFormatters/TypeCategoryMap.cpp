@@ -247,7 +247,7 @@ TypeCategoryMap::GetFormat (ValueObject& valobj,
         lldb::TypeCategoryImplSP category_sp = *begin;
         lldb::TypeFormatImplSP current_format;
         if (log)
-            log->Printf("\n[TypeCategoryMap::GetFormat] Trying to use category %s", category_sp->GetName());
+            log->Printf("[TypeCategoryMap::GetFormat] Trying to use category %s", category_sp->GetName());
         if (!category_sp->Get(valobj, matches, current_format, &reason_why))
             continue;
         return current_format;
@@ -287,7 +287,7 @@ TypeCategoryMap::GetSummaryFormat (ValueObject& valobj,
         lldb::TypeCategoryImplSP category_sp = *begin;
         lldb::TypeSummaryImplSP current_format;
         if (log)
-            log->Printf("\n[CategoryMap::GetSummaryFormat] Trying to use category %s", category_sp->GetName());
+            log->Printf("[CategoryMap::GetSummaryFormat] Trying to use category %s", category_sp->GetName());
         if (!category_sp->Get(valobj, matches, current_format, &reason_why))
             continue;
         return current_format;
@@ -329,7 +329,7 @@ TypeCategoryMap::GetSyntheticChildren (ValueObject& valobj,
         lldb::TypeCategoryImplSP category_sp = *begin;
         lldb::SyntheticChildrenSP current_format;
         if (log)
-            log->Printf("\n[CategoryMap::GetSyntheticChildren] Trying to use category %s", category_sp->GetName());
+            log->Printf("[CategoryMap::GetSyntheticChildren] Trying to use category %s", category_sp->GetName());
         if (!category_sp->Get(valobj, matches, current_format, &reason_why))
             continue;
         return current_format;
@@ -356,7 +356,7 @@ TypeCategoryMap::GetValidator (ValueObject& valobj,
     {
         for (auto match : matches)
         {
-            log->Printf("[CategoryMap::GetSummaryFormat] candidate match = %s %s %s %s reason = %" PRIu32,
+            log->Printf("[CategoryMap::GetValidator] candidate match = %s %s %s %s reason = %" PRIu32,
                         match.GetTypeName().GetCString(),
                         match.DidStripPointer() ? "strip-pointers" : "no-strip-pointers",
                         match.DidStripReference() ? "strip-reference" : "no-strip-reference",
@@ -370,7 +370,7 @@ TypeCategoryMap::GetValidator (ValueObject& valobj,
         lldb::TypeCategoryImplSP category_sp = *begin;
         lldb::TypeValidatorImplSP current_format;
         if (log)
-            log->Printf("\n[CategoryMap::GetValidator] Trying to use category %s", category_sp->GetName());
+            log->Printf("[CategoryMap::GetValidator] Trying to use category %s", category_sp->GetName());
         if (!category_sp->Get(valobj, matches, current_format, &reason_why))
             continue;
         return current_format;

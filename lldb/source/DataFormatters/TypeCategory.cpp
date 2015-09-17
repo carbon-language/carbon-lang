@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/DataFormatters/TypeCategory.h"
+#include "lldb/Target/Language.h"
 
 // C Includes
 // C++ Includes
@@ -18,7 +19,8 @@ using namespace lldb;
 using namespace lldb_private;
 
 TypeCategoryImpl::TypeCategoryImpl(IFormatChangeListener* clist,
-                                   ConstString name) :
+                                   ConstString name,
+                                   std::initializer_list<lldb::LanguageType> langs) :
 m_format_cont("format","regex-format",clist),
 m_summary_cont("summary","regex-summary",clist),
 m_filter_cont("filter","regex-filter",clist),
@@ -29,8 +31,118 @@ m_validator_cont("validator","regex-validator",clist),
 m_enabled(false),
 m_change_listener(clist),
 m_mutex(Mutex::eMutexTypeRecursive),
-m_name(name)
-{}
+m_name(name),
+m_languages()
+{
+    for (const lldb::LanguageType lang : langs)
+        AddLanguage(lang);
+}
+
+static bool
+IsApplicable(lldb::LanguageType category_lang,
+             lldb::LanguageType valobj_lang)
+{
+    switch (category_lang)
+    {
+            // these are not languages that LLDB would ordinarily deal with
+            // only allow an exact equality here, since we really don't know
+            // any better
+        case eLanguageTypeAda83:
+        case eLanguageTypeCobol74:
+        case eLanguageTypeCobol85:
+        case eLanguageTypeFortran77:
+        case eLanguageTypeFortran90:
+        case eLanguageTypePascal83:
+        case eLanguageTypeModula2:
+        case eLanguageTypeJava:
+        case eLanguageTypeAda95:
+        case eLanguageTypeFortran95:
+        case eLanguageTypePLI:
+        case eLanguageTypeUPC:
+        case eLanguageTypeD:
+        case eLanguageTypePython:
+            return category_lang == valobj_lang;
+            
+            // the C family, we consider it as one
+        case eLanguageTypeC89:
+        case eLanguageTypeC:
+        case eLanguageTypeC99:
+            return valobj_lang == eLanguageTypeC89 ||
+            valobj_lang == eLanguageTypeC ||
+            valobj_lang == eLanguageTypeC99;
+            
+            // ObjC knows about C and itself
+        case eLanguageTypeObjC:
+            return valobj_lang == eLanguageTypeC89 ||
+            valobj_lang == eLanguageTypeC ||
+            valobj_lang == eLanguageTypeC99 ||
+            valobj_lang == eLanguageTypeObjC;
+            
+            // C++ knows about C and C++
+        case eLanguageTypeC_plus_plus:
+            return valobj_lang == eLanguageTypeC89 ||
+            valobj_lang == eLanguageTypeC ||
+            valobj_lang == eLanguageTypeC99 ||
+            valobj_lang == eLanguageTypeC_plus_plus;
+            
+            // ObjC++ knows about C,C++,ObjC and ObjC++
+        case eLanguageTypeObjC_plus_plus:
+            return valobj_lang == eLanguageTypeC89 ||
+            valobj_lang == eLanguageTypeC ||
+            valobj_lang == eLanguageTypeC99 ||
+            valobj_lang == eLanguageTypeC_plus_plus ||
+            valobj_lang == eLanguageTypeObjC;
+            
+        default:
+        case eLanguageTypeUnknown:
+            return true;
+    }
+}
+
+bool
+TypeCategoryImpl::IsApplicable (ValueObject& valobj)
+{
+    lldb::LanguageType valobj_lang = valobj.GetObjectRuntimeLanguage();
+    for (size_t idx = 0;
+         idx < GetNumLanguages();
+         idx++)
+    {
+        const lldb::LanguageType category_lang = GetLanguageAtIndex(idx);
+        if (::IsApplicable(category_lang,valobj_lang))
+            return true;
+    }
+    return false;
+}
+
+size_t
+TypeCategoryImpl::GetNumLanguages ()
+{
+    if (m_languages.empty())
+        return 1;
+    return m_languages.size();
+}
+
+lldb::LanguageType
+TypeCategoryImpl::GetLanguageAtIndex (size_t idx)
+{
+    if (m_languages.empty())
+        return lldb::eLanguageTypeUnknown;
+    return m_languages[idx];
+}
+
+void
+TypeCategoryImpl::AddLanguage (lldb::LanguageType lang)
+{
+    m_languages.push_back(lang);
+}
+
+bool
+TypeCategoryImpl::HasLanguage (lldb::LanguageType lang)
+{
+    const auto iter = std::find(m_languages.begin(), m_languages.end(), lang),
+               end = m_languages.end();
+    return (iter != end);
+}
 
 bool
 TypeCategoryImpl::Get (ValueObject& valobj,
@@ -38,7 +150,7 @@ TypeCategoryImpl::Get (ValueObject& valobj,
                        lldb::TypeFormatImplSP& entry,
                        uint32_t* reason)
 {
-    if (!IsEnabled())
+    if (!IsEnabled() || !IsApplicable(valobj))
         return false;
     if (GetTypeFormatsContainer()->Get(candidates, entry, reason))
         return true;
@@ -54,7 +166,7 @@ TypeCategoryImpl::Get (ValueObject& valobj,
                        lldb::TypeSummaryImplSP& entry,
                        uint32_t* reason)
 {
-    if (!IsEnabled())
+    if (!IsEnabled() || !IsApplicable(valobj))
         return false;
     if (GetTypeSummariesContainer()->Get(candidates, entry, reason))
         return true;
@@ -70,7 +182,7 @@ TypeCategoryImpl::Get (ValueObject& valobj,
                        lldb::SyntheticChildrenSP& entry,
                        uint32_t* reason)
 {
-    if (!IsEnabled())
+    if (!IsEnabled() || !IsApplicable(valobj))
         return false;
     TypeFilterImpl::SharedPointer filter_sp;
     uint32_t reason_filter = 0;
@@ -566,4 +678,31 @@ TypeCategoryImpl::Enable (bool value, uint32_t position)
         m_enabled_position = position;
     if (m_change_listener)
         m_change_listener->Changed();
+}
+
+std::string
+TypeCategoryImpl::GetDescription ()
+{
+    StreamString stream;
+    stream.Printf("%s (%s",
+                  GetName(),
+                  (IsEnabled() ? "enabled" : "disabled"));
+    StreamString lang_stream;
+    lang_stream.Printf(", applicable for language(s): ");
+    bool print_lang = false;
+    for (size_t idx = 0;
+         idx < GetNumLanguages();
+         idx++)
+    {
+        const lldb::LanguageType lang = GetLanguageAtIndex(idx);
+        if (lang != lldb::eLanguageTypeUnknown)
+            print_lang = true;
+        lang_stream.Printf("%s%s",
+                           Language::GetNameForLanguageType(lang),
+                           idx+1<GetNumLanguages() ? ", " : "");
+    }
+    if (print_lang)
+        stream.Printf("%s",lang_stream.GetData());
+    stream.PutChar(')');
+    return stream.GetData();
 }

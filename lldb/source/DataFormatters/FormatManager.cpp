@@ -1036,8 +1036,8 @@ FormatManager::FormatManager() :
     LoadSystemFormatters();
     LoadVectorFormatters();
     
-    EnableCategory(m_vectortypes_category_name,TypeCategoryMap::Last);
-    EnableCategory(m_system_category_name,TypeCategoryMap::Last);
+    EnableCategory(m_vectortypes_category_name,TypeCategoryMap::Last, lldb::eLanguageTypeObjC_plus_plus);
+    EnableCategory(m_system_category_name,TypeCategoryMap::Last, lldb::eLanguageTypeObjC_plus_plus);
 }
 
 void
