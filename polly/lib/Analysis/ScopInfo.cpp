@@ -2925,30 +2925,41 @@ ScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
   assert(BasePointer && "Could not find base pointer");
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
-  if (auto *GEP = dyn_cast<GetElementPtrInst>(Address)) {
-    std::vector<const SCEV *> Subscripts;
-    std::vector<int> Sizes;
-    std::tie(Subscripts, Sizes) = getIndexExpressionsFromGEP(GEP, *SE);
-    auto BasePtr = GEP->getOperand(0);
+  if (isa<GetElementPtrInst>(Address) || isa<BitCastInst>(Address)) {
+    auto NewAddress = Address;
+    if (auto *BitCast = dyn_cast<BitCastInst>(Address)) {
+      auto Src = BitCast->getOperand(0);
+      auto SrcTy = Src->getType();
+      auto DstTy = BitCast->getType();
+      if (SrcTy->getPrimitiveSizeInBits() == DstTy->getPrimitiveSizeInBits())
+        NewAddress = Src;
+    }
 
-    std::vector<const SCEV *> SizesSCEV;
+    if (auto *GEP = dyn_cast<GetElementPtrInst>(NewAddress)) {
+      std::vector<const SCEV *> Subscripts;
+      std::vector<int> Sizes;
+      std::tie(Subscripts, Sizes) = getIndexExpressionsFromGEP(GEP, *SE);
+      auto BasePtr = GEP->getOperand(0);
 
-    bool AllAffineSubcripts = true;
-    for (auto Subscript : Subscripts)
-      if (!isAffineExpr(R, Subscript, *SE)) {
-        AllAffineSubcripts = false;
-        break;
-      }
+      std::vector<const SCEV *> SizesSCEV;
 
-    if (AllAffineSubcripts && Sizes.size() > 0) {
-      for (auto V : Sizes)
+      bool AllAffineSubcripts = true;
+      for (auto Subscript : Subscripts)
+        if (!isAffineExpr(R, Subscript, *SE)) {
+          AllAffineSubcripts = false;
+          break;
+        }
+
+      if (AllAffineSubcripts && Sizes.size() > 0) {
+        for (auto V : Sizes)
+          SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
+              IntegerType::getInt64Ty(BasePtr->getContext()), V)));
         SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
-            IntegerType::getInt64Ty(BasePtr->getContext()), V)));
-      SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
-          IntegerType::getInt64Ty(BasePtr->getContext()), Size)));
+            IntegerType::getInt64Ty(BasePtr->getContext()), Size)));
 
-      return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, true,
-                      Subscripts, SizesSCEV, Val);
+        return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size,
+                        true, Subscripts, SizesSCEV, Val);
+      }
     }
   }
 
