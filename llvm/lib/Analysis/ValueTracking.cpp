@@ -328,7 +328,7 @@ static void computeKnownBitsMul(Value *Op0, Value *Op1, bool NSW,
   }
 
   // If low bits are zero in either operand, output low known-0 bits.
-  // Also compute a conserative estimate for high known-0 bits.
+  // Also compute a conservative estimate for high known-0 bits.
   // More trickiness is possible, but this is sufficient for the
   // interesting case of alignment computation.
   KnownOne.clearAllBits();
