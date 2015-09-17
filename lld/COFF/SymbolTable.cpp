@@ -410,8 +410,12 @@ std::vector<ObjectFile *> SymbolTable::createLTOObjects(LTOCodeGenerator *CG) {
   for (unsigned I = 1, E = BitcodeFiles.size(); I != E; ++I)
     CG->addModule(BitcodeFiles[I]->getModule());
 
+  bool DisableVerify = true;
+#ifdef NDEBUG
+  DisableVerify = false;
+#endif
   std::string ErrMsg;
-  if (!CG->optimize(false, false, false, false, ErrMsg))
+  if (!CG->optimize(DisableVerify, false, false, false, ErrMsg))
     error(ErrMsg);
 
   Objs.resize(Config->LTOJobs);
