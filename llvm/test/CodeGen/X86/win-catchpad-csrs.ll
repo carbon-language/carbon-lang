@@ -59,9 +59,7 @@ catchendblock:                                    ; preds = %catch,
 ; X86: movl $0, -{{[0-9]+}}(%ebp)
 ; X86: movl $1, (%esp)
 ; X86: calll _f
-; X86: [[contbb:Ltmp[0-9]+]]: # Block address taken
-; X86: movl -{{[0-9]+}}(%ebp), %esp
-; X86: addl ${{[0-9]+}}, %esp
+; X86: [[contbb:LBB0_[0-9]+]]: # %try.cont
 ; X86: popl %esi
 ; X86: popl %edi
 ; X86: popl %ebx
@@ -76,10 +74,16 @@ catchendblock:                                    ; preds = %catch,
 ; X86: movl $1, -{{[0-9]+}}(%ebp)
 ; X86: movl $2, (%esp)
 ; X86: calll _f
-; X86: movl $[[contbb]], %eax
-; X86-NEXT: addl $16, %esp
+; X86: addl $16, %esp
 ; X86-NEXT: popl %ebp
+; X86-NEXT: movl $[[restorebb:LBB0_[0-9]+]], %eax
 ; X86-NEXT: retl
+
+; FIXME: Lay this out in the parent funclet.
+; X86: [[restorebb]]:
+; X86: movl -16(%ebp), %esp
+; X86: addl $12, %ebp
+; X86: jmp [[contbb]]
 
 ; X86: L__ehtable$try_catch_catch:
 ; X86: $handlerMap$0$try_catch_catch:
@@ -108,7 +112,7 @@ catchendblock:                                    ; preds = %catch,
 ; X64: callq useints
 ; X64: movl $1, %ecx
 ; X64: callq f
-; X64: [[contbb:.Ltmp[0-9]+]]: # Block address taken
+; X64: [[contbb:\.LBB0_[0-9]+]]: # %try.cont
 ; X64: addq $40, %rsp
 ; X64: popq %rbp
 ; X64: retq
@@ -120,9 +124,9 @@ catchendblock:                                    ; preds = %catch,
 ; X64: subq $32, %rsp
 ; X64: movl $2, %ecx
 ; X64: callq f
-; X64: leaq [[contbb]](%rip), %rax
 ; X64: addq $32, %rsp
 ; X64: popq %rbp
+; X64: leaq [[contbb]](%rip), %rax
 ; X64: retq
 
 ; X64: $handlerMap$0$try_catch_catch:

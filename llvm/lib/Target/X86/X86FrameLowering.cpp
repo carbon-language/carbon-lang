@@ -711,7 +711,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
           .addReg(MachineFramePtr, RegState::Kill)
           .setMIFlag(MachineInstr::FrameSetup);
       // Reset EBP / ESI to something good.
-      MBBI = restoreWin32EHFrameAndBasePtr(MBB, MBBI, DL);
+      MBBI = restoreWin32EHStackPointers(MBB, MBBI, DL);
     } else {
       // FIXME: Add SEH directives.
       NeedsWinCFI = false;
@@ -1038,9 +1038,7 @@ bool X86FrameLowering::canUseLEAForSPInEpilogue(
 static bool isFuncletReturnInstr(MachineInstr *MI) {
   switch (MI->getOpcode()) {
   case X86::CATCHRET:
-  case X86::CATCHRET64:
   case X86::CLEANUPRET:
-  case X86::CLEANUPRET64:
     return true;
   default:
     return false;
@@ -1073,13 +1071,51 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned CSSize = X86FI->getCalleeSavedFrameSize();
   uint64_t NumBytes = 0;
 
-  if (isFuncletReturnInstr(MBBI)) {
+  if (MBBI->getOpcode() == X86::CATCHRET) {
     NumBytes = MFI->getMaxCallFrameSize();
-    assert(hasFP(MF) && "win64 EH funclets without FP not yet implemented");
+    assert(hasFP(MF) && "EH funclets without FP not yet implemented");
+    MachineBasicBlock *TargetMBB = MBBI->getOperand(0).getMBB();
+
+    // If this is SEH, this isn't really a funclet return.
+    bool IsSEH = isAsynchronousEHPersonality(
+        classifyEHPersonality(MF.getFunction()->getPersonalityFn()));
+    if (IsSEH) {
+      if (STI.is32Bit())
+        restoreWin32EHStackPointers(MBB, MBBI, DL, /*RestoreSP=*/true);
+      BuildMI(MBB, MBBI, DL, TII.get(X86::JMP_4)).addMBB(TargetMBB);
+      MBBI->eraseFromParent();
+      return;
+    }
+
+    // For 32-bit, create a new block for the restore code.
+    MachineBasicBlock *RestoreMBB = TargetMBB;
+    if (STI.is32Bit()) {
+      RestoreMBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
+      MF.insert(TargetMBB, RestoreMBB);
+      MBB.transferSuccessors(RestoreMBB);
+      MBB.addSuccessor(RestoreMBB);
+      MBBI->getOperand(0).setMBB(RestoreMBB);
+    }
 
     // Pop EBP.
     BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::POP64r : X86::POP32r),
-            MachineFramePtr).setMIFlag(MachineInstr::FrameDestroy);
+            MachineFramePtr)
+        .setMIFlag(MachineInstr::FrameDestroy);
+
+    // Insert frame restoration code in a new block.
+    if (STI.is32Bit()) {
+      auto RestoreMBBI = RestoreMBB->begin();
+      restoreWin32EHStackPointers(*RestoreMBB, RestoreMBBI, DL,
+                                  /*RestoreSP=*/true);
+      BuildMI(*RestoreMBB, RestoreMBBI, DL, TII.get(X86::JMP_4))
+          .addMBB(TargetMBB);
+    }
+  } else if (isFuncletReturnInstr(MBBI)) {
+    NumBytes = MFI->getMaxCallFrameSize();
+    assert(hasFP(MF) && "EH funclets without FP not yet implemented");
+    BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::POP64r : X86::POP32r),
+            MachineFramePtr)
+        .setMIFlag(MachineInstr::FrameDestroy);
   } else if (hasFP(MF)) {
     // Calculate required stack adjustment.
     uint64_t FrameSize = StackSize - SlotSize;
@@ -2067,9 +2103,9 @@ bool X86FrameLowering::canUseAsEpilogue(const MachineBasicBlock &MBB) const {
   return !terminatorsNeedFlagsAsInput(MBB);
 }
 
-MachineBasicBlock::iterator X86FrameLowering::restoreWin32EHFrameAndBasePtr(
+MachineBasicBlock::iterator X86FrameLowering::restoreWin32EHStackPointers(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-    DebugLoc DL) const {
+    DebugLoc DL, bool RestoreSP) const {
   assert(STI.isTargetWindowsMSVC() && "funclets only supported in MSVC env");
   assert(STI.isTargetWin32() && "EBP/ESI restoration only required on win32");
   assert(STI.is32Bit() && !Uses64BitFramePtr &&
@@ -2087,13 +2123,22 @@ MachineBasicBlock::iterator X86FrameLowering::restoreWin32EHFrameAndBasePtr(
   // FIXME: Don't set FrameSetup flag in catchret case.
 
   int FI = FuncInfo.EHRegNodeFrameIndex;
+  int EHRegSize = MFI->getObjectSize(FI);
+
+  if (RestoreSP) {
+    // MOV32rm -EHRegSize(%ebp), %esp
+    addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32rm), X86::ESP),
+                 X86::EBP, true, -EHRegSize)
+        .setMIFlag(MachineInstr::FrameSetup);
+  }
+
   unsigned UsedReg;
   int EHRegOffset = getFrameIndexReference(MF, FI, UsedReg);
-  int EHRegSize = MFI->getObjectSize(FI);
   int EndOffset = -EHRegOffset - EHRegSize;
   FuncInfo.EHRegNodeEndOffset = EndOffset;
   assert(EndOffset >= 0 &&
          "end of registration object above normal EBP position!");
+
   if (UsedReg == FramePtr) {
     // ADD $offset, %ebp
     assert(UsedReg == FramePtr);
@@ -2110,14 +2155,13 @@ MachineBasicBlock::iterator X86FrameLowering::restoreWin32EHFrameAndBasePtr(
     addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::LEA32r), BasePtr),
                  FramePtr, false, EndOffset)
         .setMIFlag(MachineInstr::FrameSetup);
-    // MOV32mr SavedEBPOffset(%esi), %ebp
+    // MOV32rm SavedEBPOffset(%esi), %ebp
     assert(X86FI->getHasSEHFramePtrSave());
     int Offset =
         getFrameIndexReference(MF, X86FI->getSEHFramePtrSaveIndex(), UsedReg);
     assert(UsedReg == BasePtr);
-    addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32mr)), UsedReg, true,
-                 Offset)
-        .addReg(FramePtr)
+    addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32rm), FramePtr),
+                 UsedReg, true, Offset)
         .setMIFlag(MachineInstr::FrameSetup);
   }
   return MBBI;

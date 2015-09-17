@@ -70,8 +70,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86-DAG: movl %[[addr_reg]], 4(%esp)
 ; X86-DAG: movl $1, (%esp)
 ; X86: calll _f
-; X86: [[contbb:Ltmp[0-9]+]]: # Block address taken
-; X86: movl -{{[0-9]+}}(%ebp), %esp
+; X86: [[contbb:LBB0_[0-9]+]]: # %try.cont
 ; X86: retl
 
 ; X86: [[catch1bb:LBB0_[0-9]+]]: # %catch{{$}}
@@ -84,9 +83,9 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86-DAG: movl %[[addr_reg]], 4(%esp)
 ; X86-DAG: movl %[[e_reg]], (%esp)
 ; X86: calll _f
-; X86: movl $[[contbb]], %eax
 ; X86-NEXT: addl $8, %esp
 ; X86-NEXT: popl %ebp
+; X86-NEXT: movl $[[restorebb:LBB0_[0-9]+]], %eax
 ; X86-NEXT: retl
 
 ; X86: [[catch2bb:LBB0_[0-9]+]]: # %catch.2{{$}}
@@ -98,10 +97,16 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86-DAG: movl %[[addr_reg]], 4(%esp)
 ; X86-DAG: movl $3, (%esp)
 ; X86: calll _f
-; X86: movl $[[contbb]], %eax
 ; X86-NEXT: addl $8, %esp
 ; X86-NEXT: popl %ebp
+; X86-NEXT: movl $[[restorebb]], %eax
 ; X86-NEXT: retl
+
+; FIXME: We should lay this code out up with the parent function.
+; X86: [[restorebb]]:
+; X86: movl -16(%ebp), %esp
+; X86: addl $12, %ebp
+; X86: jmp [[contbb]]
 
 ; X86: L__ehtable$try_catch_catch:
 ; X86: $handlerMap$0$try_catch_catch:
@@ -124,7 +129,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64-DAG: leaq -[[local_offs:[0-9]+]](%rbp), %rdx
 ; X64-DAG: movl $1, %ecx
 ; X64: callq f
-; X64: [[contbb:.Ltmp[0-9]+]]: # Block address taken
+; X64: [[contbb:\.LBB0_[0-9]+]]: # %try.cont
 ; X64: addq $48, %rsp
 ; X64: popq %rbp
 ; X64: retq
@@ -137,10 +142,10 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64-DAG: leaq -[[local_offs]](%rbp), %rdx
 ; X64-DAG: movl [[e_addr:[-0-9]+]](%rbp), %ecx
 ; X64: callq f
-; X64: leaq [[contbb]](%rip), %rax
 ; X64: addq $32, %rsp
-; X64: popq %rbp
-; X64: retq
+; X64-NEXT: popq %rbp
+; X64-NEXT: leaq [[contbb]](%rip), %rax
+; X64-NEXT: retq
 
 ; X64: [[catch2bb:\.LBB0_[0-9]+]]: # %catch.2{{$}}
 ; X64: movq %rdx, 16(%rsp)
@@ -150,10 +155,10 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64-DAG: leaq -[[local_offs]](%rbp), %rdx
 ; X64-DAG: movl $3, %ecx
 ; X64: callq f
-; X64: leaq [[contbb]](%rip), %rax
 ; X64: addq $32, %rsp
-; X64: popq %rbp
-; X64: retq
+; X64-NEXT: popq %rbp
+; X64-NEXT: leaq [[contbb]](%rip), %rax
+; X64-NEXT: retq
 
 ; X64: $handlerMap$0$try_catch_catch:
 ; X64:   .long   0

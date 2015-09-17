@@ -66,14 +66,18 @@ cleanup.outer:                                      ; preds = %invoke.cont.1, %c
 ; X86: calll   _f
 
 ; X86: LBB1_[[cleanup_inner:[0-9]+]]: # %cleanup.inner
+; X86: pushl %ebp
 ; X86: leal    {{.*}}(%ebp), %ecx
 ; X86: calll   "??1Dtor@@QAE@XZ"
-; X86: retl # CLEANUPRET
+; X86: popl %ebp
+; X86: retl
 
 ; X86: LBB1_[[cleanup_outer:[0-9]+]]: # %cleanup.outer
+; X86: pushl %ebp
 ; X86: leal    {{.*}}(%ebp), %ecx
 ; X86: calll   "??1Dtor@@QAE@XZ"
-; X86: retl # CLEANUPRET
+; X86: popl %ebp
+; X86: retl
 
 ; X86: L__ehtable$nested_cleanup:
 ; X86:         .long   429065506
@@ -100,14 +104,18 @@ cleanup.outer:                                      ; preds = %invoke.cont.1, %c
 ; X64: callq   f
 
 ; X64: .LBB1_[[cleanup_inner:[0-9]+]]: # %cleanup.inner
+; X64: pushq %rbp
 ; X64: leaq    {{.*}}(%rbp), %rcx
 ; X64: callq   "??1Dtor@@QAE@XZ"
-; X64: retq # CLEANUPRET
+; X64: popq %rbp
+; X64: retq
 
 ; X64: .LBB1_[[cleanup_outer:[0-9]+]]: # %cleanup.outer
+; X64: pushq %rbp
 ; X64: leaq    {{.*}}(%rbp), %rcx
 ; X64: callq   "??1Dtor@@QAE@XZ"
-; X64: retq # CLEANUPRET
+; X64: popq %rbp
+; X64: retq
 
 ; X64:        .seh_handlerdata
 ; X64:        .long   ($cppxdata$nested_cleanup)@IMGREL

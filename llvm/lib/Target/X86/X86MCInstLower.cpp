@@ -531,13 +531,6 @@ ReSimplify:
     break;
   }
 
-  case X86::CATCHRET:
-  case X86::CATCHRET64: {
-    OutMI = MCInst();
-    OutMI.setOpcode(getRetOpcode(AsmPrinter.getSubtarget()));
-    break;
-  }
-
   // TAILJMPd, TAILJMPd64 - Lower to the correct jump instructions.
   case X86::TAILJMPr:
   case X86::TAILJMPd:

@@ -268,14 +268,6 @@ namespace llvm {
       // Exception Handling helpers.
       EH_RETURN,
 
-      // CATCHRET - Represents a return from a catch block funclet. Used for
-      // MSVC compatible exception handling. Takes a chain operand and RAX.
-      CATCHRET,
-
-      // CLEANUPRET - Represents a return from a cleanup block funclet.  Used
-      // for MSVC compatible exception handling. Takes only a chain operand.
-      CLEANUPRET,
-
       // SjLj exception handling setjmp.
       EH_SJLJ_SETJMP,
 
@@ -1014,7 +1006,6 @@ namespace llvm {
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFRAME_TO_ARGS_OFFSET(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerCATCHRET(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerCLEANUPRET(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerEH_SJLJ_SETJMP(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerEH_SJLJ_LONGJMP(SDValue Op, SelectionDAG &DAG) const;

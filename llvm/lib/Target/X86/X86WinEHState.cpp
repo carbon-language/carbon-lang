@@ -500,15 +500,6 @@ void WinEHStatePass::addStateStoresToFunclet(Value *ParentRegNode,
         insertStateNumberStore(ParentRegNode, II, State);
       }
     }
-
-    // Insert calls to llvm.x86.seh.restoreframe at catchret destinations.  In
-    // SEH, insert them before the catchret.
-    // FIXME: We should probably do this as part of catchret lowering in the
-    // DAG.
-    if (auto *CR = dyn_cast<CatchReturnInst>(BB.getTerminator()))
-      insertRestoreFrame(Personality == EHPersonality::MSVC_X86SEH
-                             ? CR->getParent()
-                             : CR->getSuccessor());
   }
 }
 
