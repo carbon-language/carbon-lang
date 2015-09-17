@@ -155,10 +155,8 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
-  OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags,
-                RelocationSection<ELFT> &RelaDynSec)
-      : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags),
-        RelaDynSec(RelaDynSec) {}
+  OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags)
+      : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags) {}
 
   void addChunk(SectionChunk<ELFT> *C);
   void writeTo(uint8_t *Buf) override;
@@ -175,7 +173,6 @@ public:
 
 private:
   std::vector<SectionChunk<ELFT> *> Chunks;
-  RelocationSection<ELFT> &RelaDynSec;
 };
 
 namespace {
@@ -922,7 +919,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     OutputSection<ELFT> *&Sec = Map[Key];
     if (!Sec) {
       Sec = new (CAlloc.Allocate())
-          OutputSection<ELFT>(Key.Name, Key.sh_type, Key.sh_flags, RelaDynSec);
+          OutputSection<ELFT>(Key.Name, Key.sh_type, Key.sh_flags);
       OutputSections.push_back(Sec);
     }
     return Sec;
