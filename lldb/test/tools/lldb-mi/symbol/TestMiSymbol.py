@@ -45,7 +45,7 @@ class MiSymbolTestCase(lldbmi_testcase.MiTestCaseBase):
         sline = line_number('symbol_list_lines_inline_test2.cpp', '// FUNC_gfunc2')
         eline = line_number('symbol_list_lines_inline_test2.cpp', '// END_gfunc2')
         self.runCmd("-symbol-list-lines symbol_list_lines_inline_test2.cpp")
-        self.expect("\^done,lines=\[\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}(,\{pc=\"0x[0-9a-f]+\",line=\"3\d\"\})*,\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}\]" % (sline, eline))
+        self.expect("\^done,lines=\[\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}(,\{pc=\"0x[0-9a-f]+\",line=\"3\d\"\})*,\{pc=\"0x[0-9a-f]+\",line=\"%d\"\}(,\{pc=\"0x[0-9a-f]+\",line=\"3\d\"\})*\]" % (sline, eline))
         ##FIXME: This doesn't work for symbol_list_lines_inline_test.cpp due to clang bug llvm.org/pr24716
         ##sline = line_number('symbol_list_lines_inline_test.cpp', '// FUNC_gfunc')
         ##eline = line_number('symbol_list_lines_inline_test.cpp', '// STRUCT_s')
