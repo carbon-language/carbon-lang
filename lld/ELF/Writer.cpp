@@ -133,7 +133,7 @@ public:
       ++P;
     }
   }
-  bool hasReocs() const { return !Relocs.empty(); }
+  bool hasRelocs() const { return !Relocs.empty(); }
 
 private:
   std::vector<DynamicReloc<ELFT>> Relocs;
@@ -356,7 +356,7 @@ public:
     Header.sh_link = DynStrSec.getSectionIndex();
 
     unsigned NumEntries = 0;
-    if (RelaDynSec.hasReocs()) {
+    if (RelaDynSec.hasRelocs()) {
       ++NumEntries; // DT_RELA
       ++NumEntries; // DT_RELASZ
     }
@@ -385,7 +385,7 @@ public:
   void writeTo(uint8_t *Buf) override {
     auto *P = reinterpret_cast<Elf_Dyn *>(Buf);
 
-    if (RelaDynSec.hasReocs()) {
+    if (RelaDynSec.hasRelocs()) {
       P->d_tag = DT_RELA;
       P->d_un.d_ptr = RelaDynSec.getVA();
       ++P;
@@ -926,7 +926,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     OutputSections.push_back(&HashSec);
     OutputSections.push_back(&DynamicSec);
     OutputSections.push_back(&DynStrSec);
-    if (RelaDynSec.hasReocs())
+    if (RelaDynSec.hasRelocs())
       OutputSections.push_back(&RelaDynSec);
   }
 
