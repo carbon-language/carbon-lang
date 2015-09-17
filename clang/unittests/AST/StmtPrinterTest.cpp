@@ -196,7 +196,7 @@ TEST(StmtPrinter, TestCXXConversionDeclImplicit) {
     "void foo(A a, A b) {"
     "  bar(a & b);"
     "}",
-    memberCallExpr(anything()).bind("id"),
+    cxxMemberCallExpr(anything()).bind("id"),
     "a & b"));
 }
 
@@ -210,7 +210,7 @@ TEST(StmtPrinter, TestCXXConversionDeclExplicit) {
     "void foo(A a, A b) {"
     "  auto x = (a & b).operator void *();"
     "}",
-    memberCallExpr(anything()).bind("id"),
+    cxxMemberCallExpr(anything()).bind("id"),
     "(a & b)"));
     // WRONG; Should be: (a & b).operator void *()
 }

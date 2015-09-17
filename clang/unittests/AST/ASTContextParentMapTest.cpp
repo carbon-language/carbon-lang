@@ -27,8 +27,9 @@ using clang::tooling::FrontendActionFactory;
 
 TEST(GetParents, ReturnsParentForDecl) {
   MatchVerifier<Decl> Verifier;
-  EXPECT_TRUE(Verifier.match("class C { void f(); };",
-                             methodDecl(hasParent(recordDecl(hasName("C"))))));
+  EXPECT_TRUE(
+      Verifier.match("class C { void f(); };",
+                     cxxMethodDecl(hasParent(recordDecl(hasName("C"))))));
 }
 
 TEST(GetParents, ReturnsParentForStmt) {
@@ -42,19 +43,20 @@ TEST(GetParents, ReturnsParentInsideTemplateInstantiations) {
   EXPECT_TRUE(DeclVerifier.match(
       "template<typename T> struct C { void f() {} };"
       "void g() { C<int> c; c.f(); }",
-      methodDecl(hasName("f"),
-                 hasParent(recordDecl(isTemplateInstantiation())))));
+      cxxMethodDecl(hasName("f"),
+                 hasParent(cxxRecordDecl(isTemplateInstantiation())))));
   EXPECT_TRUE(DeclVerifier.match(
       "template<typename T> struct C { void f() {} };"
       "void g() { C<int> c; c.f(); }",
-      methodDecl(hasName("f"),
-                 hasParent(recordDecl(unless(isTemplateInstantiation()))))));
+      cxxMethodDecl(hasName("f"),
+                 hasParent(cxxRecordDecl(unless(isTemplateInstantiation()))))));
   EXPECT_FALSE(DeclVerifier.match(
       "template<typename T> struct C { void f() {} };"
       "void g() { C<int> c; c.f(); }",
-      methodDecl(hasName("f"),
-                 allOf(hasParent(recordDecl(unless(isTemplateInstantiation()))),
-                       hasParent(recordDecl(isTemplateInstantiation()))))));
+      cxxMethodDecl(
+          hasName("f"),
+          allOf(hasParent(cxxRecordDecl(unless(isTemplateInstantiation()))),
+                hasParent(cxxRecordDecl(isTemplateInstantiation()))))));
 }
 
 TEST(GetParents, ReturnsMultipleParentsInTemplateInstantiations) {
@@ -62,9 +64,9 @@ TEST(GetParents, ReturnsMultipleParentsInTemplateInstantiations) {
   EXPECT_TRUE(TemplateVerifier.match(
       "template<typename T> struct C { void f() {} };"
       "void g() { C<int> c; c.f(); }",
-      compoundStmt(
-          allOf(hasAncestor(recordDecl(isTemplateInstantiation())),
-                hasAncestor(recordDecl(unless(isTemplateInstantiation())))))));
+      compoundStmt(allOf(
+          hasAncestor(cxxRecordDecl(isTemplateInstantiation())),
+          hasAncestor(cxxRecordDecl(unless(isTemplateInstantiation())))))));
 }
 
 } // end namespace ast_matchers

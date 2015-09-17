@@ -92,13 +92,13 @@ TEST(ParmVarDecl, KNRRange) {
 TEST(CXXNewExpr, ArrayRange) {
   RangeVerifier<CXXNewExpr> Verifier;
   Verifier.expectRange(1, 12, 1, 22);
-  EXPECT_TRUE(Verifier.match("void f() { new int[10]; }", newExpr()));
+  EXPECT_TRUE(Verifier.match("void f() { new int[10]; }", cxxNewExpr()));
 }
 
 TEST(CXXNewExpr, ParenRange) {
   RangeVerifier<CXXNewExpr> Verifier;
   Verifier.expectRange(1, 12, 1, 20);
-  EXPECT_TRUE(Verifier.match("void f() { new int(); }", newExpr()));
+  EXPECT_TRUE(Verifier.match("void f() { new int(); }", cxxNewExpr()));
 }
 
 TEST(MemberExpr, ImplicitMemberRange) {
@@ -221,7 +221,7 @@ TEST(TemplateSpecializationTypeLoc, AngleBracketLocations) {
 TEST(CXXNewExpr, TypeParenRange) {
   RangeVerifier<CXXNewExpr> Verifier;
   Verifier.expectRange(1, 10, 1, 18);
-  EXPECT_TRUE(Verifier.match("int* a = new (int);", newExpr()));
+  EXPECT_TRUE(Verifier.match("int* a = new (int);", cxxNewExpr()));
 }
 
 class UnaryTransformTypeLocParensRangeVerifier : public RangeVerifier<TypeLoc> {
@@ -252,7 +252,7 @@ TEST(CXXFunctionalCastExpr, SourceRange) {
       "int foo() {\n"
       "  return int{};\n"
       "}",
-      functionalCastExpr(), Lang_CXX11));
+      cxxFunctionalCastExpr(), Lang_CXX11));
 }
 
 TEST(CXXConstructExpr, SourceRange) {
@@ -262,7 +262,7 @@ TEST(CXXConstructExpr, SourceRange) {
       "struct A { A(int, int); };\n"
       "void f(A a);\n"
       "void g() { f({0, 0}); }",
-      constructExpr(), Lang_CXX11));
+      cxxConstructExpr(), Lang_CXX11));
 }
 
 TEST(CXXTemporaryObjectExpr, SourceRange) {
@@ -271,7 +271,7 @@ TEST(CXXTemporaryObjectExpr, SourceRange) {
   EXPECT_TRUE(Verifier.match(
       "struct A { A(int, int); };\n"
       "A a( A{0, 0} );",
-      temporaryObjectExpr(), Lang_CXX11));
+      cxxTemporaryObjectExpr(), Lang_CXX11));
 }
 
 TEST(CXXUnresolvedConstructExpr, SourceRange) {
@@ -284,7 +284,7 @@ TEST(CXXUnresolvedConstructExpr, SourceRange) {
       "U foo() {\n"
       "  return U{};\n"
       "}",
-      unresolvedConstructExpr(), Args, Lang_CXX11));
+      cxxUnresolvedConstructExpr(), Args, Lang_CXX11));
 }
 
 TEST(UsingDecl, SourceRange) {
@@ -434,11 +434,11 @@ TEST(FriendDecl, FriendConstructorDestructorLocation) {
   LocationVerifier<FriendDecl> ConstructorVerifier;
   ConstructorVerifier.expectLocation(6, 11);
   EXPECT_TRUE(ConstructorVerifier.match(
-      Code, friendDecl(has(constructorDecl(ofClass(hasName("B")))))));
+      Code, friendDecl(has(cxxConstructorDecl(ofClass(hasName("B")))))));
   LocationVerifier<FriendDecl> DestructorVerifier;
   DestructorVerifier.expectLocation(6, 19);
   EXPECT_TRUE(DestructorVerifier.match(
-      Code, friendDecl(has(destructorDecl(ofClass(hasName("B")))))));
+      Code, friendDecl(has(cxxDestructorDecl(ofClass(hasName("B")))))));
 }
 
 TEST(FriendDecl, FriendConstructorDestructorRange) {
@@ -452,11 +452,11 @@ TEST(FriendDecl, FriendConstructorDestructorRange) {
   RangeVerifier<FriendDecl> ConstructorVerifier;
   ConstructorVerifier.expectRange(6, 1, 6, 13);
   EXPECT_TRUE(ConstructorVerifier.match(
-      Code, friendDecl(has(constructorDecl(ofClass(hasName("B")))))));
+      Code, friendDecl(has(cxxConstructorDecl(ofClass(hasName("B")))))));
   RangeVerifier<FriendDecl> DestructorVerifier;
   DestructorVerifier.expectRange(6, 1, 6, 22);
   EXPECT_TRUE(DestructorVerifier.match(
-      Code, friendDecl(has(destructorDecl(ofClass(hasName("B")))))));
+      Code, friendDecl(has(cxxDestructorDecl(ofClass(hasName("B")))))));
 }
 
 TEST(FriendDecl, FriendTemplateFunctionLocation) {
@@ -527,7 +527,7 @@ TEST(FriendDecl, InstantiationSourceRange) {
       "  friend void operator+<>(S<T> src);\n"
       "};\n"
       "void test(S<double> s) { +s; }",
-      friendDecl(hasParent(recordDecl(isTemplateInstantiation())))));
+      friendDecl(hasParent(cxxRecordDecl(isTemplateInstantiation())))));
 }
 
 TEST(ObjCMessageExpr, CXXConstructExprRange) {
@@ -539,7 +539,7 @@ TEST(ObjCMessageExpr, CXXConstructExprRange) {
       "+ (void) f1: (A)arg;\n"
       "@end\n"
       "void f2() { A a; [B f1: (a)]; }\n",
-      constructExpr(), Lang_OBJCXX));
+      cxxConstructExpr(), Lang_OBJCXX));
 }
 
 } // end namespace ast_matchers

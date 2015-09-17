@@ -301,12 +301,12 @@ TEST(ParserTest, CompletionNamedValues) {
   EXPECT_EQ("String nameX", Comps[0].MatcherDecl);
 
   // Can complete if there are names in the expression.
-  Code = "methodDecl(hasName(nameX), ";
+  Code = "cxxMethodDecl(hasName(nameX), ";
   Comps = Parser::completeExpression(Code, Code.size(), nullptr, &NamedValues);
   EXPECT_LT(0u, Comps.size());
 
   // Can complete names and registry together.
-  Code = "methodDecl(hasP";
+  Code = "cxxMethodDecl(hasP";
   Comps = Parser::completeExpression(Code, Code.size(), nullptr, &NamedValues);
   ASSERT_EQ(3u, Comps.size());
   EXPECT_EQ("aramA", Comps[0].TypedText);

@@ -71,7 +71,7 @@ TEST(RefactoringCallbacksTest, ReplacesStmtWithStmt) {
   ReplaceStmtWithStmt Callback("always-false", "should-be");
   expectRewritten(Code, Expected,
       id("always-false", conditionalOperator(
-          hasCondition(boolLiteral(equals(false))),
+          hasCondition(cxxBoolLiteral(equals(false))),
           hasFalseExpression(id("should-be", expr())))),
       Callback);
 }
@@ -92,7 +92,7 @@ TEST(RefactoringCallbacksTest, RemovesEntireIfOnEmptyElse) {
   std::string Expected = "void f() {  }";
   ReplaceIfStmtWithItsBody Callback("id", false);
   expectRewritten(Code, Expected,
-      id("id", ifStmt(hasCondition(boolLiteral(equals(false))))),
+      id("id", ifStmt(hasCondition(cxxBoolLiteral(equals(false))))),
       Callback);
 }
 
