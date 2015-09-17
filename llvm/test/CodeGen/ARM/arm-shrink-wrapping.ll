@@ -562,3 +562,65 @@ for.body:                                         ; preds = %for.body, %entry
 if.end:
   ret void
 }
+
+; Another infinite loop test this time with a body bigger than just one block.
+; CHECK-LABEL: infiniteloop2
+; CHECK: pop
+define void @infiniteloop2() {
+entry:
+  br i1 undef, label %if.then, label %if.end
+
+if.then:
+  %ptr = alloca i32, i32 4
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %sum.03 = phi i32 [ 0, %if.then ], [ %add, %body1 ], [ 1, %body2]
+  %call = tail call i32 asm "mov $0, #0", "=r,~{r4}"()
+  %add = add nsw i32 %call, %sum.03
+  store i32 %add, i32* %ptr
+  br i1 undef, label %body1, label %body2
+
+body1:
+  tail call void asm sideeffect "nop", "~{r4}"()
+  br label %for.body
+
+body2:
+  tail call void asm sideeffect "nop", "~{r4}"()
+  br label %for.body
+
+if.end:
+  ret void
+}
+
+; Another infinite loop test this time with two nested infinite loop.
+; CHECK-LABEL: infiniteloop3
+; CHECK: bx lr
+define void @infiniteloop3() {
+entry:
+  br i1 undef, label %loop2a, label %body
+
+body:                                             ; preds = %entry
+  br i1 undef, label %loop2a, label %end
+
+loop1:                                            ; preds = %loop2a, %loop2b
+  %var.phi = phi i32* [ %next.phi, %loop2b ], [ %var, %loop2a ]
+  %next.phi = phi i32* [ %next.load, %loop2b ], [ %next.var, %loop2a ]
+  %0 = icmp eq i32* %var, null
+  %next.load = load i32*, i32** undef
+  br i1 %0, label %loop2a, label %loop2b
+
+loop2a:                                           ; preds = %loop1, %body, %entry
+  %var = phi i32* [ null, %body ], [ null, %entry ], [ %next.phi, %loop1 ]
+  %next.var = phi i32* [ undef, %body ], [ null, %entry ], [ %next.load, %loop1 ]
+  br label %loop1
+
+loop2b:                                           ; preds = %loop1
+  %gep1 = bitcast i32* %var.phi to i32*
+  %next.ptr = bitcast i32* %gep1 to i32**
+  store i32* %next.phi, i32** %next.ptr
+  br label %loop1
+
+end:
+  ret void
+}

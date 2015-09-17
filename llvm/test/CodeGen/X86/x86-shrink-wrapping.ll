@@ -697,3 +697,35 @@ body2:
 if.end:
   ret void
 }
+
+; Another infinite loop test this time with two nested infinite loop.
+; CHECK-LABEL: infiniteloop3
+; CHECK: retq
+define void @infiniteloop3() {
+entry:
+  br i1 undef, label %loop2a, label %body
+
+body:                                             ; preds = %entry
+  br i1 undef, label %loop2a, label %end
+
+loop1:                                            ; preds = %loop2a, %loop2b
+  %var.phi = phi i32* [ %next.phi, %loop2b ], [ %var, %loop2a ]
+  %next.phi = phi i32* [ %next.load, %loop2b ], [ %next.var, %loop2a ]
+  %0 = icmp eq i32* %var, null
+  %next.load = load i32*, i32** undef
+  br i1 %0, label %loop2a, label %loop2b
+
+loop2a:                                           ; preds = %loop1, %body, %entry
+  %var = phi i32* [ null, %body ], [ null, %entry ], [ %next.phi, %loop1 ]
+  %next.var = phi i32* [ undef, %body ], [ null, %entry ], [ %next.load, %loop1 ]
+  br label %loop1
+
+loop2b:                                           ; preds = %loop1
+  %gep1 = bitcast i32* %var.phi to i32*
+  %next.ptr = bitcast i32* %gep1 to i32**
+  store i32* %next.phi, i32** %next.ptr
+  br label %loop1
+
+end:
+  ret void
+}
