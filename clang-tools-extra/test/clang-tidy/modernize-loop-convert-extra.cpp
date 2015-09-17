@@ -702,21 +702,15 @@ void messing_with_macros() {
     printf("Value: %d\n", CONT arr[i]);
   }
 
-  // FIXME: Right now, clang-tidy does not allow to make insertions in several
-  // arguments of the same macro call. The following code:
-  // \code
-  //   for (int i = 0; i < N; ++i) {
-  //    TWO_PARAM(arr[i], arr[i]);
-  //    THREE_PARAM(arr[i], arr[i], arr[i]);
-  //   }
-  // \endcode
-  // Should be converted to this:
-  // \code
-  //   for (auto & elem : arr) {
-  //    TWO_PARAM(elem, elem);
-  //    THREE_PARAM(elem, elem, elem);
-  //   }
-  // \endcode
+  // Multiple macro arguments.
+  for (int i = 0; i < N; ++i) {
+    TWO_PARAM(arr[i], arr[i]);
+    THREE_PARAM(arr[i], arr[i], arr[i]);
+  }
+  // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : arr)
+  // CHECK-FIXES-NEXT: TWO_PARAM(elem, elem);
+  // CHECK-FIXES-NEXT: THREE_PARAM(elem, elem, elem);
 }
 
 } // namespace Macros
