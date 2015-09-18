@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.osx.cocoa.ObjCGenerics -verify -Wno-objc-method-access %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.osx.cocoa.ObjCGenerics -verify -Wno-objc-method-access %s -analyzer-output=plist -o %t.plist
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.osx.cocoa.ObjCGenerics,alpha.core.DynamicTypeChecker -verify -Wno-objc-method-access %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.osx.cocoa.ObjCGenerics,alpha.core.DynamicTypeChecker -verify -Wno-objc-method-access %s -analyzer-output=plist -o %t.plist
 // RUN: FileCheck --input-file %t.plist %s
 
 #if !__has_feature(objc_generics)
@@ -236,13 +236,13 @@ void enforceDynamicRulesInsteadOfStatic(NSArray<NSNumber *> *a) {
 
 void workWithProperties(NSArray<NSNumber *> *a) {
   NSArray *b = a;
-  NSString *str = [b getObjAtIndex: 0]; // expected-warning {{Conversion}}
+  NSString *str = [b getObjAtIndex: 0]; // expected-warning {{Object has a dynamic type 'NSNumber *' which is incompatible with static type 'NSString *'}}
   NSNumber *num = [b getObjAtIndex: 0];
-  str = [b firstObject]; // expected-warning {{Conversion}}
+  str = [b firstObject]; // expected-warning {{Object has a dynamic type 'NSNumber *' which is incompatible with static type 'NSString *'}}
   num = [b firstObject];
-  str = b.firstObject; // expected-warning {{Conversion}}
+  str = b.firstObject; // expected-warning {{Object has a dynamic type 'NSNumber *' which is incompatible with static type 'NSString *'}}
   num = b.firstObject;
-  str = b[0]; // expected-warning {{Conversion}}
+  str = b[0]; // expected-warning {{Object has a dynamic type 'NSNumber *' which is incompatible with static type 'NSString *'}}
   num = b[0];
 }
 
@@ -318,15 +318,14 @@ void eraseSpecialization(NSArray<NSArray<NSString *> *> *arr) {
 
 void returnToUnrelatedType(NSArray<NSArray<NSString *> *> *arr) {
   NSArray *erased = arr;
-  NSSet* a = [erased firstObject]; // expected-warning {{Conversion}}
+  NSSet* a = [erased firstObject]; // expected-warning {{Object has a dynamic type 'NSArray<NSString *> *' which is incompatible with static type 'NSSet *'}}
   (void)a;
 }
 
 void returnToIdVariable(NSArray<NSString *> *arr) {
   NSArray *erased = arr;
   id a = [erased firstObject];
-  // TODO: Warn in this case. Possibly in a separate checker.
-  NSNumber *res = a;
+  NSNumber *res = a; // expected-warning {{Object has a dynamic type 'NSString *' which is incompatible with static type 'NSNumber *'}}
 }
 
 // CHECK:  <array>
@@ -4428,35 +4427,6 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:    <key>path</key>
 // CHECK:    <array>
 // CHECK:     <dict>
-// CHECK:      <key>kind</key><string>event</string>
-// CHECK:      <key>location</key>
-// CHECK:      <dict>
-// CHECK:       <key>line</key><integer>238</integer>
-// CHECK:       <key>col</key><integer>16</integer>
-// CHECK:       <key>file</key><integer>0</integer>
-// CHECK:      </dict>
-// CHECK:      <key>ranges</key>
-// CHECK:      <array>
-// CHECK:        <array>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>238</integer>
-// CHECK:          <key>col</key><integer>16</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>238</integer>
-// CHECK:          <key>col</key><integer>16</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:        </array>
-// CHECK:      </array>
-// CHECK:      <key>depth</key><integer>0</integer>
-// CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
-// CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
-// CHECK:     </dict>
-// CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
 // CHECK:      <key>edges</key>
 // CHECK:       <array>
@@ -4549,15 +4519,44 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
+// CHECK:      <string>Type &apos;NSNumber *&apos; is inferred from this context</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
+// CHECK:      <string>Type &apos;NSNumber *&apos; is inferred from this context</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>239</integer>
+// CHECK:       <key>col</key><integer>19</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>239</integer>
+// CHECK:          <key>col</key><integer>19</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>239</integer>
+// CHECK:          <key>col</key><integer>38</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK:      <string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
-// CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
-// CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
+// CHECK:    <key>description</key><string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
+// CHECK:    <key>category</key><string>Type Error</string>
+// CHECK:    <key>type</key><string>Dynamic and static type mismatch</string>
+// CHECK:    <key>check_name</key><string>alpha.core.DynamicTypeChecker</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>workWithProperties</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -4571,35 +4570,6 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:   <dict>
 // CHECK:    <key>path</key>
 // CHECK:    <array>
-// CHECK:     <dict>
-// CHECK:      <key>kind</key><string>event</string>
-// CHECK:      <key>location</key>
-// CHECK:      <dict>
-// CHECK:       <key>line</key><integer>238</integer>
-// CHECK:       <key>col</key><integer>16</integer>
-// CHECK:       <key>file</key><integer>0</integer>
-// CHECK:      </dict>
-// CHECK:      <key>ranges</key>
-// CHECK:      <array>
-// CHECK:        <array>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>238</integer>
-// CHECK:          <key>col</key><integer>16</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>238</integer>
-// CHECK:          <key>col</key><integer>16</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:        </array>
-// CHECK:      </array>
-// CHECK:      <key>depth</key><integer>0</integer>
-// CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
-// CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
-// CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
 // CHECK:      <key>edges</key>
@@ -4693,15 +4663,44 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
+// CHECK:      <string>Type &apos;NSNumber *&apos; is inferred from this context</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
+// CHECK:      <string>Type &apos;NSNumber *&apos; is inferred from this context</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>241</integer>
+// CHECK:       <key>col</key><integer>9</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>241</integer>
+// CHECK:          <key>col</key><integer>9</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>241</integer>
+// CHECK:          <key>col</key><integer>23</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK:      <string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
-// CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
-// CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
+// CHECK:    <key>description</key><string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
+// CHECK:    <key>category</key><string>Type Error</string>
+// CHECK:    <key>type</key><string>Dynamic and static type mismatch</string>
+// CHECK:    <key>check_name</key><string>alpha.core.DynamicTypeChecker</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>workWithProperties</string>
 // CHECK:   <key>issue_hash</key><string>4</string>
@@ -4715,35 +4714,6 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:   <dict>
 // CHECK:    <key>path</key>
 // CHECK:    <array>
-// CHECK:     <dict>
-// CHECK:      <key>kind</key><string>event</string>
-// CHECK:      <key>location</key>
-// CHECK:      <dict>
-// CHECK:       <key>line</key><integer>238</integer>
-// CHECK:       <key>col</key><integer>16</integer>
-// CHECK:       <key>file</key><integer>0</integer>
-// CHECK:      </dict>
-// CHECK:      <key>ranges</key>
-// CHECK:      <array>
-// CHECK:        <array>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>238</integer>
-// CHECK:          <key>col</key><integer>16</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>238</integer>
-// CHECK:          <key>col</key><integer>16</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:        </array>
-// CHECK:      </array>
-// CHECK:      <key>depth</key><integer>0</integer>
-// CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
-// CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
-// CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
 // CHECK:      <key>edges</key>
@@ -4837,57 +4807,57 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
+// CHECK:      <string>Type &apos;NSNumber *&apos; is inferred from this context</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
+// CHECK:      <string>Type &apos;NSNumber *&apos; is inferred from this context</string>
 // CHECK:     </dict>
-// CHECK:    </array>
-// CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
-// CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
-// CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
-// CHECK:   <key>issue_context_kind</key><string>function</string>
-// CHECK:   <key>issue_context</key><string>workWithProperties</string>
-// CHECK:   <key>issue_hash</key><string>6</string>
-// CHECK:   <key>location</key>
-// CHECK:   <dict>
-// CHECK:    <key>line</key><integer>243</integer>
-// CHECK:    <key>col</key><integer>11</integer>
-// CHECK:    <key>file</key><integer>0</integer>
-// CHECK:   </dict>
-// CHECK:   </dict>
-// CHECK:   <dict>
-// CHECK:    <key>path</key>
-// CHECK:    <array>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>event</string>
 // CHECK:      <key>location</key>
 // CHECK:      <dict>
-// CHECK:       <key>line</key><integer>238</integer>
-// CHECK:       <key>col</key><integer>16</integer>
+// CHECK:       <key>line</key><integer>243</integer>
+// CHECK:       <key>col</key><integer>9</integer>
 // CHECK:       <key>file</key><integer>0</integer>
 // CHECK:      </dict>
 // CHECK:      <key>ranges</key>
 // CHECK:      <array>
 // CHECK:        <array>
 // CHECK:         <dict>
-// CHECK:          <key>line</key><integer>238</integer>
-// CHECK:          <key>col</key><integer>16</integer>
+// CHECK:          <key>line</key><integer>243</integer>
+// CHECK:          <key>col</key><integer>9</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:         <dict>
-// CHECK:          <key>line</key><integer>238</integer>
-// CHECK:          <key>col</key><integer>16</integer>
+// CHECK:          <key>line</key><integer>243</integer>
+// CHECK:          <key>col</key><integer>21</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
 // CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
+// CHECK:    <key>category</key><string>Type Error</string>
+// CHECK:    <key>type</key><string>Dynamic and static type mismatch</string>
+// CHECK:    <key>check_name</key><string>alpha.core.DynamicTypeChecker</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>workWithProperties</string>
+// CHECK:   <key>issue_hash</key><string>6</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>243</integer>
+// CHECK:    <key>col</key><integer>9</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
 // CHECK:      <key>edges</key>
@@ -4981,15 +4951,44 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
+// CHECK:      <string>Type &apos;NSNumber *&apos; is inferred from this context</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
+// CHECK:      <string>Type &apos;NSNumber *&apos; is inferred from this context</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>245</integer>
+// CHECK:       <key>col</key><integer>9</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>245</integer>
+// CHECK:          <key>col</key><integer>9</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>245</integer>
+// CHECK:          <key>col</key><integer>12</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK:      <string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Conversion from value of type &apos;NSNumber *&apos; to incompatible type &apos;NSString *&apos;</string>
-// CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
-// CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
+// CHECK:    <key>description</key><string>Object has a dynamic type &apos;NSNumber *&apos; which is incompatible with static type &apos;NSString *&apos;</string>
+// CHECK:    <key>category</key><string>Type Error</string>
+// CHECK:    <key>type</key><string>Dynamic and static type mismatch</string>
+// CHECK:    <key>check_name</key><string>alpha.core.DynamicTypeChecker</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>workWithProperties</string>
 // CHECK:   <key>issue_hash</key><string>8</string>
@@ -5436,35 +5435,6 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:    <key>path</key>
 // CHECK:    <array>
 // CHECK:     <dict>
-// CHECK:      <key>kind</key><string>event</string>
-// CHECK:      <key>location</key>
-// CHECK:      <dict>
-// CHECK:       <key>line</key><integer>289</integer>
-// CHECK:       <key>col</key><integer>13</integer>
-// CHECK:       <key>file</key><integer>0</integer>
-// CHECK:      </dict>
-// CHECK:      <key>ranges</key>
-// CHECK:      <array>
-// CHECK:        <array>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>289</integer>
-// CHECK:          <key>col</key><integer>13</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>289</integer>
-// CHECK:          <key>col</key><integer>39</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:        </array>
-// CHECK:      </array>
-// CHECK:      <key>depth</key><integer>0</integer>
-// CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
-// CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
-// CHECK:     </dict>
-// CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
 // CHECK:      <key>edges</key>
 // CHECK:       <array>
@@ -5557,6 +5527,35 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
+// CHECK:      <key>message</key>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>290</integer>
+// CHECK:       <key>col</key><integer>28</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>290</integer>
+// CHECK:          <key>col</key><integer>28</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>290</integer>
+// CHECK:          <key>col</key><integer>39</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
 // CHECK:      <string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
 // CHECK:      <key>message</key>
 // CHECK:      <string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSArray&lt;NSNumber *&gt; *&apos;</string>
@@ -5580,24 +5579,92 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:    <key>path</key>
 // CHECK:    <array>
 // CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>289</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>289</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>291</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>291</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>291</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>291</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>291</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>291</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
 // CHECK:      <key>kind</key><string>event</string>
 // CHECK:      <key>location</key>
 // CHECK:      <dict>
-// CHECK:       <key>line</key><integer>289</integer>
-// CHECK:       <key>col</key><integer>13</integer>
+// CHECK:       <key>line</key><integer>291</integer>
+// CHECK:       <key>col</key><integer>7</integer>
 // CHECK:       <key>file</key><integer>0</integer>
 // CHECK:      </dict>
 // CHECK:      <key>ranges</key>
 // CHECK:      <array>
 // CHECK:        <array>
 // CHECK:         <dict>
-// CHECK:          <key>line</key><integer>289</integer>
-// CHECK:          <key>col</key><integer>13</integer>
+// CHECK:          <key>line</key><integer>291</integer>
+// CHECK:          <key>col</key><integer>7</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:         <dict>
-// CHECK:          <key>line</key><integer>289</integer>
-// CHECK:          <key>col</key><integer>39</integer>
+// CHECK:          <key>line</key><integer>291</integer>
+// CHECK:          <key>col</key><integer>19</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:        </array>
@@ -5607,74 +5674,6 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
 // CHECK:      <key>message</key>
 // CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
-// CHECK:     </dict>
-// CHECK:     <dict>
-// CHECK:      <key>kind</key><string>control</string>
-// CHECK:      <key>edges</key>
-// CHECK:       <array>
-// CHECK:        <dict>
-// CHECK:         <key>start</key>
-// CHECK:          <array>
-// CHECK:           <dict>
-// CHECK:            <key>line</key><integer>289</integer>
-// CHECK:            <key>col</key><integer>3</integer>
-// CHECK:            <key>file</key><integer>0</integer>
-// CHECK:           </dict>
-// CHECK:           <dict>
-// CHECK:            <key>line</key><integer>289</integer>
-// CHECK:            <key>col</key><integer>7</integer>
-// CHECK:            <key>file</key><integer>0</integer>
-// CHECK:           </dict>
-// CHECK:          </array>
-// CHECK:         <key>end</key>
-// CHECK:          <array>
-// CHECK:           <dict>
-// CHECK:            <key>line</key><integer>291</integer>
-// CHECK:            <key>col</key><integer>3</integer>
-// CHECK:            <key>file</key><integer>0</integer>
-// CHECK:           </dict>
-// CHECK:           <dict>
-// CHECK:            <key>line</key><integer>291</integer>
-// CHECK:            <key>col</key><integer>3</integer>
-// CHECK:            <key>file</key><integer>0</integer>
-// CHECK:           </dict>
-// CHECK:          </array>
-// CHECK:        </dict>
-// CHECK:       </array>
-// CHECK:     </dict>
-// CHECK:     <dict>
-// CHECK:      <key>kind</key><string>control</string>
-// CHECK:      <key>edges</key>
-// CHECK:       <array>
-// CHECK:        <dict>
-// CHECK:         <key>start</key>
-// CHECK:          <array>
-// CHECK:           <dict>
-// CHECK:            <key>line</key><integer>291</integer>
-// CHECK:            <key>col</key><integer>3</integer>
-// CHECK:            <key>file</key><integer>0</integer>
-// CHECK:           </dict>
-// CHECK:           <dict>
-// CHECK:            <key>line</key><integer>291</integer>
-// CHECK:            <key>col</key><integer>3</integer>
-// CHECK:            <key>file</key><integer>0</integer>
-// CHECK:           </dict>
-// CHECK:          </array>
-// CHECK:         <key>end</key>
-// CHECK:          <array>
-// CHECK:           <dict>
-// CHECK:            <key>line</key><integer>291</integer>
-// CHECK:            <key>col</key><integer>7</integer>
-// CHECK:            <key>file</key><integer>0</integer>
-// CHECK:           </dict>
-// CHECK:           <dict>
-// CHECK:            <key>line</key><integer>291</integer>
-// CHECK:            <key>col</key><integer>7</integer>
-// CHECK:            <key>file</key><integer>0</integer>
-// CHECK:           </dict>
-// CHECK:          </array>
-// CHECK:        </dict>
-// CHECK:       </array>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>event</string>
@@ -6224,35 +6223,6 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:    <key>path</key>
 // CHECK:    <array>
 // CHECK:     <dict>
-// CHECK:      <key>kind</key><string>event</string>
-// CHECK:      <key>location</key>
-// CHECK:      <dict>
-// CHECK:       <key>line</key><integer>320</integer>
-// CHECK:       <key>col</key><integer>21</integer>
-// CHECK:       <key>file</key><integer>0</integer>
-// CHECK:      </dict>
-// CHECK:      <key>ranges</key>
-// CHECK:      <array>
-// CHECK:        <array>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>320</integer>
-// CHECK:          <key>col</key><integer>21</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>320</integer>
-// CHECK:          <key>col</key><integer>23</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:        </array>
-// CHECK:      </array>
-// CHECK:      <key>depth</key><integer>0</integer>
-// CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSArray&lt;NSString *&gt; *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSArray&lt;NSString *&gt; *&gt; *&apos; to &apos;NSArray *&apos;)</string>
-// CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSArray&lt;NSString *&gt; *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSArray&lt;NSString *&gt; *&gt; *&apos; to &apos;NSArray *&apos;)</string>
-// CHECK:     </dict>
-// CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
 // CHECK:      <key>edges</key>
 // CHECK:       <array>
@@ -6345,15 +6315,44 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSSet *&apos;</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSSet *&apos;</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>321</integer>
+// CHECK:       <key>col</key><integer>14</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>321</integer>
+// CHECK:          <key>col</key><integer>14</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>321</integer>
+// CHECK:          <key>col</key><integer>33</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Object has a dynamic type &apos;NSArray&lt;NSString *&gt; *&apos; which is incompatible with static type &apos;NSSet *&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK:      <string>Object has a dynamic type &apos;NSArray&lt;NSString *&gt; *&apos; which is incompatible with static type &apos;NSSet *&apos;</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Conversion from value of type &apos;NSArray&lt;NSString *&gt; *&apos; to incompatible type &apos;NSSet *&apos;</string>
-// CHECK:    <key>category</key><string>Core Foundation/Objective-C</string>
-// CHECK:    <key>type</key><string>Generics</string>
-// CHECK:    <key>check_name</key><string>core.DynamicTypePropagation</string>
+// CHECK:    <key>description</key><string>Object has a dynamic type &apos;NSArray&lt;NSString *&gt; *&apos; which is incompatible with static type &apos;NSSet *&apos;</string>
+// CHECK:    <key>category</key><string>Type Error</string>
+// CHECK:    <key>type</key><string>Dynamic and static type mismatch</string>
+// CHECK:    <key>check_name</key><string>alpha.core.DynamicTypeChecker</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>returnToUnrelatedType</string>
 // CHECK:   <key>issue_hash</key><string>2</string>
@@ -6361,6 +6360,184 @@ void returnToIdVariable(NSArray<NSString *> *arr) {
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>321</integer>
 // CHECK:    <key>col</key><integer>14</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>326</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>326</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>327</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>327</integer>
+// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>327</integer>
+// CHECK:       <key>col</key><integer>10</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>327</integer>
+// CHECK:          <key>col</key><integer>10</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>327</integer>
+// CHECK:          <key>col</key><integer>29</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Type &apos;NSString *&apos; is inferred from this context</string>
+// CHECK:      <key>message</key>
+// CHECK:      <string>Type &apos;NSString *&apos; is inferred from this context</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>327</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>327</integer>
+// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>328</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>328</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>328</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>328</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>328</integer>
+// CHECK:            <key>col</key><integer>19</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>328</integer>
+// CHECK:            <key>col</key><integer>19</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>328</integer>
+// CHECK:       <key>col</key><integer>19</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>328</integer>
+// CHECK:          <key>col</key><integer>19</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>328</integer>
+// CHECK:          <key>col</key><integer>19</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Object has a dynamic type &apos;NSString *&apos; which is incompatible with static type &apos;NSNumber *&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK:      <string>Object has a dynamic type &apos;NSString *&apos; which is incompatible with static type &apos;NSNumber *&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Object has a dynamic type &apos;NSString *&apos; which is incompatible with static type &apos;NSNumber *&apos;</string>
+// CHECK:    <key>category</key><string>Type Error</string>
+// CHECK:    <key>type</key><string>Dynamic and static type mismatch</string>
+// CHECK:    <key>check_name</key><string>alpha.core.DynamicTypeChecker</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>returnToIdVariable</string>
+// CHECK:   <key>issue_hash</key><string>3</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>328</integer>
+// CHECK:    <key>col</key><integer>19</integer>
 // CHECK:    <key>file</key><integer>0</integer>
 // CHECK:   </dict>
 // CHECK:   </dict>

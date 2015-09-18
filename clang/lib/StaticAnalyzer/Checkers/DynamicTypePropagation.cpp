@@ -22,7 +22,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/AST/ParentMap.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -98,13 +97,6 @@ class DynamicTypePropagation:
                          const ObjCObjectPointerType *To, ExplodedNode *N,
                          SymbolRef Sym, CheckerContext &C,
                          const Stmt *ReportedNode = nullptr) const;
-
-  bool isReturnValueMisused(const ObjCMessageExpr *MessageExpr,
-                            const ObjCObjectPointerType *TrackedType,
-                            SymbolRef Sym, const ObjCMethodDecl *Method,
-                            ArrayRef<QualType> TypeArgs,
-                            bool SubscriptOrProperty, CheckerContext &C) const;
-
 public:
   void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
   void checkPostCall(const CallEvent &Call, CheckerContext &C) const;
@@ -684,46 +676,6 @@ static QualType getReturnTypeForMethod(
   return ResultType;
 }
 
-/// Validate that the return type of a message expression is used correctly.
-/// Returns true in case an error is detected.
-bool DynamicTypePropagation::isReturnValueMisused(
-    const ObjCMessageExpr *MessageExpr,
-    const ObjCObjectPointerType *ResultPtrType, SymbolRef Sym,
-    const ObjCMethodDecl *Method, ArrayRef<QualType> TypeArgs,
-    bool SubscriptOrProperty, CheckerContext &C) const {
-  if (!ResultPtrType)
-    return false;
-
-  ASTContext &ASTCtxt = C.getASTContext();
-  const Stmt *Parent =
-      C.getCurrentAnalysisDeclContext()->getParentMap().getParent(MessageExpr);
-  if (SubscriptOrProperty) {
-    // Properties and subscripts are not direct parents.
-    Parent =
-        C.getCurrentAnalysisDeclContext()->getParentMap().getParent(Parent);
-  }
-
-  const auto *ImplicitCast = dyn_cast_or_null<ImplicitCastExpr>(Parent);
-  if (!ImplicitCast || ImplicitCast->getCastKind() != CK_BitCast)
-    return false;
-
-  const auto *ExprTypeAboveCast =
-      ImplicitCast->getType()->getAs<ObjCObjectPointerType>();
-  if (!ExprTypeAboveCast)
-    return false;
-
-  // Only warn on unrelated types to avoid too many false positives on
-  // downcasts.
-  if (!ASTCtxt.canAssignObjCInterfaces(ExprTypeAboveCast, ResultPtrType) &&
-      !ASTCtxt.canAssignObjCInterfaces(ResultPtrType, ExprTypeAboveCast)) {
-    static CheckerProgramPointTag Tag(this, "ReturnTypeMismatch");
-    ExplodedNode *N = C.addTransition(C.getState(), &Tag);
-    reportGenericsBug(ResultPtrType, ExprTypeAboveCast, N, Sym, C);
-    return true;
-  }
-  return false;
-}
-
 /// When the receiver has a tracked type, use that type to validate the
 /// argumments of the message expression and the return value.
 void DynamicTypePropagation::checkPreObjCMessage(const ObjCMethodCall &M,
@@ -880,10 +832,6 @@ void DynamicTypePropagation::checkPostObjCMessage(const ObjCMethodCall &M,
   }
 
   const auto *ResultPtrType = ResultType->getAs<ObjCObjectPointerType>();
-
-  if (isReturnValueMisused(MessageExpr, ResultPtrType, RecSym, Method,
-                           *TypeArgs, M.getMessageKind() != OCM_Message, C))
-    return;
 
   if (!ResultPtrType || ResultPtrType->isUnspecialized())
     return;
