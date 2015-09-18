@@ -414,6 +414,14 @@ macro(add_clang_executable name)
   set_clang_windows_version_resource_properties(${name})
 endmacro(add_clang_executable)
 
+macro(add_clang_symlink name dest)
+  add_llvm_tool_symlink(${name} ${dest})
+  # Always generate install targets
+  if(LLVM_INSTALL_TOOLCHAIN_ONLY)
+    llvm_install_symlink(${name} ${dest})
+  endif()
+endmacro()
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 include_directories(BEFORE
