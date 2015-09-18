@@ -2245,11 +2245,11 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(
     Res = ActOnOpenMPCancellationPointDirective(StartLoc, EndLoc, CancelRegion);
     break;
   case OMPD_cancel:
-    assert(ClausesWithImplicit.empty() &&
-           "No clauses are allowed for 'omp cancel' directive");
     assert(AStmt == nullptr &&
            "No associated statement allowed for 'omp cancel' directive");
-    Res = ActOnOpenMPCancelDirective(StartLoc, EndLoc, CancelRegion);
+    Res = ActOnOpenMPCancelDirective(ClausesWithImplicit, StartLoc, EndLoc,
+                                     CancelRegion);
+    AllowedNameModifiers.push_back(OMPD_cancel);
     break;
   case OMPD_target_data:
     Res = ActOnOpenMPTargetDataDirective(ClausesWithImplicit, AStmt, StartLoc,
@@ -4909,7 +4909,8 @@ Sema::ActOnOpenMPCancellationPointDirective(SourceLocation StartLoc,
                                                CancelRegion);
 }
 
-StmtResult Sema::ActOnOpenMPCancelDirective(SourceLocation StartLoc,
+StmtResult Sema::ActOnOpenMPCancelDirective(ArrayRef<OMPClause *> Clauses,
+                                            SourceLocation StartLoc,
                                             SourceLocation EndLoc,
                                             OpenMPDirectiveKind CancelRegion) {
   if (CancelRegion != OMPD_parallel && CancelRegion != OMPD_for &&
@@ -4927,7 +4928,8 @@ StmtResult Sema::ActOnOpenMPCancelDirective(SourceLocation StartLoc,
     return StmtError();
   }
   DSAStack->setParentCancelRegion(/*Cancel=*/true);
-  return OMPCancelDirective::Create(Context, StartLoc, EndLoc, CancelRegion);
+  return OMPCancelDirective::Create(Context, StartLoc, EndLoc, Clauses,
+                                    CancelRegion);
 }
 
 OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,

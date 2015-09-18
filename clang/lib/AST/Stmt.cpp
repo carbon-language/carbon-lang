@@ -2128,22 +2128,27 @@ OMPCancellationPointDirective::CreateEmpty(const ASTContext &C, EmptyShell) {
 
 OMPCancelDirective *
 OMPCancelDirective::Create(const ASTContext &C, SourceLocation StartLoc,
-                           SourceLocation EndLoc,
+                           SourceLocation EndLoc, ArrayRef<OMPClause *> Clauses,
                            OpenMPDirectiveKind CancelRegion) {
-  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPCancelDirective),
-                                           llvm::alignOf<Stmt *>());
+  unsigned Size = llvm::RoundUpToAlignment(
+      sizeof(OMPCancelDirective) + sizeof(OMPClause *) * Clauses.size(),
+      llvm::alignOf<Stmt *>());
   void *Mem = C.Allocate(Size);
-  OMPCancelDirective *Dir = new (Mem) OMPCancelDirective(StartLoc, EndLoc);
+  OMPCancelDirective *Dir =
+      new (Mem) OMPCancelDirective(StartLoc, EndLoc, Clauses.size());
+  Dir->setClauses(Clauses);
   Dir->setCancelRegion(CancelRegion);
   return Dir;
 }
 
 OMPCancelDirective *OMPCancelDirective::CreateEmpty(const ASTContext &C,
+                                                    unsigned NumClauses,
                                                     EmptyShell) {
-  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPCancelDirective),
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPCancelDirective) +
+                                               sizeof(OMPClause *) * NumClauses,
                                            llvm::alignOf<Stmt *>());
   void *Mem = C.Allocate(Size);
-  return new (Mem) OMPCancelDirective();
+  return new (Mem) OMPCancelDirective(NumClauses);
 }
 
 OMPFlushDirective *OMPFlushDirective::Create(const ASTContext &C,

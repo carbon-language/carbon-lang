@@ -2127,17 +2127,21 @@ class OMPCancelDirective : public OMPExecutableDirective {
   ///
   /// \param StartLoc Starting location of the directive kind.
   /// \param EndLoc Ending location of the directive.
+  /// \param NumClauses Number of clauses.
   ///
-  OMPCancelDirective(SourceLocation StartLoc, SourceLocation EndLoc)
+  OMPCancelDirective(SourceLocation StartLoc, SourceLocation EndLoc,
+                     unsigned NumClauses)
       : OMPExecutableDirective(this, OMPCancelDirectiveClass, OMPD_cancel,
-                               StartLoc, EndLoc, 0, 0),
+                               StartLoc, EndLoc, NumClauses, 0),
         CancelRegion(OMPD_unknown) {}
 
   /// \brief Build an empty directive.
   ///
-  explicit OMPCancelDirective()
+  /// \param NumClauses Number of clauses.
+  explicit OMPCancelDirective(unsigned NumClauses)
       : OMPExecutableDirective(this, OMPCancelDirectiveClass, OMPD_cancel,
-                               SourceLocation(), SourceLocation(), 0, 0),
+                               SourceLocation(), SourceLocation(), NumClauses,
+                               0),
         CancelRegion(OMPD_unknown) {}
 
   /// \brief Set cancel region for current cancellation point.
@@ -2150,17 +2154,19 @@ public:
   /// \param C AST context.
   /// \param StartLoc Starting location of the directive kind.
   /// \param EndLoc Ending Location of the directive.
+  /// \param Clauses List of clauses.
   ///
-  static OMPCancelDirective *Create(const ASTContext &C,
-                                    SourceLocation StartLoc,
-                                    SourceLocation EndLoc,
-                                    OpenMPDirectiveKind CancelRegion);
+  static OMPCancelDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         ArrayRef<OMPClause *> Clauses, OpenMPDirectiveKind CancelRegion);
 
   /// \brief Creates an empty directive.
   ///
   /// \param C AST context.
+  /// \param NumClauses Number of clauses.
   ///
-  static OMPCancelDirective *CreateEmpty(const ASTContext &C, EmptyShell);
+  static OMPCancelDirective *CreateEmpty(const ASTContext &C,
+                                         unsigned NumClauses, EmptyShell);
 
   /// \brief Get cancellation region for the current cancellation point.
   OpenMPDirectiveKind getCancelRegion() const { return CancelRegion; }

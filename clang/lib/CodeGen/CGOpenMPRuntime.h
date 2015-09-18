@@ -718,9 +718,12 @@ public:
                                          OpenMPDirectiveKind CancelRegion);
 
   /// \brief Emit code for 'cancel' construct.
+  /// \param IfCond Condition in the associated 'if' clause, if it was
+  /// specified, nullptr otherwise.
   /// \param CancelRegion Region kind for which the cancel must be emitted.
   ///
   virtual void emitCancelCall(CodeGenFunction &CGF, SourceLocation Loc,
+                              const Expr *IfCond,
                               OpenMPDirectiveKind CancelRegion);
 };
 

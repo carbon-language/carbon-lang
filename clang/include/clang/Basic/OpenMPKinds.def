@@ -63,6 +63,9 @@
 #ifndef OPENMP_TEAMS_CLAUSE
 #  define OPENMP_TEAMS_CLAUSE(Name)
 #endif
+#ifndef OPENMP_CANCEL_CLAUSE
+#  define OPENMP_CANCEL_CLAUSE(Name)
+#endif
 #ifndef OPENMP_DEFAULT_KIND
 #  define OPENMP_DEFAULT_KIND(Name)
 #endif
@@ -197,6 +200,9 @@ OPENMP_SINGLE_CLAUSE(firstprivate)
 OPENMP_SINGLE_CLAUSE(copyprivate)
 OPENMP_SINGLE_CLAUSE(nowait)
 
+// Clauses allowed for OpenMP directive 'cancel'.
+OPENMP_CANCEL_CLAUSE(if)
+
 // Static attributes for 'default' clause.
 OPENMP_DEFAULT_KIND(none)
 OPENMP_DEFAULT_KIND(shared)
@@ -313,6 +319,7 @@ OPENMP_TEAMS_CLAUSE(reduction)
 #undef OPENMP_DIRECTIVE
 #undef OPENMP_DIRECTIVE_EXT
 #undef OPENMP_CLAUSE
+#undef OPENMP_CANCEL_CLAUSE
 #undef OPENMP_SINGLE_CLAUSE
 #undef OPENMP_SECTIONS_CLAUSE
 #undef OPENMP_PARALLEL_CLAUSE

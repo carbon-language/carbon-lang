@@ -10,11 +10,11 @@ int main (int argc, char **argv) {
 // CHECK: int main(int argc, char **argv) {
 #pragma omp parallel
 {
-#pragma omp cancel parallel
+#pragma omp cancel parallel if(argc)
 }
 // CHECK: #pragma omp parallel
 // CHECK-NEXT: {
-// CHECK-NEXT: #pragma omp cancel parallel
+// CHECK-NEXT: #pragma omp cancel parallel if(argc)
 // CHECK-NEXT: }
 #pragma omp sections
 {
@@ -26,11 +26,11 @@ int main (int argc, char **argv) {
 // CHECK: }
 #pragma omp for
 for (int i = 0; i < argc; ++i) {
-#pragma omp cancel for
+#pragma omp cancel for if(cancel:argc)
 }
 // CHECK: #pragma omp for
 // CHECK-NEXT: for (int i = 0; i < argc; ++i) {
-// CHECK-NEXT: #pragma omp cancel for
+// CHECK-NEXT: #pragma omp cancel for if(cancel: argc)
 // CHECK-NEXT: }
 #pragma omp task
 {

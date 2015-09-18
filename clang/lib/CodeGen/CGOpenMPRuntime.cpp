@@ -2914,6 +2914,7 @@ void CGOpenMPRuntime::emitCancellationPointCall(
 }
 
 void CGOpenMPRuntime::emitCancelCall(CodeGenFunction &CGF, SourceLocation Loc,
+                                     const Expr *IfCond,
                                      OpenMPDirectiveKind CancelRegion) {
   // Build call kmp_int32 __kmpc_cancel(ident_t *loc, kmp_int32 global_tid,
   // kmp_int32 cncl_kind);
@@ -2921,27 +2922,34 @@ void CGOpenMPRuntime::emitCancelCall(CodeGenFunction &CGF, SourceLocation Loc,
           dyn_cast_or_null<CGOpenMPRegionInfo>(CGF.CapturedStmtInfo)) {
     if (OMPRegionInfo->getDirectiveKind() == OMPD_single)
       return;
-    llvm::Value *Args[] = {
-        emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc),
-        CGF.Builder.getInt32(getCancellationKind(CancelRegion))};
-    // Ignore return result until untied tasks are supported.
-    auto *Result =
-        CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_cancel), Args);
-    // if (__kmpc_cancel()) {
-    //  __kmpc_cancel_barrier();
-    //   exit from construct;
-    // }
-    auto *ExitBB = CGF.createBasicBlock(".cancel.exit");
-    auto *ContBB = CGF.createBasicBlock(".cancel.continue");
-    auto *Cmp = CGF.Builder.CreateIsNotNull(Result);
-    CGF.Builder.CreateCondBr(Cmp, ExitBB, ContBB);
-    CGF.EmitBlock(ExitBB);
-    // __kmpc_cancel_barrier();
-    emitBarrierCall(CGF, Loc, OMPD_unknown, /*EmitChecks=*/false);
-    // exit from construct;
-    auto CancelDest =
-        CGF.getOMPCancelDestination(OMPRegionInfo->getDirectiveKind());
-    CGF.EmitBranchThroughCleanup(CancelDest);
-    CGF.EmitBlock(ContBB, /*IsFinished=*/true);
+    auto &&ThenGen = [this, Loc, CancelRegion,
+                      OMPRegionInfo](CodeGenFunction &CGF) {
+      llvm::Value *Args[] = {
+          emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc),
+          CGF.Builder.getInt32(getCancellationKind(CancelRegion))};
+      // Ignore return result until untied tasks are supported.
+      auto *Result =
+          CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_cancel), Args);
+      // if (__kmpc_cancel()) {
+      //  __kmpc_cancel_barrier();
+      //   exit from construct;
+      // }
+      auto *ExitBB = CGF.createBasicBlock(".cancel.exit");
+      auto *ContBB = CGF.createBasicBlock(".cancel.continue");
+      auto *Cmp = CGF.Builder.CreateIsNotNull(Result);
+      CGF.Builder.CreateCondBr(Cmp, ExitBB, ContBB);
+      CGF.EmitBlock(ExitBB);
+      // __kmpc_cancel_barrier();
+      emitBarrierCall(CGF, Loc, OMPD_unknown, /*EmitChecks=*/false);
+      // exit from construct;
+      auto CancelDest =
+          CGF.getOMPCancelDestination(OMPRegionInfo->getDirectiveKind());
+      CGF.EmitBranchThroughCleanup(CancelDest);
+      CGF.EmitBlock(ContBB, /*IsFinished=*/true);
+    };
+    if (IfCond)
+      emitOMPIfClause(CGF, IfCond, ThenGen, [](CodeGenFunction &) {});
+    else
+      ThenGen(CGF);
   }
 }

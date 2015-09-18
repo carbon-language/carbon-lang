@@ -2262,7 +2262,15 @@ void CodeGenFunction::EmitOMPCancellationPointDirective(
 }
 
 void CodeGenFunction::EmitOMPCancelDirective(const OMPCancelDirective &S) {
-  CGM.getOpenMPRuntime().emitCancelCall(*this, S.getLocStart(),
+  const Expr *IfCond = nullptr;
+  for (const auto *C : S.getClausesOfKind<OMPIfClause>()) {
+    if (C->getNameModifier() == OMPD_unknown ||
+        C->getNameModifier() == OMPD_cancel) {
+      IfCond = C->getCondition();
+      break;
+    }
+  }
+  CGM.getOpenMPRuntime().emitCancelCall(*this, S.getLocStart(), IfCond,
                                         S.getCancelRegion());
 }
 
