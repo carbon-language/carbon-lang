@@ -51,6 +51,33 @@ endif()
 
 add_dependencies(clang clang-headers)
 
+if(UNIX)
+  set(CLANGXX_LINK_OR_COPY create_symlink)
+# Create a relative symlink
+  set(clang_binary "clang${CMAKE_EXECUTABLE_SUFFIX}")
+else()
+  set(CLANGXX_LINK_OR_COPY copy)
+  set(clang_binary "${LLVM_RUNTIME_OUTPUT_INTDIR}/clang${CMAKE_EXECUTABLE_SUFFIX}")
+endif()
+
+# Create the clang++ symlink in the build directory.
+set(clang_pp "${LLVM_RUNTIME_OUTPUT_INTDIR}/clang++${CMAKE_EXECUTABLE_SUFFIX}")
+add_custom_command(TARGET clang POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E ${CLANGXX_LINK_OR_COPY} "${clang_binary}" "${clang_pp}"
+    WORKING_DIRECTORY "${LLVM_RUNTIME_OUTPUT_INTDIR}")
+
+set_property(DIRECTORY APPEND
+  PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${clang_pp})
+
+# Create the clang-cl symlink in the build directory.
+set(clang_cl "${LLVM_RUNTIME_OUTPUT_INTDIR}/clang-cl${CMAKE_EXECUTABLE_SUFFIX}")
+add_custom_command(TARGET clang POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E ${CLANGXX_LINK_OR_COPY} "${clang_binary}" "${clang_cl}"
+    WORKING_DIRECTORY "${LLVM_RUNTIME_OUTPUT_INTDIR}")
+
+set_property(DIRECTORY APPEND
+  PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${clang_cl})
+
 install(TARGETS clang
   RUNTIME DESTINATION bin
   COMPONENT clang)
@@ -60,13 +87,8 @@ add_custom_target(install-clang
           -DCMAKE_INSTALL_COMPONENT=clang
           -P "${CMAKE_BINARY_DIR}/cmake_install.cmake")
 
-if(NOT CLANG_LINKS_TO_CREATE)
-  set(CLANG_LINKS_TO_CREATE clang++ clang-cl)
-endif()
-
-foreach(link ${CLANG_LINKS_TO_CREATE})
-  add_clang_symlink(${link} clang)
-endforeach()
+# Create the clang++ and clang-cl symlinks at installation time.
+install(SCRIPT clang_symlink.cmake -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
 
 # Configure plist creation for OS X.
 set (TOOL_INFO_PLIST "Info.plist" CACHE STRING "Plist name")
