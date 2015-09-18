@@ -298,6 +298,10 @@ bool ARMSubtarget::useMovt(const MachineFunction &MF) const {
 }
 
 bool ARMSubtarget::useFastISel() const {
+  // Limit fast-isel to the targets that are or have been tested.
+  if (!hasV6Ops())
+    return false;
+
   // Thumb2 support on iOS; ARM support on iOS, Linux and NaCl.
   return TM.Options.EnableFastISel &&
          ((isTargetMachO() && !isThumb1Only()) ||
