@@ -14,6 +14,7 @@
 #include "SymbolTable.h"
 #include "Symbols.h"
 #include "Writer.h"
+#include "lld/Core/Parallel.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -708,8 +709,8 @@ void Writer::writeSections() {
     // ADD instructions).
     if (Sec->getPermissions() & IMAGE_SCN_CNT_CODE)
       memset(SecBuf, 0xCC, Sec->getRawSize());
-    for (Chunk *C : Sec->getChunks())
-      C->writeTo(SecBuf);
+    parallel_for_each(Sec->getChunks().begin(), Sec->getChunks().end(),
+                      [&](Chunk *C) { C->writeTo(SecBuf); });
   }
 }
 
