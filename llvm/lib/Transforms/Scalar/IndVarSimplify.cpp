@@ -849,6 +849,11 @@ class WidenIV {
   Type *WideType;
   bool IsSigned;
 
+  // True if the narrow induction variable is never negative.  Tracking this
+  // information lets us use a sign extension instead of a zero extension or
+  // vice versa, when profitable and legal.
+  bool NeverNegative;
+
   // Context
   LoopInfo        *LI;
   Loop            *L;
@@ -871,6 +876,7 @@ public:
     OrigPhi(WI.NarrowIV),
     WideType(WI.WidestNativeType),
     IsSigned(WI.IsSigned),
+    NeverNegative(false),
     LI(LInfo),
     L(LI->getLoopFor(OrigPhi->getParent())),
     SE(SEv),
@@ -1082,8 +1088,22 @@ bool WidenIV::WidenLoopCompare(NarrowIVDefUse DU) {
   if (!Cmp)
     return false;
 
-  // Sign of IV user and compare must match.
-  if (IsSigned != CmpInst::isSigned(Cmp->getPredicate()))
+  // We can legally widen the comparison in the following two cases:
+  //
+  //  - The signedness of the IV extension and comparison match
+  //
+  //  - The narrow IV is always positive (and thus its sign extension is equal
+  //    to its zero extension).  For instance, let's say we're zero extending
+  //    %narrow for the following use
+  //
+  //      icmp slt i32 %narrow, %val   ... (A)
+  //
+  //    and %narrow is always positive.  Then
+  //
+  //      (A) == icmp slt i32 sext(%narrow), sext(%val)
+  //          == icmp slt i32 zext(%narrow), sext(%val)
+
+  if (!(NeverNegative || IsSigned == Cmp->isSigned()))
     return false;
 
   Value *Op = Cmp->getOperand(Cmp->getOperand(0) == DU.NarrowDef ? 1 : 0);
@@ -1097,7 +1117,7 @@ bool WidenIV::WidenLoopCompare(NarrowIVDefUse DU) {
 
   // Widen the other operand of the compare, if necessary.
   if (CastWidth < IVWidth) {
-    Value *ExtOp = getExtend(Op, WideType, IsSigned, Cmp);
+    Value *ExtOp = getExtend(Op, WideType, Cmp->isSigned(), Cmp);
     DU.NarrowUse->replaceUsesOfWith(Op, ExtOp);
   }
   return true;
@@ -1246,6 +1266,9 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
   const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(OrigPhi));
   if (!AddRec)
     return nullptr;
+
+  NeverNegative = SE->isKnownPredicate(ICmpInst::ICMP_SGE, AddRec,
+                                       SE->getConstant(AddRec->getType(), 0));
 
   // Widen the induction variable expression.
   const SCEV *WideIVExpr = IsSigned ?

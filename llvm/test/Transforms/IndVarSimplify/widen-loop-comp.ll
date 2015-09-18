@@ -193,3 +193,131 @@ for.body:
 for.end:
   ret i32 %sum.0
 }
+
+define i32 @test6(i32* %a, i32 %b) {
+; CHECK-LABEL: @test6(
+; CHECK: [[B_SEXT:%[a-z0-9]+]] = sext i32 %b to i64
+; CHECK: for.cond:
+; CHECK: icmp sle i64 %indvars.iv, [[B_SEXT]]
+
+entry:
+  br label %for.cond
+
+for.cond:
+  %sum.0 = phi i32 [ 0, %entry ], [ %add, %for.body ]
+  %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %cmp = icmp sle i32 %i.0, %b
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:
+  %idxprom = zext i32 %i.0 to i64
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %idxprom
+  %0 = load i32, i32* %arrayidx, align 4
+  %add = add nsw i32 %sum.0, %0
+  %inc = add nsw i32 %i.0, 1
+  br label %for.cond
+
+for.end:
+  ret i32 %sum.0
+}
+
+define i32 @test7(i32* %a, i32 %b) {
+; CHECK-LABEL: @test7(
+; CHECK: [[B_ZEXT:%[a-z0-9]+]] = zext i32 %b to i64
+; CHECK: [[B_SEXT:%[a-z0-9]+]] = sext i32 %b to i64
+; CHECK: for.cond:
+; CHECK: icmp ule i64 %indvars.iv, [[B_ZEXT]]
+; CHECK: for.body:
+; CHECK: icmp sle i64 %indvars.iv, [[B_SEXT]]
+
+entry:
+  br label %for.cond
+
+for.cond:
+  %sum.0 = phi i32 [ 0, %entry ], [ %add, %for.body ]
+  %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %cmp = icmp ule i32 %i.0, %b
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:
+  %idxprom = sext i32 %i.0 to i64
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %idxprom
+  %0 = load i32, i32* %arrayidx, align 4
+  %add = add nsw i32 %sum.0, %0
+  %inc = add nsw i32 %i.0, 1
+  %cmp2 = icmp sle i32 %i.0, %b
+  br i1 %cmp2, label %for.cond, label %for.end
+
+for.end:
+  ret i32 %sum.0
+}
+
+define i32 @test8(i32* %a, i32 %b, i32 %init) {
+; CHECK-LABEL: @test8(
+; CHECK: [[INIT_SEXT:%[a-z0-9]+]] = sext i32 %init to i64
+; CHECK: [[B_ZEXT:%[a-z0-9]+]] = zext i32 %b to i64
+; CHECK: for.cond:
+;     Note: %indvars.iv is the sign extension of %i.0
+; CHECK: %indvars.iv = phi i64 [ [[INIT_SEXT]], %for.cond.preheader ], [ %indvars.iv.next, %for.body ]
+; CHECK: icmp ule i64 %indvars.iv, [[B_ZEXT]]
+
+entry:
+  %e = icmp sgt i32 %init, 0
+  br i1 %e, label %for.cond, label %leave
+
+for.cond:
+  %sum.0 = phi i32 [ 0, %entry ], [ %add, %for.body ]
+  %i.0 = phi i32 [ %init, %entry ], [ %inc, %for.body ]
+  %cmp = icmp ule i32 %i.0, %b
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:
+  %idxprom = sext i32 %i.0 to i64
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %idxprom
+  %0 = load i32, i32* %arrayidx, align 4
+  %add = add nsw i32 %sum.0, %0
+  %inc = add nsw i32 %i.0, 1
+  %cmp2 = icmp slt i32 0, %inc
+  br i1 %cmp2, label %for.cond, label %for.end
+
+for.end:
+  ret i32 %sum.0
+
+leave:
+  ret i32 0
+}
+
+define i32 @test9(i32* %a, i32 %b, i32 %init) {
+; CHECK-LABEL: @test9(
+; CHECK: [[INIT_ZEXT:%[a-z0-9]+]] = zext i32 %init to i64
+; CHECK: [[B_SEXT:%[a-z0-9]+]] = sext i32 %b to i64
+; CHECK: for.cond:
+;     Note: %indvars.iv is the zero extension of %i.0
+; CHECK: %indvars.iv = phi i64 [ [[INIT_ZEXT]], %for.cond.preheader ], [ %indvars.iv.next, %for.body ]
+; CHECK: icmp slt i64 %indvars.iv, [[B_SEXT]]
+
+entry:
+  %e = icmp sgt i32 %init, 0
+  br i1 %e, label %for.cond, label %leave
+
+for.cond:
+  %sum.0 = phi i32 [ 0, %entry ], [ %add, %for.body ]
+  %i.0 = phi i32 [ %init, %entry ], [ %inc, %for.body ]
+  %cmp = icmp slt i32 %i.0, %b
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:
+  %idxprom = zext i32 %i.0 to i64
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %idxprom
+  %0 = load i32, i32* %arrayidx, align 4
+  %add = add nsw i32 %sum.0, %0
+  %inc = add nsw i32 %i.0, 1
+  %cmp2 = icmp slt i32 0, %inc
+  br i1 %cmp2, label %for.cond, label %for.end
+
+for.end:
+  ret i32 %sum.0
+
+leave:
+  ret i32 0
+}
