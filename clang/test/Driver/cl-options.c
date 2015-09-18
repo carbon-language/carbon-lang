@@ -221,6 +221,7 @@
 // Ignored options. Check that we don't get "unused during compilation" errors.
 // RUN: %clang_cl /c \
 // RUN:    /analyze- \
+// RUN:    /bigobj \
 // RUN:    /cgthreads4 \
 // RUN:    /cgthreads8 \
 // RUN:    /d2Zi+ \
