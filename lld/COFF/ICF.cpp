@@ -137,8 +137,6 @@ bool ICF::equalsVariable(const SectionChunk *A, const SectionChunk *B) {
   auto Eq = [&](const coff_relocation &R1, const coff_relocation &R2) {
     SymbolBody *B1 = A->File->getSymbolBody(R1.SymbolTableIndex)->repl();
     SymbolBody *B2 = B->File->getSymbolBody(R2.SymbolTableIndex)->repl();
-    if (B1 == B2)
-      return true;
     auto *D1 = dyn_cast<DefinedRegular>(B1);
     auto *D2 = dyn_cast<DefinedRegular>(B2);
     return D1 && D2 && D1->getChunk()->GroupID == D2->getChunk()->GroupID;
