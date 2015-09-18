@@ -63,23 +63,21 @@ typedef bool (*Comparator)(const SectionChunk *, const SectionChunk *);
 
 class ICF {
 public:
-  ICF(const std::vector<Chunk *> &V) : Chunks(V) {}
-  void run();
+  void run(const std::vector<Chunk *> &V);
 
 private:
   static uint64_t getHash(SectionChunk *C);
   static bool equalsConstant(const SectionChunk *A, const SectionChunk *B);
   static bool equalsVariable(const SectionChunk *A, const SectionChunk *B);
-  bool forEachGroup(std::vector<SectionChunk *> &SChunks, Comparator Eq);
+  bool forEachGroup(std::vector<SectionChunk *> &Chunks, Comparator Eq);
   bool partition(ChunkIterator Begin, ChunkIterator End, Comparator Eq);
 
-  const std::vector<Chunk *> &Chunks;
   uint64_t NextID = 1;
 };
 
 // Entry point to ICF.
 void doICF(const std::vector<Chunk *> &Chunks) {
-  ICF(Chunks).run();
+  ICF().run(Chunks);
 }
 
 uint64_t ICF::getHash(SectionChunk *C) {
@@ -138,10 +136,12 @@ bool ICF::equalsVariable(const SectionChunk *A, const SectionChunk *B) {
   // Compare relocations.
   auto Eq = [&](const coff_relocation &R1, const coff_relocation &R2) {
     SymbolBody *B1 = A->File->getSymbolBody(R1.SymbolTableIndex)->repl();
-    SymbolBody *B2 = B->File->getSymbolBody(R2.SymbolTableIndex)->repl();
-    auto *D1 = dyn_cast<DefinedRegular>(B1);
-    auto *D2 = dyn_cast<DefinedRegular>(B2);
-    return D1 && D2 && D1->getChunk()->GroupID == D2->getChunk()->GroupID;
+    if (auto *D1 = dyn_cast<DefinedRegular>(B1)) {
+      SymbolBody *B2 = B->File->getSymbolBody(R2.SymbolTableIndex)->repl();
+      if (auto *D2 = dyn_cast<DefinedRegular>(B2))
+        return D1->getChunk()->GroupID == D2->getChunk()->GroupID;
+    }
+    return false;
   };
   return std::equal(A->Relocs.begin(), A->Relocs.end(), B->Relocs.begin(), Eq);
 }
@@ -162,9 +162,9 @@ bool ICF::partition(ChunkIterator Begin, ChunkIterator End, Comparator Eq) {
   }
 }
 
-bool ICF::forEachGroup(std::vector<SectionChunk *> &SChunks, Comparator Eq) {
+bool ICF::forEachGroup(std::vector<SectionChunk *> &Chunks, Comparator Eq) {
   bool R = false;
-  for (auto It = SChunks.begin(), End = SChunks.end(); It != End;) {
+  for (auto It = Chunks.begin(), End = Chunks.end(); It != End;) {
     SectionChunk *Head = *It;
     auto Bound = std::find_if(It + 1, End, [&](SectionChunk *SC) {
       return SC->GroupID != Head->GroupID;
@@ -179,17 +179,17 @@ bool ICF::forEachGroup(std::vector<SectionChunk *> &SChunks, Comparator Eq) {
 // Merge identical COMDAT sections.
 // Two sections are considered the same if their section headers,
 // contents and relocations are all the same.
-void ICF::run() {
+void ICF::run(const std::vector<Chunk *> &Vec) {
   // Collect only mergeable sections and group by hash value.
   std::vector<std::vector<SectionChunk *>> VChunks(NJOBS);
-  parallel_for_each(Chunks.begin(), Chunks.end(), [&](Chunk *C) {
+  parallel_for_each(Vec.begin(), Vec.end(), [&](Chunk *C) {
     if (auto *SC = dyn_cast<SectionChunk>(C)) {
       bool Writable = SC->getPermissions() & llvm::COFF::IMAGE_SCN_MEM_WRITE;
       if (SC->isCOMDAT() && SC->isLive() && !Writable)
         SC->GroupID = getHash(SC) | (uint64_t(1) << 63);
     }
   });
-  for (Chunk *C : Chunks) {
+  for (Chunk *C : Vec) {
     if (auto *SC = dyn_cast<SectionChunk>(C)) {
       if (SC->GroupID) {
         VChunks[SC->GroupID % NJOBS].push_back(SC);
@@ -202,8 +202,8 @@ void ICF::run() {
   // From now on, sections in Chunks are ordered so that sections in
   // the same group are consecutive in the vector.
   parallel_for_each(VChunks.begin(), VChunks.end(),
-                    [&](std::vector<SectionChunk *> &SChunks) {
-    std::sort(SChunks.begin(), SChunks.end(),
+                    [&](std::vector<SectionChunk *> &Chunks) {
+    std::sort(Chunks.begin(), Chunks.end(),
               [](SectionChunk *A, SectionChunk *B) {
                 return A->GroupID < B->GroupID;
               });
@@ -212,15 +212,15 @@ void ICF::run() {
   // Split groups until we get a convergence.
   int Cnt = 1;
   parallel_for_each(VChunks.begin(), VChunks.end(),
-                    [&](std::vector<SectionChunk *> &SChunks) {
-    forEachGroup(SChunks, equalsConstant);
+                    [&](std::vector<SectionChunk *> &Chunks) {
+    forEachGroup(Chunks, equalsConstant);
   });
 
   for (;;) {
     bool Redo = false;
     parallel_for_each(VChunks.begin(), VChunks.end(),
-                      [&](std::vector<SectionChunk *> &SChunks) {
-      if (forEachGroup(SChunks, equalsVariable))
+                      [&](std::vector<SectionChunk *> &Chunks) {
+      if (forEachGroup(Chunks, equalsVariable))
         Redo = true;
     });
     if (!Redo)
@@ -231,8 +231,8 @@ void ICF::run() {
     llvm::outs() << "\nICF needed " << Cnt << " iterations.\n";
 
   // Merge sections in the same group.
-  for (std::vector<SectionChunk *> &SChunks : VChunks) {
-    for (auto It = SChunks.begin(), End = SChunks.end(); It != End;) {
+  for (std::vector<SectionChunk *> &Chunks : VChunks) {
+    for (auto It = Chunks.begin(), End = Chunks.end(); It != End;) {
       SectionChunk *Head = *It;
       auto Bound = std::find_if(It + 1, End, [&](SectionChunk *SC) {
         return Head->GroupID != SC->GroupID;
