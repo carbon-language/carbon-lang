@@ -1,10 +1,8 @@
 ; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
 
-; Do not if-convert when branches go to the different loops.
 ; CHECK-LABEL: t:
-; CHECK-NOT: subgt
-; CHECK-NOT: suble
-; Don't use
+; CHECK: subgt
+; CHECK: suble
 define i32 @t(i32 %a, i32 %b) {
 entry:
 	%tmp1434 = icmp eq i32 %a, %b		; <i1> [#uses=1]

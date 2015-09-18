@@ -59,9 +59,6 @@ for.body.1:                                       ; preds = %for.body
   br i1 %cmp.1, label %for.body.2, label %for.end
 
 for.body.2:                                       ; preds = %for.body.1
-; CHECK: %for.body.2
-; CHECK: ldrb {{r[0-9]+|lr}}, [{{r[0-9]+|lr}}, {{r[0-9]+|lr}}]!
-; CHECK: ldrb {{r[0-9]+|lr}}, [{{r[0-9]+|lr}}, {{r[0-9]+|lr}}]!
   %arrayidx.2 = getelementptr inbounds i8, i8* %a, i32 %add5.1
   %4 = load i8, i8* %arrayidx.2, align 1
   %conv6.2 = zext i8 %4 to i32

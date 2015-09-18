@@ -1,8 +1,13 @@
 ; REQUIRES: asserts
-; RUN: llc < %s -mtriple=thumbv7-apple-ios -stats 2>&1 | not grep "Number of pipeline stalls"
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -disable-ifcvt-diamond -stats 2>&1 | FileCheck %s
 ; Evaluate the two vld1.8 instructions in separate MBB's,
 ; instead of stalling on one and conditionally overwriting its result.
+;
+; Update: After if-conversion the two vld1.8 instructions are in the same MBB
+; again. So we disable this if-conversion to eliminate its influence to this
+; test.
 
+; CHECK-NOT: Number of pipeline stalls
 define <16 x i8> @multiselect(i32 %avail, i8* %foo, i8* %bar) {
 entry:
   %vld1 = call <16 x i8> @llvm.arm.neon.vld1.v16i8(i8* %foo, i32 1)
