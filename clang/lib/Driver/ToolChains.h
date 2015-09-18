@@ -102,8 +102,7 @@ public:
     GCCInstallationDetector() : IsValid(false) {}
     void init(const Driver &D, const llvm::Triple &TargetTriple,
               const llvm::opt::ArgList &Args,
-              const ArrayRef<std::string> ExtraTripleAliases =
-                  ArrayRef<std::string>());
+              ArrayRef<std::string> ExtraTripleAliases = None);
 
     /// \brief Check whether we detected a valid GCC install.
     bool isValid() const { return IsValid; }

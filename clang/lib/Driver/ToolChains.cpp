@@ -1171,7 +1171,7 @@ static llvm::StringRef getGCCToolchainDir(const ArgList &Args) {
 /// triple.
 void Generic_GCC::GCCInstallationDetector::init(
     const Driver &D, const llvm::Triple &TargetTriple, const ArgList &Args,
-    const ArrayRef<std::string> ExtraTripleAliases) {
+    ArrayRef<std::string> ExtraTripleAliases) {
   llvm::Triple BiarchVariantTriple = TargetTriple.isArch32Bit()
                                          ? TargetTriple.get64BitArchVariant()
                                          : TargetTriple.get32BitArchVariant();
