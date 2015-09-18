@@ -132,7 +132,7 @@ public:
       : ObjectFileBase(getStaticELFKind<ELFT>(), M) {}
   void parse() override;
 
-  ArrayRef<SectionChunk<ELFT> *> getChunks() { return Chunks; }
+  ArrayRef<SectionChunk<ELFT> *> getChunks() const { return Chunks; }
 
   SymbolBody *getSymbolBody(uint32_t SymbolIndex) const {
     uint32_t FirstNonLocal = this->Symtab->sh_info;
@@ -143,8 +143,8 @@ public:
 
   Elf_Sym_Range getLocalSymbols();
 
-  const Elf_Shdr *getSymbolTable() { return this->Symtab; };
-  ArrayRef<Elf_Word> getSymbolTableShndx() { return SymtabSHNDX; };
+  const Elf_Shdr *getSymbolTable() const { return this->Symtab; };
+  ArrayRef<Elf_Word> getSymbolTableShndx() const { return SymtabSHNDX; };
 
 private:
   void initializeChunks();
