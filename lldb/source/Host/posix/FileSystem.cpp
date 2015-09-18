@@ -182,6 +182,16 @@ FileSystem::Hardlink(const FileSpec &src, const FileSpec &dst)
     return error;
 }
 
+int
+FileSystem::GetHardlinkCount(const FileSpec &file_spec)
+{
+    struct stat file_stat;
+    if (::stat(file_spec.GetCString(), &file_stat) == 0)
+        return file_stat.st_nlink;
+
+    return -1;
+}
+
 Error
 FileSystem::Symlink(const FileSpec &src, const FileSpec &dst)
 {

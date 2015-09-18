@@ -35,6 +35,7 @@ class FileSystem
     static bool GetFileExists(const FileSpec &file_spec);
 
     static Error Hardlink(const FileSpec &src, const FileSpec &dst);
+    static int GetHardlinkCount(const FileSpec &file_spec);
     static Error Symlink(const FileSpec &src, const FileSpec &dst);
     static Error Readlink(const FileSpec &src, FileSpec &dst);
     static Error Unlink(const FileSpec &file_spec);

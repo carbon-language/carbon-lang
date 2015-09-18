@@ -9,6 +9,7 @@
 
 #include "ModuleCache.h"
 
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Host/File.h"
@@ -27,10 +28,22 @@ using namespace lldb_private;
 namespace {
 
 const char* kModulesSubdir = ".cache";
-const char* kLockFileName = ".lock";
+const char* kLockDirName = ".lock";
 const char* kTempFileName = ".temp";
 const char* kTempSymFileName = ".symtemp";
 const char* kSymFileExtension = ".sym";
+
+class ModuleLock
+{
+private:
+    File m_file;
+    std::unique_ptr<lldb_private::LockFile> m_lock;
+    FileSpec m_file_spec;
+
+public:
+    ModuleLock (const FileSpec &root_dir_spec, const UUID &uuid, Error& error);
+    void Delete ();
+};
 
 FileSpec
 JoinPath (const FileSpec &path1, const char* path2)
@@ -61,13 +74,76 @@ GetModuleDirectory (const FileSpec &root_dir_spec, const UUID &uuid)
     return JoinPath (modules_dir_spec, uuid.GetAsString ().c_str ());
 }
 
+FileSpec
+GetSymbolFileSpec(const FileSpec& module_file_spec)
+{
+    return FileSpec((module_file_spec.GetPath() + kSymFileExtension).c_str(), false);
+}
+
+void
+DeleteExistingModule (const FileSpec &root_dir_spec, const FileSpec &sysroot_module_path_spec)
+{
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_MODULES));
+    UUID module_uuid;
+    {
+        auto module_sp = std::make_shared<Module>(ModuleSpec (sysroot_module_path_spec));
+        module_uuid = module_sp->GetUUID ();
+    }
+
+    if (!module_uuid.IsValid ())
+        return;
+
+    Error error;
+    ModuleLock lock (root_dir_spec,  module_uuid, error);
+    if (error.Fail ())
+    {
+        if (log)
+            log->Printf ("Failed to lock module %s: %s",
+                         module_uuid.GetAsString ().c_str (),
+                         error.AsCString ());
+    }
+
+    auto link_count = FileSystem::GetHardlinkCount (sysroot_module_path_spec);
+    if (link_count == -1)
+        return;
+
+    if (link_count > 2)  // module is referred by other hosts.
+        return;
+
+    const auto module_spec_dir = GetModuleDirectory (root_dir_spec, module_uuid);
+    FileSystem::DeleteDirectory (module_spec_dir, true);
+    lock.Delete();
+}
+
+void
+DecrementRefExistingModule (const FileSpec &root_dir_spec, const FileSpec &sysroot_module_path_spec)
+{
+    // Remove $platform/.cache/$uuid folder if nobody else references it.
+    DeleteExistingModule (root_dir_spec, sysroot_module_path_spec);
+
+    // Remove sysroot link.
+    FileSystem::Unlink (sysroot_module_path_spec);
+
+    FileSpec symfile_spec = GetSymbolFileSpec (sysroot_module_path_spec);
+    if (symfile_spec.Exists ())  // delete module's symbol file if exists.
+        FileSystem::Unlink (symfile_spec);
+}
+
 Error
-CreateHostSysRootModuleLink (const FileSpec &root_dir_spec, const char *hostname, const FileSpec &platform_module_spec, const FileSpec &local_module_spec)
+CreateHostSysRootModuleLink (const FileSpec &root_dir_spec, const char *hostname,
+                             const FileSpec &platform_module_spec,
+                             const FileSpec &local_module_spec,
+                             bool delete_existing)
 {
     const auto sysroot_module_path_spec = JoinPath (
         JoinPath (root_dir_spec, hostname), platform_module_spec.GetPath ().c_str ());
     if (sysroot_module_path_spec.Exists())
-        return Error ();
+    {
+        if (!delete_existing)
+            return Error ();
+
+        DecrementRefExistingModule (root_dir_spec, sysroot_module_path_spec);
+    }
 
     const auto error = MakeDirectory (FileSpec (sysroot_module_path_spec.GetDirectory ().AsCString (), false));
     if (error.Fail ())
@@ -76,13 +152,40 @@ CreateHostSysRootModuleLink (const FileSpec &root_dir_spec, const char *hostname
     return FileSystem::Hardlink(sysroot_module_path_spec, local_module_spec);
 }
 
-FileSpec
-GetSymbolFileSpec(const FileSpec& module_file_spec)
+}  // namespace
+
+ModuleLock::ModuleLock (const FileSpec &root_dir_spec, const UUID &uuid, Error& error)
 {
-    return FileSpec((module_file_spec.GetPath() + kSymFileExtension).c_str(), false);
+    const auto lock_dir_spec = JoinPath (root_dir_spec, kLockDirName);
+    error = MakeDirectory (lock_dir_spec);
+    if (error.Fail ())
+        return;
+
+    m_file_spec = JoinPath (lock_dir_spec, uuid.GetAsString ().c_str ());
+    m_file.Open (m_file_spec.GetCString (),
+                 File::eOpenOptionWrite | File::eOpenOptionCanCreate | File::eOpenOptionCloseOnExec);
+    if (!m_file)
+    {
+        error.SetErrorToErrno ();
+        return;
+    }
+
+    m_lock.reset (new lldb_private::LockFile (m_file.GetDescriptor ()));
+    error = m_lock->WriteLock (0, 1);
+    if (error.Fail ())
+        error.SetErrorStringWithFormat ("Failed to lock file: %s", error.AsCString ());
 }
 
-}  // namespace
+void ModuleLock::Delete ()
+{
+    if (!m_file)
+        return;
+
+    m_file.Close ();
+    FileSystem::Unlink (m_file_spec);
+}
+
+/////////////////////////////////////////////////////////////////////////
 
 Error
 ModuleCache::Put (const FileSpec &root_dir_spec,
@@ -100,7 +203,7 @@ ModuleCache::Put (const FileSpec &root_dir_spec,
         return Error ("Failed to rename file %s to %s: %s",
                       tmp_file_path.c_str (), module_file_path.GetPath ().c_str (), err_code.message ().c_str ());
 
-    const auto error = CreateHostSysRootModuleLink(root_dir_spec, hostname, target_file, module_file_path);
+    const auto error = CreateHostSysRootModuleLink(root_dir_spec, hostname, target_file, module_file_path, true);
     if (error.Fail ())
         return Error ("Failed to create link to %s: %s", module_file_path.GetPath ().c_str (), error.AsCString ());
     return Error ();
@@ -131,7 +234,7 @@ ModuleCache::Get (const FileSpec &root_dir_spec,
         return Error ("Module %s has invalid file size", module_file_path.GetPath ().c_str ());
 
     // We may have already cached module but downloaded from an another host - in this case let's create a link to it.
-    const auto error = CreateHostSysRootModuleLink(root_dir_spec, hostname, module_spec.GetFileSpec(), module_file_path);
+    const auto error = CreateHostSysRootModuleLink(root_dir_spec, hostname, module_spec.GetFileSpec(), module_file_path, false);
     if (error.Fail ())
         return Error ("Failed to create link to %s: %s", module_file_path.GetPath().c_str(), error.AsCString());
 
@@ -167,18 +270,9 @@ ModuleCache::GetAndPut (const FileSpec &root_dir_spec,
     if (error.Fail ())
         return error;
 
-    // Open lock file.
-    const auto lock_file_spec = JoinPath (module_spec_dir, kLockFileName);
-    File lock_file (lock_file_spec, File::eOpenOptionWrite | File::eOpenOptionCanCreate | File::eOpenOptionCloseOnExec);
-    if (!lock_file)
-    {
-        error.SetErrorToErrno ();
-        return Error("Failed to open lock file %s: %s", lock_file_spec.GetPath ().c_str (), error.AsCString ());
-    }
-    LockFile lock (lock_file.GetDescriptor ());
-    error = lock.WriteLock (0, 1);
+    ModuleLock lock (root_dir_spec,  module_spec.GetUUID (), error);
     if (error.Fail ())
-        return Error("Failed to lock file %s:%s", lock_file_spec.GetPath ().c_str (), error.AsCString ());
+        return Error("Failed to lock module %s: %s", module_spec.GetUUID ().GetAsString().c_str(), error.AsCString ());
 
     // Check local cache for a module.
     error = Get (root_dir_spec, hostname, module_spec, cached_module_sp, did_create_ptr);
