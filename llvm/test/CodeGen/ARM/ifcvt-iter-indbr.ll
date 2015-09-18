@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple thumbv7s-apple-darwin  -asm-verbose=false | FileCheck %s
+; RUN: llc < %s -mtriple thumbv7s-apple-darwin  -asm-verbose=false -print-machineinstrs=if-converter 2>&1 | FileCheck --check-prefix=CHECK-WEIGHT %s
 
 declare i32 @foo(i32)
 declare i8* @bar(i32, i8*, i8*)
@@ -27,6 +28,11 @@ declare i8* @bar(i32, i8*, i8*)
 ; CHECK-NEXT:  movw r0, #4567
 ; CHECK-NEXT: [[FOOCALL]]:
 ; CHECK-NEXT:  blx _foo
+;
+; CHECK-WEIGHT: BB#0:
+; CHECK-WEIGHT: Successors according to CFG: BB#1(16) BB#2(8) BB#4(8)
+; CHECK-WEIGHT: BB#1:
+; CHECK-WEIGHT: Successors according to CFG: BB#2(24) BB#4(8)
 
 define i32 @test(i32 %a, i32 %a2, i32* %p, i32* %p2) {
 entry:

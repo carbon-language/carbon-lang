@@ -1686,19 +1686,83 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI, bool AddEdges) {
   ToBBI.BB->splice(ToBBI.BB->end(),
                    FromBBI.BB, FromBBI.BB->begin(), FromBBI.BB->end());
 
-  std::vector<MachineBasicBlock *> Succs(FromBBI.BB->succ_begin(),
-                                         FromBBI.BB->succ_end());
+  SmallVector<MachineBasicBlock *, 4> FromSuccs(FromBBI.BB->succ_begin(),
+                                                FromBBI.BB->succ_end());
   MachineBasicBlock *NBB = getNextBlock(FromBBI.BB);
   MachineBasicBlock *FallThrough = FromBBI.HasFallThrough ? NBB : nullptr;
 
-  for (unsigned i = 0, e = Succs.size(); i != e; ++i) {
-    MachineBasicBlock *Succ = Succs[i];
+  // The edge weight from ToBBI.BB to FromBBI.BB, which is only needed when
+  // AddEdges is true and FromBBI.BB is a successor of ToBBI.BB.
+  uint32_t To2FromWeight = 0;
+  // WeightScale and SumWeight are for calculating successor probabilities of
+  // FromBBI.BB.
+  uint32_t WeightScale = 0;
+  uint32_t SumWeight = 0;
+  if (AddEdges && ToBBI.BB->isSuccessor(FromBBI.BB)) {
+    To2FromWeight = MBPI->getEdgeWeight(ToBBI.BB, FromBBI.BB);
+    // Set the edge weight from ToBBI.BB to FromBBI.BB to zero to avoid the edge
+    // weight being merged to other edges when this edge is removed later.
+    ToBBI.BB->setSuccWeight(
+        std::find(ToBBI.BB->succ_begin(), ToBBI.BB->succ_end(), FromBBI.BB), 0);
+    SumWeight = MBPI->getSumForBlock(FromBBI.BB, WeightScale);
+  }
+
+  for (unsigned i = 0, e = FromSuccs.size(); i != e; ++i) {
+    MachineBasicBlock *Succ = FromSuccs[i];
     // Fallthrough edge can't be transferred.
     if (Succ == FallThrough)
       continue;
+
+    uint32_t NewWeight = 0;
+    if (AddEdges) {
+      // Calculate the edge weight for the edge from ToBBI.BB to Succ, which is
+      // a portion of the edge weight from FromBBI.BB to Succ. The portion ratio
+      // is the edge probability from ToBBI.BB to FromBBI.BB (if FromBBI is a
+      // successor of ToBBI.BB. See comment below for excepion).
+      NewWeight = MBPI->getEdgeWeight(FromBBI.BB, Succ);
+
+      // To2FromWeight is 0 when FromBBI.BB is not a successor of ToBBI.BB. This
+      // only happens when if-converting a diamond CFG and FromBBI.BB is the
+      // tail BB.  In this case FromBBI.BB post-dominates ToBBI.BB and hence we
+      // could just use the weights on FromBBI.BB's out-edges when adding new
+      // successors.
+      if (To2FromWeight > 0) {
+        BranchProbability Prob(NewWeight / WeightScale, SumWeight);
+        NewWeight = Prob.scale(To2FromWeight);
+      }
+    }
+
     FromBBI.BB->removeSuccessor(Succ);
-    if (AddEdges && !ToBBI.BB->isSuccessor(Succ))
-      ToBBI.BB->addSuccessor(Succ);
+
+    if (AddEdges) {
+      // If the edge from ToBBI.BB to Succ already exists, update the weight of
+      // this edge by adding NewWeight to it. An example is shown below, in
+      // which A is ToBBI.BB and B is FromBBI.BB. In this case we don't have to
+      // set C as A's successor as it already is. We only need to update the
+      // edge weight on A->C. Note that B will not be immediately removed from
+      // A's successors. It is possible that B->D is not removed either if D is
+      // a fallthrough of B. Later the edge A->D (generated here) and B->D will
+      // be combined into one edge. To maintain correct edge weight of this
+      // combined edge, we need to set the edge weight of A->B to zero, which is
+      // already done above. The edge weight on A->D is calculated by scaling
+      // the original weight on A->B by the probability of B->D.
+      //
+      // Before ifcvt:      After ifcvt (assume B->D is kept):
+      //
+      //       A                A
+      //      /|               /|\
+      //     / B              / B|
+      //    | /|             |  ||
+      //    |/ |             |  |/
+      //    C  D             C  D
+      //
+      if (ToBBI.BB->isSuccessor(Succ))
+        ToBBI.BB->setSuccWeight(
+            std::find(ToBBI.BB->succ_begin(), ToBBI.BB->succ_end(), Succ),
+            MBPI->getEdgeWeight(ToBBI.BB, Succ) + NewWeight);
+      else
+        ToBBI.BB->addSuccessor(Succ, NewWeight);
+    }
   }
 
   // Now FromBBI always falls through to the next block!
