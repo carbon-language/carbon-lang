@@ -234,7 +234,7 @@ bool llvm::DisplayGraph(StringRef FilenameRef, bool wait,
 
     errs() << "Running '" << GeneratorPath << "' program... ";
 
-    if (ExecGraphViewer(GeneratorPath, args, Filename, wait, ErrMsg))
+    if (ExecGraphViewer(GeneratorPath, args, Filename, true, ErrMsg))
       return true;
 
     // The lifetime of StartArg must include the call of ExecGraphViewer
