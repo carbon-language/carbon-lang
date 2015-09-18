@@ -45,6 +45,7 @@
 
 #include "Chunks.h"
 #include "Symbols.h"
+#include "lld/Core/Parallel.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -56,6 +57,7 @@ using namespace llvm;
 namespace lld {
 namespace coff {
 
+static const size_t NJOBS = 256;
 typedef std::vector<SectionChunk *>::iterator ChunkIterator;
 typedef bool (*Comparator)(const SectionChunk *, const SectionChunk *);
 
@@ -72,7 +74,7 @@ private:
   bool partition(ChunkIterator Begin, ChunkIterator End, Comparator Eq);
 
   const std::vector<Chunk *> &Chunks;
-  uint64_t NextID = 0;
+  uint64_t NextID = 1;
 };
 
 // Entry point to ICF.
@@ -179,51 +181,74 @@ bool ICF::forEachGroup(std::vector<SectionChunk *> &SChunks, Comparator Eq) {
 // contents and relocations are all the same.
 void ICF::run() {
   // Collect only mergeable sections and group by hash value.
-  std::vector<SectionChunk *> SChunks;
-  for (Chunk *C : Chunks) {
+  std::vector<std::vector<SectionChunk *>> VChunks(NJOBS);
+  parallel_for_each(Chunks.begin(), Chunks.end(), [&](Chunk *C) {
     if (auto *SC = dyn_cast<SectionChunk>(C)) {
       bool Writable = SC->getPermissions() & llvm::COFF::IMAGE_SCN_MEM_WRITE;
-      if (SC->isCOMDAT() && SC->isLive() && !Writable) {
-        SChunks.push_back(SC);
+      if (SC->isCOMDAT() && SC->isLive() && !Writable)
         SC->GroupID = getHash(SC) | (uint64_t(1) << 63);
+    }
+  });
+  for (Chunk *C : Chunks) {
+    if (auto *SC = dyn_cast<SectionChunk>(C)) {
+      if (SC->GroupID) {
+        VChunks[SC->GroupID % NJOBS].push_back(SC);
       } else {
         SC->GroupID = NextID++;
       }
     }
   }
 
-  // From now on, sections in SChunks are ordered so that sections in
+  // From now on, sections in Chunks are ordered so that sections in
   // the same group are consecutive in the vector.
-  std::sort(SChunks.begin(), SChunks.end(),
-            [](SectionChunk *A, SectionChunk *B) {
-              return A->GroupID < B->GroupID;
-            });
+  parallel_for_each(VChunks.begin(), VChunks.end(),
+                    [&](std::vector<SectionChunk *> &SChunks) {
+    std::sort(SChunks.begin(), SChunks.end(),
+              [](SectionChunk *A, SectionChunk *B) {
+                return A->GroupID < B->GroupID;
+              });
+  });
 
   // Split groups until we get a convergence.
   int Cnt = 1;
-  forEachGroup(SChunks, equalsConstant);
-  while (forEachGroup(SChunks, equalsVariable))
+  parallel_for_each(VChunks.begin(), VChunks.end(),
+                    [&](std::vector<SectionChunk *> &SChunks) {
+    forEachGroup(SChunks, equalsConstant);
+  });
+
+  for (;;) {
+    bool Redo = false;
+    parallel_for_each(VChunks.begin(), VChunks.end(),
+                      [&](std::vector<SectionChunk *> &SChunks) {
+      if (forEachGroup(SChunks, equalsVariable))
+        Redo = true;
+    });
+    if (!Redo)
+      break;
     ++Cnt;
+  }
   if (Config->Verbose)
     llvm::outs() << "\nICF needed " << Cnt << " iterations.\n";
 
   // Merge sections in the same group.
-  for (auto It = SChunks.begin(), End = SChunks.end(); It != End;) {
-    SectionChunk *Head = *It;
-    auto Bound = std::find_if(It + 1, End, [&](SectionChunk *SC) {
-      return Head->GroupID != SC->GroupID;
-    });
-    if (std::distance(It, Bound) == 1) {
-      It = Bound;
-      continue;
-    }
-    if (Config->Verbose)
-      llvm::outs() << "Selected " << Head->getDebugName() << "\n";
-    for (++It; It != Bound; ++It) {
-      SectionChunk *SC = *It;
+  for (std::vector<SectionChunk *> &SChunks : VChunks) {
+    for (auto It = SChunks.begin(), End = SChunks.end(); It != End;) {
+      SectionChunk *Head = *It;
+      auto Bound = std::find_if(It + 1, End, [&](SectionChunk *SC) {
+        return Head->GroupID != SC->GroupID;
+      });
+      if (std::distance(It, Bound) == 1) {
+        It = Bound;
+        continue;
+      }
       if (Config->Verbose)
-        llvm::outs() << "  Removed " << SC->getDebugName() << "\n";
-      SC->replaceWith(Head);
+        llvm::outs() << "Selected " << Head->getDebugName() << "\n";
+      for (++It; It != Bound; ++It) {
+        SectionChunk *SC = *It;
+        if (Config->Verbose)
+          llvm::outs() << "  Removed " << SC->getDebugName() << "\n";
+        SC->replaceWith(Head);
+      }
     }
   }
 }

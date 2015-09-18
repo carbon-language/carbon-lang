@@ -17,6 +17,7 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Object/COFF.h"
+#include <atomic>
 #include <map>
 #include <vector>
 
@@ -203,7 +204,7 @@ private:
 
   // Used for ICF (Identical COMDAT Folding)
   void replaceWith(SectionChunk *Other);
-  uint64_t GroupID;
+  std::atomic<uint64_t> GroupID = { 0 };
 
   // Chunks are basically unnamed chunks of bytes.
   // Symbols are associated for debugging and logging purposs only.
