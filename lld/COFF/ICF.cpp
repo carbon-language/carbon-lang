@@ -90,12 +90,8 @@ uint64_t ICF::getHash(SectionChunk *C) {
 }
 
 bool ICF::equalsConstant(const SectionChunk *A, const SectionChunk *B) {
-  if (A->getPermissions() != B->getPermissions() ||
-      A->SectionName != B->SectionName ||
-      A->Header->SizeOfRawData != B->Header->SizeOfRawData ||
-      A->NumRelocs != B->NumRelocs ||
-      A->Checksum != B->Checksum ||
-      A->AssocChildren.size() != B->AssocChildren.size()) {
+  if (A->AssocChildren.size() != B->AssocChildren.size() ||
+      A->NumRelocs != B->NumRelocs) {
     return false;
   }
 
@@ -114,17 +110,21 @@ bool ICF::equalsConstant(const SectionChunk *A, const SectionChunk *B) {
     SymbolBody *B2 = B->File->getSymbolBody(R2.SymbolTableIndex)->repl();
     if (B1 == B2)
       return true;
-    auto *D1 = dyn_cast<DefinedRegular>(B1);
-    auto *D2 = dyn_cast<DefinedRegular>(B2);
-    return D1 && D2 &&
-           D1->getValue() == D2->getValue() &&
-           D1->getChunk()->GroupID == D2->getChunk()->GroupID;
+    if (auto *D1 = dyn_cast<DefinedRegular>(B1))
+      if (auto *D2 = dyn_cast<DefinedRegular>(B2))
+        return D1->getValue() == D2->getValue() &&
+               D1->getChunk()->GroupID == D2->getChunk()->GroupID;
+    return false;
   };
   if (!std::equal(A->Relocs.begin(), A->Relocs.end(), B->Relocs.begin(), Eq))
     return false;
 
-  // Compare section contents.
-  return A->getContents() == B->getContents();
+  // Compare section attributes and contents.
+  return A->getPermissions() == B->getPermissions() &&
+         A->SectionName == B->SectionName &&
+         A->Header->SizeOfRawData == B->Header->SizeOfRawData &&
+         A->Checksum == B->Checksum &&
+         A->getContents() == B->getContents();
 }
 
 bool ICF::equalsVariable(const SectionChunk *A, const SectionChunk *B) {
