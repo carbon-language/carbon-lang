@@ -30,6 +30,11 @@
 #include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
+static cl::opt<bool>
+VerboseDAGDumping("dag-dump-verbose", cl::Hidden,
+                  cl::desc("Display more information when dumping selection "
+                           "DAG nodes."));
+
 std::string SDNode::getOperationName(const SelectionDAG *G) const {
   switch (getOpcode()) {
   default:
@@ -553,26 +558,28 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
        << ']';
   }
 
-  if (unsigned Order = getIROrder())
-      OS << " [ORD=" << Order << ']';
+  if (VerboseDAGDumping) {
+    if (unsigned Order = getIROrder())
+        OS << " [ORD=" << Order << ']';
 
-  if (getNodeId() != -1)
-    OS << " [ID=" << getNodeId() << ']';
+    if (getNodeId() != -1)
+      OS << " [ID=" << getNodeId() << ']';
 
-  if (!G)
-    return;
+    if (!G)
+      return;
 
-  DILocation *L = getDebugLoc();
-  if (!L)
-    return;
+    DILocation *L = getDebugLoc();
+    if (!L)
+      return;
 
-  if (auto *Scope = L->getScope())
-    OS << Scope->getFilename();
-  else
-    OS << "<unknown>";
-  OS << ':' << L->getLine();
-  if (unsigned C = L->getColumn())
-    OS << ':' << C;
+    if (auto *Scope = L->getScope())
+      OS << Scope->getFilename();
+    else
+      OS << "<unknown>";
+    OS << ':' << L->getLine();
+    if (unsigned C = L->getColumn())
+      OS << ':' << C;
+  }
 }
 
 static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {

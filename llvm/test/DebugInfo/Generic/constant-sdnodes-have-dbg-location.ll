@@ -1,4 +1,4 @@
-; RUN: llc -debug < %s 2>&1 | FileCheck %s
+; RUN: llc -debug -dag-dump-verbose < %s 2>&1 | FileCheck %s
 ; REQUIRES: asserts
 
 ; CHECK: t{{[0-9]+}}: i32 = Constant<-1>test.c:4:5
