@@ -6133,7 +6133,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
       SDISelAsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
 
       if (OpInfo.ConstraintVT != Input.ConstraintVT) {
-	const TargetRegisterInfo *TRI = DAG.getSubtarget().getRegisterInfo();
+        const TargetRegisterInfo *TRI = DAG.getSubtarget().getRegisterInfo();
         std::pair<unsigned, const TargetRegisterClass *> MatchRC =
             TLI.getRegForInlineAsmConstraint(TRI, OpInfo.ConstraintCode,
                                              OpInfo.ConstraintVT);
