@@ -15,6 +15,7 @@ import os
 import sys
 import threading
 import time
+import traceback
 import xml.sax.saxutils
 
 
@@ -78,6 +79,16 @@ class EventBuilder(object):
         return str(error_tuple[1])
 
     @staticmethod
+    def _error_tuple_traceback(error_tuple):
+        """Returns the unittest error tuple's error message.
+
+        @param error_tuple the error tuple provided by the test framework.
+
+        @return the error message provided by the test framework.
+        """
+        return error_tuple[2]
+
+    @staticmethod
     def _event_dictionary_test_result(test, status):
         """Returns an event dictionary with common test result fields set.
 
@@ -110,6 +121,9 @@ class EventBuilder(object):
         event = EventBuilder._event_dictionary_test_result(test, status)
         event["issue_class"] = EventBuilder._error_tuple_class(error_tuple)
         event["issue_message"] = EventBuilder._error_tuple_message(error_tuple)
+        tb = EventBuilder._error_tuple_traceback(error_tuple)
+        if tb is not None:
+            event["issue_backtrace"] = traceback.format_tb(tb)
         return event
 
     @staticmethod
@@ -499,11 +513,17 @@ class XunitFormatter(ResultsFormatter):
         """Handles a test failure.
         @param test_event the test event to handle.
         """
+        message_summary = test_event["issue_message"].splitlines()[0]
+        backtrace = "".join(test_event.get("issue_backtrace", []))
+
         result = self._common_add_testcase_entry(
             test_event,
-            inner_content='<failure type={} message={} />'.format(
+            inner_content=('<failure type={} message={}><![CDATA[message: {}\nbacktrace:\n{}]]></failure>'.format(
                 XunitFormatter._quote_attribute(test_event["issue_class"]),
-                XunitFormatter._quote_attribute(test_event["issue_message"])))
+                XunitFormatter._quote_attribute(message_summary),
+                test_event["issue_message"],
+                backtrace)
+            ))
         with self.lock:
             self.elements["failures"].append(result)
 
@@ -511,11 +531,20 @@ class XunitFormatter(ResultsFormatter):
         """Handles a test error.
         @param test_event the test event to handle.
         """
+
+        # Limit the message summary attribute to the first line of the
+        # issue message.
+        message_summary = test_event["issue_message"].splitlines()[0]
+        backtrace = "".join(test_event.get("issue_backtrace", []))
+
         result = self._common_add_testcase_entry(
             test_event,
-            inner_content='<error type={} message={} />'.format(
+            inner_content=('<error type={} message={}><![CDATA[message: {}\nbacktrace:\n{}]]></error>'.format(
                 XunitFormatter._quote_attribute(test_event["issue_class"]),
-                XunitFormatter._quote_attribute(test_event["issue_message"])))
+                XunitFormatter._quote_attribute(message_summary),
+                test_event["issue_message"],
+                backtrace)
+            ))
         with self.lock:
             self.elements["errors"].append(result)
 
