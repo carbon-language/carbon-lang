@@ -306,7 +306,10 @@ HostInfoBase::ComputeSharedLibraryDirectory(FileSpec &file_spec)
 
     FileSpec lldb_file_spec(
         Host::GetModuleFileSpecForHostAddress(reinterpret_cast<void *>(reinterpret_cast<intptr_t>(HostInfoBase::GetLLDBPath))));
-
+    
+    // This is necessary because when running the testsuite the shlib might be a symbolic link inside the Python resource dir.
+    lldb_file_spec = lldb_file_spec.ResolveSymbolicLink();
+    
     // Remove the filename so that this FileSpec only represents the directory.
     file_spec.GetDirectory() = lldb_file_spec.GetDirectory();
 

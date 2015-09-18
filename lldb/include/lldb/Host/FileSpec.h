@@ -73,7 +73,7 @@ public:
     ///     The full or partial path to a file.
     ///
     /// @param[in] resolve_path
-    ///     If \b true, then we resolve the path with realpath,
+    ///     If \b true, then we resolve the path, removing stray ../.. and so forth,
     ///     if \b false we trust the path is in canonical form already.
     ///
     /// @see FileSpec::SetFile (const char *path, bool resolve)
@@ -511,6 +511,9 @@ public:
 
     bool
     IsSymbolicLink () const;
+    
+    FileSpec
+    ResolveSymbolicLink () const;
 
     //------------------------------------------------------------------
     /// Get the memory cost of this object.
