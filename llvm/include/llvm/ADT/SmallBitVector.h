@@ -553,15 +553,17 @@ public:
 private:
   template<bool AddBits, bool InvertMask>
   void applyMask(const uint32_t *Mask, unsigned MaskWords) {
-    uintptr_t M = Mask[0];
-    if (MaskWords != 1) {
-      assert(NumBaseBits == 64 && MaskWords == 2 &&
-             "Mask is larger than base!");
-      M |= uintptr_t(Mask[1]) << 32;
+    if (NumBaseBits == 64 && MaskWords >= 2) {
+      uint64_t M = Mask[0] | (uint64_t(Mask[1]) << 32);
+      if (InvertMask) M = ~M;
+      if (AddBits) setSmallBits(getSmallBits() | M);
+      else         setSmallBits(getSmallBits() & ~M);
+    } else {
+      uint32_t M = Mask[0];
+      if (InvertMask) M = ~M;
+      if (AddBits) setSmallBits(getSmallBits() | M);
+      else         setSmallBits(getSmallBits() & ~M);
     }
-    if (InvertMask) M = ~M;
-    if (AddBits) setSmallBits(getSmallBits() | M);
-    else         setSmallBits(getSmallBits() & ~M);
   }
 };
 
