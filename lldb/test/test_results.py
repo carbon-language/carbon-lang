@@ -12,6 +12,7 @@ import argparse
 import cPickle
 import inspect
 import os
+import re
 import sys
 import threading
 import time
@@ -418,6 +419,31 @@ class XunitFormatter(ResultsFormatter):
     RM_PASSTHRU = 'passthru'
 
     @staticmethod
+    def _build_illegal_xml_regex():
+        # Construct the range pairs of invalid unicode chareacters.
+        illegal_chars_u = [
+            (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F), (0x7F, 0x84),
+            (0x86, 0x9F), (0xFDD0, 0xFDDF), (0xFFFE, 0xFFFF)]
+
+        # For wide builds, we have more.
+        if sys.maxunicode >= 0x10000:
+            illegal_chars_u.extend(
+                [(0x1FFFE, 0x1FFFF), (0x2FFFE, 0x2FFFF), (0x3FFFE, 0x3FFFF),
+                 (0x4FFFE, 0x4FFFF), (0x5FFFE, 0x5FFFF), (0x6FFFE, 0x6FFFF),
+                 (0x7FFFE, 0x7FFFF), (0x8FFFE, 0x8FFFF), (0x9FFFE, 0x9FFFF),
+                 (0xAFFFE, 0xAFFFF), (0xBFFFE, 0xBFFFF), (0xCFFFE, 0xCFFFF),
+                 (0xDFFFE, 0xDFFFF), (0xEFFFE, 0xEFFFF), (0xFFFFE, 0xFFFFF),
+                 (0x10FFFE, 0x10FFFF)])
+
+        # Build up an array of range expressions.
+        illegal_ranges = [
+            "%s-%s" % (unichr(low), unichr(high))
+            for (low, high) in illegal_chars_u]
+
+        # Compile the regex
+        return re.compile(u'[%s]' % u''.join(illegal_ranges))
+
+    @staticmethod
     def _quote_attribute(text):
         """Returns the given text in a manner safe for usage in an XML attribute.
 
@@ -425,6 +451,14 @@ class XunitFormatter(ResultsFormatter):
         @return the attribute-escaped version of the input text.
         """
         return xml.sax.saxutils.quoteattr(text)
+
+    def _replace_invalid_xml(self, str_or_unicode):
+        # Get the content into unicode
+        if isinstance(str_or_unicode, str):
+            unicode_content = str_or_unicode.decode('utf-8')
+        else:
+            unicode_content = str_or_unicode
+        return self.invalid_xml_re.sub(u'?', unicode_content).encode('utf-8')
 
     @classmethod
     def arg_parser(cls):
@@ -458,6 +492,7 @@ class XunitFormatter(ResultsFormatter):
         # Initialize the parent
         super(XunitFormatter, self).__init__(out_file, options)
         self.text_encoding = "UTF-8"
+        self.invalid_xml_re = XunitFormatter._build_illegal_xml_regex()
 
         self.total_test_count = 0
 
@@ -513,16 +548,17 @@ class XunitFormatter(ResultsFormatter):
         """Handles a test failure.
         @param test_event the test event to handle.
         """
-        message_summary = test_event["issue_message"].splitlines()[0]
-        backtrace = "".join(test_event.get("issue_backtrace", []))
+        message = self._replace_invalid_xml(test_event["issue_message"])
+        backtrace = self._replace_invalid_xml(
+            "".join(test_event.get("issue_backtrace", [])))
 
         result = self._common_add_testcase_entry(
             test_event,
-            inner_content=('<failure type={} message={}><![CDATA[message: {}\nbacktrace:\n{}]]></failure>'.format(
-                XunitFormatter._quote_attribute(test_event["issue_class"]),
-                XunitFormatter._quote_attribute(message_summary),
-                test_event["issue_message"],
-                backtrace)
+            inner_content=(
+                '<failure type={} message={}><![CDATA[{}]]></failure>'.format(
+                    XunitFormatter._quote_attribute(test_event["issue_class"]),
+                    XunitFormatter._quote_attribute(message),
+                    backtrace)
             ))
         with self.lock:
             self.elements["failures"].append(result)
@@ -531,19 +567,17 @@ class XunitFormatter(ResultsFormatter):
         """Handles a test error.
         @param test_event the test event to handle.
         """
-
-        # Limit the message summary attribute to the first line of the
-        # issue message.
-        message_summary = test_event["issue_message"].splitlines()[0]
-        backtrace = "".join(test_event.get("issue_backtrace", []))
+        message = self._replace_invalid_xml(test_event["issue_message"])
+        backtrace = self._replace_invalid_xml(
+            "".join(test_event.get("issue_backtrace", [])))
 
         result = self._common_add_testcase_entry(
             test_event,
-            inner_content=('<error type={} message={}><![CDATA[message: {}\nbacktrace:\n{}]]></error>'.format(
-                XunitFormatter._quote_attribute(test_event["issue_class"]),
-                XunitFormatter._quote_attribute(message_summary),
-                test_event["issue_message"],
-                backtrace)
+            inner_content=(
+                '<error type={} message={}><![CDATA[{}]]></error>'.format(
+                    XunitFormatter._quote_attribute(test_event["issue_class"]),
+                    XunitFormatter._quote_attribute(message),
+                    backtrace)
             ))
         with self.lock:
             self.elements["errors"].append(result)
@@ -552,10 +586,11 @@ class XunitFormatter(ResultsFormatter):
         """Handles a skipped test.
         @param test_event the test event to handle.
         """
+        reason = self._replace_invalid_xml(test_event.get("skip_reason", ""))
         result = self._common_add_testcase_entry(
             test_event,
             inner_content='<skipped message={} />'.format(
-                XunitFormatter._quote_attribute(test_event["skip_reason"])))
+                XunitFormatter._quote_attribute(reason)))
         with self.lock:
             self.elements["skips"].append(result)
 
