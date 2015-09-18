@@ -237,7 +237,8 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     struct HookDefn
     {
         const char * name;
-        const char * symbol_name;
+        const char * symbol_name_m32; // mangled name for the 32 bit architectures
+        const char * symbol_name_m64; // mangled name for the 64 bit archs
         uint32_t version;
         ModuleKind kind;
         CaptureStateFn grabber;
@@ -286,7 +287,7 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
 
     void HookCallback(RuntimeHook* hook_info, ExecutionContext& context);
 
-    bool GetArg32Simple(ExecutionContext& context, uint32_t arg, uint32_t *data);
+    bool GetArgSimple(ExecutionContext& context, uint32_t arg, uint64_t* data);
 
     void CaptureScriptInit1(RuntimeHook* hook_info, ExecutionContext& context);
     void CaptureAllocationInit1(RuntimeHook* hook_info, ExecutionContext& context);
