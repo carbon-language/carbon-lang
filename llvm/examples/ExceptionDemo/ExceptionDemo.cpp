@@ -320,7 +320,7 @@ void printStr(char *toPrint) {
 }
 
 
-/// Deletes the true previosly allocated exception whose address
+/// Deletes the true previously allocated exception whose address
 /// is calculated from the supplied OurBaseException_t::unwindException
 /// member address. Handles (ignores), NULL pointers.
 /// @param expToDelete exception to delete
