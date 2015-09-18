@@ -1919,11 +1919,17 @@ static DecodeStatus DecodeRegListOperand(MCInst &Inst,
   unsigned RegNum;
 
   unsigned RegLst = fieldFromInstruction(Insn, 21, 5);
+
   // Empty register lists are not allowed.
   if (RegLst == 0)
     return MCDisassembler::Fail;
 
   RegNum = RegLst & 0xf;
+
+  // RegLst values 10-15, and 26-31 are reserved.
+  if (RegNum > 9)
+    return MCDisassembler::Fail;
+
   for (unsigned i = 0; i < RegNum; i++)
     Inst.addOperand(MCOperand::createReg(Regs[i]));
 
