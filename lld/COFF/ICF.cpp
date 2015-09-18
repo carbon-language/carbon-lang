@@ -218,7 +218,7 @@ void ICF::run(const std::vector<Chunk *> &Vec) {
   });
 
   for (;;) {
-    std::atomic<bool> Redo = false;
+    std::atomic<bool> Redo(false);
     parallel_for_each(VChunks.begin(), VChunks.end(),
                       [&](std::vector<SectionChunk *> &Chunks) {
       if (forEachGroup(Chunks, equalsVariable))
