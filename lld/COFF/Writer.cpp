@@ -724,14 +724,16 @@ void Writer::sortExceptionTable() {
   uint8_t *End = Begin + Sec->getVirtualSize();
   if (Config->Machine == AMD64) {
     struct Entry { ulittle32_t Begin, End, Unwind; };
-    std::sort((Entry *)Begin, (Entry *)End,
-              [](const Entry &A, const Entry &B) { return A.Begin < B.Begin; });
+    parallel_sort(
+        (Entry *)Begin, (Entry *)End,
+        [](const Entry &A, const Entry &B) { return A.Begin < B.Begin; });
     return;
   }
   if (Config->Machine == ARMNT) {
     struct Entry { ulittle32_t Begin, Unwind; };
-    std::sort((Entry *)Begin, (Entry *)End,
-              [](const Entry &A, const Entry &B) { return A.Begin < B.Begin; });
+    parallel_sort(
+        (Entry *)Begin, (Entry *)End,
+        [](const Entry &A, const Entry &B) { return A.Begin < B.Begin; });
     return;
   }
   errs() << "warning: don't know how to handle .pdata.\n";
