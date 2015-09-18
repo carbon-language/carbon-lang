@@ -730,18 +730,26 @@ void OutputSection<ELFT>::relocate(
 
     uint32_t Type = RI.getType(IsMips64EL);
     uintX_t SymVA;
-    if (auto *DR = dyn_cast<DefinedRegular<ELFT>>(Body)) {
-      SymVA = getSymVA<ELFT>(DR);
-    } else if (auto *DA = dyn_cast<DefinedAbsolute<ELFT>>(Body)) {
-      SymVA = DA->Sym.st_value;
-    } else if (auto *S = dyn_cast<SharedSymbol<ELFT>>(Body)) {
+
+    switch (Body->kind()) {
+    case SymbolBody::DefinedRegularKind:
+      SymVA = getSymVA<ELFT>(cast<DefinedRegular<ELFT>>(Body));
+      break;
+    case SymbolBody::DefinedAbsoluteKind:
+      SymVA = cast<DefinedAbsolute<ELFT>>(Body)->Sym.st_value;
+      break;
+    case SymbolBody::DefinedCommonKind:
+      continue;
+    case SymbolBody::SharedKind:
       if (!relocNeedsGOT(Type))
         continue;
-      SymVA = GotSec.getEntryAddr(*S);
+      SymVA = GotSec.getEntryAddr(*Body);
       Type = R_X86_64_PC32;
-    } else {
-      // Skip unsupported for now.
+      break;
+    case SymbolBody::UndefinedKind:
       continue;
+    case SymbolBody::LazyKind:
+      llvm_unreachable("Lazy symbol reached writer");
     }
 
     relocateOne(Buf, RI, Type, BaseAddr, SymVA);
