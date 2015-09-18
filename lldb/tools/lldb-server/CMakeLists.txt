@@ -30,6 +30,7 @@ if (BUILD_SHARED_LIBS )
   if (HAVE_LIBPTHREAD)
     target_link_libraries(lldb-server pthread)
   endif ()
+  target_link_libraries(lldb-server ${LLDB_SYSTEM_LIBS})
 else()
   add_lldb_executable(lldb-server
     lldb-gdbserver.cpp
