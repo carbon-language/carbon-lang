@@ -175,6 +175,8 @@ public:
                           MachineBasicBlock::iterator End,
                           unsigned NumRegionInstrs) {}
 
+  virtual void dumpPolicy() {}
+
   /// Check if pressure tracking is needed before building the DAG and
   /// initializing this strategy. Called after initPolicy.
   virtual bool shouldTrackPressure() const { return true; }
@@ -857,6 +859,8 @@ public:
   void initPolicy(MachineBasicBlock::iterator Begin,
                   MachineBasicBlock::iterator End,
                   unsigned NumRegionInstrs) override;
+
+  void dumpPolicy() override;
 
   bool shouldTrackPressure() const override {
     return RegionPolicy.ShouldTrackPressure;

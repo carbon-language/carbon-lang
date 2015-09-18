@@ -504,7 +504,7 @@ void MachineSchedulerBase::print(raw_ostream &O, const Module* m) const {
 
 LLVM_DUMP_METHOD
 void ReadyQueue::dump() {
-  dbgs() << Name << ": ";
+  dbgs() << "Queue " << Name << ": ";
   for (unsigned i = 0, e = Queue.size(); i < e; ++i)
     dbgs() << Queue[i]->NodeNum << " ";
   dbgs() << "\n";
@@ -665,6 +665,9 @@ bool ScheduleDAGMI::checkSchedLimit() {
 /// does not consider liveness or register pressure. It is useful for PostRA
 /// scheduling and potentially other custom schedulers.
 void ScheduleDAGMI::schedule() {
+  DEBUG(dbgs() << "ScheduleDAGMI::schedule starting\n");
+  DEBUG(SchedImpl->dumpPolicy());
+
   // Build the DAG.
   buildSchedGraph(AA);
 
@@ -687,7 +690,11 @@ void ScheduleDAGMI::schedule() {
   initQueues(TopRoots, BotRoots);
 
   bool IsTopNode = false;
-  while (SUnit *SU = SchedImpl->pickNode(IsTopNode)) {
+  while (true) {
+    DEBUG(dbgs() << "** ScheduleDAGMI::schedule picking next node\n");
+    SUnit *SU = SchedImpl->pickNode(IsTopNode);
+    if (!SU) break;
+
     assert(!SU->isScheduled && "Node already scheduled");
     if (!checkSchedLimit())
       break;
@@ -1009,6 +1016,8 @@ void ScheduleDAGMILive::updatePressureDiffs(ArrayRef<unsigned> LiveUses) {
 /// ScheduleDAGMILive then it will want to override this virtual method in order
 /// to update any specialized state.
 void ScheduleDAGMILive::schedule() {
+  DEBUG(dbgs() << "ScheduleDAGMILive::schedule starting\n");
+  DEBUG(SchedImpl->dumpPolicy());
   buildDAGWithRegPressure();
 
   Topo.InitDAGTopologicalSorting();
@@ -1035,7 +1044,11 @@ void ScheduleDAGMILive::schedule() {
   }
 
   bool IsTopNode = false;
-  while (SUnit *SU = SchedImpl->pickNode(IsTopNode)) {
+  while (true) {
+    DEBUG(dbgs() << "** ScheduleDAGMILive::schedule picking next node\n");
+    SUnit *SU = SchedImpl->pickNode(IsTopNode);
+    if (!SU) break;
+
     assert(!SU->isScheduled && "Node already scheduled");
     if (!checkSchedLimit())
       break;
@@ -2306,7 +2319,7 @@ void GenericSchedulerBase::traceCandidate(const SchedCandidate &Cand) {
     Latency = Cand.SU->getDepth();
     break;
   }
-  dbgs() << "  SU(" << Cand.SU->NodeNum << ") " << getReasonStr(Cand.Reason);
+  dbgs() << "  Cand SU(" << Cand.SU->NodeNum << ") " << getReasonStr(Cand.Reason);
   if (P.isValid())
     dbgs() << " " << TRI->getRegPressureSetName(P.getPSet())
            << ":" << P.getUnitInc() << " ";
@@ -2465,6 +2478,14 @@ void GenericScheduler::initPolicy(MachineBasicBlock::iterator Begin,
     if (RegionPolicy.OnlyTopDown)
       RegionPolicy.OnlyBottomUp = false;
   }
+}
+
+void GenericScheduler::dumpPolicy() {
+  dbgs() << "GenericScheduler RegionPolicy: "
+         << " ShouldTrackPressure=" << RegionPolicy.ShouldTrackPressure
+         << " OnlyTopDown=" << RegionPolicy.OnlyTopDown
+         << " OnlyBottomUp=" << RegionPolicy.OnlyBottomUp
+         << "\n";
 }
 
 /// Set IsAcyclicLatencyLimited if the acyclic path is longer than the cyclic
@@ -2626,7 +2647,7 @@ void GenericScheduler::tryCandidate(SchedCandidate &Cand,
     }
   }
   DEBUG(if (TryCand.RPDelta.Excess.isValid())
-          dbgs() << "  SU(" << TryCand.SU->NodeNum << ") "
+          dbgs() << "  Try  SU(" << TryCand.SU->NodeNum << ") "
                  << TRI->getRegPressureSetName(TryCand.RPDelta.Excess.getPSet())
                  << ":" << TryCand.RPDelta.Excess.getUnitInc() << "\n");
 
