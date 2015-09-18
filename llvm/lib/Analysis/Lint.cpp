@@ -829,8 +829,9 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
     for (;;) {
       if (!VisitedBlocks.insert(BB).second)
         break;
-      if (Value *U = FindAvailableLoadedValue(L->getPointerOperand(),
-                                              BB, BBI, 6, AA))
+      if (Value *U =
+          FindAvailableLoadedValue(L->getPointerOperand(),
+                                   BB, BBI, DefMaxInstsToScan, AA))
         return findValueImpl(U, OffsetOk, Visited);
       if (BBI != BB->begin()) break;
       BB = BB->getUniquePredecessor();
