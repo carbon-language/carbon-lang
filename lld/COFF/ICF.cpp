@@ -95,16 +95,16 @@ bool ICF::equalsConstant(const SectionChunk *A, const SectionChunk *B) {
       A->Header->SizeOfRawData != B->Header->SizeOfRawData ||
       A->NumRelocs != B->NumRelocs ||
       A->Checksum != B->Checksum ||
-      A->AssocChildren.size() != B->AssocChildren.size() ||
-      A->getContents() != B->getContents()) {
+      A->AssocChildren.size() != B->AssocChildren.size()) {
     return false;
   }
 
+  // Compare associative sections.
   for (size_t I = 0, E = A->AssocChildren.size(); I != E; ++I)
     if (A->AssocChildren[I]->GroupID != B->AssocChildren[I]->GroupID)
       return false;
 
-  // Compare relocations
+  // Compare relocations.
   auto Eq = [&](const coff_relocation &R1, const coff_relocation &R2) {
     if (R1.Type != R2.Type ||
         R1.VirtualAddress != R2.VirtualAddress) {
@@ -120,7 +120,11 @@ bool ICF::equalsConstant(const SectionChunk *A, const SectionChunk *B) {
            D1->getValue() == D2->getValue() &&
            D1->getChunk()->GroupID == D2->getChunk()->GroupID;
   };
-  return std::equal(A->Relocs.begin(), A->Relocs.end(), B->Relocs.begin(), Eq);
+  if (!std::equal(A->Relocs.begin(), A->Relocs.end(), B->Relocs.begin(), Eq))
+    return false;
+
+  // Compare section contents.
+  return A->getContents() == B->getContents();
 }
 
 bool ICF::equalsVariable(const SectionChunk *A, const SectionChunk *B) {
