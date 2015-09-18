@@ -1024,7 +1024,13 @@ function(add_lit_testsuites project directory)
 endfunction()
 
 function(llvm_install_symlink name dest)
-  install(SCRIPT ${CMAKE_SOURCE_DIR}/cmake/modules/install_symlink.cmake
+  foreach(path ${CMAKE_MODULE_PATH})
+    if(EXISTS ${path}/LLVMInstallSymlink.cmake)
+      set(INSTALL_SYMLINK ${path}/LLVMInstallSymlink.cmake)
+      break()
+    endif()
+  endforeach()
+  install(SCRIPT ${INSTALL_SYMLINK}
           CODE "install_symlink(${name} ${dest})"
           COMPONENT ${name})
 
