@@ -70,6 +70,10 @@ public:
   }
   void setDynamicSymbolTableIndex(unsigned V) { DynamicSymbolTableIndex = V; }
 
+  unsigned getGotIndex() const { return GotIndex; }
+  bool isInGot() const { return GotIndex != -1U; }
+  void setGotIndex(unsigned I) { GotIndex = I; }
+
   // A SymbolBody has a backreference to a Symbol. Originally they are
   // doubly-linked. A backreference will never change. But the pointer
   // in the Symbol may be mutated by the resolver. If you have a
@@ -96,6 +100,7 @@ protected:
   unsigned MostConstrainingVisibility : 2;
   unsigned IsUsedInRegularObj : 1;
   unsigned DynamicSymbolTableIndex = 0;
+  unsigned GotIndex = -1;
   StringRef Name;
   Symbol *Backref = nullptr;
 };

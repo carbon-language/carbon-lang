@@ -81,6 +81,8 @@ public:
   }
   uint32_t getType() { return Header.sh_type; }
 
+  static unsigned getAddrSize() { return Is64Bits ? 8 : 4; }
+
   virtual void finalize() {}
   virtual void writeTo(uint8_t *Buf) = 0;
 
@@ -98,17 +100,55 @@ template <class ELFT> struct DynamicReloc {
   const Elf_Rel &RI;
 };
 
+static bool relocNeedsGOT(uint32_t Type) {
+  switch (Type) {
+  default:
+    return false;
+  case R_X86_64_GOTPCREL:
+    return true;
+  }
+}
+
+template <class ELFT>
+class GotSection final : public OutputSectionBase<ELFT::Is64Bits> {
+  typedef OutputSectionBase<ELFT::Is64Bits> Base;
+  typedef typename Base::uintX_t uintX_t;
+
+public:
+  GotSection()
+      : OutputSectionBase<ELFT::Is64Bits>(".got", SHT_PROGBITS,
+                                          SHF_ALLOC | SHF_WRITE) {
+    this->Header.sh_addralign = this->getAddrSize();
+  }
+  void finalize() override {
+    this->Header.sh_size = Entries.size() * this->getAddrSize();
+  }
+  void writeTo(uint8_t *Buf) override {}
+  void addEntry(SymbolBody *Sym) {
+    Sym->setGotIndex(Entries.size());
+    Entries.push_back(Sym);
+  }
+  bool empty() const { return Entries.empty(); }
+  uintX_t getEntryAddr(const SymbolBody &B) const {
+    return this->getVA() + B.getGotIndex() * this->getAddrSize();
+  }
+
+private:
+  std::vector<const SymbolBody *> Entries;
+};
+
 template <class ELFT>
 class RelocationSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
 
 public:
-  RelocationSection(SymbolTableSection<ELFT> &DynSymSec, bool IsRela)
+  RelocationSection(SymbolTableSection<ELFT> &DynSymSec,
+                    const GotSection<ELFT> &GotSec, bool IsRela)
       : OutputSectionBase<ELFT::Is64Bits>(IsRela ? ".rela.dyn" : ".rel.dyn",
                                           IsRela ? SHT_RELA : SHT_REL,
                                           SHF_ALLOC),
-        DynSymSec(DynSymSec), IsRela(IsRela) {
+        DynSymSec(DynSymSec), GotSec(GotSec), IsRela(IsRela) {
     this->Header.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
     this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
   }
@@ -127,12 +167,18 @@ public:
       OutputSection<ELFT> *Out = C.getOutputSection();
       uint32_t SymIndex = RI.getSymbol(IsMips64EL);
       const SymbolBody *Body = C.getFile()->getSymbolBody(SymIndex);
-
-      P->r_offset = RI.r_offset + C.getOutputSectionOff() + Out->getVA();
-      P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
-                          RI.getType(IsMips64EL), IsMips64EL);
-      if (IsRela)
-        P->r_addend = static_cast<const Elf_Rela &>(RI).r_addend;
+      uint32_t Type = RI.getType(IsMips64EL);
+      if (relocNeedsGOT(Type)) {
+        P->r_offset = GotSec.getEntryAddr(*Body);
+        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
+                            R_X86_64_GLOB_DAT, IsMips64EL);
+      } else {
+        P->r_offset = RI.r_offset + C.getOutputSectionOff() + Out->getVA();
+        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
+                            IsMips64EL);
+        if (IsRela)
+          P->r_addend = static_cast<const Elf_Rela &>(RI).r_addend;
+      }
 
       ++P;
     }
@@ -143,6 +189,7 @@ public:
 private:
   std::vector<DynamicReloc<ELFT>> Relocs;
   SymbolTableSection<ELFT> &DynSymSec;
+  const GotSection<ELFT> &GotSec;
   const bool IsRela;
 };
 }
@@ -155,8 +202,10 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
-  OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags)
-      : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags) {}
+  OutputSection(const GotSection<ELFT> &GotSec, StringRef Name,
+                uint32_t sh_type, uintX_t sh_flags)
+      : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags),
+        GotSec(GotSec) {}
 
   void addChunk(SectionChunk<ELFT> *C);
   void writeTo(uint8_t *Buf) override;
@@ -173,6 +222,7 @@ public:
 
 private:
   std::vector<SectionChunk<ELFT> *> Chunks;
+  const GotSection<ELFT> &GotSec;
 };
 
 namespace {
@@ -507,7 +557,7 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   Writer(SymbolTable *T)
       : SymTabSec(*this, *T, StrTabSec), DynSymSec(*this, *T, DynStrSec),
-        RelaDynSec(DynSymSec, T->shouldUseRela()), HashSec(DynSymSec),
+        RelaDynSec(DynSymSec, GotSec, T->shouldUseRela()), HashSec(DynSymSec),
         DynamicSec(*T, HashSec, RelaDynSec) {}
   void run();
 
@@ -558,6 +608,8 @@ private:
   SymbolTableSection<ELFT> DynSymSec;
 
   RelocationSection<ELFT> RelaDynSec;
+
+  GotSection<ELFT> GotSec;
 
   HashTableSection<ELFT> HashSec;
 
@@ -676,16 +728,22 @@ void OutputSection<ELFT>::relocate(
     if (!Body)
       continue;
 
+    uint32_t Type = RI.getType(IsMips64EL);
     uintX_t SymVA;
-    if (auto *DR = dyn_cast<DefinedRegular<ELFT>>(Body))
+    if (auto *DR = dyn_cast<DefinedRegular<ELFT>>(Body)) {
       SymVA = getSymVA<ELFT>(DR);
-    else if (auto *DA = dyn_cast<DefinedAbsolute<ELFT>>(Body))
+    } else if (auto *DA = dyn_cast<DefinedAbsolute<ELFT>>(Body)) {
       SymVA = DA->Sym.st_value;
-    else
+    } else if (auto *S = dyn_cast<SharedSymbol<ELFT>>(Body)) {
+      if (!relocNeedsGOT(Type))
+        continue;
+      SymVA = GotSec.getEntryAddr(*S);
+      Type = R_X86_64_PC32;
+    } else {
       // Skip unsupported for now.
       continue;
+    }
 
-    uint32_t Type = RI.getType(IsMips64EL);
     relocateOne(Buf, RI, Type, BaseAddr, SymVA);
   }
 }
@@ -899,12 +957,17 @@ void Writer<ELFT>::scanRelocs(
   bool IsMips64EL = File.getObj()->isMips64EL();
   for (const RelType &RI : Rels) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
-    const SymbolBody *Body = File.getSymbolBody(SymIndex);
+    SymbolBody *Body = File.getSymbolBody(SymIndex);
     if (!Body)
       continue;
     auto *S = dyn_cast<SharedSymbol<ELFT>>(Body);
     if (!S)
       continue;
+    if (relocNeedsGOT(RI.getType(IsMips64EL))) {
+      if (Body->isInGot())
+        continue;
+      GotSec.addEntry(Body);
+    }
     RelaDynSec.addReloc({C, RI});
   }
 }
@@ -934,7 +997,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     OutputSection<ELFT> *&Sec = Map[Key];
     if (!Sec) {
       Sec = new (CAlloc.Allocate())
-          OutputSection<ELFT>(Key.Name, Key.sh_type, Key.sh_flags);
+          OutputSection<ELFT>(GotSec, Key.Name, Key.sh_type, Key.sh_flags);
       OutputSections.push_back(Sec);
     }
     return Sec;
@@ -1009,6 +1072,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     OutputSections.push_back(&DynStrSec);
     if (RelaDynSec.hasRelocs())
       OutputSections.push_back(&RelaDynSec);
+    if (!GotSec.empty())
+      OutputSections.push_back(&GotSec);
   }
 
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
