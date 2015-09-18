@@ -59,7 +59,7 @@ struct isl_schedule;
 
 namespace polly {
 
-class IRAccess;
+class MemoryAccess;
 class Scop;
 class ScopStmt;
 class ScopInfo;
@@ -93,7 +93,7 @@ public:
 /// through the loop.
 typedef std::map<const Loop *, const SCEV *> LoopBoundMapType;
 
-typedef std::vector<std::pair<IRAccess, Instruction *>> AccFuncSetType;
+typedef std::deque<MemoryAccess> AccFuncSetType;
 typedef std::map<const BasicBlock *, AccFuncSetType> AccFuncMapType;
 
 /// @brief A class to store information about arrays in the SCoP.
@@ -212,81 +212,11 @@ private:
   bool IsPHI;
 };
 
-//===---------------------------------------------------------------------===//
-/// @brief A memory access described by a SCEV expression and the access type.
-class IRAccess {
-public:
-  Value *BaseAddress;
-  Value *AccessValue;
-
-  const SCEV *Offset;
-
-  // The type of the scev affine function
-  enum TypeKind {
-    READ = 0x1,
-    MUST_WRITE = 0x2,
-    MAY_WRITE = 0x3,
-  };
-
-private:
-  unsigned ElemBytes;
-  TypeKind Type;
-  bool IsAffine;
-
-  /// @brief Is this IRAccess modeling special PHI node accesses?
-  bool IsPHI;
-
-public:
-  SmallVector<const SCEV *, 4> Subscripts, Sizes;
-
-  /// @brief Create a new IRAccess
-  ///
-  /// @param IsPHI Are we modeling special PHI node accesses?
-  explicit IRAccess(TypeKind Type, Value *BaseAddress, const SCEV *Offset,
-                    unsigned elemBytes, bool Affine, Value *AccessValue,
-                    bool IsPHI = false)
-      : BaseAddress(BaseAddress), AccessValue(AccessValue), Offset(Offset),
-        ElemBytes(elemBytes), Type(Type), IsAffine(Affine), IsPHI(IsPHI) {}
-
-  explicit IRAccess(TypeKind Type, Value *BaseAddress, const SCEV *Offset,
-                    unsigned elemBytes, bool Affine,
-                    ArrayRef<const SCEV *> Subscripts,
-                    ArrayRef<const SCEV *> Sizes, Value *AccessValue)
-      : BaseAddress(BaseAddress), AccessValue(AccessValue), Offset(Offset),
-        ElemBytes(elemBytes), Type(Type), IsAffine(Affine), IsPHI(false),
-        Subscripts(Subscripts.begin(), Subscripts.end()),
-        Sizes(Sizes.begin(), Sizes.end()) {}
-
-  enum TypeKind getType() const { return Type; }
-
-  Value *getBase() const { return BaseAddress; }
-
-  Value *getAccessValue() const { return AccessValue; }
-
-  const SCEV *getOffset() const { return Offset; }
-
-  unsigned getElemSizeInBytes() const { return ElemBytes; }
-
-  bool isAffine() const { return IsAffine; }
-
-  bool isRead() const { return Type == READ; }
-
-  bool isWrite() const { return Type == MUST_WRITE; }
-
-  void setMayWrite() { Type = MAY_WRITE; }
-
-  bool isMayWrite() const { return Type == MAY_WRITE; }
-
-  bool isScalar() const { return Subscripts.size() == 0; }
-
-  // @brief Is this IRAccess modeling special PHI node accesses?
-  bool isPHI() const { return IsPHI; }
-
-  void print(raw_ostream &OS) const;
-};
-
 /// @brief Represent memory accesses in statements.
 class MemoryAccess {
+  friend class Scop;
+  friend class ScopStmt;
+
 public:
   /// @brief The access type of a memory access
   ///
@@ -308,7 +238,11 @@ public:
   /// A certain set of memory locations may be written. The memory location may
   /// contain a new value if there is actually a write or the old value may
   /// remain, if no write happens.
-  enum AccessType { READ, MUST_WRITE, MAY_WRITE };
+  enum AccessType {
+    READ = 0x1,
+    MUST_WRITE = 0x2,
+    MAY_WRITE = 0x3,
+  };
 
   /// @brief Reduction access type
   ///
@@ -326,15 +260,18 @@ private:
   MemoryAccess(const MemoryAccess &) = delete;
   const MemoryAccess &operator=(const MemoryAccess &) = delete;
 
-  isl_map *AccessRelation;
+  /// @brief A unique identifier for this memory access.
+  ///
+  /// The identifier is unique between all memory accesses belonging to the same
+  /// scop statement.
+  isl_id *Id;
+
+  /// @brief Is this MemoryAccess modeling special PHI node accesses?
+  bool IsPHI;
+
+  /// @brief Whether it a reading or writing access, and if writing, whether it
+  /// is conditional (MAY_WRITE).
   enum AccessType AccType;
-
-  /// @brief The base address (e.g., A for A[i+j]).
-  Value *BaseAddr;
-
-  std::string BaseName;
-  __isl_give isl_basic_map *createBasicAccessMap(ScopStmt *Statement);
-  ScopStmt *Statement;
 
   /// @brief Reduction type for reduction like accesses, RT_NONE otherwise
   ///
@@ -362,6 +299,29 @@ private:
   /// could allow us to handle the above example.
   ReductionType RedType = RT_NONE;
 
+  /// @brief Parent ScopStmt of this access.
+  ScopStmt *Statement;
+
+  // Properties describing the accessed array.
+  // TODO: It might be possible to move them to ScopArrayInfo.
+  // @{
+
+  /// @brief The base address (e.g., A for A[i+j]).
+  Value *BaseAddr;
+
+  /// @brief An unique name of the accessed array.
+  std::string BaseName;
+
+  /// @brief Size in bytes of a single array element.
+  unsigned ElemBytes;
+
+  /// @brief Size of each dimension of the accessed array.
+  SmallVector<const SCEV *, 4> Sizes;
+  // @}
+
+  // Properties describing the accessed element.
+  // @{
+
   /// @brief The access instruction of this memory access.
   Instruction *AccessInstruction;
 
@@ -373,16 +333,38 @@ private:
   ///
   Value *AccessValue;
 
-  /// Updated access relation read from JSCOP file.
-  isl_map *NewAccessRelation;
-
-  /// @brief A unique identifier for this memory access.
+  /// @brief Accessed element relative to the base pointer (in bytes).
   ///
-  /// The identifier is unique between all memory accesses belonging to the same
-  /// scop statement.
-  isl_id *Id;
+  /// Currently only used by printIR.
+  const SCEV *Offset;
 
-  void assumeNoOutOfBound(const IRAccess &Access);
+  /// @brief Are all the subscripts affine expression?
+  bool IsAffine;
+
+  /// @brief Subscript expression for each dimension.
+  SmallVector<const SCEV *, 4> Subscripts;
+
+  /// @brief Relation from statment instances to the accessed array elements.
+  isl_map *AccessRelation;
+
+  /// @brief Updated access relation read from JSCOP file.
+  isl_map *NewAccessRelation;
+  // @}
+
+  unsigned getElemSizeInBytes() const { return ElemBytes; }
+
+  bool isAffine() const { return IsAffine; }
+
+  /// @brief Is this MemoryAccess modeling special PHI node accesses?
+  bool isPHI() const { return IsPHI; }
+
+  void printIR(raw_ostream &OS) const;
+
+  void setStatement(ScopStmt *Stmt) { this->Statement = Stmt; }
+
+  __isl_give isl_basic_map *createBasicAccessMap(ScopStmt *Statement);
+
+  void assumeNoOutOfBound();
 
   /// @brief Compute bounds on an over approximated  access relation.
   ///
@@ -426,22 +408,37 @@ private:
   /// The introduction of different cases necessarily complicates the memory
   /// access function, but cases that can be statically proven to not happen
   /// will be eliminated later on.
-  __isl_give isl_map *foldAccess(const IRAccess &Access,
-                                 __isl_take isl_map *AccessRelation,
+  __isl_give isl_map *foldAccess(__isl_take isl_map *AccessRelation,
                                  ScopStmt *Statement);
 
-public:
-  /// @brief Create a memory access from an access in LLVM-IR.
+  /// @brief Assemble the access relation from all availbale information.
   ///
-  /// @param Access     The memory access.
-  /// @param AccInst    The access instruction.
-  /// @param Statement  The statement that contains the access.
-  /// @param SAI        The ScopArrayInfo object for this base pointer.
-  /// @param Identifier An identifier that is unique for all memory accesses
-  ///                   belonging to the same scop statement.
-  MemoryAccess(const IRAccess &Access, Instruction *AccInst,
-               ScopStmt *Statement, const ScopArrayInfo *SAI, int Identifier);
+  /// In particular, used the information passes in the constructor and the
+  /// parent ScopStmt set by setStatment().
+  ///
+  /// @param SAI Info object for the accessed array.
+  void buildAccessRelation(const ScopArrayInfo *SAI);
 
+public:
+  /// @brief Create a new MemoryAccess.
+  ///
+  /// @param AccessInst The instruction doing the access.
+  /// @param Id         Identifier that is guranteed to be unique within the
+  ///                   same ScopStmt.
+  /// @param BaseAddr   The accessed array's address.
+  /// @param Offset     Accessed memoray location relative to @p BaseAddr.
+  /// @param ElemBytes  Number of accessed bytes.
+  /// @param AccType    Whether read or write access.
+  /// @param IsAffine   Whether the subscripts are affine expressions.
+  /// @param IsPHI      Are we modeling special PHI node accesses?
+  /// @param Subscripts Subscipt expressions
+  /// @param Sizes      Dimension lengths of the accessed array.
+  /// @param BaseName   Name of the acessed array.
+  MemoryAccess(Instruction *AccessInst, __isl_take isl_id *Id, AccessType Type,
+               Value *BaseAddress, const SCEV *Offset, unsigned ElemBytes,
+               bool Affine, ArrayRef<const SCEV *> Subscripts,
+               ArrayRef<const SCEV *> Sizes, Value *AccessValue, bool IsPHI,
+               StringRef BaseName);
   ~MemoryAccess();
 
   /// @brief Get the type of a memory access.
@@ -582,7 +579,7 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
 class ScopStmt {
 public:
   /// @brief List to hold all (scalar) memory accesses mapped to an instruction.
-  using MemoryAccessList = std::forward_list<MemoryAccess>;
+  using MemoryAccessList = std::forward_list<MemoryAccess *>;
 
   ScopStmt(const ScopStmt &) = delete;
   const ScopStmt &operator=(const ScopStmt &) = delete;
@@ -784,8 +781,7 @@ public:
   /// @brief Return the __first__ (scalar) memory access for @p Inst if any.
   MemoryAccess *lookupAccessFor(const Instruction *Inst) const {
     auto It = InstructionToAccess.find(Inst);
-    return It == InstructionToAccess.end() ? nullptr
-                                           : &It->getSecond()->front();
+    return It == InstructionToAccess.end() ? nullptr : It->getSecond()->front();
   }
 
   void setBasicBlock(BasicBlock *Block) {
@@ -1437,6 +1433,9 @@ class ScopInfo : public RegionPass {
   const DataLayout *TD;
 
   // Access function of statements (currently BasicBlocks) .
+  //
+  // This owns all the MemoryAccess objects of the Scop created in this pass. It
+  // must live until #scop is deleted.
   AccFuncMapType AccFuncMap;
 
   // Pre-created zero for the scalar accesses, with it we do not need create a
@@ -1453,16 +1452,13 @@ class ScopInfo : public RegionPass {
   // Build the SCoP for Region @p R.
   Scop *buildScop(Region &R, DominatorTree &DT);
 
-  /// @brief Build an instance of IRAccess from the Load/Store instruction.
+  /// @brief Build an instance of MemoryAccess from the Load/Store instruction.
   ///
   /// @param Inst       The Load/Store instruction that access the memory
   /// @param L          The parent loop of the instruction
   /// @param R          The region on which to build the data access dictionary.
   /// @param BoxedLoops The set of loops that are overapproximated in @p R.
-  ///
-  /// @return     The IRAccess to describe the access function of the
-  ///             instruction.
-  IRAccess buildIRAccess(Instruction *Inst, Loop *L, Region *R,
+  void buildMemoryAccess(Instruction *Inst, Loop *L, Region *R,
                          const ScopDetection::BoxedLoopsSetTy *BoxedLoops);
 
   /// @brief Analyze and extract the cross-BB scalar dependences (or,
@@ -1477,15 +1473,14 @@ class ScopInfo : public RegionPass {
   bool buildScalarDependences(Instruction *Inst, Region *R,
                               Region *NonAffineSubRegio);
 
-  /// @brief Create IRAccesses for the given PHI node in the given region.
+  /// @brief Create MemoryAccesses for the given PHI node in the given region.
   ///
   /// @param PHI                The PHI node to be handled
   /// @param R                  The SCoP region
-  /// @param Functions          The access functions of the current BB
   /// @param NonAffineSubRegion The non affine sub-region @p PHI is in.
   /// @param IsExitBlock        Flag to indicate that @p PHI is in the exit BB.
-  void buildPHIAccesses(PHINode *PHI, Region &R, AccFuncSetType &Functions,
-                        Region *NonAffineSubRegion, bool IsExitBlock = false);
+  void buildPHIAccesses(PHINode *PHI, Region &R, Region *NonAffineSubRegion,
+                        bool IsExitBlock = false);
 
   /// @brief Build the access functions for the subregion @p SR.
   ///
@@ -1502,6 +1497,44 @@ class ScopInfo : public RegionPass {
   void buildAccessFunctions(Region &R, BasicBlock &BB,
                             Region *NonAffineSubRegion = nullptr,
                             bool IsExitBlock = false);
+
+  /// @brief Create a new MemoryAccess object and add it to #AccFuncMap.
+  ///
+  /// @param BB          The block where the access takes place.
+  /// @param Inst        The instruction doing the access. It is not necessarily
+  ///                    inside @p BB.
+  /// @param Type        The kind of access.
+  /// @param BaseAddress The accessed array's base address.
+  /// @param Offset      Accessed location relative to @p BaseAddress.
+  /// @param ElemBytes   Size of accessed array element.
+  /// @param Affine      Whether all subscripts are affine expressions.
+  /// @param AccessValue Value read or written.
+  /// @param Subscripts  Access subscripts per dimension.
+  /// @param Sizes       The array diminsion's sizes.
+  /// @param IsPHI       Whether this is an emulated PHI node.
+  void addMemoryAccess(BasicBlock *BB, Instruction *Inst,
+                       MemoryAccess::AccessType Type, Value *BaseAddress,
+                       const SCEV *Offset, unsigned ElemBytes, bool Affine,
+                       Value *AccessValue, ArrayRef<const SCEV *> Subscripts,
+                       ArrayRef<const SCEV *> Sizes, bool IsPHI);
+
+  void addMemoryAccess(BasicBlock *BB, Instruction *Inst,
+                       MemoryAccess::AccessType Type, Value *BaseAddress,
+                       const SCEV *Offset, unsigned ElemBytes, bool Affine,
+                       Value *AccessValue, bool IsPHI = false) {
+    addMemoryAccess(BB, Inst, Type, BaseAddress, Offset, ElemBytes, Affine,
+                    AccessValue, ArrayRef<const SCEV *>(),
+                    ArrayRef<const SCEV *>(), IsPHI);
+  }
+
+  void addMemoryAccess(BasicBlock *BB, Instruction *Inst,
+                       MemoryAccess::AccessType Type, Value *BaseAddress,
+                       const SCEV *Offset, unsigned ElemBytes, bool Affine,
+                       ArrayRef<const SCEV *> Subscripts,
+                       ArrayRef<const SCEV *> Sizes, Value *AccessValue) {
+    addMemoryAccess(BB, Inst, Type, BaseAddress, Offset, ElemBytes, Affine,
+                    AccessValue, Subscripts, Sizes, false);
+  }
 
 public:
   static char ID;

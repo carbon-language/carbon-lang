@@ -227,7 +227,7 @@ const ScopArrayInfo *ScopArrayInfo::getFromId(isl_id *Id) {
   return SAI;
 }
 
-void IRAccess::print(raw_ostream &OS) const {
+void MemoryAccess::printIR(raw_ostream &OS) const {
   if (isRead())
     OS << "Read ";
   else {
@@ -235,7 +235,7 @@ void IRAccess::print(raw_ostream &OS) const {
       OS << "May";
     OS << "Write ";
   }
-  OS << BaseAddress->getName() << '[' << *Offset << "]\n";
+  OS << BaseAddr->getName() << '[' << *Offset << "]\n";
 }
 
 const std::string
@@ -289,8 +289,6 @@ static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
     return MemoryAccess::RT_NONE;
   }
 }
-
-//===----------------------------------------------------------------------===//
 
 /// @brief Derive the individual index expressions from a GEP instruction
 ///
@@ -357,18 +355,6 @@ MemoryAccess::~MemoryAccess() {
   isl_id_free(Id);
   isl_map_free(AccessRelation);
   isl_map_free(NewAccessRelation);
-}
-
-static MemoryAccess::AccessType getMemoryAccessType(const IRAccess &Access) {
-  switch (Access.getType()) {
-  case IRAccess::READ:
-    return MemoryAccess::READ;
-  case IRAccess::MUST_WRITE:
-    return MemoryAccess::MUST_WRITE;
-  case IRAccess::MAY_WRITE:
-    return MemoryAccess::MAY_WRITE;
-  }
-  llvm_unreachable("Unknown IRAccess type!");
 }
 
 const ScopArrayInfo *MemoryAccess::getScopArrayInfo() const {
@@ -446,10 +432,10 @@ MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
 // possibly yield out of bound memory accesses. The complement of these
 // constraints is the set of constraints that needs to be assumed to ensure such
 // statement instances are never executed.
-void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
+void MemoryAccess::assumeNoOutOfBound() {
   isl_space *Space = isl_space_range(getOriginalAccessRelationSpace());
   isl_set *Outside = isl_set_empty(isl_space_copy(Space));
-  for (int i = 1, Size = Access.Subscripts.size(); i < Size; ++i) {
+  for (int i = 1, Size = Subscripts.size(); i < Size; ++i) {
     isl_local_space *LS = isl_local_space_from_space(isl_space_copy(Space));
     isl_pw_aff *Var =
         isl_pw_aff_var_on_domain(isl_local_space_copy(LS), isl_dim_set, i);
@@ -458,7 +444,7 @@ void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
     isl_set *DimOutside;
 
     DimOutside = isl_pw_aff_lt_set(isl_pw_aff_copy(Var), Zero);
-    isl_pw_aff *SizeE = Statement->getPwAff(Access.Sizes[i - 1]);
+    isl_pw_aff *SizeE = Statement->getPwAff(Sizes[i - 1]);
 
     SizeE = isl_pw_aff_drop_dims(SizeE, isl_dim_in, 0,
                                  Statement->getNumIterators());
@@ -519,15 +505,14 @@ void MemoryAccess::computeBoundsOnAccessRelation(unsigned ElementSize) {
   AccessRelation = isl_map_intersect_range(AccessRelation, AccessRange);
 }
 
-__isl_give isl_map *MemoryAccess::foldAccess(const IRAccess &Access,
-                                             __isl_take isl_map *AccessRelation,
+__isl_give isl_map *MemoryAccess::foldAccess(__isl_take isl_map *AccessRelation,
                                              ScopStmt *Statement) {
-  int Size = Access.Subscripts.size();
+  int Size = Subscripts.size();
 
   for (int i = Size - 2; i >= 0; --i) {
     isl_space *Space;
     isl_map *MapOne, *MapTwo;
-    isl_pw_aff *DimSize = Statement->getPwAff(Access.Sizes[i]);
+    isl_pw_aff *DimSize = Statement->getPwAff(Sizes[i]);
 
     isl_space *SpaceSize = isl_pw_aff_get_space(DimSize);
     isl_pw_aff_free(DimSize);
@@ -570,23 +555,13 @@ __isl_give isl_map *MemoryAccess::foldAccess(const IRAccess &Access,
   return AccessRelation;
 }
 
-MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
-                           ScopStmt *Statement, const ScopArrayInfo *SAI,
-                           int Identifier)
-    : AccType(getMemoryAccessType(Access)), Statement(Statement),
-      AccessInstruction(AccInst), AccessValue(Access.getAccessValue()),
-      NewAccessRelation(nullptr) {
+void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
+  assert(!AccessRelation && "AccessReltation already built");
 
-  isl_ctx *Ctx = Statement->getIslCtx();
-  BaseAddr = Access.getBase();
-  BaseName = getIslCompatibleName("MemRef_", getBaseAddr(), "");
-
+  isl_ctx *Ctx = isl_id_get_ctx(Id);
   isl_id *BaseAddrId = SAI->getBasePtrId();
 
-  auto IdName = "__polly_array_ref_" + std::to_string(Identifier);
-  Id = isl_id_alloc(Ctx, IdName.c_str(), nullptr);
-
-  if (!Access.isAffine()) {
+  if (!isAffine()) {
     // We overapproximate non-affine accesses with a possible access to the
     // whole array. For read accesses it does not make a difference, if an
     // access must or may happen. However, for write accesses it is important to
@@ -595,15 +570,15 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
     AccessRelation =
         isl_map_set_tuple_id(AccessRelation, isl_dim_out, BaseAddrId);
 
-    computeBoundsOnAccessRelation(Access.getElemSizeInBytes());
+    computeBoundsOnAccessRelation(getElemSizeInBytes());
     return;
   }
 
   isl_space *Space = isl_space_alloc(Ctx, 0, Statement->getNumIterators(), 0);
   AccessRelation = isl_map_universe(Space);
 
-  for (int i = 0, Size = Access.Subscripts.size(); i < Size; ++i) {
-    isl_pw_aff *Affine = Statement->getPwAff(Access.Subscripts[i]);
+  for (int i = 0, Size = Subscripts.size(); i < Size; ++i) {
+    isl_pw_aff *Affine = Statement->getPwAff(Subscripts[i]);
 
     if (Size == 1) {
       // For the non delinearized arrays, divide the access function of the last
@@ -614,7 +589,7 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
       // two subsequent values of 'i' index two values that are stored next to
       // each other in memory. By this division we make this characteristic
       // obvious again.
-      isl_val *v = isl_val_int_from_si(Ctx, Access.getElemSizeInBytes());
+      isl_val *v = isl_val_int_from_si(Ctx, getElemSizeInBytes());
       Affine = isl_pw_aff_scale_down_val(Affine, v);
     }
 
@@ -623,8 +598,8 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
     AccessRelation = isl_map_flat_range_product(AccessRelation, SubscriptMap);
   }
 
-  if (Access.Sizes.size() > 1 && !isa<SCEVConstant>(Access.Sizes[0]))
-    AccessRelation = foldAccess(Access, AccessRelation, Statement);
+  if (Sizes.size() > 1 && !isa<SCEVConstant>(Sizes[0]))
+    AccessRelation = foldAccess(AccessRelation, Statement);
 
   Space = Statement->getDomainSpace();
   AccessRelation = isl_map_set_tuple_id(
@@ -632,10 +607,23 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
   AccessRelation =
       isl_map_set_tuple_id(AccessRelation, isl_dim_out, BaseAddrId);
 
-  assumeNoOutOfBound(Access);
+  assumeNoOutOfBound();
   AccessRelation = isl_map_gist_domain(AccessRelation, Statement->getDomain());
   isl_space_free(Space);
 }
+
+MemoryAccess::MemoryAccess(Instruction *AccessInst, __isl_take isl_id *Id,
+                           AccessType Type, Value *BaseAddress,
+                           const SCEV *Offset, unsigned ElemBytes, bool Affine,
+                           ArrayRef<const SCEV *> Subscripts,
+                           ArrayRef<const SCEV *> Sizes, Value *AccessValue,
+                           bool IsPHI, StringRef BaseName)
+    : Id(Id), IsPHI(IsPHI), AccType(Type), RedType(RT_NONE), Statement(nullptr),
+      BaseAddr(BaseAddress), BaseName(BaseName), ElemBytes(ElemBytes),
+      Sizes(Sizes.begin(), Sizes.end()), AccessInstruction(AccessInst),
+      AccessValue(AccessValue), Offset(Offset), IsAffine(Affine),
+      Subscripts(Subscripts.begin(), Subscripts.end()), AccessRelation(nullptr),
+      NewAccessRelation(nullptr) {}
 
 void MemoryAccess::realignParams() {
   isl_space *ParamSpace = Statement->getParent()->getParamSpace();
@@ -808,22 +796,23 @@ void ScopStmt::buildAccesses(BasicBlock *Block, bool isApproximated) {
   if (!AFS)
     return;
 
-  for (auto &AccessPair : *AFS) {
-    IRAccess &Access = AccessPair.first;
-    Instruction *AccessInst = AccessPair.second;
+  for (auto &Access : *AFS) {
+    Instruction *AccessInst = Access.getAccessInstruction();
     Type *ElementType = Access.getAccessValue()->getType();
 
     const ScopArrayInfo *SAI = getParent()->getOrCreateScopArrayInfo(
-        Access.getBase(), ElementType, Access.Sizes, Access.isPHI());
+        Access.getBaseAddr(), ElementType, Access.Sizes, Access.isPHI());
 
-    if (isApproximated && Access.isWrite())
-      Access.setMayWrite();
+    if (isApproximated && Access.isMustWrite())
+      Access.AccType = MemoryAccess::MAY_WRITE;
 
     MemoryAccessList *&MAL = InstructionToAccess[AccessInst];
     if (!MAL)
       MAL = new MemoryAccessList();
-    MAL->emplace_front(Access, AccessInst, this, SAI, MemAccs.size());
-    MemAccs.push_back(&MAL->front());
+    Access.setStatement(this);
+    Access.buildAccessRelation(SAI);
+    MAL->emplace_front(&Access);
+    MemAccs.push_back(MAL->front());
   }
 }
 
@@ -2741,7 +2730,7 @@ void Scop::printIRAccessesDetail(raw_ostream &OS, ScalarEvolution *SE,
 
     for (access_iterator AI = AccFuncs.begin(), AE = AccFuncs.end(); AI != AE;
          ++AI)
-      AI->first.print(OS.indent(ind + 2));
+      AI->printIR(OS.indent(ind + 2));
   }
 }
 
@@ -2754,7 +2743,6 @@ int Scop::getRelativeLoopDepth(const Loop *L) const {
 }
 
 void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
-                                AccFuncSetType &Functions,
                                 Region *NonAffineSubRegion, bool IsExitBlock) {
 
   // PHI nodes that are in the exit block of the region, hence if IsExitBlock is
@@ -2792,11 +2780,10 @@ void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
       // we have to insert a scalar dependence from the definition of OpI to
       // OpBB if the definition is not in OpBB.
       if (OpIBB != OpBB) {
-        IRAccess ScalarRead(IRAccess::READ, OpI, ZeroOffset, 1, true, OpI);
-        AccFuncMap[OpBB].push_back(std::make_pair(ScalarRead, PHI));
-        IRAccess ScalarWrite(IRAccess::MUST_WRITE, OpI, ZeroOffset, 1, true,
-                             OpI);
-        AccFuncMap[OpIBB].push_back(std::make_pair(ScalarWrite, OpI));
+        addMemoryAccess(OpBB, PHI, MemoryAccess::READ, OpI, ZeroOffset, 1, true,
+                        OpI);
+        addMemoryAccess(OpIBB, OpI, MemoryAccess::MUST_WRITE, OpI, ZeroOffset,
+                        1, true, OpI);
       }
     }
 
@@ -2804,15 +2791,14 @@ void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
     // instruction.
     OpI = OpBB->getTerminator();
 
-    IRAccess ScalarAccess(IRAccess::MUST_WRITE, PHI, ZeroOffset, 1, true, Op,
-                          /* IsPHI */ !IsExitBlock);
-    AccFuncMap[OpBB].push_back(std::make_pair(ScalarAccess, OpI));
+    addMemoryAccess(OpBB, OpI, MemoryAccess::MUST_WRITE, PHI, ZeroOffset, 1,
+                    true, Op, /* IsPHI */ !IsExitBlock);
   }
 
   if (!OnlyNonAffineSubRegionOperands) {
-    IRAccess ScalarAccess(IRAccess::READ, PHI, ZeroOffset, 1, true, PHI,
-                          /* IsPHI */ !IsExitBlock);
-    Functions.push_back(std::make_pair(ScalarAccess, PHI));
+    addMemoryAccess(PHI->getParent(), PHI, MemoryAccess::READ, PHI, ZeroOffset,
+                    1, true, PHI,
+                    /* IsPHI */ !IsExitBlock);
   }
 }
 
@@ -2866,10 +2852,10 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     AnyCrossStmtUse = true;
 
     // Do not build a read access that is not in the current SCoP
-    // Use the def instruction as base address of the IRAccess, so that it will
-    // become the name of the scalar access in the polyhedral form.
-    IRAccess ScalarAccess(IRAccess::READ, Inst, ZeroOffset, 1, true, Inst);
-    AccFuncMap[UseParent].push_back(std::make_pair(ScalarAccess, UI));
+    // Use the def instruction as base address of the MemoryAccess, so that it
+    // will become the name of the scalar access in the polyhedral form.
+    addMemoryAccess(UseParent, UI, MemoryAccess::READ, Inst, ZeroOffset, 1,
+                    true, Inst);
   }
 
   if (ModelReadOnlyScalars) {
@@ -2884,9 +2870,8 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
       if (isa<Constant>(Op))
         continue;
 
-      IRAccess ScalarAccess(IRAccess::READ, Op, ZeroOffset, 1, true, Op);
-      AccFuncMap[Inst->getParent()].push_back(
-          std::make_pair(ScalarAccess, Inst));
+      addMemoryAccess(Inst->getParent(), Inst, MemoryAccess::READ, Op,
+                      ZeroOffset, 1, true, Op);
     }
   }
 
@@ -2895,24 +2880,24 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
 
 extern MapInsnToMemAcc InsnToMemAcc;
 
-IRAccess
-ScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
-                        const ScopDetection::BoxedLoopsSetTy *BoxedLoops) {
+void ScopInfo::buildMemoryAccess(
+    Instruction *Inst, Loop *L, Region *R,
+    const ScopDetection::BoxedLoopsSetTy *BoxedLoops) {
   unsigned Size;
   Type *SizeType;
   Value *Val;
-  enum IRAccess::TypeKind Type;
+  enum MemoryAccess::AccessType Type;
 
   if (LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
     SizeType = Load->getType();
     Size = TD->getTypeStoreSize(SizeType);
-    Type = IRAccess::READ;
+    Type = MemoryAccess::READ;
     Val = Load;
   } else {
     StoreInst *Store = cast<StoreInst>(Inst);
     SizeType = Store->getValueOperand()->getType();
     Size = TD->getTypeStoreSize(SizeType);
-    Type = IRAccess::MUST_WRITE;
+    Type = MemoryAccess::MUST_WRITE;
     Val = Store->getValueOperand();
   }
 
@@ -2957,17 +2942,20 @@ ScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
         SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
             IntegerType::getInt64Ty(BasePtr->getContext()), Size)));
 
-        return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size,
-                        true, Subscripts, SizesSCEV, Val);
+        addMemoryAccess(Inst->getParent(), Inst, Type, BasePointer->getValue(),
+                        AccessFunction, Size, true, Subscripts, SizesSCEV, Val);
       }
     }
   }
 
   auto AccItr = InsnToMemAcc.find(Inst);
-  if (PollyDelinearize && AccItr != InsnToMemAcc.end())
-    return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, true,
+  if (PollyDelinearize && AccItr != InsnToMemAcc.end()) {
+    addMemoryAccess(Inst->getParent(), Inst, Type, BasePointer->getValue(),
+                    AccessFunction, Size, true,
                     AccItr->second.DelinearizedSubscripts,
                     AccItr->second.Shape->DelinearizedSizes, Val);
+    return;
+  }
 
   // Check if the access depends on a loop contained in a non-affine subregion.
   bool isVariantInNonAffineLoop = false;
@@ -2986,11 +2974,11 @@ ScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
   Subscripts.push_back(AccessFunction);
   Sizes.push_back(SE->getConstant(ZeroOffset->getType(), Size));
 
-  if (!IsAffine && Type == IRAccess::MUST_WRITE)
-    Type = IRAccess::MAY_WRITE;
+  if (!IsAffine && Type == MemoryAccess::MUST_WRITE)
+    Type = MemoryAccess::MAY_WRITE;
 
-  return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, IsAffine,
-                  Subscripts, Sizes, Val);
+  addMemoryAccess(Inst->getParent(), Inst, Type, BasePointer->getValue(),
+                  AccessFunction, Size, IsAffine, Subscripts, Sizes, Val);
 }
 
 void ScopInfo::buildAccessFunctions(Region &R, Region &SR) {
@@ -3011,7 +2999,6 @@ void ScopInfo::buildAccessFunctions(Region &R, Region &SR) {
 void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
                                     Region *NonAffineSubRegion,
                                     bool IsExitBlock) {
-  AccFuncSetType Functions;
   Loop *L = LI->getLoopFor(&BB);
 
   // The set of loops contained in non-affine subregions that are part of R.
@@ -3022,35 +3009,42 @@ void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
 
     PHINode *PHI = dyn_cast<PHINode>(Inst);
     if (PHI)
-      buildPHIAccesses(PHI, R, Functions, NonAffineSubRegion, IsExitBlock);
+      buildPHIAccesses(PHI, R, NonAffineSubRegion, IsExitBlock);
 
     // For the exit block we stop modeling after the last PHI node.
     if (!PHI && IsExitBlock)
       break;
 
     if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst))
-      Functions.push_back(
-          std::make_pair(buildIRAccess(Inst, L, &R, BoxedLoops), Inst));
+      buildMemoryAccess(Inst, L, &R, BoxedLoops);
 
     if (isIgnoredIntrinsic(Inst))
       continue;
 
     if (buildScalarDependences(Inst, &R, NonAffineSubRegion)) {
-      // If the Instruction is used outside the statement, we need to build the
-      // write access.
-      if (!isa<StoreInst>(Inst)) {
-        IRAccess ScalarAccess(IRAccess::MUST_WRITE, Inst, ZeroOffset, 1, true,
-                              Inst);
-        Functions.push_back(std::make_pair(ScalarAccess, Inst));
-      }
+      if (!isa<StoreInst>(Inst))
+        addMemoryAccess(&BB, Inst, MemoryAccess::MUST_WRITE, Inst, ZeroOffset,
+                        1, true, Inst);
     }
   }
+}
 
-  if (Functions.empty())
-    return;
+void ScopInfo::addMemoryAccess(
+    BasicBlock *BB, Instruction *Inst, MemoryAccess::AccessType Type,
+    Value *BaseAddress, const SCEV *Offset, unsigned ElemBytes, bool Affine,
+    Value *AccessValue, ArrayRef<const SCEV *> Subscripts,
+    ArrayRef<const SCEV *> Sizes, bool IsPHI = false) {
+  AccFuncSetType &AccList = AccFuncMap[BB];
+  size_t Identifier = AccList.size();
 
-  AccFuncSetType &Accs = AccFuncMap[&BB];
-  Accs.insert(Accs.end(), Functions.begin(), Functions.end());
+  Value *BaseAddr = BaseAddress;
+  std::string BaseName = getIslCompatibleName("MemRef_", BaseAddr, "");
+
+  std::string IdName = "__polly_array_ref_" + std::to_string(Identifier);
+  isl_id *Id = isl_id_alloc(ctx, IdName.c_str(), nullptr);
+
+  AccList.emplace_back(Inst, Id, Type, BaseAddress, Offset, ElemBytes, Affine,
+                       Subscripts, Sizes, AccessValue, IsPHI, BaseName);
 }
 
 Scop *ScopInfo::buildScop(Region &R, DominatorTree &DT) {
