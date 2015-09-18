@@ -531,8 +531,10 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
     return true;
   }
 
-  if (AllocaInst *AI = dyn_cast<AllocaInst>(BBI)) {
-    Res = LVILatticeVal::getNot(ConstantPointerNull::get(AI->getType()));
+  // If this value is a nonnull pointer, record it's range and bailout.
+  PointerType *PT = dyn_cast<PointerType>(BBI->getType());
+  if (PT && isKnownNonNull(BBI)) {
+    Res = LVILatticeVal::getNot(ConstantPointerNull::get(PT));
     insertResult(Val, BB, Res);
     return true;
   }

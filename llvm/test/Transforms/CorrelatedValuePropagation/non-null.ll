@@ -140,3 +140,24 @@ merge:
   ; CHECK: call void @test11_helper(i8* nonnull %merged_arg)
   ret void
 }
+
+declare void @test12_helper(i8* %arg)
+define void @test12(i8* %arg1, i8** %arg2) {
+; CHECK-LABEL: @test12
+entry:
+  %is_null = icmp eq i8* %arg1, null
+  br i1 %is_null, label %null, label %non_null
+
+non_null:
+  br label %merge
+
+null:
+  %another_arg = load i8*, i8** %arg2, !nonnull !{}
+  br label %merge
+
+merge:
+  %merged_arg = phi i8* [%another_arg, %null], [%arg1, %non_null]
+  call void @test12_helper(i8* %merged_arg)
+  ; CHECK: call void @test12_helper(i8* nonnull %merged_arg)
+  ret void
+}
