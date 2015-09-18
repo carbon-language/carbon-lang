@@ -375,6 +375,11 @@ public:
     BasicBlocks.erase(MBBI);
   }
 
+  template <typename Comp>
+  void sort(Comp comp) {
+    BasicBlocks.sort(comp);
+  }
+
   //===--------------------------------------------------------------------===//
   // Internal functions used to automatically number MachineBasicBlocks
   //

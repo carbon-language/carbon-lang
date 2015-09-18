@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/ADT/MapVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -34,7 +33,7 @@ public:
 }
 
 static void
-collectFuncletMembers(MapVector<MachineBasicBlock *, int> &FuncletMembership,
+collectFuncletMembers(DenseMap<MachineBasicBlock *, int> &FuncletMembership,
                       int Funclet, MachineBasicBlock *MBB) {
   // Don't revisit blocks.
   if (FuncletMembership.count(MBB) > 0)
@@ -81,16 +80,13 @@ bool FuncletLayout::runOnMachineFunction(MachineFunction &F) {
   if (FuncletBlocks.empty())
     return false;
 
-  MapVector<MachineBasicBlock *, int> FuncletMembership;
+  DenseMap<MachineBasicBlock *, int> FuncletMembership;
   for (MachineBasicBlock *MBB : FuncletBlocks)
     collectFuncletMembers(FuncletMembership, MBB->getNumber(), MBB);
 
-  for (std::pair<llvm::MachineBasicBlock *, int> &FuncletMember :
-       FuncletMembership) {
-    // Move this block to the end of the function.
-    MachineBasicBlock *MBB = FuncletMember.first;
-    MBB->moveAfter(--F.end());
-  }
+  F.sort([&](MachineBasicBlock &x, MachineBasicBlock &y) {
+    return FuncletMembership[&x] < FuncletMembership[&y];
+  });
 
   // Conservatively assume we changed something.
   return true;

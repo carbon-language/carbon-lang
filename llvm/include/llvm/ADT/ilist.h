@@ -579,6 +579,53 @@ public:
   void splice(iterator where, iplist &L2, iterator first, iterator last) {
     if (first != last) transfer(where, L2, first, last);
   }
+
+  template <class Compare>
+  void merge(iplist &Right, Compare comp) {
+    if (this == &Right)
+      return;
+    iterator First1 = begin(), Last1 = end();
+    iterator First2 = Right.begin(), Last2 = Right.end();
+    while (First1 != Last1 && First2 != Last2) {
+      if (comp(*First2, *First1)) {
+        iterator Next = First2;
+        transfer(First1, Right, First2, ++Next);
+        First2 = Next;
+      } else {
+        ++First1;
+      }
+    }
+    if (First2 != Last2)
+      transfer(Last1, Right, First2, Last2);
+  }
+  void merge(iplist &Right) { return merge(Right, op_less); }
+
+  template <class Compare>
+  void sort(Compare comp) {
+    // The list is empty, vacuously sorted.
+    if (empty())
+      return;
+    // The list has a single element, vacuously sorted.
+    if (std::next(begin()) == end())
+      return;
+    // Find the split point for the list.
+    iterator Center = begin(), End = begin();
+    while (End != end() && std::next(End) != end()) {
+      Center = std::next(Center);
+      End = std::next(std::next(End));
+    }
+    // Split the list into two.
+    iplist RightHalf;
+    RightHalf.splice(RightHalf.begin(), *this, Center, end());
+
+    // Sort the two sublists.
+    sort(comp);
+    RightHalf.sort(comp);
+
+    // Merge the two sublists back together.
+    merge(RightHalf, comp);
+  }
+  void sort() { sort(op_less); }
 };
 
 
