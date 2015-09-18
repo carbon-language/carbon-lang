@@ -586,9 +586,6 @@ static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
   for (const SDValue &Op : N->op_values())
     if (Op.getNode()->hasOneUse())
       DumpNodes(Op.getNode(), indent+2, G);
-    else
-      dbgs() << std::string(indent+2, ' ')
-             << PrintNodeId(*Op.getNode()) << ": <multiple use>\n";
 
   dbgs().indent(indent);
   N->dump(G);
