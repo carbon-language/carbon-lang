@@ -6812,9 +6812,10 @@ Syntax:
 
 ::
 
-      <result> = load [volatile] <ty>, <ty>* <pointer>[, align <alignment>][, !nontemporal !<index>][, !invariant.load !<index>][, !invariant.group !<index>][, !nonnull !<index>][, !dereferenceable !<index>][, !dereferenceable_or_null !<index>]
+      <result> = load [volatile] <ty>, <ty>* <pointer>[, align <alignment>][, !nontemporal !<index>][, !invariant.load !<index>][, !invariant.group !<index>][, !nonnull !<index>][, !dereferenceable !<deref_bytes_node>][, !dereferenceable_or_null !<deref_bytes_node>]
       <result> = load atomic [volatile] <ty>* <pointer> [singlethread] <ordering>, align <alignment> [, !invariant.group !<index>]
       !<index> = !{ i32 1 }
+      !<deref_bytes_node> = !{i64 <dereferenceable_bytes>}
 
 Overview:
 """""""""
@@ -6880,8 +6881,8 @@ never be null. This is analogous to the ``nonnull`` attribute
 on parameters and return values. This metadata can only be applied
 to loads of a pointer type.
 
-The optional ``!dereferenceable`` metadata must reference a single
-metadata name ``<index>`` corresponding to a metadata node with one ``i64``
+The optional ``!dereferenceable`` metadata must reference a single metadata
+name ``<deref_bytes_node>`` corresponding to a metadata node with one ``i64``
 entry. The existence of the ``!dereferenceable`` metadata on the instruction
 tells the optimizer that the value loaded is known to be dereferenceable.
 The number of bytes known to be dereferenceable is specified by the integer
@@ -6890,8 +6891,8 @@ attribute on parameters and return values. This metadata can only be applied
 to loads of a pointer type.
 
 The optional ``!dereferenceable_or_null`` metadata must reference a single
-metadata name ``<index>`` corresponding to a metadata node with one ``i64``
-entry. The existence of the ``!dereferenceable_or_null`` metadata on the
+metadata name ``<deref_bytes_node>`` corresponding to a metadata node with one
+``i64`` entry. The existence of the ``!dereferenceable_or_null`` metadata on the
 instruction tells the optimizer that the value loaded is known to be either
 dereferenceable or null.
 The number of bytes known to be dereferenceable is specified by the integer
