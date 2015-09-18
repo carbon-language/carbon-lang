@@ -53,12 +53,14 @@ void __foo2(void) {}
 #pragma weak unused // expected-warning {{weak identifier 'unused' never declared}}
 #pragma weak unused_alias = __unused_alias  // expected-warning {{weak identifier '__unused_alias' never declared}}
 
-#pragma weak td // expected-warning {{weak identifier 'td' never declared}}
+#pragma weak td // expected-warning {{'weak' attribute only applies to variables and functions}}
 typedef int td;
 
-#pragma weak td2 = __td2 // expected-warning {{weak identifier '__td2' never declared}}
+#pragma weak td2 = __td2 // expected-warning {{'weak' attribute only applies to variables and functions}}
 typedef int __td2;
 
+typedef int __td3;
+#pragma weak td3 = __td3 // expected-warning {{'weak' attribute only applies to variables and functions}}
 
 ///// test weird cases
 

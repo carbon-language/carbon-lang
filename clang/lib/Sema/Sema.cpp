@@ -727,8 +727,15 @@ void Sema::ActOnEndOfTranslationUnit() {
     if (WeakID.second.getUsed())
       continue;
 
-    Diag(WeakID.second.getLocation(), diag::warn_weak_identifier_undeclared)
-        << WeakID.first;
+    Decl *PrevDecl = LookupSingleName(TUScope, WeakID.first, SourceLocation(),
+                                      LookupOrdinaryName);
+    if (PrevDecl != nullptr &&
+        !(isa<FunctionDecl>(PrevDecl) || isa<VarDecl>(PrevDecl)))
+      Diag(WeakID.second.getLocation(), diag::warn_attribute_wrong_decl_type)
+          << "'weak'" << ExpectedVariableOrFunction;
+    else
+      Diag(WeakID.second.getLocation(), diag::warn_weak_identifier_undeclared)
+          << WeakID.first;
   }
 
   if (LangOpts.CPlusPlus11 &&
