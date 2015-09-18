@@ -43,9 +43,6 @@ namespace bitc {
     TYPE_BLOCK_ID_NEW,
 
     USELIST_BLOCK_ID,
-
-    MODULE_STRTAB_BLOCK_ID,
-    FUNCTION_SUMMARY_BLOCK_ID
   };
 
 
