@@ -738,8 +738,11 @@ void OutputSection<ELFT>::relocate(
     case SymbolBody::DefinedAbsoluteKind:
       SymVA = cast<DefinedAbsolute<ELFT>>(Body)->Sym.st_value;
       break;
-    case SymbolBody::DefinedCommonKind:
-      continue;
+    case SymbolBody::DefinedCommonKind: {
+      auto *DC = cast<DefinedCommon<ELFT>>(Body);
+      SymVA = DC->OutputSec->getVA() + DC->OffsetInBSS;
+      break;
+    }
     case SymbolBody::SharedKind:
       if (!relocNeedsGOT(Type))
         continue;
@@ -1063,6 +1066,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     uintX_t Align = C->MaxAlignment;
     Off = RoundUpToAlignment(Off, Align);
     C->OffsetInBSS = Off;
+    C->OutputSec = BSSSec;
     Off += Sym.st_size;
   }
 

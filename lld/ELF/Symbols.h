@@ -24,6 +24,7 @@ class Chunk;
 class InputFile;
 class SymbolBody;
 template <class ELFT> class ObjectFile;
+template <class ELFT> class OutputSection;
 
 // A real symbol object, SymbolBody, is usually accessed indirectly
 // through a Symbol. There's always one Symbol for each symbol name.
@@ -180,6 +181,8 @@ public:
 
   // The maximum alignment we have seen for this symbol.
   uintX_t MaxAlignment;
+
+  OutputSection<ELFT> *OutputSec = nullptr;
 };
 
 // Regular defined symbols read from object file symbol tables.
