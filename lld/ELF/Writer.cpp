@@ -750,7 +750,9 @@ void OutputSection<ELFT>::relocate(
       Type = R_X86_64_PC32;
       break;
     case SymbolBody::UndefinedKind:
-      continue;
+      assert(Body->isWeak() && "Undefined symbol reached writer");
+      SymVA = 0;
+      break;
     case SymbolBody::LazyKind:
       llvm_unreachable("Lazy symbol reached writer");
     }
