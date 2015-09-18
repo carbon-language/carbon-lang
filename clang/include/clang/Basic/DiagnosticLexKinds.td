@@ -184,7 +184,7 @@ def ext_hexconstant_invalid : Extension<
 def ext_binary_literal : Extension<
   "binary integer literals are a GNU extension">, InGroup<GNUBinaryLiteral>;
 def ext_binary_literal_cxx14 : Extension<
-  "binary integer literals are a C++14 extension">, InGroup<CXX14>;
+  "binary integer literals are a C++14 extension">, InGroup<CXX14BinaryLiteral>;
 def warn_cxx11_compat_binary_literal : Warning<
   "binary integer literals are incompatible with C++ standards before C++14">,
   InGroup<CXXPre14CompatPedantic>, DefaultIgnore;

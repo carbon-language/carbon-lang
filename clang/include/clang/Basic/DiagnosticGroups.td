@@ -29,6 +29,7 @@ def ArrayBoundsPointerArithmetic : DiagGroup<"array-bounds-pointer-arithmetic">;
 def Availability : DiagGroup<"availability">;
 def Section : DiagGroup<"section">;
 def AutoImport : DiagGroup<"auto-import">;
+def CXX14BinaryLiteral : DiagGroup<"c++14-binary-literal">;
 def GNUBinaryLiteral : DiagGroup<"gnu-binary-literal">;
 def GNUCompoundLiteralInitializer : DiagGroup<"gnu-compound-literal-initializer">;
 def BitFieldConstantConversion : DiagGroup<"bitfield-constant-conversion">;
@@ -680,7 +681,7 @@ def CXX11 : DiagGroup<"c++11-extensions", [CXX11ExtraSemi, CXX11LongLong]>;
 
 // A warning group for warnings about using C++14 features as extensions in
 // earlier C++ versions.
-def CXX14 : DiagGroup<"c++14-extensions">;
+def CXX14 : DiagGroup<"c++14-extensions", [CXX14BinaryLiteral]>;
 
 // A warning group for warnings about using C++1z features as extensions in
 // earlier C++ versions.
