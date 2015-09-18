@@ -911,8 +911,9 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
       elementType = elemReg->getElementType();
     }
     else if (isa<SubRegion>(region)) {
+      assert(op == BO_Add || op == BO_Sub);
+      index = (op == BO_Add) ? rhs : evalMinus(rhs);
       superR = region;
-      index = rhs;
       if (resultTy->isAnyPointerType())
         elementType = resultTy->getPointeeType();
     }

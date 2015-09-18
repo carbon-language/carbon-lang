@@ -296,3 +296,20 @@ void symbolicFieldRegion(struct Point *points, int i, int j) {
   clang_analyzer_eval(&points[i].x < &points[i].y);// expected-warning{{TRUE}}
 }
 
+void negativeIndex(char *str) {
+  *(str + 1) = 'a';
+  clang_analyzer_eval(*(str + 1) == 'a'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(*(str - 1) == 'a'); // expected-warning{{UNKNOWN}}
+
+  char *ptr1 = str - 1;
+  clang_analyzer_eval(*ptr1 == 'a'); // expected-warning{{UNKNOWN}}
+
+  char *ptr2 = str;
+  ptr2 -= 1;
+  clang_analyzer_eval(*ptr2 == 'a'); // expected-warning{{UNKNOWN}}
+
+  char *ptr3 = str;
+  --ptr3;
+  clang_analyzer_eval(*ptr3 == 'a'); // expected-warning{{UNKNOWN}}
+}
+
