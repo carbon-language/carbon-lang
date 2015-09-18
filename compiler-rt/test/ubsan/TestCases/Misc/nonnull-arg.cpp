@@ -8,8 +8,8 @@
 // RUN: not %run %t 0f 2>&1 | FileCheck %s --check-prefix=FUNC
 // RUN: not %run %t 0v 2>&1 | FileCheck %s --check-prefix=VARIADIC
 //
-// AArch64 lacks var args instrumentation.
-// XFAIL: aarch64
+// AArch64 lacks variadic instrumentation for MSAN.
+// REQUIRES: stable-runtime
 
 class C {
   int *null_;
