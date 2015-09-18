@@ -180,9 +180,14 @@ def call_with_timeout(command, timeout, name, inferior_pid_events):
         command = [timeout_command, '-s', 'QUIT', timeout] + command
 
     if GET_WORKER_INDEX is not None:
-        worker_index = GET_WORKER_INDEX()
-        command.extend([
-            "--event-add-entries", "worker_index={}".format(worker_index)])
+        try:
+            worker_index = GET_WORKER_INDEX()
+            command.extend([
+                "--event-add-entries", "worker_index={}".format(worker_index)])
+        except:
+            # Ctrl-C does bad things to multiprocessing.Manager.dict() lookup.
+            pass
+
     # Specifying a value for close_fds is unsupported on Windows when using
     # subprocess.PIPE
     if os.name != "nt":
@@ -896,7 +901,7 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv,
     # listener channel and tell the inferior to send results to the
     # port on which we'll be listening.
     if RESULTS_FORMATTER is not None:
-        forwarding_func = RESULTS_FORMATTER.process_event
+        forwarding_func = RESULTS_FORMATTER.handle_event
         RESULTS_LISTENER_CHANNEL = (
             dotest_channels.UnpicklingForwardingListenerChannel(
                 RUNNER_PROCESS_ASYNC_MAP, "localhost", 0, forwarding_func))
@@ -1183,15 +1188,6 @@ def main(print_details_on_success, num_threads, test_subdir,
     cores = find('core.*', test_subdir)
     for core in cores:
         os.unlink(core)
-
-    if not num_threads:
-        num_threads_str = os.environ.get("LLDB_TEST_THREADS")
-        if num_threads_str:
-            num_threads = int(num_threads_str)
-        else:
-            num_threads = multiprocessing.cpu_count()
-    if num_threads < 1:
-        num_threads = 1
 
     system_info = " ".join(platform.uname())
 

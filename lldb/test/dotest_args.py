@@ -1,4 +1,5 @@
 import sys
+import multiprocessing
 import os
 import textwrap
 
@@ -25,6 +26,16 @@ def parse_args(parser, argv):
         return parser.parse_args(args=argv, namespace=args)
     else:
         return parser.parse_args(args=argv)
+
+
+def default_thread_count():
+    # Check if specified in the environment
+    num_threads_str = os.environ.get("LLDB_TEST_THREADS")
+    if num_threads_str:
+        return int(num_threads_str)
+    else:
+        return multiprocessing.cpu_count()
+
 
 def create_parser():
     parser = argparse.ArgumentParser(description='description', prefix_chars='+-', add_help=False)
@@ -126,6 +137,7 @@ def create_parser():
         '--threads',
         type=int,
         dest='num_threads',
+        default=default_thread_count(),
         help=('The number of threads/processes to use when running tests '
               'separately, defaults to the number of CPU cores available'))
     group.add_argument(
