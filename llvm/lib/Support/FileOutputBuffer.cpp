@@ -15,6 +15,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Errc.h"
+#include "llvm/Support/Signals.h"
 #include <system_error>
 
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
@@ -74,6 +75,8 @@ FileOutputBuffer::create(StringRef FilePath, size_t Size, unsigned Flags) {
   if (EC)
     return EC;
 
+  sys::RemoveFileOnSignal(TempFilePath);
+
 #ifndef LLVM_ON_WIN32
   // On Windows, CreateFileMapping (the mmap function on Windows)
   // automatically extends the underlying file. We don't need to
@@ -104,6 +107,8 @@ std::error_code FileOutputBuffer::commit() {
 
 
   // Rename file to final name.
-  return sys::fs::rename(Twine(TempPath), Twine(FinalPath));
+  std::error_code EC = sys::fs::rename(Twine(TempPath), Twine(FinalPath));
+  sys::DontRemoveFileOnSignal(TempPath);
+  return EC;
 }
 } // namespace
