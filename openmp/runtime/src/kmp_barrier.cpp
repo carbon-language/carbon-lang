@@ -1514,7 +1514,7 @@ __kmp_join_barrier(int gtid)
 
 #if OMPT_SUPPORT
     if (ompt_status & ompt_status_track) {
-#if OMPT_TRACE
+#if OMPT_BLAME
         if ((ompt_status == ompt_status_track_callback) &&
             ompt_callbacks.ompt_callback(ompt_event_barrier_end)) {
             ompt_callbacks.ompt_callback(ompt_event_barrier_end)(
