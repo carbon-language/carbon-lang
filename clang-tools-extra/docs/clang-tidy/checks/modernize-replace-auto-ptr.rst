@@ -1,29 +1,71 @@
 modernize-replace-auto-ptr
 ==========================
 
+This check replaces the uses of the deprecated class ``std::auto_ptr`` by
+``std::unique_ptr`` (introduced in C++11). The transfer of ownership, done
+by the copy-constructor and the assignment operator, is changed to match
+``std::unique_ptr`` usage by using explicit calls to ``std::move()``.
 
-Transforms the deprecated ``std::auto_ptr`` into the C++11 ``std::unique_ptr``.
+Migration example:
 
-Note that both the ``std::auto_ptr`` type and the transfer of ownership are
-transformed. ``std::auto_ptr`` provides two ways to transfer the ownership,
-the copy-constructor and the assignment operator. Unlike most classes these
-operations do not 'copy' the resource but they 'steal' it.
-``std::unique_ptr`` uses move semantics instead, which makes the intent of
-transferring the resource explicit. This difference between the two smart
-pointers requeres to wrap the copy-ctor and assign-operator with
-``std::move()``.
+.. code-block:: c++
 
-For example, given:
+  -void take_ownership_fn(std::auto_ptr<int> int_ptr);
+  +void take_ownership_fn(std::unique_ptr<int> int_ptr);
 
-.. code:: c++
+   void f(int x) {
+  -  std::auto_ptr<int> a(new int(x));
+  -  std::auto_ptr<int> b;
+  +  std::unique_ptr<int> a(new int(x));
+  +  std::unique_ptr<int> b;
 
-  std::auto_ptr<int> i, j;
-  i = j;
+  -  b = a;
+  -  take_ownership_fn(b);
+  +  b = std::move(a);
+  +  take_ownership_fn(std::move(b));
+   }
 
-This code is transformed to:
+Since `std::move()` is a library function declared in `<utility>` it may be
+necessary to add this include. The transform will add the include directive when
+necessary.
 
-.. code:: c++
+Known Limitations
+=================
+* If headers modification is not activated or if a header is not allowed to be
+  changed this transform will produce broken code (compilation error), where the
+  the headers' code will stay unchanged while the code using them will be
+  changed.
 
-  std::unique_ptr<in> i, j;
-  i = std::move(j);
+* Client code that declares a reference to an ``std::auto_ptr`` coming from code
+  that can't be migrated (such as a header coming from a 3\ :sup:`rd` party
+  library) will produce a compilation error after migration. This is because the
+  type of the reference will be changed to ``std::unique_ptr`` but the type
+  returned by the library won't change, binding a reference to
+  ``std::unique_ptr`` from an ``std::auto_ptr``. This pattern doesn't make much
+  sense and usually ``std::auto_ptr`` are stored by value (otherwise what is the
+  point in using them instead of a reference or a pointer?).
+
+  .. code-block:: c++
+
+     // <3rd-party header...>
+     std::auto_ptr<int> get_value();
+     const std::auto_ptr<int> & get_ref();
+
+     // <calling code (with migration)...>
+    -std::auto_ptr<int> a(get_value());
+    +std::unique_ptr<int> a(get_value()); // ok, unique_ptr constructed from auto_ptr
+
+    -const std::auto_ptr<int> & p = get_ptr();
+    +const std::unique_ptr<int> & p = get_ptr(); // won't compile
+
+* Non-instantiated templates aren't modified.
+
+  .. code-block:: c++
+
+     template <typename X>
+     void f() {
+         std::auto_ptr<X> p;
+     }
+
+     // only 'f<int>()' (or similar) will trigger the replacement.
 
