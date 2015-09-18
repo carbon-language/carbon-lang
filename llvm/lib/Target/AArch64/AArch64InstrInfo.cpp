@@ -1394,40 +1394,32 @@ bool AArch64InstrInfo::getMemOpBaseRegImmOfsWidth(
     Scale = 1;
     break;
   case AArch64::LDRXui:
+  case AArch64::LDRDui:
   case AArch64::STRXui:
+  case AArch64::STRDui:
     Scale = Width = 8;
     break;
   case AArch64::LDRWui:
-  case AArch64::STRWui:
-    Scale = Width = 4;
-    break;
-  case AArch64::LDRBui:
-  case AArch64::STRBui:
-    Scale = Width = 1;
-    break;
-  case AArch64::LDRHui:
-  case AArch64::STRHui:
-    Scale = Width = 2;
-    break;
   case AArch64::LDRSui:
+  case AArch64::STRWui:
   case AArch64::STRSui:
     Scale = Width = 4;
     break;
-  case AArch64::LDRDui:
-  case AArch64::STRDui:
-    Scale = Width = 8;
+  case AArch64::LDRBui:
+  case AArch64::LDRBBui:
+  case AArch64::STRBui:
+  case AArch64::STRBBui:
+    Scale = Width = 1;
+    break;
+  case AArch64::LDRHui:
+  case AArch64::LDRHHui:
+  case AArch64::STRHui:
+  case AArch64::STRHHui:
+    Scale = Width = 2;
     break;
   case AArch64::LDRQui:
   case AArch64::STRQui:
     Scale = Width = 16;
-    break;
-  case AArch64::LDRBBui:
-  case AArch64::STRBBui:
-    Scale = Width = 1;
-    break;
-  case AArch64::LDRHHui:
-  case AArch64::STRHHui:
-    Scale = Width = 2;
     break;
   };
 
