@@ -974,7 +974,6 @@ void ScopStmt::buildDomain() {
 }
 
 void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP) {
-  int Dimension = 0;
   isl_ctx *Ctx = Parent.getIslCtx();
   isl_local_space *LSpace = isl_local_space_from_space(getDomainSpace());
   Type *Ty = GEP->getPointerOperandType();
@@ -986,7 +985,6 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP) {
   std::tie(Subscripts, Sizes) = getIndexExpressionsFromGEP(GEP, SE);
 
   if (auto *PtrTy = dyn_cast<PointerType>(Ty)) {
-    Dimension = 1;
     Ty = PtrTy->getElementType();
   }
 
