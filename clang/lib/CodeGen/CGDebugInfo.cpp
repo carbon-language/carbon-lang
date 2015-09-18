@@ -1674,7 +1674,7 @@ llvm::DIType *CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
 llvm::DIModule *
 CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod) {
-  auto &ModRef = ModuleRefCache[Mod.Signature];
+  auto &ModRef = ModuleRefCache[Mod.ModuleName];
   if (ModRef)
     return cast<llvm::DIModule>(ModRef);
 
