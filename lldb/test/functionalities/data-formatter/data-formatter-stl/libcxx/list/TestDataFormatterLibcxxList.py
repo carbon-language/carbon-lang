@@ -2,7 +2,7 @@
 Test lldb data formatter subsystem.
 """
 
-import os, time
+import os, time, re
 import unittest2
 import lldb
 from lldbtest import *
@@ -39,6 +39,8 @@ class LibcxxListDataFormatterTestCase(TestBase):
     def data_formatter_commands(self):
         """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+        
+        lldbutil.skip_if_library_missing(self, self.target(), lldbutil.PrintableRegex("libc\+\+"))
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=-1)
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line2, num_expected_locations=-1)
