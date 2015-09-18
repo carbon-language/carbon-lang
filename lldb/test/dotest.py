@@ -830,7 +830,13 @@ def parseOptionsAndInitTestdirs():
         for keyval in args.event_add_entries.split(","):
             key_val_entry = keyval.split("=")
             if len(key_val_entry) == 2:
-                entries[key_val_entry[0]] = key_val_entry[1]
+                (key, val) = key_val_entry
+                val_parts = val.split(':')
+                if len(val_parts) > 1:
+                    (val, val_type) = val_parts
+                    if val_type == 'int':
+                        val = int(val)
+                entries[key] = val
         # Tell the event builder to create all events with these
         # key/val pairs in them.
         if len(entries) > 0:

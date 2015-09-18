@@ -183,7 +183,7 @@ def call_with_timeout(command, timeout, name, inferior_pid_events):
         try:
             worker_index = GET_WORKER_INDEX()
             command.extend([
-                "--event-add-entries", "worker_index={}".format(worker_index)])
+                "--event-add-entries", "worker_index={}:int".format(worker_index)])
         except:
             # Ctrl-C does bad things to multiprocessing.Manager.dict() lookup.
             pass
@@ -1084,7 +1084,6 @@ def _remove_option(args, option_name, removal_count):
         for index in range(len(args)):
             match = regex.match(args[index])
             if match:
-                print "found matching option= at index {}".format(index)
                 del args[index]
                 return
         print "failed to find regex '{}'".format(regex_string)
