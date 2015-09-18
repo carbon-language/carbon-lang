@@ -1024,17 +1024,25 @@ function(add_lit_testsuites project directory)
 endfunction()
 
 function(llvm_install_symlink name dest)
+  cmake_parse_arguments(ARG "ALWAYS_GENERATE" "" "" ${ARGN})
   foreach(path ${CMAKE_MODULE_PATH})
     if(EXISTS ${path}/LLVMInstallSymlink.cmake)
       set(INSTALL_SYMLINK ${path}/LLVMInstallSymlink.cmake)
       break()
     endif()
   endforeach()
+  
+  if(ARG_ALWAYS_GENERATE)
+    set(component ${dest})
+  else()
+    set(component ${name})
+  endif()
+
   install(SCRIPT ${INSTALL_SYMLINK}
           CODE "install_symlink(${name} ${dest})"
-          COMPONENT ${name})
+          COMPONENT ${component})
 
-  if (NOT CMAKE_CONFIGURATION_TYPES)
+  if (NOT CMAKE_CONFIGURATION_TYPES AND NOT ARG_ALWAYS_GENERATE)
     add_custom_target(install-${name}
                       DEPENDS ${name} ${dest} install-${dest}
                       COMMAND "${CMAKE_COMMAND}"
@@ -1044,6 +1052,7 @@ function(llvm_install_symlink name dest)
 endfunction()
 
 function(add_llvm_tool_symlink name dest)
+  cmake_parse_arguments(ARG "ALWAYS_GENERATE" "" "" ${ARGN})
   if(UNIX)
     set(LLVM_LINK_OR_COPY create_symlink)
     set(dest_binary "${dest}${CMAKE_EXECUTABLE_SUFFIX}")
@@ -1054,28 +1063,32 @@ function(add_llvm_tool_symlink name dest)
 
   set(output_path "${LLVM_RUNTIME_OUTPUT_INTDIR}/${name}${CMAKE_EXECUTABLE_SUFFIX}")
 
-  add_custom_command(OUTPUT ${output_path}
+  if(ARG_ALWAYS_GENERATE)
+    set_property(DIRECTORY APPEND PROPERTY
+      ADDITIONAL_MAKE_CLEAN_FILES ${dest_binary})
+    add_custom_command(TARGET ${dest} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E ${LLVM_LINK_OR_COPY} "${dest_binary}" "${output_path}")
+  else()
+    add_custom_command(OUTPUT ${output_path}
                      COMMAND ${CMAKE_COMMAND} -E ${LLVM_LINK_OR_COPY} "${dest_binary}" "${output_path}"
                      DEPENDS ${dest})
+    add_custom_target(${name} ALL DEPENDS ${output_path})
+    set_target_properties(${name} PROPERTIES FOLDER Tools)
 
-  add_custom_target(${name} ALL DEPENDS ${output_path})
-  set_target_properties(${name} PROPERTIES FOLDER Tools)
-  set_property(DIRECTORY APPEND PROPERTY
-    ADDITIONAL_MAKE_CLEAN_FILES ${dest_binary})
+    # Make sure the parent tool is a toolchain tool, otherwise exclude this tool
+    list(FIND LLVM_TOOLCHAIN_TOOLS ${dest} LLVM_IS_${dest}_TOOLCHAIN_TOOL)
+    if (NOT LLVM_IS_${dest}_TOOLCHAIN_TOOL GREATER -1)
+      set(LLVM_IS_${name}_TOOLCHAIN_TOOL ${LLVM_IS_${dest}_TOOLCHAIN_TOOL})
+    else()
+      list(FIND LLVM_TOOLCHAIN_TOOLS ${name} LLVM_IS_${name}_TOOLCHAIN_TOOL)
+    endif()
 
-  # Make sure the parent tool is a toolchain tool, otherwise exclude this tool
-  list(FIND LLVM_TOOLCHAIN_TOOLS ${dest} LLVM_IS_${dest}_TOOLCHAIN_TOOL)
-  if (NOT LLVM_IS_${dest}_TOOLCHAIN_TOOL GREATER -1)
-    set(LLVM_IS_${name}_TOOLCHAIN_TOOL ${LLVM_IS_${dest}_TOOLCHAIN_TOOL})
-  else()
-    list(FIND LLVM_TOOLCHAIN_TOOLS ${name} LLVM_IS_${name}_TOOLCHAIN_TOOL)
-  endif()
-
-  # LLVM_IS_${name}_TOOLCHAIN_TOOL will only be greater than -1 if both this
-  # tool and its parent tool are in LLVM_TOOLCHAIN_TOOLS
-  if (LLVM_IS_${name}_TOOLCHAIN_TOOL GREATER -1 OR NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
-    if( LLVM_BUILD_TOOLS )
-      llvm_install_symlink(${name} ${dest})
+    # LLVM_IS_${name}_TOOLCHAIN_TOOL will only be greater than -1 if both this
+    # tool and its parent tool are in LLVM_TOOLCHAIN_TOOLS
+    if (LLVM_IS_${name}_TOOLCHAIN_TOOL GREATER -1 OR NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+      if( LLVM_BUILD_TOOLS )
+        llvm_install_symlink(${name} ${dest})
+      endif()
     endif()
   endif()
 endfunction()
