@@ -86,7 +86,7 @@ public:
   void getRelocationTypeName(uint32_t Type,
                              SmallVectorImpl<char> &Result) const;
 
-  /// \brief Get the symbol table section and symbol for a given relocation.
+  /// \brief Get the symbol for a given relocation.
   template <class RelT>
   const Elf_Sym *getRelocationSymbol(const RelT *Rel,
                                      const Elf_Shdr *SymTab) const;
