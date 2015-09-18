@@ -3274,7 +3274,7 @@ std::error_code BitcodeReader::parseModule(bool Resume,
     case bitc::MODULE_CODE_ALIAS:
     case bitc::MODULE_CODE_ALIAS_OLD: {
       bool NewRecord = BitCode == bitc::MODULE_CODE_ALIAS;
-      if (Record.size() < (3 + NewRecord))
+      if (Record.size() < (3 + (unsigned)NewRecord))
         return error("Invalid record");
       unsigned OpNum = 0;
       Type *Ty = getTypeByID(Record[OpNum++]);
