@@ -223,6 +223,7 @@ template <class ELFT> class Writer;
 template <class ELFT>
 class SymbolTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
 public:
+  typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
@@ -733,6 +734,8 @@ static bool includeInSymtab(const SymbolBody &B) {
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
+  const OutputSection<ELFT> *Out = nullptr;
+  const SectionChunk<ELFT> *Section = nullptr;
   Buf += sizeof(Elf_Sym);
 
   // All symbols with STB_LOCAL binding precede the weak and global symbols.
@@ -744,10 +747,22 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       Elf_Sym_Range Syms = File.getLocalSymbols();
       for (const Elf_Sym &Sym : Syms) {
         auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
+        uint32_t SecIndex = Sym.st_shndx;
         ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
         ESym->st_name = (SymName) ? StrTabSec.getFileOff(*SymName) : 0;
-        ESym->st_value = Sym.st_value;
         ESym->st_size = Sym.st_size;
+        ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
+        if (SecIndex == SHN_XINDEX)
+          SecIndex = File.getObj()->getExtendedSymbolTableIndex(
+              &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
+        ArrayRef<SectionChunk<ELFT> *> Chunks = File.getChunks();
+        Section = Chunks[SecIndex];
+        assert(Section != nullptr);
+        Out = Section->getOutputSection();
+        assert(Out != nullptr);
+        ESym->st_shndx = Out->getSectionIndex();
+        ESym->st_value =
+            Out->getVA() + Section->getOutputSectionOff() + Sym.st_value;
         Buf += sizeof(Elf_Sym);
       }
     }
@@ -764,8 +779,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
     ESym->st_name = StrTabSec.getFileOff(Name);
 
-    const SectionChunk<ELFT> *Section = nullptr;
-    const OutputSection<ELFT> *Out = nullptr;
+    Out = nullptr;
+    Section = nullptr;
 
     switch (Body->kind()) {
     case SymbolBody::DefinedRegularKind:

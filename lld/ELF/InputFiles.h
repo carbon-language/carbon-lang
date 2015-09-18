@@ -143,6 +143,9 @@ public:
 
   Elf_Sym_Range getLocalSymbols();
 
+  const Elf_Shdr *getSymbolTable() { return this->Symtab; };
+  ArrayRef<Elf_Word> getSymbolTableShndx() { return SymtabSHNDX; };
+
 private:
   void initializeChunks();
   void initializeSymbols();
