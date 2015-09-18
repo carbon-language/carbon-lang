@@ -92,11 +92,8 @@ GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
   std::vector<std::unique_ptr<ASTConsumer>> Consumers;
   Consumers.push_back(llvm::make_unique<PCHGenerator>(
       CI.getPreprocessor(), OutputFile, nullptr, Sysroot, Buffer));
-  Consumers.push_back(
-      CI.getPCHContainerWriter().CreatePCHContainerGenerator(
-          CI.getDiagnostics(), CI.getHeaderSearchOpts(),
-          CI.getPreprocessorOpts(), CI.getTargetOpts(), CI.getLangOpts(),
-          InFile, OutputFile, OS, Buffer));
+  Consumers.push_back(CI.getPCHContainerWriter().CreatePCHContainerGenerator(
+      CI.getDiagnostics(), CI, InFile, OutputFile, OS, Buffer));
 
   return llvm::make_unique<MultiplexConsumer>(std::move(Consumers));
 }
@@ -140,11 +137,8 @@ GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
       CI.getPreprocessor(), OutputFile, Module, Sysroot, Buffer,
       /*AllowASTWithErrors*/false,
       /*IncludeTimestamps*/+CI.getFrontendOpts().BuildingImplicitModule));
-  Consumers.push_back(
-      CI.getPCHContainerWriter().CreatePCHContainerGenerator(
-          CI.getDiagnostics(), CI.getHeaderSearchOpts(),
-          CI.getPreprocessorOpts(), CI.getTargetOpts(), CI.getLangOpts(),
-          InFile, OutputFile, OS, Buffer));
+  Consumers.push_back(CI.getPCHContainerWriter().CreatePCHContainerGenerator(
+      CI.getDiagnostics(), CI, InFile, OutputFile, OS, Buffer));
   return llvm::make_unique<MultiplexConsumer>(std::move(Consumers));
 }
 

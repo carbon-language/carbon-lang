@@ -18,6 +18,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/BackendUtil.h"
 #include "clang/Frontend/CodeGenOptions.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Serialization/ASTWriter.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Bitcode/BitstreamReader.h"
@@ -115,15 +116,15 @@ class PCHContainerGenerator : public ASTConsumer {
   };
 
 public:
-  PCHContainerGenerator(DiagnosticsEngine &diags,
-                        const HeaderSearchOptions &HSO,
-                        const PreprocessorOptions &PPO, const TargetOptions &TO,
-                        const LangOptions &LO, const std::string &MainFileName,
+  PCHContainerGenerator(DiagnosticsEngine &diags, const CompilerInstance &CI,
+                        const std::string &MainFileName,
                         const std::string &OutputFileName,
                         raw_pwrite_stream *OS,
                         std::shared_ptr<PCHBuffer> Buffer)
-      : Diags(diags), Ctx(nullptr), HeaderSearchOpts(HSO), PreprocessorOpts(PPO),
-        TargetOpts(TO), LangOpts(LO), OS(OS), Buffer(Buffer) {
+      : Diags(diags), Ctx(nullptr), HeaderSearchOpts(CI.getHeaderSearchOpts()),
+        PreprocessorOpts(CI.getPreprocessorOpts()),
+        TargetOpts(CI.getTargetOpts()), LangOpts(CI.getLangOpts()), OS(OS),
+        Buffer(Buffer) {
     // The debug info output isn't affected by CodeModel and
     // ThreadModel, but the backend expects them to be nonempty.
     CodeGenOpts.CodeModel = "default";
@@ -252,13 +253,11 @@ public:
 
 std::unique_ptr<ASTConsumer>
 ObjectFilePCHContainerWriter::CreatePCHContainerGenerator(
-    DiagnosticsEngine &Diags, const HeaderSearchOptions &HSO,
-    const PreprocessorOptions &PPO, const TargetOptions &TO,
-    const LangOptions &LO, const std::string &MainFileName,
-    const std::string &OutputFileName, llvm::raw_pwrite_stream *OS,
-    std::shared_ptr<PCHBuffer> Buffer) const {
-  return llvm::make_unique<PCHContainerGenerator>(
-      Diags, HSO, PPO, TO, LO, MainFileName, OutputFileName, OS, Buffer);
+    DiagnosticsEngine &Diags, const CompilerInstance &CI,
+    const std::string &MainFileName, const std::string &OutputFileName,
+    llvm::raw_pwrite_stream *OS, std::shared_ptr<PCHBuffer> Buffer) const {
+  return llvm::make_unique<PCHContainerGenerator>(Diags, CI, MainFileName,
+                                                  OutputFileName, OS, Buffer);
 }
 
 void ObjectFilePCHContainerReader::ExtractPCH(

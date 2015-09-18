@@ -27,13 +27,7 @@ class RawPCHContainerGenerator : public ASTConsumer {
   raw_pwrite_stream *OS;
 
 public:
-  RawPCHContainerGenerator(DiagnosticsEngine &Diags,
-                           const HeaderSearchOptions &HSO,
-                           const PreprocessorOptions &PPO,
-                           const TargetOptions &TO, const LangOptions &LO,
-                           const std::string &MainFileName,
-                           const std::string &OutputFileName,
-                           llvm::raw_pwrite_stream *OS,
+  RawPCHContainerGenerator(llvm::raw_pwrite_stream *OS,
                            std::shared_ptr<PCHBuffer> Buffer)
       : Buffer(Buffer), OS(OS) {}
 
@@ -54,13 +48,10 @@ public:
 } // anonymous namespace
 
 std::unique_ptr<ASTConsumer> RawPCHContainerWriter::CreatePCHContainerGenerator(
-    DiagnosticsEngine &Diags, const HeaderSearchOptions &HSO,
-    const PreprocessorOptions &PPO, const TargetOptions &TO,
-    const LangOptions &LO, const std::string &MainFileName,
-    const std::string &OutputFileName, llvm::raw_pwrite_stream *OS,
-    std::shared_ptr<PCHBuffer> Buffer) const {
-  return llvm::make_unique<RawPCHContainerGenerator>(
-      Diags, HSO, PPO, TO, LO, MainFileName, OutputFileName, OS, Buffer);
+    DiagnosticsEngine &Diags, const CompilerInstance &CI,
+    const std::string &MainFileName, const std::string &OutputFileName,
+    llvm::raw_pwrite_stream *OS, std::shared_ptr<PCHBuffer> Buffer) const {
+  return llvm::make_unique<RawPCHContainerGenerator>(OS, Buffer);
 }
 
 void RawPCHContainerReader::ExtractPCH(
