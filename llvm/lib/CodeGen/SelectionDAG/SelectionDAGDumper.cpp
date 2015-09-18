@@ -587,16 +587,15 @@ static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
     if (Op.getNode()->hasOneUse())
       DumpNodes(Op.getNode(), indent+2, G);
     else
-      dbgs() << "\n" << std::string(indent+2, ' ')
-             << PrintNodeId(*Op.getNode()) << ": <multiple use>";
+      dbgs() << std::string(indent+2, ' ')
+             << PrintNodeId(*Op.getNode()) << ": <multiple use>\n";
 
-  dbgs() << '\n';
   dbgs().indent(indent);
   N->dump(G);
 }
 
 void SelectionDAG::dump() const {
-  dbgs() << "SelectionDAG has " << AllNodes.size() << " nodes:";
+  dbgs() << "SelectionDAG has " << AllNodes.size() << " nodes:\n";
 
   for (allnodes_const_iterator I = allnodes_begin(), E = allnodes_end();
        I != E; ++I) {
