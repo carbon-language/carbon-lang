@@ -350,6 +350,23 @@ llvm-as-fuzzer
 
 Tracking bug: https://llvm.org/bugs/show_bug.cgi?id=24639
 
+llvm-mc-fuzzer
+--------------
+
+This tool fuzzes the MC layer. Currently it is only able to fuzz the
+disassembler but it is hoped that assembly, and round-trip verification will be
+added in future.
+
+When run in dissassembly mode, the inputs are opcodes to be disassembled. The
+fuzzer will consume as many instructions as possible and will stop when it
+finds an invalid instruction or runs out of data.
+
+Please note that the command line interface differs from that of other fuzzers.
+The fuzzer arguments are specified with ``-fuzzer-args`` while other arguments
+control the operation mode and target in a similar manner to ``llvm-mc``.
+
+Unfortunately, this fuzzer is currently unable to use the -jobs option.
+
 Buildbot
 --------
 
