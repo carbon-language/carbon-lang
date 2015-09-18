@@ -13,12 +13,9 @@
 #include <functional>
 #include <string>
 #include "lldb/lldb-private.h"
-#include "lldb/Core/ClangForward.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Expression/Expression.h"
 #include "lldb/Symbol/CompilerDeclContext.h"
-#include "clang/AST/CharUnits.h"
-#include "clang/AST/Type.h"
 #include "llvm/Support/Casting.h"
 
 class DWARFDIE;

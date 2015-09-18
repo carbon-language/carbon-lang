@@ -14,8 +14,6 @@
 #include <vector>
 #include <bitset>
 
-#include "clang/AST/CharUnits.h"
-
 #include "lldb/Core/RangeMap.h"
 #include "lldb/Symbol/SymbolFile.h"
 

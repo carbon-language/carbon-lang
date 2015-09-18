@@ -15,7 +15,6 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "llvm/Support/raw_ostream.h"
-#include "clang/AST/Type.h"
 
 // Project includes
 #include "lldb/Core/DataBufferHeap.h"

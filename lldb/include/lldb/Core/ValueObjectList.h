@@ -17,7 +17,6 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
-#include "lldb/Core/ClangForward.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Target/ExecutionContextScope.h"
 

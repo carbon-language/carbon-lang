@@ -11,8 +11,6 @@
 
 #include <map>
 
-#include "clang/AST/DeclCXX.h"
-#include "clang/AST/Type.h"
 #include "llvm/ADT/StringRef.h"
 
 #include "lldb/lldb-private.h"
@@ -41,7 +39,6 @@
 #include "lldb/Interpreter/OptionValueProperties.h"
 #include "lldb/Interpreter/OptionValueSInt64.h"
 #include "lldb/Interpreter/OptionValueString.h"
-#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"

@@ -18,8 +18,6 @@
 #include <vector>
 
 // Other libraries and framework includes
-#include "clang/AST/CharUnits.h"
-#include "clang/AST/ExternalASTSource.h"
 #include "llvm/ADT/DenseMap.h"
 
 #include "lldb/lldb-private.h"

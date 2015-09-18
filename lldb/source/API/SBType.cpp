@@ -19,11 +19,9 @@
 #include "lldb/Symbol/TypeSystem.h"
 
 #include "llvm/ADT/APSInt.h"
-#include "clang/AST/Decl.h"
 
 using namespace lldb;
 using namespace lldb_private;
-using namespace clang;
 
 SBType::SBType() :
     m_opaque_sp()

@@ -11,15 +11,6 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/RecordLayout.h"
-#include "clang/CodeGen/CodeGenAction.h"
-#include "clang/CodeGen/ModuleBuilder.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Triple.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/IR/Module.h"
 
 // Project includes
 #include "lldb/Core/DataExtractor.h"
@@ -29,11 +20,9 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Expression/ASTStructExtractor.h"
-#include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/FunctionCaller.h"
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -167,7 +156,6 @@ FunctionCaller::WriteFunctionArguments (ExecutionContext &exe_ctx,
     }
         
     Error error;
-    using namespace clang;
     lldb::ExpressionResults return_value = lldb::eExpressionSetupError;
 
     Process *process = exe_ctx.GetProcessPtr();
@@ -240,8 +228,6 @@ FunctionCaller::WriteFunctionArguments (ExecutionContext &exe_ctx,
 bool
 FunctionCaller::InsertFunction (ExecutionContext &exe_ctx, lldb::addr_t &args_addr_ref, Stream &errors)
 {
-    using namespace clang;
-    
     if (CompileFunction(errors) != 0)
         return false;
     if (!WriteFunctionWrapper(exe_ctx, errors))
@@ -344,7 +330,6 @@ FunctionCaller::ExecuteFunction(
         Stream &errors, 
         Value &results)
 {
-    using namespace clang;
     lldb::ExpressionResults return_value = lldb::eExpressionSetupError;
     
     // FunctionCaller::ExecuteFunction execution is always just to get the result.  Do make sure we ignore

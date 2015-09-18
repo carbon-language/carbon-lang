@@ -14,9 +14,6 @@
 // Other libraries and framework includes
 // Project includes
 
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/DeclCXX.h"
-
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Log.h"

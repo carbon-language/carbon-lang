@@ -11,7 +11,6 @@
 #define liblldb_ASTDumper_h_
 
 #include "clang/AST/DeclVisitor.h"
-#include "clang/AST/StmtVisitor.h"
 #include "clang/AST/TypeVisitor.h"
 
 #include "lldb/Core/Stream.h"

@@ -10,7 +10,6 @@
 #ifndef liblldb_Function_h_
 #define liblldb_Function_h_
 
-#include "lldb/Core/ClangForward.h"
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/Declaration.h"
