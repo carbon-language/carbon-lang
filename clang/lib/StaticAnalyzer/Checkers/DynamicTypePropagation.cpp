@@ -665,38 +665,36 @@ findMethodDecl(const ObjCMessageExpr *MessageExpr,
 /// Get the returned ObjCObjectPointerType by a method based on the tracked type
 /// information, or null pointer when the returned type is not an
 /// ObjCObjectPointerType.
-static const ObjCObjectPointerType *getReturnTypeForMethod(
+static QualType getReturnTypeForMethod(
     const ObjCMethodDecl *Method, ArrayRef<QualType> TypeArgs,
     const ObjCObjectPointerType *SelfType, ASTContext &C) {
   QualType StaticResultType = Method->getReturnType();
 
   // Is the return type declared as instance type?
   if (StaticResultType == C.getObjCInstanceType())
-    return SelfType;
+    return QualType(SelfType, 0);
 
   // Check whether the result type depends on a type parameter.
   if (!isObjCTypeParamDependent(StaticResultType))
-    return nullptr;
+    return QualType();
 
   QualType ResultType = StaticResultType.substObjCTypeArgs(
       C, TypeArgs, ObjCSubstitutionContext::Result);
 
-  return ResultType->getAs<ObjCObjectPointerType>();
+  return ResultType;
 }
 
 /// Validate that the return type of a message expression is used correctly.
 /// Returns true in case an error is detected.
 bool DynamicTypePropagation::isReturnValueMisused(
     const ObjCMessageExpr *MessageExpr,
-    const ObjCObjectPointerType *SeflType, SymbolRef Sym,
+    const ObjCObjectPointerType *ResultPtrType, SymbolRef Sym,
     const ObjCMethodDecl *Method, ArrayRef<QualType> TypeArgs,
     bool SubscriptOrProperty, CheckerContext &C) const {
-  ASTContext &ASTCtxt = C.getASTContext();
-  const auto *ResultPtrType =
-      getReturnTypeForMethod(Method, TypeArgs, SeflType, ASTCtxt);
   if (!ResultPtrType)
     return false;
 
+  ASTContext &ASTCtxt = C.getASTContext();
   const Stmt *Parent =
       C.getCurrentAnalysisDeclContext()->getParentMap().getParent(MessageExpr);
   if (SubscriptOrProperty) {
@@ -861,12 +859,32 @@ void DynamicTypePropagation::checkPostObjCMessage(const ObjCMethodCall &M,
   if (!TypeArgs)
     return;
 
-  if (isReturnValueMisused(MessageExpr, *TrackedType, RecSym, Method, *TypeArgs,
-                           M.getMessageKind() != OCM_Message, C))
+  QualType ResultType =
+      getReturnTypeForMethod(Method, *TypeArgs, *TrackedType, ASTCtxt);
+  // The static type is the same as the deduced type.
+  if (ResultType.isNull())
     return;
 
-  const auto *ResultPtrType =
-      getReturnTypeForMethod(Method, *TypeArgs, *TrackedType, ASTCtxt);
+  const MemRegion *RetRegion = M.getReturnValue().getAsRegion();
+  ExplodedNode *Pred = C.getPredecessor();
+  // When there is an entry available for the return symbol in DynamicTypeMap,
+  // the call was inlined, and the information in the DynamicTypeMap is should
+  // be precise.
+  if (RetRegion && !State->get<DynamicTypeMap>(RetRegion)) {
+    // TODO: we have duplicated information in DynamicTypeMap and
+    // MostSpecializedTypeArgsMap. We should only store anything in the later if
+    // the stored data differs from the one stored in the former.
+    State = setDynamicTypeInfo(State, RetRegion, ResultType,
+                               /*CanBeSubclass=*/true);
+    Pred = C.addTransition(State);
+  }
+
+  const auto *ResultPtrType = ResultType->getAs<ObjCObjectPointerType>();
+
+  if (isReturnValueMisused(MessageExpr, ResultPtrType, RecSym, Method,
+                           *TypeArgs, M.getMessageKind() != OCM_Message, C))
+    return;
+
   if (!ResultPtrType || ResultPtrType->isUnspecialized())
     return;
 
@@ -874,7 +892,7 @@ void DynamicTypePropagation::checkPostObjCMessage(const ObjCMethodCall &M,
   // for the result symbol.
   if (!State->get<MostSpecializedTypeArgsMap>(RetSym)) {
     State = State->set<MostSpecializedTypeArgsMap>(RetSym, ResultPtrType);
-    C.addTransition(State);
+    C.addTransition(State, Pred);
   }
 }
 
