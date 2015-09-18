@@ -26,8 +26,18 @@ __attribute__((objc_root_class))
 @interface NSNumber : NSObject <NSCopying>
 @end
 
+@class MyType;
+
 void testTypeCheck(NSString* str) {
   id obj = str;
   NSNumber *num = obj; // expected-warning {{}}
+  (void)num;
+}
+
+void testForwardDeclarations(NSString* str) {
+  id obj = str;
+  // Do not warn, since no information is available wether MyType is a sub or
+  // super class of any other type.
+  MyType *num = obj; // no warning
   (void)num;
 }

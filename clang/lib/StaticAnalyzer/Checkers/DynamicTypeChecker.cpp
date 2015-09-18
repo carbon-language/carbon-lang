@@ -151,6 +151,14 @@ PathDiagnosticPiece *DynamicTypeChecker::DynamicTypeBugVisitor::VisitNode(
   return new PathDiagnosticEventPiece(Pos, OS.str(), true, nullptr);
 }
 
+static bool hasDefinition(const ObjCObjectPointerType *ObjPtr) {
+  const ObjCInterfaceDecl *Decl = ObjPtr->getInterfaceDecl();
+  if (!Decl)
+    return false;
+
+  return Decl->getDefinition();
+}
+
 // TODO: consider checking explicit casts?
 void DynamicTypeChecker::checkPostStmt(const ImplicitCastExpr *CE,
                                        CheckerContext &C) const {
@@ -175,6 +183,9 @@ void DynamicTypeChecker::checkPostStmt(const ImplicitCastExpr *CE,
   const auto *StaticObjCType = StaticType->getAs<ObjCObjectPointerType>();
 
   if (!DynObjCType || !StaticObjCType)
+    return;
+
+  if (!hasDefinition(DynObjCType) || !hasDefinition(StaticObjCType))
     return;
 
   ASTContext &ASTCtxt = C.getASTContext();
