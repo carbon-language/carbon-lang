@@ -12,6 +12,7 @@ import argparse
 import cPickle
 import inspect
 import os
+import pprint
 import re
 import sys
 import threading
@@ -22,6 +23,9 @@ import xml.sax.saxutils
 
 class EventBuilder(object):
     """Helper class to build test result event dictionaries."""
+
+    BASE_DICTIONARY = None
+
     @staticmethod
     def _get_test_name_info(test):
         """Returns (test-class-name, test-method-name) from a test case instance.
@@ -46,12 +50,19 @@ class EventBuilder(object):
         @return event dictionary with common event fields set.
         """
         test_class_name, test_name = EventBuilder._get_test_name_info(test)
-        return {
+
+        if EventBuilder.BASE_DICTIONARY is not None:
+            # Start with a copy of the "always include" entries.
+            result = dict(EventBuilder.BASE_DICTIONARY)
+        else:
+            result = {}
+        result.update({
             "event": event_type,
             "test_class": test_class_name,
             "test_name": test_name,
             "event_time": time.time()
-        }
+        })
+        return result
 
     @staticmethod
     def _error_tuple_class(error_tuple):
@@ -122,9 +133,9 @@ class EventBuilder(object):
         event = EventBuilder._event_dictionary_test_result(test, status)
         event["issue_class"] = EventBuilder._error_tuple_class(error_tuple)
         event["issue_message"] = EventBuilder._error_tuple_message(error_tuple)
-        tb = EventBuilder._error_tuple_traceback(error_tuple)
-        if tb is not None:
-            event["issue_backtrace"] = traceback.format_tb(tb)
+        backtrace = EventBuilder._error_tuple_traceback(error_tuple)
+        if backtrace is not None:
+            event["issue_backtrace"] = traceback.format_tb(backtrace)
         return event
 
     @staticmethod
@@ -246,8 +257,38 @@ class EventBuilder(object):
         event["issue_phase"] = "cleanup"
         return event
 
+    @staticmethod
+    def add_entries_to_all_events(entries_dict):
+        """Specifies a dictionary of entries to add to all test events.
+
+        This provides a mechanism for, say, a parallel test runner to
+        indicate to each inferior dotest.py that it should add a
+        worker index to each.
+
+        Calling this method replaces all previous entries added
+        by a prior call to this.
+
+        Event build methods will overwrite any entries that collide.
+        Thus, the passed in dictionary is the base, which gets merged
+        over by event building when keys collide.
+
+        @param entries_dict a dictionary containing key and value
+        pairs that should be merged into all events created by the
+        event generator.  May be None to clear out any extra entries.
+        """
+        EventBuilder.BASE_DICTIONARY = dict(entries_dict)
+
+    @staticmethod
+    def base_event():
+        """@return the base event dictionary that all events should contain."""
+        if EventBuilder.BASE_DICTIONARY is not None:
+            return dict(EventBuilder.BASE_DICTIONARY)
+        else:
+            return None
+
 
 class ResultsFormatter(object):
+
     """Provides interface to formatting test results out to a file-like object.
 
     This class allows the LLDB test framework's raw test-realted
@@ -420,6 +461,9 @@ class XunitFormatter(ResultsFormatter):
 
     @staticmethod
     def _build_illegal_xml_regex():
+        """Contructs a regex to match all illegal xml characters.
+
+        Expects to be used against a unicode string."""
         # Construct the range pairs of invalid unicode chareacters.
         illegal_chars_u = [
             (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F), (0x7F, 0x84),
@@ -453,6 +497,15 @@ class XunitFormatter(ResultsFormatter):
         return xml.sax.saxutils.quoteattr(text)
 
     def _replace_invalid_xml(self, str_or_unicode):
+        """Replaces invalid XML characters with a '?'.
+
+        @param str_or_unicode a string to replace invalid XML
+        characters within.  Can be unicode or not.  If not unicode,
+        assumes it is a byte string in utf-8 encoding.
+
+        @returns a utf-8-encoded byte string with invalid
+        XML replaced with '?'.
+        """
         # Get the content into unicode
         if isinstance(str_or_unicode, str):
             unicode_content = str_or_unicode.decode('utf-8')
@@ -471,6 +524,11 @@ class XunitFormatter(ResultsFormatter):
             XunitFormatter.RM_SUCCESS,
             XunitFormatter.RM_FAILURE,
             XunitFormatter.RM_PASSTHRU]
+        parser.add_argument(
+            "--assert-on-unknown-events",
+            action="store_true",
+            help=('cause unknown test events to generate '
+                  'a python assert.  Default is to ignore.'))
         parser.add_argument(
             "--xpass", action="store", choices=results_mapping_choices,
             default=XunitFormatter.RM_FAILURE,
@@ -533,8 +591,10 @@ class XunitFormatter(ResultsFormatter):
         elif event_type == "test_result":
             self._process_test_result(test_event)
         else:
-            sys.stderr.write("unknown event type {} from {}\n".format(
-                event_type, test_event))
+            # This is an unknown event.
+            if self.options.assert_on_unknown_events:
+                raise Exception("unknown event type {} from {}\n".format(
+                    event_type, test_event))
 
     def _handle_success(self, test_event):
         """Handles a test success.
@@ -817,17 +877,18 @@ class RawPickledFormatter(ResultsFormatter):
 
     def begin_session(self):
         super(RawPickledFormatter, self).begin_session()
-        self.process_event({
+        event = EventBuilder.base_event()
+        if event is None:
+            event = {}
+        event.update({
             "event": "session_begin",
             "event_time": time.time(),
             "pid": self.pid
         })
+        self.process_event(event)
 
     def process_event(self, test_event):
         super(RawPickledFormatter, self).process_event(test_event)
-
-        # Add pid to the event for tracking.
-        # test_event["pid"] = self.pid
 
         # Send it as {serialized_length_of_serialized_bytes}#{serialized_bytes}
         pickled_message = cPickle.dumps(test_event)
@@ -835,9 +896,21 @@ class RawPickledFormatter(ResultsFormatter):
             "{}#{}".format(len(pickled_message), pickled_message))
 
     def end_session(self):
-        self.process_event({
+        event = EventBuilder.base_event()
+        if event is None:
+            event = {}
+        event.update({
             "event": "session_end",
             "event_time": time.time(),
             "pid": self.pid
         })
+        self.process_event(event)
         super(RawPickledFormatter, self).end_session()
+
+
+class DumpFormatter(ResultsFormatter):
+    """Formats events to the file as their raw python dictionary format."""
+
+    def process_event(self, test_event):
+        super(DumpFormatter, self).process_event(test_event)
+        self.out_file.write("\n" + pprint.pformat(test_event) + "\n")

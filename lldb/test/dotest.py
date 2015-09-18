@@ -823,6 +823,19 @@ def parseOptionsAndInitTestdirs():
         lldb_platform_url = args.lldb_platform_url
     if args.lldb_platform_working_dir:
         lldb_platform_working_dir = args.lldb_platform_working_dir
+
+    if args.event_add_entries and len(args.event_add_entries) > 0:
+        entries = {}
+        # Parse out key=val pairs, separated by comma
+        for keyval in args.event_add_entries.split(","):
+            key_val_entry = keyval.split("=")
+            if len(key_val_entry) == 2:
+                entries[key_val_entry[0]] = key_val_entry[1]
+        # Tell the event builder to create all events with these
+        # key/val pairs in them.
+        if len(entries) > 0:
+            test_results.EventBuilder.add_entries_to_all_events(entries)
+
     # Gather all the dirs passed on the command line.
     if len(args.args) > 0:
         testdirs = map(os.path.abspath, args.args)
@@ -947,8 +960,15 @@ def setupTestResults():
 
     if results_filename:
         # Open the results file for writing.
-        results_file_object = open(results_filename, "w")
-        cleanup_func = results_file_object.close
+        if results_filename == 'stdout':
+            results_file_object = sys.stdout
+            cleanup_func = None
+        elif results_filename == 'stderr':
+            results_file_object = sys.stderr
+            cleanup_func = None
+        else:
+            results_file_object = open(results_filename, "w")
+            cleanup_func = results_file_object.close
         default_formatter_name = "test_results.XunitFormatter"
     elif results_port:
         # Connect to the specified localhost port.
@@ -995,7 +1015,8 @@ def setupTestResults():
             results_formatter_object.end_session()
 
             # And now close out the output file-like object.
-            cleanup_func()
+            if cleanup_func is not None:
+                cleanup_func()
 
         atexit.register(shutdown_formatter)
 
