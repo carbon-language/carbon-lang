@@ -128,12 +128,22 @@ bool ICF::equalsConstant(const SectionChunk *A, const SectionChunk *B) {
 }
 
 bool ICF::equalsVariable(const SectionChunk *A, const SectionChunk *B) {
-  assert(A->Successors.size() == B->Successors.size());
-  return std::equal(A->Successors.begin(), A->Successors.end(),
-                    B->Successors.begin(),
-                    [](const SectionChunk *X, const SectionChunk *Y) {
-                      return X->GroupID == Y->GroupID;
-                    });
+  // Compare associative sections.
+  for (size_t I = 0, E = A->AssocChildren.size(); I != E; ++I)
+    if (A->AssocChildren[I]->GroupID != B->AssocChildren[I]->GroupID)
+      return false;
+
+  // Compare relocations.
+  auto Eq = [&](const coff_relocation &R1, const coff_relocation &R2) {
+    SymbolBody *B1 = A->File->getSymbolBody(R1.SymbolTableIndex)->repl();
+    SymbolBody *B2 = B->File->getSymbolBody(R2.SymbolTableIndex)->repl();
+    if (B1 == B2)
+      return true;
+    auto *D1 = dyn_cast<DefinedRegular>(B1);
+    auto *D2 = dyn_cast<DefinedRegular>(B2);
+    return D1 && D2 && D1->getChunk()->GroupID == D2->getChunk()->GroupID;
+  };
+  return std::equal(A->Relocs.begin(), A->Relocs.end(), B->Relocs.begin(), Eq);
 }
 
 bool ICF::partition(ChunkIterator Begin, ChunkIterator End, Comparator Eq) {
@@ -190,16 +200,6 @@ void ICF::run() {
             [](SectionChunk *A, SectionChunk *B) {
               return A->GroupID < B->GroupID;
             });
-
-  // Initialize chunk successors for equalsVariable.
-  for (SectionChunk *SC : SChunks) {
-    SC->Successors = SC->AssocChildren;
-    for (const coff_relocation &R : SC->Relocs) {
-      SymbolBody *B = SC->File->getSymbolBody(R.SymbolTableIndex)->repl();
-      if (auto D = dyn_cast<DefinedRegular>(B))
-        SC->Successors.push_back(D->getChunk());
-    }
-  }
 
   // Split groups until we get a convergence.
   int Cnt = 1;

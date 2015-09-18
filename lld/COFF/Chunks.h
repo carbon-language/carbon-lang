@@ -203,7 +203,6 @@ private:
 
   // Used for ICF (Identical COMDAT Folding)
   void replaceWith(SectionChunk *Other);
-  std::vector<SectionChunk *> Successors;
   uint64_t GroupID;
 
   // Chunks are basically unnamed chunks of bytes.
