@@ -50,6 +50,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <atomic>
 #include <vector>
 
 using namespace llvm;
@@ -181,7 +182,6 @@ bool ICF::forEachGroup(std::vector<SectionChunk *> &Chunks, Comparator Eq) {
 // contents and relocations are all the same.
 void ICF::run(const std::vector<Chunk *> &Vec) {
   // Collect only mergeable sections and group by hash value.
-  std::vector<std::vector<SectionChunk *>> VChunks(NJOBS);
   parallel_for_each(Vec.begin(), Vec.end(), [&](Chunk *C) {
     if (auto *SC = dyn_cast<SectionChunk>(C)) {
       bool Writable = SC->getPermissions() & llvm::COFF::IMAGE_SCN_MEM_WRITE;
@@ -189,6 +189,7 @@ void ICF::run(const std::vector<Chunk *> &Vec) {
         SC->GroupID = getHash(SC) | (uint64_t(1) << 63);
     }
   });
+  std::vector<std::vector<SectionChunk *>> VChunks(NJOBS);
   for (Chunk *C : Vec) {
     if (auto *SC = dyn_cast<SectionChunk>(C)) {
       if (SC->GroupID) {
@@ -217,7 +218,7 @@ void ICF::run(const std::vector<Chunk *> &Vec) {
   });
 
   for (;;) {
-    bool Redo = false;
+    std::atomic<bool> Redo = false;
     parallel_for_each(VChunks.begin(), VChunks.end(),
                       [&](std::vector<SectionChunk *> &Chunks) {
       if (forEachGroup(Chunks, equalsVariable))
@@ -233,18 +234,16 @@ void ICF::run(const std::vector<Chunk *> &Vec) {
   // Merge sections in the same group.
   for (std::vector<SectionChunk *> &Chunks : VChunks) {
     for (auto It = Chunks.begin(), End = Chunks.end(); It != End;) {
-      SectionChunk *Head = *It;
-      auto Bound = std::find_if(It + 1, End, [&](SectionChunk *SC) {
+      SectionChunk *Head = *It++;
+      auto Bound = std::find_if(It, End, [&](SectionChunk *SC) {
         return Head->GroupID != SC->GroupID;
       });
-      if (std::distance(It, Bound) == 1) {
-        It = Bound;
+      if (It == Bound)
         continue;
-      }
       if (Config->Verbose)
         llvm::outs() << "Selected " << Head->getDebugName() << "\n";
-      for (++It; It != Bound; ++It) {
-        SectionChunk *SC = *It;
+      while (It != Bound) {
+        SectionChunk *SC = *It++;
         if (Config->Verbose)
           llvm::outs() << "  Removed " << SC->getDebugName() << "\n";
         SC->replaceWith(Head);
