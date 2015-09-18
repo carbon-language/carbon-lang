@@ -333,14 +333,15 @@ Value *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
                                          ScalarAllocaMapTy &Map,
                                          const char *NameExt) {
   // Check if an alloca was cached for the base instruction.
-  AllocaInst *&Addr = Map[ScalarBase];
+  Value *&Addr = Map[ScalarBase];
 
   // If no alloca was found create one and insert it in the entry block.
   if (!Addr) {
     auto *Ty = ScalarBase->getType();
-    Addr = new AllocaInst(Ty, ScalarBase->getName() + NameExt);
+    auto NewAddr = new AllocaInst(Ty, ScalarBase->getName() + NameExt);
     EntryBB = &Builder.GetInsertBlock()->getParent()->getEntryBlock();
-    Addr->insertBefore(EntryBB->getFirstInsertionPt());
+    NewAddr->insertBefore(EntryBB->getFirstInsertionPt());
+    Addr = NewAddr;
   }
 
   if (GlobalMap.count(Addr))
@@ -365,7 +366,7 @@ Value *BlockGenerator::getOrCreatePHIAlloca(Value *ScalarBase) {
 }
 
 void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
-                                        Value *InstCopy, AllocaInst *Address) {
+                                        Value *InstCopy, Value *Address) {
   // If there are escape users we get the alloca for this instruction and put it
   // in the EscapeMap for later finalization. Lastly, if the instruction was
   // copied multiple times we already did this and can exit.
@@ -391,8 +392,7 @@ void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
     return;
 
   // Get or create an escape alloca for this instruction.
-  auto *ScalarAddr =
-      Address ? Address : cast<AllocaInst>(getOrCreateScalarAlloca(Inst));
+  auto *ScalarAddr = Address ? Address : getOrCreateScalarAlloca(Inst);
 
   // Remember that this instruction has escape uses and the escape alloca.
   EscapeMap[Inst] = std::make_pair(ScalarAddr, std::move(EscapeUsers));

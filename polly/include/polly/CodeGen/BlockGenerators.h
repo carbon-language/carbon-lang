@@ -68,7 +68,7 @@ public:
   ///@{
 
   /// @see The ScalarMap and PHIOpMap member.
-  using ScalarAllocaMapTy = DenseMap<Value *, AllocaInst *>;
+  using ScalarAllocaMapTy = DenseMap<Value *, Value *>;
 
   /// @brief Simple vector of instructions to store escape users.
   using EscapeUserVectorTy = SmallVector<Instruction *, 4>;
@@ -77,7 +77,7 @@ public:
   ///
   /// @see The EscapeMap member.
   using EscapeUsersAllocaMapTy =
-      DenseMap<Instruction *, std::pair<AllocaInst *, EscapeUserVectorTy>>;
+      DenseMap<Instruction *, std::pair<Value *, EscapeUserVectorTy>>;
 
   ///@}
 
@@ -388,7 +388,7 @@ protected:
   ///                  SCoP.
   /// @param Address   If given it is used as the escape address for @p Inst.
   void handleOutsideUsers(const Region &R, Instruction *Inst, Value *InstCopy,
-                          AllocaInst *Address = nullptr);
+                          Value *Address = nullptr);
 
   /// @brief Initialize the memory of demoted scalars.
   ///
