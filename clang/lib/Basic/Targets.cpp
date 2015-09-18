@@ -1583,19 +1583,20 @@ public:
   }
 };
 
-  static const unsigned NVPTXAddrSpaceMap[] = {
-    1,    // opencl_global
-    3,    // opencl_local
-    4,    // opencl_constant
+static const unsigned NVPTXAddrSpaceMap[] = {
+    1, // opencl_global
+    3, // opencl_local
+    4, // opencl_constant
     // FIXME: generic has to be added to the target
-    0,    // opencl_generic
-    1,    // cuda_device
-    4,    // cuda_constant
-    3,    // cuda_shared
-  };
-  class NVPTXTargetInfo : public TargetInfo {
-    static const char * const GCCRegNames[];
-    static const Builtin::Info BuiltinInfo[];
+    0, // opencl_generic
+    1, // cuda_device
+    4, // cuda_constant
+    3, // cuda_shared
+};
+
+class NVPTXTargetInfo : public TargetInfo {
+  static const char *const GCCRegNames[];
+  static const Builtin::Info BuiltinInfo[];
 
   // The GPU profiles supported by the NVPTX backend
   enum GPUKind {
@@ -1607,140 +1608,138 @@ public:
     GK_SM37,
   } GPU;
 
-  public:
-    NVPTXTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
-      BigEndian = false;
-      TLSSupported = false;
-      LongWidth = LongAlign = 64;
-      AddrSpaceMap = &NVPTXAddrSpaceMap;
-      UseAddrSpaceMapMangling = true;
-      // Define available target features
-      // These must be defined in sorted order!
-      NoAsmVariants = true;
-      // Set the default GPU to sm20
-      GPU = GK_SM20;
-    }
-    void getTargetDefines(const LangOptions &Opts,
-                          MacroBuilder &Builder) const override {
-      Builder.defineMacro("__PTX__");
-      Builder.defineMacro("__NVPTX__");
-      if (Opts.CUDAIsDevice) {
-        // Set __CUDA_ARCH__ for the GPU specified.
-        std::string CUDAArchCode;
-        switch (GPU) {
-        case GK_SM20:
-          CUDAArchCode = "200";
-          break;
-        case GK_SM21:
-          CUDAArchCode = "210";
-          break;
-        case GK_SM30:
-          CUDAArchCode = "300";
-          break;
-        case GK_SM35:
-          CUDAArchCode = "350";
-          break;
-        case GK_SM37:
-          CUDAArchCode = "370";
-          break;
-        default:
-          llvm_unreachable("Unhandled target CPU");
-        }
-        Builder.defineMacro("__CUDA_ARCH__", CUDAArchCode);
+public:
+  NVPTXTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
+    BigEndian = false;
+    TLSSupported = false;
+    LongWidth = LongAlign = 64;
+    AddrSpaceMap = &NVPTXAddrSpaceMap;
+    UseAddrSpaceMapMangling = true;
+    // Define available target features
+    // These must be defined in sorted order!
+    NoAsmVariants = true;
+    // Set the default GPU to sm20
+    GPU = GK_SM20;
+  }
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    Builder.defineMacro("__PTX__");
+    Builder.defineMacro("__NVPTX__");
+    if (Opts.CUDAIsDevice) {
+      // Set __CUDA_ARCH__ for the GPU specified.
+      std::string CUDAArchCode;
+      switch (GPU) {
+      case GK_SM20:
+        CUDAArchCode = "200";
+        break;
+      case GK_SM21:
+        CUDAArchCode = "210";
+        break;
+      case GK_SM30:
+        CUDAArchCode = "300";
+        break;
+      case GK_SM35:
+        CUDAArchCode = "350";
+        break;
+      case GK_SM37:
+        CUDAArchCode = "370";
+        break;
+      default:
+        llvm_unreachable("Unhandled target CPU");
       }
+      Builder.defineMacro("__CUDA_ARCH__", CUDAArchCode);
     }
-    void getTargetBuiltins(const Builtin::Info *&Records,
-                           unsigned &NumRecords) const override {
-      Records = BuiltinInfo;
-      NumRecords = clang::NVPTX::LastTSBuiltin-Builtin::FirstTSBuiltin;
-    }
-    bool hasFeature(StringRef Feature) const override {
-      return Feature == "ptx" || Feature == "nvptx";
-    }
-
-    void getGCCRegNames(const char * const *&Names,
-                        unsigned &NumNames) const override;
-    void getGCCRegAliases(const GCCRegAlias *&Aliases,
-                                  unsigned &NumAliases) const override {
-      // No aliases.
-      Aliases = nullptr;
-      NumAliases = 0;
-    }
-    bool
-    validateAsmConstraint(const char *&Name,
-                          TargetInfo::ConstraintInfo &Info) const override {
-      switch (*Name) {
-      default: return false;
-      case 'c':
-      case 'h':
-      case 'r':
-      case 'l':
-      case 'f':
-      case 'd':
-        Info.setAllowsRegister();
-        return true;
-      }
-    }
-    const char *getClobbers() const override {
-      // FIXME: Is this really right?
-      return "";
-    }
-    BuiltinVaListKind getBuiltinVaListKind() const override {
-      // FIXME: implement
-      return TargetInfo::CharPtrBuiltinVaList;
-    }
-    bool setCPU(const std::string &Name) override {
-      GPU = llvm::StringSwitch<GPUKind>(Name)
-                .Case("sm_20", GK_SM20)
-                .Case("sm_21", GK_SM21)
-                .Case("sm_30", GK_SM30)
-                .Case("sm_35", GK_SM35)
-                .Case("sm_37", GK_SM37)
-                .Default(GK_NONE);
-
-      return GPU != GK_NONE;
-    }
-  };
-
-  const Builtin::Info NVPTXTargetInfo::BuiltinInfo[] = {
-#define BUILTIN(ID, TYPE, ATTRS) \
-    { #ID, TYPE, ATTRS, nullptr, ALL_LANGUAGES, nullptr },
-#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) \
-    { #ID, TYPE, ATTRS, HEADER, ALL_LANGUAGES, nullptr },
-#include "clang/Basic/BuiltinsNVPTX.def"
-  };
-
-  const char * const NVPTXTargetInfo::GCCRegNames[] = {
-    "r0"
-  };
-
-  void NVPTXTargetInfo::getGCCRegNames(const char * const *&Names,
-                                     unsigned &NumNames) const {
-    Names = GCCRegNames;
-    NumNames = llvm::array_lengthof(GCCRegNames);
+  }
+  void getTargetBuiltins(const Builtin::Info *&Records,
+                         unsigned &NumRecords) const override {
+    Records = BuiltinInfo;
+    NumRecords = clang::NVPTX::LastTSBuiltin - Builtin::FirstTSBuiltin;
+  }
+  bool hasFeature(StringRef Feature) const override {
+    return Feature == "ptx" || Feature == "nvptx";
   }
 
-  class NVPTX32TargetInfo : public NVPTXTargetInfo {
-  public:
-    NVPTX32TargetInfo(const llvm::Triple &Triple) : NVPTXTargetInfo(Triple) {
-      PointerWidth = PointerAlign = 32;
-      SizeType = TargetInfo::UnsignedInt;
-      PtrDiffType = TargetInfo::SignedInt;
-      IntPtrType = TargetInfo::SignedInt;
-      DataLayoutString = "e-p:32:32-i64:64-v16:16-v32:32-n16:32:64";
+  void getGCCRegNames(const char *const *&Names,
+                      unsigned &NumNames) const override;
+  void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                        unsigned &NumAliases) const override {
+    // No aliases.
+    Aliases = nullptr;
+    NumAliases = 0;
+  }
+  bool validateAsmConstraint(const char *&Name,
+                             TargetInfo::ConstraintInfo &Info) const override {
+    switch (*Name) {
+    default:
+      return false;
+    case 'c':
+    case 'h':
+    case 'r':
+    case 'l':
+    case 'f':
+    case 'd':
+      Info.setAllowsRegister();
+      return true;
     }
-  };
+  }
+  const char *getClobbers() const override {
+    // FIXME: Is this really right?
+    return "";
+  }
+  BuiltinVaListKind getBuiltinVaListKind() const override {
+    // FIXME: implement
+    return TargetInfo::CharPtrBuiltinVaList;
+  }
+  bool setCPU(const std::string &Name) override {
+    GPU = llvm::StringSwitch<GPUKind>(Name)
+              .Case("sm_20", GK_SM20)
+              .Case("sm_21", GK_SM21)
+              .Case("sm_30", GK_SM30)
+              .Case("sm_35", GK_SM35)
+              .Case("sm_37", GK_SM37)
+              .Default(GK_NONE);
 
-  class NVPTX64TargetInfo : public NVPTXTargetInfo {
-  public:
-    NVPTX64TargetInfo(const llvm::Triple &Triple) : NVPTXTargetInfo(Triple) {
-      PointerWidth = PointerAlign = 64;
-      SizeType = TargetInfo::UnsignedLong;
-      PtrDiffType = TargetInfo::SignedLong;
-      IntPtrType = TargetInfo::SignedLong;
-      DataLayoutString = "e-i64:64-v16:16-v32:32-n16:32:64";
-    }
-  };
+    return GPU != GK_NONE;
+  }
+};
+
+const Builtin::Info NVPTXTargetInfo::BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS)                                               \
+  { #ID, TYPE, ATTRS, nullptr, ALL_LANGUAGES, nullptr },
+#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER)                                    \
+  { #ID, TYPE, ATTRS, HEADER, ALL_LANGUAGES, nullptr },
+#include "clang/Basic/BuiltinsNVPTX.def"
+};
+
+const char *const NVPTXTargetInfo::GCCRegNames[] = {"r0"};
+
+void NVPTXTargetInfo::getGCCRegNames(const char *const *&Names,
+                                     unsigned &NumNames) const {
+  Names = GCCRegNames;
+  NumNames = llvm::array_lengthof(GCCRegNames);
+}
+
+class NVPTX32TargetInfo : public NVPTXTargetInfo {
+public:
+  NVPTX32TargetInfo(const llvm::Triple &Triple) : NVPTXTargetInfo(Triple) {
+    PointerWidth = PointerAlign = 32;
+    SizeType = TargetInfo::UnsignedInt;
+    PtrDiffType = TargetInfo::SignedInt;
+    IntPtrType = TargetInfo::SignedInt;
+    DataLayoutString = "e-p:32:32-i64:64-v16:16-v32:32-n16:32:64";
+  }
+};
+
+class NVPTX64TargetInfo : public NVPTXTargetInfo {
+public:
+  NVPTX64TargetInfo(const llvm::Triple &Triple) : NVPTXTargetInfo(Triple) {
+    PointerWidth = PointerAlign = 64;
+    SizeType = TargetInfo::UnsignedLong;
+    PtrDiffType = TargetInfo::SignedLong;
+    IntPtrType = TargetInfo::SignedLong;
+    DataLayoutString = "e-i64:64-v16:16-v32:32-n16:32:64";
+  }
+};
 
 static const unsigned AMDGPUAddrSpaceMap[] = {
   1,    // opencl_global
@@ -4947,15 +4946,15 @@ void ARMTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
 
 const Builtin::Info ARMTargetInfo::BuiltinInfo[] = {
 #define BUILTIN(ID, TYPE, ATTRS) \
-  { #ID, TYPE, ATTRS, nullptr, ALL_LANGUAGES, nullptr},
+  { #ID, TYPE, ATTRS, nullptr, ALL_LANGUAGES, nullptr },
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) \
   { #ID, TYPE, ATTRS, HEADER, ALL_LANGUAGES, nullptr },
 #include "clang/Basic/BuiltinsNEON.def"
 
 #define BUILTIN(ID, TYPE, ATTRS) \
-  { #ID, TYPE, ATTRS, nullptr, ALL_LANGUAGES, nullptr},
+  { #ID, TYPE, ATTRS, nullptr, ALL_LANGUAGES, nullptr },
 #define LANGBUILTIN(ID, TYPE, ATTRS, LANG) \
-  { #ID, TYPE, ATTRS, nullptr, LANG, nullptr},
+  { #ID, TYPE, ATTRS, nullptr, LANG, nullptr },
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) \
   { #ID, TYPE, ATTRS, HEADER, ALL_LANGUAGES, nullptr },
 #include "clang/Basic/BuiltinsARM.def"
@@ -6056,157 +6055,155 @@ validateAsmConstraint(const char *&Name,
   }
 }
 
-  class MSP430TargetInfo : public TargetInfo {
-    static const char * const GCCRegNames[];
-  public:
-    MSP430TargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
-      BigEndian = false;
-      TLSSupported = false;
-      IntWidth = 16; IntAlign = 16;
-      LongWidth = 32; LongLongWidth = 64;
-      LongAlign = LongLongAlign = 16;
-      PointerWidth = 16; PointerAlign = 16;
-      SuitableAlign = 16;
-      SizeType = UnsignedInt;
-      IntMaxType = SignedLongLong;
-      IntPtrType = SignedInt;
-      PtrDiffType = SignedInt;
-      SigAtomicType = SignedLong;
-      DataLayoutString = "e-m:e-p:16:16-i32:16:32-a:16-n8:16";
-    }
-    void getTargetDefines(const LangOptions &Opts,
-                          MacroBuilder &Builder) const override {
-      Builder.defineMacro("MSP430");
-      Builder.defineMacro("__MSP430__");
-      // FIXME: defines for different 'flavours' of MCU
-    }
-    void getTargetBuiltins(const Builtin::Info *&Records,
-                           unsigned &NumRecords) const override {
-      // FIXME: Implement.
-      Records = nullptr;
-      NumRecords = 0;
-    }
-    bool hasFeature(StringRef Feature) const override {
-      return Feature == "msp430";
-    }
-    void getGCCRegNames(const char * const *&Names,
-                        unsigned &NumNames) const override;
-    void getGCCRegAliases(const GCCRegAlias *&Aliases,
-                          unsigned &NumAliases) const override {
-      // No aliases.
-      Aliases = nullptr;
-      NumAliases = 0;
-    }
-    bool
-    validateAsmConstraint(const char *&Name,
-                          TargetInfo::ConstraintInfo &info) const override {
-      // FIXME: implement
-      switch (*Name) {
-      case 'K': // the constant 1
-      case 'L': // constant -1^20 .. 1^19
-      case 'M': // constant 1-4:
-        return true;
-      }
-      // No target constraints for now.
-      return false;
-    }
-    const char *getClobbers() const override {
-      // FIXME: Is this really right?
-      return "";
-    }
-    BuiltinVaListKind getBuiltinVaListKind() const override {
-      // FIXME: implement
-      return TargetInfo::CharPtrBuiltinVaList;
-   }
-  };
+class MSP430TargetInfo : public TargetInfo {
+  static const char *const GCCRegNames[];
 
-  const char * const MSP430TargetInfo::GCCRegNames[] = {
-    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-    "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
-  };
-
-  void MSP430TargetInfo::getGCCRegNames(const char * const *&Names,
-                                        unsigned &NumNames) const {
-    Names = GCCRegNames;
-    NumNames = llvm::array_lengthof(GCCRegNames);
+public:
+  MSP430TargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
+    BigEndian = false;
+    TLSSupported = false;
+    IntWidth = 16;
+    IntAlign = 16;
+    LongWidth = 32;
+    LongLongWidth = 64;
+    LongAlign = LongLongAlign = 16;
+    PointerWidth = 16;
+    PointerAlign = 16;
+    SuitableAlign = 16;
+    SizeType = UnsignedInt;
+    IntMaxType = SignedLongLong;
+    IntPtrType = SignedInt;
+    PtrDiffType = SignedInt;
+    SigAtomicType = SignedLong;
+    DataLayoutString = "e-m:e-p:16:16-i32:16:32-a:16-n8:16";
   }
-
-  // LLVM and Clang cannot be used directly to output native binaries for
-  // target, but is used to compile C code to llvm bitcode with correct
-  // type and alignment information.
-  //
-  // TCE uses the llvm bitcode as input and uses it for generating customized
-  // target processor and program binary. TCE co-design environment is
-  // publicly available in http://tce.cs.tut.fi
-
-  static const unsigned TCEOpenCLAddrSpaceMap[] = {
-      3, // opencl_global
-      4, // opencl_local
-      5, // opencl_constant
-      // FIXME: generic has to be added to the target
-      0, // opencl_generic
-      0, // cuda_device
-      0, // cuda_constant
-      0  // cuda_shared
-  };
-
-  class TCETargetInfo : public TargetInfo{
-  public:
-    TCETargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
-      TLSSupported = false;
-      IntWidth = 32;
-      LongWidth = LongLongWidth = 32;
-      PointerWidth = 32;
-      IntAlign = 32;
-      LongAlign = LongLongAlign = 32;
-      PointerAlign = 32;
-      SuitableAlign = 32;
-      SizeType = UnsignedInt;
-      IntMaxType = SignedLong;
-      IntPtrType = SignedInt;
-      PtrDiffType = SignedInt;
-      FloatWidth = 32;
-      FloatAlign = 32;
-      DoubleWidth = 32;
-      DoubleAlign = 32;
-      LongDoubleWidth = 32;
-      LongDoubleAlign = 32;
-      FloatFormat = &llvm::APFloat::IEEEsingle;
-      DoubleFormat = &llvm::APFloat::IEEEsingle;
-      LongDoubleFormat = &llvm::APFloat::IEEEsingle;
-      DataLayoutString = "E-p:32:32-i8:8:32-i16:16:32-i64:32"
-                         "-f64:32-v64:32-v128:32-a:0:32-n32";
-      AddrSpaceMap = &TCEOpenCLAddrSpaceMap;
-      UseAddrSpaceMapMangling = true;
-    }
-
-    void getTargetDefines(const LangOptions &Opts,
-                          MacroBuilder &Builder) const override {
-      DefineStd(Builder, "tce", Opts);
-      Builder.defineMacro("__TCE__");
-      Builder.defineMacro("__TCE_V1__");
-    }
-    bool hasFeature(StringRef Feature) const override {
-      return Feature == "tce";
-    }
-
-    void getTargetBuiltins(const Builtin::Info *&Records,
-                           unsigned &NumRecords) const override {}
-    const char *getClobbers() const override {
-      return "";
-    }
-    BuiltinVaListKind getBuiltinVaListKind() const override {
-      return TargetInfo::VoidPtrBuiltinVaList;
-    }
-    void getGCCRegNames(const char * const *&Names,
-                        unsigned &NumNames) const override {}
-    bool validateAsmConstraint(const char *&Name,
-                               TargetInfo::ConstraintInfo &info) const override{
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    Builder.defineMacro("MSP430");
+    Builder.defineMacro("__MSP430__");
+    // FIXME: defines for different 'flavours' of MCU
+  }
+  void getTargetBuiltins(const Builtin::Info *&Records,
+                         unsigned &NumRecords) const override {
+    // FIXME: Implement.
+    Records = nullptr;
+    NumRecords = 0;
+  }
+  bool hasFeature(StringRef Feature) const override {
+    return Feature == "msp430";
+  }
+  void getGCCRegNames(const char *const *&Names,
+                      unsigned &NumNames) const override;
+  void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                        unsigned &NumAliases) const override {
+    // No aliases.
+    Aliases = nullptr;
+    NumAliases = 0;
+  }
+  bool validateAsmConstraint(const char *&Name,
+                             TargetInfo::ConstraintInfo &info) const override {
+    // FIXME: implement
+    switch (*Name) {
+    case 'K': // the constant 1
+    case 'L': // constant -1^20 .. 1^19
+    case 'M': // constant 1-4:
       return true;
     }
-    void getGCCRegAliases(const GCCRegAlias *&Aliases,
-                          unsigned &NumAliases) const override {}
-  };
+    // No target constraints for now.
+    return false;
+  }
+  const char *getClobbers() const override {
+    // FIXME: Is this really right?
+    return "";
+  }
+  BuiltinVaListKind getBuiltinVaListKind() const override {
+    // FIXME: implement
+    return TargetInfo::CharPtrBuiltinVaList;
+  }
+};
+
+const char *const MSP430TargetInfo::GCCRegNames[] = {
+    "r0", "r1", "r2",  "r3",  "r4",  "r5",  "r6",  "r7",
+    "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
+
+void MSP430TargetInfo::getGCCRegNames(const char *const *&Names,
+                                      unsigned &NumNames) const {
+  Names = GCCRegNames;
+  NumNames = llvm::array_lengthof(GCCRegNames);
+}
+
+// LLVM and Clang cannot be used directly to output native binaries for
+// target, but is used to compile C code to llvm bitcode with correct
+// type and alignment information.
+//
+// TCE uses the llvm bitcode as input and uses it for generating customized
+// target processor and program binary. TCE co-design environment is
+// publicly available in http://tce.cs.tut.fi
+
+static const unsigned TCEOpenCLAddrSpaceMap[] = {
+    3, // opencl_global
+    4, // opencl_local
+    5, // opencl_constant
+    // FIXME: generic has to be added to the target
+    0, // opencl_generic
+    0, // cuda_device
+    0, // cuda_constant
+    0  // cuda_shared
+};
+
+class TCETargetInfo : public TargetInfo {
+public:
+  TCETargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
+    TLSSupported = false;
+    IntWidth = 32;
+    LongWidth = LongLongWidth = 32;
+    PointerWidth = 32;
+    IntAlign = 32;
+    LongAlign = LongLongAlign = 32;
+    PointerAlign = 32;
+    SuitableAlign = 32;
+    SizeType = UnsignedInt;
+    IntMaxType = SignedLong;
+    IntPtrType = SignedInt;
+    PtrDiffType = SignedInt;
+    FloatWidth = 32;
+    FloatAlign = 32;
+    DoubleWidth = 32;
+    DoubleAlign = 32;
+    LongDoubleWidth = 32;
+    LongDoubleAlign = 32;
+    FloatFormat = &llvm::APFloat::IEEEsingle;
+    DoubleFormat = &llvm::APFloat::IEEEsingle;
+    LongDoubleFormat = &llvm::APFloat::IEEEsingle;
+    DataLayoutString = "E-p:32:32-i8:8:32-i16:16:32-i64:32"
+                       "-f64:32-v64:32-v128:32-a:0:32-n32";
+    AddrSpaceMap = &TCEOpenCLAddrSpaceMap;
+    UseAddrSpaceMapMangling = true;
+  }
+
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    DefineStd(Builder, "tce", Opts);
+    Builder.defineMacro("__TCE__");
+    Builder.defineMacro("__TCE_V1__");
+  }
+  bool hasFeature(StringRef Feature) const override { return Feature == "tce"; }
+
+  void getTargetBuiltins(const Builtin::Info *&Records,
+                         unsigned &NumRecords) const override {}
+  const char *getClobbers() const override { return ""; }
+  BuiltinVaListKind getBuiltinVaListKind() const override {
+    return TargetInfo::VoidPtrBuiltinVaList;
+  }
+  void getGCCRegNames(const char *const *&Names,
+                      unsigned &NumNames) const override {}
+  bool validateAsmConstraint(const char *&Name,
+                             TargetInfo::ConstraintInfo &info) const override {
+    return true;
+  }
+  void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                        unsigned &NumAliases) const override {}
+};
 
 class BPFTargetInfo : public TargetInfo {
 public:
@@ -7139,97 +7136,93 @@ const Builtin::Info Le64TargetInfo::BuiltinInfo[] = {
 };
 
 namespace {
-  static const unsigned SPIRAddrSpaceMap[] = {
-    1,    // opencl_global
-    3,    // opencl_local
-    2,    // opencl_constant
-    4,    // opencl_generic
-    0,    // cuda_device
-    0,    // cuda_constant
-    0     // cuda_shared
-  };
-  class SPIRTargetInfo : public TargetInfo {
-  public:
-    SPIRTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
-      assert(getTriple().getOS() == llvm::Triple::UnknownOS &&
-        "SPIR target must use unknown OS");
-      assert(getTriple().getEnvironment() == llvm::Triple::UnknownEnvironment &&
-        "SPIR target must use unknown environment type");
-      BigEndian = false;
-      TLSSupported = false;
-      LongWidth = LongAlign = 64;
-      AddrSpaceMap = &SPIRAddrSpaceMap;
-      UseAddrSpaceMapMangling = true;
-      // Define available target features
-      // These must be defined in sorted order!
-      NoAsmVariants = true;
-    }
-    void getTargetDefines(const LangOptions &Opts,
-                          MacroBuilder &Builder) const override {
-      DefineStd(Builder, "SPIR", Opts);
-    }
-    bool hasFeature(StringRef Feature) const override {
-      return Feature == "spir";
-    }
+static const unsigned SPIRAddrSpaceMap[] = {
+    1, // opencl_global
+    3, // opencl_local
+    2, // opencl_constant
+    4, // opencl_generic
+    0, // cuda_device
+    0, // cuda_constant
+    0  // cuda_shared
+};
+class SPIRTargetInfo : public TargetInfo {
+public:
+  SPIRTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
+    assert(getTriple().getOS() == llvm::Triple::UnknownOS &&
+           "SPIR target must use unknown OS");
+    assert(getTriple().getEnvironment() == llvm::Triple::UnknownEnvironment &&
+           "SPIR target must use unknown environment type");
+    BigEndian = false;
+    TLSSupported = false;
+    LongWidth = LongAlign = 64;
+    AddrSpaceMap = &SPIRAddrSpaceMap;
+    UseAddrSpaceMapMangling = true;
+    // Define available target features
+    // These must be defined in sorted order!
+    NoAsmVariants = true;
+  }
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    DefineStd(Builder, "SPIR", Opts);
+  }
+  bool hasFeature(StringRef Feature) const override {
+    return Feature == "spir";
+  }
 
-    void getTargetBuiltins(const Builtin::Info *&Records,
-                           unsigned &NumRecords) const override {}
-    const char *getClobbers() const override {
-      return "";
-    }
-    void getGCCRegNames(const char * const *&Names,
-                        unsigned &NumNames) const override {}
-    bool
-    validateAsmConstraint(const char *&Name,
-                          TargetInfo::ConstraintInfo &info) const override {
-      return true;
-    }
-    void getGCCRegAliases(const GCCRegAlias *&Aliases,
-                          unsigned &NumAliases) const override {}
-    BuiltinVaListKind getBuiltinVaListKind() const override {
-      return TargetInfo::VoidPtrBuiltinVaList;
-    }
+  void getTargetBuiltins(const Builtin::Info *&Records,
+                         unsigned &NumRecords) const override {}
+  const char *getClobbers() const override { return ""; }
+  void getGCCRegNames(const char *const *&Names,
+                      unsigned &NumNames) const override {}
+  bool validateAsmConstraint(const char *&Name,
+                             TargetInfo::ConstraintInfo &info) const override {
+    return true;
+  }
+  void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                        unsigned &NumAliases) const override {}
+  BuiltinVaListKind getBuiltinVaListKind() const override {
+    return TargetInfo::VoidPtrBuiltinVaList;
+  }
 
-    CallingConvCheckResult checkCallingConvention(CallingConv CC) const override {
-      return (CC == CC_SpirFunction ||
-              CC == CC_SpirKernel) ? CCCR_OK : CCCR_Warning;
-    }
+  CallingConvCheckResult checkCallingConvention(CallingConv CC) const override {
+    return (CC == CC_SpirFunction || CC == CC_SpirKernel) ? CCCR_OK
+                                                          : CCCR_Warning;
+  }
 
-    CallingConv getDefaultCallingConv(CallingConvMethodType MT) const override {
-      return CC_SpirFunction;
-    }
-  };
+  CallingConv getDefaultCallingConv(CallingConvMethodType MT) const override {
+    return CC_SpirFunction;
+  }
+};
 
+class SPIR32TargetInfo : public SPIRTargetInfo {
+public:
+  SPIR32TargetInfo(const llvm::Triple &Triple) : SPIRTargetInfo(Triple) {
+    PointerWidth = PointerAlign = 32;
+    SizeType = TargetInfo::UnsignedInt;
+    PtrDiffType = IntPtrType = TargetInfo::SignedInt;
+    DataLayoutString = "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-"
+                       "v96:128-v192:256-v256:256-v512:512-v1024:1024";
+  }
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    DefineStd(Builder, "SPIR32", Opts);
+  }
+};
 
-  class SPIR32TargetInfo : public SPIRTargetInfo {
-  public:
-    SPIR32TargetInfo(const llvm::Triple &Triple) : SPIRTargetInfo(Triple) {
-      PointerWidth = PointerAlign = 32;
-      SizeType     = TargetInfo::UnsignedInt;
-      PtrDiffType = IntPtrType = TargetInfo::SignedInt;
-      DataLayoutString = "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-"
-                         "v96:128-v192:256-v256:256-v512:512-v1024:1024";
-    }
-    void getTargetDefines(const LangOptions &Opts,
-                          MacroBuilder &Builder) const override {
-      DefineStd(Builder, "SPIR32", Opts);
-    }
-  };
-
-  class SPIR64TargetInfo : public SPIRTargetInfo {
-  public:
-    SPIR64TargetInfo(const llvm::Triple &Triple) : SPIRTargetInfo(Triple) {
-      PointerWidth = PointerAlign = 64;
-      SizeType     = TargetInfo::UnsignedLong;
-      PtrDiffType = IntPtrType = TargetInfo::SignedLong;
-      DataLayoutString = "e-i64:64-v16:16-v24:32-v32:32-v48:64-"
-                         "v96:128-v192:256-v256:256-v512:512-v1024:1024";
-    }
-    void getTargetDefines(const LangOptions &Opts,
-                          MacroBuilder &Builder) const override {
-      DefineStd(Builder, "SPIR64", Opts);
-    }
-  };
+class SPIR64TargetInfo : public SPIRTargetInfo {
+public:
+  SPIR64TargetInfo(const llvm::Triple &Triple) : SPIRTargetInfo(Triple) {
+    PointerWidth = PointerAlign = 64;
+    SizeType = TargetInfo::UnsignedLong;
+    PtrDiffType = IntPtrType = TargetInfo::SignedLong;
+    DataLayoutString = "e-i64:64-v16:16-v24:32-v32:32-v48:64-"
+                       "v96:128-v192:256-v256:256-v512:512-v1024:1024";
+  }
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    DefineStd(Builder, "SPIR64", Opts);
+  }
+};
 
 class XCoreTargetInfo : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
