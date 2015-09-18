@@ -126,6 +126,9 @@ struct AssemblerInvocation {
   unsigned NoExecStack : 1;
   unsigned FatalWarnings : 1;
 
+  /// The name of the relocation model to use.
+  std::string RelocationModel;
+
   /// @}
 
 public:
@@ -248,6 +251,7 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   Opts.RelaxAll = Args.hasArg(OPT_mrelax_all);
   Opts.NoExecStack = Args.hasArg(OPT_mno_exec_stack);
   Opts.FatalWarnings = Args.hasArg(OPT_massembler_fatal_warnings);
+  Opts.RelocationModel = Args.getLastArgValue(OPT_mrelocation_model, "pic");
 
   return Success;
 }
@@ -321,8 +325,19 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   std::unique_ptr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
 
   MCContext Ctx(MAI.get(), MRI.get(), MOFI.get(), &SrcMgr);
-  // FIXME: Assembler behavior can change with -static.
-  MOFI->InitMCObjectFileInfo(Triple(Opts.Triple), Reloc::Default,
+
+  llvm::Reloc::Model RM = llvm::Reloc::Default;
+  if (Opts.RelocationModel == "static") {
+    RM = llvm::Reloc::Static;
+  } else if (Opts.RelocationModel == "pic") {
+    RM = llvm::Reloc::PIC_;
+  } else {
+    assert(Opts.RelocationModel == "dynamic-no-pic" &&
+           "Invalid PIC model!");
+    RM = llvm::Reloc::DynamicNoPIC;
+  }
+
+  MOFI->InitMCObjectFileInfo(Triple(Opts.Triple), RM,
                              CodeModel::Default, Ctx);
   if (Opts.SaveTemporaryLabels)
     Ctx.setAllowTemporaryLabels(false);

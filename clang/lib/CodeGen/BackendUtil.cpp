@@ -463,6 +463,7 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
     FeaturesStr = Features.getString();
   }
 
+  // Keep this synced with the equivalent code in tools/driver/cc1as_main.cpp.
   llvm::Reloc::Model RM = llvm::Reloc::Default;
   if (CodeGenOpts.RelocationModel == "static") {
     RM = llvm::Reloc::Static;
