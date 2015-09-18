@@ -2952,6 +2952,8 @@ static bool isAligned(const Value *Base, APInt Offset, unsigned Align,
     BaseAlign = GV->getAlignment();
   else if (const Argument *A = dyn_cast<Argument>(Base))
     BaseAlign = A->getParamAlignment();
+  else if (auto CS = ImmutableCallSite(Base))
+    BaseAlign = CS.getAttributes().getParamAlignment(AttributeSet::ReturnIndex);
 
   if (!BaseAlign) {
     Type *Ty = Base->getType()->getPointerElementType();
