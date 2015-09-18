@@ -708,6 +708,7 @@ class XunitFormatter(ResultsFormatter):
         # Output the header.
         self.out_file.write(
             '<?xml version="1.0" encoding="{}"?>\n'
+            '<testsuites>'
             '<testsuite name="{}" tests="{}" errors="{}" failures="{}" '
             'skip="{}"{}>\n'.format(
                 self.text_encoding,
@@ -723,7 +724,7 @@ class XunitFormatter(ResultsFormatter):
             self.out_file.write(result + '\n')
 
         # Close off the test suite.
-        self.out_file.write('</testsuite>\n')
+        self.out_file.write('</testsuite></testsuites>\n')
 
         super(XunitFormatter, self).end_session()
 
