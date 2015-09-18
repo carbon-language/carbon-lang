@@ -763,6 +763,7 @@ static void VerifySDNode(SDNode *N) {
 void SelectionDAG::InsertNode(SDNode *N) {
   AllNodes.push_back(N);
 #ifndef NDEBUG
+  N->PersistentId = NextPersistentId++;
   VerifySDNode(N);
 #endif
 }
@@ -948,6 +949,9 @@ void SelectionDAG::allnodes_clear() {
   AllNodes.remove(AllNodes.begin());
   while (!AllNodes.empty())
     DeallocateNode(AllNodes.begin());
+#ifndef NDEBUG
+  NextPersistentId = 0;
+#endif
 }
 
 BinarySDNode *SelectionDAG::GetBinarySDNode(unsigned Opcode, SDLoc DL,

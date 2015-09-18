@@ -1,7 +1,7 @@
 ; RUN: llc -debug < %s 2>&1 | FileCheck %s
 ; REQUIRES: asserts
 
-; CHECK: 0x{{[0-9,a-f]+}}: f64 = ConstantFP<1.500000e+00>test.c:3:5
+; CHECK: t{{[0-9]+}}: f64 = ConstantFP<1.500000e+00>test.c:3:5
 
 define double @f() {
 entry:

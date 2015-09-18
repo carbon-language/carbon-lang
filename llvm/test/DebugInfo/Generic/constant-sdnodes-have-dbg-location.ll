@@ -1,7 +1,7 @@
 ; RUN: llc -debug < %s 2>&1 | FileCheck %s
 ; REQUIRES: asserts
 
-; CHECK: 0x{{[0-9,a-f]+}}: i32 = Constant<-1>test.c:4:5
+; CHECK: t{{[0-9]+}}: i32 = Constant<-1>test.c:4:5
 
 define i32 @main() {
 entry:

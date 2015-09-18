@@ -361,6 +361,27 @@ const char *SDNode::getIndexedModeName(ISD::MemIndexedMode AM) {
   }
 }
 
+namespace {
+class PrintNodeId {
+  const SDNode &Node;
+public:
+  explicit PrintNodeId(const SDNode &Node)
+      : Node(Node) {}
+  void print(raw_ostream &OS) const {
+#ifndef NDEBUG
+    OS << 't' << Node.PersistentId;
+#else
+    OS << (const void*)&Node;
+#endif
+  }
+};
+
+static inline raw_ostream &operator<<(raw_ostream &OS, const PrintNodeId &P) {
+  P.print(OS);
+  return OS;
+}
+}
+
 void SDNode::dump() const { dump(nullptr); }
 void SDNode::dump(const SelectionDAG *G) const {
   print(dbgs(), G);
@@ -368,7 +389,7 @@ void SDNode::dump(const SelectionDAG *G) const {
 }
 
 void SDNode::print_types(raw_ostream &OS, const SelectionDAG *G) const {
-  OS << (const void*)this << ": ";
+  OS << PrintNodeId(*this) << ": ";
 
   for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
     if (i) OS << ",";
@@ -560,7 +581,7 @@ static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
       DumpNodes(Op.getNode(), indent+2, G);
     else
       dbgs() << "\n" << std::string(indent+2, ' ')
-             << (void*)Op.getNode() << ": <multiple use>";
+             << PrintNodeId(*Op.getNode()) << ": <multiple use>";
 
   dbgs() << '\n';
   dbgs().indent(indent);
@@ -676,8 +697,9 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
   print_types(OS, G);
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     if (i) OS << ", "; else OS << " ";
-    OS << (void*)getOperand(i).getNode();
-    if (unsigned RN = getOperand(i).getResNo())
+    const SDValue Operand = getOperand(i);
+    OS << PrintNodeId(*Operand.getNode());
+    if (unsigned RN = Operand.getResNo())
       OS << ":" << RN;
   }
   print_details(OS, G);
