@@ -708,8 +708,15 @@ private:
 } // end namespace MinGW
 
 namespace arm {
-StringRef getARMFloatABI(const Driver &D, const llvm::opt::ArgList &Args,
-                         const llvm::Triple &Triple);
+enum class FloatABI {
+  Invalid,
+  Soft,
+  SoftFP,
+  Hard,
+};
+
+FloatABI getARMFloatABI(const Driver &D, const llvm::opt::ArgList &Args,
+                        const llvm::Triple &Triple);
 }
 namespace XCore {
 // For XCore, we do not need to instantiate tools for PreProcess, PreCompile and

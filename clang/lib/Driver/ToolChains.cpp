@@ -855,10 +855,10 @@ void MachO::AddLinkRuntimeLibArgs(const ArgList &Args,
   // with different libraries for each member of the product { static, PIC } x
   // { hard-float, soft-float }
   llvm::SmallString<32> CompilerRT = StringRef("libclang_rt.");
-  CompilerRT +=
-      tools::arm::getARMFloatABI(getDriver(), Args, getTriple()) == "hard"
-          ? "hard"
-          : "soft";
+  CompilerRT += (tools::arm::getARMFloatABI(getDriver(), Args, getTriple()) ==
+                        tools::arm::FloatABI::Hard)
+                    ? "hard"
+                    : "soft";
   CompilerRT += Args.hasArg(options::OPT_fPIC) ? "_pic.a" : "_static.a";
 
   AddLinkRuntimeLib(Args, CmdArgs, CompilerRT, false, true);

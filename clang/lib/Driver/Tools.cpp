@@ -574,61 +574,62 @@ static bool useAAPCSForMachO(const llvm::Triple &T) {
 
 // Select the float ABI as determined by -msoft-float, -mhard-float, and
 // -mfloat-abi=.
-StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
-                                     const llvm::Triple &Triple) {
-  StringRef FloatABI;
+arm::FloatABI arm::getARMFloatABI(const Driver &D, const ArgList &Args,
+                                  const llvm::Triple &Triple) {
+  auto SubArch = getARMSubArchVersionNumber(Triple);
+  arm::FloatABI ABI = FloatABI::Invalid;
   if (Arg *A =
           Args.getLastArg(options::OPT_msoft_float, options::OPT_mhard_float,
                           options::OPT_mfloat_abi_EQ)) {
-    if (A->getOption().matches(options::OPT_msoft_float))
-      FloatABI = "soft";
-    else if (A->getOption().matches(options::OPT_mhard_float))
-      FloatABI = "hard";
-    else {
-      FloatABI = A->getValue();
-      if (FloatABI != "soft" && FloatABI != "softfp" && FloatABI != "hard") {
+    if (A->getOption().matches(options::OPT_msoft_float)) {
+      ABI = FloatABI::Soft;
+    } else if (A->getOption().matches(options::OPT_mhard_float)) {
+      ABI = FloatABI::Hard;
+    } else {
+      ABI = llvm::StringSwitch<arm::FloatABI>(A->getValue())
+                .Case("soft", FloatABI::Soft)
+                .Case("softfp", FloatABI::SoftFP)
+                .Case("hard", FloatABI::Hard)
+                .Default(FloatABI::Invalid);
+      if (ABI == FloatABI::Invalid && !StringRef(A->getValue()).empty()) {
         D.Diag(diag::err_drv_invalid_mfloat_abi) << A->getAsString(Args);
-        FloatABI = "soft";
+        ABI = FloatABI::Soft;
       }
     }
 
     // It is incorrect to select hard float ABI on MachO platforms if the ABI is
     // "apcs-gnu".
     if (Triple.isOSBinFormatMachO() && !useAAPCSForMachO(Triple) &&
-        FloatABI == "hard")
+        ABI == FloatABI::Hard) {
       D.Diag(diag::err_drv_unsupported_opt_for_target) << A->getAsString(Args)
                                                        << Triple.getArchName();
+    }
   }
 
   // If unspecified, choose the default based on the platform.
-  if (FloatABI.empty()) {
+  if (ABI == FloatABI::Invalid) {
     switch (Triple.getOS()) {
     case llvm::Triple::Darwin:
     case llvm::Triple::MacOSX:
     case llvm::Triple::IOS: {
       // Darwin defaults to "softfp" for v6 and v7.
-      //
-      if (getARMSubArchVersionNumber(Triple) == 6 ||
-          getARMSubArchVersionNumber(Triple) == 7)
-        FloatABI = "softfp";
-      else
-        FloatABI = "soft";
+      ABI = (SubArch == 6 || SubArch == 7) ? FloatABI::SoftFP : FloatABI::Soft;
       break;
     }
 
     // FIXME: this is invalid for WindowsCE
     case llvm::Triple::Win32:
-      FloatABI = "hard";
+      ABI = FloatABI::Hard;
       break;
 
     case llvm::Triple::FreeBSD:
       switch (Triple.getEnvironment()) {
       case llvm::Triple::GNUEABIHF:
-        FloatABI = "hard";
+        ABI = FloatABI::Hard;
         break;
       default:
         // FreeBSD defaults to soft float
-        FloatABI = "soft";
+        ABI = FloatABI::Soft;
         break;
       }
       break;
@@ -636,28 +637,20 @@ StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
     default:
       switch (Triple.getEnvironment()) {
       case llvm::Triple::GNUEABIHF:
-        FloatABI = "hard";
+      case llvm::Triple::EABIHF:
+        ABI = FloatABI::Hard;
         break;
       case llvm::Triple::GNUEABI:
-        FloatABI = "softfp";
-        break;
-      case llvm::Triple::EABIHF:
-        FloatABI = "hard";
-        break;
       case llvm::Triple::EABI:
         // EABI is always AAPCS, and if it was not marked 'hard', it's softfp
-        FloatABI = "softfp";
+        ABI = FloatABI::SoftFP;
         break;
-      case llvm::Triple::Android: {
-        if (getARMSubArchVersionNumber(Triple) == 7)
-          FloatABI = "softfp";
-        else
-          FloatABI = "soft";
+      case llvm::Triple::Android:
+        ABI = (SubArch == 7) ? FloatABI::SoftFP : FloatABI::Soft;
         break;
-      }
       default:
         // Assume "soft", but warn the user we are guessing.
-        FloatABI = "soft";
+        ABI = FloatABI::Soft;
         if (Triple.getOS() != llvm::Triple::UnknownOS ||
             !Triple.isOSBinFormatMachO())
           D.Diag(diag::warn_drv_assuming_mfloat_abi_is) << "soft";
@@ -666,7 +659,8 @@ StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
     }
   }
 
-  return FloatABI;
+  assert(ABI != FloatABI::Invalid && "must select an ABI");
+  return ABI;
 }
 
 static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
@@ -675,7 +669,7 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
                                  bool ForAS) {
   bool KernelOrKext =
       Args.hasArg(options::OPT_mkernel, options::OPT_fapple_kext);
-  StringRef FloatABI = tools::arm::getARMFloatABI(D, Args, Triple);
+  arm::FloatABI ABI = arm::getARMFloatABI(D, Args, Triple);
   const Arg *WaCPU = nullptr, *WaFPU = nullptr;
   const Arg *WaHDiv = nullptr, *WaArch = nullptr;
 
@@ -693,11 +687,11 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     // assembler and the frontend behave the same.
 
     // Use software floating point operations?
-    if (FloatABI == "soft")
+    if (ABI == arm::FloatABI::Soft)
       Features.push_back("+soft-float");
 
     // Use software floating point argument passing?
-    if (FloatABI != "hard")
+    if (ABI != arm::FloatABI::Hard)
       Features.push_back("+soft-float-abi");
   } else {
     // Here, we make sure that -Wa,-mfpu/cpu/arch/hwdiv will be passed down
@@ -781,7 +775,7 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
 
   // Setting -msoft-float effectively disables NEON because of the GCC
   // implementation, although the same isn't true of VFP or VFP3.
-  if (FloatABI == "soft") {
+  if (ABI == arm::FloatABI::Soft) {
     Features.push_back("-neon");
     // Also need to explicitly disable features which imply NEON.
     Features.push_back("-crypto");
@@ -904,21 +898,20 @@ void Clang::AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs,
   CmdArgs.push_back(ABIName);
 
   // Determine floating point ABI from the options & target defaults.
-  StringRef FloatABI = tools::arm::getARMFloatABI(D, Args, Triple);
-  if (FloatABI == "soft") {
+  arm::FloatABI ABI = arm::getARMFloatABI(D, Args, Triple);
+  if (ABI == arm::FloatABI::Soft) {
     // Floating point operations and argument passing are soft.
-    //
     // FIXME: This changes CPP defines, we need -target-soft-float.
     CmdArgs.push_back("-msoft-float");
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("soft");
-  } else if (FloatABI == "softfp") {
+  } else if (ABI == arm::FloatABI::SoftFP) {
     // Floating point operations are hard, but argument passing is soft.
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("soft");
   } else {
     // Floating point operations and argument passing are hard.
-    assert(FloatABI == "hard" && "Invalid float abi!");
+    assert(ABI == arm::FloatABI::Hard && "Invalid float abi!");
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("hard");
   }
@@ -7353,13 +7346,12 @@ void freebsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
              getToolChain().getArch() == llvm::Triple::thumbeb) {
     const Driver &D = getToolChain().getDriver();
     const llvm::Triple &Triple = getToolChain().getTriple();
-    StringRef FloatABI = arm::getARMFloatABI(D, Args, Triple);
+    arm::FloatABI ABI = arm::getARMFloatABI(D, Args, Triple);
 
-    if (FloatABI == "hard") {
+    if (ABI == arm::FloatABI::Hard)
       CmdArgs.push_back("-mfpu=vfp");
-    } else {
+    else
       CmdArgs.push_back("-mfpu=softvfp");
-    }
 
     switch (getToolChain().getTriple().getEnvironment()) {
     case llvm::Triple::GNUEABIHF:
@@ -7941,9 +7933,18 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
       break;
     }
 
-    StringRef ARMFloatABI =
-        tools::arm::getARMFloatABI(getToolChain().getDriver(), Args, Triple);
-    CmdArgs.push_back(Args.MakeArgString("-mfloat-abi=" + ARMFloatABI));
+    switch (arm::getARMFloatABI(getToolChain().getDriver(), Args, Triple)) {
+    case arm::FloatABI::Invalid: llvm_unreachable("must have an ABI!");
+    case arm::FloatABI::Soft:
+      CmdArgs.push_back(Args.MakeArgString("-mfloat-abi=soft"));
+      break;
+    case arm::FloatABI::SoftFP:
+      CmdArgs.push_back(Args.MakeArgString("-mfloat-abi=softfp"));
+      break;
+    case arm::FloatABI::Hard:
+      CmdArgs.push_back(Args.MakeArgString("-mfloat-abi=hard"));
+      break;
+    }
 
     Args.AddLastArg(CmdArgs, options::OPT_march_EQ);
 
@@ -8128,14 +8129,16 @@ static std::string getLinuxDynamicLinker(const ArgList &Args,
     return "/lib/ld-linux-aarch64_be.so.1";
   else if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb) {
     if (ToolChain.getTriple().getEnvironment() == llvm::Triple::GNUEABIHF ||
-        tools::arm::getARMFloatABI(ToolChain.getDriver(), Args, ToolChain.getTriple()) == "hard")
+        arm::getARMFloatABI(ToolChain.getDriver(), Args,
+                            ToolChain.getTriple()) == arm::FloatABI::Hard)
       return "/lib/ld-linux-armhf.so.3";
     else
       return "/lib/ld-linux.so.3";
   } else if (Arch == llvm::Triple::armeb || Arch == llvm::Triple::thumbeb) {
     // TODO: check which dynamic linker name.
     if (ToolChain.getTriple().getEnvironment() == llvm::Triple::GNUEABIHF ||
-        tools::arm::getARMFloatABI(ToolChain.getDriver(), Args, ToolChain.getTriple()) == "hard")
+        arm::getARMFloatABI(ToolChain.getDriver(), Args,
+                            ToolChain.getTriple()) == arm::FloatABI::Hard)
       return "/lib/ld-linux-armhf.so.3";
     else
       return "/lib/ld-linux.so.3";
