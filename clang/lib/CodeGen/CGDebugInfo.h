@@ -403,9 +403,11 @@ private:
   /// Get the type from the cache or create a new type if necessary.
   llvm::DIType *getOrCreateType(QualType Ty, llvm::DIFile *Fg);
 
-  /// Get a reference to a clang module.
+  /// Get a reference to a clang module.  If \p CreateSkeletonCU is true,
+  /// this also creates a split dwarf skeleton compile unit.
   llvm::DIModule *
-  getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod);
+  getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod,
+                       bool CreateSkeletonCU);
 
   /// DebugTypeExtRefs: If \p D originated in a clang module, return it.
   llvm::DIModule *getParentModuleOrNull(const Decl *D);
