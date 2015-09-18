@@ -166,6 +166,7 @@ public:
 
   SDNode *SelectBitfieldExtractOp(SDNode *N);
   SDNode *SelectBitfieldInsertOp(SDNode *N);
+  SDNode *SelectBitfieldInsertInZeroOp(SDNode *N);
 
   SDNode *SelectLIBM(SDNode *N);
   SDNode *SelectFPConvertWithRound(SDNode *N);
@@ -1918,6 +1919,7 @@ static SDValue getLeftShift(SelectionDAG *CurDAG, SDValue Op, int ShlAmount) {
 /// Does this tree qualify as an attempt to move a bitfield into position,
 /// essentially "(and (shl VAL, N), Mask)".
 static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
+                                    bool BiggerPattern,
                                     SDValue &Src, int &ShiftAmount,
                                     int &MaskWidth) {
   EVT VT = Op.getValueType();
@@ -1940,6 +1942,11 @@ static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
     Op = Op.getOperand(0);
   }
 
+  // Don't match if the SHL has more than one use, since then we'll end up
+  // generating SHL+UBFIZ instead of just keeping SHL+AND.
+  if (!BiggerPattern && !Op.hasOneUse())
+    return false;
+
   uint64_t ShlImm;
   if (!isOpcWithIntImmediate(Op.getNode(), ISD::SHL, ShlImm))
     return false;
@@ -1953,7 +1960,11 @@ static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
 
   // BFI encompasses sufficiently many nodes that it's worth inserting an extra
   // LSL/LSR if the mask in NonZeroBits doesn't quite match up with the ISD::SHL
-  // amount.
+  // amount.  BiggerPattern is true when this pattern is being matched for BFI,
+  // BiggerPattern is false when this pattern is being matched for UBFIZ, in
+  // which case it is not profitable to insert an extra shift.
+  if (ShlImm - ShiftAmount != 0 && !BiggerPattern)
+    return false;
   Src = getLeftShift(CurDAG, Op, ShlImm - ShiftAmount);
 
   return true;
@@ -1990,17 +2001,26 @@ static bool isBitfieldInsertOpFromOr(SDNode *N, unsigned &Opc, SDValue &Dst,
   unsigned NumberOfIgnoredLowBits = UsefulBits.countTrailingZeros();
   unsigned NumberOfIgnoredHighBits = UsefulBits.countLeadingZeros();
 
-  // OR is commutative, check both possibilities (does llvm provide a
-  // way to do that directely, e.g., via code matcher?)
-  SDValue OrOpd1Val = N->getOperand(1);
-  SDNode *OrOpd0 = N->getOperand(0).getNode();
-  SDNode *OrOpd1 = N->getOperand(1).getNode();
-  for (int i = 0; i < 2;
-       ++i, std::swap(OrOpd0, OrOpd1), OrOpd1Val = N->getOperand(0)) {
+  // OR is commutative, check all combinations of operand order and values of
+  // BiggerPattern, i.e.
+  //     Opd0, Opd1, BiggerPattern=false
+  //     Opd1, Opd0, BiggerPattern=false
+  //     Opd0, Opd1, BiggerPattern=true
+  //     Opd1, Opd0, BiggerPattern=true
+  // Several of these combinations may match, so check with BiggerPattern=false
+  // first since that will produce better results by matching more instructions
+  // and/or inserting fewer extra instructions.
+  for (int I = 0; I < 4; ++I) {
+
+    bool BiggerPattern = I / 2;
+    SDNode *OrOpd0 = N->getOperand(I % 2).getNode();
+    SDValue OrOpd1Val = N->getOperand((I + 1) % 2);
+    SDNode *OrOpd1 = OrOpd1Val.getNode();
+
     unsigned BFXOpc;
     int DstLSB, Width;
     if (isBitfieldExtractOp(CurDAG, OrOpd0, BFXOpc, Src, ImmR, ImmS,
-                            NumberOfIgnoredLowBits, true)) {
+                            NumberOfIgnoredLowBits, BiggerPattern)) {
       // Check that the returned opcode is compatible with the pattern,
       // i.e., same type and zero extended (U and not S)
       if ((BFXOpc != AArch64::UBFMXri && VT == MVT::i64) ||
@@ -2018,8 +2038,9 @@ static bool isBitfieldInsertOpFromOr(SDNode *N, unsigned &Opc, SDValue &Dst,
 
       // If the mask on the insertee is correct, we have a BFXIL operation. We
       // can share the ImmR and ImmS values from the already-computed UBFM.
-    } else if (isBitfieldPositioningOp(CurDAG, SDValue(OrOpd0, 0), Src,
-                                       DstLSB, Width)) {
+    } else if (isBitfieldPositioningOp(CurDAG, SDValue(OrOpd0, 0),
+                                       BiggerPattern,
+                                       Src, DstLSB, Width)) {
       ImmR = (VT.getSizeInBits() - DstLSB) % VT.getSizeInBits();
       ImmS = Width - 1;
     } else
@@ -2079,6 +2100,39 @@ SDNode *AArch64DAGToDAGISel::SelectBitfieldInsertOp(SDNode *N) {
                     Opd1,
                     CurDAG->getTargetConstant(LSB, dl, VT),
                     CurDAG->getTargetConstant(MSB, dl, VT) };
+  return CurDAG->SelectNodeTo(N, Opc, VT, Ops);
+}
+
+/// SelectBitfieldInsertInZeroOp - Match a UBFIZ instruction that is the
+/// equivalent of a left shift by a constant amount followed by an and masking
+/// out a contiguous set of bits.
+SDNode *AArch64DAGToDAGISel::SelectBitfieldInsertInZeroOp(SDNode *N) {
+  if (N->getOpcode() != ISD::AND)
+    return nullptr;
+
+  EVT VT = N->getValueType(0);
+  unsigned Opc;
+  if (VT == MVT::i32)
+    Opc = AArch64::UBFMWri;
+  else if (VT == MVT::i64)
+    Opc = AArch64::UBFMXri;
+  else
+    return nullptr;
+
+  SDValue Op0;
+  int DstLSB, Width;
+  if (!isBitfieldPositioningOp(CurDAG, SDValue(N, 0), /*BiggerPattern=*/false,
+                               Op0, DstLSB, Width))
+    return nullptr;
+
+  // ImmR is the rotate right amount.
+  unsigned ImmR = (VT.getSizeInBits() - DstLSB) % VT.getSizeInBits();
+  // ImmS is the most significant bit of the source to be moved.
+  unsigned ImmS = Width - 1;
+
+  SDLoc DL(N);
+  SDValue Ops[] = {Op0, CurDAG->getTargetConstant(ImmR, DL, VT),
+                   CurDAG->getTargetConstant(ImmS, DL, VT)};
   return CurDAG->SelectNodeTo(N, Opc, VT, Ops);
 }
 
@@ -2442,6 +2496,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   case ISD::AND:
   case ISD::SRA:
     if (SDNode *I = SelectBitfieldExtractOp(Node))
+      return I;
+    if (SDNode *I = SelectBitfieldInsertInZeroOp(Node))
       return I;
     break;
 

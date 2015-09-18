@@ -196,3 +196,22 @@ define void @test_32bit_with_shr(i32* %existing, i32* %new) {
 
   ret void
 }
+
+; Bitfield insert where the second or operand is a better match to be folded into the BFM
+define void @test_32bit_opnd1_better(i32* %existing, i32* %new) {
+; CHECK-LABEL: test_32bit_opnd1_better:
+
+  %oldval = load volatile i32, i32* %existing
+  %oldval_keep = and i32 %oldval, 65535 ; 0x0000ffff
+
+  %newval = load i32, i32* %new
+  %newval_shifted = shl i32 %newval, 16
+  %newval_masked = and i32 %newval_shifted, 16711680 ; 0x00ff0000
+
+  %combined = or i32 %oldval_keep, %newval_masked
+  store volatile i32 %combined, i32* %existing
+; CHECK: and [[BIT:w[0-9]+]], {{w[0-9]+}}, #0xffff
+; CHECK: bfi [[BIT]], {{w[0-9]+}}, #16, #8
+
+  ret void
+}
