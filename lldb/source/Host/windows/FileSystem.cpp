@@ -199,6 +199,12 @@ FileSystem::Readlink(const FileSpec &src, FileSpec &dst)
     return error;
 }
 
+Error
+FileSystem::ResolveSymbolicLink(const FileSpec &src, FileSpec &dst)
+{
+    return Error("ResolveSymbolicLink() isn't implemented on Windows");
+}
+
 bool
 FileSystem::IsLocal(const FileSpec &spec)
 {

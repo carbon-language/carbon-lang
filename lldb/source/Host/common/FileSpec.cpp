@@ -811,32 +811,6 @@ FileSpec::IsSymbolicLink () const
 #endif
 }
 
-FileSpec
-FileSpec::ResolveSymbolicLink () const {
-    if (!IsSymbolicLink())
-    {
-        return *this;
-    }
-        
-    char resolved_path[PATH_MAX];
-    if (!GetPath (resolved_path, sizeof (resolved_path)))
-    {
-        return *this;
-    }
-        
-#ifdef _WIN32
-    return *this; // TODO make this work on win32
-#else
-    char real_path[PATH_MAX + 1];
-    if (realpath(resolved_path, real_path) == nullptr)
-    {
-        return *this;
-    }
-    
-    return FileSpec(real_path, false);
-#endif
-}
-
 uint32_t
 FileSpec::GetPermissions () const
 {

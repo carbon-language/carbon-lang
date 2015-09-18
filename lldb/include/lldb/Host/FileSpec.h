@@ -511,9 +511,6 @@ public:
 
     bool
     IsSymbolicLink () const;
-    
-    FileSpec
-    ResolveSymbolicLink () const;
 
     //------------------------------------------------------------------
     /// Get the memory cost of this object.
