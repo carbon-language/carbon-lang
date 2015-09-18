@@ -78,6 +78,7 @@ class EventBuilder(object):
         event.update({
             "test_class": test_class_name,
             "test_name": test_name,
+            "test_filename": inspect.getfile(test.__class__)
         })
         return event
 
