@@ -37,6 +37,12 @@ class InputFile;
 // Entry point of the COFF linker.
 void link(llvm::ArrayRef<const char *> Args);
 
+// Implemented in MarkLive.cpp.
+void markLive(const std::vector<Chunk *> &Chunks);
+
+// Implemented in ICF.cpp.
+void doICF(const std::vector<Chunk *> &Chunks);
+
 class ArgParser {
 public:
   ArgParser() : Alloc(AllocAux) {}

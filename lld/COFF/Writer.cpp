@@ -49,8 +49,6 @@ public:
   void run();
 
 private:
-  void markLive();
-  void dedupCOMDATs();
   void createSections();
   void createMiscChunks();
   void createImportTables();
@@ -216,8 +214,6 @@ bool Defined::isExecutable() {
 
 // The main function of the writer.
 void Writer::run() {
-  markLive();
-  dedupCOMDATs();
   createSections();
   createMiscChunks();
   createImportTables();
@@ -237,57 +233,6 @@ void Writer::run() {
   writeSections();
   sortExceptionTable();
   error(Buffer->commit(), "Failed to write the output file");
-}
-
-// Set live bit on for each reachable chunk. Unmarked (unreachable)
-// COMDAT chunks will be ignored in the next step, so that they don't
-// come to the final output file.
-void Writer::markLive() {
-  if (!Config->DoGC)
-    return;
-
-  // We build up a worklist of sections which have been marked as live. We only
-  // push into the worklist when we discover an unmarked section, and we mark
-  // as we push, so sections never appear twice in the list.
-  SmallVector<SectionChunk *, 256> Worklist;
-
-  // COMDAT section chunks are dead by default. Add non-COMDAT chunks.
-  for (Chunk *C : Symtab->getChunks())
-    if (auto *SC = dyn_cast<SectionChunk>(C))
-      if (SC->isLive())
-        Worklist.push_back(SC);
-
-  auto Enqueue = [&](SectionChunk *C) {
-    if (C->isLive())
-      return;
-    C->markLive();
-    Worklist.push_back(C);
-  };
-
-  // Add GC root chunks.
-  for (Undefined *U : Config->GCRoot)
-    if (auto *D = dyn_cast<DefinedRegular>(U->repl()))
-      Enqueue(D->getChunk());
-
-  while (!Worklist.empty()) {
-    SectionChunk *SC = Worklist.pop_back_val();
-    assert(SC->isLive() && "We mark as live when pushing onto the worklist!");
-
-    // Mark all symbols listed in the relocation table for this section.
-    for (SymbolBody *S : SC->symbols())
-      if (auto *D = dyn_cast<DefinedRegular>(S->repl()))
-        Enqueue(D->getChunk());
-
-    // Mark associative sections if any.
-    for (SectionChunk *C : SC->children())
-      Enqueue(C);
-  }
-}
-
-// Merge identical COMDAT sections.
-void Writer::dedupCOMDATs() {
-  if (Config->DoICF)
-    doICF(Symtab->getChunks());
 }
 
 static StringRef getOutputSection(StringRef Name) {

@@ -20,9 +20,6 @@ class OutputSection;
 
 void writeResult(SymbolTable *T);
 
-// Implemented in ICF.cpp.
-void doICF(const std::vector<Chunk *> &Chunks);
-
 }
 }
 

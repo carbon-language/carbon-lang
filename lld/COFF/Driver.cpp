@@ -644,6 +644,14 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   if (auto *Arg = Args.getLastArg(OPT_pdb))
     touchFile(Arg->getValue());
 
+  // Identify unreferenced COMDAT sections.
+  if (Config->DoGC)
+    markLive(Symtab.getChunks());
+
+  // Identify identical COMDAT sections to merge them.
+  if (Config->DoICF)
+    doICF(Symtab.getChunks());
+
   // Write the result.
   writeResult(&Symtab);
 

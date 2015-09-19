@@ -10,6 +10,7 @@ add_llvm_library(lldCOFF
   Error.cpp
   ICF.cpp
   InputFiles.cpp
+  MarkLive.cpp
   ModuleDef.cpp
   SymbolTable.cpp
   Symbols.cpp
