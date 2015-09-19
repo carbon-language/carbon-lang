@@ -1090,33 +1090,37 @@ static StringRef getGnuCompatibleMipsABIName(StringRef ABI) {
 
 // Select the MIPS float ABI as determined by -msoft-float, -mhard-float,
 // and -mfloat-abi=.
-static StringRef getMipsFloatABI(const Driver &D, const ArgList &Args) {
-  StringRef FloatABI;
+static mips::FloatABI getMipsFloatABI(const Driver &D, const ArgList &Args) {
+  mips::FloatABI ABI = mips::FloatABI::Invalid;
   if (Arg *A =
           Args.getLastArg(options::OPT_msoft_float, options::OPT_mhard_float,
                           options::OPT_mfloat_abi_EQ)) {
     if (A->getOption().matches(options::OPT_msoft_float))
-      FloatABI = "soft";
+      ABI = mips::FloatABI::Soft;
     else if (A->getOption().matches(options::OPT_mhard_float))
-      FloatABI = "hard";
+      ABI = mips::FloatABI::Hard;
     else {
-      FloatABI = A->getValue();
-      if (FloatABI != "soft" && FloatABI != "hard") {
+      ABI = llvm::StringSwitch<mips::FloatABI>(A->getValue())
+                .Case("soft", mips::FloatABI::Soft)
+                .Case("hard", mips::FloatABI::Hard)
+                .Default(mips::FloatABI::Invalid);
+      if (ABI == mips::FloatABI::Invalid && !StringRef(A->getValue()).empty()) {
         D.Diag(diag::err_drv_invalid_mfloat_abi) << A->getAsString(Args);
-        FloatABI = "hard";
+        ABI = mips::FloatABI::Hard;
       }
     }
   }
 
   // If unspecified, choose the default based on the platform.
-  if (FloatABI.empty()) {
+  if (ABI == mips::FloatABI::Invalid) {
     // Assume "hard", because it's a default value used by gcc.
     // When we start to recognize specific target MIPS processors,
     // we will be able to select the default more correctly.
-    FloatABI = "hard";
+    ABI = mips::FloatABI::Hard;
   }
 
-  return FloatABI;
+  assert(ABI != mips::FloatABI::Invalid && "must select an ABI");
+  return ABI;
 }
 
 static void AddTargetFeature(const ArgList &Args,
@@ -1142,8 +1146,8 @@ static void getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   AddTargetFeature(Args, Features, options::OPT_mno_abicalls,
                    options::OPT_mabicalls, "noabicalls");
 
-  StringRef FloatABI = getMipsFloatABI(D, Args);
-  if (FloatABI == "soft") {
+  mips::FloatABI FloatABI = getMipsFloatABI(D, Args);
+  if (FloatABI == mips::FloatABI::Soft) {
     // FIXME: Note, this is a hack. We need to pass the selected float
     // mode to the MipsTargetInfoBase to define appropriate macros there.
     // Now it is the only method.
@@ -1215,16 +1219,15 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   CmdArgs.push_back("-target-abi");
   CmdArgs.push_back(ABIName.data());
 
-  StringRef FloatABI = getMipsFloatABI(D, Args);
-
-  if (FloatABI == "soft") {
+  mips::FloatABI ABI = getMipsFloatABI(D, Args);
+  if (ABI == mips::FloatABI::Soft) {
     // Floating point operations and argument passing are soft.
     CmdArgs.push_back("-msoft-float");
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("soft");
   } else {
     // Floating point operations and argument passing are hard.
-    assert(FloatABI == "hard" && "Invalid float abi!");
+    assert(ABI == mips::FloatABI::Hard && "Invalid float abi!");
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("hard");
   }
@@ -6193,7 +6196,7 @@ bool mips::isNaN2008(const ArgList &Args, const llvm::Triple &Triple) {
 }
 
 bool mips::isFPXXDefault(const llvm::Triple &Triple, StringRef CPUName,
-                         StringRef ABIName, StringRef FloatABI) {
+                         StringRef ABIName, mips::FloatABI FloatABI) {
   if (Triple.getVendor() != llvm::Triple::ImaginationTechnologies &&
       Triple.getVendor() != llvm::Triple::MipsTechnologies)
     return false;
@@ -6203,7 +6206,7 @@ bool mips::isFPXXDefault(const llvm::Triple &Triple, StringRef CPUName,
 
   // FPXX shouldn't be used if either -msoft-float or -mfloat-abi=soft is
   // present.
-  if (FloatABI == "soft")
+  if (FloatABI == mips::FloatABI::Soft)
     return false;
 
   return llvm::StringSwitch<bool>(CPUName)
@@ -6215,7 +6218,7 @@ bool mips::isFPXXDefault(const llvm::Triple &Triple, StringRef CPUName,
 
 bool mips::shouldUseFPXX(const ArgList &Args, const llvm::Triple &Triple,
                          StringRef CPUName, StringRef ABIName,
-                         StringRef FloatABI) {
+                         mips::FloatABI FloatABI) {
   bool UseFPXX = isFPXXDefault(Triple, CPUName, ABIName, FloatABI);
 
   // FPXX shouldn't be used if -msingle-float is present.
@@ -7996,13 +7999,13 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     }
 
     // Add the last -mfp32/-mfpxx/-mfp64 or -mfpxx if it is enabled by default.
-    StringRef MIPSFloatABI = getMipsFloatABI(getToolChain().getDriver(), Args);
     if (Arg *A = Args.getLastArg(options::OPT_mfp32, options::OPT_mfpxx,
                                  options::OPT_mfp64)) {
       A->claim();
       A->render(Args, CmdArgs);
-    } else if (mips::shouldUseFPXX(Args, getToolChain().getTriple(), CPUName,
-                                   ABIName, MIPSFloatABI))
+    } else if (mips::shouldUseFPXX(
+                   Args, getToolChain().getTriple(), CPUName, ABIName,
+                   getMipsFloatABI(getToolChain().getDriver(), Args)))
       CmdArgs.push_back("-mfpxx");
 
     // Pass on -mmips16 or -mno-mips16. However, the assembler equivalent of

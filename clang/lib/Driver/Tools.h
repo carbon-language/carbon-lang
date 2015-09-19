@@ -253,6 +253,13 @@ void appendEBLinkFlags(const llvm::opt::ArgList &Args, ArgStringList &CmdArgs,
 
 namespace mips {
 typedef enum { NanLegacy = 1, Nan2008 = 2 } NanEncoding;
+
+enum class FloatABI {
+  Invalid,
+  Soft,
+  Hard,
+};
+
 NanEncoding getSupportedNanEncoding(StringRef &CPU);
 void getMipsCPUAndABI(const llvm::opt::ArgList &Args,
                       const llvm::Triple &Triple, StringRef &CPUName,
@@ -261,9 +268,10 @@ bool hasMipsAbiArg(const llvm::opt::ArgList &Args, const char *Value);
 bool isUCLibc(const llvm::opt::ArgList &Args);
 bool isNaN2008(const llvm::opt::ArgList &Args, const llvm::Triple &Triple);
 bool isFPXXDefault(const llvm::Triple &Triple, StringRef CPUName,
-                   StringRef ABIName, StringRef FloatABI);
+                   StringRef ABIName, mips::FloatABI FloatABI);
 bool shouldUseFPXX(const llvm::opt::ArgList &Args, const llvm::Triple &Triple,
-                   StringRef CPUName, StringRef ABIName, StringRef FloatABI);
+                   StringRef CPUName, StringRef ABIName,
+                   mips::FloatABI FloatABI);
 }
 
 namespace ppc {
