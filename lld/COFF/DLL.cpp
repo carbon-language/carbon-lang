@@ -48,7 +48,7 @@ public:
     return RoundUpToAlignment(Name.size() + 3, 2);
   }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     write16le(Buf + OutputSectionOff, Hint);
     memcpy(Buf + OutputSectionOff + 2, Name.data(), Name.size());
   }
@@ -64,7 +64,7 @@ public:
   explicit LookupChunk(Chunk *C) : HintName(C) {}
   size_t getSize() const override { return ptrSize(); }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     write32le(Buf + OutputSectionOff, HintName->getRVA());
   }
 
@@ -79,7 +79,7 @@ public:
   explicit OrdinalOnlyChunk(uint16_t V) : Ordinal(V) {}
   size_t getSize() const override { return ptrSize(); }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     // An import-by-ordinal slot has MSB 1 to indicate that
     // this is import-by-ordinal (and not import-by-name).
     if (Config->is64()) {
@@ -98,7 +98,7 @@ public:
   explicit ImportDirectoryChunk(Chunk *N) : DLLName(N) {}
   size_t getSize() const override { return sizeof(ImportDirectoryTableEntry); }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     auto *E = (coff_import_directory_table_entry *)(Buf + OutputSectionOff);
     E->ImportLookupTableRVA = LookupTab->getRVA();
     E->NameRVA = DLLName->getRVA();
@@ -160,7 +160,7 @@ public:
     return sizeof(delay_import_directory_table_entry);
   }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     auto *E = (delay_import_directory_table_entry *)(Buf + OutputSectionOff);
     E->Attributes = 1;
     E->Name = DLLName->getRVA();
@@ -223,7 +223,7 @@ public:
 
   size_t getSize() const override { return sizeof(ThunkX64); }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     memcpy(Buf + OutputSectionOff, ThunkX64, sizeof(ThunkX64));
     write32le(Buf + OutputSectionOff + 36, Imp->getRVA() - RVA - 40);
     write32le(Buf + OutputSectionOff + 43, Desc->getRVA() - RVA - 47);
@@ -242,7 +242,7 @@ public:
 
   size_t getSize() const override { return sizeof(ThunkX86); }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     memcpy(Buf + OutputSectionOff, ThunkX86, sizeof(ThunkX86));
     write32le(Buf + OutputSectionOff + 3, Imp->getRVA() + Config->ImageBase);
     write32le(Buf + OutputSectionOff + 8, Desc->getRVA() + Config->ImageBase);
@@ -265,7 +265,7 @@ public:
   explicit DelayAddressChunk(Chunk *C) : Thunk(C) {}
   size_t getSize() const override { return ptrSize(); }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     if (Config->is64()) {
       write64le(Buf + OutputSectionOff, Thunk->getRVA() + Config->ImageBase);
     } else {
@@ -294,7 +294,7 @@ public:
     return sizeof(export_directory_table_entry);
   }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     auto *E = (export_directory_table_entry *)(Buf + OutputSectionOff);
     E->NameRVA = DLLName->getRVA();
     E->OrdinalBase = 0;
@@ -318,7 +318,7 @@ public:
   explicit AddressTableChunk(size_t MaxOrdinal) : Size(MaxOrdinal + 1) {}
   size_t getSize() const override { return Size * 4; }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     for (Export &E : Config->Exports) {
       auto *D = cast<Defined>(E.Sym->repl());
       write32le(Buf + OutputSectionOff + E.Ordinal * 4, D->getRVA());
@@ -334,7 +334,7 @@ public:
   explicit NamePointersChunk(std::vector<Chunk *> &V) : Chunks(V) {}
   size_t getSize() const override { return Chunks.size() * 4; }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     uint8_t *P = Buf + OutputSectionOff;
     for (Chunk *C : Chunks) {
       write32le(P, C->getRVA());
@@ -351,7 +351,7 @@ public:
   explicit ExportOrdinalChunk(size_t I) : Size(I) {}
   size_t getSize() const override { return Size * 2; }
 
-  void writeTo(uint8_t *Buf) override {
+  void writeTo(uint8_t *Buf) const override {
     uint8_t *P = Buf + OutputSectionOff;
     for (Export &E : Config->Exports) {
       if (E.Noname)

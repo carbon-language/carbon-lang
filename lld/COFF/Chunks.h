@@ -59,7 +59,7 @@ public:
   // beginning of the file. Because this function may use RVA values
   // of other chunks for relocations, you need to set them properly
   // before calling this function.
-  virtual void writeTo(uint8_t *Buf) {}
+  virtual void writeTo(uint8_t *Buf) const {}
 
   // The writer sets and uses the addresses.
   uint64_t getRVA() { return RVA; }
@@ -139,15 +139,15 @@ public:
   SectionChunk(ObjectFile *File, const coff_section *Header);
   static bool classof(const Chunk *C) { return C->kind() == SectionKind; }
   size_t getSize() const override { return Header->SizeOfRawData; }
-  void writeTo(uint8_t *Buf) override;
+  void writeTo(uint8_t *Buf) const override;
   bool hasData() const override;
   uint32_t getPermissions() const override;
   StringRef getSectionName() const override { return SectionName; }
   void getBaserels(std::vector<Baserel> *Res) override;
   bool isCOMDAT() const;
-  void applyRelX64(uint8_t *Off, uint16_t Type, Defined *Sym, uint64_t P);
-  void applyRelX86(uint8_t *Off, uint16_t Type, Defined *Sym, uint64_t P);
-  void applyRelARM(uint8_t *Off, uint16_t Type, Defined *Sym, uint64_t P);
+  void applyRelX64(uint8_t *Off, uint16_t Type, Defined *Sym, uint64_t P) const;
+  void applyRelX86(uint8_t *Off, uint16_t Type, Defined *Sym, uint64_t P) const;
+  void applyRelARM(uint8_t *Off, uint16_t Type, Defined *Sym, uint64_t P) const;
 
   // Called if the garbage collector decides to not include this chunk
   // in a final output. It's supposed to print out a log message to stdout.
@@ -228,7 +228,7 @@ class StringChunk : public Chunk {
 public:
   explicit StringChunk(StringRef S) : Str(S) {}
   size_t getSize() const override { return Str.size() + 1; }
-  void writeTo(uint8_t *Buf) override;
+  void writeTo(uint8_t *Buf) const override;
 
 private:
   StringRef Str;
@@ -251,7 +251,7 @@ class ImportThunkChunkX64 : public Chunk {
 public:
   explicit ImportThunkChunkX64(Defined *S);
   size_t getSize() const override { return sizeof(ImportThunkX86); }
-  void writeTo(uint8_t *Buf) override;
+  void writeTo(uint8_t *Buf) const override;
 
 private:
   Defined *ImpSymbol;
@@ -262,7 +262,7 @@ public:
   explicit ImportThunkChunkX86(Defined *S) : ImpSymbol(S) {}
   size_t getSize() const override { return sizeof(ImportThunkX86); }
   void getBaserels(std::vector<Baserel> *Res) override;
-  void writeTo(uint8_t *Buf) override;
+  void writeTo(uint8_t *Buf) const override;
 
 private:
   Defined *ImpSymbol;
@@ -273,7 +273,7 @@ public:
   explicit ImportThunkChunkARM(Defined *S) : ImpSymbol(S) {}
   size_t getSize() const override { return sizeof(ImportThunkARM); }
   void getBaserels(std::vector<Baserel> *Res) override;
-  void writeTo(uint8_t *Buf) override;
+  void writeTo(uint8_t *Buf) const override;
 
 private:
   Defined *ImpSymbol;
@@ -286,7 +286,7 @@ public:
   explicit LocalImportChunk(Defined *S) : Sym(S) {}
   size_t getSize() const override;
   void getBaserels(std::vector<Baserel> *Res) override;
-  void writeTo(uint8_t *Buf) override;
+  void writeTo(uint8_t *Buf) const override;
 
 private:
   Defined *Sym;
@@ -299,7 +299,7 @@ class SEHTableChunk : public Chunk {
 public:
   explicit SEHTableChunk(std::set<Defined *> S) : Syms(S) {}
   size_t getSize() const override { return Syms.size() * 4; }
-  void writeTo(uint8_t *Buf) override;
+  void writeTo(uint8_t *Buf) const override;
 
 private:
   std::set<Defined *> Syms;
@@ -312,7 +312,7 @@ class BaserelChunk : public Chunk {
 public:
   BaserelChunk(uint32_t Page, Baserel *Begin, Baserel *End);
   size_t getSize() const override { return Data.size(); }
-  void writeTo(uint8_t *Buf) override;
+  void writeTo(uint8_t *Buf) const override;
 
 private:
   std::vector<uint8_t> Data;
