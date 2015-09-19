@@ -310,6 +310,9 @@ void ImportFile::parse() {
 }
 
 void BitcodeFile::parse() {
+  // Usually parse() is thread-safe, but bitcode file is an exception.
+  std::lock_guard<std::mutex> Lock(Mu);
+
   std::string Err;
   M.reset(LTOModule::createFromBuffer(MB.getBufferStart(),
                                       MB.getBufferSize(),
@@ -355,6 +358,8 @@ MachineTypes BitcodeFile::getMachineType() {
     return IMAGE_FILE_MACHINE_UNKNOWN;
   }
 }
+
+std::mutex BitcodeFile::Mu;
 
 } // namespace coff
 } // namespace lld

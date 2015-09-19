@@ -17,6 +17,7 @@
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/StringSaver.h"
 #include <memory>
+#include <mutex>
 #include <set>
 #include <vector>
 
@@ -213,6 +214,7 @@ private:
   std::vector<SymbolBody *> SymbolBodies;
   llvm::BumpPtrAllocator Alloc;
   std::unique_ptr<LTOModule> M;
+  static std::mutex Mu;
 };
 
 } // namespace coff
