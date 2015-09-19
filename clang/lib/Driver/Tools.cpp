@@ -851,15 +851,9 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     Features.push_back("+no-movt");
 }
 
-void Clang::AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs,
-                             bool KernelOrKext) const {
-  const Driver &D = getToolChain().getDriver();
-  // Get the effective triple, which takes into account the deployment target.
-  std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
-  llvm::Triple Triple(TripleStr);
-
+void Clang::AddARMTargetArgs(const llvm::Triple &Triple, const ArgList &Args,
+                             ArgStringList &CmdArgs, bool KernelOrKext) const {
   // Select the ABI to use.
-  //
   // FIXME: Support -meabi.
   // FIXME: Parts of this are duplicated in the backend, unify this somehow.
   const char *ABIName = nullptr;
@@ -898,7 +892,8 @@ void Clang::AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs,
   CmdArgs.push_back(ABIName);
 
   // Determine floating point ABI from the options & target defaults.
-  arm::FloatABI ABI = arm::getARMFloatABI(D, Args, Triple);
+  arm::FloatABI ABI =
+      arm::getARMFloatABI(getToolChain().getDriver(), Args, Triple);
   if (ABI == arm::FloatABI::Soft) {
     // Floating point operations and argument passing are soft.
     // FIXME: This changes CPP defines, we need -target-soft-float.
@@ -3676,7 +3671,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::armeb:
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb:
-    AddARMTargetArgs(Args, CmdArgs, KernelOrKext);
+    // Use the effective triple, which takes into account the deployment target.
+    AddARMTargetArgs(Triple, Args, CmdArgs, KernelOrKext);
     break;
 
   case llvm::Triple::aarch64:
