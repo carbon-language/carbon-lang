@@ -1013,6 +1013,7 @@ def err_module_expected_ident : Error<
   "expected a module name after module import">;
 def err_module_expected_semi : Error<
   "expected ';' after module name">;
+def err_missing_before_module_end : Error<"expected %0 at end of module">;
 }
 
 let CategoryName = "Generics Issue" in {

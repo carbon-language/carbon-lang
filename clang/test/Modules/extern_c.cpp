@@ -68,7 +68,7 @@ namespace N {
   extern "C" {
 #endif
     int f;
-#if !defined(CXX_HEADER)
+#if !defined(CXX_HEADER) && !defined(NAMESPACE)
     // expected-error@-2 {{redefinition of 'f' as different kind of symbol}}
     // expected-note@c-header.h:1 {{previous}}
 #endif
@@ -78,4 +78,6 @@ namespace N {
 }
 #endif
 
+#if !defined(NAMESPACE)
 suppress_expected_no_diagnostics_error error_here; // expected-error {{}}
+#endif

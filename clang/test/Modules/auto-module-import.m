@@ -83,6 +83,7 @@ int getNotInModule() {
   return not_in_module;
 }
 
-void includeNotAtTopLevel() { // expected-note {{to match this '{'}}
-  #include <NoUmbrella/A.h> // expected-warning {{treating #include as an import}} expected-error {{expected '}'}}
-} // expected-error {{extraneous closing brace}}
+void includeNotAtTopLevel() { // expected-note {{function 'includeNotAtTopLevel' begins here}}
+  #include <NoUmbrella/A.h> // expected-warning {{treating #include as an import}} \
+			       expected-error {{import of module 'NoUmbrella.A' appears within function 'includeNotAtTopLevel'}}
+}

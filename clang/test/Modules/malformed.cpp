@@ -12,20 +12,14 @@
 #include STR(HEADER)
 
 // CHECK-A: While building module 'malformed_a'
-// CHECK-A: {{^}}Inputs/malformed/a1.h:1:{{.*}} error: expected '}'
+// CHECK-A: {{^}}Inputs/malformed/a1.h:1:{{.*}} error: expected '}' at end of module
 // CHECK-A: {{^}}Inputs/malformed/a1.h:1:{{.*}} note: to match this '{'
 //
 // CHECK-A: While building module 'malformed_a'
 // CHECK-A: {{^}}Inputs/malformed/a2.h:1:{{.*}} error: extraneous closing brace
 
 // CHECK-B: While building module 'malformed_b'
-// CHECK-B: {{^}}Inputs/malformed/b1.h:2:{{.*}} error: expected '}'
-// CHECK-B: {{^}}Inputs/malformed/b1.h:1:{{.*}} note: to match this '{'
-// CHECK-B: {{^}}Inputs/malformed/b1.h:3:{{.*}} error: extraneous closing brace ('}')
-//
-// CHECK-B: While building module 'malformed_b'
-// CHECK-B: {{^}}Inputs/malformed/b2.h:1:{{.*}} error: redefinition of 'g'
-// CHECK-B: {{^}}Inputs/malformed/b2.h:1:{{.*}} note: previous definition is here
+// CHECK-B: {{^}}Inputs/malformed/b1.h:2:{{.*}} error: import of module 'malformed_b.b2' appears within 'S'
 
 void test() { f<int>(); }
 // Test that we use relative paths to name files within an imported module.
