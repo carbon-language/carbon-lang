@@ -1702,19 +1702,17 @@ CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod,
     }
   }
 
-  llvm::DIModule *M = nullptr;
   if (CreateSkeletonCU) {
     llvm::DIBuilder DIB(CGM.getModule());
-    auto *CU = DIB.createCompileUnit(
-        TheCU->getSourceLanguage(), Mod.FullModuleName, Mod.Path,
-        TheCU->getProducer(), true, StringRef(), 0, Mod.ASTFile,
-        llvm::DIBuilder::FullDebug, Mod.Signature);
-    M = DIB.createModule(CU, Mod.FullModuleName, ConfigMacros, Mod.Path,
-                         CGM.getHeaderSearchOpts().Sysroot);
+    DIB.createCompileUnit(TheCU->getSourceLanguage(), Mod.FullModuleName,
+                          Mod.Path, TheCU->getProducer(), true, StringRef(), 0,
+                          Mod.ASTFile, llvm::DIBuilder::FullDebug,
+                          Mod.Signature);
     DIB.finalize();
-  } else
-    M = DBuilder.createModule(TheCU, Mod.FullModuleName, ConfigMacros, Mod.Path,
-                              CGM.getHeaderSearchOpts().Sysroot);
+  }
+  llvm::DIModule *M =
+      DBuilder.createModule(TheCU, Mod.FullModuleName, ConfigMacros, Mod.Path,
+                            CGM.getHeaderSearchOpts().Sysroot);
   ModRef.reset(M);
   return M;
 }
