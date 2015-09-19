@@ -47,7 +47,7 @@ void AsmPrinter::EmitSLEB128(int64_t Value, const char *Desc) const {
   OutStreamer->EmitSLEB128IntValue(Value);
 }
 
-/// EmitULEB128 - emit the specified signed leb128 value.
+/// EmitULEB128 - emit the specified unsigned leb128 value.
 void AsmPrinter::EmitULEB128(uint64_t Value, const char *Desc,
                              unsigned PadTo) const {
   if (isVerbose() && Desc)
