@@ -100,7 +100,8 @@ static void printVersion() {
 /// \param[out] Result Contents of the file after applying replacements if
 /// replacements were provided.
 ///
-/// \returns \li true if all replacements were applied successfully.
+/// \returns \parblock
+///          \li true if all replacements were applied successfully.
 ///          \li false if at least one replacement failed to apply.
 static bool
 getRewrittenData(const std::vector<tooling::Replacement> &Replacements,
@@ -134,7 +135,8 @@ getRewrittenData(const std::vector<tooling::Replacement> &Replacements,
 /// replacements were provided.
 /// \param[in] Diagnostics For diagnostic output.
 ///
-/// \returns \li true if all replacements applied successfully.
+/// \returns \parblock
+///          \li true if all replacements applied successfully.
 ///          \li false if at least one replacement failed to apply.
 static bool
 applyReplacements(const std::vector<tooling::Replacement> &Replacements,
@@ -160,7 +162,8 @@ applyReplacements(const std::vector<tooling::Replacement> &Replacements,
 /// \param[in] FormatStyle Style to apply.
 /// \param[in] Diagnostics For diagnostic output.
 ///
-/// \returns \li true if reformatting replacements were all successfully
+/// \returns \parblock
+///          \li true if reformatting replacements were all successfully
 ///          applied.
 ///          \li false if at least one reformatting replacement failed to apply.
 static bool

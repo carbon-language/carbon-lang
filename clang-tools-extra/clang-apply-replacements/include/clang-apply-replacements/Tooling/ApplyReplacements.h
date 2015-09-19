@@ -84,7 +84,8 @@ collectReplacementsFromDirectory(const llvm::StringRef Directory,
 /// file they target.
 /// \param[in] SM SourceManager required for conflict reporting.
 ///
-/// \returns \li true If all changes were applied successfully.
+/// \returns \parblock
+///          \li true If all changes were applied successfully.
 ///          \li false If there were conflicts.
 bool mergeAndDeduplicate(const TUReplacements &TUs,
                          FileToReplacementsMap &GroupedReplacements,
@@ -97,7 +98,8 @@ bool mergeAndDeduplicate(const TUReplacements &TUs,
 /// \param[out] Rewrites The results of applying replacements will be applied
 /// to this Rewriter.
 ///
-/// \returns \li true If all changes were applied successfully.
+/// \returns \parblock
+///          \li true If all changes were applied successfully.
 ///          \li false If a replacement failed to apply.
 bool applyReplacements(const FileToReplacementsMap &GroupedReplacements,
                        clang::Rewriter &Rewrites);
@@ -125,7 +127,8 @@ bool writeFiles(const clang::Rewriter &Rewrites);
 /// \param[in] Files Replacement files to delete.
 /// \param[in] Diagnostics DiagnosticsEngine used for error output.
 ///
-/// \returns \li true If all files have been deleted successfully.
+/// \returns \parblock
+///          \li true If all files have been deleted successfully.
 ///          \li false If at least one or more failures occur when deleting
 /// files.
 bool deleteReplacementFiles(const TUReplacementFiles &Files,

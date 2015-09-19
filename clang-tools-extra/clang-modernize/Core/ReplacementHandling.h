@@ -31,7 +31,8 @@ public:
   ///
   /// \param[in] Argv0 argv[0] as passed to main().
   ///
-  /// \returns \li true if clang-apply-replacements was found.
+  /// \returns \parblock
+  ///          \li true if clang-apply-replacements was found.
   ///          \li false otherwise.
   bool findClangApplyReplacements(const char *Argv0);
 
@@ -65,7 +66,8 @@ public:
   ///
   /// \param[in] Replacements Container of replacements to serialize.
   ///
-  /// \returns \li true if all replacements were serialized successfully to
+  /// \returns \parblock
+  ///          \li true if all replacements were serialized successfully to
   ///          disk.
   ///          \li false otherwise.
   bool serializeReplacements(const TUReplacementsMap &Replacements);
@@ -76,7 +78,8 @@ public:
   /// \pre Destination directory must have been previously set by calling
   /// setDestiantionDir() or useTempDestinationDir().
   ///
-  /// \returns \li true if clang-apply-replacements was successfully launched
+  /// \returns \parblock
+  ///          \li true if clang-apply-replacements was successfully launched
   ///          and successfully completed.
   ///          \li false otherwise.
   bool applyReplacements();
@@ -97,7 +100,8 @@ public:
   /// \param[out] Error If an error occurs a description of that error is
   ///             placed in this string.
   ///
-  /// \returns \li true on success
+  /// \returns \parblock
+  ///          \li true on success
   ///          \li false if a unique file name could not be created.
   static bool generateReplacementsFileName(llvm::StringRef DestinationDir,
                                            llvm::StringRef MainSourceFile,

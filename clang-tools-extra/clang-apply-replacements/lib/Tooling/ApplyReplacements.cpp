@@ -131,7 +131,8 @@ static void reportConflict(
 /// to be deduplicated and checked for conflicts.
 /// \param[in] SM SourceManager required for conflict reporting.
 ///
-/// \returns \li true if conflicts were detected
+/// \returns \parblock
+///          \li true if conflicts were detected
 ///          \li false if no conflicts were detected
 static bool deduplicateAndDetectConflicts(FileToReplacementsMap &Replacements,
                                           SourceManager &SM) {

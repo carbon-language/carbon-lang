@@ -41,7 +41,7 @@ public:
   /// \param File A file accessible by a SourceManager
   /// \param Include The include file as it should be written in the code.
   ///
-  /// \returns
+  /// \returns \parblock
   /// \li A null Replacement (check using \c Replacement::isApplicable()), if
   ///     the \c Include is already visible from \c File.
   /// \li Otherwise, a non-null Replacement that, when applied, inserts an
