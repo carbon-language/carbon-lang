@@ -149,8 +149,8 @@ public:
     ASTSourceDescriptor(){};
     ASTSourceDescriptor(std::string Name, std::string Path, std::string ASTFile,
                         uint64_t Signature)
-        : FullModuleName(Name), Path(Path), ASTFile(ASTFile),
-          Signature(Signature){};
+        : FullModuleName(std::move(Name)), Path(std::move(Path)),
+          ASTFile(std::move(ASTFile)), Signature(Signature){};
     ASTSourceDescriptor(const Module &M);
     std::string FullModuleName;
     std::string Path;
