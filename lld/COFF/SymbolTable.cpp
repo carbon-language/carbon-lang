@@ -56,8 +56,8 @@ void SymbolTable::readArchives() {
   if (ArchiveQueue.empty())
     return;
 
-  std::for_each(ArchiveQueue.begin(), ArchiveQueue.end(),
-                [](ArchiveFile *File) { File->parse(); });
+  parallel_for_each(ArchiveQueue.begin(), ArchiveQueue.end(),
+                    [](ArchiveFile *File) { File->parse(); });
 
   // Add lazy symbols to the symbol table. Lazy symbols that conflict
   // with existing undefined symbols are accumulated in LazySyms.
@@ -83,8 +83,8 @@ void SymbolTable::readObjects() {
   // Add defined and undefined symbols to the symbol table.
   std::vector<StringRef> Directives;
   for (size_t I = 0; I < ObjectQueue.size();) {
-    std::for_each(ObjectQueue.begin() + I, ObjectQueue.end(),
-                  [](InputFile *File) { File->parse(); });
+    parallel_for_each(ObjectQueue.begin() + I, ObjectQueue.end(),
+                      [](InputFile *File) { File->parse(); });
     for (size_t E = ObjectQueue.size(); I != E; ++I) {
       InputFile *File = ObjectQueue[I];
       if (Config->Verbose)
