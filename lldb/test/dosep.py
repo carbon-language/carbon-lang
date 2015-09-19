@@ -44,7 +44,7 @@ import signal
 import subprocess
 import sys
 import threading
-
+import test_results
 import dotest_channels
 import dotest_args
 
@@ -75,7 +75,6 @@ total_tests = None
 test_name_len = None
 dotest_options = None
 output_on_success = False
-
 RESULTS_FORMATTER = None
 RUNNER_PROCESS_ASYNC_MAP = None
 RESULTS_LISTENER_CHANNEL = None
@@ -114,20 +113,22 @@ def setup_global_variables(
 def report_test_failure(name, command, output):
     global output_lock
     with output_lock:
-        print >> sys.stderr
-        print >> sys.stderr, output
-        print >> sys.stderr, "[%s FAILED]" % name
-        print >> sys.stderr, "Command invoked: %s" % ' '.join(command)
+        if not (RESULTS_FORMATTER and RESULTS_FORMATTER.is_using_terminal()):
+            print >> sys.stderr
+            print >> sys.stderr, output
+            print >> sys.stderr, "[%s FAILED]" % name
+            print >> sys.stderr, "Command invoked: %s" % ' '.join(command)
         update_progress(name)
 
 
 def report_test_pass(name, output):
     global output_lock, output_on_success
     with output_lock:
-        if output_on_success:
-            print >> sys.stderr
-            print >> sys.stderr, output
-            print >> sys.stderr, "[%s PASSED]" % name
+        if not (RESULTS_FORMATTER and RESULTS_FORMATTER.is_using_terminal()):
+            if output_on_success:
+                print >> sys.stderr
+                print >> sys.stderr, output
+                print >> sys.stderr, "[%s PASSED]" % name
         update_progress(name)
 
 
@@ -135,10 +136,11 @@ def update_progress(test_name=""):
     global output_lock, test_counter, total_tests, test_name_len
     with output_lock:
         counter_len = len(str(total_tests))
-        sys.stderr.write(
-            "\r%*d out of %d test suites processed - %-*s" %
-            (counter_len, test_counter.value, total_tests,
-             test_name_len.value, test_name))
+        if not (RESULTS_FORMATTER and RESULTS_FORMATTER.is_using_terminal()):
+            sys.stderr.write(
+                "\r%*d out of %d test suites processed - %-*s" %
+                (counter_len, test_counter.value, total_tests,
+                 test_name_len.value, test_name))
         if len(test_name) > test_name_len.value:
             test_name_len.value = len(test_name)
         test_counter.value += 1
@@ -434,11 +436,13 @@ def find_test_files_in_dir_tree(dir_root, found_func):
 
 def initialize_global_vars_common(num_threads, test_work_items):
     global total_tests, test_counter, test_name_len
+    
     total_tests = sum([len(item[1]) for item in test_work_items])
     test_counter = multiprocessing.Value('i', 0)
     test_name_len = multiprocessing.Value('i', 0)
-    print >> sys.stderr, "Testing: %d test suites, %d thread%s" % (
-        total_tests, num_threads, (num_threads > 1) * "s")
+    if not (RESULTS_FORMATTER and RESULTS_FORMATTER.is_using_terminal()):
+        print >> sys.stderr, "Testing: %d test suites, %d thread%s" % (
+            total_tests, num_threads, (num_threads > 1) * "s")
     update_progress()
 
 
@@ -1162,9 +1166,10 @@ def main(print_details_on_success, num_threads, test_subdir,
 
     dotest_argv = sys.argv[1:]
 
-    global output_on_success, RESULTS_FORMATTER
+    global output_on_success, RESULTS_FORMATTER, output_lock
     output_on_success = print_details_on_success
     RESULTS_FORMATTER = results_formatter
+    RESULTS_FORMATTER.set_lock(output_lock)
 
     # We can't use sys.path[0] to determine the script directory
     # because it doesn't work under a debugger
