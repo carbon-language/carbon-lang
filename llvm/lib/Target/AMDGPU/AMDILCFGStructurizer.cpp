@@ -185,7 +185,7 @@ protected:
   MachinePostDominatorTree *PDT;
   MachineLoopInfo *MLI;
   const R600InstrInfo *TII;
-  const AMDGPURegisterInfo *TRI;
+  const R600RegisterInfo *TRI;
 
   // PRINT FUNCTIONS
   /// Print the ordered Blocks.

@@ -323,14 +323,6 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   }
 }
 
-const TargetRegisterClass * SIRegisterInfo::getCFGStructurizerRegClass(
-                                                                   MVT VT) const {
-  switch(VT.SimpleTy) {
-    default:
-    case MVT::i32: return &AMDGPU::VGPR_32RegClass;
-  }
-}
-
 unsigned SIRegisterInfo::getHWRegIndex(unsigned Reg) const {
   return getEncodingValue(Reg) & 0xff;
 }

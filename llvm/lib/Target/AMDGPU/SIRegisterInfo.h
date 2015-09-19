@@ -40,10 +40,6 @@ public:
                            unsigned FIOperandNum,
                            RegScavenger *RS) const override;
 
-  /// \brief get the register class of the specified type to use in the
-  /// CFGStructurizer
-  const TargetRegisterClass * getCFGStructurizerRegClass(MVT VT) const override;
-
   unsigned getHWRegIndex(unsigned Reg) const override;
 
   /// \brief Return the 'base' register class for this register.

@@ -37,10 +37,6 @@ struct AMDGPURegisterInfo : public AMDGPUGenRegisterInfo {
     assert(!"Unimplemented");  return BitVector();
   }
 
-  virtual const TargetRegisterClass* getCFGStructurizerRegClass(MVT VT) const {
-    assert(!"Unimplemented"); return nullptr;
-  }
-
   virtual unsigned getHWRegIndex(unsigned Reg) const {
     assert(!"Unimplemented"); return 0;
   }
