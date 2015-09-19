@@ -676,28 +676,25 @@ define <16 x i16> @stack_fold_pmovsxbw(<16 x i8> %a0) {
   ;CHECK-LABEL: stack_fold_pmovsxbw
   ;CHECK:       vpmovsxbw {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
-  %2 = call <16 x i16> @llvm.x86.avx2.pmovsxbw(<16 x i8> %a0)
+  %2 = sext <16 x i8> %a0 to <16 x i16>
   ret <16 x i16> %2
 }
-declare <16 x i16> @llvm.x86.avx2.pmovsxbw(<16 x i8>) nounwind readnone
 
 define <4 x i64> @stack_fold_pmovsxdq(<4 x i32> %a0) {
   ;CHECK-LABEL: stack_fold_pmovsxdq
   ;CHECK:       vpmovsxdq {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
-  %2 = call <4 x i64> @llvm.x86.avx2.pmovsxdq(<4 x i32> %a0)
+  %2 = sext <4 x i32> %a0 to <4 x i64>
   ret <4 x i64> %2
 }
-declare <4 x i64> @llvm.x86.avx2.pmovsxdq(<4 x i32>) nounwind readnone
 
 define <8 x i32> @stack_fold_pmovsxwd(<8 x i16> %a0) {
   ;CHECK-LABEL: stack_fold_pmovsxwd
   ;CHECK:       vpmovsxwd {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
-  %2 = call <8 x i32> @llvm.x86.avx2.pmovsxwd(<8 x i16> %a0)
+  %2 = sext <8 x i16> %a0 to <8 x i32>
   ret <8 x i32> %2
 }
-declare <8 x i32> @llvm.x86.avx2.pmovsxwd(<8 x i16>) nounwind readnone
 
 define <4 x i64> @stack_fold_pmovsxwq(<8 x i16> %a0) {
   ;CHECK-LABEL: stack_fold_pmovsxwq
