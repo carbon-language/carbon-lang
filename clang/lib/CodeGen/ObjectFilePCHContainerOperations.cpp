@@ -172,9 +172,8 @@ public:
     if (Diags.hasErrorOccurred())
       return;
 
-    if (CodeGen::CGDebugInfo *DI = Builder->getModuleDebugInfo())
-      if (const RecordDecl *RD = dyn_cast<RecordDecl>(D))
-        DI->completeRequiredType(RD);
+    if (const RecordDecl *RD = dyn_cast<RecordDecl>(D))
+      Builder->getModuleDebugInfo()->completeRequiredType(RD);
   }
 
   /// Emit a container holding the serialized AST.
