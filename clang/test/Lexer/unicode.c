@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -x c -std=c11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -x c++ -std=c++11 %s
 // RUN: %clang_cc1 -E -DPP_ONLY=1 %s -o %t
 // RUN: FileCheck --strict-whitespace --input-file=%t %s
 
@@ -24,3 +25,11 @@ COPYRIGHT
 // CHECK: Copyright © {{2012}}
 CHECK: The preprocessor should not complain about Unicode characters like ©.
 #endif
+
+// A 🌹 by any other name....
+extern int 🌹;
+int 🌵(int 🌻) { return 🌻+ 1; }
+int main () {
+  int 🌷 = 🌵(🌹);
+  return 🌷;
+}
