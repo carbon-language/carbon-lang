@@ -93,7 +93,7 @@ GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
   Consumers.push_back(llvm::make_unique<PCHGenerator>(
       CI.getPreprocessor(), OutputFile, nullptr, Sysroot, Buffer));
   Consumers.push_back(CI.getPCHContainerWriter().CreatePCHContainerGenerator(
-      CI.getDiagnostics(), CI, InFile, OutputFile, OS, Buffer));
+      CI, InFile, OutputFile, OS, Buffer));
 
   return llvm::make_unique<MultiplexConsumer>(std::move(Consumers));
 }
@@ -138,7 +138,7 @@ GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
       /*AllowASTWithErrors*/false,
       /*IncludeTimestamps*/+CI.getFrontendOpts().BuildingImplicitModule));
   Consumers.push_back(CI.getPCHContainerWriter().CreatePCHContainerGenerator(
-      CI.getDiagnostics(), CI, InFile, OutputFile, OS, Buffer));
+      CI, InFile, OutputFile, OS, Buffer));
   return llvm::make_unique<MultiplexConsumer>(std::move(Consumers));
 }
 

@@ -23,9 +23,8 @@ class ObjectFilePCHContainerWriter : public PCHContainerWriter {
   /// PCHGenerator that produces a wrapper file format
   /// that also contains full debug info for the module.
   std::unique_ptr<ASTConsumer> CreatePCHContainerGenerator(
-      DiagnosticsEngine &Diags, const CompilerInstance &CI,
-      const std::string &MainFileName, const std::string &OutputFileName,
-      llvm::raw_pwrite_stream *OS,
+      CompilerInstance &CI, const std::string &MainFileName,
+      const std::string &OutputFileName, llvm::raw_pwrite_stream *OS,
       std::shared_ptr<PCHBuffer> Buffer) const override;
 };
 

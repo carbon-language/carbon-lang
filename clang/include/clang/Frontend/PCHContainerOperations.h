@@ -46,9 +46,9 @@ public:
   /// PCHGenerator that produces a wrapper file format containing a
   /// serialized AST bitstream.
   virtual std::unique_ptr<ASTConsumer> CreatePCHContainerGenerator(
-      DiagnosticsEngine &Diags, const CompilerInstance &CI,
-      const std::string &MainFileName, const std::string &OutputFileName,
-      llvm::raw_pwrite_stream *OS, std::shared_ptr<PCHBuffer> Buffer) const = 0;
+      CompilerInstance &CI, const std::string &MainFileName,
+      const std::string &OutputFileName, llvm::raw_pwrite_stream *OS,
+      std::shared_ptr<PCHBuffer> Buffer) const = 0;
 };
 
 /// This abstract interface provides operations for unwrapping
@@ -73,9 +73,8 @@ class RawPCHContainerWriter : public PCHContainerWriter {
   /// Return an ASTConsumer that can be chained with a
   /// PCHGenerator that writes the module to a flat file.
   std::unique_ptr<ASTConsumer> CreatePCHContainerGenerator(
-      DiagnosticsEngine &Diags, const CompilerInstance &CI,
-      const std::string &MainFileName, const std::string &OutputFileName,
-      llvm::raw_pwrite_stream *OS,
+      CompilerInstance &CI, const std::string &MainFileName,
+      const std::string &OutputFileName, llvm::raw_pwrite_stream *OS,
       std::shared_ptr<PCHBuffer> Buffer) const override;
 };
 

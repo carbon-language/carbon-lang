@@ -116,12 +116,12 @@ class PCHContainerGenerator : public ASTConsumer {
   };
 
 public:
-  PCHContainerGenerator(DiagnosticsEngine &diags, const CompilerInstance &CI,
-                        const std::string &MainFileName,
+  PCHContainerGenerator(CompilerInstance &CI, const std::string &MainFileName,
                         const std::string &OutputFileName,
                         raw_pwrite_stream *OS,
                         std::shared_ptr<PCHBuffer> Buffer)
-      : Diags(diags), Ctx(nullptr), HeaderSearchOpts(CI.getHeaderSearchOpts()),
+      : Diags(CI.getDiagnostics()), Ctx(nullptr),
+        HeaderSearchOpts(CI.getHeaderSearchOpts()),
         PreprocessorOpts(CI.getPreprocessorOpts()),
         TargetOpts(CI.getTargetOpts()), LangOpts(CI.getLangOpts()), OS(OS),
         Buffer(Buffer) {
@@ -252,10 +252,10 @@ public:
 
 std::unique_ptr<ASTConsumer>
 ObjectFilePCHContainerWriter::CreatePCHContainerGenerator(
-    DiagnosticsEngine &Diags, const CompilerInstance &CI,
-    const std::string &MainFileName, const std::string &OutputFileName,
-    llvm::raw_pwrite_stream *OS, std::shared_ptr<PCHBuffer> Buffer) const {
-  return llvm::make_unique<PCHContainerGenerator>(Diags, CI, MainFileName,
+    CompilerInstance &CI, const std::string &MainFileName,
+    const std::string &OutputFileName, llvm::raw_pwrite_stream *OS,
+    std::shared_ptr<PCHBuffer> Buffer) const {
+  return llvm::make_unique<PCHContainerGenerator>(CI, MainFileName,
                                                   OutputFileName, OS, Buffer);
 }
 
