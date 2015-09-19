@@ -724,8 +724,7 @@ enum class FloatABI {
   Hard,
 };
 
-FloatABI getARMFloatABI(const Driver &D, const llvm::opt::ArgList &Args,
-                        const llvm::Triple &Triple);
+FloatABI getARMFloatABI(const ToolChain &TC, const llvm::opt::ArgList &Args);
 }
 namespace XCore {
 // For XCore, we do not need to instantiate tools for PreProcess, PreCompile and

@@ -574,8 +574,9 @@ static bool useAAPCSForMachO(const llvm::Triple &T) {
 
 // Select the float ABI as determined by -msoft-float, -mhard-float, and
 // -mfloat-abi=.
-arm::FloatABI arm::getARMFloatABI(const Driver &D, const ArgList &Args,
-                                  const llvm::Triple &Triple) {
+arm::FloatABI arm::getARMFloatABI(const ToolChain &TC, const ArgList &Args) {
+  const Driver &D = TC.getDriver();
+  const llvm::Triple Triple(TC.ComputeEffectiveClangTriple(Args));
   auto SubArch = getARMSubArchVersionNumber(Triple);
   arm::FloatABI ABI = FloatABI::Invalid;
   if (Arg *A =
@@ -663,13 +664,16 @@ arm::FloatABI arm::getARMFloatABI(const Driver &D, const ArgList &Args,
   return ABI;
 }
 
-static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
+static void getARMTargetFeatures(const ToolChain &TC,
+                                 const llvm::Triple &Triple,
                                  const ArgList &Args,
                                  std::vector<const char *> &Features,
                                  bool ForAS) {
+  const Driver &D = TC.getDriver();
+
   bool KernelOrKext =
       Args.hasArg(options::OPT_mkernel, options::OPT_fapple_kext);
-  arm::FloatABI ABI = arm::getARMFloatABI(D, Args, Triple);
+  arm::FloatABI ABI = arm::getARMFloatABI(TC, Args);
   const Arg *WaCPU = nullptr, *WaFPU = nullptr;
   const Arg *WaHDiv = nullptr, *WaArch = nullptr;
 
@@ -892,8 +896,7 @@ void Clang::AddARMTargetArgs(const llvm::Triple &Triple, const ArgList &Args,
   CmdArgs.push_back(ABIName);
 
   // Determine floating point ABI from the options & target defaults.
-  arm::FloatABI ABI =
-      arm::getARMFloatABI(getToolChain().getDriver(), Args, Triple);
+  arm::FloatABI ABI = arm::getARMFloatABI(getToolChain(), Args);
   if (ABI == arm::FloatABI::Soft) {
     // Floating point operations and argument passing are soft.
     // FIXME: This changes CPP defines, we need -target-soft-float.
@@ -2108,9 +2111,10 @@ static void getWebAssemblyTargetFeatures(const ArgList &Args,
   }
 }
 
-static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
+static void getTargetFeatures(const ToolChain &TC, const llvm::Triple &Triple,
                               const ArgList &Args, ArgStringList &CmdArgs,
                               bool ForAS) {
+  const Driver &D = TC.getDriver();
   std::vector<const char *> Features;
   switch (Triple.getArch()) {
   default:
@@ -2126,7 +2130,7 @@ static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   case llvm::Triple::armeb:
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb:
-    getARMTargetFeatures(D, Triple, Args, Features, ForAS);
+    getARMTargetFeatures(TC, Triple, Args, Features, ForAS);
     break;
 
   case llvm::Triple::ppc:
@@ -3660,7 +3664,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Add the target features
-  getTargetFeatures(D, Triple, Args, CmdArgs, false);
+  getTargetFeatures(getToolChain(), Triple, Args, CmdArgs, false);
 
   // Add target specific flags.
   switch (getToolChain().getArch()) {
@@ -5525,8 +5529,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Add the target features
-  const Driver &D = getToolChain().getDriver();
-  getTargetFeatures(D, Triple, Args, CmdArgs, true);
+  getTargetFeatures(getToolChain(), Triple, Args, CmdArgs, true);
 
   // Ignore explicit -force_cpusubtype_ALL option.
   (void)Args.hasArg(options::OPT_force__cpusubtype__ALL);
@@ -7343,9 +7346,7 @@ void freebsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
              getToolChain().getArch() == llvm::Triple::armeb ||
              getToolChain().getArch() == llvm::Triple::thumb ||
              getToolChain().getArch() == llvm::Triple::thumbeb) {
-    const Driver &D = getToolChain().getDriver();
-    const llvm::Triple &Triple = getToolChain().getTriple();
-    arm::FloatABI ABI = arm::getARMFloatABI(D, Args, Triple);
+    arm::FloatABI ABI = arm::getARMFloatABI(getToolChain(), Args);
 
     if (ABI == arm::FloatABI::Hard)
       CmdArgs.push_back("-mfpu=vfp");
@@ -7932,7 +7933,7 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
       break;
     }
 
-    switch (arm::getARMFloatABI(getToolChain().getDriver(), Args, Triple)) {
+    switch (arm::getARMFloatABI(getToolChain(), Args)) {
     case arm::FloatABI::Invalid: llvm_unreachable("must have an ABI!");
     case arm::FloatABI::Soft:
       CmdArgs.push_back(Args.MakeArgString("-mfloat-abi=soft"));
@@ -8128,16 +8129,14 @@ static std::string getLinuxDynamicLinker(const ArgList &Args,
     return "/lib/ld-linux-aarch64_be.so.1";
   else if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb) {
     if (ToolChain.getTriple().getEnvironment() == llvm::Triple::GNUEABIHF ||
-        arm::getARMFloatABI(ToolChain.getDriver(), Args,
-                            ToolChain.getTriple()) == arm::FloatABI::Hard)
+        arm::getARMFloatABI(ToolChain, Args) == arm::FloatABI::Hard)
       return "/lib/ld-linux-armhf.so.3";
     else
       return "/lib/ld-linux.so.3";
   } else if (Arch == llvm::Triple::armeb || Arch == llvm::Triple::thumbeb) {
     // TODO: check which dynamic linker name.
     if (ToolChain.getTriple().getEnvironment() == llvm::Triple::GNUEABIHF ||
-        arm::getARMFloatABI(ToolChain.getDriver(), Args,
-                            ToolChain.getTriple()) == arm::FloatABI::Hard)
+        arm::getARMFloatABI(ToolChain, Args) == arm::FloatABI::Hard)
       return "/lib/ld-linux-armhf.so.3";
     else
       return "/lib/ld-linux.so.3";
