@@ -286,37 +286,37 @@ _mm_cmpeq_epi64(__m128i __V1, __m128i __V2)
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_cvtepi8_epi16(__m128i __V)
 {
-  return (__m128i) __builtin_ia32_pmovsxbw128((__v16qi) __V);
+  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__v16qi)__V, (__v16qi)__V, 0, 1, 2, 3, 4, 5, 6, 7), __v8hi);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_cvtepi8_epi32(__m128i __V)
 {
-  return (__m128i) __builtin_ia32_pmovsxbd128((__v16qi) __V);
+  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__v16qi)__V, (__v16qi)__V, 0, 1, 2, 3), __v4si);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_cvtepi8_epi64(__m128i __V)
 {
-  return (__m128i) __builtin_ia32_pmovsxbq128((__v16qi) __V);
+  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__v16qi)__V, (__v16qi)__V, 0, 1), __v2di);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_cvtepi16_epi32(__m128i __V)
 {
-  return (__m128i) __builtin_ia32_pmovsxwd128((__v8hi) __V);
+  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__v8hi)__V, (__v8hi)__V, 0, 1, 2, 3), __v4si);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_cvtepi16_epi64(__m128i __V)
 {
-  return (__m128i) __builtin_ia32_pmovsxwq128((__v8hi)__V);
+  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__v8hi)__V, (__v8hi)__V, 0, 1), __v2di);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_cvtepi32_epi64(__m128i __V)
 {
-  return (__m128i) __builtin_ia32_pmovsxdq128((__v4si)__V);
+  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__v4si)__V, (__v4si)__V, 0, 1), __v2di);
 }
 
 /* SSE4 Packed Integer Zero-Extension.  */

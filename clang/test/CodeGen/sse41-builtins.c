@@ -86,42 +86,42 @@ __m128i test_mm_cmpeq_epi64(__m128i A, __m128i B) {
 
 __m128i test_mm_cvtepi8_epi16(__m128i a) {
   // CHECK-LABEL: test_mm_cvtepi8_epi16
-  // CHECK: call <8 x i16> @llvm.x86.sse41.pmovsxbw(<16 x i8> {{.*}})
+  // CHECK: sext <8 x i8> {{.*}} to <8 x i16>
   // CHECK-ASM: pmovsxbw %xmm{{.*}}, %xmm{{.*}}
   return _mm_cvtepi8_epi16(a);
 }
 
 __m128i test_mm_cvtepi8_epi32(__m128i a) {
   // CHECK-LABEL: test_mm_cvtepi8_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse41.pmovsxbd(<16 x i8> {{.*}})
+  // CHECK: sext <4 x i8> {{.*}} to <4 x i32>
   // CHECK-ASM: pmovsxbd %xmm{{.*}}, %xmm{{.*}}
   return _mm_cvtepi8_epi32(a);
 }
 
 __m128i test_mm_cvtepi8_epi64(__m128i a) {
   // CHECK-LABEL: test_mm_cvtepi8_epi64
-  // CHECK: call <2 x i64> @llvm.x86.sse41.pmovsxbq(<16 x i8> {{.*}})
+  // CHECK: sext <2 x i8> {{.*}} to <2 x i64>
   // CHECK-ASM: pmovsxbq %xmm{{.*}}, %xmm{{.*}}
   return _mm_cvtepi8_epi64(a);
 }
 
 __m128i test_mm_cvtepi16_epi32(__m128i a) {
   // CHECK-LABEL: test_mm_cvtepi16_epi32
-  // CHECK: call <4 x i32> @llvm.x86.sse41.pmovsxwd(<8 x i16> {{.*}})
+  // CHECK: sext <4 x i16> {{.*}} to <4 x i32>
   // CHECK-ASM: pmovsxwd %xmm{{.*}}, %xmm{{.*}}
   return _mm_cvtepi16_epi32(a);
 }
 
 __m128i test_mm_cvtepi16_epi64(__m128i a) {
   // CHECK-LABEL: test_mm_cvtepi16_epi64
-  // CHECK: call <2 x i64> @llvm.x86.sse41.pmovsxwq(<8 x i16> {{.*}})
+  // CHECK: sext <2 x i16> {{.*}} to <2 x i64>
   // CHECK-ASM: pmovsxwq %xmm{{.*}}, %xmm{{.*}}
   return _mm_cvtepi16_epi64(a);
 }
 
 __m128i test_mm_cvtepi32_epi64(__m128i a) {
   // CHECK-LABEL: test_mm_cvtepi32_epi64
-  // CHECK: call <2 x i64> @llvm.x86.sse41.pmovsxdq(<4 x i32> {{.*}})
+  // CHECK: sext <2 x i32> {{.*}} to <2 x i64>
   // CHECK-ASM: pmovsxdq %xmm{{.*}}, %xmm{{.*}}
   return _mm_cvtepi32_epi64(a);
 }
