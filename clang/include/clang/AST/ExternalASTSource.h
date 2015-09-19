@@ -146,12 +146,13 @@ public:
   /// everything needed to generate debug info for an imported module
   /// or PCH.
   struct ASTSourceDescriptor {
+    ASTSourceDescriptor(){};
     ASTSourceDescriptor(std::string Name, std::string Path, std::string ASTFile,
                         uint64_t Signature)
-        : ModuleName(Name), Path(Path), ASTFile(ASTFile),
+        : FullModuleName(Name), Path(Path), ASTFile(ASTFile),
           Signature(Signature){};
     ASTSourceDescriptor(const Module &M);
-    std::string ModuleName;
+    std::string FullModuleName;
     std::string Path;
     std::string ASTFile;
     uint64_t Signature = 0;

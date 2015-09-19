@@ -1675,7 +1675,7 @@ llvm::DIType *CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 llvm::DIModule *
 CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod,
                                   bool CreateSkeletonCU) {
-  auto &ModRef = ModuleRefCache[Mod.ModuleName];
+  auto &ModRef = ModuleRefCache[Mod.FullModuleName];
   if (ModRef)
     return cast<llvm::DIModule>(ModRef);
 
@@ -1705,15 +1705,15 @@ CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod,
   llvm::DIModule *M = nullptr;
   if (CreateSkeletonCU) {
     llvm::DIBuilder DIB(CGM.getModule());
-    auto *CU = DIB.createCompileUnit(TheCU->getSourceLanguage(), Mod.ModuleName,
-                                     Mod.Path, TheCU->getProducer(), true,
-                                     StringRef(), 0, Mod.ASTFile,
-                                     llvm::DIBuilder::FullDebug, Mod.Signature);
-    M = DIB.createModule(CU, Mod.ModuleName, ConfigMacros, Mod.Path,
+    auto *CU = DIB.createCompileUnit(
+        TheCU->getSourceLanguage(), Mod.FullModuleName, Mod.Path,
+        TheCU->getProducer(), true, StringRef(), 0, Mod.ASTFile,
+        llvm::DIBuilder::FullDebug, Mod.Signature);
+    M = DIB.createModule(CU, Mod.FullModuleName, ConfigMacros, Mod.Path,
                          CGM.getHeaderSearchOpts().Sysroot);
     DIB.finalize();
   } else
-    M = DBuilder.createModule(TheCU, Mod.ModuleName, ConfigMacros, Mod.Path,
+    M = DBuilder.createModule(TheCU, Mod.FullModuleName, ConfigMacros, Mod.Path,
                               CGM.getHeaderSearchOpts().Sysroot);
   ModRef.reset(M);
   return M;

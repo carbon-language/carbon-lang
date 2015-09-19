@@ -29,7 +29,7 @@ ExternalASTSource::getSourceDescriptor(unsigned ID) {
 }
 
 ExternalASTSource::ASTSourceDescriptor::ASTSourceDescriptor(const Module &M)
-    : ModuleName(M.getFullModuleName()), Signature(M.Signature) {
+    : FullModuleName(M.getFullModuleName()), Signature(M.Signature) {
   if (M.Directory)
     Path = M.Directory->getName();
   if (auto *File = M.getASTFile())
