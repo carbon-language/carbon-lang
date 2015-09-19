@@ -42,6 +42,7 @@ namespace tooling {
 /// \code
 /// #include "clang/Frontend/FrontendActions.h"
 /// #include "clang/Tooling/CommonOptionsParser.h"
+/// #include "clang/Tooling/Tooling.h"
 /// #include "llvm/Support/CommandLine.h"
 ///
 /// using namespace clang::tooling;
@@ -56,8 +57,8 @@ namespace tooling {
 /// int main(int argc, const char **argv) {
 ///   CommonOptionsParser OptionsParser(argc, argv, MyToolCategory);
 ///   ClangTool Tool(OptionsParser.getCompilations(),
-///                  OptionsParser.getSourcePathListi());
-///   return Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>());
+///                  OptionsParser.getSourcePathList());
+///   return Tool.run(newFrontendActionFactory<SyntaxOnlyAction>().get());
 /// }
 /// \endcode
 class CommonOptionsParser {
