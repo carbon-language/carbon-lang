@@ -12,6 +12,7 @@
 #include "Error.h"
 #include "SymbolTable.h"
 #include "Symbols.h"
+#include "lld/Core/Parallel.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/LTO/LTOCodeGenerator.h"
 #include "llvm/Support/Debug.h"
@@ -56,13 +57,15 @@ void SymbolTable::readArchives() {
   if (ArchiveQueue.empty())
     return;
 
+  std::for_each(ArchiveQueue.begin(), ArchiveQueue.end(),
+                [](ArchiveFile *File) { File->parse(); });
+
   // Add lazy symbols to the symbol table. Lazy symbols that conflict
   // with existing undefined symbols are accumulated in LazySyms.
   std::vector<Symbol *> LazySyms;
   for (ArchiveFile *File : ArchiveQueue) {
     if (Config->Verbose)
       llvm::outs() << "Reading " << File->getShortName() << "\n";
-    File->parse();
     for (Lazy &Sym : File->getLazySymbols())
       addLazy(&Sym, &LazySyms);
   }
@@ -80,22 +83,25 @@ void SymbolTable::readObjects() {
 
   // Add defined and undefined symbols to the symbol table.
   std::vector<StringRef> Directives;
-  for (size_t I = 0; I < ObjectQueue.size(); ++I) {
-    InputFile *File = ObjectQueue[I];
-    if (Config->Verbose)
-      llvm::outs() << "Reading " << File->getShortName() << "\n";
-    File->parse();
-    // Adding symbols may add more files to ObjectQueue
-    // (but not to ArchiveQueue).
-    for (SymbolBody *Sym : File->getSymbols())
-      if (Sym->isExternal())
-        addSymbol(Sym);
-    StringRef S = File->getDirectives();
-    if (!S.empty()) {
-      Directives.push_back(S);
+  for (size_t I = 0; I < ObjectQueue.size();) {
+    std::for_each(ObjectQueue.begin() + I, ObjectQueue.end(),
+                  [](InputFile *File) { File->parse(); });
+    for (size_t E = ObjectQueue.size(); I != E; ++I) {
+      InputFile *File = ObjectQueue[I];
       if (Config->Verbose)
-        llvm::outs() << "Directives: " << File->getShortName()
-                     << ": " << S << "\n";
+        llvm::outs() << "Reading " << File->getShortName() << "\n";
+      // Adding symbols may add more files to ObjectQueue
+      // (but not to ArchiveQueue).
+      for (SymbolBody *Sym : File->getSymbols())
+        if (Sym->isExternal())
+          addSymbol(Sym);
+      StringRef S = File->getDirectives();
+      if (!S.empty()) {
+        Directives.push_back(S);
+        if (Config->Verbose)
+          llvm::outs() << "Directives: " << File->getShortName()
+                       << ": " << S << "\n";
+      }
     }
   }
   ObjectQueue.clear();
