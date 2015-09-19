@@ -854,9 +854,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
 
     // We only use the lowest lanes of the argument.
-    APInt DemandedElts = APInt::getLowBitsSet(ArgWidth, RetWidth);
-    APInt UndefElts(ArgWidth, 0);
-    if (Value *V = SimplifyDemandedVectorElts(Arg, DemandedElts, UndefElts)) {
+    if (Value *V = SimplifyDemandedVectorEltsLow(Arg, ArgWidth, RetWidth)) {
       II->setArgOperand(0, V);
       return II;
     }
@@ -873,12 +871,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_sse2_cvttsd2si64: {
     // These intrinsics only demand the 0th element of their input vectors. If
     // we can simplify the input based on that, do so now.
-    unsigned VWidth =
-      cast<VectorType>(II->getArgOperand(0)->getType())->getNumElements();
-    APInt DemandedElts(VWidth, 1);
-    APInt UndefElts(VWidth, 0);
-    if (Value *V = SimplifyDemandedVectorElts(II->getArgOperand(0),
-                                              DemandedElts, UndefElts)) {
+    Value *Arg = II->getArgOperand(0);
+    unsigned VWidth = Arg->getType()->getVectorNumElements();
+    if (Value *V = SimplifyDemandedVectorEltsLow(Arg, VWidth, 1)) {
       II->setArgOperand(0, V);
       return II;
     }
@@ -929,16 +924,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     // SSE2/AVX2 uses only the first 64-bits of the 128-bit vector
     // operand to compute the shift amount.
-    auto ShiftAmt = II->getArgOperand(1);
-    auto ShiftType = cast<VectorType>(ShiftAmt->getType());
-    assert(ShiftType->getPrimitiveSizeInBits() == 128 &&
+    Value *Arg1 = II->getArgOperand(1);
+    assert(Arg1->getType()->getPrimitiveSizeInBits() == 128 &&
            "Unexpected packed shift size");
-    unsigned VWidth = ShiftType->getNumElements();
+    unsigned VWidth = Arg1->getType()->getVectorNumElements();
 
-    APInt DemandedElts = APInt::getLowBitsSet(VWidth, VWidth / 2);
-    APInt UndefElts(VWidth, 0);
-    if (Value *V =
-            SimplifyDemandedVectorElts(ShiftAmt, DemandedElts, UndefElts)) {
+    if (Value *V = SimplifyDemandedVectorEltsLow(Arg1, VWidth, VWidth / 2)) {
       II->setArgOperand(1, V);
       return II;
     }
