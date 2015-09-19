@@ -1083,7 +1083,7 @@ Instruction *InstCombiner::FoldICmpCstShrCst(ICmpInst &I, Value *Op, Value *A,
   if (Shift > 0) {
     if (IsAShr && AP1 == AP2.ashr(Shift)) {
       // There are multiple solutions if we are comparing against -1 and the LHS
-      // of the ashr is not a power of two..
+      // of the ashr is not a power of two.
       if (AP1.isAllOnesValue() && !AP2.isPowerOf2())
         return getICmp(I.ICMP_UGE, A, ConstantInt::get(A->getType(), Shift));
       return getICmp(I.ICMP_EQ, A, ConstantInt::get(A->getType(), Shift));

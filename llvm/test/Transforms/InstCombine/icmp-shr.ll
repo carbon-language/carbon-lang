@@ -376,3 +376,12 @@ define i1 @PR21222(i32 %B) {
   %cmp = icmp eq i32 %shr, -2
   ret i1 %cmp
 }
+
+; CHECK-LABEL: @PR24873(
+; CHECK:      %[[icmp:.*]] = icmp ugt i64 %V, 61
+; CHECK-NEXT: ret i1 %[[icmp]]
+define i1 @PR24873(i64 %V) {
+  %ashr = ashr i64 -4611686018427387904, %V
+  %icmp = icmp eq i64 %ashr, -1
+  ret i1 %icmp
+}
