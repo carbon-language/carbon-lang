@@ -16,6 +16,7 @@
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclarationName.h"
+#include "clang/Basic/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
@@ -27,9 +28,12 @@ ExternalASTSource::getSourceDescriptor(unsigned ID) {
   return None;
 }
 
-ExternalASTSource::ASTSourceDescriptor
-ExternalASTSource::getSourceDescriptor(const Module &M) {
-  return ASTSourceDescriptor();
+ExternalASTSource::ASTSourceDescriptor::ASTSourceDescriptor(const Module &M)
+    : ModuleName(M.getFullModuleName()), Signature(M.Signature) {
+  if (M.Directory)
+    Path = M.Directory->getName();
+  if (auto *File = M.getASTFile())
+    ASTFile = File->getName();
 }
 
 void ExternalASTSource::FindFileRegionDecls(FileID File, unsigned Offset,

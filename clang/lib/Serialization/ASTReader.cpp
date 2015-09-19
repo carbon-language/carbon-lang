@@ -7403,33 +7403,17 @@ unsigned ASTReader::getModuleFileID(ModuleFile *F) {
   return (I - PCHModules.end()) << 1;
 }
 
-ExternalASTSource::ASTSourceDescriptor
-ASTReader::getSourceDescriptor(const Module &M) {
-  StringRef Dir, Filename;
-  if (M.Directory)
-    Dir = M.Directory->getName();
-  if (auto *File = M.getASTFile())
-    Filename = File->getName();
-  return ASTReader::ASTSourceDescriptor{
-             M.getFullModuleName(), Dir, Filename,
-             M.Signature
-         };
-}
-
 llvm::Optional<ExternalASTSource::ASTSourceDescriptor>
 ASTReader::getSourceDescriptor(unsigned ID) {
   if (const Module *M = getSubmodule(ID))
-    return getSourceDescriptor(*M);
+    return ExternalASTSource::ASTSourceDescriptor(*M);
 
   // If there is only a single PCH, return it instead.
   // Chained PCH are not suported.
   if (ModuleMgr.size() == 1) {
     ModuleFile &MF = ModuleMgr.getPrimaryModule();
-    return ASTReader::ASTSourceDescriptor{
-      MF.OriginalSourceFileName, MF.OriginalDir,
-      MF.FileName,
-      MF.Signature
-    };
+    return ASTReader::ASTSourceDescriptor(
+        MF.OriginalSourceFileName, MF.OriginalDir, MF.FileName, MF.Signature);
   }
   return None;
 }
