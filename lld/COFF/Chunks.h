@@ -18,7 +18,6 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Object/COFF.h"
 #include <atomic>
-#include <map>
 #include <vector>
 
 namespace lld {

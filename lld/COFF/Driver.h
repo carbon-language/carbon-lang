@@ -21,7 +21,6 @@
 #include "llvm/Support/StringSaver.h"
 #include <memory>
 #include <set>
-#include <system_error>
 #include <vector>
 
 namespace lld {
