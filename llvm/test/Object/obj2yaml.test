@@ -414,3 +414,6 @@ ELF-X86-64-UNWIND-NEXT:   Type:            SHT_X86_64_UNWIND
 ELF-X86-64-UNWIND-NEXT:   Flags:           [ SHF_ALLOC ]
 ELF-X86-64-UNWIND-NEXT:   AddressAlign:    0x0000000000000001
 ELF-X86-64-UNWIND-NEXT:   Content:         ''
+
+RUN: not llvm-cxxdump %t.blah 2>&1 | FileCheck --check-prefix=ENOENT %s
+ENOENT: {{.*}}.blah: {{[Nn]}}o such file or directory
