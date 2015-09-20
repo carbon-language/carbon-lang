@@ -1015,13 +1015,11 @@ private:
   /// @brief Initialize this ScopInfo .
   void init(LoopInfo &LI, ScopDetection &SD, AliasAnalysis &AA);
 
-  /// @brief Add loop carried constraints to the header blocks of loops.
+  /// @brief Add loop carried constraints to the header block of the loop @p L.
   ///
+  /// @param L  The loop to process.
   /// @param LI The LoopInfo analysis.
-  /// @param SD The ScopDetection analysis to identify non-affine sub-regions.
-  /// @param DT The dominator tree of the current function.
-  void addLoopBoundsToHeaderDomains(LoopInfo &LI, ScopDetection &SD,
-                                    DominatorTree &DT);
+  void addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI);
 
   /// @brief Compute the branching constraints for each basic block in @p R.
   ///
