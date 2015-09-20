@@ -18,6 +18,13 @@
 #include <cstring>
 #include <cctype>
 
+#ifdef _MSC_VER
+// snprintf is implemented in VS 2015
+#if _MSC_VER < 1900
+#define snprintf _snprintf_s
+#endif
+#endif
+
 namespace __cxxabiv1
 {
 
@@ -4818,6 +4825,12 @@ class malloc_alloc
 {
 public:
     typedef T value_type;
+    typedef T& reference;
+    typedef const T& const_reference;
+    typedef T* pointer;
+    typedef const T* const_pointer;
+    typedef std::size_t size_type;
+    typedef std::ptrdiff_t difference_type;
 
     malloc_alloc() = default;
     template <class U> malloc_alloc(const malloc_alloc<U>&) noexcept {}
@@ -4829,6 +4842,17 @@ public:
     void deallocate(T* p, std::size_t) noexcept
     {
         std::free(p);
+    }
+
+    template <class U> struct rebind { using other = malloc_alloc<U>; };
+    template <class U, class... Args>
+    void construct(U* p, Args&&... args)
+    {
+        ::new ((void*)p) U(std::forward<Args>(args)...);
+    }
+    void destroy(T* p)
+    {
+        p->~T();
     }
 };
 
