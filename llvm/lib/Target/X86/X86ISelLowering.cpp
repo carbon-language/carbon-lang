@@ -15726,6 +15726,8 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
       case X86ISD::CMPM:
       case X86ISD::CMPMU:
         return DAG.getNode(ISD::AND, dl, VT, Op, VMask);
+      case X86ISD::VFPCLASS:
+        return DAG.getNode(ISD::OR, dl, VT, Op, VMask);
       case X86ISD::VTRUNC:
       case X86ISD::VTRUNCS:
       case X86ISD::VTRUNCUS:
@@ -16051,6 +16053,26 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                               dl, Op.getValueType(),
                                               Src1, Src2, Src3),
                                   Mask, PassThru, Subtarget, DAG);
+    }
+    case FPCLASS: {
+      // FPclass intrinsics with mask
+      //
+       SDValue Src1 = Op.getOperand(1);
+       EVT VT = Src1.getValueType();
+       EVT MaskVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
+                                      VT.getVectorNumElements());
+       SDValue Imm = Op.getOperand(2);
+       SDValue Mask = Op.getOperand(3);
+       EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
+                                        Mask.getValueType().getSizeInBits());
+       SDValue FPclass = DAG.getNode(IntrData->Opc0, dl, MaskVT, Src1, Imm);
+       SDValue FPclassMask = getVectorMaskingNode(FPclass, Mask,
+                                                 DAG.getTargetConstant(0, dl, MaskVT),
+                                                 Subtarget, DAG);
+       SDValue Res = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, BitcastVT,
+                                 DAG.getUNDEF(BitcastVT), FPclassMask,
+                                 DAG.getIntPtrConstant(0, dl));
+       return DAG.getBitcast(Op.getValueType(), Res);
     }
     case CMP_MASK:
     case CMP_MASK_CC: {
@@ -19709,6 +19731,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::UINT_TO_FP_RND:     return "X86ISD::UINT_TO_FP_RND";
   case X86ISD::FP_TO_SINT_RND:     return "X86ISD::FP_TO_SINT_RND";
   case X86ISD::FP_TO_UINT_RND:     return "X86ISD::FP_TO_UINT_RND";
+  case X86ISD::VFPCLASS:           return "X86ISD::VFPCLASS";
   }
   return nullptr;
 }

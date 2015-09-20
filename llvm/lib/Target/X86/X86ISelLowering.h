@@ -397,6 +397,8 @@ namespace llvm {
       VREDUCE,
       // RndScale - Round FP Values To Include A Given Number Of Fraction Bits
       VRNDSCALE,
+      // VFPCLASS - Tests Types Of a FP Values
+      VFPCLASS, 
       // Broadcast scalar to vector
       VBROADCAST,
       // Broadcast subvector to vector

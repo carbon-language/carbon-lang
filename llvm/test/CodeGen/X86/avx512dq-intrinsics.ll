@@ -436,3 +436,34 @@ define <8 x i64>@test_int_x86_avx512_mask_inserti64x2_512(<8 x i64> %x0, <2 x i6
   %res4 = add <8 x i64> %res2, %res3
   ret <8 x i64> %res4
 }
+
+declare i8 @llvm.x86.avx512.mask.fpclass.pd.512(<8 x double>, i32, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_fpclass_pd_512
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vfpclasspd
+; CHECK: {%k1} 
+; CHECK: vfpclasspd
+; CHECK: kmovb   %k0
+define i8 @test_int_x86_avx512_mask_fpclass_pd_512(<8 x double> %x0, i8 %x1) {
+	%res = call i8 @llvm.x86.avx512.mask.fpclass.pd.512(<8 x double> %x0, i32 2, i8 %x1)
+	%res1 = call i8 @llvm.x86.avx512.mask.fpclass.pd.512(<8 x double> %x0, i32 4, i8 -1)
+	%res2 = add i8 %res, %res1
+	ret i8 %res2
+}
+declare i16 @llvm.x86.avx512.mask.fpclass.ps.512(<16 x float>, i32, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_fpclass_ps_512
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vfpclassps
+; CHECK: vfpclassps
+; CHECK: {%k1} 
+; CHECK: kmov
+define i16@test_int_x86_avx512_mask_fpclass_ps_512(<16 x float> %x0, i16 %x1) {
+	%res = call i16 @llvm.x86.avx512.mask.fpclass.ps.512(<16 x float> %x0, i32 4, i16 %x1)
+	%res1 = call i16 @llvm.x86.avx512.mask.fpclass.ps.512(<16 x float> %x0, i32 4, i16 -1)
+	%res2 = add i16 %res, %res1
+	ret i16 %res2
+}

@@ -1708,3 +1708,67 @@ define <4 x i64>@test_int_x86_avx512_mask_inserti64x2_256(<4 x i64> %x0, <2 x i6
   %res4 = add <4 x i64> %res3, %res2
   ret <4 x i64> %res4
 }
+
+declare i8 @llvm.x86.avx512.mask.fpclass.ps.128(<4 x float>, i32, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_fpclass_ps_128
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vfpclassps
+; CHECK: {%k1} 
+; CHECK: vfpclassps
+; CHECK: kmovb   %k0
+define i8 @test_int_x86_avx512_mask_fpclass_ps_128(<4 x float> %x0, i8 %x1) {
+  %res = call i8 @llvm.x86.avx512.mask.fpclass.ps.128(<4 x float> %x0, i32 2, i8 %x1)
+  %res1 = call i8 @llvm.x86.avx512.mask.fpclass.ps.128(<4 x float> %x0, i32 4, i8 -1)
+  %res2 = add i8 %res, %res1
+  ret i8 %res2
+}
+
+declare i8 @llvm.x86.avx512.mask.fpclass.ps.256(<8 x float>, i32, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_fpclass_ps_256
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vfpclassps
+; CHECK: {%k1} 
+; CHECK: vfpclassps
+; CHECK: kmovb   %k0
+define i8 @test_int_x86_avx512_mask_fpclass_ps_256(<8 x float> %x0, i8 %x1) {
+  %res = call i8 @llvm.x86.avx512.mask.fpclass.ps.256(<8 x float> %x0, i32 2, i8 %x1)
+  %res1 = call i8 @llvm.x86.avx512.mask.fpclass.ps.256(<8 x float> %x0, i32 4, i8 -1)
+  %res2 = add i8 %res, %res1
+  ret i8 %res2
+}
+
+declare i8 @llvm.x86.avx512.mask.fpclass.pd.128(<2 x double>, i32, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_fpclass_pd_128
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vfpclasspd
+; CHECK: {%k1} 
+; CHECK: vfpclasspd
+; CHECK: kmovb   %k0
+define i8 @test_int_x86_avx512_mask_fpclass_pd_128(<2 x double> %x0, i8 %x1) {
+  %res =  call i8 @llvm.x86.avx512.mask.fpclass.pd.128(<2 x double> %x0, i32 4, i8 %x1)
+  %res1 = call i8 @llvm.x86.avx512.mask.fpclass.pd.128(<2 x double> %x0, i32 2, i8 -1)
+  %res2 = add i8 %res, %res1
+  ret i8 %res2
+}
+
+declare i8 @llvm.x86.avx512.mask.fpclass.pd.256(<4 x double>, i32, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_fpclass_pd_256
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vfpclasspd
+; CHECK: {%k1} 
+; CHECK: vfpclasspd
+; CHECK: kmovb   %k0
+define i8 @test_int_x86_avx512_mask_fpclass_pd_256(<4 x double> %x0, i8 %x1) {
+  %res = call i8 @llvm.x86.avx512.mask.fpclass.pd.256(<4 x double> %x0, i32 2, i8 %x1)
+  %res1 = call i8 @llvm.x86.avx512.mask.fpclass.pd.256(<4 x double> %x0, i32 4, i8 -1)
+  %res2 = add i8 %res, %res1
+  ret i8 %res2
+}

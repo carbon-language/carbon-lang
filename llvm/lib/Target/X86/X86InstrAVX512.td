@@ -1796,6 +1796,89 @@ def : Pat<(v8i1 (X86cmpmu (v8i32 VR256X:$src1), (v8i32 VR256X:$src2), imm:$cc)),
             (v16i32 (SUBREG_TO_REG (i32 0), VR256X:$src2, sub_ymm)),
             imm:$cc), VK8)>;
 
+// ----------------------------------------------------------------
+// FPClass
+//handle fpclass instruction mask = fpclass(reg_vec, reg_vec, imm)
+//                                  fpclass(reg_vec, mem_vec, imm)
+//                                  fpclass(reg_vec, broadcast(eltVt), imm)
+multiclass avx512_vector_fpclass<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                 X86VectorVTInfo _, string mem, string broadcast>{
+  def rr : AVX512<opc, MRMSrcReg, (outs _.KRC:$dst),
+                      (ins _.RC:$src1, i32u8imm:$src2),
+                      OpcodeStr##_.Suffix#"\t{$src2, $src1, $dst | $dst, $src1, $src2}",
+                      [(set _.KRC:$dst,(OpNode (_.VT _.RC:$src1),
+                                       (i32 imm:$src2)))], NoItinerary>;
+  def rrk : AVX512<opc, MRMSrcReg, (outs _.KRC:$dst),
+                      (ins _.KRCWM:$mask, _.RC:$src1, i32u8imm:$src2),
+                      OpcodeStr##_.Suffix#
+                      "\t{$src2, $src1, $dst {${mask}}| $dst {${mask}}, $src1, $src2}",
+                      [(set _.KRC:$dst,(or _.KRCWM:$mask, 
+                                       (OpNode (_.VT _.RC:$src1),
+                                       (i32 imm:$src2))))], NoItinerary>, EVEX_K;
+  let mayLoad = 1 in {
+    def rm : AVX512<opc, MRMSrcMem, (outs _.KRC:$dst),
+                      (ins _.MemOp:$src1, i32u8imm:$src2),
+                      OpcodeStr##_.Suffix##mem#
+                      "\t{$src2, $src1, $dst | $dst, $src1, $src2}",
+                      [(set _.KRC:$dst,(OpNode 
+                                       (_.VT (bitconvert (_.LdFrag addr:$src1))),
+                                       (i32 imm:$src2)))], NoItinerary>;
+    def rmk : AVX512<opc, MRMSrcMem, (outs _.KRC:$dst),
+                      (ins _.KRCWM:$mask, _.MemOp:$src1, i32u8imm:$src2),
+                      OpcodeStr##_.Suffix##mem#
+                      "\t{$src2, $src1, $dst {${mask}} | $dst {${mask}}, $src1, $src2}",
+                      [(set _.KRC:$dst, (or _.KRCWM:$mask, (OpNode 
+                                    (_.VT (bitconvert (_.LdFrag addr:$src1))),
+                                    (i32 imm:$src2))))], NoItinerary>, EVEX_K;
+    def rmb : AVX512<opc, MRMSrcMem, (outs _.KRC:$dst),
+                      (ins _.ScalarMemOp:$src1, i32u8imm:$src2),
+                      OpcodeStr##_.Suffix##broadcast##"\t{$src2, ${src1}"##
+                                        _.BroadcastStr##", $dst | $dst, ${src1}"
+                                                    ##_.BroadcastStr##", $src2}",
+                      [(set _.KRC:$dst,(OpNode 
+                                       (_.VT (X86VBroadcast 
+                                             (_.ScalarLdFrag addr:$src1))),
+                                       (i32 imm:$src2)))], NoItinerary>,EVEX_B;
+    def rmbk : AVX512<opc, MRMSrcMem, (outs _.KRC:$dst),
+                      (ins _.KRCWM:$mask, _.ScalarMemOp:$src1, i32u8imm:$src2),
+                      OpcodeStr##_.Suffix##broadcast##"\t{$src2, ${src1}"##
+                            _.BroadcastStr##", $dst {${mask}} | $dst {${mask}}, ${src1}"##
+                                                     _.BroadcastStr##", $src2}",
+                      [(set _.KRC:$dst,(or _.KRCWM:$mask, (OpNode 
+                                       (_.VT (X86VBroadcast 
+                                             (_.ScalarLdFrag addr:$src1))),
+                                       (i32 imm:$src2))))], NoItinerary>,
+                                                            EVEX_B, EVEX_K;
+  }
+}
+
+
+multiclass avx512_vector_fpclass_all<string OpcodeStr,
+            AVX512VLVectorVTInfo _, bits<8> opc, SDNode OpNode, Predicate prd, 
+                                                              string broadcast>{
+  let Predicates = [prd] in {
+    defm Z    : avx512_vector_fpclass<opc, OpcodeStr, OpNode, _.info512, "{z}", 
+                                      broadcast>, EVEX_V512;
+  }
+  let Predicates = [prd, HasVLX] in {
+    defm Z128 : avx512_vector_fpclass<opc, OpcodeStr, OpNode, _.info128, "{x}",
+                                      broadcast>, EVEX_V128;
+    defm Z256 : avx512_vector_fpclass<opc, OpcodeStr, OpNode, _.info256, "{y}",
+                                      broadcast>, EVEX_V256;
+  }
+}
+
+multiclass avx512_fp_fpclass_all<string OpcodeStr, bits<8> opcVec,
+                                 SDNode OpNode, Predicate prd>{
+  defm PS : avx512_vector_fpclass_all<OpcodeStr,  avx512vl_f32_info, opcVec, 
+                                      OpNode, prd, "{l}">, EVEX_CD8<32, CD8VF>;
+  defm PD : avx512_vector_fpclass_all<OpcodeStr,  avx512vl_f64_info, opcVec, 
+                                      OpNode, prd, "{q}">,EVEX_CD8<64, CD8VF> , VEX_W;
+}
+
+defm VFPCLASS : avx512_fp_fpclass_all<"vfpclass", 0x66, X86Vfpclass, HasDQI>,
+                                      AVX512AIi8Base,EVEX;
+
 //-----------------------------------------------------------------
 // Mask register copy, including
 // - copy between mask registers
