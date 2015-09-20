@@ -63,7 +63,6 @@ public:
 
   // The writer sets and uses the addresses.
   uint64_t getRVA() { return RVA; }
-  uint64_t getOutputSectionOff() { return OutputSectionOff; }
   uint32_t getAlign() { return Align; }
   void setRVA(uint64_t V) { RVA = V; }
   void setOutputSectionOff(uint64_t V) { OutputSectionOff = V; }

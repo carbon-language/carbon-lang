@@ -175,10 +175,6 @@ public:
     return S->kind() == DefinedRegularKind;
   }
 
-  uint64_t getOutputSectionOff() {
-    return (*Data)->getOutputSectionOff() + Sym->Value;
-  }
-
   uint64_t getRVA() { return (*Data)->getRVA() + Sym->Value; }
   bool isCOMDAT() { return IsCOMDAT; }
   SectionChunk *getChunk() { return *Data; }
@@ -200,13 +196,10 @@ public:
   }
 
   uint64_t getRVA() { return Data->getRVA(); }
-  uint64_t getOutputSectionOff() { return Data->getOutputSectionOff(); }
 
 private:
   friend SymbolBody;
-
   uint64_t getSize() { return Sym->Value; }
-
   CommonChunk *Data;
 };
 
@@ -314,8 +307,6 @@ public:
   }
 
   uint64_t getRVA() { return Location->getRVA(); }
-  uint64_t getOutputSectionOff() { return Location->getOutputSectionOff(); }
-
   StringRef getDLLName() { return DLLName; }
   StringRef getExternalName() { return ExternalName; }
   void setLocation(Chunk *AddressTable) { Location = AddressTable; }
@@ -342,7 +333,6 @@ public:
   }
 
   uint64_t getRVA() { return Data->getRVA(); }
-  uint64_t getOutputSectionOff() { return Data->getOutputSectionOff(); }
   Chunk *getChunk() { return Data.get(); }
 
 private:
@@ -364,8 +354,6 @@ public:
   }
 
   uint64_t getRVA() { return Data.getRVA(); }
-  uint64_t getOutputSectionOff() { return Data.getOutputSectionOff(); }
-
   Chunk *getChunk() { return &Data; }
 
 private:
