@@ -2,8 +2,8 @@
 ;
 ;    void foo(long n, float A[restrict][n], float B[restrict][n],
 ;             float C[restrict][n], float D[restrict][n]) {
-;      for (long i = 0; i < 4; i++)
-;        for (long j = 0; j < 4; j++)
+;      for (long i = 0; i < 8; i++)
+;        for (long j = 0; j < 8; j++)
 ;          A[i][j] += B[i][0] + C[i][2 * j] + D[j][0];
 ;    }
 ;
@@ -17,7 +17,7 @@
 ; CHECK: insertelement
 ; CHECK: insertelement
 ; CHECK: insertelement
-; CHECK: store <4 x float>
+; CHECK: store <8 x float>
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
@@ -27,7 +27,7 @@ bb:
 
 bb3:                                              ; preds = %bb25, %bb
   %i.0 = phi i64 [ 0, %bb ], [ %tmp26, %bb25 ]
-  %exitcond2 = icmp ne i64 %i.0, 4
+  %exitcond2 = icmp ne i64 %i.0, 8
   br i1 %exitcond2, label %bb4, label %bb27
 
 bb4:                                              ; preds = %bb3
@@ -35,7 +35,7 @@ bb4:                                              ; preds = %bb3
 
 bb5:                                              ; preds = %bb22, %bb4
   %j.0 = phi i64 [ 0, %bb4 ], [ %tmp23, %bb22 ]
-  %exitcond = icmp ne i64 %j.0, 4
+  %exitcond = icmp ne i64 %j.0, 8
   br i1 %exitcond, label %bb6, label %bb24
 
 bb6:                                              ; preds = %bb5
