@@ -164,14 +164,18 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setOperationAction(ISD::UINT_TO_FP       , MVT::i16  , Promote);
 
   if (Subtarget->is64Bit()) {
-    setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Promote);
+    if (!Subtarget->useSoftFloat() && Subtarget->hasAVX512())
+      // f32/f64 are legal, f80 is custom.
+      setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Custom);
+    else
+      setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Promote);
     setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Custom);
   } else if (!Subtarget->useSoftFloat()) {
     // We have an algorithm for SSE2->double, and we turn this into a
     // 64-bit FILD followed by conditional FADD for other targets.
     setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Custom);
     // We have an algorithm for SSE2, and we turn this into a 64-bit
-    // FILD for other targets.
+    // FILD or VCVTUSI2SS/SD for other targets.
     setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Custom);
   }
 
@@ -1353,13 +1357,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::FMA,                MVT::v8f64, Legal);
     setOperationAction(ISD::FMA,                MVT::v16f32, Legal);
 
-    // FIXME:  [US]INT_TO_FP are not legal for f80.
-    setOperationAction(ISD::SINT_TO_FP,         MVT::i32, Legal);
-    setOperationAction(ISD::UINT_TO_FP,         MVT::i32, Legal);
-    if (Subtarget->is64Bit()) {
-      setOperationAction(ISD::SINT_TO_FP,       MVT::i64, Legal);
-      setOperationAction(ISD::UINT_TO_FP,       MVT::i64, Legal);
-    }
     setOperationAction(ISD::FP_TO_SINT,         MVT::v16i32, Legal);
     setOperationAction(ISD::FP_TO_UINT,         MVT::v16i32, Legal);
     setOperationAction(ISD::FP_TO_UINT,         MVT::v8i32, Legal);
@@ -12516,6 +12513,14 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
 
   MVT SrcVT = N0.getSimpleValueType();
   MVT DstVT = Op.getSimpleValueType();
+
+  if (Subtarget->hasAVX512() && isScalarFPTypeInSSEReg(DstVT) &&
+      (SrcVT == MVT::i32 || (SrcVT == MVT::i64 && Subtarget->is64Bit()))) {
+    // Conversions from unsigned i32 to f32/f64 are legal,
+    // using VCVTUSI2SS/SD.  Same for i64 in 64-bit mode.
+    return Op;
+  }
+
   if (SrcVT == MVT::i64 && DstVT == MVT::f64 && X86ScalarSSEf64)
     return LowerUINT_TO_FP_i64(Op, DAG);
   if (SrcVT == MVT::i32 && X86ScalarSSEf64)
