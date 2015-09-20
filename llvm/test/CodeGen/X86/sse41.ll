@@ -204,7 +204,7 @@ declare <4 x float> @llvm.x86.sse41.insertps(<4 x float>, <4 x float>, i32) noun
 define <4 x float> @blendps_not_insertps_1(<4 x float> %t1, float %t2) nounwind {
 ; X32-LABEL: blendps_not_insertps_1:
 ; X32:       ## BB#0:
-; X32-NEXT:    movss   {{.*#+}} xmm1
+; X32-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero
 ; X32-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
 ; X32-NEXT:    retl
 ;
