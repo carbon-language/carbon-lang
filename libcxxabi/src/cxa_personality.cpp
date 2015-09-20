@@ -514,11 +514,14 @@ void
 set_registers(_Unwind_Exception* unwind_exception, _Unwind_Context* context,
               const scan_results& results)
 {
-    _Unwind_SetGR(context, __builtin_eh_return_data_regno(0),
-                                 reinterpret_cast<uintptr_t>(unwind_exception));
-    _Unwind_SetGR(context, __builtin_eh_return_data_regno(1),
-                                    static_cast<uintptr_t>(results.ttypeIndex));
-    _Unwind_SetIP(context, results.landingPad);
+#if defined(__USING_SJLJ_EXCEPTIONS__)
+#define __builtin_eh_return_data_regno(regno) regno
+#endif
+  _Unwind_SetGR(context, __builtin_eh_return_data_regno(0),
+                reinterpret_cast<uintptr_t>(unwind_exception));
+  _Unwind_SetGR(context, __builtin_eh_return_data_regno(1),
+                static_cast<uintptr_t>(results.ttypeIndex));
+  _Unwind_SetIP(context, results.landingPad);
 }
 
 /*
