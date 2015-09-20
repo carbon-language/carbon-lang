@@ -88,61 +88,61 @@ struct RewritePhi;
 }
 
 namespace {
-  class IndVarSimplify : public LoopPass {
-    LoopInfo                  *LI;
-    ScalarEvolution           *SE;
-    DominatorTree             *DT;
-    TargetLibraryInfo         *TLI;
-    const TargetTransformInfo *TTI;
+class IndVarSimplify : public LoopPass {
+  LoopInfo                  *LI;
+  ScalarEvolution           *SE;
+  DominatorTree             *DT;
+  TargetLibraryInfo         *TLI;
+  const TargetTransformInfo *TTI;
 
-    SmallVector<WeakVH, 16> DeadInsts;
-    bool Changed;
-  public:
+  SmallVector<WeakVH, 16> DeadInsts;
+  bool Changed;
+public:
 
-    static char ID; // Pass identification, replacement for typeid
-    IndVarSimplify()
-        : LoopPass(ID), LI(nullptr), SE(nullptr), DT(nullptr), Changed(false) {
-      initializeIndVarSimplifyPass(*PassRegistry::getPassRegistry());
-    }
+  static char ID; // Pass identification, replacement for typeid
+  IndVarSimplify()
+    : LoopPass(ID), LI(nullptr), SE(nullptr), DT(nullptr), Changed(false) {
+    initializeIndVarSimplifyPass(*PassRegistry::getPassRegistry());
+  }
 
-    bool runOnLoop(Loop *L, LPPassManager &LPM) override;
+  bool runOnLoop(Loop *L, LPPassManager &LPM) override;
 
-    void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<DominatorTreeWrapperPass>();
-      AU.addRequired<LoopInfoWrapperPass>();
-      AU.addRequired<ScalarEvolutionWrapperPass>();
-      AU.addRequiredID(LoopSimplifyID);
-      AU.addRequiredID(LCSSAID);
-      AU.addPreserved<GlobalsAAWrapperPass>();
-      AU.addPreserved<ScalarEvolutionWrapperPass>();
-      AU.addPreservedID(LoopSimplifyID);
-      AU.addPreservedID(LCSSAID);
-      AU.setPreservesCFG();
-    }
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<LoopInfoWrapperPass>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
+    AU.addRequiredID(LoopSimplifyID);
+    AU.addRequiredID(LCSSAID);
+    AU.addPreserved<GlobalsAAWrapperPass>();
+    AU.addPreserved<ScalarEvolutionWrapperPass>();
+    AU.addPreservedID(LoopSimplifyID);
+    AU.addPreservedID(LCSSAID);
+    AU.setPreservesCFG();
+  }
 
-  private:
-    void releaseMemory() override {
-      DeadInsts.clear();
-    }
+private:
+  void releaseMemory() override {
+    DeadInsts.clear();
+  }
 
-    bool isValidRewrite(Value *FromVal, Value *ToVal);
+  bool isValidRewrite(Value *FromVal, Value *ToVal);
 
-    void HandleFloatingPointIV(Loop *L, PHINode *PH);
-    void RewriteNonIntegerIVs(Loop *L);
+  void HandleFloatingPointIV(Loop *L, PHINode *PH);
+  void RewriteNonIntegerIVs(Loop *L);
 
-    void SimplifyAndExtend(Loop *L, SCEVExpander &Rewriter, LPPassManager &LPM);
+  void SimplifyAndExtend(Loop *L, SCEVExpander &Rewriter, LPPassManager &LPM);
 
-    bool CanLoopBeDeleted(Loop *L, SmallVector<RewritePhi, 8> &RewritePhiSet);
-    void RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter);
+  bool CanLoopBeDeleted(Loop *L, SmallVector<RewritePhi, 8> &RewritePhiSet);
+  void RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter);
 
-    Value *LinearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
-                                     PHINode *IndVar, SCEVExpander &Rewriter);
+  Value *LinearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
+                                   PHINode *IndVar, SCEVExpander &Rewriter);
 
-    void SinkUnusedInvariants(Loop *L);
+  void SinkUnusedInvariants(Loop *L);
 
-    Value *ExpandSCEVIfNeeded(SCEVExpander &Rewriter, const SCEV *S, Loop *L,
-                              Instruction *InsertPt, Type *Ty);
-  };
+  Value *ExpandSCEVIfNeeded(SCEVExpander &Rewriter, const SCEV *S, Loop *L,
+                            Instruction *InsertPt, Type *Ty);
+};
 }
 
 char IndVarSimplify::ID = 0;
@@ -768,17 +768,17 @@ bool IndVarSimplify::CanLoopBeDeleted(
 //===----------------------------------------------------------------------===//
 
 namespace {
-  // Collect information about induction variables that are used by sign/zero
-  // extend operations. This information is recorded by CollectExtend and
-  // provides the input to WidenIV.
-  struct WideIVInfo {
-    PHINode *NarrowIV;
-    Type *WidestNativeType; // Widest integer type created [sz]ext
-    bool IsSigned;          // Was a sext user seen before a zext?
+// Collect information about induction variables that are used by sign/zero
+// extend operations. This information is recorded by CollectExtend and provides
+// the input to WidenIV.
+struct WideIVInfo {
+  PHINode *NarrowIV;
+  Type *WidestNativeType; // Widest integer type created [sz]ext
+  bool IsSigned;          // Was a sext user seen before a zext?
 
-    WideIVInfo() : NarrowIV(nullptr), WidestNativeType(nullptr),
-                   IsSigned(false) {}
-  };
+  WideIVInfo() : NarrowIV(nullptr), WidestNativeType(nullptr),
+                 IsSigned(false) {}
+};
 }
 
 /// Update information about the induction variable that is extended by this
@@ -1347,27 +1347,27 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class IndVarSimplifyVisitor : public IVVisitor {
-    ScalarEvolution *SE;
-    const TargetTransformInfo *TTI;
-    PHINode *IVPhi;
+class IndVarSimplifyVisitor : public IVVisitor {
+  ScalarEvolution *SE;
+  const TargetTransformInfo *TTI;
+  PHINode *IVPhi;
 
-  public:
-    WideIVInfo WI;
+public:
+  WideIVInfo WI;
 
-    IndVarSimplifyVisitor(PHINode *IV, ScalarEvolution *SCEV,
-                          const TargetTransformInfo *TTI,
-                          const DominatorTree *DTree)
-        : SE(SCEV), TTI(TTI), IVPhi(IV) {
-      DT = DTree;
-      WI.NarrowIV = IVPhi;
-      if (ReduceLiveIVs)
-        setSplitOverflowIntrinsics();
-    }
+  IndVarSimplifyVisitor(PHINode *IV, ScalarEvolution *SCEV,
+                        const TargetTransformInfo *TTI,
+                        const DominatorTree *DTree)
+    : SE(SCEV), TTI(TTI), IVPhi(IV) {
+    DT = DTree;
+    WI.NarrowIV = IVPhi;
+    if (ReduceLiveIVs)
+      setSplitOverflowIntrinsics();
+  }
 
-    // Implement the interface used by simplifyUsersOfIV.
-    void visitCast(CastInst *Cast) override { visitIVCast(Cast, WI, SE, TTI); }
-  };
+  // Implement the interface used by simplifyUsersOfIV.
+  void visitCast(CastInst *Cast) override { visitIVCast(Cast, WI, SE, TTI); }
+};
 }
 
 /// Iteratively perform simplification on a worklist of IV users. Each
