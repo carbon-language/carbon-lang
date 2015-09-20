@@ -332,10 +332,11 @@ def X86faddRnd   : SDNode<"X86ISD::FADD_RND",  SDTFPBinOpRound>;
 def X86fsubRnd   : SDNode<"X86ISD::FSUB_RND",  SDTFPBinOpRound>;
 def X86fmulRnd   : SDNode<"X86ISD::FMUL_RND",  SDTFPBinOpRound>;
 def X86fdivRnd   : SDNode<"X86ISD::FDIV_RND",  SDTFPBinOpRound>;
-def X86fmaxRnd   : SDNode<"X86ISD::FMAX_RND",      SDTFPBinOpRound>;
-def X86scalef    : SDNode<"X86ISD::SCALEF",    SDTFPBinOpRound>;
-def X86fminRnd   : SDNode<"X86ISD::FMIN_RND",      SDTFPBinOpRound>;
-def X86fsqrtRnd     : SDNode<"X86ISD::FSQRT_RND",  SDTFPUnaryOpRound>;
+def X86fmaxRnd   : SDNode<"X86ISD::FMAX_RND",       SDTFPBinOpRound>;
+def X86scalef    : SDNode<"X86ISD::SCALEF",         SDTFPBinOpRound>;
+def X86fminRnd   : SDNode<"X86ISD::FMIN_RND",       SDTFPBinOpRound>;
+def X86fsqrtRnd     : SDNode<"X86ISD::FSQRT_RND",   SDTFPUnaryOpRound>;
+def X86fsqrtRnds    : SDNode<"X86ISD::FSQRT_RND",   STDFp2SrcRm>;
 def X86fgetexpRnd   : SDNode<"X86ISD::FGETEXP_RND", SDTFPUnaryOpRound>;
 def X86fgetexpRnds  : SDNode<"X86ISD::FGETEXP_RND", STDFp2SrcRm>;
 

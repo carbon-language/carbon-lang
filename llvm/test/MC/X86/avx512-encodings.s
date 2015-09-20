@@ -14958,6 +14958,110 @@ vpermilpd $0x23, 0x400(%rbx), %zmm2
 // CHECK:  encoding: [0x62,0xf2,0xc5,0x08,0x43,0x92,0xf8,0xfb,0xff,0xff]
           vgetexpsd -1032(%rdx), %xmm7, %xmm2
 
+// CHECK: vsqrtss %xmm8, %xmm19, %xmm22
+// CHECK:  encoding: [0x62,0xc1,0x66,0x00,0x51,0xf0]
+          vsqrtss %xmm8, %xmm19, %xmm22
+
+// CHECK: vsqrtss %xmm8, %xmm19, %xmm22 {%k1}
+// CHECK:  encoding: [0x62,0xc1,0x66,0x01,0x51,0xf0]
+          vsqrtss %xmm8, %xmm19, %xmm22 {%k1}
+
+// CHECK: vsqrtss %xmm8, %xmm19, %xmm22 {%k1} {z}
+// CHECK:  encoding: [0x62,0xc1,0x66,0x81,0x51,0xf0]
+          vsqrtss %xmm8, %xmm19, %xmm22 {%k1} {z}
+
+// CHECK: vsqrtss {rn-sae}, %xmm8, %xmm19, %xmm22
+// CHECK:  encoding: [0x62,0xc1,0x66,0x10,0x51,0xf0]
+          vsqrtss {rn-sae}, %xmm8, %xmm19, %xmm22
+
+// CHECK: vsqrtss {ru-sae}, %xmm8, %xmm19, %xmm22
+// CHECK:  encoding: [0x62,0xc1,0x66,0x50,0x51,0xf0]
+          vsqrtss {ru-sae}, %xmm8, %xmm19, %xmm22
+
+// CHECK: vsqrtss {rd-sae}, %xmm8, %xmm19, %xmm22
+// CHECK:  encoding: [0x62,0xc1,0x66,0x30,0x51,0xf0]
+          vsqrtss {rd-sae}, %xmm8, %xmm19, %xmm22
+
+// CHECK: vsqrtss {rz-sae}, %xmm8, %xmm19, %xmm22
+// CHECK:  encoding: [0x62,0xc1,0x66,0x70,0x51,0xf0]
+          vsqrtss {rz-sae}, %xmm8, %xmm19, %xmm22
+
+// CHECK: vsqrtss (%rcx), %xmm19, %xmm22
+// CHECK:  encoding: [0x62,0xe1,0x66,0x00,0x51,0x31]
+          vsqrtss (%rcx), %xmm19, %xmm22
+
+// CHECK: vsqrtss 291(%rax,%r14,8), %xmm19, %xmm22
+// CHECK:  encoding: [0x62,0xa1,0x66,0x00,0x51,0xb4,0xf0,0x23,0x01,0x00,0x00]
+          vsqrtss 291(%rax,%r14,8), %xmm19, %xmm22
+
+// CHECK: vsqrtss 508(%rdx), %xmm19, %xmm22
+// CHECK:  encoding: [0x62,0xe1,0x66,0x00,0x51,0x72,0x7f]
+          vsqrtss 508(%rdx), %xmm19, %xmm22
+
+// CHECK: vsqrtss 512(%rdx), %xmm19, %xmm22
+// CHECK:  encoding: [0x62,0xe1,0x66,0x00,0x51,0xb2,0x00,0x02,0x00,0x00]
+          vsqrtss 512(%rdx), %xmm19, %xmm22
+
+// CHECK: vsqrtss -512(%rdx), %xmm19, %xmm22
+// CHECK:  encoding: [0x62,0xe1,0x66,0x00,0x51,0x72,0x80]
+          vsqrtss -512(%rdx), %xmm19, %xmm22
+
+// CHECK: vsqrtss -516(%rdx), %xmm19, %xmm22
+// CHECK:  encoding: [0x62,0xe1,0x66,0x00,0x51,0xb2,0xfc,0xfd,0xff,0xff]
+          vsqrtss -516(%rdx), %xmm19, %xmm22
+
+// CHECK: vsqrtsd %xmm12, %xmm2, %xmm26   
+// CHECK: encoding: [0x62,0x41,0xef,0x08,0x51,0xd4]
+          vsqrtsd %xmm12, %xmm2, %xmm26
+
+// CHECK: vsqrtsd %xmm12, %xmm2, %xmm6 {%k7}
+// CHECK:  encoding: [0x62,0xd1,0xef,0x0f,0x51,0xf4]
+          vsqrtsd %xmm12, %xmm2, %xmm6 {%k7}
+
+// CHECK: vsqrtsd %xmm12, %xmm2, %xmm6 {%k7} {z}
+// CHECK:  encoding: [0x62,0xd1,0xef,0x8f,0x51,0xf4]
+          vsqrtsd %xmm12, %xmm2, %xmm6 {%k7} {z}
+
+// CHECK: vsqrtsd {rn-sae}, %xmm12, %xmm2, %xmm6
+// CHECK:  encoding: [0x62,0xd1,0xef,0x18,0x51,0xf4]
+          vsqrtsd {rn-sae}, %xmm12, %xmm2, %xmm6
+
+// CHECK: vsqrtsd {ru-sae}, %xmm12, %xmm2, %xmm6
+// CHECK:  encoding: [0x62,0xd1,0xef,0x58,0x51,0xf4]
+          vsqrtsd {ru-sae}, %xmm12, %xmm2, %xmm6
+
+// CHECK: vsqrtsd {rd-sae}, %xmm12, %xmm2, %xmm6
+// CHECK:  encoding: [0x62,0xd1,0xef,0x38,0x51,0xf4]
+          vsqrtsd {rd-sae}, %xmm12, %xmm2, %xmm6
+
+// CHECK: vsqrtsd {rz-sae}, %xmm12, %xmm2, %xmm6
+// CHECK:  encoding: [0x62,0xd1,0xef,0x78,0x51,0xf4]
+          vsqrtsd {rz-sae}, %xmm12, %xmm2, %xmm6
+
+// CHECK: vsqrtsd (%rcx), %xmm2, %xmm26
+// CHECK: encoding: [0x62,0x61,0xef,0x08,0x51,0x11]
+          vsqrtsd (%rcx), %xmm2, %xmm26
+
+// CHECK: vsqrtsd 291(%rax,%r14,8), %xmm2, %xmm26
+// CHECK: encoding: [0x62,0x21,0xef,0x08,0x51,0x94,0xf0,0x23,0x01,0x00,0x00]
+          vsqrtsd 291(%rax,%r14,8), %xmm2, %xmm26
+
+// CHECK: vsqrtsd 1016(%rdx), %xmm2, %xmm26
+// CHECK: encoding: [0x62,0x61,0xef,0x08,0x51,0x52,0x7f]
+          vsqrtsd 1016(%rdx), %xmm2, %xmm26
+
+// CHECK: vsqrtsd 1024(%rdx), %xmm2, %xmm26
+// CHECK: encoding: [0x62,0x61,0xef,0x08,0x51,0x92,0x00,0x04,0x00,0x00]
+          vsqrtsd 1024(%rdx), %xmm2, %xmm26
+
+// CHECK: vsqrtsd -1024(%rdx), %xmm2, %xmm26
+// CHECK: encoding: [0x62,0x61,0xef,0x08,0x51,0x52,0x80]
+          vsqrtsd -1024(%rdx), %xmm2, %xmm26
+
+// CHECK: vsqrtsd -1032(%rdx), %xmm2, %xmm26
+// CHECK: encoding: [0x62,0x61,0xef,0x08,0x51,0x92,0xf8,0xfb,0xff,0xff]
+          vsqrtsd -1032(%rdx), %xmm2, %xmm26
+
 // CHECK: vinsertf32x4 $171, %xmm3, %zmm26, %zmm11
 // CHECK:  encoding: [0x62,0x73,0x2d,0x40,0x18,0xdb,0xab]
           vinsertf32x4 $0xab, %xmm3, %zmm26, %zmm11

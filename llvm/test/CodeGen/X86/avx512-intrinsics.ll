@@ -148,19 +148,59 @@ define <16 x float> @test_getexp_round_ps_512(<16 x float> %a0) {
 }
 declare <16 x float> @llvm.x86.avx512.mask.getexp.ps.512(<16 x float>, <16 x float>, i16, i32) nounwind readnone
 
-define <4 x float> @test_sqrt_ss(<4 x float> %a0, <4 x float> %a1) {
-  ; CHECK: vsqrtss {{.*}}encoding: [0x62
-  %res = call <4 x float> @llvm.x86.avx512.sqrt.ss(<4 x float> %a0, <4 x float> %a1) ; <<4 x float>> [#uses=1]
+declare <4 x float> @llvm.x86.avx512.mask.sqrt.ss(<4 x float>, <4 x float>, <4 x float>, i8, i32) nounwind readnone
+
+define <4 x float> @test_sqrt_ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 %mask) {
+; CHECK-LABEL: test_sqrt_ss:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    andl $1, %edi
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vmovaps %zmm2, %zmm3
+; CHECK-NEXT:    vsqrtss %xmm1, %xmm0, %xmm3 {%k1}
+; CHECK-NEXT:    vsqrtss {rd-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+; CHECK-NEXT:    vsqrtss {ru-sae}, %xmm1, %xmm0, %xmm4 {%k1} {z}
+; CHECK-NEXT:    vsqrtss {rz-sae}, %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vaddps %xmm2, %xmm3, %xmm1
+; CHECK-NEXT:    vaddps %xmm0, %xmm4, %xmm0
+; CHECK-NEXT:    vaddps %xmm0, %xmm1, %xmm0
+; CHECK-NEXT:    retq
+  %res0 = call <4 x float> @llvm.x86.avx512.mask.sqrt.ss(<4 x float>%a0, <4 x float> %a1, <4 x float> %a2, i8 %mask, i32 4)
+  %res1 = call <4 x float> @llvm.x86.avx512.mask.sqrt.ss(<4 x float>%a0, <4 x float> %a1, <4 x float> %a2, i8 %mask, i32 1)
+  %res2 = call <4 x float> @llvm.x86.avx512.mask.sqrt.ss(<4 x float>%a0, <4 x float> %a1, <4 x float> zeroinitializer, i8 %mask, i32 2)
+  %res3 = call <4 x float> @llvm.x86.avx512.mask.sqrt.ss(<4 x float>%a0, <4 x float> %a1, <4 x float> zeroinitializer, i8 -1, i32 3)
+
+  %res.1 = fadd <4 x float> %res0, %res1
+  %res.2 = fadd <4 x float> %res2, %res3
+  %res   = fadd <4 x float> %res.1, %res.2
   ret <4 x float> %res
 }
-declare <4 x float> @llvm.x86.avx512.sqrt.ss(<4 x float>, <4 x float>) nounwind readnone
 
-define <2 x double> @test_sqrt_sd(<2 x double> %a0, <2 x double> %a1) {
-  ; CHECK: vsqrtsd {{.*}}encoding: [0x62
-  %res = call <2 x double> @llvm.x86.avx512.sqrt.sd(<2 x double> %a0, <2 x double> %a1) ; <<2 x double>> [#uses=1]
+declare <2 x double> @llvm.x86.avx512.mask.sqrt.sd(<2 x double>, <2 x double>, <2 x double>, i8, i32) nounwind readnone
+
+define <2 x double> @test_sqrt_sd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 %mask) {
+; CHECK-LABEL: test_sqrt_sd:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    andl $1, %edi
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vmovaps %zmm2, %zmm3
+; CHECK-NEXT:    vsqrtsd %xmm1, %xmm0, %xmm3 {%k1}
+; CHECK-NEXT:    vsqrtsd {rd-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+; CHECK-NEXT:    vsqrtsd {ru-sae}, %xmm1, %xmm0, %xmm4 {%k1} {z}
+; CHECK-NEXT:    vsqrtsd {rz-sae}, %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vaddpd %xmm2, %xmm3, %xmm1
+; CHECK-NEXT:    vaddpd %xmm0, %xmm4, %xmm0
+; CHECK-NEXT:    vaddpd %xmm0, %xmm1, %xmm0
+; CHECK-NEXT:    retq
+  %res0 = call <2 x double> @llvm.x86.avx512.mask.sqrt.sd(<2 x double>%a0, <2 x double> %a1, <2 x double> %a2, i8 %mask, i32 4)
+  %res1 = call <2 x double> @llvm.x86.avx512.mask.sqrt.sd(<2 x double>%a0, <2 x double> %a1, <2 x double> %a2, i8 %mask, i32 1)
+  %res2 = call <2 x double> @llvm.x86.avx512.mask.sqrt.sd(<2 x double>%a0, <2 x double> %a1, <2 x double> zeroinitializer, i8 %mask, i32 2)
+  %res3 = call <2 x double> @llvm.x86.avx512.mask.sqrt.sd(<2 x double>%a0, <2 x double> %a1, <2 x double> zeroinitializer, i8 -1, i32 3)
+
+  %res.1 = fadd <2 x double> %res0, %res1
+  %res.2 = fadd <2 x double> %res2, %res3
+  %res   = fadd <2 x double> %res.1, %res.2
   ret <2 x double> %res
 }
-declare <2 x double> @llvm.x86.avx512.sqrt.sd(<2 x double>, <2 x double>) nounwind readnone
 
 define i64 @test_x86_sse2_cvtsd2si64(<2 x double> %a0) {
   ; CHECK: vcvtsd2si {{.*}}encoding: [0x62
@@ -182,7 +222,6 @@ define i64 @test_x86_sse2_cvttsd2si64(<2 x double> %a0) {
   ret i64 %res
 }
 declare i64 @llvm.x86.sse2.cvttsd2si64(<2 x double>) nounwind readnone
-
 
 define i64 @test_x86_sse_cvtss2si64(<4 x float> %a0) {
   ; CHECK: vcvtss2si {{.*}}encoding: [0x62

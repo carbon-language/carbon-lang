@@ -5487,67 +5487,6 @@ multiclass avx512_sqrt_packed<bits<8> opc, string OpcodeStr,
   }
 }
 
-multiclass avx512_sqrt_scalar<bits<8> opc, string OpcodeStr,
-                          Intrinsic F32Int, Intrinsic F64Int,
-                          OpndItins itins_s, OpndItins itins_d> {
-  def SSZr : SI<opc, MRMSrcReg, (outs FR32X:$dst),
-               (ins FR32X:$src1, FR32X:$src2),
-               !strconcat(OpcodeStr,
-                          "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                      [], itins_s.rr>, XS, EVEX_4V;
-  let isCodeGenOnly = 1 in
-  def SSZr_Int : SIi8<opc, MRMSrcReg, (outs VR128X:$dst),
-               (ins VR128X:$src1, VR128X:$src2),
-               !strconcat(OpcodeStr,
-                "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-               [(set VR128X:$dst,
-                 (F32Int VR128X:$src1, VR128X:$src2))],
-               itins_s.rr>, XS, EVEX_4V;
-  let mayLoad = 1 in {
-  def SSZm : SI<opc, MRMSrcMem, (outs FR32X:$dst),
-               (ins FR32X:$src1, f32mem:$src2),
-               !strconcat(OpcodeStr,
-                          "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                      [], itins_s.rm>, XS, EVEX_4V, EVEX_CD8<32, CD8VT1>;
-  let isCodeGenOnly = 1 in
-  def SSZm_Int : SIi8<opc, MRMSrcMem, (outs VR128X:$dst),
-                   (ins VR128X:$src1, ssmem:$src2),
-                   !strconcat(OpcodeStr,
-                 "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   [(set VR128X:$dst,
-                     (F32Int VR128X:$src1, sse_load_f32:$src2))],
-                   itins_s.rm>, XS, EVEX_4V, EVEX_CD8<32, CD8VT1>;
-  }
-  def SDZr : SI<opc, MRMSrcReg, (outs FR64X:$dst),
-               (ins FR64X:$src1, FR64X:$src2),
-               !strconcat(OpcodeStr,
-                          "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>,
-                      XD, EVEX_4V, VEX_W;
-  let isCodeGenOnly = 1 in
-  def SDZr_Int : SIi8<opc, MRMSrcReg, (outs VR128X:$dst),
-               (ins VR128X:$src1, VR128X:$src2),
-               !strconcat(OpcodeStr,
-                "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-               [(set VR128X:$dst,
-                 (F64Int VR128X:$src1, VR128X:$src2))],
-               itins_s.rr>, XD, EVEX_4V, VEX_W;
-  let mayLoad = 1 in {
-  def SDZm : SI<opc, MRMSrcMem, (outs FR64X:$dst),
-               (ins FR64X:$src1, f64mem:$src2),
-               !strconcat(OpcodeStr,
-                  "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>,
-               XD, EVEX_4V, VEX_W, EVEX_CD8<64, CD8VT1>;
-  let isCodeGenOnly = 1 in
-  def SDZm_Int : SIi8<opc, MRMSrcMem, (outs VR128X:$dst),
-                  (ins VR128X:$src1, sdmem:$src2),
-                   !strconcat(OpcodeStr,
-                  "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                  [(set VR128X:$dst,
-                    (F64Int VR128X:$src1, sse_load_f64:$src2))]>,
-                  XD, EVEX_4V, VEX_W, EVEX_CD8<64, CD8VT1>;
-  }
-}
-
 multiclass avx512_sqrt_packed_all<bits<8> opc, string OpcodeStr,
                                   SDNode OpNode> {
   defm PSZ : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode,
@@ -5581,25 +5520,65 @@ multiclass avx512_sqrt_packed_all_round<bits<8> opc, string OpcodeStr,
                                 v8f64_info>, EVEX_V512, VEX_W, PD, EVEX_CD8<64, CD8VF>;
 }
 
+multiclass avx512_sqrt_scalar<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
+                              string SUFF, SDNode OpNode, SDNode OpNodeRnd> {
+
+  defm r_Int : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                         (ins _.RC:$src1, _.RC:$src2), OpcodeStr,
+                         "$src2, $src1", "$src1, $src2",
+                         (OpNodeRnd (_.VT _.RC:$src1),
+                                    (_.VT _.RC:$src2),
+                                    (i32 FROUND_CURRENT))>;
+  let mayLoad = 1 in
+    defm m_Int : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
+                         (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr,
+                         "$src2, $src1", "$src1, $src2",
+                         (OpNodeRnd (_.VT _.RC:$src1),
+                                    (_.VT (scalar_to_vector
+                                              (_.ScalarLdFrag addr:$src2))),
+                                    (i32 FROUND_CURRENT))>;
+
+  defm rb_Int : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                         (ins _.RC:$src1, _.RC:$src2, AVX512RC:$rc), OpcodeStr,
+                         "$rc, $src2, $src1", "$src1, $src2, $rc",
+                         (OpNodeRnd (_.VT _.RC:$src1),
+                                     (_.VT _.RC:$src2),
+                                     (i32 imm:$rc))>,
+                         EVEX_B, EVEX_RC;
+
+  let isCodeGenOnly = 1 in {
+    def r : SI<opc, MRMSrcReg, (outs _.FRC:$dst),
+               (ins _.FRC:$src1, _.FRC:$src2),
+               OpcodeStr#"\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>;
+
+    let mayLoad = 1 in
+      def m : SI<opc, MRMSrcMem, (outs _.FRC:$dst),
+                 (ins _.FRC:$src1, _.ScalarMemOp:$src2),
+                 OpcodeStr#"\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>;
+  }
+
+  def : Pat<(_.EltVT (OpNode _.FRC:$src)),
+            (!cast<Instruction>(NAME#SUFF#Zr)
+                (_.EltVT (IMPLICIT_DEF)), _.FRC:$src)>;
+
+  def : Pat<(_.EltVT (OpNode (load addr:$src))),
+            (!cast<Instruction>(NAME#SUFF#Zm)
+                (_.EltVT (IMPLICIT_DEF)), addr:$src)>, Requires<[OptForSize]>;
+}
+
+multiclass avx512_sqrt_scalar_all<bits<8> opc, string OpcodeStr> {
+  defm SSZ : avx512_sqrt_scalar<opc, OpcodeStr#"ss", f32x_info, "SS", fsqrt,
+                        X86fsqrtRnds>, EVEX_CD8<32, CD8VT1>, EVEX_4V, XS;
+  defm SDZ : avx512_sqrt_scalar<opc, OpcodeStr#"sd", f64x_info, "SD", fsqrt,
+                        X86fsqrtRnds>, EVEX_CD8<64, CD8VT1>, EVEX_4V, XD, VEX_W;
+}
+
 defm VSQRT   : avx512_sqrt_packed_all<0x51, "vsqrt", fsqrt>,
                avx512_sqrt_packed_all_round<0x51, "vsqrt", X86fsqrtRnd>;
 
-defm VSQRT  : avx512_sqrt_scalar<0x51, "sqrt",
-                int_x86_avx512_sqrt_ss, int_x86_avx512_sqrt_sd,
-                SSE_SQRTSS, SSE_SQRTSD>;
+defm VSQRT   : avx512_sqrt_scalar_all<0x51, "vsqrt">, VEX_LIG;
 
 let Predicates = [HasAVX512] in {
-  def : Pat<(f32 (fsqrt FR32X:$src)),
-            (VSQRTSSZr (f32 (IMPLICIT_DEF)), FR32X:$src)>;
-  def : Pat<(f32 (fsqrt (load addr:$src))),
-            (VSQRTSSZm (f32 (IMPLICIT_DEF)), addr:$src)>,
-            Requires<[OptForSize]>;
-  def : Pat<(f64 (fsqrt FR64X:$src)),
-            (VSQRTSDZr (f64 (IMPLICIT_DEF)), FR64X:$src)>;
-  def : Pat<(f64 (fsqrt (load addr:$src))),
-            (VSQRTSDZm (f64 (IMPLICIT_DEF)), addr:$src)>,
-            Requires<[OptForSize]>;
-
   def : Pat<(f32 (X86frsqrt FR32X:$src)),
             (VRSQRT14SSrr (f32 (IMPLICIT_DEF)), FR32X:$src)>;
   def : Pat<(f32 (X86frsqrt (load addr:$src))),
@@ -5611,20 +5590,6 @@ let Predicates = [HasAVX512] in {
   def : Pat<(f32 (X86frcp (load addr:$src))),
             (VRCP14SSrm (f32 (IMPLICIT_DEF)), addr:$src)>,
             Requires<[OptForSize]>;
-
-  def : Pat<(int_x86_sse_sqrt_ss VR128X:$src),
-            (COPY_TO_REGCLASS (VSQRTSSZr (f32 (IMPLICIT_DEF)),
-                                        (COPY_TO_REGCLASS VR128X:$src, FR32)),
-                              VR128X)>;
-  def : Pat<(int_x86_sse_sqrt_ss sse_load_f32:$src),
-            (VSQRTSSZm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
-
-  def : Pat<(int_x86_sse2_sqrt_sd VR128X:$src),
-            (COPY_TO_REGCLASS (VSQRTSDZr (f64 (IMPLICIT_DEF)),
-                                        (COPY_TO_REGCLASS VR128X:$src, FR64)),
-                              VR128X)>;
-  def : Pat<(int_x86_sse2_sqrt_sd sse_load_f64:$src),
-            (VSQRTSDZm_Int (v2f64 (IMPLICIT_DEF)), sse_load_f64:$src)>;
 }
 
 multiclass
