@@ -18,3 +18,6 @@ def shared : Flag<["-"], "shared">,
 
 def discard_all : Flag<["-"], "discard-all">,
      HelpText<"Delete all local symbols">;
+
+def discard_locals : Flag<["-"], "discard-locals">,
+     HelpText<"Delete temporary local symbols">;

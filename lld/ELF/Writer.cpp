@@ -820,6 +820,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
         auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
         uint32_t SecIndex = Sym.st_shndx;
         ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
+        if (Config->DiscardLocals && SymName->startswith(".L"))
+          continue;
         ESym->st_name = (SymName) ? StrTabSec.getFileOff(*SymName) : 0;
         ESym->st_size = Sym.st_size;
         ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
@@ -1044,7 +1046,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       Elf_Sym_Range Syms = File.getLocalSymbols();
       for (const Elf_Sym &Sym : Syms) {
         ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
-        if (SymName)
+        if (SymName && !(Config->DiscardLocals && SymName->startswith(".L")))
           SymTabSec.addSymbol(*SymName, true);
       }
     }
