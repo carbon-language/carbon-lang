@@ -15973,7 +15973,8 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
         Mask, PassThru, Subtarget, DAG);
     }
     case INTR_TYPE_3OP_IMM8_MASK:
-    case INTR_TYPE_3OP_MASK: {
+    case INTR_TYPE_3OP_MASK:
+    case INSERT_SUBVEC: {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
       SDValue Src3 = Op.getOperand(3);
@@ -15982,6 +15983,14 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
 
       if (IntrData->Type == INTR_TYPE_3OP_IMM8_MASK)
         Src3 = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, Src3);
+      else if (IntrData->Type == INSERT_SUBVEC) {
+        // imm should be adapted to ISD::INSERT_SUBVECTOR behavior
+        assert(isa<ConstantSDNode>(Src3) && "Expected a ConstantSDNode here!");
+        unsigned Imm = cast<ConstantSDNode>(Src3)->getZExtValue();
+        Imm *= Src2.getValueType().getVectorNumElements();
+        Src3 = DAG.getTargetConstant(Imm, dl, MVT::i32);
+      }
+
       // We specify 2 possible opcodes for intrinsics with rounding modes.
       // First, we check if the intrinsic may have non-default rounding mode,
       // (IntrData->Opc1 != 0), then we check the rounding mode operand.

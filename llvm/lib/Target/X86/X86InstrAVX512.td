@@ -471,83 +471,122 @@ def : Pat<(v8f64 immAllZerosV), (AVX512_512_SET0)>;
 //===----------------------------------------------------------------------===//
 // AVX-512 - VECTOR INSERT
 //
-
-multiclass vinsert_for_size_no_alt<int Opcode,
-                                   X86VectorVTInfo From, X86VectorVTInfo To,
-                                   PatFrag vinsert_insert,
-                                   SDNodeXForm INSERT_get_vinsert_imm> {
+multiclass vinsert_for_size<int Opcode, X86VectorVTInfo From, X86VectorVTInfo To,
+                                                       PatFrag vinsert_insert> {
   let hasSideEffects = 0, ExeDomain = To.ExeDomain in {
-    def rr : AVX512AIi8<Opcode, MRMSrcReg, (outs VR512:$dst),
-               (ins VR512:$src1, From.RC:$src2, u8imm:$src3),
-               "vinsert" # From.EltTypeName # "x" # From.NumElts #
-                                                "\t{$src3, $src2, $src1, $dst|"
-                                                   "$dst, $src1, $src2, $src3}",
-               [(set To.RC:$dst, (vinsert_insert:$src3 (To.VT VR512:$src1),
-                                                       (From.VT From.RC:$src2),
-                                                       (iPTR imm)))]>,
-             EVEX_4V, EVEX_V512;
+    defm rr : AVX512_maskable<Opcode, MRMSrcReg, To, (outs To.RC:$dst),
+                   (ins To.RC:$src1, From.RC:$src2, i32u8imm:$src3),
+                   "vinsert" # From.EltTypeName # "x" # From.NumElts,
+                   "$src3, $src2, $src1", "$src1, $src2, $src3",
+                   (vinsert_insert:$src3 (To.VT To.RC:$src1),
+                                         (From.VT From.RC:$src2),
+                                         (iPTR imm))>, AVX512AIi8Base, EVEX_4V;
 
-    let mayLoad = 1 in
-    def rm : AVX512AIi8<Opcode, MRMSrcMem, (outs VR512:$dst),
-               (ins VR512:$src1, From.MemOp:$src2, u8imm:$src3),
-               "vinsert" # From.EltTypeName # "x" # From.NumElts #
-                                                "\t{$src3, $src2, $src1, $dst|"
-                                                   "$dst, $src1, $src2, $src3}",
-               []>,
-             EVEX_4V, EVEX_V512, EVEX_CD8<From.EltSize, From.CD8TupleForm>;
+  let mayLoad = 1 in
+    defm rm : AVX512_maskable<Opcode, MRMSrcMem, To, (outs To.RC:$dst),
+                   (ins To.RC:$src1, From.MemOp:$src2, i32u8imm:$src3),
+                   "vinsert" # From.EltTypeName # "x" # From.NumElts,
+                   "$src3, $src2, $src1", "$src1, $src2, $src3",
+                   (vinsert_insert:$src3 (To.VT To.RC:$src1),
+                               (From.VT (bitconvert (From.LdFrag addr:$src2))),
+                               (iPTR imm))>, AVX512AIi8Base, EVEX_4V,
+                   EVEX_CD8<From.EltSize, From.CD8TupleForm>;
   }
 }
 
-multiclass vinsert_for_size<int Opcode,
-                            X86VectorVTInfo From, X86VectorVTInfo To,
-                            X86VectorVTInfo AltFrom, X86VectorVTInfo AltTo,
-                            PatFrag vinsert_insert,
-                            SDNodeXForm INSERT_get_vinsert_imm> :
-  vinsert_for_size_no_alt<Opcode, From, To,
-                          vinsert_insert, INSERT_get_vinsert_imm> {
-  // Codegen pattern with the alternative types, e.g. v2i64 -> v8i64 for
-  // vinserti32x4.  Only add this if 64x2 and friends are not supported
-  // natively via AVX512DQ.
-  let Predicates = [NoDQI] in
+multiclass vinsert_for_size_lowering<string InstrStr, X86VectorVTInfo From,
+                       X86VectorVTInfo To, PatFrag vinsert_insert,
+                       SDNodeXForm INSERT_get_vinsert_imm , list<Predicate> p> {
+  let Predicates = p in {
     def : Pat<(vinsert_insert:$ins
-                 (AltTo.VT VR512:$src1), (AltFrom.VT From.RC:$src2), (iPTR imm)),
-              (AltTo.VT (!cast<Instruction>(NAME # From.EltSize # "x4rr")
-                            VR512:$src1, From.RC:$src2,
-                            (INSERT_get_vinsert_imm VR512:$ins)))>;
+                     (To.VT To.RC:$src1), (From.VT From.RC:$src2), (iPTR imm)),
+              (To.VT (!cast<Instruction>(InstrStr#"rr")
+                     To.RC:$src1, From.RC:$src2,
+                     (INSERT_get_vinsert_imm To.RC:$ins)))>;
+
+    def : Pat<(vinsert_insert:$ins
+                  (To.VT To.RC:$src1),
+                  (From.VT (bitconvert (From.LdFrag addr:$src2))),
+                  (iPTR imm)),
+              (To.VT (!cast<Instruction>(InstrStr#"rm")
+                  To.RC:$src1, addr:$src2,
+                  (INSERT_get_vinsert_imm To.RC:$ins)))>;
+  }
 }
 
 multiclass vinsert_for_type<ValueType EltVT32, int Opcode128,
                             ValueType EltVT64, int Opcode256> {
-  defm NAME # "32x4" : vinsert_for_size<Opcode128,
+
+  let Predicates = [HasVLX] in
+    defm NAME # "32x4Z256" : vinsert_for_size<Opcode128,
+                                 X86VectorVTInfo< 4, EltVT32, VR128X>,
+                                 X86VectorVTInfo< 8, EltVT32, VR256X>,
+                                 vinsert128_insert>, EVEX_V256;
+
+  defm NAME # "32x4Z" : vinsert_for_size<Opcode128,
                                  X86VectorVTInfo< 4, EltVT32, VR128X>,
                                  X86VectorVTInfo<16, EltVT32, VR512>,
-                                 X86VectorVTInfo< 2, EltVT64, VR128X>,
-                                 X86VectorVTInfo< 8, EltVT64, VR512>,
-                                 vinsert128_insert,
-                                 INSERT_get_vinsert128_imm>;
-  let Predicates = [HasDQI] in
-    defm NAME # "64x2" : vinsert_for_size_no_alt<Opcode128,
-                                 X86VectorVTInfo< 2, EltVT64, VR128X>,
-                                 X86VectorVTInfo< 8, EltVT64, VR512>,
-                                 vinsert128_insert,
-                                 INSERT_get_vinsert128_imm>, VEX_W;
-  defm NAME # "64x4" : vinsert_for_size<Opcode256,
+                                 vinsert128_insert>, EVEX_V512;
+
+  defm NAME # "64x4Z" : vinsert_for_size<Opcode256,
                                  X86VectorVTInfo< 4, EltVT64, VR256X>,
                                  X86VectorVTInfo< 8, EltVT64, VR512>,
-                                 X86VectorVTInfo< 8, EltVT32, VR256>,
-                                 X86VectorVTInfo<16, EltVT32, VR512>,
-                                 vinsert256_insert,
-                                 INSERT_get_vinsert256_imm>, VEX_W;
-  let Predicates = [HasDQI] in
-    defm NAME # "32x8" : vinsert_for_size_no_alt<Opcode256,
-                                 X86VectorVTInfo< 8, EltVT32, VR256X>,
-                                 X86VectorVTInfo<16, EltVT32, VR512>,
-                                 vinsert256_insert,
-                                 INSERT_get_vinsert256_imm>;
+                                 vinsert256_insert>, VEX_W, EVEX_V512;
+
+  let Predicates = [HasVLX, HasDQI] in
+    defm NAME # "64x2Z256" : vinsert_for_size<Opcode128,
+                                   X86VectorVTInfo< 2, EltVT64, VR128X>,
+                                   X86VectorVTInfo< 4, EltVT64, VR256X>,
+                                   vinsert128_insert>, VEX_W, EVEX_V256;
+
+  let Predicates = [HasDQI] in {
+    defm NAME # "64x2Z" : vinsert_for_size<Opcode128,
+                                 X86VectorVTInfo< 2, EltVT64, VR128X>,
+                                 X86VectorVTInfo< 8, EltVT64, VR512>,
+                                 vinsert128_insert>, VEX_W, EVEX_V512;
+
+    defm NAME # "32x8Z" : vinsert_for_size<Opcode256,
+                                   X86VectorVTInfo< 8, EltVT32, VR256X>,
+                                   X86VectorVTInfo<16, EltVT32, VR512>,
+                                   vinsert256_insert>, EVEX_V512;
+  }
 }
 
 defm VINSERTF : vinsert_for_type<f32, 0x18, f64, 0x1a>;
 defm VINSERTI : vinsert_for_type<i32, 0x38, i64, 0x3a>;
+
+// Codegen pattern with the alternative types,
+// Only add this if 64x2 and its friends are not supported natively via AVX512DQ.
+defm : vinsert_for_size_lowering<"VINSERTF32x4Z256", v2f64x_info, v4f64x_info,
+              vinsert128_insert, INSERT_get_vinsert128_imm, [HasVLX, NoDQI]>;
+defm : vinsert_for_size_lowering<"VINSERTI32x4Z256", v2i64x_info, v4i64x_info,
+              vinsert128_insert, INSERT_get_vinsert128_imm, [HasVLX, NoDQI]>;
+
+defm : vinsert_for_size_lowering<"VINSERTF32x4Z", v2f64x_info, v8f64_info,
+              vinsert128_insert, INSERT_get_vinsert128_imm, [HasAVX512, NoDQI]>;
+defm : vinsert_for_size_lowering<"VINSERTI32x4Z", v2i64x_info, v8i64_info,
+              vinsert128_insert, INSERT_get_vinsert128_imm, [HasAVX512, NoDQI]>;
+
+defm : vinsert_for_size_lowering<"VINSERTF64x4Z", v8f32x_info, v16f32_info,
+              vinsert256_insert, INSERT_get_vinsert256_imm, [HasAVX512, NoDQI]>;
+defm : vinsert_for_size_lowering<"VINSERTI64x4Z", v8i32x_info, v16i32_info,
+              vinsert256_insert, INSERT_get_vinsert256_imm, [HasAVX512, NoDQI]>;
+
+// Codegen pattern with the alternative types insert VEC128 into VEC256
+defm : vinsert_for_size_lowering<"VINSERTI32x4Z256", v8i16x_info, v16i16x_info,
+              vinsert128_insert, INSERT_get_vinsert128_imm, [HasVLX]>;
+defm : vinsert_for_size_lowering<"VINSERTI32x4Z256", v16i8x_info, v32i8x_info,
+              vinsert128_insert, INSERT_get_vinsert128_imm, [HasVLX]>;
+// Codegen pattern with the alternative types insert VEC128 into VEC512
+defm : vinsert_for_size_lowering<"VINSERTI32x4Z", v8i16x_info, v32i16_info,
+              vinsert128_insert, INSERT_get_vinsert128_imm, [HasAVX512]>;
+defm : vinsert_for_size_lowering<"VINSERTI32x4Z", v16i8x_info, v64i8_info,
+               vinsert128_insert, INSERT_get_vinsert128_imm, [HasAVX512]>;
+// Codegen pattern with the alternative types insert VEC256 into VEC512
+defm : vinsert_for_size_lowering<"VINSERTI64x4Z", v16i16x_info, v32i16_info,
+              vinsert256_insert, INSERT_get_vinsert256_imm, [HasAVX512]>;
+defm : vinsert_for_size_lowering<"VINSERTI64x4Z", v32i8x_info, v64i8_info,
+              vinsert256_insert, INSERT_get_vinsert256_imm, [HasAVX512]>;
 
 // vinsertps - insert f32 to XMM
 def VINSERTPSzrr : AVX512AIi8<0x21, MRMSrcReg, (outs VR128X:$dst),

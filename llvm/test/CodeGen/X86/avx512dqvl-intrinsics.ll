@@ -1668,3 +1668,43 @@ define <2 x double>@test_int_x86_avx512_mask_vextractf64x2_256(<4 x double> %x0,
   %res4 = fadd <2 x double> %res3, %res2
   ret <2 x double> %res4
 }
+
+declare <4 x double> @llvm.x86.avx512.mask.insertf64x2.256(<4 x double>, <2 x double>, i32, <4 x double>, i8)
+
+define <4 x double>@test_int_x86_avx512_mask_insertf64x2_256(<4 x double> %x0, <2 x double> %x1, <4 x double> %x3, i8 %x4) {
+; CHECK-LABEL: test_int_x86_avx512_mask_insertf64x2_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %edi, %k1
+; CHECK-NEXT:    vinsertf64x2 $1, %xmm1, %ymm0, %ymm2 {%k1}
+; CHECK-NEXT:    vinsertf64x2 $1, %xmm1, %ymm0, %ymm3 {%k1} {z}
+; CHECK-NEXT:    vinsertf64x2 $1, %xmm1, %ymm0, %ymm0
+; CHECK-NEXT:    vaddpd %ymm0, %ymm2, %ymm0
+; CHECK-NEXT:    vaddpd %ymm0, %ymm3, %ymm0
+; CHECK-NEXT:    retq
+  %res = call <4 x double> @llvm.x86.avx512.mask.insertf64x2.256(<4 x double> %x0, <2 x double> %x1, i32 1, <4 x double> %x3, i8 %x4)
+  %res1 = call <4 x double> @llvm.x86.avx512.mask.insertf64x2.256(<4 x double> %x0, <2 x double> %x1, i32 1, <4 x double> %x3, i8 -1)
+  %res2 = call <4 x double> @llvm.x86.avx512.mask.insertf64x2.256(<4 x double> %x0, <2 x double> %x1, i32 1, <4 x double> zeroinitializer, i8 %x4)
+  %res3 = fadd <4 x double> %res, %res1
+  %res4 = fadd <4 x double> %res2, %res3
+  ret <4 x double> %res4
+}
+
+declare <4 x i64> @llvm.x86.avx512.mask.inserti64x2.256(<4 x i64>, <2 x i64>, i32, <4 x i64>, i8)
+
+define <4 x i64>@test_int_x86_avx512_mask_inserti64x2_256(<4 x i64> %x0, <2 x i64> %x1, <4 x i64> %x3, i8 %x4) {
+; CHECK-LABEL: test_int_x86_avx512_mask_inserti64x2_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %edi, %k1
+; CHECK-NEXT:    vinserti64x2 $1, %xmm1, %ymm0, %ymm2 {%k1}
+; CHECK-NEXT:    vinserti64x2 $1, %xmm1, %ymm0, %ymm3 {%k1} {z}
+; CHECK-NEXT:    vinserti64x2 $1, %xmm1, %ymm0, %ymm0
+; CHECK-NEXT:    vpaddq %ymm0, %ymm2, %ymm0
+; CHECK-NEXT:    vpaddq %ymm3, %ymm0, %ymm0
+; CHECK-NEXT:    retq
+  %res = call <4 x i64> @llvm.x86.avx512.mask.inserti64x2.256(<4 x i64> %x0, <2 x i64> %x1, i32 1, <4 x i64> %x3, i8 %x4)
+  %res1 = call <4 x i64> @llvm.x86.avx512.mask.inserti64x2.256(<4 x i64> %x0, <2 x i64> %x1, i32 1, <4 x i64> %x3, i8 -1)
+  %res2 = call <4 x i64> @llvm.x86.avx512.mask.inserti64x2.256(<4 x i64> %x0, <2 x i64> %x1, i32 1, <4 x i64> zeroinitializer, i8 %x4)
+  %res3 = add <4 x i64> %res, %res1
+  %res4 = add <4 x i64> %res3, %res2
+  ret <4 x i64> %res4
+}

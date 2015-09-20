@@ -544,7 +544,7 @@ define <16 x i16> @testv16i16(<16 x i16> %in) nounwind {
 ; AVX512-NEXT:    vpextrw $7, %xmm0, %eax
 ; AVX512-NEXT:    lzcntw %ax, %ax
 ; AVX512-NEXT:    vpinsrw $7, %eax, %xmm2, %xmm0
-; AVX512-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; AVX512-NEXT:    vinserti32x4 $1, %xmm1, %ymm0, %ymm0
 ; AVX512-NEXT:    retq
   %out = call <16 x i16> @llvm.ctlz.v16i16(<16 x i16> %in, i1 0)
   ret <16 x i16> %out
@@ -742,7 +742,7 @@ define <16 x i16> @testv16i16u(<16 x i16> %in) nounwind {
 ; AVX512-NEXT:    vpextrw $7, %xmm0, %eax
 ; AVX512-NEXT:    lzcntw %ax, %ax
 ; AVX512-NEXT:    vpinsrw $7, %eax, %xmm2, %xmm0
-; AVX512-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; AVX512-NEXT:    vinserti32x4 $1, %xmm1, %ymm0, %ymm0
 ; AVX512-NEXT:    retq
   %out = call <16 x i16> @llvm.ctlz.v16i16(<16 x i16> %in, i1 -1)
   ret <16 x i16> %out
@@ -1214,7 +1214,7 @@ define <32 x i8> @testv32i8(<32 x i8> %in) nounwind {
 ; AVX512-NEXT:    lzcntl %eax, %eax
 ; AVX512-NEXT:    addl $-24, %eax
 ; AVX512-NEXT:    vpinsrb $15, %eax, %xmm2, %xmm0
-; AVX512-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; AVX512-NEXT:    vinserti32x4 $1, %xmm1, %ymm0, %ymm0
 ; AVX512-NEXT:    retq
   %out = call <32 x i8> @llvm.ctlz.v32i8(<32 x i8> %in, i1 0)
   ret <32 x i8> %out
@@ -1620,7 +1620,7 @@ define <32 x i8> @testv32i8u(<32 x i8> %in) nounwind {
 ; AVX512-NEXT:    lzcntl %eax, %eax
 ; AVX512-NEXT:    addl $-24, %eax
 ; AVX512-NEXT:    vpinsrb $15, %eax, %xmm2, %xmm0
-; AVX512-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; AVX512-NEXT:    vinserti32x4 $1, %xmm1, %ymm0, %ymm0
 ; AVX512-NEXT:    retq
   %out = call <32 x i8> @llvm.ctlz.v32i8(<32 x i8> %in, i1 -1)
   ret <32 x i8> %out

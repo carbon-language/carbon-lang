@@ -7898,7 +7898,7 @@ def VINSERTF128rm : AVXAIi8<0x18, MRMSrcMem, (outs VR256:$dst),
           []>, Sched<[WriteFShuffleLd, ReadAfterLd]>, VEX_4V, VEX_L;
 }
 
-let Predicates = [HasAVX] in {
+let Predicates = [HasAVX, NoVLX] in {
 def : Pat<(vinsert128_insert:$ins (v8f32 VR256:$src1), (v4f32 VR128:$src2),
                                    (iPTR imm)),
           (VINSERTF128rr VR256:$src1, VR128:$src2,
@@ -8560,7 +8560,7 @@ def VINSERTI128rm : AVX2AIi8<0x38, MRMSrcMem, (outs VR256:$dst),
           []>, Sched<[WriteShuffle256Ld, ReadAfterLd]>, VEX_4V, VEX_L;
 }
 
-let Predicates = [HasAVX2] in {
+let Predicates = [HasAVX2, NoVLX] in {
 def : Pat<(vinsert128_insert:$ins (v4i64 VR256:$src1), (v2i64 VR128:$src2),
                                    (iPTR imm)),
           (VINSERTI128rr VR256:$src1, VR128:$src2,
