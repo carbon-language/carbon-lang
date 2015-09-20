@@ -733,6 +733,22 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
   return invalid<ReportLoopBound>(Context, /*Assert=*/true, L, LoopCount);
 }
 
+/// @brief Return the number of loops in @p L (incl. @p L) that have a trip
+///        count that is not known to be less than 8.
+static unsigned countBeneficialLoops(Loop *L, ScalarEvolution &SE) {
+  auto *TripCount = SE.getBackedgeTakenCount(L);
+
+  auto count = 1;
+  if (auto *TripCountC = dyn_cast<SCEVConstant>(TripCount))
+    if (TripCountC->getValue()->getZExtValue() < 8)
+      count -= 1;
+
+  for (auto &SubLoop : *L)
+    count += countBeneficialLoops(SubLoop, SE);
+
+  return count;
+}
+
 bool ScopDetection::hasMoreThanOneLoop(Region *R) const {
   auto LoopNum = 0;
 
@@ -745,9 +761,7 @@ bool ScopDetection::hasMoreThanOneLoop(Region *R) const {
 
   for (auto &SubLoop : SubLoops)
     if (R->contains(SubLoop)) {
-      LoopNum++;
-      if (SubLoop->getSubLoopsVector().size() > 0)
-        LoopNum++;
+      LoopNum += countBeneficialLoops(SubLoop, *SE);
 
       if (LoopNum >= 2)
         return true;
