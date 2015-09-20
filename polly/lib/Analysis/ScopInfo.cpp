@@ -1927,8 +1927,7 @@ void Scop::addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI) {
 
   isl_set *UnboundedCtx = isl_set_params(Parts.first);
   isl_set *BoundedCtx = isl_set_complement(UnboundedCtx);
-  // TODO: Use the unbounded part to build runtime assumptions.
-  isl_set_free(BoundedCtx);
+  addAssumption(BoundedCtx);
 }
 
 void Scop::buildAliasChecks(AliasAnalysis &AA) {

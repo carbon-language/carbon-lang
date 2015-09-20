@@ -1,5 +1,14 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s | FileCheck %s
 ;
+; The assumed context is tricky here as the equality test for the inner loop
+; allows an "unbounded" loop trip count. We assume that does not happen, thus
+; if N <= 1 the outer loop is not executed and we are done, if N >= 3 the
+; equality test in the inner exit condition will trigger at some point and,
+; finally, if N == 2 we would have an unbounded inner loop.
+;
+; CHECK:      Assumed Context:
+; CHECK-NEXT:   [N] -> {  : N >= 3 or N <= 1 }
+;
 ;    int jd(int *restrict A, int x, int N) {
 ;      for (int i = 1; i < N; i++)
 ;        for (int j = 3; j < N; j++)
