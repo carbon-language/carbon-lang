@@ -135,7 +135,7 @@ protected: // Can only create subclasses.
 
   virtual AsmToken LexToken() = 0;
 
-  void SetError(const SMLoc &errLoc, const std::string &err) {
+  void SetError(SMLoc errLoc, const std::string &err) {
     ErrLoc = errLoc;
     Err = err;
   }
@@ -179,7 +179,7 @@ public:
                             bool ShouldSkipSpace = true) = 0;
 
   /// Get the current error location
-  const SMLoc &getErrLoc() {
+  SMLoc getErrLoc() {
     return ErrLoc;
   }
 

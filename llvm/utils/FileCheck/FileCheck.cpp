@@ -975,7 +975,7 @@ static bool ReadCheckFile(SourceMgr &SM,
   return false;
 }
 
-static void PrintCheckFailed(const SourceMgr &SM, const SMLoc &Loc,
+static void PrintCheckFailed(const SourceMgr &SM, SMLoc Loc,
                              const Pattern &Pat, StringRef Buffer,
                              StringMap<StringRef> &VariableTable) {
   // Otherwise, we have an error, emit an error message.

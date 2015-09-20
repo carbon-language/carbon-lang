@@ -107,8 +107,7 @@ void MCStreamer::EmitSLEB128IntValue(int64_t Value) {
   EmitBytes(OSE.str());
 }
 
-void MCStreamer::EmitValue(const MCExpr *Value, unsigned Size,
-                           const SMLoc &Loc) {
+void MCStreamer::EmitValue(const MCExpr *Value, unsigned Size, SMLoc Loc) {
   EmitValueImpl(Value, Size, Loc);
 }
 
@@ -681,8 +680,7 @@ void MCStreamer::EmitTBSSSymbol(MCSection *Section, MCSymbol *Symbol,
 void MCStreamer::ChangeSection(MCSection *, const MCExpr *) {}
 void MCStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {}
 void MCStreamer::EmitBytes(StringRef Data) {}
-void MCStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
-                               const SMLoc &Loc) {
+void MCStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size, SMLoc Loc) {
   visitUsedExpr(*Value);
 }
 void MCStreamer::EmitULEB128Value(const MCExpr *Value) {}
