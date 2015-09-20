@@ -16,6 +16,13 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
 
+#ifdef _MSC_VER
+// <future> depends on <eh.h> for __uncaught_exception.
+#include <eh.h>
+#endif
+
+#include <future>
+
 namespace llvm {
 struct LTOCodeGenerator;
 }
@@ -104,8 +111,8 @@ private:
   llvm::DenseMap<StringRef, Symbol *> Symtab;
 
   std::vector<std::unique_ptr<InputFile>> Files;
-  std::vector<ArchiveFile *> ArchiveQueue;
-  std::vector<InputFile *> ObjectQueue;
+  std::vector<std::future<ArchiveFile *>> ArchiveQueue;
+  std::vector<std::future<InputFile *>> ObjectQueue;
 
   std::vector<BitcodeFile *> BitcodeFiles;
   std::vector<SmallVector<char, 0>> Objs;
