@@ -832,10 +832,19 @@ struct NarrowIVDefUse {
   Instruction *NarrowUse;
   Instruction *WideDef;
 
-  NarrowIVDefUse(): NarrowDef(nullptr), NarrowUse(nullptr), WideDef(nullptr) {}
+  // True if the narrow def is never negative.  Tracking this information lets
+  // us use a sign extension instead of a zero extension or vice versa, when
+  // profitable and legal.
+  bool NeverNegative;
 
-  NarrowIVDefUse(Instruction *ND, Instruction *NU, Instruction *WD):
-    NarrowDef(ND), NarrowUse(NU), WideDef(WD) {}
+  NarrowIVDefUse()
+      : NarrowDef(nullptr), NarrowUse(nullptr), WideDef(nullptr),
+        NeverNegative(false) {}
+
+  NarrowIVDefUse(Instruction *ND, Instruction *NU, Instruction *WD,
+                 bool NeverNegative)
+      : NarrowDef(ND), NarrowUse(NU), WideDef(WD),
+        NeverNegative(NeverNegative) {}
 };
 
 /// WidenIV - The goal of this transform is to remove sign and zero extends
@@ -848,11 +857,6 @@ class WidenIV {
   PHINode *OrigPhi;
   Type *WideType;
   bool IsSigned;
-
-  // True if the narrow induction variable is never negative.  Tracking this
-  // information lets us use a sign extension instead of a zero extension or
-  // vice versa, when profitable and legal.
-  bool NeverNegative;
 
   // Context
   LoopInfo        *LI;
@@ -876,7 +880,6 @@ public:
     OrigPhi(WI.NarrowIV),
     WideType(WI.WidestNativeType),
     IsSigned(WI.IsSigned),
-    NeverNegative(false),
     LI(LInfo),
     L(LI->getLoopFor(OrigPhi->getParent())),
     SE(SEv),
@@ -1103,7 +1106,7 @@ bool WidenIV::WidenLoopCompare(NarrowIVDefUse DU) {
   //      (A) == icmp slt i32 sext(%narrow), sext(%val)
   //          == icmp slt i32 zext(%narrow), sext(%val)
 
-  if (!(NeverNegative || IsSigned == Cmp->isSigned()))
+  if (!(DU.NeverNegative || IsSigned == Cmp->isSigned()))
     return false;
 
   Value *Op = Cmp->getOperand(Cmp->getOperand(0) == DU.NarrowDef ? 1 : 0);
@@ -1240,6 +1243,10 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
 /// pushNarrowIVUsers - Add eligible users of NarrowDef to NarrowIVUsers.
 ///
 void WidenIV::pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef) {
+  const SCEV *NarrowSCEV = SE->getSCEV(NarrowDef);
+  bool NeverNegative =
+      SE->isKnownPredicate(ICmpInst::ICMP_SGE, NarrowSCEV,
+                           SE->getConstant(NarrowSCEV->getType(), 0));
   for (User *U : NarrowDef->users()) {
     Instruction *NarrowUser = cast<Instruction>(U);
 
@@ -1247,7 +1254,8 @@ void WidenIV::pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef) {
     if (!Widened.insert(NarrowUser).second)
       continue;
 
-    NarrowIVUsers.push_back(NarrowIVDefUse(NarrowDef, NarrowUser, WideDef));
+    NarrowIVUsers.push_back(
+        NarrowIVDefUse(NarrowDef, NarrowUser, WideDef, NeverNegative));
   }
 }
 
@@ -1266,9 +1274,6 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
   const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(OrigPhi));
   if (!AddRec)
     return nullptr;
-
-  NeverNegative = SE->isKnownPredicate(ICmpInst::ICMP_SGE, AddRec,
-                                       SE->getConstant(AddRec->getType(), 0));
 
   // Widen the induction variable expression.
   const SCEV *WideIVExpr = IsSigned ?

@@ -321,3 +321,35 @@ for.end:
 leave:
   ret i32 0
 }
+
+declare void @consume.i64(i64)
+declare void @consume.i1(i1)
+
+define i32 @test10(i32 %v) {
+; CHECK-LABEL: @test10(
+ entry:
+; CHECK-NOT: zext
+  br label %loop
+
+ loop:
+; CHECK: loop:
+; CHECK: %indvars.iv = phi i64 [ %indvars.iv.next, %loop ], [ 0, %entry ]
+; CHECK: %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+; CHECK: [[MUL:%[a-z0-9]+]] = mul nsw i64 %indvars.iv, -1
+; CHECK: [[MUL_TRUNC:%[a-z0-9]+]] = trunc i64 [[MUL]] to i32
+; CHECK: [[CMP:%[a-z0-9]+]] = icmp eq i32 [[MUL_TRUNC]], %v
+; CHECK: call void @consume.i1(i1 [[CMP]])
+
+  %i = phi i32 [ 0, %entry ], [ %i.inc, %loop ]
+  %i.inc = add i32 %i, 1
+  %iv = mul i32 %i, -1
+  %cmp = icmp eq i32 %iv, %v
+  call void @consume.i1(i1 %cmp)
+  %be.cond = icmp slt i32 %i.inc, 11
+  %ext = sext i32 %iv to i64
+  call void @consume.i64(i64 %ext)
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret i32 22
+}
