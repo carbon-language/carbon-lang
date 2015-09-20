@@ -15753,17 +15753,20 @@ static SDValue getScalarMaskingNode(SDValue Op, SDValue Mask,
                                     SDValue PreservedSrc,
                                     const X86Subtarget *Subtarget,
                                     SelectionDAG &DAG) {
-    if (isAllOnes(Mask))
-      return Op;
+  if (isAllOnes(Mask))
+    return Op;
 
-    EVT VT = Op.getValueType();
-    SDLoc dl(Op);
-    // The mask should be of type MVT::i1
-    SDValue IMask = DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, Mask);
+  EVT VT = Op.getValueType();
+  SDLoc dl(Op);
+  // The mask should be of type MVT::i1
+  SDValue IMask = DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, Mask);
 
-    if (PreservedSrc.getOpcode() == ISD::UNDEF)
-      PreservedSrc = getZeroVector(VT, Subtarget, DAG, dl);
-    return DAG.getNode(X86ISD::SELECT, dl, VT, IMask, Op, PreservedSrc);
+  if (Op.getOpcode() == X86ISD::FSETCC)
+    return DAG.getNode(ISD::AND, dl, VT, Op, IMask);
+
+  if (PreservedSrc.getOpcode() == ISD::UNDEF)
+    PreservedSrc = getZeroVector(VT, Subtarget, DAG, dl);
+  return DAG.getNode(X86ISD::SELECT, dl, VT, IMask, Op, PreservedSrc);
 }
 
 static int getSEHRegistrationNodeSize(const Function *Fn) {
@@ -16123,6 +16126,32 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                 DAG.getUNDEF(BitcastVT), CmpMask,
                                 DAG.getIntPtrConstant(0, dl));
       return DAG.getBitcast(Op.getValueType(), Res);
+    }
+    case CMP_MASK_SCALAR_CC: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue CC = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, Op.getOperand(3));
+      SDValue Mask = Op.getOperand(4);
+
+      SDValue Cmp;
+      if (IntrData->Opc1 != 0) {
+        SDValue Rnd = Op.getOperand(5);
+        if (cast<ConstantSDNode>(Rnd)->getZExtValue() !=
+            X86::STATIC_ROUNDING::CUR_DIRECTION)
+          Cmp = DAG.getNode(IntrData->Opc1, dl, MVT::i1, Src1, Src2, CC, Rnd);
+      }
+      //default rounding mode
+      if(!Cmp.getNode())
+        Cmp = DAG.getNode(IntrData->Opc0, dl, MVT::i1, Src1, Src2, CC);
+
+      SDValue CmpMask = getScalarMaskingNode(Cmp, Mask,
+                                             DAG.getTargetConstant(0, dl,
+                                                                   MVT::i1),
+                                             Subtarget, DAG);
+
+      return DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, MVT::i8,
+                         DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i8, CmpMask),
+                         DAG.getValueType(MVT::i1));
     }
     case COMI: { // Comparison intrinsics
       ISD::CondCode CC = (ISD::CondCode)IntrData->Opc1;

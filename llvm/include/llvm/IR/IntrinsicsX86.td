@@ -6973,6 +6973,14 @@ let TargetPrefix = "x86" in {
         GCCBuiltin<"__builtin_ia32_cmppd128_mask">,
             Intrinsic<[llvm_i8_ty], [llvm_v2f64_ty, llvm_v2f64_ty,
                        llvm_i32_ty, llvm_i8_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_cmp_ss :
+        GCCBuiltin<"__builtin_ia32_cmpss_mask">,
+              Intrinsic<[llvm_i8_ty], [llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_i32_ty, llvm_i8_ty, llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_cmp_sd :
+        GCCBuiltin<"__builtin_ia32_cmpsd_mask">,
+              Intrinsic<[llvm_i8_ty], [llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_i32_ty, llvm_i8_ty, llvm_i32_ty], [IntrNoMem]>;
 
   def int_x86_avx512_movntdqa :
         GCCBuiltin<"__builtin_ia32_movntdqa512">,
