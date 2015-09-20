@@ -158,21 +158,6 @@ bool ReportNonBranchTerminator::classof(const RejectReason *RR) {
 }
 
 //===----------------------------------------------------------------------===//
-// ReportCondition.
-
-std::string ReportCondition::getMessage() const {
-  return ("Not well structured condition at BB: " + BB->getName()).str();
-}
-
-const DebugLoc &ReportCondition::getDebugLoc() const {
-  return BB->getTerminator()->getDebugLoc();
-}
-
-bool ReportCondition::classof(const RejectReason *RR) {
-  return RR->getKind() == rrkCondition;
-}
-
-//===----------------------------------------------------------------------===//
 // ReportAffFunc.
 
 ReportAffFunc::ReportAffFunc(const RejectReasonKind K, const Instruction *Inst)

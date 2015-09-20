@@ -259,29 +259,6 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// @brief Captures a not well-structured condition within the CFG.
-class ReportCondition : public ReportCFG {
-  //===--------------------------------------------------------------------===//
-
-  // The BasicBlock we found the broken condition in.
-  BasicBlock *BB;
-
-public:
-  ReportCondition(BasicBlock *BB) : ReportCFG(rrkCondition), BB(BB) {}
-
-  /// @name LLVM-RTTI interface
-  //@{
-  static bool classof(const RejectReason *RR);
-  //@}
-
-  /// @name RejectReason interface
-  //@{
-  virtual std::string getMessage() const override;
-  virtual const DebugLoc &getDebugLoc() const override;
-  //@}
-};
-
-//===----------------------------------------------------------------------===//
 /// @brief Base class for non-affine reject reasons.
 ///
 /// Scop candidates that violate restrictions to affinity are reported under
