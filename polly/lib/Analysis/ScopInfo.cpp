@@ -1913,28 +1913,7 @@ void Scop::addLoopBoundsToHeaderDomains(LoopInfo &LI, ScopDetection &SD,
     int LoopDepth = getRelativeLoopDepth(L);
     assert(LoopDepth >= 0 && "Loop in region should have at least depth one");
 
-    BasicBlock *LatchBB = L->getLoopLatch();
-    assert(LatchBB && "TODO implement multiple exit loop handling");
-
-    isl_set *LatchBBDom = DomainMap[LatchBB];
-    isl_set *BackedgeCondition = nullptr;
-
     BasicBlock *HeaderBB = L->getHeader();
-
-    BranchInst *BI = cast<BranchInst>(LatchBB->getTerminator());
-    if (BI->isUnconditional())
-      BackedgeCondition = isl_set_copy(LatchBBDom);
-    else {
-      SmallVector<isl_set *, 2> ConditionSets;
-      int idx = BI->getSuccessor(0) != HeaderBB;
-      buildConditionSets(*this, BI, L, LatchBBDom, ConditionSets);
-
-      // Free the non back edge condition set as we do not need it.
-      isl_set_free(ConditionSets[1 - idx]);
-
-      BackedgeCondition = ConditionSets[idx];
-    }
-
     isl_set *&HeaderBBDom = DomainMap[HeaderBB];
     isl_set *FirstIteration =
         createFirstIterationDomain(isl_set_get_space(HeaderBBDom), LoopDepth);
@@ -1942,23 +1921,52 @@ void Scop::addLoopBoundsToHeaderDomains(LoopInfo &LI, ScopDetection &SD,
     isl_map *NextIterationMap =
         createNextIterationMap(isl_set_get_space(HeaderBBDom), LoopDepth);
 
-    int LatchLoopDepth = getRelativeLoopDepth(LI.getLoopFor(LatchBB));
-    assert(LatchLoopDepth >= LoopDepth);
-    BackedgeCondition =
-        isl_set_project_out(BackedgeCondition, isl_dim_set, LoopDepth + 1,
-                            LatchLoopDepth - LoopDepth);
+    isl_set *UnionBackedgeCondition =
+        isl_set_empty(isl_set_get_space(HeaderBBDom));
+
+    SmallVector<llvm::BasicBlock *, 4> LatchBlocks;
+    L->getLoopLatches(LatchBlocks);
+
+    for (BasicBlock *LatchBB : LatchBlocks) {
+      assert(DomainMap.count(LatchBB));
+      isl_set *LatchBBDom = DomainMap[LatchBB];
+      isl_set *BackedgeCondition = nullptr;
+
+      BranchInst *BI = cast<BranchInst>(LatchBB->getTerminator());
+      if (BI->isUnconditional())
+        BackedgeCondition = isl_set_copy(LatchBBDom);
+      else {
+        SmallVector<isl_set *, 2> ConditionSets;
+        int idx = BI->getSuccessor(0) != HeaderBB;
+        buildConditionSets(*this, BI, L, LatchBBDom, ConditionSets);
+
+        // Free the non back edge condition set as we do not need it.
+        isl_set_free(ConditionSets[1 - idx]);
+
+        BackedgeCondition = ConditionSets[idx];
+      }
+
+      int LatchLoopDepth = getRelativeLoopDepth(LI.getLoopFor(LatchBB));
+      assert(LatchLoopDepth >= LoopDepth);
+      BackedgeCondition =
+          isl_set_project_out(BackedgeCondition, isl_dim_set, LoopDepth + 1,
+                              LatchLoopDepth - LoopDepth);
+      UnionBackedgeCondition =
+          isl_set_union(UnionBackedgeCondition, BackedgeCondition);
+    }
 
     isl_map *ForwardMap = isl_map_lex_le(isl_set_get_space(HeaderBBDom));
     for (int i = 0; i < LoopDepth; i++)
       ForwardMap = isl_map_equate(ForwardMap, isl_dim_in, i, isl_dim_out, i);
 
-    isl_set *BackedgeConditionComplement =
-        isl_set_complement(BackedgeCondition);
-    BackedgeConditionComplement = isl_set_lower_bound_si(
-        BackedgeConditionComplement, isl_dim_set, LoopDepth, 0);
-    BackedgeConditionComplement =
-        isl_set_apply(BackedgeConditionComplement, ForwardMap);
-    HeaderBBDom = isl_set_subtract(HeaderBBDom, BackedgeConditionComplement);
+    isl_set *UnionBackedgeConditionComplement =
+        isl_set_complement(UnionBackedgeCondition);
+    UnionBackedgeConditionComplement = isl_set_lower_bound_si(
+        UnionBackedgeConditionComplement, isl_dim_set, LoopDepth, 0);
+    UnionBackedgeConditionComplement =
+        isl_set_apply(UnionBackedgeConditionComplement, ForwardMap);
+    HeaderBBDom =
+        isl_set_subtract(HeaderBBDom, UnionBackedgeConditionComplement);
 
     auto Parts = partitionSetParts(HeaderBBDom, LoopDepth);
 

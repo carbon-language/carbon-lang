@@ -699,10 +699,6 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
 
 bool ScopDetection::canUseISLTripCount(Loop *L,
                                        DetectionContext &Context) const {
-  // Ensure the loop has a single back edge.
-  if (L->getNumBackEdges() != 1)
-    return false;
-
   // Ensure the loop has valid exiting blocks, otherwise we need to
   // overapproximate it as a boxed loop.
   SmallVector<BasicBlock *, 4> ExitingBlocks;
