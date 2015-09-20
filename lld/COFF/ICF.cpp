@@ -73,7 +73,7 @@ private:
   bool forEachGroup(std::vector<SectionChunk *> &Chunks, Comparator Eq);
   bool partition(ChunkIterator Begin, ChunkIterator End, Comparator Eq);
 
-  uint64_t NextID = 1;
+  std::atomic<uint64_t> NextID = { 1 };
 };
 
 // Entry point to ICF.
