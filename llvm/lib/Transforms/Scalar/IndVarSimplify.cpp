@@ -772,12 +772,9 @@ namespace {
 // extend operations. This information is recorded by CollectExtend and provides
 // the input to WidenIV.
 struct WideIVInfo {
-  PHINode *NarrowIV;
-  Type *WidestNativeType; // Widest integer type created [sz]ext
-  bool IsSigned;          // Was a sext user seen before a zext?
-
-  WideIVInfo() : NarrowIV(nullptr), WidestNativeType(nullptr),
-                 IsSigned(false) {}
+  PHINode *NarrowIV = nullptr;
+  Type *WidestNativeType = nullptr; // Widest integer type created [sz]ext
+  bool IsSigned = false;            // Was a sext user seen before a zext?
 };
 }
 
@@ -828,18 +825,14 @@ namespace {
 /// computes the same value as the Narrow IV def.  This avoids caching Use*
 /// pointers.
 struct NarrowIVDefUse {
-  Instruction *NarrowDef;
-  Instruction *NarrowUse;
-  Instruction *WideDef;
+  Instruction *NarrowDef = nullptr;
+  Instruction *NarrowUse = nullptr;
+  Instruction *WideDef = nullptr;
 
   // True if the narrow def is never negative.  Tracking this information lets
   // us use a sign extension instead of a zero extension or vice versa, when
   // profitable and legal.
-  bool NeverNegative;
-
-  NarrowIVDefUse()
-      : NarrowDef(nullptr), NarrowUse(nullptr), WideDef(nullptr),
-        NeverNegative(false) {}
+  bool NeverNegative = false;
 
   NarrowIVDefUse(Instruction *ND, Instruction *NU, Instruction *WD,
                  bool NeverNegative)
