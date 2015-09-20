@@ -139,6 +139,20 @@ SCEVAffinator::addModuloSemantic(__isl_take isl_pw_aff *PWA,
   return PWA;
 }
 
+bool SCEVAffinator::hasNSWAddRecForLoop(Loop *L) const {
+  for (const auto &CachedPair : CachedExpressions) {
+    auto *AddRec = dyn_cast<SCEVAddRecExpr>(CachedPair.first.first);
+    if (!AddRec)
+      continue;
+    if (AddRec->getLoop() != L)
+      continue;
+    if (AddRec->getNoWrapFlags() & SCEV::FlagNSW)
+      return true;
+  }
+
+  return false;
+}
+
 __isl_give isl_pw_aff *SCEVAffinator::visit(const SCEV *Expr) {
 
   auto Key = std::make_pair(Expr, BB);

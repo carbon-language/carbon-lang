@@ -66,6 +66,9 @@ public:
   /// @returns The context in which integer wrapping is happening.
   __isl_give isl_set *getWrappingContext() const;
 
+  /// @brief Check an <nsw> AddRec for the loop @p L is cached.
+  bool hasNSWAddRecForLoop(llvm::Loop *L) const;
+
 private:
   /// @brief Key to identify cached expressions.
   using CacheKey = std::pair<const llvm::SCEV *, llvm::BasicBlock *>;

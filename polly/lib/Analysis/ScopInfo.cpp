@@ -1925,6 +1925,14 @@ void Scop::addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI) {
   auto Parts = partitionSetParts(HeaderBBDom, LoopDepth);
   HeaderBBDom = Parts.second;
 
+  // Check if there is a <nsw> tagged AddRec for this loop and if so do not add
+  // the bounded assumptions to the context as they are already implied by the
+  // <nsw> tag.
+  if (Affinator.hasNSWAddRecForLoop(L)) {
+    isl_set_free(Parts.first);
+    return;
+  }
+
   isl_set *UnboundedCtx = isl_set_params(Parts.first);
   isl_set *BoundedCtx = isl_set_complement(UnboundedCtx);
   addAssumption(BoundedCtx);
