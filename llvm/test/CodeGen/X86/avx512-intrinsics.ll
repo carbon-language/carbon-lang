@@ -216,12 +216,47 @@ define <2 x double> @test_x86_sse2_cvtsi642sd(<2 x double> %a0, i64 %a1) {
 }
 declare <2 x double> @llvm.x86.sse2.cvtsi642sd(<2 x double>, i64) nounwind readnone
 
-define i64 @test_x86_sse2_cvttsd2si64(<2 x double> %a0) {
+define i64 @test_x86_avx512_cvttsd2si64(<2 x double> %a0) {
   ; CHECK: vcvttsd2si {{.*}}encoding: [0x62
-  %res = call i64 @llvm.x86.sse2.cvttsd2si64(<2 x double> %a0) ; <i64> [#uses=1]
-  ret i64 %res
+  ; CHECK: vcvttsd2si {sae}{{.*}}encoding: [0x62
+  %res0 = call i64 @llvm.x86.avx512.cvttsd2si64(<2 x double> %a0, i32 4) ;
+  %res1 = call i64 @llvm.x86.avx512.cvttsd2si64(<2 x double> %a0, i32 8) ;
+  %res2 = add i64 %res0, %res1
+  ret i64 %res2
 }
-declare i64 @llvm.x86.sse2.cvttsd2si64(<2 x double>) nounwind readnone
+declare i64 @llvm.x86.avx512.cvttsd2si64(<2 x double>, i32) nounwind readnone
+
+define i32 @test_x86_avx512_cvttsd2usi(<2 x double> %a0) {
+  ; CHECK: vcvttsd2usi {{.*}}encoding: [0x62
+  ; CHECK: vcvttsd2usi {sae}{{.*}}encoding: [0x62
+  %res0 = call i32 @llvm.x86.avx512.cvttsd2usi(<2 x double> %a0, i32 4) ;
+  %res1 = call i32 @llvm.x86.avx512.cvttsd2usi(<2 x double> %a0, i32 8) ;
+  %res2 = add i32 %res0, %res1
+  ret i32 %res2
+}
+declare i32 @llvm.x86.avx512.cvttsd2usi(<2 x double>, i32) nounwind readnone
+
+define i32 @test_x86_avx512_cvttsd2si(<2 x double> %a0) {
+  ; CHECK: vcvttsd2si {{.*}}encoding: [0x62
+  ; CHECK: vcvttsd2si {sae}{{.*}}encoding: [0x62
+  %res0 = call i32 @llvm.x86.avx512.cvttsd2si(<2 x double> %a0, i32 4) ;
+  %res1 = call i32 @llvm.x86.avx512.cvttsd2si(<2 x double> %a0, i32 8) ;
+  %res2 = add i32 %res0, %res1
+  ret i32 %res2
+}
+declare i32 @llvm.x86.avx512.cvttsd2si(<2 x double>, i32) nounwind readnone
+
+
+
+define i64 @test_x86_avx512_cvttsd2usi64(<2 x double> %a0) {
+  ; CHECK: vcvttsd2usi {{.*}}encoding: [0x62
+  ; CHECK: vcvttsd2usi {sae}{{.*}}encoding: [0x62
+  %res0 = call i64 @llvm.x86.avx512.cvttsd2usi64(<2 x double> %a0, i32 4) ;
+  %res1 = call i64 @llvm.x86.avx512.cvttsd2usi64(<2 x double> %a0, i32 8) ;
+  %res2 = add i64 %res0, %res1
+  ret i64 %res2
+}
+declare i64 @llvm.x86.avx512.cvttsd2usi64(<2 x double>, i32) nounwind readnone
 
 define i64 @test_x86_sse_cvtss2si64(<4 x float> %a0) {
   ; CHECK: vcvtss2si {{.*}}encoding: [0x62
@@ -239,12 +274,45 @@ define <4 x float> @test_x86_sse_cvtsi642ss(<4 x float> %a0, i64 %a1) {
 declare <4 x float> @llvm.x86.sse.cvtsi642ss(<4 x float>, i64) nounwind readnone
 
 
-define i64 @test_x86_sse_cvttss2si64(<4 x float> %a0) {
+define i32 @test_x86_avx512_cvttss2si(<4 x float> %a0) {
+  ; CHECK: vcvttss2si {sae}{{.*}}encoding: [0x62
   ; CHECK: vcvttss2si {{.*}}encoding: [0x62
-  %res = call i64 @llvm.x86.sse.cvttss2si64(<4 x float> %a0) ; <i64> [#uses=1]
-  ret i64 %res
+  %res0 = call i32 @llvm.x86.avx512.cvttss2si(<4 x float> %a0, i32 8) ;
+  %res1 = call i32 @llvm.x86.avx512.cvttss2si(<4 x float> %a0, i32 4) ;
+  %res2 = add i32 %res0, %res1
+  ret i32 %res2
 }
-declare i64 @llvm.x86.sse.cvttss2si64(<4 x float>) nounwind readnone
+declare i32 @llvm.x86.avx512.cvttss2si(<4 x float>, i32) nounwind readnone
+
+define i64 @test_x86_avx512_cvttss2si64(<4 x float> %a0) {
+  ; CHECK: vcvttss2si {{.*}}encoding: [0x62
+  ; CHECK: vcvttss2si {sae}{{.*}}encoding: [0x62
+  %res0 = call i64 @llvm.x86.avx512.cvttss2si64(<4 x float> %a0, i32 4) ;
+  %res1 = call i64 @llvm.x86.avx512.cvttss2si64(<4 x float> %a0, i32 8) ;
+  %res2 = add i64 %res0, %res1
+  ret i64 %res2
+}
+declare i64 @llvm.x86.avx512.cvttss2si64(<4 x float>, i32) nounwind readnone
+
+define i32 @test_x86_avx512_cvttss2usi(<4 x float> %a0) {
+  ; CHECK: vcvttss2usi {sae}{{.*}}encoding: [0x62
+  ; CHECK: vcvttss2usi {{.*}}encoding: [0x62
+  %res0 = call i32 @llvm.x86.avx512.cvttss2usi(<4 x float> %a0, i32 8) ;
+  %res1 = call i32 @llvm.x86.avx512.cvttss2usi(<4 x float> %a0, i32 4) ;
+  %res2 = add i32 %res0, %res1
+  ret i32 %res2
+}
+declare i32 @llvm.x86.avx512.cvttss2usi(<4 x float>, i32) nounwind readnone
+
+define i64 @test_x86_avx512_cvttss2usi64(<4 x float> %a0) {
+  ; CHECK: vcvttss2usi {{.*}}encoding: [0x62
+  ; CHECK: vcvttss2usi {sae}{{.*}}encoding: [0x62
+  %res0 = call i64 @llvm.x86.avx512.cvttss2usi64(<4 x float> %a0, i32 4) ;
+  %res1 = call i64 @llvm.x86.avx512.cvttss2usi64(<4 x float> %a0, i32 8) ;
+  %res2 = add i64 %res0, %res1
+  ret i64 %res2
+}
+declare i64 @llvm.x86.avx512.cvttss2usi64(<4 x float>, i32) nounwind readnone
 
 define i64 @test_x86_avx512_cvtsd2usi64(<2 x double> %a0) {
   ; CHECK: vcvtsd2usi {{.*}}encoding: [0x62
@@ -4272,3 +4340,32 @@ define <8 x i64>@test_int_x86_avx512_mask_inserti64x4_512(<8 x i64> %x0, <4 x i6
   ret <8 x i64> %res4
 }
 
+declare <2 x double> @llvm.x86.avx512.mask.cvtss2sd.round(<4 x float>, <4 x float>, <2 x double>, i8, i32)
+
+define <2 x double>@test_int_x86_avx512_mask_cvt_ss2sd_round(<4 x float> %x0,<4 x float> %x1, <2 x double> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_cvt_ss2sd_round:
+; CHECK:    kmovw %edi, %k1    
+; CHECK-NEXT:    vcvtss2sd %xmm1, %xmm0, %xmm2 {%k1} 
+; CHECK-NEXT:    vcvtss2sd {sae}, %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    %xmm0, %xmm2, %xmm0
+; CHECK-NEXT:    retq
+  %res = call <2 x double> @llvm.x86.avx512.mask.cvtss2sd.round(<4 x float> %x0, <4 x float> %x1, <2 x double> %x2, i8 %x3, i32 4)
+  %res1 = call <2 x double> @llvm.x86.avx512.mask.cvtss2sd.round(<4 x float> %x0, <4 x float> %x1, <2 x double> %x2, i8 -1, i32 8)
+  %res2 = fadd <2 x double> %res, %res1
+  ret <2 x double> %res2
+}
+
+declare <4 x float> @llvm.x86.avx512.mask.cvtsd2ss.round(<2 x double>, <2 x double>, <4 x float>, i8, i32)
+
+define <4 x float>@test_int_x86_avx512_mask_cvt_sd2ss_round(<2 x double> %x0,<2 x double> %x1, <4 x float> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_cvt_sd2ss_round:
+; CHECK:    kmovw %edi, %k1
+; CHECK-NEXT:    vcvtsd2ss {rz-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+; CHECK-NEXT:    vcvtsd2ss {rn-sae}, %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vaddps %xmm0, %xmm2, %xmm0
+; CHECK-NEXT:    retq
+  %res = call <4 x float> @llvm.x86.avx512.mask.cvtsd2ss.round(<2 x double> %x0, <2 x double> %x1, <4 x float> %x2, i8 %x3, i32 3)
+  %res1 = call <4 x float> @llvm.x86.avx512.mask.cvtsd2ss.round(<2 x double> %x0, <2 x double> %x1, <4 x float> %x2, i8 -1, i32 8)
+  %res2 = fadd <4 x float> %res, %res1
+  ret <4 x float> %res2
+}
