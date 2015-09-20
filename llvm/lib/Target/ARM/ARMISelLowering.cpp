@@ -6627,8 +6627,8 @@ SDValue ARMTargetLowering::LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const {
   Entry.isZExt = false;
   Args.push_back(Entry);
 
-  const char *LibcallName  = (ArgVT == MVT::f64)
-  ? "__sincos_stret" : "__sincosf_stret";
+  const char *LibcallName =
+      (ArgVT == MVT::f64) ? "__sincos_stret" : "__sincosf_stret";
   SDValue Callee = DAG.getExternalSymbol(LibcallName, getPointerTy(DL));
 
   TargetLowering::CallLoweringInfo CLI(DAG);
