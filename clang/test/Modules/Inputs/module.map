@@ -364,3 +364,14 @@ module TargetFeatures {
     module x86_64 { requires x86_64 }
   }
 }
+
+module DebugSubmodules {
+  module DebugSubmoduleA {
+    header "DebugSubmoduleA.h"
+    export *
+  }
+  module DebugSubmoduleB {
+    header "DebugSubmoduleB.h"
+    export *
+  }
+}

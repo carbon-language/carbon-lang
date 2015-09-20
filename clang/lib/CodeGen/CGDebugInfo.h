@@ -32,12 +32,13 @@ class MDNode;
 
 namespace clang {
 class CXXMethodDecl;
-class VarDecl;
-class ObjCInterfaceDecl;
-class ObjCIvarDecl;
 class ClassTemplateSpecializationDecl;
 class GlobalDecl;
+class ModuleMap;
+class ObjCInterfaceDecl;
+class ObjCIvarDecl;
 class UsingDecl;
+class VarDecl;
 
 namespace CodeGen {
 class CodeGenModule;
@@ -55,6 +56,7 @@ class CGDebugInfo {
   bool DebugTypeExtRefs;
   llvm::DIBuilder DBuilder;
   llvm::DICompileUnit *TheCU = nullptr;
+  ModuleMap *ClangModuleMap = nullptr;
   SourceLocation CurLoc;
   llvm::DIType *VTablePtrType = nullptr;
   llvm::DIType *ClassTy = nullptr;
@@ -273,6 +275,11 @@ public:
   ~CGDebugInfo();
 
   void finalize();
+
+  /// When generating debug information for a clang module or
+  /// precompiled header, this module map will be used to determine
+  /// the module of origin of each Decl.
+  void setModuleMap(ModuleMap &MMap) { ClangModuleMap = &MMap; }
 
   /// Update the current source location. If \arg loc is invalid it is
   /// ignored.

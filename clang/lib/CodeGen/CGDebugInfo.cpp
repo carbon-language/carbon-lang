@@ -28,6 +28,7 @@
 #include "clang/Basic/Version.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Lex/HeaderSearchOptions.h"
+#include "clang/Lex/ModuleMap.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -2159,17 +2160,34 @@ ObjCInterfaceDecl *CGDebugInfo::getObjCInterfaceDecl(QualType Ty) {
 }
 
 llvm::DIModule *CGDebugInfo::getParentModuleOrNull(const Decl *D) {
-  if (!DebugTypeExtRefs || !D->isFromASTFile())
-    return nullptr;
+  ExternalASTSource::ASTSourceDescriptor Info;
+  if (ClangModuleMap) {
+    // We are building a clang module or a precompiled header.
+    //
+    // TODO: When D is a CXXRecordDecl or a C++ Enum, the ODR applies
+    // and it wouldn't be necessary to specify the parent scope
+    // because the type is already unique by definition (it would look
+    // like the output of -fno-standalone-debug). On the other hand,
+    // the parent scope helps a consumer to quickly locate the object
+    // file where the type's definition is located, so it might be
+    // best to make this behavior a command line or debugger tuning
+    // option.
+    FullSourceLoc Loc(D->getLocation(), CGM.getContext().getSourceManager());
+    if (Module *M = ClangModuleMap->inferModuleFromLocation(Loc)) {
+      auto Info = ExternalASTSource::ASTSourceDescriptor(*M);
+      return getOrCreateModuleRef(Info, /*SkeletonCU=*/false);
+    }
+  }
 
-  // Record a reference to an imported clang module or precompiled header.
-  llvm::DIModule *ModuleRef = nullptr;
-  auto *Reader = CGM.getContext().getExternalSource();
-  auto Idx = D->getOwningModuleID();
-  auto Info = Reader->getSourceDescriptor(Idx);
-  if (Info)
-    ModuleRef = getOrCreateModuleRef(*Info, true);
-  return ModuleRef;
+  if (DebugTypeExtRefs && D->isFromASTFile()) {
+    // Record a reference to an imported clang module or precompiled header.
+    auto *Reader = CGM.getContext().getExternalSource();
+    auto Idx = D->getOwningModuleID();
+    auto Info = Reader->getSourceDescriptor(Idx);
+    if (Info)
+      return getOrCreateModuleRef(*Info, /*SkeletonCU=*/true);
+  }
+  return nullptr;
 }
 
 llvm::DIType *CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile *Unit) {

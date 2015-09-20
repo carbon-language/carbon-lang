@@ -19,6 +19,8 @@
 #include "clang/CodeGen/BackendUtil.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Serialization/ASTWriter.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Bitcode/BitstreamReader.h"
@@ -41,6 +43,7 @@ class PCHContainerGenerator : public ASTConsumer {
   DiagnosticsEngine &Diags;
   const std::string MainFileName;
   ASTContext *Ctx;
+  ModuleMap &MMap;
   const HeaderSearchOptions &HeaderSearchOpts;
   const PreprocessorOptions &PreprocessorOpts;
   CodeGenOptions CodeGenOpts;
@@ -121,6 +124,7 @@ public:
                         raw_pwrite_stream *OS,
                         std::shared_ptr<PCHBuffer> Buffer)
       : Diags(CI.getDiagnostics()), Ctx(nullptr),
+        MMap(CI.getPreprocessor().getHeaderSearchInfo().getModuleMap()),
         HeaderSearchOpts(CI.getHeaderSearchOpts()),
         PreprocessorOpts(CI.getPreprocessorOpts()),
         TargetOpts(CI.getTargetOpts()), LangOpts(CI.getLangOpts()), OS(OS),
@@ -145,6 +149,7 @@ public:
     M->setDataLayout(Ctx->getTargetInfo().getDataLayoutString());
     Builder.reset(new CodeGen::CodeGenModule(
         *Ctx, HeaderSearchOpts, PreprocessorOpts, CodeGenOpts, *M, Diags));
+    Builder->getModuleDebugInfo()->setModuleMap(MMap);
   }
 
   bool HandleTopLevelDecl(DeclGroupRef D) override {
