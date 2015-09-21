@@ -247,7 +247,7 @@ void ICF::run(const std::vector<Chunk *> &Vec) {
         SectionChunk *SC = *It++;
         if (Config->Verbose)
           llvm::outs() << "  Removed " << SC->getDebugName() << "\n";
-        SC->replaceWith(Head);
+        Head->replace(SC);
       }
     }
   }

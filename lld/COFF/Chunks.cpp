@@ -228,9 +228,9 @@ ArrayRef<uint8_t> SectionChunk::getContents() const {
   return A;
 }
 
-void SectionChunk::replaceWith(SectionChunk *Other) {
-  Ptr = Other->Ptr;
-  Live = false;
+void SectionChunk::replace(SectionChunk *Other) {
+  Other->Ptr = Ptr;
+  Other->Live = false;
 }
 
 CommonChunk::CommonChunk(const COFFSymbolRef S) : Sym(S) {

@@ -201,7 +201,7 @@ private:
   bool Live;
 
   // Used for ICF (Identical COMDAT Folding)
-  void replaceWith(SectionChunk *Other);
+  void replace(SectionChunk *Other);
   std::atomic<uint64_t> GroupID = { 0 };
 
   // Chunks are basically unnamed chunks of bytes.
