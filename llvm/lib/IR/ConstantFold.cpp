@@ -1187,7 +1187,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         (void)C3V.divide(C2V, APFloat::rmNearestTiesToEven);
         return ConstantFP::get(C1->getContext(), C3V);
       case Instruction::FRem:
-        (void)C3V.mod(C2V, APFloat::rmNearestTiesToEven);
+        (void)C3V.mod(C2V);
         return ConstantFP::get(C1->getContext(), C3V);
       }
     }

@@ -869,8 +869,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
             GV.IntVal = apfLHS.bitcastToAPInt();
             break;
           case Instruction::FRem:
-            apfLHS.mod(APFloat(Sem, RHS.IntVal),
-                       APFloat::rmNearestTiesToEven);
+            apfLHS.mod(APFloat(Sem, RHS.IntVal));
             GV.IntVal = apfLHS.bitcastToAPInt();
             break;
           }

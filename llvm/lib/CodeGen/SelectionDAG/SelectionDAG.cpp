@@ -3738,7 +3738,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
         }
         break;
       case ISD::FREM :
-        s = V1.mod(V2, APFloat::rmNearestTiesToEven);
+        s = V1.mod(V2);
         if (!HasFPExceptions || (s!=APFloat::opInvalidOp &&
                                  s!=APFloat::opDivByZero)) {
           return getConstantFP(V1, DL, VT);

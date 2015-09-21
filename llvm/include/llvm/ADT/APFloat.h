@@ -299,7 +299,7 @@ public:
   /// IEEE remainder.
   opStatus remainder(const APFloat &);
   /// C fmod, or llvm frem.
-  opStatus mod(const APFloat &, roundingMode);
+  opStatus mod(const APFloat &);
   opStatus fusedMultiplyAdd(const APFloat &, const APFloat &, roundingMode);
   opStatus roundToIntegral(roundingMode);
   /// IEEE-754R 5.3.1: nextUp/nextDown.
