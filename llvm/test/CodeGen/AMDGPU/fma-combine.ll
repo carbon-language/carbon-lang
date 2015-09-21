@@ -364,5 +364,205 @@ define void @aggressive_combine_to_fma_fsub_1_f64(double addrspace(1)* noalias %
   ret void
 }
 
+;
+; Patterns (+ fneg variants): mul(add(1.0,x),y), mul(sub(1.0,x),y), mul(sub(x,1.0),y)
+;
+
+; FUNC-LABEL: {{^}}test_f32_mul_add_x_one_y:
+; SI: v_mac_f32_e32 [[VY:v[0-9]]], [[VY:v[0-9]]], [[VX:v[0-9]]]
+define void @test_f32_mul_add_x_one_y(float addrspace(1)* %out,
+                                        float addrspace(1)* %in1,
+                                        float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %a = fadd float %x, 1.0
+  %m = fmul float %a, %y
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f32_mul_y_add_x_one:
+; SI: v_mac_f32_e32 [[VY:v[0-9]]], [[VY:v[0-9]]], [[VX:v[0-9]]]
+define void @test_f32_mul_y_add_x_one(float addrspace(1)* %out,
+                                        float addrspace(1)* %in1,
+                                        float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %a = fadd float %x, 1.0
+  %m = fmul float %y, %a
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f32_mul_add_x_negone_y:
+; SI: v_mad_f32 [[VX:v[0-9]]], [[VX]], [[VY:v[0-9]]], -[[VY]]
+define void @test_f32_mul_add_x_negone_y(float addrspace(1)* %out,
+                                           float addrspace(1)* %in1,
+                                           float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %a = fadd float %x, -1.0
+  %m = fmul float %a, %y
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f32_mul_y_add_x_negone:
+; SI: v_mad_f32 [[VX:v[0-9]]], [[VX]], [[VY:v[0-9]]], -[[VY]]
+define void @test_f32_mul_y_add_x_negone(float addrspace(1)* %out,
+                                           float addrspace(1)* %in1,
+                                           float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %a = fadd float %x, -1.0
+  %m = fmul float %y, %a
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f32_mul_sub_one_x_y:
+; SI: v_mad_f32 [[VX:v[0-9]]], -[[VX]], [[VY:v[0-9]]], [[VY]]
+define void @test_f32_mul_sub_one_x_y(float addrspace(1)* %out,
+                                        float addrspace(1)* %in1,
+                                        float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %s = fsub float 1.0, %x
+  %m = fmul float %s, %y
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f32_mul_y_sub_one_x:
+; SI: v_mad_f32 [[VX:v[0-9]]], -[[VX]], [[VY:v[0-9]]], [[VY]]
+define void @test_f32_mul_y_sub_one_x(float addrspace(1)* %out,
+                                        float addrspace(1)* %in1,
+                                        float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %s = fsub float 1.0, %x
+  %m = fmul float %y, %s
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f32_mul_sub_negone_x_y:
+; SI: v_mad_f32 [[VX:v[0-9]]], -[[VX]], [[VY:v[0-9]]], -[[VY]]
+define void @test_f32_mul_sub_negone_x_y(float addrspace(1)* %out,
+                                           float addrspace(1)* %in1,
+                                           float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %s = fsub float -1.0, %x
+  %m = fmul float %s, %y
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f32_mul_y_sub_negone_x:
+; SI: v_mad_f32 [[VX:v[0-9]]], -[[VX]], [[VY:v[0-9]]], -[[VY]]
+define void @test_f32_mul_y_sub_negone_x(float addrspace(1)* %out,
+                                         float addrspace(1)* %in1,
+                                         float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %s = fsub float -1.0, %x
+  %m = fmul float %y, %s
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f32_mul_sub_x_one_y:
+; SI: v_mad_f32 [[VX:v[0-9]]], [[VX]], [[VY:v[0-9]]], -[[VY]]
+define void @test_f32_mul_sub_x_one_y(float addrspace(1)* %out,
+                                        float addrspace(1)* %in1,
+                                        float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %s = fsub float %x, 1.0
+  %m = fmul float %s, %y
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f32_mul_y_sub_x_one:
+; SI: v_mad_f32 [[VX:v[0-9]]], [[VX]], [[VY:v[0-9]]], -[[VY]]
+define void @test_f32_mul_y_sub_x_one(float addrspace(1)* %out,
+                                      float addrspace(1)* %in1,
+                                      float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %s = fsub float %x, 1.0
+  %m = fmul float %y, %s
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f32_mul_sub_x_negone_y:
+; SI: v_mac_f32_e32 [[VY:v[0-9]]], [[VY]], [[VX:v[0-9]]]
+define void @test_f32_mul_sub_x_negone_y(float addrspace(1)* %out,
+                                         float addrspace(1)* %in1,
+                                         float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %s = fsub float %x, -1.0
+  %m = fmul float %s, %y
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f32_mul_y_sub_x_negone:
+; SI: v_mac_f32_e32 [[VY:v[0-9]]], [[VY]], [[VX:v[0-9]]]
+define void @test_f32_mul_y_sub_x_negone(float addrspace(1)* %out,
+                                         float addrspace(1)* %in1,
+                                         float addrspace(1)* %in2) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %s = fsub float %x, -1.0
+  %m = fmul float %y, %s
+  store float %m, float addrspace(1)* %out
+  ret void
+}
+
+;
+; Interpolation Patterns: add(mul(x,t),mul(sub(1.0,t),y))
+;
+
+; FUNC-LABEL: {{^}}test_f32_interp:
+; SI: v_mad_f32 [[VR:v[0-9]]], -[[VT:v[0-9]]], [[VY:v[0-9]]], [[VY]]
+; SI: v_mac_f32_e32 [[VR]], [[VT]], [[VX:v[0-9]]]
+define void @test_f32_interp(float addrspace(1)* %out,
+                             float addrspace(1)* %in1,
+                             float addrspace(1)* %in2,
+                             float addrspace(1)* %in3) {
+  %x = load float, float addrspace(1)* %in1
+  %y = load float, float addrspace(1)* %in2
+  %t = load float, float addrspace(1)* %in3
+  %t1 = fsub float 1.0, %t
+  %tx = fmul float %x, %t
+  %ty = fmul float %y, %t1
+  %r = fadd float %tx, %ty
+  store float %r, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}test_f64_interp:
+; SI: v_fma_f64 [[VR:v\[[0-9]+:[0-9]+\]]], -[[VT:v\[[0-9]+:[0-9]+\]]], [[VY:v\[[0-9]+:[0-9]+\]]], [[VY]]
+; SI: v_fma_f64 [[VR:v\[[0-9]+:[0-9]+\]]], [[VX:v\[[0-9]+:[0-9]+\]]], [[VT]], [[VR]]
+define void @test_f64_interp(double addrspace(1)* %out,
+                             double addrspace(1)* %in1,
+                             double addrspace(1)* %in2,
+                             double addrspace(1)* %in3) {
+  %x = load double, double addrspace(1)* %in1
+  %y = load double, double addrspace(1)* %in2
+  %t = load double, double addrspace(1)* %in3
+  %t1 = fsub double 1.0, %t
+  %tx = fmul double %x, %t
+  %ty = fmul double %y, %t1
+  %r = fadd double %tx, %ty
+  store double %r, double addrspace(1)* %out
+  ret void
+}
+
 attributes #0 = { nounwind readnone }
 attributes #1 = { nounwind }
