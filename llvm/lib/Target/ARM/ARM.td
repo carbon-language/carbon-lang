@@ -119,9 +119,9 @@ def FeatureAvoidMOVsShOp : SubtargetFeature<"avoid-movs-shop",
 def FeatureHasRAS : SubtargetFeature<"ras", "HasRAS", "true",
                                      "Has return address stack">;
 
-/// Some architectures don't have the DSP extension
+/// Some M architectures don't have the DSP extension (v7E-M vs. v7M)
 def FeatureDSPThumb2 : SubtargetFeature<"t2dsp", "Thumb2DSP", "true",
-                              "Supports DSP instructions in ARM and/or Thumb2">;
+                                 "Supports v7 DSP instructions in Thumb2">;
 
 // Multiprocessing extension.
 def FeatureMP : SubtargetFeature<"mp", "HasMPExtension", "true",
