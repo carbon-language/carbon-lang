@@ -4121,7 +4121,6 @@ class ARMTargetInfo : public TargetInfo {
 
   unsigned CRC : 1;
   unsigned Crypto : 1;
-  unsigned T2DSP : 1;
   unsigned Unaligned : 1;
 
   enum {
@@ -4473,7 +4472,6 @@ public:
     FPU = 0;
     CRC = 0;
     Crypto = 0;
-    T2DSP = 0;
     Unaligned = 1;
     SoftFloat = SoftFloatABI = false;
     HWDiv = 0;
@@ -4509,8 +4507,6 @@ public:
         CRC = 1;
       } else if (Feature == "+crypto") {
         Crypto = 1;
-      } else if (Feature == "+t2dsp") {
-        T2DSP = 1;
       } else if (Feature == "+fp-only-sp") {
         HW_FP_remove |= HW_FP_DP | HW_FP_HP;
       } else if (Feature == "+strict-align") {
@@ -4747,7 +4743,11 @@ public:
 
     // ACLE 6.4.7 DSP instructions
     bool hasDSP = false;
-    if (T2DSP) {
+    bool is5EOrAbove = (ArchVersion >= 6 ||
+                       (ArchVersion == 5 && CPUAttr.count('E')));
+    // FIXME: We are not getting all 32-bit ARM architectures
+    bool is32Bit = (!isThumb() || supportsThumb2());
+    if (is5EOrAbove && is32Bit && (CPUProfile != "M" || CPUAttr  == "7EM")) {
       Builder.defineMacro("__ARM_FEATURE_DSP", "1");
       hasDSP = true;
     }
