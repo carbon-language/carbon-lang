@@ -422,8 +422,9 @@ Optional<coff_symbol16> Writer::createSymbol(Defined *Def) {
 }
 
 void Writer::createSymbolAndStringTable() {
-  if (!Config->Debug)
+  if (!Config->Debug || !Config->WriteSymtab)
     return;
+
   // Name field in the section table is 8 byte long. Longer names need
   // to be written to the string table. First, construct string table.
   for (OutputSection *Sec : OutputSections) {

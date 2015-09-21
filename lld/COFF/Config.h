@@ -70,6 +70,7 @@ struct Configuration {
   bool Relocatable = true;
   bool Force = false;
   bool Debug = false;
+  bool WriteSymtab = true;
 
   // Symbols in this set are considered as live by the garbage collector.
   std::set<Undefined *> GCRoot;

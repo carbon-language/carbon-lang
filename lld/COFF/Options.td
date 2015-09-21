@@ -86,6 +86,9 @@ defm tsaware  : B<"tsaware", "Create non-Terminal Server aware executable">;
 def help : F<"help">;
 def help_q : Flag<["/?", "-?"], "">, Alias<help>;
 
+// LLD extensions
+def nosymtab : F<"nosymtab">;
+
 // Flags for debugging
 def lldmap : Joined<["/", "-"], "lldmap:">;
 

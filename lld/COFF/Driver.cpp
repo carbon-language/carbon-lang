@@ -427,6 +427,8 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     Config->NxCompat = false;
   if (Args.hasArg(OPT_tsaware_no))
     Config->TerminalServerAware = false;
+  if (Args.hasArg(OPT_nosymtab))
+    Config->WriteSymtab = false;
 
   // Create a list of input files. Files can be given as arguments
   // for /defaultlib option.
