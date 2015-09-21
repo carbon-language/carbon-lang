@@ -5567,20 +5567,20 @@ ClangASTContext::GetNumPointeeChildren (clang::QualType type)
 
 
 CompilerType
-ClangASTContext::GetChildClangTypeAtIndex (void* type,
-                                           ExecutionContext *exe_ctx,
-                                           size_t idx,
-                                           bool transparent_pointers,
-                                           bool omit_empty_base_classes,
-                                           bool ignore_array_bounds,
-                                           std::string& child_name,
-                                           uint32_t &child_byte_size,
-                                           int32_t &child_byte_offset,
-                                           uint32_t &child_bitfield_bit_size,
-                                           uint32_t &child_bitfield_bit_offset,
-                                           bool &child_is_base_class,
-                                           bool &child_is_deref_of_parent,
-                                           ValueObject *valobj)
+ClangASTContext::GetChildCompilerTypeAtIndex (void* type,
+                                              ExecutionContext *exe_ctx,
+                                              size_t idx,
+                                              bool transparent_pointers,
+                                              bool omit_empty_base_classes,
+                                              bool ignore_array_bounds,
+                                              std::string& child_name,
+                                              uint32_t &child_byte_size,
+                                              int32_t &child_byte_offset,
+                                              uint32_t &child_bitfield_bit_size,
+                                              uint32_t &child_bitfield_bit_offset,
+                                              bool &child_is_base_class,
+                                              bool &child_is_deref_of_parent,
+                                              ValueObject *valobj)
 {
     if (!type)
         return CompilerType();
@@ -5888,19 +5888,19 @@ ClangASTContext::GetChildClangTypeAtIndex (void* type,
                 {
                     child_is_deref_of_parent = false;
                     bool tmp_child_is_deref_of_parent = false;
-                    return pointee_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                                        idx,
-                                                                        transparent_pointers,
-                                                                        omit_empty_base_classes,
-                                                                        ignore_array_bounds,
-                                                                        child_name,
-                                                                        child_byte_size,
-                                                                        child_byte_offset,
-                                                                        child_bitfield_bit_size,
-                                                                        child_bitfield_bit_offset,
-                                                                        child_is_base_class,
-                                                                        tmp_child_is_deref_of_parent,
-                                                                        valobj);
+                    return pointee_clang_type.GetChildCompilerTypeAtIndex (exe_ctx,
+                                                                           idx,
+                                                                           transparent_pointers,
+                                                                           omit_empty_base_classes,
+                                                                           ignore_array_bounds,
+                                                                           child_name,
+                                                                           child_byte_size,
+                                                                           child_byte_offset,
+                                                                           child_bitfield_bit_size,
+                                                                           child_bitfield_bit_offset,
+                                                                           child_is_base_class,
+                                                                           tmp_child_is_deref_of_parent,
+                                                                           valobj);
                 }
                 else
                 {
@@ -5979,19 +5979,19 @@ ClangASTContext::GetChildClangTypeAtIndex (void* type,
                 {
                     child_is_deref_of_parent = false;
                     bool tmp_child_is_deref_of_parent = false;
-                    return pointee_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                                        idx,
-                                                                        transparent_pointers,
-                                                                        omit_empty_base_classes,
-                                                                        ignore_array_bounds,
-                                                                        child_name,
-                                                                        child_byte_size,
-                                                                        child_byte_offset,
-                                                                        child_bitfield_bit_size,
-                                                                        child_bitfield_bit_offset,
-                                                                        child_is_base_class,
-                                                                        tmp_child_is_deref_of_parent,
-                                                                        valobj);
+                    return pointee_clang_type.GetChildCompilerTypeAtIndex (exe_ctx,
+                                                                           idx,
+                                                                           transparent_pointers,
+                                                                           omit_empty_base_classes,
+                                                                           ignore_array_bounds,
+                                                                           child_name,
+                                                                           child_byte_size,
+                                                                           child_byte_offset,
+                                                                           child_bitfield_bit_size,
+                                                                           child_bitfield_bit_offset,
+                                                                           child_is_base_class,
+                                                                           tmp_child_is_deref_of_parent,
+                                                                           valobj);
                 }
                 else
                 {
@@ -6025,19 +6025,19 @@ ClangASTContext::GetChildClangTypeAtIndex (void* type,
                 {
                     child_is_deref_of_parent = false;
                     bool tmp_child_is_deref_of_parent = false;
-                    return pointee_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                                        idx,
-                                                                        transparent_pointers,
-                                                                        omit_empty_base_classes,
-                                                                        ignore_array_bounds,
-                                                                        child_name,
-                                                                        child_byte_size,
-                                                                        child_byte_offset,
-                                                                        child_bitfield_bit_size,
-                                                                        child_bitfield_bit_offset,
-                                                                        child_is_base_class,
-                                                                        tmp_child_is_deref_of_parent,
-                                                                        valobj);
+                    return pointee_clang_type.GetChildCompilerTypeAtIndex (exe_ctx,
+                                                                           idx,
+                                                                           transparent_pointers,
+                                                                           omit_empty_base_classes,
+                                                                           ignore_array_bounds,
+                                                                           child_name,
+                                                                           child_byte_size,
+                                                                           child_byte_offset,
+                                                                           child_bitfield_bit_size,
+                                                                           child_bitfield_bit_offset,
+                                                                           child_is_base_class,
+                                                                           tmp_child_is_deref_of_parent,
+                                                                           valobj);
                 }
                 else
                 {
@@ -6062,56 +6062,56 @@ ClangASTContext::GetChildClangTypeAtIndex (void* type,
         case clang::Type::Typedef:
         {
             CompilerType typedefed_clang_type (getASTContext(), llvm::cast<clang::TypedefType>(parent_qual_type)->getDecl()->getUnderlyingType());
-            return typedefed_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                                  idx,
-                                                                  transparent_pointers,
-                                                                  omit_empty_base_classes,
-                                                                  ignore_array_bounds,
-                                                                  child_name,
-                                                                  child_byte_size,
-                                                                  child_byte_offset,
-                                                                  child_bitfield_bit_size,
-                                                                  child_bitfield_bit_offset,
-                                                                  child_is_base_class,
-                                                                  child_is_deref_of_parent,
-                                                                  valobj);
+            return typedefed_clang_type.GetChildCompilerTypeAtIndex (exe_ctx,
+                                                                     idx,
+                                                                     transparent_pointers,
+                                                                     omit_empty_base_classes,
+                                                                     ignore_array_bounds,
+                                                                     child_name,
+                                                                     child_byte_size,
+                                                                     child_byte_offset,
+                                                                     child_bitfield_bit_size,
+                                                                     child_bitfield_bit_offset,
+                                                                     child_is_base_class,
+                                                                     child_is_deref_of_parent,
+                                                                     valobj);
         }
             break;
             
         case clang::Type::Elaborated:
         {
             CompilerType elaborated_clang_type (getASTContext(), llvm::cast<clang::ElaboratedType>(parent_qual_type)->getNamedType());
-            return elaborated_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                                   idx,
-                                                                   transparent_pointers,
-                                                                   omit_empty_base_classes,
-                                                                   ignore_array_bounds,
-                                                                   child_name,
-                                                                   child_byte_size,
-                                                                   child_byte_offset,
-                                                                   child_bitfield_bit_size,
-                                                                   child_bitfield_bit_offset,
-                                                                   child_is_base_class,
-                                                                   child_is_deref_of_parent,
-                                                                   valobj);
+            return elaborated_clang_type.GetChildCompilerTypeAtIndex (exe_ctx,
+                                                                      idx,
+                                                                      transparent_pointers,
+                                                                      omit_empty_base_classes,
+                                                                      ignore_array_bounds,
+                                                                      child_name,
+                                                                      child_byte_size,
+                                                                      child_byte_offset,
+                                                                      child_bitfield_bit_size,
+                                                                      child_bitfield_bit_offset,
+                                                                      child_is_base_class,
+                                                                      child_is_deref_of_parent,
+                                                                      valobj);
         }
             
         case clang::Type::Paren:
         {
             CompilerType paren_clang_type (getASTContext(), llvm::cast<clang::ParenType>(parent_qual_type)->desugar());
-            return paren_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                              idx,
-                                                              transparent_pointers,
-                                                              omit_empty_base_classes,
-                                                              ignore_array_bounds,
-                                                              child_name,
-                                                              child_byte_size,
-                                                              child_byte_offset,
-                                                              child_bitfield_bit_size,
-                                                              child_bitfield_bit_offset,
-                                                              child_is_base_class,
-                                                              child_is_deref_of_parent,
-                                                              valobj);
+            return paren_clang_type.GetChildCompilerTypeAtIndex (exe_ctx,
+                                                                 idx,
+                                                                 transparent_pointers,
+                                                                 omit_empty_base_classes,
+                                                                 ignore_array_bounds,
+                                                                 child_name,
+                                                                 child_byte_size,
+                                                                 child_byte_offset,
+                                                                 child_bitfield_bit_size,
+                                                                 child_bitfield_bit_offset,
+                                                                 child_is_base_class,
+                                                                 child_is_deref_of_parent,
+                                                                 valobj);
         }
             
             

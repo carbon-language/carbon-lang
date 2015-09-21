@@ -1095,11 +1095,11 @@ GoASTContext::GetFieldAtIndex(void *type, size_t idx, std::string &name, uint64_
 }
 
 CompilerType
-GoASTContext::GetChildClangTypeAtIndex(void *type, ExecutionContext *exe_ctx, size_t idx, bool transparent_pointers,
-                                       bool omit_empty_base_classes, bool ignore_array_bounds, std::string &child_name,
-                                       uint32_t &child_byte_size, int32_t &child_byte_offset,
-                                       uint32_t &child_bitfield_bit_size, uint32_t &child_bitfield_bit_offset,
-                                       bool &child_is_base_class, bool &child_is_deref_of_parent, ValueObject *valobj)
+GoASTContext::GetChildCompilerTypeAtIndex(void *type, ExecutionContext *exe_ctx, size_t idx, bool transparent_pointers,
+                                          bool omit_empty_base_classes, bool ignore_array_bounds, std::string &child_name,
+                                          uint32_t &child_byte_size, int32_t &child_byte_offset,
+                                          uint32_t &child_bitfield_bit_size, uint32_t &child_bitfield_bit_offset,
+                                          bool &child_is_base_class, bool &child_is_deref_of_parent, ValueObject *valobj)
 {
     child_name.clear();
     child_byte_size = 0;
@@ -1129,7 +1129,7 @@ GoASTContext::GetChildClangTypeAtIndex(void *type, ExecutionContext *exe_ctx, si
         if (transparent_pointers && pointee.IsAggregateType())
         {
             bool tmp_child_is_deref_of_parent = false;
-            return pointee.GetChildClangTypeAtIndex(exe_ctx, idx, transparent_pointers, omit_empty_base_classes,
+            return pointee.GetChildCompilerTypeAtIndex(exe_ctx, idx, transparent_pointers, omit_empty_base_classes,
                                                     ignore_array_bounds, child_name, child_byte_size, child_byte_offset,
                                                     child_bitfield_bit_size, child_bitfield_bit_offset,
                                                     child_is_base_class, tmp_child_is_deref_of_parent, valobj);
@@ -1171,7 +1171,7 @@ GoASTContext::GetChildClangTypeAtIndex(void *type, ExecutionContext *exe_ctx, si
     }
     else if (t->IsTypedef())
     {
-        return t->GetElementType().GetChildClangTypeAtIndex(
+        return t->GetElementType().GetChildCompilerTypeAtIndex(
             exe_ctx, idx, transparent_pointers, omit_empty_base_classes, ignore_array_bounds, child_name,
             child_byte_size, child_byte_offset, child_bitfield_bit_size, child_bitfield_bit_offset, child_is_base_class,
             child_is_deref_of_parent, valobj);

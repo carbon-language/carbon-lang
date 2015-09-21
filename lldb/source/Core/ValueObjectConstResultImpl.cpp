@@ -72,24 +72,24 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
     
     const bool transparent_pointers = synthetic_array_member == false;
     CompilerType clang_type = m_impl_backend->GetCompilerType();
-    CompilerType child_clang_type;
+    CompilerType child_compiler_type;
     
     ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
     
-    child_clang_type = clang_type.GetChildClangTypeAtIndex (&exe_ctx,
-                                                            idx,
-                                                            transparent_pointers,
-                                                            omit_empty_base_classes,
-                                                            ignore_array_bounds,
-                                                            child_name_str,
-                                                            child_byte_size,
-                                                            child_byte_offset,
-                                                            child_bitfield_bit_size,
-                                                            child_bitfield_bit_offset,
-                                                            child_is_base_class,
-                                                            child_is_deref_of_parent,
-                                                            m_impl_backend);
-    if (child_clang_type && child_byte_size)
+    child_compiler_type = clang_type.GetChildCompilerTypeAtIndex (&exe_ctx,
+                                                                  idx,
+                                                                  transparent_pointers,
+                                                                  omit_empty_base_classes,
+                                                                  ignore_array_bounds,
+                                                                  child_name_str,
+                                                                  child_byte_size,
+                                                                  child_byte_offset,
+                                                                  child_bitfield_bit_size,
+                                                                  child_bitfield_bit_offset,
+                                                                  child_is_base_class,
+                                                                  child_is_deref_of_parent,
+                                                                  m_impl_backend);
+    if (child_compiler_type && child_byte_size)
     {
         if (synthetic_index)
             child_byte_offset += child_byte_size * synthetic_index;
@@ -99,7 +99,7 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
             child_name.SetCString (child_name_str.c_str());
 
         valobj = new ValueObjectConstResultChild (*m_impl_backend,
-                                                  child_clang_type,
+                                                  child_compiler_type,
                                                   child_name,
                                                   child_byte_size,
                                                   child_byte_offset,
