@@ -8,6 +8,7 @@ add_llvm_library(lldELF2
   DriverUtils.cpp
   Error.cpp
   InputFiles.cpp
+  OutputSections.cpp
   SymbolTable.cpp
   Symbols.cpp
   Writer.cpp
