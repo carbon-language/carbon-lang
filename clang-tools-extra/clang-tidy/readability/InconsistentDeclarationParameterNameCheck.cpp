@@ -203,7 +203,7 @@ std::string joinParameterNames(
 
 void formatDifferingParamsDiagnostic(
     InconsistentDeclarationParameterNameCheck *Check,
-    const SourceLocation &Location, StringRef OtherDeclarationDescription,
+    SourceLocation Location, StringRef OtherDeclarationDescription,
     const DifferingParamsContainer &DifferingParams) {
   auto ChooseOtherName =
       [](const DifferingParamInfo &ParamInfo) { return ParamInfo.OtherName; };

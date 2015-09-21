@@ -135,7 +135,7 @@ public:
   /// \brief Tests if the file containing \a Loc is allowed to be modified by
   /// the Modernizer.
   bool isFileModifiable(const clang::SourceManager &SM,
-                        const clang::SourceLocation &Loc) const;
+                        clang::SourceLocation Loc) const;
 
   /// \brief Whether a transformation with a risk level of \p RiskLevel is
   /// acceptable or not.
