@@ -398,13 +398,13 @@ template class OutputSectionBase<false>;
 template class OutputSectionBase<true>;
 
 template void OutputSectionBase<false>::writeHeaderTo<support::little>(
-    typename ELFFile<ELFType<support::little, false>>::Elf_Shdr *SHdr);
+    ELFFile<ELFType<support::little, false>>::Elf_Shdr *SHdr);
 template void OutputSectionBase<true>::writeHeaderTo<support::little>(
-    typename ELFFile<ELFType<support::little, true>>::Elf_Shdr *SHdr);
+    ELFFile<ELFType<support::little, true>>::Elf_Shdr *SHdr);
 template void OutputSectionBase<false>::writeHeaderTo<support::big>(
-    typename ELFFile<ELFType<support::big, false>>::Elf_Shdr *SHdr);
+    ELFFile<ELFType<support::big, false>>::Elf_Shdr *SHdr);
 template void OutputSectionBase<true>::writeHeaderTo<support::big>(
-    typename ELFFile<ELFType<support::big, true>>::Elf_Shdr *SHdr);
+    ELFFile<ELFType<support::big, true>>::Elf_Shdr *SHdr);
 
 template class GotSection<ELF32LE>;
 template class GotSection<ELF32BE>;
