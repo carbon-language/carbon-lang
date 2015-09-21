@@ -1128,33 +1128,33 @@ _mm_undefined_si128()
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_set_epi64x(long long q1, long long q0)
+_mm_set_epi64x(long long __q1, long long __q0)
 {
-  return (__m128i){ q0, q1 };
+  return (__m128i){ __q0, __q1 };
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_set_epi64(__m64 q1, __m64 q0)
+_mm_set_epi64(__m64 __q1, __m64 __q0)
 {
-  return (__m128i){ (long long)q0, (long long)q1 };
+  return (__m128i){ (long long)__q0, (long long)__q1 };
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_set_epi32(int i3, int i2, int i1, int i0)
+_mm_set_epi32(int __i3, int __i2, int __i1, int __i0)
 {
-  return (__m128i)(__v4si){ i0, i1, i2, i3};
+  return (__m128i)(__v4si){ __i0, __i1, __i2, __i3};
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_set_epi16(short w7, short w6, short w5, short w4, short w3, short w2, short w1, short w0)
+_mm_set_epi16(short __w7, short __w6, short __w5, short __w4, short __w3, short __w2, short __w1, short __w0)
 {
-  return (__m128i)(__v8hi){ w0, w1, w2, w3, w4, w5, w6, w7 };
+  return (__m128i)(__v8hi){ __w0, __w1, __w2, __w3, __w4, __w5, __w6, __w7 };
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_set_epi8(char b15, char b14, char b13, char b12, char b11, char b10, char b9, char b8, char b7, char b6, char b5, char b4, char b3, char b2, char b1, char b0)
+_mm_set_epi8(char __b15, char __b14, char __b13, char __b12, char __b11, char __b10, char __b9, char __b8, char __b7, char __b6, char __b5, char __b4, char __b3, char __b2, char __b1, char __b0)
 {
-  return (__m128i)(__v16qi){ b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15 };
+  return (__m128i)(__v16qi){ __b0, __b1, __b2, __b3, __b4, __b5, __b6, __b7, __b8, __b9, __b10, __b11, __b12, __b13, __b14, __b15 };
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
@@ -1188,27 +1188,27 @@ _mm_set1_epi8(char __b)
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_setr_epi64(__m64 q0, __m64 q1)
+_mm_setr_epi64(__m64 __q0, __m64 __q1)
 {
-  return (__m128i){ (long long)q0, (long long)q1 };
+  return (__m128i){ (long long)__q0, (long long)__q1 };
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_setr_epi32(int i0, int i1, int i2, int i3)
+_mm_setr_epi32(int __i0, int __i1, int __i2, int __i3)
 {
-  return (__m128i)(__v4si){ i0, i1, i2, i3};
+  return (__m128i)(__v4si){ __i0, __i1, __i2, __i3};
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_setr_epi16(short w0, short w1, short w2, short w3, short w4, short w5, short w6, short w7)
+_mm_setr_epi16(short __w0, short __w1, short __w2, short __w3, short __w4, short __w5, short __w6, short __w7)
 {
-  return (__m128i)(__v8hi){ w0, w1, w2, w3, w4, w5, w6, w7 };
+  return (__m128i)(__v8hi){ __w0, __w1, __w2, __w3, __w4, __w5, __w6, __w7 };
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
-_mm_setr_epi8(char b0, char b1, char b2, char b3, char b4, char b5, char b6, char b7, char b8, char b9, char b10, char b11, char b12, char b13, char b14, char b15)
+_mm_setr_epi8(char __b0, char __b1, char __b2, char __b3, char __b4, char __b5, char __b6, char __b7, char __b8, char __b9, char __b10, char __b11, char __b12, char __b13, char __b14, char __b15)
 {
-  return (__m128i)(__v16qi){ b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15 };
+  return (__m128i)(__v16qi){ __b0, __b1, __b2, __b3, __b4, __b5, __b6, __b7, __b8, __b9, __b10, __b11, __b12, __b13, __b14, __b15 };
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
