@@ -2906,6 +2906,7 @@ void ScopInfo::buildMemoryAccess(
 
         addMemoryAccess(Inst->getParent(), Inst, Type, BasePointer->getValue(),
                         AccessFunction, Size, true, Subscripts, SizesSCEV, Val);
+        return;
       }
     }
   }
