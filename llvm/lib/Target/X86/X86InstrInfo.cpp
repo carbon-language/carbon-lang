@@ -6328,13 +6328,10 @@ hasHighOperandLatency(const TargetSchedModel &SchedModel,
   return isHighLatencyDef(DefMI->getOpcode());
 }
 
-static bool hasReassociableOperands(const MachineInstr &Inst,
-                                    const MachineBasicBlock *MBB) {
+bool X86InstrInfo::hasReassociableOperands(const MachineInstr &Inst,
+                                           const MachineBasicBlock *MBB) const {
   assert((Inst.getNumOperands() == 3 || Inst.getNumOperands() == 4) &&
          "Reassociation needs binary operators");
-  const MachineOperand &Op1 = Inst.getOperand(1);
-  const MachineOperand &Op2 = Inst.getOperand(2);
-  const MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
 
   // Integer binary math/logic instructions have a third source operand:
   // the EFLAGS register. That operand must be both defined here and never
@@ -6349,53 +6346,15 @@ static bool hasReassociableOperands(const MachineInstr &Inst,
     if (!Inst.getOperand(3).isDead())
       return false;
   }
-  
-  // We need virtual register definitions for the operands that we will
-  // reassociate.
-  MachineInstr *MI1 = nullptr;
-  MachineInstr *MI2 = nullptr;
-  if (Op1.isReg() && TargetRegisterInfo::isVirtualRegister(Op1.getReg()))
-    MI1 = MRI.getUniqueVRegDef(Op1.getReg());
-  if (Op2.isReg() && TargetRegisterInfo::isVirtualRegister(Op2.getReg()))
-    MI2 = MRI.getUniqueVRegDef(Op2.getReg());
 
-  // And they need to be in the trace (otherwise, they won't have a depth).
-  if (MI1 && MI2 && MI1->getParent() == MBB && MI2->getParent() == MBB)
-    return true;
-
-  return false;
-}
-
-static bool hasReassociableSibling(const MachineInstr &Inst, bool &Commuted) {
-  const MachineBasicBlock *MBB = Inst.getParent();
-  const MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
-  MachineInstr *MI1 = MRI.getUniqueVRegDef(Inst.getOperand(1).getReg());
-  MachineInstr *MI2 = MRI.getUniqueVRegDef(Inst.getOperand(2).getReg());
-  unsigned AssocOpcode = Inst.getOpcode();
-
-  // If only one operand has the same opcode and it's the second source operand,
-  // the operands must be commuted.
-  Commuted = MI1->getOpcode() != AssocOpcode && MI2->getOpcode() == AssocOpcode;
-  if (Commuted)
-    std::swap(MI1, MI2);
-
-  // 1. The previous instruction must be the same type as Inst.
-  // 2. The previous instruction must have virtual register definitions for its
-  //    operands in the same basic block as Inst.
-  // 3. The previous instruction's result must only be used by Inst.
-  if (MI1->getOpcode() == AssocOpcode &&
-      hasReassociableOperands(*MI1, MBB) &&
-      MRI.hasOneNonDBGUse(MI1->getOperand(0).getReg()))
-    return true;
-
-  return false;
+  return TargetInstrInfo::hasReassociableOperands(Inst, MBB);
 }
 
 // TODO: There are many more machine instruction opcodes to match:
 //       1. Other data types (integer, vectors)
 //       2. Other math / logic operations (xor, or)
 //       3. Other forms of the same operation (intrinsics and other variants)
-static bool isAssociativeAndCommutative(const MachineInstr &Inst) {
+bool X86InstrInfo::isAssociativeAndCommutative(const MachineInstr &Inst) const {
   switch (Inst.getOpcode()) {
   case X86::AND8rr:
   case X86::AND16rr:
@@ -6468,63 +6427,12 @@ static bool isAssociativeAndCommutative(const MachineInstr &Inst) {
   }
 }
 
-/// Return true if the input instruction is part of a chain of dependent ops
-/// that are suitable for reassociation, otherwise return false.
-/// If the instruction's operands must be commuted to have a previous
-/// instruction of the same type define the first source operand, Commuted will
-/// be set to true.
-static bool isReassociationCandidate(const MachineInstr &Inst, bool &Commuted) {
-  // 1. The operation must be associative and commutative.
-  // 2. The instruction must have virtual register definitions for its
-  //    operands in the same basic block.
-  // 3. The instruction must have a reassociable sibling.
-  if (isAssociativeAndCommutative(Inst) &&
-      hasReassociableOperands(Inst, Inst.getParent()) &&
-      hasReassociableSibling(Inst, Commuted))
-    return true;
-
-  return false;
-}
-
-// FIXME: This has the potential to be expensive (compile time) while not
-// improving the code at all. Some ways to limit the overhead:
-// 1. Track successful transforms; bail out if hit rate gets too low.
-// 2. Only enable at -O3 or some other non-default optimization level.
-// 3. Pre-screen pattern candidates here: if an operand of the previous
-//    instruction is known to not increase the critical path, then don't match
-//    that pattern.
-bool X86InstrInfo::getMachineCombinerPatterns(MachineInstr &Root,
-        SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Patterns) const {
-  // TODO: There is nothing x86-specific here except the instruction type.
-  // This logic could be hoisted into the machine combiner pass itself.
-
-  // Look for this reassociation pattern:
-  //   B = A op X (Prev)
-  //   C = B op Y (Root)
-
-  bool Commute;
-  if (isReassociationCandidate(Root, Commute)) {
-    // We found a sequence of instructions that may be suitable for a
-    // reassociation of operands to increase ILP. Specify each commutation
-    // possibility for the Prev instruction in the sequence and let the
-    // machine combiner decide if changing the operands is worthwhile.
-    if (Commute) {
-      Patterns.push_back(MachineCombinerPattern::MC_REASSOC_AX_YB);
-      Patterns.push_back(MachineCombinerPattern::MC_REASSOC_XA_YB);
-    } else {
-      Patterns.push_back(MachineCombinerPattern::MC_REASSOC_AX_BY);
-      Patterns.push_back(MachineCombinerPattern::MC_REASSOC_XA_BY);
-    }
-    return true;
-  }
-
-  return false;
-}
-
 /// This is an architecture-specific helper function of reassociateOps.
 /// Set special operand attributes for new instructions after reassociation.
-static void setSpecialOperandAttr(MachineInstr &OldMI1, MachineInstr &OldMI2,
-                                  MachineInstr &NewMI1, MachineInstr &NewMI2) {
+void X86InstrInfo::setSpecialOperandAttr(MachineInstr &OldMI1,
+                                         MachineInstr &OldMI2,
+                                         MachineInstr &NewMI1,
+                                         MachineInstr &NewMI2) const {
   // Integer instructions define an implicit EFLAGS source register operand as
   // the third source (fourth total) operand.
   if (OldMI1.getNumOperands() != 4 || OldMI2.getNumOperands() != 4)
@@ -6532,7 +6440,7 @@ static void setSpecialOperandAttr(MachineInstr &OldMI1, MachineInstr &OldMI2,
 
   assert(NewMI1.getNumOperands() == 4 && NewMI2.getNumOperands() == 4 &&
          "Unexpected instruction type for reassociation");
-  
+
   MachineOperand &OldOp1 = OldMI1.getOperand(3);
   MachineOperand &OldOp2 = OldMI2.getOperand(3);
   MachineOperand &NewOp1 = NewMI1.getOperand(3);
@@ -6557,111 +6465,6 @@ static void setSpecialOperandAttr(MachineInstr &OldMI1, MachineInstr &OldMI2,
   // be dead in order for reassociation to occur.
   NewOp1.setIsDead();
   NewOp2.setIsDead();
-}
-
-/// Attempt the following reassociation to reduce critical path length:
-///   B = A op X (Prev)
-///   C = B op Y (Root)
-///   ===>
-///   B = X op Y
-///   C = A op B
-static void reassociateOps(MachineInstr &Root, MachineInstr &Prev,
-                           MachineCombinerPattern::MC_PATTERN Pattern,
-                           SmallVectorImpl<MachineInstr *> &InsInstrs,
-                           SmallVectorImpl<MachineInstr *> &DelInstrs,
-                           DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) {
-  MachineFunction *MF = Root.getParent()->getParent();
-  MachineRegisterInfo &MRI = MF->getRegInfo();
-  const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
-  const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
-  const TargetRegisterClass *RC = Root.getRegClassConstraint(0, TII, TRI);
-
-  // This array encodes the operand index for each parameter because the
-  // operands may be commuted. Each row corresponds to a pattern value,
-  // and each column specifies the index of A, B, X, Y.
-  unsigned OpIdx[4][4] = {
-    { 1, 1, 2, 2 },
-    { 1, 2, 2, 1 },
-    { 2, 1, 1, 2 },
-    { 2, 2, 1, 1 }
-  };
-
-  MachineOperand &OpA = Prev.getOperand(OpIdx[Pattern][0]);
-  MachineOperand &OpB = Root.getOperand(OpIdx[Pattern][1]);
-  MachineOperand &OpX = Prev.getOperand(OpIdx[Pattern][2]);
-  MachineOperand &OpY = Root.getOperand(OpIdx[Pattern][3]);
-  MachineOperand &OpC = Root.getOperand(0);
-
-  unsigned RegA = OpA.getReg();
-  unsigned RegB = OpB.getReg();
-  unsigned RegX = OpX.getReg();
-  unsigned RegY = OpY.getReg();
-  unsigned RegC = OpC.getReg();
-
-  if (TargetRegisterInfo::isVirtualRegister(RegA))
-    MRI.constrainRegClass(RegA, RC);
-  if (TargetRegisterInfo::isVirtualRegister(RegB))
-    MRI.constrainRegClass(RegB, RC);
-  if (TargetRegisterInfo::isVirtualRegister(RegX))
-    MRI.constrainRegClass(RegX, RC);
-  if (TargetRegisterInfo::isVirtualRegister(RegY))
-    MRI.constrainRegClass(RegY, RC);
-  if (TargetRegisterInfo::isVirtualRegister(RegC))
-    MRI.constrainRegClass(RegC, RC);
-
-  // Create a new virtual register for the result of (X op Y) instead of
-  // recycling RegB because the MachineCombiner's computation of the critical
-  // path requires a new register definition rather than an existing one.
-  unsigned NewVR = MRI.createVirtualRegister(RC);
-  InstrIdxForVirtReg.insert(std::make_pair(NewVR, 0));
-
-  unsigned Opcode = Root.getOpcode();
-  bool KillA = OpA.isKill();
-  bool KillX = OpX.isKill();
-  bool KillY = OpY.isKill();
-
-  // Create new instructions for insertion.
-  MachineInstrBuilder MIB1 =
-    BuildMI(*MF, Prev.getDebugLoc(), TII->get(Opcode), NewVR)
-      .addReg(RegX, getKillRegState(KillX))
-      .addReg(RegY, getKillRegState(KillY));
-  MachineInstrBuilder MIB2 =
-    BuildMI(*MF, Root.getDebugLoc(), TII->get(Opcode), RegC)
-      .addReg(RegA, getKillRegState(KillA))
-      .addReg(NewVR, getKillRegState(true));
-
-  setSpecialOperandAttr(Root, Prev, *MIB1, *MIB2);
-
-  // Record new instructions for insertion and old instructions for deletion.
-  InsInstrs.push_back(MIB1);
-  InsInstrs.push_back(MIB2);
-  DelInstrs.push_back(&Prev);
-  DelInstrs.push_back(&Root);
-}
-
-void X86InstrInfo::genAlternativeCodeSequence(
-    MachineInstr &Root,
-    MachineCombinerPattern::MC_PATTERN Pattern,
-    SmallVectorImpl<MachineInstr *> &InsInstrs,
-    SmallVectorImpl<MachineInstr *> &DelInstrs,
-    DenseMap<unsigned, unsigned> &InstIdxForVirtReg) const {
-  MachineRegisterInfo &MRI = Root.getParent()->getParent()->getRegInfo();
-
-  // Select the previous instruction in the sequence based on the input pattern.
-  MachineInstr *Prev = nullptr;
-  switch (Pattern) {
-    case MachineCombinerPattern::MC_REASSOC_AX_BY:
-    case MachineCombinerPattern::MC_REASSOC_XA_BY:
-      Prev = MRI.getUniqueVRegDef(Root.getOperand(1).getReg());
-      break;
-    case MachineCombinerPattern::MC_REASSOC_AX_YB:
-    case MachineCombinerPattern::MC_REASSOC_XA_YB:
-      Prev = MRI.getUniqueVRegDef(Root.getOperand(2).getReg());
-  }
-  assert(Prev && "Unknown pattern for machine combiner");
-
-  reassociateOps(Root, *Prev, Pattern, InsInstrs, DelInstrs, InstIdxForVirtReg);
-  return;
 }
 
 std::pair<unsigned, unsigned>

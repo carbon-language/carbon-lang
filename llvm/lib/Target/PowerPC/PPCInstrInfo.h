@@ -63,19 +63,6 @@ enum PPC970_Unit {
 };
 } // end namespace PPCII
 
-namespace MachineCombinerPattern {
-enum MC_PATTERN : int {
-  // These are commutative variants for reassociating a computation chain
-  // of the form:
-  //   B = A op X (Prev)
-  //   C = B op Y (Root)
-  MC_REASSOC_AX_BY = 0,
-  MC_REASSOC_AX_YB = 1,
-  MC_REASSOC_XA_BY = 2,
-  MC_REASSOC_XA_YB = 3,
-};
-} // end namespace MachineCombinerPattern
-
 class PPCSubtarget;
 class PPCInstrInfo : public PPCGenInstrInfo {
   PPCSubtarget &Subtarget;
@@ -135,21 +122,15 @@ public:
   bool useMachineCombiner() const override {
     return true;
   }
-  
+
   /// Return true when there is potentially a faster code sequence
   /// for an instruction chain ending in <Root>. All potential patterns are
   /// output in the <Pattern> array.
   bool getMachineCombinerPatterns(
       MachineInstr &Root,
       SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &P) const override;
-  
-  /// When getMachineCombinerPatterns() finds a pattern, this function generates
-  /// the instructions that could replace the original code sequence.
-  void genAlternativeCodeSequence(
-          MachineInstr &Root, MachineCombinerPattern::MC_PATTERN P,
-          SmallVectorImpl<MachineInstr *> &InsInstrs,
-          SmallVectorImpl<MachineInstr *> &DelInstrs,
-          DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const override;
+
+  bool isAssociativeAndCommutative(const MachineInstr &Inst) const override;
 
   bool isCoalescableExtInstr(const MachineInstr &MI,
                              unsigned &SrcReg, unsigned &DstReg,
