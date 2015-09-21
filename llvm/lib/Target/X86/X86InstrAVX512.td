@@ -5360,50 +5360,31 @@ let Defs = [EFLAGS], Predicates = [HasAVX512] in {
 }
 
 /// avx512_fp14_s rcp14ss, rcp14sd, rsqrt14ss, rsqrt14sd
-multiclass avx512_fp14_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
-                            X86MemOperand x86memop> {
-  let hasSideEffects = 0 in {
-  def rr : AVX5128I<opc, MRMSrcReg, (outs RC:$dst),
-               (ins RC:$src1, RC:$src2),
-               !strconcat(OpcodeStr,
-               "\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>, EVEX_4V;
+multiclass avx512_fp14_s<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                            X86VectorVTInfo _> {
+  let hasSideEffects = 0, AddedComplexity = 20 , Predicates = [HasAVX512] in {
+  defm rr : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                           (ins _.RC:$src1, _.RC:$src2), OpcodeStr,
+                           "$src2, $src1", "$src1, $src2",
+                           (OpNode (_.VT _.RC:$src1), (_.VT _.RC:$src2))>, EVEX_4V;
   let mayLoad = 1 in {
-  def rm : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
-               (ins RC:$src1, x86memop:$src2),
-               !strconcat(OpcodeStr,
-               "\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>, EVEX_4V;
+  defm rm : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
+                         (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr,
+                         "$src2, $src1", "$src1, $src2",
+                         (OpNode (_.VT _.RC:$src1),
+                          (_.VT (scalar_to_vector (_.ScalarLdFrag addr:$src2))))>, EVEX_4V;
   }
 }
 }
 
-defm VRCP14SS   : avx512_fp14_s<0x4D, "vrcp14ss", FR32X, f32mem>,
-                  EVEX_CD8<32, CD8VT1>;
-defm VRCP14SD   : avx512_fp14_s<0x4D, "vrcp14sd", FR64X, f64mem>,
-                  VEX_W, EVEX_CD8<64, CD8VT1>;
-defm VRSQRT14SS   : avx512_fp14_s<0x4F, "vrsqrt14ss", FR32X, f32mem>,
-                  EVEX_CD8<32, CD8VT1>;
-defm VRSQRT14SD   : avx512_fp14_s<0x4F, "vrsqrt14sd", FR64X, f64mem>,
-                  VEX_W, EVEX_CD8<64, CD8VT1>;
-
-def : Pat <(v4f32 (int_x86_avx512_rcp14_ss (v4f32 VR128X:$src1),
-              (v4f32 VR128X:$src2), (bc_v4f32 (v4i32 immAllZerosV)), (i8 -1))),
-           (COPY_TO_REGCLASS (VRCP14SSrr (COPY_TO_REGCLASS VR128X:$src1, FR32X),
-                       (COPY_TO_REGCLASS VR128X:$src2, FR32X)), VR128X)>;
-
-def : Pat <(v2f64 (int_x86_avx512_rcp14_sd (v2f64 VR128X:$src1),
-              (v2f64 VR128X:$src2), (bc_v2f64 (v4i32 immAllZerosV)), (i8 -1))),
-           (COPY_TO_REGCLASS (VRCP14SDrr (COPY_TO_REGCLASS VR128X:$src1, FR64X),
-                       (COPY_TO_REGCLASS VR128X:$src2, FR64X)), VR128X)>;
-
-def : Pat <(v4f32 (int_x86_avx512_rsqrt14_ss (v4f32 VR128X:$src1),
-              (v4f32 VR128X:$src2), (bc_v4f32 (v4i32 immAllZerosV)), (i8 -1))),
-           (COPY_TO_REGCLASS (VRSQRT14SSrr (COPY_TO_REGCLASS VR128X:$src1, FR32X),
-                       (COPY_TO_REGCLASS VR128X:$src2, FR32X)), VR128X)>;
-
-def : Pat <(v2f64 (int_x86_avx512_rsqrt14_sd (v2f64 VR128X:$src1),
-              (v2f64 VR128X:$src2), (bc_v2f64 (v4i32 immAllZerosV)), (i8 -1))),
-           (COPY_TO_REGCLASS (VRSQRT14SDrr (COPY_TO_REGCLASS VR128X:$src1, FR64X),
-                       (COPY_TO_REGCLASS VR128X:$src2, FR64X)), VR128X)>;
+defm VRCP14SS   : avx512_fp14_s<0x4D, "vrcp14ss", X86frcp14s, f32x_info>,
+                  EVEX_CD8<32, CD8VT1>, T8PD;
+defm VRCP14SD   : avx512_fp14_s<0x4D, "vrcp14sd", X86frcp14s, f64x_info>,
+                  VEX_W, EVEX_CD8<64, CD8VT1>, T8PD;
+defm VRSQRT14SS   : avx512_fp14_s<0x4F, "vrsqrt14ss", X86frsqrt14s, f32x_info>,
+                  EVEX_CD8<32, CD8VT1>, T8PD;
+defm VRSQRT14SD   : avx512_fp14_s<0x4F, "vrsqrt14sd", X86frsqrt14s, f64x_info>,
+                  VEX_W, EVEX_CD8<64, CD8VT1>, T8PD;
 
 /// avx512_fp14_p rcp14ps, rcp14pd, rsqrt14ps, rsqrt14pd
 multiclass avx512_fp14_p<bits<8> opc, string OpcodeStr, SDNode OpNode,
@@ -5685,15 +5666,14 @@ defm VSQRT   : avx512_sqrt_scalar_all<0x51, "vsqrt">, VEX_LIG;
 
 let Predicates = [HasAVX512] in {
   def : Pat<(f32 (X86frsqrt FR32X:$src)),
-            (VRSQRT14SSrr (f32 (IMPLICIT_DEF)), FR32X:$src)>;
+            (COPY_TO_REGCLASS (VRSQRT14SSrr (v4f32 (IMPLICIT_DEF)), (COPY_TO_REGCLASS FR32X:$src, VR128X)), VR128X)>;
   def : Pat<(f32 (X86frsqrt (load addr:$src))),
-            (VRSQRT14SSrm (f32 (IMPLICIT_DEF)), addr:$src)>,
+            (COPY_TO_REGCLASS (VRSQRT14SSrm (v4f32 (IMPLICIT_DEF)), addr:$src), VR128X)>,
             Requires<[OptForSize]>;
-
   def : Pat<(f32 (X86frcp FR32X:$src)),
-            (VRCP14SSrr (f32 (IMPLICIT_DEF)), FR32X:$src)>;
+            (COPY_TO_REGCLASS (VRCP14SSrr (v4f32 (IMPLICIT_DEF)), (COPY_TO_REGCLASS FR32X:$src, VR128X)), VR128X )>;
   def : Pat<(f32 (X86frcp (load addr:$src))),
-            (VRCP14SSrm (f32 (IMPLICIT_DEF)), addr:$src)>,
+            (COPY_TO_REGCLASS (VRCP14SSrm (v4f32 (IMPLICIT_DEF)), addr:$src), VR128X)>,
             Requires<[OptForSize]>;
 }
 

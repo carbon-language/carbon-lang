@@ -15890,6 +15890,14 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
       return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src),
                                   Mask, PassThru, Subtarget, DAG);
     }
+    case INTR_TYPE_SCALAR_MASK: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue passThru = Op.getOperand(3);
+      SDValue Mask = Op.getOperand(4);
+      return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1, Src2),
+                                  Mask, passThru, Subtarget, DAG);
+    }
     case INTR_TYPE_SCALAR_MASK_RM: {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
@@ -16059,7 +16067,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
     }
     case FPCLASS: {
       // FPclass intrinsics with mask
-      //
        SDValue Src1 = Op.getOperand(1);
        EVT VT = Src1.getValueType();
        EVT MaskVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
