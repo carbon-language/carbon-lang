@@ -100,7 +100,18 @@ template <class ELFT> struct DynamicReloc {
   const Elf_Rel &RI;
 };
 
+static bool relocNeedsPLT(uint32_t Type) {
+  switch (Type) {
+  default:
+    return false;
+  case R_X86_64_PLT32:
+    return true;
+  }
+}
+
 static bool relocNeedsGOT(uint32_t Type) {
+  if (relocNeedsPLT(Type))
+    return true;
   switch (Type) {
   default:
     return false;
@@ -135,6 +146,58 @@ public:
 
 private:
   std::vector<const SymbolBody *> Entries;
+};
+
+template <class ELFT>
+class PltSection final : public OutputSectionBase<ELFT::Is64Bits> {
+  typedef OutputSectionBase<ELFT::Is64Bits> Base;
+  typedef typename Base::uintX_t uintX_t;
+
+public:
+  PltSection(const GotSection<ELFT> &GotSec)
+      : OutputSectionBase<ELFT::Is64Bits>(".plt", SHT_PROGBITS,
+                                          SHF_ALLOC | SHF_EXECINSTR),
+        GotSec(GotSec) {
+    this->Header.sh_addralign = 16;
+  }
+  void finalize() override {
+    this->Header.sh_size = Entries.size() * EntrySize;
+  }
+  void writeTo(uint8_t *Buf) override {
+    uintptr_t Start = reinterpret_cast<uintptr_t>(Buf);
+    ArrayRef<uint8_t> Jmp = {0xff, 0x25}; // jmpq *val(%rip)
+    for (const SymbolBody *E : Entries) {
+      uintptr_t InstPos = reinterpret_cast<uintptr_t>(Buf);
+
+      memcpy(Buf, Jmp.data(), Jmp.size());
+      Buf += Jmp.size();
+
+      uintptr_t OffsetInPLT = (InstPos + 6) - Start;
+      uintptr_t Delta = GotSec.getEntryAddr(*E) - (this->getVA() + OffsetInPLT);
+      assert(isInt<32>(Delta));
+      support::endian::write32le(Buf, Delta);
+      Buf += 4;
+
+      *Buf = 0x90; // nop
+      ++Buf;
+      *Buf = 0x90; // nop
+      ++Buf;
+    }
+  }
+  void addEntry(SymbolBody *Sym) {
+    Sym->setPltIndex(Entries.size());
+    Entries.push_back(Sym);
+  }
+  bool empty() const { return Entries.empty(); }
+  uintX_t getEntryAddr(const SymbolBody &B) const {
+    return this->getVA() + B.getPltIndex() * EntrySize;
+  }
+
+  static const unsigned EntrySize = 8;
+
+private:
+  std::vector<const SymbolBody *> Entries;
+  const GotSection<ELFT> &GotSec;
 };
 
 template <class ELFT>
@@ -202,10 +265,10 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
-  OutputSection(const GotSection<ELFT> &GotSec, StringRef Name,
-                uint32_t sh_type, uintX_t sh_flags)
+  OutputSection(const PltSection<ELFT> &PltSec, const GotSection<ELFT> &GotSec,
+                StringRef Name, uint32_t sh_type, uintX_t sh_flags)
       : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags),
-        GotSec(GotSec) {}
+        PltSec(PltSec), GotSec(GotSec) {}
 
   void addChunk(SectionChunk<ELFT> *C);
   void writeTo(uint8_t *Buf) override;
@@ -222,6 +285,7 @@ public:
 
 private:
   std::vector<SectionChunk<ELFT> *> Chunks;
+  const PltSection<ELFT> &PltSec;
   const GotSection<ELFT> &GotSec;
 };
 
@@ -557,8 +621,8 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   Writer(SymbolTable *T)
       : SymTabSec(*this, *T, StrTabSec), DynSymSec(*this, *T, DynStrSec),
-        RelaDynSec(DynSymSec, GotSec, T->shouldUseRela()), HashSec(DynSymSec),
-        DynamicSec(*T, HashSec, RelaDynSec) {}
+        RelaDynSec(DynSymSec, GotSec, T->shouldUseRela()), PltSec(GotSec),
+        HashSec(DynSymSec), DynamicSec(*T, HashSec, RelaDynSec) {}
   void run();
 
   const OutputSection<ELFT> &getBSS() const {
@@ -610,6 +674,7 @@ private:
   RelocationSection<ELFT> RelaDynSec;
 
   GotSection<ELFT> GotSec;
+  PltSection<ELFT> PltSec;
 
   HashTableSection<ELFT> HashSec;
 
@@ -744,10 +809,15 @@ void OutputSection<ELFT>::relocate(
       break;
     }
     case SymbolBody::SharedKind:
-      if (!relocNeedsGOT(Type))
+      if (relocNeedsPLT(Type)) {
+        SymVA = PltSec.getEntryAddr(*Body);
+        Type = R_X86_64_PC32;
+      } else if (relocNeedsGOT(Type)) {
+        SymVA = GotSec.getEntryAddr(*Body);
+        Type = R_X86_64_PC32;
+      } else {
         continue;
-      SymVA = GotSec.getEntryAddr(*Body);
-      Type = R_X86_64_PC32;
+      }
       break;
     case SymbolBody::UndefinedKind:
       assert(Body->isWeak() && "Undefined symbol reached writer");
@@ -978,7 +1048,13 @@ void Writer<ELFT>::scanRelocs(
     auto *S = dyn_cast<SharedSymbol<ELFT>>(Body);
     if (!S)
       continue;
-    if (relocNeedsGOT(RI.getType(IsMips64EL))) {
+    uint32_t Type = RI.getType(IsMips64EL);
+    if (relocNeedsPLT(Type)) {
+      if (Body->isInPlt())
+        continue;
+      PltSec.addEntry(Body);
+    }
+    if (relocNeedsGOT(Type)) {
       if (Body->isInGot())
         continue;
       GotSec.addEntry(Body);
@@ -1011,8 +1087,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     SectionKey<ELFT::Is64Bits> Key{Name, sh_type, sh_flags};
     OutputSection<ELFT> *&Sec = Map[Key];
     if (!Sec) {
-      Sec = new (CAlloc.Allocate())
-          OutputSection<ELFT>(GotSec, Key.Name, Key.sh_type, Key.sh_flags);
+      Sec = new (CAlloc.Allocate()) OutputSection<ELFT>(
+          PltSec, GotSec, Key.Name, Key.sh_type, Key.sh_flags);
       OutputSections.push_back(Sec);
     }
     return Sec;
@@ -1090,6 +1166,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       OutputSections.push_back(&RelaDynSec);
     if (!GotSec.empty())
       OutputSections.push_back(&GotSec);
+    if (!PltSec.empty())
+      OutputSections.push_back(&PltSec);
   }
 
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
