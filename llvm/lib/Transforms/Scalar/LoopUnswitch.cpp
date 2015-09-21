@@ -419,7 +419,7 @@ bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   Function *F = currentLoop->getHeader()->getParent();
   bool Changed = false;
   do {
-    assert(currentLoop->isLCSSAForm(*DT));
+    assert(!DT || currentLoop->isLCSSAForm(*DT));
     redoLoop = false;
     Changed |= processCurrentLoop();
   } while(redoLoop);
