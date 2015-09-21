@@ -2,10 +2,10 @@ modernize-pass-by-value
 =======================
 
 With move semantics added to the language and the standard library updated with
-move constructors added for many types it is now interesting to take an argument
-directly by value, instead of by const-reference, and then copy. This
-transformation allows the compiler to take care of choosing the best way to
-construct the copy.
+move constructors added for many types it is now interesting to take an
+argument directly by value, instead of by const-reference, and then copy. This
+check allows the compiler to take care of choosing the best way to construct
+the copy.
 
 The transformation is usually beneficial when the calling code passes an
 *rvalue* and assumes the move construction is a cheap operation. This short
@@ -34,7 +34,7 @@ Replaces the uses of const-references constructor parameters that are copied
 into class fields. The parameter is then moved with `std::move()`.
 
 Since `std::move()` is a library function declared in `<utility>` it may be
-necessary to add this include. The transform will add the include directive when
+necessary to add this include. The check will add the include directive when
 necessary.
 
   .. code-block:: c++

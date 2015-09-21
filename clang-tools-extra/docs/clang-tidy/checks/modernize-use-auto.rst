@@ -1,9 +1,8 @@
 modernize-use-auto
 ==================
 
-This check is responsible for using the ``auto`` type specifier for
-variable declarations to *improve code readability and maintainability*.
-For example:
+This check is responsible for using the ``auto`` type specifier for variable
+declarations to *improve code readability and maintainability*.  For example:
 
 .. code-block:: c++
 
@@ -38,7 +37,7 @@ Iterators
 
 Iterator type specifiers tend to be long and used frequently, especially in
 loop constructs. Since the functions generating iterators have a common format,
-the type specifier can be replaced without obscuring the meaning of code while 
+the type specifier can be replaced without obscuring the meaning of code while
 improving readability and maintainability.
 
 .. code-block:: c++
@@ -53,50 +52,33 @@ improving readability and maintainability.
   for (auto I = my_container.begin(), E = my_container.end(); I != E; ++I) {
   }
 
-The transform will only replace iterator type-specifiers when all of the
-following conditions are satisfied:
+The check will only replace iterator type-specifiers when all of the following
+conditions are satisfied:
+
 * The iterator is for one of the standard container in ``std`` namespace:
 
   * ``array``
-
   * ``deque``
-
   * ``forward_list``
-
   * ``list``
-
   * ``vector``
-
   * ``map``
-
   * ``multimap``
-
   * ``set``
-
   * ``multiset``
-
   * ``unordered_map``
-
   * ``unordered_multimap``
-
   * ``unordered_set``
-
   * ``unordered_multiset``
-
   * ``queue``
-
   * ``priority_queue``
-
   * ``stack``
 
 * The iterator is one of the possible iterator types for standard containers:
 
   * ``iterator``
-
   * ``reverse_iterator``
-
   * ``const_iterator``
-
   * ``const_reverse_iterator``
 
 * In addition to using iterator types directly, typedefs or other ways of
@@ -128,7 +110,8 @@ following conditions are satisfied:
 
 Known Limitations
 -----------------
-* If the initializer is an explicit conversion constructor, the transform will
-  not replace the type specifier even though it would be safe to do so.
+* If the initializer is an explicit conversion constructor, the check will not
+  replace the type specifier even though it would be safe to do so.
+
 * User-defined iterators are not handled at this time.
 

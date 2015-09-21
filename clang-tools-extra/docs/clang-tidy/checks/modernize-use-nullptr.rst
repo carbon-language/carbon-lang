@@ -38,7 +38,7 @@ transforms to:
 User defined macros
 -------------------
 
-By default this transform will only replace the ``NULL`` macro and will skip any
+By default this check will only replace the ``NULL`` macro and will skip any
 user-defined macros that behaves like ``NULL``. The user can use the
 :option:``UserNullMacros`` option to specify a comma-separated list of macro
 names that will be transformed along with ``NULL``.

@@ -26,24 +26,23 @@ Migration example:
    }
 
 Since ``std::move()`` is a library function declared in ``<utility>`` it may be
-necessary to add this include. The transform will add the include directive when
+necessary to add this include. The check will add the include directive when
 necessary.
 
 Known Limitations
 -----------------
 * If headers modification is not activated or if a header is not allowed to be
-  changed this transform will produce broken code (compilation error), where the
-  the headers' code will stay unchanged while the code using them will be
-  changed.
+  changed this check will produce broken code (compilation error), where the
+  headers' code will stay unchanged while the code using them will be changed.
 
-* Client code that declares a reference to an ``std::auto_ptr`` coming from code
-  that can't be migrated (such as a header coming from a 3\ :sup:`rd` party
-  library) will produce a compilation error after migration. This is because the
-  type of the reference will be changed to ``std::unique_ptr`` but the type
-  returned by the library won't change, binding a reference to
+* Client code that declares a reference to an ``std::auto_ptr`` coming from
+  code that can't be migrated (such as a header coming from a 3\ :sup:`rd`
+  party library) will produce a compilation error after migration. This is
+  because the type of the reference will be changed to ``std::unique_ptr`` but
+  the type returned by the library won't change, binding a reference to
   ``std::unique_ptr`` from an ``std::auto_ptr``. This pattern doesn't make much
-  sense and usually ``std::auto_ptr`` are stored by value (otherwise what is the
-  point in using them instead of a reference or a pointer?).
+  sense and usually ``std::auto_ptr`` are stored by value (otherwise what is
+  the point in using them instead of a reference or a pointer?).
 
   .. code-block:: c++
 

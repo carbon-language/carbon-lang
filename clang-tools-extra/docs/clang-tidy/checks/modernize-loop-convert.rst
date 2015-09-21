@@ -81,19 +81,19 @@ Original:
   v.push_back(2);
   v.push_back(3);
 
-  // safe transform
+  // safe conversion
   for (int i = 0; i < N; ++i)
     cout << arr[i];
 
-  // reasonable transform
+  // reasonable conversion
   for (vector<int>::iterator it = v.begin(); it != v.end(); ++it)
     cout << *it;*
 
-  // reasonable transform
+  // reasonable conversion
   for (int i = 0; i < v.size(); ++i)
     cout << v[i];
 
-After transformation with confidence level set to ``reasonable`` (default):
+After applying the check with minimum confidence level set to ``reasonable`` (default):
 
 .. code-block:: c++
 
@@ -104,15 +104,15 @@ After transformation with confidence level set to ``reasonable`` (default):
   v.push_back(2);
   v.push_back(3);
 
-  // safe transform
+  // safe conversion
   for (auto & elem : arr)
     cout << elem;
 
-  // reasonable transform
+  // reasonable conversion
   for (auto & elem : v)
     cout << elem;
 
-  // reasonable transform
+  // reasonable conversion
   for (auto & elem : v)
     cout << elem;
 
@@ -121,7 +121,7 @@ Limitations
 
 There are certain situations where the tool may erroneously perform
 transformations that remove information and change semantics. Users of the tool
-should be aware of the behaviour and limitations of the transform outlined by
+should be aware of the behaviour and limitations of the check outlined by
 the cases below.
 
 Comments inside loop headers
@@ -223,7 +223,7 @@ performed.
 Pointers and references to containers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-While most of the transform's risk analysis is dedicated to determining whether
+While most of the check's risk analysis is dedicated to determining whether
 the iterator or container was modified within the loop, it is possible to
 circumvent the analysis by accessing and modifying the container through a
 pointer or reference.
@@ -231,7 +231,7 @@ pointer or reference.
 If the container were directly used instead of using the pointer or reference
 the following transformation would have only been applied at the ``risky``
 level since calling a member function of the container is considered `risky`.
-The transform cannot identify expressions associated with the container that are
+The check cannot identify expressions associated with the container that are
 different than the one used in the loop header, therefore the transformation
 below ends up being performed at the ``safe`` level.
 
