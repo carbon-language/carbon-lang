@@ -3013,8 +3013,9 @@ DWARFExpression::AddressRangeForLocationListEntry(const DWARFCompileUnit* dwarf_
                     // Not supported entry type
                     return false;
             }
-            return true;
     }
+    assert (false && "Not supported location list type");
+    return false;
 }
 
 static bool
