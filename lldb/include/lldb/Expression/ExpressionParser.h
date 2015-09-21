@@ -12,7 +12,6 @@
 
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ArchSpec.h"
-#include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Expression/IRForTarget.h"
 

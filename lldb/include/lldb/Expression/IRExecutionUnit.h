@@ -23,10 +23,8 @@
 // Project includes
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
-#include "lldb/Core/ClangForward.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
-#include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/IRMemoryMap.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/ObjectFile.h"

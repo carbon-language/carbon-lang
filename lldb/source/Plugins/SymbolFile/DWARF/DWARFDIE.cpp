@@ -22,6 +22,7 @@
 
 #include "lldb/Core/Module.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Symbol/TypeSystem.h"
 
 DIERef
 DWARFDIE::GetDIERef() const

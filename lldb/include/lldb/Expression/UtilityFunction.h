@@ -21,7 +21,6 @@
 
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
-#include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/Expression.h"
 
 namespace lldb_private 

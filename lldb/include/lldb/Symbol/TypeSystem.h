@@ -16,6 +16,7 @@
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Expression/Expression.h"
 #include "lldb/Symbol/CompilerDeclContext.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/Support/Casting.h"
 
 class DWARFDIE;

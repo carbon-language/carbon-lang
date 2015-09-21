@@ -11,7 +11,6 @@
 #define liblldb_DWARFExpression_h_
 
 #include "lldb/lldb-private.h"
-#include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Error.h"

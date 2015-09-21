@@ -20,6 +20,8 @@
 #include "SymbolFileDWARFDebugMap.h"
 #include "UniqueDWARFASTType.h"
 
+#include "clang/Basic/Specifiers.h"
+
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Symbol/CompileUnit.h"
