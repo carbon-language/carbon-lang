@@ -160,25 +160,25 @@ class TypePromotionTransaction;
     }
 
   private:
-    bool EliminateFallThrough(Function &F);
-    bool EliminateMostlyEmptyBlocks(Function &F);
-    bool CanMergeBlocks(const BasicBlock *BB, const BasicBlock *DestBB) const;
-    void EliminateMostlyEmptyBlock(BasicBlock *BB);
-    bool OptimizeBlock(BasicBlock &BB, bool& ModifiedDT);
-    bool OptimizeInst(Instruction *I, bool& ModifiedDT);
-    bool OptimizeMemoryInst(Instruction *I, Value *Addr,
+    bool eliminateFallThrough(Function &F);
+    bool eliminateMostlyEmptyBlocks(Function &F);
+    bool canMergeBlocks(const BasicBlock *BB, const BasicBlock *DestBB) const;
+    void eliminateMostlyEmptyBlock(BasicBlock *BB);
+    bool optimizeBlock(BasicBlock &BB, bool& ModifiedDT);
+    bool optimizeInst(Instruction *I, bool& ModifiedDT);
+    bool optimizeMemoryInst(Instruction *I, Value *Addr,
                             Type *AccessTy, unsigned AS);
-    bool OptimizeInlineAsmInst(CallInst *CS);
-    bool OptimizeCallInst(CallInst *CI, bool& ModifiedDT);
-    bool MoveExtToFormExtLoad(Instruction *&I);
-    bool OptimizeExtUses(Instruction *I);
-    bool OptimizeSelectInst(SelectInst *SI);
-    bool OptimizeShuffleVectorInst(ShuffleVectorInst *SI);
-    bool OptimizeExtractElementInst(Instruction *Inst);
-    bool DupRetToEnableTailCallOpts(BasicBlock *BB);
-    bool PlaceDbgValues(Function &F);
+    bool optimizeInlineAsmInst(CallInst *CS);
+    bool optimizeCallInst(CallInst *CI, bool& ModifiedDT);
+    bool moveExtToFormExtLoad(Instruction *&I);
+    bool optimizeExtUses(Instruction *I);
+    bool optimizeSelectInst(SelectInst *SI);
+    bool optimizeShuffleVectorInst(ShuffleVectorInst *SI);
+    bool optimizeExtractElementInst(Instruction *Inst);
+    bool dupRetToEnableTailCallOpts(BasicBlock *BB);
+    bool placeDbgValues(Function &F);
     bool sinkAndCmp(Function &F);
-    bool ExtLdPromotion(TypePromotionTransaction &TPT, LoadInst *&LI,
+    bool extLdPromotion(TypePromotionTransaction &TPT, LoadInst *&LI,
                         Instruction *&Inst,
                         const SmallVectorImpl<Instruction *> &Exts,
                         unsigned CreatedInstCost);
@@ -225,12 +225,12 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
 
   // Eliminate blocks that contain only PHI nodes and an
   // unconditional branch.
-  EverMadeChange |= EliminateMostlyEmptyBlocks(F);
+  EverMadeChange |= eliminateMostlyEmptyBlocks(F);
 
   // llvm.dbg.value is far away from the value then iSel may not be able
   // handle it properly. iSel will drop llvm.dbg.value if it can not
   // find a node corresponding to the value.
-  EverMadeChange |= PlaceDbgValues(F);
+  EverMadeChange |= placeDbgValues(F);
 
   // If there is a mask, compare against zero, and branch that can be combined
   // into a single target instruction, push the mask and compare into branch
@@ -247,7 +247,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
     for (Function::iterator I = F.begin(); I != F.end(); ) {
       BasicBlock *BB = I++;
       bool ModifiedDTOnIteration = false;
-      MadeChange |= OptimizeBlock(*BB, ModifiedDTOnIteration);
+      MadeChange |= optimizeBlock(*BB, ModifiedDTOnIteration);
 
       // Restart BB iteration if the dominator tree of the Function was changed
       if (ModifiedDTOnIteration)
@@ -290,7 +290,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
     // Merge pairs of basic blocks with unconditional branches, connected by
     // a single edge.
     if (EverMadeChange || MadeChange)
-      MadeChange |= EliminateFallThrough(F);
+      MadeChange |= eliminateFallThrough(F);
 
     EverMadeChange |= MadeChange;
   }
@@ -311,7 +311,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
 /// Merge basic blocks which are connected by a single edge, where one of the
 /// basic blocks has a single successor pointing to the other basic block,
 /// which has a single predecessor.
-bool CodeGenPrepare::EliminateFallThrough(Function &F) {
+bool CodeGenPrepare::eliminateFallThrough(Function &F) {
   bool Changed = false;
   // Scan all of the blocks in the function, except for the entry block.
   for (Function::iterator I = std::next(F.begin()), E = F.end(); I != E;) {
@@ -346,7 +346,7 @@ bool CodeGenPrepare::EliminateFallThrough(Function &F) {
 /// unconditional branch. Passes before isel (e.g. LSR/loopsimplify) often split
 /// edges in ways that are non-optimal for isel. Start by eliminating these
 /// blocks so we can split them the way we want them.
-bool CodeGenPrepare::EliminateMostlyEmptyBlocks(Function &F) {
+bool CodeGenPrepare::eliminateMostlyEmptyBlocks(Function &F) {
   bool MadeChange = false;
   // Note that this intentionally skips the entry block.
   for (Function::iterator I = std::next(F.begin()), E = F.end(); I != E;) {
@@ -376,10 +376,10 @@ bool CodeGenPrepare::EliminateMostlyEmptyBlocks(Function &F) {
     if (DestBB == BB)
       continue;
 
-    if (!CanMergeBlocks(BB, DestBB))
+    if (!canMergeBlocks(BB, DestBB))
       continue;
 
-    EliminateMostlyEmptyBlock(BB);
+    eliminateMostlyEmptyBlock(BB);
     MadeChange = true;
   }
   return MadeChange;
@@ -388,7 +388,7 @@ bool CodeGenPrepare::EliminateMostlyEmptyBlocks(Function &F) {
 /// Return true if we can merge BB into DestBB if there is a single
 /// unconditional branch between them, and BB contains no other non-phi
 /// instructions.
-bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
+bool CodeGenPrepare::canMergeBlocks(const BasicBlock *BB,
                                     const BasicBlock *DestBB) const {
   // We only want to eliminate blocks whose phi nodes are used by phi nodes in
   // the successor.  If there are more complex condition (e.g. preheaders),
@@ -456,7 +456,7 @@ bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
 
 /// Eliminate a basic block that has only phi's and an unconditional branch in
 /// it.
-void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
+void CodeGenPrepare::eliminateMostlyEmptyBlock(BasicBlock *BB) {
   BranchInst *BI = cast<BranchInst>(BB->getTerminator());
   BasicBlock *DestBB = BI->getSuccessor(0);
 
@@ -1286,7 +1286,7 @@ static void ScalarizeMaskedStore(CallInst *CI) {
   CI->eraseFromParent();
 }
 
-bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
+bool CodeGenPrepare::optimizeCallInst(CallInst *CI, bool& ModifiedDT) {
   BasicBlock *BB = CI->getParent();
 
   // Lower inline assembly if we can.
@@ -1302,7 +1302,7 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
       return true;
     }
     // Sink address computing for memory operands into the block.
-    if (OptimizeInlineAsmInst(CI))
+    if (optimizeInlineAsmInst(CI))
       return true;
   }
 
@@ -1421,7 +1421,7 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
       Type *AccessTy;
       if (TLI->GetAddrModeArguments(II, PtrOps, AccessTy, AddrSpace))
         while (!PtrOps.empty())
-          if (OptimizeMemoryInst(II, PtrOps.pop_back_val(), AccessTy, AddrSpace))
+          if (optimizeMemoryInst(II, PtrOps.pop_back_val(), AccessTy, AddrSpace))
             return true;
     }
   }
@@ -1472,7 +1472,7 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
 ///   %tmp2 = tail call i32 @f2()
 ///   ret i32 %tmp2
 /// @endcode
-bool CodeGenPrepare::DupRetToEnableTailCallOpts(BasicBlock *BB) {
+bool CodeGenPrepare::dupRetToEnableTailCallOpts(BasicBlock *BB) {
   if (!TLI)
     return false;
 
@@ -2154,32 +2154,32 @@ public:
 
     bool Success = AddressingModeMatcher(AddrModeInsts, TM, AccessTy, AS,
                                          MemoryInst, Result, InsertedInsts,
-                                         PromotedInsts, TPT).MatchAddr(V, 0);
+                                         PromotedInsts, TPT).matchAddr(V, 0);
     (void)Success; assert(Success && "Couldn't select *anything*?");
     return Result;
   }
 private:
-  bool MatchScaledValue(Value *ScaleReg, int64_t Scale, unsigned Depth);
-  bool MatchAddr(Value *V, unsigned Depth);
-  bool MatchOperationAddr(User *Operation, unsigned Opcode, unsigned Depth,
+  bool matchScaledValue(Value *ScaleReg, int64_t Scale, unsigned Depth);
+  bool matchAddr(Value *V, unsigned Depth);
+  bool matchOperationAddr(User *Operation, unsigned Opcode, unsigned Depth,
                           bool *MovedAway = nullptr);
-  bool IsProfitableToFoldIntoAddressingMode(Instruction *I,
+  bool isProfitableToFoldIntoAddressingMode(Instruction *I,
                                             ExtAddrMode &AMBefore,
                                             ExtAddrMode &AMAfter);
-  bool ValueAlreadyLiveAtInst(Value *Val, Value *KnownLive1, Value *KnownLive2);
-  bool IsPromotionProfitable(unsigned NewCost, unsigned OldCost,
+  bool valueAlreadyLiveAtInst(Value *Val, Value *KnownLive1, Value *KnownLive2);
+  bool isPromotionProfitable(unsigned NewCost, unsigned OldCost,
                              Value *PromotedOperand) const;
 };
 
 /// Try adding ScaleReg*Scale to the current addressing mode.
 /// Return true and update AddrMode if this addr mode is legal for the target,
 /// false if not.
-bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
+bool AddressingModeMatcher::matchScaledValue(Value *ScaleReg, int64_t Scale,
                                              unsigned Depth) {
   // If Scale is 1, then this is the same as adding ScaleReg to the addressing
   // mode.  Just process that directly.
   if (Scale == 1)
-    return MatchAddr(ScaleReg, Depth);
+    return matchAddr(ScaleReg, Depth);
 
   // If the scale is 0, it takes nothing to add this.
   if (Scale == 0)
@@ -2632,7 +2632,7 @@ Value *TypePromotionHelper::promoteOperandForOther(
 /// matched in the addressing mode the promotion.
 /// \p PromotedOperand is the value that has been promoted.
 /// \return True if the promotion is profitable, false otherwise.
-bool AddressingModeMatcher::IsPromotionProfitable(
+bool AddressingModeMatcher::isPromotionProfitable(
     unsigned NewCost, unsigned OldCost, Value *PromotedOperand) const {
   DEBUG(dbgs() << "OldCost: " << OldCost << "\tNewCost: " << NewCost << '\n');
   // The cost of the new extensions is greater than the cost of the
@@ -2659,7 +2659,7 @@ bool AddressingModeMatcher::IsPromotionProfitable(
 /// This state can happen when AddrInst is a sext, since it may be moved away.
 /// Therefore, AddrInst may not be valid when MovedAway is true and it must
 /// not be referenced anymore.
-bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
+bool AddressingModeMatcher::matchOperationAddr(User *AddrInst, unsigned Opcode,
                                                unsigned Depth,
                                                bool *MovedAway) {
   // Avoid exponential behavior on extremely deep expression trees.
@@ -2672,13 +2672,13 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
   switch (Opcode) {
   case Instruction::PtrToInt:
     // PtrToInt is always a noop, as we know that the int type is pointer sized.
-    return MatchAddr(AddrInst->getOperand(0), Depth);
+    return matchAddr(AddrInst->getOperand(0), Depth);
   case Instruction::IntToPtr: {
     auto AS = AddrInst->getType()->getPointerAddressSpace();
     auto PtrTy = MVT::getIntegerVT(DL.getPointerSizeInBits(AS));
     // This inttoptr is a no-op if the integer type is pointer sized.
     if (TLI.getValueType(DL, AddrInst->getOperand(0)->getType()) == PtrTy)
-      return MatchAddr(AddrInst->getOperand(0), Depth);
+      return matchAddr(AddrInst->getOperand(0), Depth);
     return false;
   }
   case Instruction::BitCast:
@@ -2690,14 +2690,14 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
         // and we don't want to mess around with them.  Assume it knows what it
         // is doing.
         AddrInst->getOperand(0)->getType() != AddrInst->getType())
-      return MatchAddr(AddrInst->getOperand(0), Depth);
+      return matchAddr(AddrInst->getOperand(0), Depth);
     return false;
   case Instruction::AddrSpaceCast: {
     unsigned SrcAS
       = AddrInst->getOperand(0)->getType()->getPointerAddressSpace();
     unsigned DestAS = AddrInst->getType()->getPointerAddressSpace();
     if (TLI.isNoopAddrSpaceCast(SrcAS, DestAS))
-      return MatchAddr(AddrInst->getOperand(0), Depth);
+      return matchAddr(AddrInst->getOperand(0), Depth);
     return false;
   }
   case Instruction::Add: {
@@ -2711,8 +2711,8 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     TypePromotionTransaction::ConstRestorationPt LastKnownGood =
         TPT.getRestorationPoint();
 
-    if (MatchAddr(AddrInst->getOperand(1), Depth+1) &&
-        MatchAddr(AddrInst->getOperand(0), Depth+1))
+    if (matchAddr(AddrInst->getOperand(1), Depth+1) &&
+        matchAddr(AddrInst->getOperand(0), Depth+1))
       return true;
 
     // Restore the old addr mode info.
@@ -2721,8 +2721,8 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     TPT.rollback(LastKnownGood);
 
     // Otherwise this was over-aggressive.  Try merging in the LHS then the RHS.
-    if (MatchAddr(AddrInst->getOperand(0), Depth+1) &&
-        MatchAddr(AddrInst->getOperand(1), Depth+1))
+    if (matchAddr(AddrInst->getOperand(0), Depth+1) &&
+        matchAddr(AddrInst->getOperand(1), Depth+1))
       return true;
 
     // Otherwise we definitely can't merge the ADD in.
@@ -2744,7 +2744,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     if (Opcode == Instruction::Shl)
       Scale = 1LL << Scale;
 
-    return MatchScaledValue(AddrInst->getOperand(0), Scale, Depth);
+    return matchScaledValue(AddrInst->getOperand(0), Scale, Depth);
   }
   case Instruction::GetElementPtr: {
     // Scan the GEP.  We check it if it contains constant offsets and at most
@@ -2783,7 +2783,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
       if (ConstantOffset == 0 ||
           TLI.isLegalAddressingMode(DL, AddrMode, AccessTy, AddrSpace)) {
         // Check to see if we can fold the base pointer in too.
-        if (MatchAddr(AddrInst->getOperand(0), Depth+1))
+        if (matchAddr(AddrInst->getOperand(0), Depth+1))
           return true;
       }
       AddrMode.BaseOffs -= ConstantOffset;
@@ -2798,7 +2798,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     AddrMode.BaseOffs += ConstantOffset;
 
     // Match the base operand of the GEP.
-    if (!MatchAddr(AddrInst->getOperand(0), Depth+1)) {
+    if (!matchAddr(AddrInst->getOperand(0), Depth+1)) {
       // If it couldn't be matched, just stuff the value in a register.
       if (AddrMode.HasBaseReg) {
         AddrMode = BackupAddrMode;
@@ -2810,7 +2810,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     }
 
     // Match the remaining variable portion of the GEP.
-    if (!MatchScaledValue(AddrInst->getOperand(VariableOperand), VariableScale,
+    if (!matchScaledValue(AddrInst->getOperand(VariableOperand), VariableScale,
                           Depth)) {
       // If it couldn't be matched, try stuffing the base into a register
       // instead of matching it, and retrying the match of the scale.
@@ -2821,7 +2821,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
       AddrMode.HasBaseReg = true;
       AddrMode.BaseReg = AddrInst->getOperand(0);
       AddrMode.BaseOffs += ConstantOffset;
-      if (!MatchScaledValue(AddrInst->getOperand(VariableOperand),
+      if (!matchScaledValue(AddrInst->getOperand(VariableOperand),
                             VariableScale, Depth)) {
         // If even that didn't work, bail.
         AddrMode = BackupAddrMode;
@@ -2871,12 +2871,12 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     ExtAddrMode BackupAddrMode = AddrMode;
     unsigned OldSize = AddrModeInsts.size();
 
-    if (!MatchAddr(PromotedOperand, Depth) ||
+    if (!matchAddr(PromotedOperand, Depth) ||
         // The total of the new cost is equals to the cost of the created
         // instructions.
         // The total of the old cost is equals to the cost of the extension plus
         // what we have saved in the addressing mode.
-        !IsPromotionProfitable(CreatedInstsCost,
+        !isPromotionProfitable(CreatedInstsCost,
                                ExtCost + (AddrModeInsts.size() - OldSize),
                                PromotedOperand)) {
       AddrMode = BackupAddrMode;
@@ -2896,7 +2896,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
 /// unmodified. This assumes that Addr is either a pointer type or intptr_t
 /// for the target.
 ///
-bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
+bool AddressingModeMatcher::matchAddr(Value *Addr, unsigned Depth) {
   // Start a transaction at this point that we will rollback if the matching
   // fails.
   TypePromotionTransaction::ConstRestorationPt LastKnownGood =
@@ -2921,7 +2921,7 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
 
     // Check to see if it is possible to fold this operation.
     bool MovedAway = false;
-    if (MatchOperationAddr(I, I->getOpcode(), Depth, &MovedAway)) {
+    if (matchOperationAddr(I, I->getOpcode(), Depth, &MovedAway)) {
       // This instruction may have been move away. If so, there is nothing
       // to check here.
       if (MovedAway)
@@ -2930,7 +2930,7 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
       // *profitable* to do so.  We use a simple cost model to avoid increasing
       // register pressure too much.
       if (I->hasOneUse() ||
-          IsProfitableToFoldIntoAddressingMode(I, BackupAddrMode, AddrMode)) {
+          isProfitableToFoldIntoAddressingMode(I, BackupAddrMode, AddrMode)) {
         AddrModeInsts.push_back(I);
         return true;
       }
@@ -2942,7 +2942,7 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
       TPT.rollback(LastKnownGood);
     }
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Addr)) {
-    if (MatchOperationAddr(CE, CE->getOpcode(), Depth))
+    if (matchOperationAddr(CE, CE->getOpcode(), Depth))
       return true;
     TPT.rollback(LastKnownGood);
   } else if (isa<ConstantPointerNull>(Addr)) {
@@ -3054,7 +3054,7 @@ static bool FindAllMemoryUses(
 /// the use site that we're folding it into.  If so, there is no cost to
 /// include it in the addressing mode.  KnownLive1 and KnownLive2 are two values
 /// that we know are live at the instruction already.
-bool AddressingModeMatcher::ValueAlreadyLiveAtInst(Value *Val,Value *KnownLive1,
+bool AddressingModeMatcher::valueAlreadyLiveAtInst(Value *Val,Value *KnownLive1,
                                                    Value *KnownLive2) {
   // If Val is either of the known-live values, we know it is live!
   if (Val == nullptr || Val == KnownLive1 || Val == KnownLive2)
@@ -3098,7 +3098,7 @@ bool AddressingModeMatcher::ValueAlreadyLiveAtInst(Value *Val,Value *KnownLive1,
 /// X was live across 'load Z' for other reasons, we actually *would* want to
 /// fold the addressing mode in the Z case.  This would make Y die earlier.
 bool AddressingModeMatcher::
-IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
+isProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
                                      ExtAddrMode &AMAfter) {
   if (IgnoreProfitability) return true;
 
@@ -3115,9 +3115,9 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
 
   // If the BaseReg or ScaledReg was referenced by the previous addrmode, their
   // lifetime wasn't extended by adding this instruction.
-  if (ValueAlreadyLiveAtInst(BaseReg, AMBefore.BaseReg, AMBefore.ScaledReg))
+  if (valueAlreadyLiveAtInst(BaseReg, AMBefore.BaseReg, AMBefore.ScaledReg))
     BaseReg = nullptr;
-  if (ValueAlreadyLiveAtInst(ScaledReg, AMBefore.BaseReg, AMBefore.ScaledReg))
+  if (valueAlreadyLiveAtInst(ScaledReg, AMBefore.BaseReg, AMBefore.ScaledReg))
     ScaledReg = nullptr;
 
   // If folding this instruction (and it's subexprs) didn't extend any live
@@ -3162,7 +3162,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
                                   MemoryInst, Result, InsertedInsts,
                                   PromotedInsts, TPT);
     Matcher.IgnoreProfitability = true;
-    bool Success = Matcher.MatchAddr(Address, 0);
+    bool Success = Matcher.matchAddr(Address, 0);
     (void)Success; assert(Success && "Couldn't select *anything*?");
 
     // The match was to check the profitability, the changes made are not
@@ -3199,7 +3199,7 @@ static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
 ///
 /// This method is used to optimize both load/store and inline asms with memory
 /// operands.
-bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
+bool CodeGenPrepare::optimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
                                         Type *AccessTy, unsigned AddrSpace) {
   Value *Repl = Addr;
 
@@ -3538,7 +3538,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 
 /// If there are any memory operands, use OptimizeMemoryInst to sink their
 /// address computing into the block when possible / profitable.
-bool CodeGenPrepare::OptimizeInlineAsmInst(CallInst *CS) {
+bool CodeGenPrepare::optimizeInlineAsmInst(CallInst *CS) {
   bool MadeChange = false;
 
   const TargetRegisterInfo *TRI =
@@ -3555,7 +3555,7 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(CallInst *CS) {
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
         OpInfo.isIndirect) {
       Value *OpVal = CS->getArgOperand(ArgNo++);
-      MadeChange |= OptimizeMemoryInst(CS, OpVal, OpVal->getType(), ~0u);
+      MadeChange |= optimizeMemoryInst(CS, OpVal, OpVal->getType(), ~0u);
     } else if (OpInfo.Type == InlineAsm::isInput)
       ArgNo++;
   }
@@ -3635,7 +3635,7 @@ static bool hasSameExtUse(Instruction *Inst, const TargetLowering &TLI) {
 /// %add = add nuw i64 %zext, 4
 /// \encode
 /// Thanks to the promotion, we can match zext(load i32*) to i64.
-bool CodeGenPrepare::ExtLdPromotion(TypePromotionTransaction &TPT,
+bool CodeGenPrepare::extLdPromotion(TypePromotionTransaction &TPT,
                                     LoadInst *&LI, Instruction *&Inst,
                                     const SmallVectorImpl<Instruction *> &Exts,
                                     unsigned CreatedInstsCost = 0) {
@@ -3685,7 +3685,7 @@ bool CodeGenPrepare::ExtLdPromotion(TypePromotionTransaction &TPT,
     }
     // The promotion is profitable.
     // Check if it exposes an ext(load).
-    (void)ExtLdPromotion(TPT, LI, Inst, NewExts, TotalCreatedInstsCost);
+    (void)extLdPromotion(TPT, LI, Inst, NewExts, TotalCreatedInstsCost);
     if (LI && (StressExtLdPromotion || NewCreatedInstsCost <= ExtCost ||
                // If we have created a new extension, i.e., now we have two
                // extensions. We must make sure one of them is merged with
@@ -3708,7 +3708,7 @@ bool CodeGenPrepare::ExtLdPromotion(TypePromotionTransaction &TPT,
 /// \p I[in/out] the extension may be modified during the process if some
 /// promotions apply.
 ///
-bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *&I) {
+bool CodeGenPrepare::moveExtToFormExtLoad(Instruction *&I) {
   // Try to promote a chain of computation if it allows to form
   // an extended load.
   TypePromotionTransaction TPT;
@@ -3719,7 +3719,7 @@ bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *&I) {
   // Look for a load being extended.
   LoadInst *LI = nullptr;
   Instruction *OldExt = I;
-  bool HasPromoted = ExtLdPromotion(TPT, LI, I, Exts);
+  bool HasPromoted = extLdPromotion(TPT, LI, I, Exts);
   if (!LI || !I) {
     assert(!HasPromoted && !LI && "If we did not match any load instruction "
                                   "the code must remain the same");
@@ -3769,7 +3769,7 @@ bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *&I) {
   return true;
 }
 
-bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
+bool CodeGenPrepare::optimizeExtUses(Instruction *I) {
   BasicBlock *DefBB = I->getParent();
 
   // If the result of a {s|z}ext and its source are both live out, rewrite all
@@ -3870,7 +3870,7 @@ static bool isFormingBranchFromSelectProfitable(SelectInst *SI) {
 
 /// If we have a SelectInst that will likely profit from branch prediction,
 /// turn it into a branch.
-bool CodeGenPrepare::OptimizeSelectInst(SelectInst *SI) {
+bool CodeGenPrepare::optimizeSelectInst(SelectInst *SI) {
   bool VectorCond = !SI->getCondition()->getType()->isIntegerTy(1);
 
   // Can we convert the 'select' to CF ?
@@ -3943,7 +3943,7 @@ static bool isBroadcastShuffle(ShuffleVectorInst *SVI) {
 /// (e.g. x86 only introduced "vpsllvd" and friends with AVX2). In these cases
 /// it's often worth sinking a shufflevector splat down to its use so that
 /// codegen can spot all lanes are identical.
-bool CodeGenPrepare::OptimizeShuffleVectorInst(ShuffleVectorInst *SVI) {
+bool CodeGenPrepare::optimizeShuffleVectorInst(ShuffleVectorInst *SVI) {
   BasicBlock *DefBB = SVI->getParent();
 
   // Only do this xform if variable vector shifts are particularly expensive.
@@ -4308,7 +4308,7 @@ void VectorPromoteHelper::promoteImpl(Instruction *ToBePromoted) {
 /// Some targets can do store(extractelement) with one instruction.
 /// Try to push the extractelement towards the stores when the target
 /// has this feature and this is profitable.
-bool CodeGenPrepare::OptimizeExtractElementInst(Instruction *Inst) {
+bool CodeGenPrepare::optimizeExtractElementInst(Instruction *Inst) {
   unsigned CombineCost = UINT_MAX;
   if (DisableStoreExtract || !TLI ||
       (!StressStoreExtract &&
@@ -4360,7 +4360,7 @@ bool CodeGenPrepare::OptimizeExtractElementInst(Instruction *Inst) {
   return false;
 }
 
-bool CodeGenPrepare::OptimizeInst(Instruction *I, bool& ModifiedDT) {
+bool CodeGenPrepare::optimizeInst(Instruction *I, bool& ModifiedDT) {
   // Bail out if we inserted the instruction to prevent optimizations from
   // stepping on each other's toes.
   if (InsertedInsts.count(I))
@@ -4401,8 +4401,8 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I, bool& ModifiedDT) {
               TargetLowering::TypeExpandInteger) {
         return SinkCast(CI);
       } else {
-        bool MadeChange = MoveExtToFormExtLoad(I);
-        return MadeChange | OptimizeExtUses(I);
+        bool MadeChange = moveExtToFormExtLoad(I);
+        return MadeChange | optimizeExtUses(I);
       }
     }
     return false;
@@ -4416,7 +4416,7 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I, bool& ModifiedDT) {
     stripInvariantGroupMetadata(*LI);
     if (TLI) {
       unsigned AS = LI->getPointerAddressSpace();
-      return OptimizeMemoryInst(I, I->getOperand(0), LI->getType(), AS);
+      return optimizeMemoryInst(I, I->getOperand(0), LI->getType(), AS);
     }
     return false;
   }
@@ -4425,7 +4425,7 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I, bool& ModifiedDT) {
     stripInvariantGroupMetadata(*SI);
     if (TLI) {
       unsigned AS = SI->getPointerAddressSpace();
-      return OptimizeMemoryInst(I, SI->getOperand(1),
+      return optimizeMemoryInst(I, SI->getOperand(1),
                                 SI->getOperand(0)->getType(), AS);
     }
     return false;
@@ -4450,23 +4450,23 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I, bool& ModifiedDT) {
       GEPI->replaceAllUsesWith(NC);
       GEPI->eraseFromParent();
       ++NumGEPsElim;
-      OptimizeInst(NC, ModifiedDT);
+      optimizeInst(NC, ModifiedDT);
       return true;
     }
     return false;
   }
 
   if (CallInst *CI = dyn_cast<CallInst>(I))
-    return OptimizeCallInst(CI, ModifiedDT);
+    return optimizeCallInst(CI, ModifiedDT);
 
   if (SelectInst *SI = dyn_cast<SelectInst>(I))
-    return OptimizeSelectInst(SI);
+    return optimizeSelectInst(SI);
 
   if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(I))
-    return OptimizeShuffleVectorInst(SVI);
+    return optimizeShuffleVectorInst(SVI);
 
   if (isa<ExtractElementInst>(I))
-    return OptimizeExtractElementInst(I);
+    return optimizeExtractElementInst(I);
 
   return false;
 }
@@ -4474,17 +4474,17 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I, bool& ModifiedDT) {
 // In this pass we look for GEP and cast instructions that are used
 // across basic blocks and rewrite them to improve basic-block-at-a-time
 // selection.
-bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB, bool& ModifiedDT) {
+bool CodeGenPrepare::optimizeBlock(BasicBlock &BB, bool& ModifiedDT) {
   SunkAddrs.clear();
   bool MadeChange = false;
 
   CurInstIterator = BB.begin();
   while (CurInstIterator != BB.end()) {
-    MadeChange |= OptimizeInst(CurInstIterator++, ModifiedDT);
+    MadeChange |= optimizeInst(CurInstIterator++, ModifiedDT);
     if (ModifiedDT)
       return true;
   }
-  MadeChange |= DupRetToEnableTailCallOpts(&BB);
+  MadeChange |= dupRetToEnableTailCallOpts(&BB);
 
   return MadeChange;
 }
@@ -4492,7 +4492,7 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB, bool& ModifiedDT) {
 // llvm.dbg.value is far away from the value then iSel may not be able
 // handle it properly. iSel will drop llvm.dbg.value if it can not
 // find a node corresponding to the value.
-bool CodeGenPrepare::PlaceDbgValues(Function &F) {
+bool CodeGenPrepare::placeDbgValues(Function &F) {
   bool MadeChange = false;
   for (BasicBlock &BB : F) {
     Instruction *PrevNonDbgInst = nullptr;
