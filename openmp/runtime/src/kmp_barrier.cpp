@@ -735,9 +735,11 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
     register kmp_uint64 new_state;
 
     int level = team->t.t_level;
+#if OMP_40_ENABLED
     if (other_threads[0]->th.th_teams_microtask)    // are we inside the teams construct?
         if (this_thr->th.th_teams_size.nteams > 1)
             ++level; // level was not increased in teams construct for team_of_masters
+#endif
     if (level == 1) thr_bar->use_oncore_barrier = 1;
     else thr_bar->use_oncore_barrier = 0; // Do not use oncore barrier when nested
 
@@ -908,12 +910,14 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
     }
 
     int level = team->t.t_level;
+#if OMP_40_ENABLED
     if (team->t.t_threads[0]->th.th_teams_microtask ) {    // are we inside the teams construct?
         if (team->t.t_pkfn != (microtask_t)__kmp_teams_master && this_thr->th.th_teams_level == level)
             ++level; // level was not increased in teams construct for team_of_workers
         if( this_thr->th.th_teams_size.nteams > 1 )
             ++level; // level was not increased in teams construct for team_of_masters
     }
+#endif
     if (level == 1) thr_bar->use_oncore_barrier = 1;
     else thr_bar->use_oncore_barrier = 0; // Do not use oncore barrier when nested
     nproc = this_thr->th.th_team_nproc;

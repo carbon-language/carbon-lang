@@ -2224,9 +2224,9 @@ __kmp_dist_get_bounds(
         }
     }
     th = __kmp_threads[gtid];
-    KMP_DEBUG_ASSERT(th->th.th_teams_microtask);   // we are in the teams construct
     team = th->th.th_team;
     #if OMP_40_ENABLED
+    KMP_DEBUG_ASSERT(th->th.th_teams_microtask);   // we are in the teams construct
     nteams = th->th.th_teams_size.nteams;
     #endif
     team_id = team->t.t_master_tid;

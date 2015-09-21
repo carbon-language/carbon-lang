@@ -2362,9 +2362,11 @@ __kmp_join_call(ident_t *loc, int gtid
         //     But there is barrier for external team (league).
         __kmp_internal_join( loc, gtid, team );
     }
+#if OMP_40_ENABLED
     else {
         master_th->th.th_task_state = 0; // AC: no tasking in teams (out of any parallel)
     }
+#endif /* OMP_40_ENABLED */
 
     KMP_MB();
 

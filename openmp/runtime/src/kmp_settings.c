@@ -2926,11 +2926,12 @@ __kmp_stg_parse_proc_bind( char const * name, char const * value, void * data )
             // OMP_PROC_BIND => granularity=core,scatter elsewhere
             //
             __kmp_affinity_type = affinity_scatter;
-            if( __kmp_mic_type != non_mic ) {
+#  if KMP_ARCH_X86_64 && (KMP_OS_LINUX || KMP_OS_WINDOWS)
+            if( __kmp_mic_type != non_mic )
                 __kmp_affinity_gran = affinity_gran_fine;
-            } else {
+            else
+#  endif
                 __kmp_affinity_gran = affinity_gran_core;
-            }
     }
     else {
         __kmp_affinity_type = affinity_none;
