@@ -1898,6 +1898,7 @@ Target::GetScratchTypeSystemForLanguage (lldb::LanguageType language, bool creat
     if (Language::LanguageIsC(language)
        || Language::LanguageIsObjC(language)
        || Language::LanguageIsCPlusPlus(language)
+       || language == eLanguageTypeMipsAssembler // GNU AS and LLVM use it for all assembly code
        || language == eLanguageTypeUnknown)
         return GetScratchClangASTContext(create_on_demand);
     else
