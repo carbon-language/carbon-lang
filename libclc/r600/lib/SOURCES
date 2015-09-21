@@ -20,3 +20,7 @@ image/read_imagef.cl
 image/read_imagei.cl
 image/read_imageui.cl
 image/read_image_impl.ll
+image/write_imagef.cl
+image/write_imagei.cl
+image/write_imageui.cl
+image/write_image_impl.ll
