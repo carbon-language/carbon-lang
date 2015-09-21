@@ -65,11 +65,9 @@ namespace llvm {
     /// @{
 
     /// Construct an empty string ref.
-    LLVM_ATTRIBUTE_ALWAYS_INLINE
     /*implicit*/ StringRef() : Data(nullptr), Length(0) {}
 
     /// Construct a string ref from a cstring.
-    LLVM_ATTRIBUTE_ALWAYS_INLINE
     /*implicit*/ StringRef(const char *Str)
       : Data(Str) {
         assert(Str && "StringRef cannot be built from a NULL argument");
