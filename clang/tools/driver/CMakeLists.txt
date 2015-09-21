@@ -62,6 +62,10 @@ add_custom_target(install-clang
 
 if(NOT CLANG_LINKS_TO_CREATE)
   set(CLANG_LINKS_TO_CREATE clang++ clang-cl)
+
+  if (WIN32)
+    list(APPEND CLANG_LINKS_TO_CREATE ../msbuild-bin/cl)
+  endif()
 endif()
 
 foreach(link ${CLANG_LINKS_TO_CREATE})
