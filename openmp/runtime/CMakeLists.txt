@@ -206,6 +206,7 @@ set(LIBOMP_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(LIBOMP_SRC_DIR ${LIBOMP_BASE_DIR}/src)
 set(LIBOMP_TOOLS_DIR ${LIBOMP_BASE_DIR}/tools)
 set(LIBOMP_INC_DIR ${LIBOMP_SRC_DIR}/include/${LIBOMP_OMP_VERSION})
+set(LIBOMP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # Enabling Fortran if it is needed
 if(${LIBOMP_FORTRAN_MODULES})
@@ -324,4 +325,5 @@ if(${LIBOMP_STANDALONE_BUILD})
 endif()
 
 add_subdirectory(src)
+add_subdirectory(test)
 
