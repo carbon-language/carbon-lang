@@ -4926,16 +4926,19 @@ bool MipsAsmParser::parseDirectiveCPSetup() {
 
   ResTy = parseAnyRegister(TmpReg);
   if (ResTy == MatchOperand_NoMatch) {
-    const AsmToken &Tok = Parser.getTok();
-    if (Tok.is(AsmToken::Integer)) {
-      Save = Tok.getIntVal();
-      SaveIsReg = false;
-      Parser.Lex();
-    } else {
-      reportParseError("expected save register or stack offset");
+    const MCExpr *OffsetExpr;
+    int64_t OffsetVal;
+    SMLoc ExprLoc = getLexer().getLoc();
+
+    if (Parser.parseExpression(OffsetExpr) ||
+        !OffsetExpr->evaluateAsAbsolute(OffsetVal)) {
+      reportParseError(ExprLoc, "expected save register or stack offset");
       Parser.eatToEndOfStatement();
       return false;
     }
+
+    Save = OffsetVal;
+    SaveIsReg = false;
   } else {
     MipsOperand &SaveOpnd = static_cast<MipsOperand &>(*TmpReg[0]);
     if (!SaveOpnd.isGPRAsmReg()) {

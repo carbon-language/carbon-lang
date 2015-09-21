@@ -383,7 +383,7 @@ void MipsTargetAsmStreamer::emitDirectiveCpsetup(unsigned RegNo,
 
   OS << ", ";
 
-  OS << Sym.getName() << "\n";
+  OS << Sym.getName();
   forbidModuleDirective();
 }
 
