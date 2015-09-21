@@ -18,12 +18,15 @@ namespace elf2 {
 
 template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
+template <class ELFT> class PltSection;
+template <class ELFT> class GotSection;
 
 // A chunk corresponding a section of an input file.
 template <class ELFT> class InputSection {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
@@ -34,7 +37,8 @@ public:
 
   // Write this chunk to a mmap'ed file, assuming Buf is pointing to
   // beginning of the output section.
-  void writeTo(uint8_t *Buf);
+  void writeTo(uint8_t *Buf, const PltSection<ELFT> &PltSec,
+               const GotSection<ELFT> &GotSec);
 
   StringRef getSectionName() const;
   const Elf_Shdr *getSectionHdr() const { return Header; }
@@ -56,6 +60,18 @@ public:
   SmallVector<const Elf_Shdr *, 1> RelocSections;
 
 private:
+  void relocateOne(uint8_t *Buf, const Elf_Rela &Rel, uint32_t Type,
+                   uintX_t BaseAddr, uintX_t SymVA);
+  void relocateOne(uint8_t *Buf, const Elf_Rel &Rel, uint32_t Type,
+                   uintX_t BaseAddr, uintX_t SymVA);
+
+  template <bool isRela>
+  void relocate(uint8_t *Buf,
+                llvm::iterator_range<
+                    const llvm::object::Elf_Rel_Impl<ELFT, isRela> *> Rels,
+                const ObjectFile<ELFT> &File, uintX_t BaseAddr,
+                const PltSection<ELFT> &PltSec, const GotSection<ELFT> &GotSec);
+
   // The offset from beginning of the output sections this chunk was assigned
   // to. The writer sets a value.
   uint64_t OutputSectionOff = 0;

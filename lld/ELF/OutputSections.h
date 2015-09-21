@@ -245,17 +245,6 @@ public:
   void addChunk(InputSection<ELFT> *C);
   void writeTo(uint8_t *Buf) override;
 
-  template <bool isRela>
-  void relocate(uint8_t *Buf,
-                llvm::iterator_range<
-                    const llvm::object::Elf_Rel_Impl<ELFT, isRela> *> Rels,
-                const ObjectFile<ELFT> &File, uintX_t BaseAddr);
-
-  void relocateOne(uint8_t *Buf, const Elf_Rela &Rel, uint32_t Type,
-                   uintX_t BaseAddr, uintX_t SymVA);
-  void relocateOne(uint8_t *Buf, const Elf_Rel &Rel, uint32_t Type,
-                   uintX_t BaseAddr, uintX_t SymVA);
-
 private:
   std::vector<InputSection<ELFT> *> Chunks;
   const PltSection<ELFT> &PltSec;

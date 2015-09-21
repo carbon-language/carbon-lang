@@ -260,53 +260,6 @@ void OutputSection<ELFT>::addChunk(InputSection<ELFT> *C) {
 }
 
 template <class ELFT>
-void OutputSection<ELFT>::relocateOne(uint8_t *Buf, const Elf_Rel &Rel,
-                                      uint32_t Type, uintX_t BaseAddr,
-                                      uintX_t SymVA) {
-  uintX_t Offset = Rel.r_offset;
-  uint8_t *Location = Buf + Offset;
-  switch (Type) {
-  case R_386_32:
-    support::endian::write32le(Location, SymVA);
-    break;
-  default:
-    llvm::errs() << Twine("unrecognized reloc ") + Twine(Type) << '\n';
-    break;
-  }
-}
-
-template <class ELFT>
-void OutputSection<ELFT>::relocateOne(uint8_t *Buf, const Elf_Rela &Rel,
-                                      uint32_t Type, uintX_t BaseAddr,
-                                      uintX_t SymVA) {
-  uintX_t Offset = Rel.r_offset;
-  uint8_t *Location = Buf + Offset;
-  switch (Type) {
-  case R_X86_64_PC32:
-    support::endian::write32le(Location,
-                               SymVA + (Rel.r_addend - (BaseAddr + Offset)));
-    break;
-  case R_X86_64_64:
-    support::endian::write64le(Location, SymVA + Rel.r_addend);
-    break;
-  case R_X86_64_32: {
-  case R_X86_64_32S:
-    uint64_t VA = SymVA + Rel.r_addend;
-    if (Type == R_X86_64_32 && !isUInt<32>(VA))
-      error("R_X86_64_32 out of range");
-    else if (!isInt<32>(VA))
-      error("R_X86_64_32S out of range");
-
-    support::endian::write32le(Location, VA);
-    break;
-  }
-  default:
-    llvm::errs() << Twine("unrecognized reloc ") + Twine(Type) << '\n';
-    break;
-  }
-}
-
-template <class ELFT>
 typename ELFFile<ELFT>::uintX_t
 lld::elf2::getSymVA(const DefinedRegular<ELFT> *DR) {
   const InputSection<ELFT> *SC = &DR->Section;
@@ -329,81 +282,9 @@ lld::elf2::getLocalSymVA(const typename ELFFile<ELFT>::Elf_Sym *Sym,
   return Out->getVA() + Section->getOutputSectionOff() + Sym->st_value;
 }
 
-template <class ELFT>
-template <bool isRela>
-void OutputSection<ELFT>::relocate(
-    uint8_t *Buf, iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels,
-    const ObjectFile<ELFT> &File, uintX_t BaseAddr) {
-  typedef Elf_Rel_Impl<ELFT, isRela> RelType;
-  bool IsMips64EL = File.getObj()->isMips64EL();
-  for (const RelType &RI : Rels) {
-    uint32_t SymIndex = RI.getSymbol(IsMips64EL);
-    uint32_t Type = RI.getType(IsMips64EL);
-    uintX_t SymVA;
-
-    // Handle relocations for local symbols -- they never get
-    // resolved so we don't allocate a SymbolBody.
-    const Elf_Shdr *SymTab = File.getSymbolTable();
-    if (SymIndex < SymTab->sh_info) {
-      const Elf_Sym *Sym = File.getObj()->getRelocationSymbol(&RI, SymTab);
-      if (!Sym)
-        continue;
-      SymVA = getLocalSymVA(Sym, File);
-    } else {
-      const SymbolBody *Body = File.getSymbolBody(SymIndex);
-      if (!Body)
-        continue;
-      switch (Body->kind()) {
-      case SymbolBody::DefinedRegularKind:
-        SymVA = getSymVA<ELFT>(cast<DefinedRegular<ELFT>>(Body));
-        break;
-      case SymbolBody::DefinedAbsoluteKind:
-        SymVA = cast<DefinedAbsolute<ELFT>>(Body)->Sym.st_value;
-        break;
-      case SymbolBody::DefinedCommonKind: {
-        auto *DC = cast<DefinedCommon<ELFT>>(Body);
-        SymVA = DC->OutputSec->getVA() + DC->OffsetInBSS;
-        break;
-      }
-      case SymbolBody::SharedKind:
-        if (relocNeedsPLT(Type)) {
-          SymVA = PltSec.getEntryAddr(*Body);
-          Type = R_X86_64_PC32;
-        } else if (relocNeedsGOT(Type)) {
-          SymVA = GotSec.getEntryAddr(*Body);
-          Type = R_X86_64_PC32;
-        } else {
-          continue;
-        }
-        break;
-      case SymbolBody::UndefinedKind:
-        assert(Body->isWeak() && "Undefined symbol reached writer");
-        SymVA = 0;
-        break;
-      case SymbolBody::LazyKind:
-        llvm_unreachable("Lazy symbol reached writer");
-      }
-    }
-
-    relocateOne(Buf, RI, Type, BaseAddr, SymVA);
-  }
-}
-
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
-  for (InputSection<ELFT> *C : Chunks) {
-    C->writeTo(Buf);
-    const ObjectFile<ELFT> *File = C->getFile();
-    ELFFile<ELFT> *EObj = File->getObj();
-    uint8_t *Base = Buf + C->getOutputSectionOff();
-    uintX_t BaseAddr = this->getVA() + C->getOutputSectionOff();
-    // Iterate over all relocation sections that apply to this section.
-    for (const Elf_Shdr *RelSec : C->RelocSections) {
-      if (RelSec->sh_type == SHT_RELA)
-        relocate(Base, EObj->relas(RelSec), *File, BaseAddr);
-      else
-        relocate(Base, EObj->rels(RelSec), *File, BaseAddr);
-    }
-  }
+  for (InputSection<ELFT> *C : Chunks)
+    C->writeTo(Buf, PltSec, GotSec);
 }
 
 template <bool Is64Bits>
@@ -582,5 +463,21 @@ getSymVA(const DefinedRegular<ELF64LE> *DR);
 
 template typename ELFFile<ELF64BE>::uintX_t
 getSymVA(const DefinedRegular<ELF64BE> *DR);
+
+template typename ELFFile<ELF32LE>::uintX_t
+lld::elf2::getLocalSymVA(const typename ELFFile<ELF32LE>::Elf_Sym *Sym,
+                         const ObjectFile<ELF32LE> &File);
+
+template typename ELFFile<ELF32BE>::uintX_t
+lld::elf2::getLocalSymVA(const typename ELFFile<ELF32BE>::Elf_Sym *Sym,
+                         const ObjectFile<ELF32BE> &File);
+
+template typename ELFFile<ELF64LE>::uintX_t
+lld::elf2::getLocalSymVA(const typename ELFFile<ELF64LE>::Elf_Sym *Sym,
+                         const ObjectFile<ELF64LE> &File);
+
+template typename ELFFile<ELF64BE>::uintX_t
+lld::elf2::getLocalSymVA(const typename ELFFile<ELF64BE>::Elf_Sym *Sym,
+                         const ObjectFile<ELF64BE> &File);
 }
 }
