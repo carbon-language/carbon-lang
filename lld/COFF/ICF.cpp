@@ -86,7 +86,7 @@ uint64_t ICF::getHash(SectionChunk *C) {
                       hash_value(C->SectionName),
                       C->NumRelocs,
                       uint32_t(C->Header->SizeOfRawData),
-                      std::distance(C->Relocs.end(), C->Relocs.begin()),
+                      uint32_t(C->Header->SizeOfRawData),
                       C->Checksum);
 }
 
