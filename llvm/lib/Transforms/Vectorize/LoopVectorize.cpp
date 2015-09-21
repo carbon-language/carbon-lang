@@ -3654,10 +3654,12 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       VectorParts &B = getVectorValue(it->getOperand(1));
       for (unsigned Part = 0; Part < UF; ++Part) {
         Value *C = nullptr;
-        if (FCmp)
+        if (FCmp) {
           C = Builder.CreateFCmp(Cmp->getPredicate(), A[Part], B[Part]);
-        else
+          cast<FCmpInst>(C)->copyFastMathFlags(it);
+        } else {
           C = Builder.CreateICmp(Cmp->getPredicate(), A[Part], B[Part]);
+        }
         Entry[Part] = C;
       }
 

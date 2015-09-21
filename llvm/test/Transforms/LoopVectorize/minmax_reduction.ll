@@ -412,10 +412,10 @@ for.end:
 
 ; Turn this into a max reduction in the presence of a no-nans-fp-math attribute.
 ; CHECK-LABEL: @max_red_float(
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select i1
 
 define float @max_red_float(float %max) #0 {
@@ -427,7 +427,7 @@ for.body:
   %max.red.08 = phi float [ %max, %entry ], [ %max.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp ogt float %0, %max.red.08
+  %cmp3 = fcmp fast ogt float %0, %max.red.08
   %max.red.0 = select i1 %cmp3, float %0, float %max.red.08
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -438,10 +438,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @max_red_float_ge(
-; CHECK: fcmp oge <2 x float>
+; CHECK: fcmp fast oge <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select i1
 
 define float @max_red_float_ge(float %max) #0 {
@@ -453,7 +453,7 @@ for.body:
   %max.red.08 = phi float [ %max, %entry ], [ %max.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp oge float %0, %max.red.08
+  %cmp3 = fcmp fast oge float %0, %max.red.08
   %max.red.0 = select i1 %cmp3, float %0, float %max.red.08
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -464,10 +464,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_max_red_float(
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select i1
 
 define float @inverted_max_red_float(float %max) #0 {
@@ -479,7 +479,7 @@ for.body:
   %max.red.08 = phi float [ %max, %entry ], [ %max.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp olt float %0, %max.red.08
+  %cmp3 = fcmp fast olt float %0, %max.red.08
   %max.red.0 = select i1 %cmp3, float %max.red.08, float %0
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -490,10 +490,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_max_red_float_le(
-; CHECK: fcmp ole <2 x float>
+; CHECK: fcmp fast ole <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select i1
 
 define float @inverted_max_red_float_le(float %max) #0 {
@@ -505,7 +505,7 @@ for.body:
   %max.red.08 = phi float [ %max, %entry ], [ %max.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp ole float %0, %max.red.08
+  %cmp3 = fcmp fast ole float %0, %max.red.08
   %max.red.0 = select i1 %cmp3, float %max.red.08, float %0
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -516,10 +516,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @unordered_max_red_float(
-; CHECK: fcmp ole <2 x float>
+; CHECK: fcmp fast ole <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select i1
 
 define float @unordered_max_red_float(float %max) #0 {
@@ -531,7 +531,7 @@ for.body:
   %max.red.08 = phi float [ %max, %entry ], [ %max.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp ugt float %0, %max.red.08
+  %cmp3 = fcmp fast ugt float %0, %max.red.08
   %max.red.0 = select i1 %cmp3, float %0, float %max.red.08
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -542,10 +542,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @unordered_max_red_float_ge(
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select i1
 
 define float @unordered_max_red_float_ge(float %max) #0 {
@@ -557,7 +557,7 @@ for.body:
   %max.red.08 = phi float [ %max, %entry ], [ %max.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp uge float %0, %max.red.08
+  %cmp3 = fcmp fast uge float %0, %max.red.08
   %max.red.0 = select i1 %cmp3, float %0, float %max.red.08
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -568,10 +568,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_unordered_max_red_float(
-; CHECK: fcmp oge <2 x float>
+; CHECK: fcmp fast oge <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select i1
 
 define float @inverted_unordered_max_red_float(float %max) #0 {
@@ -583,7 +583,7 @@ for.body:
   %max.red.08 = phi float [ %max, %entry ], [ %max.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp ult float %0, %max.red.08
+  %cmp3 = fcmp fast ult float %0, %max.red.08
   %max.red.0 = select i1 %cmp3, float %max.red.08, float %0
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -594,10 +594,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_unordered_max_red_float_le(
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select i1
 
 define float @inverted_unordered_max_red_float_le(float %max) #0 {
@@ -609,7 +609,7 @@ for.body:
   %max.red.08 = phi float [ %max, %entry ], [ %max.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp ule float %0, %max.red.08
+  %cmp3 = fcmp fast ule float %0, %max.red.08
   %max.red.0 = select i1 %cmp3, float %max.red.08, float %0
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -623,10 +623,10 @@ for.end:
 
 ; Turn this into a min reduction in the presence of a no-nans-fp-math attribute.
 ; CHECK-LABEL: @min_red_float(
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select i1
 
 define float @min_red_float(float %min) #0 {
@@ -638,7 +638,7 @@ for.body:
   %min.red.08 = phi float [ %min, %entry ], [ %min.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp olt float %0, %min.red.08
+  %cmp3 = fcmp fast olt float %0, %min.red.08
   %min.red.0 = select i1 %cmp3, float %0, float %min.red.08
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -649,10 +649,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @min_red_float_le(
-; CHECK: fcmp ole <2 x float>
+; CHECK: fcmp fast ole <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select i1
 
 define float @min_red_float_le(float %min) #0 {
@@ -664,7 +664,7 @@ for.body:
   %min.red.08 = phi float [ %min, %entry ], [ %min.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp ole float %0, %min.red.08
+  %cmp3 = fcmp fast ole float %0, %min.red.08
   %min.red.0 = select i1 %cmp3, float %0, float %min.red.08
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -675,10 +675,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_min_red_float(
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select i1
 
 define float @inverted_min_red_float(float %min) #0 {
@@ -690,7 +690,7 @@ for.body:
   %min.red.08 = phi float [ %min, %entry ], [ %min.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp ogt float %0, %min.red.08
+  %cmp3 = fcmp fast ogt float %0, %min.red.08
   %min.red.0 = select i1 %cmp3, float %min.red.08, float %0
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -701,10 +701,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_min_red_float_ge(
-; CHECK: fcmp oge <2 x float>
+; CHECK: fcmp fast oge <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select i1
 
 define float @inverted_min_red_float_ge(float %min) #0 {
@@ -716,7 +716,7 @@ for.body:
   %min.red.08 = phi float [ %min, %entry ], [ %min.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp oge float %0, %min.red.08
+  %cmp3 = fcmp fast oge float %0, %min.red.08
   %min.red.0 = select i1 %cmp3, float %min.red.08, float %0
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -727,10 +727,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @unordered_min_red_float(
-; CHECK: fcmp oge <2 x float>
+; CHECK: fcmp fast oge <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select i1
 
 define float @unordered_min_red_float(float %min) #0 {
@@ -742,7 +742,7 @@ for.body:
   %min.red.08 = phi float [ %min, %entry ], [ %min.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp ult float %0, %min.red.08
+  %cmp3 = fcmp fast ult float %0, %min.red.08
   %min.red.0 = select i1 %cmp3, float %0, float %min.red.08
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -753,10 +753,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @unordered_min_red_float_le(
-; CHECK: fcmp ogt <2 x float>
+; CHECK: fcmp fast ogt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select i1
 
 define float @unordered_min_red_float_le(float %min) #0 {
@@ -768,7 +768,7 @@ for.body:
   %min.red.08 = phi float [ %min, %entry ], [ %min.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp ule float %0, %min.red.08
+  %cmp3 = fcmp fast ule float %0, %min.red.08
   %min.red.0 = select i1 %cmp3, float %0, float %min.red.08
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -779,10 +779,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_unordered_min_red_float(
-; CHECK: fcmp ole <2 x float>
+; CHECK: fcmp fast ole <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select i1
 
 define float @inverted_unordered_min_red_float(float %min) #0 {
@@ -794,7 +794,7 @@ for.body:
   %min.red.08 = phi float [ %min, %entry ], [ %min.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp ugt float %0, %min.red.08
+  %cmp3 = fcmp fast ugt float %0, %min.red.08
   %min.red.0 = select i1 %cmp3, float %min.red.08, float %0
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -805,10 +805,10 @@ for.end:
 }
 
 ; CHECK-LABEL: @inverted_unordered_min_red_float_ge(
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp olt <2 x float>
+; CHECK: fcmp fast olt <2 x float>
 ; CHECK: select i1
 
 define float @inverted_unordered_min_red_float_ge(float %min) #0 {
@@ -820,7 +820,7 @@ for.body:
   %min.red.08 = phi float [ %min, %entry ], [ %min.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp uge float %0, %min.red.08
+  %cmp3 = fcmp fast uge float %0, %min.red.08
   %min.red.0 = select i1 %cmp3, float %min.red.08, float %0
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -832,10 +832,10 @@ for.end:
 
 ; Make sure we handle doubles, too.
 ; CHECK-LABEL: @min_red_double(
-; CHECK: fcmp olt <2 x double>
+; CHECK: fcmp fast olt <2 x double>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block
-; CHECK: fcmp olt <2 x double>
+; CHECK: fcmp fast olt <2 x double>
 ; CHECK: select i1
 
 define double @min_red_double(double %min) #0 {
@@ -847,7 +847,7 @@ for.body:
   %min.red.08 = phi double [ %min, %entry ], [ %min.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x double], [1024 x double]* @dA, i64 0, i64 %indvars.iv
   %0 = load double, double* %arrayidx, align 4
-  %cmp3 = fcmp olt double %0, %min.red.08
+  %cmp3 = fcmp fast olt double %0, %min.red.08
   %min.red.0 = select i1 %cmp3, double %0, double %min.red.08
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024
@@ -871,7 +871,7 @@ for.body:
   %max.red.08 = phi float [ %max, %entry ], [ %max.red.0, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x float], [1024 x float]* @fA, i64 0, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4
-  %cmp3 = fcmp ogt float %0, %max.red.08
+  %cmp3 = fcmp fast ogt float %0, %max.red.08
   %max.red.0 = select i1 %cmp3, float %0, float %max.red.08
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024

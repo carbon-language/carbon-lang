@@ -594,6 +594,13 @@ Value *RecurrenceDescriptor::createMinMaxOp(IRBuilder<> &Builder,
     break;
   }
 
+  // We only match FP sequences with unsafe algebra, so we can unconditionally
+  // set it on any generated instructions.
+  IRBuilder<>::FastMathFlagGuard FMFG(Builder);
+  FastMathFlags FMF;
+  FMF.setUnsafeAlgebra();
+  Builder.SetFastMathFlags(FMF);
+
   Value *Cmp;
   if (RK == MRK_FloatMin || RK == MRK_FloatMax)
     Cmp = Builder.CreateFCmp(P, Left, Right, "rdx.minmax.cmp");
