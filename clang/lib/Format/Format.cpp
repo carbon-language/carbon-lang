@@ -473,8 +473,6 @@ FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language) {
     ChromiumStyle.BinPackParameters = false;
     ChromiumStyle.DerivePointerAlignment = false;
   }
-  ChromiumStyle.MacroBlockBegin = "^IPC_BEGIN_MESSAGE_MAP$";
-  ChromiumStyle.MacroBlockBegin = "^IPC_END_MESSAGE_MAP$";
   return ChromiumStyle;
 }
 
