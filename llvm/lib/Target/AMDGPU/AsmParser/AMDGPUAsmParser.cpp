@@ -464,7 +464,7 @@ static unsigned getRegClass(bool IsVgpr, unsigned RegWidth) {
   }
 }
 
-static unsigned getRegForName(const StringRef &RegName) {
+static unsigned getRegForName(StringRef RegName) {
 
   return StringSwitch<unsigned>(RegName)
     .Case("exec", AMDGPU::EXEC)

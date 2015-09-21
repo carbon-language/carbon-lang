@@ -46,7 +46,7 @@ TargetRecip::TargetRecip() {
     RecipMap.insert(std::make_pair(RecipOps[i], RecipParams()));
 }
 
-static bool parseRefinementStep(const StringRef &In, size_t &Position,
+static bool parseRefinementStep(StringRef In, size_t &Position,
                                 uint8_t &Value) {
   const char RefStepToken = ':';
   Position = In.find(RefStepToken);
@@ -175,7 +175,7 @@ TargetRecip::TargetRecip(const std::vector<std::string> &Args) :
   parseIndividualParams(Args);
 }
 
-bool TargetRecip::isEnabled(const StringRef &Key) const {
+bool TargetRecip::isEnabled(StringRef Key) const {
   ConstRecipIter Iter = RecipMap.find(Key);
   assert(Iter != RecipMap.end() && "Unknown name for reciprocal map");
   assert(Iter->second.Enabled != Uninitialized &&
@@ -183,7 +183,7 @@ bool TargetRecip::isEnabled(const StringRef &Key) const {
   return Iter->second.Enabled;
 }
 
-unsigned TargetRecip::getRefinementSteps(const StringRef &Key) const {
+unsigned TargetRecip::getRefinementSteps(StringRef Key) const {
   ConstRecipIter Iter = RecipMap.find(Key);
   assert(Iter != RecipMap.end() && "Unknown name for reciprocal map");
   assert(Iter->second.RefinementSteps != Uninitialized &&
@@ -192,7 +192,7 @@ unsigned TargetRecip::getRefinementSteps(const StringRef &Key) const {
 }
 
 /// Custom settings (previously initialized values) override target defaults.
-void TargetRecip::setDefaults(const StringRef &Key, bool Enable,
+void TargetRecip::setDefaults(StringRef Key, bool Enable,
                               unsigned RefSteps) {
   if (Key == "all") {
     for (auto &KV : RecipMap) {
@@ -213,7 +213,7 @@ void TargetRecip::setDefaults(const StringRef &Key, bool Enable,
 
 bool TargetRecip::operator==(const TargetRecip &Other) const {
   for (const auto &KV : RecipMap) {
-    const StringRef &Op = KV.first;
+    StringRef Op = KV.first;
     const RecipParams &RP = KV.second;
     const RecipParams &OtherRP = Other.RecipMap.find(Op)->second;
     if (RP.RefinementSteps != OtherRP.RefinementSteps)

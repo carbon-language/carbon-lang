@@ -35,16 +35,16 @@ public:
   /// Set whether a particular reciprocal operation is enabled and how many
   /// refinement steps are needed when using it. Use "all" to set enablement
   /// and refinement steps for all operations.
-  void setDefaults(const StringRef &Key, bool Enable, unsigned RefSteps);
+  void setDefaults(StringRef Key, bool Enable, unsigned RefSteps);
 
   /// Return true if the reciprocal operation has been enabled by default or
   /// from the command-line. Return false if the operation has been disabled
   /// by default or from the command-line.
-  bool isEnabled(const StringRef &Key) const;
+  bool isEnabled(StringRef Key) const;
 
   /// Return the number of iterations necessary to refine the
   /// the result of a machine instruction for the given reciprocal operation.
-  unsigned getRefinementSteps(const StringRef &Key) const;
+  unsigned getRefinementSteps(StringRef Key) const;
 
   bool operator==(const TargetRecip &Other) const;
 
