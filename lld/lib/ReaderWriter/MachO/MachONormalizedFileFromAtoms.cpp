@@ -1162,7 +1162,7 @@ void Util::addExportInfo(const lld::File &atomFile, NormalizedFile &nFile) {
       }
       Export exprt;
       exprt.name = atom->name();
-      exprt.offset = _atomToAddress[atom];   // FIXME: subtract base address
+      exprt.offset = _atomToAddress[atom] - _ctx.baseAddress();
       exprt.kind = EXPORT_SYMBOL_FLAGS_KIND_REGULAR;
       if (atom->merge() == DefinedAtom::mergeAsWeak)
         exprt.flags = EXPORT_SYMBOL_FLAGS_WEAK_DEFINITION;

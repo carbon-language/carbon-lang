@@ -1,4 +1,4 @@
-# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 -dylib \
+# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 \
 # RUN:      %s %p/Inputs/libSystem.yaml -o %t  && \
 # RUN: llvm-objdump -exports-trie %t | FileCheck %s
 #
@@ -16,7 +16,7 @@ sections:
     type:            S_REGULAR
     attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
     address:         0x0000000000000000
-    content:         [ 0xC3, 0xC3, 0xC3 ]
+    content:         [ 0xC3, 0xC3, 0xC3, 0xC3 ]
 global-symbols:
   - name:            _myHidden
     type:            N_SECT
@@ -34,8 +34,13 @@ global-symbols:
     sect:            1
     desc:            [ N_WEAK_DEF ]
     value:           0x0000000000000002
+  - name:            _main
+    type:            N_SECT
+    scope:           [ N_EXT ]
+    sect:            1
+    value:           0x0000000000000003
 ...
 
 # CHECK-NOT:  _myHidden
-# CHECK:      _myRegular
-# CHECK:      _myWeak [weak_def]
+# CHECK:      0x00000FFD  _myRegular
+# CHECK:      0x00000FFE  _myWeak [weak_def]
