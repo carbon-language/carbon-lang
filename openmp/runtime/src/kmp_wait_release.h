@@ -97,7 +97,7 @@ static inline void __kmp_wait_template(kmp_info_t *this_thr, C *flag, int final_
 
 #if OMPT_SUPPORT && OMPT_BLAME
     ompt_state_t ompt_state = this_thr->th.ompt_thread_info.state;
-    if (ompt_status == ompt_status_track_callback &&
+    if (ompt_enabled &&
         ompt_state != ompt_state_undefined) {
         if (ompt_state == ompt_state_idle) {
             if (ompt_callbacks.ompt_callback(ompt_event_idle_begin)) {
@@ -237,7 +237,7 @@ static inline void __kmp_wait_template(kmp_info_t *this_thr, C *flag, int final_
     }
 
 #if OMPT_SUPPORT && OMPT_BLAME
-    if (ompt_status == ompt_status_track_callback &&
+    if (ompt_enabled &&
         ompt_state != ompt_state_undefined) {
         if (ompt_state == ompt_state_idle) {
             if (ompt_callbacks.ompt_callback(ompt_event_idle_end)) {

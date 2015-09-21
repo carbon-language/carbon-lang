@@ -451,7 +451,7 @@ __kmp_task_start( kmp_int32 gtid, kmp_task_t * task, kmp_taskdata_t * current_ta
                   gtid, taskdata ) );
 
 #if OMPT_SUPPORT
-    if ((ompt_status == ompt_status_track_callback) &&
+    if (ompt_enabled &&
         ompt_callbacks.ompt_callback(ompt_event_task_begin)) {
         kmp_taskdata_t *parent = taskdata->td_parent;
         ompt_callbacks.ompt_callback(ompt_event_task_begin)(
@@ -608,7 +608,7 @@ __kmp_task_finish( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t *resumed_tas
     kmp_int32 children = 0;
 
 #if OMPT_SUPPORT
-    if ((ompt_status == ompt_status_track_callback) &&
+    if (ompt_enabled &&
         ompt_callbacks.ompt_callback(ompt_event_task_end)) {
         kmp_taskdata_t *parent = taskdata->td_parent;
         ompt_callbacks.ompt_callback(ompt_event_task_end)(
@@ -1031,7 +1031,7 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
                   gtid, taskdata, taskdata->td_parent) );
 
 #if OMPT_SUPPORT
-    if (ompt_status & ompt_status_track) {
+    if (ompt_enabled) {
         taskdata->ompt_task_info.task_id = __ompt_task_id_new(gtid);
         taskdata->ompt_task_info.function = (void*) task_entry;
         taskdata->ompt_task_info.frame.exit_runtime_frame = NULL; 
@@ -1118,7 +1118,7 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t * current_ta
 #if OMPT_SUPPORT
     ompt_thread_info_t oldInfo;
     kmp_info_t * thread;
-    if (ompt_status & ompt_status_track) {
+    if (ompt_enabled) {
         // Store the threads states and restore them after the task
         thread = __kmp_threads[ gtid ];
         oldInfo = thread->th.ompt_thread_info;
@@ -1166,7 +1166,7 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t * current_ta
 
 
 #if OMPT_SUPPORT
-    if (ompt_status & ompt_status_track) {
+    if (ompt_enabled) {
         thread->th.ompt_thread_info = oldInfo;
         taskdata->ompt_task_info.frame.exit_runtime_frame = 0;
     }
@@ -1233,7 +1233,7 @@ __kmp_omp_task( kmp_int32 gtid, kmp_task_t * new_task, bool serialize_immediate 
     kmp_taskdata_t * new_taskdata = KMP_TASK_TO_TASKDATA(new_task);
 
 #if OMPT_SUPPORT
-    if (ompt_status & ompt_status_track) {
+    if (ompt_enabled) {
         new_taskdata->ompt_task_info.frame.reenter_runtime_frame =
             __builtin_frame_address(0);
     }
@@ -1254,7 +1254,7 @@ __kmp_omp_task( kmp_int32 gtid, kmp_task_t * new_task, bool serialize_immediate 
     }
 
 #if OMPT_SUPPORT
-    if (ompt_status & ompt_status_track) {
+    if (ompt_enabled) {
         new_taskdata->ompt_task_info.frame.reenter_runtime_frame = 0;
     }
 #endif

@@ -64,8 +64,7 @@ typedef void (*ompt_initialize_t) (
  * global variables
  ****************************************************************************/
 
-ompt_status_t ompt_status = ompt_status_ready;
-
+int ompt_enabled = 0;
 
 ompt_state_info_t ompt_state_info[] = {
 #define ompt_state_macro(state, code) { # state, state },
@@ -126,14 +125,13 @@ void ompt_pre_init()
 
     switch(tool_setting) {
     case omp_tool_disabled:
-        ompt_status = ompt_status_disabled;
         break;
 
     case omp_tool_unset:
     case omp_tool_enabled:
         ompt_initialize_fn = ompt_tool();
         if (ompt_initialize_fn) {
-          ompt_status = ompt_status_track_callback;
+            ompt_enabled = 1;
         }
         break;
 
@@ -162,7 +160,7 @@ void ompt_post_init()
     //--------------------------------------------------
     // Initialize the tool if so indicated.
     //--------------------------------------------------
-    if (ompt_status == ompt_status_track_callback) {
+    if (ompt_enabled) {
         ompt_initialize_fn(ompt_fn_lookup, ompt_get_runtime_version(), 
                            OMPT_VERSION);
 
@@ -182,13 +180,13 @@ void ompt_post_init()
 
 void ompt_fini()
 {
-    if (ompt_status == ompt_status_track_callback) {
+    if (ompt_enabled) {
         if (ompt_callbacks.ompt_callback(ompt_event_runtime_shutdown)) {
             ompt_callbacks.ompt_callback(ompt_event_runtime_shutdown)();
         }
     }
 
-    ompt_status = ompt_status_disabled;
+    ompt_enabled = 0;
 }
 
 
@@ -426,8 +424,7 @@ OMPT_API_ROUTINE int ompt_get_ompt_version()
 
 _OMP_EXTERN void ompt_control(uint64_t command, uint64_t modifier)
 {
-    if (ompt_status == ompt_status_track_callback &&
-        ompt_callbacks.ompt_callback(ompt_event_control)) {
+    if (ompt_enabled && ompt_callbacks.ompt_callback(ompt_event_control)) {
         ompt_callbacks.ompt_callback(ompt_event_control)(command, modifier);
     }
 }
