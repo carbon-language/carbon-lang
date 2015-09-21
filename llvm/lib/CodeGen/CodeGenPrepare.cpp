@@ -114,16 +114,13 @@ typedef DenseMap<Instruction *, TypeIsSExt> InstrToOrigTy;
 class TypePromotionTransaction;
 
   class CodeGenPrepare : public FunctionPass {
-    /// TLI - Keep a pointer of a TargetLowering to consult for determining
-    /// transformation profitability.
     const TargetMachine *TM;
     const TargetLowering *TLI;
     const TargetTransformInfo *TTI;
     const TargetLibraryInfo *TLInfo;
 
-    /// CurInstIterator - As we scan instructions optimizing them, this is the
-    /// next instruction to optimize.  Xforms that can invalidate this should
-    /// update it.
+    /// As we scan instructions optimizing them, this is the next instruction
+    /// to optimize. Transforms that can invalidate this should update it.
     BasicBlock::iterator CurInstIterator;
 
     /// Keeps track of non-local addresses that have been sunk into a block.
@@ -137,10 +134,10 @@ class TypePromotionTransaction;
     /// promotion for the current function.
     InstrToOrigTy PromotedInsts;
 
-    /// ModifiedDT - If CFG is modified in anyway.
+    /// True if CFG is modified in any way.
     bool ModifiedDT;
 
-    /// OptSize - True if optimizing for size.
+    /// True if optimizing for size.
     bool OptSize;
 
     /// DataLayout for the Function being processed.
@@ -311,9 +308,9 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   return EverMadeChange;
 }
 
-/// EliminateFallThrough - Merge basic blocks which are connected
-/// by a single edge, where one of the basic blocks has a single successor
-/// pointing to the other basic block, which has a single predecessor.
+/// Merge basic blocks which are connected by a single edge, where one of the
+/// basic blocks has a single successor pointing to the other basic block,
+/// which has a single predecessor.
 bool CodeGenPrepare::EliminateFallThrough(Function &F) {
   bool Changed = false;
   // Scan all of the blocks in the function, except for the entry block.
@@ -345,11 +342,10 @@ bool CodeGenPrepare::EliminateFallThrough(Function &F) {
   return Changed;
 }
 
-/// EliminateMostlyEmptyBlocks - eliminate blocks that contain only PHI nodes,
-/// debug info directives, and an unconditional branch.  Passes before isel
-/// (e.g. LSR/loopsimplify) often split edges in ways that are non-optimal for
-/// isel.  Start by eliminating these blocks so we can split them the way we
-/// want them.
+/// Eliminate blocks that contain only PHI nodes, debug info directives, and an
+/// unconditional branch. Passes before isel (e.g. LSR/loopsimplify) often split
+/// edges in ways that are non-optimal for isel. Start by eliminating these
+/// blocks so we can split them the way we want them.
 bool CodeGenPrepare::EliminateMostlyEmptyBlocks(Function &F) {
   bool MadeChange = false;
   // Note that this intentionally skips the entry block.
@@ -389,8 +385,8 @@ bool CodeGenPrepare::EliminateMostlyEmptyBlocks(Function &F) {
   return MadeChange;
 }
 
-/// CanMergeBlocks - Return true if we can merge BB into DestBB if there is a
-/// single uncond branch between them, and BB contains no other non-phi
+/// Return true if we can merge BB into DestBB if there is a single
+/// unconditional branch between them, and BB contains no other non-phi
 /// instructions.
 bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
                                     const BasicBlock *DestBB) const {
@@ -458,8 +454,8 @@ bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
 }
 
 
-/// EliminateMostlyEmptyBlock - Eliminate a basic block that have only phi's and
-/// an unconditional branch in it.
+/// Eliminate a basic block that has only phi's and an unconditional branch in
+/// it.
 void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   BranchInst *BI = cast<BranchInst>(BB->getTerminator());
   BasicBlock *DestBB = BI->getSuccessor(0);
@@ -748,10 +744,9 @@ static bool SinkCast(CastInst *CI) {
   return MadeChange;
 }
 
-/// OptimizeNoopCopyExpression - If the specified cast instruction is a noop
-/// copy (e.g. it's casting from one pointer type to another, i32->i8 on PPC),
-/// sink it into user blocks to reduce the number of virtual
-/// registers that must be created and coalesced.
+/// If the specified cast instruction is a noop copy (e.g. it's casting from
+/// one pointer type to another, i32->i8 on PPC), sink it into user blocks to
+/// reduce the number of virtual registers that must be created and coalesced.
 ///
 /// Return true if any changes are made.
 ///
@@ -786,8 +781,8 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI,
   return SinkCast(CI);
 }
 
-/// CombineUAddWithOverflow - try to combine CI into a call to the
-/// llvm.uadd.with.overflow intrinsic if possible.
+/// Try to combine CI into a call to the llvm.uadd.with.overflow intrinsic if
+/// possible.
 ///
 /// Return true if any changes were made.
 static bool CombineUAddWithOverflow(CmpInst *CI) {
@@ -833,16 +828,16 @@ static bool CombineUAddWithOverflow(CmpInst *CI) {
   return true;
 }
 
-/// SinkCmpExpression - Sink the given CmpInst into user blocks to reduce
-/// the number of virtual registers that must be created and coalesced.  This is
-/// a clear win except on targets with multiple condition code registers
-///  (PowerPC), where it might lose; some adjustment may be wanted there.
+/// Sink the given CmpInst into user blocks to reduce the number of virtual
+/// registers that must be created and coalesced. This is a clear win except on
+/// targets with multiple condition code registers (PowerPC), where it might
+/// lose; some adjustment may be wanted there.
 ///
 /// Return true if any changes are made.
 static bool SinkCmpExpression(CmpInst *CI) {
   BasicBlock *DefBB = CI->getParent();
 
-  /// InsertedCmp - Only insert a cmp in each block once.
+  /// Only insert a cmp in each block once.
   DenseMap<BasicBlock*, CmpInst*> InsertedCmps;
 
   bool MadeChange = false;
@@ -900,8 +895,8 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
   return false;
 }
 
-/// isExtractBitsCandidateUse - Check if the candidates could
-/// be combined with shift instruction, which includes:
+/// Check if the candidates could be combined with a shift instruction, which
+/// includes:
 /// 1. Truncate instruction
 /// 2. And instruction and the imm is a mask of the low bits:
 /// imm & (imm+1) == 0
@@ -919,8 +914,7 @@ static bool isExtractBitsCandidateUse(Instruction *User) {
   return true;
 }
 
-/// SinkShiftAndTruncate - sink both shift and truncate instruction
-/// to the use of truncate's BB.
+/// Sink both shift and truncate instruction to the use of truncate's BB.
 static bool
 SinkShiftAndTruncate(BinaryOperator *ShiftI, Instruction *User, ConstantInt *CI,
                      DenseMap<BasicBlock *, BinaryOperator *> &InsertedShifts,
@@ -990,10 +984,10 @@ SinkShiftAndTruncate(BinaryOperator *ShiftI, Instruction *User, ConstantInt *CI,
   return MadeChange;
 }
 
-/// OptimizeExtractBits - sink the shift *right* instruction into user blocks if
-/// the uses could potentially be combined with this shift instruction and
-/// generate BitExtract instruction. It will only be applied if the architecture
-/// supports BitExtract instruction. Here is an example:
+/// Sink the shift *right* instruction into user blocks if the uses could
+/// potentially be combined with this shift instruction and generate BitExtract
+/// instruction. It will only be applied if the architecture supports BitExtract
+/// instruction. Here is an example:
 /// BB1:
 ///   %x.extract.shift = lshr i64 %arg1, 32
 /// BB2:
@@ -1086,7 +1080,7 @@ static bool OptimizeExtractBits(BinaryOperator *ShiftI, ConstantInt *CI,
   return MadeChange;
 }
 
-//  ScalarizeMaskedLoad() translates masked load intrinsic, like 
+// Translate a masked load intrinsic like
 // <16 x i32 > @llvm.masked.load( <16 x i32>* %addr, i32 align,
 //                               <16 x i1> %mask, <16 x i32> %passthru)
 // to a chain of basic blocks, with loading element one-by-one if
@@ -1205,7 +1199,7 @@ static void ScalarizeMaskedLoad(CallInst *CI) {
   CI->eraseFromParent();
 }
 
-//  ScalarizeMaskedStore() translates masked store intrinsic, like
+// Translate a masked store intrinsic, like
 // void @llvm.masked.store(<16 x i32> %src, <16 x i32>* %addr, i32 align,
 //                               <16 x i1> %mask)
 // to a chain of basic blocks, that stores element one-by-one if
@@ -1448,9 +1442,8 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
   return false;
 }
 
-/// DupRetToEnableTailCallOpts - Look for opportunities to duplicate return
-/// instructions to the predecessor to enable tail call optimizations. The
-/// case it is currently looking for is:
+/// Look for opportunities to duplicate return instructions to the predecessor
+/// to enable tail call optimizations. The case it is currently looking for is:
 /// @code
 /// bb0:
 ///   %tmp0 = tail call i32 @f0()
@@ -1598,7 +1591,7 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(BasicBlock *BB) {
 
 namespace {
 
-/// ExtAddrMode - This is an extended version of TargetLowering::AddrMode
+/// This is an extended version of TargetLowering::AddrMode
 /// which holds actual Value*'s for register values.
 struct ExtAddrMode : public TargetLowering::AddrMode {
   Value *BaseReg;
@@ -2112,7 +2105,7 @@ class AddressingModeMatcher {
   unsigned AddrSpace;
   Instruction *MemoryInst;
 
-  /// AddrMode - This is the addressing mode that we're building up.  This is
+  /// This is the addressing mode that we're building up. This is
   /// part of the return value of this addressing mode matching stuff.
   ExtAddrMode &AddrMode;
 
@@ -2123,9 +2116,8 @@ class AddressingModeMatcher {
   /// The ongoing transaction where every action should be registered.
   TypePromotionTransaction &TPT;
 
-  /// IgnoreProfitability - This is set to true when we should not do
-  /// profitability checks.  When true, IsProfitableToFoldIntoAddressingMode
-  /// always returns true.
+  /// This is set to true when we should not do profitability checks.
+  /// When true, IsProfitableToFoldIntoAddressingMode always returns true.
   bool IgnoreProfitability;
 
   AddressingModeMatcher(SmallVectorImpl<Instruction *> &AMI,
@@ -2144,7 +2136,7 @@ class AddressingModeMatcher {
   }
 public:
 
-  /// Match - Find the maximal addressing mode that a load/store of V can fold,
+  /// Find the maximal addressing mode that a load/store of V can fold,
   /// give an access type of AccessTy.  This returns a list of involved
   /// instructions in AddrModeInsts.
   /// \p InsertedInsts The instructions inserted by other CodeGenPrepare
@@ -2179,7 +2171,7 @@ private:
                              Value *PromotedOperand) const;
 };
 
-/// MatchScaledValue - Try adding ScaleReg*Scale to the current addressing mode.
+/// Try adding ScaleReg*Scale to the current addressing mode.
 /// Return true and update AddrMode if this addr mode is legal for the target,
 /// false if not.
 bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
@@ -2234,9 +2226,9 @@ bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
   return true;
 }
 
-/// MightBeFoldableInst - This is a little filter, which returns true if an
-/// addressing computation involving I might be folded into a load/store
-/// accessing it.  This doesn't need to be perfect, but needs to accept at least
+/// This is a little filter, which returns true if an addressing computation
+/// involving I might be folded into a load/store accessing it.
+/// This doesn't need to be perfect, but needs to accept at least
 /// the set of instructions that MatchOperationAddr can.
 static bool MightBeFoldableInst(Instruction *I) {
   switch (I->getOpcode()) {
@@ -2632,8 +2624,7 @@ Value *TypePromotionHelper::promoteOperandForOther(
   return ExtOpnd;
 }
 
-/// IsPromotionProfitable - Check whether or not promoting an instruction
-/// to a wider type was profitable.
+/// Check whether or not promoting an instruction to a wider type is profitable.
 /// \p NewCost gives the cost of extension instructions created by the
 /// promotion.
 /// \p OldCost gives the cost of extension instructions before the promotion
@@ -2657,9 +2648,9 @@ bool AddressingModeMatcher::IsPromotionProfitable(
   return isPromotedInstructionLegal(TLI, DL, PromotedOperand);
 }
 
-/// MatchOperationAddr - Given an instruction or constant expr, see if we can
-/// fold the operation into the addressing mode.  If so, update the addressing
-/// mode and return true, otherwise return false without modifying AddrMode.
+/// Given an instruction or constant expr, see if we can fold the operation
+/// into the addressing mode. If so, update the addressing  mode and return
+/// true, otherwise return false without modifying AddrMode.
 /// If \p MovedAway is not NULL, it contains the information of whether or
 /// not AddrInst has to be folded into the addressing mode on success.
 /// If \p MovedAway == true, \p AddrInst will not be part of the addressing
@@ -2900,10 +2891,10 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
   return false;
 }
 
-/// MatchAddr - If we can, try to add the value of 'Addr' into the current
-/// addressing mode.  If Addr can't be added to AddrMode this returns false and
-/// leaves AddrMode unmodified.  This assumes that Addr is either a pointer type
-/// or intptr_t for the target.
+/// If we can, try to add the value of 'Addr' into the current addressing mode.
+/// If Addr can't be added to AddrMode this returns false and leaves AddrMode
+/// unmodified. This assumes that Addr is either a pointer type or intptr_t
+/// for the target.
 ///
 bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
   // Start a transaction at this point that we will rollback if the matching
@@ -2984,9 +2975,8 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
   return false;
 }
 
-/// IsOperandAMemoryOperand - Check to see if all uses of OpVal by the specified
-/// inline asm call are due to memory operands.  If so, return true, otherwise
-/// return false.
+/// Check to see if all uses of OpVal by the specified inline asm call are due
+/// to memory operands. If so, return true, otherwise return false.
 static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
                                     const TargetMachine &TM) {
   const Function *F = CI->getParent()->getParent();
@@ -3012,8 +3002,8 @@ static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
   return true;
 }
 
-/// FindAllMemoryUses - Recursively walk all the uses of I until we find a
-/// memory use.  If we find an obviously non-foldable instruction, return true.
+/// Recursively walk all the uses of I until we find a memory use.
+/// If we find an obviously non-foldable instruction, return true.
 /// Add the ultimately found memory instructions to MemoryUses.
 static bool FindAllMemoryUses(
     Instruction *I,
@@ -3086,11 +3076,11 @@ bool AddressingModeMatcher::ValueAlreadyLiveAtInst(Value *Val,Value *KnownLive1,
   return Val->isUsedInBasicBlock(MemoryInst->getParent());
 }
 
-/// IsProfitableToFoldIntoAddressingMode - It is possible for the addressing
-/// mode of the machine to fold the specified instruction into a load or store
-/// that ultimately uses it.  However, the specified instruction has multiple
-/// uses.  Given this, it may actually increase register pressure to fold it
-/// into the load.  For example, consider this code:
+/// It is possible for the addressing mode of the machine to fold the specified
+/// instruction into a load or store that ultimately uses it.
+/// However, the specified instruction has multiple uses.
+/// Given this, it may actually increase register pressure to fold it
+/// into the load. For example, consider this code:
 ///
 ///     X = ...
 ///     Y = X+1
@@ -3193,7 +3183,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
 
 } // end anonymous namespace
 
-/// IsNonLocalValue - Return true if the specified values are defined in a
+/// Return true if the specified values are defined in a
 /// different basic block than BB.
 static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
   if (Instruction *I = dyn_cast<Instruction>(V))
@@ -3201,12 +3191,11 @@ static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
   return false;
 }
 
-/// OptimizeMemoryInst - Load and Store Instructions often have
-/// addressing modes that can do significant amounts of computation.  As such,
-/// instruction selection will try to get the load or store to do as much
-/// computation as possible for the program.  The problem is that isel can only
-/// see within a single block.  As such, we sink as much legal addressing mode
-/// stuff into the block as possible.
+/// Load and Store Instructions often have addressing modes that can do
+/// significant amounts of computation. As such, instruction selection will try
+/// to get the load or store to do as much computation as possible for the
+/// program. The problem is that isel can only see within a single block. As
+/// such, we sink as much legal addressing mode work into the block as possible.
 ///
 /// This method is used to optimize both load/store and inline asms with memory
 /// operands.
@@ -3547,9 +3536,8 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   return true;
 }
 
-/// OptimizeInlineAsmInst - If there are any memory operands, use
-/// OptimizeMemoryInst to sink their address computing into the block when
-/// possible / profitable.
+/// If there are any memory operands, use OptimizeMemoryInst to sink their
+/// address computing into the block when possible / profitable.
 bool CodeGenPrepare::OptimizeInlineAsmInst(CallInst *CS) {
   bool MadeChange = false;
 
@@ -3714,9 +3702,9 @@ bool CodeGenPrepare::ExtLdPromotion(TypePromotionTransaction &TPT,
   return false;
 }
 
-/// MoveExtToFormExtLoad - Move a zext or sext fed by a load into the same
-/// basic block as the load, unless conditions are unfavorable. This allows
-/// SelectionDAG to fold the extend into the load.
+/// Move a zext or sext fed by a load into the same basic block as the load,
+/// unless conditions are unfavorable. This allows SelectionDAG to fold the
+/// extend into the load.
 /// \p I[in/out] the extension may be modified during the process if some
 /// promotions apply.
 ///
@@ -3852,8 +3840,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   return MadeChange;
 }
 
-/// isFormingBranchFromSelectProfitable - Returns true if a SelectInst should be
-/// turned into an explicit branch.
+/// Returns true if a SelectInst should be turned into an explicit branch.
 static bool isFormingBranchFromSelectProfitable(SelectInst *SI) {
   // FIXME: This should use the same heuristics as IfConversion to determine
   // whether a select is better represented as a branch.  This requires that
