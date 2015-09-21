@@ -14,3 +14,16 @@ _CLC_OVERLOAD _CLC_DECL int get_image_channel_order (image3d_t image);
 
 _CLC_OVERLOAD _CLC_DECL int2 get_image_dim (image2d_t image);
 _CLC_OVERLOAD _CLC_DECL int4 get_image_dim (image3d_t image);
+
+_CLC_OVERLOAD _CLC_DECL float4
+read_imagef(image2d_t image, sampler_t sampler, int2 coord);
+_CLC_OVERLOAD _CLC_DECL float4
+read_imagef(image2d_t image, sampler_t sampler, float2 coord);
+_CLC_OVERLOAD _CLC_DECL int4
+read_imagei(image2d_t image, sampler_t sampler, int2 coord);
+_CLC_OVERLOAD _CLC_DECL int4
+read_imagei(image2d_t image, sampler_t sampler, float2 coord);
+_CLC_OVERLOAD _CLC_DECL uint4
+read_imageui(image2d_t image, sampler_t sampler, int2 coord);
+_CLC_OVERLOAD _CLC_DECL uint4
+read_imageui(image2d_t image, sampler_t sampler, float2 coord);

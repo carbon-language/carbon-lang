@@ -16,3 +16,7 @@ image/get_image_depth.cl
 image/get_image_channel_data_type.cl
 image/get_image_channel_order.cl
 image/get_image_attributes_impl.ll
+image/read_imagef.cl
+image/read_imagei.cl
+image/read_imageui.cl
+image/read_image_impl.ll
