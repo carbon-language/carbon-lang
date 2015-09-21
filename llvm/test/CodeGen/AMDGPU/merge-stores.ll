@@ -121,10 +121,7 @@ define void @merge_global_store_4_constants_i32(i32 addrspace(1)* %out) #0 {
 }
 
 ; GCN-LABEL: {{^}}merge_global_store_4_constants_f32_order:
-; XGCN: buffer_store_dwordx4
-; GCN: buffer_store_dword v
-; GCN: buffer_store_dword v
-; GCN: buffer_store_dwordx2 v
+; GCN: buffer_store_dwordx4
 define void @merge_global_store_4_constants_f32_order(float addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr float, float addrspace(1)* %out, i32 1
   %out.gep.2 = getelementptr float, float addrspace(1)* %out, i32 2
@@ -137,17 +134,9 @@ define void @merge_global_store_4_constants_f32_order(float addrspace(1)* %out) 
   ret void
 }
 
-; First store is out of order. Because of order of combines, the
-; consecutive store fails because only some of the stores have been
-; replaced with integer constant stores, and then won't merge because
-; the types are different.
-
+; First store is out of order.
 ; GCN-LABEL: {{^}}merge_global_store_4_constants_f32:
-; XGCN: buffer_store_dwordx4
-; GCN: buffer_store_dword v
-; GCN: buffer_store_dword v
-; GCN: buffer_store_dword v
-; GCN: buffer_store_dword v
+; GCN: buffer_store_dwordx4
 define void @merge_global_store_4_constants_f32(float addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr float, float addrspace(1)* %out, i32 1
   %out.gep.2 = getelementptr float, float addrspace(1)* %out, i32 2
@@ -156,6 +145,29 @@ define void @merge_global_store_4_constants_f32(float addrspace(1)* %out) #0 {
   store float 1.0, float addrspace(1)* %out.gep.1
   store float 2.0, float addrspace(1)* %out.gep.2
   store float 4.0, float addrspace(1)* %out.gep.3
+  store float 8.0, float addrspace(1)* %out
+  ret void
+}
+
+; FIXME: Should be able to merge this
+; GCN-LABEL: {{^}}merge_global_store_4_constants_mixed_i32_f32:
+; XGCN: buffer_store_dwordx4
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: s_endpgm
+define void @merge_global_store_4_constants_mixed_i32_f32(float addrspace(1)* %out) #0 {
+  %out.gep.1 = getelementptr float, float addrspace(1)* %out, i32 1
+  %out.gep.2 = getelementptr float, float addrspace(1)* %out, i32 2
+  %out.gep.3 = getelementptr float, float addrspace(1)* %out, i32 3
+
+  %out.gep.1.bc = bitcast float addrspace(1)* %out.gep.1 to i32 addrspace(1)*
+  %out.gep.3.bc = bitcast float addrspace(1)* %out.gep.3 to i32 addrspace(1)*
+
+  store i32 11, i32 addrspace(1)* %out.gep.1.bc
+  store float 2.0, float addrspace(1)* %out.gep.2
+  store i32 17, i32 addrspace(1)* %out.gep.3.bc
   store float 8.0, float addrspace(1)* %out
   ret void
 }

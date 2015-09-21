@@ -11485,16 +11485,6 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
   if (Value.getOpcode() == ISD::UNDEF && ST->isUnindexed())
     return Chain;
 
-  // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
-  //
-  // Make sure to do this only after attempting to merge stores in order to
-  //  avoid changing the types of some subset of stores due to visit order,
-  //  preventing their merging.
-  if (isa<ConstantFPSDNode>(Value)) {
-    if (SDValue NewSt = replaceStoreOfFPConstant(ST))
-      return NewSt;
-  }
-
   // Try to infer better alignment information than the store already has.
   if (OptLevel != CodeGenOpt::None && ST->isUnindexed()) {
     if (unsigned Align = DAG.InferPtrAlignment(Ptr)) {
@@ -11616,6 +11606,16 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
 
     if (EverChanged)
       return SDValue(N, 0);
+  }
+
+  // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
+  //
+  // Make sure to do this only after attempting to merge stores in order to
+  //  avoid changing the types of some subset of stores due to visit order,
+  //  preventing their merging.
+  if (isa<ConstantFPSDNode>(Value)) {
+    if (SDValue NewSt = replaceStoreOfFPConstant(ST))
+      return NewSt;
   }
 
   return ReduceLoadOpStoreWidth(N);
