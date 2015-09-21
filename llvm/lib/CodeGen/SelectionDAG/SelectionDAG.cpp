@@ -927,7 +927,7 @@ SelectionDAG::SelectionDAG(const TargetMachine &tm, CodeGenOpt::Level OL)
       EntryNode(ISD::EntryToken, 0, DebugLoc(), getVTList(MVT::Other)),
       Root(getEntryNode()), NewNodesMustHaveLegalTypes(false),
       UpdateListeners(nullptr) {
-  AllNodes.push_back(&EntryNode);
+  InsertNode(&EntryNode);
   DbgInfo = new SDDbgInfo();
 }
 
@@ -1024,7 +1024,7 @@ void SelectionDAG::clear() {
             static_cast<SDNode*>(nullptr));
 
   EntryNode.UseList = nullptr;
-  AllNodes.push_back(&EntryNode);
+  InsertNode(&EntryNode);
   Root = getEntryNode();
   DbgInfo->clear();
 }
