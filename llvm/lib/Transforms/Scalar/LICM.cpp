@@ -471,6 +471,17 @@ bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA, DominatorTree *DT,
     if (Behavior == FMRB_DoesNotAccessMemory)
       return true;
     if (AliasAnalysis::onlyReadsMemory(Behavior)) {
+      // A readonly argmemonly function only reads from memory pointed to by
+      // it's arguments with arbitrary offsets.  If we can prove there are no
+      // writes to this memory in the loop, we can hoist or sink.
+      if (AliasAnalysis::onlyAccessesArgPointees(Behavior)) {
+        for (Value *Op : CI->arg_operands())
+          if (Op->getType()->isPointerTy() &&
+              pointerInvalidatedByLoop(Op, MemoryLocation::UnknownSize,
+                                       AAMDNodes(), CurAST))
+            return false;
+        return true;
+      }
       // If this call only reads from memory and there are no writes to memory
       // in the loop, we can hoist or sink the call as appropriate.
       bool FoundMod = false;
