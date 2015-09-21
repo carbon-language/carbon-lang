@@ -263,6 +263,7 @@ class lld::elf2::OutputSection final
 public:
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
   typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   OutputSection(const PltSection<ELFT> &PltSec, const GotSection<ELFT> &GotSec,
@@ -734,6 +735,21 @@ getSymVA(const DefinedRegular<ELFT> *DR) {
 }
 
 template <class ELFT>
+static typename ELFFile<ELFT>::uintX_t
+getLocalSymVA(const typename ELFFile<ELFT>::Elf_Sym *Sym,
+              const ObjectFile<ELFT> &File) {
+  uint32_t SecIndex = Sym->st_shndx;
+
+  if (SecIndex == SHN_XINDEX)
+    SecIndex = File.getObj()->getExtendedSymbolTableIndex(
+        Sym, File.getSymbolTable(), File.getSymbolTableShndx());
+  ArrayRef<InputSection<ELFT> *> Chunks = File.getChunks();
+  InputSection<ELFT> *Section = Chunks[SecIndex];
+  OutputSection<ELFT> *Out = Section->getOutputSection();
+  return Out->getVA() + Section->getOutputSectionOff() + Sym->st_value;
+}
+
+template <class ELFT>
 void OutputSection<ELFT>::relocateOne(uint8_t *Buf, const Elf_Rel &Rel,
                                       uint32_t Type, uintX_t BaseAddr,
                                       uintX_t SymVA) {
@@ -789,42 +805,51 @@ void OutputSection<ELFT>::relocate(
   bool IsMips64EL = File.getObj()->isMips64EL();
   for (const RelType &RI : Rels) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
-    const SymbolBody *Body = File.getSymbolBody(SymIndex);
-    if (!Body)
-      continue;
-
     uint32_t Type = RI.getType(IsMips64EL);
     uintX_t SymVA;
 
-    switch (Body->kind()) {
-    case SymbolBody::DefinedRegularKind:
-      SymVA = getSymVA<ELFT>(cast<DefinedRegular<ELFT>>(Body));
-      break;
-    case SymbolBody::DefinedAbsoluteKind:
-      SymVA = cast<DefinedAbsolute<ELFT>>(Body)->Sym.st_value;
-      break;
-    case SymbolBody::DefinedCommonKind: {
-      auto *DC = cast<DefinedCommon<ELFT>>(Body);
-      SymVA = DC->OutputSec->getVA() + DC->OffsetInBSS;
-      break;
-    }
-    case SymbolBody::SharedKind:
-      if (relocNeedsPLT(Type)) {
-        SymVA = PltSec.getEntryAddr(*Body);
-        Type = R_X86_64_PC32;
-      } else if (relocNeedsGOT(Type)) {
-        SymVA = GotSec.getEntryAddr(*Body);
-        Type = R_X86_64_PC32;
-      } else {
+    // Handle relocations for local symbols -- they never get
+    // resolved so we don't allocate a SymbolBody.
+    const Elf_Shdr *SymTab = File.getSymbolTable();
+    if (SymIndex < SymTab->sh_info) {
+      const Elf_Sym *Sym = File.getObj()->getRelocationSymbol(&RI, SymTab);
+      if (!Sym)
         continue;
+      SymVA = getLocalSymVA(Sym, File);
+    } else {
+      const SymbolBody *Body = File.getSymbolBody(SymIndex);
+      if (!Body)
+        continue;
+      switch (Body->kind()) {
+      case SymbolBody::DefinedRegularKind:
+        SymVA = getSymVA<ELFT>(cast<DefinedRegular<ELFT>>(Body));
+        break;
+      case SymbolBody::DefinedAbsoluteKind:
+        SymVA = cast<DefinedAbsolute<ELFT>>(Body)->Sym.st_value;
+        break;
+      case SymbolBody::DefinedCommonKind: {
+        auto *DC = cast<DefinedCommon<ELFT>>(Body);
+        SymVA = DC->OutputSec->getVA() + DC->OffsetInBSS;
+        break;
       }
-      break;
-    case SymbolBody::UndefinedKind:
-      assert(Body->isWeak() && "Undefined symbol reached writer");
-      SymVA = 0;
-      break;
-    case SymbolBody::LazyKind:
-      llvm_unreachable("Lazy symbol reached writer");
+      case SymbolBody::SharedKind:
+        if (relocNeedsPLT(Type)) {
+          SymVA = PltSec.getEntryAddr(*Body);
+          Type = R_X86_64_PC32;
+        } else if (relocNeedsGOT(Type)) {
+          SymVA = GotSec.getEntryAddr(*Body);
+          Type = R_X86_64_PC32;
+        } else {
+          continue;
+        }
+        break;
+      case SymbolBody::UndefinedKind:
+        assert(Body->isWeak() && "Undefined symbol reached writer");
+        SymVA = 0;
+        break;
+      case SymbolBody::LazyKind:
+        llvm_unreachable("Lazy symbol reached writer");
+      }
     }
 
     relocateOne(Buf, RI, Type, BaseAddr, SymVA);
