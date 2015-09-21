@@ -29,3 +29,21 @@
 #define CLK_Rx                       0x10BA
 #define CLK_RGx                      0x10BB
 #define CLK_RGBx                     0x10BC
+
+/* sampler normalized coords */
+#define CLK_NORMALIZED_COORDS_FALSE  0x0000
+#define CLK_NORMALIZED_COORDS_TRUE   0x0001
+#define __CLC_NORMALIZED_COORDS_MASK 0x0001
+
+/* sampler addressing mode */
+#define CLK_ADDRESS_NONE             0x0000
+#define CLK_ADDRESS_CLAMP_TO_EDGE    0x0002
+#define CLK_ADDRESS_CLAMP            0x0004
+#define CLK_ADDRESS_REPEAT           0x0006
+#define CLK_ADDRESS_MIRRORED_REPEAT  0x0008
+#define __CLC_ADDRESS_MASK           0x000E
+
+/* sampler filter mode */
+#define CLK_FILTER_NEAREST           0x0000
+#define CLK_FILTER_LINEAR            0x0010
+#define __CLC_FILTER_MASK            0x0010
