@@ -1670,7 +1670,7 @@ static void AddGoldPlugin(const ToolChain &ToolChain, const ArgList &Args,
 /// parameter in reciprocal argument strings. Return false if there is an error
 /// parsing the refinement step. Otherwise, return true and set the Position
 /// of the refinement step in the input string.
-static bool getRefinementStep(const StringRef &In, const Driver &D,
+static bool getRefinementStep(StringRef In, const Driver &D,
                               const Arg &A, size_t &Position) {
   const char RefinementStepToken = ':';
   Position = In.find(RefinementStepToken);
