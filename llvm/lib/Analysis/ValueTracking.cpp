@@ -609,6 +609,11 @@ static void computeKnownBitsFromDominatingCondition(Value *V, APInt &KnownZero,
   if (!Q.DT || !Q.CxtI)
     return;
   Instruction *Cxt = const_cast<Instruction *>(Q.CxtI);
+  // The context instruction might be in a statically unreachable block.  If
+  // so, asking dominator queries may yield suprising results.  (e.g. the block
+  // may not have a dom tree node)
+  if (!Q.DT->isReachableFromEntry(Cxt->getParent()))
+    return;
 
   // Avoid useless work
   if (auto VI = dyn_cast<Instruction>(V))
@@ -655,7 +660,9 @@ static void computeKnownBitsFromDominatingCondition(Value *V, APInt &KnownZero,
     // instruction.  Finding a condition where one path dominates the context
     // isn't enough because both the true and false cases could merge before
     // the context instruction we're actually interested in.  Instead, we need
-    // to ensure that the taken *edge* dominates the context instruction.
+    // to ensure that the taken *edge* dominates the context instruction.  We
+    // know that the edge must be reachable since we started from a reachable
+    // block.
     BasicBlock *BB0 = BI->getSuccessor(0);
     BasicBlockEdge Edge(BI->getParent(), BB0);
     if (!Edge.isSingleEdge() || !Q.DT->dominates(Edge, Q.CxtI->getParent()))
