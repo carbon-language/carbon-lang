@@ -83,6 +83,7 @@ RESULTS_LISTENER_CHANNEL = None
    for the given thread/process calling it.  Returns a 0-based index."""
 GET_WORKER_INDEX = None
 
+
 def setup_global_variables(
         lock, counter, total, name_len, options, worker_index_map):
     global output_lock, test_counter, total_tests, test_name_len
@@ -277,6 +278,7 @@ def process_dir_worker_multiprocessing(
 
     # Shut off interrupt handling in the child process.
     signal.signal(signal.SIGINT, signal.SIG_IGN)
+    signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
     # Setup the global state for the worker process.
     setup_global_variables(
@@ -1163,6 +1165,9 @@ def main(print_details_on_success, num_threads, test_subdir,
     will send test results side-channel data over a socket to the parallel
     test runner, which will forward them on to results_formatter.
     """
+
+    # Do not shut down on sighup.
+    signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
     dotest_argv = sys.argv[1:]
 
