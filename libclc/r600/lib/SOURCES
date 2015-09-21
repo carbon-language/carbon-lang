@@ -10,3 +10,9 @@ workitem/get_global_size.ll
 workitem/get_work_dim.ll
 synchronization/barrier.cl
 synchronization/barrier_impl.ll
+image/get_image_width.cl
+image/get_image_height.cl
+image/get_image_depth.cl
+image/get_image_channel_data_type.cl
+image/get_image_channel_order.cl
+image/get_image_attributes_impl.ll

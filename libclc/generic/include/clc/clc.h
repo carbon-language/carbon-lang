@@ -210,6 +210,10 @@
 #include <clc/cl_khr_local_int32_extended_atomics/atom_or.h>
 #include <clc/cl_khr_local_int32_extended_atomics/atom_xor.h>
 
+/* 6.11.13 Image Read and Write Functions */
+
+#include <clc/image/image.h>
+
 /* libclc internal defintions */
 #ifdef __CLC_INTERNAL
 #include <math/clc_nextafter.h>
