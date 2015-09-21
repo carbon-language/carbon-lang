@@ -11395,20 +11395,7 @@ SDValue DAGCombiner::replaceStoreOfFPConstant(StoreSDNode *ST) {
       Tmp = DAG.getConstant((uint32_t)CFP->getValueAPF().
                             bitcastToAPInt().getZExtValue(), SDLoc(CFP),
                             MVT::i32);
-      SDValue NewSt = DAG.getStore(Chain, DL, Tmp,
-                                   Ptr, ST->getMemOperand());
-
-      dbgs() << "Replacing FP constant: ";
-      Value->dump(&DAG);
-
-      if (cast<StoreSDNode>(NewSt)->getMemoryVT() != MVT::i32) {
-        dbgs() << "Different memoryvt\n";
-      } else {
-        dbgs() << "same memoryvt\n";
-      }
-
-
-      return NewSt;
+      return DAG.getStore(Chain, DL, Tmp, Ptr, ST->getMemOperand());
     }
 
     return SDValue();
