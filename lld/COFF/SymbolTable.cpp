@@ -24,15 +24,21 @@ namespace lld {
 namespace coff {
 
 void SymbolTable::addFile(std::unique_ptr<InputFile> FileP) {
+#if LLVM_ENABLE_THREADS
+  std::launch Policy = std::launch::async;
+#else
+  std::launch Policy = std::launch::deferred;
+#endif
+
   InputFile *File = FileP.get();
   Files.push_back(std::move(FileP));
   if (auto *F = dyn_cast<ArchiveFile>(File)) {
     ArchiveQueue.push_back(
-        std::async(std::launch::async, [=]() { F->parse(); return F; }));
+        std::async(Policy, [=]() { F->parse(); return F; }));
     return;
   }
   ObjectQueue.push_back(
-      std::async(std::launch::async, [=]() { File->parse(); return File; }));
+      std::async(Policy, [=]() { File->parse(); return File; }));
   if (auto *F = dyn_cast<ObjectFile>(File)) {
     ObjectFiles.push_back(F);
   } else if (auto *F = dyn_cast<BitcodeFile>(File)) {
