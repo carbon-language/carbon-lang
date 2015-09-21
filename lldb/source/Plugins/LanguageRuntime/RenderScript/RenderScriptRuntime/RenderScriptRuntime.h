@@ -150,8 +150,7 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
         eModuleKindKernelObj
     };
 
-
-    ~RenderScriptRuntime() {}
+    ~RenderScriptRuntime();
 
     //------------------------------------------------------------------
     // Static Functions
@@ -253,20 +252,16 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     
     typedef std::shared_ptr<RuntimeHook> RuntimeHookSP;
 
-    struct ScriptDetails
-    {
-        std::string resname;
-        std::string scriptDyLib;
-        std::string cachedir;
-        lldb::addr_t context;
-        lldb::addr_t script;
-    };
+    struct ScriptDetails;
+    struct AllocationDetails;
 
     lldb::ModuleSP m_libRS;
     lldb::ModuleSP m_libRSDriver;
     lldb::ModuleSP m_libRSCpuRef;
     std::vector<lldb_renderscript::RSModuleDescriptorSP> m_rsmodules;
-    std::vector<ScriptDetails> m_scripts;
+
+    std::vector<std::unique_ptr<ScriptDetails>> m_scripts;
+    std::vector<std::unique_ptr<AllocationDetails>> m_allocations;
 
     std::map<lldb::addr_t, lldb_renderscript::RSModuleDescriptorSP> m_scriptMappings;
     std::map<lldb::addr_t, RuntimeHookSP> m_runtimeHooks;
@@ -293,6 +288,17 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     void CaptureAllocationInit1(RuntimeHook* hook_info, ExecutionContext& context);
     void CaptureSetGlobalVar1(RuntimeHook* hook_info, ExecutionContext& context);
 
+    // Search for a script detail object using a target address.
+    // If a script does not currently exist this function will return nullptr.
+    // If 'create' is true and there is no previous script with this address,
+    // then a new Script detail object will be created for this address and returned.
+    ScriptDetails* LookUpScript(lldb::addr_t address, bool create);
+
+    // Search for a previously saved allocation detail object using a target address.
+    // If an allocation does not exist for this address then nullptr will be returned.
+    // If 'create' is true and there is no previous allocation then a new allocation
+    // detail object will be created for this address and returned.
+    AllocationDetails* LookUpAllocation(lldb::addr_t address, bool create);
 };
 
 } // namespace lldb_private

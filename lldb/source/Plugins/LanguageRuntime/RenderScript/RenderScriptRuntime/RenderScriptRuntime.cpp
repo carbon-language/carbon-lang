@@ -32,6 +32,126 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_renderscript;
 
+namespace {
+
+// The empirical_type adds a basic level of validation to arbitrary data
+// allowing us to track if data has been discovered and stored or not.
+// An empirical_type will be marked as valid only if it has been explicitly assigned to.
+template <typename type_t>
+class empirical_type
+{
+  public:
+    // Ctor. Contents is invalid when constructed.
+    empirical_type()
+        : valid(false)
+    {}
+
+    // Return true and copy contents to out if valid, else return false.
+    bool get(type_t& out) const
+    {
+        if (valid)
+            out = data;
+        return valid;
+    }
+
+    // Return a pointer to the contents or nullptr if it was not valid.
+    const type_t* get() const
+    {
+        return valid ? &data : nullptr;
+    }
+
+    // Assign data explicitly.
+    void set(const type_t in)
+    {
+        data = in;
+        valid = true;
+    }
+
+    // Mark contents as invalid.
+    void invalidate()
+    {
+        valid = false;
+    }
+
+    // Returns true if this type contains valid data.
+    bool isValid() const
+    {
+        return valid;
+    }
+
+    // Assignment operator.
+    empirical_type<type_t>& operator = (const type_t in)
+    {
+        set(in);
+        return *this;
+    }
+
+    // Dereference operator returns contents.
+    // Warning: Will assert if not valid so use only when you know data is valid.
+    const type_t& operator * () const
+    {
+        assert(valid);
+        return data;
+    }
+
+  protected:
+    bool valid;
+    type_t data;
+};
+
+} // namespace {}
+
+// The ScriptDetails class collects data associated with a single script instance.
+struct RenderScriptRuntime::ScriptDetails
+{
+    ~ScriptDetails() {};
+
+    enum ScriptType
+    {
+        eScript,
+        eScriptC
+    };
+
+    // The derived type of the script.
+    empirical_type<ScriptType> type;
+    // The name of the original source file.
+    empirical_type<std::string> resName;
+    // Path to script .so file on the device.
+    empirical_type<std::string> scriptDyLib;
+    // Directory where kernel objects are cached on device.
+    empirical_type<std::string> cacheDir;
+    // Pointer to the context which owns this script.
+    empirical_type<lldb::addr_t> context;
+    // Pointer to the script object itself.
+    empirical_type<lldb::addr_t> script;
+};
+
+// This AllocationDetails class collects data associated with a single
+// allocation instance.
+struct RenderScriptRuntime::AllocationDetails
+{
+    ~AllocationDetails () {};
+
+    enum DataType
+    {
+        eInt,
+    };
+
+    enum Dimension
+    {
+        e1d,
+        e2d,
+        e3d,
+        eCubeMap,
+    };
+
+    empirical_type<DataType> type;
+    empirical_type<Dimension> dimension;
+    empirical_type<lldb::addr_t> address;
+    empirical_type<lldb::addr_t> dataPtr;
+    empirical_type<lldb::addr_t> context;
+};
+
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
@@ -484,6 +604,10 @@ RenderScriptRuntime::CaptureAllocationInit1(RuntimeHook* hook_info, ExecutionCon
     if (log)
         log->Printf ("RenderScriptRuntime::CaptureAllocationInit1 - 0x%" PRIx64 ",0x%" PRIx64 ",0x%" PRIx64 " .",
                         rs_context_u64, rs_alloc_u64, rs_forceZero_u64);
+
+    AllocationDetails* alloc = LookUpAllocation(rs_alloc_u64, true);
+    if (alloc)
+        alloc->context = rs_context_u64;
 }
 
 void 
@@ -541,14 +665,15 @@ RenderScriptRuntime::CaptureScriptInit1(RuntimeHook* hook_info, ExecutionContext
         StreamString strm;
         strm.Printf("librs.%s.so", resname.c_str());
 
-        ScriptDetails script;
-        script.cachedir = cachedir;
-        script.resname = resname;
-        script.scriptDyLib.assign(strm.GetData());
-        script.script = (addr_t) rs_script_u64;
-        script.context = (addr_t) rs_context_u64;
-
-        m_scripts.push_back(script);
+        ScriptDetails* script = LookUpScript(rs_script_u64, true);
+        if (script)
+        {
+            script->type = ScriptDetails::eScriptC;
+            script->cacheDir = cachedir;
+            script->resName = resname;
+            script->scriptDyLib = strm.GetData();
+            script->context = addr_t(rs_context_u64);
+        }
 
         if (log)
             log->Printf ("RenderScriptRuntime::CaptureScriptInit1 - '%s' tagged with context 0x%" PRIx64 " and script 0x%" PRIx64 ".",
@@ -560,7 +685,6 @@ RenderScriptRuntime::CaptureScriptInit1(RuntimeHook* hook_info, ExecutionContext
     }
 
 }
-
 
 void
 RenderScriptRuntime::LoadRuntimeHooks(lldb::ModuleSP module, ModuleKind kind)
@@ -642,35 +766,51 @@ RenderScriptRuntime::FixupScriptDetails(RSModuleDescriptorSP rsmodule_sp)
 
     const ModuleSP module = rsmodule_sp->m_module;
     const FileSpec& file = module->GetPlatformFileSpec();
-    
-    for (const auto &rs_script : m_scripts)
+
+    // Iterate over all of the scripts that we currently know of.
+    // Note: We cant push or pop to m_scripts here or it may invalidate rs_script.
+    for (const auto & rs_script : m_scripts)
     {
-        if (file.GetFilename() == ConstString(rs_script.scriptDyLib.c_str()))
+        // Extract the expected .so file path for this script.
+        std::string dylib;
+        if (!rs_script->scriptDyLib.get(dylib))
+            continue;
+
+        // Only proceed if the module that has loaded corresponds to this script.
+        if (file.GetFilename() != ConstString(dylib.c_str()))
+            continue;
+
+        // Obtain the script address which we use as a key.
+        lldb::addr_t script;
+        if (!rs_script->script.get(script))
+            continue;
+
+        // If we have a script mapping for the current script.
+        if (m_scriptMappings.find(script) != m_scriptMappings.end())
         {
-            if (m_scriptMappings.find( rs_script.script ) != m_scriptMappings.end())
+            // if the module we have stored is different to the one we just received.
+            if (m_scriptMappings[script] != rsmodule_sp)
             {
-                if (m_scriptMappings[rs_script.script] != rsmodule_sp)
-                {
-                    if (log)
-                    {
-                        log->Printf ("RenderScriptRuntime::FixupScriptDetails - Error: script %" PRIx64 " wants reassigned to new rsmodule '%s'.", 
-                                     (uint64_t)rs_script.script, rsmodule_sp->m_module->GetFileSpec().GetFilename().AsCString());
-                    }
-                }
-            }
-            else
-            {
-                m_scriptMappings[rs_script.script] = rsmodule_sp;
-                rsmodule_sp->m_resname = rs_script.resname;
                 if (log)
-                {
-                    log->Printf ("RenderScriptRuntime::FixupScriptDetails - script %" PRIx64 " associated with rsmodule '%s'.", 
-                                    (uint64_t)rs_script.script, rsmodule_sp->m_module->GetFileSpec().GetFilename().AsCString());
-                }
+                    log->Printf ("RenderScriptRuntime::FixupScriptDetails - Error: script %" PRIx64 " wants reassigned to new rsmodule '%s'.",
+                                    (uint64_t)script, rsmodule_sp->m_module->GetFileSpec().GetFilename().AsCString());
             }
         }
+        // We don't have a script mapping for the current script.
+        else
+        {
+            // Obtain the script resource name.
+            std::string resName;
+            if (rs_script->resName.get(resName))
+                // Set the modules resource name.
+                rsmodule_sp->m_resname = resName;
+            // Add Script/Module pair to map.
+            m_scriptMappings[script] = rsmodule_sp;
+            if (log)
+                log->Printf ("RenderScriptRuntime::FixupScriptDetails - script %" PRIx64 " associated with rsmodule '%s'.",
+                                (uint64_t)script, rsmodule_sp->m_module->GetFileSpec().GetFilename().AsCString());
+        }
     }
-    
 }
 
 bool
@@ -922,15 +1062,21 @@ RenderScriptRuntime::DumpContexts(Stream &strm) const
 
     std::map<addr_t, uint64_t> contextReferences;
 
-    for (const auto &script : m_scripts)
+    // Iterate over all of the currently discovered scripts.
+    // Note: We cant push or pop from m_scripts inside this loop or it may invalidate script.
+    for (const auto & script : m_scripts)
     {
-        if (contextReferences.find(script.context) != contextReferences.end())
+        if (!script->context.isValid())
+            continue;
+        lldb::addr_t context = *script->context;
+
+        if (contextReferences.find(context) != contextReferences.end())
         {
-            contextReferences[script.context]++;
+            contextReferences[context]++;
         }
         else
         {
-            contextReferences[script.context] = 1;
+            contextReferences[context] = 1;
         }
     }
 
@@ -1063,6 +1209,44 @@ RenderScriptRuntime::DumpModules(Stream &strm) const
         module->Dump(strm);
     }
     strm.IndentLess();
+}
+
+RenderScriptRuntime::ScriptDetails*
+RenderScriptRuntime::LookUpScript(addr_t address, bool create)
+{
+    for (const auto & s : m_scripts)
+    {
+        if (s->script.isValid())
+            if (*s->script == address)
+                return s.get();
+    }
+    if (create)
+    {
+        std::unique_ptr<ScriptDetails> s(new ScriptDetails);
+        s->script = address;
+        m_scripts.push_back(std::move(s));
+        return s.get();
+    }
+    return nullptr;
+}
+
+RenderScriptRuntime::AllocationDetails*
+RenderScriptRuntime::LookUpAllocation(addr_t address, bool create)
+{
+    for (const auto & a : m_allocations)
+    {
+        if (a->address.isValid())
+            if (*a->address == address)
+                return a.get();
+    }
+    if (create)
+    {
+        std::unique_ptr<AllocationDetails> a(new AllocationDetails);
+        a->address = address;
+        m_allocations.push_back(std::move(a));
+        return a.get();
+    }
+    return nullptr;
 }
 
 void
@@ -1482,3 +1666,4 @@ RenderScriptRuntime::GetCommandObject(lldb_private::CommandInterpreter& interpre
     return command_object;
 }
 
+RenderScriptRuntime::~RenderScriptRuntime() = default;
