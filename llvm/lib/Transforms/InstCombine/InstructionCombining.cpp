@@ -80,9 +80,9 @@ Value *InstCombiner::EmitGEPOffset(User *GEP) {
   return llvm::EmitGEPOffset(Builder, DL, GEP);
 }
 
-/// ShouldChangeType - Return true if it is desirable to convert a computation
-/// from 'From' to 'To'.  We don't want to convert from a legal to an illegal
-/// type for example, or from a smaller to a larger illegal type.
+/// Return true if it is desirable to convert a computation from 'From' to 'To'.
+/// We don't want to convert from a legal to an illegal type for example or from
+/// a smaller to a larger illegal type.
 bool InstCombiner::ShouldChangeType(Type *From, Type *To) const {
   assert(From->isIntegerTy() && To->isIntegerTy());
 
@@ -157,27 +157,26 @@ static void ClearSubclassDataAfterReassociation(BinaryOperator &I) {
   I.setFastMathFlags(FMF);
 }
 
-/// SimplifyAssociativeOrCommutative - This performs a few simplifications for
-/// operators which are associative or commutative:
-//
-//  Commutative operators:
-//
-//  1. Order operands such that they are listed from right (least complex) to
-//     left (most complex).  This puts constants before unary operators before
-//     binary operators.
-//
-//  Associative operators:
-//
-//  2. Transform: "(A op B) op C" ==> "A op (B op C)" if "B op C" simplifies.
-//  3. Transform: "A op (B op C)" ==> "(A op B) op C" if "A op B" simplifies.
-//
-//  Associative and commutative operators:
-//
-//  4. Transform: "(A op B) op C" ==> "(C op A) op B" if "C op A" simplifies.
-//  5. Transform: "A op (B op C)" ==> "B op (C op A)" if "C op A" simplifies.
-//  6. Transform: "(A op C1) op (B op C2)" ==> "(A op B) op (C1 op C2)"
-//     if C1 and C2 are constants.
-//
+/// This performs a few simplifications for operators that are associative or
+/// commutative:
+///
+///  Commutative operators:
+///
+///  1. Order operands such that they are listed from right (least complex) to
+///     left (most complex).  This puts constants before unary operators before
+///     binary operators.
+///
+///  Associative operators:
+///
+///  2. Transform: "(A op B) op C" ==> "A op (B op C)" if "B op C" simplifies.
+///  3. Transform: "A op (B op C)" ==> "(A op B) op C" if "A op B" simplifies.
+///
+///  Associative and commutative operators:
+///
+///  4. Transform: "(A op B) op C" ==> "(C op A) op B" if "C op A" simplifies.
+///  5. Transform: "A op (B op C)" ==> "B op (C op A)" if "C op A" simplifies.
+///  6. Transform: "(A op C1) op (B op C2)" ==> "(A op B) op (C1 op C2)"
+///     if C1 and C2 are constants.
 bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
   Instruction::BinaryOps Opcode = I.getOpcode();
   bool Changed = false;
@@ -323,7 +322,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
   } while (1);
 }
 
-/// LeftDistributesOverRight - Whether "X LOp (Y ROp Z)" is always equal to
+/// Return whether "X LOp (Y ROp Z)" is always equal to
 /// "(X LOp Y) ROp (X LOp Z)".
 static bool LeftDistributesOverRight(Instruction::BinaryOps LOp,
                                      Instruction::BinaryOps ROp) {
@@ -362,7 +361,7 @@ static bool LeftDistributesOverRight(Instruction::BinaryOps LOp,
   }
 }
 
-/// RightDistributesOverLeft - Whether "(X LOp Y) ROp Z" is always equal to
+/// Return whether "(X LOp Y) ROp Z" is always equal to
 /// "(X ROp Z) LOp (Y ROp Z)".
 static bool RightDistributesOverLeft(Instruction::BinaryOps LOp,
                                      Instruction::BinaryOps ROp) {
@@ -538,11 +537,11 @@ static Value *tryFactorization(InstCombiner::BuilderTy *Builder,
   return SimplifiedInst;
 }
 
-/// SimplifyUsingDistributiveLaws - This tries to simplify binary operations
-/// which some other binary operation distributes over either by factorizing
-/// out common terms (eg "(A*B)+(A*C)" -> "A*(B+C)") or expanding out if this
-/// results in simplifications (eg: "A & (B | C) -> (A&B) | (A&C)" if this is
-/// a win).  Returns the simplified value, or null if it didn't simplify.
+/// This tries to simplify binary operations which some other binary operation
+/// distributes over either by factorizing out common terms
+/// (eg "(A*B)+(A*C)" -> "A*(B+C)") or expanding out if this results in
+/// simplifications (eg: "A & (B | C) -> (A&B) | (A&C)" if this is a win).
+/// Returns the simplified value, or null if it didn't simplify.
 Value *InstCombiner::SimplifyUsingDistributiveLaws(BinaryOperator &I) {
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
   BinaryOperator *Op0 = dyn_cast<BinaryOperator>(LHS);
@@ -654,9 +653,8 @@ Value *InstCombiner::SimplifyUsingDistributiveLaws(BinaryOperator &I) {
   return nullptr;
 }
 
-// dyn_castNegVal - Given a 'sub' instruction, return the RHS of the instruction
-// if the LHS is a constant zero (which is the 'negate' form).
-//
+/// Given a 'sub' instruction, return the RHS of the instruction if the LHS is a
+/// constant zero (which is the 'negate' form).
 Value *InstCombiner::dyn_castNegVal(Value *V) const {
   if (BinaryOperator::isNeg(V))
     return BinaryOperator::getNegArgument(V);
@@ -672,10 +670,8 @@ Value *InstCombiner::dyn_castNegVal(Value *V) const {
   return nullptr;
 }
 
-// dyn_castFNegVal - Given a 'fsub' instruction, return the RHS of the
-// instruction if the LHS is a constant negative zero (which is the 'negate'
-// form).
-//
+/// Given a 'fsub' instruction, return the RHS of the instruction if the LHS is
+/// a constant negative zero (which is the 'negate' form).
 Value *InstCombiner::dyn_castFNegVal(Value *V, bool IgnoreZeroSign) const {
   if (BinaryOperator::isFNeg(V, IgnoreZeroSign))
     return BinaryOperator::getFNegArgument(V);
@@ -728,10 +724,10 @@ static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
   llvm_unreachable("Unknown binary instruction type!");
 }
 
-// FoldOpIntoSelect - Given an instruction with a select as one operand and a
-// constant as the other operand, try to fold the binary operator into the
-// select arguments.  This also works for Cast instructions, which obviously do
-// not have a second operand.
+/// Given an instruction with a select as one operand and a constant as the
+/// other operand, try to fold the binary operator into the select arguments.
+/// This also works for Cast instructions, which obviously do not have a second
+/// operand.
 Instruction *InstCombiner::FoldOpIntoSelect(Instruction &Op, SelectInst *SI) {
   // Don't modify shared select instructions
   if (!SI->hasOneUse()) return nullptr;
@@ -780,10 +776,9 @@ Instruction *InstCombiner::FoldOpIntoSelect(Instruction &Op, SelectInst *SI) {
   return nullptr;
 }
 
-/// FoldOpIntoPhi - Given a binary operator, cast instruction, or select which
-/// has a PHI node as operand #0, see if we can fold the instruction into the
-/// PHI (which is only possible if all operands to the PHI are constants).
-///
+/// Given a binary operator, cast instruction, or select which has a PHI node as
+/// operand #0, see if we can fold the instruction into the PHI (which is only
+/// possible if all operands to the PHI are constants).
 Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   PHINode *PN = cast<PHINode>(I.getOperand(0));
   unsigned NumPHIValues = PN->getNumIncomingValues();
@@ -921,10 +916,10 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   return ReplaceInstUsesWith(I, NewPN);
 }
 
-/// FindElementAtOffset - Given a pointer type and a constant offset, determine
-/// whether or not there is a sequence of GEP indices into the pointed type that
-/// will land us at the specified offset.  If so, fill them into NewIndices and
-/// return the resultant element type, otherwise return null.
+/// Given a pointer type and a constant offset, determine whether or not there
+/// is a sequence of GEP indices into the pointed type that will land us at the
+/// specified offset. If so, fill them into NewIndices and return the resultant
+/// element type, otherwise return null.
 Type *InstCombiner::FindElementAtOffset(PointerType *PtrTy, int64_t Offset,
                                         SmallVectorImpl<Value *> &NewIndices) {
   Type *Ty = PtrTy->getElementType();
@@ -993,8 +988,8 @@ static bool shouldMergeGEPs(GEPOperator &GEP, GEPOperator &Src) {
   return true;
 }
 
-/// Descale - Return a value X such that Val = X * Scale, or null if none.  If
-/// the multiplication is known not to overflow then NoSignedWrap is set.
+/// Return a value X such that Val = X * Scale, or null if none.
+/// If the multiplication is known not to overflow, then NoSignedWrap is set.
 Value *InstCombiner::Descale(Value *Val, APInt Scale, bool &NoSignedWrap) {
   assert(isa<IntegerType>(Val->getType()) && "Can only descale integers!");
   assert(cast<IntegerType>(Val->getType())->getBitWidth() ==
@@ -1036,11 +1031,11 @@ Value *InstCombiner::Descale(Value *Val, APInt Scale, bool &NoSignedWrap) {
   // 0'th operand of Val.
   std::pair<Instruction*, unsigned> Parent;
 
-  // RequireNoSignedWrap - Set if the transform requires a descaling at deeper
-  // levels that doesn't overflow.
+  // Set if the transform requires a descaling at deeper levels that doesn't
+  // overflow.
   bool RequireNoSignedWrap = false;
 
-  // logScale - log base 2 of the scale.  Negative if not a power of 2.
+  // Log base 2 of the scale. Negative if not a power of 2.
   int32_t logScale = Scale.exactLogBase2();
 
   for (;; Op = Parent.first->getOperand(Parent.second)) { // Drill down
@@ -2340,7 +2335,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
   return nullptr;
 }
 
-/// isCatchAll - Return 'true' if the given typeinfo will match anything.
+/// Return 'true' if the given typeinfo will match anything.
 static bool isCatchAll(EHPersonality Personality, Constant *TypeInfo) {
   switch (Personality) {
   case EHPersonality::GNU_C:
@@ -2665,10 +2660,10 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
   return nullptr;
 }
 
-/// TryToSinkInstruction - Try to move the specified instruction from its
-/// current block into the beginning of DestBlock, which can only happen if it's
-/// safe to move the instruction past all of the instructions between it and the
-/// end of its block.
+/// Try to move the specified instruction from its current block into the
+/// beginning of DestBlock, which can only happen if it's safe to move the
+/// instruction past all of the instructions between it and the end of its
+/// block.
 static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   assert(I->hasOneUse() && "Invariants didn't hold!");
 
@@ -2829,8 +2824,8 @@ bool InstCombiner::run() {
   return MadeIRChange;
 }
 
-/// AddReachableCodeToWorklist - Walk the function in depth-first order, adding
-/// all reachable code to the worklist.
+/// Walk the function in depth-first order, adding all reachable code to the
+/// worklist.
 ///
 /// This has a couple of tricks to make the code faster and more powerful.  In
 /// particular, we constant fold and DCE instructions as we go, to avoid adding
