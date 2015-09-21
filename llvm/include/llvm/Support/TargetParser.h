@@ -81,6 +81,7 @@ enum ArchExtKind : unsigned {
   AEK_SIMD = 0x80,
   AEK_SEC = 0x100,
   AEK_VIRT = 0x200,
+  AEK_T2DSP = 0x400,
   // Unsupported extensions.
   AEK_OS = 0x8000000,
   AEK_IWMMXT = 0x10000000,
