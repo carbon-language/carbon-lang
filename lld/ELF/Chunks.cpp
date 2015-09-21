@@ -18,10 +18,10 @@ using namespace lld;
 using namespace lld::elf2;
 
 template <class ELFT>
-SectionChunk<ELFT>::SectionChunk(ObjectFile<ELFT> *F, const Elf_Shdr *Header)
+InputSection<ELFT>::InputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header)
     : File(F), Header(Header) {}
 
-template <class ELFT> void SectionChunk<ELFT>::writeTo(uint8_t *Buf) {
+template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
   if (Header->sh_type == SHT_NOBITS)
     return;
   // Copy section contents from source object file to output file.
@@ -29,7 +29,7 @@ template <class ELFT> void SectionChunk<ELFT>::writeTo(uint8_t *Buf) {
   memcpy(Buf + OutputSectionOff, Data.data(), Data.size());
 }
 
-template <class ELFT> StringRef SectionChunk<ELFT>::getSectionName() const {
+template <class ELFT> StringRef InputSection<ELFT>::getSectionName() const {
   ErrorOr<StringRef> Name = File->getObj()->getSectionName(Header);
   error(Name);
   return *Name;
@@ -37,9 +37,9 @@ template <class ELFT> StringRef SectionChunk<ELFT>::getSectionName() const {
 
 namespace lld {
 namespace elf2 {
-template class SectionChunk<object::ELF32LE>;
-template class SectionChunk<object::ELF32BE>;
-template class SectionChunk<object::ELF64LE>;
-template class SectionChunk<object::ELF64BE>;
+template class InputSection<object::ELF32LE>;
+template class InputSection<object::ELF32BE>;
+template class InputSection<object::ELF64LE>;
+template class InputSection<object::ELF64BE>;
 }
 }

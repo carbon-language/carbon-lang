@@ -197,14 +197,14 @@ template <class ELFT> class DefinedRegular : public Defined<ELFT> {
 
 public:
   explicit DefinedRegular(StringRef N, const Elf_Sym &Sym,
-                          SectionChunk<ELFT> &Section)
+                          InputSection<ELFT> &Section)
       : Defined<ELFT>(Base::DefinedRegularKind, N, Sym), Section(Section) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedRegularKind;
   }
 
-  const SectionChunk<ELFT> &Section;
+  const InputSection<ELFT> &Section;
 };
 
 // Undefined symbol.

@@ -96,7 +96,7 @@ template <class ELFT> class SymbolTableSection;
 
 template <class ELFT> struct DynamicReloc {
   typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
-  const SectionChunk<ELFT> &C;
+  const InputSection<ELFT> &C;
   const Elf_Rel &RI;
 };
 
@@ -225,7 +225,7 @@ public:
     auto *P = reinterpret_cast<Elf_Rela *>(Buf);
     bool IsMips64EL = Relocs[0].C.getFile()->getObj()->isMips64EL();
     for (const DynamicReloc<ELFT> &Rel : Relocs) {
-      const SectionChunk<ELFT> &C = Rel.C;
+      const InputSection<ELFT> &C = Rel.C;
       const Elf_Rel &RI = Rel.RI;
       OutputSection<ELFT> *Out = C.getOutputSection();
       uint32_t SymIndex = RI.getSymbol(IsMips64EL);
@@ -270,7 +270,7 @@ public:
       : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags),
         PltSec(PltSec), GotSec(GotSec) {}
 
-  void addChunk(SectionChunk<ELFT> *C);
+  void addChunk(InputSection<ELFT> *C);
   void writeTo(uint8_t *Buf) override;
 
   template <bool isRela>
@@ -284,7 +284,7 @@ public:
                    uintX_t BaseAddr, uintX_t SymVA);
 
 private:
-  std::vector<SectionChunk<ELFT> *> Chunks;
+  std::vector<InputSection<ELFT> *> Chunks;
   const PltSection<ELFT> &PltSec;
   const GotSection<ELFT> &GotSec;
 };
@@ -633,9 +633,9 @@ public:
 private:
   void createSections();
   template <bool isRela>
-  void scanRelocs(const SectionChunk<ELFT> &C,
+  void scanRelocs(const InputSection<ELFT> &C,
                   iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels);
-  void scanRelocs(const SectionChunk<ELFT> &C);
+  void scanRelocs(const InputSection<ELFT> &C);
   void assignAddresses();
   void openFile(StringRef OutputPath);
   void writeHeader();
@@ -711,7 +711,7 @@ template <class ELFT> void Writer<ELFT>::run() {
 }
 
 template <class ELFT>
-void OutputSection<ELFT>::addChunk(SectionChunk<ELFT> *C) {
+void OutputSection<ELFT>::addChunk(InputSection<ELFT> *C) {
   Chunks.push_back(C);
   C->setOutputSection(this);
   uint32_t Align = C->getAlign();
@@ -728,7 +728,7 @@ void OutputSection<ELFT>::addChunk(SectionChunk<ELFT> *C) {
 template <class ELFT>
 static typename ELFFile<ELFT>::uintX_t
 getSymVA(const DefinedRegular<ELFT> *DR) {
-  const SectionChunk<ELFT> *SC = &DR->Section;
+  const InputSection<ELFT> *SC = &DR->Section;
   OutputSection<ELFT> *OS = SC->getOutputSection();
   return OS->getVA() + SC->getOutputSectionOff() + DR->Sym.st_value;
 }
@@ -832,7 +832,7 @@ void OutputSection<ELFT>::relocate(
 }
 
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
-  for (SectionChunk<ELFT> *C : Chunks) {
+  for (InputSection<ELFT> *C : Chunks) {
     C->writeTo(Buf);
     const ObjectFile<ELFT> *File = C->getFile();
     ELFFile<ELFT> *EObj = File->getObj();
@@ -876,7 +876,7 @@ static bool includeInSymtab(const SymbolBody &B) {
 
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   const OutputSection<ELFT> *Out = nullptr;
-  const SectionChunk<ELFT> *Section = nullptr;
+  const InputSection<ELFT> *Section = nullptr;
   Buf += sizeof(Elf_Sym);
 
   // All symbols with STB_LOCAL binding precede the weak and global symbols.
@@ -898,7 +898,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
         if (SecIndex == SHN_XINDEX)
           SecIndex = File.getObj()->getExtendedSymbolTableIndex(
               &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
-        ArrayRef<SectionChunk<ELFT> *> Chunks = File.getChunks();
+        ArrayRef<InputSection<ELFT> *> Chunks = File.getChunks();
         Section = Chunks[SecIndex];
         assert(Section != nullptr);
         Out = Section->getOutputSection();
@@ -1035,7 +1035,7 @@ static bool compSec(OutputSectionBase<Is64Bits> *A,
 template <class ELFT>
 template <bool isRela>
 void Writer<ELFT>::scanRelocs(
-    const SectionChunk<ELFT> &C,
+    const InputSection<ELFT> &C,
     iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels) {
   typedef Elf_Rel_Impl<ELFT, isRela> RelType;
   const ObjectFile<ELFT> &File = *C.getFile();
@@ -1064,7 +1064,7 @@ void Writer<ELFT>::scanRelocs(
 }
 
 template <class ELFT>
-void Writer<ELFT>::scanRelocs(const SectionChunk<ELFT> &C) {
+void Writer<ELFT>::scanRelocs(const InputSection<ELFT> &C) {
   const ObjectFile<ELFT> *File = C.getFile();
   ELFFile<ELFT> *EObj = File->getObj();
 
@@ -1126,7 +1126,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
           SymTabSec.addSymbol(*SymName, true);
       }
     }
-    for (SectionChunk<ELFT> *C : File.getChunks()) {
+    for (InputSection<ELFT> *C : File.getChunks()) {
       if (!C)
         continue;
       const Elf_Shdr *H = C->getSectionHdr();

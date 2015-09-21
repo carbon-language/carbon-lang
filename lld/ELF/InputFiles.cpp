@@ -119,14 +119,14 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
       uint32_t RelocatedSectionIndex = Sec.sh_info;
       if (RelocatedSectionIndex >= Size)
         error("Invalid relocated section index");
-      SectionChunk<ELFT> *RelocatedSection = Chunks[RelocatedSectionIndex];
+      InputSection<ELFT> *RelocatedSection = Chunks[RelocatedSectionIndex];
       if (!RelocatedSection)
         error("Unsupported relocation reference");
       RelocatedSection->RelocSections.push_back(&Sec);
       break;
     }
     default:
-      Chunks[I] = new (Alloc) SectionChunk<ELFT>(this, &Sec);
+      Chunks[I] = new (Alloc) InputSection<ELFT>(this, &Sec);
       break;
     }
     ++I;

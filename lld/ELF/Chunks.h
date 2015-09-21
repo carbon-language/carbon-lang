@@ -20,14 +20,14 @@ template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
 
 // A chunk corresponding a section of an input file.
-template <class ELFT> class SectionChunk {
+template <class ELFT> class InputSection {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
-  SectionChunk(ObjectFile<ELFT> *F, const Elf_Shdr *Header);
+  InputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header);
 
   // Returns the size of this chunk (even if this is a common or BSS.)
   size_t getSize() const { return Header->sh_size; }
