@@ -64,13 +64,11 @@
 #if KMP_OS_UNIX
     #include <stdlib.h>    // getenv, setenv, unsetenv.
     #include <string.h>    // strlen, strcpy.
-    #if KMP_OS_LINUX || KMP_OS_FREEBSD
-        extern char * * environ;
-    #elif KMP_OS_DARWIN
+    #if KMP_OS_DARWIN
         #include <crt_externs.h>
         #define environ (*_NSGetEnviron())
     #else
-        #error Unknown or unsupported OS.
+        extern char * * environ;
     #endif
 #elif KMP_OS_WINDOWS
     #include <windows.h>   // GetEnvironmentVariable, SetEnvironmentVariable, GetLastError.
