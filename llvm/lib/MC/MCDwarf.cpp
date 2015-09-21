@@ -221,8 +221,8 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS,
   };
   assert(array_lengthof(StandardOpcodeLengths) >=
          (Params.DWARF2LineOpcodeBase - 1U));
-  return Emit(MCOS, Params, ArrayRef<char>(StandardOpcodeLengths,
-                                           Params.DWARF2LineOpcodeBase - 1));
+  return Emit(MCOS, Params, makeArrayRef(StandardOpcodeLengths,
+                                         Params.DWARF2LineOpcodeBase - 1));
 }
 
 static const MCExpr *forceExpAbs(MCStreamer &OS, const MCExpr* Expr) {

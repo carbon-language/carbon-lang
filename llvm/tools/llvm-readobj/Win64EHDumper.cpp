@@ -254,7 +254,7 @@ void Dumper::printUnwindInfo(const Context &Ctx, const coff_section *Section,
         return;
       }
 
-      printUnwindCode(UI, ArrayRef<UnwindCode>(UCI, UCE));
+      printUnwindCode(UI, makeArrayRef(UCI, UCE));
       UCI = UCI + UsedSlots - 1;
     }
   }

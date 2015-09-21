@@ -2204,65 +2204,65 @@ MachOObjectFile::getLinkOptHintsLoadCommand() const {
 
 ArrayRef<uint8_t> MachOObjectFile::getDyldInfoRebaseOpcodes() const {
   if (!DyldInfoLoadCmd) 
-    return ArrayRef<uint8_t>();
+    return None;
 
   MachO::dyld_info_command DyldInfo 
                    = getStruct<MachO::dyld_info_command>(this, DyldInfoLoadCmd);
   const uint8_t *Ptr = reinterpret_cast<const uint8_t*>(
                                              getPtr(this, DyldInfo.rebase_off));
-  return ArrayRef<uint8_t>(Ptr, DyldInfo.rebase_size);
+  return makeArrayRef(Ptr, DyldInfo.rebase_size);
 }
 
 ArrayRef<uint8_t> MachOObjectFile::getDyldInfoBindOpcodes() const {
   if (!DyldInfoLoadCmd) 
-    return ArrayRef<uint8_t>();
+    return None;
 
   MachO::dyld_info_command DyldInfo 
                    = getStruct<MachO::dyld_info_command>(this, DyldInfoLoadCmd);
   const uint8_t *Ptr = reinterpret_cast<const uint8_t*>(
                                                getPtr(this, DyldInfo.bind_off));
-  return ArrayRef<uint8_t>(Ptr, DyldInfo.bind_size);
+  return makeArrayRef(Ptr, DyldInfo.bind_size);
 }
 
 ArrayRef<uint8_t> MachOObjectFile::getDyldInfoWeakBindOpcodes() const {
   if (!DyldInfoLoadCmd) 
-    return ArrayRef<uint8_t>();
+    return None;
 
   MachO::dyld_info_command DyldInfo 
                    = getStruct<MachO::dyld_info_command>(this, DyldInfoLoadCmd);
   const uint8_t *Ptr = reinterpret_cast<const uint8_t*>(
                                           getPtr(this, DyldInfo.weak_bind_off));
-  return ArrayRef<uint8_t>(Ptr, DyldInfo.weak_bind_size);
+  return makeArrayRef(Ptr, DyldInfo.weak_bind_size);
 }
 
 ArrayRef<uint8_t> MachOObjectFile::getDyldInfoLazyBindOpcodes() const {
   if (!DyldInfoLoadCmd) 
-    return ArrayRef<uint8_t>();
+    return None;
 
   MachO::dyld_info_command DyldInfo 
                    = getStruct<MachO::dyld_info_command>(this, DyldInfoLoadCmd);
   const uint8_t *Ptr = reinterpret_cast<const uint8_t*>(
                                           getPtr(this, DyldInfo.lazy_bind_off));
-  return ArrayRef<uint8_t>(Ptr, DyldInfo.lazy_bind_size);
+  return makeArrayRef(Ptr, DyldInfo.lazy_bind_size);
 }
 
 ArrayRef<uint8_t> MachOObjectFile::getDyldInfoExportsTrie() const {
   if (!DyldInfoLoadCmd) 
-    return ArrayRef<uint8_t>();
+    return None;
 
   MachO::dyld_info_command DyldInfo 
                    = getStruct<MachO::dyld_info_command>(this, DyldInfoLoadCmd);
   const uint8_t *Ptr = reinterpret_cast<const uint8_t*>(
                                              getPtr(this, DyldInfo.export_off));
-  return ArrayRef<uint8_t>(Ptr, DyldInfo.export_size);
+  return makeArrayRef(Ptr, DyldInfo.export_size);
 }
 
 ArrayRef<uint8_t> MachOObjectFile::getUuid() const {
   if (!UuidLoadCmd)
-    return ArrayRef<uint8_t>();
+    return None;
   // Returning a pointer is fine as uuid doesn't need endian swapping.
   const char *Ptr = UuidLoadCmd + offsetof(MachO::uuid_command, uuid);
-  return ArrayRef<uint8_t>(reinterpret_cast<const uint8_t *>(Ptr), 16);
+  return makeArrayRef(reinterpret_cast<const uint8_t *>(Ptr), 16);
 }
 
 StringRef MachOObjectFile::getStringTableData() const {

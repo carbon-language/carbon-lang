@@ -481,7 +481,7 @@ ELFFile<ELFT>::getSHNDXTable(const Elf_Shdr &Section) const {
     return object_error::parse_failed;
   if (NumSymbols != (SymTable.sh_size / sizeof(Elf_Sym)))
     return object_error::parse_failed;
-  return ArrayRef<Elf_Word>(ShndxTableBegin, ShndxTableEnd);
+  return makeArrayRef(ShndxTableBegin, ShndxTableEnd);
 }
 
 template <class ELFT>

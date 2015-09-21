@@ -151,7 +151,7 @@ static void printAllUnwindCodes(ArrayRef<UnwindCode> UCs) {
              << " remaining in buffer";
       return ;
     }
-    printUnwindCode(ArrayRef<UnwindCode>(I, E));
+    printUnwindCode(makeArrayRef(I, E));
     I += UsedSlots;
   }
 }
@@ -433,7 +433,7 @@ static void printWin64EHUnwindInfo(const Win64EH::UnwindInfo *UI) {
   if (UI->NumCodes)
     outs() << "    Unwind Codes:\n";
 
-  printAllUnwindCodes(ArrayRef<UnwindCode>(&UI->UnwindCodes[0], UI->NumCodes));
+  printAllUnwindCodes(makeArrayRef(&UI->UnwindCodes[0], UI->NumCodes));
 
   outs() << "\n";
   outs().flush();
