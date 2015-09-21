@@ -1171,11 +1171,9 @@ def main(print_details_on_success, num_threads, test_subdir,
 
     dotest_argv = sys.argv[1:]
 
-    global output_on_success, RESULTS_FORMATTER, output_lock
+    global output_on_success, RESULTS_FORMATTER
     output_on_success = print_details_on_success
     RESULTS_FORMATTER = results_formatter
-    if RESULTS_FORMATTER is not None:
-        RESULTS_FORMATTER.set_lock(output_lock)
 
     # We can't use sys.path[0] to determine the script directory
     # because it doesn't work under a debugger

@@ -383,7 +383,6 @@ class ResultsFormatter(object):
         self.out_file = out_file
         self.options = options
         self.using_terminal = False
-        self.lock = None # used when coordinating output is needed
         if not self.out_file:
             raise Exception("ResultsFormatter created with no file object")
         self.start_time_by_test = {}
@@ -393,9 +392,6 @@ class ResultsFormatter(object):
         # long we hold the lock just to keep inner state safe, not
         # entirely consistent from the outside.
         self.lock = threading.Lock()
-
-    def set_lock(self, lock):
-        self.lock = lock
 
     def handle_event(self, test_event):
         """Handles the test event for collection into the formatter output.
@@ -911,19 +907,6 @@ class Curses(ResultsFormatter):
         try:
             import lldbcurses
             self.main_window = lldbcurses.intialize_curses()
-            num_jobs = 8 # TODO: need to dynamically determine this
-            job_frame = self.main_window.get_contained_rect(height=num_jobs+2)
-            fail_frame = self.main_window.get_contained_rect(top_inset=num_jobs+2, bottom_inset=1)
-            status_frame = self.main_window.get_contained_rect(height=1, top_inset=self.main_window.get_size().h-1)
-            self.job_panel = lldbcurses.BoxedPanel(job_frame, "Jobs")
-            self.fail_panel = lldbcurses.BoxedPanel(fail_frame, "Failures")
-            self.status_panel = lldbcurses.StatusPanel(status_frame)
-            self.status_panel.add_status_item(name="success", title="Success (%s)" % self.status_to_short_str('success'), format="%u", width=20, value=0, update=False)
-            self.status_panel.add_status_item(name="failure", title="Failure (%s)" % self.status_to_short_str('failure'), format="%u", width=20, value=0, update=False)
-            self.status_panel.add_status_item(name="error", title="Error (%s)" % self.status_to_short_str('error'), format="%u", width=20, value=0, update=False)
-            self.status_panel.add_status_item(name="skip", title="Skipped  (%s)" % self.status_to_short_str('skip'), format="%u", width=20, value=0, update=True)
-            self.status_panel.add_status_item(name="expected_failure", title="Expected Failure (%s)" % self.status_to_short_str('expected_failure'), format="%u", width=30, value=0, update=False)
-            self.status_panel.add_status_item(name="unexpected_success", title="Unexpected Success (%s)" % self.status_to_short_str('unexpected_success'), format="%u", width=30, value=0, update=False)
             self.main_window.refresh()
         except:
             self.have_curses = False
@@ -955,48 +938,71 @@ class Curses(ResultsFormatter):
         else:
             return status
     def handle_event(self, test_event):
-        if self.lock:
-            self.lock.acquire()
-        super(Curses, self).handle_event(test_event)
-        # for formatter in self.formatters:
-        #     formatter.process_event(test_event)
-        if self.have_curses:
-            worker_index = -1
-            if 'worker_index' in test_event:
-                worker_index = test_event['worker_index']
-            if 'event' in test_event:
-                print >>self.events_file, str(test_event)
-                event = test_event['event']
-                if event == 'test_start':
-                    name = test_event['test_class'] + '.' + test_event['test_name']
-                    self.job_tests[worker_index] = test_event
-                    if 'pid' in test_event:
-                        line = 'pid: ' + str(test_event['pid']) + ' ' + name
-                    else:
-                        line = name
-                    self.job_panel.set_line(worker_index, line)
-                    self.main_window.refresh()
-                elif event == 'test_result':
-                    status = test_event['status']
-                    self.status_panel.increment_status(status)
-                    self.job_panel.set_line(worker_index, '')
-                    # if status != 'success' and status != 'skip' and status != 'expect_failure':
-                    name = test_event['test_class'] + '.' + test_event['test_name']
-                    time = test_event['event_time'] - self.job_tests[worker_index]['event_time']
-                    self.fail_panel.append_line('%s (%6.2f sec) %s' % (self.status_to_short_str(status), time, name))
-                    self.main_window.refresh()
-                    self.job_tests[worker_index] = ''
-                elif event == 'job_begin':
-                    self.jobs[worker_index] = test_event
-                elif event == 'job_end':
-                    self.jobs[worker_index] = ''
-                elif event == 'initialize':
-                    self.initialize_event = test_event
-                    num_jobs = test_event['worker_count']
-                    self.main_window.refresh()
-                    
-        if self.lock:
-            self.lock.release()
+        with self.lock:
+            super(Curses, self).handle_event(test_event)
+            # for formatter in self.formatters:
+            #     formatter.process_event(test_event)
+            if self.have_curses:
+                import lldbcurses
+                worker_index = -1
+                if 'worker_index' in test_event:
+                    worker_index = test_event['worker_index']
+                if 'event' in test_event:
+                    print >>self.events_file, str(test_event)
+                    event = test_event['event']
+                    if event == 'test_start':
+                        name = test_event['test_class'] + '.' + test_event['test_name']
+                        self.job_tests[worker_index] = test_event
+                        if 'pid' in test_event:
+                            line = 'pid: %5d ' % (test_event['pid']) + name
+                        else:
+                            line = name
+                        self.job_panel.set_line(worker_index, line)
+                        self.main_window.refresh()
+                    elif event == 'test_result':
+                        status = test_event['status']
+                        self.status_panel.increment_status(status)
+                        if 'pid' in test_event:
+                            line = 'pid: %5d ' % (test_event['pid'])
+                        else:
+                            line = ''
+                        self.job_panel.set_line(worker_index, line)
+                        # if status != 'success' and status != 'skip' and status != 'expect_failure':
+                        name = test_event['test_class'] + '.' + test_event['test_name']
+                        time = test_event['event_time'] - self.job_tests[worker_index]['event_time']
+                        self.fail_panel.append_line('%s (%6.2f sec) %s' % (self.status_to_short_str(status), time, name))
+                        self.main_window.refresh()
+                        self.job_tests[worker_index] = ''
+                    elif event == 'job_begin':
+                        self.jobs[worker_index] = test_event
+                        if 'pid' in test_event:
+                            line = 'pid: %5d ' % (test_event['pid'])
+                        else:
+                            line = ''
+                        self.job_panel.set_line(worker_index, line)
+                    elif event == 'job_end':
+                        self.jobs[worker_index] = ''
+                        self.job_panel.set_line(worker_index, '')
+                    elif event == 'initialize':
+                        self.initialize_event = test_event
+                        num_jobs = test_event['worker_count']
+                        job_frame = self.main_window.get_contained_rect(height=num_jobs+2)
+                        fail_frame = self.main_window.get_contained_rect(top_inset=num_jobs+2, bottom_inset=1)
+                        status_frame = self.main_window.get_contained_rect(height=1, top_inset=self.main_window.get_size().h-1)
+                        self.job_panel = lldbcurses.BoxedPanel(job_frame, "Jobs")
+                        self.fail_panel = lldbcurses.BoxedPanel(fail_frame, "Completed Tests")
+                        self.status_panel = lldbcurses.StatusPanel(status_frame)
+                        self.status_panel.add_status_item(name="success", title="Success", format="%u", width=20, value=0, update=False)
+                        self.status_panel.add_status_item(name="failure", title="Failure", format="%u", width=20, value=0, update=False)
+                        self.status_panel.add_status_item(name="error", title="Error", format="%u", width=20, value=0, update=False)
+                        self.status_panel.add_status_item(name="skip", title="Skipped", format="%u", width=20, value=0, update=True)
+                        self.status_panel.add_status_item(name="expected_failure", title="Expected Failure", format="%u", width=30, value=0, update=False)
+                        self.status_panel.add_status_item(name="unexpected_success", title="Unexpected Success", format="%u", width=30, value=0, update=False)
+                        self.main_window.refresh()
+                    elif event == 'terminate':
+                        lldbcurses.terminate_curses()
+                        self.using_terminal = False
+                        
 
 class DumpFormatter(ResultsFormatter):
     """Formats events to the file as their raw python dictionary format."""
