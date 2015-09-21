@@ -7590,7 +7590,7 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
 
         #if KMP_ARCH_X86_64 || KMP_ARCH_PPC64 || KMP_ARCH_AARCH64
 
-            #if KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN
+            #if KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_NETBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN
 
 	    int teamsize_cutoff = 4;
 
@@ -7612,7 +7612,7 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
                 }
             #else
                 #error "Unknown or unsupported OS"
-            #endif // KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN
+            #endif // KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_NETBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN
 
         #elif KMP_ARCH_X86 || KMP_ARCH_ARM || KMP_ARCH_AARCH
 
