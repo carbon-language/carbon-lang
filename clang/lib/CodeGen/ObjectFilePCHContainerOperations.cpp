@@ -67,6 +67,13 @@ class PCHContainerGenerator : public ASTConsumer {
       return !Ty->isDependentType() && !Ty->isUndeducedType();
     }
 
+    bool VisitImportDecl(ImportDecl *D) {
+      auto *Import = cast<ImportDecl>(D);
+      if (!Import->getImportedOwningModule())
+        DI.EmitImportDecl(*Import);
+      return true;
+    }
+
     bool VisitTypeDecl(TypeDecl *D) {
       QualType QualTy = Ctx.getTypeDeclType(D);
       if (!QualTy.isNull() && CanRepresent(QualTy.getTypePtr()))

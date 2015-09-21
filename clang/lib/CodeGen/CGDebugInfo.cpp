@@ -2161,7 +2161,14 @@ ObjCInterfaceDecl *CGDebugInfo::getObjCInterfaceDecl(QualType Ty) {
 
 llvm::DIModule *CGDebugInfo::getParentModuleOrNull(const Decl *D) {
   ExternalASTSource::ASTSourceDescriptor Info;
-  if (ClangModuleMap) {
+  if (DebugTypeExtRefs && D->isFromASTFile()) {
+    // Record a reference to an imported clang module or precompiled header.
+    auto *Reader = CGM.getContext().getExternalSource();
+    auto Idx = D->getOwningModuleID();
+    auto Info = Reader->getSourceDescriptor(Idx);
+    if (Info)
+      return getOrCreateModuleRef(*Info, /*SkeletonCU=*/true);
+  } else if (ClangModuleMap) {
     // We are building a clang module or a precompiled header.
     //
     // TODO: When D is a CXXRecordDecl or a C++ Enum, the ODR applies
@@ -2179,14 +2186,6 @@ llvm::DIModule *CGDebugInfo::getParentModuleOrNull(const Decl *D) {
     }
   }
 
-  if (DebugTypeExtRefs && D->isFromASTFile()) {
-    // Record a reference to an imported clang module or precompiled header.
-    auto *Reader = CGM.getContext().getExternalSource();
-    auto Idx = D->getOwningModuleID();
-    auto Info = Reader->getSourceDescriptor(Idx);
-    if (Info)
-      return getOrCreateModuleRef(*Info, /*SkeletonCU=*/true);
-  }
   return nullptr;
 }
 
