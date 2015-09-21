@@ -2388,7 +2388,7 @@ private:
   bool SetVarAndLB(VarDecl *NewVar, DeclRefExpr *NewVarRefExpr, Expr *NewLB);
   /// \brief Helper to set upper bound.
   bool SetUB(Expr *NewUB, bool LessOp, bool StrictOp, const SourceRange &SR,
-             const SourceLocation &SL);
+             SourceLocation SL);
   /// \brief Helper to set loop increment.
   bool SetStep(Expr *NewStep, bool Subtract);
 };
@@ -2440,7 +2440,7 @@ bool OpenMPIterationSpaceChecker::SetVarAndLB(VarDecl *NewVar,
 
 bool OpenMPIterationSpaceChecker::SetUB(Expr *NewUB, bool LessOp, bool StrictOp,
                                         const SourceRange &SR,
-                                        const SourceLocation &SL) {
+                                        SourceLocation SL) {
   // State consistency checking to ensure correct usage.
   assert(Var != nullptr && LB != nullptr && UB == nullptr && Step == nullptr &&
          !TestIsLessOp && !TestIsStrictOp);
