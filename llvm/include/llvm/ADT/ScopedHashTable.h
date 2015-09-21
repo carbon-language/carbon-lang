@@ -1,4 +1,4 @@
-//===- ScopedHashTable.h - A simple scoped hash table ---------------------===//
+//===- ScopedHashTable.h - A simple scoped hash table -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
