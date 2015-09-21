@@ -11,10 +11,10 @@ Three kinds of loops can be converted:
 -  Loops over array-like containers, using ``operator[]`` and ``at()``.
 
 MinConfidence option
-====================
+--------------------
 
 risky
------
+^^^^^
 
 In loops where the container expression is more complex than just a
 reference to a declared expression (a variable, function, enum, etc.),
@@ -40,7 +40,7 @@ for an example of an incorrect transformation when the minimum required confiden
 level is set to `risky`.
 
 reasonable (Default)
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 If a loop calls ``.end()`` or ``.size()`` after each iteration, the
 transformation for that loop is marked as `reasonable`, and thus will
@@ -54,7 +54,7 @@ be converted if the required confidence level is set to ``reasonable``
     cout << container[i];
 
 safe
-----
+^^^^
 
 Any other loops that do not match the above criteria to be marked as
 `risky` or `reasonable` are marked `safe`, and thus will be converted
@@ -68,7 +68,7 @@ if the required confidence level is set to ``safe`` or lower.
     cout << arr[i];
 
 Example
-=======
+-------
 
 Original:
 
@@ -117,7 +117,7 @@ After transformation with confidence level set to ``reasonable`` (default):
     cout << elem;
 
 Limitations
-===========
+-----------
 
 There are certain situations where the tool may erroneously perform
 transformations that remove information and change semantics. Users of the tool
@@ -125,7 +125,7 @@ should be aware of the behaviour and limitations of the transform outlined by
 the cases below.
 
 Comments inside loop headers
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Comments inside the original loop header are ignored and deleted when
 transformed.
@@ -135,7 +135,7 @@ transformed.
   for (int i = 0; i < N; /* This will be deleted */ ++i) { }
 
 Range-based loops evaluate end() only once
-------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The C++11 range-based for loop calls ``.end()`` only once during the
 initialization of the loop. If in the original loop ``.end()`` is called after
@@ -201,7 +201,7 @@ transformed loop if ``.end()`` was originally called after each iteration.
   }
 
 Overloaded operator->() with side effects
------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Similarly, if ``operator->()`` was overloaded to have side effects, such as
 logging, the semantics will change. If the iterator's ``operator->()`` was used
@@ -221,7 +221,7 @@ performed.
   }
 
 Pointers and references to containers
--------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 While most of the transform's risk analysis is dedicated to determining whether
 the iterator or container was modified within the loop, it is possible to

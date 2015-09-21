@@ -34,7 +34,7 @@ and maintainability. As a result, ``auto`` is used only introduced in specific
 situations described below.
 
 Iterators
-=========
+---------
 
 Iterator type specifiers tend to be long and used frequently, especially in
 loop constructs. Since the functions generating iterators have a common format,
@@ -127,7 +127,7 @@ following conditions are satisfied:
   deduced as``std::initializer_list``.
 
 Known Limitations
-=================
+-----------------
 * If the initializer is an explicit conversion constructor, the transform will
   not replace the type specifier even though it would be safe to do so.
 * User-defined iterators are not handled at this time.

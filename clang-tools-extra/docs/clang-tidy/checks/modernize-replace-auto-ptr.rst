@@ -25,12 +25,12 @@ Migration example:
   +  take_ownership_fn(std::move(b));
    }
 
-Since `std::move()` is a library function declared in `<utility>` it may be
+Since ``std::move()`` is a library function declared in ``<utility>`` it may be
 necessary to add this include. The transform will add the include directive when
 necessary.
 
 Known Limitations
-=================
+-----------------
 * If headers modification is not activated or if a header is not allowed to be
   changed this transform will produce broken code (compilation error), where the
   the headers' code will stay unchanged while the code using them will be
