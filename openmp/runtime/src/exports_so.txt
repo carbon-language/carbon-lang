@@ -21,7 +21,11 @@ VERSION {
         # "Normal" symbols.
         #
         omp_*;     # Standard OpenMP functions.
-        ompt_initialize;     # OMPT initialization interface
+
+        #
+        # OMPT API
+        #
+        ompt_tool;           # OMPT initialization interface
         ompt_control;        # OMPT control interface
         
         #

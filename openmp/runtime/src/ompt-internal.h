@@ -77,7 +77,8 @@ extern ompt_callbacks_t ompt_callbacks;
 extern "C" {
 #endif
 
-void ompt_init(void);
+void ompt_pre_init(void);
+void ompt_post_init(void);
 void ompt_fini(void);
 
 #ifdef __cplusplus

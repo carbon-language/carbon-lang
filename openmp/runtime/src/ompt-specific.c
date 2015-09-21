@@ -124,39 +124,6 @@ __ompt_get_taskinfo(int depth)
 //******************************************************************************
 
 //----------------------------------------------------------
-// initialization support
-//----------------------------------------------------------
-
-void
-__ompt_init_internal()
-{
-    if (ompt_status & ompt_status_track) {
-        // initialize initial thread for OMPT
-        kmp_info_t *root_thread = ompt_get_thread();
-        __kmp_task_init_ompt(
-            root_thread->th.th_team->t.t_implicit_task_taskdata, 0);
-        __kmp_task_init_ompt(
-            root_thread->th.th_serial_team->t.t_implicit_task_taskdata, 0);
-
-        // make mandatory callback for creation of initial thread
-        // this needs to occur here rather than in __kmp_register_root because
-        // __kmp_register_root is called before ompt_initialize
-        int gtid = __kmp_get_gtid();
-        if (KMP_UBER_GTID(gtid)) {
-            // initialize the initial thread's idle frame and state
-            root_thread->th.ompt_thread_info.idle_frame = 0;
-            root_thread->th.ompt_thread_info.state = ompt_state_overhead;
-            if ((ompt_status == ompt_status_track_callback) &&
-                ompt_callbacks.ompt_callback(ompt_event_thread_begin)) {
-                __ompt_thread_begin(ompt_thread_initial, gtid);
-            }
-            root_thread->th.ompt_thread_info.state = ompt_state_work_serial;
-        }
-    }
-}
-
-
-//----------------------------------------------------------
 // thread support
 //----------------------------------------------------------
 
@@ -360,15 +327,4 @@ void
 __ompt_team_assign_id(kmp_team_t *team, ompt_parallel_id_t ompt_pid)
 {
     team->t.ompt_team_info.parallel_id = ompt_pid;
-}
-
-
-//----------------------------------------------------------
-// runtime version support
-//----------------------------------------------------------
-
-const char *
-__ompt_get_runtime_version_internal()
-{
-    return &__kmp_version_lib_ver[KMP_VERSION_MAGIC_LEN];
 }

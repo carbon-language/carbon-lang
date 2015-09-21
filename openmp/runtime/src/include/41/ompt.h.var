@@ -418,12 +418,15 @@ OMPT_API_FUNCTION(void, ompt_mutex_wait, (
  * INITIALIZATION FUNCTIONS
  ***************************************************************************/
 
-/* initialization interface to be defined by tool */
-int ompt_initialize(
+OMPT_API_FUNCTION(void, ompt_initialize, (
     ompt_function_lookup_t ompt_fn_lookup,
     const char *runtime_version,
     unsigned int ompt_version
-);
+));
+
+
+/* initialization interface to be defined by tool */
+ompt_initialize_t ompt_tool(void);
 
 typedef enum opt_init_mode_e {
     ompt_init_mode_never  = 0,
