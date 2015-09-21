@@ -406,12 +406,12 @@ public:
     for (const_iterator I = begin(), E = end(); I != E; ++I)
       (void) *I;
     // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: use range-based for loop instead
-    // CHECK-FIXES: for (auto & elem : *this)
+    // CHECK-FIXES: for (const auto & elem : *this)
 
     for (const_iterator I = C::begin(), E = C::end(); I != E; ++I)
       (void) *I;
     // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: use range-based for loop instead
-    // CHECK-FIXES: for (auto & elem : *this)
+    // CHECK-FIXES: for (const auto & elem : *this)
 
     for (const_iterator I = begin(), E = end(); I != E; ++I) {
       (void) *I;

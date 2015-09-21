@@ -26,25 +26,42 @@ public:
 
 private:
   struct RangeDescriptor {
+    RangeDescriptor();
     bool ContainerNeedsDereference;
     bool DerefByConstRef;
     bool DerefByValue;
     bool IsTriviallyCopyable;
+    std::string ContainerString;
   };
 
   void doConversion(ASTContext *Context, const VarDecl *IndexVar,
-                    const VarDecl *MaybeContainer, StringRef ContainerString,
-                    const UsageResult &Usages, const DeclStmt *AliasDecl,
-                    bool AliasUseRequired, bool AliasFromForInit,
-                    const ForStmt *TheLoop, RangeDescriptor Descriptor);
+                    const VarDecl *MaybeContainer, const UsageResult &Usages,
+                    const DeclStmt *AliasDecl, bool AliasUseRequired,
+                    bool AliasFromForInit, const ForStmt *Loop,
+                    RangeDescriptor Descriptor);
 
-  StringRef checkRejections(ASTContext *Context, const Expr *ContainerExpr,
-                            const ForStmt *TheLoop);
+  StringRef getContainerString(ASTContext *Context, const ForStmt *Loop,
+                               const Expr *ContainerExpr);
 
-  void findAndVerifyUsages(ASTContext *Context, const VarDecl *LoopVar,
-                           const VarDecl *EndVar, const Expr *ContainerExpr,
-                           const Expr *BoundExpr, const ForStmt *TheLoop,
-                           LoopFixerKind FixerKind, RangeDescriptor Descriptor);
+  void getArrayLoopQualifiers(ASTContext *Context,
+                              const ast_matchers::BoundNodes &Nodes,
+                              const Expr *ContainerExpr,
+                              const UsageResult &Usages,
+                              RangeDescriptor &Descriptor);
+
+  void getIteratorLoopQualifiers(ASTContext *Context,
+                                 const ast_matchers::BoundNodes &Nodes,
+                                 RangeDescriptor &Descriptor);
+
+  void determineRangeDescriptor(ASTContext *Context,
+                                const ast_matchers::BoundNodes &Nodes,
+                                const ForStmt *Loop, LoopFixerKind FixerKind,
+                                const Expr *ContainerExpr,
+                                const UsageResult &Usages,
+                                RangeDescriptor &Descriptor);
+
+  bool isConvertible(ASTContext *Context, const ast_matchers::BoundNodes &Nodes,
+                     const ForStmt *Loop, LoopFixerKind FixerKind);
 
   std::unique_ptr<TUTrackingInfo> TUInfo;
   Confidence::Level MinConfidence;
