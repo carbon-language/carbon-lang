@@ -51,7 +51,6 @@
 # include <sys/sysctl.h>
 # include <mach/mach.h>
 #elif KMP_OS_FREEBSD
-# include <sys/sysctl.h>
 # include <pthread_np.h>
 #endif
 
@@ -2067,7 +2066,7 @@ __kmp_get_xproc( void ) {
 
     int r = 0;
 
-    #if KMP_OS_LINUX || KMP_OS_NETBSD
+    #if KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_NETBSD
 
         r = sysconf( _SC_NPROCESSORS_ONLN );
 
@@ -2088,16 +2087,6 @@ __kmp_get_xproc( void ) {
             KMP_WARNING( CantGetNumAvailCPU );
             KMP_INFORM( AssumedNumCPU );
         }; // if
-
-    #elif KMP_OS_FREEBSD
-
-        int mib[] = { CTL_HW, HW_NCPU };
-        size_t len = sizeof( r );
-        if ( sysctl( mib, 2, &r, &len, NULL, 0 ) < 0 ) {
-             r = 0;
-             KMP_WARNING( CantGetNumAvailCPU );
-             KMP_INFORM( AssumedNumCPU );
-        }
 
     #else
 
@@ -2275,7 +2264,7 @@ __kmp_is_address_mapped( void * addr ) {
     int found = 0;
     int rc;
 
-    #if KMP_OS_LINUX
+    #if KMP_OS_LINUX || KMP_OS_FREEBSD
 
         /*
             On Linux* OS, read the /proc/<pid>/maps pseudo-file to get all the address ranges mapped
