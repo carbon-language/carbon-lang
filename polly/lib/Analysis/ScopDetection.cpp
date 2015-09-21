@@ -159,6 +159,9 @@ static cl::opt<bool> AllowNonSCEVBackedgeTakenCount(
     cl::desc("Allow loops even if SCEV cannot provide a trip count"),
     cl::Hidden, cl::init(true), cl::ZeroOrMore, cl::cat(PollyCategory));
 
+/// @brief The minimal trip count under which loops are considered unprofitable.
+static const unsigned MIN_LOOP_TRIP_COUNT = 8;
+
 bool polly::PollyTrackFailures = false;
 bool polly::PollyDelinearize = false;
 StringRef polly::PollySkipFnAttr = "polly.skip.fn";
@@ -730,13 +733,13 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
 }
 
 /// @brief Return the number of loops in @p L (incl. @p L) that have a trip
-///        count that is not known to be less than 8.
+///        count that is not known to be less than MIN_LOOP_TRIP_COUNT.
 static unsigned countBeneficialLoops(Loop *L, ScalarEvolution &SE) {
   auto *TripCount = SE.getBackedgeTakenCount(L);
 
   auto count = 1;
   if (auto *TripCountC = dyn_cast<SCEVConstant>(TripCount))
-    if (TripCountC->getValue()->getZExtValue() < 8)
+    if (TripCountC->getValue()->getZExtValue() < MIN_LOOP_TRIP_COUNT)
       count -= 1;
 
   for (auto &SubLoop : *L)
