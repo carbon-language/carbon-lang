@@ -305,3 +305,14 @@ entry:
   store <4 x i32> %0, <4 x i32>* %B
   ret void
 }
+
+define void @vzip_vext_factor(<8 x i16>* %A, <4 x i16>* %B) {
+entry:
+  ; CHECK-LABEL: vzip_vext_factor
+  ; CHECK: vext.16 d16, d16, d17, #3
+  ; CHECK: vzip
+  %tmp1 = load <8 x i16>, <8 x i16>* %A
+  %0 = shufflevector <8 x i16> %tmp1, <8 x i16> undef, <4 x i32> <i32 4, i32 4, i32 5, i32 3>
+  store <4 x i16> %0, <4 x i16>* %B
+  ret void
+}

@@ -5515,13 +5515,6 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// getExtFactor - Determine the adjustment factor for the position when
-/// generating an "extract from vector registers" instruction.
-static unsigned getExtFactor(SDValue &V) {
-  EVT EltType = V.getValueType().getVectorElementType();
-  return EltType.getSizeInBits() / 8;
-}
-
 // Gather data to see if the operation can be modelled as a
 // shuffle in combination with VEXTs.
 SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
@@ -5652,11 +5645,10 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
       SDValue VEXTSrc2 =
           DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DestVT, Src.ShuffleVec,
                       DAG.getConstant(NumSrcElts, dl, MVT::i32));
-      unsigned Imm = Src.MinElt * getExtFactor(VEXTSrc1);
 
       Src.ShuffleVec = DAG.getNode(ARMISD::VEXT, dl, DestVT, VEXTSrc1,
                                    VEXTSrc2,
-                                   DAG.getConstant(Imm, dl, MVT::i32));
+                                   DAG.getConstant(Src.MinElt, dl, MVT::i32));
       Src.WindowBase = -Src.MinElt;
     }
   }
