@@ -212,6 +212,7 @@
 
 /* 6.11.13 Image Read and Write Functions */
 
+#include <clc/image/image_defines.h>
 #include <clc/image/image.h>
 
 /* libclc internal defintions */
