@@ -21,8 +21,8 @@
  *===-----------------------------------------------------------------------===
  */
 
-#if !defined __X86INTRIN_H && !defined __IMMINTRIN_H
-#error "Never use <f16cintrin.h> directly; include <x86intrin.h> instead."
+#if !defined __X86INTRIN_H && !defined __EMMINTRIN_H && !defined __IMMINTRIN_H
+#error "Never use <f16cintrin.h> directly; include <emmintrin.h> instead."
 #endif
 
 #ifndef __F16CINTRIN_H

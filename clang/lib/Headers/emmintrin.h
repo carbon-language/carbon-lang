@@ -35,6 +35,8 @@ typedef long long __v2di __attribute__ ((__vector_size__ (16)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
 typedef char __v16qi __attribute__((__vector_size__(16)));
 
+#include <f16cintrin.h>
+
 /* Define the default attributes for the functions in this file. */
 #define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("sse2")))
 
