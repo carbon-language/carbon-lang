@@ -12,6 +12,7 @@ class ConnectRemoteTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @expectedFailureFreeBSD("llvm.org/pr24896") # No stop reply packet on FreeBSD
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @expectedFailureLinux("llvm.org/pr23475") # Test occasionally times out on the Linux build bot
     @skipIfLinux                              # Test occasionally times out on the Linux build bot
