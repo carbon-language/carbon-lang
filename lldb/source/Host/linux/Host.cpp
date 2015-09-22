@@ -14,7 +14,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
-#ifndef __ANDROID__
+#if defined(__GLIBC__)
 #include <execinfo.h>
 #endif
 
