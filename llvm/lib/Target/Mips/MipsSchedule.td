@@ -16,7 +16,8 @@ def IMULDIV : FuncUnit;
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for Mips
 //===----------------------------------------------------------------------===//
-def IIAlu              : InstrItinClass;
+// IIM16Alu is a placeholder class for most MIPS16 instructions.
+def IIM16Alu           : InstrItinClass;
 def IIBranch           : InstrItinClass;
 def IIPseudo           : InstrItinClass;
 
@@ -184,7 +185,7 @@ def II_XORI             : InstrItinClass;
 // Mips Generic instruction itineraries.
 //===----------------------------------------------------------------------===//
 def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
-  InstrItinData<IIAlu              , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<IIM16Alu           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_ADDI            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_ADDIU           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_ADDU            , [InstrStage<1,  [ALU]>]>,

@@ -530,19 +530,19 @@ class MayStore {
 // Purpose: Add Immediate Unsigned Word (2-Operand, Extended)
 // To add a constant to a 32-bit integer.
 //
-def AddiuRxImmX16: FEXT_RI16_ins<0b01001, "addiu", IIAlu>;
+def AddiuRxImmX16: FEXT_RI16_ins<0b01001, "addiu", IIM16Alu>;
 
-def AddiuRxRxImm16: F2RI16_ins<0b01001, "addiu", IIAlu>,
+def AddiuRxRxImm16: F2RI16_ins<0b01001, "addiu", IIM16Alu>,
   ArithLogic16Defs<0> {
   let AddedComplexity = 5;
 }
-def AddiuRxRxImmX16: FEXT_2RI16_ins<0b01001, "addiu", IIAlu>,
+def AddiuRxRxImmX16: FEXT_2RI16_ins<0b01001, "addiu", IIM16Alu>,
   ArithLogic16Defs<0> {
   let isCodeGenOnly = 1;
 }
 
 def AddiuRxRyOffMemX16:
-  FEXT_RRI_A16_mem_ins<0, "addiu", mem16_ea, IIAlu>;
+  FEXT_RRI_A16_mem_ins<0, "addiu", mem16_ea, IIM16Alu>;
 
 //
 
@@ -550,7 +550,7 @@ def AddiuRxRyOffMemX16:
 // Purpose: Add Immediate Unsigned Word (3-Operand, PC-Relative, Extended)
 // To add a constant to the program counter.
 //
-def AddiuRxPcImmX16: FEXT_RI16_PC_ins<0b00001, "addiu", IIAlu>;
+def AddiuRxPcImmX16: FEXT_RI16_PC_ins<0b00001, "addiu", IIM16Alu>;
 
 //
 // Format: ADDIU sp, immediate MIPS16e
@@ -558,14 +558,14 @@ def AddiuRxPcImmX16: FEXT_RI16_PC_ins<0b00001, "addiu", IIAlu>;
 // To add a constant to the stack pointer.
 //
 def AddiuSpImm16
-  : FI816_SP_ins<0b011, "addiu", IIAlu> {
+  : FI816_SP_ins<0b011, "addiu", IIM16Alu> {
   let Defs = [SP];
   let Uses = [SP];
   let AddedComplexity = 5;
 }
 
 def AddiuSpImmX16
-  : FEXT_I816_SP_ins<0b011, "addiu", IIAlu> {
+  : FEXT_I816_SP_ins<0b011, "addiu", IIM16Alu> {
   let Defs = [SP];
   let Uses = [SP];
 }
@@ -576,14 +576,14 @@ def AddiuSpImmX16
 // To add 32-bit integers.
 //
 
-def AdduRxRyRz16: FRRR16_ins<01, "addu", IIAlu>, ArithLogic16Defs<1>;
+def AdduRxRyRz16: FRRR16_ins<01, "addu", IIM16Alu>, ArithLogic16Defs<1>;
 
 //
 // Format: AND rx, ry MIPS16e
 // Purpose: AND
 // To do a bitwise logical AND.
 
-def AndRxRxRy16: FRxRxRy16_ins<0b01100, "and", IIAlu>, ArithLogic16Defs<1>;
+def AndRxRxRy16: FRxRxRy16_ins<0b01100, "and", IIM16Alu>, ArithLogic16Defs<1>;
 
 
 //
@@ -591,7 +591,7 @@ def AndRxRxRy16: FRxRxRy16_ins<0b01100, "and", IIAlu>, ArithLogic16Defs<1>;
 // Purpose: Branch on Equal to Zero
 // To test a GPR then do a PC-relative conditional branch.
 //
-def BeqzRxImm16: FRI16_B_ins<0b00100, "beqz", IIAlu>, cbranch16;
+def BeqzRxImm16: FRI16_B_ins<0b00100, "beqz", IIM16Alu>, cbranch16;
 
 
 //
@@ -599,7 +599,7 @@ def BeqzRxImm16: FRI16_B_ins<0b00100, "beqz", IIAlu>, cbranch16;
 // Purpose: Branch on Equal to Zero (Extended)
 // To test a GPR then do a PC-relative conditional branch.
 //
-def BeqzRxImmX16: FEXT_RI16_B_ins<0b00100, "beqz", IIAlu>, cbranch16;
+def BeqzRxImmX16: FEXT_RI16_B_ins<0b00100, "beqz", IIM16Alu>, cbranch16;
 
 //
 // Format: B offset MIPS16e
@@ -607,27 +607,27 @@ def BeqzRxImmX16: FEXT_RI16_B_ins<0b00100, "beqz", IIAlu>, cbranch16;
 // To do an unconditional PC-relative branch.
 //
 
-def Bimm16: FI16_ins<0b00010, "b", IIAlu>, branch16;
+def Bimm16: FI16_ins<0b00010, "b", IIM16Alu>, branch16;
 
 // Format: B offset MIPS16e
 // Purpose: Unconditional Branch
 // To do an unconditional PC-relative branch.
 //
-def BimmX16: FEXT_I16_ins<0b00010, "b", IIAlu>, branch16;
+def BimmX16: FEXT_I16_ins<0b00010, "b", IIM16Alu>, branch16;
 
 //
 // Format: BNEZ rx, offset MIPS16e
 // Purpose: Branch on Not Equal to Zero
 // To test a GPR then do a PC-relative conditional branch.
 //
-def BnezRxImm16: FRI16_B_ins<0b00101, "bnez", IIAlu>, cbranch16;
+def BnezRxImm16: FRI16_B_ins<0b00101, "bnez", IIM16Alu>, cbranch16;
 
 //
 // Format: BNEZ rx, offset MIPS16e
 // Purpose: Branch on Not Equal to Zero (Extended)
 // To test a GPR then do a PC-relative conditional branch.
 //
-def BnezRxImmX16: FEXT_RI16_B_ins<0b00101, "bnez", IIAlu>, cbranch16;
+def BnezRxImmX16: FEXT_RI16_B_ins<0b00101, "bnez", IIM16Alu>, cbranch16;
 
 
 //
@@ -641,11 +641,11 @@ def Break16: FRRBreakNull16_ins<"break 0", NoItinerary>;
 // Purpose: Branch on T Equal to Zero (Extended)
 // To test special register T then do a PC-relative conditional branch.
 //
-def Bteqz16: FI816_ins<0b000, "bteqz", IIAlu>, cbranch16 {
+def Bteqz16: FI816_ins<0b000, "bteqz", IIM16Alu>, cbranch16 {
   let Uses = [T8];
 }
 
-def BteqzX16: FEXT_I816_ins<0b000, "bteqz", IIAlu>, cbranch16 {
+def BteqzX16: FEXT_I816_ins<0b000, "bteqz", IIM16Alu>, cbranch16 {
   let Uses = [T8];
 }
 
@@ -669,11 +669,11 @@ def BteqzT8SltiuX16: FEXT_T8I8I16_ins<"bteqz", "sltiu">,
 // To test special register T then do a PC-relative conditional branch.
 //
 
-def Btnez16: FI816_ins<0b001, "btnez", IIAlu>, cbranch16 {
+def Btnez16: FI816_ins<0b001, "btnez", IIM16Alu>, cbranch16 {
   let Uses = [T8];
 }
 
-def BtnezX16: FEXT_I816_ins<0b001, "btnez", IIAlu> ,cbranch16 {
+def BtnezX16: FEXT_I816_ins<0b001, "btnez", IIM16Alu> ,cbranch16 {
   let Uses = [T8];
 }
 
@@ -695,7 +695,7 @@ def BtnezT8SltiuX16: FEXT_T8I8I16_ins<"btnez", "sltiu">,
 // Purpose: Compare
 // To compare the contents of two GPRs.
 //
-def CmpRxRy16: FRR16R_ins<0b01010, "cmp", IIAlu> {
+def CmpRxRy16: FRR16R_ins<0b01010, "cmp", IIM16Alu> {
   let Defs = [T8];
 }
 
@@ -704,7 +704,7 @@ def CmpRxRy16: FRR16R_ins<0b01010, "cmp", IIAlu> {
 // Purpose: Compare Immediate
 // To compare a constant with the contents of a GPR.
 //
-def CmpiRxImm16: FRI16R_ins<0b01110, "cmpi", IIAlu> {
+def CmpiRxImm16: FRI16R_ins<0b01110, "cmpi", IIM16Alu> {
   let Defs = [T8];
 }
 
@@ -713,7 +713,7 @@ def CmpiRxImm16: FRI16R_ins<0b01110, "cmpi", IIAlu> {
 // Purpose: Compare Immediate (Extended)
 // To compare a constant with the contents of a GPR.
 //
-def CmpiRxImmX16: FEXT_RI16R_ins<0b01110, "cmpi", IIAlu> {
+def CmpiRxImmX16: FEXT_RI16R_ins<0b01110, "cmpi", IIM16Alu> {
   let Defs = [T8];
 }
 
@@ -723,7 +723,7 @@ def CmpiRxImmX16: FEXT_RI16R_ins<0b01110, "cmpi", IIAlu> {
 // Purpose: Divide Word
 // To divide 32-bit signed integers.
 //
-def DivRxRy16: FRR16_div_ins<0b11010, "div", IIAlu> {
+def DivRxRy16: FRR16_div_ins<0b11010, "div", IIM16Alu> {
   let Defs = [HI0, LO0];
 }
 
@@ -732,7 +732,7 @@ def DivRxRy16: FRR16_div_ins<0b11010, "div", IIAlu> {
 // Purpose: Divide Unsigned Word
 // To divide 32-bit unsigned integers.
 //
-def DivuRxRy16: FRR16_div_ins<0b11011, "divu", IIAlu> {
+def DivuRxRy16: FRR16_div_ins<0b11011, "divu", IIM16Alu> {
   let Defs = [HI0, LO0];
 }
 //
@@ -742,13 +742,13 @@ def DivuRxRy16: FRR16_div_ins<0b11011, "divu", IIAlu> {
 // region and preserve the current ISA.
 //
 
-def Jal16 : FJAL16_ins<0b0, "jal", IIAlu> {
+def Jal16 : FJAL16_ins<0b0, "jal", IIM16Alu> {
   let hasDelaySlot = 0;  // not true, but we add the nop for now
   let isCall=1;
   let Defs = [RA];
 }
 
-def JalB16 : FJALB16_ins<0b0, "jal", IIAlu>, branch16 {
+def JalB16 : FJALB16_ins<0b0, "jal", IIM16Alu>, branch16 {
   let hasDelaySlot = 0;  // not true, but we add the nop for now
   let isBranch=1;
   let Defs = [RA];
@@ -761,7 +761,7 @@ def JalB16 : FJALB16_ins<0b0, "jal", IIAlu>, branch16 {
 // address register.
 //
 
-def JrRa16: FRR16_JALRC_RA_only_ins<0, 0, "jr", IIAlu> {
+def JrRa16: FRR16_JALRC_RA_only_ins<0, 0, "jr", IIM16Alu> {
   let isBranch = 1;
   let isIndirectBranch = 1;
   let hasDelaySlot = 1;
@@ -769,14 +769,14 @@ def JrRa16: FRR16_JALRC_RA_only_ins<0, 0, "jr", IIAlu> {
   let isBarrier=1;
 }
 
-def JrcRa16: FRR16_JALRC_RA_only_ins<1, 1, "jrc", IIAlu> {
+def JrcRa16: FRR16_JALRC_RA_only_ins<1, 1, "jrc", IIM16Alu> {
   let isBranch = 1;
   let isIndirectBranch = 1;
   let isTerminator=1;
   let isBarrier=1;
 }
 
-def JrcRx16: FRR16_JALRC_ins<1, 1, 0, "jrc", IIAlu> {
+def JrcRx16: FRR16_JALRC_ins<1, 1, 0, "jrc", IIM16Alu> {
   let isBranch = 1;
   let isIndirectBranch = 1;
   let isTerminator=1;
@@ -825,16 +825,16 @@ def LhuRxRyOffMemX16:
 // Purpose: Load Immediate
 // To load a constant into a GPR.
 //
-def LiRxImm16: FRI16_ins<0b01101, "li", IIAlu>;
+def LiRxImm16: FRI16_ins<0b01101, "li", IIM16Alu>;
 
 //
 // Format: LI rx, immediate MIPS16e
 // Purpose: Load Immediate (Extended)
 // To load a constant into a GPR.
 //
-def LiRxImmX16: FEXT_RI16_ins<0b01101, "li", IIAlu>;
+def LiRxImmX16: FEXT_RI16_ins<0b01101, "li", IIM16Alu>;
 
-def LiRxImmAlignX16: FEXT_RI16_ins<0b01101, ".align 2\n\tli", IIAlu> {
+def LiRxImmAlignX16: FEXT_RI16_ins<0b01101, ".align 2\n\tli", IIM16Alu> {
   let isCodeGenOnly = 1;
 }
 
@@ -863,21 +863,21 @@ def LwRxPcTcpX16: FEXT_RI16_TCP_ins<0b10110, "lw", II_LW>, MayLoad;
 // Purpose: Move
 // To move the contents of a GPR to a GPR.
 //
-def Move32R16: FI8_MOV32R16_ins<"move", IIAlu>;
+def Move32R16: FI8_MOV32R16_ins<"move", IIM16Alu>;
 
 //
 // Format: MOVE ry, r32 MIPS16e
 //Purpose: Move
 // To move the contents of a GPR to a GPR.
 //
-def MoveR3216: FI8_MOVR3216_ins<"move", IIAlu>;
+def MoveR3216: FI8_MOVR3216_ins<"move", IIM16Alu>;
 
 //
 // Format: MFHI rx MIPS16e
 // Purpose: Move From HI Register
 // To copy the special purpose HI register to a GPR.
 //
-def Mfhi16: FRR16_M_ins<0b10000, "mfhi", IIAlu> {
+def Mfhi16: FRR16_M_ins<0b10000, "mfhi", IIM16Alu> {
   let Uses = [HI0];
   let hasSideEffects = 0;
 }
@@ -887,7 +887,7 @@ def Mfhi16: FRR16_M_ins<0b10000, "mfhi", IIAlu> {
 // Purpose: Move From LO Register
 // To copy the special purpose LO register to a GPR.
 //
-def Mflo16: FRR16_M_ins<0b10010, "mflo", IIAlu> {
+def Mflo16: FRR16_M_ins<0b10010, "mflo", IIM16Alu> {
   let Uses = [LO0];
   let hasSideEffects = 0;
 }
@@ -895,13 +895,13 @@ def Mflo16: FRR16_M_ins<0b10010, "mflo", IIAlu> {
 //
 // Pseudo Instruction for mult
 //
-def MultRxRy16:  FMULT16_ins<"mult",  IIAlu> {
+def MultRxRy16:  FMULT16_ins<"mult",  IIM16Alu> {
   let isCommutable = 1;
   let hasSideEffects = 0;
   let Defs = [HI0, LO0];
 }
 
-def MultuRxRy16: FMULT16_ins<"multu", IIAlu> {
+def MultuRxRy16: FMULT16_ins<"multu", IIM16Alu> {
   let isCommutable = 1;
   let hasSideEffects = 0;
   let Defs = [HI0, LO0];
@@ -912,7 +912,7 @@ def MultuRxRy16: FMULT16_ins<"multu", IIAlu> {
 // Purpose: Multiply Word
 // To multiply 32-bit signed integers.
 //
-def MultRxRyRz16: FMULT16_LO_ins<"mult", IIAlu> {
+def MultRxRyRz16: FMULT16_LO_ins<"mult", IIM16Alu> {
   let isCommutable = 1;
   let hasSideEffects = 0;
   let Defs = [HI0, LO0];
@@ -923,7 +923,7 @@ def MultRxRyRz16: FMULT16_LO_ins<"mult", IIAlu> {
 // Purpose: Multiply Unsigned Word
 // To multiply 32-bit unsigned integers.
 //
-def MultuRxRyRz16: FMULT16_LO_ins<"multu", IIAlu> {
+def MultuRxRyRz16: FMULT16_LO_ins<"multu", IIM16Alu> {
   let isCommutable = 1;
   let hasSideEffects = 0;
   let Defs = [HI0, LO0];
@@ -934,21 +934,21 @@ def MultuRxRyRz16: FMULT16_LO_ins<"multu", IIAlu> {
 // Purpose: Negate
 // To negate an integer value.
 //
-def NegRxRy16: FUnaryRR16_ins<0b11101, "neg", IIAlu>;
+def NegRxRy16: FUnaryRR16_ins<0b11101, "neg", IIM16Alu>;
 
 //
 // Format: NOT rx, ry MIPS16e
 // Purpose: Not
 // To complement an integer value
 //
-def NotRxRy16: FUnaryRR16_ins<0b01111, "not", IIAlu>;
+def NotRxRy16: FUnaryRR16_ins<0b01111, "not", IIM16Alu>;
 
 //
 // Format: OR rx, ry MIPS16e
 // Purpose: Or
 // To do a bitwise logical OR.
 //
-def OrRxRxRy16: FRxRxRy16_ins<0b01101, "or", IIAlu>, ArithLogic16Defs<1>;
+def OrRxRxRy16: FRxRxRy16_ins<0b01101, "or", IIM16Alu>, ArithLogic16Defs<1>;
 
 //
 // Format: RESTORE {ra,}{s0/s1/s0-1,}{framesize}
@@ -1012,7 +1012,7 @@ def SbRxRyOffMemX16:
 // Sign-extend least significant byte in register rx.
 //
 def SebRx16
-  : FRR_SF16_ins<0b10001, 0b100, "seb", IIAlu>;
+  : FRR_SF16_ins<0b10001, 0b100, "seb", IIM16Alu>;
 
 //
 // Format: SEH rx MIPS16e
@@ -1020,7 +1020,7 @@ def SebRx16
 // Sign-extend least significant word in register rx.
 //
 def SehRx16
-  : FRR_SF16_ins<0b10001, 0b101, "seh", IIAlu>;
+  : FRR_SF16_ins<0b10001, 0b101, "seh", IIM16Alu>;
 
 //
 // The Sel(T) instructions are pseudos
@@ -1149,21 +1149,21 @@ def ShRxRyOffMemX16:
 // Purpose: Shift Word Left Logical (Extended)
 // To execute a left-shift of a word by a fixed number of bits-0 to 31 bits.
 //
-def SllX16: FEXT_SHIFT16_ins<0b00, "sll", IIAlu>;
+def SllX16: FEXT_SHIFT16_ins<0b00, "sll", IIM16Alu>;
 
 //
 // Format: SLLV ry, rx MIPS16e
 // Purpose: Shift Word Left Logical Variable
 // To execute a left-shift of a word by a variable number of bits.
 //
-def SllvRxRy16 : FRxRxRy16_ins<0b00100, "sllv", IIAlu>;
+def SllvRxRy16 : FRxRxRy16_ins<0b00100, "sllv", IIM16Alu>;
 
 // Format: SLTI rx, immediate MIPS16e
 // Purpose: Set on Less Than Immediate
 // To record the result of a less-than comparison with a constant.
 //
 //
-def SltiRxImm16: FRI16R_ins<0b01010, "slti", IIAlu> {
+def SltiRxImm16: FRI16R_ins<0b01010, "slti", IIM16Alu> {
   let Defs = [T8];
 }
 
@@ -1173,7 +1173,7 @@ def SltiRxImm16: FRI16R_ins<0b01010, "slti", IIAlu> {
 // To record the result of a less-than comparison with a constant.
 //
 //
-def SltiRxImmX16: FEXT_RI16R_ins<0b01010, "slti", IIAlu> {
+def SltiRxImmX16: FEXT_RI16R_ins<0b01010, "slti", IIM16Alu> {
   let Defs = [T8];
 }
 
@@ -1184,7 +1184,7 @@ def SltiCCRxImmX16: FEXT_CCRXI16_ins<"slti">;
 // To record the result of a less-than comparison with a constant.
 //
 //
-def SltiuRxImm16: FRI16R_ins<0b01011, "sltiu", IIAlu> {
+def SltiuRxImm16: FRI16R_ins<0b01011, "sltiu", IIM16Alu> {
   let Defs = [T8];
 }
 
@@ -1194,7 +1194,7 @@ def SltiuRxImm16: FRI16R_ins<0b01011, "sltiu", IIAlu> {
 // To record the result of a less-than comparison with a constant.
 //
 //
-def SltiuRxImmX16: FEXT_RI16R_ins<0b01011, "sltiu", IIAlu> {
+def SltiuRxImmX16: FEXT_RI16R_ins<0b01011, "sltiu", IIM16Alu> {
   let Defs = [T8];
 }
 //
@@ -1209,7 +1209,7 @@ def SltiuCCRxImmX16: FEXT_CCRXI16_ins<"sltiu">;
 // Purpose: Set on Less Than
 // To record the result of a less-than comparison.
 //
-def SltRxRy16: FRR16R_ins<0b00010, "slt", IIAlu>{
+def SltRxRy16: FRR16R_ins<0b00010, "slt", IIM16Alu>{
   let Defs = [T8];
 }
 
@@ -1219,7 +1219,7 @@ def SltCCRxRy16: FCCRR16_ins<"slt">;
 // Purpose: Set on Less Than Unsigned
 // To record the result of an unsigned less-than comparison.
 //
-def SltuRxRy16: FRR16R_ins<0b00011, "sltu", IIAlu>{
+def SltuRxRy16: FRR16R_ins<0b00011, "sltu", IIM16Alu>{
   let Defs = [T8];
 }
 
@@ -1236,7 +1236,7 @@ def SltuCCRxRy16: FCCRR16_ins<"sltu">;
 // To execute an arithmetic right-shift of a word by a variable
 // number of bits.
 //
-def SravRxRy16: FRxRxRy16_ins<0b00111, "srav", IIAlu>;
+def SravRxRy16: FRxRxRy16_ins<0b00111, "srav", IIM16Alu>;
 
 
 //
@@ -1245,7 +1245,7 @@ def SravRxRy16: FRxRxRy16_ins<0b00111, "srav", IIAlu>;
 // To execute an arithmetic right-shift of a word by a fixed
 // number of bits-1 to 8 bits.
 //
-def SraX16: FEXT_SHIFT16_ins<0b11, "sra", IIAlu>;
+def SraX16: FEXT_SHIFT16_ins<0b11, "sra", IIM16Alu>;
 
 
 //
@@ -1254,7 +1254,7 @@ def SraX16: FEXT_SHIFT16_ins<0b11, "sra", IIAlu>;
 // To execute a logical right-shift of a word by a variable
 // number of bits.
 //
-def SrlvRxRy16: FRxRxRy16_ins<0b00110, "srlv", IIAlu>;
+def SrlvRxRy16: FRxRxRy16_ins<0b00110, "srlv", IIM16Alu>;
 
 
 //
@@ -1263,14 +1263,14 @@ def SrlvRxRy16: FRxRxRy16_ins<0b00110, "srlv", IIAlu>;
 // To execute a logical right-shift of a word by a fixed
 // number of bits-1 to 31 bits.
 //
-def SrlX16: FEXT_SHIFT16_ins<0b10, "srl", IIAlu>;
+def SrlX16: FEXT_SHIFT16_ins<0b10, "srl", IIM16Alu>;
 
 //
 // Format: SUBU rz, rx, ry MIPS16e
 // Purpose: Subtract Unsigned Word
 // To subtract 32-bit integers
 //
-def SubuRxRyRz16: FRRR16_ins<0b11, "subu", IIAlu>, ArithLogic16Defs<0>;
+def SubuRxRyRz16: FRRR16_ins<0b11, "subu", IIM16Alu>, ArithLogic16Defs<0>;
 
 //
 // Format: SW ry, offset(rx) MIPS16e
@@ -1294,7 +1294,7 @@ def SwRxSpImmX16: FEXT_RI16_SP_Store_explicit_ins
 // Purpose: Xor
 // To do a bitwise logical XOR.
 //
-def XorRxRxRy16: FRxRxRy16_ins<0b01110, "xor", IIAlu>, ArithLogic16Defs<1>;
+def XorRxRxRy16: FRxRxRy16_ins<0b01110, "xor", IIM16Alu>, ArithLogic16Defs<1>;
 
 class Mips16Pat<dag pattern, dag result> : Pat<pattern, result> {
   let Predicates = [InMips16Mode];
