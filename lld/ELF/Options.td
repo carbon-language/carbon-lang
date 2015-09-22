@@ -27,3 +27,6 @@ def discard_locals : Flag<["-"], "discard-locals">,
 
 def alias_discard_locals: Flag<["-"], "X">,
      Alias<discard_locals>;
+
+def export_dynamic : Flag<["--"], "export-dynamic">,
+     HelpText<"Put symbols in the dynamic symbol table">;

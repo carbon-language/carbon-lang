@@ -2,8 +2,10 @@
 // RUN: llvm-mc -filetype=obj -triple=i686-unknown-linux %p/Inputs/shared.s -o %t2.o
 // RUN: lld -flavor gnu2 -shared %t2.o -o %t2.so
 // RUN: llvm-readobj -s %t2.so | FileCheck --check-prefix=SO %s
-// RUN: lld -flavor gnu2 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -rpath foo -rpath bar %t.o %t2.so -o %t
+// RUN: lld -flavor gnu2 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -rpath foo -rpath bar --export-dynamic %t.o %t2.so -o %t
 // RUN: llvm-readobj --program-headers --dynamic-table -t -s -dyn-symbols -section-data -hash-table %t | FileCheck %s
+// RUN: lld -flavor gnu2 %t.o %t2.so -o %t2
+// RUN: llvm-readobj -dyn-symbols %t2 | FileCheck --check-prefix=DONT_EXPORT %s
 // REQUIRES: x86
 
 // Make sure .symtab is properly aligned.
@@ -194,6 +196,36 @@
 // CHECK-NEXT:     Section: Undefined
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
+
+// DONT_EXPORT:      DynamicSymbols [
+// DONT_EXPORT-NEXT:   Symbol {
+// DONT_EXPORT-NEXT:     Name: @ (0)
+// DONT_EXPORT-NEXT:     Value: 0x0
+// DONT_EXPORT-NEXT:     Size: 0
+// DONT_EXPORT-NEXT:     Binding: Local (0x0)
+// DONT_EXPORT-NEXT:     Type: None (0x0)
+// DONT_EXPORT-NEXT:     Other: 0
+// DONT_EXPORT-NEXT:     Section: Undefined (0x0)
+// DONT_EXPORT-NEXT:   }
+// DONT_EXPORT-NEXT:   Symbol {
+// DONT_EXPORT-NEXT:     Name: bar@
+// DONT_EXPORT-NEXT:     Value: 0x0
+// DONT_EXPORT-NEXT:     Size: 0
+// DONT_EXPORT-NEXT:     Binding: Global
+// DONT_EXPORT-NEXT:     Type: Function
+// DONT_EXPORT-NEXT:     Other: 0
+// DONT_EXPORT-NEXT:     Section: Undefined
+// DONT_EXPORT-NEXT:   }
+// DONT_EXPORT-NEXT:   Symbol {
+// DONT_EXPORT-NEXT:     Name: zed@
+// DONT_EXPORT-NEXT:     Value: 0x0
+// DONT_EXPORT-NEXT:     Size: 0
+// DONT_EXPORT-NEXT:     Binding: Global
+// DONT_EXPORT-NEXT:     Type: None
+// DONT_EXPORT-NEXT:     Other: 0
+// DONT_EXPORT-NEXT:     Section: Undefinedx
+// DONT_EXPORT-NEXT:   }
+// DONT_EXPORT-NEXT: ]
 
 // CHECK:      DynamicSection [
 // CHECK-NEXT:   Tag        Type                 Name/Value

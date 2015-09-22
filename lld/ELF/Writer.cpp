@@ -267,6 +267,7 @@ void Writer<ELFT>::scanRelocs(
         continue;
       GotSec.addEntry(Body);
     }
+    S->setUsedInDynamicReloc();
     RelaDynSec.addReloc({C, RI});
   }
 }
@@ -302,28 +303,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     return Sec;
   };
 
-  // FIXME: Try to avoid the extra walk over all global symbols.
   const SymbolTable &Symtab = SymTabSec.getSymTable();
-  std::vector<DefinedCommon<ELFT> *> CommonSymbols;
-  for (auto &P : Symtab.getSymbols()) {
-    StringRef Name = P.first;
-    SymbolBody *Body = P.second->Body;
-    if (Body->isStrongUndefined())
-      error(Twine("undefined symbol: ") + Name);
-
-    if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
-      CommonSymbols.push_back(C);
-    if (!includeInSymtab(*Body))
-      continue;
-    SymTabSec.addSymbol(Name);
-
-    // FIXME: This adds way too much to the dynamic symbol table. We only
-    // need to add the symbols use by dynamic relocations when producing
-    // an executable (ignoring --export-dynamic).
-    if (needsDynamicSections())
-      HashSec.addSymbol(Body);
-  }
-
   for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.getObjectFiles()) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     if (!Config->DiscardAll) {
@@ -343,6 +323,24 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       Sec->addSection(C);
       scanRelocs(*C);
     }
+  }
+
+  // FIXME: Try to avoid the extra walk over all global symbols.
+  std::vector<DefinedCommon<ELFT> *> CommonSymbols;
+  for (auto &P : Symtab.getSymbols()) {
+    StringRef Name = P.first;
+    SymbolBody *Body = P.second->Body;
+    if (Body->isStrongUndefined())
+      error(Twine("undefined symbol: ") + Name);
+
+    if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
+      CommonSymbols.push_back(C);
+    if (!includeInSymtab(*Body))
+      continue;
+    SymTabSec.addSymbol(Name);
+
+    if (needsDynamicSections() && includeInDynamicSymtab(*Body))
+      HashSec.addSymbol(Body);
   }
 
   BSSSec = getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);

@@ -57,6 +57,8 @@ public:
   bool isLazy() const { return SymbolKind == LazyKind; }
   bool isShared() const { return SymbolKind == SharedKind; }
   bool isUsedInRegularObj() const { return IsUsedInRegularObj; }
+  bool isUsedInDynamicReloc() const { return IsUsedInDynamicReloc; }
+  void setUsedInDynamicReloc() { IsUsedInDynamicReloc = true; }
 
   // Returns the symbol name.
   StringRef getName() const { return Name; }
@@ -97,12 +99,14 @@ protected:
       : SymbolKind(K), IsWeak(IsWeak), MostConstrainingVisibility(Visibility),
         Name(Name) {
     IsUsedInRegularObj = K != SharedKind && K != LazyKind;
+    IsUsedInDynamicReloc = 0;
   }
 
   const unsigned SymbolKind : 8;
   const unsigned IsWeak : 1;
   unsigned MostConstrainingVisibility : 2;
   unsigned IsUsedInRegularObj : 1;
+  unsigned IsUsedInDynamicReloc : 1;
   unsigned DynamicSymbolTableIndex = 0;
   unsigned GotIndex = -1;
   unsigned PltIndex = -1;

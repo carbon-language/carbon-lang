@@ -272,6 +272,12 @@ bool lld::elf2::includeInSymtab(const SymbolBody &B) {
   return true;
 }
 
+bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
+  if (Config->ExportDynamic || Config->Shared)
+    return true;
+  return B.isUsedInDynamicReloc();
+}
+
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   const OutputSection<ELFT> *Out = nullptr;
   const InputSection<ELFT> *Section = nullptr;
@@ -315,8 +321,10 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     SymbolBody *Body = Sym->Body;
     if (!includeInSymtab(*Body))
       continue;
-    const Elf_Sym &InputSym = cast<ELFSymbolBody<ELFT>>(Body)->Sym;
+    if (StrTabSec.isDynamic() && !includeInDynamicSymtab(*Body))
+      continue;
 
+    const Elf_Sym &InputSym = cast<ELFSymbolBody<ELFT>>(Body)->Sym;
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
     ESym->st_name = StrTabSec.getFileOff(Name);
 
