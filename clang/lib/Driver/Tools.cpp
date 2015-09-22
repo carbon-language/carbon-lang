@@ -2383,6 +2383,12 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
       } else if (Value == "--break") {
         CmdArgs.push_back("-target-feature");
         CmdArgs.push_back("-use-tcc-in-div");
+      } else if (Value.startswith("-msoft-float")) {
+        CmdArgs.push_back("-target-feature");
+        CmdArgs.push_back("+soft-float");
+      } else if (Value.startswith("-mhard-float")) {
+        CmdArgs.push_back("-target-feature");
+        CmdArgs.push_back("-soft-float");
       } else {
         D.Diag(diag::err_drv_unsupported_option_argument)
             << A->getOption().getName() << Value;

@@ -22,3 +22,28 @@
 // RUN:   FileCheck -check-prefix=TRAP-BOTH-BREAK-FIRST %s
 // TRAP-BOTH-BREAK-FIRST: -cc1as
 // TRAP-BOTH-BREAK-FIRST: "-target-feature" "-use-tcc-in-div" "-target-feature" "+use-tcc-in-div"
+
+// RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=MSOFT-FLOAT-DEFAULT %s
+// MSOFT-FLOAT-DEFAULT: -cc1as
+// MSOFT-FLOAT-DEFAULT-NOT: "-target-feature" "-soft-float"
+
+// RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s -Wa,-msoft-float 2>&1 | \
+// RUN:   FileCheck -check-prefix=MSOFT-FLOAT-ON %s
+// MSOFT-FLOAT-ON: -cc1as
+// MSOFT-FLOAT-ON: "-target-feature" "+soft-float"
+
+// RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s -Wa,-mhard-float 2>&1 | \
+// RUN:   FileCheck -check-prefix=MSOFT-FLOAT-OFF %s
+// MSOFT-FLOAT-OFF: -cc1as
+// MSOFT-FLOAT-OFF: "-target-feature" "-soft-float"
+
+// RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s -Wa,-msoft-float,-mhard-float 2>&1 | \
+// RUN:   FileCheck -check-prefix=MSOFT-FLOAT-BOTH-MSOFT-FLOAT-FIRST %s
+// MSOFT-FLOAT-BOTH-MSOFT-FLOAT-FIRST: -cc1as
+// MSOFT-FLOAT-BOTH-MSOFT-FLOAT-FIRST: "-target-feature" "+soft-float" "-target-feature" "-soft-float"
+
+// RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s -Wa,-mhard-float,-msoft-float 2>&1 | \
+// RUN:   FileCheck -check-prefix=MSOFT-FLOAT-BOTH-MHARD-FLOAT-FIRST %s
+// MSOFT-FLOAT-BOTH-MHARD-FLOAT-FIRST: -cc1as
+// MSOFT-FLOAT-BOTH-MHARD-FLOAT-FIRST: "-target-feature" "-soft-float" "-target-feature" "+soft-float"
