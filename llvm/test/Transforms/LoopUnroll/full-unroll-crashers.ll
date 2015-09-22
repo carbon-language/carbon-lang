@@ -81,3 +81,22 @@ for.inc:
 for.end:
   ret void
 }
+
+define <4 x i32> @vec_load() {
+entry:
+  br label %for.body
+
+for.body:
+  %phi = phi i64 [ 0, %entry ], [ %inc, %for.body ]
+  %vec_phi = phi <4 x i32> [ <i32 0, i32 0, i32 0, i32 0>, %entry ], [ %r, %for.body ]
+  %arrayidx = getelementptr inbounds [10 x i32], [10 x i32]* @known_constant, i64 0, i64 %phi
+  %bc = bitcast i32* %arrayidx to <4 x i32>*
+  %x = load <4 x i32>, < 4 x i32>* %bc, align 4
+  %r = add <4 x i32> %x, %vec_phi
+  %inc = add nuw nsw i64 %phi, 1
+  %cmp = icmp ult i64 %inc, 999
+  br i1 %cmp, label %for.body, label %for.exit
+
+for.exit:
+  ret <4 x i32> %r
+}

@@ -423,6 +423,12 @@ private:
     if (!CDS)
       return false;
 
+    // We might have a vector load from an array. FIXME: for now we just bail
+    // out in this case, but we should be able to resolve and simplify such
+    // loads.
+    if(!CDS->isElementTypeCompatible(I.getType()))
+      return false;
+
     int ElemSize = CDS->getElementType()->getPrimitiveSizeInBits() / 8U;
     assert(SimplifiedAddrOp->getValue().getActiveBits() < 64 &&
            "Unexpectedly large index value.");
