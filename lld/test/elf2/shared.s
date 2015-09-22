@@ -223,7 +223,7 @@
 // DONT_EXPORT-NEXT:     Binding: Global
 // DONT_EXPORT-NEXT:     Type: None
 // DONT_EXPORT-NEXT:     Other: 0
-// DONT_EXPORT-NEXT:     Section: Undefinedx
+// DONT_EXPORT-NEXT:     Section: Undefined
 // DONT_EXPORT-NEXT:   }
 // DONT_EXPORT-NEXT: ]
 
