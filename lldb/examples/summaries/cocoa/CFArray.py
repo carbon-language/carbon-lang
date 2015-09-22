@@ -147,7 +147,7 @@ class NSArray_SynthProvider:
 			return
 		self.wrapper.update()
 
-	# this code acts as our defense against NULL and unitialized
+	# this code acts as our defense against NULL and uninitialized
 	# NSArray pointers, which makes it much longer than it would be otherwise
 	def make_wrapper(self):
 		logger = lldb.formatters.Logger.Logger()

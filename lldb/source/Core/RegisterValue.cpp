@@ -217,7 +217,7 @@ RegisterValue::SetFromMemoryData (const RegisterInfo *reg_info,
     {
         buffer.byte_order = src_byte_order;
         // Make sure to set the buffer length of the destination buffer to avoid
-        // problems due to uninitalized variables.
+        // problems due to uninitialized variables.
         buffer.length = src_len;
     }
 

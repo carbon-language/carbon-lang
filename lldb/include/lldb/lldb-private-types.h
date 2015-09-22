@@ -51,7 +51,7 @@ namespace lldb_private
                                    // for this register will be valid.  For example, the value list for ah
                                    // would be eax (x86) or rax (x64).
         uint32_t *invalidate_regs; // List of registers (terminated with LLDB_INVALID_REGNUM).  If this value is not
-                                   // null, all registers in this list will be invalidateed when the value of this
+                                   // null, all registers in this list will be invalidated when the value of this
                                    // register changes.  For example, the invalidate list for eax would be rax
                                    // ax, ah, and al.
     } RegisterInfo;

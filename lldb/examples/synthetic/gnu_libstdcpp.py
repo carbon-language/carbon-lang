@@ -27,7 +27,7 @@ class StdListSynthProvider:
 		logger = lldb.formatters.Logger.Logger()
 		return node.GetValueAsUnsigned()
 
-	# Floyd's cyle-finding algorithm
+	# Floyd's cycle-finding algorithm
 	# try to detect if this list has a loop
 	def has_loop(self):
 		global _list_uses_loop_detector
@@ -154,7 +154,7 @@ class StdVectorSynthProvider:
 				end_val  = self.end.GetValueAsUnsigned(0)
 				# Before a vector has been constructed, it will contain bad values
 				# so we really need to be careful about the length we return since
-				# unitialized data can cause us to return a huge number. We need
+				# uninitialized data can cause us to return a huge number. We need
 				# to also check for any of the start, finish or end of storage values
 				# being zero (NULL). If any are, then this vector has not been
 				# initialized yet and we should return zero

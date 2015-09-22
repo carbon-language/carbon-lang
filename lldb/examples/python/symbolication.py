@@ -223,7 +223,7 @@ class Image:
         
     @classmethod
     def InitWithSBTargetAndSBModule(cls, target, module):
-        '''Initalize this Image object with a module from a target.'''
+        '''Initialize this Image object with a module from a target.'''
         obj = cls(module.file.fullpath, module.uuid)
         obj.resolved_path = module.platform_file.fullpath
         obj.resolved = True

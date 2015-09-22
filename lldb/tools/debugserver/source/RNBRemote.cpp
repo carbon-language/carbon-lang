@@ -236,7 +236,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (continue_with_sig,             &RNBRemote::HandlePacket_C,             NULL, "C", "Continue with signal"));
     t.push_back (Packet (detach,                        &RNBRemote::HandlePacket_D,             NULL, "D", "Detach gdb from remote system"));
 //  t.push_back (Packet (step_inferior_one_cycle,       &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "i", "Step inferior by one clock cycle"));
-//  t.push_back (Packet (signal_and_step_inf_one_cycle, &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "I", "Signal inferior, then step one clock cyle"));
+//  t.push_back (Packet (signal_and_step_inf_one_cycle, &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "I", "Signal inferior, then step one clock cycle"));
     t.push_back (Packet (kill,                          &RNBRemote::HandlePacket_k,             NULL, "k", "Kill"));
 //  t.push_back (Packet (restart,                       &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "R", "Restart inferior"));
 //  t.push_back (Packet (search_mem_backwards,          &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "t", "Search memory backwards"));

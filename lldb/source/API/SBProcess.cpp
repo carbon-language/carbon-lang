@@ -409,7 +409,7 @@ SBProcess::GetAsyncProfileData(char *dst, size_t dst_len) const
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetProfileData (dst=\"%.*s\", dst_len=%" PRIu64 ") => %" PRIu64,
+        log->Printf ("SBProcess(%p)::GetAsyncProfileData (dst=\"%.*s\", dst_len=%" PRIu64 ") => %" PRIu64,
                      static_cast<void*>(process_sp.get()),
                      static_cast<int>(bytes_read), dst,
                      static_cast<uint64_t>(dst_len),
