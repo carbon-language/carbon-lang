@@ -96,6 +96,8 @@ void MipsTargetStreamer::emitDirectiveCpRestore(
 void MipsTargetStreamer::emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                                               const MCSymbol &Sym, bool IsReg) {
 }
+void MipsTargetStreamer::emitDirectiveCpreturn(unsigned SaveLocation,
+                                               bool SaveLocationIsRegister) {}
 
 void MipsTargetStreamer::emitDirectiveModuleFP() {}
 
@@ -384,6 +386,12 @@ void MipsTargetAsmStreamer::emitDirectiveCpsetup(unsigned RegNo,
   OS << ", ";
 
   OS << Sym.getName();
+  forbidModuleDirective();
+}
+
+void MipsTargetAsmStreamer::emitDirectiveCpreturn(unsigned SaveLocation,
+                                                  bool SaveLocationIsRegister) {
+  OS << "\t.cpreturn";
   forbidModuleDirective();
 }
 
@@ -833,6 +841,30 @@ void MipsTargetELFStreamer::emitDirectiveCpsetup(unsigned RegNo,
   Inst.addOperand(MCOperand::createReg(Mips::GP));
   Inst.addOperand(MCOperand::createReg(Mips::GP));
   Inst.addOperand(MCOperand::createReg(RegNo));
+  getStreamer().EmitInstruction(Inst, STI);
+
+  forbidModuleDirective();
+}
+
+void MipsTargetELFStreamer::emitDirectiveCpreturn(unsigned SaveLocation,
+                                                  bool SaveLocationIsRegister) {
+  // Only N32 and N64 emit anything for .cpreturn iff PIC is set.
+  if (!Pic || !(getABI().IsN32() || getABI().IsN64()))
+    return;
+
+  MCInst Inst;
+  // Either restore the old $gp from a register or on the stack
+  if (SaveLocationIsRegister) {
+    Inst.setOpcode(Mips::OR);
+    Inst.addOperand(MCOperand::createReg(Mips::GP));
+    Inst.addOperand(MCOperand::createReg(SaveLocation));
+    Inst.addOperand(MCOperand::createReg(Mips::ZERO));
+  } else {
+    Inst.setOpcode(Mips::LD);
+    Inst.addOperand(MCOperand::createReg(Mips::GP));
+    Inst.addOperand(MCOperand::createReg(Mips::SP));
+    Inst.addOperand(MCOperand::createImm(SaveLocation));
+  }
   getStreamer().EmitInstruction(Inst, STI);
 
   forbidModuleDirective();

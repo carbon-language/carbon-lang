@@ -24,6 +24,8 @@
 t1:
         .cpsetup $25, 8, __cerror
         nop
+        .cpreturn
+        nop
 
 # ALL-LABEL: t1:
 
@@ -45,8 +47,15 @@ t1:
 
 # ALL-NEXT: nop
 
+# ASM-NEXT: .cpreturn
+# NXX-NEXT: ld $gp, 8($sp)
+
+# ALL-NEXT: nop
+
 t2:
         .cpsetup $25, $2, __cerror
+        nop
+        .cpreturn
         nop
 
 # ALL-LABEL: t2:
@@ -66,6 +75,11 @@ t2:
 # N64-NEXT: daddu    $gp, $gp, $25
 
 # ASM-NEXT: .cpsetup $25, $2, __cerror
+
+# ALL-NEXT: nop
+
+# ASM-NEXT: .cpreturn
+# NXX-NEXT: move $gp, $2
 
 # ALL-NEXT: nop
 
@@ -115,6 +129,8 @@ t4:
         nop
         .cpsetup $25, 8, __cerror
         nop
+        .cpreturn
+        nop
 
 # Testing that .cpsetup expands to nothing in this case
 # by checking that the next instruction after the first
@@ -124,9 +140,12 @@ t4:
 
 # NXX-NEXT: nop
 # NXX-NEXT: nop
+# NXX-NEXT: nop
 
 # ASM-NEXT: nop
 # ASM-NEXT: .cpsetup $25, 8, __cerror
+# ASM-NEXT: nop
+# ASM-NEXT: .cpreturn
 # ASM-NEXT: nop
 
 # Test that we accept constant expressions.

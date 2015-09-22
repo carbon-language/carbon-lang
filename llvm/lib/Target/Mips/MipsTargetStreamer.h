@@ -82,6 +82,8 @@ public:
                                       int Offset);
   virtual void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                                     const MCSymbol &Sym, bool IsReg);
+  virtual void emitDirectiveCpreturn(unsigned SaveLocation,
+                                     bool SaveLocationIsRegister);
 
   // FP abiflags directives
   virtual void emitDirectiveModuleFP();
@@ -195,6 +197,8 @@ public:
                               int Offset) override;
   void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                             const MCSymbol &Sym, bool IsReg) override;
+  void emitDirectiveCpreturn(unsigned SaveLocation,
+                             bool SaveLocationIsRegister) override;
 
   // FP abiflags directives
   void emitDirectiveModuleFP() override;
@@ -246,6 +250,8 @@ public:
                               int Offset) override;
   void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                             const MCSymbol &Sym, bool IsReg) override;
+  void emitDirectiveCpreturn(unsigned SaveLocation,
+                             bool SaveLocationIsRegister) override;
 
   void emitMipsAbiFlags();
 };
