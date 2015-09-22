@@ -20,6 +20,7 @@
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -103,7 +104,20 @@ uint64_t
 RegisterContext::GetPC(uint64_t fail_value)
 {
     uint32_t reg = ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
-    return ReadRegisterAsUnsigned (reg, fail_value);
+    uint64_t pc = ReadRegisterAsUnsigned (reg, fail_value);
+
+    if (pc != fail_value)
+    {
+        TargetSP target_sp = m_thread.CalculateTarget();
+        if (target_sp)
+        {
+            Target *target = target_sp.get();
+            if (target)
+                pc = target->GetOpcodeLoadAddress (pc, eAddressClassCode);
+        }
+    }
+
+    return pc;
 }
 
 bool

@@ -736,10 +736,6 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
             features_str += "+dsp,";
         if (arch_flags & ArchSpec::eMIPSAse_dspr2)
             features_str += "+dspr2,";
-        if (arch_flags & ArchSpec::eMIPSAse_mips16)
-            features_str += "+mips16,";
-        if (arch_flags & ArchSpec::eMIPSAse_micromips)
-            features_str += "+micromips,";
     }
     
     m_disasm_ap.reset (new LLVMCDisassembler(triple_str, cpu, features_str.c_str(), flavor, *this));
@@ -750,11 +746,32 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
         m_disasm_ap.reset();
     }
 
+    llvm::Triple::ArchType llvm_arch = triple.getArch();
+
     // For arm CPUs that can execute arm or thumb instructions, also create a thumb instruction disassembler.
-    if (triple.getArch() == llvm::Triple::arm)
+    if (llvm_arch == llvm::Triple::arm)
     {
         std::string thumb_triple(thumb_arch.GetTriple().getTriple());
         m_alternate_disasm_ap.reset(new LLVMCDisassembler(thumb_triple.c_str(), "", "", flavor, *this));
+        if (!m_alternate_disasm_ap->IsValid())
+        {
+            m_disasm_ap.reset();
+            m_alternate_disasm_ap.reset();
+        }
+    }
+    else if (llvm_arch == llvm::Triple::mips
+            || llvm_arch == llvm::Triple::mipsel
+            || llvm_arch == llvm::Triple::mips64
+            || llvm_arch == llvm::Triple::mips64el)
+    {
+        /* Create alternate disassembler for MIPS16 and microMIPS */
+        uint32_t arch_flags = arch.GetFlags ();
+        if (arch_flags & ArchSpec::eMIPSAse_mips16)
+            features_str += "+mips16,";
+        else if (arch_flags & ArchSpec::eMIPSAse_micromips)
+            features_str += "+micromips,";
+
+        m_alternate_disasm_ap.reset(new LLVMCDisassembler (triple_str, cpu, features_str.c_str(), flavor, *this));
         if (!m_alternate_disasm_ap->IsValid())
         {
             m_disasm_ap.reset();

@@ -463,6 +463,20 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     case DumpStyleLoadAddress:
         {
             addr_t load_addr = GetLoadAddress (target);
+
+            /*
+             * MIPS:
+             * Display address in compressed form for MIPS16 or microMIPS
+             * if the address belongs to eAddressClassCodeAlternateISA.
+            */
+            if (target)
+            {
+                const llvm::Triple::ArchType llvm_arch = target->GetArchitecture().GetMachine();
+                if (llvm_arch == llvm::Triple::mips || llvm_arch == llvm::Triple::mipsel
+                    || llvm_arch == llvm::Triple::mips64 || llvm_arch == llvm::Triple::mips64el)
+                    load_addr = GetCallableLoadAddress (target);
+            }
+
             if (load_addr == LLDB_INVALID_ADDRESS)
             {
                 if (fallback_style != DumpStyleInvalid)

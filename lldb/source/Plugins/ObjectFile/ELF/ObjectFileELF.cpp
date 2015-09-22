@@ -1894,6 +1894,10 @@ FindArmAarch64MappingSymbol(const char* symbol_name)
     return '\0';
 }
 
+#define STO_MIPS_ISA            (3 << 6)
+#define STO_MICROMIPS           (2 << 6)
+#define IS_MICROMIPS(ST_OTHER)  (((ST_OTHER) & STO_MIPS_ISA) == STO_MICROMIPS)
+
 // private
 unsigned
 ObjectFileELF::ParseSymbols (Symtab *symtab,
@@ -2111,6 +2115,37 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
                         // This address is ARM
                         m_address_class_map[symbol.st_value] = eAddressClassCode;
                     }
+                }
+            }
+
+            /*
+             * MIPS:
+             * The bit #0 of an address is used for ISA mode (1 for microMIPS, 0 for MIPS).
+             * This allows processer to switch between microMIPS and MIPS without any need
+             * for special mode-control register. However, apart from .debug_line, none of
+             * the ELF/DWARF sections set the ISA bit (for symbol or section). Use st_other
+             * flag to check whether the symbol is microMIPS and then set the address class
+             * accordingly.
+            */
+            const llvm::Triple::ArchType llvm_arch = arch.GetMachine();
+            if (llvm_arch == llvm::Triple::mips || llvm_arch == llvm::Triple::mipsel
+                || llvm_arch == llvm::Triple::mips64 || llvm_arch == llvm::Triple::mips64el)
+            {
+                if (IS_MICROMIPS(symbol.st_other))
+                    m_address_class_map[symbol.st_value] = eAddressClassCodeAlternateISA;
+                else if ((symbol.st_value & 1) && (symbol_type == eSymbolTypeCode))
+                {
+                    symbol.st_value = symbol.st_value & (~1ull);
+                    m_address_class_map[symbol.st_value] = eAddressClassCodeAlternateISA;
+                }
+                else
+                {
+                    if (symbol_type == eSymbolTypeCode)
+                        m_address_class_map[symbol.st_value] = eAddressClassCode;
+                    else if (symbol_type == eSymbolTypeData)
+                        m_address_class_map[symbol.st_value] = eAddressClassData;
+                    else
+                        m_address_class_map[symbol.st_value] = eAddressClassUnknown;
                 }
             }
         }

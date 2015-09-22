@@ -2155,6 +2155,27 @@ Target::GetCallableLoadAddress (lldb::addr_t load_addr, AddressClass addr_class)
     addr_t code_addr = load_addr;
     switch (m_arch.GetMachine())
     {
+    case llvm::Triple::mips:
+    case llvm::Triple::mipsel:
+    case llvm::Triple::mips64:
+    case llvm::Triple::mips64el:
+        switch (addr_class)
+        {
+        case eAddressClassData:
+        case eAddressClassDebug:
+            return LLDB_INVALID_ADDRESS;
+
+        case eAddressClassUnknown:
+        case eAddressClassInvalid:
+        case eAddressClassCode:
+        case eAddressClassCodeAlternateISA:
+        case eAddressClassRuntime:
+            if ((code_addr & 2ull) || (addr_class == eAddressClassCodeAlternateISA))
+                code_addr |= 1ull;
+            break;
+        }
+        break;
+
     case llvm::Triple::arm:
     case llvm::Triple::thumb:
         switch (addr_class)
@@ -2200,6 +2221,10 @@ Target::GetOpcodeLoadAddress (lldb::addr_t load_addr, AddressClass addr_class) c
     addr_t opcode_addr = load_addr;
     switch (m_arch.GetMachine())
     {
+    case llvm::Triple::mips:
+    case llvm::Triple::mipsel:
+    case llvm::Triple::mips64:
+    case llvm::Triple::mips64el:
     case llvm::Triple::arm:
     case llvm::Triple::thumb:
         switch (addr_class)
