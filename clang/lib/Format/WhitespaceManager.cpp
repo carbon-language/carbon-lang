@@ -156,41 +156,53 @@ void WhitespaceManager::alignConsecutiveAssignments() {
   unsigned EndOfSequence = 0;
   bool FoundAssignmentOnLine = false;
   bool FoundLeftParenOnLine = false;
-  unsigned CurrentLine = 0;
 
+  // Aligns a sequence of assignment tokens, on the MinColumn column.
+  //
+  // Sequences start from the first assignment token to align, and end at the
+  // first token of the first line that doesn't need to be aligned.
+  //
+  // We need to adjust the StartOfTokenColumn of each Change that is on a line
+  // containing any assignment to be aligned and located after such assignment
   auto AlignSequence = [&] {
-    alignConsecutiveAssignments(StartOfSequence, EndOfSequence, MinColumn);
+    if (StartOfSequence > 0 && StartOfSequence < EndOfSequence)
+      alignConsecutiveAssignments(StartOfSequence, EndOfSequence, MinColumn);
     MinColumn = 0;
     StartOfSequence = 0;
     EndOfSequence = 0;
   };
 
   for (unsigned i = 0, e = Changes.size(); i != e; ++i) {
-    if (Changes[i].NewlinesBefore != 0) {
-      CurrentLine += Changes[i].NewlinesBefore;
-      if (StartOfSequence > 0 &&
-          (Changes[i].NewlinesBefore > 1 || !FoundAssignmentOnLine)) {
-        EndOfSequence = i;
+    if (Changes[i].NewlinesBefore > 0) {
+      EndOfSequence = i;
+      // If there is a blank line or if the last line didn't contain any
+      // assignment, the sequence ends here.
+      if (Changes[i].NewlinesBefore > 1 || !FoundAssignmentOnLine) {
+        // NB: In the latter case, the sequence should end at the beggining of
+        // the previous line, but it doesn't really matter as there is no
+        // assignment on it
         AlignSequence();
       }
+
       FoundAssignmentOnLine = false;
       FoundLeftParenOnLine = false;
     }
 
-    if ((Changes[i].Kind == tok::equal &&
-         (FoundAssignmentOnLine || ((Changes[i].NewlinesBefore > 0 ||
-                                     Changes[i + 1].NewlinesBefore > 0)))) ||
-        (!FoundLeftParenOnLine && Changes[i].Kind == tok::r_paren)) {
-      if (StartOfSequence > 0)
-        AlignSequence();
+    // If there is more than one "=" per line, or if the "=" appears first on
+    // the line of if it appears last, end the sequence
+    if (Changes[i].Kind == tok::equal &&
+        (FoundAssignmentOnLine || Changes[i].NewlinesBefore > 0 ||
+         Changes[i + 1].NewlinesBefore > 0)) {
+      AlignSequence();
+    } else if (!FoundLeftParenOnLine && Changes[i].Kind == tok::r_paren) {
+      AlignSequence();
     } else if (Changes[i].Kind == tok::l_paren) {
       FoundLeftParenOnLine = true;
-      if (!FoundAssignmentOnLine && StartOfSequence > 0)
+      if (!FoundAssignmentOnLine)
         AlignSequence();
     } else if (!FoundAssignmentOnLine && !FoundLeftParenOnLine &&
                Changes[i].Kind == tok::equal) {
       FoundAssignmentOnLine = true;
-      EndOfSequence = i;
       if (StartOfSequence == 0)
         StartOfSequence = i;
 
@@ -199,36 +211,34 @@ void WhitespaceManager::alignConsecutiveAssignments() {
     }
   }
 
-  if (StartOfSequence > 0) {
-    EndOfSequence = Changes.size();
-    AlignSequence();
-  }
+  EndOfSequence = Changes.size();
+  AlignSequence();
 }
 
 void WhitespaceManager::alignConsecutiveAssignments(unsigned Start,
                                                     unsigned End,
                                                     unsigned Column) {
-  bool AlignedAssignment = false;
-  int PreviousShift = 0;
+  bool FoundAssignmentOnLine = false;
+  int Shift = 0;
   for (unsigned i = Start; i != End; ++i) {
-    int Shift = 0;
-    if (Changes[i].NewlinesBefore > 0)
-      AlignedAssignment = false;
-    if (!AlignedAssignment && Changes[i].Kind == tok::equal) {
-      Shift = Column - Changes[i].StartOfTokenColumn;
-      AlignedAssignment = true;
-      PreviousShift = Shift;
+    if (Changes[i].NewlinesBefore > 0) {
+      FoundAssignmentOnLine = false;
+      Shift = 0;
     }
+
+    // If this is the first assignment to be aligned, remember by how many
+    // spaces it has to be shifted, so the rest of the changes on the line are
+    // shifted by the same amount
+    if (!FoundAssignmentOnLine && Changes[i].Kind == tok::equal) {
+      FoundAssignmentOnLine = true;
+      Shift = Column - Changes[i].StartOfTokenColumn;
+      Changes[i].Spaces += Shift;
+    }
+
     assert(Shift >= 0);
-    Changes[i].Spaces += Shift;
+    Changes[i].StartOfTokenColumn += Shift;
     if (i + 1 != Changes.size())
       Changes[i + 1].PreviousEndOfTokenColumn += Shift;
-    Changes[i].StartOfTokenColumn += Shift;
-    if (AlignedAssignment) {
-      Changes[i].StartOfTokenColumn += PreviousShift;
-      if (i + 1 != Changes.size())
-        Changes[i + 1].PreviousEndOfTokenColumn += PreviousShift;
-    }
   }
 }
 
