@@ -9,8 +9,8 @@ _start:
 .section       .R_386_32,"ax",@progbits
 .global R_386_32
 R_386_32:
-  movl $R_386_32, %edx
+  movl $R_386_32 + 1, %edx
 
 // CHECK: Disassembly of section .R_386_32:
 // CHECK-NEXT: R_386_32:
-// CHECK-NEXT:  11000: {{.*}} movl $69632, %edx
+// CHECK-NEXT:  11000: {{.*}} movl $69633, %edx

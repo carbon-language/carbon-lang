@@ -31,9 +31,10 @@ void InputSection<ELFT>::relocateOne(uint8_t *Buf, const Elf_Rel &Rel,
                                      uintX_t SymVA) {
   uintX_t Offset = Rel.r_offset;
   uint8_t *Location = Buf + Offset;
+  uint32_t Addend = *(support::ulittle32_t *)Location;
   switch (Type) {
   case R_386_32:
-    support::endian::write32le(Location, SymVA);
+    support::endian::write32le(Location, SymVA + Addend);
     break;
   default:
     llvm::errs() << Twine("unrecognized reloc ") + Twine(Type) << '\n';
