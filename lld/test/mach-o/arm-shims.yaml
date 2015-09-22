@@ -1,6 +1,6 @@
 # RUN: lld -flavor darwin -arch armv7 %s %p/Inputs/arm-shims.yaml \
 # RUN: -dylib %p/Inputs/libSystem.yaml -o %t
-# RUN: macho-dump --dump-section-data %t | FileCheck %s
+# RUN: llvm-readobj -s -sd %t | FileCheck %s
 #
 # Test b from arm to thumb or vice versa has shims added.s
 #
@@ -69,10 +69,18 @@ undefined-symbols:
 
 ...
 
-
-# CHECK:    (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-# CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-# CHECK:     ('_section_data', '00bf00f0 10e800f0 19b80000 00f020e3 000000fa 0f0000ea 00bffff7 f8ef00f0 07b80000 00f020e3 f4fffffa 050000ea dff804c0 ff446047 d4ffffff dff804c0 ff446047 e0ffffff 04c09fe5 0cc08fe0 1cff2fe1 adffffff 04c09fe5 0cc08fe0 1cff2fe1 b5ffffff')
+# CHECK:   Section {
+# CHECK:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+# CHECK:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+# CHECK:     SectionData (
+# CHECK:       0000: 00BF00F0 10E800F0 19B80000 00F020E3
+# CHECK:       0010: 000000FA 0F0000EA 00BFFFF7 F8EF00F0
+# CHECK:       0020: 07B80000 00F020E3 F4FFFFFA 050000EA
+# CHECK:       0030: DFF804C0 FF446047 D4FFFFFF DFF804C0
+# CHECK:       0040: FF446047 E0FFFFFF 04C09FE5 0CC08FE0
+# CHECK:       0050: 1CFF2FE1 ADFFFFFF 04C09FE5 0CC08FE0
+# CHECK:       0060: 1CFF2FE1 B5FFFFFF
+# CHECK:     )
 
 # When we get a good mach-o disassembler the above __text section content check can be change to be symbolic.
 

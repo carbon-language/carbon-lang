@@ -2,7 +2,7 @@
 # RUN: %p/Inputs/arm-interworking.yaml -o %t  | FileCheck %s \
 # RUN: && lld -flavor darwin -arch armv7 -dylib -print_atoms \
 # RUN:         %p/Inputs/libSystem.yaml %t -o %t2  | FileCheck %s \
-# RUN: && macho-dump --dump-section-data %t2 | FileCheck -check-prefix=CODE %s
+# RUN: && llvm-readobj -s -sd %t2 | FileCheck -check-prefix=CODE %s
 #
 # Test thumb and arm branches round trip through -r.
 # Test bl/blx instructions are fixed up properly.
@@ -210,15 +210,23 @@ undefined-symbols:
 # CHECK:   - name:            _a2
 # CHECK:     scope:           global
 
+# CODE:     Name: __text (5F 5F 74 65 78 74 00 00 00 00 00 00 00 00 00 00)
+# CODE:     Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+# CODE:     SectionData (
+# CODE:       0000: 00F016E8 C04600F0 1EE8C046 00F01AE8
+# CODE:       0010: FFF7F6FF C046FFF7 F3FFC046 00F006F8
+# CODE:       0020: C04600F0 03F800F0 02F87047 70477047
+# CODE:       0030: FEFFFFEB 020000EB F0FFFFFA FAFFFFFA
+# CODE:       0040: 1EFF2FE1 1EFF2FE1
+# CODE:     )
 
-# CODE:    (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-# CODE:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-# CODE:   ('_section_data', '00f016e8 c04600f0 1ee8c046 00f01ae8 fff7f6ff c046fff7 f3ffc046 00f006f8 c04600f0 03f800f0 02f87047 70477047 feffffeb 020000eb f0fffffa fafffffa 1eff2fe1 1eff2fe1')
+# CODE:     Name: __data (5F 5F 64 61 74 61 00 00 00 00 00 00 00 00 00 00)
+# CODE:     Segment: __DATA (5F 5F 44 41 54 41 00 00 00 00 00 00 00 00 00 00)
+# CODE:     SectionData (
+# CODE:       0000: E50F0000 E80F0000 B90F0000 E80F0000
+# CODE:     )
+
 # When we get a good mach-o disassembler the above __text section content check can be change to be symbolic.
-
-# CODE:  (('section_name', '__data\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-# CODE:    ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-# CODE:  ('_section_data', '{{[0-9a-f]}}{{[13579bdf]}}{{[0-9a-f]+}} {{[0-9a-f]}}{{[02468ade]}}{{[0-9a-f]+}} {{[0-9a-f]}}{{[13579bdf]}}{{[0-9a-f]+}} {{[0-9a-f]}}{{[02468ade]}}{{[0-9a-f]+}}')
 # Verify the low (thumb) bit is set on the first and third pointers but not the second and fourth.
 
 
