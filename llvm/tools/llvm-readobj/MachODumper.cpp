@@ -267,8 +267,8 @@ namespace {
   };
 
   struct MachOSegment {
-    StringRef CmdName;
-    StringRef SegName;
+    std::string CmdName;
+    std::string SegName;
     uint64_t cmdsize;
     uint64_t vmaddr;
     uint64_t vmsize;
