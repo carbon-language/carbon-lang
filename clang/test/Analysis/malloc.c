@@ -263,21 +263,21 @@ void CheckUseZeroAllocated6() {
 
 void CheckUseZeroAllocated7() {
   int *p = realloc(0, 0);
-  *p = 1; //TODO: warn about use of zero-allocated memory
+  *p = 1; // expected-warning {{Use of zero-allocated memory}}
   free(p);
 }
 
 void CheckUseZeroAllocated8() {
   int *p = malloc(8);
   int *q = realloc(p, 0);
-  *q = 1; //TODO: warn about use of zero-allocated memory
+  *q = 1; // expected-warning {{Use of zero-allocated memory}}
   free(q);
 }
 
 void CheckUseZeroAllocated9() {
   int *p = realloc(0, 0);
   int *q = realloc(p, 0);
-  *q = 1; //TODO: warn about use of zero-allocated memory
+  *q = 1; // expected-warning {{Use of zero-allocated memory}}
   free(q);
 }
 
@@ -305,6 +305,34 @@ void CheckUseZeroAllocatedPathWarn(_Bool b) {
     *p = 1; // expected-warning {{Use of zero-allocated memory}}
 
   free(p);
+}
+
+void CheckUseZeroReallocatedPathNoWarn(_Bool b) {
+  int s = 0;
+  if (b)
+    s= 10;
+
+  char *p = malloc(8);
+  char *q = realloc(p, s);
+
+  if (b)
+    *q = 1; // no warning
+
+  free(q);
+}
+
+void CheckUseZeroReallocatedPathWarn(_Bool b) {
+  int s = 10;
+  if (b)
+    s= 0;
+
+  char *p = malloc(8);
+  char *q = realloc(p, s);
+
+  if (b)
+    *q = 1; // expected-warning {{Use of zero-allocated memory}}
+
+  free(q);
 }
 
 // This case tests that storing malloc'ed memory to a static variable which is

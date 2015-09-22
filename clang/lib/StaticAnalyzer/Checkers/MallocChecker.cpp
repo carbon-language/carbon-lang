@@ -508,6 +508,7 @@ private:
 
 REGISTER_MAP_WITH_PROGRAMSTATE(RegionState, SymbolRef, RefState)
 REGISTER_MAP_WITH_PROGRAMSTATE(ReallocPairs, SymbolRef, ReallocPair)
+REGISTER_SET_WITH_PROGRAMSTATE(ReallocSizeZeroSymbols, SymbolRef)
 
 // A map from the freed symbol to the symbol representing the return value of
 // the free function.
@@ -891,15 +892,19 @@ ProgramStateRef MallocChecker::ProcessZeroAllocation(CheckerContext &C,
       return State;
 
     const RefState *RS = State->get<RegionState>(Sym);
-    if (!RS)
-      return State; // TODO: change to assert(RS); after realloc() will
-                    // guarantee have a RegionState attached.
-
-    if (!RS->isAllocated())
-      return State;
-
-    return TrueState->set<RegionState>(Sym,
-                                       RefState::getAllocatedOfSizeZero(RS));
+    if (RS) {
+      if (RS->isAllocated())
+        return TrueState->set<RegionState>(Sym,
+                                          RefState::getAllocatedOfSizeZero(RS));
+      else
+        return State;
+    } else {
+      // Case of zero-size realloc. Historically 'realloc(ptr, 0)' is treated as
+      // 'free(ptr)' and the returned value from 'realloc(ptr, 0)' is not
+      // tracked. Add zero-reallocated Sym to the state to catch references
+      // to zero-allocated memory.
+      return TrueState->add<ReallocSizeZeroSymbols>(Sym);
+    }
   }
 
   // Assume the value is non-zero going forward.
@@ -1487,6 +1492,9 @@ MallocChecker::getCheckIfTracked(CheckerContext &C,
 Optional<MallocChecker::CheckKind>
 MallocChecker::getCheckIfTracked(CheckerContext &C, SymbolRef Sym,
                                  bool IsALeakCheck) const {
+  if (C.getState()->contains<ReallocSizeZeroSymbols>(Sym))
+    return CK_MallocChecker;
+
   const RefState *RS = C.getState()->get<RegionState>(Sym);
   assert(RS);
   return getCheckIfTracked(RS->getAllocationFamily(), IsALeakCheck);
@@ -1929,7 +1937,7 @@ ProgramStateRef MallocChecker::ReallocMem(CheckerContext &C,
   }
 
   if (PrtIsNull && SizeIsZero)
-    return nullptr;
+    return State;
 
   // Get the from and to pointer symbols as in toPtr = realloc(fromPtr, size).
   assert(!PrtIsNull);
@@ -2293,10 +2301,14 @@ bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
 void MallocChecker::checkUseZeroAllocated(SymbolRef Sym, CheckerContext &C,
                                           const Stmt *S) const {
   assert(Sym);
-  const RefState *RS = C.getState()->get<RegionState>(Sym);
 
-  if (RS && RS->isAllocatedOfSizeZero())
-    ReportUseZeroAllocated(C, RS->getStmt()->getSourceRange(), Sym);
+  if (const RefState *RS = C.getState()->get<RegionState>(Sym)) {
+    if (RS->isAllocatedOfSizeZero())
+      ReportUseZeroAllocated(C, RS->getStmt()->getSourceRange(), Sym);
+  }
+  else if (C.getState()->contains<ReallocSizeZeroSymbols>(Sym)) {
+    ReportUseZeroAllocated(C, S->getSourceRange(), Sym);
+  }
 }
 
 bool MallocChecker::checkDoubleDelete(SymbolRef Sym, CheckerContext &C) const {
