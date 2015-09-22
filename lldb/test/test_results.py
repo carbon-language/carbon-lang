@@ -456,6 +456,7 @@ class ResultsFormatter(object):
             terminate_event = EventBuilder.bare_event("terminate")
             self.handle_event(terminate_event)
 
+
 class XunitFormatter(ResultsFormatter):
     """Provides xUnit-style formatted output.
     """
@@ -537,6 +538,20 @@ class XunitFormatter(ResultsFormatter):
             help=('cause unknown test events to generate '
                   'a python assert.  Default is to ignore.'))
         parser.add_argument(
+            "--ignore-skip-matching-name",
+            action="store",
+            help=('one or more comma-separated python regex patterns, where '
+                  'any skipped test with a test method name where regex '
+                  'matches (via search) will be ignored for xUnit test '
+                  'result purposes.'))
+        parser.add_argument(
+            "--ignore-skip-matching-reason",
+            action="store",
+            help=('one or more comma-separated python regex patterns, where '
+                  'any skipped test with a skip reason where the regex '
+                  'matches (via search) will be ignored for xUnit test '
+                  'result purposes.'))
+        parser.add_argument(
             "--xpass", action="store", choices=results_mapping_choices,
             default=XunitFormatter.RM_FAILURE,
             help=('specify mapping from unexpected success to jUnit/xUnit '
@@ -548,6 +563,22 @@ class XunitFormatter(ResultsFormatter):
                   'result type'))
         return parser
 
+    @staticmethod
+    def _build_regex_list_from_option(option):
+        """Builds a list of compiled regexes from option value.
+
+        @param option string containing a comma-separated list of regex
+        patterns. Zero-length or None will produce an empty regex list.
+
+        @return list of compiled regular expressions, empty if no
+        patterns provided.
+        """
+        regex_list = []
+        if option is not None and len(option) > 0:
+            for pattern in option.split(","):
+                regex_list.append(re.compile(pattern))
+        return regex_list
+
     def __init__(self, out_file, options):
         """Initializes the XunitFormatter instance.
         @param out_file file-like object where formatted output is written.
@@ -558,8 +589,13 @@ class XunitFormatter(ResultsFormatter):
         super(XunitFormatter, self).__init__(out_file, options)
         self.text_encoding = "UTF-8"
         self.invalid_xml_re = XunitFormatter._build_illegal_xml_regex()
-
         self.total_test_count = 0
+        self.ignore_skip_name_regexes = (
+            XunitFormatter._build_regex_list_from_option(
+                options.ignore_skip_matching_name))
+        self.ignore_skip_reason_regexes = (
+            XunitFormatter._build_regex_list_from_option(
+                options.ignore_skip_matching_reason))
 
         self.elements = {
             "successes": [],
@@ -648,10 +684,40 @@ class XunitFormatter(ResultsFormatter):
         with self.lock:
             self.elements["errors"].append(result)
 
+    @staticmethod
+    def _ignore_based_on_regex_list(test_event, test_key, regex_list):
+        """Returns whether to ignore a test event based on patterns.
+
+        @param test_event the test event dictionary to check.
+        @param test_key the key within the dictionary to check.
+        @param regex_list a list of zero or more regexes.  May contain
+        zero or more compiled regexes.
+
+        @return True if any o the regex list match based on the
+        re.search() method; false otherwise.
+        """
+        for regex in regex_list:
+            match = regex.search(test_event.get(test_key, ''))
+            if match:
+                return True
+        return False
+
     def _handle_skip(self, test_event):
         """Handles a skipped test.
         @param test_event the test event to handle.
         """
+
+        # Are we ignoring this test based on test name?
+        if XunitFormatter._ignore_based_on_regex_list(
+                test_event, 'test_name', self.ignore_skip_name_regexes):
+            return
+
+        # Are we ignoring this test based on skip reason?
+        if XunitFormatter._ignore_based_on_regex_list(
+                test_event, 'skip_reason', self.ignore_skip_reason_regexes):
+            return
+
+        # We're not ignoring this test.  Process the skip.
         reason = self._replace_invalid_xml(test_event.get("skip_reason", ""))
         result = self._common_add_testcase_entry(
             test_event,
@@ -857,6 +923,7 @@ class XunitFormatter(ResultsFormatter):
         self.out_file.write('</testsuite></testsuites>\n')
 
     def _finish_output(self):
+        """Finish writing output as all incoming events have arrived."""
         with self.lock:
             self._finish_output_no_lock()
 
