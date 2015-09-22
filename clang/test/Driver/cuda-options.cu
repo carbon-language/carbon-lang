@@ -21,7 +21,7 @@
 // Then link things.
 // RUN:   -check-prefix CUDA-L %s
 
-// Verify that -cuda-no-device disables device-side compilation and linking
+// Verify that --cuda-host-only disables device-side compilation and linking
 // RUN: %clang -### -target x86_64-linux-gnu --cuda-host-only %s 2>&1 \
 // Make sure we didn't run device-side compilation.
 // RUN:   | FileCheck -check-prefix CUDA-ND \
@@ -30,8 +30,26 @@
 // Linking is allowed to happen, even if we're missing GPU code.
 // RUN:    -check-prefix CUDA-L %s
 
-// Verify that -cuda-no-host disables host-side compilation and linking
+// Same test as above, but with preceeding --cuda-device-only to make
+// sure only last option has effect.
+// RUN: %clang -### -target x86_64-linux-gnu --cuda-device-only --cuda-host-only %s 2>&1 \
+// Make sure we didn't run device-side compilation.
+// RUN:   | FileCheck -check-prefix CUDA-ND \
+// Then compile host side and make sure we don't attempt to incorporate GPU code.
+// RUN:    -check-prefix CUDA-H -check-prefix CUDA-H-NI \
+// Linking is allowed to happen, even if we're missing GPU code.
+// RUN:    -check-prefix CUDA-L %s
+
+// Verify that --cuda-device-only disables host-side compilation and linking
 // RUN: %clang -### -target x86_64-linux-gnu --cuda-device-only %s 2>&1 \
+// Compile device-side to PTX assembly
+// RUN:   | FileCheck -check-prefix CUDA-D1 -check-prefix CUDA-D1NS\
+// Make sure there are no host cmpilation or linking.
+// RUN:   -check-prefix CUDA-NH -check-prefix CUDA-NL %s
+
+// Same test as above, but with preceeding --cuda-host-only to make
+// sure only last option has effect.
+// RUN: %clang -### -target x86_64-linux-gnu --cuda-host-only --cuda-device-only %s 2>&1 \
 // Compile device-side to PTX assembly
 // RUN:   | FileCheck -check-prefix CUDA-D1 -check-prefix CUDA-D1NS\
 // Make sure there are no host cmpilation or linking.
