@@ -352,11 +352,19 @@ CommandInterpreter::Initialize ()
 #if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
         ProcessAliasOptionsArgs (cmd_obj_sp, "--", alias_arguments_vector_sp);
 #else
+    #if defined(__APPLE__)
+        std::string shell_option;
+        shell_option.append("--shell-expand-args");
+        shell_option.append(" true");
+        shell_option.append(" --");
+        ProcessAliasOptionsArgs (cmd_obj_sp, shell_option.c_str(), alias_arguments_vector_sp);
+    #else
         std::string shell_option;
         shell_option.append("--shell=");
         shell_option.append(HostInfo::GetDefaultShell().GetPath());
         shell_option.append(" --");
         ProcessAliasOptionsArgs (cmd_obj_sp, shell_option.c_str(), alias_arguments_vector_sp);
+    #endif
 #endif
         AddAlias ("r", cmd_obj_sp);
         AddAlias ("run", cmd_obj_sp);
