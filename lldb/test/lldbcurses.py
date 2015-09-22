@@ -271,6 +271,13 @@ class BoxedPanel(Panel):
         self.selected_idx = -1
         self.update()
 
+    def clear(self, update=True):
+        self.lines = list()
+        self.first_visible_idx = 0
+        self.selected_idx = -1
+        if update:
+            self.update()
+    
     def get_usable_width(self):
         '''Valid usable width is 0 to (width - 3) since the left and right lines display the box around 
            this frame and we skip a leading space'''

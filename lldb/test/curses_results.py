@@ -29,11 +29,13 @@ class Curses(test_results.ResultsFormatter):
         self.saved_first_responder = None
         try:
             self.main_window = lldbcurses.intialize_curses()
+            self.main_window.delegate = self.handle_main_window_key
             self.main_window.refresh()
             self.job_panel = None
             self.results_panel = None
             self.status_panel = None
             self.info_panel = None
+            self.hide_status_list = list()
         except:
             self.have_curses = False
             lldbcurses.terminate_curses()
@@ -64,6 +66,10 @@ class Curses(test_results.ResultsFormatter):
         else:
             return status
 
+    def handle_main_window_key(self, window, key):
+        if key == ord('\t'):
+            self.main_window.select_next_first_responder()
+
     def handle_info_panel_key(self, window, key):
         window.resign_first_responder(remove_from_parent=True, new_first_responder=self.saved_first_responder)
         window.hide()        
@@ -75,6 +81,7 @@ class Curses(test_results.ResultsFormatter):
         return False
 
     def handle_result_panel_key(self, window, key):
+        toggle_status = None
         if key == ord('\r') or key == ord('\n') or key == curses.KEY_ENTER:
             selected_idx = self.results_panel.get_selected_idx()
             if selected_idx >= 0 and selected_idx < len(self.results):
@@ -85,7 +92,7 @@ class Curses(test_results.ResultsFormatter):
                 else:
                     self.info_panel.show()
                 
-                self.saved_first_responder = self.main_window.first_responder
+                self.saved_first_responder = self.main_window.first_responder  
                 self.main_window.set_first_responder(self.info_panel)
                 test_start = self.results[selected_idx][0]
                 test_result = self.results[selected_idx][1]
@@ -101,10 +108,44 @@ class Curses(test_results.ResultsFormatter):
             self.results_panel.select_prev()
         elif key == curses.KEY_DOWN:
             self.results_panel.select_next()
+        elif key == ord('.'):                                        
+            toggle_status = 'success'
+        elif key == ord('e') or key == ord('E'):
+            toggle_status = 'error'
+        elif key == ord('f') or key == ord('F'):
+            toggle_status = 'failure'
+        elif key == ord('s') or key == ord('S'):
+            toggle_status = 'skip'
+        elif key == ord('x') or key == ord('X'):
+            toggle_status = 'expected_failure'
+        elif key == ord('?'):
+            toggle_status = 'unexpected_success'
         else:
             return False
-        self.main_window.refresh()
         
+        if toggle_status:
+            # Toggle showing and hiding results whose status matches "toggle_status" in "Results" window
+            if toggle_status in self.hide_status_list:
+                self.hide_status_list.remove(toggle_status)
+            else:
+                self.hide_status_list.append(toggle_status)   
+            self.update_results(update=False) # Will update below
+        self.main_window.refresh()
+
+    def update_results(self, update=True):
+        '''Called after a category of test have been show/hidden to update the results list with
+           what the user desires to see.'''
+        self.results_panel.clear(update=False)
+        for result in self.results:
+            test_result = result[1]
+            status = test_result['status']
+            if status in self.hide_status_list:
+                continue
+            name = test_result['test_class'] + '.' + test_result['test_name']
+            self.results_panel.append_line('%s (%6.2f sec) %s' % (self.status_to_short_str(status), test_result['elapsed_time'], name))
+        if update:
+            self.main_window.refresh()    
+            
     def handle_event(self, test_event):
         with self.lock:
             super(Curses, self).handle_event(test_event)
@@ -138,7 +179,8 @@ class Curses(test_results.ResultsFormatter):
                         # if status != 'success' and status != 'skip' and status != 'expect_failure':
                         name = test_event['test_class'] + '.' + test_event['test_name']
                         elapsed_time = test_event['event_time'] - self.job_tests[worker_index]['event_time']
-                        self.results_panel.append_line('%s (%6.2f sec) %s' % (self.status_to_short_str(status), elapsed_time, name))
+                        if not status in self.hide_status_list:
+                            self.results_panel.append_line('%s (%6.2f sec) %s' % (self.status_to_short_str(status), elapsed_time, name))
                         self.main_window.refresh()
                         # Append the result pairs
                         test_event['elapsed_time'] = elapsed_time
