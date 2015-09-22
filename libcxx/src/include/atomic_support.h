@@ -103,6 +103,13 @@ void __libcpp_atomic_store(_ValueType* __dest, _FromType __val,
     *__dest = __val;
 }
 
+template <class _ValueType, class _FromType>
+inline _LIBCPP_INLINE_VISIBILITY
+void __libcpp_relaxed_store(_ValueType* __dest, _FromType __val)
+{
+    *__dest = __val;
+}
+
 template <class _ValueType>
 inline _LIBCPP_INLINE_VISIBILITY
 _ValueType __libcpp_atomic_load(_ValueType const* __val,
