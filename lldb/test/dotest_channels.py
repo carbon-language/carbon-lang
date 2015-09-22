@@ -147,13 +147,13 @@ class UnpicklingForwardingListenerChannel(asyncore.dispatcher):
     one of the reasons for implementing with asyncore.  This listener shuts
     down once a single connection is made to it.
     """
-    def __init__(self, async_map, host, port, forwarding_func):
+    def __init__(self, async_map, host, port, backlog_count, forwarding_func):
         asyncore.dispatcher.__init__(self, map=async_map)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
         self.bind((host, port))
         self.address = self.socket.getsockname()
-        self.listen(5)
+        self.listen(backlog_count)
         self.handler = None
         self.async_map = async_map
         self.forwarding_func = forwarding_func

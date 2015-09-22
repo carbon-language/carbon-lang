@@ -895,7 +895,7 @@ def inprocess_exec_test_runner(test_work_items):
     return test_results
 
 def walk_and_invoke(test_directory, test_subdir, dotest_argv,
-                    test_runner_func):
+                    num_workers, test_runner_func):
     """Look for matched files and invoke test driver on each one.
     In single-threaded mode, each test driver is invoked directly.
     In multi-threaded mode, submit each test driver to a worker
@@ -917,7 +917,8 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv,
         forwarding_func = RESULTS_FORMATTER.handle_event
         RESULTS_LISTENER_CHANNEL = (
             dotest_channels.UnpicklingForwardingListenerChannel(
-                RUNNER_PROCESS_ASYNC_MAP, "localhost", 0, forwarding_func))
+                RUNNER_PROCESS_ASYNC_MAP, "localhost", 0,
+                2 * num_workers, forwarding_func))
         dotest_argv.append("--results-port")
         dotest_argv.append(str(RESULTS_LISTENER_CHANNEL.address[1]))
 
@@ -1158,10 +1159,7 @@ def is_darwin_version_lower_than(target_version):
         return False
 
     system_version = distutils.version.StrictVersion(platform.mac_ver()[0])
-    is_lower = cmp(system_version, target_version) < 0
-    print "is_darwin_version_lower_than: {} ({}, {})".format(
-        is_lower, system_version, target_version)
-    return is_lower
+    return cmp(system_version, target_version) < 0
 
 
 def default_test_runner_name(num_threads):
@@ -1273,7 +1271,8 @@ def main(print_details_on_success, num_threads, test_subdir,
     test_runner_func = runner_strategies_by_name[test_runner_name]
 
     summary_results = walk_and_invoke(
-        test_directory, test_subdir, dotest_argv, test_runner_func)
+        test_directory, test_subdir, dotest_argv,
+        num_threads, test_runner_func)
 
     (timed_out, passed, failed, unexpected_successes, pass_count,
      fail_count) = summary_results
