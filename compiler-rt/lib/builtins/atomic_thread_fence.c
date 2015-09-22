@@ -12,8 +12,12 @@
  *===------------------------------------------------------------------------===
  */
 
+#if __has_include(<stdatomic.h>)
+
 #include <stdatomic.h>
 #undef atomic_thread_fence
 void atomic_thread_fence(memory_order order) {
   __c11_atomic_thread_fence(order);
 }
+
+#endif

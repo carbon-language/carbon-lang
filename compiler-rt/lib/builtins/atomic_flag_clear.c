@@ -12,8 +12,12 @@
  *===------------------------------------------------------------------------===
  */
 
+#if __has_include(<stdatomic.h>)
+
 #include <stdatomic.h>
 #undef atomic_flag_clear
 void atomic_flag_clear(volatile atomic_flag *object) {
   return __c11_atomic_store(&(object)->_Value, 0, __ATOMIC_SEQ_CST);
 }
+
+#endif
