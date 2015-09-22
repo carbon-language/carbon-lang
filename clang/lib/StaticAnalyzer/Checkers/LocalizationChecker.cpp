@@ -16,7 +16,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "SelectorExtras.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -66,11 +65,12 @@ class NonLocalizedStringChecker
   mutable std::unique_ptr<BugType> BT;
 
   // Methods that require a localized string
-  mutable llvm::StringMap<llvm::StringMap<uint8_t>> UIMethods;
+  mutable llvm::DenseMap<const IdentifierInfo *,
+                         llvm::DenseMap<Selector, uint8_t>> UIMethods;
   // Methods that return a localized string
-  mutable llvm::SmallSet<std::pair<StringRef, StringRef>, 12> LSM;
+  mutable llvm::SmallSet<std::pair<const IdentifierInfo *, Selector>, 12> LSM;
   // C Functions that return a localized string
-  mutable llvm::StringSet<> LSF;
+  mutable llvm::SmallSet<const IdentifierInfo *, 5> LSF;
 
   void initUIMethods(ASTContext &Ctx) const;
   void initLocStringsMethods(ASTContext &Ctx) const;
@@ -83,6 +83,9 @@ class NonLocalizedStringChecker
   bool isAnnotatedAsLocalized(const Decl *D) const;
   void reportLocalizationError(SVal S, const ObjCMethodCall &M,
                                CheckerContext &C, int argumentNumber = 0) const;
+
+  int getLocalizedArgumentForSelector(const IdentifierInfo *Receiver,
+                                      Selector S) const;
 
 public:
   NonLocalizedStringChecker();
@@ -104,8 +107,23 @@ REGISTER_MAP_WITH_PROGRAMSTATE(LocalizedMemMap, const MemRegion *,
                                LocalizedState)
 
 NonLocalizedStringChecker::NonLocalizedStringChecker() {
-  BT.reset(new BugType(this, "Unlocalized string", "Localizability Error"));
+  BT.reset(new BugType(this, "Unlocalizable string",
+                       "Localizability Issue (Apple)"));
 }
+
+#define NEW_RECEIVER(receiver)                                                 \
+  llvm::DenseMap<Selector, uint8_t> &receiver##M =                             \
+      UIMethods.insert({&Ctx.Idents.get(#receiver),                            \
+                        llvm::DenseMap<Selector, uint8_t>()})                  \
+          .first->second;
+#define ADD_NULLARY_METHOD(receiver, method, argument)                         \
+  receiver##M.insert(                                                          \
+      {Ctx.Selectors.getNullarySelector(&Ctx.Idents.get(#method)), argument});
+#define ADD_UNARY_METHOD(receiver, method, argument)                           \
+  receiver##M.insert(                                                          \
+      {Ctx.Selectors.getUnarySelector(&Ctx.Idents.get(#method)), argument});
+#define ADD_METHOD(receiver, method_list, count, argument)                     \
+  receiver##M.insert({Ctx.Selectors.getSelector(count, method_list), argument});
 
 /// Initializes a list of methods that require a localized string
 /// Format: {"ClassName", {{"selectorName:", LocStringArg#}, ...}, ...}
@@ -113,78 +131,440 @@ void NonLocalizedStringChecker::initUIMethods(ASTContext &Ctx) const {
   if (!UIMethods.empty())
     return;
 
-  // TODO: This should eventually be a comprehensive list of UIKit methods
+  // UI Methods
+  NEW_RECEIVER(UISearchDisplayController)
+  ADD_UNARY_METHOD(UISearchDisplayController, setSearchResultsTitle, 0)
 
-  // UILabel Methods
-  llvm::StringMap<uint8_t> &UILabelM =
-      UIMethods.insert({"UILabel", llvm::StringMap<uint8_t>()}).first->second;
-  UILabelM.insert({"setText:", 0});
+  NEW_RECEIVER(UITabBarItem)
+  IdentifierInfo *initWithTitleUITabBarItemTag[] = {
+      &Ctx.Idents.get("initWithTitle"), &Ctx.Idents.get("image"),
+      &Ctx.Idents.get("tag")};
+  ADD_METHOD(UITabBarItem, initWithTitleUITabBarItemTag, 3, 0)
+  IdentifierInfo *initWithTitleUITabBarItemImage[] = {
+      &Ctx.Idents.get("initWithTitle"), &Ctx.Idents.get("image"),
+      &Ctx.Idents.get("selectedImage")};
+  ADD_METHOD(UITabBarItem, initWithTitleUITabBarItemImage, 3, 0)
 
-  // UIButton Methods
-  llvm::StringMap<uint8_t> &UIButtonM =
-      UIMethods.insert({"UIButton", llvm::StringMap<uint8_t>()}).first->second;
-  UIButtonM.insert({"setText:", 0});
+  NEW_RECEIVER(NSDockTile)
+  ADD_UNARY_METHOD(NSDockTile, setBadgeLabel, 0)
 
-  // UIAlertAction Methods
-  llvm::StringMap<uint8_t> &UIAlertActionM =
-      UIMethods.insert({"UIAlertAction", llvm::StringMap<uint8_t>()})
-          .first->second;
-  UIAlertActionM.insert({"actionWithTitle:style:handler:", 0});
+  NEW_RECEIVER(NSStatusItem)
+  ADD_UNARY_METHOD(NSStatusItem, setTitle, 0)
+  ADD_UNARY_METHOD(NSStatusItem, setToolTip, 0)
 
-  // UIAlertController Methods
-  llvm::StringMap<uint8_t> &UIAlertControllerM =
-      UIMethods.insert({"UIAlertController", llvm::StringMap<uint8_t>()})
-          .first->second;
-  UIAlertControllerM.insert(
-      {"alertControllerWithTitle:message:preferredStyle:", 1});
+  NEW_RECEIVER(UITableViewRowAction)
+  IdentifierInfo *rowActionWithStyleUITableViewRowAction[] = {
+      &Ctx.Idents.get("rowActionWithStyle"), &Ctx.Idents.get("title"),
+      &Ctx.Idents.get("handler")};
+  ADD_METHOD(UITableViewRowAction, rowActionWithStyleUITableViewRowAction, 3, 1)
+  ADD_UNARY_METHOD(UITableViewRowAction, setTitle, 0)
 
-  // NSButton Methods
-  llvm::StringMap<uint8_t> &NSButtonM =
-      UIMethods.insert({"NSButton", llvm::StringMap<uint8_t>()}).first->second;
-  NSButtonM.insert({"setTitle:", 0});
+  NEW_RECEIVER(NSBox)
+  ADD_UNARY_METHOD(NSBox, setTitle, 0)
 
-  // NSButtonCell Methods
-  llvm::StringMap<uint8_t> &NSButtonCellM =
-      UIMethods.insert({"NSButtonCell", llvm::StringMap<uint8_t>()})
-          .first->second;
-  NSButtonCellM.insert({"setTitle:", 0});
+  NEW_RECEIVER(NSButton)
+  ADD_UNARY_METHOD(NSButton, setTitle, 0)
+  ADD_UNARY_METHOD(NSButton, setAlternateTitle, 0)
 
-  // NSMenuItem Methods
-  llvm::StringMap<uint8_t> &NSMenuItemM =
-      UIMethods.insert({"NSMenuItem", llvm::StringMap<uint8_t>()})
-          .first->second;
-  NSMenuItemM.insert({"setTitle:", 0});
+  NEW_RECEIVER(NSSavePanel)
+  ADD_UNARY_METHOD(NSSavePanel, setPrompt, 0)
+  ADD_UNARY_METHOD(NSSavePanel, setTitle, 0)
+  ADD_UNARY_METHOD(NSSavePanel, setNameFieldLabel, 0)
+  ADD_UNARY_METHOD(NSSavePanel, setNameFieldStringValue, 0)
+  ADD_UNARY_METHOD(NSSavePanel, setMessage, 0)
 
-  // NSAttributedString Methods
-  llvm::StringMap<uint8_t> &NSAttributedStringM =
-      UIMethods.insert({"NSAttributedString", llvm::StringMap<uint8_t>()})
-          .first->second;
-  NSAttributedStringM.insert({"initWithString:", 0});
-  NSAttributedStringM.insert({"initWithString:attributes:", 0});
+  NEW_RECEIVER(UIPrintInfo)
+  ADD_UNARY_METHOD(UIPrintInfo, setJobName, 0)
+
+  NEW_RECEIVER(NSTabViewItem)
+  ADD_UNARY_METHOD(NSTabViewItem, setLabel, 0)
+  ADD_UNARY_METHOD(NSTabViewItem, setToolTip, 0)
+
+  NEW_RECEIVER(NSBrowser)
+  IdentifierInfo *setTitleNSBrowser[] = {&Ctx.Idents.get("setTitle"),
+                                         &Ctx.Idents.get("ofColumn")};
+  ADD_METHOD(NSBrowser, setTitleNSBrowser, 2, 0)
+
+  NEW_RECEIVER(UIAccessibilityElement)
+  ADD_UNARY_METHOD(UIAccessibilityElement, setAccessibilityLabel, 0)
+  ADD_UNARY_METHOD(UIAccessibilityElement, setAccessibilityHint, 0)
+  ADD_UNARY_METHOD(UIAccessibilityElement, setAccessibilityValue, 0)
+
+  NEW_RECEIVER(UIAlertAction)
+  IdentifierInfo *actionWithTitleUIAlertAction[] = {
+      &Ctx.Idents.get("actionWithTitle"), &Ctx.Idents.get("style"),
+      &Ctx.Idents.get("handler")};
+  ADD_METHOD(UIAlertAction, actionWithTitleUIAlertAction, 3, 0)
+
+  NEW_RECEIVER(NSPopUpButton)
+  ADD_UNARY_METHOD(NSPopUpButton, addItemWithTitle, 0)
+  IdentifierInfo *insertItemWithTitleNSPopUpButton[] = {
+      &Ctx.Idents.get("insertItemWithTitle"), &Ctx.Idents.get("atIndex")};
+  ADD_METHOD(NSPopUpButton, insertItemWithTitleNSPopUpButton, 2, 0)
+  ADD_UNARY_METHOD(NSPopUpButton, removeItemWithTitle, 0)
+  ADD_UNARY_METHOD(NSPopUpButton, selectItemWithTitle, 0)
+  ADD_UNARY_METHOD(NSPopUpButton, setTitle, 0)
+
+  NEW_RECEIVER(NSTableViewRowAction)
+  IdentifierInfo *rowActionWithStyleNSTableViewRowAction[] = {
+      &Ctx.Idents.get("rowActionWithStyle"), &Ctx.Idents.get("title"),
+      &Ctx.Idents.get("handler")};
+  ADD_METHOD(NSTableViewRowAction, rowActionWithStyleNSTableViewRowAction, 3, 1)
+  ADD_UNARY_METHOD(NSTableViewRowAction, setTitle, 0)
+
+  NEW_RECEIVER(NSImage)
+  ADD_UNARY_METHOD(NSImage, setAccessibilityDescription, 0)
+
+  NEW_RECEIVER(NSUserActivity)
+  ADD_UNARY_METHOD(NSUserActivity, setTitle, 0)
+
+  NEW_RECEIVER(NSPathControlItem)
+  ADD_UNARY_METHOD(NSPathControlItem, setTitle, 0)
+
+  NEW_RECEIVER(NSCell)
+  ADD_UNARY_METHOD(NSCell, initTextCell, 0)
+  ADD_UNARY_METHOD(NSCell, setTitle, 0)
+  ADD_UNARY_METHOD(NSCell, setStringValue, 0)
+
+  NEW_RECEIVER(NSPathControl)
+  ADD_UNARY_METHOD(NSPathControl, setPlaceholderString, 0)
+
+  NEW_RECEIVER(UIAccessibility)
+  ADD_UNARY_METHOD(UIAccessibility, setAccessibilityLabel, 0)
+  ADD_UNARY_METHOD(UIAccessibility, setAccessibilityHint, 0)
+  ADD_UNARY_METHOD(UIAccessibility, setAccessibilityValue, 0)
+
+  NEW_RECEIVER(NSTableColumn)
+  ADD_UNARY_METHOD(NSTableColumn, setTitle, 0)
+  ADD_UNARY_METHOD(NSTableColumn, setHeaderToolTip, 0)
+
+  NEW_RECEIVER(NSSegmentedControl)
+  IdentifierInfo *setLabelNSSegmentedControl[] = {
+      &Ctx.Idents.get("setLabel"), &Ctx.Idents.get("forSegment")};
+  ADD_METHOD(NSSegmentedControl, setLabelNSSegmentedControl, 2, 0)
+
+  NEW_RECEIVER(NSButtonCell)
+  ADD_UNARY_METHOD(NSButtonCell, setTitle, 0)
+  ADD_UNARY_METHOD(NSButtonCell, setAlternateTitle, 0)
+
+  NEW_RECEIVER(NSSliderCell)
+  ADD_UNARY_METHOD(NSSliderCell, setTitle, 0)
+
+  NEW_RECEIVER(NSControl)
+  ADD_UNARY_METHOD(NSControl, setStringValue, 0)
+
+  NEW_RECEIVER(NSAccessibility)
+  ADD_UNARY_METHOD(NSAccessibility, setAccessibilityValueDescription, 0)
+  ADD_UNARY_METHOD(NSAccessibility, setAccessibilityLabel, 0)
+  ADD_UNARY_METHOD(NSAccessibility, setAccessibilityTitle, 0)
+  ADD_UNARY_METHOD(NSAccessibility, setAccessibilityPlaceholderValue, 0)
+  ADD_UNARY_METHOD(NSAccessibility, setAccessibilityHelp, 0)
+
+  NEW_RECEIVER(NSMatrix)
+  IdentifierInfo *setToolTipNSMatrix[] = {&Ctx.Idents.get("setToolTip"),
+                                          &Ctx.Idents.get("forCell")};
+  ADD_METHOD(NSMatrix, setToolTipNSMatrix, 2, 0)
+
+  NEW_RECEIVER(NSPrintPanel)
+  ADD_UNARY_METHOD(NSPrintPanel, setDefaultButtonTitle, 0)
+
+  NEW_RECEIVER(UILocalNotification)
+  ADD_UNARY_METHOD(UILocalNotification, setAlertBody, 0)
+  ADD_UNARY_METHOD(UILocalNotification, setAlertAction, 0)
+  ADD_UNARY_METHOD(UILocalNotification, setAlertTitle, 0)
+
+  NEW_RECEIVER(NSSlider)
+  ADD_UNARY_METHOD(NSSlider, setTitle, 0)
+
+  NEW_RECEIVER(UIMenuItem)
+  IdentifierInfo *initWithTitleUIMenuItem[] = {&Ctx.Idents.get("initWithTitle"),
+                                               &Ctx.Idents.get("action")};
+  ADD_METHOD(UIMenuItem, initWithTitleUIMenuItem, 2, 0)
+  ADD_UNARY_METHOD(UIMenuItem, setTitle, 0)
+
+  NEW_RECEIVER(UIAlertController)
+  IdentifierInfo *alertControllerWithTitleUIAlertController[] = {
+      &Ctx.Idents.get("alertControllerWithTitle"), &Ctx.Idents.get("message"),
+      &Ctx.Idents.get("preferredStyle")};
+  ADD_METHOD(UIAlertController, alertControllerWithTitleUIAlertController, 3, 1)
+  ADD_UNARY_METHOD(UIAlertController, setTitle, 0)
+  ADD_UNARY_METHOD(UIAlertController, setMessage, 0)
+
+  NEW_RECEIVER(UIApplicationShortcutItem)
+  IdentifierInfo *initWithTypeUIApplicationShortcutItemIcon[] = {
+      &Ctx.Idents.get("initWithType"), &Ctx.Idents.get("localizedTitle"),
+      &Ctx.Idents.get("localizedSubtitle"), &Ctx.Idents.get("icon"),
+      &Ctx.Idents.get("userInfo")};
+  ADD_METHOD(UIApplicationShortcutItem,
+             initWithTypeUIApplicationShortcutItemIcon, 5, 1)
+  IdentifierInfo *initWithTypeUIApplicationShortcutItem[] = {
+      &Ctx.Idents.get("initWithType"), &Ctx.Idents.get("localizedTitle")};
+  ADD_METHOD(UIApplicationShortcutItem, initWithTypeUIApplicationShortcutItem,
+             2, 1)
+
+  NEW_RECEIVER(UIActionSheet)
+  IdentifierInfo *initWithTitleUIActionSheet[] = {
+      &Ctx.Idents.get("initWithTitle"), &Ctx.Idents.get("delegate"),
+      &Ctx.Idents.get("cancelButtonTitle"),
+      &Ctx.Idents.get("destructiveButtonTitle"),
+      &Ctx.Idents.get("otherButtonTitles")};
+  ADD_METHOD(UIActionSheet, initWithTitleUIActionSheet, 5, 0)
+  ADD_UNARY_METHOD(UIActionSheet, addButtonWithTitle, 0)
+  ADD_UNARY_METHOD(UIActionSheet, setTitle, 0)
+
+  NEW_RECEIVER(NSURLSessionTask)
+  ADD_UNARY_METHOD(NSURLSessionTask, setTaskDescription, 0)
+
+  NEW_RECEIVER(UIAccessibilityCustomAction)
+  IdentifierInfo *initWithNameUIAccessibilityCustomAction[] = {
+      &Ctx.Idents.get("initWithName"), &Ctx.Idents.get("target"),
+      &Ctx.Idents.get("selector")};
+  ADD_METHOD(UIAccessibilityCustomAction,
+             initWithNameUIAccessibilityCustomAction, 3, 0)
+  ADD_UNARY_METHOD(UIAccessibilityCustomAction, setName, 0)
+
+  NEW_RECEIVER(UISearchBar)
+  ADD_UNARY_METHOD(UISearchBar, setText, 0)
+  ADD_UNARY_METHOD(UISearchBar, setPrompt, 0)
+  ADD_UNARY_METHOD(UISearchBar, setPlaceholder, 0)
+
+  NEW_RECEIVER(UIBarItem)
+  ADD_UNARY_METHOD(UIBarItem, setTitle, 0)
+
+  NEW_RECEIVER(UITextView)
+  ADD_UNARY_METHOD(UITextView, setText, 0)
+
+  NEW_RECEIVER(NSView)
+  ADD_UNARY_METHOD(NSView, setToolTip, 0)
+
+  NEW_RECEIVER(NSTextField)
+  ADD_UNARY_METHOD(NSTextField, setPlaceholderString, 0)
+
+  NEW_RECEIVER(NSAttributedString)
+  ADD_UNARY_METHOD(NSAttributedString, initWithString, 0)
+  IdentifierInfo *initWithStringNSAttributedString[] = {
+      &Ctx.Idents.get("initWithString"), &Ctx.Idents.get("attributes")};
+  ADD_METHOD(NSAttributedString, initWithStringNSAttributedString, 2, 0)
+
+  NEW_RECEIVER(NSText)
+  ADD_UNARY_METHOD(NSText, setString, 0)
+
+  NEW_RECEIVER(UIKeyCommand)
+  IdentifierInfo *keyCommandWithInputUIKeyCommand[] = {
+      &Ctx.Idents.get("keyCommandWithInput"), &Ctx.Idents.get("modifierFlags"),
+      &Ctx.Idents.get("action"), &Ctx.Idents.get("discoverabilityTitle")};
+  ADD_METHOD(UIKeyCommand, keyCommandWithInputUIKeyCommand, 4, 3)
+  ADD_UNARY_METHOD(UIKeyCommand, setDiscoverabilityTitle, 0)
+
+  NEW_RECEIVER(UILabel)
+  ADD_UNARY_METHOD(UILabel, setText, 0)
+
+  NEW_RECEIVER(NSAlert)
+  IdentifierInfo *alertWithMessageTextNSAlert[] = {
+      &Ctx.Idents.get("alertWithMessageText"), &Ctx.Idents.get("defaultButton"),
+      &Ctx.Idents.get("alternateButton"), &Ctx.Idents.get("otherButton"),
+      &Ctx.Idents.get("informativeTextWithFormat")};
+  ADD_METHOD(NSAlert, alertWithMessageTextNSAlert, 5, 0)
+  ADD_UNARY_METHOD(NSAlert, addButtonWithTitle, 0)
+  ADD_UNARY_METHOD(NSAlert, setMessageText, 0)
+  ADD_UNARY_METHOD(NSAlert, setInformativeText, 0)
+  ADD_UNARY_METHOD(NSAlert, setHelpAnchor, 0)
+
+  NEW_RECEIVER(UIMutableApplicationShortcutItem)
+  ADD_UNARY_METHOD(UIMutableApplicationShortcutItem, setLocalizedTitle, 0)
+  ADD_UNARY_METHOD(UIMutableApplicationShortcutItem, setLocalizedSubtitle, 0)
+
+  NEW_RECEIVER(UIButton)
+  IdentifierInfo *setTitleUIButton[] = {&Ctx.Idents.get("setTitle"),
+                                        &Ctx.Idents.get("forState")};
+  ADD_METHOD(UIButton, setTitleUIButton, 2, 0)
+
+  NEW_RECEIVER(NSWindow)
+  ADD_UNARY_METHOD(NSWindow, setTitle, 0)
+  IdentifierInfo *minFrameWidthWithTitleNSWindow[] = {
+      &Ctx.Idents.get("minFrameWidthWithTitle"), &Ctx.Idents.get("styleMask")};
+  ADD_METHOD(NSWindow, minFrameWidthWithTitleNSWindow, 2, 0)
+  ADD_UNARY_METHOD(NSWindow, setMiniwindowTitle, 0)
+
+  NEW_RECEIVER(NSPathCell)
+  ADD_UNARY_METHOD(NSPathCell, setPlaceholderString, 0)
+
+  NEW_RECEIVER(UIDocumentMenuViewController)
+  IdentifierInfo *addOptionWithTitleUIDocumentMenuViewController[] = {
+      &Ctx.Idents.get("addOptionWithTitle"), &Ctx.Idents.get("image"),
+      &Ctx.Idents.get("order"), &Ctx.Idents.get("handler")};
+  ADD_METHOD(UIDocumentMenuViewController,
+             addOptionWithTitleUIDocumentMenuViewController, 4, 0)
+
+  NEW_RECEIVER(UINavigationItem)
+  ADD_UNARY_METHOD(UINavigationItem, initWithTitle, 0)
+  ADD_UNARY_METHOD(UINavigationItem, setTitle, 0)
+  ADD_UNARY_METHOD(UINavigationItem, setPrompt, 0)
+
+  NEW_RECEIVER(UIAlertView)
+  IdentifierInfo *initWithTitleUIAlertView[] = {
+      &Ctx.Idents.get("initWithTitle"), &Ctx.Idents.get("message"),
+      &Ctx.Idents.get("delegate"), &Ctx.Idents.get("cancelButtonTitle"),
+      &Ctx.Idents.get("otherButtonTitles")};
+  ADD_METHOD(UIAlertView, initWithTitleUIAlertView, 5, 0)
+  ADD_UNARY_METHOD(UIAlertView, addButtonWithTitle, 0)
+  ADD_UNARY_METHOD(UIAlertView, setTitle, 0)
+  ADD_UNARY_METHOD(UIAlertView, setMessage, 0)
+
+  NEW_RECEIVER(NSFormCell)
+  ADD_UNARY_METHOD(NSFormCell, initTextCell, 0)
+  ADD_UNARY_METHOD(NSFormCell, setTitle, 0)
+  ADD_UNARY_METHOD(NSFormCell, setPlaceholderString, 0)
+
+  NEW_RECEIVER(NSUserNotification)
+  ADD_UNARY_METHOD(NSUserNotification, setTitle, 0)
+  ADD_UNARY_METHOD(NSUserNotification, setSubtitle, 0)
+  ADD_UNARY_METHOD(NSUserNotification, setInformativeText, 0)
+  ADD_UNARY_METHOD(NSUserNotification, setActionButtonTitle, 0)
+  ADD_UNARY_METHOD(NSUserNotification, setOtherButtonTitle, 0)
+  ADD_UNARY_METHOD(NSUserNotification, setResponsePlaceholder, 0)
+
+  NEW_RECEIVER(NSToolbarItem)
+  ADD_UNARY_METHOD(NSToolbarItem, setLabel, 0)
+  ADD_UNARY_METHOD(NSToolbarItem, setPaletteLabel, 0)
+  ADD_UNARY_METHOD(NSToolbarItem, setToolTip, 0)
+
+  NEW_RECEIVER(NSProgress)
+  ADD_UNARY_METHOD(NSProgress, setLocalizedDescription, 0)
+  ADD_UNARY_METHOD(NSProgress, setLocalizedAdditionalDescription, 0)
+
+  NEW_RECEIVER(NSSegmentedCell)
+  IdentifierInfo *setLabelNSSegmentedCell[] = {&Ctx.Idents.get("setLabel"),
+                                               &Ctx.Idents.get("forSegment")};
+  ADD_METHOD(NSSegmentedCell, setLabelNSSegmentedCell, 2, 0)
+  IdentifierInfo *setToolTipNSSegmentedCell[] = {&Ctx.Idents.get("setToolTip"),
+                                                 &Ctx.Idents.get("forSegment")};
+  ADD_METHOD(NSSegmentedCell, setToolTipNSSegmentedCell, 2, 0)
+
+  NEW_RECEIVER(NSUndoManager)
+  ADD_UNARY_METHOD(NSUndoManager, setActionName, 0)
+  ADD_UNARY_METHOD(NSUndoManager, undoMenuTitleForUndoActionName, 0)
+  ADD_UNARY_METHOD(NSUndoManager, redoMenuTitleForUndoActionName, 0)
+
+  NEW_RECEIVER(NSMenuItem)
+  IdentifierInfo *initWithTitleNSMenuItem[] = {
+      &Ctx.Idents.get("initWithTitle"), &Ctx.Idents.get("action"),
+      &Ctx.Idents.get("keyEquivalent")};
+  ADD_METHOD(NSMenuItem, initWithTitleNSMenuItem, 3, 0)
+  ADD_UNARY_METHOD(NSMenuItem, setTitle, 0)
+  ADD_UNARY_METHOD(NSMenuItem, setToolTip, 0)
+
+  NEW_RECEIVER(NSPopUpButtonCell)
+  IdentifierInfo *initTextCellNSPopUpButtonCell[] = {
+      &Ctx.Idents.get("initTextCell"), &Ctx.Idents.get("pullsDown")};
+  ADD_METHOD(NSPopUpButtonCell, initTextCellNSPopUpButtonCell, 2, 0)
+  ADD_UNARY_METHOD(NSPopUpButtonCell, addItemWithTitle, 0)
+  IdentifierInfo *insertItemWithTitleNSPopUpButtonCell[] = {
+      &Ctx.Idents.get("insertItemWithTitle"), &Ctx.Idents.get("atIndex")};
+  ADD_METHOD(NSPopUpButtonCell, insertItemWithTitleNSPopUpButtonCell, 2, 0)
+  ADD_UNARY_METHOD(NSPopUpButtonCell, removeItemWithTitle, 0)
+  ADD_UNARY_METHOD(NSPopUpButtonCell, selectItemWithTitle, 0)
+  ADD_UNARY_METHOD(NSPopUpButtonCell, setTitle, 0)
+
+  NEW_RECEIVER(NSViewController)
+  ADD_UNARY_METHOD(NSViewController, setTitle, 0)
+
+  NEW_RECEIVER(NSMenu)
+  ADD_UNARY_METHOD(NSMenu, initWithTitle, 0)
+  IdentifierInfo *insertItemWithTitleNSMenu[] = {
+      &Ctx.Idents.get("insertItemWithTitle"), &Ctx.Idents.get("action"),
+      &Ctx.Idents.get("keyEquivalent"), &Ctx.Idents.get("atIndex")};
+  ADD_METHOD(NSMenu, insertItemWithTitleNSMenu, 4, 0)
+  IdentifierInfo *addItemWithTitleNSMenu[] = {
+      &Ctx.Idents.get("addItemWithTitle"), &Ctx.Idents.get("action"),
+      &Ctx.Idents.get("keyEquivalent")};
+  ADD_METHOD(NSMenu, addItemWithTitleNSMenu, 3, 0)
+  ADD_UNARY_METHOD(NSMenu, setTitle, 0)
+
+  NEW_RECEIVER(UIMutableUserNotificationAction)
+  ADD_UNARY_METHOD(UIMutableUserNotificationAction, setTitle, 0)
+
+  NEW_RECEIVER(NSForm)
+  ADD_UNARY_METHOD(NSForm, addEntry, 0)
+  IdentifierInfo *insertEntryNSForm[] = {&Ctx.Idents.get("insertEntry"),
+                                         &Ctx.Idents.get("atIndex")};
+  ADD_METHOD(NSForm, insertEntryNSForm, 2, 0)
+
+  NEW_RECEIVER(NSTextFieldCell)
+  ADD_UNARY_METHOD(NSTextFieldCell, setPlaceholderString, 0)
+
+  NEW_RECEIVER(NSUserNotificationAction)
+  IdentifierInfo *actionWithIdentifierNSUserNotificationAction[] = {
+      &Ctx.Idents.get("actionWithIdentifier"), &Ctx.Idents.get("title")};
+  ADD_METHOD(NSUserNotificationAction,
+             actionWithIdentifierNSUserNotificationAction, 2, 1)
+
+  NEW_RECEIVER(NSURLSession)
+  ADD_UNARY_METHOD(NSURLSession, setSessionDescription, 0)
+
+  NEW_RECEIVER(UITextField)
+  ADD_UNARY_METHOD(UITextField, setText, 0)
+  ADD_UNARY_METHOD(UITextField, setPlaceholder, 0)
+
+  NEW_RECEIVER(UIBarButtonItem)
+  IdentifierInfo *initWithTitleUIBarButtonItem[] = {
+      &Ctx.Idents.get("initWithTitle"), &Ctx.Idents.get("style"),
+      &Ctx.Idents.get("target"), &Ctx.Idents.get("action")};
+  ADD_METHOD(UIBarButtonItem, initWithTitleUIBarButtonItem, 4, 0)
+
+  NEW_RECEIVER(UIViewController)
+  ADD_UNARY_METHOD(UIViewController, setTitle, 0)
+
+  NEW_RECEIVER(UISegmentedControl)
+  IdentifierInfo *insertSegmentWithTitleUISegmentedControl[] = {
+      &Ctx.Idents.get("insertSegmentWithTitle"), &Ctx.Idents.get("atIndex"),
+      &Ctx.Idents.get("animated")};
+  ADD_METHOD(UISegmentedControl, insertSegmentWithTitleUISegmentedControl, 3, 0)
+  IdentifierInfo *setTitleUISegmentedControl[] = {
+      &Ctx.Idents.get("setTitle"), &Ctx.Idents.get("forSegmentAtIndex")};
+  ADD_METHOD(UISegmentedControl, setTitleUISegmentedControl, 2, 0)
 }
+
+#define LSF_INSERT(function_name) LSF.insert(&Ctx.Idents.get(function_name));
+#define LSM_INSERT_NULLARY(receiver, method_name)                              \
+  LSM.insert({&Ctx.Idents.get(receiver), Ctx.Selectors.getNullarySelector(     \
+                                             &Ctx.Idents.get(method_name))});
+#define LSM_INSERT_UNARY(receiver, method_name)                                \
+  LSM.insert({&Ctx.Idents.get(receiver),                                       \
+              Ctx.Selectors.getUnarySelector(&Ctx.Idents.get(method_name))});
+#define LSM_INSERT_SELECTOR(receiver, method_list, arguments)                  \
+  LSM.insert({&Ctx.Idents.get(receiver),                                       \
+              Ctx.Selectors.getSelector(arguments, method_list)});
 
 /// Initializes a list of methods and C functions that return a localized string
 void NonLocalizedStringChecker::initLocStringsMethods(ASTContext &Ctx) const {
   if (!LSM.empty())
     return;
 
-  LSM.insert({"NSBundle", "localizedStringForKey:value:table:"});
-  LSM.insert({"NSDateFormatter", "stringFromDate:"});
-  LSM.insert(
-      {"NSDateFormatter", "localizedStringFromDate:dateStyle:timeStyle:"});
-  LSM.insert({"NSNumberFormatter", "stringFromNumber:"});
-  LSM.insert({"UITextField", "text"});
-  LSM.insert({"UITextView", "text"});
-  LSM.insert({"UILabel", "text"});
+  IdentifierInfo *LocalizedStringMacro[] = {
+      &Ctx.Idents.get("localizedStringForKey"), &Ctx.Idents.get("value"),
+      &Ctx.Idents.get("table")};
+  LSM_INSERT_SELECTOR("NSBundle", LocalizedStringMacro, 3)
+  LSM_INSERT_UNARY("NSDateFormatter", "stringFromDate")
+  IdentifierInfo *LocalizedStringFromDate[] = {
+      &Ctx.Idents.get("localizedStringFromDate"), &Ctx.Idents.get("dateStyle"),
+      &Ctx.Idents.get("timeStyle")};
+  LSM_INSERT_SELECTOR("NSDateFormatter", LocalizedStringFromDate, 3)
+  LSM_INSERT_UNARY("NSNumberFormatter", "stringFromNumber")
+  LSM_INSERT_NULLARY("UITextField", "text")
+  LSM_INSERT_NULLARY("UITextView", "text")
+  LSM_INSERT_NULLARY("UILabel", "text")
 
-  LSF.insert("CFDateFormatterCreateStringWithDate");
-  LSF.insert("CFDateFormatterCreateStringWithAbsoluteTime");
-  LSF.insert("CFNumberFormatterCreateStringWithNumber");
+  LSF_INSERT("CFDateFormatterCreateStringWithDate");
+  LSF_INSERT("CFDateFormatterCreateStringWithAbsoluteTime");
+  LSF_INSERT("CFNumberFormatterCreateStringWithNumber");
 }
 
 /// Checks to see if the method / function declaration includes
 /// __attribute__((annotate("returns_localized_nsstring")))
 bool NonLocalizedStringChecker::isAnnotatedAsLocalized(const Decl *D) const {
+  if (!D)
+    return false;
   return std::any_of(
       D->specific_attr_begin<AnnotateAttr>(),
       D->specific_attr_end<AnnotateAttr>(), [](const AnnotateAttr *Ann) {
@@ -253,8 +633,8 @@ void NonLocalizedStringChecker::reportLocalizationError(
     return;
 
   // Generate the bug report.
-  std::unique_ptr<BugReport> R(
-      new BugReport(*BT, "String should be localized", ErrNode));
+  std::unique_ptr<BugReport> R(new BugReport(
+      *BT, "User-facing text should use localized string macro", ErrNode));
   if (argumentNumber) {
     R->addRange(M.getArgExpr(argumentNumber - 1)->getSourceRange());
   } else {
@@ -262,6 +642,24 @@ void NonLocalizedStringChecker::reportLocalizationError(
   }
   R->markInteresting(S);
   C.emitReport(std::move(R));
+}
+
+/// Returns the argument number requiring localized string if it exists
+/// otherwise, returns -1
+int NonLocalizedStringChecker::getLocalizedArgumentForSelector(
+    const IdentifierInfo *Receiver, Selector S) const {
+  auto method = UIMethods.find(Receiver);
+
+  if (method == UIMethods.end())
+    return -1;
+
+  auto argumentIterator = method->getSecond().find(S);
+
+  if (argumentIterator == method->getSecond().end())
+    return -1;
+
+  int argumentNumber = argumentIterator->getSecond();
+  return argumentNumber;
 }
 
 /// Check if the string being passed in has NonLocalized state
@@ -280,7 +678,6 @@ void NonLocalizedStringChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
   StringRef SelectorName = SelectorString;
   assert(!SelectorName.empty());
 
-  auto method = UIMethods.find(odInfo->getName());
   if (odInfo->isStr("NSString")) {
     // Handle the case where the receiver is an NSString
     // These special NSString methods draw to the screen
@@ -297,33 +694,42 @@ void NonLocalizedStringChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
     if (isNonLocalized) {
       reportLocalizationError(svTitle, msg, C);
     }
-  } else if (method != UIMethods.end()) {
+  }
 
-    auto argumentIterator = method->getValue().find(SelectorName);
+  int argumentNumber = getLocalizedArgumentForSelector(odInfo, S);
+  // Go up each hierarchy of superclasses and their protocols
+  while (argumentNumber < 0 && OD->getSuperClass() != nullptr) {
+    for (const auto *P : OD->all_referenced_protocols()) {
+      argumentNumber = getLocalizedArgumentForSelector(P->getIdentifier(), S);
+      if (argumentNumber >= 0)
+        break;
+    }
+    if (argumentNumber < 0) {
+      OD = OD->getSuperClass();
+      argumentNumber = getLocalizedArgumentForSelector(OD->getIdentifier(), S);
+    }
+  }
 
-    if (argumentIterator == method->getValue().end())
+  if (argumentNumber < 0) // There was no match in UIMethods
+    return;
+
+  SVal svTitle = msg.getArgSVal(argumentNumber);
+
+  if (const ObjCStringRegion *SR =
+          dyn_cast_or_null<ObjCStringRegion>(svTitle.getAsRegion())) {
+    StringRef stringValue =
+        SR->getObjCStringLiteral()->getString()->getString();
+    if ((stringValue.trim().size() == 0 && stringValue.size() > 0) ||
+        stringValue.empty())
       return;
+    if (!IsAggressive && llvm::sys::unicode::columnWidthUTF8(stringValue) < 2)
+      return;
+  }
 
-    int argumentNumber = argumentIterator->getValue();
+  bool isNonLocalized = hasNonLocalizedState(svTitle, C);
 
-    SVal svTitle = msg.getArgSVal(argumentNumber);
-
-    if (const ObjCStringRegion *SR =
-            dyn_cast_or_null<ObjCStringRegion>(svTitle.getAsRegion())) {
-      StringRef stringValue =
-          SR->getObjCStringLiteral()->getString()->getString();
-      if ((stringValue.trim().size() == 0 && stringValue.size() > 0) ||
-          stringValue.empty())
-        return;
-      if (!IsAggressive && llvm::sys::unicode::columnWidthUTF8(stringValue) < 2)
-        return;
-    }
-
-    bool isNonLocalized = hasNonLocalizedState(svTitle, C);
-
-    if (isNonLocalized) {
-      reportLocalizationError(svTitle, msg, C, argumentNumber + 1);
-    }
+  if (isNonLocalized) {
+    reportLocalizationError(svTitle, msg, C, argumentNumber + 1);
   }
 }
 
@@ -375,10 +781,10 @@ void NonLocalizedStringChecker::checkPostCall(const CallEvent &Call,
   if (!D)
     return;
 
-  StringRef IdentifierName = C.getCalleeName(D->getAsFunction());
+  const IdentifierInfo *Identifier = Call.getCalleeIdentifier();
 
   SVal sv = Call.getReturnValue();
-  if (isAnnotatedAsLocalized(D) || LSF.find(IdentifierName) != LSF.end()) {
+  if (isAnnotatedAsLocalized(D) || LSF.count(Identifier) != 0) {
     setLocalizedState(sv, C);
   } else if (isNSStringType(RT, C.getASTContext()) &&
              !hasLocalizedState(sv, C)) {
@@ -407,13 +813,10 @@ void NonLocalizedStringChecker::checkPostObjCMessage(const ObjCMethodCall &msg,
     return;
   const IdentifierInfo *odInfo = OD->getIdentifier();
 
-  StringRef IdentifierName = odInfo->getName();
-
   Selector S = msg.getSelector();
   std::string SelectorName = S.getAsString();
 
-  std::pair<StringRef, StringRef> MethodDescription = {IdentifierName,
-                                                       SelectorName};
+  std::pair<const IdentifierInfo *, Selector> MethodDescription = {odInfo, S};
 
   if (LSM.count(MethodDescription) || isAnnotatedAsLocalized(msg.getDecl())) {
     SVal sv = msg.getReturnValue();
@@ -505,7 +908,7 @@ void EmptyLocalizationContextChecker::MethodCrawler::VisitObjCMessageExpr(
 
   const IdentifierInfo *odInfo = OD->getIdentifier();
 
-  if (!(odInfo->isStr("NSBundle") ||
+  if (!(odInfo->isStr("NSBundle") &&
         ME->getSelector().getAsString() ==
             "localizedStringForKey:value:table:")) {
     return;
@@ -573,10 +976,209 @@ void EmptyLocalizationContextChecker::MethodCrawler::VisitObjCMessageExpr(
 void EmptyLocalizationContextChecker::MethodCrawler::reportEmptyContextError(
     const ObjCMessageExpr *ME) const {
   // Generate the bug report.
-  BR.EmitBasicReport(MD, Checker, "Context Missing", "Localizability Error",
+  BR.EmitBasicReport(MD, Checker, "Context Missing",
+                     "Localizability Issue (Apple)",
                      "Localized string macro should include a non-empty "
                      "comment for translators",
                      PathDiagnosticLocation(ME, BR.getSourceManager(), DCtx));
+}
+
+namespace {
+class PluralMisuseChecker : public Checker<check::ASTCodeBody> {
+
+  // A helper class, which walks the AST
+  class MethodCrawler : public RecursiveASTVisitor<MethodCrawler> {
+    BugReporter &BR;
+    const CheckerBase *Checker;
+    AnalysisDeclContext *AC;
+
+    // This functions like a stack. We push on any IfStmt or
+    // ConditionalOperator that matches the condition
+    // and pop it off when we leave that statement
+    llvm::SmallVector<const clang::Stmt *, 8> MatchingStatements;
+    // This is true when we are the direct-child of a
+    // matching statement
+    bool InMatchingStatement = false;
+
+  public:
+    explicit MethodCrawler(BugReporter &InBR, const CheckerBase *Checker,
+                           AnalysisDeclContext *InAC)
+        : BR(InBR), Checker(Checker), AC(InAC) {}
+
+    bool VisitIfStmt(const IfStmt *I);
+    bool EndVisitIfStmt(IfStmt *I);
+    bool TraverseIfStmt(IfStmt *x);
+    bool VisitConditionalOperator(const ConditionalOperator *C);
+    bool TraverseConditionalOperator(ConditionalOperator *C);
+    bool VisitCallExpr(const CallExpr *CE);
+    bool VisitObjCMessageExpr(const ObjCMessageExpr *ME);
+
+  private:
+    void reportPluralMisuseError(const Stmt *S) const;
+    bool isCheckingPlurality(const Expr *E) const;
+  };
+
+public:
+  void checkASTCodeBody(const Decl *D, AnalysisManager &Mgr,
+                        BugReporter &BR) const {
+    MethodCrawler Visitor(BR, this, Mgr.getAnalysisDeclContext(D));
+    Visitor.TraverseDecl(const_cast<Decl *>(D));
+  }
+};
+} // end anonymous namespace
+
+// Checks the condition of the IfStmt and returns true if one
+// of the following heuristics are met:
+// 1) The conidtion is a variable with "singular" or "plural" in the name
+// 2) The condition is a binary operator with 1 or 2 on the right-hand side
+bool PluralMisuseChecker::MethodCrawler::isCheckingPlurality(
+    const Expr *Condition) const {
+  const BinaryOperator *BO = nullptr;
+  // Accounts for when a VarDecl represents a BinaryOperator
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Condition)) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
+      const Expr *InitExpr = VD->getInit();
+      if (InitExpr) {
+        if (const BinaryOperator *B =
+                dyn_cast<BinaryOperator>(InitExpr->IgnoreParenImpCasts())) {
+          BO = B;
+        }
+      }
+      if (VD->getName().lower().find("plural") != StringRef::npos ||
+          VD->getName().lower().find("singular") != StringRef::npos) {
+        return true;
+      }
+    }
+  } else if (const BinaryOperator *B = dyn_cast<BinaryOperator>(Condition)) {
+    BO = B;
+  }
+
+  if (BO == nullptr)
+    return false;
+
+  if (IntegerLiteral *IL = dyn_cast_or_null<IntegerLiteral>(
+          BO->getRHS()->IgnoreParenImpCasts())) {
+    llvm::APInt Value = IL->getValue();
+    if (Value == 1 || Value == 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// A CallExpr with "LOC" in its identifier that takes in a string literal
+// has been shown to almost always be a function that returns a localized
+// string. Raise a diagnostic when this is in a statement that matches
+// the condition.
+bool PluralMisuseChecker::MethodCrawler::VisitCallExpr(const CallExpr *CE) {
+  if (InMatchingStatement) {
+    if (const FunctionDecl *FD = CE->getDirectCallee()) {
+      StringRef NormalizedName =
+          StringRef(FD->getNameInfo().getAsString()).lower();
+      if (NormalizedName.find("loc") != StringRef::npos) {
+        for (const Expr *Arg : CE->arguments()) {
+          if (isa<ObjCStringLiteral>(Arg))
+            reportPluralMisuseError(CE);
+        }
+      }
+    }
+  }
+  return true;
+}
+
+// The other case is for NSLocalizedString which also returns
+// a localized string. It's a macro for the ObjCMessageExpr
+// [NSBundle localizedStringForKey:value:table:] Raise a
+// diagnostic when this is in a statement that matches
+// the condition.
+bool PluralMisuseChecker::MethodCrawler::VisitObjCMessageExpr(
+    const ObjCMessageExpr *ME) {
+  const ObjCInterfaceDecl *OD = ME->getReceiverInterface();
+  if (!OD)
+    return true;
+
+  const IdentifierInfo *odInfo = OD->getIdentifier();
+
+  if (odInfo->isStr("NSBundle") &&
+      ME->getSelector().getAsString() == "localizedStringForKey:value:table:") {
+    if (InMatchingStatement) {
+      reportPluralMisuseError(ME);
+    }
+  }
+  return true;
+}
+
+/// Override TraverseIfStmt so we know when we are done traversing an IfStmt
+bool PluralMisuseChecker::MethodCrawler::TraverseIfStmt(IfStmt *I) {
+  RecursiveASTVisitor<MethodCrawler>::TraverseIfStmt(I);
+  return EndVisitIfStmt(I);
+}
+
+// EndVisit callbacks are not provided by the RecursiveASTVisitor
+// so we override TraverseIfStmt and make a call to EndVisitIfStmt
+// after traversing the IfStmt
+bool PluralMisuseChecker::MethodCrawler::EndVisitIfStmt(IfStmt *I) {
+  MatchingStatements.pop_back();
+  if (!MatchingStatements.empty()) {
+    if (MatchingStatements.back() != nullptr) {
+      InMatchingStatement = true;
+      return true;
+    }
+  }
+  InMatchingStatement = false;
+  return true;
+}
+
+bool PluralMisuseChecker::MethodCrawler::VisitIfStmt(const IfStmt *I) {
+  const Expr *Condition = I->getCond()->IgnoreParenImpCasts();
+  if (isCheckingPlurality(Condition)) {
+    MatchingStatements.push_back(I);
+    InMatchingStatement = true;
+  } else {
+    MatchingStatements.push_back(nullptr);
+    InMatchingStatement = false;
+  }
+
+  return true;
+}
+
+// Preliminary support for conditional operators.
+bool PluralMisuseChecker::MethodCrawler::TraverseConditionalOperator(
+    ConditionalOperator *C) {
+  RecursiveASTVisitor<MethodCrawler>::TraverseConditionalOperator(C);
+  MatchingStatements.pop_back();
+  if (!MatchingStatements.empty()) {
+    if (MatchingStatements.back() != nullptr)
+      InMatchingStatement = true;
+    else
+      InMatchingStatement = false;
+  } else {
+    InMatchingStatement = false;
+  }
+  return true;
+}
+
+bool PluralMisuseChecker::MethodCrawler::VisitConditionalOperator(
+    const ConditionalOperator *C) {
+  const Expr *Condition = C->getCond()->IgnoreParenImpCasts();
+  if (isCheckingPlurality(Condition)) {
+    MatchingStatements.push_back(C);
+    InMatchingStatement = true;
+  } else {
+    MatchingStatements.push_back(nullptr);
+    InMatchingStatement = false;
+  }
+  return true;
+}
+
+void PluralMisuseChecker::MethodCrawler::reportPluralMisuseError(
+    const Stmt *S) const {
+  // Generate the bug report.
+  BR.EmitBasicReport(AC->getDecl(), Checker, "Plural Misuse",
+                     "Localizability Issue (Apple)",
+                     "Plural cases are not supported accross all languages. "
+                     "Use a .stringsdict file instead",
+                     PathDiagnosticLocation(S, BR.getSourceManager(), AC));
 }
 
 //===----------------------------------------------------------------------===//
@@ -592,4 +1194,8 @@ void ento::registerNonLocalizedStringChecker(CheckerManager &mgr) {
 
 void ento::registerEmptyLocalizationContextChecker(CheckerManager &mgr) {
   mgr.registerChecker<EmptyLocalizationContextChecker>();
+}
+
+void ento::registerPluralMisuseChecker(CheckerManager &mgr) {
+  mgr.registerChecker<PluralMisuseChecker>();
 }

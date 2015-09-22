@@ -493,6 +493,10 @@ def EmptyLocalizationContextChecker : Checker<"EmptyLocalizationContextChecker">
   HelpText<"Check that NSLocalizedString macros include a comment for context">,
   DescFile<"LocalizationChecker.cpp">;
 
+def PluralMisuseChecker : Checker<"PluralMisuseChecker">,
+  HelpText<"Warns against using one vs. many plural pattern in code when generating localized strings.">,
+  DescFile<"LocalizationChecker.cpp">;
+
 } // end "alpha.osx.cocoa"
 
 let ParentPackage = CoreFoundation in {
