@@ -347,7 +347,7 @@ class CBranchBitNum<string opstr, DAGOperand opnd, PatFrag cond_op,
   InstSE<(outs), (ins RO:$rs, uimm5_64:$p, opnd:$offset),
          !strconcat(opstr, "\t$rs, $p, $offset"),
          [(brcond (i32 (cond_op (and RO:$rs, (shl shift, immZExt5_64:$p)), 0)),
-                  bb:$offset)], IIBranch, FrmI, opstr> {
+                  bb:$offset)], II_BBIT, FrmI, opstr> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;

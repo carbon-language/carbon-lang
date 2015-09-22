@@ -791,7 +791,7 @@ class CBranch<string opstr, DAGOperand opnd, PatFrag cond_op,
               RegisterOperand RO, bit DelaySlot = 1> :
   InstSE<(outs), (ins RO:$rs, RO:$rt, opnd:$offset),
          !strconcat(opstr, "\t$rs, $rt, $offset"),
-         [(brcond (i32 (cond_op RO:$rs, RO:$rt)), bb:$offset)], IIBranch,
+         [(brcond (i32 (cond_op RO:$rs, RO:$rt)), bb:$offset)], II_BCC,
          FrmI, opstr> {
   let isBranch = 1;
   let isTerminator = 1;
@@ -803,7 +803,7 @@ class CBranchZero<string opstr, DAGOperand opnd, PatFrag cond_op,
                   RegisterOperand RO, bit DelaySlot = 1> :
   InstSE<(outs), (ins RO:$rs, opnd:$offset),
          !strconcat(opstr, "\t$rs, $offset"),
-         [(brcond (i32 (cond_op RO:$rs, 0)), bb:$offset)], IIBranch,
+         [(brcond (i32 (cond_op RO:$rs, 0)), bb:$offset)], II_BCCZ,
          FrmI, opstr> {
   let isBranch = 1;
   let isTerminator = 1;
@@ -829,7 +829,7 @@ class SetCC_I<string opstr, PatFrag cond_op, Operand Od, PatLeaf imm_type,
 class JumpFJ<DAGOperand opnd, string opstr, SDPatternOperator operator,
              SDPatternOperator targetoperator, string bopstr> :
   InstSE<(outs), (ins opnd:$target), !strconcat(opstr, "\t$target"),
-         [(operator targetoperator:$target)], IIBranch, FrmJ, bopstr> {
+         [(operator targetoperator:$target)], II_J, FrmJ, bopstr> {
   let isTerminator=1;
   let isBarrier=1;
   let hasDelaySlot = 1;
@@ -839,7 +839,7 @@ class JumpFJ<DAGOperand opnd, string opstr, SDPatternOperator operator,
 
 // Unconditional branch
 class UncondBranch<Instruction BEQInst> :
-  PseudoSE<(outs), (ins brtarget:$offset), [(br bb:$offset)], IIBranch>,
+  PseudoSE<(outs), (ins brtarget:$offset), [(br bb:$offset)], II_B>,
   PseudoInstExpansion<(BEQInst ZERO, ZERO, brtarget:$offset)> {
   let isBranch = 1;
   let isTerminator = 1;
@@ -853,7 +853,7 @@ class UncondBranch<Instruction BEQInst> :
 let isTerminator=1, isBarrier=1, hasDelaySlot = 1 in
 class JumpFR<string opstr, RegisterOperand RO,
              SDPatternOperator operator = null_frag>:
-  InstSE<(outs), (ins RO:$rs), "jr\t$rs", [(operator RO:$rs)], IIBranch,
+  InstSE<(outs), (ins RO:$rs), "jr\t$rs", [(operator RO:$rs)], II_JR,
          FrmR, opstr>;
 
 // Indirect branch
@@ -866,23 +866,23 @@ class IndirectBranch<string opstr, RegisterOperand RO> : JumpFR<opstr, RO> {
 let isCall=1, hasDelaySlot=1, Defs = [RA] in {
   class JumpLink<string opstr, DAGOperand opnd> :
     InstSE<(outs), (ins opnd:$target), !strconcat(opstr, "\t$target"),
-           [(MipsJmpLink imm:$target)], IIBranch, FrmJ, opstr> {
+           [(MipsJmpLink imm:$target)], II_JAL, FrmJ, opstr> {
     let DecoderMethod = "DecodeJumpTarget";
   }
 
   class JumpLinkRegPseudo<RegisterOperand RO, Instruction JALRInst,
                           Register RetReg, RegisterOperand ResRO = RO>:
-    PseudoSE<(outs), (ins RO:$rs), [(MipsJmpLink RO:$rs)], IIBranch>,
+    PseudoSE<(outs), (ins RO:$rs), [(MipsJmpLink RO:$rs)], II_JALR>,
     PseudoInstExpansion<(JALRInst RetReg, ResRO:$rs)>;
 
   class JumpLinkReg<string opstr, RegisterOperand RO>:
     InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
-           [], IIBranch, FrmR>;
+           [], II_JALR, FrmR, opstr>;
 
   class BGEZAL_FT<string opstr, DAGOperand opnd,
                   RegisterOperand RO, bit DelaySlot = 1> :
     InstSE<(outs), (ins RO:$rs, opnd:$offset),
-           !strconcat(opstr, "\t$rs, $offset"), [], IIBranch, FrmI, opstr> {
+           !strconcat(opstr, "\t$rs, $offset"), [], II_BCCZAL, FrmI, opstr> {
     let hasDelaySlot = DelaySlot;
   }
 
@@ -891,17 +891,17 @@ let isCall=1, hasDelaySlot=1, Defs = [RA] in {
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, hasDelaySlot = 1,
     hasExtraSrcRegAllocReq = 1, Defs = [AT] in {
   class TailCall<Instruction JumpInst> :
-    PseudoSE<(outs), (ins calltarget:$target), [], IIBranch>,
+    PseudoSE<(outs), (ins calltarget:$target), [], II_J>,
     PseudoInstExpansion<(JumpInst jmptarget:$target)>;
 
   class TailCallReg<RegisterOperand RO, Instruction JRInst,
                     RegisterOperand ResRO = RO> :
-    PseudoSE<(outs), (ins RO:$rs), [(MipsTailCall RO:$rs)], IIBranch>,
+    PseudoSE<(outs), (ins RO:$rs), [(MipsTailCall RO:$rs)], II_JR>,
     PseudoInstExpansion<(JRInst ResRO:$rs)>;
 }
 
 class BAL_BR_Pseudo<Instruction RealInst> :
-  PseudoSE<(outs), (ins brtarget:$offset), [], IIBranch>,
+  PseudoSE<(outs), (ins brtarget:$offset), [], II_BCCZAL>,
   PseudoInstExpansion<(RealInst ZERO, brtarget:$offset)> {
   let isBranch = 1;
   let isTerminator = 1;
@@ -1415,7 +1415,8 @@ def TAILCALL_R : TailCallReg<GPR32Opnd, JR>;
 // Indirect branches are matched as PseudoIndirectBranch/PseudoIndirectBranch64
 // then are expanded to JR, JR64, JALR, or JALR64 depending on the ISA.
 class PseudoIndirectBranchBase<RegisterOperand RO> :
-    MipsPseudo<(outs), (ins RO:$rs), [(brind RO:$rs)], IIBranch> {
+    MipsPseudo<(outs), (ins RO:$rs), [(brind RO:$rs)],
+               II_IndirectBranchPseudo> {
   let isTerminator=1;
   let isBarrier=1;
   let hasDelaySlot = 1;
@@ -1425,12 +1426,12 @@ class PseudoIndirectBranchBase<RegisterOperand RO> :
 
 def PseudoIndirectBranch : PseudoIndirectBranchBase<GPR32Opnd>;
 
-// Return instructions are matched as a RetRA instruction, then ar expanded
+// Return instructions are matched as a RetRA instruction, then are expanded
 // into PseudoReturn/PseudoReturn64 after register allocation. Finally,
 // MipsAsmPrinter expands this into JR, JR64, JALR, or JALR64 depending on the
 // ISA.
 class PseudoReturnBase<RegisterOperand RO> : MipsPseudo<(outs), (ins RO:$rs),
-                                                        [], IIBranch> {
+                                                        [], II_ReturnPseudo> {
   let isTerminator = 1;
   let isBarrier = 1;
   let hasDelaySlot = 1;

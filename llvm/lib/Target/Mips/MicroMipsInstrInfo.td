@@ -175,7 +175,7 @@ def simm23_lsl2 : Operand<i32> {
 class CompactBranchMM<string opstr, DAGOperand opnd, PatFrag cond_op,
                       RegisterOperand RO> :
   InstSE<(outs), (ins RO:$rs, opnd:$offset),
-         !strconcat(opstr, "\t$rs, $offset"), [], IIBranch, FrmI> {
+         !strconcat(opstr, "\t$rs, $offset"), [], II_BCCZC, FrmI> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 0;
@@ -401,7 +401,7 @@ class LoadImmMM16<string opstr, Operand Od, RegisterOperand RO> :
 // 16-bit Jump and Link (Call)
 class JumpLinkRegMM16<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
-           [(MipsJmpLink RO:$rs)], IIBranch, FrmR> {
+           [(MipsJmpLink RO:$rs)], II_JALR, FrmR> {
   let isCall = 1;
   let hasDelaySlot = 1;
   let Defs = [RA];
@@ -410,7 +410,7 @@ class JumpLinkRegMM16<string opstr, RegisterOperand RO> :
 // 16-bit Jump Reg
 class JumpRegMM16<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
-           [], IIBranch, FrmR> {
+           [], II_JR, FrmR> {
   let hasDelaySlot = 1;
   let isBranch = 1;
   let isIndirectBranch = 1;
@@ -419,7 +419,7 @@ class JumpRegMM16<string opstr, RegisterOperand RO> :
 // Base class for JRADDIUSP instruction.
 class JumpRAddiuStackMM16 :
   MicroMipsInst16<(outs), (ins uimm5_lsl2:$imm), "jraddiusp\t$imm",
-                  [], IIBranch, FrmR> {
+                  [], II_JRADDIUSP, FrmR> {
   let isTerminator = 1;
   let isBarrier = 1;
   let isBranch = 1;
@@ -429,7 +429,7 @@ class JumpRAddiuStackMM16 :
 // 16-bit Jump and Link (Call) - Short Delay Slot
 class JumpLinkRegSMM16<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
-           [], IIBranch, FrmR> {
+           [], II_JALRS, FrmR> {
   let isCall = 1;
   let hasDelaySlot = 1;
   let Defs = [RA];
@@ -438,7 +438,7 @@ class JumpLinkRegSMM16<string opstr, RegisterOperand RO> :
 // 16-bit Jump Register Compact - No delay slot
 class JumpRegCMM16<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
-                  [], IIBranch, FrmR> {
+                  [], II_JRC, FrmR> {
   let isTerminator = 1;
   let isBarrier = 1;
   let isBranch = 1;
@@ -453,7 +453,7 @@ class BrkSdbbp16MM<string opstr> :
 
 class CBranchZeroMM<string opstr, DAGOperand opnd, RegisterOperand RO> :
   MicroMipsInst16<(outs), (ins RO:$rs, opnd:$offset),
-                  !strconcat(opstr, "\t$rs, $offset"), [], IIBranch, FrmI> {
+                  !strconcat(opstr, "\t$rs, $offset"), [], II_BCCZ, FrmI> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
@@ -464,18 +464,18 @@ class CBranchZeroMM<string opstr, DAGOperand opnd, RegisterOperand RO> :
 let isCall = 1, hasDelaySlot = 1, Defs = [RA] in {
   class JumpLinkMM<string opstr, DAGOperand opnd> :
     InstSE<(outs), (ins opnd:$target), !strconcat(opstr, "\t$target"),
-           [], IIBranch, FrmJ, opstr> {
+           [], II_JALS, FrmJ, opstr> {
     let DecoderMethod = "DecodeJumpTargetMM";
   }
 
   class JumpLinkRegMM<string opstr, RegisterOperand RO>:
     InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
-            [], IIBranch, FrmR>;
+            [], II_JALRS, FrmR>;
 
   class BranchCompareToZeroLinkMM<string opstr, DAGOperand opnd,
                                   RegisterOperand RO> :
     InstSE<(outs), (ins RO:$rs, opnd:$offset),
-           !strconcat(opstr, "\t$rs, $offset"), [], IIBranch, FrmI, opstr>;
+           !strconcat(opstr, "\t$rs, $offset"), [], II_BCCZALS, FrmI, opstr>;
 }
 
 class LoadWordIndexedScaledMM<string opstr, RegisterOperand RO,
@@ -556,7 +556,7 @@ class LoadMultMM16<string opstr,
 class UncondBranchMM16<string opstr> :
   MicroMipsInst16<(outs), (ins brtarget10_mm:$offset),
                   !strconcat(opstr, "\t$offset"),
-                  [], IIBranch, FrmI> {
+                  [], II_B, FrmI> {
   let isBranch = 1;
   let isTerminator = 1;
   let isBarrier = 1;

@@ -1380,7 +1380,7 @@ def: Mips16Pat<(brind CPU16Regs:$rs), (JrcRx16 CPU16Regs:$rs)> {
 let isCall=1, hasDelaySlot=0 in
 def JumpLinkReg16:
   FRR16_JALRC<0, 0, 0, (outs), (ins CPU16Regs:$rs),
-              "jalrc \t$rs", [(MipsJmpLink CPU16Regs:$rs)], IIBranch> {
+              "jalrc \t$rs", [(MipsJmpLink CPU16Regs:$rs)], II_JALRC> {
   let Defs = [RA];
 }
 

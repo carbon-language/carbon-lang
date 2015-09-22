@@ -217,7 +217,7 @@ class BC_MMR6_DESC : BC_MMR6_DESC_BASE<"bc", brtarget26>;
 
 class BC16_MMR6_DESC : MicroMipsInst16<(outs), (ins brtarget10_mm:$offset),
                                        !strconcat("bc16", "\t$offset"), [],
-                                       IIBranch, FrmI>,
+                                       II_BC, FrmI>,
                        MMR6Arch<"bc16">, MicroMipsR6Inst16 {
   let isBranch = 1;
   let isTerminator = 1;
