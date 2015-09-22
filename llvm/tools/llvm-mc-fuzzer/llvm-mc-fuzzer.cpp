@@ -44,6 +44,12 @@ static cl::opt<std::string>
          cl::desc("Target a specific cpu type (-mcpu=help for details)"),
          cl::value_desc("cpu-name"), cl::init(""));
 
+// This is useful for variable-length instruction sets.
+static cl::opt<unsigned> InsnLimit(
+    "insn-limit",
+    cl::desc("Limit the number of instructions to process (0 for no limit)"),
+    cl::value_desc("count"), cl::init(0));
+
 static cl::list<std::string>
     MAttrs("mattr", cl::CommaSeparated,
            cl::desc("Target specific attributes (-mattr=help for details)"),
@@ -67,11 +73,16 @@ void DisassembleOneInput(const uint8_t *Data, size_t Size) {
   assert(Ctx);
   uint8_t *p = DataCopy.data();
   unsigned Consumed;
+  unsigned InstructionsProcessed = 0;
   do {
     Consumed = LLVMDisasmInstruction(Ctx, p, Size, 0, AssemblyText,
                                      AssemblyTextBufSize);
     Size -= Consumed;
     p += Consumed;
+
+    InstructionsProcessed ++;
+    if (InsnLimit != 0 && InstructionsProcessed < InsnLimit)
+      break;
   } while (Consumed != 0);
   LLVMDisasmDispose(Ctx);
 }
