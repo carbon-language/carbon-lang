@@ -75,7 +75,7 @@ ASTDumper::ASTDumper (clang::QualType type)
     m_dump = type.getAsString();
 }
 
-ASTDumper::ASTDumper (lldb::clang_type_t type)
+ASTDumper::ASTDumper (lldb::opaque_compiler_type_t type)
 {
     m_dump = clang::QualType::getFromOpaquePtr(type).getAsString();
 }

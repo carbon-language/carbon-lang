@@ -841,7 +841,7 @@ ClangASTContext::GetBasicType (ASTContext *ast, lldb::BasicType basic_type)
 {
     if (ast)
     {
-        clang_type_t clang_type = nullptr;
+        opaque_compiler_type_t clang_type = nullptr;
         
         switch (basic_type)
         {
@@ -2124,7 +2124,7 @@ ClangASTContext::CreateEnumerationType
 // so we can support remote targets. The code below also requires a patch to
 // llvm::APInt.
 //bool
-//ClangASTContext::ConvertFloatValueToString (ASTContext *ast, clang_type_t clang_type, const uint8_t* bytes, size_t byte_size, int apint_byte_order, std::string &float_str)
+//ClangASTContext::ConvertFloatValueToString (ASTContext *ast, opaque_compiler_type_t clang_type, const uint8_t* bytes, size_t byte_size, int apint_byte_order, std::string &float_str)
 //{
 //  uint32_t count = 0;
 //  bool is_complex = false;
@@ -5024,7 +5024,7 @@ ClangASTContext::GetNumFields (void* type)
     return count;
 }
 
-static clang_type_t
+static opaque_compiler_type_t
 GetObjCFieldAtIndex (clang::ASTContext *ast,
                      clang::ObjCInterfaceDecl *class_interface_decl,
                      size_t idx,

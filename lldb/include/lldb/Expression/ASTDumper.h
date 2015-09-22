@@ -26,7 +26,7 @@ public:
     ASTDumper (clang::DeclContext *decl_ctx);
     ASTDumper (const clang::Type *type);
     ASTDumper (clang::QualType type);
-    ASTDumper (lldb::clang_type_t type);
+    ASTDumper (lldb::opaque_compiler_type_t type);
     ASTDumper (const CompilerType &clang_type);
     
     const char *GetCString();

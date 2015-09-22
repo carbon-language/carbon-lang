@@ -59,10 +59,10 @@ ClangASTImporter::CopyType (clang::ASTContext *dst_ast,
     return QualType();
 }
 
-lldb::clang_type_t
+lldb::opaque_compiler_type_t
 ClangASTImporter::CopyType (clang::ASTContext *dst_ast,
                             clang::ASTContext *src_ast,
-                            lldb::clang_type_t type)
+                            lldb::opaque_compiler_type_t type)
 {
     return CopyType (dst_ast, src_ast, QualType::getFromOpaquePtr(type)).getAsOpaquePtr();
 }
@@ -237,10 +237,10 @@ public:
     }
 };
 
-lldb::clang_type_t
+lldb::opaque_compiler_type_t
 ClangASTImporter::DeportType (clang::ASTContext *dst_ctx,
                               clang::ASTContext *src_ctx,
-                              lldb::clang_type_t type)
+                              lldb::opaque_compiler_type_t type)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
   
@@ -268,7 +268,7 @@ ClangASTImporter::DeportType (clang::ASTContext *dst_ctx,
     minion_sp->InitDeportWorkQueues(&decls_to_deport,
                                     &decls_already_deported);
     
-    lldb::clang_type_t result = CopyType(dst_ctx, src_ctx, type);
+    lldb::opaque_compiler_type_t result = CopyType(dst_ctx, src_ctx, type);
     
     minion_sp->ExecuteDeportWorkQueues();
     

@@ -1614,11 +1614,11 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
     }
 }
 
-//static clang_type_t
+//static opaque_compiler_type_t
 //MaybePromoteToBlockPointerType
 //(
 //    ASTContext *ast_context,
-//    clang_type_t candidate_type
+//    opaque_compiler_type_t candidate_type
 //)
 //{
 //    if (!candidate_type)
@@ -1946,7 +1946,7 @@ ClangExpressionDeclMap::ResolveUnknownTypes()
             QualType var_type = var_decl->getType();
             TypeFromParser parser_type(var_type.getAsOpaquePtr(), ClangASTContext::GetASTContext(&var_decl->getASTContext()));
 
-            lldb::clang_type_t copied_type = m_ast_importer->CopyType(scratch_ast_context->getASTContext(), &var_decl->getASTContext(), var_type.getAsOpaquePtr());
+            lldb::opaque_compiler_type_t copied_type = m_ast_importer->CopyType(scratch_ast_context->getASTContext(), &var_decl->getASTContext(), var_type.getAsOpaquePtr());
 
             if (!copied_type)
             {

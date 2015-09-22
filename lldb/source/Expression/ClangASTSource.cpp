@@ -401,7 +401,7 @@ ClangASTSource::GetCompleteObjCInterface (clang::ObjCInterfaceDecl *interface_de
         return NULL;
 
     TypeFromUser complete_type = TypeFromUser(complete_type_sp->GetFullCompilerType ());
-    lldb::clang_type_t complete_opaque_type = complete_type.GetOpaqueQualType();
+    lldb::opaque_compiler_type_t complete_opaque_type = complete_type.GetOpaqueQualType();
 
     if (!complete_opaque_type)
         return NULL;

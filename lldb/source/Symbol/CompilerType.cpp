@@ -1255,7 +1255,7 @@ CompilerType::WriteToMemory (lldb_private::ExecutionContext *exe_ctx,
 }
 
 //clang::CXXRecordDecl *
-//CompilerType::GetAsCXXRecordDecl (lldb::clang_type_t opaque_clang_qual_type)
+//CompilerType::GetAsCXXRecordDecl (lldb::opaque_compiler_type_t opaque_clang_qual_type)
 //{
 //    if (opaque_clang_qual_type)
 //        return clang::QualType::getFromOpaquePtr(opaque_clang_qual_type)->getAsCXXRecordDecl();
