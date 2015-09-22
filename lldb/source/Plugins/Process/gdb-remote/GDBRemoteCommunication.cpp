@@ -1205,74 +1205,77 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
         llvm::SmallString<PATH_MAX> named_pipe_path;
         Pipe port_pipe;
 
-        if (host_and_port[0] && in_port == 0)
+        if (in_port == 0)
         {
-            // Create a temporary file to get the stdout/stderr and redirect the
-            // output of the command into this file. We will later read this file
-            // if all goes well and fill the data into "command_output_ptr"
-
+            if (host_and_port[0])
+            {
+                // Create a temporary file to get the stdout/stderr and redirect the
+                // output of the command into this file. We will later read this file
+                // if all goes well and fill the data into "command_output_ptr"
+    
 #if defined(__APPLE__)
-            // Binding to port zero, we need to figure out what port it ends up
-            // using using a named pipe...
-            error = port_pipe.CreateWithUniqueName("debugserver-named-pipe", false, named_pipe_path);
-            if (error.Fail())
-            {
-                if (log)
-                    log->Printf("GDBRemoteCommunication::%s() "
-                            "named pipe creation failed: %s",
-                            __FUNCTION__, error.AsCString());
-                return error;
-            }
-            debugserver_args.AppendArgument("--named-pipe");
-            debugserver_args.AppendArgument(named_pipe_path.c_str());
+                // Binding to port zero, we need to figure out what port it ends up
+                // using using a named pipe...
+                error = port_pipe.CreateWithUniqueName("debugserver-named-pipe", false, named_pipe_path);
+                if (error.Fail())
+                {
+                    if (log)
+                        log->Printf("GDBRemoteCommunication::%s() "
+                                "named pipe creation failed: %s",
+                                __FUNCTION__, error.AsCString());
+                    return error;
+                }
+                debugserver_args.AppendArgument("--named-pipe");
+                debugserver_args.AppendArgument(named_pipe_path.c_str());
 #else
-            // Binding to port zero, we need to figure out what port it ends up
-            // using using an unnamed pipe...
-            error = port_pipe.CreateNew(true);
-            if (error.Fail())
-            {
-                if (log)
-                    log->Printf("GDBRemoteCommunication::%s() "
-                            "unnamed pipe creation failed: %s",
-                            __FUNCTION__, error.AsCString());
-                return error;
-            }
-            int write_fd = port_pipe.GetWriteFileDescriptor();
-            debugserver_args.AppendArgument("--pipe");
-            debugserver_args.AppendArgument(std::to_string(write_fd).c_str());
-            launch_info.AppendCloseFileAction(port_pipe.GetReadFileDescriptor());
+                // Binding to port zero, we need to figure out what port it ends up
+                // using using an unnamed pipe...
+                error = port_pipe.CreateNew(true);
+                if (error.Fail())
+                {
+                    if (log)
+                        log->Printf("GDBRemoteCommunication::%s() "
+                                "unnamed pipe creation failed: %s",
+                                __FUNCTION__, error.AsCString());
+                    return error;
+                }
+                int write_fd = port_pipe.GetWriteFileDescriptor();
+                debugserver_args.AppendArgument("--pipe");
+                debugserver_args.AppendArgument(std::to_string(write_fd).c_str());
+                launch_info.AppendCloseFileAction(port_pipe.GetReadFileDescriptor());
 #endif
-        }
-        else
-        {
-            // No host and port given, so lets listen on our end and make the debugserver
-            // connect to us..
-            error = StartListenThread ("127.0.0.1", 0);
-            if (error.Fail())
-            {
-                if (log)
-                    log->Printf ("GDBRemoteCommunication::%s() unable to start listen thread: %s", __FUNCTION__, error.AsCString());
-                return error;
-            }
-
-            ConnectionFileDescriptor *connection = (ConnectionFileDescriptor *)GetConnection ();
-            // Wait for 10 seconds to resolve the bound port
-            out_port = connection->GetListeningPort(10);
-            if (out_port > 0)
-            {
-                char port_cstr[32];
-                snprintf(port_cstr, sizeof(port_cstr), "127.0.0.1:%i", out_port);
-                // Send the host and port down that debugserver and specify an option
-                // so that it connects back to the port we are listening to in this process
-                debugserver_args.AppendArgument("--reverse-connect");
-                debugserver_args.AppendArgument(port_cstr);
             }
             else
             {
-                error.SetErrorString ("failed to bind to port 0 on 127.0.0.1");
-                if (log)
-                    log->Printf ("GDBRemoteCommunication::%s() failed: %s", __FUNCTION__, error.AsCString());
-                return error;
+                // No host and port given, so lets listen on our end and make the debugserver
+                // connect to us..
+                error = StartListenThread ("127.0.0.1", 0);
+                if (error.Fail())
+                {
+                    if (log)
+                        log->Printf ("GDBRemoteCommunication::%s() unable to start listen thread: %s", __FUNCTION__, error.AsCString());
+                    return error;
+                }
+    
+                ConnectionFileDescriptor *connection = (ConnectionFileDescriptor *)GetConnection ();
+                // Wait for 10 seconds to resolve the bound port
+                out_port = connection->GetListeningPort(10);
+                if (out_port > 0)
+                {
+                    char port_cstr[32];
+                    snprintf(port_cstr, sizeof(port_cstr), "127.0.0.1:%i", out_port);
+                    // Send the host and port down that debugserver and specify an option
+                    // so that it connects back to the port we are listening to in this process
+                    debugserver_args.AppendArgument("--reverse-connect");
+                    debugserver_args.AppendArgument(port_cstr);
+                }
+                else
+                {
+                    error.SetErrorString ("failed to bind to port 0 on 127.0.0.1");
+                    if (log)
+                        log->Printf ("GDBRemoteCommunication::%s() failed: %s", __FUNCTION__, error.AsCString());
+                    return error;
+                }
             }
         }
         
