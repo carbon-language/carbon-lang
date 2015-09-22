@@ -68,7 +68,7 @@ void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   Buf += Jmp.size();
 
   uintptr_t NextPC = PltEntryAddr + 6;
-  uintptr_t Delta = GotEntryAddr - NextPC;
+  intptr_t Delta = GotEntryAddr - NextPC;
   assert(isInt<32>(Delta));
   support::endian::write32le(Buf, Delta);
   Buf += 4;
