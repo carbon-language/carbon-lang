@@ -3453,6 +3453,12 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl) {
   return NS;
 }
 
+void CGDebugInfo::setDwoId(uint64_t Signature) {
+  assert(TheCU && "no main compile unit");
+  TheCU->setDWOId(Signature);
+}
+
+
 void CGDebugInfo::finalize() {
   // Creating types might create further types - invalidating the current
   // element and the size(), so don't cache/reference them.

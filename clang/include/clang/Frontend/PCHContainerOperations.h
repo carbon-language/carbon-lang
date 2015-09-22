@@ -30,8 +30,9 @@ class DiagnosticsEngine;
 class CompilerInstance;
 
 struct PCHBuffer {
-  bool IsComplete;
+  uint64_t Signature;
   llvm::SmallVector<char, 0> Data;
+  bool IsComplete;
 };
   
 /// This abstract interface provides operations for creating

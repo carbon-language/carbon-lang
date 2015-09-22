@@ -142,7 +142,6 @@ public:
     CodeGenOpts.ThreadModel = "single";
     CodeGenOpts.DebugTypeExtRefs = true;
     CodeGenOpts.setDebugInfo(CodeGenOptions::FullDebugInfo);
-    CodeGenOpts.SplitDwarfFile = OutputFileName;
   }
 
   ~PCHContainerGenerator() override = default;
@@ -201,6 +200,7 @@ public:
 
     M->setTargetTriple(Ctx.getTargetInfo().getTriple().getTriple());
     M->setDataLayout(Ctx.getTargetInfo().getDataLayoutString());
+    Builder->getModuleDebugInfo()->setDwoId(Buffer->Signature);
 
     // Finalize the Builder.
     if (Builder)

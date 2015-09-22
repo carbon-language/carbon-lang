@@ -48,7 +48,8 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
 
   // Emit the PCH file to the Buffer.
   assert(SemaPtr && "No Sema?");
-  Writer.WriteAST(*SemaPtr, OutputFile, Module, isysroot, hasErrors);
+  Buffer->Signature =
+      Writer.WriteAST(*SemaPtr, OutputFile, Module, isysroot, hasErrors);
 
   Buffer->IsComplete = true;
 }

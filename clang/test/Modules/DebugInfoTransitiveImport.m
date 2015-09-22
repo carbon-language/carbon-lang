@@ -6,10 +6,17 @@
 
 @import diamond_left;
 
-// CHECK: ![[TOP_DEF:.*]] = distinct !DICompileUnit({{.*}}diamond_top
-// CHECK: ![[LEFT_DEF:.*]] = distinct !DICompileUnit({{.*}}diamond_left
+// Definition of top:
+// CHECK: !DICompileUnit({{.*}}dwoId:
+// CHECK: !DIFile({{.*}}diamond_top.h
+
+// Definition of left:
+// CHECK: !DICompileUnit({{.*}}dwoId:
+// CHECK: !DIFile({{.*}}diamond_left
 // CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration,
 // CHECK-SAME:              entity: ![[MODULE:.*]], line: 3)
 // CHECK: ![[MODULE]] = !DIModule(scope: null, name: "diamond_top"
-// CHECK: ![[TOP_SKEL_CU:.*]] = distinct !DICompileUnit({{.*}}diamond_top{{.*}}dwoId:
+
+// Skeleton for top:
+// CHECK: !DICompileUnit({{.*}}splitDebugFilename: {{.*}}diamond_top{{.*}}dwoId:
 

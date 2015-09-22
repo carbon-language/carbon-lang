@@ -18,7 +18,6 @@
 
 // CHECK: distinct !DICompileUnit(language: DW_LANG_ObjC
 // CHECK-SAME:                    isOptimized: false,
-// CHECK-SAME:                    splitDebugFilename:
 // CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "ObjCClass"
 // CHECK: !DIObjCProperty(name: "property",
 // CHECK: !DIDerivedType(tag: DW_TAG_member, name: "ivar"

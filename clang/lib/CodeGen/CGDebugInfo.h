@@ -276,6 +276,9 @@ public:
 
   void finalize();
 
+  /// Set the main CU's DwoId field to \p Signature.
+  void setDwoId(uint64_t Signature);
+
   /// When generating debug information for a clang module or
   /// precompiled header, this module map will be used to determine
   /// the module of origin of each Decl.
