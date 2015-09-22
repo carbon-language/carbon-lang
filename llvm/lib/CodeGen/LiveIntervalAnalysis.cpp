@@ -1413,3 +1413,20 @@ void LiveIntervals::removeVRegDefAt(LiveInterval &LI, SlotIndex Pos) {
   }
   LI.removeEmptySubRanges();
 }
+
+void LiveIntervals::splitSeparateComponents(LiveInterval &LI,
+    SmallVectorImpl<LiveInterval*> &SplitLIs) {
+  ConnectedVNInfoEqClasses ConEQ(*this);
+  unsigned NumComp = ConEQ.Classify(&LI);
+  if (NumComp <= 1)
+    return;
+  DEBUG(dbgs() << "  Split " << NumComp << " components: " << LI << '\n');
+  unsigned Reg = LI.reg;
+  const TargetRegisterClass *RegClass = MRI->getRegClass(Reg);
+  for (unsigned I = 1; I < NumComp; ++I) {
+    unsigned NewVReg = MRI->createVirtualRegister(RegClass);
+    LiveInterval &NewLI = createEmptyInterval(NewVReg);
+    SplitLIs.push_back(&NewLI);
+  }
+  ConEQ.Distribute(LI, SplitLIs.data(), *MRI);
+}

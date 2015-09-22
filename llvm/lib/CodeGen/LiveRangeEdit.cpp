@@ -349,8 +349,9 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     ToShrink.pop_back();
     if (foldAsLoad(LI, Dead))
       continue;
+    unsigned VReg = LI->reg;
     if (TheDelegate)
-      TheDelegate->LRE_WillShrinkVirtReg(LI->reg);
+      TheDelegate->LRE_WillShrinkVirtReg(VReg);
     if (!LIS.shrinkToUses(LI, &Dead))
       continue;
 
@@ -360,7 +361,7 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     // them results in incorrect code.
     bool BeingSpilled = false;
     for (unsigned i = 0, e = RegsBeingSpilled.size(); i != e; ++i) {
-      if (LI->reg == RegsBeingSpilled[i]) {
+      if (VReg == RegsBeingSpilled[i]) {
         BeingSpilled = true;
         break;
       }
@@ -370,29 +371,21 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
 
     // LI may have been separated, create new intervals.
     LI->RenumberValues();
-    ConnectedVNInfoEqClasses ConEQ(LIS);
-    unsigned NumComp = ConEQ.Classify(LI);
-    if (NumComp <= 1)
-      continue;
-    ++NumFracRanges;
-    bool IsOriginal = VRM && VRM->getOriginal(LI->reg) == LI->reg;
-    DEBUG(dbgs() << NumComp << " components: " << *LI << '\n');
-    SmallVector<LiveInterval*, 8> Dups(1, LI);
-    for (unsigned i = 1; i != NumComp; ++i) {
-      Dups.push_back(&createEmptyIntervalFrom(LI->reg));
+    SmallVector<LiveInterval*, 8> SplitLIs;
+    LIS.splitSeparateComponents(*LI, SplitLIs);
+    if (!SplitLIs.empty())
+      ++NumFracRanges;
+
+    unsigned Original = VRM ? VRM->getOriginal(VReg) : 0;
+    for (const LiveInterval *SplitLI : SplitLIs) {
       // If LI is an original interval that hasn't been split yet, make the new
       // intervals their own originals instead of referring to LI. The original
       // interval must contain all the split products, and LI doesn't.
-      if (IsOriginal)
-        VRM->setIsSplitFromReg(Dups.back()->reg, 0);
+      if (Original != VReg && Original != 0)
+        VRM->setIsSplitFromReg(SplitLI->reg, Original);
       if (TheDelegate)
-        TheDelegate->LRE_DidCloneVirtReg(Dups.back()->reg, LI->reg);
+        TheDelegate->LRE_DidCloneVirtReg(SplitLI->reg, VReg);
     }
-    ConEQ.Distribute(&Dups[0], MRI);
-    DEBUG({
-      for (unsigned i = 0; i != NumComp; ++i)
-        dbgs() << '\t' << *Dups[i] << '\n';
-    });
   }
 }
 

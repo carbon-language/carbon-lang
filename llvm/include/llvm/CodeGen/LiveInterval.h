@@ -853,12 +853,12 @@ namespace llvm {
     /// the equivalence class assigned the VNI.
     unsigned getEqClass(const VNInfo *VNI) const { return EqClass[VNI->id]; }
 
-    /// Distribute - Distribute values in LIV[0] into a separate LiveInterval
-    /// for each connected component. LIV must have a LiveInterval for each
-    /// connected component. The LiveIntervals in Liv[1..] must be empty.
-    /// Instructions using LIV[0] are rewritten.
-    void Distribute(LiveInterval *LIV[], MachineRegisterInfo &MRI);
-
+    /// Distribute values in \p LI into a separate LiveIntervals
+    /// for each connected component. LIV must have an empty LiveInterval for
+    /// each additional connected component. The first connected component is
+    /// left in \p LI.
+    void Distribute(LiveInterval &LI, LiveInterval *LIV[],
+                    MachineRegisterInfo &MRI);
   };
 
 }

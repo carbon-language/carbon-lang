@@ -1082,16 +1082,14 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
   ConnectedVNInfoEqClasses ConEQ(LIS);
   for (unsigned i = 0, e = Edit->size(); i != e; ++i) {
     // Don't use iterators, they are invalidated by create() below.
-    LiveInterval *li = &LIS.getInterval(Edit->get(i));
-    unsigned NumComp = ConEQ.Classify(li);
-    if (NumComp <= 1)
-      continue;
-    DEBUG(dbgs() << "  " << NumComp << " components: " << *li << '\n');
-    SmallVector<LiveInterval*, 8> dups;
-    dups.push_back(li);
-    for (unsigned j = 1; j != NumComp; ++j)
-      dups.push_back(&Edit->createEmptyInterval());
-    ConEQ.Distribute(&dups[0], MRI);
+    unsigned VReg = Edit->get(i);
+    LiveInterval &LI = LIS.getInterval(VReg);
+    SmallVector<LiveInterval*, 8> SplitLIs;
+    LIS.splitSeparateComponents(LI, SplitLIs);
+    unsigned Original = VRM.getOriginal(VReg);
+    for (LiveInterval *SplitLI : SplitLIs)
+      VRM.setIsSplitFromReg(SplitLI->reg, Original);
+
     // The new intervals all map back to i.
     if (LRMap)
       LRMap->resize(Edit->size(), i);

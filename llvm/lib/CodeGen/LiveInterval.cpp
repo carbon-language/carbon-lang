@@ -1372,11 +1372,8 @@ unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
   return EqClass.getNumClasses();
 }
 
-void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
+void ConnectedVNInfoEqClasses::Distribute(LiveInterval &LI, LiveInterval *LIV[],
                                           MachineRegisterInfo &MRI) {
-  assert(LIV[0] && "LIV[0] must be set");
-  LiveInterval &LI = *LIV[0];
-
   // Rewrite instructions.
   for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(LI.reg),
        RE = MRI.reg_end(); RI != RE;) {
@@ -1398,7 +1395,8 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
     // NULL. If the use is tied to a def, VNI will be the defined value.
     if (!VNI)
       continue;
-    MO.setReg(LIV[getEqClass(VNI)]->reg);
+    if (unsigned EqClass = getEqClass(VNI))
+      MO.setReg(LIV[EqClass-1]->reg);
   }
 
   // Move runs to new intervals.
@@ -1407,9 +1405,9 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
     ++J;
   for (LiveInterval::iterator I = J; I != E; ++I) {
     if (unsigned eq = EqClass[I->valno->id]) {
-      assert((LIV[eq]->empty() || LIV[eq]->expiredAt(I->start)) &&
+      assert((LIV[eq-1]->empty() || LIV[eq-1]->expiredAt(I->start)) &&
              "New intervals should be empty");
-      LIV[eq]->segments.push_back(*I);
+      LIV[eq-1]->segments.push_back(*I);
     } else
       *J++ = *I;
   }
@@ -1424,8 +1422,8 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
   for (unsigned i = j; i != e; ++i) {
     VNInfo *VNI = LI.getValNumInfo(i);
     if (unsigned eq = EqClass[i]) {
-      VNI->id = LIV[eq]->getNumValNums();
-      LIV[eq]->valnos.push_back(VNI);
+      VNI->id = LIV[eq-1]->getNumValNums();
+      LIV[eq-1]->valnos.push_back(VNI);
     } else {
       VNI->id = j;
       LI.valnos[j++] = VNI;

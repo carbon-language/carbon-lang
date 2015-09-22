@@ -402,6 +402,10 @@ extern cl::opt<bool> UseSegmentSetForPhysRegs;
     /// that start at position @p Pos.
     void removeVRegDefAt(LiveInterval &LI, SlotIndex Pos);
 
+    /// Split separate components in LiveInterval \p LI into separate intervals.
+    void splitSeparateComponents(LiveInterval &LI,
+                                 SmallVectorImpl<LiveInterval*> &SplitLIs);
+
   private:
     /// Compute live intervals for all virtual registers.
     void computeVirtRegs();

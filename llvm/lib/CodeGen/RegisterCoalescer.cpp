@@ -224,30 +224,17 @@ namespace {
     /// Dst, we can drop \p Copy.
     bool applyTerminalRule(const MachineInstr &Copy) const;
 
-    /// Check whether or not \p LI is composed by multiple connected
-    /// components and if that is the case, fix that.
-    void splitNewRanges(LiveInterval *LI) {
-      ConnectedVNInfoEqClasses ConEQ(*LIS);
-      unsigned NumComps = ConEQ.Classify(LI);
-      if (NumComps <= 1)
-        return;
-      SmallVector<LiveInterval*, 8> NewComps(1, LI);
-      for (unsigned i = 1; i != NumComps; ++i) {
-        unsigned VReg = MRI->createVirtualRegister(MRI->getRegClass(LI->reg));
-        NewComps.push_back(&LIS->createEmptyInterval(VReg));
-      }
-
-      ConEQ.Distribute(&NewComps[0], *MRI);
-    }
-
     /// Wrapper method for \see LiveIntervals::shrinkToUses.
     /// This method does the proper fixing of the live-ranges when the afore
     /// mentioned method returns true.
     void shrinkToUses(LiveInterval *LI,
                       SmallVectorImpl<MachineInstr * > *Dead = nullptr) {
-      if (LIS->shrinkToUses(LI, Dead))
-        // We may have created multiple connected components, split them.
-        splitNewRanges(LI);
+      if (LIS->shrinkToUses(LI, Dead)) {
+        /// Check whether or not \p LI is composed by multiple connected
+        /// components and if that is the case, fix that.
+        SmallVector<LiveInterval*, 8> SplitLIs;
+        LIS->splitSeparateComponents(*LI, SplitLIs);
+      }
     }
 
   public:
