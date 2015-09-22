@@ -846,7 +846,7 @@ __movsd(unsigned long *__dst, unsigned long const *__src, size_t __n) {
 }
 static __inline__ void __DEFAULT_FN_ATTRS
 __movsw(unsigned short *__dst, unsigned short const *__src, size_t __n) {
-  __asm__("rep movsh" : : "D"(__dst), "S"(__src), "c"(__n)
+  __asm__("rep movsw" : : "D"(__dst), "S"(__src), "c"(__n)
                         : "%edi", "%esi", "%ecx");
 }
 static __inline__ void __DEFAULT_FN_ATTRS
@@ -861,7 +861,7 @@ __stosd(unsigned long *__dst, unsigned long __x, size_t __n) {
 }
 static __inline__ void __DEFAULT_FN_ATTRS
 __stosw(unsigned short *__dst, unsigned short __x, size_t __n) {
-  __asm__("rep stosh" : : "D"(__dst), "a"(__x), "c"(__n)
+  __asm__("rep stosw" : : "D"(__dst), "a"(__x), "c"(__n)
                         : "%edi", "%ecx");
 }
 #endif
