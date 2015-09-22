@@ -160,14 +160,16 @@ public:
 class CudaHostAction : public Action {
   virtual void anchor();
   ActionList DeviceActions;
+  const char *DeviceTriple;
 
 public:
-  CudaHostAction(std::unique_ptr<Action> Input,
-                 const ActionList &DeviceActions);
+  CudaHostAction(std::unique_ptr<Action> Input, const ActionList &DeviceActions,
+                 const char *DeviceTriple);
   ~CudaHostAction() override;
 
   ActionList &getDeviceActions() { return DeviceActions; }
   const ActionList &getDeviceActions() const { return DeviceActions; }
+  const char *getDeviceTriple() const { return DeviceTriple; }
 
   static bool classof(const Action *A) { return A->getKind() == CudaHostClass; }
 };

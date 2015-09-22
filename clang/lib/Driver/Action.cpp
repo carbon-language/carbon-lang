@@ -66,8 +66,10 @@ CudaDeviceAction::CudaDeviceAction(std::unique_ptr<Action> Input,
 void CudaHostAction::anchor() {}
 
 CudaHostAction::CudaHostAction(std::unique_ptr<Action> Input,
-                               const ActionList &DeviceActions)
-    : Action(CudaHostClass, std::move(Input)), DeviceActions(DeviceActions) {}
+                               const ActionList &DeviceActions,
+                               const char *DeviceTriple)
+    : Action(CudaHostClass, std::move(Input)), DeviceActions(DeviceActions),
+      DeviceTriple(DeviceTriple) {}
 
 CudaHostAction::~CudaHostAction() {
   for (auto &DA : DeviceActions)

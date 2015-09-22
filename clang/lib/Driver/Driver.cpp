@@ -1246,13 +1246,18 @@ static std::unique_ptr<Action>
 buildCudaActions(const Driver &D, const ToolChain &TC, DerivedArgList &Args,
                  const Arg *InputArg, std::unique_ptr<Action> HostAction,
                  ActionList &Actions) {
+  // Figure out which NVPTX triple to use for device-side compilation based on
+  // whether host is 64-bit.
+  const char *DeviceTriple = TC.getTriple().isArch64Bit()
+                                 ? "nvptx64-nvidia-cuda"
+                                 : "nvptx-nvidia-cuda";
   Arg *PartialCompilationArg = Args.getLastArg(options::OPT_cuda_host_only,
                                                options::OPT_cuda_device_only);
   // Host-only compilation case.
   if (PartialCompilationArg &&
       PartialCompilationArg->getOption().matches(options::OPT_cuda_host_only))
     return std::unique_ptr<Action>(
-        new CudaHostAction(std::move(HostAction), {}));
+        new CudaHostAction(std::move(HostAction), {}, DeviceTriple));
 
   // Collect all cuda_gpu_arch parameters, removing duplicates.
   SmallVector<const char *, 4> GpuArchList;
@@ -1290,12 +1295,6 @@ buildCudaActions(const Driver &D, const ToolChain &TC, DerivedArgList &Args,
     }
   }
 
-  // Figure out which NVPTX triple to use for device-side compilation based on
-  // whether host is 64-bit.
-  const char *DeviceTriple = TC.getTriple().isArch64Bit()
-                                 ? "nvptx64-nvidia-cuda"
-                                 : "nvptx-nvidia-cuda";
-
   // Figure out what to do with device actions -- pass them as inputs to the
   // host action or run each of them independently.
   bool DeviceOnlyCompilation = PartialCompilationArg != nullptr;
@@ -1331,7 +1330,7 @@ buildCudaActions(const Driver &D, const ToolChain &TC, DerivedArgList &Args,
   // Return a new host action that incorporates original host action and all
   // device actions.
   return std::unique_ptr<Action>(
-      new CudaHostAction(std::move(HostAction), DeviceActions));
+      new CudaHostAction(std::move(HostAction), DeviceActions, DeviceTriple));
 }
 
 void Driver::BuildActions(const ToolChain &TC, DerivedArgList &Args,
