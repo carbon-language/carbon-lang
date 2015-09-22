@@ -174,6 +174,11 @@ def parse_test_results(output):
     return passes, failures, unexpected_successes
 
 
+def create_new_process_group():
+    """Creates a new process group for the process."""
+    os.setpgid(os.getpid(), os.getpid())
+
+
 def call_with_timeout(command, timeout, name, inferior_pid_events):
     """Run command with a timeout if possible.
     -s QUIT will create a coredump if they are enabled on your system
@@ -198,7 +203,8 @@ def call_with_timeout(command, timeout, name, inferior_pid_events):
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
-                                   close_fds=True)
+                                   close_fds=True,
+                                   preexec_fn=create_new_process_group)
     else:
         process = subprocess.Popen(command,
                                    stdin=subprocess.PIPE,
