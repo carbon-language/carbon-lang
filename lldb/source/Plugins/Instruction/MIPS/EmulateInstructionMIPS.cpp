@@ -256,41 +256,41 @@ EmulateInstructionMIPS::GetRegisterName (unsigned reg_num, bool alternate_name)
             case dwarf_f29_mips:         return "f29";
             case dwarf_f30_mips:         return "f30";
             case dwarf_f31_mips:         return "f31";
-            case gcc_dwarf_w0_mips:      return "w0";
-            case gcc_dwarf_w1_mips:      return "w1";
-            case gcc_dwarf_w2_mips:      return "w2";
-            case gcc_dwarf_w3_mips:      return "w3";
-            case gcc_dwarf_w4_mips:      return "w4";
-            case gcc_dwarf_w5_mips:      return "w5";
-            case gcc_dwarf_w6_mips:      return "w6";
-            case gcc_dwarf_w7_mips:      return "w7";
-            case gcc_dwarf_w8_mips:      return "w8";
-            case gcc_dwarf_w9_mips:      return "w9";
-            case gcc_dwarf_w10_mips:     return "w10";
-            case gcc_dwarf_w11_mips:     return "w11";
-            case gcc_dwarf_w12_mips:     return "w12";
-            case gcc_dwarf_w13_mips:     return "w13";
-            case gcc_dwarf_w14_mips:     return "w14";
-            case gcc_dwarf_w15_mips:     return "w15";
-            case gcc_dwarf_w16_mips:     return "w16";
-            case gcc_dwarf_w17_mips:     return "w17";
-            case gcc_dwarf_w18_mips:     return "w18";
-            case gcc_dwarf_w19_mips:     return "w19";
-            case gcc_dwarf_w20_mips:     return "w20";
-            case gcc_dwarf_w21_mips:     return "w21";
-            case gcc_dwarf_w22_mips:     return "w22";
-            case gcc_dwarf_w23_mips:     return "w23";
-            case gcc_dwarf_w24_mips:     return "w24";
-            case gcc_dwarf_w25_mips:     return "w25";
-            case gcc_dwarf_w26_mips:     return "w26";
-            case gcc_dwarf_w27_mips:     return "w27";
-            case gcc_dwarf_w28_mips:     return "w28";
-            case gcc_dwarf_w29_mips:     return "w29";
-            case gcc_dwarf_w30_mips:     return "w30";
-            case gcc_dwarf_w31_mips:     return "w31";
-            case gcc_dwarf_mir_mips:     return "mir";
-            case gcc_dwarf_mcsr_mips:    return "mcsr";
-            case gcc_dwarf_config5_mips: return "config5";
+            case dwarf_w0_mips:          return "w0";
+            case dwarf_w1_mips:          return "w1";
+            case dwarf_w2_mips:          return "w2";
+            case dwarf_w3_mips:          return "w3";
+            case dwarf_w4_mips:          return "w4";
+            case dwarf_w5_mips:          return "w5";
+            case dwarf_w6_mips:          return "w6";
+            case dwarf_w7_mips:          return "w7";
+            case dwarf_w8_mips:          return "w8";
+            case dwarf_w9_mips:          return "w9";
+            case dwarf_w10_mips:         return "w10";
+            case dwarf_w11_mips:         return "w11";
+            case dwarf_w12_mips:         return "w12";
+            case dwarf_w13_mips:         return "w13";
+            case dwarf_w14_mips:         return "w14";
+            case dwarf_w15_mips:         return "w15";
+            case dwarf_w16_mips:         return "w16";
+            case dwarf_w17_mips:         return "w17";
+            case dwarf_w18_mips:         return "w18";
+            case dwarf_w19_mips:         return "w19";
+            case dwarf_w20_mips:         return "w20";
+            case dwarf_w21_mips:         return "w21";
+            case dwarf_w22_mips:         return "w22";
+            case dwarf_w23_mips:         return "w23";
+            case dwarf_w24_mips:         return "w24";
+            case dwarf_w25_mips:         return "w25";
+            case dwarf_w26_mips:         return "w26";
+            case dwarf_w27_mips:         return "w27";
+            case dwarf_w28_mips:         return "w28";
+            case dwarf_w29_mips:         return "w29";
+            case dwarf_w30_mips:         return "w30";
+            case dwarf_w31_mips:         return "w31";
+            case dwarf_mir_mips:         return "mir";
+            case dwarf_mcsr_mips:        return "mcsr";
+            case dwarf_config5_mips:     return "config5";
             default:
                 break;
         }
@@ -371,41 +371,41 @@ EmulateInstructionMIPS::GetRegisterName (unsigned reg_num, bool alternate_name)
         case dwarf_f31_mips:          return "f31";
         case dwarf_fcsr_mips:         return "fcsr";
         case dwarf_fir_mips:          return "fir";
-        case gcc_dwarf_w0_mips:       return "w0";
-        case gcc_dwarf_w1_mips:       return "w1";
-        case gcc_dwarf_w2_mips:       return "w2";
-        case gcc_dwarf_w3_mips:       return "w3";
-        case gcc_dwarf_w4_mips:       return "w4";
-        case gcc_dwarf_w5_mips:       return "w5";
-        case gcc_dwarf_w6_mips:       return "w6";
-        case gcc_dwarf_w7_mips:       return "w7";
-        case gcc_dwarf_w8_mips:       return "w8";
-        case gcc_dwarf_w9_mips:       return "w9";
-        case gcc_dwarf_w10_mips:      return "w10";
-        case gcc_dwarf_w11_mips:      return "w11";
-        case gcc_dwarf_w12_mips:      return "w12";
-        case gcc_dwarf_w13_mips:      return "w13";
-        case gcc_dwarf_w14_mips:      return "w14";
-        case gcc_dwarf_w15_mips:      return "w15";
-        case gcc_dwarf_w16_mips:      return "w16";
-        case gcc_dwarf_w17_mips:      return "w17";
-        case gcc_dwarf_w18_mips:      return "w18";
-        case gcc_dwarf_w19_mips:      return "w19";
-        case gcc_dwarf_w20_mips:      return "w20";
-        case gcc_dwarf_w21_mips:      return "w21";
-        case gcc_dwarf_w22_mips:      return "w22";
-        case gcc_dwarf_w23_mips:      return "w23";
-        case gcc_dwarf_w24_mips:      return "w24";
-        case gcc_dwarf_w25_mips:      return "w25";
-        case gcc_dwarf_w26_mips:      return "w26";
-        case gcc_dwarf_w27_mips:      return "w27";
-        case gcc_dwarf_w28_mips:      return "w28";
-        case gcc_dwarf_w29_mips:      return "w29";
-        case gcc_dwarf_w30_mips:      return "w30";
-        case gcc_dwarf_w31_mips:      return "w31";
-        case gcc_dwarf_mcsr_mips:     return "mcsr";
-        case gcc_dwarf_mir_mips:      return "mir";
-        case gcc_dwarf_config5_mips:  return "config5";
+        case dwarf_w0_mips:           return "w0";
+        case dwarf_w1_mips:           return "w1";
+        case dwarf_w2_mips:           return "w2";
+        case dwarf_w3_mips:           return "w3";
+        case dwarf_w4_mips:           return "w4";
+        case dwarf_w5_mips:           return "w5";
+        case dwarf_w6_mips:           return "w6";
+        case dwarf_w7_mips:           return "w7";
+        case dwarf_w8_mips:           return "w8";
+        case dwarf_w9_mips:           return "w9";
+        case dwarf_w10_mips:          return "w10";
+        case dwarf_w11_mips:          return "w11";
+        case dwarf_w12_mips:          return "w12";
+        case dwarf_w13_mips:          return "w13";
+        case dwarf_w14_mips:          return "w14";
+        case dwarf_w15_mips:          return "w15";
+        case dwarf_w16_mips:          return "w16";
+        case dwarf_w17_mips:          return "w17";
+        case dwarf_w18_mips:          return "w18";
+        case dwarf_w19_mips:          return "w19";
+        case dwarf_w20_mips:          return "w20";
+        case dwarf_w21_mips:          return "w21";
+        case dwarf_w22_mips:          return "w22";
+        case dwarf_w23_mips:          return "w23";
+        case dwarf_w24_mips:          return "w24";
+        case dwarf_w25_mips:          return "w25";
+        case dwarf_w26_mips:          return "w26";
+        case dwarf_w27_mips:          return "w27";
+        case dwarf_w28_mips:          return "w28";
+        case dwarf_w29_mips:          return "w29";
+        case dwarf_w30_mips:          return "w30";
+        case dwarf_w31_mips:          return "w31";
+        case dwarf_mcsr_mips:         return "mcsr";
+        case dwarf_mir_mips:          return "mir";
+        case dwarf_config5_mips:      return "config5";
     }
     return nullptr;
 }
@@ -432,7 +432,7 @@ EmulateInstructionMIPS::GetRegisterInfo (RegisterKind reg_kind, uint32_t reg_num
        ::memset (&reg_info, 0, sizeof(RegisterInfo));
        ::memset (reg_info.kinds, LLDB_INVALID_REGNUM, sizeof(reg_info.kinds));
 
-       if (reg_num == dwarf_sr_mips || reg_num == dwarf_fcsr_mips || reg_num == dwarf_fir_mips || reg_num == gcc_dwarf_mcsr_mips || reg_num == gcc_dwarf_mir_mips || reg_num == gcc_dwarf_config5_mips)
+       if (reg_num == dwarf_sr_mips || reg_num == dwarf_fcsr_mips || reg_num == dwarf_fir_mips || reg_num == dwarf_mcsr_mips || reg_num == dwarf_mir_mips || reg_num == dwarf_config5_mips)
        {
            reg_info.byte_size = 4;
            reg_info.format = eFormatHex;
@@ -444,7 +444,7 @@ EmulateInstructionMIPS::GetRegisterInfo (RegisterKind reg_kind, uint32_t reg_num
            reg_info.format = eFormatHex;
            reg_info.encoding = eEncodingUint;
        }
-       else if ((int)reg_num >= gcc_dwarf_w0_mips && (int)reg_num <= gcc_dwarf_w31_mips)
+       else if ((int)reg_num >= dwarf_w0_mips && (int)reg_num <= dwarf_w31_mips)
        {
            reg_info.byte_size = 16;
            reg_info.format = eFormatVectorOfUInt8;
@@ -3162,11 +3162,11 @@ EmulateInstructionMIPS::Emulate_MSA_Branch_DF (llvm::MCInst& insn, int element_b
     uint32_t wt = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
     int32_t offset = insn.getOperand(1).getImm();
 
-    int32_t pc = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_pc_mips, 0, &success);
+    int32_t pc = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc_mips, 0, &success);
     if (!success)
         return false;
 
-    if (ReadRegister (eRegisterKindDWARF, gcc_dwarf_w0_mips + wt, reg_value))
+    if (ReadRegister (eRegisterKindDWARF, dwarf_w0_mips + wt, reg_value))
         ptr = (uint8_t *)reg_value.GetBytes();
     else
         return false;
@@ -3205,7 +3205,7 @@ EmulateInstructionMIPS::Emulate_MSA_Branch_DF (llvm::MCInst& insn, int element_b
     Context context;
     context.type = eContextRelativeBranchImmediate;
 
-    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, gcc_dwarf_pc_mips, target))
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc_mips, target))
         return false;
 
     return true;
@@ -3236,11 +3236,11 @@ EmulateInstructionMIPS::Emulate_MSA_Branch_V (llvm::MCInst& insn, bool bnz)
     uint32_t wt = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
     int32_t offset = insn.getOperand(1).getImm();
 
-    int32_t pc = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_pc_mips, 0, &success);
+    int32_t pc = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc_mips, 0, &success);
     if (!success)
         return false;
 
-    if (ReadRegister (eRegisterKindDWARF, gcc_dwarf_w0_mips + wt, reg_value))
+    if (ReadRegister (eRegisterKindDWARF, dwarf_w0_mips + wt, reg_value))
         wr_val = reg_value.GetAsUInt128(fail_value);
     else
         return false;
@@ -3253,7 +3253,7 @@ EmulateInstructionMIPS::Emulate_MSA_Branch_V (llvm::MCInst& insn, bool bnz)
     Context context;
     context.type = eContextRelativeBranchImmediate;
 
-    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, gcc_dwarf_pc_mips, target))
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc_mips, target))
         return false;
 
     return true;
