@@ -65,6 +65,28 @@ public:
                    uint64_t BaseAddr, uint64_t SymVA) const override;
 };
 
+class PPCTargetInfo final : public TargetInfo {
+public:
+  PPCTargetInfo();
+  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                     uint64_t PltEntryAddr) const override;
+  bool relocNeedsGot(uint32_t Type) const override;
+  bool relocNeedsPlt(uint32_t Type) const override;
+  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+                   uint64_t BaseAddr, uint64_t SymVA) const override;
+};
+
+class ARMTargetInfo final : public TargetInfo {
+public:
+  ARMTargetInfo();
+  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                     uint64_t PltEntryAddr) const override;
+  bool relocNeedsGot(uint32_t Type) const override;
+  bool relocNeedsPlt(uint32_t Type) const override;
+  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+                   uint64_t BaseAddr, uint64_t SymVA) const override;
+};
+
 extern std::unique_ptr<TargetInfo> Target;
 }
 }

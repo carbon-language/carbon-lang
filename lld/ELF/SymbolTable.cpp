@@ -39,13 +39,24 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   addELFFile(cast<ELFFileBase>(FileP));
 }
 
+static TargetInfo *createTarget(uint16_t EMachine) {
+  switch (EMachine) {
+  case EM_PPC:
+    return new PPCTargetInfo();
+  case EM_ARM:
+    return new ARMTargetInfo();
+  case EM_PPC64:
+    return new PPC64TargetInfo();
+  case EM_X86_64:
+    return new X86_64TargetInfo();
+  case EM_386:
+    return new X86TargetInfo();
+  }
+  error("Unknown target machine");
+}
+
 template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
-  if (EMachine == EM_PPC64)
-    Target.reset(new PPC64TargetInfo());
-  else if (EMachine == EM_X86_64)
-    Target.reset(new X86_64TargetInfo());
-  else
-    Target.reset(new X86TargetInfo());
+  Target.reset(createTarget(EMachine));
   if (Config->Shared)
     return;
   EntrySym = new (Alloc) Undefined<ELFT>("_start", Undefined<ELFT>::Synthetic);

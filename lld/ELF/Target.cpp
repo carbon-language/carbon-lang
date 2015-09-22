@@ -180,5 +180,25 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
     break;
   }
 }
+
+PPCTargetInfo::PPCTargetInfo() {
+  // PCRelReloc = FIXME
+}
+void PPCTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                                  uint64_t PltEntryAddr) const {}
+bool PPCTargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
+bool PPCTargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
+void PPCTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+                                uint64_t BaseAddr, uint64_t SymVA) const {}
+
+ARMTargetInfo::ARMTargetInfo() {
+  // PCRelReloc = FIXME
+}
+void ARMTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                                  uint64_t PltEntryAddr) const {}
+bool ARMTargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
+bool ARMTargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
+void ARMTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+                                uint64_t BaseAddr, uint64_t SymVA) const {}
 }
 }
