@@ -16,10 +16,10 @@
 #ifdef _WIN32
 #include "lldb/Host/windows/windows.h"
 #else
-#include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #endif
 
 // C++ Includes
