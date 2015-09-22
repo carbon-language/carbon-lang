@@ -92,9 +92,12 @@ bool lld::elf2::relocNeedsGOT(uint32_t Type) {
 }
 
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
-  auto *P = reinterpret_cast<Elf_Rela *>(Buf);
+  const unsigned EntrySize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
   bool IsMips64EL = Relocs[0].C.getFile()->getObj()->isMips64EL();
   for (const DynamicReloc<ELFT> &Rel : Relocs) {
+    auto *P = reinterpret_cast<Elf_Rel *>(Buf);
+    Buf += EntrySize;
+
     const InputSection<ELFT> &C = Rel.C;
     const Elf_Rel &RI = Rel.RI;
     OutputSection<ELFT> *Out = C.getOutputSection();
@@ -109,10 +112,9 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       P->r_offset = RI.r_offset + C.getOutputSectionOff() + Out->getVA();
       P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type, IsMips64EL);
       if (IsRela)
-        P->r_addend = static_cast<const Elf_Rela &>(RI).r_addend;
+        static_cast<Elf_Rela *>(P)->r_addend =
+            static_cast<const Elf_Rela &>(RI).r_addend;
     }
-
-    ++P;
   }
 }
 

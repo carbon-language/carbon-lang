@@ -45,7 +45,7 @@
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Address: [[DYNSYMADDR:.*]]
 // CHECK-NEXT:   Offset: 0x201C
-// CHECK-NEXT:   Size: 48
+// CHECK-NEXT:   Size:
 // CHECK-NEXT:   Link: [[DYNSTR:.*]]
 // CHECK-NEXT:   Info: 1
 // CHECK-NEXT:   AddressAlignment: 4
@@ -54,6 +54,7 @@
 // CHECK-NEXT:     0000:
 // CHECK-NEXT:     0010:
 // CHECK-NEXT:     0020:
+// CHECK-NEXT:     0030:
 // CHECK-NEXT:   )
 // CHECK-NEXT: }
 // CHECK-NEXT: Section {
@@ -144,6 +145,15 @@
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined
 // CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: zed (62)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global (0x1)
+// CHECK-NEXT:     Type: None (0x0)
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: Undefined (0x0)
+// CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
 // CHECK:      DynamicSymbols [
@@ -171,6 +181,15 @@
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Function
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: Undefined
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: zed@
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined
 // CHECK-NEXT:   }
@@ -216,12 +235,13 @@
 // CHECK-NEXT: }
 
 // CHECK:      HashTable {
-// CHECK-NEXT:   Num Buckets: 3
-// CHECK-NEXT:   Num Chains: 3
-// CHECK-NEXT:   Buckets: [2, 0, 1]
-// CHECK-NEXT:   Chains: [0, 0, 0]
+// CHECK-NEXT:   Num Buckets: 4
+// CHECK-NEXT:   Num Chains: 4
+// CHECK-NEXT:   Buckets: [3, 0, 2, 0]
+// CHECK-NEXT:   Chains: [0, 0, 0, 1]
 // CHECK-NEXT: }
 
 .global _start
 _start:
 .long bar
+.long zed
