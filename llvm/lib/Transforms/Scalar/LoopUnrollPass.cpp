@@ -415,7 +415,7 @@ private:
     auto *GV = dyn_cast<GlobalVariable>(AddressIt->second.Base);
     // We're only interested in loads that can be completely folded to a
     // constant.
-    if (!GV || !GV->hasInitializer() || !GV->isConstant())
+    if (!GV || !GV->hasDefinitiveInitializer() || !GV->isConstant())
       return false;
 
     ConstantDataSequential *CDS =
