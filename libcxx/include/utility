@@ -388,8 +388,9 @@ struct _LIBCPP_TYPE_VIS_ONLY pair
     swap(pair& __p) _NOEXCEPT_(__is_nothrow_swappable<first_type>::value &&
                                __is_nothrow_swappable<second_type>::value)
     {
-        _VSTD::iter_swap(&first, &__p.first);
-        _VSTD::iter_swap(&second, &__p.second);
+        using _VSTD::swap;
+        swap(first,  __p.first);
+        swap(second, __p.second);
     }
 private:
 
