@@ -240,8 +240,8 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-void OutputSection<ELFT>::addChunk(InputSection<ELFT> *C) {
-  Chunks.push_back(C);
+void OutputSection<ELFT>::addSection(InputSection<ELFT> *C) {
+  Sections.push_back(C);
   C->setOutputSection(this);
   uint32_t Align = C->getAlign();
   if (Align > this->Header.sh_addralign)
@@ -271,14 +271,14 @@ lld::elf2::getLocalSymVA(const typename ELFFile<ELFT>::Elf_Sym *Sym,
   if (SecIndex == SHN_XINDEX)
     SecIndex = File.getObj()->getExtendedSymbolTableIndex(
         Sym, File.getSymbolTable(), File.getSymbolTableShndx());
-  ArrayRef<InputSection<ELFT> *> Chunks = File.getChunks();
-  InputSection<ELFT> *Section = Chunks[SecIndex];
+  ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
+  InputSection<ELFT> *Section = Sections[SecIndex];
   OutputSection<ELFT> *Out = Section->getOutputSection();
   return Out->getVA() + Section->getOutputSectionOff() + Sym->st_value;
 }
 
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
-  for (InputSection<ELFT> *C : Chunks)
+  for (InputSection<ELFT> *C : Sections)
     C->writeTo(Buf, PltSec, GotSec);
 }
 
@@ -323,8 +323,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
         if (SecIndex == SHN_XINDEX)
           SecIndex = File.getObj()->getExtendedSymbolTableIndex(
               &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
-        ArrayRef<InputSection<ELFT> *> Chunks = File.getChunks();
-        Section = Chunks[SecIndex];
+        ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
+        Section = Sections[SecIndex];
         assert(Section != nullptr);
         Out = Section->getOutputSection();
         assert(Out != nullptr);

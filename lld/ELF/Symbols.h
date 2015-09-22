@@ -20,7 +20,6 @@ namespace lld {
 namespace elf2 {
 
 class ArchiveFile;
-class Chunk;
 class InputFile;
 class SymbolBody;
 template <class ELFT> class ObjectFile;

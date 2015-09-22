@@ -132,7 +132,7 @@ public:
       : ObjectFileBase(getStaticELFKind<ELFT>(), M) {}
   void parse() override;
 
-  ArrayRef<InputSection<ELFT> *> getChunks() const { return Chunks; }
+  ArrayRef<InputSection<ELFT> *> getSections() const { return Sections; }
 
   SymbolBody *getSymbolBody(uint32_t SymbolIndex) const {
     uint32_t FirstNonLocal = this->Symtab->sh_info;
@@ -147,13 +147,13 @@ public:
   ArrayRef<Elf_Word> getSymbolTableShndx() const { return SymtabSHNDX; };
 
 private:
-  void initializeChunks();
+  void initializeSections();
   void initializeSymbols();
 
   SymbolBody *createSymbolBody(StringRef StringTable, const Elf_Sym *Sym);
 
-  // List of all chunks defined by this file.
-  std::vector<InputSection<ELFT> *> Chunks;
+  // List of all sections defined by this file.
+  std::vector<InputSection<ELFT> *> Sections;
 
   ArrayRef<Elf_Word> SymtabSHNDX;
 };

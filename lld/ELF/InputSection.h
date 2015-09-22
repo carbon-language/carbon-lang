@@ -21,7 +21,7 @@ template <class ELFT> class OutputSection;
 template <class ELFT> class PltSection;
 template <class ELFT> class GotSection;
 
-// A chunk corresponding a section of an input file.
+// This corresponds to a section of an input file.
 template <class ELFT> class InputSection {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
@@ -32,10 +32,10 @@ template <class ELFT> class InputSection {
 public:
   InputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header);
 
-  // Returns the size of this chunk (even if this is a common or BSS.)
+  // Returns the size of this section (even if this is a common or BSS.)
   size_t getSize() const { return Header->sh_size; }
 
-  // Write this chunk to a mmap'ed file, assuming Buf is pointing to
+  // Write this section to a mmap'ed file, assuming Buf is pointing to
   // beginning of the output section.
   void writeTo(uint8_t *Buf, const PltSection<ELFT> &PltSec,
                const GotSection<ELFT> &GotSec);
@@ -72,11 +72,11 @@ private:
                 const ObjectFile<ELFT> &File, uintX_t BaseAddr,
                 const PltSection<ELFT> &PltSec, const GotSection<ELFT> &GotSec);
 
-  // The offset from beginning of the output sections this chunk was assigned
+  // The offset from beginning of the output sections this section was assigned
   // to. The writer sets a value.
   uint64_t OutputSectionOff = 0;
 
-  // The file this chunk was created from.
+  // The file this section is from.
   ObjectFile<ELFT> *File;
 
   OutputSection<ELFT> *Out = nullptr;

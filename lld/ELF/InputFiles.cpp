@@ -91,13 +91,13 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::parse() {
   this->openELF(MB);
 
   // Read section and symbol tables.
-  initializeChunks();
+  initializeSections();
   initializeSymbols();
 }
 
-template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
+template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSections() {
   uint64_t Size = this->ELFObj->getNumSections();
-  Chunks.resize(Size);
+  Sections.resize(Size);
   unsigned I = 0;
   for (const Elf_Shdr &Sec : this->ELFObj->sections()) {
     switch (Sec.sh_type) {
@@ -119,14 +119,14 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
       uint32_t RelocatedSectionIndex = Sec.sh_info;
       if (RelocatedSectionIndex >= Size)
         error("Invalid relocated section index");
-      InputSection<ELFT> *RelocatedSection = Chunks[RelocatedSectionIndex];
+      InputSection<ELFT> *RelocatedSection = Sections[RelocatedSectionIndex];
       if (!RelocatedSection)
         error("Unsupported relocation reference");
       RelocatedSection->RelocSections.push_back(&Sec);
       break;
     }
     default:
-      Chunks[I] = new (Alloc) InputSection<ELFT>(this, &Sec);
+      Sections[I] = new (Alloc) InputSection<ELFT>(this, &Sec);
       break;
     }
     ++I;
@@ -162,8 +162,7 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
     break;
   }
 
-  if (SecIndex >= Chunks.size() ||
-      (SecIndex != 0 && !Chunks[SecIndex]))
+  if (SecIndex >= Sections.size() || (SecIndex != 0 && !Sections[SecIndex]))
     error("Invalid section index");
 
   switch (Sym->getBinding()) {
@@ -171,7 +170,7 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
     error("unexpected binding");
   case STB_GLOBAL:
   case STB_WEAK:
-    return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, *Chunks[SecIndex]);
+    return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, *Sections[SecIndex]);
   }
 }
 

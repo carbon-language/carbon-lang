@@ -333,13 +333,13 @@ template <class ELFT> void Writer<ELFT>::createSections() {
           SymTabSec.addSymbol(*SymName, true);
       }
     }
-    for (InputSection<ELFT> *C : File.getChunks()) {
+    for (InputSection<ELFT> *C : File.getSections()) {
       if (!C)
         continue;
       const Elf_Shdr *H = C->getSectionHdr();
       OutputSection<ELFT> *Sec =
           getSection(C->getSectionName(), H->sh_type, H->sh_flags);
-      Sec->addChunk(C);
+      Sec->addSection(C);
       scanRelocs(*C);
     }
   }

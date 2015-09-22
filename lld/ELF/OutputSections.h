@@ -43,10 +43,10 @@ getLocalSymVA(const typename llvm::object::ELFFile<ELFT>::Elf_Sym *Sym,
 
 bool includeInSymtab(const SymbolBody &B);
 
-// OutputSection represents a section in an output file. It's a
-// container of chunks. OutputSection and Chunk are 1:N relationship.
-// Chunks cannot belong to more than one OutputSections. The writer
-// creates multiple OutputSections and assign them unique,
+// This represents a section in an output file.
+// Different sub classes represent different types of sections. Some contain
+// input sections, others are created by the linker.
+// The writer creates multiple OutputSections and assign them unique,
 // non-overlapping file offsets and VAs.
 template <bool Is64Bits> class OutputSectionBase {
 public:
@@ -242,11 +242,11 @@ public:
       : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags),
         PltSec(PltSec), GotSec(GotSec) {}
 
-  void addChunk(InputSection<ELFT> *C);
+  void addSection(InputSection<ELFT> *C);
   void writeTo(uint8_t *Buf) override;
 
 private:
-  std::vector<InputSection<ELFT> *> Chunks;
+  std::vector<InputSection<ELFT> *> Sections;
   const PltSection<ELFT> &PltSec;
   const GotSection<ELFT> &GotSec;
 };
