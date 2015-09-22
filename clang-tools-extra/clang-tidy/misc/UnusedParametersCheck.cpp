@@ -101,6 +101,9 @@ void UnusedParametersCheck::check(const MatchFinder::MatchResult &Result) {
   if (!Function->doesThisDeclarationHaveABody() ||
       !Function->hasWrittenPrototype())
     return;
+  if (const auto *Method = dyn_cast<CXXMethodDecl>(Function))
+    if (Method->isLambdaStaticInvoker())
+      return;
   for (unsigned i = 0, e = Function->getNumParams(); i != e; ++i) {
     const auto *Param = Function->getParamDecl(i);
     if (Param->isUsed() || Param->isReferenced() || !Param->getDeclName() ||
