@@ -48,7 +48,7 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
     Buf += Jmp.size();
 
     uintptr_t OffsetInPLT = (InstPos + 6) - Start;
-    uintptr_t Delta = GotSec.getEntryAddr(*E) - (this->getVA() + OffsetInPLT);
+    intptr_t Delta = GotSec.getEntryAddr(*E) - (this->getVA() + OffsetInPLT);
     assert(isInt<32>(Delta));
     support::endian::write32le(Buf, Delta);
     Buf += 4;
