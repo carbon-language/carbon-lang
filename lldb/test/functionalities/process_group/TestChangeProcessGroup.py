@@ -89,9 +89,6 @@ class ChangeProcessGroupTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line(self, 'main.c', self.line, num_expected_locations=-1)
 
         thread = process.GetSelectedThread()
-        # this gives a chance for the thread to exit the sleep syscall and sidesteps
-        # <https://llvm.org/bugs/show_bug.cgi?id=23659> on linux
-        thread.StepInstruction(False)
 
         # release the child from its loop
         self.expect("expr release_child_flag = 1", substrs = ["= 1"])
