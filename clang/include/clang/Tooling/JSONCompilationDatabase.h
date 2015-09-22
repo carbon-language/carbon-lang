@@ -116,6 +116,10 @@ private:
   // Maps file paths to the compile command lines for that file.
   llvm::StringMap<std::vector<CompileCommandRef>> IndexByFile;
 
+  /// All the compile commands in the order that they were provided in the
+  /// JSON stream.
+  std::vector<CompileCommandRef> AllCommands;
+
   FileMatchTrie MatchTrie;
 
   std::unique_ptr<llvm::MemoryBuffer> Database;

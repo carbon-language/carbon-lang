@@ -206,11 +206,7 @@ JSONCompilationDatabase::getAllFiles() const {
 std::vector<CompileCommand>
 JSONCompilationDatabase::getAllCompileCommands() const {
   std::vector<CompileCommand> Commands;
-  for (llvm::StringMap< std::vector<CompileCommandRef> >::const_iterator
-        CommandsRefI = IndexByFile.begin(), CommandsRefEnd = IndexByFile.end();
-      CommandsRefI != CommandsRefEnd; ++CommandsRefI) {
-    getCommands(CommandsRefI->getValue(), Commands);
-  }
+  getCommands(AllCommands, Commands);
   return Commands;
 }
 
@@ -337,8 +333,9 @@ bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
     } else {
       llvm::sys::path::native(FileName, NativeFilePath);
     }
-    IndexByFile[NativeFilePath].push_back(
-        CompileCommandRef(Directory, File, *Command));
+    auto Cmd = CompileCommandRef(Directory, File, *Command);
+    IndexByFile[NativeFilePath].push_back(Cmd);
+    AllCommands.push_back(Cmd);
     MatchTrie.insert(NativeFilePath);
   }
   return true;

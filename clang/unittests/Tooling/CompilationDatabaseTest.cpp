@@ -118,6 +118,25 @@ TEST(JSONCompilationDatabase, GetAllCompileCommands) {
   EXPECT_EQ(FileName2, Commands[1].Filename) << ErrorMessage;
   ASSERT_EQ(1u, Commands[1].CommandLine.size());
   EXPECT_EQ(Command2, Commands[1].CommandLine[0]) << ErrorMessage;
+
+  // Check that order is preserved.
+  Commands = getAllCompileCommands(
+      ("[{\"directory\":\"" + Directory2 + "\"," +
+             "\"command\":\"" + Command2 + "\","
+             "\"file\":\"" + FileName2 + "\"},"
+       " {\"directory\":\"" + Directory1 + "\"," +
+             "\"command\":\"" + Command1 + "\","
+             "\"file\":\"" + FileName1 + "\"}]").str(),
+      ErrorMessage);
+  EXPECT_EQ(2U, Commands.size()) << ErrorMessage;
+  EXPECT_EQ(Directory2, Commands[0].Directory) << ErrorMessage;
+  EXPECT_EQ(FileName2, Commands[0].Filename) << ErrorMessage;
+  ASSERT_EQ(1u, Commands[0].CommandLine.size());
+  EXPECT_EQ(Command2, Commands[0].CommandLine[0]) << ErrorMessage;
+  EXPECT_EQ(Directory1, Commands[1].Directory) << ErrorMessage;
+  EXPECT_EQ(FileName1, Commands[1].Filename) << ErrorMessage;
+  ASSERT_EQ(1u, Commands[1].CommandLine.size());
+  EXPECT_EQ(Command1, Commands[1].CommandLine[0]) << ErrorMessage;
 }
 
 static CompileCommand findCompileArgsInJsonDatabase(StringRef FileName,
