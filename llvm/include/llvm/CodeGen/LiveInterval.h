@@ -842,11 +842,6 @@ namespace llvm {
     LiveIntervals &LIS;
     IntEqClasses EqClass;
 
-    // Note that values a and b are connected.
-    void Connect(unsigned a, unsigned b);
-
-    unsigned Renumber();
-
   public:
     explicit ConnectedVNInfoEqClasses(LiveIntervals &lis) : LIS(lis) {}
 
