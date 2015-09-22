@@ -33,6 +33,7 @@ echo core.%p | sudo tee /proc/sys/kernel/core_pattern
 """
 
 import asyncore
+import distutils.version
 import fnmatch
 import multiprocessing
 import multiprocessing.pool
@@ -1143,6 +1144,57 @@ def adjust_inferior_options(dotest_argv):
         _remove_option(dotest_argv, "--test-runner-name", 2)
 
 
+def is_darwin_version_lower_than(target_version):
+    """Checks that os is Darwin and version is lower than target_version.
+
+    @param target_version the StrictVersion indicating the version
+    we're checking against.
+
+    @return True if the OS is Darwin (OS X) and the version number of
+    the OS is less than target_version; False in all other cases.
+    """
+    if platform.system() != 'Darwin':
+        # Can't be Darwin lower than a certain version.
+        return False
+
+    system_version = distutils.version.StrictVersion(platform.mac_ver()[0])
+    is_lower = cmp(system_version, target_version) < 0
+    print "is_darwin_version_lower_than: {} ({}, {})".format(
+        is_lower, system_version, target_version)
+    return is_lower
+
+
+def default_test_runner_name(num_threads):
+    """Returns the default test runner name for the configuration.
+
+    @param num_threads the number of threads/workers this test runner is
+    supposed to use.
+
+    @return the test runner name that should be used by default when
+    no test runner was explicitly called out on the command line.
+    """
+    if num_threads == 1:
+        # Use the serial runner.
+        test_runner_name = "serial"
+    elif os.name == "nt":
+        # Currently the multiprocessing test runner with ctrl-c
+        # support isn't running correctly on nt.  Use the pool
+        # support without ctrl-c.
+        test_runner_name = "threading-pool"
+    elif is_darwin_version_lower_than(
+            distutils.version.StrictVersion("10.10.0")):
+        # OS X versions before 10.10 appear to have an issue using
+        # the threading test runner.  Fall back to multiprocessing.
+        # Supports Ctrl-C.
+        test_runner_name = "multiprocessing"
+    else:
+        # For everyone else, use the ctrl-c-enabled threading support.
+        # Should use fewer system resources than the multprocessing
+        # variant.
+        test_runner_name = "threading"
+    return test_runner_name
+
+
 def main(print_details_on_success, num_threads, test_subdir,
          test_runner_name, results_formatter):
     """Run dotest.py in inferior mode in parallel.
@@ -1211,24 +1263,13 @@ def main(print_details_on_success, num_threads, test_subdir,
     # If the user didn't specify a test runner strategy, determine
     # the default now based on number of threads and OS type.
     if not test_runner_name:
-        if num_threads == 1:
-            # Use the serial runner.
-            test_runner_name = "serial"
-        elif os.name == "nt":
-            # Currently the multiprocessing test runner with ctrl-c
-            # support isn't running correctly on nt.  Use the pool
-            # support without ctrl-c.
-            test_runner_name = "multiprocessing-pool"
-        else:
-            # For everyone else, use the ctrl-c-enabled
-            # multiprocessing support.
-            test_runner_name = "multiprocessing"
+        test_runner_name = default_test_runner_name(num_threads)
 
     if test_runner_name not in runner_strategies_by_name:
-        raise Exception("specified testrunner name '{}' unknown. "
-               "Valid choices: {}".format(
-                   test_runner_name,
-                   runner_strategies_by_name.keys()))
+        raise Exception(
+            "specified testrunner name '{}' unknown. Valid choices: {}".format(
+                test_runner_name,
+                runner_strategies_by_name.keys()))
     test_runner_func = runner_strategies_by_name[test_runner_name]
 
     summary_results = walk_and_invoke(
