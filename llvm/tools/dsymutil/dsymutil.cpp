@@ -257,6 +257,7 @@ int main(int argc, char **argv) {
   Options.Verbose = Verbose;
   Options.NoOutput = NoOutput;
   Options.NoODR = NoODR;
+  Options.PrependPath = OsoPrependPath;
 
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargetMCs();
