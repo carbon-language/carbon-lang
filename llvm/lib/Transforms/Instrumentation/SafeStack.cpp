@@ -19,7 +19,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -601,7 +600,6 @@ bool SafeStack::runOnFunction(Function &F) {
 char SafeStack::ID = 0;
 INITIALIZE_PASS_BEGIN(SafeStack, "safe-stack",
                       "Safe Stack instrumentation pass", false, false)
-INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(SafeStack, "safe-stack", "Safe Stack instrumentation pass",
                     false, false)
 
