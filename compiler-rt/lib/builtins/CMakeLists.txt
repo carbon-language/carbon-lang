@@ -17,6 +17,12 @@ set(GENERIC_SOURCES
   ashlti3.c
   ashrdi3.c
   ashrti3.c
+  atomic_flag_clear.c
+  atomic_flag_clear_explicit.c
+  atomic_flag_test_and_set.c
+  atomic_flag_test_and_set_explicit.c
+  atomic_signal_fence.c
+  atomic_thread_fence.c
   # FIXME: atomic.c may only be compiled if host compiler understands _Atomic
   # atomic.c
   clear_cache.c
