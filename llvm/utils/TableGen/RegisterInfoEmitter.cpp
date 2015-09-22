@@ -240,7 +240,7 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
     MaxRegUnitWeight = std::max(MaxRegUnitWeight, RegUnits.Weight);
     OS << "    \"" << RegUnits.Name << "\",\n";
   }
-  OS << "    nullptr };\n"
+  OS << "  };\n"
      << "  return PressureNameTable[Idx];\n"
      << "}\n\n";
 
