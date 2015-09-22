@@ -11,9 +11,11 @@
 #include "Config.h"
 #include "Error.h"
 #include "Symbols.h"
+#include "Target.h"
 
 using namespace llvm;
 using namespace llvm::object;
+using namespace llvm::ELF;
 
 using namespace lld;
 using namespace lld::elf2;
@@ -37,7 +39,11 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   addELFFile(cast<ELFFileBase>(FileP));
 }
 
-template <class ELFT> void SymbolTable::init() {
+template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
+  if (EMachine == EM_X86_64)
+    Target.reset(new X86_64TargetInfo());
+  else
+    Target.reset(new X86TargetInfo());
   if (Config->Shared)
     return;
   EntrySym = new (Alloc) Undefined<ELFT>("_start", Undefined<ELFT>::Synthetic);
@@ -49,7 +55,7 @@ template <class ELFT> void SymbolTable::addELFFile(ELFFileBase *File) {
     if (!Old->isCompatibleWith(*File))
       error(Twine(Old->getName() + " is incompatible with " + File->getName()));
   } else {
-    init<ELFT>();
+    init<ELFT>(File->getEMachine());
   }
 
   if (auto *O = dyn_cast<ObjectFileBase>(File)) {

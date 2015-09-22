@@ -29,9 +29,6 @@ template <class ELFT> class OutputSection;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class DefinedRegular;
 
-bool relocNeedsPLT(uint32_t Type);
-bool relocNeedsGOT(uint32_t Type);
-
 template <class ELFT>
 typename llvm::object::ELFFile<ELFT>::uintX_t
 getSymVA(const DefinedRegular<ELFT> *DR);

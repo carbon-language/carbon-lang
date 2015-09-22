@@ -10,6 +10,7 @@
 #include "OutputSections.h"
 #include "Config.h"
 #include "SymbolTable.h"
+#include "Target.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -42,21 +43,11 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
   uintptr_t Start = reinterpret_cast<uintptr_t>(Buf);
   ArrayRef<uint8_t> Jmp = {0xff, 0x25}; // jmpq *val(%rip)
   for (const SymbolBody *E : Entries) {
+    uint64_t GotEntryAddr = GotSec.getEntryAddr(*E);
     uintptr_t InstPos = reinterpret_cast<uintptr_t>(Buf);
-
-    memcpy(Buf, Jmp.data(), Jmp.size());
-    Buf += Jmp.size();
-
-    uintptr_t OffsetInPLT = (InstPos + 6) - Start;
-    intptr_t Delta = GotSec.getEntryAddr(*E) - (this->getVA() + OffsetInPLT);
-    assert(isInt<32>(Delta));
-    support::endian::write32le(Buf, Delta);
-    Buf += 4;
-
-    *Buf = 0x90; // nop
-    ++Buf;
-    *Buf = 0x90; // nop
-    ++Buf;
+    uint64_t PltEntryAddr = (InstPos - Start) + this->getVA();
+    Target->writePltEntry(Buf, GotEntryAddr, PltEntryAddr);
+    Buf += 8;
   }
 }
 
@@ -69,26 +60,6 @@ template <class ELFT>
 typename PltSection<ELFT>::uintX_t
 PltSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
   return this->getVA() + B.getPltIndex() * EntrySize;
-}
-
-bool lld::elf2::relocNeedsPLT(uint32_t Type) {
-  switch (Type) {
-  default:
-    return false;
-  case R_X86_64_PLT32:
-    return true;
-  }
-}
-
-bool lld::elf2::relocNeedsGOT(uint32_t Type) {
-  if (relocNeedsPLT(Type))
-    return true;
-  switch (Type) {
-  default:
-    return false;
-  case R_X86_64_GOTPCREL:
-    return true;
-  }
 }
 
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -104,7 +75,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     const SymbolBody *Body = C.getFile()->getSymbolBody(SymIndex);
     uint32_t Type = RI.getType(IsMips64EL);
-    if (relocNeedsGOT(Type)) {
+    if (Target->relocNeedsGot(Type)) {
       P->r_offset = GotSec.getEntryAddr(*Body);
       P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), R_X86_64_GLOB_DAT,
                           IsMips64EL);

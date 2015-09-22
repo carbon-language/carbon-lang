@@ -68,7 +68,7 @@ private:
   void addLazy(Lazy *New);
   void addMemberFile(Lazy *Body);
 
-  template <class ELFT> void init();
+  template <class ELFT> void init(uint16_t EMachine);
   template <class ELFT> void resolve(SymbolBody *Body);
 
   std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;

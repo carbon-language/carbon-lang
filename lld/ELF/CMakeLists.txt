@@ -11,6 +11,7 @@ add_llvm_library(lldELF2
   OutputSections.cpp
   SymbolTable.cpp
   Symbols.cpp
+  Target.cpp
   Writer.cpp
 
   LINK_COMPONENTS

@@ -11,6 +11,7 @@
 #include "Config.h"
 #include "OutputSections.h"
 #include "SymbolTable.h"
+#include "Target.h"
 
 #include "llvm/Support/FileOutputBuffer.h"
 
@@ -256,12 +257,12 @@ void Writer<ELFT>::scanRelocs(
     if (!S)
       continue;
     uint32_t Type = RI.getType(IsMips64EL);
-    if (relocNeedsPLT(Type)) {
+    if (Target->relocNeedsPlt(Type)) {
       if (Body->isInPlt())
         continue;
       PltSec.addEntry(Body);
     }
-    if (relocNeedsGOT(Type)) {
+    if (Target->relocNeedsGot(Type)) {
       if (Body->isInGot())
         continue;
       GotSec.addEntry(Body);

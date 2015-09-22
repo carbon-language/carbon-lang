@@ -11,6 +11,7 @@
 #include "Error.h"
 #include "InputFiles.h"
 #include "OutputSections.h"
+#include "Target.h"
 
 #include "llvm/Support/raw_ostream.h"
 
@@ -114,12 +115,12 @@ void InputSection<ELFT>::relocate(
         break;
       }
       case SymbolBody::SharedKind:
-        if (relocNeedsPLT(Type)) {
+        if (Target->relocNeedsPlt(Type)) {
           SymVA = PltSec.getEntryAddr(*Body);
-          Type = R_X86_64_PC32;
-        } else if (relocNeedsGOT(Type)) {
+          Type = Target->getPCRelReloc();
+        } else if (Target->relocNeedsGot(Type)) {
           SymVA = GotSec.getEntryAddr(*Body);
-          Type = R_X86_64_PC32;
+          Type = Target->getPCRelReloc();
         } else {
           continue;
         }
