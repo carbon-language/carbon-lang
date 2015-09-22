@@ -23,6 +23,9 @@ public:
                              uint64_t PltEntryAddr) const = 0;
   virtual bool relocNeedsGot(uint32_t Type) const = 0;
   virtual bool relocNeedsPlt(uint32_t Type) const = 0;
+  virtual void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+                           uint64_t BaseAddr, uint64_t SymVA) const = 0;
+
   virtual ~TargetInfo();
 
 protected:
@@ -36,6 +39,8 @@ public:
                      uint64_t PltEntryAddr) const override;
   bool relocNeedsGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type) const override;
+  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+                   uint64_t BaseAddr, uint64_t SymVA) const override;
 };
 
 class X86_64TargetInfo final : public TargetInfo {
@@ -45,6 +50,19 @@ public:
                      uint64_t PltEntryAddr) const override;
   bool relocNeedsGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type) const override;
+  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+                   uint64_t BaseAddr, uint64_t SymVA) const override;
+};
+
+class PPC64TargetInfo final : public TargetInfo {
+public:
+  PPC64TargetInfo();
+  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                     uint64_t PltEntryAddr) const override;
+  bool relocNeedsGot(uint32_t Type) const override;
+  bool relocNeedsPlt(uint32_t Type) const override;
+  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+                   uint64_t BaseAddr, uint64_t SymVA) const override;
 };
 
 extern std::unique_ptr<TargetInfo> Target;

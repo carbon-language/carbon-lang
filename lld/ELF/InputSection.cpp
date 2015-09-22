@@ -13,8 +13,6 @@
 #include "OutputSections.h"
 #include "Target.h"
 
-#include "llvm/Support/raw_ostream.h"
-
 using namespace llvm;
 using namespace llvm::ELF;
 using namespace llvm::object;
@@ -25,57 +23,6 @@ using namespace lld::elf2;
 template <class ELFT>
 InputSection<ELFT>::InputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header)
     : File(F), Header(Header) {}
-
-template <class ELFT>
-void InputSection<ELFT>::relocateOne(uint8_t *Buf, const Elf_Rel &Rel,
-                                     uint32_t Type, uintX_t BaseAddr,
-                                     uintX_t SymVA) {
-  uintX_t Offset = Rel.r_offset;
-  uint8_t *Location = Buf + Offset;
-  uint32_t Addend = *(support::ulittle32_t *)Location;
-  switch (Type) {
-  case R_386_PC32:
-    support::endian::write32le(Location, SymVA + Addend - (BaseAddr + Offset));
-    break;
-  case R_386_32:
-    support::endian::write32le(Location, SymVA + Addend);
-    break;
-  default:
-    llvm::errs() << Twine("unrecognized reloc ") + Twine(Type) << '\n';
-    break;
-  }
-}
-
-template <class ELFT>
-void InputSection<ELFT>::relocateOne(uint8_t *Buf, const Elf_Rela &Rel,
-                                     uint32_t Type, uintX_t BaseAddr,
-                                     uintX_t SymVA) {
-  uintX_t Offset = Rel.r_offset;
-  uint8_t *Location = Buf + Offset;
-  switch (Type) {
-  case R_X86_64_PC32:
-    support::endian::write32le(Location,
-                               SymVA + Rel.r_addend - (BaseAddr + Offset));
-    break;
-  case R_X86_64_64:
-    support::endian::write64le(Location, SymVA + Rel.r_addend);
-    break;
-  case R_X86_64_32: {
-  case R_X86_64_32S:
-    uint64_t VA = SymVA + Rel.r_addend;
-    if (Type == R_X86_64_32 && !isUInt<32>(VA))
-      error("R_X86_64_32 out of range");
-    else if (!isInt<32>(VA))
-      error("R_X86_64_32S out of range");
-
-    support::endian::write32le(Location, VA);
-    break;
-  }
-  default:
-    llvm::errs() << Twine("unrecognized reloc ") + Twine(Type) << '\n';
-    break;
-  }
-}
 
 template <class ELFT>
 template <bool isRela>
@@ -134,7 +81,8 @@ void InputSection<ELFT>::relocate(
       }
     }
 
-    relocateOne(Buf, RI, Type, BaseAddr, SymVA);
+    Target->relocateOne(Buf, reinterpret_cast<const void *>(&RI), Type,
+                        BaseAddr, SymVA);
   }
 }
 

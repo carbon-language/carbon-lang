@@ -60,11 +60,6 @@ public:
   SmallVector<const Elf_Shdr *, 1> RelocSections;
 
 private:
-  void relocateOne(uint8_t *Buf, const Elf_Rela &Rel, uint32_t Type,
-                   uintX_t BaseAddr, uintX_t SymVA);
-  void relocateOne(uint8_t *Buf, const Elf_Rel &Rel, uint32_t Type,
-                   uintX_t BaseAddr, uintX_t SymVA);
-
   template <bool isRela>
   void relocate(uint8_t *Buf,
                 llvm::iterator_range<

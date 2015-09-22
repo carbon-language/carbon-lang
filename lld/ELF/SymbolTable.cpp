@@ -40,7 +40,9 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
 }
 
 template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
-  if (EMachine == EM_X86_64)
+  if (EMachine == EM_PPC64)
+    Target.reset(new PPC64TargetInfo());
+  else if (EMachine == EM_X86_64)
     Target.reset(new X86_64TargetInfo());
   else
     Target.reset(new X86TargetInfo());
