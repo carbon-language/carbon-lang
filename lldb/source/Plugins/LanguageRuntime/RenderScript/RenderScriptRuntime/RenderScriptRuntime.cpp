@@ -1225,7 +1225,7 @@ RenderScriptRuntime::LookUpScript(addr_t address, bool create)
         std::unique_ptr<ScriptDetails> s(new ScriptDetails);
         s->script = address;
         m_scripts.push_back(std::move(s));
-        return s.get();
+        return m_scripts.back().get();
     }
     return nullptr;
 }
@@ -1244,7 +1244,7 @@ RenderScriptRuntime::LookUpAllocation(addr_t address, bool create)
         std::unique_ptr<AllocationDetails> a(new AllocationDetails);
         a->address = address;
         m_allocations.push_back(std::move(a));
-        return a.get();
+        return m_allocations.back().get();
     }
     return nullptr;
 }
@@ -1254,7 +1254,6 @@ RSModuleDescriptor::Dump(Stream &strm) const
 {
     strm.Indent();
     m_module->GetFileSpec().Dump(&strm);
-    m_module->ParseAllDebugSymbols();
     if(m_module->GetNumCompileUnits())
     {
         strm.Indent("Debug info loaded.");
