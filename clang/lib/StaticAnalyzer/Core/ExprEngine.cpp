@@ -756,7 +756,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::MSPropertyRefExprClass:
     case Stmt::CXXUnresolvedConstructExprClass:
     case Stmt::DependentScopeDeclRefExprClass:
-    case Stmt::TypeTraitExprClass:
     case Stmt::ArrayTypeTraitExprClass:
     case Stmt::ExpressionTraitExprClass:
     case Stmt::UnresolvedLookupExprClass:
@@ -902,7 +901,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::CXXPseudoDestructorExprClass:
     case Stmt::SubstNonTypeTemplateParmExprClass:
     case Stmt::CXXNullPtrLiteralExprClass:
-    case Stmt::OMPArraySectionExprClass: {
+    case Stmt::OMPArraySectionExprClass:
+    case Stmt::TypeTraitExprClass: {
       Bldr.takeNodes(Pred);
       ExplodedNodeSet preVisit;
       getCheckerManager().runCheckersForPreStmt(preVisit, Pred, S, *this);

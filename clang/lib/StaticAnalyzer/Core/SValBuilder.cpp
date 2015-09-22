@@ -259,6 +259,11 @@ Optional<SVal> SValBuilder::getConstantVal(const Expr *E) {
   case Stmt::CXXBoolLiteralExprClass:
     return makeBoolVal(cast<CXXBoolLiteralExpr>(E));
 
+  case Stmt::TypeTraitExprClass: {
+    const TypeTraitExpr *TE = cast<TypeTraitExpr>(E);
+    return makeTruthVal(TE->getValue(), TE->getType());
+  }
+
   case Stmt::IntegerLiteralClass:
     return makeIntVal(cast<IntegerLiteral>(E));
 
