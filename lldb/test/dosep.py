@@ -198,8 +198,7 @@ def call_with_timeout(command, timeout, name, inferior_pid_events):
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
-                                   close_fds=True,
-                                   preexec_fn=os.setsid)
+                                   close_fds=True)
     else:
         process = subprocess.Popen(command,
                                    stdin=subprocess.PIPE,
