@@ -29,7 +29,7 @@ OPTIONAL_DIRS := lldb
 DIRS := llvm-config
 PARALLEL_DIRS := opt llvm-as llvm-dis llc llvm-ar llvm-nm llvm-link \
                  lli llvm-extract llvm-mc bugpoint llvm-bcanalyzer llvm-diff \
-                 macho-dump llvm-objdump llvm-readobj llvm-rtdyld \
+                 llvm-objdump llvm-readobj llvm-rtdyld \
                  llvm-dwarfdump llvm-cov llvm-size llvm-stress llvm-mcmarkup \
                  llvm-profdata llvm-symbolizer obj2yaml yaml2obj llvm-c-test \
                  llvm-cxxdump verify-uselistorder dsymutil llvm-pdbdump \

@@ -41,7 +41,6 @@ subdirectories =
  llvm-rtdyld
  llvm-size
  llvm-split
- macho-dump
  opt
  verify-uselistorder
 
