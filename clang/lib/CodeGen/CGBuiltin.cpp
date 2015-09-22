@@ -1868,38 +1868,52 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   return GetUndefRValue(E->getType());
 }
 
-Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
-                                              const CallExpr *E) {
-  switch (getTarget().getTriple().getArch()) {
+static Value *EmitTargetArchBuiltinExpr(CodeGenFunction *CGF,
+                                        unsigned BuiltinID, const CallExpr *E,
+                                        llvm::Triple::ArchType Arch) {
+  switch (Arch) {
   case llvm::Triple::arm:
   case llvm::Triple::armeb:
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb:
-    return EmitARMBuiltinExpr(BuiltinID, E);
+    return CGF->EmitARMBuiltinExpr(BuiltinID, E);
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
-    return EmitAArch64BuiltinExpr(BuiltinID, E);
+    return CGF->EmitAArch64BuiltinExpr(BuiltinID, E);
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
-    return EmitX86BuiltinExpr(BuiltinID, E);
+    return CGF->EmitX86BuiltinExpr(BuiltinID, E);
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
   case llvm::Triple::ppc64le:
-    return EmitPPCBuiltinExpr(BuiltinID, E);
+    return CGF->EmitPPCBuiltinExpr(BuiltinID, E);
   case llvm::Triple::r600:
   case llvm::Triple::amdgcn:
-    return EmitAMDGPUBuiltinExpr(BuiltinID, E);
+    return CGF->EmitAMDGPUBuiltinExpr(BuiltinID, E);
   case llvm::Triple::systemz:
-    return EmitSystemZBuiltinExpr(BuiltinID, E);
+    return CGF->EmitSystemZBuiltinExpr(BuiltinID, E);
   case llvm::Triple::nvptx:
   case llvm::Triple::nvptx64:
-    return EmitNVPTXBuiltinExpr(BuiltinID, E);
+    return CGF->EmitNVPTXBuiltinExpr(BuiltinID, E);
   case llvm::Triple::wasm32:
   case llvm::Triple::wasm64:
-    return EmitWebAssemblyBuiltinExpr(BuiltinID, E);
+    return CGF->EmitWebAssemblyBuiltinExpr(BuiltinID, E);
   default:
     return nullptr;
   }
+}
+
+Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
+                                              const CallExpr *E) {
+  if (getContext().BuiltinInfo.isAuxBuiltinID(BuiltinID)) {
+    assert(getContext().getAuxTargetInfo() && "Missing aux target info");
+    return EmitTargetArchBuiltinExpr(
+        this, getContext().BuiltinInfo.getAuxBuiltinID(BuiltinID), E,
+        getContext().getAuxTargetInfo()->getTriple().getArch());
+  }
+
+  return EmitTargetArchBuiltinExpr(this, BuiltinID, E,
+                                   getTarget().getTriple().getArch());
 }
 
 static llvm::VectorType *GetNeonType(CodeGenFunction *CGF,

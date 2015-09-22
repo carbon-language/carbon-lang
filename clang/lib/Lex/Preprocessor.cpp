@@ -62,20 +62,19 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
                            IdentifierInfoLookup *IILookup, bool OwnsHeaders,
                            TranslationUnitKind TUKind)
     : PPOpts(PPOpts), Diags(&diags), LangOpts(opts), Target(nullptr),
-      FileMgr(Headers.getFileMgr()), SourceMgr(SM),
-      ScratchBuf(new ScratchBuffer(SourceMgr)),HeaderInfo(Headers),
+      AuxTarget(nullptr), FileMgr(Headers.getFileMgr()), SourceMgr(SM),
+      ScratchBuf(new ScratchBuffer(SourceMgr)), HeaderInfo(Headers),
       TheModuleLoader(TheModuleLoader), ExternalSource(nullptr),
       Identifiers(opts, IILookup),
       PragmaHandlers(new PragmaNamespace(StringRef())),
-      IncrementalProcessing(false), TUKind(TUKind),
-      CodeComplete(nullptr), CodeCompletionFile(nullptr),
-      CodeCompletionOffset(0), LastTokenWasAt(false),
-      ModuleImportExpectsIdentifier(false), CodeCompletionReached(0),
-      MainFileDir(nullptr), SkipMainFilePreamble(0, true), CurPPLexer(nullptr),
-      CurDirLookup(nullptr), CurLexerKind(CLK_Lexer), CurSubmodule(nullptr),
-      Callbacks(nullptr), CurSubmoduleState(&NullSubmoduleState),
-      MacroArgCache(nullptr), Record(nullptr),
-      MIChainHead(nullptr), DeserialMIChainHead(nullptr) {
+      IncrementalProcessing(false), TUKind(TUKind), CodeComplete(nullptr),
+      CodeCompletionFile(nullptr), CodeCompletionOffset(0),
+      LastTokenWasAt(false), ModuleImportExpectsIdentifier(false),
+      CodeCompletionReached(0), MainFileDir(nullptr),
+      SkipMainFilePreamble(0, true), CurPPLexer(nullptr), CurDirLookup(nullptr),
+      CurLexerKind(CLK_Lexer), CurSubmodule(nullptr), Callbacks(nullptr),
+      CurSubmoduleState(&NullSubmoduleState), MacroArgCache(nullptr),
+      Record(nullptr), MIChainHead(nullptr), DeserialMIChainHead(nullptr) {
   OwnsHeaderSearch = OwnsHeaders;
   
   CounterValue = 0; // __COUNTER__ starts at 0.
@@ -170,13 +169,18 @@ Preprocessor::~Preprocessor() {
     delete &HeaderInfo;
 }
 
-void Preprocessor::Initialize(const TargetInfo &Target) {
+void Preprocessor::Initialize(const TargetInfo &Target,
+                              const TargetInfo *AuxTarget) {
   assert((!this->Target || this->Target == &Target) &&
          "Invalid override of target information");
   this->Target = &Target;
-  
+
+  assert((!this->AuxTarget || this->AuxTarget == AuxTarget) &&
+         "Invalid override of aux target information.");
+  this->AuxTarget = AuxTarget;
+
   // Initialize information about built-ins.
-  BuiltinInfo.initializeTarget(Target);
+  BuiltinInfo.InitializeTarget(Target, AuxTarget);
   HeaderInfo.setTarget(Target);
 }
 

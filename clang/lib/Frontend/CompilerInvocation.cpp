@@ -975,6 +975,9 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
 
   Opts.OverrideRecordLayoutsFile
     = Args.getLastArgValue(OPT_foverride_record_layout_EQ);
+  Opts.AuxTriple =
+      llvm::Triple::normalize(Args.getLastArgValue(OPT_aux_triple));
+
   if (const Arg *A = Args.getLastArg(OPT_arcmt_check,
                                      OPT_arcmt_modify,
                                      OPT_arcmt_migrate)) {

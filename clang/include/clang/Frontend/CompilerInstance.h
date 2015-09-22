@@ -78,6 +78,9 @@ class CompilerInstance : public ModuleLoader {
   /// The target being compiled for.
   IntrusiveRefCntPtr<TargetInfo> Target;
 
+  /// Auxiliary Target info.
+  IntrusiveRefCntPtr<TargetInfo> AuxTarget;
+
   /// The virtual file system.
   IntrusiveRefCntPtr<vfs::FileSystem> VirtualFileSystem;
 
@@ -350,6 +353,15 @@ public:
 
   /// Replace the current Target.
   void setTarget(TargetInfo *Value);
+
+  /// }
+  /// @name AuxTarget Info
+  /// {
+
+  TargetInfo *getAuxTarget() const { return AuxTarget.get(); }
+
+  /// Replace the current AuxTarget.
+  void setAuxTarget(TargetInfo *Value);
 
   /// }
   /// @name Virtual File System

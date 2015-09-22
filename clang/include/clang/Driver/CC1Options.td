@@ -325,6 +325,8 @@ def cc1as : Flag<["-"], "cc1as">;
 def ast_merge : Separate<["-"], "ast-merge">,
   MetaVarName<"<ast file>">,
   HelpText<"Merge the given AST file into the translation unit being compiled.">;
+def aux_triple : Separate<["-"], "aux-triple">,
+  HelpText<"Auxiliary target triple.">;
 def code_completion_at : Separate<["-"], "code-completion-at">,
   MetaVarName<"<file>:<line>:<column>">,
   HelpText<"Dump code-completion information at a location">;

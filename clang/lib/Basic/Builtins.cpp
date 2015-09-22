@@ -32,19 +32,27 @@ static const Builtin::Info BuiltinInfo[] = {
 const Builtin::Info &Builtin::Context::getRecord(unsigned ID) const {
   if (ID < Builtin::FirstTSBuiltin)
     return BuiltinInfo[ID];
-  assert(ID - Builtin::FirstTSBuiltin < NumTSRecords && "Invalid builtin ID!");
+  assert(ID - Builtin::FirstTSBuiltin < (NumTSRecords + NumAuxTSRecords) &&
+         "Invalid builtin ID!");
+  if (isAuxBuiltinID(ID))
+    return AuxTSRecords[getAuxBuiltinID(ID) - Builtin::FirstTSBuiltin];
   return TSRecords[ID - Builtin::FirstTSBuiltin];
 }
 
 Builtin::Context::Context() {
   // Get the target specific builtins from the target.
   TSRecords = nullptr;
+  AuxTSRecords = nullptr;
   NumTSRecords = 0;
+  NumAuxTSRecords = 0;
 }
 
-void Builtin::Context::initializeTarget(const TargetInfo &Target) {
+void Builtin::Context::InitializeTarget(const TargetInfo &Target,
+                                        const TargetInfo *AuxTarget) {
   assert(NumTSRecords == 0 && "Already initialized target?");
   Target.getTargetBuiltins(TSRecords, NumTSRecords);
+  if (AuxTarget)
+    AuxTarget->getTargetBuiltins(AuxTSRecords, NumAuxTSRecords);
 }
 
 bool Builtin::Context::builtinIsSupported(const Builtin::Info &BuiltinInfo,
@@ -76,7 +84,12 @@ void Builtin::Context::initializeBuiltins(IdentifierTable &Table,
   // Step #2: Register target-specific builtins.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
     if (builtinIsSupported(TSRecords[i], LangOpts))
-      Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
+      Table.get(TSRecords[i].Name).setBuiltinID(i + Builtin::FirstTSBuiltin);
+
+  // Step #3: Register target-specific builtins for AuxTarget.
+  for (unsigned i = 0, e = NumAuxTSRecords; i != e; ++i)
+    Table.get(AuxTSRecords[i].Name)
+        .setBuiltinID(i + Builtin::FirstTSBuiltin + NumTSRecords);
 }
 
 void Builtin::Context::forgetBuiltin(unsigned ID, IdentifierTable &Table) {

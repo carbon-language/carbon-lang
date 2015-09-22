@@ -11293,11 +11293,11 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
     if (getLangOpts().CUDA && getLangOpts().CUDATargetOverloads &&
         Context.BuiltinInfo.isTSBuiltin(BuiltinID) &&
         !FD->hasAttr<CUDADeviceAttr>() && !FD->hasAttr<CUDAHostAttr>()) {
-      // Target-specific builtins are assumed to be intended for use
-      // in this particular CUDA compilation mode and should have
-      // appropriate attribute set so we can enforce CUDA function
-      // call restrictions.
-      if (getLangOpts().CUDAIsDevice)
+      // Assign appropriate attribute depending on CUDA compilation
+      // mode and the target builtin belongs to. E.g. during host
+      // compilation, aux builtins are __device__, the rest are __host__.
+      if (getLangOpts().CUDAIsDevice !=
+          Context.BuiltinInfo.isAuxBuiltinID(BuiltinID))
         FD->addAttr(CUDADeviceAttr::CreateImplicit(Context, FD->getLocation()));
       else
         FD->addAttr(CUDAHostAttr::CreateImplicit(Context, FD->getLocation()));

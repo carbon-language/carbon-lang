@@ -743,10 +743,10 @@ ASTContext::ASTContext(LangOptions &LOpts, SourceManager &SM,
       FirstLocalImport(), LastLocalImport(), ExternCContext(nullptr),
       SourceMgr(SM), LangOpts(LOpts),
       SanitizerBL(new SanitizerBlacklist(LangOpts.SanitizerBlacklistFiles, SM)),
-      AddrSpaceMap(nullptr), Target(nullptr), PrintingPolicy(LOpts),
-      Idents(idents), Selectors(sels), BuiltinInfo(builtins),
-      DeclarationNames(*this), ExternalSource(nullptr), Listener(nullptr),
-      Comments(SM), CommentsLoaded(false),
+      AddrSpaceMap(nullptr), Target(nullptr), AuxTarget(nullptr),
+      PrintingPolicy(LOpts), Idents(idents), Selectors(sels),
+      BuiltinInfo(builtins), DeclarationNames(*this), ExternalSource(nullptr),
+      Listener(nullptr), Comments(SM), CommentsLoaded(false),
       CommentCommandTraits(BumpAlloc, LOpts.CommentOpts), LastSDM(nullptr, 0) {
   TUDecl = TranslationUnitDecl::Create(*this);
 }
@@ -956,13 +956,15 @@ void ASTContext::InitBuiltinType(CanQualType &R, BuiltinType::Kind K) {
   Types.push_back(Ty);
 }
 
-void ASTContext::InitBuiltinTypes(const TargetInfo &Target) {
+void ASTContext::InitBuiltinTypes(const TargetInfo &Target,
+                                  const TargetInfo *AuxTarget) {
   assert((!this->Target || this->Target == &Target) &&
          "Incorrect target reinitialization");
   assert(VoidTy.isNull() && "Context reinitialized?");
 
   this->Target = &Target;
-  
+  this->AuxTarget = AuxTarget;
+
   ABI.reset(createCXXABI(Target));
   AddrSpaceMap = getAddressSpaceMap(Target, LangOpts);
   AddrSpaceMapMangling = isAddrSpaceMapManglingEnabled(Target, LangOpts);

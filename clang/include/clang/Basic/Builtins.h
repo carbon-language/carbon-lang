@@ -56,15 +56,23 @@ struct Info {
 
 /// \brief Holds information about both target-independent and
 /// target-specific builtins, allowing easy queries by clients.
+///
+/// Builtins from an optional auxiliary target are stored in
+/// AuxTSRecords. Their IDs are shifted up by NumTSRecords and need to
+/// be translated back with getAuxBuiltinID() before use.
 class Context {
   const Info *TSRecords;
+  const Info *AuxTSRecords;
   unsigned NumTSRecords;
+  unsigned NumAuxTSRecords;
+
 public:
   Context();
 
   /// \brief Perform target-specific initialization
-  void initializeTarget(const TargetInfo &Target);
-  
+  /// \param AuxTarget Target info to incorporate builtins from. May be nullptr.
+  void InitializeTarget(const TargetInfo &Target, const TargetInfo *AuxTarget);
+
   /// \brief Mark the identifiers for all the builtins with their
   /// appropriate builtin ID # and mark any non-portable builtin identifiers as
   /// such.
@@ -175,6 +183,15 @@ public:
   const char *getRequiredFeatures(unsigned ID) const {
     return getRecord(ID).Features;
   }
+
+  /// \brief Return true if builtin ID belongs to AuxTarget.
+  bool isAuxBuiltinID(unsigned ID) const {
+    return ID >= (Builtin::FirstTSBuiltin + NumTSRecords);
+  }
+
+  /// Return real buitin ID (i.e. ID it would have furing compilation
+  /// for AuxTarget).
+  unsigned getAuxBuiltinID(unsigned ID) const { return ID - NumTSRecords; }
 
 private:
   const Info &getRecord(unsigned ID) const;

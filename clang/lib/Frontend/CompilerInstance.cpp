@@ -78,9 +78,8 @@ void CompilerInstance::setDiagnostics(DiagnosticsEngine *Value) {
   Diagnostics = Value;
 }
 
-void CompilerInstance::setTarget(TargetInfo *Value) {
-  Target = Value;
-}
+void CompilerInstance::setTarget(TargetInfo *Value) { Target = Value; }
+void CompilerInstance::setAuxTarget(TargetInfo *Value) { AuxTarget = Value; }
 
 void CompilerInstance::setFileManager(FileManager *Value) {
   FileMgr = Value;
@@ -312,7 +311,7 @@ void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
   PP = new Preprocessor(&getPreprocessorOpts(), getDiagnostics(), getLangOpts(),
                         getSourceManager(), *HeaderInfo, *this, PTHMgr,
                         /*OwnsHeaderSearch=*/true, TUKind);
-  PP->Initialize(getTarget());
+  PP->Initialize(getTarget(), getAuxTarget());
 
   // Note that this is different then passing PTHMgr to Preprocessor's ctor.
   // That argument is used as the IdentifierInfoLookup argument to
@@ -396,7 +395,7 @@ void CompilerInstance::createASTContext() {
   auto *Context = new ASTContext(getLangOpts(), PP.getSourceManager(),
                                  PP.getIdentifierTable(), PP.getSelectorTable(),
                                  PP.getBuiltinInfo());
-  Context->InitBuiltinTypes(getTarget());
+  Context->InitBuiltinTypes(getTarget(), getAuxTarget());
   setASTContext(Context);
 }
 
@@ -799,6 +798,13 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
                                          getInvocation().TargetOpts));
   if (!hasTarget())
     return false;
+
+  // Create TargetInfo for the other side of CUDA compilation.
+  if (getLangOpts().CUDA && !getFrontendOpts().AuxTriple.empty()) {
+    std::shared_ptr<TargetOptions> TO(new TargetOptions);
+    TO->Triple = getFrontendOpts().AuxTriple;
+    setAuxTarget(TargetInfo::CreateTargetInfo(getDiagnostics(), TO));
+  }
 
   // Inform the target of the language options.
   //
