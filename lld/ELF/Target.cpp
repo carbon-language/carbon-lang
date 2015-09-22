@@ -26,7 +26,10 @@ std::unique_ptr<TargetInfo> Target;
 
 TargetInfo::~TargetInfo() {}
 
-X86TargetInfo::X86TargetInfo() { PCRelReloc = R_386_PC32; }
+X86TargetInfo::X86TargetInfo() {
+  PCRelReloc = R_386_PC32;
+  GotReloc = R_386_GLOB_DAT;
+}
 
 void X86TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                   uint64_t PltEntryAddr) const {
@@ -83,7 +86,10 @@ void X86TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
   }
 }
 
-X86_64TargetInfo::X86_64TargetInfo() { PCRelReloc = R_X86_64_PC32; }
+X86_64TargetInfo::X86_64TargetInfo() {
+  PCRelReloc = R_X86_64_PC32;
+  GotReloc = R_X86_64_GLOB_DAT;
+}
 
 void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                      uint64_t PltEntryAddr) const {
@@ -156,6 +162,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
 
 PPC64TargetInfo::PPC64TargetInfo() {
   // PCRelReloc = FIXME
+  // GotReloc = FIXME
 }
 void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                     uint64_t PltEntryAddr) const {}
@@ -183,6 +190,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
 
 PPCTargetInfo::PPCTargetInfo() {
   // PCRelReloc = FIXME
+  // GotReloc = FIXME
 }
 void PPCTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                   uint64_t PltEntryAddr) const {}
@@ -193,6 +201,7 @@ void PPCTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
 
 ARMTargetInfo::ARMTargetInfo() {
   // PCRelReloc = FIXME
+  // GotReloc = FIXME
 }
 void ARMTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                   uint64_t PltEntryAddr) const {}

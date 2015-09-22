@@ -19,6 +19,7 @@ class SymbolBody;
 class TargetInfo {
 public:
   unsigned getPCRelReloc() const { return PCRelReloc; }
+  unsigned getGotReloc() const { return GotReloc; }
   virtual void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                              uint64_t PltEntryAddr) const = 0;
   virtual bool relocNeedsGot(uint32_t Type) const = 0;
@@ -30,6 +31,7 @@ public:
 
 protected:
   unsigned PCRelReloc;
+  unsigned GotReloc;
 };
 
 class X86TargetInfo final : public TargetInfo {

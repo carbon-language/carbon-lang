@@ -77,8 +77,8 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     uint32_t Type = RI.getType(IsMips64EL);
     if (Target->relocNeedsGot(Type)) {
       P->r_offset = GotSec.getEntryAddr(*Body);
-      P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), R_X86_64_GLOB_DAT,
-                          IsMips64EL);
+      P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
+                          Target->getGotReloc(), IsMips64EL);
     } else {
       P->r_offset = RI.r_offset + C.getOutputSectionOff() + Out->getVA();
       P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type, IsMips64EL);
