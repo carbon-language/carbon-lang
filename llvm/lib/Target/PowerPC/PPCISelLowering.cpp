@@ -8704,7 +8704,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // mfspr Rx,TBU # load from TBU
     // mfspr Ry,TB  # load from TB
     // mfspr Rz,TBU # load from TBU
-    // cmpw crX,Rx,Rz # check if ‘old’=’new’
+    // cmpw crX,Rx,Rz # check if 'old'='new'
     // bne readLoop   # branch if they're not equal
     // ...
 
