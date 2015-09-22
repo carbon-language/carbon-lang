@@ -53,7 +53,7 @@ void f() {
   __readmsr(0);
 
   // FIXME: Call these in 64-bit too once the intrinsics have been fixed to
-  // work there.
+  // work there, PR19301
 #ifndef _M_X64
   __readcr3();
   __writecr3(0);
