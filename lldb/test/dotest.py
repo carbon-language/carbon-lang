@@ -1030,8 +1030,7 @@ def setupTestResults():
             # Tell the formatter to write out anything it may have
             # been saving until the very end (e.g. xUnit results
             # can't complete its output until this point).
-            terminate_event = EventBuilder.bare_event("terminate")
-            results_formatter_object.handle_event(terminate_event)
+            results_formatter_object.send_terminate_as_needed()
 
             # And now close out the output file-like object.
             if cleanup_func is not None:

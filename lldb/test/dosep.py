@@ -1231,6 +1231,11 @@ def main(print_details_on_success, num_threads, test_subdir,
     (timed_out, passed, failed, unexpected_successes, pass_count,
      fail_count) = summary_results
 
+    # The results formatter - if present - is done now.  Tell it to
+    # terminate.
+    if results_formatter is not None:
+        results_formatter.send_terminate_as_needed()
+
     timed_out = set(timed_out)
     num_test_files = len(passed) + len(failed)
     num_test_cases = pass_count + fail_count

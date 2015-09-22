@@ -386,6 +386,7 @@ class ResultsFormatter(object):
         if not self.out_file:
             raise Exception("ResultsFormatter created with no file object")
         self.start_time_by_test = {}
+        self.terminate_called = False
 
         # Lock that we use while mutating inner state, like the
         # total test count and the elements.  We minimize how
@@ -402,7 +403,14 @@ class ResultsFormatter(object):
         @param test_event the test event as formatted by one of the
         event_for_* calls.
         """
-        pass
+        # Keep track of whether terminate was received.  We do this so
+        # that a process can call the 'terminate' event on its own, to
+        # close down a formatter at the appropriate time.  Then the
+        # atexit() cleanup can call the "terminate if it hasn't been
+        # called yet".
+        if test_event is not None:
+            if test_event.get("event", "") == "terminate":
+                self.terminate_called = True
 
     def track_start_time(self, test_class, test_name, start_time):
         """Tracks the start time of a test so elapsed time can be computed.
@@ -438,8 +446,15 @@ class ResultsFormatter(object):
         return end_time - start_time
 
     def is_using_terminal(self):
-        """Returns True if this results formatter is using the terminal and output should be avoided"""
+        """Returns True if this results formatter is using the terminal and
+        output should be avoided."""
         return self.using_terminal
+
+    def send_terminate_as_needed(self):
+        """Sends the terminate event if it hasn't been received yet."""
+        if not self.terminate_called:
+            terminate_event = EventBuilder.bare_event("terminate")
+            self.handle_event(terminate_event)
 
 class XunitFormatter(ResultsFormatter):
     """Provides xUnit-style formatted output.
