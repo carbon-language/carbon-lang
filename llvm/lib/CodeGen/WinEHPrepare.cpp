@@ -2638,9 +2638,9 @@ static const CatchPadInst *getSingleCatchPadPredecessor(const BasicBlock *BB) {
 ///         to label %catch.B unwind label %endcatches
 ///   %endcatches
 ///     catchendblock unwind to caller
-void findCatchPadsForCatchEndPad(
-    const BasicBlock *CatchEndBB,
-    SmallVectorImpl<const CatchPadInst *> &Handlers) {
+static void
+findCatchPadsForCatchEndPad(const BasicBlock *CatchEndBB,
+                            SmallVectorImpl<const CatchPadInst *> &Handlers) {
   const CatchPadInst *CPI = getSingleCatchPadPredecessor(CatchEndBB);
   while (CPI) {
     Handlers.push_back(CPI);
