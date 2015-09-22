@@ -724,7 +724,7 @@ public:
   /// order since the pattern evaluator stops checking as soon as it finds a
   /// faster sequence.
   /// \param Root - Instruction that could be combined with one of its operands
-  /// \param Pattern - Vector of possible combination patterns
+  /// \param Patterns - Vector of possible combination patterns
   virtual bool getMachineCombinerPatterns(
       MachineInstr &Root,
       SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Patterns) const;
