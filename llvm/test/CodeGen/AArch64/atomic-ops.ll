@@ -893,6 +893,8 @@ define i8 @test_atomic_cmpxchg_i8(i8 %wanted, i8 %new) nounwind {
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
 ; CHECK: stxrb [[STATUS:w[0-9]+]], {{w[0-9]+}}, [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
+; CHECK: [[GET_OUT]]:
+; CHECK: clrex
 ; CHECK-NOT: dmb
 
 ; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
@@ -916,6 +918,8 @@ define i16 @test_atomic_cmpxchg_i16(i16 %wanted, i16 %new) nounwind {
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
 ; CHECK: stlxrh [[STATUS:w[0-9]+]], {{w[0-9]+}}, [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
+; CHECK: [[GET_OUT]]:
+; CHECK: clrex
 ; CHECK-NOT: dmb
 
 ; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
@@ -927,21 +931,21 @@ define i32 @test_atomic_cmpxchg_i32(i32 %wanted, i32 %new) nounwind {
    %pair = cmpxchg i32* @var32, i32 %wanted, i32 %new release monotonic
    %old = extractvalue { i32, i1 } %pair, 0
 
+; CHECK: mov {{[xw]}}[[WANTED:[0-9]+]], {{[xw]}}0
+
 ; CHECK-NOT: dmb
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var32
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var32
 
 ; CHECK: [[STARTAGAIN:.LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldxr w[[OLD:[0-9]+]], [x[[ADDR]]]
-  ; w0 below is a reasonable guess but could change: it certainly comes into the
-  ;  function there.
-; CHECK-NEXT: cmp w[[OLD]], w0
+; CHECK-NEXT: cmp w[[OLD]], w[[WANTED]]
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
 ; CHECK: stlxr [[STATUS:w[0-9]+]], {{w[0-9]+}}, [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
+; CHECK: [[GET_OUT]]:
+; CHECK: clrex
 ; CHECK-NOT: dmb
-
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
    ret i32 %old
 }
 
@@ -963,6 +967,8 @@ define void @test_atomic_cmpxchg_i64(i64 %wanted, i64 %new) nounwind {
   ; As above, w1 is a reasonable guess.
 ; CHECK: stxr [[STATUS:w[0-9]+]], x1, [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
+; CHECK: [[GET_OUT]]:
+; CHECK: clrex
 ; CHECK-NOT: dmb
 
 ; CHECK: str x[[OLD]],

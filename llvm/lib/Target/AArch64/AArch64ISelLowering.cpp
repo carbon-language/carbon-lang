@@ -9682,6 +9682,13 @@ Value *AArch64TargetLowering::emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
       cast<PointerType>(Addr->getType())->getElementType());
 }
 
+void AArch64TargetLowering::emitAtomicCmpXchgNoStoreLLBalance(
+    IRBuilder<> &Builder) const {
+  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+  Builder.CreateCall(
+      llvm::Intrinsic::getDeclaration(M, Intrinsic::aarch64_clrex));
+}
+
 Value *AArch64TargetLowering::emitStoreConditional(IRBuilder<> &Builder,
                                                    Value *Val, Value *Addr,
                                                    AtomicOrdering Ord) const {

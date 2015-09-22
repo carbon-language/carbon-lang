@@ -1097,6 +1097,14 @@ public:
   }
   /// @}
 
+  // Emits code that executes when the comparison result in the ll/sc
+  // expansion of a cmpxchg instruction is such that the store-conditional will
+  // not execute.  This makes it possible to balance out the load-linked with
+  // a dedicated instruction, if desired.
+  // E.g., on ARM, if ldrex isn't followed by strex, the exclusive monitor would
+  // be unnecessarily held, except if clrex, inserted by this hook, is executed.
+  virtual void emitAtomicCmpXchgNoStoreLLBalance(IRBuilder<> &Builder) const {}
+
   /// Returns true if the given (atomic) store should be expanded by the
   /// IR-level AtomicExpand pass into an "atomic xchg" which ignores its input.
   virtual bool shouldExpandAtomicStoreInIR(StoreInst *SI) const {

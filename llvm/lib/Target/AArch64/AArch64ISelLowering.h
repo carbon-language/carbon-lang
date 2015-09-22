@@ -348,6 +348,8 @@ public:
   Value *emitStoreConditional(IRBuilder<> &Builder, Value *Val,
                               Value *Addr, AtomicOrdering Ord) const override;
 
+  void emitAtomicCmpXchgNoStoreLLBalance(IRBuilder<> &Builder) const override;
+
   TargetLoweringBase::AtomicExpansionKind
   shouldExpandAtomicLoadInIR(LoadInst *LI) const override;
   bool shouldExpandAtomicStoreInIR(StoreInst *SI) const override;

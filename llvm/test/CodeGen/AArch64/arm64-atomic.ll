@@ -2,13 +2,17 @@
 
 define i32 @val_compare_and_swap(i32* %p, i32 %cmp, i32 %new) #0 {
 ; CHECK-LABEL: val_compare_and_swap:
-; CHECK-NEXT: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
-; CHECK-NEXT: ldaxr  [[RESULT:w[0-9]+]], [x0]
+; CHECK-NEXT: mov    x[[ADDR:[0-9]+]], x0
+; CHECK-NEXT: [[TRYBB:.?LBB[0-9_]+]]:
+; CHECK-NEXT: ldaxr  [[RESULT:w[0-9]+]], [x[[ADDR]]]
 ; CHECK-NEXT: cmp    [[RESULT]], w1
-; CHECK-NEXT: b.ne   [[LABEL2:.?LBB[0-9]+_[0-9]+]]
-; CHECK-NEXT: stxr   [[SCRATCH_REG:w[0-9]+]], w2, [x0]
-; CHECK-NEXT: cbnz   [[SCRATCH_REG]], [[LABEL]]
-; CHECK-NEXT: [[LABEL2]]:
+; CHECK-NEXT: b.ne   [[FAILBB:.?LBB[0-9_]+]]
+; CHECK-NEXT: stxr   [[SCRATCH_REG:w[0-9]+]], w2, [x[[ADDR]]]
+; CHECK-NEXT: cbnz   [[SCRATCH_REG]], [[TRYBB]]
+; CHECK-NEXT: b      [[EXITBB:.?LBB[0-9_]+]]
+; CHECK-NEXT: [[FAILBB]]:
+; CHECK-NEXT: clrex
+; CHECK-NEXT: [[EXITBB]]:
   %pair = cmpxchg i32* %p, i32 %cmp, i32 %new acquire acquire
   %val = extractvalue { i32, i1 } %pair, 0
   ret i32 %val
@@ -17,13 +21,16 @@ define i32 @val_compare_and_swap(i32* %p, i32 %cmp, i32 %new) #0 {
 define i32 @val_compare_and_swap_from_load(i32* %p, i32 %cmp, i32* %pnew) #0 {
 ; CHECK-LABEL: val_compare_and_swap_from_load:
 ; CHECK-NEXT: ldr    [[NEW:w[0-9]+]], [x2]
-; CHECK-NEXT: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
+; CHECK-NEXT: [[TRYBB:.?LBB[0-9_]+]]:
 ; CHECK-NEXT: ldaxr  [[RESULT:w[0-9]+]], [x0]
 ; CHECK-NEXT: cmp    [[RESULT]], w1
-; CHECK-NEXT: b.ne   [[LABEL2:.?LBB[0-9]+_[0-9]+]]
+; CHECK-NEXT: b.ne   [[FAILBB:.?LBB[0-9_]+]]
 ; CHECK-NEXT: stxr   [[SCRATCH_REG:w[0-9]+]], [[NEW]], [x0]
-; CHECK-NEXT: cbnz   [[SCRATCH_REG]], [[LABEL]]
-; CHECK-NEXT: [[LABEL2]]:
+; CHECK-NEXT: cbnz   [[SCRATCH_REG]], [[TRYBB]]
+; CHECK-NEXT: b      [[EXITBB:.?LBB[0-9_]+]]
+; CHECK-NEXT: [[FAILBB]]:
+; CHECK-NEXT: clrex
+; CHECK-NEXT: [[EXITBB]]:
   %new = load i32, i32* %pnew
   %pair = cmpxchg i32* %p, i32 %cmp, i32 %new acquire acquire
   %val = extractvalue { i32, i1 } %pair, 0
@@ -32,13 +39,17 @@ define i32 @val_compare_and_swap_from_load(i32* %p, i32 %cmp, i32* %pnew) #0 {
 
 define i32 @val_compare_and_swap_rel(i32* %p, i32 %cmp, i32 %new) #0 {
 ; CHECK-LABEL: val_compare_and_swap_rel:
-; CHECK-NEXT: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
-; CHECK-NEXT: ldaxr  [[RESULT:w[0-9]+]], [x0]
+; CHECK-NEXT: mov    x[[ADDR:[0-9]+]], x0
+; CHECK-NEXT: [[TRYBB:.?LBB[0-9_]+]]:
+; CHECK-NEXT: ldaxr  [[RESULT:w[0-9]+]], [x[[ADDR]]
 ; CHECK-NEXT: cmp    [[RESULT]], w1
-; CHECK-NEXT: b.ne   [[LABEL2:.?LBB[0-9]+_[0-9]+]]
-; CHECK-NEXT: stlxr  [[SCRATCH_REG:w[0-9]+]], w2, [x0]
-; CHECK-NEXT: cbnz   [[SCRATCH_REG]], [[LABEL]]
-; CHECK-NEXT: [[LABEL2]]:
+; CHECK-NEXT: b.ne   [[FAILBB:.?LBB[0-9_]+]]
+; CHECK-NEXT: stlxr  [[SCRATCH_REG:w[0-9]+]], w2, [x[[ADDR]]
+; CHECK-NEXT: cbnz   [[SCRATCH_REG]], [[TRYBB]]
+; CHECK-NEXT: b      [[EXITBB:.?LBB[0-9_]+]]
+; CHECK-NEXT: [[FAILBB]]:
+; CHECK-NEXT: clrex
+; CHECK-NEXT: [[EXITBB]]:
   %pair = cmpxchg i32* %p, i32 %cmp, i32 %new acq_rel monotonic
   %val = extractvalue { i32, i1 } %pair, 0
   ret i32 %val
@@ -47,13 +58,16 @@ define i32 @val_compare_and_swap_rel(i32* %p, i32 %cmp, i32 %new) #0 {
 define i64 @val_compare_and_swap_64(i64* %p, i64 %cmp, i64 %new) #0 {
 ; CHECK-LABEL: val_compare_and_swap_64:
 ; CHECK-NEXT: mov    x[[ADDR:[0-9]+]], x0
-; CHECK-NEXT: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
+; CHECK-NEXT: [[TRYBB:.?LBB[0-9_]+]]:
 ; CHECK-NEXT: ldxr   [[RESULT:x[0-9]+]], [x[[ADDR]]]
 ; CHECK-NEXT: cmp    [[RESULT]], x1
-; CHECK-NEXT: b.ne   [[LABEL2:.?LBB[0-9]+_[0-9]+]]
+; CHECK-NEXT: b.ne   [[FAILBB:.?LBB[0-9_]+]]
 ; CHECK-NEXT: stxr   [[SCRATCH_REG:w[0-9]+]], x2, [x[[ADDR]]]
-; CHECK-NEXT: cbnz   [[SCRATCH_REG]], [[LABEL]]
-; CHECK-NEXT: [[LABEL2]]:
+; CHECK-NEXT: cbnz   [[SCRATCH_REG]], [[TRYBB]]
+; CHECK-NEXT: b      [[EXITBB:.?LBB[0-9_]+]]
+; CHECK-NEXT: [[FAILBB]]:
+; CHECK-NEXT: clrex
+; CHECK-NEXT: [[EXITBB]]:
   %pair = cmpxchg i64* %p, i64 %cmp, i64 %new monotonic monotonic
   %val = extractvalue { i64, i1 } %pair, 0
   ret i64 %val
@@ -61,13 +75,13 @@ define i64 @val_compare_and_swap_64(i64* %p, i64 %cmp, i64 %new) #0 {
 
 define i32 @fetch_and_nand(i32* %p) #0 {
 ; CHECK-LABEL: fetch_and_nand:
-; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
+; CHECK: [[TRYBB:.?LBB[0-9_]+]]:
 ; CHECK: ldxr   w[[DEST_REG:[0-9]+]], [x0]
 ; CHECK: mvn    [[TMP_REG:w[0-9]+]], w[[DEST_REG]]
 ; CHECK: orr    [[SCRATCH2_REG:w[0-9]+]], [[TMP_REG]], #0xfffffff8
 ; CHECK-NOT: stlxr [[SCRATCH2_REG]], [[SCRATCH2_REG]]
 ; CHECK: stlxr   [[SCRATCH_REG:w[0-9]+]], [[SCRATCH2_REG]], [x0]
-; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
+; CHECK: cbnz   [[SCRATCH_REG]], [[TRYBB]]
 ; CHECK: mov    x0, x[[DEST_REG]]
   %val = atomicrmw nand i32* %p, i32 7 release
   ret i32 %val
@@ -76,12 +90,12 @@ define i32 @fetch_and_nand(i32* %p) #0 {
 define i64 @fetch_and_nand_64(i64* %p) #0 {
 ; CHECK-LABEL: fetch_and_nand_64:
 ; CHECK: mov    x[[ADDR:[0-9]+]], x0
-; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
+; CHECK: [[TRYBB:.?LBB[0-9_]+]]:
 ; CHECK: ldaxr   x[[DEST_REG:[0-9]+]], [x[[ADDR]]]
 ; CHECK: mvn    w[[TMP_REG:[0-9]+]], w[[DEST_REG]]
 ; CHECK: orr    [[SCRATCH2_REG:x[0-9]+]], x[[TMP_REG]], #0xfffffffffffffff8
 ; CHECK: stlxr   [[SCRATCH_REG:w[0-9]+]], [[SCRATCH2_REG]], [x[[ADDR]]]
-; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
+; CHECK: cbnz   [[SCRATCH_REG]], [[TRYBB]]
 
   %val = atomicrmw nand i64* %p, i64 7 acq_rel
   ret i64 %val
@@ -90,12 +104,12 @@ define i64 @fetch_and_nand_64(i64* %p) #0 {
 define i32 @fetch_and_or(i32* %p) #0 {
 ; CHECK-LABEL: fetch_and_or:
 ; CHECK: movz   [[OLDVAL_REG:w[0-9]+]], #0x5
-; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
+; CHECK: [[TRYBB:.?LBB[0-9_]+]]:
 ; CHECK: ldaxr   w[[DEST_REG:[0-9]+]], [x0]
 ; CHECK: orr    [[SCRATCH2_REG:w[0-9]+]], w[[DEST_REG]], [[OLDVAL_REG]]
 ; CHECK-NOT: stlxr [[SCRATCH2_REG]], [[SCRATCH2_REG]]
 ; CHECK: stlxr [[SCRATCH_REG:w[0-9]+]], [[SCRATCH2_REG]], [x0]
-; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
+; CHECK: cbnz   [[SCRATCH_REG]], [[TRYBB]]
 ; CHECK: mov    x0, x[[DEST_REG]]
   %val = atomicrmw or i32* %p, i32 5 seq_cst
   ret i32 %val
@@ -104,11 +118,11 @@ define i32 @fetch_and_or(i32* %p) #0 {
 define i64 @fetch_and_or_64(i64* %p) #0 {
 ; CHECK: fetch_and_or_64:
 ; CHECK: mov    x[[ADDR:[0-9]+]], x0
-; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
+; CHECK: [[TRYBB:.?LBB[0-9_]+]]:
 ; CHECK: ldxr   [[DEST_REG:x[0-9]+]], [x[[ADDR]]]
 ; CHECK: orr    [[SCRATCH2_REG:x[0-9]+]], [[DEST_REG]], #0x7
 ; CHECK: stxr   [[SCRATCH_REG:w[0-9]+]], [[SCRATCH2_REG]], [x[[ADDR]]]
-; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
+; CHECK: cbnz   [[SCRATCH_REG]], [[TRYBB]]
   %val = atomicrmw or i64* %p, i64 7 monotonic
   ret i64 %val
 }
