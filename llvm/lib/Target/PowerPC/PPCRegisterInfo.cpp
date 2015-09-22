@@ -347,9 +347,9 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
 
   // Determine the previous frame's address.  If FrameSize can't be
   // represented as 16 bits or we need special alignment, then we load the
-  // previous frame's address from 0(SP).  Why not do an addis of the hi? 
-  // Because R0 is our only safe tmp register and addi/addis treat R0 as zero. 
-  // Constructing the constant and adding would take 3 instructions. 
+  // previous frame's address from 0(SP).  Why not do an addis of the hi?
+  // Because R0 is our only safe tmp register and addi/addis treat R0 as zero.
+  // Constructing the constant and adding would take 3 instructions.
   // Fortunately, a frame greater than 32K is rare.
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
@@ -802,8 +802,9 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // If we're not using a Frame Pointer that has been set to the value of the
   // SP before having the stack size subtracted from it, then add the stack size
   // to Offset to get the correct offset.
-  // Naked functions have stack size 0, although getStackSize may not reflect that
-  // because we didn't call all the pieces that compute it for naked functions.
+  // Naked functions have stack size 0, although getStackSize may not reflect
+  // that because we didn't call all the pieces that compute it for naked
+  // functions.
   if (!MF.getFunction()->hasFnAttribute(Attribute::Naked)) {
     if (!(hasBasePointer(MF) && FrameIndex < 0))
       Offset += MFI->getStackSize();
@@ -842,7 +843,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     .addImm(Offset);
 
   // Convert into indexed form of the instruction:
-  // 
+  //
   //   sth 0:rA, 1:imm 2:(rB) ==> sthx 0:rA, 2:rB, 1:r0
   //   addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
   unsigned OperandBase;

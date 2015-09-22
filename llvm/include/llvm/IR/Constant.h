@@ -24,18 +24,18 @@ namespace llvm {
 /// This is an important base class in LLVM. It provides the common facilities
 /// of all constant values in an LLVM program. A constant is a value that is
 /// immutable at runtime. Functions are constants because their address is
-/// immutable. Same with global variables. 
-/// 
+/// immutable. Same with global variables.
+///
 /// All constants share the capabilities provided in this class. All constants
 /// can have a null value. They can have an operand list. Constants can be
 /// simple (integer and floating point values), complex (arrays and structures),
-/// or expression based (computations yielding a constant value composed of 
+/// or expression based (computations yielding a constant value composed of
 /// only certain operators and other constant values).
-/// 
-/// Note that Constants are immutable (once created they never change) 
-/// and are fully shared by structural equivalence.  This means that two 
-/// structurally equivalent constants will always have the same address.  
-/// Constants are created on demand as needed and never deleted: thus clients 
+///
+/// Note that Constants are immutable (once created they never change)
+/// and are fully shared by structural equivalence.  This means that two
+/// structurally equivalent constants will always have the same address.
+/// Constants are created on demand as needed and never deleted: thus clients
 /// don't have to worry about the lifetime of the objects.
 /// @brief LLVM Constant Representation
 class Constant : public User {
@@ -59,7 +59,7 @@ public:
   /// getAllOnesValue.
   bool isAllOnesValue() const;
 
-  /// isNegativeZeroValue - Return true if the value is what would be returned 
+  /// isNegativeZeroValue - Return true if the value is what would be returned
   /// by getZeroValueForNegation.
   bool isNegativeZeroValue() const;
 
@@ -96,7 +96,7 @@ public:
   /// whether or not it may generate a relocation entry.  This must be
   /// conservative, so if it might codegen to a relocatable entry, it should say
   /// so.  The return values are:
-  /// 
+  ///
   ///  NoRelocation: This constant pool entry is guaranteed to never have a
   ///     relocation applied to it (because it holds a simple constant like
   ///     '4').

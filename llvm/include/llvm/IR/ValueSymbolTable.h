@@ -65,7 +65,7 @@ public:
 public:
 
   /// This method finds the value with the given \p Name in the
-  /// the symbol table. 
+  /// the symbol table.
   /// @returns the value associated with the \p Name
   /// @brief Lookup a named Value.
   Value *lookup(StringRef Name) const { return vmap.lookup(Name); }
@@ -97,13 +97,13 @@ public:
 
   /// @brief Get a const_iterator to the end of the symbol table.
   inline const_iterator end() const { return vmap.end(); }
-  
-/// @}
-/// @name Mutators
-/// @{
+
+  /// @}
+  /// @name Mutators
+  /// @{
 private:
   /// This method adds the provided value \p N to the symbol table.  The Value
-  /// must have a name which is used to place the value in the symbol table. 
+  /// must have a name which is used to place the value in the symbol table.
   /// If the inserted name conflicts, this renames the value.
   /// @brief Add a named value to the symbol table
   void reinsertValue(Value *V);
@@ -117,10 +117,10 @@ private:
   /// ValueName attached to the value, but it is no longer inserted in the
   /// symtab.
   void removeValueName(ValueName *V);
-  
-/// @}
-/// @name Internal Data
-/// @{
+
+  /// @}
+  /// @name Internal Data
+  /// @{
 private:
   ValueMap vmap;                    ///< The map that holds the symbol table.
   mutable uint32_t LastUnique; ///< Counter for tracking unique names

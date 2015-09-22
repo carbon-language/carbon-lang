@@ -10652,12 +10652,12 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                               DL, VT, V1, V2, Mask, Subtarget, DAG))
       return Insertion;
 
-  // There is a really nice hard cut-over between AVX1 and AVX2 that means we can
-  // check for those subtargets here and avoid much of the subtarget querying in
-  // the per-vector-type lowering routines. With AVX1 we have essentially *zero*
-  // ability to manipulate a 256-bit vector with integer types. Since we'll use
-  // floating point types there eventually, just immediately cast everything to
-  // a float and operate entirely in that domain.
+  // There is a really nice hard cut-over between AVX1 and AVX2 that means we
+  // can check for those subtargets here and avoid much of the subtarget
+  // querying in the per-vector-type lowering routines. With AVX1 we have
+  // essentially *zero* ability to manipulate a 256-bit vector with integer
+  // types. Since we'll use floating point types there eventually, just
+  // immediately cast everything to a float and operate entirely in that domain.
   if (VT.isInteger() && !Subtarget->hasAVX2()) {
     int ElementBits = VT.getScalarSizeInBits();
     if (ElementBits < 32)
@@ -16018,7 +16018,8 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
       SDValue Src2 = Op.getOperand(2);
       SDValue PassThru = Op.getOperand(3);
       SDValue Mask = Op.getOperand(4);
-      // We specify 2 possible modes for intrinsics, with/without rounding modes.
+      // We specify 2 possible modes for intrinsics, with/without rounding
+      // modes.
       // First, we check if the intrinsic have rounding mode (6 operands),
       // if not, we set rounding mode to "current".
       SDValue Rnd;
@@ -16048,7 +16049,8 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
       SDValue Imm = Op.getOperand(3);
       SDValue PassThru = Op.getOperand(4);
       SDValue Mask = Op.getOperand(5);
-      // We specify 2 possible modes for intrinsics, with/without rounding modes.
+      // We specify 2 possible modes for intrinsics, with/without rounding
+      // modes.
       // First, we check if the intrinsic have rounding mode (7 operands),
       // if not, we set rounding mode to "current".
       SDValue Rnd;
@@ -22382,7 +22384,8 @@ combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
   return V;
 }
 
-/// \brief Search for a combinable shuffle across a chain ending in pshuflw or pshufhw.
+/// \brief Search for a combinable shuffle across a chain ending in pshuflw or
+/// pshufhw.
 ///
 /// We walk up the chain, skipping shuffles of the other half and looking
 /// through shuffles which switch halves trying to find a shuffle of the same

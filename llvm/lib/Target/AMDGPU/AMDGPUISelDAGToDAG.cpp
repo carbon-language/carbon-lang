@@ -512,8 +512,8 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
         return SelectCode(NewValue.getNode());
       }
 
-      // getNode() may fold the bitcast if its input was another bitcast.  If that
-      // happens we should only select the new store.
+      // getNode() may fold the bitcast if its input was another bitcast.  If
+      // that happens we should only select the new store.
       N = NewStore.getNode();
     }
 
@@ -857,7 +857,8 @@ SDNode *AMDGPUDAGToDAGISel::SelectDIV_SCALE(SDNode *N) {
   unsigned Opc
     = (VT == MVT::f64) ? AMDGPU::V_DIV_SCALE_F64 : AMDGPU::V_DIV_SCALE_F32;
 
-  // src0_modifiers, src0, src1_modifiers, src1, src2_modifiers, src2, clamp, omod
+  // src0_modifiers, src0, src1_modifiers, src1, src2_modifiers, src2, clamp,
+  // omod
   SDValue Ops[8];
 
   SelectVOP3Mods0(N->getOperand(0), Ops[1], Ops[0], Ops[6], Ops[7]);

@@ -1244,7 +1244,7 @@ static bool isVMerge(ShuffleVectorSDNode *N, unsigned UnitSize,
 
 /// isVMRGLShuffleMask - Return true if this is a shuffle mask suitable for
 /// a VMRGL* instruction with the specified unit size (1,2 or 4 bytes).
-/// The ShuffleKind distinguishes between big-endian merges with two 
+/// The ShuffleKind distinguishes between big-endian merges with two
 /// different inputs (0), either-endian merges with two identical inputs (1),
 /// and little-endian merges with two different inputs (2).  For the latter,
 /// the input operands are swapped (see PPCInstrAltivec.td).
@@ -1269,7 +1269,7 @@ bool PPC::isVMRGLShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
 
 /// isVMRGHShuffleMask - Return true if this is a shuffle mask suitable for
 /// a VMRGH* instruction with the specified unit size (1,2 or 4 bytes).
-/// The ShuffleKind distinguishes between big-endian merges with two 
+/// The ShuffleKind distinguishes between big-endian merges with two
 /// different inputs (0), either-endian merges with two identical inputs (1),
 /// and little-endian merges with two different inputs (2).  For the latter,
 /// the input operands are swapped (see PPCInstrAltivec.td).
@@ -1361,7 +1361,7 @@ static bool isVMerge(ShuffleVectorSDNode *N, unsigned IndexOffset,
  *   - 2 = little-endian merge with two different inputs (inputs are swapped for
  *     little-endian merges).
  * \param[in] DAG The current SelectionDAG
- * \return true iff this shuffle mask 
+ * \return true iff this shuffle mask
  */
 bool PPC::isVMRGEOShuffleMask(ShuffleVectorSDNode *N, bool CheckEven,
                               unsigned ShuffleKind, SelectionDAG &DAG) {
@@ -1388,7 +1388,7 @@ bool PPC::isVMRGEOShuffleMask(ShuffleVectorSDNode *N, bool CheckEven,
 
 /// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the shift
 /// amount, otherwise return -1.
-/// The ShuffleKind distinguishes between big-endian operations with two 
+/// The ShuffleKind distinguishes between big-endian operations with two
 /// different inputs (0), either-endian operations with two identical inputs
 /// (1), and little-endian operations with two different inputs (2).  For the
 /// latter, the input operands are swapped (see PPCInstrAltivec.td).
@@ -2547,7 +2547,7 @@ SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
 
 #include "PPCGenCallingConv.inc"
 
-// Function whose sole purpose is to kill compiler warnings 
+// Function whose sole purpose is to kill compiler warnings
 // stemming from unused functions included from PPCGenCallingConv.inc.
 CCAssignFn *PPCTargetLowering::useFastISelCCs(unsigned Flag) const {
   return Flag ? CC_PPC64_ELF_FIS : RetCC_PPC64_ELF_FIS;
@@ -4826,8 +4826,8 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
             continue;
           break;
         case MVT::v4f32:
-	  // When using QPX, this is handled like a FP register, otherwise, it
-	  // is an Altivec register.
+          // When using QPX, this is handled like a FP register, otherwise, it
+          // is an Altivec register.
           if (Subtarget.hasQPX()) {
             if (++NumFPRsUsed <= NumFPRs)
               continue;
@@ -9504,7 +9504,7 @@ SDValue PPCTargetLowering::DAGCombineTruncBoolExt(SDNode *N,
   }
 
   // Visit all inputs, collect all binary operations (and, or, xor and
-  // select) that are all fed by extensions. 
+  // select) that are all fed by extensions.
   while (!BinOps.empty()) {
     SDValue BinOp = BinOps.back();
     BinOps.pop_back();
@@ -9716,7 +9716,7 @@ SDValue PPCTargetLowering::DAGCombineExtBoolTrunc(SDNode *N,
   SmallPtrSet<SDNode *, 16> Visited;
 
   // Visit all inputs, collect all binary operations (and, or, xor and
-  // select) that are all fed by truncations. 
+  // select) that are all fed by truncations.
   while (!BinOps.empty()) {
     SDValue BinOp = BinOps.back();
     BinOps.pop_back();

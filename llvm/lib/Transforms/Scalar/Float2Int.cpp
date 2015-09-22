@@ -43,7 +43,7 @@ using namespace llvm;
 // integer domain inputs, produce an integer output; fadd, for example.
 //
 // If a non-mappable instruction is seen, this entire def-use graph is marked
-// as non-transformable. If we see an instruction that converts from the 
+// as non-transformable. If we see an instruction that converts from the
 // integer domain to FP domain (uitofp,sitofp), we terminate our walk.
 
 /// The largest integer type worth dealing with.
@@ -181,7 +181,7 @@ ConstantRange Float2Int::validateRange(ConstantRange R) {
 //   - walkForwards:  Iterate over SeenInsts in reverse order, so we visit
 //                     defs before their uses. Calculate the real range info.
 
-// Breadth-first walk of the use-def graph; determine the set of nodes 
+// Breadth-first walk of the use-def graph; determine the set of nodes
 // we care about and eagerly determine if some of them are poisonous.
 void Float2Int::walkBackwards(const SmallPtrSetImpl<Instruction*> &Roots) {
   std::deque<Instruction*> Worklist(Roots.begin(), Roots.end());
@@ -319,7 +319,7 @@ void Float2Int::walkForwards() {
         APFloat F = CF->getValueAPF();
 
         // First, weed out obviously incorrect values. Non-finite numbers
-        // can't be represented and neither can negative zero, unless 
+        // can't be represented and neither can negative zero, unless
         // we're in fast math mode.
         if (!F.isFinite() ||
             (F.isZero() && F.isNegative() && isa<FPMathOperator>(I) &&

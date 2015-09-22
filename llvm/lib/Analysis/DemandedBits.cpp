@@ -1,4 +1,4 @@
-//===---- DemandedBits.cpp - Determine demanded bits -----------------------===//
+//===---- DemandedBits.cpp - Determine demanded bits ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -315,7 +315,7 @@ bool DemandedBits::runOnFunction(Function& F) {
               !isAlwaysLive(UserI)) {
             AB = APInt(BitWidth, 0);
           } else {
-            // If all bits of the output are dead, then all bits of the input 
+            // If all bits of the output are dead, then all bits of the input
             // Bits of each operand that are used to compute alive bits of the
             // output are alive, all others are dead.
             determineLiveOperandBits(UserI, I, OI.getOperandNo(), AOut, AB,

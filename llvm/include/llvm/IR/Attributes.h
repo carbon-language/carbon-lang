@@ -511,8 +511,8 @@ public:
   /// \brief Retrieve the stack alignment attribute, if it exists.
   uint64_t getStackAlignment() const { return StackAlignment; }
 
-  /// \brief Retrieve the number of dereferenceable bytes, if the dereferenceable
-  /// attribute exists (zero is returned otherwise).
+  /// \brief Retrieve the number of dereferenceable bytes, if the
+  /// dereferenceable attribute exists (zero is returned otherwise).
   uint64_t getDereferenceableBytes() const { return DerefBytes; }
 
   /// \brief Retrieve the number of dereferenceable_or_null bytes, if the

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the TypeFinder class. 
+// This file contains the declaration of the TypeFinder class.
 //
 //===----------------------------------------------------------------------===//
 

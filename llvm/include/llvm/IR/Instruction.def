@@ -1,21 +1,21 @@
 //===-- llvm/Instruction.def - File that describes Instructions -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains descriptions of the various LLVM instructions.  This is
-// used as a central place for enumerating the different instructions and 
+// used as a central place for enumerating the different instructions and
 // should eventually be the place to put comments about the instructions.
 //
 //===----------------------------------------------------------------------===//
 
 // NOTE: NO INCLUDE GUARD DESIRED!
 
-// Provide definitions of macros so that users of this file do not have to 
+// Provide definitions of macros so that users of this file do not have to
 // define everything to use it...
 //
 #ifndef FIRST_TERM_INST
@@ -145,7 +145,7 @@ HANDLE_MEMORY_INST(38, AtomicRMW , AtomicRMWInst )
   LAST_MEMORY_INST(38)
 
 // Cast operators ...
-// NOTE: The order matters here because CastInst::isEliminableCastPair 
+// NOTE: The order matters here because CastInst::isEliminableCastPair
 // NOTE: (see Instructions.cpp) encodes a table based on this ordering.
  FIRST_CAST_INST(39)
 HANDLE_CAST_INST(39, Trunc   , TruncInst   )  // Truncate integers

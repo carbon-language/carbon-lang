@@ -1222,7 +1222,7 @@ void ExportEntry::moveToEnd() {
 }
 
 bool ExportEntry::operator==(const ExportEntry &Other) const {
-  // Common case, one at end, other iterating from begin. 
+  // Common case, one at end, other iterating from begin.
   if (Done || Other.Done)
     return (Done == Other.Done);
   // Not equal if different stack sizes.
@@ -1334,7 +1334,7 @@ void ExportEntry::pushDownUntilBottom() {
 //
 // There is one "export" node for each exported symbol.  But because some
 // symbols may be a prefix of another symbol (e.g. _dup and _dup2), an export
-// node may have child nodes too.  
+// node may have child nodes too.
 //
 // The algorithm for moveNext() is to keep moving down the leftmost unvisited
 // child until hitting a node with no children (which is an export node or

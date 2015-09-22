@@ -174,7 +174,7 @@ public:
 /// Literal struct types (e.g. { i32, i32 }) are uniqued structurally, and must
 /// always have a body when created.  You can get one of these by using one of
 /// the StructType::get() forms.
-///  
+///
 /// Identified structs (e.g. %foo or %42) may optionally have a name and are not
 /// uniqued.  The names for identified structs are managed at the LLVMContext
 /// level, so there can only be a single identified struct with a given name in
@@ -205,7 +205,7 @@ class StructType : public CompositeType {
   /// pointer to the symbol table entry (maintained by LLVMContext) for the
   /// struct.  This is null if the type is an literal struct or if it is
   /// a identified type that has an empty name.
-  /// 
+  ///
   void *SymbolTableEntry;
 public:
 

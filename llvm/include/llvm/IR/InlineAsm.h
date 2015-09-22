@@ -89,7 +89,7 @@ public:
   ///
   static bool Verify(FunctionType *Ty, StringRef Constraints);
 
-  // Constraint String Parsing 
+  // Constraint String Parsing
   enum ConstraintPrefix {
     isInput,            // 'x'
     isOutput,           // '=x'
@@ -157,8 +157,8 @@ public:
     
     /// The currently selected alternative constraint index.
     unsigned currentAlternativeIndex;
-    
-    ///Default constructor.
+
+    /// Default constructor.
     ConstraintInfo();
     
     /// Parse - Analyze the specified string (e.g. "=*&{eax}") and fill in the
@@ -175,8 +175,8 @@ public:
   /// constraints and their prefixes.  If this returns an empty vector, and if
   /// the constraint string itself isn't empty, there was an error parsing.
   static ConstraintInfoVector ParseConstraints(StringRef ConstraintString);
-  
-  /// ParseConstraints - Parse the constraints of this inlineasm object, 
+
+  /// ParseConstraints - Parse the constraints of this inlineasm object,
   /// returning them the same way that ParseConstraints(str) does.
   ConstraintInfoVector ParseConstraints() const {
     return ParseConstraints(Constraints);
@@ -273,7 +273,7 @@ public:
   }
   
   /// getFlagWordForMatchingOp - Augment an existing flag word returned by
-  /// getFlagWord with information indicating that this input operand is tied 
+  /// getFlagWord with information indicating that this input operand is tied
   /// to a previous output operand.
   static unsigned getFlagWordForMatchingOp(unsigned InputFlag,
                                            unsigned MatchedOperandNo) {

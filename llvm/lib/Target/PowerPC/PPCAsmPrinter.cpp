@@ -407,9 +407,9 @@ void PPCAsmPrinter::LowerPATCHPOINT(MCStreamer &OutStreamer, StackMaps &SM,
       // If we're on ELFv1, then we need to load the actual function pointer
       // from the function descriptor.
       if (!Subtarget->isELFv2ABI()) {
-	// Load the new TOC pointer and the function address, but not r11
-	// (needing this is rare, and loading it here would prevent passing it
-	// via a 'nest' parameter.
+        // Load the new TOC pointer and the function address, but not r11
+        // (needing this is rare, and loading it here would prevent passing it
+        // via a 'nest' parameter.
         EmitToStreamer(OutStreamer, MCInstBuilder(PPC::LD)
                                         .addReg(PPC::X2)
                                         .addImm(8)
@@ -534,7 +534,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case PPC::MovePCtoLR:
   case PPC::MovePCtoLR8: {
     // Transform %LR = MovePCtoLR
-    // Into this, where the label is the PIC base: 
+    // Into this, where the label is the PIC base:
     //     bl L1$pb
     // L1$pb:
     MCSymbol *PICBase = MF->getPICBaseSymbol();

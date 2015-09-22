@@ -38,10 +38,10 @@ template<class GraphType> struct GraphTraits;
 /// they are never changed.  Also note that only one instance of a particular
 /// type is ever created.  Thus seeing if two types are equal is a matter of
 /// doing a trivial pointer comparison. To enforce that no two equal instances
-/// are created, Type instances can only be created via static factory methods 
+/// are created, Type instances can only be created via static factory methods
 /// in class Type and in derived classes.  Once allocated, Types are never
 /// free'd.
-/// 
+///
 class Type {
 public:
   //===--------------------------------------------------------------------===//
@@ -219,9 +219,9 @@ public:
   ///
   bool isVectorTy() const { return getTypeID() == VectorTyID; }
 
-  /// canLosslesslyBitCastTo - Return true if this type could be converted 
-  /// with a lossless BitCast to type 'Ty'. For example, i8* to i32*. BitCasts 
-  /// are valid for types of the same size only where no re-interpretation of 
+  /// canLosslesslyBitCastTo - Return true if this type could be converted
+  /// with a lossless BitCast to type 'Ty'. For example, i8* to i32*. BitCasts
+  /// are valid for types of the same size only where no re-interpretation of
   /// the bits is done.
   /// @brief Determine if this type could be losslessly bitcast to Ty
   bool canLosslesslyBitCastTo(Type *Ty) const;

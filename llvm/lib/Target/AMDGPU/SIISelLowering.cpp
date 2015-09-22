@@ -569,7 +569,7 @@ SDValue SITargetLowering::LowerFormalArguments(
   }
 
   // The pointer to the list of arguments is stored in SGPR0, SGPR1
-	// The pointer to the scratch buffer is stored in SGPR2, SGPR3
+  // The pointer to the scratch buffer is stored in SGPR2, SGPR3
   if (Info->getShaderType() == ShaderType::COMPUTE) {
     if (Subtarget->isAmdHsaOS())
       Info->NumUserSGPRs = 2;  // FIXME: Need to support scratch buffers.

@@ -64,8 +64,8 @@ public:
   /// containing function, return the number of bytes known to be
   /// dereferenceable. Otherwise, zero is returned.
   uint64_t getDereferenceableBytes() const;
-  
-  /// \brief If this argument has the dereferenceable_or_null attribute on 
+
+  /// \brief If this argument has the dereferenceable_or_null attribute on
   /// it in its containing function, return the number of bytes known to be
   /// dereferenceable. Otherwise, zero is returned.
   uint64_t getDereferenceableOrNullBytes() const;

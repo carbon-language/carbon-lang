@@ -165,9 +165,9 @@ static PPCTargetMachine::PPCABI computeTargetABI(const Triple &TT,
   return PPCTargetMachine::PPC_ABI_UNKNOWN;
 }
 
-// The FeatureString here is a little subtle. We are modifying the feature string
-// with what are (currently) non-function specific overrides as it goes into the
-// LLVMTargetMachine constructor and then using the stored value in the
+// The FeatureString here is a little subtle. We are modifying the feature
+// string with what are (currently) non-function specific overrides as it goes
+// into the LLVMTargetMachine constructor and then using the stored value in the
 // Subtarget constructor below it.
 PPCTargetMachine::PPCTargetMachine(const Target &T, const Triple &TT,
                                    StringRef CPU, StringRef FS,
