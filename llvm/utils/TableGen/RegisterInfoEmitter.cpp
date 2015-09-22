@@ -1452,22 +1452,28 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "ArrayRef<const uint32_t *> " << ClassName
      << "::getRegMasks() const {\n";
-  OS << "  static const uint32_t *Masks[] = {\n";
-  for (Record *CSRSet : CSRSets)
-    OS << "    " << CSRSet->getName() << "_RegMask, \n";
-  OS << "    nullptr\n  };\n";
-  OS << "  return ArrayRef<const uint32_t *>(Masks, (size_t)" << CSRSets.size()
-     << ");\n";
+  if (!CSRSets.empty()) {
+    OS << "  static const uint32_t *const Masks[] = {\n";
+    for (Record *CSRSet : CSRSets)
+      OS << "    " << CSRSet->getName() << "_RegMask,\n";
+    OS << "  };\n";
+    OS << "  return makeArrayRef(Masks);\n";
+  } else {
+    OS << "  return None;\n";
+  }
   OS << "}\n\n";
 
   OS << "ArrayRef<const char *> " << ClassName
      << "::getRegMaskNames() const {\n";
-  OS << "  static const char *Names[] = {\n";
-  for (Record *CSRSet : CSRSets)
-    OS << "    " << '"' << CSRSet->getName() << '"' << ",\n";
-  OS << "    nullptr\n  };\n";
-  OS << "  return ArrayRef<const char *>(Names, (size_t)" << CSRSets.size()
-     << ");\n";
+  if (!CSRSets.empty()) {
+  OS << "  static const char *const Names[] = {\n";
+    for (Record *CSRSet : CSRSets)
+      OS << "    " << '"' << CSRSet->getName() << '"' << ",\n";
+    OS << "  };\n";
+    OS << "  return makeArrayRef(Names);\n";
+  } else {
+    OS << "  return None;\n";
+  }
   OS << "}\n\n";
 
   OS << "const " << TargetName << "FrameLowering *"
