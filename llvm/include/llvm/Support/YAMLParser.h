@@ -158,7 +158,7 @@ protected:
   std::unique_ptr<Document> &Doc;
   SMRange SourceRange;
 
-  void operator delete(void *) LLVM_NOEXCEPT {}
+  void operator delete(void *) LLVM_NOEXCEPT = delete;
 
   ~Node() = default;
 
