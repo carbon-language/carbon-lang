@@ -11,6 +11,24 @@ _start:
 R_386_32:
   movl $R_386_32 + 1, %edx
 
+
+.section       .R_386_PC32,"ax",@progbits,unique,1
+.global R_386_PC32
+R_386_PC32:
+  call R_386_PC32_2
+
+.section       .R_386_PC32,"ax",@progbits,unique,2
+.zero 4
+R_386_PC32_2:
+  nop
+
 // CHECK: Disassembly of section .R_386_32:
 // CHECK-NEXT: R_386_32:
 // CHECK-NEXT:  11000: {{.*}} movl $69633, %edx
+
+// CHECK: Disassembly of section .R_386_PC32:
+// CHECK-NEXT: R_386_PC32:
+// CHECK-NEXT:   11005:  e8 04 00 00 00  calll 4
+
+// CHECK:      R_386_PC32_2:
+// CHECK-NEXT:   1100e:  90  nop

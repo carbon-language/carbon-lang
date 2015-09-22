@@ -33,6 +33,9 @@ void InputSection<ELFT>::relocateOne(uint8_t *Buf, const Elf_Rel &Rel,
   uint8_t *Location = Buf + Offset;
   uint32_t Addend = *(support::ulittle32_t *)Location;
   switch (Type) {
+  case R_386_PC32:
+    support::endian::write32le(Location, SymVA + Addend - (BaseAddr + Offset));
+    break;
   case R_386_32:
     support::endian::write32le(Location, SymVA + Addend);
     break;
