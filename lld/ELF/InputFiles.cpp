@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InputFiles.h"
-#include "Chunks.h"
+#include "InputSection.h"
 #include "Error.h"
 #include "Symbols.h"
 #include "llvm/ADT/STLExtras.h"

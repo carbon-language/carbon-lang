@@ -10,7 +10,7 @@
 #ifndef LLD_ELF_INPUT_FILES_H
 #define LLD_ELF_INPUT_FILES_H
 
-#include "Chunks.h"
+#include "InputSection.h"
 #include "Error.h"
 #include "Symbols.h"
 

@@ -1,4 +1,4 @@
-//===- Chunks.h -------------------------------------------------*- C++ -*-===//
+//===- InputSection.h -------------------------------------------*- C++ -*-===//
 //
 //                             The LLVM Linker
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_ELF_CHUNKS_H
-#define LLD_ELF_CHUNKS_H
+#ifndef LLD_ELF_INPUT_SECTION_H
+#define LLD_ELF_INPUT_SECTION_H
 
 #include "lld/Core/LLVM.h"
 #include "llvm/Object/ELF.h"

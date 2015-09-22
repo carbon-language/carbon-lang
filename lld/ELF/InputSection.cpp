@@ -1,4 +1,4 @@
-//===- Chunks.cpp ---------------------------------------------------------===//
+//===- InputSection.cpp ---------------------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Chunks.h"
+#include "InputSection.h"
 #include "Error.h"
 #include "InputFiles.h"
 #include "OutputSections.h"
