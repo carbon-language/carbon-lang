@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=armv7-apple-ios -verify-machineinstrs | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv7-apple-ios -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=CHECK --check-prefix CHECK-ARMV7
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-T2
 ; RUN: llc < %s -mtriple=thumbv6-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=CHECK-T1
 ; RUN: llc < %s -mtriple=thumbv6-apple-ios -verify-machineinstrs -mcpu=cortex-m0 | FileCheck %s --check-prefix=CHECK-M0
 ; RUN: llc < %s -mtriple=thumbv7--none-eabi -thread-model single -verify-machineinstrs | FileCheck %s --check-prefix=CHECK-BAREMETAL
@@ -272,16 +272,31 @@ define i32 @test_cmpxchg_fail_order(i32 *%addr, i32 %desired, i32 %new) {
 
   %pair = cmpxchg i32* %addr, i32 %desired, i32 %new seq_cst monotonic
   %oldval = extractvalue { i32, i1 } %pair, 0
-; CHECK:     dmb ish
-; CHECK: [[LOOP_BB:\.?LBB[0-9]+_1]]:
-; CHECK:     ldrex   [[OLDVAL:r[0-9]+]], [r[[ADDR:[0-9]+]]]
-; CHECK:     cmp     [[OLDVAL]], r1
-; CHECK:     bxne    lr
-; CHECK:     strex   [[SUCCESS:r[0-9]+]], r2, [r[[ADDR]]]
-; CHECK:     cmp     [[SUCCESS]], #0
-; CHECK:     bne     [[LOOP_BB]]
-; CHECK:     dmb     ish
-; CHECK:     bx      lr
+; CHECK-ARMV7:     dmb ish
+; CHECK-ARMV7: [[LOOP_BB:\.?LBB[0-9]+_1]]:
+; CHECK-ARMV7:     ldrex   [[OLDVAL:r[0-9]+]], [r[[ADDR:[0-9]+]]]
+; CHECK-ARMV7:     cmp     [[OLDVAL]], r1
+; CHECK-ARMV7:     bne     [[FAIL_BB:\.?LBB[0-9]+_[0-9]+]]
+; CHECK-ARMV7:     strex   [[SUCCESS:r[0-9]+]], r2, [r[[ADDR]]]
+; CHECK-ARMV7:     cmp     [[SUCCESS]], #0
+; CHECK-ARMV7:     bne     [[LOOP_BB]]
+; CHECK-ARMV7:     dmb     ish
+; CHECK-ARMV7:     bx      lr
+; CHECK-ARMV7: [[FAIL_BB]]:
+; CHECK-ARMV7:     clrex
+; CHECK-ARMV7:     bx      lr
+
+; CHECK-T2:     dmb ish
+; CHECK-T2: [[LOOP_BB:\.?LBB[0-9]+_1]]:
+; CHECK-T2:     ldrex   [[OLDVAL:r[0-9]+]], [r[[ADDR:[0-9]+]]]
+; CHECK-T2:     cmp     [[OLDVAL]], r1
+; CHECK-T2:     clrexne
+; CHECK-T2:     bxne    lr
+; CHECK-T2:     strex   [[SUCCESS:r[0-9]+]], r2, [r[[ADDR]]]
+; CHECK-T2:     cmp     [[SUCCESS]], #0
+; CHECK-T2:     dmbeq   ish
+; CHECK-T2:     bxeq    lr
+; CHECK-T2:     b       [[LOOP_BB]]
 
   ret i32 %oldval
 }
@@ -295,11 +310,14 @@ define i32 @test_cmpxchg_fail_order1(i32 *%addr, i32 %desired, i32 %new) {
 ; CHECK: [[LOOP_BB:\.?LBB[0-9]+_1]]:
 ; CHECK:     ldrex   [[OLDVAL:r[0-9]+]], [r[[ADDR:[0-9]+]]]
 ; CHECK:     cmp     [[OLDVAL]], r1
-; CHECK:     bne     [[END_BB:\.?LBB[0-9]+_[0-9]+]]
+; CHECK:     bne     [[FAIL_BB:\.?LBB[0-9]+_[0-9]+]]
 ; CHECK:     strex   [[SUCCESS:r[0-9]+]], r2, [r[[ADDR]]]
 ; CHECK:     cmp     [[SUCCESS]], #0
 ; CHECK:     bne     [[LOOP_BB]]
-; CHECK: [[END_BB]]:
+; CHECK:     b       [[END_BB:\.?LBB[0-9]+_[0-9]+]]
+; CHECK: [[FAIL_BB]]:
+; CHECK-NEXT: clrex
+; CHECK-NEXT: [[END_BB]]:
 ; CHECK:     dmb     ish
 ; CHECK:     bx      lr
 

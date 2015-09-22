@@ -11614,6 +11614,12 @@ Value *ARMTargetLowering::emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
       cast<PointerType>(Addr->getType())->getElementType());
 }
 
+void ARMTargetLowering::emitAtomicCmpXchgNoStoreLLBalance(
+    IRBuilder<> &Builder) const {
+  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+  Builder.CreateCall(llvm::Intrinsic::getDeclaration(M, Intrinsic::arm_clrex));
+}
+
 Value *ARMTargetLowering::emitStoreConditional(IRBuilder<> &Builder, Value *Val,
                                                Value *Addr,
                                                AtomicOrdering Ord) const {

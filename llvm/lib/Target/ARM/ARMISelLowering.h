@@ -421,6 +421,8 @@ namespace llvm {
     Value *emitStoreConditional(IRBuilder<> &Builder, Value *Val,
                                 Value *Addr, AtomicOrdering Ord) const override;
 
+    void emitAtomicCmpXchgNoStoreLLBalance(IRBuilder<> &Builder) const override;
+
     Instruction* emitLeadingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
                           bool IsStore, bool IsLoad) const override;
     Instruction* emitTrailingFence(IRBuilder<> &Builder, AtomicOrdering Ord,

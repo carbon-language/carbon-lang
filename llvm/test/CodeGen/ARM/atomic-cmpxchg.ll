@@ -1,8 +1,8 @@
-; RUN: llc < %s -mtriple=arm-linux-gnueabi -verify-machineinstrs | FileCheck %s -check-prefix=CHECK-ARM
-; RUN: llc < %s -mtriple=thumb-linux-gnueabi -verify-machineinstrs | FileCheck %s -check-prefix=CHECK-THUMB
+; RUN: llc < %s -mtriple=arm-linux-gnueabi -asm-verbose=false -verify-machineinstrs | FileCheck %s -check-prefix=CHECK-ARM
+; RUN: llc < %s -mtriple=thumb-linux-gnueabi -asm-verbose=false -verify-machineinstrs | FileCheck %s -check-prefix=CHECK-THUMB
 
-; RUN: llc < %s -mtriple=armv7-linux-gnueabi -verify-machineinstrs | FileCheck %s -check-prefix=CHECK-ARMV7
-; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi -verify-machineinstrs | FileCheck %s -check-prefix=CHECK-THUMBV7
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -asm-verbose=false -verify-machineinstrs | FileCheck %s -check-prefix=CHECK-ARMV7
+; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi -asm-verbose=false -verify-machineinstrs | FileCheck %s -check-prefix=CHECK-THUMBV7
 
 define zeroext i1 @test_cmpxchg_res_i8(i8* %addr, i8 %desired, i8 zeroext %new) {
 entry:
@@ -30,24 +30,39 @@ entry:
 ; CHECK-THUMB: push  {[[R2]]}
 ; CHECK-THUMB: pop {r0}
 
-; CHECK-ARMV7-LABEL: test_cmpxchg_res_i8
-; CHECK-ARMV7: ldrexb [[R3:r[0-9]+]], [r0]
-; CHECK-ARMV7: mov [[R1:r[0-9]+]], #0
-; CHECK-ARMV7: cmp [[R3]], {{r[0-9]+}}
-; CHECK-ARMV7: bne
-; CHECK-ARMV7: strexb [[R3]], {{r[0-9]+}}, [{{r[0-9]+}}]
-; CHECK-ARMV7: mov [[R1]], #1
-; CHECK-ARMV7: cmp [[R3]], #0
-; CHECK-ARMV7: bne
-; CHECK-ARMV7: mov r0, [[R1]]
+; CHECK-ARMV7-LABEL: test_cmpxchg_res_i8:
+; CHECK-ARMV7-NEXT: .fnstart
+; CHECK-ARMV7-NEXT: uxtb [[DESIRED:r[0-9]+]], r1
+; CHECK-ARMV7-NEXT: [[TRY:.LBB[0-9_]+]]:
+; CHECK-ARMV7-NEXT: ldrexb [[LD:r[0-9]+]], [r0]
+; CHECK-ARMV7-NEXT: cmp [[LD]], [[DESIRED]]
+; CHECK-ARMV7-NEXT: bne [[FAIL:.LBB[0-9_]+]]
+; CHECK-ARMV7-NEXT: strexb [[SUCCESS:r[0-9]+]], r2, [r0]
+; CHECK-ARMV7-NEXT: mov [[RES:r[0-9]+]], #1
+; CHECK-ARMV7-NEXT: cmp [[SUCCESS]], #0
+; CHECK-ARMV7-NEXT: bne [[TRY]]
+; CHECK-ARMV7-NEXT: b [[END:.LBB[0-9_]+]]
+; CHECK-ARMV7-NEXT: [[FAIL]]:
+; CHECK-ARMV7-NEXT: clrex
+; CHECK-ARMV7-NEXT: mov [[RES]], #0
+; CHECK-ARMV7-NEXT: [[END]]:
+; CHECK-ARMV7-NEXT: mov r0, [[RES]]
+; CHECK-ARMV7-NEXT: bx lr
 
-; CHECK-THUMBV7-LABEL: test_cmpxchg_res_i8
-; CHECK-THUMBV7: ldrexb [[R3:r[0-9]+]], [r0]
-; CHECK-THUMBV7: cmp [[R3]], {{r[0-9]+}}
-; CHECK-THUMBV7: movne r0, #0
-; CHECK-THUMBV7: bxne lr
-; CHECK-THUMBV7: strexb [[R3]], {{r[0-9]+}}, [{{r[0-9]+}}]
-; CHECK-THUMBV7: cmp [[R3]], #0
-; CHECK-THUMBV7: itt eq
-; CHECK-THUMBV7: moveq r0, #1
-; CHECK-THUMBV7: bxeq lr
+; CHECK-THUMBV7-LABEL: test_cmpxchg_res_i8:
+; CHECK-THUMBV7-NEXT: .fnstart
+; CHECK-THUMBV7-NEXT: uxtb [[DESIRED:r[0-9]+]], r1
+; CHECK-THUMBV7-NEXT: b [[TRYLD:.LBB[0-9_]+]]
+; CHECK-THUMBV7-NEXT: [[TRYST:.LBB[0-9_]+]]:
+; CHECK-THUMBV7-NEXT: strexb [[SUCCESS:r[0-9]+]], r2, [r0]
+; CHECK-THUMBV7-NEXT: cmp [[SUCCESS]], #0
+; CHECK-THUMBV7-NEXT: itt eq
+; CHECK-THUMBV7-NEXT: moveq r0, #1
+; CHECK-THUMBV7-NEXT: bxeq lr
+; CHECK-THUMBV7-NEXT: [[TRYLD]]:
+; CHECK-THUMBV7-NEXT: ldrexb [[LD:r[0-9]+]], [r0]
+; CHECK-THUMBV7-NEXT: cmp [[LD]], [[DESIRED]]
+; CHECK-THUMBV7-NEXT: beq [[TRYST:.LBB[0-9_]+]]
+; CHECK-THUMBV7-NEXT: clrex
+; CHECK-THUMBV7-NEXT: movs r0, #0
+; CHECK-THUMBV7-NEXT: bx lr
