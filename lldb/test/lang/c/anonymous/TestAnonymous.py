@@ -62,7 +62,6 @@ class AnonymousTestCase(TestBase):
         self.buildDwarf()
         self.expr_parent()
 
-    @expectedFailureFreeBSD('llvm.org/pr21550')
     @expectedFailureWindows('llvm.org/pr21550')
     @dwarf_test
     def test_expr_null_with_dwarf(self):
