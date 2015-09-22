@@ -1303,7 +1303,7 @@ TEST_F(DICompileUnitTest, get) {
   MDTuple *Subprograms = getTuple();
   MDTuple *GlobalVariables = getTuple();
   MDTuple *ImportedEntities = getTuple();
-  uint64_t DWOId = 0xc0ffee;
+  uint64_t DWOId = 0x10000000c0ffee;
   auto *N = DICompileUnit::getDistinct(
       Context, SourceLanguage, File, Producer, IsOptimized, Flags,
       RuntimeVersion, SplitDebugFilename, EmissionKind, EnumTypes,
