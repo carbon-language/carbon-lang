@@ -1375,13 +1375,6 @@ private:
   /// \defgroup Helpers Various helper methods.
   ///
   /// @{
-  const DWARFDebugInfoEntryMinimal *
-  resolveDIEReference(const DWARFFormValue &RefValue, const DWARFUnit &Unit,
-                      const DWARFDebugInfoEntryMinimal &DIE,
-                      CompileUnit *&ReferencedCU);
-
-  CompileUnit *getUnitForOffset(unsigned Offset);
-
   bool createStreamer(Triple TheTriple, StringRef OutputFilename);
 
   /// \brief Attempt to load a debug object from disk.
@@ -1425,9 +1418,10 @@ private:
   uint32_t LastCIEOffset;
 };
 
-/// \brief Similar to DWARFUnitSection::getUnitForOffset(), but
-/// returning our CompileUnit object instead.
-CompileUnit *DwarfLinker::getUnitForOffset(unsigned Offset) {
+/// Similar to DWARFUnitSection::getUnitForOffset(), but returning our
+/// CompileUnit object instead.
+static CompileUnit *getUnitForOffset(MutableArrayRef<CompileUnit> Units,
+                                     unsigned Offset) {
   auto CU =
       std::upper_bound(Units.begin(), Units.end(), Offset,
                        [](uint32_t LHS, const CompileUnit &RHS) {
@@ -1436,21 +1430,22 @@ CompileUnit *DwarfLinker::getUnitForOffset(unsigned Offset) {
   return CU != Units.end() ? &*CU : nullptr;
 }
 
-/// \brief Resolve the DIE attribute reference that has been
+/// Resolve the DIE attribute reference that has been
 /// extracted in \p RefValue. The resulting DIE migh be in another
 /// CompileUnit which is stored into \p ReferencedCU.
 /// \returns null if resolving fails for any reason.
-const DWARFDebugInfoEntryMinimal *DwarfLinker::resolveDIEReference(
+static const DWARFDebugInfoEntryMinimal *resolveDIEReference(
+    const DwarfLinker &Linker, MutableArrayRef<CompileUnit> Units,
     const DWARFFormValue &RefValue, const DWARFUnit &Unit,
     const DWARFDebugInfoEntryMinimal &DIE, CompileUnit *&RefCU) {
   assert(RefValue.isFormClass(DWARFFormValue::FC_Reference));
   uint64_t RefOffset = *RefValue.getAsReference(&Unit);
 
-  if ((RefCU = getUnitForOffset(RefOffset)))
+  if ((RefCU = getUnitForOffset(Units, RefOffset)))
     if (const auto *RefDie = RefCU->getOrigUnit().getDIEForOffset(RefOffset))
       return RefDie;
 
-  reportWarning("could not find referenced DIE", &Unit, &DIE);
+  Linker.reportWarning("could not find referenced DIE", &Unit, &DIE);
   return nullptr;
 }
 
@@ -2102,7 +2097,8 @@ void DwarfLinker::keepDIEAndDependencies(RelocationManager &RelocMgr,
     Val.extractValue(Data, &Offset, &Unit);
     CompileUnit *ReferencedCU;
     if (const auto *RefDIE =
-            resolveDIEReference(Val, Unit, Die, ReferencedCU)) {
+            resolveDIEReference(*this, MutableArrayRef<CompileUnit>(Units), Val,
+                                Unit, Die, ReferencedCU)) {
       uint32_t RefIdx = ReferencedCU->getOrigUnit().getDIEIndex(RefDIE);
       CompileUnit::DIEInfo &Info = ReferencedCU->getInfo(RefIdx);
       // If the referenced DIE has a DeclContext that has already been
@@ -2231,7 +2227,7 @@ unsigned DwarfLinker::DIECloner::cloneDieReferenceAttribute(
   DeclContext *Ctxt = nullptr;
 
   const DWARFDebugInfoEntryMinimal *RefDie =
-      Linker.resolveDIEReference(Val, U, InputDIE, RefUnit);
+      resolveDIEReference(Linker, CompileUnits, Val, U, InputDIE, RefUnit);
 
   // If the referenced DIE is not found,  drop the attribute.
   if (!RefDie)
