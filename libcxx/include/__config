@@ -786,7 +786,7 @@ extern "C" void __sanitizer_annotate_contiguous_container(
 #define _LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS
 #endif
 
-#if __has_extension(c_atomic)
+#if __has_feature(cxx_atomic) || __has_extension(c_atomic)
 #define _LIBCPP_HAS_C_ATOMIC_IMP
 #elif _GNUC_VER > 407
 #define _LIBCPP_HAS_GCC_ATOMIC_IMP
