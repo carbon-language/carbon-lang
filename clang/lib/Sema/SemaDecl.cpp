@@ -5515,6 +5515,12 @@ static bool isIncompleteDeclExternC(Sema &S, const T *D) {
     // In C++, the overloadable attribute negates the effects of extern "C".
     if (!D->isInExternCContext() || D->template hasAttr<OverloadableAttr>())
       return false;
+
+    // So do CUDA's host/device attributes if overloading is enabled.
+    if (S.getLangOpts().CUDA && S.getLangOpts().CUDATargetOverloads &&
+        (D->template hasAttr<CUDADeviceAttr>() ||
+         D->template hasAttr<CUDAHostAttr>()))
+      return false;
   }
   return D->isExternC();
 }

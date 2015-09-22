@@ -60,8 +60,101 @@ Sema::CUDAFunctionTarget Sema::IdentifyCUDATarget(const FunctionDecl *D) {
   return CFT_Host;
 }
 
+// * CUDA Call preference table
+//
+// F - from,
+// T - to
+// Ph - preference in host mode
+// Pd - preference in device mode
+// H  - handled in (x)
+// Preferences: b-best, f-fallback, l-last resort, n-never.
+//
+// | F  | T  | Ph | Pd |  H  |
+// |----+----+----+----+-----+
+// | d  | d  | b  | b  | (b) |
+// | d  | g  | n  | n  | (a) |
+// | d  | h  | l  | l  | (e) |
+// | d  | hd | f  | f  | (c) |
+// | g  | d  | b  | b  | (b) |
+// | g  | g  | n  | n  | (a) |
+// | g  | h  | l  | l  | (e) |
+// | g  | hd | f  | f  | (c) |
+// | h  | d  | l  | l  | (e) |
+// | h  | g  | b  | b  | (b) |
+// | h  | h  | b  | b  | (b) |
+// | h  | hd | f  | f  | (c) |
+// | hd | d  | l  | f  | (d) |
+// | hd | g  | f  | n  |(d/a)|
+// | hd | h  | f  | l  | (d) |
+// | hd | hd | b  | b  | (b) |
+
+Sema::CUDAFunctionPreference
+Sema::IdentifyCUDAPreference(const FunctionDecl *Caller,
+                             const FunctionDecl *Callee) {
+  assert(getLangOpts().CUDATargetOverloads &&
+         "Should not be called w/o enabled target overloads.");
+
+  assert(Callee && "Callee must be valid.");
+  CUDAFunctionTarget CalleeTarget = IdentifyCUDATarget(Callee);
+  CUDAFunctionTarget CallerTarget =
+      (Caller != nullptr) ? IdentifyCUDATarget(Caller) : Sema::CFT_Host;
+
+  // If one of the targets is invalid, the check always fails, no matter what
+  // the other target is.
+  if (CallerTarget == CFT_InvalidTarget || CalleeTarget == CFT_InvalidTarget)
+    return CFP_Never;
+
+  // (a) Can't call global from some contexts until we support CUDA's
+  // dynamic parallelism.
+  if (CalleeTarget == CFT_Global &&
+      (CallerTarget == CFT_Global || CallerTarget == CFT_Device ||
+       (CallerTarget == CFT_HostDevice && getLangOpts().CUDAIsDevice)))
+    return CFP_Never;
+
+  // (b) Best case scenarios
+  if (CalleeTarget == CallerTarget ||
+      (CallerTarget == CFT_Host && CalleeTarget == CFT_Global) ||
+      (CallerTarget == CFT_Global && CalleeTarget == CFT_Device))
+    return CFP_Best;
+
+  // (c) Calling HostDevice is OK as a fallback that works for everyone.
+  if (CalleeTarget == CFT_HostDevice)
+    return CFP_Fallback;
+
+  // Figure out what should be returned 'last resort' cases. Normally
+  // those would not be allowed, but we'll consider them if
+  // CUDADisableTargetCallChecks is true.
+  CUDAFunctionPreference QuestionableResult =
+      getLangOpts().CUDADisableTargetCallChecks ? CFP_LastResort : CFP_Never;
+
+  // (d) HostDevice behavior depends on compilation mode.
+  if (CallerTarget == CFT_HostDevice) {
+    // Calling a function that matches compilation mode is OK.
+    // Calling a function from the other side is frowned upon.
+    if (getLangOpts().CUDAIsDevice)
+      return CalleeTarget == CFT_Device ? CFP_Fallback : QuestionableResult;
+    else
+      return (CalleeTarget == CFT_Host || CalleeTarget == CFT_Global)
+                 ? CFP_Fallback
+                 : QuestionableResult;
+  }
+
+  // (e) Calling across device/host boundary is not something you should do.
+  if ((CallerTarget == CFT_Host && CalleeTarget == CFT_Device) ||
+      (CallerTarget == CFT_Device && CalleeTarget == CFT_Host) ||
+      (CallerTarget == CFT_Global && CalleeTarget == CFT_Host))
+    return QuestionableResult;
+
+  llvm_unreachable("All cases should've been handled by now.");
+}
+
 bool Sema::CheckCUDATarget(const FunctionDecl *Caller,
                            const FunctionDecl *Callee) {
+  // With target overloads enabled, we only disallow calling
+  // combinations with CFP_Never.
+  if (getLangOpts().CUDATargetOverloads)
+    return IdentifyCUDAPreference(Caller,Callee) == CFP_Never;
+
   // The CUDADisableTargetCallChecks short-circuits this check: we assume all
   // cross-target calls are valid.
   if (getLangOpts().CUDADisableTargetCallChecks)
@@ -115,6 +208,57 @@ bool Sema::CheckCUDATarget(const FunctionDecl *Caller,
   }
 
   return false;
+}
+
+template <typename T, typename FetchDeclFn>
+static void EraseUnwantedCUDAMatchesImpl(Sema &S, const FunctionDecl *Caller,
+                                         llvm::SmallVectorImpl<T> &Matches,
+                                         FetchDeclFn FetchDecl) {
+  assert(S.getLangOpts().CUDATargetOverloads &&
+         "Should not be called w/o enabled target overloads.");
+  if (Matches.size() <= 1)
+    return;
+
+  // Find the best call preference among the functions in Matches.
+  Sema::CUDAFunctionPreference P, BestCFP = Sema::CFP_Never;
+  for (auto const &Match : Matches) {
+    P = S.IdentifyCUDAPreference(Caller, FetchDecl(Match));
+    if (P > BestCFP)
+      BestCFP = P;
+  }
+
+  // Erase all functions with lower priority.
+  for (unsigned I = 0, N = Matches.size(); I != N;)
+    if (S.IdentifyCUDAPreference(Caller, FetchDecl(Matches[I])) < BestCFP) {
+      Matches[I] = Matches[--N];
+      Matches.resize(N);
+    } else {
+      ++I;
+    }
+}
+
+void Sema::EraseUnwantedCUDAMatches(const FunctionDecl *Caller,
+                                    SmallVectorImpl<FunctionDecl *> &Matches){
+  EraseUnwantedCUDAMatchesImpl<FunctionDecl *>(
+      *this, Caller, Matches, [](const FunctionDecl *item) { return item; });
+}
+
+void Sema::EraseUnwantedCUDAMatches(const FunctionDecl *Caller,
+                                    SmallVectorImpl<DeclAccessPair> &Matches) {
+  EraseUnwantedCUDAMatchesImpl<DeclAccessPair>(
+      *this, Caller, Matches, [](const DeclAccessPair &item) {
+        return dyn_cast<FunctionDecl>(item.getDecl());
+      });
+}
+
+void Sema::EraseUnwantedCUDAMatches(
+    const FunctionDecl *Caller,
+    SmallVectorImpl<std::pair<DeclAccessPair, FunctionDecl *>> &Matches){
+  EraseUnwantedCUDAMatchesImpl<std::pair<DeclAccessPair, FunctionDecl *>>(
+      *this, Caller, Matches,
+      [](const std::pair<DeclAccessPair, FunctionDecl *> &item) {
+        return dyn_cast<FunctionDecl>(item.second);
+      });
 }
 
 /// When an implicitly-declared special member has to invoke more than one

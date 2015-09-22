@@ -659,6 +659,8 @@ def fcuda_disable_target_call_checks : Flag<["-"],
   HelpText<"Disable all cross-target (host, device, etc.) call checks in CUDA">;
 def fcuda_include_gpubinary : Separate<["-"], "fcuda-include-gpubinary">,
   HelpText<"Incorporate CUDA device-side binary into host object file.">;
+def fcuda_target_overloads : Flag<["-"], "fcuda-target-overloads">,
+  HelpText<"Enable function overloads based on CUDA target attributes.">;
 def fcuda_uses_libdevice : Flag<["-"], "fcuda-uses-libdevice">,
   HelpText<"Selectively link and internalize bitcode.">;
 

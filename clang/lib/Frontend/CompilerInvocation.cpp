@@ -1416,6 +1416,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   if (Args.hasArg(OPT_fcuda_disable_target_call_checks))
     Opts.CUDADisableTargetCallChecks = 1;
 
+  if (Args.hasArg(OPT_fcuda_target_overloads))
+    Opts.CUDATargetOverloads = 1;
+
   if (Opts.ObjC1) {
     if (Arg *arg = Args.getLastArg(OPT_fobjc_runtime_EQ)) {
       StringRef value = arg->getValue();

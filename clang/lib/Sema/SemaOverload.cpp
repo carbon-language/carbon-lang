@@ -1072,6 +1072,25 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
       return true;
   }
 
+  if (getLangOpts().CUDA && getLangOpts().CUDATargetOverloads) {
+    CUDAFunctionTarget NewTarget = IdentifyCUDATarget(New),
+                       OldTarget = IdentifyCUDATarget(Old);
+    if (NewTarget == CFT_InvalidTarget || NewTarget == CFT_Global)
+      return false;
+
+    assert((OldTarget != CFT_InvalidTarget) && "Unexpected invalid target.");
+
+    // Don't allow mixing of HD with other kinds. This guarantees that
+    // we have only one viable function with this signature on any
+    // side of CUDA compilation .
+    if ((NewTarget == CFT_HostDevice) || (OldTarget == CFT_HostDevice))
+      return false;
+
+    // Allow overloading of functions with same signature, but
+    // different CUDA target attributes.
+    return NewTarget != OldTarget;
+  }
+
   // The signatures match; this is not an overload.
   return false;
 }
@@ -8508,6 +8527,13 @@ bool clang::isBetterOverloadCandidate(Sema &S, const OverloadCandidate &Cand1,
     return true;
   }
 
+  if (S.getLangOpts().CUDA && S.getLangOpts().CUDATargetOverloads &&
+      Cand1.Function && Cand2.Function) {
+    FunctionDecl *Caller = dyn_cast<FunctionDecl>(S.CurContext);
+    return S.IdentifyCUDAPreference(Caller, Cand1.Function) >
+           S.IdentifyCUDAPreference(Caller, Cand2.Function);
+  }
+
   return false;
 }
 
@@ -9925,6 +9951,10 @@ public:
           EliminateAllExceptMostSpecializedTemplate();
       }
     }
+
+    if (S.getLangOpts().CUDA && S.getLangOpts().CUDATargetOverloads &&
+        Matches.size() > 1)
+      EliminateSuboptimalCudaMatches();
   }
   
 private:
@@ -10100,9 +10130,13 @@ private:
         ++I;
       else {
         Matches[I] = Matches[--N];
-        Matches.set_size(N);
+        Matches.resize(N);
       }
     }
+  }
+
+  void EliminateSuboptimalCudaMatches() {
+    S.EraseUnwantedCUDAMatches(dyn_cast<FunctionDecl>(S.CurContext), Matches);
   }
 
 public:
