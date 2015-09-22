@@ -1,6 +1,6 @@
 # RUN: llvm-mc -filetype=obj -triple=powerpc64-unknown-linux %s -o %t
 # RUN: lld -flavor gnu2 -discard-all %t -o %t2
-# RUN: llvm-readobj -file-headers -sections -program-headers %t2 | FileCheck %s
+# RUN: llvm-readobj -file-headers -sections -section-data -program-headers %t2 | FileCheck %s
 # REQUIRES: ppc
 
 # exits with return code 42 on linux
@@ -54,6 +54,8 @@ _start:
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 0
 # CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:     SectionData (
+# CHECK:          )
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 1
@@ -70,6 +72,8 @@ _start:
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 4
 # CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:     SectionData (
+# CHECK:          )
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 2
@@ -86,6 +90,8 @@ _start:
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 4
 # CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:     SectionData (
+# CHECK:          )
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 3
@@ -118,6 +124,10 @@ _start:
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 1
 # CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:     SectionData (
+# CHECK-NEXT:      0000: 00000000 00011000 00000000 00000000  |................|
+# CHECK-NEXT:      0010: 00000000 00000000                    |........|
+# CHECK-NEXT:     )
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 5
@@ -132,6 +142,8 @@ _start:
 # CHECK-NEXT:     Info: 1
 # CHECK-NEXT:     AddressAlignment: 8
 # CHECK-NEXT:     EntrySize: 24
+# CHECK-NEXT:     SectionData (
+# CHECK:          )
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 6
@@ -146,6 +158,8 @@ _start:
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 1
 # CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:     SectionData (
+# CHECK:          )
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
 # CHECK-NEXT: ProgramHeaders [

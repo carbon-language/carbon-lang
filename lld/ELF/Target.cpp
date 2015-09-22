@@ -162,6 +162,23 @@ void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
 bool PPC64TargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
 bool PPC64TargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
 void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                                  uint64_t BaseAddr, uint64_t SymVA) const {}
+                                  uint64_t BaseAddr, uint64_t SymVA) const {
+  typedef ELFFile<ELF64BE>::Elf_Rela Elf_Rela;
+  auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
+
+  uint64_t Offset = Rel.r_offset;
+  uint8_t *Location = Buf + Offset;
+  switch (Type) {
+  case R_PPC64_ADDR64:
+    support::endian::write64be(Location, SymVA + Rel.r_addend);
+    break;
+  case R_PPC64_TOC:
+    // We don't create a TOC yet.
+    break;
+  default:
+    error(Twine("unrecognized reloc ") + Twine(Type));
+    break;
+  }
+}
 }
 }
