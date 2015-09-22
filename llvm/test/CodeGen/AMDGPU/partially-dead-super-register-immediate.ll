@@ -1,4 +1,3 @@
-; XFAIL: *
 ; RUN: llc -march=amdgcn -verify-machineinstrs -verify-coalescing < %s
 
 ; The original and requires materializing a 64-bit immediate for
