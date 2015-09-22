@@ -98,6 +98,12 @@ DECLARE_REAL(int, sigaction, int signum, const struct sigaction *act,
     if ((!INTERCEPT_FUNCTION(name) || !REAL(name)))                      \
       VReport(1, "AddressSanitizer: failed to intercept '" #name "'\n"); \
   } while (0)
+#define ASAN_INTERCEPT_FUNC_VER(name, ver)                                     \
+  do {                                                                         \
+    if ((!INTERCEPT_FUNCTION_VER(name, ver) || !REAL(name)))                   \
+      VReport(                                                                 \
+          1, "AddressSanitizer: failed to intercept '" #name "@@" #ver "'\n"); \
+  } while (0)
 #else
 // OS X interceptors don't need to be initialized with INTERCEPT_FUNCTION.
 #define ASAN_INTERCEPT_FUNC(name)

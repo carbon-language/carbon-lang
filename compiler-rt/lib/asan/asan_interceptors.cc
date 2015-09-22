@@ -27,6 +27,10 @@
 #include "sanitizer_common/sanitizer_posix.h"
 #endif
 
+#if defined(__i386) && SANITIZER_LINUX
+#define ASAN_PTHREAD_CREATE_VERSION "GLIBC_2.1"
+#endif
+
 namespace __asan {
 
 // Return true if we can quickly decide that the region is unpoisoned.
@@ -791,7 +795,11 @@ void InitializeAsanInterceptors() {
 
   // Intercept threading-related functions
 #if ASAN_INTERCEPT_PTHREAD_CREATE
+#if defined(ASAN_PTHREAD_CREATE_VERSION)
+  ASAN_INTERCEPT_FUNC_VER(pthread_create, ASAN_PTHREAD_CREATE_VERSION);
+#else
   ASAN_INTERCEPT_FUNC(pthread_create);
+#endif
   ASAN_INTERCEPT_FUNC(pthread_join);
 #endif
 
