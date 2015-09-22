@@ -86,7 +86,6 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_crashing_expr_step_expr()
 
-    @expectedFailureFreeBSD('llvm.org/pr15989') # Couldn't allocate space for the stack frame
     @expectedFailureWindows("llvm.org/pr24778")
     @skipIfLinux # Inferior exits after stepping after a segfault. This is working as intended IMHO.
     def test_inferior_crashing_expr_step_and_expr_dwarf(self):
