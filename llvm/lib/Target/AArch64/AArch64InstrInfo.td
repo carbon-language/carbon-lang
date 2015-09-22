@@ -2440,6 +2440,26 @@ defm FCVTZS_Int : FPToIntegerScaled<0b11, 0b000, "fcvtzs", int_aarch64_neon_fcvt
 defm FCVTZU_Int : FPToIntegerScaled<0b11, 0b001, "fcvtzu", int_aarch64_neon_fcvtzu>;
 }
 
+multiclass FPToIntegerPats<SDNode to_int, SDNode round, string INST> {
+  def : Pat<(i32 (to_int (round f32:$Rn))),
+            (!cast<Instruction>(INST # UWSr) f32:$Rn)>;
+  def : Pat<(i64 (to_int (round f32:$Rn))),
+            (!cast<Instruction>(INST # UXSr) f32:$Rn)>;
+  def : Pat<(i32 (to_int (round f64:$Rn))),
+            (!cast<Instruction>(INST # UWDr) f64:$Rn)>;
+  def : Pat<(i64 (to_int (round f64:$Rn))),
+            (!cast<Instruction>(INST # UXDr) f64:$Rn)>;
+}
+
+defm : FPToIntegerPats<fp_to_sint, fceil,  "FCVTPS">;
+defm : FPToIntegerPats<fp_to_uint, fceil,  "FCVTPU">;
+defm : FPToIntegerPats<fp_to_sint, ffloor, "FCVTMS">;
+defm : FPToIntegerPats<fp_to_uint, ffloor, "FCVTMU">;
+defm : FPToIntegerPats<fp_to_sint, ftrunc, "FCVTZS">;
+defm : FPToIntegerPats<fp_to_uint, ftrunc, "FCVTZU">;
+defm : FPToIntegerPats<fp_to_sint, frnd,   "FCVTAS">;
+defm : FPToIntegerPats<fp_to_uint, frnd,   "FCVTAU">;
+
 //===----------------------------------------------------------------------===//
 // Scaled integer to floating point conversion instructions.
 //===----------------------------------------------------------------------===//
@@ -2485,14 +2505,7 @@ defm FRINTP : SingleOperandFPData<0b1001, "frintp", fceil>;
 def : Pat<(v1f64 (int_aarch64_neon_frintn (v1f64 FPR64:$Rn))),
           (FRINTNDr FPR64:$Rn)>;
 
-// FRINTX is inserted to set the flags as required by FENV_ACCESS ON behavior
-// in the C spec. Setting hasSideEffects ensures it is not DCE'd.
-// <rdar://problem/13715968>
-// TODO: We should really model the FPSR flags correctly. This is really ugly.
-let hasSideEffects = 1 in {
 defm FRINTX : SingleOperandFPData<0b1110, "frintx", frint>;
-}
-
 defm FRINTZ : SingleOperandFPData<0b1011, "frintz", ftrunc>;
 
 let SchedRW = [WriteFDiv] in {

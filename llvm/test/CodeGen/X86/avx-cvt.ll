@@ -137,7 +137,7 @@ declare double @llvm.nearbyint.f64(double %p)
 define float @floor_f32(float %a) {
 ; CHECK-LABEL: floor_f32:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vroundss $1, %xmm0, %xmm0, %xmm0
+; CHECK-NEXT:    vroundss $9, %xmm0, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %res = call float @llvm.floor.f32(float %a)
   ret float %res

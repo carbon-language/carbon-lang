@@ -6,10 +6,10 @@ define float @test1(float %x) nounwind  {
   ret float %call
 
 ; CHECK-SSE-LABEL: test1:
-; CHECK-SSE: roundss $1
+; CHECK-SSE: roundss $9
 
 ; CHECK-AVX-LABEL: test1:
-; CHECK-AVX: vroundss $1
+; CHECK-AVX: vroundss $9
 }
 
 declare float @floorf(float) nounwind readnone
@@ -19,10 +19,10 @@ define double @test2(double %x) nounwind  {
   ret double %call
 
 ; CHECK-SSE-LABEL: test2:
-; CHECK-SSE: roundsd $1
+; CHECK-SSE: roundsd $9
 
 ; CHECK-AVX-LABEL: test2:
-; CHECK-AVX: vroundsd $1
+; CHECK-AVX: vroundsd $9
 }
 
 declare double @floor(double) nounwind readnone
@@ -58,10 +58,10 @@ define float @test5(float %x) nounwind  {
   ret float %call
 
 ; CHECK-SSE-LABEL: test5:
-; CHECK-SSE: roundss $2
+; CHECK-SSE: roundss $10
 
 ; CHECK-AVX-LABEL: test5:
-; CHECK-AVX: vroundss $2
+; CHECK-AVX: vroundss $10
 }
 
 declare float @ceilf(float) nounwind readnone
@@ -71,10 +71,10 @@ define double @test6(double %x) nounwind  {
   ret double %call
 
 ; CHECK-SSE-LABEL: test6:
-; CHECK-SSE: roundsd $2
+; CHECK-SSE: roundsd $10
 
 ; CHECK-AVX-LABEL: test6:
-; CHECK-AVX: vroundsd $2
+; CHECK-AVX: vroundsd $10
 }
 
 declare double @ceil(double) nounwind readnone
@@ -110,10 +110,10 @@ define float @test9(float %x) nounwind  {
   ret float %call
 
 ; CHECK-SSE-LABEL: test9:
-; CHECK-SSE: roundss $3
+; CHECK-SSE: roundss $11
 
 ; CHECK-AVX-LABEL: test9:
-; CHECK-AVX: vroundss $3
+; CHECK-AVX: vroundss $11
 }
 
 declare float @truncf(float) nounwind readnone
@@ -123,10 +123,10 @@ define double @test10(double %x) nounwind  {
   ret double %call
 
 ; CHECK-SSE-LABEL: test10:
-; CHECK-SSE: roundsd $3
+; CHECK-SSE: roundsd $11
 
 ; CHECK-AVX-LABEL: test10:
-; CHECK-AVX: vroundsd $3
+; CHECK-AVX: vroundsd $11
 }
 
 declare double @trunc(double) nounwind readnone

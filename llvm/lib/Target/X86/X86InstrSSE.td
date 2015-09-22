@@ -6554,71 +6554,71 @@ let Predicates = [HasAVX] in {
 
 let Predicates = [UseAVX] in {
   def : Pat<(ffloor FR32:$src),
-            (VROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x1))>;
+            (VROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x9))>;
   def : Pat<(f64 (ffloor FR64:$src)),
-            (VROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x1))>;
+            (VROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x9))>;
   def : Pat<(f32 (fnearbyint FR32:$src)),
             (VROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0xC))>;
   def : Pat<(f64 (fnearbyint FR64:$src)),
             (VROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0xC))>;
   def : Pat<(f32 (fceil FR32:$src)),
-            (VROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x2))>;
+            (VROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0xA))>;
   def : Pat<(f64 (fceil FR64:$src)),
-            (VROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x2))>;
+            (VROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0xA))>;
   def : Pat<(f32 (frint FR32:$src)),
             (VROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x4))>;
   def : Pat<(f64 (frint FR64:$src)),
             (VROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x4))>;
   def : Pat<(f32 (ftrunc FR32:$src)),
-            (VROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x3))>;
+            (VROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0xB))>;
   def : Pat<(f64 (ftrunc FR64:$src)),
-            (VROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x3))>;
+            (VROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0xB))>;
 }
 
 let Predicates = [HasAVX] in {
   def : Pat<(v4f32 (ffloor VR128:$src)),
-            (VROUNDPSr VR128:$src, (i32 0x1))>;
+            (VROUNDPSr VR128:$src, (i32 0x9))>;
   def : Pat<(v4f32 (fnearbyint VR128:$src)),
             (VROUNDPSr VR128:$src, (i32 0xC))>;
   def : Pat<(v4f32 (fceil VR128:$src)),
-            (VROUNDPSr VR128:$src, (i32 0x2))>;
+            (VROUNDPSr VR128:$src, (i32 0xA))>;
   def : Pat<(v4f32 (frint VR128:$src)),
             (VROUNDPSr VR128:$src, (i32 0x4))>;
   def : Pat<(v4f32 (ftrunc VR128:$src)),
-            (VROUNDPSr VR128:$src, (i32 0x3))>;
+            (VROUNDPSr VR128:$src, (i32 0xB))>;
 
   def : Pat<(v2f64 (ffloor VR128:$src)),
-            (VROUNDPDr VR128:$src, (i32 0x1))>;
+            (VROUNDPDr VR128:$src, (i32 0x9))>;
   def : Pat<(v2f64 (fnearbyint VR128:$src)),
             (VROUNDPDr VR128:$src, (i32 0xC))>;
   def : Pat<(v2f64 (fceil VR128:$src)),
-            (VROUNDPDr VR128:$src, (i32 0x2))>;
+            (VROUNDPDr VR128:$src, (i32 0xA))>;
   def : Pat<(v2f64 (frint VR128:$src)),
             (VROUNDPDr VR128:$src, (i32 0x4))>;
   def : Pat<(v2f64 (ftrunc VR128:$src)),
-            (VROUNDPDr VR128:$src, (i32 0x3))>;
+            (VROUNDPDr VR128:$src, (i32 0xB))>;
 
   def : Pat<(v8f32 (ffloor VR256:$src)),
-            (VROUNDYPSr VR256:$src, (i32 0x1))>;
+            (VROUNDYPSr VR256:$src, (i32 0x9))>;
   def : Pat<(v8f32 (fnearbyint VR256:$src)),
             (VROUNDYPSr VR256:$src, (i32 0xC))>;
   def : Pat<(v8f32 (fceil VR256:$src)),
-            (VROUNDYPSr VR256:$src, (i32 0x2))>;
+            (VROUNDYPSr VR256:$src, (i32 0xA))>;
   def : Pat<(v8f32 (frint VR256:$src)),
             (VROUNDYPSr VR256:$src, (i32 0x4))>;
   def : Pat<(v8f32 (ftrunc VR256:$src)),
-            (VROUNDYPSr VR256:$src, (i32 0x3))>;
+            (VROUNDYPSr VR256:$src, (i32 0xB))>;
 
   def : Pat<(v4f64 (ffloor VR256:$src)),
-            (VROUNDYPDr VR256:$src, (i32 0x1))>;
+            (VROUNDYPDr VR256:$src, (i32 0x9))>;
   def : Pat<(v4f64 (fnearbyint VR256:$src)),
             (VROUNDYPDr VR256:$src, (i32 0xC))>;
   def : Pat<(v4f64 (fceil VR256:$src)),
-            (VROUNDYPDr VR256:$src, (i32 0x2))>;
+            (VROUNDYPDr VR256:$src, (i32 0xA))>;
   def : Pat<(v4f64 (frint VR256:$src)),
             (VROUNDYPDr VR256:$src, (i32 0x4))>;
   def : Pat<(v4f64 (ftrunc VR256:$src)),
-            (VROUNDYPDr VR256:$src, (i32 0x3))>;
+            (VROUNDYPDr VR256:$src, (i32 0xB))>;
 }
 
 defm ROUND  : sse41_fp_unop_rm<0x08, 0x09, "round", f128mem, VR128,
@@ -6630,47 +6630,47 @@ defm ROUND  : sse41_fp_binop_rm<0x0A, 0x0B, "round",
 
 let Predicates = [UseSSE41] in {
   def : Pat<(ffloor FR32:$src),
-            (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x1))>;
+            (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x9))>;
   def : Pat<(f64 (ffloor FR64:$src)),
-            (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x1))>;
+            (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x9))>;
   def : Pat<(f32 (fnearbyint FR32:$src)),
             (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0xC))>;
   def : Pat<(f64 (fnearbyint FR64:$src)),
             (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0xC))>;
   def : Pat<(f32 (fceil FR32:$src)),
-            (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x2))>;
+            (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0xA))>;
   def : Pat<(f64 (fceil FR64:$src)),
-            (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x2))>;
+            (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0xA))>;
   def : Pat<(f32 (frint FR32:$src)),
             (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x4))>;
   def : Pat<(f64 (frint FR64:$src)),
             (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x4))>;
   def : Pat<(f32 (ftrunc FR32:$src)),
-            (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x3))>;
+            (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0xB))>;
   def : Pat<(f64 (ftrunc FR64:$src)),
-            (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x3))>;
+            (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0xB))>;
 
   def : Pat<(v4f32 (ffloor VR128:$src)),
-            (ROUNDPSr VR128:$src, (i32 0x1))>;
+            (ROUNDPSr VR128:$src, (i32 0x9))>;
   def : Pat<(v4f32 (fnearbyint VR128:$src)),
             (ROUNDPSr VR128:$src, (i32 0xC))>;
   def : Pat<(v4f32 (fceil VR128:$src)),
-            (ROUNDPSr VR128:$src, (i32 0x2))>;
+            (ROUNDPSr VR128:$src, (i32 0xA))>;
   def : Pat<(v4f32 (frint VR128:$src)),
             (ROUNDPSr VR128:$src, (i32 0x4))>;
   def : Pat<(v4f32 (ftrunc VR128:$src)),
-            (ROUNDPSr VR128:$src, (i32 0x3))>;
+            (ROUNDPSr VR128:$src, (i32 0xB))>;
 
   def : Pat<(v2f64 (ffloor VR128:$src)),
-            (ROUNDPDr VR128:$src, (i32 0x1))>;
+            (ROUNDPDr VR128:$src, (i32 0x9))>;
   def : Pat<(v2f64 (fnearbyint VR128:$src)),
             (ROUNDPDr VR128:$src, (i32 0xC))>;
   def : Pat<(v2f64 (fceil VR128:$src)),
-            (ROUNDPDr VR128:$src, (i32 0x2))>;
+            (ROUNDPDr VR128:$src, (i32 0xA))>;
   def : Pat<(v2f64 (frint VR128:$src)),
             (ROUNDPDr VR128:$src, (i32 0x4))>;
   def : Pat<(v2f64 (ftrunc VR128:$src)),
-            (ROUNDPDr VR128:$src, (i32 0x3))>;
+            (ROUNDPDr VR128:$src, (i32 0xB))>;
 }
 
 //===----------------------------------------------------------------------===//

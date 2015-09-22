@@ -34,7 +34,6 @@ using namespace llvm;
 namespace {
 
 class AArch64DAGToDAGISel : public SelectionDAGISel {
-  AArch64TargetMachine &TM;
 
   /// Subtarget - Keep a pointer to the AArch64Subtarget around so that we can
   /// make the right decision when generating code for different targets.
@@ -45,7 +44,7 @@ class AArch64DAGToDAGISel : public SelectionDAGISel {
 public:
   explicit AArch64DAGToDAGISel(AArch64TargetMachine &tm,
                                CodeGenOpt::Level OptLevel)
-      : SelectionDAGISel(tm, OptLevel), TM(tm), Subtarget(nullptr),
+      : SelectionDAGISel(tm, OptLevel), Subtarget(nullptr),
         ForCodeSize(false) {}
 
   const char *getPassName() const override {
@@ -168,9 +167,6 @@ public:
   SDNode *SelectBitfieldInsertOp(SDNode *N);
   SDNode *SelectBitfieldInsertInZeroOp(SDNode *N);
 
-  SDNode *SelectLIBM(SDNode *N);
-  SDNode *SelectFPConvertWithRound(SDNode *N);
-
   SDNode *SelectReadRegister(SDNode *N);
   SDNode *SelectWriteRegister(SDNode *N);
 
@@ -202,9 +198,6 @@ private:
   }
 
   bool SelectCVTFixedPosOperand(SDValue N, SDValue &FixedPos, unsigned Width);
-
-  SDNode *GenerateInexactFlagIfNeeded(const SDValue &In, unsigned InTyVariant,
-                                      SDLoc DL);
 };
 } // end anonymous namespace
 
@@ -2136,158 +2129,6 @@ SDNode *AArch64DAGToDAGISel::SelectBitfieldInsertInZeroOp(SDNode *N) {
   return CurDAG->SelectNodeTo(N, Opc, VT, Ops);
 }
 
-/// GenerateInexactFlagIfNeeded - Insert FRINTX instruction to generate inexact
-/// signal on round-to-integer operations if needed. C11 leaves it
-/// implementation-defined whether these operations trigger an inexact
-/// exception. IEEE says they don't.  Unfortunately, Darwin decided they do so
-/// we sometimes have to insert a special instruction just to set the right bit
-/// in FPSR.
-SDNode *AArch64DAGToDAGISel::GenerateInexactFlagIfNeeded(const SDValue &In,
-                                                         unsigned InTyVariant,
-                                                         SDLoc DL) {
-  if (Subtarget->isTargetDarwin() && !TM.Options.UnsafeFPMath) {
-    // Pick the right FRINTX using InTyVariant needed to set the flags.
-    // InTyVariant is 0 for 32-bit and 1 for 64-bit.
-    unsigned FRINTXOpcs[] = { AArch64::FRINTXSr, AArch64::FRINTXDr };
-    return CurDAG->getMachineNode(FRINTXOpcs[InTyVariant], DL,
-                                  In.getValueType(), MVT::Glue, In);
-  }
-  return nullptr;
-}
-
-SDNode *AArch64DAGToDAGISel::SelectLIBM(SDNode *N) {
-  EVT VT = N->getValueType(0);
-  unsigned Variant;
-  unsigned Opc;
-
-  if (VT == MVT::f32) {
-    Variant = 0;
-  } else if (VT == MVT::f64) {
-    Variant = 1;
-  } else
-    return nullptr; // Unrecognized argument type. Fall back on default codegen.
-
-  switch (N->getOpcode()) {
-  default:
-    return nullptr; // Unrecognized libm ISD node. Fall back on default codegen.
-  case ISD::FCEIL: {
-    unsigned FRINTPOpcs[] = { AArch64::FRINTPSr, AArch64::FRINTPDr };
-    Opc = FRINTPOpcs[Variant];
-    break;
-  }
-  case ISD::FFLOOR: {
-    unsigned FRINTMOpcs[] = { AArch64::FRINTMSr, AArch64::FRINTMDr };
-    Opc = FRINTMOpcs[Variant];
-    break;
-  }
-  case ISD::FTRUNC: {
-    unsigned FRINTZOpcs[] = { AArch64::FRINTZSr, AArch64::FRINTZDr };
-    Opc = FRINTZOpcs[Variant];
-    break;
-  }
-  case ISD::FROUND: {
-    unsigned FRINTAOpcs[] = { AArch64::FRINTASr, AArch64::FRINTADr };
-    Opc = FRINTAOpcs[Variant];
-    break;
-  }
-  }
-
-  SDLoc dl(N);
-  SDValue In = N->getOperand(0);
-  SmallVector<SDValue, 2> Ops;
-  Ops.push_back(In);
-
-  if (SDNode *FRINTXNode = GenerateInexactFlagIfNeeded(In, Variant, dl))
-    Ops.push_back(SDValue(FRINTXNode, 1));
-
-  return CurDAG->getMachineNode(Opc, dl, VT, Ops);
-}
-
-/// SelectFPConvertWithRound - Try to combine FP rounding and
-/// FP-INT conversion.
-SDNode *AArch64DAGToDAGISel::SelectFPConvertWithRound(SDNode *N) {
-  SDNode *Op0 = N->getOperand(0).getNode();
-
-  // Return if the round op is used by other nodes, as this would result in two
-  // FRINTX, one each for round and convert.
-  if (!Op0->hasOneUse())
-    return nullptr;
-
-  unsigned InTyVariant;
-  EVT InTy = Op0->getValueType(0);
-  if (InTy == MVT::f32)
-    InTyVariant = 0;
-  else if (InTy == MVT::f64)
-    InTyVariant = 1;
-  else
-    return nullptr;
-
-  unsigned OutTyVariant;
-  EVT OutTy = N->getValueType(0);
-  if (OutTy == MVT::i32)
-    OutTyVariant = 0;
-  else if (OutTy == MVT::i64)
-    OutTyVariant = 1;
-  else
-    return nullptr;
-
-  assert((N->getOpcode() == ISD::FP_TO_SINT
-          || N->getOpcode() == ISD::FP_TO_UINT) && "Unexpected opcode!");
-  unsigned FpConVariant = N->getOpcode() == ISD::FP_TO_SINT ? 0 : 1;
-
-  unsigned Opc;
-  switch (Op0->getOpcode()) {
-  default:
-    return nullptr;
-  case ISD::FCEIL: {
-    unsigned FCVTPOpcs[2][2][2] = {
-        { { AArch64::FCVTPSUWSr, AArch64::FCVTPSUXSr },
-          { AArch64::FCVTPSUWDr, AArch64::FCVTPSUXDr } },
-        { { AArch64::FCVTPUUWSr, AArch64::FCVTPUUXSr },
-          { AArch64::FCVTPUUWDr, AArch64::FCVTPUUXDr } } };
-    Opc = FCVTPOpcs[FpConVariant][InTyVariant][OutTyVariant];
-    break;
-  }
-  case ISD::FFLOOR: {
-    unsigned FCVTMOpcs[2][2][2] = {
-        { { AArch64::FCVTMSUWSr, AArch64::FCVTMSUXSr },
-          { AArch64::FCVTMSUWDr, AArch64::FCVTMSUXDr } },
-        { { AArch64::FCVTMUUWSr, AArch64::FCVTMUUXSr },
-          { AArch64::FCVTMUUWDr, AArch64::FCVTMUUXDr } } };
-    Opc = FCVTMOpcs[FpConVariant][InTyVariant][OutTyVariant];
-    break;
-  }
-  case ISD::FTRUNC: {
-    unsigned FCVTZOpcs[2][2][2] = {
-        { { AArch64::FCVTZSUWSr, AArch64::FCVTZSUXSr },
-          { AArch64::FCVTZSUWDr, AArch64::FCVTZSUXDr } },
-        { { AArch64::FCVTZUUWSr, AArch64::FCVTZUUXSr },
-          { AArch64::FCVTZUUWDr, AArch64::FCVTZUUXDr } } };
-    Opc = FCVTZOpcs[FpConVariant][InTyVariant][OutTyVariant];
-    break;
-  }
-  case ISD::FROUND: {
-    unsigned FCVTAOpcs[2][2][2] = {
-        { { AArch64::FCVTASUWSr, AArch64::FCVTASUXSr },
-          { AArch64::FCVTASUWDr, AArch64::FCVTASUXDr } },
-        { { AArch64::FCVTAUUWSr, AArch64::FCVTAUUXSr },
-          { AArch64::FCVTAUUWDr, AArch64::FCVTAUUXDr } } };
-    Opc = FCVTAOpcs[FpConVariant][InTyVariant][OutTyVariant];
-    break;
-  }
-  }
-
-  SDLoc DL(N);
-  SDValue In = Op0->getOperand(0);
-  SmallVector<SDValue, 2> Ops;
-  Ops.push_back(In);
-
-  if (SDNode *FRINTXNode = GenerateInexactFlagIfNeeded(In, InTyVariant, DL))
-    Ops.push_back(SDValue(FRINTXNode, 1));
-
-  return CurDAG->getMachineNode(Opc, DL, OutTy, Ops);
-}
-
 bool
 AArch64DAGToDAGISel::SelectCVTFixedPosOperand(SDValue N, SDValue &FixedPos,
                                               unsigned RegWidth) {
@@ -3435,20 +3276,6 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostStoreLane(Node, 4, AArch64::ST4i64_POST);
     break;
   }
-
-  case ISD::FCEIL:
-  case ISD::FFLOOR:
-  case ISD::FTRUNC:
-  case ISD::FROUND:
-    if (SDNode *I = SelectLIBM(Node))
-      return I;
-    break;
-
-  case ISD::FP_TO_SINT:
-  case ISD::FP_TO_UINT:
-    if (SDNode *I = SelectFPConvertWithRound(Node))
-      return I;
-    break;
   }
 
   // Select the default instruction

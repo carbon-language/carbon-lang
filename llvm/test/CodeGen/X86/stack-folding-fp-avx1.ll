@@ -1411,7 +1411,7 @@ declare <8 x float> @llvm.x86.avx.round.ps.256(<8 x float>, i32) nounwind readno
 
 define double @stack_fold_roundsd(double %a0) optsize {
   ;CHECK-LABEL: stack_fold_roundsd
-  ;CHECK:       vroundsd $1, {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 8-byte Folded Reload
+  ;CHECK:       vroundsd $9, {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 8-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = call double @llvm.floor.f64(double %a0)
   ret double %2
@@ -1423,7 +1423,7 @@ declare <2 x double> @llvm.x86.sse41.round.sd(<2 x double>, <2 x double>, i32) n
 
 define float @stack_fold_roundss(float %a0) optsize {
   ;CHECK-LABEL: stack_fold_roundss
-  ;CHECK:       vroundss $1, {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 4-byte Folded Reload
+  ;CHECK:       vroundss $9, {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 4-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = call float @llvm.floor.f32(float %a0)
   ret float %2
