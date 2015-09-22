@@ -784,10 +784,6 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
 
 MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
                                               bool NewMI) const {
-
-  if (MI->getNumOperands() < 3)
-    return nullptr;
-
   int CommutedOpcode = commuteOpcode(*MI);
   if (CommutedOpcode == -1)
     return nullptr;
