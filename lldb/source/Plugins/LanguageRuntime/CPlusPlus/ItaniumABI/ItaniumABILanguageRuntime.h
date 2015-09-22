@@ -41,6 +41,10 @@ namespace lldb_private {
                                   Address &address,
                                   Value::ValueType &value_type);
         
+        virtual TypeAndOrName
+        FixUpDynamicType(const TypeAndOrName& type_and_or_name,
+                         const CompilerType& static_type);
+        
         virtual bool
         CouldHaveDynamicValue (ValueObject &in_value);
         

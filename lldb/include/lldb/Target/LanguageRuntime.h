@@ -59,6 +59,14 @@ public:
     // have a dynamic type.
     virtual bool
     CouldHaveDynamicValue (ValueObject &in_value) = 0;
+    
+    // The contract for GetDynamicTypeAndAddress() is to return a "bare-bones" dynamic type
+    // For instance, given a Base* pointer, GetDynamicTypeAndAddress() will return the type of
+    // Derived, not Derived*. The job of this API is to correct this misalignment between the
+    // static type and the discovered dynamic type
+    virtual TypeAndOrName
+    FixUpDynamicType(const TypeAndOrName& type_and_or_name,
+                     const CompilerType& static_type) = 0;
 
     virtual void
     SetExceptionBreakpoints ()

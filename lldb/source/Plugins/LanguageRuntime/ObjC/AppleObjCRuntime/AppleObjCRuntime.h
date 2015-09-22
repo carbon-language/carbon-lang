@@ -49,6 +49,10 @@ public:
                               Address &address,
                               Value::ValueType &value_type) override;
 
+    TypeAndOrName
+    FixUpDynamicType(const TypeAndOrName& type_and_or_name,
+                     const CompilerType& static_type) override;
+    
     // These are the ObjC specific functions.
     
     bool

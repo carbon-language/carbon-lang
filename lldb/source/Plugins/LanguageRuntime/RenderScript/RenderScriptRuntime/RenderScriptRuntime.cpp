@@ -313,6 +313,13 @@ RenderScriptRuntime::GetDynamicTypeAndAddress(ValueObject &in_value, lldb::Dynam
     return false;
 }
 
+TypeAndOrName
+RenderScriptRuntime::FixUpDynamicType(const TypeAndOrName& type_and_or_name,
+                                      const CompilerType& static_type)
+{
+    return type_and_or_name;
+}
+
 bool
 RenderScriptRuntime::CouldHaveDynamicValue(ValueObject &in_value)
 {

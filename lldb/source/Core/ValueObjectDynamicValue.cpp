@@ -138,40 +138,6 @@ ValueObjectDynamicValue::GetValueType() const
     return m_parent->GetValueType();
 }
 
-
-static TypeAndOrName
-FixupTypeAndOrName (const TypeAndOrName& type_andor_name,
-                    ValueObject& parent)
-{
-    TypeAndOrName ret(type_andor_name);
-    if (type_andor_name.HasType())
-    {
-        // The type will always be the type of the dynamic object.  If our parent's type was a pointer,
-        // then our type should be a pointer to the type of the dynamic object.  If a reference, then the original type
-        // should be okay...
-        CompilerType orig_type = type_andor_name.GetCompilerType();
-        CompilerType corrected_type = orig_type;
-        if (parent.IsPointerType())
-            corrected_type = orig_type.GetPointerType ();
-        else if (parent.IsPointerOrReferenceType())
-            corrected_type = orig_type.GetLValueReferenceType();
-        ret.SetCompilerType(corrected_type);
-    }
-    else /*if (m_dynamic_type_info.HasName())*/
-    {
-        // If we are here we need to adjust our dynamic type name to include the correct & or * symbol
-        std::string corrected_name (type_andor_name.GetName().GetCString());
-        if (parent.IsPointerType())
-            corrected_name.append(" *");
-        else if (parent.IsPointerOrReferenceType())
-            corrected_name.append(" &");
-        // the parent type should be a correctly pointer'ed or referenc'ed type
-        ret.SetCompilerType(parent.GetCompilerType());
-        ret.SetName(corrected_name.c_str());
-    }
-    return ret;
-}
-
 bool
 ValueObjectDynamicValue::UpdateValue ()
 {
@@ -211,25 +177,27 @@ ValueObjectDynamicValue::UpdateValue ()
     Address dynamic_address;
     bool found_dynamic_type = false;
     Value::ValueType value_type;
+    
+    LanguageRuntime *runtime = nullptr;
 
     lldb::LanguageType known_type = m_parent->GetObjectRuntimeLanguage();
     if (known_type != lldb::eLanguageTypeUnknown && known_type != lldb::eLanguageTypeC)
     {
-        LanguageRuntime *runtime = process->GetLanguageRuntime (known_type);
+        runtime = process->GetLanguageRuntime (known_type);
         if (runtime)
             found_dynamic_type = runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address, value_type);
     }
     else
     {
-        LanguageRuntime *cpp_runtime = process->GetLanguageRuntime (lldb::eLanguageTypeC_plus_plus);
-        if (cpp_runtime)
-            found_dynamic_type = cpp_runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address, value_type);
+        runtime = process->GetLanguageRuntime (lldb::eLanguageTypeC_plus_plus);
+        if (runtime)
+            found_dynamic_type = runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address, value_type);
 
         if (!found_dynamic_type)
         {
-            LanguageRuntime *objc_runtime = process->GetLanguageRuntime (lldb::eLanguageTypeObjC);
-            if (objc_runtime)
-                found_dynamic_type = objc_runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address, value_type);
+            runtime = process->GetLanguageRuntime (lldb::eLanguageTypeObjC);
+            if (runtime)
+                found_dynamic_type = runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address, value_type);
         }
     }
 
@@ -238,11 +206,12 @@ ValueObjectDynamicValue::UpdateValue ()
 
     m_update_point.SetUpdated();
 
-    if (found_dynamic_type)
+    if (runtime && found_dynamic_type)
     {
         if (class_type_or_name.HasType())
         {
-            m_type_impl = TypeImpl(m_parent->GetCompilerType(),FixupTypeAndOrName(class_type_or_name, *m_parent).GetCompilerType());
+            m_type_impl = TypeImpl(m_parent->GetCompilerType(),
+                                   runtime->FixUpDynamicType(class_type_or_name, m_parent->GetCompilerType()).GetCompilerType());
         }
         else
         {
@@ -301,7 +270,8 @@ ValueObjectDynamicValue::UpdateValue ()
         m_value.GetScalar() = load_address;
     }
 
-    m_dynamic_type_info = FixupTypeAndOrName(m_dynamic_type_info, *m_parent);
+    if (runtime)
+        m_dynamic_type_info = runtime->FixUpDynamicType(m_dynamic_type_info, m_parent->GetCompilerType());
 
     //m_value.SetContext (Value::eContextTypeClangType, corrected_type);
     m_value.SetCompilerType (m_dynamic_type_info.GetCompilerType());

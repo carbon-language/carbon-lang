@@ -270,6 +270,40 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
     return class_type_or_name.IsEmpty() == false;
 }
 
+TypeAndOrName
+ItaniumABILanguageRuntime::FixUpDynamicType(const TypeAndOrName& type_and_or_name, const CompilerType& static_type)
+{
+    Flags static_type_flags(static_type.GetTypeInfo());
+    
+    TypeAndOrName ret(type_and_or_name);
+    if (type_and_or_name.HasType())
+    {
+        // The type will always be the type of the dynamic object.  If our parent's type was a pointer,
+        // then our type should be a pointer to the type of the dynamic object.  If a reference, then the original type
+        // should be okay...
+        CompilerType orig_type = type_and_or_name.GetCompilerType();
+        CompilerType corrected_type = orig_type;
+        if (static_type_flags.AllSet(eTypeIsPointer))
+            corrected_type = orig_type.GetPointerType ();
+        else if (static_type_flags.AllSet(eTypeIsReference))
+            corrected_type = orig_type.GetLValueReferenceType();
+        ret.SetCompilerType(corrected_type);
+    }
+    else
+    {
+        // If we are here we need to adjust our dynamic type name to include the correct & or * symbol
+        std::string corrected_name (type_and_or_name.GetName().GetCString());
+        if (static_type_flags.AllSet(eTypeIsPointer))
+            corrected_name.append(" *");
+        else if (static_type_flags.AllSet(eTypeIsReference))
+            corrected_name.append(" &");
+        // the parent type should be a correctly pointer'ed or referenc'ed type
+        ret.SetCompilerType(static_type);
+        ret.SetName(corrected_name.c_str());
+    }
+    return ret;
+}
+
 bool
 ItaniumABILanguageRuntime::IsVTableName (const char *name)
 {
