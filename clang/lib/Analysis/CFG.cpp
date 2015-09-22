@@ -3101,11 +3101,11 @@ static bool shouldAddCase(bool &switchExclusivelyCovered,
         addCase = true;
         switchExclusivelyCovered = true;
       }
-      else if (condInt < lhsInt) {
+      else if (condInt > lhsInt) {
         if (const Expr *RHS = CS->getRHS()) {
           // Evaluate the RHS of the case value.
           const llvm::APSInt &V2 = RHS->EvaluateKnownConstInt(Ctx);
-          if (V2 <= condInt) {
+          if (V2 >= condInt) {
             addCase = true;
             switchExclusivelyCovered = true;
           }

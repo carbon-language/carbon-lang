@@ -99,6 +99,35 @@ public:
     return ProgramStatePair(StTrue, StFalse);
   }
 
+  virtual ProgramStateRef assumeWithinInclusiveRange(ProgramStateRef State,
+                                                     NonLoc Value,
+                                                     const llvm::APSInt &From,
+                                                     const llvm::APSInt &To,
+                                                     bool InBound) = 0;
+
+  virtual ProgramStatePair assumeWithinInclusiveRangeDual(
+      ProgramStateRef State, NonLoc Value, const llvm::APSInt &From,
+      const llvm::APSInt &To) {
+    ProgramStateRef StInRange = assumeWithinInclusiveRange(State, Value, From,
+                                                           To, true);
+
+    // If StTrue is infeasible, asserting the falseness of Cond is unnecessary
+    // because the existing constraints already establish this.
+    if (!StInRange)
+      return ProgramStatePair((ProgramStateRef)nullptr, State);
+
+    ProgramStateRef StOutOfRange = assumeWithinInclusiveRange(State, Value,
+                                                              From, To, false);
+    if (!StOutOfRange) {
+      // We are careful to return the original state, /not/ StTrue,
+      // because we want to avoid having callers generate a new node
+      // in the ExplodedGraph.
+      return ProgramStatePair(State, (ProgramStateRef)nullptr);
+    }
+
+    return ProgramStatePair(StInRange, StOutOfRange);
+  }
+
   /// \brief If a symbol is perfectly constrained to a constant, attempt
   /// to return the concrete value.
   ///

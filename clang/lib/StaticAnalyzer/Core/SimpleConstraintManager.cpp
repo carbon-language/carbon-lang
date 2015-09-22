@@ -190,6 +190,42 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
   } // end switch
 }
 
+ProgramStateRef SimpleConstraintManager::assumeWithinInclusiveRange(
+    ProgramStateRef State, NonLoc Value, const llvm::APSInt &From,
+    const llvm::APSInt &To, bool InRange) {
+
+  assert(From.isUnsigned() == To.isUnsigned() &&
+         From.getBitWidth() == To.getBitWidth() &&
+         "Values should have same types!");
+
+  if (!canReasonAbout(Value)) {
+    // Just add the constraint to the expression without trying to simplify.
+    SymbolRef Sym = Value.getAsSymExpr();
+    assert(Sym);
+    return assumeSymWithinInclusiveRange(State, Sym, From, To, InRange);
+  }
+
+  switch (Value.getSubKind()) {
+  default:
+    llvm_unreachable("'assumeWithinInclusiveRange' is not implemented"
+                     "for this NonLoc");
+
+  case nonloc::LocAsIntegerKind:
+  case nonloc::SymbolValKind: {
+    if (SymbolRef Sym = Value.getAsSymbol())
+      return assumeSymWithinInclusiveRange(State, Sym, From, To, InRange);
+    return State;
+  } // end switch
+
+  case nonloc::ConcreteIntKind: {
+    const llvm::APSInt &IntVal = Value.castAs<nonloc::ConcreteInt>().getValue();
+    bool IsInRange = IntVal >= From && IntVal <= To;
+    bool isFeasible = (IsInRange == InRange);
+    return isFeasible ? State : nullptr;
+  }
+  } // end switch
+}
+
 static void computeAdjustment(SymbolRef &Sym, llvm::APSInt &Adjustment) {
   // Is it a "($sym+constant1)" expression?
   if (const SymIntExpr *SE = dyn_cast<SymIntExpr>(Sym)) {
@@ -260,6 +296,37 @@ ProgramStateRef SimpleConstraintManager::assumeSymRel(ProgramStateRef state,
   case BO_LE:
     return assumeSymLE(state, Sym, ConvertedInt, Adjustment);
   } // end switch
+}
+
+ProgramStateRef
+SimpleConstraintManager::assumeSymWithinInclusiveRange(ProgramStateRef State,
+                                                       SymbolRef Sym,
+                                                       const llvm::APSInt &From,
+                                                       const llvm::APSInt &To,
+                                                       bool InRange) {
+  // Get the type used for calculating wraparound.
+  BasicValueFactory &BVF = getBasicVals();
+  APSIntType WraparoundType = BVF.getAPSIntType(Sym->getType());
+
+  llvm::APSInt Adjustment = WraparoundType.getZeroValue();
+  SymbolRef AdjustedSym = Sym;
+  computeAdjustment(AdjustedSym, Adjustment);
+
+  // Convert the right-hand side integer as necessary.
+  APSIntType ComparisonType = std::max(WraparoundType, APSIntType(From));
+  llvm::APSInt ConvertedFrom = ComparisonType.convert(From);
+  llvm::APSInt ConvertedTo = ComparisonType.convert(To);
+
+  // Prefer unsigned comparisons.
+  if (ComparisonType.getBitWidth() == WraparoundType.getBitWidth() &&
+      ComparisonType.isUnsigned() && !WraparoundType.isUnsigned())
+    Adjustment.setIsSigned(false);
+
+  if (InRange)
+    return assumeSymbolWithinInclusiveRange(State, AdjustedSym, ConvertedFrom,
+                                            ConvertedTo, Adjustment);
+  return assumeSymbolOutOfInclusiveRange(State, AdjustedSym, ConvertedFrom,
+                                         ConvertedTo, Adjustment);
 }
 
 } // end of namespace ento

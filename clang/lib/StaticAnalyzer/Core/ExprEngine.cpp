@@ -1784,47 +1784,24 @@ void ExprEngine::processSwitch(SwitchNodeBuilder& builder) {
     else
       V2 = V1;
 
-    // FIXME: Eventually we should replace the logic below with a range
-    //  comparison, rather than concretize the values within the range.
-    //  This should be easy once we have "ranges" for NonLVals.
+    ProgramStateRef StateCase;
+    if (Optional<NonLoc> NL = CondV.getAs<NonLoc>())
+      std::tie(StateCase, DefaultSt) =
+          DefaultSt->assumeWithinInclusiveRange(*NL, V1, V2);
+    else // UnknownVal
+      StateCase = DefaultSt;
 
-    do {
-      nonloc::ConcreteInt CaseVal(getBasicVals().getValue(V1));
-      DefinedOrUnknownSVal Res = svalBuilder.evalEQ(DefaultSt ? DefaultSt : state,
-                                               CondV, CaseVal);
+    if (StateCase)
+      builder.generateCaseStmtNode(I, StateCase);
 
-      // Now "assume" that the case matches.
-      if (ProgramStateRef stateNew = state->assume(Res, true)) {
-        builder.generateCaseStmtNode(I, stateNew);
-
-        // If CondV evaluates to a constant, then we know that this
-        // is the *only* case that we can take, so stop evaluating the
-        // others.
-        if (CondV.getAs<nonloc::ConcreteInt>())
-          return;
-      }
-
-      // Now "assume" that the case doesn't match.  Add this state
-      // to the default state (if it is feasible).
-      if (DefaultSt) {
-        if (ProgramStateRef stateNew = DefaultSt->assume(Res, false)) {
-          defaultIsFeasible = true;
-          DefaultSt = stateNew;
-        }
-        else {
-          defaultIsFeasible = false;
-          DefaultSt = nullptr;
-        }
-      }
-
-      // Concretize the next value in the range.
-      if (V1 == V2)
-        break;
-
-      ++V1;
-      assert (V1 <= V2);
-
-    } while (true);
+    // Now "assume" that the case doesn't match.  Add this state
+    // to the default state (if it is feasible).
+    if (DefaultSt)
+      defaultIsFeasible = true;
+    else {
+      defaultIsFeasible = false;
+      break;
+    }
   }
 
   if (!defaultIsFeasible)

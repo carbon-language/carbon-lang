@@ -190,6 +190,27 @@ public:
                                DefinedOrUnknownSVal upperBound,
                                bool assumption,
                                QualType IndexType = QualType()) const;
+
+  /// Assumes that the value of \p Val is bounded with [\p From; \p To]
+  /// (if \p assumption is "true") or it is fully out of this range
+  /// (if \p assumption is "false").
+  ///
+  /// This returns a new state with the added constraint on \p cond.
+  /// If no new state is feasible, NULL is returned.
+  ProgramStateRef assumeWithinInclusiveRange(DefinedOrUnknownSVal Val,
+                                             const llvm::APSInt &From,
+                                             const llvm::APSInt &To,
+                                             bool assumption) const;
+
+  /// Assumes given range both "true" and "false" for \p Val, and returns both
+  /// corresponding states (respectively).
+  ///
+  /// This is more efficient than calling assume() twice. Note that one (but not
+  /// both) of the returned states may be NULL.
+  std::pair<ProgramStateRef, ProgramStateRef>
+  assumeWithinInclusiveRange(DefinedOrUnknownSVal Val, const llvm::APSInt &From,
+                             const llvm::APSInt &To) const;
+
   
   /// \brief Check if the given SVal is constrained to zero or is a zero
   ///        constant.
@@ -634,6 +655,33 @@ ProgramState::assume(DefinedOrUnknownSVal Cond) const {
 
   return getStateManager().ConstraintMgr
       ->assumeDual(this, Cond.castAs<DefinedSVal>());
+}
+
+inline ProgramStateRef
+ProgramState::assumeWithinInclusiveRange(DefinedOrUnknownSVal Val,
+                                         const llvm::APSInt &From,
+                                         const llvm::APSInt &To,
+                                         bool Assumption) const {
+  if (Val.isUnknown())
+    return this;
+
+  assert(Val.getAs<NonLoc>() && "Only NonLocs are supported!");
+
+  return getStateManager().ConstraintMgr->assumeWithinInclusiveRange(
+        this, Val.castAs<NonLoc>(), From, To, Assumption);
+}
+
+inline std::pair<ProgramStateRef, ProgramStateRef>
+ProgramState::assumeWithinInclusiveRange(DefinedOrUnknownSVal Val,
+                                         const llvm::APSInt &From,
+                                         const llvm::APSInt &To) const {
+  if (Val.isUnknown())
+    return std::make_pair(this, this);
+
+  assert(Val.getAs<NonLoc>() && "Only NonLocs are supported!");
+
+  return getStateManager().ConstraintMgr
+      ->assumeWithinInclusiveRangeDual(this, Val.castAs<NonLoc>(), From, To);
 }
 
 inline ProgramStateRef ProgramState::bindLoc(SVal LV, SVal V) const {
