@@ -505,10 +505,9 @@ private:
                     llvm::DenseSet<Stmt *> &ParentStmts);
 
   void WriteBlockInfoBlock();
-  void WriteControlBlock(Preprocessor &PP, ASTContext &Context,
-                         StringRef isysroot, const std::string &OutputFile);
-  void WriteInputFiles(SourceManager &SourceMgr,
-                       HeaderSearchOptions &HSOpts,
+  uint64_t WriteControlBlock(Preprocessor &PP, ASTContext &Context,
+                             StringRef isysroot, const std::string &OutputFile);
+  void WriteInputFiles(SourceManager &SourceMgr, HeaderSearchOptions &HSOpts,
                        bool Modules);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
                                const Preprocessor &PP);
@@ -572,9 +571,9 @@ private:
   void WriteDecl(ASTContext &Context, Decl *D);
   void AddFunctionDefinition(const FunctionDecl *FD, RecordData &Record);
 
-  void WriteASTCore(Sema &SemaRef,
-                    StringRef isysroot, const std::string &OutputFile,
-                    Module *WritingModule);
+  uint64_t WriteASTCore(Sema &SemaRef,
+                        StringRef isysroot, const std::string &OutputFile,
+                        Module *WritingModule);
 
 public:
   /// \brief Create a new precompiled header writer that outputs to
@@ -600,10 +599,12 @@ public:
   /// \param isysroot if non-empty, write a relocatable file whose headers
   /// are relative to the given system root. If we're writing a module, its
   /// build directory will be used in preference to this if both are available.
-  void WriteAST(Sema &SemaRef,
-                const std::string &OutputFile,
-                Module *WritingModule, StringRef isysroot,
-                bool hasErrors = false);
+  ///
+  /// \return the module signature, which eventually will be a hash of
+  /// the module but currently is merely a random 32-bit number.
+  uint64_t WriteAST(Sema &SemaRef, const std::string &OutputFile,
+                    Module *WritingModule, StringRef isysroot,
+                    bool hasErrors = false);
 
   /// \brief Emit a token.
   void AddToken(const Token &Tok, RecordDataImpl &Record);
