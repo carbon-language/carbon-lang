@@ -12,6 +12,10 @@
  *===------------------------------------------------------------------------===
  */
 
+#ifndef __has_include
+#define __has_include(inc) 0
+#endif
+
 #if __has_include(<stdatomic.h>)
 
 #include <stdatomic.h>
