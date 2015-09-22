@@ -88,6 +88,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -6987,24 +6988,12 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
                     LoopContinuePredicate->getSuccessor(0) != L->getHeader()))
     return true;
 
-  struct ClearWalkingBEDominatingCondsOnExit {
-    ScalarEvolution &SE;
-
-    explicit ClearWalkingBEDominatingCondsOnExit(ScalarEvolution &SE)
-        : SE(SE){}
-
-    ~ClearWalkingBEDominatingCondsOnExit() {
-      SE.WalkingBEDominatingConds = false;
-    }
-  };
-
   // We don't want more than one activation of the following loops on the stack
   // -- that can lead to O(n!) time complexity.
   if (WalkingBEDominatingConds)
     return false;
 
-  WalkingBEDominatingConds = true;
-  ClearWalkingBEDominatingCondsOnExit ClearOnExit(*this);
+  SaveAndRestore<bool> ClearOnExit(WalkingBEDominatingConds, true);
 
   // Check conditions due to any @llvm.assume intrinsics.
   for (auto &AssumeVH : AC.assumptions()) {
