@@ -1,5 +1,6 @@
-import time 
 import curses, curses.panel
+import sys
+import time 
 
 class Point(object):
     def __init__(self, x, y):
@@ -57,9 +58,67 @@ class Rect(object):
         return False
 
 class Window(object):
-    def __init__(self, window):
+    def __init__(self, window, delegate = None, can_become_first_responder = True):
         self.window = window
+        self.parent = None
+        self.delegate = delegate
+        self.children = list()
+        self.first_responder = None
+        self.can_become_first_responder = can_become_first_responder
+    
+    def add_child(self, window):
+        self.children.append(window)
+        window.parent = self
+    
+    def remove_child(self, window):
+        self.children.remove(window)
+    
+    def set_first_responder(self, window):
+        if window.can_become_first_responder:
+            if callable(getattr(window, "hidden", None)) and window.hidden():
+                return False
+            if not window in self.children:
+                self.add_child(window)
+            self.first_responder = window
+            return True
+        else:
+            return False
+    
+    def resign_first_responder(self, remove_from_parent, new_first_responder):   
+        success = False
+        if self.parent:
+            if self.is_first_responder():
+                self.parent.first_responder = None
+                success = True
+            if remove_from_parent:
+                self.parent.remove_child(self)
+            if new_first_responder:
+                self.parent.set_first_responder(new_first_responder)
+            else:
+                self.parent.select_next_first_responder()
+        return success
 
+    def is_first_responder(self):
+        if self.parent:
+            return self.parent.first_responder == self
+        else:
+            return False
+
+    def select_next_first_responder(self):
+        num_children = len(self.children)
+        if num_children == 1:
+            return self.set_first_responder(self.children[0])
+        for (i,window) in enumerate(self.children):
+            if window.is_first_responder():
+                break
+        if i < num_children:
+            for i in range(i+1,num_children):
+                if self.set_first_responder(self.children[i]):
+                    return True
+            for i in range(0, i):
+                if self.set_first_responder(self.children[i]):
+                    return True
+            
     def point_in_window(self, pt):
         size = self.get_size()
         return pt.x >= 0 and pt.x < size.w and pt.y >= 0 and pt.y < size.h
@@ -76,8 +135,18 @@ class Window(object):
         except:
             pass
 
-    def box(self):
-        self.window.box()
+    def attron(self, attr):
+        return self.window.attron (attr)
+
+    def attroff(self, attr):
+        return self.window.attroff (attr)
+
+    def box(self, vertch=0, horch=0):
+        if vertch == 0:
+            vertch = curses.ACS_VLINE
+        if horch == 0: 
+            horch = curses.ACS_HLINE
+        self.window.box(vertch, horch)
 
     def get_contained_rect(self, top_inset=0, bottom_inset=0, left_inset=0, right_inset=0, height=-1, width=-1):
         '''Get a rectangle based on the top "height" lines of this window'''
@@ -111,20 +180,78 @@ class Window(object):
         return Size(w=x, h=y)
     
     def refresh(self):
+        self.update()
         curses.panel.update_panels()
         return self.window.refresh()
         
     def resize(self, size):
-        return window.resize(size.h, size.w)
+        return self.window.resize(size.h, size.w)
     
+    def timeout(self, timeout_msec):
+        return self.window.timeout(timeout_msec)
+
+    def handle_key(self, key, check_parent=True):
+        '''Handle a key press in this window.'''
+        
+        # First try the first responder if this window has one, but don't allow
+        # it to check with its parent (False second parameter) so we don't recurse
+        # and get a stack overflow
+        if self.first_responder:
+            if self.first_responder.handle_key(key, False):
+                return True       
+           
+        # Check if the window delegate wants to handle this key press
+        if self.delegate:      
+            if callable(getattr(self.delegate, "handle_key", None)):
+                if self.delegate.handle_key(self, key):
+                    return True
+            if self.delegate(self, key):
+                return True
+        # Check if we have a parent window and if so, let the parent 
+        # window handle the key press
+        if check_parent and self.parent:
+            return self.parent.handle_key(key, True)
+        else:
+            return False # Key not handled
+
+    def update(self):
+        for child in self.children:
+            child.update()
+
+    def key_event_loop(self, timeout_msec=-1, n=sys.maxint):
+        '''Run an event loop to receive key presses and pass them along to the
+           responder chain.
+           
+           timeout_msec is the timeout it milliseconds. If the value is -1, an
+           infinite wait will be used. It the value is zero, a non-blocking mode
+           will be used, and if greater than zero it will wait for a key press
+           for timeout_msec milliseconds.
+           
+           n is the number of times to go through the event loop before exiting'''
+        self.timeout(timeout_msec)
+        while n > 0:
+            c = self.window.getch()
+            if c != -1:
+                self.handle_key(c)
+            n -= 1
+
 class Panel(Window):
-    def __init__(self, frame):
+    def __init__(self, frame, delegate = None, can_become_first_responder = True):
         window = curses.newwin(frame.size.h,frame.size.w, frame.origin.y, frame.origin.x)
-        super(Panel, self).__init__(window)
+        super(Panel, self).__init__(window, delegate, can_become_first_responder)
         self.panel = curses.panel.new_panel(window)
 
+    def hide(self):
+        return self.panel.hide()
+
+    def hidden(self):
+        return self.panel.hidden()
+
+    def show(self):
+        return self.panel.show()
+
     def top(self):
-        self.panel.top()
+        return self.panel.top()
     
     def set_position(self, pt):
         self.panel.move(pt.y, pt.x)
@@ -136,11 +263,12 @@ class Panel(Window):
         self.set_position(new_position)
 
 class BoxedPanel(Panel):
-    def __init__(self, frame, title):
-        super(BoxedPanel, self).__init__(frame)
+    def __init__(self, frame, title, delegate = None, can_become_first_responder = True):
+        super(BoxedPanel, self).__init__(frame, delegate, can_become_first_responder)
         self.title = title
         self.lines = list()
         self.first_visible_idx = 0
+        self.selected_idx = -1
         self.update()
 
     def get_usable_width(self):
@@ -174,6 +302,42 @@ class BoxedPanel(Panel):
         if update:
             self.update()
 
+    def scroll_begin (self):
+        self.first_visible_idx = 0
+        if len(self.lines) > 0:
+            self.selected_idx = 0
+        else:
+            self.selected_idx = -1
+        self.update()
+
+    def scroll_end (self):
+        max_visible_lines = self.get_usable_height()
+        num_lines = len(self.lines)
+        if max_visible_lines > num_lines:
+            self.first_visible_idx = num_lines - max_visible_lines
+        else:
+            self.first_visible_idx = 0
+        self.selected_idx = num_lines-1
+        self.update()
+        
+    def select_next (self):
+        self.selected_idx += 1
+        if self.selected_idx >= len(self.lines):
+            self.selected_idx = len(self.lines) - 1
+        self.update()
+        
+    def select_prev (self):
+        self.selected_idx -= 1
+        if self.selected_idx < 0:
+            if len(self.lines) > 0:
+                self.selected_idx = 0
+            else:
+                self.selected_idx = -1
+        self.update()
+
+    def get_selected_idx(self):
+        return self.selected_idx
+    
     def _adjust_first_visible_line(self):
         num_lines = len(self.lines)
         max_visible_lines = self.get_usable_height()
@@ -199,20 +363,30 @@ class BoxedPanel(Panel):
     
     def update(self):
         self.erase()
+        is_first_responder = self.is_first_responder()
+        if is_first_responder:
+            self.attron (curses.A_REVERSE)
         self.box()
+        if is_first_responder:
+            self.attroff (curses.A_REVERSE)
         if self.title:
             self.addstr(Point(x=2, y=0), ' ' + self.title + ' ')
         max_width = self.get_usable_width()
         for line_idx in range(self.first_visible_idx, len(self.lines)):
             pt = self.get_point_for_line(line_idx)
             if pt.is_valid_coordinate():
+                is_selected = line_idx == self.selected_idx
+                if is_selected:
+                    self.attron (curses.A_REVERSE)
                 self.addnstr(pt, self.lines[line_idx], max_width)
+                if is_selected:
+                    self.attroff (curses.A_REVERSE)
             else:
                 return
 
 class StatusPanel(Panel):
     def __init__(self, frame):
-        super(StatusPanel, self).__init__(frame)
+        super(StatusPanel, self).__init__(frame, delegate=None, can_become_first_responder=False)
         self.status_items = list()
         self.status_dicts = dict()
         self.next_status_x = 1
