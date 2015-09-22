@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -std=c++11 %s -o %t && %run %t 2>&1
+// RUN: %clangxx_asan -std=c++11 -pthread %s -o %t && %run %t 2>&1
 // Regression test for the versioned pthread_create interceptor on linux/i386.
 // pthread_attr_init is not intercepted and binds to the new abi
 // pthread_create is intercepted; dlsym always returns the oldest version.
