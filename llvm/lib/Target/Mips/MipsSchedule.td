@@ -176,6 +176,7 @@ def II_SWR              : InstrItinClass;
 def II_SWRE             : InstrItinClass;
 def II_SWXC1            : InstrItinClass;
 def II_TRUNC            : InstrItinClass;
+def II_WSBH             : InstrItinClass;
 def II_XOR              : InstrItinClass;
 def II_XORI             : InstrItinClass;
 
