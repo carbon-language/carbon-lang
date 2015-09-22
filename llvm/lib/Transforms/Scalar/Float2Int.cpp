@@ -138,7 +138,7 @@ void Float2Int::findRoots(Function &F, SmallPtrSet<Instruction*,8> &Roots) {
       Roots.insert(&I);
       break;
     case Instruction::FCmp:
-      if (mapFCmpPred(cast<CmpInst>(&I)->getPredicate()) != 
+      if (mapFCmpPred(cast<CmpInst>(&I)->getPredicate()) !=
           CmpInst::BAD_ICMP_PREDICATE)
         Roots.insert(&I);
       break;
@@ -234,7 +234,7 @@ void Float2Int::walkBackwards(const SmallPtrSetImpl<Instruction*> &Roots) {
         ECs.unionSets(I, OI);
         if (SeenInsts.find(I)->second != badRange())
           Worklist.push_back(OI);
-      } else if (!isa<ConstantFP>(O)) {      
+      } else if (!isa<ConstantFP>(O)) {
         // Not an instruction or ConstantFP? we can't do anything.
         seen(I, badRange());
       }
@@ -350,7 +350,7 @@ void Float2Int::walkForwards() {
 
     // Reduce the operands' ranges to a single range and return.
     if (!Abort)
-      seen(I, Op(OpRanges));    
+      seen(I, Op(OpRanges));
   }
 }
 

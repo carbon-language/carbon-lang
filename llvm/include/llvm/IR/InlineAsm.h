@@ -122,8 +122,8 @@ public:
 
     /// isEarlyClobber - "&": output operand writes result before inputs are all
     /// read.  This is only ever set for an output operand.
-    bool isEarlyClobber; 
-    
+    bool isEarlyClobber;
+
     /// MatchingInput - If this is not -1, this is an output constraint where an
     /// input constraint is required to match it (e.g. "0").  The value is the
     /// constraint number that matches this one (for example, if this is

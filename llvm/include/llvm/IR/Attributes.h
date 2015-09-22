@@ -287,13 +287,13 @@ public:
   /// \brief Remove the specified attribute at the specified index from this
   /// attribute list. Because attribute lists are immutable, this returns the
   /// new list.
-  AttributeSet removeAttribute(LLVMContext &C, unsigned Index, 
+  AttributeSet removeAttribute(LLVMContext &C, unsigned Index,
                                Attribute::AttrKind Attr) const;
 
   /// \brief Remove the specified attributes at the specified index from this
   /// attribute list. Because attribute lists are immutable, this returns the
   /// new list.
-  AttributeSet removeAttributes(LLVMContext &C, unsigned Index, 
+  AttributeSet removeAttributes(LLVMContext &C, unsigned Index,
                                 AttributeSet Attrs) const;
 
   /// \brief Remove the specified attributes at the specified index from this

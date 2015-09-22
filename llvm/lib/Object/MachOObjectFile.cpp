@@ -278,7 +278,7 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
         return;
       }
       LinkOptHintsLoadCmd = Load.Ptr;
-    } else if (Load.C.cmd == MachO::LC_DYLD_INFO || 
+    } else if (Load.C.cmd == MachO::LC_DYLD_INFO ||
                Load.C.cmd == MachO::LC_DYLD_INFO_ONLY) {
       // Multiple dyldinfo load commands
       if (DyldInfoLoadCmd) {
@@ -1235,7 +1235,7 @@ bool ExportEntry::operator==(const ExportEntry &Other) const {
     if (Stack[i].Start != Other.Stack[i].Start)
       return false;
   }
-  return true;  
+  return true;
 }
 
 uint64_t ExportEntry::readULEB128(const uint8_t *&Ptr) {
@@ -1296,7 +1296,7 @@ void ExportEntry::pushNode(uint64_t offset) {
     } else {
       State.Address = readULEB128(State.Current);
       if (State.Flags & MachO::EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER)
-        State.Other = readULEB128(State.Current); 
+        State.Other = readULEB128(State.Current);
     }
   }
   State.ChildCount = *Children;
@@ -1366,7 +1366,7 @@ void ExportEntry::moveNext() {
   Done = true;
 }
 
-iterator_range<export_iterator> 
+iterator_range<export_iterator>
 MachOObjectFile::exports(ArrayRef<uint8_t> Trie) {
   ExportEntry Start(Trie);
   if (Trie.size() == 0)
@@ -1377,7 +1377,7 @@ MachOObjectFile::exports(ArrayRef<uint8_t> Trie) {
   ExportEntry Finish(Trie);
   Finish.moveToEnd();
 
-  return iterator_range<export_iterator>(export_iterator(Start), 
+  return iterator_range<export_iterator>(export_iterator(Start),
                                          export_iterator(Finish));
 }
 
@@ -2197,7 +2197,7 @@ MachOObjectFile::getLinkOptHintsLoadCommand() const {
 }
 
 ArrayRef<uint8_t> MachOObjectFile::getDyldInfoRebaseOpcodes() const {
-  if (!DyldInfoLoadCmd) 
+  if (!DyldInfoLoadCmd)
     return None;
 
   MachO::dyld_info_command DyldInfo =
@@ -2208,7 +2208,7 @@ ArrayRef<uint8_t> MachOObjectFile::getDyldInfoRebaseOpcodes() const {
 }
 
 ArrayRef<uint8_t> MachOObjectFile::getDyldInfoBindOpcodes() const {
-  if (!DyldInfoLoadCmd) 
+  if (!DyldInfoLoadCmd)
     return None;
 
   MachO::dyld_info_command DyldInfo =
@@ -2219,7 +2219,7 @@ ArrayRef<uint8_t> MachOObjectFile::getDyldInfoBindOpcodes() const {
 }
 
 ArrayRef<uint8_t> MachOObjectFile::getDyldInfoWeakBindOpcodes() const {
-  if (!DyldInfoLoadCmd) 
+  if (!DyldInfoLoadCmd)
     return None;
 
   MachO::dyld_info_command DyldInfo =
@@ -2230,7 +2230,7 @@ ArrayRef<uint8_t> MachOObjectFile::getDyldInfoWeakBindOpcodes() const {
 }
 
 ArrayRef<uint8_t> MachOObjectFile::getDyldInfoLazyBindOpcodes() const {
-  if (!DyldInfoLoadCmd) 
+  if (!DyldInfoLoadCmd)
     return None;
 
   MachO::dyld_info_command DyldInfo =
@@ -2241,7 +2241,7 @@ ArrayRef<uint8_t> MachOObjectFile::getDyldInfoLazyBindOpcodes() const {
 }
 
 ArrayRef<uint8_t> MachOObjectFile::getDyldInfoExportsTrie() const {
-  if (!DyldInfoLoadCmd) 
+  if (!DyldInfoLoadCmd)
     return None;
 
   MachO::dyld_info_command DyldInfo =

@@ -1078,8 +1078,8 @@ void PPCLinuxAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
 void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
   // linux/ppc32 - Normal entry label.
-  if (!Subtarget->isPPC64() && 
-      (TM.getRelocationModel() != Reloc::PIC_ || 
+  if (!Subtarget->isPPC64() &&
+      (TM.getRelocationModel() != Reloc::PIC_ ||
        MF->getFunction()->getParent()->getPICLevel() == PICLevel::Small))
     return AsmPrinter::EmitFunctionEntryLabel();
 
@@ -1570,7 +1570,7 @@ createPPCAsmPrinterPass(TargetMachine &tm,
 }
 
 // Force static initialization.
-extern "C" void LLVMInitializePowerPCAsmPrinter() { 
+extern "C" void LLVMInitializePowerPCAsmPrinter() {
   TargetRegistry::RegisterAsmPrinter(ThePPC32Target, createPPCAsmPrinterPass);
   TargetRegistry::RegisterAsmPrinter(ThePPC64Target, createPPCAsmPrinterPass);
   TargetRegistry::RegisterAsmPrinter(ThePPC64LETarget, createPPCAsmPrinterPass);

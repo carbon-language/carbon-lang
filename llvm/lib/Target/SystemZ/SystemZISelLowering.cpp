@@ -2844,7 +2844,7 @@ SDValue SystemZTargetLowering::lowerSDIVREM(SDValue Op,
   } else if (DAG.ComputeNumSignBits(Op1) > 32) {
     Op1 = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Op1);
     Opcode = SystemZISD::SDIVREM32;
-  } else    
+  } else
     Opcode = SystemZISD::SDIVREM64;
 
   // DSG(F) takes a 64-bit dividend, so the even register in the GR128

@@ -49,7 +49,7 @@ public:
 
   /// emitInstructionAnnot - This may be implemented to emit a string right
   /// before an instruction is emitted.
-  virtual void emitInstructionAnnot(const Instruction *, 
+  virtual void emitInstructionAnnot(const Instruction *,
                                     formatted_raw_ostream &) {}
 
   /// printInfoComment - This may be implemented to emit a comment to the

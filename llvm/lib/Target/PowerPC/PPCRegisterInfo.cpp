@@ -262,7 +262,7 @@ unsigned PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   default:
     return 0;
   case PPC::G8RC_NOX0RegClassID:
-  case PPC::GPRC_NOR0RegClassID: 
+  case PPC::GPRC_NOR0RegClassID:
   case PPC::G8RCRegClassID:
   case PPC::GPRCRegClassID: {
     unsigned FP = TFI->hasFP(MF) ? 1 : 0;

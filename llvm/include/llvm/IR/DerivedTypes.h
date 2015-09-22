@@ -279,8 +279,8 @@ public:
 
   /// isLayoutIdentical - Return true if this is layout identical to the
   /// specified struct.
-  bool isLayoutIdentical(StructType *Other) const;  
-  
+  bool isLayoutIdentical(StructType *Other) const;
+
   /// Random access to the elements
   unsigned getNumElements() const { return NumContainedTys; }
   Type *getElementType(unsigned N) const {

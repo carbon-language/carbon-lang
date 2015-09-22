@@ -184,7 +184,7 @@ public:
 
   /// isIntegerTy - True if this is an instance of IntegerType.
   ///
-  bool isIntegerTy() const { return getTypeID() == IntegerTyID; } 
+  bool isIntegerTy() const { return getTypeID() == IntegerTyID; }
 
   /// isIntegerTy - Return true if this is an IntegerType of the given width.
   bool isIntegerTy(unsigned Bitwidth) const;

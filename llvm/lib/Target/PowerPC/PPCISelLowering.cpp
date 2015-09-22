@@ -7339,7 +7339,7 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpequb_p: CompareOpc =   6; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpequh_p: CompareOpc =  70; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpequw_p: CompareOpc = 134; isDot = 1; break;
-  case Intrinsic::ppc_altivec_vcmpequd_p: 
+  case Intrinsic::ppc_altivec_vcmpequd_p:
     if (Subtarget.hasP8Altivec()) {
       CompareOpc = 199;
       isDot = 1;
@@ -7352,7 +7352,7 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpgtsb_p: CompareOpc = 774; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtsh_p: CompareOpc = 838; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtsw_p: CompareOpc = 902; isDot = 1; break;
-  case Intrinsic::ppc_altivec_vcmpgtsd_p: 
+  case Intrinsic::ppc_altivec_vcmpgtsd_p:
     if (Subtarget.hasP8Altivec()) {
       CompareOpc = 967;
       isDot = 1;
@@ -7363,7 +7363,7 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpgtub_p: CompareOpc = 518; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtuh_p: CompareOpc = 582; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtuw_p: CompareOpc = 646; isDot = 1; break;
-  case Intrinsic::ppc_altivec_vcmpgtud_p: 
+  case Intrinsic::ppc_altivec_vcmpgtud_p:
     if (Subtarget.hasP8Altivec()) {
       CompareOpc = 711;
       isDot = 1;
@@ -7371,7 +7371,7 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
       return false;
 
     break;
-      
+
     // Normal Comparisons.
   case Intrinsic::ppc_altivec_vcmpbfp:    CompareOpc = 966; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpeqfp:   CompareOpc = 198; isDot = 0; break;
@@ -7391,7 +7391,7 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpgtsb:   CompareOpc = 774; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtsh:   CompareOpc = 838; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtsw:   CompareOpc = 902; isDot = 0; break;
-  case Intrinsic::ppc_altivec_vcmpgtsd:   
+  case Intrinsic::ppc_altivec_vcmpgtsd:
     if (Subtarget.hasP8Altivec()) {
       CompareOpc = 967;
       isDot = 0;
@@ -7402,7 +7402,7 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpgtub:   CompareOpc = 518; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtuh:   CompareOpc = 582; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtuw:   CompareOpc = 646; isDot = 0; break;
-  case Intrinsic::ppc_altivec_vcmpgtud:   
+  case Intrinsic::ppc_altivec_vcmpgtud:
     if (Subtarget.hasP8Altivec()) {
       CompareOpc = 711;
       isDot = 0;
@@ -7548,7 +7548,7 @@ SDValue PPCTargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
   FPHalfs = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4f64,
                         FPHalfs, FPHalfs, FPHalfs, FPHalfs);
 
-  Value = DAG.getNode(ISD::FMA, dl, MVT::v4f64, Value, FPHalfs, FPHalfs); 
+  Value = DAG.getNode(ISD::FMA, dl, MVT::v4f64, Value, FPHalfs, FPHalfs);
 
   // Now convert to an integer and store.
   Value = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::v4f64,
@@ -7765,7 +7765,7 @@ SDValue PPCTargetLowering::LowerVectorStore(SDValue Op,
   FPHalfs = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4f64,
                         FPHalfs, FPHalfs, FPHalfs, FPHalfs);
 
-  Value = DAG.getNode(ISD::FMA, dl, MVT::v4f64, Value, FPHalfs, FPHalfs); 
+  Value = DAG.getNode(ISD::FMA, dl, MVT::v4f64, Value, FPHalfs, FPHalfs);
 
   // Now convert to an integer and store.
   Value = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::v4f64,
@@ -7984,7 +7984,7 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
                                  N->getValueType(0));
     SDVTList VTs = DAG.getVTList(SVT, MVT::Other);
     SDValue NewInt = DAG.getNode(N->getOpcode(), dl, VTs, N->getOperand(0),
-                                 N->getOperand(1)); 
+                                 N->getOperand(1));
 
     Results.push_back(NewInt);
     Results.push_back(NewInt.getValue(1));
@@ -9520,7 +9520,7 @@ SDValue PPCTargetLowering::DAGCombineTruncBoolExt(SDNode *N,
             BinOp.getOperand(i).getOpcode() == ISD::ANY_EXTEND) &&
            BinOp.getOperand(i).getOperand(0).getValueType() == MVT::i1) ||
           isa<ConstantSDNode>(BinOp.getOperand(i))) {
-        Inputs.push_back(BinOp.getOperand(i)); 
+        Inputs.push_back(BinOp.getOperand(i));
       } else if (BinOp.getOperand(i).getOpcode() == ISD::AND ||
                  BinOp.getOperand(i).getOpcode() == ISD::OR  ||
                  BinOp.getOperand(i).getOpcode() == ISD::XOR ||
@@ -9600,7 +9600,7 @@ SDValue PPCTargetLowering::DAGCombineTruncBoolExt(SDNode *N,
     if (isa<ConstantSDNode>(Inputs[i]))
       continue;
     else
-      DAG.ReplaceAllUsesOfValueWith(Inputs[i], Inputs[i].getOperand(0)); 
+      DAG.ReplaceAllUsesOfValueWith(Inputs[i], Inputs[i].getOperand(0));
   }
 
   // Replace all operations (these are all the same, but have a different
@@ -9729,7 +9729,7 @@ SDValue PPCTargetLowering::DAGCombineExtBoolTrunc(SDNode *N,
 
       if (BinOp.getOperand(i).getOpcode() == ISD::TRUNCATE ||
           isa<ConstantSDNode>(BinOp.getOperand(i))) {
-        Inputs.push_back(BinOp.getOperand(i)); 
+        Inputs.push_back(BinOp.getOperand(i));
       } else if (BinOp.getOperand(i).getOpcode() == ISD::AND ||
                  BinOp.getOperand(i).getOpcode() == ISD::OR  ||
                  BinOp.getOperand(i).getOpcode() == ISD::XOR ||
@@ -10151,7 +10151,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     break;
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
-  case ISD::ANY_EXTEND: 
+  case ISD::ANY_EXTEND:
     return DAGCombineExtBoolTrunc(N, DCI);
   case ISD::TRUNCATE:
   case ISD::SETCC:
