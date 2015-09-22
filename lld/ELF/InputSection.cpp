@@ -50,7 +50,7 @@ void InputSection<ELFT>::relocateOne(uint8_t *Buf, const Elf_Rela &Rel,
   switch (Type) {
   case R_X86_64_PC32:
     support::endian::write32le(Location,
-                               SymVA + (Rel.r_addend - (BaseAddr + Offset)));
+                               SymVA + Rel.r_addend - (BaseAddr + Offset));
     break;
   case R_X86_64_64:
     support::endian::write64le(Location, SymVA + Rel.r_addend);
