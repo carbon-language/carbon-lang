@@ -2252,9 +2252,8 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
   // Append default arguments to "ins[bwld]"
   if (Name.startswith("ins") && Operands.size() == 1 &&
-      (Name == "insb" || Name == "insw" || Name == "insl" ||
-       Name == "insd" )) {
-    AddDefaultSrcDestOperands(Operands, 
+      (Name == "insb" || Name == "insw" || Name == "insl" || Name == "insd")) {
+    AddDefaultSrcDestOperands(Operands,
                               X86Operand::CreateReg(X86::DX, NameLoc, NameLoc),
                               DefaultMemDIOperand(NameLoc));
   }

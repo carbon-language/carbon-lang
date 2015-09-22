@@ -300,10 +300,8 @@ public:
     return AttributeSets.hasAttribute(AttributeSet::FunctionIndex,
                                       Attribute::ArgMemOnly);
   }
-  void setOnlyAccessesArgMemory() {
-    addFnAttr(Attribute::ArgMemOnly);
-  }
-  
+  void setOnlyAccessesArgMemory() { addFnAttr(Attribute::ArgMemOnly); }
+
   /// @brief Determine if the function cannot return.
   bool doesNotReturn() const {
     return AttributeSets.hasAttribute(AttributeSet::FunctionIndex,
@@ -397,10 +395,8 @@ public:
   }
 
   /// Optimize this function for minimum size (-Oz).
-  bool optForMinSize() const {
-    return hasFnAttribute(Attribute::MinSize);
-  };
-  
+  bool optForMinSize() const { return hasFnAttribute(Attribute::MinSize); };
+
   /// Optimize this function for size (-Os) or minimum size (-Oz).
   bool optForSize() const {
     return hasFnAttribute(Attribute::OptimizeForSize) || optForMinSize();

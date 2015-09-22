@@ -55,8 +55,7 @@ DemandedBits::DemandedBits() : FunctionPass(ID) {
   initializeDemandedBitsPass(*PassRegistry::getPassRegistry());
 }
 
-
-void DemandedBits::getAnalysisUsage(AnalysisUsage& AU) const {
+void DemandedBits::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
   AU.addRequired<AssumptionCacheTracker>();
   AU.addRequired<DominatorTreeWrapperPass>();

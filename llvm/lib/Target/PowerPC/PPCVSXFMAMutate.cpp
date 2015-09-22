@@ -360,7 +360,6 @@ INITIALIZE_PASS_END(PPCVSXFMAMutate, DEBUG_TYPE,
 char &llvm::PPCVSXFMAMutateID = PPCVSXFMAMutate::ID;
 
 char PPCVSXFMAMutate::ID = 0;
-FunctionPass*
-llvm::createPPCVSXFMAMutatePass() { return new PPCVSXFMAMutate(); }
-
-
+FunctionPass *llvm::createPPCVSXFMAMutatePass() {
+  return new PPCVSXFMAMutate();
+}

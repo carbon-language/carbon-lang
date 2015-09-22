@@ -1689,10 +1689,9 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
-private:
 
-  template<typename AttrKind>
-  bool hasFnAttrImpl(AttrKind A) const {
+private:
+  template <typename AttrKind> bool hasFnAttrImpl(AttrKind A) const {
     if (AttributeList.hasAttribute(AttributeSet::FunctionIndex, A))
       return true;
     if (const Function *F = getCalledFunction())
@@ -1924,8 +1923,9 @@ class InsertElementInst : public Instruction {
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
                     const Twine &NameStr = "",
                     Instruction *InsertBefore = nullptr);
-  InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
-                    const Twine &NameStr, BasicBlock *InsertAtEnd);
+  InsertElementInst(Value *Vec, Value *NewElt, Value *Idx, const Twine &NameStr,
+                    BasicBlock *InsertAtEnd);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -2081,9 +2081,8 @@ class ExtractValueInst : public UnaryInstruction {
                           const Twine &NameStr, BasicBlock *InsertAtEnd);
 
   // allocate space for exactly one operand
-  void *operator new(size_t s) {
-    return User::operator new(s, 1);
-  }
+  void *operator new(size_t s) { return User::operator new(s, 1); }
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -2195,11 +2194,12 @@ class InsertValueInst : public Instruction {
 
   /// Constructors - These two constructors are convenience methods because one
   /// and two index insertvalue instructions are so common.
-  InsertValueInst(Value *Agg, Value *Val,
-                  unsigned Idx, const Twine &NameStr = "",
-                  Instruction *InsertBefore = nullptr);
   InsertValueInst(Value *Agg, Value *Val, unsigned Idx,
-                  const Twine &NameStr, BasicBlock *InsertAtEnd);
+                  const Twine &NameStr = "",
+                  Instruction *InsertBefore = nullptr);
+  InsertValueInst(Value *Agg, Value *Val, unsigned Idx, const Twine &NameStr,
+                  BasicBlock *InsertAtEnd);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -2930,8 +2930,7 @@ public:
     typedef CaseIteratorT<SwitchInst, ConstantInt, BasicBlock> ParentTy;
 
   public:
-
-    CaseIt(const ParentTy& Src) : ParentTy(Src) {}
+    CaseIt(const ParentTy &Src) : ParentTy(Src) {}
     CaseIt(SwitchInst *SI, unsigned CaseNum) : ParentTy(SI, CaseNum) {}
 
     /// Sets the new value for current case.

@@ -438,8 +438,7 @@ template <> struct isa_impl<PointerType, Type> {
 // Provide specializations of GraphTraits to be able to treat a type as a
 // graph of sub types.
 
-
-template <> struct GraphTraits<Type*> {
+template <> struct GraphTraits<Type *> {
   typedef Type NodeType;
   typedef Type::subtype_iterator ChildIteratorType;
 

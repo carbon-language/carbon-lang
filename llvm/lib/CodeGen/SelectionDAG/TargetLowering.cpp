@@ -2115,9 +2115,8 @@ bool TargetLowering::isGAPlusOffset(SDNode *N, const GlobalValue *&GA,
   return false;
 }
 
-
-SDValue TargetLowering::
-PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
+SDValue TargetLowering::PerformDAGCombine(SDNode *N,
+                                          DAGCombinerInfo &DCI) const {
   // Default implementation: no optimization.
   return SDValue();
 }

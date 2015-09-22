@@ -107,8 +107,8 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
       AddPromotedToType (ISD::SINT_TO_FP, MVT::i1,
                          isPPC64 ? MVT::i64 : MVT::i32);
       setOperationAction(ISD::UINT_TO_FP, MVT::i1, Promote);
-      AddPromotedToType (ISD::UINT_TO_FP, MVT::i1, 
-                         isPPC64 ? MVT::i64 : MVT::i32);
+      AddPromotedToType(ISD::UINT_TO_FP, MVT::i1,
+                        isPPC64 ? MVT::i64 : MVT::i32);
     } else {
       setOperationAction(ISD::SINT_TO_FP, MVT::i1, Custom);
       setOperationAction(ISD::UINT_TO_FP, MVT::i1, Custom);
@@ -403,9 +403,9 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
     // will selectively turn on ones that can be effectively codegen'd.
     for (MVT VT : MVT::vector_valuetypes()) {
       // add/sub are legal for all supported vector VT's.
-      setOperationAction(ISD::ADD , VT, Legal);
-      setOperationAction(ISD::SUB , VT, Legal);
-      
+      setOperationAction(ISD::ADD, VT, Legal);
+      setOperationAction(ISD::SUB, VT, Legal);
+
       // Vector instructions introduced in P8
       if (Subtarget.hasP8Altivec() && (VT.SimpleTy != MVT::v1i128)) {
         setOperationAction(ISD::CTPOP, VT, Legal);
@@ -519,8 +519,7 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
       setOperationAction(ISD::FSQRT, MVT::v4f32, Legal);
     }
 
-    
-    if (Subtarget.hasP8Altivec()) 
+    if (Subtarget.hasP8Altivec())
       setOperationAction(ISD::MUL, MVT::v4i32, Legal);
     else
       setOperationAction(ISD::MUL, MVT::v4i32, Custom);
@@ -5844,10 +5843,7 @@ SDValue PPCTargetLowering::LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG,
                       false, false, 0);
 }
 
-
-
-SDValue
-PPCTargetLowering::getReturnAddrFrameIndex(SelectionDAG & DAG) const {
+SDValue PPCTargetLowering::getReturnAddrFrameIndex(SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   bool isPPC64 = Subtarget.isPPC64();
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(MF.getDataLayout());
@@ -6314,9 +6310,9 @@ SDValue PPCTargetLowering::LowerINT_TO_FP(SDValue Op,
     Value = DAG.getNode(PPCISD::QBFLT, dl, MVT::v4f64, Value);
   
     SDValue FPHalfs = DAG.getConstantFP(0.5, dl, MVT::f64);
-    FPHalfs = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4f64,
-                          FPHalfs, FPHalfs, FPHalfs, FPHalfs);
-  
+    FPHalfs = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4f64, FPHalfs, FPHalfs,
+                          FPHalfs, FPHalfs);
+
     Value = DAG.getNode(ISD::FMA, dl, MVT::v4f64, Value, FPHalfs, FPHalfs);
 
     if (Op.getValueType() != MVT::v4f64)
@@ -7350,10 +7346,9 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpequw_p: CompareOpc = 134; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpequd_p: 
     if (Subtarget.hasP8Altivec()) {
-      CompareOpc = 199; 
-      isDot = 1; 
-    }
-    else 
+      CompareOpc = 199;
+      isDot = 1;
+    } else
       return false;
 
     break;
@@ -7364,10 +7359,9 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpgtsw_p: CompareOpc = 902; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtsd_p: 
     if (Subtarget.hasP8Altivec()) {
-      CompareOpc = 967; 
-      isDot = 1; 
-    }
-    else 
+      CompareOpc = 967;
+      isDot = 1;
+    } else
       return false;
 
     break;
@@ -7376,10 +7370,9 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpgtuw_p: CompareOpc = 646; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtud_p: 
     if (Subtarget.hasP8Altivec()) {
-      CompareOpc = 711; 
-      isDot = 1; 
-    }
-    else 
+      CompareOpc = 711;
+      isDot = 1;
+    } else
       return false;
 
     break;
@@ -7392,10 +7385,9 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpequw:   CompareOpc = 134; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpequd:
     if (Subtarget.hasP8Altivec()) {
-      CompareOpc = 199; 
-      isDot = 0; 
-    }
-    else
+      CompareOpc = 199;
+      isDot = 0;
+    } else
       return false;
 
     break;
@@ -7406,10 +7398,9 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpgtsw:   CompareOpc = 902; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtsd:   
     if (Subtarget.hasP8Altivec()) {
-      CompareOpc = 967; 
-      isDot = 0; 
-    }
-    else
+      CompareOpc = 967;
+      isDot = 0;
+    } else
       return false;
 
     break;
@@ -7418,10 +7409,9 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpgtuw:   CompareOpc = 646; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtud:   
     if (Subtarget.hasP8Altivec()) {
-      CompareOpc = 711; 
-      isDot = 0; 
-    }
-    else
+      CompareOpc = 711;
+      isDot = 0;
+    } else
       return false;
 
     break;
@@ -7827,11 +7817,10 @@ SDValue PPCTargetLowering::LowerVectorStore(SDValue Op,
     SDValue Idx = DAG.getConstant(i, dl, BasePtr.getValueType());
     Idx = DAG.getNode(ISD::ADD, dl, BasePtr.getValueType(), BasePtr, Idx);
 
-    Stores.push_back(DAG.getTruncStore(StoreChain, dl, Loads[i], Idx,
-                                       SN->getPointerInfo().getWithOffset(i),
-                                       MVT::i8 /* memory type */,
-                                       SN->isNonTemporal(), SN->isVolatile(), 
-                                       1 /* alignment */, SN->getAAInfo()));
+    Stores.push_back(DAG.getTruncStore(
+        StoreChain, dl, Loads[i], Idx, SN->getPointerInfo().getWithOffset(i),
+        MVT::i8 /* memory type */, SN->isNonTemporal(), SN->isVolatile(),
+        1 /* alignment */, SN->getAAInfo()));
   }
 
   StoreChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Stores);
@@ -9225,9 +9214,9 @@ static bool isConsecutiveLSLoc(SDValue Loc, EVT VT, LSBaseSDNode *Base,
   int64_t Offset1 = 0, Offset2 = 0;
   getBaseWithConstantOffset(Loc, Base1, Offset1, DAG);
   getBaseWithConstantOffset(BaseLoc, Base2, Offset2, DAG);
-    if (Base1 == Base2 && Offset1 == (Offset2 + Dist*Bytes))
-      return true;
-  
+  if (Base1 == Base2 && Offset1 == (Offset2 + Dist * Bytes))
+    return true;
+
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   const GlobalValue *GV1 = nullptr;
   const GlobalValue *GV2 = nullptr;
@@ -9960,10 +9949,11 @@ SDValue PPCTargetLowering::DAGCombineExtBoolTrunc(SDNode *N,
          "Invalid extension type");
   EVT ShiftAmountTy = getShiftAmountTy(N->getValueType(0), DAG.getDataLayout());
   SDValue ShiftCst =
-    DAG.getConstant(N->getValueSizeInBits(0) - PromBits, dl, ShiftAmountTy);
-  return DAG.getNode(ISD::SRA, dl, N->getValueType(0), 
-                     DAG.getNode(ISD::SHL, dl, N->getValueType(0),
-                                 N->getOperand(0), ShiftCst), ShiftCst);
+      DAG.getConstant(N->getValueSizeInBits(0) - PromBits, dl, ShiftAmountTy);
+  return DAG.getNode(
+      ISD::SRA, dl, N->getValueType(0),
+      DAG.getNode(ISD::SHL, dl, N->getValueType(0), N->getOperand(0), ShiftCst),
+      ShiftCst);
 }
 
 SDValue PPCTargetLowering::combineFPToIntToFP(SDNode *N,

@@ -2094,11 +2094,9 @@ bool X86TargetLowering::isNoopAddrSpaceCast(unsigned SrcAS,
 
 #include "X86GenCallingConv.inc"
 
-bool
-X86TargetLowering::CanLowerReturn(CallingConv::ID CallConv,
-                                  MachineFunction &MF, bool isVarArg,
-                        const SmallVectorImpl<ISD::OutputArg> &Outs,
-                        LLVMContext &Context) const {
+bool X86TargetLowering::CanLowerReturn(
+    CallingConv::ID CallConv, MachineFunction &MF, bool isVarArg,
+    const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context) const {
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, isVarArg, MF, RVLocs, Context);
   return CCInfo.CheckReturn(Outs, RetCC_X86);
@@ -2531,15 +2529,10 @@ static ArrayRef<MCPhysReg> get64BitArgumentXMMs(MachineFunction &MF,
   return makeArrayRef(std::begin(XMMArgRegs64Bit), std::end(XMMArgRegs64Bit));
 }
 
-SDValue
-X86TargetLowering::LowerFormalArguments(SDValue Chain,
-                                        CallingConv::ID CallConv,
-                                        bool isVarArg,
-                                      const SmallVectorImpl<ISD::InputArg> &Ins,
-                                        SDLoc dl,
-                                        SelectionDAG &DAG,
-                                        SmallVectorImpl<SDValue> &InVals)
-                                          const {
+SDValue X86TargetLowering::LowerFormalArguments(
+    SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
+    const SmallVectorImpl<ISD::InputArg> &Ins, SDLoc dl, SelectionDAG &DAG,
+    SmallVectorImpl<SDValue> &InVals) const {
   MachineFunction &MF = DAG.getMachineFunction();
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
   const TargetFrameLowering &TFI = *Subtarget->getFrameLowering();
@@ -3550,17 +3543,12 @@ bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
 
 /// Check whether the call is eligible for tail call optimization. Targets
 /// that want to do tail call optimization should implement this function.
-bool
-X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
-                                                     CallingConv::ID CalleeCC,
-                                                     bool isVarArg,
-                                                     bool isCalleeStructRet,
-                                                     bool isCallerStructRet,
-                                                     Type *RetTy,
-                                    const SmallVectorImpl<ISD::OutputArg> &Outs,
-                                    const SmallVectorImpl<SDValue> &OutVals,
-                                    const SmallVectorImpl<ISD::InputArg> &Ins,
-                                                     SelectionDAG &DAG) const {
+bool X86TargetLowering::IsEligibleForTailCallOptimization(
+    SDValue Callee, CallingConv::ID CalleeCC, bool isVarArg,
+    bool isCalleeStructRet, bool isCallerStructRet, Type *RetTy,
+    const SmallVectorImpl<ISD::OutputArg> &Outs,
+    const SmallVectorImpl<SDValue> &OutVals,
+    const SmallVectorImpl<ISD::InputArg> &Ins, SelectionDAG &DAG) const {
   if (!IsTailCallConvention(CalleeCC) && !IsCCallConvention(CalleeCC))
     return false;
 
@@ -22180,26 +22168,28 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
 
   // See if we can recurse into the operand to combine more things.
   switch (Op.getOpcode()) {
-    case X86ISD::PSHUFB:
-      HasPSHUFB = true;
-    case X86ISD::PSHUFD:
-    case X86ISD::PSHUFHW:
-    case X86ISD::PSHUFLW:
-      if (Op.getOperand(0).hasOneUse() &&
-          combineX86ShufflesRecursively(Op.getOperand(0), Root, Mask, Depth + 1,
-                                        HasPSHUFB, DAG, DCI, Subtarget))
-        return true;
-      break;
+  case X86ISD::PSHUFB:
+    HasPSHUFB = true;
+  case X86ISD::PSHUFD:
+  case X86ISD::PSHUFHW:
+  case X86ISD::PSHUFLW:
+    if (Op.getOperand(0).hasOneUse() &&
+        combineX86ShufflesRecursively(Op.getOperand(0), Root, Mask, Depth + 1,
+                                      HasPSHUFB, DAG, DCI, Subtarget))
+      return true;
+    break;
 
-    case X86ISD::UNPCKL:
-    case X86ISD::UNPCKH:
-      assert(Op.getOperand(0) == Op.getOperand(1) && "We only combine unary shuffles!");
-      // We can't check for single use, we have to check that this shuffle is the only user.
-      if (Op->isOnlyUserOf(Op.getOperand(0).getNode()) &&
-          combineX86ShufflesRecursively(Op.getOperand(0), Root, Mask, Depth + 1,
-                                        HasPSHUFB, DAG, DCI, Subtarget))
-          return true;
-      break;
+  case X86ISD::UNPCKL:
+  case X86ISD::UNPCKH:
+    assert(Op.getOperand(0) == Op.getOperand(1) &&
+           "We only combine unary shuffles!");
+    // We can't check for single use, we have to check that this shuffle is the
+    // only user.
+    if (Op->isOnlyUserOf(Op.getOperand(0).getNode()) &&
+        combineX86ShufflesRecursively(Op.getOperand(0), Root, Mask, Depth + 1,
+                                      HasPSHUFB, DAG, DCI, Subtarget))
+      return true;
+    break;
   }
 
   // Minor canonicalization of the accumulated shuffle mask to make it easier

@@ -546,10 +546,9 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
   if (!ExitCount->getType()->isPointerTy() &&
       ExitCount->getType() != CountType)
     ExitCount = SE->getZeroExtendExpr(ExitCount, CountType);
-  ExitCount = SE->getAddExpr(ExitCount,
-                             SE->getConstant(CountType, 1)); 
-  Value *ECValue = SCEVE.expandCodeFor(ExitCount, CountType,
-                                       Preheader->getTerminator());
+  ExitCount = SE->getAddExpr(ExitCount, SE->getConstant(CountType, 1));
+  Value *ECValue =
+      SCEVE.expandCodeFor(ExitCount, CountType, Preheader->getTerminator());
 
   IRBuilder<> CountBuilder(Preheader->getTerminator());
   Module *M = Preheader->getParent()->getParent();

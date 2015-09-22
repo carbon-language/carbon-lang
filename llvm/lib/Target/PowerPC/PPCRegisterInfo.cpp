@@ -459,8 +459,8 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   // We need to store the CR in the low 4-bits of the saved value. First, issue
   // an MFOCRF to save all of the CRBits and, if needed, kill the SrcReg.
   BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MFOCRF8 : PPC::MFOCRF), Reg)
-          .addReg(SrcReg, getKillRegState(MI.getOperand(0).isKill()));
-    
+      .addReg(SrcReg, getKillRegState(MI.getOperand(0).isKill()));
+
   // If the saved register wasn't CR0, shift the bits left so that they are in
   // CR0's slot.
   if (SrcReg != PPC::CR0) {
@@ -549,8 +549,8 @@ void PPCRegisterInfo::lowerCRBitSpilling(MachineBasicBlock::iterator II,
           .addReg(SrcReg, getKillRegState(MI.getOperand(0).isKill()));
 
   BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MFOCRF8 : PPC::MFOCRF), Reg)
-          .addReg(getCRFromCRBit(SrcReg));
-    
+      .addReg(getCRFromCRBit(SrcReg));
+
   // If the saved register wasn't CR0LT, shift the bits left so that the bit to
   // store is the first one. Mask all but that bit.
   unsigned Reg1 = Reg;
@@ -602,10 +602,12 @@ void PPCRegisterInfo::lowerCRBitRestore(MachineBasicBlock::iterator II,
   unsigned ShiftBits = getEncodingValue(DestReg);
   // rlwimi r11, r10, 32-ShiftBits, ..., ...
   BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::RLWIMI8 : PPC::RLWIMI), RegO)
-           .addReg(RegO, RegState::Kill).addReg(Reg, RegState::Kill)
-           .addImm(ShiftBits ? 32-ShiftBits : 0)
-           .addImm(ShiftBits).addImm(ShiftBits);
-           
+      .addReg(RegO, RegState::Kill)
+      .addReg(Reg, RegState::Kill)
+      .addImm(ShiftBits ? 32 - ShiftBits : 0)
+      .addImm(ShiftBits)
+      .addImm(ShiftBits);
+
   BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MTOCRF8 : PPC::MTOCRF),
           getCRFromCRBit(DestReg))
             .addReg(RegO, RegState::Kill)
@@ -634,11 +636,11 @@ void PPCRegisterInfo::lowerVRSAVESpilling(MachineBasicBlock::iterator II,
   unsigned SrcReg = MI.getOperand(0).getReg();
 
   BuildMI(MBB, II, dl, TII.get(PPC::MFVRSAVEv), Reg)
-          .addReg(SrcReg, getKillRegState(MI.getOperand(0).isKill()));
-    
-  addFrameReference(BuildMI(MBB, II, dl, TII.get(PPC::STW))
-                    .addReg(Reg, RegState::Kill),
-                    FrameIndex);
+      .addReg(SrcReg, getKillRegState(MI.getOperand(0).isKill()));
+
+  addFrameReference(
+      BuildMI(MBB, II, dl, TII.get(PPC::STW)).addReg(Reg, RegState::Kill),
+      FrameIndex);
 
   // Discard the pseudo instruction.
   MBB.erase(II);

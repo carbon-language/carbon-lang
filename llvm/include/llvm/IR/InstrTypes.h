@@ -441,29 +441,29 @@ public:
     BO->setIsExact(true);
     return BO;
   }
-  
-#define DEFINE_HELPERS(OPC, NUWNSWEXACT)                                     \
-  static BinaryOperator *Create ## NUWNSWEXACT ## OPC                        \
-           (Value *V1, Value *V2, const Twine &Name = "") {                  \
-    return Create ## NUWNSWEXACT(Instruction::OPC, V1, V2, Name);            \
-  }                                                                          \
-  static BinaryOperator *Create ## NUWNSWEXACT ## OPC                        \
-           (Value *V1, Value *V2, const Twine &Name, BasicBlock *BB) {       \
-    return Create ## NUWNSWEXACT(Instruction::OPC, V1, V2, Name, BB);        \
-  }                                                                          \
-  static BinaryOperator *Create ## NUWNSWEXACT ## OPC                        \
-           (Value *V1, Value *V2, const Twine &Name, Instruction *I) {       \
-    return Create ## NUWNSWEXACT(Instruction::OPC, V1, V2, Name, I);         \
+
+#define DEFINE_HELPERS(OPC, NUWNSWEXACT)                                       \
+  static BinaryOperator *Create##NUWNSWEXACT##OPC(Value *V1, Value *V2,        \
+                                                  const Twine &Name = "") {    \
+    return Create##NUWNSWEXACT(Instruction::OPC, V1, V2, Name);                \
+  }                                                                            \
+  static BinaryOperator *Create##NUWNSWEXACT##OPC(                             \
+      Value *V1, Value *V2, const Twine &Name, BasicBlock *BB) {               \
+    return Create##NUWNSWEXACT(Instruction::OPC, V1, V2, Name, BB);            \
+  }                                                                            \
+  static BinaryOperator *Create##NUWNSWEXACT##OPC(                             \
+      Value *V1, Value *V2, const Twine &Name, Instruction *I) {               \
+    return Create##NUWNSWEXACT(Instruction::OPC, V1, V2, Name, I);             \
   }
-  
-  DEFINE_HELPERS(Add, NSW)  // CreateNSWAdd
-  DEFINE_HELPERS(Add, NUW)  // CreateNUWAdd
-  DEFINE_HELPERS(Sub, NSW)  // CreateNSWSub
-  DEFINE_HELPERS(Sub, NUW)  // CreateNUWSub
-  DEFINE_HELPERS(Mul, NSW)  // CreateNSWMul
-  DEFINE_HELPERS(Mul, NUW)  // CreateNUWMul
-  DEFINE_HELPERS(Shl, NSW)  // CreateNSWShl
-  DEFINE_HELPERS(Shl, NUW)  // CreateNUWShl
+
+  DEFINE_HELPERS(Add, NSW) // CreateNSWAdd
+  DEFINE_HELPERS(Add, NUW) // CreateNUWAdd
+  DEFINE_HELPERS(Sub, NSW) // CreateNSWSub
+  DEFINE_HELPERS(Sub, NUW) // CreateNUWSub
+  DEFINE_HELPERS(Mul, NSW) // CreateNSWMul
+  DEFINE_HELPERS(Mul, NUW) // CreateNUWMul
+  DEFINE_HELPERS(Shl, NSW) // CreateNSWShl
+  DEFINE_HELPERS(Shl, NUW) // CreateNUWShl
 
   DEFINE_HELPERS(SDiv, Exact)  // CreateExactSDiv
   DEFINE_HELPERS(UDiv, Exact)  // CreateExactUDiv

@@ -159,8 +159,8 @@ public:
 
   /// getIntegerValue - Return the value for an integer or pointer constant,
   /// or a vector thereof, with the given scalar value.
-  static Constant *getIntegerValue(Type* Ty, const APInt &V);
-  
+  static Constant *getIntegerValue(Type *Ty, const APInt &V);
+
   /// removeDeadConstantUsers - If there are any dead constant users dangling
   /// off of this constant, remove them.  This method is useful for clients
   /// that want to check to see if a global is unused, but don't want to deal

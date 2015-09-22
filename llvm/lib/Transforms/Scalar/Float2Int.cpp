@@ -538,7 +538,4 @@ bool Float2Int::runOnFunction(Function &F) {
   return Modified;
 }
 
-FunctionPass *llvm::createFloat2IntPass() {
-  return new Float2Int();
-}
-
+FunctionPass *llvm::createFloat2IntPass() { return new Float2Int(); }

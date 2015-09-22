@@ -123,7 +123,7 @@ static std::string computeFSAdditions(StringRef FS, CodeGenOpt::Level OL,
   }
 
   if (OL != CodeGenOpt::None) {
-     if (!FullFS.empty())
+    if (!FullFS.empty())
       FullFS = "+invariant-function-descriptors," + FullFS;
     else
       FullFS = "+invariant-function-descriptors";

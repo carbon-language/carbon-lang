@@ -29,10 +29,10 @@
 
 namespace llvm {
 class ValueSymbolTable;
-  
-template<typename NodeTy> class ilist_iterator;
-template<typename NodeTy, typename Traits> class iplist;
-template<typename Ty> struct ilist_traits;
+
+template <typename NodeTy> class ilist_iterator;
+template <typename NodeTy, typename Traits> class iplist;
+template <typename Ty> struct ilist_traits;
 
 // ValueSubClass   - The type of objects that I hold, e.g. Instruction.
 // ItemParentClass - The type of object that owns the list, e.g. BasicBlock.

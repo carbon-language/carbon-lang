@@ -230,8 +230,7 @@ TargetIRAnalysis ARMBaseTargetMachine::getTargetIRAnalysis() {
   });
 }
 
-
-void ARMTargetMachine::anchor() { }
+void ARMTargetMachine::anchor() {}
 
 ARMTargetMachine::ARMTargetMachine(const Target &T, const Triple &TT,
                                    StringRef CPU, StringRef FS,
@@ -245,7 +244,7 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, const Triple &TT,
                        "support ARM mode execution!");
 }
 
-void ARMLETargetMachine::anchor() { }
+void ARMLETargetMachine::anchor() {}
 
 ARMLETargetMachine::ARMLETargetMachine(const Target &T, const Triple &TT,
                                        StringRef CPU, StringRef FS,
@@ -254,7 +253,7 @@ ARMLETargetMachine::ARMLETargetMachine(const Target &T, const Triple &TT,
                                        CodeGenOpt::Level OL)
     : ARMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
-void ARMBETargetMachine::anchor() { }
+void ARMBETargetMachine::anchor() {}
 
 ARMBETargetMachine::ARMBETargetMachine(const Target &T, const Triple &TT,
                                        StringRef CPU, StringRef FS,
@@ -263,7 +262,7 @@ ARMBETargetMachine::ARMBETargetMachine(const Target &T, const Triple &TT,
                                        CodeGenOpt::Level OL)
     : ARMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
 
-void ThumbTargetMachine::anchor() { }
+void ThumbTargetMachine::anchor() {}
 
 ThumbTargetMachine::ThumbTargetMachine(const Target &T, const Triple &TT,
                                        StringRef CPU, StringRef FS,
@@ -274,7 +273,7 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, const Triple &TT,
   initAsmInfo();
 }
 
-void ThumbLETargetMachine::anchor() { }
+void ThumbLETargetMachine::anchor() {}
 
 ThumbLETargetMachine::ThumbLETargetMachine(const Target &T, const Triple &TT,
                                            StringRef CPU, StringRef FS,
@@ -283,7 +282,7 @@ ThumbLETargetMachine::ThumbLETargetMachine(const Target &T, const Triple &TT,
                                            CodeGenOpt::Level OL)
     : ThumbTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
-void ThumbBETargetMachine::anchor() { }
+void ThumbBETargetMachine::anchor() {}
 
 ThumbBETargetMachine::ThumbBETargetMachine(const Target &T, const Triple &TT,
                                            StringRef CPU, StringRef FS,

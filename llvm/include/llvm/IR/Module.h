@@ -61,8 +61,11 @@ template<> struct ilist_traits<GlobalVariable>
   static void destroySentinel(GlobalVariable*) {}
 
   GlobalVariable *provideInitialHead() const { return createSentinel(); }
-  GlobalVariable *ensureHead(GlobalVariable*) const { return createSentinel(); }
-  static void noteHead(GlobalVariable*, GlobalVariable*) {}
+  GlobalVariable *ensureHead(GlobalVariable *) const {
+    return createSentinel();
+  }
+  static void noteHead(GlobalVariable *, GlobalVariable *) {}
+
 private:
   mutable ilist_node<GlobalVariable> Sentinel;
 };
@@ -76,8 +79,9 @@ template<> struct ilist_traits<GlobalAlias>
   static void destroySentinel(GlobalAlias*) {}
 
   GlobalAlias *provideInitialHead() const { return createSentinel(); }
-  GlobalAlias *ensureHead(GlobalAlias*) const { return createSentinel(); }
-  static void noteHead(GlobalAlias*, GlobalAlias*) {}
+  GlobalAlias *ensureHead(GlobalAlias *) const { return createSentinel(); }
+  static void noteHead(GlobalAlias *, GlobalAlias *) {}
+
 private:
   mutable ilist_node<GlobalAlias> Sentinel;
 };

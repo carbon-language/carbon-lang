@@ -65,19 +65,20 @@ using namespace llvm;
 #define DEBUG_TYPE "asmprinter"
 
 namespace {
-  class PPCAsmPrinter : public AsmPrinter {
-  protected:
-    MapVector<MCSymbol*, MCSymbol*> TOC;
-    const PPCSubtarget *Subtarget;
-    StackMaps SM;
-  public:
-    explicit PPCAsmPrinter(TargetMachine &TM,
-                           std::unique_ptr<MCStreamer> Streamer)
-        : AsmPrinter(TM, std::move(Streamer)), SM(*this) {}
+class PPCAsmPrinter : public AsmPrinter {
+protected:
+  MapVector<MCSymbol *, MCSymbol *> TOC;
+  const PPCSubtarget *Subtarget;
+  StackMaps SM;
 
-    const char *getPassName() const override {
-      return "PowerPC Assembly Printer";
-    }
+public:
+  explicit PPCAsmPrinter(TargetMachine &TM,
+                         std::unique_ptr<MCStreamer> Streamer)
+      : AsmPrinter(TM, std::move(Streamer)), SM(*this) {}
+
+  const char *getPassName() const override {
+    return "PowerPC Assembly Printer";
+  }
 
     MCSymbol *lookUpOrCreateTOCEntry(MCSymbol *Sym);
 
@@ -200,19 +201,19 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         !GV->isStrongDefinitionForLinker()) {
       if (!GV->hasHiddenVisibility()) {
         SymToPrint = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-        MachineModuleInfoImpl::StubValueTy &StubSym = 
-          MMI->getObjFileInfo<MachineModuleInfoMachO>()
-            .getGVStubEntry(SymToPrint);
+        MachineModuleInfoImpl::StubValueTy &StubSym =
+            MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(
+                SymToPrint);
         if (!StubSym.getPointer())
           StubSym = MachineModuleInfoImpl::
             StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
       } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
                  GV->hasAvailableExternallyLinkage()) {
         SymToPrint = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-        
-        MachineModuleInfoImpl::StubValueTy &StubSym = 
-          MMI->getObjFileInfo<MachineModuleInfoMachO>().
-                    getHiddenGVStubEntry(SymToPrint);
+
+        MachineModuleInfoImpl::StubValueTy &StubSym =
+            MMI->getObjFileInfo<MachineModuleInfoMachO>().getHiddenGVStubEntry(
+                SymToPrint);
         if (!StubSym.getPointer())
           StubSym = MachineModuleInfoImpl::
             StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
@@ -539,11 +540,12 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCSymbol *PICBase = MF->getPICBaseSymbol();
     
     // Emit the 'bl'.
-    EmitToStreamer(*OutStreamer, MCInstBuilder(PPC::BL)
-      // FIXME: We would like an efficient form for this, so we don't have to do
-      // a lot of extra uniquing.
-      .addExpr(MCSymbolRefExpr::create(PICBase, OutContext)));
-    
+    EmitToStreamer(*OutStreamer,
+                   MCInstBuilder(PPC::BL)
+                       // FIXME: We would like an efficient form for this, so we
+                       // don't have to do a lot of extra uniquing.
+                       .addExpr(MCSymbolRefExpr::create(PICBase, OutContext)));
+
     // Emit the label.
     OutStreamer->EmitLabel(PICBase);
     return;
@@ -840,13 +842,12 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
   case PPC::PPC32GOT: {
-    MCSymbol *GOTSymbol = OutContext.getOrCreateSymbol(StringRef("_GLOBAL_OFFSET_TABLE_"));
-    const MCExpr *SymGotTlsL =
-      MCSymbolRefExpr::create(GOTSymbol, MCSymbolRefExpr::VK_PPC_LO,
-                              OutContext);
-    const MCExpr *SymGotTlsHA =                               
-      MCSymbolRefExpr::create(GOTSymbol, MCSymbolRefExpr::VK_PPC_HA,
-                              OutContext);
+    MCSymbol *GOTSymbol =
+        OutContext.getOrCreateSymbol(StringRef("_GLOBAL_OFFSET_TABLE_"));
+    const MCExpr *SymGotTlsL = MCSymbolRefExpr::create(
+        GOTSymbol, MCSymbolRefExpr::VK_PPC_LO, OutContext);
+    const MCExpr *SymGotTlsHA = MCSymbolRefExpr::create(
+        GOTSymbol, MCSymbolRefExpr::VK_PPC_HA, OutContext);
     EmitToStreamer(*OutStreamer, MCInstBuilder(PPC::LI)
                                  .addReg(MI->getOperand(0).getReg())
                                  .addExpr(SymGotTlsL));
@@ -1293,8 +1294,8 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.
-  const TargetLoweringObjectFileMachO &TLOFMacho = 
-    static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
+  const TargetLoweringObjectFileMachO &TLOFMacho =
+      static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
   OutStreamer->SwitchSection(TLOFMacho.getTextCoalSection());
   if (TM.getRelocationModel() == Reloc::PIC_) {
     OutStreamer->SwitchSection(
@@ -1338,8 +1339,8 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
     S.EmitInstruction(Inst, *STI);
   };
 
-  const TargetLoweringObjectFileMachO &TLOFMacho = 
-    static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
+  const TargetLoweringObjectFileMachO &TLOFMacho =
+      static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
 
   // .lazy_symbol_pointer
   MCSection *LSPSection = TLOFMacho.getLazySymbolPointerSection();
@@ -1472,11 +1473,11 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   bool isPPC64 = getDataLayout().getPointerSizeInBits() == 64;
 
   // Darwin/PPC always uses mach-o.
-  const TargetLoweringObjectFileMachO &TLOFMacho = 
-    static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
+  const TargetLoweringObjectFileMachO &TLOFMacho =
+      static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
   MachineModuleInfoMachO &MMIMacho =
-    MMI->getObjFileInfo<MachineModuleInfoMachO>();
-  
+      MMI->getObjFileInfo<MachineModuleInfoMachO>();
+
   MachineModuleInfoMachO::SymbolListTy Stubs = MMIMacho.GetFnStubList();
   if (!Stubs.empty())
     EmitFunctionStubs(Stubs);

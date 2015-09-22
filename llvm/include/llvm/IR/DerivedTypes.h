@@ -147,9 +147,9 @@ static_assert(AlignOf<FunctionType>::Alignment >= AlignOf<Type *>::Alignment,
 /// and VectorType.
 class CompositeType : public Type {
 protected:
-  explicit CompositeType(LLVMContext &C, TypeID tid) : Type(C, tid) { }
-public:
+  explicit CompositeType(LLVMContext &C, TypeID tid) : Type(C, tid) {}
 
+public:
   /// getTypeAtIndex - Given an index value into the type, return the type of
   /// the element.
   ///
@@ -212,16 +212,13 @@ public:
   /// StructType::create - This creates an identified struct.
   static StructType *create(LLVMContext &Context, StringRef Name);
   static StructType *create(LLVMContext &Context);
-  
-  static StructType *create(ArrayRef<Type*> Elements,
-                            StringRef Name,
+
+  static StructType *create(ArrayRef<Type *> Elements, StringRef Name,
                             bool isPacked = false);
-  static StructType *create(ArrayRef<Type*> Elements);
-  static StructType *create(LLVMContext &Context,
-                            ArrayRef<Type*> Elements,
-                            StringRef Name,
-                            bool isPacked = false);
-  static StructType *create(LLVMContext &Context, ArrayRef<Type*> Elements);
+  static StructType *create(ArrayRef<Type *> Elements);
+  static StructType *create(LLVMContext &Context, ArrayRef<Type *> Elements,
+                            StringRef Name, bool isPacked = false);
+  static StructType *create(LLVMContext &Context, ArrayRef<Type *> Elements);
   static StructType *create(StringRef Name, Type *elt1, ...) LLVM_END_WITH_NULL;
 
   /// StructType::get - This static method is the primary way to create a
@@ -250,8 +247,8 @@ public:
   bool isOpaque() const { return (getSubclassData() & SCDB_HasBody) == 0; }
 
   /// isSized - Return true if this is a sized type.
-  bool isSized(SmallPtrSetImpl<Type*> *Visited = nullptr) const;
-  
+  bool isSized(SmallPtrSetImpl<Type *> *Visited = nullptr) const;
+
   /// hasName - Return true if this is a named struct that has a non-empty name.
   bool hasName() const { return SymbolTableEntry != nullptr; }
   
