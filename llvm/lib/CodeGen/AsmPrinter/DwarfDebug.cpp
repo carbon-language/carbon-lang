@@ -459,12 +459,14 @@ DwarfDebug::constructDwarfCompileUnit(const DICompileUnit *DIUnit) {
   else
     NewCU.initSection(Asm->getObjFileLowering().getDwarfInfoSection());
 
-  // Module debugging: This is a prefabricated skeleton CU.
   if (DIUnit->getDWOId()) {
+    // This CU is either a clang module DWO or a skeleton CU.
     NewCU.addUInt(Die, dwarf::DW_AT_GNU_dwo_id, dwarf::DW_FORM_data8,
                   DIUnit->getDWOId());
-    NewCU.addString(Die, dwarf::DW_AT_GNU_dwo_name,
-                    DIUnit->getSplitDebugFilename());
+    if (!DIUnit->getSplitDebugFilename().empty())
+      // This is a prefabricated skeleton CU.
+      NewCU.addString(Die, dwarf::DW_AT_GNU_dwo_name,
+                      DIUnit->getSplitDebugFilename());
   }
 
   CUMap.insert(std::make_pair(DIUnit, &NewCU));
