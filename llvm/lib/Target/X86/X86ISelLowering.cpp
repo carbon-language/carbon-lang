@@ -1279,7 +1279,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     if (Subtarget->hasInt256())
       setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
 
-
     // Promote v32i8, v16i16, v8i32 select, and, or, xor to v4i64.
     for (int i = MVT::v32i8; i != MVT::v4i64; ++i) {
       MVT VT = (MVT::SimpleValueType)i;
@@ -1716,7 +1715,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SMULO, VT, Custom);
     setOperationAction(ISD::UMULO, VT, Custom);
   }
-
 
   if (!Subtarget->is64Bit()) {
     // These libcalls are not available in 32-bit.
@@ -6471,7 +6469,6 @@ static SDValue LowerCONCAT_VECTORS(SDValue Op,
   // 512-bit vector may contain 2 256-bit vectors or 4 128-bit vectors
   return LowerAVXCONCAT_VECTORS(Op, DAG);
 }
-
 
 //===----------------------------------------------------------------------===//
 // Vector shuffle lowering
@@ -24860,7 +24857,6 @@ static SDValue PerformMLOADCombine(SDNode *N, SelectionDAG &DAG,
                                      ISD::NON_EXTLOAD);
   SDValue NewVec = DAG.getNode(X86ISD::VSEXT, dl, VT, WideLd);
   return DCI.CombineTo(N, NewVec, WideLd.getValue(1), true);
-
 }
 /// PerformMSTORECombine - Resolve truncating stores
 static SDValue PerformMSTORECombine(SDNode *N, SelectionDAG &DAG,

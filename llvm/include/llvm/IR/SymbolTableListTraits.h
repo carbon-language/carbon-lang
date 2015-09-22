@@ -40,6 +40,7 @@ template <typename Ty> struct ilist_traits;
 template<typename ValueSubClass, typename ItemParentClass>
 class SymbolTableListTraits : public ilist_default_traits<ValueSubClass> {
   typedef ilist_traits<ValueSubClass> TraitsClass;
+
 public:
   SymbolTableListTraits() {}
 

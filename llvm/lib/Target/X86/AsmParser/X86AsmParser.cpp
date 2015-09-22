@@ -61,6 +61,7 @@ class X86AsmParser : public MCTargetAsmParser {
   const MCInstrInfo &MII;
   ParseInstructionInfo *InstInfo;
   std::unique_ptr<X86AsmInstrumentation> Instrumentation;
+
 private:
   SMLoc consumeToken() {
     MCAsmParser &Parser = getParser();
@@ -269,6 +270,7 @@ private:
     bool StopOnLBrac, AddImmPrefix;
     InfixCalculator IC;
     InlineAsmIdentifierInfo Info;
+
   public:
     IntelExprStateMachine(int64_t imm, bool stoponlbrac, bool addimmprefix) :
       State(IES_PLUS), PrevState(IES_ERROR), BaseReg(0), IndexReg(0), TmpReg(0),
@@ -775,7 +777,7 @@ private:
     unsigned FB = ComputeAvailableFeatures(
       STI.ToggleFeature(OldMode.flip(mode)));
     setAvailableFeatures(FB);
-    
+
     assert(FeatureBitset({mode}) == (STI.getFeatureBits() & AllModes));
   }
 
@@ -2184,7 +2186,6 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     Name == "repe" || Name == "repz" ||
     Name == "repne" || Name == "repnz" ||
     Name == "rex64" || Name == "data16";
-
 
   // This does the actual operand parsing.  Don't parse any more if we have a
   // prefix juxtaposed with an operation like "lock incl 4(%rax)", because we

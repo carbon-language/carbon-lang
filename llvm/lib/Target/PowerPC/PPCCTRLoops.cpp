@@ -361,7 +361,7 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
                                             true);
           if (VTy == MVT::Other)
             return true;
-          
+
           if (TLI->isOperationLegalOrCustom(Opcode, VTy))
             continue;
           else if (VTy.isVector() &&
@@ -685,4 +685,3 @@ bool PPCCTRLoopsVerify::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 #endif // NDEBUG
-

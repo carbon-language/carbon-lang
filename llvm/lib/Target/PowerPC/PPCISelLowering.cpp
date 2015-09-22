@@ -523,7 +523,7 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
       setOperationAction(ISD::MUL, MVT::v4i32, Legal);
     else
       setOperationAction(ISD::MUL, MVT::v4i32, Custom);
-      
+
     setOperationAction(ISD::MUL, MVT::v8i16, Custom);
     setOperationAction(ISD::MUL, MVT::v16i8, Custom);
 
@@ -1637,7 +1637,6 @@ static bool isIntS16Immediate(SDValue Op, short &Imm) {
   return isIntS16Immediate(Op.getNode(), Imm);
 }
 
-
 /// SelectAddressRegReg - Given the specified addressed, check to see if it
 /// can be represented as an indexed [r+r] operation.  Returns false if it
 /// can be more efficiently represented with [r+imm].
@@ -2490,7 +2489,6 @@ SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
   //                * are stored
   //                */
   // } va_list[1];
-
 
   SDValue ArgGPR = DAG.getConstant(FuncInfo->getVarArgsNumGPR(), dl, MVT::i32);
   SDValue ArgFPR = DAG.getConstant(FuncInfo->getVarArgsNumFPR(), dl, MVT::i32);
@@ -3891,7 +3889,6 @@ struct TailCallArgumentInfo {
 
   TailCallArgumentInfo() : FrameIdx(0) {}
 };
-
 }
 
 /// StoreTailCallArgumentsToStackSlot - Stores arguments to their stack slot.
@@ -5999,7 +5996,7 @@ SDValue PPCTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   SDNodeFlags Flags;
   Flags.setNoInfs(true);
   Flags.setNoNaNs(true);
-  
+
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
 
   EVT ResVT = Op.getValueType();
@@ -6308,7 +6305,7 @@ SDValue PPCTargetLowering::LowerINT_TO_FP(SDValue Op,
     // into 0 (false) and 1 (true), add 1 and then divide by 2 (multiply by 0.5).
     // This can be done with an fma and the 0.5 constant: (V+1.0)*0.5 = 0.5*V+0.5
     Value = DAG.getNode(PPCISD::QBFLT, dl, MVT::v4f64, Value);
-  
+
     SDValue FPHalfs = DAG.getConstantFP(0.5, dl, MVT::f64);
     FPHalfs = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4f64, FPHalfs, FPHalfs,
                           FPHalfs, FPHalfs);
@@ -6757,7 +6754,6 @@ static SDValue BuildIntrinsicOp(unsigned IID, SDValue Op0, SDValue Op1,
                      DAG.getConstant(IID, dl, MVT::i32), Op0, Op1, Op2);
 }
 
-
 /// BuildVSLDOI - Return a VECTOR_SHUFFLE that is a vsldoi of the specified
 /// amount.  The result has the specified value type.
 static SDValue BuildVSLDOI(SDValue LHS, SDValue RHS, unsigned Amt,
@@ -6937,7 +6933,6 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
                     (32-SplatBitSize));
   if (SextVal >= -16 && SextVal <= 15)
     return BuildSplatI(SextVal, SplatSize, Op.getValueType(), DAG, dl);
-
 
   // Two instruction sequences.
 
@@ -8037,7 +8032,6 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   }
 }
-
 
 //===----------------------------------------------------------------------===//
 //  Other Lowering Code
@@ -9377,7 +9371,7 @@ static bool findConsecutiveLoad(LoadSDNode *LD, SelectionDAG &DAG) {
   for (SmallSet<SDNode *, 16>::iterator I = LoadRoots.begin(),
        IE = LoadRoots.end(); I != IE; ++I) {
     Queue.push_back(*I);
-       
+
     while (!Queue.empty()) {
       SDNode *LoadRoot = Queue.pop_back_val();
       if (!Visited.insert(LoadRoot).second)
@@ -10563,7 +10557,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::BRCOND: {
     SDValue Cond = N->getOperand(1);
     SDValue Target = N->getOperand(2);
- 
+
     if (Cond.getOpcode() == ISD::INTRINSIC_W_CHAIN &&
         cast<ConstantSDNode>(Cond.getOperand(1))->getZExtValue() ==
           Intrinsic::ppc_is_decremented_ctr_nonzero) {
@@ -10943,7 +10937,6 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
 
   return R;
 }
-
 
 /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
 /// vector.  If it is invalid, don't add anything to Ops.

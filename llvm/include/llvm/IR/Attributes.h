@@ -120,9 +120,11 @@ public:
 
     EndAttrKinds           ///< Sentinal value useful for loops
   };
+
 private:
   AttributeImpl *pImpl;
   Attribute(AttributeImpl *A) : pImpl(A) {}
+
 public:
   Attribute() : pImpl(nullptr) {}
 
@@ -226,6 +228,7 @@ public:
     ReturnIndex = 0U,
     FunctionIndex = ~0U
   };
+
 private:
   friend class AttrBuilder;
   friend class AttributeSetImpl;
@@ -249,8 +252,8 @@ private:
                               ArrayRef<std::pair<unsigned,
                                                  AttributeSetNode*> > Attrs);
 
-
   explicit AttributeSet(AttributeSetImpl *LI) : pImpl(LI) {}
+
 public:
   AttributeSet() : pImpl(nullptr) {}
 
@@ -439,6 +442,7 @@ class AttrBuilder {
   uint64_t StackAlignment;
   uint64_t DerefBytes;
   uint64_t DerefOrNullBytes;
+
 public:
   AttrBuilder()
       : Attrs(0), Alignment(0), StackAlignment(0), DerefBytes(0),

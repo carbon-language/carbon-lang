@@ -1386,7 +1386,6 @@ iterator_range<export_iterator> MachOObjectFile::exports() const {
   return exports(getDyldInfoExportsTrie());
 }
 
-
 MachORebaseEntry::MachORebaseEntry(ArrayRef<uint8_t> Bytes, bool is64Bit)
     : Opcodes(Bytes), Ptr(Bytes.begin()), SegmentOffset(0), SegmentIndex(0),
       RemainingLoopCount(0), AdvanceAmount(0), RebaseType(0),
@@ -1761,7 +1760,6 @@ int64_t MachOBindEntry::readSLEB128() {
   }
   return Result;
 }
-
 
 uint32_t MachOBindEntry::segmentIndex() const { return SegmentIndex; }
 
@@ -2308,4 +2306,3 @@ ObjectFile::createMachOObjectFile(MemoryBufferRef Buffer) {
     return EC;
   return std::move(Ret);
 }
-

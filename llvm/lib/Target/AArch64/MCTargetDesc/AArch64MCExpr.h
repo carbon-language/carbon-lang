@@ -162,7 +162,6 @@ public:
   }
 
   static bool classof(const AArch64MCExpr *) { return true; }
-
 };
 } // end namespace llvm
 

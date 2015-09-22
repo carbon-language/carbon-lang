@@ -158,7 +158,7 @@ static const char *stripRegisterPrefix(const char *RegName) {
       return RegName + 1;
     case 'c': if (RegName[1] == 'r') return RegName + 2;
   }
-  
+
   return RegName;
 }
 
@@ -166,7 +166,7 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                  raw_ostream &O) {
   const DataLayout &DL = getDataLayout();
   const MachineOperand &MO = MI->getOperand(OpNo);
-  
+
   switch (MO.getType()) {
   case MachineOperand::MO_Register: {
     const char *RegName = PPCInstPrinter::getRegisterName(MO.getReg());
@@ -316,7 +316,6 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
   return false;
 }
 
-
 /// lookUpOrCreateTOCEntry -- Given a symbol, look up whether a TOC entry
 /// exists for it.  If not, create one.  Then return a symbol that references
 /// the TOC entry.
@@ -402,7 +401,6 @@ void PPCAsmPrinter::LowerPATCHPOINT(MCStreamer &OutStreamer, StackMaps &SM,
                                       .addImm(TOCSaveOffset)
                                       .addReg(PPC::X1));
       ++EncodedBytes;
-
 
       // If we're on ELFv1, then we need to load the actual function pointer
       // from the function descriptor.
@@ -500,7 +498,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   bool isDarwin = TM.getTargetTriple().isOSDarwin();
   const Module *M = MF->getFunction()->getParent();
   PICLevel::Level PL = M->getPICLevel();
-  
+
   // Lower multi-instruction pseudo operations.
   switch (MI->getOpcode()) {
   default: break;
@@ -538,7 +536,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     //     bl L1$pb
     // L1$pb:
     MCSymbol *PICBase = MF->getPICBaseSymbol();
-    
+
     // Emit the 'bl'.
     EmitToStreamer(*OutStreamer,
                    MCInstBuilder(PPC::BL)
@@ -656,7 +654,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }
-      
+
   case PPC::ADDIStocHA: {
     // Transform %Xd = ADDIStocHA %X2, <ga:@sym>
     LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, isDarwin);
@@ -1131,7 +1129,6 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
   OutStreamer->SwitchSection(Current.first, Current.second);
 }
 
-
 bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
   const DataLayout &DL = getDataLayout();
 
@@ -1354,12 +1351,12 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
     for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
       OutStreamer->SwitchSection(StubSection);
       EmitAlignment(4);
-      
+
       MCSymbol *Stub = Stubs[i].first;
       MCSymbol *RawSym = Stubs[i].second.getPointer();
       MCSymbol *LazyPtr = GetLazyPtr(Stub, OutContext);
       MCSymbol *AnonSymbol = GetAnonSym(Stub, OutContext);
-                                           
+
       OutStreamer->EmitLabel(Stub);
       OutStreamer->EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
 
@@ -1464,10 +1461,9 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
       OutStreamer->EmitSymbolValue(DyldStubBindingHelper, 4);
     }
   }
-  
+
   OutStreamer->AddBlankLine();
 }
-
 
 bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   bool isPPC64 = getDataLayout().getPointerSizeInBits() == 64;
@@ -1499,13 +1495,13 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 
   // Output stubs for dynamically-linked functions.
   Stubs = MMIMacho.GetGVStubList();
-  
+
   // Output macho stubs for external and common global variables.
   if (!Stubs.empty()) {
     // Switch with ".non_lazy_symbol_pointer" directive.
     OutStreamer->SwitchSection(TLOFMacho.getNonLazySymbolPointerSection());
     EmitAlignment(isPPC64 ? 3 : 2);
-    
+
     for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
       // L_foo$stub:
       OutStreamer->EmitLabel(Stubs[i].first);
@@ -1536,7 +1532,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   if (!Stubs.empty()) {
     OutStreamer->SwitchSection(getObjFileLowering().getDataSection());
     EmitAlignment(isPPC64 ? 3 : 2);
-    
+
     for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
       // L_foo$stub:
       OutStreamer->EmitLabel(Stubs[i].first);

@@ -88,7 +88,6 @@
 #define LAST_OTHER_INST(num)
 #endif
 
-
 // Terminator Instructions - These instructions are used to terminate a basic
 // block of the program.   Every basic block must end with one of these
 // instructions for it to be a well formed basic block.

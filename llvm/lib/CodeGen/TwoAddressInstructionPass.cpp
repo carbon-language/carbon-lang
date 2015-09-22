@@ -1536,7 +1536,6 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
     SrcRegMap[RegA] = RegB;
   }
 
-
   if (AllUsesCopied) {
     if (!IsEarlyClobber) {
       // Replace other (un-tied) uses of regB with LastCopiedReg.

@@ -78,7 +78,6 @@ uint64_t MachObjectWriter::getSymbolAddress(const MCSymbol &S,
           dyn_cast<const MCConstantExpr>(S.getVariableValue()))
       return C->getValue();
 
-
     MCValue Target;
     if (!S.getVariableValue()->evaluateAsRelocatable(Target, &Layout, nullptr))
       report_fatal_error("unable to evaluate offset for variable '" +
@@ -745,7 +744,7 @@ void MachObjectWriter::writeObject(MCAssembler &Asm,
     ++NumLoadCommands;
     LoadCommandsSize += ComputeLinkerOptionsLoadCommandSize(Option, is64Bit());
   }
-  
+
   // Compute the total size of the section data, as well as its file size and vm
   // size.
   uint64_t SectionDataStart = (is64Bit() ? sizeof(MachO::mach_header_64) :

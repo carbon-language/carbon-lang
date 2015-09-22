@@ -40,6 +40,7 @@ class AMDGPUDAGToDAGISel : public SelectionDAGISel {
   // Subtarget - Keep a pointer to the AMDGPU Subtarget around so that we can
   // make the right decision when generating code for different targets.
   const AMDGPUSubtarget *Subtarget;
+
 public:
   AMDGPUDAGToDAGISel(TargetMachine &TM);
   virtual ~AMDGPUDAGToDAGISel();
@@ -585,7 +586,6 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
 
     return getS_BFE(Signed ? AMDGPU::S_BFE_I32 : AMDGPU::S_BFE_U32, SDLoc(N),
                     N->getOperand(0), OffsetVal, WidthVal);
-
   }
   case AMDGPUISD::DIV_SCALE: {
     return SelectDIV_SCALE(N);
@@ -610,7 +610,6 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
 
   return SelectCode(N);
 }
-
 
 bool AMDGPUDAGToDAGISel::checkType(const Value *Ptr, unsigned AS) {
   assert(AS != 0 && "Use checkPrivateAddress instead.");
@@ -1082,7 +1081,6 @@ void AMDGPUDAGToDAGISel::SelectMUBUF(SDValue Addr, SDValue &Ptr,
   VAddr = CurDAG->getTargetConstant(0, DL, MVT::i32);
   Ptr = Addr;
   Offset = CurDAG->getTargetConstant(0, DL, MVT::i16);
-
 }
 
 bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
@@ -1366,7 +1364,6 @@ SDNode *AMDGPUDAGToDAGISel::SelectAddrSpaceCast(SDNode *N) {
       Src,
       CurDAG->getTargetConstant(AMDGPU::sub0, DL, MVT::i32));
   }
-
 
   if (DestSize > SrcSize) {
     assert(SrcSize == 32 && DestSize == 64);

@@ -158,6 +158,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 private:
   // Shadow Instruction::setInstructionSubclassData with a private forwarding
   // method so that subclasses cannot accidentally use it.
@@ -165,7 +166,6 @@ private:
     Instruction::setInstructionSubclassData(D);
   }
 };
-
 
 //===----------------------------------------------------------------------===//
 //                                LoadInst Class
@@ -176,6 +176,7 @@ private:
 ///
 class LoadInst : public UnaryInstruction {
   void AssertOK();
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -290,7 +291,6 @@ public:
     return getPointerOperand()->getType()->getPointerAddressSpace();
   }
 
-
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Load;
@@ -298,6 +298,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 private:
   // Shadow Instruction::setInstructionSubclassData with a private forwarding
   // method so that subclasses cannot accidentally use it.
@@ -305,7 +306,6 @@ private:
     Instruction::setInstructionSubclassData(D);
   }
 };
-
 
 //===----------------------------------------------------------------------===//
 //                                StoreInst Class
@@ -316,6 +316,7 @@ private:
 class StoreInst : public Instruction {
   void *operator new(size_t, unsigned) = delete;
   void AssertOK();
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -343,7 +344,6 @@ public:
             unsigned Align, AtomicOrdering Order,
             SynchronizationScope SynchScope,
             BasicBlock *InsertAtEnd);
-
 
   /// isVolatile - Return true if this is a store to a volatile memory
   /// location.
@@ -422,6 +422,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 private:
   // Shadow Instruction::setInstructionSubclassData with a private forwarding
   // method so that subclasses cannot accidentally use it.
@@ -445,6 +446,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(StoreInst, Value)
 class FenceInst : public Instruction {
   void *operator new(size_t, unsigned) = delete;
   void Init(AtomicOrdering Ordering, SynchronizationScope SynchScope);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -496,6 +498,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 private:
   // Shadow Instruction::setInstructionSubclassData with a private forwarding
   // method so that subclasses cannot accidentally use it.
@@ -517,6 +520,7 @@ class AtomicCmpXchgInst : public Instruction {
   void Init(Value *Ptr, Value *Cmp, Value *NewVal,
             AtomicOrdering SuccessOrdering, AtomicOrdering FailureOrdering,
             SynchronizationScope SynchScope);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -648,6 +652,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 private:
   // Shadow Instruction::setInstructionSubclassData with a private forwarding
   // method so that subclasses cannot accidentally use it.
@@ -673,6 +678,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(AtomicCmpXchgInst, Value)
 ///
 class AtomicRMWInst : public Instruction {
   void *operator new(size_t, unsigned) = delete;
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -795,6 +801,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 private:
   void Init(BinOp Operation, Value *Ptr, Value *Val,
             AtomicOrdering Ordering, SynchronizationScope SynchScope);
@@ -1078,9 +1085,7 @@ GetElementPtrInst::GetElementPtrInst(Type *PointeeType, Value *Ptr,
   init(Ptr, IdxList, NameStr);
 }
 
-
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GetElementPtrInst, Value)
-
 
 //===----------------------------------------------------------------------===//
 //                               ICmpInst Class
@@ -1226,7 +1231,6 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
-
 };
 
 //===----------------------------------------------------------------------===//
@@ -1381,6 +1385,7 @@ class CallInst : public Instruction {
   explicit CallInst(Value *F, const Twine &NameStr,
                     Instruction *InsertBefore);
   CallInst(Value *F, const Twine &NameStr, BasicBlock *InsertAtEnd);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -1569,7 +1574,7 @@ public:
   uint64_t getDereferenceableOrNullBytes(unsigned i) const {
     return AttributeList.getDereferenceableOrNullBytes(i);
   }
-  
+
   /// \brief Return true if the call should not be treated as a call to a
   /// builtin.
   bool isNoBuiltin() const {
@@ -1728,7 +1733,6 @@ CallInst::CallInst(FunctionType *Ty, Value *Func, ArrayRef<Value *> Args,
   init(Ty, Func, Args, NameStr);
 }
 
-
 // Note: if you get compile errors about private methods then
 //       please update your code to use the high-level operand
 //       interfaces. See line 943 above.
@@ -1762,6 +1766,7 @@ class SelectInst : public Instruction {
     init(C, S1, S2);
     setName(NameStr);
   }
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -1862,6 +1867,7 @@ class ExtractElementInst : public Instruction {
                      Instruction *InsertBefore = nullptr);
   ExtractElementInst(Value *Vec, Value *Idx, const Twine &NameStr,
                      BasicBlock *InsertAtEnd);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -1891,7 +1897,6 @@ public:
   VectorType *getVectorOperandType() const {
     return cast<VectorType>(getVectorOperand()->getType());
   }
-
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -2038,7 +2043,6 @@ public:
     return Mask;
   }
 
-
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::ShuffleVector;
@@ -2163,7 +2167,6 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
                      ExtractValue, Agg, InsertAtEnd) {
   init(Idxs, NameStr);
 }
-
 
 //===----------------------------------------------------------------------===//
 //                                InsertValueInst Class
@@ -2337,6 +2340,7 @@ class PHINode : public Instruction {
     setName(NameStr);
     allocHungoffUses(ReservedSpace);
   }
+
 protected:
   // allocHungoffUses - this is more complicated than the generic
   // User::allocHungoffUses, because we have to allocate Uses for the incoming
@@ -2497,7 +2501,8 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
- private:
+
+private:
   void growOperands();
 };
 
@@ -2524,8 +2529,10 @@ class LandingPadInst : public Instruction {
   /// the number actually in use.
   unsigned ReservedSpace;
   LandingPadInst(const LandingPadInst &LP);
+
 public:
   enum ClauseType { Catch, Filter };
+
 private:
   void *operator new(size_t, unsigned) = delete;
   // Allocate space for exactly zero operands.
@@ -2636,6 +2643,7 @@ private:
                       Instruction *InsertBefore = nullptr);
   ReturnInst(LLVMContext &C, Value *retVal, BasicBlock *InsertAtEnd);
   explicit ReturnInst(LLVMContext &C, BasicBlock *InsertAtEnd);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -2672,7 +2680,8 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
- private:
+
+private:
   BasicBlock *getSuccessorV(unsigned idx) const override;
   unsigned getNumSuccessorsV() const override;
   void setSuccessorV(unsigned idx, BasicBlock *B) override;
@@ -2711,6 +2720,7 @@ class BranchInst : public TerminatorInst {
   BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd);
   BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
              BasicBlock *InsertAtEnd);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -2775,6 +2785,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 private:
   BasicBlock *getSuccessorV(unsigned idx) const override;
   unsigned getNumSuccessorsV() const override;
@@ -2821,25 +2832,23 @@ class SwitchInst : public TerminatorInst {
   /// constructor also autoinserts at the end of the specified BasicBlock.
   SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
              BasicBlock *InsertAtEnd);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
   SwitchInst *cloneImpl() const;
 
 public:
-
   // -2
   static const unsigned DefaultPseudoIndex = static_cast<unsigned>(~0L-1);
 
   template <class SwitchInstTy, class ConstantIntTy, class BasicBlockTy>
   class CaseIteratorT {
   protected:
-
     SwitchInstTy *SI;
     unsigned Index;
 
   public:
-
     typedef CaseIteratorT<SwitchInstTy, ConstantIntTy, BasicBlockTy> Self;
 
     /// Initializes case iterator for given SwitchInst and for given
@@ -3083,6 +3092,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 private:
   BasicBlock *getSuccessorV(unsigned idx) const override;
   unsigned getNumSuccessorsV() const override;
@@ -3094,7 +3104,6 @@ struct OperandTraits<SwitchInst> : public HungoffOperandTraits<2> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SwitchInst, Value)
-
 
 //===----------------------------------------------------------------------===//
 //                             IndirectBrInst Class
@@ -3128,6 +3137,7 @@ class IndirectBrInst : public TerminatorInst {
   /// here to make memory allocation more efficient.  This constructor also
   /// autoinserts at the end of the specified BasicBlock.
   IndirectBrInst(Value *Address, unsigned NumDests, BasicBlock *InsertAtEnd);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -3150,7 +3160,6 @@ public:
   Value *getAddress() { return getOperand(0); }
   const Value *getAddress() const { return getOperand(0); }
   void setAddress(Value *V) { setOperand(0, V); }
-
 
   /// getNumDestinations - return the number of possible destinations in this
   /// indirectbr instruction.
@@ -3183,6 +3192,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 private:
   BasicBlock *getSuccessorV(unsigned idx) const override;
   unsigned getNumSuccessorsV() const override;
@@ -3194,7 +3204,6 @@ struct OperandTraits<IndirectBrInst> : public HungoffOperandTraits<1> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(IndirectBrInst, Value)
-
 
 //===----------------------------------------------------------------------===//
 //                               InvokeInst Class
@@ -3238,6 +3247,7 @@ class InvokeInst : public TerminatorInst {
   inline InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
                     ArrayRef<Value *> Args, unsigned Values,
                     const Twine &NameStr, BasicBlock *InsertAtEnd);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -3364,7 +3374,7 @@ public:
   uint64_t getDereferenceableBytes(unsigned i) const {
     return AttributeList.getDereferenceableBytes(i);
   }
-  
+
   /// \brief Extract the number of dereferenceable_or_null bytes for a call or
   /// parameter (0=unknown).
   uint64_t getDereferenceableOrNullBytes(unsigned i) const {
@@ -3557,6 +3567,7 @@ class ResumeInst : public TerminatorInst {
 
   explicit ResumeInst(Value *Exn, Instruction *InsertBefore=nullptr);
   ResumeInst(Value *Exn, BasicBlock *InsertAtEnd);
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -3585,6 +3596,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 private:
   BasicBlock *getSuccessorV(unsigned idx) const override;
   unsigned getNumSuccessorsV() const override;
@@ -4209,6 +4221,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CleanupReturnInst, Value)
 ///
 class UnreachableInst : public TerminatorInst {
   void *operator new(size_t, unsigned) = delete;
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -4231,6 +4244,7 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
 private:
   BasicBlock *getSuccessorV(unsigned idx) const override;
   unsigned getNumSuccessorsV() const override;

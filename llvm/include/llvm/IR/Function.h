@@ -47,6 +47,7 @@ template<> struct ilist_traits<Argument>
   static void noteHead(Argument*, Argument*) {}
 
   static ValueSymbolTable *getSymTab(Function *ItemParent);
+
 private:
   mutable ilist_half_node<Argument> Sentinel;
 };
@@ -268,13 +269,13 @@ public:
   uint64_t getDereferenceableBytes(unsigned i) const {
     return AttributeSets.getDereferenceableBytes(i);
   }
-  
+
   /// @brief Extract the number of dereferenceable_or_null bytes for a call or
   /// parameter (0=unknown).
   uint64_t getDereferenceableOrNullBytes(unsigned i) const {
     return AttributeSets.getDereferenceableOrNullBytes(i);
   }
-  
+
   /// @brief Determine if the function does not access memory.
   bool doesNotAccessMemory() const {
     return AttributeSets.hasAttribute(AttributeSet::FunctionIndex,
@@ -424,7 +425,6 @@ public:
   ///
   void eraseFromParent() override;
 
-
   /// Get the underlying elements of the Function... the basic block list is
   /// empty for external functions.
   ///
@@ -456,7 +456,6 @@ public:
   ///
   inline       ValueSymbolTable &getValueSymbolTable()       { return *SymTab; }
   inline const ValueSymbolTable &getValueSymbolTable() const { return *SymTab; }
-
 
   //===--------------------------------------------------------------------===//
   // BasicBlock iterator forwarding functions

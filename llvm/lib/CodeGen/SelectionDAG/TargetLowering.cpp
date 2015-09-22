@@ -2305,7 +2305,6 @@ unsigned TargetLowering::AsmOperandInfo::getMatchedOperand() const {
   return atoi(ConstraintCode.c_str());
 }
 
-
 /// ParseConstraints - Split up the constraint string from the inline
 /// assembly value into the specific constraints and their prefixes,
 /// and also tie in the associated operand values.
@@ -2490,13 +2489,11 @@ TargetLowering::ParseConstraints(const DataLayout &DL,
                              " incompatible type!");
         }
       }
-
     }
   }
 
   return ConstraintOperands;
 }
-
 
 /// getConstraintGenerality - Return an integer indicating how general CT
 /// is.

@@ -207,7 +207,7 @@ public:
   /// Make this range have the bit width given by \p BitWidth. The
   /// value is zero extended, truncated, or left alone to make it that width.
   ConstantRange zextOrTrunc(uint32_t BitWidth) const;
-  
+
   /// Make this range have the bit width given by \p BitWidth. The
   /// value is sign extended, truncated, or left alone to make it that width.
   ConstantRange sextOrTrunc(uint32_t BitWidth) const;
@@ -258,7 +258,7 @@ public:
   /// Return a new range that is the logical not of the current set.
   ///
   ConstantRange inverse() const;
-  
+
   /// Print out the bounds to a stream.
   ///
   void print(raw_ostream &OS) const;

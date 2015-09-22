@@ -51,8 +51,8 @@ protected:
   virtual BasicBlock *getSuccessorV(unsigned idx) const = 0;
   virtual unsigned getNumSuccessorsV() const = 0;
   virtual void setSuccessorV(unsigned idx, BasicBlock *B) = 0;
-public:
 
+public:
   /// Return the number of successors that this terminator has.
   unsigned getNumSuccessors() const {
     return getNumSuccessorsV();
@@ -271,7 +271,6 @@ public:
   }
 };
 
-
 //===----------------------------------------------------------------------===//
 //                          UnaryInstruction Class
 //===----------------------------------------------------------------------===//
@@ -289,6 +288,7 @@ protected:
     : Instruction(Ty, iType, &Op<0>(), 1, IAE) {
     Op<0>() = V;
   }
+
 public:
   // allocate space for exactly one operand
   void *operator new(size_t s) {
@@ -327,6 +327,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(UnaryInstruction, Value)
 
 class BinaryOperator : public Instruction {
   void *operator new(size_t, unsigned) = delete;
+
 protected:
   void init(BinaryOps iType);
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, Type *Ty,
@@ -403,7 +404,7 @@ public:
     BO->setHasNoSignedWrap(true);
     return BO;
   }
-  
+
   static BinaryOperator *CreateNUW(BinaryOps Opc, Value *V1, Value *V2,
                                    const Twine &Name = "") {
     BinaryOperator *BO = Create(Opc, V1, V2, Name);
@@ -422,7 +423,7 @@ public:
     BO->setHasNoUnsignedWrap(true);
     return BO;
   }
-  
+
   static BinaryOperator *CreateExact(BinaryOps Opc, Value *V1, Value *V2,
                                      const Twine &Name = "") {
     BinaryOperator *BO = Create(Opc, V1, V2, Name);
@@ -471,7 +472,7 @@ public:
   DEFINE_HELPERS(LShr, Exact)  // CreateExactLShr
 
 #undef DEFINE_HELPERS
-  
+
   /// Helper functions to construct and inspect unary operations (NEG and NOT)
   /// via binary operators SUB and XOR:
   ///
@@ -549,7 +550,7 @@ public:
   /// Convenience method to copy supported wrapping, exact, and fast-math flags
   /// from V to this instruction.
   void copyIRFlags(const Value *V);
-  
+
   /// Logical 'and' of any supported wrapping, exact, and fast-math flags of
   /// V and this instruction.
   void andIRFlags(const Value *V);
@@ -582,6 +583,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BinaryOperator, Value)
 /// @brief Base class of casting instructions.
 class CastInst : public UnaryInstruction {
   void anchor() override;
+
 protected:
   /// @brief Constructor with insert-before-instruction semantics for subclasses
   CastInst(Type *Ty, unsigned iType, Value *S,
@@ -595,6 +597,7 @@ protected:
     : UnaryInstruction(Ty, iType, S, InsertAtEnd) {
     setName(NameStr);
   }
+
 public:
   /// Provides a way to construct any of the CastInst subclasses using an
   /// opcode instead of the subclass's constructor. The opcode must be in the
@@ -873,6 +876,7 @@ public:
 class CmpInst : public Instruction {
   void *operator new(size_t, unsigned) = delete;
   CmpInst() = delete;
+
 protected:
   CmpInst(Type *ty, Instruction::OtherOps op, unsigned short pred,
           Value *LHS, Value *RHS, const Twine &Name = "",
@@ -883,6 +887,7 @@ protected:
           BasicBlock *InsertAtEnd);
 
   void anchor() override; // Out of line virtual method.
+
 public:
   /// This enumeration lists the possible predicates for CmpInst subclasses.
   /// Values in the range 0-31 are reserved for FCmpInst, while values in the
@@ -968,7 +973,6 @@ public:
 
   bool isFPPredicate() const { return isFPPredicate(getPredicate()); }
   bool isIntPredicate() const { return isIntPredicate(getPredicate()); }
-
 
   /// For example, EQ -> NE, UGT -> ULE, SLT -> SGE,
   ///              OEQ -> UNE, UGT -> OLE, OLT -> UGE, etc.
@@ -1076,6 +1080,7 @@ public:
     }
     return Type::getInt1Ty(opnd_type->getContext());
   }
+
 private:
   // Shadow Value::setValueSubclassData with a private forwarding method so that
   // subclasses cannot accidentally use it.
@@ -1083,7 +1088,6 @@ private:
     Value::setValueSubclassData(D);
   }
 };
-
 
 // FIXME: these are redundant if CmpInst < BinaryOperator
 template <>

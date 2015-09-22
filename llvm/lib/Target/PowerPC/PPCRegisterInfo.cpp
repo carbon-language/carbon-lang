@@ -200,7 +200,7 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(PPC::R2);  // System-reserved register
     Reserved.set(PPC::R13); // Small Data Area pointer register
   }
-  
+
   // On PPC64, r13 is the thread pointer. Never allocate this register.
   if (TM.isPPC64()) {
     Reserved.set(PPC::R13);
@@ -337,7 +337,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
   unsigned maxCallFrameSize = MFI->getMaxCallFrameSize();
   // Get the total frame size.
   unsigned FrameSize = MFI->getStackSize();
-  
+
   // Get stack alignments.
   const PPCFrameLowering *TFI = getFrameLowering(MF);
   unsigned TargetAlign = TFI->getStackAlignment();
@@ -354,7 +354,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
   unsigned Reg = MF.getRegInfo().createVirtualRegister(LP64 ? G8RC : GPRC);
-  
+
   if (MaxAlign < TargetAlign && isInt<16>(FrameSize)) {
     BuildMI(MBB, II, dl, TII.get(PPC::ADDI), Reg)
       .addReg(PPC::R31)
@@ -425,7 +425,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
       .addReg(PPC::R1)
       .addImm(maxCallFrameSize);
   }
-  
+
   // Discard the DYNALLOC instruction.
   MBB.erase(II);
 }
@@ -754,7 +754,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int FPSI = FI->getFramePointerSaveIndex();
   // Get the instruction opcode.
   unsigned OpC = MI.getOpcode();
-  
+
   // Special case for dynamic alloca.
   if (FPSI && FrameIndex == FPSI &&
       (OpC == PPC::DYNALLOC || OpC == PPC::DYNALLOC8)) {

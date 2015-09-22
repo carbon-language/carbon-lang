@@ -27,7 +27,6 @@ class formatted_raw_ostream;
 
 class AssemblyAnnotationWriter {
 public:
-
   virtual ~AssemblyAnnotationWriter();
 
   /// emitFunctionAnnot - This may be implemented to emit a string right before

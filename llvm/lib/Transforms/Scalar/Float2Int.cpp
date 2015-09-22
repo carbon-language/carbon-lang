@@ -227,7 +227,7 @@ void Float2Int::walkBackwards(const SmallPtrSetImpl<Instruction*> &Roots) {
       seen(I, unknownRange());
       break;
     }
-  
+
     for (Value *O : I->operands()) {
       if (Instruction *OI = dyn_cast<Instruction>(O)) {
         // Unify def-use chains if they interfere.
@@ -400,7 +400,7 @@ bool Float2Int::validateAndTransform() {
         R.isFullSet() || R.isSignWrappedSet())
       continue;
     assert(ConvertedToTy && "Must have set the convertedtoty by this point!");
-    
+
     // The number of bits required is the maximum of the upper and
     // lower limits, plus one so it can be signed.
     unsigned MinBW = std::max(R.getLower().getMinSignedBits(),

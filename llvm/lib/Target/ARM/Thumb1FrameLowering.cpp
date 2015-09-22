@@ -232,7 +232,6 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF,
     }
   }
 
-
   // Adjust FP so it point to the stack slot that contains the previous FP.
   if (HasFP) {
     FramePtrOffsetInBlock += MFI->getObjectOffset(FramePtrSpillFI)

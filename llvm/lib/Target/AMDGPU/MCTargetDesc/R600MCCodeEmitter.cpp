@@ -37,7 +37,6 @@ class R600MCCodeEmitter : public AMDGPUMCCodeEmitter {
   const MCRegisterInfo &MRI;
 
 public:
-
   R600MCCodeEmitter(const MCInstrInfo &mcii, const MCRegisterInfo &mri)
     : MCII(mcii), MRI(mri) { }
 
@@ -50,8 +49,8 @@ public:
   uint64_t getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                              SmallVectorImpl<MCFixup> &Fixups,
                              const MCSubtargetInfo &STI) const override;
-private:
 
+private:
   void EmitByte(unsigned int byte, raw_ostream &OS) const;
 
   void Emit(uint32_t value, raw_ostream &OS) const;
@@ -59,7 +58,6 @@ private:
 
   unsigned getHWRegChan(unsigned reg) const;
   unsigned getHWReg(unsigned regNo) const;
-
 };
 
 } // End anonymous namespace

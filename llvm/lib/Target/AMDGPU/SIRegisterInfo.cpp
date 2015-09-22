@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "SIRegisterInfo.h"
 #include "SIInstrInfo.h"
 #include "SIMachineFunctionInfo.h"

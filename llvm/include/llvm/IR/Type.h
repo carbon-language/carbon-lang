@@ -132,7 +132,7 @@ public:
 
   /// isFloatTy - Return true if this is 'float', a 32-bit IEEE fp type.
   bool isFloatTy() const { return getTypeID() == FloatTyID; }
-  
+
   /// isDoubleTy - Return true if this is 'double', a 64-bit IEEE fp type.
   bool isDoubleTy() const { return getTypeID() == DoubleTyID; }
 
@@ -172,7 +172,7 @@ public:
   /// isFPOrFPVectorTy - Return true if this is a FP type or a vector of FP.
   ///
   bool isFPOrFPVectorTy() const { return getScalarType()->isFloatingPointTy(); }
- 
+
   /// isLabelTy - Return true if this is 'label'.
   bool isLabelTy() const { return getTypeID() == LabelTyID; }
 
@@ -193,7 +193,7 @@ public:
   /// integer types.
   ///
   bool isIntOrIntVectorTy() const { return getScalarType()->isIntegerTy(); }
-  
+
   /// isFunctionTy - True if this is an instance of FunctionType.
   ///
   bool isFunctionTy() const { return getTypeID() == FunctionTyID; }
@@ -214,7 +214,7 @@ public:
   /// pointer types.
   ///
   bool isPtrOrPtrVectorTy() const { return getScalarType()->isPointerTy(); }
- 
+
   /// isVectorTy - True if this is an instance of VectorType.
   ///
   bool isVectorTy() const { return getTypeID() == VectorTyID; }
@@ -337,19 +337,19 @@ public:
   // example) is shorthand for cast<VectorType>(Ty)->getNumElements().  This is
   // only intended to cover the core methods that are frequently used, helper
   // methods should not be added here.
-  
+
   unsigned getIntegerBitWidth() const;
 
   Type *getFunctionParamType(unsigned i) const;
   unsigned getFunctionNumParams() const;
   bool isFunctionVarArg() const;
-  
+
   StringRef getStructName() const;
   unsigned getStructNumElements() const;
   Type *getStructElementType(unsigned N) const;
-  
+
   Type *getSequentialElementType() const;
-  
+
   uint64_t getArrayNumElements() const;
   Type *getArrayElementType() const { return getSequentialElementType(); }
 
@@ -360,7 +360,7 @@ public:
 
   /// \brief Get the address space of this pointer or pointer vector type.
   unsigned getPointerAddressSpace() const;
-  
+
   //===--------------------------------------------------------------------===//
   // Static members exported by the Type class itself.  Useful for getting
   // instances of Type.
@@ -390,7 +390,7 @@ public:
   static IntegerType *getInt32Ty(LLVMContext &C);
   static IntegerType *getInt64Ty(LLVMContext &C);
   static IntegerType *getInt128Ty(LLVMContext &C);
-  
+
   //===--------------------------------------------------------------------===//
   // Convenience methods for getting pointer types with one of the above builtin
   // types as pointee.
@@ -433,7 +433,6 @@ template <> struct isa_impl<PointerType, Type> {
   }
 };
 
-  
 //===----------------------------------------------------------------------===//
 // Provide specializations of GraphTraits to be able to treat a type as a
 // graph of sub types.
@@ -476,7 +475,7 @@ inline Type **unwrap(LLVMTypeRef* Tys) {
 inline LLVMTypeRef *wrap(Type **Tys) {
   return reinterpret_cast<LLVMTypeRef*>(const_cast<Type**>(Tys));
 }
-  
+
 } // End llvm namespace
 
 #endif

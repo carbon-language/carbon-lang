@@ -36,11 +36,12 @@ class StringRef;
 /// @brief Integer representation type
 class IntegerType : public Type {
   friend class LLVMContextImpl;
-  
+
 protected:
   explicit IntegerType(LLVMContext &C, unsigned NumBits) : Type(C, IntegerTyID){
     setSubclassData(NumBits);
   }
+
 public:
   /// This enum is just used to hold constants we need for IntegerType.
   enum {
@@ -90,7 +91,6 @@ public:
   }
 };
 
-
 /// FunctionType - Class to represent function types
 ///
 class FunctionType : public Type {
@@ -108,7 +108,7 @@ public:
   /// FunctionType::get - Create a FunctionType taking no parameters.
   ///
   static FunctionType *get(Type *Result, bool isVarArg);
-  
+
   /// isValidReturnType - Return true if the specified type is valid as a return
   /// type.
   static bool isValidReturnType(Type *RetTy);
@@ -167,7 +167,6 @@ public:
   }
 };
 
-
 /// StructType - Class to represent struct types.  There are two different kinds
 /// of struct types: Literal structs and Identified structs.
 ///
@@ -207,8 +206,8 @@ class StructType : public CompositeType {
   /// a identified type that has an empty name.
   ///
   void *SymbolTableEntry;
-public:
 
+public:
   /// StructType::create - This creates an identified struct.
   static StructType *create(LLVMContext &Context, StringRef Name);
   static StructType *create(LLVMContext &Context);
@@ -229,7 +228,7 @@ public:
   /// StructType::get - Create an empty structure type.
   ///
   static StructType *get(LLVMContext &Context, bool isPacked = false);
-  
+
   /// StructType::get - This static method is a convenience method for creating
   /// structure types by specifying the elements as arguments.  Note that this
   /// method always returns a non-packed struct, and requires at least one
@@ -237,11 +236,11 @@ public:
   static StructType *get(Type *elt1, ...) LLVM_END_WITH_NULL;
 
   bool isPacked() const { return (getSubclassData() & SCDB_Packed) != 0; }
-  
+
   /// isLiteral - Return true if this type is uniqued by structural
   /// equivalence, false if it is a struct definition.
   bool isLiteral() const { return (getSubclassData() & SCDB_IsLiteral) != 0; }
-  
+
   /// isOpaque - Return true if this is a type with an identity that has no body
   /// specified yet.  These prints as 'opaque' in .ll files.
   bool isOpaque() const { return (getSubclassData() & SCDB_HasBody) == 0; }
@@ -251,12 +250,12 @@ public:
 
   /// hasName - Return true if this is a named struct that has a non-empty name.
   bool hasName() const { return SymbolTableEntry != nullptr; }
-  
+
   /// getName - Return the name for this struct type if it has an identity.
   /// This may return an empty string for an unnamed struct type.  Do not call
   /// this on an literal type.
   StringRef getName() const;
-  
+
   /// setName - Change the name of this type to the specified name, or to a name
   /// with a suffix if there is a collision.  Do not call this on an literal
   /// type.
@@ -265,11 +264,10 @@ public:
   /// setBody - Specify a body for an opaque identified type.
   void setBody(ArrayRef<Type*> Elements, bool isPacked = false);
   void setBody(Type *elt1, ...) LLVM_END_WITH_NULL;
-  
+
   /// isValidElementType - Return true if the specified type is valid as a
   /// element type.
   static bool isValidElementType(Type *ElemTy);
-  
 
   // Iterator access to the elements.
   typedef Type::subtype_iterator element_iterator;
@@ -327,7 +325,6 @@ public:
   }
 };
 
-
 /// ArrayType - Class to represent array types.
 ///
 class ArrayType : public SequentialType {
@@ -336,6 +333,7 @@ class ArrayType : public SequentialType {
   ArrayType(const ArrayType &) = delete;
   const ArrayType &operator=(const ArrayType &) = delete;
   ArrayType(Type *ElType, uint64_t NumEl);
+
 public:
   /// ArrayType::get - This static method is the primary way to construct an
   /// ArrayType
@@ -362,6 +360,7 @@ class VectorType : public SequentialType {
   VectorType(const VectorType &) = delete;
   const VectorType &operator=(const VectorType &) = delete;
   VectorType(Type *ElType, unsigned NumEl);
+
 public:
   /// VectorType::get - This static method is the primary way to construct an
   /// VectorType.
@@ -440,13 +439,13 @@ public:
   }
 };
 
-
 /// PointerType - Class to represent pointers.
 ///
 class PointerType : public SequentialType {
   PointerType(const PointerType &) = delete;
   const PointerType &operator=(const PointerType &) = delete;
   explicit PointerType(Type *ElType, unsigned AddrSpace);
+
 public:
   /// PointerType::get - This constructs a pointer to an object of the specified
   /// type in a numbered address space.

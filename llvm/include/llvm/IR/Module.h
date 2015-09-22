@@ -100,6 +100,7 @@ template<> struct ilist_traits<NamedMDNode>
   static void noteHead(NamedMDNode*, NamedMDNode*) {}
   void addNodeToList(NamedMDNode *) {}
   void removeNodeFromList(NamedMDNode *) {}
+
 private:
   mutable ilist_node<NamedMDNode> Sentinel;
 };
@@ -654,7 +655,7 @@ public:
 
   /// Dump the module to stderr (for debugging).
   void dump() const;
-  
+
   /// This function causes all the subinstructions to "let go" of all references
   /// that they are maintaining.  This allows one to 'delete' a whole class at
   /// a time, even though there may be circular references... first all
@@ -701,7 +702,7 @@ DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Module, LLVMModuleRef)
 inline Module *unwrap(LLVMModuleProviderRef MP) {
   return reinterpret_cast<Module*>(MP);
 }
-  
+
 } // End llvm namespace
 
 #endif

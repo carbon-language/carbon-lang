@@ -1644,7 +1644,6 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
     FirstOp = false;
   }
 
-
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
 

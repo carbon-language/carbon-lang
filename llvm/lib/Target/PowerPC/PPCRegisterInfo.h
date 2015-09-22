@@ -54,13 +54,13 @@ inline static unsigned getCRFromCRBit(unsigned SrcReg) {
   return Reg;
 }
 
-
 class PPCRegisterInfo : public PPCGenRegisterInfo {
   DenseMap<unsigned, unsigned> ImmToIdxMap;
   const PPCTargetMachine &TM;
+
 public:
   PPCRegisterInfo(const PPCTargetMachine &TM);
-  
+
   /// getPointerRegClass - Return the register class to use to hold pointers.
   /// This is used for addressing modes.
   const TargetRegisterClass *

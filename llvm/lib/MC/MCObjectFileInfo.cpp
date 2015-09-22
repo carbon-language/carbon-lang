@@ -403,7 +403,6 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(Triple T) {
       EHSectionFlags |= ELF::SHF_WRITE;
   }
 
-
   // ELF
   BSSSection = Ctx->getELFSection(".bss", ELF::SHT_NOBITS,
                                   ELF::SHF_WRITE | ELF::SHF_ALLOC);

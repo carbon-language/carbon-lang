@@ -85,13 +85,13 @@ public:
   /// isConstantUsed - Return true if the constant has users other than constant
   /// exprs and other dangling things.
   bool isConstantUsed() const;
-  
+
   enum PossibleRelocationsTy {
     NoRelocation = 0,
     LocalRelocation = 1,
     GlobalRelocations = 2
   };
-  
+
   /// getRelocationInfo - This method classifies the entry according to
   /// whether or not it may generate a relocation entry.  This must be
   /// conservative, so if it might codegen to a relocatable entry, it should say
@@ -107,7 +107,7 @@ public:
   ///
   /// FIXME: This really should not be in VMCore.
   PossibleRelocationsTy getRelocationInfo() const;
-  
+
   /// getAggregateElement - For aggregates (struct/array/vector) return the
   /// constant that corresponds to the specified element if possible, or null if
   /// not.  This can return null if the element index is a ConstantExpr, or if

@@ -69,6 +69,7 @@ private:
     }
     return CallSiteBase();
   }
+
 public:
   /// isCall - true if a CallInst is enclosed.
   /// Note that !isCall() does not mean it is an InvokeInst enclosed,
@@ -253,13 +254,13 @@ public:
   uint64_t getDereferenceableBytes(uint16_t i) const {
     CALLSITE_DELEGATE_GETTER(getDereferenceableBytes(i));
   }
-  
+
   /// @brief Extract the number of dereferenceable_or_null bytes for a call or
   /// parameter (0=unknown).
   uint64_t getDereferenceableOrNullBytes(uint16_t i) const {
     CALLSITE_DELEGATE_GETTER(getDereferenceableOrNullBytes(i));
   }
-  
+
   /// \brief Return true if the call should not be treated as a call to a
   /// builtin.
   bool isNoBuiltin() const {

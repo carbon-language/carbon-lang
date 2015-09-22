@@ -55,7 +55,6 @@ public:
 /// @name Constructors
 /// @{
 public:
-
   ValueSymbolTable() : vmap(0), LastUnique(0) {}
   ~ValueSymbolTable();
 
@@ -63,7 +62,6 @@ public:
 /// @name Accessors
 /// @{
 public:
-
   /// This method finds the value with the given \p Name in the
   /// the symbol table.
   /// @returns the value associated with the \p Name
@@ -107,12 +105,12 @@ private:
   /// If the inserted name conflicts, this renames the value.
   /// @brief Add a named value to the symbol table
   void reinsertValue(Value *V);
-    
+
   /// createValueName - This method attempts to create a value name and insert
   /// it into the symbol table with the specified name.  If it conflicts, it
   /// auto-renames the name and returns that instead.
   ValueName *createValueName(StringRef Name, Value *V);
-  
+
   /// This method removes a value from the symbol table.  It leaves the
   /// ValueName attached to the value, but it is no longer inserted in the
   /// symtab.

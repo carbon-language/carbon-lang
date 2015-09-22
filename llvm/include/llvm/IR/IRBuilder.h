@@ -52,6 +52,7 @@ protected:
 /// \brief Common base class shared among various IRBuilders.
 class IRBuilderBase {
   DebugLoc CurDbgLocation;
+
 protected:
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
@@ -59,8 +60,8 @@ protected:
 
   MDNode *DefaultFPMathTag;
   FastMathFlags FMF;
-public:
 
+public:
   IRBuilderBase(LLVMContext &context, MDNode *FPMathTag = nullptr)
     : Context(context), DefaultFPMathTag(FPMathTag), FMF() {
     ClearInsertionPoint();
@@ -515,6 +516,7 @@ template<bool preserveNames = true, typename T = ConstantFolder,
          typename Inserter = IRBuilderDefaultInserter<preserveNames> >
 class IRBuilder : public IRBuilderBase, public Inserter {
   T Folder;
+
 public:
   IRBuilder(LLVMContext &C, const T &F, Inserter I = Inserter(),
             MDNode *FPMathTag = nullptr)
@@ -737,6 +739,7 @@ private:
     I->setFastMathFlags(FMF);
     return I;
   }
+
 public:
   Value *CreateAdd(Value *LHS, Value *RHS, const Twine &Name = "",
                    bool HasNUW = false, bool HasNSW = false) {
@@ -1372,11 +1375,13 @@ public:
 
     return CreateBitCast(V, DestTy, Name);
   }
+
 private:
   // \brief Provided to resolve 'CreateIntCast(Ptr, Ptr, "...")', giving a
   // compile time error, instead of converting the string to bool for the
   // isSigned parameter.
   Value *CreateIntCast(Value *, Type *, const char *) = delete;
+
 public:
   Value *CreateFPCast(Value *V, Type *DestTy, const Twine &Name = "") {
     if (V->getType() == DestTy)
@@ -1740,7 +1745,6 @@ public:
 
 // Create wrappers for C Binding types (see CBindingWrapping.h).
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(IRBuilder<>, LLVMBuilderRef)
-
 }
 
 #endif
