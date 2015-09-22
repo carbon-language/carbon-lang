@@ -1186,7 +1186,7 @@ private:
 
   /// \brief Mark the passed DIE as well as all the ones it depends on
   /// as kept.
-  void keepDIEAndDenpendencies(RelocationManager &RelocMgr,
+  void keepDIEAndDependencies(RelocationManager &RelocMgr,
                                const DWARFDebugInfoEntryMinimal &DIE,
                                CompileUnit::DIEInfo &MyInfo,
                                const DebugMapObject &DMO, CompileUnit &CU,
@@ -2067,7 +2067,7 @@ unsigned DwarfLinker::shouldKeepDIE(RelocationManager &RelocMgr,
 /// back to lookForDIEsToKeep while adding TF_DependencyWalk to the
 /// TraversalFlags to inform it that it's not doing the primary DIE
 /// tree walk.
-void DwarfLinker::keepDIEAndDenpendencies(RelocationManager &RelocMgr,
+void DwarfLinker::keepDIEAndDependencies(RelocationManager &RelocMgr,
                                           const DWARFDebugInfoEntryMinimal &Die,
                                           CompileUnit::DIEInfo &MyInfo,
                                           const DebugMapObject &DMO,
@@ -2151,7 +2151,7 @@ void DwarfLinker::lookForDIEsToKeep(RelocationManager &RelocMgr,
   if ((Flags & TF_DependencyWalk) && AlreadyKept)
     return;
 
-  // We must not call shouldKeepDIE while called from keepDIEAndDenpendencies,
+  // We must not call shouldKeepDIE while called from keepDIEAndDependencies,
   // because it would screw up the relocation finding logic.
   if (!(Flags & TF_DependencyWalk))
     Flags = shouldKeepDIE(RelocMgr, Die, CU, MyInfo, Flags);
@@ -2159,7 +2159,7 @@ void DwarfLinker::lookForDIEsToKeep(RelocationManager &RelocMgr,
   // If it is a newly kept DIE mark it as well as all its dependencies as kept.
   if (!AlreadyKept && (Flags & TF_Keep)) {
     bool UseOdr = (Flags & TF_DependencyWalk) ? (Flags & TF_ODR) : CU.hasODR();
-    keepDIEAndDenpendencies(RelocMgr, Die, MyInfo, DMO, CU, UseOdr);
+    keepDIEAndDependencies(RelocMgr, Die, MyInfo, DMO, CU, UseOdr);
   }
   // The TF_ParentWalk flag tells us that we are currently walking up
   // the parent chain of a required DIE, and we don't want to mark all
