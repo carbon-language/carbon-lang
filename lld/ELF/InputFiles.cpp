@@ -27,24 +27,23 @@ template <class ELFT> static uint16_t getEMachine(const ELFFileBase &B) {
   return cast<ObjectFile<ELFT>>(B).getEMachine();
 }
 
-static uint16_t getEMachine(const ELFFileBase &B) {
-  ELFKind K = B.getELFKind();
-  switch (K) {
+uint16_t ELFFileBase::getEMachine() const {
+  switch (EKind) {
   case ELF32BEKind:
-    return getEMachine<ELF32BE>(B);
+    return ::getEMachine<ELF32BE>(*this);
   case ELF32LEKind:
-    return getEMachine<ELF32LE>(B);
+    return ::getEMachine<ELF32LE>(*this);
   case ELF64BEKind:
-    return getEMachine<ELF64BE>(B);
+    return ::getEMachine<ELF64BE>(*this);
   case ELF64LEKind:
-    return getEMachine<ELF64LE>(B);
+    return ::getEMachine<ELF64LE>(*this);
   }
   llvm_unreachable("Invalid kind");
 }
 
 bool ELFFileBase::isCompatibleWith(const ELFFileBase &Other) const {
   return getELFKind() == Other.getELFKind() &&
-         getEMachine(*this) == getEMachine(Other);
+         getEMachine() == Other.getEMachine();
 }
 
 template <class ELFT> void ELFData<ELFT>::openELF(MemoryBufferRef MB) {

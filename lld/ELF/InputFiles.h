@@ -62,6 +62,8 @@ public:
   bool isCompatibleWith(const ELFFileBase &Other) const;
   ELFKind getELFKind() const { return EKind; }
 
+  uint16_t getEMachine() const;
+
 protected:
   const ELFKind EKind;
 };
@@ -122,6 +124,7 @@ class ObjectFile : public ObjectFileBase, public ELFData<ELFT> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Word Elf_Word;
 
 public:
+  using ELFData<ELFT>::getEMachine;
 
   static bool classof(const InputFile *F) {
     return F->kind() == ObjectKind &&
@@ -194,6 +197,7 @@ class SharedFile : public SharedFileBase, public ELFData<ELFT> {
   std::vector<SharedSymbol<ELFT>> SymbolBodies;
 
 public:
+  using ELFData<ELFT>::getEMachine;
   llvm::MutableArrayRef<SharedSymbol<ELFT>> getSharedSymbols() {
     return SymbolBodies;
   }
