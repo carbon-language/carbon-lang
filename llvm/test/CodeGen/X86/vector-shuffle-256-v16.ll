@@ -1439,11 +1439,10 @@ define <16 x i16> @shuffle_v16i16_02_03_zz_zz_06_07_zz_zz_10_11_zz_zz_14_15_zz_z
 define <16 x i16> @shuffle_v16i16_16_zz_zz_zz_17_zz_zz_zz_18_zz_zz_zz_19_zz_zz_zz(<16 x i16> %a) {
 ; AVX1-LABEL: shuffle_v16i16_16_zz_zz_zz_17_zz_zz_zz_18_zz_zz_zz_19_zz_zz_zz:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vpshufb {{.*#+}} xmm1 = xmm0[4,5,2,3,4,5,6,7,6,7,10,11,4,5,6,7]
-; AVX1-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm1 = xmm1[0],xmm2[1,2,3],xmm1[4],xmm2[5,6,7]
+; AVX1-NEXT:    vpmovzxwq {{.*#+}} xmm1 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[1,1,2,3]
 ; AVX1-NEXT:    vpmovzxwq {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
-; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: shuffle_v16i16_16_zz_zz_zz_17_zz_zz_zz_18_zz_zz_zz_19_zz_zz_zz:

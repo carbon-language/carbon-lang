@@ -861,7 +861,7 @@ define <4 x i64> @load_sext_4i1_to_4i64(<4 x i1> *%ptr) {
 ; SSE2-NEXT:    psllq $63, %xmm0
 ; SSE2-NEXT:    psrad $31, %xmm0
 ; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,1,3,3]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm2[2,2,3,3]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm2[2,1,3,3]
 ; SSE2-NEXT:    psllq $63, %xmm1
 ; SSE2-NEXT:    psrad $31, %xmm1
 ; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[1,1,3,3]
@@ -891,7 +891,7 @@ define <4 x i64> @load_sext_4i1_to_4i64(<4 x i1> *%ptr) {
 ; SSSE3-NEXT:    psllq $63, %xmm0
 ; SSSE3-NEXT:    psrad $31, %xmm0
 ; SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,1,3,3]
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm1 = xmm2[2,2,3,3]
+; SSSE3-NEXT:    pshufd {{.*#+}} xmm1 = xmm2[2,1,3,3]
 ; SSSE3-NEXT:    psllq $63, %xmm1
 ; SSSE3-NEXT:    psrad $31, %xmm1
 ; SSSE3-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[1,1,3,3]
@@ -1347,7 +1347,7 @@ define <8 x i32> @load_sext_8i1_to_8i32(<8 x i1> *%ptr) {
 ; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
 ; SSE2-NEXT:    pslld $31, %xmm0
 ; SSE2-NEXT:    psrad $31, %xmm0
-; SSE2-NEXT:    punpckhwd {{.*#+}} xmm1 = xmm1[4,4,5,5,6,6,7,7]
+; SSE2-NEXT:    punpckhwd {{.*#+}} xmm1 = xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
 ; SSE2-NEXT:    pslld $31, %xmm1
 ; SSE2-NEXT:    psrad $31, %xmm1
 ; SSE2-NEXT:    retq
@@ -1396,7 +1396,7 @@ define <8 x i32> @load_sext_8i1_to_8i32(<8 x i1> *%ptr) {
 ; SSSE3-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
 ; SSSE3-NEXT:    pslld $31, %xmm0
 ; SSSE3-NEXT:    psrad $31, %xmm0
-; SSSE3-NEXT:    punpckhwd {{.*#+}} xmm1 = xmm1[4,4,5,5,6,6,7,7]
+; SSSE3-NEXT:    punpckhwd {{.*#+}} xmm1 = xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
 ; SSSE3-NEXT:    pslld $31, %xmm1
 ; SSSE3-NEXT:    psrad $31, %xmm1
 ; SSSE3-NEXT:    retq
@@ -1704,7 +1704,7 @@ define <16 x i16> @load_sext_16i1_to_16i16(<16 x i1> *%ptr) {
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
 ; SSE2-NEXT:    psllw $15, %xmm0
 ; SSE2-NEXT:    psraw $15, %xmm0
-; SSE2-NEXT:    punpckhbw {{.*#+}} xmm1 = xmm1[8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15]
+; SSE2-NEXT:    punpckhbw {{.*#+}} xmm1 = xmm1[8],xmm0[8],xmm1[9],xmm0[9],xmm1[10],xmm0[10],xmm1[11],xmm0[11],xmm1[12],xmm0[12],xmm1[13],xmm0[13],xmm1[14],xmm0[14],xmm1[15],xmm0[15]
 ; SSE2-NEXT:    psllw $15, %xmm1
 ; SSE2-NEXT:    psraw $15, %xmm1
 ; SSE2-NEXT:    retq
@@ -1793,7 +1793,7 @@ define <16 x i16> @load_sext_16i1_to_16i16(<16 x i1> *%ptr) {
 ; SSSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
 ; SSSE3-NEXT:    psllw $15, %xmm0
 ; SSSE3-NEXT:    psraw $15, %xmm0
-; SSSE3-NEXT:    punpckhbw {{.*#+}} xmm1 = xmm1[8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15]
+; SSSE3-NEXT:    punpckhbw {{.*#+}} xmm1 = xmm1[8],xmm0[8],xmm1[9],xmm0[9],xmm1[10],xmm0[10],xmm1[11],xmm0[11],xmm1[12],xmm0[12],xmm1[13],xmm0[13],xmm1[14],xmm0[14],xmm1[15],xmm0[15]
 ; SSSE3-NEXT:    psllw $15, %xmm1
 ; SSSE3-NEXT:    psraw $15, %xmm1
 ; SSSE3-NEXT:    retq

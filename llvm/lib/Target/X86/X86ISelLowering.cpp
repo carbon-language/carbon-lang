@@ -7357,44 +7357,81 @@ static SDValue lowerVectorShuffleWithSSE4A(SDLoc DL, MVT VT, SDValue V1,
 ///
 /// Given a specific number of elements, element bit width, and extension
 /// stride, produce either a zero or any extension based on the available
-/// features of the subtarget.
+/// features of the subtarget. The extended elements are consecutive and
+/// begin and can start from an offseted element index in the input; to
+/// avoid excess shuffling the offset must either being in the bottom lane
+/// or at the start of a higher lane. All extended elements must be from
+/// the same lane.
 static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
-    SDLoc DL, MVT VT, int Scale, bool AnyExt, SDValue InputV,
+    SDLoc DL, MVT VT, int Scale, int Offset, bool AnyExt, SDValue InputV,
     ArrayRef<int> Mask, const X86Subtarget *Subtarget, SelectionDAG &DAG) {
   assert(Scale > 1 && "Need a scale to extend.");
-  int NumElements = VT.getVectorNumElements();
   int EltBits = VT.getScalarSizeInBits();
+  int NumElements = VT.getVectorNumElements();
+  int NumEltsPerLane = 128 / EltBits;
+  int OffsetLane = Offset / NumEltsPerLane;
   assert((EltBits == 8 || EltBits == 16 || EltBits == 32) &&
          "Only 8, 16, and 32 bit elements can be extended.");
   assert(Scale * EltBits <= 64 && "Cannot zero extend past 64 bits.");
+  assert(0 <= Offset && "Extension offset must be positive.");
+  assert((Offset < NumEltsPerLane || Offset % NumEltsPerLane == 0) &&
+         "Extension offset must be in the first lane or start an upper lane.");
+
+  // Check that an index is in same lane as the base offset.
+  auto SafeOffset = [&](int Idx) {
+    return OffsetLane == (Idx / NumEltsPerLane);
+  };
+
+  // Shift along an input so that the offset base moves to the first element.
+  auto ShuffleOffset = [&](SDValue V) {
+    if (!Offset)
+      return V;
+
+    SmallVector<int, 8> ShMask((unsigned)NumElements, -1);
+    for (int i = 0; i * Scale < NumElements; ++i) {
+      int SrcIdx = i + Offset;
+      ShMask[i] = SafeOffset(SrcIdx) ? SrcIdx : -1;
+    }
+    return DAG.getVectorShuffle(VT, DL, V, DAG.getUNDEF(VT), ShMask);
+  };
 
   // Found a valid zext mask! Try various lowering strategies based on the
   // input type and available ISA extensions.
   if (Subtarget->hasSSE41()) {
+    // Not worth offseting 128-bit vectors if scale == 2, a pattern using
+    // PUNPCK will catch this in a later shuffle match.
+    if (Offset && Scale == 2 && VT.getSizeInBits() == 128)
+      return SDValue();
     MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(EltBits * Scale),
                                  NumElements / Scale);
-    return DAG.getBitcast(VT, DAG.getNode(X86ISD::VZEXT, DL, ExtVT, InputV));
+    InputV = DAG.getNode(X86ISD::VZEXT, DL, ExtVT, ShuffleOffset(InputV));
+    return DAG.getBitcast(VT, InputV);
   }
+
+  assert(VT.getSizeInBits() == 128 && "Only 128-bit vectors can be extended.");
 
   // For any extends we can cheat for larger element sizes and use shuffle
   // instructions that can fold with a load and/or copy.
   if (AnyExt && EltBits == 32) {
-    int PSHUFDMask[4] = {0, -1, 1, -1};
+    int PSHUFDMask[4] = {Offset, -1, SafeOffset(Offset + 1) ? Offset + 1 : -1,
+                         -1};
     return DAG.getBitcast(
         VT, DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32,
                         DAG.getBitcast(MVT::v4i32, InputV),
                         getV4X86ShuffleImm8ForMask(PSHUFDMask, DL, DAG)));
   }
   if (AnyExt && EltBits == 16 && Scale > 2) {
-    int PSHUFDMask[4] = {0, -1, 0, -1};
+    int PSHUFDMask[4] = {Offset / 2, -1,
+                         SafeOffset(Offset + 1) ? (Offset + 1) / 2 : -1, -1};
     InputV = DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32,
                          DAG.getBitcast(MVT::v4i32, InputV),
                          getV4X86ShuffleImm8ForMask(PSHUFDMask, DL, DAG));
-    int PSHUFHWMask[4] = {1, -1, -1, -1};
+    int PSHUFWMask[4] = {1, -1, -1, -1};
+    unsigned OddEvenOp = (Offset & 1 ? X86ISD::PSHUFLW : X86ISD::PSHUFHW);
     return DAG.getBitcast(
-        VT, DAG.getNode(X86ISD::PSHUFHW, DL, MVT::v8i16,
+        VT, DAG.getNode(OddEvenOp, DL, MVT::v8i16,
                         DAG.getBitcast(MVT::v8i16, InputV),
-                        getV4X86ShuffleImm8ForMask(PSHUFHWMask, DL, DAG)));
+                        getV4X86ShuffleImm8ForMask(PSHUFWMask, DL, DAG)));
   }
 
   // The SSE4A EXTRQ instruction can efficiently extend the first 2 lanes
@@ -7403,18 +7440,21 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
     assert(NumElements == (int)Mask.size() && "Unexpected shuffle mask size!");
     assert(VT.getSizeInBits() == 128 && "Unexpected vector width!");
 
+    int LoIdx = Offset * EltBits;
     SDValue Lo = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64,
                              DAG.getNode(X86ISD::EXTRQI, DL, VT, InputV,
                                          DAG.getConstant(EltBits, DL, MVT::i8),
-                                         DAG.getConstant(0, DL, MVT::i8)));
-    if (isUndefInRange(Mask, NumElements/2, NumElements/2))
+                                         DAG.getConstant(LoIdx, DL, MVT::i8)));
+
+    if (isUndefInRange(Mask, NumElements / 2, NumElements / 2) ||
+        !SafeOffset(Offset + 1))
       return DAG.getNode(ISD::BITCAST, DL, VT, Lo);
 
-    SDValue Hi =
-        DAG.getNode(ISD::BITCAST, DL, MVT::v2i64,
-                    DAG.getNode(X86ISD::EXTRQI, DL, VT, InputV,
-                                DAG.getConstant(EltBits, DL, MVT::i8),
-                                DAG.getConstant(EltBits, DL, MVT::i8)));
+    int HiIdx = (Offset + 1) * EltBits;
+    SDValue Hi = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64,
+                             DAG.getNode(X86ISD::EXTRQI, DL, VT, InputV,
+                                         DAG.getConstant(EltBits, DL, MVT::i8),
+                                         DAG.getConstant(HiIdx, DL, MVT::i8)));
     return DAG.getNode(ISD::BITCAST, DL, VT,
                        DAG.getNode(X86ISD::UNPCKL, DL, MVT::v2i64, Lo, Hi));
   }
@@ -7425,9 +7465,11 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
   if (Scale > 4 && EltBits == 8 && Subtarget->hasSSSE3()) {
     assert(NumElements == 16 && "Unexpected byte vector width!");
     SDValue PSHUFBMask[16];
-    for (int i = 0; i < 16; ++i)
-      PSHUFBMask[i] =
-          DAG.getConstant((i % Scale == 0) ? i / Scale : 0x80, DL, MVT::i8);
+    for (int i = 0; i < 16; ++i) {
+      int Idx = Offset + (i / Scale);
+      PSHUFBMask[i] = DAG.getConstant(
+          (i % Scale == 0 && SafeOffset(Idx)) ? Idx : 0x80, DL, MVT::i8);
+    }
     InputV = DAG.getBitcast(MVT::v16i8, InputV);
     return DAG.getBitcast(VT,
                           DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, InputV,
@@ -7435,13 +7477,28 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
                                                   MVT::v16i8, PSHUFBMask)));
   }
 
+  // If we are extending from an (odd)offset, shuffle them by 1 element.
+  if (Offset & 1) {
+    SmallVector<int, 8> ShMask((unsigned)NumElements, -1);
+    for (int i = 1; i < NumElements; ++i)
+      ShMask[i - 1] = i;
+    InputV = DAG.getVectorShuffle(VT, DL, InputV, DAG.getUNDEF(VT), ShMask);
+    Offset--;
+  }
+
   // Otherwise emit a sequence of unpacks.
   do {
+    unsigned UnpackLoHi = X86ISD::UNPCKL;
+    if (Offset >= (NumElements / 2)) {
+      UnpackLoHi = X86ISD::UNPCKH;
+      Offset -= (NumElements / 2);
+    }
+
     MVT InputVT = MVT::getVectorVT(MVT::getIntegerVT(EltBits), NumElements);
     SDValue Ext = AnyExt ? DAG.getUNDEF(InputVT)
                          : getZeroVector(InputVT, Subtarget, DAG, DL);
     InputV = DAG.getBitcast(InputVT, InputV);
-    InputV = DAG.getNode(X86ISD::UNPCKL, DL, InputVT, InputV, Ext);
+    InputV = DAG.getNode(UnpackLoHi, DL, InputVT, InputV, Ext);
     Scale /= 2;
     EltBits *= 2;
     NumElements /= 2;
@@ -7467,7 +7524,9 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
   SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
   int Bits = VT.getSizeInBits();
+  int NumLanes = Bits / 128;
   int NumElements = VT.getVectorNumElements();
+  int NumEltsPerLane = NumElements / NumLanes;
   assert(VT.getScalarSizeInBits() <= 32 &&
          "Exceeds 32-bit integer zero extension limit");
   assert((int)Mask.size() == NumElements && "Unexpected shuffle mask size");
@@ -7477,8 +7536,11 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
   auto Lower = [&](int Scale) -> SDValue {
     SDValue InputV;
     bool AnyExt = true;
+    int Offset = 0;
+    int Matches = 0;
     for (int i = 0; i < NumElements; ++i) {
-      if (Mask[i] == -1)
+      int M = Mask[i];
+      if (M == -1)
         continue; // Valid anywhere but doesn't tell us anything.
       if (i % Scale != 0) {
         // Each of the extended elements need to be zeroable.
@@ -7492,14 +7554,29 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
 
       // Each of the base elements needs to be consecutive indices into the
       // same input vector.
-      SDValue V = Mask[i] < NumElements ? V1 : V2;
-      if (!InputV)
+      SDValue V = M < NumElements ? V1 : V2;
+      M = M % NumElements;
+      if (!InputV) {
         InputV = V;
-      else if (InputV != V)
+        Offset = M - (i / Scale);
+      } else if (InputV != V)
         return SDValue(); // Flip-flopping inputs.
 
-      if (Mask[i] % NumElements != i / Scale)
+      // Offset must start in the lowest 128-bit lane or at the start of an
+      // upper lane.
+      // FIXME: Is it ever worth allowing a negative base offset?
+      if (!((0 <= Offset && Offset < NumEltsPerLane) ||
+            (Offset % NumEltsPerLane) == 0))
+        return SDValue();
+
+      // If we are offsetting, all referenced entries must come from the same
+      // lane.
+      if (Offset && (Offset / NumEltsPerLane) != (M / NumEltsPerLane))
+        return SDValue();
+
+      if ((M % NumElements) != (Offset + (i / Scale)))
         return SDValue(); // Non-consecutive strided elements.
+      Matches++;
     }
 
     // If we fail to find an input, we have a zero-shuffle which should always
@@ -7508,8 +7585,13 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
     if (!InputV)
       return SDValue();
 
+    // If we are offsetting, don't extend if we only match a single input, we
+    // can always do better by using a basic PSHUF or PUNPCK.
+    if (Offset != 0 && Matches < 2)
+      return SDValue();
+
     return lowerVectorShuffleAsSpecificZeroOrAnyExtend(
-        DL, VT, Scale, AnyExt, InputV, Mask, Subtarget, DAG);
+        DL, VT, Scale, Offset, AnyExt, InputV, Mask, Subtarget, DAG);
   };
 
   // The widest scale possible for extending is to a 64-bit integer.

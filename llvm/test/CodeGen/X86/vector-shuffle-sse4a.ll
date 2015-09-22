@@ -36,6 +36,24 @@ define <16 x i8> @shuf_0zzzzzzz1zzzzzzz(<16 x i8> %a0) {
   ret <16 x i8> %s
 }
 
+define <16 x i8> @shuf_2zzzzzzz3zzzzzzz(<16 x i8> %a0) {
+; BTVER1-LABEL: shuf_2zzzzzzz3zzzzzzz:
+; BTVER1:       # BB#0:
+; BTVER1-NEXT:    movaps %xmm0, %xmm1
+; BTVER1-NEXT:    extrq {{.*#+}} xmm1 = xmm1[3],zero,zero,zero,zero,zero,zero,zero,xmm1[u,u,u,u,u,u,u,u]
+; BTVER1-NEXT:    extrq {{.*#+}} xmm0 = xmm0[2],zero,zero,zero,zero,zero,zero,zero,xmm0[u,u,u,u,u,u,u,u]
+; BTVER1-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; BTVER1-NEXT:    retq
+;
+; BTVER2-LABEL: shuf_2zzzzzzz3zzzzzzz:
+; BTVER2:       # BB#0:
+; BTVER2-NEXT:    vpsrld $16, %xmm0, %xmm0
+; BTVER2-NEXT:    vpmovzxbq {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero
+; BTVER2-NEXT:    retq
+  %s = shufflevector <16 x i8> %a0, <16 x i8> zeroinitializer, <16 x i32> <i32 2, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 3, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16>
+  ret <16 x i8> %s
+}
+
 define <16 x i8> @shuf_01zzuuuuuuuuuuuu(<16 x i8> %a0) {
 ; BTVER1-LABEL: shuf_01zzuuuuuuuuuuuu:
 ; BTVER1:       # BB#0:

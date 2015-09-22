@@ -66,25 +66,23 @@ while.end:                                        ; preds = %while.body, %entry
 ;
 ; CHECK-LABEL: foo:
 ; CHECK: psllw $7,
-; CHECK: psllw $7,
-; CHECK-NEXT: pand
-; CHECK-NEXT: pcmpgtb 
-; CHECK-NEXT: pand %xmm{{[0-9]+}}, [[SRC:%xmm[0-9]+]]
-; Machine propagation used to delete the first copy as the
-; first few uses were <undef>.
-; CHECK-NEXT: movdqa [[SRC]], [[CPY1:%xmm[0-9]+]]
-; CHECK: punpcklbw [[CPY1]], [[CPY1]]
-; CHECK-NEXT: punpcklwd [[CPY1]], [[CPY1]]
-; CHECK-NEXT: pslld $31, [[CPY1]]
-; CHECK: movdqa [[SRC]], [[CPY2:%xmm[0-9]+]]
-; CHECK: punpcklbw [[CPY2]], [[CPY2]]
-; CHECK-NEXT: punpckhwd [[CPY2]], [[CPY2]]
-; CHECK-NEXT: pslld $31, [[CPY2]]
-; CHECK: punpckhbw [[SRC]],
+; CHECK: psllw $7, [[SRC1:%xmm[0-9]+]]
+; CHECK-NEXT: pand {{.*}}(%rip), [[SRC1]]
+; CHECK-NEXT: pcmpgtb [[SRC1]], [[SRC2:%xmm[0-9]+]]
+; CHECK-NEXT: pand %xmm{{[0-9]+}}, [[SRC2]]
+; CHECK-NEXT: movdqa [[SRC2]], [[CPY1:%xmm[0-9]+]]
+; CHECK-NEXT: punpcklbw %xmm{{[0-9]+}}, [[CPY1]]
 ; Check that CPY1 is not redefined.
-; CHECK-NOT: , [[CPY1]]
-; undef use, we do not care.
-; CHECK: punpcklwd [[CPY1]],
+; CHECK-NOT:  , [[CPY1]]
+; CHECK: punpckhwd %xmm{{[0-9]+}}, [[CPY1]]
+; CHECK-NEXT: pslld $31, [[CPY1]]
+; CHECK-NEXT: psrad $31, [[CPY1]]
+; CHECK: punpckhbw %xmm{{[0-9]+}}, [[CPY2:%xmm[0-9]+]]
+; Check that CPY2 is not redefined.
+; CHECK-NOT:  , [[CPY2]]
+; CHECK: punpckhwd %xmm{{[0-9]+}}, [[CPY2]]
+; CHECK-NEXT: pslld $31, [[CPY2]]
+; CHECK-NEXT: psrad $31, [[CPY2]]
 define <16 x float> @foo(<16 x float> %x) {
 bb:
   %v3 = icmp slt <16 x i32> undef, zeroinitializer
