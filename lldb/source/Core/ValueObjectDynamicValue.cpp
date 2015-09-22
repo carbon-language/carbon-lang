@@ -211,7 +211,7 @@ ValueObjectDynamicValue::UpdateValue ()
         if (class_type_or_name.HasType())
         {
             m_type_impl = TypeImpl(m_parent->GetCompilerType(),
-                                   runtime->FixUpDynamicType(class_type_or_name, m_parent->GetCompilerType()).GetCompilerType());
+                                   runtime->FixUpDynamicType(class_type_or_name, *m_parent).GetCompilerType());
         }
         else
         {
@@ -271,7 +271,7 @@ ValueObjectDynamicValue::UpdateValue ()
     }
 
     if (runtime)
-        m_dynamic_type_info = runtime->FixUpDynamicType(m_dynamic_type_info, m_parent->GetCompilerType());
+        m_dynamic_type_info = runtime->FixUpDynamicType(m_dynamic_type_info, *m_parent);
 
     //m_value.SetContext (Value::eContextTypeClangType, corrected_type);
     m_value.SetCompilerType (m_dynamic_type_info.GetCompilerType());

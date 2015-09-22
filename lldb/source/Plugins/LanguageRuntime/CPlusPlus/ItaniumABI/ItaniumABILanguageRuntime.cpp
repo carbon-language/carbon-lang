@@ -271,8 +271,10 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
 }
 
 TypeAndOrName
-ItaniumABILanguageRuntime::FixUpDynamicType(const TypeAndOrName& type_and_or_name, const CompilerType& static_type)
+ItaniumABILanguageRuntime::FixUpDynamicType(const TypeAndOrName& type_and_or_name,
+                                            ValueObject& static_value)
 {
+    CompilerType static_type(static_value.GetCompilerType());
     Flags static_type_flags(static_type.GetTypeInfo());
     
     TypeAndOrName ret(type_and_or_name);

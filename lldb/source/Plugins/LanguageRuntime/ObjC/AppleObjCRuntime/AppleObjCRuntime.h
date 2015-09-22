@@ -50,8 +50,8 @@ public:
                               Value::ValueType &value_type) override;
 
     TypeAndOrName
-    FixUpDynamicType(const TypeAndOrName& type_and_or_name,
-                     const CompilerType& static_type) override;
+    FixUpDynamicType (const TypeAndOrName& type_and_or_name,
+                      ValueObject& static_value) override;
     
     // These are the ObjC specific functions.
     

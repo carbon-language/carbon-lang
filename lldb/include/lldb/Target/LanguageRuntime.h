@@ -65,8 +65,8 @@ public:
     // Derived, not Derived*. The job of this API is to correct this misalignment between the
     // static type and the discovered dynamic type
     virtual TypeAndOrName
-    FixUpDynamicType(const TypeAndOrName& type_and_or_name,
-                     const CompilerType& static_type) = 0;
+    FixUpDynamicType (const TypeAndOrName& type_and_or_name,
+                      ValueObject& static_value) = 0;
 
     virtual void
     SetExceptionBreakpoints ()

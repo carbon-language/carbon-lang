@@ -185,8 +185,8 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
                                           Value::ValueType &value_type);
     
     virtual TypeAndOrName
-    FixUpDynamicType(const TypeAndOrName& type_and_or_name,
-                     const CompilerType& static_type);
+    FixUpDynamicType (const TypeAndOrName& type_and_or_name,
+                      ValueObject& static_value);
 
     virtual bool CouldHaveDynamicValue(ValueObject &in_value);
 

@@ -270,8 +270,10 @@ AppleObjCRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
 }
 
 TypeAndOrName
-AppleObjCRuntime::FixUpDynamicType(const TypeAndOrName& type_and_or_name, const CompilerType& static_type)
+AppleObjCRuntime::FixUpDynamicType (const TypeAndOrName& type_and_or_name,
+                                    ValueObject& static_value)
 {
+    CompilerType static_type(static_value.GetCompilerType());
     Flags static_type_flags(static_type.GetTypeInfo());
     
     TypeAndOrName ret(type_and_or_name);
