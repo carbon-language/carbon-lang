@@ -1096,6 +1096,9 @@ public:
   /// \brief Link the contents of the DebugMap.
   bool link(const DebugMap &);
 
+  void reportWarning(const Twine &Warning, const DWARFUnit *Unit = nullptr,
+                     const DWARFDebugInfoEntryMinimal *DIE = nullptr) const;
+
 private:
   /// \brief Called at the start of a debug object link.
   void startDebugObject(DWARFContext &, DebugMapObject &);
@@ -1378,9 +1381,6 @@ private:
                       CompileUnit *&ReferencedCU);
 
   CompileUnit *getUnitForOffset(unsigned Offset);
-
-  void reportWarning(const Twine &Warning, const DWARFUnit *Unit = nullptr,
-                     const DWARFDebugInfoEntryMinimal *DIE = nullptr) const;
 
   bool createStreamer(Triple TheTriple, StringRef OutputFilename);
 
