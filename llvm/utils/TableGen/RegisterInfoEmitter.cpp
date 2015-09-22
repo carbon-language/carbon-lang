@@ -1476,9 +1476,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "}\n\n";
 
-  OS << "const " << TargetName << "FrameLowering *"
-     << TargetName << "GenRegisterInfo::\n"
-     << "    getFrameLowering(const MachineFunction &MF) {\n"
+  OS << "const " << TargetName << "FrameLowering *\n" << TargetName
+     << "GenRegisterInfo::getFrameLowering(const MachineFunction &MF) {\n"
      << "  return static_cast<const " << TargetName << "FrameLowering *>(\n"
      << "      MF.getSubtarget().getFrameLowering());\n"
      << "}\n\n";
