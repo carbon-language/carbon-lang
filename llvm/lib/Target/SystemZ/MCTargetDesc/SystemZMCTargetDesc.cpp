@@ -226,7 +226,7 @@ extern "C" void LLVMInitializeSystemZTargetMC() {
 
   // Register the MCCodeEmitter.
   TargetRegistry::RegisterMCCodeEmitter(TheSystemZTarget,
-					createSystemZMCCodeEmitter);
+                                        createSystemZMCCodeEmitter);
 
   // Register the MCInstrInfo.
   TargetRegistry::RegisterMCInstrInfo(TheSystemZTarget,

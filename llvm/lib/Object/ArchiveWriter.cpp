@@ -77,7 +77,7 @@ NewArchiveIterator::getFD(sys::fs::file_status &NewStatus) const {
 
 template <typename T>
 static void printWithSpacePadding(raw_fd_ostream &OS, T Data, unsigned Size,
-				  bool MayTruncate = false) {
+                                  bool MayTruncate = false) {
   uint64_t OldPos = OS.tell();
   OS << Data;
   unsigned SizeSoFar = OS.tell() - OldPos;

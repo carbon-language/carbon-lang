@@ -456,9 +456,9 @@ void MachObjectWriter::bindIndirectSymbols(MCAssembler &Asm) {
     if (Section.getType() != MachO::S_NON_LAZY_SYMBOL_POINTERS &&
         Section.getType() != MachO::S_LAZY_SYMBOL_POINTERS &&
         Section.getType() != MachO::S_SYMBOL_STUBS) {
-	MCSymbol &Symbol = *it->Symbol;
-	report_fatal_error("indirect symbol '" + Symbol.getName() +
-                           "' not in a symbol pointer or stub section");
+      MCSymbol &Symbol = *it->Symbol;
+      report_fatal_error("indirect symbol '" + Symbol.getName() +
+                         "' not in a symbol pointer or stub section");
     }
   }
 

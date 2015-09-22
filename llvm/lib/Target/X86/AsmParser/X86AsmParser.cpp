@@ -1247,7 +1247,7 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
               getContext().getDirectionalLocalSymbol(IntVal, IDVal == "b");
           MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
           const MCExpr *Val =
-	    MCSymbolRefExpr::create(Sym, Variant, getContext());
+              MCSymbolRefExpr::create(Sym, Variant, getContext());
           if (IDVal == "b" && Sym->isUndefined())
             return Error(Loc, "invalid reference to undefined symbol");
           StringRef Identifier = Sym->getName();
@@ -1995,12 +1995,13 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseMemOperand(unsigned SegReg,
           }
 
           // Validate the scale amount.
-	  if (X86MCRegisterClasses[X86::GR16RegClassID].contains(BaseReg) &&
+          if (X86MCRegisterClasses[X86::GR16RegClassID].contains(BaseReg) &&
               ScaleVal != 1) {
             Error(Loc, "scale factor in 16-bit address must be 1");
             return nullptr;
-	  }
-          if (ScaleVal != 1 && ScaleVal != 2 && ScaleVal != 4 && ScaleVal != 8){
+          }
+          if (ScaleVal != 1 && ScaleVal != 2 && ScaleVal != 4 &&
+              ScaleVal != 8) {
             Error(Loc, "scale factor in address must be 1, 2, 4 or 8");
             return nullptr;
           }

@@ -1112,8 +1112,8 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
 
 bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
                                            SDValue &VAddr, SDValue &SOffset,
-					   SDValue &Offset,
-					   SDValue &SLC) const {
+                                           SDValue &Offset,
+                                           SDValue &SLC) const {
   SLC = CurDAG->getTargetConstant(0, SDLoc(Addr), MVT::i1);
   SDValue GLC, TFE;
 

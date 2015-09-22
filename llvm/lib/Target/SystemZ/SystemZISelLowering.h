@@ -481,7 +481,7 @@ private:
   SDValue lowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerExtendVectorInreg(SDValue Op, SelectionDAG &DAG,
-				 unsigned UnpackHigh) const;
+                                 unsigned UnpackHigh) const;
   SDValue lowerShift(SDValue Op, SelectionDAG &DAG, unsigned ByScalar) const;
 
   SDValue combineExtract(SDLoc DL, EVT ElemVT, EVT VecVT, SDValue OrigOp,

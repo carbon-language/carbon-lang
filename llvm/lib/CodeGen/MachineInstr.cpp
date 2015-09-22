@@ -1786,7 +1786,7 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
       DebugLoc InlinedAtDL(InlinedAt);
       if (InlinedAtDL && MF) {
         OS << " inlined @[ ";
-	InlinedAtDL.print(OS);
+        InlinedAtDL.print(OS);
         OS << " ]";
       }
     }

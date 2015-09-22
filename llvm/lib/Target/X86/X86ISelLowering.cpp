@@ -22871,9 +22871,9 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
       InputVector.getOpcode() == ISD::BITCAST &&
       dyn_cast<ConstantSDNode>(InputVector.getOperand(0))) {
     uint64_t ExtractedElt =
-	  cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+        cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
     uint64_t InputValue =
-	  cast<ConstantSDNode>(InputVector.getOperand(0))->getZExtValue();
+        cast<ConstantSDNode>(InputVector.getOperand(0))->getZExtValue();
     uint64_t Res = (InputValue >> ExtractedElt) & 1;
     return DAG.getConstant(Res, dl, MVT::i1);
   }
@@ -24814,8 +24814,8 @@ static SDValue PerformMLOADCombine(SDNode *N, SelectionDAG &DAG,
       ShuffleVec[i] = i * SizeRatio;
 
     // Can't shuffle using an illegal type.
-    assert (DAG.getTargetLoweringInfo().isTypeLegal(WideVecVT)
-	    && "WideVecVT should be legal");
+    assert(DAG.getTargetLoweringInfo().isTypeLegal(WideVecVT) &&
+           "WideVecVT should be legal");
     WideSrc0 = DAG.getVectorShuffle(WideVecVT, dl, WideSrc0,
                                     DAG.getUNDEF(WideVecVT), &ShuffleVec[0]);
   }
@@ -24906,8 +24906,8 @@ static SDValue PerformMSTORECombine(SDNode *N, SelectionDAG &DAG,
     ShuffleVec[i] = i * SizeRatio;
 
   // Can't shuffle using an illegal type.
-  assert (DAG.getTargetLoweringInfo().isTypeLegal(WideVecVT)
-	  && "WideVecVT should be legal");
+  assert(DAG.getTargetLoweringInfo().isTypeLegal(WideVecVT) &&
+         "WideVecVT should be legal");
 
   SDValue TruncatedVal = DAG.getVectorShuffle(WideVecVT, dl, WideVec,
                                         DAG.getUNDEF(WideVecVT),

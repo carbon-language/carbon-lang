@@ -234,8 +234,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF,
 
   // Adjust FP so it point to the stack slot that contains the previous FP.
   if (HasFP) {
-    FramePtrOffsetInBlock += MFI->getObjectOffset(FramePtrSpillFI)
-		                     + GPRCS1Size + ArgRegsSaveSize;
+    FramePtrOffsetInBlock +=
+        MFI->getObjectOffset(FramePtrSpillFI) + GPRCS1Size + ArgRegsSaveSize;
     AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
       .addReg(ARM::SP).addImm(FramePtrOffsetInBlock / 4)
       .setMIFlags(MachineInstr::FrameSetup));

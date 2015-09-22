@@ -592,11 +592,11 @@ void AMDGPUInstPrinter::printSendMsg(const MCInst *MI, unsigned OpNo,
     } else {
       unsigned Stream = (SImm16 >> 8) & 0x3;
       if (Op == 1)
-	O << "cut";
+        O << "cut";
       else if (Op == 2)
-	O << "emit";
+        O << "emit";
       else if (Op == 3)
-	O << "emit-cut";
+        O << "emit-cut";
       O << " stream " << Stream;
     }
     O << "), [m0] ";

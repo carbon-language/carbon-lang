@@ -205,9 +205,9 @@ void TargetLowering::softenSetCCOperands(SelectionDAG &DAG, EVT VT,
 
   // Use the target specific return value for comparions lib calls.
   EVT RetVT = getCmpLibcallReturnType();
-  SDValue Ops[2] = { NewLHS, NewRHS };
-  NewLHS = makeLibCall(DAG, LC1, RetVT, Ops, 2, false/*sign irrelevant*/,
-					   dl).first;
+  SDValue Ops[2] = {NewLHS, NewRHS};
+  NewLHS =
+      makeLibCall(DAG, LC1, RetVT, Ops, 2, false /*sign irrelevant*/, dl).first;
   NewRHS = DAG.getConstant(0, dl, RetVT);
 
   CCCode = getCmpLibcallCC(LC1);

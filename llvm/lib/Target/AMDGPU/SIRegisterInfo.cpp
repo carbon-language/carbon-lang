@@ -86,7 +86,7 @@ unsigned SIRegisterInfo::getRegPressureSetLimit(const MachineFunction &MF,
     const int *Sets = getRegClassPressureSets(*I);
     assert(Sets);
     for (unsigned i = 0; Sets[i] != -1; ++i) {
-	    if (Sets[i] == (int)Idx)
+      if (Sets[i] == (int)Idx)
         return Limit;
     }
   }

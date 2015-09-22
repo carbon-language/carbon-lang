@@ -1132,8 +1132,7 @@ Triple MachOObjectFile::getThumbArch(uint32_t CPUType, uint32_t CPUSubType,
 }
 
 Triple MachOObjectFile::getArch(uint32_t CPUType, uint32_t CPUSubType,
-                                const char **McpuDefault,
-				Triple *ThumbTriple) {
+                                const char **McpuDefault, Triple *ThumbTriple) {
   Triple T = MachOObjectFile::getArch(CPUType, CPUSubType, McpuDefault);
   *ThumbTriple = MachOObjectFile::getThumbArch(CPUType, CPUSubType,
                                                McpuDefault);

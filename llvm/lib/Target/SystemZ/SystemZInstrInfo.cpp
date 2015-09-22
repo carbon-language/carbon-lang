@@ -548,11 +548,10 @@ PredicateInstruction(MachineInstr *MI, ArrayRef<MachineOperand> Pred) const {
   return false;
 }
 
-void
-SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
-			      MachineBasicBlock::iterator MBBI, DebugLoc DL,
-			      unsigned DestReg, unsigned SrcReg,
-			      bool KillSrc) const {
+void SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MBBI,
+                                   DebugLoc DL, unsigned DestReg,
+                                   unsigned SrcReg, bool KillSrc) const {
   // Split 128-bit GPR moves into two 64-bit moves.  This handles ADDR128 too.
   if (SystemZ::GR128BitRegClass.contains(DestReg, SrcReg)) {
     copyPhysReg(MBB, MBBI, DL, RI.getSubReg(DestReg, SystemZ::subreg_h64),
@@ -590,13 +589,10 @@ SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
-void
-SystemZInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-				      MachineBasicBlock::iterator MBBI,
-				      unsigned SrcReg, bool isKill,
-				      int FrameIdx,
-				      const TargetRegisterClass *RC,
-				      const TargetRegisterInfo *TRI) const {
+void SystemZInstrInfo::storeRegToStackSlot(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, unsigned SrcReg,
+    bool isKill, int FrameIdx, const TargetRegisterClass *RC,
+    const TargetRegisterInfo *TRI) const {
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
   // Callers may expect a single instruction, so keep 128-bit moves
@@ -604,15 +600,14 @@ SystemZInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   unsigned LoadOpcode, StoreOpcode;
   getLoadStoreOpcodes(RC, LoadOpcode, StoreOpcode);
   addFrameReference(BuildMI(MBB, MBBI, DL, get(StoreOpcode))
-		    .addReg(SrcReg, getKillRegState(isKill)), FrameIdx);
+                        .addReg(SrcReg, getKillRegState(isKill)),
+                    FrameIdx);
 }
 
-void
-SystemZInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-				       MachineBasicBlock::iterator MBBI,
-				       unsigned DestReg, int FrameIdx,
-				       const TargetRegisterClass *RC,
-				       const TargetRegisterInfo *TRI) const {
+void SystemZInstrInfo::loadRegFromStackSlot(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, unsigned DestReg,
+    int FrameIdx, const TargetRegisterClass *RC,
+    const TargetRegisterInfo *TRI) const {
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
   // Callers may expect a single instruction, so keep 128-bit moves

@@ -106,7 +106,7 @@ computeTargetABI(const Triple &TT, StringRef CPU,
       if (TT.isOSNetBSD())
         TargetABI = ARMBaseTargetMachine::ARM_ABI_APCS;
       else
-	TargetABI = ARMBaseTargetMachine::ARM_ABI_AAPCS;
+        TargetABI = ARMBaseTargetMachine::ARM_ABI_AAPCS;
       break;
     }
   }

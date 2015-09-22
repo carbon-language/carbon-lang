@@ -151,9 +151,8 @@ public:
 
   MCSection *findAssociatedSection() const override;
 
-  bool evaluateAsRelocatableImpl(MCValue &Res,
-                                 const MCAsmLayout *Layout,
-				 const MCFixup *Fixup) const override;
+  bool evaluateAsRelocatableImpl(MCValue &Res, const MCAsmLayout *Layout,
+                                 const MCFixup *Fixup) const override;
 
   void fixELFSymbolsInTLSFixups(MCAssembler &Asm) const override;
 

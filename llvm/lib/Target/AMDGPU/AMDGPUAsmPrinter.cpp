@@ -283,7 +283,7 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
         }
         unsigned reg = MO.getReg();
         if (reg == AMDGPU::VCC || reg == AMDGPU::VCC_LO ||
-	    reg == AMDGPU::VCC_HI) {
+            reg == AMDGPU::VCC_HI) {
           VCCUsed = true;
           continue;
         } else if (reg == AMDGPU::FLAT_SCR ||

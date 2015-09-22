@@ -856,7 +856,7 @@ public:
                                  MCContext &Ctx,
                                  MCStreamer &Out) override;
   void InstrumentMOVSImpl(unsigned AccessSize, MCContext &Ctx,
-  	                  MCStreamer &Out) override;
+                          MCStreamer &Out) override;
 
 private:
   void EmitAdjustRSP(MCContext &Ctx, MCStreamer &Out, long Offset) {

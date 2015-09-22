@@ -50,9 +50,8 @@ int getPosixProtectionFlags(unsigned Flags) {
     return PROT_READ | PROT_WRITE;
   case llvm::sys::Memory::MF_READ|llvm::sys::Memory::MF_EXEC:
     return PROT_READ | PROT_EXEC;
-  case llvm::sys::Memory::MF_READ |
-	 llvm::sys::Memory::MF_WRITE |
-	 llvm::sys::Memory::MF_EXEC:
+  case llvm::sys::Memory::MF_READ | llvm::sys::Memory::MF_WRITE |
+      llvm::sys::Memory::MF_EXEC:
     return PROT_READ | PROT_WRITE | PROT_EXEC;
   case llvm::sys::Memory::MF_EXEC:
 #if defined(__FreeBSD__)

@@ -49,7 +49,7 @@ INITIALIZE_PASS_BEGIN(DemandedBits, "demanded-bits", "Demanded bits analysis",
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_END(DemandedBits, "demanded-bits", "Demanded bits analysis",
-			false, false)
+                    false, false)
 
 DemandedBits::DemandedBits() : FunctionPass(ID) {
   initializeDemandedBitsPass(*PassRegistry::getPassRegistry());
@@ -67,12 +67,10 @@ static bool isAlwaysLive(Instruction *I) {
       I->isEHPad() || I->mayHaveSideEffects();
 }
 
-void
-DemandedBits::determineLiveOperandBits(const Instruction *UserI,
-				       const Instruction *I, unsigned OperandNo,
-				       const APInt &AOut, APInt &AB,
-				       APInt &KnownZero, APInt &KnownOne,
-				       APInt &KnownZero2, APInt &KnownOne2) {
+void DemandedBits::determineLiveOperandBits(
+    const Instruction *UserI, const Instruction *I, unsigned OperandNo,
+    const APInt &AOut, APInt &AB, APInt &KnownZero, APInt &KnownOne,
+    APInt &KnownZero2, APInt &KnownOne2) {
   unsigned BitWidth = AB.getBitWidth();
 
   // We're called once per operand, but for some instructions, we need to

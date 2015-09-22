@@ -115,9 +115,9 @@ public:
                           unsigned FrameIndex) const;
 
   bool hasReservedSpillSlot(const MachineFunction &MF, unsigned Reg,
-			    int &FrameIdx) const override;
-  void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                           int SPAdj, unsigned FIOperandNum,
+                            int &FrameIdx) const override;
+  void eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
+                           unsigned FIOperandNum,
                            RegScavenger *RS = nullptr) const override;
 
   // Support for virtual base registers.

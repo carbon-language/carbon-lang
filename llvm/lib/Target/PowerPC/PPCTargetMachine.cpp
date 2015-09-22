@@ -149,7 +149,7 @@ static PPCTargetMachine::PPCABI computeTargetABI(const Triple &TT,
     return PPCTargetMachine::PPC_ABI_ELFv2;
 
   assert(Options.MCOptions.getABIName().empty() &&
-	 "Unknown target-abi option!");
+         "Unknown target-abi option!");
 
   if (!TT.isMacOSX()) {
     switch (TT.getArch()) {

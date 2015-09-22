@@ -610,11 +610,11 @@ void PPCRegisterInfo::lowerCRBitRestore(MachineBasicBlock::iterator II,
 
   BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MTOCRF8 : PPC::MTOCRF),
           getCRFromCRBit(DestReg))
-            .addReg(RegO, RegState::Kill)
-	    // Make sure we have a use dependency all the way through this
-	    // sequence of instructions. We can't have the other bits in the CR
-	    // modified in between the mfocrf and the mtocrf.
-            .addReg(getCRFromCRBit(DestReg), RegState::Implicit);
+      .addReg(RegO, RegState::Kill)
+      // Make sure we have a use dependency all the way through this
+      // sequence of instructions. We can't have the other bits in the CR
+      // modified in between the mfocrf and the mtocrf.
+      .addReg(getCRFromCRBit(DestReg), RegState::Implicit);
 
   // Discard the pseudo instruction.
   MBB.erase(II);
@@ -673,9 +673,8 @@ void PPCRegisterInfo::lowerVRSAVERestore(MachineBasicBlock::iterator II,
   MBB.erase(II);
 }
 
-bool
-PPCRegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
-				      unsigned Reg, int &FrameIdx) const {
+bool PPCRegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
+                                           unsigned Reg, int &FrameIdx) const {
   const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   // For the nonvolatile condition registers (CR2, CR3, CR4) in an SVR4
   // ABI, return true to prevent allocating an additional frame slot.

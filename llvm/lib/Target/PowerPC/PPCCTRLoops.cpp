@@ -242,8 +242,8 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
           // If we have a call to ppc_is_decremented_ctr_nonzero, or ppc_mtctr
           // we're definitely using CTR.
           case Intrinsic::ppc_is_decremented_ctr_nonzero:
-	  case Intrinsic::ppc_mtctr:
-	    return true;
+          case Intrinsic::ppc_mtctr:
+            return true;
 
 // VisualStudio defines setjmp as _setjmp
 #if defined(_MSC_VER) && defined(setjmp) && \

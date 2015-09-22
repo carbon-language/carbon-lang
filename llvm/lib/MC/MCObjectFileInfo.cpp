@@ -733,11 +733,11 @@ void MCObjectFileInfo::initCOFFMCObjectFileInfo(Triple T) {
       ".tls$", COFF::IMAGE_SCN_CNT_INITIALIZED_DATA | COFF::IMAGE_SCN_MEM_READ |
                    COFF::IMAGE_SCN_MEM_WRITE,
       SectionKind::getDataRel());
-	  
+
   StackMapSection = Ctx->getCOFFSection(".llvm_stackmaps",
                                         COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
                                             COFF::IMAGE_SCN_MEM_READ,
-                                        SectionKind::getReadOnly());	
+                                        SectionKind::getReadOnly());
 }
 
 void MCObjectFileInfo::InitMCObjectFileInfo(const Triple &TheTriple,

@@ -232,7 +232,7 @@ void Float2Int::walkBackwards(const SmallPtrSetImpl<Instruction*> &Roots) {
       if (Instruction *OI = dyn_cast<Instruction>(O)) {
         // Unify def-use chains if they interfere.
         ECs.unionSets(I, OI);
-	if (SeenInsts.find(I)->second != badRange())
+        if (SeenInsts.find(I)->second != badRange())
           Worklist.push_back(OI);
       } else if (!isa<ConstantFP>(O)) {      
         // Not an instruction or ConstantFP? we can't do anything.
@@ -304,7 +304,7 @@ void Float2Int::walkForwards() {
     for (Value *O : I->operands()) {
       if (Instruction *OI = dyn_cast<Instruction>(O)) {
         assert(SeenInsts.find(OI) != SeenInsts.end() &&
-	       "def not seen before use!");
+               "def not seen before use!");
         OpRanges.push_back(SeenInsts.find(OI)->second);
       } else if (ConstantFP *CF = dyn_cast<ConstantFP>(O)) {
         // Work out if the floating point number can be losslessly represented
@@ -323,7 +323,7 @@ void Float2Int::walkForwards() {
         // we're in fast math mode.
         if (!F.isFinite() ||
             (F.isZero() && F.isNegative() && isa<FPMathOperator>(I) &&
-	     !I->hasNoSignedZeros())) {
+             !I->hasNoSignedZeros())) {
           seen(I, badRange());
           Abort = true;
           break;
