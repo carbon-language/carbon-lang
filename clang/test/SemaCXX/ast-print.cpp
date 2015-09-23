@@ -219,3 +219,11 @@ struct CXXFunctionalCastExprPrint {} fce = CXXFunctionalCastExprPrint{};
 
 // CHECK: struct CXXTemporaryObjectExprPrint toe = CXXTemporaryObjectExprPrint{};
 struct CXXTemporaryObjectExprPrint { CXXTemporaryObjectExprPrint(); } toe = CXXTemporaryObjectExprPrint{};
+
+namespace PR24872 {
+// CHECK: template <typename T> struct Foo : T {
+// CHECK: using T::operator-;
+template <typename T> struct Foo : T {
+  using T::operator-;
+};
+}
