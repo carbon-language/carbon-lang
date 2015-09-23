@@ -170,10 +170,7 @@ define float @f10(float %x, float %y) {
 define float @or(float %x, float %y) {
 ; CHECK-LABEL: or:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movd %xmm0, %eax
-; CHECK-NEXT:    movd %xmm1, %ecx
-; CHECK-NEXT:    orl %eax, %ecx
-; CHECK-NEXT:    movd %ecx, %xmm0
+; CHECK-NEXT:    orps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
 
   %bc1 = bitcast float %x to i32

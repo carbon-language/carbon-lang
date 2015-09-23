@@ -24542,6 +24542,9 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
   if (SDValue R = CMPEQCombine(N, DAG, DCI, Subtarget))
     return R;
 
+  if (SDValue FPLogic = convertIntLogicToFPLogic(N, DAG, Subtarget))
+    return FPLogic;
+
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   EVT VT = N->getValueType(0);
