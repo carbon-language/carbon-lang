@@ -28,11 +28,16 @@
 // ---------------------------------------------------------------------
 #ifdef BAR_H
 // ---------------------------------------------------------------------
-// CHECK: DW_TAG_compile_unit
-// CHECK:   DW_TAG_module
-// CHECK-NEXT: DW_AT_name {{.*}}"Bar"
-// CHECK:   DW_TAG_member
-// CHECK:     DW_AT_name {{.*}}"value"
+// CHECK:            DW_TAG_compile_unit
+// CHECK-NOT:        DW_TAG
+// CHECK:              DW_TAG_module
+// CHECK-NEXT:           DW_AT_name{{.*}}"Bar"
+// CHECK-NOT:            DW_TAG
+// CHECK: 0x0[[BAR:.*]]: DW_TAG_structure_type
+// CHECK:                  DW_AT_name {{.*}}"Bar"
+// CHECK-NOT:              DW_TAG
+// CHECK:                  DW_TAG_member
+// CHECK:                    DW_AT_name {{.*}}"value"
 
 struct Bar {
   int value;
@@ -42,10 +47,12 @@ struct Bar {
 // ---------------------------------------------------------------------
 #ifdef FOO_H
 // ---------------------------------------------------------------------
-// CHECK: DW_TAG_compile_unit
-// CHECK:   DW_TAG_module
-// CHECK-NEXT: DW_AT_name {{.*}}"Foo"
-// CHECK:      DW_TAG_typedef
+// CHECK:               DW_TAG_compile_unit
+// CHECK-NOT:             DW_TAG
+// CHECK: 0x0[[FOO:.*]]:  DW_TAG_module
+// CHECK-NEXT:              DW_AT_name{{.*}}"Foo"
+// CHECK-NOT:               DW_TAG
+// CHECK:                   DW_TAG_typedef
 @import Bar;
 typedef struct Bar Bar;
 struct S {};
@@ -54,7 +61,20 @@ struct S {};
 #else
 // ---------------------------------------------------------------------
 
-// CHECK: DW_TAG_compile_unit
+// CHECK:   DW_TAG_compile_unit
+// CHECK:     DW_TAG_module
+// CHECK-NEXT:  DW_AT_name{{.*}}"Bar"
+// CHECK:     DW_TAG_module
+// CHECK-NEXT:  DW_AT_name{{.*}}"Foo"
+// CHECK-NOT:   DW_TAG
+// CHECK:       DW_TAG_typedef
+// CHECK-NOT:     DW_TAG
+// CHECK:         DW_AT_type [DW_FORM_ref_addr] (0x{{0*}}[[BAR]])
+//
+// CHECK:   DW_TAG_imported_declaration
+// CHECK-NOT: DW_TAG
+// CHECK:     DW_AT_import [DW_FORM_ref_addr] (0x{{0*}}[[FOO]]
+//
 // CHECK:   DW_TAG_subprogram
 // CHECK:     DW_AT_name {{.*}}"main"
 @import Foo;
