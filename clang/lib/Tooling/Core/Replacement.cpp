@@ -405,7 +405,8 @@ Replacements mergeReplacements(const Replacements &First,
   for (auto FirstI = First.begin(), SecondI = Second.begin();
        FirstI != First.end() || SecondI != Second.end();) {
     bool NextIsFirst = SecondI == Second.end() ||
-                       FirstI->getOffset() < SecondI->getOffset() + Delta;
+                       (FirstI != First.end() &&
+                        FirstI->getOffset() < SecondI->getOffset() + Delta);
     MergedReplacement Merged(NextIsFirst ? *FirstI : *SecondI, NextIsFirst,
                              Delta);
     ++(NextIsFirst ? FirstI : SecondI);
