@@ -288,6 +288,27 @@ void Writer<ELFT>::scanRelocs(const InputSection<ELFT> &C) {
   }
 }
 
+template <class ELFT>
+static void undefError(const SymbolTable &S, const SymbolBody &Sym) {
+  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
+
+  const Elf_Sym &SymE = cast<ELFSymbolBody<ELFT>>(Sym).Sym;
+  ELFFileBase *SymFile = nullptr;
+
+  for (const std::unique_ptr<ObjectFileBase> &F : S.getObjectFiles()) {
+    const auto &File = cast<ObjectFile<ELFT>>(*F);
+    Elf_Sym_Range Syms = File.getObj()->symbols(File.getSymbolTable());
+    if (&SymE > Syms.begin() && &SymE < Syms.end())
+      SymFile = F.get();
+  }
+  if (SymFile)
+    error(Twine("undefined symbol: ") + Sym.getName() + " in " +
+          SymFile->getName());
+  else
+    error(Twine("undefined symbol: ") + Sym.getName());
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT> *> Map;
@@ -331,7 +352,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     StringRef Name = P.first;
     SymbolBody *Body = P.second->Body;
     if (Body->isStrongUndefined())
-      error(Twine("undefined symbol: ") + Name);
+      undefError<ELFT>(Symtab, *Body);
 
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
