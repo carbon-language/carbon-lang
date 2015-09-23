@@ -196,13 +196,17 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   if (It != RegionCounters.end())
     return It->second;
 
-  // Move the name variable to the right section. Make sure it is placed in the
-  // same comdat as its associated function. Otherwise, we may get multiple
-  // counters for the same function in certain cases.
+  // Move the name variable to the right section. Place them in a COMDAT group
+  // if the associated function is a COMDAT. This will make sure that
+  // only one copy of counters of the COMDAT function will be emitted after
+  // linking.
   Function *Fn = Inc->getParent()->getParent();
+  Comdat *ProfileVarsComdat = nullptr;
+  if (Fn->hasComdat())
+    ProfileVarsComdat = M->getOrInsertComdat(StringRef(getVarName(Inc, "vars")));
   Name->setSection(getNameSection());
   Name->setAlignment(1);
-  Name->setComdat(Fn->getComdat());
+  Name->setComdat(ProfileVarsComdat);
 
   uint64_t NumCounters = Inc->getNumCounters()->getZExtValue();
   LLVMContext &Ctx = M->getContext();
@@ -215,7 +219,7 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   Counters->setVisibility(Name->getVisibility());
   Counters->setSection(getCountersSection());
   Counters->setAlignment(8);
-  Counters->setComdat(Fn->getComdat());
+  Counters->setComdat(ProfileVarsComdat);
 
   RegionCounters[Inc->getName()] = Counters;
 
@@ -240,7 +244,7 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   Data->setVisibility(Name->getVisibility());
   Data->setSection(getDataSection());
   Data->setAlignment(8);
-  Data->setComdat(Fn->getComdat());
+  Data->setComdat(ProfileVarsComdat);
 
   // Mark the data variable as used so that it isn't stripped out.
   UsedVars.push_back(Data);
