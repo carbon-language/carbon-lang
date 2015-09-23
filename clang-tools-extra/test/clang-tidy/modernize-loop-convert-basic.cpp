@@ -102,7 +102,7 @@ void constArray() {
     printf("2 * %d = %d\n", constArr[i], constArr[i] + constArr[i]);
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & elem : constArr)
+  // CHECK-FIXES: for (auto elem : constArr)
   // CHECK-FIXES-NEXT: printf("2 * %d = %d\n", elem, elem + elem);
 }
 
@@ -333,7 +333,7 @@ void different_type() {
     printf("s has value %d\n", (*it).x);
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & elem : s)
+  // CHECK-FIXES: for (auto elem : s)
   // CHECK-FIXES-NEXT: printf("s has value %d\n", (elem).x);
 
   S *ps;
@@ -341,7 +341,7 @@ void different_type() {
     printf("s has value %d\n", (*it).x);
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & p : *ps)
+  // CHECK-FIXES: for (auto p : *ps)
   // CHECK-FIXES-NEXT: printf("s has value %d\n", (p).x);
 
   // v.begin() returns a user-defined type 'iterator' which, since it's
@@ -406,12 +406,12 @@ public:
     for (const_iterator I = begin(), E = end(); I != E; ++I)
       (void) *I;
     // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: use range-based for loop instead
-    // CHECK-FIXES: for (const auto & elem : *this)
+    // CHECK-FIXES: for (auto elem : *this)
 
     for (const_iterator I = C::begin(), E = C::end(); I != E; ++I)
       (void) *I;
     // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: use range-based for loop instead
-    // CHECK-FIXES: for (const auto & elem : *this)
+    // CHECK-FIXES: for (auto elem : *this)
 
     for (const_iterator I = begin(), E = end(); I != E; ++I) {
       (void) *I;
@@ -508,7 +508,7 @@ void constness() {
     sum += constv[i] + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & elem : constv)
+  // CHECK-FIXES: for (auto elem : constv)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", elem);
   // CHECK-FIXES-NEXT: sum += elem + 2;
 
@@ -517,7 +517,7 @@ void constness() {
     sum += constv.at(i) + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & elem : constv)
+  // CHECK-FIXES: for (auto elem : constv)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", elem);
   // CHECK-FIXES-NEXT: sum += elem + 2;
 
@@ -526,7 +526,7 @@ void constness() {
     sum += pconstv->at(i) + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & elem : *pconstv)
+  // CHECK-FIXES: for (auto elem : *pconstv)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", elem);
   // CHECK-FIXES-NEXT: sum += elem + 2;
 
@@ -539,7 +539,7 @@ void constness() {
     sum += (*pconstv)[i] + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & elem : *pconstv)
+  // CHECK-FIXES: for (auto elem : *pconstv)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", elem);
   // CHECK-FIXES-NEXT: sum += elem + 2;
 }
@@ -552,7 +552,14 @@ void ConstRef(const dependent<int>& ConstVRef) {
     sum += ConstVRef[i];
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & elem : ConstVRef)
+  // CHECK-FIXES: for (auto elem : ConstVRef)
+  // CHECK-FIXES-NEXT: sum += elem;
+
+  for (auto I = ConstVRef.begin(), E = ConstVRef.end(); I != E; ++I) {
+    sum += *I;
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto elem : ConstVRef)
   // CHECK-FIXES-NEXT: sum += elem;
 }
 
@@ -611,7 +618,7 @@ void NoBeginEndTest() {
   for (unsigned i = 0, e = const_CBE.size(); i < e; ++i)
     printf("%d\n", const_CBE[i]);
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & elem : const_CBE)
+  // CHECK-FIXES: for (auto elem : const_CBE)
   // CHECK-FIXES-NEXT: printf("%d\n", elem);
 }
 

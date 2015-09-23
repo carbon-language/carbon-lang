@@ -500,7 +500,10 @@ void LoopConvertCheck::doConversion(
   // If the new variable name is from the aliased variable, then the reference
   // type for the new variable should only be used if the aliased variable was
   // declared as a reference.
-  if (!VarNameFromAlias || AliasVarIsRef) {
+  bool UseCopy = (VarNameFromAlias && !AliasVarIsRef) ||
+                 (Descriptor.DerefByConstRef && Descriptor.IsTriviallyCopyable);
+
+  if (!UseCopy) {
     if (Descriptor.DerefByConstRef) {
       AutoType =
           Context->getLValueReferenceType(Context->getConstType(AutoType));
@@ -547,35 +550,29 @@ void LoopConvertCheck::getArrayLoopQualifiers(ASTContext *Context,
                                               RangeDescriptor &Descriptor) {
   // On arrays and pseudoarrays, we must figure out the qualifiers from the
   // usages.
-  if (usagesAreConst(Usages)) {
+  if (usagesAreConst(Usages) ||
+      containerIsConst(ContainerExpr, Descriptor.ContainerNeedsDereference)) {
     Descriptor.DerefByConstRef = true;
-  } else {
-    if (usagesReturnRValues(Usages)) {
-      // If the index usages (dereference, subscript, at, ...) return rvalues,
-      // then we should not use a reference, because we need to keep the code
-      // correct if it mutates the returned objects.
-      Descriptor.DerefByValue = true;
-      // Try to find the type of the elements on the container, to check if
-      // they are trivially copyable.
-      for (const Usage &U : Usages) {
-        if (!U.Expression || U.Expression->getType().isNull())
-          continue;
-        QualType Type = U.Expression->getType().getCanonicalType();
-        if (U.Kind == Usage::UK_MemberThroughArrow) {
-          if (!Type->isPointerType())
-            continue;
-          Type = Type->getPointeeType();
-        }
-        Descriptor.IsTriviallyCopyable = Type.isTriviallyCopyableType(*Context);
-        break;
+  }
+  if (usagesReturnRValues(Usages)) {
+    // If the index usages (dereference, subscript, at, ...) return rvalues,
+    // then we should not use a reference, because we need to keep the code
+    // correct if it mutates the returned objects.
+    Descriptor.DerefByValue = true;
+  }
+  // Try to find the type of the elements on the container, to check if
+  // they are trivially copyable.
+  for (const Usage &U : Usages) {
+    if (!U.Expression || U.Expression->getType().isNull())
+      continue;
+    QualType Type = U.Expression->getType().getCanonicalType();
+    if (U.Kind == Usage::UK_MemberThroughArrow) {
+      if (!Type->isPointerType()) {
+        continue;
       }
-    } else if (containerIsConst(ContainerExpr,
-                                Descriptor.ContainerNeedsDereference)) {
-      // The usages are lvalue references, we add a 'const' if the container
-      // is 'const'. This will always be the case with const arrays (unless
-      // usagesAreConst() returned true).
-      Descriptor.DerefByConstRef = true;
+      Type = Type->getPointeeType();
     }
+    Descriptor.IsTriviallyCopyable = Type.isTriviallyCopyableType(*Context);
   }
 }
 
@@ -604,10 +601,11 @@ void LoopConvertCheck::getIteratorLoopQualifiers(ASTContext *Context,
       // A node will only be bound with DerefByRefResultName if we're dealing
       // with a user-defined iterator type. Test the const qualification of
       // the reference type.
-      Descriptor.DerefByConstRef = (*DerefType)
-                                       ->getAs<ReferenceType>()
-                                       ->getPointeeType()
-                                       .isConstQualified();
+      auto ValueType = (*DerefType)->getAs<ReferenceType>()->getPointeeType();
+
+      Descriptor.DerefByConstRef = ValueType.isConstQualified();
+      Descriptor.IsTriviallyCopyable =
+          ValueType.isTriviallyCopyableType(*Context);
     } else {
       // By nature of the matcher this case is triggered only for built-in
       // iterator types (i.e. pointers).
@@ -617,6 +615,9 @@ void LoopConvertCheck::getIteratorLoopQualifiers(ASTContext *Context,
       // We test for const qualification of the pointed-at type.
       Descriptor.DerefByConstRef =
           CanonicalInitVarType->getPointeeType().isConstQualified();
+      Descriptor.IsTriviallyCopyable =
+          CanonicalInitVarType->getPointeeType().isTriviallyCopyableType(
+              *Context);
     }
   }
 }

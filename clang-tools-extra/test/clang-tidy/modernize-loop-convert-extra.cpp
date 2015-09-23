@@ -275,7 +275,7 @@ void macroConflict() {
     printf("Max of 3 and 5: %d\n", MAX(3, 5));
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & MAXs_it : MAXs)
+  // CHECK-FIXES: for (auto MAXs_it : MAXs)
   // CHECK-FIXES-NEXT: printf("s has value %d\n", (MAXs_it).x);
   // CHECK-FIXES-NEXT: printf("Max of 3 and 5: %d\n", MAX(3, 5));
 
@@ -468,7 +468,7 @@ void f() {
     }
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & elem : NestS)
+  // CHECK-FIXES: for (auto elem : NestS)
   // CHECK-FIXES-NEXT: for (S::const_iterator SI = (elem).begin(), SE = (elem).end(); SI != SE; ++SI)
   // CHECK-FIXES-NEXT: printf("%d", *SI);
 
@@ -480,7 +480,7 @@ void f() {
     }
   }
   // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & s : NestS)
+  // CHECK-FIXES: for (auto s : NestS)
 
   for (Nested<S>::iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
     S &s = *I;
@@ -501,7 +501,7 @@ void f() {
     }
   }
   // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & s : NestS)
+  // CHECK-FIXES: for (auto s : NestS)
 
   for (Nested<S>::iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
     S &s = *I;
@@ -655,7 +655,7 @@ void different_type() {
     printf("s has value %d\n", (*it).x);
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & elem : s)
+  // CHECK-FIXES: for (auto elem : s)
   // CHECK-FIXES-NEXT: printf("s has value %d\n", (elem).x);
 
   S *ps;
@@ -663,7 +663,7 @@ void different_type() {
     printf("s has value %d\n", (*it).x);
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (const auto & p : *ps)
+  // CHECK-FIXES: for (auto p : *ps)
   // CHECK-FIXES-NEXT: printf("s has value %d\n", (p).x);
 
   // v.begin() returns a user-defined type 'iterator' which, since it's
