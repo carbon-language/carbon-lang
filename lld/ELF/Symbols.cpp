@@ -52,6 +52,10 @@ template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
     return -1;
   if (!L.first || !L.second)
     return 1;
+  if (isShared())
+    return -1;
+  if (Other->isShared())
+    return 1;
   if (isCommon()) {
     if (!Other->isCommon())
       return -1;

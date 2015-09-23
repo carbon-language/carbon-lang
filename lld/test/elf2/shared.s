@@ -4,7 +4,7 @@
 // RUN: llvm-readobj -s %t2.so | FileCheck --check-prefix=SO %s
 // RUN: lld -flavor gnu2 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -rpath foo -rpath bar --export-dynamic %t.o %t2.so -o %t
 // RUN: llvm-readobj --program-headers --dynamic-table -t -s -dyn-symbols -section-data -hash-table %t | FileCheck %s
-// RUN: lld -flavor gnu2 %t.o %t2.so -o %t2
+// RUN: lld -flavor gnu2 %t.o %t2.so %t2.so -o %t2
 // RUN: llvm-readobj -dyn-symbols %t2 | FileCheck --check-prefix=DONT_EXPORT %s
 // REQUIRES: x86
 
