@@ -23,19 +23,22 @@
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/SmallVector.h"
 
 using namespace clang;
 using namespace ento;
+using llvm::APInt;
+using llvm::APSInt;
 
 namespace {
 struct MallocOverflowCheck {
   const BinaryOperator *mulop;
   const Expr *variable;
+  APSInt maxVal;
 
-  MallocOverflowCheck (const BinaryOperator *m, const Expr *v)
-    : mulop(m), variable (v)
-  {}
+  MallocOverflowCheck(const BinaryOperator *m, const Expr *v, APSInt val)
+      : mulop(m), variable(v), maxVal(val) {}
 };
 
 class MallocOverflowSecurityChecker : public Checker<check::ASTCodeBody> {
@@ -54,6 +57,11 @@ public:
 };
 } // end anonymous namespace
 
+// Return true for computations which evaluate to zero: e.g., mult by 0.
+static inline bool EvaluatesToZero(APSInt &Val, BinaryOperatorKind op) {
+  return (op == BO_Mul) && (Val == 0);
+}
+
 void MallocOverflowSecurityChecker::CheckMallocArgument(
   SmallVectorImpl<MallocOverflowCheck> &PossibleMallocOverflows,
   const Expr *TheArgument,
@@ -64,13 +72,14 @@ void MallocOverflowSecurityChecker::CheckMallocArgument(
    Reject anything that applies to the variable: an explicit cast,
    conditional expression, an operation that could reduce the range
    of the result, or anything too complicated :-).  */
-  const Expr * e = TheArgument;
+  const Expr *e = TheArgument;
   const BinaryOperator * mulop = nullptr;
+  APSInt maxVal;
 
   for (;;) {
+    maxVal = 0;
     e = e->IgnoreParenImpCasts();
-    if (isa<BinaryOperator>(e)) {
-      const BinaryOperator * binop = dyn_cast<BinaryOperator>(e);
+    if (const BinaryOperator *binop = dyn_cast<BinaryOperator>(e)) {
       BinaryOperatorKind opc = binop->getOpcode();
       // TODO: ignore multiplications by 1, reject if multiplied by 0.
       if (mulop == nullptr && opc == BO_Mul)
@@ -80,12 +89,18 @@ void MallocOverflowSecurityChecker::CheckMallocArgument(
 
       const Expr *lhs = binop->getLHS();
       const Expr *rhs = binop->getRHS();
-      if (rhs->isEvaluatable(Context))
+      if (rhs->isEvaluatable(Context)) {
         e = lhs;
-      else if ((opc == BO_Add || opc == BO_Mul)
-               && lhs->isEvaluatable(Context))
+        maxVal = rhs->EvaluateKnownConstInt(Context);
+        if (EvaluatesToZero(maxVal, opc))
+          return;
+      } else if ((opc == BO_Add || opc == BO_Mul) &&
+                 lhs->isEvaluatable(Context)) {
+        maxVal = lhs->EvaluateKnownConstInt(Context);
+        if (EvaluatesToZero(maxVal, opc))
+          return;
         e = rhs;
-      else
+      } else
         return;
     }
     else if (isa<DeclRefExpr>(e) || isa<MemberExpr>(e))
@@ -103,7 +118,7 @@ void MallocOverflowSecurityChecker::CheckMallocArgument(
 
   // TODO: Could push this into the innermost scope where 'e' is
   // defined, rather than the whole function.
-  PossibleMallocOverflows.push_back(MallocOverflowCheck(mulop, e));
+  PossibleMallocOverflows.push_back(MallocOverflowCheck(mulop, e, maxVal));
 }
 
 namespace {
@@ -126,33 +141,84 @@ private:
       return false;
     }
 
-    void CheckExpr(const Expr *E_p) {
-      const Expr *E = E_p->IgnoreParenImpCasts();
+    const Decl *getDecl(const DeclRefExpr *DR) { return DR->getDecl(); }
 
+    const Decl *getDecl(const MemberExpr *ME) { return ME->getMemberDecl(); }
+
+    template <typename T1>
+    void Erase(const T1 *DR, std::function<bool(theVecType::iterator)> pred) {
       theVecType::iterator i = toScanFor.end();
       theVecType::iterator e = toScanFor.begin();
+      while (i != e) {
+        --i;
+        if (const T1 *DR_i = dyn_cast<T1>(i->variable)) {
+          if ((getDecl(DR_i) == getDecl(DR)) && pred(i))
+            i = toScanFor.erase(i);
+        }
+      }
+    }
 
-      if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E)) {
-        const Decl * EdreD = DR->getDecl();
-        while (i != e) {
-          --i;
-          if (const DeclRefExpr *DR_i = dyn_cast<DeclRefExpr>(i->variable)) {
-            if (DR_i->getDecl() == EdreD)
-              i = toScanFor.erase(i);
-          }
-        }
-      }
+    void CheckExpr(const Expr *E_p) {
+      auto PredTrue = [](theVecType::iterator) -> bool { return true; };
+      const Expr *E = E_p->IgnoreParenImpCasts();
+      if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E))
+        Erase<DeclRefExpr>(DR, PredTrue);
       else if (const auto *ME = dyn_cast<MemberExpr>(E)) {
-        // No points-to analysis, just look at the member
-        const Decl *EmeMD = ME->getMemberDecl();
-        while (i != e) {
-          --i;
-          if (const auto *ME_i = dyn_cast<MemberExpr>(i->variable)) {
-            if (ME_i->getMemberDecl() == EmeMD)
-              i = toScanFor.erase (i);
-          }
+        Erase<MemberExpr>(ME, PredTrue);
+      }
+    }
+
+    // Check if the argument to malloc is assigned a value
+    // which cannot cause an overflow.
+    // e.g., malloc (mul * x) and,
+    // case 1: mul = <constant value>
+    // case 2: mul = a/b, where b > x
+    void CheckAssignmentExpr(BinaryOperator *AssignEx) {
+      bool assignKnown = false;
+      bool numeratorKnown = false, denomKnown = false;
+      APSInt denomVal;
+      denomVal = 0;
+
+      // Erase if the multiplicand was assigned a constant value.
+      const Expr *rhs = AssignEx->getRHS();
+      if (rhs->isEvaluatable(Context))
+        assignKnown = true;
+
+      // Discard the report if the multiplicand was assigned a value,
+      // that can never overflow after multiplication. e.g., the assignment
+      // is a division operator and the denominator is > other multiplicand.
+      const Expr *rhse = rhs->IgnoreParenImpCasts();
+      if (const BinaryOperator *BOp = dyn_cast<BinaryOperator>(rhse)) {
+        if (BOp->getOpcode() == BO_Div) {
+          const Expr *denom = BOp->getRHS()->IgnoreParenImpCasts();
+          if (denom->EvaluateAsInt(denomVal, Context))
+            denomKnown = true;
+          const Expr *numerator = BOp->getLHS()->IgnoreParenImpCasts();
+          if (numerator->isEvaluatable(Context))
+            numeratorKnown = true;
         }
       }
+      if (!assignKnown && !denomKnown)
+        return;
+      auto denomExtVal = denomVal.getExtValue();
+
+      // Ignore negative denominator.
+      if (denomExtVal < 0)
+        return;
+
+      const Expr *lhs = AssignEx->getLHS();
+      const Expr *E = lhs->IgnoreParenImpCasts();
+
+      auto pred = [assignKnown, numeratorKnown,
+                   denomExtVal](theVecType::iterator i) {
+        return assignKnown ||
+               (numeratorKnown && (denomExtVal >= i->maxVal.getExtValue()));
+      };
+
+      if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E))
+        Erase<DeclRefExpr>(DR, pred);
+      else if (const auto *ME = dyn_cast<MemberExpr>(E))
+        Erase<MemberExpr>(ME, pred);
     }
 
   public:
@@ -162,11 +228,13 @@ private:
         const Expr * rhs = E->getRHS();
         // Ignore comparisons against zero, since they generally don't
         // protect against an overflow.
-        if (!isIntZeroExpr(lhs) && ! isIntZeroExpr(rhs)) {
+        if (!isIntZeroExpr(lhs) && !isIntZeroExpr(rhs)) {
           CheckExpr(lhs);
           CheckExpr(rhs);
         }
       }
+      if (E->isAssignmentOp())
+        CheckAssignmentExpr(E);
       EvaluatedExprVisitor<CheckOverflowOps>::VisitBinaryOperator(E);
     }
 
@@ -243,12 +311,12 @@ void MallocOverflowSecurityChecker::checkASTCodeBody(const Decl *D,
           const FunctionDecl *FD = TheCall->getDirectCallee();
 
           if (!FD)
-            return;
+            continue;
 
           // Get the name of the callee. If it's a builtin, strip off the prefix.
           IdentifierInfo *FnInfo = FD->getIdentifier();
           if (!FnInfo)
-            return;
+            continue;
 
           if (FnInfo->isStr ("malloc") || FnInfo->isStr ("_MALLOC")) {
             if (TheCall->getNumArgs() == 1)

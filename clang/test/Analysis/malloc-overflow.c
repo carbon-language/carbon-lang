@@ -102,7 +102,7 @@ void * f13(struct s13 *s)
 {
   if (s->n > 10)
     return NULL;
-  return malloc(s->n * sizeof(int));  // no warning
+  return malloc(s->n * sizeof(int)); // no-warning
 }
 
 void * f14(int n)
