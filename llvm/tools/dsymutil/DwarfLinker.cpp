@@ -3157,7 +3157,7 @@ void DwarfLinker::loadClangModule(StringRef Filename, StringRef ModulePath,
   // FIXME: At this point dsymutil should verify the DW_AT_gnu_dwo_id
   // against the module hash of the clang module.
 
-  CompileUnit *Unit = nullptr;
+  std::unique_ptr<CompileUnit> Unit;
 
   // Setup access to the debug info.
   DWARFContextInMemory DwarfContext(*ErrOrObj);
@@ -3172,7 +3172,7 @@ void DwarfLinker::loadClangModule(StringRef Filename, StringRef ModulePath,
                << " 1 compile unit.\n";
         exitDsymutil(1);
       }
-      Unit = new CompileUnit(*CU, UnitID++, !Options.NoODR);
+      Unit = llvm::make_unique<CompileUnit>(*CU, UnitID++, !Options.NoODR);
       Unit->setHasInterestingContent();
       gatherDIEParents(CUDie, 0, *Unit, &ODRContexts.getRoot(), StringPool,
                        ODRContexts);
