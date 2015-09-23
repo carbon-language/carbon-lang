@@ -78,7 +78,7 @@ namespace {
     }
 
     bool runOnBasicBlock(BasicBlock &BB);
-    bool MemoryIsNotModifiedBetween(LoadInst *LI, StoreInst *SI);
+    bool MemoryIsNotModifiedBetween(Instruction *FirstI, Instruction *SecondI);
     bool HandleFree(CallInst *F);
     bool handleEndBlock(BasicBlock &BB);
     void RemoveAccessedObjects(const MemoryLocation &LoadedLoc,
@@ -483,6 +483,7 @@ static bool isPossibleSelfRead(Instruction *Inst,
 //===----------------------------------------------------------------------===//
 
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
+  const DataLayout &DL = BB.getModule()->getDataLayout();
   bool MadeChange = false;
 
   // Do a top-down walk on the BB.
@@ -502,6 +503,22 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     // If we're storing the same value back to a pointer that we just
     // loaded from, then the store can be removed.
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+
+      auto RemoveDeadInstAndUpdateBBI = [&](Instruction *DeadInst) {
+        // DeleteDeadInstruction can delete the current instruction.  Save BBI
+        // in case we need it.
+        WeakVH NextInst(BBI);
+
+        DeleteDeadInstruction(DeadInst, *MD, *TLI);
+
+        if (!NextInst) // Next instruction deleted.
+          BBI = BB.begin();
+        else if (BBI != BB.begin()) // Revisit this instruction if possible.
+          --BBI;
+        ++NumRedundantStores;
+        MadeChange = true;
+      };
+
       if (LoadInst *DepLoad = dyn_cast<LoadInst>(SI->getValueOperand())) {
         if (SI->getPointerOperand() == DepLoad->getPointerOperand() &&
             isRemovable(SI) &&
@@ -510,18 +527,26 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
           DEBUG(dbgs() << "DSE: Remove Store Of Load from same pointer:\n  "
                        << "LOAD: " << *DepLoad << "\n  STORE: " << *SI << '\n');
 
-          // DeleteDeadInstruction can delete the current instruction.  Save BBI
-          // in case we need it.
-          WeakVH NextInst(BBI);
+          RemoveDeadInstAndUpdateBBI(SI);
+          continue;
+        }
+      }
 
-          DeleteDeadInstruction(SI, *MD, *TLI);
+      // Remove null stores into the calloc'ed objects
+      Constant *StoredConstant = dyn_cast<Constant>(SI->getValueOperand());
 
-          if (!NextInst)  // Next instruction deleted.
-            BBI = BB.begin();
-          else if (BBI != BB.begin())  // Revisit this instruction if possible.
-            --BBI;
-          ++NumRedundantStores;
-          MadeChange = true;
+      if (StoredConstant && StoredConstant->isNullValue() &&
+          isRemovable(SI)) {
+        Instruction *UnderlyingPointer = dyn_cast<Instruction>(
+            GetUnderlyingObject(SI->getPointerOperand(), DL));
+
+        if (UnderlyingPointer && isCallocLikeFn(UnderlyingPointer, TLI) &&
+            MemoryIsNotModifiedBetween(UnderlyingPointer, SI)) {
+          DEBUG(dbgs()
+                << "DSE: Remove null store to the calloc'ed object:\n  DEAD: "
+                << *Inst << "\n  OBJECT: " << *UnderlyingPointer << '\n');
+
+          RemoveDeadInstAndUpdateBBI(SI);
           continue;
         }
       }
@@ -561,7 +586,6 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       if (isRemovable(DepWrite) &&
           !isPossibleSelfRead(Inst, Loc, DepWrite, *TLI, *AA)) {
         int64_t InstWriteOffset, DepWriteOffset;
-        const DataLayout &DL = BB.getModule()->getDataLayout();
         OverwriteResult OR =
             isOverwrite(Loc, DepLoc, DL, *TLI, DepWriteOffset, InstWriteOffset);
         if (OR == OverwriteComplete) {
@@ -633,52 +657,53 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   return MadeChange;
 }
 
-/// Returns true if the memory which is accessed by the store instruction is not
-/// modified between the load and the store instruction.
-/// Precondition: The store instruction must be dominated by the load
+/// Returns true if the memory which is accessed by the second instruction is not
+/// modified between the first and the second instruction.
+/// Precondition: Second instruction must be dominated by the first
 /// instruction.
-bool DSE::MemoryIsNotModifiedBetween(LoadInst *LI, StoreInst *SI) {
+bool DSE::MemoryIsNotModifiedBetween(Instruction *FirstI,
+                                     Instruction *SecondI) {
   SmallVector<BasicBlock *, 16> WorkList;
   SmallPtrSet<BasicBlock *, 8> Visited;
-  BasicBlock::iterator LoadBBI(LI);
-  ++LoadBBI;
-  BasicBlock::iterator StoreBBI(SI);
-  BasicBlock *LoadBB = LI->getParent();
-  BasicBlock *StoreBB = SI->getParent();
-  MemoryLocation StoreLoc = MemoryLocation::get(SI);
+  BasicBlock::iterator FirstBBI(FirstI);
+  ++FirstBBI;
+  BasicBlock::iterator SecondBBI(SecondI);
+  BasicBlock *FirstBB = FirstI->getParent();
+  BasicBlock *SecondBB = SecondI->getParent();
+  MemoryLocation MemLoc = MemoryLocation::get(SecondI);
 
   // Start checking the store-block.
-  WorkList.push_back(StoreBB);
+  WorkList.push_back(SecondBB);
   bool isFirstBlock = true;
 
   // Check all blocks going backward until we reach the load-block.
   while (!WorkList.empty()) {
     BasicBlock *B = WorkList.pop_back_val();
 
-    // Ignore instructions before LI if this is the LoadBB.
-    BasicBlock::iterator BI = (B == LoadBB ? LoadBBI : B->begin());
+    // Ignore instructions before LI if this is the FirstBB.
+    BasicBlock::iterator BI = (B == FirstBB ? FirstBBI : B->begin());
 
     BasicBlock::iterator EI;
     if (isFirstBlock) {
-      // Ignore instructions after SI if this is the first visit of StoreBB.
-      assert(B == StoreBB && "first block is not the store block");
-      EI = StoreBBI;
+      // Ignore instructions after SI if this is the first visit of SecondBB.
+      assert(B == SecondBB && "first block is not the store block");
+      EI = SecondBBI;
       isFirstBlock = false;
     } else {
-      // It's not StoreBB or (in case of a loop) the second visit of StoreBB.
+      // It's not SecondBB or (in case of a loop) the second visit of SecondBB.
       // In this case we also have to look at instructions after SI.
       EI = B->end();
     }
     for (; BI != EI; ++BI) {
       Instruction *I = BI;
-      if (I->mayWriteToMemory() && I != SI) {
-        auto Res = AA->getModRefInfo(I, StoreLoc);
+      if (I->mayWriteToMemory() && I != SecondI) {
+        auto Res = AA->getModRefInfo(I, MemLoc);
         if (Res != MRI_NoModRef)
           return false;
       }
     }
-    if (B != LoadBB) {
-      assert(B != &LoadBB->getParent()->getEntryBlock() &&
+    if (B != FirstBB) {
+      assert(B != &FirstBB->getParent()->getEntryBlock() &&
           "Should not hit the entry block because SI must be dominated by LI");
       for (auto PredI = pred_begin(B), PE = pred_end(B); PredI != PE; ++PredI) {
         if (!Visited.insert(*PredI).second)
