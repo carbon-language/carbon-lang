@@ -274,9 +274,9 @@ if(APPLE)
 
   option(COMPILER_RT_ENABLE_IOS "Enable building for iOS - Experimental" Off)
 
-  find_darwin_sdk_dir(OSX_SDK_DIR macosx)
-  find_darwin_sdk_dir(IOSSIM_SDK_DIR iphonesimulator)
-  find_darwin_sdk_dir(IOS_SDK_DIR iphoneos)
+  find_darwin_sdk_dir(DARWIN_osx_SYSROOT macosx)
+  find_darwin_sdk_dir(DARWIN_iossim_SYSROOT iphonesimulator)
+  find_darwin_sdk_dir(DARWIN_ios_SYSROOT iphoneos)
 
   # Note: In order to target x86_64h on OS X the minimum deployment target must
   # be 10.8 or higher.
@@ -312,10 +312,13 @@ if(APPLE)
   set(DARWIN_osx_LINKFLAGS
     ${DARWIN_COMMON_LINKFLAGS}
     -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION})
+  set(DARWIN_osx_BUILTIN_MIN_VER 10.5)
+  set(DARWIN_osx_BUILTIN_MIN_VER_FLAG
+      -mmacosx-version-min=${DARWIN_osx_BUILTIN_MIN_VER})
 
-  if(OSX_SDK_DIR)
-    list(APPEND DARWIN_osx_CFLAGS -isysroot ${OSX_SDK_DIR})
-    list(APPEND DARWIN_osx_LINKFLAGS -isysroot ${OSX_SDK_DIR})
+  if(DARWIN_osx_SYSROOT)
+    list(APPEND DARWIN_osx_CFLAGS -isysroot ${DARWIN_osx_SYSROOT})
+    list(APPEND DARWIN_osx_LINKFLAGS -isysroot ${DARWIN_osx_SYSROOT})
   endif()
 
   # Figure out which arches to use for each OS
@@ -332,15 +335,18 @@ if(APPLE)
       set(CAN_TARGET_${arch} 1)
     endforeach()
 
-    if(IOSSIM_SDK_DIR)
+    if(DARWIN_iossim_SYSROOT)
       set(DARWIN_iossim_CFLAGS
         ${DARWIN_COMMON_CFLAGS}
         -mios-simulator-version-min=7.0
-        -isysroot ${IOSSIM_SDK_DIR})
+        -isysroot ${DARWIN_iossim_SYSROOT})
       set(DARWIN_iossim_LINKFLAGS
         ${DARWIN_COMMON_LINKFLAGS}
         -mios-simulator-version-min=7.0
-        -isysroot ${IOSSIM_SDK_DIR})
+        -isysroot ${DARWIN_iossim_SYSROOT})
+      set(DARWIN_iossim_BUILTIN_MIN_VER 6.0)
+      set(DARWIN_iossim_BUILTIN_MIN_VER_FLAG
+        -mios-simulator-version-min=${DARWIN_iossim_BUILTIN_MIN_VER})
 
       list(APPEND SANITIZER_COMMON_SUPPORTED_OS iossim)
       list(APPEND BUILTIN_SUPPORTED_OS iossim)
@@ -354,15 +360,18 @@ if(APPLE)
       endforeach()
     endif()
 
-    if(IOS_SDK_DIR AND COMPILER_RT_ENABLE_IOS)
+    if(DARWIN_ios_SYSROOT AND COMPILER_RT_ENABLE_IOS)
       set(DARWIN_ios_CFLAGS
         ${DARWIN_COMMON_CFLAGS}
         -miphoneos-version-min=7.0
-        -isysroot ${IOS_SDK_DIR})
+        -isysroot ${DARWIN_ios_SYSROOT})
       set(DARWIN_ios_LINKFLAGS
         ${DARWIN_COMMON_LINKFLAGS}
         -miphoneos-version-min=7.0
-        -isysroot ${IOS_SDK_DIR})
+        -isysroot ${DARWIN_ios_SYSROOT})
+      set(DARWIN_ios_BUILTIN_MIN_VER 6.0)
+      set(DARWIN_ios_BUILTIN_MIN_VER_FLAG
+        -miphoneos-version-min=${DARWIN_ios_BUILTIN_MIN_VER})
 
       list(APPEND SANITIZER_COMMON_SUPPORTED_OS ios)
       list(APPEND BUILTIN_SUPPORTED_OS ios)

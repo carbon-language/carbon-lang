@@ -315,45 +315,7 @@ set(arm64_SOURCES ${aarch64_SOURCES})
 add_custom_target(builtins)
 
 if (APPLE)
-  foreach (os ${BUILTIN_SUPPORTED_OS})
-    list_union(DARWIN_BUILTIN_ARCHS DARWIN_${os}_ARCHS BUILTIN_SUPPORTED_ARCH)
-    set(${os}_builtin_libs)
-    set(${os}_builtin_lipo_flags)
-    foreach (arch ${DARWIN_BUILTIN_ARCHS})
-      # Filter out generic versions of routines that are re-implemented in
-      # architecture specific manner.  This prevents multiple definitions of the
-      # same symbols, making the symbol selection non-deterministic.
-      foreach (_file ${${arch}_SOURCES})
-        if (${_file} MATCHES ${arch}/*)
-          get_filename_component(_name ${_file} NAME)
-          string(REPLACE ".S" ".c" _cname "${_name}")
-          list(REMOVE_ITEM ${arch}_SOURCES ${_cname})
-        endif ()
-      endforeach ()
-
-      add_compiler_rt_runtime(clang_rt.builtins_${arch} STATIC
-                              OS ${os}
-                              ARCHS ${arch}
-                              SOURCES ${${arch}_SOURCES}
-                              CFLAGS "-std=c99" ${DARWIN_${os}_CFLAGS} -arch ${arch}
-                              PARENT_TARGET builtins)
-      list(APPEND ${os}_builtin_libs clang_rt.builtins_${arch}_${os})
-      list(APPEND ${os}_builtin_lipo_flags -arch ${arch} 
-        ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/libclang_rt.builtins_${arch}_${os}.a)
-    endforeach()
-
-    if(${os}_builtin_libs)
-      add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libclang_rt.builtins_${os}.a
-        COMMAND lipo -output
-                ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/libclang_rt.builtins_${os}.a
-                -create ${${os}_builtin_lipo_flags}
-        DEPENDS ${${os}_builtin_libs}
-        )
-      add_custom_target(clang_rt.builtins_${os}
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libclang_rt.builtins_${os}.a)
-      add_dependencies(builtins clang_rt.builtins_${os})
-    endif()
-  endforeach()
+  darwin_add_builtin_libraries(${BUILTIN_SUPPORTED_OS})
 elseif (NOT WIN32 OR MINGW)
   foreach (arch ${BUILTIN_SUPPORTED_ARCH})
     if (CAN_TARGET_${arch})

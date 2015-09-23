@@ -99,3 +99,114 @@ function(darwin_filter_host_archs input output)
   endif()
   set(${output} ${tmp_var} PARENT_SCOPE)
 endfunction()
+
+set(DARWIN_EXCLUDE_DIR ${CMAKE_SOURCE_DIR}/lib/builtins/Darwin-excludes)
+
+# Read and process the exclude file into a list of symbols
+function(darwin_read_exclude_file output_var file)
+  if(EXISTS ${DARWIN_EXCLUDE_DIR}/${file}.txt)
+    file(READ ${DARWIN_EXCLUDE_DIR}/${file}.txt ${file}_EXCLUDES)
+    string(REPLACE "\n" ";" ${file}_EXCLUDES ${${file}_EXCLUDES})
+    set(${output_var} ${${file}_EXCLUDES} PARENT_SCOPE)
+  endif()
+endfunction()
+
+# this function takes an OS, architecture and minimum version and provides a
+# list of builtin functions to exclude
+function(darwin_find_excluded_builtins_list os arch min_version)
+  darwin_read_exclude_file(${os}_BUILTINS ${os})
+  darwin_read_exclude_file(${os}_${arch}_BASE_BUILTINS ${os}-${arch})
+
+  file(GLOB builtin_lists ${DARWIN_EXCLUDE_DIR}/${os}*-${arch}.txt)
+  foreach(builtin_list ${builtin_lists})
+    string(REGEX MATCH "${os}([0-9\\.]*)-${arch}.txt" VERSION_MATCHED "${builtin_list}")
+    if (VERSION_MATCHED AND NOT CMAKE_MATCH_1 VERSION_LESS min_version)
+      if(NOT smallest_version)
+        set(smallest_version ${CMAKE_MATCH_1})
+      elseif(CMAKE_MATCH_1 VERSION_LESS smallest_version)
+        set(smallest_version ${CMAKE_MATCH_1})
+      endif()
+    endif()
+  endforeach()
+  
+  if(smallest_version)
+    darwin_read_exclude_file(${arch}_${os}_BUILTINS ${os}${smallest_version}-${arch})
+  endif()
+  
+  set(${arch}_${os}_EXCLUDED_BUILTINS
+      ${${arch}_${os}_BUILTINS}
+      ${${os}_${arch}_BASE_BUILTINS}
+      ${${os}_BUILTINS} PARENT_SCOPE)
+endfunction()
+
+# adds a single builtin library for a single OS & ARCH
+function(darwin_add_builtin_library name)
+  cmake_parse_arguments(LIB
+    ""
+    "PARENT_TARGET;OS;ARCH"
+    "SOURCES;CFLAGS"
+    ${ARGN})
+  set(libname "${name}_${LIB_ARCH}_${LIB_OS}")
+  add_library(${libname} STATIC ${LIB_SOURCES})
+  set_target_compile_flags(${libname}
+    -isysroot ${DARWIN_${LIB_OS}_SYSROOT}
+    ${DARWIN_${LIB_OS}_BUILTIN_MIN_VER_FLAG}
+    ${LIB_CFLAGS})
+  set_target_properties(${libname} PROPERTIES
+      OUTPUT_NAME ${libname}${COMPILER_RT_OS_SUFFIX})
+  set_target_properties(${libname} PROPERTIES
+    OSX_ARCHITECTURES ${LIB_ARCH})
+
+  if(LIB_PARENT_TARGET)
+    add_dependencies(${LIB_PARENT_TARGET} ${libname})
+  endif()
+endfunction()
+
+# Generates builtin libraries for all operating systems specified in ARGN. Each
+# OS library is constructed by lipo-ing together single-architecture libraries.
+macro(darwin_add_builtin_libraries)
+  foreach (os ${ARGN})
+    list_union(DARWIN_BUILTIN_ARCHS DARWIN_${os}_ARCHS BUILTIN_SUPPORTED_ARCH)
+    set(${os}_builtin_libs)
+    set(${os}_builtin_lipo_flags)
+    foreach (arch ${DARWIN_BUILTIN_ARCHS})
+      darwin_find_excluded_builtins_list(${os} ${arch} ${DARWIN_${os}_BUILTIN_MIN_VER})
+      # Filter out generic versions of routines that are re-implemented in
+      # architecture specific manner.  This prevents multiple definitions of the
+      # same symbols, making the symbol selection non-deterministic.
+      foreach (_file ${${arch}_SOURCES})
+        get_filename_component(_name_we ${_file} NAME_WE)
+        list(FIND ${arch}_${os}_EXCLUDED_BUILTINS ${_name_we} _found)
+        if(_found GREATER -1)
+          list(REMOVE_ITEM ${arch}_SOURCES ${_file})
+        elseif(${_file} MATCHES ${arch}/*)
+          get_filename_component(_name ${_file} NAME)
+          string(REPLACE ".S" ".c" _cname "${_name}")
+          list(REMOVE_ITEM ${arch}_SOURCES ${_cname})
+        endif ()
+      endforeach ()
+
+      darwin_add_builtin_library(clang_rt.builtins
+                              OS ${os}
+                              ARCH ${arch}
+                              SOURCES ${${arch}_SOURCES}
+                              CFLAGS "-std=c99" -arch ${arch}
+                              PARENT_TARGET builtins)
+      list(APPEND ${os}_builtin_libs clang_rt.builtins_${arch}_${os})
+      list(APPEND ${os}_builtin_lipo_flags -arch ${arch} $<TARGET_FILE:clang_rt.builtins_${arch}_${os}>)
+    endforeach()
+
+    if(${os}_builtin_libs)
+      add_custom_command(OUTPUT ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/libclang_rt.${os}.a
+        COMMAND lipo -output
+                ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/libclang_rt.${os}.a
+                -create ${${os}_builtin_lipo_flags}
+        DEPENDS ${${os}_builtin_libs}
+        )
+      add_custom_target(clang_rt.${os}
+        DEPENDS ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/libclang_rt.${os}.a)
+      add_dependencies(builtins clang_rt.${os})
+    endif()
+  endforeach()
+endmacro()
+
