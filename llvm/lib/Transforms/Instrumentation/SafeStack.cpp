@@ -19,7 +19,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -37,17 +36,12 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_os_ostream.h"
-#include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 
 using namespace llvm;
 
 #define DEBUG_TYPE "safestack"
-
-static const char *const kUnsafeStackPtrVar = "__safestack_unsafe_stack_ptr";
-static const char *const kUnsafeStackPtrAddrFn = "__safestack_pointer_address";
 
 namespace llvm {
 
@@ -163,8 +157,6 @@ bool IsSafeStackAlloca(const AllocaInst *AI) {
 /// (as determined statically), and the unsafe stack, which contains all
 /// local variables that are accessed in unsafe ways.
 class SafeStack : public FunctionPass {
-  const TargetMachine *TM;
-  const TargetLoweringBase *TLI;
   const DataLayout *DL;
 
   Type *StackPtrTy;
@@ -172,7 +164,7 @@ class SafeStack : public FunctionPass {
   Type *Int32Ty;
   Type *Int8Ty;
 
-  Value *UnsafeStackPtr = nullptr;
+  Constant *UnsafeStackPtr = nullptr;
 
   /// Unsafe stack alignment. Each stack frame must ensure that the stack is
   /// aligned to this value. We need to re-align the unsafe stack if the
@@ -184,7 +176,7 @@ class SafeStack : public FunctionPass {
 
   /// \brief Build a constant representing a pointer to the unsafe stack
   /// pointer.
-  Value *getOrCreateUnsafeStackPtr(IRBuilder<> &IRB, Function &F);
+  Constant *getOrCreateUnsafeStackPtr(Module &M);
 
   /// \brief Find all static allocas, dynamic allocas, return instructions and
   /// stack restore points (exception unwind blocks and setjmp calls) in the
@@ -200,7 +192,7 @@ class SafeStack : public FunctionPass {
   ///
   /// \returns A pointer to the top of the unsafe stack after all unsafe static
   /// allocas are allocated.
-  Value *moveStaticAllocasToUnsafeStack(IRBuilder<> &IRB, Function &F,
+  Value *moveStaticAllocasToUnsafeStack(Function &F,
                                         ArrayRef<AllocaInst *> StaticAllocas,
                                         ArrayRef<ReturnInst *> Returns);
 
@@ -223,11 +215,9 @@ class SafeStack : public FunctionPass {
 
 public:
   static char ID; // Pass identification, replacement for typeid.
-  SafeStack(const TargetMachine *TM)
-      : FunctionPass(ID), TM(TM), TLI(nullptr), DL(nullptr) {
+  SafeStack() : FunctionPass(ID), DL(nullptr) {
     initializeSafeStackPass(*PassRegistry::getPassRegistry());
   }
-  SafeStack() : SafeStack(nullptr) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<AAResultsWrapperPass>();
@@ -247,53 +237,35 @@ public:
   bool runOnFunction(Function &F) override;
 }; // class SafeStack
 
-Value *SafeStack::getOrCreateUnsafeStackPtr(IRBuilder<> &IRB, Function &F) {
-  Module &M = *F.getParent();
-  Triple TargetTriple(M.getTargetTriple());
+Constant *SafeStack::getOrCreateUnsafeStackPtr(Module &M) {
+  // The unsafe stack pointer is stored in a global variable with a magic name.
+  const char *kUnsafeStackPtrVar = "__safestack_unsafe_stack_ptr";
 
-  unsigned Offset;
-  unsigned AddressSpace;
-  // Check if the target keeps the unsafe stack pointer at a fixed offset.
-  if (TLI->getSafeStackPointerLocation(Offset, AddressSpace)) {
-    Constant *OffsetVal =
-        ConstantInt::get(Type::getInt32Ty(F.getContext()), Offset);
-    return ConstantExpr::getIntToPtr(OffsetVal,
-                                     StackPtrTy->getPointerTo(AddressSpace));
-  }
+  auto UnsafeStackPtr =
+      dyn_cast_or_null<GlobalVariable>(M.getNamedValue(kUnsafeStackPtrVar));
 
-  // Android provides a libc function that returns the stack pointer address.
-  if (TargetTriple.getEnvironment() == llvm::Triple::Android) {
-    Value *Fn = M.getOrInsertFunction(kUnsafeStackPtrAddrFn,
-                                      StackPtrTy->getPointerTo(0), nullptr);
-    return IRB.CreateCall(Fn);
+  if (!UnsafeStackPtr) {
+    // The global variable is not defined yet, define it ourselves.
+    // We use the initial-exec TLS model because we do not support the variable
+    // living anywhere other than in the main executable.
+    UnsafeStackPtr = new GlobalVariable(
+        /*Module=*/M, /*Type=*/StackPtrTy,
+        /*isConstant=*/false, /*Linkage=*/GlobalValue::ExternalLinkage,
+        /*Initializer=*/0, /*Name=*/kUnsafeStackPtrVar,
+        /*InsertBefore=*/nullptr,
+        /*ThreadLocalMode=*/GlobalValue::InitialExecTLSModel);
   } else {
-    // Otherwise, declare a thread-local variable with a magic name.
-    auto UnsafeStackPtr =
-        dyn_cast_or_null<GlobalVariable>(M.getNamedValue(kUnsafeStackPtrVar));
-
-    if (!UnsafeStackPtr) {
-      // The global variable is not defined yet, define it ourselves.
-      // We use the initial-exec TLS model because we do not support the
-      // variable
-      // living anywhere other than in the main executable.
-      UnsafeStackPtr = new GlobalVariable(
-          /*Module=*/M, /*Type=*/StackPtrTy,
-          /*isConstant=*/false, /*Linkage=*/GlobalValue::ExternalLinkage,
-          /*Initializer=*/0, /*Name=*/kUnsafeStackPtrVar,
-          /*InsertBefore=*/nullptr,
-          /*ThreadLocalMode=*/GlobalValue::InitialExecTLSModel);
-    } else {
-      // The variable exists, check its type and attributes.
-      if (UnsafeStackPtr->getValueType() != StackPtrTy) {
-        report_fatal_error(Twine(kUnsafeStackPtrVar) + " must have void* type");
-      }
-
-      if (!UnsafeStackPtr->isThreadLocal()) {
-        report_fatal_error(Twine(kUnsafeStackPtrVar) + " must be thread-local");
-      }
+    // The variable exists, check its type and attributes.
+    if (UnsafeStackPtr->getValueType() != StackPtrTy) {
+      report_fatal_error(Twine(kUnsafeStackPtrVar) + " must have void* type");
     }
-    return UnsafeStackPtr;
+
+    if (!UnsafeStackPtr->isThreadLocal()) {
+      report_fatal_error(Twine(kUnsafeStackPtrVar) + " must be thread-local");
+    }
   }
+
+  return UnsafeStackPtr;
 }
 
 void SafeStack::findInsts(Function &F,
@@ -377,12 +349,13 @@ SafeStack::createStackRestorePoints(Function &F,
 }
 
 Value *
-SafeStack::moveStaticAllocasToUnsafeStack(IRBuilder<> &IRB, Function &F,
+SafeStack::moveStaticAllocasToUnsafeStack(Function &F,
                                           ArrayRef<AllocaInst *> StaticAllocas,
                                           ArrayRef<ReturnInst *> Returns) {
   if (StaticAllocas.empty())
     return nullptr;
 
+  IRBuilder<> IRB(F.getEntryBlock().getFirstInsertionPt());
   DIBuilder DIB(*F.getParent());
 
   // We explicitly compute and set the unsafe stack layout for all unsafe
@@ -540,8 +513,6 @@ void SafeStack::moveDynamicAllocasToUnsafeStack(
 bool SafeStack::runOnFunction(Function &F) {
   auto AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
 
-  TLI = TM->getSubtargetImpl(F)->getTargetLowering();
-
   DEBUG(dbgs() << "[SafeStack] Function: " << F.getName() << "\n");
 
   if (!F.hasFnAttribute(Attribute::SafeStack)) {
@@ -601,11 +572,11 @@ bool SafeStack::runOnFunction(Function &F) {
   if (!StackRestorePoints.empty())
     ++NumUnsafeStackRestorePointsFunctions;
 
-  IRBuilder<> IRB(F.begin()->getFirstInsertionPt());
-  UnsafeStackPtr = getOrCreateUnsafeStackPtr(IRB, F);
+  if (!UnsafeStackPtr)
+    UnsafeStackPtr = getOrCreateUnsafeStackPtr(*F.getParent());
 
   // The top of the unsafe stack after all unsafe static allocas are allocated.
-  Value *StaticTop = moveStaticAllocasToUnsafeStack(IRB, F, StaticAllocas, Returns);
+  Value *StaticTop = moveStaticAllocasToUnsafeStack(F, StaticAllocas, Returns);
 
   // Safe stack object that stores the current unsafe stack top. It is updated
   // as unsafe dynamic (non-constant-sized) allocas are allocated and freed.
@@ -627,11 +598,9 @@ bool SafeStack::runOnFunction(Function &F) {
 } // end anonymous namespace
 
 char SafeStack::ID = 0;
-INITIALIZE_TM_PASS_BEGIN(SafeStack, "safe-stack",
-                         "Safe Stack instrumentation pass", false, false)
-INITIALIZE_TM_PASS_END(SafeStack, "safe-stack",
-                       "Safe Stack instrumentation pass", false, false)
+INITIALIZE_PASS_BEGIN(SafeStack, "safe-stack",
+                      "Safe Stack instrumentation pass", false, false)
+INITIALIZE_PASS_END(SafeStack, "safe-stack", "Safe Stack instrumentation pass",
+                    false, false)
 
-FunctionPass *llvm::createSafeStackPass(const llvm::TargetMachine *TM) {
-  return new SafeStack(TM);
-}
+FunctionPass *llvm::createSafeStackPass() { return new SafeStack(); }

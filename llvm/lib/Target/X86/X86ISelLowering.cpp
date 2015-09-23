@@ -2079,29 +2079,6 @@ bool X86TargetLowering::getStackCookieLocation(unsigned &AddressSpace,
   return true;
 }
 
-/// Android provides a fixed TLS slot for the SafeStack pointer.
-/// See the definition of TLS_SLOT_SAFESTACK in
-/// https://android.googlesource.com/platform/bionic/+/master/libc/private/bionic_tls.h
-bool X86TargetLowering::getSafeStackPointerLocation(unsigned &AddressSpace,
-                                                    unsigned &Offset) const {
-  if (!Subtarget->isTargetAndroid())
-    return false;
-
-  if (Subtarget->is64Bit()) {
-    // %fs:0x48, unless we're using a Kernel code model, in which case it's %gs:
-    Offset = 0x48;
-    if (getTargetMachine().getCodeModel() == CodeModel::Kernel)
-      AddressSpace = 256;
-    else
-      AddressSpace = 257;
-  } else {
-    // %gs:0x24 on i386
-    Offset = 0x24;
-    AddressSpace = 256;
-  }
-  return true;
-}
-
 bool X86TargetLowering::isNoopAddrSpaceCast(unsigned SrcAS,
                                             unsigned DestAS) const {
   assert(SrcAS != DestAS && "Expected different address spaces!");

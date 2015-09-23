@@ -995,14 +995,6 @@ public:
     return false;
   }
 
-  /// Return true if the target stores SafeStack pointer at a fixed offset in
-  /// some non-standard address space, and populates the address space and
-  /// offset as appropriate.
-  virtual bool getSafeStackPointerLocation(unsigned & /*AddressSpace*/,
-                                           unsigned & /*Offset*/) const {
-    return false;
-  }
-
   /// Returns true if a cast between SrcAS and DestAS is a noop.
   virtual bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const {
     return false;
