@@ -172,11 +172,13 @@ def create_parser():
               'test events into some kind of meaningful report, written to '
               'the designated output results file-like object'))
     group.add_argument(
-        '--results-formatter-options',
-        action='store',
-        help=('Specify comma-separated options to pass to the formatter. '
-              'Use --results-formatter-options="--option1[,--option2[,...]]" '
-              'syntax.  Note the "=" is critical, and don\'t use whitespace.'))
+        '--results-formatter-option',
+        '-O',
+        action='append',
+        dest='results_formatter_options',
+        help=('Specify an option to pass to the formatter. '
+              'Use --results-formatter-option="--option1=val1" '
+              'syntax.  Note the "=" is critical, don\'t include whitespace.'))
     group.add_argument(
         '--event-add-entries',
         action='store',

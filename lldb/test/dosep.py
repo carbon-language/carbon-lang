@@ -1068,43 +1068,87 @@ def get_test_runner_strategies(num_threads):
     }
 
 
-def _remove_option(args, option_name, removal_count):
+def _remove_option(
+        args, long_option_name, short_option_name, takes_arg):
     """Removes option and related option arguments from args array.
+
+    This method removes all short/long options that match the given
+    arguments.
+
     @param args the array of command line arguments (in/out)
-    @param option_name the full command line representation of the
-    option that will be removed (including '--' or '-').
-    @param the count of elements to remove.  A value of 1 will remove
-    just the found option, while 2 will remove the option and its first
-    argument.
+
+    @param long_option_name the full command line representation of the
+    long-form option that will be removed (including '--').
+
+    @param short_option_name the short version of the command line option
+    that will be removed (including '-').
+
+    @param takes_arg True if the option takes an argument.
+
     """
-    try:
-        index = args.index(option_name)
-        # Handle the exact match case.
-        del args[index:index+removal_count]
-        return
-    except ValueError:
-        # Thanks to argparse not handling options with known arguments
-        # like other options parsing libraries (see
-        # https://bugs.python.org/issue9334), we need to support the
-        # --results-formatter-options={second-level-arguments} (note
-        # the equal sign to fool the first-level arguments parser into
-        # not treating the second-level arguments as first-level
-        # options). We're certainly at risk of getting this wrong
-        # since now we're forced into the business of trying to figure
-        # out what is an argument (although I think this
-        # implementation will suffice).
-        regex_string = "^" + option_name + "="
-        regex = re.compile(regex_string)
+    if long_option_name is not None:
+        regex_string = "^" + long_option_name + "="
+        long_regex = re.compile(regex_string)
+    if short_option_name is not None:
+        # Short options we only match the -X and assume
+        # any arg is one command line argument jammed together.
+        # i.e. -O--abc=1 is a single argument in the args list.
+        # We don't handle -O --abc=1, as argparse doesn't handle
+        # it, either.
+        regex_string = "^" + short_option_name
+        short_regex = re.compile(regex_string)
+
+    def remove_long_internal():
+        """Removes one matching long option from args.
+        @returns True if one was found and removed; False otherwise.
+        """
+        try:
+            index = args.index(long_option_name)
+            # Handle the exact match case.
+            if takes_arg:
+                removal_count = 2
+            else:
+                removal_count = 1
+            del args[index:index+removal_count]
+            return True
+        except ValueError:
+            # Thanks to argparse not handling options with known arguments
+            # like other options parsing libraries (see
+            # https://bugs.python.org/issue9334), we need to support the
+            # --results-formatter-options={second-level-arguments} (note
+            # the equal sign to fool the first-level arguments parser into
+            # not treating the second-level arguments as first-level
+            # options). We're certainly at risk of getting this wrong
+            # since now we're forced into the business of trying to figure
+            # out what is an argument (although I think this
+            # implementation will suffice).
+            for index in range(len(args)):
+                match = long_regex.search(args[index])
+                if match:
+                    del args[index]
+                    return True
+            return False
+
+    def remove_short_internal():
+        """Removes one matching short option from args.
+        @returns True if one was found and removed; False otherwise.
+        """
         for index in range(len(args)):
-            match = regex.match(args[index])
+            match = short_regex.search(args[index])
             if match:
                 del args[index]
-                return
-        print "failed to find regex '{}'".format(regex_string)
+                return True
+        return False
 
-    # We didn't find the option but we should have.
-    raise Exception("failed to find option '{}' in args '{}'".format(
-        option_name, args))
+    removal_count = 0
+    while long_option_name is not None and remove_long_internal():
+        removal_count += 1
+    while short_option_name is not None and remove_short_internal():
+        removal_count += 1
+    if removal_count == 0:
+        raise Exception(
+            "failed to find at least one of '{}', '{}' in options".format(
+                long_option_name, short_option_name))
 
 
 def adjust_inferior_options(dotest_argv):
@@ -1132,17 +1176,18 @@ def adjust_inferior_options(dotest_argv):
     # we'll have inferiors spawn with the --results-port option and
     # strip the original test runner options.
     if dotest_options.results_file is not None:
-        _remove_option(dotest_argv, "--results-file", 2)
+        _remove_option(dotest_argv, "--results-file", None, True)
     if dotest_options.results_port is not None:
-        _remove_option(dotest_argv, "--results-port", 2)
+        _remove_option(dotest_argv, "--results-port", None, True)
     if dotest_options.results_formatter is not None:
-        _remove_option(dotest_argv, "--results-formatter", 2)
+        _remove_option(dotest_argv, "--results-formatter", None, True)
     if dotest_options.results_formatter_options is not None:
-        _remove_option(dotest_argv, "--results-formatter-options", 2)
+        _remove_option(dotest_argv, "--results-formatter-option", "-O",
+                       True)
 
     # Remove test runner name if present.
     if dotest_options.test_runner_name is not None:
-        _remove_option(dotest_argv, "--test-runner-name", 2)
+        _remove_option(dotest_argv, "--test-runner-name", None, True)
 
 
 def is_darwin_version_lower_than(target_version):

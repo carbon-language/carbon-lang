@@ -1000,12 +1000,10 @@ def setupTestResults():
         # Handle formatter options for the results formatter class.
         formatter_arg_parser = clazz.arg_parser()
         if results_formatter_options and len(results_formatter_options) > 0:
-            import shlex
-            split_options = shlex.split(results_formatter_options)
+            formatter_options = formatter_arg_parser.parse_args(
+                results_formatter_options)
         else:
-            split_options = []
-
-        formatter_options = formatter_arg_parser.parse_args(split_options)
+            formatter_options = []
 
         # Create the TestResultsFormatter given the processed options.
         results_formatter_object = clazz(results_file_object, formatter_options)

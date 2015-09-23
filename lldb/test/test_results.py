@@ -538,19 +538,25 @@ class XunitFormatter(ResultsFormatter):
             help=('cause unknown test events to generate '
                   'a python assert.  Default is to ignore.'))
         parser.add_argument(
-            "--ignore-skip-matching-name",
-            action="store",
-            help=('one or more comma-separated python regex patterns, where '
+            "--ignore-skip-name",
+            "-n",
+            metavar='PATTERN',
+            action="append",
+            dest='ignore_skip_name_patterns',
+            help=('a python regex pattern, where '
                   'any skipped test with a test method name where regex '
                   'matches (via search) will be ignored for xUnit test '
-                  'result purposes.'))
+                  'result purposes.  Can be specified multiple times.'))
         parser.add_argument(
-            "--ignore-skip-matching-reason",
-            action="store",
-            help=('one or more comma-separated python regex patterns, where '
+            "--ignore-skip-reason",
+            "-r",
+            metavar='PATTERN',
+            action="append",
+            dest='ignore_skip_reason_patterns',
+            help=('a python regex pattern, where '
                   'any skipped test with a skip reason where the regex '
                   'matches (via search) will be ignored for xUnit test '
-                  'result purposes.'))
+                  'result purposes.  Can be specified multiple times.'))
         parser.add_argument(
             "--xpass", action="store", choices=results_mapping_choices,
             default=XunitFormatter.RM_FAILURE,
@@ -564,7 +570,7 @@ class XunitFormatter(ResultsFormatter):
         return parser
 
     @staticmethod
-    def _build_regex_list_from_option(option):
+    def _build_regex_list_from_patterns(patterns):
         """Builds a list of compiled regexes from option value.
 
         @param option string containing a comma-separated list of regex
@@ -574,8 +580,8 @@ class XunitFormatter(ResultsFormatter):
         patterns provided.
         """
         regex_list = []
-        if option is not None and len(option) > 0:
-            for pattern in option.split(","):
+        if patterns is not None:
+            for pattern in patterns:
                 regex_list.append(re.compile(pattern))
         return regex_list
 
@@ -591,11 +597,11 @@ class XunitFormatter(ResultsFormatter):
         self.invalid_xml_re = XunitFormatter._build_illegal_xml_regex()
         self.total_test_count = 0
         self.ignore_skip_name_regexes = (
-            XunitFormatter._build_regex_list_from_option(
-                options.ignore_skip_matching_name))
+            XunitFormatter._build_regex_list_from_patterns(
+                options.ignore_skip_name_patterns))
         self.ignore_skip_reason_regexes = (
-            XunitFormatter._build_regex_list_from_option(
-                options.ignore_skip_matching_reason))
+            XunitFormatter._build_regex_list_from_patterns(
+                options.ignore_skip_reason_patterns))
 
         self.elements = {
             "successes": [],
