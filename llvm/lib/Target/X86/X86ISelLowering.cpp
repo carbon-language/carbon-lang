@@ -24409,6 +24409,41 @@ static SDValue VectorZextCombine(SDNode *N, SelectionDAG &DAG,
   return DAG.getBitcast(N0.getValueType(), NewShuffle);
 }
 
+/// If both input operands of a logic op are being cast from floating point
+/// types, try to convert this into a floating point logic node to avoid
+/// unnecessary moves from SSE to integer registers.
+static SDValue convertIntLogicToFPLogic(SDNode *N, SelectionDAG &DAG,
+                                        const X86Subtarget *Subtarget) {
+  unsigned FPOpcode = ISD::DELETED_NODE;
+  if (N->getOpcode() == ISD::AND)
+    FPOpcode = X86ISD::FAND;
+  else if (N->getOpcode() == ISD::OR)
+    FPOpcode = X86ISD::FOR;
+  else if (N->getOpcode() == ISD::XOR)
+    FPOpcode = X86ISD::FXOR;
+
+  assert(FPOpcode != ISD::DELETED_NODE &&
+         "Unexpected input node for FP logic conversion");
+
+  EVT VT = N->getValueType(0);
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  SDLoc DL(N);
+  if (N0.getOpcode() == ISD::BITCAST && N1.getOpcode() == ISD::BITCAST &&
+      ((Subtarget->hasSSE1() && VT == MVT::i32) ||
+       (Subtarget->hasSSE2() && VT == MVT::i64))) {
+    SDValue N00 = N0.getOperand(0);
+    SDValue N10 = N1.getOperand(0);
+    EVT N00Type = N00.getValueType();
+    EVT N10Type = N10.getValueType();
+    if (N00Type.isFloatingPoint() && N10Type.isFloatingPoint()) {
+      SDValue FPLogic = DAG.getNode(FPOpcode, DL, N00Type, N00, N10);
+      return DAG.getBitcast(VT, FPLogic);
+    }
+  }
+  return SDValue();
+}
+
 static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
                                  TargetLowering::DAGCombinerInfo &DCI,
                                  const X86Subtarget *Subtarget) {
@@ -24447,23 +24482,8 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
       }
     } // BEXTR
 
-    // If both input operands are being cast from floating point types,
-    // try to convert this into a floating point logic node to avoid
-    // unnecessary moves from SSE to integer registers.
-    // FIXME: Split this into a helper function, so it can also be used with
-    //        or/xor combining.
-    if (N0.getOpcode() == ISD::BITCAST && N1.getOpcode() == ISD::BITCAST &&
-        ((Subtarget->hasSSE1() && VT == MVT::i32) ||
-         (Subtarget->hasSSE2() && VT == MVT::i64))) {
-      SDValue N00 = N0.getOperand(0);
-      SDValue N10 = N1.getOperand(0);
-      EVT N00Type = N00.getValueType();
-      EVT N10Type = N10.getValueType();
-      if (N00Type.isFloatingPoint() && N10Type.isFloatingPoint()) {
-        SDValue FLogic = DAG.getNode(X86ISD::FAND, DL, N00Type, N00, N10);
-        return DAG.getBitcast(VT, FLogic);
-      }
-    }
+    if (SDValue FPLogic = convertIntLogicToFPLogic(N, DAG, Subtarget))
+      return FPLogic;
 
     return SDValue();
   }
