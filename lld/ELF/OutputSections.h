@@ -185,7 +185,7 @@ public:
       ++NumLocals;
   }
 
-  StringTableSection<ELFT::Is64Bits> &getStrTabSec() { return StrTabSec; }
+  StringTableSection<ELFT::Is64Bits> &getStrTabSec() const { return StrTabSec; }
   unsigned getNumSymbols() const { return NumVisible + 1; }
   void setBssSec(const OutputSection<ELFT> *V) { BssSec = V; }
 
