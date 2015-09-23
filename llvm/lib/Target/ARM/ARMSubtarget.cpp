@@ -60,6 +60,12 @@ IT(cl::desc("IT block support"), cl::Hidden, cl::init(DefaultIT),
                          "Allow IT blocks based on ARMv7"),
               clEnumValEnd));
 
+/// ForceFastISel - Use the fast-isel, even for subtargets where it is not
+/// currently supported (for testing only).
+static cl::opt<bool>
+ForceFastISel("arm-force-fast-isel",
+               cl::init(false), cl::Hidden);
+
 /// initializeSubtargetDependencies - Initializes using a CPU and feature string
 /// so that we can use initializer lists for subtarget initialization.
 ARMSubtarget &ARMSubtarget::initializeSubtargetDependencies(StringRef CPU,
@@ -298,6 +304,10 @@ bool ARMSubtarget::useMovt(const MachineFunction &MF) const {
 }
 
 bool ARMSubtarget::useFastISel() const {
+  // Enable fast-isel for any target, for testing only.
+  if (ForceFastISel)
+    return true;
+
   // Limit fast-isel to the targets that are or have been tested.
   if (!hasV6Ops())
     return false;
