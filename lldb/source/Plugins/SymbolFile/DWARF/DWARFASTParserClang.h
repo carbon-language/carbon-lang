@@ -104,7 +104,7 @@ protected:
     ParseTemplateParameterInfos (const DWARFDIE &parent_die,
                                  lldb_private::ClangASTContext::TemplateParameterInfos &template_param_infos);
 
-    size_t
+    bool
     ParseChildMembers (const lldb_private::SymbolContext& sc,
                        const DWARFDIE &die,
                        lldb_private::CompilerType &class_clang_type,

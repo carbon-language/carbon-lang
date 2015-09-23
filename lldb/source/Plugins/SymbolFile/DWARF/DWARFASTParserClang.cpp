@@ -1770,7 +1770,6 @@ DWARFASTParserClang::CompleteTypeFromDWARF (const DWARFDIE &die,
                                                                          type->GetName().AsCString());
     assert (clang_type);
     DWARFAttributes attributes;
-
     switch (tag)
     {
         case DW_TAG_structure_type:
@@ -1817,17 +1816,25 @@ DWARFASTParserClang::CompleteTypeFromDWARF (const DWARFDIE &die,
                     DWARFDIECollection member_function_dies;
 
                     DelayedPropertyList delayed_properties;
-                    ParseChildMembers (sc,
-                                       die,
-                                       clang_type,
-                                       class_language,
-                                       base_classes,
-                                       member_accessibilities,
-                                       member_function_dies,
-                                       delayed_properties,
-                                       default_accessibility,
-                                       is_a_class,
-                                       layout_info);
+                    if (!ParseChildMembers (sc,
+                                            die,
+                                            clang_type,
+                                            class_language,
+                                            base_classes,
+                                            member_accessibilities,
+                                            member_function_dies,
+                                            delayed_properties,
+                                            default_accessibility,
+                                            is_a_class,
+                                            layout_info))
+                    {
+                        auto module = dwarf->GetObjectFile()->GetModule();
+                        module->ReportError (":: Class %s has members with incomplete type.", die.GetName());
+                        if (die.GetCU()->GetProducer() == DWARFCompileUnit::eProducerClang)
+                            module->ReportError(":: Try compiling the source file with -fno-limit-debug-info.");
+
+                        return false;
+                    }
 
                     // Now parse any methods if there were any...
                     size_t num_functions = member_function_dies.Size();
@@ -1902,7 +1909,6 @@ DWARFASTParserClang::CompleteTypeFromDWARF (const DWARFDIE &die,
                         // Make sure all base classes refer to complete types and not
                         // forward declarations. If we don't do this, clang will crash
                         // with an assertion in the call to clang_type.SetBaseClassesForClassType()
-                        bool base_class_error = false;
                         for (auto &base_class : base_classes)
                         {
                             clang::TypeSourceInfo *type_source_info = base_class->getTypeSourceInfo();
@@ -1911,23 +1917,15 @@ DWARFASTParserClang::CompleteTypeFromDWARF (const DWARFDIE &die,
                                 CompilerType base_class_type (&m_ast, type_source_info->getType().getAsOpaquePtr());
                                 if (base_class_type.GetCompleteType() == false)
                                 {
-                                    if (!base_class_error)
-                                    {
-                                        dwarf->GetObjectFile()->GetModule()->ReportError ("DWARF DIE at 0x%8.8x for class '%s' has a base class '%s' that is a forward declaration, not a complete definition.\nPlease file a bug against the compiler and include the preprocessed output for %s",
-                                                                                          die.GetOffset(),
-                                                                                          die.GetName(),
-                                                                                          base_class_type.GetTypeName().GetCString(),
-                                                                                          sc.comp_unit ? sc.comp_unit->GetPath().c_str() : "the source file");
-                                    }
-                                    // We have no choice other than to pretend that the base class
-                                    // is complete. If we don't do this, clang will crash when we
-                                    // call setBases() inside of "clang_type.SetBaseClassesForClassType()"
-                                    // below. Since we provide layout assistance, all ivars in this
-                                    // class and other classes will be fine, this is the best we can do
-                                    // short of crashing.
+                                    auto module = dwarf->GetObjectFile()->GetModule();
+                                    module->ReportError (
+                                        ":: Class '%s' has a base class '%s' which does not have a complete definition.",
+                                        die.GetName(),
+                                        base_class_type.GetTypeName().GetCString());
+                                    if (die.GetCU()->GetProducer() == DWARFCompileUnit::eProducerClang)
+                                         module->ReportError (":: Try compiling the source file with -fno-limit-debug-info.");
 
-                                    ClangASTContext::StartTagDeclarationDefinition (base_class_type);
-                                    ClangASTContext::CompleteTagDeclarationDefinition (base_class_type);
+                                    return false;
                                 }
                             }
                         }
@@ -2354,7 +2352,7 @@ DWARFASTParserClang::ParseFunctionFromDWARF (const SymbolContext& sc,
 }
 
 
-size_t
+bool
 DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
                                         const DWARFDIE &parent_die,
                                         CompilerType &class_clang_type,
@@ -2370,7 +2368,7 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
     if (!parent_die)
         return 0;
 
-    size_t count = 0;
+    uint32_t incomplete_member_info_count = 0;
     uint32_t member_idx = 0;
     BitfieldInfo last_field_info;
 
@@ -2704,6 +2702,8 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
                                 }
 
                                 CompilerType member_clang_type = member_type->GetLayoutCompilerType ();
+                                if (!member_clang_type.IsCompleteType() && !member_clang_type.GetCompleteType())
+                                    incomplete_member_info_count += 1;
 
                                 {
                                     // Older versions of clang emit array[0] and array[1] in the same way (<rdar://problem/12566646>).
@@ -2926,7 +2926,7 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
         }
     }
 
-    return count;
+    return incomplete_member_info_count == 0;
 }
 
 
