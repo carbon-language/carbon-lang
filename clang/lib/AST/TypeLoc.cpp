@@ -376,6 +376,27 @@ SourceLocation TypeLoc::findNullabilityLoc() const {
   return SourceLocation();
 }
 
+TypeLoc TypeLoc::findExplicitQualifierLoc() const {
+  // Qualified types.
+  if (auto qual = getAs<QualifiedTypeLoc>())
+    return qual;
+
+  TypeLoc loc = IgnoreParens();
+
+  // Attributed types.
+  if (auto attr = loc.getAs<AttributedTypeLoc>()) {
+    if (attr.isQualifier()) return attr;
+    return attr.getModifiedLoc().findExplicitQualifierLoc();
+  }
+
+  // C11 _Atomic types.
+  if (auto atomic = loc.getAs<AtomicTypeLoc>()) {
+    return atomic;
+  }
+
+  return TypeLoc();
+}
+
 void ObjCObjectTypeLoc::initializeLocal(ASTContext &Context, 
                                         SourceLocation Loc) {
   setHasBaseTypeAsWritten(true);

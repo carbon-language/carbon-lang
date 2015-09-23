@@ -7843,10 +7843,10 @@ def warn_nullability_missing : Warning<
   "type specifier (_Nonnull, _Nullable, or _Null_unspecified)">,
   InGroup<NullabilityCompleteness>;
 
-def err_type_arg_explicit_nullability : Error<
+def err_objc_type_arg_explicit_nullability : Error<
   "type argument %0 cannot explicitly specify nullability">;
 
-def err_type_param_bound_explicit_nullability : Error<
+def err_objc_type_param_bound_explicit_nullability : Error<
   "type parameter %0 bound %1 cannot explicitly specify nullability">;
 
 }
@@ -7858,6 +7858,8 @@ def err_objc_type_param_bound_nonobject : Error<
 
 def err_objc_type_param_bound_missing_pointer : Error<
   "missing '*' in type bound %0 for type parameter %1">;
+def err_objc_type_param_bound_qualified : Error<
+  "type bound %1 for type parameter %0 cannot be qualified with '%2'">;
 
 def err_objc_type_param_redecl : Error<
   "redeclaration of type parameter %0">;
@@ -7892,6 +7894,8 @@ def err_objc_parameterized_forward_class_first : Error<
 
 def err_objc_type_arg_missing_star : Error<
   "type argument %0 must be a pointer (requires a '*')">;
+def err_objc_type_arg_qualified : Error<
+  "type argument %0 cannot be qualified with '%1'">;
 
 def err_objc_type_arg_missing : Error<
   "no type or protocol named %0">;

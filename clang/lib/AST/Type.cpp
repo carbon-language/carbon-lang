@@ -2944,6 +2944,47 @@ bool TagType::isBeingDefined() const {
   return getDecl()->isBeingDefined();
 }
 
+bool AttributedType::isQualifier() const {
+  switch (getAttrKind()) {
+  // These are type qualifiers in the traditional C sense: they annotate
+  // something about a specific value/variable of a type.  (They aren't
+  // always part of the canonical type, though.)
+  case AttributedType::attr_address_space:
+  case AttributedType::attr_objc_gc:
+  case AttributedType::attr_objc_ownership:
+  case AttributedType::attr_nonnull:
+  case AttributedType::attr_nullable:
+  case AttributedType::attr_null_unspecified:
+    return true;
+
+  // These aren't qualifiers; they rewrite the modified type to be a
+  // semantically different type.
+  case AttributedType::attr_regparm:
+  case AttributedType::attr_vector_size:
+  case AttributedType::attr_neon_vector_type:
+  case AttributedType::attr_neon_polyvector_type:
+  case AttributedType::attr_pcs:
+  case AttributedType::attr_pcs_vfp:
+  case AttributedType::attr_noreturn:
+  case AttributedType::attr_cdecl:
+  case AttributedType::attr_fastcall:
+  case AttributedType::attr_stdcall:
+  case AttributedType::attr_thiscall:
+  case AttributedType::attr_pascal:
+  case AttributedType::attr_vectorcall:
+  case AttributedType::attr_inteloclbicc:
+  case AttributedType::attr_ms_abi:
+  case AttributedType::attr_sysv_abi:
+  case AttributedType::attr_ptr32:
+  case AttributedType::attr_ptr64:
+  case AttributedType::attr_sptr:
+  case AttributedType::attr_uptr:
+  case AttributedType::attr_objc_kindof:
+    return false;
+  }
+  llvm_unreachable("bad attributed type kind");
+}
+
 bool AttributedType::isMSTypeSpec() const {
   switch (getAttrKind()) {
   default:  return false;

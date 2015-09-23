@@ -3650,6 +3650,23 @@ public:
   bool isSugared() const { return true; }
   QualType desugar() const { return getEquivalentType(); }
 
+  /// Does this attribute behave like a type qualifier?
+  ///
+  /// A type qualifier adjusts a type to provide specialized rules for
+  /// a specific object, like the standard const and volatile qualifiers.
+  /// This includes attributes controlling things like nullability,
+  /// address spaces, and ARC ownership.  The value of the object is still
+  /// largely described by the modified type.
+  ///
+  /// In contrast, many type attributes "rewrite" their modified type to
+  /// produce a fundamentally different type, not necessarily related in any
+  /// formalizable way to the original type.  For example, calling convention
+  /// and vector attributes are not simple type qualifiers.
+  ///
+  /// Type qualifiers are often, but not always, reflected in the canonical
+  /// type.
+  bool isQualifier() const;
+
   bool isMSTypeSpec() const;
 
   bool isCallingConv() const;

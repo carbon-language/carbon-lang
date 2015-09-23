@@ -638,20 +638,44 @@ DeclResult Sema::actOnObjCTypeParam(Scope *S,
       typeBoundInfo = nullptr;
     }
 
-    // Type bounds cannot have explicit nullability.
+    // Type bounds cannot have qualifiers (even indirectly) or explicit
+    // nullability.
     if (typeBoundInfo) {
-      // Type arguments cannot explicitly specify nullability.
-      if (auto nullability = AttributedType::stripOuterNullability(typeBound)) {
-        // Look at the type location information to find the nullability
-        // specifier so we can zap it.
-        SourceLocation nullabilityLoc
-          = typeBoundInfo->getTypeLoc().findNullabilityLoc();
-        SourceLocation diagLoc
-          = nullabilityLoc.isValid()? nullabilityLoc
-                                    : typeBoundInfo->getTypeLoc().getLocStart();
-        Diag(diagLoc, diag::err_type_param_bound_explicit_nullability)
-          << paramName << typeBoundInfo->getType()
-          << FixItHint::CreateRemoval(nullabilityLoc);
+      QualType typeBound = typeBoundInfo->getType();
+      TypeLoc qual = typeBoundInfo->getTypeLoc().findExplicitQualifierLoc();
+      if (qual || typeBound.hasQualifiers()) {
+        bool diagnosed = false;
+        SourceRange rangeToRemove;
+        if (qual) {
+          if (auto attr = qual.getAs<AttributedTypeLoc>()) {
+            rangeToRemove = attr.getLocalSourceRange();
+            if (attr.getTypePtr()->getImmediateNullability()) {
+              Diag(attr.getLocStart(),
+                   diag::err_objc_type_param_bound_explicit_nullability)
+                << paramName << typeBound
+                << FixItHint::CreateRemoval(rangeToRemove);
+              diagnosed = true;
+            }
+          }
+        }
+
+        if (!diagnosed) {
+          Diag(qual ? qual.getLocStart()
+                    : typeBoundInfo->getTypeLoc().getLocStart(),
+              diag::err_objc_type_param_bound_qualified)
+            << paramName << typeBound << typeBound.getQualifiers().getAsString()
+            << FixItHint::CreateRemoval(rangeToRemove);
+        }
+
+        // If the type bound has qualifiers other than CVR, we need to strip
+        // them or we'll probably assert later when trying to apply new
+        // qualifiers.
+        Qualifiers quals = typeBound.getQualifiers();
+        quals.removeCVRQualifiers();
+        if (!quals.empty()) {
+          typeBoundInfo =
+             Context.getTrivialTypeSourceInfo(typeBound.getUnqualifiedType());
+        }
       }
     }
   }

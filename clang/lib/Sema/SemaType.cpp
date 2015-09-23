@@ -790,17 +790,32 @@ static QualType applyObjCTypeArgs(Sema &S, SourceLocation loc, QualType type,
     TypeSourceInfo *typeArgInfo = typeArgs[i];
     QualType typeArg = typeArgInfo->getType();
 
-    // Type arguments cannot explicitly specify nullability.
-    if (auto nullability = AttributedType::stripOuterNullability(typeArg)) {
-      SourceLocation nullabilityLoc
-        = typeArgInfo->getTypeLoc().findNullabilityLoc();
-      SourceLocation diagLoc = nullabilityLoc.isValid()? nullabilityLoc
-        : typeArgInfo->getTypeLoc().getLocStart();
-      S.Diag(diagLoc,
-             diag::err_type_arg_explicit_nullability)
-        << typeArg
-        << FixItHint::CreateRemoval(nullabilityLoc);
+    // Type arguments cannot have explicit qualifiers or nullability.
+    // We ignore indirect sources of these, e.g. behind typedefs or
+    // template arguments.
+    if (TypeLoc qual = typeArgInfo->getTypeLoc().findExplicitQualifierLoc()) {
+      bool diagnosed = false;
+      SourceRange rangeToRemove;
+      if (auto attr = qual.getAs<AttributedTypeLoc>()) {
+        rangeToRemove = attr.getLocalSourceRange();
+        if (attr.getTypePtr()->getImmediateNullability()) {
+          typeArg = attr.getTypePtr()->getModifiedType();
+          S.Diag(attr.getLocStart(),
+                 diag::err_objc_type_arg_explicit_nullability)
+            << typeArg << FixItHint::CreateRemoval(rangeToRemove);
+          diagnosed = true;
+        }
+      }
+
+      if (!diagnosed) {
+        S.Diag(qual.getLocStart(), diag::err_objc_type_arg_qualified)
+          << typeArg << typeArg.getQualifiers().getAsString()
+          << FixItHint::CreateRemoval(rangeToRemove);
+      }
     }
+
+    // Remove qualifiers even if they're non-local.
+    typeArg = typeArg.getUnqualifiedType();
 
     finalTypeArgs.push_back(typeArg);
 
