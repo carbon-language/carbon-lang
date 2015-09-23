@@ -23,7 +23,6 @@
 void atomic_flag_clear_explicit(volatile atomic_flag *object,
                                 memory_order order) {
   __c11_atomic_store(&(object)->_Value, 0, order);
-  return;
 }
 
 #endif
