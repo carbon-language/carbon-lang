@@ -1764,7 +1764,7 @@ static bool analyzeContextInfo(const DWARFDebugInfoEntryMinimal *DIE,
                                DeclContext *CurrentDeclContext,
                                NonRelocatableStringpool &StringPool,
                                DeclContextTree &Contexts,
-                               bool InTagModule = false) {
+                               bool InImportedModule = false) {
   unsigned MyIdx = CU.getOrigUnit().getDIEIndex(DIE);
   CompileUnit::DIEInfo &Info = CU.getInfo(MyIdx);
 
@@ -1780,11 +1780,14 @@ static bool analyzeContextInfo(const DWARFDebugInfoEntryMinimal *DIE,
   //   definitions match)."
   //
   // We treat non-C++ modules like namespaces for this reason.
-  if (DIE->getTag() == dwarf::DW_TAG_module)
-    InTagModule = true;
+  if (DIE->getTag() == dwarf::DW_TAG_module &&
+      DIE->getAttributeValueAsString(&CU.getOrigUnit(), dwarf::DW_AT_name,
+                                     "") != CU.getClangModuleName()) {
+    InImportedModule = true;
+  }
 
   Info.ParentIdx = ParentIdx;
-  if (CU.hasODR() || CU.isClangModule() || InTagModule) {
+  if (CU.hasODR() || CU.isClangModule() || InImportedModule) {
     if (CurrentDeclContext) {
       auto PtrInvalidPair = Contexts.getChildDeclContext(*CurrentDeclContext,
                                                          DIE, CU, StringPool);
@@ -1795,12 +1798,12 @@ static bool analyzeContextInfo(const DWARFDebugInfoEntryMinimal *DIE,
       Info.Ctxt = CurrentDeclContext = nullptr;
   }
 
-  Info.Prune = InTagModule;
+  Info.Prune = InImportedModule;
   if (DIE->hasChildren())
     for (auto *Child = DIE->getFirstChild(); Child && !Child->isNULL();
          Child = Child->getSibling())
       Info.Prune &= analyzeContextInfo(Child, MyIdx, CU, CurrentDeclContext,
-                                       StringPool, Contexts, InTagModule);
+                                       StringPool, Contexts, InImportedModule);
 
   // Prune this DIE if it is either a forward declaration inside a
   // DW_TAG_module or a DW_TAG_module that contains nothing but

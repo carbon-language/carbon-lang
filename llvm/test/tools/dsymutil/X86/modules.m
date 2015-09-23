@@ -9,8 +9,8 @@
        export *
      }
    EOF
-   clang -D BAR_H -E -o Bar.h
-   clang -D FOO_H -E -o Foo.h
+   clang -D BAR_H -E -o Bar.h modules.m
+   clang -D FOO_H -E -o Foo.h modules.m
    clang -cc1 -emit-obj -fmodules -fmodule-map-file=modules.modulemap \
      -fmodule-format=obj -g -dwarf-ext-refs -fmodules-cache-path=. \
      -fdisable-module-hash modules.m -o 1.o
@@ -32,16 +32,21 @@
 // CHECK-NOT:        DW_TAG
 // CHECK:              DW_TAG_module
 // CHECK-NEXT:           DW_AT_name{{.*}}"Bar"
-// CHECK-NOT:            DW_TAG
 // CHECK: 0x0[[BAR:.*]]: DW_TAG_structure_type
+// CHECK-NOT:              DW_TAG
 // CHECK:                  DW_AT_name {{.*}}"Bar"
 // CHECK-NOT:              DW_TAG
 // CHECK:                  DW_TAG_member
 // CHECK:                    DW_AT_name {{.*}}"value"
+// CHECK:                DW_TAG_structure_type
+// CHECK-NOT:              DW_TAG
+// CHECK:                  DW_AT_name {{.*}}"PruneMeNot"
 
 struct Bar {
   int value;
 };
+
+struct PruneMeNot;
 
 #else
 // ---------------------------------------------------------------------
