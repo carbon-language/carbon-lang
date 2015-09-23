@@ -45,7 +45,7 @@ class WebAssemblyAsmPrinter final : public AsmPrinter {
 
 public:
   WebAssemblyAsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer)
-      : AsmPrinter(TM, std::move(Streamer)), TII(nullptr) {}
+      : AsmPrinter(TM, std::move(Streamer)), hasAddr64(false), TII(nullptr) {}
 
 private:
   const char *getPassName() const override {
