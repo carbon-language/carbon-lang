@@ -624,7 +624,7 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSArraySyntheticFrontEndCre
     lldb::ProcessSP process_sp (valobj_sp->GetProcessSP());
     if (!process_sp)
         return NULL;
-    AppleObjCRuntime *runtime = (AppleObjCRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    AppleObjCRuntime *runtime = llvm::dyn_cast_or_null<AppleObjCRuntime>(process_sp->GetObjCLanguageRuntime());
     if (!runtime)
         return NULL;
     

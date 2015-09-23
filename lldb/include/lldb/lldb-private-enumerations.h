@@ -106,13 +106,6 @@ typedef enum SortOrder
     eSortOrderByName
 } SortOrder;
 
-typedef enum ObjCRuntimeVersions {
-    eObjC_VersionUnknown = 0,
-    eAppleObjC_V1 = 1,
-    eAppleObjC_V2 = 2
-} ObjCRuntimeVersions;
-
-    
 //----------------------------------------------------------------------
 // LazyBool is for boolean values that need to be calculated lazily.
 // Values start off set to eLazyBoolCalculate, and then they can be

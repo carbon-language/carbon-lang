@@ -29,6 +29,17 @@ class AppleObjCRuntime :
         public lldb_private::ObjCLanguageRuntime
 {
 public:
+    static bool classof(const ObjCLanguageRuntime* runtime)
+    {
+        switch (runtime->GetRuntimeVersion())
+        {
+            case ObjCRuntimeVersions::eAppleObjC_V1:
+            case ObjCRuntimeVersions::eAppleObjC_V2:
+                return true;
+            default:
+                return false;
+        }
+    }
     
     virtual ~AppleObjCRuntime();
     

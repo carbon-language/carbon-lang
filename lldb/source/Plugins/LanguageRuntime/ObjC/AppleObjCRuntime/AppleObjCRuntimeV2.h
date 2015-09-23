@@ -30,6 +30,17 @@ class AppleObjCRuntimeV2 :
         public AppleObjCRuntime
 {
 public:
+    static bool classof(const ObjCLanguageRuntime* runtime)
+    {
+        switch (runtime->GetRuntimeVersion())
+        {
+            case ObjCRuntimeVersions::eAppleObjC_V2:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     virtual ~AppleObjCRuntimeV2();
     
     // These are generic runtime functions:
@@ -69,9 +80,9 @@ public:
     GetPluginVersion();
     
     virtual ObjCRuntimeVersions
-    GetRuntimeVersion ()
+    GetRuntimeVersion () const
     {
-        return eAppleObjC_V2;
+        return ObjCRuntimeVersions::eAppleObjC_V2;
     }
 
     virtual size_t

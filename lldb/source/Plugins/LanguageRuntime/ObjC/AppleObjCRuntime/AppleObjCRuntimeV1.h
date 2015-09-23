@@ -24,6 +24,16 @@ class AppleObjCRuntimeV1 :
         public AppleObjCRuntime
 {
 public:
+    static bool classof(const ObjCLanguageRuntime* runtime)
+    {
+        switch (runtime->GetRuntimeVersion())
+        {
+            case ObjCRuntimeVersions::eAppleObjC_V1:
+                return true;
+            default:
+                return false;
+        }
+    }
     
     class ClassDescriptorV1 : public ObjCLanguageRuntime::ClassDescriptor
     {
@@ -131,9 +141,9 @@ public:
     GetPluginVersion();
     
     virtual ObjCRuntimeVersions
-    GetRuntimeVersion ()
+    GetRuntimeVersion () const
     {
-        return eAppleObjC_V1;
+        return ObjCRuntimeVersions::eAppleObjC_V1;
     }
     
     virtual void

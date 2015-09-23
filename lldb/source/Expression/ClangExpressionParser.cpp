@@ -277,7 +277,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     {
         if (process_sp->GetObjCLanguageRuntime())
         {
-            if (process_sp->GetObjCLanguageRuntime()->GetRuntimeVersion() == eAppleObjC_V2)
+            if (process_sp->GetObjCLanguageRuntime()->GetRuntimeVersion() == ObjCLanguageRuntime::ObjCRuntimeVersions::eAppleObjC_V2)
                 m_compiler->getLangOpts().ObjCRuntime.set(ObjCRuntime::MacOSX, VersionTuple(10, 7));
             else
                 m_compiler->getLangOpts().ObjCRuntime.set(ObjCRuntime::FragileMacOSX, VersionTuple(10, 7));

@@ -377,11 +377,11 @@ AppleObjCRuntime::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
-enum ObjCRuntimeVersions
+ObjCLanguageRuntime::ObjCRuntimeVersions
 AppleObjCRuntime::GetObjCVersion (Process *process, ModuleSP &objc_module_sp)
 {
     if (!process)
-        return eObjC_VersionUnknown;
+        return ObjCRuntimeVersions::eObjC_VersionUnknown;
         
     Target &target = process->GetTarget();
     const ModuleList &target_modules = target.GetImages();
@@ -401,21 +401,21 @@ AppleObjCRuntime::GetObjCVersion (Process *process, ModuleSP &objc_module_sp)
             objc_module_sp = module_sp;
             ObjectFile *ofile = module_sp->GetObjectFile();
             if (!ofile)
-                return eObjC_VersionUnknown;
+                return ObjCRuntimeVersions::eObjC_VersionUnknown;
             
             SectionList *sections = module_sp->GetSectionList();
             if (!sections)
-                return eObjC_VersionUnknown;    
+                return ObjCRuntimeVersions::eObjC_VersionUnknown;
             SectionSP v1_telltale_section_sp = sections->FindSectionByName(ConstString ("__OBJC"));
             if (v1_telltale_section_sp)
             {
-                return eAppleObjC_V1;
+                return ObjCRuntimeVersions::eAppleObjC_V1;
             }
-            return eAppleObjC_V2;
+            return ObjCRuntimeVersions::eAppleObjC_V2;
         }
     }
             
-    return eObjC_VersionUnknown;
+    return ObjCRuntimeVersions::eObjC_VersionUnknown;
 }
 
 void

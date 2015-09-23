@@ -438,7 +438,7 @@ AppleObjCRuntimeV2::CreateInstance (Process *process, LanguageType language)
     {
         ModuleSP objc_module_sp;
         
-        if (AppleObjCRuntime::GetObjCVersion (process, objc_module_sp) == eAppleObjC_V2)
+        if (AppleObjCRuntime::GetObjCVersion (process, objc_module_sp) == ObjCRuntimeVersions::eAppleObjC_V2)
             return new AppleObjCRuntimeV2 (process, objc_module_sp);
         else
             return NULL;

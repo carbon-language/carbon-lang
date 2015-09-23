@@ -26,6 +26,8 @@
 #include "lldb/Symbol/Type.h"
 #include "lldb/Target/LanguageRuntime.h"
 
+#include "llvm/Support/Casting.h"
+
 class CommandObjectObjC_ClassTable_Dump;
 
 namespace lldb_private {
@@ -36,6 +38,13 @@ class ObjCLanguageRuntime :
     public LanguageRuntime
 {
 public:
+    enum class ObjCRuntimeVersions
+    {
+        eObjC_VersionUnknown = 0,
+        eAppleObjC_V1 = 1,
+        eAppleObjC_V2 = 2
+    };
+    
     typedef lldb::addr_t ObjCISA;
     
     class ClassDescriptor;
@@ -293,9 +302,9 @@ public:
     CreateObjectChecker (const char *) = 0;
     
     virtual ObjCRuntimeVersions
-    GetRuntimeVersion ()
+    GetRuntimeVersion () const
     {
-        return eObjC_VersionUnknown;
+        return ObjCRuntimeVersions::eObjC_VersionUnknown;
     }
         
     bool
