@@ -317,8 +317,7 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
             ? tools::arm::getARMCPUForMArch(MArch, Triple).str()
             : tools::arm::getARMTargetCPU(MCPU, MArch, Triple);
     StringRef Suffix =
-      tools::arm::getLLVMArchSuffixForARM(CPU,
-                                          tools::arm::getARMArch(MArch, Triple));
+      tools::arm::getLLVMArchSuffixForARM(CPU, MArch, Triple);
     bool ThumbDefault = Suffix.startswith("v6m") || Suffix.startswith("v7m") ||
       Suffix.startswith("v7em") ||
       (Suffix.startswith("v7") && getTriple().isOSBinFormatMachO());

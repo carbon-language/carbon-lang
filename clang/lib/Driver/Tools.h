@@ -246,7 +246,8 @@ std::string getARMTargetCPU(StringRef CPU, StringRef Arch,
 const std::string getARMArch(StringRef Arch,
                              const llvm::Triple &Triple);
 StringRef getARMCPUForMArch(StringRef Arch, const llvm::Triple &Triple);
-StringRef getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch);
+StringRef getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch,
+                                  const llvm::Triple &Triple);
 
 void appendEBLinkFlags(const llvm::opt::ArgList &Args, ArgStringList &CmdArgs,
                        const llvm::Triple &Triple);

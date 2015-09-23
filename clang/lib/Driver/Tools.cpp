@@ -560,8 +560,7 @@ static void checkARMCPUName(const Driver &D, const Arg *A, const ArgList &Args,
                             llvm::StringRef CPUName, llvm::StringRef ArchName,
                             const llvm::Triple &Triple) {
   std::string CPU = arm::getARMTargetCPU(CPUName, ArchName, Triple);
-  std::string Arch = arm::getARMArch(ArchName, Triple);
-  if (arm::getLLVMArchSuffixForARM(CPU, Arch).empty())
+  if (arm::getLLVMArchSuffixForARM(CPU, ArchName, Triple).empty())
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
 
@@ -6087,7 +6086,7 @@ const std::string arm::getARMArch(StringRef Arch, const llvm::Triple &Triple) {
     std::string CPU = llvm::sys::getHostCPUName();
     if (CPU != "generic") {
       // Translate the native cpu into the architecture suffix for that CPU.
-      StringRef Suffix = arm::getLLVMArchSuffixForARM(CPU, MArch);
+      StringRef Suffix = arm::getLLVMArchSuffixForARM(CPU, MArch, Triple);
       // If there is no valid architecture suffix for this CPU we don't know how
       // to handle it, so return no architecture.
       if (Suffix.empty())
@@ -6133,12 +6132,19 @@ std::string arm::getARMTargetCPU(StringRef CPU, StringRef Arch,
 /// getLLVMArchSuffixForARM - Get the LLVM arch name to use for a particular
 /// CPU  (or Arch, if CPU is generic).
 // FIXME: This is redundant with -mcpu, why does LLVM use this.
-StringRef arm::getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch) {
-  if (CPU == "generic")
-    return llvm::ARM::getSubArch(
-        llvm::ARM::parseArch(Arch));
-
-  unsigned ArchKind = llvm::ARM::parseCPUArch(CPU);
+StringRef arm::getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch,
+                                       const llvm::Triple &Triple) {
+  unsigned ArchKind;
+  Arch = tools::arm::getARMArch(Arch, Triple);
+  if (CPU == "generic") {
+    ArchKind = llvm::ARM::parseArch(Arch);
+    if (ArchKind == llvm::ARM::AK_INVALID)
+      // In case of generic Arch, i.e. "arm",
+      // extract arch from default cpu of the Triple
+      ArchKind = llvm::ARM::parseCPUArch(Triple.getARMCPUForArch(Arch));
+  } else {
+    ArchKind = llvm::ARM::parseCPUArch(CPU);
+  }
   if (ArchKind == llvm::ARM::AK_INVALID)
     return "";
   return llvm::ARM::getSubArch(ArchKind);
