@@ -356,7 +356,7 @@ GoASTContext::Terminate()
 //----------------------------------------------------------------------
 
 bool
-GoASTContext::IsArrayType(void *type, CompilerType *element_type, uint64_t *size, bool *is_incomplete)
+GoASTContext::IsArrayType(lldb::opaque_compiler_type_t type, CompilerType *element_type, uint64_t *size, bool *is_incomplete)
 {
     if (element_type)
         element_type->Clear();
@@ -377,7 +377,7 @@ GoASTContext::IsArrayType(void *type, CompilerType *element_type, uint64_t *size
 }
 
 bool
-GoASTContext::IsVectorType(void *type, CompilerType *element_type, uint64_t *size)
+GoASTContext::IsVectorType(lldb::opaque_compiler_type_t type, CompilerType *element_type, uint64_t *size)
 {
     if (element_type)
         element_type->Clear();
@@ -387,7 +387,7 @@ GoASTContext::IsVectorType(void *type, CompilerType *element_type, uint64_t *siz
 }
 
 bool
-GoASTContext::IsAggregateType(void *type)
+GoASTContext::IsAggregateType(lldb::opaque_compiler_type_t type)
 {
     int kind = static_cast<GoType *>(type)->GetGoKind();
     if (kind < GoType::KIND_ARRAY)
@@ -402,20 +402,20 @@ GoASTContext::IsAggregateType(void *type)
 }
 
 bool
-GoASTContext::IsBeingDefined(void *type)
+GoASTContext::IsBeingDefined(lldb::opaque_compiler_type_t type)
 {
     return false;
 }
 
 bool
-GoASTContext::IsCharType(void *type)
+GoASTContext::IsCharType(lldb::opaque_compiler_type_t type)
 {
     // Go's DWARF doesn't distinguish between rune and int32.
     return false;
 }
 
 bool
-GoASTContext::IsCompleteType(void *type)
+GoASTContext::IsCompleteType(lldb::opaque_compiler_type_t type)
 {
     if (!type)
         return false;
@@ -428,25 +428,25 @@ GoASTContext::IsCompleteType(void *type)
 }
 
 bool
-GoASTContext::IsConst(void *type)
+GoASTContext::IsConst(lldb::opaque_compiler_type_t type)
 {
     return false;
 }
 
 bool
-GoASTContext::IsCStringType(void *type, uint32_t &length)
+GoASTContext::IsCStringType(lldb::opaque_compiler_type_t type, uint32_t &length)
 {
     return false;
 }
 
 bool
-GoASTContext::IsDefined(void *type)
+GoASTContext::IsDefined(lldb::opaque_compiler_type_t type)
 {
     return type != nullptr;
 }
 
 bool
-GoASTContext::IsFloatingPointType(void *type, uint32_t &count, bool &is_complex)
+GoASTContext::IsFloatingPointType(lldb::opaque_compiler_type_t type, uint32_t &count, bool &is_complex)
 {
     int kind = static_cast<GoType *>(type)->GetGoKind();
     if (kind >= GoType::KIND_FLOAT32 && kind <= GoType::KIND_COMPLEX128)
@@ -469,7 +469,7 @@ GoASTContext::IsFloatingPointType(void *type, uint32_t &count, bool &is_complex)
 }
 
 bool
-GoASTContext::IsFunctionType(void *type, bool *is_variadic_ptr)
+GoASTContext::IsFunctionType(lldb::opaque_compiler_type_t type, bool *is_variadic_ptr)
 {
     GoFunction *func = static_cast<GoType *>(type)->GetFunction();
     if (func)
@@ -484,31 +484,31 @@ GoASTContext::IsFunctionType(void *type, bool *is_variadic_ptr)
 }
 
 uint32_t
-GoASTContext::IsHomogeneousAggregate(void *type, CompilerType *base_type_ptr)
+GoASTContext::IsHomogeneousAggregate(lldb::opaque_compiler_type_t type, CompilerType *base_type_ptr)
 {
     return false;
 }
 
 size_t
-GoASTContext::GetNumberOfFunctionArguments(void *type)
+GoASTContext::GetNumberOfFunctionArguments(lldb::opaque_compiler_type_t type)
 {
     return 0;
 }
 
 CompilerType
-GoASTContext::GetFunctionArgumentAtIndex(void *type, const size_t index)
+GoASTContext::GetFunctionArgumentAtIndex(lldb::opaque_compiler_type_t type, const size_t index)
 {
     return CompilerType();
 }
 
 bool
-GoASTContext::IsFunctionPointerType(void *type)
+GoASTContext::IsFunctionPointerType(lldb::opaque_compiler_type_t type)
 {
     return IsFunctionType(type);
 }
 
 bool
-GoASTContext::IsIntegerType(void *type, bool &is_signed)
+GoASTContext::IsIntegerType(lldb::opaque_compiler_type_t type, bool &is_signed)
 {
     is_signed = false;
     // TODO: Is bool an integer?
@@ -525,13 +525,13 @@ GoASTContext::IsIntegerType(void *type, bool &is_signed)
 }
 
 bool
-GoASTContext::IsPolymorphicClass(void *type)
+GoASTContext::IsPolymorphicClass(lldb::opaque_compiler_type_t type)
 {
     return false;
 }
 
 bool
-GoASTContext::IsPossibleDynamicType(void *type,
+GoASTContext::IsPossibleDynamicType(lldb::opaque_compiler_type_t type,
                                     CompilerType *target_type, // Can pass NULL
                                     bool check_cplusplus, bool check_objc)
 {
@@ -543,13 +543,13 @@ GoASTContext::IsPossibleDynamicType(void *type,
 }
 
 bool
-GoASTContext::IsRuntimeGeneratedType(void *type)
+GoASTContext::IsRuntimeGeneratedType(lldb::opaque_compiler_type_t type)
 {
     return false;
 }
 
 bool
-GoASTContext::IsPointerType(void *type, CompilerType *pointee_type)
+GoASTContext::IsPointerType(lldb::opaque_compiler_type_t type, CompilerType *pointee_type)
 {
     if (!type)
         return false;
@@ -571,25 +571,25 @@ GoASTContext::IsPointerType(void *type, CompilerType *pointee_type)
 }
 
 bool
-GoASTContext::IsPointerOrReferenceType(void *type, CompilerType *pointee_type)
+GoASTContext::IsPointerOrReferenceType(lldb::opaque_compiler_type_t type, CompilerType *pointee_type)
 {
     return IsPointerType(type, pointee_type);
 }
 
 bool
-GoASTContext::IsReferenceType(void *type, CompilerType *pointee_type, bool *is_rvalue)
+GoASTContext::IsReferenceType(lldb::opaque_compiler_type_t type, CompilerType *pointee_type, bool *is_rvalue)
 {
     return false;
 }
 
 bool
-GoASTContext::IsScalarType(void *type)
+GoASTContext::IsScalarType(lldb::opaque_compiler_type_t type)
 {
     return !IsAggregateType(type);
 }
 
 bool
-GoASTContext::IsTypedefType(void *type)
+GoASTContext::IsTypedefType(lldb::opaque_compiler_type_t type)
 {
     if (type)
         return static_cast<GoType *>(type)->IsTypedef();
@@ -597,7 +597,7 @@ GoASTContext::IsTypedefType(void *type)
 }
 
 bool
-GoASTContext::IsVoidType(void *type)
+GoASTContext::IsVoidType(lldb::opaque_compiler_type_t type)
 {
     if (!type)
         return false;
@@ -615,7 +615,7 @@ GoASTContext::SupportsLanguage (lldb::LanguageType language)
 //----------------------------------------------------------------------
 
 bool
-GoASTContext::GetCompleteType(void *type)
+GoASTContext::GetCompleteType(lldb::opaque_compiler_type_t type)
 {
     if (!type)
         return false;
@@ -648,7 +648,7 @@ GoASTContext::GetPointerByteSize()
 //----------------------------------------------------------------------
 
 ConstString
-GoASTContext::GetTypeName(void *type)
+GoASTContext::GetTypeName(lldb::opaque_compiler_type_t type)
 {
     if (type)
         return static_cast<GoType *>(type)->GetName();
@@ -656,7 +656,7 @@ GoASTContext::GetTypeName(void *type)
 }
 
 uint32_t
-GoASTContext::GetTypeInfo(void *type, CompilerType *pointee_or_element_clang_type)
+GoASTContext::GetTypeInfo(lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_clang_type)
 {
     if (pointee_or_element_clang_type)
         pointee_or_element_clang_type->Clear();
@@ -699,7 +699,7 @@ GoASTContext::GetTypeInfo(void *type, CompilerType *pointee_or_element_clang_typ
 }
 
 lldb::TypeClass
-GoASTContext::GetTypeClass(void *type)
+GoASTContext::GetTypeClass(lldb::opaque_compiler_type_t type)
 {
     if (!type)
         return eTypeClassInvalid;
@@ -718,7 +718,7 @@ GoASTContext::GetTypeClass(void *type)
 }
 
 lldb::BasicType
-GoASTContext::GetBasicTypeEnumeration(void *type)
+GoASTContext::GetBasicTypeEnumeration(lldb::opaque_compiler_type_t type)
 {
     ConstString name = GetTypeName(type);
     if (name)
@@ -759,13 +759,13 @@ GoASTContext::GetBasicTypeEnumeration(void *type)
 }
 
 lldb::LanguageType
-GoASTContext::GetMinimumLanguage(void *type)
+GoASTContext::GetMinimumLanguage(lldb::opaque_compiler_type_t type)
 {
     return lldb::eLanguageTypeGo;
 }
 
 unsigned
-GoASTContext::GetTypeQualifiers(void *type)
+GoASTContext::GetTypeQualifiers(lldb::opaque_compiler_type_t type)
 {
     return 0;
 }
@@ -775,7 +775,7 @@ GoASTContext::GetTypeQualifiers(void *type)
 //----------------------------------------------------------------------
 
 CompilerType
-GoASTContext::GetArrayElementType(void *type, uint64_t *stride)
+GoASTContext::GetArrayElementType(lldb::opaque_compiler_type_t type, uint64_t *stride)
 {
     GoArray *array = static_cast<GoType *>(type)->GetArray();
     if (array)
@@ -790,7 +790,7 @@ GoASTContext::GetArrayElementType(void *type, uint64_t *stride)
 }
 
 CompilerType
-GoASTContext::GetCanonicalType(void *type)
+GoASTContext::GetCanonicalType(lldb::opaque_compiler_type_t type)
 {
     GoType *t = static_cast<GoType *>(type);
     if (t->IsTypedef())
@@ -799,7 +799,7 @@ GoASTContext::GetCanonicalType(void *type)
 }
 
 CompilerType
-GoASTContext::GetFullyUnqualifiedType(void *type)
+GoASTContext::GetFullyUnqualifiedType(lldb::opaque_compiler_type_t type)
 {
     return CompilerType(this, type);
 }
@@ -807,19 +807,19 @@ GoASTContext::GetFullyUnqualifiedType(void *type)
 // Returns -1 if this isn't a function of if the function doesn't have a prototype
 // Returns a value >= 0 if there is a prototype.
 int
-GoASTContext::GetFunctionArgumentCount(void *type)
+GoASTContext::GetFunctionArgumentCount(lldb::opaque_compiler_type_t type)
 {
     return GetNumberOfFunctionArguments(type);
 }
 
 CompilerType
-GoASTContext::GetFunctionArgumentTypeAtIndex(void *type, size_t idx)
+GoASTContext::GetFunctionArgumentTypeAtIndex(lldb::opaque_compiler_type_t type, size_t idx)
 {
     return GetFunctionArgumentAtIndex(type, idx);
 }
 
 CompilerType
-GoASTContext::GetFunctionReturnType(void *type)
+GoASTContext::GetFunctionReturnType(lldb::opaque_compiler_type_t type)
 {
     CompilerType result;
     if (type)
@@ -832,25 +832,25 @@ GoASTContext::GetFunctionReturnType(void *type)
 }
 
 size_t
-GoASTContext::GetNumMemberFunctions(void *type)
+GoASTContext::GetNumMemberFunctions(lldb::opaque_compiler_type_t type)
 {
     return 0;
 }
 
 TypeMemberFunctionImpl
-GoASTContext::GetMemberFunctionAtIndex(void *type, size_t idx)
+GoASTContext::GetMemberFunctionAtIndex(lldb::opaque_compiler_type_t type, size_t idx)
 {
     return TypeMemberFunctionImpl();
 }
 
 CompilerType
-GoASTContext::GetNonReferenceType(void *type)
+GoASTContext::GetNonReferenceType(lldb::opaque_compiler_type_t type)
 {
     return CompilerType(this, type);
 }
 
 CompilerType
-GoASTContext::GetPointeeType(void *type)
+GoASTContext::GetPointeeType(lldb::opaque_compiler_type_t type)
 {
     if (!type)
         return CompilerType();
@@ -858,7 +858,7 @@ GoASTContext::GetPointeeType(void *type)
 }
 
 CompilerType
-GoASTContext::GetPointerType(void *type)
+GoASTContext::GetPointerType(lldb::opaque_compiler_type_t type)
 {
     if (!type)
         return CompilerType();
@@ -875,7 +875,7 @@ GoASTContext::GetPointerType(void *type)
 
 // If the current object represents a typedef type, get the underlying type
 CompilerType
-GoASTContext::GetTypedefedType(void *type)
+GoASTContext::GetTypedefedType(lldb::opaque_compiler_type_t type)
 {
     if (IsTypedefType(type))
         return static_cast<GoType *>(type)->GetElementType();
@@ -904,7 +904,7 @@ GoASTContext::GetBuiltinTypeForEncodingAndBitSize (lldb::Encoding encoding,
 //----------------------------------------------------------------------
 
 uint64_t
-GoASTContext::GetBitSize(void *type, ExecutionContextScope *exe_scope)
+GoASTContext::GetBitSize(lldb::opaque_compiler_type_t type, ExecutionContextScope *exe_scope)
 {
     if (!type)
         return 0;
@@ -958,7 +958,7 @@ GoASTContext::GetBitSize(void *type, ExecutionContextScope *exe_scope)
 }
 
 lldb::Encoding
-GoASTContext::GetEncoding(void *type, uint64_t &count)
+GoASTContext::GetEncoding(lldb::opaque_compiler_type_t type, uint64_t &count)
 {
     count = 1;
     bool is_signed;
@@ -977,7 +977,7 @@ GoASTContext::GetEncoding(void *type, uint64_t &count)
 }
 
 lldb::Format
-GoASTContext::GetFormat(void *type)
+GoASTContext::GetFormat(lldb::opaque_compiler_type_t type)
 {
     if (!type)
         return eFormatDefault;
@@ -1022,13 +1022,13 @@ GoASTContext::GetFormat(void *type)
 }
 
 size_t
-GoASTContext::GetTypeBitAlign(void *type)
+GoASTContext::GetTypeBitAlign(lldb::opaque_compiler_type_t type)
 {
     return 0;
 }
 
 uint32_t
-GoASTContext::GetNumChildren(void *type, bool omit_empty_base_classes)
+GoASTContext::GetNumChildren(lldb::opaque_compiler_type_t type, bool omit_empty_base_classes)
 {
     if (!type || !GetCompleteType(type))
         return 0;
@@ -1048,7 +1048,7 @@ GoASTContext::GetNumChildren(void *type, bool omit_empty_base_classes)
 }
 
 uint32_t
-GoASTContext::GetNumFields(void *type)
+GoASTContext::GetNumFields(lldb::opaque_compiler_type_t type)
 {
     if (!type || !GetCompleteType(type))
         return 0;
@@ -1062,7 +1062,7 @@ GoASTContext::GetNumFields(void *type)
 }
 
 CompilerType
-GoASTContext::GetFieldAtIndex(void *type, size_t idx, std::string &name, uint64_t *bit_offset_ptr,
+GoASTContext::GetFieldAtIndex(lldb::opaque_compiler_type_t type, size_t idx, std::string &name, uint64_t *bit_offset_ptr,
                               uint32_t *bitfield_bit_size_ptr, bool *is_bitfield_ptr)
 {
     if (bit_offset_ptr)
@@ -1095,7 +1095,7 @@ GoASTContext::GetFieldAtIndex(void *type, size_t idx, std::string &name, uint64_
 }
 
 CompilerType
-GoASTContext::GetChildCompilerTypeAtIndex(void *type, ExecutionContext *exe_ctx, size_t idx, bool transparent_pointers,
+GoASTContext::GetChildCompilerTypeAtIndex(lldb::opaque_compiler_type_t type, ExecutionContext *exe_ctx, size_t idx, bool transparent_pointers,
                                           bool omit_empty_base_classes, bool ignore_array_bounds, std::string &child_name,
                                           uint32_t &child_byte_size, int32_t &child_byte_offset,
                                           uint32_t &child_bitfield_bit_size, uint32_t &child_bitfield_bit_offset,
@@ -1182,7 +1182,7 @@ GoASTContext::GetChildCompilerTypeAtIndex(void *type, ExecutionContext *exe_ctx,
 // Lookup a child given a name. This function will match base class names
 // and member member names in "clang_type" only, not descendants.
 uint32_t
-GoASTContext::GetIndexOfChildWithName(void *type, const char *name, bool omit_empty_base_classes)
+GoASTContext::GetIndexOfChildWithName(lldb::opaque_compiler_type_t type, const char *name, bool omit_empty_base_classes)
 {
     GoType *t = static_cast<GoType *>(type);
     GoStruct *s = t->GetStruct();
@@ -1208,7 +1208,7 @@ GoASTContext::GetIndexOfChildWithName(void *type, const char *name, bool omit_em
 // TODO: Return all matches for a given name by returning a vector<vector<uint32_t>>
 // so we catch all names that match a given child name, not just the first.
 size_t
-GoASTContext::GetIndexOfChildMemberWithName(void *type, const char *name, bool omit_empty_base_classes,
+GoASTContext::GetIndexOfChildMemberWithName(lldb::opaque_compiler_type_t type, const char *name, bool omit_empty_base_classes,
                                             std::vector<uint32_t> &child_indexes)
 {
     uint32_t index = GetIndexOfChildWithName(type, name, omit_empty_base_classes);
@@ -1221,7 +1221,7 @@ GoASTContext::GetIndexOfChildMemberWithName(void *type, const char *name, bool o
 // Converts "s" to a floating point value and place resulting floating
 // point bytes in the "dst" buffer.
 size_t
-GoASTContext::ConvertStringToFloatValue(void *type, const char *s, uint8_t *dst, size_t dst_size)
+GoASTContext::ConvertStringToFloatValue(lldb::opaque_compiler_type_t type, const char *s, uint8_t *dst, size_t dst_size)
 {
     assert(false);
     return 0;
@@ -1230,7 +1230,7 @@ GoASTContext::ConvertStringToFloatValue(void *type, const char *s, uint8_t *dst,
 // Dumping types
 //----------------------------------------------------------------------
 void
-GoASTContext::DumpValue(void *type, ExecutionContext *exe_ctx, Stream *s, lldb::Format format,
+GoASTContext::DumpValue(lldb::opaque_compiler_type_t type, ExecutionContext *exe_ctx, Stream *s, lldb::Format format,
                         const DataExtractor &data, lldb::offset_t data_offset, size_t data_byte_size,
                         uint32_t bitfield_bit_size, uint32_t bitfield_bit_offset, bool show_types, bool show_summary,
                         bool verbose, uint32_t depth)
@@ -1239,7 +1239,7 @@ GoASTContext::DumpValue(void *type, ExecutionContext *exe_ctx, Stream *s, lldb::
 }
 
 bool
-GoASTContext::DumpTypeValue(void *type, Stream *s, lldb::Format format, const DataExtractor &data,
+GoASTContext::DumpTypeValue(lldb::opaque_compiler_type_t type, Stream *s, lldb::Format format, const DataExtractor &data,
                             lldb::offset_t byte_offset, size_t byte_size, uint32_t bitfield_bit_size,
                             uint32_t bitfield_bit_offset, ExecutionContextScope *exe_scope)
 {
@@ -1329,20 +1329,20 @@ GoASTContext::DumpTypeValue(void *type, Stream *s, lldb::Format format, const Da
 }
 
 void
-GoASTContext::DumpSummary(void *type, ExecutionContext *exe_ctx, Stream *s, const DataExtractor &data,
+GoASTContext::DumpSummary(lldb::opaque_compiler_type_t type, ExecutionContext *exe_ctx, Stream *s, const DataExtractor &data,
                           lldb::offset_t data_offset, size_t data_byte_size)
 {
     assert(false);
 }
 
 void
-GoASTContext::DumpTypeDescription(void *type)
+GoASTContext::DumpTypeDescription(lldb::opaque_compiler_type_t type)
 {
     assert(false);
 } // Dump to stdout
 
 void
-GoASTContext::DumpTypeDescription(void *type, Stream *s)
+GoASTContext::DumpTypeDescription(lldb::opaque_compiler_type_t type, Stream *s)
 {
     assert(false);
 }

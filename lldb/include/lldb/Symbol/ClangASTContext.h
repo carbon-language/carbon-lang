@@ -586,60 +586,60 @@ public:
     //----------------------------------------------------------------------
     
     bool
-    IsArrayType (void *type,
+    IsArrayType (lldb::opaque_compiler_type_t type,
                  CompilerType *element_type,
                  uint64_t *size,
                  bool *is_incomplete) override;
     
     bool
-    IsVectorType (void *type,
+    IsVectorType (lldb::opaque_compiler_type_t type,
                   CompilerType *element_type,
                   uint64_t *size) override;
     
     bool
-    IsAggregateType (void *type) override;
+    IsAggregateType (lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsBeingDefined (void *type) override;
+    IsBeingDefined (lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsCharType (void *type) override;
+    IsCharType (lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsCompleteType (void *type) override;
+    IsCompleteType (lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsConst(void *type) override;
+    IsConst(lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsCStringType (void *type, uint32_t &length) override;
+    IsCStringType (lldb::opaque_compiler_type_t type, uint32_t &length) override;
     
     static bool
     IsCXXClassType (const CompilerType& type);
     
     bool
-    IsDefined(void *type) override;
+    IsDefined(lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsFloatingPointType (void *type, uint32_t &count, bool &is_complex) override;
+    IsFloatingPointType (lldb::opaque_compiler_type_t type, uint32_t &count, bool &is_complex) override;
     
     bool
-    IsFunctionType (void *type, bool *is_variadic_ptr) override;
+    IsFunctionType (lldb::opaque_compiler_type_t type, bool *is_variadic_ptr) override;
 
     uint32_t
-    IsHomogeneousAggregate (void *type, CompilerType* base_type_ptr) override;
+    IsHomogeneousAggregate (lldb::opaque_compiler_type_t type, CompilerType* base_type_ptr) override;
     
     size_t
-    GetNumberOfFunctionArguments (void *type) override;
+    GetNumberOfFunctionArguments (lldb::opaque_compiler_type_t type) override;
     
     CompilerType
-    GetFunctionArgumentAtIndex (void *type, const size_t index) override;
+    GetFunctionArgumentAtIndex (lldb::opaque_compiler_type_t type, const size_t index) override;
     
     bool
-    IsFunctionPointerType (void *type) override;
+    IsFunctionPointerType (lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsIntegerType (void *type, bool &is_signed) override;
+    IsIntegerType (lldb::opaque_compiler_type_t type, bool &is_signed) override;
     
     static bool
     IsObjCClassType (const CompilerType& type);
@@ -654,34 +654,34 @@ public:
     IsObjCObjectPointerType (const CompilerType& type, CompilerType *target_type = NULL);
     
     bool
-    IsPolymorphicClass (void *type) override;
+    IsPolymorphicClass (lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsPossibleDynamicType (void *type,
+    IsPossibleDynamicType (lldb::opaque_compiler_type_t type,
                            CompilerType *target_type, // Can pass NULL
                            bool check_cplusplus,
                            bool check_objc) override;
     
     bool
-    IsRuntimeGeneratedType (void *type) override;
+    IsRuntimeGeneratedType (lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsPointerType (void *type, CompilerType *pointee_type) override;
+    IsPointerType (lldb::opaque_compiler_type_t type, CompilerType *pointee_type) override;
     
     bool
-    IsPointerOrReferenceType (void *type, CompilerType *pointee_type) override;
+    IsPointerOrReferenceType (lldb::opaque_compiler_type_t type, CompilerType *pointee_type) override;
     
     bool
-    IsReferenceType (void *type, CompilerType *pointee_type, bool* is_rvalue) override;
+    IsReferenceType (lldb::opaque_compiler_type_t type, CompilerType *pointee_type, bool* is_rvalue) override;
     
     bool
-    IsScalarType (void *type) override;
+    IsScalarType (lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsTypedefType (void *type) override;
+    IsTypedefType (lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsVoidType (void *type) override;
+    IsVoidType (lldb::opaque_compiler_type_t type) override;
 
     bool
     SupportsLanguage (lldb::LanguageType language) override;
@@ -697,26 +697,26 @@ public:
     //----------------------------------------------------------------------
     
     bool
-    GetCompleteType (void *type) override;
+    GetCompleteType (lldb::opaque_compiler_type_t type) override;
     
     //----------------------------------------------------------------------
     // Accessors
     //----------------------------------------------------------------------
     
     ConstString
-    GetTypeName (void *type) override;
+    GetTypeName (lldb::opaque_compiler_type_t type) override;
     
     uint32_t
-    GetTypeInfo (void *type, CompilerType *pointee_or_element_clang_type) override;
+    GetTypeInfo (lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_clang_type) override;
     
     lldb::LanguageType
-    GetMinimumLanguage (void *type) override;
+    GetMinimumLanguage (lldb::opaque_compiler_type_t type) override;
     
     lldb::TypeClass
-    GetTypeClass (void *type) override;
+    GetTypeClass (lldb::opaque_compiler_type_t type) override;
     
     unsigned
-    GetTypeQualifiers(void *type) override;
+    GetTypeQualifiers(lldb::opaque_compiler_type_t type) override;
     
     //----------------------------------------------------------------------
     // Creating related types
@@ -730,61 +730,61 @@ public:
                        const CompilerDeclContext &compiler_decl_ctx);
     
     CompilerType
-    GetArrayElementType (void *type, uint64_t *stride) override;
+    GetArrayElementType (lldb::opaque_compiler_type_t type, uint64_t *stride) override;
     
     CompilerType
-    GetCanonicalType (void *type) override;
+    GetCanonicalType (lldb::opaque_compiler_type_t type) override;
     
     CompilerType
-    GetFullyUnqualifiedType (void *type) override;
+    GetFullyUnqualifiedType (lldb::opaque_compiler_type_t type) override;
     
     // Returns -1 if this isn't a function of if the function doesn't have a prototype
     // Returns a value >= 0 if there is a prototype.
     int
-    GetFunctionArgumentCount (void *type) override;
+    GetFunctionArgumentCount (lldb::opaque_compiler_type_t type) override;
     
     CompilerType
-    GetFunctionArgumentTypeAtIndex (void *type, size_t idx) override;
+    GetFunctionArgumentTypeAtIndex (lldb::opaque_compiler_type_t type, size_t idx) override;
     
     CompilerType
-    GetFunctionReturnType (void *type) override;
+    GetFunctionReturnType (lldb::opaque_compiler_type_t type) override;
     
     size_t
-    GetNumMemberFunctions (void *type) override;
+    GetNumMemberFunctions (lldb::opaque_compiler_type_t type) override;
     
     TypeMemberFunctionImpl
-    GetMemberFunctionAtIndex (void *type, size_t idx) override;
+    GetMemberFunctionAtIndex (lldb::opaque_compiler_type_t type, size_t idx) override;
     
     CompilerType
-    GetNonReferenceType (void *type) override;
+    GetNonReferenceType (lldb::opaque_compiler_type_t type) override;
     
     CompilerType
-    GetPointeeType (void *type) override;
+    GetPointeeType (lldb::opaque_compiler_type_t type) override;
     
     CompilerType
-    GetPointerType (void *type) override;
+    GetPointerType (lldb::opaque_compiler_type_t type) override;
 
     CompilerType
-    GetLValueReferenceType (void *type) override;
+    GetLValueReferenceType (lldb::opaque_compiler_type_t type) override;
 
     CompilerType
-    GetRValueReferenceType (void *type) override;
+    GetRValueReferenceType (lldb::opaque_compiler_type_t type) override;
 
     CompilerType
-    AddConstModifier (void *type) override;
+    AddConstModifier (lldb::opaque_compiler_type_t type) override;
 
     CompilerType
-    AddVolatileModifier (void *type) override;
+    AddVolatileModifier (lldb::opaque_compiler_type_t type) override;
 
     CompilerType
-    AddRestrictModifier (void *type) override;
+    AddRestrictModifier (lldb::opaque_compiler_type_t type) override;
 
     CompilerType
-    CreateTypedef (void *type, const char *name, const CompilerDeclContext &decl_ctx) override;
+    CreateTypedef (lldb::opaque_compiler_type_t type, const char *name, const CompilerDeclContext &decl_ctx) override;
 
     // If the current object represents a typedef type, get the underlying type
     CompilerType
-    GetTypedefedType (void *type) override;
+    GetTypedefedType (lldb::opaque_compiler_type_t type) override;
 
     static CompilerType
     RemoveFastQualifiers (const CompilerType& type);
@@ -800,43 +800,43 @@ public:
     //----------------------------------------------------------------------
     
     uint64_t
-    GetByteSize (void *type, ExecutionContextScope *exe_scope)
+    GetByteSize (lldb::opaque_compiler_type_t type, ExecutionContextScope *exe_scope)
     {
         return (GetBitSize (type, exe_scope) + 7) / 8;
     }
     
     uint64_t
-    GetBitSize (void *type, ExecutionContextScope *exe_scope) override;
+    GetBitSize (lldb::opaque_compiler_type_t type, ExecutionContextScope *exe_scope) override;
     
     lldb::Encoding
-    GetEncoding (void *type, uint64_t &count) override;
+    GetEncoding (lldb::opaque_compiler_type_t type, uint64_t &count) override;
     
     lldb::Format
-    GetFormat (void *type) override;
+    GetFormat (lldb::opaque_compiler_type_t type) override;
     
     size_t
-    GetTypeBitAlign (void *type) override;
+    GetTypeBitAlign (lldb::opaque_compiler_type_t type) override;
     
     uint32_t
-    GetNumChildren (void *type, bool omit_empty_base_classes) override;
+    GetNumChildren (lldb::opaque_compiler_type_t type, bool omit_empty_base_classes) override;
 
     CompilerType
     GetBuiltinTypeByName (const ConstString &name) override;
 
     lldb::BasicType
-    GetBasicTypeEnumeration (void *type) override;
+    GetBasicTypeEnumeration (lldb::opaque_compiler_type_t type) override;
     
     static lldb::BasicType
-    GetBasicTypeEnumeration (void *type, const ConstString &name);
+    GetBasicTypeEnumeration (lldb::opaque_compiler_type_t type, const ConstString &name);
 
     void
-    ForEachEnumerator (void *type, std::function <bool (const CompilerType &integer_type, const ConstString &name, const llvm::APSInt &value)> const &callback) override;
+    ForEachEnumerator (lldb::opaque_compiler_type_t type, std::function <bool (const CompilerType &integer_type, const ConstString &name, const llvm::APSInt &value)> const &callback) override;
 
     uint32_t
-    GetNumFields (void *type) override;
+    GetNumFields (lldb::opaque_compiler_type_t type) override;
     
     CompilerType
-    GetFieldAtIndex (void *type,
+    GetFieldAtIndex (lldb::opaque_compiler_type_t type,
                      size_t idx,
                      std::string& name,
                      uint64_t *bit_offset_ptr,
@@ -844,18 +844,18 @@ public:
                      bool *is_bitfield_ptr) override;
 
     uint32_t
-    GetNumDirectBaseClasses (void *type) override;
+    GetNumDirectBaseClasses (lldb::opaque_compiler_type_t type) override;
 
     uint32_t
-    GetNumVirtualBaseClasses (void *type) override;
+    GetNumVirtualBaseClasses (lldb::opaque_compiler_type_t type) override;
 
     CompilerType
-    GetDirectBaseClassAtIndex (void *type,
+    GetDirectBaseClassAtIndex (lldb::opaque_compiler_type_t type,
                                size_t idx,
                                uint32_t *bit_offset_ptr) override;
 
     CompilerType
-    GetVirtualBaseClassAtIndex (void *type,
+    GetVirtualBaseClassAtIndex (lldb::opaque_compiler_type_t type,
                                 size_t idx,
                                 uint32_t *bit_offset_ptr) override;
 
@@ -863,7 +863,7 @@ public:
     GetNumPointeeChildren (clang::QualType type);
     
     CompilerType
-    GetChildCompilerTypeAtIndex (void *type,
+    GetChildCompilerTypeAtIndex (lldb::opaque_compiler_type_t type,
                                  ExecutionContext *exe_ctx,
                                  size_t idx,
                                  bool transparent_pointers,
@@ -881,7 +881,7 @@ public:
     // Lookup a child given a name. This function will match base class names
     // and member member names in "clang_type" only, not descendants.
     uint32_t
-    GetIndexOfChildWithName (void *type,
+    GetIndexOfChildWithName (lldb::opaque_compiler_type_t type,
                              const char *name,
                              bool omit_empty_base_classes) override;
     
@@ -891,16 +891,16 @@ public:
     // TODO: Return all matches for a given name by returning a vector<vector<uint32_t>>
     // so we catch all names that match a given child name, not just the first.
     size_t
-    GetIndexOfChildMemberWithName (void *type,
+    GetIndexOfChildMemberWithName (lldb::opaque_compiler_type_t type,
                                    const char *name,
                                    bool omit_empty_base_classes,
                                    std::vector<uint32_t>& child_indexes) override;
     
     size_t
-    GetNumTemplateArguments (void *type) override;
+    GetNumTemplateArguments (lldb::opaque_compiler_type_t type) override;
     
     CompilerType
-    GetTemplateArgument (void *type,
+    GetTemplateArgument (lldb::opaque_compiler_type_t type,
                          size_t idx,
                          lldb::TemplateArgumentKind &kind) override;
     
@@ -927,7 +927,7 @@ public:
                              lldb::AccessType access);
     
     clang::CXXMethodDecl *
-    AddMethodToCXXRecordType (void *type,
+    AddMethodToCXXRecordType (lldb::opaque_compiler_type_t type,
                               const char *name,
                               const CompilerType &method_type,
                               lldb::AccessType access,
@@ -940,7 +940,7 @@ public:
     
     // C++ Base Classes
     clang::CXXBaseSpecifier *
-    CreateBaseClassSpecifier (void *type,
+    CreateBaseClassSpecifier (lldb::opaque_compiler_type_t type,
                               lldb::AccessType access,
                               bool is_virtual,
                               bool base_of_class);
@@ -950,7 +950,7 @@ public:
                                unsigned num_base_classes);
     
     bool
-    SetBaseClassesForClassType (void *type,
+    SetBaseClassesForClassType (lldb::opaque_compiler_type_t type,
                                 clang::CXXBaseSpecifier const * const *base_classes,
                                 unsigned num_base_classes);
     
@@ -970,13 +970,13 @@ public:
     
     static clang::ObjCMethodDecl *
     AddMethodToObjCObjectType (const CompilerType& type,
-                               const char *name,  // the full symbol name as seen in the symbol table (void *type, "-[NString stringWithCString:]")
+                               const char *name,  // the full symbol name as seen in the symbol table (lldb::opaque_compiler_type_t type, "-[NString stringWithCString:]")
                                const CompilerType &method_clang_type,
                                lldb::AccessType access,
                                bool is_artificial);
     
     bool
-    SetHasExternalStorage (void *type, bool has_extern);
+    SetHasExternalStorage (lldb::opaque_compiler_type_t type, bool has_extern);
     
     
     //------------------------------------------------------------------
@@ -992,7 +992,7 @@ public:
     // Modifying Enumeration types
     //----------------------------------------------------------------------
     bool
-    AddEnumerationValueToEnumerationType (void *type,
+    AddEnumerationValueToEnumerationType (lldb::opaque_compiler_type_t type,
                                           const CompilerType &enumerator_qual_type,
                                           const Declaration &decl,
                                           const char *name,
@@ -1002,7 +1002,7 @@ public:
     
     
     CompilerType
-    GetEnumerationIntegerType (void *type);
+    GetEnumerationIntegerType (lldb::opaque_compiler_type_t type);
     
     //------------------------------------------------------------------
     // Pointers & References
@@ -1017,7 +1017,7 @@ public:
     // Converts "s" to a floating point value and place resulting floating
     // point bytes in the "dst" buffer.
     size_t
-    ConvertStringToFloatValue (void *type,
+    ConvertStringToFloatValue (lldb::opaque_compiler_type_t type,
                                const char *s,
                                uint8_t *dst,
                                size_t dst_size) override;
@@ -1025,7 +1025,7 @@ public:
     // Dumping types
     //----------------------------------------------------------------------
     void
-    DumpValue (void *type,
+    DumpValue (lldb::opaque_compiler_type_t type,
                ExecutionContext *exe_ctx,
                Stream *s,
                lldb::Format format,
@@ -1040,7 +1040,7 @@ public:
                uint32_t depth) override;
     
     bool
-    DumpTypeValue (void *type,
+    DumpTypeValue (lldb::opaque_compiler_type_t type,
                    Stream *s,
                    lldb::Format format,
                    const DataExtractor &data,
@@ -1051,7 +1051,7 @@ public:
                    ExecutionContextScope *exe_scope) override;
     
     void
-    DumpSummary (void *type,
+    DumpSummary (lldb::opaque_compiler_type_t type,
                  ExecutionContext *exe_ctx,
                  Stream *s,
                  const DataExtractor &data,
@@ -1059,10 +1059,10 @@ public:
                  size_t data_byte_size) override;
     
     virtual void
-    DumpTypeDescription (void *type) override; // Dump to stdout
+    DumpTypeDescription (lldb::opaque_compiler_type_t type) override; // Dump to stdout
     
     void
-    DumpTypeDescription (void *type, Stream *s) override;
+    DumpTypeDescription (lldb::opaque_compiler_type_t type, Stream *s) override;
     
     static clang::EnumDecl *
     GetAsEnumDecl (const CompilerType& type);
@@ -1071,7 +1071,7 @@ public:
     GetAsRecordDecl (const CompilerType& type);
     
     clang::CXXRecordDecl *
-    GetAsCXXRecordDecl (void *type);
+    GetAsCXXRecordDecl (lldb::opaque_compiler_type_t type);
     
     static clang::ObjCInterfaceDecl *
     GetAsObjCInterfaceDecl (const CompilerType& type);
@@ -1116,7 +1116,7 @@ public:
     CreateVariableDeclaration (clang::DeclContext *decl_context, const char *name, clang::QualType type);
 protected:
     static clang::QualType
-    GetQualType (void *type)
+    GetQualType (lldb::opaque_compiler_type_t type)
     {
         if (type)
             return clang::QualType::getFromOpaquePtr(type);
@@ -1124,7 +1124,7 @@ protected:
     }
     
     static clang::QualType
-    GetCanonicalQualType (void *type)
+    GetCanonicalQualType (lldb::opaque_compiler_type_t type)
     {
         if (type)
             return clang::QualType::getFromOpaquePtr(type).getCanonicalType();

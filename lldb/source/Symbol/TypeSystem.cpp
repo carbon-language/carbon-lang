@@ -39,37 +39,37 @@ TypeSystem::CreateInstance (lldb::LanguageType language, const lldb_private::Arc
 }
 
 CompilerType
-TypeSystem::GetLValueReferenceType (void *type)
+TypeSystem::GetLValueReferenceType (lldb::opaque_compiler_type_t type)
 {
     return CompilerType();
 }
 
 CompilerType
-TypeSystem::GetRValueReferenceType (void *type)
+TypeSystem::GetRValueReferenceType (lldb::opaque_compiler_type_t type)
 {
     return CompilerType();
 }
 
 CompilerType
-TypeSystem::AddConstModifier (void *type)
+TypeSystem::AddConstModifier (lldb::opaque_compiler_type_t type)
 {
     return CompilerType();
 }
 
 CompilerType
-TypeSystem::AddVolatileModifier (void *type)
+TypeSystem::AddVolatileModifier (lldb::opaque_compiler_type_t type)
 {
     return CompilerType();
 }
 
 CompilerType
-TypeSystem::AddRestrictModifier (void *type)
+TypeSystem::AddRestrictModifier (lldb::opaque_compiler_type_t type)
 {
     return CompilerType();
 }
 
 CompilerType
-TypeSystem::CreateTypedef (void *type, const char *name, const CompilerDeclContext &decl_ctx)
+TypeSystem::CreateTypedef (lldb::opaque_compiler_type_t type, const char *name, const CompilerDeclContext &decl_ctx)
 {
     return CompilerType();
 }

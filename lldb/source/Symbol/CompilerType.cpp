@@ -30,7 +30,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 CompilerType::CompilerType (TypeSystem *type_system,
-                            void* type) :
+                            lldb::opaque_compiler_type_t type) :
     m_type (type),
     m_type_system (type_system)
 {
@@ -399,7 +399,7 @@ CompilerType::GetTypeClass () const
 }
 
 void
-CompilerType::SetCompilerType (TypeSystem* type_system, void*  type)
+CompilerType::SetCompilerType (TypeSystem* type_system, lldb::opaque_compiler_type_t type)
 {
     m_type_system = type_system;
     m_type = type;

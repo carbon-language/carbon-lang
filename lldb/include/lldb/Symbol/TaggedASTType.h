@@ -25,7 +25,7 @@ public:
     {
     }
 
-    TaggedASTType (void *type, TypeSystem * type_system) :
+    TaggedASTType (lldb::opaque_compiler_type_t type, TypeSystem * type_system) :
         CompilerType(type_system, type)
     {
     }
