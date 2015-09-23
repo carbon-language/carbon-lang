@@ -40,12 +40,11 @@ using namespace llvm;
 namespace {
 
 class WebAssemblyAsmPrinter final : public AsmPrinter {
-  bool hasAddr64;
   const WebAssemblyInstrInfo *TII;
 
 public:
   WebAssemblyAsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer)
-      : AsmPrinter(TM, std::move(Streamer)), hasAddr64(false), TII(nullptr) {}
+      : AsmPrinter(TM, std::move(Streamer)), TII(nullptr) {}
 
 private:
   const char *getPassName() const override {
@@ -62,7 +61,6 @@ private:
 
   bool runOnMachineFunction(MachineFunction &MF) override {
     const auto &Subtarget = MF.getSubtarget<WebAssemblySubtarget>();
-    hasAddr64 = Subtarget.hasAddr64();
     TII = Subtarget.getInstrInfo();
     return AsmPrinter::runOnMachineFunction(MF);
   }
@@ -80,6 +78,9 @@ private:
   void EmitFunctionBodyEnd() override;
 
   void EmitInstruction(const MachineInstr *MI) override;
+
+  static std::string toString(const APFloat &APF);
+  const char *toString(Type *Ty) const;
 };
 
 } // end anonymous namespace
@@ -101,7 +102,7 @@ static SmallString<32> OpcodeName(const WebAssemblyInstrInfo *TII,
 
 static std::string toSymbol(StringRef S) { return ("$" + S).str(); }
 
-static std::string toString(const APFloat &FP) {
+std::string WebAssemblyAsmPrinter::toString(const APFloat &FP) {
   static const size_t BufBytes = 128;
   char buf[BufBytes];
   if (FP.isNaN())
@@ -118,27 +119,43 @@ static std::string toString(const APFloat &FP) {
   return buf;
 }
 
-static const char *toString(const Type *Ty, bool hasAddr64) {
+const char *WebAssemblyAsmPrinter::toString(Type *Ty) const {
   switch (Ty->getTypeID()) {
-  default: break;
+  default:
+    break;
   // Treat all pointers as the underlying integer into linear memory.
-  case Type::PointerTyID: return hasAddr64 ? "i64" : "i32";
-  case Type::FloatTyID:  return "f32";
-  case Type::DoubleTyID: return "f64";
+  case Type::PointerTyID:
+    switch (getPointerSize()) {
+    case 4:
+      return "i32";
+    case 8:
+      return "i64";
+    default:
+      llvm_unreachable("unsupported pointer size");
+    }
+    break;
+  case Type::FloatTyID:
+    return "f32";
+  case Type::DoubleTyID:
+    return "f64";
   case Type::IntegerTyID:
     switch (Ty->getIntegerBitWidth()) {
-    case 8: return "i8";
-    case 16: return "i16";
-    case 32: return "i32";
-    case 64: return "i64";
-    default: break;
+    case 8:
+      return "i8";
+    case 16:
+      return "i16";
+    case 32:
+      return "i32";
+    case 64:
+      return "i64";
+    default:
+      break;
     }
   }
   DEBUG(dbgs() << "Invalid type "; Ty->print(dbgs()); dbgs() << '\n');
   llvm_unreachable("invalid type");
   return "<invalid>";
 }
-
 
 //===----------------------------------------------------------------------===//
 // WebAssemblyAsmPrinter Implementation.
@@ -195,8 +212,7 @@ void WebAssemblyAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     return;
   }
 
-  OS << "(global " << toSymbol(Name) << ' '
-     << toString(Init->getType(), hasAddr64) << ' ';
+  OS << "(global " << toSymbol(Name) << ' ' << toString(Init->getType()) << ' ';
   if (const auto *C = dyn_cast<ConstantInt>(Init)) {
     assert(C->getBitWidth() <= 64 && "Printing wider types unimplemented");
     OS << C->getZExtValue();
@@ -241,12 +257,12 @@ void WebAssemblyAsmPrinter::EmitFunctionBodyStart() {
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
   const Function *F = MF->getFunction();
-  const Type *Rt = F->getReturnType();
+  Type *Rt = F->getReturnType();
   if (!Rt->isVoidTy() || !F->arg_empty()) {
     for (const Argument &A : F->args())
-      OS << " (param " << toString(A.getType(), hasAddr64) << ')';
+      OS << " (param " << toString(A.getType()) << ')';
     if (!Rt->isVoidTy())
-      OS << " (result " << toString(Rt, hasAddr64) << ')';
+      OS << " (result " << toString(Rt) << ')';
     OutStreamer->EmitRawText(OS.str());
   }
 }
