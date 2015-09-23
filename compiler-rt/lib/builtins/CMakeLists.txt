@@ -17,12 +17,6 @@ set(GENERIC_SOURCES
   ashlti3.c
   ashrdi3.c
   ashrti3.c
-  atomic_flag_clear.c
-  atomic_flag_clear_explicit.c
-  atomic_flag_test_and_set.c
-  atomic_flag_test_and_set_explicit.c
-  atomic_signal_fence.c
-  atomic_thread_fence.c
   # FIXME: atomic.c may only be compiled if host compiler understands _Atomic
   # atomic.c
   clear_cache.c
@@ -144,6 +138,17 @@ set(GENERIC_SOURCES
   umoddi3.c
   umodsi3.c
   umodti3.c)
+
+if(APPLE)
+  set(GENERIC_SOURCES
+    ${GENERIC_SOURCES}
+    atomic_flag_clear.c
+    atomic_flag_clear_explicit.c
+    atomic_flag_test_and_set.c
+    atomic_flag_test_and_set_explicit.c
+    atomic_signal_fence.c
+    atomic_thread_fence.c)
+endif()
 
 if(NOT WIN32)
   set(GENERIC_SOURCES
