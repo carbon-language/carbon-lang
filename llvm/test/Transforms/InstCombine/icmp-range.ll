@@ -54,8 +54,65 @@ define i1 @test_nonzero6(i8* %argw) {
   ret i1 %rval
 }
 
+; Constant not in range, should return true.
+define i1 @test_not_in_range(i32* nocapture readonly %arg) {
+; CHECK-LABEL: test_not_in_range
+; CHECK: ret i1 true
+  %val = load i32, i32* %arg, !range !0
+  %rval = icmp ne i32 %val, 6
+  ret i1 %rval
+}
+
+; Constant in range, can not fold.
+define i1 @test_in_range(i32* nocapture readonly %arg) {
+; CHECK-LABEL: test_in_range
+; CHECK: icmp ne i32 %val, 3
+  %val = load i32, i32* %arg, !range !0
+  %rval = icmp ne i32 %val, 3
+  ret i1 %rval
+}
+
+; Values in range greater than constant.
+define i1 @test_range_sgt_constant(i32* nocapture readonly %arg) {
+; CHECK-LABEL: test_range_sgt_constant
+; CHECK: ret i1 true
+  %val = load i32, i32* %arg, !range !0
+  %rval = icmp sgt i32 %val, 0
+  ret i1 %rval
+}
+
+; Values in range less than constant.
+define i1 @test_range_slt_constant(i32* nocapture readonly %arg) {
+; CHECK-LABEL: test_range_slt_constant
+; CHECK: ret i1 false
+  %val = load i32, i32* %arg, !range !0
+  %rval = icmp sgt i32 %val, 6
+  ret i1 %rval
+}
+
+; Values in union of multiple sub ranges not equal to constant.
+define i1 @test_multi_range1(i32* nocapture readonly %arg) {
+; CHECK-LABEL: test_multi_range1
+; CHECK: ret i1 true
+  %val = load i32, i32* %arg, !range !4
+  %rval = icmp ne i32 %val, 0
+  ret i1 %rval
+}
+
+; Values in multiple sub ranges not equal to constant, but in
+; union of sub ranges could possibly equal to constant. This
+; in theory could also be folded and might be implemented in 
+; the future if shown profitable in practice.
+define i1 @test_multi_range2(i32* nocapture readonly %arg) {
+; CHECK-LABEL: test_multi_range2
+; CHECK: icmp ne i32 %val, 7
+  %val = load i32, i32* %arg, !range !4
+  %rval = icmp ne i32 %val, 7
+  ret i1 %rval
+}
 
 !0 = !{i32 1, i32 6} 
 !1 = !{i32 0, i32 6} 
 !2 = !{i8 0, i8 1} 
 !3 = !{i8 0, i8 6} 
+!4 = !{i32 1, i32 6, i32 8, i32 10}

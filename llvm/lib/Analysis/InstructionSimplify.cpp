@@ -2128,6 +2128,29 @@ static Constant *computePointerICmp(const DataLayout &DL,
   return nullptr;
 }
 
+static ConstantRange GetConstantRangeFromMetadata(MDNode *Ranges, uint32_t BitWidth) {
+  const unsigned NumRanges = Ranges->getNumOperands() / 2;
+  assert(NumRanges >= 1);
+
+  ConstantRange CR(BitWidth, false);
+  for (unsigned i = 0; i < NumRanges; ++i) {
+    auto *Low =
+        mdconst::extract<ConstantInt>(Ranges->getOperand(2 * i + 0));
+    auto *High =
+        mdconst::extract<ConstantInt>(Ranges->getOperand(2 * i + 1));
+
+    // Union will merge two ranges to one and potentially introduce a range
+    // not covered by the original two ranges. For example, [1, 5) and [8, 10)
+    // will become [1, 10). In this case, we can not fold comparison between
+    // constant 6 and a value of the above ranges. In practice, most values
+    // have only one range, so it might not be worth handling this by
+    // introducing additional complexity.
+    CR = CR.unionWith(ConstantRange(Low->getValue(), High->getValue()));
+  }
+
+  return CR;
+}
+
 /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
 /// fold the result.  If not, this returns null.
 static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
@@ -2364,8 +2387,15 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       // 'add nuw x, CI2' produces [CI2, UINT_MAX].
       Lower = CI2->getValue();
     }
-    if (Lower != Upper) {
-      ConstantRange LHS_CR = ConstantRange(Lower, Upper);
+
+    ConstantRange LHS_CR = Lower != Upper ? ConstantRange(Lower, Upper)
+                                          : ConstantRange(Width, true);
+
+    if (auto *I = dyn_cast<Instruction>(LHS))
+      if (auto *Ranges = I->getMetadata(LLVMContext::MD_range))
+        LHS_CR = LHS_CR.intersectWith(GetConstantRangeFromMetadata(Ranges, Width));
+
+    if (!LHS_CR.isFullSet()) {
       if (RHS_CR.contains(LHS_CR))
         return ConstantInt::getTrue(RHS->getContext());
       if (RHS_CR.inverse().contains(LHS_CR))
