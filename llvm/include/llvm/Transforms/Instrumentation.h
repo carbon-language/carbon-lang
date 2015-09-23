@@ -34,6 +34,8 @@ inline void *getDFSanRetValTLSPtrForJIT() {
 
 namespace llvm {
 
+class TargetMachine;
+
 /// Instrumentation passes often insert conditional checks into entry blocks.
 /// Call this function before splitting the entry block to move instructions
 /// that must remain in the entry block up before the split point. Static
@@ -143,7 +145,7 @@ FunctionPass *createBoundsCheckingPass();
 
 /// \brief This pass splits the stack into a safe stack and an unsafe stack to
 /// protect against stack-based overflow vulnerabilities.
-FunctionPass *createSafeStackPass();
+FunctionPass *createSafeStackPass(const TargetMachine *TM = nullptr);
 
 } // End llvm namespace
 
