@@ -1482,6 +1482,48 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
     BiarchTripleAliases.push_back(BiarchTriple.str());
 }
 
+// \brief -- try common CUDA installation paths looking for files we need for
+// CUDA compilation.
+
+void
+Generic_GCC::CudaInstallationDetector::init(const Driver &D,
+                                            const llvm::Triple &TargetTriple,
+                                            const llvm::opt::ArgList &Args) {
+  SmallVector<StringRef, 4> CudaPathCandidates;
+
+  if (Args.hasArg(options::OPT_cuda_path_EQ))
+    CudaPathCandidates.push_back(
+        Args.getLastArgValue(options::OPT_cuda_path_EQ));
+  else {
+    CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda");
+    CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-7.0");
+  }
+
+  for (const auto CudaPath : CudaPathCandidates) {
+    if (CudaPath.empty() || !llvm::sys::fs::exists(CudaPath))
+      continue;
+
+    CudaInstallPath = CudaPath;
+    CudaIncludePath = CudaInstallPath + "/include";
+    CudaLibDevicePath = CudaInstallPath + "/nvvm/libdevice";
+    CudaLibPath =
+        CudaInstallPath + (TargetTriple.isArch64Bit() ? "/lib64" : "/lib");
+
+    if (!(llvm::sys::fs::exists(CudaIncludePath) &&
+          llvm::sys::fs::exists(CudaLibPath) &&
+          llvm::sys::fs::exists(CudaLibDevicePath)))
+      continue;
+
+    IsValid = true;
+    break;
+  }
+}
+
+void Generic_GCC::CudaInstallationDetector::print(raw_ostream &OS) const {
+  if (isValid())
+    OS << "Found CUDA installation: " << CudaInstallPath << "\n";
+}
+
 namespace {
 // Filter to remove Multilibs that don't exist as a suffix to Path
 class FilterNonExistent {
@@ -2053,7 +2095,7 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
 
 Generic_GCC::Generic_GCC(const Driver &D, const llvm::Triple &Triple,
                          const ArgList &Args)
-    : ToolChain(D, Triple, Args), GCCInstallation() {
+    : ToolChain(D, Triple, Args), GCCInstallation(), CudaInstallation() {
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
@@ -2085,6 +2127,7 @@ Tool *Generic_GCC::buildLinker() const { return new tools::gcc::Linker(*this); }
 void Generic_GCC::printVerboseInfo(raw_ostream &OS) const {
   // Print the information about how we detected the GCC installation.
   GCCInstallation.print(OS);
+  CudaInstallation.print(OS);
 }
 
 bool Generic_GCC::IsUnwindTablesDefault() const {
@@ -3261,6 +3304,7 @@ static StringRef getOSLibDir(const llvm::Triple &Triple, const ArgList &Args) {
 Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     : Generic_ELF(D, Triple, Args) {
   GCCInstallation.init(D, Triple, Args);
+  CudaInstallation.init(D, Triple, Args);
   Multilibs = GCCInstallation.getMultilibs();
   llvm::Triple::ArchType Arch = Triple.getArch();
   std::string SysRoot = computeSysRoot();

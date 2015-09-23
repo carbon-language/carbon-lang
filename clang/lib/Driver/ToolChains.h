@@ -157,6 +157,38 @@ public:
 protected:
   GCCInstallationDetector GCCInstallation;
 
+  // \brief A class to find a viable CUDA installation
+
+  class CudaInstallationDetector {
+    bool IsValid;
+    std::string CudaInstallPath;
+    std::string CudaLibPath;
+    std::string CudaLibDevicePath;
+    std::string CudaIncludePath;
+
+  public:
+    CudaInstallationDetector() : IsValid(false) {}
+    void init(const Driver &D, const llvm::Triple &TargetTriple,
+              const llvm::opt::ArgList &Args);
+
+    /// \brief Check whether we detected a valid Cuda install.
+    bool isValid() const { return IsValid; }
+    /// \brief Print information about the detected CUDA installation.
+    void print(raw_ostream &OS) const;
+
+    /// \brief Get the detected Cuda installation path.
+    StringRef getInstallPath() const { return CudaInstallPath; }
+    /// \brief Get the detected Cuda Include path.
+    StringRef getIncludePath() const { return CudaIncludePath; }
+    /// \brief Get the detected Cuda library path.
+    StringRef getLibPath() const { return CudaLibPath; }
+    /// \brief Get the detected Cuda device library path.
+    StringRef getLibDevicePath() const { return CudaLibDevicePath; }
+    /// \brief Get libdevice file for given architecture
+  };
+
+  CudaInstallationDetector CudaInstallation;
+
 public:
   Generic_GCC(const Driver &D, const llvm::Triple &Triple,
               const llvm::opt::ArgList &Args);
