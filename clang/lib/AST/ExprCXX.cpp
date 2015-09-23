@@ -1432,6 +1432,25 @@ CXXRecordDecl *UnresolvedMemberExpr::getNamingClass() const {
   return Record;
 }
 
+SizeOfPackExpr *
+SizeOfPackExpr::Create(ASTContext &Context, SourceLocation OperatorLoc,
+                       NamedDecl *Pack, SourceLocation PackLoc,
+                       SourceLocation RParenLoc,
+                       Optional<unsigned> Length,
+                       ArrayRef<TemplateArgument> PartialArgs) {
+  void *Storage = Context.Allocate(
+      sizeof(SizeOfPackExpr) + sizeof(TemplateArgument) * PartialArgs.size());
+  return new (Storage) SizeOfPackExpr(Context.getSizeType(), OperatorLoc, Pack,
+                                      PackLoc, RParenLoc, Length, PartialArgs);
+}
+
+SizeOfPackExpr *SizeOfPackExpr::CreateDeserialized(ASTContext &Context,
+                                                   unsigned NumPartialArgs) {
+  void *Storage = Context.Allocate(
+      sizeof(SizeOfPackExpr) + sizeof(TemplateArgument) * NumPartialArgs);
+  return new (Storage) SizeOfPackExpr(EmptyShell(), NumPartialArgs);
+}
+
 SubstNonTypeTemplateParmPackExpr::
 SubstNonTypeTemplateParmPackExpr(QualType T, 
                                  NonTypeTemplateParmDecl *Param,

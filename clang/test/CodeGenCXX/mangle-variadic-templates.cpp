@@ -3,11 +3,12 @@
 template<unsigned I, typename ...Types>
 struct X { };
 
-template<typename T> struct identity { };
+template<typename T> struct identity { using type = T; };
 template<typename T> struct add_reference;
 template<typename ...Types> struct tuple { };
 template<int ...Values> struct int_tuple { };
 template<template<typename> class ...Templates> struct template_tuple { };
+template<typename ...T> using ArrayOfN = int[sizeof...(T)];
 
 // CHECK-LABEL: define weak_odr void @_Z2f0IJEEv1XIXsZT_EJDpRT_EE
 template<typename ...Types>
@@ -65,3 +66,12 @@ template<template<typename> class ...Templates>
 template_tuple<Templates...> f7() {}
 // CHECK-LABEL: define weak_odr void @_Z2f7IJ8identity13add_referenceEE14template_tupleIJDpT_EEv
 template template_tuple<identity, add_reference> f7();
+
+template<typename T, typename ...U> void f8(ArrayOfN<int, U..., T, typename U::type...>&) {}
+// CHECK-LABEL: define weak_odr void @_Z2f8IiJ8identityIiES0_IfEEEvRAsPiDpT0_T_DpNS3_4typeEE_i
+template void f8<int, identity<int>, identity<float>>(int (&)[6]);
+
+template<typename ...T> void f10(ArrayOfN<T...> &) {}
+// FIXME: This is wrong; should be @_Z3f10IJifEEvRAsZT__i
+// CHECK-LABEL: define weak_odr void @_Z3f10IJifEEvRAsPDpT_E_i
+template void f10<int, float>(int (&)[2]);

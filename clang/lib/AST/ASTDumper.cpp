@@ -2017,6 +2017,9 @@ void ASTDumper::VisitSizeOfPackExpr(const SizeOfPackExpr *Node) {
   VisitExpr(Node);
   dumpPointer(Node->getPack());
   dumpName(Node->getPack());
+  if (Node->isPartiallySubstituted())
+    for (const auto &A : Node->getPartialArguments())
+      dumpTemplateArgument(A);
 }
 
 

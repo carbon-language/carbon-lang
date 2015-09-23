@@ -201,3 +201,23 @@ namespace PR16904 {
   template <typename T, typename U, typename V>
   using derived2 = ::PR16904::base<T, U>::template derived<V>; // expected-error {{expected a type}} expected-error {{expected ';'}}
 }
+
+namespace PR14858 {
+  template<typename ...T> using X = int[sizeof...(T)];
+
+  template<typename ...U> struct Y {
+    using Z = X<U...>;
+  };
+  using A = Y<int, int, int, int>::Z;
+  using A = int[4];
+
+  // FIXME: These should be treated as being redeclarations.
+  template<typename ...T> void f(X<T...> &) {}
+  template<typename ...T> void f(int(&)[sizeof...(T)]) {}
+
+  template<typename ...T> void g(X<typename T::type...> &) {}
+  template<typename ...T> void g(int(&)[sizeof...(T)]) {} // ok, different
+
+  template<typename ...T, typename ...U> void h(X<T...> &) {}
+  template<typename ...T, typename ...U> void h(X<U...> &) {} // ok, different
+}

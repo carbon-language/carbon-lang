@@ -867,8 +867,8 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
 
   MarkAnyDeclReferenced(OpLoc, ParameterPack, true);
 
-  return new (Context) SizeOfPackExpr(Context.getSizeType(), OpLoc, 
-                                      ParameterPack, NameLoc, RParenLoc);
+  return SizeOfPackExpr::Create(Context, OpLoc, ParameterPack, NameLoc,
+                                RParenLoc);
 }
 
 TemplateArgumentLoc

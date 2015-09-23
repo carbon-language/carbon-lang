@@ -3558,43 +3558,51 @@ class SizeOfPackExpr : public Expr {
 
   /// \brief The length of the parameter pack, if known.
   ///
-  /// When this expression is value-dependent, the length of the parameter pack
-  /// is unknown. When this expression is not value-dependent, the length is
-  /// known.
+  /// When this expression is not value-dependent, this is the length of
+  /// the pack. When the expression was parsed rather than instantiated
+  /// (and thus is value-dependent), this is zero.
+  ///
+  /// After partial substitution into a sizeof...(X) expression (for instance,
+  /// within an alias template or during function template argument deduction),
+  /// we store a trailing array of partially-substituted TemplateArguments,
+  /// and this is the length of that array.
   unsigned Length;
 
-  /// \brief The parameter pack itself.
+  /// \brief The parameter pack.
   NamedDecl *Pack;
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 
-public:
-  /// \brief Create a value-dependent expression that computes the length of
+  /// \brief Create an expression that computes the length of
   /// the given parameter pack.
   SizeOfPackExpr(QualType SizeType, SourceLocation OperatorLoc, NamedDecl *Pack,
-                 SourceLocation PackLoc, SourceLocation RParenLoc)
-    : Expr(SizeOfPackExprClass, SizeType, VK_RValue, OK_Ordinary,
-           /*TypeDependent=*/false, /*ValueDependent=*/true,
-           /*InstantiationDependent=*/true,
-           /*ContainsUnexpandedParameterPack=*/false),
-      OperatorLoc(OperatorLoc), PackLoc(PackLoc), RParenLoc(RParenLoc),
-      Length(0), Pack(Pack) { }
-
-  /// \brief Create an expression that computes the length of
-  /// the given parameter pack, which is already known.
-  SizeOfPackExpr(QualType SizeType, SourceLocation OperatorLoc, NamedDecl *Pack,
                  SourceLocation PackLoc, SourceLocation RParenLoc,
-                 unsigned Length)
-  : Expr(SizeOfPackExprClass, SizeType, VK_RValue, OK_Ordinary,
-         /*TypeDependent=*/false, /*ValueDependent=*/false,
-         /*InstantiationDependent=*/false,
-         /*ContainsUnexpandedParameterPack=*/false),
-    OperatorLoc(OperatorLoc), PackLoc(PackLoc), RParenLoc(RParenLoc),
-    Length(Length), Pack(Pack) { }
+                 Optional<unsigned> Length, ArrayRef<TemplateArgument> PartialArgs)
+      : Expr(SizeOfPackExprClass, SizeType, VK_RValue, OK_Ordinary,
+             /*TypeDependent=*/false, /*ValueDependent=*/!Length,
+             /*InstantiationDependent=*/!Length,
+             /*ContainsUnexpandedParameterPack=*/false),
+        OperatorLoc(OperatorLoc), PackLoc(PackLoc), RParenLoc(RParenLoc),
+        Length(Length ? *Length : PartialArgs.size()), Pack(Pack) {
+    assert((!Length || PartialArgs.empty()) &&
+           "have partial args for non-dependent sizeof... expression");
+    TemplateArgument *Args = reinterpret_cast<TemplateArgument *>(this + 1);
+    std::uninitialized_copy(PartialArgs.begin(), PartialArgs.end(), Args);
+  }
 
   /// \brief Create an empty expression.
-  SizeOfPackExpr(EmptyShell Empty) : Expr(SizeOfPackExprClass, Empty) { }
+  SizeOfPackExpr(EmptyShell Empty, unsigned NumPartialArgs)
+      : Expr(SizeOfPackExprClass, Empty), Length(NumPartialArgs), Pack() {}
+
+public:
+  static SizeOfPackExpr *Create(ASTContext &Context, SourceLocation OperatorLoc,
+                                NamedDecl *Pack, SourceLocation PackLoc,
+                                SourceLocation RParenLoc,
+                                Optional<unsigned> Length = None,
+                                ArrayRef<TemplateArgument> PartialArgs = None);
+  static SizeOfPackExpr *CreateDeserialized(ASTContext &Context,
+                                            unsigned NumPartialArgs);
 
   /// \brief Determine the location of the 'sizeof' keyword.
   SourceLocation getOperatorLoc() const { return OperatorLoc; }
@@ -3616,6 +3624,23 @@ public:
     assert(!isValueDependent() &&
            "Cannot get the length of a value-dependent pack size expression");
     return Length;
+  }
+
+  /// \brief Determine whether this represents a partially-substituted sizeof...
+  /// expression, such as is produced for:
+  ///
+  ///   template<typename ...Ts> using X = int[sizeof...(Ts)];
+  ///   template<typename ...Us> void f(X<Us..., 1, 2, 3, Us...>);
+  bool isPartiallySubstituted() const {
+    return isValueDependent() && Length;
+  }
+
+  /// \brief Get
+  ArrayRef<TemplateArgument> getPartialArguments() const {
+    assert(isPartiallySubstituted());
+    const TemplateArgument *Args =
+        reinterpret_cast<const TemplateArgument *>(this + 1);
+    return llvm::makeArrayRef(Args, Args + Length);
   }
 
   SourceLocation getLocStart() const LLVM_READONLY { return OperatorLoc; }

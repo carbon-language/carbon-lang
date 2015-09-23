@@ -541,6 +541,10 @@ public:
     return Arguments.data();
   }
 
+  llvm::ArrayRef<TemplateArgumentLoc> arguments() const {
+    return Arguments;
+  }
+
   const TemplateArgumentLoc &operator[](unsigned I) const {
     return Arguments[I];
   }
