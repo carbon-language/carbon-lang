@@ -24447,6 +24447,24 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
       }
     } // BEXTR
 
+    // If both input operands are being cast from floating point types,
+    // try to convert this into a floating point logic node to avoid
+    // unnecessary moves from SSE to integer registers.
+    // FIXME: Split this into a helper function, so it can also be used with
+    //        or/xor combining.
+    if (N0.getOpcode() == ISD::BITCAST && N1.getOpcode() == ISD::BITCAST &&
+        ((Subtarget->hasSSE1() && VT == MVT::i32) ||
+         (Subtarget->hasSSE2() && VT == MVT::i64))) {
+      SDValue N00 = N0.getOperand(0);
+      SDValue N10 = N1.getOperand(0);
+      EVT N00Type = N00.getValueType();
+      EVT N10Type = N10.getValueType();
+      if (N00Type.isFloatingPoint() && N10Type.isFloatingPoint()) {
+        SDValue FLogic = DAG.getNode(X86ISD::FAND, DL, N00Type, N00, N10);
+        return DAG.getBitcast(VT, FLogic);
+      }
+    }
+
     return SDValue();
   }
 

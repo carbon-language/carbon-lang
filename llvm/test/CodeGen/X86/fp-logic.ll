@@ -142,9 +142,8 @@ define float @f8(float %x) {
 define i32 @f9(float %x, float %y) {
 ; CHECK-LABEL: f9:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movd %xmm0, %ecx
-; CHECK-NEXT:    movd %xmm1, %eax
-; CHECK-NEXT:    andl %ecx, %eax
+; CHECK-NEXT:    andps %xmm1, %xmm0
+; CHECK-NEXT:    movd %xmm0, %eax
 ; CHECK-NEXT:    retq
 
   %bc1 = bitcast float %x to i32
@@ -158,10 +157,7 @@ define i32 @f9(float %x, float %y) {
 define float @f10(float %x, float %y) {
 ; CHECK-LABEL: f10:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movd %xmm0, %eax
-; CHECK-NEXT:    movd %xmm1, %ecx
-; CHECK-NEXT:    andl %eax, %ecx
-; CHECK-NEXT:    movd %ecx, %xmm0
+; CHECK-NEXT:    andps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
 
   %bc1 = bitcast float %x to i32
@@ -208,10 +204,7 @@ define float @xor(float %x, float %y) {
 define double @doubles(double %x, double %y) {
 ; CHECK-LABEL: doubles:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movd %xmm0, %rax
-; CHECK-NEXT:    movd %xmm1, %rcx
-; CHECK-NEXT:    andq %rax, %rcx
-; CHECK-NEXT:    movd %rcx, %xmm0
+; CHECK-NEXT:    andpd %xmm1, %xmm0
 ; CHECK-NEXT:    retq
 
   %bc1 = bitcast double %x to i64
