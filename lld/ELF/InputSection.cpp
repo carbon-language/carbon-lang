@@ -29,7 +29,8 @@ template <bool isRela>
 void InputSection<ELFT>::relocate(
     uint8_t *Buf, iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels,
     const ObjectFile<ELFT> &File, uintX_t BaseAddr,
-    const PltSection<ELFT> &PltSec, const GotSection<ELFT> &GotSec) {
+    const OutputSection<ELFT> &BssSec, const PltSection<ELFT> &PltSec,
+    const GotSection<ELFT> &GotSec) {
   typedef Elf_Rel_Impl<ELFT, isRela> RelType;
   bool IsMips64EL = File.getObj()->isMips64EL();
   for (const RelType &RI : Rels) {
@@ -58,7 +59,7 @@ void InputSection<ELFT>::relocate(
         break;
       case SymbolBody::DefinedCommonKind: {
         auto *DC = cast<DefinedCommon<ELFT>>(Body);
-        SymVA = DC->OutputSec->getVA() + DC->OffsetInBSS;
+        SymVA = BssSec.getVA() + DC->OffsetInBSS;
         break;
       }
       case SymbolBody::SharedKind:
@@ -87,7 +88,9 @@ void InputSection<ELFT>::relocate(
 }
 
 template <class ELFT>
-void InputSection<ELFT>::writeTo(uint8_t *Buf, const PltSection<ELFT> &PltSec,
+void InputSection<ELFT>::writeTo(uint8_t *Buf,
+                                 const OutputSection<ELFT> &BssSec,
+                                 const PltSection<ELFT> &PltSec,
                                  const GotSection<ELFT> &GotSec) {
   if (Header->sh_type == SHT_NOBITS)
     return;
@@ -102,9 +105,11 @@ void InputSection<ELFT>::writeTo(uint8_t *Buf, const PltSection<ELFT> &PltSec,
   // Iterate over all relocation sections that apply to this section.
   for (const Elf_Shdr *RelSec : RelocSections) {
     if (RelSec->sh_type == SHT_RELA)
-      relocate(Base, EObj->relas(RelSec), *File, BaseAddr, PltSec, GotSec);
+      relocate(Base, EObj->relas(RelSec), *File, BaseAddr, BssSec, PltSec,
+               GotSec);
     else
-      relocate(Base, EObj->rels(RelSec), *File, BaseAddr, PltSec, GotSec);
+      relocate(Base, EObj->rels(RelSec), *File, BaseAddr, BssSec, PltSec,
+               GotSec);
   }
 }
 

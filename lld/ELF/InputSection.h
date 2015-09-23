@@ -37,8 +37,8 @@ public:
 
   // Write this section to a mmap'ed file, assuming Buf is pointing to
   // beginning of the output section.
-  void writeTo(uint8_t *Buf, const PltSection<ELFT> &PltSec,
-               const GotSection<ELFT> &GotSec);
+  void writeTo(uint8_t *Buf, const OutputSection<ELFT> &BssSec,
+               const PltSection<ELFT> &PltSec, const GotSection<ELFT> &GotSec);
 
   StringRef getSectionName() const;
   const Elf_Shdr *getSectionHdr() const { return Header; }
@@ -65,6 +65,7 @@ private:
                 llvm::iterator_range<
                     const llvm::object::Elf_Rel_Impl<ELFT, isRela> *> Rels,
                 const ObjectFile<ELFT> &File, uintX_t BaseAddr,
+                const OutputSection<ELFT> &BssSec,
                 const PltSection<ELFT> &PltSec, const GotSection<ELFT> &GotSec);
 
   // The offset from beginning of the output sections this section was assigned

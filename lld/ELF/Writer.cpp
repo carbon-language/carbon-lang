@@ -365,6 +365,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   }
 
   BSSSec = getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
+
+  // The only type in OutputSections is currently OutputSection.
+  for (OutputSectionBase<ELFT::Is64Bits> *OSB : OutputSections)
+    static_cast<OutputSection<ELFT> *>(OSB)->setBssSec(BSSSec);
+
   SymTabSec.setBssSec(BSSSec);
   DynSymSec.setBssSec(BSSSec);
 
@@ -376,7 +381,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     uintX_t Align = C->MaxAlignment;
     Off = RoundUpToAlignment(Off, Align);
     C->OffsetInBSS = Off;
-    C->OutputSec = BSSSec;
     Off += Sym.st_size;
   }
 

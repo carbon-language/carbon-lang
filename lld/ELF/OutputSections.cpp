@@ -252,7 +252,7 @@ lld::elf2::getLocalSymVA(const typename ELFFile<ELFT>::Elf_Sym *Sym,
 
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
   for (InputSection<ELFT> *C : Sections)
-    C->writeTo(Buf, PltSec, GotSec);
+    C->writeTo(Buf, *BssSec, PltSec, GotSec);
 }
 
 template <bool Is64Bits>

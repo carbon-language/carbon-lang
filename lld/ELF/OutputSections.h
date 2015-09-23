@@ -242,11 +242,13 @@ public:
 
   void addSection(InputSection<ELFT> *C);
   void writeTo(uint8_t *Buf) override;
+  void setBssSec(const OutputSection<ELFT> *BS) { BssSec = BS; }
 
 private:
   std::vector<InputSection<ELFT> *> Sections;
   const PltSection<ELFT> &PltSec;
   const GotSection<ELFT> &GotSec;
+  const OutputSection<ELFT> *BssSec = nullptr;
 };
 
 template <bool Is64Bits>

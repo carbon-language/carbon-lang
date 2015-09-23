@@ -189,8 +189,6 @@ public:
 
   // The maximum alignment we have seen for this symbol.
   uintX_t MaxAlignment;
-
-  OutputSection<ELFT> *OutputSec = nullptr;
 };
 
 // Regular defined symbols read from object file symbol tables.
