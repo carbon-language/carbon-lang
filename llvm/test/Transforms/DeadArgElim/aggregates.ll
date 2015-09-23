@@ -160,3 +160,27 @@ define internal i8 @outer() {
   %val = load i8, i8* %resptr
   ret i8 %val
 }
+
+define internal { i32 } @agg_ret() {
+entry:
+  unreachable
+}
+
+; CHECK-LABEL: define void @PR24906
+; CHECK: %[[invoke:.*]] = invoke i32 @agg_ret()
+; CHECK: %[[oldret:.*]] = insertvalue { i32 } undef, i32 %[[invoke]], 0
+; CHECK: phi { i32 } [ %[[oldret]],
+define void @PR24906() personality i32 (i32)* undef {
+entry:
+  %tmp2 = invoke { i32 } @agg_ret()
+          to label %bb3 unwind label %bb4
+
+bb3:
+  %tmp3 = phi { i32 } [ %tmp2, %entry ]
+  unreachable
+
+bb4:
+  %tmp4 = landingpad { i8*, i32 }
+          cleanup
+  unreachable
+}

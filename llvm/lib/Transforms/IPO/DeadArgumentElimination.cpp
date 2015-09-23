@@ -35,6 +35,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <map>
 #include <set>
 #include <tuple>
@@ -967,7 +968,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       New = InvokeInst::Create(NF, II->getNormalDest(), II->getUnwindDest(),
-                               Args, "", Call);
+                               Args, "", Call->getParent());
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
       cast<InvokeInst>(New)->setAttributes(NewCallPAL);
     } else {
@@ -997,9 +998,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
                " must have been a struct or an array!");
         Instruction *InsertPt = Call;
         if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
-          BasicBlock::iterator IP = II->getNormalDest()->begin();
-          while (isa<PHINode>(IP)) ++IP;
-          InsertPt = IP;
+          BasicBlock *NewEdge = SplitEdge(New->getParent(), II->getNormalDest());
+          InsertPt = NewEdge->getFirstInsertionPt();
         }
 
         // We used to return a struct or array. Instead of doing smart stuff
