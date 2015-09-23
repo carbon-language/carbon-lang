@@ -2,8 +2,8 @@ LEVEL = ../../../make
 
 CXX_SOURCES = main.cpp length.cpp
 
-CFLAGS_LIMIT = -g -O0 -c
-CFLAGS_NO_LIMIT = -g -O0 -c
+CFLAGS_LIMIT = -c $(CXXFLAGS)
+CFLAGS_NO_LIMIT = -c $(CXXFLAGS)
 
 ifneq (,$(findstring clang,$(CC)))
   CFLAGS_LIMIT += -flimit-debug-info
@@ -13,10 +13,10 @@ endif
 all: limit nolimit
 
 limit: main.o length_limit.o
-	$(CXX) main.o length_limit.o -o limit
+	$(CXX) $(LDFLAGS) main.o length_limit.o -o limit
 
 nolimit: main.o length_nolimit.o
-	$(CXX) main.o length_nolimit.o -o nolimit
+	$(CXX) $(LDFLAGS) main.o length_nolimit.o -o nolimit
 
 main.o: main.cpp
 	$(CXX) $(CFLAGS_LIMIT) main.cpp -o main.o
