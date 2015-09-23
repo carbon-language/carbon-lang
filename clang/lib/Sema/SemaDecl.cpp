@@ -12660,13 +12660,18 @@ ExprResult Sema::VerifyBitField(SourceLocation FieldLoc,
           CStdConstraintViolation ? TypeWidth : TypeStorageSize;
       if (FieldName)
         return Diag(FieldLoc, diag::err_bitfield_width_exceeds_type_width)
-               << FieldName << (unsigned)Value.getZExtValue() << DiagWidth;
+               << FieldName << (unsigned)Value.getZExtValue()
+               << !CStdConstraintViolation << DiagWidth;
 
       return Diag(FieldLoc, diag::err_anon_bitfield_width_exceeds_type_width)
-             << (unsigned)Value.getZExtValue() << DiagWidth;
+             << (unsigned)Value.getZExtValue() << !CStdConstraintViolation
+             << DiagWidth;
     }
 
-    if (BitfieldIsOverwide) {
+    // Warn on types where the user might conceivably expect to get all
+    // specified bits as value bits: that's all integral types other than
+    // 'bool'.
+    if (BitfieldIsOverwide && !FieldTy->isBooleanType()) {
       if (FieldName)
         Diag(FieldLoc, diag::warn_bitfield_width_exceeds_type_width)
             << FieldName << (unsigned)Value.getZExtValue()

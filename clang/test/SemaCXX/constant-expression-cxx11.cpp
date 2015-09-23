@@ -1801,7 +1801,7 @@ namespace Bitfields {
     bool b : 1;
     unsigned u : 5;
     int n : 5;
-    bool b2 : 3; // expected-warning {{exceeds the width of its type}}
+    bool b2 : 3;
     unsigned u2 : 74; // expected-warning {{exceeds the width of its type}}
     int n2 : 81; // expected-warning {{exceeds the width of its type}}
   };

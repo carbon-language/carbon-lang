@@ -69,7 +69,7 @@ struct S12 {
 
 struct S13 { // expected-warning {{padding size of 'S13' with 6 bits to alignment boundary}}
   char c;
-  bool b : 10; // expected-warning {{width of bit-field 'b' (10 bits) exceeds the width of its type}}
+  bool b : 10;
 };
 
 // The warnings are emitted when the layout of the structs is computed, so we have to use them.
