@@ -6,11 +6,6 @@
 
 #include "Inputs/cuda.h"
 
-// Make sure that all __global__ functions are added to @llvm.used
-// CHECK: @llvm.used = appending global
-// CHECK-SAME: @global_function
-// CHECK-SAME: @_Z16templated_kernelIiEvT_
-
 // CHECK-LABEL: define void @device_function
 extern "C"
 __device__ void device_function() {}
@@ -24,7 +19,7 @@ __global__ void global_function() {
 
 // Make sure host-instantiated kernels are preserved on device side.
 template <typename T> __global__ void templated_kernel(T param) {}
-// CHECK-LABEL: define linkonce_odr void @_Z16templated_kernelIiEvT_
+// CHECK-LABEL: define weak_odr void @_Z16templated_kernelIiEvT_
 void host_function() { templated_kernel<<<0,0>>>(0); }
 
 // CHECK: !{{[0-9]+}} = !{void ()* @global_function, !"kernel", i32 1}
