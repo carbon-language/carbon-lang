@@ -544,6 +544,18 @@ void constness() {
   // CHECK-FIXES-NEXT: sum += elem + 2;
 }
 
+void ConstRef(const dependent<int>& ConstVRef) {
+  int sum = 0;
+  // FIXME: This does not work with size_t (probably due to the implementation
+  // of dependent); make dependent work exactly like a std container type.
+  for (int i = 0; i < ConstVRef.size(); ++i) {
+    sum += ConstVRef[i];
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (const auto & elem : ConstVRef)
+  // CHECK-FIXES-NEXT: sum += elem;
+}
+
 // Check for loops that don't mention containers.
 void noContainer() {
   for (auto i = 0; i < v.size(); ++i) {
