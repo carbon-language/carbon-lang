@@ -224,6 +224,58 @@ sw.epilog:
 ; CHECK: Successors according to CFG: BB#2(30) BB#3(20)
 }
 
+; CHECK-LABEL: test5
+
+define void @test5(i32 %x) nounwind {
+entry:
+
+; In this switch statement, there is an edge from jump table to default basic
+; block.
+
+  switch i32 %x, label %sw.default [
+    i32 1, label %sw.bb
+    i32 5, label %sw.bb2
+    i32 7, label %sw.bb3
+    i32 9, label %sw.bb4
+    i32 31, label %sw.bb5
+  ], !prof !2
+
+sw.bb:
+  call void @foo(i32 0)
+  br label %sw.epilog
+
+sw.bb2:
+  call void @foo(i32 1)
+  br label %sw.epilog
+
+sw.bb3:
+  call void @foo(i32 2)
+  br label %sw.epilog
+
+sw.bb4:
+  call void @foo(i32 3)
+  br label %sw.epilog
+
+sw.bb5:
+  call void @foo(i32 4)
+  br label %sw.epilog
+
+sw.default:
+  call void @foo(i32 5)
+  br label %sw.epilog
+
+sw.epilog:
+  ret void
+
+; Check if weights are correctly assigned to edges generated from switch
+; statement.
+;
+; CHECK: BB#0:
+; BB#0 to BB#6: [10, UINT32_MAX] (15)
+; BB#0 to BB#8: [1, 5, 7, 9] (jump table) (45)
+; CHECK: Successors according to CFG: BB#8(15) BB#9(45)
+}
+
 !1 = !{!"branch_weights", i32 10, i32 10, i32 10, i32 10, i32 10, i32 10, i32 10, i32 10, i32 10} 
 !2 = !{!"branch_weights", i32 10, i32 10, i32 10, i32 10, i32 10, i32 10} 
 !3 = !{!"branch_weights", i32 10, i32 10, i32 10, i32 10, i32 10, i32 10, i32 10} 
