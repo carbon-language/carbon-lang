@@ -24456,6 +24456,9 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
   if (SDValue R = CMPEQCombine(N, DAG, DCI, Subtarget))
     return R;
 
+  if (SDValue FPLogic = convertIntLogicToFPLogic(N, DAG, Subtarget))
+    return FPLogic;
+
   EVT VT = N->getValueType(0);
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -24481,9 +24484,6 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
         }
       }
     } // BEXTR
-
-    if (SDValue FPLogic = convertIntLogicToFPLogic(N, DAG, Subtarget))
-      return FPLogic;
 
     return SDValue();
   }
