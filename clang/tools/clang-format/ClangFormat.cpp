@@ -19,7 +19,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Version.h"
 #include "clang/Format/Format.h"
-#include "clang/Rewrite/Core/Rewriter.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -27,6 +26,7 @@
 #include "llvm/Support/Signals.h"
 
 using namespace llvm;
+using clang::tooling::Replacements;
 
 static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
@@ -97,6 +97,10 @@ static cl::opt<unsigned>
                     "clang-format from an editor integration"),
            cl::init(0), cl::cat(ClangFormatCategory));
 
+static cl::opt<bool> SortIncludes("sort-includes",
+                                  cl::desc("Sort touched include lines"),
+                                  cl::cat(ClangFormatCategory));
+
 static cl::list<std::string> FileNames(cl::Positional, cl::desc("[<file> ...]"),
                                        cl::cat(ClangFormatCategory));
 
@@ -121,9 +125,14 @@ static bool parseLineRange(StringRef Input, unsigned &FromLine,
          LineRange.second.getAsInteger(0, ToLine);
 }
 
-static bool fillRanges(SourceManager &Sources, FileID ID,
-                       const MemoryBuffer *Code,
-                       std::vector<CharSourceRange> &Ranges) {
+static bool fillRanges(MemoryBuffer *Code,
+                       std::vector<tooling::Range> &Ranges) {
+  FileManager Files((FileSystemOptions()));
+  DiagnosticsEngine Diagnostics(
+      IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
+      new DiagnosticOptions);
+  SourceManager Sources(Diagnostics, Files);
+  FileID ID = createInMemoryFile("-", Code, Sources, Files);
   if (!LineRanges.empty()) {
     if (!Offsets.empty() || !Lengths.empty()) {
       llvm::errs() << "error: cannot use -lines with -offset/-length\n";
@@ -144,7 +153,9 @@ static bool fillRanges(SourceManager &Sources, FileID ID,
       SourceLocation End = Sources.translateLineCol(ID, ToLine, UINT_MAX);
       if (Start.isInvalid() || End.isInvalid())
         return true;
-      Ranges.push_back(CharSourceRange::getCharRange(Start, End));
+      unsigned Offset = Sources.getFileOffset(Start);
+      unsigned Length = Sources.getFileOffset(End) - Offset;
+      Ranges.push_back(tooling::Range(Offset, Length));
     }
     return false;
   }
@@ -177,7 +188,9 @@ static bool fillRanges(SourceManager &Sources, FileID ID,
     } else {
       End = Sources.getLocForEndOfFile(ID);
     }
-    Ranges.push_back(CharSourceRange::getCharRange(Start, End));
+    unsigned Offset = Sources.getFileOffset(Start);
+    unsigned Length = Sources.getFileOffset(End) - Offset;
+    Ranges.push_back(tooling::Range(Offset, Length));
   }
   return false;
 }
@@ -202,13 +215,18 @@ static void outputReplacementXML(StringRef Text) {
   llvm::outs() << Text.substr(From);
 }
 
+static void outputReplacementsXML(const Replacements &Replaces) {
+  for (const auto &R : Replaces) {
+    outs() << "<replacement "
+           << "offset='" << R.getOffset() << "' "
+           << "length='" << R.getLength() << "'>";
+    outputReplacementXML(R.getReplacementText());
+    outs() << "</replacement>\n";
+  }
+}
+
 // Returns true on error.
 static bool format(StringRef FileName) {
-  FileManager Files((FileSystemOptions()));
-  DiagnosticsEngine Diagnostics(
-      IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
-      new DiagnosticOptions);
-  SourceManager Sources(Diagnostics, Files);
   ErrorOr<std::unique_ptr<MemoryBuffer>> CodeOrErr =
       MemoryBuffer::getFileOrSTDIN(FileName);
   if (std::error_code EC = CodeOrErr.getError()) {
@@ -218,16 +236,27 @@ static bool format(StringRef FileName) {
   std::unique_ptr<llvm::MemoryBuffer> Code = std::move(CodeOrErr.get());
   if (Code->getBufferSize() == 0)
     return false; // Empty files are formatted correctly.
-  FileID ID = createInMemoryFile(FileName, Code.get(), Sources, Files);
-  std::vector<CharSourceRange> Ranges;
-  if (fillRanges(Sources, ID, Code.get(), Ranges))
+  std::vector<tooling::Range> Ranges;
+  if (fillRanges(Code.get(), Ranges))
     return true;
-
   FormatStyle FormatStyle = getStyle(
       Style, (FileName == "-") ? AssumeFilename : FileName, FallbackStyle);
+  Replacements Replaces;
+  std::string ChangedCode;
+  if (SortIncludes) {
+    Replaces =
+        sortIncludes(FormatStyle, Code->getBuffer(), Ranges, FileName);
+    ChangedCode = tooling::applyAllReplacements(Code->getBuffer(), Replaces);
+    for (const auto &R : Replaces)
+      Ranges.push_back({R.getOffset(), R.getLength()});
+  } else {
+    ChangedCode = Code->getBuffer().str();
+  }
+
   bool IncompleteFormat = false;
-  tooling::Replacements Replaces =
-      reformat(FormatStyle, Sources, ID, Ranges, &IncompleteFormat);
+  Replaces = tooling::mergeReplacements(
+      Replaces,
+      reformat(FormatStyle, ChangedCode, Ranges, FileName, &IncompleteFormat));
   if (OutputXML) {
     llvm::outs() << "<?xml version='1.0'?>\n<replacements "
                     "xml:space='preserve' incomplete_format='"
@@ -237,31 +266,30 @@ static bool format(StringRef FileName) {
                    << tooling::shiftedCodePosition(Replaces, Cursor)
                    << "</cursor>\n";
 
-    for (tooling::Replacements::const_iterator I = Replaces.begin(),
-                                               E = Replaces.end();
-         I != E; ++I) {
-      llvm::outs() << "<replacement "
-                   << "offset='" << I->getOffset() << "' "
-                   << "length='" << I->getLength() << "'>";
-      outputReplacementXML(I->getReplacementText());
-      llvm::outs() << "</replacement>\n";
-    }
+    outputReplacementsXML(Replaces); 
     llvm::outs() << "</replacements>\n";
   } else {
-    Rewriter Rewrite(Sources, LangOptions());
-    tooling::applyAllReplacements(Replaces, Rewrite);
+    std::string FormattedCode =
+        applyAllReplacements(Code->getBuffer(), Replaces);
     if (Inplace) {
       if (FileName == "-")
         llvm::errs() << "error: cannot use -i when reading from stdin.\n";
-      else if (Rewrite.overwriteChangedFiles())
-        return true;
+      else {
+        std::error_code EC;
+        raw_fd_ostream FileOut(FileName, EC, llvm::sys::fs::F_Text);
+        if (EC) {
+          llvm::errs() << EC.message() << "\n";
+          return true;
+        }
+        FileOut << FormattedCode;
+      }
     } else {
       if (Cursor.getNumOccurrences() != 0)
         outs() << "{ \"Cursor\": "
                << tooling::shiftedCodePosition(Replaces, Cursor)
                << ", \"IncompleteFormat\": "
                << (IncompleteFormat ? "true" : "false") << " }\n";
-      Rewrite.getEditBuffer(ID).write(outs());
+      outs() << FormattedCode;
     }
   }
   return false;

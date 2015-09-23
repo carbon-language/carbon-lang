@@ -310,8 +310,8 @@ template <> struct DocumentListTraits<std::vector<FormatStyle>> {
     return Seq[Index];
   }
 };
-}
-}
+} // namespace yaml
+} // namespace llvm
 
 namespace clang {
 namespace format {
@@ -1571,7 +1571,107 @@ private:
   bool BinPackInconclusiveFunctions;
 };
 
+struct IncludeDirective {
+  StringRef Filename;
+  StringRef Text;
+  unsigned Offset;
+  bool IsAngled;
+};
+
 } // end anonymous namespace
+
+// Determines whether 'Ranges' intersects with ('Start', 'End').
+static bool affectsRange(ArrayRef<tooling::Range> Ranges, unsigned Start,
+                         unsigned End) {
+  for (auto Range : Ranges) {
+    if (Range.getOffset() < End &&
+        Range.getOffset() + Range.getLength() > Start)
+      return true;
+  }
+  return false;
+}
+
+// Sorts a block of includes given by 'Includes' alphabetically adding the
+// necessary replacement to 'Replaces'. 'Includes' must be in strict source
+// order.
+static void sortIncludes(const FormatStyle &Style,
+                         const SmallVectorImpl<IncludeDirective> &Includes,
+                         ArrayRef<tooling::Range> Ranges, StringRef FileName,
+                         tooling::Replacements &Replaces) {
+  if (!affectsRange(Ranges, Includes.front().Offset,
+                    Includes.back().Offset + Includes.back().Text.size()))
+    return;
+  SmallVector<unsigned, 16> Indices;
+  for (unsigned i = 0, e = Includes.size(); i != e; ++i)
+    Indices.push_back(i);
+  std::sort(Indices.begin(), Indices.end(), [&](unsigned LHSI, unsigned RHSI) {
+    return Includes[LHSI].Filename < Includes[RHSI].Filename;
+  });
+
+  // If the #includes are out of order, we generate a single replacement fixing
+  // the entire block. Otherwise, no replacement is generated.
+  bool OutOfOrder = false;
+  for (unsigned i = 1, e = Indices.size(); i != e; ++i) {
+    if (Indices[i] != i) {
+      OutOfOrder = true;
+      break;
+    }
+  }
+  if (!OutOfOrder)
+    return;
+
+  std::string result = Includes[Indices[0]].Text;
+  for (unsigned i = 1, e = Indices.size(); i != e; ++i) {
+    result += "\n";
+    result += Includes[Indices[i]].Text;
+  }
+
+  // Sorting #includes shouldn't change their total number of characters.
+  // This would otherwise mess up 'Ranges'.
+  assert(result.size() ==
+         Includes.back().Offset + Includes.back().Text.size() -
+             Includes.front().Offset);
+
+  Replaces.insert(tooling::Replacement(FileName, Includes.front().Offset,
+                                       result.size(), result));
+}
+
+tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
+                                   ArrayRef<tooling::Range> Ranges,
+                                   StringRef FileName) {
+  tooling::Replacements Replaces;
+  unsigned Prev = 0;
+  unsigned SearchFrom = 0;
+  llvm::Regex IncludeRegex(R"(^[\t\ ]*#[\t\ ]*include[^"<]*["<]([^">]*)([">]))");
+  SmallVector<StringRef, 4> Matches;
+  SmallVector<IncludeDirective, 16> IncludesInBlock;
+  for (;;) {
+    auto Pos = Code.find('\n', SearchFrom);
+    StringRef Line =
+        Code.substr(Prev, (Pos != StringRef::npos ? Pos : Code.size()) - Prev);
+    if (!Line.endswith("\\")) {
+      if (IncludeRegex.match(Line, &Matches)) {
+        bool IsAngled = Matches[2] == ">";
+        if (!IncludesInBlock.empty() &&
+            IsAngled != IncludesInBlock.back().IsAngled) {
+          sortIncludes(Style, IncludesInBlock, Ranges, FileName, Replaces);
+          IncludesInBlock.clear();
+        }
+        IncludesInBlock.push_back({Matches[1], Line, Prev, Matches[2] == ">"});
+      } else if (!IncludesInBlock.empty()) {
+        sortIncludes(Style, IncludesInBlock, Ranges, FileName, Replaces);
+        IncludesInBlock.clear();
+      }
+      Prev = Pos + 1;
+    }
+    if (Pos == StringRef::npos || Pos + 1 == Code.size())
+      break;
+    SearchFrom = Pos + 1;
+  }
+  if (!IncludesInBlock.empty())
+    sortIncludes(Style, IncludesInBlock, Ranges, FileName, Replaces);
+  return Replaces;
+}
 
 tooling::Replacements reformat(const FormatStyle &Style,
                                SourceManager &SourceMgr, FileID ID,

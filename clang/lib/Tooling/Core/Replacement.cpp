@@ -292,6 +292,138 @@ std::string applyAllReplacements(StringRef Code, const Replacements &Replaces) {
   return Result;
 }
 
+namespace {
+// Represents a merged replacement, i.e. a replacement consisting of multiple
+// overlapping replacements from 'First' and 'Second' in mergeReplacements.
+//
+// Position projection:
+// Offsets and lengths of the replacements can generally refer to two different
+// coordinate spaces. Replacements from 'First' refer to the original text
+// whereas replacements from 'Second' refer to the text after applying 'First'.
+//
+// MergedReplacement always operates in the coordinate space of the original
+// text, i.e. transforms elements from 'Second' to take into account what was
+// changed based on the elements from 'First'.
+//
+// We can correctly calculate this projection as we look at the replacements in
+// order of strictly increasing offsets.
+//
+// Invariants:
+// * We always merge elements from 'First' into elements from 'Second' and vice
+//   versa. Within each set, the replacements are non-overlapping.
+// * We only extend to the right, i.e. merge elements with strictly increasing
+//   offsets.
+class MergedReplacement {
+public:
+  MergedReplacement(const Replacement &R, bool MergeSecond, int D)
+      : MergeSecond(MergeSecond), Delta(D), FilePath(R.getFilePath()),
+        Offset(R.getOffset() + (MergeSecond ? 0 : Delta)), Length(R.getLength()),
+        Text(R.getReplacementText()) {
+    Delta += MergeSecond ? 0 : Text.size() - Length;
+    DeltaFirst = MergeSecond ? Text.size() - Length : 0;
+  }
+
+  // Merges the next element 'R' into this merged element. As we always merge
+  // from 'First' into 'Second' or vice versa, the MergedReplacement knows what
+  // set the next element is coming from. 
+  void merge(const Replacement &R) {
+    if (MergeSecond) {
+      unsigned REnd = R.getOffset() + Delta + R.getLength();
+      unsigned End = Offset + Text.size();
+      if (REnd > End) {
+        Length += REnd - End;
+        MergeSecond = false;
+      }
+      StringRef TextRef = Text;
+      StringRef Head = TextRef.substr(0, R.getOffset() + Delta - Offset);
+      StringRef Tail = TextRef.substr(REnd - Offset);
+      Text = (Head + R.getReplacementText() + Tail).str();
+      Delta += R.getReplacementText().size() - R.getLength();
+    } else {
+      unsigned End = Offset + Length;
+      StringRef RText = R.getReplacementText();
+      StringRef Tail = RText.substr(End - R.getOffset());
+      Text = (Text + Tail).str();
+      if (R.getOffset() + RText.size() > End) {
+        Length = R.getOffset() + R.getLength() - Offset;
+        MergeSecond = true;
+      } else {
+        Length += R.getLength() - RText.size();
+      }
+      DeltaFirst += RText.size() - R.getLength();
+    }
+  }
+
+  // Returns 'true' if 'R' starts strictly after the MergedReplacement and thus
+  // doesn't need to be merged.
+  bool endsBefore(const Replacement &R) const {
+    if (MergeSecond)
+      return Offset + Text.size() < R.getOffset() + Delta;
+    return Offset + Length < R.getOffset();
+  }
+
+  // Returns 'true' if an element from the second set should be merged next.
+  bool mergeSecond() const { return MergeSecond; }
+  int deltaFirst() const { return DeltaFirst; }
+  Replacement asReplacement() const { return {FilePath, Offset, Length, Text}; }
+
+private:
+  bool MergeSecond;
+
+  // Amount of characters that elements from 'Second' need to be shifted by in
+  // order to refer to the original text.
+  int Delta;
+
+  // Sum of all deltas (text-length - length) of elements from 'First' merged
+  // into this element. This is used to update 'Delta' once the
+  // MergedReplacement is completed.
+  int DeltaFirst;
+
+  // Data of the actually merged replacement. FilePath and Offset aren't changed
+  // as the element is only extended to the right.
+  const StringRef FilePath;
+  const unsigned Offset;
+  unsigned Length;
+  std::string Text;
+};
+} // namespace
+
+Replacements mergeReplacements(const Replacements &First,
+                               const Replacements &Second) {
+  if (First.empty() || Second.empty())
+    return First.empty() ? Second : First;
+
+  // Delta is the amount of characters that replacements from 'Second' need to
+  // be shifted so that their offsets refer to the original text.
+  int Delta = 0;
+  Replacements Result;
+
+  // Iterate over both sets and always add the next element (smallest total
+  // Offset) from either 'First' or 'Second'. Merge that element with
+  // subsequent replacements as long as they overlap. See more details in the
+  // comment on MergedReplacement.
+  for (auto FirstI = First.begin(), SecondI = Second.begin();
+       FirstI != First.end() || SecondI != Second.end();) {
+    bool NextIsFirst = SecondI == Second.end() ||
+                       FirstI->getOffset() < SecondI->getOffset() + Delta;
+    MergedReplacement Merged(NextIsFirst ? *FirstI : *SecondI, NextIsFirst,
+                             Delta);
+    ++(NextIsFirst ? FirstI : SecondI);
+
+    while ((Merged.mergeSecond() && SecondI != Second.end()) ||
+           (!Merged.mergeSecond() && FirstI != First.end())) {
+      auto &I = Merged.mergeSecond() ? SecondI : FirstI;
+      if (Merged.endsBefore(*I))
+        break;
+      Merged.merge(*I);
+      ++I;
+    }
+    Delta -= Merged.deltaFirst();
+    Result.insert(Merged.asReplacement());
+  }
+  return Result;
+}
+
 } // end namespace tooling
 } // end namespace clang
 

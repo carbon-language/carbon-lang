@@ -220,6 +220,12 @@ bool applyAllReplacements(const std::vector<Replacement> &Replaces,
 /// replacements cannot be applied, this returns an empty \c string.
 std::string applyAllReplacements(StringRef Code, const Replacements &Replaces);
 
+/// \brief Merges two sets of replacements with the second set referring to the
+/// code after applying the first set. Within both 'First' and 'Second',
+/// replacements must not overlap.
+Replacements mergeReplacements(const Replacements &First,
+                               const Replacements &Second);
+
 template <typename Node>
 Replacement::Replacement(const SourceManager &Sources,
                          const Node &NodeToReplace, StringRef ReplacementText,

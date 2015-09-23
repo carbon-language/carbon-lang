@@ -571,6 +571,12 @@ std::error_code parseConfiguration(StringRef Text, FormatStyle *Style);
 /// \brief Gets configuration in a YAML string.
 std::string configurationAsText(const FormatStyle &Style);
 
+/// \brief Returns the replacements necessary to sort all #include blocks that
+/// are affected by 'Ranges'.
+tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
+                                   ArrayRef<tooling::Range> Ranges,
+                                   StringRef FileName);
+
 /// \brief Reformats the given \p Ranges in the file \p ID.
 ///
 /// Each range is extended on either end to its next bigger logic unit, i.e.
