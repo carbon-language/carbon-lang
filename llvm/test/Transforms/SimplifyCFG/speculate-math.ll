@@ -7,6 +7,33 @@ declare float @llvm.fabs.f32(float) nounwind readonly
 declare float @llvm.minnum.f32(float, float) nounwind readonly
 declare float @llvm.maxnum.f32(float, float) nounwind readonly
 
+; FIXME: This is intended to be a temporary test. As discussed in 
+; D12882, we actually do want to speculate even expensive operations
+; in SimplifyCFG because it can expose more optimizations for other
+; passes. Therefore, we either need to adjust SimplifyCFG's 
+; calculations that use the TTI cost model or use a different cost
+; model for deciding which ops should be speculated in SimplifyCFG. 
+; We should also be using the TTI cost model later - for example in
+; CodeGenPrepare - to potentially undo this speculation.
+
+; Do not speculate fdiv by default because it is generally expensive. 
+
+; CHECK-LABEL: @fdiv_test(
+; CHECK-NOT: select
+define double @fdiv_test(double %a, double %b) {
+entry:
+  %cmp = fcmp ogt double %a, 0.0
+  br i1 %cmp, label %cond.true, label %cond.end
+
+cond.true:
+  %div = fdiv double %b, %a
+  br label %cond.end
+
+cond.end:
+  %cond = phi double [ %div, %cond.true ], [ 0.0, %entry ]
+  ret double %cond
+}
+
 ; CHECK-LABEL: @sqrt_test(
 ; CHECK: select
 define void @sqrt_test(float addrspace(1)* noalias nocapture %out, float %a) nounwind {

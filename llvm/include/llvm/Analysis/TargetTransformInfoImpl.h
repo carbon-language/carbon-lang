@@ -61,6 +61,14 @@ public:
       // Otherwise, the default basic cost is used.
       return TTI::TCC_Basic;
 
+    case Instruction::FDiv:
+    case Instruction::FRem:
+    case Instruction::SDiv:
+    case Instruction::SRem:
+    case Instruction::UDiv:
+    case Instruction::URem:
+      return TTI::TCC_Expensive;
+
     case Instruction::IntToPtr: {
       // An inttoptr cast is free so long as the input is a legal integer type
       // which doesn't contain values outside the range of a pointer.
