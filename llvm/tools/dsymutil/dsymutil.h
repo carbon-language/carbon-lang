@@ -28,7 +28,7 @@ struct LinkOptions {
   bool Verbose;  ///< Verbosity
   bool NoOutput; ///< Skip emitting output
   bool NoODR;    ///< Do not unique types according to ODR
-  std::string PrependPath; //< -oso-prepend-path
+  std::string PrependPath; ///< -oso-prepend-path
 
   LinkOptions() : Verbose(false), NoOutput(false) {}
 };
