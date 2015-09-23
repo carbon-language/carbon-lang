@@ -434,8 +434,9 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
 
     // For a complete unroll, make the last iteration end with a branch
     // to the exit block.
-    if (CompletelyUnroll && j == 0) {
-      Dest = LoopExit;
+    if (CompletelyUnroll) {
+      if (j == 0)
+        Dest = LoopExit;
       NeedConditional = false;
     }
 
