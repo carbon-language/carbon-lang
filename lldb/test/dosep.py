@@ -285,7 +285,8 @@ def process_dir_worker_multiprocessing(
 
     # Shut off interrupt handling in the child process.
     signal.signal(signal.SIGINT, signal.SIG_IGN)
-    signal.signal(signal.SIGHUP, signal.SIG_IGN)
+    if hasattr(signal, 'SIGHUP'):
+        signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
     # Setup the global state for the worker process.
     setup_global_variables(
@@ -1268,7 +1269,8 @@ def main(print_details_on_success, num_threads, test_subdir,
     """
 
     # Do not shut down on sighup.
-    signal.signal(signal.SIGHUP, signal.SIG_IGN)
+    if hasattr(signal, 'SIGHUP'):
+        signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
     dotest_argv = sys.argv[1:]
 
