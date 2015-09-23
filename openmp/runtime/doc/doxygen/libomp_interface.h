@@ -26,68 +26,31 @@ The aim here is to explain the interface from the compiler to the runtime.
 The overall design is described, and each function in the interface
 has its own description. (At least, that's the ambition, we may not be there yet).
 
-@section sec_building Building the Runtime
+@section sec_building Quickly Building the Runtime
 For the impatient, we cover building the runtime as the first topic here.
 
-A top-level Makefile is provided that attempts to derive a suitable
-configuration for the most commonly used environments.  To see the
-default settings, type:
+CMake is used to build the OpenMP runtime.  For details and a full list of options for the CMake build system,
+see <tt>Build_With_CMake.txt</tt> inside the <tt>runtime/</tt> subdirectory.  These
+instructions will provide the most typical build.
+
+In-LLVM-tree build:.
 @code
-% make info
+$ cd where-you-want-to-live
+Check out openmp into llvm/projects
+$ cd where-you-want-to-build
+$ mkdir build && cd build
+$ cmake path/to/llvm -DCMAKE_C_COMPILER=<C compiler> -DCMAKE_CXX_COMPILER=<C++ compiler>
+$ make omp
 @endcode
-
-You can change the Makefile's behavior with the following options:
-
- - <b>omp_root</b>:    The path to the top-level directory containing the top-level
-             Makefile.  By default, this will take on the value of the
-             current working directory.
-
- - <b>omp_os</b>:      Operating system.  By default, the build will attempt to
-             detect this. Currently supports "linux", "macos", and
-             "windows".
-
- - <b>arch</b>:        Architecture. By default, the build will attempt to
-	     detect this if not specified by the user. Currently 
-	     supported values are
-             - "32" for IA-32 architecture 
-             - "32e" for Intel&reg;&nbsp;64 architecture
-             - "mic" for Intel&reg;&nbsp;Many Integrated Core Architecture (
-             If "mic" is specified then "icc" will be used as the
-             compiler, and appropriate k1om binutils will be used. The
-             necessary packages must be installed on the build machine
-             for this to be possible, but an
-	     Intel&reg;&nbsp;Xeon Phi&trade;&nbsp;
-             coprocessor is not required to build the library).
-
- - <b>compiler</b>:    Which compiler to use for the build.  Defaults to "icc"
-             or "icl" depending on the value of omp_os. Also supports
-             "gcc" when omp_os is "linux" for gcc\other versions
-             4.6.2 and higher. For icc on OS X\other, OS X\other versions 
-	     greater than 10.6 are not supported currently. Also, icc
-	     version 13.0 is not supported. The selected compiler should be
-             installed and in the user's path. The corresponding
-             Fortran compiler should also be in the path.
-
- - <b>mode</b>:        Library mode: default is "release".  Also supports "debug".
-
-To use any of the options above, simple add &lt;option_name&gt;=&lt;value&gt;.  For
-example, if you want to build with gcc instead of icc, type:
+Out-of-LLVM-tree build:
 @code
-% make compiler=gcc
+$ cd where-you-want-to-live
+Check out openmp
+$ cd where-you-want-to-live/openmp/runtime
+$ mkdir build && cd build
+$ cmake path/to/openmp -DCMAKE_C_COMPILER=<C compiler> -DCMAKE_CXX_COMPILER=<C++ compiler>
+$ make
 @endcode
-
-Underneath the hood of the top-level Makefile, the runtime is built by
-a perl script that in turn drives a detailed runtime system make.  The
-script can be found at <tt>tools/build.pl</tt>, and will print
-information about all its flags and controls if invoked as 
-@code 
-% tools/build.pl --help 
-@endcode
-
-If invoked with no arguments, it will try to build a set of libraries
-that are appropriate for the machine on which the build is happening. 
-There are many options for building out of tree, and configuring library
-features that can also be used. Consult the <tt>--help</tt> output for details.
 
 @section sec_supported Supported RTL Build Configurations
 
@@ -96,17 +59,39 @@ Intel&reg;&nbsp; Many Integrated Core Architecture.  The build configurations
 supported are shown in the table below.
 
 <table border=1>
-<tr><th> <th>icc/icl<th>gcc
-<tr><td>Linux\other OS<td>Yes(1,5)<td>Yes(2,4)
-<tr><td>OS X\other<td>Yes(1,3,4)<td>No
-<tr><td>Windows\other OS<td>Yes(1,4)<td>No
+<tr><th> <th>icc/icl<th>gcc<th>clang
+<tr><td>Linux\other OS<td>Yes(1,5)<td>Yes(2,4)<td>Yes(4,6,7)
+<tr><td>FreeBSD\other<td>Yes(1,5)<td>Yes(2,4)<td>Yes(4,6,7,8)
+<tr><td>OS X\other<td>Yes(1,3,4)<td>No<td>Yes(4,6,7)
+<tr><td>Windows\other OS<td>Yes(1,4)<td>No<td>No
 </table>
 (1) On IA-32 architecture and Intel&reg;&nbsp; 64, icc/icl versions 12.x 
     are supported (12.1 is recommended).<br>
-(2) gcc version 4.6.2 is supported.<br>
+(2) gcc version 4.7 is supported.<br>
 (3) For icc on OS X\other, OS X\other version 10.5.8 is supported.<br>
 (4) Intel&reg;&nbsp; Many Integrated Core Architecture not supported.<br>
-(5) On Intel&reg;&nbsp; Many Integrated Core Architecture, icc/icl versions 13.0 or later are required.
+(5) On Intel&reg;&nbsp; Many Integrated Core Architecture, icc/icl versions 13.0 or later are required.<br>
+(6) Clang\other version 3.3 is supported.<br>
+(7) Clang\other currently does not offer a software-implemented 128 bit extended
+    precision type.  Thus, all entry points reliant on this type are removed
+    from the library and cannot be called in the user program.  The following
+    functions are not available:
+@code
+    __kmpc_atomic_cmplx16_*
+    __kmpc_atomic_float16_*
+    __kmpc_atomic_*_fp
+@endcode
+(8) Community contribution provided AS IS, not tested by Intel.
+
+Supported Architectures: IBM(R) Power 7 and Power 8
+<table border=1>
+<tr><th> <th>gcc<th>clang
+<tr><td>Linux\other OS<td>Yes(1,2)<td>Yes(3,4)
+</table>
+(1) On Power 7, gcc version 4.8.2 is supported.<br>
+(2) On Power 8, gcc version 4.8.2 is supported.<br>
+(3) On Power 7, clang version 3.7 is supported.<br>
+(4) On Power 8, clang version 3.7 is supported.<br>
 
 @section sec_frontend Front-end Compilers that work with this RTL
 
