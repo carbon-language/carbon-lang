@@ -4444,7 +4444,6 @@ ClangASTContext::GetEncoding (lldb::opaque_compiler_type_t type, uint64_t &count
         case clang::Type::Builtin:
             switch (llvm::cast<clang::BuiltinType>(qual_type)->getKind())
         {
-            default: assert(0 && "Unknown builtin type!");
             case clang::BuiltinType::Void:
                 break;
                 
@@ -4484,14 +4483,25 @@ ClangASTContext::GetEncoding (lldb::opaque_compiler_type_t type, uint64_t &count
             case clang::BuiltinType::Kind::BuiltinFn:
             case clang::BuiltinType::Kind::Dependent:
             case clang::BuiltinType::Kind::Half:
+            case clang::BuiltinType::Kind::OCLClkEvent:
             case clang::BuiltinType::Kind::OCLEvent:
             case clang::BuiltinType::Kind::OCLImage1d:
             case clang::BuiltinType::Kind::OCLImage1dArray:
             case clang::BuiltinType::Kind::OCLImage1dBuffer:
             case clang::BuiltinType::Kind::OCLImage2d:
             case clang::BuiltinType::Kind::OCLImage2dArray:
+            case clang::BuiltinType::Kind::OCLImage2dArrayDepth:
+            case clang::BuiltinType::Kind::OCLImage2dArrayMSAA:
+            case clang::BuiltinType::Kind::OCLImage2dArrayMSAADepth:
+            case clang::BuiltinType::Kind::OCLImage2dDepth:
+            case clang::BuiltinType::Kind::OCLImage2dMSAA:
+            case clang::BuiltinType::Kind::OCLImage2dMSAADepth:
             case clang::BuiltinType::Kind::OCLImage3d:
+            case clang::BuiltinType::Kind::OCLQueue:
+            case clang::BuiltinType::Kind::OCLNDRange:
+            case clang::BuiltinType::Kind::OCLReserveID:
             case clang::BuiltinType::Kind::OCLSampler:
+            case clang::BuiltinType::Kind::OMPArraySection:
             case clang::BuiltinType::Kind::Overload:
             case clang::BuiltinType::Kind::PseudoObject:
             case clang::BuiltinType::Kind::UnknownAny:
