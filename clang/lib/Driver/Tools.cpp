@@ -5037,6 +5037,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Forward -fparse-all-comments to -cc1.
   Args.AddAllArgs(CmdArgs, options::OPT_fparse_all_comments);
 
+  // Turn -fplugin=name.so into -load name.so
+  for (const Arg *A : Args.filtered(options::OPT_fplugin_EQ)) {
+    CmdArgs.push_back("-load");
+    CmdArgs.push_back(A->getValue());
+    A->claim();
+  }
+
   // Forward -Xclang arguments to -cc1, and -mllvm arguments to the LLVM option
   // parser.
   Args.AddAllArgValues(CmdArgs, options::OPT_Xclang);

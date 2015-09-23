@@ -949,6 +949,8 @@ def fpic : Flag<["-"], "fpic">, Group<f_Group>;
 def fno_pic : Flag<["-"], "fno-pic">, Group<f_Group>;
 def fpie : Flag<["-"], "fpie">, Group<f_Group>;
 def fno_pie : Flag<["-"], "fno-pie">, Group<f_Group>;
+def fplugin_EQ : Joined<["-"], "fplugin=">, Group<f_Group>, Flags<[DriverOption]>, MetaVarName<"<dsopath>">,
+  HelpText<"Load the named plugin (dynamic shared object)">;
 def fprofile_arcs : Flag<["-"], "fprofile-arcs">, Group<f_Group>;
 def fno_profile_arcs : Flag<["-"], "fno-profile-arcs">, Group<f_Group>;
 def framework : Separate<["-"], "framework">, Flags<[LinkerInput]>;
