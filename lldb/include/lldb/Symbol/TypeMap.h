@@ -1,4 +1,4 @@
-//===-- TypeList.h ----------------------------------------------*- C++ -*-===//
+//===-- TypeMap.h ----------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,27 +7,27 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_TypeList_h_
-#define liblldb_TypeList_h_
+#ifndef liblldb_TypeMap_h_
+#define liblldb_TypeMap_h_
 
 #include "lldb/lldb-private.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Utility/Iterable.h"
-#include <vector>
+#include <map>
 #include <functional>
 
 namespace lldb_private {
 
-class TypeList
+class TypeMap
 {
 public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-	TypeList();
+	TypeMap();
 
     virtual
-    ~TypeList();
+    ~TypeMap();
 
     void
     Clear();
@@ -38,11 +38,14 @@ public:
 //    lldb::TypeSP
 //    FindType(lldb::user_id_t uid);
 
-    TypeList
+    TypeMap
     FindTypes(const ConstString &name);
 
     void
     Insert (const lldb::TypeSP& type);
+
+    bool
+    InsertUnique (const lldb::TypeSP& type);
 
     uint32_t
     GetSize() const;
@@ -50,8 +53,8 @@ public:
     lldb::TypeSP
     GetTypeAtIndex(uint32_t idx);
     
-    typedef std::vector<lldb::TypeSP> collection;
-    typedef AdaptedIterable<collection, lldb::TypeSP, vector_adapter> TypeIterable;
+    typedef std::multimap<lldb::user_id_t, lldb::TypeSP> collection;
+    typedef AdaptedIterable<collection, lldb::TypeSP, map_adapter> TypeIterable;
     
     TypeIterable
     Types ()
@@ -65,6 +68,8 @@ public:
     void
     ForEach (std::function <bool(lldb::TypeSP &type_sp)> const &callback);
 
+    bool
+    RemoveTypeWithUID (lldb::user_id_t uid);
 
     void
     RemoveMismatchedTypes (const char *qualified_typename,
@@ -85,9 +90,9 @@ private:
 
     collection m_types;
 
-    DISALLOW_COPY_AND_ASSIGN (TypeList);
+    DISALLOW_COPY_AND_ASSIGN (TypeMap);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_TypeList_h_
+#endif  // liblldb_TypeMap_h_

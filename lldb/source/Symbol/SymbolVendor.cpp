@@ -346,7 +346,7 @@ SymbolVendor::FindFunctions(const RegularExpression& regex, bool include_inlines
 
 
 size_t
-SymbolVendor::FindTypes (const SymbolContext& sc, const ConstString &name, const CompilerDeclContext *parent_decl_ctx, bool append, size_t max_matches, TypeList& types)
+SymbolVendor::FindTypes (const SymbolContext& sc, const ConstString &name, const CompilerDeclContext *parent_decl_ctx, bool append, size_t max_matches, TypeMap& types)
 {
     ModuleSP module_sp(GetModule());
     if (module_sp)

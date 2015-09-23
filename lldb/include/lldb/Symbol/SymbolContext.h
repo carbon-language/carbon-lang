@@ -299,6 +299,27 @@ public:
                            ConstString &language_object_name);
 
     //------------------------------------------------------------------
+    /// If this symbol context represents a function that is a method,
+    /// return true and provide information about the method.
+    ///
+    /// @param[out] language
+    ///     If \b true is returned, the language for the method.
+    ///
+    /// @param[out] is_instance_method
+    ///     If \b true is returned, \b true if this is a instance method,
+    ///     \b false if this is a static/class function.
+    ///
+    /// @param[out] language_object_name
+    ///     If \b true is returned, the name of the artificial variable
+    ///     for the language ("this" for C++, "self" for ObjC).
+    ///
+    /// @return
+    ///     \b True if this symbol context represents a function that
+    ///     is a method of a class, \b false otherwise.
+    //------------------------------------------------------------------
+    void
+	SortTypeList(TypeMap &type_map, TypeList &type_list) const;
+    //------------------------------------------------------------------
     /// Find a name of the innermost function for the symbol context.
     ///
     /// For instance, if the symbol context contains an inlined block,

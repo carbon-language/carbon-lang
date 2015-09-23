@@ -254,6 +254,7 @@ class   TypeAndOrName;
 class   TypeCategoryMap;
 class   TypeImpl;
 class   TypeList;
+class   TypeMap;
 class   TypeListImpl;
 class   TypeMemberImpl;
 class   TypeMemberFunctionImpl;

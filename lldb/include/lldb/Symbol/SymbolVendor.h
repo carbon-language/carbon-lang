@@ -16,6 +16,7 @@
 #include "lldb/Core/ModuleChild.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Symbol/TypeList.h"
+#include "lldb/Symbol/TypeMap.h"
 
 namespace lldb_private {
 
@@ -125,7 +126,7 @@ public:
                const CompilerDeclContext *parent_decl_ctx, 
                bool append, 
                size_t max_matches,
-               TypeList& types);
+               TypeMap& types);
 
     virtual CompilerDeclContext
     FindNamespace (const SymbolContext& sc, 

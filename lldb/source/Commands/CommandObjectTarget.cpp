@@ -1918,7 +1918,6 @@ LookupTypeHere (CommandInterpreter &interpreter,
         strm.PutCString("Best match found in ");
         DumpFullpath (strm, &sym_ctx.module_sp->GetFileSpec(), 0);
         strm.PutCString(":\n");
-
         TypeSP type_sp (type_list.GetTypeAtIndex(0));
         if (type_sp)
         {

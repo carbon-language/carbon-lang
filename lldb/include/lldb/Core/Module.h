@@ -1193,7 +1193,7 @@ private:
                     const CompilerDeclContext *parent_decl_ctx,
                     bool append, 
                     size_t max_matches,
-                    TypeList& types);
+                    TypeMap& types);
 
     
     DISALLOW_COPY_AND_ASSIGN (Module);
