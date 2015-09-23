@@ -89,7 +89,7 @@ RuntimeLibrary.darwin.Configs += ios.a profile_ios.a
 endif
 
 ifneq ($(IOS_SDK),)
-RuntimeLibrary.darwin.Configs += cc_kext_ios5.a
+RuntimeLibrary.darwin.Configs += cc_kext_ios.a
 endif
 
 ifneq ($(IOSSIM_SDK),)
