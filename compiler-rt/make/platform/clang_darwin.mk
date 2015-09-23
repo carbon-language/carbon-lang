@@ -96,14 +96,10 @@ UniversalArchs.osx := $(call CheckArches,i386 x86_64 x86_64h,osx,$(OSX_SDK))
 # Configuration for use with kernel/kexts.
 Configs += cc_kext
 UniversalArchs.cc_kext := $(call CheckArches,i386 x86_64 x86_64h,cc_kext,$(OSX_SDK))
-UniversalArchs.cc_kext += $(call CheckArches,armv7 arm64,cc_kext,$(IOS_SDK))
 
-# Configuration for use with kernel/kexts for iOS 5.0 and earlier (which used 
-# a different code generation strategy). Note: the x86_64 slice is unused but
-# it avoids build problems (see pr14013).
-Configs += cc_kext_ios5
-UniversalArchs.cc_kext_ios5 := $(call CheckArches,x86_64,cc_kext_ios5,$(IOSSIM_SDK))
-UniversalArchs.cc_kext_ios5 += $(call CheckArches,armv7,cc_kext_ios5,$(IOS_SDK))
+# Configuration for use with iOS kernel/kexts
+Configs += cc_kext_ios
+UniversalArchs.cc_kext_ios += $(call CheckArches,armv7,cc_kext_ios,$(IOS_SDK))
 
 # Configurations which define the profiling support functions.
 Configs += profile_osx
@@ -131,8 +127,7 @@ UniversalArchs.ubsan_iossim_dynamic := $(call CheckArches,i386 x86_64,ubsan_ioss
 # them, even though they might not have an expected slice.
 ifneq ($(shell test -x /usr/bin/sw_vers && sw_vers -productVersion | grep 10.6),)
 UniversalArchs.ios := $(filter-out armv7, $(UniversalArchs.ios))
-UniversalArchs.cc_kext := $(filter-out armv7, $(UniversalArchs.cc_kext))
-UniversalArchs.cc_kext_ios5 := $(filter-out armv7, $(UniversalArchs.cc_kext_ios5))
+UniversalArchs.cc_kext_ios := $(filter-out armv7, $(UniversalArchs.cc_kext_ios))
 UniversalArchs.profile_ios := $(filter-out armv7, $(UniversalArchs.profile_ios))
 endif
 
@@ -213,13 +208,10 @@ CFLAGS.osx.x86_64h	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.i386	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.x86_64h	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
-CFLAGS.cc_kext.armv7	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
-CFLAGS.cc_kext.armv7k	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
-CFLAGS.cc_kext.armv7s	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
-CFLAGS.cc_kext.arm64	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
-CFLAGS.cc_kext_ios5.armv7  := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
-CFLAGS.cc_kext_ios5.armv7k := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
-CFLAGS.cc_kext_ios5.armv7s := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext_ios.armv7	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext_ios.armv7k	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext_ios.armv7s	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext_ios.arm64	:= $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
 CFLAGS.profile_osx.i386    := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.profile_osx.x86_64  := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.profile_osx.x86_64h := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
@@ -471,13 +463,10 @@ CCKEXT_ARM64_FUNCTIONS := \
 	udivti3 \
 	umodti3
 
-FUNCTIONS.cc_kext.armv7 := $(CCKEXT_ARMVFP_FUNCTIONS)
-FUNCTIONS.cc_kext.armv7k := $(CCKEXT_ARMVFP_FUNCTIONS)
-FUNCTIONS.cc_kext.armv7s := $(CCKEXT_ARMVFP_FUNCTIONS)
-FUNCTIONS.cc_kext.arm64 := $(CCKEXT_ARM64_FUNCTIONS)
-FUNCTIONS.cc_kext_ios5.armv7 := $(CCKEXT_ARMVFP_FUNCTIONS)
-FUNCTIONS.cc_kext_ios5.armv7k := $(CCKEXT_ARMVFP_FUNCTIONS)
-FUNCTIONS.cc_kext_ios5.armv7s := $(CCKEXT_ARMVFP_FUNCTIONS)
+FUNCTIONS.cc_kext_ios.armv7 := $(CCKEXT_ARMVFP_FUNCTIONS)
+FUNCTIONS.cc_kext_ios.armv7k := $(CCKEXT_ARMVFP_FUNCTIONS)
+FUNCTIONS.cc_kext_ios.armv7s := $(CCKEXT_ARMVFP_FUNCTIONS)
+FUNCTIONS.cc_kext_ios.arm64 := $(CCKEXT_ARM64_FUNCTIONS)
 
 CCKEXT_X86_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 	divxc3 \
@@ -554,20 +543,14 @@ CCKEXT_MISSING_FUNCTIONS := \
 	aeabi_fcmpge aeabi_fcmpgt aeabi_fcmple aeabi_fcmplt aeabi_frsub aeabi_idivmod \
 	aeabi_uidivmod
 
-FUNCTIONS.cc_kext.armv7 := \
+FUNCTIONS.cc_kext_ios.armv7 := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.armv7))
-FUNCTIONS.cc_kext.armv7k := \
+FUNCTIONS.cc_kext_ios.armv7k := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.armv7k))
-FUNCTIONS.cc_kext.armv7s := \
+FUNCTIONS.cc_kext_ios.armv7s := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.armv7s))
-FUNCTIONS.cc_kext.arm64 := \
+FUNCTIONS.cc_kext_ios.arm64 := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.arm64))
-FUNCTIONS.cc_kext_ios5.armv7 := \
-	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext_ios5.armv7))
-FUNCTIONS.cc_kext_ios5.armv7k := \
-	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext_ios5.armv7k))
-FUNCTIONS.cc_kext_ios5.armv7s := \
-	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext_ios5.armv7s))
 FUNCTIONS.cc_kext.i386 := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.i386))
 FUNCTIONS.cc_kext.x86_64 := \
@@ -576,7 +559,7 @@ FUNCTIONS.cc_kext.x86_64h := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.x86_64h))
 
 KERNEL_USE.cc_kext := 1
-KERNEL_USE.cc_kext_ios5 := 1
+KERNEL_USE.cc_kext_ios := 1
 
 VISIBILITY_HIDDEN := 1
 
