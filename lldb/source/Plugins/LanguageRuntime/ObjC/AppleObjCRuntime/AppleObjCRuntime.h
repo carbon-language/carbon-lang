@@ -105,7 +105,7 @@ protected:
     static bool
     AppleIsModuleObjCLibrary (const lldb::ModuleSP &module_sp);
 
-    static enum ObjCRuntimeVersions
+    static ObjCRuntimeVersions
     GetObjCVersion (Process *process, lldb::ModuleSP &objc_module_sp);
 
     void
