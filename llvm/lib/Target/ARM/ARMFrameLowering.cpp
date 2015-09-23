@@ -488,7 +488,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF,
 
   if (NumBytes) {
     // Adjust SP after all the callee-save spills.
-    if (tryFoldSPUpdateIntoPushPop(STI, MF, LastPush, NumBytes))
+    if (AFI->getNumAlignedDPRCS2Regs() == 0 &&
+        tryFoldSPUpdateIntoPushPop(STI, MF, LastPush, NumBytes))
       DefCFAOffsetCandidates.addExtraBytes(LastPush, NumBytes);
     else {
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, -NumBytes,

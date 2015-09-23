@@ -67,11 +67,12 @@ define void @check_vfp_fold() minsize {
   ; iOS uses aligned NEON stores here, which is convenient since we
   ; want to make sure that works too.
 ; CHECK-IOS-LABEL: check_vfp_fold:
-; CHECK-IOS: push {r0, r1, r2, r3, r4, r7, lr}
+; CHECK-IOS: push {r4, r7, lr}
 ; CHECK-IOS: sub.w r4, sp, #16
 ; CHECK-IOS: bfc r4, #0, #4
 ; CHECK-IOS: mov sp, r4
 ; CHECK-IOS: vst1.64 {d8, d9}, [r4:128]
+; CHECK-IOS: sub sp, #16
 ; ...
 ; CHECK-IOS: add r4, sp, #16
 ; CHECK-IOS: vld1.64 {d8, d9}, [r4:128]
