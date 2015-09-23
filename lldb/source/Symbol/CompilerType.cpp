@@ -851,6 +851,13 @@ CompilerType::GetTemplateArgument (size_t idx,
     return CompilerType();
 }
 
+CompilerType
+CompilerType::GetTypeForFormatters () const
+{
+    if (IsValid())
+        return m_type_system->GetTypeForFormatters(m_type);
+    return CompilerType();
+}
 
 // Get the index of the child of "clang_type" whose name matches. This function
 // doesn't descend into the children, but only looks one level deep and name

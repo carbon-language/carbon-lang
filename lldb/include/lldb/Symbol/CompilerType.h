@@ -456,6 +456,9 @@ public:
     GetTemplateArgument (size_t idx,
                          lldb::TemplateArgumentKind &kind) const;
     
+    CompilerType
+    GetTypeForFormatters () const;
+    
     //------------------------------------------------------------------
     // Pointers & References
     //------------------------------------------------------------------

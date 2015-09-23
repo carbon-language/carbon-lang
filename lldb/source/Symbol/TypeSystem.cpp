@@ -80,3 +80,8 @@ TypeSystem::GetBuiltinTypeByName (const ConstString &name)
     return CompilerType();
 }
 
+CompilerType
+TypeSystem::GetTypeForFormatters (void* type)
+{
+    return CompilerType(this, type);
+}

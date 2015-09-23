@@ -904,6 +904,9 @@ public:
                          size_t idx,
                          lldb::TemplateArgumentKind &kind) override;
     
+    CompilerType
+    GetTypeForFormatters (void* type) override;
+    
     //----------------------------------------------------------------------
     // Modifying RecordType
     //----------------------------------------------------------------------

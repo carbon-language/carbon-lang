@@ -504,6 +504,9 @@ public:
         return nullptr;
     }
     
+    virtual CompilerType
+    GetTypeForFormatters (void* type);
+    
 protected:
     const LLVMCastKind m_kind; // Support for llvm casting
     SymbolFile *m_sym_file;

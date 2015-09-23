@@ -199,7 +199,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
                                    bool did_strip_typedef,
                                    bool root_level)
 {
-    compiler_type = ClangASTContext::RemoveFastQualifiers(compiler_type);
+    compiler_type = compiler_type.GetTypeForFormatters();
     ConstString type_name(compiler_type.GetConstTypeName());
     if (valobj.GetBitfieldBitSize() > 0)
     {

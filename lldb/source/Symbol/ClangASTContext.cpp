@@ -6801,6 +6801,14 @@ ClangASTContext::GetTemplateArgument (lldb::opaque_compiler_type_t type, size_t 
     return CompilerType ();
 }
 
+CompilerType
+ClangASTContext::GetTypeForFormatters (void* type)
+{
+    if (type)
+        return RemoveFastQualifiers(CompilerType(this, type));
+    return CompilerType();
+}
+
 static bool
 IsOperator (const char *name, clang::OverloadedOperatorKind &op_kind)
 {
