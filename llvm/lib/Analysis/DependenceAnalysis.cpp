@@ -372,7 +372,7 @@ void DependenceAnalysis::Constraint::setLine(const SCEV *AA,
 void DependenceAnalysis::Constraint::setDistance(const SCEV *D,
                                                  const Loop *CurLoop) {
   Kind = Distance;
-  A = SE->getConstant(D->getType(), 1);
+  A = SE->getOne(D->getType());
   B = SE->getNegativeSCEV(A);
   C = SE->getNegativeSCEV(D);
   AssociatedLoop = CurLoop;
@@ -1257,11 +1257,9 @@ bool DependenceAnalysis::weakCrossingSIVtest(const SCEV *Coeff,
   assert(SE->isKnownPositive(ConstCoeff) && "ConstCoeff should be positive");
 
   // compute SplitIter for use by DependenceAnalysis::getSplitIteration()
-  SplitIter =
-    SE->getUDivExpr(SE->getSMaxExpr(SE->getConstant(Delta->getType(), 0),
-                                    Delta),
-                    SE->getMulExpr(SE->getConstant(Delta->getType(), 2),
-                                   ConstCoeff));
+  SplitIter = SE->getUDivExpr(
+      SE->getSMaxExpr(SE->getZero(Delta->getType()), Delta),
+      SE->getMulExpr(SE->getConstant(Delta->getType(), 2), ConstCoeff));
   DEBUG(dbgs() << "\t    Split iter = " << *SplitIter << "\n");
 
   const SCEVConstant *ConstDelta = dyn_cast<SCEVConstant>(Delta);
@@ -1303,7 +1301,7 @@ bool DependenceAnalysis::weakCrossingSIVtest(const SCEV *Coeff,
         return true;
       }
       Result.DV[Level].Splitable = false;
-      Result.DV[Level].Distance = SE->getConstant(Delta->getType(), 0);
+      Result.DV[Level].Distance = SE->getZero(Delta->getType());
       return false;
     }
   }
@@ -1666,8 +1664,8 @@ bool DependenceAnalysis::weakZeroSrcSIVtest(const SCEV *DstCoeff,
   Level--;
   Result.Consistent = false;
   const SCEV *Delta = SE->getMinusSCEV(SrcConst, DstConst);
-  NewConstraint.setLine(SE->getConstant(Delta->getType(), 0),
-                        DstCoeff, Delta, CurLoop);
+  NewConstraint.setLine(SE->getZero(Delta->getType()), DstCoeff, Delta,
+                        CurLoop);
   DEBUG(dbgs() << "\t    Delta = " << *Delta << "\n");
   if (isKnownPredicate(CmpInst::ICMP_EQ, SrcConst, DstConst)) {
     if (Level < CommonLevels) {
@@ -1776,8 +1774,8 @@ bool DependenceAnalysis::weakZeroDstSIVtest(const SCEV *SrcCoeff,
   Level--;
   Result.Consistent = false;
   const SCEV *Delta = SE->getMinusSCEV(DstConst, SrcConst);
-  NewConstraint.setLine(SrcCoeff, SE->getConstant(Delta->getType(), 0),
-                        Delta, CurLoop);
+  NewConstraint.setLine(SrcCoeff, SE->getZero(Delta->getType()), Delta,
+                        CurLoop);
   DEBUG(dbgs() << "\t    Delta = " << *Delta << "\n");
   if (isKnownPredicate(CmpInst::ICMP_EQ, DstConst, SrcConst)) {
     if (Level < CommonLevels) {
@@ -2729,10 +2727,10 @@ void DependenceAnalysis::findBoundsALL(CoefficientInfo *A,
     // If the difference is 0, we won't need to know the number of iterations.
     if (isKnownPredicate(CmpInst::ICMP_EQ, A[K].NegPart, B[K].PosPart))
       Bound[K].Lower[Dependence::DVEntry::ALL] =
-        SE->getConstant(A[K].Coeff->getType(), 0);
+          SE->getZero(A[K].Coeff->getType());
     if (isKnownPredicate(CmpInst::ICMP_EQ, A[K].PosPart, B[K].NegPart))
       Bound[K].Upper[Dependence::DVEntry::ALL] =
-        SE->getConstant(A[K].Coeff->getType(), 0);
+          SE->getZero(A[K].Coeff->getType());
   }
 }
 
@@ -2801,9 +2799,8 @@ void DependenceAnalysis::findBoundsLT(CoefficientInfo *A,
   Bound[K].Lower[Dependence::DVEntry::LT] = nullptr; // Default value = -infinity.
   Bound[K].Upper[Dependence::DVEntry::LT] = nullptr; // Default value = +infinity.
   if (Bound[K].Iterations) {
-    const SCEV *Iter_1 =
-      SE->getMinusSCEV(Bound[K].Iterations,
-                       SE->getConstant(Bound[K].Iterations->getType(), 1));
+    const SCEV *Iter_1 = SE->getMinusSCEV(
+        Bound[K].Iterations, SE->getOne(Bound[K].Iterations->getType()));
     const SCEV *NegPart =
       getNegativePart(SE->getMinusSCEV(A[K].NegPart, B[K].Coeff));
     Bound[K].Lower[Dependence::DVEntry::LT] =
@@ -2848,9 +2845,8 @@ void DependenceAnalysis::findBoundsGT(CoefficientInfo *A,
   Bound[K].Lower[Dependence::DVEntry::GT] = nullptr; // Default value = -infinity.
   Bound[K].Upper[Dependence::DVEntry::GT] = nullptr; // Default value = +infinity.
   if (Bound[K].Iterations) {
-    const SCEV *Iter_1 =
-      SE->getMinusSCEV(Bound[K].Iterations,
-                       SE->getConstant(Bound[K].Iterations->getType(), 1));
+    const SCEV *Iter_1 = SE->getMinusSCEV(
+        Bound[K].Iterations, SE->getOne(Bound[K].Iterations->getType()));
     const SCEV *NegPart =
       getNegativePart(SE->getMinusSCEV(A[K].Coeff, B[K].PosPart));
     Bound[K].Lower[Dependence::DVEntry::GT] =
@@ -2875,13 +2871,13 @@ void DependenceAnalysis::findBoundsGT(CoefficientInfo *A,
 
 // X^+ = max(X, 0)
 const SCEV *DependenceAnalysis::getPositivePart(const SCEV *X) const {
-  return SE->getSMaxExpr(X, SE->getConstant(X->getType(), 0));
+  return SE->getSMaxExpr(X, SE->getZero(X->getType()));
 }
 
 
 // X^- = min(X, 0)
 const SCEV *DependenceAnalysis::getNegativePart(const SCEV *X) const {
-  return SE->getSMinExpr(X, SE->getConstant(X->getType(), 0));
+  return SE->getSMinExpr(X, SE->getZero(X->getType()));
 }
 
 
@@ -2892,7 +2888,7 @@ DependenceAnalysis::CoefficientInfo *
 DependenceAnalysis::collectCoeffInfo(const SCEV *Subscript,
                                      bool SrcFlag,
                                      const SCEV *&Constant) const {
-  const SCEV *Zero = SE->getConstant(Subscript->getType(), 0);
+  const SCEV *Zero = SE->getZero(Subscript->getType());
   CoefficientInfo *CI = new CoefficientInfo[MaxLevels + 1];
   for (unsigned K = 1; K <= MaxLevels; ++K) {
     CI[K].Coeff = Zero;
@@ -2976,7 +2972,7 @@ const SCEV *DependenceAnalysis::findCoefficient(const SCEV *Expr,
                                                 const Loop *TargetLoop)  const {
   const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(Expr);
   if (!AddRec)
-    return SE->getConstant(Expr->getType(), 0);
+    return SE->getZero(Expr->getType());
   if (AddRec->getLoop() == TargetLoop)
     return AddRec->getStepRecurrence(*SE);
   return findCoefficient(AddRec->getStart(), TargetLoop);

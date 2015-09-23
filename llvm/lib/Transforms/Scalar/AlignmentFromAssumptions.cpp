@@ -270,7 +270,7 @@ bool AlignmentFromAssumptions::extractAlignmentInfo(CallInst *I,
   OffSCEV = nullptr;
   if (PtrToIntInst *PToI = dyn_cast<PtrToIntInst>(AndLHS)) {
     AAPtr = PToI->getPointerOperand();
-    OffSCEV = SE->getConstant(Int64Ty, 0);
+    OffSCEV = SE->getZero(Int64Ty);
   } else if (const SCEVAddExpr* AndLHSAddSCEV =
              dyn_cast<SCEVAddExpr>(AndLHSSCEV)) {
     // Try to find the ptrtoint; subtract it and the rest is the offset.

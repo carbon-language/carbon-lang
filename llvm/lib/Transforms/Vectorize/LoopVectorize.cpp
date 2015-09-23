@@ -2625,9 +2625,8 @@ Value *InnerLoopVectorizer::getOrCreateTripCount(Loop *L) {
   BackedgeTakenCount = SE->getNoopOrZeroExtend(BackedgeTakenCount, IdxTy);
   
   // Get the total trip count from the count by adding 1.
-  const SCEV *ExitCount =
-    SE->getAddExpr(BackedgeTakenCount,
-                   SE->getConstant(BackedgeTakenCount->getType(), 1));
+  const SCEV *ExitCount = SE->getAddExpr(
+      BackedgeTakenCount, SE->getOne(BackedgeTakenCount->getType()));
 
   const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
 

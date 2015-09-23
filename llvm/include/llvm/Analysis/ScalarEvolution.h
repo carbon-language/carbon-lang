@@ -679,6 +679,12 @@ namespace llvm {
     const SCEV *getUnknown(Value *V);
     const SCEV *getCouldNotCompute();
 
+    /// \brief Return a SCEV for the constant 0 of a specific type.
+    const SCEV *getZero(Type *Ty) { return getConstant(Ty, 0); }
+
+    /// \brief Return a SCEV for the constant 1 of a specific type.
+    const SCEV *getOne(Type *Ty) { return getConstant(Ty, 1); }
+
     /// Return an expression for sizeof AllocTy that is type IntTy
     ///
     const SCEV *getSizeOfExpr(Type *IntTy, Type *AllocTy);

@@ -524,7 +524,7 @@ void StraightLineStrengthReduce::allocateCandidatesAndFindBasisForGEP(
       continue;
 
     const SCEV *OrigIndexExpr = IndexExprs[I - 1];
-    IndexExprs[I - 1] = SE->getConstant(OrigIndexExpr->getType(), 0);
+    IndexExprs[I - 1] = SE->getZero(OrigIndexExpr->getType());
 
     // The base of this candidate is GEP's base plus the offsets of all
     // indices except this current one.

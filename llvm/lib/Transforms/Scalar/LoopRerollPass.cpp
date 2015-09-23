@@ -1487,8 +1487,7 @@ bool LoopReroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     return Changed;
 
   const SCEV *LIBETC = SE->getBackedgeTakenCount(L);
-  const SCEV *IterCount =
-    SE->getAddExpr(LIBETC, SE->getConstant(LIBETC->getType(), 1));
+  const SCEV *IterCount = SE->getAddExpr(LIBETC, SE->getOne(LIBETC->getType()));
   DEBUG(dbgs() << "LRR: iteration count = " << *IterCount << "\n");
 
   // First, we need to find the induction variable with respect to which we can

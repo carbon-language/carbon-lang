@@ -253,8 +253,7 @@ void SimplifyIndvar::eliminateIVRemainder(BinaryOperator *Rem,
     Rem->replaceAllUsesWith(Rem->getOperand(0));
   else {
     // (i+1) % n  -->  (i+1)==n?0:(i+1)  if i is in [0,n).
-    const SCEV *LessOne =
-      SE->getMinusSCEV(S, SE->getConstant(S->getType(), 1));
+    const SCEV *LessOne = SE->getMinusSCEV(S, SE->getOne(S->getType()));
     if (IsSigned && !SE->isKnownNonNegative(LessOne))
       return;
 

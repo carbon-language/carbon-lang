@@ -1796,7 +1796,7 @@ LinearFunctionTestReplace(Loop *L,
     // This addition may overflow, which is valid as long as the comparison is
     // truncated to BackedgeTakenCount->getType().
     IVCount = SE->getAddExpr(BackedgeTakenCount,
-                             SE->getConstant(BackedgeTakenCount->getType(), 1));
+                             SE->getOne(BackedgeTakenCount->getType()));
     // The BackedgeTaken expression contains the number of times that the
     // backedge branches to the loop header.  This is one less than the
     // number of times the loop executes, so use the incremented indvar.

@@ -531,7 +531,7 @@ bool LoopIdiomRecognize::processLoopStridedStore(
   BECount = SE->getTruncateOrZeroExtend(BECount, IntPtr);
 
   const SCEV *NumBytesS =
-      SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1), SCEV::FlagNUW);
+      SE->getAddExpr(BECount, SE->getOne(IntPtr), SCEV::FlagNUW);
   if (StoreSize != 1) {
     NumBytesS = SE->getMulExpr(NumBytesS, SE->getConstant(IntPtr, StoreSize),
                                SCEV::FlagNUW);
@@ -635,7 +635,7 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
   BECount = SE->getTruncateOrZeroExtend(BECount, IntPtrTy);
 
   const SCEV *NumBytesS =
-      SE->getAddExpr(BECount, SE->getConstant(IntPtrTy, 1), SCEV::FlagNUW);
+      SE->getAddExpr(BECount, SE->getOne(IntPtrTy), SCEV::FlagNUW);
   if (StoreSize != 1)
     NumBytesS = SE->getMulExpr(NumBytesS, SE->getConstant(IntPtrTy, StoreSize),
                                SCEV::FlagNUW);
