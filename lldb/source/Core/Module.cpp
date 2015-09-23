@@ -36,7 +36,6 @@
 #include "lldb/Target/Target.h"
 #include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
 #include "Plugins/Language/ObjC/ObjCLanguage.h"
-#include "lldb/Symbol/TypeMap.h"
 
 #include "Plugins/ObjectFile/JIT/ObjectFileJIT.h"
 
@@ -941,7 +940,7 @@ Module::FindTypes_Impl (const SymbolContext& sc,
                         const CompilerDeclContext *parent_decl_ctx,
                         bool append,
                         size_t max_matches,
-                        TypeMap& types)
+                        TypeList& types)
 {
     Timer scoped_timer(__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
     if (sc.module_sp.get() == NULL || sc.module_sp.get() == this)
@@ -961,11 +960,7 @@ Module::FindTypesInNamespace (const SymbolContext& sc,
                               TypeList& type_list)
 {
     const bool append = true;
-    TypeMap types_map;
-    size_t num_types = FindTypes_Impl(sc, type_name, parent_decl_ctx, append, max_matches, types_map);
-    if (num_types > 0)
-        sc.SortTypeList(types_map, type_list);
-    return num_types;
+    return FindTypes_Impl(sc, type_name, parent_decl_ctx, append, max_matches, type_list);
 }
 
 lldb::TypeSP
@@ -994,7 +989,6 @@ Module::FindTypes (const SymbolContext& sc,
     std::string type_basename;
     const bool append = true;
     TypeClass type_class = eTypeClassAny;
-    TypeMap typesmap;
     if (Type::GetTypeScopeAndBasename (type_name_cstr, type_scope, type_basename, type_class))
     {
         // Check if "name" starts with "::" which means the qualified type starts
@@ -1008,10 +1002,10 @@ Module::FindTypes (const SymbolContext& sc,
             exact_match = true;
         }
         ConstString type_basename_const_str (type_basename.c_str());
-        if (FindTypes_Impl(sc, type_basename_const_str, NULL, append, max_matches, typesmap))
+        if (FindTypes_Impl(sc, type_basename_const_str, NULL, append, max_matches, types))
         {
-            typesmap.RemoveMismatchedTypes (type_scope, type_basename, type_class, exact_match);
-            num_matches = typesmap.GetSize();
+            types.RemoveMismatchedTypes (type_scope, type_basename, type_class, exact_match);
+            num_matches = types.GetSize();
         }
     }
     else
@@ -1021,18 +1015,18 @@ Module::FindTypes (const SymbolContext& sc,
         {
             // The "type_name_cstr" will have been modified if we have a valid type class
             // prefix (like "struct", "class", "union", "typedef" etc).
-            FindTypes_Impl(sc, ConstString(type_name_cstr), NULL, append, max_matches, typesmap);
-            typesmap.RemoveMismatchedTypes (type_class);
-            num_matches = typesmap.GetSize();
+            FindTypes_Impl(sc, ConstString(type_name_cstr), NULL, append, max_matches, types);
+            types.RemoveMismatchedTypes (type_class);
+            num_matches = types.GetSize();
         }
         else
         {
-            num_matches = FindTypes_Impl(sc, name, NULL, append, max_matches, typesmap);
+            num_matches = FindTypes_Impl(sc, name, NULL, append, max_matches, types);
         }
     }
-    if (num_matches > 0)
-        sc.SortTypeList(typesmap, types);
+    
     return num_matches;
+    
 }
 
 SymbolVendor*

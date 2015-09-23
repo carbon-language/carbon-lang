@@ -43,7 +43,6 @@
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/TypeSystem.h"
 #include "lldb/Symbol/VariableList.h"
-#include "lldb/Symbol/TypeMap.h"
 
 #include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
 #include "Plugins/Language/ObjC/ObjCLanguage.h"
@@ -2841,7 +2840,7 @@ SymbolFileDWARF::FindTypes (const SymbolContext& sc,
                             const CompilerDeclContext *parent_decl_ctx, 
                             bool append, 
                             uint32_t max_matches, 
-                            TypeMap& types)
+                            TypeList& types)
 {
     DWARFDebugInfo* info = DebugInfo();
     if (info == NULL)
@@ -3055,17 +3054,6 @@ SymbolFileDWARF::GetTypeForDIE (const DWARFDIE &die)
             CompileUnit* lldb_cu = GetCompUnitForDWARFCompUnit(die.GetCU());
             assert (lldb_cu);
             SymbolContext sc(lldb_cu);
-            const DWARFDebugInfoEntry* parent_die = die.GetParent().GetDIE();
-            while (parent_die != nullptr)
-                {
-                    if (parent_die->Tag() == DW_TAG_subprogram)
-                        break;
-                    parent_die = parent_die->GetParent();
-                }
-            SymbolContext sc_backup = sc;
-            if (parent_die != nullptr && !GetFunction(DWARFDIE(die.GetCU(),parent_die), sc))
-                sc = sc_backup;
-
             type_sp = ParseType(sc, die, NULL);
         }
         else if (type_ptr != DIE_IS_BEING_PARSED)

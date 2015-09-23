@@ -42,7 +42,26 @@ TypeList::Insert (const TypeSP& type_sp)
 {
     // Just push each type on the back for now. We will worry about uniquing later
     if (type_sp)
-        m_types.push_back(type_sp);
+        m_types.insert(std::make_pair(type_sp->GetID(), type_sp));
+}
+
+
+bool
+TypeList::InsertUnique (const TypeSP& type_sp)
+{
+    if (type_sp)
+    {
+        user_id_t type_uid = type_sp->GetID();
+        iterator pos, end = m_types.end();
+        
+        for (pos = m_types.find(type_uid); pos != end && pos->second->GetID() == type_uid; ++pos)
+        {
+            if (pos->second.get() == type_sp.get())
+                return false;
+        }
+    }
+    Insert (type_sp);
+    return true;
 }
 
 //----------------------------------------------------------------------
@@ -97,7 +116,7 @@ TypeList::GetTypeAtIndex(uint32_t idx)
     for (pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
     {
         if (i == 0)
-            return *pos;
+            return pos->second;
         --i;
     }
     return TypeSP();
@@ -108,7 +127,7 @@ TypeList::ForEach (std::function <bool(const lldb::TypeSP &type_sp)> const &call
 {
     for (auto pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
     {
-        if (!callback(*pos))
+        if (!callback(pos->second))
             break;
     }
 }
@@ -118,17 +137,32 @@ TypeList::ForEach (std::function <bool(lldb::TypeSP &type_sp)> const &callback)
 {
     for (auto pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
     {
-        if (!callback(*pos))
+        if (!callback(pos->second))
             break;
     }
 }
+
+
+bool
+TypeList::RemoveTypeWithUID (user_id_t uid)
+{
+    iterator pos = m_types.find(uid);
+    
+    if (pos != m_types.end())
+    {
+        m_types.erase(pos);
+        return true;
+    }
+    return false;
+}
+
 
 void
 TypeList::Dump(Stream *s, bool show_context)
 {
     for (iterator pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
     {
-        pos->get()->Dump(s, show_context);
+        pos->second->Dump(s, show_context);
     }
 }
 
@@ -163,7 +197,7 @@ TypeList::RemoveMismatchedTypes (const std::string &type_scope,
     
     for (pos = m_types.begin(); pos != end; ++pos)
     {
-        Type* the_type = pos->get();
+        Type* the_type = pos->second.get();
         bool keep_match = false;
         TypeClass match_type_class = eTypeClassAny;
 
@@ -235,7 +269,7 @@ TypeList::RemoveMismatchedTypes (const std::string &type_scope,
         
         if (keep_match)
         {
-            matching_types.push_back(*pos);
+            matching_types.insert (*pos);
         }
     }
     m_types.swap(matching_types);
@@ -257,10 +291,10 @@ TypeList::RemoveMismatchedTypes (TypeClass type_class)
     
     for (pos = m_types.begin(); pos != end; ++pos)
     {
-        Type* the_type = pos->get();
+        Type* the_type = pos->second.get();
         TypeClass match_type_class = the_type->GetForwardCompilerType ().GetTypeClass ();
         if (match_type_class & type_class)
-            matching_types.push_back (*pos);
+            matching_types.insert (*pos);
     }
     m_types.swap(matching_types);
 }
