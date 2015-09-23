@@ -140,18 +140,20 @@ function(darwin_find_excluded_builtins_list os arch min_version)
 endfunction()
 
 # adds a single builtin library for a single OS & ARCH
-function(darwin_add_builtin_library name)
+macro(darwin_add_builtin_library name suffix)
   cmake_parse_arguments(LIB
     ""
     "PARENT_TARGET;OS;ARCH"
-    "SOURCES;CFLAGS"
+    "SOURCES;CFLAGS;DEFS"
     ${ARGN})
-  set(libname "${name}_${LIB_ARCH}_${LIB_OS}")
+  set(libname "${name}.${suffix}_${LIB_ARCH}_${LIB_OS}")
   add_library(${libname} STATIC ${LIB_SOURCES})
   set_target_compile_flags(${libname}
     -isysroot ${DARWIN_${LIB_OS}_SYSROOT}
     ${DARWIN_${LIB_OS}_BUILTIN_MIN_VER_FLAG}
     ${LIB_CFLAGS})
+  set_property(TARGET ${libname} APPEND PROPERTY
+      COMPILE_DEFINITIONS ${LIB_DEFS})
   set_target_properties(${libname} PROPERTIES
       OUTPUT_NAME ${libname}${COMPILER_RT_OS_SUFFIX})
   set_target_properties(${libname} PROPERTIES
@@ -160,6 +162,26 @@ function(darwin_add_builtin_library name)
   if(LIB_PARENT_TARGET)
     add_dependencies(${LIB_PARENT_TARGET} ${libname})
   endif()
+
+  list(APPEND ${os}_${suffix}_libs ${libname})
+  list(APPEND ${os}_${suffix}_lipo_flags -arch ${arch} $<TARGET_FILE:${libname}>)
+endmacro()
+
+function(darwin_lipo_libs name)
+  cmake_parse_arguments(LIB
+    ""
+    "PARENT_TARGET"
+    "LIPO_FLAGS;DEPENDS"
+    ${ARGN})
+  add_custom_command(OUTPUT ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/lib${name}.a
+    COMMAND lipo -output
+            ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/lib${name}.a
+            -create ${LIB_LIPO_FLAGS}
+    DEPENDS ${LIB_DEPENDS}
+    )
+  add_custom_target(${name}
+    DEPENDS ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/lib${name}.a)
+  add_dependencies(${LIB_PARENT_TARGET} ${name})
 endfunction()
 
 # Generates builtin libraries for all operating systems specified in ARGN. Each
@@ -167,9 +189,17 @@ endfunction()
 macro(darwin_add_builtin_libraries)
   foreach (os ${ARGN})
     list_union(DARWIN_BUILTIN_ARCHS DARWIN_${os}_ARCHS BUILTIN_SUPPORTED_ARCH)
-    set(${os}_builtin_libs)
-    set(${os}_builtin_lipo_flags)
     foreach (arch ${DARWIN_BUILTIN_ARCHS})
+      # do cc_kext
+      darwin_add_builtin_library(clang_rt cc_kext
+                              OS ${os}
+                              ARCH ${arch}
+                              SOURCES ${${arch}_SOURCES}
+                              CFLAGS "-std=c99" -arch ${arch} -mkernel
+                              DEFS KERNEL_USE
+                              PARENT_TARGET builtins)
+
+
       darwin_find_excluded_builtins_list(${os} ${arch} ${DARWIN_${os}_BUILTIN_MIN_VER})
       # Filter out generic versions of routines that are re-implemented in
       # architecture specific manner.  This prevents multiple definitions of the
@@ -186,27 +216,22 @@ macro(darwin_add_builtin_libraries)
         endif ()
       endforeach ()
 
-      darwin_add_builtin_library(clang_rt.builtins
+      darwin_add_builtin_library(clang_rt builtins
                               OS ${os}
                               ARCH ${arch}
                               SOURCES ${${arch}_SOURCES}
                               CFLAGS "-std=c99" -arch ${arch}
                               PARENT_TARGET builtins)
-      list(APPEND ${os}_builtin_libs clang_rt.builtins_${arch}_${os})
-      list(APPEND ${os}_builtin_lipo_flags -arch ${arch} $<TARGET_FILE:clang_rt.builtins_${arch}_${os}>)
     endforeach()
 
-    if(${os}_builtin_libs)
-      add_custom_command(OUTPUT ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/libclang_rt.${os}.a
-        COMMAND lipo -output
-                ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/libclang_rt.${os}.a
-                -create ${${os}_builtin_lipo_flags}
-        DEPENDS ${${os}_builtin_libs}
-        )
-      add_custom_target(clang_rt.${os}
-        DEPENDS ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/libclang_rt.${os}.a)
-      add_dependencies(builtins clang_rt.${os})
-    endif()
+    darwin_lipo_libs(clang_rt.cc_kext_${os}
+                    PARENT_TARGET builtins
+                    LIPO_FLAGS ${${os}_cc_kext_lipo_flags}
+                    DEPENDS ${${os}_cc_kext_libs})
+    darwin_lipo_libs(clang_rt.${os}
+                    PARENT_TARGET builtins
+                    LIPO_FLAGS ${${os}_builtins_lipo_flags}
+                    DEPENDS ${${os}_builtins_libs})
   endforeach()
 endmacro()
 
