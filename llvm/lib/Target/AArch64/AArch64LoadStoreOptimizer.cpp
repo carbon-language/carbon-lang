@@ -117,15 +117,10 @@ struct AArch64LoadStoreOpt : public MachineFunctionPass {
   MachineBasicBlock::iterator
   findMatchingUpdateInsnBackward(MachineBasicBlock::iterator I, unsigned Limit);
 
-  // Merge a pre-index base register update into a ld/st instruction.
+  // Merge a pre- or post-index base register update into a ld/st instruction.
   MachineBasicBlock::iterator
-  mergePreIdxUpdateInsn(MachineBasicBlock::iterator I,
-                        MachineBasicBlock::iterator Update);
-
-  // Merge a post-index base register update into a ld/st instruction.
-  MachineBasicBlock::iterator
-  mergePostIdxUpdateInsn(MachineBasicBlock::iterator I,
-                         MachineBasicBlock::iterator Update);
+  mergeUpdateInsn(MachineBasicBlock::iterator I,
+                  MachineBasicBlock::iterator Update, bool IsPreIdx);
 
   bool optimizeBlock(MachineBasicBlock &MBB);
 
@@ -688,8 +683,9 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
 }
 
 MachineBasicBlock::iterator
-AArch64LoadStoreOpt::mergePreIdxUpdateInsn(MachineBasicBlock::iterator I,
-                                           MachineBasicBlock::iterator Update) {
+AArch64LoadStoreOpt::mergeUpdateInsn(MachineBasicBlock::iterator I,
+                                     MachineBasicBlock::iterator Update,
+                                     bool IsPreIdx) {
   assert((Update->getOpcode() == AArch64::ADDXri ||
           Update->getOpcode() == AArch64::SUBXri) &&
          "Unexpected base register update instruction to merge!");
@@ -702,11 +698,12 @@ AArch64LoadStoreOpt::mergePreIdxUpdateInsn(MachineBasicBlock::iterator I,
 
   int Value = Update->getOperand(2).getImm();
   assert(AArch64_AM::getShiftValue(Update->getOperand(3).getImm()) == 0 &&
-         "Can't merge 1 << 12 offset into pre-indexed load / store");
+         "Can't merge 1 << 12 offset into pre-/post-indexed load / store");
   if (Update->getOpcode() == AArch64::SUBXri)
     Value = -Value;
 
-  unsigned NewOpc = getPreIndexedOpcode(I->getOpcode());
+  unsigned NewOpc = IsPreIdx ? getPreIndexedOpcode(I->getOpcode())
+                             : getPostIndexedOpcode(I->getOpcode());
   MachineInstrBuilder MIB =
       BuildMI(*I->getParent(), I, I->getDebugLoc(), TII->get(NewOpc))
           .addOperand(getLdStRegOp(Update))
@@ -715,50 +712,10 @@ AArch64LoadStoreOpt::mergePreIdxUpdateInsn(MachineBasicBlock::iterator I,
           .addImm(Value);
   (void)MIB;
 
-  DEBUG(dbgs() << "Creating pre-indexed load/store.");
-  DEBUG(dbgs() << "    Replacing instructions:\n    ");
-  DEBUG(I->print(dbgs()));
-  DEBUG(dbgs() << "    ");
-  DEBUG(Update->print(dbgs()));
-  DEBUG(dbgs() << "  with instruction:\n    ");
-  DEBUG(((MachineInstr *)MIB)->print(dbgs()));
-  DEBUG(dbgs() << "\n");
-
-  // Erase the old instructions for the block.
-  I->eraseFromParent();
-  Update->eraseFromParent();
-
-  return NextI;
-}
-
-MachineBasicBlock::iterator AArch64LoadStoreOpt::mergePostIdxUpdateInsn(
-    MachineBasicBlock::iterator I, MachineBasicBlock::iterator Update) {
-  assert((Update->getOpcode() == AArch64::ADDXri ||
-          Update->getOpcode() == AArch64::SUBXri) &&
-         "Unexpected base register update instruction to merge!");
-  MachineBasicBlock::iterator NextI = I;
-  // Return the instruction following the merged instruction, which is
-  // the instruction following our unmerged load. Unless that's the add/sub
-  // instruction we're merging, in which case it's the one after that.
-  if (++NextI == Update)
-    ++NextI;
-
-  int Value = Update->getOperand(2).getImm();
-  assert(AArch64_AM::getShiftValue(Update->getOperand(3).getImm()) == 0 &&
-         "Can't merge 1 << 12 offset into post-indexed load / store");
-  if (Update->getOpcode() == AArch64::SUBXri)
-    Value = -Value;
-
-  unsigned NewOpc = getPostIndexedOpcode(I->getOpcode());
-  MachineInstrBuilder MIB =
-      BuildMI(*I->getParent(), I, I->getDebugLoc(), TII->get(NewOpc))
-          .addOperand(getLdStRegOp(Update))
-          .addOperand(getLdStRegOp(I))
-          .addOperand(getLdStBaseOp(I))
-          .addImm(Value);
-  (void)MIB;
-
-  DEBUG(dbgs() << "Creating post-indexed load/store.");
+  if (IsPreIdx)
+    DEBUG(dbgs() << "Creating pre-indexed load/store.");
+  else
+    DEBUG(dbgs() << "Creating post-indexed load/store.");
   DEBUG(dbgs() << "    Replacing instructions:\n    ");
   DEBUG(I->print(dbgs()));
   DEBUG(dbgs() << "    ");
@@ -1044,7 +1001,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
           findMatchingUpdateInsnForward(MBBI, ScanLimit, 0);
       if (Update != E) {
         // Merge the update into the ld/st.
-        MBBI = mergePostIdxUpdateInsn(MBBI, Update);
+        MBBI = mergeUpdateInsn(MBBI, Update, /*IsPreIdx=*/false);
         Modified = true;
         ++NumPostFolded;
         break;
@@ -1064,7 +1021,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
       Update = findMatchingUpdateInsnBackward(MBBI, ScanLimit);
       if (Update != E) {
         // Merge the update into the ld/st.
-        MBBI = mergePreIdxUpdateInsn(MBBI, Update);
+        MBBI = mergeUpdateInsn(MBBI, Update, /*IsPreIdx=*/true);
         Modified = true;
         ++NumPreFolded;
         break;
@@ -1085,7 +1042,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
       Update = findMatchingUpdateInsnForward(MBBI, ScanLimit, Value);
       if (Update != E) {
         // Merge the update into the ld/st.
-        MBBI = mergePreIdxUpdateInsn(MBBI, Update);
+        MBBI = mergeUpdateInsn(MBBI, Update, /*IsPreIdx=*/true);
         Modified = true;
         ++NumPreFolded;
         break;
