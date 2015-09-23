@@ -6749,8 +6749,6 @@ void darwin::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
 
-  addOpenMPRuntime(CmdArgs, getToolChain(), Args);
-
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
   // Build the input file for -filelist (list of linker input files) in case we
   // need it later
@@ -6768,6 +6766,10 @@ void darwin::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
     InputFileList.push_back(II.getFilename());
   }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nodefaultlibs))
+    addOpenMPRuntime(CmdArgs, getToolChain(), Args);
 
   if (isObjCRuntimeLinked(Args) && !Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
