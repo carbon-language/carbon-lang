@@ -24787,6 +24787,9 @@ static SDValue PerformXorCombine(SDNode *N, SelectionDAG &DAG,
     if (SDValue RV = performIntegerAbsCombine(N, DAG))
       return RV;
 
+  if (SDValue FPLogic = convertIntLogicToFPLogic(N, DAG, Subtarget))
+    return FPLogic;
+
   return SDValue();
 }
 

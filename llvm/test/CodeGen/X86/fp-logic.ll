@@ -183,10 +183,7 @@ define float @or(float %x, float %y) {
 define float @xor(float %x, float %y) {
 ; CHECK-LABEL: xor:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movd %xmm0, %eax
-; CHECK-NEXT:    movd %xmm1, %ecx
-; CHECK-NEXT:    xorl %eax, %ecx
-; CHECK-NEXT:    movd %ecx, %xmm0
+; CHECK-NEXT:    xorps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
 
   %bc1 = bitcast float %x to i32
