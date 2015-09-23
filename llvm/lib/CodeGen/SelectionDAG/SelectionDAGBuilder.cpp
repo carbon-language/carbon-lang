@@ -8146,13 +8146,13 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
         uint32_t JumpWeight = I->Weight;
         uint32_t FallthroughWeight = UnhandledWeights;
 
-        // If Fallthrough is a target of the jump table, we evenly distribute
-        // the weight on the edge to Fallthrough to successors of CurMBB.
-        // Also update the weight on the edge from JumpMBB to Fallthrough.
+        // If the default statement is a target of the jump table, we evenly
+        // distribute the default weight to successors of CurMBB. Also update
+        // the weight on the edge from JumpMBB to Fallthrough.
         for (MachineBasicBlock::succ_iterator SI = JumpMBB->succ_begin(),
                                               SE = JumpMBB->succ_end();
              SI != SE; ++SI) {
-          if (*SI == Fallthrough) {
+          if (*SI == DefaultMBB) {
             JumpWeight += DefaultWeight / 2;
             FallthroughWeight -= DefaultWeight / 2;
             JumpMBB->setSuccWeight(SI, DefaultWeight / 2);
