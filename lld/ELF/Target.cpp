@@ -137,6 +137,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
   uint8_t *Location = Buf + Offset;
   switch (Type) {
   case R_X86_64_PC32:
+  case R_X86_64_GOTPCREL:
     support::endian::write32le(Location,
                                SymVA + Rel.r_addend - (BaseAddr + Offset));
     break;

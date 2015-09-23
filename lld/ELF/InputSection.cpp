@@ -50,6 +50,7 @@ void InputSection<ELFT>::relocate(
       const SymbolBody *Body = File.getSymbolBody(SymIndex);
       if (!Body)
         continue;
+      uint32_t OrigType = Type;
       switch (Body->kind()) {
       case SymbolBody::DefinedRegularKind:
         SymVA = getSymVA<ELFT>(cast<DefinedRegular<ELFT>>(Body));
@@ -63,15 +64,12 @@ void InputSection<ELFT>::relocate(
         break;
       }
       case SymbolBody::SharedKind:
-        if (Target->relocNeedsPlt(Type)) {
-          SymVA = PltSec.getEntryAddr(*Body);
+        if (Target->relocNeedsPlt(Type))
           Type = Target->getPCRelReloc();
-        } else if (Target->relocNeedsGot(Type)) {
-          SymVA = GotSec.getEntryAddr(*Body);
+        else if (Target->relocNeedsGot(Type))
           Type = Target->getPCRelReloc();
-        } else {
+        else
           continue;
-        }
         break;
       case SymbolBody::UndefinedKind:
         assert(Body->isWeak() && "Undefined symbol reached writer");
@@ -80,6 +78,11 @@ void InputSection<ELFT>::relocate(
       case SymbolBody::LazyKind:
         llvm_unreachable("Lazy symbol reached writer");
       }
+
+      if (Target->relocNeedsPlt(OrigType))
+        SymVA = PltSec.getEntryAddr(*Body);
+      else if (Target->relocNeedsGot(OrigType))
+        SymVA = GotSec.getEntryAddr(*Body);
     }
 
     Target->relocateOne(Buf, reinterpret_cast<const void *>(&RI), Type,

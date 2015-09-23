@@ -255,9 +255,6 @@ void Writer<ELFT>::scanRelocs(
     SymbolBody *Body = File.getSymbolBody(SymIndex);
     if (!Body)
       continue;
-    auto *S = dyn_cast<SharedSymbol<ELFT>>(Body);
-    if (!S)
-      continue;
     uint32_t Type = RI.getType(IsMips64EL);
     if (Target->relocNeedsPlt(Type)) {
       if (Body->isInPlt())
@@ -269,7 +266,9 @@ void Writer<ELFT>::scanRelocs(
         continue;
       GotSec.addEntry(Body);
     }
-    S->setUsedInDynamicReloc();
+    if (!isa<SharedSymbol<ELFT>>(Body))
+      continue;
+    Body->setUsedInDynamicReloc();
     RelaDynSec.addReloc({C, RI});
   }
 }
@@ -395,11 +394,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     OutputSections.push_back(&DynStrSec);
     if (RelaDynSec.hasRelocs())
       OutputSections.push_back(&RelaDynSec);
-    if (!GotSec.empty())
-      OutputSections.push_back(&GotSec);
-    if (!PltSec.empty())
-      OutputSections.push_back(&PltSec);
   }
+  if (!GotSec.empty())
+    OutputSections.push_back(&GotSec);
+  if (!PltSec.empty())
+    OutputSections.push_back(&PltSec);
 
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
                    compSec<ELFT::Is64Bits>);
