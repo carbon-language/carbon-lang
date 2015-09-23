@@ -15,7 +15,7 @@
 */
 
 // RUN: llvm-dsymutil -f -oso-prepend-path=%p/../Inputs/mismatch \
-// RUN:   -y %p/dummy-debug-map.map -o %t.bin 2>&1 >%t
+// RUN:   -y %p/dummy-debug-map.map -o %t.bin  >%t 2>&1
 // RUN: cat %t
 // RUN: cat %t | FileCheck %s
 
