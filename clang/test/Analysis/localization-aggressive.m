@@ -34,20 +34,12 @@ typedef struct CGPoint CGPoint;
                               value:(NSString *)value
                               table:(NSString *)tableName;
 @end
-@protocol UIAccessibility 
-- (void)accessibilitySetIdentification:(NSString *)ident;
-- (void)setAccessibilityLabel:(NSString *)label;
-@end
-@interface UILabel : NSObject <UIAccessibility>
+@interface UILabel : NSObject
 @property(nullable, nonatomic, copy) NSString *text;
+- (void)accessibilitySetIdentification:(NSString *)ident;
 @end
 @interface TestObject : NSObject
 @property(strong) NSString *text;
-@end
-@interface NSView : NSObject
-@property (strong) NSString *toolTip;
-@end
-@interface NSViewSubclass : NSView
 @end
 
 @interface LocalizationTestSuite : NSObject
@@ -86,7 +78,7 @@ NSString *ForceLocalized(NSString *str) { return str; }
     bar = @"Unlocalized string";
   }
 
-  [testLabel setText:bar]; // expected-warning {{User-facing text should use localized string macro}}
+  [testLabel setText:bar]; // expected-warning {{String should be localized}}
 }
 
 - (void)testLocalizationErrorDetectedOnNSString {
@@ -96,7 +88,7 @@ NSString *ForceLocalized(NSString *str) { return str; }
     bar = @"Unlocalized string";
   }
 
-  [bar drawAtPoint:CGPointMake(0, 0) withAttributes:nil]; // expected-warning {{User-facing text should use localized string macro}}
+  [bar drawAtPoint:CGPointMake(0, 0) withAttributes:nil]; // expected-warning {{String should be localized}}
 }
 
 - (void)testNoLocalizationErrorDetectedFromCFunction {
@@ -145,7 +137,7 @@ NSString *ForceLocalized(NSString *str) { return str; }
 // An string literal @"Hello" inline should raise an error
 - (void)testInlineStringLiteralHasLocalizedState {
   UILabel *testLabel = [[UILabel alloc] init];
-  [testLabel setText:@"Hello"]; // expected-warning {{User-facing text should use localized string macro}}
+  [testLabel setText:@"Hello"]; // expected-warning {{String should be localized}}
 }
 
 // A nil string should not raise an error
@@ -184,7 +176,7 @@ NSString *ForceLocalized(NSString *str) { return str; }
 - (void)localizedStringAsArgument:(NSString *)argumentString {
   UILabel *testLabel = [[UILabel alloc] init];
 
-  [testLabel setText:argumentString]; // expected-warning {{User-facing text should use localized string macro}}
+  [testLabel setText:argumentString]; // expected-warning {{String should be localized}}
 }
 
 // [LocalizationTestSuite unLocalizedStringMethod] returns an unlocalized string
@@ -195,7 +187,7 @@ NSString *ForceLocalized(NSString *str) { return str; }
   UILabel *testLabel = [[UILabel alloc] init];
   NSString *bar = NSLocalizedString(@"Hello", @"Comment");
 
-  [testLabel setText:[LocalizationTestSuite unLocalizedStringMethod]]; // expected-warning {{User-facing text should use localized string macro}}
+  [testLabel setText:[LocalizationTestSuite unLocalizedStringMethod]]; // expected-warning {{String should be localized}}
 }
 
 // This is the reverse situation: accessibilitySetIdentification: doesn't care
@@ -204,21 +196,6 @@ NSString *ForceLocalized(NSString *str) { return str; }
   UILabel *testLabel = [[UILabel alloc] init];
 
   [testLabel accessibilitySetIdentification:@"UnlocalizedString"]; // no-warning
-}
-
-// An NSView subclass should raise a warning for methods in NSView that 
-// require localized strings 
-- (void)testRequiresLocalizationMethodFromSuperclass {
-  NSViewSubclass *s = [[NSViewSubclass alloc] init];
-  NSString *bar = @"UnlocalizedString";
-
-  [s setToolTip:bar]; // expected-warning {{User-facing text should use localized string macro}}
-}
-
-- (void)testRequiresLocalizationMethodFromProtocol {
-  UILabel *testLabel = [[UILabel alloc] init];
-
-  [testLabel setAccessibilityLabel:@"UnlocalizedString"]; // expected-warning {{User-facing text should use localized string macro}}
 }
 
 // EmptyLocalizationContextChecker tests
