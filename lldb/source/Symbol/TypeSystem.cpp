@@ -85,3 +85,9 @@ TypeSystem::GetTypeForFormatters (void* type)
 {
     return CompilerType(this, type);
 }
+
+LazyBool
+TypeSystem::ShouldPrintAsOneLiner (void* type)
+{
+    return eLazyBoolCalculate;
+}

@@ -558,6 +558,23 @@ FormatManager::ShouldPrintAsOneLiner (ValueObject& valobj)
     if (valobj.GetNumChildren() == 0)
         return false;
     
+    // ask the type if it has any opinion about this
+    // eLazyBoolCalculate == no opinion; other values should be self explanatory
+    CompilerType compiler_type(valobj.GetCompilerType());
+    if (compiler_type.IsValid())
+    {
+        switch (compiler_type.ShouldPrintAsOneLiner())
+        {
+            case eLazyBoolNo:
+                return false;
+            case eLazyBoolYes:
+                return true;
+            case eLazyBoolCalculate:
+            default:
+                break;
+        }
+    }
+    
     size_t total_children_name_len = 0;
     
     for (size_t idx = 0;

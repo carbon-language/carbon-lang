@@ -507,6 +507,9 @@ public:
     virtual CompilerType
     GetTypeForFormatters (void* type);
     
+    virtual LazyBool
+    ShouldPrintAsOneLiner (void* type);
+    
 protected:
     const LLVMCastKind m_kind; // Support for llvm casting
     SymbolFile *m_sym_file;

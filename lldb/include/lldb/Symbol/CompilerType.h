@@ -459,6 +459,9 @@ public:
     CompilerType
     GetTypeForFormatters () const;
     
+    LazyBool
+    ShouldPrintAsOneLiner () const;
+    
     //------------------------------------------------------------------
     // Pointers & References
     //------------------------------------------------------------------

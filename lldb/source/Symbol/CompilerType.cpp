@@ -859,6 +859,14 @@ CompilerType::GetTypeForFormatters () const
     return CompilerType();
 }
 
+LazyBool
+CompilerType::ShouldPrintAsOneLiner () const
+{
+    if (IsValid())
+        return m_type_system->ShouldPrintAsOneLiner(m_type);
+    return eLazyBoolCalculate;
+}
+
 // Get the index of the child of "clang_type" whose name matches. This function
 // doesn't descend into the children, but only looks one level deep and name
 // matches can include base class names.
