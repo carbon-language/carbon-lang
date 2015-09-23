@@ -936,12 +936,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
 
-  case Intrinsic::x86_sse41_pmovsxbd:
-  case Intrinsic::x86_sse41_pmovsxbq:
-  case Intrinsic::x86_sse41_pmovsxbw:
-  case Intrinsic::x86_sse41_pmovsxdq:
-  case Intrinsic::x86_sse41_pmovsxwd:
-  case Intrinsic::x86_sse41_pmovsxwq:
   case Intrinsic::x86_avx2_pmovsxbd:
   case Intrinsic::x86_avx2_pmovsxbq:
   case Intrinsic::x86_avx2_pmovsxbw:

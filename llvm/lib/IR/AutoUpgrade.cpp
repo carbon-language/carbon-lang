@@ -132,6 +132,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name.startswith("x86.avx2.vbroadcast") ||
         Name.startswith("x86.avx2.pbroadcast") ||
         Name.startswith("x86.avx.vpermil.") ||
+        Name.startswith("x86.sse41.pmovsx") ||
         Name == "x86.avx.vinsertf128.pd.256" ||
         Name == "x86.avx.vinsertf128.ps.256" ||
         Name == "x86.avx.vinsertf128.si.256" ||
@@ -440,6 +441,19 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       for (unsigned I = 0; I < EltNum; ++I)
         Rep = Builder.CreateInsertElement(Rep, Load,
                                           ConstantInt::get(I32Ty, I));
+    } else if (Name.startswith("llvm.x86.sse41.pmovsx")) {
+      VectorType *SrcTy = cast<VectorType>(CI->getArgOperand(0)->getType());
+      VectorType *DstTy = cast<VectorType>(CI->getType());
+      unsigned NumDstElts = DstTy->getNumElements();
+
+      // Extract a subvector of the first NumDstElts lanes and sign extend.
+      SmallVector<int, 8> ShuffleMask;
+      for (int i = 0; i != (int)NumDstElts; ++i)
+        ShuffleMask.push_back(i);
+
+      Value *SV = Builder.CreateShuffleVector(
+          CI->getArgOperand(0), UndefValue::get(SrcTy), ShuffleMask);
+      Rep = Builder.CreateSExt(SV, DstTy);
     } else if (Name == "llvm.x86.avx2.vbroadcasti128") {
       // Replace vbroadcasts with a vector shuffle.
       Type *VT = VectorType::get(Type::getInt64Ty(C), 2);
@@ -527,10 +541,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       unsigned Imm = cast<ConstantInt>(CI->getArgOperand(2))->getZExtValue();
       VectorType *VecTy = cast<VectorType>(CI->getType());
       unsigned NumElts = VecTy->getNumElements();
-      
+
       // Mask off the high bits of the immediate value; hardware ignores those.
       Imm = Imm & 1;
-      
+
       // Extend the second operand into a vector that is twice as big.
       Value *UndefV = UndefValue::get(Op1->getType());
       SmallVector<Constant*, 8> Idxs;
@@ -572,7 +586,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
       VectorType *VecTy = cast<VectorType>(CI->getType());
       unsigned NumElts = VecTy->getNumElements();
-      
+
       // Mask off the high bits of the immediate value; hardware ignores those.
       Imm = Imm & 1;
 
