@@ -46,12 +46,12 @@ public:
     ///     The expression to be parsed.
     //------------------------------------------------------------------
     ExpressionParser (ExecutionContextScope *exe_scope,
-                           Expression &expr,
-                           bool generate_debug_info) :
+                      Expression &expr,
+                      bool generate_debug_info) :
         m_expr(expr),
         m_generate_debug_info(generate_debug_info)
-        {
-        }
+    {
+    }
     
     //------------------------------------------------------------------
     /// Destructor
