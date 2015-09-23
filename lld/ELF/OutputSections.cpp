@@ -252,7 +252,7 @@ lld::elf2::getLocalSymVA(const typename ELFFile<ELFT>::Elf_Sym *Sym,
 
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
   for (InputSection<ELFT> *C : Sections)
-    C->writeTo(Buf, *BssSec, PltSec, GotSec);
+    C->writeTo(Buf, BssSec, PltSec, GotSec);
 }
 
 template <bool Is64Bits>
@@ -336,7 +336,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       Section = &cast<DefinedRegular<ELFT>>(Body)->Section;
       break;
     case SymbolBody::DefinedCommonKind:
-      Out = BssSec;
+      Out = &BssSec;
       break;
     case SymbolBody::UndefinedKind:
     case SymbolBody::DefinedAbsoluteKind:

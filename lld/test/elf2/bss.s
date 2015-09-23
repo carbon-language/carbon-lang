@@ -24,6 +24,8 @@
 // CHECK-NEXT:   Name:
 // CHECK-NEXT:   Type:
 // CHECK-NEXT:   Flags [
+// CHECK-NEXT:     SHF_ALLOC
+// CHECK-NEXT:     SHF_EXECINSTR
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Address:
 // CHECK-NEXT:   Offset: 0x1000

@@ -97,9 +97,11 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   Writer(SymbolTable *T)
-      : SymTabSec(*T, StrTabSec), DynSymSec(*T, DynStrSec),
+      : SymTabSec(*T, StrTabSec, BssSec), DynSymSec(*T, DynStrSec, BssSec),
         RelaDynSec(DynSymSec, GotSec, T->shouldUseRela()), PltSec(GotSec),
-        HashSec(DynSymSec), DynamicSec(*T, HashSec, RelaDynSec) {}
+        HashSec(DynSymSec), DynamicSec(*T, HashSec, RelaDynSec),
+        BssSec(PltSec, GotSec, BssSec, ".bss", SHT_NOBITS,
+               SHF_ALLOC | SHF_WRITE) {}
   void run();
 
 private:
@@ -154,7 +156,7 @@ private:
 
   InterpSection<ELFT::Is64Bits> InterpSec;
 
-  OutputSection<ELFT> *BSSSec = nullptr;
+  OutputSection<ELFT> BssSec;
 };
 } // anonymous namespace
 
@@ -312,13 +314,17 @@ static void undefError(const SymbolTable &S, const SymbolBody &Sym) {
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT> *> Map;
+
+  OutputSections.push_back(&BssSec);
+  Map[{BssSec.getName(), BssSec.getType(), BssSec.getFlags()}] = &BssSec;
+
   auto getSection = [&](StringRef Name, uint32_t sh_type,
                         uintX_t sh_flags) -> OutputSection<ELFT> * {
     SectionKey<ELFT::Is64Bits> Key{Name, sh_type, sh_flags};
     OutputSection<ELFT> *&Sec = Map[Key];
     if (!Sec) {
       Sec = new (CAlloc.Allocate()) OutputSection<ELFT>(
-          PltSec, GotSec, Key.Name, Key.sh_type, Key.sh_flags);
+          PltSec, GotSec, BssSec, Key.Name, Key.sh_type, Key.sh_flags);
       OutputSections.push_back(Sec);
     }
     return Sec;
@@ -364,18 +370,9 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       HashSec.addSymbol(Body);
   }
 
-  BSSSec = getSection(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
-
-  // The only type in OutputSections is currently OutputSection.
-  for (OutputSectionBase<ELFT::Is64Bits> *OSB : OutputSections)
-    static_cast<OutputSection<ELFT> *>(OSB)->setBssSec(BSSSec);
-
-  SymTabSec.setBssSec(BSSSec);
-  DynSymSec.setBssSec(BSSSec);
-
   // Sort the common symbols by alignment as an heuristic to pack them better.
   std::stable_sort(CommonSymbols.begin(), CommonSymbols.end(), cmpAlign<ELFT>);
-  uintX_t Off = BSSSec->getSize();
+  uintX_t Off = BssSec.getSize();
   for (DefinedCommon<ELFT> *C : CommonSymbols) {
     const Elf_Sym &Sym = C->Sym;
     uintX_t Align = C->MaxAlignment;
@@ -384,7 +381,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     Off += Sym.st_size;
   }
 
-  BSSSec->setSize(Off);
+  BssSec.setSize(Off);
 
   OutputSections.push_back(&SymTabSec);
   OutputSections.push_back(&StrTabSec);

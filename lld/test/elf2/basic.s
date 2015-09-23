@@ -53,6 +53,22 @@ _start:
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 1
+# CHECK-NEXT:     Name: .bss
+# CHECK-NEXT:     Type: SHT_NOBITS (0x8)
+# CHECK-NEXT:     Flags [ (0x3)
+# CHECK-NEXT:       SHF_ALLOC (0x2)
+# CHECK-NEXT:       SHF_WRITE (0x1)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Address: 0x11000
+# CHECK-NEXT:     Offset: 0x1000
+# CHECK-NEXT:     Size: 0
+# CHECK-NEXT:     Link: 0
+# CHECK-NEXT:     Info: 0
+# CHECK-NEXT:     AddressAlignment: 4
+# CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Section {
+# CHECK-NEXT:     Index: 2
 # CHECK-NEXT:     Name: .text
 # CHECK-NEXT:     Type: SHT_PROGBITS (0x1)
 # CHECK-NEXT:     Flags [ (0x6)
@@ -68,25 +84,9 @@ _start:
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
-# CHECK-NEXT:     Index: 2
+# CHECK-NEXT:     Index: 3
 # CHECK-NEXT:     Name: .data
 # CHECK-NEXT:     Type: SHT_PROGBITS (0x1)
-# CHECK-NEXT:     Flags [ (0x3)
-# CHECK-NEXT:       SHF_ALLOC (0x2)
-# CHECK-NEXT:       SHF_WRITE (0x1)
-# CHECK-NEXT:     ]
-# CHECK-NEXT:     Address: 0x11010
-# CHECK-NEXT:     Offset: 0x1010
-# CHECK-NEXT:     Size: 0
-# CHECK-NEXT:     Link: 0
-# CHECK-NEXT:     Info: 0
-# CHECK-NEXT:     AddressAlignment: 4
-# CHECK-NEXT:     EntrySize: 0
-# CHECK-NEXT:   }
-# CHECK-NEXT:   Section {
-# CHECK-NEXT:     Index: 3
-# CHECK-NEXT:     Name: .bss
-# CHECK-NEXT:     Type: SHT_NOBITS (0x8)
 # CHECK-NEXT:     Flags [ (0x3)
 # CHECK-NEXT:       SHF_ALLOC (0x2)
 # CHECK-NEXT:       SHF_WRITE (0x1)
@@ -145,7 +145,7 @@ _start:
 # CHECK-NEXT:     Binding: Global (0x1)
 # CHECK-NEXT:     Type: None (0x0)
 # CHECK-NEXT:     Other: 0
-# CHECK-NEXT:     Section: .text (0x1)
+# CHECK-NEXT:     Section: .text
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
 # CHECK-NEXT: ProgramHeaders [

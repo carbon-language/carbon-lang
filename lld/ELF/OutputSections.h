@@ -154,13 +154,14 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
   SymbolTableSection(SymbolTable &Table,
-                     StringTableSection<ELFT::Is64Bits> &StrTabSec)
+                     StringTableSection<ELFT::Is64Bits> &StrTabSec,
+                     const OutputSection<ELFT> &BssSec)
       : OutputSectionBase<ELFT::Is64Bits>(
             StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
             StrTabSec.isDynamic() ? llvm::ELF::SHT_DYNSYM
                                   : llvm::ELF::SHT_SYMTAB,
             StrTabSec.isDynamic() ? (uintX_t)llvm::ELF::SHF_ALLOC : 0),
-        Table(Table), StrTabSec(StrTabSec) {
+        Table(Table), StrTabSec(StrTabSec), BssSec(BssSec) {
     typedef OutputSectionBase<ELFT::Is64Bits> Base;
     typename Base::HeaderT &Header = this->Header;
 
@@ -187,14 +188,13 @@ public:
 
   StringTableSection<ELFT::Is64Bits> &getStrTabSec() const { return StrTabSec; }
   unsigned getNumSymbols() const { return NumVisible + 1; }
-  void setBssSec(const OutputSection<ELFT> *V) { BssSec = V; }
 
 private:
   SymbolTable &Table;
   StringTableSection<ELFT::Is64Bits> &StrTabSec;
   unsigned NumVisible = 0;
   unsigned NumLocals = 0;
-  const OutputSection<ELFT> *BssSec = nullptr;
+  const OutputSection<ELFT> &BssSec;
 };
 
 template <class ELFT>
@@ -236,19 +236,19 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
   OutputSection(const PltSection<ELFT> &PltSec, const GotSection<ELFT> &GotSec,
-                StringRef Name, uint32_t sh_type, uintX_t sh_flags)
+                const OutputSection<ELFT> &BssSec, StringRef Name,
+                uint32_t sh_type, uintX_t sh_flags)
       : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags),
-        PltSec(PltSec), GotSec(GotSec) {}
+        PltSec(PltSec), GotSec(GotSec), BssSec(BssSec) {}
 
   void addSection(InputSection<ELFT> *C);
   void writeTo(uint8_t *Buf) override;
-  void setBssSec(const OutputSection<ELFT> *BS) { BssSec = BS; }
 
 private:
   std::vector<InputSection<ELFT> *> Sections;
   const PltSection<ELFT> &PltSec;
   const GotSection<ELFT> &GotSec;
-  const OutputSection<ELFT> *BssSec = nullptr;
+  const OutputSection<ELFT> &BssSec;
 };
 
 template <bool Is64Bits>

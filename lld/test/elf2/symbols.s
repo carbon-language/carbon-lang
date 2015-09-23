@@ -45,23 +45,23 @@ hidden:
 .internal internal
 internal:
 
+// CHECK:      Name: .bss
+// CHECK-NEXT: Type: SHT_NOBITS
+// CHECK-NEXT: Flags [
+// CHECK-NEXT:   SHF_ALLOC
+// CHECK-NEXT:   SHF_WRITE
+// CHECK-NEXT: ]
+// CHECK-NEXT: Address: 0x11000
+// CHECK-NEXT: Offset: 0x1000
+// CHECK-NEXT: Size: 4
+
 // CHECK:      Name: .text
 // CHECK-NEXT: Type: SHT_PROGBITS
 // CHECK-NEXT: Flags [
 // CHECK-NEXT:   SHF_ALLOC
 // CHECK-NEXT:   SHF_EXECINSTR
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x11000
-
-// CHECK:      Name: .bss (14)
-// CHECK-NEXT: Type: SHT_NOBITS (0x8)
-// CHECK-NEXT: Flags [ (0x3)
-// CHECK-NEXT:   SHF_ALLOC (0x2)
-// CHECK-NEXT:   SHF_WRITE (0x1)
-// CHECK-NEXT: ]
 // CHECK-NEXT: Address: 0x12000
-// CHECK-NEXT: Offset: 0x2000
-// CHECK-NEXT: Size: 4
 
 // CHECK:      Name: foobar
 // CHECK-NEXT: Type: SHT_NOBITS
@@ -82,7 +82,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: _start
-// CHECK-NEXT:     Value: 0x11000
+// CHECK-NEXT:     Value: 0x12000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: Function
@@ -109,7 +109,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: common
-// CHECK-NEXT:     Value: 0x12000
+// CHECK-NEXT:     Value: 0x11000
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Object
@@ -118,7 +118,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: foo
-// CHECK-NEXT:     Value: 0x11000
+// CHECK-NEXT:     Value: 0x12000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Weak (0x2)
 // CHECK-NEXT:     Type: Object
