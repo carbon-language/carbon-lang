@@ -20,6 +20,11 @@
 // RUN:   -y %p/dummy-debug-map.map -o - \
 // RUN:     | llvm-dwarfdump --debug-dump=info - | FileCheck %s
 
+// RUN: llvm-dsymutil -f -oso-prepend-path=%p/../Inputs/modules -y \
+// RUN:   %p/dummy-debug-map.map -o %t 2>&1 | FileCheck --check-prefix=WARN %s
+
+// WARN-NOT: warning: hash mismatch
+
 // ---------------------------------------------------------------------
 #ifdef BAR_H
 // ---------------------------------------------------------------------
@@ -37,7 +42,7 @@ struct Bar {
 // ---------------------------------------------------------------------
 #ifdef FOO_H
 // ---------------------------------------------------------------------
-// CHECK: 55{{.*}}DW_TAG_compile_unit
+// CHECK: DW_TAG_compile_unit
 // CHECK:   DW_TAG_module
 // CHECK-NEXT: DW_AT_name {{.*}}"Foo"
 // CHECK:      DW_TAG_typedef

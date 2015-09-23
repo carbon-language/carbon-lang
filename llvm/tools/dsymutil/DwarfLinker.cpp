@@ -13,7 +13,7 @@
 #include "MachOUtils.h"
 #include "NonRelocatableStringpool.h"
 #include "llvm/ADT/IntervalMap.h"
-#include "llvm/ADT/StringSet.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DIE.h"
@@ -1205,7 +1205,7 @@ private:
   /// Recursively add the debug info in this clang module .pcm
   /// file (and all the modules imported by it in a bottom-up fashion)
   /// to Units.
-  void loadClangModule(StringRef Filename, StringRef ModulePath,
+  void loadClangModule(StringRef Filename, StringRef ModulePath, uint64_t DwoId,
                        DebugMap &ModuleMap, unsigned Indent = 0);
 
   /// \brief Flags passed to DwarfLinker::lookForDIEsToKeep
@@ -1448,8 +1448,8 @@ private:
   /// debug_frame section.
   uint32_t LastCIEOffset;
 
-  /// FIXME: We may need to use something more resilient than the PCM filename.
-  StringSet<> ClangModules;
+  /// Mapping the PCM filename to the DwoId.
+  StringMap<uint64_t> ClangModules;
 };
 
 /// Similar to DWARFUnitSection::getUnitForOffset(), but returning our
@@ -3091,24 +3091,42 @@ void DwarfLinker::DIECloner::copyAbbrev(
   Linker.AssignAbbrev(Copy);
 }
 
+static uint64_t getDwoId(const DWARFDebugInfoEntryMinimal &CUDie,
+                         const DWARFUnit &Unit) {
+  uint64_t DwoId =
+      CUDie.getAttributeValueAsUnsignedConstant(&Unit, dwarf::DW_AT_dwo_id, 0);
+  if (!DwoId)
+    DwoId = CUDie.getAttributeValueAsUnsignedConstant(&Unit,
+                                                      dwarf::DW_AT_GNU_dwo_id, 0);
+  return DwoId;
+}
+
 bool DwarfLinker::registerModuleReference(
     const DWARFDebugInfoEntryMinimal &CUDie, const DWARFUnit &Unit,
     DebugMap &ModuleMap, unsigned Indent) {
   std::string PCMfile =
-      CUDie.getAttributeValueAsString(&Unit, dwarf::DW_AT_GNU_dwo_name, "");
+      CUDie.getAttributeValueAsString(&Unit, dwarf::DW_AT_dwo_name, "");
+  if (PCMfile.empty())
+    PCMfile =
+        CUDie.getAttributeValueAsString(&Unit, dwarf::DW_AT_GNU_dwo_name, "");
   if (PCMfile.empty())
     return false;
 
   // Clang module DWARF skeleton CUs abuse this for the path to the module.
   std::string PCMpath =
       CUDie.getAttributeValueAsString(&Unit, dwarf::DW_AT_comp_dir, "");
+  uint64_t DwoId = getDwoId(CUDie, Unit);
 
   if (Options.Verbose) {
     outs().indent(Indent);
     outs() << "Found clang module reference " << PCMfile;
   }
 
-  if (ClangModules.count(PCMfile)) {
+  auto Cached = ClangModules.find(PCMfile);
+  if (Cached != ClangModules.end()) {
+    if (Cached->second != DwoId)
+      reportWarning(Twine("hash mismatch: this object file was built against a "
+                          "different version of the module ") + PCMfile);
     if (Options.Verbose)
       outs() << " [cached].\n";
     return true;
@@ -3118,8 +3136,8 @@ bool DwarfLinker::registerModuleReference(
 
   // Cyclic dependencies are disallowed by Clang, but we still
   // shouldn't run into an infinite loop, so mark it as processed now.
-  ClangModules.insert(PCMfile);
-  loadClangModule(PCMfile, PCMpath, ModuleMap, Indent + 2);
+  ClangModules.insert({PCMfile, DwoId});
+  loadClangModule(PCMfile, PCMpath, DwoId, ModuleMap, Indent + 2);
   return true;
 }
 
@@ -3139,7 +3157,8 @@ DwarfLinker::loadObject(BinaryHolder &BinaryHolder, DebugMapObject &Obj,
 }
 
 void DwarfLinker::loadClangModule(StringRef Filename, StringRef ModulePath,
-                                  DebugMap &ModuleMap, unsigned Indent) {
+                                  uint64_t DwoId, DebugMap &ModuleMap,
+                                  unsigned Indent) {
   SmallString<80> Path(Options.PrependPath);
   if (sys::path::is_relative(Filename))
     sys::path::append(Path, ModulePath, Filename);
@@ -3154,9 +3173,6 @@ void DwarfLinker::loadClangModule(StringRef Filename, StringRef ModulePath,
     return;
   }
 
-  // FIXME: At this point dsymutil should verify the DW_AT_gnu_dwo_id
-  // against the module hash of the clang module.
-
   std::unique_ptr<CompileUnit> Unit;
 
   // Setup access to the debug info.
@@ -3166,12 +3182,17 @@ void DwarfLinker::loadClangModule(StringRef Filename, StringRef ModulePath,
     auto *CUDie = CU->getUnitDIE(false);
     // Recursively get all modules imported by this one.
     if (!registerModuleReference(*CUDie, *CU, ModuleMap, Indent)) {
-      // Add this module.
       if (Unit) {
         errs() << Filename << ": Clang modules are expected to have exactly"
                << " 1 compile unit.\n";
         exitDsymutil(1);
       }
+      if (getDwoId(*CUDie, *CU) != DwoId)
+        reportWarning(
+            Twine("hash mismatch: this object file was built against a "
+                  "different version of the module ") + Filename);
+
+      // Add this module.
       Unit = llvm::make_unique<CompileUnit>(*CU, UnitID++, !Options.NoODR);
       Unit->setHasInterestingContent();
       gatherDIEParents(CUDie, 0, *Unit, &ODRContexts.getRoot(), StringPool,
