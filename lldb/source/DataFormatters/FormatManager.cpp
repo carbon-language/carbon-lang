@@ -570,7 +570,6 @@ FormatManager::ShouldPrintAsOneLiner (ValueObject& valobj)
             case eLazyBoolYes:
                 return true;
             case eLazyBoolCalculate:
-            default:
                 break;
         }
     }
