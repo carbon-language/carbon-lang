@@ -741,7 +741,7 @@ static void AddAlignmentAssumptions(CallSite CS, InlineFunctionInfo &IFI) {
       // caller, then don't bother inserting the assumption.
       Value *Arg = CS.getArgument(I->getArgNo());
       if (getKnownAlignment(Arg, DL, CS.getInstruction(),
-                            &IFI.ACT->getAssumptionCache(*CalledFunc),
+                            &IFI.ACT->getAssumptionCache(*CS.getCaller()),
                             &DT) >= Align)
         continue;
 
