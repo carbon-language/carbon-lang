@@ -101,6 +101,29 @@ void SymbolTable::addELFFile(ELFFileBase *File) {
   }
 }
 
+template <class ELFT>
+void SymbolTable::dupErorr(const SymbolBody &Old, const SymbolBody &New) {
+  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
+
+  const Elf_Sym &OldE = cast<ELFSymbolBody<ELFT>>(Old).Sym;
+  const Elf_Sym &NewE = cast<ELFSymbolBody<ELFT>>(New).Sym;
+  ELFFileBase *OldFile = nullptr;
+  ELFFileBase *NewFile = nullptr;
+
+  for (const std::unique_ptr<ObjectFileBase> &F : ObjectFiles) {
+    const auto &File = cast<ObjectFile<ELFT>>(*F);
+    Elf_Sym_Range Syms = File.getObj()->symbols(File.getSymbolTable());
+    if (&OldE > Syms.begin() && &OldE < Syms.end())
+      OldFile = F.get();
+    if (&NewE > Syms.begin() && &NewE < Syms.end())
+      NewFile = F.get();
+  }
+
+  error(Twine("duplicate symbol: ") + Old.getName() + " in " +
+        OldFile->getName() + " and " + NewFile->getName());
+}
+
 // This function resolves conflicts if there's an existing symbol with
 // the same name. Decisions are made based on symbol type.
 template <class ELFT> void SymbolTable::resolve(SymbolBody *New) {
@@ -127,8 +150,8 @@ template <class ELFT> void SymbolTable::resolve(SymbolBody *New) {
   int comp = Existing->compare<ELFT>(New);
   if (comp < 0)
     Sym->Body = New;
-  if (comp == 0)
-    error(Twine("duplicate symbol: ") + Sym->Body->getName());
+  else if (comp == 0)
+    dupErorr<ELFT>(*Existing, *New);
 }
 
 Symbol *SymbolTable::insert(SymbolBody *New) {
