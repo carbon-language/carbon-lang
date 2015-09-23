@@ -18,6 +18,8 @@
 // RUN:     -ffreestanding -fsyntax-only -Werror \
 // RUN:     -isystem %S/Inputs/include %s
 
+// REQUIRES: x86-registered-target
+
 // Intrin.h needs size_t, but -ffreestanding prevents us from getting it from
 // stddef.h.  Work around it with this typedef.
 typedef __SIZE_TYPE__ size_t;
