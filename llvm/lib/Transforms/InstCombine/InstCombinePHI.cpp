@@ -15,6 +15,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "instcombine"
@@ -349,24 +350,37 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
 
   Value *InVal = FirstLI->getOperand(0);
   NewPN->addIncoming(InVal, PN.getIncomingBlock(0));
+  LoadInst *NewLI = new LoadInst(NewPN, "", isVolatile, LoadAlignment);
 
-  // Add all operands to the new PHI.
+  unsigned KnownIDs[] = {
+    LLVMContext::MD_tbaa,
+    LLVMContext::MD_range,
+    LLVMContext::MD_invariant_load,
+    LLVMContext::MD_alias_scope,
+    LLVMContext::MD_noalias,
+    LLVMContext::MD_nonnull
+  };
+
+  for (unsigned ID : KnownIDs)
+    NewLI->setMetadata(ID, FirstLI->getMetadata(ID));
+
+  // Add all operands to the new PHI and combine TBAA metadata.
   for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
-    Value *NewInVal = cast<LoadInst>(PN.getIncomingValue(i))->getOperand(0);
+    LoadInst *LI = cast<LoadInst>(PN.getIncomingValue(i));
+    combineMetadata(NewLI, LI, KnownIDs);
+    Value *NewInVal = LI->getOperand(0);
     if (NewInVal != InVal)
       InVal = nullptr;
     NewPN->addIncoming(NewInVal, PN.getIncomingBlock(i));
   }
 
-  Value *PhiVal;
   if (InVal) {
     // The new PHI unions all of the same values together.  This is really
     // common, so we handle it intelligently here for compile-time speed.
-    PhiVal = InVal;
+    NewLI->setOperand(0, InVal);
     delete NewPN;
   } else {
     InsertNewInstBefore(NewPN, PN);
-    PhiVal = NewPN;
   }
 
   // If this was a volatile load that we are merging, make sure to loop through
@@ -376,7 +390,6 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
     for (Value *IncValue : PN.incoming_values())
       cast<LoadInst>(IncValue)->setVolatile(false);
 
-  LoadInst *NewLI = new LoadInst(PhiVal, "", isVolatile, LoadAlignment);
   NewLI->setDebugLoc(FirstLI->getDebugLoc());
   return NewLI;
 }
