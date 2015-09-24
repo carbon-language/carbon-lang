@@ -65,11 +65,31 @@ class Window(object):
         self.children = list()
         self.first_responder = None
         self.can_become_first_responder = can_become_first_responder
+        self.key_actions = dict()
     
     def add_child(self, window):
         self.children.append(window)
         window.parent = self
-    
+
+    def add_key_action(self, arg, callback, decription):
+        if isinstance(arg, list):
+            for key in arg:
+                self.add_key_action(key, callback, description)
+        else:
+            if isinstance(arg, ( int, long )):
+                key_action_dict = { 'key'         : arg, 
+                                    'callback'    : callback,
+                                    'description' : decription }
+                self.key_actions[arg] = key_action_dict
+            elif isinstance(arg, basestring):       
+                key_integer = ord(arg)
+                key_action_dict = { 'key'         : key_integer, 
+                                    'callback'    : callback,
+                                    'description' : decription }
+                self.key_actions[key_integer] = key_action_dict
+            else:
+                raise ValueError
+       
     def remove_child(self, window):
         self.children.remove(window)
     
@@ -199,7 +219,18 @@ class Window(object):
         if self.first_responder:
             if self.first_responder.handle_key(key, False):
                 return True       
-           
+
+        # Check our key map to see if we have any actions. Actions don't take
+        # any arguments, they must be callable
+        if key in self.key_actions:
+            key_action = self.key_actions[key]
+            key_action['callback']()
+            return True
+        # Check if there is a wildcard key for any key
+        if -1 in self.key_actions:
+            key_action = self.key_actions[-1]
+            key_action['callback']()
+            return True
         # Check if the window delegate wants to handle this key press
         if self.delegate:      
             if callable(getattr(self.delegate, "handle_key", None)):
@@ -320,7 +351,7 @@ class BoxedPanel(Panel):
     def scroll_end (self):
         max_visible_lines = self.get_usable_height()
         num_lines = len(self.lines)
-        if max_visible_lines > num_lines:
+        if num_lines > max_visible_lines:
             self.first_visible_idx = num_lines - max_visible_lines
         else:
             self.first_visible_idx = 0

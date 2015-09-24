@@ -10,9 +10,12 @@ Configuration options for lldbtest.py set by dotest.py during initialization
 """
 
 import curses
+import datetime
 import lldbcurses
+import math
 import sys
 import test_results
+import time
 
 class Curses(test_results.ResultsFormatter):
     """Receives live results from tests that are running and reports them to the terminal in a curses GUI"""
@@ -28,14 +31,15 @@ class Curses(test_results.ResultsFormatter):
         self.results = list()
         self.saved_first_responder = None
         try:
-            self.main_window = lldbcurses.intialize_curses()
-            self.main_window.delegate = self.handle_main_window_key
+            self.main_window = lldbcurses.intialize_curses()         
+            self.main_window.add_key_action('\t', self.main_window.select_next_first_responder, "Switch between views that can respond to keyboard input")
             self.main_window.refresh()
             self.job_panel = None
             self.results_panel = None
             self.status_panel = None
             self.info_panel = None
             self.hide_status_list = list()
+            self.start_time = time.time()
         except:
             self.have_curses = False
             lldbcurses.terminate_curses()
@@ -66,71 +70,41 @@ class Curses(test_results.ResultsFormatter):
         else:
             return status
 
-    def handle_main_window_key(self, window, key):
-        if key == ord('\t'):
-            self.main_window.select_next_first_responder()
+    def show_info_panel(self):
+        selected_idx = self.results_panel.get_selected_idx()
+        if selected_idx >= 0 and selected_idx < len(self.results):
+            if self.info_panel is None:
+                info_frame = self.results_panel.get_contained_rect(top_inset=10, left_inset=10, right_inset=10, height=30)
+                self.info_panel = lldbcurses.BoxedPanel(info_frame, "Result Details")
+                # Add a key action for any key that will hide this panel when any key is pressed
+                self.info_panel.add_key_action(-1, self.hide_info_panel, 'Hide the info panel')
+                self.info_panel.top()
+            else:
+                self.info_panel.show()
+            
+            self.saved_first_responder = self.main_window.first_responder  
+            self.main_window.set_first_responder(self.info_panel)
+            test_start = self.results[selected_idx][0]
+            test_result = self.results[selected_idx][1]
+            self.info_panel.set_line(0, "File: %s" % (test_start['test_filename']))
+            self.info_panel.set_line(1, "Test: %s.%s" % (test_start['test_class'], test_start['test_name']))
+            self.info_panel.set_line(2, "Time: %s" % (test_result['elapsed_time']))
+            self.info_panel.set_line(3, "Status: %s" % (test_result['status']))
 
-    def handle_info_panel_key(self, window, key):
-        window.resign_first_responder(remove_from_parent=True, new_first_responder=self.saved_first_responder)
-        window.hide()        
+    def hide_info_panel(self):
+        self.info_panel.resign_first_responder(remove_from_parent=True, new_first_responder=self.saved_first_responder)
+        self.info_panel.hide()        
         self.saved_first_responder = None
         self.main_window.refresh()
-        return True
-
-    def handle_job_panel_key(self, window, key):
-        return False
-
-    def handle_result_panel_key(self, window, key):
-        toggle_status = None
-        if key == ord('\r') or key == ord('\n') or key == curses.KEY_ENTER:
-            selected_idx = self.results_panel.get_selected_idx()
-            if selected_idx >= 0 and selected_idx < len(self.results):
-                if self.info_panel is None:
-                    info_frame = self.results_panel.get_contained_rect(top_inset=10, left_inset=10, right_inset=10, height=30)
-                    self.info_panel = lldbcurses.BoxedPanel(info_frame, "Result Details", delegate=self.handle_info_panel_key)
-                    self.info_panel.top()
-                else:
-                    self.info_panel.show()
-                
-                self.saved_first_responder = self.main_window.first_responder  
-                self.main_window.set_first_responder(self.info_panel)
-                test_start = self.results[selected_idx][0]
-                test_result = self.results[selected_idx][1]
-                self.info_panel.set_line(0, "File: %s" % (test_start['test_filename']))
-                self.info_panel.set_line(1, "Test: %s.%s" % (test_start['test_class'], test_start['test_name']))
-                self.info_panel.set_line(2, "Time: %s" % (test_result['elapsed_time']))
-                self.info_panel.set_line(3, "Status: %s" % (test_result['status']))
-        elif key == curses.KEY_HOME:
-            self.results_panel.scroll_begin()
-        elif key == curses.KEY_END:
-            self.results_panel.scroll_end()
-        elif key == curses.KEY_UP:
-            self.results_panel.select_prev()
-        elif key == curses.KEY_DOWN:
-            self.results_panel.select_next()
-        elif key == ord('.'):                                        
-            toggle_status = 'success'
-        elif key == ord('e') or key == ord('E'):
-            toggle_status = 'error'
-        elif key == ord('f') or key == ord('F'):
-            toggle_status = 'failure'
-        elif key == ord('s') or key == ord('S'):
-            toggle_status = 'skip'
-        elif key == ord('x') or key == ord('X'):
-            toggle_status = 'expected_failure'
-        elif key == ord('?'):
-            toggle_status = 'unexpected_success'
-        else:
-            return False
         
-        if toggle_status:
-            # Toggle showing and hiding results whose status matches "toggle_status" in "Results" window
-            if toggle_status in self.hide_status_list:
-                self.hide_status_list.remove(toggle_status)
+    def toggle_status(self, status):
+        if status:
+            # Toggle showing and hiding results whose status matches "status" in "Results" window
+            if status in self.hide_status_list:
+                self.hide_status_list.remove(status)
             else:
-                self.hide_status_list.append(toggle_status)   
-            self.update_results(update=False) # Will update below
-        self.main_window.refresh()
+                self.hide_status_list.append(status)
+            self.update_results()
 
     def update_results(self, update=True):
         '''Called after a category of test have been show/hidden to update the results list with
@@ -158,7 +132,9 @@ class Curses(test_results.ResultsFormatter):
                 if 'event' in test_event:
                     check_for_one_key = True
                     #print >>self.events_file, str(test_event)
-                    event = test_event['event']
+                    event = test_event['event']   
+                    if self.status_panel:
+                        self.status_panel.update_status('time', str(datetime.timedelta(seconds=math.floor(time.time() - self.start_time))))
                     if event == 'test_start':
                         name = test_event['test_class'] + '.' + test_event['test_name']
                         self.job_tests[worker_index] = test_event
@@ -176,7 +152,6 @@ class Curses(test_results.ResultsFormatter):
                         else:
                             line = ''
                         self.job_panel.set_line(worker_index, line)
-                        # if status != 'success' and status != 'skip' and status != 'expect_failure':
                         name = test_event['test_class'] + '.' + test_event['test_name']
                         elapsed_time = test_event['event_time'] - self.job_tests[worker_index]['event_time']
                         if not status in self.hide_status_list:
@@ -196,14 +171,26 @@ class Curses(test_results.ResultsFormatter):
                     elif event == 'job_end':
                         self.jobs[worker_index] = ''
                         self.job_panel.set_line(worker_index, '')
-                    elif event == 'initialize':
+                    elif event == 'initialize': 
                         self.initialize_event = test_event
                         num_jobs = test_event['worker_count']
                         job_frame = self.main_window.get_contained_rect(height=num_jobs+2)
                         results_frame = self.main_window.get_contained_rect(top_inset=num_jobs+2, bottom_inset=1)
                         status_frame = self.main_window.get_contained_rect(height=1, top_inset=self.main_window.get_size().h-1)
-                        self.job_panel = lldbcurses.BoxedPanel(frame=job_frame, title="Jobs", delegate=self.handle_job_panel_key)
-                        self.results_panel = lldbcurses.BoxedPanel(frame=results_frame, title="Results", delegate=self.handle_result_panel_key)
+                        self.job_panel = lldbcurses.BoxedPanel(frame=job_frame, title="Jobs")
+                        self.results_panel = lldbcurses.BoxedPanel(frame=results_frame, title="Results")
+                        
+                        self.results_panel.add_key_action(curses.KEY_UP,    self.results_panel.select_prev      , "Select the previous list entry")
+                        self.results_panel.add_key_action(curses.KEY_DOWN,  self.results_panel.select_next      , "Select the next list entry")
+                        self.results_panel.add_key_action(curses.KEY_HOME,  self.results_panel.scroll_begin     , "Scroll to the start of the list")
+                        self.results_panel.add_key_action(curses.KEY_END,   self.results_panel.scroll_end       , "Scroll to the end of the list")
+                        self.results_panel.add_key_action(curses.KEY_ENTER, self.show_info_panel                , "Display info for the selected result item")
+                        self.results_panel.add_key_action('.', lambda : self.toggle_status('success')           , "Toggle showing/hiding tests whose status is 'success'")
+                        self.results_panel.add_key_action('e', lambda : self.toggle_status('error')             , "Toggle showing/hiding tests whose status is 'error'")
+                        self.results_panel.add_key_action('f', lambda : self.toggle_status('failure')           , "Toggle showing/hiding tests whose status is 'failure'")
+                        self.results_panel.add_key_action('s', lambda : self.toggle_status('skip')              , "Toggle showing/hiding tests whose status is 'skip'")
+                        self.results_panel.add_key_action('x', lambda : self.toggle_status('expected_failure')  , "Toggle showing/hiding tests whose status is 'expected_failure'")
+                        self.results_panel.add_key_action('?', lambda : self.toggle_status('unexpected_success'), "Toggle showing/hiding tests whose status is 'unexpected_success'")
                         self.status_panel = lldbcurses.StatusPanel(frame=status_frame)
                         
                         self.main_window.add_child(self.job_panel)
@@ -211,6 +198,7 @@ class Curses(test_results.ResultsFormatter):
                         self.main_window.add_child(self.status_panel)
                         self.main_window.set_first_responder(self.results_panel)
                         
+                        self.status_panel.add_status_item(name="time", title="Elapsed", format="%s", width=20, value="0:00:00", update=False)
                         self.status_panel.add_status_item(name="success", title="Success", format="%u", width=20, value=0, update=False)
                         self.status_panel.add_status_item(name="failure", title="Failure", format="%u", width=20, value=0, update=False)
                         self.status_panel.add_status_item(name="error", title="Error", format="%u", width=20, value=0, update=False)
