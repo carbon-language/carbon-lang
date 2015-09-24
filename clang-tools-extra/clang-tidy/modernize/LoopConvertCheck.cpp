@@ -410,11 +410,21 @@ LoopConvertCheck::LoopConvertCheck(StringRef Name, ClangTidyContext *Context)
                         Options.get("MinConfidence", "reasonable"))
                         .Case("safe", Confidence::CL_Safe)
                         .Case("risky", Confidence::CL_Risky)
-                        .Default(Confidence::CL_Reasonable)) {}
+                        .Default(Confidence::CL_Reasonable)),
+      NamingStyle(StringSwitch<VariableNamer::NamingStyle>(
+                      Options.get("NamingStyle", "CamelCase"))
+                      .Case("camelBack", VariableNamer::NS_CamelBack)
+                      .Case("lower_case", VariableNamer::NS_LowerCase)
+                      .Case("UPPER_CASE", VariableNamer::NS_UpperCase)
+                      .Default(VariableNamer::NS_CamelCase)) {}
 
 void LoopConvertCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
   SmallVector<std::string, 3> Confs{"risky", "reasonable", "safe"};
   Options.store(Opts, "MinConfidence", Confs[static_cast<int>(MinConfidence)]);
+
+  SmallVector<std::string, 4> Styles{"camelBack", "CamelCase", "lower_case",
+                                    "UPPER_CASE"};
+  Options.store(Opts, "NamingStyle", Styles[static_cast<int>(NamingStyle)]);
 }
 
 void LoopConvertCheck::registerMatchers(MatchFinder *Finder) {
@@ -466,7 +476,7 @@ void LoopConvertCheck::doConversion(
   } else {
     VariableNamer Namer(&TUInfo->getGeneratedDecls(),
                         &TUInfo->getParentFinder().getStmtToParentStmtMap(),
-                        Loop, IndexVar, MaybeContainer, Context);
+                        Loop, IndexVar, MaybeContainer, Context, NamingStyle);
     VarName = Namer.createIndexName();
     // First, replace all usages of the array subscript expression with our new
     // variable.

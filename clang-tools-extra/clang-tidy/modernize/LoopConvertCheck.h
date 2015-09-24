@@ -64,7 +64,8 @@ private:
                      const ForStmt *Loop, LoopFixerKind FixerKind);
 
   std::unique_ptr<TUTrackingInfo> TUInfo;
-  Confidence::Level MinConfidence;
+  const Confidence::Level MinConfidence;
+  const VariableNamer::NamingStyle NamingStyle;
 };
 
 } // namespace modernize

@@ -414,14 +414,22 @@ private:
 /// index, if they exist.
 class VariableNamer {
 public:
+  // Supported naming styles.
+  enum NamingStyle {
+    NS_CamelBack,
+    NS_CamelCase,
+    NS_LowerCase,
+    NS_UpperCase,
+  };
+
   VariableNamer(StmtGeneratedVarNameMap *GeneratedDecls,
                 const StmtParentMap *ReverseAST, const clang::Stmt *SourceStmt,
                 const clang::VarDecl *OldIndex,
                 const clang::VarDecl *TheContainer,
-                const clang::ASTContext *Context)
+                const clang::ASTContext *Context, NamingStyle Style)
       : GeneratedDecls(GeneratedDecls), ReverseAST(ReverseAST),
         SourceStmt(SourceStmt), OldIndex(OldIndex), TheContainer(TheContainer),
-        Context(Context) {}
+        Context(Context), Style(Style) {}
 
   /// \brief Generate a new index name.
   ///
@@ -437,10 +445,14 @@ private:
   const clang::VarDecl *OldIndex;
   const clang::VarDecl *TheContainer;
   const clang::ASTContext *Context;
+  const NamingStyle Style;
 
   // Determine whether or not a declaration that would conflict with Symbol
   // exists in an outer context or in any statement contained in SourceStmt.
   bool declarationExists(llvm::StringRef Symbol);
+
+  // Concatenates two identifiers following the current naming style.
+  std::string AppendWithStyle(StringRef Str, StringRef Suffix) const;
 };
 
 } // namespace modernize

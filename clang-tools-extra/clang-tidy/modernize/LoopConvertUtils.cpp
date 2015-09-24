@@ -809,40 +809,63 @@ bool ForLoopIndexUseVisitor::TraverseStmt(Stmt *S) {
 
 std::string VariableNamer::createIndexName() {
   // FIXME: Add in naming conventions to handle:
-  //  - Uppercase/lowercase indices.
   //  - How to handle conflicts.
   //  - An interactive process for naming.
   std::string IteratorName;
-  std::string ContainerName;
+  StringRef ContainerName;
   if (TheContainer)
-    ContainerName = TheContainer->getName().str();
+    ContainerName = TheContainer->getName();
 
-  size_t Len = ContainerName.length();
-  if (Len > 1 && ContainerName[Len - 1] == 's')
+  size_t Len = ContainerName.size();
+  if (Len > 1 && ContainerName.endswith(Style == NS_UpperCase ? "S" : "s")) {
     IteratorName = ContainerName.substr(0, Len - 1);
-  else
-    IteratorName = "elem";
+    if (!declarationExists(IteratorName))
+      return IteratorName;
+  }
 
+  std::string Elem;
+  switch (Style) {
+  case NS_CamelBack:
+  case NS_LowerCase:
+    Elem = "elem";
+    break;
+  case NS_CamelCase:
+    Elem = "Elem";
+    break;
+  case NS_UpperCase:
+    Elem = "ELEM";
+  }
+  if (!declarationExists(Elem))
+    return Elem;
+
+  IteratorName = AppendWithStyle(ContainerName, OldIndex->getName());
   if (!declarationExists(IteratorName))
     return IteratorName;
 
-  IteratorName = ContainerName + "_" + OldIndex->getName().str();
+  IteratorName = AppendWithStyle(ContainerName, Elem);
   if (!declarationExists(IteratorName))
     return IteratorName;
-
-  IteratorName = ContainerName + "_elem";
-  if (!declarationExists(IteratorName))
-    return IteratorName;
-
-  IteratorName += "_elem";
-  if (!declarationExists(IteratorName))
-    return IteratorName;
-
-  IteratorName = "_elem_";
 
   // Someone defeated my naming scheme...
-  while (declarationExists(IteratorName))
-    IteratorName += "i";
+  std::string GiveMeName;
+  switch (Style) {
+  case NS_CamelBack:
+    GiveMeName = "giveMeName";
+    break;
+  case NS_CamelCase:
+    GiveMeName = "GiveMeName";
+    break;
+  case NS_LowerCase:
+    GiveMeName = "give_me_name_";
+    break;
+  case NS_UpperCase:
+    GiveMeName = "GIVE_ME_NAME_";
+  }
+  int Attempt = 0;
+  do {
+    IteratorName = GiveMeName + std::to_string(Attempt++);
+  } while (declarationExists(IteratorName));
+
   return IteratorName;
 }
 
@@ -880,6 +903,20 @@ bool VariableNamer::declarationExists(StringRef Symbol) {
   // Finally, determine if the symbol was used in the loop or a child context.
   DeclFinderASTVisitor DeclFinder(Symbol, GeneratedDecls);
   return DeclFinder.findUsages(SourceStmt);
+}
+
+std::string VariableNamer::AppendWithStyle(StringRef Str,
+                                           StringRef Suffix) const {
+  std::string Name = Str;
+  if (!Suffix.empty()) {
+    if (Style == NS_LowerCase || Style == NS_UpperCase)
+      Name += "_";
+    int SuffixStart = Name.size();
+    Name += Suffix;
+    if (Style == NS_CamelBack)
+      Name[SuffixStart] = toupper(Name[SuffixStart]);
+  }
+  return Name;
 }
 
 } // namespace modernize

@@ -41,6 +41,7 @@ public:
     ClangTidyOptions Options;
     auto &Opts = Options.CheckOptions;
     Opts["modernize-loop-convert.MinConfidence"] = "reasonable";
+    Opts["modernize-loop-convert.NamingStyle"] = "CamelCase";
     Opts["modernize-pass-by-value.IncludeStyle"] = "llvm"; // Also: "google".
     Opts["modernize-replace-auto-ptr.IncludeStyle"] = "llvm"; // Also: "google".
 

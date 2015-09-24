@@ -5,7 +5,7 @@ extern "C" {
 extern int printf(const char *restrict, ...);
 }
 
-struct Val {int x; void g(); };
+struct Val {int X; void g(); };
 
 struct MutableVal {
   void constFun(int) const;
@@ -13,7 +13,7 @@ struct MutableVal {
   void constFun(MutableVal &) const;
   void constParamFun(const MutableVal &) const;
   void nonConstParamFun(const MutableVal &);
-  int x;
+  int X;
 };
 
 struct S {
@@ -32,7 +32,7 @@ struct T {
     iterator& operator ++();
     bool operator!=(const iterator &other);
     void insert(int);
-    int x;
+    int X;
   };
   iterator begin();
   iterator end();
@@ -48,13 +48,13 @@ struct U {
   };
   iterator begin();
   iterator end();
-  int x;
+  int X;
 };
 
 struct X {
-  S s;
-  T t;
-  U u;
+  S Ss;
+  T Tt;
+  U Uu;
   S getS();
 };
 
@@ -181,7 +181,7 @@ struct RValueDerefContainer {
 namespace Macros {
 
 struct MacroStruct {
-  int arr[10];
+  int Arr[10];
 };
 static MacroStruct *MacroSt;
 #define CONT MacroSt->
