@@ -750,10 +750,10 @@ static bool isMatchingUpdateInsn(MachineInstr *MI, unsigned BaseReg,
       break;
     // If the instruction has the base register as source and dest and the
     // immediate will fit in a signed 9-bit integer, then we have a match.
-    if (getLdStRegOp(MI).getReg() == BaseReg &&
-        getLdStBaseOp(MI).getReg() == BaseReg &&
-        getLdStOffsetOp(MI).getImm() <= 255 &&
-        getLdStOffsetOp(MI).getImm() >= -256) {
+    if (MI->getOperand(0).getReg() == BaseReg &&
+        MI->getOperand(1).getReg() == BaseReg &&
+        MI->getOperand(2).getImm() <= 255 &&
+        MI->getOperand(2).getImm() >= -256) {
       // If we have a non-zero Offset, we check that it matches the amount
       // we're adding to the register.
       if (!Offset || Offset == MI->getOperand(2).getImm())
