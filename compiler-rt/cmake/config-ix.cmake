@@ -247,27 +247,32 @@ endfunction()
 
 set(ARM64 aarch64)
 set(ARM32 arm)
+set(X86 i386 i686)
 set(X86_64 x86_64)
+set(MIPS32 mips mipsel)
+set(MIPS64 mips64 mips64el)
+set(PPC64 powerpc64 powerpc64le)
+
 if(APPLE)
   set(ARM64 arm64)
   set(ARM32 armv7 armv7s)
   set(X86_64 x86_64 x86_64h)
 endif()
 
-set(ALL_BUILTIN_SUPPORTED_ARCH i386 i686 ${X86_64} ${ARM32} ${ARM64})
-set(ALL_SANITIZER_COMMON_SUPPORTED_ARCH ${X86_64} i386 i686 powerpc64
-  powerpc64le ${ARM32} ${ARM64} mips mips64 mipsel mips64el)
-set(ALL_ASAN_SUPPORTED_ARCH ${X86_64} i386 i686 powerpc64 powerpc64le ${ARM32}
-  ${ARM64} mips mipsel mips64 mips64el)
-set(ALL_DFSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el ${ARM64})
-set(ALL_LSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el)
-set(ALL_MSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el ${ARM64})
-set(ALL_PROFILE_SUPPORTED_ARCH ${X86_64} i386 i686 ${ARM32} mips mips64
-    mipsel mips64el ${ARM64} powerpc64 powerpc64le)
-set(ALL_TSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el ${ARM64})
-set(ALL_UBSAN_SUPPORTED_ARCH ${X86_64} i386 i686 ${ARM32} ${ARM64} mips
-    mipsel mips64 mips64el powerpc64 powerpc64le)
-set(ALL_SAFESTACK_SUPPORTED_ARCH ${X86_64} i386 i686)
+set(ALL_BUILTIN_SUPPORTED_ARCH ${X86} ${X86_64} ${ARM32} ${ARM64})
+set(ALL_SANITIZER_COMMON_SUPPORTED_ARCH ${X86} ${X86_64} ${PPC64}
+    ${ARM32} ${ARM64} ${MIPS32} ${MIPS64})
+set(ALL_ASAN_SUPPORTED_ARCH ${X86} ${X86_64} ${ARM32} ${ARM64}
+    ${MIPS32} ${MIPS64} ${PPC64})
+set(ALL_DFSAN_SUPPORTED_ARCH ${X86_64} ${MIPS64} ${ARM64})
+set(ALL_LSAN_SUPPORTED_ARCH ${X86_64} ${MIPS64})
+set(ALL_MSAN_SUPPORTED_ARCH ${X86_64} ${MIPS64} ${ARM64})
+set(ALL_PROFILE_SUPPORTED_ARCH ${X86} ${X86_64} ${ARM32} ${ARM64} ${PPC64}
+    ${MIPS32} ${MIPS64})
+set(ALL_TSAN_SUPPORTED_ARCH ${X86_64} ${MIPS64} ${ARM64})
+set(ALL_UBSAN_SUPPORTED_ARCH ${X86} ${X86_64} ${ARM32} ${ARM64}
+    ${MIPS32} ${MIPS64} ${PPC64})
+set(ALL_SAFESTACK_SUPPORTED_ARCH ${X86} ${X86_64})
 
 if(APPLE)
   include(CompilerRTDarwinUtils)
