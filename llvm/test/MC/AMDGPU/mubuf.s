@@ -1,5 +1,9 @@
-// RUN: llvm-mc -arch=amdgcn -mcpu=tahiti -show-encoding %s | FileCheck -check-prefix=GCN -check-prefix=SI -check-prefix=SICI %s
-// RUN: llvm-mc -arch=amdgcn -mcpu=bonaire -show-encoding %s | FileCheck -check-prefix=GCN -check-prefix=CI -check-prefix=SICI %s
+// RUN: not llvm-mc -arch=amdgcn -mcpu=tahiti -show-encoding %s | FileCheck -check-prefix=GCN -check-prefix=SI -check-prefix=SICI %s
+// RUN: not llvm-mc -arch=amdgcn -mcpu=bonaire -show-encoding %s | FileCheck -check-prefix=GCN -check-prefix=CI -check-prefix=SICI %s
+
+// RUN: not llvm-mc -arch=amdgcn -mcpu=tahiti %s 2>&1 | FileCheck -check-prefix=NOSI %s
+// RUN: not llvm-mc -arch=amdgcn -mcpu=bonaire %s 2>&1 | FileCheck -check-prefix=NOCI %s
+// RUN: not llvm-mc -arch=amdgcn -mcpu=tonga %s 2>&1 | FileCheck -check-prefix=NOVI %s
 
 //===----------------------------------------------------------------------===//
 // Test for different operand combinations
@@ -348,5 +352,21 @@ buffer_store_dwordx2 v[1:2], s[4:7], s1
 
 buffer_store_dwordx4 v[1:4], s[4:7], s1
 // SICI: buffer_store_dwordx4 v[1:4], s[4:7], s1 ; encoding: [0x00,0x00,0x78,0xe0,0x00,0x01,0x01,0x01]
+
+//===----------------------------------------------------------------------===//
+// Cache invalidation
+//===----------------------------------------------------------------------===//
+
+buffer_wbinvl1
+// SICI: buffer_wbinvl1   ; encoding: [0x00,0x00,0xc4,0xe1,0x00,0x00,0x00,0x00]
+
+buffer_wbinvl1_sc
+// SI: buffer_wbinvl1_sc ; encoding: [0x00,0x00,0xc0,0xe1,0x00,0x00,0x00,0x00]
+// NOCI: error: instruction not supported on this GPU
+// NOVI: error: instruction not supported on this GPU
+
+buffer_wbinvl1_vol
+// CI: buffer_wbinvl1_vol ; encoding: [0x00,0x00,0xc0,0xe1,0x00,0x00,0x00,0x00]
+// NOSI: error: instruction not supported on this GPU
 
 // TODO: Atomics

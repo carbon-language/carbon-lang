@@ -83,3 +83,21 @@ def int_AMDGPU_read_workdim : AMDGPUReadPreloadRegisterIntrinsic <
                                        "__builtin_amdgpu_read_workdim">;
 
 } // End TargetPrefix = "AMDGPU"
+
+let TargetPrefix = "amdgcn" in {
+
+// SI only
+def int_amdgcn_buffer_wbinvl1_sc :
+  GCCBuiltin<"__builtin_amdgcn_buffer_wbinvl1_sc">,
+  Intrinsic<[], [], []>;
+
+// On CI+
+def int_amdgcn_buffer_wbinvl1_vol :
+  GCCBuiltin<"__builtin_amdgcn_buffer_wbinvl1_vol">,
+  Intrinsic<[], [], []>;
+
+def int_amdgcn_buffer_wbinvl1 :
+  GCCBuiltin<"__builtin_amdgcn_buffer_wbinvl1">,
+  Intrinsic<[], [], []>;
+
+}

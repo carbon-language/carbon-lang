@@ -2455,6 +2455,23 @@ multiclass MUBUF_Store_Helper <mubuf op, string name, RegisterClass vdataClass,
   } // End mayLoad = 0, mayStore = 1
 }
 
+// For cache invalidation instructions.
+multiclass MUBUF_Invalidate <mubuf op, string opName, SDPatternOperator node> {
+  let hasSideEffects = 1, mayStore = 1, AsmMatchConverter = "" in {
+    def "" : MUBUF_Pseudo <opName, (outs), (ins), [(node)]>;
+
+    // Set everything to 0.
+    let offset = 0, offen = 0, idxen = 0, glc = 0, vaddr = 0,
+        vdata = 0, srsrc = 0, slc = 0, tfe = 0, soffset = 0 in {
+      let addr64 = 0 in {
+        def _si : MUBUF_Real_si <op, opName, (outs), (ins), opName>;
+      }
+
+      def _vi : MUBUF_Real_vi <op, opName, (outs), (ins), opName>;
+    }
+  } // End hasSideEffects = 1, mayStore = 1, AsmMatchConverter = ""
+}
+
 class FLAT_Load_Helper <bits<7> op, string asm, RegisterClass regClass> :
       FLAT <op, (outs regClass:$vdst),
                 (ins VReg_64:$addr, glc_flat:$glc, slc_flat:$slc, tfe_flat:$tfe),
