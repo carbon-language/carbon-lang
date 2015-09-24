@@ -195,7 +195,7 @@ macro(darwin_add_builtin_libraries)
                               OS ${os}
                               ARCH ${arch}
                               SOURCES ${${arch}_SOURCES}
-                              CFLAGS "-std=c99" -arch ${arch} -mkernel
+                              CFLAGS "-std=c99" -arch ${arch} -mkernel -Wno-pedantic
                               DEFS KERNEL_USE
                               PARENT_TARGET builtins)
 
