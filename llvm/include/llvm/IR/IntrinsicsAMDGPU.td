@@ -100,4 +100,23 @@ def int_amdgcn_buffer_wbinvl1 :
   GCCBuiltin<"__builtin_amdgcn_buffer_wbinvl1">,
   Intrinsic<[], [], []>;
 
+def int_amdgcn_s_dcache_inv :
+  GCCBuiltin<"__builtin_amdgcn_s_dcache_inv">,
+  Intrinsic<[], [], []>;
+
+// CI+
+def int_amdgcn_s_dcache_inv_vol :
+  GCCBuiltin<"__builtin_amdgcn_s_dcache_inv_vol">,
+  Intrinsic<[], [], []>;
+
+// VI
+def int_amdgcn_s_dcache_wb :
+  GCCBuiltin<"__builtin_amdgcn_s_dcache_wb">,
+  Intrinsic<[], [], []>;
+
+// VI
+def int_amdgcn_s_dcache_wb_vol :
+  GCCBuiltin<"__builtin_amdgcn_s_dcache_wb_vol">,
+  Intrinsic<[], [], []>;
+
 }

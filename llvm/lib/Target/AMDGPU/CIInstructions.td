@@ -9,12 +9,10 @@
 // Instruction definitions for CI and newer.
 //===----------------------------------------------------------------------===//
 // Remaining instructions:
-// FLAT_*
 // S_CBRANCH_CDBGUSER
 // S_CBRANCH_CDBGSYS
 // S_CBRANCH_CDBGSYS_OR_USER
 // S_CBRANCH_CDBGSYS_AND_USER
-// S_DCACHE_INV_VOL
 // DS_NOP
 // DS_GWS_SEMA_RELEASE_ALL
 // DS_WRAP_RTN_B32
@@ -98,6 +96,13 @@ defm DS_WRAP_RTN_F32 : DS_1A1D_RET <0x34, "ds_wrap_rtn_f32", VGPR_32, "ds_wrap_f
 
 // DS_CONDXCHG32_RTN_B64
 // DS_CONDXCHG32_RTN_B128
+
+//===----------------------------------------------------------------------===//
+// SMRD Instructions
+//===----------------------------------------------------------------------===//
+
+defm S_DCACHE_INV_VOL : SMRD_Inval <smrd<0x1d, 0x22>,
+  "s_dcache_inv_vol", int_amdgcn_s_dcache_inv_vol>;
 
 //===----------------------------------------------------------------------===//
 // MUBUF Instructions

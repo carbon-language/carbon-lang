@@ -89,6 +89,16 @@ def : SI2_VI3Alias <"v_cvt_pknorm_i16_f32", V_CVT_PKNORM_I16_F32_e64_vi>;
 def : SI2_VI3Alias <"v_cvt_pknorm_u16_f32", V_CVT_PKNORM_U16_F32_e64_vi>;
 def : SI2_VI3Alias <"v_cvt_pkrtz_f16_f32", V_CVT_PKRTZ_F16_F32_e64_vi>;
 
+//===----------------------------------------------------------------------===//
+// SMEM Instructions
+//===----------------------------------------------------------------------===//
+
+def S_DCACHE_WB : SMEM_Inval <0x21,
+  "s_dcache_wb", int_amdgcn_s_dcache_wb>;
+
+def S_DCACHE_WB_VOL : SMEM_Inval <0x23,
+  "s_dcache_wb_vol", int_amdgcn_s_dcache_wb_vol>;
+
 } // End SIAssemblerPredicate = DisableInst, SubtargetPredicate = isVI
 
 //===----------------------------------------------------------------------===//

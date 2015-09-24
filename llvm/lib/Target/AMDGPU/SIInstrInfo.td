@@ -73,9 +73,12 @@ class sopk <bits<5> si, bits<5> vi = si> {
 }
 
 // Specify an SMRD opcode for SI and SMEM opcode for VI
-class smrd<bits<5> si, bits<5> vi = si> {
-  field bits<5> SI = si;
-  field bits<8> VI = { 0, 0, 0, vi };
+
+// FIXME: This should really be bits<5> si, Tablegen crashes if
+// parameter default value is other parameter with different bit size
+class smrd<bits<8> si, bits<8> vi = si> {
+  field bits<5> SI = si{4-0};
+  field bits<8> VI = vi;
 }
 
 // Execpt for the NONE field, this must be kept in sync with the SISubtarget enum
@@ -899,8 +902,8 @@ class SMRD_Real_si <bits<5> op, string opName, bit imm, dag outs, dag ins,
 }
 
 class SMRD_Real_vi <bits<8> op, string opName, bit imm, dag outs, dag ins,
-                    string asm> :
-  SMRD <outs, ins, asm, []>,
+                    string asm, list<dag> pattern = []> :
+  SMRD <outs, ins, asm, pattern>,
   SMEMe_vi <op, imm>,
   SIMCInstr<opName, SISubtarget.VI> {
   let AssemblerPredicates = [isVI];
@@ -918,6 +921,33 @@ multiclass SMRD_m <smrd op, string opName, bit imm, dag outs, dag ins,
   let glc = 0 in {
     def _vi : SMRD_Real_vi <op.VI, opName, imm, outs, ins, asm>;
   }
+}
+
+multiclass SMRD_Inval <smrd op, string opName,
+                       SDPatternOperator node> {
+  let hasSideEffects = 1, mayStore = 1 in {
+    def "" : SMRD_Pseudo <opName, (outs), (ins), [(node)]>;
+
+    let sbase = 0, offset = 0 in {
+      let sdst = 0 in {
+        def _si : SMRD_Real_si <op.SI, opName, 0, (outs), (ins), opName>;
+      }
+
+      let glc = 0, sdata = 0 in {
+        def _vi : SMRD_Real_vi <op.VI, opName, 0, (outs), (ins), opName>;
+      }
+    }
+  }
+}
+
+class SMEM_Inval <bits<8> op, string opName, SDPatternOperator node> :
+  SMRD_Real_vi<op, opName, 0, (outs), (ins), opName, [(node)]> {
+  let hasSideEffects = 1;
+  let mayStore = 1;
+  let sbase = 0;
+  let sdata = 0;
+  let glc = 0;
+  let offset = 0;
 }
 
 multiclass SMRD_Helper <smrd op, string opName, RegisterClass baseClass,

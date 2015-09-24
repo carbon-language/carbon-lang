@@ -93,7 +93,9 @@ defm S_BUFFER_LOAD_DWORDX16 : SMRD_Helper <
 } // mayLoad = 1
 
 //def S_MEMTIME : SMRD_ <0x0000001e, "s_memtime", []>;
-//def S_DCACHE_INV : SMRD_ <0x0000001f, "s_dcache_inv", []>;
+
+defm S_DCACHE_INV : SMRD_Inval <smrd<0x1f, 0x20>, "s_dcache_inv",
+  int_amdgcn_s_dcache_inv>;
 
 //===----------------------------------------------------------------------===//
 // SOP1 Instructions

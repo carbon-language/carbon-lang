@@ -51,3 +51,10 @@ s_load_dwordx16 s[16:31], s[2:3], 1
 
 s_load_dwordx16 s[16:31], s[2:3], s4
 // GCN: s_load_dwordx16 s[16:31], s[2:3], s4 ; encoding: [0x04,0x02,0x08,0xc1]
+
+s_dcache_inv
+// GCN: s_dcache_inv ; encoding: [0x00,0x00,0xc0,0xc7]
+
+s_dcache_inv_vol
+// CI: s_dcache_inv_vol ; encoding: [0x00,0x00,0x40,0xc7]
+// NOSI: error: instruction not supported on this GPU
