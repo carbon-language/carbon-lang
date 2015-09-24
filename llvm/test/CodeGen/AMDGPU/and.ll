@@ -147,9 +147,10 @@ endif:
   ret void
 }
 
+; FIXME: and 0 should be replaced witht copy
 ; FUNC-LABEL: {{^}}v_and_constant_i64:
 ; SI: v_and_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
-; SI: v_and_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; SI: v_and_b32_e32 {{v[0-9]+}}, 0, {{v[0-9]+}}
 define void @v_and_constant_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr) {
   %a = load i64, i64 addrspace(1)* %aptr, align 8
   %and = and i64 %a, 1234567

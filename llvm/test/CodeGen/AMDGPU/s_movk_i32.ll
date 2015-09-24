@@ -3,10 +3,9 @@
 
 ; SI-LABEL: {{^}}s_movk_i32_k0:
 ; SI-DAG: s_mov_b32 [[LO_S_IMM:s[0-9]+]], 0xffff{{$}}
-; SI-DAG: s_mov_b32 [[HI_S_IMM:s[0-9]+]], 1{{$}}
 ; SI-DAG: buffer_load_dwordx2 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}},
 ; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[LO_S_IMM]], v[[LO_VREG]]
-; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[HI_S_IMM]], v[[HI_VREG]]
+; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, 1, v[[HI_VREG]]
 ; SI: s_endpgm
 define void @s_movk_i32_k0(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 addrspace(1)* %b) {
   %loada = load i64, i64 addrspace(1)* %a, align 4
@@ -17,10 +16,9 @@ define void @s_movk_i32_k0(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 add
 
 ; SI-LABEL: {{^}}s_movk_i32_k1:
 ; SI-DAG: s_movk_i32 [[LO_S_IMM:s[0-9]+]], 0x7fff{{$}}
-; SI-DAG: s_mov_b32 [[HI_S_IMM:s[0-9]+]], 1{{$}}
 ; SI-DAG: buffer_load_dwordx2 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}},
 ; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[LO_S_IMM]], v[[LO_VREG]]
-; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[HI_S_IMM]], v[[HI_VREG]]
+; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, 1, v[[HI_VREG]]
 ; SI: s_endpgm
 define void @s_movk_i32_k1(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 addrspace(1)* %b) {
   %loada = load i64, i64 addrspace(1)* %a, align 4
@@ -31,10 +29,9 @@ define void @s_movk_i32_k1(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 add
 
 ; SI-LABEL: {{^}}s_movk_i32_k2:
 ; SI-DAG: s_movk_i32 [[LO_S_IMM:s[0-9]+]], 0x7fff{{$}}
-; SI-DAG: s_mov_b32 [[HI_S_IMM:s[0-9]+]], 64{{$}}
 ; SI-DAG: buffer_load_dwordx2 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}},
 ; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[LO_S_IMM]], v[[LO_VREG]]
-; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[HI_S_IMM]], v[[HI_VREG]]
+; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, 64, v[[HI_VREG]]
 ; SI: s_endpgm
 define void @s_movk_i32_k2(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 addrspace(1)* %b) {
   %loada = load i64, i64 addrspace(1)* %a, align 4
@@ -45,10 +42,9 @@ define void @s_movk_i32_k2(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 add
 
 ; SI-LABEL: {{^}}s_movk_i32_k3:
 ; SI-DAG: s_mov_b32 [[LO_S_IMM:s[0-9]+]], 0x8000{{$}}
-; SI-DAG: s_mov_b32 [[HI_S_IMM:s[0-9]+]], 1{{$}}
 ; SI-DAG: buffer_load_dwordx2 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}},
 ; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[LO_S_IMM]], v[[LO_VREG]]
-; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[HI_S_IMM]], v[[HI_VREG]]
+; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, 1, v[[HI_VREG]]
 ; SI: s_endpgm
 define void @s_movk_i32_k3(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 addrspace(1)* %b) {
   %loada = load i64, i64 addrspace(1)* %a, align 4
@@ -59,10 +55,9 @@ define void @s_movk_i32_k3(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 add
 
 ; SI-LABEL: {{^}}s_movk_i32_k4:
 ; SI-DAG: s_mov_b32 [[LO_S_IMM:s[0-9]+]], 0x20000{{$}}
-; SI-DAG: s_mov_b32 [[HI_S_IMM:s[0-9]+]], 1{{$}}
 ; SI-DAG: buffer_load_dwordx2 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}},
 ; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[LO_S_IMM]], v[[LO_VREG]]
-; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[HI_S_IMM]], v[[HI_VREG]]
+; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, 1, v[[HI_VREG]]
 ; SI: s_endpgm
 define void @s_movk_i32_k4(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 addrspace(1)* %b) {
   %loada = load i64, i64 addrspace(1)* %a, align 4
@@ -87,10 +82,9 @@ define void @s_movk_i32_k5(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 add
 
 ; SI-LABEL: {{^}}s_movk_i32_k6:
 ; SI-DAG: s_movk_i32 [[LO_S_IMM:s[0-9]+]], 0x41{{$}}
-; SI-DAG: s_mov_b32 [[HI_S_IMM:s[0-9]+]], 63{{$}}
 ; SI-DAG: buffer_load_dwordx2 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}},
 ; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[LO_S_IMM]], v[[LO_VREG]]
-; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, [[HI_S_IMM]], v[[HI_VREG]]
+; SI-DAG: v_or_b32_e32 {{v[0-9]+}}, 63, v[[HI_VREG]]
 ; SI: s_endpgm
 define void @s_movk_i32_k6(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 addrspace(1)* %b) {
   %loada = load i64, i64 addrspace(1)* %a, align 4

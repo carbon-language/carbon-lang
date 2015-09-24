@@ -1556,17 +1556,21 @@ unsigned SIInstrInfo::buildExtractSubReg(MachineBasicBlock::iterator MI,
                                          unsigned SubIdx,
                                          const TargetRegisterClass *SubRC)
                                          const {
-  assert(SuperReg.isReg());
-
-  unsigned NewSuperReg = MRI.createVirtualRegister(SuperRC);
+  MachineBasicBlock *MBB = MI->getParent();
+  DebugLoc DL = MI->getDebugLoc();
   unsigned SubReg = MRI.createVirtualRegister(SubRC);
+
+  if (SuperReg.getSubReg() == AMDGPU::NoSubRegister) {
+    BuildMI(*MBB, MI, DL, get(TargetOpcode::COPY), SubReg)
+      .addReg(SuperReg.getReg(), 0, SubIdx);
+    return SubReg;
+  }
 
   // Just in case the super register is itself a sub-register, copy it to a new
   // value so we don't need to worry about merging its subreg index with the
   // SubIdx passed to this function. The register coalescer should be able to
   // eliminate this extra copy.
-  MachineBasicBlock *MBB = MI->getParent();
-  DebugLoc DL = MI->getDebugLoc();
+  unsigned NewSuperReg = MRI.createVirtualRegister(SuperRC);
 
   BuildMI(*MBB, MI, DL, get(TargetOpcode::COPY), NewSuperReg)
     .addReg(SuperReg.getReg(), 0, SuperReg.getSubReg());
