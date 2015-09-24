@@ -145,17 +145,24 @@ public:
   /// Abstracts clang modules and precompiled header files and holds
   /// everything needed to generate debug info for an imported module
   /// or PCH.
-  struct ASTSourceDescriptor {
+  class ASTSourceDescriptor {
+    StringRef PCHModuleName;
+    StringRef Path;
+    StringRef ASTFile;
+    uint64_t Signature = 0;
+    const Module *ClangModule = nullptr;
+
+  public:
     ASTSourceDescriptor(){};
-    ASTSourceDescriptor(std::string Name, std::string Path, std::string ASTFile,
+    ASTSourceDescriptor(StringRef Name, StringRef Path, StringRef ASTFile,
                         uint64_t Signature)
-        : FullModuleName(std::move(Name)), Path(std::move(Path)),
+        : PCHModuleName(std::move(Name)), Path(std::move(Path)),
           ASTFile(std::move(ASTFile)), Signature(Signature){};
     ASTSourceDescriptor(const Module &M);
-    std::string FullModuleName;
-    std::string Path;
-    std::string ASTFile;
-    uint64_t Signature = 0;
+    std::string getFullModuleName() const;
+    StringRef getPath() const { return Path; }
+    StringRef getASTFile() const { return ASTFile; }
+    uint64_t getSignature() const { return Signature; }
   };
 
   /// Return a descriptor for the corresponding module, if one exists.

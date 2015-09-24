@@ -29,11 +29,18 @@ ExternalASTSource::getSourceDescriptor(unsigned ID) {
 }
 
 ExternalASTSource::ASTSourceDescriptor::ASTSourceDescriptor(const Module &M)
-    : FullModuleName(M.getFullModuleName()), Signature(M.Signature) {
+  : Signature(M.Signature), ClangModule(&M) {
   if (M.Directory)
     Path = M.Directory->getName();
   if (auto *File = M.getASTFile())
     ASTFile = File->getName();
+}
+
+std::string ExternalASTSource::ASTSourceDescriptor::getFullModuleName() const {
+  if (ClangModule)
+    return ClangModule->getFullModuleName();
+  else
+    return PCHModuleName;
 }
 
 void ExternalASTSource::FindFileRegionDecls(FileID File, unsigned Offset,
