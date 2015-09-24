@@ -35,7 +35,7 @@ public:
     virtual bool
     CompleteTypeFromDWARF (const DWARFDIE &die,
                            lldb_private::Type *type,
-                           lldb_private::CompilerType &clang_type) = 0;
+                           lldb_private::CompilerType &compiler_type) = 0;
 
     virtual lldb_private::CompilerDecl
     GetDeclForUIDFromDWARF (const DWARFDIE &die) = 0;

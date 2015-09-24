@@ -71,7 +71,7 @@ class DWARFASTParserGo : public DWARFASTParser
                              std::vector<uint64_t> &element_orders, uint32_t &byte_stride, uint32_t &bit_stride);
 
     size_t ParseChildMembers(const lldb_private::SymbolContext &sc, const DWARFDIE &die,
-                             lldb_private::CompilerType &class_clang_type);
+                             lldb_private::CompilerType &class_compiler_type);
 
     lldb_private::GoASTContext &m_ast;
 };

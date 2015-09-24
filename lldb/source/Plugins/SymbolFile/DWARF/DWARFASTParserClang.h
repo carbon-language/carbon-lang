@@ -46,7 +46,7 @@ public:
     virtual bool
     CompleteTypeFromDWARF (const DWARFDIE &die,
                            lldb_private::Type *type,
-                           lldb_private::CompilerType &clang_type) override;
+                           lldb_private::CompilerType &compiler_type) override;
 
     virtual lldb_private::CompilerDecl
     GetDeclForUIDFromDWARF (const DWARFDIE &die) override;
@@ -107,7 +107,7 @@ protected:
     bool
     ParseChildMembers (const lldb_private::SymbolContext& sc,
                        const DWARFDIE &die,
-                       lldb_private::CompilerType &class_clang_type,
+                       lldb_private::CompilerType &class_compiler_type,
                        const lldb::LanguageType class_language,
                        std::vector<clang::CXXBaseSpecifier *>& base_classes,
                        std::vector<int>& member_accessibilities,
@@ -140,7 +140,7 @@ protected:
 
     size_t
     ParseChildEnumerators (const lldb_private::SymbolContext& sc,
-                           lldb_private::CompilerType &clang_type,
+                           lldb_private::CompilerType &compiler_type,
                            bool is_signed,
                            uint32_t enumerator_byte_size,
                            const DWARFDIE &parent_die);

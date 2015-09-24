@@ -27,7 +27,7 @@ public:
     ASTDumper (const clang::Type *type);
     ASTDumper (clang::QualType type);
     ASTDumper (lldb::opaque_compiler_type_t type);
-    ASTDumper (const CompilerType &clang_type);
+    ASTDumper (const CompilerType &compiler_type);
     
     const char *GetCString();
     void ToSTDERR();

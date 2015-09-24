@@ -389,7 +389,7 @@ protected:
     ///     The source AST context, typically the AST context of whatever
     ///     symbol file the type was found in.
     ///
-    /// @param[in] clang_type
+    /// @param[in] src_type
     ///     The source type.
     ///
     /// @return
@@ -495,10 +495,10 @@ struct NameSearchContext {
     /// Create a TypeDecl with the name being searched for and the provided
     /// type and register it in the right places.
     ///
-    /// @param[in] type
+    /// @param[in] compiler_type
     ///     The opaque QualType for the TypeDecl being registered.
     //------------------------------------------------------------------
-    clang::NamedDecl *AddTypeDecl(const CompilerType &clang_type);
+    clang::NamedDecl *AddTypeDecl(const CompilerType &compiler_type);
     
     
     //------------------------------------------------------------------

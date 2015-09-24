@@ -377,7 +377,7 @@ public:
     }
     
     bool
-    GetTypeBitSize (const CompilerType& clang_type,
+    GetTypeBitSize (const CompilerType& compiler_type,
                     uint64_t &size) override;
 
 protected:

@@ -20,8 +20,8 @@ namespace lldb_private
 template <unsigned int C> class TaggedASTType : public CompilerType
 {
 public:
-    TaggedASTType (const CompilerType &clang_type) :
-        CompilerType(clang_type)
+    TaggedASTType (const CompilerType &compiler_type) :
+        CompilerType(compiler_type)
     {
     }
 

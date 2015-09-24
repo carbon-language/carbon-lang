@@ -332,18 +332,18 @@ ABISysV_arm::GetArgumentValues (Thread &thread,
         if (!value)
             return false;
         
-        CompilerType clang_type = value->GetCompilerType();
-        if (clang_type)
+        CompilerType compiler_type = value->GetCompilerType();
+        if (compiler_type)
         {
             bool is_signed = false;
             size_t bit_width = 0;
-            if (clang_type.IsIntegerType (is_signed))
+            if (compiler_type.IsIntegerType (is_signed))
             {
-                bit_width = clang_type.GetBitSize(&thread);
+                bit_width = compiler_type.GetBitSize(&thread);
             }
-            else if (clang_type.IsPointerOrReferenceType ())
+            else if (compiler_type.IsPointerOrReferenceType ())
             {
-                bit_width = clang_type.GetBitSize(&thread);
+                bit_width = compiler_type.GetBitSize(&thread);
             }
             else
             {
@@ -416,16 +416,16 @@ GetReturnValuePassedInMemory(Thread &thread, RegisterContext* reg_ctx, size_t by
 
 ValueObjectSP
 ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
-                                       lldb_private::CompilerType &clang_type) const
+                                       lldb_private::CompilerType &compiler_type) const
 {
     Value value;
     ValueObjectSP return_valobj_sp;
     
-    if (!clang_type)
+    if (!compiler_type)
         return return_valobj_sp;
     
-    //value.SetContext (Value::eContextTypeClangType, clang_type.GetOpaqueQualType());
-    value.SetCompilerType (clang_type);
+    //value.SetContext (Value::eContextTypeClangType, compiler_type.GetOpaqueQualType());
+    value.SetCompilerType (compiler_type);
             
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
@@ -439,9 +439,9 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
     // when reading data
     
     const RegisterInfo *r0_reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1);
-    size_t bit_width = clang_type.GetBitSize(&thread);
+    size_t bit_width = compiler_type.GetBitSize(&thread);
 
-    if (clang_type.IsIntegerType (is_signed))
+    if (compiler_type.IsIntegerType (is_signed))
     {       
         switch (bit_width)
         {
@@ -479,14 +479,14 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
                 break;
         }
     }
-    else if (clang_type.IsPointerType ())
+    else if (compiler_type.IsPointerType ())
     {
         uint32_t ptr = thread.GetRegisterContext()->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
         value.GetScalar() = ptr;
     }
-    else if (clang_type.IsVectorType(nullptr, nullptr))
+    else if (compiler_type.IsVectorType(nullptr, nullptr))
     {
-        size_t byte_size = clang_type.GetByteSize(&thread);
+        size_t byte_size = compiler_type.GetByteSize(&thread);
         if (byte_size <= 16)
         {
             DataBufferHeap buffer(16, 0);
@@ -505,7 +505,7 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
                 return return_valobj_sp;
         }
     }
-    else if (clang_type.IsFloatingPointType(float_count, is_complex))
+    else if (compiler_type.IsFloatingPointType(float_count, is_complex))
     {
         if (float_count == 1 && !is_complex)
         {
@@ -539,9 +539,9 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
             return return_valobj_sp;
         }
     }
-    else if (clang_type.IsAggregateType())
+    else if (compiler_type.IsAggregateType())
     {
-        size_t byte_size = clang_type.GetByteSize(&thread);
+        size_t byte_size = compiler_type.GetByteSize(&thread);
         if (byte_size <= 4)
         {
             RegisterValue r0_reg_value;
@@ -578,8 +578,8 @@ ABISysV_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjec
         return error;
     }
     
-    CompilerType clang_type = new_value_sp->GetCompilerType();
-    if (!clang_type)
+    CompilerType compiler_type = new_value_sp->GetCompilerType();
+    if (!compiler_type)
     {
         error.SetErrorString ("Null clang type for return value.");
         return error;
@@ -594,7 +594,7 @@ ABISysV_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjec
     RegisterContext *reg_ctx = thread->GetRegisterContext().get();
 
     bool set_it_simple = false;
-    if (clang_type.IsIntegerType (is_signed) || clang_type.IsPointerType())
+    if (compiler_type.IsIntegerType (is_signed) || compiler_type.IsPointerType())
     {
         DataExtractor data;
         Error data_error;
@@ -634,7 +634,7 @@ ABISysV_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjec
             error.SetErrorString("We don't support returning longer than 64 bit integer values at present.");
         }
     }
-    else if (clang_type.IsFloatingPointType (count, is_complex))
+    else if (compiler_type.IsFloatingPointType (count, is_complex))
     {
         if (is_complex)
             error.SetErrorString ("We don't support returning complex values at present");

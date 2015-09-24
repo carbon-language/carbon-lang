@@ -72,7 +72,7 @@ public:
     lldb_private::Type* ResolveTypeUID (lldb::user_id_t type_uid) override;
     lldb_private::CompilerDeclContext GetDeclContextForUID (lldb::user_id_t uid) override;
     lldb_private::CompilerDeclContext GetDeclContextContainingUID (lldb::user_id_t uid) override;
-    bool            CompleteType (lldb_private::CompilerType& clang_type) override;
+    bool            CompleteType (lldb_private::CompilerType& compiler_type) override;
     uint32_t        ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc) override;
     uint32_t        ResolveSymbolContext (const lldb_private::FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, lldb_private::SymbolContextList& sc_list) override;
     uint32_t        FindGlobalVariables (const lldb_private::ConstString &name, const lldb_private::CompilerDeclContext *parent_decl_ctx, bool append, uint32_t max_matches, lldb_private::VariableList& variables) override;

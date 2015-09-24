@@ -56,11 +56,11 @@ AppleObjCRuntime::AppleObjCRuntime(Process *process) :
 bool
 AppleObjCRuntime::GetObjectDescription (Stream &str, ValueObject &valobj)
 {
-    CompilerType clang_type(valobj.GetCompilerType());
+    CompilerType compiler_type(valobj.GetCompilerType());
     bool is_signed;
     // ObjC objects can only be pointers (or numbers that actually represents pointers
     // but haven't been typecast, because reasons..)
-    if (!clang_type.IsIntegerType (is_signed) && !clang_type.IsPointerType ())
+    if (!compiler_type.IsIntegerType (is_signed) && !compiler_type.IsPointerType ())
         return false;
     
     // Make the argument list: we pass one arg, the address of our pointer, to the print function.
@@ -94,10 +94,10 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
         return false;
     
     Target *target = exe_ctx.GetTargetPtr();
-    CompilerType clang_type = value.GetCompilerType();
-    if (clang_type)
+    CompilerType compiler_type = value.GetCompilerType();
+    if (compiler_type)
     {
-        if (!ClangASTContext::IsObjCObjectPointerType(clang_type))
+        if (!ClangASTContext::IsObjCObjectPointerType(compiler_type))
         {
             strm.Printf ("Value doesn't point to an ObjC object.\n");
             return false;
@@ -120,10 +120,10 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     // This is the return value:
     ClangASTContext *ast_context = target->GetScratchClangASTContext();
     
-    CompilerType return_clang_type = ast_context->GetCStringType(true);
+    CompilerType return_compiler_type = ast_context->GetCStringType(true);
     Value ret;
-//    ret.SetContext(Value::eContextTypeClangType, return_clang_type);
-    ret.SetCompilerType (return_clang_type);
+//    ret.SetContext(Value::eContextTypeClangType, return_compiler_type);
+    ret.SetCompilerType (return_compiler_type);
     
     if (exe_ctx.GetFramePtr() == NULL)
     {
@@ -148,7 +148,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     {
         Error error;
          m_print_object_caller_up.reset(exe_scope->CalculateTarget()->GetFunctionCallerForLanguage (eLanguageTypeObjC,
-                                                                                                    return_clang_type,
+                                                                                                    return_compiler_type,
                                                                                                     *function_address,
                                                                                                     arg_value_list,
                                                                                                     "objc-object-description",

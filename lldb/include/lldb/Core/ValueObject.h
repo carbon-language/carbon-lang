@@ -408,7 +408,7 @@ public:
     GetObjectRuntimeLanguage();
 
     virtual uint32_t
-    GetTypeInfo (CompilerType *pointee_or_element_clang_type = NULL);
+    GetTypeInfo (CompilerType *pointee_or_element_compiler_type = NULL);
 
     virtual bool
     IsPointerType ();
@@ -746,7 +746,7 @@ public:
     GetCPPVTableAddress(AddressType &address_type);
     
     virtual lldb::ValueObjectSP
-    Cast (const CompilerType &clang_ast_type);
+    Cast (const CompilerType &compiler_type);
     
     virtual lldb::ValueObjectSP
     CastPointerType (const char *name,

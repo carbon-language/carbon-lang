@@ -91,7 +91,7 @@ DWARFASTParserGo::ParseTypeFromDWARF(const lldb_private::SymbolContext &sc, cons
             Declaration decl;
 
             Type::EncodingDataType encoding_data_type = Type::eEncodingIsUID;
-            CompilerType clang_type;
+            CompilerType compiler_type;
             DWARFFormValue form_value;
 
             dw_attr_t attr;
@@ -155,12 +155,12 @@ DWARFASTParserGo::ParseTypeFromDWARF(const lldb_private::SymbolContext &sc, cons
 
                         case DW_TAG_unspecified_type:
                             resolve_state = Type::eResolveStateFull;
-                            clang_type = m_ast.CreateVoidType(type_name_const_str);
+                            compiler_type = m_ast.CreateVoidType(type_name_const_str);
                             break;
 
                         case DW_TAG_base_type:
                             resolve_state = Type::eResolveStateFull;
-                            clang_type = m_ast.CreateBaseType(go_kind, type_name_const_str, byte_size);
+                            compiler_type = m_ast.CreateBaseType(go_kind, type_name_const_str, byte_size);
                             break;
 
                         case DW_TAG_pointer_type:
@@ -179,13 +179,13 @@ DWARFASTParserGo::ParseTypeFromDWARF(const lldb_private::SymbolContext &sc, cons
                                     return type->shared_from_this();
                                 }
                                 impl = type->GetForwardCompilerType();
-                                clang_type = m_ast.CreateTypedefType (go_kind, type_name_const_str, impl);
+                                compiler_type = m_ast.CreateTypedefType (go_kind, type_name_const_str, impl);
                             }
                             break;
                     }
 
                     type_sp.reset(new Type(dwarf->MakeUserID(die.GetOffset()), dwarf, type_name_const_str, byte_size,
-                                           NULL, encoding_uid, encoding_data_type, &decl, clang_type, resolve_state));
+                                           NULL, encoding_uid, encoding_data_type, &decl, compiler_type, resolve_state));
 
                     dwarf->m_die_to_type[die.GetDIE()] = type_sp.get();
                 }
@@ -258,16 +258,16 @@ DWARFASTParserGo::ParseTypeFromDWARF(const lldb_private::SymbolContext &sc, cons
                     DEBUG_PRINTF("0x%8.8" PRIx64 ": %s (\"%s\")\n", dwarf->MakeUserID(die.GetOffset()),
                                  DW_TAG_value_to_name(tag), type_name_cstr);
 
-                    bool clang_type_was_created = false;
-                    clang_type.SetCompilerType(&m_ast, dwarf->m_forward_decl_die_to_clang_type.lookup(die.GetDIE()));
-                    if (!clang_type)
+                    bool compiler_type_was_created = false;
+                    compiler_type.SetCompilerType(&m_ast, dwarf->m_forward_decl_die_to_clang_type.lookup(die.GetDIE()));
+                    if (!compiler_type)
                     {
-                        clang_type_was_created = true;
-                        clang_type = m_ast.CreateStructType(go_kind, type_name_const_str, byte_size);
+                        compiler_type_was_created = true;
+                        compiler_type = m_ast.CreateStructType(go_kind, type_name_const_str, byte_size);
                     }
 
                     type_sp.reset(new Type(dwarf->MakeUserID(die.GetOffset()), dwarf, type_name_const_str, byte_size,
-                                           NULL, LLDB_INVALID_UID, Type::eEncodingIsUID, &decl, clang_type,
+                                           NULL, LLDB_INVALID_UID, Type::eEncodingIsUID, &decl, compiler_type,
                                            Type::eResolveStateForward));
 
                     // Add our type to the unique type map so we don't
@@ -288,18 +288,18 @@ DWARFASTParserGo::ParseTypeFromDWARF(const lldb_private::SymbolContext &sc, cons
                         if (die.HasChildren() == false)
                         {
                             // No children for this struct/union/class, lets finish it
-                            m_ast.CompleteStructType(clang_type);
+                            m_ast.CompleteStructType(compiler_type);
                         }
-                        else if (clang_type_was_created)
+                        else if (compiler_type_was_created)
                         {
                             // Leave this as a forward declaration until we need
                             // to know the details of the type. lldb_private::Type
                             // will automatically call the SymbolFile virtual function
                             // "SymbolFileDWARF::CompleteType(Type *)"
                             // When the definition needs to be defined.
-                            dwarf->m_forward_decl_die_to_clang_type[die.GetDIE()] = clang_type.GetOpaqueQualType();
-                            dwarf->m_forward_decl_clang_type_to_die[clang_type.GetOpaqueQualType()] = die.GetDIERef();
-                            // SetHasExternalStorage (clang_type.GetOpaqueQualType(), true);
+                            dwarf->m_forward_decl_die_to_clang_type[die.GetDIE()] = compiler_type.GetOpaqueQualType();
+                            dwarf->m_forward_decl_clang_type_to_die[compiler_type.GetOpaqueQualType()] = die.GetDIERef();
+                            // SetHasExternalStorage (compiler_type.GetOpaqueQualType(), true);
                         }
                     }
                 }
@@ -360,12 +360,12 @@ DWARFASTParserGo::ParseTypeFromDWARF(const lldb_private::SymbolContext &sc, cons
                         ParseChildParameters(sc, die, is_variadic, function_param_types);
                     }
 
-                    // clang_type will get the function prototype clang type after this call
-                    clang_type = m_ast.CreateFunctionType(type_name_const_str, function_param_types.data(),
+                    // compiler_type will get the function prototype clang type after this call
+                    compiler_type = m_ast.CreateFunctionType(type_name_const_str, function_param_types.data(),
                                                           function_param_types.size(), is_variadic);
 
                     type_sp.reset(new Type(dwarf->MakeUserID(die.GetOffset()), dwarf, type_name_const_str, 0, NULL,
-                                           LLDB_INVALID_UID, Type::eEncodingIsUID, &decl, clang_type,
+                                           LLDB_INVALID_UID, Type::eEncodingIsUID, &decl, compiler_type,
                                            Type::eResolveStateFull));
                     assert(type_sp.get());
                 }
@@ -427,16 +427,16 @@ DWARFASTParserGo::ParseTypeFromDWARF(const lldb_private::SymbolContext &sc, cons
                             {
                                 if (element_orders.size() > 1)
                                     printf("golang: unsupported multi-dimensional array %s\n", type_name_cstr);
-                                clang_type =
+                                compiler_type =
                                     m_ast.CreateArrayType(type_name_const_str, array_element_type, element_orders[0]);
                             }
                             else
                             {
-                                clang_type = m_ast.CreateArrayType(type_name_const_str, array_element_type, 0);
+                                compiler_type = m_ast.CreateArrayType(type_name_const_str, array_element_type, 0);
                             }
                             type_sp.reset(new Type(dwarf->MakeUserID(die.GetOffset()), dwarf, type_name_const_str,
                                                    byte_stride, NULL, type_die_offset, Type::eEncodingIsUID, &decl,
-                                                   clang_type, Type::eResolveStateFull));
+                                                   compiler_type, Type::eResolveStateFull));
                             type_sp->SetEncodingType(element_type);
                         }
                     }
@@ -619,7 +619,7 @@ DWARFASTParserGo::ParseChildArrayInfo(const SymbolContext &sc, const DWARFDIE &p
 }
 
 bool
-DWARFASTParserGo::CompleteTypeFromDWARF(const DWARFDIE &die, lldb_private::Type *type, CompilerType &clang_type)
+DWARFASTParserGo::CompleteTypeFromDWARF(const DWARFDIE &die, lldb_private::Type *type, CompilerType &compiler_type)
 {
     if (!die)
         return false;
@@ -632,7 +632,7 @@ DWARFASTParserGo::CompleteTypeFromDWARF(const DWARFDIE &die, lldb_private::Type 
         dwarf->GetObjectFile()->GetModule()->LogMessageVerboseBacktrace(
             log, "0x%8.8" PRIx64 ": %s '%s' resolving forward declaration...", dwarf->MakeUserID(die.GetOffset()),
             DW_TAG_value_to_name(tag), type->GetName().AsCString());
-    assert(clang_type);
+    assert(compiler_type);
     DWARFAttributes attributes;
 
     switch (tag)
@@ -644,11 +644,11 @@ DWARFASTParserGo::CompleteTypeFromDWARF(const DWARFDIE &die, lldb_private::Type 
                 {
                     SymbolContext sc(die.GetLLDBCompileUnit());
 
-                    ParseChildMembers(sc, die, clang_type);
+                    ParseChildMembers(sc, die, compiler_type);
                 }
             }
-            m_ast.CompleteStructType(clang_type);
-            return (bool)clang_type;
+            m_ast.CompleteStructType(compiler_type);
+            return (bool)compiler_type;
         }
 
         default:
@@ -660,13 +660,13 @@ DWARFASTParserGo::CompleteTypeFromDWARF(const DWARFDIE &die, lldb_private::Type 
 }
 
 size_t
-DWARFASTParserGo::ParseChildMembers(const SymbolContext &sc, const DWARFDIE &parent_die, CompilerType &class_clang_type)
+DWARFASTParserGo::ParseChildMembers(const SymbolContext &sc, const DWARFDIE &parent_die, CompilerType &class_compiler_type)
 {
     size_t count = 0;
     uint32_t member_idx = 0;
 
     ModuleSP module_sp = parent_die.GetDWARF()->GetObjectFile()->GetModule();
-    GoASTContext *ast = llvm::dyn_cast_or_null<GoASTContext>(class_clang_type.GetTypeSystem());
+    GoASTContext *ast = llvm::dyn_cast_or_null<GoASTContext>(class_compiler_type.GetTypeSystem());
     if (ast == nullptr)
         return 0;
 
@@ -742,7 +742,7 @@ DWARFASTParserGo::ParseChildMembers(const SymbolContext &sc, const DWARFDIE &par
                     {
                         CompilerType member_go_type = member_type->GetFullCompilerType();
                         ConstString name_const_str(name);
-                        m_ast.AddFieldToStruct(class_clang_type, name_const_str, member_go_type, member_byte_offset);
+                        m_ast.AddFieldToStruct(class_compiler_type, name_const_str, member_go_type, member_byte_offset);
                     }
                 }
                 ++member_idx;

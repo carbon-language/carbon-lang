@@ -324,30 +324,30 @@ ValueObject::ClearDynamicTypeInformation ()
 CompilerType
 ValueObject::MaybeCalculateCompleteType ()
 {
-    CompilerType clang_type(GetCompilerTypeImpl());
+    CompilerType compiler_type(GetCompilerTypeImpl());
         
     if (m_did_calculate_complete_objc_class_type)
     {
         if (m_override_type.IsValid())
             return m_override_type;
         else
-            return clang_type;
+            return compiler_type;
     }
     
     CompilerType class_type;
     bool is_pointer_type = false;
     
-    if (ClangASTContext::IsObjCObjectPointerType(clang_type, &class_type))
+    if (ClangASTContext::IsObjCObjectPointerType(compiler_type, &class_type))
     {
         is_pointer_type = true;
     }
-    else if (ClangASTContext::IsObjCObjectOrInterfaceType(clang_type))
+    else if (ClangASTContext::IsObjCObjectOrInterfaceType(compiler_type))
     {
-        class_type = clang_type;
+        class_type = compiler_type;
     }
     else
     {
-        return clang_type;
+        return compiler_type;
     }
     
     m_did_calculate_complete_objc_class_type = true;
@@ -391,7 +391,7 @@ ValueObject::MaybeCalculateCompleteType ()
             }
         }
     }
-    return clang_type;
+    return compiler_type;
 }
 
 CompilerType
@@ -936,10 +936,10 @@ ValueObject::GetSummaryAsCString (std::string& destination,
 bool
 ValueObject::IsCStringContainer(bool check_pointer)
 {
-    CompilerType pointee_or_element_clang_type;
-    const Flags type_flags (GetTypeInfo (&pointee_or_element_clang_type));
+    CompilerType pointee_or_element_compiler_type;
+    const Flags type_flags (GetTypeInfo (&pointee_or_element_compiler_type));
     bool is_char_arr_ptr (type_flags.AnySet (eTypeIsArray | eTypeIsPointer) &&
-                          pointee_or_element_clang_type.IsCharType ());
+                          pointee_or_element_compiler_type.IsCharType ());
     if (!is_char_arr_ptr)
         return false;
     if (!check_pointer)
@@ -957,8 +957,8 @@ ValueObject::GetPointeeData (DataExtractor& data,
                              uint32_t item_idx,
                              uint32_t item_count)
 {
-    CompilerType pointee_or_element_clang_type;
-    const uint32_t type_info = GetTypeInfo (&pointee_or_element_clang_type);
+    CompilerType pointee_or_element_compiler_type;
+    const uint32_t type_info = GetTypeInfo (&pointee_or_element_compiler_type);
     const bool is_pointer_type = type_info & eTypeIsPointer;
     const bool is_array_type = type_info & eTypeIsArray;
     if (!(is_pointer_type || is_array_type))
@@ -969,7 +969,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
     
     ExecutionContext exe_ctx (GetExecutionContextRef());
     
-    const uint64_t item_type_size = pointee_or_element_clang_type.GetByteSize(exe_ctx.GetBestExecutionContextScope());
+    const uint64_t item_type_size = pointee_or_element_compiler_type.GetByteSize(exe_ctx.GetBestExecutionContextScope());
     const uint64_t bytes = item_count * item_type_size;
     const uint64_t offset = item_idx * item_type_size;
     
@@ -1225,11 +1225,11 @@ ValueObject::ReadPointedString (lldb::DataBufferSP& buffer_sp,
     size_t bytes_read = 0;
     size_t total_bytes_read = 0;
     
-    CompilerType clang_type = GetCompilerType();
-    CompilerType elem_or_pointee_clang_type;
-    const Flags type_flags (GetTypeInfo (&elem_or_pointee_clang_type));
+    CompilerType compiler_type = GetCompilerType();
+    CompilerType elem_or_pointee_compiler_type;
+    const Flags type_flags (GetTypeInfo (&elem_or_pointee_compiler_type));
     if (type_flags.AnySet (eTypeIsArray | eTypeIsPointer) &&
-        elem_or_pointee_clang_type.IsCharType ())
+        elem_or_pointee_compiler_type.IsCharType ())
     {
         addr_t cstr_address = LLDB_INVALID_ADDRESS;
         AddressType cstr_address_type = eAddressTypeInvalid;
@@ -1240,7 +1240,7 @@ ValueObject::ReadPointedString (lldb::DataBufferSP& buffer_sp,
         {
             // We have an array
             uint64_t array_size = 0;
-            if (clang_type.IsArrayType(NULL, &array_size, NULL))
+            if (compiler_type.IsArrayType(NULL, &array_size, NULL))
             {
                 cstr_len = array_size;
                 if (cstr_len > max_length)
@@ -1384,11 +1384,11 @@ ValueObject::GetObjectDescription ()
     if (runtime == NULL)
     {
         // Aw, hell, if the things a pointer, or even just an integer, let's try ObjC anyway...
-        CompilerType clang_type = GetCompilerType();
-        if (clang_type)
+        CompilerType compiler_type = GetCompilerType();
+        if (compiler_type)
         {
             bool is_signed;
-            if (clang_type.IsIntegerType (is_signed) || clang_type.IsPointerType ())
+            if (compiler_type.IsIntegerType (is_signed) || compiler_type.IsPointerType ())
             {
                 runtime = process->GetLanguageRuntime(eLanguageTypeObjC);
             }
@@ -2022,9 +2022,9 @@ ValueObject::GetSyntheticChild (const ConstString &key) const
 }
 
 uint32_t
-ValueObject::GetTypeInfo (CompilerType *pointee_or_element_clang_type)
+ValueObject::GetTypeInfo (CompilerType *pointee_or_element_compiler_type)
 {
-    return GetCompilerType().GetTypeInfo (pointee_or_element_clang_type);
+    return GetCompilerType().GetTypeInfo (pointee_or_element_compiler_type);
 }
 
 bool
@@ -2416,9 +2416,9 @@ ValueObject::GetBaseClassPath (Stream &s)
     if (IsBaseClass())
     {
         bool parent_had_base_class = GetParent() && GetParent()->GetBaseClassPath (s);
-        CompilerType clang_type = GetCompilerType();
+        CompilerType compiler_type = GetCompilerType();
         std::string cxx_class_name;
-        bool this_had_base_class = ClangASTContext::GetCXXClassName (clang_type, cxx_class_name);
+        bool this_had_base_class = ClangASTContext::GetCXXClassName (compiler_type, cxx_class_name);
         if (this_had_base_class)
         {
             if (parent_had_base_class)
@@ -2535,8 +2535,8 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
             ValueObject *non_base_class_parent = GetNonBaseClassParent();
             if (non_base_class_parent)
             {
-                CompilerType non_base_class_parent_clang_type = non_base_class_parent->GetCompilerType();
-                if (non_base_class_parent_clang_type)
+                CompilerType non_base_class_parent_compiler_type = non_base_class_parent->GetCompilerType();
+                if (non_base_class_parent_compiler_type)
                 {
                     if (parent && parent->IsDereferenceOfParent() && epformat == eGetExpressionPathFormatHonorPointers)
                     {
@@ -2544,7 +2544,7 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
                     }
                     else
                     {                    
-                        const uint32_t non_base_class_parent_type_info = non_base_class_parent_clang_type.GetTypeInfo();
+                        const uint32_t non_base_class_parent_type_info = non_base_class_parent_compiler_type.GetTypeInfo();
                         
                         if (non_base_class_parent_type_info & eTypeIsPointer)
                         {
@@ -2756,13 +2756,13 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
         
         const char* expression_cstr = *first_unparsed; // hide the top level expression_cstr
         
-        CompilerType root_clang_type = root->GetCompilerType();
-        CompilerType pointee_clang_type;
-        Flags pointee_clang_type_info;
+        CompilerType root_compiler_type = root->GetCompilerType();
+        CompilerType pointee_compiler_type;
+        Flags pointee_compiler_type_info;
         
-        Flags root_clang_type_info(root_clang_type.GetTypeInfo(&pointee_clang_type));
-        if (pointee_clang_type)
-            pointee_clang_type_info.Reset(pointee_clang_type.GetTypeInfo());
+        Flags root_compiler_type_info(root_compiler_type.GetTypeInfo(&pointee_compiler_type));
+        if (pointee_compiler_type)
+            pointee_compiler_type_info.Reset(pointee_compiler_type.GetTypeInfo());
         
         if (!expression_cstr || *expression_cstr == '\0')
         {
@@ -2775,15 +2775,15 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
             case '-':
             {
                 if (options.m_check_dot_vs_arrow_syntax &&
-                    root_clang_type_info.Test(eTypeIsPointer) ) // if you are trying to use -> on a non-pointer and I must catch the error
+                    root_compiler_type_info.Test(eTypeIsPointer) ) // if you are trying to use -> on a non-pointer and I must catch the error
                 {
                     *first_unparsed = expression_cstr;
                     *reason_to_stop = ValueObject::eExpressionPathScanEndReasonArrowInsteadOfDot;
                     *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                     return ValueObjectSP();
                 }
-                if (root_clang_type_info.Test(eTypeIsObjC) &&  // if yo are trying to extract an ObjC IVar when this is forbidden
-                    root_clang_type_info.Test(eTypeIsPointer) &&
+                if (root_compiler_type_info.Test(eTypeIsObjC) &&  // if yo are trying to extract an ObjC IVar when this is forbidden
+                    root_compiler_type_info.Test(eTypeIsPointer) &&
                     options.m_no_fragile_ivar)
                 {
                     *first_unparsed = expression_cstr;
@@ -2803,7 +2803,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
             case '.': // or fallthrough from ->
             {
                 if (options.m_check_dot_vs_arrow_syntax && *expression_cstr == '.' &&
-                    root_clang_type_info.Test(eTypeIsPointer)) // if you are trying to use . on a pointer and I must catch the error
+                    root_compiler_type_info.Test(eTypeIsPointer)) // if you are trying to use . on a pointer and I must catch the error
                 {
                     *first_unparsed = expression_cstr;
                     *reason_to_stop = ValueObject::eExpressionPathScanEndReasonDotInsteadOfArrow;
@@ -2952,9 +2952,9 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
             }
             case '[':
             {
-                if (!root_clang_type_info.Test(eTypeIsArray) && !root_clang_type_info.Test(eTypeIsPointer) && !root_clang_type_info.Test(eTypeIsVector)) // if this is not a T[] nor a T*
+                if (!root_compiler_type_info.Test(eTypeIsArray) && !root_compiler_type_info.Test(eTypeIsPointer) && !root_compiler_type_info.Test(eTypeIsVector)) // if this is not a T[] nor a T*
                 {
-                    if (!root_clang_type_info.Test(eTypeIsScalar)) // if this is not even a scalar...
+                    if (!root_compiler_type_info.Test(eTypeIsScalar)) // if this is not even a scalar...
                     {
                         if (options.m_synthetic_children_traversal == GetValueForExpressionPathOptions::SyntheticChildrenTraversal::None) // ...only chance left is synthetic
                         {
@@ -2974,7 +2974,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                 }
                 if (*(expression_cstr+1) == ']') // if this is an unbounded range it only works for arrays
                 {
-                    if (!root_clang_type_info.Test(eTypeIsArray))
+                    if (!root_compiler_type_info.Test(eTypeIsArray))
                     {
                         *first_unparsed = expression_cstr;
                         *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEmptyRangeNotAllowed;
@@ -3011,7 +3011,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     }
                     if (end - expression_cstr == 1) // if this is [], only return a valid value for arrays
                     {
-                        if (root_clang_type_info.Test(eTypeIsArray))
+                        if (root_compiler_type_info.Test(eTypeIsArray))
                         {
                             *first_unparsed = expression_cstr+2;
                             *reason_to_stop = ValueObject::eExpressionPathScanEndReasonArrayRangeOperatorMet;
@@ -3027,7 +3027,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         }
                     }
                     // from here on we do have a valid index
-                    if (root_clang_type_info.Test(eTypeIsArray))
+                    if (root_compiler_type_info.Test(eTypeIsArray))
                     {
                         ValueObjectSP child_valobj_sp = root->GetChildAtIndex(index, true);
                         if (!child_valobj_sp)
@@ -3050,10 +3050,10 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             return ValueObjectSP();
                         }
                     }
-                    else if (root_clang_type_info.Test(eTypeIsPointer))
+                    else if (root_compiler_type_info.Test(eTypeIsPointer))
                     {
                         if (*what_next == ValueObject::eExpressionPathAftermathDereference &&  // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
-                            pointee_clang_type_info.Test(eTypeIsScalar))
+                            pointee_compiler_type_info.Test(eTypeIsScalar))
                         {
                             Error error;
                             root = root->Dereference(error);
@@ -3073,7 +3073,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         else
                         {
                             if (root->GetCompilerType().GetMinimumLanguage() == eLanguageTypeObjC
-                                && pointee_clang_type_info.AllClear(eTypeIsPointer)
+                                && pointee_compiler_type_info.AllClear(eTypeIsPointer)
                                 && root->HasSyntheticValue()
                                 && (options.m_synthetic_children_traversal == GetValueForExpressionPathOptions::SyntheticChildrenTraversal::ToSynthetic ||
                                     options.m_synthetic_children_traversal == GetValueForExpressionPathOptions::SyntheticChildrenTraversal::Both))
@@ -3097,7 +3097,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             }
                         }
                     }
-                    else if (root_clang_type_info.Test(eTypeIsScalar))
+                    else if (root_compiler_type_info.Test(eTypeIsScalar))
                     {
                         root = root->GetSyntheticBitFieldChild(index, index, true);
                         if (!root.get())
@@ -3115,7 +3115,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             return root;
                         }
                     }
-                    else if (root_clang_type_info.Test(eTypeIsVector))
+                    else if (root_compiler_type_info.Test(eTypeIsVector))
                     {
                         root = root->GetChildAtIndex(index, true);
                         if (!root.get())
@@ -3201,7 +3201,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         index_lower = index_higher;
                         index_higher = temp;
                     }
-                    if (root_clang_type_info.Test(eTypeIsScalar)) // expansion only works for scalars
+                    if (root_compiler_type_info.Test(eTypeIsScalar)) // expansion only works for scalars
                     {
                         root = root->GetSyntheticBitFieldChild(index_lower, index_higher, true);
                         if (!root.get())
@@ -3219,9 +3219,9 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             return root;
                         }
                     }
-                    else if (root_clang_type_info.Test(eTypeIsPointer) && // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
+                    else if (root_compiler_type_info.Test(eTypeIsPointer) && // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
                              *what_next == ValueObject::eExpressionPathAftermathDereference &&
-                             pointee_clang_type_info.Test(eTypeIsScalar))
+                             pointee_compiler_type_info.Test(eTypeIsScalar))
                     {
                         Error error;
                         root = root->Dereference(error);
@@ -3280,12 +3280,12 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
         
         const char* expression_cstr = *first_unparsed; // hide the top level expression_cstr
         
-        CompilerType root_clang_type = root->GetCompilerType();
-        CompilerType pointee_clang_type;
-        Flags pointee_clang_type_info;
-        Flags root_clang_type_info(root_clang_type.GetTypeInfo(&pointee_clang_type));
-        if (pointee_clang_type)
-            pointee_clang_type_info.Reset(pointee_clang_type.GetTypeInfo());
+        CompilerType root_compiler_type = root->GetCompilerType();
+        CompilerType pointee_compiler_type;
+        Flags pointee_compiler_type_info;
+        Flags root_compiler_type_info(root_compiler_type.GetTypeInfo(&pointee_compiler_type));
+        if (pointee_compiler_type)
+            pointee_compiler_type_info.Reset(pointee_compiler_type.GetTypeInfo());
         
         if (!expression_cstr || *expression_cstr == '\0')
         {
@@ -3298,9 +3298,9 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
         {
             case '[':
             {
-                if (!root_clang_type_info.Test(eTypeIsArray) && !root_clang_type_info.Test(eTypeIsPointer)) // if this is not a T[] nor a T*
+                if (!root_compiler_type_info.Test(eTypeIsArray) && !root_compiler_type_info.Test(eTypeIsPointer)) // if this is not a T[] nor a T*
                 {
-                    if (!root_clang_type_info.Test(eTypeIsScalar)) // if this is not even a scalar, this syntax is just plain wrong!
+                    if (!root_compiler_type_info.Test(eTypeIsScalar)) // if this is not even a scalar, this syntax is just plain wrong!
                     {
                         *first_unparsed = expression_cstr;
                         *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorInvalid;
@@ -3317,7 +3317,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                 }
                 if (*(expression_cstr+1) == ']') // if this is an unbounded range it only works for arrays
                 {
-                    if (!root_clang_type_info.Test(eTypeIsArray))
+                    if (!root_compiler_type_info.Test(eTypeIsArray))
                     {
                         *first_unparsed = expression_cstr;
                         *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEmptyRangeNotAllowed;
@@ -3361,7 +3361,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                     }
                     if (end - expression_cstr == 1) // if this is [], only return a valid value for arrays
                     {
-                        if (root_clang_type_info.Test(eTypeIsArray))
+                        if (root_compiler_type_info.Test(eTypeIsArray))
                         {
                             const size_t max_index = root->GetNumChildren() - 1;
                             for (size_t index = 0; index < max_index; index++)
@@ -3384,7 +3384,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                         }
                     }
                     // from here on we do have a valid index
-                    if (root_clang_type_info.Test(eTypeIsArray))
+                    if (root_compiler_type_info.Test(eTypeIsArray))
                     {
                         root = root->GetChildAtIndex(index, true);
                         if (!root.get())
@@ -3403,10 +3403,10 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                             return 1;
                         }
                     }
-                    else if (root_clang_type_info.Test(eTypeIsPointer))
+                    else if (root_compiler_type_info.Test(eTypeIsPointer))
                     {
                         if (*what_next == ValueObject::eExpressionPathAftermathDereference &&  // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
-                            pointee_clang_type_info.Test(eTypeIsScalar))
+                            pointee_compiler_type_info.Test(eTypeIsScalar))
                         {
                             Error error;
                             root = root->Dereference(error);
@@ -3443,7 +3443,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                             }
                         }
                     }
-                    else /*if (ClangASTContext::IsScalarType(root_clang_type))*/
+                    else /*if (ClangASTContext::IsScalarType(root_compiler_type))*/
                     {
                         root = root->GetSyntheticBitFieldChild(index, index, true);
                         if (!root.get())
@@ -3488,7 +3488,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                         index_lower = index_higher;
                         index_higher = temp;
                     }
-                    if (root_clang_type_info.Test(eTypeIsScalar)) // expansion only works for scalars
+                    if (root_compiler_type_info.Test(eTypeIsScalar)) // expansion only works for scalars
                     {
                         root = root->GetSyntheticBitFieldChild(index_lower, index_higher, true);
                         if (!root.get())
@@ -3507,9 +3507,9 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                             return 1;
                         }
                     }
-                    else if (root_clang_type_info.Test(eTypeIsPointer) && // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
+                    else if (root_compiler_type_info.Test(eTypeIsPointer) && // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
                              *what_next == ValueObject::eExpressionPathAftermathDereference &&
-                             pointee_clang_type_info.Test(eTypeIsScalar))
+                             pointee_compiler_type_info.Test(eTypeIsScalar))
                     {
                         Error error;
                         root = root->Dereference(error);
@@ -3805,14 +3805,14 @@ ValueObject::AddressOf (Error &error)
         case eAddressTypeFile:
         case eAddressTypeLoad:
             {
-                CompilerType clang_type = GetCompilerType();
-                if (clang_type)
+                CompilerType compiler_type = GetCompilerType();
+                if (compiler_type)
                 {
                     std::string name (1, '&');
                     name.append (m_name.AsCString(""));
                     ExecutionContext exe_ctx (GetExecutionContextRef());
                     m_addr_of_valobj_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                                          clang_type.GetPointerType(),
+                                                                          compiler_type.GetPointerType(),
                                                                           ConstString (name.c_str()),
                                                                           addr, 
                                                                           eAddressTypeInvalid,
@@ -3835,13 +3835,13 @@ ValueObject::AddressOf (Error &error)
 }
 
 ValueObjectSP
-ValueObject::Cast (const CompilerType &clang_ast_type)
+ValueObject::Cast (const CompilerType &compiler_type)
 {
-    return ValueObjectCast::Create (*this, GetName(), clang_ast_type);
+    return ValueObjectCast::Create (*this, GetName(), compiler_type);
 }
 
 ValueObjectSP
-ValueObject::CastPointerType (const char *name, CompilerType &clang_ast_type)
+ValueObject::CastPointerType (const char *name, CompilerType &compiler_type)
 {
     ValueObjectSP valobj_sp;
     AddressType address_type;
@@ -3854,7 +3854,7 @@ ValueObject::CastPointerType (const char *name, CompilerType &clang_ast_type)
         valobj_sp = ValueObjectMemory::Create (exe_ctx.GetBestExecutionContextScope(),
                                                name, 
                                                ptr_addr, 
-                                               clang_ast_type);
+                                               compiler_type);
     }
     return valobj_sp;    
 }

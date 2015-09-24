@@ -130,7 +130,7 @@ public:
     virtual size_t          ParseTypes (const SymbolContext& sc) = 0;
     virtual size_t          ParseVariablesForContext (const SymbolContext& sc) = 0;
     virtual Type*           ResolveTypeUID (lldb::user_id_t type_uid) = 0;
-    virtual bool            CompleteType (CompilerType &clang_type) = 0;
+    virtual bool            CompleteType (CompilerType &compiler_type) = 0;
     virtual void            ParseDeclsForContext (CompilerDeclContext decl_ctx) {}
     virtual CompilerDecl    GetDeclForUID (lldb::user_id_t uid) { return CompilerDecl(); }
     virtual CompilerDeclContext GetDeclContextForUID (lldb::user_id_t uid) { return CompilerDeclContext(); }

@@ -71,24 +71,24 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
     bool child_is_deref_of_parent = false;
     
     const bool transparent_pointers = synthetic_array_member == false;
-    CompilerType clang_type = m_impl_backend->GetCompilerType();
+    CompilerType compiler_type = m_impl_backend->GetCompilerType();
     CompilerType child_compiler_type;
     
     ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
     
-    child_compiler_type = clang_type.GetChildCompilerTypeAtIndex (&exe_ctx,
-                                                                  idx,
-                                                                  transparent_pointers,
-                                                                  omit_empty_base_classes,
-                                                                  ignore_array_bounds,
-                                                                  child_name_str,
-                                                                  child_byte_size,
-                                                                  child_byte_offset,
-                                                                  child_bitfield_bit_size,
-                                                                  child_bitfield_bit_offset,
-                                                                  child_is_base_class,
-                                                                  child_is_deref_of_parent,
-                                                                  m_impl_backend);
+    child_compiler_type = compiler_type.GetChildCompilerTypeAtIndex (&exe_ctx,
+                                                                     idx,
+                                                                     transparent_pointers,
+                                                                     omit_empty_base_classes,
+                                                                     ignore_array_bounds,
+                                                                     child_name_str,
+                                                                     child_byte_size,
+                                                                     child_byte_offset,
+                                                                     child_bitfield_bit_size,
+                                                                     child_bitfield_bit_offset,
+                                                                     child_is_base_class,
+                                                                     child_is_deref_of_parent,
+                                                                     m_impl_backend);
     if (child_compiler_type && child_byte_size)
     {
         if (synthetic_index)
@@ -132,7 +132,7 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
         return lldb::ValueObjectSP();
     if (m_live_address != LLDB_INVALID_ADDRESS)
     {
-        CompilerType clang_type(m_impl_backend->GetCompilerType());
+        CompilerType compiler_type(m_impl_backend->GetCompilerType());
         
         lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&m_live_address,sizeof(lldb::addr_t)));
         
@@ -140,7 +140,7 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
         new_name.append(m_impl_backend->GetName().AsCString(""));
         ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
         m_address_of_backend = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                               clang_type.GetPointerType(),
+                                                               compiler_type.GetPointerType(),
                                                                ConstString(new_name.c_str()),
                                                                buffer,
                                                                lldb::endian::InlHostByteOrder(), 
@@ -156,13 +156,13 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
 }
 
 lldb::ValueObjectSP
-ValueObjectConstResultImpl::Cast (const CompilerType &clang_ast_type)
+ValueObjectConstResultImpl::Cast (const CompilerType &compiler_type)
 {
     if (m_impl_backend == NULL)
         return lldb::ValueObjectSP();
 
     ValueObjectConstResultCast *result_cast = new ValueObjectConstResultCast(
-        *m_impl_backend, m_impl_backend->GetName(), clang_ast_type, m_live_address);
+        *m_impl_backend, m_impl_backend->GetName(), compiler_type, m_live_address);
     return result_cast->GetSP();
 }
 

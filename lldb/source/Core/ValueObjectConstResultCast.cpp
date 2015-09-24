@@ -69,7 +69,7 @@ ValueObjectConstResultCast::GetPointeeData (DataExtractor& data,
 }
 
 lldb::ValueObjectSP
-ValueObjectConstResultCast::Cast (const CompilerType &clang_ast_type)
+ValueObjectConstResultCast::Cast (const CompilerType &compiler_type)
 {
-    return m_impl.Cast(clang_ast_type);
+    return m_impl.Cast(compiler_type);
 }

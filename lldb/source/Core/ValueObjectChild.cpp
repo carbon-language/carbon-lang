@@ -27,7 +27,7 @@ using namespace lldb_private;
 ValueObjectChild::ValueObjectChild
 (
     ValueObject &parent,
-    const CompilerType &clang_type,
+    const CompilerType &compiler_type,
     const ConstString &name,
     uint64_t byte_size,
     int32_t byte_offset,
@@ -38,7 +38,7 @@ ValueObjectChild::ValueObjectChild
     AddressType child_ptr_or_ref_addr_type
 ) :
     ValueObject (parent),
-    m_clang_type (clang_type),
+    m_compiler_type (compiler_type),
     m_byte_size (byte_size),
     m_byte_offset (byte_offset),
     m_bitfield_bit_size (bitfield_bit_size),
@@ -73,11 +73,11 @@ AdjustForBitfieldness(ConstString& name,
 {
     if (name && bitfield_bit_size)
     {
-        const char *clang_type_name = name.AsCString();
-        if (clang_type_name)
+        const char *compiler_type_name = name.AsCString();
+        if (compiler_type_name)
         {
-            std::vector<char> bitfield_type_name (strlen(clang_type_name) + 32, 0);
-            ::snprintf (&bitfield_type_name.front(), bitfield_type_name.size(), "%s:%u", clang_type_name, bitfield_bit_size);
+            std::vector<char> bitfield_type_name (strlen(compiler_type_name) + 32, 0);
+            ::snprintf (&bitfield_type_name.front(), bitfield_type_name.size(), "%s:%u", compiler_type_name, bitfield_bit_size);
             name.SetCString(&bitfield_type_name.front());
         }
     }

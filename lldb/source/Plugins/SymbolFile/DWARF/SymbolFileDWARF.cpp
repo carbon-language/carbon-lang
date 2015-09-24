@@ -382,14 +382,14 @@ SymbolFileDWARF::GetTypes (SymbolContextScope *sc_scope,
         }
     }
 
-    std::set<CompilerType> clang_type_set;
+    std::set<CompilerType> compiler_type_set;
     size_t num_types_added = 0;
     for (Type *type : type_set)
     {
-        CompilerType clang_type = type->GetForwardCompilerType ();
-        if (clang_type_set.find(clang_type) == clang_type_set.end())
+        CompilerType compiler_type = type->GetForwardCompilerType ();
+        if (compiler_type_set.find(compiler_type) == compiler_type_set.end())
         {
-            clang_type_set.insert(clang_type);
+            compiler_type_set.insert(compiler_type);
             type_list.Insert (type->shared_from_this());
             ++num_types_added;
         }
@@ -1530,21 +1530,21 @@ SymbolFileDWARF::ResolveTypeUID (const DWARFDIE &die, bool assert_not_being_pars
 
 // This function is used when SymbolFileDWARFDebugMap owns a bunch of
 // SymbolFileDWARF objects to detect if this DWARF file is the one that
-// can resolve a clang_type.
+// can resolve a compiler_type.
 bool
-SymbolFileDWARF::HasForwardDeclForClangType (const CompilerType &clang_type)
+SymbolFileDWARF::HasForwardDeclForClangType (const CompilerType &compiler_type)
 {
-    CompilerType clang_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(clang_type);
-    return GetForwardDeclClangTypeToDie().count (clang_type_no_qualifiers.GetOpaqueQualType());
+    CompilerType compiler_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(compiler_type);
+    return GetForwardDeclClangTypeToDie().count (compiler_type_no_qualifiers.GetOpaqueQualType());
 }
 
 
 bool
-SymbolFileDWARF::CompleteType (CompilerType &clang_type)
+SymbolFileDWARF::CompleteType (CompilerType &compiler_type)
 {
     // We have a struct/union/class/enum that needs to be fully resolved.
-    CompilerType clang_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(clang_type);
-    auto die_it = GetForwardDeclClangTypeToDie().find (clang_type_no_qualifiers.GetOpaqueQualType());
+    CompilerType compiler_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(compiler_type);
+    auto die_it = GetForwardDeclClangTypeToDie().find (compiler_type_no_qualifiers.GetOpaqueQualType());
     if (die_it == GetForwardDeclClangTypeToDie().end())
     {
         // We have already resolved this type...
@@ -1569,10 +1569,10 @@ SymbolFileDWARF::CompleteType (CompilerType &clang_type)
                                                                   dwarf_die.GetID(),
                                                                   dwarf_die.GetTagAsCString(),
                                                                   type->GetName().AsCString());
-    assert (clang_type);
+    assert (compiler_type);
     DWARFASTParser *dwarf_ast = dwarf_die.GetDWARFParser();
     if (dwarf_ast)
-        return dwarf_ast->CompleteTypeFromDWARF (dwarf_die, type, clang_type);
+        return dwarf_ast->CompleteTypeFromDWARF (dwarf_die, type, compiler_type);
     return false;
 }
 

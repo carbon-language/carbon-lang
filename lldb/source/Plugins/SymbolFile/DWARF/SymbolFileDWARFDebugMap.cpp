@@ -778,15 +778,15 @@ SymbolFileDWARFDebugMap::ResolveTypeUID(lldb::user_id_t type_uid)
 }
 
 bool
-SymbolFileDWARFDebugMap::CompleteType (CompilerType& clang_type)
+SymbolFileDWARFDebugMap::CompleteType (CompilerType& compiler_type)
 {
     bool success = false;
-    if (clang_type)
+    if (compiler_type)
     {
         ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
-            if (oso_dwarf->HasForwardDeclForClangType (clang_type))
+            if (oso_dwarf->HasForwardDeclForClangType (compiler_type))
             {
-                oso_dwarf->CompleteType (clang_type);
+                oso_dwarf->CompleteType (compiler_type);
                 success = true;
                 return true;
             }

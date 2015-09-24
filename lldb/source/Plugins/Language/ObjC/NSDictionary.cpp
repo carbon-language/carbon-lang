@@ -29,7 +29,7 @@ using namespace lldb_private::formatters;
 static CompilerType
 GetLLDBNSPairType (TargetSP target_sp)
 {
-    CompilerType clang_type;
+    CompilerType compiler_type;
 
     ClangASTContext *target_ast_context = target_sp->GetScratchClangASTContext();
 
@@ -37,23 +37,23 @@ GetLLDBNSPairType (TargetSP target_sp)
     {
         ConstString g___lldb_autogen_nspair("__lldb_autogen_nspair");
 
-        clang_type = target_ast_context->GetTypeForIdentifier<clang::CXXRecordDecl>(g___lldb_autogen_nspair);
+        compiler_type = target_ast_context->GetTypeForIdentifier<clang::CXXRecordDecl>(g___lldb_autogen_nspair);
         
-        if (!clang_type)
+        if (!compiler_type)
         {
-            clang_type = target_ast_context->CreateRecordType(NULL, lldb::eAccessPublic, g___lldb_autogen_nspair.GetCString(), clang::TTK_Struct, lldb::eLanguageTypeC);
+            compiler_type = target_ast_context->CreateRecordType(NULL, lldb::eAccessPublic, g___lldb_autogen_nspair.GetCString(), clang::TTK_Struct, lldb::eLanguageTypeC);
             
-            if (clang_type)
+            if (compiler_type)
             {
-                ClangASTContext::StartTagDeclarationDefinition(clang_type);
-                CompilerType id_clang_type = target_ast_context->GetBasicType (eBasicTypeObjCID);
-                ClangASTContext::AddFieldToRecordType(clang_type, "key", id_clang_type, lldb::eAccessPublic, 0);
-                ClangASTContext::AddFieldToRecordType(clang_type, "value", id_clang_type, lldb::eAccessPublic, 0);
-                ClangASTContext::CompleteTagDeclarationDefinition(clang_type);
+                ClangASTContext::StartTagDeclarationDefinition(compiler_type);
+                CompilerType id_compiler_type = target_ast_context->GetBasicType (eBasicTypeObjCID);
+                ClangASTContext::AddFieldToRecordType(compiler_type, "key", id_compiler_type, lldb::eAccessPublic, 0);
+                ClangASTContext::AddFieldToRecordType(compiler_type, "value", id_compiler_type, lldb::eAccessPublic, 0);
+                ClangASTContext::CompleteTagDeclarationDefinition(compiler_type);
             }
         }
     }
-    return clang_type;
+    return compiler_type;
 }
 
 namespace lldb_private {

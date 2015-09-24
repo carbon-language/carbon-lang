@@ -306,23 +306,23 @@ ABIMacOSX_i386::GetArgumentValues (Thread &thread,
         
         // We currently only support extracting values with Clang QualTypes.
         // Do we care about others?
-        CompilerType clang_type (value->GetCompilerType());
-        if (clang_type)
+        CompilerType compiler_type (value->GetCompilerType());
+        if (compiler_type)
         {
             bool is_signed;
             
-            if (clang_type.IsIntegerType (is_signed))
+            if (compiler_type.IsIntegerType (is_signed))
             {
                 ReadIntegerArgument(value->GetScalar(),
-                                    clang_type.GetBitSize(&thread),
+                                    compiler_type.GetBitSize(&thread),
                                     is_signed,
                                     thread.GetProcess().get(), 
                                     current_stack_argument);
             }
-            else if (clang_type.IsPointerType())
+            else if (compiler_type.IsPointerType())
             {
                 ReadIntegerArgument(value->GetScalar(),
-                                    clang_type.GetBitSize(&thread),
+                                    compiler_type.GetBitSize(&thread),
                                     false,
                                     thread.GetProcess().get(),
                                     current_stack_argument);
@@ -343,8 +343,8 @@ ABIMacOSX_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
         return error;
     }
     
-    CompilerType clang_type = new_value_sp->GetCompilerType();
-    if (!clang_type)
+    CompilerType compiler_type = new_value_sp->GetCompilerType();
+    if (!compiler_type)
     {
         error.SetErrorString ("Null clang type for return value.");
         return error;
@@ -359,7 +359,7 @@ ABIMacOSX_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
     RegisterContext *reg_ctx = thread->GetRegisterContext().get();
 
     bool set_it_simple = false;
-    if (clang_type.IsIntegerType (is_signed) || clang_type.IsPointerType())
+    if (compiler_type.IsIntegerType (is_signed) || compiler_type.IsPointerType())
     {
         DataExtractor data;
         Error data_error;
@@ -399,7 +399,7 @@ ABIMacOSX_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
             error.SetErrorString("We don't support returning longer than 64 bit integer values at present.");
         }
     }
-    else if (clang_type.IsFloatingPointType (count, is_complex))
+    else if (compiler_type.IsFloatingPointType (count, is_complex))
     {
         if (is_complex)
             error.SetErrorString ("We don't support returning complex values at present");
@@ -415,16 +415,16 @@ ABIMacOSX_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
 
 ValueObjectSP
 ABIMacOSX_i386::GetReturnValueObjectImpl (Thread &thread,
-                                          CompilerType &clang_type) const
+                                          CompilerType &compiler_type) const
 {
     Value value;
     ValueObjectSP return_valobj_sp;
     
-    if (!clang_type)
+    if (!compiler_type)
         return return_valobj_sp;
     
-    //value.SetContext (Value::eContextTypeClangType, clang_type.GetOpaqueQualType());
-    value.SetCompilerType (clang_type);
+    //value.SetContext (Value::eContextTypeClangType, compiler_type.GetOpaqueQualType());
+    value.SetCompilerType (compiler_type);
     
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
         if (!reg_ctx)
@@ -432,9 +432,9 @@ ABIMacOSX_i386::GetReturnValueObjectImpl (Thread &thread,
         
     bool is_signed;
             
-    if (clang_type.IsIntegerType (is_signed))
+    if (compiler_type.IsIntegerType (is_signed))
     {
-        size_t bit_width = clang_type.GetBitSize(&thread);
+        size_t bit_width = compiler_type.GetBitSize(&thread);
         
         unsigned eax_id = reg_ctx->GetRegisterInfoByName("eax", 0)->kinds[eRegisterKindLLDB];
         unsigned edx_id = reg_ctx->GetRegisterInfoByName("edx", 0)->kinds[eRegisterKindLLDB];
@@ -474,7 +474,7 @@ ABIMacOSX_i386::GetReturnValueObjectImpl (Thread &thread,
                 break;
         }
     }
-    else if (clang_type.IsPointerType ())
+    else if (compiler_type.IsPointerType ())
     {
         unsigned eax_id = reg_ctx->GetRegisterInfoByName("eax", 0)->kinds[eRegisterKindLLDB];
         uint32_t ptr = thread.GetRegisterContext()->ReadRegisterAsUnsigned(eax_id, 0) & 0xffffffff;

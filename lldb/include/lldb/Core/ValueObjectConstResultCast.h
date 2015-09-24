@@ -58,7 +58,7 @@ public:
                     uint32_t item_count = 1) override;
 
     lldb::ValueObjectSP
-    Cast (const CompilerType &clang_ast_type) override;
+    Cast (const CompilerType &compiler_type) override;
 
 protected:
     ValueObjectConstResultImpl m_impl;

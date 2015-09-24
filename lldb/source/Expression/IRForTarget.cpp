@@ -1509,7 +1509,7 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
         if (value_decl == NULL)
             return false;
 
-        lldb_private::CompilerType clang_type(&value_decl->getASTContext(), value_decl->getType());
+        lldb_private::CompilerType compiler_type(&value_decl->getASTContext(), value_decl->getType());
 
         const Type *value_type = NULL;
 
@@ -1524,7 +1524,7 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
             // to the type of $__lldb_expr_result, not the type itself.
             //
             // We also do this for any user-declared persistent variables.
-            clang_type = clang_type.GetPointerType();
+            compiler_type = compiler_type.GetPointerType();
             value_type = PointerType::get(global_variable->getType(), 0);
         }
         else
@@ -1532,14 +1532,14 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
             value_type = global_variable->getType();
         }
 
-        const uint64_t value_size = clang_type.GetByteSize(nullptr);
-        lldb::offset_t value_alignment = (clang_type.GetTypeBitAlign() + 7ull) / 8ull;
+        const uint64_t value_size = compiler_type.GetByteSize(nullptr);
+        lldb::offset_t value_alignment = (compiler_type.GetTypeBitAlign() + 7ull) / 8ull;
 
         if (log)
         {
             log->Printf("Type of \"%s\" is [clang \"%s\", llvm \"%s\"] [size %" PRIu64 ", align %" PRIu64 "]",
                         name.c_str(),
-                        lldb_private::ClangASTContext::GetQualType(clang_type).getAsString().c_str(),
+                        lldb_private::ClangASTContext::GetQualType(compiler_type).getAsString().c_str(),
                         PrintType(value_type).c_str(),
                         value_size,
                         value_alignment);

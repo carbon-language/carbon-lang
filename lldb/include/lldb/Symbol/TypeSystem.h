@@ -211,7 +211,7 @@ public:
     GetTypeName (lldb::opaque_compiler_type_t type) = 0;
     
     virtual uint32_t
-    GetTypeInfo (lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_clang_type) = 0;
+    GetTypeInfo (lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_compiler_type) = 0;
     
     virtual lldb::LanguageType
     GetMinimumLanguage (lldb::opaque_compiler_type_t type) = 0;

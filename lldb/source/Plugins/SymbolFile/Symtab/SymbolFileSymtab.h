@@ -82,7 +82,7 @@ public:
     ResolveTypeUID(lldb::user_id_t type_uid);
 
     virtual bool
-    CompleteType (lldb_private::CompilerType& clang_type);
+    CompleteType (lldb_private::CompilerType& compiler_type);
 
     virtual uint32_t
     ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc);

@@ -61,21 +61,21 @@ ValueObjectSP
 ValueObjectConstResult::Create
 (
     ExecutionContextScope *exe_scope,
-    const CompilerType &clang_type,
+    const CompilerType &compiler_type,
     const ConstString &name,
     const DataExtractor &data,
     lldb::addr_t address
 )
 {
     return (new ValueObjectConstResult (exe_scope,
-                                        clang_type,
+                                        compiler_type,
                                         name,
                                         data,
                                         address))->GetSP();
 }
 
 ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                                                const CompilerType &clang_type,
+                                                const CompilerType &compiler_type,
                                                 const ConstString &name,
                                                 const DataExtractor &data,
                                                 lldb::addr_t address) :
@@ -94,7 +94,7 @@ ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope
     
     m_value.GetScalar() = (uintptr_t)m_data.GetDataStart();
     m_value.SetValueType(Value::eValueTypeHostAddress);
-    m_value.SetCompilerType(clang_type);
+    m_value.SetCompilerType(compiler_type);
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
@@ -103,7 +103,7 @@ ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope
 
 ValueObjectSP
 ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
-                                const CompilerType &clang_type,
+                                const CompilerType &compiler_type,
                                 const ConstString &name,
                                 const lldb::DataBufferSP &data_sp,
                                 lldb::ByteOrder data_byte_order,
@@ -111,7 +111,7 @@ ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
                                 lldb::addr_t address)
 {
     return (new ValueObjectConstResult (exe_scope,
-                                        clang_type,
+                                        compiler_type,
                                         name,
                                         data_sp,
                                         data_byte_order,
@@ -129,7 +129,7 @@ ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
 }
 
 ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                                                const CompilerType &clang_type,
+                                                const CompilerType &compiler_type,
                                                 const ConstString &name,
                                                 const lldb::DataBufferSP &data_sp,
                                                 lldb::ByteOrder data_byte_order, 
@@ -145,8 +145,8 @@ ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope
     m_data.SetData(data_sp);
     m_value.GetScalar() = (uintptr_t)data_sp->GetBytes();
     m_value.SetValueType(Value::eValueTypeHostAddress);
-    //m_value.SetContext(Value::eContextTypeClangType, clang_type);
-    m_value.SetCompilerType (clang_type);
+    //m_value.SetContext(Value::eContextTypeClangType, compiler_type);
+    m_value.SetCompilerType (compiler_type);
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
@@ -155,14 +155,14 @@ ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope
 
 ValueObjectSP
 ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
-                                const CompilerType &clang_type,
+                                const CompilerType &compiler_type,
                                 const ConstString &name,
                                 lldb::addr_t address,
                                 AddressType address_type,
                                 uint32_t addr_byte_size)
 {
     return (new ValueObjectConstResult (exe_scope,
-                                        clang_type,
+                                        compiler_type,
                                         name,
                                         address,
                                         address_type,
@@ -170,7 +170,7 @@ ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
 }
 
 ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                                                const CompilerType &clang_type,
+                                                const CompilerType &compiler_type,
                                                 const ConstString &name,
                                                 lldb::addr_t address,
                                                 AddressType address_type,
@@ -191,8 +191,8 @@ ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope
     case eAddressTypeLoad:      m_value.SetValueType(Value::eValueTypeLoadAddress); break;    
     case eAddressTypeHost:      m_value.SetValueType(Value::eValueTypeHostAddress); break;
     }
-//    m_value.SetContext(Value::eContextTypeClangType, clang_type);
-    m_value.SetCompilerType (clang_type);
+//    m_value.SetContext(Value::eContextTypeClangType, compiler_type);
+    m_value.SetCompilerType (compiler_type);
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
@@ -366,9 +366,9 @@ ValueObjectConstResult::GetDynamicValue (lldb::DynamicValueType use_dynamic)
 }
 
 lldb::ValueObjectSP
-ValueObjectConstResult::Cast (const CompilerType &clang_ast_type)
+ValueObjectConstResult::Cast (const CompilerType &compiler_type)
 {
-    return m_impl.Cast(clang_ast_type);
+    return m_impl.Cast(compiler_type);
 }
 
 lldb::LanguageType

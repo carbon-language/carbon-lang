@@ -324,22 +324,22 @@ ABISysV_i386::GetArgumentValues (Thread &thread,
             return false;
 
         // Currently: Support for extracting values with Clang QualTypes only.
-        CompilerType clang_type (value->GetCompilerType());
-        if (clang_type)
+        CompilerType compiler_type (value->GetCompilerType());
+        if (compiler_type)
         {
             bool is_signed;
-            if (clang_type.IsIntegerType (is_signed))
+            if (compiler_type.IsIntegerType (is_signed))
             {
                 ReadIntegerArgument(value->GetScalar(),
-                                    clang_type.GetBitSize(&thread),
+                                    compiler_type.GetBitSize(&thread),
                                     is_signed,
                                     thread.GetProcess().get(),
                                     current_stack_argument);
             }
-            else if (clang_type.IsPointerType())
+            else if (compiler_type.IsPointerType())
             {
                 ReadIntegerArgument(value->GetScalar(),
-                                    clang_type.GetBitSize(&thread),
+                                    compiler_type.GetBitSize(&thread),
                                     false,
                                     thread.GetProcess().get(),
                                     current_stack_argument);
@@ -361,14 +361,14 @@ ABISysV_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObje
         return error;
     }
 
-    CompilerType clang_type = new_value_sp->GetCompilerType();
-    if (!clang_type)
+    CompilerType compiler_type = new_value_sp->GetCompilerType();
+    if (!compiler_type)
     {
         error.SetErrorString ("Null clang type for return value.");
         return error;
     }
 
-    const uint32_t type_flags = clang_type.GetTypeInfo ();
+    const uint32_t type_flags = compiler_type.GetTypeInfo ();
     Thread *thread = frame_sp->GetThread().get();
     RegisterContext *reg_ctx = thread->GetRegisterContext().get();
     DataExtractor data;
@@ -504,21 +504,21 @@ ABISysV_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObje
 
 ValueObjectSP
 ABISysV_i386::GetReturnValueObjectSimple (Thread &thread,
-                                          CompilerType &return_clang_type) const
+                                          CompilerType &return_compiler_type) const
 {
     ValueObjectSP return_valobj_sp;
     Value value;
 
-    if (!return_clang_type)
+    if (!return_compiler_type)
         return return_valobj_sp;
 
-    value.SetCompilerType (return_clang_type);
+    value.SetCompilerType (return_compiler_type);
 
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
         return return_valobj_sp;
 
-    const uint32_t type_flags = return_clang_type.GetTypeInfo ();
+    const uint32_t type_flags = return_compiler_type.GetTypeInfo ();
 
     unsigned eax_id = reg_ctx->GetRegisterInfoByName("eax", 0)->kinds[eRegisterKindLLDB];
     unsigned edx_id = reg_ctx->GetRegisterInfoByName("edx", 0)->kinds[eRegisterKindLLDB];
@@ -541,7 +541,7 @@ ABISysV_i386::GetReturnValueObjectSimple (Thread &thread,
     else if ((type_flags & eTypeIsScalar) || (type_flags & eTypeIsEnumeration)) //'Integral' + 'Floating Point'
     {
         value.SetValueType(Value::eValueTypeScalar);
-        const size_t byte_size = return_clang_type.GetByteSize(nullptr);
+        const size_t byte_size = return_compiler_type.GetByteSize(nullptr);
         bool success = false;
 
         if (type_flags & eTypeIsInteger)    // 'Integral' except enum
@@ -657,7 +657,7 @@ ABISysV_i386::GetReturnValueObjectSimple (Thread &thread,
                 return_valobj_sp = ValueObjectMemory::Create (&thread,
                                                                "",
                                                               Address (storage_addr, nullptr),
-                                                              return_clang_type);
+                                                              return_compiler_type);
             }
         }
 
@@ -675,7 +675,7 @@ ABISysV_i386::GetReturnValueObjectSimple (Thread &thread,
 
     else if (type_flags & eTypeIsVector)    // 'Packed'
     {
-        const size_t byte_size = return_clang_type.GetByteSize(nullptr);
+        const size_t byte_size = return_compiler_type.GetByteSize(nullptr);
         if (byte_size > 0)
         {
             const RegisterInfo *vec_reg = reg_ctx->GetRegisterInfoByName("xmm0", 0);
@@ -705,7 +705,7 @@ ABISysV_i386::GetReturnValueObjectSimple (Thread &thread,
                                                     byte_order,
                                                     process_sp->GetTarget().GetArchitecture().GetAddressByteSize());
                                 return_valobj_sp = ValueObjectConstResult::Create (&thread,
-                                                                                   return_clang_type,
+                                                                                   return_compiler_type,
                                                                                    ConstString(""),
                                                                                    data);
                             }
@@ -743,7 +743,7 @@ ABISysV_i386::GetReturnValueObjectSimple (Thread &thread,
                                                         byte_order,
                                                         process_sp->GetTarget().GetArchitecture().GetAddressByteSize());
                                     return_valobj_sp = ValueObjectConstResult::Create (&thread,
-                                                                                       return_clang_type,
+                                                                                       return_compiler_type,
                                                                                        ConstString(""),
                                                                                        data);
                                 }
@@ -764,15 +764,15 @@ ABISysV_i386::GetReturnValueObjectSimple (Thread &thread,
 
 
 ValueObjectSP
-ABISysV_i386::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_clang_type) const
+ABISysV_i386::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_compiler_type) const
 {
     ValueObjectSP return_valobj_sp;
 
-    if (!return_clang_type)
+    if (!return_compiler_type)
         return return_valobj_sp;
 
     ExecutionContext exe_ctx (thread.shared_from_this());
-    return_valobj_sp = GetReturnValueObjectSimple(thread, return_clang_type);
+    return_valobj_sp = GetReturnValueObjectSimple(thread, return_compiler_type);
     if (return_valobj_sp)
         return return_valobj_sp;
 
@@ -780,14 +780,14 @@ ABISysV_i386::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_cla
     if (!reg_ctx_sp)
        return return_valobj_sp;
 
-    if (return_clang_type.IsAggregateType())
+    if (return_compiler_type.IsAggregateType())
     {
         unsigned eax_id = reg_ctx_sp->GetRegisterInfoByName("eax", 0)->kinds[eRegisterKindLLDB];
         lldb::addr_t storage_addr = (uint32_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(eax_id, 0) & 0xffffffff);
         return_valobj_sp = ValueObjectMemory::Create (&thread,
                                                       "",
                                                       Address (storage_addr, nullptr),
-                                                      return_clang_type);
+                                                      return_compiler_type);
     }
 
     return return_valobj_sp;

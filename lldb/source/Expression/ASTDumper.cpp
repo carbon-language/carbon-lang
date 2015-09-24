@@ -80,9 +80,9 @@ ASTDumper::ASTDumper (lldb::opaque_compiler_type_t type)
     m_dump = clang::QualType::getFromOpaquePtr(type).getAsString();
 }
 
-ASTDumper::ASTDumper (const CompilerType &clang_type)
+ASTDumper::ASTDumper (const CompilerType &compiler_type)
 {
-    m_dump = ClangASTContext::GetQualType(clang_type).getAsString();
+    m_dump = ClangASTContext::GetQualType(compiler_type).getAsString();
 }
 
 

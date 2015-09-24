@@ -533,12 +533,12 @@ ThreadPlanStepOut::CalculateReturnValue ()
         
     if (m_immediate_step_from_function != NULL)
     {
-        CompilerType return_clang_type = m_immediate_step_from_function->GetCompilerType().GetFunctionReturnType();
-        if (return_clang_type)
+        CompilerType return_compiler_type = m_immediate_step_from_function->GetCompilerType().GetFunctionReturnType();
+        if (return_compiler_type)
         {
             lldb::ABISP abi_sp = m_thread.GetProcess()->GetABI();
             if (abi_sp)
-                m_return_valobj_sp = abi_sp->GetReturnValueObject(m_thread, return_clang_type);
+                m_return_valobj_sp = abi_sp->GetReturnValueObject(m_thread, return_compiler_type);
         }
     }
 }

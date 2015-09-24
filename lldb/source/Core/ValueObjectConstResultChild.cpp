@@ -19,7 +19,7 @@ using namespace lldb_private;
 ValueObjectConstResultChild::ValueObjectConstResultChild
 (
     ValueObject &parent,
-    const CompilerType &clang_type,
+    const CompilerType &compiler_type,
     const ConstString &name,
     uint32_t byte_size,
     int32_t byte_offset,
@@ -30,7 +30,7 @@ ValueObjectConstResultChild::ValueObjectConstResultChild
     lldb::addr_t live_address
 ) :
     ValueObjectChild (parent,
-                      clang_type,
+                      compiler_type,
                       name,
                       byte_size,
                       byte_offset,
@@ -81,7 +81,7 @@ ValueObjectConstResultChild::GetPointeeData (DataExtractor& data,
 }
 
 lldb::ValueObjectSP
-ValueObjectConstResultChild::Cast (const CompilerType &clang_ast_type)
+ValueObjectConstResultChild::Cast (const CompilerType &compiler_type)
 {
-    return m_impl.Cast(clang_ast_type);
+    return m_impl.Cast(compiler_type);
 }

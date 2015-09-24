@@ -369,12 +369,12 @@ CompilerType::GetDisplayTypeName () const
 }
 
 uint32_t
-CompilerType::GetTypeInfo (CompilerType *pointee_or_element_clang_type) const
+CompilerType::GetTypeInfo (CompilerType *pointee_or_element_compiler_type) const
 {
     if (!IsValid())
         return 0;
     
-    return m_type_system->GetTypeInfo(m_type, pointee_or_element_clang_type);
+    return m_type_system->GetTypeInfo(m_type, pointee_or_element_compiler_type);
 }
 
 
@@ -730,7 +730,7 @@ CompilerType::GetVirtualBaseClassAtIndex (size_t idx, uint32_t *bit_offset_ptr) 
 
 uint32_t
 CompilerType::GetIndexOfFieldWithName (const char* name,
-                                       CompilerType* field_clang_type_ptr,
+                                       CompilerType* field_compiler_type_ptr,
                                        uint64_t *bit_offset_ptr,
                                        uint32_t *bitfield_bit_size_ptr,
                                        bool *is_bitfield_ptr) const
@@ -739,11 +739,11 @@ CompilerType::GetIndexOfFieldWithName (const char* name,
     std::string field_name;
     for (unsigned index = 0; index < count; index++)
     {
-        CompilerType field_clang_type (GetFieldAtIndex(index, field_name, bit_offset_ptr, bitfield_bit_size_ptr, is_bitfield_ptr));
+        CompilerType field_compiler_type (GetFieldAtIndex(index, field_name, bit_offset_ptr, bitfield_bit_size_ptr, is_bitfield_ptr));
         if (strcmp(field_name.c_str(), name) == 0)
         {
-            if (field_clang_type_ptr)
-                *field_clang_type_ptr = field_clang_type;
+            if (field_compiler_type_ptr)
+                *field_compiler_type_ptr = field_compiler_type;
             return index;
         }
     }
@@ -1270,10 +1270,10 @@ CompilerType::WriteToMemory (lldb_private::ExecutionContext *exe_ctx,
 }
 
 //clang::CXXRecordDecl *
-//CompilerType::GetAsCXXRecordDecl (lldb::opaque_compiler_type_t opaque_clang_qual_type)
+//CompilerType::GetAsCXXRecordDecl (lldb::opaque_compiler_type_t opaque_compiler_qual_type)
 //{
-//    if (opaque_clang_qual_type)
-//        return clang::QualType::getFromOpaquePtr(opaque_clang_qual_type)->getAsCXXRecordDecl();
+//    if (opaque_compiler_qual_type)
+//        return clang::QualType::getFromOpaquePtr(opaque_compiler_qual_type)->getAsCXXRecordDecl();
 //    return NULL;
 //}
 

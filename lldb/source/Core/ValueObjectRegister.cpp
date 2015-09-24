@@ -279,7 +279,7 @@ ValueObjectRegister::ValueObjectRegister (ValueObject &parent, lldb::RegisterCon
     m_reg_info (),
     m_reg_value (),
     m_type_name (),
-    m_clang_type ()
+    m_compiler_type ()
 {
     assert (reg_ctx_sp.get());
     ConstructObject(reg_num);
@@ -297,7 +297,7 @@ ValueObjectRegister::ValueObjectRegister (ExecutionContextScope *exe_scope, lldb
     m_reg_info (),
     m_reg_value (),
     m_type_name (),
-    m_clang_type ()
+    m_compiler_type ()
 {
     assert (reg_ctx);
     ConstructObject(reg_num);
@@ -310,7 +310,7 @@ ValueObjectRegister::~ValueObjectRegister()
 CompilerType
 ValueObjectRegister::GetCompilerTypeImpl ()
 {
-    if (!m_clang_type.IsValid())
+    if (!m_compiler_type.IsValid())
     {
         ExecutionContext exe_ctx (GetExecutionContextRef());
         Target *target = exe_ctx.GetTargetPtr();
@@ -321,12 +321,12 @@ ValueObjectRegister::GetCompilerTypeImpl ()
             {
                 TypeSystem *type_system = exe_module->GetTypeSystemForLanguage (eLanguageTypeC);
                 if (type_system)
-                    m_clang_type = type_system->GetBuiltinTypeForEncodingAndBitSize (m_reg_info.encoding,
+                    m_compiler_type = type_system->GetBuiltinTypeForEncodingAndBitSize (m_reg_info.encoding,
                                                                                      m_reg_info.byte_size * 8);
             }
         }
     }
-    return m_clang_type;
+    return m_compiler_type;
 }
 
 ConstString

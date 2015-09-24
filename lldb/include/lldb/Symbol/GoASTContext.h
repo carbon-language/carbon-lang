@@ -198,7 +198,7 @@ class GoASTContext : public TypeSystem
 
     virtual ConstString GetTypeName(lldb::opaque_compiler_type_t type) override;
 
-    virtual uint32_t GetTypeInfo(lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_clang_type = NULL) override;
+    virtual uint32_t GetTypeInfo(lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_compiler_type = NULL) override;
 
     virtual lldb::LanguageType GetMinimumLanguage(lldb::opaque_compiler_type_t type) override;
 

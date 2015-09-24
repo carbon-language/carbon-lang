@@ -656,15 +656,15 @@ GoASTContext::GetTypeName(lldb::opaque_compiler_type_t type)
 }
 
 uint32_t
-GoASTContext::GetTypeInfo(lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_clang_type)
+GoASTContext::GetTypeInfo(lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_compiler_type)
 {
-    if (pointee_or_element_clang_type)
-        pointee_or_element_clang_type->Clear();
+    if (pointee_or_element_compiler_type)
+        pointee_or_element_compiler_type->Clear();
     if (!type)
         return 0;
     GoType *t = static_cast<GoType *>(type);
-    if (pointee_or_element_clang_type)
-        *pointee_or_element_clang_type = t->GetElementType();
+    if (pointee_or_element_compiler_type)
+        *pointee_or_element_compiler_type = t->GetElementType();
     int kind = t->GetGoKind();
     if (kind == GoType::KIND_ARRAY)
         return eTypeHasChildren | eTypeIsArray;
@@ -1254,12 +1254,12 @@ GoASTContext::DumpTypeValue(lldb::opaque_compiler_type_t type, Stream *s, lldb::
         GoType *t = static_cast<GoType *>(type);
         if (t->IsTypedef())
         {
-            CompilerType typedef_clang_type = t->GetElementType();
+            CompilerType typedef_compiler_type = t->GetElementType();
             if (format == eFormatDefault)
-                format = typedef_clang_type.GetFormat();
-            uint64_t typedef_byte_size = typedef_clang_type.GetByteSize(exe_scope);
+                format = typedef_compiler_type.GetFormat();
+            uint64_t typedef_byte_size = typedef_compiler_type.GetByteSize(exe_scope);
 
-            return typedef_clang_type.DumpTypeValue(
+            return typedef_compiler_type.DumpTypeValue(
                 s,
                 format,              // The format with which to display the element
                 data,                // Data buffer containing all bytes for this type

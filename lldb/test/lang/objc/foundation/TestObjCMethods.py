@@ -189,11 +189,11 @@ class FoundationTestCase(TestBase):
 
         self.expect("image lookup -t NSString", DATA_TYPES_DISPLAYED_CORRECTLY,
             substrs = ['name = "NSString"',
-                       'clang_type = "@interface NSString'])
+                       'compiler_type = "@interface NSString'])
 
         self.expect("image lookup -t MyString", DATA_TYPES_DISPLAYED_CORRECTLY,
             substrs = ['name = "MyString"',
-                       'clang_type = "@interface MyString',
+                       'compiler_type = "@interface MyString',
                        'NSString * str;',
                        'NSDate * date;'])
 

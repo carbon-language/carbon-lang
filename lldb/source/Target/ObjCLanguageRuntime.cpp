@@ -368,16 +368,16 @@ ObjCLanguageRuntime::GetEncodingToType ()
 }
 
 bool
-ObjCLanguageRuntime::GetTypeBitSize (const CompilerType& clang_type,
+ObjCLanguageRuntime::GetTypeBitSize (const CompilerType& compiler_type,
                                      uint64_t &size)
 {
-    void *opaque_ptr = clang_type.GetOpaqueQualType();
+    void *opaque_ptr = compiler_type.GetOpaqueQualType();
     size = m_type_size_cache.Lookup(opaque_ptr);
     // an ObjC object will at least have an ISA, so 0 is definitely not OK
     if (size > 0)
         return true;
     
-    ClassDescriptorSP class_descriptor_sp = GetClassDescriptorFromClassName(clang_type.GetTypeName());
+    ClassDescriptorSP class_descriptor_sp = GetClassDescriptorFromClassName(compiler_type.GetTypeName());
     if (!class_descriptor_sp)
         return false;
     

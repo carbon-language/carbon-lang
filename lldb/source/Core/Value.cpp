@@ -35,7 +35,7 @@ using namespace lldb_private;
 Value::Value() :
     m_value (),
     m_vector (),
-    m_clang_type (),
+    m_compiler_type (),
     m_context (NULL),
     m_value_type (eValueTypeScalar),
     m_context_type (eContextTypeInvalid),
@@ -46,7 +46,7 @@ Value::Value() :
 Value::Value(const Scalar& scalar) :
     m_value (scalar),
     m_vector (),
-    m_clang_type (),
+    m_compiler_type (),
     m_context (NULL),
     m_value_type (eValueTypeScalar),
     m_context_type (eContextTypeInvalid),
@@ -58,7 +58,7 @@ Value::Value(const Scalar& scalar) :
 Value::Value(const void *bytes, int len) :
     m_value (),
     m_vector (),
-    m_clang_type (),
+    m_compiler_type (),
     m_context (NULL),
     m_value_type (eValueTypeHostAddress),
     m_context_type (eContextTypeInvalid),
@@ -70,7 +70,7 @@ Value::Value(const void *bytes, int len) :
 Value::Value(const Value &v) :
     m_value (v.m_value),
     m_vector (v.m_vector),
-    m_clang_type (v.m_clang_type),
+    m_compiler_type (v.m_compiler_type),
     m_context (v.m_context),
     m_value_type (v.m_value_type),
     m_context_type (v.m_context_type),
@@ -93,7 +93,7 @@ Value::operator=(const Value &rhs)
     {
         m_value = rhs.m_value;
         m_vector = rhs.m_vector;
-        m_clang_type = rhs.m_clang_type;
+        m_compiler_type = rhs.m_compiler_type;
         m_context = rhs.m_context;
         m_value_type = rhs.m_value_type;
         m_context_type = rhs.m_context_type;
@@ -300,7 +300,7 @@ Value::GetValueByteSize (Error *error_ptr)
 const CompilerType &
 Value::GetCompilerType ()
 {
-    if (!m_clang_type.IsValid())
+    if (!m_compiler_type.IsValid())
     {
         switch (m_context_type)
         {
@@ -308,13 +308,13 @@ Value::GetCompilerType ()
             break;
 
         case eContextTypeRegisterInfo:
-            break;    // TODO: Eventually convert into a clang type?
+            break;    // TODO: Eventually convert into a compiler type?
 
         case eContextTypeLLDBType:
             {
                 Type *lldb_type = GetType();
                 if (lldb_type)
-                    m_clang_type = lldb_type->GetForwardCompilerType ();
+                    m_compiler_type = lldb_type->GetForwardCompilerType ();
             }
             break;
 
@@ -325,20 +325,20 @@ Value::GetCompilerType ()
                 {
                     Type *variable_type = variable->GetType();
                     if (variable_type)
-                        m_clang_type = variable_type->GetForwardCompilerType ();
+                        m_compiler_type = variable_type->GetForwardCompilerType ();
                 }
             }
             break;
         }
     }
 
-    return m_clang_type;
+    return m_compiler_type;
 }
 
 void
-Value::SetCompilerType (const CompilerType &clang_type)
+Value::SetCompilerType (const CompilerType &compiler_type)
 {
-    m_clang_type = clang_type;
+    m_compiler_type = compiler_type;
 }
 
 lldb::Format
@@ -721,8 +721,8 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
 Scalar &
 Value::ResolveValue(ExecutionContext *exe_ctx)
 {
-    const CompilerType &clang_type = GetCompilerType();
-    if (clang_type.IsValid())
+    const CompilerType &compiler_type = GetCompilerType();
+    if (compiler_type.IsValid())
     {
         switch (m_value_type)
         {
@@ -740,7 +740,7 @@ Value::ResolveValue(ExecutionContext *exe_ctx)
                 if (error.Success())
                 {
                     Scalar scalar;
-                    if (clang_type.GetValueAsScalar (data, 0, data.GetByteSize(), scalar))
+                    if (compiler_type.GetValueAsScalar (data, 0, data.GetByteSize(), scalar))
                     {
                         m_value = scalar;
                         m_value_type = eValueTypeScalar;
@@ -782,7 +782,7 @@ Value::Clear()
 {
     m_value.Clear();
     m_vector.Clear();
-    m_clang_type.Clear();
+    m_compiler_type.Clear();
     m_value_type = eValueTypeScalar;
     m_context = NULL;
     m_context_type = eContextTypeInvalid;

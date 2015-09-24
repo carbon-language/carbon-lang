@@ -27,7 +27,7 @@ class ValueObjectConstResultChild : public ValueObjectChild
 public:
     
     ValueObjectConstResultChild (ValueObject &parent,
-                                 const CompilerType &clang_type,
+                                 const CompilerType &compiler_type,
                                  const ConstString &name,
                                  uint32_t byte_size,
                                  int32_t byte_offset,
@@ -63,7 +63,7 @@ public:
 					uint32_t item_count = 1) override;
 
     lldb::ValueObjectSP
-    Cast (const CompilerType &clang_ast_type) override;
+    Cast (const CompilerType &compiler_type) override;
     
 protected:
     ValueObjectConstResultImpl m_impl;

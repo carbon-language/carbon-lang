@@ -34,14 +34,14 @@ public:
 
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
-            const CompilerType &clang_type,
+            const CompilerType &compiler_type,
             const ConstString &name,
             const DataExtractor &data,
             lldb::addr_t address = LLDB_INVALID_ADDRESS);
 
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
-            const CompilerType &clang_type,
+            const CompilerType &compiler_type,
             const ConstString &name,
             const lldb::DataBufferSP &result_data_sp,
             lldb::ByteOrder byte_order, 
@@ -50,7 +50,7 @@ public:
 
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
-            const CompilerType &clang_type,
+            const CompilerType &compiler_type,
             const ConstString &name,
             lldb::addr_t address,
             AddressType address_type,
@@ -132,7 +132,7 @@ public:
     GetPreferredDisplayLanguage ();
 
     virtual lldb::ValueObjectSP
-    Cast (const CompilerType &clang_ast_type);
+    Cast (const CompilerType &compiler_type);
 
 protected:
     virtual bool
@@ -154,13 +154,13 @@ private:
                             lldb::addr_t address);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            const CompilerType &clang_type,
+                            const CompilerType &compiler_type,
                             const ConstString &name,
                             const DataExtractor &data,
                             lldb::addr_t address);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            const CompilerType &clang_type,
+                            const CompilerType &compiler_type,
                             const ConstString &name,
                             const lldb::DataBufferSP &result_data_sp,
                             lldb::ByteOrder byte_order, 
@@ -168,7 +168,7 @@ private:
                             lldb::addr_t address);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            const CompilerType &clang_type,
+                            const CompilerType &compiler_type,
                             const ConstString &name,
                             lldb::addr_t address,
                             AddressType address_type,

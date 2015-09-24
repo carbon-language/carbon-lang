@@ -247,8 +247,8 @@ ABISysV_mips64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
         return error;
     }
 
-    CompilerType clang_type = new_value_sp->GetCompilerType();
-    if (!clang_type)
+    CompilerType compiler_type = new_value_sp->GetCompilerType();
+    if (!compiler_type)
     {
         error.SetErrorString ("Null clang type for return value.");
         return error;
@@ -270,7 +270,7 @@ ABISysV_mips64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
         return error;
     }
 
-    const uint32_t type_flags = clang_type.GetTypeInfo (NULL);
+    const uint32_t type_flags = compiler_type.GetTypeInfo (NULL);
     
     if (type_flags & eTypeIsScalar ||
         type_flags & eTypeIsPointer)
@@ -325,14 +325,14 @@ ABISysV_mips64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
 
 
 ValueObjectSP
-ABISysV_mips64::GetReturnValueObjectSimple (Thread &thread, CompilerType &return_clang_type) const
+ABISysV_mips64::GetReturnValueObjectSimple (Thread &thread, CompilerType &return_compiler_type) const
 {
     ValueObjectSP return_valobj_sp;
     return return_valobj_sp;
 }
 
 ValueObjectSP
-ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_clang_type) const
+ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_compiler_type) const
 {
     ValueObjectSP return_valobj_sp;
     Value value;
@@ -342,7 +342,7 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
     if (exe_ctx.GetTargetPtr() == NULL || exe_ctx.GetProcessPtr() == NULL)
         return return_valobj_sp;
 
-    value.SetCompilerType(return_clang_type);
+    value.SetCompilerType(return_compiler_type);
 
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
@@ -350,8 +350,8 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
 
     Target *target = exe_ctx.GetTargetPtr();
     ByteOrder target_byte_order = target->GetArchitecture().GetByteOrder();
-    const size_t byte_size = return_clang_type.GetByteSize(nullptr);
-    const uint32_t type_flags = return_clang_type.GetTypeInfo (NULL);
+    const size_t byte_size = return_compiler_type.GetByteSize(nullptr);
+    const uint32_t type_flags = return_compiler_type.GetTypeInfo (NULL);
     
     const RegisterInfo *r2_info = reg_ctx->GetRegisterInfoByName("r2", 0);
     const RegisterInfo *r3_info = reg_ctx->GetRegisterInfoByName("r3", 0);
@@ -467,7 +467,7 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
                                                                   target_byte_order);
 
                         return_valobj_sp = ValueObjectConstResult::Create (&thread, 
-                                                                           return_clang_type,
+                                                                           return_compiler_type,
                                                                            ConstString(""),
                                                                            return_ext);
                         return return_valobj_sp;
@@ -505,7 +505,7 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
             std::string name;
             bool is_complex;
             uint32_t count;
-            const uint32_t num_children = return_clang_type.GetNumFields ();
+            const uint32_t num_children = return_compiler_type.GetNumFields ();
 
             // A structure consisting of one or two FP values (and nothing else) will be
             // returned in the two FP return-value registers i.e fp0 and fp2.
@@ -516,9 +516,9 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
                 // Check if this structure contains only floating point fields
                 for (uint32_t idx = 0; idx < num_children; idx++)
                 {
-                    CompilerType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
+                    CompilerType field_compiler_type = return_compiler_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
                     
-                    if (field_clang_type.IsFloatingPointType (count, is_complex))
+                    if (field_compiler_type.IsFloatingPointType (count, is_complex))
                         use_fp_regs = 1;
                     else
                         found_non_fp_field = 1;
@@ -540,8 +540,8 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
 
                     for (uint32_t idx = 0; idx < num_children; idx++)
                     {
-                        CompilerType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
-                        const size_t field_byte_width = field_clang_type.GetByteSize(nullptr);
+                        CompilerType field_compiler_type = return_compiler_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
+                        const size_t field_byte_width = field_compiler_type.GetByteSize(nullptr);
 
                         DataExtractor *copy_from_extractor = NULL;
 
@@ -584,7 +584,7 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
 
                     // The result is in our data buffer.  Create a variable object out of it
                     return_valobj_sp = ValueObjectConstResult::Create (&thread, 
-                                                                       return_clang_type,
+                                                                       return_compiler_type,
                                                                        ConstString(""),
                                                                        return_ext);
 
@@ -601,8 +601,8 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
                 bool is_signed;
                 uint32_t padding;
 
-                CompilerType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
-                const size_t field_byte_width = field_clang_type.GetByteSize(nullptr);
+                CompilerType field_compiler_type = return_compiler_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
+                const size_t field_byte_width = field_compiler_type.GetByteSize(nullptr);
 
                 // if we don't know the size of the field (e.g. invalid type), just bail out
                 if (field_byte_width == 0)
@@ -610,9 +610,9 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
 
                 uint32_t field_byte_offset = field_bit_offset/8;
 
-                if (field_clang_type.IsIntegerType (is_signed) 
-                    || field_clang_type.IsPointerType ()
-                    || field_clang_type.IsFloatingPointType (count, is_complex))
+                if (field_compiler_type.IsIntegerType (is_signed)
+                    || field_compiler_type.IsPointerType ()
+                    || field_compiler_type.IsFloatingPointType (count, is_complex))
                 {
                     padding = field_byte_offset - integer_bytes;
 
@@ -689,7 +689,7 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
             {
                 // The result is in our data buffer.  Create a variable object out of it
                 return_valobj_sp = ValueObjectConstResult::Create (&thread, 
-                                                                   return_clang_type,
+                                                                   return_compiler_type,
                                                                    ConstString(""),
                                                                    return_ext);
             }
@@ -704,7 +704,7 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
         return_valobj_sp = ValueObjectMemory::Create (&thread,
                                                       "",
                                                       Address (mem_address, NULL),
-                                                      return_clang_type); 
+                                                      return_compiler_type);
     }
     return return_valobj_sp;
 }

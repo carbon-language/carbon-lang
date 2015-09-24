@@ -71,7 +71,7 @@ protected:
 
     Address  m_address;  ///< The variable that this value object is based upon
     lldb::TypeSP m_type_sp;
-    CompilerType m_clang_type;
+    CompilerType m_compiler_type;
 
 private:
     ValueObjectMemory (ExecutionContextScope *exe_scope, 

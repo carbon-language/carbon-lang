@@ -92,8 +92,8 @@ public:
           lldb::user_id_t encoding_uid,
           EncodingDataType encoding_uid_type,
           const Declaration& decl,
-          const CompilerType &clang_qual_type,
-          ResolveState clang_type_resolve_state);
+          const CompilerType &compiler_qual_type,
+          ResolveState compiler_type_resolve_state);
     
     // This makes an invalid type.  Used for functions that return a Type when they
     // get an error.
@@ -293,14 +293,14 @@ protected:
     EncodingDataType m_encoding_uid_type;
     uint64_t m_byte_size;
     Declaration m_decl;
-    CompilerType m_clang_type;
+    CompilerType m_compiler_type;
     
     struct Flags {
 #ifdef __GNUC__
         // using unsigned type here to work around a very noisy gcc warning
-        unsigned        clang_type_resolve_state : 2;
+        unsigned        compiler_type_resolve_state : 2;
 #else
-        ResolveState    clang_type_resolve_state : 2;
+        ResolveState    compiler_type_resolve_state : 2;
 #endif
         bool            is_complete_objc_class   : 1;
     } m_flags;
@@ -309,7 +309,7 @@ protected:
     GetEncodingType ();
     
     bool 
-    ResolveClangType (ResolveState clang_type_resolve_state);
+    ResolveClangType (ResolveState compiler_type_resolve_state);
 };
 
 // these classes are used to back the SBType* objects
@@ -318,28 +318,28 @@ class TypePair
 {
 public:
     TypePair () :
-        clang_type(),
+        compiler_type(),
         type_sp()
     {
     }
 
     TypePair (CompilerType type) :
-        clang_type(type),
+        compiler_type(type),
         type_sp()
     {
     }
     
     TypePair (lldb::TypeSP type) :
-        clang_type(),
+        compiler_type(),
         type_sp(type)
     {
-        clang_type = type_sp->GetForwardCompilerType ();
+        compiler_type = type_sp->GetForwardCompilerType ();
     }
     
     bool
     IsValid () const
     {
-        return clang_type.IsValid() || (type_sp.get() != nullptr);
+        return compiler_type.IsValid() || (type_sp.get() != nullptr);
     }
     
     explicit operator bool () const
@@ -350,21 +350,21 @@ public:
     bool
     operator == (const TypePair& rhs) const
     {
-        return clang_type == rhs.clang_type &&
+        return compiler_type == rhs.compiler_type &&
         type_sp.get() == rhs.type_sp.get();
     }
     
     bool
     operator != (const TypePair& rhs) const
     {
-        return clang_type != rhs.clang_type ||
+        return compiler_type != rhs.compiler_type ||
         type_sp.get() != rhs.type_sp.get();
     }
     
     void
     Clear ()
     {
-        clang_type.Clear();
+        compiler_type.Clear();
         type_sp.reset();
     }
     
@@ -373,8 +373,8 @@ public:
     {
         if (type_sp)
             return type_sp->GetName();
-        if (clang_type)
-            return clang_type.GetTypeName();
+        if (compiler_type)
+            return compiler_type.GetTypeName();
         return ConstString ();
     }
     
@@ -383,8 +383,8 @@ public:
     {
         if (type_sp)
             return type_sp->GetForwardCompilerType ().GetDisplayTypeName();
-        if (clang_type)
-            return clang_type.GetDisplayTypeName();
+        if (compiler_type)
+            return compiler_type.GetDisplayTypeName();
         return ConstString();
     }
     
@@ -392,14 +392,14 @@ public:
     SetType (CompilerType type)
     {
         type_sp.reset();
-        clang_type = type;
+        compiler_type = type;
     }
     
     void
     SetType (lldb::TypeSP type)
     {
         type_sp = type;
-        clang_type = type_sp->GetForwardCompilerType ();
+        compiler_type = type_sp->GetForwardCompilerType ();
     }
     
     lldb::TypeSP
@@ -411,7 +411,7 @@ public:
     CompilerType
     GetCompilerType () const
     {
-        return clang_type;
+        return compiler_type;
     }
     
     CompilerType
@@ -419,7 +419,7 @@ public:
     {
         if (type_sp)
             return type_sp->GetForwardCompilerType().GetPointerType();
-        return clang_type.GetPointerType();
+        return compiler_type.GetPointerType();
     }
     
     CompilerType
@@ -427,7 +427,7 @@ public:
     {
         if (type_sp)
             return type_sp->GetForwardCompilerType ().GetPointeeType();
-        return clang_type.GetPointeeType();
+        return compiler_type.GetPointeeType();
     }
     
     CompilerType
@@ -436,7 +436,7 @@ public:
         if (type_sp)
             return type_sp->GetForwardCompilerType ().GetLValueReferenceType();
         else
-            return clang_type.GetLValueReferenceType();
+            return compiler_type.GetLValueReferenceType();
     }
 
     CompilerType
@@ -445,7 +445,7 @@ public:
         if (type_sp)
             return type_sp->GetForwardCompilerType ().GetTypedefedType();
         else
-            return clang_type.GetTypedefedType();
+            return compiler_type.GetTypedefedType();
     }
 
     CompilerType
@@ -454,7 +454,7 @@ public:
         if (type_sp)
             return type_sp->GetForwardCompilerType ().GetNonReferenceType();
         else
-            return clang_type.GetNonReferenceType();
+            return compiler_type.GetNonReferenceType();
     }
     
     CompilerType
@@ -463,7 +463,7 @@ public:
         if (type_sp)
             return type_sp->GetForwardCompilerType ().GetFullyUnqualifiedType();
         else
-            return clang_type.GetFullyUnqualifiedType();
+            return compiler_type.GetFullyUnqualifiedType();
     }
     
     CompilerType
@@ -471,13 +471,13 @@ public:
     {
         if (type_sp)
             return type_sp->GetForwardCompilerType ().GetCanonicalType();
-        return clang_type.GetCanonicalType();
+        return compiler_type.GetCanonicalType();
     }
     
     TypeSystem *
     GetTypeSystem () const
     {
-        return clang_type.GetTypeSystem();
+        return compiler_type.GetTypeSystem();
     }
     
     lldb::ModuleSP
@@ -488,7 +488,7 @@ public:
         return lldb::ModuleSP();
     }
 protected:
-    CompilerType clang_type;
+    CompilerType compiler_type;
     lldb::TypeSP type_sp;
 };
     
@@ -504,11 +504,11 @@ public:
     
     TypeImpl (const lldb::TypeSP &type_sp);
     
-    TypeImpl (const CompilerType &clang_type);
+    TypeImpl (const CompilerType &compiler_type);
     
     TypeImpl (const lldb::TypeSP &type_sp, const CompilerType &dynamic);
     
-    TypeImpl (const CompilerType &clang_type, const CompilerType &dynamic);
+    TypeImpl (const CompilerType &compiler_type, const CompilerType &dynamic);
     
     TypeImpl (const TypePair &pair, const CompilerType &dynamic);
 
@@ -516,13 +516,13 @@ public:
     SetType (const lldb::TypeSP &type_sp);
     
     void
-    SetType (const CompilerType &clang_type);
+    SetType (const CompilerType &compiler_type);
     
     void
     SetType (const lldb::TypeSP &type_sp, const CompilerType &dynamic);
     
     void
-    SetType (const CompilerType &clang_type, const CompilerType &dynamic);
+    SetType (const CompilerType &compiler_type, const CompilerType &dynamic);
     
     void
     SetType (const TypePair &pair, const CompilerType &dynamic);
@@ -745,7 +745,7 @@ class TypeAndOrName
 public:
     TypeAndOrName ();
     TypeAndOrName (lldb::TypeSP &type_sp);
-    TypeAndOrName (const CompilerType &clang_type);
+    TypeAndOrName (const CompilerType &compiler_type);
     TypeAndOrName (const char *type_str);
     TypeAndOrName (const TypeAndOrName &rhs);
     TypeAndOrName (ConstString &type_const_string);
@@ -783,7 +783,7 @@ public:
     SetTypeSP (lldb::TypeSP type_sp);
     
     void
-    SetCompilerType (CompilerType clang_type);
+    SetCompilerType (CompilerType compiler_type);
     
     bool
     IsEmpty () const;

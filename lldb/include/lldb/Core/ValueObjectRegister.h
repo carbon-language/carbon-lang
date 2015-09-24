@@ -177,7 +177,7 @@ protected:
     RegisterInfo m_reg_info;
     RegisterValue m_reg_value;
     ConstString m_type_name;
-    CompilerType m_clang_type;
+    CompilerType m_compiler_type;
 
 private:
     void

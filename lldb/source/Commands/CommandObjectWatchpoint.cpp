@@ -1048,7 +1048,7 @@ protected:
                 valobj_sp = valobj_list.GetValueObjectAtIndex(0);
         }
         
-        CompilerType clang_type;
+        CompilerType compiler_type;
         
         if (valobj_sp)
         {
@@ -1061,7 +1061,7 @@ protected:
                 size = m_option_watchpoint.watch_size == 0 ? valobj_sp->GetByteSize()
                                                            : m_option_watchpoint.watch_size;
             }
-            clang_type = valobj_sp->GetCompilerType();
+            compiler_type = valobj_sp->GetCompilerType();
         }
         else
         {
@@ -1078,7 +1078,7 @@ protected:
         uint32_t watch_type = m_option_watchpoint.watch_type;
         
         error.Clear();
-        Watchpoint *wp = target->CreateWatchpoint(addr, size, &clang_type, watch_type, error).get();
+        Watchpoint *wp = target->CreateWatchpoint(addr, size, &compiler_type, watch_type, error).get();
         if (wp)
         {
             wp->SetWatchSpec(command.GetArgumentAtIndex(0));
@@ -1295,10 +1295,10 @@ protected:
         
         // Fetch the type from the value object, the type of the watched object is the pointee type
         /// of the expression, so convert to that if we  found a valid type.
-        CompilerType clang_type(valobj_sp->GetCompilerType());
+        CompilerType compiler_type(valobj_sp->GetCompilerType());
         
         Error error;
-        Watchpoint *wp = target->CreateWatchpoint(addr, size, &clang_type, watch_type, error).get();
+        Watchpoint *wp = target->CreateWatchpoint(addr, size, &compiler_type, watch_type, error).get();
         if (wp)
         {
             Stream &output_stream = result.GetOutputStream();

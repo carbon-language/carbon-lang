@@ -269,9 +269,9 @@ SBType::GetFunctionReturnType ()
 {
     if (IsValid())
     {
-        CompilerType return_clang_type (m_opaque_sp->GetCompilerType(true).GetFunctionReturnType());
-        if (return_clang_type.IsValid())
-            return SBType(return_clang_type);
+        CompilerType return_type (m_opaque_sp->GetCompilerType(true).GetFunctionReturnType());
+        if (return_type.IsValid())
+            return SBType(return_type);
     }
     return lldb::SBType();
 }

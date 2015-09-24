@@ -109,12 +109,12 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
         return false;
     
     // Get a wchar_t basic type from the current type system
-    CompilerType wchar_clang_type = valobj.GetCompilerType().GetBasicTypeFromAST(lldb::eBasicTypeWChar);
+    CompilerType wchar_compiler_type = valobj.GetCompilerType().GetBasicTypeFromAST(lldb::eBasicTypeWChar);
     
-    if (!wchar_clang_type)
+    if (!wchar_compiler_type)
         return false;
     
-    const uint32_t wchar_size = wchar_clang_type.GetBitSize(nullptr); // Safe to pass NULL for exe_scope here
+    const uint32_t wchar_size = wchar_compiler_type.GetBitSize(nullptr); // Safe to pass NULL for exe_scope here
     
     StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
     options.SetLocation(data_addr);

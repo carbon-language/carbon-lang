@@ -54,7 +54,7 @@ public:
     }
 
     lldb::ValueObjectSP
-    Cast (const CompilerType &clang_ast_type);
+    Cast (const CompilerType &compiler_type);
     
     void
     SetLiveAddress(lldb::addr_t addr = LLDB_INVALID_ADDRESS,

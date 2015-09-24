@@ -143,7 +143,7 @@ public:
     ResolveTypeUID(lldb::user_id_t type_uid) override;
 
     bool
-    CompleteType (lldb_private::CompilerType& clang_type) override;
+    CompleteType (lldb_private::CompilerType& compiler_type) override;
 
     lldb_private::Type *
     ResolveType (const DWARFDIE &die,
@@ -292,7 +292,7 @@ public:
     }
 
     bool
-    HasForwardDeclForClangType (const lldb_private::CompilerType &clang_type);
+    HasForwardDeclForClangType (const lldb_private::CompilerType &compiler_type);
 
     lldb_private::CompileUnit*
     GetCompUnitForDWARFCompUnit(DWARFCompileUnit* dwarf_cu,

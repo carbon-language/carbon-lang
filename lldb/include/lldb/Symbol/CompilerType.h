@@ -220,7 +220,7 @@ public:
     GetDisplayTypeName () const;
 
     uint32_t
-    GetTypeInfo (CompilerType *pointee_or_element_clang_type = NULL) const;
+    GetTypeInfo (CompilerType *pointee_or_element_compiler_type = NULL) const;
     
     lldb::LanguageType
     GetMinimumLanguage ();
@@ -413,7 +413,7 @@ public:
 
     uint32_t
     GetIndexOfFieldWithName (const char* name,
-                             CompilerType* field_clang_type = NULL,
+                             CompilerType* field_compiler_type = NULL,
                              uint64_t *bit_offset_ptr = NULL,
                              uint32_t *bitfield_bit_size_ptr = NULL,
                              bool *is_bitfield_ptr = NULL) const;

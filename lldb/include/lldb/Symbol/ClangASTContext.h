@@ -253,7 +253,7 @@ public:
     CompilerType
     GetTypeForIdentifier (const ConstString &type_name)
     {
-        CompilerType clang_type;
+        CompilerType compiler_type;
         
         if (type_name.GetLength())
         {
@@ -269,12 +269,12 @@ public:
                 {
                     clang::NamedDecl *named_decl = result[0];
                     if (const RecordDeclType *record_decl = llvm::dyn_cast<RecordDeclType>(named_decl))
-                        clang_type.SetCompilerType(ast, clang::QualType(record_decl->getTypeForDecl(), 0));
+                        compiler_type.SetCompilerType(ast, clang::QualType(record_decl->getTypeForDecl(), 0));
                 }
             }
         }
         
-        return clang_type;
+        return compiler_type;
     }
     
     CompilerType
@@ -707,7 +707,7 @@ public:
     GetTypeName (lldb::opaque_compiler_type_t type) override;
     
     uint32_t
-    GetTypeInfo (lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_clang_type) override;
+    GetTypeInfo (lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_compiler_type) override;
     
     lldb::LanguageType
     GetMinimumLanguage (lldb::opaque_compiler_type_t type) override;
@@ -959,12 +959,12 @@ public:
     
     static bool
     SetObjCSuperClass (const CompilerType& type,
-                       const CompilerType &superclass_clang_type);
+                       const CompilerType &superclass_compiler_type);
     
     static bool
     AddObjCClassProperty (const CompilerType& type,
                           const char *property_name,
-                          const CompilerType &property_clang_type,
+                          const CompilerType &property_compiler_type,
                           clang::ObjCIvarDecl *ivar_decl,
                           const char *property_setter_name,
                           const char *property_getter_name,
@@ -974,7 +974,7 @@ public:
     static clang::ObjCMethodDecl *
     AddMethodToObjCObjectType (const CompilerType& type,
                                const char *name,  // the full symbol name as seen in the symbol table (lldb::opaque_compiler_type_t type, "-[NString stringWithCString:]")
-                               const CompilerType &method_clang_type,
+                               const CompilerType &method_compiler_type,
                                lldb::AccessType access,
                                bool is_artificial);
     

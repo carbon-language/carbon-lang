@@ -828,7 +828,7 @@ LoadValueFromConsecutiveGPRRegisters (ExecutionContext &exe_ctx,
 }
 
 ValueObjectSP
-ABISysV_arm64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_clang_type) const
+ABISysV_arm64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_compiler_type) const
 {
     ValueObjectSP return_valobj_sp;
     Value value;
@@ -837,16 +837,16 @@ ABISysV_arm64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_cl
     if (exe_ctx.GetTargetPtr() == NULL || exe_ctx.GetProcessPtr() == NULL)
         return return_valobj_sp;
 
-    //value.SetContext (Value::eContextTypeClangType, return_clang_type);
-    value.SetCompilerType(return_clang_type);
+    //value.SetContext (Value::eContextTypeClangType, return_compiler_type);
+    value.SetCompilerType(return_compiler_type);
     
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
         return return_valobj_sp;
     
-    const size_t byte_size = return_clang_type.GetByteSize(nullptr);
+    const size_t byte_size = return_compiler_type.GetByteSize(nullptr);
 
-    const uint32_t type_flags = return_clang_type.GetTypeInfo (NULL);
+    const uint32_t type_flags = return_compiler_type.GetTypeInfo (NULL);
     if (type_flags & eTypeIsScalar ||
         type_flags & eTypeIsPointer)
     {
@@ -895,7 +895,7 @@ ABISysV_arm64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_cl
                                                                     exe_ctx.GetProcessRef().GetAddressByteSize());
                                                 
                                                 return_valobj_sp = ValueObjectConstResult::Create (&thread,
-                                                                                                   return_clang_type,
+                                                                                                   return_compiler_type,
                                                                                                    ConstString(""),
                                                                                                    data);
                                                 return return_valobj_sp;
@@ -1012,7 +1012,7 @@ ABISysV_arm64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_cl
                                                 byte_order,
                                                 exe_ctx.GetProcessRef().GetAddressByteSize());
                             return_valobj_sp = ValueObjectConstResult::Create (&thread,
-                                                                               return_clang_type,
+                                                                               return_compiler_type,
                                                                                ConstString(""),
                                                                                data);
                         }
@@ -1029,10 +1029,10 @@ ABISysV_arm64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_cl
         uint32_t NGRN = 0;  // Search ABI docs for NGRN
         uint32_t NSRN = 0;  // Search ABI docs for NSRN
         const bool is_return_value = true;
-        if (LoadValueFromConsecutiveGPRRegisters (exe_ctx, reg_ctx, return_clang_type, is_return_value, NGRN, NSRN, data))
+        if (LoadValueFromConsecutiveGPRRegisters (exe_ctx, reg_ctx, return_compiler_type, is_return_value, NGRN, NSRN, data))
         {
             return_valobj_sp = ValueObjectConstResult::Create (&thread,
-                                                               return_clang_type,
+                                                               return_compiler_type,
                                                                ConstString(""),
                                                                data);            
         }

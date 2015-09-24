@@ -136,7 +136,7 @@ public:
     GetCompilerType();
     
     void
-    SetCompilerType (const CompilerType &clang_type);
+    SetCompilerType (const CompilerType &compiler_type);
 
     ValueType
     GetValueType() const;
@@ -288,7 +288,7 @@ public:
 protected:
     Scalar          m_value;
     Vector          m_vector;
-    CompilerType    m_clang_type;
+    CompilerType    m_compiler_type;
     void *          m_context;
     ValueType       m_value_type;
     ContextType     m_context_type;

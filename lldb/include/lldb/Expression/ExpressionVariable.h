@@ -95,9 +95,9 @@ public:
     }
     
     void
-    SetCompilerType(const CompilerType &clang_type)
+    SetCompilerType(const CompilerType &compiler_type)
     {
-        m_frozen_sp->GetValue().SetCompilerType(clang_type);
+        m_frozen_sp->GetValue().SetCompilerType(compiler_type);
     }
     
     void

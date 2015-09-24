@@ -97,9 +97,9 @@ ValueObjectCast::UpdateValue ()
         Value old_value(m_value);
         m_update_point.SetUpdated();
         m_value = m_parent->GetValue();
-        CompilerType clang_type (GetCompilerType());
-        //m_value.SetContext (Value::eContextTypeClangType, clang_type);
-        m_value.SetCompilerType (clang_type);
+        CompilerType compiler_type (GetCompilerType());
+        //m_value.SetContext (Value::eContextTypeClangType, compiler_type);
+        m_value.SetCompilerType (compiler_type);
         SetAddressTypeOfChildren(m_parent->GetAddressTypeOfChildren());
         if (!CanProvideValue())
         {

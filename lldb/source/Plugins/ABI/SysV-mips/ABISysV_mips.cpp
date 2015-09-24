@@ -282,8 +282,8 @@ ABISysV_mips::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObje
         return error;
     }
 
-    CompilerType clang_type = new_value_sp->GetCompilerType();
-    if (!clang_type)
+    CompilerType compiler_type = new_value_sp->GetCompilerType();
+    if (!compiler_type)
     {
         error.SetErrorString ("Null clang type for return value.");
         return error;
@@ -298,7 +298,7 @@ ABISysV_mips::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObje
     RegisterContext *reg_ctx = thread->GetRegisterContext().get();
 
     bool set_it_simple = false;
-    if (clang_type.IsIntegerType (is_signed) || clang_type.IsPointerType())
+    if (compiler_type.IsIntegerType (is_signed) || compiler_type.IsPointerType())
     {
         DataExtractor data;
         Error data_error;
@@ -339,7 +339,7 @@ ABISysV_mips::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObje
             error.SetErrorString("We don't support returning longer than 64 bit integer values at present.");
         }
     }
-    else if (clang_type.IsFloatingPointType (count, is_complex))
+    else if (compiler_type.IsFloatingPointType (count, is_complex))
     {
         if (is_complex)
             error.SetErrorString ("We don't support returning complex values at present");
@@ -355,26 +355,26 @@ ABISysV_mips::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObje
 
 
 ValueObjectSP
-ABISysV_mips::GetReturnValueObjectSimple (Thread &thread, CompilerType &return_clang_type) const
+ABISysV_mips::GetReturnValueObjectSimple (Thread &thread, CompilerType &return_compiler_type) const
 {
     ValueObjectSP return_valobj_sp;
     return return_valobj_sp;
 }
 
 ValueObjectSP
-ABISysV_mips::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_clang_type) const
+ABISysV_mips::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_compiler_type) const
 {
     ValueObjectSP return_valobj_sp;
     Value value;
 
-    if (!return_clang_type)
+    if (!return_compiler_type)
         return return_valobj_sp;
 
     ExecutionContext exe_ctx (thread.shared_from_this());
     if (exe_ctx.GetTargetPtr() == NULL || exe_ctx.GetProcessPtr() == NULL)
         return return_valobj_sp;
 
-    value.SetCompilerType(return_clang_type);
+    value.SetCompilerType(return_compiler_type);
 
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
@@ -386,9 +386,9 @@ ABISysV_mips::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_cla
 
     // In MIPS register "r2" (v0) holds the integer function return values
     const RegisterInfo *r2_reg_info = reg_ctx->GetRegisterInfoByName("r2", 0);
-    size_t bit_width = return_clang_type.GetBitSize(&thread);
+    size_t bit_width = return_compiler_type.GetBitSize(&thread);
     
-    if (return_clang_type.IsIntegerType (is_signed))
+    if (return_compiler_type.IsIntegerType (is_signed))
     {
         switch (bit_width)
         {
@@ -426,12 +426,12 @@ ABISysV_mips::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_cla
                 break;
         }
     }
-    else if (return_clang_type.IsPointerType ())
+    else if (return_compiler_type.IsPointerType ())
     {
         uint32_t ptr = thread.GetRegisterContext()->ReadRegisterAsUnsigned(r2_reg_info, 0) & UINT32_MAX;
         value.GetScalar() = ptr;
     }
-    else if (return_clang_type.IsAggregateType ())
+    else if (return_compiler_type.IsAggregateType ())
     {
         // Structure/Vector is always passed in memory and pointer to that memory is passed in r2. 
         uint64_t mem_address = reg_ctx->ReadRegisterAsUnsigned(reg_ctx->GetRegisterInfoByName("r2", 0), 0);
@@ -439,10 +439,10 @@ ABISysV_mips::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_cla
         return_valobj_sp = ValueObjectMemory::Create (&thread,
                                                       "",
                                                       Address (mem_address, NULL),
-                                                      return_clang_type);
+                                                      return_compiler_type);
         return return_valobj_sp;
     }
-    else if (return_clang_type.IsFloatingPointType (count, is_complex))
+    else if (return_compiler_type.IsFloatingPointType (count, is_complex))
     {
         const RegisterInfo *f0_info = reg_ctx->GetRegisterInfoByName("f0", 0);
         const RegisterInfo *f1_info = reg_ctx->GetRegisterInfoByName("f1", 0);
