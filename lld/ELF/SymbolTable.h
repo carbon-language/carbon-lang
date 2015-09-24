@@ -71,7 +71,7 @@ private:
   template <class ELFT> void init(uint16_t EMachine);
   template <class ELFT> void resolve(SymbolBody *Body);
   template <class ELFT>
-  void dupErorr(const SymbolBody &Old, const SymbolBody &New);
+  void dupError(const SymbolBody &Old, const SymbolBody &New);
 
   std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;
 
