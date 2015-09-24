@@ -300,7 +300,7 @@ getIndexExpressionsFromGEP(GetElementPtrInst *GEP, ScalarEvolution &SE) {
 
   bool DroppedFirstDim = false;
 
-  for (long i = 1; i < GEP->getNumOperands(); i++) {
+  for (unsigned i = 1; i < GEP->getNumOperands(); i++) {
 
     const SCEV *Expr = SE.getSCEV(GEP->getOperand(i));
 
