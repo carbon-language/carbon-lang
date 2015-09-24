@@ -865,7 +865,7 @@ void LiveInterval::constructMainRangeFromSubranges(
   // - If any of the subranges is live at a point the main liverange has to be
   //   live too, conversily if no subrange is live the main range mustn't be
   //   live either.
-  // We do this by scannig through all the subranges simultaneously creating new
+  // We do this by scanning through all the subranges simultaneously creating new
   // segments in the main range as segments start/ends come up in the subranges.
   assert(hasSubRanges() && "expected subranges to be present");
   assert(segments.empty() && valnos.empty() && "expected empty main range");
