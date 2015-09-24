@@ -187,6 +187,18 @@ endfunction()
 # Generates builtin libraries for all operating systems specified in ARGN. Each
 # OS library is constructed by lipo-ing together single-architecture libraries.
 macro(darwin_add_builtin_libraries)
+  if(CMAKE_CONFIGURATION_TYPES)
+    foreach(type ${CMAKE_CONFIGURATION_TYPES})
+      set(CMAKE_C_FLAGS_${type} -O3)
+      set(CMAKE_CXX_FLAGS_${type} -O3)
+    endforeach()
+  else()
+    set(CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE} -O3)
+  endif()
+
+  set(CMAKE_C_FLAGS "-fPIC -fvisibility=hidden -DVISIBILITY_HIDDEN -Wall -fomit-frame-pointer")
+  set(CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
+  set(CMAKE_ASM_FLAGS ${CMAKE_C_FLAGS})
   foreach (os ${ARGN})
     list_union(DARWIN_BUILTIN_ARCHS DARWIN_${os}_ARCHS BUILTIN_SUPPORTED_ARCH)
     foreach (arch ${DARWIN_BUILTIN_ARCHS})
@@ -195,7 +207,7 @@ macro(darwin_add_builtin_libraries)
                               OS ${os}
                               ARCH ${arch}
                               SOURCES ${${arch}_SOURCES}
-                              CFLAGS "-std=c99" -arch ${arch} -mkernel -Wno-pedantic
+                              CFLAGS -arch ${arch} -mkernel
                               DEFS KERNEL_USE
                               PARENT_TARGET builtins)
 
@@ -220,7 +232,7 @@ macro(darwin_add_builtin_libraries)
                               OS ${os}
                               ARCH ${arch}
                               SOURCES ${${arch}_SOURCES}
-                              CFLAGS "-std=c99" -arch ${arch}
+                              CFLAGS -arch ${arch}
                               PARENT_TARGET builtins)
     endforeach()
 
