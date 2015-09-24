@@ -7485,13 +7485,15 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
                                                   MVT::v16i8, PSHUFBMask)));
   }
 
-  // If we are extending from an (odd)offset, shuffle them by 1 element.
-  if (Offset & 1) {
+  // If we are extending from an offset, ensure we start on a boundary that
+  // we can unpack from.
+  int AlignToUnpack = Offset % (NumElements / Scale);
+  if (AlignToUnpack) {
     SmallVector<int, 8> ShMask((unsigned)NumElements, -1);
-    for (int i = 1; i < NumElements; ++i)
-      ShMask[i - 1] = i;
+    for (int i = AlignToUnpack; i < NumElements; ++i)
+      ShMask[i - AlignToUnpack] = i;
     InputV = DAG.getVectorShuffle(VT, DL, InputV, DAG.getUNDEF(VT), ShMask);
-    Offset--;
+    Offset -= AlignToUnpack;
   }
 
   // Otherwise emit a sequence of unpacks.
