@@ -110,21 +110,6 @@ else ()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
 endif ()
 
-# Define the FLAGS for the compilation of isl and imath
-#
-# Those are the only C files we have in the repository. Hence, we can just use
-# the CFLAGS to identify them.
-#
-# We first set the visibility of all isl functions to hidden to ensure we do
-# not clash with other isl versions that got linked into a program that uses
-# Polly. (This happens e.g when linking Polly with dragonegg)
-#
-# We also disable all warnings, as these should be fixed upstream. There is
-# no value in reporting them here.
-if (NOT MSVC)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -w")
-endif ()
-
 # Add path for custom modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${POLLY_SOURCE_DIR}/cmake")
 
@@ -148,10 +133,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/JSON/include
   ${CMAKE_CURRENT_BINARY_DIR}/lib/External/isl/include
-  ${CMAKE_CURRENT_BINARY_DIR}/lib/External/isl
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/External/isl/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/External/isl/imath
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/External/isl
   ${CMAKE_CURRENT_BINARY_DIR}/include
   )
 
