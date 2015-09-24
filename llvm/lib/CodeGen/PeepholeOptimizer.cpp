@@ -577,36 +577,6 @@ bool PeepholeOptimizer::optimizeCondBranch(MachineInstr *MI) {
   return TII->optimizeCondBranch(MI);
 }
 
-/// \brief Check if the registers defined by the pair (RegisterClass, SubReg)
-/// share the same register file.
-static bool shareSameRegisterFile(const TargetRegisterInfo &TRI,
-                                  const TargetRegisterClass *DefRC,
-                                  unsigned DefSubReg,
-                                  const TargetRegisterClass *SrcRC,
-                                  unsigned SrcSubReg) {
-  // Same register class.
-  if (DefRC == SrcRC)
-    return true;
-
-  // Both operands are sub registers. Check if they share a register class.
-  unsigned SrcIdx, DefIdx;
-  if (SrcSubReg && DefSubReg)
-    return TRI.getCommonSuperRegClass(SrcRC, SrcSubReg, DefRC, DefSubReg,
-                                      SrcIdx, DefIdx) != nullptr;
-  // At most one of the register is a sub register, make it Src to avoid
-  // duplicating the test.
-  if (!SrcSubReg) {
-    std::swap(DefSubReg, SrcSubReg);
-    std::swap(DefRC, SrcRC);
-  }
-
-  // One of the register is a sub register, check if we can get a superclass.
-  if (SrcSubReg)
-    return TRI.getMatchingSuperRegClass(SrcRC, DefRC, SrcSubReg) != nullptr;
-  // Plain copy.
-  return TRI.getCommonSubClass(DefRC, SrcRC) != nullptr;
-}
-
 /// \brief Try to find the next source that share the same register file
 /// for the value defined by \p Reg and \p SubReg.
 /// When true is returned, the \p RewriteMap can be used by the client to
@@ -687,10 +657,8 @@ bool PeepholeOptimizer::findNextSource(unsigned Reg, unsigned SubReg,
         return false;
 
       const TargetRegisterClass *SrcRC = MRI->getRegClass(CurSrcPair.Reg);
-
-      // If this source does not incur a cross register bank copy, use it.
-      ShouldRewrite = shareSameRegisterFile(*TRI, DefRC, SubReg, SrcRC,
-                                           CurSrcPair.SubReg);
+      ShouldRewrite = TRI->shouldRewriteCopySrc(DefRC, SubReg, SrcRC,
+                                                CurSrcPair.SubReg);
     } while (!ShouldRewrite);
 
     // Continue looking for new sources...

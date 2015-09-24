@@ -20,11 +20,11 @@ define <8 x i8> @vuzpi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <16 x i8> @vuzpi8_Qres(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ; CHECK-LABEL: vuzpi8_Qres:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    vldr d17, [r1]
-; CHECK-NEXT:    vldr d16, [r0]
-; CHECK-NEXT:    vuzp.8 d16, d17
-; CHECK-NEXT:    vmov r0, r1, d16
-; CHECK-NEXT:    vmov r2, r3, d17
+; CHECK-NEXT:    vldr [[LDR1:d[0-9]+]], [r1]
+; CHECK-NEXT:    vldr [[LDR0:d[0-9]+]], [r0]
+; CHECK-NEXT:    vuzp.8 [[LDR0]], [[LDR1]]
+; CHECK-NEXT:    vmov r0, r1, [[LDR0]]
+; CHECK-NEXT:    vmov r2, r3, [[LDR1]]
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <8 x i8>, <8 x i8>* %A
 	%tmp2 = load <8 x i8>, <8 x i8>* %B
@@ -52,11 +52,11 @@ define <4 x i16> @vuzpi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <8 x i16> @vuzpi16_Qres(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ; CHECK-LABEL: vuzpi16_Qres:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    vldr d17, [r1]
-; CHECK-NEXT:    vldr d16, [r0]
-; CHECK-NEXT:    vuzp.16 d16, d17
-; CHECK-NEXT:    vmov r0, r1, d16
-; CHECK-NEXT:    vmov r2, r3, d17
+; CHECK-NEXT:    vldr [[LDR1:d[0-9]+]], [r1]
+; CHECK-NEXT:    vldr [[LDR0:d[0-9]+]], [r0]
+; CHECK-NEXT:    vuzp.16 [[LDR0]], [[LDR1]]
+; CHECK-NEXT:    vmov r0, r1, [[LDR0]]
+; CHECK-NEXT:    vmov r2, r3, [[LDR1]]
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <4 x i16>, <4 x i16>* %A
 	%tmp2 = load <4 x i16>, <4 x i16>* %B
@@ -220,11 +220,11 @@ define <8 x i8> @vuzpi8_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <16 x i8> @vuzpi8_undef_Qres(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ; CHECK-LABEL: vuzpi8_undef_Qres:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    vldr d17, [r1]
-; CHECK-NEXT:    vldr d16, [r0]
-; CHECK-NEXT:    vuzp.8 d16, d17
-; CHECK-NEXT:    vmov r0, r1, d16
-; CHECK-NEXT:    vmov r2, r3, d17
+; CHECK-NEXT:    vldr [[LDR1:d[0-9]+]], [r1]
+; CHECK-NEXT:    vldr [[LDR0:d[0-9]+]], [r0]
+; CHECK-NEXT:    vuzp.8 [[LDR0]], [[LDR1]]
+; CHECK-NEXT:    vmov r0, r1, [[LDR0]]
+; CHECK-NEXT:    vmov r2, r3, [[LDR1]]
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <8 x i8>, <8 x i8>* %A
 	%tmp2 = load <8 x i8>, <8 x i8>* %B

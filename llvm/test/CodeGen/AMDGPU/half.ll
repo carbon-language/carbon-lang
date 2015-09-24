@@ -391,13 +391,12 @@ define void @global_truncstore_v2f32_to_v2f16(<2 x half> addrspace(1)* %out, <2 
   ret void
 }
 
-; FIXME: Shouldn't do 4th conversion
 ; GCN-LABEL: {{^}}global_truncstore_v3f32_to_v3f16:
 ; GCN: buffer_load_dwordx4
 ; GCN: v_cvt_f16_f32_e32
 ; GCN: v_cvt_f16_f32_e32
 ; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
+; GCN-NOT: v_cvt_f16_f32_e32
 ; GCN: buffer_store_short
 ; GCN: buffer_store_dword
 ; GCN: s_endpgm
@@ -476,38 +475,38 @@ define void @global_truncstore_v8f32_to_v8f16(<8 x half> addrspace(1)* %out, <8 
 ; GCN: buffer_load_dword
 ; GCN: buffer_load_dword
 ; GCN: buffer_load_dword
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: v_cvt_f16_f32_e32
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
-; GCN: buffer_store_short
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: v_cvt_f16_f32_e32
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
+; GCN-DAG: buffer_store_short
 ; GCN: s_endpgm
 define void @global_truncstore_v16f32_to_v16f16(<16 x half> addrspace(1)* %out, <16 x float> addrspace(1)* %in) #0 {
   %val = load <16 x float>, <16 x float> addrspace(1)* %in

@@ -147,11 +147,24 @@ endif:
   ret void
 }
 
-; FIXME: and 0 should be replaced witht copy
 ; FUNC-LABEL: {{^}}v_and_constant_i64:
+; SI-DAG: s_mov_b32 [[KLO:s[0-9]+]], 0xab19b207
+; SI-DAG: s_movk_i32 [[KHI:s[0-9]+]], 0x11e{{$}}
+; SI-DAG: v_and_b32_e32 {{v[0-9]+}}, [[KLO]], {{v[0-9]+}}
+; SI-DAG: v_and_b32_e32 {{v[0-9]+}}, [[KHI]], {{v[0-9]+}}
+; SI: buffer_store_dwordx2
+define void @v_and_constant_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr) {
+  %a = load i64, i64 addrspace(1)* %aptr, align 8
+  %and = and i64 %a, 1231231234567
+  store i64 %and, i64 addrspace(1)* %out, align 8
+  ret void
+}
+
+; FIXME: Should replace and 0
+; FUNC-LABEL: {{^}}v_and_i64_32_bit_constant:
 ; SI: v_and_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
 ; SI: v_and_b32_e32 {{v[0-9]+}}, 0, {{v[0-9]+}}
-define void @v_and_constant_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr) {
+define void @v_and_i64_32_bit_constant(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr) {
   %a = load i64, i64 addrspace(1)* %aptr, align 8
   %and = and i64 %a, 1234567
   store i64 %and, i64 addrspace(1)* %out, align 8

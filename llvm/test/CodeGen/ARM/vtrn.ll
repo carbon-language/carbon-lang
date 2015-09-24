@@ -20,11 +20,11 @@ define <8 x i8> @vtrni8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <16 x i8> @vtrni8_Qres(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ; CHECK-LABEL: vtrni8_Qres:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    vldr d17, [r1]
-; CHECK-NEXT:    vldr d16, [r0]
-; CHECK-NEXT:    vtrn.8 d16, d17
-; CHECK-NEXT:    vmov r0, r1, d16
-; CHECK-NEXT:    vmov r2, r3, d17
+; CHECK-NEXT:    vldr [[LDR1:d[0-9]+]], [r1]
+; CHECK-NEXT:    vldr [[LDR0:d[0-9]+]], [r0]
+; CHECK-NEXT:    vtrn.8 [[LDR0]], [[LDR1]]
+; CHECK-NEXT:    vmov r0, r1, [[LDR0]]
+; CHECK-NEXT:    vmov r2, r3, [[LDR1]]
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <8 x i8>, <8 x i8>* %A
 	%tmp2 = load <8 x i8>, <8 x i8>* %B
@@ -52,11 +52,11 @@ define <4 x i16> @vtrni16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <8 x i16> @vtrni16_Qres(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ; CHECK-LABEL: vtrni16_Qres:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    vldr d17, [r1]
-; CHECK-NEXT:    vldr d16, [r0]
-; CHECK-NEXT:    vtrn.16 d16, d17
-; CHECK-NEXT:    vmov r0, r1, d16
-; CHECK-NEXT:    vmov r2, r3, d17
+; CHECK-NEXT:    vldr [[LDR1:d[0-9]+]], [r1]
+; CHECK-NEXT:    vldr [[LDR0:d[0-9]+]], [r0]
+; CHECK-NEXT:    vtrn.16 [[LDR0]], [[LDR1]]
+; CHECK-NEXT:    vmov r0, r1, [[LDR0]]
+; CHECK-NEXT:    vmov r2, r3, [[LDR1]]
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <4 x i16>, <4 x i16>* %A
 	%tmp2 = load <4 x i16>, <4 x i16>* %B
@@ -84,11 +84,11 @@ define <2 x i32> @vtrni32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <4 x i32> @vtrni32_Qres(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ; CHECK-LABEL: vtrni32_Qres:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    vldr d17, [r1]
-; CHECK-NEXT:    vldr d16, [r0]
-; CHECK-NEXT:    vtrn.32 d16, d17
-; CHECK-NEXT:    vmov r0, r1, d16
-; CHECK-NEXT:    vmov r2, r3, d17
+; CHECK-NEXT:    vldr [[LDR1:d[0-9]+]], [r1]
+; CHECK-NEXT:    vldr [[LDR0:d[0-9]+]], [r0]
+; CHECK-NEXT:    vtrn.32 [[LDR0]], [[LDR1]]
+; CHECK-NEXT:    vmov r0, r1, [[LDR0]]
+; CHECK-NEXT:    vmov r2, r3, [[LDR1]]
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <2 x i32>, <2 x i32>* %A
 	%tmp2 = load <2 x i32>, <2 x i32>* %B
@@ -116,11 +116,11 @@ define <2 x float> @vtrnf(<2 x float>* %A, <2 x float>* %B) nounwind {
 define <4 x float> @vtrnf_Qres(<2 x float>* %A, <2 x float>* %B) nounwind {
 ; CHECK-LABEL: vtrnf_Qres:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    vldr d17, [r1]
-; CHECK-NEXT:    vldr d16, [r0]
-; CHECK-NEXT:    vtrn.32 d16, d17
-; CHECK-NEXT:    vmov r0, r1, d16
-; CHECK-NEXT:    vmov r2, r3, d17
+; CHECK-NEXT:    vldr [[LDR1:d[0-9]+]], [r1]
+; CHECK-NEXT:    vldr [[LDR0:d[0-9]+]], [r0]
+; CHECK-NEXT:    vtrn.32 [[LDR0]], [[LDR1]]
+; CHECK-NEXT:    vmov r0, r1, [[LDR0]]
+; CHECK-NEXT:    vmov r2, r3, [[LDR1]]
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <2 x float>, <2 x float>* %A
 	%tmp2 = load <2 x float>, <2 x float>* %B
@@ -281,11 +281,11 @@ define <8 x i8> @vtrni8_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <16 x i8> @vtrni8_undef_Qres(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ; CHECK-LABEL: vtrni8_undef_Qres:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    vldr d17, [r1]
-; CHECK-NEXT:    vldr d16, [r0]
-; CHECK-NEXT:    vtrn.8 d16, d17
-; CHECK-NEXT:    vmov r0, r1, d16
-; CHECK-NEXT:    vmov r2, r3, d17
+; CHECK-NEXT:    vldr [[LDR1:d[0-9]+]], [r1]
+; CHECK-NEXT:    vldr [[LDR0:d[0-9]+]], [r0]
+; CHECK-NEXT:    vtrn.8 [[LDR0]], [[LDR1]]
+; CHECK-NEXT:    vmov r0, r1, [[LDR0]]
+; CHECK-NEXT:    vmov r2, r3, [[LDR1]]
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <8 x i8>, <8 x i8>* %A
 	%tmp2 = load <8 x i8>, <8 x i8>* %B

@@ -502,6 +502,15 @@ public:
   getMatchingSuperRegClass(const TargetRegisterClass *A,
                            const TargetRegisterClass *B, unsigned Idx) const;
 
+  // For a copy-like instruction that defines a register of class DefRC with
+  // subreg index DefSubReg, reading from another source with class SrcRC and
+  // subregister SrcSubReg return true if this is a preferrable copy
+  // instruction or an earlier use should be used.
+  virtual bool shouldRewriteCopySrc(const TargetRegisterClass *DefRC,
+                                    unsigned DefSubReg,
+                                    const TargetRegisterClass *SrcRC,
+                                    unsigned SrcSubReg) const;
+
   /// getSubClassWithSubReg - Returns the largest legal sub-class of RC that
   /// supports the sub-register index Idx.
   /// If no such sub-class exists, return NULL.
