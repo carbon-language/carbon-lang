@@ -201,19 +201,19 @@ public:
                              PragmaMessageKind Kind, StringRef Str) {
   }
 
-  /// \brief Callback invoked when a \#pragma gcc dianostic push directive
+  /// \brief Callback invoked when a \#pragma gcc diagnostic push directive
   /// is read.
   virtual void PragmaDiagnosticPush(SourceLocation Loc,
                                     StringRef Namespace) {
   }
 
-  /// \brief Callback invoked when a \#pragma gcc dianostic pop directive
+  /// \brief Callback invoked when a \#pragma gcc diagnostic pop directive
   /// is read.
   virtual void PragmaDiagnosticPop(SourceLocation Loc,
                                    StringRef Namespace) {
   }
 
-  /// \brief Callback invoked when a \#pragma gcc dianostic directive is read.
+  /// \brief Callback invoked when a \#pragma gcc diagnostic directive is read.
   virtual void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
                                 diag::Severity mapping, StringRef Str) {}
 
