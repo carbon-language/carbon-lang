@@ -46,7 +46,7 @@ class RegionOffset {
   /// The base region.
   const MemRegion *R;
 
-  /// The bit offset within the base region. It shouldn't be negative.
+  /// The bit offset within the base region. Can be negative.
   int64_t Offset;
 
 public:
@@ -1333,7 +1333,9 @@ public:
     /// Tells that a region's contents is not changed.
     TK_PreserveContents = 0x1,
     /// Suppress pointer-escaping of a region.
-    TK_SuppressEscape = 0x2
+    TK_SuppressEscape = 0x2,
+    // Do not invalidate super region.
+    TK_DoNotInvalidateSuperRegion = 0x4
 
     // Do not forget to extend StorageTypeForKinds if number of traits exceed 
     // the number of bits StorageTypeForKinds can store.
