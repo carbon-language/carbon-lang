@@ -102,6 +102,9 @@ void Module::getMDKindNames(SmallVectorImpl<StringRef> &Result) const {
   return Context.getMDKindNames(Result);
 }
 
+void Module::getOperandBundleTags(SmallVectorImpl<StringRef> &Result) const {
+  return Context.getOperandBundleTags(Result);
+}
 
 //===----------------------------------------------------------------------===//
 // Methods for easy access to the functions in the module.

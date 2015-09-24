@@ -282,3 +282,11 @@ void LLVMContext::getMDKindNames(SmallVectorImpl<StringRef> &Names) const {
        E = pImpl->CustomMDKindNames.end(); I != E; ++I)
     Names[I->second] = I->first();
 }
+
+void LLVMContext::getOperandBundleTags(SmallVectorImpl<StringRef> &Tags) const {
+  pImpl->getOperandBundleTags(Tags);
+}
+
+uint32_t LLVMContext::getOperandBundleTagID(StringRef Tag) const {
+  return pImpl->getOperandBundleTagID(Tag);
+}

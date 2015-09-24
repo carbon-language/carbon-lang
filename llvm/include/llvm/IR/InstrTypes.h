@@ -1096,6 +1096,231 @@ struct OperandTraits<CmpInst> : public FixedNumOperandTraits<CmpInst, 2> {
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CmpInst, Value)
 
+/// \brief A lightweight accessor for an operand bundle meant to be passed
+/// around by value.
+struct OperandBundleUse {
+  StringRef Tag;
+  ArrayRef<Use> Inputs;
+
+  OperandBundleUse() {}
+  explicit OperandBundleUse(StringRef Tag, ArrayRef<Use> Inputs)
+      : Tag(Tag), Inputs(Inputs) {}
+};
+
+/// \brief A container for an operand bundle being viewed as a set of values
+/// rather than a set of uses.
+///
+/// Unlike OperandBundleUse, OperandBundleDefT owns the memory it carries, and
+/// so it is possible to create and pass around "self-contained" instances of
+/// OperandBundleDef and ConstOperandBundleDef.
+template <typename InputTy> struct OperandBundleDefT {
+  std::string Tag;
+  std::vector<InputTy> Inputs;
+
+  OperandBundleDefT() {}
+  explicit OperandBundleDefT(StringRef Tag, const std::vector<InputTy> &Inputs)
+      : Tag(Tag), Inputs(Inputs) {}
+};
+
+typedef OperandBundleDefT<Value *> OperandBundleDef;
+typedef OperandBundleDefT<const Value *> ConstOperandBundleDef;
+
+/// \brief A mixin to add operand bundle functionality to llvm instruction
+/// classes.
+///
+/// OperandBundleUser uses the descriptor area co-allocated with the host User
+/// to store some meta information about which operands are "normal" operands,
+/// and which ones belong to some operand bundle.
+///
+/// The layout of an operand bundle user is
+///
+///              +-------uint32_t End---------------------------------+
+///             /                                                      \
+///            /  +------uint32_t Begin------------------+              \
+///           /  /                                        \              \
+///          ^  ^                                          v              v
+///  |------|------|----|----|----|----|----|---------|----|---------|----|-----
+///  | BOI0 | BOI1 | .. | DU | U0 | U1 | .. | BOI0_U0 | .. | BOI1_U0 | .. | Un
+///  |------|------|----|----|----|----|----|---------|----|---------|----|-----
+///   v  v                                  ^              ^
+///    \  \                                /              /
+///     \  +------uint32_t Begin----------+              /
+///      \                                              /
+///       +-------uint32_t End-------------------------+
+///
+///
+/// BOI0, BOI1 ... are descriptions of operand bundles in this User's use list.
+/// These descriptions are installed and managed by this class, and they're all
+/// instances of OperandBundleUser<T>::BundleOpInfo.
+///
+/// DU is an additional descriptor installed by User's 'operator new' to keep
+/// track of the 'BOI0 ... BOIN' co-allocation.  OperandBundleUser does not
+/// access or modify DU in any way, it's an implementation detail private to
+/// User.
+///
+/// The regular Use& vector for the User starts at U0.  The operand bundle uses
+/// are part of the Use& vector, just like normal uses.  In the diagram above,
+/// the operand bundle uses start at BOI0_U0.  Each instance of BundleOpInfo has
+/// information about a contiguous set of uses constituting an operand bundle,
+/// and the total set of operand bundle uses themselves form a contiguous set of
+/// uses (i.e. there are no gaps between uses corresponding to individual
+/// operand bundles).
+///
+/// This class does not know the location of the set of operand bundle uses
+/// within the use list -- that is decided by the User using this class via the
+/// BeginIdx argument in populateBundleOperandInfos.
+///
+/// Currently operand bundle users with hung-off operands are not supported.
+template <typename InstrTy, typename OpIteratorTy> class OperandBundleUser {
+public:
+  /// \brief Return the number of operand bundles associated with this User.
+  unsigned getNumOperandBundles() const {
+    return std::distance(bundle_op_info_begin(), bundle_op_info_end());
+  }
+
+  /// \brief Return true if this User has any operand bundles.
+  bool hasOperandBundles() const { return getNumOperandBundles() != 0; }
+
+  /// \brief Return the total number operands (not operand bundles) used by
+  /// every operand bundle in this OperandBundleUser.
+  unsigned getNumTotalBundleOperands() const {
+    if (!hasOperandBundles())
+      return 0;
+
+    auto *Begin = bundle_op_info_begin();
+    auto *Back = bundle_op_info_end() - 1;
+
+    assert(Begin <= Back && "hasOperandBundles() returned true!");
+
+    return Back->End - Begin->Begin;
+  }
+
+  /// \brief Return the operand bundle at a specific index.
+  OperandBundleUse getOperandBundle(unsigned Index) const {
+    assert(Index < getNumOperandBundles() && "Index out of bounds!");
+    auto *BOI = bundle_op_info_begin() + Index;
+    auto op_begin = static_cast<const InstrTy *>(this)->op_begin();
+    ArrayRef<Use> Inputs(op_begin + BOI->Begin, op_begin + BOI->End);
+    return OperandBundleUse(BOI->Tag->getKey(), Inputs);
+  }
+
+  /// \brief Return the operand bundle at a specific index.
+  OperandBundleUse getOperandBundle(unsigned Index) {
+    assert(Index < getNumOperandBundles() && "Index out of bounds!");
+    auto *BOI = bundle_op_info_begin() + Index;
+    auto op_begin = static_cast<InstrTy *>(this)->op_begin();
+    ArrayRef<Use> Inputs(op_begin + BOI->Begin, op_begin + BOI->End);
+    return OperandBundleUse(BOI->Tag->getKey(), Inputs);
+  }
+
+protected:
+  /// \brief Used to keep track of an operand bundle.  See the main comment on
+  /// OperandBundleUser above.
+  struct BundleOpInfo {
+    /// \brief The operand bundle tag, interned by
+    /// LLVMContextImpl::getOrInsertBundleTag.
+    StringMapEntry<uint32_t> *Tag;
+
+    /// \brief The index in the Use& vector where operands for this operand
+    /// bundle starts.
+    uint32_t Begin;
+
+    /// \brief The index in the Use& vector where operands for this operand
+    /// bundle ends.
+    uint32_t End;
+  };
+
+  typedef BundleOpInfo *bundle_op_iterator;
+  typedef const BundleOpInfo *const_bundle_op_iterator;
+
+  /// \brief Return the start of the list of BundleOpInfo instances associated
+  /// with this OperandBundleUser.
+  bundle_op_iterator bundle_op_info_begin() {
+    if (!static_cast<InstrTy *>(this)->hasDescriptor())
+      return nullptr;
+
+    uint8_t *BytesBegin = static_cast<InstrTy *>(this)->getDescriptor().begin();
+    return reinterpret_cast<bundle_op_iterator>(BytesBegin);
+  }
+
+  /// \brief Return the start of the list of BundleOpInfo instances associated
+  /// with this OperandBundleUser.
+  const_bundle_op_iterator bundle_op_info_begin() const {
+    auto *NonConstThis =
+        const_cast<OperandBundleUser<InstrTy, OpIteratorTy> *>(this);
+    return NonConstThis->bundle_op_info_begin();
+  }
+
+  /// \brief Return the end of the list of BundleOpInfo instances associated
+  /// with this OperandBundleUser.
+  bundle_op_iterator bundle_op_info_end() {
+    if (!static_cast<InstrTy *>(this)->hasDescriptor())
+      return nullptr;
+
+    uint8_t *BytesEnd = static_cast<InstrTy *>(this)->getDescriptor().end();
+    return reinterpret_cast<bundle_op_iterator>(BytesEnd);
+  }
+
+  /// \brief Return the end of the list of BundleOpInfo instances associated
+  /// with this OperandBundleUser.
+  const_bundle_op_iterator bundle_op_info_end() const {
+    auto *NonConstThis =
+        const_cast<OperandBundleUser<InstrTy, OpIteratorTy> *>(this);
+    return NonConstThis->bundle_op_info_end();
+  }
+
+  /// \brief Return the range [\p bundle_op_info_begin, \p bundle_op_info_end).
+  iterator_range<bundle_op_iterator> bundle_op_infos() {
+    return iterator_range<bundle_op_iterator>(bundle_op_info_begin(),
+                                              bundle_op_info_end());
+  }
+
+  /// \brief Return the range [\p bundle_op_info_begin, \p bundle_op_info_end).
+  iterator_range<const_bundle_op_iterator> bundle_op_infos() const {
+    return iterator_range<const_bundle_op_iterator>(bundle_op_info_begin(),
+                                                    bundle_op_info_end());
+  }
+
+  /// \brief Populate the BundleOpInfo instances and the Use& vector from \p
+  /// Bundles.  Return the op_iterator pointing to the Use& one past the last
+  /// last bundle operand use.
+  ///
+  /// Each \p OperandBundleDef instance is tracked by a OperandBundleInfo
+  /// instance allocated in this User's descriptor.
+  OpIteratorTy populateBundleOperandInfos(ArrayRef<OperandBundleDef> Bundles,
+                                          const unsigned BeginIndex) {
+    auto It = static_cast<InstrTy *>(this)->op_begin() + BeginIndex;
+    for (auto &B : Bundles)
+      It = std::copy(B.Inputs.begin(), B.Inputs.end(), It);
+
+    auto *ContextImpl = static_cast<InstrTy *>(this)->getContext().pImpl;
+    auto BI = Bundles.begin();
+    unsigned CurrentIndex = BeginIndex;
+
+    for (auto &BOI : bundle_op_infos()) {
+      assert(BI != Bundles.end() && "Incorrect allocation?");
+
+      BOI.Tag = ContextImpl->getOrInsertBundleTag(BI->Tag);
+      BOI.Begin = CurrentIndex;
+      BOI.End = CurrentIndex + BI->Inputs.size();
+      CurrentIndex = BOI.End;
+      BI++;
+    }
+
+    assert(BI == Bundles.end() && "Incorrect allocation?");
+
+    return It;
+  }
+
+  /// \brief Return the total number of values used in \p Bundles.
+  static unsigned CountBundleInputs(ArrayRef<OperandBundleDef> Bundles) {
+    unsigned Total = 0;
+    for (auto &B : Bundles)
+      Total += B.Inputs.size();
+    return Total;
+  }
+};
+
 } // End llvm namespace
 
 #endif

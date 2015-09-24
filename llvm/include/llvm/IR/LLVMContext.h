@@ -74,6 +74,15 @@ public:
   /// custom metadata IDs registered in this LLVMContext.
   void getMDKindNames(SmallVectorImpl<StringRef> &Result) const;
 
+  /// getOperandBundleTags - Populate client supplied SmallVector with the
+  /// bundle tags registered in this LLVMContext.  The bundle tags are ordered
+  /// by increasing bundle IDs.
+  /// \see LLVMContext::getOperandBundleTagID
+  void getOperandBundleTags(SmallVectorImpl<StringRef> &Result) const;
+
+  /// getOperandBundleTagID - Maps a bundle tag to an integer ID.  Every bundle
+  /// tag registered with an LLVMContext has an unique ID.
+  uint32_t getOperandBundleTagID(StringRef Tag) const;
 
   typedef void (*InlineAsmDiagHandlerTy)(const SMDiagnostic&, void *Context,
                                          unsigned LocCookie);

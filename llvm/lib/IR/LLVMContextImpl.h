@@ -986,6 +986,16 @@ public:
   int getOrAddScopeRecordIdxEntry(MDNode *N, int ExistingIdx);
   int getOrAddScopeInlinedAtIdxEntry(MDNode *Scope, MDNode *IA,int ExistingIdx);
 
+  /// \brief A set of interned tags for operand bundles.  The StringMap maps
+  /// bundle tags to their IDs.
+  ///
+  /// \see LLVMContext::getOperandBundleTagID
+  StringMap<uint32_t> BundleTagCache;
+
+  StringMapEntry<uint32_t> *getOrInsertBundleTag(StringRef Tag);
+  void getOperandBundleTags(SmallVectorImpl<StringRef> &Tags) const;
+  uint32_t getOperandBundleTagID(StringRef Tag) const;
+
   LLVMContextImpl(LLVMContext &C);
   ~LLVMContextImpl();
 

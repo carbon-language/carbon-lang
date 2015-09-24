@@ -1354,37 +1354,49 @@ public:
 /// field to indicate whether or not this is a tail call.  The rest of the bits
 /// hold the calling convention of the call.
 ///
-class CallInst : public Instruction {
+class CallInst : public Instruction,
+                 public OperandBundleUser<CallInst, User::op_iterator> {
   AttributeSet AttributeList; ///< parameter attributes for call
   FunctionType *FTy;
   CallInst(const CallInst &CI);
-  void init(Value *Func, ArrayRef<Value *> Args, const Twine &NameStr) {
+  void init(Value *Func, ArrayRef<Value *> Args,
+            ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr) {
     init(cast<FunctionType>(
              cast<PointerType>(Func->getType())->getElementType()),
-         Func, Args, NameStr);
+         Func, Args, Bundles, NameStr);
   }
   void init(FunctionType *FTy, Value *Func, ArrayRef<Value *> Args,
-            const Twine &NameStr);
+            ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr);
   void init(Value *Func, const Twine &NameStr);
 
   /// Construct a CallInst given a range of arguments.
   /// \brief Construct a CallInst from a range of arguments
   inline CallInst(FunctionType *Ty, Value *Func, ArrayRef<Value *> Args,
-                  const Twine &NameStr, Instruction *InsertBefore);
-  inline CallInst(Value *Func, ArrayRef<Value *> Args, const Twine &NameStr,
+                  ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr,
+                  Instruction *InsertBefore);
+  inline CallInst(Value *Func, ArrayRef<Value *> Args,
+                  ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr,
                   Instruction *InsertBefore)
       : CallInst(cast<FunctionType>(
                      cast<PointerType>(Func->getType())->getElementType()),
-                 Func, Args, NameStr, InsertBefore) {}
+                 Func, Args, Bundles, NameStr, InsertBefore) {}
+
+  inline CallInst(Value *Func, ArrayRef<Value *> Args, const Twine &NameStr,
+                  Instruction *InsertBefore)
+      : CallInst(Func, Args, None, NameStr, InsertBefore) {}
 
   /// Construct a CallInst given a range of arguments.
   /// \brief Construct a CallInst from a range of arguments
   inline CallInst(Value *Func, ArrayRef<Value *> Args,
-                  const Twine &NameStr, BasicBlock *InsertAtEnd);
+                  ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr,
+                  BasicBlock *InsertAtEnd);
 
   explicit CallInst(Value *F, const Twine &NameStr,
                     Instruction *InsertBefore);
   CallInst(Value *F, const Twine &NameStr, BasicBlock *InsertAtEnd);
+
+  friend class OperandBundleUser<CallInst, User::op_iterator>;
+  bool hasDescriptor() const { return HasDescriptor; }
 
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
@@ -1392,25 +1404,52 @@ protected:
   CallInst *cloneImpl() const;
 
 public:
-  static CallInst *Create(Value *Func,
-                          ArrayRef<Value *> Args,
+  static CallInst *Create(Value *Func, ArrayRef<Value *> Args,
+                          ArrayRef<OperandBundleDef> Bundles = None,
                           const Twine &NameStr = "",
                           Instruction *InsertBefore = nullptr) {
     return Create(cast<FunctionType>(
                       cast<PointerType>(Func->getType())->getElementType()),
-                  Func, Args, NameStr, InsertBefore);
+                  Func, Args, Bundles, NameStr, InsertBefore);
+  }
+  static CallInst *Create(Value *Func, ArrayRef<Value *> Args,
+                          const Twine &NameStr,
+                          Instruction *InsertBefore = nullptr) {
+    return Create(cast<FunctionType>(
+                      cast<PointerType>(Func->getType())->getElementType()),
+                  Func, Args, None, NameStr, InsertBefore);
   }
   static CallInst *Create(FunctionType *Ty, Value *Func, ArrayRef<Value *> Args,
-                          const Twine &NameStr = "",
+                          const Twine &NameStr,
                           Instruction *InsertBefore = nullptr) {
     return new (unsigned(Args.size() + 1))
-        CallInst(Ty, Func, Args, NameStr, InsertBefore);
+        CallInst(Ty, Func, Args, None, NameStr, InsertBefore);
   }
-  static CallInst *Create(Value *Func,
-                          ArrayRef<Value *> Args,
+  static CallInst *Create(FunctionType *Ty, Value *Func, ArrayRef<Value *> Args,
+                          ArrayRef<OperandBundleDef> Bundles = None,
+                          const Twine &NameStr = "",
+                          Instruction *InsertBefore = nullptr) {
+    const unsigned TotalOps =
+        unsigned(Args.size()) + CountBundleInputs(Bundles) + 1;
+    const unsigned DescriptorBytes = Bundles.size() * sizeof(BundleOpInfo);
+
+    return new (TotalOps, DescriptorBytes)
+        CallInst(Ty, Func, Args, Bundles, NameStr, InsertBefore);
+  }
+  static CallInst *Create(Value *Func, ArrayRef<Value *> Args,
+                          ArrayRef<OperandBundleDef> Bundles,
                           const Twine &NameStr, BasicBlock *InsertAtEnd) {
-    return new(unsigned(Args.size() + 1))
-      CallInst(Func, Args, NameStr, InsertAtEnd);
+    const unsigned TotalOps =
+        unsigned(Args.size()) + CountBundleInputs(Bundles) + 1;
+    const unsigned DescriptorBytes = Bundles.size() * sizeof(BundleOpInfo);
+
+    return new (TotalOps, DescriptorBytes)
+        CallInst(Func, Args, Bundles, NameStr, InsertAtEnd);
+  }
+  static CallInst *Create(Value *Func, ArrayRef<Value *> Args,
+                          const Twine &NameStr, BasicBlock *InsertAtEnd) {
+    return new (unsigned(Args.size() + 1))
+        CallInst(Func, Args, None, NameStr, InsertAtEnd);
   }
   static CallInst *Create(Value *F, const Twine &NameStr = "",
                           Instruction *InsertBefore = nullptr) {
@@ -1474,7 +1513,9 @@ public:
 
   /// getNumArgOperands - Return the number of call arguments.
   ///
-  unsigned getNumArgOperands() const { return getNumOperands() - 1; }
+  unsigned getNumArgOperands() const {
+    return getNumOperands() - getNumTotalBundleOperands() - 1;
+  }
 
   /// getArgOperand/setArgOperand - Return/set the i-th call argument.
   ///
@@ -1491,12 +1532,14 @@ public:
   iterator_range<op_iterator> arg_operands() {
     // The last operand in the op list is the callee - it's not one of the args
     // so we don't want to iterate over it.
-    return iterator_range<op_iterator>(op_begin(), op_end() - 1);
+    return iterator_range<op_iterator>(
+        op_begin(), op_end() - getNumTotalBundleOperands() - 1);
   }
 
   /// arg_operands - iteration adapter for range-for loops.
   iterator_range<const_op_iterator> arg_operands() const {
-    return iterator_range<const_op_iterator>(op_begin(), op_end() - 1);
+    return iterator_range<const_op_iterator>(
+        op_begin(), op_end() - getNumTotalBundleOperands() - 1);
   }
 
   /// \brief Wrappers for getting the \c Use of a call argument.
@@ -1716,21 +1759,26 @@ struct OperandTraits<CallInst> : public VariadicOperandTraits<CallInst, 1> {
 };
 
 CallInst::CallInst(Value *Func, ArrayRef<Value *> Args,
-                   const Twine &NameStr, BasicBlock *InsertAtEnd)
-  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
-                                   ->getElementType())->getReturnType(),
-                Instruction::Call,
-                OperandTraits<CallInst>::op_end(this) - (Args.size() + 1),
-                unsigned(Args.size() + 1), InsertAtEnd) {
-  init(Func, Args, NameStr);
+                   ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr,
+                   BasicBlock *InsertAtEnd)
+    : Instruction(
+          cast<FunctionType>(cast<PointerType>(Func->getType())
+                                 ->getElementType())->getReturnType(),
+          Instruction::Call, OperandTraits<CallInst>::op_end(this) -
+                                 (Args.size() + CountBundleInputs(Bundles) + 1),
+          unsigned(Args.size() + CountBundleInputs(Bundles) + 1), InsertAtEnd) {
+  init(Func, Args, Bundles, NameStr);
 }
 
 CallInst::CallInst(FunctionType *Ty, Value *Func, ArrayRef<Value *> Args,
-                   const Twine &NameStr, Instruction *InsertBefore)
+                   ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr,
+                   Instruction *InsertBefore)
     : Instruction(Ty->getReturnType(), Instruction::Call,
-                  OperandTraits<CallInst>::op_end(this) - (Args.size() + 1),
-                  unsigned(Args.size() + 1), InsertBefore) {
-  init(Ty, Func, Args, NameStr);
+                  OperandTraits<CallInst>::op_end(this) -
+                      (Args.size() + CountBundleInputs(Bundles) + 1),
+                  unsigned(Args.size() + CountBundleInputs(Bundles) + 1),
+                  InsertBefore) {
+  init(Ty, Func, Args, Bundles, NameStr);
 }
 
 // Note: if you get compile errors about private methods then
@@ -3212,41 +3260,48 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(IndirectBrInst, Value)
 /// InvokeInst - Invoke instruction.  The SubclassData field is used to hold the
 /// calling convention of the call.
 ///
-class InvokeInst : public TerminatorInst {
+class InvokeInst : public TerminatorInst,
+                   public OperandBundleUser<InvokeInst, User::op_iterator> {
   AttributeSet AttributeList;
   FunctionType *FTy;
   InvokeInst(const InvokeInst &BI);
   void init(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
-            ArrayRef<Value *> Args, const Twine &NameStr) {
+            ArrayRef<Value *> Args, ArrayRef<OperandBundleDef> Bundles,
+            const Twine &NameStr) {
     init(cast<FunctionType>(
              cast<PointerType>(Func->getType())->getElementType()),
-         Func, IfNormal, IfException, Args, NameStr);
+         Func, IfNormal, IfException, Args, Bundles, NameStr);
   }
   void init(FunctionType *FTy, Value *Func, BasicBlock *IfNormal,
             BasicBlock *IfException, ArrayRef<Value *> Args,
-            const Twine &NameStr);
+            ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr);
 
   /// Construct an InvokeInst given a range of arguments.
   ///
   /// \brief Construct an InvokeInst from a range of arguments
   inline InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
-                    ArrayRef<Value *> Args, unsigned Values,
-                    const Twine &NameStr, Instruction *InsertBefore)
+                    ArrayRef<Value *> Args, ArrayRef<OperandBundleDef> Bundles,
+                    unsigned Values, const Twine &NameStr,
+                    Instruction *InsertBefore)
       : InvokeInst(cast<FunctionType>(
                        cast<PointerType>(Func->getType())->getElementType()),
-                   Func, IfNormal, IfException, Args, Values, NameStr,
+                   Func, IfNormal, IfException, Args, Bundles, Values, NameStr,
                    InsertBefore) {}
 
   inline InvokeInst(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
                     BasicBlock *IfException, ArrayRef<Value *> Args,
-                    unsigned Values, const Twine &NameStr,
-                    Instruction *InsertBefore);
+                    ArrayRef<OperandBundleDef> Bundles, unsigned Values,
+                    const Twine &NameStr, Instruction *InsertBefore);
   /// Construct an InvokeInst given a range of arguments.
   ///
   /// \brief Construct an InvokeInst from a range of arguments
   inline InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
-                    ArrayRef<Value *> Args, unsigned Values,
-                    const Twine &NameStr, BasicBlock *InsertAtEnd);
+                    ArrayRef<Value *> Args, ArrayRef<OperandBundleDef> Bundles,
+                    unsigned Values, const Twine &NameStr,
+                    BasicBlock *InsertAtEnd);
+
+  friend class OperandBundleUser<InvokeInst, User::op_iterator>;
+  bool hasDescriptor() const { return HasDescriptor; }
 
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
@@ -3254,29 +3309,63 @@ protected:
   InvokeInst *cloneImpl() const;
 
 public:
-  static InvokeInst *Create(Value *Func,
-                            BasicBlock *IfNormal, BasicBlock *IfException,
-                            ArrayRef<Value *> Args, const Twine &NameStr = "",
+  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            const Twine &NameStr,
                             Instruction *InsertBefore = nullptr) {
     return Create(cast<FunctionType>(
                       cast<PointerType>(Func->getType())->getElementType()),
-                  Func, IfNormal, IfException, Args, NameStr, InsertBefore);
+                  Func, IfNormal, IfException, Args, None, NameStr,
+                  InsertBefore);
+  }
+  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            ArrayRef<OperandBundleDef> Bundles = None,
+                            const Twine &NameStr = "",
+                            Instruction *InsertBefore = nullptr) {
+    return Create(cast<FunctionType>(
+                      cast<PointerType>(Func->getType())->getElementType()),
+                  Func, IfNormal, IfException, Args, Bundles, NameStr,
+                  InsertBefore);
   }
   static InvokeInst *Create(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
                             BasicBlock *IfException, ArrayRef<Value *> Args,
-                            const Twine &NameStr = "",
+                            const Twine &NameStr,
                             Instruction *InsertBefore = nullptr) {
     unsigned Values = unsigned(Args.size()) + 3;
-    return new (Values) InvokeInst(Ty, Func, IfNormal, IfException, Args,
+    return new (Values) InvokeInst(Ty, Func, IfNormal, IfException, Args, None,
                                    Values, NameStr, InsertBefore);
+  }
+  static InvokeInst *Create(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            ArrayRef<OperandBundleDef> Bundles = None,
+                            const Twine &NameStr = "",
+                            Instruction *InsertBefore = nullptr) {
+    unsigned Values = unsigned(Args.size()) + CountBundleInputs(Bundles) + 3;
+    unsigned DescriptorBytes = Bundles.size() * sizeof(BundleOpInfo);
+
+    return new (Values, DescriptorBytes)
+        InvokeInst(Ty, Func, IfNormal, IfException, Args, Bundles, Values,
+                   NameStr, InsertBefore);
   }
   static InvokeInst *Create(Value *Func,
                             BasicBlock *IfNormal, BasicBlock *IfException,
                             ArrayRef<Value *> Args, const Twine &NameStr,
                             BasicBlock *InsertAtEnd) {
     unsigned Values = unsigned(Args.size()) + 3;
-    return new(Values) InvokeInst(Func, IfNormal, IfException, Args,
-                                  Values, NameStr, InsertAtEnd);
+    return new (Values) InvokeInst(Func, IfNormal, IfException, Args, None,
+                                   Values, NameStr, InsertAtEnd);
+  }
+  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            ArrayRef<OperandBundleDef> Bundles,
+                            const Twine &NameStr, BasicBlock *InsertAtEnd) {
+    unsigned Values = unsigned(Args.size()) + CountBundleInputs(Bundles) + 3;
+    unsigned DescriptorBytes = Bundles.size() * sizeof(BundleOpInfo);
+
+    return new (Values, DescriptorBytes)
+        InvokeInst(Func, IfNormal, IfException, Args, Bundles, Values, NameStr,
+                   InsertAtEnd);
   }
 
   /// Provide fast operand accessors
@@ -3291,7 +3380,9 @@ public:
 
   /// getNumArgOperands - Return the number of invoke arguments.
   ///
-  unsigned getNumArgOperands() const { return getNumOperands() - 3; }
+  unsigned getNumArgOperands() const {
+    return getNumOperands() - getNumTotalBundleOperands() - 3;
+  }
 
   /// getArgOperand/setArgOperand - Return/set the i-th invoke argument.
   ///
@@ -3306,12 +3397,14 @@ public:
 
   /// arg_operands - iteration adapter for range-for loops.
   iterator_range<op_iterator> arg_operands() {
-    return iterator_range<op_iterator>(op_begin(), op_end() - 3);
+    return iterator_range<op_iterator>(
+        op_begin(), op_end() - getNumTotalBundleOperands() - 3);
   }
 
   /// arg_operands - iteration adapter for range-for loops.
   iterator_range<const_op_iterator> arg_operands() const {
-    return iterator_range<const_op_iterator>(op_begin(), op_end() - 3);
+    return iterator_range<const_op_iterator>(
+        op_begin(), op_end() - getNumTotalBundleOperands() - 3);
   }
 
   /// \brief Wrappers for getting the \c Use of a invoke argument.
@@ -3534,23 +3627,23 @@ struct OperandTraits<InvokeInst> : public VariadicOperandTraits<InvokeInst, 3> {
 
 InvokeInst::InvokeInst(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
                        BasicBlock *IfException, ArrayRef<Value *> Args,
-                       unsigned Values, const Twine &NameStr,
-                       Instruction *InsertBefore)
+                       ArrayRef<OperandBundleDef> Bundles, unsigned Values,
+                       const Twine &NameStr, Instruction *InsertBefore)
     : TerminatorInst(Ty->getReturnType(), Instruction::Invoke,
                      OperandTraits<InvokeInst>::op_end(this) - Values, Values,
                      InsertBefore) {
-  init(Ty, Func, IfNormal, IfException, Args, NameStr);
+  init(Ty, Func, IfNormal, IfException, Args, Bundles, NameStr);
 }
-InvokeInst::InvokeInst(Value *Func,
-                       BasicBlock *IfNormal, BasicBlock *IfException,
-                       ArrayRef<Value *> Args, unsigned Values,
+InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal,
+                       BasicBlock *IfException, ArrayRef<Value *> Args,
+                       ArrayRef<OperandBundleDef> Bundles, unsigned Values,
                        const Twine &NameStr, BasicBlock *InsertAtEnd)
-  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
-                                      ->getElementType())->getReturnType(),
-                   Instruction::Invoke,
-                   OperandTraits<InvokeInst>::op_end(this) - Values,
-                   Values, InsertAtEnd) {
-  init(Func, IfNormal, IfException, Args, NameStr);
+    : TerminatorInst(
+          cast<FunctionType>(cast<PointerType>(Func->getType())
+                                 ->getElementType())->getReturnType(),
+          Instruction::Invoke, OperandTraits<InvokeInst>::op_end(this) - Values,
+          Values, InsertAtEnd) {
+  init(Func, IfNormal, IfException, Args, Bundles, NameStr);
 }
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InvokeInst, Value)

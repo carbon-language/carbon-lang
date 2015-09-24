@@ -226,9 +226,10 @@ CallInst::~CallInst() {
 }
 
 void CallInst::init(FunctionType *FTy, Value *Func, ArrayRef<Value *> Args,
-                    const Twine &NameStr) {
+                    ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr) {
   this->FTy = FTy;
-  assert(getNumOperands() == Args.size() + 1 && "NumOperands not set up?");
+  assert(getNumOperands() == Args.size() + CountBundleInputs(Bundles) + 1 &&
+         "NumOperands not set up?");
   Op<-1>() = Func;
 
 #ifndef NDEBUG
@@ -243,6 +244,11 @@ void CallInst::init(FunctionType *FTy, Value *Func, ArrayRef<Value *> Args,
 #endif
 
   std::copy(Args.begin(), Args.end(), op_begin());
+
+  auto It = populateBundleOperandInfos(Bundles, Args.size());
+  (void)It;
+  assert(It + 1 == op_end() && "Should add up!");
+
   setName(NameStr);
 }
 
@@ -284,8 +290,10 @@ CallInst::CallInst(const CallInst &CI)
       AttributeList(CI.AttributeList), FTy(CI.FTy) {
   setTailCallKind(CI.getTailCallKind());
   setCallingConv(CI.getCallingConv());
-    
+
   std::copy(CI.op_begin(), CI.op_end(), op_begin());
+  std::copy(CI.bundle_op_info_begin(), CI.bundle_op_info_end(),
+            bundle_op_info_begin());
   SubclassOptionalData = CI.SubclassOptionalData;
 }
 
@@ -499,10 +507,12 @@ Instruction* CallInst::CreateFree(Value* Source, BasicBlock *InsertAtEnd) {
 
 void InvokeInst::init(FunctionType *FTy, Value *Fn, BasicBlock *IfNormal,
                       BasicBlock *IfException, ArrayRef<Value *> Args,
+                      ArrayRef<OperandBundleDef> Bundles,
                       const Twine &NameStr) {
   this->FTy = FTy;
 
-  assert(getNumOperands() == 3 + Args.size() && "NumOperands not set up?");
+  assert(getNumOperands() == 3 + Args.size() + CountBundleInputs(Bundles) &&
+         "NumOperands not set up?");
   Op<-3>() = Fn;
   Op<-2>() = IfNormal;
   Op<-1>() = IfException;
@@ -519,6 +529,11 @@ void InvokeInst::init(FunctionType *FTy, Value *Fn, BasicBlock *IfNormal,
 #endif
 
   std::copy(Args.begin(), Args.end(), op_begin());
+
+  auto It = populateBundleOperandInfos(Bundles, Args.size());
+  (void)It;
+  assert(It + 3 == op_end() && "Should add up!");
+
   setName(NameStr);
 }
 
@@ -530,6 +545,8 @@ InvokeInst::InvokeInst(const InvokeInst &II)
       AttributeList(II.AttributeList), FTy(II.FTy) {
   setCallingConv(II.getCallingConv());
   std::copy(II.op_begin(), II.op_end(), op_begin());
+  std::copy(II.bundle_op_info_begin(), II.bundle_op_info_end(),
+            bundle_op_info_begin());
   SubclassOptionalData = II.SubclassOptionalData;
 }
 

@@ -219,6 +219,23 @@ unsigned MDNodeOpsKey::calculateHash(ArrayRef<Metadata *> Ops) {
   return hash_combine_range(Ops.begin(), Ops.end());
 }
 
+StringMapEntry<uint32_t> *LLVMContextImpl::getOrInsertBundleTag(StringRef Tag) {
+  uint32_t NewIdx = BundleTagCache.size();
+  return &*(BundleTagCache.insert(std::make_pair(Tag, NewIdx)).first);
+}
+
+void LLVMContextImpl::getOperandBundleTags(SmallVectorImpl<StringRef> &Tags) const {
+  Tags.resize(BundleTagCache.size());
+  for (const auto &T : BundleTagCache)
+    Tags[T.second] = T.first();
+}
+
+uint32_t LLVMContextImpl::getOperandBundleTagID(StringRef Tag) const {
+  auto I = BundleTagCache.find(Tag);
+  assert(I != BundleTagCache.end() && "Unknown tag!");
+  return I->second;
+}
+
 // ConstantsContext anchors
 void UnaryConstantExpr::anchor() { }
 

@@ -333,6 +333,11 @@ public:
   /// registered in this LLVMContext.
   void getMDKindNames(SmallVectorImpl<StringRef> &Result) const;
 
+  /// Populate client supplied SmallVector with the bundle tags registered in
+  /// this LLVMContext.  The bundle tags are ordered by increasing bundle IDs.
+  /// \see LLVMContext::getOperandBundleTagID
+  void getOperandBundleTags(SmallVectorImpl<StringRef> &Result) const;
+
   /// Return the type with the specified name, or null if there is none by that
   /// name.
   StructType *getTypeByName(StringRef Name) const;

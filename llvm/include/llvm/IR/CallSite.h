@@ -41,6 +41,7 @@ template <typename FunTy = const Function,
           typename BBTy = const BasicBlock,
           typename ValTy = const Value,
           typename UserTy = const User,
+          typename UseTy = const Use,
           typename InstrTy = const Instruction,
           typename CallTy = const CallInst,
           typename InvokeTy = const InvokeInst,
@@ -316,6 +317,22 @@ public:
     CALLSITE_DELEGATE_SETTER(setDoesNotThrow());
   }
 
+  int getNumOperandBundles() const {
+    CALLSITE_DELEGATE_GETTER(getNumOperandBundles());
+  }
+
+  bool hasOperandBundles() const {
+    CALLSITE_DELEGATE_GETTER(hasOperandBundles());
+  }
+
+  int getNumTotalBundleOperands() const {
+    CALLSITE_DELEGATE_GETTER(getNumTotalBundleOperands());
+  }
+
+  OperandBundleUse getOperandBundle(unsigned Index) const {
+    CALLSITE_DELEGATE_GETTER(getOperandBundle(Index));
+  }
+
 #undef CALLSITE_DELEGATE_GETTER
 #undef CALLSITE_DELEGATE_SETTER
 
@@ -380,10 +397,15 @@ public:
 
 private:
   unsigned getArgumentEndOffset() const {
-    if (isCall())
-      return 1; // Skip Callee
-    else
-      return 3; // Skip BB, BB, Callee
+    if (isCall()) {
+      // Skip [ operand bundles ], Callee
+      auto *CI = cast<CallInst>(getInstruction());
+      return 1 + CI->getNumTotalBundleOperands();
+    } else {
+      // Skip [ operand bundles ], BB, BB, Callee
+      auto *II = cast<InvokeInst>(getInstruction());
+      return 3 + II->getNumTotalBundleOperands();
+    }
   }
 
   IterTy getCallee() const {
@@ -394,7 +416,7 @@ private:
   }
 };
 
-class CallSite : public CallSiteBase<Function, BasicBlock, Value, User,
+class CallSite : public CallSiteBase<Function, BasicBlock, Value, User, Use,
                                      Instruction, CallInst, InvokeInst,
                                      User::op_iterator> {
 public:
