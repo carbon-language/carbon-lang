@@ -184,6 +184,25 @@ function(darwin_lipo_libs name)
   add_dependencies(${LIB_PARENT_TARGET} ${name})
 endfunction()
 
+# Filter out generic versions of routines that are re-implemented in
+# architecture specific manner.  This prevents multiple definitions of the
+# same symbols, making the symbol selection non-deterministic.
+function(darwin_filter_builtin_sources output_var excluded_list)
+  set(intermediate ${ARGN})
+  foreach (_file ${intermediate})
+    get_filename_component(_name_we ${_file} NAME_WE)
+    list(FIND ${excluded_list} ${_name_we} _found)
+    if(_found GREATER -1)
+      list(REMOVE_ITEM intermediate ${_file})
+    elseif(${_file} MATCHES ".*/.*\\.S")
+      get_filename_component(_name ${_file} NAME)
+      string(REPLACE ".S" ".c" _cname "${_name}")
+      list(REMOVE_ITEM intermediate ${_cname})
+    endif ()
+  endforeach ()
+  set(${output_var} ${intermediate} PARENT_SCOPE)
+endfunction()
+
 # Generates builtin libraries for all operating systems specified in ARGN. Each
 # OS library is constructed by lipo-ing together single-architecture libraries.
 macro(darwin_add_builtin_libraries)
@@ -213,25 +232,13 @@ macro(darwin_add_builtin_libraries)
 
 
       darwin_find_excluded_builtins_list(${os} ${arch} ${DARWIN_${os}_BUILTIN_MIN_VER})
-      # Filter out generic versions of routines that are re-implemented in
-      # architecture specific manner.  This prevents multiple definitions of the
-      # same symbols, making the symbol selection non-deterministic.
-      foreach (_file ${${arch}_SOURCES})
-        get_filename_component(_name_we ${_file} NAME_WE)
-        list(FIND ${arch}_${os}_EXCLUDED_BUILTINS ${_name_we} _found)
-        if(_found GREATER -1)
-          list(REMOVE_ITEM ${arch}_SOURCES ${_file})
-        elseif(${_file} MATCHES ${arch}/*)
-          get_filename_component(_name ${_file} NAME)
-          string(REPLACE ".S" ".c" _cname "${_name}")
-          list(REMOVE_ITEM ${arch}_SOURCES ${_cname})
-        endif ()
-      endforeach ()
+      
+      darwin_filter_builtin_sources(filtered_sources ${arch}_${os}_EXCLUDED_BUILTINS ${${arch}_SOURCES})
 
       darwin_add_builtin_library(clang_rt builtins
                               OS ${os}
                               ARCH ${arch}
-                              SOURCES ${${arch}_SOURCES}
+                              SOURCES ${filtered_sources}
                               CFLAGS -arch ${arch}
                               PARENT_TARGET builtins)
     endforeach()
