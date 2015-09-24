@@ -31,21 +31,5 @@ def alias_discard_locals: Flag<["-"], "X">,
 def discard_none : Flag<["-"], "discard-none">,
      HelpText<"Keep all symbols in the symbol table">;
 
-//===----------------------------------------------------------------------===//
-/// Ignored options
-//===----------------------------------------------------------------------===//
-
-def dashg : Flag<["-"], "g">,
-     HelpText<"Ignored.">;
-
-def Qy : Flag<["-"], "Qy">,
-     HelpText<"Ignored for SVR4 Compatibility">;
-
-def qmagic : Flag<["-"], "qmagic">,
-     HelpText<"Ignored for Linux Compatibility">;
-
-def sunassert : Flag<["-"], "assert">,
-     HelpText<"Ignored for SunOS Compatibility">;
-
 def export_dynamic : Flag<["--"], "export-dynamic">,
      HelpText<"Put symbols in the dynamic symbol table">;
