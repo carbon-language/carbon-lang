@@ -1497,7 +1497,7 @@ Generic_GCC::CudaInstallationDetector::init(const Driver &D,
     CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-7.0");
   }
 
-  for (const auto CudaPath : CudaPathCandidates) {
+  for (const auto &CudaPath : CudaPathCandidates) {
     if (CudaPath.empty() || !llvm::sys::fs::exists(CudaPath))
       continue;
 
