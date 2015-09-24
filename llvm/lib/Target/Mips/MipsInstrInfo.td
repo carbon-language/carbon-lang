@@ -208,6 +208,9 @@ def IsNotNaCl    :    Predicate<"!Subtarget->isTargetNaCl()">;
 def UseTCCInDIV    :  AssemblerPredicate<"FeatureUseTCCInDIV">;
 def HasEVA       :    Predicate<"Subtarget->hasEVA()">,
                       AssemblerPredicate<"FeatureEVA,FeatureMips32r2">;
+def HasMSA : Predicate<"Subtarget->hasMSA()">,
+             AssemblerPredicate<"FeatureMSA">;
+
 
 //===----------------------------------------------------------------------===//
 // Mips GPR size adjectives.
@@ -298,6 +301,14 @@ class INSN_MIPS4_32R2_NOT_32R6_64R6 {
 // MIPS32r6 and MIPS64r6.
 class INSN_MIPS5_32R2_NOT_32R6_64R6 {
   list<Predicate> InsnPredicates = [HasMips5_32r2, NotMips32r6, NotMips64r6];
+}
+
+class ASE_MSA {
+  list<Predicate> InsnPredicates = [HasMSA];
+}
+
+class ASE_MSA64 {
+  list<Predicate> InsnPredicates = [HasMSA, HasMips64];
 }
 
 // Class used for separating microMIPSr6 and microMIPS (r3) instruction.
