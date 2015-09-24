@@ -230,18 +230,21 @@ macro(darwin_add_builtin_libraries)
   set(CMAKE_C_FLAGS "-fPIC -fvisibility=hidden -DVISIBILITY_HIDDEN -Wall -fomit-frame-pointer")
   set(CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
   set(CMAKE_ASM_FLAGS ${CMAKE_C_FLAGS})
+
+  set(PROFILE_SOURCES ../profile/InstrProfiling 
+                      ../profile/InstrProfilingBuffer
+                      ../profile/InstrProfilingPlatformDarwin)
   foreach (os ${ARGN})
     list_union(DARWIN_BUILTIN_ARCHS DARWIN_${os}_ARCHS BUILTIN_SUPPORTED_ARCH)
     foreach (arch ${DARWIN_BUILTIN_ARCHS})
-      # do cc_kext
+      # In addition to the builtins cc_kext includes some profile sources
       darwin_add_builtin_library(clang_rt cc_kext
                               OS ${os}
                               ARCH ${arch}
-                              SOURCES ${${arch}_SOURCES}
+                              SOURCES ${${arch}_SOURCES} ${PROFILE_SOURCES}
                               CFLAGS -arch ${arch} -mkernel
                               DEFS KERNEL_USE
                               PARENT_TARGET builtins)
-
 
       darwin_find_excluded_builtins_list(${arch}_${os}_EXCLUDED_BUILTINS
                               OS ${os}
