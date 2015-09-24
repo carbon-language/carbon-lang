@@ -12,7 +12,7 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}atomic_add_i32_ret_offset:
-; GCN: buffer_atomic_add [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc {{$}}
+; GCN: buffer_atomic_add [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc{{$}}
 ; GCN: buffer_store_dword [[RET]]
 define void @atomic_add_i32_ret_offset(i32 addrspace(1)* %out, i32 addrspace(1)* %out2, i32 %in) {
 entry:
@@ -105,7 +105,7 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}atomic_and_i32_ret_offset:
-; GCN: buffer_atomic_and [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc {{$}}
+; GCN: buffer_atomic_and [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc{{$}}
 ; GCN: buffer_store_dword [[RET]]
 define void @atomic_and_i32_ret_offset(i32 addrspace(1)* %out, i32 addrspace(1)* %out2, i32 %in) {
 entry:
@@ -197,7 +197,7 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}atomic_sub_i32_ret_offset:
-; GCN: buffer_atomic_sub [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc {{$}}
+; GCN: buffer_atomic_sub [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc{{$}}
 ; GCN: buffer_store_dword [[RET]]
 define void @atomic_sub_i32_ret_offset(i32 addrspace(1)* %out, i32 addrspace(1)* %out2, i32 %in) {
 entry:
@@ -289,7 +289,7 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}atomic_max_i32_ret_offset:
-; GCN: buffer_atomic_smax [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc {{$}}
+; GCN: buffer_atomic_smax [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc{{$}}
 ; GCN: buffer_store_dword [[RET]]
 define void @atomic_max_i32_ret_offset(i32 addrspace(1)* %out, i32 addrspace(1)* %out2, i32 %in) {
 entry:
@@ -381,7 +381,7 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}atomic_umax_i32_ret_offset:
-; GCN: buffer_atomic_umax [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc {{$}}
+; GCN: buffer_atomic_umax [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc{{$}}
 ; GCN: buffer_store_dword [[RET]]
 define void @atomic_umax_i32_ret_offset(i32 addrspace(1)* %out, i32 addrspace(1)* %out2, i32 %in) {
 entry:
@@ -473,7 +473,7 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}atomic_min_i32_ret_offset:
-; GCN: buffer_atomic_smin [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc {{$}}
+; GCN: buffer_atomic_smin [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc{{$}}
 ; GCN: buffer_store_dword [[RET]]
 define void @atomic_min_i32_ret_offset(i32 addrspace(1)* %out, i32 addrspace(1)* %out2, i32 %in) {
 entry:
@@ -565,7 +565,7 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}atomic_umin_i32_ret_offset:
-; GCN: buffer_atomic_umin [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc {{$}}
+; GCN: buffer_atomic_umin [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc{{$}}
 ; GCN: buffer_store_dword [[RET]]
 define void @atomic_umin_i32_ret_offset(i32 addrspace(1)* %out, i32 addrspace(1)* %out2, i32 %in) {
 entry:
@@ -657,7 +657,7 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}atomic_or_i32_ret_offset:
-; GCN: buffer_atomic_or [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc {{$}}
+; GCN: buffer_atomic_or [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc{{$}}
 ; GCN: buffer_store_dword [[RET]]
 define void @atomic_or_i32_ret_offset(i32 addrspace(1)* %out, i32 addrspace(1)* %out2, i32 %in) {
 entry:
@@ -749,7 +749,7 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}atomic_xchg_i32_ret_offset:
-; GCN: buffer_atomic_swap [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc {{$}}
+; GCN: buffer_atomic_swap [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc{{$}}
 ; GCN: buffer_store_dword [[RET]]
 define void @atomic_xchg_i32_ret_offset(i32 addrspace(1)* %out, i32 addrspace(1)* %out2, i32 %in) {
 entry:
@@ -838,7 +838,7 @@ entry:
 }
 
 ; FUNC-LABEL: {{^}}atomic_xor_i32_ret_offset:
-; GCN: buffer_atomic_xor [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc {{$}}
+; GCN: buffer_atomic_xor [[RET:v[0-9]+]], s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16 glc{{$}}
 ; GCN: buffer_store_dword [[RET]]
 define void @atomic_xor_i32_ret_offset(i32 addrspace(1)* %out, i32 addrspace(1)* %out2, i32 %in) {
 entry:
