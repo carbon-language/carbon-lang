@@ -163,6 +163,7 @@ public:
     StringRef getPath() const { return Path; }
     StringRef getASTFile() const { return ASTFile; }
     uint64_t getSignature() const { return Signature; }
+    const Module *getModuleOrNull() const { return ClangModule; }
   };
 
   /// Return a descriptor for the corresponding module, if one exists.

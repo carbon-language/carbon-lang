@@ -1676,8 +1676,11 @@ llvm::DIType *CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 llvm::DIModule *
 CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod,
                                   bool CreateSkeletonCU) {
-  std::string FullModuleName = Mod.getFullModuleName();
-  auto &ModRef = ModuleRefCache[FullModuleName];
+  // Use the Module pointer as the key into the cache. This is a
+  // nullptr if the "Module" is a PCH, which is safe because we don't
+  // support chained PCH debug info, so there can only be a single PCH.
+  const Module *M = Mod.getModuleOrNull();
+  auto &ModRef = ModuleCache[M];
   if (ModRef)
     return cast<llvm::DIModule>(ModRef);
 
@@ -1704,6 +1707,7 @@ CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod,
     }
   }
 
+  std::string FullModuleName = Mod.getFullModuleName();
   if (CreateSkeletonCU) {
     llvm::DIBuilder DIB(CGM.getModule());
     DIB.createCompileUnit(TheCU->getSourceLanguage(), FullModuleName,
@@ -1712,11 +1716,11 @@ CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod,
                           llvm::DIBuilder::FullDebug, Mod.getSignature());
     DIB.finalize();
   }
-  llvm::DIModule *M =
+  llvm::DIModule *DIMod =
       DBuilder.createModule(TheCU, FullModuleName, ConfigMacros, Mod.getPath(),
                             CGM.getHeaderSearchOpts().Sysroot);
-  ModRef.reset(M);
-  return M;
+  ModRef.reset(DIMod);
+  return DIMod;
 }
 
 llvm::DIType *CGDebugInfo::CreateTypeDefinition(const ObjCInterfaceType *Ty,
