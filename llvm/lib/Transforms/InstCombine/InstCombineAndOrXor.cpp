@@ -2220,14 +2220,18 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   ConstantInt *C1 = nullptr, *C2 = nullptr;
 
   // (A | B) | C  and  A | (B | C)                  -> bswap if possible.
+  bool OrOfOrs = match(Op0, m_Or(m_Value(), m_Value())) ||
+                 match(Op1, m_Or(m_Value(), m_Value()));
   // (A >> B) | (C << D)  and  (A << B) | (B >> C)  -> bswap if possible.
-  if (match(Op0, m_Or(m_Value(), m_Value())) ||
-      match(Op1, m_Or(m_Value(), m_Value())) ||
-      (match(Op0, m_LogicalShift(m_Value(), m_Value())) &&
-       match(Op1, m_LogicalShift(m_Value(), m_Value())))) {
+  bool OrOfShifts = match(Op0, m_LogicalShift(m_Value(), m_Value())) &&
+                    match(Op1, m_LogicalShift(m_Value(), m_Value()));
+  // (A & B) | (C & D)                              -> bswap if possible.
+  bool OrOfAnds = match(Op0, m_And(m_Value(), m_Value())) &&
+                  match(Op1, m_And(m_Value(), m_Value()));
+
+  if (OrOfOrs || OrOfShifts || OrOfAnds)
     if (Instruction *BSwap = MatchBSwap(I))
       return BSwap;
-  }
 
   // (X^C)|Y -> (X|Y)^C iff Y&C == 0
   if (Op0->hasOneUse() &&

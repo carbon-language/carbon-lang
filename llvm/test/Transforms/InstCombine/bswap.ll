@@ -1,7 +1,7 @@
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32"
 
 ; RUN: opt < %s -instcombine -S | \
-; RUN:    grep "call.*llvm.bswap" | count 6
+; RUN:    grep "call.*llvm.bswap" | count 7
 
 define i32 @test1(i32 %i) {
 	%tmp1 = lshr i32 %i, 24		; <i32> [#uses=1]
@@ -72,3 +72,15 @@ define i32 @test6(i32 %x) nounwind readnone {
 	ret i32 %tmp7
 }
 
+; PR23863
+define i32 @test7(i32 %x) {
+        %shl = shl i32 %x, 16
+        %shr = lshr i32 %x, 16
+        %or = or i32 %shl, %shr
+        %and2 = shl i32 %or, 8
+        %shl3 = and i32 %and2, -16711936
+        %and4 = lshr i32 %or, 8
+        %shr5 = and i32 %and4, 16711935
+        %or6 = or i32 %shl3, %shr5
+        ret i32 %or6
+}
