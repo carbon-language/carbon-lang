@@ -113,30 +113,42 @@ endfunction()
 
 # this function takes an OS, architecture and minimum version and provides a
 # list of builtin functions to exclude
-function(darwin_find_excluded_builtins_list os arch min_version)
-  darwin_read_exclude_file(${os}_BUILTINS ${os})
-  darwin_read_exclude_file(${os}_${arch}_BASE_BUILTINS ${os}-${arch})
+function(darwin_find_excluded_builtins_list output_var)
+  cmake_parse_arguments(LIB
+    ""
+    "OS;ARCH;MIN_VERSION"
+    ""
+    ${ARGN})
 
-  file(GLOB builtin_lists ${DARWIN_EXCLUDE_DIR}/${os}*-${arch}.txt)
-  foreach(builtin_list ${builtin_lists})
-    string(REGEX MATCH "${os}([0-9\\.]*)-${arch}.txt" VERSION_MATCHED "${builtin_list}")
-    if (VERSION_MATCHED AND NOT CMAKE_MATCH_1 VERSION_LESS min_version)
-      if(NOT smallest_version)
-        set(smallest_version ${CMAKE_MATCH_1})
-      elseif(CMAKE_MATCH_1 VERSION_LESS smallest_version)
-        set(smallest_version ${CMAKE_MATCH_1})
+  if(NOT LIB_OS OR NOT LIB_ARCH)
+    message(FATAL_ERROR "Must specify OS and ARCH to darwin_find_excluded_builtins_list!")
+  endif()
+
+  darwin_read_exclude_file(${LIB_OS}_BUILTINS ${LIB_OS})
+  darwin_read_exclude_file(${LIB_OS}_${LIB_ARCH}_BASE_BUILTINS ${LIB_OS}-${LIB_ARCH})
+
+  if(LIB_MIN_VERSION)
+    file(GLOB builtin_lists ${DARWIN_EXCLUDE_DIR}/${LIB_OS}*-${LIB_ARCH}.txt)
+    foreach(builtin_list ${builtin_lists})
+      string(REGEX MATCH "${LIB_OS}([0-9\\.]*)-${LIB_ARCH}.txt" VERSION_MATCHED "${builtin_list}")
+      if (VERSION_MATCHED AND NOT CMAKE_MATCH_1 VERSION_LESS LIB_MIN_VERSION)
+        if(NOT smallest_version)
+          set(smallest_version ${CMAKE_MATCH_1})
+        elseif(CMAKE_MATCH_1 VERSION_LESS smallest_version)
+          set(smallest_version ${CMAKE_MATCH_1})
+        endif()
       endif()
+    endforeach()
+
+    if(smallest_version)
+      darwin_read_exclude_file(${LIB_ARCH}_${LIB_OS}_BUILTINS ${LIB_OS}${smallest_version}-${LIB_ARCH})
     endif()
-  endforeach()
-  
-  if(smallest_version)
-    darwin_read_exclude_file(${arch}_${os}_BUILTINS ${os}${smallest_version}-${arch})
   endif()
   
-  set(${arch}_${os}_EXCLUDED_BUILTINS
-      ${${arch}_${os}_BUILTINS}
-      ${${os}_${arch}_BASE_BUILTINS}
-      ${${os}_BUILTINS} PARENT_SCOPE)
+  set(${output_var}
+      ${${LIB_ARCH}_${LIB_OS}_BUILTINS}
+      ${${LIB_OS}_${LIB_ARCH}_BASE_BUILTINS}
+      ${${LIB_OS}_BUILTINS} PARENT_SCOPE)
 endfunction()
 
 # adds a single builtin library for a single OS & ARCH
@@ -231,8 +243,11 @@ macro(darwin_add_builtin_libraries)
                               PARENT_TARGET builtins)
 
 
-      darwin_find_excluded_builtins_list(${os} ${arch} ${DARWIN_${os}_BUILTIN_MIN_VER})
-      
+      darwin_find_excluded_builtins_list(${arch}_${os}_EXCLUDED_BUILTINS
+                              OS ${os}
+                              ARCH ${arch}
+                              MIN_VERSION ${DARWIN_${os}_BUILTIN_MIN_VER})
+
       darwin_filter_builtin_sources(filtered_sources ${arch}_${os}_EXCLUDED_BUILTINS ${${arch}_SOURCES})
 
       darwin_add_builtin_library(clang_rt builtins
