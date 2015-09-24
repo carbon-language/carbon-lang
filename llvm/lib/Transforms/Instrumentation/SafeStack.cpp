@@ -210,7 +210,7 @@ class SafeStack : public FunctionPass {
   /// \returns A local variable in which to maintain the dynamic top of the
   /// unsafe stack if needed.
   AllocaInst *
-  createStackRestorePoints(Function &F,
+  createStackRestorePoints(IRBuilder<> &IRB, Function &F,
                            ArrayRef<Instruction *> StackRestorePoints,
                            Value *StaticTop, bool NeedDynamicTop);
 
@@ -332,15 +332,11 @@ void SafeStack::findInsts(Function &F,
 }
 
 AllocaInst *
-SafeStack::createStackRestorePoints(Function &F,
+SafeStack::createStackRestorePoints(IRBuilder<> &IRB, Function &F,
                                     ArrayRef<Instruction *> StackRestorePoints,
                                     Value *StaticTop, bool NeedDynamicTop) {
   if (StackRestorePoints.empty())
     return nullptr;
-
-  IRBuilder<> IRB(StaticTop
-                      ? cast<Instruction>(StaticTop)->getNextNode()
-                      : (Instruction *)F.getEntryBlock().getFirstInsertionPt());
 
   // We need the current value of the shadow stack pointer to restore
   // after longjmp or exception catching.
@@ -613,7 +609,7 @@ bool SafeStack::runOnFunction(Function &F) {
   // FIXME: a better alternative might be to store the unsafe stack pointer
   // before setjmp / invoke instructions.
   AllocaInst *DynamicTop = createStackRestorePoints(
-      F, StackRestorePoints, StaticTop, !DynamicAllocas.empty());
+      IRB, F, StackRestorePoints, StaticTop, !DynamicAllocas.empty());
 
   // Handle dynamic allocas.
   moveDynamicAllocasToUnsafeStack(F, UnsafeStackPtr, DynamicTop,
