@@ -3253,8 +3253,8 @@ class LoadPairPostIdx<bits<2> opc, bit V, RegisterClass regtype,
 let mayStore = 1, mayLoad = 0 in
 class StorePairPostIdx<bits<2> opc, bit V, RegisterClass regtype,
                        Operand idxtype, string asm>
-    : BaseLoadStorePairPostIdx<opc, V, 0, (outs),
-                             (ins GPR64sp:$wback, regtype:$Rt, regtype:$Rt2,
+    : BaseLoadStorePairPostIdx<opc, V, 0, (outs GPR64sp:$wback),
+                             (ins regtype:$Rt, regtype:$Rt2,
                                   GPR64sp:$Rn, idxtype:$offset),
                              asm>,
       Sched<[WriteAdr, WriteSTP]>;
