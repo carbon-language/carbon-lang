@@ -28,7 +28,7 @@ length_nolimit.o: length.cpp
 	$(CXX) $(CFLAGS_NO_LIMIT) length.cpp -o length_nolimit.o
 
 a.o: a.cpp
-	$(CXX) -c a.cpp -o a.o
+	$(CXX) $(CFLAGS_NO_DEBUG) -c a.cpp -o a.o
 
 clean: OBJECTS += limit nolimit length_limit.o length_nolimit.o
 
