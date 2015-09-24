@@ -1487,7 +1487,7 @@ void
 Generic_GCC::CudaInstallationDetector::init(const Driver &D,
                                             const llvm::Triple &TargetTriple,
                                             const llvm::opt::ArgList &Args) {
-  SmallVector<StringRef, 4> CudaPathCandidates;
+  SmallVector<std::string, 4> CudaPathCandidates;
 
   if (Args.hasArg(options::OPT_cuda_path_EQ))
     CudaPathCandidates.push_back(
