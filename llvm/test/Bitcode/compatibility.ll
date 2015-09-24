@@ -6,7 +6,7 @@
 ;     http://llvm.org/docs/DeveloperPolicy.html#ir-backwards-compatibility 
 
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
-; RUN: verify-uselistorder < %s
+; RUN-PR24755: verify-uselistorder < %s
 
 target datalayout = "E"
 ; CHECK: target datalayout = "E"
@@ -1312,6 +1312,158 @@ define void @misc.metadata() {
   call void @f1(), !srcloc !14
   ret void
 }
+
+declare void @op_bundle_callee_0()
+declare void @op_bundle_callee_1(i32,i32)
+
+define void @call_with_operand_bundle0(i32* %ptr) {
+; CHECK-LABEL: call_with_operand_bundle0(
+ entry:
+  %l = load i32, i32* %ptr
+  %x = add i32 42, 1
+  call void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "bar"(float  0.000000e+00, i64 100, i32 %l) ]
+; CHECK: call void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "bar"(float  0.000000e+00, i64 100, i32 %l) ]
+  ret void
+}
+
+define void @call_with_operand_bundle1(i32* %ptr) {
+; CHECK-LABEL: call_with_operand_bundle1(
+ entry:
+  %l = load i32, i32* %ptr
+  %x = add i32 42, 1
+
+  call void @op_bundle_callee_0()
+  call void @op_bundle_callee_0() [ "foo"() ]
+  call void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "bar"(float  0.000000e+00, i64 100, i32 %l) ]
+; CHECK: @op_bundle_callee_0(){{$}}
+; CHECK-NEXT: call void @op_bundle_callee_0() [ "foo"() ]
+; CHECK-NEXT: call void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "bar"(float  0.000000e+00, i64 100, i32 %l) ]
+  ret void
+}
+
+define void @call_with_operand_bundle2(i32* %ptr) {
+; CHECK-LABEL: call_with_operand_bundle2(
+ entry:
+  call void @op_bundle_callee_0() [ "foo"() ]
+; CHECK: call void @op_bundle_callee_0() [ "foo"() ]
+  ret void
+}
+
+define void @call_with_operand_bundle3(i32* %ptr) {
+; CHECK-LABEL: call_with_operand_bundle3(
+ entry:
+  %l = load i32, i32* %ptr
+  %x = add i32 42, 1
+  call void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "foo"(i32 42, float  0.000000e+00, i32 %l) ]
+; CHECK: call void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "foo"(i32 42, float  0.000000e+00, i32 %l) ]
+  ret void
+}
+
+define void @call_with_operand_bundle4(i32* %ptr) {
+; CHECK-LABEL: call_with_operand_bundle4(
+ entry:
+  %l = load i32, i32* %ptr
+  %x = add i32 42, 1
+  call void @op_bundle_callee_1(i32 10, i32 %x) [ "foo"(i32 42, i64 100, i32 %x), "foo"(i32 42, float  0.000000e+00, i32 %l) ]
+; CHECK: call void @op_bundle_callee_1(i32 10, i32 %x) [ "foo"(i32 42, i64 100, i32 %x), "foo"(i32 42, float  0.000000e+00, i32 %l) ]
+  ret void
+}
+
+; Invoke versions of the above tests:
+
+
+define void @invoke_with_operand_bundle0(i32* %ptr) personality i8 3 {
+; CHECK-LABEL: @invoke_with_operand_bundle0(
+ entry:
+  %l = load i32, i32* %ptr
+  %x = add i32 42, 1
+  invoke void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "bar"(float  0.000000e+00, i64 100, i32 %l) ] to label %normal unwind label %exception
+; CHECK: invoke void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "bar"(float  0.000000e+00, i64 100, i32 %l) ]
+
+exception:
+  %cleanup = landingpad i8 cleanup
+  br label %normal
+normal:
+  ret void
+}
+
+define void @invoke_with_operand_bundle1(i32* %ptr) personality i8 3 {
+; CHECK-LABEL: @invoke_with_operand_bundle1(
+ entry:
+  %l = load i32, i32* %ptr
+  %x = add i32 42, 1
+
+  invoke void @op_bundle_callee_0() to label %normal unwind label %exception
+; CHECK: invoke void @op_bundle_callee_0(){{$}}
+
+exception:
+  %cleanup = landingpad i8 cleanup
+  br label %normal
+
+normal:
+  invoke void @op_bundle_callee_0() [ "foo"() ] to label %normal1 unwind label %exception1
+; CHECK: invoke void @op_bundle_callee_0() [ "foo"() ]
+
+exception1:
+  %cleanup1 = landingpad i8 cleanup
+  br label %normal1
+
+normal1:
+  invoke void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "foo"(i32 42, float  0.000000e+00, i32 %l) ] to label %normal2 unwind label %exception2
+; CHECK: invoke void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "foo"(i32 42, float  0.000000e+00, i32 %l) ]
+
+exception2:
+  %cleanup2 = landingpad i8 cleanup
+  br label %normal2
+
+normal2:
+  ret void
+}
+
+define void @invoke_with_operand_bundle2(i32* %ptr) personality i8 3 {
+; CHECK-LABEL: @invoke_with_operand_bundle2(
+ entry:
+  invoke void @op_bundle_callee_0() [ "foo"() ] to label %normal unwind label %exception
+; CHECK: invoke void @op_bundle_callee_0() [ "foo"() ]
+
+exception:
+  %cleanup = landingpad i8 cleanup
+  br label %normal
+normal:
+  ret void
+}
+
+define void @invoke_with_operand_bundle3(i32* %ptr) personality i8 3 {
+; CHECK-LABEL: @invoke_with_operand_bundle3(
+ entry:
+  %l = load i32, i32* %ptr
+  %x = add i32 42, 1
+  invoke void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "foo"(i32 42, float  0.000000e+00, i32 %l) ] to label %normal unwind label %exception
+; CHECK: invoke void @op_bundle_callee_0() [ "foo"(i32 42, i64 100, i32 %x), "foo"(i32 42, float  0.000000e+00, i32 %l) ]
+
+exception:
+  %cleanup = landingpad i8 cleanup
+  br label %normal
+normal:
+  ret void
+}
+
+define void @invoke_with_operand_bundle4(i32* %ptr) personality i8 3 {
+; CHECK-LABEL: @invoke_with_operand_bundle4(
+ entry:
+  %l = load i32, i32* %ptr
+  %x = add i32 42, 1
+  invoke void @op_bundle_callee_1(i32 10, i32 %x) [ "foo"(i32 42, i64 100, i32 %x), "foo"(i32 42, float  0.000000e+00, i32 %l) ]
+        to label %normal unwind label %exception
+; CHECK: invoke void @op_bundle_callee_1(i32 10, i32 %x) [ "foo"(i32 42, i64 100, i32 %x), "foo"(i32 42, float  0.000000e+00, i32 %l) ]
+
+exception:
+  %cleanup = landingpad i8 cleanup
+  br label %normal
+normal:
+  ret void
+}
+
 
 ; CHECK: attributes #0 = { alignstack=4 }
 ; CHECK: attributes #1 = { alignstack=8 }

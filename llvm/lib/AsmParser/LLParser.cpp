@@ -1942,7 +1942,61 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
   return false;
 }
 
+/// ParseOptionalOperandBundles
+///    ::= /*empty*/
+///    ::= '[' OperandBundle [, OperandBundle ]* ']'
+///
+/// OperandBundle
+///    ::= bundle-tag '(' ')'
+///    ::= bundle-tag '(' Type Value [, Type Value ]* ')'
+///
+/// bundle-tag ::= String Constant
+bool LLParser::ParseOptionalOperandBundles(
+    SmallVectorImpl<OperandBundleDef> &BundleList, PerFunctionState &PFS) {
+  LocTy BeginLoc = Lex.getLoc();
+  if (!EatIfPresent(lltok::lsquare))
+    return false;
 
+  while (Lex.getKind() != lltok::rsquare) {
+    // If this isn't the first operand bundle, we need a comma.
+    if (!BundleList.empty() &&
+        ParseToken(lltok::comma, "expected ',' in input list"))
+      return true;
+
+    std::string Tag;
+    if (ParseStringConstant(Tag))
+      return true;
+
+    BundleList.emplace_back();
+    auto &OBI = BundleList.back();
+
+    OBI.Tag = std::move(Tag);
+
+    if (ParseToken(lltok::lparen, "expected '(' in operand bundle"))
+      return true;
+
+    while (Lex.getKind() != lltok::rparen) {
+      // If this isn't the first input, we need a comma.
+      if (!OBI.Inputs.empty() &&
+          ParseToken(lltok::comma, "expected ',' in input list"))
+        return true;
+
+      Type *Ty = nullptr;
+      Value *Input = nullptr;
+      if (ParseType(Ty) || ParseValue(Ty, Input, PFS))
+        return true;
+      OBI.Inputs.push_back(Input);
+    }
+
+    Lex.Lex(); // Lex the ')'.
+  }
+
+  if (BundleList.empty())
+    return Error(BeginLoc, "operand bundle set must not be empty");
+
+  Lex.Lex(); // Lex the ']'.
+  return false;
+}
 
 /// ParseArgumentList - Parse the argument list for a function type or function
 /// prototype.
@@ -4991,15 +5045,15 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   LocTy RetTypeLoc;
   ValID CalleeID;
   SmallVector<ParamInfo, 16> ArgList;
+  SmallVector<OperandBundleDef, 2> BundleList;
 
   BasicBlock *NormalBB, *UnwindBB;
-  if (ParseOptionalCallingConv(CC) ||
-      ParseOptionalReturnAttrs(RetAttrs) ||
+  if (ParseOptionalCallingConv(CC) || ParseOptionalReturnAttrs(RetAttrs) ||
       ParseType(RetType, RetTypeLoc, true /*void allowed*/) ||
-      ParseValID(CalleeID) ||
-      ParseParameterList(ArgList, PFS) ||
+      ParseValID(CalleeID) || ParseParameterList(ArgList, PFS) ||
       ParseFnAttributeValuePairs(FnAttrs, FwdRefAttrGrps, false,
                                  NoBuiltinLoc) ||
+      ParseOptionalOperandBundles(BundleList, PFS) ||
       ParseToken(lltok::kw_to, "expected 'to' in invoke") ||
       ParseTypeAndBasicBlock(NormalBB, PFS) ||
       ParseToken(lltok::kw_unwind, "expected 'unwind' in invoke") ||
@@ -5075,7 +5129,8 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   // Finish off the Attribute and check them
   AttributeSet PAL = AttributeSet::get(Context, Attrs);
 
-  InvokeInst *II = InvokeInst::Create(Ty, Callee, NormalBB, UnwindBB, Args);
+  InvokeInst *II =
+      InvokeInst::Create(Ty, Callee, NormalBB, UnwindBB, Args, BundleList);
   II->setCallingConv(CC);
   II->setAttributes(PAL);
   ForwardRefAttrGroups[II] = FwdRefAttrGrps;
@@ -5589,18 +5644,18 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   LocTy RetTypeLoc;
   ValID CalleeID;
   SmallVector<ParamInfo, 16> ArgList;
+  SmallVector<OperandBundleDef, 2> BundleList;
   LocTy CallLoc = Lex.getLoc();
 
   if ((TCK != CallInst::TCK_None &&
        ParseToken(lltok::kw_call, "expected 'tail call'")) ||
-      ParseOptionalCallingConv(CC) ||
-      ParseOptionalReturnAttrs(RetAttrs) ||
+      ParseOptionalCallingConv(CC) || ParseOptionalReturnAttrs(RetAttrs) ||
       ParseType(RetType, RetTypeLoc, true /*void allowed*/) ||
       ParseValID(CalleeID) ||
       ParseParameterList(ArgList, PFS, TCK == CallInst::TCK_MustTail,
                          PFS.getFunction().isVarArg()) ||
-      ParseFnAttributeValuePairs(FnAttrs, FwdRefAttrGrps, false,
-                                 BuiltinLoc))
+      ParseFnAttributeValuePairs(FnAttrs, FwdRefAttrGrps, false, BuiltinLoc) ||
+      ParseOptionalOperandBundles(BundleList, PFS))
     return true;
 
   // If RetType is a non-function pointer type, then this is the short syntax
@@ -5672,7 +5727,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   // Finish off the Attribute and check them
   AttributeSet PAL = AttributeSet::get(Context, Attrs);
 
-  CallInst *CI = CallInst::Create(Ty, Callee, Args);
+  CallInst *CI = CallInst::Create(Ty, Callee, Args, BundleList);
   CI->setTailCallKind(TCK);
   CI->setCallingConv(CC);
   CI->setAttributes(PAL);

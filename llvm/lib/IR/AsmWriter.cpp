@@ -2022,6 +2022,7 @@ public:
 
   void writeOperand(const Value *Op, bool PrintType);
   void writeParamOperand(const Value *Operand, AttributeSet Attrs,unsigned Idx);
+  void writeOperandBundles(ImmutableCallSite CS);
   void writeAtomic(AtomicOrdering Ordering, SynchronizationScope SynchScope);
   void writeAtomicCmpXchg(AtomicOrdering SuccessOrdering,
                           AtomicOrdering FailureOrdering,
@@ -2155,6 +2156,43 @@ void AssemblyWriter::writeParamOperand(const Value *Operand,
   Out << ' ';
   // Print the operand
   WriteAsOperandInternal(Out, Operand, &TypePrinter, &Machine, TheModule);
+}
+
+void AssemblyWriter::writeOperandBundles(ImmutableCallSite CS) {
+  if (!CS.hasOperandBundles())
+    return;
+
+  Out << " [ ";
+
+  bool FirstBundle = true;
+  for (unsigned i = 0, e = CS.getNumOperandBundles(); i != e; ++i) {
+    OperandBundleUse BU = CS.getOperandBundle(i);
+
+    if (!FirstBundle)
+      Out << ", ";
+    FirstBundle = false;
+
+    Out << '"';
+    PrintEscapedString(BU.Tag, Out);
+    Out << '"';
+
+    Out << '(';
+
+    bool FirstInput = true;
+    for (const auto &Input : BU.Inputs) {
+      if (!FirstInput)
+        Out << ", ";
+      FirstInput = false;
+
+      TypePrinter.print(Input->getType(), Out);
+      Out << " ";
+      WriteAsOperandInternal(Out, Input, &TypePrinter, &Machine, TheModule);
+    }
+
+    Out << ')';
+  }
+
+  Out << " ]";
 }
 
 void AssemblyWriter::printModule(const Module *M) {
@@ -2944,6 +2982,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << ')';
     if (PAL.hasAttributes(AttributeSet::FunctionIndex))
       Out << " #" << Machine.getAttributeGroupSlot(PAL.getFnAttributes());
+
+    writeOperandBundles(CI);
+
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
     Operand = II->getCalledValue();
     FunctionType *FTy = cast<FunctionType>(II->getFunctionType());
@@ -2977,6 +3018,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << ')';
     if (PAL.hasAttributes(AttributeSet::FunctionIndex))
       Out << " #" << Machine.getAttributeGroupSlot(PAL.getFnAttributes());
+
+    writeOperandBundles(II);
 
     Out << "\n          to ";
     writeOperand(II->getNormalDest(), true);

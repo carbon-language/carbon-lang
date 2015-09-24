@@ -226,6 +226,8 @@ class BitcodeReader : public GVMaterializer {
 
   bool StripDebugInfo = false;
 
+  std::vector<std::string> BundleTags;
+
 public:
   std::error_code error(BitcodeError E, const Twine &Message);
   std::error_code error(BitcodeError E);
@@ -370,6 +372,7 @@ private:
   std::error_code parseAttributeGroupBlock();
   std::error_code parseTypeTable();
   std::error_code parseTypeTableBody();
+  std::error_code parseOperandBundleTags();
 
   ErrorOr<Value *> recordValue(SmallVectorImpl<uint64_t> &Record,
                                unsigned NameIndex, Triple &TT);
@@ -1583,6 +1586,42 @@ std::error_code BitcodeReader::parseTypeTableBody() {
           "Invalid TYPE table: Only named structs can be forward referenced");
     assert(ResultTy && "Didn't read a type?");
     TypeList[NumRecords++] = ResultTy;
+  }
+}
+
+std::error_code BitcodeReader::parseOperandBundleTags() {
+  if (Stream.EnterSubBlock(bitc::OPERAND_BUNDLE_TAGS_BLOCK_ID))
+    return error("Invalid record");
+
+  if (!BundleTags.empty())
+    return error("Invalid multiple blocks");
+
+  SmallVector<uint64_t, 64> Record;
+
+  while (1) {
+    BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
+
+    switch (Entry.Kind) {
+    case BitstreamEntry::SubBlock: // Handled for us already.
+    case BitstreamEntry::Error:
+      return error("Malformed block");
+    case BitstreamEntry::EndBlock:
+      return std::error_code();
+    case BitstreamEntry::Record:
+      // The interesting case.
+      break;
+    }
+
+    // Tags are implicitly mapped to integers by their order.
+
+    if (Stream.readRecord(Entry.ID, Record) != bitc::OPERAND_BUNDLE_TAG)
+      return error("Invalid record");
+
+    // OPERAND_BUNDLE_TAG: [strchr x N]
+    BundleTags.emplace_back();
+    if (convertToString(Record, 0, BundleTags.back()))
+      return error("Invalid record");
+    Record.clear();
   }
 }
 
@@ -3019,6 +3058,10 @@ std::error_code BitcodeReader::parseModule(bool Resume,
         if (std::error_code EC = parseUseLists())
           return EC;
         break;
+      case bitc::OPERAND_BUNDLE_TAGS_BLOCK_ID:
+        if (std::error_code EC = parseOperandBundleTags())
+          return EC;
+        break;
       }
       continue;
 
@@ -3555,6 +3598,8 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       return &FunctionBBs[CurBBNo - 1]->back();
     return nullptr;
   };
+
+  std::vector<OperandBundleDef> OperandBundles;
 
   // Read all the records.
   SmallVector<uint64_t, 64> Record;
@@ -4325,7 +4370,8 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
         }
       }
 
-      I = InvokeInst::Create(Callee, NormalBB, UnwindBB, Ops);
+      I = InvokeInst::Create(Callee, NormalBB, UnwindBB, Ops, OperandBundles);
+      OperandBundles.clear();
       InstructionList.push_back(I);
       cast<InvokeInst>(I)
           ->setCallingConv(static_cast<CallingConv::ID>(~(1U << 13) & CCInfo));
@@ -4708,7 +4754,8 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
         }
       }
 
-      I = CallInst::Create(FTy, Callee, Args);
+      I = CallInst::Create(FTy, Callee, Args, OperandBundles);
+      OperandBundles.clear();
       InstructionList.push_back(I);
       cast<CallInst>(I)->setCallingConv(
           static_cast<CallingConv::ID>((~(1U << 14) & CCInfo) >> 1));
@@ -4733,6 +4780,30 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       InstructionList.push_back(I);
       break;
     }
+
+    case bitc::FUNC_CODE_OPERAND_BUNDLE: {
+      // A call or an invoke can be optionally prefixed with some variable
+      // number of operand bundle blocks.  These blocks are read into
+      // OperandBundles and consumed at the next call or invoke instruction.
+
+      if (Record.size() < 1 || Record[0] >= BundleTags.size())
+        return error("Invalid record");
+
+      OperandBundles.emplace_back();
+      OperandBundles.back().Tag = BundleTags[Record[0]];
+
+      std::vector<Value *> &Inputs = OperandBundles.back().Inputs;
+
+      unsigned OpNum = 1;
+      while (OpNum != Record.size()) {
+        Value *Op;
+        if (getValueTypePair(Record, OpNum, NextValueNo, Op))
+          return error("Invalid record");
+        Inputs.push_back(Op);
+      }
+
+      continue;
+    }
     }
 
     // Add instruction to end of current BB.  If there is no current BB, reject
@@ -4740,6 +4811,10 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
     if (!CurBB) {
       delete I;
       return error("Invalid instruction with no BB");
+    }
+    if (!OperandBundles.empty()) {
+      delete I;
+      return error("Operand bundles found with no consumer");
     }
     CurBB->getInstList().push_back(I);
 
@@ -4756,6 +4831,9 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
   }
 
 OutOfRecordLoop:
+
+  if (!OperandBundles.empty())
+    return error("Operand bundles found with no consumer");
 
   // Check the function list for unresolved values.
   if (Argument *A = dyn_cast<Argument>(ValueList.back())) {

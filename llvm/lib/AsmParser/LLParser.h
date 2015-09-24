@@ -406,6 +406,10 @@ namespace llvm {
                             bool IsMustTailCall = false,
                             bool InVarArgsFunc = false);
 
+    bool
+    ParseOptionalOperandBundles(SmallVectorImpl<OperandBundleDef> &BundleList,
+                                PerFunctionState &PFS);
+
     bool ParseExceptionArgs(SmallVectorImpl<Value *> &Args,
                             PerFunctionState &PFS);
 

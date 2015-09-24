@@ -16,11 +16,13 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/UseListOrder.h"
@@ -1392,6 +1394,33 @@ static void WriteModuleMetadataStore(const Module *M, BitstreamWriter &Stream) {
   Stream.ExitBlock();
 }
 
+static void WriteOperandBundleTags(const Module *M, BitstreamWriter &Stream) {
+  // Write metadata kinds
+  //
+  // OPERAND_BUNDLE_TAGS_BLOCK_ID : N x OPERAND_BUNDLE_TAG
+  //
+  // OPERAND_BUNDLE_TAG - [strchr x N]
+
+  SmallVector<StringRef, 8> Tags;
+  M->getOperandBundleTags(Tags);
+
+  if (Tags.empty())
+    return;
+
+  Stream.EnterSubblock(bitc::OPERAND_BUNDLE_TAGS_BLOCK_ID, 3);
+
+  SmallVector<uint64_t, 64> Record;
+
+  for (auto Tag : Tags) {
+    Record.append(Tag.begin(), Tag.end());
+
+    Stream.EmitRecord(bitc::OPERAND_BUNDLE_TAG, Record, 0);
+    Record.clear();
+  }
+
+  Stream.ExitBlock();
+}
+
 static void emitSignedInt64(SmallVectorImpl<uint64_t> &Vals, uint64_t V) {
   if ((int64_t)V >= 0)
     Vals.push_back(V << 1);
@@ -1700,6 +1729,23 @@ static bool PushValueAndType(const Value *V, unsigned InstID,
   return false;
 }
 
+static void WriteOperandBundles(BitstreamWriter &Stream, ImmutableCallSite CS,
+                                unsigned InstID, ValueEnumerator &VE) {
+  SmallVector<unsigned, 64> Record;
+  LLVMContext &C = CS.getInstruction()->getContext();
+
+  for (unsigned i = 0, e = CS.getNumOperandBundles(); i != e; ++i) {
+    const auto &Bundle = CS.getOperandBundle(i);
+    Record.push_back(C.getOperandBundleTagID(Bundle.Tag));
+
+    for (auto &Input : Bundle.Inputs)
+      PushValueAndType(Input, InstID, Record, VE);
+
+    Stream.EmitRecord(bitc::FUNC_CODE_OPERAND_BUNDLE, Record);
+    Record.clear();
+  }
+}
+
 /// pushValue - Like PushValueAndType, but where the type of the value is
 /// omitted (perhaps it was already encoded in an earlier operand).
 static void pushValue(const Value *V, unsigned InstID,
@@ -1862,6 +1908,10 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     const InvokeInst *II = cast<InvokeInst>(&I);
     const Value *Callee = II->getCalledValue();
     FunctionType *FTy = II->getFunctionType();
+
+    if (II->hasOperandBundles())
+      WriteOperandBundles(Stream, II, InstID, VE);
+
     Code = bitc::FUNC_CODE_INST_INVOKE;
 
     Vals.push_back(VE.getAttributeID(II->getAttributes()));
@@ -2070,6 +2120,9 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::Call: {
     const CallInst &CI = cast<CallInst>(I);
     FunctionType *FTy = CI.getFunctionType();
+
+    if (CI.hasOperandBundles())
+      WriteOperandBundles(Stream, &CI, InstID, VE);
 
     Code = bitc::FUNC_CODE_INST_CALL;
 
@@ -2590,6 +2643,8 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream,
   // Emit module-level use-lists.
   if (VE.shouldPreserveUseListOrder())
     WriteUseListBlock(nullptr, VE, Stream);
+
+  WriteOperandBundleTags(M, Stream);
 
   // Emit function bodies.
   DenseMap<const Function *, uint64_t> FunctionIndex;

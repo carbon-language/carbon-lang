@@ -1438,6 +1438,53 @@ example:
     the ELF x86-64 abi, but it can be disabled for some compilation
     units.
 
+
+.. _opbundles:
+
+Operand Bundles
+---------------
+
+Note: operand bundles are a work in progress, and they should be
+considered experimental at this time.
+
+Operand bundles are tagged sets of SSA values that can be associated
+with certain LLVM instructions (currently only ``call``s and
+``invoke``s).  In a way they are like metadata, but dropping them is
+incorrect and will change program semantics.
+
+Syntax::
+    operand bundle set ::= '[' operand bundle ']'
+    operand bundle ::= tag '(' [ bundle operand ] (, bundle operand )* ')'
+    bundle operand ::= SSA value
+    tag ::= string constant
+
+Operand bundles are **not** part of a function's signature, and a
+given function may be called from multiple places with different kinds
+of operand bundles.  This reflects the fact that the operand bundles
+are conceptually a part of the ``call`` (or ``invoke``), not the
+callee being dispatched to.
+
+Operand bundles are a generic mechanism intended to support
+runtime-introspection-like functionality for managed languages.  While
+the exact semantics of an operand bundle depend on the bundle tag,
+there are certain limitations to how much the presence of an operand
+bundle can influence the semantics of a program.  These restrictions
+are described as the semantics of an "unknown" operand bundle.  As
+long as the behavior of an operand bundle is describable within these
+restrictions, LLVM does not need to have special knowledge of the
+operand bundle to not miscompile programs containing it.
+
+ - The bundle operands for an unknown operand bundle escape in unknown
+   ways before control is transferred to the callee or invokee.
+
+ - Calls and invokes with operand bundles have unknown read / write
+   effect on the heap on entry and exit (even if the call target is
+   ``readnone`` or ``readonly``).
+
+ - An operand bundle at a call site cannot change the implementation
+   of the called function.  Inter-procedural optimizations work as
+   usual as long as they take into account the first two properties.
+
 .. _moduleasm:
 
 Module-Level Inline Assembly
@@ -5061,7 +5108,7 @@ Syntax:
 ::
 
       <result> = invoke [cconv] [ret attrs] <ptr to function ty> <function ptr val>(<function args>) [fn attrs]
-                    to label <normal label> unwind label <exception label>
+                    [operand bundles] to label <normal label> unwind label <exception label>
 
 Overview:
 """""""""
@@ -5115,6 +5162,7 @@ This instruction requires several arguments:
 #. The optional :ref:`function attributes <fnattrs>` list. Only
    '``noreturn``', '``nounwind``', '``readonly``' and '``readnone``'
    attributes are valid here.
+#. The optional :ref:`operand bundles <opbundles>` list.
 
 Semantics:
 """"""""""
@@ -8310,6 +8358,7 @@ Syntax:
 ::
 
       <result> = [tail | musttail] call [cconv] [ret attrs] <ty> [<fnty>*] <fnptrval>(<function args>) [fn attrs]
+                   [ operand bundles ]
 
 Overview:
 """""""""
@@ -8389,6 +8438,7 @@ This instruction requires several arguments:
 #. The optional :ref:`function attributes <fnattrs>` list. Only
    '``noreturn``', '``nounwind``', '``readonly``' and '``readnone``'
    attributes are valid here.
+#. The optional :ref:`operand bundles <opbundles>` list.
 
 Semantics:
 """"""""""
