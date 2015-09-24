@@ -1730,6 +1730,8 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
       // legalize it.
       legalizeOpWithMove(MI, Idx);
     }
+
+    return;
   }
 
   // Legalize REG_SEQUENCE and PHI
@@ -1785,6 +1787,8 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
               .addOperand(MI->getOperand(i));
       MI->getOperand(i).setReg(DstReg);
     }
+
+    return;
   }
 
   // Legalize INSERT_SUBREG
