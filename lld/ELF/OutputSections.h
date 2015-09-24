@@ -186,6 +186,8 @@ public:
       ++NumLocals;
   }
 
+  bool shouldKeepInSymtab(StringRef Name);
+
   StringTableSection<ELFT::Is64Bits> &getStrTabSec() const { return StrTabSec; }
   unsigned getNumSymbols() const { return NumVisible + 1; }
 

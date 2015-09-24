@@ -88,6 +88,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (Args.hasArg(OPT_discard_locals))
     Config->DiscardLocals = true;
 
+  if (Args.hasArg(OPT_discard_none))
+    Config->DiscardNone = true;
+
   if (Args.hasArg(OPT_export_dynamic))
     Config->ExportDynamic = true;
 

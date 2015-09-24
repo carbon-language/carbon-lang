@@ -272,6 +272,15 @@ bool lld::elf2::includeInSymtab(const SymbolBody &B) {
   return true;
 }
 
+template <class ELFT>
+bool SymbolTableSection<ELFT>::shouldKeepInSymtab(StringRef SymName) {
+  if (Config->DiscardNone)
+    return true;
+
+  // ELF defines dynamic locals as symbols which name starts with ".L".
+  return !(Config->DiscardLocals && SymName.startswith(".L"));
+}
+
 bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
   if (Config->ExportDynamic || Config->Shared)
     return true;
@@ -294,7 +303,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
         auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
         uint32_t SecIndex = Sym.st_shndx;
         ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
-        if (Config->DiscardLocals && SymName->startswith(".L"))
+        if (SymName && !shouldKeepInSymtab(*SymName))
           continue;
         ESym->st_name = (SymName) ? StrTabSec.getFileOff(*SymName) : 0;
         ESym->st_size = Sym.st_size;

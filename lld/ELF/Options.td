@@ -28,6 +28,9 @@ def discard_locals : Flag<["-"], "discard-locals">,
 def alias_discard_locals: Flag<["-"], "X">,
      Alias<discard_locals>;
 
+def discard_none : Flag<["-"], "discard-none">,
+     HelpText<"Keep all symbols in the symbol table">;
+
 //===----------------------------------------------------------------------===//
 /// Ignored options
 //===----------------------------------------------------------------------===//

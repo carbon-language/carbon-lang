@@ -22,6 +22,7 @@ struct Configuration {
   bool Shared = false;
   bool DiscardAll = false;
   bool DiscardLocals = false;
+  bool DiscardNone = false;
   bool ExportDynamic = false;
 };
 
