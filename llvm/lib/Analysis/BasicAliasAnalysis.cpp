@@ -627,6 +627,47 @@ static bool isAssumeIntrinsic(ImmutableCallSite CS) {
   return false;
 }
 
+static const Function *getParent(const Value *V) {
+  if (const Instruction *inst = dyn_cast<Instruction>(V))
+    return inst->getParent()->getParent();
+
+  if (const Argument *arg = dyn_cast<Argument>(V))
+    return arg->getParent();
+
+  return nullptr;
+}
+
+static bool notDifferentParent(const Value *O1, const Value *O2) {
+
+  const Function *F1 = getParent(O1);
+  const Function *F2 = getParent(O2);
+
+  return !F1 || !F2 || F1 == F2;
+}
+
+AliasResult BasicAAResult::alias(const MemoryLocation &LocA,
+                                 const MemoryLocation &LocB) {
+  assert(notDifferentParent(LocA.Ptr, LocB.Ptr) &&
+         "BasicAliasAnalysis doesn't support interprocedural queries.");
+
+  // If we have a directly cached entry for these locations, we have recursed
+  // through this once, so just return the cached results. Notably, when this
+  // happens, we don't clear the cache.
+  auto CacheIt = AliasCache.find(LocPair(LocA, LocB));
+  if (CacheIt != AliasCache.end())
+    return CacheIt->second;
+
+  AliasResult Alias = aliasCheck(LocA.Ptr, LocA.Size, LocA.AATags, LocB.Ptr,
+                                 LocB.Size, LocB.AATags);
+  // AliasCache rarely has more than 1 or 2 elements, always use
+  // shrink_and_clear so it quickly returns to the inline capacity of the
+  // SmallDenseMap if it ever grows larger.
+  // FIXME: This should really be shrink_to_inline_capacity_and_clear().
+  AliasCache.shrink_and_clear();
+  VisitedPhiBBs.clear();
+  return Alias;
+}
+
 /// Checks to see if the specified callsite can clobber the specified memory
 /// object.
 ///
