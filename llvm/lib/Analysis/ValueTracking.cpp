@@ -1827,6 +1827,23 @@ bool isKnownNonZero(Value *V, const DataLayout &DL, unsigned Depth,
     ComputeSignBit(X, XKnownNonNegative, XKnownNegative, DL, Depth, Q);
     if (XKnownNegative)
       return true;
+
+    // If the shifter operand is a constant, and all of the bits shifted
+    // out are known to be zero, and X is known non-zero then at least one
+    // non-zero bit must remain.
+    if (ConstantInt *Shift = dyn_cast<ConstantInt>(Y)) {
+      APInt KnownZero(BitWidth, 0);
+      APInt KnownOne(BitWidth, 0);
+      computeKnownBits(X, KnownZero, KnownOne, DL, Depth, Q);
+      
+      auto ShiftVal = Shift->getLimitedValue(BitWidth - 1);
+      // Is there a known one in the portion not shifted out?
+      if (KnownOne.countLeadingZeros() < BitWidth - ShiftVal)
+        return true;
+      // Are all the bits to be shifted out known zero?
+      if (KnownZero.countTrailingOnes() >= ShiftVal)
+        return isKnownNonZero(X, DL, Depth, Q);
+    }
   }
   // div exact can only produce a zero if the dividend is zero.
   else if (match(V, m_Exact(m_IDiv(m_Value(X), m_Value())))) {
