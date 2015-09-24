@@ -138,7 +138,6 @@ set_target_properties(omp PROPERTIES
   PREFIX "" SUFFIX "" OUTPUT_NAME "${LIBOMP_LIB_FILE}"
   LINK_FLAGS "${LIBOMP_CONFIGURED_LDFLAGS}"
   LINKER_LANGUAGE ${LIBOMP_LINKER_LANGUAGE}
-  SKIP_BUILD_RPATH true # have Mac linker -install_name just be "-install_name libomp.dylib"
 )
 
 # Get the library's location within the build tree for the unit tester
@@ -209,7 +208,6 @@ if(WIN32)
   set_target_properties(ompimp PROPERTIES
     PREFIX "" SUFFIX "" OUTPUT_NAME "${LIBOMP_IMP_LIB_FILE}"
     LINKER_LANGUAGE C
-    SKIP_BUILD_RPATH true
   )
   add_dependencies(ompimp omp) # ensure generated import library is created first
 
