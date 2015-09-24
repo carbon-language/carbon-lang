@@ -45,7 +45,6 @@ public:
 
   IteratorT begin() const { return begin_iterator; }
   IteratorT end() const { return end_iterator; }
-  bool empty() const { return begin_iterator == end_iterator; }
 };
 
 /// \brief Convenience function for iterating over sub-ranges.
