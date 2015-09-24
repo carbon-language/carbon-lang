@@ -6164,13 +6164,13 @@ std::string arm::getARMTargetCPU(StringRef CPU, StringRef Arch,
 StringRef arm::getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch,
                                        const llvm::Triple &Triple) {
   unsigned ArchKind;
-  Arch = tools::arm::getARMArch(Arch, Triple);
   if (CPU == "generic") {
-    ArchKind = llvm::ARM::parseArch(Arch);
+    StringRef ARMArch = tools::arm::getARMArch(Arch, Triple);
+    ArchKind = llvm::ARM::parseArch(ARMArch);
     if (ArchKind == llvm::ARM::AK_INVALID)
       // In case of generic Arch, i.e. "arm",
       // extract arch from default cpu of the Triple
-      ArchKind = llvm::ARM::parseCPUArch(Triple.getARMCPUForArch(Arch));
+      ArchKind = llvm::ARM::parseCPUArch(Triple.getARMCPUForArch(ARMArch));
   } else {
     ArchKind = llvm::ARM::parseCPUArch(CPU);
   }
