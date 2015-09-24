@@ -207,7 +207,7 @@ class Curses(test_results.ResultsFormatter):
                         self.status_panel.add_status_item(name="unexpected_success", title="Unexpected Success", format="%u", width=30, value=0, update=False)
                         self.main_window.refresh()
                     elif event == 'terminate':
-                        self.main_window.key_event_loop()
+                        #self.main_window.key_event_loop()
                         lldbcurses.terminate_curses()
                         check_for_one_key = False
                         self.using_terminal = False
