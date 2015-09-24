@@ -1,8 +1,8 @@
 
 #include "length.h"
 
-size_t
-length (const std::string &str)
+int
+length (A &a)
 {
-  return str.length();
+  return a.length();
 }

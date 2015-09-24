@@ -16,9 +16,9 @@ class TestCppIncompleteTypes(TestBase):
         self.assertTrue(value_f.IsValid(), "'expr f' results in a valid SBValue object")
         self.assertFalse(value_f.GetError().Success(), "'expr f' results in an error, but LLDB does not crash")
 
-        value_s = frame.EvaluateExpression("s")
-        self.assertTrue(value_s.IsValid(), "'expr s' results in a valid SBValue object")
-        self.assertFalse(value_s.GetError().Success(), "'expr s' results in an error, but LLDB does not crash")
+        value_a = frame.EvaluateExpression("a")
+        self.assertTrue(value_a.IsValid(), "'expr a' results in a valid SBValue object")
+        self.assertFalse(value_a.GetError().Success(), "'expr a' results in an error, but LLDB does not crash")
 
     @dwarf_test
     @skipIfGcc
@@ -30,9 +30,9 @@ class TestCppIncompleteTypes(TestBase):
         self.assertTrue(value_f.IsValid(), "'expr f' results in a valid SBValue object")
         self.assertTrue(value_f.GetError().Success(), "'expr f' is successful")
 
-        value_s = frame.EvaluateExpression("s")
-        self.assertTrue(value_s.IsValid(), "'expr s' results in a valid SBValue object")
-        self.assertTrue(value_s.GetError().Success(), "'expr s' is successful")
+        value_a = frame.EvaluateExpression("a")
+        self.assertTrue(value_a.IsValid(), "'expr a' results in a valid SBValue object")
+        self.assertTrue(value_a.GetError().Success(), "'expr a' is successful")
 
     def setUp(self):
         TestBase.setUp(self)

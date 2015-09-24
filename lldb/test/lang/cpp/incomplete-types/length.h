@@ -1,8 +1,8 @@
 #ifndef __LENGTH_H__
 #define __LENGTH_H__
 
-#include <string>
+#include "a.h"
 
-size_t length (const std::string &str);
+int length (A &a);
 
 #endif

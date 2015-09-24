@@ -3,21 +3,16 @@
 
 class Foo {
 public:
-    Foo(std::string x) : s(x) {}
-
-private:
-    std::string s;
+    A a;
 };
 
-class MyString : public std::string {
-public:
-    MyString(std::string x) : std::string(x) {}
+class MyA : public A {
 };
 
 int main()
 {
-    Foo f("qwerty");
-    MyString s("qwerty");
+    Foo f;
+    MyA a;
 
-    return length(s); // break here
+    return length(a); // break here
 }
