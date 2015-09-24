@@ -619,6 +619,7 @@ ModRefInfo BasicAAResult::getArgModRefInfo(ImmutableCallSite CS,
   return AAResultBase::getArgModRefInfo(CS, ArgIdx);
 }
 
+#ifndef NDEBUG
 static bool isAssumeIntrinsic(ImmutableCallSite CS) {
   const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
   if (II && II->getIntrinsicID() == Intrinsic::assume)
@@ -636,6 +637,7 @@ static const Function *getParent(const Value *V) {
 
   return nullptr;
 }
+#endif
 
 static bool notDifferentParent(const Value *O1, const Value *O2) {
 
