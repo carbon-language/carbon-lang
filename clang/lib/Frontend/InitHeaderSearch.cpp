@@ -215,6 +215,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     case llvm::Triple::OpenBSD:
     case llvm::Triple::Bitrig:
     case llvm::Triple::NaCl:
+    case llvm::Triple::PS4:
       break;
     case llvm::Triple::Win32:
       if (triple.getEnvironment() != llvm::Triple::Cygnus)
@@ -320,6 +321,28 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
   case llvm::Triple::RTEMS:
   case llvm::Triple::NaCl:
     break;
+  case llvm::Triple::PS4: {
+    // <isysroot> gets prepended later in AddPath().
+    std::string BaseSDKPath = "";
+    if (!HasSysroot) {
+      const char *envValue = getenv("SCE_PS4_SDK_DIR");
+      if (envValue)
+        BaseSDKPath = envValue;
+      else {
+        // HSOpts.ResourceDir variable contains the location of Clang's
+        // resource files.
+        // Assuming that Clang is configured for PS4 without
+        // --with-clang-resource-dir option, the location of Clang's resource
+        // files is <SDK_DIR>/host_tools/lib/clang
+        SmallString<128> P = StringRef(HSOpts.ResourceDir);
+        llvm::sys::path::append(P, "../../..");
+        BaseSDKPath = P.str();
+      }
+    }
+    AddPath(BaseSDKPath + "/target/include", System, false);
+    if (triple.isPS4CPU())
+      AddPath(BaseSDKPath + "/target/include_common", System, false);
+  }
   default:
     AddPath("/usr/include", ExternCSystem, false);
     break;

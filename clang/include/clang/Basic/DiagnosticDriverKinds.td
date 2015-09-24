@@ -192,4 +192,18 @@ def warn_target_unsupported_nan2008 : Warning<
 def warn_target_unsupported_nanlegacy : Warning<
   "ignoring '-mnan=legacy' option because the '%0' architecture does not support it">,
   InGroup<UnsupportedNan>;
+
+def warn_drv_unable_to_find_directory_expected : Warning<
+  "unable to find %0 directory, expected to be in '%1'">,
+  InGroup<InvalidOrNonExistentDirectory>;
+
+def warn_drv_ps4_force_pic : Warning<
+  "option '%0' was ignored by the PS4 toolchain, using '-fPIC'">,
+  InGroup<OptionIgnored>;
+
+def warn_drv_ps4_sdk_dir : Warning<
+  "environment variable SCE_PS4_SDK_DIR is set, but points to invalid or nonexistent directory '%0'">,
+  InGroup<InvalidOrNonExistentDirectory>;
+
+def err_drv_unsupported_linker : Error<"unsupported value '%0' for -linker option">;
 }
