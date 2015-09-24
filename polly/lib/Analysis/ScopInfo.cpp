@@ -2707,6 +2707,8 @@ void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
         addMemoryAccess(OpIBB, OpI, MemoryAccess::MUST_WRITE, OpI, 1, true,
                         OpI);
       }
+    } else if (ModelReadOnlyScalars && !isa<Constant>(Op)) {
+      addMemoryAccess(OpBB, PHI, MemoryAccess::READ, Op, 1, true, Op);
     }
 
     // Always use the terminator of the incoming basic block as the access
@@ -2779,7 +2781,7 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     addMemoryAccess(UseParent, UI, MemoryAccess::READ, Inst, 1, true, Inst);
   }
 
-  if (ModelReadOnlyScalars) {
+  if (ModelReadOnlyScalars && !isa<PHINode>(Inst)) {
     for (Value *Op : Inst->operands()) {
       if (canSynthesize(Op, LI, SE, R))
         continue;
