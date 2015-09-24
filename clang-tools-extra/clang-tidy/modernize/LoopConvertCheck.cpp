@@ -472,11 +472,21 @@ void LoopConvertCheck::doConversion(
     // variable.
     for (const auto &Usage : Usages) {
       std::string ReplaceText;
+      SourceRange Range = Usage.Range;
       if (Usage.Expression) {
         // If this is an access to a member through the arrow operator, after
         // the replacement it must be accessed through the '.' operator.
         ReplaceText = Usage.Kind == Usage::UK_MemberThroughArrow ? VarName + "."
                                                                  : VarName;
+        auto Parents = Context->getParents(*Usage.Expression);
+        if (Parents.size() == 1) {
+          if (const auto *Paren = Parents[0].get<ParenExpr>()) {
+            // Usage.Expression will be replaced with the new index variable,
+            // and parenthesis around a simple DeclRefExpr can always be
+            // removed.
+            Range = Paren->getSourceRange();
+          }
+        }
       } else {
         // The Usage expression is only null in case of lambda captures (which
         // are VarDecl). If the index is captured by value, add '&' to capture
@@ -486,7 +496,7 @@ void LoopConvertCheck::doConversion(
       }
       TUInfo->getReplacedVars().insert(std::make_pair(Loop, IndexVar));
       Diag << FixItHint::CreateReplacement(
-          CharSourceRange::getTokenRange(Usage.Range), ReplaceText);
+          CharSourceRange::getTokenRange(Range), ReplaceText);
     }
   }
 

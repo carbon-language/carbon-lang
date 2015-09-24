@@ -199,7 +199,7 @@ void f() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : s)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (elem).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", elem.x);
 
   S *ps;
   for (S::iterator it = ps->begin(), e = ps->end(); it != e; ++it) {
@@ -207,7 +207,7 @@ void f() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & p : *ps)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (p).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", p.x);
 
   for (S::iterator it = s.begin(), e = s.end(); it != e; ++it) {
     printf("s has value %d\n", it->x);
@@ -228,7 +228,7 @@ void f() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : s)
-  // CHECK-FIXES-NEXT: (elem).x = 3;
+  // CHECK-FIXES-NEXT: elem.x = 3;
 
   for (S::iterator it = s.begin(), e = s.end(); it != e; ++it) {
     it->nonConstFun(4, 5);
@@ -250,7 +250,7 @@ void f() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : u)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (elem).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", elem.x);
 
   U::iterator A;
   for (U::iterator i = u.begin(), e = u.end(); i != e; ++i)
@@ -321,6 +321,21 @@ void f() {
       (void) *I;
     }
   }
+
+  dependent<Val *> dpp;
+  for (dependent<Val *>::iterator I = dpp.begin(), E = dpp.end(); I != E; ++I) {
+    printf("%d\n", (**I).x);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : dpp)
+  // CHECK-FIXES-NEXT: printf("%d\n", (*elem).x);
+
+  for (dependent<Val *>::iterator I = dpp.begin(), E = dpp.end(); I != E; ++I) {
+    printf("%d\n", (*I)->x);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : dpp)
+  // CHECK-FIXES-NEXT: printf("%d\n", elem->x);
 }
 
 // Tests to verify the proper use of auto where the init variable type and the
@@ -334,7 +349,7 @@ void different_type() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto elem : s)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (elem).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", elem.x);
 
   S *ps;
   for (S::const_iterator it = ps->begin(), e = ps->end(); it != e; ++it) {
@@ -342,7 +357,7 @@ void different_type() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto p : *ps)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (p).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", p.x);
 
   // v.begin() returns a user-defined type 'iterator' which, since it's
   // different from const_iterator, disqualifies these loops from

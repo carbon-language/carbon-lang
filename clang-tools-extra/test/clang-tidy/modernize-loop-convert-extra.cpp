@@ -267,7 +267,7 @@ void macroConflict() {
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & MAXs_it : MAXs)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (MAXs_it).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", MAXs_it.x);
   // CHECK-FIXES-NEXT: printf("Max of 3 and 5: %d\n", MAX(3, 5));
 
   for (S::const_iterator it = MAXs.begin(), e = MAXs.end(); it != e; ++it) {
@@ -276,7 +276,7 @@ void macroConflict() {
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto MAXs_it : MAXs)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (MAXs_it).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", MAXs_it.x);
   // CHECK-FIXES-NEXT: printf("Max of 3 and 5: %d\n", MAX(3, 5));
 
   T DEFs;
@@ -307,7 +307,7 @@ void keywordConflict() {
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & __FUNCTION__s_elem : __FUNCTION__s)
-  // CHECK-FIXES-NEXT: int __FUNCTION__s_it = (__FUNCTION__s_elem).x + 2;
+  // CHECK-FIXES-NEXT: int __FUNCTION__s_it = __FUNCTION__s_elem.x + 2;
 }
 
 void typeConflict() {
@@ -457,7 +457,7 @@ void f() {
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : NestT)
-  // CHECK-FIXES-NEXT: for (T::iterator TI = (elem).begin(), TE = (elem).end(); TI != TE; ++TI)
+  // CHECK-FIXES-NEXT: for (T::iterator TI = elem.begin(), TE = elem.end(); TI != TE; ++TI)
   // CHECK-FIXES-NEXT: printf("%d", *TI);
 
   // The inner loop is also convertible.
@@ -469,7 +469,7 @@ void f() {
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto elem : NestS)
-  // CHECK-FIXES-NEXT: for (S::const_iterator SI = (elem).begin(), SE = (elem).end(); SI != SE; ++SI)
+  // CHECK-FIXES-NEXT: for (S::const_iterator SI = elem.begin(), SE = elem.end(); SI != SE; ++SI)
   // CHECK-FIXES-NEXT: printf("%d", *SI);
 
   for (Nested<S>::const_iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
@@ -557,7 +557,7 @@ void f() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : s)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (elem).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", elem.x);
 
   S *ps;
   for (S::iterator it = ps->begin(); it != ps->end(); ++it) {
@@ -565,7 +565,7 @@ void f() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & p : *ps)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (p).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", p.x);
 
   for (S::iterator it = s.begin(); it != s.end(); ++it) {
     printf("s has value %d\n", it->x);
@@ -586,7 +586,7 @@ void f() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : s)
-  // CHECK-FIXES-NEXT: (elem).x = 3;
+  // CHECK-FIXES-NEXT: elem.x = 3;
 
   for (S::iterator it = s.begin(); it != s.end(); ++it) {
     it->nonConstFun(4, 5);
@@ -608,7 +608,7 @@ void f() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & elem : u)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (elem).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", elem.x);
 
   U::iterator A;
   for (U::iterator i = u.begin(); i != u.end(); ++i)
@@ -656,7 +656,7 @@ void different_type() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto elem : s)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (elem).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", elem.x);
 
   S *ps;
   for (S::const_iterator it = ps->begin(); it != ps->end(); ++it) {
@@ -664,7 +664,7 @@ void different_type() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto p : *ps)
-  // CHECK-FIXES-NEXT: printf("s has value %d\n", (p).x);
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", p.x);
 
   // v.begin() returns a user-defined type 'iterator' which, since it's
   // different from const_iterator, disqualifies these loops from
