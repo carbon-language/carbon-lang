@@ -159,6 +159,8 @@ template <class ELFT> class DefinedAbsolute : public Defined<ELFT> {
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
+  static Elf_Sym IgnoreUndef;
+
   explicit DefinedAbsolute(StringRef N, const Elf_Sym &Sym)
       : Defined<ELFT>(Base::DefinedAbsoluteKind, N, Sym) {}
 
@@ -166,6 +168,9 @@ public:
     return S->kind() == Base::DefinedAbsoluteKind;
   }
 };
+
+template <class ELFT>
+typename DefinedAbsolute<ELFT>::Elf_Sym DefinedAbsolute<ELFT>::IgnoreUndef;
 
 template <class ELFT> class DefinedCommon : public Defined<ELFT> {
   typedef ELFSymbolBody<ELFT> Base;

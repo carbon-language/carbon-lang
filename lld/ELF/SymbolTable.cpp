@@ -61,6 +61,23 @@ template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
     return;
   EntrySym = new (Alloc) Undefined<ELFT>("_start", Undefined<ELFT>::Synthetic);
   resolve<ELFT>(EntrySym);
+
+  // In the assembly for 32 bit x86 the _GLOBAL_OFFSET_TABLE_ symbol is magical
+  // and is used to produce a R_386_GOTPC relocation.
+  // The R_386_GOTPC relocation value doesn't actually depend on the
+  // symbol value, so it could use an index of STN_UNDEF which, according to the
+  // spec, means the symbol value is 0.
+  // Unfortunately both gas and MC keep the _GLOBAL_OFFSET_TABLE_ symbol in
+  // the object file.
+  // The situation is even stranger on x86_64 where the assembly doesn't
+  // need the magical symbol, but gas still puts _GLOBAL_OFFSET_TABLE_ as
+  // an undefined symbol in the .o files.
+  // Given that the symbol is effectively unused, we just create a dummy
+  // hidden one to avoid the undefined symbol error.
+  DefinedAbsolute<ELFT>::IgnoreUndef.setVisibility(STV_HIDDEN);
+  auto Got = new (Alloc) DefinedAbsolute<ELFT>(
+      "_GLOBAL_OFFSET_TABLE_", DefinedAbsolute<ELFT>::IgnoreUndef);
+  resolve<ELFT>(Got);
 }
 
 template <class ELFT> void SymbolTable::addELFFile(ELFFileBase *File) {
