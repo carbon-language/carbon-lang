@@ -871,7 +871,9 @@ public:
       const llvm::opt::ArgList &DriverArgs,
       llvm::opt::ArgStringList &CC1Args) const override;
 
-  bool getWindowsSDKDir(std::string &path, int &major, int &minor) const;
+  bool getWindowsSDKDir(std::string &path, int &major,
+                        std::string &windowsSDKIncludeVersion,
+                        std::string &windowsSDKLibVersion) const;
   bool getWindowsSDKLibraryPath(std::string &path) const;
   /// \brief Check if Universal CRT should be used if available
   bool useUniversalCRT(std::string &visualStudioDir) const;
@@ -889,7 +891,9 @@ protected:
   void AddSystemIncludeWithSubfolder(const llvm::opt::ArgList &DriverArgs,
                                      llvm::opt::ArgStringList &CC1Args,
                                      const std::string &folder,
-                                     const char *subfolder) const;
+                                     const Twine &subfolder1,
+                                     const Twine &subfolder2 = "",
+                                     const Twine &subfolder3 = "") const;
 
   Tool *buildLinker() const override;
   Tool *buildAssembler() const override;
