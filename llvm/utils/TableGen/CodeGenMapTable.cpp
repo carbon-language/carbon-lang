@@ -471,7 +471,7 @@ void MapTableEmitter::emitTablesWithFunc(raw_ostream &OS) {
 
   ListInit *ColFields = InstrMapDesc.getColFields();
   const std::vector<ListInit*> &ValueCols = InstrMapDesc.getValueCols();
-  OS << "// "<< InstrMapDesc.getName() << "\n";
+  OS << "// "<< InstrMapDesc.getName() << "\nLLVM_READONLY\n";
   OS << "int "<< InstrMapDesc.getName() << "(uint16_t Opcode";
   if (ValueCols.size() > 1) {
     for (Init *CF : ColFields->getValues()) {
