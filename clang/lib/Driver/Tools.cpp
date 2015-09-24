@@ -6165,7 +6165,7 @@ StringRef arm::getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch,
                                        const llvm::Triple &Triple) {
   unsigned ArchKind;
   if (CPU == "generic") {
-    StringRef ARMArch = tools::arm::getARMArch(Arch, Triple);
+    std::string ARMArch = tools::arm::getARMArch(Arch, Triple);
     ArchKind = llvm::ARM::parseArch(ARMArch);
     if (ArchKind == llvm::ARM::AK_INVALID)
       // In case of generic Arch, i.e. "arm",
