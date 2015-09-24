@@ -16,7 +16,7 @@ int test_omp_get_wtime()
   my_sleep (wait_time); 
   end = omp_get_wtime();
   measured_time = end-start;
-  return ((measured_time > 0.99 * wait_time) && (measured_time < 1.01 * wait_time)) ;
+  return ((measured_time > 0.97 * wait_time) && (measured_time < 1.03 * wait_time)) ;
 }
 
 int main()
