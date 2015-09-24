@@ -149,7 +149,6 @@ namespace {
     bool optimizeSelect(MachineInstr *MI,
                         SmallPtrSetImpl<MachineInstr *> &LocalMIs);
     bool optimizeCondBranch(MachineInstr *MI);
-    bool optimizeCopyOrBitcast(MachineInstr *MI);
     bool optimizeCoalescableCopy(MachineInstr *MI);
     bool optimizeUncoalescableCopy(MachineInstr *MI,
                                    SmallPtrSetImpl<MachineInstr *> &LocalMIs);
