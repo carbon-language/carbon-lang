@@ -36,6 +36,6 @@
 // CHECK-LE64:   Ident {
 // CHECK-LE64:     Class: 64-bit
 // CHECK-LE64:     DataEncoding: LittleEndian
-// CHECK-LE64:     OS/ABI: GNU/Linux
+// CHECK-LE64:     OS/ABI: SystemV
 // CHECK-LE64:   }
 // CHECK-LE64: }
