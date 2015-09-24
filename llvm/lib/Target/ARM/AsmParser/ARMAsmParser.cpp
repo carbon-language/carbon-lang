@@ -272,8 +272,8 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool hasARM() const {
     return !STI.getFeatureBits()[ARM::FeatureNoARM];
   }
-  bool hasThumb2DSP() const {
-    return STI.getFeatureBits()[ARM::FeatureDSPThumb2];
+  bool hasDSP() const {
+    return STI.getFeatureBits()[ARM::FeatureDSP];
   }
   bool hasD16() const {
     return STI.getFeatureBits()[ARM::FeatureD16];
@@ -3972,7 +3972,7 @@ ARMAsmParser::parseMSRMaskOperand(OperandVector &Operands) {
     if (FlagsVal == ~0U)
       return MatchOperand_NoMatch;
 
-    if (!hasThumb2DSP() && (FlagsVal & 0x400))
+    if (!hasDSP() && (FlagsVal & 0x400))
       // The _g and _nzcvqg versions are only valid if the DSP extension is
       // available.
       return MatchOperand_NoMatch;

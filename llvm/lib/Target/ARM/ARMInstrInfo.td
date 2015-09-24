@@ -234,9 +234,8 @@ def HasDivideInARM   : Predicate<"Subtarget->hasDivideInARMMode()">,
 def HasT2ExtractPack : Predicate<"Subtarget->hasT2ExtractPack()">,
                                  AssemblerPredicate<"FeatureT2XtPk",
                                                      "pack/extract">;
-def HasThumb2DSP     : Predicate<"Subtarget->hasThumb2DSP()">,
-                                 AssemblerPredicate<"FeatureDSPThumb2",
-                                                    "thumb2-dsp">;
+def HasDSP           : Predicate<"Subtarget->hasDSP()">,
+                                 AssemblerPredicate<"FeatureDSP", "dsp">;
 def HasDB            : Predicate<"Subtarget->hasDataBarrier()">,
                                  AssemblerPredicate<"FeatureDB",
                                                     "data-barriers">;

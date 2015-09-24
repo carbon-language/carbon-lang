@@ -3442,9 +3442,9 @@ static inline int getMClassRegisterSYSmValueMask(StringRef RegString) {
 // The flags here are common to those allowed for apsr in the A class cores and
 // those allowed for the special registers in the M class cores. Returns a
 // value representing which flags were present, -1 if invalid.
-static inline int getMClassFlagsMask(StringRef Flags, bool hasThumb2DSP) {
+static inline int getMClassFlagsMask(StringRef Flags, bool hasDSP) {
   if (Flags.empty())
-    return 0x2 | (int)hasThumb2DSP;
+    return 0x2 | (int)hasDSP;
 
   return StringSwitch<int>(Flags)
           .Case("g", 0x1)
@@ -3473,7 +3473,7 @@ static int getMClassRegisterMask(StringRef Reg, StringRef Flags, bool IsRead,
   }
 
   // We know we are now handling a write so need to get the mask for the flags.
-  int Mask = getMClassFlagsMask(Flags, Subtarget->hasThumb2DSP());
+  int Mask = getMClassFlagsMask(Flags, Subtarget->hasDSP());
 
   // Only apsr, iapsr, eapsr, xpsr can have flags. The other register values
   // shouldn't have flags present.
@@ -3482,7 +3482,7 @@ static int getMClassRegisterMask(StringRef Reg, StringRef Flags, bool IsRead,
 
   // The _g and _nzcvqg versions are only valid if the DSP extension is
   // available.
-  if (!Subtarget->hasThumb2DSP() && (Mask & 0x1))
+  if (!Subtarget->hasDSP() && (Mask & 0x1))
     return -1;
 
   // The register was valid so need to put the mask in the correct place

@@ -199,9 +199,9 @@ protected:
   ///  blocks to conform to ARMv8 rule.
   bool RestrictIT;
 
-  /// Thumb2DSP - If true, the subtarget supports the v7 DSP (saturating arith
-  /// and such) instructions in Thumb2 code.
-  bool Thumb2DSP;
+  /// HasDSP - If true, the subtarget supports the DSP (saturating arith
+  /// and such) instructions.
+  bool HasDSP;
 
   /// NaCl TRAP instruction is generated instead of the regular TRAP.
   bool UseNaClTrap;
@@ -343,7 +343,7 @@ public:
   bool avoidMOVsShifterOperand() const { return AvoidMOVsShifterOperand; }
   bool hasRAS() const { return HasRAS; }
   bool hasMPExtension() const { return HasMPExtension; }
-  bool hasThumb2DSP() const { return Thumb2DSP; }
+  bool hasDSP() const { return HasDSP; }
   bool useNaClTrap() const { return UseNaClTrap; }
   bool genLongCalls() const { return GenLongCalls; }
 

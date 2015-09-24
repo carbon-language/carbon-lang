@@ -523,7 +523,7 @@ static ARMBuildAttrs::CPUArch getArchForCPU(StringRef CPU,
   if (Subtarget->hasV8Ops())
     return ARMBuildAttrs::v8;
   else if (Subtarget->hasV7Ops()) {
-    if (Subtarget->isMClass() && Subtarget->hasThumb2DSP())
+    if (Subtarget->isMClass() && Subtarget->hasDSP())
       return ARMBuildAttrs::v7E_M;
     return ARMBuildAttrs::v7;
   } else if (Subtarget->hasV6T2Ops())

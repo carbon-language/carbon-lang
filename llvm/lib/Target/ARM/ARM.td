@@ -119,9 +119,9 @@ def FeatureAvoidMOVsShOp : SubtargetFeature<"avoid-movs-shop",
 def FeatureHasRAS : SubtargetFeature<"ras", "HasRAS", "true",
                                      "Has return address stack">;
 
-/// Some M architectures don't have the DSP extension (v7E-M vs. v7M)
-def FeatureDSPThumb2 : SubtargetFeature<"t2dsp", "Thumb2DSP", "true",
-                                 "Supports v7 DSP instructions in Thumb2">;
+/// DSP extension (called "t2dsp" for backwards compatibility only).
+def FeatureDSP : SubtargetFeature<"t2dsp", "HasDSP", "true",
+                              "Supports DSP instructions in ARM and/or Thumb2">;
 
 // Multiprocessing extension.
 def FeatureMP : SubtargetFeature<"mp", "HasMPExtension", "true",
@@ -279,9 +279,8 @@ def ProcR4      : SubtargetFeature<"r4", "ARMProcFamily", "CortexR4",
                                    "Cortex-R4 ARM processors",
                                    [FeatureHWDiv,
                                     FeatureAvoidPartialCPSR,
-                                    FeatureDSPThumb2, FeatureT2XtPk,
-                                    HasV7Ops, FeatureDB, FeatureHasRAS,
-                                    FeatureRClass]>;
+                                    FeatureDSP, FeatureT2XtPk, HasV7Ops,
+                                    FeatureDB, FeatureHasRAS, FeatureRClass]>;
 
 def ProcR5      : SubtargetFeature<"r5", "ARMProcFamily", "CortexR5",
                                    "Cortex-R5 ARM processors",
@@ -369,55 +368,50 @@ def : Processor<"mpcore",           ARMV6Itineraries, [HasV6KOps, FeatureVFP2,
                                                        FeatureHasSlowFPVMLx]>;
 
 // V6T2 Processors.
-def : Processor<"arm1156t2-s",      ARMV6Itineraries, [HasV6T2Ops,
-                                                       FeatureDSPThumb2]>;
+def : Processor<"arm1156t2-s",      ARMV6Itineraries, [HasV6T2Ops, FeatureDSP]>;
 def : Processor<"arm1156t2f-s",     ARMV6Itineraries, [HasV6T2Ops, FeatureVFP2,
                                                        FeatureHasSlowFPVMLx,
-                                                       FeatureDSPThumb2]>;
+                                                       FeatureDSP]>;
 
 // V7a Processors.
 // FIXME: A5 has currently the same Schedule model as A8
 def : ProcessorModel<"cortex-a5",   CortexA8Model,
                                     [ProcA5, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureVFP4, FeatureDSPThumb2,
+                                     FeatureVFP4, FeatureDSP,
                                      FeatureHasRAS, FeatureAClass]>;
 def : ProcessorModel<"cortex-a7",   CortexA8Model,
                                     [ProcA7, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2, FeatureHasRAS,
-                                     FeatureAClass]>;
+                                     FeatureDSP, FeatureHasRAS, FeatureAClass]>;
 def : ProcessorModel<"cortex-a8",   CortexA8Model,
                                     [ProcA8, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2, FeatureHasRAS,
-                                     FeatureAClass]>;
+                                     FeatureDSP, FeatureHasRAS, FeatureAClass]>;
 def : ProcessorModel<"cortex-a9",   CortexA9Model,
                                     [ProcA9, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2, FeatureHasRAS, FeatureMP,
+                                     FeatureDSP, FeatureHasRAS, FeatureMP,
                                      FeatureAClass]>;
 
 // FIXME: A12 has currently the same Schedule model as A9
 def : ProcessorModel<"cortex-a12", CortexA9Model,
                                     [ProcA12, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2, FeatureMP,
+                                     FeatureDSP, FeatureMP,
                                      FeatureHasRAS, FeatureAClass]>;
 
 // FIXME: A15 has currently the same ProcessorModel as A9.
 def : ProcessorModel<"cortex-a15",   CortexA9Model,
                                     [ProcA15, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2, FeatureHasRAS,
-                                     FeatureAClass]>;
+                                     FeatureDSP, FeatureHasRAS, FeatureAClass]>;
 
 // FIXME: A17 has currently the same Schedule model as A9
 def : ProcessorModel<"cortex-a17",  CortexA9Model,
                                     [ProcA17, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2, FeatureMP,
+                                     FeatureDSP, FeatureMP,
                                      FeatureHasRAS, FeatureAClass]>;
 
 // FIXME: krait has currently the same Schedule model as A9
 def : ProcessorModel<"krait",       CortexA9Model,
                                     [ProcKrait, HasV7Ops,
                                      FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2, FeatureHasRAS,
-                                     FeatureAClass]>;
+                                     FeatureDSP, FeatureHasRAS, FeatureAClass]>;
 
 // FIXME: R4 has currently the same ProcessorModel as A8.
 def : ProcessorModel<"cortex-r4",   CortexA8Model,
@@ -432,14 +426,13 @@ def : ProcessorModel<"cortex-r4f",  CortexA8Model,
 // FIXME: R5 has currently the same ProcessorModel as A8.
 def : ProcessorModel<"cortex-r5",   CortexA8Model,
                                     [ProcR5, HasV7Ops, FeatureDB,
-                                     FeatureVFP3, FeatureDSPThumb2,
-                                     FeatureHasRAS,
+                                     FeatureVFP3, FeatureDSP, FeatureHasRAS,
                                      FeatureD16, FeatureRClass]>;
 
 // FIXME: R7 has currently the same ProcessorModel as A8 and is modelled as R5.
 def : ProcessorModel<"cortex-r7",   CortexA8Model,
                                     [ProcR5, HasV7Ops, FeatureDB,
-                                     FeatureVFP3, FeatureDSPThumb2,
+                                     FeatureVFP3, FeatureDSP,
                                      FeatureHasRAS, FeatureVFPOnlySP,
                                      FeatureD16, FeatureMP, FeatureRClass]>;
 
@@ -454,13 +447,12 @@ def : ProcNoItin<"sc300",           [HasV7Ops,
 // V7EM Processors.
 def : ProcNoItin<"cortex-m4",       [HasV7Ops,
                                      FeatureThumb2, FeatureNoARM, FeatureDB,
-                                     FeatureHWDiv, FeatureDSPThumb2,
-                                     FeatureT2XtPk, FeatureVFP4,
-                                     FeatureVFPOnlySP, FeatureD16,
+                                     FeatureHWDiv, FeatureDSP, FeatureT2XtPk,
+                                     FeatureVFP4, FeatureVFPOnlySP, FeatureD16,
                                      FeatureMClass]>;
 def : ProcNoItin<"cortex-m7",       [HasV7Ops,
                                      FeatureThumb2, FeatureNoARM, FeatureDB,
-                                     FeatureHWDiv, FeatureDSPThumb2,
+                                     FeatureHWDiv, FeatureDSP,
                                      FeatureT2XtPk, FeatureFPARMv8,
                                      FeatureD16, FeatureMClass]>;
 
@@ -468,26 +460,26 @@ def : ProcNoItin<"cortex-m7",       [HasV7Ops,
 // Swift uArch Processors.
 def : ProcessorModel<"swift",       SwiftModel,
                                     [ProcSwift, HasV7Ops, FeatureNEON,
-                                     FeatureDB, FeatureDSPThumb2,
+                                     FeatureDB, FeatureDSP,
                                      FeatureHasRAS, FeatureAClass]>;
 
 // V8 Processors
 def : ProcNoItin<"cortex-a53",      [ProcA53, HasV8Ops, FeatureAClass,
                                     FeatureDB, FeatureFPARMv8,
-                                    FeatureNEON, FeatureDSPThumb2]>;
+                                    FeatureNEON, FeatureDSP]>;
 def : ProcNoItin<"cortex-a57",      [ProcA57, HasV8Ops, FeatureAClass,
                                     FeatureDB, FeatureFPARMv8,
-                                    FeatureNEON, FeatureDSPThumb2]>;
+                                    FeatureNEON, FeatureDSP]>;
 // FIXME: Cortex-A72 is currently modelled as an Cortex-A57.
 def : ProcNoItin<"cortex-a72",      [ProcA57, HasV8Ops, FeatureAClass,
                                     FeatureDB, FeatureFPARMv8,
-                                    FeatureNEON, FeatureDSPThumb2]>;
+                                    FeatureNEON, FeatureDSP]>;
 
 // Cyclone is very similar to swift
 def : ProcessorModel<"cyclone",     SwiftModel,
                                     [ProcSwift, HasV8Ops, HasV7Ops,
                                      FeatureCrypto, FeatureFPARMv8,
-                                     FeatureDB,FeatureDSPThumb2,
+                                     FeatureDB, FeatureDSP,
                                      FeatureHasRAS, FeatureZCZeroing]>;
 
 //===----------------------------------------------------------------------===//

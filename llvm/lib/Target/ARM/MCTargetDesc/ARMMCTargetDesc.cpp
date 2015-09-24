@@ -141,7 +141,7 @@ std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
     llvm_unreachable("invalid sub-architecture for ARM");
   case Triple::ARMSubArch_v8:
     if (NoCPU)
-      // v8a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSPThumb2,
+      // v8a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSP,
       //      FeatureMP, FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone,
       //      FeatureT2XtPk, FeatureCrypto, FeatureCRC
       ARMArchFeature = "+v8,+db,+fp-armv8,+neon,+t2dsp,+mp,+hwdiv,+hwdiv-arm,"
@@ -152,7 +152,7 @@ std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
     break;
   case Triple::ARMSubArch_v8_1a:
     if (NoCPU)
-      // v8.1a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSPThumb2,
+      // v8.1a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSP,
       //      FeatureMP, FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone,
       //      FeatureT2XtPk, FeatureCrypto, FeatureCRC, FeatureV8_1a
       ARMArchFeature = "+v8.1a,+db,+fp-armv8,+neon,+t2dsp,+mp,+hwdiv,+hwdiv-arm,"
@@ -172,7 +172,7 @@ std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
     break;
   case Triple::ARMSubArch_v7em:
     if (NoCPU)
-      // v7em: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureDSPThumb2,
+      // v7em: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureDSP,
       //       FeatureT2XtPk, FeatureMClass
       ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+t2dsp,+t2xtpk,+mclass";
     else
@@ -181,7 +181,7 @@ std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
     break;
   case Triple::ARMSubArch_v7s:
     if (NoCPU)
-      // v7s: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureHasRAS
+      // v7s: FeatureNEON, FeatureDB, FeatureDSP, FeatureHasRAS
       //      Swift
       ARMArchFeature = "+v7,+swift,+neon,+db,+t2dsp,+ras";
     else
@@ -194,7 +194,7 @@ std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
     // the "minimum" feature set and use CPU string to figure out the exact
     // features.
     if (NoCPU)
-      // v7a: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureT2XtPk
+      // v7a: FeatureNEON, FeatureDB, FeatureDSP, FeatureT2XtPk
       ARMArchFeature = "+v7,+neon,+db,+t2dsp,+t2xtpk";
     else
       // Use CPU to figure out the exact features.

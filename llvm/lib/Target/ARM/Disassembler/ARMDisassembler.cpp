@@ -4111,7 +4111,7 @@ static DecodeStatus DecodeMSRMask(MCInst &Inst, unsigned Val,
         // indicates the move for the GE{3:0} bits, the mask{0} bit can be set
         // only if the processor includes the DSP extension.
         if (Mask == 0 || (Mask != 2 && ValLow > 3) ||
-            (!(FeatureBits[ARM::FeatureDSPThumb2]) && (Mask & 1)))
+            (!(FeatureBits[ARM::FeatureDSP]) && (Mask & 1)))
           S = MCDisassembler::SoftFail;
       }
     }

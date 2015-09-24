@@ -189,6 +189,11 @@ bool llvm::ARM::getExtensionFeatures(unsigned Extensions,
   else
     Features.push_back("-crc");
 
+  if (Extensions & ARM::AEK_DSP)
+    Features.push_back("+t2dsp");
+  else
+    Features.push_back("-t2dsp");
+
   return getHWDivFeatures(Extensions, Features);
 }
 

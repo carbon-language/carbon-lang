@@ -147,7 +147,7 @@ void ARMSubtarget::initializeEnvironment() {
   HasCRC = false;
   HasZeroCycleZeroing = false;
   StrictAlign = false;
-  Thumb2DSP = false;
+  HasDSP = false;
   UseNaClTrap = false;
   GenLongCalls = false;
   UnsafeFPMath = false;
