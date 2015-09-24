@@ -249,7 +249,7 @@ void Writer<ELFT>::scanRelocs(
     iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels) {
   typedef Elf_Rel_Impl<ELFT, isRela> RelType;
   const ObjectFile<ELFT> &File = *C.getFile();
-  bool IsMips64EL = File.getObj()->isMips64EL();
+  bool IsMips64EL = File.getObj().isMips64EL();
   for (const RelType &RI : Rels) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     SymbolBody *Body = File.getSymbolBody(SymIndex);
@@ -275,17 +275,17 @@ void Writer<ELFT>::scanRelocs(
 
 template <class ELFT>
 void Writer<ELFT>::scanRelocs(const InputSection<ELFT> &C) {
-  const ObjectFile<ELFT> *File = C.getFile();
-  ELFFile<ELFT> *EObj = File->getObj();
+  ObjectFile<ELFT> *File = C.getFile();
+  ELFFile<ELFT> &EObj = File->getObj();
 
   if (!(C.getSectionHdr()->sh_flags & SHF_ALLOC))
     return;
 
   for (const Elf_Shdr *RelSec : C.RelocSections) {
     if (RelSec->sh_type == SHT_RELA)
-      scanRelocs(C, EObj->relas(RelSec));
+      scanRelocs(C, EObj.relas(RelSec));
     else
-      scanRelocs(C, EObj->rels(RelSec));
+      scanRelocs(C, EObj.rels(RelSec));
   }
 }
 
@@ -299,7 +299,7 @@ static void undefError(const SymbolTable &S, const SymbolBody &Sym) {
 
   for (const std::unique_ptr<ObjectFileBase> &F : S.getObjectFiles()) {
     const auto &File = cast<ObjectFile<ELFT>>(*F);
-    Elf_Sym_Range Syms = File.getObj()->symbols(File.getSymbolTable());
+    Elf_Sym_Range Syms = File.getObj().symbols(File.getSymbolTable());
     if (&SymE > Syms.begin() && &SymE < Syms.end())
       SymFile = F.get();
   }

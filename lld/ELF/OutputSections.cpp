@@ -64,7 +64,7 @@ PltSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
 
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
   const unsigned EntrySize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
-  bool IsMips64EL = Relocs[0].C.getFile()->getObj()->isMips64EL();
+  bool IsMips64EL = Relocs[0].C.getFile()->getObj().isMips64EL();
   for (const DynamicReloc<ELFT> &Rel : Relocs) {
     auto *P = reinterpret_cast<Elf_Rel *>(Buf);
     Buf += EntrySize;
@@ -242,7 +242,7 @@ lld::elf2::getLocalSymVA(const typename ELFFile<ELFT>::Elf_Sym *Sym,
   uint32_t SecIndex = Sym->st_shndx;
 
   if (SecIndex == SHN_XINDEX)
-    SecIndex = File.getObj()->getExtendedSymbolTableIndex(
+    SecIndex = File.getObj().getExtendedSymbolTableIndex(
         Sym, File.getSymbolTable(), File.getSymbolTableShndx());
   ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
   InputSection<ELFT> *Section = Sections[SecIndex];
@@ -309,7 +309,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
         ESym->st_size = Sym.st_size;
         ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
         if (SecIndex == SHN_XINDEX)
-          SecIndex = File.getObj()->getExtendedSymbolTableIndex(
+          SecIndex = File.getObj().getExtendedSymbolTableIndex(
               &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
         ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
         Section = Sections[SecIndex];

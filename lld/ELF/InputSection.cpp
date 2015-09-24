@@ -32,7 +32,7 @@ void InputSection<ELFT>::relocate(
     const OutputSection<ELFT> &BssSec, const PltSection<ELFT> &PltSec,
     const GotSection<ELFT> &GotSec) {
   typedef Elf_Rel_Impl<ELFT, isRela> RelType;
-  bool IsMips64EL = File.getObj()->isMips64EL();
+  bool IsMips64EL = File.getObj().isMips64EL();
   for (const RelType &RI : Rels) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     uint32_t Type = RI.getType(IsMips64EL);
@@ -42,7 +42,7 @@ void InputSection<ELFT>::relocate(
     // resolved so we don't allocate a SymbolBody.
     const Elf_Shdr *SymTab = File.getSymbolTable();
     if (SymIndex < SymTab->sh_info) {
-      const Elf_Sym *Sym = File.getObj()->getRelocationSymbol(&RI, SymTab);
+      const Elf_Sym *Sym = File.getObj().getRelocationSymbol(&RI, SymTab);
       if (!Sym)
         continue;
       SymVA = getLocalSymVA(Sym, File);
@@ -98,26 +98,26 @@ void InputSection<ELFT>::writeTo(uint8_t *Buf,
   if (Header->sh_type == SHT_NOBITS)
     return;
   // Copy section contents from source object file to output file.
-  ArrayRef<uint8_t> Data = *File->getObj()->getSectionContents(Header);
+  ArrayRef<uint8_t> Data = *File->getObj().getSectionContents(Header);
   memcpy(Buf + OutputSectionOff, Data.data(), Data.size());
 
-  const ObjectFile<ELFT> *File = getFile();
-  ELFFile<ELFT> *EObj = File->getObj();
+  ObjectFile<ELFT> *File = getFile();
+  ELFFile<ELFT> &EObj = File->getObj();
   uint8_t *Base = Buf + getOutputSectionOff();
   uintX_t BaseAddr = Out->getVA() + getOutputSectionOff();
   // Iterate over all relocation sections that apply to this section.
   for (const Elf_Shdr *RelSec : RelocSections) {
     if (RelSec->sh_type == SHT_RELA)
-      relocate(Base, EObj->relas(RelSec), *File, BaseAddr, BssSec, PltSec,
+      relocate(Base, EObj.relas(RelSec), *File, BaseAddr, BssSec, PltSec,
                GotSec);
     else
-      relocate(Base, EObj->rels(RelSec), *File, BaseAddr, BssSec, PltSec,
+      relocate(Base, EObj.rels(RelSec), *File, BaseAddr, BssSec, PltSec,
                GotSec);
   }
 }
 
 template <class ELFT> StringRef InputSection<ELFT>::getSectionName() const {
-  ErrorOr<StringRef> Name = File->getObj()->getSectionName(Header);
+  ErrorOr<StringRef> Name = File->getObj().getSectionName(Header);
   error(Name);
   return *Name;
 }

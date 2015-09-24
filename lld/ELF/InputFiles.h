@@ -97,23 +97,23 @@ template <class ELFT> static ELFKind getStaticELFKind() {
 
 template <class ELFT> class ELFData {
 public:
+  ELFData(MemoryBufferRef MB);
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
-  llvm::object::ELFFile<ELFT> *getObj() const { return ELFObj.get(); }
+  const llvm::object::ELFFile<ELFT> &getObj() const { return ELFObj; }
+  llvm::object::ELFFile<ELFT> &getObj() { return ELFObj; }
 
-  uint16_t getEMachine() const { return getObj()->getHeader()->e_machine; }
+  uint16_t getEMachine() const { return getObj().getHeader()->e_machine; }
 
   StringRef getStringTable() const { return StringTable; }
 
 protected:
-  std::unique_ptr<llvm::object::ELFFile<ELFT>> ELFObj;
+  llvm::object::ELFFile<ELFT> ELFObj;
   const Elf_Shdr *Symtab = nullptr;
   StringRef StringTable;
   Elf_Sym_Range getNonLocalSymbols();
   Elf_Sym_Range getSymbolsHelper(bool);
-
-  void openELF(MemoryBufferRef MB);
 };
 
 template <class ELFT>
@@ -131,8 +131,7 @@ public:
            cast<ELFFileBase>(F)->getELFKind() == getStaticELFKind<ELFT>();
   }
 
-  explicit ObjectFile(MemoryBufferRef M)
-      : ObjectFileBase(getStaticELFKind<ELFT>(), M) {}
+  explicit ObjectFile(MemoryBufferRef M);
   void parse() override;
 
   ArrayRef<InputSection<ELFT> *> getSections() const { return Sections; }
@@ -207,8 +206,7 @@ public:
            cast<ELFFileBase>(F)->getELFKind() == getStaticELFKind<ELFT>();
   }
 
-  explicit SharedFile(MemoryBufferRef M)
-      : SharedFileBase(getStaticELFKind<ELFT>(), M) {}
+  explicit SharedFile(MemoryBufferRef M);
 
   void parse() override;
 };

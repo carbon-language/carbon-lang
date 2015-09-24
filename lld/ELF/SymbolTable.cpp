@@ -130,7 +130,7 @@ void SymbolTable::dupError(const SymbolBody &Old, const SymbolBody &New) {
 
   for (const std::unique_ptr<ObjectFileBase> &F : ObjectFiles) {
     const auto &File = cast<ObjectFile<ELFT>>(*F);
-    Elf_Sym_Range Syms = File.getObj()->symbols(File.getSymbolTable());
+    Elf_Sym_Range Syms = File.getObj().symbols(File.getSymbolTable());
     if (&OldE > Syms.begin() && &OldE < Syms.end())
       OldFile = F.get();
     if (&NewE > Syms.begin() && &NewE < Syms.end())
