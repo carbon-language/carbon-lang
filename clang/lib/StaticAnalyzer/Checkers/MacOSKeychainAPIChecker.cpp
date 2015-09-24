@@ -589,7 +589,7 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
     return;
 
   // Generate the error reports.
-  for (const auto P : Errors)
+  for (const auto &P : Errors)
     C.emitReport(generateAllocatedDataNotReleasedReport(P, N, C));
 
   // Generate the new, cleaned up state.
