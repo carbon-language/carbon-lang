@@ -790,17 +790,12 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
 
   int Src0Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
                                            AMDGPU::OpName::src0);
-  assert(Src0Idx != -1 && "Should always have src0 operand");
-
   MachineOperand &Src0 = MI->getOperand(Src0Idx);
   if (!Src0.isReg())
     return nullptr;
 
   int Src1Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
                                            AMDGPU::OpName::src1);
-  if (Src1Idx == -1)
-    return nullptr;
-
   MachineOperand &Src1 = MI->getOperand(Src1Idx);
 
   // Make sure it's legal to commute operands for VOP2.
