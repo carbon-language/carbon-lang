@@ -1146,10 +1146,14 @@ public:
   /// \brief Tests whether the given source location represents a macro
   /// argument's expansion into the function-like macro definition.
   ///
+  /// \param StartLoc If non-null and function returns true, it is set to the
+  /// start location of the macro argument expansion.
+  ///
   /// Such source locations only appear inside of the expansion
   /// locations representing where a particular function-like macro was
   /// expanded.
-  bool isMacroArgExpansion(SourceLocation Loc) const;
+  bool isMacroArgExpansion(SourceLocation Loc,
+                           SourceLocation *StartLoc = nullptr) const;
 
   /// \brief Tests whether the given source location represents the expansion of
   /// a macro body.

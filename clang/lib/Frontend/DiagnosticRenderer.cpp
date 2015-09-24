@@ -306,6 +306,38 @@ void DiagnosticRenderer::emitModuleBuildStack(const SourceManager &SM) {
   }
 }
 
+/// A recursive function to trace all possible backtrace locations
+/// to match the \p CaretLocFileID.
+static SourceLocation retrieveMacroLocation(SourceLocation Loc,
+                                            FileID MacroFileID,
+                                            FileID CaretFileID,
+                                            bool getBeginLoc,
+                                            const SourceManager *SM) {
+  if (MacroFileID == CaretFileID) return Loc;
+  if (!Loc.isMacroID()) return SourceLocation();
+
+  SourceLocation MacroLocation, MacroArgLocation;
+
+  if (SM->isMacroArgExpansion(Loc)) {
+    MacroLocation = SM->getImmediateSpellingLoc(Loc);
+    MacroArgLocation = getBeginLoc ? SM->getImmediateExpansionRange(Loc).first
+                                   : SM->getImmediateExpansionRange(Loc).second;
+  } else {
+    MacroLocation = getBeginLoc ? SM->getImmediateExpansionRange(Loc).first
+                                : SM->getImmediateExpansionRange(Loc).second;
+    MacroArgLocation = SM->getImmediateSpellingLoc(Loc);
+  }
+
+  MacroFileID = SM->getFileID(MacroLocation);
+  MacroLocation = retrieveMacroLocation(MacroLocation, MacroFileID, CaretFileID,
+                                        getBeginLoc, SM);
+  if (MacroLocation.isValid()) return MacroLocation;
+
+  MacroFileID = SM->getFileID(MacroArgLocation);
+  return retrieveMacroLocation(MacroArgLocation, MacroFileID, CaretFileID,
+                               getBeginLoc, SM);
+}
+
 // Helper function to fix up source ranges.  It takes in an array of ranges,
 // and outputs an array of ranges where we want to draw the range highlighting
 // around the location specified by CaretLoc.
@@ -323,9 +355,9 @@ static void mapDiagnosticRanges(
     const SourceManager *SM) {
   FileID CaretLocFileID = SM->getFileID(CaretLoc);
 
-  for (ArrayRef<CharSourceRange>::const_iterator I = Ranges.begin(),
-       E = Ranges.end();
-       I != E; ++I) {
+  for (auto I = Ranges.begin(), E = Ranges.end(); I != E; ++I) {
+    if (I->isInvalid()) continue;
+
     SourceLocation Begin = I->getBegin(), End = I->getEnd();
     bool IsTokenRange = I->isTokenRange();
 
@@ -354,27 +386,17 @@ static void mapDiagnosticRanges(
       }
     }
 
-    while (Begin.isMacroID() && BeginFileID != CaretLocFileID) {
-      if (SM->isMacroArgExpansion(Begin)) {
-        Begin = SM->getImmediateSpellingLoc(Begin);
-        End = SM->getImmediateSpellingLoc(End);
-      } else {
-        Begin = SM->getImmediateExpansionRange(Begin).first;
-        End = SM->getImmediateExpansionRange(End).second;
-      }
-      BeginFileID = SM->getFileID(Begin);
-      if (BeginFileID != SM->getFileID(End)) {
-        // FIXME: Ugly hack to stop a crash; this code is making bad
-        // assumptions and it's too complicated for me to reason
-        // about.
-        Begin = End = SourceLocation();
-        break;
-      }
-    }
+    // Do the backtracking.
+    Begin = retrieveMacroLocation(Begin, BeginFileID, CaretLocFileID,
+                                  true /*getBeginLoc*/, SM);
+    End = retrieveMacroLocation(End, BeginFileID, CaretLocFileID,
+                                false /*getBeginLoc*/, SM);
+    if (Begin.isInvalid() || End.isInvalid()) continue;
 
     // Return the spelling location of the beginning and end of the range.
     Begin = SM->getSpellingLoc(Begin);
     End = SM->getSpellingLoc(End);
+
     SpellingRanges.push_back(CharSourceRange(SourceRange(Begin, End),
                                              IsTokenRange));
   }
@@ -417,20 +439,37 @@ void DiagnosticRenderer::emitSingleMacroExpansion(
                  SpellingRanges, None, &SM);
 }
 
+/// Check that the macro argument location of Loc starts with ArgumentLoc.
+/// The starting location of the macro expansions is used to differeniate
+/// different macro expansions.
+static bool checkLocForMacroArgExpansion(SourceLocation Loc,
+                                         const SourceManager &SM,
+                                         SourceLocation ArgumentLoc) {
+  SourceLocation MacroLoc;
+  if (SM.isMacroArgExpansion(Loc, &MacroLoc)) {
+    if (ArgumentLoc == MacroLoc) return true;
+  }
+
+  return false;
+}
+
+/// Check if all the locations in the range have the same macro argument
+/// expansion, and that that expansion starts with ArgumentLoc.
 static bool checkRangeForMacroArgExpansion(CharSourceRange Range,
-                                           const SourceManager &SM) {
+                                           const SourceManager &SM,
+                                           SourceLocation ArgumentLoc) {
   SourceLocation BegLoc = Range.getBegin(), EndLoc = Range.getEnd();
   while (BegLoc != EndLoc) {
-    if (!SM.isMacroArgExpansion(BegLoc))
+    if (!checkLocForMacroArgExpansion(BegLoc, SM, ArgumentLoc))
       return false;
     BegLoc.getLocWithOffset(1);
   }
 
-  return SM.isMacroArgExpansion(BegLoc);
+  return checkLocForMacroArgExpansion(BegLoc, SM, ArgumentLoc);
 }
 
-/// A helper function to check if the current ranges are all inside
-/// the macro expansions.
+/// A helper function to check if the current ranges are all inside the same
+/// macro argument expansion as Loc.
 static bool checkRangesForMacroArgExpansion(SourceLocation Loc,
                                             ArrayRef<CharSourceRange> Ranges,
                                             const SourceManager &SM) {
@@ -439,12 +478,26 @@ static bool checkRangesForMacroArgExpansion(SourceLocation Loc,
   SmallVector<CharSourceRange, 4> SpellingRanges;
   mapDiagnosticRanges(Loc, Ranges, SpellingRanges, &SM);
 
-  if (!SM.isMacroArgExpansion(Loc))
+  /// Count all valid ranges.
+  unsigned ValidCount = 0;
+  for (auto I : Ranges)
+    if (I.isValid()) ValidCount++;
+
+  if (ValidCount > SpellingRanges.size())
     return false;
 
-  for (auto I = SpellingRanges.begin(), E = SpellingRanges.end(); I != E; ++I)
-    if (!checkRangeForMacroArgExpansion(*I, SM))
+  /// To store the source location of the argument location.
+  SourceLocation ArgumentLoc;
+
+  /// Set the ArgumentLoc to the beginning location of the expansion of Loc
+  /// so to check if the ranges expands to the same beginning location.
+  if (!SM.isMacroArgExpansion(Loc,&ArgumentLoc))
+    return false;
+
+  for (auto I = SpellingRanges.begin(), E = SpellingRanges.end(); I != E; ++I) {
+    if (!checkRangeForMacroArgExpansion(*I, SM, ArgumentLoc))
       return false;
+  }
 
   return true;
 }

@@ -20,7 +20,3 @@ void _rdar_12584554_A (volatile const void * object, volatile const void * selec
 @end
 
 // CHECK: FIX-IT: Insert "@" at 18:22
-// CHECK: fix-its.m:9:28: note: expanded from macro '_rdar_12584554_C'
-// CHECK: Number FIX-ITs = 0
-// CHECK: fix-its.m:7:77: note: expanded from macro '_rdar_12584554_B'
-// CHECK: Number FIX-ITs = 0

@@ -1004,12 +1004,17 @@ SourceManager::getExpansionRange(SourceLocation Loc) const {
   return Res;
 }
 
-bool SourceManager::isMacroArgExpansion(SourceLocation Loc) const {
+bool SourceManager::isMacroArgExpansion(SourceLocation Loc,
+                                        SourceLocation *StartLoc) const {
   if (!Loc.isMacroID()) return false;
 
   FileID FID = getFileID(Loc);
   const SrcMgr::ExpansionInfo &Expansion = getSLocEntry(FID).getExpansion();
-  return Expansion.isMacroArgExpansion();
+  if (!Expansion.isMacroArgExpansion()) return false;
+
+  if (StartLoc)
+    *StartLoc = Expansion.getExpansionLocStart();
+  return true;
 }
 
 bool SourceManager::isMacroBodyExpansion(SourceLocation Loc) const {

@@ -16,7 +16,7 @@ void PR16799() {
   // CHECK: :15:3: error: invalid operands to binary expression
   // CHECK:       ('const char *' and 'int')
   // CHECK:   a(str);
-  // CHECK:   ^ ~~~
+  // CHECK:   ^~~~~~
   // CHECK: :3:11: note: expanded from macro 'a'
   // CHECK: #define a b
   // CHECK:           ^
@@ -28,7 +28,7 @@ void PR16799() {
   // CHECK:              ^~~~
   // CHECK: :6:15: note: expanded from macro 'd'
   // CHECK: #define d(x) x*1
-  // CHECK:               ^~
+  // CHECK:              ~^~
 
   e(str);
   // CHECK: :33:5: warning: expression result unused
