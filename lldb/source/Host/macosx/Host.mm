@@ -25,7 +25,6 @@
 
 #include <asl.h>
 #include <crt_externs.h>
-#include <execinfo.h>
 #include <grp.h>
 #include <libproc.h>
 #include <pwd.h>
