@@ -11,18 +11,13 @@ target_link_libraries(lld
 install(TARGETS lld
   RUNTIME DESTINATION bin)
 
-if(UNIX)
-  set(LLD_LINK_OR_COPY create_symlink)
-  set(lld_binary "lld${CMAKE_EXECUTABLE_SUFFIX}")
-
-else()
-  set(LLD_LINK_OR_COPY copy)
-  set(lld_binary "${LLVM_RUNTIME_OUTPUT_INTDIR}/lld${CMAKE_EXECUTABLE_SUFFIX}")
+if(NOT LLD_SYMLINKS_TO_CREATE)
+  set(LLD_SYMLINKS_TO_CREATE lld-link)
 endif()
 
-set(lld_link "${LLVM_RUNTIME_OUTPUT_INTDIR}/lld-link${CMAKE_EXECUTABLE_SUFFIX}")
+foreach(link ${LLD_SYMLINKS_TO_CREATE})
+  add_llvm_tool_symlink(${link} lld ALWAYS_GENERATE)
+  # Always generate install targets
+  llvm_install_symlink(${link} lld ALWAYS_GENERATE)
+endforeach()
 
-add_custom_command(TARGET lld POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E ${LLD_LINK_OR_COPY} "${lld_binary}" "${lld_link}")
-
-install(SCRIPT install_symlink.cmake -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
