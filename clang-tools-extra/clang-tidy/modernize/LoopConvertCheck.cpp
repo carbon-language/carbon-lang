@@ -601,7 +601,7 @@ void LoopConvertCheck::getIteratorLoopQualifiers(ASTContext *Context,
       // A node will only be bound with DerefByRefResultName if we're dealing
       // with a user-defined iterator type. Test the const qualification of
       // the reference type.
-      auto ValueType = (*DerefType)->getAs<ReferenceType>()->getPointeeType();
+      auto ValueType = DerefType->getNonReferenceType();
 
       Descriptor.DerefByConstRef = ValueType.isConstQualified();
       Descriptor.IsTriviallyCopyable =
