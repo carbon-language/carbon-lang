@@ -87,20 +87,68 @@ void User::growHungoffUses(unsigned NewNumUses, bool IsPhi) {
   Use::zap(OldOps, OldOps + OldNumUses, true);
 }
 
+
+// This is a private struct used by `User` to track the co-allocated descriptor
+// section.
+struct DescriptorInfo {
+  intptr_t SizeInBytes;
+};
+
+ArrayRef<const uint8_t> User::getDescriptor() const {
+  auto MutableARef = const_cast<User *>(this)->getDescriptor();
+  return {MutableARef.begin(), MutableARef.end()};
+}
+
+MutableArrayRef<uint8_t> User::getDescriptor() {
+  assert(HasDescriptor && "Don't call otherwise!");
+  assert(!HasHungOffUses && "Invariant!");
+
+  auto *DI = reinterpret_cast<DescriptorInfo *>(getIntrusiveOperands()) - 1;
+  assert(DI->SizeInBytes != 0 && "Should not have had a descriptor otherwise!");
+
+  return MutableArrayRef<uint8_t>(
+      reinterpret_cast<uint8_t *>(DI) - DI->SizeInBytes, DI->SizeInBytes);
+}
+
 //===----------------------------------------------------------------------===//
 //                         User operator new Implementations
 //===----------------------------------------------------------------------===//
 
-void *User::operator new(size_t Size, unsigned Us) {
+void *User::allocateFixedOperandUser(size_t Size, unsigned Us,
+                                     unsigned DescBytes) {
   assert(Us < (1u << NumUserOperandsBits) && "Too many operands");
-  void *Storage = ::operator new(Size + sizeof(Use) * Us);
-  Use *Start = static_cast<Use*>(Storage);
+
+  static_assert(sizeof(DescriptorInfo) % sizeof(void *) == 0, "Required below");
+
+  unsigned DescBytesToAllocate =
+      DescBytes == 0 ? 0 : (DescBytes + sizeof(DescriptorInfo));
+  assert(DescBytesToAllocate % sizeof(void *) == 0 &&
+         "We need this to satisfy alignment constraints for Uses");
+
+  uint8_t *Storage = static_cast<uint8_t *>(
+      ::operator new(Size + sizeof(Use) * Us + DescBytesToAllocate));
+  Use *Start = reinterpret_cast<Use *>(Storage + DescBytesToAllocate);
   Use *End = Start + Us;
   User *Obj = reinterpret_cast<User*>(End);
   Obj->NumUserOperands = Us;
   Obj->HasHungOffUses = false;
+  Obj->HasDescriptor = DescBytes != 0;
   Use::initTags(Start, End);
+
+  if (DescBytes != 0) {
+    auto *DescInfo = reinterpret_cast<DescriptorInfo *>(Storage + DescBytes);
+    DescInfo->SizeInBytes = DescBytes;
+  }
+
   return Obj;
+}
+
+void *User::operator new(size_t Size, unsigned Us) {
+  return allocateFixedOperandUser(Size, Us, 0);
+}
+
+void *User::operator new(size_t Size, unsigned Us, unsigned DescBytes) {
+  return allocateFixedOperandUser(Size, Us, DescBytes);
 }
 
 void *User::operator new(size_t Size) {
@@ -110,6 +158,7 @@ void *User::operator new(size_t Size) {
   User *Obj = reinterpret_cast<User *>(HungOffOperandList + 1);
   Obj->NumUserOperands = 0;
   Obj->HasHungOffUses = true;
+  Obj->HasDescriptor = false;
   *HungOffOperandList = nullptr;
   return Obj;
 }
@@ -123,11 +172,20 @@ void User::operator delete(void *Usr) {
   // use a Use[] allocated prior to the user.
   User *Obj = static_cast<User *>(Usr);
   if (Obj->HasHungOffUses) {
+    assert(!Obj->HasDescriptor && "not supported!");
+
     Use **HungOffOperandList = static_cast<Use **>(Usr) - 1;
     // drop the hung off uses.
     Use::zap(*HungOffOperandList, *HungOffOperandList + Obj->NumUserOperands,
              /* Delete */ true);
     ::operator delete(HungOffOperandList);
+  } else if (Obj->HasDescriptor) {
+    Use *UseBegin = static_cast<Use *>(Usr) - Obj->NumUserOperands;
+    Use::zap(UseBegin, UseBegin + Obj->NumUserOperands, /* Delete */ false);
+
+    auto *DI = reinterpret_cast<DescriptorInfo *>(UseBegin) - 1;
+    uint8_t *Storage = reinterpret_cast<uint8_t *>(DI) - DI->SizeInBytes;
+    ::operator delete(Storage);
   } else {
     Use *Storage = static_cast<Use *>(Usr) - Obj->NumUserOperands;
     Use::zap(Storage, Storage + Obj->NumUserOperands,

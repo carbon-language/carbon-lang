@@ -19,6 +19,7 @@
 #ifndef LLVM_IR_USER_H
 #define LLVM_IR_USER_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/Value.h"
@@ -39,6 +40,9 @@ class User : public Value {
   friend struct HungoffOperandTraits;
   virtual void anchor();
 
+  LLVM_ATTRIBUTE_ALWAYS_INLINE inline static void *
+  allocateFixedOperandUser(size_t, unsigned, unsigned);
+
 protected:
   /// Allocate a User with an operand pointer co-allocated.
   ///
@@ -50,6 +54,16 @@ protected:
   ///
   /// This is used for subclasses which have a fixed number of operands.
   void *operator new(size_t Size, unsigned Us);
+
+  /// Allocate a User with the operands co-allocated.  If DescBytes is non-zero
+  /// then allocate an additional DescBytes bytes before the operands. These
+  /// bytes can be accessed by calling getDescriptor.
+  ///
+  /// DescBytes needs to be divisible by sizeof(void *).  The allocated
+  /// descriptor, if any, is aligned to sizeof(void *) bytes.
+  ///
+  /// This is used for subclasses which have a fixed number of operands.
+  void *operator new(size_t Size, unsigned Us, unsigned DescBytes);
 
   User(Type *ty, unsigned vty, Use *OpList, unsigned NumOps)
       : Value(ty, vty) {
@@ -136,6 +150,12 @@ public:
   }
 
   unsigned getNumOperands() const { return NumUserOperands; }
+
+  /// Returns the descriptor co-allocated with this User instance.
+  ArrayRef<const uint8_t> getDescriptor() const;
+
+  /// Returns the descriptor co-allocated with this User instance.
+  MutableArrayRef<uint8_t> getDescriptor();
 
   /// Set the number of operands on a GlobalVariable.
   ///
