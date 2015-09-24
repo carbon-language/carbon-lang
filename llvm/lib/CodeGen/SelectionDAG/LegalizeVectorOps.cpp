@@ -723,24 +723,30 @@ SDValue VectorLegalizer::Expand(SDValue Op) {
 
 SDValue VectorLegalizer::ExpandABSDIFF(SDValue Op) {
   SDLoc dl(Op);
-  SDValue Tmp1, Tmp2, Tmp3, Tmp4;
+  SDValue Op0 = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
   EVT VT = Op.getValueType();
-  SDNodeFlags Flags;
-  Flags.setNoSignedWrap(Op->getOpcode() == ISD::SABSDIFF);
 
-  Tmp2 = Op.getOperand(0);
-  Tmp3 = Op.getOperand(1);
-  Tmp1 = DAG.getNode(ISD::SUB, dl, VT, Tmp2, Tmp3, &Flags);
-  Tmp2 =
-      DAG.getNode(ISD::SUB, dl, VT, DAG.getConstant(0, dl, VT), Tmp1, &Flags);
-  Tmp4 = DAG.getNode(
-      ISD::SETCC, dl,
-      TLI.getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), VT), Tmp2,
-      DAG.getConstant(0, dl, VT),
-      DAG.getCondCode(Op->getOpcode() == ISD::SABSDIFF ? ISD::SETLT
-                                                       : ISD::SETULT));
-  Tmp1 = DAG.getNode(ISD::VSELECT, dl, VT, Tmp4, Tmp1, Tmp2);
-  return Tmp1;
+  // For unsigned intrinsic, promote the type to handle unsigned overflow.
+  bool isUabsdiff = (Op->getOpcode() == ISD::UABSDIFF);
+  if (isUabsdiff) {
+    VT = VT.widenIntegerVectorElementType(*DAG.getContext());
+    Op0 = DAG.getNode(ISD::ZERO_EXTEND, dl, VT, Op0);
+    Op1 = DAG.getNode(ISD::ZERO_EXTEND, dl, VT, Op1);
+  }
+
+  SDNodeFlags Flags;
+  Flags.setNoSignedWrap(!isUabsdiff);
+  SDValue Sub = DAG.getNode(ISD::SUB, dl, VT, Op0, Op1, &Flags);
+  if (isUabsdiff)
+    return DAG.getNode(ISD::TRUNCATE, dl, Op.getValueType(), Sub);
+
+  SDValue Cmp =
+      DAG.getNode(ISD::SETCC, dl, TLI.getSetCCResultType(DAG.getDataLayout(),
+                                                         *DAG.getContext(), VT),
+                  Sub, DAG.getConstant(0, dl, VT), DAG.getCondCode(ISD::SETGE));
+  SDValue Neg = DAG.getNode(ISD::SUB, dl, VT, DAG.getConstant(0, dl, VT), Sub, &Flags);
+  return DAG.getNode(ISD::VSELECT, dl, VT, Cmp, Sub, Neg);
 }
 
 SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
