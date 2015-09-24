@@ -17,6 +17,7 @@
 
 using namespace llvm;
 using namespace llvm::object;
+using namespace llvm::support::endian;
 using namespace llvm::ELF;
 
 namespace lld {
@@ -38,7 +39,7 @@ void X86TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   Buf += Jmp.size();
 
   assert(isUInt<32>(GotEntryAddr));
-  support::endian::write32le(Buf, GotEntryAddr);
+  write32le(Buf, GotEntryAddr);
   Buf += 4;
 
   ArrayRef<uint8_t> Nops = {0x90, 0x90};
@@ -65,6 +66,8 @@ bool X86TargetInfo::relocNeedsPlt(uint32_t Type) const {
   }
 }
 
+static void add32le(uint8_t *P, int32_t V) { write32le(P, read32le(P) + V); }
+
 void X86TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
                                 uint64_t BaseAddr, uint64_t SymVA) const {
   typedef ELFFile<ELF32LE>::Elf_Rel Elf_Rel;
@@ -72,13 +75,12 @@ void X86TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
 
   uint32_t Offset = Rel.r_offset;
   uint8_t *Location = Buf + Offset;
-  uint32_t Addend = *(support::ulittle32_t *)Location;
   switch (Type) {
   case R_386_PC32:
-    support::endian::write32le(Location, SymVA + Addend - (BaseAddr + Offset));
+    add32le(Location, SymVA - (BaseAddr + Offset));
     break;
   case R_386_32:
-    support::endian::write32le(Location, SymVA + Addend);
+    add32le(Location, SymVA);
     break;
   default:
     error(Twine("unrecognized reloc ") + Twine(Type));
@@ -100,7 +102,7 @@ void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   uintptr_t NextPC = PltEntryAddr + 6;
   intptr_t Delta = GotEntryAddr - NextPC;
   assert(isInt<32>(Delta));
-  support::endian::write32le(Buf, Delta);
+  write32le(Buf, Delta);
   Buf += 4;
 
   ArrayRef<uint8_t> Nops = {0x90, 0x90};
@@ -138,11 +140,10 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
   switch (Type) {
   case R_X86_64_PC32:
   case R_X86_64_GOTPCREL:
-    support::endian::write32le(Location,
-                               SymVA + Rel.r_addend - (BaseAddr + Offset));
+    write32le(Location, SymVA + Rel.r_addend - (BaseAddr + Offset));
     break;
   case R_X86_64_64:
-    support::endian::write64le(Location, SymVA + Rel.r_addend);
+    write64le(Location, SymVA + Rel.r_addend);
     break;
   case R_X86_64_32: {
   case R_X86_64_32S:
@@ -152,7 +153,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
     else if (!isInt<32>(VA))
       error("R_X86_64_32S out of range");
 
-    support::endian::write32le(Location, VA);
+    write32le(Location, VA);
     break;
   }
   default:
@@ -178,7 +179,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
   uint8_t *Location = Buf + Offset;
   switch (Type) {
   case R_PPC64_ADDR64:
-    support::endian::write64be(Location, SymVA + Rel.r_addend);
+    write64be(Location, SymVA + Rel.r_addend);
     break;
   case R_PPC64_TOC:
     // We don't create a TOC yet.
