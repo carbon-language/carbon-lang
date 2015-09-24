@@ -12,9 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#if KMP_STATS_ENABLED
-
 #include "kmp.h"
 #include "kmp_str.h"
 #include "kmp_lock.h"
@@ -610,4 +607,3 @@ void __kmp_stats_init(void)
 
 } // extern "C" 
 
-#endif // KMP_STATS_ENABLED
