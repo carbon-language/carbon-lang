@@ -619,7 +619,6 @@ ModRefInfo BasicAAResult::getArgModRefInfo(ImmutableCallSite CS,
   return AAResultBase::getArgModRefInfo(CS, ArgIdx);
 }
 
-#ifndef NDEBUG
 static bool isAssumeIntrinsic(ImmutableCallSite CS) {
   const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
   if (II && II->getIntrinsicID() == Intrinsic::assume)
@@ -628,6 +627,7 @@ static bool isAssumeIntrinsic(ImmutableCallSite CS) {
   return false;
 }
 
+#ifndef NDEBUG
 static const Function *getParent(const Value *V) {
   if (const Instruction *inst = dyn_cast<Instruction>(V))
     return inst->getParent()->getParent();
@@ -637,7 +637,6 @@ static const Function *getParent(const Value *V) {
 
   return nullptr;
 }
-#endif
 
 static bool notDifferentParent(const Value *O1, const Value *O2) {
 
@@ -646,6 +645,7 @@ static bool notDifferentParent(const Value *O1, const Value *O2) {
 
   return !F1 || !F2 || F1 == F2;
 }
+#endif
 
 AliasResult BasicAAResult::alias(const MemoryLocation &LocA,
                                  const MemoryLocation &LocB) {
