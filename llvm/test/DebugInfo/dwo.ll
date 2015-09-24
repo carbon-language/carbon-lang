@@ -3,6 +3,7 @@
 ; CHECK: DW_TAG_compile_unit
 ; CHECK: DW_AT_GNU_dwo_id {{.*}}abcd
 ; CHECK-NOT: DW_AT_GNU_dwo_name
+; REQUIRES: default_triple
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3, !4}
