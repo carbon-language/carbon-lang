@@ -13,6 +13,7 @@
 
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/macosx/HostInfoMacOSX.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Utility/SafeMachO.h"
 
@@ -23,7 +24,9 @@
 #include <string>
 
 // C inclues
+#include <stdlib.h>
 #include <sys/sysctl.h>
+#include <sys/syslimits.h>
 #include <sys/types.h>
 
 // Objective C/C++ includes
@@ -152,6 +155,40 @@ HostInfoMacOSX::ComputeSupportExeDirectory(FileSpec &file_spec)
         raw_path.append("/Resources");
 #endif
     }
+    else
+    {
+        // Find the bin path relative to the lib path where the cmake-based
+        // OS X .dylib lives.  This is not going to work if the bin and lib
+        // dir are not both in the same dir.
+        //
+        // It is not going to work to do it by the executable path either,
+        // as in the case of a python script, the executable is python, not
+        // the lldb driver.
+        raw_path.append("/../bin");
+        FileSpec support_dir_spec(raw_path, true);
+        if (!support_dir_spec.Exists() || !support_dir_spec.IsDirectory())
+        {
+            Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+            if (log)
+                log->Printf("HostInfoMacOSX::%s(): failed to find support directory",
+                            __FUNCTION__);
+            return false;
+        }
+
+        // Get normalization from support_dir_spec.  Note the FileSpec resolve
+        // does not remove '..' in the path.
+        char *const dir_realpath = realpath(support_dir_spec.GetPath().c_str(), NULL);
+        if (dir_realpath)
+        {
+            raw_path = dir_realpath;
+            free(dir_realpath);
+        }
+        else
+        {
+            raw_path = support_dir_spec.GetPath();
+        }
+    }
+
     file_spec.GetDirectory().SetString(llvm::StringRef(raw_path.c_str(), raw_path.size()));
     return (bool)file_spec.GetDirectory();
 }
