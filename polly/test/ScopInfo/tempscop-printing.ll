@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-scops -analyze < %s | FileCheck %s -check-prefix=SCALARACCESS
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-scops -analyze < %s | FileCheck %s
 
 ; void f(long A[], int N, int *init_ptr) {
 ;   long i, j;
@@ -13,6 +13,7 @@
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 
+; CHECK-LABEL: Function: f
 define void @f(i64* noalias %A, i64 %N, i64* noalias %init_ptr) nounwind {
 entry:
   br label %for.i
@@ -23,17 +24,21 @@ for.i:
   br label %entry.next
 
 entry.next:
-; SCALARACCESS: BB: entry.next
+; CHECK:      Stmt_entry_next
   %init = load i64, i64* %init_ptr
-; SCALARACCESS: Read init_ptr[0]
-; SCALARACCESS:  Write init[0]
+; CHECK:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:         [N] -> { Stmt_entry_next[i0] -> MemRef_init_ptr[0] };
+; CHECK:          MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; CHECK-NEXT:         [N] -> { Stmt_entry_next[i0] -> MemRef_init[] };
   br label %for.j
 
 for.j:
   %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
-; SCALARACCESS: BB: for.j
-; SCALARACCESS: Read init
-; SCALARACCESS: Write A[{0,+,8}<%for.j>]
+; CHECK:      Stmt_for_j
+; CHECK:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 1]
+; CHECK-NEXT:         [N] -> { Stmt_for_j[i0, i1] -> MemRef_init[] };
+; CHECK:          MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:         [N] -> { Stmt_for_j[i0, i1] -> MemRef_A[i1] };
   %init_plus_two = add i64 %init, 2
   %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init_plus_two, i64* %scevgep
@@ -49,6 +54,7 @@ return:
   ret void
 }
 
+; CHECK-LABEL: Function: g
 define void @g(i64* noalias %A, i64 %N, i64* noalias %init_ptr) nounwind {
 entry:
   br label %for.i
@@ -59,19 +65,23 @@ for.i:
   br label %entry.next
 
 entry.next:
-; SCALARACCESS: BB: entry.next
+; CHECK:      Stmt_entry_next
   %init = load i64, i64* %init_ptr
-; SCALARACCESS: Read init_ptr[0]
-; SCALARACCESS:  Write init[0]
+; CHECK:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:         [N] -> { Stmt_entry_next[i0] -> MemRef_init_ptr[0] };
+; CHECK:          MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; CHECK-NEXT:         [N] -> { Stmt_entry_next[i0] -> MemRef_init[] };
   br label %for.j
 
 for.j:
-; SCALARACCESS: BB: for.j
+; CHECK:      Stmt_for_j
   %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
   %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init, i64* %scevgep
-; SCALARACCESS: Read init
-; SCALARACCESS: Write A[{0,+,8}<%for.j>]
+; CHECK:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 1]
+; CHECK-NEXT:         [N] -> { Stmt_for_j[i0, i1] -> MemRef_init[] };
+; CHECK:          MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:         [N] -> { Stmt_for_j[i0, i1] -> MemRef_A[i1] };
   %indvar.j.next = add nsw i64 %indvar.j, 1
   %exitcond.j = icmp eq i64 %indvar.j.next, %N
   br i1 %exitcond.j, label %for.i.end, label %for.j

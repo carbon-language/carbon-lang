@@ -5,7 +5,9 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 @A = common global [1024 x float] zeroinitializer, align 8
 
-; CHECK: empty
+; Terminating loops without side-effects will be optimzied away, hence
+; detecting a scop would be pointless.
+; CHECK-NOT: Function: empty
 ; Function Attrs: nounwind
 define i32 @empty() #0 {
 entry:
@@ -29,7 +31,7 @@ return:                                           ; preds = %for.cond
   ret i32 0
 }
 
-; CHECK: array_access
+; CHECK-LABEL: Function: array_access
 ; Function Attrs: nounwind
 define i32 @array_access() #0 {
 entry:
@@ -46,9 +48,10 @@ for.body:                                         ; preds = %for.cond
   %float = uitofp i64 %indvar to float
   store float %float, float* %arrayidx
   br label %for.inc
-; CHECK: BB: for.body
-; CHECK-NOT: Read
-; CHECK: Write A[{0,+,4}<%for.cond>]
+; CHECK:     Stmt_for_body
+; CHECK-NOT:     ReadAccess
+; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:        { Stmt_for_body[i0] -> MemRef_A[i0] };
 
 for.inc:                                          ; preds = %for.body
   %indvar.next = add i64 %indvar, 1
@@ -60,7 +63,7 @@ return:                                           ; preds = %for.cond
 }
 
 ; Function Attrs: nounwind
-; CHECK: intra_scop_dep
+; CHECK-LABEL: Function: intra_scop_dep
 define i32 @intra_scop_dep() #0 {
 entry:
   fence seq_cst
@@ -75,9 +78,11 @@ for.body.a:                                       ; preds = %for.cond
   %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
   %scalar = load float, float* %arrayidx
   br label %for.body.b
-; CHECK: BB: for.body.a
-; CHECK: Read A[{0,+,4}<%for.cond>]
-; CHECK: Write scalar[0]
+; CHECK:      Stmt_for_body_a
+; CHECK:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:         { Stmt_for_body_a[i0] -> MemRef_A[i0] };
+; CHECK:          MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; CHECK-NEXT:         { Stmt_for_body_a[i0] -> MemRef_scalar[] };
 
 for.body.b:                                       ; preds = %for.body.a
   %arrayidx2 = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
@@ -85,9 +90,11 @@ for.body.b:                                       ; preds = %for.body.a
   %sum = fadd float %scalar, %float
   store float %sum, float* %arrayidx2
   br label %for.inc
-; CHECK: BB: for.body.b
-; CHECK: Read scalar[0]
-; CHECK: Write A[{0,+,4}<%for.cond>]
+; CHECK:      Stmt_for_body_b
+; CHECK:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 1]
+; CHECK-NEXT:          { Stmt_for_body_b[i0] -> MemRef_scalar[] };
+; CHECK:          MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:         { Stmt_for_body_b[i0] -> MemRef_A[i0] };
 
 for.inc:                                          ; preds = %for.body.b
   %indvar.next = add i64 %indvar, 1
@@ -104,7 +111,7 @@ return:                                           ; preds = %for.cond
 ; Please note that this is still required when scalar to array rewritting is
 ; disabled.
 
-; CHECK: use_after_scop
+; CHECK-LABEL: Function: use_after_scop
 ; Function Attrs: nounwind
 define i32 @use_after_scop() #0 {
 entry:
@@ -121,9 +128,11 @@ for.body:                                         ; preds = %for.head
   %scalar = load float, float* %arrayidx
   store float %scalar, float* %scalar.s2a
 ; Escaped uses are still required to be rewritten to stack variable.
-; CHECK: BB: for.body
-; CHECK: Read A[{0,+,4}<%for.head>]
-; CHECK: Write scalar.s2a[0]
+; CHECK:      Stmt_for_body
+; CHECK:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:         { Stmt_for_body[i0] -> MemRef_A[i0] };
+; CHECK:          MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:         { Stmt_for_body[i0] -> MemRef_scalar_s2a[0] };
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
@@ -149,7 +158,7 @@ return:                                           ; preds = %for.after
 ;  o For integer values, such a translation may block the use of scalar
 ;    evolution on those values.
 ;
-; CHECK: before_scop
+; CHECK-LABEL: Function: before_scop
 ; Function Attrs: nounwind
 define i32 @before_scop() #0 {
 entry:
@@ -169,8 +178,9 @@ for.body:                                         ; preds = %for.cond
   %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
   store float %scalar, float* %arrayidx
   br label %for.inc
-; CHECK: BB: for.body
-; CHECK: Write A[{0,+,4}<%for.cond>]
+; CHECK:      Stmt_for_body
+; CHECK:          MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:         { Stmt_for_body[i0] -> MemRef_A[i0] };
 
 for.inc:                                          ; preds = %for.body
   %indvar.next = add i64 %indvar, 1

@@ -333,11 +333,6 @@ private:
   ///
   Value *AccessValue;
 
-  /// @brief Accessed element relative to the base pointer (in bytes).
-  ///
-  /// Currently only used by printIR.
-  const SCEV *Offset;
-
   /// @brief Are all the subscripts affine expression?
   bool IsAffine;
 
@@ -357,8 +352,6 @@ private:
 
   /// @brief Is this MemoryAccess modeling special PHI node accesses?
   bool isPHI() const { return IsPHI; }
-
-  void printIR(raw_ostream &OS) const;
 
   void setStatement(ScopStmt *Stmt) { this->Statement = Stmt; }
 
@@ -426,7 +419,6 @@ public:
   /// @param Id         Identifier that is guranteed to be unique within the
   ///                   same ScopStmt.
   /// @param BaseAddr   The accessed array's address.
-  /// @param Offset     Accessed memoray location relative to @p BaseAddr.
   /// @param ElemBytes  Number of accessed bytes.
   /// @param AccType    Whether read or write access.
   /// @param IsAffine   Whether the subscripts are affine expressions.
@@ -435,10 +427,9 @@ public:
   /// @param Sizes      Dimension lengths of the accessed array.
   /// @param BaseName   Name of the acessed array.
   MemoryAccess(Instruction *AccessInst, __isl_take isl_id *Id, AccessType Type,
-               Value *BaseAddress, const SCEV *Offset, unsigned ElemBytes,
-               bool Affine, ArrayRef<const SCEV *> Subscripts,
-               ArrayRef<const SCEV *> Sizes, Value *AccessValue, bool IsPHI,
-               StringRef BaseName);
+               Value *BaseAddress, unsigned ElemBytes, bool Affine,
+               ArrayRef<const SCEV *> Subscripts, ArrayRef<const SCEV *> Sizes,
+               Value *AccessValue, bool IsPHI, StringRef BaseName);
   ~MemoryAccess();
 
   /// @brief Get the type of a memory access.
@@ -1120,22 +1111,6 @@ public:
   }
   //@}
 
-  /// @brief Print data access information.
-  ///
-  /// @param OS The output stream the access functions is printed to.
-  /// @param SE The ScalarEvolution to help printing more details.
-  /// @param LI The LoopInfo that help printing the access functions.
-  void printIRAccesses(raw_ostream &OS, ScalarEvolution *SE,
-                       LoopInfo *LI) const;
-
-  /// @brief Print the access functions and loop bounds in this Scop.
-  ///
-  /// @param OS The output stream the access functions is printed to.
-  /// @param SE The ScalarEvolution that help printing the access functions.
-  /// @param LI The LoopInfo that help printing the access functions.
-  void printIRAccessesDetail(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI,
-                             const Region *Reg, unsigned ind) const;
-
   ScalarEvolution *getSE() const;
 
   /// @brief Get the count of parameters used in this Scop.
@@ -1503,7 +1478,6 @@ class ScopInfo : public RegionPass {
   ///                    inside @p BB.
   /// @param Type        The kind of access.
   /// @param BaseAddress The accessed array's base address.
-  /// @param Offset      Accessed location relative to @p BaseAddress.
   /// @param ElemBytes   Size of accessed array element.
   /// @param Affine      Whether all subscripts are affine expressions.
   /// @param AccessValue Value read or written.
@@ -1512,26 +1486,25 @@ class ScopInfo : public RegionPass {
   /// @param IsPHI       Whether this is an emulated PHI node.
   void addMemoryAccess(BasicBlock *BB, Instruction *Inst,
                        MemoryAccess::AccessType Type, Value *BaseAddress,
-                       const SCEV *Offset, unsigned ElemBytes, bool Affine,
-                       Value *AccessValue, ArrayRef<const SCEV *> Subscripts,
+                       unsigned ElemBytes, bool Affine, Value *AccessValue,
+                       ArrayRef<const SCEV *> Subscripts,
                        ArrayRef<const SCEV *> Sizes, bool IsPHI);
 
   void addMemoryAccess(BasicBlock *BB, Instruction *Inst,
                        MemoryAccess::AccessType Type, Value *BaseAddress,
-                       const SCEV *Offset, unsigned ElemBytes, bool Affine,
-                       Value *AccessValue, bool IsPHI = false) {
-    addMemoryAccess(BB, Inst, Type, BaseAddress, Offset, ElemBytes, Affine,
-                    AccessValue, ArrayRef<const SCEV *>(),
-                    ArrayRef<const SCEV *>(), IsPHI);
+                       unsigned ElemBytes, bool Affine, Value *AccessValue,
+                       bool IsPHI = false) {
+    addMemoryAccess(BB, Inst, Type, BaseAddress, ElemBytes, Affine, AccessValue,
+                    ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(), IsPHI);
   }
 
   void addMemoryAccess(BasicBlock *BB, Instruction *Inst,
                        MemoryAccess::AccessType Type, Value *BaseAddress,
-                       const SCEV *Offset, unsigned ElemBytes, bool Affine,
+                       unsigned ElemBytes, bool Affine,
                        ArrayRef<const SCEV *> Subscripts,
                        ArrayRef<const SCEV *> Sizes, Value *AccessValue) {
-    addMemoryAccess(BB, Inst, Type, BaseAddress, Offset, ElemBytes, Affine,
-                    AccessValue, Subscripts, Sizes, false);
+    addMemoryAccess(BB, Inst, Type, BaseAddress, ElemBytes, Affine, AccessValue,
+                    Subscripts, Sizes, false);
   }
 
 public:

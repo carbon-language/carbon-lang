@@ -227,17 +227,6 @@ const ScopArrayInfo *ScopArrayInfo::getFromId(isl_id *Id) {
   return SAI;
 }
 
-void MemoryAccess::printIR(raw_ostream &OS) const {
-  if (isRead())
-    OS << "Read ";
-  else {
-    if (isMayWrite())
-      OS << "May";
-    OS << "Write ";
-  }
-  OS << BaseAddr->getName() << '[' << *Offset << "]\n";
-}
-
 const std::string
 MemoryAccess::getReductionOperatorStr(MemoryAccess::ReductionType RT) {
   switch (RT) {
@@ -614,14 +603,14 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
 
 MemoryAccess::MemoryAccess(Instruction *AccessInst, __isl_take isl_id *Id,
                            AccessType Type, Value *BaseAddress,
-                           const SCEV *Offset, unsigned ElemBytes, bool Affine,
+                           unsigned ElemBytes, bool Affine,
                            ArrayRef<const SCEV *> Subscripts,
                            ArrayRef<const SCEV *> Sizes, Value *AccessValue,
                            bool IsPHI, StringRef BaseName)
     : Id(Id), IsPHI(IsPHI), AccType(Type), RedType(RT_NONE), Statement(nullptr),
       BaseAddr(BaseAddress), BaseName(BaseName), ElemBytes(ElemBytes),
       Sizes(Sizes.begin(), Sizes.end()), AccessInstruction(AccessInst),
-      AccessValue(AccessValue), Offset(Offset), IsAffine(Affine),
+      AccessValue(AccessValue), IsAffine(Affine),
       Subscripts(Subscripts.begin(), Subscripts.end()), AccessRelation(nullptr),
       NewAccessRelation(nullptr) {}
 
@@ -2668,34 +2657,6 @@ ScopStmt *Scop::getStmtForBasicBlock(BasicBlock *BB) const {
   return StmtMapIt->second;
 }
 
-void Scop::printIRAccesses(raw_ostream &OS, ScalarEvolution *SE,
-                           LoopInfo *LI) const {
-  OS << "Scop: " << R.getNameStr() << "\n";
-
-  printIRAccessesDetail(OS, SE, LI, &R, 0);
-}
-
-void Scop::printIRAccessesDetail(raw_ostream &OS, ScalarEvolution *SE,
-                                 LoopInfo *LI, const Region *CurR,
-                                 unsigned ind) const {
-  // FIXME: Print other details rather than memory accesses.
-  for (const auto &CurBlock : CurR->blocks()) {
-    AccFuncMapType::const_iterator AccSetIt = AccFuncMap.find(CurBlock);
-
-    // Ignore trivial blocks that do not contain any memory access.
-    if (AccSetIt == AccFuncMap.end())
-      continue;
-
-    OS.indent(ind) << "BB: " << CurBlock->getName() << '\n';
-    typedef AccFuncSetType::const_iterator access_iterator;
-    const AccFuncSetType &AccFuncs = AccSetIt->second;
-
-    for (access_iterator AI = AccFuncs.begin(), AE = AccFuncs.end(); AI != AE;
-         ++AI)
-      AI->printIR(OS.indent(ind + 2));
-  }
-}
-
 int Scop::getRelativeLoopDepth(const Loop *L) const {
   Loop *OuterLoop =
       L ? R.outermostLoopInRegion(const_cast<Loop *>(L)) : nullptr;
@@ -2742,10 +2703,9 @@ void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
       // we have to insert a scalar dependence from the definition of OpI to
       // OpBB if the definition is not in OpBB.
       if (OpIBB != OpBB) {
-        addMemoryAccess(OpBB, PHI, MemoryAccess::READ, OpI, ZeroOffset, 1, true,
+        addMemoryAccess(OpBB, PHI, MemoryAccess::READ, OpI, 1, true, OpI);
+        addMemoryAccess(OpIBB, OpI, MemoryAccess::MUST_WRITE, OpI, 1, true,
                         OpI);
-        addMemoryAccess(OpIBB, OpI, MemoryAccess::MUST_WRITE, OpI, ZeroOffset,
-                        1, true, OpI);
       }
     }
 
@@ -2753,13 +2713,13 @@ void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
     // instruction.
     OpI = OpBB->getTerminator();
 
-    addMemoryAccess(OpBB, OpI, MemoryAccess::MUST_WRITE, PHI, ZeroOffset, 1,
-                    true, Op, /* IsPHI */ !IsExitBlock);
+    addMemoryAccess(OpBB, OpI, MemoryAccess::MUST_WRITE, PHI, 1, true, Op,
+                    /* IsPHI */ !IsExitBlock);
   }
 
   if (!OnlyNonAffineSubRegionOperands) {
-    addMemoryAccess(PHI->getParent(), PHI, MemoryAccess::READ, PHI, ZeroOffset,
-                    1, true, PHI,
+    addMemoryAccess(PHI->getParent(), PHI, MemoryAccess::READ, PHI, 1, true,
+                    PHI,
                     /* IsPHI */ !IsExitBlock);
   }
 }
@@ -2816,8 +2776,7 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     // Do not build a read access that is not in the current SCoP
     // Use the def instruction as base address of the MemoryAccess, so that it
     // will become the name of the scalar access in the polyhedral form.
-    addMemoryAccess(UseParent, UI, MemoryAccess::READ, Inst, ZeroOffset, 1,
-                    true, Inst);
+    addMemoryAccess(UseParent, UI, MemoryAccess::READ, Inst, 1, true, Inst);
   }
 
   if (ModelReadOnlyScalars) {
@@ -2832,8 +2791,8 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
       if (isa<Constant>(Op))
         continue;
 
-      addMemoryAccess(Inst->getParent(), Inst, MemoryAccess::READ, Op,
-                      ZeroOffset, 1, true, Op);
+      addMemoryAccess(Inst->getParent(), Inst, MemoryAccess::READ, Op, 1, true,
+                      Op);
     }
   }
 
@@ -2905,7 +2864,7 @@ void ScopInfo::buildMemoryAccess(
             IntegerType::getInt64Ty(BasePtr->getContext()), Size)));
 
         addMemoryAccess(Inst->getParent(), Inst, Type, BasePointer->getValue(),
-                        AccessFunction, Size, true, Subscripts, SizesSCEV, Val);
+                        Size, true, Subscripts, SizesSCEV, Val);
         return;
       }
     }
@@ -2914,8 +2873,7 @@ void ScopInfo::buildMemoryAccess(
   auto AccItr = InsnToMemAcc.find(Inst);
   if (PollyDelinearize && AccItr != InsnToMemAcc.end()) {
     addMemoryAccess(Inst->getParent(), Inst, Type, BasePointer->getValue(),
-                    AccessFunction, Size, true,
-                    AccItr->second.DelinearizedSubscripts,
+                    Size, true, AccItr->second.DelinearizedSubscripts,
                     AccItr->second.Shape->DelinearizedSizes, Val);
     return;
   }
@@ -2940,8 +2898,8 @@ void ScopInfo::buildMemoryAccess(
   if (!IsAffine && Type == MemoryAccess::MUST_WRITE)
     Type = MemoryAccess::MAY_WRITE;
 
-  addMemoryAccess(Inst->getParent(), Inst, Type, BasePointer->getValue(),
-                  AccessFunction, Size, IsAffine, Subscripts, Sizes, Val);
+  addMemoryAccess(Inst->getParent(), Inst, Type, BasePointer->getValue(), Size,
+                  IsAffine, Subscripts, Sizes, Val);
 }
 
 void ScopInfo::buildAccessFunctions(Region &R, Region &SR) {
@@ -2986,17 +2944,19 @@ void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
 
     if (buildScalarDependences(Inst, &R, NonAffineSubRegion)) {
       if (!isa<StoreInst>(Inst))
-        addMemoryAccess(&BB, Inst, MemoryAccess::MUST_WRITE, Inst, ZeroOffset,
-                        1, true, Inst);
+        addMemoryAccess(&BB, Inst, MemoryAccess::MUST_WRITE, Inst, 1, true,
+                        Inst);
     }
   }
 }
 
-void ScopInfo::addMemoryAccess(
-    BasicBlock *BB, Instruction *Inst, MemoryAccess::AccessType Type,
-    Value *BaseAddress, const SCEV *Offset, unsigned ElemBytes, bool Affine,
-    Value *AccessValue, ArrayRef<const SCEV *> Subscripts,
-    ArrayRef<const SCEV *> Sizes, bool IsPHI = false) {
+void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
+                               MemoryAccess::AccessType Type,
+                               Value *BaseAddress, unsigned ElemBytes,
+                               bool Affine, Value *AccessValue,
+                               ArrayRef<const SCEV *> Subscripts,
+                               ArrayRef<const SCEV *> Sizes,
+                               bool IsPHI = false) {
   AccFuncSetType &AccList = AccFuncMap[BB];
   size_t Identifier = AccList.size();
 
@@ -3006,7 +2966,7 @@ void ScopInfo::addMemoryAccess(
   std::string IdName = "__polly_array_ref_" + std::to_string(Identifier);
   isl_id *Id = isl_id_alloc(ctx, IdName.c_str(), nullptr);
 
-  AccList.emplace_back(Inst, Id, Type, BaseAddress, Offset, ElemBytes, Affine,
+  AccList.emplace_back(Inst, Id, Type, BaseAddress, ElemBytes, Affine,
                        Subscripts, Sizes, AccessValue, IsPHI, BaseName);
 }
 
@@ -3036,7 +2996,6 @@ void ScopInfo::print(raw_ostream &OS, const Module *) const {
     return;
   }
 
-  scop->printIRAccesses(OS, SE, LI);
   scop->print(OS);
 }
 
