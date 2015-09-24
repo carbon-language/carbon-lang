@@ -45,8 +45,15 @@ public:
 
     assert(!_file->hasAtoms() && "The file shouldn't have atoms yet");
     _resolver(sym, *_file);
-    // If atoms were added - release the file to the caller.
-    return _file->hasAtoms() ? _file.release() : nullptr;
+
+    if (!_file->hasAtoms())
+      return nullptr;
+
+    // If atoms were added - return the file but also store it for later
+    // destruction.
+    File *result = _file.get();
+    _returnedFiles.push_back(std::move(_file));
+    return result;
   }
 
 private:
@@ -57,6 +64,7 @@ private:
   // reversed destruction order.
   llvm::BumpPtrAllocator _alloc;
   unique_bump_ptr<SymbolFile<ELFT>> _file;
+  std::vector<unique_bump_ptr<SymbolFile<ELFT>>> _returnedFiles;
 };
 
 } // end anon namespace

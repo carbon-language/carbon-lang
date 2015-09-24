@@ -11,6 +11,7 @@
 #include "lld/Core/LLVM.h"
 #include "lld/Core/LinkingContext.h"
 #include "lld/Core/Parallel.h"
+#include "lld/Driver/Driver.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/Archive.h"
@@ -76,8 +77,11 @@ public:
     if (instantiateMember(ci, result))
       return nullptr;
 
-    // give up the pointer so that this object no longer manages it
-    return result.release();
+    File *file = result.get();
+    _filesReturned.push_back(std::move(result));
+
+    // Give up the file pointer. It was stored and will be destroyed with destruction of FileArchive
+    return file;
   }
 
   // Instantiate a member file containing a given symbol name.
@@ -259,6 +263,7 @@ private:
   std::vector<std::unique_ptr<MemoryBuffer>> _memberBuffers;
   std::map<const char *, std::unique_ptr<Future<File *>>> _preloaded;
   std::mutex _mutex;
+  FileVector _filesReturned;
 };
 
 class ArchiveReader : public Reader {
