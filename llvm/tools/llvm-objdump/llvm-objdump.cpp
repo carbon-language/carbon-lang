@@ -189,7 +189,7 @@ public:
       : Predicate(P), Iterator(I), End(E) {
     ScanPredicate();
   }
-  llvm::object::SectionRef operator*() const { return *Iterator; }
+  const llvm::object::SectionRef &operator*() const { return *Iterator; }
   SectionFilterIterator &operator++() {
     ++Iterator;
     ScanPredicate();
