@@ -260,6 +260,7 @@ void PassManagerBuilder::populateModulePassManager(
   MPM.add(createLoopRotatePass(SizeLevel == 2 ? 0 : -1));
   MPM.add(createLICMPass());                  // Hoist loop invariants
   MPM.add(createLoopUnswitchPass(SizeLevel || OptLevel < 3));
+  MPM.add(createCFGSimplificationPass());
   MPM.add(createInstructionCombiningPass());
   MPM.add(createIndVarSimplifyPass());        // Canonicalize indvars
   MPM.add(createLoopIdiomPass());             // Recognize idioms like memset.
