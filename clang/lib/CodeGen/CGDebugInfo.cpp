@@ -1707,18 +1707,23 @@ CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod,
     }
   }
 
-  std::string FullModuleName = Mod.getFullModuleName();
-  if (CreateSkeletonCU) {
+  bool IsRootModule = M ? !M->Parent : true;
+  if (CreateSkeletonCU && IsRootModule) {
     llvm::DIBuilder DIB(CGM.getModule());
-    DIB.createCompileUnit(TheCU->getSourceLanguage(), FullModuleName,
+    DIB.createCompileUnit(TheCU->getSourceLanguage(), Mod.getModuleName(),
                           Mod.getPath(), TheCU->getProducer(), true,
                           StringRef(), 0, Mod.getASTFile(),
                           llvm::DIBuilder::FullDebug, Mod.getSignature());
     DIB.finalize();
   }
+  llvm::DIModule *Parent =
+      IsRootModule ? nullptr
+                   : getOrCreateModuleRef(
+                         ExternalASTSource::ASTSourceDescriptor(*M->Parent),
+                         CreateSkeletonCU);
   llvm::DIModule *DIMod =
-      DBuilder.createModule(TheCU, FullModuleName, ConfigMacros, Mod.getPath(),
-                            CGM.getHeaderSearchOpts().Sysroot);
+      DBuilder.createModule(Parent, Mod.getModuleName(), ConfigMacros,
+                            Mod.getPath(), CGM.getHeaderSearchOpts().Sysroot);
   ModRef.reset(DIMod);
   return DIMod;
 }

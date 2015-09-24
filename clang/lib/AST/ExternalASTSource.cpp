@@ -36,9 +36,9 @@ ExternalASTSource::ASTSourceDescriptor::ASTSourceDescriptor(const Module &M)
     ASTFile = File->getName();
 }
 
-std::string ExternalASTSource::ASTSourceDescriptor::getFullModuleName() const {
+std::string ExternalASTSource::ASTSourceDescriptor::getModuleName() const {
   if (ClangModule)
-    return ClangModule->getFullModuleName();
+    return ClangModule->Name;
   else
     return PCHModuleName;
 }

@@ -159,7 +159,7 @@ public:
         : PCHModuleName(std::move(Name)), Path(std::move(Path)),
           ASTFile(std::move(ASTFile)), Signature(Signature){};
     ASTSourceDescriptor(const Module &M);
-    std::string getFullModuleName() const;
+    std::string getModuleName() const;
     StringRef getPath() const { return Path; }
     StringRef getASTFile() const { return ASTFile; }
     uint64_t getSignature() const { return Signature; }
