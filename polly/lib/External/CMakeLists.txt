@@ -254,12 +254,12 @@ set (ISL_FILES
     isl/imath/imrat.c
     )
 
-add_polly_library(Polly_isl FORCE_STATIC
+add_polly_library(PollyISL FORCE_STATIC
   ${ISL_FILES}
 )
 
 # ISL requires at least C99 to compile. gcc < 5.0 use -std=gnu89 as default.
-target_enable_c99(Polly_isl)
+target_enable_c99(PollyISL)
 
 # Define the FLAGS for the compilation of isl and imath
 #
@@ -272,7 +272,7 @@ target_enable_c99(Polly_isl)
 #
 # We also disable warnings which should be coped with upstream.
 if (NOT MSVC)
-  set_target_properties(Polly_isl PROPERTIES
+  set_target_properties(PollyISL PROPERTIES
     COMPILE_FLAGS "-fvisibility=hidden -w"
   )
 endif ()

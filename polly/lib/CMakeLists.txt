@@ -54,7 +54,7 @@ add_polly_library(Polly
   ${POLLY_HEADER_FILES}
   )
 
-target_link_libraries(Polly Polly_isl)
+target_link_libraries(Polly PollyISL)
 
 if (BUILD_SHARED_LIBS)
   target_link_libraries(Polly
