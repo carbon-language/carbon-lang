@@ -15,6 +15,8 @@
 namespace lld {
 namespace elf2 {
 
+void warning(const Twine &Msg) { llvm::errs() << Msg << "\n"; }
+
 void error(const Twine &Msg) {
   llvm::errs() << Msg << "\n";
   exit(1);

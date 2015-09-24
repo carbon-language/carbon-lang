@@ -15,6 +15,8 @@
 namespace lld {
 namespace elf2 {
 
+void warning(const Twine &Msg);
+
 LLVM_ATTRIBUTE_NORETURN void error(const Twine &Msg);
 void error(std::error_code EC, const Twine &Prefix);
 void error(std::error_code EC);
