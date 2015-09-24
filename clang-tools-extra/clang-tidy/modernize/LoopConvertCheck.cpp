@@ -394,9 +394,7 @@ static bool containerIsConst(const Expr *ContainerExpr, bool Dereference) {
     // If VDec is a reference to a container, Dereference is false,
     // but we still need to check the const-ness of the underlying container
     // type.
-    if (const auto &RT = CType->getAs<ReferenceType>()) {
-      CType = RT->getPointeeType();
-    }
+    CType = CType.getNonReferenceType();
     return CType.isConstQualified();
   }
   return false;
