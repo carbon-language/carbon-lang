@@ -1780,7 +1780,7 @@ static bool analyzeContextInfo(const DWARFDebugInfoEntryMinimal *DIE,
   //   definitions match)."
   //
   // We treat non-C++ modules like namespaces for this reason.
-  if (DIE->getTag() == dwarf::DW_TAG_module &&
+  if (DIE->getTag() == dwarf::DW_TAG_module && ParentIdx == 0 &&
       DIE->getAttributeValueAsString(&CU.getOrigUnit(), dwarf::DW_AT_name,
                                      "") != CU.getClangModuleName()) {
     InImportedModule = true;
