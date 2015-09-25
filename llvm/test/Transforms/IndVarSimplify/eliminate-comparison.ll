@@ -356,5 +356,42 @@ define void @func_17(i32* %len.ptr) {
   ret void
 }
 
-!0 = !{i32 0, i32 2147483647}
+define i1 @func_18(i16* %tmp20, i32* %len.addr) {
+; CHECK-LABEL: @func_18(
+entry:
+  %len = load i32, i32* %len.addr, !range !0
+  %tmp18 = icmp eq i32 %len, 0
+  br i1 %tmp18, label %bb2, label %bb0.preheader
 
+bb0.preheader:
+  br label %bb0
+
+bb0:
+; CHECK: bb0:
+  %var_0.in = phi i32 [ %var_0, %bb1 ], [ %len, %bb0.preheader ]
+  %var_1 = phi i32 [ %tmp30, %bb1 ], [ 0, %bb0.preheader ]
+  %var_0 = add nsw i32 %var_0.in, -1
+  %tmp23 = icmp ult i32 %var_1, %len
+; CHECK: br i1 true, label %stay, label %bb2.loopexit
+  br i1 %tmp23, label %stay, label %bb2
+
+stay:
+; CHECK: stay:
+  %tmp25 = getelementptr inbounds i16, i16* %tmp20, i32 %var_1
+  %tmp26 = load i16, i16* %tmp25
+  %tmp29 = icmp eq i16 %tmp26, 0
+  br i1 %tmp29, label %bb1, label %bb2
+
+bb1:
+  %tmp30 = add i32 %var_1, 1
+  %tmp31 = icmp eq i32 %var_0, 0
+  br i1 %tmp31, label %bb3, label %bb0
+
+bb2:
+  ret i1 false
+
+bb3:
+  ret i1 true
+}
+
+!0 = !{i32 0, i32 2147483647}
