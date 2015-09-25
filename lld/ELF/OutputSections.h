@@ -43,7 +43,7 @@ getLocalSymVA(const typename llvm::object::ELFFile<ELFT>::Elf_Sym *Sym,
 bool includeInSymtab(const SymbolBody &B);
 bool includeInDynamicSymtab(const SymbolBody &B);
 
-static bool shouldKeepInSymtab(StringRef SymName) {
+inline bool shouldKeepInSymtab(StringRef SymName) {
   if (Config->DiscardNone)
     return true;
 
