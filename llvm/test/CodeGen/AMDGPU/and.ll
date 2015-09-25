@@ -2,6 +2,8 @@
 ; RUN: llc -march=amdgcn -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
+declare i32 @llvm.r600.read.tidig.x() #0
+
 ; FUNC-LABEL: {{^}}test2:
 ; EG: AND_INT {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; EG: AND_INT {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
@@ -54,13 +56,80 @@ define void @s_and_constant_i32(i32 addrspace(1)* %out, i32 %a) {
   ret void
 }
 
-; FUNC-LABEL: {{^}}v_and_i32:
-; SI: v_and_b32
-define void @v_and_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) {
-  %a = load i32, i32 addrspace(1)* %aptr, align 4
-  %b = load i32, i32 addrspace(1)* %bptr, align 4
+; FIXME: We should really duplicate the constant so that the SALU use
+; can fold into the s_and_b32 and the VALU one is materialized
+; directly without copying from the SGPR.
+
+; Second use is a VGPR use of the constant.
+; FUNC-LABEL: {{^}}s_and_multi_use_constant_i32_0:
+; SI: s_mov_b32 [[K:s[0-9]+]], 0x12d687
+; SI-DAG: s_and_b32 [[AND:s[0-9]+]], s{{[0-9]+}}, [[K]]
+; SI-DAG: v_mov_b32_e32 [[VK:v[0-9]+]], [[K]]
+; SI: buffer_store_dword [[VK]]
+define void @s_and_multi_use_constant_i32_0(i32 addrspace(1)* %out, i32 %a, i32 %b) {
+  %and = and i32 %a, 1234567
+
+  ; Just to stop future replacement of copy to vgpr + store with VALU op.
+  %foo = add i32 %and, %b
+  store volatile i32 %foo, i32 addrspace(1)* %out
+  store volatile i32 1234567, i32 addrspace(1)* %out
+  ret void
+}
+
+; Second use is another SGPR use of the constant.
+; FUNC-LABEL: {{^}}s_and_multi_use_constant_i32_1:
+; SI: s_mov_b32 [[K:s[0-9]+]], 0x12d687
+; SI: s_and_b32 [[AND:s[0-9]+]], s{{[0-9]+}}, [[K]]
+; SI: s_add_i32
+; SI: s_add_i32 [[ADD:s[0-9]+]], s{{[0-9]+}}, [[K]]
+; SI: buffer_store_dword [[VK]]
+define void @s_and_multi_use_constant_i32_1(i32 addrspace(1)* %out, i32 %a, i32 %b) {
+  %and = and i32 %a, 1234567
+  %foo = add i32 %and, 1234567
+  %bar = add i32 %foo, %b
+  store volatile i32 %bar, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_and_i32_vgpr_vgpr:
+; SI: v_and_b32_e32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
+define void @v_and_i32_vgpr_vgpr(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) {
+  %tid = call i32 @llvm.r600.read.tidig.x() #0
+  %gep.a = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid
+  %gep.b = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
+  %a = load i32, i32 addrspace(1)* %gep.a
+  %b = load i32, i32 addrspace(1)* %gep.b
   %and = and i32 %a, %b
-  store i32 %and, i32 addrspace(1)* %out, align 4
+  store i32 %and, i32 addrspace(1)* %gep.out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_and_i32_sgpr_vgpr:
+; SI-DAG: s_load_dword [[SA:s[0-9]+]]
+; SI-DAG: {{buffer|flat}}_load_dword [[VB:v[0-9]+]]
+; SI: v_and_b32_e32 v{{[0-9]+}}, [[SA]], [[VB]]
+define void @v_and_i32_sgpr_vgpr(i32 addrspace(1)* %out, i32 %a, i32 addrspace(1)* %bptr) {
+  %tid = call i32 @llvm.r600.read.tidig.x() #0
+  %gep.b = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
+  %b = load i32, i32 addrspace(1)* %gep.b
+  %and = and i32 %a, %b
+  store i32 %and, i32 addrspace(1)* %gep.out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}v_and_i32_vgpr_sgpr:
+; SI-DAG: s_load_dword [[SA:s[0-9]+]]
+; SI-DAG: {{buffer|flat}}_load_dword [[VB:v[0-9]+]]
+; SI: v_and_b32_e32 v{{[0-9]+}}, [[SA]], [[VB]]
+define void @v_and_i32_vgpr_sgpr(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 %b) {
+  %tid = call i32 @llvm.r600.read.tidig.x() #0
+  %gep.a = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
+  %a = load i32, i32 addrspace(1)* %gep.a
+  %and = and i32 %a, %b
+  store i32 %and, i32 addrspace(1)* %gep.out
   ret void
 }
 
@@ -308,3 +377,5 @@ define void @s_and_inline_high_imm_f32_neg_4.0_i64(i64 addrspace(1)* %out, i64 a
   store i64 %and, i64 addrspace(1)* %out, align 8
   ret void
 }
+
+attributes #0 = { nounwind readnone }
