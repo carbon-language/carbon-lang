@@ -7151,6 +7151,14 @@ bool ScalarEvolution::isImpliedCond(ICmpInst::Predicate Pred,
   const SCEV *FoundLHS = getSCEV(ICI->getOperand(0));
   const SCEV *FoundRHS = getSCEV(ICI->getOperand(1));
 
+  return isImpliedCond(Pred, LHS, RHS, FoundPred, FoundLHS, FoundRHS);
+}
+
+bool ScalarEvolution::isImpliedCond(ICmpInst::Predicate Pred, const SCEV *LHS,
+                                    const SCEV *RHS,
+                                    ICmpInst::Predicate FoundPred,
+                                    const SCEV *FoundLHS,
+                                    const SCEV *FoundRHS) {
   // Balance the types.
   if (getTypeSizeInBits(LHS->getType()) <
       getTypeSizeInBits(FoundLHS->getType())) {

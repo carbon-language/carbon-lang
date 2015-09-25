@@ -507,6 +507,13 @@ namespace llvm {
                        bool Inverse);
 
     /// Test whether the condition described by Pred, LHS, and RHS is true
+    /// whenever the condition described by FoundPred, FoundLHS, FoundRHS is
+    /// true.
+    bool isImpliedCond(ICmpInst::Predicate Pred, const SCEV *LHS,
+                       const SCEV *RHS, ICmpInst::Predicate FoundPred,
+                       const SCEV *FoundLHS, const SCEV *FoundRHS);
+
+    /// Test whether the condition described by Pred, LHS, and RHS is true
     /// whenever the condition described by Pred, FoundLHS, and FoundRHS is
     /// true.
     bool isImpliedCondOperands(ICmpInst::Predicate Pred,
