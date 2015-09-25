@@ -28,6 +28,14 @@ OutputSectionBase<Is64Bits>::OutputSectionBase(StringRef Name, uint32_t sh_type,
   Header.sh_flags = sh_flags;
 }
 
+template <class ELFT>
+GotSection<ELFT>::GotSection()
+    : OutputSectionBase<ELFT::Is64Bits>(".got", llvm::ELF::SHT_PROGBITS,
+                                        llvm::ELF::SHF_ALLOC |
+                                            llvm::ELF::SHF_WRITE) {
+  this->Header.sh_addralign = this->getAddrSize();
+}
+
 template <class ELFT> void GotSection<ELFT>::addEntry(SymbolBody *Sym) {
   Sym->setGotIndex(Entries.size());
   Entries.push_back(Sym);
@@ -37,6 +45,15 @@ template <class ELFT>
 typename GotSection<ELFT>::uintX_t
 GotSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
   return this->getVA() + B.getGotIndex() * this->getAddrSize();
+}
+
+template <class ELFT>
+PltSection<ELFT>::PltSection(const GotSection<ELFT> &GotSec)
+    : OutputSectionBase<ELFT::Is64Bits>(".plt", llvm::ELF::SHT_PROGBITS,
+                                        llvm::ELF::SHF_ALLOC |
+                                            llvm::ELF::SHF_EXECINSTR),
+      GotSec(GotSec) {
+  this->Header.sh_addralign = 16;
 }
 
 template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -60,6 +77,19 @@ template <class ELFT>
 typename PltSection<ELFT>::uintX_t
 PltSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
   return this->getVA() + B.getPltIndex() * EntrySize;
+}
+
+template <class ELFT>
+RelocationSection<ELFT>::RelocationSection(SymbolTableSection<ELFT> &DynSymSec,
+                                           const GotSection<ELFT> &GotSec,
+                                           bool IsRela)
+    : OutputSectionBase<ELFT::Is64Bits>(IsRela ? ".rela.dyn" : ".rel.dyn",
+                                        IsRela ? llvm::ELF::SHT_RELA
+                                               : llvm::ELF::SHT_REL,
+                                        llvm::ELF::SHF_ALLOC),
+      DynSymSec(DynSymSec), GotSec(GotSec), IsRela(IsRela) {
+  this->Header.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
+  this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
 }
 
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -122,11 +152,35 @@ template <bool Is64Bits> void InterpSection<Is64Bits>::writeTo(uint8_t *Buf) {
   memcpy(Buf, Config->DynamicLinker.data(), Config->DynamicLinker.size());
 }
 
+template <class ELFT>
+HashTableSection<ELFT>::HashTableSection(SymbolTableSection<ELFT> &DynSymSec)
+    : OutputSectionBase<ELFT::Is64Bits>(".hash", llvm::ELF::SHT_HASH,
+                                        llvm::ELF::SHF_ALLOC),
+      DynSymSec(DynSymSec) {
+  this->Header.sh_entsize = sizeof(Elf_Word);
+  this->Header.sh_addralign = sizeof(Elf_Word);
+}
+
 template <class ELFT> void HashTableSection<ELFT>::addSymbol(SymbolBody *S) {
   StringRef Name = S->getName();
   DynSymSec.addSymbol(Name);
   Hashes.push_back(hash(Name));
   S->setDynamicSymbolTableIndex(Hashes.size());
+}
+
+template <class ELFT>
+DynamicSection<ELFT>::DynamicSection(SymbolTable &SymTab,
+                                     HashTableSection<ELFT> &HashSec,
+                                     RelocationSection<ELFT> &RelaDynSec)
+    : OutputSectionBase<ELFT::Is64Bits>(".dynamic", llvm::ELF::SHT_DYNAMIC,
+                                        llvm::ELF::SHF_ALLOC |
+                                            llvm::ELF::SHF_WRITE),
+      HashSec(HashSec), DynSymSec(HashSec.getDynSymSec()),
+      DynStrSec(DynSymSec.getStrTabSec()), RelaDynSec(RelaDynSec),
+      SymTab(SymTab) {
+  typename Base::HeaderT &Header = this->Header;
+  Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
+  Header.sh_entsize = ELFT::Is64Bits ? 16 : 8;
 }
 
 template <class ELFT> void DynamicSection<ELFT>::finalize() {
@@ -213,6 +267,15 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
+OutputSection<ELFT>::OutputSection(const PltSection<ELFT> &PltSec,
+                                   const GotSection<ELFT> &GotSec,
+                                   const OutputSection<ELFT> &BssSec,
+                                   StringRef Name, uint32_t sh_type,
+                                   uintX_t sh_flags)
+    : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags),
+      PltSec(PltSec), GotSec(GotSec), BssSec(BssSec) {}
+
+template <class ELFT>
 void OutputSection<ELFT>::addSection(InputSection<ELFT> *C) {
   Sections.push_back(C);
   C->setOutputSection(this);
@@ -256,6 +319,15 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <bool Is64Bits>
+StringTableSection<Is64Bits>::StringTableSection(bool Dynamic)
+    : OutputSectionBase<Is64Bits>(Dynamic ? ".dynstr" : ".strtab",
+                                  llvm::ELF::SHT_STRTAB,
+                                  Dynamic ? (uintX_t)llvm::ELF::SHF_ALLOC : 0),
+      Dynamic(Dynamic) {
+  this->Header.sh_addralign = 1;
+}
+
+template <bool Is64Bits>
 void StringTableSection<Is64Bits>::writeTo(uint8_t *Buf) {
   StringRef Data = StrTabBuilder.data();
   memcpy(Buf, Data.data(), Data.size());
@@ -276,6 +348,22 @@ bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
   if (Config->ExportDynamic || Config->Shared)
     return true;
   return B.isUsedInDynamicReloc();
+}
+
+template <class ELFT>
+SymbolTableSection<ELFT>::SymbolTableSection(
+    SymbolTable &Table, StringTableSection<ELFT::Is64Bits> &StrTabSec,
+    const OutputSection<ELFT> &BssSec)
+    : OutputSectionBase<ELFT::Is64Bits>(
+          StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
+          StrTabSec.isDynamic() ? llvm::ELF::SHT_DYNSYM : llvm::ELF::SHT_SYMTAB,
+          StrTabSec.isDynamic() ? (uintX_t)llvm::ELF::SHF_ALLOC : 0),
+      Table(Table), StrTabSec(StrTabSec), BssSec(BssSec) {
+  typedef OutputSectionBase<ELFT::Is64Bits> Base;
+  typename Base::HeaderT &Header = this->Header;
+
+  Header.sh_entsize = sizeof(Elf_Sym);
+  Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
