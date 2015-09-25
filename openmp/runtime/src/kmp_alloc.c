@@ -1178,7 +1178,7 @@ bufdump(  kmp_info_t *th, void *buf )
         }
 
         for (i = 0; i < l; i++) {
-            (void) KMP_SNPRINTF(bhex + i * 3, sizeof(bhex), "%02X ", bdump[i]);
+            (void) KMP_SNPRINTF(bhex + i * 3, sizeof(bhex) - i * 3, "%02X ", bdump[i]);
             if (bdump[i] > 0x20 && bdump[i] < 0x7F)
                 bascii[ i ] = bdump[ i ];
             else

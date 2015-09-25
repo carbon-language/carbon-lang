@@ -66,13 +66,13 @@ __kmp_affinity_print_mask(char *buf, int buf_len, kmp_affin_mask_t *mask)
         }
     }
     if (i == KMP_CPU_SETSIZE) {
-        KMP_SNPRINTF(scan, buf_len, "{<empty>}");
+        KMP_SNPRINTF(scan, end-scan+1, "{<empty>}");
         while (*scan != '\0') scan++;
         KMP_ASSERT(scan <= end);
         return buf;
     }
 
-    KMP_SNPRINTF(scan, buf_len, "{%ld", (long)i);
+    KMP_SNPRINTF(scan, end-scan+1, "{%ld", (long)i);
     while (*scan != '\0') scan++;
     i++;
     for (; i < KMP_CPU_SETSIZE; i++) {
@@ -89,14 +89,14 @@ __kmp_affinity_print_mask(char *buf, int buf_len, kmp_affin_mask_t *mask)
         if (end - scan < 15) {
            break;
         }
-        KMP_SNPRINTF(scan, buf_len, ",%-ld", (long)i);
+        KMP_SNPRINTF(scan, end-scan+1, ",%-ld", (long)i);
         while (*scan != '\0') scan++;
     }
     if (i < KMP_CPU_SETSIZE) {
-        KMP_SNPRINTF(scan, buf_len,  ",...");
+        KMP_SNPRINTF(scan, end-scan+1,  ",...");
         while (*scan != '\0') scan++;
     }
-    KMP_SNPRINTF(scan, buf_len, "}");
+    KMP_SNPRINTF(scan, end-scan+1, "}");
     while (*scan != '\0') scan++;
     KMP_ASSERT(scan <= end);
     return buf;
