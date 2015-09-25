@@ -1208,6 +1208,11 @@ static Instruction *matchDeMorgansLaws(BinaryOperator &I,
   auto Opcode = I.getOpcode();
   assert((Opcode == Instruction::And || Opcode == Instruction::Or) &&
          "Trying to match De Morgan's Laws with something other than and/or");
+  // Flip the logic operation.
+  if (Opcode == Instruction::And)
+    Opcode = Instruction::Or;
+  else
+    Opcode = Instruction::And;
 
   Value *Op0 = I.getOperand(0);
   Value *Op1 = I.getOperand(1);
@@ -1215,15 +1220,30 @@ static Instruction *matchDeMorgansLaws(BinaryOperator &I,
   if (Value *Op0NotVal = dyn_castNotVal(Op0))
     if (Value *Op1NotVal = dyn_castNotVal(Op1))
       if (Op0->hasOneUse() && Op1->hasOneUse()) {
-        // Flip the logic operation.
-        if (Opcode == Instruction::And)
-          Opcode = Instruction::Or;
-        else
-          Opcode = Instruction::And;
         Value *LogicOp = Builder->CreateBinOp(Opcode, Op0NotVal, Op1NotVal,
                                               I.getName() + ".demorgan");
         return BinaryOperator::CreateNot(LogicOp);
       }
+
+  // De Morgan's Law in disguise:
+  // (zext(bool A) ^ 1) & (zext(bool B) ^ 1) -> zext(~(A | B))
+  // (zext(bool A) ^ 1) | (zext(bool B) ^ 1) -> zext(~(A & B))
+  Value *A = nullptr;
+  Value *B = nullptr;
+  ConstantInt *C1 = nullptr;
+  if (match(Op0, m_OneUse(m_Xor(m_ZExt(m_Value(A)), m_ConstantInt(C1)))) &&
+      match(Op1, m_OneUse(m_Xor(m_ZExt(m_Value(B)), m_Specific(C1))))) {
+    // TODO: This check could be loosened to handle different type sizes.
+    // Alternatively, we could fix the definition of m_Not to recognize a not
+    // operation hidden by a zext?
+    if (A->getType()->isIntegerTy(1) && B->getType()->isIntegerTy(1) &&
+        C1->isOne()) {
+      Value *LogicOp = Builder->CreateBinOp(Opcode, A, B,
+                                            I.getName() + ".demorgan");
+      Value *Not = Builder->CreateNot(LogicOp);
+      return CastInst::CreateZExtOrBitCast(Not, I.getType());
+    }
+  }
 
   return nullptr;
 }

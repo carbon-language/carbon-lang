@@ -11,12 +11,10 @@ define i32 @demorgan_or(i1 %X, i1 %Y) {
   ret i32 %or
 
 ; CHECK-LABEL: demorgan_or(
-; CHECK-NEXT:  = zext
-; CHECK-NEXT:  = zext
-; CHECK-NEXT:  = xor
-; CHECK-NEXT:  = xor
-; CHECK-NEXT:  = or
-; CHECK-NEXT:  ret
+; CHECK-NEXT:  %[[AND:.*]] = and i1 %X, %Y
+; CHECK-NEXT:  %[[ZEXT:.*]] = zext i1 %[[AND]] to i32
+; CHECK-NEXT:  %[[XOR:.*]] = xor i32 %[[ZEXT]], 1
+; CHECK-NEXT:  ret i32 %[[XOR]]
 }
 
 define i32 @demorgan_and(i1 %X, i1 %Y) {
@@ -28,11 +26,9 @@ define i32 @demorgan_and(i1 %X, i1 %Y) {
   ret i32 %and
 
 ; CHECK-LABEL: demorgan_and(
-; CHECK-NEXT:  = zext
-; CHECK-NEXT:  = zext
-; CHECK-NEXT:  = xor
-; CHECK-NEXT:  = xor
-; CHECK-NEXT:  = and
-; CHECK-NEXT:  ret
+; CHECK-NEXT:  %[[OR:.*]] = or i1 %X, %Y
+; CHECK-NEXT:  %[[ZEXT:.*]] = zext i1 %[[OR]] to i32
+; CHECK-NEXT:  %[[XOR:.*]] = xor i32 %[[ZEXT]], 1
+; CHECK-NEXT:  ret i32 %[[XOR]]
 }
 
