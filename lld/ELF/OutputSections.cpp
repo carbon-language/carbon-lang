@@ -367,8 +367,6 @@ SymbolTableSection<ELFT>::SymbolTableSection(
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
-  const OutputSection<ELFT> *Out = nullptr;
-  const InputSection<ELFT> *Section = nullptr;
   Buf += sizeof(Elf_Sym);
 
   // All symbols with STB_LOCAL binding precede the weak and global symbols.
@@ -391,9 +389,9 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
           SecIndex = File.getObj().getExtendedSymbolTableIndex(
               &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
         ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
-        Section = Sections[SecIndex];
+        const InputSection<ELFT> *Section = Sections[SecIndex];
         assert(Section != nullptr);
-        Out = Section->getOutputSection();
+        const OutputSection<ELFT> *Out = Section->getOutputSection();
         assert(Out != nullptr);
         ESym->st_shndx = Out->getSectionIndex();
         ESym->st_value =
@@ -416,8 +414,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
     ESym->st_name = StrTabSec.getFileOff(Name);
 
-    Out = nullptr;
-    Section = nullptr;
+    const OutputSection<ELFT> *Out = nullptr;
+    const InputSection<ELFT> *Section = nullptr;
 
     switch (Body->kind()) {
     case SymbolBody::DefinedRegularKind:
