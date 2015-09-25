@@ -103,11 +103,11 @@ endfunction()
 set(DARWIN_EXCLUDE_DIR ${CMAKE_SOURCE_DIR}/lib/builtins/Darwin-excludes)
 
 # Read and process the exclude file into a list of symbols
-function(darwin_read_exclude_file output_var file)
-  if(EXISTS ${DARWIN_EXCLUDE_DIR}/${file}.txt)
-    file(READ ${DARWIN_EXCLUDE_DIR}/${file}.txt ${file}_EXCLUDES)
-    string(REPLACE "\n" ";" ${file}_EXCLUDES ${${file}_EXCLUDES})
-    set(${output_var} ${${file}_EXCLUDES} PARENT_SCOPE)
+function(darwin_read_list_from_file output_var file)
+  if(EXISTS ${file})
+    file(READ ${file} EXCLUDES)
+    string(REPLACE "\n" ";" EXCLUDES ${EXCLUDES})
+    set(${output_var} ${EXCLUDES} PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -124,8 +124,10 @@ function(darwin_find_excluded_builtins_list output_var)
     message(FATAL_ERROR "Must specify OS and ARCH to darwin_find_excluded_builtins_list!")
   endif()
 
-  darwin_read_exclude_file(${LIB_OS}_BUILTINS ${LIB_OS})
-  darwin_read_exclude_file(${LIB_OS}_${LIB_ARCH}_BASE_BUILTINS ${LIB_OS}-${LIB_ARCH})
+  darwin_read_list_from_file(${LIB_OS}_BUILTINS
+    ${DARWIN_EXCLUDE_DIR}/${LIB_OS}.txt)
+  darwin_read_list_from_file(${LIB_OS}_${LIB_ARCH}_BASE_BUILTINS
+    ${DARWIN_EXCLUDE_DIR}/${LIB_OS}-${LIB_ARCH}.txt)
 
   if(LIB_MIN_VERSION)
     file(GLOB builtin_lists ${DARWIN_EXCLUDE_DIR}/${LIB_OS}*-${LIB_ARCH}.txt)
@@ -141,7 +143,8 @@ function(darwin_find_excluded_builtins_list output_var)
     endforeach()
 
     if(smallest_version)
-      darwin_read_exclude_file(${LIB_ARCH}_${LIB_OS}_BUILTINS ${LIB_OS}${smallest_version}-${LIB_ARCH})
+      darwin_read_list_from_file(${LIB_ARCH}_${LIB_OS}_BUILTINS
+        ${DARWIN_EXCLUDE_DIR}/${LIB_OS}${smallest_version}-${LIB_ARCH}.txt)
     endif()
   endif()
   
