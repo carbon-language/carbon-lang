@@ -128,18 +128,18 @@ exit:
 ; SI-DAG: v_cmp_ne_i32_e64 [[NEG1_CHECK_0:s\[[0-9]+:[0-9]+\]]], -1, [[A]]
 ; SI-DAG: v_cmp_ne_i32_e32 [[NEG1_CHECK_1:vcc]], -1, [[B]]
 ; SI: s_and_b64 [[ORNEG1:s\[[0-9]+:[0-9]+\]]], [[NEG1_CHECK_1]], [[NEG1_CHECK_0]]
-; SI: s_and_saveexec_b64 [[ORNEG1]], [[ORNEG1]]
-; SI: s_xor_b64 [[ORNEG1]], exec, [[ORNEG1]]
+; SI: s_and_saveexec_b64 [[ORNEG2:s\[[0-9]+:[0-9]+\]]], [[ORNEG1]]
+; SI: s_xor_b64 [[ORNEG2]], exec, [[ORNEG2]]
 ; SI: s_cbranch_execz BB3_5
 
 ; SI: BB#4:
 ; SI: buffer_store_dword
-; SI: v_cmp_ge_i64_e32 vcc
-; SI: s_or_b64 [[COND_STATE]], vcc, [[COND_STATE]]
+; SI: v_cmp_ge_i64_e64 [[CMP:s\[[0-9]+:[0-9]+\]]]
+; SI: s_or_b64 [[COND_STATE]], [[CMP]], [[COND_STATE]]
 
 ; SI: BB3_5:
-; SI: s_or_b64 exec, exec, [[ORNEG1]]
-; SI: s_or_b64 [[COND_STATE]], [[ORNEG1]], [[COND_STATE]]
+; SI: s_or_b64 exec, exec, [[ORNEG2]]
+; SI: s_or_b64 [[COND_STATE]], [[ORNEG2]], [[COND_STATE]]
 ; SI: s_andn2_b64 exec, exec, [[COND_STATE]]
 ; SI: s_cbranch_execnz BB3_3
 

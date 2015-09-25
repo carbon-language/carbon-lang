@@ -271,7 +271,8 @@ define void @test_class_64_f64(i32 addrspace(1)* %out, double %a) #0 {
 ; SI: s_load_dwordx2 [[SA:s\[[0-9]+:[0-9]+\]]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: v_mov_b32_e32 [[MASK:v[0-9]+]], 0x1ff{{$}}
 ; SI: v_cmp_class_f64_e32 vcc, [[SA]], [[MASK]]
-; SI-NEXT: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], 0, -1, vcc
+; SI-NOT: vcc
+; SI: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], 0, -1, vcc
 ; SI-NEXT: buffer_store_dword [[RESULT]]
 ; SI: s_endpgm
 define void @test_class_full_mask_f64(i32 addrspace(1)* %out, double %a) #0 {
@@ -285,7 +286,8 @@ define void @test_class_full_mask_f64(i32 addrspace(1)* %out, double %a) #0 {
 ; SI-DAG: buffer_load_dwordx2 [[VA:v\[[0-9]+:[0-9]+\]]]
 ; SI-DAG: v_mov_b32_e32 [[MASK:v[0-9]+]], 0x1ff{{$}}
 ; SI: v_cmp_class_f64_e32 vcc, [[VA]], [[MASK]]
-; SI-NEXT: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], 0, -1, vcc
+; SI-NOT: vcc
+; SI: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], 0, -1, vcc
 ; SI: buffer_store_dword [[RESULT]]
 ; SI: s_endpgm
 define void @v_test_class_full_mask_f64(i32 addrspace(1)* %out, double addrspace(1)* %in) #0 {

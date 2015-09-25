@@ -22,11 +22,22 @@ def WriteBarrier : SchedWrite;
 // Vector ALU instructions
 def Write32Bit         : SchedWrite;
 def WriteQuarterRate32 : SchedWrite;
+def WriteFullOrQuarterRate32 : SchedWrite;
 
 def WriteFloatFMA   : SchedWrite;
 
-def WriteDouble     : SchedWrite;
+// Slow quarter rate f64 instruction.
+def WriteDouble : SchedWrite;
+
+// half rate f64 instruction (same as v_add_f64)
 def WriteDoubleAdd  : SchedWrite;
+
+// Half rate 64-bit instructions.
+def Write64Bit : SchedWrite;
+
+// FIXME: Should there be a class for instructions which are VALU
+// instructions and have VALU rates, but write to the SALU (i.e. VOPC
+// instructions)
 
 def SIFullSpeedModel : SchedMachineModel;
 def SIQuarterSpeedModel : SchedMachineModel;
@@ -54,7 +65,7 @@ class HWVALUWriteRes<SchedWrite write, int latency> :
 
 
 // The latency numbers are taken from AMD Accelerated Parallel Processing
-// guide.  They may not be acurate.
+// guide. They may not be accurate.
 
 // The latency values are 1 / (operations / cycle) / 4.
 multiclass SICommonWriteRes {
@@ -68,6 +79,7 @@ multiclass SICommonWriteRes {
   def : HWWriteRes<WriteBarrier, [HWBranch], 500>; // XXX: Guessed ???
 
   def : HWVALUWriteRes<Write32Bit,         1>;
+  def : HWVALUWriteRes<Write64Bit,         2>;
   def : HWVALUWriteRes<WriteQuarterRate32, 4>;
 }
 
