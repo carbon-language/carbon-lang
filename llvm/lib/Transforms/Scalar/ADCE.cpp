@@ -1,4 +1,4 @@
-//===- DCE.cpp - Code to perform dead code elimination --------------------===//
+//===- ADCE.cpp - Code to perform dead code elimination -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
