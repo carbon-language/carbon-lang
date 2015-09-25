@@ -194,6 +194,8 @@ function(darwin_lipo_libs name)
   add_custom_target(${name}
     DEPENDS ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/lib${name}.a)
   add_dependencies(${LIB_PARENT_TARGET} ${name})
+  install(FILES ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/lib${name}.a
+    DESTINATION ${COMPILER_RT_INSTALL_PATH})
 endfunction()
 
 # Filter out generic versions of routines that are re-implemented in
