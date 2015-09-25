@@ -34,7 +34,7 @@ std::unique_ptr<Writer> AMDGPUTargetHandler::getWriter() {
 }
 
 HSATextSection::HSATextSection(const ELFLinkingContext &ctx)
-    : AtomSection(ctx, ".text", DefinedAtom::typeCode, 0, 0) {
+    : AtomSection(ctx, ".hsatext", DefinedAtom::typeCode, 0, 0) {
   _type = SHT_PROGBITS;
   _flags = SHF_ALLOC | SHF_WRITE | SHF_EXECINSTR | SHF_AMDGPU_HSA_AGENT |
            SHF_AMDGPU_HSA_CODE;
@@ -49,7 +49,7 @@ void AMDGPUTargetLayout::assignSectionsToSegments() {
   for (OutputSection<ELF64LE> *osi : _outputSections) {
     for (Section<ELF64LE> *section : osi->sections()) {
       StringRef InputSectionName = section->inputSectionName();
-      if (InputSectionName != ".text")
+      if (InputSectionName != ".hsatext")
         continue;
 
       Segment<ELF64LE> *segment = new (_allocator) Segment<ELF64LE>(

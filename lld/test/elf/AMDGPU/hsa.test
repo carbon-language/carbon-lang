@@ -10,7 +10,7 @@
 
 
 # CHECK: Section {
-# CHECK: Name: .text
+# CHECK: Name: .hsatext
 # CHECK: Type: SHT_PROGBITS (0x1)
 # CHECK: Flags [ (0xC00007
 # CHECK: SHF_ALLOC (0x2)
@@ -36,7 +36,7 @@ FileHeader:
   Type:            ET_REL
   Machine:         EM_AMDGPU
 Sections:
-  - Name:            .text
+  - Name:            .hsatext
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x0000000000000004
@@ -49,5 +49,5 @@ Symbols:
   Local:
     - Name:            kernel
       Type:            STT_GNU_IFUNC
-      Section:         .text
+      Section:         .hsatext
 ...

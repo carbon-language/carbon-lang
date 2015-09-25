@@ -36,7 +36,7 @@ public:
   createSection(StringRef name, int32_t contentType,
                 DefinedAtom::ContentPermissions contentPermissions,
                 TargetLayout::SectionOrder sectionOrder) override {
-    if (name == ".text")
+    if (name == ".hsatext")
       return new (_allocator) HSATextSection(_ctx);
 
     if (name == ".note")
