@@ -41,8 +41,6 @@ extern "C" void extended() {
 }
 
 // CHECK: [[INSTANCE:%.*]] = {{.*}} call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* {{.*}}, i8* {{.*}})
-// CHECK-NEXT: [[CAST:%.*]] = bitcast [1 x %0*]* %{{.*}} to i8**
-// CHECK-NEXT: store i8* [[INSTANCE]], i8** [[CAST]],
 // CHECK: {{.*}} call void @_Z8externalv()
 // CHECK: {{.*}} call void @objc_release(i8* {{.*}})
 
