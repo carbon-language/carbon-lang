@@ -94,6 +94,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (Args.hasArg(OPT_export_dynamic))
     Config->ExportDynamic = true;
 
+  if (Args.hasArg(OPT_noinhibit_exec))
+    Config->NoInhibitExec = true;
+
   // Create a list of input files.
   std::vector<MemoryBufferRef> Inputs;
 

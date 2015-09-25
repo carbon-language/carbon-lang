@@ -281,11 +281,14 @@ static void undefError(const SymbolTable &S, const SymbolBody &Sym) {
     if (&SymE > Syms.begin() && &SymE < Syms.end())
       SymFile = F.get();
   }
+
+  std::string Message = "undefined symbol: " + Sym.getName().str();
   if (SymFile)
-    error(Twine("undefined symbol: ") + Sym.getName() + " in " +
-          SymFile->getName());
+    Message += " in " + SymFile->getName().str();
+  if (Config->NoInhibitExec)
+    warning(Message);
   else
-    error(Twine("undefined symbol: ") + Sym.getName());
+    error(Message);
 }
 
 // Create output section objects and add them to OutputSections.

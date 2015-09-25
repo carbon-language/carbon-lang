@@ -24,6 +24,7 @@ struct Configuration {
   bool DiscardLocals = false;
   bool DiscardNone = false;
   bool ExportDynamic = false;
+  bool NoInhibitExec = false;
 };
 
 extern Configuration *Config;

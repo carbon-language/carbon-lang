@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InputSection.h"
+#include "Config.h"
 #include "Error.h"
 #include "InputFiles.h"
 #include "OutputSections.h"

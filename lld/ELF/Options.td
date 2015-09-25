@@ -28,6 +28,10 @@ def discard_locals : Flag<["-"], "discard-locals">,
 def alias_discard_locals: Flag<["-"], "X">,
      Alias<discard_locals>;
 
+def noinhibit_exec : Flag<["--"], "noinhibit-exec">,
+     HelpText<"Retain the executable output file whenever"
+              " it is still usable">;
+
 def discard_none : Flag<["-"], "discard-none">,
      HelpText<"Keep all symbols in the symbol table">;
 
