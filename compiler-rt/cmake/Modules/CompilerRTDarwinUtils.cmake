@@ -185,19 +185,19 @@ endmacro()
 function(darwin_lipo_libs name)
   cmake_parse_arguments(LIB
     ""
-    "PARENT_TARGET"
+    "PARENT_TARGET;OUTPUT_DIR"
     "LIPO_FLAGS;DEPENDS"
     ${ARGN})
-  add_custom_command(OUTPUT ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/lib${name}.a
+  add_custom_command(OUTPUT ${LIB_OUTPUT_DIR}/lib${name}.a
     COMMAND lipo -output
-            ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/lib${name}.a
+            ${LIB_OUTPUT_DIR}/lib${name}.a
             -create ${LIB_LIPO_FLAGS}
     DEPENDS ${LIB_DEPENDS}
     )
   add_custom_target(${name}
-    DEPENDS ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/lib${name}.a)
+    DEPENDS ${LIB_OUTPUT_DIR}/lib${name}.a)
   add_dependencies(${LIB_PARENT_TARGET} ${name})
-  install(FILES ${COMPILER_RT_LIBRARY_OUTPUT_DIR}/lib${name}.a
+  install(FILES ${LIB_OUTPUT_DIR}/lib${name}.a
     DESTINATION ${COMPILER_RT_INSTALL_PATH})
 endfunction()
 
@@ -269,11 +269,13 @@ macro(darwin_add_builtin_libraries)
     darwin_lipo_libs(clang_rt.cc_kext_${os}
                     PARENT_TARGET builtins
                     LIPO_FLAGS ${${os}_cc_kext_lipo_flags}
-                    DEPENDS ${${os}_cc_kext_libs})
+                    DEPENDS ${${os}_cc_kext_libs}
+                    OUTPUT_DIR ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
     darwin_lipo_libs(clang_rt.${os}
                     PARENT_TARGET builtins
                     LIPO_FLAGS ${${os}_builtins_lipo_flags}
-                    DEPENDS ${${os}_builtins_libs})
+                    DEPENDS ${${os}_builtins_libs}
+                    OUTPUT_DIR ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
   endforeach()
 endmacro()
 
