@@ -14519,14 +14519,14 @@ bool DAGCombiner::findBetterNeighborChains(StoreSDNode* St) {
     if (Index != St && !SDValue(Index, 0)->hasOneUse())
       break;
 
+    if (Index->isVolatile() || Index->isIndexed())
+      break;
+
     // Find the base pointer and offset for this memory node.
     BaseIndexOffset Ptr = BaseIndexOffset::match(Index->getBasePtr());
 
     // Check that the base pointer is the same as the original one.
     if (!Ptr.equalBaseIndex(BasePtr))
-      break;
-
-    if (Index->isVolatile() || Index->isIndexed())
       break;
 
     // Find the next memory operand in the chain. If the next operand in the
