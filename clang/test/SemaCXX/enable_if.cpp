@@ -2,6 +2,8 @@
 
 typedef int (*fp)(int);
 int surrogate(int);
+struct Incomplete;  // expected-note{{forward declaration of 'Incomplete'}} \
+                    // expected-note {{forward declaration of 'Incomplete'}}
 
 struct X {
   X() = default;  // expected-note{{candidate constructor not viable: requires 0 arguments, but 1 was provided}}
@@ -13,12 +15,15 @@ struct X {
 
   void g(int n) __attribute__((enable_if(n == 0, "chosen when 'n' is zero")));  // expected-note{{candidate disabled: chosen when 'n' is zero}}
 
-  void h(int n, int m = 0) __attribute((enable_if(m == 0, "chosen when 'm' is zero")));  // expected-note{{candidate disabled: chosen when 'm' is zero}}
+  void h(int n, int m = 0) __attribute__((enable_if(m == 0, "chosen when 'm' is zero")));  // expected-note{{candidate disabled: chosen when 'm' is zero}}
 
   static void s(int n) __attribute__((enable_if(n == 0, "chosen when 'n' is zero")));  // expected-note2{{candidate disabled: chosen when 'n' is zero}}
 
   void conflict(int n) __attribute__((enable_if(n+n == 10, "chosen when 'n' is five")));  // expected-note{{candidate function}}
   void conflict(int n) __attribute__((enable_if(n*2 == 10, "chosen when 'n' is five")));  // expected-note{{candidate function}}
+
+  void hidden_by_argument_conversion(Incomplete n, int m = 0) __attribute__((enable_if(m == 10, "chosen when 'm' is ten")));
+  Incomplete hidden_by_incomplete_return_value(int n = 0) __attribute__((enable_if(n == 10, "chosen when 'n' is ten"))); // expected-note{{'hidden_by_incomplete_return_value' declared here}}
 
   operator long() __attribute__((enable_if(true, "chosen on your platform")));
   operator int() __attribute__((enable_if(false, "chosen on other platform")));
@@ -84,6 +89,9 @@ void test() {
   X::s(1);  // expected-error{{no matching member function for call to 's'}}
 
   x.conflict(5);  // expected-error{{call to member function 'conflict' is ambiguous}}
+
+  x.hidden_by_argument_conversion(10);  // expected-error{{argument type 'Incomplete' is incomplete}}
+  x.hidden_by_incomplete_return_value(10);  // expected-error{{calling 'hidden_by_incomplete_return_value' with incomplete return type 'Incomplete'}}
 
   deprec2(0);
 

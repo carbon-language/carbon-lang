@@ -11664,16 +11664,6 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     FoundDecl = MemExpr->getFoundDecl();
     Qualifier = MemExpr->getQualifier();
     UnbridgedCasts.restore();
-
-    if (const EnableIfAttr *Attr = CheckEnableIf(Method, Args, true)) {
-      Diag(MemExprE->getLocStart(),
-           diag::err_ovl_no_viable_member_function_in_call)
-          << Method << Method->getSourceRange();
-      Diag(Method->getLocation(),
-           diag::note_ovl_candidate_disabled_by_enable_if_attr)
-          << Attr->getCond()->getSourceRange() << Attr->getMessage();
-      return ExprError();
-    }
   } else {
     UnresolvedMemberExpr *UnresExpr = cast<UnresolvedMemberExpr>(NakedMemExpr);
     Qualifier = UnresExpr->getQualifier();
@@ -11836,6 +11826,21 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
   if (CheckFunctionCall(Method, TheCall, Proto))
     return ExprError();
+
+  // In the case the method to call was not selected by the overloading
+  // resolution process, we still need to handle the enable_if attribute. Do
+  // that here, so it will not hide previous -- and more relevant -- errors
+  if (isa<MemberExpr>(NakedMemExpr)) {
+    if (const EnableIfAttr *Attr = CheckEnableIf(Method, Args, true)) {
+      Diag(MemExprE->getLocStart(),
+           diag::err_ovl_no_viable_member_function_in_call)
+          << Method << Method->getSourceRange();
+      Diag(Method->getLocation(),
+           diag::note_ovl_candidate_disabled_by_enable_if_attr)
+          << Attr->getCond()->getSourceRange() << Attr->getMessage();
+      return ExprError();
+    }
+  }
 
   if ((isa<CXXConstructorDecl>(CurContext) || 
        isa<CXXDestructorDecl>(CurContext)) && 
