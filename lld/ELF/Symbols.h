@@ -37,15 +37,15 @@ struct Symbol {
 class SymbolBody {
 public:
   enum Kind {
-    DefinedFirst = 0,
-    DefinedRegularKind = 0,
-    DefinedAbsoluteKind = 1,
-    DefinedCommonKind = 2,
-    DefinedSyntheticKind = 3,
-    SharedKind = 4,
-    DefinedLast = 4,
-    UndefinedKind = 5,
-    LazyKind = 6,
+    DefinedFirst,
+    DefinedRegularKind = DefinedFirst,
+    DefinedAbsoluteKind,
+    DefinedCommonKind,
+    DefinedSyntheticKind,
+    SharedKind,
+    DefinedLast = SharedKind,
+    UndefinedKind,
+    LazyKind
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
