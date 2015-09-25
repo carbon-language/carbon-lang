@@ -28,7 +28,7 @@ namespace lld {
 namespace coff {
 
 SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H)
-    : Chunk(SectionKind), Ptr(this), File(F), Header(H),
+    : Chunk(SectionKind), Repl(this), File(F), Header(H),
       Relocs(File->getCOFFObj()->getRelocations(Header)),
       NumRelocs(std::distance(Relocs.begin(), Relocs.end())) {
   // Initialize SectionName.
@@ -212,7 +212,7 @@ bool SectionChunk::isCOMDAT() const {
 void SectionChunk::printDiscardedMessage() const {
   // Removed by dead-stripping. If it's removed by ICF, ICF already
   // printed out the name, so don't repeat that here.
-  if (Sym && this == Ptr)
+  if (Sym && this == Repl)
     llvm::outs() << "Discarded " << Sym->getName() << "\n";
 }
 
@@ -229,7 +229,7 @@ ArrayRef<uint8_t> SectionChunk::getContents() const {
 }
 
 void SectionChunk::replace(SectionChunk *Other) {
-  Other->Ptr = Ptr;
+  Other->Repl = Repl;
   Other->Live = false;
 }
 

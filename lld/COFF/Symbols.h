@@ -166,7 +166,7 @@ protected:
 class DefinedRegular : public DefinedCOFF {
 public:
   DefinedRegular(ObjectFile *F, COFFSymbolRef S, SectionChunk *C)
-      : DefinedCOFF(DefinedRegularKind, F, S), Data(&C->Ptr) {
+      : DefinedCOFF(DefinedRegularKind, F, S), Data(&C->Repl) {
     IsExternal = S.isExternal();
     IsCOMDAT = C->isCOMDAT();
   }
