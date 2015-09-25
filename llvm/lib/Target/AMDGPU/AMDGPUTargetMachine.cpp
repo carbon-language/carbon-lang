@@ -110,7 +110,13 @@ namespace {
 class AMDGPUPassConfig : public TargetPassConfig {
 public:
   AMDGPUPassConfig(TargetMachine *TM, PassManagerBase &PM)
-    : TargetPassConfig(TM, PM) {}
+    : TargetPassConfig(TM, PM) {
+
+    // Exceptions and StackMaps are not supported, so these passes will never do
+    // anything.
+    disablePass(&StackMapLivenessID);
+    disablePass(&FuncletLayoutID);
+  }
 
   AMDGPUTargetMachine &getAMDGPUTargetMachine() const {
     return getTM<AMDGPUTargetMachine>();
@@ -126,8 +132,9 @@ public:
 
   void addIRPasses() override;
   void addCodeGenPrepare() override;
-  virtual bool addPreISel() override;
-  virtual bool addInstSelector() override;
+  bool addPreISel() override;
+  bool addInstSelector() override;
+  bool addGCPasses() override;
 };
 
 class R600PassConfig : public AMDGPUPassConfig {
@@ -197,6 +204,11 @@ AMDGPUPassConfig::addPreISel() {
 
 bool AMDGPUPassConfig::addInstSelector() {
   addPass(createAMDGPUISelDag(getAMDGPUTargetMachine()));
+  return false;
+}
+
+bool AMDGPUPassConfig::addGCPasses() {
+  // Do nothing. GC is not supported.
   return false;
 }
 
