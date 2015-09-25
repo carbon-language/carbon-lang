@@ -305,7 +305,8 @@ public:
                  unsigned HalfImmOp, unsigned HalfSGPROp,
                  MachineInstr *&Lo, MachineInstr *&Hi) const;
 
-  void moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) const;
+  void moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI,
+                      SmallVectorImpl<MachineInstr *> &Worklist) const;
 
   /// \brief Replace this instruction's opcode with the equivalent VALU
   /// opcode.  This function will also move the users of \p MI to the

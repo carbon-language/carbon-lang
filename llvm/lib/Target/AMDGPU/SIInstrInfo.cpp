@@ -2057,7 +2057,9 @@ void SIInstrInfo::splitSMRD(MachineInstr *MI,
     .addImm(SubHi);
 }
 
-void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) const {
+void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI,
+                                 MachineRegisterInfo &MRI,
+                                 SmallVectorImpl<MachineInstr *> &Worklist) const {
   MachineBasicBlock *MBB = MI->getParent();
   int DstIdx = AMDGPU::getNamedOperandIdx(MI->getOpcode(), AMDGPU::OpName::dst);
   assert(DstIdx != -1);
@@ -2109,32 +2111,36 @@ void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) con
       BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B32), DWord3)
               .addImm(RsrcDataFormat >> 32);
       BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::REG_SEQUENCE), SRsrc)
-              .addReg(DWord0)
-              .addImm(AMDGPU::sub0)
-              .addReg(DWord1)
-              .addImm(AMDGPU::sub1)
-              .addReg(DWord2)
-              .addImm(AMDGPU::sub2)
-              .addReg(DWord3)
-              .addImm(AMDGPU::sub3);
-      MI->setDesc(get(NewOpcode));
-      if (MI->getOperand(2).isReg()) {
-        MI->getOperand(2).setReg(SRsrc);
-      } else {
-        MI->getOperand(2).ChangeToRegister(SRsrc, false);
-      }
-      MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(0));
-      MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(ImmOffset));
-      MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(0)); // glc
-      MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(0)); // slc
-      MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(0)); // tfe
+        .addReg(DWord0)
+        .addImm(AMDGPU::sub0)
+        .addReg(DWord1)
+        .addImm(AMDGPU::sub1)
+        .addReg(DWord2)
+        .addImm(AMDGPU::sub2)
+        .addReg(DWord3)
+        .addImm(AMDGPU::sub3);
 
-      const TargetRegisterClass *NewDstRC =
-          RI.getRegClass(get(NewOpcode).OpInfo[0].RegClass);
-
-      unsigned DstReg = MI->getOperand(0).getReg();
+      const MCInstrDesc &NewInstDesc = get(NewOpcode);
+      const TargetRegisterClass *NewDstRC
+        = RI.getRegClass(NewInstDesc.OpInfo[0].RegClass);
       unsigned NewDstReg = MRI.createVirtualRegister(NewDstRC);
+      unsigned DstReg = MI->getOperand(0).getReg();
       MRI.replaceRegWith(DstReg, NewDstReg);
+
+      MachineInstr *NewInst =
+        BuildMI(*MBB, MI, MI->getDebugLoc(), NewInstDesc, NewDstReg)
+        .addOperand(MI->getOperand(1)) // sbase
+        .addReg(SRsrc)
+        .addImm(0)
+        .addImm(ImmOffset)
+        .addImm(0) // glc
+        .addImm(0) // slc
+        .addImm(0) // tfe
+        .setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
+      MI->eraseFromParent();
+
+      legalizeOperands(NewInst);
+      addUsersToMoveToVALUWorklist(NewDstReg, MRI, Worklist);
       break;
     }
     case 32: {
@@ -2142,8 +2148,8 @@ void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) con
       splitSMRD(MI, &AMDGPU::SReg_128RegClass, AMDGPU::S_LOAD_DWORDX4_IMM,
                 AMDGPU::S_LOAD_DWORDX4_SGPR, Lo, Hi);
       MI->eraseFromParent();
-      moveSMRDToVALU(Lo, MRI);
-      moveSMRDToVALU(Hi, MRI);
+      moveSMRDToVALU(Lo, MRI, Worklist);
+      moveSMRDToVALU(Hi, MRI, Worklist);
       break;
     }
 
@@ -2152,8 +2158,8 @@ void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) con
       splitSMRD(MI, &AMDGPU::SReg_256RegClass, AMDGPU::S_LOAD_DWORDX8_IMM,
                 AMDGPU::S_LOAD_DWORDX8_SGPR, Lo, Hi);
       MI->eraseFromParent();
-      moveSMRDToVALU(Lo, MRI);
-      moveSMRDToVALU(Hi, MRI);
+      moveSMRDToVALU(Lo, MRI, Worklist);
+      moveSMRDToVALU(Hi, MRI, Worklist);
       break;
     }
   }
@@ -2175,7 +2181,8 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
     switch (Opcode) {
     default:
       if (isSMRD(Inst->getOpcode())) {
-        moveSMRDToVALU(Inst, MRI);
+        moveSMRDToVALU(Inst, MRI, Worklist);
+        continue;
       }
       break;
     case AMDGPU::S_AND_B64:
