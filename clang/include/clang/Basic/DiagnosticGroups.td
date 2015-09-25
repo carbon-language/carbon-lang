@@ -820,7 +820,3 @@ def CudaCompat : DiagGroup<"cuda-compat">;
 
 // A warning group for things that will change semantics in the future.
 def FutureCompat : DiagGroup<"future-compat">;
-
-def InvalidOrNonExistentDirectory : DiagGroup<"invalid-or-nonexistent-directory">;
-
-def OptionIgnored : DiagGroup<"option-ignored">;

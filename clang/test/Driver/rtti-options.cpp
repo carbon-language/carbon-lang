@@ -34,8 +34,7 @@
 // RUN: %clang -x c++ -### -c -target x86_64-unknown-unknown -fexceptions %s 2>&1 | FileCheck -check-prefix=CHECK-OK %s
 
 // -frtti + exceptions
-// ps4 needs -nostdinc due to having warnings if the SDK is not installed
-// RUN: %clang -### -c -nostdinc -target x86_64-scei-ps4 -fcxx-exceptions -frtti %s 2>&1 | FileCheck -check-prefix=CHECK-OK %s
+// RUN: %clang -### -c -target x86_64-scei-ps4 -fcxx-exceptions -frtti %s 2>&1 | FileCheck -check-prefix=CHECK-OK %s
 // RUN: %clang -### -c -target x86_64-unknown-unknown -fcxx-exceptions -frtti %s 2>&1 | FileCheck -check-prefix=CHECK-OK %s
 
 // -f{no-,}rtti/default
