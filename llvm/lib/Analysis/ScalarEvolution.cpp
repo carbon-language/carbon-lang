@@ -7288,6 +7288,146 @@ bool ScalarEvolution::isImpliedCond(ICmpInst::Predicate Pred, const SCEV *LHS,
   return false;
 }
 
+// Return true if More == (Less + C), where C is a constant.
+static bool IsConstDiff(ScalarEvolution &SE, const SCEV *Less, const SCEV *More,
+                        APInt &C) {
+  // We avoid subtracting expressions here because this function is usually
+  // fairly deep in the call stack (i.e. is called many times).
+
+  auto SplitBinaryAdd = [](const SCEV *Expr, const SCEV *&L, const SCEV *&R) {
+    const auto *AE = dyn_cast<SCEVAddExpr>(Expr);
+    if (!AE || AE->getNumOperands() != 2)
+      return false;
+
+    L = AE->getOperand(0);
+    R = AE->getOperand(1);
+    return true;
+  };
+
+  if (isa<SCEVAddRecExpr>(Less) && isa<SCEVAddRecExpr>(More)) {
+    const auto *LAR = cast<SCEVAddRecExpr>(Less);
+    const auto *MAR = cast<SCEVAddRecExpr>(More);
+
+    if (LAR->getLoop() != MAR->getLoop())
+      return false;
+
+    // We look at affine expressions only; not for correctness but to keep
+    // getStepRecurrence cheap.
+    if (!LAR->isAffine() || !MAR->isAffine())
+      return false;
+
+    if (LAR->getStepRecurrence(SE) != MAR->getStepRecurrence(SE))
+      return false;
+
+    Less = LAR->getStart();
+    More = MAR->getStart();
+
+    // fall through
+  }
+
+  if (isa<SCEVConstant>(Less) && isa<SCEVConstant>(More)) {
+    const auto &M = cast<SCEVConstant>(More)->getValue()->getValue();
+    const auto &L = cast<SCEVConstant>(Less)->getValue()->getValue();
+    C = M - L;
+    return true;
+  }
+
+  const SCEV *L, *R;
+  if (SplitBinaryAdd(Less, L, R))
+    if (const auto *LC = dyn_cast<SCEVConstant>(L))
+      if (R == More) {
+        C = -(LC->getValue()->getValue());
+        return true;
+      }
+
+  if (SplitBinaryAdd(More, L, R))
+    if (const auto *LC = dyn_cast<SCEVConstant>(L))
+      if (R == Less) {
+        C = LC->getValue()->getValue();
+        return true;
+      }
+
+  return false;
+}
+
+bool ScalarEvolution::isImpliedCondOperandsViaNoOverflow(
+    ICmpInst::Predicate Pred, const SCEV *LHS, const SCEV *RHS,
+    const SCEV *FoundLHS, const SCEV *FoundRHS) {
+  if (Pred != CmpInst::ICMP_SLT && Pred != CmpInst::ICMP_ULT)
+    return false;
+
+  const auto *AddRecLHS = dyn_cast<SCEVAddRecExpr>(LHS);
+  if (!AddRecLHS)
+    return false;
+
+  const auto *AddRecFoundLHS = dyn_cast<SCEVAddRecExpr>(FoundLHS);
+  if (!AddRecFoundLHS)
+    return false;
+
+  // We'd like to let SCEV reason about control dependencies, so we constrain
+  // both the inequalities to be about add recurrences on the same loop.  This
+  // way we can use isLoopEntryGuardedByCond later.
+
+  const Loop *L = AddRecFoundLHS->getLoop();
+  if (L != AddRecLHS->getLoop())
+    return false;
+
+  //  FoundLHS u< FoundRHS u< -C =>  (FoundLHS + C) u< (FoundRHS + C) ... (1)
+  //
+  //  FoundLHS s< FoundRHS s< INT_MIN - C => (FoundLHS + C) s< (FoundRHS + C)
+  //                                                                  ... (2)
+  //
+  // Informal proof for (2), assuming (1) [*]:
+  //
+  // We'll also assume (A s< B) <=> ((A + INT_MIN) u< (B + INT_MIN)) ... (3)[**]
+  //
+  // Then
+  //
+  //       FoundLHS s< FoundRHS s< INT_MIN - C
+  // <=>  (FoundLHS + INT_MIN) u< (FoundRHS + INT_MIN) u< -C   [ using (3) ]
+  // <=>  (FoundLHS + INT_MIN + C) u< (FoundRHS + INT_MIN + C) [ using (1) ]
+  // <=>  (FoundLHS + INT_MIN + C + INT_MIN) s<
+  //                        (FoundRHS + INT_MIN + C + INT_MIN) [ using (3) ]
+  // <=>  FoundLHS + C s< FoundRHS + C
+  //
+  // [*]: (1) can be proved by ruling out overflow.
+  //
+  // [**]: This can be proved by analyzing all the four possibilities:
+  //    (A s< 0, B s< 0), (A s< 0, B s>= 0), (A s>= 0, B s< 0) and
+  //    (A s>= 0, B s>= 0).
+  //
+  // Note:
+  // Despite (2), "FoundRHS s< INT_MIN - C" does not mean that "FoundRHS + C"
+  // will not sign underflow.  For instance, say FoundLHS = (i8 -128), FoundRHS
+  // = (i8 -127) and C = (i8 -100).  Then INT_MIN - C = (i8 -28), and FoundRHS
+  // s< (INT_MIN - C).  Lack of sign overflow / underflow in "FoundRHS + C" is
+  // neither necessary nor sufficient to prove "(FoundLHS + C) s< (FoundRHS +
+  // C)".
+
+  APInt LDiff, RDiff;
+  if (!IsConstDiff(*this, FoundLHS, LHS, LDiff) ||
+      !IsConstDiff(*this, FoundRHS, RHS, RDiff) ||
+      LDiff != RDiff)
+    return false;
+
+  if (LDiff == 0)
+    return true;
+
+  unsigned Width = cast<IntegerType>(RHS->getType())->getBitWidth();
+  APInt FoundRHSLimit;
+
+  if (Pred == CmpInst::ICMP_ULT) {
+    FoundRHSLimit = -RDiff;
+  } else {
+    assert(Pred == CmpInst::ICMP_SLT && "Checked above!");
+    FoundRHSLimit = APInt::getSignedMinValue(Width) - RDiff;
+  }
+
+  // Try to prove (1) or (2), as needed.
+  return isLoopEntryGuardedByCond(L, Pred, FoundRHS,
+                                  getConstant(FoundRHSLimit));
+}
+
 /// isImpliedCondOperands - Test whether the condition described by Pred,
 /// LHS, and RHS is true whenever the condition described by Pred, FoundLHS,
 /// and FoundRHS is true.
@@ -7296,6 +7436,9 @@ bool ScalarEvolution::isImpliedCondOperands(ICmpInst::Predicate Pred,
                                             const SCEV *FoundLHS,
                                             const SCEV *FoundRHS) {
   if (isImpliedCondOperandsViaRanges(Pred, LHS, RHS, FoundLHS, FoundRHS))
+    return true;
+
+  if (isImpliedCondOperandsViaNoOverflow(Pred, LHS, RHS, FoundLHS, FoundRHS))
     return true;
 
   return isImpliedCondOperandsHelper(Pred, LHS, RHS,

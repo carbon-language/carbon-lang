@@ -209,3 +209,152 @@ assert77:                                         ; preds = %noassert68
 unrolledend:                                      ; preds = %forcond38
   ret i32 0
 }
+
+declare void @side_effect()
+
+define void @func_13(i32* %len.ptr) {
+; CHECK-LABEL: @func_13(
+ entry:
+  %len = load i32, i32* %len.ptr, !range !0
+  %len.sub.1 = add i32 %len, -1
+  %len.is.zero = icmp eq i32 %len, 0
+  br i1 %len.is.zero, label %leave, label %loop
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  call void @side_effect()
+  %iv.inc = add i32 %iv, 1
+  %iv.cmp = icmp ult i32 %iv, %len
+  br i1 %iv.cmp, label %be, label %leave
+; CHECK: br i1 true, label %be, label %leave
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp ult i32 %iv, %len.sub.1
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_14(i32* %len.ptr) {
+; CHECK-LABEL: @func_14(
+ entry:
+  %len = load i32, i32* %len.ptr, !range !0
+  %len.sub.1 = add i32 %len, -1
+  %len.is.zero = icmp eq i32 %len, 0
+  %len.is.int_min = icmp eq i32 %len, 2147483648
+  %no.entry = or i1 %len.is.zero, %len.is.int_min
+  br i1 %no.entry, label %leave, label %loop
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  call void @side_effect()
+  %iv.inc = add i32 %iv, 1
+  %iv.cmp = icmp slt i32 %iv, %len
+  br i1 %iv.cmp, label %be, label %leave
+; CHECK: br i1 true, label %be, label %leave
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv, %len.sub.1
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_15(i32* %len.ptr) {
+; CHECK-LABEL: @func_15(
+ entry:
+  %len = load i32, i32* %len.ptr, !range !0
+  %len.add.1 = add i32 %len, 1
+  %len.add.1.is.zero = icmp eq i32 %len.add.1, 0
+  br i1 %len.add.1.is.zero, label %leave, label %loop
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  call void @side_effect()
+  %iv.inc = add i32 %iv, 1
+  %iv.cmp = icmp ult i32 %iv, %len.add.1
+  br i1 %iv.cmp, label %be, label %leave
+; CHECK: br i1 true, label %be, label %leave
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp ult i32 %iv, %len
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_16(i32* %len.ptr) {
+; CHECK-LABEL: @func_16(
+ entry:
+  %len = load i32, i32* %len.ptr, !range !0
+  %len.add.5 = add i32 %len, 5
+  %entry.cond.0 = icmp slt i32 %len, 2147483643
+  %entry.cond.1 = icmp slt i32 4, %len.add.5
+  %entry.cond = and i1 %entry.cond.0, %entry.cond.1
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  call void @side_effect()
+  %iv.inc = add i32 %iv, 1
+  %iv.add.4 = add i32 %iv, 4
+  %iv.cmp = icmp slt i32 %iv.add.4, %len.add.5
+  br i1 %iv.cmp, label %be, label %leave
+; CHECK: br i1 true, label %be, label %leave
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv, %len
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_17(i32* %len.ptr) {
+; CHECK-LABEL: @func_17(
+ entry:
+  %len = load i32, i32* %len.ptr
+  %len.add.5 = add i32 %len, -5
+  %entry.cond.0 = icmp slt i32 %len, 2147483653 ;; 2147483653 == INT_MIN - (-5)
+  %entry.cond.1 = icmp slt i32 -6, %len.add.5
+  %entry.cond = and i1 %entry.cond.0, %entry.cond.1
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv.2 = phi i32 [ 0, %entry ], [ %iv.2.inc, %be ]
+  %iv = phi i32 [ -6, %entry ], [ %iv.inc, %be ]
+  call void @side_effect()
+  %iv.inc = add i32 %iv, 1
+  %iv.2.inc = add i32 %iv.2, 1
+  %iv.cmp = icmp slt i32 %iv, %len.add.5
+
+; Deduces {-5,+,1} s< (-5 + %len) from {0,+,1} < %len
+; since %len s< INT_MIN - (-5) from the entry condition
+
+; CHECK: br i1 true, label %be, label %leave
+  br i1 %iv.cmp, label %be, label %leave
+
+ be:
+; CHECK: be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv.2, %len
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+!0 = !{i32 0, i32 2147483647}
+
