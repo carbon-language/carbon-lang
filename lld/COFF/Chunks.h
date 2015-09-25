@@ -62,8 +62,8 @@ public:
   virtual void writeTo(uint8_t *Buf) const {}
 
   // The writer sets and uses the addresses.
-  uint64_t getRVA() { return RVA; }
-  uint32_t getAlign() { return Align; }
+  uint64_t getRVA() const { return RVA; }
+  uint32_t getAlign() const { return Align; }
   void setRVA(uint64_t V) { RVA = V; }
   void setOutputSectionOff(uint64_t V) { OutputSectionOff = V; }
 

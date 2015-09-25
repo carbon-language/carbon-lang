@@ -85,6 +85,7 @@ uint64_t ICF::getHash(SectionChunk *C) {
   return hash_combine(C->getPermissions(),
                       hash_value(C->SectionName),
                       C->NumRelocs,
+                      C->getAlign(),
                       uint32_t(C->Header->SizeOfRawData),
                       C->Checksum);
 }
@@ -122,6 +123,7 @@ bool ICF::equalsConstant(const SectionChunk *A, const SectionChunk *B) {
   // Compare section attributes and contents.
   return A->getPermissions() == B->getPermissions() &&
          A->SectionName == B->SectionName &&
+         A->getAlign() == B->getAlign() &&
          A->Header->SizeOfRawData == B->Header->SizeOfRawData &&
          A->Checksum == B->Checksum &&
          A->getContents() == B->getContents();
