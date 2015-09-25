@@ -151,6 +151,20 @@ public:
   // Returns the RTTIMode for the toolchain with the current arguments.
   RTTIMode getRTTIMode() const { return CachedRTTIMode; }
 
+  /// \brief Return any implicit target and/or mode flag for an invocation of
+  /// the compiler driver as `ProgName`.
+  ///
+  /// For example, when called with i686-linux-android-g++, the first element
+  /// of the return value will be set to `"i686-linux-android"` and the second
+  /// will be set to "--driver-mode=g++"`.
+  ///
+  /// \pre `llvm::InitializeAllTargets()` has been called.
+  /// \param ProgName The name the Clang driver was invoked with (from,
+  /// e.g., argv[0])
+  /// \return A pair of (`target`, `mode-flag`), where one or both may be empty.
+  static std::pair<std::string, std::string>
+  getTargetAndModeFromProgramName(StringRef ProgName);
+
   // Tool access.
 
   /// TranslateArgs - Create a new derived argument list for any argument

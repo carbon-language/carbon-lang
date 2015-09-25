@@ -22,6 +22,7 @@
 #include "llvm/Option/Option.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/TargetRegistry.h"
 using namespace clang::driver;
 using namespace clang;
 using namespace llvm::opt;
@@ -86,6 +87,99 @@ const SanitizerArgs& ToolChain::getSanitizerArgs() const {
   if (!SanitizerArguments.get())
     SanitizerArguments.reset(new SanitizerArgs(*this, Args));
   return *SanitizerArguments.get();
+}
+
+namespace {
+struct DriverSuffix {
+  const char *Suffix;
+  const char *ModeFlag;
+};
+
+const DriverSuffix *FindDriverSuffix(StringRef ProgName) {
+  // A list of known driver suffixes. Suffixes are compared against the
+  // program name in order. If there is a match, the frontend type is updated as
+  // necessary by applying the ModeFlag.
+  static const DriverSuffix DriverSuffixes[] = {
+      {"clang", nullptr},
+      {"clang++", "--driver-mode=g++"},
+      {"clang-c++", "--driver-mode=g++"},
+      {"clang-cc", nullptr},
+      {"clang-cpp", "--driver-mode=cpp"},
+      {"clang-g++", "--driver-mode=g++"},
+      {"clang-gcc", nullptr},
+      {"clang-cl", "--driver-mode=cl"},
+      {"cc", nullptr},
+      {"cpp", "--driver-mode=cpp"},
+      {"cl", "--driver-mode=cl"},
+      {"++", "--driver-mode=g++"},
+  };
+
+  for (size_t i = 0; i < llvm::array_lengthof(DriverSuffixes); ++i)
+    if (ProgName.endswith(DriverSuffixes[i].Suffix))
+      return &DriverSuffixes[i];
+  return nullptr;
+}
+
+/// Normalize the program name from argv[0] by stripping the file extension if
+/// present and lower-casing the string on Windows.
+std::string normalizeProgramName(llvm::StringRef Argv0) {
+  std::string ProgName = llvm::sys::path::stem(Argv0);
+#ifdef LLVM_ON_WIN32
+  // Transform to lowercase for case insensitive file systems.
+  std::transform(ProgName.begin(), ProgName.end(), ProgName.begin(), ::tolower);
+#endif
+  return ProgName;
+}
+
+const DriverSuffix *parseDriverSuffix(StringRef ProgName) {
+  // Try to infer frontend type and default target from the program name by
+  // comparing it against DriverSuffixes in order.
+
+  // If there is a match, the function tries to identify a target as prefix.
+  // E.g. "x86_64-linux-clang" as interpreted as suffix "clang" with target
+  // prefix "x86_64-linux". If such a target prefix is found, it may be
+  // added via -target as implicit first argument.
+  const DriverSuffix *DS = FindDriverSuffix(ProgName);
+
+  if (!DS) {
+    // Try again after stripping any trailing version number:
+    // clang++3.5 -> clang++
+    ProgName = ProgName.rtrim("0123456789.");
+    DS = FindDriverSuffix(ProgName);
+  }
+
+  if (!DS) {
+    // Try again after stripping trailing -component.
+    // clang++-tot -> clang++
+    ProgName = ProgName.slice(0, ProgName.rfind('-'));
+    DS = FindDriverSuffix(ProgName);
+  }
+  return DS;
+}
+} // anonymous namespace
+
+std::pair<std::string, std::string>
+ToolChain::getTargetAndModeFromProgramName(StringRef PN) {
+  std::string ProgName = normalizeProgramName(PN);
+  const DriverSuffix *DS = parseDriverSuffix(ProgName);
+  if (!DS)
+    return std::make_pair("", "");
+  std::string ModeFlag = DS->ModeFlag == nullptr ? "" : DS->ModeFlag;
+
+  std::string::size_type LastComponent =
+      ProgName.rfind('-', ProgName.size() - strlen(DS->Suffix));
+  if (LastComponent == std::string::npos)
+    return std::make_pair("", ModeFlag);
+
+  // Infer target from the prefix.
+  StringRef Prefix(ProgName);
+  Prefix = Prefix.slice(0, LastComponent);
+  std::string IgnoredError;
+  std::string Target;
+  if (llvm::TargetRegistry::lookupTarget(Prefix, IgnoredError)) {
+    Target = Prefix;
+  }
+  return std::make_pair(Target, ModeFlag);
 }
 
 StringRef ToolChain::getDefaultUniversalArchName() const {
