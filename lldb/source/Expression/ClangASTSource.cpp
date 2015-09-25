@@ -1674,7 +1674,8 @@ ClangASTSource::layoutRecordType(const RecordDecl *record, uint64_t &size, uint6
 
     ClangASTContext::GetCompleteDecl(&origin_record->getASTContext(), const_cast<RecordDecl*>(origin_record.decl));
 
-    if (!origin_record.decl->getDefinition())
+    clang::RecordDecl* definition = origin_record.decl->getDefinition();
+    if (!definition || !definition->isCompleteDefinition())
         return false;
 
     const ASTRecordLayout &record_layout(origin_record->getASTContext().getASTRecordLayout(origin_record.decl));
