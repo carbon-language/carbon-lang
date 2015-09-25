@@ -1495,6 +1495,7 @@ multiclass VOP3_C_m <vop op, dag outs, dag ins, string asm,
 
   def "" : VOP3_Pseudo <outs, ins, pattern, opName>,
            VOP2_REV<revOp#"_e64", !eq(revOp, opName)> {
+    let Defs = !if(defExec, [EXEC], []);
     let SchedRW = sched;
   }
 
@@ -1699,6 +1700,7 @@ multiclass VOPC_m <vopc op, dag ins, string op_asm, list<dag> pattern,
                    string revOpName = "", string asm = opName#"_e32 "#op_asm,
                    string alias_asm = opName#" "#op_asm> {
   def "" : VOPC_Pseudo <ins, pattern, opName> {
+    let Defs = !if(DefExec, [VCC, EXEC], [VCC]);
     let SchedRW = sched;
   }
 
