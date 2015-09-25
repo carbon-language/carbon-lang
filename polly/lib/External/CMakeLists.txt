@@ -160,7 +160,7 @@ configure_file("${ISL_BINARY_DIR}/gitversion.h.tmp"
                "${ISL_BINARY_DIR}/gitversion.h" COPYONLY)
 
 file(WRITE "${ISL_BINARY_DIR}/include/isl/stdint.h.tmp"
-     "${INCLUDE_STDINT_H}")
+     "${INCLUDE_STDINT_H}\n")
 configure_file("${ISL_BINARY_DIR}/include/isl/stdint.h.tmp"
                "${ISL_BINARY_DIR}/include/isl/stdint.h" COPYONLY)
 
