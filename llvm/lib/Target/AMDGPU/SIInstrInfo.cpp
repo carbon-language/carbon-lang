@@ -1737,8 +1737,7 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
   // Legalize REG_SEQUENCE and PHI
   // The register class of the operands much be the same type as the register
   // class of the output.
-  if (MI->getOpcode() == AMDGPU::REG_SEQUENCE ||
-      MI->getOpcode() == AMDGPU::PHI) {
+  if (MI->getOpcode() == AMDGPU::PHI) {
     const TargetRegisterClass *RC = nullptr, *SRC = nullptr, *VRC = nullptr;
     for (unsigned i = 1, e = MI->getNumOperands(); i != e; i+=2) {
       if (!MI->getOperand(i).isReg() ||
@@ -1767,25 +1766,50 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
     }
 
     // Update all the operands so they have the same type.
-    for (unsigned i = 1, e = MI->getNumOperands(); i != e; i+=2) {
-      if (!MI->getOperand(i).isReg() ||
-          !TargetRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg()))
+    for (unsigned I = 1, E = MI->getNumOperands(); I != E; I += 2) {
+      MachineOperand &Op = MI->getOperand(I);
+      if (!Op.isReg() || !TargetRegisterInfo::isVirtualRegister(Op.getReg()))
         continue;
       unsigned DstReg = MRI.createVirtualRegister(RC);
-      MachineBasicBlock *InsertBB;
-      MachineBasicBlock::iterator Insert;
-      if (MI->getOpcode() == AMDGPU::REG_SEQUENCE) {
-        InsertBB = MI->getParent();
-        Insert = MI;
-      } else {
-        // MI is a PHI instruction.
-        InsertBB = MI->getOperand(i + 1).getMBB();
-        Insert = InsertBB->getFirstTerminator();
+
+      // MI is a PHI instruction.
+      MachineBasicBlock *InsertBB = MI->getOperand(I + 1).getMBB();
+      MachineBasicBlock::iterator Insert = InsertBB->getFirstTerminator();
+
+      BuildMI(*InsertBB, Insert, MI->getDebugLoc(), get(AMDGPU::COPY), DstReg)
+        .addOperand(Op);
+      Op.setReg(DstReg);
+    }
+  }
+
+  // REG_SEQUENCE doesn't really require operand legalization, but if one has a
+  // VGPR dest type and SGPR sources, insert copies so all operands are
+  // VGPRs. This seems to help operand folding / the register coalescer.
+  if (MI->getOpcode() == AMDGPU::REG_SEQUENCE) {
+    MachineBasicBlock *MBB = MI->getParent();
+    const TargetRegisterClass *DstRC = getOpRegClass(*MI, 0);
+    if (RI.hasVGPRs(DstRC)) {
+      // Update all the operands so they are VGPR register classes. These may
+      // not be the same register class because REG_SEQUENCE supports mixing
+      // subregister index types e.g. sub0_sub1 + sub2 + sub3
+      for (unsigned I = 1, E = MI->getNumOperands(); I != E; I += 2) {
+        MachineOperand &Op = MI->getOperand(I);
+        if (!Op.isReg() || !TargetRegisterInfo::isVirtualRegister(Op.getReg()))
+          continue;
+
+        const TargetRegisterClass *OpRC = MRI.getRegClass(Op.getReg());
+        const TargetRegisterClass *VRC = RI.getEquivalentVGPRClass(OpRC);
+        if (VRC == OpRC)
+          continue;
+
+        unsigned DstReg = MRI.createVirtualRegister(VRC);
+
+        BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::COPY), DstReg)
+          .addOperand(Op);
+
+        Op.setReg(DstReg);
+        Op.setIsKill();
       }
-      BuildMI(*InsertBB, Insert, MI->getDebugLoc(),
-              get(AMDGPU::COPY), DstReg)
-              .addOperand(MI->getOperand(i));
-      MI->getOperand(i).setReg(DstReg);
     }
 
     return;

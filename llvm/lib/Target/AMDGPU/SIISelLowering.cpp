@@ -2188,47 +2188,32 @@ MachineSDNode *SITargetLowering::wrapAddr64Rsrc(SelectionDAG &DAG,
                                                 SDLoc DL,
                                                 SDValue Ptr) const {
   const SIInstrInfo *TII =
-      static_cast<const SIInstrInfo *>(Subtarget->getInstrInfo());
-#if 1
-    // XXX - Workaround for moveToVALU not handling different register class
-    // inserts for REG_SEQUENCE.
+    static_cast<const SIInstrInfo *>(Subtarget->getInstrInfo());
 
-    // Build the half of the subregister with the constants.
-    const SDValue Ops0[] = {
-      DAG.getTargetConstant(AMDGPU::SGPR_64RegClassID, DL, MVT::i32),
-      buildSMovImm32(DAG, DL, 0),
-      DAG.getTargetConstant(AMDGPU::sub0, DL, MVT::i32),
-      buildSMovImm32(DAG, DL, TII->getDefaultRsrcDataFormat() >> 32),
-      DAG.getTargetConstant(AMDGPU::sub1, DL, MVT::i32)
-    };
+  // Build the half of the subregister with the constants before building the
+  // full 128-bit register. If we are building multiple resource descriptors,
+  // this will allow CSEing of the 2-component register.
+  const SDValue Ops0[] = {
+    DAG.getTargetConstant(AMDGPU::SGPR_64RegClassID, DL, MVT::i32),
+    buildSMovImm32(DAG, DL, 0),
+    DAG.getTargetConstant(AMDGPU::sub0, DL, MVT::i32),
+    buildSMovImm32(DAG, DL, TII->getDefaultRsrcDataFormat() >> 32),
+    DAG.getTargetConstant(AMDGPU::sub1, DL, MVT::i32)
+  };
 
-    SDValue SubRegHi = SDValue(DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL,
-                                                  MVT::v2i32, Ops0), 0);
+  SDValue SubRegHi = SDValue(DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL,
+                                                MVT::v2i32, Ops0), 0);
 
-    // Combine the constants and the pointer.
-    const SDValue Ops1[] = {
-      DAG.getTargetConstant(AMDGPU::SReg_128RegClassID, DL, MVT::i32),
-      Ptr,
-      DAG.getTargetConstant(AMDGPU::sub0_sub1, DL, MVT::i32),
-      SubRegHi,
-      DAG.getTargetConstant(AMDGPU::sub2_sub3, DL, MVT::i32)
-    };
+  // Combine the constants and the pointer.
+  const SDValue Ops1[] = {
+    DAG.getTargetConstant(AMDGPU::SReg_128RegClassID, DL, MVT::i32),
+    Ptr,
+    DAG.getTargetConstant(AMDGPU::sub0_sub1, DL, MVT::i32),
+    SubRegHi,
+    DAG.getTargetConstant(AMDGPU::sub2_sub3, DL, MVT::i32)
+  };
 
-    return DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL, MVT::v4i32, Ops1);
-#else
-    const SDValue Ops[] = {
-      DAG.getTargetConstant(AMDGPU::SReg_128RegClassID, MVT::i32),
-      Ptr,
-      DAG.getTargetConstant(AMDGPU::sub0_sub1, MVT::i32),
-      buildSMovImm32(DAG, DL, 0),
-      DAG.getTargetConstant(AMDGPU::sub2, MVT::i32),
-      buildSMovImm32(DAG, DL, TII->getDefaultRsrcFormat() >> 32),
-      DAG.getTargetConstant(AMDGPU::sub3, MVT::i32)
-    };
-
-    return DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL, MVT::v4i32, Ops);
-
-#endif
+  return DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL, MVT::v4i32, Ops1);
 }
 
 /// \brief Return a resource descriptor with the 'Add TID' bit enabled
