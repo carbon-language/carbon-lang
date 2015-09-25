@@ -72,7 +72,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_crashing_step_after_break()
 
-    @skipIfFreeBSD # llvm.org/pr16684
+    @expectedFailureFreeBSD('llvm.org/pr24939')
     @expectedFailureWindows("llvm.org/pr24778")
     @expectedFailureAndroid(archs=['aarch64'], api_levels=range(21 + 1)) # No eh_frame for sa_restorer
     def test_inferior_crashing_step_after_break_dwarf(self):
