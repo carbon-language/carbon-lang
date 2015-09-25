@@ -500,14 +500,15 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
                                ? ELFDATA2LSB
                                : ELFDATA2MSB;
   EHdr->e_ident[EI_VERSION] = EV_CURRENT;
-  EHdr->e_ident[EI_OSABI] = ELFOSABI_NONE;
+
+  const SymbolTable &Symtab = SymTabSec.getSymTable();
+  auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.getFirstELF());
+  EHdr->e_ident[EI_OSABI] = FirstObj.getOSABI();
 
   // FIXME: Generalize the segment construction similar to how we create
   // output sections.
-  const SymbolTable &Symtab = SymTabSec.getSymTable();
 
   EHdr->e_type = Config->Shared ? ET_DYN : ET_EXEC;
-  auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.getFirstELF());
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
   SymbolBody *Entry = Symtab.getEntrySym();

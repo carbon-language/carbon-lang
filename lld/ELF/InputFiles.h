@@ -105,6 +105,9 @@ public:
   llvm::object::ELFFile<ELFT> &getObj() { return ELFObj; }
 
   uint16_t getEMachine() const { return getObj().getHeader()->e_machine; }
+  uint8_t getOSABI() const {
+    return getObj().getHeader()->e_ident[llvm::ELF::EI_OSABI];
+  }
 
   StringRef getStringTable() const { return StringTable; }
 
