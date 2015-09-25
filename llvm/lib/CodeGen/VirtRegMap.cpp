@@ -263,7 +263,7 @@ void VirtRegRewriter::addLiveInsForSubRanges(const LiveInterval &LI,
     SlotIndex MBBBegin = MBBI->first;
     // Advance all subrange iterators so that their end position is just
     // behind MBBBegin (or the iterator is at the end).
-    unsigned LaneMask = 0;
+    LaneBitmask LaneMask = 0;
     for (auto &RangeIterPair : SubRanges) {
       const LiveInterval::SubRange *SR = RangeIterPair.first;
       LiveInterval::const_iterator &SRI = RangeIterPair.second;
@@ -335,7 +335,7 @@ bool VirtRegRewriter::readsUndefSubreg(const MachineOperand &MO) const {
   assert(LI.liveAt(BaseIndex) &&
          "Reads of completely dead register should be marked undef already");
   unsigned SubRegIdx = MO.getSubReg();
-  unsigned UseMask = TRI->getSubRegIndexLaneMask(SubRegIdx);
+  LaneBitmask UseMask = TRI->getSubRegIndexLaneMask(SubRegIdx);
   // See if any of the relevant subregister liveranges is defined at this point.
   for (const LiveInterval::SubRange &SR : LI.subranges()) {
     if ((SR.LaneMask & UseMask) != 0 && SR.liveAt(BaseIndex))
@@ -405,7 +405,7 @@ void VirtRegRewriter::rewrite() {
               // our subregister liveness tracking isn't precise and we can't
               // know what subregister parts are undefined, fall back to the
               // implicit super-register def then.
-              unsigned LaneMask = TRI->getSubRegIndexLaneMask(SubReg);
+              LaneBitmask LaneMask = TRI->getSubRegIndexLaneMask(SubReg);
               if (TargetRegisterInfo::isImpreciseLaneMask(LaneMask))
                 SuperDefs.push_back(PhysReg);
             }

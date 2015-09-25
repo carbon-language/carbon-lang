@@ -331,7 +331,7 @@ void MachineBasicBlock::printAsOperand(raw_ostream &OS,
   OS << "BB#" << getNumber();
 }
 
-void MachineBasicBlock::removeLiveIn(MCPhysReg Reg, unsigned LaneMask) {
+void MachineBasicBlock::removeLiveIn(MCPhysReg Reg, LaneBitmask LaneMask) {
   LiveInVector::iterator I = std::find_if(
       LiveIns.begin(), LiveIns.end(),
       [Reg] (const RegisterMaskPair &LI) { return LI.PhysReg == Reg; });
@@ -343,7 +343,7 @@ void MachineBasicBlock::removeLiveIn(MCPhysReg Reg, unsigned LaneMask) {
     LiveIns.erase(I);
 }
 
-bool MachineBasicBlock::isLiveIn(MCPhysReg Reg, unsigned LaneMask) const {
+bool MachineBasicBlock::isLiveIn(MCPhysReg Reg, LaneBitmask LaneMask) const {
   livein_iterator I = std::find_if(
       LiveIns.begin(), LiveIns.end(),
       [Reg] (const RegisterMaskPair &LI) { return LI.PhysReg == Reg; });
@@ -361,7 +361,7 @@ void MachineBasicBlock::sortUniqueLiveIns() {
   LiveInVector::iterator Out = LiveIns.begin();
   for (; I != LiveIns.end(); ++Out, I = J) {
     unsigned PhysReg = I->PhysReg;
-    unsigned LaneMask = I->LaneMask;
+    LaneBitmask LaneMask = I->LaneMask;
     for (J = std::next(I); J != LiveIns.end() && J->PhysReg == PhysReg; ++J)
       LaneMask |= J->LaneMask;
     Out->PhysReg = PhysReg;

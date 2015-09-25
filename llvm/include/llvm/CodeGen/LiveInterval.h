@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <cassert>
 #include <climits>
 #include <set>
@@ -595,15 +596,15 @@ namespace llvm {
     class SubRange : public LiveRange {
     public:
       SubRange *Next;
-      unsigned LaneMask;
+      LaneBitmask LaneMask;
 
       /// Constructs a new SubRange object.
-      SubRange(unsigned LaneMask)
+      SubRange(LaneBitmask LaneMask)
         : Next(nullptr), LaneMask(LaneMask) {
       }
 
       /// Constructs a new SubRange object by copying liveness from @p Other.
-      SubRange(unsigned LaneMask, const LiveRange &Other,
+      SubRange(LaneBitmask LaneMask, const LiveRange &Other,
                BumpPtrAllocator &Allocator)
         : LiveRange(Other, Allocator), Next(nullptr), LaneMask(LaneMask) {
       }
@@ -677,7 +678,8 @@ namespace llvm {
 
     /// Creates a new empty subregister live range. The range is added at the
     /// beginning of the subrange list; subrange iterators stay valid.
-    SubRange *createSubRange(BumpPtrAllocator &Allocator, unsigned LaneMask) {
+    SubRange *createSubRange(BumpPtrAllocator &Allocator,
+                             LaneBitmask LaneMask) {
       SubRange *Range = new (Allocator) SubRange(LaneMask);
       appendSubRange(Range);
       return Range;
@@ -685,7 +687,8 @@ namespace llvm {
 
     /// Like createSubRange() but the new range is filled with a copy of the
     /// liveness information in @p CopyFrom.
-    SubRange *createSubRangeFrom(BumpPtrAllocator &Allocator, unsigned LaneMask,
+    SubRange *createSubRangeFrom(BumpPtrAllocator &Allocator,
+                                 LaneBitmask LaneMask,
                                  const LiveRange &CopyFrom) {
       SubRange *Range = new (Allocator) SubRange(LaneMask, CopyFrom, Allocator);
       appendSubRange(Range);

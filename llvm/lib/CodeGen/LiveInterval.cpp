@@ -889,7 +889,7 @@ void LiveInterval::constructMainRangeFromSubranges(
   Segment CurrentSegment;
   bool ConstructingSegment = false;
   bool NeedVNIFixup = false;
-  unsigned ActiveMask = 0;
+  LaneBitmask ActiveMask = 0;
   SlotIndex Pos = First;
   while (true) {
     SlotIndex NextPos = Last;
@@ -899,7 +899,7 @@ void LiveInterval::constructMainRangeFromSubranges(
       END_SEGMENT,
     } Event = NOTHING;
     // Which subregister lanes are affected by the current event.
-    unsigned EventMask = 0;
+    LaneBitmask EventMask = 0;
     // Whether a BEGIN_SEGMENT is also a valno definition point.
     bool IsDef = false;
     // Find the next begin or end of a subrange segment. Combine masks if we
@@ -1101,8 +1101,8 @@ void LiveInterval::verify(const MachineRegisterInfo *MRI) const {
   super::verify();
 
   // Make sure SubRanges are fine and LaneMasks are disjunct.
-  unsigned Mask = 0;
-  unsigned MaxMask = MRI != nullptr ? MRI->getMaxLaneMaskForVReg(reg) : ~0u;
+  LaneBitmask Mask = 0;
+  LaneBitmask MaxMask = MRI != nullptr ? MRI->getMaxLaneMaskForVReg(reg) : ~0u;
   for (const SubRange &SR : subranges()) {
     // Subrange lanemask should be disjunct to any previous subrange masks.
     assert((Mask & SR.LaneMask) == 0);

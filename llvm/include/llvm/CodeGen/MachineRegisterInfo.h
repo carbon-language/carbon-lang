@@ -759,7 +759,7 @@ public:
 
   /// Returns a mask covering all bits that can appear in lane masks of
   /// subregisters of the virtual register @p Reg.
-  unsigned getMaxLaneMaskForVReg(unsigned Reg) const;
+  LaneBitmask getMaxLaneMaskForVReg(unsigned Reg) const;
 
   /// defusechain_iterator - This class provides iterator support for machine
   /// operands in the function that use or define a specific register.  If

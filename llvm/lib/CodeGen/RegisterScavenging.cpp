@@ -31,9 +31,9 @@ using namespace llvm;
 #define DEBUG_TYPE "reg-scavenging"
 
 /// setUsed - Set the register units of this register as used.
-void RegScavenger::setRegUsed(unsigned Reg, unsigned LaneMask) {
+void RegScavenger::setRegUsed(unsigned Reg, LaneBitmask LaneMask) {
   for (MCRegUnitMaskIterator RUI(Reg, TRI); RUI.isValid(); ++RUI) {
-    unsigned UnitMask = (*RUI).second;
+    LaneBitmask UnitMask = (*RUI).second;
     if (UnitMask == 0 || (LaneMask & UnitMask) != 0)
       RegUnitsAvailable.reset((*RUI).first);
   }

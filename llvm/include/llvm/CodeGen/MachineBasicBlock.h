@@ -32,6 +32,9 @@ class StringRef;
 class raw_ostream;
 class MachineBranchProbabilityInfo;
 
+// Forward declaration to avoid circular include problem with TargetRegisterInfo
+typedef unsigned LaneBitmask;
+
 template <>
 struct ilist_traits<MachineInstr> : public ilist_default_traits<MachineInstr> {
 private:
@@ -69,9 +72,9 @@ public:
   struct RegisterMaskPair {
   public:
     MCPhysReg PhysReg;
-    unsigned LaneMask;
+    LaneBitmask LaneMask;
 
-    RegisterMaskPair(MCPhysReg PhysReg, unsigned LaneMask)
+    RegisterMaskPair(MCPhysReg PhysReg, LaneBitmask LaneMask)
         : PhysReg(PhysReg), LaneMask(LaneMask) {}
   };
 
@@ -328,7 +331,7 @@ public:
   /// Adds the specified register as a live in. Note that it is an error to add
   /// the same register to the same set more than once unless the intention is
   /// to call sortUniqueLiveIns after all registers are added.
-  void addLiveIn(MCPhysReg PhysReg, unsigned LaneMask = ~0u) {
+  void addLiveIn(MCPhysReg PhysReg, LaneBitmask LaneMask = ~0u) {
     LiveIns.push_back(RegisterMaskPair(PhysReg, LaneMask));
   }
   void addLiveIn(const RegisterMaskPair &RegMaskPair) {
@@ -346,10 +349,10 @@ public:
   unsigned addLiveIn(MCPhysReg PhysReg, const TargetRegisterClass *RC);
 
   /// Remove the specified register from the live in set.
-  void removeLiveIn(MCPhysReg Reg, unsigned LaneMask = ~0u);
+  void removeLiveIn(MCPhysReg Reg, LaneBitmask LaneMask = ~0u);
 
   /// Return true if the specified register is in the live in set.
-  bool isLiveIn(MCPhysReg Reg, unsigned LaneMask = ~0u) const;
+  bool isLiveIn(MCPhysReg Reg, LaneBitmask LaneMask = ~0u) const;
 
   // Iteration support for live in sets.  These sets are kept in sorted
   // order by their register number.

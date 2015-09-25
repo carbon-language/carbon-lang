@@ -531,8 +531,8 @@ void LiveIntervals::shrinkToUses(LiveInterval::SubRange &SR, unsigned Reg)
     // Maybe the operand is for a subregister we don't care about.
     unsigned SubReg = MO.getSubReg();
     if (SubReg != 0) {
-      unsigned SubRegMask = TRI->getSubRegIndexLaneMask(SubReg);
-      if ((SubRegMask & SR.LaneMask) == 0)
+      LaneBitmask LaneMask = TRI->getSubRegIndexLaneMask(SubReg);
+      if ((LaneMask & SR.LaneMask) == 0)
         continue;
     }
     // We only need to visit each instruction once.
@@ -731,7 +731,7 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
         // assign R0L to %vreg1, and R0 to %vreg2 because the low 32bits of R0
         // are actually never written by %vreg2. After assignment the <kill>
         // flag at the read instruction is invalid.
-        unsigned DefinedLanesMask;
+        LaneBitmask DefinedLanesMask;
         if (!SRs.empty()) {
           // Compute a mask of lanes that are defined.
           DefinedLanesMask = 0;
@@ -755,7 +755,7 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
             continue;
           if (MO.isUse()) {
             // Reading any undefined lanes?
-            unsigned UseMask = TRI->getSubRegIndexLaneMask(MO.getSubReg());
+            LaneBitmask UseMask = TRI->getSubRegIndexLaneMask(MO.getSubReg());
             if ((UseMask & ~DefinedLanesMask) != 0)
               goto CancelKill;
           } else if (MO.getSubReg() == 0) {
@@ -963,7 +963,7 @@ public:
         LiveInterval &LI = LIS.getInterval(Reg);
         if (LI.hasSubRanges()) {
           unsigned SubReg = MO.getSubReg();
-          unsigned LaneMask = TRI.getSubRegIndexLaneMask(SubReg);
+          LaneBitmask LaneMask = TRI.getSubRegIndexLaneMask(SubReg);
           for (LiveInterval::SubRange &S : LI.subranges()) {
             if ((S.LaneMask & LaneMask) == 0)
               continue;
@@ -987,7 +987,7 @@ public:
 private:
   /// Update a single live range, assuming an instruction has been moved from
   /// OldIdx to NewIdx.
-  void updateRange(LiveRange &LR, unsigned Reg, unsigned LaneMask) {
+  void updateRange(LiveRange &LR, unsigned Reg, LaneBitmask LaneMask) {
     if (!Updated.insert(&LR).second)
       return;
     DEBUG({
@@ -1117,7 +1117,7 @@ private:
   ///    Hoist kill to NewIdx, then scan for last kill between NewIdx and
   ///    OldIdx.
   ///
-  void handleMoveUp(LiveRange &LR, unsigned Reg, unsigned LaneMask) {
+  void handleMoveUp(LiveRange &LR, unsigned Reg, LaneBitmask LaneMask) {
     // First look for a kill at OldIdx.
     LiveRange::iterator I = LR.find(OldIdx.getBaseIndex());
     LiveRange::iterator E = LR.end();
@@ -1194,7 +1194,7 @@ private:
   }
 
   // Return the last use of reg between NewIdx and OldIdx.
-  SlotIndex findLastUseBefore(unsigned Reg, unsigned LaneMask) {
+  SlotIndex findLastUseBefore(unsigned Reg, LaneBitmask LaneMask) {
 
     if (TargetRegisterInfo::isVirtualRegister(Reg)) {
       SlotIndex LastUse = NewIdx;
@@ -1274,7 +1274,7 @@ void LiveIntervals::repairOldRegInRange(const MachineBasicBlock::iterator Begin,
                                         const MachineBasicBlock::iterator End,
                                         const SlotIndex endIdx,
                                         LiveRange &LR, const unsigned Reg,
-                                        const unsigned LaneMask) {
+                                        LaneBitmask LaneMask) {
   LiveInterval::iterator LII = LR.find(endIdx);
   SlotIndex lastUseIdx;
   if (LII != LR.end() && LII->start < endIdx)
@@ -1301,7 +1301,7 @@ void LiveIntervals::repairOldRegInRange(const MachineBasicBlock::iterator Begin,
         continue;
 
       unsigned SubReg = MO.getSubReg();
-      unsigned Mask = TRI->getSubRegIndexLaneMask(SubReg);
+      LaneBitmask Mask = TRI->getSubRegIndexLaneMask(SubReg);
       if ((Mask & LaneMask) == 0)
         continue;
 

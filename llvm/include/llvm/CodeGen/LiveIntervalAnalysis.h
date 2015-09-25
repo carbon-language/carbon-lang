@@ -440,7 +440,7 @@ extern cl::opt<bool> UseSegmentSetForPhysRegs;
     void repairOldRegInRange(MachineBasicBlock::iterator Begin,
                              MachineBasicBlock::iterator End,
                              const SlotIndex endIdx, LiveRange &LR,
-                             unsigned Reg, unsigned LaneMask = ~0u);
+                             unsigned Reg, LaneBitmask LaneMask = ~0u);
 
     class HMEditor;
   };
