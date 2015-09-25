@@ -15,17 +15,16 @@
 
 ; DBGDAG-LABEL: Optimized lowered selection DAG: BB#0 'merge_store_partial_overlap_load:'
 ; DBGDAG: [[ENTRYTOKEN:t[0-9]+]]: ch = EntryToken
-; DBGDAG-DAG: [[TWO:t[0-9]+]]: i64 = Constant<2>
 ; DBGDAG-DAG: [[BASEPTR:t[0-9]+]]: i64,ch = CopyFromReg [[ENTRYTOKEN]],
-; DBGDAG-DAG: [[ADDPTR:t[0-9]+]]: i64 = add [[BASEPTR]], [[TWO]]
+; DBGDAG-DAG: [[ADDPTR:t[0-9]+]]: i64 = add [[BASEPTR]], Constant:i64<2>
 
-; DBGDAG-DAG: [[LD2:t[0-9]+]]: i16,ch = load [[ENTRYTOKEN]], [[BASEPTR]], t{{[0-9]+}}<LD2[%tmp81](align=1)>
-; DBGDAG-DAG: [[LD1:t[0-9]+]]: i8,ch = load [[ENTRYTOKEN]], [[ADDPTR]], t{{[0-9]+}}<LD1[%tmp12]>
+; DBGDAG-DAG: [[LD2:t[0-9]+]]: i16,ch = load<LD2[%tmp81](align=1)> [[ENTRYTOKEN]], [[BASEPTR]], undef:i64
+; DBGDAG-DAG: [[LD1:t[0-9]+]]: i8,ch = load<LD1[%tmp12]> [[ENTRYTOKEN]], [[ADDPTR]], undef:i64
 
 ; DBGDAG: [[LOADTOKEN:t[0-9]+]]: ch = TokenFactor [[LD2]]:1, [[LD1]]:1
 
-; DBGDAG-DAG: [[ST2:t[0-9]+]]: ch = store [[LOADTOKEN]], [[LD2]], t{{[0-9]+}}, t{{[0-9]+}}<ST2[%tmp10](align=1)>
-; DBGDAG-DAG: [[ST1:t[0-9]+]]: ch = store [[ST2]], [[LD1]], t{{[0-9]+}}, t{{[0-9]+}}<ST1[%tmp14]>
+; DBGDAG-DAG: [[ST2:t[0-9]+]]: ch = store<ST2[%tmp10](align=1)> [[LOADTOKEN]], [[LD2]], t{{[0-9]+}}, undef:i64
+; DBGDAG-DAG: [[ST1:t[0-9]+]]: ch = store<ST1[%tmp14]> [[ST2]], [[LD1]], t{{[0-9]+}}, undef:i64
 ; DBGDAG: X86ISD::RET_FLAG [[ST1]],
 
 ; DBGDAG: Type-legalized selection DAG: BB#0 'merge_store_partial_overlap_load:'

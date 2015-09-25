@@ -394,8 +394,6 @@ void SDNode::dump(const SelectionDAG *G) const {
 }
 
 void SDNode::print_types(raw_ostream &OS, const SelectionDAG *G) const {
-  OS << PrintNodeId(*this) << ": ";
-
   for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
     if (i) OS << ",";
     if (getValueType(i) == MVT::Other)
@@ -403,7 +401,6 @@ void SDNode::print_types(raw_ostream &OS, const SelectionDAG *G) const {
     else
       OS << getValueType(i).getEVTString();
   }
-  OS << " = " << getOperationName(G);
 }
 
 void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
@@ -582,10 +579,21 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   }
 }
 
+/// Return true if this node is so simple that we should just print it inline
+/// if it appears as an operand.
+static bool shouldPrintInline(const SDNode &Node) {
+  if (Node.getOpcode() == ISD::EntryToken)
+    return false;
+  return Node.getNumOperands() == 0;
+}
+
 static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
-  for (const SDValue &Op : N->op_values())
+  for (const SDValue &Op : N->op_values()) {
+    if (shouldPrintInline(*Op.getNode()))
+      continue;
     if (Op.getNode()->hasOneUse())
       DumpNodes(Op.getNode(), indent+2, G);
+  }
 
   dbgs().indent(indent);
   N->dump(G);
@@ -597,7 +605,8 @@ void SelectionDAG::dump() const {
   for (allnodes_const_iterator I = allnodes_begin(), E = allnodes_end();
        I != E; ++I) {
     const SDNode *N = I;
-    if (!N->hasOneUse() && N != getRoot().getNode())
+    if (!N->hasOneUse() && N != getRoot().getNode() &&
+        (!shouldPrintInline(*N) || N->use_empty()))
       DumpNodes(N, 2, this);
   }
 
@@ -606,8 +615,25 @@ void SelectionDAG::dump() const {
 }
 
 void SDNode::printr(raw_ostream &OS, const SelectionDAG *G) const {
+  OS << PrintNodeId(*this) << ": ";
   print_types(OS, G);
+  OS << " = " << getOperationName(G);
   print_details(OS, G);
+}
+
+static bool printOperand(raw_ostream &OS, const SelectionDAG *G,
+                         const SDValue Value) {
+  if (shouldPrintInline(*Value.getNode())) {
+    OS << Value->getOperationName(G) << ':';
+    Value->print_types(OS, G);
+    Value->print_details(OS, G);
+    return true;
+  } else {
+    OS << PrintNodeId(*Value.getNode());
+    if (unsigned RN = Value.getResNo())
+      OS << ':' << RN;
+    return false;
+  }
 }
 
 typedef SmallPtrSet<const SDNode *, 128> VisitedSDNodeSet;
@@ -622,20 +648,13 @@ static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
 
   // Having printed this SDNode, walk the children:
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    const SDNode *child = N->getOperand(i).getNode();
-
     if (i) OS << ",";
     OS << " ";
 
-    if (child->getNumOperands() == 0) {
-      // This child has no grandchildren; print it inline right here.
-      child->printr(OS, G);
-      once.insert(child);
-    } else {         // Just the address. FIXME: also print the child's opcode.
-      OS << (const void*)child;
-      if (unsigned RN = N->getOperand(i).getResNo())
-        OS << ":" << RN;
-    }
+    const SDValue Op = N->getOperand(i);
+    bool printedInline = printOperand(OS, G, Op);
+    if (printedInline)
+      once.insert(Op.getNode());
   }
 
   OS << "\n";
@@ -697,13 +716,9 @@ void SDNode::dumprFull(const SelectionDAG *G) const {
 }
 
 void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
-  print_types(OS, G);
+  printr(OS, G);
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     if (i) OS << ", "; else OS << " ";
-    const SDValue Operand = getOperand(i);
-    OS << PrintNodeId(*Operand.getNode());
-    if (unsigned RN = Operand.getResNo())
-      OS << ":" << RN;
+    printOperand(OS, G, getOperand(i));
   }
-  print_details(OS, G);
 }
