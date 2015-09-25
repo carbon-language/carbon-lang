@@ -407,7 +407,7 @@ void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
     return;
 
   for (MemoryAccess *MA : *MAL) {
-    if (!MA->isScalar() || !MA->isRead())
+    if (MA->isExplicit() || !MA->isRead())
       continue;
 
     auto *Address = getOrCreateAlloca(*MA);
@@ -461,7 +461,7 @@ void BlockGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
          "function in the RegionGenerator");
 
   for (MemoryAccess *MA : Stmt) {
-    if (!MA->isScalar() || MA->isRead())
+    if (MA->isExplicit() || MA->isRead())
       continue;
 
     Value *Val = MA->getAccessValue();
@@ -1113,7 +1113,7 @@ void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
 
   for (MemoryAccess *MA : Stmt) {
 
-    if (!MA->isScalar() || MA->isRead())
+    if (MA->isExplicit() || MA->isRead())
       continue;
 
     Instruction *ScalarInst = MA->getAccessInstruction();

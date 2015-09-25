@@ -217,7 +217,7 @@ static isl_stat addReferencesFromStmt(const ScopStmt *Stmt, void *UserPtr) {
   }
 
   for (auto &Access : *Stmt) {
-    if (!Access->isScalar()) {
+    if (Access->isExplicit()) {
       auto *BasePtr = Access->getScopArrayInfo()->getBasePtr();
       if (Instruction *OpInst = dyn_cast<Instruction>(BasePtr))
         if (Stmt->getParent()->getRegion().contains(OpInst))

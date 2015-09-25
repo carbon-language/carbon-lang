@@ -606,11 +606,11 @@ MemoryAccess::MemoryAccess(Instruction *AccessInst, __isl_take isl_id *Id,
                            unsigned ElemBytes, bool Affine,
                            ArrayRef<const SCEV *> Subscripts,
                            ArrayRef<const SCEV *> Sizes, Value *AccessValue,
-                           bool IsPHI, StringRef BaseName)
-    : Id(Id), IsPHI(IsPHI), AccType(Type), RedType(RT_NONE), Statement(nullptr),
-      BaseAddr(BaseAddress), BaseName(BaseName), ElemBytes(ElemBytes),
-      Sizes(Sizes.begin(), Sizes.end()), AccessInstruction(AccessInst),
-      AccessValue(AccessValue), IsAffine(Affine),
+                           AccessOrigin Origin, StringRef BaseName)
+    : Id(Id), Origin(Origin), AccType(Type), RedType(RT_NONE),
+      Statement(nullptr), BaseAddr(BaseAddress), BaseName(BaseName),
+      ElemBytes(ElemBytes), Sizes(Sizes.begin(), Sizes.end()),
+      AccessInstruction(AccessInst), AccessValue(AccessValue), IsAffine(Affine),
       Subscripts(Subscripts.begin(), Subscripts.end()), AccessRelation(nullptr),
       NewAccessRelation(nullptr) {}
 
@@ -647,7 +647,7 @@ void MemoryAccess::print(raw_ostream &OS) const {
     break;
   }
   OS << "[Reduction Type: " << getReductionType() << "] ";
-  OS << "[Scalar: " << isScalar() << "]\n";
+  OS << "[Scalar: " << isImplicit() << "]\n";
   OS.indent(16) << getOriginalAccessRelationStr() << ";\n";
   if (hasNewAccessRelation())
     OS.indent(11) << "new: " << getNewAccessRelationStr() << ";\n";
@@ -728,10 +728,6 @@ bool MemoryAccess::isStrideX(__isl_take const isl_map *Schedule,
 
 bool MemoryAccess::isStrideZero(const isl_map *Schedule) const {
   return isStrideX(Schedule, 0);
-}
-
-bool MemoryAccess::isScalar() const {
-  return isl_map_n_out(AccessRelation) == 0;
 }
 
 bool MemoryAccess::isStrideOne(const isl_map *Schedule) const {
@@ -1978,7 +1974,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
       continue;
 
     for (MemoryAccess *MA : Stmt) {
-      if (MA->isScalar())
+      if (MA->isImplicit())
         continue;
       if (!MA->isRead())
         HasWriteAccess.insert(MA->getBaseAddr());
@@ -2948,7 +2944,8 @@ void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
                                Value *BaseAddress, unsigned ElemBytes,
                                bool Affine, Value *AccessValue,
                                ArrayRef<const SCEV *> Subscripts,
-                               ArrayRef<const SCEV *> Sizes, bool IsPHI) {
+                               ArrayRef<const SCEV *> Sizes,
+                               MemoryAccess::AccessOrigin Origin) {
   AccFuncSetType &AccList = AccFuncMap[BB];
   size_t Identifier = AccList.size();
 
@@ -2959,7 +2956,7 @@ void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
   isl_id *Id = isl_id_alloc(ctx, IdName.c_str(), nullptr);
 
   AccList.emplace_back(Inst, Id, Type, BaseAddress, ElemBytes, Affine,
-                       Subscripts, Sizes, AccessValue, IsPHI, BaseName);
+                       Subscripts, Sizes, AccessValue, Origin, BaseName);
 }
 
 void ScopInfo::addExplicitAccess(
@@ -2969,34 +2966,37 @@ void ScopInfo::addExplicitAccess(
   assert(isa<LoadInst>(MemAccInst) || isa<StoreInst>(MemAccInst));
   assert(isa<LoadInst>(MemAccInst) == (Type == MemoryAccess::READ));
   addMemoryAccess(MemAccInst->getParent(), MemAccInst, Type, BaseAddress,
-                  ElemBytes, IsAffine, AccessValue, Subscripts, Sizes, false);
+                  ElemBytes, IsAffine, AccessValue, Subscripts, Sizes,
+                  MemoryAccess::EXPLICIT);
 }
 void ScopInfo::addScalarWriteAccess(Instruction *Value) {
   addMemoryAccess(Value->getParent(), Value, MemoryAccess::MUST_WRITE, Value, 1,
                   true, Value, ArrayRef<const SCEV *>(),
-                  ArrayRef<const SCEV *>(), false);
+                  ArrayRef<const SCEV *>(), MemoryAccess::SCALAR);
 }
 void ScopInfo::addScalarReadAccess(Value *Value, Instruction *User) {
   assert(!isa<PHINode>(User));
   addMemoryAccess(User->getParent(), User, MemoryAccess::READ, Value, 1, true,
                   Value, ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
-                  false);
+                  MemoryAccess::SCALAR);
 }
 void ScopInfo::addScalarReadAccess(Value *Value, PHINode *User,
                                    BasicBlock *UserBB) {
   addMemoryAccess(UserBB, User, MemoryAccess::READ, Value, 1, true, Value,
-                  ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(), false);
+                  ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
+                  MemoryAccess::SCALAR);
 }
 void ScopInfo::addPHIWriteAccess(PHINode *PHI, BasicBlock *IncomingBlock,
                                  Value *IncomingValue, bool IsExitBlock) {
   addMemoryAccess(IncomingBlock, IncomingBlock->getTerminator(),
                   MemoryAccess::MUST_WRITE, PHI, 1, true, IncomingValue,
                   ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
-                  !IsExitBlock);
+                  IsExitBlock ? MemoryAccess::SCALAR : MemoryAccess::PHI);
 }
 void ScopInfo::addPHIReadAccess(PHINode *PHI) {
   addMemoryAccess(PHI->getParent(), PHI, MemoryAccess::READ, PHI, 1, true, PHI,
-                  ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(), true);
+                  ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
+                  MemoryAccess::PHI);
 }
 
 Scop *ScopInfo::buildScop(Region &R, DominatorTree &DT) {

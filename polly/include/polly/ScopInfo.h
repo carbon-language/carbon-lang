@@ -218,6 +218,56 @@ class MemoryAccess {
   friend class ScopStmt;
 
 public:
+  /// @brief Description of the reason why a MemoryAccess was added.
+  ///
+  /// There are currently three separate access origins:
+  ///
+  /// * Explicit access
+  ///
+  /// Memory is accessed by either a load (READ) or store (*_WRITE) found in the
+  /// IR. #AccessInst is the LoadInst respectively StoreInst. The #BaseAddr is
+  /// the array pointer being accesses without subscript. #AccessValue is the
+  /// llvm::Value the StoreInst writes respectively the result of the LoadInst
+  /// (the LoadInst itself).
+  ///
+  /// * Accessing an llvm::Value (a scalar)
+  ///
+  /// This is either a *_WRITE for the value's definition (i.e. exactly one per
+  /// llvm::Value) or a READ when the scalar is being used in a different
+  /// BasicBlock. In CodeGeneration, it results in alloca postfixed with .s2a.
+  /// #AccessInst is either the llvm::Value for WRITEs or the value's user for
+  /// READS. The #BaseAddr is represented by the value's definition (i.e. the
+  /// llvm::Value itself) as no such alloca yet exists before CodeGeneration.
+  /// #AccessValue is also the llvm::Value itself.
+  ///
+  /// * Accesses to emulate PHI nodes
+  ///
+  /// CodeGeneration converts a PHI node such as
+  ///   %PHI = phi float [ %Val1, %IncomingBlock1 ], [ %Val2, %IncomingBlock2 ]
+  /// into
+  ///
+  ///                  %PHI.phiops = alloca float
+  ///                  ...
+  ///
+  ///
+  /// IncomingBlock1:                    IncomingBlock2:
+  ///   ...                                ...
+  ///   store float %Val1 %PHI.phiops      store float %Val2 %PHI.phiops
+  ///   br label % JoinBlock               br label %JoinBlock
+  ///                         \           /
+  ///                          \         /
+  ///                           JoinBlock:
+  ///                             %PHI = load float, float* PHI.phiops
+  ///
+  /// Since the stores and loads do not exist in the analyzed code, the
+  /// #AccessInst of a load is the PHIInst and a incoming block's terminator for
+  /// stores. The #BaseAddr is represented through the PHINode because there
+  /// also no alloca before CodeGeneration. The #AccessValue is represented by
+  /// the PHIInst itself.
+  /// Note that there can also be a scalar write access for %PHI if used in a
+  /// different BasicBlock.
+  enum AccessOrigin { EXPLICIT, SCALAR, PHI };
+
   /// @brief The access type of a memory access
   ///
   /// There are three kind of access types:
@@ -266,8 +316,9 @@ private:
   /// scop statement.
   isl_id *Id;
 
-  /// @brief Is this MemoryAccess modeling special PHI node accesses?
-  bool IsPHI;
+  /// @brief The accesses' purpose.
+  /// @see AccessOrigin
+  enum AccessOrigin Origin;
 
   /// @brief Whether it a reading or writing access, and if writing, whether it
   /// is conditional (MAY_WRITE).
@@ -351,7 +402,7 @@ private:
   bool isAffine() const { return IsAffine; }
 
   /// @brief Is this MemoryAccess modeling special PHI node accesses?
-  bool isPHI() const { return IsPHI; }
+  bool isPHI() const { return Origin == PHI; }
 
   void setStatement(ScopStmt *Stmt) { this->Statement = Stmt; }
 
@@ -422,14 +473,14 @@ public:
   /// @param ElemBytes  Number of accessed bytes.
   /// @param AccType    Whether read or write access.
   /// @param IsAffine   Whether the subscripts are affine expressions.
-  /// @param IsPHI      Are we modeling special PHI node accesses?
+  /// @param Origin     What is the purpose of this access?
   /// @param Subscripts Subscipt expressions
   /// @param Sizes      Dimension lengths of the accessed array.
   /// @param BaseName   Name of the acessed array.
   MemoryAccess(Instruction *AccessInst, __isl_take isl_id *Id, AccessType Type,
                Value *BaseAddress, unsigned ElemBytes, bool Affine,
                ArrayRef<const SCEV *> Subscripts, ArrayRef<const SCEV *> Sizes,
-               Value *AccessValue, bool IsPHI, StringRef BaseName);
+               Value *AccessValue, AccessOrigin Origin, StringRef BaseName);
   ~MemoryAccess();
 
   /// @brief Get the type of a memory access.
@@ -523,8 +574,12 @@ public:
   /// statement.
   bool isStrideZero(__isl_take const isl_map *Schedule) const;
 
-  /// @brief Check if this is a scalar memory access.
-  bool isScalar() const;
+  /// @brief Whether this is an access of an explicit load or store in the IR.
+  bool isExplicit() const { return Origin == EXPLICIT; }
+
+  /// @brief Whether this access represents a register access or models PHI
+  /// nodes.
+  bool isImplicit() const { return !isExplicit(); }
 
   /// @brief Get the statement that contains this memory access.
   ScopStmt *getStatement() const { return Statement; }
@@ -1483,12 +1538,13 @@ class ScopInfo : public RegionPass {
   /// @param AccessValue Value read or written.
   /// @param Subscripts  Access subscripts per dimension.
   /// @param Sizes       The array diminsion's sizes.
-  /// @param IsPHI       Whether this is an emulated PHI node.
+  /// @param Origin      Purpose of this access.
   void addMemoryAccess(BasicBlock *BB, Instruction *Inst,
                        MemoryAccess::AccessType Type, Value *BaseAddress,
                        unsigned ElemBytes, bool Affine, Value *AccessValue,
                        ArrayRef<const SCEV *> Subscripts,
-                       ArrayRef<const SCEV *> Sizes, bool IsPHI);
+                       ArrayRef<const SCEV *> Sizes,
+                       MemoryAccess::AccessOrigin Origin);
 
   /// @brief Create a MemoryAccess that represents either a LoadInst or
   /// StoreInst.
