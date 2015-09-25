@@ -166,6 +166,48 @@ bar:
 
 ; Check the following transform:
 ;
+; (ldp|stp) w1, w2 [x0, #32]
+;  ...
+; add x0, x0, #32
+;  ->
+; (ldp|stp) w1, w2, [x0, #32]!
+;
+
+define void @load-pair-pre-indexed-word(%struct.word* %ptr) nounwind {
+; CHECK-LABEL: load-pair-pre-indexed-word
+; CHECK: ldp w{{[0-9]+}}, w{{[0-9]+}}, [x0, #32]!
+; CHECK-NOT: add x0, x0, #32
+entry:
+  %a = getelementptr inbounds %struct.word, %struct.word* %ptr, i64 0, i32 1, i32 0
+  %a1 = load i32, i32* %a, align 4
+  %b = getelementptr inbounds %struct.word, %struct.word* %ptr, i64 0, i32 1, i32 1
+  %b1 = load i32, i32* %b, align 4
+  %add = add i32 %a1, %b1
+  br label %bar
+bar:
+  %c = getelementptr inbounds %struct.word, %struct.word* %ptr, i64 0, i32 1
+  tail call void @bar_word(%s.word* %c, i32 %add)
+  ret void
+}
+
+define void @store-pair-pre-indexed-word(%struct.word* %ptr, i32 %val) nounwind {
+; CHECK-LABEL: store-pair-pre-indexed-word
+; CHECK: stp w{{[0-9]+}}, w{{[0-9]+}}, [x0, #32]!
+; CHECK-NOT: add x0, x0, #32
+entry:
+  %a = getelementptr inbounds %struct.word, %struct.word* %ptr, i64 0, i32 1, i32 0
+  store i32 %val, i32* %a, align 4
+  %b = getelementptr inbounds %struct.word, %struct.word* %ptr, i64 0, i32 1, i32 1
+  store i32 %val, i32* %b, align 4
+  br label %bar
+bar:
+  %c = getelementptr inbounds %struct.word, %struct.word* %ptr, i64 0, i32 1
+  tail call void @bar_word(%s.word* %c, i32 %val)
+  ret void
+}
+
+; Check the following transform:
+;
 ; add x8, x8, #16
 ;  ...
 ; ldr X, [x8]
@@ -635,6 +677,90 @@ declare void @use-doubleword(i64)
 declare void @use-quadword(<2 x i64>)
 declare void @use-float(float)
 declare void @use-double(double)
+
+; Check the following transform:
+;
+; stp w0, [x20]
+;  ...
+; add x20, x20, #32
+;  ->
+; stp w0, [x20], #32
+
+define void @store-pair-post-indexed-word() nounwind {
+; CHECK-LABEL: store-pair-post-indexed-word
+; CHECK: stp w{{[0-9]+}}, w{{[0-9]+}}, [sp], #16
+; CHECK: ret
+  %src = alloca { i32, i32 }, align 8
+  %dst = alloca { i32, i32 }, align 8
+
+  %src.realp = getelementptr inbounds { i32, i32 }, { i32, i32 }* %src, i32 0, i32 0
+  %src.real = load i32, i32* %src.realp
+  %src.imagp = getelementptr inbounds { i32, i32 }, { i32, i32 }* %src, i32 0, i32 1
+  %src.imag = load i32, i32* %src.imagp
+
+  %dst.realp = getelementptr inbounds { i32, i32 }, { i32, i32 }* %dst, i32 0, i32 0
+  %dst.imagp = getelementptr inbounds { i32, i32 }, { i32, i32 }* %dst, i32 0, i32 1
+  store i32 %src.real, i32* %dst.realp
+  store i32 %src.imag, i32* %dst.imagp
+  ret void
+}
+
+define void @store-pair-post-indexed-doubleword() nounwind {
+; CHECK-LABEL: store-pair-post-indexed-doubleword
+; CHECK: stp x{{[0-9]+}}, x{{[0-9]+}}, [sp], #32
+; CHECK: ret
+  %src = alloca { i64, i64 }, align 8
+  %dst = alloca { i64, i64 }, align 8
+
+  %src.realp = getelementptr inbounds { i64, i64 }, { i64, i64 }* %src, i32 0, i32 0
+  %src.real = load i64, i64* %src.realp
+  %src.imagp = getelementptr inbounds { i64, i64 }, { i64, i64 }* %src, i32 0, i32 1
+  %src.imag = load i64, i64* %src.imagp
+
+  %dst.realp = getelementptr inbounds { i64, i64 }, { i64, i64 }* %dst, i32 0, i32 0
+  %dst.imagp = getelementptr inbounds { i64, i64 }, { i64, i64 }* %dst, i32 0, i32 1
+  store i64 %src.real, i64* %dst.realp
+  store i64 %src.imag, i64* %dst.imagp
+  ret void
+}
+
+define void @store-pair-post-indexed-float() nounwind {
+; CHECK-LABEL: store-pair-post-indexed-float
+; CHECK: stp s{{[0-9]+}}, s{{[0-9]+}}, [sp], #16
+; CHECK: ret
+  %src = alloca { float, float }, align 8
+  %dst = alloca { float, float }, align 8
+
+  %src.realp = getelementptr inbounds { float, float }, { float, float }* %src, i32 0, i32 0
+  %src.real = load float, float* %src.realp
+  %src.imagp = getelementptr inbounds { float, float }, { float, float }* %src, i32 0, i32 1
+  %src.imag = load float, float* %src.imagp
+
+  %dst.realp = getelementptr inbounds { float, float }, { float, float }* %dst, i32 0, i32 0
+  %dst.imagp = getelementptr inbounds { float, float }, { float, float }* %dst, i32 0, i32 1
+  store float %src.real, float* %dst.realp
+  store float %src.imag, float* %dst.imagp
+  ret void
+}
+
+define void @store-pair-post-indexed-double() nounwind {
+; CHECK-LABEL: store-pair-post-indexed-double
+; CHECK: stp d{{[0-9]+}}, d{{[0-9]+}}, [sp], #32
+; CHECK: ret
+  %src = alloca { double, double }, align 8
+  %dst = alloca { double, double }, align 8
+
+  %src.realp = getelementptr inbounds { double, double }, { double, double }* %src, i32 0, i32 0
+  %src.real = load double, double* %src.realp
+  %src.imagp = getelementptr inbounds { double, double }, { double, double }* %src, i32 0, i32 1
+  %src.imag = load double, double* %src.imagp
+
+  %dst.realp = getelementptr inbounds { double, double }, { double, double }* %dst, i32 0, i32 0
+  %dst.imagp = getelementptr inbounds { double, double }, { double, double }* %dst, i32 0, i32 1
+  store double %src.real, double* %dst.realp
+  store double %src.imag, double* %dst.imagp
+  ret void
+}
 
 ; Check the following transform:
 ;
