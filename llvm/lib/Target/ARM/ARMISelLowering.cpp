@@ -6688,8 +6688,8 @@ SDValue ARMTargetLowering::LowerWindowsDIVLibCall(SDValue Op, SelectionDAG &DAG,
 
 SDValue ARMTargetLowering::LowerDIV_Windows(SDValue Op, SelectionDAG &DAG,
                                             bool Signed) const {
-  EVT VT = Op.getValueType();
-  assert(VT == MVT::i32 && "unexpected type for custom lowering DIV");
+  assert(Op.getValueType() == MVT::i32 &&
+         "unexpected type for custom lowering DIV");
   SDLoc dl(Op);
 
   SDValue DBZCHK = DAG.getNode(ARMISD::WIN__DBZCHK, dl, MVT::Other,
@@ -6704,8 +6704,8 @@ void ARMTargetLowering::ExpandDIV_Windows(
   const auto &DL = DAG.getDataLayout();
   const auto &TLI = DAG.getTargetLoweringInfo();
 
-  EVT VT = Op.getValueType();
-  assert(VT == MVT::i64 && "unexpected type for custom lowering DIV");
+  assert(Op.getValueType() == MVT::i64 &&
+         "unexpected type for custom lowering DIV");
   SDLoc dl(Op);
 
   SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Op.getOperand(1),
