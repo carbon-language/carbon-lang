@@ -47,6 +47,7 @@ public:
   bool runOnMachineFunction(MachineFunction &MF) override;
   SDNode *Select(SDNode *N) override;
   const char *getPassName() const override;
+  void PreprocessISelDAG() override;
   void PostprocessISelDAG() override;
 
 private:
@@ -466,62 +467,11 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, DL,
                                   N->getValueType(0), Ops);
   }
-
-  case ISD::LOAD: {
-    LoadSDNode *LD = cast<LoadSDNode>(N);
-    SDLoc SL(N);
-    EVT VT = N->getValueType(0);
-
-    if (VT != MVT::i64 || LD->getExtensionType() != ISD::NON_EXTLOAD) {
-      N = glueCopyToM0(N);
-      break;
-    }
-
-    // To simplify the TableGen patters, we replace all i64 loads with
-    // v2i32 loads.  Alternatively, we could promote i64 loads to v2i32
-    // during DAG legalization, however, so places (ExpandUnalignedLoad)
-    // in the DAG legalizer assume that if i64 is legal, so doing this
-    // promotion early can cause problems.
-
-    SDValue NewLoad = CurDAG->getLoad(MVT::v2i32, SDLoc(N), LD->getChain(),
-                                      LD->getBasePtr(), LD->getMemOperand());
-    SDValue BitCast = CurDAG->getNode(ISD::BITCAST, SL,
-                                      MVT::i64, NewLoad);
-    CurDAG->ReplaceAllUsesOfValueWith(SDValue(N, 1), NewLoad.getValue(1));
-    CurDAG->ReplaceAllUsesOfValueWith(SDValue(N, 0), BitCast);
-    SDNode *Load = glueCopyToM0(NewLoad.getNode());
-    SelectCode(Load);
-    N = BitCast.getNode();
-    break;
-  }
-
+  case ISD::LOAD:
   case ISD::STORE: {
-    // Handle i64 stores here for the same reason mentioned above for loads.
-    StoreSDNode *ST = cast<StoreSDNode>(N);
-    SDValue Value = ST->getValue();
-    if (Value.getValueType() == MVT::i64 && !ST->isTruncatingStore()) {
-
-      SDValue NewValue = CurDAG->getNode(ISD::BITCAST, SDLoc(N),
-                                        MVT::v2i32, Value);
-      SDValue NewStore = CurDAG->getStore(ST->getChain(), SDLoc(N), NewValue,
-                                          ST->getBasePtr(), ST->getMemOperand());
-
-      CurDAG->ReplaceAllUsesOfValueWith(SDValue(N, 0), NewStore);
-
-      if (NewValue.getOpcode() == ISD::BITCAST) {
-        Select(NewStore.getNode());
-        return SelectCode(NewValue.getNode());
-      }
-
-      // getNode() may fold the bitcast if its input was another bitcast.  If
-      // that happens we should only select the new store.
-      N = NewStore.getNode();
-    }
-
     N = glueCopyToM0(N);
     break;
   }
-
   case AMDGPUISD::REGISTER_LOAD: {
     if (Subtarget->getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
       break;
@@ -1543,6 +1493,65 @@ bool AMDGPUDAGToDAGISel::SelectVOP3Mods0Clamp0OMod(SDValue In, SDValue &Src,
                                                    SDValue &Omod) const {
   Clamp = Omod = CurDAG->getTargetConstant(0, SDLoc(In), MVT::i32);
   return SelectVOP3Mods(In, Src, SrcMods);
+}
+
+void AMDGPUDAGToDAGISel::PreprocessISelDAG() {
+  bool Modified = false;
+
+  // XXX - Other targets seem to be able to do this without a worklist.
+  SmallVector<LoadSDNode *, 8> LoadsToReplace;
+  SmallVector<StoreSDNode *, 8> StoresToReplace;
+
+  for (SDNode &Node : CurDAG->allnodes()) {
+    if (LoadSDNode *LD = dyn_cast<LoadSDNode>(&Node)) {
+      EVT VT = LD->getValueType(0);
+      if (VT != MVT::i64 || LD->getExtensionType() != ISD::NON_EXTLOAD)
+        continue;
+
+      // To simplify the TableGen patters, we replace all i64 loads with v2i32
+      // loads.  Alternatively, we could promote i64 loads to v2i32 during DAG
+      // legalization, however, so places (ExpandUnalignedLoad) in the DAG
+      // legalizer assume that if i64 is legal, so doing this promotion early
+      // can cause problems.
+      LoadsToReplace.push_back(LD);
+    } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(&Node)) {
+      // Handle i64 stores here for the same reason mentioned above for loads.
+      SDValue Value = ST->getValue();
+      if (Value.getValueType() != MVT::i64 || ST->isTruncatingStore())
+        continue;
+      StoresToReplace.push_back(ST);
+    }
+  }
+
+  for (LoadSDNode *LD : LoadsToReplace) {
+    SDLoc SL(LD);
+
+    SDValue NewLoad = CurDAG->getLoad(MVT::v2i32, SL, LD->getChain(),
+                                      LD->getBasePtr(), LD->getMemOperand());
+    SDValue BitCast = CurDAG->getNode(ISD::BITCAST, SL,
+                                      MVT::i64, NewLoad);
+    CurDAG->ReplaceAllUsesOfValueWith(SDValue(LD, 1), NewLoad.getValue(1));
+    CurDAG->ReplaceAllUsesOfValueWith(SDValue(LD, 0), BitCast);
+    Modified = true;
+  }
+
+  for (StoreSDNode *ST : StoresToReplace) {
+    SDValue NewValue = CurDAG->getNode(ISD::BITCAST, SDLoc(ST),
+                                       MVT::v2i32, ST->getValue());
+    const SDValue StoreOps[] = {
+      ST->getChain(),
+      NewValue,
+      ST->getBasePtr(),
+      ST->getOffset()
+    };
+
+    CurDAG->UpdateNodeOperands(ST, StoreOps);
+    Modified = true;
+  }
+
+  // XXX - Is this necessary?
+  if (Modified)
+    CurDAG->RemoveDeadNodes();
 }
 
 void AMDGPUDAGToDAGISel::PostprocessISelDAG() {
