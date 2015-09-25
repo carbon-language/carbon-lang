@@ -184,15 +184,6 @@ template <class ELFT> void Writer<ELFT>::run() {
   error(Buffer->commit());
 }
 
-template <class ELFT>
-static int compareSym(const typename ELFFile<ELFT>::Elf_Sym *A,
-                      const typename ELFFile<ELFT>::Elf_Sym *B) {
-  uint32_t AN = A->st_name;
-  uint32_t BN = B->st_name;
-  assert(AN != BN);
-  return AN - BN;
-}
-
 namespace {
 template <bool Is64Bits> struct SectionKey {
   typedef typename std::conditional<Is64Bits, uint64_t, uint32_t>::type uintX_t;
