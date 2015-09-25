@@ -28,6 +28,9 @@ class ArgParser {
 public:
   // Parses command line options.
   llvm::opt::InputArgList parse(ArrayRef<const char *> Args);
+
+private:
+  llvm::BumpPtrAllocator Alloc;
 };
 
 class LinkerDriver {

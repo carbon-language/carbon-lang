@@ -176,6 +176,11 @@ _start:
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
 
+# RUN: echo " -o %t2" > %t.responsefile
+# RUN: lld -flavor gnu2 %t @%t.responsefile
+# RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
+# RUN:   | FileCheck %s
+
 # RUN: not lld -flavor gnu2 %t 2>&1 | FileCheck --check-prefix=NO_O %s
 # NO_O: -o must be specified.
 

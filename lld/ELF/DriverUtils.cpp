@@ -16,6 +16,8 @@
 #include "Driver.h"
 #include "Error.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/StringSaver.h"
 
 using namespace llvm;
 
@@ -53,7 +55,13 @@ opt::InputArgList ArgParser::parse(ArrayRef<const char *> Argv) {
   unsigned MissingIndex;
   unsigned MissingCount;
 
-  opt::InputArgList Args = Table.ParseArgs(Argv, MissingIndex, MissingCount);
+  // Expand response files. '@<filename>' is replaced by the file's contents.
+  SmallVector<const char *, 256> Vec(Argv.data(), Argv.data() + Argv.size());
+  StringSaver Saver(Alloc);
+  llvm::cl::ExpandResponseFiles(Saver, llvm::cl::TokenizeGNUCommandLine, Vec);
+
+  // Parse options and then do error checking.
+  opt::InputArgList Args = Table.ParseArgs(Vec, MissingIndex, MissingCount);
   if (MissingCount)
     error(Twine("missing arg value for \"") + Args.getArgString(MissingIndex) +
           "\", expected " + Twine(MissingCount) +
