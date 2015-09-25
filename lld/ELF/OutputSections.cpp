@@ -292,10 +292,25 @@ void OutputSection<ELFT>::addSection(InputSection<ELFT> *C) {
 
 template <class ELFT>
 typename ELFFile<ELFT>::uintX_t
-lld::elf2::getSymVA(const DefinedRegular<ELFT> *DR) {
-  const InputSection<ELFT> *SC = &DR->Section;
-  OutputSection<ELFT> *OS = SC->getOutputSection();
-  return OS->getVA() + SC->getOutputSectionOff() + DR->Sym.st_value;
+lld::elf2::getSymVA(const ELFSymbolBody<ELFT> &S,
+                    const OutputSection<ELFT> &BssSec) {
+  switch (S.kind()) {
+  case SymbolBody::DefinedAbsoluteKind:
+    return S.Sym.st_value;
+  case SymbolBody::DefinedRegularKind: {
+    const auto &DR = cast<DefinedRegular<ELFT>>(S);
+    const InputSection<ELFT> *SC = &DR.Section;
+    OutputSection<ELFT> *OS = SC->getOutputSection();
+    return OS->getVA() + SC->getOutputSectionOff() + DR.Sym.st_value;
+  }
+  case SymbolBody::DefinedCommonKind:
+    return BssSec.getVA() + cast<DefinedCommon<ELFT>>(S).OffsetInBSS;
+  case SymbolBody::SharedKind:
+  case SymbolBody::UndefinedKind:
+    return 0;
+  case SymbolBody::LazyKind:
+    llvm_unreachable("Lazy symbol reached writer");
+  }
 }
 
 template <class ELFT>
@@ -410,16 +425,17 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     if (StrTabSec.isDynamic() && !includeInDynamicSymtab(*Body))
       continue;
 
-    const Elf_Sym &InputSym = cast<ELFSymbolBody<ELFT>>(Body)->Sym;
+    const auto &EBody = *cast<ELFSymbolBody<ELFT>>(Body);
+    const Elf_Sym &InputSym = EBody.Sym;
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
     ESym->st_name = StrTabSec.getFileOff(Name);
 
     const OutputSection<ELFT> *Out = nullptr;
     const InputSection<ELFT> *Section = nullptr;
 
-    switch (Body->kind()) {
+    switch (EBody.kind()) {
     case SymbolBody::DefinedRegularKind:
-      Section = &cast<DefinedRegular<ELFT>>(Body)->Section;
+      Section = &cast<DefinedRegular<ELFT>>(EBody).Section;
       break;
     case SymbolBody::DefinedCommonKind:
       Out = &BssSec;
@@ -434,7 +450,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
     ESym->setBindingAndType(InputSym.getBinding(), InputSym.getType());
     ESym->st_size = InputSym.st_size;
-    ESym->setVisibility(Body->getMostConstrainingVisibility());
+    ESym->setVisibility(EBody.getMostConstrainingVisibility());
     if (InputSym.isAbsolute()) {
       ESym->st_shndx = SHN_ABS;
       ESym->st_value = InputSym.st_value;
@@ -443,17 +459,10 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     if (Section)
       Out = Section->getOutputSection();
 
-    if (Out) {
+    ESym->st_value = getSymVA(EBody, BssSec);
+
+    if (Out)
       ESym->st_shndx = Out->getSectionIndex();
-      uintX_t VA = Out->getVA();
-      if (Section)
-        VA += Section->getOutputSectionOff();
-      if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
-        VA += C->OffsetInBSS;
-      else
-        VA += InputSym.st_value;
-      ESym->st_value = VA;
-    }
 
     Buf += sizeof(Elf_Sym);
   }
@@ -514,13 +523,17 @@ template class SymbolTableSection<ELF32BE>;
 template class SymbolTableSection<ELF64LE>;
 template class SymbolTableSection<ELF64BE>;
 
-template ELFFile<ELF32LE>::uintX_t getSymVA(const DefinedRegular<ELF32LE> *DR);
+template ELFFile<ELF32LE>::uintX_t
+getSymVA(const ELFSymbolBody<ELF32LE> &S, const OutputSection<ELF32LE> &BssSec);
 
-template ELFFile<ELF32BE>::uintX_t getSymVA(const DefinedRegular<ELF32BE> *DR);
+template ELFFile<ELF32BE>::uintX_t
+getSymVA(const ELFSymbolBody<ELF32BE> &S, const OutputSection<ELF32BE> &BssSec);
 
-template ELFFile<ELF64LE>::uintX_t getSymVA(const DefinedRegular<ELF64LE> *DR);
+template ELFFile<ELF64LE>::uintX_t
+getSymVA(const ELFSymbolBody<ELF64LE> &S, const OutputSection<ELF64LE> &BssSec);
 
-template ELFFile<ELF64BE>::uintX_t getSymVA(const DefinedRegular<ELF64BE> *DR);
+template ELFFile<ELF64BE>::uintX_t
+getSymVA(const ELFSymbolBody<ELF64BE> &S, const OutputSection<ELF64BE> &BssSec);
 
 template ELFFile<ELF32LE>::uintX_t
 getLocalSymVA(const ELFFile<ELF32LE>::Elf_Sym *Sym,

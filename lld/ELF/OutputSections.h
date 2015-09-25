@@ -30,10 +30,11 @@ template <class ELFT> class InputSection;
 template <class ELFT> class OutputSection;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class DefinedRegular;
+template <class ELFT> class ELFSymbolBody;
 
 template <class ELFT>
 typename llvm::object::ELFFile<ELFT>::uintX_t
-getSymVA(const DefinedRegular<ELFT> *DR);
+getSymVA(const ELFSymbolBody<ELFT> &S, const OutputSection<ELFT> &BssSec);
 
 template <class ELFT>
 typename llvm::object::ELFFile<ELFT>::uintX_t

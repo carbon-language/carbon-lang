@@ -47,42 +47,22 @@ void InputSection<ELFT>::relocate(
         continue;
       SymVA = getLocalSymVA(Sym, File);
     } else {
-      const SymbolBody *Body = File.getSymbolBody(SymIndex);
-      if (!Body)
-        continue;
-      uint32_t OrigType = Type;
-      switch (Body->kind()) {
-      case SymbolBody::DefinedRegularKind:
-        SymVA = getSymVA<ELFT>(cast<DefinedRegular<ELFT>>(Body));
-        break;
-      case SymbolBody::DefinedAbsoluteKind:
-        SymVA = cast<DefinedAbsolute<ELFT>>(Body)->Sym.st_value;
-        break;
-      case SymbolBody::DefinedCommonKind: {
-        auto *DC = cast<DefinedCommon<ELFT>>(Body);
-        SymVA = BssSec.getVA() + DC->OffsetInBSS;
-        break;
-      }
-      case SymbolBody::SharedKind:
+      const auto &Body =
+          *cast<ELFSymbolBody<ELFT>>(File.getSymbolBody(SymIndex));
+      SymVA = getSymVA<ELFT>(Body, BssSec);
+      if (Target->relocNeedsPlt(Type))
+        SymVA = PltSec.getEntryAddr(Body);
+      else if (Target->relocNeedsGot(Type))
+        SymVA = GotSec.getEntryAddr(Body);
+
+      if (Body.kind() == SymbolBody::SharedKind) {
         if (Target->relocNeedsPlt(Type))
           Type = Target->getPCRelReloc();
         else if (Target->relocNeedsGot(Type))
           Type = Target->getPCRelReloc();
         else
           continue;
-        break;
-      case SymbolBody::UndefinedKind:
-        assert(Body->isWeak() && "Undefined symbol reached writer");
-        SymVA = 0;
-        break;
-      case SymbolBody::LazyKind:
-        llvm_unreachable("Lazy symbol reached writer");
       }
-
-      if (Target->relocNeedsPlt(OrigType))
-        SymVA = PltSec.getEntryAddr(*Body);
-      else if (Target->relocNeedsGot(OrigType))
-        SymVA = GotSec.getEntryAddr(*Body);
     }
 
     Target->relocateOne(Buf, reinterpret_cast<const void *>(&RI), Type,
