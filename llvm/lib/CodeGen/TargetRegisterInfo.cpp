@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -85,6 +86,10 @@ void PrintVRegOrUnit::print(raw_ostream &OS) const {
     return;
   }
   PrintRegUnit::print(OS);
+}
+
+void PrintLaneMask::print(raw_ostream &OS) const {
+  OS << format("%08X", LaneMask);
 }
 
 /// getAllocatableClass - Return the maximal subclass of the given register

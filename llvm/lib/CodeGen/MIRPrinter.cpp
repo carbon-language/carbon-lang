@@ -28,7 +28,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/YAMLTraits.h"
@@ -481,7 +480,7 @@ void MIPrinter::print(const MachineBasicBlock &MBB) {
       First = false;
       printReg(LI.PhysReg, OS, TRI);
       if (LI.LaneMask != ~0u)
-        OS << format(":%08X", LI.LaneMask);
+        OS << ':' << PrintLaneMask(LI.LaneMask);
     }
     OS << "\n";
     HasLineAttributes = true;

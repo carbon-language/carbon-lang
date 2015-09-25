@@ -1022,6 +1022,24 @@ static inline raw_ostream &operator<<(raw_ostream &OS,
   return OS;
 }
 
+/// Helper class for printing lane masks.
+///
+/// They are currently printed out as hexadecimal numbers.
+/// Usage: OS << PrintLaneMask(Mask);
+class PrintLaneMask {
+protected:
+  LaneBitmask LaneMask;
+public:
+  PrintLaneMask(LaneBitmask LaneMask)
+    : LaneMask(LaneMask) {}
+  void print(raw_ostream&) const;
+};
+
+static inline raw_ostream &operator<<(raw_ostream &OS, const PrintLaneMask &P) {
+  P.print(OS);
+  return OS;
+}
+
 } // End llvm namespace
 
 #endif

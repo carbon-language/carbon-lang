@@ -28,7 +28,6 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -288,7 +287,7 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
     for (const auto &LI : make_range(livein_begin(), livein_end())) {
       OS << ' ' << PrintReg(LI.PhysReg, TRI);
       if (LI.LaneMask != ~0u)
-        OS << format(":%08X", LI.LaneMask);
+        OS << ':' << PrintLaneMask(LI.LaneMask);
     }
     OS << '\n';
   }

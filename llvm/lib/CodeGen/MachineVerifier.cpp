@@ -42,7 +42,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -447,7 +446,7 @@ void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB,
   errs() << "- liverange:   " << LR << '\n';
   errs() << "- register:    " << PrintReg(Reg, TRI) << '\n';
   if (LaneMask != 0)
-    errs() << "- lanemask:    " << format("%04X\n", LaneMask);
+    errs() << "- lanemask:    " << PrintLaneMask(LaneMask) << '\n';
 }
 
 void MachineVerifier::report(const char *msg, const MachineFunction *MF,
@@ -457,7 +456,7 @@ void MachineVerifier::report(const char *msg, const MachineFunction *MF,
   errs() << "- liverange:   " << LR << '\n';
   errs() << "- register:    " << PrintReg(Reg, TRI) << '\n';
   if (LaneMask != 0)
-    errs() << "- lanemask:    " << format("%04X\n", LaneMask);
+    errs() << "- lanemask:    " << PrintLaneMask(LaneMask) << '\n';
 }
 
 void MachineVerifier::markReachable(const MachineBasicBlock *MBB) {

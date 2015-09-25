@@ -26,7 +26,6 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <algorithm>
@@ -1066,7 +1065,7 @@ void LiveInterval::print(raw_ostream &OS) const {
   super::print(OS);
   // Print subranges
   for (const SubRange &SR : subranges()) {
-    OS << format(" L%04X ", SR.LaneMask) << SR;
+    OS << " L" << PrintLaneMask(SR.LaneMask) << ' ' << SR;
   }
 }
 

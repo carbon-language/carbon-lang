@@ -32,7 +32,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -995,7 +994,7 @@ private:
       if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         dbgs() << PrintReg(Reg);
         if (LaneMask != 0)
-          dbgs() << format(" L%04X", LaneMask);
+          dbgs() << " L" << PrintLaneMask(LaneMask);
       } else {
         dbgs() << PrintRegUnit(Reg, &TRI);
       }

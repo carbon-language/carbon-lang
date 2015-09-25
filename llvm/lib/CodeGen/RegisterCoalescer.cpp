@@ -32,7 +32,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -806,13 +805,14 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
         if (Common == 0)
           continue;
 
-        DEBUG(
-            dbgs() << format("\t\tCopy+Merge %04X into %04X\n", BMask, Common));
+        DEBUG( dbgs() << "\t\tCopy_Merge " << PrintLaneMask(BMask)
+                      << " into " << PrintLaneMask(Common) << '\n');
         LaneBitmask BRest = BMask & ~AMask;
         LiveInterval::SubRange *CommonRange;
         if (BRest != 0) {
           SB.LaneMask = BRest;
-          DEBUG(dbgs() << format("\t\tReduce Lane to %04X\n", BRest));
+          DEBUG(dbgs() << "\t\tReduce Lane to " << PrintLaneMask(BRest)
+                       << '\n');
           // Duplicate SubRange for newly merged common stuff.
           CommonRange = IntB.createSubRangeFrom(Allocator, Common, SB);
         } else {
@@ -829,7 +829,7 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
         AMask &= ~BMask;
       }
       if (AMask != 0) {
-        DEBUG(dbgs() << format("\t\tNew Lane %04X\n", AMask));
+        DEBUG(dbgs() << "\t\tNew Lane " << PrintLaneMask(AMask) << '\n');
         LiveRange *NewRange = IntB.createSubRange(Allocator, AMask);
         VNInfo *BSubValNo = NewRange->getNextValue(CopyIdx, Allocator);
         addSegmentsWithValNo(*NewRange, BSubValNo, SA, ASubValNo);
@@ -1432,8 +1432,8 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     for (LiveInterval::SubRange &S : LI.subranges()) {
       if ((S.LaneMask & ShrinkMask) == 0)
         continue;
-      DEBUG(dbgs() << "Shrink LaneUses (Lane "
-                   << format("%04X", S.LaneMask) << ")\n");
+      DEBUG(dbgs() << "Shrink LaneUses (Lane " << PrintLaneMask(S.LaneMask)
+                   << ")\n");
       LIS->shrinkToUses(S, LI.reg);
     }
     LI.removeEmptySubRanges();
@@ -2388,7 +2388,7 @@ void JoinVals::pruneSubRegValues(LiveInterval &LI, LaneBitmask &ShrinkMask)
       // copied and we must remove that subrange value as well.
       VNInfo *ValueOut = Q.valueOutOrDead();
       if (ValueOut != nullptr && Q.valueIn() == nullptr) {
-        DEBUG(dbgs() << "\t\tPrune sublane " << format("%04X", S.LaneMask)
+        DEBUG(dbgs() << "\t\tPrune sublane " << PrintLaneMask(S.LaneMask)
                      << " at " << Def << "\n");
         LIS->pruneValue(S, Def, nullptr);
         DidPrune = true;
@@ -2399,8 +2399,8 @@ void JoinVals::pruneSubRegValues(LiveInterval &LI, LaneBitmask &ShrinkMask)
       // If a subrange ends at the copy, then a value was copied but only
       // partially used later. Shrink the subregister range appropriately.
       if (Q.valueIn() != nullptr && Q.valueOut() == nullptr) {
-        DEBUG(dbgs() << "\t\tDead uses at sublane "
-                     << format("%04X", S.LaneMask) << " at " << Def << "\n");
+        DEBUG(dbgs() << "\t\tDead uses at sublane " << PrintLaneMask(S.LaneMask)
+                     << " at " << Def << "\n");
         ShrinkMask |= S.LaneMask;
       }
     }
@@ -2531,14 +2531,15 @@ bool RegisterCoalescer::mergeSubRangeInto(LiveInterval &LI,
     if (Common == 0)
       continue;
 
-    DEBUG(dbgs() << format("\t\tCopy+Merge %04X into %04X\n", RMask, Common));
+    DEBUG(dbgs() << "\t\tCopy+Merge " << PrintLaneMask(RMask) << " into "
+                 << PrintLaneMask(Common) << '\n');
     // LaneMask of subregisters contained in the R range but not in ToMerge,
     // they have to split into their own subrange.
     LaneBitmask LRest = RMask & ~LaneMask;
     LiveInterval::SubRange *CommonRange;
     if (LRest != 0) {
       R.LaneMask = LRest;
-      DEBUG(dbgs() << format("\t\tReduce Lane to %04X\n", LRest));
+      DEBUG(dbgs() << "\t\tReduce Lane to " << PrintLaneMask(LRest) << '\n');
       // Duplicate SubRange for newly merged common stuff.
       CommonRange = LI.createSubRangeFrom(Allocator, Common, R);
     } else {
@@ -2553,7 +2554,7 @@ bool RegisterCoalescer::mergeSubRangeInto(LiveInterval &LI,
   }
 
   if (LaneMask != 0) {
-    DEBUG(dbgs() << format("\t\tNew Lane %04X\n", LaneMask));
+    DEBUG(dbgs() << "\t\tNew Lane " << PrintLaneMask(LaneMask) << '\n');
     LI.createSubRangeFrom(Allocator, LaneMask, ToMerge);
   }
   return true;
