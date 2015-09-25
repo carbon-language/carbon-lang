@@ -402,7 +402,7 @@ static void updateLiveness(MachineFunction &MF) {
     const MachineBasicBlock *CurBB = WorkList.pop_back_val();
     // By construction, the region that is after the save point is
     // dominated by the Save and post-dominated by the Restore.
-    if (CurBB == Save)
+    if (CurBB == Save && Save != Restore)
       continue;
     // Enqueue all the successors not already visited.
     // Those are by construction either before Save or after Restore.
@@ -414,10 +414,13 @@ static void updateLiveness(MachineFunction &MF) {
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    for (MachineBasicBlock *MBB : Visited)
+    for (MachineBasicBlock *MBB : Visited) {
+      MCPhysReg Reg = CSI[i].getReg();
       // Add the callee-saved register as live-in.
       // It's killed at the spill.
-      MBB->addLiveIn(CSI[i].getReg());
+      if (!MBB->isLiveIn(Reg))
+        MBB->addLiveIn(Reg);
+    }
   }
 }
 

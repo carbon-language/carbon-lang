@@ -616,3 +616,169 @@ loop2b:                                           ; preds = %loop1
 end:
   ret void
 }
+
+@columns = external global [0 x i32], align 4
+@lock = common global i32 0, align 4
+@htindex = common global i32 0, align 4
+@stride = common global i32 0, align 4
+@ht = common global i32* null, align 8
+@he = common global i8* null, align 8
+
+; Test for a bug that was caused when save point was equal to restore point.
+; Function Attrs: nounwind
+; CHECK-LABEL: transpose
+;
+; Store of callee-save register saved by shrink wrapping
+; CHECK: std [[CSR:[0-9]+]], -[[STACK_OFFSET:[0-9]+]](1) # 8-byte Folded Spill
+;
+; Reload of callee-save register
+; CHECK: ld [[CSR]], -[[STACK_OFFSET]](1) # 8-byte Folded Reload
+;
+; Ensure no subsequent uses of callee-save register before end of function
+; CHECK-NOT: {{[a-z]+}} [[CSR]]
+; CHECK: blr
+define signext i32 @transpose() {
+entry:
+  %0 = load i32, i32* getelementptr inbounds ([0 x i32], [0 x i32]* @columns, i64 0, i64 1), align 4
+  %shl.i = shl i32 %0, 7
+  %1 = load i32, i32* getelementptr inbounds ([0 x i32], [0 x i32]* @columns, i64 0, i64 2), align 4
+  %or.i = or i32 %shl.i, %1
+  %shl1.i = shl i32 %or.i, 7
+  %2 = load i32, i32* getelementptr inbounds ([0 x i32], [0 x i32]* @columns, i64 0, i64 3), align 4
+  %or2.i = or i32 %shl1.i, %2
+  %3 = load i32, i32* getelementptr inbounds ([0 x i32], [0 x i32]* @columns, i64 0, i64 7), align 4
+  %shl3.i = shl i32 %3, 7
+  %4 = load i32, i32* getelementptr inbounds ([0 x i32], [0 x i32]* @columns, i64 0, i64 6), align 4
+  %or4.i = or i32 %shl3.i, %4
+  %shl5.i = shl i32 %or4.i, 7
+  %5 = load i32, i32* getelementptr inbounds ([0 x i32], [0 x i32]* @columns, i64 0, i64 5), align 4
+  %or6.i = or i32 %shl5.i, %5
+  %cmp.i = icmp ugt i32 %or2.i, %or6.i
+  br i1 %cmp.i, label %cond.true.i, label %cond.false.i
+
+cond.true.i:
+  %shl7.i = shl i32 %or2.i, 7
+  %6 = load i32, i32* getelementptr inbounds ([0 x i32], [0 x i32]* @columns, i64 0, i64 4), align 4
+  %or8.i = or i32 %6, %shl7.i
+  %conv.i = zext i32 %or8.i to i64
+  %shl9.i = shl nuw nsw i64 %conv.i, 21
+  %conv10.i = zext i32 %or6.i to i64
+  %or11.i = or i64 %shl9.i, %conv10.i
+  br label %hash.exit
+
+cond.false.i:
+  %shl12.i = shl i32 %or6.i, 7
+  %7 = load i32, i32* getelementptr inbounds ([0 x i32], [0 x i32]* @columns, i64 0, i64 4), align 4
+  %or13.i = or i32 %7, %shl12.i
+  %conv14.i = zext i32 %or13.i to i64
+  %shl15.i = shl nuw nsw i64 %conv14.i, 21
+  %conv16.i = zext i32 %or2.i to i64
+  %or17.i = or i64 %shl15.i, %conv16.i
+  br label %hash.exit
+
+hash.exit:
+  %cond.i = phi i64 [ %or11.i, %cond.true.i ], [ %or17.i, %cond.false.i ]
+  %shr.29.i = lshr i64 %cond.i, 17
+  %conv18.i = trunc i64 %shr.29.i to i32
+  store i32 %conv18.i, i32* @lock, align 4
+  %rem.i = srem i64 %cond.i, 1050011
+  %conv19.i = trunc i64 %rem.i to i32
+  store i32 %conv19.i, i32* @htindex, align 4
+  %rem20.i = urem i32 %conv18.i, 179
+  %add.i = or i32 %rem20.i, 131072
+  store i32 %add.i, i32* @stride, align 4
+  %8 = load i32*, i32** @ht, align 8
+  %arrayidx = getelementptr inbounds i32, i32* %8, i64 %rem.i
+  %9 = load i32, i32* %arrayidx, align 4
+  %cmp1 = icmp eq i32 %9, %conv18.i
+  br i1 %cmp1, label %if.then, label %if.end
+
+if.then:
+  %idxprom.lcssa = phi i64 [ %rem.i, %hash.exit ], [ %idxprom.1, %if.end ], [ %idxprom.2, %if.end.1 ], [ %idxprom.3, %if.end.2 ], [ %idxprom.4, %if.end.3 ], [ %idxprom.5, %if.end.4 ], [ %idxprom.6, %if.end.5 ], [ %idxprom.7, %if.end.6 ]
+  %10 = load i8*, i8** @he, align 8
+  %arrayidx3 = getelementptr inbounds i8, i8* %10, i64 %idxprom.lcssa
+  %11 = load i8, i8* %arrayidx3, align 1
+  %conv = sext i8 %11 to i32
+  br label %cleanup
+
+if.end:
+  %add = add nsw i32 %add.i, %conv19.i
+  %cmp4 = icmp sgt i32 %add, 1050010
+  %sub = add nsw i32 %add, -1050011
+  %sub.add = select i1 %cmp4, i32 %sub, i32 %add
+  %idxprom.1 = sext i32 %sub.add to i64
+  %arrayidx.1 = getelementptr inbounds i32, i32* %8, i64 %idxprom.1
+  %12 = load i32, i32* %arrayidx.1, align 4
+  %cmp1.1 = icmp eq i32 %12, %conv18.i
+  br i1 %cmp1.1, label %if.then, label %if.end.1
+
+cleanup:
+  %retval.0 = phi i32 [ %conv, %if.then ], [ -128, %if.end.6 ]
+  ret i32 %retval.0
+
+if.end.1:
+  %add.1 = add nsw i32 %add.i, %sub.add
+  %cmp4.1 = icmp sgt i32 %add.1, 1050010
+  %sub.1 = add nsw i32 %add.1, -1050011
+  %sub.add.1 = select i1 %cmp4.1, i32 %sub.1, i32 %add.1
+  %idxprom.2 = sext i32 %sub.add.1 to i64
+  %arrayidx.2 = getelementptr inbounds i32, i32* %8, i64 %idxprom.2
+  %13 = load i32, i32* %arrayidx.2, align 4
+  %cmp1.2 = icmp eq i32 %13, %conv18.i
+  br i1 %cmp1.2, label %if.then, label %if.end.2
+
+if.end.2:
+  %add.2 = add nsw i32 %add.i, %sub.add.1
+  %cmp4.2 = icmp sgt i32 %add.2, 1050010
+  %sub.2 = add nsw i32 %add.2, -1050011
+  %sub.add.2 = select i1 %cmp4.2, i32 %sub.2, i32 %add.2
+  %idxprom.3 = sext i32 %sub.add.2 to i64
+  %arrayidx.3 = getelementptr inbounds i32, i32* %8, i64 %idxprom.3
+  %14 = load i32, i32* %arrayidx.3, align 4
+  %cmp1.3 = icmp eq i32 %14, %conv18.i
+  br i1 %cmp1.3, label %if.then, label %if.end.3
+
+if.end.3:
+  %add.3 = add nsw i32 %add.i, %sub.add.2
+  %cmp4.3 = icmp sgt i32 %add.3, 1050010
+  %sub.3 = add nsw i32 %add.3, -1050011
+  %sub.add.3 = select i1 %cmp4.3, i32 %sub.3, i32 %add.3
+  %idxprom.4 = sext i32 %sub.add.3 to i64
+  %arrayidx.4 = getelementptr inbounds i32, i32* %8, i64 %idxprom.4
+  %15 = load i32, i32* %arrayidx.4, align 4
+  %cmp1.4 = icmp eq i32 %15, %conv18.i
+  br i1 %cmp1.4, label %if.then, label %if.end.4
+
+if.end.4:
+  %add.4 = add nsw i32 %add.i, %sub.add.3
+  %cmp4.4 = icmp sgt i32 %add.4, 1050010
+  %sub.4 = add nsw i32 %add.4, -1050011
+  %sub.add.4 = select i1 %cmp4.4, i32 %sub.4, i32 %add.4
+  %idxprom.5 = sext i32 %sub.add.4 to i64
+  %arrayidx.5 = getelementptr inbounds i32, i32* %8, i64 %idxprom.5
+  %16 = load i32, i32* %arrayidx.5, align 4
+  %cmp1.5 = icmp eq i32 %16, %conv18.i
+  br i1 %cmp1.5, label %if.then, label %if.end.5
+
+if.end.5:
+  %add.5 = add nsw i32 %add.i, %sub.add.4
+  %cmp4.5 = icmp sgt i32 %add.5, 1050010
+  %sub.5 = add nsw i32 %add.5, -1050011
+  %sub.add.5 = select i1 %cmp4.5, i32 %sub.5, i32 %add.5
+  %idxprom.6 = sext i32 %sub.add.5 to i64
+  %arrayidx.6 = getelementptr inbounds i32, i32* %8, i64 %idxprom.6
+  %17 = load i32, i32* %arrayidx.6, align 4
+  %cmp1.6 = icmp eq i32 %17, %conv18.i
+  br i1 %cmp1.6, label %if.then, label %if.end.6
+
+if.end.6:
+  %add.6 = add nsw i32 %add.i, %sub.add.5
+  %cmp4.6 = icmp sgt i32 %add.6, 1050010
+  %sub.6 = add nsw i32 %add.6, -1050011
+  %sub.add.6 = select i1 %cmp4.6, i32 %sub.6, i32 %add.6
+  %idxprom.7 = sext i32 %sub.add.6 to i64
+  %arrayidx.7 = getelementptr inbounds i32, i32* %8, i64 %idxprom.7
+  %18 = load i32, i32* %arrayidx.7, align 4
+  %cmp1.7 = icmp eq i32 %18, %conv18.i
+  br i1 %cmp1.7, label %if.then, label %cleanup
+}
