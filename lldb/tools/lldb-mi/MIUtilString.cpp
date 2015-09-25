@@ -63,14 +63,7 @@ CMIUtilString::CMIUtilString(const std::string& vrStr)
 //--
 CMIUtilString &CMIUtilString::operator=(const char *vpRhs)
 {
-    if (*this == vpRhs)
-        return *this;
-
-    if (vpRhs != nullptr)
-    {
-        assign(vpRhs);
-    }
-
+    assign(vpRhs);
     return *this;
 }
 
