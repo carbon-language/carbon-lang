@@ -125,7 +125,6 @@ class ProcessLaunchTestCase(TestBase):
         self.setTearDownCleanup(self.d)
         self.my_working_dir_test()
 
-    @skipIfFreeBSD # llvm.org/pr16684
     @expectedFailureLinux("llvm.org/pr20265")
     @dwarf_test
     def test_set_working_dir_with_dwarf (self):

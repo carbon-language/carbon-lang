@@ -59,8 +59,6 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers()
 
-    @skipIfFreeBSD # llvm.org/pr16684
-    @expectedFailureFreeBSD("llvm.org/pr18200")
     def test_convenience_registers_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['amd64', 'x86_64']:
@@ -68,8 +66,6 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers_with_process_attach(test_16bit_regs=False)
 
-    @skipIfFreeBSD # llvm.org/pr18230
-    @expectedFailureFreeBSD("llvm.org/pr18200")
     def test_convenience_registers_16bit_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['amd64', 'x86_64']:
