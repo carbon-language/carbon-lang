@@ -41,6 +41,32 @@ define void @test_sgpr_use_twice_ternary_op_a_a_b(float addrspace(1)* %out, floa
   ret void
 }
 
+; GCN-LABEL: {{^}}test_use_s_v_s:
+; GCN-DAG: s_load_dword [[SA:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, {{0xb|0x2c}}
+; GCN-DAG: s_load_dword [[SB:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, {{0xc|0x30}}
+
+; GCN: buffer_load_dword [[VA0:v[0-9]+]]
+; GCN-NOT: v_mov_b32
+; GCN: buffer_load_dword [[VA1:v[0-9]+]]
+
+; GCN-NOT: v_mov_b32
+; GCN: v_mov_b32_e32 [[VB:v[0-9]+]], [[SB]]
+; GCN-NOT: v_mov_b32
+
+; GCN-DAG: v_fma_f32 [[RESULT0:v[0-9]+]], [[VA0]], [[SA]], [[VB]]
+; GCN-DAG: v_fma_f32 [[RESULT1:v[0-9]+]], [[VA1]], [[SA]], [[VB]]
+; GCN: buffer_store_dword [[RESULT0]]
+; GCN: buffer_store_dword [[RESULT1]]
+define void @test_use_s_v_s(float addrspace(1)* %out, float %a, float %b, float addrspace(1)* %in) #0 {
+  %va0 = load volatile float, float addrspace(1)* %in
+  %va1 = load volatile float, float addrspace(1)* %in
+  %fma0 = call float @llvm.fma.f32(float %a, float %va0, float %b) #1
+  %fma1 = call float @llvm.fma.f32(float %a, float %va1, float %b) #1
+  store volatile float %fma0, float addrspace(1)* %out
+  store volatile float %fma1, float addrspace(1)* %out
+  ret void
+}
+
 ; GCN-LABEL: {{^}}test_sgpr_use_twice_ternary_op_a_b_a:
 ; SI: s_load_dword [[SGPR0:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: s_load_dword [[SGPR1:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
@@ -199,14 +225,11 @@ define void @test_literal_use_twice_ternary_op_s_k_k_x2(float addrspace(1)* %out
 ; GCN-DAG: s_load_dword [[SGPR0:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, {{0xb|0x2c}}
 ; GCN-DAG: s_load_dword [[SGPR1:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, {{0xc|0x30}}
 ; GCN-DAG: v_mov_b32_e32 [[VK0:v[0-9]+]], 0x44800000
+; GCN-DAG: v_mov_b32_e32 [[VS1:v[0-9]+]], [[SGPR1]]
 
-; FIXME: Why do we end up with 2 copies of the same SGPR? These should be CSE'd
-; GCN: v_mov_b32_e32 [[VS1_1:v[0-9]+]], [[SGPR1]]
-; GCN: v_mov_b32_e32 [[VS1_0:v[0-9]+]], [[SGPR1]]
-
-; GCN-DAG: v_fma_f32 [[RESULT0:v[0-9]+]], [[SGPR0]], [[VS1_0]], [[VK0]]
+; GCN-DAG: v_fma_f32 [[RESULT0:v[0-9]+]], [[SGPR0]], [[VS1]], [[VK0]]
 ; GCN-DAG: v_mov_b32_e32 [[VK1:v[0-9]+]], 0x45800000
-; GCN-DAG: v_fma_f32 [[RESULT1:v[0-9]+]], [[SGPR0]], [[VS1_1]], [[VK1]]
+; GCN-DAG: v_fma_f32 [[RESULT1:v[0-9]+]], [[SGPR0]], [[VS1]], [[VK1]]
 
 ; GCN: buffer_store_dword [[RESULT0]]
 ; GCN: buffer_store_dword [[RESULT1]]
@@ -224,24 +247,16 @@ define void @test_s0_s1_k_f32(float addrspace(1)* %out, float %a, float %b) #0 {
 ; GCN-DAG: s_load_dwordx2 s{{\[}}[[SGPR1_SUB0:[0-9]+]]:[[SGPR1_SUB1:[0-9]+]]{{\]}}, s{{\[[0-9]+:[0-9]+\]}}, {{0xd|0x34}}
 ; GCN-DAG: s_mov_b32 s[[SK0_SUB1:[0-9]+]], 0x40900000
 ; GCN-DAG: s_mov_b32 s[[SZERO:[0-9]+]], 0{{$}}
-; GCN-DAG: v_mov_b32_e32 v[[VK0_SUB0:[0-9]+]], s[[SZERO]]
-; GCN-DAG: v_mov_b32_e32 v[[VK0_SUB1:[0-9]+]], s[[SK0_SUB1]]
+; GCN: v_mov_b32_e32 v[[VK0_SUB0:[0-9]+]], s[[SZERO]]
+; GCN: v_mov_b32_e32 v[[VK0_SUB1:[0-9]+]], s[[SK0_SUB1]]
 
-; GCN-DAG: s_mov_b32 s[[SK1_SUB0:[0-9]+]], 0x40b00000{{$}}
-
-; FIXME: Redundant copies
-; GCN: v_mov_b32_e32 v[[VS1_1_SUB0:[0-9]+]], s[[SGPR1_SUB0]]
-; GCN: v_mov_b32_e32 v[[VS1_1_SUB1:[0-9]+]], s[[SGPR1_SUB1]]
-; GCN: v_mov_b32_e32 v[[VS1_0_SUB0:[0-9]+]], s[[SGPR1_SUB0]]
-; GCN: v_mov_b32_e32 v[[VS1_0_SUB1:[0-9]+]], s[[SGPR1_SUB1]]
-
-
-; GCN-DAG: v_fma_f64 [[RESULT0:v\[[0-9]+:[0-9]+\]]], [[SGPR0]], v{{\[}}[[VS1_0_SUB0]]:[[VS1_0_SUB1]]{{\]}}, v{{\[}}[[VK0_SUB0]]:[[VK0_SUB1]]{{\]}}
-
+; GCN-DAG: s_mov_b32 s[[SK1_SUB1:[0-9]+]], 0x40b00000{{$}}
+; GCN-DAG: v_mov_b32_e32 v[[VS1_SUB0:[0-9]+]], s[[SGPR1_SUB0]]
+; GCN-DAG: v_mov_b32_e32 v[[VS1_SUB1:[0-9]+]], s[[SGPR1_SUB1]]
 ; GCN-DAG: v_mov_b32_e32 v[[VK1_SUB0:[0-9]+]], s[[SZERO]]
-; GCN-DAG: v_mov_b32_e32 v[[VK1_SUB1:[0-9]+]], s[[SK1_SUB0]]
-
-; GCN-DAG: v_fma_f64 [[RESULT1:v\[[0-9]+:[0-9]+\]]], [[SGPR0]], v{{\[}}[[VS1_1_SUB0]]:[[VS1_1_SUB1]]{{\]}}, v{{\[}}[[VK1_SUB0]]:[[VK1_SUB1]]{{\]}}
+; GCN-DAG: v_mov_b32_e32 v[[VK1_SUB1:[0-9]+]], s[[SK1_SUB1]]
+; GCN-DAG: v_fma_f64 [[RESULT0:v\[[0-9]+:[0-9]+\]]], [[SGPR0]], v{{\[}}[[VS1_SUB0]]:[[VS1_SUB1]]{{\]}}, v{{\[}}[[VK0_SUB0]]:[[VK0_SUB1]]{{\]}}
+; GCN-DAG: v_fma_f64 [[RESULT1:v\[[0-9]+:[0-9]+\]]], [[SGPR0]], v{{\[}}[[VS1_SUB0]]:[[VS1_SUB1]]{{\]}}, v{{\[}}[[VK1_SUB0]]:[[VK1_SUB1]]{{\]}}
 
 ; GCN: buffer_store_dwordx2 [[RESULT0]]
 ; GCN: buffer_store_dwordx2 [[RESULT1]]

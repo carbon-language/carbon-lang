@@ -160,6 +160,15 @@ namespace {
     bool foldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
                        SmallSet<unsigned, 4> &ImmDefRegs,
                        DenseMap<unsigned, MachineInstr*> &ImmDefMIs);
+
+    /// \brief If copy instruction \p MI is a virtual register copy, track it in
+    /// the set \p CopiedFromRegs and \p CopyMIs. If this virtual register was
+    /// previously seen as a copy, replace the uses of this copy with the
+    /// previously seen copy's destination register.
+    bool foldRedundantCopy(MachineInstr *MI,
+                           SmallSet<unsigned, 4> &CopiedFromRegs,
+                           DenseMap<unsigned, MachineInstr*> &CopyMIs);
+
     bool isLoadFoldable(MachineInstr *MI,
                         SmallSet<unsigned, 16> &FoldAsLoadDefCandidates);
 
@@ -1335,6 +1344,65 @@ bool PeepholeOptimizer::foldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
   return false;
 }
 
+// FIXME: This is very simple and misses some cases which should be handled when
+// motivating examples are found.
+//
+// The copy rewriting logic should look at uses as well as defs and be able to
+// eliminate copies across blocks.
+//
+// Later copies that are subregister extracts will also not be eliminated since
+// only the first copy is considered.
+//
+// e.g.
+// %vreg1 = COPY %vreg0
+// %vreg2 = COPY %vreg0:sub1
+//
+// Should replace %vreg2 uses with %vreg1:sub1
+bool PeepholeOptimizer::foldRedundantCopy(
+  MachineInstr *MI,
+  SmallSet<unsigned, 4> &CopySrcRegs,
+  DenseMap<unsigned, MachineInstr *> &CopyMIs) {
+  assert(MI->isCopy());
+
+  unsigned SrcReg = MI->getOperand(1).getReg();
+  if (!TargetRegisterInfo::isVirtualRegister(SrcReg))
+    return false;
+
+  unsigned DstReg = MI->getOperand(0).getReg();
+  if (!TargetRegisterInfo::isVirtualRegister(DstReg))
+    return false;
+
+  if (CopySrcRegs.insert(SrcReg).second) {
+    // First copy of this reg seen.
+    CopyMIs.insert(std::make_pair(SrcReg, MI));
+    return false;
+  }
+
+  MachineInstr *PrevCopy = CopyMIs.find(SrcReg)->second;
+
+  unsigned SrcSubReg = MI->getOperand(1).getSubReg();
+  unsigned PrevSrcSubReg = PrevCopy->getOperand(1).getSubReg();
+
+  // Can't replace different subregister extracts.
+  if (SrcSubReg != PrevSrcSubReg)
+    return false;
+
+  unsigned PrevDstReg = PrevCopy->getOperand(0).getReg();
+
+  // Only replace if the copy register class is the same.
+  //
+  // TODO: If we have multiple copies to different register classes, we may want
+  // to track multiple copies of the same source register.
+  if (MRI->getRegClass(DstReg) != MRI->getRegClass(PrevDstReg))
+    return false;
+
+  MRI->replaceRegWith(DstReg, PrevDstReg);
+
+  // Lifetime of the previous copy has been extended.
+  MRI->clearKillFlags(PrevDstReg);
+  return true;
+}
+
 bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
   if (skipOptnoneFunction(*MF.getFunction()))
     return false;
@@ -1367,6 +1435,10 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
     SmallSet<unsigned, 4> ImmDefRegs;
     DenseMap<unsigned, MachineInstr*> ImmDefMIs;
     SmallSet<unsigned, 16> FoldAsLoadDefCandidates;
+
+    // Set of virtual registers that are copied from.
+    SmallSet<unsigned, 4> CopySrcRegs;
+    DenseMap<unsigned, MachineInstr *> CopySrcMIs;
 
     for (MachineBasicBlock::iterator
            MII = I->begin(), MIE = I->end(); MII != MIE; ) {
@@ -1406,6 +1478,13 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
       if (isCoalescableCopy(*MI) && optimizeCoalescableCopy(MI)) {
         // MI is just rewritten.
+        Changed = true;
+        continue;
+      }
+
+      if (MI->isCopy() && foldRedundantCopy(MI, CopySrcRegs, CopySrcMIs)) {
+        LocalMIs.erase(MI);
+        MI->eraseFromParent();
         Changed = true;
         continue;
       }
