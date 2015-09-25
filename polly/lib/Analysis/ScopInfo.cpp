@@ -2703,26 +2703,18 @@ void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
       // we have to insert a scalar dependence from the definition of OpI to
       // OpBB if the definition is not in OpBB.
       if (OpIBB != OpBB) {
-        addMemoryAccess(OpBB, PHI, MemoryAccess::READ, OpI, 1, true, OpI);
-        addMemoryAccess(OpIBB, OpI, MemoryAccess::MUST_WRITE, OpI, 1, true,
-                        OpI);
+        addScalarReadAccess(OpI, PHI, OpBB);
+        addScalarWriteAccess(OpI);
       }
     } else if (ModelReadOnlyScalars && !isa<Constant>(Op)) {
-      addMemoryAccess(OpBB, PHI, MemoryAccess::READ, Op, 1, true, Op);
+      addScalarReadAccess(Op, PHI, OpBB);
     }
 
-    // Always use the terminator of the incoming basic block as the access
-    // instruction.
-    OpI = OpBB->getTerminator();
-
-    addMemoryAccess(OpBB, OpI, MemoryAccess::MUST_WRITE, PHI, 1, true, Op,
-                    /* IsPHI */ !IsExitBlock);
+    addPHIWriteAccess(PHI, OpBB, Op, IsExitBlock);
   }
 
-  if (!OnlyNonAffineSubRegionOperands) {
-    addMemoryAccess(PHI->getParent(), PHI, MemoryAccess::READ, PHI, 1, true,
-                    PHI,
-                    /* IsPHI */ !IsExitBlock);
+  if (!OnlyNonAffineSubRegionOperands && !IsExitBlock) {
+    addPHIReadAccess(PHI);
   }
 }
 
@@ -2778,7 +2770,7 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     // Do not build a read access that is not in the current SCoP
     // Use the def instruction as base address of the MemoryAccess, so that it
     // will become the name of the scalar access in the polyhedral form.
-    addMemoryAccess(UseParent, UI, MemoryAccess::READ, Inst, 1, true, Inst);
+    addScalarReadAccess(Inst, UI);
   }
 
   if (ModelReadOnlyScalars && !isa<PHINode>(Inst)) {
@@ -2793,8 +2785,7 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
       if (isa<Constant>(Op))
         continue;
 
-      addMemoryAccess(Inst->getParent(), Inst, MemoryAccess::READ, Op, 1, true,
-                      Op);
+      addScalarReadAccess(Op, Inst);
     }
   }
 
@@ -2865,8 +2856,8 @@ void ScopInfo::buildMemoryAccess(
         SizesSCEV.push_back(SE->getSCEV(ConstantInt::get(
             IntegerType::getInt64Ty(BasePtr->getContext()), Size)));
 
-        addMemoryAccess(Inst->getParent(), Inst, Type, BasePointer->getValue(),
-                        Size, true, Subscripts, SizesSCEV, Val);
+        addExplicitAccess(Inst, Type, BasePointer->getValue(), Size, true,
+                          Subscripts, SizesSCEV, Val);
         return;
       }
     }
@@ -2874,9 +2865,9 @@ void ScopInfo::buildMemoryAccess(
 
   auto AccItr = InsnToMemAcc.find(Inst);
   if (PollyDelinearize && AccItr != InsnToMemAcc.end()) {
-    addMemoryAccess(Inst->getParent(), Inst, Type, BasePointer->getValue(),
-                    Size, true, AccItr->second.DelinearizedSubscripts,
-                    AccItr->second.Shape->DelinearizedSizes, Val);
+    addExplicitAccess(Inst, Type, BasePointer->getValue(), Size, true,
+                      AccItr->second.DelinearizedSubscripts,
+                      AccItr->second.Shape->DelinearizedSizes, Val);
     return;
   }
 
@@ -2893,15 +2884,16 @@ void ScopInfo::buildMemoryAccess(
   bool IsAffine = !isVariantInNonAffineLoop &&
                   isAffineExpr(R, AccessFunction, *SE, BasePointer->getValue());
 
-  SmallVector<const SCEV *, 4> Subscripts, Sizes;
-  Subscripts.push_back(AccessFunction);
-  Sizes.push_back(SE->getConstant(ZeroOffset->getType(), Size));
+  // FIXME: Size if the number of bytes of an array element, not the number of
+  // elements as probably intended here.
+  const SCEV *SizeSCEV = SE->getConstant(ZeroOffset->getType(), Size);
 
   if (!IsAffine && Type == MemoryAccess::MUST_WRITE)
     Type = MemoryAccess::MAY_WRITE;
 
-  addMemoryAccess(Inst->getParent(), Inst, Type, BasePointer->getValue(), Size,
-                  IsAffine, Subscripts, Sizes, Val);
+  addExplicitAccess(Inst, Type, BasePointer->getValue(), Size, IsAffine,
+                    ArrayRef<const SCEV *>(AccessFunction),
+                    ArrayRef<const SCEV *>(SizeSCEV), Val);
 }
 
 void ScopInfo::buildAccessFunctions(Region &R, Region &SR) {
@@ -2946,8 +2938,7 @@ void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
 
     if (buildScalarDependences(Inst, &R, NonAffineSubRegion)) {
       if (!isa<StoreInst>(Inst))
-        addMemoryAccess(&BB, Inst, MemoryAccess::MUST_WRITE, Inst, 1, true,
-                        Inst);
+        addScalarWriteAccess(Inst);
     }
   }
 }
@@ -2957,8 +2948,7 @@ void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
                                Value *BaseAddress, unsigned ElemBytes,
                                bool Affine, Value *AccessValue,
                                ArrayRef<const SCEV *> Subscripts,
-                               ArrayRef<const SCEV *> Sizes,
-                               bool IsPHI = false) {
+                               ArrayRef<const SCEV *> Sizes, bool IsPHI) {
   AccFuncSetType &AccList = AccFuncMap[BB];
   size_t Identifier = AccList.size();
 
@@ -2970,6 +2960,43 @@ void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
 
   AccList.emplace_back(Inst, Id, Type, BaseAddress, ElemBytes, Affine,
                        Subscripts, Sizes, AccessValue, IsPHI, BaseName);
+}
+
+void ScopInfo::addExplicitAccess(
+    Instruction *MemAccInst, MemoryAccess::AccessType Type, Value *BaseAddress,
+    unsigned ElemBytes, bool IsAffine, ArrayRef<const SCEV *> Subscripts,
+    ArrayRef<const SCEV *> Sizes, Value *AccessValue) {
+  assert(isa<LoadInst>(MemAccInst) || isa<StoreInst>(MemAccInst));
+  assert(isa<LoadInst>(MemAccInst) == (Type == MemoryAccess::READ));
+  addMemoryAccess(MemAccInst->getParent(), MemAccInst, Type, BaseAddress,
+                  ElemBytes, IsAffine, AccessValue, Subscripts, Sizes, false);
+}
+void ScopInfo::addScalarWriteAccess(Instruction *Value) {
+  addMemoryAccess(Value->getParent(), Value, MemoryAccess::MUST_WRITE, Value, 1,
+                  true, Value, ArrayRef<const SCEV *>(),
+                  ArrayRef<const SCEV *>(), false);
+}
+void ScopInfo::addScalarReadAccess(Value *Value, Instruction *User) {
+  assert(!isa<PHINode>(User));
+  addMemoryAccess(User->getParent(), User, MemoryAccess::READ, Value, 1, true,
+                  Value, ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
+                  false);
+}
+void ScopInfo::addScalarReadAccess(Value *Value, PHINode *User,
+                                   BasicBlock *UserBB) {
+  addMemoryAccess(UserBB, User, MemoryAccess::READ, Value, 1, true, Value,
+                  ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(), false);
+}
+void ScopInfo::addPHIWriteAccess(PHINode *PHI, BasicBlock *IncomingBlock,
+                                 Value *IncomingValue, bool IsExitBlock) {
+  addMemoryAccess(IncomingBlock, IncomingBlock->getTerminator(),
+                  MemoryAccess::MUST_WRITE, PHI, 1, true, IncomingValue,
+                  ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(),
+                  !IsExitBlock);
+}
+void ScopInfo::addPHIReadAccess(PHINode *PHI) {
+  addMemoryAccess(PHI->getParent(), PHI, MemoryAccess::READ, PHI, 1, true, PHI,
+                  ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(), true);
 }
 
 Scop *ScopInfo::buildScop(Region &R, DominatorTree &DT) {

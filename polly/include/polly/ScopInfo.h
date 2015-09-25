@@ -1490,22 +1490,60 @@ class ScopInfo : public RegionPass {
                        ArrayRef<const SCEV *> Subscripts,
                        ArrayRef<const SCEV *> Sizes, bool IsPHI);
 
-  void addMemoryAccess(BasicBlock *BB, Instruction *Inst,
-                       MemoryAccess::AccessType Type, Value *BaseAddress,
-                       unsigned ElemBytes, bool Affine, Value *AccessValue,
-                       bool IsPHI = false) {
-    addMemoryAccess(BB, Inst, Type, BaseAddress, ElemBytes, Affine, AccessValue,
-                    ArrayRef<const SCEV *>(), ArrayRef<const SCEV *>(), IsPHI);
-  }
+  /// @brief Create a MemoryAccess that represents either a LoadInst or
+  /// StoreInst.
+  ///
+  /// @param MemAccInst  The LoadInst or StoreInst.
+  /// @param Type        The kind of access.
+  /// @param BaseAddress The accessed array's base address.
+  /// @param ElemBytes   Size of accessed array element.
+  /// @param IsAffine    Whether all subscripts are affine expressions.
+  /// @param Subscripts  Access subscripts per dimension.
+  /// @param Sizes       The array dimension's sizes.
+  /// @param AccessValue Value read or written.
+  void addExplicitAccess(Instruction *MemAccInst, MemoryAccess::AccessType Type,
+                         Value *BaseAddress, unsigned ElemBytes, bool IsAffine,
+                         ArrayRef<const SCEV *> Subscripts,
+                         ArrayRef<const SCEV *> Sizes, Value *AccessValue);
 
-  void addMemoryAccess(BasicBlock *BB, Instruction *Inst,
-                       MemoryAccess::AccessType Type, Value *BaseAddress,
-                       unsigned ElemBytes, bool Affine,
-                       ArrayRef<const SCEV *> Subscripts,
-                       ArrayRef<const SCEV *> Sizes, Value *AccessValue) {
-    addMemoryAccess(BB, Inst, Type, BaseAddress, ElemBytes, Affine, AccessValue,
-                    Subscripts, Sizes, false);
-  }
+  /// @brief Create a MemoryAccess for writing to .s2a memory.
+  ///
+  /// The access will be created at the @p Value's definition.
+  ///
+  /// @param Value The value to be written into the .s2a memory.
+  void addScalarWriteAccess(Instruction *Value);
+
+  /// @brief Create a MemoryAccess for reading from .s2a memory.
+  ///
+  /// @param Value The scalar expected to be loaded.
+  /// @param User  User of the scalar, where the access is added.
+  void addScalarReadAccess(Value *Value, Instruction *User);
+
+  /// @brief Create a MemoryAccess for reading from .s2a memory.
+  ///
+  /// This is for PHINodes using the scalar. It is used when leaving the
+  /// incoming block to write to the .phiops location.
+  ///
+  /// @param Value  The scalar expected to be loaded.
+  /// @param User   The PHI node referencing @p Value.
+  /// @param UserBB Incoming block for the incoming @p Value.
+  void addScalarReadAccess(Value *Value, PHINode *User, BasicBlock *UserBB);
+
+  /// @brief Create a MemoryAccess for writing to .phiops memory.
+  ///
+  /// @param PHI           PHINode under consideration.
+  /// @param IncomingBlock Some predecessor block.
+  /// @param IncomingValue @p PHI's value when coming from @p IncomingBlock.
+  /// @param IsExitBlock   When true, use the .s2a alloca instead. Used for
+  ///                      values escaping through a PHINode in the SCoP
+  ///                      region's exit block.
+  void addPHIWriteAccess(PHINode *PHI, BasicBlock *IncomingBlock,
+                         Value *IncomingValue, bool IsExitBlock);
+
+  /// @brief Create a MemoryAccess for reading from .phiops memory.
+  ///
+  /// @param PHI PHINode under consideration. READ access will be added here.
+  void addPHIReadAccess(PHINode *PHI);
 
 public:
   static char ID;
