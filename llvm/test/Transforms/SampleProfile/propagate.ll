@@ -73,8 +73,8 @@ for.cond:                                         ; preds = %for.inc16, %if.else
   %5 = load i64, i64* %N.addr, align 8, !dbg !15
   %cmp1 = icmp slt i64 %4, %5, !dbg !15
   br i1 %cmp1, label %for.body, label %for.end18, !dbg !15
-; CHECK: edge for.cond -> for.body probability is 10 / 10 = 100% [HOT edge]
-; CHECK: edge for.cond -> for.end18 probability is 0 / 10 = 0%
+; CHECK: edge for.cond -> for.body probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
+; CHECK: edge for.cond -> for.end18 probability is 0x00000000 / 0x80000000 = 0.00%
 
 for.body:                                         ; preds = %for.cond
   %6 = load i64, i64* %i, align 8, !dbg !18
@@ -82,8 +82,8 @@ for.body:                                         ; preds = %for.cond
   %div = sdiv i64 %7, 3, !dbg !18
   %cmp2 = icmp sgt i64 %6, %div, !dbg !18
   br i1 %cmp2, label %if.then3, label %if.end, !dbg !18
-; CHECK: edge for.body -> if.then3 probability is 1 / 5 = 20%
-; CHECK: edge for.body -> if.end probability is 4 / 5 = 80%
+; CHECK: edge for.body -> if.then3 probability is 0x1999999a / 0x80000000 = 20.00%
+; CHECK: edge for.body -> if.end probability is 0x66666666 / 0x80000000 = 80.00%
 
 if.then3:                                         ; preds = %for.body
   %8 = load i32, i32* %x.addr, align 4, !dbg !21
@@ -97,8 +97,8 @@ if.end:                                           ; preds = %if.then3, %for.body
   %div4 = sdiv i64 %10, 4, !dbg !22
   %cmp5 = icmp sgt i64 %9, %div4, !dbg !22
   br i1 %cmp5, label %if.then6, label %if.else7, !dbg !22
-; CHECK: edge if.end -> if.then6 probability is 3 / 6342 = 0.0473037%
-; CHECK: edge if.end -> if.else7 probability is 6339 / 6342 = 99.9527% [HOT edge]
+; CHECK: edge if.end -> if.then6 probability is 0x000f801f / 0x80000000 = 0.05%
+; CHECK: edge if.end -> if.else7 probability is 0x7ff07fe1 / 0x80000000 = 99.95% [HOT edge]
 
 if.then6:                                         ; preds = %if.end
   %11 = load i32, i32* %y.addr, align 4, !dbg !24
@@ -119,8 +119,8 @@ for.cond8:                                        ; preds = %for.inc, %if.else7
   %14 = load i64, i64* %i, align 8, !dbg !28
   %cmp10 = icmp slt i64 %conv9, %14, !dbg !28
   br i1 %cmp10, label %for.body11, label %for.end, !dbg !28
-; CHECK: edge for.cond8 -> for.body11 probability is 16191 / 16191 = 100% [HOT edge]
-; CHECK: edge for.cond8 -> for.end probability is 0 / 16191 = 0%
+; CHECK: edge for.cond8 -> for.body11 probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
+; CHECK: edge for.cond8 -> for.end probability is 0x00000000 / 0x80000000 = 0.00%
 
 for.body11:                                       ; preds = %for.cond8
   %15 = load i32, i32* %j, align 4, !dbg !31

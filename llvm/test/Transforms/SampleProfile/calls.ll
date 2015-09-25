@@ -52,8 +52,8 @@ while.cond:                                       ; preds = %if.end, %entry
   store i32 %inc, i32* %i, align 4, !dbg !14
   %cmp = icmp slt i32 %0, 400000000, !dbg !14
   br i1 %cmp, label %while.body, label %while.end, !dbg !14
-; CHECK: edge while.cond -> while.body probability is 5391 / 5391 = 100% [HOT edge]
-; CHECK: edge while.cond -> while.end probability is 0 / 5391 = 0%
+; CHECK: edge while.cond -> while.body probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
+; CHECK: edge while.cond -> while.end probability is 0x00000000 / 0x80000000 = 0.00%
 
 while.body:                                       ; preds = %while.cond
   %1 = load i32, i32* %i, align 4, !dbg !16
@@ -63,8 +63,8 @@ while.body:                                       ; preds = %while.cond
 ; both branches out of while.body had the same weight. In reality,
 ; the edge while.body->if.then is taken most of the time.
 ;
-; CHECK: edge while.body -> if.then probability is 5752 / 5752 = 100% [HOT edge]
-; CHECK: edge while.body -> if.else probability is 0 / 5752 = 0%
+; CHECK: edge while.body -> if.then probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
+; CHECK: edge while.body -> if.else probability is 0x00000000 / 0x80000000 = 0.00%
 
 
 if.then:                                          ; preds = %while.body

@@ -1190,10 +1190,11 @@ raw_ostream &BlockFrequencyInfoImpl<BT>::print(raw_ostream &OS) const {
   if (!F)
     return OS;
   OS << "block-frequency-info: " << F->getName() << "\n";
-  for (const BlockT &BB : *F)
-    OS << " - " << bfi_detail::getBlockName(&BB)
-       << ": float = " << getFloatingBlockFreq(&BB)
-       << ", int = " << getBlockFreq(&BB).getFrequency() << "\n";
+  for (const BlockT &BB : *F) {
+    OS << " - " << bfi_detail::getBlockName(&BB) << ": float = ";
+    getFloatingBlockFreq(&BB).print(OS, 5)
+        << ", int = " << getBlockFreq(&BB).getFrequency() << "\n";
+  }
 
   // Add an extra newline for readability.
   OS << "\n";

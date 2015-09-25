@@ -36,8 +36,8 @@ entry:
   tail call void @llvm.dbg.value(metadata i8** %argv, i64 0, metadata !14, metadata !DIExpression()), !dbg !27
   %cmp = icmp slt i32 %argc, 2, !dbg !28
   br i1 %cmp, label %return, label %if.end, !dbg !28
-; CHECK: edge entry -> return probability is 0 / 1 = 0%
-; CHECK: edge entry -> if.end probability is 1 / 1 = 100%
+; CHECK: edge entry -> return probability is 0x00000000 / 0x80000000 = 0.00%
+; CHECK: edge entry -> if.end probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 if.end:                                           ; preds = %entry
   %arrayidx = getelementptr inbounds i8*, i8** %argv, i64 1, !dbg !30
@@ -46,8 +46,8 @@ if.end:                                           ; preds = %entry
   tail call void @llvm.dbg.value(metadata i32 %call, i64 0, metadata !17, metadata !DIExpression()), !dbg !30
   %cmp1 = icmp sgt i32 %call, 100, !dbg !35
   br i1 %cmp1, label %for.body, label %if.end6, !dbg !35
-; CHECK: edge if.end -> for.body probability is 0 / 1 = 0%
-; CHECK: edge if.end -> if.end6 probability is 1 / 1 = 100%
+; CHECK: edge if.end -> for.body probability is 0x00000000 / 0x80000000 = 0.00%
+; CHECK: edge if.end -> if.end6 probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 for.body:                                         ; preds = %if.end, %for.body
   %u.016 = phi i32 [ %inc, %for.body ], [ 0, %if.end ]
@@ -65,14 +65,14 @@ for.body:                                         ; preds = %if.end, %for.body
   tail call void @llvm.dbg.value(metadata i32 %inc, i64 0, metadata !21, metadata !DIExpression()), !dbg !38
   %exitcond = icmp eq i32 %inc, %call, !dbg !38
   br i1 %exitcond, label %if.end6, label %for.body, !dbg !38
-; CHECK: edge for.body -> if.end6 probability is 0 / 10226 = 0%
-; CHECK: edge for.body -> for.body probability is 10226 / 10226 = 100% [HOT edge]
+; CHECK: edge for.body -> if.end6 probability is 0x00000000 / 0x80000000 = 0.00%
+; CHECK: edge for.body -> for.body probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 if.end6:                                          ; preds = %for.body, %if.end
   %result.0 = phi double [ 0.000000e+00, %if.end ], [ %sub, %for.body ]
   %call7 = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([15 x i8], [15 x i8]* @.str, i64 0, i64 0), double %result.0), !dbg !39
   br label %return, !dbg !40
-; CHECK: edge if.end6 -> return probability is 16 / 16 = 100% [HOT edge]
+; CHECK: edge if.end6 -> return probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 return:                                           ; preds = %entry, %if.end6
   %retval.0 = phi i32 [ 0, %if.end6 ], [ 1, %entry ]

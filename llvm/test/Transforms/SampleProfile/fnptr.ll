@@ -5,12 +5,12 @@
 ; RUN: opt < %s -sample-profile -sample-profile-file=%S/Inputs/fnptr.prof | opt -analyze -branch-prob | FileCheck %s
 ; RUN: opt < %s -sample-profile -sample-profile-file=%S/Inputs/fnptr.binprof | opt -analyze -branch-prob | FileCheck %s
 
-; CHECK:   edge for.body3 -> if.then probability is 534 / 2598 = 20.5543%
-; CHECK:   edge for.body3 -> if.else probability is 2064 / 2598 = 79.4457%
-; CHECK:   edge for.inc -> for.inc12 probability is 1052 / 2598 = 40.4927%
-; CHECK:   edge for.inc -> for.body3 probability is 1546 / 2598 = 59.5073%
-; CHECK:   edge for.inc12 -> for.end14 probability is 518 / 1052 = 49.2395%
-; CHECK:   edge for.inc12 -> for.cond1.preheader probability is 534 / 1052 = 50.7605%
+; CHECK:   edge for.body3 -> if.then probability is 0x1a4f3959 / 0x80000000 = 20.55%
+; CHECK:   edge for.body3 -> if.else probability is 0x65b0c6a7 / 0x80000000 = 79.45%
+; CHECK:   edge for.inc -> for.inc12 probability is 0x33d4a4c1 / 0x80000000 = 40.49%
+; CHECK:   edge for.inc -> for.body3 probability is 0x4c2b5b3f / 0x80000000 = 59.51%
+; CHECK:   edge for.inc12 -> for.end14 probability is 0x3f06d04e / 0x80000000 = 49.24%
+; CHECK:   edge for.inc12 -> for.cond1.preheader probability is 0x40f92fb2 / 0x80000000 = 50.76%
 
 ; Original C++ test case.
 ;

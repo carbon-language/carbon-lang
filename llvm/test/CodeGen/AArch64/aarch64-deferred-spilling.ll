@@ -260,7 +260,7 @@ if.then.72:                                       ; preds = %while.body.68.backe
   %verbosity = getelementptr inbounds %struct.DState, %struct.DState* %s, i64 0, i32 12
   %tmp18 = load i32, i32* %verbosity, align 4
   %cmp118 = icmp sgt i32 %tmp18, 1
-  br i1 %cmp118, label %if.then.120, label %sw.bb.123
+  br i1 %cmp118, label %if.then.120, label %sw.bb.123, !prof !0
 
 if.end.82:                                        ; preds = %while.body.68.backedge, %if.end.82.lr.ph
   %lsr.iv480 = phi i32 [ %tmp16, %if.end.82.lr.ph ], [ %lsr.iv.next481, %while.body.68.backedge ]
@@ -510,3 +510,5 @@ save_state_and_return:                            ; preds = %sw.default, %if.end
   store i32 %tmp74, i32* %save_zj20.pre-phi434, align 4
   ret i32 %retVal.0
 }
+
+!0 = !{!"branch_weights", i32 10, i32 1}

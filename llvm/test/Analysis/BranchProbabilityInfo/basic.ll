@@ -4,7 +4,7 @@ define i32 @test1(i32 %i, i32* %a) {
 ; CHECK: Printing analysis {{.*}} for function 'test1'
 entry:
   br label %body
-; CHECK: edge entry -> body probability is 16 / 16 = 100%
+; CHECK: edge entry -> body probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 body:
   %iv = phi i32 [ 0, %entry ], [ %next, %body ]
@@ -15,8 +15,8 @@ body:
   %next = add i32 %iv, 1
   %exitcond = icmp eq i32 %next, %i
   br i1 %exitcond, label %exit, label %body
-; CHECK: edge body -> exit probability is 4 / 128
-; CHECK: edge body -> body probability is 124 / 128
+; CHECK: edge body -> exit probability is 0x04000000 / 0x80000000 = 3.12%
+; CHECK: edge body -> body probability is 0x7c000000 / 0x80000000 = 96.88% [HOT edge]
 
 exit:
   ret i32 %sum
@@ -27,16 +27,16 @@ define i32 @test2(i32 %i, i32 %a, i32 %b) {
 entry:
   %cond = icmp ult i32 %i, 42
   br i1 %cond, label %then, label %else, !prof !0
-; CHECK: edge entry -> then probability is 64 / 68
-; CHECK: edge entry -> else probability is 4 / 68
+; CHECK: edge entry -> then probability is 0x78787878 / 0x80000000 = 94.12% [HOT edge]
+; CHECK: edge entry -> else probability is 0x07878788 / 0x80000000 = 5.88%
 
 then:
   br label %exit
-; CHECK: edge then -> exit probability is 16 / 16 = 100%
+; CHECK: edge then -> exit probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 else:
   br label %exit
-; CHECK: edge else -> exit probability is 16 / 16 = 100%
+; CHECK: edge else -> exit probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 exit:
   %result = phi i32 [ %a, %then ], [ %b, %else ]
@@ -52,31 +52,31 @@ entry:
                                  i32 2, label %case_c
                                  i32 3, label %case_d
                                  i32 4, label %case_e ], !prof !1
-; CHECK: edge entry -> case_a probability is 4 / 80
-; CHECK: edge entry -> case_b probability is 4 / 80
-; CHECK: edge entry -> case_c probability is 64 / 80
-; CHECK: edge entry -> case_d probability is 4 / 80
-; CHECK: edge entry -> case_e probability is 4 / 80
+; CHECK: edge entry -> case_a probability is 0x06666666 / 0x80000000 = 5.00%
+; CHECK: edge entry -> case_b probability is 0x06666666 / 0x80000000 = 5.00%
+; CHECK: edge entry -> case_c probability is 0x66666666 / 0x80000000 = 80.00%
+; CHECK: edge entry -> case_d probability is 0x06666666 / 0x80000000 = 5.00%
+; CHECK: edge entry -> case_e probability is 0x06666666 / 0x80000000 = 5.00%
 
 case_a:
   br label %exit
-; CHECK: edge case_a -> exit probability is 16 / 16 = 100%
+; CHECK: edge case_a -> exit probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 case_b:
   br label %exit
-; CHECK: edge case_b -> exit probability is 16 / 16 = 100%
+; CHECK: edge case_b -> exit probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 case_c:
   br label %exit
-; CHECK: edge case_c -> exit probability is 16 / 16 = 100%
+; CHECK: edge case_c -> exit probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 case_d:
   br label %exit
-; CHECK: edge case_d -> exit probability is 16 / 16 = 100%
+; CHECK: edge case_d -> exit probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 case_e:
   br label %exit
-; CHECK: edge case_e -> exit probability is 16 / 16 = 100%
+; CHECK: edge case_e -> exit probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 exit:
   %result = phi i32 [ %a, %case_a ],
@@ -99,9 +99,9 @@ entry:
     i64 2, label %sw.bb
     i64 5, label %sw.bb1
   ], !prof !2
-; CHECK: edge entry -> return probability is 7 / 85
-; CHECK: edge entry -> sw.bb probability is 14 / 85
-; CHECK: edge entry -> sw.bb1 probability is 64 / 85
+; CHECK: edge entry -> return probability is 0x0a8a8a8b / 0x80000000 = 8.24%
+; CHECK: edge entry -> sw.bb probability is 0x15151515 / 0x80000000 = 16.47%
+; CHECK: edge entry -> sw.bb1 probability is 0x60606060 / 0x80000000 = 75.29%
 
 sw.bb:
   br label %return
@@ -122,17 +122,17 @@ define i32 @test5(i32 %a, i32 %b, i1 %flag) {
 ; CHECK: Printing analysis {{.*}} for function 'test5'
 entry:
   br i1 %flag, label %then, label %else
-; CHECK: edge entry -> then probability is 4 / 68
-; CHECK: edge entry -> else probability is 64 / 68
+; CHECK: edge entry -> then probability is 0x07878788 / 0x80000000 = 5.88%
+; CHECK: edge entry -> else probability is 0x78787878 / 0x80000000 = 94.12% [HOT edge]
 
 then:
   call void @coldfunc()
   br label %exit
-; CHECK: edge then -> exit probability is 16 / 16 = 100%
+; CHECK: edge then -> exit probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 else:
   br label %exit
-; CHECK: edge else -> exit probability is 16 / 16 = 100%
+; CHECK: edge else -> exit probability is 0x80000000 / 0x80000000 = 100.00% [HOT edge]
 
 exit:
   %result = phi i32 [ %a, %then ], [ %b, %else ]
@@ -149,8 +149,8 @@ define i32 @test_cold_call_sites(i32* %a) {
 ; after that is fixed.
 
 ; CHECK: Printing analysis {{.*}} for function 'test_cold_call_sites'
-; CHECK: edge entry -> then probability is 4 / 68 = 5.88235%
-; CHECK: edge entry -> else probability is 64 / 68 = 94.1176% [HOT edge]
+; CHECK: edge entry -> then probability is 0x07878788 / 0x80000000 = 5.88%
+; CHECK: edge entry -> else probability is 0x78787878 / 0x80000000 = 94.12% [HOT edge]
 
 entry:
   %gep1 = getelementptr i32, i32* %a, i32 1
@@ -179,8 +179,8 @@ define i32 @zero1(i32 %i, i32 %a, i32 %b) {
 entry:
   %cond = icmp eq i32 %i, 0
   br i1 %cond, label %then, label %else
-; CHECK: edge entry -> then probability is 12 / 32
-; CHECK: edge entry -> else probability is 20 / 32
+; CHECK: edge entry -> then probability is 0x30000000 / 0x80000000 = 37.50%
+; CHECK: edge entry -> else probability is 0x50000000 / 0x80000000 = 62.50%
 
 then:
   br label %exit
@@ -198,8 +198,8 @@ define i32 @zero2(i32 %i, i32 %a, i32 %b) {
 entry:
   %cond = icmp ne i32 %i, -1
   br i1 %cond, label %then, label %else
-; CHECK: edge entry -> then probability is 20 / 32
-; CHECK: edge entry -> else probability is 12 / 32
+; CHECK: edge entry -> then probability is 0x50000000 / 0x80000000 = 62.50%
+; CHECK: edge entry -> else probability is 0x30000000 / 0x80000000 = 37.50%
 
 then:
   br label %exit
@@ -220,8 +220,8 @@ entry:
   %and = and i32 %i, 2
   %tobool = icmp eq i32 %and, 0
   br i1 %tobool, label %then, label %else
-; CHECK: edge entry -> then probability is 16 / 32
-; CHECK: edge entry -> else probability is 16 / 32
+; CHECK: edge entry -> then probability is 0x40000000 / 0x80000000 = 50.00%
+; CHECK: edge entry -> else probability is 0x40000000 / 0x80000000 = 50.00%
 
 then:
 ; AND'ing with other bitmask might be something else, so we still assume the
@@ -229,8 +229,8 @@ then:
   %and2 = and i32 %i, 5
   %tobool2 = icmp eq i32 %and2, 0
   br i1 %tobool2, label %else, label %exit
-; CHECK: edge then -> else probability is 12 / 32
-; CHECK: edge then -> exit probability is 20 / 32
+; CHECK: edge then -> else probability is 0x30000000 / 0x80000000 = 37.50%
+; CHECK: edge then -> exit probability is 0x50000000 / 0x80000000 = 62.50%
 
 else:
   br label %exit

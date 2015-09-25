@@ -93,7 +93,7 @@ for.cond4:                                        ; preds = %for.inc, %for.body3
   %cmp5 = icmp slt i32 %2, 100
   br i1 %cmp5, label %for.body6, label %for.end, !prof !3
 
-; CHECK: - for.body6: float = 500000.5, int = 4000003
+; CHECK: - for.body6: float = 500000.5, int = 4000004
 for.body6:                                        ; preds = %for.cond4
   call void @bar()
   br label %for.inc
@@ -143,7 +143,7 @@ for.cond16:                                       ; preds = %for.inc19, %for.bod
   %cmp17 = icmp slt i32 %8, 10000
   br i1 %cmp17, label %for.body18, label %for.end21, !prof !4
 
-; CHECK: - for.body18: float = 500000.5, int = 4000003
+; CHECK: - for.body18: float = 499999.9, int = 3999998
 for.body18:                                       ; preds = %for.cond16
   call void @bar()
   br label %for.inc19
@@ -175,7 +175,7 @@ for.cond26:                                       ; preds = %for.inc29, %for.end
   %cmp27 = icmp slt i32 %12, 1000000
   br i1 %cmp27, label %for.body28, label %for.end31, !prof !5
 
-; CHECK: - for.body28: float = 500000.5, int = 4000003
+; CHECK: - for.body28: float = 499995.2, int = 3999961
 for.body28:                                       ; preds = %for.cond26
   call void @bar()
   br label %for.inc29
