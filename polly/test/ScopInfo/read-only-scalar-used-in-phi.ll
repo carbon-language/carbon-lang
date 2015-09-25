@@ -52,5 +52,6 @@ bb1:
   br i1 %exitcond, label %bb1, label %bb7
 
 bb7:
-  ret float %phisum
+  %phisummerge = phi float [%phisum, %bb1], [0.0, %next]
+  ret float %phisummerge
 }
