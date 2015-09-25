@@ -1540,6 +1540,7 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
 
   if (Operator *I = dyn_cast<Operator>(V))
     computeKnownBitsFromOperator(I, KnownZero, KnownOne, DL, Depth, Q);
+
   // computeKnownBitsFromAssume and computeKnownBitsFromDominatingCondition
   // strictly refines KnownZero and KnownOne. Therefore, we run them after
   // computeKnownBitsFromOperator.
