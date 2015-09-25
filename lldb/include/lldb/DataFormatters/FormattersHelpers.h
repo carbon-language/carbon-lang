@@ -106,6 +106,9 @@ namespace lldb_private {
         size_t
         ExtractIndexFromString (const char* item_name);
         
+        lldb::addr_t
+        GetArrayAddressOrPointerValue (ValueObject& valobj);
+
         time_t
         GetOSXEpoch ();
     } // namespace formatters

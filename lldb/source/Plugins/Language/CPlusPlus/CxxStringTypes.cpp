@@ -24,6 +24,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Utility/ProcessStructReader.h"
+#include "lldb/DataFormatters/FormattersHelpers.h"
 
 #include <algorithm>
 
@@ -44,9 +45,8 @@ lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stre
     if (!process_sp)
         return false;
     
-    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
-    
-    if (!valobj_addr)
+    lldb::addr_t valobj_addr = GetArrayAddressOrPointerValue(valobj);
+    if (valobj_addr == 0 || valobj_addr == LLDB_INVALID_ADDRESS)
         return false;
     
     StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
@@ -71,9 +71,8 @@ lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stre
     if (!process_sp)
         return false;
     
-    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
-    
-    if (!valobj_addr)
+    lldb::addr_t valobj_addr = GetArrayAddressOrPointerValue(valobj);
+    if (valobj_addr == 0 || valobj_addr == LLDB_INVALID_ADDRESS)
         return false;
     
     StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
@@ -98,14 +97,8 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     if (!process_sp)
         return false;
     
-    lldb::addr_t data_addr = 0;
-    
-    if (valobj.IsPointerType())
-        data_addr = valobj.GetValueAsUnsigned(0);
-    else if (valobj.IsArrayType())
-        data_addr = valobj.GetAddressOf();
-    
-    if (data_addr == 0 || data_addr == LLDB_INVALID_ADDRESS)
+    lldb::addr_t valobj_addr = GetArrayAddressOrPointerValue(valobj);
+    if (valobj_addr == 0 || valobj_addr == LLDB_INVALID_ADDRESS)
         return false;
     
     // Get a wchar_t basic type from the current type system
@@ -117,7 +110,7 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     const uint32_t wchar_size = wchar_compiler_type.GetBitSize(nullptr); // Safe to pass NULL for exe_scope here
     
     StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
-    options.SetLocation(data_addr);
+    options.SetLocation(valobj_addr);
     options.SetProcessSP(process_sp);
     options.SetStream(&stream);
     options.SetPrefixToken('L');

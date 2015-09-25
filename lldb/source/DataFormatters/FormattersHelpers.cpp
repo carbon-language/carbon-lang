@@ -306,3 +306,16 @@ lldb_private::formatters::ExtractIndexFromString (const char* item_name)
         return UINT32_MAX;
     return idx;
 }
+
+lldb::addr_t
+lldb_private::formatters::GetArrayAddressOrPointerValue (ValueObject& valobj)
+{
+    lldb::addr_t data_addr = LLDB_INVALID_ADDRESS;
+
+    if (valobj.IsPointerType())
+        data_addr = valobj.GetValueAsUnsigned(0);
+    else if (valobj.IsArrayType())
+        data_addr = valobj.GetAddressOf();
+
+    return data_addr;
+}

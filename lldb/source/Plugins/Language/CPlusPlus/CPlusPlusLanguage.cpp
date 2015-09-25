@@ -628,8 +628,20 @@ LoadSystemFormatters(lldb::TypeCategoryImplSP cpp_category_sp)
 #ifndef LLDB_DISABLE_PYTHON
     // FIXME because of a bug in the FormattersContainer we need to add a summary for both X* and const X* (<rdar://problem/12717717>)
     AddCXXSummary(cpp_category_sp, lldb_private::formatters::Char16StringSummaryProvider, "char16_t * summary provider", ConstString("char16_t *"), string_flags);
+    AddCXXSummary(cpp_category_sp,
+                  lldb_private::formatters::Char16StringSummaryProvider,
+                  "char16_t [] summary provider",
+                  ConstString("char16_t \\[[0-9]+\\]"),
+                  string_array_flags,
+                  true);
     
     AddCXXSummary(cpp_category_sp, lldb_private::formatters::Char32StringSummaryProvider, "char32_t * summary provider", ConstString("char32_t *"), string_flags);
+    AddCXXSummary(cpp_category_sp,
+                  lldb_private::formatters::Char32StringSummaryProvider,
+                  "char32_t [] summary provider",
+                  ConstString("char32_t \\[[0-9]+\\]"),
+                  string_array_flags,
+                  true);
     
     AddCXXSummary(cpp_category_sp, lldb_private::formatters::WCharStringSummaryProvider, "wchar_t * summary provider", ConstString("wchar_t *"), string_flags);
     AddCXXSummary(cpp_category_sp, lldb_private::formatters::WCharStringSummaryProvider, "wchar_t * summary provider", ConstString("wchar_t \\[[0-9]+\\]"), string_array_flags, true);
