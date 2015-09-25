@@ -18,28 +18,8 @@ namespace misc {
 
 /// Finds temporaries that look like RAII objects.
 ///
-/// The canonical example for this is a scoped lock.
-///
-/// \code
-///   {
-///     scoped_lock(&global_mutex);
-///     critical_section();
-///   }
-/// \endcode
-///
-/// The destructor of the scoped_lock is called before the `critical_section` is
-/// entered, leaving it unprotected.
-///
-/// We apply a number of heuristics to reduce the false positive count of this
-/// check:
-///
-///   * Ignore code expanded from macros. Testing frameworks make heavy use of
-///     this.
-///   * Ignore types with no user-declared constructor. Those are very unlikely
-///     to be RAII objects.
-///   * Ignore objects at the end of a compound statement (doesn't change
-///     behavior).
-///   * Ignore objects returned from a call.
+/// For the user-facing documentation see:
+/// http://clang.llvm.org/extra/clang-tidy/checks/misc-unused-raii.html
 class UnusedRAIICheck : public ClangTidyCheck {
 public:
   UnusedRAIICheck(StringRef Name, ClangTidyContext *Context)
