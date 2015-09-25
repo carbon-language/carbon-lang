@@ -1995,33 +1995,42 @@ void SIInstrInfo::splitSMRD(MachineInstr *MI,
   }
 
   unsigned SubLo, SubHi;
+  const TargetRegisterClass *NewDstRC;
   switch (HalfSize) {
     case 4:
       SubLo = AMDGPU::sub0;
       SubHi = AMDGPU::sub1;
+      NewDstRC = &AMDGPU::VReg_64RegClass;
       break;
     case 8:
       SubLo = AMDGPU::sub0_sub1;
       SubHi = AMDGPU::sub2_sub3;
+      NewDstRC = &AMDGPU::VReg_128RegClass;
       break;
     case 16:
       SubLo = AMDGPU::sub0_sub1_sub2_sub3;
       SubHi = AMDGPU::sub4_sub5_sub6_sub7;
+      NewDstRC = &AMDGPU::VReg_256RegClass;
       break;
     case 32:
       SubLo = AMDGPU::sub0_sub1_sub2_sub3_sub4_sub5_sub6_sub7;
       SubHi = AMDGPU::sub8_sub9_sub10_sub11_sub12_sub13_sub14_sub15;
+      NewDstRC = &AMDGPU::VReg_512RegClass;
       break;
     default:
       llvm_unreachable("Unhandled HalfSize");
   }
 
-  BuildMI(*MBB, MI, DL, get(AMDGPU::REG_SEQUENCE))
-          .addOperand(MI->getOperand(0))
-          .addReg(RegLo)
-          .addImm(SubLo)
-          .addReg(RegHi)
-          .addImm(SubHi);
+  unsigned OldDst = MI->getOperand(0).getReg();
+  unsigned NewDst = MRI.createVirtualRegister(NewDstRC);
+
+  MRI.replaceRegWith(OldDst, NewDst);
+
+  BuildMI(*MBB, MI, DL, get(AMDGPU::REG_SEQUENCE), NewDst)
+    .addReg(RegLo)
+    .addImm(SubLo)
+    .addReg(RegHi)
+    .addImm(SubHi);
 }
 
 void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) const {
