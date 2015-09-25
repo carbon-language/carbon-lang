@@ -212,19 +212,6 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
 };
 }
 
-template <class ELFT>
-static bool cmpAlign(const DefinedCommon<ELFT> *A,
-                     const DefinedCommon<ELFT> *B) {
-  return A->MaxAlignment > B->MaxAlignment;
-}
-
-template <bool Is64Bits>
-static bool compSec(OutputSectionBase<Is64Bits> *A,
-                    OutputSectionBase<Is64Bits> *B) {
-  // Place SHF_ALLOC sections first.
-  return (A->getFlags() & SHF_ALLOC) && !(B->getFlags() & SHF_ALLOC);
-}
-
 // The reason we have to do this early scan is as follows
 // * To mmap the output file, we need to know the size
 // * For that, we need to know how many dynamic relocs we will have.
@@ -361,7 +348,12 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   }
 
   // Sort the common symbols by alignment as an heuristic to pack them better.
-  std::stable_sort(CommonSymbols.begin(), CommonSymbols.end(), cmpAlign<ELFT>);
+  std::stable_sort(
+      CommonSymbols.begin(), CommonSymbols.end(),
+      [](const DefinedCommon<ELFT> *A, const DefinedCommon<ELFT> *B) {
+        return A->MaxAlignment > B->MaxAlignment;
+      });
+
   uintX_t Off = BssSec.getSize();
   for (DefinedCommon<ELFT> *C : CommonSymbols) {
     const Elf_Sym &Sym = C->Sym;
@@ -391,8 +383,14 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   if (!PltSec.empty())
     OutputSections.push_back(&PltSec);
 
-  std::stable_sort(OutputSections.begin(), OutputSections.end(),
-                   compSec<ELFT::Is64Bits>);
+  std::stable_sort(
+      OutputSections.begin(), OutputSections.end(),
+      [](OutputSectionBase<ELFT::Is64Bits> *A,
+         OutputSectionBase<ELFT::Is64Bits> *B) {
+        // Place SHF_ALLOC sections first.
+        return (A->getFlags() & SHF_ALLOC) && !(B->getFlags() & SHF_ALLOC);
+      });
+
   for (unsigned I = 0, N = OutputSections.size(); I < N; ++I)
     OutputSections[I]->setSectionIndex(I + 1);
 }
