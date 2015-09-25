@@ -338,8 +338,10 @@ public:
 
   /// \brief Returns the operand named \p Op.  If \p MI does not have an
   /// operand named \c Op, this function returns nullptr.
+  LLVM_READONLY
   MachineOperand *getNamedOperand(MachineInstr &MI, unsigned OperandName) const;
 
+  LLVM_READONLY
   const MachineOperand *getNamedOperand(const MachineInstr &MI,
                                         unsigned OpName) const {
     return getNamedOperand(const_cast<MachineInstr &>(MI), OpName);

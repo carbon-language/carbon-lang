@@ -196,6 +196,7 @@ public:
 };
 
 namespace AMDGPU {
+  LLVM_READONLY
   int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIndex);
 }  // End namespace AMDGPU
 
