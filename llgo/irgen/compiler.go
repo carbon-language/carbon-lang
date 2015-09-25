@@ -20,7 +20,6 @@ import (
 	"log"
 	"sort"
 	"strconv"
-	"strings"
 
 	llgobuild "llvm.org/llgo/build"
 	"llvm.org/llgo/debug"
@@ -110,15 +109,10 @@ type CompilerOptions struct {
 type Compiler struct {
 	opts       CompilerOptions
 	dataLayout string
-	pnacl      bool
 }
 
 func NewCompiler(opts CompilerOptions) (*Compiler, error) {
 	compiler := &Compiler{opts: opts}
-	if strings.ToLower(compiler.opts.TargetTriple) == "pnacl" {
-		compiler.opts.TargetTriple = PNaClTriple
-		compiler.pnacl = true
-	}
 	dataLayout, err := llvmDataLayout(compiler.opts.TargetTriple)
 	if err != nil {
 		return nil, err
@@ -133,7 +127,6 @@ func (c *Compiler) Compile(fset *token.FileSet, astFiles []*ast.File, importpath
 		CompilerOptions: c.opts,
 		dataLayout:      c.dataLayout,
 		target:          target,
-		pnacl:           c.pnacl,
 		llvmtypes:       NewLLVMTypeMap(llvm.GlobalContext(), target),
 	}
 	return compiler.compile(fset, astFiles, importpath)
@@ -150,12 +143,6 @@ type compiler struct {
 	runtime   *runtimeInterface
 	llvmtypes *llvmTypeMap
 	types     *TypeMap
-
-	// pnacl is set to true if the target triple was originally
-	// specified as "pnacl". This is necessary, as the TargetTriple
-	// field will have been updated to the true triple used to
-	// compile PNaCl modules.
-	pnacl bool
 
 	debug *debug.DIBuilder
 }
