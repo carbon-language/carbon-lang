@@ -295,18 +295,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   OutputSections.push_back(&BssSec);
   Map[{BssSec.getName(), BssSec.getType(), BssSec.getFlags()}] = &BssSec;
 
-  auto getSection = [&](StringRef Name, uint32_t sh_type,
-                        uintX_t sh_flags) -> OutputSection<ELFT> * {
-    SectionKey<ELFT::Is64Bits> Key{Name, sh_type, sh_flags};
-    OutputSection<ELFT> *&Sec = Map[Key];
-    if (!Sec) {
-      Sec = new (CAlloc.Allocate()) OutputSection<ELFT>(
-          PltSec, GotSec, BssSec, Key.Name, Key.sh_type, Key.sh_flags);
-      OutputSections.push_back(Sec);
-    }
-    return Sec;
-  };
-
   const SymbolTable &Symtab = SymTabSec.getSymTable();
   for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.getObjectFiles()) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
@@ -322,8 +310,14 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       if (!C)
         continue;
       const Elf_Shdr *H = C->getSectionHdr();
-      OutputSection<ELFT> *Sec =
-          getSection(C->getSectionName(), H->sh_type, H->sh_flags);
+      SectionKey<ELFT::Is64Bits> Key{C->getSectionName(), H->sh_type,
+                                     H->sh_flags};
+      OutputSection<ELFT> *&Sec = Map[Key];
+      if (!Sec) {
+        Sec = new (CAlloc.Allocate()) OutputSection<ELFT>(
+            PltSec, GotSec, BssSec, Key.Name, Key.sh_type, Key.sh_flags);
+        OutputSections.push_back(Sec);
+      }
       Sec->addSection(C);
       scanRelocs(*C);
     }
