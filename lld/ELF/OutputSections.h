@@ -15,6 +15,8 @@
 #include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Object/ELF.h"
 
+#include "Config.h"
+
 #include <type_traits>
 
 namespace lld {
@@ -40,6 +42,14 @@ getLocalSymVA(const typename llvm::object::ELFFile<ELFT>::Elf_Sym *Sym,
 
 bool includeInSymtab(const SymbolBody &B);
 bool includeInDynamicSymtab(const SymbolBody &B);
+
+static bool shouldKeepInSymtab(StringRef SymName) {
+  if (Config->DiscardNone)
+    return true;
+
+  // ELF defines dynamic locals as symbols which name starts with ".L".
+  return !(Config->DiscardLocals && SymName.startswith(".L"));
+}
 
 // This represents a section in an output file.
 // Different sub classes represent different types of sections. Some contain
@@ -185,8 +195,6 @@ public:
     if (isLocal)
       ++NumLocals;
   }
-
-  bool shouldKeepInSymtab(StringRef Name);
 
   StringTableSection<ELFT::Is64Bits> &getStrTabSec() const { return StrTabSec; }
   unsigned getNumSymbols() const { return NumVisible + 1; }

@@ -272,15 +272,6 @@ bool lld::elf2::includeInSymtab(const SymbolBody &B) {
   return true;
 }
 
-template <class ELFT>
-bool SymbolTableSection<ELFT>::shouldKeepInSymtab(StringRef SymName) {
-  if (Config->DiscardNone)
-    return true;
-
-  // ELF defines dynamic locals as symbols which name starts with ".L".
-  return !(Config->DiscardLocals && SymName.startswith(".L"));
-}
-
 bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
   if (Config->ExportDynamic || Config->Shared)
     return true;
