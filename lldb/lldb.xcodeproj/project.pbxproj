@@ -1880,7 +1880,7 @@
 		26BC7D8410F1B77400F91463 /* ValueObjectList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectList.h; path = include/lldb/Core/ValueObjectList.h; sourceTree = "<group>"; };
 		26BC7D8510F1B77400F91463 /* ValueObjectVariable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectVariable.h; path = include/lldb/Core/ValueObjectVariable.h; sourceTree = "<group>"; };
 		26BC7D8610F1B77400F91463 /* VMRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VMRange.h; path = include/lldb/Core/VMRange.h; sourceTree = "<group>"; };
-		26BC7DC010F1B79500F91463 /* ClangExpressionHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpressionHelper.h; path = include/lldb/Expression/ClangExpressionHelper.h; sourceTree = "<group>"; };
+		26BC7DC010F1B79500F91463 /* ClangExpressionHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpressionHelper.h; path = ExpressionParser/Clang/ClangExpressionHelper.h; sourceTree = "<group>"; };
 		26BC7DC310F1B79500F91463 /* DWARFExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DWARFExpression.h; path = include/lldb/Expression/DWARFExpression.h; sourceTree = "<group>"; };
 		26BC7DD210F1B7D500F91463 /* Condition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Condition.h; path = include/lldb/Host/Condition.h; sourceTree = "<group>"; };
 		26BC7DD310F1B7D500F91463 /* Endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Endian.h; path = include/lldb/Host/Endian.h; sourceTree = "<group>"; };
@@ -4397,7 +4397,6 @@
 				4C00832C1B9A58A700D5CF24 /* Expression.h */,
 				4C88BC291BA3722B00AA0964 /* Expression.cpp */,
 				4C29E77D1BA2403F00DFF855 /* ExpressionTypeSystemHelper.h */,
-				26BC7DC010F1B79500F91463 /* ClangExpressionHelper.h */,
 				4C00832D1B9A58A700D5CF24 /* FunctionCaller.h */,
 				4C0083321B9A5DE200D5CF24 /* FunctionCaller.cpp */,
 				4C00832E1B9A58A700D5CF24 /* UserExpression.h */,
@@ -5088,6 +5087,7 @@
 			children = (
 				4C98D3E0118FB98F00E575D0 /* ClangFunctionCaller.h */,
 				4C98D3DA118FB96F00E575D0 /* ClangFunctionCaller.cpp */,
+				26BC7DC010F1B79500F91463 /* ClangExpressionHelper.h */,
 				49445E341225AB6A00C11A81 /* ClangUserExpression.h */,
 				26BC7ED510F1B86700F91463 /* ClangUserExpression.cpp */,
 				497C86C1122823F300B54702 /* ClangUtilityFunction.h */,

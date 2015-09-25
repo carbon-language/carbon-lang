@@ -18,11 +18,11 @@
 
 // Other libraries and framework includes
 // Project includes
+#include "ClangExpressionHelper.h"
 
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
-#include "lldb/Expression/ClangExpressionHelper.h"
 #include "lldb/Expression/UtilityFunction.h"
 
 namespace lldb_private 
