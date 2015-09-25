@@ -175,8 +175,8 @@ macro(darwin_add_builtin_library name suffix)
     add_dependencies(${LIB_PARENT_TARGET} ${libname})
   endif()
 
-  list(APPEND ${os}_${suffix}_libs ${libname})
-  list(APPEND ${os}_${suffix}_lipo_flags -arch ${arch} $<TARGET_FILE:${libname}>)
+  list(APPEND ${LIB_OS}_${suffix}_libs ${libname})
+  list(APPEND ${LIB_OS}_${suffix}_lipo_flags -arch ${arch} $<TARGET_FILE:${libname}>)
 endmacro()
 
 function(darwin_lipo_libs name)
