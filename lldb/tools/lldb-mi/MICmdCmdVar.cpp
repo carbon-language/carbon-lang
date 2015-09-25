@@ -179,7 +179,7 @@ CMICmdCmdVarCreate::Execute()
 
     if (rStrExpression[0] == '$')
     {
-        const CMIUtilString rStrRegister(rStrExpression.substr(1).c_str());
+        const CMIUtilString rStrRegister(rStrExpression.substr(1));
         value = frame.FindRegister(rStrRegister.c_str());
     }
     else

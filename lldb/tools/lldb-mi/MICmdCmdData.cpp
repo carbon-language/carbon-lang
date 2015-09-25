@@ -1613,7 +1613,7 @@ CMICmdCmdDataInfoLine::Execute()
         // Parse argument:
         // *0x12345
         //  ^^^^^^^ -- address
-        const CMIUtilString strAddress(strLocation.c_str() + 1);
+        const CMIUtilString strAddress(strLocation.substr(1));
         strCmdOptionsLocation = CMIUtilString::Format("--address %s", strAddress.c_str());
     }
     else
@@ -1629,8 +1629,8 @@ CMICmdCmdDataInfoLine::Execute()
         // hello.cpp:5
         // ^^^^^^^^^ -- file
         //           ^ -- line
-        const CMIUtilString strFile(strLocation.substr(0, nLineStartPos).c_str());
-        const CMIUtilString strLine(strLocation.substr(nLineStartPos + 1).c_str());
+        const CMIUtilString strFile(strLocation.substr(0, nLineStartPos));
+        const CMIUtilString strLine(strLocation.substr(nLineStartPos + 1));
         strCmdOptionsLocation = CMIUtilString::Format("--file \"%s\" --line %s", strFile.AddSlashes().c_str(), strLine.c_str());
     }
     const CMIUtilString strCmd(CMIUtilString::Format("target modules lookup -v %s", strCmdOptionsLocation.c_str()));

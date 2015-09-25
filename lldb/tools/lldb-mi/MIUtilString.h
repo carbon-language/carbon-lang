@@ -43,8 +43,7 @@ class CMIUtilString : public std::string
   public:
     /* ctor */ CMIUtilString();
     /* ctor */ CMIUtilString(const char *vpData);
-    /* ctor */ CMIUtilString(const char *const *vpData);
-    /* ctor */ CMIUtilString(const char *vpData, size_t nLen);
+    /* ctor */ CMIUtilString(const std::string& vrStr);
     //
     bool ExtractNumber(MIint64 &vwrNumber) const;
     CMIUtilString FindAndReplace(const CMIUtilString &vFind, const CMIUtilString &vReplaceWith) const;

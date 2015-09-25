@@ -893,7 +893,7 @@ CMIDriver::WrapCLICommandIntoMICommand(const CMIUtilString &vTextLine) const
    const std::string vToken(vTextLine.begin(), vTextLine.begin() + nCommandOffset);
    // 001target create "/path/to/file"
    //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ -- CLI command
-   const CMIUtilString vCliCommand(std::string(vTextLine, nCommandOffset).c_str());
+   const CMIUtilString vCliCommand(std::string(vTextLine, nCommandOffset));
 
    // 5. Escape special characters and embed the command in a string
    // Result: it looks like -- target create \"/path/to/file\".

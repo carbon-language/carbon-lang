@@ -121,7 +121,7 @@ CMICmdArgValThreadGrp::IsArgThreadGrp(const CMIUtilString &vrTxt) const
     if (nPos != 0)
         return false;
 
-    const CMIUtilString strNum = vrTxt.substr(1).c_str();
+    const CMIUtilString strNum = vrTxt.substr(1);
     if (!strNum.IsNumber())
         return false;
 
@@ -139,7 +139,7 @@ CMICmdArgValThreadGrp::IsArgThreadGrp(const CMIUtilString &vrTxt) const
 bool
 CMICmdArgValThreadGrp::ExtractNumber(const CMIUtilString &vrTxt)
 {
-    const CMIUtilString strNum = vrTxt.substr(1).c_str();
+    const CMIUtilString strNum = vrTxt.substr(1);
     MIint64 nNumber = 0;
     bool bOk = strNum.ExtractNumber(nNumber);
     if (bOk)

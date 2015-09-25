@@ -130,7 +130,7 @@ CMICmdArgContext::RemoveArg(const CMIUtilString &vArg)
     }
 
     const size_t nPosEnd = nLen + nExtraSpace;
-    m_strCmdArgsAndOptions = m_strCmdArgsAndOptions.replace(nPos, nPosEnd, "").c_str();
+    m_strCmdArgsAndOptions = m_strCmdArgsAndOptions.replace(nPos, nPosEnd, "");
     m_strCmdArgsAndOptions = m_strCmdArgsAndOptions.Trim();
 
     return MIstatus::success;

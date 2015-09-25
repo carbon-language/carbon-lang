@@ -1572,7 +1572,7 @@ CMICmnLLDBDebuggerHandleEvents::GetProcessStdout()
             if (nNewLine == std::string::npos)
                 break;
 
-            const CMIUtilString line(text.substr(0, nNewLine + 1).c_str());
+            const CMIUtilString line(text.substr(0, nNewLine + 1));
             text.erase(0, nNewLine + 1);
             const bool bEscapeQuotes(true);
             CMICmnMIValueConst miValueConst(line.Escape(bEscapeQuotes));
@@ -1625,7 +1625,7 @@ CMICmnLLDBDebuggerHandleEvents::GetProcessStderr()
             if (nNewLine == std::string::npos)
                 break;
 
-            const CMIUtilString line(text.substr(0, nNewLine + 1).c_str());
+            const CMIUtilString line(text.substr(0, nNewLine + 1));
             const bool bEscapeQuotes(true);
             CMICmnMIValueConst miValueConst(line.Escape(bEscapeQuotes));
             CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_TargetStreamOutput, miValueConst);

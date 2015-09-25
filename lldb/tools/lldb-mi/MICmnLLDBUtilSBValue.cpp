@@ -505,7 +505,7 @@ CMICmnLLDBUtilSBValue::ReadCStringFromHostMemory(lldb::SBValue &vrValue, const M
         addr += sizeof(ch);
     }
 
-    return result.c_str();
+    return result;
 }
 
 //++ ------------------------------------------------------------------------------------

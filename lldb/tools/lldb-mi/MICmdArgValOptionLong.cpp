@@ -261,7 +261,7 @@ CMICmdArgValOptionLong::IsArgLongOption(const CMIUtilString &vrTxt) const
     if (vrTxt.length() < 3)
         return false;
 
-    const CMIUtilString strArg = vrTxt.substr(2).c_str();
+    const CMIUtilString strArg = vrTxt.substr(2);
     if (strArg.IsNumber())
         return false;
 
@@ -293,7 +293,7 @@ CMICmdArgValOptionLong::IsArgOptionCorrect(const CMIUtilString &vrTxt) const
 bool
 CMICmdArgValOptionLong::ArgNameMatch(const CMIUtilString &vrTxt) const
 {
-    const CMIUtilString strArg = vrTxt.substr(2).c_str();
+    const CMIUtilString strArg = vrTxt.substr(2);
     return (strArg == GetName());
 }
 

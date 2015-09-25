@@ -585,7 +585,7 @@ CMICmnLLDBDebugger::ClientGetMaskForAllClients(const CMIUtilString &vBroadcaster
     while (it != m_mapIdToEventMask.end())
     {
         const CMIUtilString &rId((*it).first);
-        if (rId.find(vBroadcasterClass.c_str()) != std::string::npos)
+        if (rId.find(vBroadcasterClass) != std::string::npos)
         {
             const MIuint clientsMask = (*it).second;
             mask |= clientsMask;
@@ -678,9 +678,7 @@ CMICmnLLDBDebugger::ClientGetTheirMask(const CMIUtilString &vClientName, const C
         return MIstatus::failure;
     }
 
-    CMIUtilString strId(vBroadcasterClass.c_str());
-    strId += vClientName;
-
+    const CMIUtilString strId(vBroadcasterClass + vClientName);
     const MapIdToEventMask_t::const_iterator it = m_mapIdToEventMask.find(strId);
     if (it != m_mapIdToEventMask.end())
     {
