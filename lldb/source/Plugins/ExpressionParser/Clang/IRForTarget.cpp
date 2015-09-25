@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Expression/IRForTarget.h"
+#include "IRForTarget.h"
+
+#include "ClangExpressionDeclMap.h"
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/Constants.h"
@@ -29,7 +31,6 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
-#include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Expression/IRInterpreter.h"
 #include "lldb/Host/Endian.h"

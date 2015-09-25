@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ASTStructExtractor.h"
+
 #include "stdlib.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
@@ -20,7 +22,6 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Expression/ASTStructExtractor.h"
 
 using namespace llvm;
 using namespace clang;

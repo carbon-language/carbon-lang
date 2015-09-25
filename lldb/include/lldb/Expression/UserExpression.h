@@ -26,7 +26,6 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Expression/Expression.h"
-#include "lldb/Expression/IRForTarget.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Target/ExecutionContext.h"

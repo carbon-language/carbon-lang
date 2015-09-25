@@ -15,7 +15,8 @@
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Expression/ExpressionParser.h"
-#include "lldb/Expression/IRForTarget.h"
+
+#include "IRForTarget.h"
 
 #include <string>
 #include <vector>

@@ -10,8 +10,8 @@
 #ifndef liblldb_ClangPersistentVariables_h_
 #define liblldb_ClangPersistentVariables_h_
 
-#include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
-#include "lldb/Expression/ClangModulesDeclVendor.h"
+#include "ClangExpressionVariable.h"
+#include "ClangModulesDeclVendor.h"
 
 #include "llvm/ADT/DenseMap.h"
 

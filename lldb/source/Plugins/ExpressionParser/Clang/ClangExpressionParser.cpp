@@ -7,7 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Expression/ClangExpressionParser.h"
+#include "ClangExpressionParser.h"
+
+#include "ClangASTSource.h"
+#include "ClangExpressionHelper.h"
+#include "ClangExpressionDeclMap.h"
+#include "ClangModulesDeclVendor.h"
+#include "ClangPersistentVariables.h"
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBufferHeap.h"
@@ -18,11 +24,6 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
-#include "lldb/Expression/ClangASTSource.h"
-#include "lldb/Expression/ClangExpressionHelper.h"
-#include "lldb/Expression/ClangExpressionDeclMap.h"
-#include "lldb/Expression/ClangModulesDeclVendor.h"
-#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Expression/IRInterpreter.h"

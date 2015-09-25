@@ -86,7 +86,7 @@ public:
     
     uint32_t AddPersistentVariable (lldb::ExpressionVariableSP &persistent_variable_sp, Error &err);
     uint32_t AddVariable (lldb::VariableSP &variable_sp, Error &err);
-    uint32_t AddResultVariable (const TypeFromUser &type, bool is_lvalue, bool keep_in_memory, Error &err);
+    uint32_t AddResultVariable (const CompilerType &type, bool is_lvalue, bool keep_in_memory, Error &err);
     uint32_t AddSymbol (const Symbol &symbol_sp, Error &err);
     uint32_t AddRegister (const RegisterInfo &register_info, Error &err);
     

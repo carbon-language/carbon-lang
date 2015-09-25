@@ -19,15 +19,18 @@
 // Other libraries and framework includes
 // Project includes
 
+#include "ASTStructExtractor.h"
+#include "ASTResultSynthesizer.h"
+#include "ClangExpressionDeclMap.h"
+#include "ClangExpressionHelper.h"
+#include "ClangExpressionVariable.h"
+#include "IRForTarget.h"
+
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/UserExpression.h"
-#include "lldb/Expression/ClangExpressionHelper.h"
-#include "lldb/Expression/ASTStructExtractor.h"
-#include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
-#include "lldb/Expression/IRForTarget.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Target/ExecutionContext.h"

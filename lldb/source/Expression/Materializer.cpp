@@ -12,7 +12,7 @@
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
-#include "lldb/Expression/ClangPersistentVariables.h"
+#include "Plugins/ExpressionParser/Clang/ClangPersistentVariables.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Symbol.h"
@@ -1016,7 +1016,7 @@ private:
 };
 
 uint32_t
-Materializer::AddResultVariable (const TypeFromUser &type, bool is_program_reference, bool keep_in_memory, Error &err)
+Materializer::AddResultVariable (const CompilerType &type, bool is_program_reference, bool keep_in_memory, Error &err)
 {
     EntityVector::iterator iter = m_entities.insert(m_entities.end(), EntityUP());
     iter->reset (new EntityResultVariable (type, is_program_reference, keep_in_memory));

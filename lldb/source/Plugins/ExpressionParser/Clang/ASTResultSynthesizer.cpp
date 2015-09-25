@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ASTResultSynthesizer.h"
+
+#include "ClangPersistentVariables.h"
+
 #include "stdlib.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
@@ -20,8 +24,6 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Expression/ClangPersistentVariables.h"
-#include "lldb/Expression/ASTResultSynthesizer.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangASTImporter.h"
 #include "lldb/Target/Target.h"

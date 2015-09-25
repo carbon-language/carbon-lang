@@ -9,7 +9,7 @@
 
 #include <mutex> // std::once
 
-#include "lldb/Expression/ClangModulesDeclVendor.h"
+#include "ClangModulesDeclVendor.h"
 
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"

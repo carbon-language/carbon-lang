@@ -11,7 +11,7 @@
 
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
-#include "lldb/Expression/ASTDumper.h"
+#include "Plugins/ExpressionParser/Clang/ASTDumper.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"

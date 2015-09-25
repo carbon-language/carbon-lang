@@ -25,7 +25,7 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/Value.h"
 
-#include "lldb/Expression/ClangModulesDeclVendor.h"
+#include "Plugins/ExpressionParser/Clang/ClangModulesDeclVendor.h"
 
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"

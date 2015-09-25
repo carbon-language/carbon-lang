@@ -7,7 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Expression/ClangExpressionDeclMap.h"
+#include "ClangExpressionDeclMap.h"
+
+#include "ASTDumper.h"
+#include "ClangASTSource.h"
+#include "ClangModulesDeclVendor.h"
+#include "ClangPersistentVariables.h"
+
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclarationName.h"
@@ -21,10 +27,6 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Core/ValueObjectVariable.h"
-#include "lldb/Expression/ASTDumper.h"
-#include "lldb/Expression/ClangASTSource.h"
-#include "lldb/Expression/ClangModulesDeclVendor.h"
-#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"

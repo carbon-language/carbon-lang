@@ -17,6 +17,9 @@
 // C++ Includes
 #include <vector>
 
+#include "ClangExpressionVariable.h"
+#include "ClangASTSource.h"
+
 // Other libraries and framework includes
 // Project includes
 #include "llvm/ADT/DenseMap.h"
@@ -24,8 +27,6 @@
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Value.h"
-#include "lldb/Expression/ClangASTSource.h"
-#include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Symbol/SymbolContext.h"

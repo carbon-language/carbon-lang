@@ -16,18 +16,20 @@
 #include <string>
 #include <map>
 
+#include "ClangUserExpression.h"
+
+#include "ASTResultSynthesizer.h"
+#include "ClangExpressionDeclMap.h"
+#include "ClangExpressionParser.h"
+#include "ClangModulesDeclVendor.h"
+#include "ClangPersistentVariables.h"
+
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectConstResult.h"
-#include "lldb/Expression/ASTResultSynthesizer.h"
-#include "lldb/Expression/ClangExpressionDeclMap.h"
-#include "lldb/Expression/ClangExpressionParser.h"
-#include "lldb/Expression/ClangModulesDeclVendor.h"
-#include "lldb/Expression/ClangPersistentVariables.h"
-#include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Expression/ExpressionSourceCode.h"
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Expression/IRInterpreter.h"

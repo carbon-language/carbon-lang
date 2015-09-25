@@ -7,15 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ClangASTSource.h"
+
+#include "ASTDumper.h"
+#include "ClangModulesDeclVendor.h"
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecordLayout.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
-#include "lldb/Expression/ASTDumper.h"
-#include "lldb/Expression/ClangASTSource.h"
-#include "lldb/Expression/ClangModulesDeclVendor.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompilerDeclContext.h"
 #include "lldb/Symbol/Function.h"

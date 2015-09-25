@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ClangFunctionCaller.h"
+
+#include "ASTStructExtractor.h"
+#include "ClangExpressionParser.h"
 
 // C Includes
 // C++ Includes
@@ -28,9 +32,6 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectList.h"
-#include "lldb/Expression/ASTStructExtractor.h"
-#include "lldb/Expression/ClangExpressionParser.h"
-#include "lldb/Expression/ClangFunctionCaller.h"
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Symbol/ClangASTContext.h"

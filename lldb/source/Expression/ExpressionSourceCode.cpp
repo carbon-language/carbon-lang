@@ -10,8 +10,8 @@
 #include "lldb/Expression/ExpressionSourceCode.h"
 
 #include "lldb/Core/StreamString.h"
-#include "lldb/Expression/ClangModulesDeclVendor.h"
-#include "lldb/Expression/ClangPersistentVariables.h"
+#include "Plugins/ExpressionParser/Clang/ClangModulesDeclVendor.h"
+#include "Plugins/ExpressionParser/Clang/ClangPersistentVariables.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Platform.h"

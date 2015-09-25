@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ClangExpressionDeclMap.h"
+#include "ClangExpressionParser.h"
+#include "ClangUtilityFunction.h"
+
 // C Includes
 #include <stdio.h>
 #if HAVE_SYS_TYPES_H
@@ -20,9 +24,6 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
-#include "lldb/Expression/ClangExpressionDeclMap.h"
-#include "lldb/Expression/ClangExpressionParser.h"
-#include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Expression/ExpressionSourceCode.h"
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Host/Host.h"

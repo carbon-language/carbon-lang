@@ -10,10 +10,11 @@
 #ifndef liblldb_ASTStructExtractor_h_
 #define liblldb_ASTStructExtractor_h_
 
+#include "ClangExpressionVariable.h"
+#include "ClangFunctionCaller.h"
+
 #include "clang/Sema/SemaConsumer.h"
 #include "lldb/Core/ClangForward.h"
-#include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
-#include "lldb/Expression/ClangFunctionCaller.h"
 
 namespace lldb_private {
     

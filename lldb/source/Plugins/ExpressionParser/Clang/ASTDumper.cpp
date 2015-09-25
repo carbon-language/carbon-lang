@@ -7,8 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ASTDumper.h"
+
 #include "lldb/Core/Log.h"
-#include "lldb/Expression/ASTDumper.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompilerType.h"
 
