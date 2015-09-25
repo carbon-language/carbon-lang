@@ -796,9 +796,25 @@ bool AArch64TargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
                                                            bool *Fast) const {
   if (Subtarget->requiresStrictAlign())
     return false;
-  // FIXME: True for Cyclone, but not necessary others.
-  if (Fast)
-    *Fast = true;
+
+  // FIXME: This is mostly true for Cyclone, but not necessarily others.
+  if (Fast) {
+    // FIXME: Define an attribute for slow unaligned accesses instead of
+    // relying on the CPU type as a proxy.
+    // On Cyclone, unaligned 128-bit stores are slow.
+    *Fast = !Subtarget->isCyclone() || VT.getStoreSize() != 16 ||
+            // See comments in performSTORECombine() for more details about
+            // these conditions.
+
+            // Code that uses clang vector extensions can mark that it
+            // wants unaligned accesses to be treated as fast by
+            // underspecifying alignment to be 1 or 2.
+            Align <= 2 ||
+
+            // Disregard v2i64. Memcpy lowering produces those and splitting
+            // them regresses performance on micro-benchmarks and olden/bh.
+            VT == MVT::v2i64;
+  }
   return true;
 }
 
@@ -8434,6 +8450,10 @@ static SDValue performSTORECombine(SDNode *N,
   StoreSDNode *S = cast<StoreSDNode>(N);
   if (S->isVolatile())
     return SDValue();
+
+  // FIXME: The logic for deciding if an unaligned store should be split should
+  // be included in TLI.allowsMisalignedMemoryAccesses(), and there should be
+  // a call to that function here.
 
   // Cyclone has bad performance on unaligned 16B stores when crossing line and
   // page boundaries. We want to split such stores.

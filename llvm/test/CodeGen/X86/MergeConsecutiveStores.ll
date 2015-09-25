@@ -478,10 +478,8 @@ define void @merge_vec_extract_stores(<8 x float> %v1, <8 x float> %v2, <4 x flo
   ret void
 
 ; CHECK-LABEL: merge_vec_extract_stores
-; CHECK:      vmovaps %xmm0, 48(%rdi)
-; CHECK-NEXT: vextractf128 $1, %ymm0, 64(%rdi)
-; CHECK-NEXT: vmovaps %xmm1, 80(%rdi)
-; CHECK-NEXT: vextractf128 $1, %ymm1, 96(%rdi)
+; CHECK:      vmovups %ymm0, 48(%rdi)
+; CHECK-NEXT: vmovups %ymm1, 80(%rdi)
 ; CHECK-NEXT: vzeroupper
 ; CHECK-NEXT: retq
 }

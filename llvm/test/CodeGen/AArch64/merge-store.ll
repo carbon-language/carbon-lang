@@ -1,4 +1,5 @@
 ; RUN: llc -march aarch64 %s -o - | FileCheck %s
+; RUN: llc < %s -mtriple=aarch64-unknown-unknown  -mcpu=cyclone  | FileCheck %s --check-prefix=CYCLONE
 
 @g0 = external global <3 x float>, align 16
 @g1 = external global <3 x float>, align 4
@@ -17,4 +18,33 @@ define void @blam() {
   %tmp9 = extractelement <3 x float> %tmp8, i64 1
   store float %tmp9, float* %tmp7
   ret void;
+}
+
+
+; PR21711 - Merge vector stores into wider vector stores.
+
+; On Cyclone, the stores should not get merged into a 16-byte store because
+; unaligned 16-byte stores are slow. This test would infinite loop when
+; the fastness of unaligned accesses was not specified correctly.
+
+define void @merge_vec_extract_stores(<4 x float> %v1, <2 x float>* %ptr) {
+  %idx0 = getelementptr inbounds <2 x float>, <2 x float>* %ptr, i64 3
+  %idx1 = getelementptr inbounds <2 x float>, <2 x float>* %ptr, i64 4
+
+  %shuffle0 = shufflevector <4 x float> %v1, <4 x float> undef, <2 x i32> <i32 0, i32 1>
+  %shuffle1 = shufflevector <4 x float> %v1, <4 x float> undef, <2 x i32> <i32 2, i32 3>
+
+  store <2 x float> %shuffle0, <2 x float>* %idx0, align 8
+  store <2 x float> %shuffle1, <2 x float>* %idx1, align 8
+  ret void
+
+; CHECK-LABEL:    merge_vec_extract_stores
+; CHECK:          stur   q0, [x0, #24]
+; CHECK-NEXT:     ret
+
+; CYCLONE-LABEL:    merge_vec_extract_stores
+; CYCLONE:          ext   v1.16b, v0.16b, v0.16b, #8
+; CYCLONE-NEXT:     str   d0, [x0, #24]
+; CYCLONE-NEXT:     str   d1, [x0, #32]
+; CYCLONE-NEXT:     ret
 }
