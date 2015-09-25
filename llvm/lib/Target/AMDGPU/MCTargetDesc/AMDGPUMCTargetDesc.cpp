@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUMCTargetDesc.h"
+#include "AMDGPUELFStreamer.h"
 #include "AMDGPUMCAsmInfo.h"
 #include "AMDGPUTargetStreamer.h"
 #include "InstPrinter/AMDGPUInstPrinter.h"
@@ -85,6 +86,15 @@ static MCTargetStreamer * createAMDGPUObjectTargetStreamer(
   return new AMDGPUTargetELFStreamer(S);
 }
 
+static MCStreamer *createMCStreamer(const Triple &T, MCContext &Context,
+                                    MCAsmBackend &MAB, raw_pwrite_stream &OS,
+                                    MCCodeEmitter *Emitter, bool RelaxAll) {
+  if (T.getOS() == Triple::AMDHSA)
+    return createAMDGPUELFStreamer(Context, MAB, OS, Emitter, RelaxAll);
+
+  return createELFStreamer(Context, MAB, OS, Emitter, RelaxAll);
+}
+
 extern "C" void LLVMInitializeAMDGPUTargetMC() {
   for (Target *T : {&TheAMDGPUTarget, &TheGCNTarget}) {
     RegisterMCAsmInfo<AMDGPUMCAsmInfo> X(*T);
@@ -95,6 +105,7 @@ extern "C" void LLVMInitializeAMDGPUTargetMC() {
     TargetRegistry::RegisterMCSubtargetInfo(*T, createAMDGPUMCSubtargetInfo);
     TargetRegistry::RegisterMCInstPrinter(*T, createAMDGPUMCInstPrinter);
     TargetRegistry::RegisterMCAsmBackend(*T, createAMDGPUAsmBackend);
+    TargetRegistry::RegisterELFStreamer(*T, createMCStreamer);
   }
 
   // R600 specific registration

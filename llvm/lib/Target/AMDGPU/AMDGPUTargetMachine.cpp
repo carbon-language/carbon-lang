@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUTargetMachine.h"
+#include "AMDGPUHSATargetObjectFile.h"
 #include "AMDGPU.h"
 #include "AMDGPUTargetTransformInfo.h"
 #include "R600ISelLowering.h"
@@ -41,6 +42,13 @@ extern "C" void LLVMInitializeAMDGPUTarget() {
   // Register the target
   RegisterTargetMachine<R600TargetMachine> X(TheAMDGPUTarget);
   RegisterTargetMachine<GCNTargetMachine> Y(TheGCNTarget);
+}
+
+static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
+  if (TT.getOS() == Triple::AMDHSA)
+    return make_unique<AMDGPUHSATargetObjectFile>();
+
+  return make_unique<TargetLoweringObjectFileELF>();
 }
 
 static ScheduleDAGInstrs *createR600MachineScheduler(MachineSchedContext *C) {
@@ -72,15 +80,13 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, const Triple &TT,
                                          CodeGenOpt::Level OptLevel)
     : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options, RM, CM,
                         OptLevel),
-      TLOF(new TargetLoweringObjectFileELF()), Subtarget(TT, CPU, FS, *this),
+      TLOF(createTLOF(getTargetTriple())), Subtarget(TT, CPU, FS, *this),
       IntrinsicInfo() {
   setRequiresStructuredCFG(true);
   initAsmInfo();
 }
 
-AMDGPUTargetMachine::~AMDGPUTargetMachine() {
-  delete TLOF;
-}
+AMDGPUTargetMachine::~AMDGPUTargetMachine() { }
 
 //===----------------------------------------------------------------------===//
 // R600 Target Machine (R600 -> Cayman)

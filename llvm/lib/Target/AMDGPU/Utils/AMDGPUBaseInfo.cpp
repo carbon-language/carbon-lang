@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "AMDGPUBaseInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/SubtargetFeature.h"
 
 #define GET_SUBTARGETINFO_ENUM
@@ -54,6 +56,14 @@ void initDefaultAMDKernelCodeT(amd_kernel_code_t &Header,
   Header.kernarg_segment_alignment = 4;
   Header.group_segment_alignment = 4;
   Header.private_segment_alignment = 4;
+}
+
+MCSection *getHSATextSection(MCContext &Ctx) {
+  return Ctx.getELFSection(".hsatext", ELF::SHT_PROGBITS,
+                           ELF::SHF_ALLOC | ELF::SHF_WRITE |
+                           ELF::SHF_EXECINSTR |
+                           ELF::SHF_AMDGPU_HSA_AGENT |
+                           ELF::SHF_AMDGPU_HSA_CODE);
 }
 
 } // End namespace AMDGPU

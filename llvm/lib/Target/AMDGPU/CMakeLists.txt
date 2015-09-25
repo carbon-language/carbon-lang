@@ -17,6 +17,7 @@ add_llvm_target(AMDGPUCodeGen
   AMDGPUAlwaysInlinePass.cpp
   AMDGPUAsmPrinter.cpp
   AMDGPUFrameLowering.cpp
+  AMDGPUHSATargetObjectFile.cpp
   AMDGPUIntrinsicInfo.cpp
   AMDGPUISelDAGToDAG.cpp
   AMDGPUMCInstLower.cpp

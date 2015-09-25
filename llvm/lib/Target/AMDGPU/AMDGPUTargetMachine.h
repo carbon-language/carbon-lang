@@ -32,7 +32,7 @@ class AMDGPUTargetMachine : public LLVMTargetMachine {
 private:
 
 protected:
-  TargetLoweringObjectFile *TLOF;
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
   AMDGPUSubtarget Subtarget;
   AMDGPUIntrinsicInfo IntrinsicInfo;
 
@@ -52,7 +52,7 @@ public:
   TargetIRAnalysis getTargetIRAnalysis() override;
 
   TargetLoweringObjectFile *getObjFileLowering() const override {
-    return TLOF;
+    return TLOF.get();
   }
 };
 

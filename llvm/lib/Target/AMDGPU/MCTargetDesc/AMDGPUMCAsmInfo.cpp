@@ -41,3 +41,8 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(const Triple &TT) : MCAsmInfoELF() {
   //===--- Dwarf Emission Directives -----------------------------------===//
   SupportsDebugInformation = true;
 }
+
+bool AMDGPUMCAsmInfo::shouldOmitSectionDirective(StringRef SectionName) const {
+  return SectionName == ".hsatext" ||
+         MCAsmInfo::shouldOmitSectionDirective(SectionName);
+}
