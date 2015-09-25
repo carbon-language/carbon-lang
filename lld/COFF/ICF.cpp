@@ -156,7 +156,7 @@ bool ICF::partition(ChunkIterator Begin, ChunkIterator End, Comparator Eq) {
     });
     if (Bound == End)
       return R;
-    size_t ID = NextID++;
+    uint64_t ID = NextID++;
     std::for_each(It, Bound, [&](SectionChunk *SC) { SC->GroupID = ID; });
     It = Bound;
     R = true;
