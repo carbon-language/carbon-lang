@@ -232,7 +232,7 @@ public:
 template <class ELFT>
 typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::Synthetic;
 
-template <class ELFT> class SharedSymbol : public ELFSymbolBody<ELFT> {
+template <class ELFT> class SharedSymbol : public Defined<ELFT> {
   typedef ELFSymbolBody<ELFT> Base;
   typedef typename Base::Elf_Sym Elf_Sym;
 
@@ -242,7 +242,7 @@ public:
   }
 
   SharedSymbol(StringRef Name, const Elf_Sym &Sym)
-      : ELFSymbolBody<ELFT>(Base::SharedKind, Name, Sym) {}
+      : Defined<ELFT>(Base::SharedKind, Name, Sym) {}
 };
 
 // This class represents a symbol defined in an archive file. It is
