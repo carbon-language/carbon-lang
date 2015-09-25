@@ -27,12 +27,7 @@ bool MCSectionELF::ShouldOmitSectionDirective(StringRef Name,
   if (isUnique())
     return false;
 
-  // FIXME: Does .section .bss/.data/.text work everywhere??
-  if (Name == ".text" || Name == ".data" ||
-      (Name == ".bss" && !MAI.usesELFSectionDirectiveForBSS()))
-    return true;
-
-  return false;
+  return MAI.shouldOmitSectionDirective(Name);
 }
 
 static void printName(raw_ostream &OS, StringRef Name) {
