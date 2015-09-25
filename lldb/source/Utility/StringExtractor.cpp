@@ -120,11 +120,13 @@ StringExtractor::DecodeHexU8()
 
 //----------------------------------------------------------------------
 // Extract an unsigned character from two hex ASCII chars in the packet
-// string
+// string, or return fail_value on failure
 //----------------------------------------------------------------------
 uint8_t
 StringExtractor::GetHexU8 (uint8_t fail_value, bool set_eof_on_fail)
 {
+    // On success, fail_value will be overwritten with the next
+    // character in the stream
     GetHexU8Ex(fail_value, set_eof_on_fail);
     return fail_value;
 }
