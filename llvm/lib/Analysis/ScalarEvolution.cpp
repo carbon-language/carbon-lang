@@ -6994,6 +6994,22 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
 
   SaveAndRestore<bool> ClearOnExit(WalkingBEDominatingConds, true);
 
+  // See if we can exploit a trip count to prove the predicate.
+  const auto &BETakenInfo = getBackedgeTakenInfo(L);
+  const SCEV *LatchBECount = BETakenInfo.getExact(Latch, this);
+  if (LatchBECount != getCouldNotCompute()) {
+    // We know that Latch branches back to the loop header exactly
+    // LatchBECount times.  This means the backdege condition at Latch is
+    // equivalent to  "{0,+,1} u< LatchBECount".
+    Type *Ty = LatchBECount->getType();
+    auto NoWrapFlags = SCEV::NoWrapFlags(SCEV::FlagNUW | SCEV::FlagNW);
+    const SCEV *LoopCounter =
+      getAddRecExpr(getZero(Ty), getOne(Ty), L, NoWrapFlags);
+    if (isImpliedCond(Pred, LHS, RHS, ICmpInst::ICMP_ULT, LoopCounter,
+                      LatchBECount))
+      return true;
+  }
+
   // Check conditions due to any @llvm.assume intrinsics.
   for (auto &AssumeVH : AC.assumptions()) {
     if (!AssumeVH)
