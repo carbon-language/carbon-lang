@@ -496,6 +496,12 @@ public:
     return const_cast<MachineBasicBlock *>(this)->getLastNonDebugInstr();
   }
 
+  /// Convenience function that returns true if the block has no successors and
+  /// contains a return instruction.
+  bool isReturnBlock() const {
+    return !empty() && back().isReturn();
+  }
+
   /// Split the critical edge from this block to the given successor block, and
   /// return the newly created block, or null if splitting is not possible.
   ///

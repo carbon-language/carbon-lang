@@ -270,7 +270,7 @@ static void RemoveVRSaveCode(MachineInstr *MI) {
   // epilog blocks.
   for (MachineFunction::iterator I = MF->begin(), E = MF->end(); I != E; ++I) {
     // If last instruction is a return instruction, add an epilogue
-    if (!I->empty() && I->back().isReturn()) {
+    if (I->isReturnBlock()) {
       bool FoundIt = false;
       for (MBBI = I->end(); MBBI != I->begin(); ) {
         --MBBI;
@@ -326,7 +326,7 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
   for (MachineFunction::const_iterator BI = MF->begin(), BE = MF->end();
        UsedRegMask != 0 && BI != BE; ++BI) {
     const MachineBasicBlock &MBB = *BI;
-    if (MBB.empty() || !MBB.back().isReturn())
+    if (!MBB.isReturnBlock())
       continue;
     const MachineInstr &Ret = MBB.back();
     for (unsigned I = 0, E = Ret.getNumOperands(); I != E; ++I) {

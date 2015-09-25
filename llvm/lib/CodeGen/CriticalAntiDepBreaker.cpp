@@ -52,7 +52,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   // Clear "do not change" set.
   KeepRegs.reset();
 
-  bool IsReturnBlock = (BBSize != 0 && BB->back().isReturn());
+  bool IsReturnBlock = BB->isReturnBlock();
 
   // Examine the live-in regs of all successors.
   for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),

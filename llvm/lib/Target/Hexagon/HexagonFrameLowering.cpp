@@ -370,11 +370,11 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF,
     insertEpilogueInBlock(*EpilogB);
   } else {
     for (auto &B : MF)
-      if (!B.empty() && B.back().isReturn())
+      if (B.isReturnBlock())
         insertCSRRestoresInBlock(B, CSI, HRI);
 
     for (auto &B : MF)
-      if (!B.empty() && B.back().isReturn())
+      if (B.isReturnBlock())
         insertEpilogueInBlock(B);
   }
 }

@@ -142,7 +142,7 @@ void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   assert(!State);
   State = new AggressiveAntiDepState(TRI->getNumRegs(), BB);
 
-  bool IsReturnBlock = (!BB->empty() && BB->back().isReturn());
+  bool IsReturnBlock = BB->isReturnBlock();
   std::vector<unsigned> &KillIndices = State->GetKillIndices();
   std::vector<unsigned> &DefIndices = State->GetDefIndices();
 

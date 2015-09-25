@@ -92,9 +92,6 @@ private:
                            int &SPAdj);
   void scavengeFrameVirtualRegs(MachineFunction &Fn);
   void insertPrologEpilogCode(MachineFunction &Fn);
-
-  // Convenience for recognizing return blocks.
-  bool isReturnBlock(const MachineBasicBlock *MBB) const;
 };
 } // namespace
 
@@ -129,10 +126,6 @@ void PEI::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-bool PEI::isReturnBlock(const MachineBasicBlock* MBB) const {
-  return (MBB && !MBB->empty() && MBB->back().isReturn());
-}
-
 /// Compute the set of return blocks
 void PEI::calculateSets(MachineFunction &Fn) {
   const MachineFrameInfo *MFI = Fn.getFrameInfo();
@@ -149,7 +142,7 @@ void PEI::calculateSets(MachineFunction &Fn) {
     // If RestoreBlock does not have any successor and is not a return block
     // then the end point is unreachable and we do not need to insert any
     // epilogue.
-    if (!RestoreBlock->succ_empty() || isReturnBlock(RestoreBlock))
+    if (!RestoreBlock->succ_empty() || RestoreBlock->isReturnBlock())
       RestoreBlocks.push_back(RestoreBlock);
     return;
   }
@@ -159,7 +152,7 @@ void PEI::calculateSets(MachineFunction &Fn) {
   for (MachineBasicBlock &MBB : Fn) {
     if (MBB.isEHFuncletEntry())
       SaveBlocks.push_back(&MBB);
-    if (isReturnBlock(&MBB))
+    if (MBB.isReturnBlock())
       RestoreBlocks.push_back(&MBB);
   }
 }
