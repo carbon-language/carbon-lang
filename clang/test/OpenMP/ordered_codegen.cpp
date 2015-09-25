@@ -92,7 +92,7 @@ void dynamic1(float *a, float *b, float *c, float *d) {
 // CHECK-NOT: !llvm.mem.parallel_loop_access
 // CHECK-NEXT: call void @__kmpc_end_ordered([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 // ... end of ordered region ...
-    #pragma omp ordered
+    #pragma omp ordered threads
     a[i] = b[i] * c[i] * d[i];
 // CHECK: [[IV1_2:%.+]] = load i64, i64* [[OMP_IV]]{{.*}}
 // CHECK-NEXT: [[ADD1_2:%.+]] = add i64 [[IV1_2]], 1
@@ -197,7 +197,7 @@ void runtime(float *a, float *b, float *c, float *d) {
 // CHECK-NOT: !llvm.mem.parallel_loop_access
 // CHECK-NEXT: call void @__kmpc_end_ordered([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 // ... end of ordered region ...
-    #pragma omp ordered
+    #pragma omp ordered threads
     a[i] = b[i] * c[i] * d[i];
 // CHECK: [[IV1_2:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}
 // CHECK-NEXT: [[ADD1_2:%.+]] = add nsw i32 [[IV1_2]], 1

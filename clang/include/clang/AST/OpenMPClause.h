@@ -2530,6 +2530,37 @@ public:
   child_range children() { return child_range(&Device, &Device + 1); }
 };
 
+/// \brief This represents 'threads' clause in the '#pragma omp ...' directive.
+///
+/// \code
+/// #pragma omp ordered threads
+/// \endcode
+/// In this example directive '#pragma omp ordered' has simple 'threads' clause.
+///
+class OMPThreadsClause : public OMPClause {
+public:
+  /// \brief Build 'threads' clause.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param EndLoc Ending location of the clause.
+  ///
+  OMPThreadsClause(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPClause(OMPC_threads, StartLoc, EndLoc) {}
+
+  /// \brief Build an empty clause.
+  ///
+  OMPThreadsClause()
+      : OMPClause(OMPC_threads, SourceLocation(), SourceLocation()) {}
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_threads;
+  }
+
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
+};
+
 } // end namespace clang
 
 #endif

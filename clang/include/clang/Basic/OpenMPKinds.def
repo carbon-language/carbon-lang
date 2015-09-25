@@ -66,6 +66,9 @@
 #ifndef OPENMP_CANCEL_CLAUSE
 #  define OPENMP_CANCEL_CLAUSE(Name)
 #endif
+#ifndef OPENMP_ORDERED_CLAUSE
+#  define OPENMP_ORDERED_CLAUSE(Name)
+#endif
 #ifndef OPENMP_DEFAULT_KIND
 #  define OPENMP_DEFAULT_KIND(Name)
 #endif
@@ -141,6 +144,7 @@ OPENMP_CLAUSE(capture, OMPCaptureClause)
 OPENMP_CLAUSE(seq_cst, OMPSeqCstClause)
 OPENMP_CLAUSE(depend, OMPDependClause)
 OPENMP_CLAUSE(device, OMPDeviceClause)
+OPENMP_CLAUSE(threads, OMPThreadsClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -311,6 +315,10 @@ OPENMP_TEAMS_CLAUSE(firstprivate)
 OPENMP_TEAMS_CLAUSE(shared)
 OPENMP_TEAMS_CLAUSE(reduction)
 
+// Clauses allowed for OpenMP directive 'ordered'.
+// TODO More clauses for 'ordered' directive.
+OPENMP_ORDERED_CLAUSE(threads)
+
 #undef OPENMP_LINEAR_KIND
 #undef OPENMP_DEPEND_KIND
 #undef OPENMP_SCHEDULE_KIND
@@ -319,6 +327,7 @@ OPENMP_TEAMS_CLAUSE(reduction)
 #undef OPENMP_DIRECTIVE
 #undef OPENMP_DIRECTIVE_EXT
 #undef OPENMP_CLAUSE
+#undef OPENMP_ORDERED_CLAUSE
 #undef OPENMP_CANCEL_CLAUSE
 #undef OPENMP_SINGLE_CLAUSE
 #undef OPENMP_SECTIONS_CLAUSE

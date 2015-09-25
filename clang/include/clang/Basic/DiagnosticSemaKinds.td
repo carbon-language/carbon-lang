@@ -7731,6 +7731,10 @@ def err_omp_unnamed_if_clause : Error<
   "expected %select{|one of}0 %1 directive name modifier%select{|s}0">;
 def note_omp_previous_named_if_clause : Note<
   "previous clause with directive name modifier specified here">;
+def err_omp_ordered_directive_with_param : Error<
+  "'ordered' directive %select{without any clauses|with 'threads' clause}0 cannot be closely nested inside ordered region with specified parameter">;
+def note_omp_ordered_param : Note<
+  "'ordered' clause with specified parameter">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

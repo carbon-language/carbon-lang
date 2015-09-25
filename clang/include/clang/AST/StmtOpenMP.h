@@ -1714,16 +1714,21 @@ class OMPOrderedDirective : public OMPExecutableDirective {
   ///
   /// \param StartLoc Starting location of the directive kind.
   /// \param EndLoc Ending location of the directive.
+  /// \param NumClauses Number of clauses.
   ///
-  OMPOrderedDirective(SourceLocation StartLoc, SourceLocation EndLoc)
+  OMPOrderedDirective(SourceLocation StartLoc, SourceLocation EndLoc,
+                      unsigned NumClauses)
       : OMPExecutableDirective(this, OMPOrderedDirectiveClass, OMPD_ordered,
-                               StartLoc, EndLoc, 0, 1) {}
+                               StartLoc, EndLoc, NumClauses, 1) {}
 
   /// \brief Build an empty directive.
   ///
-  explicit OMPOrderedDirective()
+  /// \param NumClauses Number of clauses.
+  ///
+  explicit OMPOrderedDirective(unsigned NumClauses)
       : OMPExecutableDirective(this, OMPOrderedDirectiveClass, OMPD_ordered,
-                               SourceLocation(), SourceLocation(), 0, 1) {}
+                               SourceLocation(), SourceLocation(), NumClauses,
+                               1) {}
 
 public:
   /// \brief Creates directive.
@@ -1731,18 +1736,20 @@ public:
   /// \param C AST context.
   /// \param StartLoc Starting location of the directive kind.
   /// \param EndLoc Ending Location of the directive.
+  /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
   ///
-  static OMPOrderedDirective *Create(const ASTContext &C,
-                                     SourceLocation StartLoc,
-                                     SourceLocation EndLoc,
-                                     Stmt *AssociatedStmt);
+  static OMPOrderedDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt);
 
   /// \brief Creates an empty directive.
   ///
   /// \param C AST context.
+  /// \param NumClauses Number of clauses.
   ///
-  static OMPOrderedDirective *CreateEmpty(const ASTContext &C, EmptyShell);
+  static OMPOrderedDirective *CreateEmpty(const ASTContext &C,
+                                          unsigned NumClauses, EmptyShell);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPOrderedDirectiveClass;

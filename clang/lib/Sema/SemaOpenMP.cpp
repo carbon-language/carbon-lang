@@ -96,7 +96,10 @@ private:
     DeclarationNameInfo DirectiveName;
     Scope *CurScope;
     SourceLocation ConstructLoc;
-    bool OrderedRegion;
+    /// \brief first argument (Expr *) contains optional argument of the
+    /// 'ordered' clause, the second one is true if the regions has 'ordered'
+    /// clause, false otherwise.
+    llvm::PointerIntPair<Expr *, 1, bool> OrderedRegion;
     bool NowaitRegion;
     bool CancelRegion;
     unsigned CollapseNumber;
@@ -105,12 +108,12 @@ private:
                  Scope *CurScope, SourceLocation Loc)
         : SharingMap(), AlignedMap(), LCVSet(), DefaultAttr(DSA_unspecified),
           Directive(DKind), DirectiveName(std::move(Name)), CurScope(CurScope),
-          ConstructLoc(Loc), OrderedRegion(false), NowaitRegion(false),
+          ConstructLoc(Loc), OrderedRegion(), NowaitRegion(false),
           CancelRegion(false), CollapseNumber(1), InnerTeamsRegionLoc() {}
     SharingMapTy()
         : SharingMap(), AlignedMap(), LCVSet(), DefaultAttr(DSA_unspecified),
           Directive(OMPD_unknown), DirectiveName(), CurScope(nullptr),
-          ConstructLoc(), OrderedRegion(false), NowaitRegion(false),
+          ConstructLoc(), OrderedRegion(), NowaitRegion(false),
           CancelRegion(false), CollapseNumber(1), InnerTeamsRegionLoc() {}
   };
 
@@ -231,15 +234,22 @@ public:
   }
 
   /// \brief Marks current region as ordered (it has an 'ordered' clause).
-  void setOrderedRegion(bool IsOrdered = true) {
-    Stack.back().OrderedRegion = IsOrdered;
+  void setOrderedRegion(bool IsOrdered, Expr *Param) {
+    Stack.back().OrderedRegion.setInt(IsOrdered);
+    Stack.back().OrderedRegion.setPointer(Param);
   }
   /// \brief Returns true, if parent region is ordered (has associated
   /// 'ordered' clause), false - otherwise.
   bool isParentOrderedRegion() const {
     if (Stack.size() > 2)
-      return Stack[Stack.size() - 2].OrderedRegion;
+      return Stack[Stack.size() - 2].OrderedRegion.getInt();
     return false;
+  }
+  /// \brief Returns optional parameter for the ordered region.
+  Expr *getParentOrderedRegionParam() const {
+    if (Stack.size() > 2)
+      return Stack[Stack.size() - 2].OrderedRegion.getPointer();
+    return nullptr;
   }
   /// \brief Marks current region as nowait (it has a 'nowait' clause).
   void setNowaitRegion(bool IsNowait = true) {
@@ -2220,9 +2230,8 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(
     Res = ActOnOpenMPFlushDirective(ClausesWithImplicit, StartLoc, EndLoc);
     break;
   case OMPD_ordered:
-    assert(ClausesWithImplicit.empty() &&
-           "No clauses are allowed for 'omp ordered' directive");
-    Res = ActOnOpenMPOrderedDirective(AStmt, StartLoc, EndLoc);
+    Res = ActOnOpenMPOrderedDirective(ClausesWithImplicit, AStmt, StartLoc,
+                                      EndLoc);
     break;
   case OMPD_atomic:
     Res = ActOnOpenMPAtomicDirective(ClausesWithImplicit, AStmt, StartLoc,
@@ -4125,7 +4134,8 @@ StmtResult Sema::ActOnOpenMPFlushDirective(ArrayRef<OMPClause *> Clauses,
   return OMPFlushDirective::Create(Context, StartLoc, EndLoc, Clauses);
 }
 
-StmtResult Sema::ActOnOpenMPOrderedDirective(Stmt *AStmt,
+StmtResult Sema::ActOnOpenMPOrderedDirective(ArrayRef<OMPClause *> Clauses,
+                                             Stmt *AStmt,
                                              SourceLocation StartLoc,
                                              SourceLocation EndLoc) {
   if (!AStmt)
@@ -4135,7 +4145,22 @@ StmtResult Sema::ActOnOpenMPOrderedDirective(Stmt *AStmt,
 
   getCurFunction()->setHasBranchProtectedScope();
 
-  return OMPOrderedDirective::Create(Context, StartLoc, EndLoc, AStmt);
+  OMPThreadsClause *TC = nullptr;
+  for (auto *C: Clauses) {
+    if (C->getClauseKind() == OMPC_threads)
+      TC = cast<OMPThreadsClause>(C);
+  }
+
+  // TODO: this must happen only if 'threads' clause specified or if no clauses
+  // is specified.
+  if (auto *Param = DSAStack->getParentOrderedRegionParam()) {
+    SourceLocation ErrLoc = TC ? TC->getLocStart() : StartLoc;
+    Diag(ErrLoc, diag::err_omp_ordered_directive_with_param) << (TC != nullptr);
+    Diag(Param->getLocStart(), diag::note_omp_ordered_param);
+    return StmtError();
+  }
+
+  return OMPOrderedDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt);
 }
 
 namespace {
@@ -4983,6 +5008,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_capture:
   case OMPC_seq_cst:
   case OMPC_depend:
+  case OMPC_threads:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5181,7 +5207,6 @@ OMPClause *Sema::ActOnOpenMPOrderedClause(SourceLocation StartLoc,
                                           SourceLocation EndLoc,
                                           SourceLocation LParenLoc,
                                           Expr *NumForLoops) {
-  DSAStack->setOrderedRegion();
   // OpenMP [2.7.1, loop construct, Description]
   // OpenMP [2.8.1, simd construct, Description]
   // OpenMP [2.9.6, distribute construct, Description]
@@ -5193,7 +5218,9 @@ OMPClause *Sema::ActOnOpenMPOrderedClause(SourceLocation StartLoc,
     if (NumForLoopsResult.isInvalid())
       return nullptr;
     NumForLoops = NumForLoopsResult.get();
-  }
+  } else
+    NumForLoops = nullptr;
+  DSAStack->setOrderedRegion(/*IsOrdered=*/true, NumForLoops);
   return new (Context)
       OMPOrderedClause(NumForLoops, StartLoc, LParenLoc, EndLoc);
 }
@@ -5242,6 +5269,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_seq_cst:
   case OMPC_depend:
   case OMPC_device:
+  case OMPC_threads:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5369,6 +5397,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_seq_cst:
   case OMPC_depend:
   case OMPC_device:
+  case OMPC_threads:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5472,6 +5501,9 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_seq_cst:
     Res = ActOnOpenMPSeqCstClause(StartLoc, EndLoc);
     break;
+  case OMPC_threads:
+    Res = ActOnOpenMPThreadsClause(StartLoc, EndLoc);
+    break;
   case OMPC_if:
   case OMPC_final:
   case OMPC_num_threads:
@@ -5541,6 +5573,11 @@ OMPClause *Sema::ActOnOpenMPSeqCstClause(SourceLocation StartLoc,
   return new (Context) OMPSeqCstClause(StartLoc, EndLoc);
 }
 
+OMPClause *Sema::ActOnOpenMPThreadsClause(SourceLocation StartLoc,
+                                          SourceLocation EndLoc) {
+  return new (Context) OMPThreadsClause(StartLoc, EndLoc);
+}
+
 OMPClause *Sema::ActOnOpenMPVarListClause(
     OpenMPClauseKind Kind, ArrayRef<Expr *> VarList, Expr *TailExpr,
     SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation ColonLoc,
@@ -5606,6 +5643,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_capture:
   case OMPC_seq_cst:
   case OMPC_device:
+  case OMPC_threads:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
