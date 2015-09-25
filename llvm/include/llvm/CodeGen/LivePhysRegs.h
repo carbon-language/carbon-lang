@@ -122,9 +122,9 @@ public:
   void addLiveIns(const MachineBasicBlock *MBB, bool AddPristines = false);
 
   /// \brief Adds all live-out registers of basic block @p MBB; After prologue/
-  /// epilogue insertion \p AddPristines should be set to true to insert the
-  /// pristine registers.
-  void addLiveOuts(const MachineBasicBlock *MBB, bool AddPristines = false);
+  /// epilogue insertion \p AddPristinesAndCSRs should be set to true.
+  void addLiveOuts(const MachineBasicBlock *MBB,
+                   bool AddPristinesAndCSRs = false);
 
   typedef SparseSet<unsigned>::const_iterator const_iterator;
   const_iterator begin() const { return LiveRegs.begin(); }
