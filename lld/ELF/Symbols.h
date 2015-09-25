@@ -41,10 +41,11 @@ public:
     DefinedRegularKind = 0,
     DefinedAbsoluteKind = 1,
     DefinedCommonKind = 2,
-    SharedKind = 3,
-    DefinedLast = 3,
-    UndefinedKind = 4,
-    LazyKind = 5,
+    DefinedSyntheticKind = 3,
+    SharedKind = 4,
+    DefinedLast = 4,
+    UndefinedKind = 5,
+    LazyKind = 6,
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
@@ -211,6 +212,22 @@ public:
   }
 
   const InputSection<ELFT> &Section;
+};
+
+template <class ELFT> class DefinedSynthetic : public Defined<ELFT> {
+  typedef Defined<ELFT> Base;
+
+public:
+  typedef typename Base::Elf_Sym Elf_Sym;
+  explicit DefinedSynthetic(StringRef N, const Elf_Sym &Sym,
+                            OutputSection<ELFT> &Section)
+      : Defined<ELFT>(Base::DefinedSyntheticKind, N, Sym), Section(Section) {}
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == Base::DefinedSyntheticKind;
+  }
+
+  const OutputSection<ELFT> &Section;
 };
 
 // Undefined symbol.

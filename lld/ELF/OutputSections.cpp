@@ -295,6 +295,8 @@ typename ELFFile<ELFT>::uintX_t
 lld::elf2::getSymVA(const ELFSymbolBody<ELFT> &S,
                     const OutputSection<ELFT> &BssSec) {
   switch (S.kind()) {
+  case SymbolBody::DefinedSyntheticKind:
+    return cast<DefinedSynthetic<ELFT>>(S).Section.getVA() + S.Sym.st_value;
   case SymbolBody::DefinedAbsoluteKind:
     return S.Sym.st_value;
   case SymbolBody::DefinedRegularKind: {
@@ -434,6 +436,9 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     const InputSection<ELFT> *Section = nullptr;
 
     switch (EBody.kind()) {
+    case SymbolBody::DefinedSyntheticKind:
+      Out = &cast<DefinedSynthetic<ELFT>>(Body)->Section;
+      break;
     case SymbolBody::DefinedRegularKind:
       Section = &cast<DefinedRegular<ELFT>>(EBody).Section;
       break;

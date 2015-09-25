@@ -295,7 +295,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   OutputSections.push_back(&BssSec);
   Map[{BssSec.getName(), BssSec.getType(), BssSec.getFlags()}] = &BssSec;
 
-  const SymbolTable &Symtab = SymTabSec.getSymTable();
+  SymbolTable &Symtab = SymTabSec.getSymTable();
   for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.getObjectFiles()) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     if (!Config->DiscardAll) {
@@ -321,6 +321,12 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       Sec->addSection(C);
       scanRelocs(*C);
     }
+  }
+
+  if (OutputSection<ELFT> *OS =
+          Map.lookup({".init_array", SHT_INIT_ARRAY, SHF_WRITE | SHF_ALLOC})) {
+    Symtab.addSyntheticSym<ELFT>("__init_array_start", *OS, 0);
+    Symtab.addSyntheticSym<ELFT>("__init_array_end", *OS, OS->getSize());
   }
 
   // FIXME: Try to avoid the extra walk over all global symbols.

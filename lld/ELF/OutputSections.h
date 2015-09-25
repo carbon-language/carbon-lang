@@ -165,7 +165,7 @@ public:
 
   void writeTo(uint8_t *Buf) override;
 
-  const SymbolTable &getSymTable() const { return Table; }
+  SymbolTable &getSymTable() const { return Table; }
 
   void addSymbol(StringRef Name, bool isLocal = false) {
     StrTabSec.add(Name);

@@ -55,6 +55,17 @@ static TargetInfo *createTarget(uint16_t EMachine) {
   error("Unknown target machine");
 }
 
+template <class ELFT>
+void SymbolTable::addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
+                                  typename ELFFile<ELFT>::uintX_t Value) {
+  typedef typename DefinedSynthetic<ELFT>::Elf_Sym Elf_Sym;
+  auto ESym = new (Alloc) Elf_Sym;
+  memset(ESym, 0, sizeof(Elf_Sym));
+  ESym->st_value = Value;
+  auto Sym = new (Alloc) DefinedSynthetic<ELFT>(Name, *ESym, Section);
+  resolve<ELFT>(Sym);
+}
+
 template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
   Target.reset(createTarget(EMachine));
   if (Config->Shared)
@@ -204,4 +215,21 @@ void SymbolTable::addMemberFile(Lazy *Body) {
     return;
 
   addFile(std::move(File));
+}
+
+namespace lld {
+namespace elf2 {
+template void SymbolTable::addSyntheticSym(StringRef Name,
+                                           OutputSection<ELF32LE> &Section,
+                                           ELFFile<ELF32LE>::uintX_t Value);
+template void SymbolTable::addSyntheticSym(StringRef Name,
+                                           OutputSection<ELF32BE> &Section,
+                                           ELFFile<ELF32BE>::uintX_t Value);
+template void SymbolTable::addSyntheticSym(StringRef Name,
+                                           OutputSection<ELF64LE> &Section,
+                                           ELFFile<ELF64LE>::uintX_t Value);
+template void SymbolTable::addSyntheticSym(StringRef Name,
+                                           OutputSection<ELF64BE> &Section,
+                                           ELFFile<ELF64BE>::uintX_t Value);
+}
 }

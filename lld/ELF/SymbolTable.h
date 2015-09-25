@@ -61,6 +61,10 @@ public:
     return EntrySym->getReplacement();
   }
 
+  template <class ELFT>
+  void addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
+                       typename llvm::object::ELFFile<ELFT>::uintX_t Value);
+
 private:
   Symbol *insert(SymbolBody *New);
   template <class ELFT> void addELFFile(ELFFileBase *File);
