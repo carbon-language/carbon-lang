@@ -233,7 +233,7 @@ template <class ELFT>
 typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::Synthetic;
 
 template <class ELFT> class SharedSymbol : public Defined<ELFT> {
-  typedef ELFSymbolBody<ELFT> Base;
+  typedef Defined<ELFT> Base;
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
