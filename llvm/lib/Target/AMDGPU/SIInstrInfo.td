@@ -2061,12 +2061,14 @@ multiclass DS_1A1D_RET <bits<8> op, string opName, RegisterClass rc,
   dag ins = (ins VGPR_32:$addr, rc:$data0, ds_offset:$offset, gds:$gds),
   string asm = opName#" $vdst, $addr, $data0"#"$offset$gds"> {
 
-  def "" : DS_Pseudo <opName, outs, ins, []>,
-           AtomicNoRet<noRetOp, 1>;
+  let hasPostISelHook = 1 in {
+    def "" : DS_Pseudo <opName, outs, ins, []>,
+             AtomicNoRet<noRetOp, 1>;
 
-  let data1 = 0 in {
-    def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
-    def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
+    let data1 = 0 in {
+      def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
+      def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
+    }
   }
 }
 
@@ -2075,11 +2077,13 @@ multiclass DS_1A2D_RET_m <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs rc:$vdst),
   string asm = opName#" $vdst, $addr, $data0, $data1"#"$offset"#"$gds"> {
 
-  def "" : DS_Pseudo <opName, outs, ins, []>,
-           AtomicNoRet<noRetOp, 1>;
+  let hasPostISelHook = 1 in {
+    def "" : DS_Pseudo <opName, outs, ins, []>,
+             AtomicNoRet<noRetOp, 1>;
 
-  def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
-  def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
+    def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
+    def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
+  }
 }
 
 multiclass DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc,
@@ -2561,6 +2565,7 @@ multiclass FLAT_ATOMIC <bits<7> op, string name, RegisterClass vdst_rc,
                      name#" $vdst, $addr, $data glc"#"$slc"#"$tfe", []>,
                AtomicNoRet <NAME, 1> {
       let glc = 1;
+      let hasPostISelHook = 1;
     }
   }
 }

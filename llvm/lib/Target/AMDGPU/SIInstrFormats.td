@@ -69,9 +69,6 @@ class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
   let TSFlags{20} = WQM;
   let TSFlags{21} = VGPRSpill;
 
-  // Most instructions require adjustments after selection to satisfy
-  // operand requirements.
-  let hasPostISelHook = 1;
   let SchedRW = [Write32Bit];
 }
 
@@ -137,6 +134,11 @@ class VOP3Common <dag outs, dag ins, string asm, list<dag> pattern> :
   let isCodeGenOnly = 0;
 
   int Size = 8;
+
+  // Because SGPRs may be allowed if there are multiple operands, we
+  // need a post-isel hook to insert copies in order to avoid
+  // violating constant bus requirements.
+  let hasPostISelHook = 1;
 }
 
 } // End Uses = [EXEC]
