@@ -2,7 +2,7 @@
 # RUN: lld -flavor gnu2 %t -o %t2
 # RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
 # RUN:   | FileCheck %s
-# REQUIRES: x86
+# REQUIRES: arm64
 
 # exits with return code 42 on FreeBSD/AArch64
 .globl _start;
