@@ -193,24 +193,46 @@ def SReg_64 : RegisterClass<"AMDGPU", [v2i32, i64, f64, i1], 64,
   (add SGPR_64, VCC, EXEC, FLAT_SCR)
 >;
 
-def SReg_128 : RegisterClass<"AMDGPU", [v4i32, v16i8], 128, (add SGPR_128)>;
+def SReg_128 : RegisterClass<"AMDGPU", [v4i32, v16i8], 128, (add SGPR_128)> {
+  // Requires 2 s_mov_b64 to copy
+  let CopyCost = 2;
+}
 
-def SReg_256 : RegisterClass<"AMDGPU", [v32i8, v8i32, v8f32], 256, (add SGPR_256)>;
+def SReg_256 : RegisterClass<"AMDGPU", [v32i8, v8i32, v8f32], 256, (add SGPR_256)> {
+  // Requires 4 s_mov_b64 to copy
+  let CopyCost = 4;
+}
 
-def SReg_512 : RegisterClass<"AMDGPU", [v64i8, v16i32], 512, (add SGPR_512)>;
+def SReg_512 : RegisterClass<"AMDGPU", [v64i8, v16i32], 512, (add SGPR_512)> {
+  // Requires 8 s_mov_b64 to copy
+  let CopyCost = 8;
+}
 
 // Register class for all vector registers (VGPRs + Interploation Registers)
-def VReg_64 : RegisterClass<"AMDGPU", [i64, f64, v2i32, v2f32], 64, (add VGPR_64)>;
+def VReg_64 : RegisterClass<"AMDGPU", [i64, f64, v2i32, v2f32], 64, (add VGPR_64)> {
+  // Requires 2 v_mov_b32 to copy
+  let CopyCost = 2;
+}
 
 def VReg_96 : RegisterClass<"AMDGPU", [untyped], 96, (add VGPR_96)> {
   let Size = 96;
+
+  // Requires 3 v_mov_b32 to copy
+  let CopyCost = 3;
 }
 
-def VReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32], 128, (add VGPR_128)>;
+def VReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32], 128, (add VGPR_128)> {
+  // Requires 4 v_mov_b32 to copy
+  let CopyCost = 4;
+}
 
-def VReg_256 : RegisterClass<"AMDGPU", [v32i8, v8i32, v8f32], 256, (add VGPR_256)>;
+def VReg_256 : RegisterClass<"AMDGPU", [v32i8, v8i32, v8f32], 256, (add VGPR_256)> {
+  let CopyCost = 8;
+}
 
-def VReg_512 : RegisterClass<"AMDGPU", [v16i32, v16f32], 512, (add VGPR_512)>;
+def VReg_512 : RegisterClass<"AMDGPU", [v16i32, v16f32], 512, (add VGPR_512)> {
+  let CopyCost = 16;
+}
 
 def VReg_1 : RegisterClass<"AMDGPU", [i1], 32, (add VGPR_32)> {
   let Size = 32;
@@ -252,7 +274,9 @@ def SCSrc_32 : RegInlineOperand<SReg_32> {
 
 def VS_32 : RegisterClass<"AMDGPU", [i32, f32], 32, (add VGPR_32, SReg_32)>;
 
-def VS_64 : RegisterClass<"AMDGPU", [i64, f64], 64, (add VReg_64, SReg_64)>;
+def VS_64 : RegisterClass<"AMDGPU", [i64, f64], 64, (add VReg_64, SReg_64)> {
+  let CopyCost = 2;
+}
 
 def VSrc_32 : RegisterOperand<VS_32> {
   let OperandNamespace = "AMDGPU";
