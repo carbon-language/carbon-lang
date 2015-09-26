@@ -340,9 +340,9 @@ class SGPRImm <dag frag> : PatLeaf<frag, [{
       static_cast<const SIRegisterInfo *>(Subtarget->getRegisterInfo());
   for (SDNode::use_iterator U = N->use_begin(), E = SDNode::use_end();
                                                 U != E; ++U) {
-    if (SIRI->isSGPRClass(getOperandRegClass(*U, U.getOperandNo()))) {
+    const TargetRegisterClass *RC = getOperandRegClass(*U, U.getOperandNo());
+    if (RC && SIRI->isSGPRClass(RC))
       return true;
-    }
   }
   return false;
 }]>;
