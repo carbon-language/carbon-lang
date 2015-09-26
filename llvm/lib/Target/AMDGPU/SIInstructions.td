@@ -1768,12 +1768,16 @@ defm V_MUL_HI_I32 : VOP3Inst <vop3<0x16c, 0x287>, "v_mul_hi_i32",
 } // isCommutable = 1, SchedRW = [WriteQuarterRate32]
 
 let SchedRW = [WriteFloatFMA, WriteSALU] in {
-defm V_DIV_SCALE_F32 : VOP3b_32 <vop3<0x16d, 0x1e0>, "v_div_scale_f32", []>;
+defm V_DIV_SCALE_F32 : VOP3bInst <vop3<0x16d, 0x1e0>, "v_div_scale_f32",
+  VOP3b_F32_I1_F32_F32_F32
+>;
 }
 
 let SchedRW = [WriteDouble, WriteSALU] in {
 // Double precision division pre-scale.
-defm V_DIV_SCALE_F64 : VOP3b_64 <vop3<0x16e, 0x1e1>, "v_div_scale_f64", []>;
+defm V_DIV_SCALE_F64 : VOP3bInst <vop3<0x16e, 0x1e1>, "v_div_scale_f64",
+  VOP3b_F64_I1_F64_F64_F64
+>;
 } // let SchedRW = [WriteDouble]
 
 let isCommutable = 1, Uses = [VCC, EXEC] in {

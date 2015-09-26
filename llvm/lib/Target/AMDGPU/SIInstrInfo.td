@@ -1190,6 +1190,21 @@ def VOP2b_I32_I1_I32_I32_I1 : VOPProfile<[i32, i32, i32, i1]> {
   let Ins32 = (ins Src0RC32:$src0, Src1RC32:$src1);
 }
 
+class VOP3b_Profile<ValueType vt> : VOPProfile<[vt, vt, vt, vt]> {
+  let Outs64 = (outs DstRC:$vdst, SReg_64:$sdst);
+  let Asm64 = "$vdst, $sdst, $src0_modifiers, $src1_modifiers, $src2_modifiers"#"$clamp"#"$omod";
+}
+
+def VOP3b_F32_I1_F32_F32_F32 : VOP3b_Profile<f32> {
+  // FIXME: Hack to stop printing _e64
+  let DstRC = RegisterOperand<VGPR_32>;
+}
+
+def VOP3b_F64_I1_F64_F64_F64 : VOP3b_Profile<f64> {
+  // FIXME: Hack to stop printing _e64
+  let DstRC = RegisterOperand<VReg_64>;
+}
+
 // VOPC instructions are a special case because for the 32-bit
 // encoding, we want to display the implicit vcc write as if it were
 // an explicit $dst.
@@ -1894,24 +1909,12 @@ multiclass VOP3_VCC_Inst <vop3 op, string opName,
   3, 1
 >;
 
-multiclass VOP3b_Helper <vop op, RegisterClass vrc, RegisterOperand arc,
-                    string opName, list<dag> pattern> :
+multiclass VOP3bInst <vop op, string opName, VOPProfile P, list<dag> pattern = []> :
   VOP3b_2_3_m <
-  op, (outs vrc:$vdst, SReg_64:$sdst),
-      (ins InputModsNoDefault:$src0_modifiers, arc:$src0,
-           InputModsNoDefault:$src1_modifiers, arc:$src1,
-           InputModsNoDefault:$src2_modifiers, arc:$src2,
-           ClampMod:$clamp, omod:$omod),
-  opName#" $vdst, $sdst, $src0_modifiers, $src1_modifiers, $src2_modifiers"#"$clamp"#"$omod", pattern,
-  opName, opName, 1, 1
+  op, P.Outs64, P.Ins64,
+  opName#" "#P.Asm64, pattern,
+  opName, "", 1, 1
 >;
-
-multiclass VOP3b_64 <vop3 op, string opName, list<dag> pattern> :
-  VOP3b_Helper <op, VReg_64, VSrc_64, opName, pattern>;
-
-multiclass VOP3b_32 <vop3 op, string opName, list<dag> pattern> :
-  VOP3b_Helper <op, VGPR_32, VSrc_32, opName, pattern>;
-
 
 class Vop3ModPat<Instruction Inst, VOPProfile P, SDPatternOperator node> : Pat<
   (node (P.Src0VT (VOP3Mods0 P.Src0VT:$src0, i32:$src0_modifiers, i1:$clamp, i32:$omod)),
