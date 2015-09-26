@@ -25,11 +25,11 @@ defm COPYSIGN : BinaryFP<fcopysign>;
 defm CEIL : UnaryFP<fceil>;
 defm FLOOR : UnaryFP<ffloor>;
 defm TRUNC : UnaryFP<ftrunc>;
-defm NEARESTINT : UnaryFP<fnearbyint>;
+defm NEAREST : UnaryFP<fnearbyint>;
 
 // WebAssembly doesn't expose inexact exceptions, so map frint to fnearbyint.
-def : Pat<(frint f32:$src), (NEARESTINT_F32 f32:$src)>;
-def : Pat<(frint f64:$src), (NEARESTINT_F64 f64:$src)>;
+def : Pat<(frint f32:$src), (NEAREST_F32 f32:$src)>;
+def : Pat<(frint f64:$src), (NEAREST_F64 f64:$src)>;
 
 defm EQ : ComparisonFP<SETOEQ>;
 defm NE : ComparisonFP<SETUNE>;
@@ -55,6 +55,6 @@ def : Pat<(setge f64:$lhs, f64:$rhs), (GE_F64 f64:$lhs, f64:$rhs)>;
 /*
  * TODO(jfb): Add the following for 32-bit and 64-bit.
  *
- * float32.min: minimum (binary operator); if either operand is NaN, returns NaN
- * float32.max: maximum (binary operator); if either operand is NaN, returns NaN
+ * f32.min: minimum (binary operator); if either operand is NaN, returns NaN
+ * f32.max: maximum (binary operator); if either operand is NaN, returns NaN
  */

@@ -48,7 +48,7 @@ foreach i = 0-4 in {
 //  Register classes
 //===----------------------------------------------------------------------===//
 
-def Int32 : WebAssemblyRegClass<[i32], 32, (add (sequence "I%u", 0, 4), SP32)>;
-def Int64 : WebAssemblyRegClass<[i64], 64, (add (sequence "L%u", 0, 4), SP64)>;
-def Float32 : WebAssemblyRegClass<[f32], 32, (add (sequence "F%u", 0, 4))>;
-def Float64 : WebAssemblyRegClass<[f64], 64, (add (sequence "D%u", 0, 4))>;
+def I32 : WebAssemblyRegClass<[i32], 32, (add (sequence "I%u", 0, 4), SP32)>;
+def I64 : WebAssemblyRegClass<[i64], 64, (add (sequence "L%u", 0, 4), SP64)>;
+def F32 : WebAssemblyRegClass<[f32], 32, (add (sequence "F%u", 0, 4))>;
+def F64 : WebAssemblyRegClass<[f64], 64, (add (sequence "D%u", 0, 4))>;

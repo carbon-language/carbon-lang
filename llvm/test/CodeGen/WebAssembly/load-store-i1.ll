@@ -5,43 +5,43 @@
 target datalayout = "e-p:32:32-i64:64-n32:64-S128"
 target triple = "wasm32-unknown-unknown"
 
-; CHECK-LABEL: (func $load_unsigned_i1_i32
-; CHECK:      (setlocal @1 (load_zx_i8_i32 @0))
+; CHECK-LABEL: (func $load_u_i1_i32
+; CHECK:      (setlocal @1 (load_u_i8_i32 @0))
 ; CHECK-NEXT: (return @1)
-define i32 @load_unsigned_i1_i32(i1* %p) {
+define i32 @load_u_i1_i32(i1* %p) {
   %v = load i1, i1* %p
   %e = zext i1 %v to i32
   ret i32 %e
 }
 
-; CHECK-LABEL: (func $load_signed_i1_i32
-; CHECK:      (setlocal @1 (load_zx_i8_i32 @0))
+; CHECK-LABEL: (func $load_s_i1_i32
+; CHECK:      (setlocal @1 (load_u_i8_i32 @0))
 ; CHECK-NEXT: (setlocal @2 (immediate 31))
 ; CHECK-NEXT: (setlocal @3 (shl @1 @2))
 ; CHECK-NEXT: (setlocal @4 (shr_s @3 @2))
 ; CHECK-NEXT: (return @4)
-define i32 @load_signed_i1_i32(i1* %p) {
+define i32 @load_s_i1_i32(i1* %p) {
   %v = load i1, i1* %p
   %e = sext i1 %v to i32
   ret i32 %e
 }
 
-; CHECK-LABEL: (func $load_unsigned_i1_i64
-; CHECK:      (setlocal @1 (load_zx_i8_i64 @0))
+; CHECK-LABEL: (func $load_u_i1_i64
+; CHECK:      (setlocal @1 (load_u_i8_i64 @0))
 ; CHECK-NEXT: (return @1)
-define i64 @load_unsigned_i1_i64(i1* %p) {
+define i64 @load_u_i1_i64(i1* %p) {
   %v = load i1, i1* %p
   %e = zext i1 %v to i64
   ret i64 %e
 }
 
-; CHECK-LABEL: (func $load_signed_i1_i64
-; CHECK:      (setlocal @1 (load_zx_i8_i64 @0))
+; CHECK-LABEL: (func $load_s_i1_i64
+; CHECK:      (setlocal @1 (load_u_i8_i64 @0))
 ; CHECK-NEXT: (setlocal @2 (immediate 63))
 ; CHECK-NEXT: (setlocal @3 (shl @1 @2))
 ; CHECK-NEXT: (setlocal @4 (shr_s @3 @2))
 ; CHECK-NEXT: (return @4)
-define i64 @load_signed_i1_i64(i1* %p) {
+define i64 @load_s_i1_i64(i1* %p) {
   %v = load i1, i1* %p
   %e = sext i1 %v to i64
   ret i64 %e

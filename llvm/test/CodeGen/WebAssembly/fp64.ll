@@ -95,16 +95,16 @@ define double @trunc64(double %x) {
   ret double %a
 }
 
-; CHECK-LABEL: (func $nearestint64
-; CHECK: (setlocal @1 (nearestint @0))
-define double @nearestint64(double %x) {
+; CHECK-LABEL: (func $nearest64
+; CHECK: (setlocal @1 (nearest @0))
+define double @nearest64(double %x) {
   %a = call double @llvm.nearbyint.f64(double %x)
   ret double %a
 }
 
-; CHECK-LABEL: (func $nearestint64_via_rint
-; CHECK: (setlocal @1 (nearestint @0))
-define double @nearestint64_via_rint(double %x) {
+; CHECK-LABEL: (func $nearest64_via_rint
+; CHECK: (setlocal @1 (nearest @0))
+define double @nearest64_via_rint(double %x) {
   %a = call double @llvm.rint.f64(double %x)
   ret double %a
 }

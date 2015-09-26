@@ -87,26 +87,26 @@ multiclass ARGUMENT<WebAssemblyRegClass vt> {
   def ARGUMENT_#vt : I<(outs vt:$res), (ins i32imm:$argno),
                        [(set vt:$res, (WebAssemblyargument timm:$argno))]>;
 }
-defm : ARGUMENT<Int32>;
-defm : ARGUMENT<Int64>;
-defm : ARGUMENT<Float32>;
-defm : ARGUMENT<Float64>;
+defm : ARGUMENT<I32>;
+defm : ARGUMENT<I64>;
+defm : ARGUMENT<F32>;
+defm : ARGUMENT<F64>;
 
 
-def Immediate_I32 : I<(outs Int32:$res), (ins i32imm:$imm),
-                      [(set Int32:$res, imm:$imm)]>;
-def Immediate_I64 : I<(outs Int64:$res), (ins i64imm:$imm),
-                      [(set Int64:$res, imm:$imm)]>;
-def Immediate_F32 : I<(outs Float32:$res), (ins f32imm:$imm),
-                      [(set Float32:$res, fpimm:$imm)]>;
-def Immediate_F64 : I<(outs Float64:$res), (ins f64imm:$imm),
-                      [(set Float64:$res, fpimm:$imm)]>;
+def Immediate_I32 : I<(outs I32:$res), (ins i32imm:$imm),
+                      [(set I32:$res, imm:$imm)]>;
+def Immediate_I64 : I<(outs I64:$res), (ins i64imm:$imm),
+                      [(set I64:$res, imm:$imm)]>;
+def Immediate_F32 : I<(outs F32:$res), (ins f32imm:$imm),
+                      [(set F32:$res, fpimm:$imm)]>;
+def Immediate_F64 : I<(outs F64:$res), (ins f64imm:$imm),
+                      [(set F64:$res, fpimm:$imm)]>;
 
 // Special types of immediates. FIXME: Hard-coded as 32-bit for now.
-def GLOBAL : I<(outs Int32:$dst), (ins global:$addr),
-               [(set Int32:$dst, (WebAssemblywrapper tglobaladdr:$addr))]>;
-def JUMP_TABLE : I<(outs Int32:$dst), (ins tjumptable_op:$addr),
-                   [(set Int32:$dst, (WebAssemblywrapper tjumptable:$addr))]>;
+def GLOBAL : I<(outs I32:$dst), (ins global:$addr),
+               [(set I32:$dst, (WebAssemblywrapper tglobaladdr:$addr))]>;
+def JUMP_TABLE : I<(outs I32:$dst), (ins tjumptable_op:$addr),
+                   [(set I32:$dst, (WebAssemblywrapper tjumptable:$addr))]>;
 
 //===----------------------------------------------------------------------===//
 // Additional sets of instructions.

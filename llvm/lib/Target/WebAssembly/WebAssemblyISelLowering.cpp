@@ -107,10 +107,10 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   setStackPointerRegisterToSaveRestore(
       Subtarget->hasAddr64() ? WebAssembly::SP64 : WebAssembly::SP32);
   // Set up the register classes.
-  addRegisterClass(MVT::i32, &WebAssembly::Int32RegClass);
-  addRegisterClass(MVT::i64, &WebAssembly::Int64RegClass);
-  addRegisterClass(MVT::f32, &WebAssembly::Float32RegClass);
-  addRegisterClass(MVT::f64, &WebAssembly::Float64RegClass);
+  addRegisterClass(MVT::i32, &WebAssembly::I32RegClass);
+  addRegisterClass(MVT::i64, &WebAssembly::I64RegClass);
+  addRegisterClass(MVT::f32, &WebAssembly::F32RegClass);
+  addRegisterClass(MVT::f64, &WebAssembly::F64RegClass);
   // Compute derived properties from the register classes.
   computeRegisterProperties(Subtarget->getRegisterInfo());
 

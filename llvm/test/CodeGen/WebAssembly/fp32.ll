@@ -95,16 +95,16 @@ define float @trunc32(float %x) {
   ret float %a
 }
 
-; CHECK-LABEL: (func $nearestint32
-; CHECK: (setlocal @1 (nearestint @0))
-define float @nearestint32(float %x) {
+; CHECK-LABEL: (func $nearest32
+; CHECK: (setlocal @1 (nearest @0))
+define float @nearest32(float %x) {
   %a = call float @llvm.nearbyint.f32(float %x)
   ret float %a
 }
 
-; CHECK-LABEL: (func $nearestint32_via_rint
-; CHECK: (setlocal @1 (nearestint @0))
-define float @nearestint32_via_rint(float %x) {
+; CHECK-LABEL: (func $nearest32_via_rint
+; CHECK: (setlocal @1 (nearest @0))
+define float @nearest32_via_rint(float %x) {
   %a = call float @llvm.rint.f32(float %x)
   ret float %a
 }
