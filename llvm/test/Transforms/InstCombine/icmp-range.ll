@@ -111,8 +111,40 @@ define i1 @test_multi_range2(i32* nocapture readonly %arg) {
   ret i1 %rval
 }
 
+; Values' ranges overlap each other, so it can not be simplified.
+define i1 @test_two_ranges(i32* nocapture readonly %arg1, i32* nocapture readonly %arg2) {
+; CHECK-LABEL: test_two_ranges
+; CHECK: icmp ult i32 %val2, %val1
+  %val1 = load i32, i32* %arg1, !range !5
+  %val2 = load i32, i32* %arg2, !range !6
+  %rval = icmp ult i32 %val2, %val1
+  ret i1 %rval
+}
+
+; Values' ranges do not overlap each other, so it can simplified to false.
+define i1 @test_two_ranges2(i32* nocapture readonly %arg1, i32* nocapture readonly %arg2) {
+; CHECK-LABEL: test_two_ranges2
+; CHECK: ret i1 false
+  %val1 = load i32, i32* %arg1, !range !0
+  %val2 = load i32, i32* %arg2, !range !6
+  %rval = icmp ult i32 %val2, %val1
+  ret i1 %rval
+}
+
+; Values' ranges do not overlap each other, so it can simplified to true.
+define i1 @test_two_ranges3(i32* nocapture readonly %arg1, i32* nocapture readonly %arg2) {
+; CHECK-LABEL: test_two_ranges3
+; CHECK: ret i1 true
+  %val1 = load i32, i32* %arg1, !range !0
+  %val2 = load i32, i32* %arg2, !range !6
+  %rval = icmp ugt i32 %val2, %val1
+  ret i1 %rval
+}
+
 !0 = !{i32 1, i32 6} 
 !1 = !{i32 0, i32 6} 
 !2 = !{i8 0, i8 1} 
 !3 = !{i8 0, i8 6} 
 !4 = !{i32 1, i32 6, i32 8, i32 10}
+!5 = !{i32 5, i32 10} 
+!6 = !{i32 8, i32 16} 
