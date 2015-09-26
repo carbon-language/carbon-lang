@@ -2936,7 +2936,7 @@ void ScopInfo::buildMemoryAccess(
   bool IsAffine = !isVariantInNonAffineLoop &&
                   isAffineExpr(R, AccessFunction, *SE, BasePointer->getValue());
 
-  // FIXME: Size if the number of bytes of an array element, not the number of
+  // FIXME: Size of the number of bytes of an array element, not the number of
   // elements as probably intended here.
   const SCEV *SizeSCEV = SE->getConstant(ZeroOffset->getType(), Size);
 
