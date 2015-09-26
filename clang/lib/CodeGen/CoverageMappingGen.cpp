@@ -66,7 +66,7 @@ public:
 
   void setStartLoc(SourceLocation Loc) { LocStart = Loc; }
 
-  const SourceLocation &getStartLoc() const {
+  SourceLocation getStartLoc() const {
     assert(LocStart && "Region has no start location");
     return *LocStart;
   }
@@ -75,7 +75,7 @@ public:
 
   void setEndLoc(SourceLocation Loc) { LocEnd = Loc; }
 
-  const SourceLocation &getEndLoc() const {
+  SourceLocation getEndLoc() const {
     assert(LocEnd && "Region has no end location");
     return *LocEnd;
   }
