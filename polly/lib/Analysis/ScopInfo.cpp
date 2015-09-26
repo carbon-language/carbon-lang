@@ -2645,7 +2645,8 @@ void Scop::buildSchedule(
     auto *Stmt = addScopStmt(nullptr, R);
     auto *UDomain = isl_union_set_from_set(Stmt->getDomain());
     auto *StmtSchedule = isl_schedule_from_domain(UDomain);
-    auto &LSchedulePair = LoopSchedules[nullptr];
+    Loop *L = getLoopSurroundingRegion(*R, LI);
+    auto &LSchedulePair = LoopSchedules[L];
     LSchedulePair.first = StmtSchedule;
     return;
   }

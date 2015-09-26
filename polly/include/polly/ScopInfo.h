@@ -1168,9 +1168,10 @@ private:
 
   /// @brief Build Schedule and ScopStmts.
   ///
-  /// @param R  The current region traversed.
-  /// @param LI The LoopInfo object.
-  /// @param SD The ScopDetection object.
+  /// @param R              The current region traversed.
+  /// @param LI             The LoopInfo object.
+  /// @param SD             The ScopDetection object.
+  /// @param LoopSchedules  Map from loops to their schedule and progress.
   void buildSchedule(
       Region *R, LoopInfo &LI, ScopDetection &SD,
       DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules);
