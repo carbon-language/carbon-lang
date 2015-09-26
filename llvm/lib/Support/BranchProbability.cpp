@@ -19,20 +19,13 @@
 
 using namespace llvm;
 
+const uint32_t BranchProbability::D;
+
 raw_ostream &BranchProbability::print(raw_ostream &OS) const {
-  auto GetHexDigit = [](int Val) -> char {
-    assert(Val < 16);
-    if (Val < 10)
-      return '0' + Val;
-    return 'a' + Val - 10;
-  };
-  OS << "0x";
-  for (int Digits = 0; Digits < 8; ++Digits)
-    OS << GetHexDigit(N >> (28 - Digits * 4) & 0xf);
-  OS << " / 0x";
-  for (int Digits = 0; Digits < 8; ++Digits)
-    OS << GetHexDigit(D >> (28 - Digits * 4) & 0xf);
-  OS << " = " << format("%.2f%%", ((double)N / D) * 100.0);
+  // Get a percentage rounded to two decimal digits. This avoids
+  // implementation-defined rounding inside printf.
+  double Percent = rint(((double)N / D) * 100.0 * 100.0) / 100.0;
+  OS << format("0x%08" PRIx32 " / 0x%08" PRIx32 " = %.2f%%", N, D, Percent);
   return OS;
 }
 
@@ -50,25 +43,11 @@ BranchProbability::BranchProbability(uint32_t Numerator, uint32_t Denominator) {
   }
 }
 
-BranchProbability &BranchProbability::operator+=(BranchProbability RHS) {
-  assert(N <= D - RHS.N &&
-         "The sum of branch probabilities should not exceed one!");
-  N += RHS.N;
-  return *this;
-}
-
-BranchProbability &BranchProbability::operator-=(BranchProbability RHS) {
-  assert(N >= RHS.N &&
-         "Can only subtract a smaller probability from a larger one!");
-  N -= RHS.N;
-  return *this;
-}
-
 // If ConstD is not zero, then replace D by ConstD so that division and modulo
 // operations by D can be optimized, in case this function is not inlined by the
 // compiler.
 template <uint32_t ConstD>
-inline uint64_t scale(uint64_t Num, uint32_t N, uint32_t D) {
+static uint64_t scale(uint64_t Num, uint32_t N, uint32_t D) {
   if (ConstD > 0)
     D = ConstD;
 

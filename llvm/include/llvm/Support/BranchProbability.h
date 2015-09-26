@@ -79,8 +79,20 @@ public:
   /// \return \c Num divided by \c this.
   uint64_t scaleByInverse(uint64_t Num) const;
 
-  BranchProbability &operator+=(BranchProbability RHS);
-  BranchProbability &operator-=(BranchProbability RHS);
+  BranchProbability &operator+=(BranchProbability RHS) {
+    assert(N <= D - RHS.N &&
+           "The sum of branch probabilities should not exceed one!");
+    N += RHS.N;
+    return *this;
+  }
+
+  BranchProbability &operator-=(BranchProbability RHS) {
+    assert(N >= RHS.N &&
+           "Can only subtract a smaller probability from a larger one!");
+    N -= RHS.N;
+    return *this;
+  }
+
   BranchProbability &operator*=(BranchProbability RHS) {
     N = (static_cast<uint64_t>(N) * RHS.N + D / 2) / D;
     return *this;
