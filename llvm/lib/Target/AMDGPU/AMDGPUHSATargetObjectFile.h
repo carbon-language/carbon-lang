@@ -23,7 +23,7 @@ namespace llvm {
 
 class AMDGPUHSATargetObjectFile final : public TargetLoweringObjectFileELF {
 public:
-  void Initialize(MCContext &Ctx, const TargetMachine &TM);
+  void Initialize(MCContext &Ctx, const TargetMachine &TM) override;
 
   MCSection *SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                                     Mangler &Mang,
