@@ -2403,12 +2403,19 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
 }
 
 // Until ARM libraries are build separately, we have them all in one library
-static StringRef getArchNameForCompilerRTLib(const ToolChain &TC) {
-  if (TC.getTriple().isWindowsMSVCEnvironment() &&
-      TC.getArch() == llvm::Triple::x86)
+static StringRef getArchNameForCompilerRTLib(const ToolChain &TC,
+                                             const ArgList &Args) {
+  const llvm::Triple &Triple = TC.getTriple();
+  bool IsWindows = Triple.isOSWindows();
+
+  if (Triple.isWindowsMSVCEnvironment() && TC.getArch() == llvm::Triple::x86)
     return "i386";
+
   if (TC.getArch() == llvm::Triple::arm || TC.getArch() == llvm::Triple::armeb)
-    return "arm";
+    return (arm::getARMFloatABI(TC, Args) == arm::FloatABI::Hard && !IsWindows)
+               ? "armhf"
+               : "arm";
+
   return TC.getArchName();
 }
 
@@ -2423,8 +2430,8 @@ static SmallString<128> getCompilerRTLibDir(const ToolChain &TC) {
   return Res;
 }
 
-SmallString<128> tools::getCompilerRT(const ToolChain &TC, StringRef Component,
-                                      bool Shared) {
+SmallString<128> tools::getCompilerRT(const ToolChain &TC, const ArgList &Args,
+                                      StringRef Component, bool Shared) {
   const char *Env = TC.getTriple().getEnvironment() == llvm::Triple::Android
                         ? "-android"
                         : "";
@@ -2432,7 +2439,7 @@ SmallString<128> tools::getCompilerRT(const ToolChain &TC, StringRef Component,
   bool IsOSWindows = TC.getTriple().isOSWindows();
   bool IsITANMSVCWindows = TC.getTriple().isWindowsMSVCEnvironment() ||
                            TC.getTriple().isWindowsItaniumEnvironment();
-  StringRef Arch = getArchNameForCompilerRTLib(TC);
+  StringRef Arch = getArchNameForCompilerRTLib(TC, Args);
   const char *Prefix = IsITANMSVCWindows ? "" : "lib";
   const char *Suffix =
       Shared ? (IsOSWindows ? ".dll" : ".so") : (IsITANMSVCWindows ? ".lib" : ".a");
@@ -2444,12 +2451,19 @@ SmallString<128> tools::getCompilerRT(const ToolChain &TC, StringRef Component,
   return Path;
 }
 
+static const char *getCompilerRTArgString(const ToolChain &TC,
+                                          const llvm::opt::ArgList &Args,
+                                          StringRef Component,
+                                          bool Shared = false) {
+  return Args.MakeArgString(getCompilerRT(TC, Args, Component, Shared));
+}
+
 // This adds the static libclang_rt.builtins-arch.a directly to the command line
 // FIXME: Make sure we can also emit shared objects if they're requested
 // and available, check for possible errors, etc.
 static void addClangRT(const ToolChain &TC, const ArgList &Args,
                        ArgStringList &CmdArgs) {
-  CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, "builtins")));
+  CmdArgs.push_back(getCompilerRTArgString(TC, Args, "builtins"));
 }
 
 static void addProfileRT(const ToolChain &TC, const ArgList &Args,
@@ -2464,7 +2478,7 @@ static void addProfileRT(const ToolChain &TC, const ArgList &Args,
         Args.hasArg(options::OPT_coverage)))
     return;
 
-  CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, "profile")));
+  CmdArgs.push_back(getCompilerRTArgString(TC, Args, "profile"));
 }
 
 namespace {
@@ -2545,7 +2559,7 @@ static void addSanitizerRuntime(const ToolChain &TC, const ArgList &Args,
   // whole-archive.
   if (!IsShared)
     CmdArgs.push_back("-whole-archive");
-  CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, Sanitizer, IsShared)));
+  CmdArgs.push_back(getCompilerRTArgString(TC, Args, Sanitizer, IsShared));
   if (!IsShared)
     CmdArgs.push_back("-no-whole-archive");
 }
@@ -2555,7 +2569,7 @@ static void addSanitizerRuntime(const ToolChain &TC, const ArgList &Args,
 static bool addSanitizerDynamicList(const ToolChain &TC, const ArgList &Args,
                                     ArgStringList &CmdArgs,
                                     StringRef Sanitizer) {
-  SmallString<128> SanRT = getCompilerRT(TC, Sanitizer);
+  SmallString<128> SanRT = getCompilerRT(TC, Args, Sanitizer);
   if (llvm::sys::fs::exists(SanRT + ".syms")) {
     CmdArgs.push_back(Args.MakeArgString("--dynamic-list=" + SanRT + ".syms"));
     return true;
@@ -9016,19 +9030,18 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
           "asan_dynamic", "asan_dynamic_runtime_thunk",
       };
       for (const auto &Component : CompilerRTComponents)
-        CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, Component)));
+        CmdArgs.push_back(getCompilerRTArgString(TC, Args, Component));
       // Make sure the dynamic runtime thunk is not optimized out at link time
       // to ensure proper SEH handling.
       CmdArgs.push_back(Args.MakeArgString("-include:___asan_seh_interceptor"));
     } else if (DLL) {
-      CmdArgs.push_back(
-          Args.MakeArgString(getCompilerRT(TC, "asan_dll_thunk")));
+      CmdArgs.push_back(getCompilerRTArgString(TC, Args, "asan_dll_thunk"));
     } else {
       static const char *CompilerRTComponents[] = {
           "asan", "asan_cxx",
       };
       for (const auto &Component : CompilerRTComponents)
-        CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, Component)));
+        CmdArgs.push_back(getCompilerRTArgString(TC, Args, Component));
     }
   }
 
