@@ -14,6 +14,7 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -455,13 +456,8 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   llvm::cl::ParseCommandLineOptions(BackendArgs.size() - 1,
                                     BackendArgs.data());
 
-  std::string FeaturesStr;
-  if (!TargetOpts.Features.empty()) {
-    SubtargetFeatures Features;
-    for (const std::string &Feature : TargetOpts.Features)
-      Features.AddFeature(Feature);
-    FeaturesStr = Features.getString();
-  }
+  std::string FeaturesStr =
+      llvm::join(TargetOpts.Features.begin(), TargetOpts.Features.end(), ",");
 
   // Keep this synced with the equivalent code in tools/driver/cc1as_main.cpp.
   llvm::Reloc::Model RM = llvm::Reloc::Default;
