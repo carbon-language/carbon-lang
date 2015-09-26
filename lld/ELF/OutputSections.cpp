@@ -367,6 +367,14 @@ bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
   return B.isUsedInDynamicReloc();
 }
 
+bool lld::elf2::shouldKeepInSymtab(StringRef SymName) {
+  if (Config->DiscardNone)
+    return true;
+
+  // ELF defines dynamic locals as symbols which name starts with ".L".
+  return !(Config->DiscardLocals && SymName.startswith(".L"));
+}
+
 template <class ELFT>
 SymbolTableSection<ELFT>::SymbolTableSection(
     SymbolTable &Table, StringTableSection<ELFT::Is64Bits> &StrTabSec,

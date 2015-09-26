@@ -43,14 +43,7 @@ getLocalSymVA(const typename llvm::object::ELFFile<ELFT>::Elf_Sym *Sym,
 
 bool includeInSymtab(const SymbolBody &B);
 bool includeInDynamicSymtab(const SymbolBody &B);
-
-inline bool shouldKeepInSymtab(StringRef SymName) {
-  if (Config->DiscardNone)
-    return true;
-
-  // ELF defines dynamic locals as symbols which name starts with ".L".
-  return !(Config->DiscardLocals && SymName.startswith(".L"));
-}
+bool shouldKeepInSymtab(StringRef SymName);
 
 // This represents a section in an output file.
 // Different sub classes represent different types of sections. Some contain
