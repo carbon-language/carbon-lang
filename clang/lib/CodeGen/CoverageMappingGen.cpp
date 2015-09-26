@@ -47,17 +47,6 @@ public:
                       Optional<SourceLocation> LocEnd)
       : Count(Count), LocStart(LocStart), LocEnd(LocEnd) {}
 
-  SourceMappingRegion(SourceMappingRegion &&Region)
-      : Count(std::move(Region.Count)), LocStart(std::move(Region.LocStart)),
-        LocEnd(std::move(Region.LocEnd)) {}
-
-  SourceMappingRegion &operator=(SourceMappingRegion &&RHS) {
-    Count = std::move(RHS.Count);
-    LocStart = std::move(RHS.LocStart);
-    LocEnd = std::move(RHS.LocEnd);
-    return *this;
-  }
-
   const Counter &getCounter() const { return Count; }
 
   void setCounter(Counter C) { Count = C; }
@@ -426,7 +415,7 @@ struct CounterCoverageMappingBuilder
           MostRecentLocation = getIncludeOrExpansionLoc(EndLoc);
 
         assert(SM.isWrittenInSameFile(Region.getStartLoc(), EndLoc));
-        SourceRegions.push_back(std::move(Region));
+        SourceRegions.push_back(Region);
       }
       RegionStack.pop_back();
     }
