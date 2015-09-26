@@ -45,6 +45,8 @@ static TargetInfo *createTarget(uint16_t EMachine) {
     return new PPCTargetInfo();
   case EM_ARM:
     return new ARMTargetInfo();
+  case EM_AARCH64:
+    return new AArch64TargetInfo();
   case EM_PPC64:
     return new PPC64TargetInfo();
   case EM_X86_64:

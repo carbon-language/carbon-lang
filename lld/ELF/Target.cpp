@@ -211,5 +211,17 @@ bool ARMTargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
 bool ARMTargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
 void ARMTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
                                 uint64_t BaseAddr, uint64_t SymVA) const {}
+
+AArch64TargetInfo::AArch64TargetInfo() {
+  // PCRelReloc = FIXME
+  // GotReloc = FIXME
+}
+void AArch64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                                      uint64_t PltEntryAddr) const {}
+bool AArch64TargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
+bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
+void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
+                                    uint32_t Type, uint64_t BaseAddr,
+                                    uint64_t SymVA) const {}
 }
 }
