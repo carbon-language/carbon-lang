@@ -160,22 +160,46 @@ static const ScopArrayInfo *identifyBasePtrOriginSAI(Scop *S, Value *BasePtr) {
 }
 
 ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
-                             ArrayRef<const SCEV *> DimensionSizes, bool IsPHI,
-                             Scop *S)
-    : BasePtr(BasePtr), ElementType(ElementType),
-      DimensionSizes(DimensionSizes.begin(), DimensionSizes.end()),
-      IsPHI(IsPHI) {
+                             ArrayRef<const SCEV *> Sizes, bool IsPHI, Scop *S)
+    : BasePtr(BasePtr), ElementType(ElementType), IsPHI(IsPHI), S(*S) {
   std::string BasePtrName =
       getIslCompatibleName("MemRef_", BasePtr, IsPHI ? "__phi" : "");
   Id = isl_id_alloc(Ctx, BasePtrName.c_str(), this);
-  for (const SCEV *Expr : DimensionSizes) {
-    isl_pw_aff *Size = S->getPwAff(Expr);
-    DimensionSizesPw.push_back(Size);
-  }
 
+  updateSizes(Sizes);
   BasePtrOriginSAI = identifyBasePtrOriginSAI(S, BasePtr);
   if (BasePtrOriginSAI)
     const_cast<ScopArrayInfo *>(BasePtrOriginSAI)->addDerivedSAI(this);
+}
+
+__isl_give isl_space *ScopArrayInfo::getSpace() const {
+  auto Space =
+      isl_space_set_alloc(isl_id_get_ctx(Id), 0, getNumberOfDimensions());
+  Space = isl_space_set_tuple_id(Space, isl_dim_set, isl_id_copy(Id));
+  return Space;
+}
+
+void ScopArrayInfo::updateSizes(ArrayRef<const SCEV *> NewSizes) {
+#ifndef NDEBUG
+  int SharedDims = std::min(NewSizes.size(), DimensionSizes.size());
+  int ExtraDimsNew = NewSizes.size() - SharedDims;
+  int ExtraDimsOld = DimensionSizes.size() - SharedDims;
+  for (int i = 0; i < SharedDims; i++) {
+    assert(NewSizes[i + ExtraDimsNew] == DimensionSizes[i + ExtraDimsOld] &&
+           "Array update with non-matching dimension sizes");
+  }
+#endif
+
+  DimensionSizes.clear();
+  DimensionSizes.insert(DimensionSizes.begin(), NewSizes.begin(),
+                        NewSizes.end());
+  for (isl_pw_aff *Size : DimensionSizesPw)
+    isl_pw_aff_free(Size);
+  DimensionSizesPw.clear();
+  for (const SCEV *Expr : DimensionSizes) {
+    isl_pw_aff *Size = S.getPwAff(Expr);
+    DimensionSizesPw.push_back(Size);
+  }
 }
 
 ScopArrayInfo::~ScopArrayInfo() {
@@ -225,6 +249,26 @@ const ScopArrayInfo *ScopArrayInfo::getFromId(isl_id *Id) {
   const ScopArrayInfo *SAI = static_cast<ScopArrayInfo *>(User);
   isl_id_free(Id);
   return SAI;
+}
+
+void MemoryAccess::updateDimensionality() {
+  auto ArraySpace = getScopArrayInfo()->getSpace();
+  auto AccessSpace = isl_space_range(isl_map_get_space(AccessRelation));
+
+  auto DimsArray = isl_space_dim(ArraySpace, isl_dim_set);
+  auto DimsAccess = isl_space_dim(AccessSpace, isl_dim_set);
+  auto DimsMissing = DimsArray - DimsAccess;
+
+  auto Map = isl_map_from_domain_and_range(isl_set_universe(AccessSpace),
+                                           isl_set_universe(ArraySpace));
+
+  for (unsigned i = 0; i < DimsMissing; i++)
+    Map = isl_map_fix_si(Map, isl_dim_out, i, 0);
+
+  for (unsigned i = DimsMissing; i < DimsArray; i++)
+    Map = isl_map_equate(Map, isl_dim_in, i - DimsMissing, isl_dim_out, i);
+
+  AccessRelation = isl_map_apply_range(AccessRelation, Map);
 }
 
 const std::string
@@ -2146,6 +2190,7 @@ void Scop::init(LoopInfo &LI, ScopDetection &SD, AliasAnalysis &AA) {
   Loop *L = getLoopSurroundingRegion(R, LI);
   LoopSchedules[L];
   buildSchedule(&R, LI, SD, LoopSchedules);
+  updateAccessDimensionality();
   Schedule = LoopSchedules[L].first;
 
   realignParams();
@@ -2178,13 +2223,23 @@ Scop::~Scop() {
   }
 }
 
+void Scop::updateAccessDimensionality() {
+  for (auto &Stmt : *this)
+    for (auto &Access : Stmt)
+      Access->updateDimensionality();
+}
+
 const ScopArrayInfo *
 Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
                                ArrayRef<const SCEV *> Sizes, bool IsPHI) {
   auto &SAI = ScopArrayInfoMap[std::make_pair(BasePtr, IsPHI)];
-  if (!SAI)
+  if (!SAI) {
     SAI.reset(new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes, IsPHI,
                                 this));
+  } else {
+    if (Sizes.size() > SAI->getNumberOfDimensions())
+      SAI->updateSizes(Sizes);
+  }
   return SAI.get();
 }
 

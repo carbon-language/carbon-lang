@@ -114,6 +114,16 @@ public:
   ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *IslCtx,
                 ArrayRef<const SCEV *> DimensionSizes, bool IsPHI, Scop *S);
 
+  ///  @brief Update the sizes of the ScopArrayInfo object.
+  ///
+  ///  A ScopArrayInfo object may with certain outer dimensions not being added
+  ///  on the first creation. This function allows to update the sizes of the
+  ///  ScopArrayInfo object by adding additional outer array dimensions.
+  ///
+  ///  @param A vector of array sizes where the rightmost array sizes need to
+  ///         match the innermost array sizes already defined in SAI.
+  void updateSizes(ArrayRef<const SCEV *> Sizes);
+
   /// @brief Destructor to free the isl id of the base pointer.
   ~ScopArrayInfo();
 
@@ -182,6 +192,9 @@ public:
   /// @brief Access the ScopArrayInfo associated with an isl Id.
   static const ScopArrayInfo *getFromId(__isl_take isl_id *Id);
 
+  /// @brief Get the space of this array access.
+  __isl_give isl_space *getSpace() const;
+
 private:
   void addDerivedSAI(ScopArrayInfo *DerivedSAI) {
     DerivedSAIs.insert(DerivedSAI);
@@ -210,6 +223,9 @@ private:
 
   /// @brief Is this PHI node specific storage?
   bool IsPHI;
+
+  /// @brief The scop this SAI object belongs to.
+  Scop &S;
 };
 
 /// @brief Represent memory accesses in statements.
@@ -595,6 +611,16 @@ public:
 
   /// @brief Align the parameters in the access relation to the scop context
   void realignParams();
+
+  /// @brief Update the dimensionality of the memory access.
+  ///
+  /// During scop construction some memory accesses may not be constructed with
+  /// their full dimensionality, but outer dimensions that may have been omitted
+  /// if they took the value 'zero'. By updating the dimensionality of the
+  /// statement we add additional zero-valued dimensions to match the
+  /// dimensionality of the ScopArrayInfo object that belongs to this memory
+  /// access.
+  void updateDimensionality();
 
   /// @brief Get identifier for the memory access.
   ///
@@ -1130,6 +1156,15 @@ private:
   /// @param BB         The basic block we build the statement for (or null)
   /// @param R          The region we build the statement for (or null).
   ScopStmt *addScopStmt(BasicBlock *BB, Region *R);
+
+  /// @param Update access dimensionalities.
+  ///
+  /// When detecting memory accesses different accesses to the same array may
+  /// have built with different dimensionality, as outer zero-values dimensions
+  /// may not have been recognized as separate dimensions. This function goes
+  /// again over all memory accesses and updates their dimensionality to match
+  /// the dimensionality of the underlying ScopArrayInfo object.
+  void updateAccessDimensionality();
 
   /// @brief Build Schedule and ScopStmts.
   ///
