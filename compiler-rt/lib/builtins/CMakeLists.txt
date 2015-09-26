@@ -313,6 +313,7 @@ set(aarch64_SOURCES
   trunctfsf2.c
   ${GENERIC_SOURCES})
 
+set(armhf_SOURCES ${arm_SOURCES})
 set(armv7_SOURCES ${arm_SOURCES})
 set(armv7s_SOURCES ${arm_SOURCES})
 set(arm64_SOURCES ${aarch64_SOURCES})
