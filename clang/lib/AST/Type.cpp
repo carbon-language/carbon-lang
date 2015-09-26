@@ -1307,7 +1307,7 @@ Optional<ArrayRef<QualType>> Type::getObjCSubstitutions(
   if (!curClassDecl) {
     // If we don't have a context type (e.g., this is "id" or some
     // variant thereof), substitute the bounds.
-    return None;
+    return llvm::ArrayRef<QualType>();
   }
 
   // Follow the superclass chain until we've mapped the receiver type
@@ -1327,7 +1327,7 @@ Optional<ArrayRef<QualType>> Type::getObjCSubstitutions(
   // If we don't have a receiver type, or the receiver type does not
   // have type arguments, substitute in the defaults.
   if (!objectType || objectType->isUnspecialized()) {
-    return None;
+    return llvm::ArrayRef<QualType>();
   }
 
   // The receiver type has the type arguments we want.
