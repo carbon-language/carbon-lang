@@ -1479,7 +1479,7 @@ public:
 
   /// Return an empty list.
   ArrayRef<BasicBlock*> successors() {
-    return ArrayRef<BasicBlock*>();
+    return None;
   }
 
   SExpr *returnValue() { return Retval; }
@@ -1507,7 +1507,7 @@ inline ArrayRef<BasicBlock*> Terminator::successors() {
     case COP_Branch: return cast<Branch>(this)->successors();
     case COP_Return: return cast<Return>(this)->successors();
     default:
-      return ArrayRef<BasicBlock*>();
+      return None;
   }
 }
 
