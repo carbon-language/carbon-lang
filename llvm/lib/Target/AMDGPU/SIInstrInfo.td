@@ -1613,14 +1613,15 @@ multiclass VOP2b_Helper <vop2 op, string opName, dag outs32, dag outs64,
                          dag ins32, string asm32, list<dag> pat32,
                          dag ins64, string asm64, list<dag> pat64,
                          string revOp, bit HasMods, bit useSGPRInput> {
+  let SchedRW = [Write32Bit, WriteSALU] in {
+    let Uses = !if(useSGPRInput, [VCC, EXEC], [EXEC]), Defs = [VCC] in {
+      defm _e32 : VOP2_m <op, outs32, ins32, asm32, pat32, opName, revOp>;
+    }
 
-  let Uses = !if(useSGPRInput, [VCC, EXEC], [EXEC]), Defs = [VCC] in {
-    defm _e32 : VOP2_m <op, outs32, ins32, asm32, pat32, opName, revOp>;
+    defm _e64 : VOP3b_2_3_m <op,
+      outs64, ins64, opName#asm64, pat64, opName, revOp, HasMods, useSGPRInput
+    >;
   }
-
-  defm _e64 : VOP3b_2_3_m <op,
-    outs64, ins64, opName#asm64, pat64, opName, revOp, HasMods, useSGPRInput
-  >;
 }
 
 multiclass VOP2bInst <vop2 op, string opName, VOPProfile P,

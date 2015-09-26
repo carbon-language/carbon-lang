@@ -155,9 +155,9 @@ define void @reorder_global_load_local_store_global_load(i32 addrspace(1)* %out,
 }
 
 ; FUNC-LABEL: @reorder_local_offsets
-; CI: ds_write_b32 {{v[0-9]+}}, {{v[0-9]+}} offset:12
 ; CI: ds_read_b32 {{v[0-9]+}}, {{v[0-9]+}} offset:400
 ; CI: ds_read_b32 {{v[0-9]+}}, {{v[0-9]+}} offset:404
+; CI: ds_write_b32 {{v[0-9]+}}, {{v[0-9]+}} offset:12
 ; CI: ds_write_b32 {{v[0-9]+}}, {{v[0-9]+}} offset:400
 ; CI: ds_write_b32 {{v[0-9]+}}, {{v[0-9]+}} offset:404
 ; CI: buffer_store_dword
@@ -181,9 +181,10 @@ define void @reorder_local_offsets(i32 addrspace(1)* nocapture %out, i32 addrspa
 }
 
 ; FUNC-LABEL: @reorder_global_offsets
-; CI: buffer_store_dword {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 offset:12
 ; CI: buffer_load_dword {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 offset:400
 ; CI: buffer_load_dword {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 offset:404
+; CI: buffer_store_dword {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 offset:12
+; CI: buffer_load_dword {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 offset:12
 ; CI: buffer_store_dword {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 offset:400
 ; CI: buffer_store_dword {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 offset:404
 ; CI: buffer_store_dword
