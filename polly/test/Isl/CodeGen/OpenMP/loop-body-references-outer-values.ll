@@ -14,7 +14,7 @@
 ; AST: for (int c0 = 0; c0 <= 99; c0 += 1)
 ; AST:   Stmt_for_body(c0);
 
-; IR-LABEL: polly.start:
+; IR-LABEL: polly.parallel.for:
 ; IR-NEXT:  %0 = bitcast { float* }* %polly.par.userContext to i8*
 ; IR-NEXT:  call void @llvm.lifetime.start(i64 8, i8* %0)
 ; IR-NEXT:  %1 = getelementptr inbounds { float* }, { float* }* %polly.par.userContext, i32 0, i32 0

@@ -484,7 +484,7 @@ void BlockGenerator::createScalarInitialization(Scop &S) {
   if (StartBB == R.getEntry())
     StartBB = SplitBBTerm->getSuccessor(1);
 
-  Builder.SetInsertPoint(StartBB->begin());
+  Builder.SetInsertPoint(StartBB->getTerminator());
 
   for (auto &Pair : S.arrays()) {
     auto &Array = Pair.second;

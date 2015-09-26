@@ -30,7 +30,7 @@
 ; IR-NEXT: entry
 ; IR-NEXT:   %polly.par.userContext = alloca
 
-; IR-LABEL: polly.start:
+; IR-LABEL: polly.parallel.for:
 ; IR-NEXT:   %0 = bitcast {}* %polly.par.userContext to i8*
 ; IR-NEXT:   call void @llvm.lifetime.start(i64 0, i8* %0)
 ; IR-NEXT:   %polly.par.userContext1 = bitcast {}* %polly.par.userContext to i8*

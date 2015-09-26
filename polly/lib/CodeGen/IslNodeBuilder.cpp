@@ -534,6 +534,14 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
   Value *IV;
   CmpInst::Predicate Predicate;
 
+  // The preamble of parallel code interacts different than normal code with
+  // e.g., scalar initialization. Therefore, we ensure the parallel code is
+  // separated from the last basic block.
+  BasicBlock *ParBB =
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
+  ParBB->setName("polly.parallel.for");
+  Builder.SetInsertPoint(ParBB->begin());
+
   Body = isl_ast_node_for_get_body(For);
   Init = isl_ast_node_for_get_init(For);
   Inc = isl_ast_node_for_get_inc(For);
