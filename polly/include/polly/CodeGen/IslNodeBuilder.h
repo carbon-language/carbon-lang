@@ -75,8 +75,6 @@ protected:
   BlockGenerator::EscapeUsersAllocaMapTy EscapeMap;
 
   ///@}
-  ///
-  ValueToValueMap GlobalMap;
 
   /// @brief The generator used to copy a basic block.
   BlockGenerator BlockGen;
