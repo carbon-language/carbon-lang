@@ -4427,9 +4427,9 @@ INTERCEPTOR(int, capset, void *hdrp, const void *datap) {
 #endif
 
 #if SANITIZER_INTERCEPT_AEABI_MEM
-DECLARE_REAL_AND_INTERCEPTOR(void *, memmove, void *, const void *, uptr);
-DECLARE_REAL_AND_INTERCEPTOR(void *, memcpy, void *, const void *, uptr);
-DECLARE_REAL_AND_INTERCEPTOR(void *, memset, void *, int, uptr);
+DECLARE_REAL_AND_INTERCEPTOR(void *, memmove, void *, const void *, uptr)
+DECLARE_REAL_AND_INTERCEPTOR(void *, memcpy, void *, const void *, uptr)
+DECLARE_REAL_AND_INTERCEPTOR(void *, memset, void *, int, uptr)
 
 INTERCEPTOR(void *, __aeabi_memmove, void *to, const void *from, uptr size) {
   return WRAP(memmove)(to, from, size);
