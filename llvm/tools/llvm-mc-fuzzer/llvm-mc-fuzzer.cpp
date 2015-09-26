@@ -127,13 +127,10 @@ int main(int argc, char **argv) {
     FeaturesStr = Features.getString();
   }
 
-  // Insert the program name into the FuzzerArgv.
-  FuzzerArgv.insert(FuzzerArgv.begin(), argv[0]);
-
   if (Action == AC_Assemble)
     errs() << "error: -assemble is not implemented\n";
   else if (Action == AC_Disassemble)
-    return fuzzer::FuzzerDriver(FuzzerArgv, DisassembleOneInput);
+    return fuzzer::FuzzerDriver(argc, argv, DisassembleOneInput);
 
   llvm_unreachable("Unknown action");
   return 1;

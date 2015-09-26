@@ -361,11 +361,12 @@ When run in dissassembly mode, the inputs are opcodes to be disassembled. The
 fuzzer will consume as many instructions as possible and will stop when it
 finds an invalid instruction or runs out of data.
 
-Please note that the command line interface differs from that of other fuzzers.
-The fuzzer arguments are specified with ``-fuzzer-args`` while other arguments
-control the operation mode and target in a similar manner to ``llvm-mc``.
+Please note that the command line interface differs slightly from that of other
+fuzzers. The fuzzer arguments should follow ``--fuzzer-args`` and should have
+a single dash, while other arguments control the operation mode and target in a
+similar manner to ``llvm-mc`` and should have two dashes. For example::
 
-Unfortunately, this fuzzer is currently unable to use the -jobs option.
+  llvm-mc-fuzzer --triple=aarch64-linux-gnu --disassemble --fuzzer-args -max_len=4 -jobs=10
 
 Buildbot
 --------
