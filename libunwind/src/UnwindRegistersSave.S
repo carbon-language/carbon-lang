@@ -87,6 +87,15 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   xorl  %eax, %eax    # return UNW_ESUCCESS
   ret
 
+# elif defined(__mips__)
+
+#
+# extern int unw_getcontext(unw_context_t* thread_state)
+#
+# Just trap for the time being.
+DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+  teq $0, $0
+
 #elif defined(__ppc__)
 
 ;
