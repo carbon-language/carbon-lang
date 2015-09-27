@@ -421,3 +421,34 @@ unreachable:
 ; CHECK-NEXT:   catchendpad unwind to caller
 ; CHECK:      exit:
 ; CHECK-NEXT:   ret void
+
+define void @test11() personality i32 (...)* @__CxxFrameHandler3 {
+entry:
+  invoke void @f()
+    to label %exit unwind label %cleanup.outer
+cleanup.outer:
+  %outer = cleanuppad []
+  invoke void @f()
+    to label %outer.cont unwind label %cleanup.inner
+outer.cont:
+  br label %merge
+cleanup.inner:
+  %inner = cleanuppad []
+  br label %merge
+merge:
+  invoke void @f()
+    to label %unreachable unwind label %merge.end
+unreachable:
+  unreachable
+merge.end:
+  cleanupendpad %outer unwind to caller
+exit:
+  ret void
+}
+; merge.end will get cloned for outer and inner, but is implausible
+; from inner, so the invoke @f() in inner's copy of merge should be
+; rewritten to call @f()
+; CHECK-LABEL: define void @test11()
+; CHECK:      %inner = cleanuppad []
+; CHECK-NEXT: call void @f()
+; CHECK-NEXT: unreachable

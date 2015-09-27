@@ -2901,31 +2901,6 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, IRBuilder<> &Builder,
   return true;
 }
 
-// FIXME: This seems like a pretty common thing to want to do.  Consider
-// whether there is a more accessible place to put this.
-static void convertInvokeToCall(InvokeInst *II) {
-  SmallVector<Value*, 8> Args(II->op_begin(), II->op_end() - 3);
-  // Insert a call instruction before the invoke.
-  CallInst *Call = CallInst::Create(II->getCalledValue(), Args, "", II);
-  Call->takeName(II);
-  Call->setCallingConv(II->getCallingConv());
-  Call->setAttributes(II->getAttributes());
-  Call->setDebugLoc(II->getDebugLoc());
-
-  // Anything that used the value produced by the invoke instruction now uses
-  // the value produced by the call instruction.  Note that we do this even
-  // for void functions and calls with no uses so that the callgraph edge is
-  // updated.
-  II->replaceAllUsesWith(Call);
-  II->getUnwindDest()->removePredecessor(II->getParent());
-
-  // Insert a branch to the normal destination right before the invoke.
-  BranchInst::Create(II->getNormalDest(), II);
-
-  // Finally, delete the invoke instruction!
-  II->eraseFromParent();
-}
-
 bool SimplifyCFGOpt::SimplifyResume(ResumeInst *RI, IRBuilder<> &Builder) {
   // If this is a trivial landing pad that just continues unwinding the caught
   // exception then zap the landing pad, turning its invokes into calls.
@@ -2944,8 +2919,8 @@ bool SimplifyCFGOpt::SimplifyResume(ResumeInst *RI, IRBuilder<> &Builder) {
 
   // Turn all invokes that unwind here into calls and delete the basic block.
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE;) {
-    InvokeInst *II = cast<InvokeInst>((*PI++)->getTerminator());
-    convertInvokeToCall(II);
+    BasicBlock *Pred = *PI++;
+    removeUnwindEdge(Pred);
   }
 
   // The landingpad is now unreachable.  Zap it.
@@ -3056,62 +3031,11 @@ bool SimplifyCFGOpt::SimplifyCleanupReturn(CleanupReturnInst *RI) {
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE;) {
     // The iterator must be updated here because we are removing this pred.
     BasicBlock *PredBB = *PI++;
-    TerminatorInst *TI = PredBB->getTerminator();
     if (UnwindDest == nullptr) {
-      if (auto *II = dyn_cast<InvokeInst>(TI)) {
-        // The cleanup return being simplified continues to the caller and this
-        // predecessor terminated with an invoke instruction.  Convert the
-        // invoke to a call.
-        // This call updates the predecessor/successor chain.
-        convertInvokeToCall(II);
-      } else {
-        // In the remaining cases the predecessor's terminator unwinds to the
-        // block we are removing.  We need to create a new instruction that
-        // unwinds to the caller.  Simply setting the unwind destination to
-        // nullptr would leave the objects internal data in an inconsistent
-        // state.
-        // FIXME: Consider whether it is better to update setUnwindDest to
-        //        keep things consistent.
-        if (auto *CRI = dyn_cast<CleanupReturnInst>(TI)) {
-          auto *NewCRI = CleanupReturnInst::Create(CRI->getCleanupPad(),
-                                                   nullptr, CRI);
-          NewCRI->takeName(CRI);
-          NewCRI->setDebugLoc(CRI->getDebugLoc());
-          CRI->eraseFromParent();
-        } else if (auto *CEP = dyn_cast<CatchEndPadInst>(TI)) {
-          auto *NewCEP = CatchEndPadInst::Create(CEP->getContext(), nullptr,
-                                                 CEP);
-          NewCEP->takeName(CEP);
-          NewCEP->setDebugLoc(CEP->getDebugLoc());
-          CEP->eraseFromParent();
-        } else if (auto *TPI = dyn_cast<TerminatePadInst>(TI)) {
-          SmallVector<Value *, 3> TerminatePadArgs;
-          for (Value *Operand : TPI->arg_operands())
-            TerminatePadArgs.push_back(Operand);
-          auto *NewTPI = TerminatePadInst::Create(TPI->getContext(), nullptr,
-                                                  TerminatePadArgs, TPI);
-          NewTPI->takeName(TPI);
-          NewTPI->setDebugLoc(TPI->getDebugLoc());
-          TPI->eraseFromParent();
-        } else {
-          llvm_unreachable("Unexpected predecessor to cleanup pad.");
-        }
-      }
+      removeUnwindEdge(PredBB);
     } else {
-      // If the predecessor did not terminate with an invoke instruction, it
-      // must be some variety of EH pad.
       TerminatorInst *TI = PredBB->getTerminator();
-      // FIXME: Introducing an EH terminator base class would simplify this.
-      if (auto *II = dyn_cast<InvokeInst>(TI))
-        II->setUnwindDest(UnwindDest);
-      else if (auto *CRI = dyn_cast<CleanupReturnInst>(TI))
-        CRI->setUnwindDest(UnwindDest);
-      else if (auto *CEP = dyn_cast<CatchEndPadInst>(TI))
-        CEP->setUnwindDest(UnwindDest);
-      else if (auto *TPI = dyn_cast<TerminatePadInst>(TI))
-        TPI->setUnwindDest(UnwindDest);
-      else
-        llvm_unreachable("Unexpected predecessor to cleanup pad.");
+      TI->replaceUsesOfWith(BB, UnwindDest);
     }
   }
 
@@ -3249,26 +3173,21 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
           --i; --e;
           Changed = true;
         }
-    } else if (InvokeInst *II = dyn_cast<InvokeInst>(TI)) {
-      if (II->getUnwindDest() == BB) {
-        // Convert the invoke to a call instruction.  This would be a good
-        // place to note that the call does not throw though.
-        BranchInst *BI = Builder.CreateBr(II->getNormalDest());
-        II->removeFromParent();   // Take out of symbol table
-
-        // Insert the call now...
-        SmallVector<Value*, 8> Args(II->op_begin(), II->op_end()-3);
-        Builder.SetInsertPoint(BI);
-        CallInst *CI = Builder.CreateCall(II->getCalledValue(),
-                                          Args, II->getName());
-        CI->setCallingConv(II->getCallingConv());
-        CI->setAttributes(II->getAttributes());
-        // If the invoke produced a value, the call does now instead.
-        II->replaceAllUsesWith(CI);
-        delete II;
-        Changed = true;
-      }
+    } else if ((isa<InvokeInst>(TI) &&
+                cast<InvokeInst>(TI)->getUnwindDest() == BB) ||
+               isa<CatchEndPadInst>(TI) || isa<TerminatePadInst>(TI)) {
+      removeUnwindEdge(TI->getParent());
+      Changed = true;
+    } else if (isa<CleanupReturnInst>(TI) || isa<CleanupEndPadInst>(TI) ||
+               isa<CatchReturnInst>(TI)) {
+      new UnreachableInst(TI->getContext(), TI);
+      TI->eraseFromParent();
+      Changed = true;
     }
+    // TODO: If TI is a CatchPadInst, then (BB must be its normal dest and)
+    // we can eliminate it, redirecting its preds to its unwind successor,
+    // or to the next outer handler if the removed catch is the last for its
+    // catchendpad.
   }
 
   // If this block is now dead, remove it.

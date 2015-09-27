@@ -1258,6 +1258,43 @@ static bool markAliveBlocks(Function &F,
   return Changed;
 }
 
+void llvm::removeUnwindEdge(BasicBlock *BB) {
+  TerminatorInst *TI = BB->getTerminator();
+
+  if (auto *II = dyn_cast<InvokeInst>(TI)) {
+    changeToCall(II);
+    return;
+  }
+
+  TerminatorInst *NewTI;
+  BasicBlock *UnwindDest;
+
+  if (auto *CRI = dyn_cast<CleanupReturnInst>(TI)) {
+    NewTI = CleanupReturnInst::Create(CRI->getCleanupPad(), nullptr, CRI);
+    UnwindDest = CRI->getUnwindDest();
+  } else if (auto *CEP = dyn_cast<CleanupEndPadInst>(TI)) {
+    NewTI = CleanupEndPadInst::Create(CEP->getCleanupPad(), nullptr, CEP);
+    UnwindDest = CEP->getUnwindDest();
+  } else if (auto *CEP = dyn_cast<CatchEndPadInst>(TI)) {
+    NewTI = CatchEndPadInst::Create(CEP->getContext(), nullptr, CEP);
+    UnwindDest = CEP->getUnwindDest();
+  } else if (auto *TPI = dyn_cast<TerminatePadInst>(TI)) {
+    SmallVector<Value *, 3> TerminatePadArgs;
+    for (Value *Operand : TPI->arg_operands())
+      TerminatePadArgs.push_back(Operand);
+    NewTI = TerminatePadInst::Create(TPI->getContext(), nullptr,
+                                     TerminatePadArgs, TPI);
+    UnwindDest = TPI->getUnwindDest();
+  } else {
+    llvm_unreachable("Could not find unwind successor");
+  }
+
+  NewTI->takeName(TI);
+  NewTI->setDebugLoc(TI->getDebugLoc());
+  UnwindDest->removePredecessor(BB);
+  TI->eraseFromParent();
+}
+
 /// removeUnreachableBlocksFromFn - Remove blocks that are not reachable, even
 /// if they are in a dead cycle.  Return true if a change was made, false
 /// otherwise.

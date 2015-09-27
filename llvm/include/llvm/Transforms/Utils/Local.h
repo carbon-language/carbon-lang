@@ -277,6 +277,14 @@ DbgDeclareInst *FindAllocaDbgDeclare(Value *V);
 bool replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
                                 DIBuilder &Builder, bool Deref);
 
+/// Replace 'BB's terminator with one that does not have an unwind successor
+/// block.  Rewrites `invoke` to `call`, `catchendpad unwind label %foo` to
+/// `catchendpad unwind to caller`, etc.  Updates any PHIs in unwind successor.
+///
+/// \param BB  Block whose terminator will be replaced.  Its terminator must
+///            have an unwind successor.
+void removeUnwindEdge(BasicBlock *BB);
+
 /// \brief Remove all blocks that can not be reached from the function's entry.
 ///
 /// Returns true if any basic block was removed.

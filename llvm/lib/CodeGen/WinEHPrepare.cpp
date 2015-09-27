@@ -3184,9 +3184,23 @@ void WinEHPrepare::removeImplausibleTerminators(Function &F) {
         for (BasicBlock *SuccBB : TI->successors())
           SuccBB->removePredecessor(BB);
 
+        if (IsUnreachableCleanupendpad) {
+          // We can't simply replace a cleanupendpad with unreachable, because
+          // its predecessor edges are EH edges and unreachable is not an EH
+          // pad.  Change all predecessors to the "unwind to caller" form.
+          for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+               PI != PE;) {
+            BasicBlock *Pred = *PI++;
+            removeUnwindEdge(Pred);
+          }
+        }
+
         new UnreachableInst(BB->getContext(), TI);
         TI->eraseFromParent();
       }
+      // FIXME: Check for invokes/cleanuprets/cleanupendpads which unwind to
+      // implausible catchendpads (i.e. catchendpad not in immediate parent
+      // funclet).
     }
   }
 }
