@@ -335,12 +335,10 @@ public:
 private:
   isl_schedule *LastSchedule;
 
-  using llvm::Pass::doFinalization;
-
-  virtual bool doFinalization() override {
+  /// @brief Release the internal memory.
+  void releaseMemory() override {
     isl_schedule_free(LastSchedule);
     LastSchedule = nullptr;
-    return true;
   }
 };
 }
