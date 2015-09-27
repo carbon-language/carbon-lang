@@ -1502,10 +1502,6 @@ class ScopInfo : public RegionPass {
   // must live until #scop is deleted.
   AccFuncMapType AccFuncMap;
 
-  // Pre-created zero for the scalar accesses, with it we do not need create a
-  // zero scev every time when we need it.
-  const SCEV *ZeroOffset;
-
   // The Scop
   Scop *scop;
   isl_ctx *ctx;

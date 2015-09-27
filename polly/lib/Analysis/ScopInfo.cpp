@@ -2938,7 +2938,8 @@ void ScopInfo::buildMemoryAccess(
 
   // FIXME: Size of the number of bytes of an array element, not the number of
   // elements as probably intended here.
-  const SCEV *SizeSCEV = SE->getConstant(ZeroOffset->getType(), Size);
+  const SCEV *SizeSCEV =
+      SE->getConstant(TD->getIntPtrType(Inst->getContext()), Size);
 
   if (!IsAffine && Type == MemoryAccess::MUST_WRITE)
     Type = MemoryAccess::MAY_WRITE;
@@ -3126,7 +3127,6 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
   TD = &F->getParent()->getDataLayout();
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  ZeroOffset = SE->getConstant(TD->getIntPtrType(F->getContext()), 0);
 
   scop = buildScop(*R, DT);
 
