@@ -7,8 +7,8 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 ; CHECK:   %polly.subregion.iv = phi i32 [ 0, %polly.stmt.bb3.entry ]
 ; CHECK:   %polly.tmp = phi i64 [ %tmp.phiops.reload, %polly.stmt.bb3.entry ]
 ; CHECK:   %tmp6_p_scalar_ = load double, double* %arg11, !alias.scope !0, !noalias !2
-; CHECK:   %p_tmp7 = fadd double undef, %tmp6_p_scalar_
-; CHECK:   %p_tmp8 = fcmp olt double undef, %p_tmp7
+; CHECK:   %p_tmp7 = fadd double 1.000000e+00, %tmp6_p_scalar_
+; CHECK:   %p_tmp8 = fcmp olt double 1.400000e+01, %p_tmp7
 ; CHECK:   %polly.subregion.iv.inc = add i32 %polly.subregion.iv, 1
 ; CHECK:   br i1 %p_tmp8, label %polly.stmt.bb9, label %polly.stmt.bb10
 
@@ -33,8 +33,8 @@ bb3:                                              ; preds = %bb11, %bb2
   %tmp4 = icmp sgt i32 %arg, 0
   %tmp5 = getelementptr inbounds [1024 x double], [1024 x double]* %arg1, i64 0, i64 0
   %tmp6 = load double, double* %tmp5
-  %tmp7 = fadd double undef, %tmp6
-  %tmp8 = fcmp olt double undef, %tmp7
+  %tmp7 = fadd double 1.0, %tmp6
+  %tmp8 = fcmp olt double 14.0, %tmp7
   br i1 %tmp8, label %bb9, label %bb10
 
 bb9:                                              ; preds = %bb3
