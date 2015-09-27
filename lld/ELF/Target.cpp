@@ -220,8 +220,37 @@ void AArch64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                       uint64_t PltEntryAddr) const {}
 bool AArch64TargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
 bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
+
+static void handle_ADR_PREL_LO21(uint8_t *Location, uint64_t S, int64_t A,
+                                 uint64_t P) {
+  uint64_t X = S + A - P;
+  if (!isInt<21>(X))
+    error("Relocation R_AARCH64_ADR_PREL_LO21 out of range");
+  uint32_t Imm = X & 0x1FFFFF;
+  uint32_t ImmLo = (Imm & 0x3) << 29;
+  uint32_t ImmHi = ((Imm & 0x1FFFFC) >> 2) << 5;
+  uint64_t Mask = (0x3 << 29) | (0x7FFFF << 5);
+  write32le(Location, (read32le(Location) & ~Mask) | ImmLo | ImmHi);
+}
+
 void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
                                     uint32_t Type, uint64_t BaseAddr,
-                                    uint64_t SymVA) const {}
+                                    uint64_t SymVA) const {
+  typedef ELFFile<ELF64LE>::Elf_Rela Elf_Rela;
+  auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
+
+  uint8_t *Location = Buf + Rel.r_offset;
+  uint64_t S = SymVA;
+  int64_t A = Rel.r_addend;
+  uint64_t P = BaseAddr + Rel.r_offset;
+  switch (Type) {
+  case R_AARCH64_ADR_PREL_LO21:
+    handle_ADR_PREL_LO21(Location, S, A, P);
+    break;
+  default:
+    error(Twine("unrecognized reloc ") + Twine(Type));
+    break;
+  }
+}
 }
 }
