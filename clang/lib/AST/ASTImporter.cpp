@@ -5329,7 +5329,7 @@ Expr *ASTNodeImporter::VisitCallExpr(CallExpr *E) {
 
   return new (Importer.getToContext())
     CallExpr(Importer.getToContext(), ToCallee, 
-             ArrayRef<Expr*>(ToArgs_Copied, NumArgs), T, E->getValueKind(),
+             llvm::makeArrayRef(ToArgs_Copied, NumArgs), T, E->getValueKind(),
              Importer.Import(E->getRParenLoc()));
 }
 

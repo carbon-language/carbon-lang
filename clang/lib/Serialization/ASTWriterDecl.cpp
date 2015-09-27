@@ -208,7 +208,7 @@ namespace clang {
       auto &&PartialSpecializations = getPartialSpecializations(Common);
       ArrayRef<DeclID> LazySpecializations;
       if (auto *LS = Common->LazySpecializations)
-        LazySpecializations = ArrayRef<DeclID>(LS + 1, LS + 1 + LS[0]);
+        LazySpecializations = llvm::makeArrayRef(LS + 1, LS + 1 + LS[0]);
 
       // Add a slot to the record for the number of specializations.
       unsigned I = Record.size();
