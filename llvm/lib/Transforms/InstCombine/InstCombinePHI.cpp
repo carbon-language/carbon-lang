@@ -394,7 +394,73 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
   return NewLI;
 }
 
+/// TODO: This function could handle other cast types, but then it might
+/// require special-casing a cast from the 'i1' type. See the comment in
+/// FoldPHIArgOpIntoPHI() about pessimizing illegal integer types.
+Instruction *InstCombiner::FoldPHIArgZextsIntoPHI(PHINode &Phi) {
+  // Early exit for the common case of a phi with two operands. These are
+  // handled elsewhere. See the comment below where we check the count of zexts
+  // and constants for more details.
+  unsigned NumIncomingValues = Phi.getNumIncomingValues();
+  if (NumIncomingValues < 3)
+    return nullptr;
 
+  // Find the narrower type specified by the first zext.
+  Type *NarrowType = nullptr;
+  for (Value *V : Phi.incoming_values()) {
+    if (auto *Zext = dyn_cast<ZExtInst>(V)) {
+      NarrowType = Zext->getSrcTy();
+      break;
+    }
+  }
+  if (!NarrowType)
+    return nullptr;
+
+  // Walk the phi operands checking that we only have zexts or constants that
+  // we can shrink for free. Store the new operands for the new phi.
+  SmallVector<Value *, 4> NewIncoming;
+  unsigned NumZexts = 0;
+  unsigned NumConsts = 0;
+  for (Value *V : Phi.incoming_values()) {
+    if (auto *Zext = dyn_cast<ZExtInst>(V)) {
+      // All zexts must be identical and have one use.
+      if (Zext->getSrcTy() != NarrowType || !Zext->hasOneUse())
+        return nullptr;
+      NewIncoming.push_back(Zext->getOperand(0));
+      NumZexts++;
+    } else if (auto *C = dyn_cast<Constant>(V)) {
+      // Make sure that constants can fit in the new type.
+      Constant *Trunc = ConstantExpr::getTrunc(C, NarrowType);
+      if (ConstantExpr::getZExt(Trunc, C->getType()) != C)
+        return nullptr;
+      NewIncoming.push_back(Trunc);
+      NumConsts++;
+    } else {
+      // If it's not a cast or a constant, bail out.
+      return nullptr;
+    }
+  }
+
+  // The more common cases of a phi with no constant operands or just one
+  // variable operand are handled by FoldPHIArgOpIntoPHI() and FoldOpIntoPhi()
+  // respectively. FoldOpIntoPhi() wants to do the opposite transform that is
+  // performed here. It tries to replicate a cast in the phi operand's basic
+  // block to expose other folding opportunities. Thus, InstCombine will
+  // infinite loop without this check.
+  if (NumConsts == 0 || NumZexts < 2)
+    return nullptr;
+
+  // All incoming values are zexts or constants that are safe to truncate.
+  // Create a new phi node of the narrow type, phi together all of the new
+  // operands, and zext the result back to the original type.
+  PHINode *NewPhi = PHINode::Create(NarrowType, NumIncomingValues,
+                                    Phi.getName() + ".shrunk");
+  for (unsigned i = 0; i != NumIncomingValues; ++i)
+    NewPhi->addIncoming(NewIncoming[i], Phi.getIncomingBlock(i));
+
+  InsertNewInstBefore(NewPhi, Phi);
+  return CastInst::CreateZExtOrBitCast(NewPhi, Phi.getType());
+}
 
 /// If all operands to a PHI node are the same "unary" operator and they all are
 /// only used by the PHI, PHI together their inputs, and do the operation once,
@@ -799,6 +865,9 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   if (Value *V = SimplifyInstruction(&PN, DL, TLI, DT, AC))
     return ReplaceInstUsesWith(PN, V);
+
+  if (Instruction *Result = FoldPHIArgZextsIntoPHI(PN))
+    return Result;
 
   // If all PHI operands are the same operation, pull them through the PHI,
   // reducing code size.

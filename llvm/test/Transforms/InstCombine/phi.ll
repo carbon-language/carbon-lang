@@ -630,3 +630,133 @@ done:
   %y = phi i32 [ undef, %entry ]
   ret i32 %y
 }
+
+; We should be able to fold the zexts to the other side of the phi
+; even though there's a constant value input to the phi. This is
+; because we can shrink that constant to the smaller phi type.
+
+define i1 @PR24766(i8 %x1, i8 %x2, i8 %condition) {
+entry:
+  %conv = sext i8 %condition to i32
+  switch i32 %conv, label %epilog [
+    i32 0, label %sw1
+    i32 1, label %sw2
+  ]
+
+sw1:
+  %cmp1 = icmp eq i8 %x1, %x2
+  %frombool1 = zext i1 %cmp1 to i8
+  br label %epilog
+
+sw2:
+  %cmp2 = icmp sle i8 %x1, %x2
+  %frombool2 = zext i1 %cmp2 to i8
+  br label %epilog
+
+epilog:
+  %conditionMet = phi i8 [ 0, %entry ], [ %frombool2, %sw2 ], [ %frombool1, %sw1 ]
+  %tobool = icmp ne i8 %conditionMet, 0
+  ret i1 %tobool
+
+; CHECK-LABEL: @PR24766(
+; CHECK: %[[RES:.*]] = phi i1 [ false, %entry ], [ %cmp2, %sw2 ], [ %cmp1, %sw1 ]
+; CHECK-NEXT: ret i1 %[[RES]] 
+}
+
+; Same as above (a phi with more than 2 operands), but no constants
+ 
+define i1 @PR24766_no_constants(i8 %x1, i8 %x2, i8 %condition, i1 %another_condition) {
+entry:
+  %frombool0 = zext i1 %another_condition to i8
+  %conv = sext i8 %condition to i32
+  switch i32 %conv, label %epilog [
+    i32 0, label %sw1
+    i32 1, label %sw2
+  ]
+
+sw1:
+  %cmp1 = icmp eq i8 %x1, %x2
+  %frombool1 = zext i1 %cmp1 to i8
+  br label %epilog
+
+sw2:
+  %cmp2 = icmp sle i8 %x1, %x2
+  %frombool2 = zext i1 %cmp2 to i8
+  br label %epilog
+
+epilog:
+  %conditionMet = phi i8 [ %frombool0, %entry ], [ %frombool2, %sw2 ], [ %frombool1, %sw1 ]
+  %tobool = icmp ne i8 %conditionMet, 0
+  ret i1 %tobool
+
+; CHECK-LABEL: @PR24766_no_constants(
+; CHECK: %[[RES:.*]] = phi i1 [ %another_condition, %entry ], [ %cmp2, %sw2 ], [ %cmp1, %sw1 ]
+; CHECK-NEXT: ret i1 %[[RES]]
+}
+
+; Same as above (a phi with more than 2 operands), but two constants
+
+define i1 @PR24766_two_constants(i8 %x1, i8 %x2, i8 %condition) {
+entry:
+  %conv = sext i8 %condition to i32
+  switch i32 %conv, label %epilog [
+    i32 0, label %sw1
+    i32 1, label %sw2
+  ]
+
+sw1:
+  %cmp1 = icmp eq i8 %x1, %x2
+  %frombool1 = zext i1 %cmp1 to i8
+  br label %epilog
+
+sw2:
+  %cmp2 = icmp sle i8 %x1, %x2
+  %frombool2 = zext i1 %cmp2 to i8
+  br label %epilog
+
+epilog:
+  %conditionMet = phi i8 [ 0, %entry ], [ 1, %sw2 ], [ %frombool1, %sw1 ]
+  %tobool = icmp ne i8 %conditionMet, 0
+  ret i1 %tobool
+
+; CHECK-LABEL: @PR24766_two_constants(
+; CHECK: %[[RES:.*]] = phi i1 [ false, %entry ], [ true, %sw2 ], [ %cmp1, %sw1 ]
+; CHECK-NEXT: ret i1 %[[RES]]
+}
+
+; Same as above (a phi with more than 2 operands), but two constants and two variables
+
+define i1 @PR24766_two_constants_two_var(i8 %x1, i8 %x2, i8 %condition) {
+entry:
+  %conv = sext i8 %condition to i32
+  switch i32 %conv, label %epilog [
+    i32 0, label %sw1
+    i32 1, label %sw2
+    i32 2, label %sw3
+  ]
+
+sw1:
+  %cmp1 = icmp eq i8 %x1, %x2
+  %frombool1 = zext i1 %cmp1 to i8
+  br label %epilog
+
+sw2:
+  %cmp2 = icmp sle i8 %x1, %x2
+  %frombool2 = zext i1 %cmp2 to i8
+  br label %epilog
+
+sw3:
+  %cmp3 = icmp sge i8 %x1, %x2
+  %frombool3 = zext i1 %cmp3 to i8
+  br label %epilog
+
+epilog:
+  %conditionMet = phi i8 [ 0, %entry ], [ %frombool2, %sw2 ], [ %frombool1, %sw1 ], [ 1, %sw3 ]
+  %tobool = icmp ne i8 %conditionMet, 0
+  ret i1 %tobool
+
+; CHECK-LABEL: @PR24766_two_constants_two_var(
+; CHECK: %[[RES:.*]] = phi i1 [ false, %entry ], [ %cmp2, %sw2 ], [ %cmp1, %sw1 ], [ true, %sw3 ]
+; CHECK-NEXT: ret i1 %[[RES]]
+}
+
