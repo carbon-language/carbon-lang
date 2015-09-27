@@ -8,8 +8,6 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 ; CHECK:   br label %polly.stmt.bb3
 
 ; CHECK: polly.stmt.bb3:                                   ; preds = %polly.stmt.bb3.entry
-; CHECK:   %polly.subregion.iv = phi i32 [ 0, %polly.stmt.bb3.entry ]
-; CHECK:   %polly.subregion.iv.inc = add i32 %polly.subregion.iv, 1
 ; CHECK:   br i1 true, label %polly.stmt.bb4, label %polly.stmt.bb5
 
 ; CHECK: polly.stmt.bb4:                                   ; preds = %polly.stmt.bb3

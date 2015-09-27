@@ -1090,6 +1090,9 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
     LTS[L] = SE.getUnknown(LoopPHI);
   }
 
+  for (auto *BB : SeenBlocks)
+    SimplifyInstructionsInBlock(BlockMap[BB], nullptr);
+
   // Reset the old insert point for the build.
   Builder.SetInsertPoint(ExitBBCopy->begin());
 }

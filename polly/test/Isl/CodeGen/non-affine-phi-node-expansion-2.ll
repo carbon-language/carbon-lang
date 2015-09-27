@@ -4,12 +4,9 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 
 ; CHECK: polly.stmt.bb3:                                   ; preds = %polly.stmt.bb3.entry
-; CHECK:   %polly.subregion.iv = phi i32 [ 0, %polly.stmt.bb3.entry ]
-; CHECK:   %polly.tmp = phi i64 [ %tmp.phiops.reload, %polly.stmt.bb3.entry ]
 ; CHECK:   %tmp6_p_scalar_ = load double, double* %arg11, !alias.scope !0, !noalias !2
 ; CHECK:   %p_tmp7 = fadd double 1.000000e+00, %tmp6_p_scalar_
 ; CHECK:   %p_tmp8 = fcmp olt double 1.400000e+01, %p_tmp7
-; CHECK:   %polly.subregion.iv.inc = add i32 %polly.subregion.iv, 1
 ; CHECK:   br i1 %p_tmp8, label %polly.stmt.bb9, label %polly.stmt.bb10
 
 ; CHECK: polly.stmt.bb9:                                   ; preds = %polly.stmt.bb3
