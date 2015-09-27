@@ -194,15 +194,15 @@ __gcc_personality_v0(int version, _Unwind_Action actions,
              * Set Instruction Pointer to so we re-enter function 
              * at landing pad. The landing pad is created by the compiler
              * to take two parameters in registers.
-	     */
-            _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), 
-                                                (uintptr_t)exceptionObject);
+             */
+            _Unwind_SetGR(context, __builtin_eh_return_data_regno(0),
+                          (uintptr_t)exceptionObject);
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), 0);
-            _Unwind_SetIP(context, funcStart+landingPad);
+            _Unwind_SetIP(context, (funcStart + landingPad));
             return _URC_INSTALL_CONTEXT;
         }
     }
-    
+
     /* No landing pad found, continue unwinding. */
     return _URC_CONTINUE_UNWIND;
 }
