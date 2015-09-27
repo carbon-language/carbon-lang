@@ -12778,7 +12778,7 @@ X86TargetLowering::FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
     // for DAG type consistency we have to match the FP operand type.
 
     APFloat Thresh(APFloat::IEEEsingle, APInt(32, 0x5f000000));
-    APFloat::opStatus Status = APFloat::opOK;
+    LLVM_ATTRIBUTE_UNUSED APFloat::opStatus Status = APFloat::opOK;
     bool LosesInfo = false;
     if (TheVT == MVT::f64)
       // The rounding mode is irrelevant as the conversion should be exact.
