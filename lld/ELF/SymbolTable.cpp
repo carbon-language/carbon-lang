@@ -41,18 +41,18 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
 
 static TargetInfo *createTarget(uint16_t EMachine) {
   switch (EMachine) {
-  case EM_PPC:
-    return new PPCTargetInfo();
-  case EM_ARM:
-    return new ARMTargetInfo();
+  case EM_386:
+    return new X86TargetInfo();
   case EM_AARCH64:
     return new AArch64TargetInfo();
+  case EM_ARM:
+    return new ARMTargetInfo();
+  case EM_PPC:
+    return new PPCTargetInfo();
   case EM_PPC64:
     return new PPC64TargetInfo();
   case EM_X86_64:
     return new X86_64TargetInfo();
-  case EM_386:
-    return new X86TargetInfo();
   }
   error("Unknown target machine");
 }
