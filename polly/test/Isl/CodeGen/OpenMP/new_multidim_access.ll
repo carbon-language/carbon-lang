@@ -20,14 +20,14 @@
 ; CHECK:    new: [n, m] -> { Stmt_bb4[i0, i1] -> MemRef_A[i0, 43 + i1] };
 
 ; IR: %polly.access.mul.polly.subfunc.arg.A = mul i64 %polly.indvar, %polly.subfunc.arg.m
-; IR: %8 = add nsw i64 %polly.indvar5, 13
-; IR: %polly.access.add.polly.subfunc.arg.A = add i64 %polly.access.mul.polly.subfunc.arg.A, %8
+; IR: %6 = add nsw i64 %polly.indvar5, 13
+; IR: %polly.access.add.polly.subfunc.arg.A = add i64 %polly.access.mul.polly.subfunc.arg.A, %6
 ; IR: %polly.access.polly.subfunc.arg.A = getelementptr float, float* %polly.subfunc.arg.A, i64 %polly.access.add.polly.subfunc.arg.A
 ; IR: %tmp10_p_scalar_ = load float, float* %polly.access.polly.subfunc.arg.A, align 4, !alias.scope !0, !noalias !2, !llvm.mem.parallel_loop_access !3
 
 ; IR: %polly.access.mul.polly.subfunc.arg.A9 = mul i64 %polly.indvar, %polly.subfunc.arg.m
-; IR: %9 = add nsw i64 %polly.indvar5, 43
-; IR: %polly.access.add.polly.subfunc.arg.A10 = add i64 %polly.access.mul.polly.subfunc.arg.A9, %9
+; IR: %7 = add nsw i64 %polly.indvar5, 43
+; IR: %polly.access.add.polly.subfunc.arg.A10 = add i64 %polly.access.mul.polly.subfunc.arg.A9, %7
 ; IR: %polly.access.polly.subfunc.arg.A11 = getelementptr float, float* %polly.subfunc.arg.A, i64 %polly.access.add.polly.subfunc.arg.A10
 ; IR: store float %p_tmp11, float* %polly.access.polly.subfunc.arg.A11, align 4, !alias.scope !0, !noalias !2, !llvm.mem.parallel_
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"

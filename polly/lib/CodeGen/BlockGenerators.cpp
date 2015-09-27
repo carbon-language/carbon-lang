@@ -28,6 +28,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "isl/aff.h"
 #include "isl/ast.h"
 #include "isl/ast_build.h"
@@ -293,6 +294,10 @@ void BlockGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
 
   BasicBlock *BB = Stmt.getBasicBlock();
   copyBB(Stmt, BB, BBMap, LTS, NewAccesses);
+
+  auto CopyBB = Builder.GetInsertBlock();
+  SimplifyInstructionsInBlock(CopyBB, nullptr);
+  Builder.SetInsertPoint(CopyBB->getTerminator());
 }
 
 BasicBlock *BlockGenerator::splitBB(BasicBlock *BB) {
