@@ -328,18 +328,23 @@ public:
 
   ~IslScheduleOptimizer() { isl_schedule_free(LastSchedule); }
 
+  /// @brief Optimize the schedule of the SCoP @p S.
   bool runOnScop(Scop &S) override;
-  void printScop(raw_ostream &OS, Scop &S) const override;
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-private:
-  isl_schedule *LastSchedule;
+  /// @brief Print the new schedule for the SCoP @p S.
+  void printScop(raw_ostream &OS, Scop &S) const override;
+
+  /// @brief Register all analyses and transformation required.
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   /// @brief Release the internal memory.
   void releaseMemory() override {
     isl_schedule_free(LastSchedule);
     LastSchedule = nullptr;
   }
+
+private:
+  isl_schedule *LastSchedule;
 };
 }
 

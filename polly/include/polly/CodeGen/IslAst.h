@@ -88,10 +88,16 @@ public:
   IslAstInfo() : ScopPass(ID), S(nullptr), Ast(nullptr) {}
 
   /// @brief Build the AST for the given SCoP @p S.
-  bool runOnScop(Scop &S);
+  bool runOnScop(Scop &S) override;
+
+  /// @brief Register all analyses and transformation required.
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+
+  /// @brief Release the internal memory.
+  void releaseMemory() override;
 
   /// @brief Print a source code representation of the program.
-  void printScop(llvm::raw_ostream &OS, Scop &S) const;
+  void printScop(llvm::raw_ostream &OS, Scop &S) const override;
 
   /// @brief Return a copy of the AST root node.
   __isl_give isl_ast_node *getAst() const;
@@ -143,9 +149,6 @@ public:
   static __isl_give isl_ast_build *getBuild(__isl_keep isl_ast_node *Node);
 
   ///}
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual void releaseMemory();
 };
 }
 

@@ -108,6 +108,7 @@ public:
     }
   }
 
+  /// @brief Generate LLVM-IR for the SCoP @p S.
   bool runOnScop(Scop &S) override {
     AI = &getAnalysis<IslAstInfo>();
 
@@ -159,8 +160,7 @@ public:
     return true;
   }
 
-  void printScop(raw_ostream &, Scop &) const override {}
-
+  /// @brief Register all analyses and transformation required.
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<IslAstInfo>();

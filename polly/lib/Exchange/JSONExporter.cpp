@@ -60,9 +60,15 @@ struct JSONExporter : public ScopPass {
 
   std::string getFileName(Scop &S) const;
   Json::Value getJSON(Scop &S) const;
-  virtual bool runOnScop(Scop &S);
-  void printScop(raw_ostream &OS, Scop &S) const;
-  void getAnalysisUsage(AnalysisUsage &AU) const;
+
+  /// @brief Export the SCoP @p S to a JSON file.
+  bool runOnScop(Scop &S) override;
+
+  /// @brief Print the SCoP @p S as it is exported.
+  void printScop(raw_ostream &OS, Scop &S) const override;
+
+  /// @brief Register all analyses and transformation required.
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
 struct JSONImporter : public ScopPass {
@@ -71,9 +77,15 @@ struct JSONImporter : public ScopPass {
   explicit JSONImporter() : ScopPass(ID) {}
 
   std::string getFileName(Scop &S) const;
-  virtual bool runOnScop(Scop &S);
-  void printScop(raw_ostream &OS, Scop &S) const;
-  void getAnalysisUsage(AnalysisUsage &AU) const;
+
+  /// @brief Import new access functions for SCoP @p S from a JSON file.
+  bool runOnScop(Scop &S) override;
+
+  /// @brief Print the SCoP @p S and the imported access functions.
+  void printScop(raw_ostream &OS, Scop &S) const override;
+
+  /// @brief Register all analyses and transformation required.
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 }
 
@@ -386,6 +398,7 @@ void JSONImporter::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
   AU.addRequired<DependenceInfo>();
 }
+
 Pass *polly::createJSONImporterPass() { return new JSONImporter(); }
 
 INITIALIZE_PASS_BEGIN(JSONExporter, "polly-export-jscop",

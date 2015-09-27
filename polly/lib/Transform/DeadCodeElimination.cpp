@@ -59,9 +59,10 @@ public:
   static char ID;
   explicit DeadCodeElim() : ScopPass(ID) {}
 
+  /// @brief Remove dead iterations from the schedule of @p S.
   bool runOnScop(Scop &S) override;
 
-  void printScop(raw_ostream &OS, Scop &S) const override;
+  /// @brief Register all analyses and transformation required.
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 
 private:
@@ -165,8 +166,6 @@ bool DeadCodeElim::eliminateDeadCode(Scop &S, int PreciseSteps) {
 bool DeadCodeElim::runOnScop(Scop &S) {
   return eliminateDeadCode(S, DCEPreciseSteps);
 }
-
-void DeadCodeElim::printScop(raw_ostream &, Scop &) const {}
 
 void DeadCodeElim::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);

@@ -188,9 +188,16 @@ public:
   /// @brief Recompute dependences from schedule and memory accesses.
   void recomputeDependences();
 
+  /// @brief Compute the dependence information for the SCoP @p S.
   bool runOnScop(Scop &S) override;
+
+  /// @brief Print the dependences for the given SCoP to @p OS.
   void printScop(raw_ostream &OS, Scop &) const override { D.print(OS); }
+
+  /// @brief Release the internal memory.
   void releaseMemory() override { D.releaseMemory(); }
+
+  /// @brief Register all analyses and transformation required.
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 
 private:
