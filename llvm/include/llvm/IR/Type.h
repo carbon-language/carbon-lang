@@ -109,7 +109,7 @@ protected:
   Type * const *ContainedTys;
 
 public:
-  void print(raw_ostream &O) const;
+  void print(raw_ostream &O, bool IsForDebug = false) const;
   void dump() const;
 
   /// getContext - Return the LLVMContext in which this type was uniqued.

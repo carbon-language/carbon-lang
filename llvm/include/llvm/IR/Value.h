@@ -202,8 +202,9 @@ public:
 
   /// \brief Implement operator<< on Value.
   /// @{
-  void print(raw_ostream &O) const;
-  void print(raw_ostream &O, ModuleSlotTracker &MST) const;
+  void print(raw_ostream &O, bool IsForDebug = false) const;
+  void print(raw_ostream &O, ModuleSlotTracker &MST,
+             bool IsForDebug = false) const;
   /// @}
 
   /// \brief Print the name of this Value out to the specified raw_ostream.

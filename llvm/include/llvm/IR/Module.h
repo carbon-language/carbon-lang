@@ -656,7 +656,8 @@ public:
   /// uselistorder directives so that use-lists can be recreated when reading
   /// the assembly.
   void print(raw_ostream &OS, AssemblyAnnotationWriter *AAW,
-             bool ShouldPreserveUseListOrder = false) const;
+             bool ShouldPreserveUseListOrder = false,
+             bool IsForDebug = false) const;
 
   /// Dump the module to stderr (for debugging).
   void dump() const;
