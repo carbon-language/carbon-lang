@@ -2056,6 +2056,8 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   CallingConv::ID CallerCC = CallerF->getCallingConv();
   bool CCMatch = CallerCC == CalleeCC;
 
+  assert(Subtarget->supportsTailCall());
+
   // Look for obvious safe cases to perform tail call optimization that do not
   // require ABI changes. This is what gcc calls sibcall.
 
@@ -2073,26 +2075,6 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // Also avoid sibcall optimization if either caller or callee uses struct
   // return semantics.
   if (isCalleeStructRet || isCallerStructRet)
-    return false;
-
-  // FIXME: Completely disable sibcall for Thumb1 since ThumbRegisterInfo::
-  // emitEpilogue is not ready for them. Thumb tail calls also use t2B, as
-  // the Thumb1 16-bit unconditional branch doesn't have sufficient relocation
-  // support in the assembler and linker to be used. This would need to be
-  // fixed to fully support tail calls in Thumb1.
-  //
-  // Doing this is tricky, since the LDM/POP instruction on Thumb doesn't take
-  // LR.  This means if we need to reload LR, it takes an extra instructions,
-  // which outweighs the value of the tail call; but here we don't know yet
-  // whether LR is going to be used.  Probably the right approach is to
-  // generate the tail call here and turn it back into CALL/RET in
-  // emitEpilogue if LR is used.
-
-  // Thumb1 PIC calls to external symbols use BX, so they can be tail calls,
-  // but we need to make sure there are enough registers; the only valid
-  // registers are the 4 used for parameters.  We don't currently do this
-  // case.
-  if (Subtarget->isThumb1Only())
     return false;
 
   // Externally-defined functions with weak linkage should not be
@@ -2442,7 +2424,7 @@ bool ARMTargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
   if (!CI->isTailCall() || Attr.getValueAsString() == "true")
     return false;
 
-  return !Subtarget->isThumb1Only();
+  return true;
 }
 
 // Trying to write a 64 bit value so need to split into two 32 bit values first,
