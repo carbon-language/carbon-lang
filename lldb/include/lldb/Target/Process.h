@@ -3479,7 +3479,7 @@ protected:
     }
     
     Error
-    StopForDestroyOrDetach(lldb::EventSP &exit_event_sp);
+    HaltForDestroyOrDetach(lldb::EventSP &exit_event_sp);
 
     bool
     StateChangedIsExternallyHijacked();
