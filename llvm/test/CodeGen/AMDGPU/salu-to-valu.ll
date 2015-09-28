@@ -1,4 +1,5 @@
 ; RUN: llc -march=amdgcn -mcpu=tahiti -verify-machineinstrs < %s | FileCheck -check-prefix=GCN -check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=GCN -check-prefix=CI %s
 
 declare i32 @llvm.r600.read.tidig.x() #0
 declare i32 @llvm.r600.read.tidig.y() #0
@@ -87,6 +88,99 @@ entry:
   ret void
 }
 
+; Use a big offset that will use the SMRD literal offset on CI
+; GCN-LABEL: {{^}}smrd_valu_ci_offset:
+; GCN: s_movk_i32 s[[OFFSET:[0-9]+]], 0x4e20{{$}}
+; GCN: buffer_load_dword v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[}}[[OFFSET]]:{{[0-9]+}}], 0 addr64{{$}}
+; GCN: v_add_i32_e32
+; GCN: buffer_store_dword
+define void @smrd_valu_ci_offset(i32 addrspace(1)* %out, i32 addrspace(2)* %in, i32 %c) #1 {
+entry:
+  %tmp = call i32 @llvm.r600.read.tidig.x() #0
+  %tmp2 = getelementptr i32, i32 addrspace(2)* %in, i32 %tmp
+  %tmp3 = getelementptr i32, i32 addrspace(2)* %tmp2, i32 5000
+  %tmp4 = load i32, i32 addrspace(2)* %tmp3
+  %tmp5 = add i32 %tmp4, %c
+  store i32 %tmp5, i32 addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}smrd_valu_ci_offset_x2:
+; GCN: s_mov_b32 s[[OFFSET:[0-9]+]], 0x9c40{{$}}
+; GCN: buffer_load_dwordx2 v{{\[[0-9]+:[0-9]+\]}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[}}[[OFFSET]]:{{[0-9]+}}], 0 addr64{{$}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: buffer_store_dwordx2
+define void @smrd_valu_ci_offset_x2(i64 addrspace(1)* %out, i64 addrspace(2)* %in, i64 %c) #1 {
+entry:
+  %tmp = call i32 @llvm.r600.read.tidig.x() #0
+  %tmp2 = getelementptr i64, i64 addrspace(2)* %in, i32 %tmp
+  %tmp3 = getelementptr i64, i64 addrspace(2)* %tmp2, i32 5000
+  %tmp4 = load i64, i64 addrspace(2)* %tmp3
+  %tmp5 = or i64 %tmp4, %c
+  store i64 %tmp5, i64 addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}smrd_valu_ci_offset_x4:
+; GCN: s_movk_i32 s[[OFFSET:[0-9]+]], 0x4d20{{$}}
+; GCN: buffer_load_dwordx4 v{{\[[0-9]+:[0-9]+\]}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[}}[[OFFSET]]:{{[0-9]+}}], 0 addr64{{$}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: buffer_store_dwordx4
+define void @smrd_valu_ci_offset_x4(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(2)* %in, <4 x i32> %c) #1 {
+entry:
+  %tmp = call i32 @llvm.r600.read.tidig.x() #0
+  %tmp2 = getelementptr <4 x i32>, <4 x i32> addrspace(2)* %in, i32 %tmp
+  %tmp3 = getelementptr <4 x i32>, <4 x i32> addrspace(2)* %tmp2, i32 1234
+  %tmp4 = load <4 x i32>, <4 x i32> addrspace(2)* %tmp3
+  %tmp5 = or <4 x i32> %tmp4, %c
+  store <4 x i32> %tmp5, <4 x i32> addrspace(1)* %out
+  ret void
+}
+
+; Original scalar load uses SGPR offset on SI and 32-bit literal on
+; CI.
+
+; GCN-LABEL: {{^}}smrd_valu_ci_offset_x8:
+; GCN: s_mov_b32 s[[OFFSET0:[0-9]+]], 0x9a40{{$}}
+; GCN: buffer_load_dwordx4 v{{\[[0-9]+:[0-9]+\]}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[}}[[OFFSET0]]:{{[0-9]+}}], 0 addr64{{$}}
+
+; SI: s_add_i32 s[[OFFSET1:[0-9]+]], s[[OFFSET0]], 16
+; SI: buffer_load_dwordx4 v{{\[[0-9]+:[0-9]+\]}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[}}[[OFFSET1]]:{{[0-9]+}}], 0 addr64{{$}}
+
+; CI: s_mov_b32 s[[OFFSET1:[0-9]+]], 0x9a50{{$}}
+; CI: buffer_load_dwordx4 v{{\[[0-9]+:[0-9]+\]}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[}}[[OFFSET1]]:{{[0-9]+}}], 0 addr64{{$}}
+
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+define void @smrd_valu_ci_offset_x8(<8 x i32> addrspace(1)* %out, <8 x i32> addrspace(2)* %in, <8 x i32> %c) #1 {
+entry:
+  %tmp = call i32 @llvm.r600.read.tidig.x() #0
+  %tmp2 = getelementptr <8 x i32>, <8 x i32> addrspace(2)* %in, i32 %tmp
+  %tmp3 = getelementptr <8 x i32>, <8 x i32> addrspace(2)* %tmp2, i32 1234
+  %tmp4 = load <8 x i32>, <8 x i32> addrspace(2)* %tmp3
+  %tmp5 = or <8 x i32> %tmp4, %c
+  store <8 x i32> %tmp5, <8 x i32> addrspace(1)* %out
+  ret void
+}
+
 ; GCN-LABEL: {{^}}smrd_valu2_salu_user:
 ; GCN: buffer_load_dword [[MOVED:v[0-9]+]], v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:16{{$}}
 ; GCN: v_add_i32_e32 [[ADD:v[0-9]+]], vcc, s{{[0-9]+}}, [[MOVED]]
@@ -119,7 +213,10 @@ entry:
 ; FIXME: We should be using the offset but we don't
 
 ; GCN-LABEL: {{^}}smrd_valu2_mubuf_offset:
-; GCN: buffer_load_dword v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
+; SI: s_movk_i32 s[[OFFSET:[0-9]+]], 0x400{{$}}
+; SI: buffer_load_dword v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[}}[[OFFSET]]:{{[0-9]+\]}}, 0 addr64{{$}}
+
+; CI: buffer_load_dword v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:1024{{$}}
 define void @smrd_valu2_mubuf_offset(i32 addrspace(1)* %out, [1024 x i32] addrspace(2)* %in) #1 {
 entry:
   %tmp = call i32 @llvm.r600.read.tidig.x() #0
