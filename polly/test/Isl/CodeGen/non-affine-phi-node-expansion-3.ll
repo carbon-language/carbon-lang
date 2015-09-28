@@ -13,6 +13,7 @@ loop:
   br i1 %cond0, label %branch1, label %backedge
 
 ; CHECK-LABEL: polly.stmt.loop:
+; CHECK-NEXT: %polly.subregion.iv = phi i32 [ 0, %polly.stmt.loop.entry ]
 ; CHECK-NEXT: %p_val0 = fadd float 1.000000e+00, 2.000000e+00
 ; CHECK-NEXT: %p_val1 = fadd float 1.000000e+00, 2.000000e+00
 ; CHECK-NEXT: %p_val2 = fadd float 1.000000e+00, 2.000000e+00
