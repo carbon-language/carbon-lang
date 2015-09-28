@@ -22,17 +22,17 @@ declare void @foo5()
 ; CHECK: (block $BB0_2)
 ; CHECK: (switch {{.*}} $BB0_2 $BB0_2 $BB0_2 $BB0_2 $BB0_2 $BB0_2 $BB0_2 $BB0_2 $BB0_3 $BB0_3 $BB0_3 $BB0_3 $BB0_3 $BB0_3 $BB0_3 $BB0_3 $BB0_4 $BB0_4 $BB0_4 $BB0_4 $BB0_4 $BB0_4 $BB0_5 $BB0_6 $BB0_7)
 ; CHECk: BB0_2:
-; CHECK:   (setlocal {{.*}} (global $foo0))
+; CHECK:   (call $foo0)
 ; CHECK: BB0_3:
-; CHECK:   (setlocal {{.*}} (global $foo1))
+; CHECK:   (call $foo1)
 ; CHECK: BB0_4:
-; CHECK:   (setlocal {{.*}} (global $foo2))
+; CHECK:   (call $foo2)
 ; CHECK: BB0_5:
-; CHECK:   (setlocal {{.*}} (global $foo3))
+; CHECK:   (call $foo3)
 ; CHECK: BB0_6:
-; CHECK:   (setlocal {{.*}} (global $foo4))
+; CHECK:   (call $foo4)
 ; CHECK: BB0_7:
-; CHECK:   (setlocal {{.*}} (global $foo5))
+; CHECK:   (call $foo5)
 ; CHECK: BB0_8:
 ; CHECK:   (return)
 define void @bar32(i32 %n) {
@@ -102,17 +102,17 @@ sw.epilog:                                        ; preds = %entry, %sw.bb.5, %s
 ; CHECK: (block $BB1_2)
 ; CHECK: (switch {{.*}} $BB1_2 $BB1_2 $BB1_2 $BB1_2 $BB1_2 $BB1_2 $BB1_2 $BB1_2 $BB1_3 $BB1_3 $BB1_3 $BB1_3 $BB1_3 $BB1_3 $BB1_3 $BB1_3 $BB1_4 $BB1_4 $BB1_4 $BB1_4 $BB1_4 $BB1_4 $BB1_5 $BB1_6 $BB1_7)
 ; CHECk: BB1_2:
-; CHECK:   (setlocal {{.*}} (global $foo0))
+; CHECK:   (call $foo0)
 ; CHECK: BB1_3:
-; CHECK:   (setlocal {{.*}} (global $foo1))
+; CHECK:   (call $foo1)
 ; CHECK: BB1_4:
-; CHECK:   (setlocal {{.*}} (global $foo2))
+; CHECK:   (call $foo2)
 ; CHECK: BB1_5:
-; CHECK:   (setlocal {{.*}} (global $foo3))
+; CHECK:   (call $foo3)
 ; CHECK: BB1_6:
-; CHECK:   (setlocal {{.*}} (global $foo4))
+; CHECK:   (call $foo4)
 ; CHECK: BB1_7:
-; CHECK:   (setlocal {{.*}} (global $foo5))
+; CHECK:   (call $foo5)
 ; CHECK: BB1_8:
 ; CHECK:   (return)
 define void @bar64(i64 %n) {
