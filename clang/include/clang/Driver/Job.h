@@ -85,6 +85,9 @@ public:
   Command(const Action &Source, const Tool &Creator, const char *Executable,
           const llvm::opt::ArgStringList &Arguments,
           ArrayRef<InputInfo> Inputs);
+  // FIXME: This really shouldn't be copyable, but is currently copied in some
+  // error handling in Driver::generateCompilationDiagnostics.
+  Command(const Command &) = default;
   virtual ~Command() {}
 
   virtual void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
