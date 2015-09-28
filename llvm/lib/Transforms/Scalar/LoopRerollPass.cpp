@@ -993,6 +993,25 @@ bool LoopReroll::DAGRootTracker::instrDependsOn(Instruction *I,
   return false;
 }
 
+static bool isIgnorableInst(const Instruction *I) {
+  if (isa<DbgInfoIntrinsic>(I))
+    return true;
+  const IntrinsicInst* II = dyn_cast<IntrinsicInst>(I);
+  if (!II)
+    return false;
+  switch (II->getIntrinsicID()) {
+    default:
+      return false;
+    case llvm::Intrinsic::annotation:
+    case Intrinsic::ptr_annotation:
+    case Intrinsic::var_annotation:
+    // TODO: the following intrinsics may also be whitelisted:
+    //   lifetime_start, lifetime_end, invariant_start, invariant_end
+      return true;
+  }
+  return false;
+}
+
 bool LoopReroll::DAGRootTracker::validate(ReductionTracker &Reductions) {
   // We now need to check for equivalence of the use graph of each root with
   // that of the primary induction variable (excluding the roots). Our goal
@@ -1026,7 +1045,7 @@ bool LoopReroll::DAGRootTracker::validate(ReductionTracker &Reductions) {
   // Make sure all instructions in the loop are in one and only one
   // set.
   for (auto &KV : Uses) {
-    if (KV.second.count() != 1) {
+    if (KV.second.count() != 1 && !isIgnorableInst(KV.first)) {
       DEBUG(dbgs() << "LRR: Aborting - instruction is not used in 1 iteration: "
             << *KV.first << " (#uses=" << KV.second.count() << ")\n");
       return false;
