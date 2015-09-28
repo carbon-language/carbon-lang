@@ -181,6 +181,49 @@ entry:
   ret void
 }
 
+; FIXME: should use immediate offset instead of using s_add_i32 for adding to constant.
+; GCN-LABEL: {{^}}smrd_valu_ci_offset_x16:
+
+; GCN: s_mov_b32 s[[OFFSET0:[0-9]+]], 0x13480{{$}}
+; SI: s_add_i32 s[[OFFSET1:[0-9]+]], s[[OFFSET0]], 16
+; GCN: buffer_load_dwordx4 v{{\[[0-9]+:[0-9]+\]}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[}}[[OFFSET0]]:{{[0-9]+}}], 0 addr64{{$}}
+
+; CI: s_mov_b32 s[[OFFSET1:[0-9]+]], 0x13490{{$}}
+; GCN: buffer_load_dwordx4 v{{\[[0-9]+:[0-9]+\]}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[}}[[OFFSET1]]:{{[0-9]+}}], 0 addr64{{$}}
+
+; SI: s_add_i32 s[[OFFSET2:[0-9]+]], s[[OFFSET0]], 32
+; CI: s_mov_b32 s[[OFFSET2:[0-9]+]], 0x134a0
+
+; GCN: buffer_load_dwordx4 v{{\[[0-9]+:[0-9]+\]}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[}}[[OFFSET2]]:{{[0-9]+}}], 0 addr64{{$}}
+; GCN: s_add_i32 s[[OFFSET3:[0-9]+]], s[[OFFSET2]], 16
+; GCN: buffer_load_dwordx4 v{{\[[0-9]+:[0-9]+\]}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[}}[[OFFSET3]]:{{[0-9]+}}], 0 addr64{{$}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: v_or_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+; GCN: buffer_store_dword
+define void @smrd_valu_ci_offset_x16(<16 x i32> addrspace(1)* %out, <16 x i32> addrspace(2)* %in, <16 x i32> %c) #1 {
+entry:
+  %tmp = call i32 @llvm.r600.read.tidig.x() #0
+  %tmp2 = getelementptr <16 x i32>, <16 x i32> addrspace(2)* %in, i32 %tmp
+  %tmp3 = getelementptr <16 x i32>, <16 x i32> addrspace(2)* %tmp2, i32 1234
+  %tmp4 = load <16 x i32>, <16 x i32> addrspace(2)* %tmp3
+  %tmp5 = or <16 x i32> %tmp4, %c
+  store <16 x i32> %tmp5, <16 x i32> addrspace(1)* %out
+  ret void
+}
+
 ; GCN-LABEL: {{^}}smrd_valu2_salu_user:
 ; GCN: buffer_load_dword [[MOVED:v[0-9]+]], v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:16{{$}}
 ; GCN: v_add_i32_e32 [[ADD:v[0-9]+]], vcc, s{{[0-9]+}}, [[MOVED]]

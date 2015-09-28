@@ -2037,8 +2037,8 @@ void SIInstrInfo::splitSMRD(MachineInstr *MI,
                   .addOperand(*SOff);
     unsigned OffsetSGPR = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
     BuildMI(*MBB, MI, DL, get(AMDGPU::S_ADD_I32), OffsetSGPR)
-            .addOperand(*SOff)
-            .addImm(HalfSize);
+      .addReg(SOff->getReg(), 0, SOff->getSubReg())
+      .addImm(HalfSize);
     Hi = BuildMI(*MBB, MI, DL, get(HalfSGPROp), RegHi)
                   .addReg(SBase->getReg(), getKillRegState(IsKill),
                           SBase->getSubReg())
