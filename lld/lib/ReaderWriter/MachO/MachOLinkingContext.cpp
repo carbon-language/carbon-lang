@@ -10,6 +10,7 @@
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 #include "ArchHandler.h"
 #include "File.h"
+#include "FlatNamespaceFile.h"
 #include "MachONormalizedFile.h"
 #include "MachOPasses.h"
 #include "lld/Core/ArchiveLibraryFile.h"
@@ -143,10 +144,12 @@ MachOLinkingContext::MachOLinkingContext()
       _doNothing(false), _pie(false), _arch(arch_unknown), _os(OS::macOSX),
       _osMinVersion(0), _pageZeroSize(0), _pageSize(4096), _baseAddress(0),
       _stackSize(0), _compatibilityVersion(0), _currentVersion(0),
+      _flatNamespace(false), _undefinedMode(UndefinedMode::error),
       _deadStrippableDylib(false), _printAtoms(false), _testingFileUsage(false),
       _keepPrivateExterns(false), _demangle(false), _archHandler(nullptr),
       _exportMode(ExportMode::globals),
-      _debugInfoMode(DebugInfoMode::addDebugMap), _orderFileEntries(0) {}
+      _debugInfoMode(DebugInfoMode::addDebugMap), _orderFileEntries(0),
+      _flatNamespaceFile(nullptr) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}
 
@@ -716,6 +719,15 @@ void MachOLinkingContext::createImplicitFiles(
 
   // Let writer add output type specific extras.
   writer().createImplicitFiles(result);
+
+  // If we're using flat namespace or undefinedMode is != error, add a
+  // FlatNamespaceFile instance. This will provide a SharedLibraryAtom for
+  // symbols that aren't defined elsewhere.
+  if (useFlatNamespace() && undefinedMode() != UndefinedMode::error) {
+    bool warnOnUndef = undefinedMode() == UndefinedMode::warning;
+    result.emplace_back(new mach_o::FlatNamespaceFile(*this, warnOnUndef));
+    _flatNamespaceFile = result.back().get();
+  }
 }
 
 

@@ -55,6 +55,19 @@ def order_file : Separate<["-"], "order_file">,
      MetaVarName<"<file-path>">,
      HelpText<"re-order and move specified symbols to start of their section">,
      Group<grp_opts>;
+def flat_namespace : Flag<["-"], "flat_namespace">,
+     HelpText<"Resolves symbols in any (transitively) linked dynamic libraries. "
+              "Source libraries are not recorded: dyld will re-search all "
+              "images at runtime and use the first definition found.">,
+     Group<grp_opts>;
+def twolevel_namespace : Flag<["-"], "twolevel_namespace">,
+     HelpText<"Resolves symbols in listed libraries only. Source libraries are "
+              "recorded in the symbol table.">,
+     Group<grp_opts>;
+def undefined : Separate<["-"], "undefined">,
+                MetaVarName<"<undefined>">,
+                HelpText<"Determines how undefined symbols are handled.">,
+                Group<grp_opts>;
 
 // main executable options
 def grp_main : OptionGroup<"opts">, HelpText<"MAIN EXECUTABLE OPTIONS">;

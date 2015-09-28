@@ -855,7 +855,9 @@ std::error_code Util::addSymbols(const lld::File &atomFile,
     Symbol sym;
     uint16_t desc = 0;
     if (!rMode) {
-      uint8_t ordinal = dylibOrdinal(dyn_cast<SharedLibraryAtom>(ai.atom));
+      uint8_t ordinal = 0;
+      if (!_ctx.useFlatNamespace())
+        ordinal = dylibOrdinal(dyn_cast<SharedLibraryAtom>(ai.atom));
       llvm::MachO::SET_LIBRARY_ORDINAL(desc, ordinal);
     }
     sym.name  = ai.atom->name();
@@ -953,16 +955,28 @@ void Util::addDependentDylibs(const lld::File &atomFile,NormalizedFile &nFile) {
     DylibPathToInfo::iterator pos = _dylibInfo.find(loadPath);
     if (pos == _dylibInfo.end()) {
       DylibInfo info;
-      info.ordinal = ordinal++;
+      bool flatNamespaceAtom = &slAtom->file() == _ctx.flatNamespaceFile();
+
+      // If we're in -flat_namespace mode (or this atom came from the flat
+      // namespace file under -undefined dynamic_lookup) then use the flat
+      // lookup ordinal.
+      if (flatNamespaceAtom || _ctx.useFlatNamespace())
+        info.ordinal = BIND_SPECIAL_DYLIB_FLAT_LOOKUP;
+      else
+        info.ordinal = ordinal++;
       info.hasWeak = slAtom->canBeNullAtRuntime();
       info.hasNonWeak = !info.hasWeak;
       _dylibInfo[loadPath] = info;
-      DependentDylib depInfo;
-      depInfo.path = loadPath;
-      depInfo.kind = llvm::MachO::LC_LOAD_DYLIB;
-      depInfo.currentVersion = _ctx.dylibCurrentVersion(loadPath);
-      depInfo.compatVersion = _ctx.dylibCompatVersion(loadPath);
-      nFile.dependentDylibs.push_back(depInfo);
+
+      // Unless this was a flat_namespace atom, record the source dylib.
+      if (!flatNamespaceAtom) {
+        DependentDylib depInfo;
+        depInfo.path = loadPath;
+        depInfo.kind = llvm::MachO::LC_LOAD_DYLIB;
+        depInfo.currentVersion = _ctx.dylibCurrentVersion(loadPath);
+        depInfo.compatVersion = _ctx.dylibCompatVersion(loadPath);
+        nFile.dependentDylibs.push_back(depInfo);
+      }
     } else {
       if ( slAtom->canBeNullAtRuntime() )
         pos->second.hasWeak = true;
@@ -1180,7 +1194,9 @@ uint32_t Util::fileFlags() {
   if (_ctx.outputMachOType() == MH_OBJECT) {
     return MH_SUBSECTIONS_VIA_SYMBOLS;
   } else {
-    uint32_t flags = MH_DYLDLINK | MH_NOUNDEFS | MH_TWOLEVEL;
+    uint32_t flags = MH_DYLDLINK;
+    if (!_ctx.useFlatNamespace())
+        flags |= MH_TWOLEVEL | MH_NOUNDEFS;
     if ((_ctx.outputMachOType() == MH_EXECUTE) && _ctx.PIE())
       flags |= MH_PIE;
     if (_hasTLVDescriptors)

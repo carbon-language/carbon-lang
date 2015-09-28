@@ -751,6 +751,49 @@ bool DarwinLdDriver::parse(llvm::ArrayRef<const char *> args,
     }
   }
 
+  // Handle -flat_namespace.
+  if (llvm::opt::Arg *ns =
+          parsedArgs.getLastArg(OPT_flat_namespace, OPT_twolevel_namespace)) {
+    if (ns->getOption().getID() == OPT_flat_namespace)
+      ctx.setUseFlatNamespace(true);
+  }
+
+  // Handle -undefined
+  if (llvm::opt::Arg *undef = parsedArgs.getLastArg(OPT_undefined)) {
+    MachOLinkingContext::UndefinedMode UndefMode;
+    if (StringRef(undef->getValue()).equals("error"))
+      UndefMode = MachOLinkingContext::UndefinedMode::error;
+    else if (StringRef(undef->getValue()).equals("warning"))
+      UndefMode = MachOLinkingContext::UndefinedMode::warning;
+    else if (StringRef(undef->getValue()).equals("suppress"))
+      UndefMode = MachOLinkingContext::UndefinedMode::suppress;
+    else if (StringRef(undef->getValue()).equals("dynamic_lookup"))
+      UndefMode = MachOLinkingContext::UndefinedMode::dynamicLookup;
+    else {
+      diagnostics << "error: invalid option to -undefined "
+                     "[ warning | error | suppress | dynamic_lookup ]\n";
+      return false;
+    }
+
+    if (ctx.useFlatNamespace()) {
+      // If we're using -flat_namespace then 'warning', 'suppress' and
+      // 'dynamic_lookup' are all equivalent, so map them to 'suppress'.
+      if (UndefMode != MachOLinkingContext::UndefinedMode::error)
+        UndefMode = MachOLinkingContext::UndefinedMode::suppress;
+    } else {
+      // If we're using -twolevel_namespace then 'warning' and 'suppress' are
+      // illegal. Emit a diagnostic if they've been (mis)used.
+      if (UndefMode == MachOLinkingContext::UndefinedMode::warning ||
+          UndefMode == MachOLinkingContext::UndefinedMode::suppress) {
+        diagnostics << "error: can't use -undefined warning or suppress with "
+                       "-twolevel_namespace\n";
+        return false;
+      }
+    }
+
+    ctx.setUndefinedMode(UndefMode);
+  }
+
   // Handle -rpath <path>
   if (parsedArgs.hasArg(OPT_rpath)) {
     switch (ctx.outputMachOType()) {

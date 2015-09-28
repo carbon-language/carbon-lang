@@ -1042,7 +1042,12 @@ void MachOFileLayout::buildBindInfo() {
     _bindingInfo.append_byte(BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB
                             | entry.segIndex);
     _bindingInfo.append_uleb128(entry.segOffset);
-    _bindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_ORDINAL_IMM | entry.ordinal);
+    if (entry.ordinal > 0)
+      _bindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_ORDINAL_IMM |
+                               (entry.ordinal & 0xF));
+    else
+      _bindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_SPECIAL_IMM |
+                               (entry.ordinal & 0xF));
     _bindingInfo.append_byte(BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM);
     _bindingInfo.append_string(entry.symbolName);
     if (entry.addend != lastAddend) {
@@ -1062,7 +1067,12 @@ void MachOFileLayout::buildLazyBindInfo() {
     _lazyBindingInfo.append_byte(BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB
                             | entry.segIndex);
     _lazyBindingInfo.append_uleb128Fixed(entry.segOffset, 5);
-    _lazyBindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_ORDINAL_IMM | entry.ordinal);
+    if (entry.ordinal > 0)
+      _lazyBindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_ORDINAL_IMM |
+                                   (entry.ordinal & 0xF));
+    else
+      _lazyBindingInfo.append_byte(BIND_OPCODE_SET_DYLIB_SPECIAL_IMM |
+                                   (entry.ordinal & 0xF));
     _lazyBindingInfo.append_byte(BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM);
     _lazyBindingInfo.append_string(entry.symbolName);
     _lazyBindingInfo.append_byte(BIND_OPCODE_DO_BIND);
