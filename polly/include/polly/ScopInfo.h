@@ -234,54 +234,104 @@ class MemoryAccess {
   friend class ScopStmt;
 
 public:
-  /// @brief Description of the reason why a MemoryAccess was added.
+  /// @brief Description of the cause of a MemoryAccess being added.
   ///
-  /// There are currently three separate access origins:
+  /// We distinguish between explicit and implicit accesses. Explicit are those
+  /// for which there is a load or store instruction in the analyzed IR.
+  /// Implicit accesses are derived from defintions and uses of llvm::Values.
+  /// The polyhedral model has no notion of such values or SSA form, hence they
+  /// are modeled "as if" they were accesses to zero-dimensional arrays even if
+  /// they do represent accesses to (main) memory in the analyzed IR code. The
+  /// actual memory for the zero-dimensional arrays is only created using
+  /// allocas at CodeGeneration, with suffixes (currently ".s2a" and ".phiops")
+  /// added to the value's name. To describe how def/uses are modeled using
+  /// accesses we use these these suffixes here as well.
+  /// There are currently three separate kinds of access origins:
+  ///
   ///
   /// * Explicit access
   ///
   /// Memory is accessed by either a load (READ) or store (*_WRITE) found in the
   /// IR. #AccessInst is the LoadInst respectively StoreInst. The #BaseAddr is
   /// the array pointer being accesses without subscript. #AccessValue is the
-  /// llvm::Value the StoreInst writes respectively the result of the LoadInst
+  /// llvm::Value the StoreInst writes, respectively the result of the LoadInst
   /// (the LoadInst itself).
+  ///
   ///
   /// * Accessing an llvm::Value (a scalar)
   ///
   /// This is either a *_WRITE for the value's definition (i.e. exactly one per
-  /// llvm::Value) or a READ when the scalar is being used in a different
-  /// BasicBlock. In CodeGeneration, it results in alloca postfixed with .s2a.
+  /// llvm::Value) or a READ when the scalar is used in a different
+  /// BasicBlock. For instance, a use/def chain of such as %V in
+  ///              ______________________
+  ///              |DefBB:              |
+  ///              |  %V = float op ... |
+  ///              ----------------------
+  ///               |                  |
+  /// _________________               _________________
+  /// |UseBB1:        |               |UseBB2:        |
+  /// |  use float %V |               |  use float %V |
+  /// -----------------               -----------------
+  ///
+  /// is modeled as if the accesses had occured this way:
+  ///
+  ///                        __________________________
+  ///                        |entry:                  |
+  ///                        |  %V.s2a = alloca float |
+  ///                        --------------------------
+  ///                                     |
+  ///                    ___________________________________
+  ///                    |DefBB:                           |
+  ///                    |  store %float %V, float* %V.sa2 |
+  ///                    -----------------------------------
+  ///                           |                   |
+  /// ____________________________________  ____________________________________
+  /// |UseBB1:                           |  |UseBB2:                           |
+  /// |  %V.reload1 = load float* %V.s2a |  |  %V.reload2 = load float* %V.s2a |
+  /// |  use float %V.reload1            |  |  use float %V.reload2            |
+  /// ------------------------------------  ------------------------------------
+  ///
   /// #AccessInst is either the llvm::Value for WRITEs or the value's user for
   /// READS. The #BaseAddr is represented by the value's definition (i.e. the
   /// llvm::Value itself) as no such alloca yet exists before CodeGeneration.
   /// #AccessValue is also the llvm::Value itself.
   ///
+  ///
   /// * Accesses to emulate PHI nodes
   ///
-  /// CodeGeneration converts a PHI node such as
-  ///   %PHI = phi float [ %Val1, %IncomingBlock1 ], [ %Val2, %IncomingBlock2 ]
-  /// into
+  /// PHIInst instructions such as
   ///
-  ///                  %PHI.phiops = alloca float
-  ///                  ...
+  /// %PHI = phi float [ %Val1, %IncomingBlock1 ], [ %Val2, %IncomingBlock2 ]
   ///
+  /// are modeled as if the accesses occured this way:
   ///
-  /// IncomingBlock1:                    IncomingBlock2:
-  ///   ...                                ...
-  ///   store float %Val1 %PHI.phiops      store float %Val2 %PHI.phiops
-  ///   br label % JoinBlock               br label %JoinBlock
-  ///                         \           /
-  ///                          \         /
-  ///                           JoinBlock:
-  ///                             %PHI = load float, float* PHI.phiops
+  ///                    _______________________________
+  ///                    |entry:                       |
+  ///                    |  %PHI.phiops = alloca float |
+  ///                    -------------------------------
+  ///                           |              |
+  /// __________________________________  __________________________________
+  /// |IncomingBlock1:                 |  |IncomingBlock2:                 |
+  /// |  ...                           |  |  ...                           |
+  /// |  store float %Val1 %PHI.phiops |  |  store float %Val2 %PHI.phiops |
+  /// |  br label % JoinBlock          |  |  br label %JoinBlock           |
+  /// ----------------------------------  ----------------------------------
+  ///                             \            /
+  ///                              \          /
+  ///               _________________________________________
+  ///               |JoinBlock:                             |
+  ///               |  %PHI = load float, float* PHI.phiops |
+  ///               -----------------------------------------
   ///
   /// Since the stores and loads do not exist in the analyzed code, the
   /// #AccessInst of a load is the PHIInst and a incoming block's terminator for
   /// stores. The #BaseAddr is represented through the PHINode because there
-  /// also no alloca before CodeGeneration. The #AccessValue is represented by
+  /// also such alloca in the analyzed code. The #AccessValue is represented by
   /// the PHIInst itself.
+  ///
   /// Note that there can also be a scalar write access for %PHI if used in a
-  /// different BasicBlock.
+  /// different BasicBlock, i.e. there can be a %PHI.phiops as well as a
+  /// %PHI.s2a.
   enum AccessOrigin { EXPLICIT, SCALAR, PHI };
 
   /// @brief The access type of a memory access
@@ -332,7 +382,7 @@ private:
   /// scop statement.
   isl_id *Id;
 
-  /// @brief The accesses' purpose.
+  /// @brief What is modeled by this MemoetyAccess.
   /// @see AccessOrigin
   enum AccessOrigin Origin;
 
@@ -1589,48 +1639,71 @@ class ScopInfo : public RegionPass {
   /// @param Subscripts  Access subscripts per dimension.
   /// @param Sizes       The array dimension's sizes.
   /// @param AccessValue Value read or written.
+  /// @see AccessOrigin
   void addExplicitAccess(Instruction *MemAccInst, MemoryAccess::AccessType Type,
                          Value *BaseAddress, unsigned ElemBytes, bool IsAffine,
                          ArrayRef<const SCEV *> Subscripts,
                          ArrayRef<const SCEV *> Sizes, Value *AccessValue);
 
-  /// @brief Create a MemoryAccess for writing to .s2a memory.
+  /// @brief Create a MemoryAccess for writing an llvm::Value.
   ///
   /// The access will be created at the @p Value's definition.
   ///
-  /// @param Value The value to be written into the .s2a memory.
+  /// @param Value The value to be written.
+  /// @see addScalarReadAccess()
+  /// @see AccessOrigin
   void addScalarWriteAccess(Instruction *Value);
 
-  /// @brief Create a MemoryAccess for reading from .s2a memory.
+  /// @brief Create a MemoryAccess for reloading an llvm::Value.
+  ///
+  /// Use this overload only for non-PHI instructions.
   ///
   /// @param Value The scalar expected to be loaded.
-  /// @param User  User of the scalar, where the access is added.
+  /// @param User  User of the scalar; this is where the access is added.
+  /// @see addScalarWriteAccess()
+  /// @see AccessOrigin
   void addScalarReadAccess(Value *Value, Instruction *User);
 
-  /// @brief Create a MemoryAccess for reading from .s2a memory.
+  /// @brief Create a MemoryAccess for reloading an llvm::Value.
   ///
-  /// This is for PHINodes using the scalar. It is used when leaving the
-  /// incoming block to write to the .phiops location.
+  /// This is for PHINodes using the scalar. As we model it, the used value must
+  /// be available at the incoming block instead of when hitting the
+  /// instruction.
   ///
   /// @param Value  The scalar expected to be loaded.
   /// @param User   The PHI node referencing @p Value.
   /// @param UserBB Incoming block for the incoming @p Value.
+  /// @see addPHIWriteAccess()
+  /// @see addScalarWriteAccess()
+  /// @see AccessOrigin
   void addScalarReadAccess(Value *Value, PHINode *User, BasicBlock *UserBB);
 
-  /// @brief Create a MemoryAccess for writing to .phiops memory.
+  /// @brief Create a write MemoryAccess for the incoming block of a phi node.
+  ///
+  /// Each of the incoming blocks write their incoming value to be picked in the
+  /// phi's block.
   ///
   /// @param PHI           PHINode under consideration.
   /// @param IncomingBlock Some predecessor block.
   /// @param IncomingValue @p PHI's value when coming from @p IncomingBlock.
-  /// @param IsExitBlock   When true, use the .s2a alloca instead. Used for
-  ///                      values escaping through a PHINode in the SCoP
-  ///                      region's exit block.
+  /// @param IsExitBlock   When true, uses the .s2a alloca instead of the
+  ///                      .phiops one. Required for values escaping through a
+  ///                      PHINode in the SCoP region's exit block.
+  /// @see addPHIReadAccess()
+  /// @see AccessOrigin
   void addPHIWriteAccess(PHINode *PHI, BasicBlock *IncomingBlock,
                          Value *IncomingValue, bool IsExitBlock);
 
-  /// @brief Create a MemoryAccess for reading from .phiops memory.
+  /// @brief Create a MemoryAccess for reading the value of a phi.
   ///
-  /// @param PHI PHINode under consideration. READ access will be added here.
+  /// The modeling assumes that all incoming blocks write their incoming value
+  /// to the same location. Thus, this access will read the incoming block's
+  /// value as instructed by this @p PHI.
+  ///
+  /// @param PHI PHINode under consideration; the READ access will be added
+  /// here.
+  /// @see addPHIWriteAccess()
+  /// @see AccessOrigin
   void addPHIReadAccess(PHINode *PHI);
 
 public:
