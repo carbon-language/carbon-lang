@@ -1,4 +1,4 @@
-
+//===--------- ScopInfo.cpp  - Create Scops from LLVM IR ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
