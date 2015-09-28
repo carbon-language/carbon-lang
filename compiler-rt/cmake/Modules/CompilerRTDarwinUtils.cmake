@@ -272,11 +272,22 @@ macro(darwin_add_builtin_libraries)
     # Don't build cc_kext libraries for simulator platforms
     if(NOT ${os} MATCHES ".*sim$")
       foreach (arch ${DARWIN_BUILTIN_ARCHS})
+        # By not specifying MIN_VERSION this only reads the OS and OS-arch lists.
+        # We don't want to filter out the builtins that are present in libSystem
+        # because kexts can't link libSystem.
+        darwin_find_excluded_builtins_list(${arch}_${os}_EXCLUDED_BUILTINS
+                              OS ${os}
+                              ARCH ${arch})
+
+        darwin_filter_builtin_sources(filtered_sources
+          EXCLUDE ${arch}_${os}_EXCLUDED_BUILTINS
+          ${${arch}_SOURCES})
+
         # In addition to the builtins cc_kext includes some profile sources
         darwin_add_builtin_library(clang_rt cc_kext
                                 OS ${os}
                                 ARCH ${arch}
-                                SOURCES ${${arch}_SOURCES} ${PROFILE_SOURCES}
+                                SOURCES ${filtered_sources} ${PROFILE_SOURCES}
                                 CFLAGS -arch ${arch} -mkernel
                                 DEFS KERNEL_USE
                                 PARENT_TARGET builtins)
