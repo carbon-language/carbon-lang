@@ -129,7 +129,6 @@ namespace clang {
     public:
       RedeclarableResult(GlobalDeclID FirstID, Decl *MergeWith, bool IsKeyDecl)
           : FirstID(FirstID), MergeWith(MergeWith), IsKeyDecl(IsKeyDecl) {}
-      ~RedeclarableResult() {}
 
       /// \brief Retrieve the first ID.
       GlobalDeclID getFirstID() const { return FirstID; }
@@ -882,7 +881,7 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
 }
 
 void ASTDeclReader::VisitObjCTypeParamDecl(ObjCTypeParamDecl *D) {
-  RedeclarableResult Redecl = VisitTypedefNameDecl(D);
+  VisitTypedefNameDecl(D);
 
   D->Variance = Record[Idx++];
   D->Index = Record[Idx++];
