@@ -80,11 +80,6 @@ enum RejectReasonKind {
   rrkDifferentElementSize,
   rrkLastAffFunc,
 
-  // IndVar
-  rrkIndVar,
-  rrkPhiNodeRefInRegion,
-  rrkLastIndVar,
-
   rrkIndEdge,
 
   rrkLoopBound,
@@ -100,7 +95,6 @@ enum RejectReasonKind {
   rrkIntToPtr,
   rrkAlloca,
   rrkUnknownInst,
-  rrkPHIinExit,
   rrkEntry,
   rrkUnprofitable,
   rrkLastOther
@@ -533,40 +527,6 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// @brief Base class for reject reasons related to induction variables.
-///
-//  ReportIndVar reject reasons are generated when the ScopDetection finds
-/// errors in the induction variable(s) of the Scop candidate.
-class ReportIndVar : public RejectReason {
-  //===--------------------------------------------------------------------===//
-public:
-  ReportIndVar(const RejectReasonKind K);
-};
-
-//===----------------------------------------------------------------------===//
-/// @brief Captures a phi node that refers to SSA names in the current region.
-class ReportPhiNodeRefInRegion : public ReportIndVar {
-  //===--------------------------------------------------------------------===//
-
-  // The offending instruction.
-  Instruction *Inst;
-
-public:
-  ReportPhiNodeRefInRegion(Instruction *Inst);
-
-  /// @name LLVM-RTTI interface
-  //@{
-  static bool classof(const RejectReason *RR);
-  //@}
-
-  /// @name RejectReason interface
-  //@{
-  virtual std::string getMessage() const override;
-  virtual const DebugLoc &getDebugLoc() const override;
-  //@}
-};
-
-//===----------------------------------------------------------------------===//
 /// @brief Captures a region with invalid entering edges.
 class ReportIndEdge : public RejectReason {
   //===--------------------------------------------------------------------===//
@@ -770,27 +730,6 @@ class ReportUnknownInst : public ReportOther {
 
 public:
   ReportUnknownInst(Instruction *Inst);
-
-  /// @name LLVM-RTTI interface
-  //@{
-  static bool classof(const RejectReason *RR);
-  //@}
-
-  /// @name RejectReason interface
-  //@{
-  virtual std::string getMessage() const override;
-  virtual const DebugLoc &getDebugLoc() const override;
-  //@}
-};
-
-//===----------------------------------------------------------------------===//
-/// @brief Captures errors with phi nodes in exit BBs.
-class ReportPHIinExit : public ReportOther {
-  //===--------------------------------------------------------------------===//
-  Instruction *Inst;
-
-public:
-  ReportPHIinExit(Instruction *Inst);
 
   /// @name LLVM-RTTI interface
   //@{

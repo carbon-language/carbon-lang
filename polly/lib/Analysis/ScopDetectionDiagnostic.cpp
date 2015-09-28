@@ -40,7 +40,6 @@
   STATISTIC(Bad##NAME##ForScop, "Number of bad regions for Scop: " DESC)
 
 BADSCOP_STAT(CFG, "CFG too complex");
-BADSCOP_STAT(IndVar, "Non canonical induction variable in loop");
 BADSCOP_STAT(IndEdge, "Found invalid region entering edges");
 BADSCOP_STAT(LoopBound, "Loop bounds can not be computed");
 BADSCOP_STAT(FuncCall, "Function call with side effects appeared");
@@ -302,31 +301,6 @@ std::string ReportNonAffineAccess::getEndUserMessage() const {
 }
 
 //===----------------------------------------------------------------------===//
-// ReportIndVar.
-
-ReportIndVar::ReportIndVar(const RejectReasonKind K) : RejectReason(K) {
-  ++BadIndVarForScop;
-}
-
-//===----------------------------------------------------------------------===//
-// ReportPhiNodeRefInRegion.
-
-ReportPhiNodeRefInRegion::ReportPhiNodeRefInRegion(Instruction *Inst)
-    : ReportIndVar(rrkPhiNodeRefInRegion), Inst(Inst) {}
-
-std::string ReportPhiNodeRefInRegion::getMessage() const {
-  return "SCEV of PHI node refers to SSA names in region: " + *Inst;
-}
-
-const DebugLoc &ReportPhiNodeRefInRegion::getDebugLoc() const {
-  return Inst->getDebugLoc();
-}
-
-bool ReportPhiNodeRefInRegion::classof(const RejectReason *RR) {
-  return RR->getKind() == rrkPhiNodeRefInRegion;
-}
-
-//===----------------------------------------------------------------------===//
 // ReportIndEdge.
 
 ReportIndEdge::ReportIndEdge(BasicBlock *BB)
@@ -532,24 +506,6 @@ const DebugLoc &ReportUnknownInst::getDebugLoc() const {
 
 bool ReportUnknownInst::classof(const RejectReason *RR) {
   return RR->getKind() == rrkUnknownInst;
-}
-
-//===----------------------------------------------------------------------===//
-// ReportPHIinExit.
-
-ReportPHIinExit::ReportPHIinExit(Instruction *Inst)
-    : ReportOther(rrkPHIinExit), Inst(Inst) {}
-
-std::string ReportPHIinExit::getMessage() const {
-  return "PHI node in exit BB";
-}
-
-const DebugLoc &ReportPHIinExit::getDebugLoc() const {
-  return Inst->getDebugLoc();
-}
-
-bool ReportPHIinExit::classof(const RejectReason *RR) {
-  return RR->getKind() == rrkPHIinExit;
 }
 
 //===----------------------------------------------------------------------===//
