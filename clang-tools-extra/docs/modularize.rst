@@ -210,7 +210,7 @@ The following module map will be generated::
 An optional ``-root-module=<root-name>`` option can be used to cause a root module
 to be created which encloses all the modules.
 
-An optional ``-problem-files-list=<problem-file-name> can be used to input
+An optional ``-problem-files-list=<problem-file-name>`` can be used to input
 a list of files to be excluded, perhaps as a temporary stop-gap measure until
 problem headers can be fixed.
 
