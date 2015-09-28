@@ -1738,9 +1738,10 @@ unsigned llvm::getMatchingCondBranchOpcode(unsigned Opc) {
   llvm_unreachable("Unknown unconditional branch opcode!");
 }
 
-/// commuteInstruction - Handle commutable instructions.
-MachineInstr *
-ARMBaseInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
+MachineInstr *ARMBaseInstrInfo::commuteInstructionImpl(MachineInstr *MI,
+                                                       bool NewMI,
+                                                       unsigned OpIdx1,
+                                                       unsigned OpIdx2) const {
   switch (MI->getOpcode()) {
   case ARM::MOVCCr:
   case ARM::t2MOVCCr: {
@@ -1750,7 +1751,7 @@ ARMBaseInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     // MOVCC AL can't be inverted. Shouldn't happen.
     if (CC == ARMCC::AL || PredReg != ARM::CPSR)
       return nullptr;
-    MI = TargetInstrInfo::commuteInstruction(MI, NewMI);
+    MI = TargetInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx1, OpIdx2);
     if (!MI)
       return nullptr;
     // After swapping the MOVCC operands, also invert the condition.
@@ -1759,7 +1760,7 @@ ARMBaseInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     return MI;
   }
   }
-  return TargetInstrInfo::commuteInstruction(MI, NewMI);
+  return TargetInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx1, OpIdx2);
 }
 
 /// Identify instructions that can be folded into a MOVCC instruction, and

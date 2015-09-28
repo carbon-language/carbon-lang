@@ -2917,10 +2917,10 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   return NewMI;
 }
 
-/// We have a few instructions that must be hacked on to commute them.
-///
-MachineInstr *
-X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
+MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr *MI,
+                                                   bool NewMI,
+                                                   unsigned OpIdx1,
+                                                   unsigned OpIdx2) const {
   switch (MI->getOpcode()) {
   case X86::SHRD16rri8: // A = SHRD16rri8 B, C, I -> A = SHLD16rri8 C, B, (16-I)
   case X86::SHLD16rri8: // A = SHLD16rri8 B, C, I -> A = SHRD16rri8 C, B, (16-I)
@@ -2947,7 +2947,7 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     }
     MI->setDesc(get(Opc));
     MI->getOperand(3).setImm(Size-Amt);
-    return TargetInstrInfo::commuteInstruction(MI, NewMI);
+    return TargetInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx1, OpIdx2);
   }
   case X86::BLENDPDrri:
   case X86::BLENDPSrri:
@@ -2983,7 +2983,7 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
       NewMI = false;
     }
     MI->getOperand(3).setImm(Mask ^ Imm);
-    return TargetInstrInfo::commuteInstruction(MI, NewMI);
+    return TargetInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx1, OpIdx2);
   }
   case X86::PCLMULQDQrr:
   case X86::VPCLMULQDQrr:{
@@ -2998,7 +2998,7 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
       NewMI = false;
     }
     MI->getOperand(3).setImm((Src1Hi << 4) | (Src2Hi >> 4));
-    return TargetInstrInfo::commuteInstruction(MI, NewMI);
+    return TargetInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx1, OpIdx2);
   }
   case X86::CMPPDrri:
   case X86::CMPPSrri:
@@ -3019,7 +3019,7 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
         MI = MF.CloneMachineInstr(MI);
         NewMI = false;
       }
-      return TargetInstrInfo::commuteInstruction(MI, NewMI);
+      return TargetInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx1, OpIdx2);
     default:
       return nullptr;
     }
@@ -3048,7 +3048,7 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
       NewMI = false;
     }
     MI->getOperand(3).setImm(Imm);
-    return TargetInstrInfo::commuteInstruction(MI, NewMI);
+    return TargetInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx1, OpIdx2);
   }
   case X86::CMOVB16rr:  case X86::CMOVB32rr:  case X86::CMOVB64rr:
   case X86::CMOVAE16rr: case X86::CMOVAE32rr: case X86::CMOVAE64rr:
@@ -3127,11 +3127,12 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     // Fallthrough intended.
   }
   default:
-    return TargetInstrInfo::commuteInstruction(MI, NewMI);
+    return TargetInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx1, OpIdx2);
   }
 }
 
-bool X86InstrInfo::findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
+bool X86InstrInfo::findCommutedOpIndices(MachineInstr *MI,
+                                         unsigned &SrcOpIdx1,
                                          unsigned &SrcOpIdx2) const {
   switch (MI->getOpcode()) {
     case X86::CMPPDrri:
@@ -3144,13 +3145,13 @@ bool X86InstrInfo::findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
       // Ordered/Unordered/Equal/NotEqual tests
       unsigned Imm = MI->getOperand(3).getImm() & 0x7;
       switch (Imm) {
-      case 0x00: // EQUAL
-      case 0x03: // UNORDERED
-      case 0x04: // NOT EQUAL
-      case 0x07: // ORDERED
-        SrcOpIdx1 = 1;
-        SrcOpIdx2 = 2;
-        return true;
+        case 0x00: // EQUAL
+        case 0x03: // UNORDERED
+        case 0x04: // NOT EQUAL
+        case 0x07: // ORDERED
+          // The indices of the commutable operands are 1 and 2.
+          // Assign them to the returned operand indices here.
+          return fixCommutedOpIndices(SrcOpIdx1, SrcOpIdx2, 1, 2);
       }
       return false;
     }
@@ -3178,12 +3179,13 @@ bool X86InstrInfo::findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
     case X86::VFNMADDPSr231rY:
     case X86::VFNMSUBPDr231rY:
     case X86::VFNMSUBPSr231rY:
-      SrcOpIdx1 = 2;
-      SrcOpIdx2 = 3;
-      return true;
+          // The indices of the commutable operands are 2 and 3.
+          // Assign them to the returned operand indices here.
+          return fixCommutedOpIndices(SrcOpIdx1, SrcOpIdx2, 2, 3);
     default:
       return TargetInstrInfo::findCommutedOpIndices(MI, SrcOpIdx1, SrcOpIdx2);
   }
+  return false;
 }
 
 static X86::CondCode getCondFromBranchOpc(unsigned BrOpc) {
@@ -4998,60 +5000,56 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
   // If the instruction and target operand are commutable, commute the
   // instruction and try again.
   if (AllowCommute) {
-    unsigned OriginalOpIdx = OpNum, CommuteOpIdx1, CommuteOpIdx2;
+    unsigned CommuteOpIdx1 = OpNum, CommuteOpIdx2 = CommuteAnyOperandIndex;
     if (findCommutedOpIndices(MI, CommuteOpIdx1, CommuteOpIdx2)) {
       bool HasDef = MI->getDesc().getNumDefs();
       unsigned Reg0 = HasDef ? MI->getOperand(0).getReg() : 0;
       unsigned Reg1 = MI->getOperand(CommuteOpIdx1).getReg();
       unsigned Reg2 = MI->getOperand(CommuteOpIdx2).getReg();
-      bool Tied0 =
-          0 == MI->getDesc().getOperandConstraint(CommuteOpIdx1, MCOI::TIED_TO);
       bool Tied1 =
+          0 == MI->getDesc().getOperandConstraint(CommuteOpIdx1, MCOI::TIED_TO);
+      bool Tied2 =
           0 == MI->getDesc().getOperandConstraint(CommuteOpIdx2, MCOI::TIED_TO);
 
       // If either of the commutable operands are tied to the destination
       // then we can not commute + fold.
-      if ((HasDef && Reg0 == Reg1 && Tied0) ||
-          (HasDef && Reg0 == Reg2 && Tied1))
+      if ((HasDef && Reg0 == Reg1 && Tied1) ||
+          (HasDef && Reg0 == Reg2 && Tied2))
         return nullptr;
 
-      if ((CommuteOpIdx1 == OriginalOpIdx) ||
-          (CommuteOpIdx2 == OriginalOpIdx)) {
-        MachineInstr *CommutedMI = commuteInstruction(MI, false);
-        if (!CommutedMI) {
-          // Unable to commute.
-          return nullptr;
-        }
-        if (CommutedMI != MI) {
-          // New instruction. We can't fold from this.
-          CommutedMI->eraseFromParent();
-          return nullptr;
-        }
-
-        // Attempt to fold with the commuted version of the instruction.
-        unsigned CommuteOp =
-            (CommuteOpIdx1 == OriginalOpIdx ? CommuteOpIdx2 : CommuteOpIdx1);
-        NewMI =
-            foldMemoryOperandImpl(MF, MI, CommuteOp, MOs, InsertPt, Size, Align,
-                                  /*AllowCommute=*/false);
-        if (NewMI)
-          return NewMI;
-
-        // Folding failed again - undo the commute before returning.
-        MachineInstr *UncommutedMI = commuteInstruction(MI, false);
-        if (!UncommutedMI) {
-          // Unable to commute.
-          return nullptr;
-        }
-        if (UncommutedMI != MI) {
-          // New instruction. It doesn't need to be kept.
-          UncommutedMI->eraseFromParent();
-          return nullptr;
-        }
-
-        // Return here to prevent duplicate fuse failure report.
+      MachineInstr *CommutedMI =
+          commuteInstruction(MI, false, CommuteOpIdx1, CommuteOpIdx2);
+      if (!CommutedMI) {
+        // Unable to commute.
         return nullptr;
       }
+      if (CommutedMI != MI) {
+        // New instruction. We can't fold from this.
+        CommutedMI->eraseFromParent();
+        return nullptr;
+      }
+
+      // Attempt to fold with the commuted version of the instruction.
+      NewMI = foldMemoryOperandImpl(MF, MI, CommuteOpIdx2, MOs, InsertPt,
+                                    Size, Align, /*AllowCommute=*/false);
+      if (NewMI)
+        return NewMI;
+
+      // Folding failed again - undo the commute before returning.
+      MachineInstr *UncommutedMI =
+          commuteInstruction(MI, false, CommuteOpIdx1, CommuteOpIdx2);
+      if (!UncommutedMI) {
+        // Unable to commute.
+        return nullptr;
+      }
+      if (UncommutedMI != MI) {
+        // New instruction. It doesn't need to be kept.
+        UncommutedMI->eraseFromParent();
+        return nullptr;
+      }
+
+      // Return here to prevent duplicate fuse failure report.
+      return nullptr;
     }
   }
 

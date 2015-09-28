@@ -94,6 +94,41 @@ protected:
     return false;
   }
 
+  /// This method commutes the operands of the given machine instruction MI.
+  /// The operands to be commuted are specified by their indices OpIdx1 and
+  /// OpIdx2.
+  ///
+  /// If a target has any instructions that are commutable but require
+  /// converting to different instructions or making non-trivial changes
+  /// to commute them, this method can be overloaded to do that.
+  /// The default implementation simply swaps the commutable operands.
+  ///
+  /// If NewMI is false, MI is modified in place and returned; otherwise, a
+  /// new machine instruction is created and returned.
+  ///
+  /// Do not call this method for a non-commutable instruction.
+  /// Even though the instruction is commutable, the method may still
+  /// fail to commute the operands, null pointer is returned in such cases.
+  virtual MachineInstr *commuteInstructionImpl(MachineInstr *MI,
+                                               bool NewMI,
+                                               unsigned OpIdx1,
+                                               unsigned OpIdx2) const;
+
+  /// Assigns the (CommutableOpIdx1, CommutableOpIdx2) pair of commutable
+  /// operand indices to (ResultIdx1, ResultIdx2).
+  /// One or both input values of the pair: (ResultIdx1, ResultIdx2) may be
+  /// predefined to some indices or be undefined (designated by the special
+  /// value 'CommuteAnyOperandIndex').
+  /// The predefined result indices cannot be re-defined.
+  /// The function returns true iff after the result pair redefinition
+  /// the fixed result pair is equal to or equivalent to the source pair of
+  /// indices: (CommutableOpIdx1, CommutableOpIdx2). It is assumed here that
+  /// the pairs (x,y) and (y,x) are equivalent.
+  static bool fixCommutedOpIndices(unsigned &ResultIdx1,
+                                   unsigned &ResultIdx2,
+                                   unsigned CommutableOpIdx1,
+                                   unsigned CommutableOpIdx2);
+
 private:
   /// For instructions with opcodes for which the M_REMATERIALIZABLE flag is
   /// set and the target hook isReallyTriviallyReMaterializable returns false,
@@ -250,20 +285,51 @@ public:
     return nullptr;
   }
 
-  /// If a target has any instructions that are commutable but require
-  /// converting to different instructions or making non-trivial changes to
-  /// commute them, this method can overloaded to do that.
-  /// The default implementation simply swaps the commutable operands.
-  /// If NewMI is false, MI is modified in place and returned; otherwise, a
-  /// new machine instruction is created and returned.  Do not call this
-  /// method for a non-commutable instruction, but there may be some cases
-  /// where this method fails and returns null.
-  virtual MachineInstr *commuteInstruction(MachineInstr *MI,
-                                           bool NewMI = false) const;
+  // This constant can be used as an input value of operand index passed to
+  // the method findCommutedOpIndices() to tell the method that the
+  // corresponding operand index is not pre-defined and that the method
+  // can pick any commutable operand.
+  static const unsigned CommuteAnyOperandIndex = ~0U;
 
-  /// If specified MI is commutable, return the two operand indices that would
-  /// swap value. Return false if the instruction
-  /// is not in a form which this routine understands.
+  /// This method commutes the operands of the given machine instruction MI.
+  ///
+  /// The operands to be commuted are specified by their indices OpIdx1 and
+  /// OpIdx2. OpIdx1 and OpIdx2 arguments may be set to a special value
+  /// 'CommuteAnyOperandIndex', which means that the method is free to choose
+  /// any arbitrarily chosen commutable operand. If both arguments are set to
+  /// 'CommuteAnyOperandIndex' then the method looks for 2 different commutable
+  /// operands; then commutes them if such operands could be found.
+  ///
+  /// If NewMI is false, MI is modified in place and returned; otherwise, a
+  /// new machine instruction is created and returned.
+  ///
+  /// Do not call this method for a non-commutable instruction or
+  /// for non-commuable operands.
+  /// Even though the instruction is commutable, the method may still
+  /// fail to commute the operands, null pointer is returned in such cases.
+  MachineInstr *
+  commuteInstruction(MachineInstr *MI,
+                     bool NewMI = false,
+                     unsigned OpIdx1 = CommuteAnyOperandIndex,
+                     unsigned OpIdx2 = CommuteAnyOperandIndex) const;
+
+  /// Returns true iff the routine could find two commutable operands in the
+  /// given machine instruction.
+  /// The 'SrcOpIdx1' and 'SrcOpIdx2' are INPUT and OUTPUT arguments.
+  /// If any of the INPUT values is set to the special value
+  /// 'CommuteAnyOperandIndex' then the method arbitrarily picks a commutable
+  /// operand, then returns its index in the corresponding argument.
+  /// If both of INPUT values are set to 'CommuteAnyOperandIndex' then method
+  /// looks for 2 commutable operands.
+  /// If INPUT values refer to some operands of MI, then the method simply
+  /// returns true if the corresponding operands are commutable and returns
+  /// false otherwise.
+  ///
+  /// For example, calling this method this way:
+  ///     unsigned Op1 = 1, Op2 = CommuteAnyOperandIndex;
+  ///     findCommutedOpIndices(MI, Op1, Op2);
+  /// can be interpreted as a query asking to find an operand that would be
+  /// commutable with the operand#1.
   virtual bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
                                      unsigned &SrcOpIdx2) const;
 

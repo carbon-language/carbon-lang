@@ -316,16 +316,16 @@ unsigned PPCInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   return 0;
 }
 
-// commuteInstruction - We can commute rlwimi instructions, but only if the
-// rotate amt is zero.  We also have to munge the immediates a bit.
-MachineInstr *
-PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
+MachineInstr *PPCInstrInfo::commuteInstructionImpl(MachineInstr *MI,
+                                                   bool NewMI,
+                                                   unsigned OpIdx1,
+                                                   unsigned OpIdx2) const {
   MachineFunction &MF = *MI->getParent()->getParent();
 
   // Normal instructions can be commuted the obvious way.
   if (MI->getOpcode() != PPC::RLWIMI &&
       MI->getOpcode() != PPC::RLWIMIo)
-    return TargetInstrInfo::commuteInstruction(MI, NewMI);
+    return TargetInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx1, OpIdx2);
   // Note that RLWIMI can be commuted as a 32-bit instruction, but not as a
   // 64-bit instruction (so we don't handle PPC::RLWIMI8 here), because
   // changing the relative order of the mask operands might change what happens
@@ -343,6 +343,8 @@ PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
   //   Op0 = (Op2 & ~M) | (Op1 & M)
 
   // Swap op1/op2
+  assert(((OpIdx1 == 1 && OpIdx2 == 2) || (OpIdx1 == 2 && OpIdx2 == 1)) &&
+         "Only the operands 1 and 2 can be swapped in RLSIMI/RLWIMIo.");
   unsigned Reg0 = MI->getOperand(0).getReg();
   unsigned Reg1 = MI->getOperand(1).getReg();
   unsigned Reg2 = MI->getOperand(2).getReg();
@@ -410,9 +412,9 @@ bool PPCInstrInfo::findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
   if (AltOpc == -1)
     return TargetInstrInfo::findCommutedOpIndices(MI, SrcOpIdx1, SrcOpIdx2);
 
-  SrcOpIdx1 = 2;
-  SrcOpIdx2 = 3;
-  return true;
+  // The commutable operand indices are 2 and 3. Return them in SrcOpIdx1
+  // and SrcOpIdx2.
+  return fixCommutedOpIndices(SrcOpIdx1, SrcOpIdx2, 2, 3);
 }
 
 void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB,

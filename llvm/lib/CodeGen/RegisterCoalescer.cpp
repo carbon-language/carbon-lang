@@ -665,14 +665,18 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
   unsigned UseOpIdx;
   if (!DefMI->isRegTiedToUseOperand(DefIdx, &UseOpIdx))
     return false;
-  unsigned Op1, Op2, NewDstIdx;
-  if (!TII->findCommutedOpIndices(DefMI, Op1, Op2))
-    return false;
-  if (Op1 == UseOpIdx)
-    NewDstIdx = Op2;
-  else if (Op2 == UseOpIdx)
-    NewDstIdx = Op1;
-  else
+
+  // FIXME: The code below tries to commute 'UseOpIdx' operand with some other
+  // commutable operand which is expressed by 'CommuteAnyOperandIndex'value
+  // passed to the method. That _other_ operand is chosen by
+  // the findCommutedOpIndices() method.
+  //
+  // That is obviously an area for improvement in case of instructions having
+  // more than 2 operands. For example, if some instruction has 3 commutable
+  // operands then all possible variants (i.e. op#1<->op#2, op#1<->op#3,
+  // op#2<->op#3) of commute transformation should be considered/tried here.
+  unsigned NewDstIdx = TargetInstrInfo::CommuteAnyOperandIndex;
+  if (!TII->findCommutedOpIndices(DefMI, UseOpIdx, NewDstIdx))
     return false;
 
   MachineOperand &NewDstMO = DefMI->getOperand(NewDstIdx);
@@ -705,7 +709,8 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
   // At this point we have decided that it is legal to do this
   // transformation.  Start by commuting the instruction.
   MachineBasicBlock *MBB = DefMI->getParent();
-  MachineInstr *NewMI = TII->commuteInstruction(DefMI);
+  MachineInstr *NewMI =
+      TII->commuteInstruction(DefMI, false, UseOpIdx, NewDstIdx);
   if (!NewMI)
     return false;
   if (TargetRegisterInfo::isVirtualRegister(IntA.reg) &&

@@ -782,8 +782,17 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   return true;
 }
 
-MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
-                                              bool NewMI) const {
+/// Commutes the operands in the given instruction.
+/// The commutable operands are specified by their indices OpIdx0 and OpIdx1.
+///
+/// Do not call this method for a non-commutable instruction or for
+/// non-commutable pair of operand indices OpIdx0 and OpIdx1.
+/// Even though the instruction is commutable, the method may still
+/// fail to commute the operands, null pointer is returned in such cases.
+MachineInstr *SIInstrInfo::commuteInstructionImpl(MachineInstr *MI,
+                                                  bool NewMI,
+                                                  unsigned OpIdx0,
+                                                  unsigned OpIdx1) const {
   int CommutedOpcode = commuteOpcode(*MI);
   if (CommutedOpcode == -1)
     return nullptr;
@@ -796,6 +805,13 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
 
   int Src1Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
                                            AMDGPU::OpName::src1);
+
+  if ((OpIdx0 != static_cast<unsigned>(Src0Idx) ||
+       OpIdx1 != static_cast<unsigned>(Src1Idx)) &&
+      (OpIdx0 != static_cast<unsigned>(Src1Idx) ||
+       OpIdx1 != static_cast<unsigned>(Src0Idx)))
+    return nullptr;
+
   MachineOperand &Src1 = MI->getOperand(Src1Idx);
 
   // Make sure it's legal to commute operands for VOP2.
@@ -841,7 +857,7 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
     Src1.ChangeToRegister(Reg, false);
     Src1.setSubReg(SubReg);
   } else {
-    MI = TargetInstrInfo::commuteInstruction(MI, NewMI);
+    MI = TargetInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx0, OpIdx1);
   }
 
   if (MI)
@@ -854,8 +870,8 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
 // between the true commutable operands, and the base
 // TargetInstrInfo::commuteInstruction uses it.
 bool SIInstrInfo::findCommutedOpIndices(MachineInstr *MI,
-                                        unsigned &SrcOpIdx1,
-                                        unsigned &SrcOpIdx2) const {
+                                        unsigned &SrcOpIdx0,
+                                        unsigned &SrcOpIdx1) const {
   const MCInstrDesc &MCID = MI->getDesc();
   if (!MCID.isCommutable())
     return false;
@@ -866,7 +882,8 @@ bool SIInstrInfo::findCommutedOpIndices(MachineInstr *MI,
     return false;
 
   // FIXME: Workaround TargetInstrInfo::commuteInstruction asserting on
-  // immediate.
+  // immediate. Also, immediate src0 operand is not handled in
+  // SIInstrInfo::commuteInstruction();
   if (!MI->getOperand(Src0Idx).isReg())
     return false;
 
@@ -874,18 +891,22 @@ bool SIInstrInfo::findCommutedOpIndices(MachineInstr *MI,
   if (Src1Idx == -1)
     return false;
 
-  if (!MI->getOperand(Src1Idx).isReg())
+  MachineOperand &Src1 = MI->getOperand(Src1Idx);
+  if (Src1.isImm()) {
+    // SIInstrInfo::commuteInstruction() does support commuting the immediate
+    // operand src1 in 2 and 3 operand instructions.
+    if (!isVOP2(MI->getOpcode()) && !isVOP3(MI->getOpcode()))
+      return false;
+  } else if (Src1.isReg()) {
+    // If any source modifiers are set, the generic instruction commuting won't
+    // understand how to copy the source modifiers.
+    if (hasModifiersSet(*MI, AMDGPU::OpName::src0_modifiers) ||
+        hasModifiersSet(*MI, AMDGPU::OpName::src1_modifiers))
+      return false;
+  } else
     return false;
 
-  // If any source modifiers are set, the generic instruction commuting won't
-  // understand how to copy the source modifiers.
-  if (hasModifiersSet(*MI, AMDGPU::OpName::src0_modifiers) ||
-      hasModifiersSet(*MI, AMDGPU::OpName::src1_modifiers))
-    return false;
-
-  SrcOpIdx1 = Src0Idx;
-  SrcOpIdx2 = Src1Idx;
-  return true;
+  return fixCommutedOpIndices(SrcOpIdx0, SrcOpIdx1, Src0Idx, Src1Idx);
 }
 
 MachineInstr *SIInstrInfo::buildMovInstr(MachineBasicBlock *MBB,

@@ -246,11 +246,21 @@ public:
                                       MachineBasicBlock::iterator &MBBI,
                                       LiveVariables *LV) const override;
 
-  /// commuteInstruction - We have a few instructions that must be hacked on to
-  /// commute them.
+  /// Returns true iff the routine could find two commutable operands in the
+  /// given machine instruction.
+  /// The 'SrcOpIdx1' and 'SrcOpIdx2' are INPUT and OUTPUT arguments. Their
+  /// input values can be re-defined in this method only if the input values
+  /// are not pre-defined, which is designated by the special value
+  /// 'CommuteAnyOperandIndex' assigned to it.
+  /// If both of indices are pre-defined and refer to some operands, then the
+  /// method simply returns true if the corresponding operands are commutable
+  /// and returns false otherwise.
   ///
-  MachineInstr *commuteInstruction(MachineInstr *MI, bool NewMI) const override;
-
+  /// For example, calling this method this way:
+  ///     unsigned Op1 = 1, Op2 = CommuteAnyOperandIndex;
+  ///     findCommutedOpIndices(MI, Op1, Op2);
+  /// can be interpreted as a query asking to find an operand that would be
+  /// commutable with the operand#1.
   bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
                              unsigned &SrcOpIdx2) const override;
 
@@ -484,6 +494,22 @@ public:
 
   ArrayRef<std::pair<unsigned, const char *>>
   getSerializableDirectMachineOperandTargetFlags() const override;
+
+protected:
+  /// Commutes the operands in the given instruction by changing the operands
+  /// order and/or changing the instruction's opcode and/or the immediate value
+  /// operand.
+  ///
+  /// The arguments 'CommuteOpIdx1' and 'CommuteOpIdx2' specify the operands
+  /// to be commuted.
+  ///
+  /// Do not call this method for a non-commutable instruction or
+  /// non-commutable operands.
+  /// Even though the instruction is commutable, the method may still
+  /// fail to commute the operands, null pointer is returned in such cases.
+  MachineInstr *commuteInstructionImpl(MachineInstr *MI, bool NewMI,
+                                       unsigned CommuteOpIdx1,
+                                       unsigned CommuteOpIdx2) const override;
 
 private:
   MachineInstr * convertToThreeAddressWithLEA(unsigned MIOpc,

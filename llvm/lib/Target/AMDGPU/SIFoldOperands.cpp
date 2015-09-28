@@ -165,8 +165,8 @@ static bool tryAddToFoldList(std::vector<FoldCandidate> &FoldList,
 
     // Operand is not legal, so try to commute the instruction to
     // see if this makes it possible to fold.
-    unsigned CommuteIdx0;
-    unsigned CommuteIdx1;
+    unsigned CommuteIdx0 = TargetInstrInfo::CommuteAnyOperandIndex;
+    unsigned CommuteIdx1 = TargetInstrInfo::CommuteAnyOperandIndex;
     bool CanCommute = TII->findCommutedOpIndices(MI, CommuteIdx0, CommuteIdx1);
 
     if (CanCommute) {
@@ -176,7 +176,16 @@ static bool tryAddToFoldList(std::vector<FoldCandidate> &FoldList,
         OpNo = CommuteIdx0;
     }
 
-    if (!CanCommute || !TII->commuteInstruction(MI))
+    // One of operands might be an Imm operand, and OpNo may refer to it after
+    // the call of commuteInstruction() below. Such situations are avoided
+    // here explicitly as OpNo must be a register operand to be a candidate
+    // for memory folding.
+    if (CanCommute && (!MI->getOperand(CommuteIdx0).isReg() ||
+                       !MI->getOperand(CommuteIdx1).isReg()))
+      return false;
+
+    if (!CanCommute ||
+        !TII->commuteInstruction(MI, false, CommuteIdx0, CommuteIdx1))
       return false;
 
     if (!TII->isOperandLegal(MI, OpNo, OpToFold))

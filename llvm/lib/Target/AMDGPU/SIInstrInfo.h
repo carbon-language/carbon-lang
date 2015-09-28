@@ -61,6 +61,12 @@ private:
 
   unsigned findUsedSGPR(const MachineInstr *MI, int OpIndices[3]) const;
 
+protected:
+  MachineInstr *commuteInstructionImpl(MachineInstr *MI,
+                                       bool NewMI,
+                                       unsigned OpIdx0,
+                                       unsigned OpIdx1) const override;
+
 public:
   explicit SIInstrInfo(const AMDGPUSubtarget &st);
 
@@ -117,8 +123,6 @@ public:
   LLVM_READONLY
   int commuteOpcode(const MachineInstr &MI) const;
 
-  MachineInstr *commuteInstruction(MachineInstr *MI,
-                                   bool NewMI = false) const override;
   bool findCommutedOpIndices(MachineInstr *MI,
                              unsigned &SrcOpIdx1,
                              unsigned &SrcOpIdx2) const override;

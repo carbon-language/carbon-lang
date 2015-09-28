@@ -86,6 +86,18 @@ protected:
                             RegSubRegPair &BaseReg,
                             RegSubRegPairAndIdx &InsertedReg) const override;
 
+  /// Commutes the operands in the given instruction.
+  /// The commutable operands are specified by their indices OpIdx1 and OpIdx2.
+  ///
+  /// Do not call this method for a non-commutable instruction or for
+  /// non-commutable pair of operand indices OpIdx1 and OpIdx2.
+  /// Even though the instruction is commutable, the method may still
+  /// fail to commute the operands, null pointer is returned in such cases.
+  MachineInstr *commuteInstructionImpl(MachineInstr *MI,
+                                       bool NewMI,
+                                       unsigned OpIdx1,
+                                       unsigned OpIdx2) const override;
+
 public:
   // Return whether the target has an explicit NOP encoding.
   bool hasNOP() const;
@@ -187,9 +199,6 @@ public:
 
   MachineInstr *duplicate(MachineInstr *Orig,
                           MachineFunction &MF) const override;
-
-  MachineInstr *commuteInstruction(MachineInstr*,
-                                   bool=false) const override;
 
   const MachineInstrBuilder &AddDReg(MachineInstrBuilder &MIB, unsigned Reg,
                                      unsigned SubIdx, unsigned State,
