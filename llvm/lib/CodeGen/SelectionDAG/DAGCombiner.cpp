@@ -10986,6 +10986,8 @@ void DAGCombiner::getStoreMergeAndAliasCandidates(
     SDValue Chain = St->getChain();
     for (auto I = Chain->use_begin(), E = Chain->use_end(); I != E; ++I) {
       if (StoreSDNode *OtherST = dyn_cast<StoreSDNode>(*I)) {
+        if (I.getOperandNo() != 0)
+          continue;
 
         if (OtherST->isVolatile() || OtherST->isIndexed())
           continue;
