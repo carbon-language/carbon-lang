@@ -87,6 +87,21 @@ entry:
   ret void
 }
 
+; GCN-LABEL: {{^}}smrd_valu2_salu_user:
+; GCN: buffer_load_dword [[MOVED:v[0-9]+]], v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:16{{$}}
+; GCN: v_add_i32_e32 [[ADD:v[0-9]+]], vcc, s{{[0-9]+}}, [[MOVED]]
+; GCN: buffer_store_dword [[ADD]]
+define void @smrd_valu2_salu_user(i32 addrspace(1)* %out, [8 x i32] addrspace(2)* %in, i32 %a) #1 {
+entry:
+  %tmp = call i32 @llvm.r600.read.tidig.x() #0
+  %tmp1 = add i32 %tmp, 4
+  %tmp2 = getelementptr [8 x i32], [8 x i32] addrspace(2)* %in, i32 %tmp, i32 4
+  %tmp3 = load i32, i32 addrspace(2)* %tmp2
+  %tmp4 = add i32 %tmp3, %a
+  store i32 %tmp4, i32 addrspace(1)* %out
+  ret void
+}
+
 ; GCN-LABEL: {{^}}smrd_valu2_max_smrd_offset:
 ; GCN: buffer_load_dword v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:1020{{$}}
 define void @smrd_valu2_max_smrd_offset(i32 addrspace(1)* %out, [1024 x i32] addrspace(2)* %in) #1 {
@@ -128,6 +143,45 @@ entry:
   ret void
 }
 
+; GCN-LABEL: {{^}}s_load_imm_v8i32_salu_user:
+; GCN: buffer_load_dwordx4
+; GCN: buffer_load_dwordx4
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: buffer_store_dword
+define void @s_load_imm_v8i32_salu_user(i32 addrspace(1)* %out, i32 addrspace(2)* nocapture readonly %in) #1 {
+entry:
+  %tmp0 = tail call i32 @llvm.r600.read.tidig.x()
+  %tmp1 = getelementptr inbounds i32, i32 addrspace(2)* %in, i32 %tmp0
+  %tmp2 = bitcast i32 addrspace(2)* %tmp1 to <8 x i32> addrspace(2)*
+  %tmp3 = load <8 x i32>, <8 x i32> addrspace(2)* %tmp2, align 4
+
+  %elt0 = extractelement <8 x i32> %tmp3, i32 0
+  %elt1 = extractelement <8 x i32> %tmp3, i32 1
+  %elt2 = extractelement <8 x i32> %tmp3, i32 2
+  %elt3 = extractelement <8 x i32> %tmp3, i32 3
+  %elt4 = extractelement <8 x i32> %tmp3, i32 4
+  %elt5 = extractelement <8 x i32> %tmp3, i32 5
+  %elt6 = extractelement <8 x i32> %tmp3, i32 6
+  %elt7 = extractelement <8 x i32> %tmp3, i32 7
+
+  %add0 = add i32 %elt0, %elt1
+  %add1 = add i32 %add0, %elt2
+  %add2 = add i32 %add1, %elt3
+  %add3 = add i32 %add2, %elt4
+  %add4 = add i32 %add3, %elt5
+  %add5 = add i32 %add4, %elt6
+  %add6 = add i32 %add5, %elt7
+
+  store i32 %add6, i32 addrspace(1)* %out
+  ret void
+}
+
 ; GCN-LABEL: {{^}}s_load_imm_v16i32:
 ; GCN: buffer_load_dwordx4
 ; GCN: buffer_load_dwordx4
@@ -140,6 +194,71 @@ entry:
   %tmp2 = bitcast i32 addrspace(2)* %tmp1 to <16 x i32> addrspace(2)*
   %tmp3 = load <16 x i32>, <16 x i32> addrspace(2)* %tmp2, align 4
   store <16 x i32> %tmp3, <16 x i32> addrspace(1)* %out, align 32
+  ret void
+}
+
+; GCN-LABEL: {{^}}s_load_imm_v16i32_salu_user:
+; GCN: buffer_load_dwordx4
+; GCN: buffer_load_dwordx4
+; GCN: buffer_load_dwordx4
+; GCN: buffer_load_dwordx4
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: v_add_i32_e32
+; GCN: buffer_store_dword
+define void @s_load_imm_v16i32_salu_user(i32 addrspace(1)* %out, i32 addrspace(2)* nocapture readonly %in) #1 {
+entry:
+  %tmp0 = tail call i32 @llvm.r600.read.tidig.x() #1
+  %tmp1 = getelementptr inbounds i32, i32 addrspace(2)* %in, i32 %tmp0
+  %tmp2 = bitcast i32 addrspace(2)* %tmp1 to <16 x i32> addrspace(2)*
+  %tmp3 = load <16 x i32>, <16 x i32> addrspace(2)* %tmp2, align 4
+
+  %elt0 = extractelement <16 x i32> %tmp3, i32 0
+  %elt1 = extractelement <16 x i32> %tmp3, i32 1
+  %elt2 = extractelement <16 x i32> %tmp3, i32 2
+  %elt3 = extractelement <16 x i32> %tmp3, i32 3
+  %elt4 = extractelement <16 x i32> %tmp3, i32 4
+  %elt5 = extractelement <16 x i32> %tmp3, i32 5
+  %elt6 = extractelement <16 x i32> %tmp3, i32 6
+  %elt7 = extractelement <16 x i32> %tmp3, i32 7
+  %elt8 = extractelement <16 x i32> %tmp3, i32 8
+  %elt9 = extractelement <16 x i32> %tmp3, i32 9
+  %elt10 = extractelement <16 x i32> %tmp3, i32 10
+  %elt11 = extractelement <16 x i32> %tmp3, i32 11
+  %elt12 = extractelement <16 x i32> %tmp3, i32 12
+  %elt13 = extractelement <16 x i32> %tmp3, i32 13
+  %elt14 = extractelement <16 x i32> %tmp3, i32 14
+  %elt15 = extractelement <16 x i32> %tmp3, i32 15
+
+  %add0 = add i32 %elt0, %elt1
+  %add1 = add i32 %add0, %elt2
+  %add2 = add i32 %add1, %elt3
+  %add3 = add i32 %add2, %elt4
+  %add4 = add i32 %add3, %elt5
+  %add5 = add i32 %add4, %elt6
+  %add6 = add i32 %add5, %elt7
+  %add7 = add i32 %add6, %elt8
+  %add8 = add i32 %add7, %elt9
+  %add9 = add i32 %add8, %elt10
+  %add10 = add i32 %add9, %elt11
+  %add11 = add i32 %add10, %elt12
+  %add12 = add i32 %add11, %elt13
+  %add13 = add i32 %add12, %elt14
+  %add14 = add i32 %add13, %elt15
+
+  store i32 %add14, i32 addrspace(1)* %out
   ret void
 }
 
