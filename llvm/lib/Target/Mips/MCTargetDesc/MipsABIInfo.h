@@ -47,10 +47,10 @@ public:
   ABI GetEnumValue() const { return ThisABI; }
 
   /// The registers to use for byval arguments.
-  const ArrayRef<MCPhysReg> GetByValArgRegs() const;
+  ArrayRef<MCPhysReg> GetByValArgRegs() const;
 
   /// The registers to use for the variable argument list.
-  const ArrayRef<MCPhysReg> GetVarArgRegs() const;
+  ArrayRef<MCPhysReg> GetVarArgRegs() const;
 
   /// Obtain the size of the area allocated by the callee for arguments.
   /// CallingConv::FastCall affects the value for O32.
