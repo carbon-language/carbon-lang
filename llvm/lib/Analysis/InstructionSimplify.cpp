@@ -2128,6 +2128,47 @@ static Constant *computePointerICmp(const DataLayout &DL,
   return nullptr;
 }
 
+/// Return true if B is known to be implied by A.  A & B must be i1 (boolean)
+/// values. Note that the truth table for implication is the same as <=u on i1
+/// values (but not <=s!).  The truth table for both is:
+///    | T | F (B)
+///  T | T | F
+///  F | T | T
+/// (A)
+static bool implies(Value *A, Value *B) {
+  // TODO: Consider extending this to vector of i1?
+  assert(A->getType()->isIntegerTy(1) && B->getType()->isIntegerTy(1));
+  
+  // A ==> A by definition
+  if (A == B) return true;
+
+  ICmpInst::Predicate APred, BPred;
+  Value *I;
+  Value *L;
+  ConstantInt *CI;
+  // i +_{nsw} C_{>0} <s L ==> i <s L
+  if (match(A, m_ICmp(APred,
+                      m_NSWAdd(m_Value(I), m_ConstantInt(CI)),
+                      m_Value(L))) &&
+      APred == ICmpInst::ICMP_SLT &&
+      !CI->isNegative() &&
+      match(B, m_ICmp(BPred, m_Specific(I), m_Specific(L))) &&
+      BPred == ICmpInst::ICMP_SLT)
+    return true;
+
+  // i +_{nuw} C_{>0} <u L ==> i <u L
+  if (match(A, m_ICmp(APred,
+                      m_NUWAdd(m_Value(I), m_ConstantInt(CI)),
+                      m_Value(L))) &&
+      APred == ICmpInst::ICMP_ULT &&
+      !CI->isNegative() &&
+      match(B, m_ICmp(BPred, m_Specific(I), m_Specific(L))) &&
+      BPred == ICmpInst::ICMP_ULT)
+    return true;
+
+  return false;
+}
+
 static ConstantRange GetConstantRangeFromMetadata(MDNode *Ranges, uint32_t BitWidth) {
   const unsigned NumRanges = Ranges->getNumOperands() / 2;
   assert(NumRanges >= 1);
@@ -2199,6 +2240,8 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       // X >=u 1 -> X
       if (match(RHS, m_One()))
         return LHS;
+      if (implies(RHS, LHS))
+        return getTrue(ITy);
       break;
     case ICmpInst::ICMP_SLT:
       // X <s 0 -> X
@@ -2209,6 +2252,10 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       // X <=s -1 -> X
       if (match(RHS, m_One()))
         return LHS;
+      break;
+    case ICmpInst::ICMP_ULE:
+      if (implies(LHS, RHS))
+        return getTrue(ITy);
       break;
     }
   }
