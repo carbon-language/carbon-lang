@@ -42,8 +42,14 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
     Mips3, Mips4, Mips5, Mips64, Mips64r2, Mips64r3, Mips64r5, Mips64r6
   };
 
+  enum class CPU { P5600 };
+
   // Mips architecture version
   MipsArchEnum MipsArchVersion;
+
+  // Processor implementation (unused but required to exist by
+  // tablegen-erated code).
+  CPU ProcImpl;
 
   // IsLittle - The target is Little Endian
   bool IsLittle;

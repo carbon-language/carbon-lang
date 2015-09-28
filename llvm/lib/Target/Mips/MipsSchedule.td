@@ -371,3 +371,5 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_MFHC1           , [InstrStage<2,  [ALU]>]>,
   InstrItinData<II_MTHC1           , [InstrStage<2,  [ALU]>]>
 ]>;
+
+include "MipsScheduleP5600.td"
