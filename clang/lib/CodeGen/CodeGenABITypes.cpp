@@ -33,12 +33,6 @@ CodeGenABITypes::CodeGenABITypes(ASTContext &C, llvm::Module &M,
       CGM(new CodeGen::CodeGenModule(C, *HSO, *PPO, *CGO, M, C.getDiagnostics(),
                                      CoverageInfo)) {}
 
-CodeGenABITypes::~CodeGenABITypes()
-{
-  delete CGO;
-  delete CGM;
-}
-
 const CGFunctionInfo &
 CodeGenABITypes::arrangeObjCMessageSendSignature(const ObjCMethodDecl *MD,
                                                  QualType receiverType) {
