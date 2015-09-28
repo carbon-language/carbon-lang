@@ -2712,7 +2712,8 @@ static bool EvaluateStaticConstructor(Function *F, const DataLayout &DL,
 }
 
 static int compareNames(Constant *const *A, Constant *const *B) {
-  return (*A)->getName().compare((*B)->getName());
+  return (*A)->stripPointerCasts()->getName().compare(
+      (*B)->stripPointerCasts()->getName());
 }
 
 static void setUsedInitializer(GlobalVariable &V,
