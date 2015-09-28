@@ -310,8 +310,9 @@ lld::elf2::getSymVA(const ELFSymbolBody<ELFT> &S,
   case SymbolBody::UndefinedKind:
     return 0;
   case SymbolBody::LazyKind:
-    llvm_unreachable("Lazy symbol reached writer");
+    break;
   }
+  llvm_unreachable("Lazy symbol reached writer");
 }
 
 template <class ELFT>
