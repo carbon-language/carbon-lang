@@ -2336,27 +2336,9 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
     }
 
     // Update the destination register class.
-
-    const TargetRegisterClass *NewDstRC = getOpRegClass(*Inst, 0);
-
-    switch (Opcode) {
-      // For target instructions, getOpRegClass just returns the virtual
-      // register class associated with the operand, so we need to find an
-      // equivalent VGPR register class in order to move the instruction to the
-      // VALU.
-    case AMDGPU::COPY:
-    case AMDGPU::PHI:
-    case AMDGPU::REG_SEQUENCE:
-    case AMDGPU::INSERT_SUBREG:
-      if (RI.hasVGPRs(NewDstRC))
-        continue;
-      NewDstRC = RI.getEquivalentVGPRClass(NewDstRC);
-      if (!NewDstRC)
-        continue;
-      break;
-    default:
-      break;
-    }
+    const TargetRegisterClass *NewDstRC = getDestEquivalentVGPRClass(*Inst);
+    if (!NewDstRC)
+      continue;
 
     unsigned DstReg = Inst->getOperand(0).getReg();
     unsigned NewDstReg = MRI.createVirtualRegister(NewDstRC);
@@ -2619,6 +2601,30 @@ void SIInstrInfo::addUsersToMoveToVALUWorklist(
     if (!canReadVGPR(UseMI, I.getOperandNo())) {
       Worklist.push_back(&UseMI);
     }
+  }
+}
+
+const TargetRegisterClass *SIInstrInfo::getDestEquivalentVGPRClass(
+  const MachineInstr &Inst) const {
+  const TargetRegisterClass *NewDstRC = getOpRegClass(Inst, 0);
+
+  switch (Inst.getOpcode()) {
+  // For target instructions, getOpRegClass just returns the virtual register
+  // class associated with the operand, so we need to find an equivalent VGPR
+  // register class in order to move the instruction to the VALU.
+  case AMDGPU::COPY:
+  case AMDGPU::PHI:
+  case AMDGPU::REG_SEQUENCE:
+  case AMDGPU::INSERT_SUBREG:
+    if (RI.hasVGPRs(NewDstRC))
+      return nullptr;
+
+    NewDstRC = RI.getEquivalentVGPRClass(NewDstRC);
+    if (!NewDstRC)
+      return nullptr;
+    return NewDstRC;
+  default:
+    return NewDstRC;
   }
 }
 

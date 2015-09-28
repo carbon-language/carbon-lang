@@ -56,6 +56,9 @@ private:
     unsigned Reg, MachineRegisterInfo &MRI,
     SmallVectorImpl<MachineInstr *> &Worklist) const;
 
+  const TargetRegisterClass *
+  getDestEquivalentVGPRClass(const MachineInstr &Inst) const;
+
   bool checkInstOffsetsDoNotOverlap(MachineInstr *MIa,
                                     MachineInstr *MIb) const;
 
