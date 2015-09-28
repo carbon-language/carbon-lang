@@ -5262,7 +5262,13 @@ SelectionDAGBuilder::lowerInvokable(TargetLowering::CallLoweringInfo &CLI,
     DAG.setRoot(DAG.getEHLabel(getCurSDLoc(), getRoot(), EndLabel));
 
     // Inform MachineModuleInfo of range.
-    MMI.addInvoke(FuncInfo.MBBMap[EHPadBB], BeginLabel, EndLabel);
+    if (MMI.hasEHFunclets()) {
+      WinEHFuncInfo &EHInfo =
+          MMI.getWinEHFuncInfo(DAG.getMachineFunction().getFunction());
+      EHInfo.addIPToStateRange(EHPadBB, BeginLabel, EndLabel);
+    } else {
+      MMI.addInvoke(FuncInfo.MBBMap[EHPadBB], BeginLabel, EndLabel);
+    }
   }
 
   return Result;

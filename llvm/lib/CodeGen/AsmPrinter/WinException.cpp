@@ -176,6 +176,12 @@ const MCExpr *WinException::create32bitRef(const Value *V) {
   return create32bitRef(MMI->getAddrLabelSymbol(cast<BasicBlock>(V)));
 }
 
+const MCExpr *WinException::getLabelPlusOne(MCSymbol *Label) {
+  return MCBinaryExpr::createAdd(create32bitRef(Label),
+                                 MCConstantExpr::create(1, Asm->OutContext),
+                                 Asm->OutContext);
+}
+
 /// Emit the language-specific data that __C_specific_handler expects.  This
 /// handler lives in the x64 Microsoft C runtime and allows catching or cleaning
 /// up after faults with __try, __except, and __finally.  The typeinfo values
@@ -263,9 +269,7 @@ void WinException::emitCSpecificHandlerTable(const MachineFunction *MF) {
     if (CSE.EndLabel) {
       // The interval is half-open, so we have to add one to include the return
       // address of the last invoke in the range.
-      End = MCBinaryExpr::createAdd(create32bitRef(CSE.EndLabel),
-                                    MCConstantExpr::create(1, Asm->OutContext),
-                                    Asm->OutContext);
+      End = getLabelPlusOne(CSE.EndLabel);
     } else {
       End = create32bitRef(EHFuncEndSym);
     }
@@ -312,13 +316,15 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
 
   StringRef FuncLinkageName = GlobalValue::getRealLinkageName(F->getName());
 
+  SmallVector<std::pair<const MCExpr *, int>, 4> IPToStateTable;
   MCSymbol *FuncInfoXData = nullptr;
   if (shouldEmitPersonality) {
+    // If we're 64-bit, emit a pointer to the C++ EH data, and build a map from
+    // IPs to state numbers.
     FuncInfoXData =
         Asm->OutContext.getOrCreateSymbol(Twine("$cppxdata$", FuncLinkageName));
     OS.EmitValue(create32bitRef(FuncInfoXData), 4);
-
-    extendIP2StateTable(MF, FuncInfo);
+    computeIP2StateTable(MF, FuncInfo, IPToStateTable);
   } else {
     FuncInfoXData = Asm->OutContext.getOrCreateLSDASymbol(FuncLinkageName);
     emitEHRegistrationOffsetLabel(FuncInfo, FuncLinkageName);
@@ -333,7 +339,7 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   if (!FuncInfo.TryBlockMap.empty())
     TryBlockMapXData =
         Asm->OutContext.getOrCreateSymbol(Twine("$tryMap$", FuncLinkageName));
-  if (!FuncInfo.IPToStateList.empty())
+  if (!IPToStateTable.empty())
     IPToStateXData =
         Asm->OutContext.getOrCreateSymbol(Twine("$ip2state$", FuncLinkageName));
 
@@ -359,7 +365,7 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   OS.EmitValue(create32bitRef(UnwindMapXData), 4);     // UnwindMap
   OS.EmitIntValue(FuncInfo.TryBlockMap.size(), 4);     // NumTryBlocks
   OS.EmitValue(create32bitRef(TryBlockMapXData), 4);   // TryBlockMap
-  OS.EmitIntValue(FuncInfo.IPToStateList.size(), 4);   // IPMapEntries
+  OS.EmitIntValue(IPToStateTable.size(), 4);           // IPMapEntries
   OS.EmitValue(create32bitRef(IPToStateXData), 4);     // IPToStateMap
   if (Asm->MAI->usesWindowsCFI())
     OS.EmitIntValue(FuncInfo.UnwindHelpFrameOffset, 4); // UnwindHelp
@@ -477,79 +483,86 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   // };
   if (IPToStateXData) {
     OS.EmitLabel(IPToStateXData);
-    for (auto &IPStatePair : FuncInfo.IPToStateList) {
-      OS.EmitValue(create32bitRef(IPStatePair.first), 4);   // IP
-      OS.EmitIntValue(IPStatePair.second, 4);               // State
+    for (auto &IPStatePair : IPToStateTable) {
+      OS.EmitValue(IPStatePair.first, 4);     // IP
+      OS.EmitIntValue(IPStatePair.second, 4); // State
     }
   }
 }
 
-void WinException::extendIP2StateTable(const MachineFunction *MF,
-                                       WinEHFuncInfo &FuncInfo) {
-  // The Itanium LSDA table sorts similar landing pads together to simplify the
-  // actions table, but we don't need that.
-  SmallVector<const LandingPadInfo *, 64> LandingPads;
-  const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
-  LandingPads.reserve(PadInfos.size());
-  for (const auto &LP : PadInfos)
-    LandingPads.push_back(&LP);
-
-  RangeMapType PadMap;
-  computePadMap(LandingPads, PadMap);
-
-  // The end label of the previous invoke or nounwind try-range.
-  MCSymbol *LastLabel = Asm->getFunctionBegin();
-
+void WinException::computeIP2StateTable(
+    const MachineFunction *MF, WinEHFuncInfo &FuncInfo,
+    SmallVectorImpl<std::pair<const MCExpr *, int>> &IPToStateTable) {
   // Whether there is a potentially throwing instruction (currently this means
   // an ordinary call) between the end of the previous try-range and now.
-  bool SawPotentiallyThrowing = false;
+  bool SawPotentiallyThrowing = true;
 
-  int LastEHState = -2;
+  // Remember what state we were in the last time we found a begin try label.
+  // This allows us to coalesce many nearby invokes with the same state into one
+  // entry.
+  int LastEHState = -1;
+  MCSymbol *LastEndLabel = Asm->getFunctionBegin();
+  assert(LastEndLabel && "need local function start label");
 
-  // The parent function and the catch handlers contribute to the 'ip2state'
-  // table.
+  // Indicate that all calls from the prologue to the first invoke unwind to
+  // caller. We handle this as a special case since other ranges starting at end
+  // labels need to use LtmpN+1.
+  IPToStateTable.push_back(std::make_pair(create32bitRef(LastEndLabel), -1));
 
-  // Include ip2state entries for the beginning of the main function and
-  // for catch handler functions.
-  FuncInfo.IPToStateList.push_back(std::make_pair(LastLabel, -1));
-  LastEHState = -1;
   for (const auto &MBB : *MF) {
+    // FIXME: Do we need to emit entries for funclet base states?
+
     for (const auto &MI : MBB) {
+      // Find all the EH_LABEL instructions, tracking if we've crossed a
+      // potentially throwing call since the last label.
       if (!MI.isEHLabel()) {
         if (MI.isCall())
           SawPotentiallyThrowing |= !callToNoUnwindFunction(&MI);
         continue;
       }
 
-      // End of the previous try-range?
-      MCSymbol *BeginLabel = MI.getOperand(0).getMCSymbol();
-      if (BeginLabel == LastLabel)
+      // If this was an end label, return SawPotentiallyThrowing to the start
+      // state and keep going. Otherwise, we will consider the call between the
+      // begin/end labels to be a potentially throwing call and generate extra
+      // table entries.
+      MCSymbol *Label = MI.getOperand(0).getMCSymbol();
+      if (Label == LastEndLabel)
         SawPotentiallyThrowing = false;
 
-      // Beginning of a new try-range?
-      RangeMapType::const_iterator L = PadMap.find(BeginLabel);
-      if (L == PadMap.end())
-        // Nope, it was just some random label.
+      // Check if this was a begin label. Otherwise, it must be an end label or
+      // some random label, and we should continue.
+      auto StateAndEnd = FuncInfo.InvokeToStateMap.find(Label);
+      if (StateAndEnd == FuncInfo.InvokeToStateMap.end())
         continue;
 
-      const PadRange &P = L->second;
-      const LandingPadInfo *LandingPad = LandingPads[P.PadIndex];
-      assert(BeginLabel == LandingPad->BeginLabels[P.RangeIndex] &&
-             "Inconsistent landing pad map!");
+      // Extract the state and end label.
+      int State;
+      MCSymbol *EndLabel;
+      std::tie(State, EndLabel) = StateAndEnd->second;
 
-      // FIXME: Should this be using FuncInfo.HandlerBaseState?
+      // If there was a potentially throwing call between this begin label and
+      // the last end label, we need an extra base state entry to indicate that
+      // those calls unwind directly to the caller.
       if (SawPotentiallyThrowing && LastEHState != -1) {
-        FuncInfo.IPToStateList.push_back(std::make_pair(LastLabel, -1));
+        IPToStateTable.push_back(
+            std::make_pair(getLabelPlusOne(LastEndLabel), -1));
         SawPotentiallyThrowing = false;
         LastEHState = -1;
       }
 
-      if (LandingPad->WinEHState != LastEHState)
-        FuncInfo.IPToStateList.push_back(
-            std::make_pair(BeginLabel, LandingPad->WinEHState));
-      LastEHState = LandingPad->WinEHState;
-      LastLabel = LandingPad->EndLabels[P.RangeIndex];
+      // Emit an entry indicating that PCs after 'Label' have this EH state.
+      if (State != LastEHState)
+        IPToStateTable.push_back(std::make_pair(create32bitRef(Label), State));
+      LastEHState = State;
+      LastEndLabel = EndLabel;
     }
+  }
+
+  if (LastEndLabel != Asm->getFunctionBegin()) {
+    // Indicate that all calls from the last invoke until the epilogue unwind to
+    // caller. This also ensures that we have at least one ip2state entry, if
+    // somehow all invokes were deleted during CodeGen.
+    IPToStateTable.push_back(std::make_pair(getLabelPlusOne(LastEndLabel), -1));
   }
 }
 

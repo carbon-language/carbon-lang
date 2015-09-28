@@ -96,12 +96,19 @@ cleanup.outer:                                      ; preds = %invoke.cont.1, %c
 ; X86:         .long   LBB1_[[cleanup_inner]]
 
 ; X64-LABEL: nested_cleanup:
+; X64: .Lfunc_begin1:
+; X64: .Ltmp8:
 ; X64: movl    $1, %ecx
 ; X64: callq   f
+; X64: .Ltmp10:
 ; X64: movl    $2, %ecx
 ; X64: callq   f
+; X64: .Ltmp11:
+; X64: callq   "??1Dtor@@QAE@XZ"
+; X64: .Ltmp12:
 ; X64: movl    $3, %ecx
 ; X64: callq   f
+; X64: .Ltmp13:
 
 ; X64: .LBB1_[[cleanup_inner:[0-9]+]]: # %cleanup.inner
 ; X64: pushq %rbp
@@ -117,29 +124,38 @@ cleanup.outer:                                      ; preds = %invoke.cont.1, %c
 ; X64: popq %rbp
 ; X64: retq
 
-; X64:        .seh_handlerdata
-; X64:        .long   ($cppxdata$nested_cleanup)@IMGREL
-; X64:        .align  4
-; X64:$cppxdata$nested_cleanup:
-; X64:        .long   429065506
-; X64:        .long   2
-; X64:        .long   ($stateUnwindMap$nested_cleanup)@IMGREL
-; X64:        .long   0
-; X64:        .long   0
-; X64:        .long   1
-; X64:        .long   ($ip2state$nested_cleanup)@IMGREL
-; X64:        .long   40
-; X64:        .long   0
-; X64:        .long   1
-; X64:$stateUnwindMap$nested_cleanup:
-; X64:        .long   -1
-; X64:        .long   .LBB1_[[cleanup_outer]]@IMGREL
-; X64:        .long   0
-; X64:        .long   .LBB1_[[cleanup_inner]]@IMGREL
-; FIXME: The ip2state table is totally wrong.
-; X64:$ip2state$nested_cleanup:
-; X64:        .long   .Lfunc_begin1@IMGREL
-; X64:        .long   -1
+; X64: .seh_handlerdata
+; X64-NEXT: .long   ($cppxdata$nested_cleanup)@IMGREL
+; X64-NEXT: .align  4
+; X64: $cppxdata$nested_cleanup:
+; X64-NEXT: .long   429065506
+; X64-NEXT: .long   2
+; X64-NEXT: .long   ($stateUnwindMap$nested_cleanup)@IMGREL
+; X64-NEXT: .long   0
+; X64-NEXT: .long   0
+; X64-NEXT: .long   5
+; X64-NEXT: .long   ($ip2state$nested_cleanup)@IMGREL
+; X64-NEXT: .long   40
+; X64-NEXT: .long   0
+; X64-NEXT: .long   1
+
+; X64: $stateUnwindMap$nested_cleanup:
+; X64-NEXT: .long   -1
+; X64-NEXT: .long   .LBB1_[[cleanup_outer]]@IMGREL
+; X64-NEXT: .long   0
+; X64-NEXT: .long   .LBB1_[[cleanup_inner]]@IMGREL
+
+; X64: $ip2state$nested_cleanup:
+; X64-NEXT: .long   .Lfunc_begin1@IMGREL
+; X64-NEXT: .long   -1
+; X64-NEXT: .long   .Ltmp8@IMGREL
+; X64-NEXT: .long   0
+; X64-NEXT: .long   .Ltmp10@IMGREL
+; X64-NEXT: .long   1
+; X64-NEXT: .long   .Ltmp12@IMGREL
+; X64-NEXT: .long   0
+; X64-NEXT: .long   .Ltmp13@IMGREL+1
+; X64-NEXT: .long   -1
 
 attributes #0 = { "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-realign-stack" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-realign-stack" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }

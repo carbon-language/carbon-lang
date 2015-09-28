@@ -34,6 +34,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -3498,4 +3499,13 @@ void WinEHPrepare::replaceUseWithLoad(Value *V, Use &U, AllocaInst *&SpillSlot,
                               /*Volatile=*/false, UsingInst);
     U.set(Load);
   }
+}
+
+void WinEHFuncInfo::addIPToStateRange(const BasicBlock *PadBB,
+                                      MCSymbol *InvokeBegin,
+                                      MCSymbol *InvokeEnd) {
+  assert(PadBB->isEHPad() && EHPadStateMap.count(PadBB->getFirstNonPHI()) &&
+         "should get EH pad BB with precomputed state");
+  InvokeToStateMap[InvokeBegin] =
+      std::make_pair(EHPadStateMap[PadBB->getFirstNonPHI()], InvokeEnd);
 }
