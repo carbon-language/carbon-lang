@@ -251,16 +251,7 @@ macro(darwin_add_builtin_libraries)
                       ../profile/InstrProfilingPlatformDarwin)
   foreach (os ${ARGN})
     list_union(DARWIN_BUILTIN_ARCHS DARWIN_${os}_ARCHS BUILTIN_SUPPORTED_ARCH)
-    foreach (arch ${DARWIN_BUILTIN_ARCHS})
-      # In addition to the builtins cc_kext includes some profile sources
-      darwin_add_builtin_library(clang_rt cc_kext
-                              OS ${os}
-                              ARCH ${arch}
-                              SOURCES ${${arch}_SOURCES} ${PROFILE_SOURCES}
-                              CFLAGS -arch ${arch} -mkernel
-                              DEFS KERNEL_USE
-                              PARENT_TARGET builtins)
-
+    foreach (arch ${DARWIN_BUILTIN_ARCHS} ${DARWIN_BUILTIN_SIM_ARCHS})
       darwin_find_excluded_builtins_list(${arch}_${os}_EXCLUDED_BUILTINS
                               OS ${os}
                               ARCH ${arch}
@@ -278,16 +269,35 @@ macro(darwin_add_builtin_libraries)
                               PARENT_TARGET builtins)
     endforeach()
 
-    darwin_lipo_libs(clang_rt.cc_kext_${os}
-                    PARENT_TARGET builtins
-                    LIPO_FLAGS ${${os}_cc_kext_lipo_flags}
-                    DEPENDS ${${os}_cc_kext_libs}
-                    OUTPUT_DIR ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
-    darwin_lipo_libs(clang_rt.${os}
-                    PARENT_TARGET builtins
-                    LIPO_FLAGS ${${os}_builtins_lipo_flags}
-                    DEPENDS ${${os}_builtins_libs}
-                    OUTPUT_DIR ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
+    # Don't build cc_kext libraries for simulator platforms
+    if(NOT ${os} MATCHES ".*sim$")
+      foreach (arch ${DARWIN_BUILTIN_ARCHS})
+        # In addition to the builtins cc_kext includes some profile sources
+        darwin_add_builtin_library(clang_rt cc_kext
+                                OS ${os}
+                                ARCH ${arch}
+                                SOURCES ${${arch}_SOURCES} ${PROFILE_SOURCES}
+                                CFLAGS -arch ${arch} -mkernel
+                                DEFS KERNEL_USE
+                                PARENT_TARGET builtins)
+      endforeach()
+      darwin_lipo_libs(clang_rt.cc_kext_${os}
+                      PARENT_TARGET builtins
+                      LIPO_FLAGS ${${os}_cc_kext_lipo_flags}
+                      DEPENDS ${${os}_cc_kext_libs}
+                      OUTPUT_DIR ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
+    endif()
+  endforeach()
+
+  # We put the x86 sim slices into the archives for their base OS
+  foreach (os ${ARGN})
+    if(NOT ${os} MATCHES ".*sim$")
+      darwin_lipo_libs(clang_rt.${os}
+                        PARENT_TARGET builtins
+                        LIPO_FLAGS ${${os}_builtins_lipo_flags} ${${os}sim_builtins_lipo_flags}
+                        DEPENDS ${${os}_builtins_libs} ${${os}sim_builtins_libs}
+                        OUTPUT_DIR ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
+    endif()
   endforeach()
 endmacro()
 
