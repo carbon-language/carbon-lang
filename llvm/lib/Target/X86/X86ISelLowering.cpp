@@ -1785,7 +1785,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   MaxStoresPerMemmoveOptSize = 4;
   setPrefLoopAlignment(4); // 2^4 bytes.
 
-  // Predictable cmov don't hurt on atom because it's in-order.
+  // A predictable cmov does not hurt on an in-order CPU.
+  // FIXME: Use a CPU attribute to trigger this, not a CPU model.
   PredictableSelectIsExpensive = !Subtarget->isAtom();
   EnableExtLdPromotion = true;
   setPrefFunctionAlignment(4); // 2^4 bytes.
