@@ -53,7 +53,7 @@ static Error
 FindUnusedPort (uint16_t& port)
 {
     Socket* socket = nullptr;
-    auto error = Socket::TcpListen ("localhost:0", false, socket, nullptr);
+    auto error = Socket::TcpListen ("127.0.0.1:0", false, socket, nullptr);
     if (error.Success ())
     {
         port = socket->GetLocalPortNumber ();
