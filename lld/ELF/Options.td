@@ -37,3 +37,15 @@ def discard_none : Flag<["-"], "discard-none">,
 
 def export_dynamic : Flag<["--"], "export-dynamic">,
      HelpText<"Put symbols in the dynamic symbol table">;
+
+def L : Joined<["-"], "L">, MetaVarName<"<dir>">,
+     HelpText<"Directory to search for libraries">;
+
+def alias_L : Joined<["--"], "library-path=">,
+     Alias<L>;
+
+def l : Joined<["-"], "l">, MetaVarName<"<libName>">,
+     HelpText<"Root name of library to use">;
+
+def alias_l : Joined<["--"], "library=">,
+     Alias<l>;

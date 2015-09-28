@@ -16,6 +16,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
 
 using namespace llvm;
 
@@ -59,6 +60,28 @@ static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
   return createELFFile<ObjectFile>(MB);
 }
 
+// Searches a given library from input search paths, which are filled
+// from -L command line switches. Returns a path to an existent library file.
+static std::string searchLibrary(StringRef Path) {
+  std::vector<std::string> Names;
+  if (Path[0] == ':') {
+    Names.push_back(Path.drop_front().str());
+  } else {
+    Names.push_back((Twine("lib") + Path + ".so").str());
+    Names.push_back((Twine("lib") + Path + ".a").str());
+  }
+  SmallString<128> FullPath;
+  for (StringRef Dir : Config->InputSearchPaths) {
+    for (const std::string &Name : Names) {
+      FullPath = Dir;
+      sys::path::append(FullPath, Name);
+      if (sys::fs::exists(FullPath.str()))
+        return FullPath.str().str();
+    }
+  }
+  error(Twine("Unable to find library -l") + Path);
+}
+
 void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   // Parse command line options.
   opt::InputArgList Args = Parser.parse(ArgsArr);
@@ -78,6 +101,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     RPaths.push_back(Arg->getValue());
   if (!RPaths.empty())
     Config->RPath = llvm::join(RPaths.begin(), RPaths.end(), ":");
+
+  for (auto *Arg : Args.filtered(OPT_L))
+    Config->InputSearchPaths.push_back(Arg->getValue());
 
   if (Args.hasArg(OPT_shared))
     Config->Shared = true;
@@ -100,8 +126,12 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   // Create a list of input files.
   std::vector<MemoryBufferRef> Inputs;
 
-  for (auto *Arg : Args.filtered(OPT_INPUT)) {
+  for (auto *Arg : Args.filtered(OPT_l, OPT_INPUT)) {
     StringRef Path = Arg->getValue();
+    if (Arg->getOption().getID() == OPT_l) {
+      Inputs.push_back(openFile(searchLibrary(Path)));
+      continue;
+    }
     Inputs.push_back(openFile(Path));
   }
 

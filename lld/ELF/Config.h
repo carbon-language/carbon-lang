@@ -19,6 +19,7 @@ struct Configuration {
   llvm::StringRef OutputFile;
   llvm::StringRef DynamicLinker;
   std::string RPath;
+  std::vector<llvm::StringRef> InputSearchPaths;
   bool Shared = false;
   bool DiscardAll = false;
   bool DiscardLocals = false;
