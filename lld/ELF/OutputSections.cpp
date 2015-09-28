@@ -58,7 +58,6 @@ PltSection<ELFT>::PltSection(const GotSection<ELFT> &GotSec)
 
 template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
   uintptr_t Start = reinterpret_cast<uintptr_t>(Buf);
-  ArrayRef<uint8_t> Jmp = {0xff, 0x25}; // jmpq *val(%rip)
   for (const SymbolBody *E : Entries) {
     uint64_t GotEntryAddr = GotSec.getEntryAddr(*E);
     uintptr_t InstPos = reinterpret_cast<uintptr_t>(Buf);
