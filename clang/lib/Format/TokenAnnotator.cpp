@@ -374,7 +374,7 @@ private:
           FormatToken *Previous = CurrentToken->getPreviousNonComment();
           if ((CurrentToken->is(tok::colon) ||
                Style.Language == FormatStyle::LK_Proto) &&
-              Previous->is(tok::identifier))
+              Previous->Tok.getIdentifierInfo())
             Previous->Type = TT_SelectorName;
           if (CurrentToken->is(tok::colon) ||
               Style.Language == FormatStyle::LK_JavaScript)

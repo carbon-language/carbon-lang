@@ -844,6 +844,11 @@ void UnwrappedLineParser::parseStructuralElement() {
       if (Style.Language == FormatStyle::LK_Java && FormatTok &&
           FormatTok->is(tok::kw_class))
         nextToken();
+      if (Style.Language == FormatStyle::LK_JavaScript && FormatTok &&
+          FormatTok->Tok.getIdentifierInfo())
+        // JavaScript only has pseudo keywords, all keywords are allowed to
+        // appear in "IdentifierName" positions. See http://es5.github.io/#x7.6
+        nextToken();
       break;
     case tok::semi:
       nextToken();
