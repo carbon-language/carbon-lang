@@ -40,7 +40,6 @@
   STATISTIC(Bad##NAME##ForScop, "Number of bad regions for Scop: " DESC)
 
 BADSCOP_STAT(CFG, "CFG too complex");
-BADSCOP_STAT(IndEdge, "Found invalid region entering edges");
 BADSCOP_STAT(LoopBound, "Loop bounds can not be computed");
 BADSCOP_STAT(FuncCall, "Function call with side effects appeared");
 BADSCOP_STAT(AffFunc, "Expression not affine");
@@ -298,26 +297,6 @@ std::string ReportNonAffineAccess::getEndUserMessage() const {
   llvm::StringRef BaseName = BaseValue->getName();
   std::string Name = (BaseName.size() > 0) ? BaseName : "UNKNOWN";
   return "The array subscript of \"" + Name + "\" is not affine";
-}
-
-//===----------------------------------------------------------------------===//
-// ReportIndEdge.
-
-ReportIndEdge::ReportIndEdge(BasicBlock *BB)
-    : RejectReason(rrkIndEdge), BB(BB) {
-  ++BadIndEdgeForScop;
-}
-
-std::string ReportIndEdge::getMessage() const {
-  return "Region has invalid entering edges!";
-}
-
-const DebugLoc &ReportIndEdge::getDebugLoc() const {
-  return BB->getTerminator()->getDebugLoc();
-}
-
-bool ReportIndEdge::classof(const RejectReason *RR) {
-  return RR->getKind() == rrkIndEdge;
 }
 
 //===----------------------------------------------------------------------===//

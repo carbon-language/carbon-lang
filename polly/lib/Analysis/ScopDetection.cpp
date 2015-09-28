@@ -949,18 +949,8 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
     BasicBlock *entry = CurRegion.getEntry();
     Loop *L = LI->getLoopFor(entry);
 
-    if (L) {
-      if (!L->isLoopSimplifyForm())
-        return invalid<ReportSimpleLoop>(Context, /*Assert=*/true);
-
-      for (pred_iterator PI = pred_begin(entry), PE = pred_end(entry); PI != PE;
-           ++PI) {
-        // Region entering edges come from the same loop but outside the region
-        // are not allowed.
-        if (L->contains(*PI) && !CurRegion.contains(*PI))
-          return invalid<ReportIndEdge>(Context, /*Assert=*/true, *PI);
-      }
-    }
+    if (L && !L->isLoopSimplifyForm())
+      return invalid<ReportSimpleLoop>(Context, /*Assert=*/true);
   }
 
   // SCoP cannot contain the entry block of the function, because we need

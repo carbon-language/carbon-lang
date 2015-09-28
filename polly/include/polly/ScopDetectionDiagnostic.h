@@ -80,8 +80,6 @@ enum RejectReasonKind {
   rrkDifferentElementSize,
   rrkLastAffFunc,
 
-  rrkIndEdge,
-
   rrkLoopBound,
 
   rrkFuncCall,
@@ -523,28 +521,6 @@ public:
   //@{
   virtual std::string getMessage() const override;
   virtual std::string getEndUserMessage() const override;
-  //@}
-};
-
-//===----------------------------------------------------------------------===//
-/// @brief Captures a region with invalid entering edges.
-class ReportIndEdge : public RejectReason {
-  //===--------------------------------------------------------------------===//
-
-  BasicBlock *BB;
-
-public:
-  ReportIndEdge(BasicBlock *BB);
-
-  /// @name LLVM-RTTI interface
-  //@{
-  static bool classof(const RejectReason *RR);
-  //@}
-
-  /// @name RejectReason interface
-  //@{
-  virtual std::string getMessage() const override;
-  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 

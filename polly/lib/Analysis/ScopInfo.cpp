@@ -1861,7 +1861,7 @@ void Scop::propagateDomainConstraints(Region *R, LoopInfo &LI,
     // Under the union of all predecessor conditions we can reach this block.
     Domain = isl_set_coalesce(isl_set_intersect(Domain, PredDom));
 
-    if (BBLoop && BBLoop->getHeader() == BB)
+    if (BBLoop && BBLoop->getHeader() == BB && getRegion().contains(BBLoop))
       addLoopBoundsToHeaderDomain(BBLoop, LI);
 
     // Add assumptions for error blocks.
