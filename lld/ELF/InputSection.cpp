@@ -51,18 +51,12 @@ void InputSection<ELFT>::relocate(
       const auto &Body =
           *cast<ELFSymbolBody<ELFT>>(File.getSymbolBody(SymIndex));
       SymVA = getSymVA<ELFT>(Body, BssSec);
-      if (Target->relocNeedsPlt(Type))
+      if (Target->relocNeedsPlt(Type)) {
         SymVA = PltSec.getEntryAddr(Body);
-      else if (Target->relocNeedsGot(Type))
+        Type = Target->getPCRelReloc();
+      } else if (Target->relocNeedsGot(Type)) {
         SymVA = GotSec.getEntryAddr(Body);
-
-      if (Body.kind() == SymbolBody::SharedKind) {
-        if (Target->relocNeedsPlt(Type))
-          Type = Target->getPCRelReloc();
-        else if (Target->relocNeedsGot(Type))
-          Type = Target->getPCRelReloc();
-        else
-          continue;
+        Type = Target->getPCRelReloc();
       }
     }
 

@@ -244,8 +244,6 @@ void Writer<ELFT>::scanRelocs(
         continue;
       GotSec.addEntry(Body);
     }
-    if (!isa<SharedSymbol<ELFT>>(Body))
-      continue;
     Body->setUsedInDynamicReloc();
     RelaDynSec.addReloc({C, RI});
   }

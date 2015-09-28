@@ -14,7 +14,7 @@
 // CHECK-NEXT: ]
 // CHECK-NEXT: Address: 0x16000
 // CHECK-NEXT: Offset:
-// CHECK-NEXT: Size: 16
+// CHECK-NEXT: Size: 24
 // CHECK-NEXT: Link: 0
 // CHECK-NEXT: Info: 0
 // CHECK-NEXT: AddressAlignment: 16
@@ -23,6 +23,7 @@
 // CHECK-NEXT:   Section ({{.*}}) .rela.dyn {
 // CHECK-NEXT:     0x15000 R_X86_64_GLOB_DAT bar 0x0
 // CHECK-NEXT:     0x15008 R_X86_64_GLOB_DAT zed 0x0
+// CHECK-NEXT:     0x15010 R_X86_64_GLOB_DAT _start 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
@@ -55,3 +56,4 @@ _start:
   jmp bar@PLT
   jmp bar@PLT
   jmp zed@PLT
+  jmp _start@plt
