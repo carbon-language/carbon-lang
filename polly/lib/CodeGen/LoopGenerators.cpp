@@ -297,6 +297,7 @@ ParallelLoopGenerator::storeValuesIntoStruct(SetVector<Value *> &Values) {
 
   for (unsigned i = 0; i < Values.size(); i++) {
     Value *Address = Builder.CreateStructGEP(Ty, Struct, i);
+    Address->setName("polly.subfn.storeaddr." + Values[i]->getName());
     Builder.CreateStore(Values[i], Address);
   }
 

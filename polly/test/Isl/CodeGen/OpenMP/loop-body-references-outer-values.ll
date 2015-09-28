@@ -17,8 +17,8 @@
 ; IR-LABEL: polly.parallel.for:
 ; IR-NEXT:  %0 = bitcast { float* }* %polly.par.userContext to i8*
 ; IR-NEXT:  call void @llvm.lifetime.start(i64 8, i8* %0)
-; IR-NEXT:  %1 = getelementptr inbounds { float* }, { float* }* %polly.par.userContext, i32 0, i32 0
-; IR-NEXT:  store float* %A, float** %1
+; IR-NEXT:  %polly.subfn.storeaddr.A = getelementptr inbounds { float* }, { float* }* %polly.par.userContext, i32 0, i32 0
+; IR-NEXT:  store float* %A, float** %polly.subfn.storeaddr.A
 ; IR-NEXT:  %polly.par.userContext1 = bitcast { float* }* %polly.par.userContext to i8*
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
