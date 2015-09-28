@@ -10,3 +10,5 @@ target_link_libraries(clang-query
   clangQuery
   clangTooling
   )
+
+install(TARGETS clang-query RUNTIME DESTINATION bin)
