@@ -271,6 +271,28 @@ private:
   /// @return True if the instruction is valid, false otherwise.
   bool isValidInstruction(Instruction &Inst, DetectionContext &Context) const;
 
+  /// @brief Check if the switch @p SI with condition @p Condition is valid.
+  ///
+  /// @param BB        The block to check.
+  /// @param SI        The switch to check.
+  /// @param Condition The switch condition.
+  /// @param Context   The context of scop detection.
+  ///
+  /// @return True if the branch @p BI is valid.
+  bool isValidSwitch(BasicBlock &BB, SwitchInst *SI, Value *Condition,
+                     DetectionContext &Context) const;
+
+  /// @brief Check if the branch @p BI with condition @p Condition is valid.
+  ///
+  /// @param BB        The block to check.
+  /// @param BI        The branch to check.
+  /// @param Condition The branch condition.
+  /// @param Context   The context of scop detection.
+  ///
+  /// @return True if the branch @p BI is valid.
+  bool isValidBranch(BasicBlock &BB, BranchInst *BI, Value *Condition,
+                     DetectionContext &Context) const;
+
   /// @brief Check if the control flow in a basic block is valid.
   ///
   /// @param BB The BB to check the control flow.

@@ -345,3 +345,17 @@ bool polly::isErrorBlock(BasicBlock &BB) {
 
   return false;
 }
+
+Value *polly::getConditionFromTerminator(TerminatorInst *TI) {
+  if (BranchInst *BR = dyn_cast<BranchInst>(TI)) {
+    if (BR->isUnconditional())
+      return ConstantInt::getTrue(Type::getInt1Ty(TI->getContext()));
+
+    return BR->getCondition();
+  }
+
+  if (SwitchInst *SI = dyn_cast<SwitchInst>(TI))
+    return SI->getCondition();
+
+  return nullptr;
+}

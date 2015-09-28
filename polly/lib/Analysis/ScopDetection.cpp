@@ -299,39 +299,34 @@ bool ScopDetection::addOverApproximatedRegion(Region *AR,
   return (AllowNonAffineSubLoops || Context.BoxedLoopsSet.empty());
 }
 
-bool ScopDetection::isValidCFG(BasicBlock &BB,
-                               DetectionContext &Context) const {
+bool ScopDetection::isValidSwitch(BasicBlock &BB, SwitchInst *SI,
+                                  Value *Condition,
+                                  DetectionContext &Context) const {
   Region &CurRegion = Context.CurRegion;
 
-  TerminatorInst *TI = BB.getTerminator();
+  Loop *L = LI->getLoopFor(&BB);
+  const SCEV *ConditionSCEV = SE->getSCEVAtScope(Condition, L);
 
-  // Return instructions are only valid if the region is the top level region.
-  if (isa<ReturnInst>(TI) && !CurRegion.getExit() && TI->getNumOperands() == 0)
-    return true;
-
-  BranchInst *Br = dyn_cast<BranchInst>(TI);
-
-  if (!Br)
-    return invalid<ReportNonBranchTerminator>(Context, /*Assert=*/true, &BB);
-
-  if (Br->isUnconditional())
-    return true;
-
-  Value *Condition = Br->getCondition();
-
-  // UndefValue is not allowed as condition.
-  if (isa<UndefValue>(Condition))
-    return invalid<ReportUndefCond>(Context, /*Assert=*/true, Br, &BB);
-
-  // Only Constant and ICmpInst are allowed as condition.
-  if (!(isa<Constant>(Condition) || isa<ICmpInst>(Condition))) {
+  if (!isAffineExpr(&CurRegion, ConditionSCEV, *SE))
     if (!AllowNonAffineSubRegions ||
         !addOverApproximatedRegion(RI->getRegionFor(&BB), Context))
-      return invalid<ReportInvalidCond>(Context, /*Assert=*/true, Br, &BB);
-  }
+      return invalid<ReportNonAffBranch>(Context, /*Assert=*/true, &BB,
+                                         ConditionSCEV, ConditionSCEV, SI);
 
-  // Allow perfectly nested conditions.
-  assert(Br->getNumSuccessors() == 2 && "Unexpected number of successors");
+  return true;
+}
+
+bool ScopDetection::isValidBranch(BasicBlock &BB, BranchInst *BI,
+                                  Value *Condition,
+                                  DetectionContext &Context) const {
+  Region &CurRegion = Context.CurRegion;
+
+  // Non constant conditions of branches need to be ICmpInst.
+  if (!isa<ICmpInst>(Condition)) {
+    if (!AllowNonAffineSubRegions ||
+        !addOverApproximatedRegion(RI->getRegionFor(&BB), Context))
+      return invalid<ReportInvalidCond>(Context, /*Assert=*/true, BI, &BB);
+  }
 
   if (ICmpInst *ICmp = dyn_cast<ICmpInst>(Condition)) {
     // Unsigned comparisons are not allowed. They trigger overflow problems
@@ -340,7 +335,7 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
     // TODO: This is not sufficient and just hides bugs. However it does pretty
     // well.
     if (ICmp->isUnsigned() && !AllowUnsigned)
-      return invalid<ReportUnsignedCond>(Context, /*Assert=*/true, Br, &BB);
+      return invalid<ReportUnsignedCond>(Context, /*Assert=*/true, BI, &BB);
 
     // Are both operands of the ICmp affine?
     if (isa<UndefValue>(ICmp->getOperand(0)) ||
@@ -367,6 +362,38 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
   }
 
   return true;
+}
+
+bool ScopDetection::isValidCFG(BasicBlock &BB,
+                               DetectionContext &Context) const {
+  Region &CurRegion = Context.CurRegion;
+
+  TerminatorInst *TI = BB.getTerminator();
+
+  // Return instructions are only valid if the region is the top level region.
+  if (isa<ReturnInst>(TI) && !CurRegion.getExit() && TI->getNumOperands() == 0)
+    return true;
+
+  Value *Condition = getConditionFromTerminator(TI);
+
+  if (!Condition)
+    return invalid<ReportInvalidTerminator>(Context, /*Assert=*/true, &BB);
+
+  // UndefValue is not allowed as condition.
+  if (isa<UndefValue>(Condition))
+    return invalid<ReportUndefCond>(Context, /*Assert=*/true, TI, &BB);
+
+  // Constant conditions are always affine.
+  if (isa<Constant>(Condition))
+    return true;
+
+  if (BranchInst *BI = dyn_cast<BranchInst>(TI))
+    return isValidBranch(BB, BI, Condition, Context);
+
+  SwitchInst *SI = dyn_cast<SwitchInst>(TI);
+  assert(SI && "Terminator was neither branch nor switch");
+
+  return isValidSwitch(BB, SI, Condition, Context);
 }
 
 bool ScopDetection::isValidCallInst(CallInst &CI) {

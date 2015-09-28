@@ -1074,15 +1074,13 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
       continue;
     }
 
-    BranchInst *BI = cast<BranchInst>(TI);
-
     Instruction *BICopy = BBCopy->getTerminator();
 
     ValueMapT &RegionMap = RegionMaps[BBCopy];
     RegionMap.insert(BlockMap.begin(), BlockMap.end());
 
     Builder.SetInsertPoint(BICopy);
-    copyInstScalar(Stmt, BI, RegionMap, LTS);
+    copyInstScalar(Stmt, TI, RegionMap, LTS);
     BICopy->eraseFromParent();
   }
 

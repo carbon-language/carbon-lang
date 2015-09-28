@@ -62,7 +62,7 @@ void emitValidRemarks(const llvm::Function &F, const Region *R);
 enum RejectReasonKind {
   // CFG Category
   rrkCFG,
-  rrkNonBranchTerminator,
+  rrkInvalidTerminator,
   rrkCondition,
   rrkLastCFG,
 
@@ -230,13 +230,13 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// @brief Captures a non-branch terminator within a Scop candidate.
-class ReportNonBranchTerminator : public ReportCFG {
+/// @brief Captures bad terminator within a Scop candidate.
+class ReportInvalidTerminator : public ReportCFG {
   BasicBlock *BB;
 
 public:
-  ReportNonBranchTerminator(BasicBlock *BB)
-      : ReportCFG(rrkNonBranchTerminator), BB(BB) {}
+  ReportInvalidTerminator(BasicBlock *BB)
+      : ReportCFG(rrkInvalidTerminator), BB(BB) {}
 
   /// @name LLVM-RTTI interface
   //@{

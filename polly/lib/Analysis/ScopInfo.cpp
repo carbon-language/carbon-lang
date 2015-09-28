@@ -914,8 +914,20 @@ partitionSetParts(__isl_take isl_set *S, unsigned Dim) {
   return std::make_pair(UnboundedParts, BoundedParts);
 }
 
+/// @brief Set the dimension Ids from @p From in @p To.
+static __isl_give isl_set *setDimensionIds(__isl_keep isl_set *From,
+                                           __isl_take isl_set *To) {
+  for (unsigned u = 0, e = isl_set_n_dim(From); u < e; u++) {
+    isl_id *DimId = isl_set_get_dim_id(From, isl_dim_set, u);
+    To = isl_set_set_dim_id(To, isl_dim_set, u, DimId);
+  }
+  return To;
+}
+
+/// @brief Create the conditions under which @p L @p Pred @p R is true.
 static __isl_give isl_set *buildConditionSet(ICmpInst::Predicate Pred,
-                                             isl_pw_aff *L, isl_pw_aff *R) {
+                                             __isl_take isl_pw_aff *L,
+                                             __isl_take isl_pw_aff *R) {
   switch (Pred) {
   case ICmpInst::ICMP_EQ:
     return isl_pw_aff_eq_set(L, R);
@@ -942,21 +954,82 @@ static __isl_give isl_set *buildConditionSet(ICmpInst::Predicate Pred,
   }
 }
 
-/// @brief Build the conditions sets for the branch @p BI in the @p Domain.
+/// @brief Create the conditions under which @p L @p Pred @p R is true.
+///
+/// Helper function that will make sure the dimensions of the result have the
+/// same isl_id's as the @p Domain.
+static __isl_give isl_set *buildConditionSet(ICmpInst::Predicate Pred,
+                                             __isl_take isl_pw_aff *L,
+                                             __isl_take isl_pw_aff *R,
+                                             __isl_keep isl_set *Domain) {
+  isl_set *ConsequenceCondSet = buildConditionSet(Pred, L, R);
+  return setDimensionIds(Domain, ConsequenceCondSet);
+}
+
+/// @brief Build the conditions sets for the switch @p SI in the @p Domain.
 ///
 /// This will fill @p ConditionSets with the conditions under which control
-/// will be moved from @p BI to its successors. Hence, @p ConditionSets will
-/// have as many elements as @p BI has successors.
+/// will be moved from @p SI to its successors. Hence, @p ConditionSets will
+/// have as many elements as @p SI has successors.
 static void
-buildConditionSets(Scop &S, BranchInst *BI, Loop *L, __isl_keep isl_set *Domain,
+buildConditionSets(Scop &S, SwitchInst *SI, Loop *L, __isl_keep isl_set *Domain,
                    SmallVectorImpl<__isl_give isl_set *> &ConditionSets) {
 
-  if (BI->isUnconditional()) {
+  Value *Condition = getConditionFromTerminator(SI);
+  assert(Condition && "No condition for switch");
+
+  ScalarEvolution &SE = *S.getSE();
+  BasicBlock *BB = SI->getParent();
+  isl_pw_aff *LHS, *RHS;
+  LHS = S.getPwAff(SE.getSCEVAtScope(Condition, L), BB);
+
+  unsigned NumSuccessors = SI->getNumSuccessors();
+  ConditionSets.resize(NumSuccessors);
+  for (auto &Case : SI->cases()) {
+    unsigned Idx = Case.getSuccessorIndex();
+    ConstantInt *CaseValue = Case.getCaseValue();
+
+    RHS = S.getPwAff(SE.getSCEV(CaseValue), BB);
+    isl_set *CaseConditionSet =
+        buildConditionSet(ICmpInst::ICMP_EQ, isl_pw_aff_copy(LHS), RHS, Domain);
+    ConditionSets[Idx] = isl_set_coalesce(
+        isl_set_intersect(CaseConditionSet, isl_set_copy(Domain)));
+  }
+
+  assert(ConditionSets[0] == nullptr && "Default condition set was set");
+  isl_set *ConditionSetUnion = isl_set_copy(ConditionSets[1]);
+  for (unsigned u = 2; u < NumSuccessors; u++)
+    ConditionSetUnion =
+        isl_set_union(ConditionSetUnion, isl_set_copy(ConditionSets[u]));
+  ConditionSets[0] = setDimensionIds(
+      Domain, isl_set_subtract(isl_set_copy(Domain), ConditionSetUnion));
+
+  S.markAsOptimized();
+  isl_pw_aff_free(LHS);
+}
+
+/// @brief Build the conditions sets for the terminator @p TI in the @p Domain.
+///
+/// This will fill @p ConditionSets with the conditions under which control
+/// will be moved from @p TI to its successors. Hence, @p ConditionSets will
+/// have as many elements as @p TI has successors.
+static void
+buildConditionSets(Scop &S, TerminatorInst *TI, Loop *L,
+                   __isl_keep isl_set *Domain,
+                   SmallVectorImpl<__isl_give isl_set *> &ConditionSets) {
+
+  if (SwitchInst *SI = dyn_cast<SwitchInst>(TI))
+    return buildConditionSets(S, SI, L, Domain, ConditionSets);
+
+  assert(isa<BranchInst>(TI) && "Terminator was neither branch nor switch.");
+
+  if (TI->getNumSuccessors() == 1) {
     ConditionSets.push_back(isl_set_copy(Domain));
     return;
   }
 
-  Value *Condition = BI->getCondition();
+  Value *Condition = getConditionFromTerminator(TI);
+  assert(Condition && "No condition for Terminator");
 
   isl_set *ConsequenceCondSet = nullptr;
   if (auto *CCond = dyn_cast<ConstantInt>(Condition)) {
@@ -970,17 +1043,12 @@ buildConditionSets(Scop &S, BranchInst *BI, Loop *L, __isl_keep isl_set *Domain,
            "Condition of exiting branch was neither constant nor ICmp!");
 
     ScalarEvolution &SE = *S.getSE();
-    BasicBlock *BB = BI->getParent();
+    BasicBlock *BB = TI->getParent();
     isl_pw_aff *LHS, *RHS;
     LHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(0), L), BB);
     RHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(1), L), BB);
-    ConsequenceCondSet = buildConditionSet(ICond->getPredicate(), LHS, RHS);
-
-    for (unsigned u = 0, e = isl_set_n_dim(Domain); u < e; u++) {
-      isl_id *DimId = isl_set_get_dim_id(Domain, isl_dim_set, u);
-      ConsequenceCondSet =
-          isl_set_set_dim_id(ConsequenceCondSet, isl_dim_set, u, DimId);
-    }
+    ConsequenceCondSet =
+        buildConditionSet(ICond->getPredicate(), LHS, RHS, Domain);
   }
 
   assert(ConsequenceCondSet);
@@ -1551,13 +1619,13 @@ static inline BasicBlock *getRegionNodeBasicBlock(RegionNode *RN) {
 }
 
 /// @brief Return the @p idx'th block that is executed after @p RN.
-static inline BasicBlock *getRegionNodeSuccessor(RegionNode *RN, BranchInst *BI,
-                                                 unsigned idx) {
+static inline BasicBlock *
+getRegionNodeSuccessor(RegionNode *RN, TerminatorInst *TI, unsigned idx) {
   if (RN->isSubRegion()) {
     assert(idx == 0);
     return RN->getNodeAs<Region>()->getExit();
   }
-  return BI->getSuccessor(idx);
+  return TI->getSuccessor(idx);
 }
 
 /// @brief Return the smallest loop surrounding @p RN.
@@ -1681,20 +1749,20 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
     // node. If it is a non-affine subregion we will always execute the single
     // exit node, hence the single entry node domain is the condition set. For
     // basic blocks we use the helper function buildConditionSets.
-    SmallVector<isl_set *, 2> ConditionSets;
-    BranchInst *BI = cast<BranchInst>(TI);
+    SmallVector<isl_set *, 8> ConditionSets;
     if (RN->isSubRegion())
       ConditionSets.push_back(isl_set_copy(Domain));
     else
-      buildConditionSets(*this, BI, BBLoop, Domain, ConditionSets);
+      buildConditionSets(*this, TI, BBLoop, Domain, ConditionSets);
 
     // Now iterate over the successors and set their initial domain based on
     // their condition set. We skip back edges here and have to be careful when
     // we leave a loop not to keep constraints over a dimension that doesn't
     // exist anymore.
+    assert(RN->isSubRegion() || TI->getNumSuccessors() == ConditionSets.size());
     for (unsigned u = 0, e = ConditionSets.size(); u < e; u++) {
-      BasicBlock *SuccBB = getRegionNodeSuccessor(RN, BI, u);
       isl_set *CondSet = ConditionSets[u];
+      BasicBlock *SuccBB = getRegionNodeSuccessor(RN, TI, u);
 
       // Skip back edges.
       if (DT.dominates(SuccBB, BB)) {
@@ -1915,13 +1983,14 @@ void Scop::addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI) {
     isl_set *LatchBBDom = DomainMap[LatchBB];
     isl_set *BackedgeCondition = nullptr;
 
-    BranchInst *BI = cast<BranchInst>(LatchBB->getTerminator());
-    if (BI->isUnconditional())
+    TerminatorInst *TI = LatchBB->getTerminator();
+    BranchInst *BI = dyn_cast<BranchInst>(TI);
+    if (BI && BI->isUnconditional())
       BackedgeCondition = isl_set_copy(LatchBBDom);
     else {
-      SmallVector<isl_set *, 2> ConditionSets;
+      SmallVector<isl_set *, 8> ConditionSets;
       int idx = BI->getSuccessor(0) != HeaderBB;
-      buildConditionSets(*this, BI, L, LatchBBDom, ConditionSets);
+      buildConditionSets(*this, TI, L, LatchBBDom, ConditionSets);
 
       // Free the non back edge condition set as we do not need it.
       isl_set_free(ConditionSets[1 - idx]);

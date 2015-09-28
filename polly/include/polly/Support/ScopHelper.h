@@ -30,6 +30,7 @@ class StringRef;
 class DataLayout;
 class DominatorTree;
 class RegionInfo;
+class TerminatorInst;
 class ScalarEvolution;
 }
 
@@ -113,5 +114,14 @@ llvm::Value *expandCodeFor(Scop &S, llvm::ScalarEvolution &SE,
 ///
 /// @return True if the block is a error block, false otherwise.
 bool isErrorBlock(llvm::BasicBlock &BB);
+
+/// @brief Return the condition for the terminator @p TI.
+///
+/// For unconditional branches the "i1 true" condition will be returned.
+///
+/// @param TI The terminator to get the condition from.
+///
+/// @return The condition of @p TI and nullptr if none could be extracted.
+llvm::Value *getConditionFromTerminator(llvm::TerminatorInst *TI);
 }
 #endif

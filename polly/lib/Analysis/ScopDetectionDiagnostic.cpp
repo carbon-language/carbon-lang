@@ -141,18 +141,18 @@ bool ReportCFG::classof(const RejectReason *RR) {
 }
 
 //===----------------------------------------------------------------------===//
-// ReportNonBranchTerminator.
+// ReportInvalidTerminator.
 
-std::string ReportNonBranchTerminator::getMessage() const {
-  return ("Non branch instruction terminates BB: " + BB->getName()).str();
+std::string ReportInvalidTerminator::getMessage() const {
+  return ("Invalid instruction terminates BB: " + BB->getName()).str();
 }
 
-const DebugLoc &ReportNonBranchTerminator::getDebugLoc() const {
+const DebugLoc &ReportInvalidTerminator::getDebugLoc() const {
   return BB->getTerminator()->getDebugLoc();
 }
 
-bool ReportNonBranchTerminator::classof(const RejectReason *RR) {
-  return RR->getKind() == rrkNonBranchTerminator;
+bool ReportInvalidTerminator::classof(const RejectReason *RR) {
+  return RR->getKind() == rrkInvalidTerminator;
 }
 
 //===----------------------------------------------------------------------===//
