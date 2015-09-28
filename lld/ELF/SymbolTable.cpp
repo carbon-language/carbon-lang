@@ -150,8 +150,13 @@ void SymbolTable::dupError(const SymbolBody &Old, const SymbolBody &New) {
       NewFile = F.get();
   }
 
-  error(Twine("duplicate symbol: ") + Old.getName() + " in " +
-        OldFile->getName() + " and " + NewFile->getName());
+  std::string Msg = (Twine("duplicate symbol: ") + Old.getName() + " in " +
+                     OldFile->getName() + " and " + NewFile->getName())
+                        .str();
+  if (Config->AllowMultipleDefinition)
+    warning(Msg);
+  else
+    error(Msg);
 }
 
 // This function resolves conflicts if there's an existing symbol with

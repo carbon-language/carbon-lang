@@ -29,6 +29,7 @@ struct Configuration {
   bool DiscardNone = false;
   bool ExportDynamic = false;
   bool NoInhibitExec = false;
+  bool AllowMultipleDefinition = false;
 };
 
 extern Configuration *Config;

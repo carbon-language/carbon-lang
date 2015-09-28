@@ -38,6 +38,9 @@ def discard_none : Flag<["-"], "discard-none">,
 def export_dynamic : Flag<["--"], "export-dynamic">,
      HelpText<"Put symbols in the dynamic symbol table">;
 
+def allow_multiple_definition: Flag<["--"], "allow-multiple-definition">,
+    HelpText<"Allow multiple definitions">;
+
 def L : Joined<["-"], "L">, MetaVarName<"<dir>">,
      HelpText<"Directory to search for libraries">;
 

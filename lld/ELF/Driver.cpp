@@ -139,6 +139,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (Args.hasArg(OPT_noinhibit_exec))
     Config->NoInhibitExec = true;
 
+  if (Args.hasArg(OPT_allow_multiple_definition))
+    Config->AllowMultipleDefinition = true;
+
   // Create a list of input files.
   std::vector<MemoryBufferRef> Inputs;
 
