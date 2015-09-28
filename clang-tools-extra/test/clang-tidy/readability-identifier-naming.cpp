@@ -68,6 +68,8 @@
 // FIXME: name, declaration contexts, forward declarations, etc, are correctly
 // FIXME: checked and renamed
 
+// clang-format off
+
 namespace FOO_NS {
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for namespace 'FOO_NS' [readability-identifier-naming]
 // CHECK-FIXES: {{^}}namespace foo_ns {{{$}}

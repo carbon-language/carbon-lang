@@ -62,20 +62,32 @@ public:
     }
   };
 
-private:
-  std::vector<NamingStyle> NamingStyles;
-  bool IgnoreFailedSplit;
-
+  /// \brief Holds an identifier name check failure, tracking the kind of the
+  /// identifer, its possible fixup and the starting locations of all the
+  /// idenfiier usages.
   struct NamingCheckFailure {
     std::string KindName;
     std::string Fixup;
+
+    /// \brief Whether the failure should be fixed or not.
+    ///
+    /// ie: if the identifier was used or declared within a macro we won't offer
+    /// a fixup for safety reasons.
     bool ShouldFix;
-    std::vector<SourceRange> Usages;
+
+    /// \brief A set of all the identifier usages starting SourceLocation, in
+    /// their encoded form.
+    llvm::DenseSet<unsigned> RawUsageLocs;
 
     NamingCheckFailure() : ShouldFix(true) {}
   };
+  typedef llvm::DenseMap<const NamedDecl *, NamingCheckFailure>
+      NamingCheckFailureMap;
 
-  llvm::DenseMap<const NamedDecl *, NamingCheckFailure> NamingCheckFailures;
+private:
+  std::vector<NamingStyle> NamingStyles;
+  bool IgnoreFailedSplit;
+  NamingCheckFailureMap NamingCheckFailures;
 };
 
 } // namespace readability

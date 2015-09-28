@@ -21,6 +21,7 @@ namespace clang {
 namespace tidy {
 namespace readability {
 
+// clang-format off
 #define NAMING_KEYS(m) \
     m(Namespace) \
     m(InlineNamespace) \
@@ -80,6 +81,7 @@ static StringRef const StyleNames[] = {
 };
 
 #undef NAMING_KEYS
+// clang-format on
 
 IdentifierNamingCheck::IdentifierNamingCheck(StringRef Name,
                                              ClangTidyContext *Context)
@@ -134,10 +136,10 @@ void IdentifierNamingCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
 }
 
 void IdentifierNamingCheck::registerMatchers(MatchFinder *Finder) {
-// FIXME: For now, only Decl and DeclRefExpr nodes are visited for checking and
-// replacement. There is a lot of missing cases, such as references to a class
-// name (as in 'const int CMyClass::kClassConstant = 4;'), to an enclosing
-// context (namespace, class, etc).
+  // FIXME: For now, only Decl and DeclRefExpr nodes are visited for checking
+  // and replacement. There is a lot of missing cases, such as references to a
+  // class name (as in 'const int CMyClass::kClassConstant = 4;'), to an
+  // enclosing context (namespace, class, etc).
 
   Finder->addMatcher(namedDecl().bind("decl"), this);
   Finder->addMatcher(declRefExpr().bind("declref"), this);
@@ -499,23 +501,24 @@ static StyleKind findStyleKind(
   return SK_Invalid;
 }
 
+static void addUsage(IdentifierNamingCheck::NamingCheckFailureMap &Failures,
+                     const NamedDecl *Decl, SourceRange Range,
+                     const SourceManager *SM) {
+  auto &Failure = Failures[Decl];
+  if (!Failure.RawUsageLocs.insert(Range.getBegin().getRawEncoding()).second)
+    return;
+
+  Failure.ShouldFix = Failure.ShouldFix && SM->isInMainFile(Range.getBegin()) &&
+                      SM->isInMainFile(Range.getEnd()) &&
+                      !Range.getBegin().isMacroID() &&
+                      !Range.getEnd().isMacroID();
+}
+
 void IdentifierNamingCheck::check(const MatchFinder::MatchResult &Result) {
   if (const auto *DeclRef = Result.Nodes.getNodeAs<DeclRefExpr>("declref")) {
-    auto It = NamingCheckFailures.find(DeclRef->getDecl());
-    if (It == NamingCheckFailures.end())
-      return;
-
-    NamingCheckFailure &Failure = It->second;
     SourceRange Range = DeclRef->getNameInfo().getSourceRange();
-
-    Failure.Usages.push_back(Range);
-    Failure.ShouldFix = Failure.ShouldFix &&
-                        Result.SourceManager->isInMainFile(Range.getBegin()) &&
-                        Result.SourceManager->isInMainFile(Range.getEnd()) &&
-                        !Range.getBegin().isMacroID() &&
-                        !Range.getEnd().isMacroID();
-
-    return;
+    return addUsage(NamingCheckFailures, DeclRef->getDecl(), Range,
+                    Result.SourceManager);
   }
 
   if (const auto *Decl = Result.Nodes.getNodeAs<NamedDecl>("decl")) {
@@ -550,11 +553,7 @@ void IdentifierNamingCheck::check(const MatchFinder::MatchResult &Result) {
 
       Failure.Fixup = std::move(Fixup);
       Failure.KindName = std::move(KindName);
-      Failure.ShouldFix =
-          Failure.ShouldFix &&
-          Result.SourceManager->isInMainFile(Range.getBegin()) &&
-          Result.SourceManager->isInMainFile(Range.getEnd()) &&
-          !Range.getBegin().isMacroID() && !Range.getEnd().isMacroID();
+      addUsage(NamingCheckFailures, Decl, Range, Result.SourceManager);
     }
   }
 }
@@ -564,19 +563,19 @@ void IdentifierNamingCheck::onEndOfTranslationUnit() {
     const NamedDecl &Decl = *Pair.first;
     const NamingCheckFailure &Failure = Pair.second;
 
-    SourceRange DeclRange =
-        DeclarationNameInfo(Decl.getDeclName(), Decl.getLocation())
-            .getSourceRange();
+    if (Failure.KindName.empty())
+      continue;
+
     auto Diag = diag(Decl.getLocStart(), "invalid case style for %0 '%1'")
                 << Failure.KindName << Decl.getName();
-
     if (Failure.ShouldFix) {
-      Diag << FixItHint::CreateReplacement(
-          CharSourceRange::getTokenRange(DeclRange), Failure.Fixup);
-
-      for (const auto &Range : Failure.Usages) {
+      for (const auto &Loc : Failure.RawUsageLocs) {
+        // We assume that the identifier name is made of one token only. This is
+        // always the case as we ignore usages in macros that could build
+        // identifier names by combining multiple tokens.
         Diag << FixItHint::CreateReplacement(
-            CharSourceRange::getTokenRange(Range), Failure.Fixup);
+            SourceRange(SourceLocation::getFromRawEncoding(Loc)),
+            Failure.Fixup);
       }
     }
   }
