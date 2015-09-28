@@ -221,7 +221,7 @@ std::unique_ptr<ELFFileBase> createELFFile(MemoryBufferRef MB) {
   std::pair<unsigned char, unsigned char> Type =
     object::getElfArchType(MB.getBuffer());
   if (Type.second != ELF::ELFDATA2LSB && Type.second != ELF::ELFDATA2MSB)
-    error("Invalid data encoding");
+    error("Invalid data encoding: " + MB.getBufferIdentifier());
 
   if (Type.first == ELF::ELFCLASS32) {
     if (Type.second == ELF::ELFDATA2LSB)
@@ -233,7 +233,7 @@ std::unique_ptr<ELFFileBase> createELFFile(MemoryBufferRef MB) {
       return make_unique<T<object::ELF64LE>>(MB);
     return make_unique<T<object::ELF64BE>>(MB);
   }
-  error("Invalid file class");
+  error("Invalid file class: " + MB.getBufferIdentifier());
 }
 
 } // namespace elf2
