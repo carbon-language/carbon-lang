@@ -774,7 +774,7 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 
     { LLDB_OPT_SET_4, true, "fullname", 'F', OptionParser::eRequiredArgument, NULL, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFullName,
         "Set the breakpoint by fully qualified function names. For C++ this means namespaces and all arguments, and "
-        "for Objective C this means a full function prototype with class and selector.   "
+        "for Objective C this means a full function prototype with class and selector.  "
         "Can be repeated multiple times to make one breakpoint for multiple names." },
 
     { LLDB_OPT_SET_5, true, "selector", 'S', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeSelector,
