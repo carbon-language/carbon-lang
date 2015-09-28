@@ -145,6 +145,7 @@ OPENMP_CLAUSE(seq_cst, OMPSeqCstClause)
 OPENMP_CLAUSE(depend, OMPDependClause)
 OPENMP_CLAUSE(device, OMPDeviceClause)
 OPENMP_CLAUSE(threads, OMPThreadsClause)
+OPENMP_CLAUSE(simd, OMPSIMDClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -318,6 +319,7 @@ OPENMP_TEAMS_CLAUSE(reduction)
 // Clauses allowed for OpenMP directive 'ordered'.
 // TODO More clauses for 'ordered' directive.
 OPENMP_ORDERED_CLAUSE(threads)
+OPENMP_ORDERED_CLAUSE(simd)
 
 #undef OPENMP_LINEAR_KIND
 #undef OPENMP_DEPEND_KIND

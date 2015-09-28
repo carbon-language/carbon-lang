@@ -1780,6 +1780,9 @@ OMPClause *OMPClauseReader::readClause() {
   case OMPC_threads:
     C = new (Context) OMPThreadsClause();
     break;
+  case OMPC_simd:
+    C = new (Context) OMPSIMDClause();
+    break;
   case OMPC_private:
     C = OMPPrivateClause::CreateEmpty(Context, Record[Idx++]);
     break;
@@ -1903,6 +1906,8 @@ void OMPClauseReader::VisitOMPCaptureClause(OMPCaptureClause *) {}
 void OMPClauseReader::VisitOMPSeqCstClause(OMPSeqCstClause *) {}
 
 void OMPClauseReader::VisitOMPThreadsClause(OMPThreadsClause *) {}
+
+void OMPClauseReader::VisitOMPSIMDClause(OMPSIMDClause *) {}
 
 void OMPClauseReader::VisitOMPPrivateClause(OMPPrivateClause *C) {
   C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));

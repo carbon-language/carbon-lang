@@ -701,6 +701,8 @@ void OMPClausePrinter::VisitOMPThreadsClause(OMPThreadsClause *) {
   OS << "threads";
 }
 
+void OMPClausePrinter::VisitOMPSIMDClause(OMPSIMDClause *) { OS << "simd"; }
+
 void OMPClausePrinter::VisitOMPDeviceClause(OMPDeviceClause *Node) {
   OS << "device(";
   Node->getDevice()->printPretty(OS, nullptr, Policy, 0);

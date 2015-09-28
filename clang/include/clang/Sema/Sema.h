@@ -7997,7 +7997,10 @@ public:
                                      SourceLocation EndLoc);
   /// \brief Called on well-formed 'threads' clause.
   OMPClause *ActOnOpenMPThreadsClause(SourceLocation StartLoc,
-                                     SourceLocation EndLoc);
+                                      SourceLocation EndLoc);
+  /// \brief Called on well-formed 'simd' clause.
+  OMPClause *ActOnOpenMPSIMDClause(SourceLocation StartLoc,
+                                   SourceLocation EndLoc);
 
   OMPClause *ActOnOpenMPVarListClause(
       OpenMPClauseKind Kind, ArrayRef<Expr *> Vars, Expr *TailExpr,

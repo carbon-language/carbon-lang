@@ -1547,7 +1547,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | simd             | taskwait        |                                    |
   // | simd             | taskgroup       |                                    |
   // | simd             | flush           |                                    |
-  // | simd             | ordered         |                                    |
+  // | simd             | ordered         | + (with simd clause)               |
   // | simd             | atomic          |                                    |
   // | simd             | target          |                                    |
   // | simd             | teams           |                                    |
@@ -1573,7 +1573,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | for simd         | taskwait        |                                    |
   // | for simd         | taskgroup       |                                    |
   // | for simd         | flush           |                                    |
-  // | for simd         | ordered         |                                    |
+  // | for simd         | ordered         | + (with simd clause)               |
   // | for simd         | atomic          |                                    |
   // | for simd         | target          |                                    |
   // | for simd         | teams           |                                    |
@@ -1599,7 +1599,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel for simd| taskwait        |                                    |
   // | parallel for simd| taskgroup       |                                    |
   // | parallel for simd| flush           |                                    |
-  // | parallel for simd| ordered         |                                    |
+  // | parallel for simd| ordered         | + (with simd clause)               |
   // | parallel for simd| atomic          |                                    |
   // | parallel for simd| target          |                                    |
   // | parallel for simd| teams           |                                    |
@@ -1877,9 +1877,12 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
       ShouldBeInOrderedRegion,
       ShouldBeInTargetRegion
     } Recommend = NoRecommend;
-    if (isOpenMPSimdDirective(ParentRegion)) {
+    if (isOpenMPSimdDirective(ParentRegion) && CurrentRegion != OMPD_ordered) {
       // OpenMP [2.16, Nesting of Regions]
       // OpenMP constructs may not be nested inside a simd region.
+      // OpenMP [2.8.1,simd Construct, Restrictions]
+      // An ordered construct with the simd clause is the only OpenMP construct
+      // that can appear in the simd region.
       SemaRef.Diag(StartLoc, diag::err_omp_prohibited_region_simd);
       return true;
     }
@@ -1987,9 +1990,13 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
       // atomic, or explicit task region.
       // An ordered region must be closely nested inside a loop region (or
       // parallel loop region) with an ordered clause.
+      // OpenMP [2.8.1,simd Construct, Restrictions]
+      // An ordered construct with the simd clause is the only OpenMP construct
+      // that can appear in the simd region.
       NestingProhibited = ParentRegion == OMPD_critical ||
                           ParentRegion == OMPD_task ||
-                          !Stack->isParentOrderedRegion();
+                          !(isOpenMPSimdDirective(ParentRegion) ||
+                            Stack->isParentOrderedRegion());
       Recommend = ShouldBeInOrderedRegion;
     } else if (isOpenMPTeamsDirective(CurrentRegion)) {
       // OpenMP [2.16, Nesting of Regions]
@@ -4146,9 +4153,12 @@ StmtResult Sema::ActOnOpenMPOrderedDirective(ArrayRef<OMPClause *> Clauses,
   getCurFunction()->setHasBranchProtectedScope();
 
   OMPThreadsClause *TC = nullptr;
+  OMPSIMDClause *SC = nullptr;
   for (auto *C: Clauses) {
     if (C->getClauseKind() == OMPC_threads)
       TC = cast<OMPThreadsClause>(C);
+    else if (C->getClauseKind() == OMPC_simd)
+      SC = cast<OMPSIMDClause>(C);
   }
 
   // TODO: this must happen only if 'threads' clause specified or if no clauses
@@ -4157,6 +4167,13 @@ StmtResult Sema::ActOnOpenMPOrderedDirective(ArrayRef<OMPClause *> Clauses,
     SourceLocation ErrLoc = TC ? TC->getLocStart() : StartLoc;
     Diag(ErrLoc, diag::err_omp_ordered_directive_with_param) << (TC != nullptr);
     Diag(Param->getLocStart(), diag::note_omp_ordered_param);
+    return StmtError();
+  }
+  if (!SC && isOpenMPSimdDirective(DSAStack->getParentDirective())) {
+    // OpenMP [2.8.1,simd Construct, Restrictions]
+    // An ordered construct with the simd clause is the only OpenMP construct
+    // that can appear in the simd region.
+    Diag(StartLoc, diag::err_omp_prohibited_region_simd);
     return StmtError();
   }
 
@@ -5009,6 +5026,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_seq_cst:
   case OMPC_depend:
   case OMPC_threads:
+  case OMPC_simd:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5270,6 +5288,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_depend:
   case OMPC_device:
   case OMPC_threads:
+  case OMPC_simd:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5398,6 +5417,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_depend:
   case OMPC_device:
   case OMPC_threads:
+  case OMPC_simd:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5504,6 +5524,9 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_threads:
     Res = ActOnOpenMPThreadsClause(StartLoc, EndLoc);
     break;
+  case OMPC_simd:
+    Res = ActOnOpenMPSIMDClause(StartLoc, EndLoc);
+    break;
   case OMPC_if:
   case OMPC_final:
   case OMPC_num_threads:
@@ -5578,6 +5601,11 @@ OMPClause *Sema::ActOnOpenMPThreadsClause(SourceLocation StartLoc,
   return new (Context) OMPThreadsClause(StartLoc, EndLoc);
 }
 
+OMPClause *Sema::ActOnOpenMPSIMDClause(SourceLocation StartLoc,
+                                       SourceLocation EndLoc) {
+  return new (Context) OMPSIMDClause(StartLoc, EndLoc);
+}
+
 OMPClause *Sema::ActOnOpenMPVarListClause(
     OpenMPClauseKind Kind, ArrayRef<Expr *> VarList, Expr *TailExpr,
     SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation ColonLoc,
@@ -5644,6 +5672,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_seq_cst:
   case OMPC_device:
   case OMPC_threads:
+  case OMPC_simd:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }

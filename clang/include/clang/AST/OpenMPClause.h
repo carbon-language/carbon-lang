@@ -2561,6 +2561,36 @@ public:
   }
 };
 
+/// \brief This represents 'simd' clause in the '#pragma omp ...' directive.
+///
+/// \code
+/// #pragma omp ordered simd
+/// \endcode
+/// In this example directive '#pragma omp ordered' has simple 'simd' clause.
+///
+class OMPSIMDClause : public OMPClause {
+public:
+  /// \brief Build 'simd' clause.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param EndLoc Ending location of the clause.
+  ///
+  OMPSIMDClause(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPClause(OMPC_simd, StartLoc, EndLoc) {}
+
+  /// \brief Build an empty clause.
+  ///
+  OMPSIMDClause() : OMPClause(OMPC_simd, SourceLocation(), SourceLocation()) {}
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_simd;
+  }
+
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
+};
+
 } // end namespace clang
 
 #endif

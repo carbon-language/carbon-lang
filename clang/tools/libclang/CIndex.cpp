@@ -2068,6 +2068,8 @@ void OMPClauseEnqueue::VisitOMPSeqCstClause(const OMPSeqCstClause *) {}
 
 void OMPClauseEnqueue::VisitOMPThreadsClause(const OMPThreadsClause *) {}
 
+void OMPClauseEnqueue::VisitOMPSIMDClause(const OMPSIMDClause *) {}
+
 void OMPClauseEnqueue::VisitOMPDeviceClause(const OMPDeviceClause *C) {
   Visitor->AddStmt(C->getDevice());
 }
