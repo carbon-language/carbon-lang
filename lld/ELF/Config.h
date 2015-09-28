@@ -12,6 +12,8 @@
 
 #include "llvm/ADT/StringRef.h"
 
+#include <vector>
+
 namespace lld {
 namespace elf2 {
 
