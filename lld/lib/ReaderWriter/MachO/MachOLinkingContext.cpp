@@ -720,12 +720,10 @@ void MachOLinkingContext::createImplicitFiles(
   // Let writer add output type specific extras.
   writer().createImplicitFiles(result);
 
-  // If we're using flat namespace or undefinedMode is != error, add a
-  // FlatNamespaceFile instance. This will provide a SharedLibraryAtom for
-  // symbols that aren't defined elsewhere.
-  if (useFlatNamespace() && undefinedMode() != UndefinedMode::error) {
-    bool warnOnUndef = undefinedMode() == UndefinedMode::warning;
-    result.emplace_back(new mach_o::FlatNamespaceFile(*this, warnOnUndef));
+  // If undefinedMode is != error, add a FlatNamespaceFile instance. This will
+  // provide a SharedLibraryAtom for symbols that aren't defined elsewhere.
+  if (undefinedMode() != UndefinedMode::error) {
+    result.emplace_back(new mach_o::FlatNamespaceFile(*this));
     _flatNamespaceFile = result.back().get();
   }
 }
