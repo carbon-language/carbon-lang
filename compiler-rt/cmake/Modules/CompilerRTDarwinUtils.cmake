@@ -251,7 +251,7 @@ macro(darwin_add_builtin_libraries)
                       ../profile/InstrProfilingPlatformDarwin)
   foreach (os ${ARGN})
     list_union(DARWIN_BUILTIN_ARCHS DARWIN_${os}_ARCHS BUILTIN_SUPPORTED_ARCH)
-    foreach (arch ${DARWIN_BUILTIN_ARCHS} ${DARWIN_BUILTIN_SIM_ARCHS})
+    foreach (arch ${DARWIN_BUILTIN_ARCHS})
       darwin_find_excluded_builtins_list(${arch}_${os}_EXCLUDED_BUILTINS
                               OS ${os}
                               ARCH ${arch}
