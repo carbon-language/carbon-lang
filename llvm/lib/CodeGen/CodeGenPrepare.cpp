@@ -3849,19 +3849,19 @@ static bool isFormingBranchFromSelectProfitable(SelectInst *SI) {
 
   CmpInst *Cmp = dyn_cast<CmpInst>(SI->getCondition());
 
-  // If the branch is predicted right, an out of order CPU can avoid blocking on
-  // the compare.  Emit cmovs on compares with a memory operand as branches to
-  // avoid stalls on the load from memory.  If the compare has more than one use
-  // there's probably another cmov or setcc around so it's not worth emitting a
-  // branch.
+  // If a branch is predictable, an out-of-order CPU can avoid blocking on its
+  // comparison condition. If the compare has more than one use, there's
+  // probably another cmov or setcc around, so it's not worth emitting a branch.
   if (!Cmp || !Cmp->hasOneUse())
     return false;
 
   Value *CmpOp0 = Cmp->getOperand(0);
   Value *CmpOp1 = Cmp->getOperand(1);
 
-  // We check that the memory operand has one use to avoid uses of the loaded
-  // value directly after the compare, making branches unprofitable.
+  // Emit "cmov on compare with a memory operand" as a branch to avoid stalls
+  // on a load from memory. But if the load is used more than once, do not
+  // change the select to a branch because the load is probably needed
+  // regardless of whether the branch is taken or not.
   return ((isa<LoadInst>(CmpOp0) && CmpOp0->hasOneUse()) ||
           (isa<LoadInst>(CmpOp1) && CmpOp1->hasOneUse()));
 }
