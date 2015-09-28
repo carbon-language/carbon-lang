@@ -1716,6 +1716,7 @@ void NVPTXTargetInfo::getGCCRegNames(const char *const *&Names,
 class NVPTX32TargetInfo : public NVPTXTargetInfo {
 public:
   NVPTX32TargetInfo(const llvm::Triple &Triple) : NVPTXTargetInfo(Triple) {
+    LongWidth = LongAlign = 32;
     PointerWidth = PointerAlign = 32;
     SizeType = TargetInfo::UnsignedInt;
     PtrDiffType = TargetInfo::SignedInt;

@@ -4737,10 +4737,10 @@
 // NVPTX32:#define __INT_FAST32_FMTi__ "i"
 // NVPTX32:#define __INT_FAST32_MAX__ 2147483647
 // NVPTX32:#define __INT_FAST32_TYPE__ int
-// NVPTX32:#define __INT_FAST64_FMTd__ "ld"
-// NVPTX32:#define __INT_FAST64_FMTi__ "li"
+// NVPTX32:#define __INT_FAST64_FMTd__ "lld"
+// NVPTX32:#define __INT_FAST64_FMTi__ "lli"
 // NVPTX32:#define __INT_FAST64_MAX__ 9223372036854775807L
-// NVPTX32:#define __INT_FAST64_TYPE__ long int
+// NVPTX32:#define __INT_FAST64_TYPE__ long long int
 // NVPTX32:#define __INT_FAST8_FMTd__ "hhd"
 // NVPTX32:#define __INT_FAST8_FMTi__ "hhi"
 // NVPTX32:#define __INT_FAST8_MAX__ 127
@@ -4753,10 +4753,10 @@
 // NVPTX32:#define __INT_LEAST32_FMTi__ "i"
 // NVPTX32:#define __INT_LEAST32_MAX__ 2147483647
 // NVPTX32:#define __INT_LEAST32_TYPE__ int
-// NVPTX32:#define __INT_LEAST64_FMTd__ "ld"
-// NVPTX32:#define __INT_LEAST64_FMTi__ "li"
+// NVPTX32:#define __INT_LEAST64_FMTd__ "lld"
+// NVPTX32:#define __INT_LEAST64_FMTi__ "lli"
 // NVPTX32:#define __INT_LEAST64_MAX__ 9223372036854775807L
-// NVPTX32:#define __INT_LEAST64_TYPE__ long int
+// NVPTX32:#define __INT_LEAST64_TYPE__ long long int
 // NVPTX32:#define __INT_LEAST8_FMTd__ "hhd"
 // NVPTX32:#define __INT_LEAST8_FMTi__ "hhi"
 // NVPTX32:#define __INT_LEAST8_MAX__ 127
@@ -4777,7 +4777,7 @@
 // NVPTX32:#define __LDBL_MIN__ 2.2250738585072014e-308L
 // NVPTX32:#define __LITTLE_ENDIAN__ 1
 // NVPTX32:#define __LONG_LONG_MAX__ 9223372036854775807LL
-// NVPTX32:#define __LONG_MAX__ 9223372036854775807L
+// NVPTX32:#define __LONG_MAX__ 2147483647L
 // NVPTX32-NOT:#define __LP64__
 // NVPTX32:#define __NVPTX__ 1
 // NVPTX32:#define __POINTER_WIDTH__ 32
@@ -4794,7 +4794,7 @@
 // NVPTX32:#define __SIZEOF_INT__ 4
 // NVPTX32:#define __SIZEOF_LONG_DOUBLE__ 8
 // NVPTX32:#define __SIZEOF_LONG_LONG__ 8
-// NVPTX32:#define __SIZEOF_LONG__ 8
+// NVPTX32:#define __SIZEOF_LONG__ 4
 // NVPTX32:#define __SIZEOF_POINTER__ 4
 // NVPTX32:#define __SIZEOF_PTRDIFF_T__ 4
 // NVPTX32:#define __SIZEOF_SHORT__ 2
@@ -4828,7 +4828,7 @@
 // NVPTX32:#define __UINT_FAST32_MAX__ 4294967295U
 // NVPTX32:#define __UINT_FAST32_TYPE__ unsigned int
 // NVPTX32:#define __UINT_FAST64_MAX__ 18446744073709551615UL
-// NVPTX32:#define __UINT_FAST64_TYPE__ long unsigned int
+// NVPTX32:#define __UINT_FAST64_TYPE__ long long unsigned int
 // NVPTX32:#define __UINT_FAST8_MAX__ 255
 // NVPTX32:#define __UINT_FAST8_TYPE__ unsigned char
 // NVPTX32:#define __UINT_LEAST16_MAX__ 65535
@@ -4836,7 +4836,7 @@
 // NVPTX32:#define __UINT_LEAST32_MAX__ 4294967295U
 // NVPTX32:#define __UINT_LEAST32_TYPE__ unsigned int
 // NVPTX32:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
-// NVPTX32:#define __UINT_LEAST64_TYPE__ long unsigned int
+// NVPTX32:#define __UINT_LEAST64_TYPE__ long long unsigned int
 // NVPTX32:#define __UINT_LEAST8_MAX__ 255
 // NVPTX32:#define __UINT_LEAST8_TYPE__ unsigned char
 // NVPTX32:#define __USER_LABEL_PREFIX__ _

@@ -50,7 +50,7 @@ BUILTIN(__builtin_ptx_read_lanemask_ge, "i", "nc")
 BUILTIN(__builtin_ptx_read_lanemask_gt, "i", "nc")
 
 BUILTIN(__builtin_ptx_read_clock, "i", "n")
-BUILTIN(__builtin_ptx_read_clock64, "Li", "n")
+BUILTIN(__builtin_ptx_read_clock64, "LLi", "n")
 
 BUILTIN(__builtin_ptx_read_pm0, "i", "n")
 BUILTIN(__builtin_ptx_read_pm1, "i", "n")

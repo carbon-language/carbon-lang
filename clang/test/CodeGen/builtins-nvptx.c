@@ -109,16 +109,15 @@ __device__ int read_lanemasks() {
 
 }
 
-__device__ long read_clocks() {
+__device__ long long read_clocks() {
 
 // CHECK: call i32 @llvm.ptx.read.clock()
 // CHECK: call i64 @llvm.ptx.read.clock64()
 
   int a = __builtin_ptx_read_clock();
-  long b = __builtin_ptx_read_clock64();
+  long long b = __builtin_ptx_read_clock64();
 
-  return (long)a + b;
-
+  return a + b;
 }
 
 __device__ int read_pms() {
