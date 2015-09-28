@@ -60,6 +60,21 @@ static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
   return createELFFile<ObjectFile>(MB);
 }
 
+// Makes a path by concatenating Dir and File.
+// If Dir starts with "=" the result will be preceded by SysRoot,
+// which can be set with --sysroot command line switch.
+static std::string buildSysrootedPath(StringRef Dir, StringRef File) {
+  SmallString<128> Path;
+  if (Dir.startswith("=")) {
+    Path.assign(Config->Sysroot);
+    sys::path::append(Path, Dir.substr(1), File);
+  } else {
+    Path.assign(Dir);
+    sys::path::append(Path, File);
+  }
+  return Path.str().str();
+}
+
 // Searches a given library from input search paths, which are filled
 // from -L command line switches. Returns a path to an existent library file.
 static std::string searchLibrary(StringRef Path) {
@@ -70,13 +85,11 @@ static std::string searchLibrary(StringRef Path) {
     Names.push_back((Twine("lib") + Path + ".so").str());
     Names.push_back((Twine("lib") + Path + ".a").str());
   }
-  SmallString<128> FullPath;
   for (StringRef Dir : Config->InputSearchPaths) {
     for (const std::string &Name : Names) {
-      FullPath = Dir;
-      sys::path::append(FullPath, Name);
-      if (sys::fs::exists(FullPath.str()))
-        return FullPath.str().str();
+      std::string FullPath = buildSysrootedPath(Dir, Name);
+      if (sys::fs::exists(FullPath))
+        return FullPath;
     }
   }
   error(Twine("Unable to find library -l") + Path);
@@ -95,6 +108,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   // Handle -dynamic-linker
   if (auto *Arg = Args.getLastArg(OPT_dynamic_linker))
     Config->DynamicLinker = Arg->getValue();
+
+  if (auto *Arg = Args.getLastArg(OPT_sysroot))
+    Config->Sysroot = Arg->getValue();
 
   std::vector<StringRef> RPaths;
   for (auto *Arg : Args.filtered(OPT_rpath))

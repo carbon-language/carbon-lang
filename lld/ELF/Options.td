@@ -49,3 +49,6 @@ def l : Joined<["-"], "l">, MetaVarName<"<libName>">,
 
 def alias_l : Joined<["--"], "library=">,
      Alias<l>;
+
+def sysroot : Joined<["--"], "sysroot=">,
+     HelpText<"Set the system root">;
