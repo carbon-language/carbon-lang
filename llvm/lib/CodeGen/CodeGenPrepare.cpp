@@ -3854,7 +3854,7 @@ static bool isFormingBranchFromSelectProfitable(SelectInst *SI) {
   // avoid stalls on the load from memory.  If the compare has more than one use
   // there's probably another cmov or setcc around so it's not worth emitting a
   // branch.
-  if (!Cmp)
+  if (!Cmp || !Cmp->hasOneUse())
     return false;
 
   Value *CmpOp0 = Cmp->getOperand(0);
@@ -3862,8 +3862,7 @@ static bool isFormingBranchFromSelectProfitable(SelectInst *SI) {
 
   // We check that the memory operand has one use to avoid uses of the loaded
   // value directly after the compare, making branches unprofitable.
-  return Cmp->hasOneUse() &&
-         ((isa<LoadInst>(CmpOp0) && CmpOp0->hasOneUse()) ||
+  return ((isa<LoadInst>(CmpOp0) && CmpOp0->hasOneUse()) ||
           (isa<LoadInst>(CmpOp1) && CmpOp1->hasOneUse()));
 }
 
