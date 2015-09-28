@@ -1,7 +1,8 @@
 // RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t.o
 // RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %p/Inputs/shared.s -o %t2.o
+// RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %p/Inputs/dynamic-reloc.s -o %t3.o
 // RUN: lld -flavor gnu2 -shared %t2.o -o %t2.so
-// RUN: lld -flavor gnu2 %t.o %t2.so -o %t
+// RUN: lld -flavor gnu2 %t.o %t3.o %t2.so -o %t
 // RUN: llvm-readobj -dynamic-table -r --expand-relocs -s %t | FileCheck %s
 // REQUIRES: x86
 
@@ -56,3 +57,4 @@
 .global _start
 _start:
 .quad bar + 0x42
+call main
