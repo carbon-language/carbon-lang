@@ -7436,14 +7436,13 @@ bool ScalarEvolution::isImpliedCondOperandsViaNoOverflow(
   if (LDiff == 0)
     return true;
 
-  unsigned Width = cast<IntegerType>(RHS->getType())->getBitWidth();
   APInt FoundRHSLimit;
 
   if (Pred == CmpInst::ICMP_ULT) {
     FoundRHSLimit = -RDiff;
   } else {
     assert(Pred == CmpInst::ICMP_SLT && "Checked above!");
-    FoundRHSLimit = APInt::getSignedMinValue(Width) - RDiff;
+    FoundRHSLimit = APInt::getSignedMinValue(getTypeSizeInBits(RHS->getType())) - RDiff;
   }
 
   // Try to prove (1) or (2), as needed.
