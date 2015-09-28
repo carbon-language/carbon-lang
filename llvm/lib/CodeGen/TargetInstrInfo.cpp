@@ -128,7 +128,8 @@ MachineInstr *TargetInstrInfo::commuteInstructionImpl(MachineInstr *MI,
     // No idea how to commute this instruction. Target should implement its own.
     return nullptr;
 
-  unsigned CommutableOpIdx1 = Idx1, CommutableOpIdx2 = Idx2;
+  unsigned CommutableOpIdx1 = Idx1; (void)CommutableOpIdx1;
+  unsigned CommutableOpIdx2 = Idx2; (void)CommutableOpIdx2;
   assert(findCommutedOpIndices(MI, CommutableOpIdx1, CommutableOpIdx2) &&
          CommutableOpIdx1 == Idx1 && CommutableOpIdx2 == Idx2 &&
          "TargetInstrInfo::CommuteInstructionImpl(): not commutable operands.");
