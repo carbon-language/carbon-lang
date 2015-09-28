@@ -1770,6 +1770,9 @@ def JalTwoReg : MipsAsmPseudoInst<(outs GPR32Opnd:$rd), (ins GPR32Opnd:$rs),
 def JalOneReg : MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs),
                       "jal\t$rs"> ;
 
+def NORImm : MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm),
+                               "nor\t$rs, $rt, $imm"> ;
+
 let hasDelaySlot = 1 in {
 def BneImm : MipsAsmPseudoInst<(outs GPR32Opnd:$rt),
                                (ins imm64:$imm64, brtarget:$offset),

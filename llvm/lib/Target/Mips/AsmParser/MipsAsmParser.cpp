@@ -202,6 +202,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool expandLoadStoreMultiple(MCInst &Inst, SMLoc IDLoc,
                                SmallVectorImpl<MCInst> &Instructions);
 
+  bool expandAliasImmediate(MCInst &Inst, SMLoc IDLoc,
+                          SmallVectorImpl<MCInst> &Instructions);
+
   bool expandBranchImm(MCInst &Inst, SMLoc IDLoc,
                        SmallVectorImpl<MCInst> &Instructions);
 
@@ -1883,7 +1886,31 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   case Mips::DUDivMacro:
   case Mips::Ulhu:
   case Mips::Ulw:
+  case Mips::NORImm:
     return true;
+  case Mips::ADDi:
+  case Mips::ADDiu:
+  case Mips::SLTi:
+  case Mips::SLTiu:
+    if ((Inst.getNumOperands() == 3) &&
+        Inst.getOperand(0).isReg() &&
+        Inst.getOperand(1).isReg() &&
+        Inst.getOperand(2).isImm()) {
+      int64_t ImmValue = Inst.getOperand(2).getImm();
+      return !isInt<16>(ImmValue);
+    }
+    return false;
+  case Mips::ANDi:
+  case Mips::ORi:
+  case Mips::XORi:
+    if ((Inst.getNumOperands() == 3) &&
+        Inst.getOperand(0).isReg() &&
+        Inst.getOperand(1).isReg() &&
+        Inst.getOperand(2).isImm()) {
+      int64_t ImmValue = Inst.getOperand(2).getImm();
+      return !isUInt<16>(ImmValue);
+    }
+    return false;
   default:
     return false;
   }
@@ -1957,6 +1984,15 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
     return expandUlhu(Inst, IDLoc, Instructions);
   case Mips::Ulw:
     return expandUlw(Inst, IDLoc, Instructions);
+  case Mips::ADDi:
+  case Mips::ADDiu:
+  case Mips::ANDi:
+  case Mips::NORImm:
+  case Mips::ORi:
+  case Mips::SLTi:
+  case Mips::SLTiu:
+  case Mips::XORi:
+    return expandAliasImmediate(Inst, IDLoc, Instructions);
   }
 }
 
@@ -3123,6 +3159,82 @@ bool MipsAsmParser::expandUlw(MCInst &Inst, SMLoc IDLoc,
   Instructions.push_back(RightLoadInst);
 
   return false;
+}
+
+bool MipsAsmParser::expandAliasImmediate(MCInst &Inst, SMLoc IDLoc,
+                                         SmallVectorImpl<MCInst> &Instructions) {
+
+  assert (Inst.getNumOperands() == 3 && "Invalid operand count");
+  assert (Inst.getOperand(0).isReg() &&
+          Inst.getOperand(1).isReg() &&
+          Inst.getOperand(2).isImm() && "Invalid instruction operand.");
+
+  unsigned ATReg = Mips::NoRegister;
+  unsigned FinalDstReg = Mips::NoRegister;
+  unsigned DstReg = Inst.getOperand(0).getReg();
+  unsigned SrcReg = Inst.getOperand(1).getReg();
+  int64_t ImmValue = Inst.getOperand(2).getImm();
+
+  bool Is32Bit = isInt<32>(ImmValue) || isUInt<32>(ImmValue);
+
+  unsigned FinalOpcode = Inst.getOpcode();
+
+  if (DstReg == SrcReg) {
+    ATReg = getATReg(Inst.getLoc());
+    if (!ATReg)
+      return true;
+    FinalDstReg = DstReg;
+    DstReg = ATReg;
+  }
+
+  if (!loadImmediate(ImmValue, DstReg, Mips::NoRegister, Is32Bit, false, Inst.getLoc(), Instructions)) {
+    switch (FinalOpcode) {
+    default:
+      llvm_unreachable("unimplemented expansion");
+    case (Mips::ADDi):
+      FinalOpcode = Mips::ADD;
+      break;
+    case (Mips::ADDiu):
+      FinalOpcode = Mips::ADDu;
+      break;
+    case (Mips::ANDi):
+      FinalOpcode = Mips::AND;
+      break;
+    case (Mips::NORImm):
+      FinalOpcode = Mips::NOR;
+      break;
+    case (Mips::ORi):
+      FinalOpcode = Mips::OR;
+      break;
+    case (Mips::SLTi):
+      FinalOpcode = Mips::SLT;
+      break;
+    case (Mips::SLTiu):
+      FinalOpcode = Mips::SLTu;
+      break;
+    case (Mips::XORi):
+      FinalOpcode = Mips::XOR;
+      break;
+    }
+
+    MCInst tmpInst;
+
+    tmpInst.clear();
+    tmpInst.setLoc(Inst.getLoc());
+    tmpInst.setOpcode(FinalOpcode);
+    if (FinalDstReg == Mips::NoRegister) {
+      tmpInst.addOperand(MCOperand::createReg(DstReg));
+      tmpInst.addOperand(MCOperand::createReg(DstReg));
+      tmpInst.addOperand(MCOperand::createReg(SrcReg));
+    } else {
+      tmpInst.addOperand(MCOperand::createReg(FinalDstReg));
+      tmpInst.addOperand(MCOperand::createReg(FinalDstReg));
+      tmpInst.addOperand(MCOperand::createReg(DstReg));
+    }
+    Instructions.push_back(tmpInst);
+    return false;
+  }
+  return true;
 }
 
 void MipsAsmParser::createNop(bool hasShortDelaySlot, SMLoc IDLoc,
