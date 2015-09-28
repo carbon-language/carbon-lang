@@ -2033,7 +2033,7 @@ void SIInstrInfo::splitSMRD(MachineInstr *MI,
     BuildMI(*MBB, MI, DL, get(AMDGPU::S_ADD_I32), OffsetSGPR)
             .addOperand(*SOff)
             .addImm(HalfSize);
-    Hi = BuildMI(*MBB, MI, DL, get(HalfSGPROp))
+    Hi = BuildMI(*MBB, MI, DL, get(HalfSGPROp), RegHi)
                   .addReg(SBase->getReg(), getKillRegState(IsKill),
                           SBase->getSubReg())
                   .addReg(OffsetSGPR);
