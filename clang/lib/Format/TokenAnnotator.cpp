@@ -1951,7 +1951,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
         Left.isOneOf(Keywords.kw_returns, Keywords.kw_option))
       return true;
   } else if (Style.Language == FormatStyle::LK_JavaScript) {
-    if (Left.isOneOf(Keywords.kw_var, TT_JsFatArrow))
+    if (Left.isOneOf(Keywords.kw_let, Keywords.kw_var, TT_JsFatArrow))
       return true;
     if (Right.isOneOf(TT_JsTypeColon, TT_JsTypeOptionalQuestion))
       return false;
@@ -2082,8 +2082,9 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
         Left.Previous && Left.Previous->is(tok::equal) &&
         Line.First->isOneOf(tok::identifier, Keywords.kw_import, tok::kw_export,
                             tok::kw_const) &&
-        // kw_var is a pseudo-token that's a tok::identifier, so matches above.
-        !Line.startsWith(Keywords.kw_var))
+        // kw_var/kw_let are pseudo-tokens that are tok::identifier, so match
+        // above.
+        !Line.First->isOneOf(Keywords.kw_var, Keywords.kw_let))
       // Object literals on the top level of a file are treated as "enum-style".
       // Each key/value pair is put on a separate line, instead of bin-packing.
       return true;
