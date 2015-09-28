@@ -204,12 +204,22 @@ endfunction()
 # Filter out generic versions of routines that are re-implemented in
 # architecture specific manner.  This prevents multiple definitions of the
 # same symbols, making the symbol selection non-deterministic.
-function(darwin_filter_builtin_sources output_var excluded_list)
+function(darwin_filter_builtin_sources output_var exclude_or_include excluded_list)
+  if(exclude_or_include STREQUAL "EXCLUDE")
+    set(filter_action GREATER)
+    set(filter_value -1)
+  elseif(exclude_or_include STREQUAL "INCLUDE")
+    set(filter_action LESS)
+    set(filter_value 0)
+  else()
+    message(FATAL_ERROR "darwin_filter_builtin_sources called without EXCLUDE|INCLUDE")
+  endif()
+
   set(intermediate ${ARGN})
   foreach (_file ${intermediate})
     get_filename_component(_name_we ${_file} NAME_WE)
     list(FIND ${excluded_list} ${_name_we} _found)
-    if(_found GREATER -1)
+    if(_found ${filter_action} ${filter_value})
       list(REMOVE_ITEM intermediate ${_file})
     elseif(${_file} MATCHES ".*/.*\\.S")
       get_filename_component(_name ${_file} NAME)
@@ -256,7 +266,9 @@ macro(darwin_add_builtin_libraries)
                               ARCH ${arch}
                               MIN_VERSION ${DARWIN_${os}_BUILTIN_MIN_VER})
 
-      darwin_filter_builtin_sources(filtered_sources ${arch}_${os}_EXCLUDED_BUILTINS ${${arch}_SOURCES})
+      darwin_filter_builtin_sources(filtered_sources
+        EXCLUDE ${arch}_${os}_EXCLUDED_BUILTINS
+        ${${arch}_SOURCES})
 
       darwin_add_builtin_library(clang_rt builtins
                               OS ${os}
