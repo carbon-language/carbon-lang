@@ -14,7 +14,7 @@
 // CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size:
 // CHECK-NEXT:     Link:
-// CHECK-NEXT:     Info: 4
+// CHECK-NEXT:     Info: 5
 
 // CHECK: Symbols [
 // CHECK-NEXT:   Symbol {
@@ -25,6 +25,15 @@
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: abs
+// CHECK-NEXT:     Value: 0x2A
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: Absolute
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: blah
@@ -70,3 +79,4 @@ _start:
 blah:
 foo:
 goo:
+abs = 42

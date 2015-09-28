@@ -403,24 +403,27 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       Elf_Sym_Range Syms = File.getLocalSymbols();
       for (const Elf_Sym &Sym : Syms) {
         auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
-        uint32_t SecIndex = Sym.st_shndx;
         ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
         if (SymName && !shouldKeepInSymtab(*SymName))
           continue;
         ESym->st_name = (SymName) ? StrTabSec.getFileOff(*SymName) : 0;
         ESym->st_size = Sym.st_size;
         ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
-        if (SecIndex == SHN_XINDEX)
-          SecIndex = File.getObj().getExtendedSymbolTableIndex(
-              &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
-        ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
-        const InputSection<ELFT> *Section = Sections[SecIndex];
-        assert(Section != nullptr);
-        const OutputSection<ELFT> *Out = Section->getOutputSection();
-        assert(Out != nullptr);
-        ESym->st_shndx = Out->getSectionIndex();
-        ESym->st_value =
-            Out->getVA() + Section->getOutputSectionOff() + Sym.st_value;
+        uint32_t SecIndex = Sym.st_shndx;
+        uintX_t VA = Sym.st_value;
+        if (SecIndex == SHN_ABS) {
+          ESym->st_shndx = SHN_ABS;
+        } else {
+          if (SecIndex == SHN_XINDEX)
+            SecIndex = File.getObj().getExtendedSymbolTableIndex(
+                &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
+          ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
+          const InputSection<ELFT> *Section = Sections[SecIndex];
+          const OutputSection<ELFT> *Out = Section->getOutputSection();
+          ESym->st_shndx = Out->getSectionIndex();
+          VA += Out->getVA() + Section->getOutputSectionOff();
+        }
+        ESym->st_value = VA;
         Buf += sizeof(Elf_Sym);
       }
     }
