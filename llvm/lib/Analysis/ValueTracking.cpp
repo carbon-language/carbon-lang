@@ -2979,6 +2979,11 @@ static bool isAligned(const Value *Base, APInt Offset, unsigned Align,
     BaseAlign = A->getParamAlignment();
   else if (auto CS = ImmutableCallSite(Base))
     BaseAlign = CS.getAttributes().getParamAlignment(AttributeSet::ReturnIndex);
+  else if (const LoadInst *LI = dyn_cast<LoadInst>(Base))
+    if (MDNode *MD = LI->getMetadata(LLVMContext::MD_align)) {
+      ConstantInt *CI = mdconst::extract<ConstantInt>(MD->getOperand(0));
+      BaseAlign = CI->getLimitedValue();
+    }
 
   if (!BaseAlign) {
     Type *Ty = Base->getType()->getPointerElementType();
