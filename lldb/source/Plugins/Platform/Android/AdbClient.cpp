@@ -12,6 +12,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataEncoder.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -208,6 +209,29 @@ AdbClient::ReadMessage (std::vector<char> &message)
     if (error.Fail ())
         message.clear ();
 
+    return error;
+}
+
+Error
+AdbClient::ReadMessageStream (std::vector<char>& message, uint32_t timeout_ms)
+{
+    auto start = std::chrono::steady_clock::now();
+    message.clear();
+
+    Error error;
+    lldb::ConnectionStatus status = lldb::eConnectionStatusSuccess;
+    char buffer[1024];
+    while (error.Success() && status == lldb::eConnectionStatusSuccess)
+    {
+        auto end = std::chrono::steady_clock::now();
+        uint32_t elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        if (elapsed_time >= timeout_ms)
+            return Error("Timed out");
+
+        size_t n = m_conn.Read(buffer, sizeof(buffer), 1000 * (timeout_ms - elapsed_time), status, &error);
+        if (n > 0)
+            message.insert(message.end(), &buffer[0], &buffer[n]);
+    }
     return error;
 }
 
@@ -492,4 +516,31 @@ AdbClient::Stat (const FileSpec &remote_file, uint32_t &mode, uint32_t &size, ui
     size = extractor.GetU32 (&offset);
     mtime = extractor.GetU32 (&offset);
     return Error ();
+}
+
+Error
+AdbClient::Shell (const char* command, uint32_t timeout_ms, std::string* output)
+{
+    auto error = SwitchDeviceTransport ();
+    if (error.Fail ())
+        return Error ("Failed to switch to device transport: %s", error.AsCString ());
+
+    StreamString adb_command;
+    adb_command.Printf("shell:%s", command);
+    error = SendMessage (adb_command.GetData(), false);
+    if (error.Fail ())
+        return error;
+
+    error = ReadResponseStatus ();
+    if (error.Fail ())
+        return error;
+
+    std::vector<char> in_buffer;
+    error = ReadMessageStream (in_buffer, timeout_ms);
+    if (error.Fail())
+        return error;
+
+    if (output)
+        output->assign(in_buffer.begin(), in_buffer.end());
+    return error;
 }

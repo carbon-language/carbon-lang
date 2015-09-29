@@ -62,6 +62,9 @@ public:
     Error
     Stat (const FileSpec &remote_file, uint32_t &mode, uint32_t &size, uint32_t &mtime);
 
+    Error
+    Shell (const char* command, uint32_t timeout_ms, std::string* output);
+
 private:
     Error
     Connect ();
@@ -83,6 +86,9 @@ private:
 
     Error
     ReadMessage (std::vector<char> &message);
+
+    Error
+    ReadMessageStream (std::vector<char> &message, uint32_t timeout_ms);
 
     Error
     GetResponseError (const char *response_id);

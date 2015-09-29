@@ -325,33 +325,21 @@ PlatformAndroid::DownloadSymbolFile (const lldb::ModuleSP& module_sp,
     if (module_sp->GetSectionList()->FindSectionByName(ConstString(".symtab")) != nullptr)
         return Error("Symtab already available in the module");
 
-    int status = 0;
-    std::string tmpdir;
-    StreamString command;
-    command.Printf("mktemp --directory --tmpdir %s", GetWorkingDirectory().GetCString());
-    Error error = RunShellCommand(command.GetData(),
-                                  GetWorkingDirectory(),
-                                  &status,
-                                  nullptr,
-                                  &tmpdir,
-                                  5 /* timeout (s) */);
+    AdbClient adb(m_device_id);
 
-    if (error.Fail() || status != 0 || tmpdir.empty())
+    std::string tmpdir;
+    Error error = adb.Shell("mktemp --directory --tmpdir /data/local/tmp", 5000 /* ms */, &tmpdir);
+    if (error.Fail() || tmpdir.empty())
         return Error("Failed to generate temporary directory on the device (%s)", error.AsCString());
     tmpdir.erase(tmpdir.size() - 1); // Remove trailing new line
 
     // Create file remover for the temporary directory created on the device
     std::unique_ptr<std::string, std::function<void(std::string*)>> tmpdir_remover(
         &tmpdir,
-        [this](std::string* s) {
+        [this, &adb](std::string* s) {
             StreamString command;
             command.Printf("rm -rf %s", s->c_str());
-            Error error = this->RunShellCommand(command.GetData(),
-                                                GetWorkingDirectory(),
-                                                nullptr,
-                                                nullptr,
-                                                nullptr,
-                                                5 /* timeout (s) */);
+            Error error = adb.Shell(command.GetData(), 5000 /* ms */, nullptr);
 
             Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
             if (error.Fail())
@@ -363,17 +351,12 @@ PlatformAndroid::DownloadSymbolFile (const lldb::ModuleSP& module_sp,
     symfile_platform_filespec.AppendPathComponent("symbolized.oat");
 
     // Execute oatdump on the remote device to generate a file with symtab
-    command.Clear();
+    StreamString command;
     command.Printf("oatdump --symbolize=%s --output=%s",
                    module_sp->GetPlatformFileSpec().GetCString(false),
                    symfile_platform_filespec.GetCString(false));
-    error = RunShellCommand(command.GetData(),
-                            GetWorkingDirectory(),
-                            &status,
-                            nullptr,
-                            nullptr,
-                            60 /* timeout (s) */);
-    if (error.Fail() || status != 0)
+    error = adb.Shell(command.GetData(), 60000 /* ms */, nullptr);
+    if (error.Fail())
         return Error("Oatdump failed: %s", error.AsCString());
 
     // Download the symbolfile from the remote device
