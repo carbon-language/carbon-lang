@@ -37,16 +37,11 @@ X86TargetInfo::X86TargetInfo() {
 
 void X86TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                   uint64_t PltEntryAddr) const {
-  ArrayRef<uint8_t> Jmp = {0xff, 0x25}; // jmpl *val
-  memcpy(Buf, Jmp.data(), Jmp.size());
-  Buf += Jmp.size();
-
+  // jmpl *val; nop; nop
+  const uint8_t Inst[] = {0xff, 0x25, 0, 0, 0, 0, 0x90, 0x90};
+  memcpy(Buf, Inst, sizeof(Inst));
   assert(isUInt<32>(GotEntryAddr));
-  write32le(Buf, GotEntryAddr);
-  Buf += 4;
-
-  ArrayRef<uint8_t> Nops = {0x90, 0x90};
-  memcpy(Buf, Nops.data(), Nops.size());
+  write32le(Buf + 2, GotEntryAddr);
 }
 
 bool X86TargetInfo::relocNeedsGot(uint32_t Type) const {
@@ -107,18 +102,14 @@ X86_64TargetInfo::X86_64TargetInfo() {
 
 void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                      uint64_t PltEntryAddr) const {
-  ArrayRef<uint8_t> Jmp = {0xff, 0x25}; // jmpq *val(%rip)
-  memcpy(Buf, Jmp.data(), Jmp.size());
-  Buf += Jmp.size();
+  // jmpq *val(%rip); nop; nop
+  const uint8_t Inst[] = {0xff, 0x25, 0, 0, 0, 0, 0x90, 0x90};
+  memcpy(Buf, Inst, sizeof(Inst));
 
   uintptr_t NextPC = PltEntryAddr + 6;
   intptr_t Delta = GotEntryAddr - NextPC;
   assert(isInt<32>(Delta));
-  write32le(Buf, Delta);
-  Buf += 4;
-
-  ArrayRef<uint8_t> Nops = {0x90, 0x90};
-  memcpy(Buf, Nops.data(), Nops.size());
+  write32le(Buf + 2, Delta);
 }
 
 bool X86_64TargetInfo::relocNeedsGot(uint32_t Type) const {
