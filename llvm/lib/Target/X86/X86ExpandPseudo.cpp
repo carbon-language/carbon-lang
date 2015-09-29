@@ -141,41 +141,6 @@ bool X86ExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     // The EH_RETURN pseudo is really removed during the MC Lowering.
     return true;
   }
-
-  case X86::CLEANUPRET: {
-    // Replace CATCHRET with the appropriate RET.
-    unsigned RetOp = STI->is64Bit() ? X86::RETQ : X86::RETL;
-    BuildMI(MBB, MBBI, DL, TII->get(RetOp));
-    MBBI->eraseFromParent();
-    return true;
-  }
-
-  case X86::CATCHRET: {
-    MachineBasicBlock *TargetMBB = MBBI->getOperand(0).getMBB();
-
-    // Fill EAX/RAX with the address of the target block.
-    unsigned ReturnReg = STI->is64Bit() ? X86::RAX : X86::EAX;
-    unsigned RetOp = STI->is64Bit() ? X86::RETQ : X86::RETL;
-    if (STI->is64Bit()) {
-      // LEA64r TargetMBB(%rip), %rax
-      BuildMI(MBB, MBBI, DL, TII->get(X86::LEA64r), ReturnReg)
-          .addReg(X86::RIP)
-          .addImm(0)
-          .addReg(0)
-          .addMBB(TargetMBB)
-          .addReg(0);
-    } else {
-      // MOV32ri $TargetMBB, %eax
-      BuildMI(MBB, MBBI, DL, TII->get(X86::MOV32ri))
-          .addReg(ReturnReg)
-          .addMBB(TargetMBB);
-    }
-
-    // Replace CATCHRET with the appropriate RET.
-    BuildMI(MBB, MBBI, DL, TII->get(RetOp)).addReg(ReturnReg);
-    MBBI->eraseFromParent();
-    return true;
-  }
   }
   llvm_unreachable("Previous switch has a fallthrough?");
 }

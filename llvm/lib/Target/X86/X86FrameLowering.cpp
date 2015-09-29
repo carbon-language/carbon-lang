@@ -1093,9 +1093,26 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     if (STI.is32Bit()) {
       RestoreMBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
       MF.insert(TargetMBB, RestoreMBB);
-      MBB.transferSuccessors(RestoreMBB);
+      MBB.removeSuccessor(TargetMBB);
       MBB.addSuccessor(RestoreMBB);
-      MBBI->getOperand(0).setMBB(RestoreMBB);
+      RestoreMBB->addSuccessor(TargetMBB);
+    }
+
+    // Fill EAX/RAX with the address of the target block.
+    unsigned ReturnReg = STI.is64Bit() ? X86::RAX : X86::EAX;
+    if (STI.is64Bit()) {
+      // LEA64r RestoreMBB(%rip), %rax
+      BuildMI(MBB, MBBI, DL, TII.get(X86::LEA64r), ReturnReg)
+          .addReg(X86::RIP)
+          .addImm(0)
+          .addReg(0)
+          .addMBB(RestoreMBB)
+          .addReg(0);
+    } else {
+      // MOV32ri $RestoreMBB, %eax
+      BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri))
+          .addReg(ReturnReg)
+          .addMBB(RestoreMBB);
     }
 
     // Pop EBP.
@@ -1111,12 +1128,24 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
       BuildMI(*RestoreMBB, RestoreMBBI, DL, TII.get(X86::JMP_4))
           .addMBB(TargetMBB);
     }
-  } else if (isFuncletReturnInstr(MBBI)) {
+    // Replace CATCHRET with the appropriate RET.
+    unsigned RetOp = STI.is64Bit() ? X86::RETQ : X86::RETL;
+    MachineBasicBlock::iterator NewExit =
+        BuildMI(MBB, MBBI, DL, TII.get(RetOp)).addReg(ReturnReg);
+    MBBI->eraseFromParent();
+    MBBI = NewExit;
+  } else if (MBBI->getOpcode() == X86::CLEANUPRET) {
     NumBytes = MFI->getMaxCallFrameSize();
     assert(hasFP(MF) && "EH funclets without FP not yet implemented");
     BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::POP64r : X86::POP32r),
             MachineFramePtr)
         .setMIFlag(MachineInstr::FrameDestroy);
+    // Replace CLEANUPRET with the appropriate RET.
+    unsigned RetOp = STI.is64Bit() ? X86::RETQ : X86::RETL;
+    MachineBasicBlock::iterator NewExit =
+        BuildMI(MBB, MBBI, DL, TII.get(RetOp));
+    MBBI->eraseFromParent();
+    MBBI = NewExit;
   } else if (hasFP(MF)) {
     // Calculate required stack adjustment.
     uint64_t FrameSize = StackSize - SlotSize;

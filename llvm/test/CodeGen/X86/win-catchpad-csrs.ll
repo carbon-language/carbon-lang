@@ -80,9 +80,9 @@ catchendblock:                                    ; preds = %catch,
 ; X86: movl $1, -{{[0-9]+}}(%ebp)
 ; X86: movl $2, (%esp)
 ; X86: calll _f
-; X86: addl $16, %esp
+; X86: movl $[[restorebb]], %eax
+; X86-NEXT: addl $16, %esp
 ; X86-NEXT: popl %ebp
-; X86-NEXT: movl $[[restorebb]], %eax
 ; X86-NEXT: retl
 
 ; X86: L__ehtable$try_catch_catch:
@@ -125,9 +125,9 @@ catchendblock:                                    ; preds = %catch,
 ; X64: subq $32, %rsp
 ; X64: movl $2, %ecx
 ; X64: callq f
+; X64: leaq [[contbb]](%rip), %rax
 ; X64: addq $32, %rsp
 ; X64: popq %rbp
-; X64: leaq [[contbb]](%rip), %rax
 ; X64: retq
 
 ; X64: $handlerMap$0$try_catch_catch:
