@@ -520,7 +520,7 @@ static const ioctl_desc *ioctl_table_lookup(unsigned req) {
   if (left == right && ioctl_table[left].req == req)
     return ioctl_table + left;
   else
-    return 0;
+    return nullptr;
 }
 
 static bool ioctl_decode(unsigned req, ioctl_desc *desc) {
@@ -567,7 +567,7 @@ static const ioctl_desc *ioctl_lookup(unsigned req) {
       (desc->type == ioctl_desc::READWRITE || desc->type == ioctl_desc::WRITE ||
        desc->type == ioctl_desc::READ))
     return desc;
-  return 0;
+  return nullptr;
 }
 
 static void ioctl_common_pre(void *ctx, const ioctl_desc *desc, int d,

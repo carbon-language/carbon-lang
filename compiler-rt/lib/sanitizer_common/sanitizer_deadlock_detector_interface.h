@@ -72,10 +72,10 @@ struct DDCallback {
 struct DDetector {
   static DDetector *Create(const DDFlags *flags);
 
-  virtual DDPhysicalThread* CreatePhysicalThread() { return 0; }
+  virtual DDPhysicalThread* CreatePhysicalThread() { return nullptr; }
   virtual void DestroyPhysicalThread(DDPhysicalThread *pt) {}
 
-  virtual DDLogicalThread* CreateLogicalThread(u64 ctx) { return 0; }
+  virtual DDLogicalThread* CreateLogicalThread(u64 ctx) { return nullptr; }
   virtual void DestroyLogicalThread(DDLogicalThread *lt) {}
 
   virtual void MutexInit(DDCallback *cb, DDMutex *m) {}
@@ -85,7 +85,7 @@ struct DDetector {
   virtual void MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock) {}
   virtual void MutexDestroy(DDCallback *cb, DDMutex *m) {}
 
-  virtual DDReport *GetReport(DDCallback *cb) { return 0; }
+  virtual DDReport *GetReport(DDCallback *cb) { return nullptr; }
 };
 
 } // namespace __sanitizer

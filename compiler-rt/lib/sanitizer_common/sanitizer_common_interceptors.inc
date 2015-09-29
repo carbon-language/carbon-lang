@@ -31,6 +31,7 @@
 //   COMMON_INTERCEPTOR_HANDLE_RECVMSG
 //   COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED
 //===----------------------------------------------------------------------===//
+
 #include "interception/interception.h"
 #include "sanitizer_addrhashmap.h"
 #include "sanitizer_placement_new.h"
@@ -1319,14 +1320,14 @@ INTERCEPTOR(__sanitizer_passwd *, getpwnam, const char *name) {
   COMMON_INTERCEPTOR_ENTER(ctx, getpwnam, name);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
   __sanitizer_passwd *res = REAL(getpwnam)(name);
-  if (res != 0) unpoison_passwd(ctx, res);
+  if (res) unpoison_passwd(ctx, res);
   return res;
 }
 INTERCEPTOR(__sanitizer_passwd *, getpwuid, u32 uid) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getpwuid, uid);
   __sanitizer_passwd *res = REAL(getpwuid)(uid);
-  if (res != 0) unpoison_passwd(ctx, res);
+  if (res) unpoison_passwd(ctx, res);
   return res;
 }
 INTERCEPTOR(__sanitizer_group *, getgrnam, const char *name) {
@@ -1334,14 +1335,14 @@ INTERCEPTOR(__sanitizer_group *, getgrnam, const char *name) {
   COMMON_INTERCEPTOR_ENTER(ctx, getgrnam, name);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
   __sanitizer_group *res = REAL(getgrnam)(name);
-  if (res != 0) unpoison_group(ctx, res);
+  if (res) unpoison_group(ctx, res);
   return res;
 }
 INTERCEPTOR(__sanitizer_group *, getgrgid, u32 gid) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getgrgid, gid);
   __sanitizer_group *res = REAL(getgrgid)(gid);
-  if (res != 0) unpoison_group(ctx, res);
+  if (res) unpoison_group(ctx, res);
   return res;
 }
 #define INIT_GETPWNAM_AND_FRIENDS      \
@@ -1430,14 +1431,14 @@ INTERCEPTOR(__sanitizer_passwd *, getpwent, int dummy) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getpwent, dummy);
   __sanitizer_passwd *res = REAL(getpwent)(dummy);
-  if (res != 0) unpoison_passwd(ctx, res);
+  if (res) unpoison_passwd(ctx, res);
   return res;
 }
 INTERCEPTOR(__sanitizer_group *, getgrent, int dummy) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getgrent, dummy);
   __sanitizer_group *res = REAL(getgrent)(dummy);
-  if (res != 0) unpoison_group(ctx, res);;
+  if (res) unpoison_group(ctx, res);;
   return res;
 }
 #define INIT_GETPWENT                  \
@@ -1452,14 +1453,14 @@ INTERCEPTOR(__sanitizer_passwd *, fgetpwent, void *fp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, fgetpwent, fp);
   __sanitizer_passwd *res = REAL(fgetpwent)(fp);
-  if (res != 0) unpoison_passwd(ctx, res);
+  if (res) unpoison_passwd(ctx, res);
   return res;
 }
 INTERCEPTOR(__sanitizer_group *, fgetgrent, void *fp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, fgetgrent, fp);
   __sanitizer_group *res = REAL(fgetgrent)(fp);
-  if (res != 0) unpoison_group(ctx, res);
+  if (res) unpoison_group(ctx, res);
   return res;
 }
 #define INIT_FGETPWENT                  \
@@ -2367,7 +2368,7 @@ INTERCEPTOR(__sanitizer_dirent *, opendir, const char *path) {
   COMMON_INTERCEPTOR_ENTER(ctx, opendir, path);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
   __sanitizer_dirent *res = REAL(opendir)(path);
-  if (res != 0)
+  if (res)
     COMMON_INTERCEPTOR_DIR_ACQUIRE(ctx, path);
   return res;
 }
@@ -2557,7 +2558,7 @@ UNUSED static inline void FixRealStrtolEndptr(const char *nptr, char **endptr) {
 
 UNUSED static inline void StrtolFixAndCheck(void *ctx, const char *nptr,
                              char **endptr, char *real_endptr, int base) {
-  if (endptr != 0) {
+  if (endptr) {
     *endptr = real_endptr;
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, endptr, sizeof(*endptr));
   }
@@ -2787,7 +2788,7 @@ INTERCEPTOR(char *, realpath, const char *path, char *resolved_path) {
   // version of a versioned symbol. For realpath(), this gives us something
   // (called __old_realpath) that does not handle NULL in the second argument.
   // Handle it as part of the interceptor.
-  char *allocated_path = 0;
+  char *allocated_path = nullptr;
   if (!resolved_path)
     allocated_path = resolved_path = (char *)WRAP(malloc)(path_max + 1);
 
@@ -2958,10 +2959,11 @@ INTERCEPTOR(int, scandir, char *dirp, __sanitizer_dirent ***namelist,
   // FIXME: under ASan the call below may write to freed memory and corrupt
   // its metadata. See
   // https://code.google.com/p/address-sanitizer/issues/detail?id=321.
-  int res = REAL(scandir)(dirp, namelist, filter ? wrapped_scandir_filter : 0,
-                          compar ? wrapped_scandir_compar : 0);
-  scandir_filter = 0;
-  scandir_compar = 0;
+  int res = REAL(scandir)(dirp, namelist,
+                          filter ? wrapped_scandir_filter : nullptr,
+                          compar ? wrapped_scandir_compar : nullptr);
+  scandir_filter = nullptr;
+  scandir_compar = nullptr;
   if (namelist && res > 0) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, namelist, sizeof(*namelist));
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *namelist, sizeof(**namelist) * res);
@@ -3011,10 +3013,11 @@ INTERCEPTOR(int, scandir64, char *dirp, __sanitizer_dirent64 ***namelist,
   // its metadata. See
   // https://code.google.com/p/address-sanitizer/issues/detail?id=321.
   int res =
-      REAL(scandir64)(dirp, namelist, filter ? wrapped_scandir64_filter : 0,
-                      compar ? wrapped_scandir64_compar : 0);
-  scandir64_filter = 0;
-  scandir64_compar = 0;
+      REAL(scandir64)(dirp, namelist,
+                      filter ? wrapped_scandir64_filter : nullptr,
+                      compar ? wrapped_scandir64_compar : nullptr);
+  scandir64_filter = nullptr;
+  scandir64_compar = nullptr;
   if (namelist && res > 0) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, namelist, sizeof(*namelist));
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *namelist, sizeof(**namelist) * res);
@@ -4144,7 +4147,7 @@ INTERCEPTOR(SIZE_T, iconv, void *cd, char **inbuf, SIZE_T *inbytesleft,
     COMMON_INTERCEPTOR_READ_RANGE(ctx, *inbuf, *inbytesleft);
   if (outbytesleft)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, outbytesleft, sizeof(*outbytesleft));
-  void *outbuf_orig = outbuf ? *outbuf : 0;
+  void *outbuf_orig = outbuf ? *outbuf : nullptr;
   // FIXME: under ASan the call below may write to freed memory and corrupt
   // its metadata. See
   // https://code.google.com/p/address-sanitizer/issues/detail?id=321.

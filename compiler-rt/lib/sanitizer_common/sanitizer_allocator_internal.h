@@ -1,4 +1,4 @@
-//===-- sanitizer_allocator_internal.h -------------------------- C++ -----===//
+//===-- sanitizer_allocator_internal.h --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -45,19 +45,19 @@ typedef SizeClassAllocatorLocalCache<PrimaryInternalAllocator>
 typedef CombinedAllocator<PrimaryInternalAllocator, InternalAllocatorCache,
                           LargeMmapAllocator<> > InternalAllocator;
 
-void *InternalAlloc(uptr size, InternalAllocatorCache *cache = 0);
-void InternalFree(void *p, InternalAllocatorCache *cache = 0);
+void *InternalAlloc(uptr size, InternalAllocatorCache *cache = nullptr);
+void InternalFree(void *p, InternalAllocatorCache *cache = nullptr);
 InternalAllocator *internal_allocator();
 
 enum InternalAllocEnum {
   INTERNAL_ALLOC
 };
 
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
 inline void *operator new(__sanitizer::operator_new_size_type size,
                           InternalAllocEnum) {
   return InternalAlloc(size);
 }
 
-#endif  // SANITIZER_ALLOCATOR_INTERNAL_H
+#endif // SANITIZER_ALLOCATOR_INTERNAL_H

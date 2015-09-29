@@ -10,6 +10,7 @@
 // Implementation of a mapping from arbitrary values to unique 32-bit
 // identifiers.
 //===----------------------------------------------------------------------===//
+
 #ifndef SANITIZER_STACKDEPOTBASE_H
 #define SANITIZER_STACKDEPOTBASE_H
 
@@ -26,7 +27,7 @@ class StackDepotBase {
   typedef typename Node::args_type args_type;
   typedef typename Node::handle_type handle_type;
   // Maps stack trace to an unique id.
-  handle_type Put(args_type args, bool *inserted = 0);
+  handle_type Put(args_type args, bool *inserted = nullptr);
   // Retrieves a stored stack trace by the id.
   args_type Get(u32 id);
 
@@ -66,7 +67,7 @@ Node *StackDepotBase<Node, kReservedBits, kTabSizeLog>::find(Node *s,
       return s;
     }
   }
-  return 0;
+  return nullptr;
 }
 
 template <class Node, int kReservedBits, int kTabSizeLog>
@@ -172,5 +173,6 @@ void StackDepotBase<Node, kReservedBits, kTabSizeLog>::UnlockAll() {
   }
 }
 
-}  // namespace __sanitizer
-#endif  // SANITIZER_STACKDEPOTBASE_H
+} // namespace __sanitizer
+
+#endif // SANITIZER_STACKDEPOTBASE_H

@@ -153,7 +153,7 @@ class QuarantineCache {
 
   QuarantineBatch *DequeueBatch() {
     if (list_.empty())
-      return 0;
+      return nullptr;
     QuarantineBatch *b = list_.front();
     list_.pop_front();
     SizeSub(b->size);
@@ -180,6 +180,6 @@ class QuarantineCache {
     return b;
   }
 };
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
-#endif  // #ifndef SANITIZER_QUARANTINE_H
+#endif // SANITIZER_QUARANTINE_H

@@ -347,7 +347,7 @@ class SizeClassAllocator64 {
     CHECK_LT(class_id, kNumClasses);
     RegionInfo *region = GetRegionInfo(class_id);
     Batch *b = region->free_list.Pop();
-    if (b == 0)
+    if (!b)
       b = PopulateFreeList(stat, c, class_id, region);
     region->n_allocated += b->count;
     return b;
@@ -371,16 +371,16 @@ class SizeClassAllocator64 {
   void *GetBlockBegin(const void *p) {
     uptr class_id = GetSizeClass(p);
     uptr size = SizeClassMap::Size(class_id);
-    if (!size) return 0;
+    if (!size) return nullptr;
     uptr chunk_idx = GetChunkIdx((uptr)p, size);
     uptr reg_beg = (uptr)p & ~(kRegionSize - 1);
     uptr beg = chunk_idx * size;
     uptr next_beg = beg + size;
-    if (class_id >= kNumClasses) return 0;
+    if (class_id >= kNumClasses) return nullptr;
     RegionInfo *region = GetRegionInfo(class_id);
     if (region->mapped_user >= next_beg)
       return reinterpret_cast<void*>(reg_beg + beg);
-    return 0;
+    return nullptr;
   }
 
   static uptr GetActuallyAllocatedSize(void *p) {
@@ -609,6 +609,7 @@ class TwoLevelByteMap {
     internal_memset(map1_, 0, sizeof(map1_));
     mu_.Init();
   }
+
   void TestOnlyUnmap() {
     for (uptr i = 0; i < kSize1; i++) {
       u8 *p = Get(i);
@@ -872,9 +873,9 @@ class SizeClassAllocator32 {
     uptr reg = AllocateRegion(stat, class_id);
     uptr n_chunks = kRegionSize / (size + kMetadataSize);
     uptr max_count = SizeClassMap::MaxCached(class_id);
-    Batch *b = 0;
+    Batch *b = nullptr;
     for (uptr i = reg; i < reg + n_chunks * size; i += size) {
-      if (b == 0) {
+      if (!b) {
         if (SizeClassMap::SizeClassRequiresSeparateTransferBatch(class_id))
           b = (Batch*)c->Allocate(this, SizeClassMap::ClassID(sizeof(Batch)));
         else
@@ -885,7 +886,7 @@ class SizeClassAllocator32 {
       if (b->count == max_count) {
         CHECK_GT(b->count, 0);
         sci->free_list.push_back(b);
-        b = 0;
+        b = nullptr;
       }
     }
     if (b) {
@@ -1065,7 +1066,7 @@ class LargeMmapAllocator {
 
   void *ReturnNullOrDie() {
     if (atomic_load(&may_return_null_, memory_order_acquire))
-      return 0;
+      return nullptr;
     ReportAllocatorCannotReturnNull();
   }
 
@@ -1105,7 +1106,7 @@ class LargeMmapAllocator {
   }
 
   bool PointerIsMine(const void *p) {
-    return GetBlockBegin(p) != 0;
+    return GetBlockBegin(p) != nullptr;
   }
 
   uptr GetActuallyAllocatedSize(void *p) {
@@ -1134,13 +1135,13 @@ class LargeMmapAllocator {
         nearest_chunk = ch;
     }
     if (!nearest_chunk)
-      return 0;
+      return nullptr;
     Header *h = reinterpret_cast<Header *>(nearest_chunk);
     CHECK_GE(nearest_chunk, h->map_beg);
     CHECK_LT(nearest_chunk, h->map_beg + h->map_size);
     CHECK_LE(nearest_chunk, p);
     if (h->map_beg + h->map_size <= p)
-      return 0;
+      return nullptr;
     return GetUser(h);
   }
 
@@ -1150,7 +1151,7 @@ class LargeMmapAllocator {
     mutex_.CheckLocked();
     uptr p = reinterpret_cast<uptr>(ptr);
     uptr n = n_chunks_;
-    if (!n) return 0;
+    if (!n) return nullptr;
     if (!chunks_sorted_) {
       // Do one-time sort. chunks_sorted_ is reset in Allocate/Deallocate.
       SortArray(reinterpret_cast<uptr*>(chunks_), n);
@@ -1162,7 +1163,7 @@ class LargeMmapAllocator {
           chunks_[n - 1]->map_size;
     }
     if (p < min_mmap_ || p >= max_mmap_)
-      return 0;
+      return nullptr;
     uptr beg = 0, end = n - 1;
     // This loop is a log(n) lower_bound. It does not check for the exact match
     // to avoid expensive cache-thrashing loads.
@@ -1183,7 +1184,7 @@ class LargeMmapAllocator {
 
     Header *h = chunks_[beg];
     if (h->map_beg + h->map_size <= p || p < h->map_beg)
-      return 0;
+      return nullptr;
     return GetUser(h);
   }
 
@@ -1312,7 +1313,7 @@ class CombinedAllocator {
 
   void *ReturnNullOrDie() {
     if (MayReturnNull())
-      return 0;
+      return nullptr;
     ReportAllocatorCannotReturnNull();
   }
 
@@ -1344,7 +1345,7 @@ class CombinedAllocator {
       return Allocate(cache, new_size, alignment);
     if (!new_size) {
       Deallocate(cache, p);
-      return 0;
+      return nullptr;
     }
     CHECK(PointerIsMine(p));
     uptr old_size = GetActuallyAllocatedSize(p);
@@ -1449,7 +1450,6 @@ class CombinedAllocator {
 // Returns true if calloc(size, n) should return 0 due to overflow in size*n.
 bool CallocShouldReturnNullDueToOverflow(uptr size, uptr n);
 
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
-#endif  // SANITIZER_ALLOCATOR_H
-
+#endif // SANITIZER_ALLOCATOR_H

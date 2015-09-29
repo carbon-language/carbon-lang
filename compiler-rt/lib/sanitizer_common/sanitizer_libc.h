@@ -13,6 +13,7 @@
 // functions are intercepted. Instead, we implement a tiny subset of libc here.
 // FIXME: Some of functions declared in this file are in fact POSIX, not libc.
 //===----------------------------------------------------------------------===//
+
 #ifndef SANITIZER_LIBC_H
 #define SANITIZER_LIBC_H
 
@@ -75,8 +76,8 @@ uptr internal_getppid();
 uptr internal_sched_yield();
 
 // Error handling
-bool internal_iserror(uptr retval, int *rverrno = 0);
+bool internal_iserror(uptr retval, int *rverrno = nullptr);
 
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
-#endif  // SANITIZER_LIBC_H
+#endif // SANITIZER_LIBC_H

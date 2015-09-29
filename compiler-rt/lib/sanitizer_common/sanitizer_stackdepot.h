@@ -10,6 +10,7 @@
 // This file is shared between AddressSanitizer and ThreadSanitizer
 // run-time libraries.
 //===----------------------------------------------------------------------===//
+
 #ifndef SANITIZER_STACKDEPOT_H
 #define SANITIZER_STACKDEPOT_H
 
@@ -23,7 +24,7 @@ namespace __sanitizer {
 struct StackDepotNode;
 struct StackDepotHandle {
   StackDepotNode *node_;
-  StackDepotHandle() : node_(0) {}
+  StackDepotHandle() : node_(nullptr) {}
   explicit StackDepotHandle(StackDepotNode *node) : node_(node) {}
   bool valid() { return node_; }
   u32 id();
@@ -66,6 +67,6 @@ class StackDepotReverseMap {
   void operator=(const StackDepotReverseMap&);
 };
 
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
-#endif  // SANITIZER_STACKDEPOT_H
+#endif // SANITIZER_STACKDEPOT_H
