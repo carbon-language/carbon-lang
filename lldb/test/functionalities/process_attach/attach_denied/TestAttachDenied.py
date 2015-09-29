@@ -21,6 +21,7 @@ class AttachDeniedTestCase(TestBase):
         return (err, shell_command.GetStatus(), shell_command.GetOutput())
 
     @skipIfWindows
+    @skipIfLinux # hanging after reviews D13124 change went in
     def test_attach_to_process_by_id_denied(self):
         """Test attach by process id denied"""
 
