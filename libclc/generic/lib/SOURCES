@@ -109,6 +109,7 @@ math/sinpi.cl
 math/clc_sqrt.cl
 math/sqrt.cl
 math/tan.cl
+math/tanh.cl
 relational/all.cl
 relational/any.cl
 relational/bitselect.cl

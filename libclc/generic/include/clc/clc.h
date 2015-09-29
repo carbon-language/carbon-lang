@@ -77,6 +77,7 @@
 #include <clc/math/sinpi.h>
 #include <clc/math/sqrt.h>
 #include <clc/math/tan.h>
+#include <clc/math/tanh.h>
 #include <clc/math/trunc.h>
 #include <clc/math/native_cos.h>
 #include <clc/math/native_divide.h>
