@@ -326,3 +326,34 @@ define i64 @pairUpNotAlignedSext(i32* %a) nounwind ssp {
   %tmp3 = add i64 %sexttmp1, %sexttmp2
  ret i64 %tmp3
 }
+
+declare void @use-ptr(i32*)
+
+; CHECK: ldp_sext_int_pre
+; CHECK: ldpsw x{{[0-9]+}}, x{{[0-9]+}}, [x0, #8]
+define i64 @ldp_sext_int_pre(i32* %p) nounwind {
+  %ptr = getelementptr inbounds i32, i32* %p, i64 2
+  call void @use-ptr(i32* %ptr)
+  %add.ptr = getelementptr inbounds i32, i32* %ptr, i64 0
+  %tmp = load i32, i32* %add.ptr, align 4
+  %add.ptr1 = getelementptr inbounds i32, i32* %ptr, i64 1
+  %tmp1 = load i32, i32* %add.ptr1, align 4
+  %sexttmp = sext i32 %tmp to i64
+  %sexttmp1 = sext i32 %tmp1 to i64
+  %add = add nsw i64 %sexttmp1, %sexttmp
+  ret i64 %add
+}
+
+; CHECK: ldp_sext_int_post
+; CHECK: ldpsw x{{[0-9]+}}, x{{[0-9]+}}, [x0], #8
+define i64 @ldp_sext_int_post(i32* %p) nounwind {
+  %tmp = load i32, i32* %p, align 4
+  %add.ptr = getelementptr inbounds i32, i32* %p, i64 1
+  %tmp1 = load i32, i32* %add.ptr, align 4
+  %sexttmp = sext i32 %tmp to i64
+  %sexttmp1 = sext i32 %tmp1 to i64
+  %ptr = getelementptr inbounds i32, i32* %add.ptr, i64 1
+  call void @use-ptr(i32* %ptr)
+  %add = add nsw i64 %sexttmp1, %sexttmp
+  ret i64 %add
+}

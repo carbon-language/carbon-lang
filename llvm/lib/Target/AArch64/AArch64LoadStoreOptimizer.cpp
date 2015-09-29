@@ -186,6 +186,7 @@ static int getMemScale(MachineInstr *MI) {
   case AArch64::STRWui:
   case AArch64::STURWi:
   case AArch64::LDPSi:
+  case AArch64::LDPSWi:
   case AArch64::LDPWi:
   case AArch64::STPSi:
   case AArch64::STPWi:
@@ -326,6 +327,8 @@ static unsigned getPreIndexedOpcode(unsigned Opc) {
     return AArch64::LDRSWpre;
   case AArch64::LDPSi:
     return AArch64::LDPSpre;
+  case AArch64::LDPSWi:
+    return AArch64::LDPSWpre;
   case AArch64::LDPDi:
     return AArch64::LDPDpre;
   case AArch64::LDPQi:
@@ -383,6 +386,8 @@ static unsigned getPostIndexedOpcode(unsigned Opc) {
     return AArch64::LDRSWpost;
   case AArch64::LDPSi:
     return AArch64::LDPSpost;
+  case AArch64::LDPSWi:
+    return AArch64::LDPSWpost;
   case AArch64::LDPDi:
     return AArch64::LDPDpost;
   case AArch64::LDPQi:
@@ -409,6 +414,7 @@ static bool isPairedLdSt(const MachineInstr *MI) {
   default:
     return false;
   case AArch64::LDPSi:
+  case AArch64::LDPSWi:
   case AArch64::LDPDi:
   case AArch64::LDPQi:
   case AArch64::LDPWi:
@@ -1127,6 +1133,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
     case AArch64::LDURXi:
     // Paired instructions.
     case AArch64::LDPSi:
+    case AArch64::LDPSWi:
     case AArch64::LDPDi:
     case AArch64::LDPQi:
     case AArch64::LDPWi:
@@ -1180,11 +1187,6 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
       // however, is not, so adjust here.
       int Value =
           MI->getOperand(isPairedLdSt(MI) ? 3 : 2).getImm() * getMemScale(MI);
-
-      // FIXME: The immediate in the load/store should be scaled by the size of
-      // the memory operation, not the size of the register being loaded/stored.
-      // This works in general, but does not work for the LDPSW instruction,
-      // which defines two 64-bit registers, but loads 32-bit values.
 
       // Look forward to try to find a post-index instruction. For example,
       // ldr x1, [x0, #64]
