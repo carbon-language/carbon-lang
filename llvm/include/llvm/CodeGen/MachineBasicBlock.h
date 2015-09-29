@@ -57,8 +57,8 @@ public:
   void addNodeToList(MachineInstr* N);
   void removeNodeFromList(MachineInstr* N);
   void transferNodesFromList(ilist_traits &SrcTraits,
-                             ilist_iterator<MachineInstr> first,
-                             ilist_iterator<MachineInstr> last);
+                             ilist_iterator<MachineInstr> First,
+                             ilist_iterator<MachineInstr> Last);
   void deleteNode(MachineInstr *N);
 private:
   void createNode(const MachineInstr &);
@@ -121,7 +121,7 @@ protected:
   // Intrusive list support
   MachineBasicBlock() {}
 
-  explicit MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb);
+  explicit MachineBasicBlock(MachineFunction &MF, const BasicBlock *BB);
 
   ~MachineBasicBlock();
 
@@ -159,14 +159,14 @@ public:
     IterTy MII;
 
   public:
-    bundle_iterator(IterTy mii) : MII(mii) {}
+    bundle_iterator(IterTy MI) : MII(MI) {}
 
-    bundle_iterator(Ty &mi) : MII(mi) {
-      assert(!mi.isBundledWithPred() &&
+    bundle_iterator(Ty &MI) : MII(MI) {
+      assert(!MI.isBundledWithPred() &&
              "It's not legal to initialize bundle_iterator with a bundled MI");
     }
-    bundle_iterator(Ty *mi) : MII(mi) {
-      assert((!mi || !mi->isBundledWithPred()) &&
+    bundle_iterator(Ty *MI) : MII(MI) {
+      assert((!MI || !MI->isBundledWithPred()) &&
              "It's not legal to initialize bundle_iterator with a bundled MI");
     }
     // Template allows conversion from const to nonconst.
@@ -180,11 +180,11 @@ public:
 
     operator Ty*() const { return MII; }
 
-    bool operator==(const bundle_iterator &x) const {
-      return MII == x.MII;
+    bool operator==(const bundle_iterator &X) const {
+      return MII == X.MII;
     }
-    bool operator!=(const bundle_iterator &x) const {
-      return !operator==(x);
+    bool operator!=(const bundle_iterator &X) const {
+      return !operator==(X);
     }
 
     // Increment and decrement operators...
@@ -408,23 +408,23 @@ public:
 
   // Machine-CFG mutators
 
-  /// Add succ as a successor of this MachineBasicBlock.  The Predecessors list
-  /// of succ is automatically updated. WEIGHT parameter is stored in Weights
+  /// Add Succ as a successor of this MachineBasicBlock.  The Predecessors list
+  /// of Succ is automatically updated. WEIGHT parameter is stored in Weights
   /// list and it may be used by MachineBranchProbabilityInfo analysis to
   /// calculate branch probability.
   ///
   /// Note that duplicate Machine CFG edges are not allowed.
-  void addSuccessor(MachineBasicBlock *succ, uint32_t weight = 0);
+  void addSuccessor(MachineBasicBlock *Succ, uint32_t Weight = 0);
 
   /// Set successor weight of a given iterator.
-  void setSuccWeight(succ_iterator I, uint32_t weight);
+  void setSuccWeight(succ_iterator I, uint32_t Weight);
 
   /// Remove successor from the successors list of this MachineBasicBlock. The
-  /// Predecessors list of succ is automatically updated.
-  void removeSuccessor(MachineBasicBlock *succ);
+  /// Predecessors list of Succ is automatically updated.
+  void removeSuccessor(MachineBasicBlock *Succ);
 
   /// Remove specified successor from the successors list of this
-  /// MachineBasicBlock. The Predecessors list of succ is automatically updated.
+  /// MachineBasicBlock. The Predecessors list of Succ is automatically updated.
   /// Return the iterator to the element after the one removed.
   succ_iterator removeSuccessor(succ_iterator I);
 
@@ -432,13 +432,13 @@ public:
   void replaceSuccessor(MachineBasicBlock *Old, MachineBasicBlock *New);
 
   /// Transfers all the successors from MBB to this machine basic block (i.e.,
-  /// copies all the successors fromMBB and remove all the successors from
-  /// fromMBB).
-  void transferSuccessors(MachineBasicBlock *fromMBB);
+  /// copies all the successors FromMBB and remove all the successors from
+  /// FromMBB).
+  void transferSuccessors(MachineBasicBlock *FromMBB);
 
   /// Transfers all the successors, as in transferSuccessors, and update PHI
-  /// operands in the successor blocks which refer to fromMBB to refer to this.
-  void transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB);
+  /// operands in the successor blocks which refer to FromMBB to refer to this.
+  void transferSuccessorsAndUpdatePHIs(MachineBasicBlock *FromMBB);
 
   /// Return true if any of the successors have weights attached to them.
   bool hasSuccessorWeights() const { return !Weights.empty(); }
@@ -645,7 +645,7 @@ public:
   /// possible that DestA and/or DestB are LandingPads.
   bool CorrectExtraCFGEdges(MachineBasicBlock *DestA,
                             MachineBasicBlock *DestB,
-                            bool isCond);
+                            bool IsCond);
 
   /// Find the next valid DebugLoc starting at MBBI, skipping any DBG_VALUE
   /// instructions.  Return UnknownLoc if there is none.
@@ -714,15 +714,15 @@ private:
 
   // Machine-CFG mutators
 
-  /// Remove pred as a predecessor of this MachineBasicBlock. Don't do this
-  /// unless you know what you're doing, because it doesn't update pred's
-  /// successors list. Use pred->addSuccessor instead.
-  void addPredecessor(MachineBasicBlock *pred);
+  /// Remove Pred as a predecessor of this MachineBasicBlock. Don't do this
+  /// unless you know what you're doing, because it doesn't update Pred's
+  /// successors list. Use Pred->addSuccessor instead.
+  void addPredecessor(MachineBasicBlock *Pred);
 
-  /// Remove pred as a predecessor of this MachineBasicBlock. Don't do this
-  /// unless you know what you're doing, because it doesn't update pred's
-  /// successors list. Use pred->removeSuccessor instead.
-  void removePredecessor(MachineBasicBlock *pred);
+  /// Remove Pred as a predecessor of this MachineBasicBlock. Don't do this
+  /// unless you know what you're doing, because it doesn't update Pred's
+  /// successors list. Use Pred->removeSuccessor instead.
+  void removePredecessor(MachineBasicBlock *Pred);
 };
 
 raw_ostream& operator<<(raw_ostream &OS, const MachineBasicBlock &MBB);
