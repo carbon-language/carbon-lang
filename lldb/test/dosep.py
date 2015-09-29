@@ -32,6 +32,7 @@ ulimit -c unlimited
 echo core.%p | sudo tee /proc/sys/kernel/core_pattern
 """
 
+# system packages and modules
 import asyncore
 import distutils.version
 import fnmatch
@@ -42,30 +43,17 @@ import platform
 import Queue
 import re
 import signal
-import subprocess
 import sys
 import threading
-import test_results
+
+# Add our local test_runner/lib dir to the python path.
+sys.path.append(os.path.join(os.path.dirname(__file__), "test_runner", "lib"))
+
+# Our packages and modules
 import dotest_channels
 import dotest_args
-
-
-def get_timeout_command():
-    """Search for a suitable timeout command."""
-    if not sys.platform.startswith("win32"):
-        try:
-            subprocess.call("timeout", stderr=subprocess.PIPE)
-            return "timeout"
-        except OSError:
-            pass
-    try:
-        subprocess.call("gtimeout", stderr=subprocess.PIPE)
-        return "gtimeout"
-    except OSError:
-        pass
-    return None
-
-timeout_command = get_timeout_command()
+import lldb_utils
+import process_control
 
 # Status codes for running command with timeout.
 eTimedOut, ePassed, eFailed = 124, 0, 1
@@ -171,73 +159,119 @@ def parse_test_results(output):
             unexpected_successes = unexpected_successes + int(unexpected_success_count.group(1))
         if error_count is not None:
             failures = failures + int(error_count.group(1))
-        pass
     return passes, failures, unexpected_successes
 
 
-def create_new_process_group():
-    """Creates a new process group for the process."""
-    os.setpgid(os.getpid(), os.getpid())
+class DoTestProcessDriver(process_control.ProcessDriver):
+    """Drives the dotest.py inferior process and handles bookkeeping."""
+    def __init__(self, output_file, output_file_lock, pid_events, file_name,
+                 soft_terminate_timeout):
+        super(DoTestProcessDriver, self).__init__(
+            soft_terminate_timeout=soft_terminate_timeout)
+        self.output_file = output_file
+        self.output_lock = lldb_utils.OptionalWith(output_file_lock)
+        self.pid_events = pid_events
+        self.results = None
+        self.file_name = file_name
+
+    def write(self, content):
+        with self.output_lock:
+            self.output_file.write(content)
+
+    def on_process_started(self):
+        if self.pid_events:
+            self.pid_events.put_nowait(('created', self.process.pid))
+
+    def on_process_exited(self, command, output, was_timeout, exit_status):
+        if self.pid_events:
+            # No point in culling out those with no exit_status (i.e.
+            # those we failed to kill). That would just cause
+            # downstream code to try to kill it later on a Ctrl-C. At
+            # this point, a best-effort-to-kill already took place. So
+            # call it destroyed here.
+            self.pid_events.put_nowait(('destroyed', self.process.pid))
+
+        # Override the exit status if it was a timeout.
+        if was_timeout:
+            exit_status = eTimedOut
+
+        # If we didn't end up with any output, call it empty for
+        # stdout/stderr.
+        if output is None:
+            output = ('', '')
+
+        # Now parse the output.
+        passes, failures, unexpected_successes = parse_test_results(output)
+        if exit_status == 0:
+            # stdout does not have any useful information from 'dotest.py',
+            # only stderr does.
+            report_test_pass(self.file_name, output[1])
+        else:
+            report_test_failure(self.file_name, command, output[1])
+
+        # Save off the results for the caller.
+        self.results = (
+            self.file_name,
+            exit_status,
+            passes,
+            failures,
+            unexpected_successes)
+
+
+def get_soft_terminate_timeout():
+    # Defaults to 10 seconds, but can set
+    # LLDB_TEST_SOFT_TERMINATE_TIMEOUT to a floating point
+    # number in seconds.  This value indicates how long
+    # the test runner will wait for the dotest inferior to
+    # handle a timeout via a soft terminate before it will
+    # assume that failed and do a hard terminate.
+
+    # TODO plumb through command-line option
+    return float(os.environ.get('LLDB_TEST_SOFT_TERMINATE_TIMEOUT', 10.0))
+
+
+def want_core_on_soft_terminate():
+    # TODO plumb through command-line option
+    if platform.system() == 'Linux':
+        return True
+    else:
+        return False
 
 
 def call_with_timeout(command, timeout, name, inferior_pid_events):
-    """Run command with a timeout if possible.
-    -s QUIT will create a coredump if they are enabled on your system
-    """
-    process = None
-    if timeout_command and timeout != "0":
-        command = [timeout_command, '-s', 'QUIT', timeout] + command
-
+    # Add our worker index (if we have one) to all test events
+    # from this inferior.
     if GET_WORKER_INDEX is not None:
         try:
             worker_index = GET_WORKER_INDEX()
             command.extend([
-                "--event-add-entries", "worker_index={}:int".format(worker_index)])
-        except:
-            # Ctrl-C does bad things to multiprocessing.Manager.dict() lookup.
+                "--event-add-entries",
+                "worker_index={}:int".format(worker_index)])
+        except:  # pylint: disable=bare-except
+            # Ctrl-C does bad things to multiprocessing.Manager.dict()
+            # lookup.  Just swallow it.
             pass
 
-    # Specifying a value for close_fds is unsupported on Windows when using
-    # subprocess.PIPE
-    if os.name != "nt":
-        process = subprocess.Popen(command,
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE,
-                                   close_fds=True,
-                                   preexec_fn=create_new_process_group)
-    else:
-        process = subprocess.Popen(command,
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-    inferior_pid = process.pid
-    if inferior_pid_events:
-        inferior_pid_events.put_nowait(('created', inferior_pid))
-    output = process.communicate()
+    # Create the inferior dotest.py ProcessDriver.
+    soft_terminate_timeout = get_soft_terminate_timeout()
+    want_core = want_core_on_soft_terminate()
 
-    # The inferior should now be entirely wrapped up.
-    exit_status = process.returncode
-    if exit_status is None:
-        raise Exception(
-            "no exit status available after the inferior dotest.py "
-            "should have completed")
+    process_driver = DoTestProcessDriver(
+        sys.stdout,
+        output_lock,
+        inferior_pid_events,
+        name,
+        soft_terminate_timeout)
 
-    if inferior_pid_events:
-        inferior_pid_events.put_nowait(('destroyed', inferior_pid))
+    # Run it with a timeout.
+    process_driver.run_command_with_timeout(command, timeout, want_core)
 
-    passes, failures, unexpected_successes = parse_test_results(output)
-    if exit_status == 0:
-        # stdout does not have any useful information from 'dotest.py',
-        # only stderr does.
-        report_test_pass(name, output[1])
-    else:
-        # TODO need to differentiate a failing test from a run that
-        # was broken out of by a SIGTERM/SIGKILL, reporting those as
-        # an error.  If a signal-based completion, need to call that
-        # an error.
-        report_test_failure(name, command, output[1])
-    return name, exit_status, passes, failures, unexpected_successes
+    # Return the results.
+    if not process_driver.results:
+        # This is truly exceptional.  Even a failing or timed out
+        # binary should have called the results-generation code.
+        raise Exception("no test results were generated whatsoever")
+    return process_driver.results
 
 
 def process_dir(root, files, test_root, dotest_argv, inferior_pid_events):
