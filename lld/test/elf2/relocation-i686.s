@@ -57,3 +57,9 @@ R_386_GOTPC:
 // CHECK:      Disassembly of section .R_386_GOTPC:
 // CHECK-NEXT: R_386_GOTPC:
 // CHECK-NEXT:   11014:  {{.*}} movl  $16364, %eax
+
+.section .dynamic_reloc, "ax",@progbits
+        call bar+4
+// CHECK:      Disassembly of section .dynamic_reloc:
+// CHECK-NEXT: .dynamic_reloc:
+// CHECK-NEXT:   11019:  e8 00 00 00 00  calll  0

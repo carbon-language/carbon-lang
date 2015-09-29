@@ -60,6 +60,8 @@ void InputSection<ELFT>::relocate(
       } else if (Target->relocPointsToGot(Type)) {
         SymVA = GotSec.getVA();
         Type = Target->getPCRelReloc();
+      } else if (isa<SharedSymbol<ELFT>>(Body)) {
+        continue;
       }
     }
 
