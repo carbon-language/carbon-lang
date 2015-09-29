@@ -9,10 +9,10 @@
 ;        A[i] += 10;
 ;    }
 
-; CHECK: %polly.access.cast.A14 = bitcast float* %A to i32*
-; CHECK: %5 = sub nsw i64 99, %polly.indvar11
-; CHECK: %polly.access.A15 = getelementptr i32, i32* %polly.access.cast.A14, i64 %5
-; CHECK: %6 = bitcast i32* %polly.access.A15 to float*
+; CHECK: %polly.access.cast.A1 = bitcast float* %A to i32*
+; CHECK: %5 = sub nsw i64 99, %polly.indvar15
+; CHECK: %polly.access.A19 = getelementptr i32, i32* %polly.access.cast.A18, i64 %5
+; CHECK: %6 = bitcast i32* %polly.access.A19 to float*
 ; CHECK: %tmp14_p_scalar_ = load float, float* %6, align 4, !alias.scope !3, !noalias !4
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
