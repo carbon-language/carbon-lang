@@ -338,6 +338,11 @@ function(darwin_add_embedded_builtin_libraries)
 
   set(DARWIN_macho_embedded_LIBRARY_OUTPUT_DIR
     ${COMPILER_RT_OUTPUT_DIR}/lib/macho_embedded)
+    
+  set(CFLAGS_armv7 "-target thumbv7-apple-darwin-eabi")
+  set(CFLAGS_armv7em "-target thumbv7-apple-darwin-eabi")
+  set(CFLAGS_armv7m "-target thumbv7-apple-darwin-eabi")
+  set(CFLAGS_i386 "-march=pentium")
 
   set(DARWIN_SOFT_FLOAT_ARCHS armv6m armv7m armv7em armv7)
   set(DARWIN_HARD_FLOAT_ARCHS armv7em armv7 i386 x86_64)
@@ -378,7 +383,7 @@ function(darwin_add_embedded_builtin_libraries)
                               OS macho_embedded
                               ARCH ${arch}
                               SOURCES ${${arch}_filtered_sources}
-                              CFLAGS -arch ${arch} ${${type}_FLAG} ${${float_type}_FLOAT_FLAG}
+                              CFLAGS -arch ${arch} ${${type}_FLAG} ${${float_type}_FLOAT_FLAG} ${CFLAGS_${arch}}
                               PARENT_TARGET builtins)
       endforeach()
       foreach(lib ${macho_embedded_${lib_suffix}_libs})
