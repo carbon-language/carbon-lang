@@ -687,6 +687,8 @@ public:
   /// @param BlockGen A generator for basic blocks.
   RegionGenerator(BlockGenerator &BlockGen) : BlockGenerator(BlockGen) {}
 
+  virtual ~RegionGenerator() = default;
+
   /// @brief Copy the region statement @p Stmt.
   ///
   /// This copies the entire region represented by @p Stmt and updates
