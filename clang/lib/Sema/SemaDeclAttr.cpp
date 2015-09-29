@@ -628,13 +628,10 @@ static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
 
   // Check that this attribute only applies to lockable types.
   QualType QT = cast<ValueDecl>(D)->getType();
-  if (!QT->isDependentType()) {
-    const RecordType *RT = getRecordType(QT);
-    if (!RT || !RT->getDecl()->hasAttr<CapabilityAttr>()) {
-      S.Diag(Attr.getLoc(), diag::warn_thread_attribute_decl_not_lockable)
-        << Attr.getName();
-      return false;
-    }
+  if (!QT->isDependentType() && !typeHasCapability(S, QT)) {
+    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_decl_not_lockable)
+      << Attr.getName();
+    return false;
   }
 
   // Check that all arguments are lockable objects.

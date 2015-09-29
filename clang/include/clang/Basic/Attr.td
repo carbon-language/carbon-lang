@@ -1543,8 +1543,8 @@ def Capability : InheritableAttr {
   let Spellings = [GNU<"capability">, CXX11<"clang", "capability">,
                    GNU<"shared_capability">,
                    CXX11<"clang", "shared_capability">];
-  let Subjects = SubjectList<[Struct, TypedefName], ErrorDiag,
-                             "ExpectedStructOrTypedef">;
+  let Subjects = SubjectList<[Record, TypedefName], ErrorDiag,
+                             "ExpectedStructOrUnionOrTypedef">;
   let Args = [StringArgument<"Name">];
   let Accessors = [Accessor<"isShared",
                     [GNU<"shared_capability">,

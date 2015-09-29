@@ -5159,3 +5159,26 @@ void test3() {
 
 }  // end namespace  GlobalAcquiredBeforeAfterTest
 
+
+namespace LockableUnions {
+
+union LOCKABLE MutexUnion {
+  int a;
+  char* b;
+
+  void Lock()   EXCLUSIVE_LOCK_FUNCTION();
+  void Unlock() UNLOCK_FUNCTION();
+};
+
+MutexUnion muun2;
+MutexUnion muun1 ACQUIRED_BEFORE(muun2);
+
+void test() {
+  muun2.Lock();
+  muun1.Lock();  // expected-warning {{mutex 'muun1' must be acquired before 'muun2'}}
+  muun1.Unlock();
+  muun2.Unlock();
+}
+
+}  // end namespace LockableUnions
+
