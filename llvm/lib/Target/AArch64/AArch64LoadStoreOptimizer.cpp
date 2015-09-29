@@ -164,44 +164,36 @@ static bool isUnscaledLdSt(MachineInstr *MI) {
   return isUnscaledLdSt(MI->getOpcode());
 }
 
-// Size in bytes of the data moved by an unscaled load or store
+// Size in bytes of the data moved by an unscaled load or store.
 static int getMemSize(MachineInstr *MI) {
   switch (MI->getOpcode()) {
   default:
     llvm_unreachable("Opcode has unknown size!");
+  case AArch64::LDRSui:
+  case AArch64::LDURSi:
+  case AArch64::LDRSWui:
+  case AArch64::LDURSWi:
+  case AArch64::LDRWui:
+  case AArch64::LDURWi:
   case AArch64::STRSui:
   case AArch64::STURSi:
-    return 4;
-  case AArch64::STRDui:
-  case AArch64::STURDi:
-    return 8;
-  case AArch64::STRQui:
-  case AArch64::STURQi:
-    return 16;
   case AArch64::STRWui:
   case AArch64::STURWi:
     return 4;
+  case AArch64::LDRDui:
+  case AArch64::LDURDi:
+  case AArch64::LDRXui:
+  case AArch64::LDURXi:
+  case AArch64::STRDui:
+  case AArch64::STURDi:
   case AArch64::STRXui:
   case AArch64::STURXi:
     return 8;
-  case AArch64::LDRSui:
-  case AArch64::LDURSi:
-    return 4;
-  case AArch64::LDRDui:
-  case AArch64::LDURDi:
-    return 8;
   case AArch64::LDRQui:
   case AArch64::LDURQi:
+  case AArch64::STRQui:
+  case AArch64::STURQi:
     return 16;
-  case AArch64::LDRWui:
-  case AArch64::LDURWi:
-    return 4;
-  case AArch64::LDRXui:
-  case AArch64::LDURXi:
-    return 8;
-  case AArch64::LDRSWui:
-  case AArch64::LDURSWi:
-    return 4;
   }
 }
 
