@@ -5,11 +5,6 @@
 # RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
 # RUN:   | FileCheck %s
 
-# RUN: mkdir -p %t.dir
-# RUN: (cd %t.dir && lld -flavor gnu2 %t)
-# RUN: llvm-readobj -file-headers -sections -program-headers -symbols \
-# RUN:   %t.dir/a.out | FileCheck %s
-
 # exits with return code 42 on linux
 .globl _start;
 _start:
