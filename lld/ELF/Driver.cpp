@@ -142,6 +142,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (Args.hasArg(OPT_allow_multiple_definition))
     Config->AllowMultipleDefinition = true;
 
+  if (auto *Arg = Args.getLastArg(OPT_entry))
+    Config->Entry = Arg->getValue();
+
   // Create a list of input files.
   std::vector<MemoryBufferRef> Inputs;
 

@@ -55,3 +55,9 @@ def alias_l : Joined<["--"], "library=">,
 
 def sysroot : Joined<["--"], "sysroot=">,
      HelpText<"Set the system root">;
+
+def entry : Separate<["--", "-"], "entry">, MetaVarName<"<entry>">,
+     HelpText<"Name of entry point symbol">;
+
+def alias_entry : Separate<["-"], "e">,
+     Alias<entry>;

@@ -30,6 +30,7 @@ struct Configuration {
   bool ExportDynamic = false;
   bool NoInhibitExec = false;
   bool AllowMultipleDefinition = false;
+  llvm::StringRef Entry;
 };
 
 extern Configuration *Config;
