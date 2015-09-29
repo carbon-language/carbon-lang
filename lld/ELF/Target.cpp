@@ -107,8 +107,8 @@ void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   const uint8_t Inst[] = {0xff, 0x25, 0, 0, 0, 0, 0x90, 0x90};
   memcpy(Buf, Inst, sizeof(Inst));
 
-  uintptr_t NextPC = PltEntryAddr + 6;
-  intptr_t Delta = GotEntryAddr - NextPC;
+  uint64_t NextPC = PltEntryAddr + 6;
+  int64_t Delta = GotEntryAddr - NextPC;
   assert(isInt<32>(Delta));
   write32le(Buf + 2, Delta);
 }
