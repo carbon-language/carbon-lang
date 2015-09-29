@@ -32,6 +32,7 @@ bool TargetInfo::relocPointsToGot(uint32_t Type) const { return false; }
 X86TargetInfo::X86TargetInfo() {
   PCRelReloc = R_386_PC32;
   GotReloc = R_386_GLOB_DAT;
+  GotRefReloc = R_386_GOT32;
 }
 
 void X86TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -75,13 +76,17 @@ bool X86TargetInfo::relocNeedsPlt(uint32_t Type) const {
 static void add32le(uint8_t *P, int32_t V) { write32le(P, read32le(P) + V); }
 
 void X86TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                                uint64_t BaseAddr, uint64_t SymVA) const {
+                                uint64_t BaseAddr, uint64_t SymVA,
+                                uint64_t GotVA) const {
   typedef ELFFile<ELF32LE>::Elf_Rel Elf_Rel;
   auto &Rel = *reinterpret_cast<const Elf_Rel *>(RelP);
 
   uint32_t Offset = Rel.r_offset;
   uint8_t *Location = Buf + Offset;
   switch (Type) {
+  case R_386_GOT32:
+    add32le(Location, SymVA - GotVA);
+    break;
   case R_386_PC32:
     add32le(Location, SymVA - (BaseAddr + Offset));
     break;
@@ -97,6 +102,7 @@ void X86TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
 X86_64TargetInfo::X86_64TargetInfo() {
   PCRelReloc = R_X86_64_PC32;
   GotReloc = R_X86_64_GLOB_DAT;
+  GotRefReloc = R_X86_64_PC32;
 }
 
 void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -137,7 +143,7 @@ bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type) const {
 
 void X86_64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
                                    uint32_t Type, uint64_t BaseAddr,
-                                   uint64_t SymVA) const {
+                                   uint64_t SymVA, uint64_t GotVA) const {
   typedef ELFFile<ELF64LE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
@@ -177,7 +183,8 @@ void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
 bool PPC64TargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
 bool PPC64TargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
 void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                                  uint64_t BaseAddr, uint64_t SymVA) const {
+                                  uint64_t BaseAddr, uint64_t SymVA,
+                                  uint64_t GotVA) const {
   typedef ELFFile<ELF64BE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
@@ -205,7 +212,8 @@ void PPCTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
 bool PPCTargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
 bool PPCTargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
 void PPCTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                                uint64_t BaseAddr, uint64_t SymVA) const {}
+                                uint64_t BaseAddr, uint64_t SymVA,
+                                uint64_t GotVA) const {}
 
 ARMTargetInfo::ARMTargetInfo() {
   // PCRelReloc = FIXME
@@ -216,7 +224,8 @@ void ARMTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
 bool ARMTargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
 bool ARMTargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
 void ARMTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                                uint64_t BaseAddr, uint64_t SymVA) const {}
+                                uint64_t BaseAddr, uint64_t SymVA,
+                                uint64_t GotVA) const {}
 
 AArch64TargetInfo::AArch64TargetInfo() {
   // PCRelReloc = FIXME
@@ -241,7 +250,7 @@ static void handle_ADR_PREL_LO21(uint8_t *Location, uint64_t S, int64_t A,
 
 void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
                                     uint32_t Type, uint64_t BaseAddr,
-                                    uint64_t SymVA) const {
+                                    uint64_t SymVA, uint64_t GotVA) const {
   typedef ELFFile<ELF64LE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
@@ -273,6 +282,7 @@ bool MipsTargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
 bool MipsTargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
 
 void MipsTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                                 uint64_t BaseAddr, uint64_t SymVA) const {}
+                                 uint64_t BaseAddr, uint64_t SymVA,
+                                 uint64_t GotVA) const {}
 }
 }

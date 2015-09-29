@@ -23,18 +23,21 @@ public:
   llvm::StringRef getDefaultEntry() const { return DefaultEntry; }
   unsigned getPCRelReloc() const { return PCRelReloc; }
   unsigned getGotReloc() const { return GotReloc; }
+  unsigned getGotRefReloc() const { return GotRefReloc; };
   virtual void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                              uint64_t PltEntryAddr) const = 0;
   virtual bool relocNeedsGot(uint32_t Type) const = 0;
   virtual bool relocPointsToGot(uint32_t Type) const;
   virtual bool relocNeedsPlt(uint32_t Type) const = 0;
   virtual void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                           uint64_t BaseAddr, uint64_t SymVA) const = 0;
+                           uint64_t BaseAddr, uint64_t SymVA,
+                           uint64_t GotVA) const = 0;
 
   virtual ~TargetInfo();
 
 protected:
   unsigned PCRelReloc;
+  unsigned GotRefReloc;
   unsigned GotReloc;
   llvm::StringRef DefaultEntry = "_start";
 };
@@ -48,7 +51,8 @@ public:
   bool relocPointsToGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+                   uint64_t BaseAddr, uint64_t SymVA,
+                   uint64_t GotVA) const override;
 };
 
 class X86_64TargetInfo final : public TargetInfo {
@@ -59,7 +63,8 @@ public:
   bool relocNeedsGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+                   uint64_t BaseAddr, uint64_t SymVA,
+                   uint64_t GotVA) const override;
 };
 
 class PPC64TargetInfo final : public TargetInfo {
@@ -70,7 +75,8 @@ public:
   bool relocNeedsGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+                   uint64_t BaseAddr, uint64_t SymVA,
+                   uint64_t GotVA) const override;
 };
 
 class PPCTargetInfo final : public TargetInfo {
@@ -81,7 +87,8 @@ public:
   bool relocNeedsGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+                   uint64_t BaseAddr, uint64_t SymVA,
+                   uint64_t GotVA) const override;
 };
 
 class ARMTargetInfo final : public TargetInfo {
@@ -92,7 +99,8 @@ public:
   bool relocNeedsGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+                   uint64_t BaseAddr, uint64_t SymVA,
+                   uint64_t GotVA) const override;
 };
 
 class AArch64TargetInfo final : public TargetInfo {
@@ -103,7 +111,8 @@ public:
   bool relocNeedsGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+                   uint64_t BaseAddr, uint64_t SymVA,
+                   uint64_t GotVA) const override;
 };
 
 class MipsTargetInfo final : public TargetInfo {
@@ -114,7 +123,8 @@ public:
   bool relocNeedsGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type) const override;
   void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+                   uint64_t BaseAddr, uint64_t SymVA,
+                   uint64_t GotVA) const override;
 };
 
 extern std::unique_ptr<TargetInfo> Target;

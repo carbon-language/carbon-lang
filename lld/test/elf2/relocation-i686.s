@@ -40,7 +40,7 @@ R_386_PC32_2:
 movl bar@GOT, %eax
 
 
-// ADDR:      Name: .got (14)
+// ADDR:      Name: .got
 // ADDR-NEXT: Type: SHT_PROGBITS
 // ADDR-NEXT: Flags [
 // ADDR-NEXT:   SHF_ALLOC
@@ -63,3 +63,12 @@ R_386_GOTPC:
 // CHECK:      Disassembly of section .dynamic_reloc:
 // CHECK-NEXT: .dynamic_reloc:
 // CHECK-NEXT:   11019:  e8 00 00 00 00  calll  0
+
+.section .R_386_GOT32,"ax",@progbits
+.global R_386_GOT32
+R_386_GOT32:
+        movl R_386_GOT32@GOT, %eax
+// This is the second symbol in the got, so the offset is 4.
+// CHECK:      Disassembly of section .R_386_GOT32:
+// CHECK-NEXT: R_386_GOT32:
+// CHECK-NEXT:   1101e:  {{.*}} movl 4, %eax

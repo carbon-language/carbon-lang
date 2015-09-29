@@ -37,6 +37,7 @@ void InputSection<ELFT>::relocate(
   for (const RelType &RI : Rels) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     uint32_t Type = RI.getType(IsMips64EL);
+    uintX_t GotVA = GotSec.getVA();
     uintX_t SymVA;
 
     // Handle relocations for local symbols -- they never get
@@ -56,9 +57,9 @@ void InputSection<ELFT>::relocate(
         Type = Target->getPCRelReloc();
       } else if (Target->relocNeedsGot(Type)) {
         SymVA = GotSec.getEntryAddr(Body);
-        Type = Target->getPCRelReloc();
+        Type = Target->getGotRefReloc();
       } else if (Target->relocPointsToGot(Type)) {
-        SymVA = GotSec.getVA();
+        SymVA = GotVA;
         Type = Target->getPCRelReloc();
       } else if (isa<SharedSymbol<ELFT>>(Body)) {
         continue;
@@ -66,7 +67,7 @@ void InputSection<ELFT>::relocate(
     }
 
     Target->relocateOne(Buf, reinterpret_cast<const void *>(&RI), Type,
-                        BaseAddr, SymVA);
+                        BaseAddr, SymVA, GotVA);
   }
 }
 
