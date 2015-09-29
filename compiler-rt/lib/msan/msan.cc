@@ -415,6 +415,8 @@ void __msan_init() {
 
   MsanTSDInit(MsanTSDDtor);
 
+  MsanAllocatorInit();
+
   MsanThread *main_thread = MsanThread::Create(0, 0);
   SetCurrentThread(main_thread);
   main_thread->ThreadStart();

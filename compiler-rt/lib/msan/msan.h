@@ -189,6 +189,7 @@ bool InitShadow(bool init_origins);
 char *GetProcSelfMaps();
 void InitializeInterceptors();
 
+void MsanAllocatorInit();
 void MsanAllocatorThreadFinish();
 void *MsanCalloc(StackTrace *stack, uptr nmemb, uptr size);
 void *MsanReallocate(StackTrace *stack, void *oldp, uptr size,

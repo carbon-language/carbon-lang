@@ -87,12 +87,7 @@ static Allocator allocator;
 static AllocatorCache fallback_allocator_cache;
 static SpinMutex fallback_mutex;
 
-static int inited = 0;
-
-static inline void Init() {
-  if (inited) return;
-  __msan_init();
-  inited = true;  // this must happen before any threads are created.
+void MsanAllocatorInit() {
   allocator.Init(common_flags()->allocator_may_return_null);
 }
 
@@ -108,7 +103,6 @@ void MsanThreadLocalMallocStorage::CommitBack() {
 
 static void *MsanAllocate(StackTrace *stack, uptr size, uptr alignment,
                           bool zeroise) {
-  Init();
   if (size > kMaxAllowedMallocSize) {
     Report("WARNING: MemorySanitizer failed to allocate %p bytes\n",
            (void *)size);
@@ -143,7 +137,6 @@ static void *MsanAllocate(StackTrace *stack, uptr size, uptr alignment,
 
 void MsanDeallocate(StackTrace *stack, void *p) {
   CHECK(p);
-  Init();
   MSAN_FREE_HOOK(p);
   Metadata *meta = reinterpret_cast<Metadata *>(allocator.GetMetaData(p));
   uptr size = meta->requested_size;
@@ -170,7 +163,6 @@ void MsanDeallocate(StackTrace *stack, void *p) {
 }
 
 void *MsanCalloc(StackTrace *stack, uptr nmemb, uptr size) {
-  Init();
   if (CallocShouldReturnNullDueToOverflow(size, nmemb))
     return allocator.ReturnNullOrDie();
   return MsanReallocate(stack, 0, nmemb * size, sizeof(u64), true);
