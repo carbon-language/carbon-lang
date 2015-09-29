@@ -814,7 +814,6 @@ Address CodeGenFunction::EmitPointerWithAlignment(const Expr *E,
         // If this is an explicit bitcast, and the source l-value is
         // opaque, honor the alignment of the casted-to type.
         if (isa<ExplicitCastExpr>(CE) &&
-            CE->getCastKind() == CK_BitCast &&
             InnerSource != AlignmentSource::Decl) {
           Addr = Address(Addr.getPointer(),
                          getNaturalPointeeTypeAlignment(E->getType(), Source));

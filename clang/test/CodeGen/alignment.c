@@ -59,3 +59,11 @@ void test4(float4align64 *p) {
 // CHECK: @test4(
 // CHECK: store <4 x float> {{.*}}, <4 x float>* {{.*}}, align 64
 
+// PR24944 - Typedef alignment not honored on no-op cast.
+typedef float __attribute__((vector_size(16), aligned(16))) float4align16;
+typedef float __attribute__((vector_size(16), aligned(2))) float4align2;
+void test6(float4align64 *p) {
+    float4align64 vec = *(float4align2*) p;
+}
+// CHECK-LABEL: @test6
+// CHECK:       load <4 x float>, <4 x float>* {{.*}}, align 2
