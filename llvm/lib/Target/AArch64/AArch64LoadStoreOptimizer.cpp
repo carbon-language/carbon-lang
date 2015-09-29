@@ -168,7 +168,13 @@ static bool isUnscaledLdSt(MachineInstr *MI) {
 static int getMemScale(MachineInstr *MI) {
   switch (MI->getOpcode()) {
   default:
-    llvm_unreachable("Opcode has unknown size!");
+    llvm_unreachable("Opcode has unknown scale!");
+  case AArch64::LDRBBui:
+  case AArch64::STRBBui:
+    return 1;
+  case AArch64::LDRHHui:
+  case AArch64::STRHHui:
+    return 2;
   case AArch64::LDRSui:
   case AArch64::LDURSi:
   case AArch64::LDRSWui:
@@ -294,6 +300,10 @@ static unsigned getPreIndexedOpcode(unsigned Opc) {
     return AArch64::STRDpre;
   case AArch64::STRQui:
     return AArch64::STRQpre;
+  case AArch64::STRBBui:
+    return AArch64::STRBBpre;
+  case AArch64::STRHHui:
+    return AArch64::STRHHpre;
   case AArch64::STRWui:
     return AArch64::STRWpre;
   case AArch64::STRXui:
@@ -304,6 +314,10 @@ static unsigned getPreIndexedOpcode(unsigned Opc) {
     return AArch64::LDRDpre;
   case AArch64::LDRQui:
     return AArch64::LDRQpre;
+  case AArch64::LDRBBui:
+    return AArch64::LDRBBpre;
+  case AArch64::LDRHHui:
+    return AArch64::LDRHHpre;
   case AArch64::LDRWui:
     return AArch64::LDRWpre;
   case AArch64::LDRXui:
@@ -343,6 +357,10 @@ static unsigned getPostIndexedOpcode(unsigned Opc) {
     return AArch64::STRDpost;
   case AArch64::STRQui:
     return AArch64::STRQpost;
+  case AArch64::STRBBui:
+    return AArch64::STRBBpost;
+  case AArch64::STRHHui:
+    return AArch64::STRHHpost;
   case AArch64::STRWui:
     return AArch64::STRWpost;
   case AArch64::STRXui:
@@ -353,6 +371,10 @@ static unsigned getPostIndexedOpcode(unsigned Opc) {
     return AArch64::LDRDpost;
   case AArch64::LDRQui:
     return AArch64::LDRQpost;
+  case AArch64::LDRBBui:
+    return AArch64::LDRBBpost;
+  case AArch64::LDRHHui:
+    return AArch64::LDRHHpost;
   case AArch64::LDRWui:
     return AArch64::LDRWpost;
   case AArch64::LDRXui:
@@ -1083,11 +1105,15 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
     case AArch64::STRQui:
     case AArch64::STRXui:
     case AArch64::STRWui:
+    case AArch64::STRHHui:
+    case AArch64::STRBBui:
     case AArch64::LDRSui:
     case AArch64::LDRDui:
     case AArch64::LDRQui:
     case AArch64::LDRXui:
     case AArch64::LDRWui:
+    case AArch64::LDRHHui:
+    case AArch64::LDRBBui:
     // Unscaled instructions.
     case AArch64::STURSi:
     case AArch64::STURDi:
