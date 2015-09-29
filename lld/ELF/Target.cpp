@@ -132,7 +132,7 @@ bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
     // This relocation is defined to have a value of (S + A - P).
     // The problems start when a non PIC program calls a function is a shared
     // library.
-    // In an idea world, we could just report an error saying the relocation
+    // In an ideal world, we could just report an error saying the relocation
     // can overflow at runtime.
     // In the real world, crt1.o has a R_X86_64_PC32 pointing to libc.so.
     // The general idea is to create a PLT entry and use that as the function
