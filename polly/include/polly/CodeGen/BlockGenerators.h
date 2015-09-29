@@ -161,7 +161,9 @@ public:
   void finalizeSCoP(Scop &S);
 
   /// @brief An empty destructor
-  virtual ~BlockGenerator(){};
+  virtual ~BlockGenerator() = default;
+
+  BlockGenerator(const BlockGenerator &) = default;
 
 protected:
   PollyIRBuilder &Builder;
