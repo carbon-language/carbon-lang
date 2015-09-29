@@ -30,6 +30,7 @@ List of clang-tidy Checks
    misc-macro-parentheses
    misc-macro-repeated-side-effects
    misc-move-constructor-init
+   misc-new-delete-overloads
    misc-noexcept-move-constructor
    misc-sizeof-container
    misc-static-assert

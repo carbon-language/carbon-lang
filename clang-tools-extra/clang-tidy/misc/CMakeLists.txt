@@ -11,6 +11,7 @@ add_clang_library(clangTidyMiscModule
   MacroRepeatedSideEffectsCheck.cpp
   MiscTidyModule.cpp
   MoveConstructorInitCheck.cpp
+  NewDeleteOverloadsCheck.cpp
   NoexceptMoveConstructorCheck.cpp
   SizeofContainerCheck.cpp
   StaticAssertCheck.cpp
