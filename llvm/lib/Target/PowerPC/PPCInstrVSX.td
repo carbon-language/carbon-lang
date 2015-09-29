@@ -67,17 +67,19 @@ def PPCmfvsr : SDNode<"PPCISD::MFVSR", SDTUnaryOp, []>;
 def PPCmtvsra : SDNode<"PPCISD::MTVSRA", SDTUnaryOp, []>;
 def PPCmtvsrz : SDNode<"PPCISD::MTVSRZ", SDTUnaryOp, []>;
 
-multiclass XX3Form_Rcr<bits<6> opcode, bits<7> xo, dag OOL, dag IOL,
-                    string asmbase, string asmstr, InstrItinClass itin,
-                    list<dag> pattern> {
+multiclass XX3Form_Rcr<bits<6> opcode, bits<7> xo, string asmbase,
+                    string asmstr, InstrItinClass itin, Intrinsic Int,
+                    ValueType OutTy, ValueType InTy> {
   let BaseName = asmbase in {
-    def NAME : XX3Form_Rc<opcode, xo, OOL, IOL,
+    def NAME : XX3Form_Rc<opcode, xo, (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                        !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
-                       pattern>;
+                       [(set OutTy:$XT, (Int InTy:$XA, InTy:$XB))]>;
     let Defs = [CR6] in
-    def o    : XX3Form_Rc<opcode, xo, OOL, IOL,
+    def o    : XX3Form_Rc<opcode, xo, (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
-                       []>, isDOT;
+                       [(set InTy:$XT,
+                                (InTy (PPCvcmp_o InTy:$XA, InTy:$XB, xo)))]>,
+                       isDOT;
   }
 }
 
@@ -456,35 +458,23 @@ let Uses = [RM] in {
                            "xscmpudp $crD, $XA, $XB", IIC_FPCompare, []>;
 
   defm XVCMPEQDP : XX3Form_Rcr<60, 99,
-                             (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                              "xvcmpeqdp", "$XT, $XA, $XB", IIC_VecFPCompare,
-                             [(set v2i64:$XT,
-                                (int_ppc_vsx_xvcmpeqdp v2f64:$XA, v2f64:$XB))]>;
+                             int_ppc_vsx_xvcmpeqdp, v2i64, v2f64>;
   defm XVCMPEQSP : XX3Form_Rcr<60, 67,
-                             (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                              "xvcmpeqsp", "$XT, $XA, $XB", IIC_VecFPCompare,
-                             [(set v4i32:$XT,
-                                (int_ppc_vsx_xvcmpeqsp v4f32:$XA, v4f32:$XB))]>;
+                             int_ppc_vsx_xvcmpeqsp, v4i32, v4f32>;
   defm XVCMPGEDP : XX3Form_Rcr<60, 115,
-                             (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                              "xvcmpgedp", "$XT, $XA, $XB", IIC_VecFPCompare,
-                             [(set v2i64:$XT,
-                                (int_ppc_vsx_xvcmpgedp v2f64:$XA, v2f64:$XB))]>;
+                             int_ppc_vsx_xvcmpgedp, v2i64, v2f64>;
   defm XVCMPGESP : XX3Form_Rcr<60, 83,
-                             (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                              "xvcmpgesp", "$XT, $XA, $XB", IIC_VecFPCompare,
-                             [(set v4i32:$XT,
-                                (int_ppc_vsx_xvcmpgesp v4f32:$XA, v4f32:$XB))]>;
+                             int_ppc_vsx_xvcmpgesp, v4i32, v4f32>;
   defm XVCMPGTDP : XX3Form_Rcr<60, 107,
-                             (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                              "xvcmpgtdp", "$XT, $XA, $XB", IIC_VecFPCompare,
-                             [(set v2i64:$XT,
-                                (int_ppc_vsx_xvcmpgtdp v2f64:$XA, v2f64:$XB))]>;
+                             int_ppc_vsx_xvcmpgtdp, v2i64, v2f64>;
   defm XVCMPGTSP : XX3Form_Rcr<60, 75,
-                             (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                              "xvcmpgtsp", "$XT, $XA, $XB", IIC_VecFPCompare,
-                             [(set v4i32:$XT,
-                                (int_ppc_vsx_xvcmpgtsp v4f32:$XA, v4f32:$XB))]>;
+                             int_ppc_vsx_xvcmpgtsp, v4i32, v4f32>;
 
   // Move Instructions
   def XSABSDP : XX2Form<60, 345,

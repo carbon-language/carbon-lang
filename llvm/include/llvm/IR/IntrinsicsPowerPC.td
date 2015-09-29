@@ -710,21 +710,39 @@ def int_ppc_vsx_xvrsqrtedp : GCCBuiltin<"__builtin_vsx_xvrsqrtedp">,
 def int_ppc_vsx_xvcmpeqdp :
       PowerPC_VSX_Intrinsic<"xvcmpeqdp", [llvm_v2i64_ty],
                             [llvm_v2f64_ty, llvm_v2f64_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcmpeqdp_p : GCCBuiltin<"__builtin_vsx_xvcmpeqdp_p">,
+              Intrinsic<[llvm_i32_ty],[llvm_i32_ty,llvm_v2f64_ty,llvm_v2f64_ty],
+                        [IntrNoMem]>;
 def int_ppc_vsx_xvcmpeqsp :
       PowerPC_VSX_Intrinsic<"xvcmpeqsp", [llvm_v4i32_ty],
                             [llvm_v4f32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcmpeqsp_p : GCCBuiltin<"__builtin_vsx_xvcmpeqsp_p">,
+              Intrinsic<[llvm_i32_ty],[llvm_i32_ty,llvm_v4f32_ty,llvm_v4f32_ty],
+                        [IntrNoMem]>;
 def int_ppc_vsx_xvcmpgedp :
       PowerPC_VSX_Intrinsic<"xvcmpgedp", [llvm_v2i64_ty],
                             [llvm_v2f64_ty, llvm_v2f64_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcmpgedp_p : GCCBuiltin<"__builtin_vsx_xvcmpgedp_p">,
+              Intrinsic<[llvm_i32_ty],[llvm_i32_ty,llvm_v2f64_ty,llvm_v2f64_ty],
+                        [IntrNoMem]>;
 def int_ppc_vsx_xvcmpgesp :
       PowerPC_VSX_Intrinsic<"xvcmpgesp", [llvm_v4i32_ty],
                             [llvm_v4f32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcmpgesp_p : GCCBuiltin<"__builtin_vsx_xvcmpgesp_p">,
+              Intrinsic<[llvm_i32_ty],[llvm_i32_ty,llvm_v4f32_ty,llvm_v4f32_ty],
+                        [IntrNoMem]>;
 def int_ppc_vsx_xvcmpgtdp :
       PowerPC_VSX_Intrinsic<"xvcmpgtdp", [llvm_v2i64_ty],
                             [llvm_v2f64_ty, llvm_v2f64_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcmpgtdp_p : GCCBuiltin<"__builtin_vsx_xvcmpgtdp_p">,
+              Intrinsic<[llvm_i32_ty],[llvm_i32_ty,llvm_v2f64_ty,llvm_v2f64_ty],
+                        [IntrNoMem]>;
 def int_ppc_vsx_xvcmpgtsp :
       PowerPC_VSX_Intrinsic<"xvcmpgtsp", [llvm_v4i32_ty],
                             [llvm_v4f32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcmpgtsp_p : GCCBuiltin<"__builtin_vsx_xvcmpgtsp_p">,
+              Intrinsic<[llvm_i32_ty],[llvm_i32_ty,llvm_v4f32_ty,llvm_v4f32_ty],
+                        [IntrNoMem]>;
 def int_ppc_vsx_xxleqv :
       PowerPC_VSX_Intrinsic<"xxleqv", [llvm_v4i32_ty],
                             [llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;

@@ -7322,11 +7322,11 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
                        V1, V2, VPermMask);
 }
 
-/// getAltivecCompareInfo - Given an intrinsic, return false if it is not an
-/// altivec comparison.  If it is, return true and fill in Opc/isDot with
+/// getVectorCompareInfo - Given an intrinsic, return false if it is not a
+/// vector comparison.  If it is, return true and fill in Opc/isDot with
 /// information about the intrinsic.
-static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
-                                  bool &isDot, const PPCSubtarget &Subtarget) {
+static bool getVectorCompareInfo(SDValue Intrin, int &CompareOpc,
+                                 bool &isDot, const PPCSubtarget &Subtarget) {
   unsigned IntrinsicID =
     cast<ConstantSDNode>(Intrin.getOperand(0))->getZExtValue();
   CompareOpc = -1;
@@ -7368,6 +7368,28 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
       CompareOpc = 711;
       isDot = 1;
     } else
+      return false;
+
+    break;
+    // VSX predicate comparisons use the same infrastructure
+  case Intrinsic::ppc_vsx_xvcmpeqdp_p:
+  case Intrinsic::ppc_vsx_xvcmpgedp_p:
+  case Intrinsic::ppc_vsx_xvcmpgtdp_p:
+  case Intrinsic::ppc_vsx_xvcmpeqsp_p:
+  case Intrinsic::ppc_vsx_xvcmpgesp_p:
+  case Intrinsic::ppc_vsx_xvcmpgtsp_p:
+    if (Subtarget.hasVSX()) {
+      switch (IntrinsicID) {
+      case Intrinsic::ppc_vsx_xvcmpeqdp_p: CompareOpc = 99; break;
+      case Intrinsic::ppc_vsx_xvcmpgedp_p: CompareOpc = 115; break;
+      case Intrinsic::ppc_vsx_xvcmpgtdp_p: CompareOpc = 107; break;
+      case Intrinsic::ppc_vsx_xvcmpeqsp_p: CompareOpc = 67; break;
+      case Intrinsic::ppc_vsx_xvcmpgesp_p: CompareOpc = 83; break;
+      case Intrinsic::ppc_vsx_xvcmpgtsp_p: CompareOpc = 75; break;
+      }
+      isDot = 1;
+    }
+    else
       return false;
 
     break;
@@ -7423,7 +7445,7 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   SDLoc dl(Op);
   int CompareOpc;
   bool isDot;
-  if (!getAltivecCompareInfo(Op, CompareOpc, isDot, Subtarget))
+  if (!getVectorCompareInfo(Op, CompareOpc, isDot, Subtarget))
     return SDValue();    // Don't custom lower most intrinsics.
 
   // If this is a non-dot comparison, make the VCMP node and we are done.
@@ -10618,7 +10640,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
 
     if (LHS.getOpcode() == ISD::INTRINSIC_WO_CHAIN &&
         isa<ConstantSDNode>(RHS) && (CC == ISD::SETEQ || CC == ISD::SETNE) &&
-        getAltivecCompareInfo(LHS, CompareOpc, isDot, Subtarget)) {
+        getVectorCompareInfo(LHS, CompareOpc, isDot, Subtarget)) {
       assert(isDot && "Can't compare against a vector result!");
 
       // If this is a comparison against something other than 0/1, then we know
