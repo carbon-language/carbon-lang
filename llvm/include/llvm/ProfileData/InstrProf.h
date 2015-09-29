@@ -127,7 +127,8 @@ struct InstrProfRecord {
   std::vector<InstrProfValueSiteRecord> &
   getValueSitesForKind(uint32_t ValueKind) {
     return const_cast<std::vector<InstrProfValueSiteRecord> &>(
-        this->getValueSitesForKind(ValueKind));
+        const_cast<const InstrProfRecord *>(this)
+            ->getValueSitesForKind(ValueKind));
   }
 };
 
