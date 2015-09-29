@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+class MachineBasicBlock;
 class MachineFunction;
 class MachineInstr;
 class MCSymbol;
@@ -49,6 +50,11 @@ public:
   /// Please note that some AsmPrinter implementations may not call
   /// beginFunction at all.
   virtual void endFunction(const MachineFunction *MF) = 0;
+
+  /// \brief Emit target-specific EH funclet machinery.
+  virtual void beginFunclet(const MachineBasicBlock &MBB,
+                            MCSymbol *Sym = nullptr) {}
+  virtual void endFunclet() {}
 
   /// \brief Process beginning of an instruction.
   virtual void beginInstruction(const MachineInstr *MI) = 0;

@@ -35,6 +35,9 @@ __try.cont:                                       ; preds = %lpad1, %entry
 ; CHECK: .seh_handler __C_specific_handler
 ; CHECK-NOT: jmpq *
 ; CHECK: .seh_handlerdata
+; CHECK-NEXT: .text
+; CHECK: .seh_endproc
+; CHECK: .section .xdata,"dr"
 ; CHECK-NEXT: .long 1
 ; CHECK-NEXT: .long .Ltmp{{.*}}
 ; CHECK-NEXT: .long .Ltmp{{.*}}

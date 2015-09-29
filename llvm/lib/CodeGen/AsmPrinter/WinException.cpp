@@ -30,6 +30,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCWin64EH.h"
+#include "llvm/Support/COFF.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -98,14 +99,7 @@ void WinException::beginFunction(const MachineFunction *MF) {
     return;
   }
 
-  if (shouldEmitMoves || shouldEmitPersonality)
-    Asm->OutStreamer->EmitWinCFIStartProc(Asm->CurrentFnSym);
-
-  if (shouldEmitPersonality) {
-    const MCSymbol *PersHandlerSym =
-        TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, Asm->TM, MMI);
-    Asm->OutStreamer->EmitWinEHHandler(PersHandlerSym, true, true);
-  }
+  beginFunclet(MF->front(), Asm->CurrentFnSym);
 }
 
 /// endFunction - Gather and emit post-function exception information.
@@ -125,20 +119,16 @@ void WinException::endFunction(const MachineFunction *MF) {
   if (!isMSVCEHPersonality(Per))
     MMI->TidyLandingPads();
 
+  endFunclet();
+
   if (shouldEmitPersonality || shouldEmitLSDA) {
     Asm->OutStreamer->PushSection();
 
-    if (shouldEmitMoves || shouldEmitPersonality) {
-      // Emit an UNWIND_INFO struct describing the prologue.
-      Asm->OutStreamer->EmitWinEHHandlerData();
-    } else {
-      // Just switch sections to the right xdata section. This use of
-      // CurrentFnSym assumes that we only emit the LSDA when ending the parent
-      // function.
-      MCSection *XData = WinEH::UnwindEmitter::getXDataSection(
-          Asm->CurrentFnSym, Asm->OutContext);
-      Asm->OutStreamer->SwitchSection(XData);
-    }
+    // Just switch sections to the right xdata section. This use of CurrentFnSym
+    // assumes that we only emit the LSDA when ending the parent function.
+    MCSection *XData = WinEH::UnwindEmitter::getXDataSection(Asm->CurrentFnSym,
+                                                             Asm->OutContext);
+    Asm->OutStreamer->SwitchSection(XData);
 
     // Emit the tables appropriate to the personality function in use. If we
     // don't recognize the personality, assume it uses an Itanium-style LSDA.
@@ -153,9 +143,120 @@ void WinException::endFunction(const MachineFunction *MF) {
 
     Asm->OutStreamer->PopSection();
   }
+}
 
+/// Retreive the MCSymbol for a GlobalValue or MachineBasicBlock. GlobalValues
+/// are used in the old WinEH scheme, and they will be removed eventually.
+static MCSymbol *getMCSymbolForMBBOrGV(AsmPrinter *Asm, ValueOrMBB Handler) {
+  if (!Handler)
+    return nullptr;
+  if (Handler.is<const MachineBasicBlock *>()) {
+    auto *MBB = Handler.get<const MachineBasicBlock *>();
+    assert(MBB->isEHFuncletEntry());
+
+    // Give catches and cleanups a name based off of their parent function and
+    // their funclet entry block's number.
+    const MachineFunction *MF = MBB->getParent();
+    const Function *F = MF->getFunction();
+    StringRef FuncLinkageName = GlobalValue::getRealLinkageName(F->getName());
+    MCContext &Ctx = MF->getContext();
+    StringRef HandlerPrefix = MBB->isCleanupFuncletEntry() ? "dtor" : "catch";
+    return Ctx.getOrCreateSymbol("?" + HandlerPrefix + "$" +
+                                 Twine(MBB->getNumber()) + "@?0?" +
+                                 FuncLinkageName + "@4HA");
+  }
+  return Asm->getSymbol(cast<GlobalValue>(Handler.get<const Value *>()));
+}
+
+void WinException::beginFunclet(const MachineBasicBlock &MBB,
+                                MCSymbol *Sym) {
+  CurrentFuncletEntry = &MBB;
+
+  const Function *F = Asm->MF->getFunction();
+  // If a symbol was not provided for the funclet, invent one.
+  if (!Sym) {
+    Sym = getMCSymbolForMBBOrGV(Asm, &MBB);
+
+    // Describe our funclet symbol as a function with internal linkage.
+    Asm->OutStreamer->BeginCOFFSymbolDef(Sym);
+    Asm->OutStreamer->EmitCOFFSymbolStorageClass(COFF::IMAGE_SYM_CLASS_STATIC);
+    Asm->OutStreamer->EmitCOFFSymbolType(COFF::IMAGE_SYM_DTYPE_FUNCTION
+                                         << COFF::SCT_COMPLEX_TYPE_SHIFT);
+    Asm->OutStreamer->EndCOFFSymbolDef();
+
+    // We want our funclet's entry point to be aligned such that no nops will be
+    // present after the label.
+    Asm->EmitAlignment(std::max(Asm->MF->getAlignment(), MBB.getAlignment()),
+                       F);
+
+    // Now that we've emitted the alignment directive, point at our funclet.
+    Asm->OutStreamer->EmitLabel(Sym);
+  }
+
+  // Mark 'Sym' as starting our funclet.
   if (shouldEmitMoves || shouldEmitPersonality)
+    Asm->OutStreamer->EmitWinCFIStartProc(Sym);
+
+  if (shouldEmitPersonality) {
+    const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
+    const Function *PerFn = nullptr;
+
+    // Determine which personality routine we are using for this funclet.
+    if (F->hasPersonalityFn())
+      PerFn = dyn_cast<Function>(F->getPersonalityFn()->stripPointerCasts());
+    const MCSymbol *PersHandlerSym =
+        TLOF.getCFIPersonalitySymbol(PerFn, *Asm->Mang, Asm->TM, MMI);
+
+    // Classify the personality routine so that we may reason about it.
+    EHPersonality Per = EHPersonality::Unknown;
+    if (F->hasPersonalityFn())
+      Per = classifyEHPersonality(F->getPersonalityFn());
+
+    // Do not emit a .seh_handler directive if it is a C++ cleanup funclet.
+    if (Per != EHPersonality::MSVC_CXX ||
+        !CurrentFuncletEntry->isCleanupFuncletEntry())
+      Asm->OutStreamer->EmitWinEHHandler(PersHandlerSym, true, true);
+  }
+}
+
+void WinException::endFunclet() {
+  // No funclet to process?  Great, we have nothing to do.
+  if (!CurrentFuncletEntry)
+    return;
+
+  if (shouldEmitMoves || shouldEmitPersonality) {
+    const Function *F = Asm->MF->getFunction();
+    EHPersonality Per = EHPersonality::Unknown;
+    if (F->hasPersonalityFn())
+      Per = classifyEHPersonality(F->getPersonalityFn());
+
+    // The .seh_handlerdata directive implicitly switches section, push the
+    // current section so that we may return to it.
+    Asm->OutStreamer->PushSection();
+
+    // Emit an UNWIND_INFO struct describing the prologue.
+    Asm->OutStreamer->EmitWinEHHandlerData();
+
+    // If this is a C++ catch funclet (or the parent function),
+    // emit a reference to the LSDA for the parent function.
+    if (Per == EHPersonality::MSVC_CXX && shouldEmitPersonality &&
+        !CurrentFuncletEntry->isCleanupFuncletEntry()) {
+      StringRef FuncLinkageName = GlobalValue::getRealLinkageName(F->getName());
+      MCSymbol *FuncInfoXData = Asm->OutContext.getOrCreateSymbol(
+          Twine("$cppxdata$", FuncLinkageName));
+      Asm->OutStreamer->EmitValue(create32bitRef(FuncInfoXData), 4);
+    }
+
+    // Switch back to the previous section now that we are done writing to
+    // .xdata.
+    Asm->OutStreamer->PopSection();
+
+    // Emit a .seh_endproc directive to mark the end of the function.
     Asm->OutStreamer->EmitWinCFIEndProc();
+  }
+
+  // Let's make sure we don't try to end the same funclet twice.
+  CurrentFuncletEntry = nullptr;
 }
 
 const MCExpr *WinException::create32bitRef(const MCSymbol *Value) {
@@ -299,16 +400,6 @@ void WinException::emitCSpecificHandlerTable(const MachineFunction *MF) {
   }
 }
 
-/// Retreive the MCSymbol for a GlobalValue or MachineBasicBlock. GlobalValues
-/// are used in the old WinEH scheme, and they will be removed eventually.
-static MCSymbol *getMCSymbolForMBBOrGV(AsmPrinter *Asm, ValueOrMBB Handler) {
-  if (!Handler)
-    return nullptr;
-  if (Handler.is<MachineBasicBlock *>())
-    return Handler.get<MachineBasicBlock *>()->getSymbol();
-  return Asm->getSymbol(cast<GlobalValue>(Handler.get<const Value *>()));
-}
-
 void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   const Function *F = MF->getFunction();
   auto &OS = *Asm->OutStreamer;
@@ -323,7 +414,6 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
     // IPs to state numbers.
     FuncInfoXData =
         Asm->OutContext.getOrCreateSymbol(Twine("$cppxdata$", FuncLinkageName));
-    OS.EmitValue(create32bitRef(FuncInfoXData), 4);
     computeIP2StateTable(MF, FuncInfo, IPToStateTable);
   } else {
     FuncInfoXData = Asm->OutContext.getOrCreateLSDASymbol(FuncLinkageName);

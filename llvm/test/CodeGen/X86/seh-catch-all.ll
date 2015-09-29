@@ -38,6 +38,10 @@ eh.resume:
 ; CHECK: callq printf
 
 ; CHECK: .seh_handlerdata
+; CHECK-NEXT: .text
+; CHECK-NEXT: .Ltmp{{[0-9]+}}
+; CHECK-NEXT: .seh_endproc
+; CHECK-NEXT: .section .xdata,"dr"
 ; CHECK-NEXT: .long 1
 ; CHECK-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL
 ; CHECK-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL+1

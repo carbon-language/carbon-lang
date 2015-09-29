@@ -713,8 +713,6 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
       // Reset EBP / ESI to something good.
       MBBI = restoreWin32EHStackPointers(MBB, MBBI, DL);
     } else {
-      // FIXME: Add SEH directives.
-      NeedsWinCFI = false;
       // Immediately spill RDX into the home slot. The runtime cares about this.
       unsigned RDX = Uses64BitFramePtr ? X86::RDX : X86::EDX;
       // MOV64mr %rdx, 16(%rsp)
@@ -726,6 +724,9 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
       // PUSH64r %rbp
       BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH64r))
           .addReg(MachineFramePtr, RegState::Kill)
+          .setMIFlag(MachineInstr::FrameSetup);
+      BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_PushReg))
+          .addImm(MachineFramePtr)
           .setMIFlag(MachineInstr::FrameSetup);
       // MOV64rr %rdx, %rbp
       unsigned MOVrr = Uses64BitFramePtr ? X86::MOV64rr : X86::MOV32rr;

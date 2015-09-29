@@ -71,7 +71,8 @@ catchendblock:                                    ; preds = %catch,
 ; X86: addl $12, %ebp
 ; X86: jmp [[contbb]]
 
-; X86: [[catch1bb:LBB0_[0-9]+]]: # %catch{{$}}
+; X86: "?catch$[[catch1bb:[0-9]+]]@?0?try_catch_catch@4HA":
+; X86: LBB0_[[catch1bb]]: # %catch{{$}}
 ; X86: pushl %ebp
 ; X86-NOT: pushl
 ; X86: addl $12, %ebp
@@ -89,7 +90,7 @@ catchendblock:                                    ; preds = %catch,
 ; X86:   .long   0
 ; X86:   .long   "??_R0H@8"
 ; X86:   .long   0
-; X86:   .long   [[catch1bb]]
+; X86:   .long   "?catch$[[catch1bb]]@?0?try_catch_catch@4HA"
 
 ; X64-LABEL: try_catch_catch:
 ; X64: pushq %rbp
@@ -116,7 +117,8 @@ catchendblock:                                    ; preds = %catch,
 ; X64: popq %rbp
 ; X64: retq
 
-; X64: [[catch1bb:\.LBB0_[0-9]+]]: # %catch{{$}}
+; X64: "?catch$[[catch1bb:[0-9]+]]@?0?try_catch_catch@4HA":
+; X64: LBB0_[[catch1bb]]: # %catch{{$}}
 ; X64: movq %rdx, 16(%rsp)
 ; X64: pushq %rbp
 ; X64: movq %rdx, %rbp
@@ -132,5 +134,5 @@ catchendblock:                                    ; preds = %catch,
 ; X64:   .long   0
 ; X64:   .long   "??_R0H@8"@IMGREL
 ; X64:   .long   0
-; X64:   .long   [[catch1bb]]@IMGREL
+; X64:   .long   "?catch$[[catch1bb]]@?0?try_catch_catch@4HA"@IMGREL
 ; X64:   .long   56

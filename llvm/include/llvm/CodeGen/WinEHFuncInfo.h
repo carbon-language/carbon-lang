@@ -118,7 +118,7 @@ void parseEHActions(const IntrinsicInst *II,
 // exceptions on Windows.
 
 typedef PointerUnion<const BasicBlock *, MachineBasicBlock *> MBBOrBasicBlock;
-typedef PointerUnion<const Value *, MachineBasicBlock *> ValueOrMBB;
+typedef PointerUnion<const Value *, const MachineBasicBlock *> ValueOrMBB;
 
 struct WinEHUnwindMapEntry {
   int ToState;

@@ -38,6 +38,10 @@ terminate.lpad:                                   ; preds = %lpad
 ; X64: retq
 
 ; X64: .seh_handlerdata
+; X64-NEXT: .text
+; X64-NEXT: .Ltmp{{[0-9]+}}:
+; X64-NEXT: .seh_endproc
+; X64-NEXT: .section .xdata,"dr"
 ; X64-NEXT: .long 1
 ; X64-NEXT: .long .Ltmp0@IMGREL
 ; X64-NEXT: .long .Ltmp1@IMGREL

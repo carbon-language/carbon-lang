@@ -114,6 +114,9 @@ protected:
   /// Indicate that this basic block is the entry block of an EH funclet.
   bool IsEHFuncletEntry = false;
 
+  /// Indicate that this basic block is the entry block of a cleanup funclet.
+  bool IsCleanupFuncletEntry = false;
+
   /// \brief since getSymbol is a relatively heavy-weight operation, the symbol
   /// is only computed once and is cached.
   mutable MCSymbol *CachedMCSymbol = nullptr;
@@ -391,6 +394,12 @@ public:
 
   /// Indicates if this is the entry block of an EH funclet.
   void setIsEHFuncletEntry(bool V = true) { IsEHFuncletEntry = V; }
+
+  /// Returns true if this is the entry block of a cleanup funclet.
+  bool isCleanupFuncletEntry() const { return IsCleanupFuncletEntry; }
+
+  /// Indicates if this is the entry block of a cleanup funclet.
+  void setIsCleanupFuncletEntry(bool V = true) { IsCleanupFuncletEntry = V; }
 
   // Code Layout methods.
 

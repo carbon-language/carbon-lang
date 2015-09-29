@@ -65,14 +65,16 @@ cleanup.outer:                                      ; preds = %invoke.cont.1, %c
 ; X86: movl    $3, (%esp)
 ; X86: calll   _f
 
-; X86: LBB1_[[cleanup_inner:[0-9]+]]: # %cleanup.inner
+; X86: "?dtor$[[cleanup_inner:[0-9]+]]@?0?nested_cleanup@4HA":
+; X86: LBB1_[[cleanup_inner]]: # %cleanup.inner{{$}}
 ; X86: pushl %ebp
 ; X86: leal    {{.*}}(%ebp), %ecx
 ; X86: calll   "??1Dtor@@QAE@XZ"
 ; X86: popl %ebp
 ; X86: retl
 
-; X86: LBB1_[[cleanup_outer:[0-9]+]]: # %cleanup.outer
+; X86: "?dtor$[[cleanup_outer:[0-9]+]]@?0?nested_cleanup@4HA":
+; X86: LBB1_[[cleanup_outer]]: # %cleanup.outer{{$}}
 ; X86: pushl %ebp
 ; X86: leal    {{.*}}(%ebp), %ecx
 ; X86: calll   "??1Dtor@@QAE@XZ"
@@ -91,41 +93,46 @@ cleanup.outer:                                      ; preds = %invoke.cont.1, %c
 ; X86:         .long   1
 ; X86: $stateUnwindMap$nested_cleanup:
 ; X86:         .long   -1
-; X86:         .long   LBB1_[[cleanup_outer]]
+; X86:         .long   "?dtor$[[cleanup_outer]]@?0?nested_cleanup@4HA"
 ; X86:         .long   0
-; X86:         .long   LBB1_[[cleanup_inner]]
+; X86:         .long   "?dtor$[[cleanup_inner]]@?0?nested_cleanup@4HA"
 
 ; X64-LABEL: nested_cleanup:
 ; X64: .Lfunc_begin1:
-; X64: .Ltmp8:
+; X64: .Ltmp14:
 ; X64: movl    $1, %ecx
 ; X64: callq   f
-; X64: .Ltmp10:
+; X64: .Ltmp16:
 ; X64: movl    $2, %ecx
 ; X64: callq   f
-; X64: .Ltmp11:
+; X64: .Ltmp17:
 ; X64: callq   "??1Dtor@@QAE@XZ"
-; X64: .Ltmp12:
+; X64: .Ltmp18:
 ; X64: movl    $3, %ecx
 ; X64: callq   f
-; X64: .Ltmp13:
+; X64: .Ltmp19:
 
-; X64: .LBB1_[[cleanup_inner:[0-9]+]]: # %cleanup.inner
+; X64: "?dtor$[[cleanup_inner:[0-9]+]]@?0?nested_cleanup@4HA":
+; X64: LBB1_[[cleanup_inner]]: # %cleanup.inner{{$}}
 ; X64: pushq %rbp
 ; X64: leaq    {{.*}}(%rbp), %rcx
 ; X64: callq   "??1Dtor@@QAE@XZ"
 ; X64: popq %rbp
 ; X64: retq
 
-; X64: .LBB1_[[cleanup_outer:[0-9]+]]: # %cleanup.outer
+; X64:        .seh_handlerdata
+; X64:        .text
+; X64:        .seh_endproc
+
+; X64: "?dtor$[[cleanup_outer:[0-9]+]]@?0?nested_cleanup@4HA":
+; X64: LBB1_[[cleanup_outer]]: # %cleanup.outer{{$}}
 ; X64: pushq %rbp
 ; X64: leaq    {{.*}}(%rbp), %rcx
 ; X64: callq   "??1Dtor@@QAE@XZ"
 ; X64: popq %rbp
 ; X64: retq
 
-; X64: .seh_handlerdata
-; X64-NEXT: .long   ($cppxdata$nested_cleanup)@IMGREL
+; X64:        .section .xdata,"dr"
 ; X64-NEXT: .align  4
 ; X64: $cppxdata$nested_cleanup:
 ; X64-NEXT: .long   429065506
@@ -141,20 +148,20 @@ cleanup.outer:                                      ; preds = %invoke.cont.1, %c
 
 ; X64: $stateUnwindMap$nested_cleanup:
 ; X64-NEXT: .long   -1
-; X64-NEXT: .long   .LBB1_[[cleanup_outer]]@IMGREL
+; X64-NEXT: .long   "?dtor$[[cleanup_outer]]@?0?nested_cleanup@4HA"@IMGREL
 ; X64-NEXT: .long   0
-; X64-NEXT: .long   .LBB1_[[cleanup_inner]]@IMGREL
+; X64-NEXT: .long   "?dtor$[[cleanup_inner]]@?0?nested_cleanup@4HA"@IMGREL
 
 ; X64: $ip2state$nested_cleanup:
 ; X64-NEXT: .long   .Lfunc_begin1@IMGREL
 ; X64-NEXT: .long   -1
-; X64-NEXT: .long   .Ltmp8@IMGREL
+; X64-NEXT: .long   .Ltmp14@IMGREL
 ; X64-NEXT: .long   0
-; X64-NEXT: .long   .Ltmp10@IMGREL
+; X64-NEXT: .long   .Ltmp16@IMGREL
 ; X64-NEXT: .long   1
-; X64-NEXT: .long   .Ltmp12@IMGREL
+; X64-NEXT: .long   .Ltmp18@IMGREL
 ; X64-NEXT: .long   0
-; X64-NEXT: .long   .Ltmp13@IMGREL+1
+; X64-NEXT: .long   .Ltmp19@IMGREL+1
 ; X64-NEXT: .long   -1
 
 attributes #0 = { "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-realign-stack" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }

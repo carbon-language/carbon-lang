@@ -78,7 +78,8 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: addl $12, %ebp
 ; X86: jmp [[contbb]]
 
-; X86: [[catch1bb:LBB0_[0-9]+]]: # %catch{{$}}
+; X86: "?catch$[[catch1bb:[0-9]+]]@?0?try_catch_catch@4HA":
+; X86: LBB0_[[catch1bb]]: # %catch{{$}}
 ; X86: pushl %ebp
 ; X86: addl $12, %ebp
 ; X86: subl $8, %esp
@@ -93,7 +94,8 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86-NEXT: movl $[[restorebb]], %eax
 ; X86-NEXT: retl
 
-; X86: [[catch2bb:LBB0_[0-9]+]]: # %catch.2{{$}}
+; X86: "?catch$[[catch2bb:[0-9]+]]@?0?try_catch_catch@4HA":
+; X86: LBB0_[[catch2bb]]: # %catch.2{{$}}
 ; X86: pushl %ebp
 ; X86: addl $12, %ebp
 ; X86: subl $8, %esp
@@ -112,11 +114,11 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86-NEXT:   .long   0
 ; X86-NEXT:   .long   "??_R0H@8"
 ; X86-NEXT:   .long   -20
-; X86-NEXT:   .long   [[catch1bb]]
+; X86-NEXT:   .long   "?catch$[[catch1bb]]@?0?try_catch_catch@4HA"
 ; X86-NEXT:   .long   64
 ; X86-NEXT:   .long   0
 ; X86-NEXT:   .long   0
-; X86-NEXT:   .long   [[catch2bb]]
+; X86-NEXT:   .long   "?catch$[[catch2bb]]@?0?try_catch_catch@4HA"
 
 ; X64-LABEL: try_catch_catch:
 ; X64: Lfunc_begin0:
@@ -135,7 +137,8 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64: popq %rbp
 ; X64: retq
 
-; X64: [[catch1bb:\.LBB0_[0-9]+]]: # %catch{{$}}
+; X64: "?catch$[[catch1bb:[0-9]+]]@?0?try_catch_catch@4HA":
+; X64: LBB0_[[catch1bb]]: # %catch{{$}}
 ; X64: movq %rdx, 16(%rsp)
 ; X64: pushq %rbp
 ; X64: movq %rdx, %rbp
@@ -149,7 +152,8 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64-NEXT: leaq [[contbb]](%rip), %rax
 ; X64-NEXT: retq
 
-; X64: [[catch2bb:\.LBB0_[0-9]+]]: # %catch.2{{$}}
+; X64: "?catch$[[catch2bb:[0-9]+]]@?0?try_catch_catch@4HA":
+; X64: LBB0_[[catch2bb]]: # %catch.2{{$}}
 ; X64: movq %rdx, 16(%rsp)
 ; X64: pushq %rbp
 ; X64: movq %rdx, %rbp
@@ -187,12 +191,12 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64-NEXT:   .long   "??_R0H@8"@IMGREL
 ; FIXME: This should probably be offset from rsp, not rbp.
 ; X64-NEXT:   .long   [[e_addr]]
-; X64-NEXT:   .long   [[catch1bb]]@IMGREL
+; X64-NEXT:   .long   "?catch$[[catch1bb]]@?0?try_catch_catch@4HA"@IMGREL
 ; X64-NEXT:   .long   56
 ; X64-NEXT:   .long   64
 ; X64-NEXT:   .long   0
 ; X64-NEXT:   .long   0
-; X64-NEXT:   .long   [[catch2bb]]@IMGREL
+; X64-NEXT:   .long   "?catch$[[catch2bb]]@?0?try_catch_catch@4HA"@IMGREL
 ; X64-NEXT:   .long   56
 
 ; X64: $ip2state$try_catch_catch:

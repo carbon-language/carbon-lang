@@ -90,6 +90,10 @@ __try.cont:
 ; CHECK: jmp [[cont_bb]]
 
 ; CHECK: .seh_handlerdata
+; CHECK-NEXT: .text
+; CHECK-NEXT: .Ltmp{{[0-9]+}}
+; CHECK-NEXT: .seh_endproc
+; CHECK-NEXT: .section .xdata,"dr"
 ; CHECK-NEXT: .long 2
 ; CHECK-NEXT: .long .Ltmp0@IMGREL
 ; CHECK-NEXT: .long .Ltmp1@IMGREL+1
