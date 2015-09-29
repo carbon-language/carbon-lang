@@ -27,6 +27,9 @@ extern llvm::cl::opt<bool> NoEnumDefs;
 extern llvm::cl::list<std::string> ExcludeTypes;
 extern llvm::cl::list<std::string> ExcludeSymbols;
 extern llvm::cl::list<std::string> ExcludeCompilands;
+extern llvm::cl::list<std::string> IncludeTypes;
+extern llvm::cl::list<std::string> IncludeSymbols;
+extern llvm::cl::list<std::string> IncludeCompilands;
 }
 
 #endif

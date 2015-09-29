@@ -91,6 +91,20 @@ cl::list<std::string>
     ExcludeCompilands("exclude-compilands",
                       cl::desc("Exclude compilands by regular expression"),
                       cl::ZeroOrMore, cl::cat(FilterCategory));
+
+cl::list<std::string> IncludeTypes(
+    "include-types",
+    cl::desc("Include only types which match a regular expression"),
+    cl::ZeroOrMore, cl::cat(FilterCategory));
+cl::list<std::string> IncludeSymbols(
+    "include-symbols",
+    cl::desc("Include only symbols which match a regular expression"),
+    cl::ZeroOrMore, cl::cat(FilterCategory));
+cl::list<std::string> IncludeCompilands(
+    "include-compilands",
+    cl::desc("Include only compilands those which match a regular expression"),
+    cl::ZeroOrMore, cl::cat(FilterCategory));
+
 cl::opt<bool> ExcludeCompilerGenerated(
     "no-compiler-generated",
     cl::desc("Don't show compiler generated types and symbols"),

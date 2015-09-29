@@ -48,9 +48,13 @@ private:
   int IndentSpaces;
   int CurrentIndent;
 
-  std::list<Regex> CompilandFilters;
-  std::list<Regex> TypeFilters;
-  std::list<Regex> SymbolFilters;
+  std::list<Regex> ExcludeCompilandFilters;
+  std::list<Regex> ExcludeTypeFilters;
+  std::list<Regex> ExcludeSymbolFilters;
+
+  std::list<Regex> IncludeCompilandFilters;
+  std::list<Regex> IncludeTypeFilters;
+  std::list<Regex> IncludeSymbolFilters;
 };
 
 template <class T>

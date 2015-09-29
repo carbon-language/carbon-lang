@@ -10,6 +10,10 @@
 ; RUN:    %p/Inputs/FilterTest.pdb | FileCheck  --check-prefix=EXCLUDE_WHOLE_CLASS %s
 ; RUN: llvm-pdbdump -symbols -globals -exclude-compilands="FilterTest.obj"  \
 ; RUN:    %p/Inputs/FilterTest.pdb | FileCheck  --check-prefix=EXCLUDE_COMPILAND %s
+; RUN: llvm-pdbdump -types -include-types="FilterTestClass" \
+; RUN:    %p/Inputs/FilterTest.pdb | FileCheck --check-prefix=INCLUDE_ONLY_TYPES %s
+; RUN: llvm-pdbdump -types -symbols -globals -include-symbols="[[:<:]](IntGlobalVar|DoubleGlobalVar)[[:>:]]" \
+; RUN:    %p/Inputs/FilterTest.pdb | FileCheck --check-prefix=INCLUDE_ONLY_VARS %s
 
 ; NO_FILTER: ---TYPES---
 ; NO_FILTER: Enums:
@@ -73,3 +77,19 @@
 ; EXCLUDE_COMPILAND-NOT: __cdecl main
 ; EXCLUDE_COMPILAND: * Linker *
 ; EXCLUDE_COMPILAND: ---GLOBALS---
+
+; Everything but types are displayed normally.  But FilterTestClass is
+; the only type that should be displayed.
+; INCLUDE_ONLY_TYPES: ---TYPES---
+; INCLUDE_ONLY_TYPES-NOT: GlobalTypedef
+; INCLUDE_ONLY_TYPES: class FilterTestClass
+
+; We should only see DoubleGlobalVar and IntGlobalVar.  This means that even
+; variables printed in class definitions should be filtered out.
+; INCLUDE_ONLY_VARS: ---TYPES---
+; INCLUDE_ONLY_VARS: class FilterTestClass
+; INCLUDE_ONLY_VARS-NOT: IntMemberVar
+; INCLUDE_ONLY_VARS-NOT: IntDoubleVar
+; INCLUDE_ONLY_VARS: ---GLOBALS---
+; INCLUDE_ONLY_VARS: DoubleGlobalVar
+; INCLUDE_ONLY_VARS: IntGlobalVar
