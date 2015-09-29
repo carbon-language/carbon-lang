@@ -687,7 +687,7 @@ public:
     Value *S,                ///< The pointer value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
     const Twine &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+    Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
   /// @brief Create a BitCast, a PtrToInt, or an IntToPTr cast instruction.
@@ -700,7 +700,7 @@ public:
     Value *S,                ///< The pointer value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
     const Twine &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+    Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
   /// @brief Create a ZExt, BitCast, or Trunc for int -> int casts.
@@ -1321,6 +1321,6 @@ protected:
   }
 };
 
-} // End llvm namespace
+} // end llvm namespace
 
-#endif
+#endif // LLVM_IR_INSTRTYPES_H

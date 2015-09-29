@@ -65,7 +65,7 @@ static int gettok() {
       LastChar = getchar();
     } while (isdigit(LastChar) || LastChar == '.');
 
-    NumVal = strtod(NumStr.c_str(), 0);
+    NumVal = strtod(NumStr.c_str(), nullptr);
     return tok_number;
   }
 
@@ -200,6 +200,7 @@ std::unique_ptr<ExprAST> Error(const char *Str) {
   fprintf(stderr, "Error: %s\n", Str);
   return nullptr;
 }
+
 std::unique_ptr<PrototypeAST> ErrorP(const char *Str) {
   Error(Str);
   return nullptr;

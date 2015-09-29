@@ -426,7 +426,7 @@ public:
 
   /// \brief Create a call to Masked Load intrinsic
   CallInst *CreateMaskedLoad(Value *Ptr, unsigned Align, Value *Mask,
-                             Value *PassThru = 0, const Twine &Name = "");
+                             Value *PassThru = nullptr, const Twine &Name = "");
 
   /// \brief Create a call to Masked Store intrinsic
   CallInst *CreateMaskedStore(Value *Val, Value *Ptr, unsigned Align,
@@ -1745,6 +1745,7 @@ public:
 
 // Create wrappers for C Binding types (see CBindingWrapping.h).
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(IRBuilder<>, LLVMBuilderRef)
-}
 
-#endif
+} // end namespace llvm
+
+#endif // LLVM_IR_IRBUILDER_H

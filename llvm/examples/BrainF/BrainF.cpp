@@ -29,6 +29,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include <iostream>
+
 using namespace llvm;
 
 //Set the constants for naming
@@ -44,7 +45,7 @@ Module *BrainF::parse(std::istream *in1, int mem, CompileFlags cf,
   comflag  = cf;
 
   header(Context);
-  readloop(0, 0, 0, Context);
+  readloop(nullptr, nullptr, nullptr, Context);
   delete builder;
   return module;
 }
@@ -68,7 +69,6 @@ void BrainF::header(LLVMContext& C) {
     getOrInsertFunction("putchar", IntegerType::getInt32Ty(C),
                         IntegerType::getInt32Ty(C), NULL));
 
-
   //Function header
 
   //define void @brainf()
@@ -85,7 +85,7 @@ void BrainF::header(LLVMContext& C) {
   Constant* allocsize = ConstantExpr::getSizeOf(Int8Ty);
   allocsize = ConstantExpr::getTruncOrBitCast(allocsize, IntPtrTy);
   ptr_arr = CallInst::CreateMalloc(BB, IntPtrTy, Int8Ty, allocsize, val_mem, 
-                                   NULL, "arr");
+                                   nullptr, "arr");
   BB->getInstList().push_back(cast<Instruction>(ptr_arr));
 
   //call void @llvm.memset.p0i8.i32(i8 *%arr, i8 0, i32 %d, i32 1, i1 0)
@@ -114,8 +114,6 @@ void BrainF::header(LLVMContext& C) {
                                ConstantInt::get(C, APInt(32, memtotal/2)),
                                headreg);
 
-
-
   //Function footer
 
   //brainf.end:
@@ -126,8 +124,6 @@ void BrainF::header(LLVMContext& C) {
 
   //ret void
   ReturnInst::Create(C, endbb);
-
-
 
   //Error block for array out of bounds
   if (comflag & flag_arraybounds)

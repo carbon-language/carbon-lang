@@ -28,7 +28,7 @@ class ImmutableListImpl : public FoldingSetNode {
   T Head;
   const ImmutableListImpl* Tail;
 
-  ImmutableListImpl(const T& head, const ImmutableListImpl* tail = 0)
+  ImmutableListImpl(const T& head, const ImmutableListImpl* tail = nullptr)
     : Head(head), Tail(tail) {}
 
   friend class ImmutableListFactory<T>;
@@ -72,7 +72,7 @@ public:
   // This constructor should normally only be called by ImmutableListFactory<T>.
   // There may be cases, however, when one needs to extract the internal pointer
   // and reconstruct a list object from that pointer.
-  ImmutableList(const ImmutableListImpl<T>* x = 0) : X(x) {}
+  ImmutableList(const ImmutableListImpl<T>* x = nullptr) : X(x) {}
 
   const ImmutableListImpl<T>* getInternalPointer() const {
     return X;
@@ -81,7 +81,7 @@ public:
   class iterator {
     const ImmutableListImpl<T>* L;
   public:
-    iterator() : L(0) {}
+    iterator() : L(nullptr) {}
     iterator(ImmutableList l) : L(l.getInternalPointer()) {}
 
     iterator& operator++() { L = L->getTail(); return *this; }
@@ -128,7 +128,7 @@ public:
   /// getTail - Returns the tail of the list, which is another (possibly empty)
   ///  ImmutableList.
   ImmutableList getTail() {
-    return X ? X->getTail() : 0;
+    return X ? X->getTail() : nullptr;
   }
 
   void Profile(FoldingSetNodeID& ID) const {
@@ -190,7 +190,7 @@ public:
   }
 
   ImmutableList<T> getEmptyList() const {
-    return ImmutableList<T>(0);
+    return ImmutableList<T>(nullptr);
   }
 
   ImmutableList<T> create(const T& X) {
@@ -226,4 +226,4 @@ struct isPodLike<ImmutableList<T> > { static const bool value = true; };
 
 } // end llvm namespace
 
-#endif
+#endif // LLVM_ADT_IMMUTABLELIST_H

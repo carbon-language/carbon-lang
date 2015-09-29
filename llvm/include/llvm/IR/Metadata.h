@@ -573,10 +573,12 @@ struct AAMDNodes {
 template<>
 struct DenseMapInfo<AAMDNodes> {
   static inline AAMDNodes getEmptyKey() {
-    return AAMDNodes(DenseMapInfo<MDNode *>::getEmptyKey(), 0, 0);
+    return AAMDNodes(DenseMapInfo<MDNode *>::getEmptyKey(),
+                     nullptr, nullptr);
   }
   static inline AAMDNodes getTombstoneKey() {
-    return AAMDNodes(DenseMapInfo<MDNode *>::getTombstoneKey(), 0, 0);
+    return AAMDNodes(DenseMapInfo<MDNode *>::getTombstoneKey(),
+                     nullptr, nullptr);
   }
   static unsigned getHashValue(const AAMDNodes &Val) {
     return DenseMapInfo<MDNode *>::getHashValue(Val.TBAA) ^
@@ -1219,4 +1221,4 @@ public:
 
 } // end llvm namespace
 
-#endif
+#endif // LLVM_IR_METADATA_H

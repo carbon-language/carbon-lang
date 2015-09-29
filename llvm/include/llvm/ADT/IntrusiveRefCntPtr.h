@@ -154,7 +154,7 @@ public:
 
     template <class X>
     IntrusiveRefCntPtr(IntrusiveRefCntPtr<X>&& S) : Obj(S.get()) {
-      S.Obj = 0;
+      S.Obj = nullptr;
     }
 
     template <class X>
@@ -190,7 +190,7 @@ public:
     }
 
     void resetWithoutRelease() {
-      Obj = 0;
+      Obj = nullptr;
     }
 
   private:

@@ -65,7 +65,7 @@ int main() {
   Function *Add1F =
     cast<Function>(M->getOrInsertFunction("add1", Type::getInt32Ty(Context),
                                           Type::getInt32Ty(Context),
-                                          (Type *)0));
+                                          nullptr));
 
   // Add a basic block to the function. As before, it automatically inserts
   // because of the last argument.
@@ -91,12 +91,11 @@ int main() {
 
   // Now, function add1 is ready.
 
-
   // Now we're going to create function `foo', which returns an int and takes no
   // arguments.
   Function *FooF =
     cast<Function>(M->getOrInsertFunction("foo", Type::getInt32Ty(Context),
-                                          (Type *)0));
+                                          nullptr));
 
   // Add a basic block to the FooF function.
   BB = BasicBlock::Create(Context, "EntryBlock", FooF);

@@ -39,7 +39,6 @@ namespace llvm {
 /// etc) do not perform as well in practice as a linked list with this iterator
 /// kept up to date.  They are also significantly more memory intensive.
 
-
 template <unsigned ElementSize = 128>
 struct SparseBitVectorElement
   : public ilist_node<SparseBitVectorElement<ElementSize> > {
@@ -204,6 +203,7 @@ public:
     BecameZero = allzero;
     return changed;
   }
+
   // Intersect this Element with the complement of RHS and return true if this
   // one changed.  BecameZero is set to true if this element became all-zero
   // bits.
@@ -226,6 +226,7 @@ public:
     BecameZero = allzero;
     return changed;
   }
+
   // Three argument version of intersectWithComplement that intersects
   // RHS1 & ~RHS2 into this element
   void intersectWithComplement(const SparseBitVectorElement &RHS1,
@@ -408,12 +409,13 @@ class SparseBitVector {
       // bitmap.
       return AtEnd == RHS.AtEnd && RHS.BitNumber == BitNumber;
     }
+
     bool operator!=(const SparseBitVectorIterator &RHS) const {
       return !(*this == RHS);
     }
-    SparseBitVectorIterator(): BitVector(NULL) {
-    }
 
+    SparseBitVectorIterator(): BitVector(nullptr) {
+    }
 
     SparseBitVectorIterator(const SparseBitVector<ElementSize> *RHS,
                             bool end = false):BitVector(RHS) {
@@ -690,7 +692,6 @@ public:
     return intersectWithComplement(*RHS);
   }
 
-
   //  Three argument version of intersectWithComplement.
   //  Result of RHS1 & ~RHS2 is stored into this bitmap.
   void intersectWithComplement(const SparseBitVector<ElementSize> &RHS1,
@@ -749,8 +750,6 @@ public:
         Elements.push_back(NewElement);
         ++Iter1;
       }
-
-    return;
   }
 
   void intersectWithComplement(const SparseBitVector<ElementSize> *RHS1,
@@ -885,9 +884,6 @@ operator-(const SparseBitVector<ElementSize> &LHS,
   return Result;
 }
 
-
-
-
 // Dump a SparseBitVector to a stream
 template <unsigned ElementSize>
 void dump(const SparseBitVector<ElementSize> &LHS, raw_ostream &out) {
@@ -905,4 +901,4 @@ void dump(const SparseBitVector<ElementSize> &LHS, raw_ostream &out) {
 }
 } // end namespace llvm
 
-#endif
+#endif // LLVM_ADT_SPARSEBITVECTOR_H

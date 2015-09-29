@@ -133,6 +133,7 @@ static cl::opt<bool> NoSymbolicOperands(
 static cl::list<std::string>
     ArchFlags("arch", cl::desc("architecture(s) from a Mach-O file to dump"),
               cl::ZeroOrMore);
+
 bool ArchAll = false;
 
 static std::string ThumbTripleName;
@@ -4460,7 +4461,7 @@ static void print_class64_t(uint64_t p, struct DisassembleInfo *info) {
   bool is_meta_class;
   print_class_ro64_t((c.data + n_value) & ~0x7, info, is_meta_class);
 
-  if (is_meta_class == false) {
+  if (!is_meta_class) {
     outs() << "Meta Class\n";
     print_class64_t(c.isa + isa_n_value, info);
   }
@@ -4525,7 +4526,7 @@ static void print_class32_t(uint32_t p, struct DisassembleInfo *info) {
   bool is_meta_class;
   print_class_ro32_t(c.data & ~0x3, info, is_meta_class);
 
-  if (is_meta_class == false) {
+  if (!is_meta_class) {
     outs() << "Meta Class\n";
     print_class32_t(c.isa, info);
   }
@@ -4833,7 +4834,7 @@ static void print_category32_t(uint32_t p, struct DisassembleInfo *info) {
   outs() << "              name " << format("0x%" PRIx32, c.name);
   name = get_symbol_32(offset + offsetof(struct category32_t, name), S, info,
                        c.name);
-  if (name != NULL)
+  if (name)
     outs() << " " << name;
   outs() << "\n";
 
@@ -5527,7 +5528,7 @@ static void printObjcMetaData(MachOObjectFile *O, bool verbose) {
       // binary for the iOS simulator which is the second Objective-C
       // ABI.  In that case printObjc1_32bit_MetaData() will determine that
       // and return false.
-      if (printObjc1_32bit_MetaData(O, verbose) == false)
+      if (!printObjc1_32bit_MetaData(O, verbose))
         printObjc2_32bit_MetaData(O, verbose);
     }
   }

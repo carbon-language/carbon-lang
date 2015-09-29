@@ -137,7 +137,7 @@ public:
       if (CrashRecoveryContext *context = CrashRecoveryContext::GetCurrent())
         return new DERIVED(context, x);
     }
-    return 0;
+    return nullptr;
   }
 };
 
@@ -195,9 +195,9 @@ public:
   void unregister() {
     if (cleanup && !cleanup->cleanupFired)
       cleanup->getContext()->unregisterCleanup(cleanup);
-    cleanup = 0;
+    cleanup = nullptr;
   }
 };
-}
+} // end namespace llvm
 
-#endif
+#endif // LLVM_SUPPORT_CRASHRECOVERYCONTEXT_H

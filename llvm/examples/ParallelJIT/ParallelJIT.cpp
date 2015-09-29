@@ -28,6 +28,7 @@
 #include "llvm/Support/TargetSelect.h"
 #include <iostream>
 #include <pthread.h>
+
 using namespace llvm;
 
 static Function* createAdd1(Module *M) {
@@ -38,7 +39,7 @@ static Function* createAdd1(Module *M) {
     cast<Function>(M->getOrInsertFunction("add1",
                                           Type::getInt32Ty(M->getContext()),
                                           Type::getInt32Ty(M->getContext()),
-                                          (Type *)0));
+                                          nullptr));
 
   // Add a basic block to the function. As before, it automatically inserts
   // because of the last argument.
@@ -69,7 +70,7 @@ static Function *CreateFibFunction(Module *M) {
     cast<Function>(M->getOrInsertFunction("fib",
                                           Type::getInt32Ty(M->getContext()),
                                           Type::getInt32Ty(M->getContext()),
-                                          (Type *)0));
+                                          nullptr));
 
   // Add a basic block to the function.
   BasicBlock *BB = BasicBlock::Create(M->getContext(), "EntryBlock", FibF);
@@ -129,10 +130,10 @@ public:
     n = 0;
     waitFor = 0;
 
-    int result = pthread_cond_init( &condition, NULL );
+    int result = pthread_cond_init( &condition, nullptr );
     assert( result == 0 );
 
-    result = pthread_mutex_init( &mutex, NULL );
+    result = pthread_mutex_init( &mutex, nullptr );
     assert( result == 0 );
   }
 
@@ -261,21 +262,21 @@ int main() {
   struct threadParams fib2 = { EE, fibF, 42 };
 
   pthread_t add1Thread;
-  int result = pthread_create( &add1Thread, NULL, callFunc, &add1 );
+  int result = pthread_create( &add1Thread, nullptr, callFunc, &add1 );
   if ( result != 0 ) {
           std::cerr << "Could not create thread" << std::endl;
           return 1;
   }
 
   pthread_t fibThread1;
-  result = pthread_create( &fibThread1, NULL, callFunc, &fib1 );
+  result = pthread_create( &fibThread1, nullptr, callFunc, &fib1 );
   if ( result != 0 ) {
           std::cerr << "Could not create thread" << std::endl;
           return 1;
   }
 
   pthread_t fibThread2;
-  result = pthread_create( &fibThread2, NULL, callFunc, &fib2 );
+  result = pthread_create( &fibThread2, nullptr, callFunc, &fib2 );
   if ( result != 0 ) {
           std::cerr << "Could not create thread" << std::endl;
           return 1;

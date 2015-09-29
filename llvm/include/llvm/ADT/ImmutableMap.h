@@ -78,9 +78,11 @@ public:
   explicit ImmutableMap(const TreeTy* R) : Root(const_cast<TreeTy*>(R)) {
     if (Root) { Root->retain(); }
   }
+
   ImmutableMap(const ImmutableMap &X) : Root(X.Root) {
     if (Root) { Root->retain(); }
   }
+
   ImmutableMap &operator=(const ImmutableMap &X) {
     if (Root != X.Root) {
       if (X.Root) { X.Root->retain(); }
@@ -89,6 +91,7 @@ public:
     }
     return *this;
   }
+
   ~ImmutableMap() {
     if (Root) { Root->release(); }
   }
@@ -377,7 +380,7 @@ public:
       if (T) return &T->getValue().second;
     }
 
-    return 0;
+    return nullptr;
   }
 
   /// getMaxElement - Returns the <key,value> pair in the ImmutableMap for
@@ -402,4 +405,4 @@ public:
 
 } // end namespace llvm
 
-#endif
+#endif // LLVM_ADT_IMMUTABLEMAP_H
