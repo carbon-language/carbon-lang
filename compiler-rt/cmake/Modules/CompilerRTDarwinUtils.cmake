@@ -100,8 +100,6 @@ function(darwin_filter_host_archs input output)
   set(${output} ${tmp_var} PARENT_SCOPE)
 endfunction()
 
-set(DARWIN_EXCLUDE_DIR ${CMAKE_SOURCE_DIR}/lib/builtins/Darwin-excludes)
-
 # Read and process the exclude file into a list of symbols
 function(darwin_read_list_from_file output_var file)
   if(EXISTS ${file})
@@ -233,6 +231,8 @@ endfunction()
 # Generates builtin libraries for all operating systems specified in ARGN. Each
 # OS library is constructed by lipo-ing together single-architecture libraries.
 macro(darwin_add_builtin_libraries)
+  set(DARWIN_EXCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Darwin-excludes)
+
   if(CMAKE_CONFIGURATION_TYPES)
     foreach(type ${CMAKE_CONFIGURATION_TYPES})
       set(CMAKE_C_FLAGS_${type} -O3)
@@ -310,5 +310,85 @@ macro(darwin_add_builtin_libraries)
                         OUTPUT_DIR ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
     endif()
   endforeach()
+  darwin_add_embedded_builtin_libraries()
 endmacro()
 
+function(darwin_add_embedded_builtin_libraries)
+  set(MACHO_SYM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/macho_embedded)
+  if(CMAKE_CONFIGURATION_TYPES)
+    foreach(type ${CMAKE_CONFIGURATION_TYPES})
+      set(CMAKE_C_FLAGS_${type} -Oz)
+      set(CMAKE_CXX_FLAGS_${type} -Oz)
+    endforeach()
+  else()
+    set(CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE} -Oz)
+  endif()
+
+  set(CMAKE_C_FLAGS "-Wall -fomit-frame-pointer -ffreestanding")
+  set(CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
+  set(CMAKE_ASM_FLAGS ${CMAKE_C_FLAGS})
+
+  set(SOFT_FLOAT_FLAG -mfloat-abi=soft)
+  set(HARD_FLOAT_FLAG -mfloat-abi=hard)
+
+  set(PIC_FLAG_ -fPIC)
+  set(STATIC_FLAG -static)
+
+  set(DARWIN_macho_embedded_ARCHS armv6m armv7m armv7em armv7 i386 x86_64)
+
+  set(DARWIN_macho_embedded_LIBRARY_OUTPUT_DIR
+    ${COMPILER_RT_OUTPUT_DIR}/lib/macho_embedded)
+
+  set(DARWIN_SOFT_FLOAT_ARCHS armv6m armv7m armv7em armv7)
+  set(DARWIN_HARD_FLOAT_ARCHS armv7em armv7 i386 x86_64)
+
+  darwin_read_list_from_file(common_FUNCTIONS ${MACHO_SYM_DIR}/common.txt)
+  darwin_read_list_from_file(thumb2_FUNCTIONS ${MACHO_SYM_DIR}/thumb2.txt)
+  darwin_read_list_from_file(arm_FUNCTIONS ${MACHO_SYM_DIR}/arm.txt)
+  darwin_read_list_from_file(i386_FUNCTIONS ${MACHO_SYM_DIR}/i386.txt)
+
+
+  set(armv6m_FUNCTIONS ${common_FUNCTIONS} ${arm_FUNCTIONS})
+  set(armv7m_FUNCTIONS ${common_FUNCTIONS} ${arm_FUNCTIONS} ${thumb2_FUNCTIONS})
+  set(armv7em_FUNCTIONS ${common_FUNCTIONS} ${arm_FUNCTIONS} ${thumb2_FUNCTIONS})
+  set(armv7_FUNCTIONS ${common_FUNCTIONS} ${arm_FUNCTIONS} ${thumb2_FUNCTIONS})
+  set(i386_FUNCTIONS ${common_FUNCTIONS} ${i386_FUNCTIONS})
+  set(x86_64_FUNCTIONS ${common_FUNCTIONS})
+
+  foreach(arch ${DARWIN_macho_embedded_ARCHS})
+    darwin_filter_builtin_sources(${arch}_filtered_sources
+      INCLUDE ${arch}_FUNCTIONS
+      ${${arch}_SOURCES})
+    if(NOT ${arch}_filtered_sources)
+      message("${arch}_SOURCES: ${${arch}_SOURCES}")
+      message("${arch}_FUNCTIONS: ${${arch}_FUNCTIONS}")
+      message(FATAL_ERROR "Empty filtered sources!")
+    endif()
+  endforeach()
+
+  foreach(float_type SOFT HARD)
+    foreach(type PIC STATIC)
+      string(TOLOWER "${float_type}_${type}" lib_suffix)
+      foreach(arch ${DARWIN_${float_type}_FLOAT_ARCHS})
+        set(DARWIN_macho_embedded_SYSROOT ${DARWIN_osx_SYSROOT})
+        if(${arch} MATCHES "^arm")
+          set(DARWIN_macho_embedded_SYSROOT ${DARWIN_ios_SYSROOT})
+        endif()
+        darwin_add_builtin_library(clang_rt ${lib_suffix}
+                              OS macho_embedded
+                              ARCH ${arch}
+                              SOURCES ${${arch}_filtered_sources}
+                              CFLAGS -arch ${arch} ${${type}_FLAG} ${${float_type}_FLOAT_FLAG}
+                              PARENT_TARGET builtins)
+      endforeach()
+      foreach(lib ${macho_embedded_${lib_suffix}_libs})
+        set_target_properties(${lib} PROPERTIES LINKER_LANGUAGE C)
+      endforeach()
+      darwin_lipo_libs(clang_rt.${lib_suffix}
+                    PARENT_TARGET builtins
+                    LIPO_FLAGS ${macho_embedded_${lib_suffix}_lipo_flags}
+                    DEPENDS ${macho_embedded_${lib_suffix}_libs}
+                    OUTPUT_DIR ${DARWIN_macho_embedded_LIBRARY_OUTPUT_DIR})
+    endforeach()
+  endforeach()
+endfunction()

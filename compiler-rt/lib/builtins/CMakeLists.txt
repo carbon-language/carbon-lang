@@ -318,6 +318,11 @@ set(armv7_SOURCES ${arm_SOURCES})
 set(armv7s_SOURCES ${arm_SOURCES})
 set(arm64_SOURCES ${aarch64_SOURCES})
 
+# macho_embedded archs
+set(armv6m_SOURCES ${GENERIC_SOURCES})
+set(armv7m_SOURCES ${arm_SOURCES})
+set(armv7em_SOURCES ${arm_SOURCES})
+
 add_custom_target(builtins)
 
 if (APPLE)
