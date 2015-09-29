@@ -210,7 +210,7 @@ void RegPressureTracker::init(const MachineFunction *mf,
 
   P.MaxSetPressure = CurrSetPressure;
 
-  LiveRegs.PhysRegs.setUniverse(TRI->getNumRegs());
+  LiveRegs.PhysRegs.setUniverse(TRI->getNumRegUnits());
   LiveRegs.VirtRegs.setUniverse(MRI->getNumVirtRegs());
   if (TrackUntiedDefs)
     UntiedDefs.setUniverse(MRI->getNumVirtRegs());
