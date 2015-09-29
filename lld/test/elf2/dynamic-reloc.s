@@ -6,7 +6,15 @@
 // RUN: llvm-readobj -dynamic-table -r --expand-relocs -s %t | FileCheck %s
 // REQUIRES: x86
 
-// CHECK:      Index: 1
+// CHECK:      Name: .text
+// CHECK-NEXT: Type: SHT_PROGBITS
+// CHECK-NEXT: Flags [
+// CHECK-NEXT:   SHF_ALLOC
+// CHECK-NEXT:   SHF_EXECINSTR
+// CHECK-NEXT: ]
+// CHECK-NEXT: Address: [[ADDR:.*]]
+
+// CHECK:      Index: 4
 // CHECK-NEXT: Name: .dynsym
 
 // CHECK:      Name: .rela.dyn
@@ -17,18 +25,10 @@
 // CHECK-NEXT: Address: [[RELAADDR:.*]]
 // CHECK-NEXT: Offset:
 // CHECK-NEXT: Size: [[RELASIZE:.*]]
-// CHECK-NEXT: Link: 1
+// CHECK-NEXT: Link: 4
 // CHECK-NEXT: Info: 0
 // CHECK-NEXT: AddressAlignment: 8
 // CHECK-NEXT: EntrySize: 24
-
-// CHECK:      Name: .text
-// CHECK-NEXT: Type: SHT_PROGBITS
-// CHECK-NEXT: Flags [
-// CHECK-NEXT:   SHF_ALLOC
-// CHECK-NEXT:   SHF_EXECINSTR
-// CHECK-NEXT: ]
-// CHECK-NEXT: Address: [[ADDR:.*]]
 
 // CHECK:      Relocations [
 // CHECK-NEXT:   Section ({{.*}}) .rela.dyn {

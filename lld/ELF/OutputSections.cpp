@@ -183,9 +183,6 @@ DynamicSection<ELFT>::DynamicSection(SymbolTable &SymTab,
 }
 
 template <class ELFT> void DynamicSection<ELFT>::finalize() {
-  if (this->Header.sh_size)
-    return; // Already finalized.
-
   typename Base::HeaderT &Header = this->Header;
   Header.sh_link = DynStrSec.getSectionIndex();
 

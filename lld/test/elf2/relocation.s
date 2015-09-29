@@ -32,11 +32,11 @@ lulz:
 
 // CHECK: Disassembly of section .text:
 // CHECK-NEXT: _start:
-// CHECK-NEXT:   12000:  e8 04 00 00 00   callq 4
-// CHECK-NEXT:   12005:
+// CHECK-NEXT:   11000:  e8 04 00 00 00   callq 4
+// CHECK-NEXT:   11005:
 
 // CHECK:      lulz:
-// CHECK-NEXT:   12009:  90  nop
+// CHECK-NEXT:   11009:  90  nop
 
 
 .section       .text2,"ax",@progbits
@@ -48,7 +48,7 @@ R_X86_64_32:
 // constants in hex.
 // CHECK: Disassembly of section .text2:
 // CHECK-NEXT: R_X86_64_32:
-// CHECK-NEXT:  1200a: {{.*}} movl $73738, %edx
+// CHECK-NEXT:  1100c: {{.*}} movl $69644, %edx
 
 .section .R_X86_64_32S,"ax",@progbits
 .global R_X86_64_32S
@@ -57,7 +57,7 @@ R_X86_64_32S:
 
 // CHECK: Disassembly of section .R_X86_64_32S:
 // CHECK-NEXT: R_X86_64_32S:
-// CHECK-NEXT:  {{.*}}: {{.*}} movq -974839, %rdx
+// CHECK-NEXT:  {{.*}}: {{.*}} movq -978935, %rdx
 
 .section .R_X86_64_64,"a",@progbits
 .global R_X86_64_64
@@ -65,7 +65,7 @@ R_X86_64_64:
  .quad R_X86_64_64
 
 // CHECK:      Contents of section .R_X86_64_64:
-// CHECK-NEXT:   11000 00100100 00000000
+// CHECK-NEXT:   12000 00200100 00000000
 
 .section .R_X86_64_GOTPCREL,"a",@progbits
 .global R_X86_64_GOTPCREL
@@ -75,4 +75,4 @@ R_X86_64_GOTPCREL:
 // 0x13000 - 0x12008 = 4088
 // 4088 = 0xf80f0000 in little endian
 // CHECK:      Contents of section .R_X86_64_GOTPCREL
-// CHECK-NEXT:   11008 f81f0000
+// CHECK-NEXT:   12008 f80f0000
