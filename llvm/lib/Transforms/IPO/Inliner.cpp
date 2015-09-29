@@ -228,6 +228,14 @@ static bool InlineCallIfPossible(Pass &P, CallSite CS, InlineFunctionInfo &IFI,
       DEBUG(dbgs() << "    ***MERGED ALLOCA: " << *AI << "\n\t\tINTO: "
                    << *AvailableAlloca << '\n');
       
+      // Move affected dbg.declare calls immediately after the new alloca to
+      // avoid the situation when a dbg.declare preceeds its alloca.
+      if (auto *L = LocalAsMetadata::getIfExists(AI))
+        if (auto *MDV = MetadataAsValue::getIfExists(AI->getContext(), L))
+          for (User *U : MDV->users())
+            if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(U))
+              DDI->moveBefore(AvailableAlloca->getNextNode());
+
       AI->replaceAllUsesWith(AvailableAlloca);
 
       if (Align1 != Align2) {

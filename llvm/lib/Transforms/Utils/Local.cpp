@@ -1157,10 +1157,10 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
     DIExpr = Builder.createExpression(NewDIExpr);
   }
 
-  // Insert llvm.dbg.declare in the same basic block as the original alloca,
-  // and remove old llvm.dbg.declare.
-  BasicBlock *BB = AI->getParent();
-  Builder.insertDeclare(NewAllocaAddress, DIVar, DIExpr, Loc, BB);
+  // Insert llvm.dbg.declare immediately after the original alloca, and remove
+  // old llvm.dbg.declare.
+  Builder.insertDeclare(NewAllocaAddress, DIVar, DIExpr, Loc,
+                        AI->getNextNode());
   DDI->eraseFromParent();
   return true;
 }

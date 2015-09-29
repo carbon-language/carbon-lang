@@ -42,6 +42,7 @@ define void @bar(float* %dst) #0 {
 entry:
 
 ; CHECK: [[x_addr_i:%[a-zA-Z0-9.]+]] = alloca float, align 4
+; CHECK-NEXT: void @llvm.dbg.declare(metadata float* [[x_addr_i]], metadata [[m23:![0-9]+]], metadata !{{[0-9]+}}), !dbg [[m24:![0-9]+]]
 
   %dst.addr = alloca float*, align 4
   store float* %dst, float** %dst.addr, align 4
@@ -52,7 +53,6 @@ entry:
   %call = call float @foo(float %1), !dbg !22
 
 ; CHECK-NOT: call float @foo
-; CHECK: void @llvm.dbg.declare(metadata float* [[x_addr_i]], metadata [[m23:![0-9]+]], metadata !{{[0-9]+}}), !dbg [[m24:![0-9]+]]
 
   %2 = load float*, float** %dst.addr, align 4, !dbg !22
   %arrayidx1 = getelementptr inbounds float, float* %2, i32 0, !dbg !22
@@ -95,5 +95,5 @@ attributes #1 = { nounwind readnone }
 ; CHECK: [[FOO:![0-9]+]] = distinct !DISubprogram(name: "foo",
 ; CHECK: [[BAR:![0-9]+]] = distinct !DISubprogram(name: "bar",
 ; CHECK: [[m23]] = !DILocalVariable(name: "x", arg: 1, scope: [[FOO]]
-; CHECK: [[CALL_SITE:![0-9]+]] = distinct !DILocation(line: 8, column: 14, scope: [[BAR]])
-; CHECK: [[m24]] = !DILocation(line: 1, column: 17, scope: [[FOO]], inlinedAt: [[CALL_SITE]])
+; CHECK: [[m24]] = !DILocation(line: 1, column: 17, scope: [[FOO]], inlinedAt: [[CALL_SITE:![0-9]+]])
+; CHECK: [[CALL_SITE]] = distinct !DILocation(line: 8, column: 14, scope: [[BAR]])
