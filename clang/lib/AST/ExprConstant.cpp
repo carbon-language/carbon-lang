@@ -5568,7 +5568,7 @@ namespace {
     VectorExprEvaluator(EvalInfo &info, APValue &Result)
       : ExprEvaluatorBaseTy(info), Result(Result) {}
 
-    bool Success(const ArrayRef<APValue> &V, const Expr *E) {
+    bool Success(ArrayRef<APValue> V, const Expr *E) {
       assert(V.size() == E->getType()->castAs<VectorType>()->getNumElements());
       // FIXME: remove this APValue copy.
       Result = APValue(V.data(), V.size());
