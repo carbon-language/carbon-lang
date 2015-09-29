@@ -838,6 +838,17 @@ define <8 x i16> @sse2_psra_w_var(<8 x i16> %v, <8 x i16> %a) {
   ret <8 x i16> %2
 }
 
+define <8 x i16> @sse2_psra_w_var_bc(<8 x i16> %v, <2 x i64> %a) {
+; CHECK-LABEL: @sse2_psra_w_var_bc
+; CHECK-NEXT: %1 = bitcast <2 x i64> %a to <8 x i16>
+; CHECK-NEXT: %2 = tail call <8 x i16> @llvm.x86.sse2.psra.w(<8 x i16> %v, <8 x i16> %1)
+; CHECK-NEXT: ret <8 x i16> %2
+  %1 = shufflevector <2 x i64> %a, <2 x i64> undef, <2 x i32> <i32 0, i32 0>
+  %2 = bitcast <2 x i64> %1 to <8 x i16>
+  %3 = tail call <8 x i16> @llvm.x86.sse2.psra.w(<8 x i16> %v, <8 x i16> %2)
+  ret <8 x i16> %3
+}
+
 define <4 x i32> @sse2_psra_d_var(<4 x i32> %v, <4 x i32> %a) {
 ; CHECK-LABEL: @sse2_psra_d_var
 ; CHECK-NEXT: %1 = tail call <4 x i32> @llvm.x86.sse2.psra.d(<4 x i32> %v, <4 x i32> %a)
@@ -845,6 +856,17 @@ define <4 x i32> @sse2_psra_d_var(<4 x i32> %v, <4 x i32> %a) {
   %1 = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
   %2 = tail call <4 x i32> @llvm.x86.sse2.psra.d(<4 x i32> %v, <4 x i32> %1)
   ret <4 x i32> %2
+}
+
+define <4 x i32> @sse2_psra_d_var_bc(<4 x i32> %v, <8 x i16> %a) {
+; CHECK-LABEL: @sse2_psra_d_var_bc
+; CHECK-NEXT: %1 = bitcast <8 x i16> %a to <4 x i32>
+; CHECK-NEXT: %2 = tail call <4 x i32> @llvm.x86.sse2.psra.d(<4 x i32> %v, <4 x i32> %1)
+; CHECK-NEXT: ret <4 x i32> %2
+  %1 = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3>
+  %2 = bitcast <8 x i16> %1 to <4 x i32>
+  %3 = tail call <4 x i32> @llvm.x86.sse2.psra.d(<4 x i32> %v, <4 x i32> %2)
+  ret <4 x i32> %3
 }
 
 define <16 x i16> @avx2_psra_w_var(<16 x i16> %v, <8 x i16> %a) {
@@ -901,6 +923,17 @@ define <16 x i16> @avx2_psrl_w_var(<16 x i16> %v, <8 x i16> %a) {
   ret <16 x i16> %2
 }
 
+define <16 x i16> @avx2_psrl_w_var_bc(<16 x i16> %v, <16 x i8> %a) {
+; CHECK-LABEL: @avx2_psrl_w_var_bc
+; CHECK-NEXT: %1 = bitcast <16 x i8> %a to <8 x i16>
+; CHECK-NEXT: %2 = tail call <16 x i16> @llvm.x86.avx2.psrl.w(<16 x i16> %v, <8 x i16> %1)
+; CHECK-NEXT: ret <16 x i16> %2
+  %1 = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  %2 = bitcast <16 x i8> %1 to <8 x i16>
+  %3 = tail call <16 x i16> @llvm.x86.avx2.psrl.w(<16 x i16> %v, <8 x i16> %2)
+  ret <16 x i16> %3
+}
+
 define <8 x i32> @avx2_psrl_d_var(<8 x i32> %v, <4 x i32> %a) {
 ; CHECK-LABEL: @avx2_psrl_d_var
 ; CHECK-NEXT: %1 = tail call <8 x i32> @llvm.x86.avx2.psrl.d(<8 x i32> %v, <4 x i32> %a)
@@ -908,6 +941,17 @@ define <8 x i32> @avx2_psrl_d_var(<8 x i32> %v, <4 x i32> %a) {
   %1 = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
   %2 = tail call <8 x i32> @llvm.x86.avx2.psrl.d(<8 x i32> %v, <4 x i32> %1)
   ret <8 x i32> %2
+}
+
+define <8 x i32> @avx2_psrl_d_var_bc(<8 x i32> %v, <2 x i64> %a) {
+; CHECK-LABEL: @avx2_psrl_d_var_bc
+; CHECK-NEXT: %1 = bitcast <2 x i64> %a to <4 x i32>
+; CHECK-NEXT: %2 = tail call <8 x i32> @llvm.x86.avx2.psrl.d(<8 x i32> %v, <4 x i32> %1)
+; CHECK-NEXT: ret <8 x i32> %2
+  %1 = shufflevector <2 x i64> %a, <2 x i64> undef, <2 x i32> <i32 0, i32 0>
+  %2 = bitcast <2 x i64> %1 to <4 x i32>
+  %3 = tail call <8 x i32> @llvm.x86.avx2.psrl.d(<8 x i32> %v, <4 x i32> %2)
+  ret <8 x i32> %3
 }
 
 define <4 x i64> @avx2_psrl_q_var(<4 x i64> %v, <2 x i64> %a) {

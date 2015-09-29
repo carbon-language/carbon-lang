@@ -1082,6 +1082,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     if (!VTy) break;
     unsigned InVWidth = VTy->getNumElements();
     APInt InputDemandedElts(InVWidth, 0);
+    UndefElts2 = APInt(InVWidth, 0);
     unsigned Ratio;
 
     if (VWidth == InVWidth) {
@@ -1089,29 +1090,25 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       // elements as are demanded of us.
       Ratio = 1;
       InputDemandedElts = DemandedElts;
-    } else if (VWidth > InVWidth) {
-      // Untested so far.
-      break;
-
-      // If there are more elements in the result than there are in the source,
-      // then an input element is live if any of the corresponding output
-      // elements are live.
-      Ratio = VWidth/InVWidth;
-      for (unsigned OutIdx = 0; OutIdx != VWidth; ++OutIdx) {
+    } else if ((VWidth % InVWidth) == 0) {
+      // If the number of elements in the output is a multiple of the number of
+      // elements in the input then an input element is live if any of the
+      // corresponding output elements are live.
+      Ratio = VWidth / InVWidth;
+      for (unsigned OutIdx = 0; OutIdx != VWidth; ++OutIdx)
         if (DemandedElts[OutIdx])
-          InputDemandedElts.setBit(OutIdx/Ratio);
-      }
-    } else {
-      // Untested so far.
-      break;
-
-      // If there are more elements in the source than there are in the result,
-      // then an input element is live if the corresponding output element is
-      // live.
-      Ratio = InVWidth/VWidth;
+          InputDemandedElts.setBit(OutIdx / Ratio);
+    } else if ((InVWidth % VWidth) == 0) {
+      // If the number of elements in the input is a multiple of the number of
+      // elements in the output then an input element is live if the
+      // corresponding output element is live.
+      Ratio = InVWidth / VWidth;
       for (unsigned InIdx = 0; InIdx != InVWidth; ++InIdx)
-        if (DemandedElts[InIdx/Ratio])
+        if (DemandedElts[InIdx / Ratio])
           InputDemandedElts.setBit(InIdx);
+    } else {
+      // Unsupported so far.
+      break;
     }
 
     // div/rem demand all inputs, because they don't want divide by zero.
@@ -1122,24 +1119,26 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       MadeChange = true;
     }
 
-    UndefElts = UndefElts2;
-    if (VWidth > InVWidth) {
-      llvm_unreachable("Unimp");
-      // If there are more elements in the result than there are in the source,
-      // then an output element is undef if the corresponding input element is
-      // undef.
+    if (VWidth == InVWidth) {
+      UndefElts = UndefElts2;
+    } else if ((VWidth % InVWidth) == 0) {
+      // If the number of elements in the output is a multiple of the number of
+      // elements in the input then an output element is undef if the
+      // corresponding input element is undef.
       for (unsigned OutIdx = 0; OutIdx != VWidth; ++OutIdx)
-        if (UndefElts2[OutIdx/Ratio])
+        if (UndefElts2[OutIdx / Ratio])
           UndefElts.setBit(OutIdx);
-    } else if (VWidth < InVWidth) {
+    } else if ((InVWidth % VWidth) == 0) {
+      // If the number of elements in the input is a multiple of the number of
+      // elements in the output then an output element is undef if all of the
+      // corresponding input elements are undef.
+      for (unsigned OutIdx = 0; OutIdx != VWidth; ++OutIdx) {
+        APInt SubUndef = UndefElts2.lshr(OutIdx * Ratio).zextOrTrunc(Ratio);
+        if (SubUndef.countPopulation() == Ratio)
+          UndefElts.setBit(OutIdx);
+      }
+    } else {
       llvm_unreachable("Unimp");
-      // If there are more elements in the source than there are in the result,
-      // then a result element is undef if all of the corresponding input
-      // elements are undef.
-      UndefElts = ~0ULL >> (64-VWidth);  // Start out all undef.
-      for (unsigned InIdx = 0; InIdx != InVWidth; ++InIdx)
-        if (!UndefElts2[InIdx])            // Not undef?
-          UndefElts.clearBit(InIdx/Ratio);    // Clear undef bit.
     }
     break;
   }
