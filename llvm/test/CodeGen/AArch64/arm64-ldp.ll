@@ -330,7 +330,7 @@ define i64 @pairUpNotAlignedSext(i32* %a) nounwind ssp {
 declare void @use-ptr(i32*)
 
 ; CHECK: ldp_sext_int_pre
-; CHECK: ldpsw x{{[0-9]+}}, x{{[0-9]+}}, [x0, #8]
+; CHECK: ldpsw x{{[0-9]+}}, x{{[0-9]+}}, [x{{[0-9]+}}, #8]
 define i64 @ldp_sext_int_pre(i32* %p) nounwind {
   %ptr = getelementptr inbounds i32, i32* %p, i64 2
   call void @use-ptr(i32* %ptr)
