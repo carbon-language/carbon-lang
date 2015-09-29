@@ -253,6 +253,8 @@ unsigned SampleProfileLoader::getBlockWeight(BasicBlock *BB) {
     if (InstWeight > Weight)
       Weight = InstWeight;
   }
+  if (Weight > 0)
+    VisitedBlocks.insert(BB);
   Entry.first->second = Weight;
   return Weight;
 }
@@ -304,8 +306,7 @@ void SampleProfileLoader::findEquivalencesFor(
   for (auto *BB2 : Descendants) {
     bool IsDomParent = DomTree->dominates(BB2, BB1);
     bool IsInSameLoop = LI->getLoopFor(BB1) == LI->getLoopFor(BB2);
-    if (BB1 != BB2 && VisitedBlocks.insert(BB2).second && IsDomParent &&
-        IsInSameLoop) {
+    if (BB1 != BB2 && IsDomParent && IsInSameLoop) {
       EquivalenceClass[BB2] = BB1;
 
       // If BB2 is heavier than BB1, make BB2 have the same weight
