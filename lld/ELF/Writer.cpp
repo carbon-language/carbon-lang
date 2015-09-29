@@ -389,12 +389,42 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       OutputSections.begin(), OutputSections.end(),
       [](OutputSectionBase<ELFT::Is64Bits> *A,
          OutputSectionBase<ELFT::Is64Bits> *B) {
-        // Place SHF_ALLOC sections first.
-        return (A->getFlags() & SHF_ALLOC) && !(B->getFlags() & SHF_ALLOC);
+        // Sort by ALLOC < (ALLOC & NOBITS) < (ALLOC & EXECUTE) <
+        // (ALLOC & WRITE) < (ALLOC & WRITE & NOBITS)
+        uintX_t AFlags =
+            A->getFlags() & (SHF_ALLOC | SHF_EXECINSTR | SHF_WRITE);
+        uintX_t BFlags =
+            B->getFlags() & (SHF_ALLOC | SHF_EXECINSTR | SHF_WRITE);
+
+        auto rank = [](OutputSectionBase<ELFT::Is64Bits> *Sec) {
+          switch (Sec->getFlags() & (SHF_ALLOC | SHF_EXECINSTR | SHF_WRITE)) {
+          case SHF_ALLOC:
+            return 0;
+          case SHF_ALLOC | SHF_EXECINSTR:
+            return 1;
+          case SHF_ALLOC | SHF_EXECINSTR | SHF_WRITE:
+            return 2;
+          case SHF_ALLOC | SHF_WRITE:
+            return 3;
+          case 0:
+            return 4;
+          default:
+            error("Unexpected section flags");
+          }
+        };
+
+        // Ignore SHT_NOBITS for non-allocated sections.
+        if (AFlags && AFlags == BFlags)
+          return A->getType() != SHT_NOBITS && B->getType() == SHT_NOBITS;
+
+        return rank(A) < rank(B);
       });
 
   for (unsigned I = 0, N = OutputSections.size(); I < N; ++I)
     OutputSections[I]->setSectionIndex(I + 1);
+
+  // Fill the DynStrSec early.
+  DynamicSec.finalize();
 }
 
 template <class ELFT>

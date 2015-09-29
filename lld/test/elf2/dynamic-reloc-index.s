@@ -8,7 +8,7 @@
 
 // CHECK:      Relocations [
 // CHECK-NEXT:   Section ({{.*}}) .rela.dyn {
-// CHECK-NEXT:     0x11000 R_X86_64_64 bar 0x0
+// CHECK-NEXT:     0x12000 R_X86_64_64 bar 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
