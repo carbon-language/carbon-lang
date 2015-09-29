@@ -13782,9 +13782,6 @@ support). As a result, we need to be able to turn off support for those.
 The remaining ones (currently controlled by -mcrypto for GCC) still
 need to be provided on compliant hardware even if Vector.Crypto is not
 provided.
-FIXME: the naming convention for the builtins will be adjusted due
-to the inconsistency (__builtin_crypto_ prefix on builtins that cannot be
-removed with -mno-crypto). This is under development.
 */
 #ifdef __CRYPTO__
 #define vec_sbox_be __builtin_altivec_crypto_vsbox
