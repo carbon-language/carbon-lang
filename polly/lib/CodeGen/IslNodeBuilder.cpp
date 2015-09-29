@@ -814,6 +814,123 @@ void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
   llvm_unreachable("Unknown isl_ast_node type");
 }
 
+/// @brief Create the actual preload memory access for @p MA.
+static inline Value *createPreloadLoad(Scop &S, const MemoryAccess &MA,
+                                       isl_ast_build *Build,
+                                       IslExprBuilder &ExprBuilder) {
+  isl_set *AccessRange = isl_map_range(MA.getAccessRelation());
+  isl_pw_multi_aff *PWAccRel = isl_pw_multi_aff_from_set(AccessRange);
+  PWAccRel = isl_pw_multi_aff_gist_params(PWAccRel, S.getContext());
+  isl_ast_expr *Access =
+      isl_ast_build_access_from_pw_multi_aff(Build, PWAccRel);
+  return ExprBuilder.create(Access);
+}
+
+Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
+                                            isl_set *Domain,
+                                            isl_ast_build *Build) {
+
+  isl_set *Universe = isl_set_universe(isl_set_get_space(Domain));
+  bool AlwaysExecuted = isl_set_is_equal(Domain, Universe);
+  isl_set_free(Universe);
+
+  if (AlwaysExecuted) {
+    isl_set_free(Domain);
+    return createPreloadLoad(S, MA, Build, ExprBuilder);
+  } else {
+
+    isl_ast_expr *DomainCond = isl_ast_build_expr_from_set(Build, Domain);
+
+    Value *Cond = ExprBuilder.create(DomainCond);
+    if (!Cond->getType()->isIntegerTy(1))
+      Cond = Builder.CreateIsNotNull(Cond);
+
+    BasicBlock *CondBB = SplitBlock(Builder.GetInsertBlock(),
+                                    Builder.GetInsertPoint(), &DT, &LI);
+    CondBB->setName("polly.preload.cond");
+
+    BasicBlock *MergeBB = SplitBlock(CondBB, CondBB->begin(), &DT, &LI);
+    MergeBB->setName("polly.preload.merge");
+
+    Function *F = Builder.GetInsertBlock()->getParent();
+    LLVMContext &Context = F->getContext();
+    BasicBlock *ExecBB = BasicBlock::Create(Context, "polly.preload.exec", F);
+
+    DT.addNewBlock(ExecBB, CondBB);
+    if (Loop *L = LI.getLoopFor(CondBB))
+      L->addBasicBlockToLoop(ExecBB, LI);
+
+    auto *CondBBTerminator = CondBB->getTerminator();
+    Builder.SetInsertPoint(CondBBTerminator);
+    Builder.CreateCondBr(Cond, ExecBB, MergeBB);
+    CondBBTerminator->eraseFromParent();
+
+    Builder.SetInsertPoint(ExecBB);
+    Builder.CreateBr(MergeBB);
+
+    Builder.SetInsertPoint(ExecBB->getTerminator());
+    Instruction *AccInst = MA.getAccessInstruction();
+    Type *AccInstTy = AccInst->getType();
+    Value *PreAccInst = createPreloadLoad(S, MA, Build, ExprBuilder);
+
+    Builder.SetInsertPoint(MergeBB->getTerminator());
+    auto *MergePHI = Builder.CreatePHI(
+        AccInstTy, 2, "polly.preload." + AccInst->getName() + ".merge");
+    MergePHI->addIncoming(PreAccInst, ExecBB);
+    MergePHI->addIncoming(Constant::getNullValue(AccInstTy), CondBB);
+
+    return MergePHI;
+  }
+}
+
+void IslNodeBuilder::preloadInvariantLoads() {
+
+  const auto &InvAccList = S.getInvariantAccesses();
+  if (InvAccList.empty())
+    return;
+
+  const Region &R = S.getRegion();
+
+  BasicBlock *PreLoadBB =
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
+  PreLoadBB->setName("polly.preload.begin");
+  Builder.SetInsertPoint(PreLoadBB->begin());
+
+  isl_ast_build *Build =
+      isl_ast_build_from_context(isl_set_universe(S.getParamSpace()));
+
+  for (const auto &IA : InvAccList) {
+    MemoryAccess *MA = IA.first;
+    assert(!MA->isImplicit());
+
+    isl_set *Domain = isl_set_copy(IA.second);
+    Instruction *AccInst = MA->getAccessInstruction();
+    Value *PreloadVal = preloadInvariantLoad(*MA, Domain, Build);
+    ValueMap[AccInst] = PreloadVal;
+
+    if (SE.isSCEVable(AccInst->getType())) {
+      isl_id *ParamId = S.getIdForParam(SE.getSCEV(AccInst));
+      if (ParamId)
+        IDToValue[ParamId] = PreloadVal;
+      isl_id_free(ParamId);
+    }
+
+    SmallVector<Instruction *, 4> Users;
+    for (auto *U : AccInst->users())
+      if (Instruction *UI = dyn_cast<Instruction>(U))
+        if (!R.contains(UI))
+          Users.push_back(UI);
+    for (auto *U : Users)
+      U->replaceUsesOfWith(AccInst, PreloadVal);
+
+    auto *SAI = S.getScopArrayInfo(MA->getBaseAddr());
+    for (auto *DerivedSAI : SAI->getDerivedSAIs())
+      DerivedSAI->setBasePtr(PreloadVal);
+  }
+
+  isl_ast_build_free(Build);
+}
+
 void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
 
   for (unsigned i = 0; i < isl_set_dim(Context, isl_dim_param); ++i) {

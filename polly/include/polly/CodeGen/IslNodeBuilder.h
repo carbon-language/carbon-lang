@@ -42,6 +42,9 @@ public:
   void addParameters(__isl_take isl_set *Context);
   void create(__isl_take isl_ast_node *Node);
 
+  /// @brief Preload all memory loads that are invariant.
+  void preloadInvariantLoads();
+
   /// @brief Finalize code generation for the SCoP @p S.
   ///
   /// @see BlockGenerator::finalizeSCoP(Scop &S)
@@ -190,6 +193,21 @@ protected:
   /// @param Mark The node we generate code for.
   virtual void createMark(__isl_take isl_ast_node *Marker);
   virtual void createFor(__isl_take isl_ast_node *For);
+
+  /// @brief Preload the memory load access @p MA.
+  ///
+  /// If @p MA is not always executed it will be conditionally loaded and
+  /// merged with undef from the same type. Hence, if @p MA is executed only
+  /// under condition C then the preload code will look like this:
+  ///
+  /// MA_preload = undef;
+  /// if (C)
+  ///   MA_preload = load MA;
+  /// use MA_preload
+  Value *preloadInvariantLoad(const MemoryAccess &MA,
+                              __isl_take isl_set *Domain,
+                              __isl_keep isl_ast_build *Build);
+
   void createForVector(__isl_take isl_ast_node *For, int VectorWidth);
   void createForSequential(__isl_take isl_ast_node *For);
 

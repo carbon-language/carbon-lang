@@ -146,8 +146,9 @@ public:
     auto SplitBlock = StartBlock->getSinglePredecessor();
     Builder.SetInsertPoint(SplitBlock->getTerminator());
     NodeBuilder.addParameters(S.getContext());
+    NodeBuilder.preloadInvariantLoads();
     Value *RTC = buildRTC(Builder, NodeBuilder.getExprBuilder());
-    SplitBlock->getTerminator()->setOperand(0, RTC);
+    Builder.GetInsertBlock()->getTerminator()->setOperand(0, RTC);
     Builder.SetInsertPoint(StartBlock->begin());
 
     NodeBuilder.create(AstRoot);

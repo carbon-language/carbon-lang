@@ -127,6 +127,9 @@ public:
   /// @brief Destructor to free the isl id of the base pointer.
   ~ScopArrayInfo();
 
+  /// @brief Set the base pointer to @p BP.
+  void setBasePtr(Value *BP) { BasePtr = BP; }
+
   /// @brief Return the base pointer.
   Value *getBasePtr() const { return BasePtr; }
 
@@ -690,6 +693,15 @@ public:
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
                               MemoryAccess::ReductionType RT);
 
+/// @brief Ordered list type to hold accesses.
+using MemoryAccessList = std::forward_list<MemoryAccess *>;
+
+/// @brief Type for invariant memory accesses and their domain context.
+using InvariantAccessTy = std::pair<MemoryAccess *, isl_set *>;
+
+/// @brief Type for multiple invariant memory accesses and their domain context.
+using InvariantAccessesTy = SmallVector<InvariantAccessTy, 8>;
+
 ///===----------------------------------------------------------------------===//
 /// @brief Statement of the Scop
 ///
@@ -700,9 +712,6 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
 /// At the moment every statement represents a single basic block of LLVM-IR.
 class ScopStmt {
 public:
-  /// @brief List to hold all (scalar) memory accesses mapped to an instruction.
-  using MemoryAccessList = std::forward_list<MemoryAccess *>;
-
   ScopStmt(const ScopStmt &) = delete;
   const ScopStmt &operator=(const ScopStmt &) = delete;
 
@@ -880,6 +889,9 @@ public:
   /// @brief Return true if this statement represents a whole region.
   bool isRegionStmt() const { return R != nullptr; }
 
+  /// @brief Return true if this statement does not contain any accesses.
+  bool isEmpty() const { return MemAccs.empty(); }
+
   /// @brief Return the (scalar) memory accesses for @p Inst.
   const MemoryAccessList &getAccessesFor(const Instruction *Inst) const {
     MemoryAccessList *MAL = lookupAccessesFor(Inst);
@@ -912,6 +924,13 @@ public:
     assert(BB && "Cannot set a block for a region statement");
     BB = Block;
   }
+
+  /// @brief Move the memory access in @p InvMAs to @p TargetList.
+  ///
+  /// Note that scalar accesses that are caused by any access in @p InvMAs will
+  /// be eliminated too.
+  void hoistMemoryAccesses(MemoryAccessList &InvMAs,
+                           InvariantAccessesTy &TargetList);
 
   typedef MemoryAccessVec::iterator iterator;
   typedef MemoryAccessVec::const_iterator const_iterator;
@@ -1023,7 +1042,7 @@ private:
   /// Max loop depth.
   unsigned MaxLoopDepth;
 
-  typedef std::deque<ScopStmt> StmtSet;
+  typedef std::list<ScopStmt> StmtSet;
   /// The statements in this Scop.
   StmtSet Stmts;
 
@@ -1130,6 +1149,9 @@ private:
   /// group to ensure the SCoP is executed in an alias free environment.
   MinMaxVectorPairVectorTy MinMaxAliasGroups;
 
+  /// @brief List of invariant accesses.
+  InvariantAccessesTy InvariantAccesses;
+
   /// @brief Scop constructor; invoked from ScopInfo::buildScop.
   Scop(Region &R, AccFuncMapType &AccFuncMap, ScalarEvolution &SE,
        DominatorTree &DT, isl_ctx *ctx, unsigned MaxLoopDepth);
@@ -1182,6 +1204,15 @@ private:
 
   /// @brief Add parameter constraints to @p C that imply a non-empty domain.
   __isl_give isl_set *addNonEmptyDomainConstraints(__isl_take isl_set *C) const;
+
+  /// @brief Simplify the SCoP representation
+  ///
+  /// At the moment we perform the following simplifications:
+  ///   - removal of empty statements (due to invariant load hoisting)
+  void simplifySCoP();
+
+  /// @brief Hoist all invariant memory loads.
+  void hoistInvariantLoads();
 
   /// @brief Build the Context of the Scop.
   void buildContext();
@@ -1312,6 +1343,11 @@ public:
   ///
   /// @return The maximum depth of the loop.
   inline unsigned getMaxLoopDepth() const { return MaxLoopDepth; }
+
+  /// @brief Return the set of invariant accesses.
+  const InvariantAccessesTy &getInvariantAccesses() const {
+    return InvariantAccesses;
+  }
 
   /// @brief Mark the SCoP as optimized by the scheduler.
   void markAsOptimized() { IsOptimized = true; }

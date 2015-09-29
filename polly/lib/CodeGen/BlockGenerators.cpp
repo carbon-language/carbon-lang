@@ -108,6 +108,8 @@ Value *BlockGenerator::getNewValue(ScopStmt &Stmt, const Value *Old,
     return const_cast<Value *>(Old);
 
   if (Value *New = GlobalMap.lookup(Old)) {
+    if (Value *NewRemapped = GlobalMap.lookup(New))
+      New = NewRemapped;
     if (Old->getType()->getScalarSizeInBits() <
         New->getType()->getScalarSizeInBits())
       New = Builder.CreateTruncOrBitCast(New, Old->getType());
@@ -226,6 +228,9 @@ Loop *BlockGenerator::getLoopForInst(const llvm::Instruction *Inst) {
 Value *BlockGenerator::generateScalarLoad(ScopStmt &Stmt, const LoadInst *Load,
                                           ValueMapT &BBMap, LoopToScevMapT &LTS,
                                           isl_id_to_ast_expr *NewAccesses) {
+  if (Value *PreloadLoad = GlobalMap.lookup(Load))
+    return PreloadLoad;
+
   const Value *Pointer = Load->getPointerOperand();
   Value *NewPointer =
       generateLocationAccessed(Stmt, Load, Pointer, BBMap, LTS, NewAccesses);
@@ -762,6 +767,12 @@ Value *VectorBlockGenerator::generateUnknownStrideLoad(
 void VectorBlockGenerator::generateLoad(
     ScopStmt &Stmt, const LoadInst *Load, ValueMapT &VectorMap,
     VectorValueMapT &ScalarMaps, __isl_keep isl_id_to_ast_expr *NewAccesses) {
+  if (Value *PreloadLoad = GlobalMap.lookup(Load)) {
+    VectorMap[Load] = Builder.CreateVectorSplat(getVectorWidth(), PreloadLoad,
+                                                Load->getName() + "_p");
+    return;
+  }
+
   if (!VectorType::isValidElementType(Load->getType())) {
     for (int i = 0; i < getVectorWidth(); i++)
       ScalarMaps[i][Load] =

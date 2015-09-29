@@ -28,8 +28,10 @@ bb4:                                              ; preds = %bb1
   ret void
 }
 
-; CHECK: %tmp_p_splat_one = load <1 x float>, <1 x float>* bitcast ([1024 x float]* @A to <1 x float>*), align 8, !alias.scope !0, !noalias !2
-; CHECK: %tmp_p_splat = shufflevector <1 x float> %tmp_p_splat_one, <1 x float> %tmp_p_splat_one, <4 x i32> zeroinitializer
-; CHECK: %0 = fpext <4 x float> %tmp_p_splat to <4 x double>
-; CHECK: store <4 x double> %0, <4 x double>* bitcast ([1024 x double]* @B to <4 x double>*), align 8, !alias.scope !3, !noalias !4
+; CHECK:   %.load = load float, float* getelementptr inbounds ([1024 x float], [1024 x float]* @A, i32 0, i32 0)
 
+; CHECK: polly.stmt.bb2:                                   ; preds = %polly.start
+; CHECK:   %tmp_p.splatinsert = insertelement <4 x float> undef, float %.load, i32 0
+; CHECK:   %tmp_p.splat = shufflevector <4 x float> %tmp_p.splatinsert, <4 x float> undef, <4 x i32> zeroinitializer
+; CHECK:   %0 = fpext <4 x float> %tmp_p.splat to <4 x double>
+; CHECK:   store <4 x double> %0, <4 x double>*

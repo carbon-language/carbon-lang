@@ -4,6 +4,11 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 %struct.wombat = type {[4 x i32]}
 
+; CHECK:      polly.preload.begin:
+; CHECK-NEXT:   %polly.access.B = getelementptr i32, i32* %B, i64 0
+; CHECK-NEXT:   %polly.access.B.load = load i32, i32* %polly.access.B
+; CHECK-NOT:    %polly.access.B.load = load i32, i32* %polly.access.B
+
 ; CHECK: polly.stmt.bb3.entry:                             ; preds = %polly.start
 ; CHECK:   br label %polly.stmt.bb3
 
@@ -14,8 +19,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 ; CHECK:   br label %polly.stmt.bb13.exit
 
 ; CHECK: polly.stmt.bb5:                                   ; preds = %polly.stmt.bb3
-; CHECK:   %tmp7_p_scalar_ = load i32, i32* %B, !alias.scope !0, !noalias !2
-; CHECK:   store i32 %tmp7_p_scalar_, i32* %polly.access.cast.arg1, !alias.scope !3, !noalias !4
+; CHECK:   store i32 %polly.access.B.load, i32* %polly.access.cast.arg2
 ; CHECK:   br label %polly.stmt.bb13.exit
 
 ; Function Attrs: nounwind uwtable

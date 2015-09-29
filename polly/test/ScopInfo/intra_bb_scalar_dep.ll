@@ -14,6 +14,9 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 
 ; Function Attrs: nounwind
+; CHECK:      Invariant Accesses:
+; CHECK-NEXT:     ReadAccess :=  [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:          [N] -> { Stmt_for_j[i0, i1] -> MemRef_init_ptr[0] };
 define void @f(i64* noalias %A, i64 %N, i64* noalias %init_ptr) #0 {
 entry:
   br label %for.i
@@ -32,11 +35,12 @@ for.j:                                            ; preds = %for.j, %entry.next
   %init_plus_two = add i64 %init, 2
   %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init_plus_two, i64* %scevgep
-; CHECK-LABEL: Stmt_for_j
-; CHECK:           ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:          [N] -> { Stmt_for_j[i0, i1] -> MemRef_init_ptr[0] };
-; CHECK:           MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:          [N] -> { Stmt_for_j[i0, i1] -> MemRef_A[i1] };
+; CHECK:      Statements {
+; CHECK-NEXT:   Stmt_for_j
+; CHECK-NOT:     ReadAccess
+; CHECK:         MustWriteAccess := [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:            [N] -> { Stmt_for_j[i0, i1] -> MemRef_A[i1] };
+; CHECK-NEXT:  }
   %indvar.j.next = add nsw i64 %indvar.j, 1
   %exitcond.j = icmp eq i64 %indvar.j.next, %N
   br i1 %exitcond.j, label %for.i.end, label %for.j

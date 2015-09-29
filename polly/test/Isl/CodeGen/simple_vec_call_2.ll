@@ -24,19 +24,13 @@ return:
   ret void
 }
 
-; CHECK: %value_p_splat_one = load <1 x float>, <1 x float>* bitcast ([1024 x float]* @A to <1 x float>*), align 8
-; CHECK: %value_p_splat = shufflevector <1 x float> %value_p_splat_one, <1 x float> %value_p_splat_one, <4 x i32> zeroinitializer
-; CHECK: %0 = extractelement <4 x float> %value_p_splat, i32 0
-; CHECK: %1 = extractelement <4 x float> %value_p_splat, i32 1
-; CHECK: %2 = extractelement <4 x float> %value_p_splat, i32 2
-; CHECK: %3 = extractelement <4 x float> %value_p_splat, i32 3
-; CHECK: [[RES1:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %0) [[NUW:#[0-9]+]]
-; CHECK: [[RES2:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %1) [[NUW]]
-; CHECK: [[RES3:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %2) [[NUW]]
-; CHECK: [[RES4:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %3) [[NUW]]
-; CHECK: %4 = insertelement <4 x float**> undef, float** %p_result, i32 0
-; CHECK: %5 = insertelement <4 x float**> %4, float** %p_result1, i32 1
-; CHECK: %6 = insertelement <4 x float**> %5, float** %p_result2, i32 2
-; CHECK: %7 = insertelement <4 x float**> %6, float** %p_result3, i32 3
-; CHECK: store <4 x float**> %7, <4 x float**>* bitcast ([1024 x float**]* @B to <4 x float**>*), align
+; CHECK: [[RES1:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %.load) [[NUW:#[0-9]+]]
+; CHECK: [[RES2:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %.load) [[NUW]]
+; CHECK: [[RES3:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %.load) [[NUW]]
+; CHECK: [[RES4:%[a-zA-Z0-9_]+]] = tail call float** @foo(float %.load) [[NUW]]
+; CHECK: %0 = insertelement <4 x float**> undef, float** %p_result, i32 0
+; CHECK: %1 = insertelement <4 x float**> %0, float** %p_result1, i32 1
+; CHECK: %2 = insertelement <4 x float**> %1, float** %p_result2, i32 2
+; CHECK: %3 = insertelement <4 x float**> %2, float** %p_result3, i32 3
+; CHECK: store <4 x float**> %3, <4 x float**>* bitcast ([1024 x float**]* @B to <4 x float**>*), align
 ; CHECK: attributes [[NUW]] = { nounwind }

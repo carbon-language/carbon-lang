@@ -21,6 +21,7 @@ entry:
 
 for.0:
   %Scalar0.val = load i32, i32* %Scalar0
+  store i32 1, i32* %Scalar0
   br i1 false, label %for.0, label %for.1.preheader
 
 for.1.preheader:

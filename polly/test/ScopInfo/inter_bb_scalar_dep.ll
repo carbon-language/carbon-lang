@@ -14,6 +14,10 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 
 ; Function Attrs: nounwind
+; CHECK: Invariant
+; CHECK:           ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:          MemRef_init_ptr[0]
+
 define void @f(i64* noalias %A, i64 %N, i64* noalias %init_ptr) #0 {
 entry:
   br label %for.i
@@ -25,11 +29,7 @@ for.i:                                            ; preds = %for.i.end, %entry
 
 entry.next:                                       ; preds = %for.i
   %init = load i64, i64* %init_ptr
-; CHECK-LABEL: Stmt_entry_next
-; CHECK:           ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:          [N] -> { Stmt_entry_next[i0] -> MemRef_init_ptr[0] };
-; CHECK:           MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK-NEXT:          [N] -> { Stmt_entry_next[i0] -> MemRef_init[] };
+; CHECK-NOT: Stmt_entry_next
   br label %for.j
 
 for.j:                                            ; preds = %for.j, %entry.next

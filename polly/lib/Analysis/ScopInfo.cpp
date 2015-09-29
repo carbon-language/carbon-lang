@@ -1350,6 +1350,46 @@ void ScopStmt::print(raw_ostream &OS) const {
 
 void ScopStmt::dump() const { print(dbgs()); }
 
+void ScopStmt::hoistMemoryAccesses(MemoryAccessList &InvMAs,
+                                   InvariantAccessesTy &TargetList) {
+
+  // Remove all memory accesses in @p InvMAs from this statement together
+  // with all scalar accesses that were caused by them. The tricky iteration
+  // order uses is needed because the MemAccs is a vector and the order in
+  // which the accesses of each memory access list (MAL) are stored in this
+  // vector is reversed.
+  for (MemoryAccess *MA : InvMAs) {
+    auto &MAL = *lookupAccessesFor(MA->getAccessInstruction());
+    MAL.reverse();
+
+    auto MALIt = MAL.begin();
+    auto MALEnd = MAL.end();
+    auto MemAccsIt = MemAccs.begin();
+    while (MALIt != MALEnd) {
+      while (*MemAccsIt != *MALIt)
+        MemAccsIt++;
+
+      MALIt++;
+      MemAccs.erase(MemAccsIt);
+    }
+
+    InstructionToAccess.erase(MA->getAccessInstruction());
+    delete &MAL;
+  }
+
+  // Get the context under which this statement, hence the memory accesses, are
+  // executed.
+  isl_set *DomainCtx = isl_set_params(getDomain());
+  DomainCtx = isl_set_remove_redundancies(DomainCtx);
+  DomainCtx = isl_set_detect_equalities(DomainCtx);
+  DomainCtx = isl_set_coalesce(DomainCtx);
+
+  for (MemoryAccess *MA : InvMAs)
+    TargetList.push_back(std::make_pair(MA, isl_set_copy(DomainCtx)));
+
+  isl_set_free(DomainCtx);
+}
+
 //===----------------------------------------------------------------------===//
 /// Scop class implement
 
@@ -2268,6 +2308,9 @@ void Scop::init(LoopInfo &LI, ScopDetection &SD, AliasAnalysis &AA) {
   buildBoundaryContext();
   simplifyContexts();
   buildAliasChecks(AA);
+
+  hoistInvariantLoads();
+  simplifySCoP();
 }
 
 Scop::~Scop() {
@@ -2290,12 +2333,90 @@ Scop::~Scop() {
       isl_pw_multi_aff_free(MMA.second);
     }
   }
+
+  for (const auto &IA : InvariantAccesses)
+    isl_set_free(IA.second);
 }
 
 void Scop::updateAccessDimensionality() {
   for (auto &Stmt : *this)
     for (auto &Access : Stmt)
       Access->updateDimensionality();
+}
+
+void Scop::simplifySCoP() {
+
+  for (auto StmtIt = Stmts.begin(), StmtEnd = Stmts.end(); StmtIt != StmtEnd;) {
+    ScopStmt &Stmt = *StmtIt;
+
+    if (!StmtIt->isEmpty()) {
+      StmtIt++;
+      continue;
+    }
+
+    if (Stmt.isRegionStmt())
+      for (BasicBlock *BB : Stmt.getRegion()->blocks())
+        StmtMap.erase(BB);
+    else
+      StmtMap.erase(Stmt.getBasicBlock());
+
+    StmtIt = Stmts.erase(StmtIt);
+  }
+}
+
+void Scop::hoistInvariantLoads() {
+  isl_union_map *Writes = getWrites();
+  for (ScopStmt &Stmt : *this) {
+
+    // TODO: Loads that are not loop carried, hence are in a statement with
+    //       zero iterators, are by construction invariant, though we
+    //       currently "hoist" them anyway.
+
+    isl_set *Domain = Stmt.getDomain();
+    MemoryAccessList InvMAs;
+
+    for (MemoryAccess *MA : Stmt) {
+      if (MA->isImplicit() || MA->isWrite() || !MA->isAffine())
+        continue;
+
+      isl_map *AccessRelation = MA->getAccessRelation();
+      if (isl_map_involves_dims(AccessRelation, isl_dim_in, 0,
+                                Stmt.getNumIterators())) {
+        isl_map_free(AccessRelation);
+        continue;
+      }
+
+      AccessRelation =
+          isl_map_intersect_domain(AccessRelation, isl_set_copy(Domain));
+      isl_set *AccessRange = isl_map_range(AccessRelation);
+
+      isl_union_map *Written = isl_union_map_intersect_range(
+          isl_union_map_copy(Writes), isl_union_set_from_set(AccessRange));
+      bool IsWritten = !isl_union_map_is_empty(Written);
+      isl_union_map_free(Written);
+
+      if (IsWritten)
+        continue;
+
+      InvMAs.push_front(MA);
+    }
+
+    // We inserted invariant accesses always in the front but need them to be
+    // sorted in a "natural order". The statements are already sorted in reverse
+    // post order and that suffices for the accesses too. The reason we require
+    // an order in the first place is the dependences between invariant loads
+    // that can be caused by indirect loads.
+    InvMAs.reverse();
+
+    // Transfer the memory access from the statement to the SCoP.
+    Stmt.hoistMemoryAccesses(InvMAs, InvariantAccesses);
+
+    isl_set_free(Domain);
+  }
+  isl_union_map_free(Writes);
+
+  if (!InvariantAccesses.empty())
+    IsOptimized = true;
 }
 
 const ScopArrayInfo *
@@ -2478,6 +2599,12 @@ void Scop::print(raw_ostream &OS) const {
                << "\n";
   OS.indent(4) << "Region: " << getNameStr() << "\n";
   OS.indent(4) << "Max Loop Depth:  " << getMaxLoopDepth() << "\n";
+  OS.indent(4) << "Invariant Accesses: {\n";
+  for (const auto &IA : InvariantAccesses) {
+    IA.first->print(OS);
+    OS.indent(12) << "Execution Context: " << IA.second << "\n";
+  }
+  OS.indent(4) << "}\n";
   printContext(OS.indent(4));
   printArrayInfo(OS.indent(4));
   printAliasAssumptions(OS);

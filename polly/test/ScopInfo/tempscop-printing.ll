@@ -14,6 +14,10 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 
 ; CHECK-LABEL: Function: f
+; CHECK:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:         MemRef_init_ptr[0]
+; CHECK-NEXT:     Execution Context: [N] -> {  : N >= 1 or N <= -1 }
+
 define void @f(i64* noalias %A, i64 %N, i64* noalias %init_ptr) nounwind {
 entry:
   br label %for.i
@@ -24,12 +28,8 @@ for.i:
   br label %entry.next
 
 entry.next:
-; CHECK:      Stmt_entry_next
+; CHECK-NOT:      Stmt_entry_next
   %init = load i64, i64* %init_ptr
-; CHECK:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:         [N] -> { Stmt_entry_next[i0] -> MemRef_init_ptr[0] };
-; CHECK:          MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK-NEXT:         [N] -> { Stmt_entry_next[i0] -> MemRef_init[] };
   br label %for.j
 
 for.j:
@@ -55,6 +55,9 @@ return:
 }
 
 ; CHECK-LABEL: Function: g
+; CHECK:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:         MemRef_init_ptr[0]
+; CHECK-NEXT:     Execution Context: [N] -> {  : N >= 1 or N <= -1 }
 define void @g(i64* noalias %A, i64 %N, i64* noalias %init_ptr) nounwind {
 entry:
   br label %for.i
@@ -65,12 +68,8 @@ for.i:
   br label %entry.next
 
 entry.next:
-; CHECK:      Stmt_entry_next
+; CHECK-NOT:      Stmt_entry_next
   %init = load i64, i64* %init_ptr
-; CHECK:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:         [N] -> { Stmt_entry_next[i0] -> MemRef_init_ptr[0] };
-; CHECK:          MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK-NEXT:         [N] -> { Stmt_entry_next[i0] -> MemRef_init[] };
   br label %for.j
 
 for.j:
