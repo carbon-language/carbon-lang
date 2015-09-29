@@ -99,13 +99,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   // Parse command line options.
   opt::InputArgList Args = Parser.parse(ArgsArr);
 
-  // Handle -o
   if (auto *Arg = Args.getLastArg(OPT_output))
     Config->OutputFile = Arg->getValue();
-  if (Config->OutputFile.empty())
-    error("-o must be specified.");
 
-  // Handle -dynamic-linker
   if (auto *Arg = Args.getLastArg(OPT_dynamic_linker))
     Config->DynamicLinker = Arg->getValue();
 

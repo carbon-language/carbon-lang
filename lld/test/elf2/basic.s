@@ -1,8 +1,14 @@
+# REQUIRES: x86
+
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
 # RUN: lld -flavor gnu2 %t -o %t2
 # RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
 # RUN:   | FileCheck %s
-# REQUIRES: x86
+
+# RUN: mkdir -p %t.dir
+# RUN: (cd %t.dir && lld -flavor gnu2 %t)
+# RUN: llvm-readobj -file-headers -sections -program-headers -symbols \
+# RUN:   %t.dir/a.out | FileCheck %s
 
 # exits with return code 42 on linux
 .globl _start;
@@ -180,9 +186,6 @@ _start:
 # RUN: lld -flavor gnu2 %t @%t.responsefile
 # RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
 # RUN:   | FileCheck %s
-
-# RUN: not lld -flavor gnu2 %t 2>&1 | FileCheck --check-prefix=NO_O %s
-# NO_O: -o must be specified.
 
 # RUN: not lld -flavor gnu2 %t.foo -o %t2 2>&1 | \
 # RUN:  FileCheck --check-prefix=MISSING %s

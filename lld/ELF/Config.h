@@ -18,7 +18,7 @@ namespace lld {
 namespace elf2 {
 
 struct Configuration {
-  llvm::StringRef OutputFile;
+  llvm::StringRef OutputFile = "a.out";
   llvm::StringRef DynamicLinker;
   std::string RPath;
   std::vector<llvm::StringRef> InputSearchPaths;
