@@ -2,6 +2,9 @@
 
 typedef __typeof(sizeof(0)) size_t;
 
+// Declare the reserved global placement new.
+void *operator new(size_t, void*);
+
 // This just shouldn't crash.
 namespace test0 {
   struct allocator {
@@ -524,6 +527,23 @@ namespace test11 {
   // CHECK:      br label
   // CHECK:      resume
   //   (After this is a terminate landingpad.)
+}
+
+namespace test12 {
+  struct A {
+    void operator delete(void *, void *);
+    A();
+  };
+
+  A *test(void *ptr) {
+    return new (ptr) A();
+  }
+  // CHECK-LABEL: define {{.*}} @_ZN6test124testEPv(
+  // CHECK:       [[PTR:%.*]] = load i8*, i8*
+  // CHECK-NEXT:  [[CAST:%.*]] = bitcast i8* [[PTR]] to [[A:%.*]]*
+  // CHECK-NEXT:  invoke void @_ZN6test121AC1Ev([[A]]* [[CAST]])
+  // CHECK:       ret [[A]]* [[CAST]]
+  // CHECK:       invoke void @_ZN6test121AdlEPvS1_(i8* [[PTR]], i8* [[PTR]])
 }
 
 // CHECK: attributes [[NI_NR_NUW]] = { noinline noreturn nounwind }
