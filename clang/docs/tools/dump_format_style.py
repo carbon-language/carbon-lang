@@ -36,13 +36,34 @@ class Option:
     self.type = type
     self.comment = comment.strip()
     self.enum = None
+    self.nested_struct = None
 
   def __str__(self):
     s = '**%s** (``%s``)\n%s' % (self.name, self.type,
                                  doxygen2rst(indent(self.comment, 2)))
     if self.enum:
       s += indent('\n\nPossible values:\n\n%s\n' % self.enum, 2)
+    if self.nested_struct:
+      s += indent('\n\nNested configuration flags:\n\n%s\n' %self.nested_struct,
+                  2)
     return s
+
+class NestedStruct:
+  def __init__(self, name, comment):
+    self.name = name
+    self.comment = comment.strip()
+    self.values = []
+
+  def __str__(self):
+    return '\n'.join(map(str, self.values))
+
+class NestedField:
+  def __init__(self, name, comment):
+    self.name = name
+    self.comment = comment.strip()
+
+  def __str__(self):
+    return '* ``%s`` %s' % (self.name, doxygen2rst(self.comment))
 
 class Enum:
   def __init__(self, name, comment):
@@ -69,14 +90,16 @@ def clean_comment_line(line):
 
 def read_options(header):
   class State:
-    BeforeStruct, Finished, InStruct, InFieldComment, InEnum, \
-    InEnumMemberComment = range(6)
+    BeforeStruct, Finished, InStruct, InNestedStruct, InNestedFieldComent, \
+    InFieldComment, InEnum, InEnumMemberComment = range(8)
   state = State.BeforeStruct
 
   options = []
   enums = {}
+  nested_structs = {}
   comment = ''
   enum = None
+  nested_struct = None
 
   for line in header:
     line = line.strip()
@@ -97,13 +120,33 @@ def read_options(header):
         state = State.InEnum
         name = re.sub(r'enum\s+(\w+)\s*\{', '\\1', line)
         enum = Enum(name, comment)
+      elif line.startswith('struct'):
+        state = State.InNestedStruct
+        name = re.sub(r'struct\s+(\w+)\s*\{', '\\1', line)
+        nested_struct = NestedStruct(name, comment)
       elif line.endswith(';'):
         state = State.InStruct
-        field_type, field_name = re.match(r'([<>:\w]+)\s+(\w+);', line).groups()
+        field_type, field_name = re.match(r'([<>:\w(,\s)]+)\s+(\w+);',
+                                          line).groups()
         option = Option(str(field_name), str(field_type), comment)
         options.append(option)
       else:
         raise Exception('Invalid format, expected comment, field or enum')
+    elif state == State.InNestedStruct:
+      if line.startswith('///'):
+        state = State.InNestedFieldComent
+        comment = clean_comment_line(line)
+      elif line == '};':
+        state = State.InStruct
+        nested_structs[nested_struct.name] = nested_struct
+      else:
+        raise Exception('Invalid format, expected struct field comment or };')
+    elif state == State.InNestedFieldComent:
+      if line.startswith('///'):
+        comment += clean_comment_line(line)
+      else:
+        state = State.InNestedStruct
+        nested_struct.values.append(NestedField(line.replace(';', ''), comment))
     elif state == State.InEnum:
       if line.startswith('///'):
         state = State.InEnumMemberComment
@@ -124,9 +167,12 @@ def read_options(header):
 
   for option in options:
     if not option.type in ['bool', 'unsigned', 'int', 'std::string',
-                           'std::vector<std::string>']:
+                           'std::vector<std::string>',
+                           'std::vector<std::pair<std::string, unsigned>>']:
       if enums.has_key(option.type):
         option.enum = enums[option.type]
+      elif nested_structs.has_key(option.type):
+        option.nested_struct = nested_structs[option.type];
       else:
         raise Exception('Unknown type: %s' % option.type)
   return options

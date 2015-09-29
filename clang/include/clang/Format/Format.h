@@ -178,11 +178,45 @@ struct FormatStyle {
     /// or other definitions.
     BS_GNU,
     /// Like ``Attach``, but break before functions.
-    BS_WebKit
+    BS_WebKit,
+    /// Configure each individual brace in \c BraceWrapping.
+    BS_Custom
   };
 
   /// \brief The brace breaking style to use.
   BraceBreakingStyle BreakBeforeBraces;
+
+  /// \brief Precise control over the wrapping of braces.
+  struct BraceWrappingFlags {
+    /// \brief Wrap class definitions.
+    bool AfterClass;
+    /// \brief Wrap control statements (if/for/while/switch/..).
+    bool AfterControlStatement;
+    /// \brief Wrap enum definitions.
+    bool AfterEnum;
+    /// \brief Wrap function definitions.
+    bool AfterFunction;
+    /// \brief Wrap namespace definitions.
+    bool AfterNamespace;
+    /// \brief Wrap ObjC definitions (@autoreleasepool, interfaces, ..).
+    bool AfterObjCDeclaration;
+    /// \brief Wrap struct definitions.
+    bool AfterStruct;
+    /// \brief Wrap union definitions.
+    bool AfterUnion;
+    /// \brief Wrap before \c catch.
+    bool BeforeCatch;
+    /// \brief Wrap before \c else.
+    bool BeforeElse;
+    /// \brief Indent the wrapped braces themselves.
+    bool IndentBraces;
+  };
+
+  /// \brief Control of individual brace wrapping cases.
+  ///
+  /// If \c BreakBeforeBraces is set to \c custom, use this to specify how each
+  /// individual brace case should be handled. Otherwise, this is ignored.
+  BraceWrappingFlags BraceWrapping;
 
   /// \brief If \c true, ternary operators will be placed after line breaks.
   bool BreakBeforeTernaryOperators;

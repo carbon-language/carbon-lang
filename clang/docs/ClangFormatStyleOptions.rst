@@ -252,6 +252,27 @@ the configuration (without a prefix: ``Auto``).
   If ``false``, a function declaration's or function definition's
   parameters will either all be on the same line or will have one line each.
 
+**BraceWrapping** (``BraceWrappingFlags``)
+  Control of individual brace wrapping cases.
+
+  If ``BreakBeforeBraces`` is set to ``custom``, use this to specify how each
+  individual brace case should be handled. Otherwise, this is ignored.
+
+  Nested configuration flags:
+
+  * ``bool AfterClass`` Wrap class definitions.
+  * ``bool AfterControlStatement`` Wrap control statements (if/for/while/switch/..).
+  * ``bool AfterEnum`` Wrap enum definitions.
+  * ``bool AfterFunction`` Wrap function definitions.
+  * ``bool AfterNamespace`` Wrap namespace definitions.
+  * ``bool AfterObjCDeclaration`` Wrap ObjC definitions (@autoreleasepool, interfaces, ..).
+  * ``bool AfterStruct`` Wrap struct definitions.
+  * ``bool AfterUnion`` Wrap union definitions.
+  * ``bool BeforeCatch`` Wrap before ``catch``.
+  * ``bool BeforeElse`` Wrap before ``else``.
+  * ``bool IndentBraces`` Indent the wrapped braces themselves.
+
+
 **BreakBeforeBinaryOperators** (``BinaryOperatorStyle``)
   The way to wrap binary operators.
 
@@ -288,6 +309,8 @@ the configuration (without a prefix: ``Auto``).
     or other definitions.
   * ``BS_WebKit`` (in configuration: ``WebKit``)
     Like ``Attach``, but break before functions.
+  * ``BS_Custom`` (in configuration: ``Custom``)
+    Configure each individual brace in ``BraceWrapping``.
 
 
 **BreakBeforeTernaryOperators** (``bool``)
@@ -364,6 +387,21 @@ the configuration (without a prefix: ``Auto``).
   \endcode
 
   For example: BOOST_FOREACH.
+
+**IncludeCategories** (``std::vector<std::pair<std::string, unsigned>>``)
+  Regular expressions denoting the different #include categories used
+  for ordering #includes.
+
+  These regular expressions are matched against the filename of an include
+  (including the <> or "") in order. The value belonging to the first
+  matching regular expression is assigned and #includes are sorted first
+  according to increasing category number and then alphabetically within
+  each category.
+
+  If none of the regular expressions match, UINT_MAX is assigned as
+  category. The main header for a source file automatically gets category 0,
+  so that it is kept at the beginning of the #includes
+  (http://llvm.org/docs/CodingStandards.html#include-style).
 
 **IndentCaseLabels** (``bool``)
   Indent case labels one level from the switch statement.

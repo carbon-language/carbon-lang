@@ -99,11 +99,14 @@ template <> struct ScalarEnumerationTraits<FormatStyle::BraceBreakingStyle> {
     IO.enumCase(Value, "Allman", FormatStyle::BS_Allman);
     IO.enumCase(Value, "GNU", FormatStyle::BS_GNU);
     IO.enumCase(Value, "WebKit", FormatStyle::BS_WebKit);
+    IO.enumCase(Value, "Custom", FormatStyle::BS_Custom);
   }
 };
 
-template <> struct ScalarEnumerationTraits<FormatStyle::DefinitionReturnTypeBreakingStyle> {
-  static void enumeration(IO &IO, FormatStyle::DefinitionReturnTypeBreakingStyle &Value) {
+template <>
+struct ScalarEnumerationTraits<FormatStyle::DefinitionReturnTypeBreakingStyle> {
+  static void
+  enumeration(IO &IO, FormatStyle::DefinitionReturnTypeBreakingStyle &Value) {
     IO.enumCase(Value, "None", FormatStyle::DRTBS_None);
     IO.enumCase(Value, "All", FormatStyle::DRTBS_All);
     IO.enumCase(Value, "TopLevel", FormatStyle::DRTBS_TopLevel);
@@ -221,6 +224,7 @@ template <> struct MappingTraits<FormatStyle> {
                    Style.AlwaysBreakTemplateDeclarations);
     IO.mapOptional("BinPackArguments", Style.BinPackArguments);
     IO.mapOptional("BinPackParameters", Style.BinPackParameters);
+    IO.mapOptional("BraceWrapping", Style.BraceWrapping);
     IO.mapOptional("BreakBeforeBinaryOperators",
                    Style.BreakBeforeBinaryOperators);
     IO.mapOptional("BreakBeforeBraces", Style.BreakBeforeBraces);
@@ -285,6 +289,22 @@ template <> struct MappingTraits<FormatStyle> {
   }
 };
 
+template <> struct MappingTraits<FormatStyle::BraceWrappingFlags> {
+  static void mapping(IO &IO, FormatStyle::BraceWrappingFlags &Wrapping) {
+    IO.mapOptional("AfterClass", Wrapping.AfterClass);
+    IO.mapOptional("AfterControlStatement", Wrapping.AfterControlStatement);
+    IO.mapOptional("AfterEnum", Wrapping.AfterEnum);
+    IO.mapOptional("AfterFunction", Wrapping.AfterFunction);
+    IO.mapOptional("AfterNamespace", Wrapping.AfterNamespace);
+    IO.mapOptional("AfterObjCDeclaration", Wrapping.AfterObjCDeclaration);
+    IO.mapOptional("AfterStruct", Wrapping.AfterStruct);
+    IO.mapOptional("AfterUnion", Wrapping.AfterUnion);
+    IO.mapOptional("BeforeCatch", Wrapping.BeforeCatch);
+    IO.mapOptional("BeforeElse", Wrapping.BeforeElse);
+    IO.mapOptional("IndentBraces", Wrapping.IndentBraces);
+  }
+};
+
 // Allows to read vector<FormatStyle> while keeping default values.
 // IO.getContext() should contain a pointer to the FormatStyle structure, that
 // will be used to get default values for missing keys.
@@ -338,6 +358,53 @@ std::string ParseErrorCategory::message(int EV) const {
     return "Unsuitable";
   }
   llvm_unreachable("unexpected parse error");
+}
+
+static FormatStyle expandPresets(const FormatStyle &Style) {
+  FormatStyle Expanded = Style;
+  Expanded.BraceWrapping = {false, false, false, false, false, false,
+                            false, false, false, false, false};
+  switch (Style.BreakBeforeBraces) {
+  case FormatStyle::BS_Linux:
+    Expanded.BraceWrapping.AfterClass = true;
+    Expanded.BraceWrapping.AfterFunction = true;
+    Expanded.BraceWrapping.AfterNamespace = true;
+    Expanded.BraceWrapping.BeforeElse = true;
+    break;
+  case FormatStyle::BS_Mozilla:
+    Expanded.BraceWrapping.AfterClass = true;
+    Expanded.BraceWrapping.AfterEnum = true;
+    Expanded.BraceWrapping.AfterFunction = true;
+    Expanded.BraceWrapping.AfterStruct = true;
+    Expanded.BraceWrapping.AfterUnion = true;
+    break;
+  case FormatStyle::BS_Stroustrup:
+    Expanded.BraceWrapping.AfterFunction = true;
+    Expanded.BraceWrapping.BeforeCatch = true;
+    Expanded.BraceWrapping.BeforeElse = true;
+    break;
+  case FormatStyle::BS_Allman:
+    Expanded.BraceWrapping.AfterClass = true;
+    Expanded.BraceWrapping.AfterControlStatement = true;
+    Expanded.BraceWrapping.AfterEnum = true;
+    Expanded.BraceWrapping.AfterFunction = true;
+    Expanded.BraceWrapping.AfterNamespace = true;
+    Expanded.BraceWrapping.AfterObjCDeclaration = true;
+    Expanded.BraceWrapping.AfterStruct = true;
+    Expanded.BraceWrapping.BeforeCatch = true;
+    Expanded.BraceWrapping.BeforeElse = true;
+    break;
+  case FormatStyle::BS_GNU:
+    Expanded.BraceWrapping = {true, true, true, true, true, true,
+                              true, true, true, true, true};
+    break;
+  case FormatStyle::BS_WebKit:
+    Expanded.BraceWrapping.AfterFunction = true;
+    break;
+  default:
+    break;
+  }
+  return Expanded;
 }
 
 FormatStyle getLLVMStyle() {
@@ -615,7 +682,7 @@ std::string configurationAsText(const FormatStyle &Style) {
   llvm::yaml::Output Output(Stream);
   // We use the same mapping method for input and output, so we need a non-const
   // reference here.
-  FormatStyle NonConstStyle = Style;
+  FormatStyle NonConstStyle = expandPresets(Style);
   Output << NonConstStyle;
   return Stream.str();
 }
@@ -1709,9 +1776,10 @@ tooling::Replacements reformat(const FormatStyle &Style,
                                SourceManager &SourceMgr, FileID ID,
                                ArrayRef<CharSourceRange> Ranges,
                                bool *IncompleteFormat) {
-  if (Style.DisableFormat)
+  FormatStyle Expanded = expandPresets(Style);
+  if (Expanded.DisableFormat)
     return tooling::Replacements();
-  Formatter formatter(Style, SourceMgr, ID, Ranges);
+  Formatter formatter(Expanded, SourceMgr, ID, Ranges);
   return formatter.format(IncompleteFormat);
 }
 

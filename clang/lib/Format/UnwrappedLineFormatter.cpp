@@ -199,12 +199,12 @@ private:
       return MergeShortFunctions ? tryMergeSimpleBlock(I, E, Limit) : 0;
     }
     if (TheLine->Last->is(tok::l_brace)) {
-      return Style.BreakBeforeBraces == FormatStyle::BS_Attach
+      return !Style.BraceWrapping.AfterFunction
                  ? tryMergeSimpleBlock(I, E, Limit)
                  : 0;
     }
     if (I[1]->First->is(TT_FunctionLBrace) &&
-        Style.BreakBeforeBraces != FormatStyle::BS_Attach) {
+        Style.BraceWrapping.AfterFunction) {
       if (I[1]->Last->is(TT_LineComment))
         return 0;
 
@@ -263,8 +263,7 @@ private:
       SmallVectorImpl<AnnotatedLine *>::const_iterator E, unsigned Limit) {
     if (Limit == 0)
       return 0;
-    if ((Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
-         Style.BreakBeforeBraces == FormatStyle::BS_GNU) &&
+    if (Style.BraceWrapping.AfterControlStatement &&
         (I[1]->First->is(tok::l_brace) && !Style.AllowShortBlocksOnASingleLine))
       return 0;
     if (I[1]->InPPDirective != (*I)->InPPDirective ||
