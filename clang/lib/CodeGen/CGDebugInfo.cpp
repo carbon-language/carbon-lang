@@ -1680,9 +1680,9 @@ CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod,
   // nullptr if the "Module" is a PCH, which is safe because we don't
   // support chained PCH debug info, so there can only be a single PCH.
   const Module *M = Mod.getModuleOrNull();
-  auto &ModRef = ModuleCache[M];
-  if (ModRef)
-    return cast<llvm::DIModule>(ModRef);
+  auto ModRef = ModuleCache.find(M);
+  if (ModRef != ModuleCache.end())
+    return cast<llvm::DIModule>(ModRef->second);
 
   // Macro definitions that were defined with "-D" on the command line.
   SmallString<128> ConfigMacros;
@@ -1724,7 +1724,7 @@ CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod,
   llvm::DIModule *DIMod =
       DBuilder.createModule(Parent, Mod.getModuleName(), ConfigMacros,
                             Mod.getPath(), CGM.getHeaderSearchOpts().Sysroot);
-  ModRef.reset(DIMod);
+  ModuleCache[M].reset(DIMod);
   return DIMod;
 }
 
