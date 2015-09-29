@@ -58,12 +58,12 @@ static cl::opt<unsigned> DomConditionsMaxDepth("dom-conditions-max-depth",
 /// conditions?
 static cl::opt<unsigned> DomConditionsMaxDomBlocks("dom-conditions-dom-blocks",
                                                    cl::Hidden,
-                                                   cl::init(20000));
+                                                   cl::init(20));
 
 // Controls the number of uses of the value searched for possible
 // dominating comparisons.
 static cl::opt<unsigned> DomConditionsMaxUses("dom-conditions-max-uses",
-                                              cl::Hidden, cl::init(2000));
+                                              cl::Hidden, cl::init(20));
 
 // If true, don't consider only compares whose only use is a branch.
 static cl::opt<bool> DomConditionsSingleCmpUse("dom-conditions-single-cmp-use",
