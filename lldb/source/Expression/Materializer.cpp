@@ -109,11 +109,11 @@ public:
         
         // Clear the flag if the variable will never be deallocated.
         
-        if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVKeepInTarget)
+        if (m_persistent_variable_sp->m_flags & ExpressionVariable::EVKeepInTarget)
         {
             Error leak_error;
             map.Leak(mem, leak_error);
-            m_persistent_variable_sp->m_flags &= ~ClangExpressionVariable::EVNeedsAllocation;
+            m_persistent_variable_sp->m_flags &= ~ExpressionVariable::EVNeedsAllocation;
         }
         
         // Write the contents of the variable to the area.
@@ -161,17 +161,17 @@ public:
                         m_persistent_variable_sp->m_flags);
         }
         
-        if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVNeedsAllocation)
+        if (m_persistent_variable_sp->m_flags & ExpressionVariable::EVNeedsAllocation)
         {
             MakeAllocation(map, err);
-            m_persistent_variable_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
+            m_persistent_variable_sp->m_flags |= ExpressionVariable::EVIsLLDBAllocated;
             
             if (!err.Success())
                 return;
         }
         
-        if ((m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVIsProgramReference && m_persistent_variable_sp->m_live_sp) ||
-            m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated)
+        if ((m_persistent_variable_sp->m_flags & ExpressionVariable::EVIsProgramReference && m_persistent_variable_sp->m_live_sp) ||
+            m_persistent_variable_sp->m_flags & ExpressionVariable::EVIsLLDBAllocated)
         {
             Error write_error;
                         
@@ -211,10 +211,10 @@ public:
                         m_persistent_variable_sp->m_flags);
         }
         
-        if ((m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated) ||
-            (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVIsProgramReference))
+        if ((m_persistent_variable_sp->m_flags & ExpressionVariable::EVIsLLDBAllocated) ||
+            (m_persistent_variable_sp->m_flags & ExpressionVariable::EVIsProgramReference))
         {
-            if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVIsProgramReference &&
+            if (m_persistent_variable_sp->m_flags & ExpressionVariable::EVIsProgramReference &&
                 !m_persistent_variable_sp->m_live_sp)
             {
                 // If the reference comes from the program, then the ClangExpressionVariable's
@@ -232,7 +232,7 @@ public:
                 }
                 
                 m_persistent_variable_sp->m_live_sp = ValueObjectConstResult::Create (map.GetBestExecutionContextScope (),
-                                                                                      llvm::cast<ClangExpressionVariable>(m_persistent_variable_sp.get())->GetTypeFromUser(),
+                                                                                      m_persistent_variable_sp.get()->GetCompilerType(),
                                                                                       m_persistent_variable_sp->GetName(),
                                                                                       location,
                                                                                       eAddressTypeLoad,
@@ -246,10 +246,10 @@ public:
                     // If the variable is resident in the stack frame created by the expression,
                     // then it cannot be relied upon to stay around.  We treat it as needing
                     // reallocation.
-                    m_persistent_variable_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
-                    m_persistent_variable_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
-                    m_persistent_variable_sp->m_flags |= ClangExpressionVariable::EVNeedsFreezeDry;
-                    m_persistent_variable_sp->m_flags &= ~ClangExpressionVariable::EVIsProgramReference;
+                    m_persistent_variable_sp->m_flags |= ExpressionVariable::EVIsLLDBAllocated;
+                    m_persistent_variable_sp->m_flags |= ExpressionVariable::EVNeedsAllocation;
+                    m_persistent_variable_sp->m_flags |= ExpressionVariable::EVNeedsFreezeDry;
+                    m_persistent_variable_sp->m_flags &= ~ExpressionVariable::EVIsProgramReference;
                 }
             }
             
@@ -267,8 +267,8 @@ public:
                 return;
             }
             
-            if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVNeedsFreezeDry ||
-                m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVKeepInTarget)
+            if (m_persistent_variable_sp->m_flags & ExpressionVariable::EVNeedsFreezeDry ||
+                m_persistent_variable_sp->m_flags & ExpressionVariable::EVKeepInTarget)
             {                
                 if (log)
                     log->Printf("Dematerializing %s from 0x%" PRIx64 " (size = %llu)", m_persistent_variable_sp->GetName().GetCString(), (uint64_t)mem, (unsigned long long)m_persistent_variable_sp->GetByteSize());
@@ -290,7 +290,7 @@ public:
                     return;
                 }
                     
-                m_persistent_variable_sp->m_flags &= ~ClangExpressionVariable::EVNeedsFreezeDry;
+                m_persistent_variable_sp->m_flags &= ~ExpressionVariable::EVNeedsFreezeDry;
             }
         }
         else
@@ -305,14 +305,14 @@ public:
         {
             // Allocations are not persistent so persistent variables cannot stay materialized.
             
-            m_persistent_variable_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
+            m_persistent_variable_sp->m_flags |= ExpressionVariable::EVNeedsAllocation;
 
             DestroyAllocation(map, err);
             if (!err.Success())
                 return;
         }
-        else if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVNeedsAllocation &&
-                 !(m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVKeepInTarget))
+        else if (m_persistent_variable_sp->m_flags & ExpressionVariable::EVNeedsAllocation &&
+                 !(m_persistent_variable_sp->m_flags & ExpressionVariable::EVKeepInTarget))
         {
             DestroyAllocation(map, err);
             if (!err.Success())
@@ -756,7 +756,7 @@ Materializer::AddVariable (lldb::VariableSP &variable_sp, Error &err)
 class EntityResultVariable : public Materializer::Entity
 {
 public:
-    EntityResultVariable (const TypeFromUser &type, bool is_program_reference, bool keep_in_memory) :
+    EntityResultVariable (const CompilerType &type, bool is_program_reference, bool keep_in_memory) :
         Entity(),
         m_type(type),
         m_is_program_reference(is_program_reference),
@@ -904,7 +904,7 @@ public:
         
         if (!can_persist || !m_keep_in_memory)
         {
-            ret->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
+            ret->m_flags |= ExpressionVariable::EVNeedsAllocation;
             
             if (m_temporary_allocation != LLDB_INVALID_ADDRESS)
             {
@@ -914,7 +914,7 @@ public:
         }
         else
         {
-            ret->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
+            ret->m_flags |= ExpressionVariable::EVIsLLDBAllocated;
         }
         
         m_temporary_allocation = LLDB_INVALID_ADDRESS;
@@ -1007,7 +1007,7 @@ public:
         m_temporary_allocation_size = 0;
     }
 private:
-    TypeFromUser    m_type;
+    CompilerType    m_type;
     bool            m_is_program_reference;
     bool            m_keep_in_memory;
     
