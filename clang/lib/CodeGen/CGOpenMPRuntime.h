@@ -449,7 +449,7 @@ public:
   /// ordered region.
   virtual void emitOrderedRegion(CodeGenFunction &CGF,
                                  const RegionCodeGenTy &OrderedOpGen,
-                                 SourceLocation Loc);
+                                 SourceLocation Loc, bool IsThreads);
 
   /// \brief Emit an implicit/explicit barrier for OpenMP threads.
   /// \param Kind Directive for which this implicit barrier call must be

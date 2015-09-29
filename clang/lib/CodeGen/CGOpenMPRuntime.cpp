@@ -1548,21 +1548,21 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
 
 void CGOpenMPRuntime::emitOrderedRegion(CodeGenFunction &CGF,
                                         const RegionCodeGenTy &OrderedOpGen,
-                                        SourceLocation Loc) {
+                                        SourceLocation Loc, bool IsThreads) {
   // __kmpc_ordered(ident_t *, gtid);
   // OrderedOpGen();
   // __kmpc_end_ordered(ident_t *, gtid);
   // Prepare arguments and build a call to __kmpc_ordered
-  {
-    CodeGenFunction::RunCleanupsScope Scope(CGF);
+  CodeGenFunction::RunCleanupsScope Scope(CGF);
+  if (IsThreads) {
     llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
     CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_ordered), Args);
     // Build a call to __kmpc_end_ordered
     CGF.EHStack.pushCleanup<CallEndCleanup<std::extent<decltype(Args)>::value>>(
         NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_ordered),
         llvm::makeArrayRef(Args));
-    emitInlinedDirective(CGF, OMPD_ordered, OrderedOpGen);
   }
+  emitInlinedDirective(CGF, OMPD_ordered, OrderedOpGen);
 }
 
 void CGOpenMPRuntime::emitBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,

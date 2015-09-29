@@ -213,5 +213,22 @@ void runtime(float *a, float *b, float *c, float *d) {
 // CHECK: ret void
 }
 
+float f[10];
+// CHECK-LABEL: foo_simd
+void foo_simd(int low, int up) {
+  // CHECK: store float 0.000000e+00, float* %{{.+}}, align {{[0-9]+}}, !llvm.mem.parallel_loop_access !
+  // CHECK-NEXT: call void [[CAP_FUNC:@.+]](i32* %{{.+}}) #{{[0-9]+}}, !llvm.mem.parallel_loop_access !
+#pragma omp simd
+  for (int i = low; i < up; ++i) {
+    f[i] = 0.0;
+#pragma omp ordered simd
+    f[i] = 1.0;
+  }
+}
+
+// CHECK: define internal void [[CAP_FUNC]](i32* dereferenceable({{[0-9]+}}) %{{.+}}) #
+// CHECK: store float 1.000000e+00, float* %{{.+}}, align
+// CHECK-NEXT: ret void
+
 #endif // HEADER
 

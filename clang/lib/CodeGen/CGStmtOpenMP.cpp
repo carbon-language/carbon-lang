@@ -1799,13 +1799,33 @@ void CodeGenFunction::EmitOMPFlushDirective(const OMPFlushDirective &S) {
   }(), S.getLocStart());
 }
 
+static llvm::Function *emitOutlinedOrderedFunction(CodeGenModule &CGM,
+                                                   const CapturedStmt *S) {
+  CodeGenFunction CGF(CGM, /*suppressNewContext=*/true);
+  CodeGenFunction::CGCapturedStmtInfo CapStmtInfo;
+  CGF.CapturedStmtInfo = &CapStmtInfo;
+  auto *Fn = CGF.GenerateOpenMPCapturedStmtFunction(*S);
+  Fn->addFnAttr(llvm::Attribute::NoInline);
+  return Fn;
+}
+
 void CodeGenFunction::EmitOMPOrderedDirective(const OMPOrderedDirective &S) {
   LexicalScope Scope(*this, S.getSourceRange());
-  auto &&CodeGen = [&S](CodeGenFunction &CGF) {
-    CGF.EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
+  auto *C = S.getSingleClause<OMPSIMDClause>();
+  auto &&CodeGen = [&S, C, this](CodeGenFunction &CGF) {
+    if (C) {
+      auto CS = cast<CapturedStmt>(S.getAssociatedStmt());
+      llvm::SmallVector<llvm::Value *, 16> CapturedVars;
+      CGF.GenerateOpenMPCapturedVars(*CS, CapturedVars);
+      auto *OutlinedFn = emitOutlinedOrderedFunction(CGM, CS);
+      CGF.EmitNounwindRuntimeCall(OutlinedFn, CapturedVars);
+    } else {
+      CGF.EmitStmt(
+          cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
+    }
     CGF.EnsureInsertPoint();
   };
-  CGM.getOpenMPRuntime().emitOrderedRegion(*this, CodeGen, S.getLocStart());
+  CGM.getOpenMPRuntime().emitOrderedRegion(*this, CodeGen, S.getLocStart(), !C);
 }
 
 static llvm::Value *convertToScalarValue(CodeGenFunction &CGF, RValue Val,
