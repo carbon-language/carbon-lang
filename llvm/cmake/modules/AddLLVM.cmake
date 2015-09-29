@@ -1,5 +1,6 @@
 include(LLVMProcessSources)
 include(LLVM-Config)
+include(DetermineGCCCompatible)
 
 function(llvm_update_compile_flags name)
   get_property(sources TARGET ${name} PROPERTY SOURCES)

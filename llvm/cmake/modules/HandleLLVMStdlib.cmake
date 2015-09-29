@@ -1,16 +1,10 @@
 # This CMake module is responsible for setting the standard library to libc++
 # if the user has requested it.
 
+include(DetermineGCCCompatible)
+
 if(NOT DEFINED LLVM_STDLIB_HANDLED)
   set(LLVM_STDLIB_HANDLED ON)
-
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    set(LLVM_COMPILER_IS_GCC_COMPATIBLE ON)
-  elseif( MSVC )
-    set(LLVM_COMPILER_IS_GCC_COMPATIBLE OFF)
-  elseif( "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" )
-    set(LLVM_COMPILER_IS_GCC_COMPATIBLE ON)
-  endif()
 
   function(append value)
     foreach(variable ${ARGN})
