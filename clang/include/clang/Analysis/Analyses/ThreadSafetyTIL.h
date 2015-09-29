@@ -1395,7 +1395,7 @@ public:
 
   /// Return the list of basic blocks that this terminator can branch to.
   ArrayRef<BasicBlock*> successors() {
-    return llvm::makeArrayRef(TargetBlock);
+    return TargetBlock;
   }
 
   template <class V>
@@ -1445,7 +1445,7 @@ public:
 
   /// Return the list of basic blocks that this terminator can branch to.
   ArrayRef<BasicBlock*> successors() {
-    return llvm::makeArrayRef(Branches);
+    return Branches;
   }
 
   template <class V>
