@@ -716,7 +716,7 @@ bool Preprocessor::HandleIdentifier(Token &Identifier) {
 }
 
 void Preprocessor::Lex(Token &Result) {
-  // We loop here until a lex function retuns a token; this avoids recursion.
+  // We loop here until a lex function returns a token; this avoids recursion.
   bool ReturnedToken;
   do {
     switch (CurLexerKind) {
