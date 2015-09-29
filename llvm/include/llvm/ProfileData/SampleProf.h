@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
 
@@ -188,16 +189,16 @@ public:
                                                                          Num);
   }
 
-  /// Return the sample record at the given location.
-  /// Each location is specified by \p LineOffset and \p Discriminator.
-  SampleRecord &sampleRecordAt(const LineLocation &Loc) {
-    return BodySamples[Loc];
-  }
-
   /// Return the number of samples collected at the given location.
   /// Each location is specified by \p LineOffset and \p Discriminator.
-  unsigned samplesAt(int LineOffset, unsigned Discriminator) {
-    return sampleRecordAt(LineLocation(LineOffset, Discriminator)).getSamples();
+  /// If the location is not found in profile, return error.
+  ErrorOr<unsigned> findSamplesAt(int LineOffset,
+                                  unsigned Discriminator) const {
+    const auto &ret = BodySamples.find(LineLocation(LineOffset, Discriminator));
+    if (ret == BodySamples.end())
+      return std::error_code();
+    else
+      return ret->second.getSamples();
   }
 
   bool empty() const { return BodySamples.empty(); }
@@ -219,7 +220,7 @@ public:
     for (const auto &I : Other.getBodySamples()) {
       const LineLocation &Loc = I.first;
       const SampleRecord &Rec = I.second;
-      sampleRecordAt(Loc).merge(Rec);
+      BodySamples[Loc].merge(Rec);
     }
   }
 
