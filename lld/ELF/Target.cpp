@@ -27,6 +27,8 @@ std::unique_ptr<TargetInfo> Target;
 
 TargetInfo::~TargetInfo() {}
 
+bool TargetInfo::relocPointsToGot(uint32_t Type) const { return false; }
+
 X86TargetInfo::X86TargetInfo() {
   PCRelReloc = R_386_PC32;
   GotReloc = R_386_GLOB_DAT;
@@ -55,6 +57,10 @@ bool X86TargetInfo::relocNeedsGot(uint32_t Type) const {
   case R_386_GOT32:
     return true;
   }
+}
+
+bool X86TargetInfo::relocPointsToGot(uint32_t Type) const {
+  return Type == R_386_GOTPC;
 }
 
 bool X86TargetInfo::relocNeedsPlt(uint32_t Type) const {

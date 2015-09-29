@@ -57,6 +57,9 @@ void InputSection<ELFT>::relocate(
       } else if (Target->relocNeedsGot(Type)) {
         SymVA = GotSec.getEntryAddr(Body);
         Type = Target->getPCRelReloc();
+      } else if (Target->relocPointsToGot(Type)) {
+        SymVA = GotSec.getVA();
+        Type = Target->getPCRelReloc();
       }
     }
 
