@@ -280,11 +280,20 @@ BUILTIN(__builtin_vsx_xvrspip, "V4fV4f", "")
 BUILTIN(__builtin_vsx_xvcmpeqdp, "V2ULLiV2dV2d", "")
 BUILTIN(__builtin_vsx_xvcmpeqsp, "V4UiV4fV4f", "")
 
+BUILTIN(__builtin_vsx_xvcmpeqdp_p, "iiV2dV2d", "")
+BUILTIN(__builtin_vsx_xvcmpeqsp_p, "iiV4fV4f", "")
+
 BUILTIN(__builtin_vsx_xvcmpgedp, "V2ULLiV2dV2d", "")
 BUILTIN(__builtin_vsx_xvcmpgesp, "V4UiV4fV4f", "")
 
+BUILTIN(__builtin_vsx_xvcmpgedp_p, "iiV2dV2d", "")
+BUILTIN(__builtin_vsx_xvcmpgesp_p, "iiV4fV4f", "")
+
 BUILTIN(__builtin_vsx_xvcmpgtdp, "V2ULLiV2dV2d", "")
 BUILTIN(__builtin_vsx_xvcmpgtsp, "V4UiV4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvcmpgtdp_p, "iiV2dV2d", "")
+BUILTIN(__builtin_vsx_xvcmpgtsp_p, "iiV4fV4f", "")
 
 BUILTIN(__builtin_vsx_xvrdpim, "V2dV2d", "")
 BUILTIN(__builtin_vsx_xvrspim, "V4fV4f", "")
