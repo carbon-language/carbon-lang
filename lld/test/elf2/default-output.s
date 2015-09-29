@@ -5,9 +5,9 @@
 # RUN: mkdir -p %t.dir
 # RUN: cd %t.dir
 # RUN: rm -f a.out
-# RUN: not test -e a.out
+# RUN: not llvm-readobj a.out > /dev/null 2>&1
 # RUN: lld -flavor gnu2 %t
-# RUN: test -e a.out
+# RUN: llvm-readobj a.out > /dev/null 2>&1
 
 .globl _start;
 _start:
