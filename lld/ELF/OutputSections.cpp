@@ -104,7 +104,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     const SymbolBody *Body = C.getFile()->getSymbolBody(SymIndex);
     uint32_t Type = RI.getType(IsMips64EL);
-    if (Target->relocNeedsGot(Type)) {
+    if (Target->relocNeedsGot(Type, *Body)) {
       P->r_offset = GotSec.getEntryAddr(*Body);
       P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
                           Target->getGotReloc(), IsMips64EL);

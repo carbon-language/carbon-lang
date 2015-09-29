@@ -9,6 +9,7 @@
 
 #include "Target.h"
 #include "Error.h"
+#include "Symbols.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/ELF.h"
@@ -44,8 +45,8 @@ void X86TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   write32le(Buf + 2, GotEntryAddr);
 }
 
-bool X86TargetInfo::relocNeedsGot(uint32_t Type) const {
-  if (relocNeedsPlt(Type))
+bool X86TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+  if (relocNeedsPlt(Type, S))
     return true;
   switch (Type) {
   default:
@@ -59,7 +60,7 @@ bool X86TargetInfo::relocPointsToGot(uint32_t Type) const {
   return Type == R_386_GOTPC;
 }
 
-bool X86TargetInfo::relocNeedsPlt(uint32_t Type) const {
+bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   switch (Type) {
   default:
     return false;
@@ -112,8 +113,8 @@ void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   write32le(Buf + 2, Delta);
 }
 
-bool X86_64TargetInfo::relocNeedsGot(uint32_t Type) const {
-  if (relocNeedsPlt(Type))
+bool X86_64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+  if (relocNeedsPlt(Type, S))
     return true;
   switch (Type) {
   default:
@@ -123,10 +124,28 @@ bool X86_64TargetInfo::relocNeedsGot(uint32_t Type) const {
   }
 }
 
-bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type) const {
+bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   switch (Type) {
   default:
     return false;
+  case R_X86_64_PC32:
+    // This relocation is defined to have a value of (S + A - P).
+    // The problems start when a non PIC program calls a function is a shared
+    // library.
+    // In an idea world, we could just report an error saying the relocation
+    // can overflow at runtime.
+    // In the real world, crt1.o has a R_X86_64_PC32 pointing to libc.so.
+    // The general idea is to create a PLT entry and use that as the function
+    // value, which is why we return true in here.
+    // The remaining (unimplemented) problem is making sure pointer equality
+    // still works. For that, we need the help of the dynamic linker. We
+    // let it know that we have a direct reference to a symbol by creating
+    // an undefined symbol with a non zero st_value. Seeing that the
+    // dynamic linker resolves the symbol to the value of the symbol we created.
+    // This is true even for got entries, so pointer equality is maintained.
+    // To avoid an infinite loop, the only entry that points to the
+    // real function is a dedicated got entry used by the plt.
+    return S.isShared();
   case R_X86_64_PLT32:
     return true;
   }
@@ -171,8 +190,12 @@ PPC64TargetInfo::PPC64TargetInfo() {
 }
 void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                     uint64_t PltEntryAddr) const {}
-bool PPC64TargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
-bool PPC64TargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
+bool PPC64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+  return false;
+}
+bool PPC64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
+  return false;
+}
 void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
                                   uint64_t BaseAddr, uint64_t SymVA,
                                   uint64_t GotVA) const {
@@ -200,8 +223,12 @@ PPCTargetInfo::PPCTargetInfo() {
 }
 void PPCTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                   uint64_t PltEntryAddr) const {}
-bool PPCTargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
-bool PPCTargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
+bool PPCTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+  return false;
+}
+bool PPCTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
+  return false;
+}
 void PPCTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
                                 uint64_t BaseAddr, uint64_t SymVA,
                                 uint64_t GotVA) const {}
@@ -212,8 +239,12 @@ ARMTargetInfo::ARMTargetInfo() {
 }
 void ARMTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                   uint64_t PltEntryAddr) const {}
-bool ARMTargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
-bool ARMTargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
+bool ARMTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+  return false;
+}
+bool ARMTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
+  return false;
+}
 void ARMTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
                                 uint64_t BaseAddr, uint64_t SymVA,
                                 uint64_t GotVA) const {}
@@ -224,8 +255,14 @@ AArch64TargetInfo::AArch64TargetInfo() {
 }
 void AArch64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                       uint64_t PltEntryAddr) const {}
-bool AArch64TargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
-bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
+bool AArch64TargetInfo::relocNeedsGot(uint32_t Type,
+                                      const SymbolBody &S) const {
+  return false;
+}
+bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type,
+                                      const SymbolBody &S) const {
+  return false;
+}
 
 static void handle_ADR_PREL_LO21(uint8_t *Location, uint64_t S, int64_t A,
                                  uint64_t P) {
@@ -268,9 +305,13 @@ MipsTargetInfo::MipsTargetInfo() {
 void MipsTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                    uint64_t PltEntryAddr) const {}
 
-bool MipsTargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
+bool MipsTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+  return false;
+}
 
-bool MipsTargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
+bool MipsTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
+  return false;
+}
 
 void MipsTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
                                  uint64_t BaseAddr, uint64_t SymVA,

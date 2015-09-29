@@ -234,12 +234,12 @@ void Writer<ELFT>::scanRelocs(
     if (!Body)
       continue;
     uint32_t Type = RI.getType(IsMips64EL);
-    if (Target->relocNeedsPlt(Type)) {
+    if (Target->relocNeedsPlt(Type, *Body)) {
       if (Body->isInPlt())
         continue;
       PltSec.addEntry(Body);
     }
-    if (Target->relocNeedsGot(Type)) {
+    if (Target->relocNeedsGot(Type, *Body)) {
       if (Body->isInGot())
         continue;
       GotSec.addEntry(Body);
