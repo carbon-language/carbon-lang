@@ -11,6 +11,7 @@
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
 #include "LoopConvertCheck.h"
+#include "MakeUniqueCheck.h"
 #include "PassByValueCheck.h"
 #include "ReplaceAutoPtrCheck.h"
 #include "ShrinkToFitCheck.h"
@@ -28,6 +29,8 @@ class ModernizeModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.registerCheck<LoopConvertCheck>("modernize-loop-convert");
+    CheckFactories.registerCheck<MakeUniqueCheck>(
+        "modernize-make-unique");
     CheckFactories.registerCheck<PassByValueCheck>("modernize-pass-by-value");
     CheckFactories.registerCheck<ReplaceAutoPtrCheck>(
         "modernize-replace-auto-ptr");
