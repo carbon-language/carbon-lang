@@ -97,6 +97,7 @@ namespace lltok {
     kw_webkit_jscc, kw_anyregcc,
     kw_preserve_mostcc, kw_preserve_allcc,
     kw_ghccc,
+    kw_hhvmcc, kw_hhvm_ccc,
 
     // Attributes:
     kw_attributes,

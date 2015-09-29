@@ -42,10 +42,11 @@ syn keyword llvmKeyword arm_aapcscc arm_apcscc asm atomic available_externally
 syn keyword llvmKeyword blockaddress byval c catch cc ccc cleanup coldcc common
 syn keyword llvmKeyword constant datalayout declare default define deplibs
 syn keyword llvmKeyword distinct dllexport dllimport except extern_weak external
-syn keyword llvmKeyword externally_initialized fastcc filter gc global hidden
-syn keyword llvmKeyword initialexec inlinehint inreg intel_ocl_bicc inteldialect
-syn keyword llvmKeyword internal linkonce linkonce_odr localdynamic localexec
-syn keyword llvmKeyword minsize module monotonic msp430_intrcc naked nest
+syn keyword llvmKeyword externally_initialized fastcc filter gc global hhvmcc
+syn keyword llvmKeyword hhvm_ccc hidden initialexec inlinehint inreg
+syn keyword llvmKeyword intel_ocl_bicc inteldialect internal linkonce
+syn keyword llvmKeyword linkonce_odr localdynamic localexec minsize module
+syn keyword llvmKeyword monotonic msp430_intrcc musttail naked nest
 syn keyword llvmKeyword noalias nocapture noimplicitfloat noinline nonlazybind
 syn keyword llvmKeyword noredzone noreturn nounwind optnone optsize personality
 syn keyword llvmKeyword private protected ptx_device ptx_kernel readnone

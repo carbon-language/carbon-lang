@@ -202,6 +202,16 @@ def RetCC_X86_64_AnyReg : CallingConv<[
   CCCustom<"CC_X86_AnyReg_Error">
 ]>;
 
+// X86-64 HHVM return-value convention.
+def RetCC_X86_64_HHVM: CallingConv<[
+  // Promote all types to i64
+  CCIfType<[i8, i16, i32], CCPromoteToType<i64>>,
+
+  // Return: could return in any GP register save RSP and R12.
+  CCIfType<[i64], CCAssignToReg<[RBX, RBP, RDI, RSI, RDX, RCX, R8, R9,
+                                 RAX, R10, R11, R13, R14, R15]>>
+]>;
+
 // This is the root return-value convention for the X86-32 backend.
 def RetCC_X86_32 : CallingConv<[
   // If FastCC, use RetCC_X86_32_Fast.
@@ -226,6 +236,9 @@ def RetCC_X86_64 : CallingConv<[
   // Handle explicit CC selection
   CCIfCC<"CallingConv::X86_64_Win64", CCDelegateTo<RetCC_X86_Win64_C>>,
   CCIfCC<"CallingConv::X86_64_SysV", CCDelegateTo<RetCC_X86_64_C>>,
+
+  // Handle HHVM calls.
+  CCIfCC<"CallingConv::HHVM", CCDelegateTo<RetCC_X86_64_HHVM>>,
 
   // Mingw64 and native Win64 use Win64 CC
   CCIfSubtarget<"isTargetWin64()", CCDelegateTo<RetCC_X86_Win64_C>>,
@@ -317,6 +330,23 @@ def CC_X86_64_C : CallingConv<[
   // 512-bit vectors get 64-byte stack slots that are 64-byte aligned.
   CCIfType<[v16i32, v8i64, v16f32, v8f64],
            CCAssignToStack<64, 64>>
+]>;
+
+// Calling convention for X86-64 HHVM.
+def CC_X86_64_HHVM : CallingConv<[
+  // Use all/any GP registers for args, except RSP.
+  CCIfType<[i64], CCAssignToReg<[RBX, R12, RBP, R15,
+                                 RDI, RSI, RDX, RCX, R8, R9,
+                                 RAX, R10, R11, R13, R14]>>
+]>;
+
+// Calling convention for helper functions in HHVM.
+def CC_X86_64_HHVM_C : CallingConv<[
+  // Pass the first argument in RBP.
+  CCIfType<[i64], CCAssignToReg<[RBP]>>,
+
+  // Otherwise it's the same as the regular C calling convention.
+  CCDelegateTo<CC_X86_64_C>
 ]>;
 
 // Calling convention used on Win64
@@ -734,6 +764,8 @@ def CC_X86_64 : CallingConv<[
   CCIfCC<"CallingConv::X86_64_Win64", CCDelegateTo<CC_X86_Win64_C>>,
   CCIfCC<"CallingConv::X86_64_SysV", CCDelegateTo<CC_X86_64_C>>,
   CCIfCC<"CallingConv::X86_VectorCall", CCDelegateTo<CC_X86_Win64_VectorCall>>,
+  CCIfCC<"CallingConv::HHVM", CCDelegateTo<CC_X86_64_HHVM>>,
+  CCIfCC<"CallingConv::HHVM_C", CCDelegateTo<CC_X86_64_HHVM_C>>,
 
   // Mingw64 and native Win64 use Win64 CC
   CCIfSubtarget<"isTargetWin64()", CCDelegateTo<CC_X86_Win64_C>>,
@@ -804,3 +836,6 @@ def CSR_64_Intel_OCL_BI_AVX    : CalleeSavedRegs<(add CSR_64,
 def CSR_64_Intel_OCL_BI_AVX512 : CalleeSavedRegs<(add RBX, RDI, RSI, R14, R15,
                                                   (sequence "ZMM%u", 16, 31),
                                                   K4, K5, K6, K7)>;
+
+// Only R12 is preserved for PHP calls in HHVM.
+def CSR_64_HHVM : CalleeSavedRegs<(add R12)>;

@@ -2426,7 +2426,7 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
 /// supports tail call optimization.
 static bool IsTailCallConvention(CallingConv::ID CC) {
   return (CC == CallingConv::Fast || CC == CallingConv::GHC ||
-          CC == CallingConv::HiPE);
+          CC == CallingConv::HiPE || CC == CallingConv::HHVM);
 }
 
 /// \brief Return true if the calling convention is a C calling convention.
@@ -3900,6 +3900,10 @@ bool X86::isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
 /// Callee pop is necessary to support tail calls.
 bool X86::isCalleePop(CallingConv::ID CallingConv,
                       bool is64Bit, bool IsVarArg, bool TailCallOpt) {
+
+  if (IsTailCallConvention(CallingConv))
+    return IsVarArg ? false : TailCallOpt;
+
   switch (CallingConv) {
   default:
     return false;
@@ -3907,12 +3911,6 @@ bool X86::isCalleePop(CallingConv::ID CallingConv,
   case CallingConv::X86_FastCall:
   case CallingConv::X86_ThisCall:
     return !is64Bit;
-  case CallingConv::Fast:
-  case CallingConv::GHC:
-  case CallingConv::HiPE:
-    if (IsVarArg)
-      return false;
-    return TailCallOpt;
   }
 }
 

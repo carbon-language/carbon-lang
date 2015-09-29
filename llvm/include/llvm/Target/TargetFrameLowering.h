@@ -96,6 +96,11 @@ public:
     return StackRealignable;
   }
 
+  /// Return the skew that has to be applied to stack alignment under
+  /// certain conditions (e.g. stack was adjusted before function \p MF
+  /// was called).
+  virtual unsigned getStackAlignmentSkew(const MachineFunction &MF) const;
+
   /// getOffsetOfLocalArea - This method returns the offset of the local area
   /// from the stack pointer on entrance to a function.
   ///
