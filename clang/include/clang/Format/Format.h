@@ -259,6 +259,21 @@ struct FormatStyle {
   /// For example: BOOST_FOREACH.
   std::vector<std::string> ForEachMacros;
 
+  /// \brief Regular expressions denoting the different #include categories used
+  /// for ordering #includes.
+  ///
+  /// These regular expressions are matched against the filename of an include
+  /// (including the <> or "") in order. The value belonging to the first
+  /// matching regular expression is assigned and #includes are sorted first
+  /// according to increasing category number and then alphabetically within
+  /// each category.
+  ///
+  /// If none of the regular expressions match, UINT_MAX is assigned as
+  /// category. The main header for a source file automatically gets category 0,
+  /// so that it is kept at the beginning of the #includes
+  /// (http://llvm.org/docs/CodingStandards.html#include-style).
+  std::vector<std::pair<std::string, unsigned>> IncludeCategories;
+
   /// \brief Indent case labels one level from the switch statement.
   ///
   /// When \c false, use the same indentation level as for the switch statement.

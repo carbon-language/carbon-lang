@@ -73,7 +73,7 @@ FallbackStyle("fallback-style",
               cl::init("LLVM"), cl::cat(ClangFormatCategory));
 
 static cl::opt<std::string>
-AssumeFilename("assume-filename",
+AssumeFileName("assume-filename",
                cl::desc("When reading from stdin, clang-format assumes this\n"
                         "filename to look for a style config file (with\n"
                         "-style=file) and to determine the language."),
@@ -239,13 +239,13 @@ static bool format(StringRef FileName) {
   std::vector<tooling::Range> Ranges;
   if (fillRanges(Code.get(), Ranges))
     return true;
-  FormatStyle FormatStyle = getStyle(
-      Style, (FileName == "-") ? AssumeFilename : FileName, FallbackStyle);
+  StringRef AssumedFileName = (FileName == "-") ? AssumeFileName : FileName;
+  FormatStyle FormatStyle = getStyle(Style, AssumedFileName, FallbackStyle);
   Replacements Replaces;
   std::string ChangedCode;
   if (SortIncludes) {
     Replaces =
-        sortIncludes(FormatStyle, Code->getBuffer(), Ranges, FileName);
+        sortIncludes(FormatStyle, Code->getBuffer(), Ranges, AssumedFileName);
     ChangedCode = tooling::applyAllReplacements(Code->getBuffer(), Replaces);
     for (const auto &R : Replaces)
       Ranges.push_back({R.getOffset(), R.getLength()});
@@ -324,7 +324,7 @@ int main(int argc, const char **argv) {
   if (DumpConfig) {
     std::string Config =
         clang::format::configurationAsText(clang::format::getStyle(
-            Style, FileNames.empty() ? AssumeFilename : FileNames[0],
+            Style, FileNames.empty() ? AssumeFileName : FileNames[0],
             FallbackStyle));
     llvm::outs() << Config << "\n";
     return 0;

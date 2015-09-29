@@ -13,6 +13,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "clang/Format/Format.h"
 #include "ContinuationIndenter.h"
 #include "TokenAnnotator.h"
 #include "UnwrappedLineFormatter.h"
@@ -21,7 +22,6 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Format/Format.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Allocator.h"
@@ -375,6 +375,9 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.ForEachMacros.push_back("foreach");
   LLVMStyle.ForEachMacros.push_back("Q_FOREACH");
   LLVMStyle.ForEachMacros.push_back("BOOST_FOREACH");
+  LLVMStyle.IncludeCategories = {{"^\"(llvm|llvm-c|clang|clang-c)/", 2},
+                                 {"^(<|\"(gtest|isl|json)/)", 3},
+                                 {".*", 1}};
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.IndentWrappedFunctionNames = false;
   LLVMStyle.IndentWidth = 2;
@@ -423,6 +426,7 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
   GoogleStyle.AlwaysBreakTemplateDeclarations = true;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.DerivePointerAlignment = true;
+  GoogleStyle.IncludeCategories = {{"^<.*\\.h>", 1}, {"^<.*", 2}, {".*", 3}};
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.KeepEmptyLinesAtTheStartOfBlocks = false;
   GoogleStyle.ObjCSpaceAfterProperty = false;
@@ -1575,7 +1579,7 @@ struct IncludeDirective {
   StringRef Filename;
   StringRef Text;
   unsigned Offset;
-  bool IsAngled;
+  unsigned Category;
 };
 
 } // end anonymous namespace
@@ -1605,7 +1609,8 @@ static void sortIncludes(const FormatStyle &Style,
   for (unsigned i = 0, e = Includes.size(); i != e; ++i)
     Indices.push_back(i);
   std::sort(Indices.begin(), Indices.end(), [&](unsigned LHSI, unsigned RHSI) {
-    return Includes[LHSI].Filename < Includes[RHSI].Filename;
+    return std::tie(Includes[LHSI].Category, Includes[LHSI].Filename) <
+           std::tie(Includes[RHSI].Category, Includes[RHSI].Filename);
   });
 
   // If the #includes are out of order, we generate a single replacement fixing
@@ -1642,22 +1647,49 @@ tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
   tooling::Replacements Replaces;
   unsigned Prev = 0;
   unsigned SearchFrom = 0;
-  llvm::Regex IncludeRegex(R"(^[\t\ ]*#[\t\ ]*include[^"<]*["<]([^">]*)([">]))");
+  llvm::Regex IncludeRegex(
+      R"(^[\t\ ]*#[\t\ ]*include[^"<]*(["<][^">]*[">]))");
   SmallVector<StringRef, 4> Matches;
   SmallVector<IncludeDirective, 16> IncludesInBlock;
+
+  // In compiled files, consider the first #include to be the main #include of
+  // the file if it is not a system #include. This ensures that the header
+  // doesn't have hidden dependencies
+  // (http://llvm.org/docs/CodingStandards.html#include-style).
+  //
+  // FIXME: Do some sanity checking, e.g. edit distance of the base name, to fix
+  // cases where the first #include is unlikely to be the main header.
+  bool LookForMainHeader = FileName.endswith(".c") ||
+                           FileName.endswith(".cc") ||
+                           FileName.endswith(".cpp")||
+                           FileName.endswith(".c++")||
+                           FileName.endswith(".cxx");
+
+  // Create pre-compiled regular expressions for the #include categories.
+  SmallVector<llvm::Regex, 4> CategoryRegexs;
+  for (const auto &IncludeBlock : Style.IncludeCategories)
+    CategoryRegexs.emplace_back(IncludeBlock.first);
+
   for (;;) {
     auto Pos = Code.find('\n', SearchFrom);
     StringRef Line =
         Code.substr(Prev, (Pos != StringRef::npos ? Pos : Code.size()) - Prev);
     if (!Line.endswith("\\")) {
       if (IncludeRegex.match(Line, &Matches)) {
-        bool IsAngled = Matches[2] == ">";
-        if (!IncludesInBlock.empty() &&
-            IsAngled != IncludesInBlock.back().IsAngled) {
-          sortIncludes(Style, IncludesInBlock, Ranges, FileName, Replaces);
-          IncludesInBlock.clear();
+        unsigned Category;
+        if (LookForMainHeader && !Matches[1].startswith("<")) {
+          Category = 0;
+        } else {
+          Category = UINT_MAX;
+          for (unsigned i = 0, e = CategoryRegexs.size(); i != e; ++i) {
+            if (CategoryRegexs[i].match(Matches[1])) {
+              Category = Style.IncludeCategories[i].second;
+              break;
+            }
+          }
         }
-        IncludesInBlock.push_back({Matches[1], Line, Prev, Matches[2] == ">"});
+        LookForMainHeader = false;
+        IncludesInBlock.push_back({Matches[1], Line, Prev, Category});
       } else if (!IncludesInBlock.empty()) {
         sortIncludes(Style, IncludesInBlock, Ranges, FileName, Replaces);
         IncludesInBlock.clear();
