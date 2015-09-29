@@ -4,6 +4,7 @@
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
 # RUN: mkdir -p %t.dir
 # RUN: cd %t.dir
+# RUN: rm -f a.out
 # RUN: not test -e a.out
 # RUN: lld -flavor gnu2 %t
 # RUN: test -e a.out
