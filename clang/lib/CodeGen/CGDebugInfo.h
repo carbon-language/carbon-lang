@@ -326,7 +326,7 @@ public:
                                          llvm::Value *storage,
                                          CGBuilderTy &Builder,
                                          const CGBlockInfo &blockInfo,
-                                         llvm::Instruction *InsertPoint = 0);
+                                         llvm::Instruction *InsertPoint = nullptr);
 
   /// Emit call to \c llvm.dbg.declare for an argument variable
   /// declaration.
@@ -593,4 +593,4 @@ public:
 } // namespace CodeGen
 } // namespace clang
 
-#endif
+#endif // LLVM_CLANG_LIB_CODEGEN_CGDEBUGINFO_H

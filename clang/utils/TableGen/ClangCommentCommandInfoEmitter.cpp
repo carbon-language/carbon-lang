@@ -72,7 +72,7 @@ void EmitClangCommentCommandInfo(RecordKeeper &Records, raw_ostream &OS) {
   OS << "const CommandInfo *CommandTraits::getBuiltinCommandInfo(\n"
      << "                                         StringRef Name) {\n";
   StringMatcher("Name", Matches, OS).Emit();
-  OS << "  return NULL;\n"
+  OS << "  return nullptr;\n"
      << "}\n\n";
 }
 
@@ -123,4 +123,3 @@ void EmitClangCommentCommandList(RecordKeeper &Records, raw_ostream &OS) {
   }
 }
 } // end namespace clang
-

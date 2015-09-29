@@ -2513,7 +2513,7 @@ public:
   ///
   OMPDeviceClause()
       : OMPClause(OMPC_device, SourceLocation(), SourceLocation()), 
-        LParenLoc(SourceLocation()), Device(0) {}
+        LParenLoc(SourceLocation()), Device(nullptr) {}
   /// \brief Sets the location of '('.
   void setLParenLoc(SourceLocation Loc) { LParenLoc = Loc; }
   /// \brief Returns the location of '('.
@@ -2593,5 +2593,4 @@ public:
 
 } // end namespace clang
 
-#endif
-
+#endif // LLVM_CLANG_AST_OPENMPCLAUSE_H

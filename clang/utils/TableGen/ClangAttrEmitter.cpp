@@ -348,7 +348,7 @@ namespace {
          << "Length])";
     }
     void writeCtorDefaultInitializers(raw_ostream &OS) const override {
-      OS << getLowerName() << "Length(0)," << getLowerName() << "(0)";
+      OS << getLowerName() << "Length(0)," << getLowerName() << "(nullptr)";
     }
     void writeCtorParameters(raw_ostream &OS) const override {
       OS << "llvm::StringRef " << getUpperName();
@@ -491,7 +491,7 @@ namespace {
       // The aligned attribute argument expression is optional.
       OS << "    if (is" << getLowerName() << "Expr && "
          << getLowerName() << "Expr)\n";
-      OS << "      " << getLowerName() << "Expr->printPretty(OS, 0, Policy);\n";
+      OS << "      " << getLowerName() << "Expr->printPretty(OS, nullptr, Policy);\n";
       OS << "    OS << \"";
     }
     void writeDump(raw_ostream &OS) const override {
@@ -2158,7 +2158,7 @@ void EmitClangAttrTemplateInstantiate(RecordKeeper &Records, raw_ostream &OS) {
     bool ShouldClone = R.getValueAsBit("Clone");
 
     if (!ShouldClone) {
-      OS << "      return NULL;\n";
+      OS << "      return nullptr;\n";
       OS << "    }\n";
       continue;
     }
@@ -2192,7 +2192,7 @@ void EmitClangAttrTemplateInstantiate(RecordKeeper &Records, raw_ostream &OS) {
   }
   OS << "  } // end switch\n"
      << "  llvm_unreachable(\"Unknown attribute!\");\n"
-     << "  return 0;\n"
+     << "  return nullptr;\n"
      << "}\n\n"
      << "} // end namespace sema\n"
      << "} // end namespace clang\n";

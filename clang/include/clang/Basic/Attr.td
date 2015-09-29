@@ -113,7 +113,7 @@ def GlobalVar : SubsetSubject<Var,
 // the case of a SubsetSubject, there's no way to express it without this hack.
 def DeclBase : AttrSubject;
 def FunctionLike : SubsetSubject<DeclBase,
-                                  [{S->getFunctionType(false) != NULL}]>;
+                                  [{S->getFunctionType(false) != nullptr}]>;
 
 def OpenCLKernelFunction : SubsetSubject<Function, [{
   S->hasAttr<OpenCLKernelAttr>()
@@ -123,7 +123,7 @@ def OpenCLKernelFunction : SubsetSubject<Function, [{
 // never be specified in a Subjects list along with FunctionLike (due to the
 // inclusive nature of subject testing).
 def HasFunctionProto : SubsetSubject<DeclBase,
-                                     [{(S->getFunctionType(true) != NULL &&
+                                     [{(S->getFunctionType(true) != nullptr &&
                               isa<FunctionProtoType>(S->getFunctionType())) ||
                                        isa<ObjCMethodDecl>(S) ||
                                        isa<BlockDecl>(S)}]>;

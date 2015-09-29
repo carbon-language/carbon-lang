@@ -229,7 +229,6 @@ public:
     return static_cast<CXXDeleteExpr *>(Data2.getPointer());
   }
 
-
 private:
   friend class CFGElement;
   CFGDeleteDtor() {}
@@ -693,7 +692,7 @@ public:
   iterator beginAutomaticObjDtorsInsert(iterator I, size_t Cnt,
       BumpVectorContext &C) {
     return iterator(Elements.insert(I.base(), Cnt,
-                                    CFGAutomaticObjDtor(nullptr, 0), C));
+                                    CFGAutomaticObjDtor(nullptr, nullptr), C));
   }
   iterator insertAutomaticObjDtor(iterator I, VarDecl *VD, Stmt *S) {
     *I = CFGAutomaticObjDtor(VD, S);
@@ -1110,4 +1109,5 @@ template <> struct GraphTraits<Inverse<const ::clang::CFG*> >
   }
 };
 } // end llvm namespace
-#endif
+
+#endif // LLVM_CLANG_ANALYSIS_CFG_H

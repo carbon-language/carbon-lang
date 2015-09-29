@@ -1523,10 +1523,7 @@ bool CursorVisitor::VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
 }
 
 bool CursorVisitor::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
-  if (Visit(MakeCursorObjCClassRef(TL.getIFaceDecl(), TL.getNameLoc(), TU)))
-    return true;
-
-  return false;
+  return Visit(MakeCursorObjCClassRef(TL.getIFaceDecl(), TL.getNameLoc(), TU));
 }
 
 bool CursorVisitor::VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
@@ -1644,10 +1641,7 @@ bool CursorVisitor::VisitUnaryTransformTypeLoc(UnaryTransformTypeLoc TL) {
 }
 
 bool CursorVisitor::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
-  if (VisitNestedNameSpecifierLoc(TL.getQualifierLoc()))
-    return true;
-  
-  return false;
+  return VisitNestedNameSpecifierLoc(TL.getQualifierLoc());
 }
 
 bool CursorVisitor::VisitDependentTemplateSpecializationTypeLoc(

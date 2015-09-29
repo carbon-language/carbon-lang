@@ -7266,7 +7266,7 @@ OMPClause *
 TreeTransform<Derived>::TransformOMPCollapseClause(OMPCollapseClause *C) {
   ExprResult E = getDerived().TransformExpr(C->getNumForLoops());
   if (E.isInvalid())
-    return 0;
+    return nullptr;
   return getDerived().RebuildOMPCollapseClause(
       E.get(), C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
 }
@@ -11298,4 +11298,4 @@ TreeTransform<Derived>::TransformCapturedStmt(CapturedStmt *S) {
 
 } // end namespace clang
 
-#endif
+#endif // LLVM_CLANG_LIB_SEMA_TREETRANSFORM_H
