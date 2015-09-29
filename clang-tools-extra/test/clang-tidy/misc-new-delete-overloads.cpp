@@ -1,5 +1,7 @@
 // RUN: %python %S/check_clang_tidy.py %s misc-new-delete-overloads %t -- -std=c++14
 
+typedef unsigned int size_t;
+
 struct S {
   // CHECK-MESSAGES: :[[@LINE+1]]:9: warning: declaration of 'operator new' has no matching declaration of 'operator delete' at the same scope [misc-new-delete-overloads]
   void *operator new(size_t size) noexcept;
