@@ -698,9 +698,6 @@ public:
   void copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
                 __isl_keep isl_id_to_ast_expr *IdToAstExp);
 
-  /// @brief An empty destructor
-  virtual ~RegionGenerator(){};
-
 private:
   /// @brief A map from old to new blocks in the region.
   DenseMap<BasicBlock *, BasicBlock *> BlockMap;
