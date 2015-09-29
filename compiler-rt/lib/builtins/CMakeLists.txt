@@ -326,6 +326,8 @@ set(armv7em_SOURCES ${arm_SOURCES})
 add_custom_target(builtins)
 
 if (APPLE)
+  add_subdirectory(Darwin-excludes)
+  add_subdirectory(macho_embedded)
   darwin_add_builtin_libraries(${BUILTIN_SUPPORTED_OS})
 elseif (NOT WIN32 OR MINGW)
   foreach (arch ${BUILTIN_SUPPORTED_ARCH})
