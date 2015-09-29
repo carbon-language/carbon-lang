@@ -10,7 +10,7 @@ struct S {
 };
 
 // CHECK-MESSAGES: :[[@LINE+1]]:7: warning: declaration of 'operator new' has no matching declaration of 'operator delete' at the same scope
-void *operator new(size_t size) noexcept;
+void *operator new(size_t size) noexcept(false);
 
 struct T {
   // Sized deallocations are not enabled by default, and so this new/delete pair
