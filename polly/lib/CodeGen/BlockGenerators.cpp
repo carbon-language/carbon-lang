@@ -197,7 +197,23 @@ Value *BlockGenerator::generateLocationAccessed(
 
   if (AccessExpr) {
     AccessExpr = isl_ast_expr_address_of(AccessExpr);
-    return ExprBuilder->create(AccessExpr);
+    auto Address = ExprBuilder->create(AccessExpr);
+
+    // Cast the address of this memory access to a pointer type that has the
+    // same element type as the original access, but uses the address space of
+    // the newly generated pointer.
+    auto OldPtrTy = MA.getAccessValue()->getType()->getPointerTo();
+    auto NewPtrTy = Address->getType();
+    OldPtrTy = PointerType::get(OldPtrTy->getElementType(),
+                                NewPtrTy->getPointerAddressSpace());
+
+    if (OldPtrTy != NewPtrTy) {
+      assert(OldPtrTy->getPointerElementType()->getPrimitiveSizeInBits() ==
+                 NewPtrTy->getPointerElementType()->getPrimitiveSizeInBits() &&
+             "Pointer types to elements with different size found");
+      Address = Builder.CreateBitOrPointerCast(Address, OldPtrTy);
+    }
+    return Address;
   }
 
   return getNewValue(Stmt, Pointer, BBMap, LTS, getLoopForInst(Inst));
