@@ -51,9 +51,8 @@ declare i32 @__CxxFrameHandler3(...)
 ; CHECK: subq    $32, %rsp
 ; CHECK: .seh_stackalloc 32
 
-; FIXME: This looks wrong...
-; CHECK: leaq    32(%rsp), %rbp
-; CHECK: .seh_setframe 5, 32
+; CHECK: leaq    48(%rdx), %rbp
+; CHECK-NOT: .seh_setframe
 
 ; Prologue is done, emit the .seh_endprologue directive.
 ; CHECK: .seh_endprologue
@@ -82,9 +81,8 @@ declare i32 @__CxxFrameHandler3(...)
 ; CHECK: subq    $32, %rsp
 ; CHECK: .seh_stackalloc 32
 
-; FIXME: This looks wrong...
-; CHECK: leaq    32(%rsp), %rbp
-; CHECK: .seh_setframe 5, 32
+; CHECK: leaq    48(%rdx), %rbp
+; CHECK-NOT: .seh_setframe
 
 ; Prologue is done, emit the .seh_endprologue directive.
 ; CHECK: .seh_endprologue

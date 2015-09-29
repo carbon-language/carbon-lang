@@ -623,6 +623,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   uint64_t MaxAlign = calculateMaxStackAlign(MF); // Desired stack alignment.
   uint64_t StackSize = MFI->getStackSize();    // Number of bytes to allocate.
+  bool IsFunclet = MBB.isEHFuncletEntry();
   bool HasFP = hasFP(MF);
   bool IsWin64CC = STI.isCallingConvWin64(Fn->getCallingConv());
   bool IsWin64Prologue = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
@@ -700,46 +701,17 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   uint64_t NumBytes = 0;
   int stackGrowth = -SlotSize;
 
-  if (MBB.isEHFuncletEntry()) {
-    assert(STI.isOSWindows() && "funclets only supported on Windows");
-
-    // Set up the FramePtr and BasePtr physical registers using the address
-    // passed as EBP or RDX by the MSVC EH runtime.
-    if (STI.is32Bit()) {
-      // PUSH32r %ebp
-      BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH32r))
-          .addReg(MachineFramePtr, RegState::Kill)
-          .setMIFlag(MachineInstr::FrameSetup);
-      // Reset EBP / ESI to something good.
-      MBBI = restoreWin32EHStackPointers(MBB, MBBI, DL);
-    } else {
-      // Immediately spill RDX into the home slot. The runtime cares about this.
-      unsigned RDX = Uses64BitFramePtr ? X86::RDX : X86::EDX;
-      // MOV64mr %rdx, 16(%rsp)
-      unsigned MOVmr = Uses64BitFramePtr ? X86::MOV64mr : X86::MOV32mr;
-      addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(MOVmr)),
-                   StackPtr, true, 16)
+  unsigned RDX = Uses64BitFramePtr ? X86::RDX : X86::EDX;
+  if (IsWin64Prologue && IsFunclet) {
+    // Immediately spill RDX into the home slot. The runtime cares about this.
+    // MOV64mr %rdx, 16(%rsp)
+    unsigned MOVmr = Uses64BitFramePtr ? X86::MOV64mr : X86::MOV32mr;
+    addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(MOVmr)), StackPtr, true, 16)
         .addReg(RDX)
         .setMIFlag(MachineInstr::FrameSetup);
-      // PUSH64r %rbp
-      BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH64r))
-          .addReg(MachineFramePtr, RegState::Kill)
-          .setMIFlag(MachineInstr::FrameSetup);
-      BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_PushReg))
-          .addImm(MachineFramePtr)
-          .setMIFlag(MachineInstr::FrameSetup);
-      // MOV64rr %rdx, %rbp
-      unsigned MOVrr = Uses64BitFramePtr ? X86::MOV64rr : X86::MOV32rr;
-      BuildMI(MBB, MBBI, DL, TII.get(MOVrr), FramePtr)
-          .addReg(RDX)
-          .setMIFlag(MachineInstr::FrameSetup);
-      assert(!TRI->hasBasePointer(MF) &&
-             "x64 funclets with base ptrs not yet implemented");
-    }
+  }
 
-    // For EH funclets, only allocate enough space for outgoing calls.
-    NumBytes = MFI->getMaxCallFrameSize();
-  } else if (HasFP) {
+  if (HasFP) {
     // Calculate required stack adjustment.
     uint64_t FrameSize = StackSize - SlotSize;
     // If required, include space for extra hidden slot for stashing base pointer.
@@ -755,7 +727,11 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
     // Get the offset of the stack slot for the EBP register, which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
     // Update the frame offset adjustment.
-    MFI->setOffsetAdjustment(-NumBytes);
+    if (!IsFunclet)
+      MFI->setOffsetAdjustment(-NumBytes);
+    else
+      assert(MFI->getOffsetAdjustment() == -NumBytes &&
+             "should calculate same local variable offset for funclets");
 
     // Save EBP/RBP into the appropriate stack slot.
     BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::PUSH64r : X86::PUSH32r))
@@ -781,29 +757,36 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
           .setMIFlag(MachineInstr::FrameSetup);
     }
 
-    if (!IsWin64Prologue) {
+    if (!IsWin64Prologue && !IsFunclet) {
       // Update EBP with the new base value.
       BuildMI(MBB, MBBI, DL,
               TII.get(Uses64BitFramePtr ? X86::MOV64rr : X86::MOV32rr),
               FramePtr)
           .addReg(StackPtr)
           .setMIFlag(MachineInstr::FrameSetup);
-    }
 
-    if (NeedsDwarfCFI) {
-      // Mark effective beginning of when frame pointer becomes valid.
-      // Define the current CFA to use the EBP/RBP register.
-      unsigned DwarfFramePtr = TRI->getDwarfRegNum(MachineFramePtr, true);
-      BuildCFI(MBB, MBBI, DL,
-               MCCFIInstruction::createDefCfaRegister(nullptr, DwarfFramePtr));
+      if (NeedsDwarfCFI) {
+        // Mark effective beginning of when frame pointer becomes valid.
+        // Define the current CFA to use the EBP/RBP register.
+        unsigned DwarfFramePtr = TRI->getDwarfRegNum(MachineFramePtr, true);
+        BuildCFI(MBB, MBBI, DL, MCCFIInstruction::createDefCfaRegister(
+                                    nullptr, DwarfFramePtr));
+      }
     }
 
     // Mark the FramePtr as live-in in every block.
     for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
       I->addLiveIn(MachineFramePtr);
   } else {
+    assert(!IsFunclet && "funclets without FPs not yet implemented");
     NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
   }
+
+  // For EH funclets, only allocate enough space for outgoing calls. Save the
+  // NumBytes value that we would've used for the parent frame.
+  unsigned ParentFrameNumBytes = NumBytes;
+  if (IsFunclet)
+    NumBytes = MFI->getMaxCallFrameSize();
 
   // Skip the callee-saved push instructions.
   bool PushedRegs = false;
@@ -835,7 +818,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   // Realign stack after we pushed callee-saved registers (so that we'll be
   // able to calculate their offsets from the frame pointer).
   // Don't do this for Win64, it needs to realign the stack after the prologue.
-  if (!IsWin64Prologue && TRI->needsStackRealignment(MF)) {
+  if (!IsWin64Prologue && !IsFunclet && TRI->needsStackRealignment(MF)) {
     assert(HasFP && "There should be a frame pointer if stack is realigned.");
     BuildStackAlignAND(MBB, MBBI, DL, MaxAlign);
   }
@@ -856,7 +839,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   // increments is necessary to ensure that the guard pages used by the OS
   // virtual memory manager are allocated in correct sequence.
   uint64_t AlignedNumBytes = NumBytes;
-  if (IsWin64Prologue && TRI->needsStackRealignment(MF))
+  if (IsWin64Prologue && !IsFunclet && TRI->needsStackRealignment(MF))
     AlignedNumBytes = RoundUpToAlignment(AlignedNumBytes, MaxAlign);
   if (AlignedNumBytes >= StackProbeSize && UseStackProbe) {
     // Check whether EAX is livein for this function.
@@ -927,18 +910,27 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
 
   int SEHFrameOffset = 0;
   if (IsWin64Prologue && HasFP) {
-    SEHFrameOffset = calculateSetFPREG(NumBytes);
+    // Set RBP to a small fixed offset from RSP. In the funclet case, we base
+    // this calculation on the incoming RDX, which holds the value of RSP from
+    // the parent frame at the end of the prologue.
+    unsigned SPOrRDX = !IsFunclet ? StackPtr : RDX;
+    SEHFrameOffset = calculateSetFPREG(ParentFrameNumBytes);
     if (SEHFrameOffset)
       addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::LEA64r), FramePtr),
-                   StackPtr, false, SEHFrameOffset);
+                   SPOrRDX, false, SEHFrameOffset);
     else
-      BuildMI(MBB, MBBI, DL, TII.get(X86::MOV64rr), FramePtr).addReg(StackPtr);
+      BuildMI(MBB, MBBI, DL, TII.get(X86::MOV64rr), FramePtr)
+          .addReg(SPOrRDX);
 
-    if (NeedsWinCFI)
+    // If this is not a funclet, emit the CFI describing our frame pointer.
+    if (NeedsWinCFI && !IsFunclet)
       BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_SetFrame))
           .addImm(FramePtr)
           .addImm(SEHFrameOffset)
           .setMIFlag(MachineInstr::FrameSetup);
+  } else if (IsFunclet && STI.is32Bit()) {
+    // Reset EBP / ESI to something good for funclets.
+    MBBI = restoreWin32EHStackPointers(MBB, MBBI, DL);
   }
 
   while (MBBI != MBB.end() && MBBI->getFlag(MachineInstr::FrameSetup)) {

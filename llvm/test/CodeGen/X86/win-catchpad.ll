@@ -87,8 +87,8 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: "?catch$[[catch1bb:[0-9]+]]@?0?try_catch_catch@4HA":
 ; X86: LBB0_[[catch1bb]]: # %catch{{$}}
 ; X86: pushl %ebp
-; X86: addl $12, %ebp
 ; X86: subl $8, %esp
+; X86: addl $12, %ebp
 ; X86: movl -32(%ebp), %[[e_reg:[a-z]+]]
 ; X86: movl $1, -{{[0-9]+}}(%ebp)
 ; X86: leal -[[local_offs]](%ebp), %[[addr_reg:[a-z]+]]
@@ -103,8 +103,8 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: "?catch$[[catch2bb:[0-9]+]]@?0?try_catch_catch@4HA":
 ; X86: LBB0_[[catch2bb]]: # %catch.2{{$}}
 ; X86: pushl %ebp
-; X86: addl $12, %ebp
 ; X86: subl $8, %esp
+; X86: addl $12, %ebp
 ; X86: movl $1, -{{[0-9]+}}(%ebp)
 ; X86: leal -[[local_offs]](%ebp), %[[addr_reg:[a-z]+]]
 ; X86-DAG: movl %[[addr_reg]], 4(%esp)
@@ -134,6 +134,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64: .seh_stackalloc 48
 ; X64: leaq 48(%rsp), %rbp
 ; X64: .seh_setframe 5, 48
+; X64: .seh_endprologue
 ; X64: .Ltmp0
 ; X64-DAG: leaq -[[local_offs:[0-9]+]](%rbp), %rdx
 ; X64-DAG: movl $1, %ecx
@@ -147,8 +148,11 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64: LBB0_[[catch1bb]]: # %catch{{$}}
 ; X64: movq %rdx, 16(%rsp)
 ; X64: pushq %rbp
-; X64: movq %rdx, %rbp
+; X64: .seh_pushreg 5
 ; X64: subq $32, %rsp
+; X64: .seh_stackalloc 32
+; X64: leaq 48(%rdx), %rbp
+; X64: .seh_endprologue
 ; X64-DAG: .Ltmp4
 ; X64-DAG: leaq -[[local_offs]](%rbp), %rdx
 ; X64-DAG: movl [[e_addr:[-0-9]+]](%rbp), %ecx
@@ -162,8 +166,11 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64: LBB0_[[catch2bb]]: # %catch.2{{$}}
 ; X64: movq %rdx, 16(%rsp)
 ; X64: pushq %rbp
-; X64: movq %rdx, %rbp
+; X64: .seh_pushreg 5
 ; X64: subq $32, %rsp
+; X64: .seh_stackalloc 32
+; X64: leaq 48(%rdx), %rbp
+; X64: .seh_endprologue
 ; X64-DAG: leaq -[[local_offs]](%rbp), %rdx
 ; X64-DAG: movl $3, %ecx
 ; X64: callq f
