@@ -65,6 +65,9 @@ public:
   InstrProfIterator end() { return InstrProfIterator(); }
 
 protected:
+  /// String table for holding a unique copy of all the strings in the profile.
+  InstrProfStringTable StringTable;
+
   /// Set the current std::error_code and return same.
   std::error_code error(std::error_code EC) {
     LastError = EC;
@@ -195,6 +198,7 @@ class InstrProfLookupTrait {
   std::vector<InstrProfRecord> DataBuffer;
   IndexedInstrProf::HashT HashType;
   unsigned FormatVersion;
+  std::vector<std::pair<uint64_t, const char *>> HashKeys;
 
 public:
   InstrProfLookupTrait(IndexedInstrProf::HashT HashType, unsigned FormatVersion)
@@ -209,9 +213,13 @@ public:
 
   static bool EqualKey(StringRef A, StringRef B) { return A == B; }
   static StringRef GetInternalKey(StringRef K) { return K; }
+  static StringRef GetExternalKey(StringRef K) { return K; }
 
   hash_value_type ComputeHash(StringRef K);
 
+  void setHashKeys(std::vector<std::pair<uint64_t, const char *>> HashKeys) {
+    this->HashKeys = std::move(HashKeys);
+  }
   static std::pair<offset_type, offset_type>
   ReadKeyDataLength(const unsigned char *&D) {
     using namespace support;
@@ -224,6 +232,8 @@ public:
     return StringRef((const char *)D, N);
   }
 
+  bool ReadValueProfilingData(const unsigned char *&D,
+                              const unsigned char *const End);
   data_type ReadData(StringRef K, const unsigned char *D, offset_type N);
 };
 

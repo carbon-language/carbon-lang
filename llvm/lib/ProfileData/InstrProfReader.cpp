@@ -302,42 +302,102 @@ InstrProfLookupTrait::ComputeHash(StringRef K) {
 typedef InstrProfLookupTrait::data_type data_type;
 typedef InstrProfLookupTrait::offset_type offset_type;
 
+bool InstrProfLookupTrait::ReadValueProfilingData(
+    const unsigned char *&D, const unsigned char *const End) {
+
+  using namespace support;
+  // Read number of value kinds with value sites.
+  if (D + sizeof(uint64_t) > End)
+    return false;
+  uint64_t ValueKindCount = endian::readNext<uint64_t, little, unaligned>(D);
+
+  for (uint32_t Kind = 0; Kind < ValueKindCount; ++Kind) {
+
+    // Read value kind and number of value sites for kind.
+    if (D + 2 * sizeof(uint64_t) > End)
+      return false;
+    uint64_t ValueKind = endian::readNext<uint64_t, little, unaligned>(D);
+    uint64_t ValueSiteCount = endian::readNext<uint64_t, little, unaligned>(D);
+
+    std::vector<InstrProfValueSiteRecord> &ValueSites =
+        DataBuffer.back().getValueSitesForKind(ValueKind);
+    ValueSites.reserve(ValueSiteCount);
+    for (uint64_t VSite = 0; VSite < ValueSiteCount; ++VSite) {
+      // Read number of value data pairs at value site.
+      if (D + sizeof(uint64_t) > End)
+        return false;
+      uint64_t ValueDataCount =
+          endian::readNext<uint64_t, little, unaligned>(D);
+
+      // Check if there are as many ValueDataPairs as ValueDataCount in memory.
+      if (D + (ValueDataCount << 1) * sizeof(uint64_t) > End)
+        return false;
+
+      InstrProfValueSiteRecord VSiteRecord;
+      for (uint64_t VCount = 0; VCount < ValueDataCount; ++VCount) {
+        uint64_t Value = endian::readNext<uint64_t, little, unaligned>(D);
+        uint64_t NumTaken = endian::readNext<uint64_t, little, unaligned>(D);
+        switch (ValueKind) {
+        case IPVK_IndirectCallTarget: {
+          auto Result =
+              std::lower_bound(HashKeys.begin(), HashKeys.end(), Value,
+                               [](const std::pair<uint64_t, const char *> &LHS,
+                                  uint64_t RHS) { return LHS.first < RHS; });
+          assert(Result != HashKeys.end() &&
+                 "Hash does not match any known keys\n");
+          Value = (uint64_t)Result->second;
+          break;
+        }
+        }
+        VSiteRecord.ValueData.push_back(std::make_pair(Value, NumTaken));
+      }
+      ValueSites.push_back(std::move(VSiteRecord));
+    }
+  }
+  return true;
+}
+
 data_type InstrProfLookupTrait::ReadData(StringRef K, const unsigned char *D,
                                          offset_type N) {
-
   // Check if the data is corrupt. If so, don't try to read it.
   if (N % sizeof(uint64_t))
     return data_type();
 
   DataBuffer.clear();
-  uint64_t NumCounts;
-  uint64_t NumEntries = N / sizeof(uint64_t);
   std::vector<uint64_t> CounterBuffer;
-  for (uint64_t I = 0; I < NumEntries; I += NumCounts) {
-    using namespace support;
-    // The function hash comes first.
+
+  using namespace support;
+  const unsigned char *End = D + N;
+  while (D < End) {
+    // Read hash
+    if (D + sizeof(uint64_t) >= End)
+      return data_type();
     uint64_t Hash = endian::readNext<uint64_t, little, unaligned>(D);
 
-    if (++I >= NumEntries)
-      return data_type();
-
-    // In v1, we have at least one count.
-    // Later, we have the number of counts.
-    NumCounts = (1 == FormatVersion)
-                    ? NumEntries - I
-                    : endian::readNext<uint64_t, little, unaligned>(D);
-    if (1 != FormatVersion)
-      ++I;
-
-    // If we have more counts than data, this is bogus.
-    if (I + NumCounts > NumEntries)
+    // Initialize number of counters for FormatVersion == 1
+    uint64_t CountsSize = N / sizeof(uint64_t) - 1;
+    // If format version is different then read number of counters
+    if (FormatVersion != 1) {
+      if (D + sizeof(uint64_t) > End)
+        return data_type();
+      CountsSize = endian::readNext<uint64_t, little, unaligned>(D);
+    }
+    // Read counter values
+    if (D + CountsSize * sizeof(uint64_t) > End)
       return data_type();
 
     CounterBuffer.clear();
-    for (unsigned J = 0; J < NumCounts; ++J)
+    CounterBuffer.reserve(CountsSize);
+    for (uint64_t J = 0; J < CountsSize; ++J)
       CounterBuffer.push_back(endian::readNext<uint64_t, little, unaligned>(D));
 
     DataBuffer.push_back(InstrProfRecord(K, Hash, std::move(CounterBuffer)));
+
+    // Read value profiling data
+    if (FormatVersion > 2 && !ReadValueProfilingData(D, End)) {
+      DataBuffer.clear();
+      return data_type();
+    }
   }
   return DataBuffer;
 }
@@ -384,6 +444,18 @@ std::error_code IndexedInstrProfReader::readHeader() {
   Index.reset(InstrProfReaderIndex::Create(
       Start + HashOffset, Cur, Start,
       InstrProfLookupTrait(HashType, FormatVersion)));
+
+  // Form the map of hash values to const char* keys in profiling data.
+  std::vector<std::pair<uint64_t, const char *>> HashKeys;
+  for (auto Key : Index->keys()) {
+    const char *KeyTableRef = StringTable.insertString(Key);
+    HashKeys.push_back(std::make_pair(ComputeHash(HashType, Key), KeyTableRef));
+  }
+  std::sort(HashKeys.begin(), HashKeys.end(), less_first());
+  std::unique(HashKeys.begin(), HashKeys.end(), less_first());
+  HashKeys.erase(std::unique(HashKeys.begin(), HashKeys.end()), HashKeys.end());
+  // Set the hash key map for the InstrLookupTrait
+  Index->getInfoObj().setHashKeys(std::move(HashKeys));
   // Set up our iterator for readNextRecord.
   RecordIterator = Index->data_begin();
 

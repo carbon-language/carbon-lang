@@ -50,6 +50,8 @@ class InstrProfErrorCategoryType : public std::error_category {
       return "Function count mismatch";
     case instrprof_error::counter_overflow:
       return "Counter overflow";
+    case instrprof_error::value_site_count_mismatch:
+      return "Function's value site counts mismatch";
     }
     llvm_unreachable("A value of instrprof_error has no message.");
   }

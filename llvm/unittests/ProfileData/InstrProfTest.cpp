@@ -50,7 +50,8 @@ TEST_F(InstrProfTest, write_and_read_empty_profile) {
 }
 
 TEST_F(InstrProfTest, write_and_read_one_function) {
-  Writer.addFunctionCounts("foo", 0x1234, {1, 2, 3, 4});
+  InstrProfRecord Record("foo", 0x1234, {1, 2, 3, 4});
+  Writer.addRecord(std::move(Record));
   auto Profile = Writer.writeBuffer();
   readProfile(std::move(Profile));
 
@@ -67,8 +68,10 @@ TEST_F(InstrProfTest, write_and_read_one_function) {
 }
 
 TEST_F(InstrProfTest, get_function_counts) {
-  Writer.addFunctionCounts("foo", 0x1234, {1, 2});
-  Writer.addFunctionCounts("foo", 0x1235, {3, 4});
+  InstrProfRecord Record1("foo", 0x1234, {1, 2});
+  InstrProfRecord Record2("foo", 0x1235, {3, 4});
+  Writer.addRecord(std::move(Record1));
+  Writer.addRecord(std::move(Record2));
   auto Profile = Writer.writeBuffer();
   readProfile(std::move(Profile));
 
@@ -92,9 +95,12 @@ TEST_F(InstrProfTest, get_function_counts) {
 }
 
 TEST_F(InstrProfTest, get_max_function_count) {
-  Writer.addFunctionCounts("foo", 0x1234, {1ULL << 31, 2});
-  Writer.addFunctionCounts("bar", 0, {1ULL << 63});
-  Writer.addFunctionCounts("baz", 0x5678, {0, 0, 0, 0});
+  InstrProfRecord Record1("foo", 0x1234, {1ULL << 31, 2});
+  InstrProfRecord Record2("bar", 0, {1ULL << 63});
+  InstrProfRecord Record3("baz", 0x5678, {0, 0, 0, 0});
+  Writer.addRecord(std::move(Record1));
+  Writer.addRecord(std::move(Record2));
+  Writer.addRecord(std::move(Record3));
   auto Profile = Writer.writeBuffer();
   readProfile(std::move(Profile));
 
