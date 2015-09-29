@@ -18,19 +18,19 @@ namespace lld {
 namespace elf2 {
 
 struct Configuration {
-  llvm::StringRef OutputFile = "a.out";
   llvm::StringRef DynamicLinker;
+  llvm::StringRef Entry;
+  llvm::StringRef OutputFile = "a.out";
+  llvm::StringRef Sysroot;
   std::string RPath;
   std::vector<llvm::StringRef> InputSearchPaths;
-  llvm::StringRef Sysroot;
-  bool Shared = false;
+  bool AllowMultipleDefinition = false;
   bool DiscardAll = false;
   bool DiscardLocals = false;
   bool DiscardNone = false;
   bool ExportDynamic = false;
   bool NoInhibitExec = false;
-  bool AllowMultipleDefinition = false;
-  llvm::StringRef Entry;
+  bool Shared = false;
 };
 
 extern Configuration *Config;
