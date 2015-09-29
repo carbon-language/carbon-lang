@@ -290,7 +290,7 @@ til::SExpr *SExprBuilder::translateDeclRefExpr(const DeclRefExpr *DRE,
     VD = FD->getParamDecl(I);
   }
 
-  // For non-local variables, treat it as a referenced to a named object.
+  // For non-local variables, treat it as a reference to a named object.
   return new (Arena) til::LiteralPtr(VD);
 }
 

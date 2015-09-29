@@ -5145,4 +5145,17 @@ void test() {
 }  // end namespace TestReferenceNoThreadSafetyAnalysis
 
 
+namespace GlobalAcquiredBeforeAfterTest {
+
+Mutex mu1;
+Mutex mu2 ACQUIRED_AFTER(mu1);
+
+void test3() {
+  mu2.Lock();
+  mu1.Lock();  // expected-warning {{mutex 'mu1' must be acquired before 'mu2'}}
+  mu1.Unlock();
+  mu2.Unlock();
+}
+
+}  // end namespace  GlobalAcquiredBeforeAfterTest
 

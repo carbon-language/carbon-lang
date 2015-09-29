@@ -81,7 +81,8 @@ int main() {
   mutex_shared_lock(&mu2);
   Foo_fun1(1);
 
-  mutex_shared_lock(&mu1); // expected-warning{{acquiring mutex 'mu1' that is already held}}
+  mutex_shared_lock(&mu1); // expected-warning{{acquiring mutex 'mu1' that is already held}} \
+                              expected-warning{{mutex 'mu1' must be acquired before 'mu2'}}
   mutex_unlock(&mu1);
   mutex_unlock(&mu2);
   mutex_shared_lock(&mu1);
