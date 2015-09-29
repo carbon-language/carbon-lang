@@ -117,29 +117,16 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   for (auto *Arg : Args.filtered(OPT_L))
     Config->InputSearchPaths.push_back(Arg->getValue());
 
-  if (Args.hasArg(OPT_shared))
-    Config->Shared = true;
-
-  if (Args.hasArg(OPT_discard_all))
-    Config->DiscardAll = true;
-
-  if (Args.hasArg(OPT_discard_locals))
-    Config->DiscardLocals = true;
-
-  if (Args.hasArg(OPT_discard_none))
-    Config->DiscardNone = true;
-
-  if (Args.hasArg(OPT_export_dynamic))
-    Config->ExportDynamic = true;
-
-  if (Args.hasArg(OPT_noinhibit_exec))
-    Config->NoInhibitExec = true;
-
-  if (Args.hasArg(OPT_allow_multiple_definition))
-    Config->AllowMultipleDefinition = true;
-
   if (auto *Arg = Args.getLastArg(OPT_entry))
     Config->Entry = Arg->getValue();
+
+  Config->AllowMultipleDefinition = Args.hasArg(OPT_allow_multiple_definition);
+  Config->DiscardAll = Args.hasArg(OPT_discard_all);
+  Config->DiscardLocals = Args.hasArg(OPT_discard_locals);
+  Config->DiscardNone = Args.hasArg(OPT_discard_none);
+  Config->ExportDynamic = Args.hasArg(OPT_export_dynamic);
+  Config->NoInhibitExec = Args.hasArg(OPT_noinhibit_exec);
+  Config->Shared = Args.hasArg(OPT_shared);
 
   // Create a list of input files.
   std::vector<MemoryBufferRef> Inputs;
