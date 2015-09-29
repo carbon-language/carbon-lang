@@ -10,6 +10,8 @@
 #ifndef LLD_ELF_TARGET_H
 #define LLD_ELF_TARGET_H
 
+#include "llvm/ADT/StringRef.h"
+
 #include <memory>
 
 namespace lld {
@@ -18,6 +20,7 @@ class SymbolBody;
 
 class TargetInfo {
 public:
+  llvm::StringRef getDefaultEntry() const { return DefaultEntry; }
   unsigned getPCRelReloc() const { return PCRelReloc; }
   unsigned getGotReloc() const { return GotReloc; }
   virtual void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -32,6 +35,7 @@ public:
 protected:
   unsigned PCRelReloc;
   unsigned GotReloc;
+  llvm::StringRef DefaultEntry = "_start";
 };
 
 class X86TargetInfo final : public TargetInfo {
@@ -92,6 +96,17 @@ public:
 class AArch64TargetInfo final : public TargetInfo {
 public:
   AArch64TargetInfo();
+  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                     uint64_t PltEntryAddr) const override;
+  bool relocNeedsGot(uint32_t Type) const override;
+  bool relocNeedsPlt(uint32_t Type) const override;
+  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+                   uint64_t BaseAddr, uint64_t SymVA) const override;
+};
+
+class MipsTargetInfo final : public TargetInfo {
+public:
+  MipsTargetInfo();
   void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                      uint64_t PltEntryAddr) const override;
   bool relocNeedsGot(uint32_t Type) const override;

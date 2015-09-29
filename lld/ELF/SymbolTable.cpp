@@ -47,6 +47,8 @@ static TargetInfo *createTarget(uint16_t EMachine) {
     return new AArch64TargetInfo();
   case EM_ARM:
     return new ARMTargetInfo();
+  case EM_MIPS:
+    return new MipsTargetInfo();
   case EM_PPC:
     return new PPCTargetInfo();
   case EM_PPC64:
@@ -72,7 +74,8 @@ template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
   Target.reset(createTarget(EMachine));
   if (Config->Shared)
     return;
-  EntrySym = new (Alloc) Undefined<ELFT>("_start", Undefined<ELFT>::Synthetic);
+  EntrySym = new (Alloc)
+      Undefined<ELFT>(Target->getDefaultEntry(), Undefined<ELFT>::Synthetic);
   resolve<ELFT>(EntrySym);
 
   // In the assembly for 32 bit x86 the _GLOBAL_OFFSET_TABLE_ symbol is magical

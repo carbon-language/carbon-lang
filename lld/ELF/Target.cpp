@@ -252,5 +252,21 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
     break;
   }
 }
+
+MipsTargetInfo::MipsTargetInfo() {
+  // PCRelReloc = FIXME
+  // GotReloc = FIXME
+  DefaultEntry = "__start";
+}
+
+void MipsTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                                   uint64_t PltEntryAddr) const {}
+
+bool MipsTargetInfo::relocNeedsGot(uint32_t Type) const { return false; }
+
+bool MipsTargetInfo::relocNeedsPlt(uint32_t Type) const { return false; }
+
+void MipsTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+                                 uint64_t BaseAddr, uint64_t SymVA) const {}
 }
 }
