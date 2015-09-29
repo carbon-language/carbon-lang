@@ -1904,6 +1904,26 @@ bool isKnownNonZero(Value *V, const DataLayout &DL, unsigned Depth,
         isKnownNonZero(SI->getFalseValue(), DL, Depth, Q))
       return true;
   }
+  // PHI
+  else if (PHINode *PN = dyn_cast<PHINode>(V)) {
+    // Try and detect a recurrence that monotonically increases from a
+    // starting value, as these are common as induction variables.
+    if (PN->getNumIncomingValues() == 2) {
+      Value *Start = PN->getIncomingValue(0);
+      Value *Induction = PN->getIncomingValue(1);
+      if (isa<ConstantInt>(Induction) && !isa<ConstantInt>(Start))
+        std::swap(Start, Induction);
+      if (ConstantInt *C = dyn_cast<ConstantInt>(Start)) {
+        if (!C->isZero() && !C->isNegative()) {
+          ConstantInt *X;
+          if ((match(Induction, m_NSWAdd(m_Specific(PN), m_ConstantInt(X))) ||
+               match(Induction, m_NUWAdd(m_Specific(PN), m_ConstantInt(X)))) &&
+              !X->isNegative())
+            return true;
+        }
+      }
+    }
+  }
 
   if (!BitWidth) return false;
   APInt KnownZero(BitWidth, 0);
