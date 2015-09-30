@@ -24,13 +24,13 @@ struct Configuration {
   llvm::StringRef Sysroot;
   std::string RPath;
   std::vector<llvm::StringRef> InputSearchPaths;
-  bool AllowMultipleDefinition = false;
-  bool DiscardAll = false;
-  bool DiscardLocals = false;
-  bool DiscardNone = false;
-  bool ExportDynamic = false;
-  bool NoInhibitExec = false;
-  bool Shared = false;
+  bool AllowMultipleDefinition;
+  bool DiscardAll;
+  bool DiscardLocals;
+  bool DiscardNone;
+  bool ExportDynamic;
+  bool NoInhibitExec;
+  bool Shared;
 };
 
 extern Configuration *Config;
