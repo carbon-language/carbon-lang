@@ -410,10 +410,11 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     Elf_Sym_Range Syms = File.getLocalSymbols();
     for (const Elf_Sym &Sym : Syms) {
-      auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
       ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
       if (SymName && !shouldKeepInSymtab(*SymName))
         continue;
+      auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
+      Buf += sizeof(*ESym);
       ESym->st_name = (SymName) ? StrTabSec.getFileOff(*SymName) : 0;
       ESym->st_size = Sym.st_size;
       ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
@@ -432,7 +433,6 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
         VA += Out->getVA() + Section->getOutputSectionOff();
       }
       ESym->st_value = VA;
-      Buf += sizeof(Elf_Sym);
     }
   }
 }
@@ -453,6 +453,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
     const auto &EBody = *cast<ELFSymbolBody<ELFT>>(Body);
     const Elf_Sym &InputSym = EBody.Sym;
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
+    Buf += sizeof(*ESym);
     ESym->st_name = StrTabSec.getFileOff(Name);
 
     const OutputSection<ELFT> *Out = nullptr;
@@ -491,8 +492,6 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
 
     if (Out)
       ESym->st_shndx = Out->getSectionIndex();
-
-    Buf += sizeof(Elf_Sym);
   }
 }
 
