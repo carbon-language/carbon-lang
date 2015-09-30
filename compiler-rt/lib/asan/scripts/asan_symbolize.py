@@ -164,8 +164,8 @@ class Addr2LineSymbolizer(Symbolizer):
         file_name = self.pipe.stdout.readline().rstrip()
         if is_first_frame:
           is_first_frame = False
-        elif function_name == '??':
-          assert file_name == '??:0'
+        elif function_name in ['', '??']:
+          assert file_name == function_name
           break
         lines.append((function_name, file_name));
     except Exception:
