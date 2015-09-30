@@ -272,10 +272,11 @@ bool LowerDbgDeclare(Function &F);
 DbgDeclareInst *FindAllocaDbgDeclare(Value *V);
 
 /// \brief Replaces llvm.dbg.declare instruction when an alloca is replaced with
-/// a new value.  If Deref is true, tan additional DW_OP_deref is prepended to
-/// the expression.
+/// a new value. If Deref is true, an additional DW_OP_deref is prepended to the
+/// expression. If Offset is non-zero, a constant displacement is added to the
+/// expression (after the optional Deref). Offset can be negative.
 bool replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
-                                DIBuilder &Builder, bool Deref);
+                                DIBuilder &Builder, bool Deref, int Offset = 0);
 
 /// Replace 'BB's terminator with one that does not have an unwind successor
 /// block.  Rewrites `invoke` to `call`, `catchendpad unwind label %foo` to

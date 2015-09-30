@@ -1136,7 +1136,7 @@ DbgDeclareInst *llvm::FindAllocaDbgDeclare(Value *V) {
 }
 
 bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
-                                      DIBuilder &Builder, bool Deref) {
+                                      DIBuilder &Builder, bool Deref, int Offset) {
   DbgDeclareInst *DDI = FindAllocaDbgDeclare(AI);
   if (!DDI)
     return false;
@@ -1145,13 +1145,21 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   auto *DIExpr = DDI->getExpression();
   assert(DIVar && "Missing variable");
 
-  if (Deref) {
+  if (Deref || Offset) {
     // Create a copy of the original DIDescriptor for user variable, prepending
     // "deref" operation to a list of address elements, as new llvm.dbg.declare
     // will take a value storing address of the memory for variable, not
     // alloca itself.
     SmallVector<uint64_t, 4> NewDIExpr;
-    NewDIExpr.push_back(dwarf::DW_OP_deref);
+    if (Deref)
+      NewDIExpr.push_back(dwarf::DW_OP_deref);
+    if (Offset > 0) {
+      NewDIExpr.push_back(dwarf::DW_OP_plus);
+      NewDIExpr.push_back(Offset);
+    } else if (Offset < 0) {
+      NewDIExpr.push_back(dwarf::DW_OP_minus);
+      NewDIExpr.push_back(-Offset);
+    }
     if (DIExpr)
       NewDIExpr.append(DIExpr->elements_begin(), DIExpr->elements_end());
     DIExpr = Builder.createExpression(NewDIExpr);

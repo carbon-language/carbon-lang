@@ -211,12 +211,15 @@ bool DwarfExpression::AddMachineRegExpression(const DIExpression *Expr,
     return AddMachineRegPiece(MachineReg, SizeInBits,
                getOffsetOrZero(OffsetInBits, PieceOffsetInBits));
   }
-  case dwarf::DW_OP_plus: {
-    // [DW_OP_reg,Offset,DW_OP_plus,DW_OP_deref] --> [DW_OP_breg,Offset].
+  case dwarf::DW_OP_plus:
+  case dwarf::DW_OP_minus: {
+    // [DW_OP_reg,Offset,DW_OP_plus, DW_OP_deref] --> [DW_OP_breg, Offset].
+    // [DW_OP_reg,Offset,DW_OP_minus,DW_OP_deref] --> [DW_OP_breg,-Offset].
     auto N = I.getNext();
     if (N != E && N->getOp() == dwarf::DW_OP_deref) {
       unsigned Offset = I->getArg(0);
-      ValidReg = AddMachineRegIndirect(MachineReg, Offset);
+      ValidReg = AddMachineRegIndirect(
+          MachineReg, I->getOp() == dwarf::DW_OP_plus ? Offset : -Offset);
       std::advance(I, 2);
       break;
     } else
@@ -254,6 +257,12 @@ void DwarfExpression::AddExpression(DIExpression::expr_op_iterator I,
     case dwarf::DW_OP_plus:
       EmitOp(dwarf::DW_OP_plus_uconst);
       EmitUnsigned(I->getArg(0));
+      break;
+    case dwarf::DW_OP_minus:
+      // There is no OP_minus_uconst.
+      EmitOp(dwarf::DW_OP_constu);
+      EmitUnsigned(I->getArg(0));
+      EmitOp(dwarf::DW_OP_minus);
       break;
     case dwarf::DW_OP_deref:
       EmitOp(dwarf::DW_OP_deref);

@@ -4394,15 +4394,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                                    N);
           return nullptr;
         }
-      } else if (AI)
+      } else {
         SDV = DAG.getDbgValue(Variable, Expression, N.getNode(), N.getResNo(),
                               true, 0, dl, SDNodeOrder);
-      else {
-        // Can't do anything with other non-AI cases yet.
-        DEBUG(dbgs() << "Dropping debug info for " << DI << "\n");
-        DEBUG(dbgs() << "non-AllocaInst issue for Address: \n\t");
-        DEBUG(Address->dump());
-        return nullptr;
       }
       DAG.AddDbgValue(SDV, N.getNode(), isParameter);
     } else {

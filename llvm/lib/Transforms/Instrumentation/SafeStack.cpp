@@ -443,7 +443,7 @@ SafeStack::moveStaticAllocasToUnsafeStack(IRBuilder<> &IRB, Function &F,
       cast<Instruction>(NewAI)->takeName(AI);
 
     // Replace alloc with the new location.
-    replaceDbgDeclareForAlloca(AI, NewAI, DIB, /*Deref=*/true);
+    replaceDbgDeclareForAlloca(AI, BasePointer, DIB, /*Deref=*/true, -StaticOffset);
     AI->replaceAllUsesWith(NewAI);
     AI->eraseFromParent();
   }
