@@ -1,8 +1,6 @@
 ; RUN: llc < %s -march=arm64 -aarch64-stp-suppress=false -verify-machineinstrs -mcpu=cyclone | FileCheck %s
-; RUN: llc < %s -march=arm64 -aarch64-unscaled-mem-op=true\
-; RUN:   -verify-machineinstrs -mcpu=cyclone | FileCheck -check-prefix=STUR_CHK %s
 
-; CHECK: stp_int
+; CHECK-LABEL: stp_int
 ; CHECK: stp w0, w1, [x2]
 define void @stp_int(i32 %a, i32 %b, i32* nocapture %p) nounwind {
   store i32 %a, i32* %p, align 4
@@ -11,7 +9,7 @@ define void @stp_int(i32 %a, i32 %b, i32* nocapture %p) nounwind {
   ret void
 }
 
-; CHECK: stp_long
+; CHECK-LABEL: stp_long
 ; CHECK: stp x0, x1, [x2]
 define void @stp_long(i64 %a, i64 %b, i64* nocapture %p) nounwind {
   store i64 %a, i64* %p, align 8
@@ -20,7 +18,7 @@ define void @stp_long(i64 %a, i64 %b, i64* nocapture %p) nounwind {
   ret void
 }
 
-; CHECK: stp_float
+; CHECK-LABEL: stp_float
 ; CHECK: stp s0, s1, [x0]
 define void @stp_float(float %a, float %b, float* nocapture %p) nounwind {
   store float %a, float* %p, align 4
@@ -29,7 +27,7 @@ define void @stp_float(float %a, float %b, float* nocapture %p) nounwind {
   ret void
 }
 
-; CHECK: stp_double
+; CHECK-LABEL: stp_double
 ; CHECK: stp d0, d1, [x0]
 define void @stp_double(double %a, double %b, double* nocapture %p) nounwind {
   store double %a, double* %p, align 8
@@ -40,9 +38,9 @@ define void @stp_double(double %a, double %b, double* nocapture %p) nounwind {
 
 ; Test the load/store optimizer---combine ldurs into a ldp, if appropriate
 define void @stur_int(i32 %a, i32 %b, i32* nocapture %p) nounwind {
-; STUR_CHK: stur_int
-; STUR_CHK: stp w{{[0-9]+}}, {{w[0-9]+}}, [x{{[0-9]+}}, #-8]
-; STUR_CHK-NEXT: ret
+; CHECK-LABEL: stur_int
+; CHECK: stp w{{[0-9]+}}, {{w[0-9]+}}, [x{{[0-9]+}}, #-8]
+; CHECK-NEXT: ret
   %p1 = getelementptr inbounds i32, i32* %p, i32 -1
   store i32 %a, i32* %p1, align 2
   %p2 = getelementptr inbounds i32, i32* %p, i32 -2
@@ -51,9 +49,9 @@ define void @stur_int(i32 %a, i32 %b, i32* nocapture %p) nounwind {
 }
 
 define void @stur_long(i64 %a, i64 %b, i64* nocapture %p) nounwind {
-; STUR_CHK: stur_long
-; STUR_CHK: stp x{{[0-9]+}}, {{x[0-9]+}}, [x{{[0-9]+}}, #-16]
-; STUR_CHK-NEXT: ret
+; CHECK-LABEL: stur_long
+; CHECK: stp x{{[0-9]+}}, {{x[0-9]+}}, [x{{[0-9]+}}, #-16]
+; CHECK-NEXT: ret
   %p1 = getelementptr inbounds i64, i64* %p, i32 -1
   store i64 %a, i64* %p1, align 2
   %p2 = getelementptr inbounds i64, i64* %p, i32 -2
@@ -62,9 +60,9 @@ define void @stur_long(i64 %a, i64 %b, i64* nocapture %p) nounwind {
 }
 
 define void @stur_float(float %a, float %b, float* nocapture %p) nounwind {
-; STUR_CHK: stur_float
-; STUR_CHK: stp s{{[0-9]+}}, {{s[0-9]+}}, [x{{[0-9]+}}, #-8]
-; STUR_CHK-NEXT: ret
+; CHECK-LABEL: stur_float
+; CHECK: stp s{{[0-9]+}}, {{s[0-9]+}}, [x{{[0-9]+}}, #-8]
+; CHECK-NEXT: ret
   %p1 = getelementptr inbounds float, float* %p, i32 -1
   store float %a, float* %p1, align 2
   %p2 = getelementptr inbounds float, float* %p, i32 -2
@@ -73,9 +71,9 @@ define void @stur_float(float %a, float %b, float* nocapture %p) nounwind {
 }
 
 define void @stur_double(double %a, double %b, double* nocapture %p) nounwind {
-; STUR_CHK: stur_double
-; STUR_CHK: stp d{{[0-9]+}}, {{d[0-9]+}}, [x{{[0-9]+}}, #-16]
-; STUR_CHK-NEXT: ret
+; CHECK-LABEL: stur_double
+; CHECK: stp d{{[0-9]+}}, {{d[0-9]+}}, [x{{[0-9]+}}, #-16]
+; CHECK-NEXT: ret
   %p1 = getelementptr inbounds double, double* %p, i32 -1
   store double %a, double* %p1, align 2
   %p2 = getelementptr inbounds double, double* %p, i32 -2
