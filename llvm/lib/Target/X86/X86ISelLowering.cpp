@@ -2945,6 +2945,20 @@ static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, EVT VT, SDValue V1,
   return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
 }
 
+/// Check if the fall through instruction after a call site is unreachable.
+/// FIXME: This will fail if there are interesting non-code generating IR
+/// instructions between the call and the unreachable (lifetime.end). In
+/// practice, this should be rare because optimizations like to delete non-call
+/// code before unreachable.
+static bool isCallFollowedByUnreachable(ImmutableCallSite CS) {
+  const Instruction *NextInst;
+  if (auto *II = dyn_cast<InvokeInst>(CS.getInstruction()))
+    NextInst = II->getNormalDest()->getFirstNonPHIOrDbg();
+  else
+    NextInst = CS.getInstruction()->getNextNode();
+  return isa<UnreachableInst>(NextInst);
+}
+
 SDValue
 X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                              SmallVectorImpl<SDValue> &InVals) const {
@@ -3448,6 +3462,15 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                                      true),
                                InFlag, dl);
     InFlag = Chain.getValue(1);
+  }
+
+  if (Subtarget->isTargetWin64() && CLI.CS) {
+    // Look for a call followed by unreachable. On Win64, we need to ensure that
+    // the call does not accidentally fall through to something that looks like
+    // an epilogue. We do this by inserting a DEBUGTRAP, which lowers to int3,
+    // which is what MSVC emits after noreturn calls.
+    if (isCallFollowedByUnreachable(*CLI.CS))
+      Chain = DAG.getNode(ISD::DEBUGTRAP, dl, MVT::Other, Chain);
   }
 
   // Handle result values, copying them out of physregs into vregs that we

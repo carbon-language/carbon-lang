@@ -1569,10 +1569,8 @@ bool FastISel::selectOperator(const User *I, unsigned Opcode) {
   }
 
   case Instruction::Unreachable:
-    if (TM.Options.TrapUnreachable)
-      return fastEmit_(MVT::Other, MVT::Other, ISD::TRAP) != 0;
-    else
-      return true;
+    // Nothing to emit.
+    return true;
 
   case Instruction::Alloca:
     // FunctionLowering has the static-sized case covered.

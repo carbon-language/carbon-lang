@@ -2205,10 +2205,7 @@ void SelectionDAGBuilder::visitIndirectBr(const IndirectBrInst &I) {
                           getValue(I.getAddress())));
 }
 
-void SelectionDAGBuilder::visitUnreachable(const UnreachableInst &I) {
-  if (DAG.getTarget().Options.TrapUnreachable)
-    DAG.setRoot(DAG.getNode(ISD::TRAP, getCurSDLoc(), MVT::Other, DAG.getRoot()));
-}
+void SelectionDAGBuilder::visitUnreachable(const UnreachableInst &I) {}
 
 void SelectionDAGBuilder::visitFSub(const User &I) {
   // -0.0 - X --> fneg
