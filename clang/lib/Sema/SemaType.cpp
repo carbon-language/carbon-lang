@@ -1390,11 +1390,13 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     if (Result.isNull()) {
       declarator.setInvalidType(true);
     } else if (S.getLangOpts().OpenCL) {
-      if (const AtomicType *AT = Result->getAs<AtomicType>()) {
-        const BuiltinType *BT = AT->getValueType()->getAs<BuiltinType>();
-        bool NoExtTypes = BT && (BT->getKind() == BuiltinType::Int ||
-                                 BT->getKind() == BuiltinType::UInt ||
-                                 BT->getKind() == BuiltinType::Float);
+      if (Result->getAs<AtomicType>()) {
+        StringRef TypeName = Result.getBaseTypeIdentifier()->getName();
+        bool NoExtTypes =
+            llvm::StringSwitch<bool>(TypeName)
+                .Cases("atomic_int", "atomic_uint", "atomic_float",
+                       "atomic_flag", true)
+                .Default(false);
         if (!S.getOpenCLOptions().cl_khr_int64_base_atomics && !NoExtTypes) {
           S.Diag(DS.getTypeSpecTypeLoc(), diag::err_type_requires_extension)
               << Result << "cl_khr_int64_base_atomics";
@@ -1406,8 +1408,8 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
               << Result << "cl_khr_int64_extended_atomics";
           declarator.setInvalidType(true);
         }
-        if (!S.getOpenCLOptions().cl_khr_fp64 && BT &&
-            BT->getKind() == BuiltinType::Double) {
+        if (!S.getOpenCLOptions().cl_khr_fp64 &&
+            !TypeName.compare("atomic_double")) {
           S.Diag(DS.getTypeSpecTypeLoc(), diag::err_type_requires_extension)
               << Result << "cl_khr_fp64";
           declarator.setInvalidType(true);

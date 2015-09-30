@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 %s -triple x86_64-unknown-unknown -verify -pedantic -fsyntax-only
-// RUN: %clang_cc1 %s -triple x86_64-unknown-unknown -verify  -fsyntax-only -cl-std=CL2.0 -DCL20
-// RUN: %clang_cc1 %s -triple x86_64-unknown-unknown -verify  -fsyntax-only -cl-std=CL2.0 -DCL20 -DEXT
+// RUN: %clang_cc1 %s -verify -pedantic -fsyntax-only
+// RUN: %clang_cc1 %s -verify  -fsyntax-only -cl-std=CL2.0 -DCL20
+// RUN: %clang_cc1 %s -verify  -fsyntax-only -cl-std=CL2.0 -DCL20 -DEXT
 
 #ifdef EXT
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics:enable
