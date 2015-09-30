@@ -2410,15 +2410,19 @@ def warn_availability_version_ordering : Warning<
 def warn_mismatched_availability: Warning<
   "availability does not match previous declaration">, InGroup<Availability>;
 def warn_mismatched_availability_override : Warning<
-  "overriding method %select{introduced after|"
-  "deprecated before|obsoleted before}0 overridden method on %1 (%2 vs. %3)">, 
-  InGroup<Availability>;
+  "%select{|overriding }4method %select{introduced after|"
+  "deprecated before|obsoleted before}0 "
+  "%select{the protocol method it implements|overridden method}4 "
+  "on %1 (%2 vs. %3)">, InGroup<Availability>;
 def warn_mismatched_availability_override_unavail : Warning<
-  "overriding method cannot be unavailable on %0 when its overridden method is "
+  "%select{|overriding }1method cannot be unavailable on %0 when "
+  "%select{the protocol method it implements|its overridden method}1 is "
   "available">,
   InGroup<Availability>;
 def note_overridden_method : Note<
   "overridden method is here">;
+def note_protocol_method : Note<
+  "protocol method is here">;
 
 // Thread Safety Attributes
 def warn_invalid_capability_name : Warning<

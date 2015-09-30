@@ -23,6 +23,7 @@
 - (void)overridden4 __attribute__((availability(macosx,deprecated=10.3))); // expected-note{{overridden method is here}}
 - (void)overridden5 __attribute__((availability(macosx,unavailable)));
 - (void)overridden6 __attribute__((availability(macosx,introduced=10.3))); // expected-note{{overridden method is here}}
+- (void)unavailableMethod __attribute__((unavailable));
 @end
 
 // rdar://11475360
@@ -35,6 +36,7 @@
 - (void)overridden4 __attribute__((availability(macosx,deprecated=10.2))); // expected-warning{{overriding method deprecated before overridden method on OS X (10.3 vs. 10.2)}}
 - (void)overridden5 __attribute__((availability(macosx,introduced=10.3)));
 - (void)overridden6 __attribute__((availability(macosx,unavailable))); // expected-warning{{overriding method cannot be unavailable on OS X when its overridden method is available}}
+- (void)unavailableMethod; // does *not* inherit unavailability
 @end
 
 void f(A *a, B *b) {
@@ -206,3 +208,73 @@ void use_myEnum() {
   // expected-error@+1 {{MyEnum_Blah' is unavailable: not available}}
   MyEnum e = MyEnum_Blah; 
 }
+
+// Test that the availability of (optional) protocol methods is not
+// inherited be implementations of those protocol methods.
+@protocol AvailabilityP2
+@optional
+-(void)methodA __attribute__((availability(macosx,introduced=10.1,deprecated=10.2))); // expected-note 4{{'methodA' has been explicitly marked deprecated here}} \
+// expected-note 2{{protocol method is here}}
+-(void)methodB __attribute__((unavailable)); // expected-note 4{{'methodB' has been explicitly marked unavailable here}}
+-(void)methodC;
+@end
+
+void testAvailabilityP2(id<AvailabilityP2> obj) {
+  [obj methodA]; // expected-warning{{'methodA' is deprecated: first deprecated in OS X 10.2}}
+  [obj methodB]; // expected-error{{'methodB' is unavailable}}
+}
+
+@interface ImplementsAvailabilityP2a <AvailabilityP2>
+-(void)methodA;
+-(void)methodB;
+@end
+
+void testImplementsAvailabilityP2a(ImplementsAvailabilityP2a *obj) {
+  [obj methodA]; // okay: availability not inherited
+  [obj methodB]; // okay: unavailability not inherited
+}
+
+__attribute__((objc_root_class))
+@interface ImplementsAvailabilityP2b <AvailabilityP2>
+@end
+
+@implementation ImplementsAvailabilityP2b
+-(void)methodA {
+  // Make sure we're not inheriting availability.
+  id<AvailabilityP2> obj = self;
+  [obj methodA]; // expected-warning{{'methodA' is deprecated: first deprecated in OS X 10.2}}
+  [obj methodB]; // expected-error{{'methodB' is unavailable}}
+}
+-(void)methodB {
+  // Make sure we're not inheriting unavailability.
+  id<AvailabilityP2> obj = self;
+  [obj methodA]; // expected-warning{{'methodA' is deprecated: first deprecated in OS X 10.2}}
+  [obj methodB]; // expected-error{{'methodB' is unavailable}}
+}
+
+@end
+
+void testImplementsAvailabilityP2b(ImplementsAvailabilityP2b *obj) {
+  // still get warnings/errors because we see the protocol version.
+
+  [obj methodA]; // expected-warning{{'methodA' is deprecated: first deprecated in OS X 10.2}}
+  [obj methodB]; // expected-error{{'methodB' is unavailable}}
+}
+
+__attribute__((objc_root_class))
+@interface ImplementsAvailabilityP2c <AvailabilityP2>
+-(void)methodA __attribute__((availability(macosx,introduced=10.2))); // expected-warning{{method introduced after the protocol method it implements on OS X (10.2 vs. 10.1)}}
+-(void)methodB __attribute__((unavailable));
+@end
+
+__attribute__((objc_root_class))
+@interface ImplementsAvailabilityP2d <AvailabilityP2>
+@end
+
+@implementation ImplementsAvailabilityP2d
+-(void)methodA __attribute__((availability(macosx,introduced=10.2))) // expected-warning{{method introduced after the protocol method it implements on OS X (10.2 vs. 10.1)}}
+{
+}
+-(void)methodB __attribute__((unavailable)) {
+}
+@end
