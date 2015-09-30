@@ -7,6 +7,7 @@ add_clang_executable(clang-format
 set(CLANG_FORMAT_LIB_DEPS
   clangBasic
   clangFormat
+  clangRewrite
   clangToolingCore
   )
 
