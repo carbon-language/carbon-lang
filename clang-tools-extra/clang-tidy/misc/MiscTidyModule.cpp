@@ -21,6 +21,7 @@
 #include "MoveConstructorInitCheck.h"
 #include "NewDeleteOverloadsCheck.h"
 #include "NoexceptMoveConstructorCheck.h"
+#include "NonCopyableObjects.h"
 #include "SizeofContainerCheck.h"
 #include "StaticAssertCheck.h"
 #include "SwappedArgumentsCheck.h"
@@ -58,8 +59,9 @@ public:
         "misc-new-delete-overloads");
     CheckFactories.registerCheck<NoexceptMoveConstructorCheck>(
         "misc-noexcept-move-constructor");
-    CheckFactories.registerCheck<SizeofContainerCheck>(
-        "misc-sizeof-container");
+    CheckFactories.registerCheck<NonCopyableObjectsCheck>(
+        "misc-non-copyable-objects");
+    CheckFactories.registerCheck<SizeofContainerCheck>("misc-sizeof-container");
     CheckFactories.registerCheck<StaticAssertCheck>(
         "misc-static-assert");
     CheckFactories.registerCheck<SwappedArgumentsCheck>(
