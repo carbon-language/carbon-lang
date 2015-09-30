@@ -890,6 +890,7 @@ void IslNodeBuilder::preloadInvariantLoads() {
     return;
 
   const Region &R = S.getRegion();
+  BasicBlock *EntryBB = &Builder.GetInsertBlock()->getParent()->getEntryBlock();
 
   BasicBlock *PreLoadBB =
       SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
@@ -915,17 +916,27 @@ void IslNodeBuilder::preloadInvariantLoads() {
       isl_id_free(ParamId);
     }
 
-    SmallVector<Instruction *, 4> Users;
-    for (auto *U : AccInst->users())
-      if (Instruction *UI = dyn_cast<Instruction>(U))
-        if (!R.contains(UI))
-          Users.push_back(UI);
-    for (auto *U : Users)
-      U->replaceUsesOfWith(AccInst, PreloadVal);
-
     auto *SAI = S.getScopArrayInfo(MA->getBaseAddr());
     for (auto *DerivedSAI : SAI->getDerivedSAIs())
       DerivedSAI->setBasePtr(PreloadVal);
+
+    // Use the escape system to get the correct value to users outside
+    // the SCoP.
+    BlockGenerator::EscapeUserVectorTy EscapeUsers;
+    for (auto *U : AccInst->users())
+      if (Instruction *UI = dyn_cast<Instruction>(U))
+        if (!R.contains(UI))
+          EscapeUsers.push_back(UI);
+
+    if (EscapeUsers.empty())
+      continue;
+
+    auto *Ty = AccInst->getType();
+    auto *Alloca = new AllocaInst(Ty, AccInst->getName() + ".preload.s2a");
+    Alloca->insertBefore(EntryBB->getFirstInsertionPt());
+    Builder.CreateStore(PreloadVal, Alloca);
+
+    EscapeMap[AccInst] = std::make_pair(Alloca, std::move(EscapeUsers));
   }
 
   isl_ast_build_free(Build);
