@@ -341,6 +341,17 @@ if(APPLE)
       set(CAN_TARGET_${arch} 1)
     endforeach()
 
+    # Need to build a 10.4 compatible libclang_rt
+    set(DARWIN_10.4_SYSROOT ${DARWIN_osx_SYSROOT})
+    set(DARWIN_10.4_BUILTIN_MIN_VER 10.4)
+    set(DARWIN_10.4_BUILTIN_MIN_VER_FLAG
+        -mmacosx-version-min=${DARWIN_10.4_BUILTIN_MIN_VER})
+    set(DARWIN_10.4_SKIP_CC_KEXT On)
+    list(APPEND BUILTIN_SUPPORTED_OS 10.4)
+    darwin_test_archs(10.4
+      DARWIN_10.4_ARCHS
+      ${toolchain_arches})
+
     if(DARWIN_iossim_SYSROOT)
       set(DARWIN_iossim_CFLAGS
         ${DARWIN_COMMON_CFLAGS}
