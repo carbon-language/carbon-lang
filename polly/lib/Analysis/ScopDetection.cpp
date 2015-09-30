@@ -1141,7 +1141,6 @@ void ScopDetection::releaseMemory() {
   InsnToMemAcc.clear();
   BoxedLoopsMap.clear();
   NonAffineSubRegionMap.clear();
-  RequiredInvariantLoadsMap.clear();
 
   // Do not clear the invalid function set.
 }
