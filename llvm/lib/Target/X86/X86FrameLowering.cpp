@@ -730,7 +730,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
     if (!IsFunclet)
       MFI->setOffsetAdjustment(-NumBytes);
     else
-      assert(MFI->getOffsetAdjustment() == -NumBytes &&
+      assert(MFI->getOffsetAdjustment() == -(int)NumBytes &&
              "should calculate same local variable offset for funclets");
 
     // Save EBP/RBP into the appropriate stack slot.
