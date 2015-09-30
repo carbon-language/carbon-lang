@@ -640,3 +640,19 @@ int has_include(int); // expected-note {{'has_include' declared here}}
 // expected-error@+1 {{__has_include must be used within a preprocessing directive}}
 int foo = __has_include(42); // expected-error {{use of undeclared identifier '__has_include'; did you mean 'has_include'?}}
 }
+
+namespace PR24781_using_crash {
+namespace A {
+namespace B {
+class Foofoo {};  // expected-note {{'A::B::Foofoo' declared here}}
+}
+}
+
+namespace C {
+namespace D {
+class Bar : public A::B::Foofoo {};
+}
+}
+
+using C::D::Foofoo;  // expected-error {{no member named 'Foofoo' in namespace 'PR24781_using_crash::C::D'; did you mean 'A::B::Foofoo'?}}
+}
