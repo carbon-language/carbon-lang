@@ -254,7 +254,7 @@ Value *SafeStack::getOrCreateUnsafeStackPtr(IRBuilder<> &IRB, Function &F) {
   unsigned Offset;
   unsigned AddressSpace;
   // Check if the target keeps the unsafe stack pointer at a fixed offset.
-  if (TLI && TLI->getSafeStackPointerLocation(Offset, AddressSpace)) {
+  if (TLI && TLI->getSafeStackPointerLocation(AddressSpace, Offset)) {
     Constant *OffsetVal =
         ConstantInt::get(Type::getInt32Ty(F.getContext()), Offset);
     return ConstantExpr::getIntToPtr(OffsetVal,

@@ -10,20 +10,20 @@ entry:
 ; TLS: %[[USST:.*]] = getelementptr i8, i8* %[[USP]], i32 -16
 ; TLS: store i8* %[[USST]], i8** @__safestack_unsafe_stack_ptr
 
-; DIRECT-TLS32: %[[USP:.*]] = load i8*, i8* addrspace(36)* inttoptr (i32 256 to i8* addrspace(36)*)
+; DIRECT-TLS32: %[[USP:.*]] = load i8*, i8* addrspace(256)* inttoptr (i32 36 to i8* addrspace(256)*)
 ; DIRECT-TLS32: %[[USST:.*]] = getelementptr i8, i8* %[[USP]], i32 -16
-; DIRECT-TLS32: store i8* %[[USST]], i8* addrspace(36)* inttoptr (i32 256 to i8* addrspace(36)*)
+; DIRECT-TLS32: store i8* %[[USST]], i8* addrspace(256)* inttoptr (i32 36 to i8* addrspace(256)*)
 
-; DIRECT-TLS64: %[[USP:.*]] = load i8*, i8* addrspace(72)* inttoptr (i32 257 to i8* addrspace(72)*)
+; DIRECT-TLS64: %[[USP:.*]] = load i8*, i8* addrspace(257)* inttoptr (i32 72 to i8* addrspace(257)*)
 ; DIRECT-TLS64: %[[USST:.*]] = getelementptr i8, i8* %[[USP]], i32 -16
-; DIRECT-TLS64: store i8* %[[USST]], i8* addrspace(72)* inttoptr (i32 257 to i8* addrspace(72)*)
+; DIRECT-TLS64: store i8* %[[USST]], i8* addrspace(257)* inttoptr (i32 72 to i8* addrspace(257)*)
 
   %a = alloca i8, align 8
   call void @Capture(i8* %a)
 
 ; TLS: store i8* %[[USP]], i8** @__safestack_unsafe_stack_ptr
-; DIRECT-TLS32: store i8* %[[USP]], i8* addrspace(36)* inttoptr (i32 256 to i8* addrspace(36)*)
-; DIRECT-TLS64: store i8* %[[USP]], i8* addrspace(72)* inttoptr (i32 257 to i8* addrspace(72)*)
+; DIRECT-TLS32: store i8* %[[USP]], i8* addrspace(256)* inttoptr (i32 36 to i8* addrspace(256)*)
+; DIRECT-TLS64: store i8* %[[USP]], i8* addrspace(257)* inttoptr (i32 72 to i8* addrspace(257)*)
   ret void
 }
 
