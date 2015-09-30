@@ -1710,6 +1710,6 @@ PPCFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 }
 
 bool PPCFrameLowering::enableShrinkWrapping(const MachineFunction &MF) const {
-  return (MF.getSubtarget<PPCSubtarget>().isSVR4ABI() &&
-          MF.getSubtarget<PPCSubtarget>().isPPC64());
+  // FIXME: Enable this for non-Darwin PPC64 once it is confirmed working.
+  return false;
 }
