@@ -61,17 +61,14 @@ static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
 }
 
 // Makes a path by concatenating Dir and File.
-// If Dir starts with "=" the result will be preceded by SysRoot,
+// If Dir starts with '=' the result will be preceded by Sysroot,
 // which can be set with --sysroot command line switch.
 static std::string buildSysrootedPath(StringRef Dir, StringRef File) {
   SmallString<128> Path;
-  if (Dir.startswith("=")) {
-    Path.assign(Config->Sysroot);
-    sys::path::append(Path, Dir.substr(1), File);
-  } else {
-    Path.assign(Dir);
-    sys::path::append(Path, File);
-  }
+  if (Dir.startswith("="))
+    sys::path::append(Path, Config->Sysroot, Dir.substr(1), File);
+  else
+    sys::path::append(Path, Dir, File);
   return Path.str().str();
 }
 
