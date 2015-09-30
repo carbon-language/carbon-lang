@@ -54,7 +54,7 @@ bool writePid (const char* file_name, const pid_t pid)
     return res;
 }
 
-void sigterm_handler (int)
+void signal_handler (int)
 {
 }
 
@@ -75,8 +75,10 @@ int main (int argc, char const *argv[])
 
     if (pid > 0)
     {
-        // Make pause call to return when SIGTERM is received.
-        signal (SIGTERM, sigterm_handler);
+        // Make pause call to return when a signal is received. Normally this happens when the
+        // test runner tries to terminate us.
+        signal (SIGHUP, signal_handler);
+        signal (SIGTERM, signal_handler);
         if (ptrace (ATTACH_REQUEST, pid, NULL, 0) == -1)
         {
             fprintf (stderr, "ptrace(ATTACH) failed: %s\n", strerror (errno));
