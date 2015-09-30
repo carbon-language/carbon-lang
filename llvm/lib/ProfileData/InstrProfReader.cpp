@@ -452,7 +452,6 @@ std::error_code IndexedInstrProfReader::readHeader() {
     HashKeys.push_back(std::make_pair(ComputeHash(HashType, Key), KeyTableRef));
   }
   std::sort(HashKeys.begin(), HashKeys.end(), less_first());
-  std::unique(HashKeys.begin(), HashKeys.end(), less_first());
   HashKeys.erase(std::unique(HashKeys.begin(), HashKeys.end()), HashKeys.end());
   // Set the hash key map for the InstrLookupTrait
   Index->getInfoObj().setHashKeys(std::move(HashKeys));
