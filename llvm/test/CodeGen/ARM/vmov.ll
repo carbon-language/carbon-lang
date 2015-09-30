@@ -393,8 +393,8 @@ entry:
   %sub.i = sub <4 x i32> %add.i185, zeroinitializer
   %add.i = add <4 x i32> %sub.i, zeroinitializer
   %vmovn.i = trunc <4 x i32> %add.i to <4 x i16>
-  tail call void @llvm.arm.neon.vst1.v4i16(i8* undef, <4 x i16> %vmovn.i, i32 2)
+  tail call void @llvm.arm.neon.vst1.p0i8.v4i16(i8* undef, <4 x i16> %vmovn.i, i32 2)
   unreachable
 }
 
-declare void @llvm.arm.neon.vst1.v4i16(i8*, <4 x i16>, i32) nounwind
+declare void @llvm.arm.neon.vst1.p0i8.v4i16(i8*, <4 x i16>, i32) nounwind

@@ -7,7 +7,7 @@
 %quux = type { i32 (...)**, %baz*, i32 }
 %quuz = type { %quux, i32, %bar, [128 x i8], [16 x %foo], %foo, %foo, %foo }
 
-declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*, i32) nounwind readonly
+declare <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8*, i32) nounwind readonly
 
 define void @aaa(%quuz* %this, i8* %block) {
 ; CHECK-LABEL: aaa:
@@ -18,30 +18,30 @@ entry:
   %aligned_vec = alloca <4 x float>, align 16
   %"alloca point" = bitcast i32 0 to i32
   %vecptr = bitcast <4 x float>* %aligned_vec to i8*
-  %0 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* %vecptr, i32 1) nounwind ; <<4 x float>> [#uses=1]
+  %0 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* %vecptr, i32 1) nounwind ; <<4 x float>> [#uses=1]
   store float 6.300000e+01, float* undef, align 4
-  %1 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind ; <<4 x float>> [#uses=1]
+  %1 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind ; <<4 x float>> [#uses=1]
   store float 0.000000e+00, float* undef, align 4
-  %2 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind ; <<4 x float>> [#uses=1]
-  %ld3 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  %2 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind ; <<4 x float>> [#uses=1]
+  %ld3 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind
   store float 0.000000e+00, float* undef, align 4
-  %ld4 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  %ld4 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind
   store float 0.000000e+00, float* undef, align 4
-  %ld5 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  %ld5 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind
   store float 0.000000e+00, float* undef, align 4
-  %ld6 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  %ld6 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind
   store float 0.000000e+00, float* undef, align 4
-  %ld7 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  %ld7 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind
   store float 0.000000e+00, float* undef, align 4
-  %ld8 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  %ld8 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind
   store float 0.000000e+00, float* undef, align 4
-  %ld9 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  %ld9 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind
   store float 0.000000e+00, float* undef, align 4
-  %ld10 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  %ld10 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind
   store float 0.000000e+00, float* undef, align 4
-  %ld11 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  %ld11 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind
   store float 0.000000e+00, float* undef, align 4
-  %ld12 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind
+  %ld12 = call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* undef, i32 1) nounwind
   store float 0.000000e+00, float* undef, align 4
   %val173 = load <4 x float>, <4 x float>* undef               ; <<4 x float>> [#uses=1]
   br label %bb4

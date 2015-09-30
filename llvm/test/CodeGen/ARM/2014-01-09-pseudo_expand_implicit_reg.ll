@@ -27,7 +27,7 @@ entry:
   %n0 = insertelement <2 x i64> undef, i64 %tmp0, i32 0
   %n1 = insertelement <2 x i64> %n0, i64 %tmp1, i32 1
 
-  call void @llvm.arm.neon.vst4.v1i64(i8* %m, <1 x i64> %s0, <1 x i64> %s1, <1 x i64> %s2, <1 x i64> %s3, i32 8)
+  call void @llvm.arm.neon.vst4.p0i8.v1i64(i8* %m, <1 x i64> %s0, <1 x i64> %s1, <1 x i64> %s2, <1 x i64> %s3, i32 8)
 
   call void @bar(<2 x i64> %n1)
 
@@ -50,7 +50,7 @@ define <8 x i8> @vtbx4(<8 x i8>* %A, %struct.__neon_int8x8x4_t* %B, <8 x i8>* %C
 	ret <8 x i8> %tmp8
 }
 
-declare void @llvm.arm.neon.vst4.v1i64(i8*, <1 x i64>, <1 x i64>, <1 x i64>, <1 x i64>, i32)
+declare void @llvm.arm.neon.vst4.p0i8.v1i64(i8*, <1 x i64>, <1 x i64>, <1 x i64>, <1 x i64>, i32)
 declare <8 x i8>  @llvm.arm.neon.vtbx4(<8 x i8>, <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8>) nounwind readnone
 declare void @bar2(%struct.__neon_int8x8x4_t, <8 x i8>)
 declare void @bar(<2 x i64> %arg)

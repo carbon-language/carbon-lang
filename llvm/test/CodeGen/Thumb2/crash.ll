@@ -15,11 +15,11 @@ entry:
   %6 = bitcast i32* %sp3 to <4 x i32>*            ; <<4 x i32>*> [#uses=1]
   %7 = load <4 x i32>, <4 x i32>* %6, align 16               ; <<4 x i32>> [#uses=1]
   %8 = bitcast i32* %dp to i8*                    ; <i8*> [#uses=1]
-  tail call void @llvm.arm.neon.vst4.v4i32(i8* %8, <4 x i32> %1, <4 x i32> %3, <4 x i32> %5, <4 x i32> %7, i32 1)
+  tail call void @llvm.arm.neon.vst4.p0i8.v4i32(i8* %8, <4 x i32> %1, <4 x i32> %3, <4 x i32> %5, <4 x i32> %7, i32 1)
   ret void
 }
 
-declare void @llvm.arm.neon.vst4.v4i32(i8*, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>, i32) nounwind
+declare void @llvm.arm.neon.vst4.p0i8.v4i32(i8*, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>, i32) nounwind
 
 @sbuf = common global [16 x i32] zeroinitializer, align 16 ; <[16 x i32]*> [#uses=5]
 @dbuf = common global [16 x i32] zeroinitializer  ; <[16 x i32]*> [#uses=2]
@@ -45,7 +45,7 @@ bb2:                                              ; preds = %bb
   %3 = load <4 x i32>, <4 x i32>* bitcast (i32* getelementptr inbounds ([16 x i32], [16 x i32]* @sbuf, i32 0, i32 4) to <4 x i32>*), align 16 ; <<4 x i32>> [#uses=1]
   %4 = load <4 x i32>, <4 x i32>* bitcast (i32* getelementptr inbounds ([16 x i32], [16 x i32]* @sbuf, i32 0, i32 8) to <4 x i32>*), align 16 ; <<4 x i32>> [#uses=1]
   %5 = load <4 x i32>, <4 x i32>* bitcast (i32* getelementptr inbounds ([16 x i32], [16 x i32]* @sbuf, i32 0, i32 12) to <4 x i32>*), align 16 ; <<4 x i32>> [#uses=1]
-  tail call void @llvm.arm.neon.vst4.v4i32(i8* bitcast ([16 x i32]* @dbuf to i8*), <4 x i32> %2, <4 x i32> %3, <4 x i32> %4, <4 x i32> %5, i32 1) nounwind
+  tail call void @llvm.arm.neon.vst4.p0i8.v4i32(i8* bitcast ([16 x i32]* @dbuf to i8*), <4 x i32> %2, <4 x i32> %3, <4 x i32> %4, <4 x i32> %5, i32 1) nounwind
   ret i32 0
 }
 
@@ -53,15 +53,15 @@ bb2:                                              ; preds = %bb
 ; Make sure the DPair register class can spill.
 define void @pr12389(i8* %p) nounwind ssp {
 entry:
-  %vld1 = tail call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* %p, i32 1)
+  %vld1 = tail call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* %p, i32 1)
   tail call void asm sideeffect "", "~{q0},~{q1},~{q2},~{q3},~{q4},~{q5},~{q6},~{q7},~{q8},~{q9},~{q10},~{q11},~{q12},~{q13},~{q14},~{q15}"() nounwind
-  tail call void @llvm.arm.neon.vst1.v4f32(i8* %p, <4 x float> %vld1, i32 1)
+  tail call void @llvm.arm.neon.vst1.p0i8.v4f32(i8* %p, <4 x float> %vld1, i32 1)
   ret void
 }
 
-declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*, i32) nounwind readonly
+declare <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8*, i32) nounwind readonly
 
-declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind
+declare void @llvm.arm.neon.vst1.p0i8.v4f32(i8*, <4 x float>, i32) nounwind
 
 ; <rdar://problem/11101911>
 ; When an strd is expanded into two str instructions, make sure the first str

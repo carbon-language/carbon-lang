@@ -202,3 +202,24 @@ define void @store_undef_mask_factor4(i32* %ptr, <4 x i32> %v0, <4 x i32> %v1, <
   store <16 x i32> %interleaved.vec, <16 x i32>* %base, align 4
   ret void
 }
+
+; The following test cases check that address spaces are properly handled
+
+; CHECK-LABEL: load_address_space
+; CHECK: vld3.32
+define void @load_address_space(<4 x i32> addrspace(1)* %A, <2 x i32>* %B) {
+ %tmp = load <4 x i32>, <4 x i32> addrspace(1)* %A
+ %interleaved = shufflevector <4 x i32> %tmp, <4 x i32> undef, <2 x i32> <i32 0, i32 3>
+ store <2 x i32> %interleaved, <2 x i32>* %B
+ ret void
+}
+
+; CHECK-LABEL: store_address_space
+; CHECK: vst2.32
+define void @store_address_space(<2 x i32>* %A, <2 x i32>* %B, <4 x i32> addrspace(1)* %C) {
+ %tmp0 = load <2 x i32>, <2 x i32>* %A
+ %tmp1 = load <2 x i32>, <2 x i32>* %B
+ %interleaved = shufflevector <2 x i32> %tmp0, <2 x i32> %tmp1, <4 x i32> <i32 0, i32 2, i32 1, i32 3>
+ store <4 x i32> %interleaved, <4 x i32> addrspace(1)* %C
+ ret void
+}

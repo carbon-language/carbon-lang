@@ -14,11 +14,11 @@ target triple = "thumbv7-apple-ios0.0.0"
 define void @f(float* %p, i32 %c) nounwind ssp {
 entry:
   %0 = bitcast float* %p to i8*
-  %vld2 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32(i8* %0, i32 4)
+  %vld2 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32.p0i8(i8* %0, i32 4)
   %vld221 = extractvalue { <4 x float>, <4 x float> } %vld2, 1
   %add.ptr = getelementptr inbounds float, float* %p, i32 8
   %1 = bitcast float* %add.ptr to i8*
-  tail call void @llvm.arm.neon.vst2.v4f32(i8* %1, <4 x float> %vld221, <4 x float> undef, i32 4)
+  tail call void @llvm.arm.neon.vst2.p0i8.v4f32(i8* %1, <4 x float> %vld221, <4 x float> undef, i32 4)
   ret void
 }
 
@@ -27,13 +27,13 @@ entry:
 define void @f1(float* %p, i32 %c) nounwind ssp {
 entry:
   %0 = bitcast float* %p to i8*
-  %vld2 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32(i8* %0, i32 4)
+  %vld2 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32.p0i8(i8* %0, i32 4)
   %vld221 = extractvalue { <4 x float>, <4 x float> } %vld2, 1
   %add.ptr = getelementptr inbounds float, float* %p, i32 8
   %1 = bitcast float* %add.ptr to i8*
-  %vld22 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32(i8* %1, i32 4)
+  %vld22 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32.p0i8(i8* %1, i32 4)
   %vld2215 = extractvalue { <4 x float>, <4 x float> } %vld22, 0
-  tail call void @llvm.arm.neon.vst2.v4f32(i8* %1, <4 x float> %vld221, <4 x float> %vld2215, i32 4)
+  tail call void @llvm.arm.neon.vst2.p0i8.v4f32(i8* %1, <4 x float> %vld221, <4 x float> %vld2215, i32 4)
   ret void
 }
 
@@ -42,7 +42,7 @@ entry:
 define void @f2(float* %p, i32 %c) nounwind ssp {
 entry:
   %0 = bitcast float* %p to i8*
-  %vld2 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32(i8* %0, i32 4)
+  %vld2 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32.p0i8(i8* %0, i32 4)
   %vld224 = extractvalue { <4 x float>, <4 x float> } %vld2, 1
   br label %do.body
 
@@ -52,10 +52,10 @@ do.body:                                          ; preds = %do.body, %entry
   %p.addr.0 = phi float* [ %p, %entry ], [ %add.ptr, %do.body ]
   %add.ptr = getelementptr inbounds float, float* %p.addr.0, i32 8
   %1 = bitcast float* %add.ptr to i8*
-  %vld22 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32(i8* %1, i32 4)
+  %vld22 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32.p0i8(i8* %1, i32 4)
   %vld2215 = extractvalue { <4 x float>, <4 x float> } %vld22, 0
   %vld2216 = extractvalue { <4 x float>, <4 x float> } %vld22, 1
-  tail call void @llvm.arm.neon.vst2.v4f32(i8* %1, <4 x float> %qq0.0.1.0, <4 x float> %vld2215, i32 4)
+  tail call void @llvm.arm.neon.vst2.p0i8.v4f32(i8* %1, <4 x float> %qq0.0.1.0, <4 x float> %vld2215, i32 4)
   %dec = add nsw i32 %c.addr.0, -1
   %tobool = icmp eq i32 %dec, 0
   br i1 %tobool, label %do.end, label %do.body
@@ -64,8 +64,8 @@ do.end:                                           ; preds = %do.body
   ret void
 }
 
-declare { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32(i8*, i32) nounwind readonly
-declare void @llvm.arm.neon.vst2.v4f32(i8*, <4 x float>, <4 x float>, i32) nounwind
+declare { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32.p0i8(i8*, i32) nounwind readonly
+declare void @llvm.arm.neon.vst2.p0i8.v4f32(i8*, <4 x float>, <4 x float>, i32) nounwind
 
 ; CHECK: f3
 ; This function has lane insertions that span basic blocks.
@@ -109,12 +109,12 @@ if.end:                                           ; preds = %if.else, %if.then
   %x.0 = phi <2 x float> [ %vecins3, %if.then ], [ %vecins5, %if.else ]
   %add.ptr = getelementptr inbounds float, float* %p, i32 4
   %4 = bitcast float* %add.ptr to i8*
-  tail call void @llvm.arm.neon.vst1.v2f32(i8* %4, <2 x float> %x.0, i32 4)
+  tail call void @llvm.arm.neon.vst1.p0i8.v2f32(i8* %4, <2 x float> %x.0, i32 4)
   ret void
 }
 
-declare void @llvm.arm.neon.vst1.v2f32(i8*, <2 x float>, i32) nounwind
-declare <2 x float> @llvm.arm.neon.vld1.v2f32(i8*, i32) nounwind readonly
+declare void @llvm.arm.neon.vst1.p0i8.v2f32(i8*, <2 x float>, i32) nounwind
+declare <2 x float> @llvm.arm.neon.vld1.v2f32.p0i8(i8*, i32) nounwind readonly
 
 ; CHECK: f4
 ; This function inserts a lane into a fully defined vector.
@@ -124,7 +124,7 @@ declare <2 x float> @llvm.arm.neon.vld1.v2f32(i8*, i32) nounwind readonly
 define void @f4(float* %p, float* %q) nounwind ssp {
 entry:
   %0 = bitcast float* %p to i8*
-  %vld1 = tail call <2 x float> @llvm.arm.neon.vld1.v2f32(i8* %0, i32 4)
+  %vld1 = tail call <2 x float> @llvm.arm.neon.vld1.v2f32.p0i8(i8* %0, i32 4)
   %tobool = icmp eq float* %q, null
   br i1 %tobool, label %if.end, label %if.then
 
@@ -138,7 +138,7 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %entry, %if.then
   %x.0 = phi <2 x float> [ %vecins, %if.then ], [ %vld1, %entry ]
-  tail call void @llvm.arm.neon.vst1.v2f32(i8* %0, <2 x float> %x.0, i32 4)
+  tail call void @llvm.arm.neon.vst1.p0i8.v2f32(i8* %0, <2 x float> %x.0, i32 4)
   ret void
 }
 
@@ -154,7 +154,7 @@ if.end:                                           ; preds = %entry, %if.then
 define void @f5(float* %p, float* %q) nounwind ssp {
 entry:
   %0 = bitcast float* %p to i8*
-  %vld1 = tail call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* %0, i32 4)
+  %vld1 = tail call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* %0, i32 4)
   %vecext = extractelement <4 x float> %vld1, i32 0
   %vecext1 = extractelement <4 x float> %vld1, i32 1
   %vecext2 = extractelement <4 x float> %vld1, i32 2
@@ -182,13 +182,13 @@ if.end:                                           ; preds = %entry, %if.then
   %vecinit9 = insertelement <4 x float> %vecinit, float %b.0, i32 1
   %vecinit10 = insertelement <4 x float> %vecinit9, float %c.0, i32 2
   %vecinit11 = insertelement <4 x float> %vecinit10, float %add, i32 3
-  tail call void @llvm.arm.neon.vst1.v4f32(i8* %0, <4 x float> %vecinit11, i32 4)
+  tail call void @llvm.arm.neon.vst1.p0i8.v4f32(i8* %0, <4 x float> %vecinit11, i32 4)
   ret void
 }
 
-declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*, i32) nounwind readonly
+declare <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8*, i32) nounwind readonly
 
-declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind
+declare void @llvm.arm.neon.vst1.p0i8.v4f32(i8*, <4 x float>, i32) nounwind
 
 ; CHECK: pr13999
 define void @pr13999() nounwind readonly {

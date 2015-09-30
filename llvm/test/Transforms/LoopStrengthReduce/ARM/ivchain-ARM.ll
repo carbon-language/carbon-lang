@@ -239,33 +239,33 @@ define hidden void @testNeon(i8* %ref_data, i32 %ref_stride, i32 %limit, <16 x i
   %counter.04 = phi i32 [ 0, %.lr.ph ], [ %44, %11 ]
   %result.03 = phi <16 x i8> [ zeroinitializer, %.lr.ph ], [ %41, %11 ]
   %.012 = phi <16 x i8>* [ %data, %.lr.ph ], [ %43, %11 ]
-  %12 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64(i8* %.05, i32 1) nounwind
+  %12 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64.p0i8(i8* %.05, i32 1) nounwind
   %13 = getelementptr inbounds i8, i8* %.05, i32 %ref_stride
-  %14 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64(i8* %13, i32 1) nounwind
+  %14 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64.p0i8(i8* %13, i32 1) nounwind
   %15 = shufflevector <1 x i64> %12, <1 x i64> %14, <2 x i32> <i32 0, i32 1>
   %16 = bitcast <2 x i64> %15 to <16 x i8>
   %17 = getelementptr inbounds <16 x i8>, <16 x i8>* %.012, i32 1
   store <16 x i8> %16, <16 x i8>* %.012, align 4
   %18 = getelementptr inbounds i8, i8* %.05, i32 %2
-  %19 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64(i8* %18, i32 1) nounwind
+  %19 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64.p0i8(i8* %18, i32 1) nounwind
   %20 = getelementptr inbounds i8, i8* %.05, i32 %3
-  %21 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64(i8* %20, i32 1) nounwind
+  %21 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64.p0i8(i8* %20, i32 1) nounwind
   %22 = shufflevector <1 x i64> %19, <1 x i64> %21, <2 x i32> <i32 0, i32 1>
   %23 = bitcast <2 x i64> %22 to <16 x i8>
   %24 = getelementptr inbounds <16 x i8>, <16 x i8>* %.012, i32 2
   store <16 x i8> %23, <16 x i8>* %17, align 4
   %25 = getelementptr inbounds i8, i8* %.05, i32 %4
-  %26 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64(i8* %25, i32 1) nounwind
+  %26 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64.p0i8(i8* %25, i32 1) nounwind
   %27 = getelementptr inbounds i8, i8* %.05, i32 %5
-  %28 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64(i8* %27, i32 1) nounwind
+  %28 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64.p0i8(i8* %27, i32 1) nounwind
   %29 = shufflevector <1 x i64> %26, <1 x i64> %28, <2 x i32> <i32 0, i32 1>
   %30 = bitcast <2 x i64> %29 to <16 x i8>
   %31 = getelementptr inbounds <16 x i8>, <16 x i8>* %.012, i32 3
   store <16 x i8> %30, <16 x i8>* %24, align 4
   %32 = getelementptr inbounds i8, i8* %.05, i32 %6
-  %33 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64(i8* %32, i32 1) nounwind
+  %33 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64.p0i8(i8* %32, i32 1) nounwind
   %34 = getelementptr inbounds i8, i8* %.05, i32 %7
-  %35 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64(i8* %34, i32 1) nounwind
+  %35 = tail call <1 x i64> @llvm.arm.neon.vld1.v1i64.p0i8(i8* %34, i32 1) nounwind
   %36 = shufflevector <1 x i64> %33, <1 x i64> %35, <2 x i32> <i32 0, i32 1>
   %37 = bitcast <2 x i64> %36 to <16 x i8>
   store <16 x i8> %37, <16 x i8>* %31, align 4
@@ -290,7 +290,7 @@ define hidden void @testNeon(i8* %ref_data, i32 %ref_stride, i32 %limit, <16 x i
   ret void
 }
 
-declare <1 x i64> @llvm.arm.neon.vld1.v1i64(i8*, i32) nounwind readonly
+declare <1 x i64> @llvm.arm.neon.vld1.v1i64.p0i8(i8*, i32) nounwind readonly
 
 ; Handle chains in which the same offset is used for both loads and
 ; stores to the same array.
@@ -328,32 +328,32 @@ for.body:                                         ; preds = %for.body, %entry
   %i.0110 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %src.addr = phi i8* [ %src, %entry ], [ %add.ptr45, %for.body ]
   %add.ptr = getelementptr inbounds i8, i8* %src.addr, i32 %idx.neg
-  %vld1 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr, i32 1)
+  %vld1 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8.p0i8(i8* %add.ptr, i32 1)
   %add.ptr3 = getelementptr inbounds i8, i8* %src.addr, i32 %idx.neg2
-  %vld2 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr3, i32 1)
+  %vld2 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8.p0i8(i8* %add.ptr3, i32 1)
   %add.ptr7 = getelementptr inbounds i8, i8* %src.addr, i32 %idx.neg6
-  %vld3 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr7, i32 1)
+  %vld3 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8.p0i8(i8* %add.ptr7, i32 1)
   %add.ptr11 = getelementptr inbounds i8, i8* %src.addr, i32 %idx.neg10
-  %vld4 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr11, i32 1)
-  %vld5 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %src.addr, i32 1)
+  %vld4 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8.p0i8(i8* %add.ptr11, i32 1)
+  %vld5 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8.p0i8(i8* %src.addr, i32 1)
   %add.ptr17 = getelementptr inbounds i8, i8* %src.addr, i32 %stride
-  %vld6 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr17, i32 1)
+  %vld6 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8.p0i8(i8* %add.ptr17, i32 1)
   %add.ptr20 = getelementptr inbounds i8, i8* %src.addr, i32 %mul5
-  %vld7 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr20, i32 1)
+  %vld7 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8.p0i8(i8* %add.ptr20, i32 1)
   %add.ptr23 = getelementptr inbounds i8, i8* %src.addr, i32 %mul1
-  %vld8 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr23, i32 1)
+  %vld8 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8.p0i8(i8* %add.ptr23, i32 1)
   %vadd1 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld1, <8 x i8> %vld2) nounwind
   %vadd2 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld2, <8 x i8> %vld3) nounwind
   %vadd3 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld3, <8 x i8> %vld4) nounwind
   %vadd4 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld4, <8 x i8> %vld5) nounwind
   %vadd5 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld5, <8 x i8> %vld6) nounwind
   %vadd6 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld6, <8 x i8> %vld7) nounwind
-  tail call void @llvm.arm.neon.vst1.v8i8(i8* %add.ptr3, <8 x i8> %vadd1, i32 1)
-  tail call void @llvm.arm.neon.vst1.v8i8(i8* %add.ptr7, <8 x i8> %vadd2, i32 1)
-  tail call void @llvm.arm.neon.vst1.v8i8(i8* %add.ptr11, <8 x i8> %vadd3, i32 1)
-  tail call void @llvm.arm.neon.vst1.v8i8(i8* %src.addr, <8 x i8> %vadd4, i32 1)
-  tail call void @llvm.arm.neon.vst1.v8i8(i8* %add.ptr17, <8 x i8> %vadd5, i32 1)
-  tail call void @llvm.arm.neon.vst1.v8i8(i8* %add.ptr20, <8 x i8> %vadd6, i32 1)
+  tail call void @llvm.arm.neon.vst1.p0i8.v8i8(i8* %add.ptr3, <8 x i8> %vadd1, i32 1)
+  tail call void @llvm.arm.neon.vst1.p0i8.v8i8(i8* %add.ptr7, <8 x i8> %vadd2, i32 1)
+  tail call void @llvm.arm.neon.vst1.p0i8.v8i8(i8* %add.ptr11, <8 x i8> %vadd3, i32 1)
+  tail call void @llvm.arm.neon.vst1.p0i8.v8i8(i8* %src.addr, <8 x i8> %vadd4, i32 1)
+  tail call void @llvm.arm.neon.vst1.p0i8.v8i8(i8* %add.ptr17, <8 x i8> %vadd5, i32 1)
+  tail call void @llvm.arm.neon.vst1.p0i8.v8i8(i8* %add.ptr20, <8 x i8> %vadd6, i32 1)
   %inc = add nsw i32 %i.0110, 1
   %add.ptr45 = getelementptr inbounds i8, i8* %src.addr, i32 8
   %exitcond = icmp eq i32 %inc, 4
@@ -363,8 +363,8 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-declare <8 x i8> @llvm.arm.neon.vld1.v8i8(i8*, i32) nounwind readonly
+declare <8 x i8> @llvm.arm.neon.vld1.v8i8.p0i8(i8*, i32) nounwind readonly
 
-declare void @llvm.arm.neon.vst1.v8i8(i8*, <8 x i8>, i32) nounwind
+declare void @llvm.arm.neon.vst1.p0i8.v8i8(i8*, <8 x i8>, i32) nounwind
 
 declare <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8>, <8 x i8>) nounwind readnone

@@ -22,7 +22,7 @@ declare arm_aapcs_vfpcc %2* @func3(%2*, %2*, i32)
 declare arm_aapcs_vfpcc %2** @func4()
 
 define arm_aapcs_vfpcc void @foo(%3* nocapture) nounwind align 2 {
-  call void @llvm.arm.neon.vst4.v4i32(i8* undef, <4 x i32> <i32 0, i32 1065353216, i32 1073741824, i32 1077936128>, <4 x i32> <i32 1082130432, i32 1084227584, i32 1086324736, i32 1088421888>, <4 x i32> <i32 1090519040, i32 1091567616, i32 1092616192, i32 1093664768>, <4 x i32> <i32 1094713344, i32 1095761920, i32 1096810496, i32 1097859072>, i32 16) nounwind
+  call void @llvm.arm.neon.vst4.p0i8.v4i32(i8* undef, <4 x i32> <i32 0, i32 1065353216, i32 1073741824, i32 1077936128>, <4 x i32> <i32 1082130432, i32 1084227584, i32 1086324736, i32 1088421888>, <4 x i32> <i32 1090519040, i32 1091567616, i32 1092616192, i32 1093664768>, <4 x i32> <i32 1094713344, i32 1095761920, i32 1096810496, i32 1097859072>, i32 16) nounwind
   %2 = call arm_aapcs_vfpcc  %0** @func2() nounwind
   %3 = load %0*, %0** %2, align 4
   store float 0.000000e+00, float* undef, align 4
@@ -40,10 +40,10 @@ define arm_aapcs_vfpcc void @foo(%3* nocapture) nounwind align 2 {
   %10 = fmul float undef, 2.000000e+05
   %11 = fadd float %10, -1.000000e+05
   store float %11, float* undef, align 4
-  call void @llvm.arm.neon.vst4.v4i32(i8* undef, <4 x i32> <i32 0, i32 1065353216, i32 1073741824, i32 1077936128>, <4 x i32> <i32 1082130432, i32 1084227584, i32 1086324736, i32 1088421888>, <4 x i32> <i32 1090519040, i32 1091567616, i32 1092616192, i32 1093664768>, <4 x i32> <i32 1094713344, i32 1095761920, i32 1096810496, i32 1097859072>, i32 16) nounwind
+  call void @llvm.arm.neon.vst4.p0i8.v4i32(i8* undef, <4 x i32> <i32 0, i32 1065353216, i32 1073741824, i32 1077936128>, <4 x i32> <i32 1082130432, i32 1084227584, i32 1086324736, i32 1088421888>, <4 x i32> <i32 1090519040, i32 1091567616, i32 1092616192, i32 1093664768>, <4 x i32> <i32 1094713344, i32 1095761920, i32 1096810496, i32 1097859072>, i32 16) nounwind
   ret void
 }
 
-declare void @llvm.arm.neon.vst4.v4i32(i8*, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>, i32) nounwind
+declare void @llvm.arm.neon.vst4.p0i8.v4i32(i8*, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>, i32) nounwind
 
 declare arm_aapcs_vfpcc i32 @rand()

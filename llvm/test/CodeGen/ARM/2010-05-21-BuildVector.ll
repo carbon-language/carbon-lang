@@ -36,8 +36,8 @@ entry:
   %tmp5 = insertelement <4 x float> %tmp7, float %18, i32 3
   %19 = fmul <4 x float> %tmp5, %2
   %20 = bitcast float* %fltp to i8*
-  tail call void @llvm.arm.neon.vst1.v4f32(i8* %20, <4 x float> %19, i32 1)
+  tail call void @llvm.arm.neon.vst1.p0i8.v4f32(i8* %20, <4 x float> %19, i32 1)
   ret void
 }
 
-declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind
+declare void @llvm.arm.neon.vst1.p0i8.v4f32(i8*, <4 x float>, i32) nounwind

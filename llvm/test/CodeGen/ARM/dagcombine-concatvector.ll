@@ -19,8 +19,8 @@ bb:
   %tmp5 = bitcast i64 %tmp4 to <8 x i8>
   %tmp6 = shufflevector <8 x i8> %tmp5, <8 x i8> undef, <16 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   %tmp7 = shufflevector <16 x i8> %tmp6, <16 x i8> %tmp3, <16 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-  tail call void @llvm.arm.neon.vst1.v16i8(i8* %arg, <16 x i8> %tmp7, i32 2)
+  tail call void @llvm.arm.neon.vst1.p0i8.v16i8(i8* %arg, <16 x i8> %tmp7, i32 2)
   ret void
 }
 
-declare void @llvm.arm.neon.vst1.v16i8(i8*, <16 x i8>, i32)
+declare void @llvm.arm.neon.vst1.p0i8.v16i8(i8*, <16 x i8>, i32)

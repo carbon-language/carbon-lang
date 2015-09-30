@@ -8,7 +8,7 @@ target triple = "thumbv7-none-linux-gnueabi"
 
 define void @foo(float* nocapture %A) #0 {
   %1= bitcast float* %A to i8*
-  %2 = tail call { <4 x float>, <4 x float>, <4 x float>, <4 x float> } @llvm.arm.neon.vld4.v4f32(i8* %1, i32 4)
+  %2 = tail call { <4 x float>, <4 x float>, <4 x float>, <4 x float> } @llvm.arm.neon.vld4.v4f32.p0i8(i8* %1, i32 4)
   %3 = extractvalue { <4 x float>, <4 x float>, <4 x float>, <4 x float> } %2, 0
   %divp_vec = fdiv <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, %3
   %4 = extractvalue { <4 x float>, <4 x float>, <4 x float>, <4 x float> } %2, 1
@@ -17,7 +17,7 @@ define void @foo(float* nocapture %A) #0 {
   %div8p_vec = fdiv <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, %5
   %6 = extractvalue { <4 x float>, <4 x float>, <4 x float>, <4 x float> } %2, 3
   %div13p_vec = fdiv <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>, %6
-  tail call void @llvm.arm.neon.vst4.v4f32(i8* %1, <4 x float> %divp_vec, <4 x float> %div3p_vec, <4 x float> %div8p_vec, <4 x float> %div13p_vec, i32 4)
+  tail call void @llvm.arm.neon.vst4.p0i8.v4f32(i8* %1, <4 x float> %divp_vec, <4 x float> %div3p_vec, <4 x float> %div8p_vec, <4 x float> %div13p_vec, i32 4)
  ret void
 }
 
@@ -27,8 +27,8 @@ declare i32 @llvm.annotation.i32(i32, i8*, i8*, i32) #1
 ; Function Attrs: nounwind readonly
 
 ; Function Attrs: nounwind
-declare void @llvm.arm.neon.vst4.v4f32(i8*, <4 x float>, <4 x float>, <4 x float>, <4 x float>, i32) #1
-declare { <4 x float>, <4 x float>, <4 x float>, <4 x float> } @llvm.arm.neon.vld4.v4f32(i8*, i32) #2
+declare void @llvm.arm.neon.vst4.p0i8.v4f32(i8*, <4 x float>, <4 x float>, <4 x float>, <4 x float>, i32) #1
+declare { <4 x float>, <4 x float>, <4 x float>, <4 x float> } @llvm.arm.neon.vld4.v4f32.p0i8(i8*, i32) #2
 
 ; Function Attrs: nounwind
 

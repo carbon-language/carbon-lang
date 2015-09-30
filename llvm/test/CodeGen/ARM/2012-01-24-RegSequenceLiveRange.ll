@@ -52,8 +52,8 @@ cond.end295:                                      ; preds = %entry
   %shuffle.i35.i.i = shufflevector <2 x i64> undef, <2 x i64> undef, <1 x i32> zeroinitializer
   %shuffle.i34.i.i = shufflevector <1 x i64> %shuffle.i36.i.i, <1 x i64> %shuffle.i35.i.i, <2 x i32> <i32 0, i32 1>
   %2 = bitcast <2 x i64> %shuffle.i34.i.i to <4 x float>
-  tail call void @llvm.arm.neon.vst1.v4f32(i8* undef, <4 x float> %0, i32 4) nounwind
-  tail call void @llvm.arm.neon.vst1.v4f32(i8* undef, <4 x float> %2, i32 4) nounwind
+  tail call void @llvm.arm.neon.vst1.p0i8.v4f32(i8* undef, <4 x float> %0, i32 4) nounwind
+  tail call void @llvm.arm.neon.vst1.p0i8.v4f32(i8* undef, <4 x float> %2, i32 4) nounwind
   unreachable
 
 for.end:                                          ; preds = %entry
@@ -63,10 +63,10 @@ for.end:                                          ; preds = %entry
 ; Check that pseudo-expansion preserves <undef> flags.
 define void @foo3(i8* %p) nounwind ssp {
 entry:
-  tail call void @llvm.arm.neon.vst2.v4f32(i8* %p, <4 x float> undef, <4 x float> undef, i32 4)
+  tail call void @llvm.arm.neon.vst2.p0i8.v4f32(i8* %p, <4 x float> undef, <4 x float> undef, i32 4)
   ret void
 }
 
 declare arm_aapcs_vfpcc void @bar(i8*, float, float, float)
-declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind
-declare void @llvm.arm.neon.vst2.v4f32(i8*, <4 x float>, <4 x float>, i32) nounwind
+declare void @llvm.arm.neon.vst1.p0i8.v4f32(i8*, <4 x float>, i32) nounwind
+declare void @llvm.arm.neon.vst2.p0i8.v4f32(i8*, <4 x float>, <4 x float>, i32) nounwind
