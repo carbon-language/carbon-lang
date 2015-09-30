@@ -8,6 +8,7 @@ add_llvm_library(lldELF2
   Error.cpp
   InputFiles.cpp
   InputSection.cpp
+  LinkerScript.cpp
   OutputSections.cpp
   SymbolTable.cpp
   Symbols.cpp
