@@ -7021,7 +7021,9 @@ Value *CodeGenFunction::EmitNVPTXBuiltinExpr(unsigned BuiltinID,
   case NVPTX::BI__nvvm_atom_cas_gen_i:
   case NVPTX::BI__nvvm_atom_cas_gen_l:
   case NVPTX::BI__nvvm_atom_cas_gen_ll:
-    return MakeAtomicCmpXchgValue(*this, E, true);
+    // __nvvm_atom_cas_gen_* should return the old value rather than the
+    // success flag.
+    return MakeAtomicCmpXchgValue(*this, E, /*ReturnBool=*/false);
 
   case NVPTX::BI__nvvm_atom_add_gen_f: {
     Value *Ptr = EmitScalarExpr(E->getArg(0));
