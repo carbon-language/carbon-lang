@@ -181,7 +181,7 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
 }
 
 void ArchiveFile::parse() {
-  auto ArchiveOrErr = Archive::create(MB);
+  ErrorOr<std::unique_ptr<Archive>> ArchiveOrErr = Archive::create(MB);
   error(ArchiveOrErr, "Failed to parse archive");
   File = std::move(*ArchiveOrErr);
 
