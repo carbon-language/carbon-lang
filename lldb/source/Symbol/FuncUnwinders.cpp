@@ -10,6 +10,7 @@
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Symbol/FuncUnwinders.h"
+#include "lldb/Symbol/ArmUnwindInfo.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
 #include "lldb/Symbol/CompactUnwindInfo.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -37,6 +38,7 @@ FuncUnwinders::FuncUnwinders (UnwindTable& unwind_table, AddressRange range) :
     m_unwind_plan_eh_frame_sp (),
     m_unwind_plan_eh_frame_augmented_sp (),
     m_unwind_plan_compact_unwind (),
+    m_unwind_plan_arm_unwind_sp (),
     m_unwind_plan_fast_sp (), 
     m_unwind_plan_arch_default_sp (), 
     m_unwind_plan_arch_default_at_func_entry_sp (),
@@ -44,6 +46,7 @@ FuncUnwinders::FuncUnwinders (UnwindTable& unwind_table, AddressRange range) :
     m_tried_unwind_plan_eh_frame (false),
     m_tried_unwind_plan_eh_frame_augmented (false),
     m_tried_unwind_plan_compact_unwind (false),
+    m_tried_unwind_plan_arm_unwind (false),
     m_tried_unwind_fast (false),
     m_tried_unwind_arch_default (false),
     m_tried_unwind_arch_default_at_func_entry (false),
@@ -65,12 +68,18 @@ FuncUnwinders::GetUnwindPlanAtCallSite (Target &target, int current_offset)
     Mutex::Locker locker (m_mutex);
 
     UnwindPlanSP unwind_plan_sp = GetEHFrameUnwindPlan (target, current_offset);
-    if (unwind_plan_sp.get() == nullptr)
-    {
-        unwind_plan_sp = GetCompactUnwindUnwindPlan (target, current_offset);
-    }
+    if (unwind_plan_sp)
+        return unwind_plan_sp;
 
-    return unwind_plan_sp;
+    unwind_plan_sp = GetCompactUnwindUnwindPlan (target, current_offset);
+    if (unwind_plan_sp)
+        return unwind_plan_sp;
+
+    unwind_plan_sp = GetArmUnwindUnwindPlan (target, current_offset);
+    if (unwind_plan_sp)
+        return unwind_plan_sp;
+
+    return nullptr;
 }
 
 UnwindPlanSP
@@ -124,6 +133,30 @@ FuncUnwinders::GetEHFrameUnwindPlan (Target &target, int current_offset)
         }
     }
     return m_unwind_plan_eh_frame_sp;
+}
+
+UnwindPlanSP
+FuncUnwinders::GetArmUnwindUnwindPlan (Target &target, int current_offset)
+{
+    if (m_unwind_plan_arm_unwind_sp.get() || m_tried_unwind_plan_arm_unwind)
+        return m_unwind_plan_arm_unwind_sp;
+
+    Mutex::Locker lock (m_mutex);
+    m_tried_unwind_plan_arm_unwind = true;
+    if (m_range.GetBaseAddress().IsValid())
+    {
+        Address current_pc (m_range.GetBaseAddress ());
+        if (current_offset != -1)
+            current_pc.SetOffset (current_pc.GetOffset() + current_offset);
+        ArmUnwindInfo *arm_unwind_info = m_unwind_table.GetArmUnwindInfo();
+        if (arm_unwind_info)
+        {
+            m_unwind_plan_arm_unwind_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
+            if (!arm_unwind_info->GetUnwindPlan (target, current_pc, *m_unwind_plan_arm_unwind_sp))
+                m_unwind_plan_arm_unwind_sp.reset();
+        }
+    }
+    return m_unwind_plan_arm_unwind_sp;
 }
 
 UnwindPlanSP

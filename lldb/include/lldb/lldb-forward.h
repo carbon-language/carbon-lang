@@ -25,6 +25,7 @@ class   AddressImpl;
 class   AddressRange;
 class   AddressResolver;
 class   ArchSpec;
+class   ArmUnwindInfo;
 class   Args;
 class   ASTResultSynthesizer;
 class   ASTStructExtractor;

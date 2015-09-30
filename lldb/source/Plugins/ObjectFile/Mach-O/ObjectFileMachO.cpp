@@ -1342,6 +1342,8 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                         return eAddressClassDebug;
 
                     case eSectionTypeEHFrame:
+                    case eSectionTypeARMexidx:
+                    case eSectionTypeARMextab:
                     case eSectionTypeCompactUnwind:
                         return eAddressClassRuntime;
 

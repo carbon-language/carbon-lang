@@ -1720,6 +1720,8 @@ ObjectFileELF::CreateSections(SectionList &unified_section_list)
             static ConstString g_sect_name_dwarf_debug_str_dwo (".debug_str.dwo");
             static ConstString g_sect_name_dwarf_debug_str_offsets_dwo (".debug_str_offsets.dwo");
             static ConstString g_sect_name_eh_frame (".eh_frame");
+            static ConstString g_sect_name_arm_exidx (".ARM.exidx");
+            static ConstString g_sect_name_arm_extab (".ARM.extab");
             static ConstString g_sect_name_go_symtab (".gosymtab");
 
             SectionType sect_type = eSectionTypeOther;
@@ -1773,6 +1775,8 @@ ObjectFileELF::CreateSections(SectionList &unified_section_list)
             else if (name == g_sect_name_dwarf_debug_str_dwo)         sect_type = eSectionTypeDWARFDebugStr;
             else if (name == g_sect_name_dwarf_debug_str_offsets_dwo) sect_type = eSectionTypeDWARFDebugStrOffsets;
             else if (name == g_sect_name_eh_frame)                    sect_type = eSectionTypeEHFrame;
+            else if (name == g_sect_name_arm_exidx)                   sect_type = eSectionTypeARMexidx;
+            else if (name == g_sect_name_arm_extab)                   sect_type = eSectionTypeARMextab;
             else if (name == g_sect_name_go_symtab)                   sect_type = eSectionTypeGoSymtab;
 
             switch (header.sh_type)

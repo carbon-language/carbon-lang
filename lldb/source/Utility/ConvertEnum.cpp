@@ -105,6 +105,10 @@ lldb_private::GetSectionTypeAsCString(lldb::SectionType sect_type)
             return "apple-objc";
         case eSectionTypeEHFrame:
             return "eh-frame";
+        case eSectionTypeARMexidx:
+            return "ARM.exidx";
+        case eSectionTypeARMextab:
+            return "ARM.extab";
         case eSectionTypeCompactUnwind:
             return "compact-unwind";
         case eSectionTypeGoSymtab:

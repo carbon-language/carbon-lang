@@ -103,6 +103,9 @@ public:
     GetCompactUnwindUnwindPlan (Target &target, int current_offset);
 
     lldb::UnwindPlanSP
+    GetArmUnwindUnwindPlan (Target &target, int current_offset);
+
+    lldb::UnwindPlanSP
     GetArchDefaultUnwindPlan (Thread &thread);
 
     lldb::UnwindPlanSP
@@ -122,6 +125,7 @@ private:
     lldb::UnwindPlanSP              m_unwind_plan_eh_frame_sp;
     lldb::UnwindPlanSP              m_unwind_plan_eh_frame_augmented_sp;   // augmented by assembly inspection so it's valid everywhere
     std::vector<lldb::UnwindPlanSP> m_unwind_plan_compact_unwind;
+    lldb::UnwindPlanSP              m_unwind_plan_arm_unwind_sp;
     lldb::UnwindPlanSP              m_unwind_plan_fast_sp;
     lldb::UnwindPlanSP              m_unwind_plan_arch_default_sp;
     lldb::UnwindPlanSP              m_unwind_plan_arch_default_at_func_entry_sp;
@@ -132,6 +136,7 @@ private:
          m_tried_unwind_plan_eh_frame:1,
          m_tried_unwind_plan_eh_frame_augmented:1,
          m_tried_unwind_plan_compact_unwind:1,
+         m_tried_unwind_plan_arm_unwind:1,
          m_tried_unwind_fast:1,
          m_tried_unwind_arch_default:1,
          m_tried_unwind_arch_default_at_func_entry:1;

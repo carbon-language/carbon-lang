@@ -1,4 +1,5 @@
 add_lldb_library(lldbSymbol
+  ArmUnwindInfo.cpp
   Block.cpp
   ClangASTContext.cpp
   ClangASTImporter.cpp

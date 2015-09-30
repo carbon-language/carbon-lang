@@ -17,6 +17,7 @@
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
+#include "lldb/Symbol/ArmUnwindInfo.h"
 #include "lldb/Symbol/CompactUnwindInfo.h"
 
 // There is one UnwindTable object per ObjectFile.
@@ -31,8 +32,9 @@ UnwindTable::UnwindTable (ObjectFile& objfile) :
     m_unwinds (),
     m_initialized (false),
     m_mutex (),
-    m_eh_frame (nullptr),
-    m_compact_unwind (nullptr)
+    m_eh_frame_up (),
+    m_compact_unwind_up (),
+    m_arm_unwind_up ()
 {
 }
 
@@ -56,12 +58,21 @@ UnwindTable::Initialize ()
         SectionSP sect = sl->FindSectionByType (eSectionTypeEHFrame, true);
         if (sect.get())
         {
-            m_eh_frame = new DWARFCallFrameInfo(m_object_file, sect, eRegisterKindEHFrame, true);
+            m_eh_frame_up.reset(new DWARFCallFrameInfo(m_object_file, sect, eRegisterKindEHFrame, true));
         }
         sect = sl->FindSectionByType (eSectionTypeCompactUnwind, true);
         if (sect.get())
         {
-            m_compact_unwind = new CompactUnwindInfo(m_object_file, sect);
+            m_compact_unwind_up.reset(new CompactUnwindInfo(m_object_file, sect));
+        }
+        sect = sl->FindSectionByType (eSectionTypeARMexidx, true);
+        if (sect.get())
+        {
+            SectionSP sect_extab = sl->FindSectionByType (eSectionTypeARMextab, true);
+            if (sect_extab.get())
+            {
+                m_arm_unwind_up.reset(new ArmUnwindInfo(m_object_file, sect, sect_extab));
+            }
         }
     }
     
@@ -70,8 +81,6 @@ UnwindTable::Initialize ()
 
 UnwindTable::~UnwindTable ()
 {
-    if (m_eh_frame)
-        delete m_eh_frame;
 }
 
 FuncUnwindersSP
@@ -102,7 +111,7 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
     if (!sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, 0, false, range) || !range.GetBaseAddress().IsValid())
     {
         // Does the eh_frame unwind info has a function bounds for this addr?
-        if (m_eh_frame == nullptr || !m_eh_frame->GetAddressRange (addr, range))
+        if (m_eh_frame_up == nullptr || !m_eh_frame_up->GetAddressRange (addr, range))
         {
             return no_unwind_found;
         }
@@ -129,7 +138,7 @@ UnwindTable::GetUncachedFuncUnwindersContainingAddress (const Address& addr, Sym
     if (!sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, 0, false, range) || !range.GetBaseAddress().IsValid())
     {
         // Does the eh_frame unwind info has a function bounds for this addr?
-        if (m_eh_frame == nullptr || !m_eh_frame->GetAddressRange (addr, range))
+        if (m_eh_frame_up == nullptr || !m_eh_frame_up->GetAddressRange (addr, range))
         {
             return no_unwind_found;
         }
@@ -158,14 +167,21 @@ DWARFCallFrameInfo *
 UnwindTable::GetEHFrameInfo ()
 {
     Initialize();
-    return m_eh_frame;
+    return m_eh_frame_up.get();
 }
 
 CompactUnwindInfo *
 UnwindTable::GetCompactUnwindInfo ()
 {
     Initialize();
-    return m_compact_unwind;
+    return m_compact_unwind_up.get();
+}
+
+ArmUnwindInfo *
+UnwindTable::GetArmUnwindInfo ()
+{
+    Initialize();
+    return m_arm_unwind_up.get();
 }
 
 bool

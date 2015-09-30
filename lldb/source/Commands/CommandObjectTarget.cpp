@@ -3819,6 +3819,14 @@ protected:
                 result.GetOutputStream().Printf("\n");
             }
 
+            UnwindPlanSP arm_unwind_sp = func_unwinders_sp->GetArmUnwindUnwindPlan(*target, 0);
+            if (arm_unwind_sp)
+            {
+                result.GetOutputStream().Printf("ARM.exidx unwind UnwindPlan:\n");
+                arm_unwind_sp->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
+                result.GetOutputStream().Printf("\n");
+            }
+
             UnwindPlanSP compact_unwind_sp = func_unwinders_sp->GetCompactUnwindUnwindPlan(*target, 0);
             if (compact_unwind_sp)
             {

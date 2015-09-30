@@ -34,6 +34,9 @@ public:
     lldb_private::CompactUnwindInfo *
     GetCompactUnwindInfo ();
 
+    ArmUnwindInfo *
+    GetArmUnwindInfo ();
+
     lldb::FuncUnwindersSP
     GetFuncUnwindersContainingAddress (const Address& addr, SymbolContext &sc);
 
@@ -65,9 +68,10 @@ private:
     bool                m_initialized;  // delay some initialization until ObjectFile is set up
     Mutex               m_mutex;
 
-    DWARFCallFrameInfo* m_eh_frame;
-    CompactUnwindInfo  *m_compact_unwind;
-    
+    std::unique_ptr<DWARFCallFrameInfo> m_eh_frame_up;
+    std::unique_ptr<CompactUnwindInfo>  m_compact_unwind_up;
+    std::unique_ptr<ArmUnwindInfo>      m_arm_unwind_up;
+
     DISALLOW_COPY_AND_ASSIGN (UnwindTable);
 };
 
