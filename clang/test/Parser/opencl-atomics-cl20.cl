@@ -54,3 +54,16 @@ void atomic_types_test() {
 // expected-error-re@-31 {{use of type 'atomic_ptrdiff_t' (aka '_Atomic({{.+}})') requires cl_khr_int64_base_atomics extension to be enabled}}
 // expected-error-re@-32 {{use of type 'atomic_ptrdiff_t' (aka '_Atomic({{.+}})') requires cl_khr_int64_extended_atomics extension to be enabled}}
 #endif
+
+#ifdef CL20
+void foo(atomic_int * ptr) {}
+void atomic_ops_test() {
+  atomic_int i;
+  foo(&i);
+// OpenCL v2.0 s6.13.11.8, arithemtic operations are not permitted on atomic types.
+  i++; // expected-error {{invalid argument type 'atomic_int' (aka '_Atomic(int)') to unary expression}}
+  i = 1; // expected-error {{atomic variable can only be assigned to a compile time constant in the declaration statement in the program scope}}
+  i += 1; // expected-error {{invalid operands to binary expression ('atomic_int' (aka '_Atomic(int)') and 'int')}}
+  i = i + i; // expected-error {{invalid operands to binary expression ('atomic_int' (aka '_Atomic(int)') and 'atomic_int')}}
+}
+#endif
