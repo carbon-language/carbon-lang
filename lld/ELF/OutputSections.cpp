@@ -552,31 +552,27 @@ template class SymbolTableSection<ELF64LE>;
 template class SymbolTableSection<ELF64BE>;
 
 template ELFFile<ELF32LE>::uintX_t
-getSymVA(const ELFSymbolBody<ELF32LE> &S, const OutputSection<ELF32LE> &BssSec);
+getSymVA(const ELFSymbolBody<ELF32LE> &, const OutputSection<ELF32LE> &);
 
 template ELFFile<ELF32BE>::uintX_t
-getSymVA(const ELFSymbolBody<ELF32BE> &S, const OutputSection<ELF32BE> &BssSec);
+getSymVA(const ELFSymbolBody<ELF32BE> &, const OutputSection<ELF32BE> &);
 
 template ELFFile<ELF64LE>::uintX_t
-getSymVA(const ELFSymbolBody<ELF64LE> &S, const OutputSection<ELF64LE> &BssSec);
+getSymVA(const ELFSymbolBody<ELF64LE> &, const OutputSection<ELF64LE> &);
 
 template ELFFile<ELF64BE>::uintX_t
-getSymVA(const ELFSymbolBody<ELF64BE> &S, const OutputSection<ELF64BE> &BssSec);
+getSymVA(const ELFSymbolBody<ELF64BE> &, const OutputSection<ELF64BE> &);
 
 template ELFFile<ELF32LE>::uintX_t
-getLocalSymVA(const ELFFile<ELF32LE>::Elf_Sym *Sym,
-              const ObjectFile<ELF32LE> &File);
+getLocalSymVA(const ELFFile<ELF32LE>::Elf_Sym *, const ObjectFile<ELF32LE> &);
 
 template ELFFile<ELF32BE>::uintX_t
-getLocalSymVA(const ELFFile<ELF32BE>::Elf_Sym *Sym,
-              const ObjectFile<ELF32BE> &File);
+getLocalSymVA(const ELFFile<ELF32BE>::Elf_Sym *, const ObjectFile<ELF32BE> &);
 
 template ELFFile<ELF64LE>::uintX_t
-getLocalSymVA(const ELFFile<ELF64LE>::Elf_Sym *Sym,
-              const ObjectFile<ELF64LE> &File);
+getLocalSymVA(const ELFFile<ELF64LE>::Elf_Sym *, const ObjectFile<ELF64LE> &);
 
 template ELFFile<ELF64BE>::uintX_t
-getLocalSymVA(const ELFFile<ELF64BE>::Elf_Sym *Sym,
-              const ObjectFile<ELF64BE> &File);
+getLocalSymVA(const ELFFile<ELF64BE>::Elf_Sym *, const ObjectFile<ELF64BE> &);
 }
 }
