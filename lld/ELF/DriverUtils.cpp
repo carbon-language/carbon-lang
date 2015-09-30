@@ -125,6 +125,18 @@ std::vector<StringRef> LinkerScript::tokenize(StringRef S) {
     S = skipSpace(S);
     if (S.empty())
       return Ret;
+
+    // Quoted token
+    if (S.startswith("\"")) {
+      size_t E = S.find("\"", 1);
+      if (E == StringRef::npos)
+        error("unclosed quote");
+      Ret.push_back(S.substr(1, E));
+      S = S.substr(E + 1);
+      continue;
+    }
+
+    // Unquoted token
     size_t Pos = S.find_first_not_of(
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         "0123456789_.$/\\~=+[]*?-:");
