@@ -508,7 +508,7 @@ entry:
 ; "i64 %0" should be in register x7.
 ; "i32 8" should be on stack at [sp].
 ; CHECK: ldr x7, [{{x[0-9]+}}]
-; CHECK: str {{w[0-9]+}}, [sp]
+; CHECK: str {{w[0-9]+}}, [sp, #-16]!
 ; FAST-LABEL: i64_split
 ; FAST: ldr x7, [{{x[0-9]+}}]
 ; FAST: mov x[[R0:[0-9]+]], sp

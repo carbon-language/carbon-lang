@@ -7,12 +7,12 @@
 define fastcc void @func_stack0() {
 ; CHECK-LABEL: func_stack0:
 ; CHECK: mov x29, sp
-; CHECK-NEXT: sub sp, sp, #32
+; CHECK: str w{{[0-9]+}}, [sp, #-32]!
 
 ; CHECK-TAIL-LABEL: func_stack0:
 ; CHECK-TAIL: stp x29, x30, [sp, #-16]!
 ; CHECK-TAIL-NEXT: mov x29, sp
-; CHECK-TAIL-NEXT: sub sp, sp, #32
+; CHECK-TAIL: str w{{[0-9]+}}, [sp, #-32]!
 
 
   call fastcc void @func_stack8([8 x i32] undef, i32 42)
@@ -55,13 +55,13 @@ define fastcc void @func_stack8([8 x i32], i32 %stacked) {
 ; CHECK-LABEL: func_stack8:
 ; CHECK: stp x29, x30, [sp, #-16]!
 ; CHECK: mov x29, sp
-; CHECK: sub sp, sp, #32
+; CHECK: str w{{[0-9]+}}, [sp, #-32]!
 
 
 ; CHECK-TAIL-LABEL: func_stack8:
 ; CHECK-TAIL: stp x29, x30, [sp, #-16]!
 ; CHECK-TAIL: mov x29, sp
-; CHECK-TAIL: sub sp, sp, #32
+; CHECK-TAIL: str w{{[0-9]+}}, [sp, #-32]!
 
 
   call fastcc void @func_stack8([8 x i32] undef, i32 42)

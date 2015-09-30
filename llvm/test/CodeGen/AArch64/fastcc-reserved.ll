@@ -16,7 +16,7 @@ define fastcc void @foo(i32 %in) {
 ; CHECK: mov     x29, sp
 
 ; Reserve space for call-frame:
-; CHECK: sub sp, sp, #16
+; CHECK: str w{{[0-9]+}}, [sp, #-16]!
 
   call fastcc void @will_pop([8 x i32] undef, i32 42)
 ; CHECK: bl will_pop
@@ -42,7 +42,7 @@ define void @foo1(i32 %in) {
 ; CHECK: mov     x29, sp
 
 ; Reserve space for call-frame
-; CHECK: sub sp, sp, #16
+; CHECK: str w{{[0-9]+}}, [sp, #-16]!
 
   call void @wont_pop([8 x i32] undef, i32 42)
 ; CHECK: bl wont_pop

@@ -959,7 +959,6 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnBackward(
 
   unsigned BaseReg = getLdStBaseOp(MemMI).getReg();
   int Offset = getLdStOffsetOp(MemMI).getImm();
-  unsigned MemSize = getMemScale(MemMI);
 
   // If the load/store is the first instruction in the block, there's obviously
   // not any matching update. Ditto if the memory offset isn't zero.
@@ -991,7 +990,7 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnBackward(
     ++Count;
 
     // If we found a match, return it.
-    if (isMatchingUpdateInsn(I, MI, BaseReg, MemSize))
+    if (isMatchingUpdateInsn(I, MI, BaseReg, Offset))
       return MBBI;
 
     // Update the status of what the instruction clobbered and used.

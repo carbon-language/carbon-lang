@@ -5,7 +5,7 @@ target triple = "arm64-apple-macosx10"
 ; A move isn't necessary.
 ; <rdar://problem/11492712>
 ; CHECK-LABEL: g:
-; CHECK: str xzr, [sp]
+; CHECK: str xzr, [sp, #-16]!
 ; CHECK: bl
 ; CHECK: ret
 define void @g() nounwind ssp {

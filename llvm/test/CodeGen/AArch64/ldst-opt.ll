@@ -276,11 +276,11 @@ bar:
 ;
 ; with X being either w0, x0, s0, d0 or q0.
 
-%pre.struct.i32 = type { i32, i32, i32}
-%pre.struct.i64 = type { i32, i64, i64}
-%pre.struct.i128 = type { i32, <2 x i64>, <2 x i64>}
-%pre.struct.float = type { i32, float, float}
-%pre.struct.double = type { i32, double, double}
+%pre.struct.i32 = type { i32, i32, i32, i32, i32}
+%pre.struct.i64 = type { i32, i64, i64, i64, i64}
+%pre.struct.i128 = type { i32, <2 x i64>, <2 x i64>, <2 x i64>}
+%pre.struct.float = type { i32, float, float, float}
+%pre.struct.double = type { i32, double, double, double}
 
 define i32 @load-pre-indexed-word2(%pre.struct.i32** %this, i1 %cond,
                                    %pre.struct.i32* %load2) nounwind {
@@ -365,6 +365,96 @@ if.then:
   br label %return
 if.end:
   %gep2 = getelementptr inbounds %pre.struct.double, %pre.struct.double* %load2, i64 0, i32 2
+  br label %return
+return:
+  %retptr = phi double* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  %ret = load double, double* %retptr
+  ret double %ret
+}
+
+define i32 @load-pre-indexed-word3(%pre.struct.i32** %this, i1 %cond,
+                                   %pre.struct.i32* %load2) nounwind {
+; CHECK-LABEL: load-pre-indexed-word3
+; CHECK: ldr w{{[0-9]+}}, [x{{[0-9]+}}, #12]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.i32*, %pre.struct.i32** %this
+  %gep1 = getelementptr inbounds %pre.struct.i32, %pre.struct.i32* %load1, i64 0, i32 3
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.i32, %pre.struct.i32* %load2, i64 0, i32 4
+  br label %return
+return:
+  %retptr = phi i32* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  %ret = load i32, i32* %retptr
+  ret i32 %ret
+}
+
+define i64 @load-pre-indexed-doubleword3(%pre.struct.i64** %this, i1 %cond,
+                                         %pre.struct.i64* %load2) nounwind {
+; CHECK-LABEL: load-pre-indexed-doubleword3
+; CHECK: ldr x{{[0-9]+}}, [x{{[0-9]+}}, #16]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.i64*, %pre.struct.i64** %this
+  %gep1 = getelementptr inbounds %pre.struct.i64, %pre.struct.i64* %load1, i64 0, i32 2
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.i64, %pre.struct.i64* %load2, i64 0, i32 3
+  br label %return
+return:
+  %retptr = phi i64* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  %ret = load i64, i64* %retptr
+  ret i64 %ret
+}
+
+define <2 x i64> @load-pre-indexed-quadword3(%pre.struct.i128** %this, i1 %cond,
+                                             %pre.struct.i128* %load2) nounwind {
+; CHECK-LABEL: load-pre-indexed-quadword3
+; CHECK: ldr q{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.i128*, %pre.struct.i128** %this
+  %gep1 = getelementptr inbounds %pre.struct.i128, %pre.struct.i128* %load1, i64 0, i32 2
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.i128, %pre.struct.i128* %load2, i64 0, i32 3
+  br label %return
+return:
+  %retptr = phi <2 x i64>* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  %ret = load <2 x i64>, <2 x i64>* %retptr
+  ret <2 x i64> %ret
+}
+
+define float @load-pre-indexed-float3(%pre.struct.float** %this, i1 %cond,
+                                      %pre.struct.float* %load2) nounwind {
+; CHECK-LABEL: load-pre-indexed-float3
+; CHECK: ldr s{{[0-9]+}}, [x{{[0-9]+}}, #8]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.float*, %pre.struct.float** %this
+  %gep1 = getelementptr inbounds %pre.struct.float, %pre.struct.float* %load1, i64 0, i32 2
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.float, %pre.struct.float* %load2, i64 0, i32 3
+  br label %return
+return:
+  %retptr = phi float* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  %ret = load float, float* %retptr
+  ret float %ret
+}
+
+define double @load-pre-indexed-double3(%pre.struct.double** %this, i1 %cond,
+                                        %pre.struct.double* %load2) nounwind {
+; CHECK-LABEL: load-pre-indexed-double3
+; CHECK: ldr d{{[0-9]+}}, [x{{[0-9]+}}, #16]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.double*, %pre.struct.double** %this
+  %gep1 = getelementptr inbounds %pre.struct.double, %pre.struct.double* %load1, i64 0, i32 2
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.double, %pre.struct.double* %load2, i64 0, i32 3
   br label %return
 return:
   %retptr = phi double* [ %gep1, %if.then ], [ %gep2, %if.end ]
@@ -470,6 +560,101 @@ if.then:
   br label %return
 if.end:
   %gep2 = getelementptr inbounds %pre.struct.double, %pre.struct.double* %load2, i64 0, i32 2
+  br label %return
+return:
+  %retptr = phi double* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  store double %val, double* %retptr
+  ret void
+}
+
+define void @store-pre-indexed-word3(%pre.struct.i32** %this, i1 %cond,
+                                     %pre.struct.i32* %load2,
+                                     i32 %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-word3
+; CHECK: str w{{[0-9]+}}, [x{{[0-9]+}}, #12]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.i32*, %pre.struct.i32** %this
+  %gep1 = getelementptr inbounds %pre.struct.i32, %pre.struct.i32* %load1, i64 0, i32 3
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.i32, %pre.struct.i32* %load2, i64 0, i32 4
+  br label %return
+return:
+  %retptr = phi i32* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  store i32 %val, i32* %retptr
+  ret void
+}
+
+define void @store-pre-indexed-doubleword3(%pre.struct.i64** %this, i1 %cond,
+                                           %pre.struct.i64* %load2,
+                                           i64 %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-doubleword3
+; CHECK: str x{{[0-9]+}}, [x{{[0-9]+}}, #24]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.i64*, %pre.struct.i64** %this
+  %gep1 = getelementptr inbounds %pre.struct.i64, %pre.struct.i64* %load1, i64 0, i32 3
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.i64, %pre.struct.i64* %load2, i64 0, i32 4
+  br label %return
+return:
+  %retptr = phi i64* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  store i64 %val, i64* %retptr
+  ret void
+}
+
+define void @store-pre-indexed-quadword3(%pre.struct.i128** %this, i1 %cond,
+                                         %pre.struct.i128* %load2,
+                                         <2 x i64> %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-quadword3
+; CHECK: str q{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.i128*, %pre.struct.i128** %this
+  %gep1 = getelementptr inbounds %pre.struct.i128, %pre.struct.i128* %load1, i64 0, i32 2
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.i128, %pre.struct.i128* %load2, i64 0, i32 3
+  br label %return
+return:
+  %retptr = phi <2 x i64>* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  store <2 x i64> %val, <2 x i64>* %retptr
+  ret void
+}
+
+define void @store-pre-indexed-float3(%pre.struct.float** %this, i1 %cond,
+                                      %pre.struct.float* %load2,
+                                      float %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-float3
+; CHECK: str s{{[0-9]+}}, [x{{[0-9]+}}, #8]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.float*, %pre.struct.float** %this
+  %gep1 = getelementptr inbounds %pre.struct.float, %pre.struct.float* %load1, i64 0, i32 2
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.float, %pre.struct.float* %load2, i64 0, i32 3
+  br label %return
+return:
+  %retptr = phi float* [ %gep1, %if.then ], [ %gep2, %if.end ]
+  store float %val, float* %retptr
+  ret void
+}
+
+define void @store-pre-indexed-double3(%pre.struct.double** %this, i1 %cond,
+                                      %pre.struct.double* %load2,
+                                      double %val) nounwind {
+; CHECK-LABEL: store-pre-indexed-double3
+; CHECK: str d{{[0-9]+}}, [x{{[0-9]+}}, #16]!
+  br i1 %cond, label %if.then, label %if.end
+if.then:
+  %load1 = load %pre.struct.double*, %pre.struct.double** %this
+  %gep1 = getelementptr inbounds %pre.struct.double, %pre.struct.double* %load1, i64 0, i32 2
+  br label %return
+if.end:
+  %gep2 = getelementptr inbounds %pre.struct.double, %pre.struct.double* %load2, i64 0, i32 3
   br label %return
 return:
   %retptr = phi double* [ %gep1, %if.then ], [ %gep2, %if.end ]
