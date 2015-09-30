@@ -3787,7 +3787,7 @@ class FunctionParmPackExpr : public Expr {
 
   FunctionParmPackExpr(QualType T, ParmVarDecl *ParamPack,
                        SourceLocation NameLoc, unsigned NumParams,
-                       Decl * const *Params);
+                       ParmVarDecl *const *Params);
 
   friend class ASTReader;
   friend class ASTStmtReader;
@@ -3796,7 +3796,7 @@ public:
   static FunctionParmPackExpr *Create(const ASTContext &Context, QualType T,
                                       ParmVarDecl *ParamPack,
                                       SourceLocation NameLoc,
-                                      ArrayRef<Decl *> Params);
+                                      ArrayRef<ParmVarDecl *> Params);
   static FunctionParmPackExpr *CreateEmpty(const ASTContext &Context,
                                            unsigned NumParams);
 

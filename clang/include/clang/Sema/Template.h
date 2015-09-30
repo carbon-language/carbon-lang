@@ -178,8 +178,8 @@ namespace clang {
   class LocalInstantiationScope {
   public:
     /// \brief A set of declarations.
-    typedef SmallVector<Decl *, 4> DeclArgumentPack;
-    
+    typedef SmallVector<ParmVarDecl *, 4> DeclArgumentPack;
+
   private:
     /// \brief Reference to the semantic analysis that is performing
     /// this template instantiation.
@@ -332,7 +332,7 @@ namespace clang {
     findInstantiationOf(const Decl *D);
 
     void InstantiatedLocal(const Decl *D, Decl *Inst);
-    void InstantiatedLocalPackArg(const Decl *D, Decl *Inst);
+    void InstantiatedLocalPackArg(const Decl *D, ParmVarDecl *Inst);
     void MakeInstantiatedLocalArgPack(const Decl *D);
     
     /// \brief Note that the given parameter pack has been partially substituted

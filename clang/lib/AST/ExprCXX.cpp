@@ -1468,19 +1468,19 @@ TemplateArgument SubstNonTypeTemplateParmPackExpr::getArgumentPack() const {
 FunctionParmPackExpr::FunctionParmPackExpr(QualType T, ParmVarDecl *ParamPack,
                                            SourceLocation NameLoc,
                                            unsigned NumParams,
-                                           Decl * const *Params)
-  : Expr(FunctionParmPackExprClass, T, VK_LValue, OK_Ordinary,
-         true, true, true, true),
-    ParamPack(ParamPack), NameLoc(NameLoc), NumParameters(NumParams) {
+                                           ParmVarDecl *const *Params)
+    : Expr(FunctionParmPackExprClass, T, VK_LValue, OK_Ordinary, true, true,
+           true, true),
+      ParamPack(ParamPack), NameLoc(NameLoc), NumParameters(NumParams) {
   if (Params)
     std::uninitialized_copy(Params, Params + NumParams,
-                            reinterpret_cast<Decl**>(this+1));
+                            reinterpret_cast<ParmVarDecl **>(this + 1));
 }
 
 FunctionParmPackExpr *
 FunctionParmPackExpr::Create(const ASTContext &Context, QualType T,
                              ParmVarDecl *ParamPack, SourceLocation NameLoc,
-                             ArrayRef<Decl *> Params) {
+                             ArrayRef<ParmVarDecl *> Params) {
   return new (Context.Allocate(sizeof(FunctionParmPackExpr) +
                                sizeof(ParmVarDecl*) * Params.size()))
     FunctionParmPackExpr(T, ParamPack, NameLoc, Params.size(), Params.data());
