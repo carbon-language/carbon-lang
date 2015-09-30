@@ -1163,6 +1163,47 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
 
+  case Intrinsic::x86_ssse3_pshuf_b_128:
+  case Intrinsic::x86_avx2_pshuf_b: {
+    // Turn pshufb(V1,mask) -> shuffle(V1,Zero,mask) if mask is a constant.
+    auto *V = II->getArgOperand(1);
+    auto *VTy = cast<VectorType>(V->getType());
+    unsigned NumElts = VTy->getNumElements();
+    assert((NumElts == 16 || NumElts == 32) &&
+           "Unexpected number of elements in shuffle mask!");
+    // Initialize the resulting shuffle mask to all zeroes.
+    uint32_t Indexes[32] = {0};
+
+    if (auto *Mask = dyn_cast<ConstantDataVector>(V)) {
+      // Each byte in the shuffle control mask forms an index to permute the
+      // corresponding byte in the destination operand.
+      for (unsigned I = 0; I < NumElts; ++I) {
+        int8_t Index = Mask->getElementAsInteger(I);
+        // If the most significant bit (bit[7]) of each byte of the shuffle
+        // control mask is set, then zero is written in the result byte.
+        // The zero vector is in the right-hand side of the resulting
+        // shufflevector.
+ 
+        // The value of each index is the least significant 4 bits of the
+        // shuffle control byte.      
+        Indexes[I] = (Index < 0) ? NumElts : Index & 0xF;
+      }
+    } else if (!isa<ConstantAggregateZero>(V))
+      break;
+
+    // The value of each index for the high 128-bit lane is the least
+    // significant 4 bits of the respective shuffle control byte.
+    for (unsigned I = 16; I < NumElts; ++I)
+      Indexes[I] += I & 0xF0;
+
+    auto NewC = ConstantDataVector::get(V->getContext(),
+                                        makeArrayRef(Indexes, NumElts));
+    auto V1 = II->getArgOperand(0);
+    auto V2 = Constant::getNullValue(II->getType());
+    auto Shuffle = Builder->CreateShuffleVector(V1, V2, NewC);
+    return ReplaceInstUsesWith(CI, Shuffle);
+  }
+
   case Intrinsic::x86_avx_vpermilvar_ps:
   case Intrinsic::x86_avx_vpermilvar_ps_256:
   case Intrinsic::x86_avx_vpermilvar_pd:
