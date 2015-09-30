@@ -48,8 +48,6 @@ class TargetThreadWindows : public lldb_private::Thread
   private:
     lldb::RegisterContextSP CreateRegisterContextForFrameIndex(uint32_t idx);
 
-    lldb::StackFrameUP m_stack_frame;
-
     HostThread m_host_thread;
 };
 }
