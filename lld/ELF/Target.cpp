@@ -111,21 +111,29 @@ bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
     return false;
   case R_X86_64_PC32:
     // This relocation is defined to have a value of (S + A - P).
-    // The problems start when a non PIC program calls a function is a shared
+    // The problems start when a non PIC program calls a function in a shared
     // library.
     // In an ideal world, we could just report an error saying the relocation
     // can overflow at runtime.
-    // In the real world, crt1.o has a R_X86_64_PC32 pointing to libc.so.
-    // The general idea is to create a PLT entry and use that as the function
-    // value, which is why we return true in here.
+    // In the real world with glibc, crt1.o has a R_X86_64_PC32 pointing to
+    // libc.so.
+    //
+    // The general idea on how to handle such cases is to create a PLT entry
+    // and use that as the function value.
+    //
+    // For the static linking part, we just return true and everything else
+    // will use the the PLT entry as the address.
+    //
     // The remaining (unimplemented) problem is making sure pointer equality
-    // still works. For that, we need the help of the dynamic linker. We
-    // let it know that we have a direct reference to a symbol by creating
-    // an undefined symbol with a non zero st_value. Seeing that the
+    // still works. We need the help of the dynamic linker for that. We
+    // let it know that we have a direct reference to a so symbol by creating
+    // an undefined symbol with a non zero st_value. Seeing that, the
     // dynamic linker resolves the symbol to the value of the symbol we created.
     // This is true even for got entries, so pointer equality is maintained.
     // To avoid an infinite loop, the only entry that points to the
-    // real function is a dedicated got entry used by the plt.
+    // real function is a dedicated got entry used by the plt. That is
+    // identified by special relocation types (R_X86_64_JUMP_SLOT,
+    // R_386_JMP_SLOT, etc).
     return S.isShared();
   case R_X86_64_PLT32:
     return true;
