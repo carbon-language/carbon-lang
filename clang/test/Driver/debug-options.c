@@ -10,7 +10,7 @@
 // RUN: %clang -### -c -ggdb %s -target x86_64-linux-gnu 2>&1 \
 // RUN:             | FileCheck -check-prefix=G %s
 // RUN: %clang -### -c -ggdb1 %s -target x86_64-linux-gnu 2>&1 \
-// RUN:             | FileCheck -check-prefix=G %s
+// RUN:             | FileCheck -check-prefix=GLTO_ONLY %s
 // RUN: %clang -### -c -ggdb3 %s -target x86_64-linux-gnu 2>&1 \
 // RUN:             | FileCheck -check-prefix=G %s
 
@@ -23,7 +23,7 @@
 // RUN: %clang -### -c -ggdb %s -target x86_64-apple-darwin 2>&1 \
 // RUN:             | FileCheck -check-prefix=G_DARWIN %s
 // RUN: %clang -### -c -ggdb1 %s -target x86_64-apple-darwin 2>&1 \
-// RUN:             | FileCheck -check-prefix=G_DARWIN %s
+// RUN:             | FileCheck -check-prefix=GLTO_ONLY_DWARF2 %s
 // RUN: %clang -### -c -ggdb3 %s -target x86_64-apple-darwin 2>&1 \
 // RUN:             | FileCheck -check-prefix=G_DARWIN %s
 

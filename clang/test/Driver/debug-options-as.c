@@ -7,10 +7,16 @@
 // SAVE: "-cc1as"
 // SAVE-NOT: "-g"
 
+// Make sure that '-ggdb0' is not accidentally mistaken for '-g'
+// RUN: %clang -### -ggdb0 -c -integrated-as -x assembler %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=GGDB0 %s
+//
+// GGDB0: "-cc1as"
+// GGDB0-NOT: "-g"
+
 // Check to make sure clang with -g on a .s file gets passed.
 // rdar://9275556
-// RUN: touch %t.s
-// RUN: %clang -### -c -integrated-as -g %t.s 2>&1 \
+// RUN: %clang -### -c -integrated-as -g -x assembler %s 2>&1 \
 // RUN:   | FileCheck %s
 //
 // CHECK: "-cc1as"
@@ -18,8 +24,7 @@
 
 // Check to make sure clang with -g on a .s file gets passed -dwarf-debug-producer.
 // rdar://12955296
-// RUN: touch %t.s
-// RUN: %clang -### -c -integrated-as -g %t.s 2>&1 \
+// RUN: %clang -### -c -integrated-as -g -x assembler %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=P %s
 //
 // P: "-cc1as"

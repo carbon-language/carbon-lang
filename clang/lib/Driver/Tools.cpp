@@ -3802,8 +3802,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT_g_Group);
   Arg *SplitDwarfArg = Args.getLastArg(options::OPT_gsplit_dwarf);
   if (Arg *A = Args.getLastArg(options::OPT_g_Group)) {
-    if ((A->getOption().matches(options::OPT_gline_tables_only) ||
-         A->getOption().matches(options::OPT_g1)) &&
+    if (A->getOption().matches(options::OPT_gline_tables_only) &&
         (!SplitDwarfArg || A->getIndex() > SplitDwarfArg->getIndex())) {
       // FIXME: we should support specifying dwarf version with
       // -gline-tables-only.
@@ -3819,8 +3818,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                A->getOption().matches(options::OPT_gdwarf_3) ||
                A->getOption().matches(options::OPT_gdwarf_4)) {
       A->render(Args, CmdArgs);
-    } else if (!A->getOption().matches(options::OPT_g0) &&
-               !A->getOption().matches(options::OPT_ggdb0)) {
+    } else if (!A->getOption().matches(options::OPT_g0)) {
       // Default is dwarf-2 for Darwin, OpenBSD, FreeBSD and Solaris.
       const llvm::Triple &Triple = getToolChain().getTriple();
       if (Triple.isOSDarwin() || Triple.getOS() == llvm::Triple::OpenBSD ||
