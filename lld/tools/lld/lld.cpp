@@ -23,7 +23,7 @@
 using namespace lld;
 
 
-/// Universal linker main().  This linker emulates the gnu, darwin, or
+/// Universal linker main(). This linker emulates the gnu, darwin, or
 /// windows linker based on the tool name or if the first argument is
 /// -flavor.
 int main(int argc, const char *argv[]) {
