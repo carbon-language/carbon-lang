@@ -1824,7 +1824,6 @@ Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
         bool isInstance = CurMethod &&
                           CurMethod->isInstance() &&
                           DC == CurMethod->getParent() && !isDefaultArgument;
-                          
 
         // Give a code modification hint to insert 'this->'.
         // TODO: fixit for inserting 'Base<T>::' in the other cases.
@@ -1838,15 +1837,23 @@ Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
               CallsUndergoingInstantiation.back()->getCallee());
 
           CXXMethodDecl *DepMethod;
-          if (CurMethod->isDependentContext())
+          if (CurMethod->isDependentContext()) {
             DepMethod = CurMethod;
-          else if (CurMethod->getTemplatedKind() ==
-              FunctionDecl::TK_FunctionTemplateSpecialization)
-            DepMethod = cast<CXXMethodDecl>(CurMethod->getPrimaryTemplate()->
-                getInstantiatedFromMemberTemplate()->getTemplatedDecl());
-          else
+          } else if (FunctionTemplateDecl *FTD =
+                         CurMethod->getPrimaryTemplate()) {
+            // We have a member function template. It may be contained in a
+            // class template. If so, get the original pattern for the member
+            // function template. Otherwise, 'this' isn't dependent and we can
+            // use CurMethod as is.
+            if (FunctionTemplateDecl *MemberFTD =
+                    FTD->getInstantiatedFromMemberTemplate())
+              DepMethod = cast<CXXMethodDecl>(MemberFTD->getTemplatedDecl());
+            else
+              DepMethod = CurMethod;
+          } else {
             DepMethod = cast<CXXMethodDecl>(
                 CurMethod->getInstantiatedFromMemberFunction());
+          }
           assert(DepMethod && "No template pattern found");
 
           QualType DepThisType = DepMethod->getThisType(Context);
@@ -1856,7 +1863,7 @@ Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
           TemplateArgumentListInfo TList;
           if (ULE->hasExplicitTemplateArgs())
             ULE->copyTemplateArgumentsInto(TList);
-          
+
           CXXScopeSpec SS;
           SS.Adopt(ULE->getQualifierLoc());
           CXXDependentScopeMemberExpr *DepExpr =

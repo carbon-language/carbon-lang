@@ -35,3 +35,25 @@ namespace PR16225 {
     g<S>(0);  // expected-note {{in instantiation of function template specialization}}
   }
 }
+
+namespace test1 {
+  template <typename> class ArraySlice {};
+  class Foo;
+  class NonTemplateClass {
+    void MemberFunction(ArraySlice<Foo>, int);
+    template <class T> void MemberFuncTemplate(ArraySlice<T>, int);
+  };
+  void NonTemplateClass::MemberFunction(ArraySlice<Foo> resource_data,
+                                        int now) {
+    // expected-note@+1 {{in instantiation of function template specialization 'test1::NonTemplateClass::MemberFuncTemplate<test1::Foo>'}}
+    MemberFuncTemplate(resource_data, now);
+  }
+  template <class T>
+  void NonTemplateClass::MemberFuncTemplate(ArraySlice<T> resource_data, int) {
+    // expected-error@+1 {{use of undeclared identifier 'UndeclaredMethod'}}
+    UndeclaredMethod(resource_data);
+  }
+  // expected-error@+2 {{out-of-line definition of 'UndeclaredMethod' does not match any declaration}}
+  // expected-note@+1 {{must qualify identifier to find this declaration in dependent base class}}
+  void NonTemplateClass::UndeclaredMethod() {}
+}
