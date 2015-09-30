@@ -3,6 +3,7 @@
 import argparse
 import datetime
 import signal
+import subprocess
 import sys
 import time
 
@@ -25,6 +26,15 @@ def parse_args(command_line):
         default=[],
         help="ignore the given signal number (if possible)")
     parser.add_argument(
+        "--launch-child-share-handles",
+        action="store_true",
+        help=("launch a child inferior.py that shares stdout/stderr/stdio and "
+              "never returns"))
+    parser.add_argument(
+        "--never-return",
+        action="store_true",
+        help="run in an infinite loop, never return")
+    parser.add_argument(
         "--return-code",
         "-r",
         type=int,
@@ -43,7 +53,7 @@ def parse_args(command_line):
     return parser.parse_args(command_line)
 
 
-def maybe_ignore_signals(options, signals):
+def handle_ignore_signals(options, signals):
     """Ignores any signals provided to it.
 
     @param options the command line options parsed by the program.
@@ -61,7 +71,7 @@ def maybe_ignore_signals(options, signals):
         signal.signal(signum, signal.SIG_IGN)
 
 
-def maybe_sleep(options, sleep_seconds):
+def handle_sleep(options, sleep_seconds):
     """Sleeps the number of seconds specified, restarting as needed.
 
     @param options the command line options parsed by the program.
@@ -90,7 +100,27 @@ def maybe_sleep(options, sleep_seconds):
             sleep_seconds = sleep_interval.total_seconds()
             if sleep_seconds > 0:
                 time.sleep(sleep_seconds)
-        except:
+        except:  # pylint: disable=bare-except
+            pass
+
+
+def handle_launch_children(options):
+    if options.launch_child_share_handles:
+        # Launch the child, share our file handles.
+        # We won't bother reaping it since it will likely outlive us.
+        subprocess.Popen([sys.executable, __file__, "--never-return"])
+
+
+def handle_never_return(options):
+    if not options.never_return:
+        return
+
+    # Loop forever.
+    while True:
+        try:
+            time.sleep(10)
+        except:  # pylint: disable=bare-except
+            # Ignore
             pass
 
 
@@ -102,8 +132,11 @@ def main(command_line):
     @return the exit value (program return code) for the process.
     """
     options = parse_args(command_line)
-    maybe_ignore_signals(options, options.ignore_signals)
-    maybe_sleep(options, options.sleep_seconds)
+    handle_ignore_signals(options, options.ignore_signals)
+    handle_launch_children(options)
+    handle_sleep(options, options.sleep_seconds)
+    handle_never_return(options)
+
     return options.return_code
 
 if __name__ == "__main__":

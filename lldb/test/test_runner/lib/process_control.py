@@ -297,17 +297,23 @@ class UnixProcessHelper(ProcessHelper):
                 log_file.write("skipping soft_terminate(): no process id")
             return False
 
-        # Don't kill if it's already dead.
-        popen_process.poll()
-        if popen_process.returncode is not None:
-            # It has a returncode.  It has already stopped.
-            if log_file:
-                log_file.write(
-                    "requested to terminate pid {} but it has already "
-                    "terminated, returncode {}".format(
-                        popen_process.pid, popen_process.returncode))
-            # Move along...
-            return False
+        # We only do the process liveness check if we're not using
+        # process groups.  With process groups, checking if the main
+        # inferior process is dead and short circuiting here is no
+        # good - children of it in the process group could still be
+        # alive, and they should be killed during a timeout.
+        if not popen_process.using_process_groups:
+            # Don't kill if it's already dead.
+            popen_process.poll()
+            if popen_process.returncode is not None:
+                # It has a returncode.  It has already stopped.
+                if log_file:
+                    log_file.write(
+                        "requested to terminate pid {} but it has already "
+                        "terminated, returncode {}".format(
+                            popen_process.pid, popen_process.returncode))
+                # Move along...
+                return False
 
         # Good to go.
         return True

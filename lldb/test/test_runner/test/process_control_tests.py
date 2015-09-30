@@ -178,7 +178,7 @@ class ProcessControlTimeoutTests(ProcessControlTests):
             # ignore soft terminate calls.
             self.inferior_command(
                 ignore_soft_terminate=True,
-                options="--sleep 120"),
+                options="--never-return"),
             "{}s".format(timeout_seconds),
             True)
 
@@ -197,6 +197,36 @@ class ProcessControlTimeoutTests(ProcessControlTests):
              "for hard teriminate: {} ({})").format(
                  driver.returncode,
                  driver.output))
+
+    def test_inferior_exits_with_live_child_shared_handles(self):
+        """inferior exit detected when inferior children are live with shared
+        stdout/stderr handles.
+        """
+        driver = TestInferiorDriver()
+
+        # Create the inferior (I1), and instruct it to create a child (C1)
+        # that shares the stdout/stderr handles with the inferior.
+        # C1 will then loop forever.
+        driver.run_command_with_timeout(
+            self.inferior_command(
+                options="--launch-child-share-handles --return-code 3"),
+            "5s",
+            False)
+
+        # We should complete without a timetout.  I1 should end
+        # immediately after launching C1.
+        self.assertTrue(
+            driver.completed_event.wait(5),
+            "process failed to complete")
+
+        # Ensure we didn't receive a timeout.
+        self.assertTrue(
+            driver.was_timeout, "inferior should have completed normally")
+
+        self.assertEqual(
+            driver.returncode, 3,
+            "expected inferior process to end with expected returncode")
+
 
 if __name__ == "__main__":
     unittest.main()
