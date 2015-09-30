@@ -47,4 +47,30 @@ exit:
   ret void
 }
 
+define i8 @test3(i8 *%addr) {
+; Check that we do not vectorize types that are padded to a bigger ones.
+;
+; CHECK-LABEL: @test3
+; CHECK-NOT:   <4 x i2>
+; CHECK:       ret i8
+entry:
+  %a = bitcast i8* %addr to i2*
+  %a0 = getelementptr inbounds i2, i2* %a, i64 0
+  %a1 = getelementptr inbounds i2, i2* %a, i64 1
+  %a2 = getelementptr inbounds i2, i2* %a, i64 2
+  %a3 = getelementptr inbounds i2, i2* %a, i64 3
+  %l0 = load i2, i2* %a0, align 1
+  %l1 = load i2, i2* %a1, align 1
+  %l2 = load i2, i2* %a2, align 1
+  %l3 = load i2, i2* %a3, align 1
+  br label %bb1
+bb1:                                              ; preds = %entry
+  %p0 = phi i2 [ %l0, %entry ]
+  %p1 = phi i2 [ %l1, %entry ]
+  %p2 = phi i2 [ %l2, %entry ]
+  %p3 = phi i2 [ %l3, %entry ]
+  %r  = zext i2 %p2 to i8
+  ret i8 %r
+}
+
 declare void @f(i64, i64)

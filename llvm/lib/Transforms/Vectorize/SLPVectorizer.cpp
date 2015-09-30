@@ -1158,6 +1158,23 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
       return;
     }
     case Instruction::Load: {
+      // Check that a vectorized load would load the same memory as a scalar
+      // load.
+      // For example we don't want vectorize loads that are smaller than 8 bit.
+      // Even though we have a packed struct {<i2, i2, i2, i2>} LLVM treats
+      // loading/storing it as an i8 struct. If we vectorize loads/stores from
+      // such a struct we read/write packed bits disagreeing with the
+      // unvectorized version.
+      const DataLayout &DL = F->getParent()->getDataLayout();
+      Type *ScalarTy = VL[0]->getType();
+
+      if (DL.getTypeSizeInBits(ScalarTy) !=
+          DL.getTypeAllocSizeInBits(ScalarTy)) {
+        BS.cancelScheduling(VL);
+        newTreeEntry(VL, false);
+        DEBUG(dbgs() << "SLP: Gathering loads of non-packed type.\n");
+        return;
+      }
       // Check if the loads are consecutive or of we need to swizzle them.
       for (unsigned i = 0, e = VL.size() - 1; i < e; ++i) {
         LoadInst *L = cast<LoadInst>(VL[i]);
@@ -1167,7 +1184,7 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
           DEBUG(dbgs() << "SLP: Gathering non-simple loads.\n");
           return;
         }
-        const DataLayout &DL = F->getParent()->getDataLayout();
+
         if (!isConsecutiveAccess(VL[i], VL[i + 1], DL)) {
           if (VL.size() == 2 && isConsecutiveAccess(VL[1], VL[0], DL)) {
             ++NumLoadsWantToChangeOrder;
