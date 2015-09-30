@@ -530,7 +530,7 @@ protected:
             
             if (type_list.GetSize() == 0 && lookup_type_name.GetCString() && *lookup_type_name.GetCString() == '$')
             {
-                clang::TypeDecl *tdecl = target->GetPersistentVariables().GetPersistentType(ConstString(lookup_type_name));
+                clang::TypeDecl *tdecl = llvm::cast<ClangPersistentVariables>(target->GetScratchTypeSystemForLanguage(lldb::eLanguageTypeC)->GetPersistentExpressionState())->GetPersistentType(ConstString(lookup_type_name));
                 if (tdecl)
                 {
                     clang_ast_type.SetCompilerType(ClangASTContext::GetASTContext(&tdecl->getASTContext()),(const lldb::opaque_compiler_type_t)tdecl->getTypeForDecl());

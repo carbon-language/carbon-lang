@@ -30,3 +30,7 @@ ExpressionVariable::GetValueBytes()
     }
     return NULL;
 }
+
+PersistentExpressionState::~PersistentExpressionState ()
+{
+}

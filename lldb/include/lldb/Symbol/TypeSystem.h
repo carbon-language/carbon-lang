@@ -504,6 +504,12 @@ public:
         return nullptr;
     }
     
+    virtual PersistentExpressionState *
+    GetPersistentExpressionState()
+    {
+        return nullptr;
+    }
+    
     virtual CompilerType
     GetTypeForFormatters (void* type);
     

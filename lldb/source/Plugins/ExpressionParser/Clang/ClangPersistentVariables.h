@@ -13,6 +13,8 @@
 #include "ClangExpressionVariable.h"
 #include "ClangModulesDeclVendor.h"
 
+#include "lldb/Expression/ExpressionVariable.h"
+
 #include "llvm/ADT/DenseMap.h"
 
 namespace lldb_private
@@ -26,7 +28,7 @@ namespace lldb_private
 /// ClangPersistentVariable for more discussion.  Also provides an increasing,
 /// 0-based counter for naming result variables.
 //----------------------------------------------------------------------
-class ClangPersistentVariables : public ExpressionVariableList
+class ClangPersistentVariables : public PersistentExpressionState
 {
 public:
     
@@ -34,6 +36,16 @@ public:
     /// Constructor
     //----------------------------------------------------------------------
     ClangPersistentVariables ();
+    
+    ~ClangPersistentVariables () { }
+    
+    //------------------------------------------------------------------
+    // llvm casting support
+    //------------------------------------------------------------------
+    static bool classof(const PersistentExpressionState *pv)
+    {
+        return pv->getKind() == PersistentExpressionState::eKindClang;
+    }
 
     lldb::ExpressionVariableSP
     CreatePersistentVariable (const lldb::ValueObjectSP &valobj_sp);
@@ -53,10 +65,10 @@ public:
     ///     A string that contains the next persistent variable name.
     //----------------------------------------------------------------------
     ConstString
-    GetNextPersistentVariableName ();
+    GetNextPersistentVariableName () override;
     
     void
-    RemovePersistentVariable (lldb::ExpressionVariableSP variable);
+    RemovePersistentVariable (lldb::ExpressionVariableSP variable) override;
 
     void
     RegisterPersistentType (const ConstString &name,

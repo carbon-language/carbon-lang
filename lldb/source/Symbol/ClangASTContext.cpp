@@ -9158,7 +9158,8 @@ ClangASTContext::DeclContextGetClangASTContext (const CompilerDeclContext &dc)
 
 ClangASTContextForExpressions::ClangASTContextForExpressions (Target &target) :
     ClangASTContext (target.GetArchitecture().GetTriple().getTriple().c_str()),
-    m_target_wp(target.shared_from_this())
+    m_target_wp(target.shared_from_this()),
+    m_persistent_variables (new ClangPersistentVariables)
 {
 }
 
@@ -9196,9 +9197,15 @@ UtilityFunction *
 ClangASTContextForExpressions::GetUtilityFunction (const char *text,
                                                    const char *name)
 {
-     TargetSP target_sp = m_target_wp.lock();
+    TargetSP target_sp = m_target_wp.lock();
     if (!target_sp)
         return nullptr;
     
     return new ClangUtilityFunction(*target_sp.get(), text, name);
+}
+
+PersistentExpressionState *
+ClangASTContextForExpressions::GetPersistentExpressionState ()
+{
+    return m_persistent_variables.get();
 }

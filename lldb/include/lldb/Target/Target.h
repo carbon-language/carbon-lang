@@ -1319,9 +1319,9 @@ public:
                         lldb::ValueObjectSP &result_valobj_sp,
                         const EvaluateExpressionOptions& options = EvaluateExpressionOptions());
 
-    ClangPersistentVariables &
-    GetPersistentVariables();
-
+    lldb::ExpressionVariableSP
+    GetPersistentVariable(const ConstString &name);
+    
     //------------------------------------------------------------------
     // Target Stop Hooks
     //------------------------------------------------------------------
@@ -1523,7 +1523,6 @@ protected:
     lldb::ClangASTSourceUP m_scratch_ast_source_ap;
     lldb::ClangASTImporterUP m_ast_importer_ap;
     lldb::ClangModulesDeclVendorUP m_clang_modules_decl_vendor_ap;
-    lldb::ClangPersistentVariablesUP m_persistent_variables;      ///< These are the persistent variables associated with this process for the expression parser.
 
     lldb::SourceManagerUP m_source_manager_ap;
 

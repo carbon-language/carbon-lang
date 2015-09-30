@@ -265,6 +265,36 @@ private:
     std::vector <lldb::ExpressionVariableSP> m_variables;
 };
     
+class PersistentExpressionState : public ExpressionVariableList {
+public:
+    //----------------------------------------------------------------------
+    // See TypeSystem.h for how to add subclasses to this.
+    //----------------------------------------------------------------------
+    enum LLVMCastKind {
+        eKindClang,
+        eKindSwift,
+        eKindGo,
+        kNumKinds
+    };
+    
+    LLVMCastKind getKind() const { return m_kind; }
+    
+    PersistentExpressionState(LLVMCastKind kind) :
+        m_kind(kind)
+    {
+    }
+
+    virtual ~PersistentExpressionState ();
+    
+    virtual ConstString
+    GetNextPersistentVariableName () = 0;
+    
+    virtual void
+    RemovePersistentVariable (lldb::ExpressionVariableSP variable) = 0;
+private:
+    LLVMCastKind m_kind;
+};
+    
 }
 
 #endif /* liblldb_ExpressionVariable_h_ */

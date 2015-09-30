@@ -34,6 +34,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/Type.h"
+#include "lldb/Symbol/TypeSystem.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
@@ -586,7 +587,7 @@ UserExpression::Evaluate (ExecutionContext &exe_ctx,
 
             if (options.GetResultIsInternal() && expr_result && process)
             {
-                process->GetTarget().GetPersistentVariables().RemovePersistentVariable (expr_result);
+                process->GetTarget().GetScratchTypeSystemForLanguage(lldb::eLanguageTypeC)->GetPersistentExpressionState()->RemovePersistentVariable (expr_result);
             }
 
             if (execution_results != lldb::eExpressionCompleted)

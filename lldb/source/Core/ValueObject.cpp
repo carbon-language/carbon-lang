@@ -4277,14 +4277,19 @@ ValueObject::Persist ()
     if (!target_sp)
         return nullptr;
     
-    ConstString name(target_sp->GetPersistentVariables().GetNextPersistentVariableName());
+    PersistentExpressionState *persistent_state = target_sp->GetScratchTypeSystemForLanguage(GetCompilerType().GetMinimumLanguage())->GetPersistentExpressionState();
+    
+    if (!persistent_state)
+        return nullptr;
+    
+    ConstString name(persistent_state->GetNextPersistentVariableName());
     
     ExpressionVariableSP clang_var_sp(new ClangExpressionVariable(target_sp.get(), GetValue(), name));
     if (clang_var_sp)
     {
         clang_var_sp->m_live_sp = clang_var_sp->m_frozen_sp;
         clang_var_sp->m_flags |= ClangExpressionVariable::EVIsProgramReference;
-        target_sp->GetPersistentVariables().AddVariable(clang_var_sp);
+        persistent_state->AddVariable(clang_var_sp);
     }
     
     return clang_var_sp->GetValueObject();

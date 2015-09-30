@@ -11,8 +11,7 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Core/ValueObjectVariable.h"
-#include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
-#include "Plugins/ExpressionParser/Clang/ClangPersistentVariables.h"
+#include "lldb/Expression/ExpressionVariable.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Symbol.h"
@@ -858,9 +857,25 @@ public:
             return;
         }
         
-        ConstString name = target_sp->GetPersistentVariables().GetNextPersistentVariableName();
+        TypeSystem *type_system = target_sp->GetScratchTypeSystemForLanguage(m_type.GetMinimumLanguage());
         
-        lldb::ExpressionVariableSP ret = ClangExpressionVariable::CreateVariableInList(target_sp->GetPersistentVariables(),
+        if (!type_system)
+        {
+            err.SetErrorString("Couldn't dematerialize a result variable: couldn't get the corresponding type system");
+            return;
+        }
+        
+        PersistentExpressionState *persistent_state = type_system->GetPersistentExpressionState();
+        
+        if (!persistent_state)
+        {
+            err.SetErrorString("Couldn't dematerialize a result variable: corresponding type system doesn't handle persistent variables");
+            return;
+        }
+        
+        ConstString name = persistent_state->GetNextPersistentVariableName();
+        
+        lldb::ExpressionVariableSP ret = ClangExpressionVariable::CreateVariableInList(*persistent_state,
                                                                                        exe_scope,
                                                                                        name,
                                                                                        m_type,

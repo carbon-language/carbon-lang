@@ -20,6 +20,8 @@
 #include <utility>
 
 // Other libraries and framework includes
+#include "ClangPersistentVariables.h"
+
 #include "llvm/ADT/SmallVector.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/TemplateBase.h"
@@ -1188,8 +1190,12 @@ public:
     
     UtilityFunction *
     GetUtilityFunction(const char *text, const char *name) override;
+    
+    PersistentExpressionState *
+    GetPersistentExpressionState() override;
 private:
     lldb::TargetWP m_target_wp;
+    lldb::ClangPersistentVariablesUP m_persistent_variables;      ///< These are the persistent variables associated with this process for the expression parser.
 };
 
 } // namespace lldb_private

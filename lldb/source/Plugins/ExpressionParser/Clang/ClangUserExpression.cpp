@@ -357,7 +357,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     
     if (ClangModulesDeclVendor *decl_vendor = m_target->GetClangModulesDeclVendor())
     {
-        const ClangModulesDeclVendor::ModuleVector &hand_imported_modules = m_target->GetPersistentVariables().GetHandLoadedClangModules();
+        const ClangModulesDeclVendor::ModuleVector &hand_imported_modules = llvm::cast<ClangPersistentVariables>(m_target->GetScratchTypeSystemForLanguage(lldb::eLanguageTypeC)->GetPersistentExpressionState())->GetHandLoadedClangModules();
         ClangModulesDeclVendor::ModuleVector modules_for_macros;
         
         for (ClangModulesDeclVendor::ModuleID module : hand_imported_modules)

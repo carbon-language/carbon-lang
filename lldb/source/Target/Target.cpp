@@ -88,7 +88,6 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_scratch_ast_context_ap (),
     m_scratch_ast_source_ap (),
     m_ast_importer_ap (),
-    m_persistent_variables (new ClangPersistentVariables),
     m_source_manager_ap(),
     m_stop_hooks (),
     m_stop_hook_next_id (0),
@@ -231,7 +230,6 @@ Target::Destroy()
     m_last_created_watchpoint.reset();
     m_search_filter_sp.reset();
     m_image_search_paths.Clear(notify);
-    m_persistent_variables->Clear();
     m_stop_hooks.clear();
     m_stop_hook_next_id = 0;
     m_suppress_stop_hooks = false;
@@ -2119,7 +2117,7 @@ Target::EvaluateExpression
     lldb::ExpressionVariableSP persistent_var_sp;
     // Only check for persistent variables the expression starts with a '$' 
     if (expr_cstr[0] == '$')
-        persistent_var_sp = m_persistent_variables->GetVariable (expr_cstr);
+        persistent_var_sp = GetScratchTypeSystemForLanguage(eLanguageTypeC)->GetPersistentExpressionState()->GetVariable (expr_cstr);
 
     if (persistent_var_sp)
     {
@@ -2143,10 +2141,18 @@ Target::EvaluateExpression
     return execution_results;
 }
 
-ClangPersistentVariables &
-Target::GetPersistentVariables()
+lldb::ExpressionVariableSP
+Target::GetPersistentVariable(const ConstString &name)
 {
-    return *m_persistent_variables;
+    if (ClangASTContext *ast_context = GetScratchClangASTContext(false))
+    {
+        if (PersistentExpressionState *persistent_state = ast_context->GetPersistentExpressionState())
+        {
+            return persistent_state->GetVariable(name);
+        }
+    }
+    
+    return ExpressionVariableSP();
 }
 
 lldb::addr_t

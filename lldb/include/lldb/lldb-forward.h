@@ -165,6 +165,7 @@ class   OptionValueUUID;
 class   NamedOption;
 class   PathMappingList;
 class   FunctionCaller;
+class   PersistentExpressionState;
 class   Platform;
 class   Process;
 class   ProcessAttachInfo;
