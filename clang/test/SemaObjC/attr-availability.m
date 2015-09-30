@@ -278,3 +278,19 @@ __attribute__((objc_root_class))
 -(void)methodB __attribute__((unavailable)) {
 }
 @end
+
+__attribute__((objc_root_class))
+@interface InheritUnavailableSuper
+-(void)method __attribute__((unavailable)); // expected-note{{'method' has been explicitly marked unavailable here}}
+@end
+
+@interface InheritUnavailableSub : InheritUnavailableSuper
+-(void)method;
+@end
+
+@implementation InheritUnavailableSub
+-(void)method {
+  InheritUnavailableSuper *obj = self;
+  [obj method]; // expected-error{{'method' is unavailable}}
+}
+@end
