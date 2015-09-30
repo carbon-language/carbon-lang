@@ -110,7 +110,6 @@ Value *BlockGenerator::trySynthesizeNewValue(ScopStmt &Stmt, const Value *Old,
         ValueToValueMap VTV;
         VTV.insert(BBMap.begin(), BBMap.end());
         VTV.insert(GlobalMap.begin(), GlobalMap.end());
-        NewScev = SCEVParameterRewriter::rewrite(NewScev, SE, VTV);
 
         Scop &S = *Stmt.getParent();
         const DataLayout &DL =
@@ -119,8 +118,8 @@ Value *BlockGenerator::trySynthesizeNewValue(ScopStmt &Stmt, const Value *Old,
 
         assert(IP != Builder.GetInsertBlock()->end() &&
                "Only instructions can be insert points for SCEVExpander");
-        Value *Expanded =
-            expandCodeFor(S, SE, DL, "polly", NewScev, Old->getType(), IP);
+        Value *Expanded = expandCodeFor(S, SE, DL, "polly", NewScev,
+                                        Old->getType(), IP, &VTV);
 
         BBMap[Old] = Expanded;
         return Expanded;

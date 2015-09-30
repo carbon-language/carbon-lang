@@ -235,8 +235,9 @@ struct ScopExpander : SCEVVisitor<ScopExpander, const SCEV *> {
   friend struct SCEVVisitor<ScopExpander, const SCEV *>;
 
   explicit ScopExpander(const Region &R, ScalarEvolution &SE,
-                        const DataLayout &DL, const char *Name)
-      : Expander(SCEVExpander(SE, DL, Name)), SE(SE), Name(Name), R(R) {}
+                        const DataLayout &DL, const char *Name, ValueMapT *VMap)
+      : Expander(SCEVExpander(SE, DL, Name)), SE(SE), Name(Name), R(R),
+        VMap(VMap) {}
 
   Value *expandCodeFor(const SCEV *E, Type *Ty, Instruction *I) {
     // If we generate code in the region we will immediately fall back to the
@@ -252,8 +253,15 @@ private:
   ScalarEvolution &SE;
   const char *Name;
   const Region &R;
+  ValueMapT *VMap;
 
   const SCEV *visitUnknown(const SCEVUnknown *E) {
+
+    // If a value mapping was given try if the underlying value is remapped.
+    if (VMap)
+      if (Value *NewVal = VMap->lookup(E->getValue()))
+        return visit(SE.getSCEV(NewVal));
+
     Instruction *Inst = dyn_cast<Instruction>(E->getValue());
     if (!Inst || (Inst->getOpcode() != Instruction::SRem &&
                   Inst->getOpcode() != Instruction::SDiv))
@@ -327,8 +335,8 @@ private:
 
 Value *polly::expandCodeFor(Scop &S, ScalarEvolution &SE, const DataLayout &DL,
                             const char *Name, const SCEV *E, Type *Ty,
-                            Instruction *IP) {
-  ScopExpander Expander(S.getRegion(), SE, DL, Name);
+                            Instruction *IP, ValueMapT *VMap) {
+  ScopExpander Expander(S.getRegion(), SE, DL, Name, VMap);
   return Expander.expandCodeFor(E, Ty, IP);
 }
 

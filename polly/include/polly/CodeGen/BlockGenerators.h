@@ -17,10 +17,10 @@
 #define POLLY_BLOCK_GENERATORS_H
 
 #include "polly/CodeGen/IRBuilder.h"
+#include "polly/Support/ScopHelper.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "isl/map.h"
-#include <vector>
 
 struct isl_ast_build;
 struct isl_id_to_ast_expr;
@@ -36,9 +36,6 @@ using namespace llvm;
 class ScopStmt;
 class MemoryAccess;
 class IslExprBuilder;
-
-typedef DenseMap<const Value *, Value *> ValueMapT;
-typedef std::vector<ValueMapT> VectorValueMapT;
 
 /// @brief Check whether a value an be synthesized by the code generator.
 ///

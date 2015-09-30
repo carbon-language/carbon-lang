@@ -14,6 +14,11 @@
 #ifndef POLLY_SUPPORT_IRHELPER_H
 #define POLLY_SUPPORT_IRHELPER_H
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+
 namespace llvm {
 class Type;
 class Instruction;
@@ -36,6 +41,9 @@ class ScalarEvolution;
 
 namespace polly {
 class Scop;
+typedef llvm::DenseMap<const llvm::Value *, llvm::Value *> ValueMapT;
+typedef llvm::SmallVector<ValueMapT, 8> VectorValueMapT;
+
 /// Temporary Hack for extended regiontree.
 ///
 /// @brief Cast the region to loop.
@@ -99,7 +107,7 @@ void splitEntryBlockForAlloca(llvm::BasicBlock *EntryBlock, llvm::Pass *P);
 llvm::Value *expandCodeFor(Scop &S, llvm::ScalarEvolution &SE,
                            const llvm::DataLayout &DL, const char *Name,
                            const llvm::SCEV *E, llvm::Type *Ty,
-                           llvm::Instruction *IP);
+                           llvm::Instruction *IP, ValueMapT *VMap = nullptr);
 
 /// @brief Check if the block is a error block.
 ///
