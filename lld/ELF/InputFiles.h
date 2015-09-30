@@ -41,7 +41,7 @@ public:
   StringRef getName() const { return MB.getBufferIdentifier(); }
 
 protected:
-  explicit InputFile(Kind K, MemoryBufferRef M) : MB(M), FileKind(K) {}
+  InputFile(Kind K, MemoryBufferRef M) : MB(M), FileKind(K) {}
   MemoryBufferRef MB;
 
 private:
@@ -52,7 +52,7 @@ enum ELFKind { ELF32LEKind, ELF32BEKind, ELF64LEKind, ELF64BEKind };
 
 class ELFFileBase : public InputFile {
 public:
-  explicit ELFFileBase(Kind K, ELFKind EKind, MemoryBufferRef M)
+  ELFFileBase(Kind K, ELFKind EKind, MemoryBufferRef M)
       : InputFile(K, M), EKind(EKind) {}
   static bool classof(const InputFile *F) {
     Kind K = F->kind();
@@ -71,7 +71,7 @@ protected:
 // .o file.
 class ObjectFileBase : public ELFFileBase {
 public:
-  explicit ObjectFileBase(ELFKind EKind, MemoryBufferRef M)
+  ObjectFileBase(ELFKind EKind, MemoryBufferRef M)
       : ELFFileBase(ObjectKind, EKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == ObjectKind; }
 
@@ -185,7 +185,7 @@ private:
 // .so file.
 class SharedFileBase : public ELFFileBase {
 public:
-  explicit SharedFileBase(ELFKind EKind, MemoryBufferRef M)
+  SharedFileBase(ELFKind EKind, MemoryBufferRef M)
       : ELFFileBase(SharedKind, EKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == SharedKind; }
 };

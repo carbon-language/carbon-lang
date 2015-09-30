@@ -149,7 +149,7 @@ protected:
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
-  explicit Defined(Kind K, StringRef N, const Elf_Sym &Sym)
+  Defined(Kind K, StringRef N, const Elf_Sym &Sym)
       : ELFSymbolBody<ELFT>(K, N, Sym) {}
 
   static bool classof(const SymbolBody *S) { return S->isDefined(); }
@@ -162,7 +162,7 @@ template <class ELFT> class DefinedAbsolute : public Defined<ELFT> {
 public:
   static Elf_Sym IgnoreUndef;
 
-  explicit DefinedAbsolute(StringRef N, const Elf_Sym &Sym)
+  DefinedAbsolute(StringRef N, const Elf_Sym &Sym)
       : Defined<ELFT>(Base::DefinedAbsoluteKind, N, Sym) {}
 
   static bool classof(const SymbolBody *S) {
@@ -180,7 +180,7 @@ template <class ELFT> class DefinedCommon : public Defined<ELFT> {
 public:
   typedef typename std::conditional<ELFT::Is64Bits, uint64_t, uint32_t>::type
       uintX_t;
-  explicit DefinedCommon(StringRef N, const Elf_Sym &Sym)
+  DefinedCommon(StringRef N, const Elf_Sym &Sym)
       : Defined<ELFT>(Base::DefinedCommonKind, N, Sym) {
     MaxAlignment = Sym.st_value;
   }
@@ -203,8 +203,7 @@ template <class ELFT> class DefinedRegular : public Defined<ELFT> {
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
-  explicit DefinedRegular(StringRef N, const Elf_Sym &Sym,
-                          InputSection<ELFT> &Section)
+  DefinedRegular(StringRef N, const Elf_Sym &Sym, InputSection<ELFT> &Section)
       : Defined<ELFT>(Base::DefinedRegularKind, N, Sym), Section(Section) {}
 
   static bool classof(const SymbolBody *S) {
@@ -219,8 +218,8 @@ template <class ELFT> class DefinedSynthetic : public Defined<ELFT> {
 
 public:
   typedef typename Base::Elf_Sym Elf_Sym;
-  explicit DefinedSynthetic(StringRef N, const Elf_Sym &Sym,
-                            OutputSection<ELFT> &Section)
+  DefinedSynthetic(StringRef N, const Elf_Sym &Sym,
+                   OutputSection<ELFT> &Section)
       : Defined<ELFT>(Base::DefinedSyntheticKind, N, Sym), Section(Section) {}
 
   static bool classof(const SymbolBody *S) {
@@ -238,7 +237,7 @@ template <class ELFT> class Undefined : public ELFSymbolBody<ELFT> {
 public:
   static Elf_Sym Synthetic;
 
-  explicit Undefined(StringRef N, const Elf_Sym &Sym)
+  Undefined(StringRef N, const Elf_Sym &Sym)
       : ELFSymbolBody<ELFT>(Base::UndefinedKind, N, Sym) {}
 
   static bool classof(const SymbolBody *S) {
