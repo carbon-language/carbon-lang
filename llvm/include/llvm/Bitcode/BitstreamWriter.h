@@ -102,18 +102,13 @@ public:
   /// Backpatch a 32-bit word in the output at the given bit offset
   /// with the specified value.
   void BackpatchWord(uint64_t BitNo, unsigned NewWord) {
+    using namespace llvm::support;
     unsigned ByteNo = BitNo / 8;
-    if ((BitNo & 7) == 0) {
-      // Already 8-bit aligned
-      support::endian::write32le(&Out[ByteNo], NewWord);
-    } else {
-      uint64_t CurDWord = support::endian::read64le(&Out[ByteNo]);
-      unsigned StartBit = BitNo & 7;
-      // Currently expect to backpatch 0-value placeholders.
-      assert(((CurDWord >> StartBit) & 0xffffffff) == 0);
-      CurDWord |= NewWord << StartBit;
-      support::endian::write64le(&Out[ByteNo], CurDWord);
-    }
+    assert((!endian::readAtBitAlignment<uint32_t, little, unaligned>(
+               &Out[ByteNo], BitNo & 7)) &&
+           "Expected to be patching over 0-value placeholders");
+    endian::writeAtBitAlignment<uint32_t, little, unaligned>(
+        &Out[ByteNo], NewWord, BitNo & 7);
   }
 
   void Emit(uint32_t Val, unsigned NumBits) {

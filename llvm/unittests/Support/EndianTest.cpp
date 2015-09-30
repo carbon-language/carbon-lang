@@ -32,6 +32,54 @@ TEST(Endian, Read) {
             (endian::read<int32_t, little, unaligned>(littleval + 1)));
 }
 
+TEST(Endian, ReadBitAligned) {
+  // Simple test to make sure we properly pull out the 0x0 word.
+  unsigned char littleval[] = {0x3f, 0x00, 0x00, 0x00, 0xc0, 0xff, 0xff, 0xff};
+  unsigned char bigval[] = {0x00, 0x00, 0x00, 0x3f, 0xff, 0xff, 0xff, 0xc0};
+  EXPECT_EQ(
+      (endian::readAtBitAlignment<int, little, unaligned>(&littleval[0], 6)),
+      0x0);
+  EXPECT_EQ((endian::readAtBitAlignment<int, big, unaligned>(&bigval[0], 6)),
+            0x0);
+  // Test to make sure that signed right shift of 0xf0000000 is masked
+  // properly.
+  unsigned char littleval2[] = {0x00, 0x00, 0x00, 0xf0, 0x00, 0x00, 0x00, 0x00};
+  unsigned char bigval2[] = {0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  EXPECT_EQ(
+      (endian::readAtBitAlignment<int, little, unaligned>(&littleval2[0], 4)),
+      0x0f000000);
+  EXPECT_EQ((endian::readAtBitAlignment<int, big, unaligned>(&bigval2[0], 4)),
+            0x0f000000);
+}
+
+TEST(Endian, WriteBitAligned) {
+  // This test ensures that signed right shift of 0xffffaa is masked
+  // properly.
+  unsigned char bigval[8] = {0x00};
+  endian::writeAtBitAlignment<int32_t, big, unaligned>(bigval, (int)0xffffaaaa,
+                                                       4);
+  EXPECT_EQ(bigval[0], 0xff);
+  EXPECT_EQ(bigval[1], 0xfa);
+  EXPECT_EQ(bigval[2], 0xaa);
+  EXPECT_EQ(bigval[3], 0xa0);
+  EXPECT_EQ(bigval[4], 0x00);
+  EXPECT_EQ(bigval[5], 0x00);
+  EXPECT_EQ(bigval[6], 0x00);
+  EXPECT_EQ(bigval[7], 0x0f);
+
+  unsigned char littleval[8] = {0x00};
+  endian::writeAtBitAlignment<int32_t, little, unaligned>(littleval,
+                                                          (int)0xffffaaaa, 4);
+  EXPECT_EQ(littleval[0], 0xa0);
+  EXPECT_EQ(littleval[1], 0xaa);
+  EXPECT_EQ(littleval[2], 0xfa);
+  EXPECT_EQ(littleval[3], 0xff);
+  EXPECT_EQ(littleval[4], 0x0f);
+  EXPECT_EQ(littleval[5], 0x00);
+  EXPECT_EQ(littleval[6], 0x00);
+  EXPECT_EQ(littleval[7], 0x00);
+}
+
 TEST(Endian, Write) {
   unsigned char data[5];
   endian::write<int32_t, big, unaligned>(data, -1362446643);
