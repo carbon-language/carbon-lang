@@ -84,6 +84,9 @@ public:
   /// \brief Set base of the array section.
   void setBase(Expr *E) { SubExprs[BASE] = E; }
 
+  /// \brief Return original type of the base expression for array section.
+  static QualType getBaseOriginalType(Expr *Base);
+
   /// \brief Get lower bound of array section.
   Expr *getLowerBound() { return cast_or_null<Expr>(SubExprs[LOWER_BOUND]); }
   const Expr *getLowerBound() const {

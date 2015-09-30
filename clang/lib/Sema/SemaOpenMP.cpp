@@ -6390,14 +6390,39 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     // OpenMP  [2.14.3.3, Restrictions, p.1]
     //  A variable that is part of another variable (as an array or
     //  structure element) cannot appear in a private clause.
-    auto DE = dyn_cast<DeclRefExpr>(RefExpr);
-    if (!DE || !isa<VarDecl>(DE->getDecl())) {
-      Diag(ELoc, diag::err_omp_expected_var_name) << ERange;
+    auto *DE = dyn_cast<DeclRefExpr>(RefExpr);
+    auto *ASE = dyn_cast<ArraySubscriptExpr>(RefExpr);
+    auto *OASE = dyn_cast<OMPArraySectionExpr>(RefExpr);
+    if (!ASE && !OASE && (!DE || !isa<VarDecl>(DE->getDecl()))) {
+      Diag(ELoc, diag::err_omp_expected_var_name_or_array_item) << ERange;
       continue;
     }
-    auto D = DE->getDecl();
-    auto VD = cast<VarDecl>(D);
-    auto Type = VD->getType();
+    QualType Type;
+    VarDecl *VD = nullptr;
+    if (DE) {
+      auto D = DE->getDecl();
+      VD = cast<VarDecl>(D);
+      Type = VD->getType();
+    } else if (ASE)
+      Type = ASE->getType();
+    else if (OASE) {
+      auto BaseType = OMPArraySectionExpr::getBaseOriginalType(OASE->getBase());
+      if (auto *ATy = BaseType->getAsArrayTypeUnsafe())
+        Type = ATy->getElementType();
+      else
+        Type = BaseType->getPointeeType();
+    }
+    // OpenMP [2.15.3.6, reduction Clause]
+    // If a list item is an array section, its lower-bound must be zero.
+    llvm::APSInt Result;
+    if (OASE && OASE->getLowerBound() &&
+        OASE->getLowerBound()->EvaluateAsInt(Result, Context) && Result != 0) {
+      Diag(OASE->getLowerBound()->getExprLoc(),
+           diag::err_omp_expected_array_sect_reduction_lb_not_zero)
+          << OASE->getLowerBound()->getSourceRange();
+      continue;
+    }
+
     // OpenMP [2.9.3.3, Restrictions, C/C++, p.3]
     //  A variable that appears in a private clause must not have an incomplete
     //  type or a reference type.
@@ -6408,36 +6433,42 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     // Arrays may not appear in a reduction clause.
     if (Type.getNonReferenceType()->isArrayType()) {
       Diag(ELoc, diag::err_omp_reduction_type_array) << Type << ERange;
-      bool IsDecl =
-          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
-           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
+      if (VD) {
+        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                      VarDecl::DeclarationOnly;
+        Diag(VD->getLocation(),
+             IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+            << VD;
+      }
       continue;
     }
     // OpenMP [2.14.3.6, reduction clause, Restrictions]
     // A list item that appears in a reduction clause must not be
     // const-qualified.
     if (Type.getNonReferenceType().isConstant(Context)) {
-      Diag(ELoc, diag::err_omp_const_variable)
+      Diag(ELoc, diag::err_omp_const_reduction_list_item)
           << getOpenMPClauseName(OMPC_reduction) << Type << ERange;
-      bool IsDecl =
-          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
-           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
+      if (VD) {
+        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                      VarDecl::DeclarationOnly;
+        Diag(VD->getLocation(),
+             IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+            << VD;
+      }
       continue;
     }
     // OpenMP [2.9.3.6, Restrictions, C/C++, p.4]
     //  If a list-item is a reference type then it must bind to the same object
     //  for all threads of the team.
-    VarDecl *VDDef = VD->getDefinition();
-    if (Type->isReferenceType() && VDDef) {
-      DSARefChecker Check(DSAStack);
-      if (Check.Visit(VDDef->getInit())) {
-        Diag(ELoc, diag::err_omp_reduction_ref_type_arg) << ERange;
-        Diag(VDDef->getLocation(), diag::note_defined_here) << VDDef;
-        continue;
+    if (VD) {
+      VarDecl *VDDef = VD->getDefinition();
+      if (Type->isReferenceType() && VDDef) {
+        DSARefChecker Check(DSAStack);
+        if (Check.Visit(VDDef->getInit())) {
+          Diag(ELoc, diag::err_omp_reduction_ref_type_arg) << ERange;
+          Diag(VDDef->getLocation(), diag::note_defined_here) << VDDef;
+          continue;
+        }
       }
     }
     // OpenMP [2.14.3.6, reduction clause, Restrictions]
@@ -6453,21 +6484,25 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
           (getLangOpts().CPlusPlus && Type->isArithmeticType()))) {
       Diag(ELoc, diag::err_omp_clause_not_arithmetic_type_arg)
           << getLangOpts().CPlusPlus;
-      bool IsDecl =
-          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
-           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
+      if (VD) {
+        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                      VarDecl::DeclarationOnly;
+        Diag(VD->getLocation(),
+             IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+            << VD;
+      }
       continue;
     }
     if ((BOK == BO_OrAssign || BOK == BO_AndAssign || BOK == BO_XorAssign) &&
         !getLangOpts().CPlusPlus && Type->isFloatingType()) {
       Diag(ELoc, diag::err_omp_clause_floating_type_arg);
-      bool IsDecl =
-          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
-           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
+      if (VD) {
+        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                      VarDecl::DeclarationOnly;
+        Diag(VD->getLocation(),
+             IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+            << VD;
+      }
       continue;
     }
     // OpenMP [2.14.1.1, Data-sharing Attribute Rules for Variables Referenced
@@ -6481,42 +6516,49 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     //  Any number of reduction clauses can be specified on the directive,
     //  but a list item can appear only once in the reduction clauses for that
     //  directive.
-    DSAStackTy::DSAVarData DVar = DSAStack->getTopDSA(VD, false);
-    if (DVar.CKind == OMPC_reduction) {
-      Diag(ELoc, diag::err_omp_once_referenced)
-          << getOpenMPClauseName(OMPC_reduction);
-      if (DVar.RefExpr) {
-        Diag(DVar.RefExpr->getExprLoc(), diag::note_omp_referenced);
+    DSAStackTy::DSAVarData DVar;
+    if (VD) {
+      DVar = DSAStack->getTopDSA(VD, false);
+      if (DVar.CKind == OMPC_reduction) {
+        Diag(ELoc, diag::err_omp_once_referenced)
+            << getOpenMPClauseName(OMPC_reduction);
+        if (DVar.RefExpr) {
+          Diag(DVar.RefExpr->getExprLoc(), diag::note_omp_referenced);
+        }
+      } else if (DVar.CKind != OMPC_unknown) {
+        Diag(ELoc, diag::err_omp_wrong_dsa)
+            << getOpenMPClauseName(DVar.CKind)
+            << getOpenMPClauseName(OMPC_reduction);
+        ReportOriginalDSA(*this, DSAStack, VD, DVar);
+        continue;
       }
-    } else if (DVar.CKind != OMPC_unknown) {
-      Diag(ELoc, diag::err_omp_wrong_dsa)
-          << getOpenMPClauseName(DVar.CKind)
-          << getOpenMPClauseName(OMPC_reduction);
-      ReportOriginalDSA(*this, DSAStack, VD, DVar);
-      continue;
     }
 
     // OpenMP [2.14.3.6, Restrictions, p.1]
     //  A list item that appears in a reduction clause of a worksharing
     //  construct must be shared in the parallel regions to which any of the
     //  worksharing regions arising from the worksharing construct bind.
-    OpenMPDirectiveKind CurrDir = DSAStack->getCurrentDirective();
-    if (isOpenMPWorksharingDirective(CurrDir) &&
-        !isOpenMPParallelDirective(CurrDir)) {
-      DVar = DSAStack->getImplicitDSA(VD, true);
-      if (DVar.CKind != OMPC_shared) {
-        Diag(ELoc, diag::err_omp_required_access)
-            << getOpenMPClauseName(OMPC_reduction)
-            << getOpenMPClauseName(OMPC_shared);
-        ReportOriginalDSA(*this, DSAStack, VD, DVar);
-        continue;
+    if (VD) {
+      OpenMPDirectiveKind CurrDir = DSAStack->getCurrentDirective();
+      if (isOpenMPWorksharingDirective(CurrDir) &&
+          !isOpenMPParallelDirective(CurrDir)) {
+        DVar = DSAStack->getImplicitDSA(VD, true);
+        if (DVar.CKind != OMPC_shared) {
+          Diag(ELoc, diag::err_omp_required_access)
+              << getOpenMPClauseName(OMPC_reduction)
+              << getOpenMPClauseName(OMPC_shared);
+          ReportOriginalDSA(*this, DSAStack, VD, DVar);
+          continue;
+        }
       }
     }
     Type = Type.getNonLValueExprType(Context).getUnqualifiedType();
-    auto *LHSVD = buildVarDecl(*this, ELoc, Type, ".reduction.lhs",
-                               VD->hasAttrs() ? &VD->getAttrs() : nullptr);
-    auto *RHSVD = buildVarDecl(*this, ELoc, Type, VD->getName(),
-                               VD->hasAttrs() ? &VD->getAttrs() : nullptr);
+    auto *LHSVD =
+        buildVarDecl(*this, ELoc, Type, ".reduction.lhs",
+                     VD && VD->hasAttrs() ? &VD->getAttrs() : nullptr);
+    auto *RHSVD =
+        buildVarDecl(*this, ELoc, Type, VD ? VD->getName() : ".item.",
+                     VD && VD->hasAttrs() ? &VD->getAttrs() : nullptr);
     // Add initializer for private variable.
     Expr *Init = nullptr;
     switch (BOK) {
@@ -6631,11 +6673,13 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     if (!RHSVD->hasInit()) {
       Diag(ELoc, diag::err_omp_reduction_id_not_compatible) << Type
                                                             << ReductionIdRange;
-      bool IsDecl =
-          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
-           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
+      if (VD) {
+        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                      VarDecl::DeclarationOnly;
+        Diag(VD->getLocation(),
+             IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+            << VD;
+      }
       continue;
     }
     auto *LHSDRE = buildDeclRefExpr(*this, LHSVD, Type, ELoc);
@@ -6661,8 +6705,9 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     if (ReductionOp.isInvalid())
       continue;
 
-    DSAStack->addDSA(VD, DE, OMPC_reduction);
-    Vars.push_back(DE);
+    if (VD)
+      DSAStack->addDSA(VD, DE, OMPC_reduction);
+    Vars.push_back(RefExpr);
     LHSs.push_back(LHSDRE);
     RHSs.push_back(RHSDRE);
     ReductionOps.push_back(ReductionOp.get());
