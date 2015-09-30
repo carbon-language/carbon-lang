@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instruction.h"
@@ -92,6 +93,34 @@ namespace {
 char DCE::ID = 0;
 INITIALIZE_PASS(DCE, "dce", "Dead Code Elimination", false, false)
 
+static bool DCEInstruction(Instruction *I,
+                           SmallSetVector<Instruction *, 16> &WorkList,
+                           const TargetLibraryInfo *TLI) {
+  if (isInstructionTriviallyDead(I, TLI)) {
+    // Null out all of the instruction's operands to see if any operand becomes
+    // dead as we go.
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+      Value *OpV = I->getOperand(i);
+      I->setOperand(i, nullptr);
+
+      if (!OpV->use_empty() || I == OpV)
+        continue;
+
+      // If the operand is an instruction that became dead as we nulled out the
+      // operand, and if it is 'trivially' dead, delete it in a future loop
+      // iteration.
+      if (Instruction *OpI = dyn_cast<Instruction>(OpV))
+        if (isInstructionTriviallyDead(OpI, TLI))
+          WorkList.insert(OpI);
+    }
+
+    I->eraseFromParent();
+    ++DCEEliminated;
+    return true;
+  }
+  return false;
+}
+
 bool DCE::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
@@ -99,39 +128,24 @@ bool DCE::runOnFunction(Function &F) {
   auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
   TargetLibraryInfo *TLI = TLIP ? &TLIP->getTLI() : nullptr;
 
-  // Start out with all of the instructions in the worklist...
-  std::vector<Instruction*> WorkList;
-  for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
-    WorkList.push_back(&*i);
-
-  // Loop over the worklist finding instructions that are dead.  If they are
-  // dead make them drop all of their uses, making other instructions
-  // potentially dead, and work until the worklist is empty.
-  //
   bool MadeChange = false;
+  SmallSetVector<Instruction *, 16> WorkList;
+  // Iterate over the original function, only adding insts to the worklist
+  // if they actually need to be revisited. This avoids having to pre-init
+  // the worklist with the entire function's worth of instructions.
+  for (inst_iterator FI = inst_begin(F), FE = inst_end(F); FI != FE;) {
+    Instruction *I = &*FI;
+    ++FI;
+
+    // We're visiting this instruction now, so make sure it's not in the
+    // worklist from an earlier visit.
+    if (!WorkList.count(I))
+      MadeChange |= DCEInstruction(I, WorkList, TLI);
+  }
+
   while (!WorkList.empty()) {
-    Instruction *I = WorkList.back();
-    WorkList.pop_back();
-
-    if (isInstructionTriviallyDead(I, TLI)) { // If the instruction is dead.
-      // Loop over all of the values that the instruction uses, if there are
-      // instructions being used, add them to the worklist, because they might
-      // go dead after this one is removed.
-      //
-      for (User::op_iterator OI = I->op_begin(), E = I->op_end(); OI != E; ++OI)
-        if (Instruction *Used = dyn_cast<Instruction>(*OI))
-          WorkList.push_back(Used);
-
-      // Remove the instruction.
-      I->eraseFromParent();
-
-      // Remove the instruction from the worklist if it still exists in it.
-      WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), I),
-                     WorkList.end());
-
-      MadeChange = true;
-      ++DCEEliminated;
-    }
+    Instruction *I = WorkList.pop_back_val();
+    MadeChange |= DCEInstruction(I, WorkList, TLI);
   }
   return MadeChange;
 }
