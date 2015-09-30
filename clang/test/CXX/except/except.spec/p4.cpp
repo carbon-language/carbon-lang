@@ -19,7 +19,7 @@ struct T {
   void operator delete(void*) noexcept; // expected-note {{here}}
 };
 
-void T::a() {} // expected-warning {{missing exception specification 'noexcept'}}
+void T::a() {} // expected-error {{missing exception specification 'noexcept'}}
 T::~T() {} // expected-warning {{function previously declared with an explicit exception specification redeclared with an implicit exception specification}}
 void T::operator delete(void*) {} // expected-warning {{function previously declared with an explicit exception specification redeclared with an implicit exception specification}}
 

@@ -73,7 +73,7 @@ void fnptrs()
 // Member function stuff
 
 struct Str1 { void f() throw(int); }; // expected-note {{previous declaration}}
-void Str1::f() // expected-warning {{missing exception specification}}
+void Str1::f() // expected-error {{missing exception specification}}
 {
 }
 

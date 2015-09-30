@@ -45,7 +45,7 @@ class B : public A {
 };
 
 void f() throw(); // expected-note{{previous}}
-void f(); // expected-warning{{missing exception specification}}
+void f(); // expected-error{{missing exception specification}}
 
 namespace rdar7853795 {
   struct A {

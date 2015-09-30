@@ -1153,7 +1153,10 @@ def err_incompatible_exception_specs : Error<
   "target exception specification is not superset of source">;
 def err_deep_exception_specs_differ : Error<
   "exception specifications of %select{return|argument}0 types differ">;
-def warn_missing_exception_specification : Warning<
+def ext_missing_exception_specification : ExtWarn<
+  "%0 is missing exception specification '%1'">,
+  InGroup<DiagGroup<"missing-exception-spec">>;
+def err_missing_exception_specification : Error<
   "%0 is missing exception specification '%1'">;
 def err_noexcept_needs_constant_expression : Error<
   "argument to noexcept specifier must be a constant expression">;

@@ -7,7 +7,7 @@
 // pointing at the implicit operator new. We can't match such a diagnostic
 // with -verify.
 __extension__ typedef __SIZE_TYPE__ size_t;
-void *operator new(size_t); // expected-warning 0-1{{missing exception spec}} expected-note{{candidate}}
+void *operator new(size_t); // expected-error 0-1{{missing exception spec}} expected-note{{candidate}}
 
 namespace dr500 { // dr500: dup 372
   class D;

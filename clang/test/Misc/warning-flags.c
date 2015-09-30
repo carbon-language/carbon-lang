@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (90):
+CHECK: Warnings without flags (89):
 CHECK-NEXT:   ext_excess_initializers
 CHECK-NEXT:   ext_excess_initializers_in_char_array_initializer
 CHECK-NEXT:   ext_expected_semi_decl_list
@@ -80,7 +80,6 @@ CHECK-NEXT:   warn_maynot_respond
 CHECK-NEXT:   warn_method_param_redefinition
 CHECK-NEXT:   warn_missing_case_for_condition
 CHECK-NEXT:   warn_missing_dependent_template_keyword
-CHECK-NEXT:   warn_missing_exception_specification
 CHECK-NEXT:   warn_missing_whitespace_after_macro_name
 CHECK-NEXT:   warn_mt_message
 CHECK-NEXT:   warn_no_constructor_for_refconst

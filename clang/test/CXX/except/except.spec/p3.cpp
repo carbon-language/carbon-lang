@@ -24,9 +24,9 @@ extern void (*r4)() throw(...);
 extern void (*r5)() throw(int); // expected-note {{previous declaration}}
 extern void (*r5)(); // expected-error {{exception specification in declaration does not match}}
 
-// For functions, we accept this with a warning.
+// throw(int) and no spec are not compatible
 extern void f5() throw(int); // expected-note {{previous declaration}}
-extern void f5(); // expected-warning {{missing exception specification}}
+extern void f5(); // expected-error {{missing exception specification}}
 
 // Different types are not compatible.
 extern void (*r7)() throw(int); // expected-note {{previous declaration}}
