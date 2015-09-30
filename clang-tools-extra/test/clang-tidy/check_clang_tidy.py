@@ -73,8 +73,12 @@ def main():
   args = ['clang-tidy', temp_file_name, '-fix', '--checks=-*,' + check_name] + \
         clang_tidy_extra_args
   print('Running ' + repr(args) + '...')
-  clang_tidy_output = \
-      subprocess.check_output(args, stderr=subprocess.STDOUT).decode()
+  try:
+    clang_tidy_output = \
+        subprocess.check_output(args, stderr=subprocess.STDOUT).decode()
+  except subprocess.CalledProcessError as e:
+    print('clang-tidy failed:\n' + e.output.decode())
+    raise
 
   print('------------------------ clang-tidy output -----------------------\n' +
         clang_tidy_output +
