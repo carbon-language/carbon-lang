@@ -9902,8 +9902,7 @@ static const struct {
     {ARM::FeatureHWDiv, ARM::FeatureHWDivARM} },
   { ARM::AEK_MP, Feature_HasV7 | Feature_IsNotMClass, {ARM::FeatureMP} },
   { ARM::AEK_SIMD, Feature_HasV8, {ARM::FeatureNEON, ARM::FeatureFPARMv8} },
-  // FIXME: Also available in ARMv6-K
-  { ARM::AEK_SEC, Feature_HasV7, {ARM::FeatureTrustZone} },
+  { ARM::AEK_SEC, Feature_HasV6K, {ARM::FeatureTrustZone} },
   // FIXME: Only available in A-class, isel not predicated
   { ARM::AEK_VIRT, Feature_HasV7, {ARM::FeatureVirtualization} },
   // FIXME: Unsupported extensions.
