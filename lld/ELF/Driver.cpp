@@ -25,39 +25,29 @@ using namespace lld::elf2;
 
 namespace lld {
 namespace elf2 {
+
 Configuration *Config;
+std::vector<std::unique_ptr<MemoryBuffer>> *MemoryBufferPool;
 
 void link(ArrayRef<const char *> Args) {
   Configuration C;
   Config = &C;
+  std::vector<std::unique_ptr<MemoryBuffer>> V;
+  MemoryBufferPool = &V;
   LinkerDriver().link(Args.slice(1));
-}
-
-}
 }
 
 // Opens a file. Path has to be resolved already.
 // Newly created memory buffers are owned by this driver.
-MemoryBufferRef LinkerDriver::openFile(StringRef Path) {
+MemoryBufferRef openFile(StringRef Path) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> MBOrErr = MemoryBuffer::getFile(Path);
   error(MBOrErr, Twine("cannot open ") + Path);
   std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
   MemoryBufferRef MBRef = MB->getMemBufferRef();
-  OwningMBs.push_back(std::move(MB)); // take ownership
+  MemoryBufferPool->push_back(std::move(MB)); // transfer ownership
   return MBRef;
 }
-
-static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
-  using namespace llvm::sys::fs;
-  file_magic Magic = identify_magic(MB.getBuffer());
-
-  if (Magic == file_magic::archive)
-    return make_unique<ArchiveFile>(MB);
-
-  if (Magic == file_magic::elf_shared_object)
-    return createELFFile<SharedFile>(MB);
-
-  return createELFFile<ObjectFile>(MB);
+}
 }
 
 // Makes a path by concatenating Dir and File.
@@ -90,6 +80,12 @@ static std::string searchLibrary(StringRef Path) {
     }
   }
   error(Twine("Unable to find library -l") + Path);
+}
+
+// Returns true if MB looks like a linker script.
+static bool isLinkerScript(MemoryBufferRef MB) {
+  using namespace llvm::sys::fs;
+  return identify_magic(MB.getBuffer()) == file_magic::unknown;
 }
 
 void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
@@ -125,30 +121,24 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Config->NoInhibitExec = Args.hasArg(OPT_noinhibit_exec);
   Config->Shared = Args.hasArg(OPT_shared);
 
-  // Create a list of input files.
-  std::vector<MemoryBufferRef> Inputs;
-
-  for (auto *Arg : Args.filtered(OPT_l, OPT_INPUT)) {
-    StringRef Path = Arg->getValue();
-    if (Arg->getOption().getID() == OPT_l) {
-      Inputs.push_back(openFile(searchLibrary(Path)));
-      continue;
-    }
-    Inputs.push_back(openFile(Path));
-  }
-
-  if (Inputs.empty())
-    error("no input files.");
-
   // Create a symbol table.
   SymbolTable Symtab;
 
-  // Parse all input files and put all symbols to the symbol table.
-  // The symbol table will take care of name resolution.
-  for (MemoryBufferRef MB : Inputs) {
-    std::unique_ptr<InputFile> File = createFile(MB);
-    Symtab.addFile(std::move(File));
+  for (auto *Arg : Args.filtered(OPT_l, OPT_INPUT)) {
+    std::string Path = Arg->getValue();
+    if (Arg->getOption().getID() == OPT_l)
+      Path = searchLibrary(Path);
+    MemoryBufferRef MB = openFile(Path);
+    if (isLinkerScript(MB)) {
+      // readLinkerScript may add files to the symbol table.
+      readLinkerScript(&Symtab, MB);
+      continue;
+    }
+    Symtab.addFile(createFile(MB));
   }
+
+  if (Symtab.getObjectFiles().empty())
+    error("no input files.");
 
   // Write the result.
   const ELFFileBase *FirstObj = Symtab.getFirstELF();

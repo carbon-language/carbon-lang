@@ -16,9 +16,19 @@
 using namespace llvm;
 using namespace llvm::ELF;
 using namespace llvm::object;
+using namespace llvm::sys::fs;
 
 using namespace lld;
 using namespace lld::elf2;
+
+std::unique_ptr<InputFile> lld::elf2::createFile(MemoryBufferRef MB) {
+  file_magic Magic = identify_magic(MB.getBuffer());
+  if (Magic == file_magic::archive)
+    return make_unique<ArchiveFile>(MB);
+  if (Magic == file_magic::elf_shared_object)
+    return createELFFile<SharedFile>(MB);
+  return createELFFile<ObjectFile>(MB);
+}
 
 template <class ELFT> static uint16_t getEMachine(const ELFFileBase &B) {
   bool IsShared = isa<SharedFileBase>(B);

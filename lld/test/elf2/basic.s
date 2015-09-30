@@ -177,8 +177,21 @@ _start:
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
 
+
+# Test for the response file
 # RUN: echo " -o %t2" > %t.responsefile
 # RUN: lld -flavor gnu2 %t @%t.responsefile
+# RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
+# RUN:   | FileCheck %s
+
+# Test for the linker script
+# RUN: echo "GROUP(" %t ")" > %t.script
+# RUN: lld -flavor gnu2 -o %t2 %t.script
+# RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
+# RUN:   | FileCheck %s
+
+# RUN: echo "OUTPUT_FORMAT(elf64-x86-64) /*/*/ GROUP(" %t ")" > %t.script
+# RUN: lld -flavor gnu2 -o %t2 %t.script
 # RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
 # RUN:   | FileCheck %s
 
