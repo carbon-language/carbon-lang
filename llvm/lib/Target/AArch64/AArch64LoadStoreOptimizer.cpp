@@ -1185,8 +1185,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
       // The immediate in the load/store is scaled by the size of the register
       // being loaded. The immediate in the add we're looking for,
       // however, is not, so adjust here.
-      int Value =
-          MI->getOperand(isPairedLdSt(MI) ? 3 : 2).getImm() * getMemScale(MI);
+      int Value = getLdStOffsetOp(MI).getImm() * getMemScale(MI);
 
       // Look forward to try to find a post-index instruction. For example,
       // ldr x1, [x0, #64]
