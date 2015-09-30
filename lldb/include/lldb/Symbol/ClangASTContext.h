@@ -20,7 +20,7 @@
 #include <utility>
 
 // Other libraries and framework includes
-#include "ClangPersistentVariables.h"
+#include "Plugins/ExpressionParser/Clang/ClangPersistentVariables.h"
 
 #include "llvm/ADT/SmallVector.h"
 #include "clang/AST/ASTContext.h"
