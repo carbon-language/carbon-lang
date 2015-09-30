@@ -260,7 +260,8 @@ private:
     // If a value mapping was given try if the underlying value is remapped.
     if (VMap)
       if (Value *NewVal = VMap->lookup(E->getValue()))
-        return visit(SE.getSCEV(NewVal));
+        if (NewVal != E->getValue())
+          return visit(SE.getSCEV(NewVal));
 
     Instruction *Inst = dyn_cast<Instruction>(E->getValue());
     if (!Inst || (Inst->getOpcode() != Instruction::SRem &&
