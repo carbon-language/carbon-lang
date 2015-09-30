@@ -46,14 +46,7 @@ void X86TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
 }
 
 bool X86TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
-  if (relocNeedsPlt(Type, S))
-    return true;
-  switch (Type) {
-  default:
-    return false;
-  case R_386_GOT32:
-    return true;
-  }
+  return Type == R_386_GOT32 || relocNeedsPlt(Type, S);
 }
 
 bool X86TargetInfo::relocPointsToGot(uint32_t Type) const {
@@ -61,12 +54,7 @@ bool X86TargetInfo::relocPointsToGot(uint32_t Type) const {
 }
 
 bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
-  switch (Type) {
-  default:
-    return false;
-  case R_386_PLT32:
-    return true;
-  }
+  return Type == R_386_PLT32;
 }
 
 static void add32le(uint8_t *P, int32_t V) { write32le(P, read32le(P) + V); }
@@ -114,14 +102,7 @@ void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
 }
 
 bool X86_64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
-  if (relocNeedsPlt(Type, S))
-    return true;
-  switch (Type) {
-  default:
-    return false;
-  case R_X86_64_GOTPCREL:
-    return true;
-  }
+  return Type == R_X86_64_GOTPCREL || relocNeedsPlt(Type, S);
 }
 
 bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
