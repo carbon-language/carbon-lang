@@ -152,7 +152,7 @@ StackDepotReverseMap::StackDepotReverseMap()
 StackTrace StackDepotReverseMap::Get(u32 id) {
   if (!map_.size())
     return StackTrace();
-  IdDescPair pair = {id, 0};
+  IdDescPair pair = {id, nullptr};
   uptr idx = InternalBinarySearch(map_, 0, map_.size(), pair,
                                   IdDescPair::IdComparator);
   if (idx > map_.size())
@@ -160,4 +160,4 @@ StackTrace StackDepotReverseMap::Get(u32 id) {
   return map_[idx].desc->load();
 }
 
-}  // namespace __sanitizer
+} // namespace __sanitizer

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
+
 #if SANITIZER_FREEBSD || SANITIZER_LINUX
 
 #include "sanitizer_libignore.h"
@@ -38,11 +39,11 @@ void LibIgnore::OnLibraryLoaded(const char *name) {
   BlockingMutexLock lock(&mutex_);
   // Try to match suppressions with symlink target.
   InternalScopedString buf(kMaxPathLength);
-  if (name != 0 && internal_readlink(name, buf.data(), buf.size() - 1) > 0 &&
+  if (name && internal_readlink(name, buf.data(), buf.size() - 1) > 0 &&
       buf[0]) {
     for (uptr i = 0; i < count_; i++) {
       Lib *lib = &libs_[i];
-      if (!lib->loaded && lib->real_name == 0 &&
+      if (!lib->loaded && (!lib->real_name) &&
           TemplateMatch(lib->templ, name))
         lib->real_name = internal_strdup(buf.data());
     }
@@ -60,7 +61,7 @@ void LibIgnore::OnLibraryLoaded(const char *name) {
       if ((prot & MemoryMappingLayout::kProtectionExecute) == 0)
         continue;
       if (TemplateMatch(lib->templ, module.data()) ||
-          (lib->real_name != 0 &&
+          (lib->real_name &&
           internal_strcmp(lib->real_name, module.data()) == 0)) {
         if (loaded) {
           Report("%s: called_from_lib suppression '%s' is matched against"
@@ -93,9 +94,9 @@ void LibIgnore::OnLibraryLoaded(const char *name) {
 }
 
 void LibIgnore::OnLibraryUnloaded() {
-  OnLibraryLoaded(0);
+  OnLibraryLoaded(nullptr);
 }
 
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
-#endif  // #if SANITIZER_FREEBSD || SANITIZER_LINUX
+#endif // #if SANITIZER_FREEBSD || SANITIZER_LINUX

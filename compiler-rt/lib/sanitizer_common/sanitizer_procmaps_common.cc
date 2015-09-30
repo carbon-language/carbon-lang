@@ -11,7 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
+
 #if SANITIZER_FREEBSD || SANITIZER_LINUX
+
 #include "sanitizer_common.h"
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
@@ -151,7 +153,7 @@ uptr MemoryMappingLayout::DumpListOfModules(LoadedModule *modules,
 }
 
 void GetMemoryProfile(fill_profile_f cb, uptr *stats, uptr stats_size) {
-  char *smaps = 0;
+  char *smaps = nullptr;
   uptr smaps_cap = 0;
   uptr smaps_len = 0;
   if (!ReadFileToBuffer("/proc/self/smaps", &smaps, &smaps_cap, &smaps_len))
@@ -174,6 +176,6 @@ void GetMemoryProfile(fill_profile_f cb, uptr *stats, uptr stats_size) {
   UnmapOrDie(smaps, smaps_cap);
 }
 
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
-#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX
+#endif // SANITIZER_FREEBSD || SANITIZER_LINUX

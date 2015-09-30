@@ -250,8 +250,8 @@ void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type) {
 
 const char *StripPathPrefix(const char *filepath,
                             const char *strip_path_prefix) {
-  if (filepath == 0) return 0;
-  if (strip_path_prefix == 0) return filepath;
+  if (!filepath) return nullptr;
+  if (!strip_path_prefix) return filepath;
   const char *res = filepath;
   if (const char *pos = internal_strstr(filepath, strip_path_prefix))
     res = pos + internal_strlen(strip_path_prefix);
@@ -261,8 +261,8 @@ const char *StripPathPrefix(const char *filepath,
 }
 
 const char *StripModuleName(const char *module) {
-  if (module == 0)
-    return 0;
+  if (!module)
+    return nullptr;
   if (SANITIZER_WINDOWS) {
     // On Windows, both slash and backslash are possible.
     // Pick the one that goes last.
@@ -343,7 +343,7 @@ void DecreaseTotalMmap(uptr size) {
 }
 
 bool TemplateMatch(const char *templ, const char *str) {
-  if (str == 0 || str[0] == 0)
+  if ((!str) || str[0] == 0)
     return false;
   bool start = false;
   if (templ && templ[0] == '^') {
@@ -364,9 +364,9 @@ bool TemplateMatch(const char *templ, const char *str) {
       return false;
     char *tpos = (char*)internal_strchr(templ, '*');
     char *tpos1 = (char*)internal_strchr(templ, '$');
-    if (tpos == 0 || (tpos1 && tpos1 < tpos))
+    if ((!tpos) || (tpos1 && tpos1 < tpos))
       tpos = tpos1;
-    if (tpos != 0)
+    if (tpos)
       tpos[0] = 0;
     const char *str0 = str;
     const char *spos = internal_strstr(str, templ);
@@ -374,7 +374,7 @@ bool TemplateMatch(const char *templ, const char *str) {
     templ = tpos;
     if (tpos)
       tpos[0] = tpos == tpos1 ? '$' : '*';
-    if (spos == 0)
+    if (!spos)
       return false;
     if (start && spos != str0)
       return false;
@@ -389,7 +389,7 @@ static const char kPathSeparator = SANITIZER_WINDOWS ? ';' : ':';
 char *FindPathToBinary(const char *name) {
   const char *path = GetEnv("PATH");
   if (!path)
-    return 0;
+    return nullptr;
   uptr name_len = internal_strlen(name);
   InternalScopedBuffer<char> buffer(kMaxPathLength);
   const char *beg = path;
@@ -451,7 +451,7 @@ uptr ReadBinaryNameCached(/*out*/char *buf, uptr buf_len) {
   return name_len;
 }
 
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
 using namespace __sanitizer;  // NOLINT
 
@@ -468,4 +468,4 @@ SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_set_death_callback(void (*callback)(void)) {
   SetUserDieCallback(callback);
 }
-}  // extern "C"
+} // extern "C"

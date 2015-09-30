@@ -71,7 +71,7 @@ DD::DD(const DDFlags *flags)
 }
 
 DDPhysicalThread* DD::CreatePhysicalThread() {
-  return 0;
+  return nullptr;
 }
 
 void DD::DestroyPhysicalThread(DDPhysicalThread *pt) {
@@ -181,10 +181,10 @@ void DD::MutexDestroy(DDCallback *cb,
 
 DDReport *DD::GetReport(DDCallback *cb) {
   if (!cb->lt->report_pending)
-    return 0;
+    return nullptr;
   cb->lt->report_pending = false;
   return &cb->lt->rep;
 }
 
-}  // namespace __sanitizer
-#endif  // #if SANITIZER_DEADLOCK_DETECTOR_VERSION == 1
+} // namespace __sanitizer
+#endif // #if SANITIZER_DEADLOCK_DETECTOR_VERSION == 1

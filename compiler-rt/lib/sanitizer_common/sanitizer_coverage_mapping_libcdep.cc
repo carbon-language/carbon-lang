@@ -75,7 +75,7 @@ void CovUpdateMapping(const char *coverage_dir, uptr caller_pc) {
     InternalScopedBuffer<LoadedModule> modules(kMaxNumberOfModules);
     CHECK(modules.data());
     int n_modules = GetListOfModules(modules.data(), kMaxNumberOfModules,
-                                     /* filter */ 0);
+                                     /* filter */ nullptr);
 
     text.append("%d\n", sizeof(uptr) * 8);
     for (int i = 0; i < n_modules; ++i) {
@@ -124,4 +124,4 @@ void CovUpdateMapping(const char *coverage_dir, uptr caller_pc) {
   }
 }
 
-}  // namespace __sanitizer
+} // namespace __sanitizer

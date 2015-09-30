@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
+
 #if SANITIZER_FREEBSD || SANITIZER_LINUX
 
 #include "sanitizer_common.h"
@@ -374,20 +375,20 @@ const char *GetEnv(const char *name) {
     if (!ReadFileToBuffer("/proc/self/environ", &environ, &environ_size, &len))
       environ = nullptr;
   }
-  if (!environ || len == 0) return 0;
+  if (!environ || len == 0) return nullptr;
   uptr namelen = internal_strlen(name);
   const char *p = environ;
   while (*p != '\0') {  // will happen at the \0\0 that terminates the buffer
     // proc file has the format NAME=value\0NAME=value\0NAME=value\0...
     const char* endp =
         (char*)internal_memchr(p, '\0', len - (p - environ));
-    if (endp == 0)  // this entry isn't NUL terminated
-      return 0;
+    if (!endp)  // this entry isn't NUL terminated
+      return nullptr;
     else if (!internal_memcmp(p, name, namelen) && p[namelen] == '=')  // Match.
       return p + namelen + 1;  // point after =
     p = endp + 1;
   }
-  return 0;  // Not found.
+  return nullptr;  // Not found.
 #else
 #error "Unsupported platform"
 #endif
@@ -585,8 +586,8 @@ int internal_sigaction_norestorer(int signum, const void *act, void *oldact) {
   }
 
   uptr result = internal_syscall(SYSCALL(rt_sigaction), (uptr)signum,
-      (uptr)(u_act ? &k_act : NULL),
-      (uptr)(u_oldact ? &k_oldact : NULL),
+      (uptr)(u_act ? &k_act : nullptr),
+      (uptr)(u_oldact ? &k_oldact : nullptr),
       (uptr)sizeof(__sanitizer_kernel_sigset_t));
 
   if ((result == 0) && u_oldact) {
@@ -1053,13 +1054,13 @@ void *internal_start_thread(void(*func)(void *arg), void *arg) {
 #endif
   internal_sigprocmask(SIG_SETMASK, &set, &old);
   void *th;
-  real_pthread_create(&th, 0, (void*(*)(void *arg))func, arg);
-  internal_sigprocmask(SIG_SETMASK, &old, 0);
+  real_pthread_create(&th, nullptr, (void*(*)(void *arg))func, arg);
+  internal_sigprocmask(SIG_SETMASK, &old, nullptr);
   return th;
 }
 
 void internal_join_thread(void *th) {
-  real_pthread_join(th, 0);
+  real_pthread_join(th, nullptr);
 }
 #else
 void *internal_start_thread(void (*func)(void *), void *arg) { return 0; }
@@ -1139,6 +1140,6 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 #endif
 }
 
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
-#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX
+#endif // SANITIZER_FREEBSD || SANITIZER_LINUX

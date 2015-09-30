@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
+
 #if SANITIZER_FREEBSD || SANITIZER_LINUX
 
 #include "sanitizer_allocator_internal.h"
@@ -65,7 +66,7 @@ namespace __sanitizer {
 extern "C" {
 SANITIZER_WEAK_ATTRIBUTE int
 real_pthread_attr_getstack(void *attr, void **addr, size_t *size);
-}  // extern "C"
+} // extern "C"
 
 static int my_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
 #if !SANITIZER_GO
@@ -100,7 +101,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
     MemoryMappingLayout proc_maps(/*cache_enabled*/true);
     uptr start, end, offset;
     uptr prev_end = 0;
-    while (proc_maps.Next(&start, &end, &offset, 0, 0, /* protection */0)) {
+    while (proc_maps.Next(&start, &end, &offset, nullptr, 0, /* protection */nullptr)) {
       if ((uptr)&rl < end)
         break;
       prev_end = end;
@@ -125,7 +126,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   pthread_attr_init(&attr);
   CHECK_EQ(pthread_getattr_np(pthread_self(), &attr), 0);
   uptr stacksize = 0;
-  void *stackaddr = 0;
+  void *stackaddr = nullptr;
   my_pthread_attr_getstack(&attr, &stackaddr, (size_t*)&stacksize);
   pthread_attr_destroy(&attr);
 
@@ -137,7 +138,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
 #if !SANITIZER_GO
 bool SetEnv(const char *name, const char *value) {
   void *f = dlsym(RTLD_NEXT, "setenv");
-  if (f == 0)
+  if (!f)
     return false;
   typedef int(*setenv_ft)(const char *name, const char *value, int overwrite);
   setenv_ft setenv_f;
@@ -581,8 +582,8 @@ void WriteToSyslog(const char *buffer) {
   } while (q);
   InternalFree(copy);
 }
-#endif  // SANITIZER_LINUX
+#endif // SANITIZER_LINUX
 
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
-#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX
+#endif // SANITIZER_FREEBSD || SANITIZER_LINUX

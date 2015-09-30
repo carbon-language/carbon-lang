@@ -11,6 +11,7 @@
 // run-time libraries.
 // This allocator is used inside run-times.
 //===----------------------------------------------------------------------===//
+
 #include "sanitizer_allocator.h"
 #include "sanitizer_allocator_internal.h"
 #include "sanitizer_common.h"
@@ -44,7 +45,7 @@ InternalAllocator *internal_allocator() {
   return 0;
 }
 
-#else  // SANITIZER_GO
+#else // SANITIZER_GO
 
 static ALIGNED(64) char internal_alloc_placeholder[sizeof(InternalAllocator)];
 static atomic_uint8_t internal_allocator_initialized;
@@ -77,29 +78,29 @@ static void *RawInternalAlloc(uptr size, InternalAllocatorCache *cache) {
 }
 
 static void RawInternalFree(void *ptr, InternalAllocatorCache *cache) {
-  if (cache == 0) {
+  if (!cache) {
     SpinMutexLock l(&internal_allocator_cache_mu);
     return internal_allocator()->Deallocate(&internal_allocator_cache, ptr);
   }
   internal_allocator()->Deallocate(cache, ptr);
 }
 
-#endif  // SANITIZER_GO
+#endif // SANITIZER_GO
 
 const u64 kBlockMagic = 0x6A6CB03ABCEBC041ull;
 
 void *InternalAlloc(uptr size, InternalAllocatorCache *cache) {
   if (size + sizeof(u64) < size)
-    return 0;
+    return nullptr;
   void *p = RawInternalAlloc(size + sizeof(u64), cache);
-  if (p == 0)
-    return 0;
+  if (!p)
+    return nullptr;
   ((u64*)p)[0] = kBlockMagic;
   return (char*)p + sizeof(u64);
 }
 
 void InternalFree(void *addr, InternalAllocatorCache *cache) {
-  if (addr == 0)
+  if (!addr)
     return;
   addr = (char*)addr - sizeof(u64);
   CHECK_EQ(kBlockMagic, ((u64*)addr)[0]);
@@ -147,4 +148,4 @@ void NORETURN ReportAllocatorCannotReturnNull() {
   Die();
 }
 
-}  // namespace __sanitizer
+} // namespace __sanitizer

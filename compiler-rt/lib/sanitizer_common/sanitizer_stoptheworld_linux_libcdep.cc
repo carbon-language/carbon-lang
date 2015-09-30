@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "sanitizer_platform.h"
+
 #if SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__) || \
                         defined(__aarch64__))
 
@@ -119,7 +119,7 @@ bool ThreadSuspender::SuspendThread(SuspendedThreadID tid) {
   if (suspended_threads_list_.Contains(tid))
     return false;
   int pterrno;
-  if (internal_iserror(internal_ptrace(PTRACE_ATTACH, tid, NULL, NULL),
+  if (internal_iserror(internal_ptrace(PTRACE_ATTACH, tid, nullptr, nullptr),
                        &pterrno)) {
     // Either the thread is dead, or something prevented us from attaching.
     // Log this event and move on.
@@ -146,11 +146,11 @@ bool ThreadSuspender::SuspendThread(SuspendedThreadID tid) {
         // doesn't hurt to report it.
         VReport(1, "Waiting on thread %d failed, detaching (errno %d).\n",
                 tid, wperrno);
-        internal_ptrace(PTRACE_DETACH, tid, NULL, NULL);
+        internal_ptrace(PTRACE_DETACH, tid, nullptr, nullptr);
         return false;
       }
       if (WIFSTOPPED(status) && WSTOPSIG(status) != SIGSTOP) {
-        internal_ptrace(PTRACE_CONT, tid, 0, (void*)(uptr)WSTOPSIG(status));
+        internal_ptrace(PTRACE_CONT, tid, nullptr, (void*)(uptr)WSTOPSIG(status));
         continue;
       }
       break;
@@ -164,7 +164,7 @@ void ThreadSuspender::ResumeAllThreads() {
   for (uptr i = 0; i < suspended_threads_list_.thread_count(); i++) {
     pid_t tid = suspended_threads_list_.GetThreadID(i);
     int pterrno;
-    if (!internal_iserror(internal_ptrace(PTRACE_DETACH, tid, NULL, NULL),
+    if (!internal_iserror(internal_ptrace(PTRACE_DETACH, tid, nullptr, nullptr),
                           &pterrno)) {
       VReport(2, "Detached from thread %d.\n", tid);
     } else {
@@ -179,7 +179,7 @@ void ThreadSuspender::ResumeAllThreads() {
 void ThreadSuspender::KillAllThreads() {
   for (uptr i = 0; i < suspended_threads_list_.thread_count(); i++)
     internal_ptrace(PTRACE_KILL, suspended_threads_list_.GetThreadID(i),
-                    NULL, NULL);
+                    nullptr, nullptr);
 }
 
 bool ThreadSuspender::SuspendAllThreads() {
@@ -205,7 +205,7 @@ bool ThreadSuspender::SuspendAllThreads() {
 }
 
 // Pointer to the ThreadSuspender instance for use in signal handler.
-static ThreadSuspender *thread_suspender_instance = NULL;
+static ThreadSuspender *thread_suspender_instance = nullptr;
 
 // Synchronous signals that should not be blocked.
 static const int kSyncSignals[] = { SIGABRT, SIGILL, SIGFPE, SIGSEGV, SIGBUS,
@@ -219,9 +219,9 @@ static void TracerThreadDieCallback() {
   // not those that happen before or after the callback. Hopefully there aren't
   // a lot of opportunities for that to happen...
   ThreadSuspender *inst = thread_suspender_instance;
-  if (inst != NULL && stoptheworld_tracer_pid == internal_getpid()) {
+  if (inst && stoptheworld_tracer_pid == internal_getpid()) {
     inst->KillAllThreads();
-    thread_suspender_instance = NULL;
+    thread_suspender_instance = nullptr;
   }
 }
 
@@ -231,13 +231,13 @@ static void TracerThreadSignalHandler(int signum, void *siginfo, void *uctx) {
   VPrintf(1, "Tracer caught signal %d: addr=0x%zx pc=0x%zx sp=0x%zx\n",
       signum, ctx.addr, ctx.pc, ctx.sp);
   ThreadSuspender *inst = thread_suspender_instance;
-  if (inst != NULL) {
+  if (inst) {
     if (signum == SIGABRT)
       inst->KillAllThreads();
     else
       inst->ResumeAllThreads();
     RAW_CHECK(RemoveDieCallback(TracerThreadDieCallback));
-    thread_suspender_instance = NULL;
+    thread_suspender_instance = nullptr;
     atomic_store(&inst->arg->done, 1, memory_order_relaxed);
   }
   internal__exit((signum == SIGABRT) ? 1 : 2);
@@ -272,7 +272,7 @@ static int TracerThread(void* argument) {
   internal_memset(&handler_stack, 0, sizeof(handler_stack));
   handler_stack.ss_sp = handler_stack_memory.data();
   handler_stack.ss_size = kHandlerStackSize;
-  internal_sigaltstack(&handler_stack, NULL);
+  internal_sigaltstack(&handler_stack, nullptr);
 
   // Install our handler for synchronous signals. Other signals should be
   // blocked by the mask we inherited from the parent thread.
@@ -295,7 +295,7 @@ static int TracerThread(void* argument) {
     exit_code = 0;
   }
   RAW_CHECK(RemoveDieCallback(TracerThreadDieCallback));
-  thread_suspender_instance = NULL;
+  thread_suspender_instance = nullptr;
   atomic_store(&tracer_thread_argument->done, 1, memory_order_relaxed);
   return exit_code;
 }
@@ -403,8 +403,8 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
   uptr tracer_pid = internal_clone(
       TracerThread, tracer_stack.Bottom(),
       CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_UNTRACED,
-      &tracer_thread_argument, 0 /* parent_tidptr */, 0 /* newtls */, 0
-      /* child_tidptr */);
+      &tracer_thread_argument, nullptr /* parent_tidptr */,
+      nullptr /* newtls */, nullptr /* child_tidptr */);
   internal_sigprocmask(SIG_SETMASK, &old_sigset, 0);
   int local_errno = 0;
   if (internal_iserror(tracer_pid, &local_errno)) {
@@ -431,7 +431,7 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
     // Now the tracer thread is about to exit and does not touch errno,
     // wait for it.
     for (;;) {
-      uptr waitpid_status = internal_waitpid(tracer_pid, NULL, __WALL);
+      uptr waitpid_status = internal_waitpid(tracer_pid, nullptr, __WALL);
       if (!internal_iserror(waitpid_status, &local_errno))
         break;
       if (local_errno == EINTR)
@@ -491,7 +491,7 @@ int SuspendedThreadsList::GetRegistersAndSP(uptr index,
                                 (void*)NT_PRSTATUS, (void*)&regset_io),
                                 &pterrno);
 #else
-  bool isErr = internal_iserror(internal_ptrace(PTRACE_GETREGS, tid, NULL,
+  bool isErr = internal_iserror(internal_ptrace(PTRACE_GETREGS, tid, nullptr,
                                 &regs), &pterrno);
 #endif
   if (isErr) {
@@ -508,7 +508,7 @@ int SuspendedThreadsList::GetRegistersAndSP(uptr index,
 uptr SuspendedThreadsList::RegisterCount() {
   return sizeof(regs_struct) / sizeof(uptr);
 }
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
-#endif  // SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__)
-        // || defined(__aarch64__)
+#endif // SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__)
+       // || defined(__aarch64__)
