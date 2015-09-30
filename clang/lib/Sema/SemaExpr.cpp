@@ -7754,7 +7754,7 @@ static bool checkArithmeticBinOpPointerOperands(Sema &S, SourceLocation Loc,
   if (isRHSPointer) RHSPointeeTy = RHSExpr->getType()->getPointeeType();
 
   // if both are pointers check if operation is valid wrt address spaces
-  if (isLHSPointer && isRHSPointer) {
+  if (S.getLangOpts().OpenCL && isLHSPointer && isRHSPointer) {
     const PointerType *lhsPtr = LHSExpr->getType()->getAs<PointerType>();
     const PointerType *rhsPtr = RHSExpr->getType()->getAs<PointerType>();
     if (!lhsPtr->isAddressSpaceOverlapping(*rhsPtr)) {
@@ -8783,12 +8783,14 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
       diagnoseDistinctPointerComparison(*this, Loc, LHS, RHS, /*isError*/false);
     }
     if (LCanPointeeTy != RCanPointeeTy) {
-      const PointerType *lhsPtr = LHSType->getAs<PointerType>();
-      if (!lhsPtr->isAddressSpaceOverlapping(*RHSType->getAs<PointerType>())) {
-        Diag(Loc,
-             diag::err_typecheck_op_on_nonoverlapping_address_space_pointers)
-            << LHSType << RHSType << 0 /* comparison */
-            << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
+      if (getLangOpts().OpenCL) {
+        const PointerType *LHSPtr = LHSType->getAs<PointerType>();
+        if (!LHSPtr->isAddressSpaceOverlapping(*RHSType->getAs<PointerType>())) {
+          Diag(Loc,
+               diag::err_typecheck_op_on_nonoverlapping_address_space_pointers)
+              << LHSType << RHSType << 0 /* comparison */
+              << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
+        }
       }
       unsigned AddrSpaceL = LCanPointeeTy.getAddressSpace();
       unsigned AddrSpaceR = RCanPointeeTy.getAddressSpace();

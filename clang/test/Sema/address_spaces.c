@@ -67,3 +67,8 @@ void access_as_field()
 
 typedef int PR4997 __attribute__((address_space(Foobar))); // expected-error {{use of undeclared identifier 'Foobar'}}
 __attribute__((address_space("12"))) int *i; // expected-error {{'address_space' attribute requires an integer constant}}
+
+// Clang extension doesn't forbid operations on pointers to different address spaces.
+char* cmp(_AS1 char *x,  _AS2 char *y) {
+  return x < y ? x : y; // expected-warning {{pointer type mismatch ('__attribute__((address_space(1))) char *' and '__attribute__((address_space(2))) char *')}}
+}
