@@ -171,6 +171,9 @@ public:
   unsigned getNumSymbols() const { return NumVisible + 1; }
 
 private:
+  void writeLocalSymbols(uint8_t *&Buf);
+  void writeGlobalSymbols(uint8_t *&Buf);
+
   SymbolTable &Table;
   StringTableSection<ELFT::Is64Bits> &StrTabSec;
   unsigned NumVisible = 0;

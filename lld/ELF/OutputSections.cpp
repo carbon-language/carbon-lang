@@ -396,40 +396,52 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
   // All symbols with STB_LOCAL binding precede the weak and global symbols.
   // .dynsym only contains global symbols.
-  if (!Config->DiscardAll && !StrTabSec.isDynamic()) {
-    for (const std::unique_ptr<ObjectFileBase> &FileB :
-         Table.getObjectFiles()) {
-      auto &File = cast<ObjectFile<ELFT>>(*FileB);
-      Elf_Sym_Range Syms = File.getLocalSymbols();
-      for (const Elf_Sym &Sym : Syms) {
-        auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
-        ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
-        if (SymName && !shouldKeepInSymtab(*SymName))
-          continue;
-        ESym->st_name = (SymName) ? StrTabSec.getFileOff(*SymName) : 0;
-        ESym->st_size = Sym.st_size;
-        ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
-        uint32_t SecIndex = Sym.st_shndx;
-        uintX_t VA = Sym.st_value;
-        if (SecIndex == SHN_ABS) {
-          ESym->st_shndx = SHN_ABS;
-        } else {
-          if (SecIndex == SHN_XINDEX)
-            SecIndex = File.getObj().getExtendedSymbolTableIndex(
-                &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
-          ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
-          const InputSection<ELFT> *Section = Sections[SecIndex];
-          const OutputSection<ELFT> *Out = Section->getOutputSection();
-          ESym->st_shndx = Out->getSectionIndex();
-          VA += Out->getVA() + Section->getOutputSectionOff();
-        }
-        ESym->st_value = VA;
-        Buf += sizeof(Elf_Sym);
+  if (!Config->DiscardAll && !StrTabSec.isDynamic())
+    writeLocalSymbols(Buf);
+
+  writeGlobalSymbols(Buf);
+}
+
+template <class ELFT>
+void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
+  // Iterate over all input object files to copy their local symbols
+  // to the output symbol table pointed by Buf.
+  for (const std::unique_ptr<ObjectFileBase> &FileB : Table.getObjectFiles()) {
+    auto &File = cast<ObjectFile<ELFT>>(*FileB);
+    Elf_Sym_Range Syms = File.getLocalSymbols();
+    for (const Elf_Sym &Sym : Syms) {
+      auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
+      ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
+      if (SymName && !shouldKeepInSymtab(*SymName))
+        continue;
+      ESym->st_name = (SymName) ? StrTabSec.getFileOff(*SymName) : 0;
+      ESym->st_size = Sym.st_size;
+      ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
+      uint32_t SecIndex = Sym.st_shndx;
+      uintX_t VA = Sym.st_value;
+      if (SecIndex == SHN_ABS) {
+        ESym->st_shndx = SHN_ABS;
+      } else {
+        if (SecIndex == SHN_XINDEX)
+          SecIndex = File.getObj().getExtendedSymbolTableIndex(
+              &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
+        ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
+        const InputSection<ELFT> *Section = Sections[SecIndex];
+        const OutputSection<ELFT> *Out = Section->getOutputSection();
+        ESym->st_shndx = Out->getSectionIndex();
+        VA += Out->getVA() + Section->getOutputSectionOff();
       }
+      ESym->st_value = VA;
+      Buf += sizeof(Elf_Sym);
     }
   }
+}
 
-  for (auto &P : Table.getSymbols()) {
+template <class ELFT>
+void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
+  // Write the internal symbol table contents to the output symbol table
+  // pointed by Buf.
+  for (const std::pair<StringRef, Symbol *> &P : Table.getSymbols()) {
     StringRef Name = P.first;
     Symbol *Sym = P.second;
     SymbolBody *Body = Sym->Body;
