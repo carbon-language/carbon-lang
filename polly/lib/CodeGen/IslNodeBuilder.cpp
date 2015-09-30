@@ -814,6 +814,25 @@ void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
   llvm_unreachable("Unknown isl_ast_node type");
 }
 
+void IslNodeBuilder::materializeValue(isl_id *Id) {
+  Value *&V = IDToValue[Id];
+
+  // If the Id is already mapped, skip it.
+  if (!V)
+    V = generateSCEV((const SCEV *)isl_id_get_user(Id));
+
+  isl_id_free(Id);
+}
+
+void IslNodeBuilder::materializeParameters(isl_set *Set, bool All) {
+  for (unsigned i = 0, e = isl_set_dim(Set, isl_dim_param); i < e; ++i) {
+    if (!All && !isl_set_involves_dims(Set, isl_dim_param, i, 1))
+      continue;
+    isl_id *Id = isl_set_get_dim_id(Set, isl_dim_param, i);
+    materializeValue(Id);
+  }
+}
+
 /// @brief Create the actual preload memory access for @p MA.
 static inline Value *createPreloadLoad(Scop &S, const MemoryAccess &MA,
                                        isl_ast_build *Build,
@@ -944,14 +963,8 @@ void IslNodeBuilder::preloadInvariantLoads() {
 
 void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
 
-  for (unsigned i = 0; i < isl_set_dim(Context, isl_dim_param); ++i) {
-    isl_id *Id;
-
-    Id = isl_set_get_dim_id(Context, isl_dim_param, i);
-    IDToValue[Id] = generateSCEV((const SCEV *)isl_id_get_user(Id));
-
-    isl_id_free(Id);
-  }
+  // Materialize values for the parameters of the SCoP.
+  materializeParameters(Context, /* all */ true);
 
   // Generate values for the current loop iteration for all surrounding loops.
   //

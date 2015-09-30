@@ -117,6 +117,15 @@ protected:
   /// llvm::Values to new llvm::Values.
   polly::ValueMapT ValueMap;
 
+  /// @brief Materialize code for @p Id if it was not done before.
+  void materializeValue(__isl_take isl_id *Id);
+
+  /// @brief Materialize parameters of @p Set.
+  ///
+  /// @param All If not set only parameters referred to by the constraints in
+  ///            @p Set will be materialized, otherwise all.
+  void materializeParameters(__isl_take isl_set *Set, bool All);
+
   // Extract the upper bound of this loop
   //
   // The isl code generation can generate arbitrary expressions to check if the
