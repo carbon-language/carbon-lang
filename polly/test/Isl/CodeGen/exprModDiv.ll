@@ -28,7 +28,7 @@
 ;       each value of i to indeed be mapped to a value.
 ;
 ; CHECK:  %pexp.p_div_q = udiv i64 %polly.indvar, 127
-; CHECK:  %polly.access.B8 = getelementptr float, float* %B, i64 %pexp.p_div_q
+; CHECK:  %polly.access.B7 = getelementptr float, float* %B, i64 %pexp.p_div_q
 
 ; #define floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
 ; A[p + 127 * floord(-p - 1, 127) + 127]
@@ -42,11 +42,11 @@
 ; CHECK:  %19 = mul nsw i64 127, %pexp.fdiv_q.4
 ; CHECK:  %20 = add nsw i64 %p, %19
 ; CHECK:  %21 = add nsw i64 %20, 127
-; CHECK:  %polly.access.A10 = getelementptr float, float* %A, i64 %21
+; CHECK:  %polly.access.A8 = getelementptr float, float* %A, i64 %21
 
 ; A[p / 127]
 ; CHECK:  %pexp.div = sdiv exact i64 %p, 127
-; CHECK:  %polly.access.B13 = getelementptr float, float* %B, i64 %pexp.div
+; CHECK:  %polly.access.B9 = getelementptr float, float* %B, i64 %pexp.div
 
 ; A[i % 128]
 ; POW2:  %pexp.pdiv_r = urem i64 %polly.indvar, 128
@@ -54,7 +54,7 @@
 
 ; A[floor(i / 128)]
 ; POW2:  %pexp.p_div_q = udiv i64 %polly.indvar, 128
-; POW2:  %polly.access.B8 = getelementptr float, float* %B, i64 %pexp.p_div_q
+; POW2:  %polly.access.B7 = getelementptr float, float* %B, i64 %pexp.p_div_q
 
 ; #define floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
 ; A[p + 128 * floord(-p - 1, 128) + 128]
@@ -64,11 +64,11 @@
 ; POW2:  %19 = mul nsw i64 128, %polly.fdiv_q.shr
 ; POW2:  %20 = add nsw i64 %p, %19
 ; POW2:  %21 = add nsw i64 %20, 128
-; POW2:  %polly.access.A10 = getelementptr float, float* %A, i64 %21
+; POW2:  %polly.access.A8 = getelementptr float, float* %A, i64 %21
 
 ; A[p / 128]
 ; POW2:  %pexp.div = sdiv exact i64 %p, 128
-; POW2:  %polly.access.B13 = getelementptr float, float* %B, i64 %pexp.div
+; POW2:  %polly.access.B9 = getelementptr float, float* %B, i64 %pexp.div
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

@@ -378,9 +378,13 @@ protected:
   ///
   /// @param Stmt  The statement we generate code for.
   /// @param BB    The basic block we generate code for.
+  /// @param LTS   A mapping from loops virtual canonical induction
+  ///              variable to their new values
+  ///              (for values recalculated in the new ScoP, but not
+  ///               within this basic block)
   /// @param BBMap A mapping from old values to their new values in this block.
   virtual void generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
-                                    ValueMapT &BBMAp);
+                                    LoopToScevMapT &LTS, ValueMapT &BBMap);
 
   /// @brief Handle users of @p Inst outside the SCoP.
   ///
@@ -526,12 +530,17 @@ protected:
   ///
   /// @param ScalarValue The original value needed.
   /// @param R           The current SCoP region.
+  /// @param Stmt        The ScopStmt in which we look up this value.
+  /// @param LTS         A mapping from loops virtual canonical induction
+  ///                    variable to their new values
+  ///                    (for values recalculated in the new ScoP, but not
+  ///                     within this basic block)
   /// @param BBMap       A mapping from old values to their new values
   ///                    (for values recalculated within this basic block).
   ///
   /// @returns The newest version (e.g., reloaded) of the scalar value.
-  Value *getNewScalarValue(Value *ScalarValue, const Region &R,
-                           ValueMapT &BBMap);
+  Value *getNewScalarValue(Value *ScalarValue, const Region &R, ScopStmt &,
+                           LoopToScevMapT &LTS, ValueMapT &BBMap);
 };
 
 /// @brief Generate a new vector basic block for a polyhedral statement.
@@ -768,8 +777,12 @@ private:
   ///
   /// @param Stmt  The statement we generate code for.
   /// @param BB    The basic block we generate code for.
+  /// @param LTS   A mapping from loops virtual canonical induction variable to
+  ///              their new values (for values recalculated in the new ScoP,
+  ///              but not within this basic block)
   /// @param BBMap A mapping from old values to their new values in this block.
   virtual void generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
+                                    LoopToScevMapT &LTS,
                                     ValueMapT &BBMAp) override;
 
   /// @brief Copy a single PHI instruction.
