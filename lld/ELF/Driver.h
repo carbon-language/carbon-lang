@@ -16,11 +16,6 @@
 namespace lld {
 namespace elf2 {
 
-class LinkerDriver;
-extern LinkerDriver *Driver;
-
-class InputFile;
-
 // Entry point of the ELF linker.
 void link(ArrayRef<const char *> Args);
 
