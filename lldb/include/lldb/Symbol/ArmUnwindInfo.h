@@ -33,19 +33,28 @@ namespace lldb_private {
 class ArmUnwindInfo
 {
 public:
-    ArmUnwindInfo (ObjectFile& objfile, lldb::SectionSP& arm_exidx, lldb::SectionSP& arm_extab);
+    ArmUnwindInfo(const ObjectFile& objfile,
+                  lldb::SectionSP& arm_exidx,
+                  lldb::SectionSP& arm_extab);
+
     ~ArmUnwindInfo();
 
     bool
-    GetUnwindPlan (Target &target, const Address& addr, UnwindPlan& unwind_plan);
+    GetUnwindPlan(Target &target, const Address& addr, UnwindPlan& unwind_plan);
 
 private:
     const uint8_t*
     GetExceptionHandlingTableEntry(const Address& addr);
-    
+
+    uint8_t
+    GetByteAtOffset(const uint32_t* data, uint16_t offset) const;
+
+    uint64_t
+    GetULEB128(const uint32_t* data, uint16_t& offset, uint16_t max_offset) const;
+
+    const lldb::ByteOrder m_byte_order;
     lldb::SectionSP m_arm_exidx_sp; // .ARM.exidx section
     lldb::SectionSP m_arm_extab_sp; // .ARM.extab section
-
     DataExtractor m_arm_exidx_data; // .ARM.exidx section data
     DataExtractor m_arm_extab_data; // .ARM.extab section data
 };

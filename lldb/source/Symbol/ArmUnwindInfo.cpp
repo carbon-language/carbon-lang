@@ -11,6 +11,7 @@
 
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ArmUnwindInfo.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/UnwindPlan.h"
@@ -38,7 +39,10 @@ namespace
     };
 };
 
-ArmUnwindInfo::ArmUnwindInfo(ObjectFile& objfile, SectionSP& arm_exidx, SectionSP& arm_extab) :
+ArmUnwindInfo::ArmUnwindInfo(const ObjectFile& objfile,
+                             SectionSP& arm_exidx,
+                             SectionSP& arm_extab) :
+    m_byte_order(objfile.GetByteOrder()),
     m_arm_exidx_sp(arm_exidx),
     m_arm_extab_sp(arm_extab)
 {
@@ -50,22 +54,26 @@ ArmUnwindInfo::~ArmUnwindInfo()
 {
 }
 
-static uint8_t
-GetNextByte(const uint32_t* data, uint16_t offset)
+// Read a byte from the unwind instruction stream with the given offset.
+// Custom function is required because have to red in order of significance within their containing
+// word (most significant byte first) and in increasing word address order.
+uint8_t
+ArmUnwindInfo::GetByteAtOffset(const uint32_t* data, uint16_t offset) const
 {
-    data += offset / 4;
-    offset = offset % 4;
-    return (data[0] >> ((3 - offset) * 8)) & 0xff;
+    uint32_t value = data[offset / 4];
+    if (m_byte_order != endian::InlHostByteOrder())
+        value = llvm::ByteSwap_32(value);
+    return (value >> ((3 - (offset % 4)) * 8)) & 0xff;
 }
 
-static uint64_t
-GetULEB128(const uint32_t* data, uint16_t& offset, uint16_t max_offset)
+uint64_t
+ArmUnwindInfo::GetULEB128(const uint32_t* data, uint16_t& offset, uint16_t max_offset) const
 {
     uint64_t result = 0;
     uint8_t shift = 0;
     while (offset < max_offset)
     {
-        uint8_t byte = GetNextByte(data, offset++);
+        uint8_t byte = GetByteAtOffset(data, offset++);
         result |= (byte & 0x7f) << shift;
         if ((byte & 0x80) == 0)
             break;
@@ -116,7 +124,7 @@ ArmUnwindInfo::GetUnwindPlan(Target &target, const Address& addr, UnwindPlan& un
 
     while (byte_offset < byte_count)
     {
-        uint8_t byte1 = GetNextByte(data, byte_offset++);
+        uint8_t byte1 = GetByteAtOffset(data, byte_offset++);
         if ((byte1&0xc0) == 0x00)
         {
             // 00xxxxxx
@@ -134,7 +142,7 @@ ArmUnwindInfo::GetUnwindPlan(Target &target, const Address& addr, UnwindPlan& un
             if (byte_offset >= byte_count)
                 return false;
 
-            uint8_t byte2 = GetNextByte(data, byte_offset++);
+            uint8_t byte2 = GetByteAtOffset(data, byte_offset++);
             if (byte1 == 0x80 && byte2 == 0)
             {
                 // 10000000 00000000
@@ -210,7 +218,7 @@ ArmUnwindInfo::GetUnwindPlan(Target &target, const Address& addr, UnwindPlan& un
             if (byte_offset >= byte_count)
                 return false;
 
-            uint8_t byte2 = GetNextByte(data, byte_offset++);
+            uint8_t byte2 = GetByteAtOffset(data, byte_offset++);
             if ((byte2&0xff) == 0x00)
             {
                 // 10110001 00000000
@@ -251,7 +259,7 @@ ArmUnwindInfo::GetUnwindPlan(Target &target, const Address& addr, UnwindPlan& un
             if (byte_offset >= byte_count)
                 return false;
 
-            uint8_t byte2 = GetNextByte(data, byte_offset++);
+            uint8_t byte2 = GetByteAtOffset(data, byte_offset++);
             uint8_t s = (byte2&0xf0) >> 4;
             uint8_t c = (byte2&0x0f) >> 0;
             for (uint8_t i = 0; i <= c; ++i)
@@ -305,7 +313,7 @@ ArmUnwindInfo::GetUnwindPlan(Target &target, const Address& addr, UnwindPlan& un
             if (byte_offset >= byte_count)
                 return false;
 
-            uint8_t byte2 = GetNextByte(data, byte_offset++);
+            uint8_t byte2 = GetByteAtOffset(data, byte_offset++);
             uint8_t s = (byte2&0xf0) >> 4;
             uint8_t c = (byte2&0x0f) >> 0;
             for (uint8_t i = 0; i <= c; ++i)
@@ -321,7 +329,7 @@ ArmUnwindInfo::GetUnwindPlan(Target &target, const Address& addr, UnwindPlan& un
             if (byte_offset >= byte_count)
                 return false;
 
-            uint8_t byte2 = GetNextByte(data, byte_offset++);
+            uint8_t byte2 = GetByteAtOffset(data, byte_offset++);
             uint8_t s = (byte2&0xf0) >> 4;
             uint8_t c = (byte2&0x0f) >> 0;
             for (uint8_t i = 0; i <= c; ++i)
