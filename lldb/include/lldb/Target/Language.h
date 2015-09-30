@@ -41,6 +41,9 @@ public:
     virtual lldb::LanguageType
     GetLanguageType () const = 0;
     
+    bool
+    IsTopLevelFunction (Function& function);
+    
     virtual lldb::TypeCategoryImplSP
     GetFormatters ();
     

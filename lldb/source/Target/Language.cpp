@@ -89,6 +89,12 @@ Language::ForEach (std::function<bool(Language*)> callback)
     }
 }
 
+bool
+Language::IsTopLevelFunction (Function& function)
+{
+    return false;
+}
+
 lldb::TypeCategoryImplSP
 Language::GetFormatters ()
 {

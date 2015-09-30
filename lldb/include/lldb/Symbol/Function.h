@@ -631,6 +631,24 @@ public:
     //------------------------------------------------------------------
     bool
     GetIsOptimized ();
+    
+    //------------------------------------------------------------------
+    /// Get whether this function represents a 'top-level' function
+    ///
+    /// The concept of a top-level function is language-specific, mostly
+    /// meant to represent the notion of scripting-style code that has
+    /// global visibility of the variables/symbols/functions/...
+    /// defined within the containing file/module
+    ///
+    /// If stopped in a top-level function, LLDB will expose global variables
+    /// as-if locals in the 'frame variable' command
+    ///
+    /// @return
+    ///     Returns 'true' if this function is a top-level function,
+    ///     'false' otherwise.
+    //------------------------------------------------------------------
+    bool
+    IsTopLevelFunction ();
 
     lldb::DisassemblerSP
     GetInstructions (const ExecutionContext &exe_ctx,

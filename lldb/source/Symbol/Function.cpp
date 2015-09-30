@@ -17,6 +17,7 @@
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Target/Language.h"
 #include "llvm/Support/Casting.h"
 
 using namespace lldb;
@@ -478,6 +479,17 @@ Function::GetIsOptimized ()
     {
         result = m_comp_unit->GetIsOptimized();
     }
+    return result;
+}
+
+bool
+Function::IsTopLevelFunction ()
+{
+    bool result = false;
+    
+    if (Language* language = Language::FindPlugin(GetLanguage()))
+        result = language->IsTopLevelFunction(*this);
+    
     return result;
 }
 

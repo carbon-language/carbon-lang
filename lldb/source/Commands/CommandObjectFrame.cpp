@@ -35,6 +35,7 @@
 #include "lldb/Interpreter/OptionGroupVariable.h"
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
@@ -408,6 +409,10 @@ protected:
             summary_format_sp.reset(new StringSummaryFormat(TypeSummaryImpl::Flags(),m_option_variable.summary_string.GetCurrentValue()));
         
         DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions(eLanguageRuntimeDescriptionDisplayVerbosityFull,eFormatDefault,summary_format_sp));
+        
+        const SymbolContext& sym_ctx = frame->GetSymbolContext(eSymbolContextFunction);
+        if (sym_ctx.function && sym_ctx.function->IsTopLevelFunction())
+            m_option_variable.show_globals = true;
         
         if (variable_list)
         {
