@@ -76,6 +76,18 @@ struct LineLocation {
   unsigned Discriminator;
 };
 
+/// Represents the relative location of a callsite.
+///
+/// Callsite locations are specified by the line offset from the
+/// beginning of the function (marked by the line where the function
+/// head is), the discriminator value within that line, and the callee
+/// function name.
+struct CallsiteLocation : public LineLocation {
+  CallsiteLocation(int L, unsigned D, StringRef N)
+      : LineLocation(L, D), CalleeName(N) {}
+  StringRef CalleeName;
+};
+
 } // End namespace sampleprof
 
 template <> struct DenseMapInfo<sampleprof::LineLocation> {
@@ -97,6 +109,31 @@ template <> struct DenseMapInfo<sampleprof::LineLocation> {
                              sampleprof::LineLocation RHS) {
     return LHS.LineOffset == RHS.LineOffset &&
            LHS.Discriminator == RHS.Discriminator;
+  }
+};
+
+template <> struct DenseMapInfo<sampleprof::CallsiteLocation> {
+  typedef DenseMapInfo<int> OffsetInfo;
+  typedef DenseMapInfo<unsigned> DiscriminatorInfo;
+  typedef DenseMapInfo<StringRef> CalleeNameInfo;
+  static inline sampleprof::CallsiteLocation getEmptyKey() {
+    return sampleprof::CallsiteLocation(OffsetInfo::getEmptyKey(),
+                                        DiscriminatorInfo::getEmptyKey(), "");
+  }
+  static inline sampleprof::CallsiteLocation getTombstoneKey() {
+    return sampleprof::CallsiteLocation(OffsetInfo::getTombstoneKey(),
+                                        DiscriminatorInfo::getTombstoneKey(),
+                                        "");
+  }
+  static inline unsigned getHashValue(sampleprof::CallsiteLocation Val) {
+    return DenseMapInfo<std::pair<int, unsigned>>::getHashValue(
+        std::pair<int, unsigned>(Val.LineOffset, Val.Discriminator));
+  }
+  static inline bool isEqual(sampleprof::CallsiteLocation LHS,
+                             sampleprof::CallsiteLocation RHS) {
+    return LHS.LineOffset == RHS.LineOffset &&
+           LHS.Discriminator == RHS.Discriminator &&
+           LHS.CalleeName.equals(RHS.CalleeName);
   }
 };
 
@@ -160,6 +197,8 @@ private:
 };
 
 typedef DenseMap<LineLocation, SampleRecord> BodySampleMap;
+class FunctionSamples;
+typedef DenseMap<CallsiteLocation, FunctionSamples> CallsiteSampleMap;
 
 /// Representation of the samples collected for a function.
 ///
@@ -201,7 +240,23 @@ public:
       return ret->second.getSamples();
   }
 
-  bool empty() const { return BodySamples.empty(); }
+  /// Return the function samples at the given callsite location.
+  FunctionSamples &functionSamplesAt(const CallsiteLocation &Loc) {
+    return CallsiteSamples[Loc];
+  }
+
+  /// Return a pointer to function samples at the given callsite location.
+  const FunctionSamples *
+  findFunctionSamplesAt(const CallsiteLocation &Loc) const {
+    auto iter = CallsiteSamples.find(Loc);
+    if (iter == CallsiteSamples.end()) {
+      return NULL;
+    } else {
+      return &iter->second;
+    }
+  }
+
+  bool empty() const { return TotalSamples == 0; }
 
   /// Return the total number of samples collected inside the function.
   unsigned getTotalSamples() const { return TotalSamples; }
@@ -213,6 +268,11 @@ public:
   /// Return all the samples collected in the body of the function.
   const BodySampleMap &getBodySamples() const { return BodySamples; }
 
+  /// Return all the callsite samples collected in the body of the function.
+  const CallsiteSampleMap &getCallsiteSamples() const {
+    return CallsiteSamples;
+  }
+
   /// Merge the samples in \p Other into this one.
   void merge(const FunctionSamples &Other) {
     addTotalSamples(Other.getTotalSamples());
@@ -221,6 +281,11 @@ public:
       const LineLocation &Loc = I.first;
       const SampleRecord &Rec = I.second;
       BodySamples[Loc].merge(Rec);
+    }
+    for (const auto &I : Other.getCallsiteSamples()) {
+      const CallsiteLocation &Loc = I.first;
+      const FunctionSamples &Rec = I.second;
+      functionSamplesAt(Loc).merge(Rec);
     }
   }
 
@@ -242,6 +307,8 @@ private:
   /// collected at the corresponding line offset. All line locations
   /// are an offset from the start of the function.
   BodySampleMap BodySamples;
+
+  CallsiteSampleMap CallsiteSamples;
 };
 
 } // End namespace sampleprof

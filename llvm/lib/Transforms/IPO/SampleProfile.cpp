@@ -46,6 +46,7 @@
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include <cctype>
 
 using namespace llvm;
@@ -105,6 +106,9 @@ protected:
   bool emitAnnotations(Function &F);
   ErrorOr<unsigned> getInstWeight(const Instruction &I) const;
   ErrorOr<unsigned> getBlockWeight(const BasicBlock *BB) const;
+  const FunctionSamples *findCalleeFunctionSamples(const CallInst &I) const;
+  const FunctionSamples *findFunctionSamples(const Instruction &I) const;
+  bool inlineHotFunctions(Function &F);
   void printEdgeWeight(raw_ostream &OS, Edge E);
   void printBlockWeight(raw_ostream &OS, const BasicBlock *BB) const;
   void printBlockEquivalence(raw_ostream &OS, const BasicBlock *BB);
@@ -227,8 +231,11 @@ SampleProfileLoader::getInstWeight(const Instruction &Inst) const {
     return std::error_code();
 
   const DILocation *DIL = DLoc;
+  const FunctionSamples *FS = findFunctionSamples(Inst);
+  if (!FS)
+    return std::error_code();
   ErrorOr<unsigned> R =
-      Samples->findSamplesAt(Lineno - HeaderLineno, DIL->getDiscriminator());
+      FS->findSamplesAt(Lineno - HeaderLineno, DIL->getDiscriminator());
   if (R)
     DEBUG(dbgs() << "    " << Lineno << "." << DIL->getDiscriminator() << ":"
                  << Inst << " (line offset: " << Lineno - HeaderLineno << "."
@@ -280,6 +287,121 @@ bool SampleProfileLoader::computeBlockWeights(Function &F) {
     DEBUG(printBlockWeight(dbgs(), &BB));
   }
 
+  return Changed;
+}
+
+/// \brief Get the FunctionSamples for a call instruction.
+///
+/// The FunctionSamples of a call instruction \p Inst is the inlined
+/// instance in which that call instruction is calling to. It contains
+/// all samples that resides in the inlined instance. We first find the
+/// inlined instance in which the call instruction is from, then we
+/// traverse its children to find the callsite with the matching
+/// location and callee function name.
+///
+/// \param Inst Call instruction to query.
+///
+/// \returns The FunctionSamples pointer to the inlined instance.
+const FunctionSamples *
+SampleProfileLoader::findCalleeFunctionSamples(const CallInst &Inst) const {
+  const DILocation *DIL = Inst.getDebugLoc();
+  if (!DIL) {
+    return nullptr;
+  }
+  DISubprogram *SP = DIL->getScope()->getSubprogram();
+  if (!SP || DIL->getLine() < SP->getLine())
+    return nullptr;
+
+  Function *CalleeFunc = Inst.getCalledFunction();
+  if (!CalleeFunc) {
+    return nullptr;
+  }
+
+  StringRef CalleeName = CalleeFunc->getName();
+  const FunctionSamples *FS = findFunctionSamples(Inst);
+  if (FS == nullptr)
+    return nullptr;
+
+  return FS->findFunctionSamplesAt(CallsiteLocation(
+      DIL->getLine() - SP->getLine(), DIL->getDiscriminator(), CalleeName));
+}
+
+/// \brief Get the FunctionSamples for an instruction.
+///
+/// The FunctionSamples of an instruction \p Inst is the inlined instance
+/// in which that instruction is coming from. We traverse the inline stack
+/// of that instruction, and match it with the tree nodes in the profile.
+///
+/// \param Inst Instruction to query.
+///
+/// \returns the FunctionSamples pointer to the inlined instance.
+const FunctionSamples *
+SampleProfileLoader::findFunctionSamples(const Instruction &Inst) const {
+  SmallVector<CallsiteLocation, 10> S;
+  const DILocation *DIL = Inst.getDebugLoc();
+  if (!DIL) {
+    return Samples;
+  }
+  StringRef CalleeName;
+  for (const DILocation *DIL = Inst.getDebugLoc(); DIL;
+       DIL = DIL->getInlinedAt()) {
+    DISubprogram *SP = DIL->getScope()->getSubprogram();
+    if (!SP || DIL->getLine() < SP->getLine())
+      return nullptr;
+    if (!CalleeName.empty()) {
+      S.push_back(CallsiteLocation(DIL->getLine() - SP->getLine(),
+                                   DIL->getDiscriminator(), CalleeName));
+    }
+    CalleeName = SP->getLinkageName();
+  }
+  if (S.size() == 0)
+    return Samples;
+  const FunctionSamples *FS = Samples;
+  for (int i = S.size() - 1; i >= 0 && FS != nullptr; i--) {
+    FS = FS->findFunctionSamplesAt(S[i]);
+  }
+  return FS;
+}
+
+/// \brief Iteratively inline hot callsites of a function.
+///
+/// Iteratively traverse all callsites of the function \p F, and find if
+/// the corresponding inlined instance exists and is hot in profile. If
+/// it is hot enough, inline the callsites and adds new callsites of the
+/// callee into the caller.
+///
+/// TODO: investigate the possibility of not invoking InlineFunction directly.
+///
+/// \param F function to perform iterative inlining.
+///
+/// \returns True if there is any inline happened.
+bool SampleProfileLoader::inlineHotFunctions(Function &F) {
+  bool Changed = false;
+  while (true) {
+    bool LocalChanged = false;
+    SmallVector<CallInst *, 10> CIS;
+    for (auto &BB : F) {
+      for (auto &I : BB.getInstList()) {
+        CallInst *CI = dyn_cast<CallInst>(&I);
+        if (CI) {
+          const FunctionSamples *FS = findCalleeFunctionSamples(*CI);
+          if (FS && FS->getTotalSamples() > 0) {
+            CIS.push_back(CI);
+          }
+        }
+      }
+    }
+    for (auto CI : CIS) {
+      InlineFunctionInfo IFI;
+      if (InlineFunction(CI, IFI))
+        LocalChanged = true;
+    }
+    if (LocalChanged) {
+      Changed = true;
+    } else {
+      break;
+    }
+  }
   return Changed;
 }
 
@@ -732,6 +854,8 @@ bool SampleProfileLoader::emitAnnotations(Function &F) {
 
   DEBUG(dbgs() << "Line number for the first instruction in " << F.getName()
                << ": " << HeaderLineno << "\n");
+
+  Changed |= inlineHotFunctions(F);
 
   // Compute basic block weights.
   Changed |= computeBlockWeights(F);
