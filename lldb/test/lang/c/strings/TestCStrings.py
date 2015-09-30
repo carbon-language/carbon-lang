@@ -9,31 +9,14 @@ class CStringsTestCase(TestBase):
     
     mydir = TestBase.compute_mydir(__file__)
     
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Tests that C strings work as expected in expressions"""
-        self.buildDsym()
-        self.static_method_commands()
-
-    @dwarf_test
     @expectedFailureWindows("llvm.org/pr21765")
-    def test_with_dwarf_and_run_command(self):
+    def test_with_run_command(self):
         """Tests that C strings work as expected in expressions"""
-        self.buildDwarf()
-        self.static_method_commands()
-
-    def setUp(self):
-        TestBase.setUp(self)
-    
-    def set_breakpoint(self, line):
-        lldbutil.run_break_set_by_file_and_line (self, "main.c", line, num_expected_locations=1, loc_exact=True)
-    
-    def static_method_commands(self):
-        """Tests that C strings work as expected in expressions"""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        self.set_breakpoint(line_number('main.c', '// breakpoint 1'))
+        line = line_number('main.c', '// breakpoint 1')
+        lldbutil.run_break_set_by_file_and_line (self, "main.c", line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("process launch", RUN_SUCCEEDED)
 

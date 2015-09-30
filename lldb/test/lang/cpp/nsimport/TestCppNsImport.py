@@ -9,25 +9,10 @@ class TestCppNsImport(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Tests imported namespaces in C++."""
-        self.buildDsym()
-        self.check()
-
-    @dwarf_test
     @expectedFailureGcc(None, ['>=', '4.9'])
-    def test_with_dwarf_and_run_command(self):
+    def test_with_run_command(self):
         """Tests imported namespaces in C++."""
-        self.buildDwarf()
-        self.check()
-
-    def setUp(self):
-        TestBase.setUp(self)
-
-    def check(self):
-        """Tests imported namespaces in C++."""
+        self.build()
 
         # Get main source file
         src_file = "main.cpp"

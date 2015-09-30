@@ -32,7 +32,7 @@ class AvoidsFdLeakTestCase(TestBase):
         self.do_test(["log enable -f '/dev/null' lldb commands"])
 
     def do_test (self, commands):
-        self.buildDefault()
+        self.build()
         exe = os.path.join (os.getcwd(), "a.out")
 
         for c in commands:
@@ -52,7 +52,7 @@ class AvoidsFdLeakTestCase(TestBase):
     @skipIfWindows # The check for descriptor leakage needs to be implemented differently here.
     @skipIfTargetAndroid() # Android have some other file descriptors open by the shell
     def test_fd_leak_multitarget (self):
-        self.buildDefault()
+        self.build()
         exe = os.path.join (os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

@@ -75,7 +75,7 @@ class LoadUnloadTestCase(TestBase):
         """Test target modules list after loading a different copy of the library libd.dylib, and verifies that it works with 'target modules search-paths add'."""
 
         # Invoke the default build rule.
-        self.buildDefault()
+        self.build()
 
         if self.platformIsDarwin():
             dylibName = 'libloadunload_d.dylib'
@@ -129,7 +129,7 @@ class LoadUnloadTestCase(TestBase):
         """Test (DY)LD_LIBRARY_PATH after moving libd.dylib, which defines d_function, somewhere else."""
 
         # Invoke the default build rule.
-        self.buildDefault()
+        self.build()
         self.copy_shlibs_to_remote(hidden_dir=True)
 
         exe = os.path.join(os.getcwd(), "a.out")
@@ -185,7 +185,7 @@ class LoadUnloadTestCase(TestBase):
         """Test that lldb process load/unload command work correctly."""
 
         # Invoke the default build rule.
-        self.buildDefault()
+        self.build()
         self.copy_shlibs_to_remote()
 
         exe = os.path.join(os.getcwd(), "a.out")
@@ -245,7 +245,7 @@ class LoadUnloadTestCase(TestBase):
         """Test breakpoint by name works correctly with dlopen'ing."""
 
         # Invoke the default build rule.
-        self.buildDefault()
+        self.build()
         self.copy_shlibs_to_remote()
 
         exe = os.path.join(os.getcwd(), "a.out")
@@ -288,7 +288,7 @@ class LoadUnloadTestCase(TestBase):
         """Test stepping over code that loads a shared library works correctly."""
 
         # Invoke the default build rule.
-        self.buildDefault()
+        self.build()
         self.copy_shlibs_to_remote()
 
         exe = os.path.join(os.getcwd(), "a.out")

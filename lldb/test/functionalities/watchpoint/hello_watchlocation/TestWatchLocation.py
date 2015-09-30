@@ -13,23 +13,6 @@ class HelloWatchLocationTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_hello_watchlocation_with_dsym(self):
-        """Test watching a location with '-s size' option."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.hello_watchlocation()
-
-    @dwarf_test
-    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
-    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
-    def test_hello_watchlocation_with_dwarf(self):
-        """Test watching a location with '-s size' option."""
-        self.buildDwarf(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.hello_watchlocation()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -43,8 +26,12 @@ class HelloWatchLocationTestCase(TestBase):
         self.exe_name = self.testMethodName
         self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
-    def hello_watchlocation(self):
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
+    def test_hello_watchlocation(self):
         """Test watching a location with '-s size' option."""
+        self.build(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
         exe = os.path.join(os.getcwd(), self.exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

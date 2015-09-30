@@ -13,22 +13,6 @@ class Rdar10967107TestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    def test_charstar_dyntype_with_dsym(self):
-        """Test that we do not attempt to make a dynamic type for a 'const char*'"""
-        d = {'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.charstar_dyntype(self.exe_name)
-
-    @dwarf_test
-    def test_charstar_dyntype_with_dwarf(self):
-        """Test that we do not attempt to make a dynamic type for a 'const char*'"""
-        d = {'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.charstar_dyntype(self.exe_name)
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -38,9 +22,13 @@ class Rdar10967107TestCase(TestBase):
         self.main_source = "main.m"
         self.line = line_number(self.main_source, '// Set breakpoint here.')
 
-    def charstar_dyntype(self, exe_name):
+    def test_charstar_dyntype(self):
         """Test that we do not attempt to make a dynamic type for a 'const char*'"""
-        exe = os.path.join(os.getcwd(), exe_name)
+        d = {'EXE': self.exe_name}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+
+        exe = os.path.join(os.getcwd(), self.exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, self.main_source, self.line, num_expected_locations=1, loc_exact=True)

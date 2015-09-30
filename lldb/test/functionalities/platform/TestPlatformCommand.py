@@ -11,26 +11,32 @@ class PlatformCommandTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @no_debug_info_test
     def test_help_platform(self):
         self.runCmd("help platform")
 
+    @no_debug_info_test
     def test_list(self):
         self.expect("platform list",
             patterns = ['^Available platforms:'])
 
+    @no_debug_info_test
     def test_process_list(self):
         self.expect("platform process list",
             substrs = ['PID', 'TRIPLE', 'NAME'])
 
+    @no_debug_info_test
     def test_process_info_with_no_arg(self):
         """This is expected to fail and to return a proper error message."""
         self.expect("platform process info", error=True,
             substrs = ['one or more process id(s) must be specified'])
 
+    @no_debug_info_test
     def test_status(self):
         self.expect("platform status",
             substrs = ['Platform', 'Triple', 'OS Version', 'Kernel', 'Hostname'])
 
+    @no_debug_info_test
     def test_shell(self):
         """ Test that the platform shell command can invoke ls. """
         triple = self.dbg.GetSelectedPlatform().GetTriple()
@@ -41,12 +47,14 @@ class PlatformCommandTestCase(TestBase):
         else:
           self.expect("platform shell ls /", substrs = ["dev", "tmp", "usr"])
 
+    @no_debug_info_test
     def test_shell_builtin(self):
         """ Test a shell built-in command (echo) """
         self.expect("platform shell echo hello lldb",
             substrs = ["hello lldb"])
 
     #FIXME: re-enable once platform shell -t can specify the desired timeout
+    @no_debug_info_test
     def test_shell_timeout(self):
         """ Test a shell built-in command (sleep) that times out """
         self.skipTest("due to taking too long to complete.")

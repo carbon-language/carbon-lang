@@ -12,21 +12,6 @@ class ThreadExitTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test thread exit handling."""
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.thread_exit_test()
-
-    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
-    @expectedFailureWindows("llvm.org/pr24681")
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test thread exit handling."""
-        self.buildDwarf(dictionary=self.getBuildFlags())
-        self.thread_exit_test()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -36,8 +21,11 @@ class ThreadExitTestCase(TestBase):
         self.break_3 = line_number('main.cpp', '// Set third breakpoint here')
         self.break_4 = line_number('main.cpp', '// Set fourth breakpoint here')
 
-    def thread_exit_test(self):
+    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
+    @expectedFailureWindows("llvm.org/pr24681")
+    def test(self):
         """Test thread exit handling."""
+        self.build(dictionary=self.getBuildFlags())
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

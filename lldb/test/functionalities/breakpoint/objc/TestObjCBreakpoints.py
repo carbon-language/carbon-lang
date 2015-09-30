@@ -16,17 +16,9 @@ class TestObjCBreakpoints(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    def test_break_with_dsym(self):
-        """Test setting Objective C specific breakpoints (dSYM)."""
-        self.buildDsym()
-        self.setTearDownCleanup()
-        self.check_objc_breakpoints(True)
-
-    @dwarf_test
-    def test_break_with_dwarf(self):
+    def test_break(self):
         """Test setting Objective C specific breakpoints (DWARF in .o files)."""
-        self.buildDwarf()
+        self.build()
         self.setTearDownCleanup()
         self.check_objc_breakpoints(False)
 

@@ -12,23 +12,11 @@ class DeadStripTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test breakpoint works correctly with dead-code stripping."""
-        self.buildDsym()
-        self.dead_strip()
-
     @expectedFailureWindows("llvm.org/pr24778")
     @skipIfFreeBSD # The -dead_strip linker option isn't supported on FreeBSD versions of ld.
-    @dwarf_test
-    def test_with_dwarf(self):
+    def test(self):
         """Test breakpoint works correctly with dead-code stripping."""
-        self.buildDwarf()
-        self.dead_strip()
-
-    def dead_strip(self):
-        """Test breakpoint works correctly with dead-code stripping."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

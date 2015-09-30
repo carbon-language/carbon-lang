@@ -26,15 +26,13 @@ class TestGdbRemoteSegFault(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(int(hex_exit_code, 16), expected_signo)
 
     @debugserver_test
-    @dsym_test
-    def test_inferior_seg_fault_received_debugserver_dsym(self):
+    def test_inferior_seg_fault_received_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.inferior_seg_fault_received(self.GDB_REMOTE_STOP_CODE_BAD_ACCESS)
 
     @llgs_test
-    @dwarf_test
-    def test_inferior_seg_fault_received_llgs_dwarf(self):
+    def test_inferior_seg_fault_received_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.inferior_seg_fault_received(lldbutil.get_signal_number('SIGSEGV'))

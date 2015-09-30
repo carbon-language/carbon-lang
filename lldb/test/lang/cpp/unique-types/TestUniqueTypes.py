@@ -11,19 +11,6 @@ class UniqueTypesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test for unique types of std::vector<long> and std::vector<short>."""
-        self.buildDsym()
-        self.unique_types()
-
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test for unique types of std::vector<long> and std::vector<short>."""
-        self.buildDwarf()
-        self.unique_types()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -31,8 +18,9 @@ class UniqueTypesTestCase(TestBase):
         self.line = line_number("main.cpp",
           "// Set breakpoint here to verify that std::vector 'longs' and 'shorts' have unique types.")
 
-    def unique_types(self):
+    def test(self):
         """Test for unique types of std::vector<long> and std::vector<short>."""
+        self.build()
 
         compiler = self.getCompiler()
         compiler_basename = os.path.basename(compiler)

@@ -12,12 +12,6 @@ class WatchpointSetErrorTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    def test_error_cases_with_watchpoint_set(self):
-        """Test error cases with the 'watchpoint set' command."""
-        self.buildDwarf()
-        self.setTearDownCleanup()
-        self.error_cases_with_watchpoint_set()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -27,8 +21,11 @@ class WatchpointSetErrorTestCase(TestBase):
         self.line = line_number(self.source, '// Set break point at this line.')
         # Build dictionary to have unique executable names for each test method.
 
-    def error_cases_with_watchpoint_set(self):
+    def test_error_cases_with_watchpoint_set(self):
         """Test error cases with the 'watchpoint set' command."""
+        self.build()
+        self.setTearDownCleanup()
+
         exe = os.path.join(os.getcwd(), 'a.out')
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

@@ -16,6 +16,7 @@ class AddDsymMidExecutionCommandCase(TestBase):
         TestBase.setUp(self)
         self.source = 'main.c'
 
+    @no_debug_info_test # Prevent the genaration of the dwarf version of this test
     def test_add_dsym_mid_execution(self):
         """Test that add-dsym mid-execution loads the symbols at the right place for a slid binary."""
         self.buildDsym(clean=True)

@@ -22,23 +22,14 @@ class ObjCiVarIMPTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @skipUnlessDarwin
+    @no_debug_info_test
     def test_imp_ivar_type(self):
         """Test that dynamically discovered ivars of type IMP do not crash LLDB"""
         if self.getArchitecture() == 'i386':
             # rdar://problem/9946499
             self.skipTest("Dynamic types for ObjC V1 runtime not implemented")
-        self.buildReproCase()
-        self.runTheTest()
-
-    def setUp(self):
-        # Call super's setUp().                                                                                                           
-        TestBase.setUp(self)
-
-    def buildReproCase (self):
+        
         execute_command("make repro")
-
-    def runTheTest(self):
-        """MakeTest that dynamically discovered ivars of type IMP do not crash LLDB"""
         def cleanup():
             execute_command("make cleanup")
         self.addTearDownHook(cleanup)
@@ -46,7 +37,6 @@ class ObjCiVarIMPTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target from the debugger.
-
         target = self.dbg.CreateTarget (exe)
         self.assertTrue(target, VALID_TARGET)
 

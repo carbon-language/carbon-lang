@@ -24,8 +24,7 @@ class AttachDeniedTestCase(TestBase):
     @skipIfLinux # hanging after reviews D13124 change went in
     def test_attach_to_process_by_id_denied(self):
         """Test attach by process id denied"""
-
-        self.buildDefault()
+        self.build()
         exe = os.path.join(os.getcwd(), exe_name)
 
         # Use a file as a synchronization point between test and inferior.

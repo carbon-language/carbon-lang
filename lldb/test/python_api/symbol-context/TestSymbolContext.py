@@ -12,30 +12,17 @@ class SymbolContextAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym(self):
-        """Exercise SBSymbolContext API extensively."""
-        self.buildDsym()
-        self.symbol_context()
-
-    @python_api_test
-    @dwarf_test
-    @expectedFailureWindows("llvm.org/pr24778")
-    def test_with_dwarf(self):
-        """Exercise SBSymbolContext API extensively."""
-        self.buildDwarf()
-        self.symbol_context()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to of function 'c'.
         self.line = line_number('main.c', '// Find the line number of function "c" here.')
 
-    def symbol_context(self):
-        """Get an SBSymbolContext object and call its many methods."""
+    @python_api_test
+    @expectedFailureWindows("llvm.org/pr24778")
+    def test(self):
+        """Exercise SBSymbolContext API extensively."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.

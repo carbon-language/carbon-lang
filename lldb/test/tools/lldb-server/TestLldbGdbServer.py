@@ -116,17 +116,15 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.expect_gdbremote_sequence()
 
     @debugserver_test
-    @dsym_test
-    def test_start_inferior_debugserver_dsym(self):
+    def test_start_inferior_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.start_inferior()
 
     @llgs_test
-    @dwarf_test
-    def test_start_inferior_llgs_dwarf(self):
+    def test_start_inferior_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.start_inferior()
 
     def inferior_exit_0(self):
@@ -145,17 +143,15 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.expect_gdbremote_sequence()
 
     @debugserver_test
-    @dsym_test
-    def test_inferior_exit_0_debugserver_dsym(self):
+    def test_inferior_exit_0_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.inferior_exit_0()
 
     @llgs_test
-    @dwarf_test
-    def test_inferior_exit_0_llgs_dwarf(self):
+    def test_inferior_exit_0_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.inferior_exit_0()
 
     def inferior_exit_42(self):
@@ -179,17 +175,15 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.expect_gdbremote_sequence()
 
     @debugserver_test
-    @dsym_test
-    def test_inferior_exit_42_debugserver_dsym(self):
+    def test_inferior_exit_42_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.inferior_exit_42()
 
     @llgs_test
-    @dwarf_test
-    def test_inferior_exit_42_llgs_dwarf(self):
+    def test_inferior_exit_42_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.inferior_exit_42()
 
     def c_packet_works(self):
@@ -208,17 +202,15 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.expect_gdbremote_sequence()
 
     @debugserver_test
-    @dsym_test
-    def test_c_packet_works_debugserver_dsym(self):
+    def test_c_packet_works_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.c_packet_works()
 
     @llgs_test
-    @dwarf_test
-    def test_c_packet_works_llgs_dwarf(self):
+    def test_c_packet_works_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.c_packet_works()
 
     def inferior_print_exit(self):
@@ -242,17 +234,15 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertIsNotNone(context)
 
     @debugserver_test
-    @dsym_test
-    def test_inferior_print_exit_debugserver_dsym(self):
+    def test_inferior_print_exit_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.inferior_print_exit()
 
     @llgs_test
-    @dwarf_test
-    def test_inferior_print_exit_llgs_dwarf(self):
+    def test_inferior_print_exit_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.inferior_print_exit()
 
     def first_launch_stop_reply_thread_matches_first_qC(self):
@@ -275,17 +265,15 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.expect_gdbremote_sequence()
 
     @debugserver_test
-    @dsym_test
-    def test_first_launch_stop_reply_thread_matches_first_qC_debugserver_dsym(self):
+    def test_first_launch_stop_reply_thread_matches_first_qC_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.first_launch_stop_reply_thread_matches_first_qC()
 
     @llgs_test
-    @dwarf_test
-    def test_first_launch_stop_reply_thread_matches_first_qC_llgs_dwarf(self):
+    def test_first_launch_stop_reply_thread_matches_first_qC_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.first_launch_stop_reply_thread_matches_first_qC()
 
     def attach_commandline_continue_app_exits(self):
@@ -308,18 +296,16 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertFalse(lldbgdbserverutils.process_is_running(procs["inferior"].pid, False))
 
     @debugserver_test
-    @dsym_test
-    def test_attach_commandline_continue_app_exits_debugserver_dsym(self):
+    def test_attach_commandline_continue_app_exits_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_attach()
         self.attach_commandline_continue_app_exits()
 
     @llgs_test
-    @dwarf_test
-    def test_attach_commandline_continue_app_exits_llgs_dwarf(self):
+    def test_attach_commandline_continue_app_exits_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_attach()
         self.attach_commandline_continue_app_exits()
 
@@ -346,17 +332,15 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assert_valid_reg_info(lldbgdbserverutils.parse_reg_info_response(reg_info_packet))
 
     @debugserver_test
-    @dsym_test
-    def test_qRegisterInfo_returns_one_valid_result_debugserver_dsym(self):
+    def test_qRegisterInfo_returns_one_valid_result_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.qRegisterInfo_returns_one_valid_result()
 
     @llgs_test
-    @dwarf_test
-    def test_qRegisterInfo_returns_one_valid_result_llgs_dwarf(self):
+    def test_qRegisterInfo_returns_one_valid_result_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.qRegisterInfo_returns_one_valid_result()
 
     def qRegisterInfo_returns_all_valid_results(self):
@@ -379,17 +363,15 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             self.assert_valid_reg_info(reg_info)
 
     @debugserver_test
-    @dsym_test
-    def test_qRegisterInfo_returns_all_valid_results_debugserver_dsym(self):
+    def test_qRegisterInfo_returns_all_valid_results_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.qRegisterInfo_returns_all_valid_results()
 
     @llgs_test
-    @dwarf_test
-    def test_qRegisterInfo_returns_all_valid_results_llgs_dwarf(self):
+    def test_qRegisterInfo_returns_all_valid_results_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.qRegisterInfo_returns_all_valid_results()
 
     def qRegisterInfo_contains_required_generics(self):
@@ -426,17 +408,15 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertTrue('flags' in generic_regs)
 
     @debugserver_test
-    @dsym_test
-    def test_qRegisterInfo_contains_required_generics_debugserver_dsym(self):
+    def test_qRegisterInfo_contains_required_generics_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.qRegisterInfo_contains_required_generics()
 
     @llgs_test
-    @dwarf_test
-    def test_qRegisterInfo_contains_required_generics_llgs_dwarf(self):
+    def test_qRegisterInfo_contains_required_generics_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.qRegisterInfo_contains_required_generics()
 
     def qRegisterInfo_contains_at_least_one_register_set(self):
@@ -462,17 +442,15 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertTrue(len(register_sets) >= 1)
 
     @debugserver_test
-    @dsym_test
-    def test_qRegisterInfo_contains_at_least_one_register_set_debugserver_dsym(self):
+    def test_qRegisterInfo_contains_at_least_one_register_set_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.qRegisterInfo_contains_at_least_one_register_set()
 
     @llgs_test
-    @dwarf_test
-    def test_qRegisterInfo_contains_at_least_one_register_set_llgs_dwarf(self):
+    def test_qRegisterInfo_contains_at_least_one_register_set_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.qRegisterInfo_contains_at_least_one_register_set()
 
     def targetHasAVX(self):
@@ -518,10 +496,9 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(self.targetHasAVX(), "Advanced Vector Extensions" in register_sets)
 
     @llgs_test
-    @dwarf_test
-    def test_qRegisterInfo_contains_avx_registers_llgs_dwarf(self):
+    def test_qRegisterInfo_contains_avx_registers_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.qRegisterInfo_contains_avx_registers()
 
     def qThreadInfo_contains_thread(self):
@@ -540,34 +517,30 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEqual(len(threads), 1)
 
     @debugserver_test
-    @dsym_test
-    def test_qThreadInfo_contains_thread_launch_debugserver_dsym(self):
+    def test_qThreadInfo_contains_thread_launch_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.qThreadInfo_contains_thread()
 
     @llgs_test
-    @dwarf_test
-    def test_qThreadInfo_contains_thread_launch_llgs_dwarf(self):
+    def test_qThreadInfo_contains_thread_launch_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.qThreadInfo_contains_thread()
 
     @debugserver_test
-    @dsym_test
-    def test_qThreadInfo_contains_thread_attach_debugserver_dsym(self):
+    def test_qThreadInfo_contains_thread_attach_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_attach()
         self.qThreadInfo_contains_thread()
 
     @llgs_test
-    @dwarf_test
-    def test_qThreadInfo_contains_thread_attach_llgs_dwarf(self):
+    def test_qThreadInfo_contains_thread_attach_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_attach()
         self.qThreadInfo_contains_thread()
 
@@ -600,34 +573,30 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(threads[0], QC_thread_id)
 
     @debugserver_test
-    @dsym_test
-    def test_qThreadInfo_matches_qC_launch_debugserver_dsym(self):
+    def test_qThreadInfo_matches_qC_launch_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.qThreadInfo_matches_qC()
 
     @llgs_test
-    @dwarf_test
-    def test_qThreadInfo_matches_qC_launch_llgs_dwarf(self):
+    def test_qThreadInfo_matches_qC_launch_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.qThreadInfo_matches_qC()
 
     @debugserver_test
-    @dsym_test
-    def test_qThreadInfo_matches_qC_attach_debugserver_dsym(self):
+    def test_qThreadInfo_matches_qC_attach_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_attach()
         self.qThreadInfo_matches_qC()
 
     @llgs_test
-    @dwarf_test
-    def test_qThreadInfo_matches_qC_attach_llgs_dwarf(self):
+    def test_qThreadInfo_matches_qC_attach_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_attach()
         self.qThreadInfo_matches_qC()
 
@@ -673,34 +642,30 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             reg_index += 1
 
     @debugserver_test
-    @dsym_test
-    def test_p_returns_correct_data_size_for_each_qRegisterInfo_launch_debugserver_dsym(self):
+    def test_p_returns_correct_data_size_for_each_qRegisterInfo_launch_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.p_returns_correct_data_size_for_each_qRegisterInfo()
 
     @llgs_test
-    @dwarf_test
-    def test_p_returns_correct_data_size_for_each_qRegisterInfo_launch_llgs_dwarf(self):
+    def test_p_returns_correct_data_size_for_each_qRegisterInfo_launch_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.p_returns_correct_data_size_for_each_qRegisterInfo()
 
     @debugserver_test
-    @dsym_test
-    def test_p_returns_correct_data_size_for_each_qRegisterInfo_attach_debugserver_dsym(self):
+    def test_p_returns_correct_data_size_for_each_qRegisterInfo_attach_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_attach()
         self.p_returns_correct_data_size_for_each_qRegisterInfo()
 
     @llgs_test
-    @dwarf_test
-    def test_p_returns_correct_data_size_for_each_qRegisterInfo_attach_llgs_dwarf(self):
+    def test_p_returns_correct_data_size_for_each_qRegisterInfo_attach_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_attach()
         self.p_returns_correct_data_size_for_each_qRegisterInfo()
 
@@ -734,34 +699,30 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             self.assertEquals(int(context.get("thread_id"), 16), thread)
 
     @debugserver_test
-    @dsym_test
-    def test_Hg_switches_to_3_threads_launch_debugserver_dsym(self):
+    def test_Hg_switches_to_3_threads_launch_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.Hg_switches_to_3_threads()
 
     @llgs_test
-    @dwarf_test
-    def test_Hg_switches_to_3_threads_launch_llgs_dwarf(self):
+    def test_Hg_switches_to_3_threads_launch_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.Hg_switches_to_3_threads()
 
     @debugserver_test
-    @dsym_test
-    def test_Hg_switches_to_3_threads_attach_debugserver_dsym(self):
+    def test_Hg_switches_to_3_threads_attach_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_attach()
         self.Hg_switches_to_3_threads()
 
     @llgs_test
-    @dwarf_test
-    def test_Hg_switches_to_3_threads_attach_llgs_dwarf(self):
+    def test_Hg_switches_to_3_threads_attach_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_attach()
         self.Hg_switches_to_3_threads()
 
@@ -867,21 +828,19 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             post_handle_thread_id = int(post_handle_thread_id, 16)
             self.assertEquals(post_handle_thread_id, print_thread_id)
 
-    @debugserver_test
-    @dsym_test
     @unittest2.expectedFailure()
-    def test_Hc_then_Csignal_signals_correct_thread_launch_debugserver_dsym(self):
+    @debugserver_test
+    def test_Hc_then_Csignal_signals_correct_thread_launch_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         # Darwin debugserver translates some signals like SIGSEGV into some gdb expectations about fixed signal numbers.
         self.Hc_then_Csignal_signals_correct_thread(self.TARGET_EXC_BAD_ACCESS)
 
     @llgs_test
-    @dwarf_test
-    def test_Hc_then_Csignal_signals_correct_thread_launch_llgs_dwarf(self):
+    def test_Hc_then_Csignal_signals_correct_thread_launch_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.Hc_then_Csignal_signals_correct_thread(lldbutil.get_signal_number('SIGSEGV'))
 
@@ -932,18 +891,16 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(read_contents, MEMORY_CONTENTS)
 
     @debugserver_test
-    @dsym_test
-    def test_m_packet_reads_memory_debugserver_dsym(self):
+    def test_m_packet_reads_memory_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.m_packet_reads_memory()
 
     @llgs_test
-    @dwarf_test
-    def test_m_packet_reads_memory_llgs_dwarf(self):
+    def test_m_packet_reads_memory_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.m_packet_reads_memory()
 
@@ -959,18 +916,16 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.expect_gdbremote_sequence()
 
     @debugserver_test
-    @dsym_test
-    def test_qMemoryRegionInfo_is_supported_debugserver_dsym(self):
+    def test_qMemoryRegionInfo_is_supported_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.qMemoryRegionInfo_is_supported()
 
     @llgs_test
-    @dwarf_test
-    def test_qMemoryRegionInfo_is_supported_llgs_dwarf(self):
+    def test_qMemoryRegionInfo_is_supported_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.qMemoryRegionInfo_is_supported()
 
@@ -1022,18 +977,16 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assert_address_within_memory_region(code_address, mem_region_dict)
 
     @debugserver_test
-    @dsym_test
-    def test_qMemoryRegionInfo_reports_code_address_as_executable_debugserver_dsym(self):
+    def test_qMemoryRegionInfo_reports_code_address_as_executable_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.qMemoryRegionInfo_reports_code_address_as_executable()
 
     @llgs_test
-    @dwarf_test
-    def test_qMemoryRegionInfo_reports_code_address_as_executable_llgs_dwarf(self):
+    def test_qMemoryRegionInfo_reports_code_address_as_executable_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.qMemoryRegionInfo_reports_code_address_as_executable()
 
@@ -1085,18 +1038,16 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assert_address_within_memory_region(stack_address, mem_region_dict)
 
     @debugserver_test
-    @dsym_test
-    def test_qMemoryRegionInfo_reports_stack_address_as_readable_writeable_debugserver_dsym(self):
+    def test_qMemoryRegionInfo_reports_stack_address_as_readable_writeable_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.qMemoryRegionInfo_reports_stack_address_as_readable_writeable()
 
     @llgs_test
-    @dwarf_test
-    def test_qMemoryRegionInfo_reports_stack_address_as_readable_writeable_llgs_dwarf(self):
+    def test_qMemoryRegionInfo_reports_stack_address_as_readable_writeable_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.qMemoryRegionInfo_reports_stack_address_as_readable_writeable()
 
@@ -1149,18 +1100,16 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
 
     @debugserver_test
-    @dsym_test
-    def test_qMemoryRegionInfo_reports_heap_address_as_readable_writeable_debugserver_dsym(self):
+    def test_qMemoryRegionInfo_reports_heap_address_as_readable_writeable_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.qMemoryRegionInfo_reports_heap_address_as_readable_writeable()
 
     @llgs_test
-    @dwarf_test
-    def test_qMemoryRegionInfo_reports_heap_address_as_readable_writeable_llgs_dwarf(self):
+    def test_qMemoryRegionInfo_reports_heap_address_as_readable_writeable_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.qMemoryRegionInfo_reports_heap_address_as_readable_writeable()
 
@@ -1268,18 +1217,16 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertIsNotNone(context)
 
     @debugserver_test
-    @dsym_test
-    def test_software_breakpoint_set_and_remove_work_debugserver_dsym(self):
+    def test_software_breakpoint_set_and_remove_work_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.software_breakpoint_set_and_remove_work()
 
     @llgs_test
-    @dwarf_test
-    def test_software_breakpoint_set_and_remove_work_llgs_dwarf(self):
+    def test_software_breakpoint_set_and_remove_work_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.software_breakpoint_set_and_remove_work()
 
@@ -1298,18 +1245,16 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertTrue(len(supported_dict) > 0)
 
     @debugserver_test
-    @dsym_test
-    def test_qSupported_returns_known_stub_features_debugserver_dsym(self):
+    def test_qSupported_returns_known_stub_features_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.qSupported_returns_known_stub_features()
 
     @llgs_test
-    @dwarf_test
-    def test_qSupported_returns_known_stub_features_llgs_dwarf(self):
+    def test_qSupported_returns_known_stub_features_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.qSupported_returns_known_stub_features()
 
@@ -1358,18 +1303,16 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(printed_message, TEST_MESSAGE + "X")
 
     @debugserver_test
-    @dsym_test
-    def test_written_M_content_reads_back_correctly_debugserver_dsym(self):
+    def test_written_M_content_reads_back_correctly_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.written_M_content_reads_back_correctly()
 
     @llgs_test
-    @dwarf_test
-    def test_written_M_content_reads_back_correctly_llgs_dwarf(self):
+    def test_written_M_content_reads_back_correctly_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.written_M_content_reads_back_correctly()
 
@@ -1404,18 +1347,16 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
     # Note: as of this moment, a hefty number of the GPR writes are failing with E32 (everything except rax-rdx, rdi, rsi, rbp).
     # Come back to this.  I have the test rigged to verify that at least some of the bit-flip writes work.
     @debugserver_test
-    @dsym_test
-    def test_P_writes_all_gpr_registers_debugserver_dsym(self):
+    def test_P_writes_all_gpr_registers_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.P_writes_all_gpr_registers()
 
     @llgs_test
-    @dwarf_test
-    def test_P_writes_all_gpr_registers_llgs_dwarf(self):
+    def test_P_writes_all_gpr_registers_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.P_writes_all_gpr_registers()
 
@@ -1512,18 +1453,16 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     # Note: as of this moment, a hefty number of the GPR writes are failing with E32 (everything except rax-rdx, rdi, rsi, rbp).
     @debugserver_test
-    @dsym_test
-    def test_P_and_p_thread_suffix_work_debugserver_dsym(self):
+    def test_P_and_p_thread_suffix_work_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.P_and_p_thread_suffix_work()
 
     @llgs_test
-    @dwarf_test
-    def test_P_and_p_thread_suffix_work_llgs_dwarf(self):
+    def test_P_and_p_thread_suffix_work_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.P_and_p_thread_suffix_work()
 

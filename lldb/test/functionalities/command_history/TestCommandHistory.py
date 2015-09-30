@@ -11,6 +11,7 @@ class CommandHistoryTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @no_debug_info_test
     def test_history(self):
         self.runCmd('command history --clear', inHistory=False)
         self.runCmd('breakpoint list', check=False, inHistory=True) #0

@@ -12,68 +12,35 @@ class ExitDuringStepTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
-    @dsym_test
-    def test_thread_state_is_stopped_with_dsym(self):
-        """Test thread exit during step handling."""
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.thread_state_is_stopped()
-
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @expectedFailureLinux("llvm.org/pr15824") # thread states not properly maintained
     @expectedFailureWindows("llvm.org/pr24681")
-    @dwarf_test
-    def test_thread_state_is_stopped_with_dwarf(self):
+    def test_thread_state_is_stopped(self):
         """Test thread exit during step handling."""
-        self.buildDwarf(dictionary=self.getBuildFlags())
-        self.thread_state_is_stopped()
+        self.build(dictionary=self.getBuildFlags())
+        self.exit_during_step_base("thread step-in -m all-threads", 'stop reason = step in', True)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
+    @skipIfFreeBSD # llvm.org/pr21411: test is hanging
+    @expectedFailureWindows("llvm.org/pr24681")
+    def test(self):
         """Test thread exit during step handling."""
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.exit_during_step_inst_test()
+        self.build(dictionary=self.getBuildFlags())
+        self.exit_during_step_base("thread step-inst -m all-threads", 'stop reason = instruction step', False)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_step_over_with_dsym(self):
+    @skipIfFreeBSD # llvm.org/pr21411: test is hanging
+    @expectedFailureWindows("llvm.org/pr24681")
+    def test_step_over(self):
         """Test thread exit during step-over handling."""
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.exit_during_step_over_test()
+        self.build(dictionary=self.getBuildFlags())
+        self.exit_during_step_base("thread step-over -m all-threads", 'stop reason = step over', False)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_step_in_with_dsym(self):
+    @skipIfFreeBSD # llvm.org/pr21411: test is hanging
+    @expectedFailureWindows("llvm.org/pr24681")
+    def test_step_in(self):
         """Test thread exit during step-in handling."""
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.exit_during_step_in_test()
-
-    @skipIfFreeBSD # llvm.org/pr21411: test is hanging
-    @expectedFailureWindows("llvm.org/pr24681")
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test thread exit during step handling."""
-        self.buildDwarf(dictionary=self.getBuildFlags())
-        self.exit_during_step_inst_test()
-
-    @skipIfFreeBSD # llvm.org/pr21411: test is hanging
-    @expectedFailureWindows("llvm.org/pr24681")
-    @dwarf_test
-    def test_step_over_with_dwarf(self):
-        """Test thread exit during step-over handling."""
-        self.buildDwarf(dictionary=self.getBuildFlags())
-        self.exit_during_step_over_test()
-
-    @skipIfFreeBSD # llvm.org/pr21411: test is hanging
-    @expectedFailureWindows("llvm.org/pr24681")
-    @dwarf_test
-    def test_step_in_with_dwarf(self):
-        """Test thread exit during step-in handling."""
-        self.buildDwarf(dictionary=self.getBuildFlags())
-        self.exit_during_step_in_test()
+        self.build(dictionary=self.getBuildFlags())
+        self.exit_during_step_base("thread step-in -m all-threads", 'stop reason = step in', False)
 
     def setUp(self):
         # Call super's setUp().
@@ -81,22 +48,6 @@ class ExitDuringStepTestCase(TestBase):
         # Find the line numbers to break and continue.
         self.breakpoint = line_number('main.cpp', '// Set breakpoint here')
         self.continuepoint = line_number('main.cpp', '// Continue from here')
-
-    def exit_during_step_inst_test(self):
-        """Test thread exit while using step-inst."""
-        self.exit_during_step_base("thread step-inst -m all-threads", 'stop reason = instruction step', False)
-
-    def exit_during_step_over_test(self):
-        """Test thread exit while using step-over."""
-        self.exit_during_step_base("thread step-over -m all-threads", 'stop reason = step over', False)
-
-    def exit_during_step_in_test(self):
-        """Test thread exit while using step-in."""
-        self.exit_during_step_base("thread step-in -m all-threads", 'stop reason = step in', False)
-
-    def thread_state_is_stopped (self):
-        """Go to first point where all threads are stopped, and test that the thread state is correctly set."""
-        self.exit_during_step_base("thread step-in -m all-threads", 'stop reason = step in', True)
 
     def exit_during_step_base(self, step_cmd, step_stop_reason, test_thread_state):
         """Test thread exit during step handling."""

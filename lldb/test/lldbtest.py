@@ -520,6 +520,19 @@ def benchmarks_test(func):
     wrapper.__benchmarks_test__ = True
     return wrapper
 
+def no_debug_info_test(func):
+    """Decorate the item as a test what don't use any debug info. If this annotation is specified
+       then the test runner won't generate a separate test for each debug info format. """
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@no_debug_info_test can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        return func(self, *args, **kwargs)
+
+    # Mark this function as such to separate them from the regular tests.
+    wrapper.__no_debug_info_test__ = True
+    return wrapper
+
 def dsym_test(func):
     """Decorate the item as a dsym test."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
@@ -628,26 +641,31 @@ def expectedFailure(expected_fn, bugnumber=None):
     else:
         return expectedFailure_impl
 
-def expectedFailureCompiler(compiler, compiler_version=None, bugnumber=None):
-    if compiler_version is None:
-        compiler_version=['=', None]
-    def fn(self):
-        return compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version)
-    return expectedFailure(fn, bugnumber)
-
 # provide a function to xfail on defined oslist, compiler version, and archs
 # if none is specified for any argument, that argument won't be checked and thus means for all
 # for example,
 # @expectedFailureAll, xfail for all platform/compiler/arch,
 # @expectedFailureAll(compiler='gcc'), xfail for gcc on all platform/architecture
 # @expectedFailureAll(bugnumber, ["linux"], "gcc", ['>=', '4.9'], ['i386']), xfail for gcc>=4.9 on linux with i386
-def expectedFailureAll(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, triple=None):
+def expectedFailureAll(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, triple=None, debug_info=None):
     def fn(self):
         return ((oslist is None or self.getPlatform() in oslist) and
                 (compiler is None or (compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version))) and
                 self.expectedArch(archs) and
-                (triple is None or re.match(triple, lldb.DBG.GetSelectedPlatform().GetTriple())))
+                (triple is None or re.match(triple, lldb.DBG.GetSelectedPlatform().GetTriple())) and
+                (debug_info is None or self.debug_info in debug_info))
     return expectedFailure(fn, bugnumber)
+
+def expectedFailureDwarf(bugnumber=None):
+    return expectedFailureAll(bugnumber==bugnumber, debug_info="dwarf")
+
+def expectedFailureDsym(bugnumber=None):
+    return expectedFailureAll(bugnumber==bugnumber, debug_info="dsym")
+
+def expectedFailureCompiler(compiler, compiler_version=None, bugnumber=None):
+    if compiler_version is None:
+        compiler_version=['=', None]
+    return expectedFailureAll(bugnumber=bugnumber, compiler=compiler, compiler_version=compiler_version)
 
 # to XFAIL a specific clang versions, try this
 # @expectedFailureClang('bugnumber', ['<=', '3.4'])
@@ -671,10 +689,11 @@ def expectedFailurei386(bugnumber=None):
 def expectedFailurex86_64(bugnumber=None):
     return expectedFailureArch('x86_64', bugnumber)
 
-def expectedFailureOS(oslist, bugnumber=None, compilers=None):
+def expectedFailureOS(oslist, bugnumber=None, compilers=None, debug_info=None):
     def fn(self):
         return (self.getPlatform() in oslist and
-                self.expectedCompiler(compilers))
+                self.expectedCompiler(compilers) and
+                (debug_info is None or self.debug_info in debug_info))
     return expectedFailure(fn, bugnumber)
 
 def expectedFailureHostOS(oslist, bugnumber=None, compilers=None):
@@ -683,18 +702,18 @@ def expectedFailureHostOS(oslist, bugnumber=None, compilers=None):
                 self.expectedCompiler(compilers))
     return expectedFailure(fn, bugnumber)
 
-def expectedFailureDarwin(bugnumber=None, compilers=None):
+def expectedFailureDarwin(bugnumber=None, compilers=None, debug_info=None):
     # For legacy reasons, we support both "darwin" and "macosx" as OS X triples.
-    return expectedFailureOS(getDarwinOSTriples(), bugnumber, compilers)
+    return expectedFailureOS(getDarwinOSTriples(), bugnumber, compilers, debug_info=debug_info)
 
-def expectedFailureFreeBSD(bugnumber=None, compilers=None):
-    return expectedFailureOS(['freebsd'], bugnumber, compilers)
+def expectedFailureFreeBSD(bugnumber=None, compilers=None, debug_info=None):
+    return expectedFailureOS(['freebsd'], bugnumber, compilers, debug_info=debug_info)
 
-def expectedFailureLinux(bugnumber=None, compilers=None):
-    return expectedFailureOS(['linux'], bugnumber, compilers)
+def expectedFailureLinux(bugnumber=None, compilers=None, debug_info=None):
+    return expectedFailureOS(['linux'], bugnumber, compilers, debug_info=debug_info)
 
-def expectedFailureWindows(bugnumber=None, compilers=None):
-    return expectedFailureOS(['windows'], bugnumber, compilers)
+def expectedFailureWindows(bugnumber=None, compilers=None, debug_info=None):
+    return expectedFailureOS(['windows'], bugnumber, compilers, debug_info=debug_info)
 
 def expectedFailureHostWindows(bugnumber=None, compilers=None):
     return expectedFailureHostOS(['windows'], bugnumber, compilers)
@@ -758,6 +777,16 @@ def expectedFlakey(expected_fn, bugnumber=None):
         return expectedFailure_impl(bugnumber)
     else:
         return expectedFailure_impl
+
+def expectedFlakeyDwarf(bugnumber=None):
+    def fn(self):
+        return self.debug_info == "dwarf"
+    return expectedFlakey(fn, bugnumber)
+
+def expectedFlakeyDsym(bugnumber=None):
+    def fn(self):
+        return self.debug_info == "dwarf"
+    return expectedFlakey(fn, bugnumber)
 
 def expectedFlakeyOS(oslist, bugnumber=None, compilers=None):
     def fn(self):
@@ -1021,12 +1050,22 @@ def skipIfLinuxClang(func):
 # @skipIf(bugnumber, ["linux"], "gcc", ['>=', '4.9'], ['i386']), skip for gcc>=4.9 on linux with i386
 
 # TODO: refactor current code, to make skipIfxxx functions to call this function
-def skipIf(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None):
+def skipIf(bugnumber=None, oslist=None, compiler=None, compiler_version=None, archs=None, debug_info=None):
     def fn(self):
         return ((oslist is None or self.getPlatform() in oslist) and
                 (compiler is None or (compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version))) and
-                self.expectedArch(archs))
-    return skipTestIfFn(fn, bugnumber, skipReason="skipping because os:%s compiler: %s %s arch: %s"%(oslist, compiler, compiler_version, archs))
+                self.expectedArch(archs) and
+                (debug_info is None or self.debug_info in debug_info))
+    return skipTestIfFn(fn, bugnumber, skipReason="skipping because os:%s compiler: %s %s arch: %s debug info: %s"%(oslist, compiler, compiler_version, archs, debug_info))
+
+def skipIfDebugInfo(bugnumber=None, debug_info=None):
+    return skipIf(bugnumber=bugnumber, debug_info=debug_info)
+
+def skipIfDwarf(bugnumber=None):
+    return skipIfDebugInfo(bugnumber, ["dwarf"])
+
+def skipIfDsym(bugnumber=None):
+    return skipIfDebugInfo(bugnumber, ["dsym"])
 
 def skipTestIfFn(expected_fn, bugnumber=None, skipReason=None):
     def skipTestIfFn_impl(func):
@@ -2049,7 +2088,7 @@ class Base(unittest2.TestCase):
             print "Building LLDB Library (%s) from sources %s" % (lib_name, sources)
 
         self.buildDefault(dictionary=d)
-
+    
     def buildProgram(self, sources, exe_name):
         """ Platform specific way to build an executable from C/C++ sources. """
         d = {'CXX_SOURCES' : sources,
@@ -2177,6 +2216,34 @@ class Base(unittest2.TestCase):
         else:
             return ['libc++.1.dylib','libc++abi.dylib']
 
+# Metaclass for TestBase to change the list of test metods when a new TestCase is loaded.
+# We change the test methods to create a new test method for each test for each debug info we are
+# testing. The name of the new test method will be '<original-name>_<debug-info>' and with adding
+# the new test method we remove the old method at the same time.
+class LLDBTestCaseFactory(type):
+    def __new__(cls, name, bases, attrs):
+        newattrs = {}
+        for attrname, attrvalue in attrs.iteritems():
+            if attrname.startswith("test") and not getattr(attrvalue, "__no_debug_info_test__", False):
+                @dsym_test
+                def dsym_test_method(self, attrvalue=attrvalue):
+                    self.debug_info = "dsym"
+                    return attrvalue(self)
+                dsym_method_name = attrname + "_dsym"
+                dsym_test_method.__name__ = dsym_method_name
+                newattrs[dsym_method_name] = dsym_test_method
+
+                @dwarf_test
+                def dwarf_test_method(self, attrvalue=attrvalue):
+                    self.debug_info = "dwarf"
+                    return attrvalue(self)
+                dwarf_method_name = attrname + "_dwarf"
+                dwarf_test_method.__name__ = dwarf_method_name
+                newattrs[dwarf_method_name] = dwarf_test_method
+            else:
+                newattrs[attrname] = attrvalue
+        return super(LLDBTestCaseFactory, cls).__new__(cls, name, bases, newattrs)
+
 class TestBase(Base):
     """
     This abstract base class is meant to be subclassed.  It provides default
@@ -2236,6 +2303,9 @@ class TestBase(Base):
     # Time to wait before the next launching attempt in second(s).
     # Can be overridden by the LLDB_TIME_WAIT_NEXT_LAUNCH environment variable.
     timeWaitNextLaunch = 1.0;
+
+    # Setup the metaclass for this class to change the list of the test methods when a new class is loaded
+    __metaclass__ = LLDBTestCaseFactory
 
     def doDelay(self):
         """See option -w of dotest.py."""
@@ -2691,6 +2761,20 @@ class TestBase(Base):
         with recording(self, trace) as sbuf:
             print >> sbuf, str(method) + ":",  result
         return result
+
+    def build(self, architecture=None, compiler=None, dictionary=None, clean=True):
+        """Platform specific way to build the default binaries."""
+        if lldb.skip_build_and_cleanup:
+            return
+        module = builder_module()
+        if target_is_android():
+            dictionary = append_android_envs(dictionary)
+        if self.debug_info is None:
+            return self.buildDefault(architecture, compiler, dictionary, clean)
+        elif self.debug_info == "dsym":
+            return self.buildDsym(architecture, compiler, dictionary, clean)
+        elif self.debug_info == "dwarf":
+            return self.buildDwarf(architecture, compiler, dictionary, clean)
 
     # =================================================
     # Misc. helper methods for debugging test execution

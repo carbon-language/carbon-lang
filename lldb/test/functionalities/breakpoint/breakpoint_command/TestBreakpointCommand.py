@@ -18,19 +18,10 @@ class BreakpointCommandTestCase(TestBase):
         cls.RemoveTempFile("output.txt")
         cls.RemoveTempFile("output2.txt")
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test a sequence of breakpoint command add, list, and delete."""
-        self.buildDsym()
-        self.breakpoint_command_sequence()
-        self.breakpoint_command_script_parameters ()
-
-    @dwarf_test
     @expectedFailureWindows("llvm.org/pr24528")
-    def test_with_dwarf(self):
+    def test(self):
         """Test a sequence of breakpoint command add, list, and delete."""
-        self.buildDwarf()
+        self.build()
         self.breakpoint_command_sequence()
         self.breakpoint_command_script_parameters ()
 

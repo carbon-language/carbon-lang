@@ -11,80 +11,6 @@ class HiddenIvarsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_expr_with_dsym(self):
-        if self.getArchitecture() == 'i386':
-            self.skipTest("requires modern objc runtime")
-        else:
-            self.buildDsym()
-            self.expr(False)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_expr_stripped_with_dsym(self):
-        if self.getArchitecture() == 'i386':
-            self.skipTest("requires modern objc runtime")
-        else:
-            self.buildDsym()
-            self.expr(True)
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_expr_with_dwarf(self):
-        if self.getArchitecture() == 'i386':
-            self.skipTest("requires modern objc runtime")
-        else:
-            self.buildDwarf()
-            self.expr(False)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_frame_variable_with_dsym(self):
-        if self.getArchitecture() == 'i386':
-            self.skipTest("requires modern objc runtime")
-        else:
-            self.buildDsym()
-            self.frame_var(False)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_frame_variable_stripped_with_dsym(self):
-        if self.getArchitecture() == 'i386':
-            self.skipTest("requires modern objc runtime")
-        else:
-            self.buildDsym()
-            self.frame_var(True)
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_frame_variable_with_dwarf(self):
-        if self.getArchitecture() == 'i386':
-            self.skipTest("requires modern objc runtime")
-        else:
-            self.buildDwarf()
-            self.frame_var(False)
-
-    @unittest2.expectedFailure("rdar://18683637")
-    @skipUnlessDarwin
-    @dsym_test
-    def test_frame_variable_across_modules_with_dsym(self):
-        if self.getArchitecture() == 'i386':
-            self.skipTest("requires modern objc runtime")
-        else:
-            self.buildDsym()
-            self.frame_var_type_access_across_module()
-
-    @unittest2.expectedFailure("rdar://18683637")
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_frame_variable_across_modules_with_dwarf(self):
-        if self.getArchitecture() == 'i386':
-            self.skipTest("requires modern objc runtime")
-        else:
-            self.buildDwarf()
-            self.frame_var_type_access_across_module()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -94,6 +20,48 @@ class HiddenIvarsTestCase(TestBase):
         # The makefile names of the shared libraries as they appear in DYLIB_NAME.
         # The names should have no loading "lib" or extension as they will be localized
         self.shlib_names = ["InternalDefiner"]
+
+    @skipUnlessDarwin
+    def test_expr_stripped(self):
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
+        else:
+            self.build()
+            self.expr(True)
+
+    @skipUnlessDarwin
+    def test_expr(self):
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
+        else:
+            self.build()
+            self.expr(False)
+
+    @skipUnlessDarwin
+    def test_frame_variable_stripped(self):
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
+        else:
+            self.build()
+            self.frame_var(True)
+
+    @skipUnlessDarwin
+    def test_frame_variable(self):
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
+        else:
+            self.build()
+            self.frame_var(False)
+
+    @unittest2.expectedFailure("rdar://18683637")
+    @skipUnlessDarwin
+    def test_frame_variable_across_modules(self):
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
+        else:
+            self.build()
+            self.common_setup(False)
+            self.expect("frame variable k->bar", VARIABLES_DISPLAYED_CORRECTLY, substrs = ["= 3"])
         
     def common_setup(self, strip):
         
@@ -196,11 +164,6 @@ class HiddenIvarsTestCase(TestBase):
         else:
             self.expect("frame variable *k", VARIABLES_DISPLAYED_CORRECTLY,
                 substrs = ["foo = 2", "bar = 3", '_filteredDataSource = 0x', '"2 objects"'])
-        
-    def frame_var_type_access_across_module(self):
-        self.common_setup(False)
-
-        self.expect("frame variable k->bar", VARIABLES_DISPLAYED_CORRECTLY, substrs = ["= 3"])
 
                        
 if __name__ == '__main__':

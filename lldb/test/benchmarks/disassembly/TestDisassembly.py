@@ -37,6 +37,7 @@ class DisassembleDriverMainLoop(BenchBase):
             self.count = 5
 
     @benchmarks_test
+    @no_debug_info_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_run_lldb_then_gdb(self):
         """Test disassembly on a large function with lldb vs. gdb."""
@@ -52,6 +53,7 @@ class DisassembleDriverMainLoop(BenchBase):
         print "lldb_avg/gdb_avg: %f" % (self.lldb_avg/self.gdb_avg)
 
     @benchmarks_test
+    @no_debug_info_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_run_gdb_then_lldb(self):
         """Test disassembly on a large function with lldb vs. gdb."""

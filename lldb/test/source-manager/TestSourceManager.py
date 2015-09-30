@@ -28,21 +28,7 @@ class SourceManagerTestCase(TestBase):
     @python_api_test
     def test_display_source_python(self):
         """Test display of source using the SBSourceManager API."""
-        self.buildDefault()
-        self.display_source_python()
-
-    def test_move_and_then_display_source(self):
-        """Test that target.source-map settings work by moving main.c to hidden/main.c."""
-        self.buildDefault()
-        self.move_and_then_display_source()
-
-    def test_modify_source_file_while_debugging(self):
-        """Modify a source file while debugging the executable."""
-        self.buildDefault()
-        self.modify_source_file_while_debugging()
-
-    def display_source_python(self):
-        """Display source using the SBSourceManager API."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -81,8 +67,9 @@ class SourceManagerTestCase(TestBase):
         stream.Print(None)
         stream.RedirectToFile(None, True)
 
-    def move_and_then_display_source(self):
+    def test_move_and_then_display_source(self):
         """Test that target.source-map settings work by moving main.c to hidden/main.c."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -108,8 +95,9 @@ class SourceManagerTestCase(TestBase):
         self.expect("source list -n main", SOURCE_DISPLAYED_CORRECTLY,
             substrs = ['Hello world'])
 
-    def modify_source_file_while_debugging(self):
+    def test_modify_source_file_while_debugging(self):
         """Modify a source file while debugging the executable."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

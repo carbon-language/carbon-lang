@@ -9,31 +9,10 @@ class CPPTestDiamondInheritance(TestBase):
     
     mydir = TestBase.compute_mydir(__file__)
     
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test that virtual base classes work in when SBValue objects are used to explore the variable value"""
-        self.buildDsym()
-        self.diamong_inheritace()
-
-    @dwarf_test
     @expectedFailureWindows("llvm.org/pr24764")
-    def test_with_dwarf_and_run_command(self):
+    def test_with_run_command(self):
         """Test that virtual base classes work in when SBValue objects are used to explore the variable value"""
-        self.buildDwarf()
-        self.diamong_inheritace()
-
-    def setUp(self):
-        TestBase.setUp(self)
-    
-    def set_breakpoint(self, line):
-        # Some compilers (for example GCC 4.4.7 and 4.6.1) emit multiple locations for the statement with the ternary
-        # operator in the test program, while others emit only 1.
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", line, num_expected_locations=-1, loc_exact=False)
-
-    def diamong_inheritace(self):
-        """Test that virtual base classes work in when SBValue objects are used to explore the variable value"""
-        
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         
         target = self.dbg.CreateTarget(exe)
@@ -56,6 +35,11 @@ class CPPTestDiamondInheritance(TestBase):
         self.assertTrue(frame.FindVariable("d").GetChildAtIndex(0).GetChildAtIndex(0).GetValueAsUnsigned(0) == 12345, "ensure Derived2 from j1 is correct");
         thread.StepOver()
         self.assertTrue(frame.FindVariable("d").GetChildAtIndex(0).GetChildAtIndex(0).GetValueAsUnsigned(0) == 12346, "ensure Derived2 from j2 is correct");
+    
+    def set_breakpoint(self, line):
+        # Some compilers (for example GCC 4.4.7 and 4.6.1) emit multiple locations for the statement with the ternary
+        # operator in the test program, while others emit only 1.
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", line, num_expected_locations=-1, loc_exact=False)
         
 if __name__ == '__main__':
     import atexit

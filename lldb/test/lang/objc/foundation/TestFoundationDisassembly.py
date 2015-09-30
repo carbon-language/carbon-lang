@@ -18,7 +18,7 @@ class FoundationDisassembleTestCase(TestBase):
     @unittest2.skipIf(TestBase.skipLongRunningTest(), "Skip this long running test")
     def test_foundation_disasm(self):
         """Do 'disassemble -n func' on each and every 'Code' symbol entry from the Foundation.framework."""
-        self.buildDefault()
+        self.build()
         
         # Enable synchronous mode
         self.dbg.SetAsync(False)
@@ -61,21 +61,10 @@ class FoundationDisassembleTestCase(TestBase):
                 self.runCmd('disassemble -n "%s"' % func)
         
 
-    @dsym_test
-    def test_simple_disasm_with_dsym(self):
+    def test_simple_disasm(self):
         """Test the lldb 'disassemble' command"""
-        self.buildDsym()
-        self.do_simple_disasm()
+        self.build()
 
-    @dwarf_test
-    def test_simple_disasm_with_dwarf(self):
-        """Test the lldb 'disassemble' command"""
-        self.buildDwarf()
-        self.do_simple_disasm()
-
-    def do_simple_disasm(self):
-        """Do a bunch of simple disassemble commands."""
-        
         # Create a target by the debugger.
         target = self.dbg.CreateTarget("a.out")
         self.assertTrue(target, VALID_TARGET)

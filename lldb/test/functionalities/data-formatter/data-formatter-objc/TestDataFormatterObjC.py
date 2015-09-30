@@ -15,180 +15,81 @@ class ObjCDataFormatterTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_plain_objc_with_dsym_and_run_command(self):
+    def test_plain_objc_with_run_command(self):
         """Test basic ObjC formatting behavior."""
-        self.buildDsym()
+        self.build()
         self.plain_data_formatter_commands()
 
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_plain_objc_with_dwarf_and_run_command(self):
-        """Test basic ObjC formatting behavior."""
-        self.buildDwarf()
-        self.plain_data_formatter_commands()
-
-    def appkit_tester_impl(self,builder,commands):
-        builder()
+    def appkit_tester_impl(self,commands):
+        self.build()
         self.appkit_common_data_formatters_command()
         commands()
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_nsnumber_with_dsym_and_run_command(self):
+    def test_nsnumber_with_run_command(self):
         """Test formatters for NSNumber."""
-        self.appkit_tester_impl(self.buildDsym,self.nsnumber_data_formatter_commands)
+        self.appkit_tester_impl(self.nsnumber_data_formatter_commands)
 
     @skipUnlessDarwin
-    @dwarf_test
-    def test_nsnumber_with_dwarf_and_run_command(self):
-        """Test formatters for NSNumber."""
-        self.appkit_tester_impl(self.buildDwarf,self.nsnumber_data_formatter_commands)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_nscontainers_with_dsym_and_run_command(self):
-        """Test formatters for NS container classes."""
-        self.appkit_tester_impl(self.buildDsym,self.nscontainers_data_formatter_commands)
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_nscontainers_with_dwarf_and_run_command(self):
+    def test_nscontainers_with_run_command(self):
         """Test formatters for  NS container classes."""
-        self.appkit_tester_impl(self.buildDwarf,self.nscontainers_data_formatter_commands)
-
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_nsdata_with_dsym_and_run_command(self):
-        """Test formatters for NSData."""
-        self.appkit_tester_impl(self.buildDsym,self.nsdata_data_formatter_commands)
+        self.appkit_tester_impl(self.nscontainers_data_formatter_commands)
 
     @skipUnlessDarwin
-    @dwarf_test
-    def test_nsdata_with_dwarf_and_run_command(self):
+    def test_nsdata_with_run_command(self):
         """Test formatters for  NSData."""
-        self.appkit_tester_impl(self.buildDwarf,self.nsdata_data_formatter_commands)
-
+        self.appkit_tester_impl(self.nsdata_data_formatter_commands)
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_nsurl_with_dsym_and_run_command(self):
+    def test_nsurl_with_run_command(self):
         """Test formatters for NSURL."""
-        self.appkit_tester_impl(self.buildDsym,self.nsurl_data_formatter_commands)
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_nsurl_with_dwarf_and_run_command(self):
-        """Test formatters for NSURL."""
-        self.appkit_tester_impl(self.buildDwarf,self.nsurl_data_formatter_commands)
+        self.appkit_tester_impl(self.nsurl_data_formatter_commands)
 
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_nserror_with_dsym_and_run_command(self):
+    def test_nserror_with_run_command(self):
         """Test formatters for NSError."""
-        self.appkit_tester_impl(self.buildDsym,self.nserror_data_formatter_commands)
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_nserror_with_dwarf_and_run_command(self):
-        """Test formatters for NSError."""
-        self.appkit_tester_impl(self.buildDwarf,self.nserror_data_formatter_commands)
+        self.appkit_tester_impl(self.nserror_data_formatter_commands)
 
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_nsbundle_with_dsym_and_run_command(self):
+    def test_nsbundle_with_run_command(self):
         """Test formatters for NSBundle."""
-        self.appkit_tester_impl(self.buildDsym,self.nsbundle_data_formatter_commands)
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_nsbundle_with_dwarf_and_run_command(self):
-        """Test formatters for NSBundle."""
-        self.appkit_tester_impl(self.buildDwarf,self.nsbundle_data_formatter_commands)
+        self.appkit_tester_impl(self.nsbundle_data_formatter_commands)
 
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_nsexception_with_dsym_and_run_command(self):
+    def test_nsexception_with_run_command(self):
         """Test formatters for NSException."""
-        self.appkit_tester_impl(self.buildDsym,self.nsexception_data_formatter_commands)
+        self.appkit_tester_impl(self.nsexception_data_formatter_commands)
 
     @skipUnlessDarwin
-    @dwarf_test
-    def test_nsexception_with_dwarf_and_run_command(self):
-        """Test formatters for NSException."""
-        self.appkit_tester_impl(self.buildDwarf,self.nsexception_data_formatter_commands)
-
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_nsmisc_with_dsym_and_run_command(self):
+    def test_nsmisc_with_run_command(self):
         """Test formatters for misc NS classes."""
-        self.appkit_tester_impl(self.buildDsym,self.nsmisc_data_formatter_commands)
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_nsmisc_with_dwarf_and_run_command(self):
-        """Test formatters for misc NS classes."""
-        self.appkit_tester_impl(self.buildDwarf,self.nsmisc_data_formatter_commands)
+        self.appkit_tester_impl(self.nsmisc_data_formatter_commands)
 
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_nsdate_with_dsym_and_run_command(self):
+    def test_nsdate_with_run_command(self):
         """Test formatters for NSDate."""
-        self.appkit_tester_impl(self.buildDsym,self.nsdate_data_formatter_commands)
+        self.appkit_tester_impl(self.nsdate_data_formatter_commands)
 
     @skipUnlessDarwin
-    @dwarf_test
-    def test_nsdate_with_dwarf_and_run_command(self):
-        """Test formatters for NSDate."""
-        self.appkit_tester_impl(self.buildDwarf,self.nsdate_data_formatter_commands)
-
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_coreframeworks_with_dsym_and_run_command(self):
+    def test_coreframeworks_and_run_command(self):
         """Test formatters for Core OSX frameworks."""
-        self.buildDsym()
+        self.build()
         self.cf_data_formatter_commands()
 
     @skipUnlessDarwin
-    @dwarf_test
-    def test_coreframeworks_with_dwarf_and_run_command(self):
-        """Test formatters for Core OSX frameworks."""
-        self.buildDwarf()
-        self.cf_data_formatter_commands()
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_kvo_with_dsym_and_run_command(self):
+    def test_kvo_with_run_command(self):
         """Test the behavior of formatters when KVO is in use."""
-        self.buildDsym()
+        self.build()
         self.kvo_data_formatter_commands()
 
     @skipUnlessDarwin
-    @dwarf_test
-    def test_kvo_with_dwarf_and_run_command(self):
-        """Test the behavior of formatters when KVO is in use."""
-        self.buildDwarf()
-        self.kvo_data_formatter_commands()
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_expr_with_dsym_and_run_command(self):
+    def test_expr_with_run_command(self):
         """Test common cases of expression parser <--> formatters interaction."""
-        self.buildDsym()
-        self.expr_objc_data_formatter_commands()
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_expr_with_dwarf_and_run_command(self):
-        """Test common cases of expression parser <--> formatters interaction."""
-        self.buildDwarf()
+        self.build()
         self.expr_objc_data_formatter_commands()
 
     def setUp(self):

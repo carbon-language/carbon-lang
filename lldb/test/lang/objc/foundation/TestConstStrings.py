@@ -9,25 +9,10 @@ import lldb
 from lldbtest import *
 import lldbutil
 
-@skipUnlessDarwin
 class ConstStringTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
     d = {'OBJC_SOURCES': 'const-strings.m'}
-
-    @dsym_test
-    def test_break_with_dsym(self):
-        """Test constant string generation amd comparison by the expression parser."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(self.d)
-        self.objc_const_strings()
-
-    @dwarf_test
-    def test_break_with_dwarf(self):
-        """Test constant string generation amd comparison by the expression parser."""
-        self.buildDwarf(dictionary=self.d)
-        self.setTearDownCleanup(self.d)
-        self.objc_const_strings()
 
     def setUp(self):
         # Call super's setUp().
@@ -36,8 +21,12 @@ class ConstStringTestCase(TestBase):
         self.main_source = "const-strings.m"
         self.line = line_number(self.main_source, '// Set breakpoint here.')
 
-    def objc_const_strings(self):
+    @skipUnlessDarwin
+    def test_break(self):
         """Test constant string generation amd comparison by the expression parser."""
+        self.build(dictionary=self.d)
+        self.setTearDownCleanup(self.d)
+        
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

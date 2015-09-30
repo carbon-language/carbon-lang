@@ -13,32 +13,19 @@ class TestCStepping(TestBase):
     def getCategories(self):
         return ['basic_process']
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Test stepping over vrs. hitting breakpoints & subsequent stepping in various forms."""
-        self.buildDsym()
-        self.step_over_stepping()
-
-    @expectedFailureFreeBSD('llvm.org/pr17932')
-    @expectedFailureLinux # llvm.org/pr14437
-    @expectedFailureWindows("llvm.org/pr24777")
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Test stepping over vrs. hitting breakpoints & subsequent stepping in various forms."""
-        self.buildDwarf()
-        self.step_over_stepping()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line numbers that we will step to in main:
         self.main_source = "main.c"
 
-    def step_over_stepping(self):
-        """Use Python APIs to test stepping over and hitting breakpoints."""
+    @expectedFailureFreeBSD('llvm.org/pr17932')
+    @expectedFailureLinux # llvm.org/pr14437
+    @expectedFailureWindows("llvm.org/pr24777")
+    @python_api_test
+    def test_and_python_api(self):
+        """Test stepping over vrs. hitting breakpoints & subsequent stepping in various forms."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

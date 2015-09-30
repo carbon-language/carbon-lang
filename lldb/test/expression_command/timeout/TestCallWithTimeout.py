@@ -19,24 +19,13 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
         self.main_source_spec = lldb.SBFileSpec (self.main_source)
 
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test calling std::String member function."""
-        self.buildDsym()
-        self.call_function()
-
     @expectedFlakeyFreeBSD("llvm.org/pr19605")
     @expectedFlakeyLinux("llvm.org/pr20275")
     @expectedFailureWindows("llvm.org/pr21765")
-    @dwarf_test
-    def test_with_dwarf(self):
+    def test(self):
         """Test calling std::String member function."""
-        self.buildDwarf()
-        self.call_function()
+        self.build()
 
-    def call_function(self):
-        """Test calling function with timeout."""
         exe_name = "a.out"
         exe = os.path.join(os.getcwd(), exe_name)
 

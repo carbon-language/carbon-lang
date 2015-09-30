@@ -12,28 +12,16 @@ class CPPBreakpointTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test lldb exception breakpoint command for CPP."""
-        self.buildDsym()
-        self.cpp_exceptions()
-
-    @dwarf_test
-    @expectedFailureWindows("llvm.org/pr24538") # clang-cl does not support throw or catch
-    def test_with_dwarf(self):
-        """Test lldb exception breakpoint command for CPP."""
-        self.buildDwarf()
-        self.cpp_exceptions()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         self.source = 'exceptions.cpp'
         self.catch_line = line_number(self.source, '// This is the line you should stop at for catch')
 
-    def cpp_exceptions (self):
+    @expectedFailureWindows("llvm.org/pr24538") # clang-cl does not support throw or catch
+    def test(self):
         """Test lldb exception breakpoint command for CPP."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target from the debugger.
@@ -73,8 +61,7 @@ class CPPBreakpointTestCase(TestBase):
         self.assertTrue (frame_functions.count ("intervening_function(int)") == 0,     "At catch our intervening function is off the stack")
         self.assertTrue (frame_functions.count ("catches_exception(int)") == 1, "At catch our catch function is on the stack")
 
-        
-                
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

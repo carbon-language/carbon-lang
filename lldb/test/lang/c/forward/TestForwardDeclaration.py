@@ -10,25 +10,9 @@ class ForwardDeclarationTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
+    def test_and_run_command(self):
         """Display *bar_ptr when stopped on a function with forward declaration of struct bar."""
-        self.buildDsym()
-        self.forward_declaration()
-
-    # rdar://problem/8648070
-    # 'expression *bar_ptr' seg faults
-    # rdar://problem/8546815
-    # './dotest.py -v -t forward' fails for test_with_dwarf_and_run_command
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Display *bar_ptr when stopped on a function with forward declaration of struct bar."""
-        self.buildDwarf()
-        self.forward_declaration()
-
-    def forward_declaration(self):
-        """Display *bar_ptr when stopped on a function with forward declaration of struct bar."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

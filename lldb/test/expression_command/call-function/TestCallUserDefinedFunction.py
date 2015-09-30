@@ -22,23 +22,11 @@ class ExprCommandCallUserDefinedFunction(TestBase):
         # Find the line number to break for main.c.
         self.line = line_number('main.cpp',
                                 '// Please test these expressions while stopped at this line:')
-    @skipUnlessDarwin
-    @dsym_test
-    @expectedFailureDarwin("llvm.org/pr20274") # intermittent failure on MacOSX
-    def test_with_dsym(self):
-        """Test return values of user defined function calls."""
-        self.buildDsym()
-        self.call_function()
-
-    @dwarf_test
+    @expectedFailureDarwin("llvm.org/pr20274", debug_info=["dsym"]) # intermittent failure on MacOSX
     @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
-    def test_with_dwarf(self):
+    def test(self):
         """Test return values of user defined function calls."""
-        self.buildDwarf()
-        self.call_functions()
-
-    def call_functions(self):
-        """Test return values of user defined function calls."""
+        self.build()
 
         # Set breakpoint in main and run exe
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)

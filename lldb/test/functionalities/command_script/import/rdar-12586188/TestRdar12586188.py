@@ -10,6 +10,7 @@ class Rdar12586188TestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
+    @no_debug_info_test
     def test_rdar12586188_command(self):
         """Check that we handle an ImportError in a special way when command script importing files."""
         self.run_test()

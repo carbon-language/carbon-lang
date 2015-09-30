@@ -12,29 +12,16 @@ class FormatPropagationTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    # rdar://problem/14035604
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Check if changing Format on an SBValue correctly propagates that new format to children as it should"""
-        self.buildDsym()
-        self.propagate_test_commands()
-
-    # rdar://problem/14035604
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Check if changing Format on an SBValue correctly propagates that new format to children as it should"""
-        self.buildDwarf()
-        self.propagate_test_commands()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break at.
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    def propagate_test_commands(self):
+    # rdar://problem/14035604
+    def test_with_run_command(self):
         """Check for an issue where capping does not work because the Target pointer appears to be changing behind our backs."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)

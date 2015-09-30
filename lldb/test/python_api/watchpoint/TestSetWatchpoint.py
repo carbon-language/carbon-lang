@@ -20,25 +20,12 @@ class SetWatchpointAPITestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number(self.source, '// Set break point at this line.')
 
-    @skipUnlessDarwin
     @python_api_test
-    @dsym_test
-    def test_watch_val_with_dsym(self):
-        """Exercise SBValue.Watch() API to set a watchpoint."""
-        self.buildDsym()
-        self.do_set_watchpoint()
-
-    @python_api_test
-    @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
-    def test_watch_val_with_dwarf(self):
+    def test_watch_val(self):
         """Exercise SBValue.Watch() API to set a watchpoint."""
-        self.buildDwarf()
-        self.do_set_watchpoint()
-
-    def do_set_watchpoint(self):
-        """Use SBFrame.WatchValue() to set a watchpoint and verify that the program stops later due to the watchpoint."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.

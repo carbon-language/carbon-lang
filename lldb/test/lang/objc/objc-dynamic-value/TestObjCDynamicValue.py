@@ -12,30 +12,6 @@ class ObjCDynamicValueTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    @expectedFailureDarwin("llvm.org/pr20271 rdar://18684107")
-    def test_get_dynamic_objc_vals_with_dsym(self):
-        """Test fetching ObjC dynamic values."""
-        if self.getArchitecture() == 'i386':
-            # rdar://problem/9946499
-            self.skipTest("Dynamic types for ObjC V1 runtime not implemented")
-        self.buildDsym()
-        self.do_get_dynamic_vals()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dwarf_test
-    @expectedFailureDarwin("llvm.org/pr20271 rdar://18684107")
-    def test_get_objc_dynamic_vals_with_dwarf(self):
-        """Test fetching ObjC dynamic values."""
-        if self.getArchitecture() == 'i386':
-            # rdar://problem/9946499
-            self.skipTest("Dynamic types for ObjC V1 runtime not implemented")
-        self.buildDwarf()
-        self.do_get_dynamic_vals()
-
     def setUp(self):
         # Call super's setUp().                                                                                                           
         TestBase.setUp(self)
@@ -49,15 +25,16 @@ class ObjCDynamicValueTestCase(TestBase):
         self.main_before_setProperty_line = line_number(self.source_name,
                                                        '// Break here to see if we can step into real method.')
 
-    def examine_SourceDerived_ptr (self, object):
-        self.assertTrue (object)
-        self.assertTrue (object.GetTypeName().find ('SourceDerived') != -1)
-        derivedValue = object.GetChildMemberWithName ('_derivedValue')
-        self.assertTrue (derivedValue)
-        self.assertTrue (int (derivedValue.GetValue(), 0) == 30)
+    @skipUnlessDarwin
+    @python_api_test
+    @expectedFailureDarwin("llvm.org/pr20271 rdar://18684107")
+    def test_get_objc_dynamic_vals(self):
+        """Test fetching ObjC dynamic values."""
+        if self.getArchitecture() == 'i386':
+            # rdar://problem/9946499
+            self.skipTest("Dynamic types for ObjC V1 runtime not implemented")
 
-    def do_get_dynamic_vals(self):
-        """Make sure we get dynamic values correctly both for compiled in classes and dynamic ones"""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target from the debugger.
@@ -187,6 +164,13 @@ class ObjCDynamicValueTestCase(TestBase):
         del (object_static)
 
         self.examine_SourceDerived_ptr (object_dynamic)
+
+    def examine_SourceDerived_ptr (self, object):
+        self.assertTrue (object)
+        self.assertTrue (object.GetTypeName().find ('SourceDerived') != -1)
+        derivedValue = object.GetChildMemberWithName ('_derivedValue')
+        self.assertTrue (derivedValue)
+        self.assertTrue (int (derivedValue.GetValue(), 0) == 30)
 
 if __name__ == '__main__':
     import atexit

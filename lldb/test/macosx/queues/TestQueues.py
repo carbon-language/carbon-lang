@@ -12,19 +12,9 @@ class TestQueues(TestBase):
 
     @skipUnlessDarwin
     @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
+    def test_with_python_api(self):
         """Test queues inspection SB APIs."""
-        self.buildDsym()
-        self.queues()
-        self.queues_with_libBacktraceRecording()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Test queues inspection SB APIs."""
-        self.buildDwarf()
+        self.build()
         self.queues()
         self.queues_with_libBacktraceRecording()
 

@@ -12,28 +12,6 @@ class ObjectDescriptionAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    # rdar://problem/10857337
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_find_global_variables_then_object_description_with_dsym(self):
-        """Exercise SBTaget.FindGlobalVariables() API."""
-        d = {'EXE': 'a.out'}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.find_global_variables_then_object_description('a.out')
-
-    # rdar://problem/10857337
-    @skipUnlessDarwin
-    @python_api_test
-    @dwarf_test
-    def test_find_global_variables_then_object_description_with_dwarf(self):
-        """Exercise SBTarget.FindGlobalVariables() API."""
-        d = {'EXE': 'b.out'}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.find_global_variables_then_object_description('b.out')
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -41,9 +19,15 @@ class ObjectDescriptionAPITestCase(TestBase):
         self.source = 'main.m'
         self.line = line_number(self.source, '// Set break point at this line.')
 
-    def find_global_variables_then_object_description(self, exe_name):
-        """Exercise SBTaget.FindGlobalVariables() followed by SBValue.GetObjectDescription()."""
-        exe = os.path.join(os.getcwd(), exe_name)
+    # rdar://problem/10857337
+    @skipUnlessDarwin
+    @python_api_test
+    def test_find_global_variables_then_object_description(self):
+        """Exercise SBTarget.FindGlobalVariables() API."""
+        d = {'EXE': 'b.out'}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        exe = os.path.join(os.getcwd(), 'b.out')
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)

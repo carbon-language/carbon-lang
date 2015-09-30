@@ -26,7 +26,7 @@ class Issue11581TestCase(TestBase):
         self.addTearDownHook(cleanup)
 
         """valobj.AddressOf() should return correct values."""
-        self.buildDefault()
+        self.build()
         
         exe = os.path.join(os.getcwd(), "a.out")
         

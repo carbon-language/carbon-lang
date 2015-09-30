@@ -16,6 +16,7 @@ class AddDsymCommandCase(TestBase):
         self.source = 'main.cpp'
         self.teardown_hook_added = False
 
+    @no_debug_info_test
     def test_add_dsym_command_with_error(self):
         """Test that the 'add-dsym' command informs the user about failures."""
 
@@ -32,6 +33,7 @@ class AddDsymCommandCase(TestBase):
         self.exe_name = 'a.out'
         self.do_add_dsym_with_error(self.exe_name)
 
+    @no_debug_info_test
     def test_add_dsym_command_with_success(self):
         """Test that the 'add-dsym' command informs the user about success."""
 
@@ -42,6 +44,7 @@ class AddDsymCommandCase(TestBase):
         self.exe_name = 'a.out'
         self.do_add_dsym_with_success(self.exe_name)
 
+    @no_debug_info_test
     def test_add_dsym_with_dSYM_bundle(self):
         """Test that the 'add-dsym' command informs the user about success."""
 

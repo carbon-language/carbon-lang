@@ -10,22 +10,6 @@ class TestObjCIvarOffsets(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Test printing ObjC objects that use unbacked properties"""
-        self.buildDsym()
-        self.objc_ivar_offsets()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Test printing ObjC objects that use unbacked properties"""
-        self.buildDwarf()
-        self.objc_ivar_offsets()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -33,8 +17,11 @@ class TestObjCIvarOffsets(TestBase):
         self.main_source = "main.m"
         self.stop_line = line_number(self.main_source, '// Set breakpoint here.')
 
-    def objc_ivar_offsets(self):
-        """Use Python APIs to test stepping into ObjC methods."""
+    @skipUnlessDarwin
+    @python_api_test
+    def test_with_python_api(self):
+        """Test printing ObjC objects that use unbacked properties"""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

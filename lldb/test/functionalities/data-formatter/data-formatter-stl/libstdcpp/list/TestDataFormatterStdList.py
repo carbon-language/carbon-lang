@@ -12,21 +12,6 @@ class StdListDataFormatterTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test data formatter commands."""
-        self.buildDsym()
-        self.data_formatter_commands()
-
-    @dwarf_test
-    @skipIfWindows # libstdcpp not ported to Windows
-    @expectedFailureFreeBSD("llvm.org/pr20548") # fails to build on lab.llvm.org buildbot
-    def test_with_dwarf_and_run_command(self):
-        """Test data formatter commands."""
-        self.buildDwarf()
-        self.data_formatter_commands()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -35,8 +20,11 @@ class StdListDataFormatterTestCase(TestBase):
         self.optional_line = line_number('main.cpp', '// Optional break point at this line.')
         self.final_line = line_number('main.cpp', '// Set final break point at this line.')
 
-    def data_formatter_commands(self):
+    @skipIfWindows # libstdcpp not ported to Windows
+    @expectedFailureFreeBSD("llvm.org/pr20548") # fails to build on lab.llvm.org buildbot
+    def test_with_run_command(self):
         """Test that that file and class static variables display correctly."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=-1)

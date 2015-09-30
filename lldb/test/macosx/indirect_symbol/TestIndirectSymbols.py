@@ -10,30 +10,17 @@ class TestIndirectFunctions(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Test stepping and setting breakpoints in indirect and re-exported symbols."""
-        self.buildDsym()
-        self.indirect_stepping()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Test stepping and setting breakpoints in indirect and re-exported symbols."""
-        self.buildDwarf()
-        self.indirect_stepping()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line numbers that we will step to in main:
         self.main_source = "main.c"
 
-    def indirect_stepping(self):
+    @skipUnlessDarwin
+    @python_api_test
+    def test_with_python_api(self):
         """Test stepping and setting breakpoints in indirect and re-exported symbols."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

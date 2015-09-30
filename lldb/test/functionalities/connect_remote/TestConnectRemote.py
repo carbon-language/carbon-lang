@@ -16,6 +16,7 @@ class ConnectRemoteTestCase(TestBase):
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @expectedFailureLinux("llvm.org/pr23475") # Test occasionally times out on the Linux build bot
     @skipIfLinux                              # Test occasionally times out on the Linux build bot
+    @no_debug_info_test
     def test_connect_remote(self):
         """Test "process connect connect:://localhost:[port]"."""
 

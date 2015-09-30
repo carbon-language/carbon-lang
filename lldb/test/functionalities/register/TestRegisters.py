@@ -25,7 +25,7 @@ class RegisterCommandsTestCase(TestBase):
         """Test commands related to registers, in particular vector registers."""
         if not self.getArchitecture() in ['amd64', 'i386', 'x86_64']:
             self.skipTest("This test requires x86 or x86_64 as the architecture for the inferior")
-        self.buildDefault()
+        self.build()
         self.register_commands()
 
     @skipIfTargetAndroid(archs=["i386"]) # Writing of mxcsr register fails, presumably due to a kernel/hardware problem
@@ -33,7 +33,7 @@ class RegisterCommandsTestCase(TestBase):
         """Test commands that write to registers, in particular floating-point registers."""
         if not self.getArchitecture() in ['amd64', 'i386', 'x86_64']:
             self.skipTest("This test requires x86 or x86_64 as the architecture for the inferior")
-        self.buildDefault()
+        self.build()
         self.fp_register_write()
 
     @expectedFailureAndroid(archs=["i386"]) # "register read fstat" always return 0xffff
@@ -42,35 +42,35 @@ class RegisterCommandsTestCase(TestBase):
         """Test commands that read fpu special purpose registers."""
         if not self.getArchitecture() in ['amd64', 'i386', 'x86_64']:
             self.skipTest("This test requires x86 or x86_64 as the architecture for the inferior")
-        self.buildDefault()
+        self.build()
         self.fp_special_purpose_register_read()
 
     def test_register_expressions(self):
         """Test expression evaluation with commands related to registers."""
         if not self.getArchitecture() in ['amd64', 'i386', 'x86_64']:
             self.skipTest("This test requires x86 or x86_64 as the architecture for the inferior")
-        self.buildDefault()
+        self.build()
         self.register_expressions()
 
     def test_convenience_registers(self):
         """Test convenience registers."""
         if not self.getArchitecture() in ['amd64', 'x86_64']:
             self.skipTest("This test requires x86_64 as the architecture for the inferior")
-        self.buildDefault()
+        self.build()
         self.convenience_registers()
 
     def test_convenience_registers_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['amd64', 'x86_64']:
             self.skipTest("This test requires x86_64 as the architecture for the inferior")
-        self.buildDefault()
+        self.build()
         self.convenience_registers_with_process_attach(test_16bit_regs=False)
 
     def test_convenience_registers_16bit_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['amd64', 'x86_64']:
             self.skipTest("This test requires x86_64 as the architecture for the inferior")
-        self.buildDefault()
+        self.build()
         self.convenience_registers_with_process_attach(test_16bit_regs=True)
 
     def common_setup(self):

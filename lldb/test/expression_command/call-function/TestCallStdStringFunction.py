@@ -18,24 +18,12 @@ class ExprCommandCallFunctionTestCase(TestBase):
         self.line = line_number('main.cpp',
                                 '// Please test these expressions while stopped at this line:')
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test calling std::String member function."""
-        self.buildDsym()
-        self.call_function()
-
-    @dwarf_test
-    @expectedFailureFreeBSD('llvm.org/pr17807') # Fails on FreeBSD buildbot
     @expectedFailureIcc # llvm.org/pr14437, fails with ICC 13.1
+    @expectedFailureFreeBSD('llvm.org/pr17807') # Fails on FreeBSD buildbot
     @expectedFailureWindows("llvm.org/pr21765")
-    def test_with_dwarf(self):
+    def test_with(self):
         """Test calling std::String member function."""
-        self.buildDwarf()
-        self.call_function()
-
-    def call_function(self):
-        """Test calling std::String member function."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         # Some versions of GCC encode two locations for the 'return' statement in main.cpp

@@ -76,18 +76,16 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertIsNotNone(context)
 
     @debugserver_test
-    @dsym_test
-    def test_QListThreadsInStopReply_supported_debugserver_dsym(self):
+    def test_QListThreadsInStopReply_supported_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.QListThreadsInStopReply_supported()
 
     @llgs_test
-    @dwarf_test
-    def test_QListThreadsInStopReply_supported_llgs_dwarf(self):
+    def test_QListThreadsInStopReply_supported_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.QListThreadsInStopReply_supported()
 
@@ -97,18 +95,16 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(len(stop_reply_threads), thread_count)
 
     @debugserver_test
-    @dsym_test
-    def test_stop_reply_reports_multiple_threads_debugserver_dsym(self):
+    def test_stop_reply_reports_multiple_threads_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.stop_reply_reports_multiple_threads(5)
 
     @llgs_test
-    @dwarf_test
-    def test_stop_reply_reports_multiple_threads_llgs_dwarf(self):
+    def test_stop_reply_reports_multiple_threads_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.stop_reply_reports_multiple_threads(5)
 
@@ -118,18 +114,16 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(len(stop_reply_threads), 0)
 
     @debugserver_test
-    @dsym_test
-    def test_no_QListThreadsInStopReply_supplies_no_threads_debugserver_dsym(self):
+    def test_no_QListThreadsInStopReply_supplies_no_threads_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.no_QListThreadsInStopReply_supplies_no_threads(5)
 
     @llgs_test
-    @dwarf_test
-    def test_no_QListThreadsInStopReply_supplies_no_threads_llgs_dwarf(self):
+    def test_no_QListThreadsInStopReply_supplies_no_threads_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.no_QListThreadsInStopReply_supplies_no_threads(5)
 
@@ -154,18 +148,16 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
             self.assertTrue(tid in stop_reply_threads)
 
     @debugserver_test
-    @dsym_test
-    def test_stop_reply_reports_correct_threads_debugserver_dsym(self):
+    def test_stop_reply_reports_correct_threads_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.stop_reply_reports_correct_threads(5)
 
     @llgs_test
-    @dwarf_test
-    def test_stop_reply_reports_correct_threads_llgs_dwarf(self):
+    def test_stop_reply_reports_correct_threads_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.stop_reply_reports_correct_threads(5)
 

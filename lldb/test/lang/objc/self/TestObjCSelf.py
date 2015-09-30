@@ -10,27 +10,9 @@ class ObjCSelfTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
     
     @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
+    def test_with_run_command(self):
         """Test that the appropriate member variables are available when stopped in Objective-C class and instance methods"""
-        self.buildDsym()
-        self.self_commands()
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Test that the appropriate member variables are available when stopped in Objective-C class and instance methods"""
-        self.buildDwarf()
-        self.self_commands()
-
-    def setUp(self):
-        TestBase.setUp(self)
-    
-    def set_breakpoint(self, line):
-        lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
-    
-    def self_commands(self):
-        """Test that the appropriate member variables are available when stopped in Objective-C class and instance methods"""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         self.set_breakpoint(line_number('main.m', '// breakpoint 1'))
@@ -49,6 +31,9 @@ class ObjCSelfTestCase(TestBase):
         
         self.expect("expression -- s_a", 
                     startstr = "(int) $1 = 5")
+
+    def set_breakpoint(self, line):
+        lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
 
 if __name__ == '__main__':
     import atexit

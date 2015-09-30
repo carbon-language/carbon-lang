@@ -13,44 +13,11 @@ class TestStepOverWatchpoint(TestBase):
     def getCategories(self):
         return ['basic_process']
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test stepping over watchpoints."""
-        self.buildDsym()
-        self.step_over_watchpoint()
-
-    @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     @expectedFailureWindows("llvm.org/pr24446")
-    def test_with_dwarf(self):
+    def test(self):
         """Test stepping over watchpoints."""
-        self.buildDwarf()
-        self.step_over_watchpoint()
-
-    def setUp(self):
-        TestBase.setUp(self)
-
-    def step_inst_for_watchpoint(self, wp_id):
-        watchpoint_hit = False
-        current_line = self.frame().GetLineEntry().GetLine()
-        while self.frame().GetLineEntry().GetLine() == current_line:
-            self.thread().StepInstruction(False)  # step_over=False
-            stop_reason = self.thread().GetStopReason()
-            if stop_reason == lldb.eStopReasonWatchpoint:
-                self.assertFalse(watchpoint_hit, "Watchpoint already hit.")
-                expected_stop_desc = "watchpoint %d" % wp_id
-                actual_stop_desc = self.thread().GetStopDescription(20)
-                self.assertTrue(actual_stop_desc == expected_stop_desc,
-                                "Watchpoint ID didn't match.")
-                watchpoint_hit = True
-            else:
-                self.assertTrue(stop_reason == lldb.eStopReasonPlanComplete,
-                                STOPPED_DUE_TO_STEP_IN)
-        self.assertTrue(watchpoint_hit, "Watchpoint never hit.")
-
-    def step_over_watchpoint(self):
-        """Test stepping over watchpoints."""
+        self.build()
         exe = os.path.join(os.getcwd(), 'a.out')
 
         target = self.dbg.CreateTarget(exe)
@@ -118,6 +85,24 @@ class TestStepOverWatchpoint(TestBase):
         self.assertTrue(thread.GetStopDescription(20) == 'step over')
 
         self.step_inst_for_watchpoint(2)
+
+    def step_inst_for_watchpoint(self, wp_id):
+        watchpoint_hit = False
+        current_line = self.frame().GetLineEntry().GetLine()
+        while self.frame().GetLineEntry().GetLine() == current_line:
+            self.thread().StepInstruction(False)  # step_over=False
+            stop_reason = self.thread().GetStopReason()
+            if stop_reason == lldb.eStopReasonWatchpoint:
+                self.assertFalse(watchpoint_hit, "Watchpoint already hit.")
+                expected_stop_desc = "watchpoint %d" % wp_id
+                actual_stop_desc = self.thread().GetStopDescription(20)
+                self.assertTrue(actual_stop_desc == expected_stop_desc,
+                                "Watchpoint ID didn't match.")
+                watchpoint_hit = True
+            else:
+                self.assertTrue(stop_reason == lldb.eStopReasonPlanComplete,
+                                STOPPED_DUE_TO_STEP_IN)
+        self.assertTrue(watchpoint_hit, "Watchpoint never hit.")
 
 if __name__ == '__main__':
     import atexit

@@ -12,17 +12,9 @@ class BreakpointInDummyTarget (TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
+    def test(self):
         """Test breakpoint set before we have a target. """
-        self.buildDsym()
-        self.dummy_breakpoint_test()
-
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test breakpoint set before we have a target. """
-        self.buildDwarf()
+        self.build()
         self.dummy_breakpoint_test()
 
     def setUp(self):

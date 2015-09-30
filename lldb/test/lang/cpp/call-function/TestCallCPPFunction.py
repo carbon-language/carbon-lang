@@ -10,26 +10,14 @@ class CallCPPFunctionTestCase(TestBase):
     
     mydir = TestBase.compute_mydir(__file__)
     
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test calling a function by basename"""
-        self.buildDsym()
-        self.call_cpp_function()
-
-    @dwarf_test
-    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
-    def test_with_dwarf_and_run_command(self):
-        """Test calling a function by basename"""
-        self.buildDwarf()
-        self.call_cpp_function()
-
     def setUp(self):
         TestBase.setUp(self)
         self.line = line_number('main.cpp', '// breakpoint')
     
-    def call_cpp_function(self):
+    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
+    def test_with_run_command(self):
         """Test calling a function by basename"""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)

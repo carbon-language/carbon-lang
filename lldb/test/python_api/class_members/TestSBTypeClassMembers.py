@@ -12,26 +12,6 @@ class SBTypeMemberFunctionsTest(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym(self):
-        """Test SBType APIs to fetch member function types."""
-        d = {'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.type_api(self.exe_name)
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test SBType APIs to fetch member function types."""
-        d = {'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.type_api(self.exe_name)
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -41,9 +21,14 @@ class SBTypeMemberFunctionsTest(TestBase):
         self.source = 'main.mm'
         self.line = line_number(self.source, '// set breakpoint here')
 
-    def type_api(self, exe_name):
+    @skipUnlessDarwin
+    @python_api_test
+    def test(self):
         """Test SBType APIs to fetch member function types."""
-        exe = os.path.join(os.getcwd(), exe_name)
+        d = {'EXE': self.exe_name}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        exe = os.path.join(os.getcwd(), self.exe_name)
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)

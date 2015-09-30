@@ -10,46 +10,19 @@ class TestWatchpointEvents (TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Test that adding, deleting and modifying watchpoints sends the appropriate events."""
-        self.buildDsym()
-        self.step_over_stepping()
-
-    @python_api_test
-    @dwarf_test
-    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
-    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
-    def test_with_dwarf_and_python_api(self):
-        """Test that adding, deleting and modifying watchpoints sends the appropriate events."""
-        self.buildDwarf()
-        self.step_over_stepping()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line numbers that we will step to in main:
         self.main_source = "main.c"
 
-    def GetWatchpointEvent (self, event_type):
-        # We added a watchpoint so we should get a watchpoint added event.
-        event = lldb.SBEvent()
-        success = self.listener.WaitForEvent (1, event)
-        self.assertTrue(success == True, "Successfully got watchpoint event")
-        self.assertTrue (lldb.SBWatchpoint.EventIsWatchpointEvent(event), "Event is a watchpoint event.")
-        found_type = lldb.SBWatchpoint.GetWatchpointEventTypeFromEvent (event)
-        self.assertTrue (found_type == event_type, "Event is not correct type, expected: %d, found: %d"%(event_type, found_type))
-        # There shouldn't be another event waiting around:
-        found_event = self.listener.PeekAtNextEventForBroadcasterWithType (self.target_bcast, lldb.SBTarget.eBroadcastBitBreakpointChanged, event)
-        if found_event:
-            print "Found an event I didn't expect: ", event
-
-        self.assertTrue (not found_event, "Only one event per change.")
-
-    def step_over_stepping(self):
-        """Use Python APIs to test stepping over and hitting breakpoints."""
+    @python_api_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
+    def test_with_python_api(self):
+        """Test that adding, deleting and modifying watchpoints sends the appropriate events."""
+        self.build()
+        
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -96,6 +69,21 @@ class TestWatchpointEvents (TestBase):
 
         local_watch.SetCondition ("1 == 2")
         self.GetWatchpointEvent (lldb.eWatchpointEventTypeConditionChanged)
+
+    def GetWatchpointEvent (self, event_type):
+        # We added a watchpoint so we should get a watchpoint added event.
+        event = lldb.SBEvent()
+        success = self.listener.WaitForEvent (1, event)
+        self.assertTrue(success == True, "Successfully got watchpoint event")
+        self.assertTrue (lldb.SBWatchpoint.EventIsWatchpointEvent(event), "Event is a watchpoint event.")
+        found_type = lldb.SBWatchpoint.GetWatchpointEventTypeFromEvent (event)
+        self.assertTrue (found_type == event_type, "Event is not correct type, expected: %d, found: %d"%(event_type, found_type))
+        # There shouldn't be another event waiting around:
+        found_event = self.listener.PeekAtNextEventForBroadcasterWithType (self.target_bcast, lldb.SBTarget.eBroadcastBitBreakpointChanged, event)
+        if found_event:
+            print "Found an event I didn't expect: ", event
+
+        self.assertTrue (not found_event, "Only one event per change.")
 
 if __name__ == '__main__':
     import atexit

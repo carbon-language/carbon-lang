@@ -13,28 +13,16 @@ class NSArraySyntheticTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_rdar11086338_with_dsym_and_run_command(self):
-        """Test that NSArray reports its synthetic children properly."""
-        self.buildDsym()
-        self.rdar11086338_tester()
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_rdar11086338_with_dwarf_and_run_command(self):
-        """Test that NSArray reports its synthetic children properly."""
-        self.buildDwarf()
-        self.rdar11086338_tester()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break at.
         self.line = line_number('main.m', '// Set break point at this line.')
 
-    def rdar11086338_tester(self):
+    @skipUnlessDarwin
+    def test_rdar11086338_with_run_command(self):
         """Test that NSArray reports its synthetic children properly."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.m", self.line, num_expected_locations=1, loc_exact=True)

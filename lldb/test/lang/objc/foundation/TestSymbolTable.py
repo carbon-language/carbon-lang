@@ -25,21 +25,9 @@ class FoundationSymtabTestCase(TestBase):
                     ]
 
     @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
+    def test_with_python_api(self):
         """Test symbol table access with Python APIs."""
-        self.buildDsym()
-        self.symtab_access_python()
-
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Test symbol table access with Python APIs."""
-        self.buildDwarf()
-        self.symtab_access_python()
-
-    def symtab_access_python(self):
-        """Test symbol table access with Python APIs."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

@@ -14,36 +14,17 @@ class IncompleteModulesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    @unittest2.expectedFailure("rdar://20416388")
-    def test_expr_with_dsym(self):
-        self.buildDsym()
-        self.expr()
-
-    @dwarf_test
-    @skipIfFreeBSD
-    @skipIfLinux
-    @unittest2.expectedFailure("rdar://20416388")
-    def test_expr_with_dwarf(self):
-        self.buildDwarf()
-        self.expr()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.m', '// Set breakpoint 0 here.')
 
-    def applies(self):
-        if platform.system() != "Darwin":
-            return False
-        if StrictVersion('12.0.0') > platform.release():
-            return False
-
-        return True
-
-    def common_setup(self):
+    @skipUnlessDarwin
+    @unittest2.expectedFailure("rdar://20416388")
+    @unittest2.skipIf(platform.system() != "Darwin" or StrictVersion('12.0.0') > platform.release(), "Only supported on Darwin 12.0.0+")
+    def test_expr(self):
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -60,12 +41,6 @@ class IncompleteModulesTestCase(TestBase):
         # The breakpoint should have a hit count of 1.
         self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
-
-    def expr(self):
-        if not self.applies():
-            return
-
-        self.common_setup()
 
         self.runCmd("settings set target.clang-module-search-paths \"" + os.getcwd() + "\"")
 

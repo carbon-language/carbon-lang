@@ -12,30 +12,17 @@ class VectorTypesFormattingTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    # rdar://problem/14035604
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Check that vector types format properly"""
-        self.buildDsym()
-        self.propagate_test_commands()
-
-    # rdar://problem/14035604
-    @dwarf_test
-    @skipIf(compiler='gcc') # gcc don't have ext_vector_type extension
-    def test_with_dwarf_and_run_command(self):
-        """Check that vector types format properly"""
-        self.buildDwarf()
-        self.propagate_test_commands()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break at.
         self.line = line_number('main.cpp', '// break here')
 
-    def propagate_test_commands(self):
+    # rdar://problem/14035604
+    @skipIf(compiler='gcc') # gcc don't have ext_vector_type extension
+    def test_with_run_command(self):
         """Check that vector types format properly"""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)

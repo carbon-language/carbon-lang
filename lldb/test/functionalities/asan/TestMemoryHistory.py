@@ -16,23 +16,13 @@ class AsanTestCase(TestBase):
     # may not have the debugging API which was recently added, so we're calling
     # self.useBuiltClang() to use clang from the llvm-build directory instead
 
-    @dsym_test
-    @skipIfRemote
-    @skipUnlessCompilerRt
-    @skipUnlessDarwin
-    def test_with_dsym (self):
-        compiler = self.findBuiltClang ()
-        self.buildDsym (None, compiler)
-        self.asan_tests ()
-
-    @dwarf_test
     @expectedFailureLinux # non-core functionality, need to reenable and fix later (DES 2014.11.07)
     @skipIfFreeBSD # llvm.org/pr21136 runtimes not yet available by default
     @skipIfRemote
     @skipUnlessCompilerRt
-    def test_with_dwarf (self):
+    def test (self):
         compiler = self.findBuiltClang ()
-        self.buildDwarf (None, compiler)
+        self.build (None, compiler)
         self.asan_tests ()
 
     def setUp(self):

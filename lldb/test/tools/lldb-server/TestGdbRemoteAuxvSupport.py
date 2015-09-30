@@ -87,10 +87,9 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
     #
 
     @llgs_test
-    @dwarf_test
-    def test_supports_auxv_llgs_dwarf(self):
+    def test_supports_auxv_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.supports_auxv()
 
@@ -103,18 +102,16 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         # print "auxv contains {} entries".format(len(auxv_data) / (2*word_size))
 
     @debugserver_test
-    @dsym_test
-    def test_auxv_data_is_correct_size_debugserver_dsym(self):
+    def test_auxv_data_is_correct_size_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.auxv_data_is_correct_size()
 
     @llgs_test
-    @dwarf_test
-    def test_auxv_data_is_correct_size_llgs_dwarf(self):
+    def test_auxv_data_is_correct_size_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.auxv_data_is_correct_size()
 
@@ -143,18 +140,16 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         # print "auxv dict: {}".format(auxv_dict)
 
     @debugserver_test
-    @dsym_test
-    def test_auxv_keys_look_valid_debugserver_dsym(self):
+    def test_auxv_keys_look_valid_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.auxv_keys_look_valid()
 
     @llgs_test
-    @dwarf_test
-    def test_auxv_keys_look_valid_llgs_dwarf(self):
+    def test_auxv_keys_look_valid_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.auxv_keys_look_valid()
 
@@ -190,18 +185,16 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(auxv_dict_iterated, auxv_dict)
 
     @debugserver_test
-    @dsym_test
-    def test_auxv_chunked_reads_work_debugserver_dsym(self):
+    def test_auxv_chunked_reads_work_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.auxv_chunked_reads_work()
 
     @llgs_test
-    @dwarf_test
-    def test_auxv_chunked_reads_work_llgs_dwarf(self):
+    def test_auxv_chunked_reads_work_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.auxv_chunked_reads_work()
 

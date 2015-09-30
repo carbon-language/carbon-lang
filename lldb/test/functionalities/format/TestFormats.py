@@ -14,7 +14,7 @@ class TestFormats(TestBase):
     @expectedFailureHostWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_formats(self):
         """Test format string functionality."""
-        self.buildDwarf ()
+        self.build()
         import pexpect
         prompt = "(lldb) "
         child = pexpect.spawn('%s %s -x -o "b main" -o r a.out' % (lldbtest_config.lldbExec, self.lldbOption))

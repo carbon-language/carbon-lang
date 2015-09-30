@@ -12,36 +12,21 @@ class ObjCDynamicValueTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_get_baseclass_with_dsym(self):
-        """Test fetching ObjC base class info."""
-        if self.getArchitecture() == 'i386':
-            # rdar://problem/9946499
-            self.skipTest("Dynamic types for ObjC V1 runtime not implemented")
-        self.buildDsym()
-        self.do_get_baseclass_info()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dwarf_test
-    def test_get_baseclass_with_dwarf(self):
-        """Test fetching ObjC dynamic values."""
-        if self.getArchitecture() == 'i386':
-            # rdar://problem/9946499
-            self.skipTest("Dynamic types for ObjC V1 runtime not implemented")
-        self.buildDwarf()
-        self.do_get_baseclass_info()
-
     def setUp(self):
         # Call super's setUp().                                                                                                           
         TestBase.setUp(self)
 
         self.line = line_number('main.m', '// Set breakpoint here.')
 
-    def do_get_baseclass_info(self):
-        """Make sure we get dynamic values correctly both for compiled in classes and dynamic ones"""
+    @skipUnlessDarwin
+    @python_api_test
+    def test_get_baseclass(self):
+        """Test fetching ObjC dynamic values."""
+        if self.getArchitecture() == 'i386':
+            # rdar://problem/9946499
+            self.skipTest("Dynamic types for ObjC V1 runtime not implemented")
+
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target from the debugger.

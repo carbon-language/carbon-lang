@@ -18,19 +18,10 @@ class ExprCommandWithThrowTestCase(TestBase):
         self.main_source = "call-throws.m"
         self.main_source_spec = lldb.SBFileSpec (self.main_source)
 
-
     @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
+    def test(self):
         """Test calling a function that throws and ObjC exception."""
-        self.buildDsym()
-        self.call_function()
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test calling a function that throws and ObjC exception."""
-        self.buildDwarf()
+        self.build()
         self.call_function()
 
     def check_after_call (self):

@@ -17,33 +17,16 @@ class ConditionalBreakTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_python(self):
-        """Exercise some thread and frame APIs to break if c() is called by a()."""
-        self.buildDsym()
-        self.do_conditional_break()
-
     @expectedFailureWindows("llvm.org/pr24778")
     @python_api_test
-    @dwarf_test
-    def test_with_dwarf_python(self):
+    def test_with_python(self):
         """Exercise some thread and frame APIs to break if c() is called by a()."""
-        self.buildDwarf()
+        self.build()
         self.do_conditional_break()
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_command(self):
+    def test_with_command(self):
         """Simulate a user using lldb commands to break on c() if called from a()."""
-        self.buildDsym()
-        self.simulate_conditional_break_by_user()
-
-    @dwarf_test
-    def test_with_dwarf_command(self):
-        """Simulate a user using lldb commands to break on c() if called from a()."""
-        self.buildDwarf()
+        self.build()
         self.simulate_conditional_break_by_user()
 
     def do_conditional_break(self):

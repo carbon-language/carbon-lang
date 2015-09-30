@@ -10,22 +10,6 @@ class TestObjCBuiltinTypes(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Test expression parser respect for ObjC built-in types."""
-        self.buildDsym()
-        self.objc_builtin_types()
-
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Test expression parser respect for ObjC built-in types."""
-        self.buildDwarf()
-        self.objc_builtin_types()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -33,9 +17,12 @@ class TestObjCBuiltinTypes(TestBase):
         self.main_source = "main.cpp"
         self.break_line = line_number(self.main_source, '// Set breakpoint here.')
 
+    @skipUnlessDarwin
+    @python_api_test
     #<rdar://problem/10591460> [regression] Can't print ivar value: error: reference to 'id' is ambiguous
-    def objc_builtin_types(self):
+    def test_with_python_api(self):
         """Test expression parser respect for ObjC built-in types."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

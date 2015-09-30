@@ -12,27 +12,15 @@ class NumberOfThreadsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test number of threads."""
-        self.buildDsym()
-        self.number_of_threads_test()
-
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test number of threads."""
-        self.buildDwarf()
-        self.number_of_threads_test()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    def number_of_threads_test(self):
+    def test(self):
         """Test number of threads."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

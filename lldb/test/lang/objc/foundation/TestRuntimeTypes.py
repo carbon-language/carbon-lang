@@ -13,23 +13,12 @@ class RuntimeTypesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    def test_break_with_dsym(self):
+    def test_break(self):
         """Test setting objc breakpoints using '_regexp-break' and 'breakpoint set'."""
-        # This only applies to the v2 runtime
-        if self.getArchitecture() == 'x86_64':
-            self.buildDsym()
-            self.runtime_types()
+        if self.getArchitecture() != 'x86_64':
+            self.skipTest("This only applies to the v2 runtime")
 
-    @dwarf_test
-    def test_break_with_dwarf(self):
-        """Test setting objc breakpoints using '_regexp-break' and 'breakpoint set'."""
-        # This only applies to the v2 runtime
-        if self.getArchitecture() == 'x86_64':
-            self.buildDwarf()
-            self.runtime_types()
-
-    def runtime_types(self):
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

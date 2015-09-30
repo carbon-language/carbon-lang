@@ -13,19 +13,6 @@ class ThreadSteppingTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_step_out_with_dsym_and_run_command(self):
-        """Exercise thread step-out and frame select followed by thread step-out."""
-        self.buildDwarf()
-        self.thread_step_out()
-
-    @dwarf_test
-    def test_step_out_with_dwarf_and_run_command(self):
-        """Exercise thread step-out and frame select followed by thread step-out."""
-        self.buildDwarf()
-        self.thread_step_out()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -35,8 +22,9 @@ class ThreadSteppingTestCase(TestBase):
         self.line3 = line_number('main.c', '// thread step-out while stopped at "c(2)"')
         self.line4 = line_number('main.c', '// frame select 1, thread step-out while stopped at "c(3)"')
 
-    def thread_step_out(self):
+    def test_step_out_with_run_command(self):
         """Exercise thread step-out and frame select followed by thread step-out."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

@@ -13,28 +13,16 @@ class DataFormatterOSTypeTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_ostype_with_dsym_and_run_command(self):
-        """Test the formatters we use for OSType."""
-        self.buildDsym()
-        self.ostype_data_formatter_commands()
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_ostype_with_dwarf_and_run_command(self):
-        """Test the formatters we use for OSType."""
-        self.buildDwarf()
-        self.ostype_data_formatter_commands()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break at.
         self.line = line_number('main.mm', '// Set break point at this line.')
 
-    def ostype_data_formatter_commands(self):
+    @skipUnlessDarwin
+    def test_ostype_with_run_command(self):
         """Test the formatters we use for OSType."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.mm", self.line, num_expected_locations=1, loc_exact=True)

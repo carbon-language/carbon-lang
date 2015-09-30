@@ -16,7 +16,7 @@ class Radar9531204TestCase(TestBase):
     @expectedFailureWindows("llvm.org/pr21765")
     def test_expr_commands(self):
         """The evaluating printf(...) after break stop and then up a stack frame."""
-        self.buildDefault()
+        self.build()
 
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 

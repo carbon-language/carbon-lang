@@ -13,7 +13,7 @@ class PersistentVariablesTestCase(TestBase):
 
     def test_persistent_variables(self):
         """Test that lldb persistent variables works correctly."""
-        self.buildDefault()
+        self.build()
 
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 

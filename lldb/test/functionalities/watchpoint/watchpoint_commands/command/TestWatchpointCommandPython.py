@@ -25,26 +25,14 @@ class WatchpointPythonCommandTestCase(TestBase):
         self.exe_name = self.testMethodName
         self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_watchpoint_command_with_dsym(self):
-        """Test 'watchpoint command'."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.watchpoint_command()
-
-    @dwarf_test
     @skipIfFreeBSD # timing out on buildbot
     @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
-    def test_watchpoint_command_with_dwarf(self):
+    def test_watchpoint_command(self):
         """Test 'watchpoint command'."""
-        self.buildDwarf(dictionary=self.d)
+        self.build(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
-        self.watchpoint_command()
 
-    def watchpoint_command(self):
-        """Do 'watchpoint command add'."""
         exe = os.path.join(os.getcwd(), self.exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

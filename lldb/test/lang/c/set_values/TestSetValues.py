@@ -10,20 +10,6 @@ class SetValuesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test settings and readings of program variables."""
-        self.buildDsym()
-        self.set_values()
-
-    @dwarf_test
-    @expectedFailureWindows("llvm.org/pr21765")
-    def test_with_dwarf(self):
-        """Test settings and readings of program variables."""
-        self.buildDwarf()
-        self.set_values()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -34,8 +20,10 @@ class SetValuesTestCase(TestBase):
         self.line4 = line_number('main.c', '// Set break point #4.')
         self.line5 = line_number('main.c', '// Set break point #5.')
 
-    def set_values(self):
+    @expectedFailureWindows("llvm.org/pr21765")
+    def test(self):
         """Test settings and readings of program variables."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

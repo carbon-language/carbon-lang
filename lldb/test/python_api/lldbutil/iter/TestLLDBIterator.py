@@ -22,22 +22,7 @@ class LLDBIteratorTestCase(TestBase):
     @python_api_test
     def test_lldb_iter_module(self):
         """Test module_iter works correctly for SBTarget -> SBModule."""
-        self.buildDefault()
-        self.lldb_iter_module()
-
-    @python_api_test
-    def test_lldb_iter_breakpoint(self):
-        """Test breakpoint_iter works correctly for SBTarget -> SBBreakpoint."""
-        self.buildDefault()
-        self.lldb_iter_breakpoint()
-
-    @python_api_test
-    def test_lldb_iter_frame(self):
-        """Test iterator works correctly for SBProcess->SBThread->SBFrame."""
-        self.buildDefault()
-        self.lldb_iter_frame()
-
-    def lldb_iter_module(self):
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -68,7 +53,10 @@ class LLDBIteratorTestCase(TestBase):
             self.assertTrue(yours[i] == mine[i],
                             "UUID+FileSpec of yours[{0}] and mine[{0}] matches".format(i))
 
-    def lldb_iter_breakpoint(self):
+    @python_api_test
+    def test_lldb_iter_breakpoint(self):
+        """Test breakpoint_iter works correctly for SBTarget -> SBBreakpoint."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -97,7 +85,10 @@ class LLDBIteratorTestCase(TestBase):
             self.assertTrue(yours[i] == mine[i],
                             "ID of yours[{0}] and mine[{0}] matches".format(i))
 
-    def lldb_iter_frame(self):
+    @python_api_test
+    def test_lldb_iter_frame(self):
+        """Test iterator works correctly for SBProcess->SBThread->SBFrame."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

@@ -20,26 +20,11 @@ class AppleTypesTestCase(TestBase):
         if not self.getCompiler().endswith('clang'):
             self.skipTest("clang compiler only test")
 
-        self.buildDefault()
-        self.apple_types(dot_o=True)
-
-    @skipUnlessDarwin
-    def test_debug_info_for_apple_types_dsym(self):
-        """Test that __apple_types section does get produced by dsymutil.
-           This is supposed to succeed even with rdar://problem/11166975."""
-
-        if not self.getCompiler().endswith('clang'):
-            self.skipTest("clang compiler only test")
-
-        self.buildDsym()
-        self.apple_types(dot_o=False)
-
-    def apple_types(self, dot_o):
-        """Test that __apple_types section does get produced by clang."""
-        if dot_o:
-            exe = os.path.join(os.getcwd(), "main.o")
-        else:
+        self.build()
+        if self.debug_info == "dsym":
             exe = os.path.join(os.getcwd(), "a.out.dSYM/Contents/Resources/DWARF/a.out")
+        else:
+            exe = os.path.join(os.getcwd(), "main.o")
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)

@@ -14,17 +14,15 @@ class AttachResumeTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @skipIfRemote
     @expectedFailureFreeBSD('llvm.org/pr19310')
     @expectedFlakeyLinux('llvm.org/pr19310')
     @expectedFailureWindows("llvm.org/pr24778")
-    @skipIfRemote
-    @dwarf_test
     def test_attach_continue_interrupt_detach(self):
         """Test attach/continue/interrupt/detach"""
-        self.buildDwarf()
+        self.build()
         self.process_attach_continue_interrupt_detach()
 
-    @skipIfRemote
     def process_attach_continue_interrupt_detach(self):
         """Test attach/continue/interrupt/detach"""
 

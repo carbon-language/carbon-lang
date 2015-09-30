@@ -10,14 +10,6 @@ class TestObjCIvarStripped(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Test that we can find stripped Objective-C ivars in the runtime"""
-        self.buildDsym()
-        self.objc_ivar_offsets()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -25,8 +17,11 @@ class TestObjCIvarStripped(TestBase):
         self.main_source = "main.m"
         self.stop_line = line_number(self.main_source, '// Set breakpoint here.')
 
-    def objc_ivar_offsets(self):
+    @skipUnlessDarwin
+    @python_api_test
+    def test_with_python_api(self):
         """Test that we can find stripped Objective-C ivars in the runtime"""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out.stripped")
 
         target = self.dbg.CreateTarget(exe)

@@ -21,35 +21,19 @@ class ExecTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-        
     @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym (self):
+    def test(self):
         if self.getArchitecture() == 'x86_64':
             source = os.path.join (os.getcwd(), "main.cpp")
             o_file = os.path.join (os.getcwd(), "main.o")
             execute_command ("'%s' -g -O0 -arch i386 -arch x86_64 '%s' -c -o '%s'" % (os.environ["CC"], source, o_file))
             execute_command ("'%s' -g -O0 -arch i386 -arch x86_64 '%s'" % (os.environ["CC"], o_file))
+            if self.debug_info != "dsym":
+                dsym_path = os.path.join (os.getcwd(), "a.out.dSYM")
+                execute_command ("rm -rf '%s'" % (dsym_path))
         else:
-            self.buildDsym()
-        self.do_test ()
+            self.build()
 
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_with_dwarf (self):
-        if self.getArchitecture() == 'x86_64':
-            source = os.path.join (os.getcwd(), "main.cpp")
-            o_file = os.path.join (os.getcwd(), "main.o")
-            dsym_path = os.path.join (os.getcwd(), "a.out.dSYM")
-            execute_command ("'%s' -g -O0 -arch i386 -arch x86_64 '%s' -c -o '%s'" % (os.environ["CC"], source, o_file))
-            execute_command ("'%s' -g -O0 -arch i386 -arch x86_64 '%s'" % (os.environ["CC"], o_file))
-            execute_command ("rm -rf '%s'" % (dsym_path))
-        else:
-            self.buildDwarf()
-        self.do_test ()
-
-    def do_test (self):
         exe = os.path.join (os.getcwd(), "a.out")
         
         # Create the target

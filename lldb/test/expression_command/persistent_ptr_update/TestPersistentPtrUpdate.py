@@ -15,21 +15,10 @@ class PersistentPtrUpdateTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
+    def test(self):
         """Test that we can have persistent pointer variables"""
-        self.buildDsym()
-        self.do_my_test()
+        self.build()
 
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test that we can have persistent pointer variables"""
-        self.buildDwarf()
-        self.do_my_test()
-
-    def do_my_test(self):
         def cleanup():
             pass
         

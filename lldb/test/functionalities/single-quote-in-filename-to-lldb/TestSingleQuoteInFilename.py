@@ -23,6 +23,7 @@ class SingleQuoteInCommandLineTestCase(TestBase):
             pass
 
     @expectedFailureHostWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @no_debug_info_test
     def test_lldb_invocation_with_single_quote_in_filename(self):
         """Test that 'lldb my_file_name' works where my_file_name is a string with a single quote char in it."""
         import pexpect

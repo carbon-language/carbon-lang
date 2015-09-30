@@ -10,36 +10,17 @@ class SBFormattersAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_formatters_api(self):
-        """Test Python APIs for working with formatters"""
-        self.buildDsym()
-        self.setTearDownCleanup()
-        self.formatters()
-
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_formatters_api(self):
-        """Test Python APIs for working with formatters"""
-        self.buildDwarf()
-        self.setTearDownCleanup()
-        self.formatters()
-
-    @python_api_test
-    def test_force_synth_off(self):
-        """Test that one can have the public API return non-synthetic SBValues if desired"""
-        self.buildDwarf(dictionary={'EXE':'no_synth'})
-        self.setTearDownCleanup()
-        self.force_synth_off()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    def formatters(self):
+    @python_api_test
+    def test_formatters_api(self):
+        """Test Python APIs for working with formatters"""
+        self.build()
+        self.setTearDownCleanup()
+        
         """Test Python APIs for working with formatters"""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
@@ -307,8 +288,12 @@ class SBFormattersAPITestCase(TestBase):
         self.expect("frame variable e2", substrs=["I am an empty Empty2"])
         self.expect("frame variable e2", substrs=["I am an empty Empty2 {}"], matching=False)
 
-    def force_synth_off(self):
+    @python_api_test
+    def test_force_synth_off(self):
         """Test that one can have the public API return non-synthetic SBValues if desired"""
+        self.build(dictionary={'EXE':'no_synth'})
+        self.setTearDownCleanup()
+
         self.runCmd("file no_synth", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)

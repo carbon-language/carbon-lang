@@ -21,21 +21,9 @@ class ObjCTypeQueryTestCase(TestBase):
                                 "// Set breakpoint here, then do 'expr (NSArray*)array_token'.")
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
+    def test(self):
         """The expression parser's type search should be wider than the current compilation unit."""
-        self.buildDsym()
-        self.type_query_from_other_cu()
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_with_dwarf(self):
-        """The expression parser's type search should be wider than the current compilation unit."""
-        self.buildDwarf()
-        self.type_query_from_other_cu()
-
-    def type_query_from_other_cu(self):
-        """The expression parser's type search should be wider than the current compilation unit."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.m", self.line, num_expected_locations=1, loc_exact=True)

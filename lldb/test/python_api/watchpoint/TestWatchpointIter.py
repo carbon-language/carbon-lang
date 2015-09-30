@@ -20,25 +20,12 @@ class WatchpointIteratorTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number(self.source, '// Set break point at this line.')
 
-    @skipUnlessDarwin
     @python_api_test
-    @dsym_test
-    def test_watch_iter_with_dsym(self):
-        """Exercise SBTarget.watchpoint_iter() API to iterate on the available watchpoints."""
-        self.buildDsym()
-        self.do_watchpoint_iter()
-
-    @python_api_test
-    @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
-    def test_watch_iter_with_dwarf(self):
+    def test_watch_iter(self):
         """Exercise SBTarget.watchpoint_iter() API to iterate on the available watchpoints."""
-        self.buildDwarf()
-        self.do_watchpoint_iter()
-
-    def do_watchpoint_iter(self):
-        """Use SBTarget.watchpoint_iter() to do Pythonic iteration on the available watchpoints."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.

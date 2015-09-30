@@ -12,48 +12,23 @@ class BreakpointConditionsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_breakpoint_condition_with_dsym_and_run_command(self):
+    @skipIfWindows # Requires EE to support COFF on Windows (http://llvm.org/pr22232)
+    def test_breakpoint_condition_and_run_command(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
-        self.buildDsym()
+        self.build()
         self.breakpoint_conditions()
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_breakpoint_condition_inline_with_dsym_and_run_command(self):
+    @skipIfWindows # Requires EE to support COFF on Windows (http://llvm.org/pr22232)
+    def test_breakpoint_condition_inline_and_run_command(self):
         """Exercise breakpoint condition inline with 'breakpoint set'."""
-        self.buildDsym()
+        self.build()
         self.breakpoint_conditions(inline=True)
 
-    @skipUnlessDarwin
+    @skipIfWindows # Requires EE to support COFF on Windows (http://llvm.org/pr22232)
     @python_api_test
-    @dsym_test
-    def test_breakpoint_condition_with_dsym_and_python_api(self):
+    def test_breakpoint_condition_and_python_api(self):
         """Use Python APIs to set breakpoint conditions."""
-        self.buildDsym()
-        self.breakpoint_conditions_python()
-
-    @dwarf_test
-    @skipIfWindows # Requires EE to support COFF on Windows (http://llvm.org/pr22232)
-    def test_breakpoint_condition_with_dwarf_and_run_command(self):
-        """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
-        self.buildDwarf()
-        self.breakpoint_conditions()
-
-    @dwarf_test
-    @skipIfWindows # Requires EE to support COFF on Windows (http://llvm.org/pr22232)
-    def test_breakpoint_condition_inline_with_dwarf_and_run_command(self):
-        """Exercise breakpoint condition inline with 'breakpoint set'."""
-        self.buildDwarf()
-        self.breakpoint_conditions(inline=True)
-
-    @python_api_test
-    @dwarf_test
-    @skipIfWindows # Requires EE to support COFF on Windows (http://llvm.org/pr22232)
-    def test_breakpoint_condition_with_dwarf_and_python_api(self):
-        """Use Python APIs to set breakpoint conditions."""
-        self.buildDwarf()
+        self.build()
         self.breakpoint_conditions_python()
 
     def setUp(self):

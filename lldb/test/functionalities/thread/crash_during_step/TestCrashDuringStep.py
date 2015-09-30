@@ -12,26 +12,15 @@ class CreateDuringStepTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_step_inst_with_dsym(self):
-        """Test thread creation during step-inst handling."""
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.crash_during_step_inst_test()
-
-    @dwarf_test
-    @expectedFailureWindows("llvm.org/pr24778")
-    @expectedFailureAndroid("llvm.org/pr24497", archs=['arm', 'aarch64'])
-    def test_step_inst_with_dwarf(self):
-        """Test thread creation during step-inst handling."""
-        self.buildDwarf(dictionary=self.getBuildFlags())
-        self.crash_during_step_inst_test()
-
     def setUp(self):
         TestBase.setUp(self)
         self.breakpoint = line_number('main.cpp', '// Set breakpoint here')
 
-    def crash_during_step_inst_test(self):
+    @expectedFailureWindows("llvm.org/pr24778")
+    @expectedFailureAndroid("llvm.org/pr24497", archs=['arm', 'aarch64'])
+    def test_step_inst_with(self):
+        """Test thread creation during step-inst handling."""
+        self.build(dictionary=self.getBuildFlags())
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

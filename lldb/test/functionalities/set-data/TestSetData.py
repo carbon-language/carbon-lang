@@ -8,19 +8,14 @@ import lldb
 from lldbtest import *
 import lldbutil
 
-@skipUnlessDarwin
 class SetDataTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    def test_set_data_dsym(self):
+    @skipUnlessDarwin
+    def test_set_data(self):
         """Test setting the contents of variables and registers using raw data."""
-        self.buildDsym()
-        self.setData()
-
-    def setData(self):
-        """Test setting objc breakpoints using '_regexp-break' and 'breakpoint set'."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

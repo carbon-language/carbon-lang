@@ -10,24 +10,6 @@ class TestObjCSuperMethod(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @expectedFailurei386
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Test calling methods on super."""
-        self.buildDsym()
-        self.objc_super()
-
-    @skipUnlessDarwin
-    @expectedFailurei386
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Test calling methods on super."""
-        self.buildDwarf()
-        self.objc_super()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -35,8 +17,12 @@ class TestObjCSuperMethod(TestBase):
         self.main_source = "class.m"
         self.break_line = line_number(self.main_source, '// Set breakpoint here.')
 
-    def objc_super(self):
+    @skipUnlessDarwin
+    @expectedFailurei386
+    @python_api_test
+    def test_with_python_api(self):
         """Test calling methods on super."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

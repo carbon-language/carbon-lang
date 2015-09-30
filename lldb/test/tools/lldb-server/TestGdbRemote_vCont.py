@@ -36,91 +36,80 @@ class TestGdbRemote_vCont(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.vCont_supports_mode("S")
 
     @debugserver_test
-    @dsym_test
-    def test_vCont_supports_c_debugserver_dsym(self):
+    def test_vCont_supports_c_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.vCont_supports_c()
 
     @llgs_test
-    def test_vCont_supports_c_llgs_dwarf(self):
+    def test_vCont_supports_c_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.vCont_supports_c()
 
     @debugserver_test
-    @dsym_test
-    def test_vCont_supports_C_debugserver_dsym(self):
+    def test_vCont_supports_C_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.vCont_supports_C()
 
     @llgs_test
-    @dwarf_test
-    def test_vCont_supports_C_llgs_dwarf(self):
+    def test_vCont_supports_C_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.vCont_supports_C()
 
     @debugserver_test
-    @dsym_test
-    def test_vCont_supports_s_debugserver_dsym(self):
+    def test_vCont_supports_s_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.vCont_supports_s()
 
     @llgs_test
-    @dwarf_test
-    def test_vCont_supports_s_llgs_dwarf(self):
+    def test_vCont_supports_s_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.vCont_supports_s()
 
     @debugserver_test
-    @dsym_test
-    def test_vCont_supports_S_debugserver_dsym(self):
+    def test_vCont_supports_S_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.vCont_supports_S()
 
     @llgs_test
-    @dwarf_test
-    def test_vCont_supports_S_llgs_dwarf(self):
+    def test_vCont_supports_S_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.vCont_supports_S()
 
     @debugserver_test
-    @dsym_test
-    def test_single_step_only_steps_one_instruction_with_Hc_vCont_s_debugserver_dsym(self):
+    def test_single_step_only_steps_one_instruction_with_Hc_vCont_s_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.single_step_only_steps_one_instruction(use_Hc_packet=True, step_instruction="vCont;s")
 
     @llgs_test
-    @dwarf_test
     @expectedFailureAndroid(bugnumber="llvm.com/pr24739", archs=["arm", "aarch64"])
-    def test_single_step_only_steps_one_instruction_with_Hc_vCont_s_llgs_dwarf(self):
+    def test_single_step_only_steps_one_instruction_with_Hc_vCont_s_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.single_step_only_steps_one_instruction(use_Hc_packet=True, step_instruction="vCont;s")
 
     @debugserver_test
-    @dsym_test
-    def test_single_step_only_steps_one_instruction_with_vCont_s_thread_debugserver_dsym(self):
+    def test_single_step_only_steps_one_instruction_with_vCont_s_thread_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.single_step_only_steps_one_instruction(use_Hc_packet=False, step_instruction="vCont;s:{thread}")
 
     @llgs_test
-    @dwarf_test
     @expectedFailureAndroid(bugnumber="llvm.com/pr24739", archs=["arm", "aarch64"])
-    def test_single_step_only_steps_one_instruction_with_vCont_s_thread_llgs_dwarf(self):
+    def test_single_step_only_steps_one_instruction_with_vCont_s_thread_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.single_step_only_steps_one_instruction(use_Hc_packet=False, step_instruction="vCont;s:{thread}")
 

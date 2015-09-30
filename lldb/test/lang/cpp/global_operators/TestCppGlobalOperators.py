@@ -9,22 +9,10 @@ class TestCppGlobalOperators(TestBase):
     
     mydir = TestBase.compute_mydir(__file__)
     
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        self.buildDsym()
-        self.check()
-
-    @dwarf_test
     @expectedFailureWindows("llvm.org/pr21765")
-    def test_with_dwarf_and_run_command(self):
-        self.buildDwarf()
-        self.check()
+    def test_with_run_command(self):
+        self.build()
 
-    def setUp(self):
-        TestBase.setUp(self)
-
-    def check(self):
         # Get main source file
         src_file = "main.cpp"
         src_file_spec = lldb.SBFileSpec(src_file)

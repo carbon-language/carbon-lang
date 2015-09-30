@@ -18,13 +18,9 @@ class NonOverlappingIndexVariableCase(TestBase):
     # rdar://problem/9890530
     def test_eval_index_variable(self):
         """Test expressions of variable 'i' which appears in two for loops."""
-        self.buildDefault()
+        self.build()
         self.exe_name = 'a.out'
-        self.eval_index_variable_i(self.exe_name)
-
-    def eval_index_variable_i(self, exe_name):
-        """Test expressions of variable 'i' which appears in two for loops."""
-        exe = os.path.join(os.getcwd(), exe_name)
+        exe = os.path.join(os.getcwd(), self.exe_name)
         self.runCmd("file %s" % exe, CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, self.source, self.line_to_break, num_expected_locations=1, loc_exact=True)

@@ -12,22 +12,6 @@ class NamespaceTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    # rdar://problem/8668674
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test that anonymous and named namespace variables display correctly."""
-        self.buildDsym()
-        self.namespace_variable_commands()
-
-    # rdar://problem/8668674
-    @expectedFailureWindows("llvm.org/pr24764")
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Test that anonymous and named namespace variables display correctly."""
-        self.buildDwarf()
-        self.namespace_variable_commands()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -40,8 +24,11 @@ class NamespaceTestCase(TestBase):
         self.line_break = line_number('main.cpp',
                 '// Set break point at this line.')
 
-    def namespace_variable_commands(self):
+    # rdar://problem/8668674
+    @expectedFailureWindows("llvm.org/pr24764")
+    def test_with_run_command(self):
         """Test that anonymous and named namespace variables display correctly."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line_break, num_expected_locations=1, loc_exact=True)

@@ -11,24 +11,13 @@ import lldbutil
 class NoreturnUnwind(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym (self):
-        """Test that we can backtrace correctly with 'noreturn' functions on the stack"""
-        self.buildDsym()
-        self.setTearDownCleanup()
-        self.noreturn_unwind_tests()
-
-    @dwarf_test
     @expectedFailurei386 #xfail to get buildbot green, failing config: i386 binary running on ubuntu 14.04 x86_64
     @skipIfWindows # clang-cl does not support gcc style attributes.
-    def test_with_dwarf (self):
+    def test (self):
         """Test that we can backtrace correctly with 'noreturn' functions on the stack"""
-        self.buildDwarf()
+        self.build()
         self.setTearDownCleanup()
-        self.noreturn_unwind_tests()
 
-    def noreturn_unwind_tests (self):
         exe = os.path.join(os.getcwd(), "a.out")
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)

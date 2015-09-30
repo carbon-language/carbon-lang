@@ -15,28 +15,12 @@ class ExprDoesntDeadlockTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test that expr will time out and allow other threads to run if it blocks - with dsym."""
-        self.buildDsym()
-        self.expr_doesnt_deadlock()
-
-    @dwarf_test
     @expectedFailureFreeBSD('llvm.org/pr17946')
     @expectedFlakeyLinux # failed 1/365 test runs, line 61, thread.IsValid()
     @expectedFailureWindows # Windows doesn't have pthreads, need to port this test.
-    def test_with_dwarf_and_run_command(self):
+    def test_with_run_command(self):
         """Test that expr will time out and allow other threads to run if it blocks."""
-        self.buildDwarf()
-        self.expr_doesnt_deadlock()
-
-    def setUp(self):
-        # Call super's setUp().
-        TestBase.setUp(self)
-
-    def expr_doesnt_deadlock (self):
-        """Test that expr will time out and allow other threads to run if it blocks."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.

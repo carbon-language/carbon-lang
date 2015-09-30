@@ -20,24 +20,11 @@ class ExprCommandCallStopContinueTestCase(TestBase):
         self.func_line = line_number ('main.cpp', 
                                 '{ 5, "five" }')
 
-    @skipUnlessDarwin
-    @dsym_test
-    @expectedFlakeyDarwin("llvm.org/pr20274")
-    def test_with_dsym(self):
-        """Test gathering result from interrupted function call."""
-        self.buildDsym()
-        self.call_function()
-
-    @dwarf_test
     @expectedFlakeyDarwin("llvm.org/pr20274")
     @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
-    def test_with_dwarf(self):
+    def test(self):
         """Test gathering result from interrupted function call."""
-        self.buildDwarf()
-        self.call_function()
-
-    def call_function(self):
-        """Test gathering result from interrupted function call."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         # Some versions of GCC encode two locations for the 'return' statement in main.cpp

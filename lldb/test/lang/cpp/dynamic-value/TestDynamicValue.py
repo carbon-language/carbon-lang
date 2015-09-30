@@ -12,23 +12,6 @@ class DynamicValueTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_get_dynamic_vals_with_dsym(self):
-        """Test fetching C++ dynamic values from pointers & references."""
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.do_get_dynamic_vals()
-
-    @expectedFailureFreeBSD # FIXME: This needs to be root-caused.
-    @expectedFailureWindows("llvm.org/pr24663")
-    @python_api_test
-    @dwarf_test
-    def test_get_dynamic_vals_with_dwarf(self):
-        """Test fetching C++ dynamic values from pointers & references."""
-        self.buildDwarf(dictionary=self.getBuildFlags())
-        self.do_get_dynamic_vals()
-
     def setUp(self):
         # Call super's setUp().                                                                                                           
         TestBase.setUp(self)
@@ -41,66 +24,12 @@ class DynamicValueTestCase(TestBase):
         self.main_second_call_line = line_number('pass-to-base.cpp',
                                                        '// Break here and get real address of reallyA.')
 
-
-    def examine_value_object_of_this_ptr (self, this_static, this_dynamic, dynamic_location):
-
-        # Get "this" as its static value
-        
-        self.assertTrue (this_static)
-        this_static_loc = int (this_static.GetValue(), 16)
-        
-        # Get "this" as its dynamic value
-        
-        self.assertTrue (this_dynamic)
-        this_dynamic_typename = this_dynamic.GetTypeName()
-        self.assertTrue (this_dynamic_typename.find('B') != -1)
-        this_dynamic_loc = int (this_dynamic.GetValue(), 16)
-        
-        # Make sure we got the right address for "this"
-        
-        self.assertTrue (this_dynamic_loc == dynamic_location)
-
-        # And that the static address is greater than the dynamic one
-
-        self.assertTrue (this_static_loc > this_dynamic_loc)
-        
-        # Now read m_b_value which is only in the dynamic value:
-
-        use_dynamic = lldb.eDynamicCanRunTarget
-        no_dynamic  = lldb.eNoDynamicValues
-
-        this_dynamic_m_b_value = this_dynamic.GetChildMemberWithName('m_b_value', use_dynamic)
-        self.assertTrue (this_dynamic_m_b_value)
-        
-        m_b_value = int (this_dynamic_m_b_value.GetValue(), 0)
-        self.assertTrue (m_b_value == 10)
-        
-        # Make sure it is not in the static version
-
-        this_static_m_b_value = this_static.GetChildMemberWithName('m_b_value', no_dynamic)
-        self.assertFalse (this_static_m_b_value)
-
-        # Okay, now let's make sure that we can get the dynamic type of a child element:
-
-        contained_auto_ptr = this_dynamic.GetChildMemberWithName ('m_client_A', use_dynamic)
-        self.assertTrue (contained_auto_ptr)
-        contained_b = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', use_dynamic)
-        if not contained_b:
-                contained_b = contained_auto_ptr.GetChildMemberWithName ('__ptr_', use_dynamic)
-        self.assertTrue (contained_b)
-        
-        contained_b_static = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', no_dynamic)
-        if not contained_b_static:
-                contained_b_static = contained_auto_ptr.GetChildMemberWithName ('__ptr_', no_dynamic)
-        self.assertTrue (contained_b_static)
-        
-        contained_b_addr = int (contained_b.GetValue(), 16)
-        contained_b_static_addr = int (contained_b_static.GetValue(), 16)
-        
-        self.assertTrue (contained_b_addr < contained_b_static_addr)
-        
-    def do_get_dynamic_vals(self):
-        """Get argument vals for the call stack when stopped on a breakpoint."""
+    @expectedFailureFreeBSD # FIXME: This needs to be root-caused.
+    @expectedFailureWindows("llvm.org/pr24663")
+    @python_api_test
+    def test_get_dynamic_vals(self):
+        """Test fetching C++ dynamic values from pointers & references."""
+        self.build(dictionary=self.getBuildFlags())
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target from the debugger.
@@ -233,6 +162,62 @@ class DynamicValueTestCase(TestBase):
         anotherA_loc = int (anotherA_value.GetValue(), 16)
         self.assertTrue (anotherA_loc == reallyA_loc)
         self.assertTrue (anotherA_value.GetTypeName().find ('B') == -1)
+
+    def examine_value_object_of_this_ptr (self, this_static, this_dynamic, dynamic_location):
+        # Get "this" as its static value
+        self.assertTrue (this_static)
+        this_static_loc = int (this_static.GetValue(), 16)
+        
+        # Get "this" as its dynamic value
+        
+        self.assertTrue (this_dynamic)
+        this_dynamic_typename = this_dynamic.GetTypeName()
+        self.assertTrue (this_dynamic_typename.find('B') != -1)
+        this_dynamic_loc = int (this_dynamic.GetValue(), 16)
+        
+        # Make sure we got the right address for "this"
+        
+        self.assertTrue (this_dynamic_loc == dynamic_location)
+
+        # And that the static address is greater than the dynamic one
+
+        self.assertTrue (this_static_loc > this_dynamic_loc)
+        
+        # Now read m_b_value which is only in the dynamic value:
+
+        use_dynamic = lldb.eDynamicCanRunTarget
+        no_dynamic  = lldb.eNoDynamicValues
+
+        this_dynamic_m_b_value = this_dynamic.GetChildMemberWithName('m_b_value', use_dynamic)
+        self.assertTrue (this_dynamic_m_b_value)
+        
+        m_b_value = int (this_dynamic_m_b_value.GetValue(), 0)
+        self.assertTrue (m_b_value == 10)
+        
+        # Make sure it is not in the static version
+
+        this_static_m_b_value = this_static.GetChildMemberWithName('m_b_value', no_dynamic)
+        self.assertFalse (this_static_m_b_value)
+
+        # Okay, now let's make sure that we can get the dynamic type of a child element:
+
+        contained_auto_ptr = this_dynamic.GetChildMemberWithName ('m_client_A', use_dynamic)
+        self.assertTrue (contained_auto_ptr)
+        contained_b = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', use_dynamic)
+        if not contained_b:
+                contained_b = contained_auto_ptr.GetChildMemberWithName ('__ptr_', use_dynamic)
+        self.assertTrue (contained_b)
+        
+        contained_b_static = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', no_dynamic)
+        if not contained_b_static:
+                contained_b_static = contained_auto_ptr.GetChildMemberWithName ('__ptr_', no_dynamic)
+        self.assertTrue (contained_b_static)
+        
+        contained_b_addr = int (contained_b.GetValue(), 16)
+        contained_b_static_addr = int (contained_b_static.GetValue(), 16)
+        
+        self.assertTrue (contained_b_addr < contained_b_static_addr)
+
 
 if __name__ == '__main__':
     import atexit

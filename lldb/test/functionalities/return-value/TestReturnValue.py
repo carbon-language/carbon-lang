@@ -12,80 +12,12 @@ class ReturnValueTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @expectedFailurei386
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_python(self):
-        """Test getting return values from stepping out with dsyms."""
-        self.buildDsym()
-        self.do_return_value()
-
     @expectedFailurei386
     @expectedFailureWindows("llvm.org/pr24778")
     @python_api_test
-    @dwarf_test
-    def test_with_dwarf_python(self):
+    def test_with_python(self):
         """Test getting return values from stepping out."""
-        self.buildDwarf()
-        self.do_return_value()
-
-    def return_and_test_struct_value (self, func_name):
-        """Pass in the name of the function to return from - takes in value, returns value."""
-        
-        # Set the breakpoint, run to it, finish out.
-        bkpt = self.target.BreakpointCreateByName (func_name)
-        self.assertTrue (bkpt.GetNumResolvedLocations() > 0)
-
-        self.process.Continue ()
-
-        thread_list = lldbutil.get_threads_stopped_at_breakpoint (self.process, bkpt)
-
-        self.assertTrue (len(thread_list) == 1)
-        thread = thread_list[0]
-
-        self.target.BreakpointDelete (bkpt.GetID())
-
-        in_value = thread.GetFrameAtIndex(0).FindVariable ("value")
-        
-        self.assertTrue (in_value.IsValid())
-        num_in_children = in_value.GetNumChildren()
-
-        # This is a little hokey, but if we don't get all the children now, then
-        # once we've stepped we won't be able to get them?
-        
-        for idx in range(0, num_in_children):
-            in_child = in_value.GetChildAtIndex (idx)
-            in_child_str = in_child.GetValue()
-
-        thread.StepOut()
-        
-        self.assertTrue (self.process.GetState() == lldb.eStateStopped)
-        self.assertTrue (thread.GetStopReason() == lldb.eStopReasonPlanComplete)
-
-        # Assuming all these functions step out to main.  Could figure out the caller dynamically
-        # if that would add something to the test.
-        frame = thread.GetFrameAtIndex(0)
-        fun_name = frame.GetFunctionName()
-        self.assertTrue (fun_name == "main")
-
-        frame = thread.GetFrameAtIndex(0)
-        ret_value = thread.GetStopReturnValue()
-
-        self.assertTrue (ret_value.IsValid())
-
-        num_ret_children = ret_value.GetNumChildren()
-        self.assertTrue (num_in_children == num_ret_children)
-        for idx in range(0, num_ret_children):
-            in_child = in_value.GetChildAtIndex(idx)
-            ret_child = ret_value.GetChildAtIndex(idx)
-            in_child_str = in_child.GetValue()
-            ret_child_str = ret_child.GetValue()
-
-            self.assertEqual(in_child_str, ret_child_str)
-
-    def do_return_value(self):
-        """Test getting return values from stepping out."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         error = lldb.SBError()
 
@@ -220,6 +152,60 @@ class ReturnValueTestCase(TestBase):
             self.return_and_test_struct_value ("return_ext_vector_size_float32_2")
             self.return_and_test_struct_value ("return_ext_vector_size_float32_4")
             self.return_and_test_struct_value ("return_ext_vector_size_float32_8")
+
+    def return_and_test_struct_value (self, func_name):
+        """Pass in the name of the function to return from - takes in value, returns value."""
+        
+        # Set the breakpoint, run to it, finish out.
+        bkpt = self.target.BreakpointCreateByName (func_name)
+        self.assertTrue (bkpt.GetNumResolvedLocations() > 0)
+
+        self.process.Continue ()
+
+        thread_list = lldbutil.get_threads_stopped_at_breakpoint (self.process, bkpt)
+
+        self.assertTrue (len(thread_list) == 1)
+        thread = thread_list[0]
+
+        self.target.BreakpointDelete (bkpt.GetID())
+
+        in_value = thread.GetFrameAtIndex(0).FindVariable ("value")
+        
+        self.assertTrue (in_value.IsValid())
+        num_in_children = in_value.GetNumChildren()
+
+        # This is a little hokey, but if we don't get all the children now, then
+        # once we've stepped we won't be able to get them?
+        
+        for idx in range(0, num_in_children):
+            in_child = in_value.GetChildAtIndex (idx)
+            in_child_str = in_child.GetValue()
+
+        thread.StepOut()
+        
+        self.assertTrue (self.process.GetState() == lldb.eStateStopped)
+        self.assertTrue (thread.GetStopReason() == lldb.eStopReasonPlanComplete)
+
+        # Assuming all these functions step out to main.  Could figure out the caller dynamically
+        # if that would add something to the test.
+        frame = thread.GetFrameAtIndex(0)
+        fun_name = frame.GetFunctionName()
+        self.assertTrue (fun_name == "main")
+
+        frame = thread.GetFrameAtIndex(0)
+        ret_value = thread.GetStopReturnValue()
+
+        self.assertTrue (ret_value.IsValid())
+
+        num_ret_children = ret_value.GetNumChildren()
+        self.assertTrue (num_in_children == num_ret_children)
+        for idx in range(0, num_ret_children):
+            in_child = in_value.GetChildAtIndex(idx)
+            ret_child = ret_value.GetChildAtIndex(idx)
+            in_child_str = in_child.GetValue()
+            ret_child_str = ret_child.GetValue()
+
+            self.assertEqual(in_child_str, ret_child_str)
 
 if __name__ == '__main__':
     import atexit

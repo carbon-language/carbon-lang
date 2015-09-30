@@ -17,7 +17,7 @@ class ExprCharTestCase(TestBase):
 
     def do_test(self, dictionary=None):
         """These basic expression commands should work as expected."""
-        self.buildDefault(dictionary = dictionary)
+        self.build(dictionary = dictionary)
 
         target = self.dbg.CreateTarget(self.exe)
         self.assertTrue(target)

@@ -80,18 +80,16 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(len(stop_replies), thread_count)
 
     @debugserver_test
-    @dsym_test
-    def test_qThreadStopInfo_works_for_multiple_threads_debugserver_dsym(self):
+    def test_qThreadStopInfo_works_for_multiple_threads_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.qThreadStopInfo_works_for_multiple_threads(self.THREAD_COUNT)
 
     @llgs_test
-    @dwarf_test
-    def test_qThreadStopInfo_works_for_multiple_threads_llgs_dwarf(self):
+    def test_qThreadStopInfo_works_for_multiple_threads_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.qThreadStopInfo_works_for_multiple_threads(self.THREAD_COUNT)
 
@@ -109,18 +107,16 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEqual(with_stop_reason_count, 1)
 
     @debugserver_test
-    @dsym_test
-    def test_qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt_debugserver_dsym(self):
+    def test_qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt(self.THREAD_COUNT)
 
     @llgs_test
-    @dwarf_test
-    def test_qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt_llgs_dwarf(self):
+    def test_qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt(self.THREAD_COUNT)
 
@@ -135,19 +131,17 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @unittest2.skip("MacOSX doesn't have a default thread name")
     @debugserver_test
-    @dsym_test
-    def test_qThreadStopInfo_has_valid_thread_names_debugserver_dsym(self):
+    def test_qThreadStopInfo_has_valid_thread_names_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.qThreadStopInfo_has_valid_thread_names(self.THREAD_COUNT, "a.out")
 
     @skipUnlessPlatform(["linux"]) # test requires OS with set, equal thread names by default.
     @llgs_test
-    @dwarf_test
-    def test_qThreadStopInfo_has_valid_thread_names_llgs_dwarf(self):
+    def test_qThreadStopInfo_has_valid_thread_names_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.qThreadStopInfo_has_valid_thread_names(self.THREAD_COUNT, "a.out")
 

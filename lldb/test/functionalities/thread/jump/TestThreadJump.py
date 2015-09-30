@@ -12,29 +12,9 @@ class ThreadJumpTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
+    def test(self):
         """Test thread jump handling."""
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.thread_jump_test()
-
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test thread jump handling."""
-        self.buildDwarf(dictionary=self.getBuildFlags())
-        self.thread_jump_test()
-
-    def do_min_test(self, start, jump, var, value):
-        self.runCmd("j %i" % start)                     # jump to the start marker
-        self.runCmd("thread step-in")                   # step into the min fn
-        self.runCmd("j %i" % jump)                      # jump to the branch we're interested in
-        self.runCmd("thread step-out")                  # return out
-        self.runCmd("thread step-over")                 # assign to the global
-        self.expect("expr %s" % var, substrs = [value]) # check it
-
-    def thread_jump_test(self):
-        """Test thread exit handling."""
+        self.build(dictionary=self.getBuildFlags())
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -67,6 +47,14 @@ class ThreadJumpTestCase(TestBase):
         # Try jumping to another function (without forcing)
         self.expect("j main.cpp:%i" % self.mark1, COMMAND_FAILED_AS_EXPECTED, error = True,
             substrs = ["error"])
+    
+    def do_min_test(self, start, jump, var, value):
+        self.runCmd("j %i" % start)                     # jump to the start marker
+        self.runCmd("thread step-in")                   # step into the min fn
+        self.runCmd("j %i" % jump)                      # jump to the branch we're interested in
+        self.runCmd("thread step-out")                  # return out
+        self.runCmd("thread step-over")                 # assign to the global
+        self.expect("expr %s" % var, substrs = [value]) # check it
 
 if __name__ == '__main__':
     import atexit

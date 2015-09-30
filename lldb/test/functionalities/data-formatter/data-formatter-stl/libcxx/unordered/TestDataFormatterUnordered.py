@@ -12,31 +12,11 @@ class LibcxxUnorderedDataFormatterTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test data formatter commands."""
-        self.buildDsym()
-        self.data_formatter_commands()
-
-    @dwarf_test
     @skipIfWindows # libc++ not ported to Windows yet
     @skipIfGcc
-    def test_with_dwarf_and_run_command(self):
-        """Test data formatter commands."""
-        self.buildDwarf()
-        self.data_formatter_commands()
-
-    def setUp(self):
-        # Call super's setUp().
-        TestBase.setUp(self)
-
-    def look_for_content_and_continue(self, var_name, patterns):
-        self.expect( ("frame variable %s" % var_name), patterns=patterns)
-        self.runCmd("continue")
-
-    def data_formatter_commands(self):
+    def test_with_run_command(self):
         """Test that that file and class static variables display correctly."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.skip_if_library_missing(self, self.target(), lldbutil.PrintableRegex("libc\+\+"))
@@ -86,6 +66,10 @@ class LibcxxUnorderedDataFormatterTestCase(TestBase):
             "smset",
             ['size=5 {', '(\[\d\] = "is"(\\n|.)+){2}',
                          '(\[\d\] = "world"(\\n|.)+){2}'])
+
+    def look_for_content_and_continue(self, var_name, patterns):
+        self.expect( ("frame variable %s" % var_name), patterns=patterns)
+        self.runCmd("continue")
 
 if __name__ == '__main__':
     import atexit

@@ -10,28 +10,12 @@ class RegisterVariableTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    @expectedFailureAll(
-        oslist=['macosx'], compiler='clang', compiler_version=['<', '7.0.0'])
-    def test_with_dsym_and_run_command(self):
-        """Test expressions on register values."""
-        self.buildDsym()
-        self.const_variable()
-
-    @dwarf_test
+    @expectedFailureAll(oslist=['macosx'], compiler='clang', compiler_version=['<', '7.0.0'], debug_info="dsym")
     @expectedFailureClang(None, ['<', '3.5'])
     @expectedFailureGcc(None, ['is', '4.8.2'])
-    def test_with_dwarf_and_run_command(self):
+    def test_and_run_command(self):
         """Test expressions on register values."""
-        self.buildDwarf()
-        self.const_variable()
-
-    def setUp(self):
-        # Call super's setUp().
-        TestBase.setUp(self)
-
-    def const_variable(self):
-        """Test expressions on register values."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

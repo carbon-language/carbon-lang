@@ -19,20 +19,9 @@ class PoVerbosityTestCase(TestBase):
                                 '// Stop here')
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
+    def test(self):
         """Test that the po command acts correctly."""
-        self.buildDsym()
-        self.do_my_test()
-
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test that the po command acts correctly."""
-        self.buildDwarf()
-        self.do_my_test()
-
-    def do_my_test(self):
+        self.build()
         
         # This is the function to remove the custom formats in order to have a
         # clean slate for the next test case.

@@ -10,23 +10,6 @@ class HelloWorldTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_process_launch_api(self):
-        """Test SBValue::GetValueDidChange"""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.do_test()
-
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_process_launch_api(self):
-        """Test SBValue::GetValueDidChange"""
-        self.buildDwarf(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.do_test()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -34,9 +17,11 @@ class HelloWorldTestCase(TestBase):
         self.exe = os.path.join(os.getcwd(), self.testMethodName)
         self.d = {'EXE': self.testMethodName}
 
-    def do_test(self):
-        """Create target, breakpoint, launch a process, and then kill it."""
-
+    @python_api_test
+    def test_with_process_launch_api(self):
+        """Test SBValue::GetValueDidChange"""
+        self.build(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
         target = self.dbg.CreateTarget(self.exe)
 
         breakpoint = target.BreakpointCreateBySourceRegex("break here", lldb.SBFileSpec("main.c"))

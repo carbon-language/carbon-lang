@@ -11,25 +11,9 @@ class CPPBreakpointCommandsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
+    def test(self):
         """Test a sequence of breakpoint command add, list, and delete."""
-        self.buildDsym()
-        self.cpp_breakpoints()
-
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test a sequence of breakpoint command add, list, and delete."""
-        self.buildDwarf()
-        self.cpp_breakpoints()
-
-    def setUp(self):
-        # Call super's setUp().
-        TestBase.setUp(self)
-
-    def cpp_breakpoints (self):
-        """Test a sequence of breakpoint command add, list, and delete."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target from the debugger.

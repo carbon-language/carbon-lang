@@ -13,27 +13,15 @@ class UnsignedTypesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test that variables with unsigned types display correctly."""
-        self.buildDsym()
-        self.unsigned_types()
-
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test that variables with unsigned types display correctly."""
-        self.buildDwarf()
-        self.unsigned_types()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    def unsigned_types(self):
+    def test(self):
         """Test that variables with unsigned types display correctly."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

@@ -13,22 +13,6 @@ class Rdar12408181TestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    def test_nswindow_count_with_dsym(self):
-        """Test that we are able to find out how many children NSWindow has."""
-        d = {'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.nswindow_count(self.exe_name)
-
-    @dwarf_test
-    def test_nswindow_count_with_dwarf(self):
-        """Test that we are able to find out how many children NSWindow has."""
-        d = {'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.nswindow_count(self.exe_name)
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -38,9 +22,13 @@ class Rdar12408181TestCase(TestBase):
         self.main_source = "main.m"
         self.line = line_number(self.main_source, '// Set breakpoint here.')
 
-    def nswindow_count(self, exe_name):
+    def test_nswindow_count(self):
         """Test that we are able to find out how many children NSWindow has."""
-        exe = os.path.join(os.getcwd(), exe_name)
+        d = {'EXE': self.exe_name}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+
+        exe = os.path.join(os.getcwd(), self.exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, self.main_source, self.line, num_expected_locations=1, loc_exact=True)

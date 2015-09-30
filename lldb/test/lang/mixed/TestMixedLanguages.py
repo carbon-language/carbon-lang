@@ -11,7 +11,7 @@ class MixedLanguagesTestCase(TestBase):
 
     def test_language_of_frame(self):
         """Test that the language defaults to the language of the current frame."""
-        self.buildDefault()
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

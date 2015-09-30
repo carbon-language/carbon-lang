@@ -10,17 +10,9 @@ class ConsecutiveBreakpoitsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
     @unittest2.expectedFailure("llvm.org/pr23478")
-    def test_with_dsym (self):
-        self.buildDsym ()
-        self.consecutive_breakpoints_tests()
-
-    @dwarf_test
-    @unittest2.expectedFailure("llvm.org/pr23478")
-    def test_with_dwarf (self):
-        self.buildDwarf ()
+    def test (self):
+        self.build ()
         self.consecutive_breakpoints_tests()
 
     def consecutive_breakpoints_tests(self):

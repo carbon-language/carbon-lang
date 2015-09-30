@@ -13,6 +13,7 @@ class TestGoASTContext(TestBase):
     @python_api_test
     @skipIfFreeBSD # llvm.org/pr24895 triggers assertion failure
     @skipIfRemote # Not remote test suite ready
+    @no_debug_info_test
     @skipUnlessGoInstalled
     def test_goroutine_plugin(self):
         """Test goroutine as threads support."""

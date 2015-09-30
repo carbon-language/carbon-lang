@@ -11,24 +11,6 @@ class StopHookForMultipleThreadsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_stop_hook_multiple_threads_with_dsym(self):
-        """Test that lldb stop-hook works for multiple threads."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.stop_hook_multiple_threads()
-
-    @dwarf_test
-    @expectedFlakeyFreeBSD("llvm.org/pr15037")
-    @expectedFlakeyLinux("llvm.org/pr15037") # stop hooks sometimes fail to fire on Linux
-    @expectedFailureHostWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    def test_stop_hook_multiple_threads_with_dwarf(self):
-        """Test that lldb stop-hook works for multiple threads."""
-        self.buildDwarf(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.stop_hook_multiple_threads()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -41,8 +23,14 @@ class StopHookForMultipleThreadsTestCase(TestBase):
         self.exe_name = self.testMethodName
         self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
-    def stop_hook_multiple_threads(self):
+    @expectedFlakeyFreeBSD("llvm.org/pr15037")
+    @expectedFlakeyLinux("llvm.org/pr15037") # stop hooks sometimes fail to fire on Linux
+    @expectedFailureHostWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    def test_stop_hook_multiple_threads(self):
         """Test that lldb stop-hook works for multiple threads."""
+        self.build(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
+
         import pexpect
         exe = os.path.join(os.getcwd(), self.exe_name)
         prompt = "(lldb) "

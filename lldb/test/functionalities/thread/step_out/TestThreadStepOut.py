@@ -12,52 +12,31 @@ class ThreadStepOutTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    def test_step_single_thread_with_dsym(self):
-        """Test thread step out on one thread via command interpreter. """
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.step_out_test(self.step_out_single_thread_with_cmd)
-
     @skipIfLinux                              # Test occasionally times out on the Linux build bot
     @expectedFailureLinux("llvm.org/pr23477") # Test occasionally times out on the Linux build bot
     @expectedFailureFreeBSD("llvm.org/pr18066") # inferior does not exit
     @expectedFailureWindows # Test crashes
-    @dwarf_test
-    def test_step_single_thread_with_dwarf(self):
+    def test_step_single_thread(self):
         """Test thread step out on one thread via command interpreter. """
-        self.buildDwarf(dictionary=self.getBuildFlags())
+        self.build(dictionary=self.getBuildFlags())
         self.step_out_test(self.step_out_single_thread_with_cmd)
-
-    @dsym_test
-    def test_step_all_threads_with_dsym(self):
-        """Test thread step out on all threads via command interpreter. """
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.step_out_test(self.step_out_all_threads_with_cmd)
 
     @skipIfLinux                              # Test occasionally times out on the Linux build bot
     @expectedFailureLinux("llvm.org/pr23477") # Test occasionally times out on the Linux build bot
     @expectedFailureFreeBSD("llvm.org/pr19347") # 2nd thread stops at breakpoint
     @expectedFailureWindows # Test crashes
-    @dwarf_test
-    def test_step_all_threads_with_dwarf(self):
+    def test_step_all_threads(self):
         """Test thread step out on all threads via command interpreter. """
-        self.buildDwarf(dictionary=self.getBuildFlags())
+        self.build(dictionary=self.getBuildFlags())
         self.step_out_test(self.step_out_all_threads_with_cmd)
-
-    @dsym_test
-    def test_python_with_dsym(self):
-        """Test thread step out on one threads via Python API (dsym)."""
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.step_out_test(self.step_out_with_python)
 
     @skipIfLinux                              # Test occasionally times out on the Linux build bot
     @expectedFailureLinux("llvm.org/pr23477") # Test occasionally times out on the Linux build bot
     @expectedFailureFreeBSD("llvm.org/pr19347")
     @expectedFailureWindows("llvm.org/pr24681")
-    @dwarf_test
-    def test_python_with_dwarf(self):
+    def test_python(self):
         """Test thread step out on one thread via Python API (dwarf)."""
-        self.buildDwarf(dictionary=self.getBuildFlags())
+        self.build(dictionary=self.getBuildFlags())
         self.step_out_test(self.step_out_with_python)
 
     def setUp(self):

@@ -12,27 +12,11 @@ class TypeCompletionTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Check that types only get completed when necessary."""
-        self.buildDsym()
-        self.type_completion_commands()
-
-    @dwarf_test
     @expectedFailureIcc # often fails with 'NameAndAddress should be valid'
     # Fails with gcc 4.8.1 with llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
-    def test_with_dwarf_and_run_command(self):
+    def test_with_run_command(self):
         """Check that types only get completed when necessary."""
-        self.buildDwarf()
-        self.type_completion_commands()
-
-    def setUp(self):
-        # Call super's setUp().
-        TestBase.setUp(self)
-
-    def type_completion_commands(self):
-        """Check that types only get completed when necessary."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_source_regexp (self, "// Set break point at this line.")

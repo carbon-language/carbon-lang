@@ -13,22 +13,6 @@ class TestObjCStepping(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Test stepping through ObjC method dispatch in various forms."""
-        self.buildDsym()
-        self.objc_stepping()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Test stepping through ObjC method dispatch in various forms."""
-        self.buildDwarf()
-        self.objc_stepping()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -40,8 +24,11 @@ class TestObjCStepping(TestBase):
         self.sourceBase_returnsStruct_start_line = line_number (self.main_source, '// SourceBase returnsStruct start line.')
         self.stepped_past_nil_line = line_number (self.main_source, '// Step over nil should stop here.')
 
-    def objc_stepping(self):
-        """Use Python APIs to test stepping into ObjC methods."""
+    @skipUnlessDarwin
+    @python_api_test
+    def test_with_python_api(self):
+        """Test stepping through ObjC method dispatch in various forms."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

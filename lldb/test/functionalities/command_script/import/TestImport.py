@@ -10,6 +10,7 @@ class ImportTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
+    @no_debug_info_test
     def test_import_command(self):
         """Import some Python scripts by path and test them"""
         self.run_test()

@@ -14,39 +14,17 @@ class ObjCNewSyntaxTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    @expectedFailureAll(
-        oslist=['macosx'], compiler='clang', compiler_version=['<', '7.0.0'])
-    def test_expr_with_dsym(self):
-        self.buildDsym()
-        self.expr()
-
-    @dwarf_test
-    @skipIfFreeBSD
-    @skipIfLinux
-    @skipIfWindows
-    @expectedFailureAll(
-        oslist=['macosx'], compiler='clang', compiler_version=['<', '7.0.0'])
-    def test_expr_with_dwarf(self):
-        self.buildDwarf()
-        self.expr()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.m', '// Set breakpoint 0 here.')
 
-    def applies(self):
-        if platform.system() != "Darwin":
-            return False
-        if StrictVersion('12.0.0') > platform.release():
-            return False
-
-        return True
-
-    def common_setup(self):
+    @skipUnlessDarwin
+    @expectedFailureAll(oslist=['macosx'], compiler='clang', compiler_version=['<', '7.0.0'])
+    @unittest2.skipIf(platform.system() != "Darwin" or StrictVersion('12.0.0') > platform.release(), "Only supported on Darwin 12.0.0+")
+    def test_expr(self):
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -63,12 +41,6 @@ class ObjCNewSyntaxTestCase(TestBase):
         # The breakpoint should have a hit count of 1.
         self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
-
-    def expr(self):
-        if not self.applies():
-            return
-
-        self.common_setup()
 
         self.expect("expr --object-description -- immutable_array[0]", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["foo"])
@@ -126,7 +98,6 @@ class ObjCNewSyntaxTestCase(TestBase):
         self.expect("expr -- @((char*)\"Hello world\" + 6)", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSString", "world"])
 
-            
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

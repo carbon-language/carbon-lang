@@ -11,22 +11,6 @@ class StopHookMechanismTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test the stop-hook mechanism."""
-        self.buildDsym()
-        self.stop_hook_firing()
-
-    @skipIfFreeBSD # llvm.org/pr15037
-    @expectedFlakeyLinux('llvm.org/pr15037') # stop-hooks sometimes fail to fire on Linux
-    @expectedFailureHostWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test the stop-hook mechanism."""
-        self.buildDwarf()
-        self.stop_hook_firing()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -36,8 +20,13 @@ class StopHookMechanismTestCase(TestBase):
         self.correct_step_line = line_number ('main.cpp', '// We should stop here after stepping.')
         self.line = line_number('main.cpp', '// Another breakpoint which is outside of the stop-hook range.')
 
-    def stop_hook_firing(self):
+    @skipIfFreeBSD # llvm.org/pr15037
+    @expectedFlakeyLinux('llvm.org/pr15037') # stop-hooks sometimes fail to fire on Linux
+    @expectedFailureHostWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    def test(self):
         """Test the stop-hook mechanism."""
+        self.build()
+
         import pexpect
         exe = os.path.join(os.getcwd(), "a.out")
         prompt = "(lldb) "

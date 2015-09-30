@@ -13,56 +13,26 @@ class ReturnValueTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
     @python_api_test
-    @dsym_test
-    def test_step_out_with_dsym_python(self):
+    def test_step_out_with_python(self):
         """Test stepping out using avoid-no-debug with dsyms."""
-        self.buildDsym()
+        self.build()
         self.get_to_starting_point()
         self.do_step_out_past_nodebug()
 
     @python_api_test
-    @dwarf_test
-    def test_step_out_with_dwarf_python(self):
-        """Test stepping out using avoid-no-debug with dsyms."""
-        self.buildDwarf()
-        self.get_to_starting_point()
-        self.do_step_out_past_nodebug()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_step_over_with_dsym_python(self):
-        """Test stepping over using avoid-no-debug with dsyms."""
-        self.buildDsym()
-        self.get_to_starting_point()
-        self.do_step_over_past_nodebug()
-
-    @python_api_test
-    @dwarf_test
     @expectedFailureGcc("llvm.org/pr19247")
-    def test_step_over_with_dwarf_python(self):
+    def test_step_over_with_python(self):
         """Test stepping over using avoid-no-debug with dwarf."""
-        self.buildDwarf()
+        self.build()
         self.get_to_starting_point()
         self.do_step_over_past_nodebug()
 
-    @skipUnlessDarwin
     @python_api_test
-    @dsym_test
-    def test_step_in_with_dsym_python(self):
-        """Test stepping in using avoid-no-debug with dsyms."""
-        self.buildDsym()
-        self.get_to_starting_point()
-        self.do_step_in_past_nodebug()
-
-    @python_api_test
-    @dwarf_test
     @expectedFailureGcc("llvm.org/pr19247")
-    def test_step_in_with_dwarf_python(self):
+    def test_step_in_with_python(self):
         """Test stepping in using avoid-no-debug with dwarf."""
-        self.buildDwarf()
+        self.build()
         self.get_to_starting_point()
         self.do_step_in_past_nodebug()
 

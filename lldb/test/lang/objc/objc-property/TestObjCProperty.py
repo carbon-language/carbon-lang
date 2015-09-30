@@ -12,36 +12,21 @@ class ObjCPropertyTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_objc_properties_with_dsym(self):
-        """Test that expr uses the correct property getters and setters"""
-        if self.getArchitecture() == 'i386':
-            self.skipTest("requires modern objc runtime")
-        self.buildDsym()
-        self.do_test_properties()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dwarf_test
-    def test_objc_properties_with_dwarf(self):
-        """Test that expr uses the correct property getters and setters"""
-        if self.getArchitecture() == 'i386':
-            self.skipTest("requires modern objc runtime")
-        self.buildDwarf()
-        self.do_test_properties()
-
     def setUp(self):
         # Call super's setUp().                                                                                                           
         TestBase.setUp(self)
 
         # Find the line number to break for main.c.                                                                                       
-
         self.source_name = 'main.m'
 
-    def run_to_main (self):
+    @skipUnlessDarwin
+    @python_api_test
+    def test_objc_properties(self):
         """Test that expr uses the correct property getters and setters"""
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
+
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target from the debugger.
@@ -65,12 +50,6 @@ class ObjCPropertyTestCase(TestBase):
         threads = lldbutil.get_threads_stopped_at_breakpoint (process, main_bkpt)
         self.assertTrue (len(threads) == 1)
         thread = threads[0]
-        return thread
-
-    def do_test_properties (self):
-
-        thread = self.run_to_main()
-
         frame = thread.GetFrameAtIndex(0)
 
         mine = frame.FindVariable ("mine")

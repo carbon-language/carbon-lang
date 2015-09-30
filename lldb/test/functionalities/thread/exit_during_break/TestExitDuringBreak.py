@@ -12,32 +12,19 @@ class ExitDuringBreakpointTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
-    @dsym_test
-    def test_with_dsym(self):
-        """Test thread exit during breakpoint handling."""
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.exit_during_breakpoint_test()
-
-    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
-    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
-    @expectedFailureLinux("llvm.org/pr15824") # thread states not properly maintained
-    @expectedFailureWindows("llvm.org/pr24668") # Breakpoints not resolved correctly
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test thread exit during breakpoint handling."""
-        self.buildDwarf(dictionary=self.getBuildFlags())
-        self.exit_during_breakpoint_test()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number for our breakpoint.
         self.breakpoint = line_number('main.cpp', '// Set breakpoint here')
 
-    def exit_during_breakpoint_test(self):
+    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
+    @expectedFailureLinux("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureWindows("llvm.org/pr24668") # Breakpoints not resolved correctly
+    def test(self):
         """Test thread exit during breakpoint handling."""
+        self.build(dictionary=self.getBuildFlags())
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

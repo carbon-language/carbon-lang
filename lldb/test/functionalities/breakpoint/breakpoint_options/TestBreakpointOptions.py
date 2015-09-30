@@ -12,17 +12,9 @@ class BreakpointOptionsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
+    def test(self):
         """Test breakpoint command for different options."""
-        self.buildDsym()
-        self.breakpoint_options_test()
-
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test breakpoint command for different options."""
-        self.buildDwarf()
+        self.build()
         self.breakpoint_options_test()
 
     def setUp(self):

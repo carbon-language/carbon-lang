@@ -11,6 +11,7 @@ class ARMEmulationTestCase(TestBase):
     
     mydir = TestBase.compute_mydir(__file__)
 
+    @no_debug_info_test
     def test_thumb_emulations (self):
         current_dir = os.getcwd();
         test_dir = os.path.join (current_dir, "new-test-files")
@@ -24,7 +25,7 @@ class ARMEmulationTestCase(TestBase):
             test_file = os.path.join (test_dir, f)
             self.run_a_single_test (test_file)
 
-
+    @no_debug_info_test
     def test_arm_emulations (self):
         current_dir = os.getcwd();
         test_dir = os.path.join (current_dir, "new-test-files")

@@ -31,17 +31,15 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertTrue(lldbgdbserverutils.process_is_running(pid, True))
 
     @debugserver_test
-    @dsym_test
-    def test_qProcessInfo_returns_running_process_debugserver_dsym(self):
+    def test_qProcessInfo_returns_running_process_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.qProcessInfo_returns_running_process()
 
     @llgs_test
-    @dwarf_test
-    def test_qProcessInfo_returns_running_process_llgs_dwarf(self):
+    def test_qProcessInfo_returns_running_process_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.qProcessInfo_returns_running_process()
 
     def attach_commandline_qProcessInfo_reports_correct_pid(self):
@@ -64,18 +62,16 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEqual(reported_pid, procs["inferior"].pid)
 
     @debugserver_test
-    @dsym_test
-    def test_attach_commandline_qProcessInfo_reports_correct_pid_debugserver_dsym(self):
+    def test_attach_commandline_qProcessInfo_reports_correct_pid_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_attach()
         self.attach_commandline_qProcessInfo_reports_correct_pid()
 
     @llgs_test
-    @dwarf_test
-    def test_attach_commandline_qProcessInfo_reports_correct_pid_llgs_dwarf(self):
+    def test_attach_commandline_qProcessInfo_reports_correct_pid_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_attach()
         self.attach_commandline_qProcessInfo_reports_correct_pid()
 
@@ -97,17 +93,15 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertTrue(endian in ["little", "big", "pdp"])
 
     @debugserver_test
-    @dsym_test
-    def test_qProcessInfo_reports_valid_endian_debugserver_dsym(self):
+    def test_qProcessInfo_reports_valid_endian_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.qProcessInfo_reports_valid_endian()
 
     @llgs_test
-    @dwarf_test
-    def test_qProcessInfo_reports_valid_endian_llgs_dwarf(self):
+    def test_qProcessInfo_reports_valid_endian_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.qProcessInfo_reports_valid_endian()
 
     def qProcessInfo_contains_keys(self, expected_key_set):
@@ -152,26 +146,23 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @skipUnlessDarwin
     @debugserver_test
-    @dsym_test
     def test_qProcessInfo_contains_cputype_cpusubtype_debugserver_darwin(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.qProcessInfo_contains_keys(set(['cputype', 'cpusubtype']))
 
     @skipUnlessPlatform(["linux"])
     @llgs_test
-    @dwarf_test
     def test_qProcessInfo_contains_triple_llgs_linux(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.qProcessInfo_contains_keys(set(['triple']))
 
     @skipUnlessDarwin
     @debugserver_test
-    @dsym_test
     def test_qProcessInfo_does_not_contain_triple_debugserver_darwin(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         # We don't expect to see triple on darwin.  If we do, we'll prefer triple
         # to cputype/cpusubtype and skip some darwin-based ProcessGDBRemote ArchSpec setup
         # for the remote Host and Process.
@@ -179,10 +170,9 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @skipUnlessPlatform(["linux"])
     @llgs_test
-    @dwarf_test
     def test_qProcessInfo_does_not_contain_cputype_cpusubtype_llgs_linux(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.qProcessInfo_does_not_contain_keys(set(['cputype', 'cpusubtype']))
 
 

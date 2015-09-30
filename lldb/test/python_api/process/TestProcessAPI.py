@@ -12,71 +12,16 @@ class ProcessAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_read_memory_with_dsym(self):
-        """Test Python SBProcess.ReadMemory() API."""
-        self.buildDsym()
-        self.read_memory()
-
-    @python_api_test
-    @dwarf_test
-    def test_read_memory_with_dwarf(self):
-        """Test Python SBProcess.ReadMemory() API."""
-        self.buildDwarf()
-        self.read_memory()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_write_memory_with_dsym(self):
-        """Test Python SBProcess.WriteMemory() API."""
-        self.buildDsym()
-        self.write_memory()
-
-    @python_api_test
-    @dwarf_test
-    def test_write_memory_with_dwarf(self):
-        """Test Python SBProcess.WriteMemory() API."""
-        self.buildDwarf()
-        self.write_memory()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_access_my_int_with_dsym(self):
-        """Test access 'my_int' using Python SBProcess.GetByteOrder() and other APIs."""
-        self.buildDsym()
-        self.access_my_int()
-
-    @python_api_test
-    @dwarf_test
-    def test_access_my_int_with_dwarf(self):
-        """Test access 'my_int' using Python SBProcess.GetByteOrder() and other APIs."""
-        self.buildDwarf()
-        self.access_my_int()
-
-    @python_api_test
-    def test_remote_launch(self):
-        """Test SBProcess.RemoteLaunch() API with a process not in eStateConnected, and it should fail."""
-        self.buildDefault()
-        self.remote_launch_should_fail()
-
-    @python_api_test
-    def test_get_num_supported_hardware_watchpoints(self):
-        """Test SBProcess.GetNumSupportedHardwareWatchpoints() API with a process."""
-        self.buildDefault()
-        self.get_num_supported_hardware_watchpoints()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number("main.cpp", "// Set break point at this line and check variable 'my_char'.")
 
-    def read_memory(self):
+    @python_api_test
+    def test_read_memory(self):
         """Test Python SBProcess.ReadMemory() API."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -156,8 +101,10 @@ class ProcessAPITestCase(TestBase):
         if my_uint32 != 12345:
             self.fail("Result from SBProcess.ReadUnsignedFromMemory() does not match our expected output")
 
-    def write_memory(self):
+    @python_api_test
+    def test_write_memory(self):
         """Test Python SBProcess.WriteMemory() API."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -206,8 +153,10 @@ class ProcessAPITestCase(TestBase):
                     exe=False,
             startstr = 'a')
 
-    def access_my_int(self):
+    @python_api_test
+    def test_access_my_int(self):
         """Test access 'my_int' using Python SBProcess.GetByteOrder() and other APIs."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -294,8 +243,10 @@ class ProcessAPITestCase(TestBase):
             for i in new_bytes:
                 print "byte:", i
 
-    def remote_launch_should_fail(self):
+    @python_api_test
+    def test_remote_launch(self):
         """Test SBProcess.RemoteLaunch() API with a process not in eStateConnected, and it should fail."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -312,8 +263,10 @@ class ProcessAPITestCase(TestBase):
         success = process.RemoteLaunch(None, None, None, None, None, None, 0, False, error)
         self.assertTrue(not success, "RemoteLaunch() should fail for process state != eStateConnected")
 
-    def get_num_supported_hardware_watchpoints(self):
+    @python_api_test
+    def test_get_num_supported_hardware_watchpoints(self):
         """Test SBProcess.GetNumSupportedHardwareWatchpoints() API with a process."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

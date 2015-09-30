@@ -10,22 +10,6 @@ class TestObjCStructArgument(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Test passing structs to Objective-C methods."""
-        self.buildDsym()
-        self.objc_class_method()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Test passing structs to Objective-C methods."""
-        self.buildDwarf()
-        self.objc_class_method()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -33,8 +17,11 @@ class TestObjCStructArgument(TestBase):
         self.main_source = "test.m"
         self.break_line = line_number(self.main_source, '// Set breakpoint here.')
 
-    def objc_class_method(self):
+    @skipUnlessDarwin
+    @python_api_test
+    def test_with_python_api(self):
         """Test passing structs to Objective-C methods."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

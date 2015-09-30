@@ -28,7 +28,7 @@ class ExprOptionsTestCase(TestBase):
 
     def test_expr_options(self):
         """These expression command options should work as expected."""
-        self.buildDefault()
+        self.build()
 
         # Set debugger into synchronous mode
         self.dbg.SetAsync(False)

@@ -13,25 +13,6 @@ class ValueAsLinkedListTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym(self):
-        """Exercise SBValue API linked_list_iter."""
-        d = {'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.linked_list_api(self.exe_name)
-
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Exercise SBValue API linked_list_iter."""
-        d = {'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.linked_list_api(self.exe_name)
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -40,9 +21,13 @@ class ValueAsLinkedListTestCase(TestBase):
         # Find the line number to break at.
         self.line = line_number('main.cpp', '// Break at this line')
 
-    def linked_list_api(self, exe_name):
-        """Exercise SBValue API linked_list-iter."""
-        exe = os.path.join(os.getcwd(), exe_name)
+    @python_api_test
+    def test(self):
+        """Exercise SBValue API linked_list_iter."""
+        d = {'EXE': self.exe_name}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        exe = os.path.join(os.getcwd(), self.exe_name)
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)

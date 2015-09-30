@@ -10,30 +10,12 @@ class RvalueReferencesTestCase(TestBase):
     
     mydir = TestBase.compute_mydir(__file__)
     
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test that rvalues are supported in the C++ expression parser"""
-        self.buildDsym()
-        self.static_method_commands()
-
     #rdar://problem/11479676
     @expectedFailureIcc("ICC (13.1, 14-beta) do not emit DW_TAG_rvalue_reference_type.")
     @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
+    def test_with_run_command(self):
         """Test that rvalues are supported in the C++ expression parser"""
-        self.buildDwarf()
-        self.static_method_commands()
-
-    def setUp(self):
-        TestBase.setUp(self)
-    
-    def set_breakpoint(self, line):
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", line, num_expected_locations=1, loc_exact=True)
-
-    def static_method_commands(self):
-        """Test that rvalues are supported in the C++ expression parser"""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         self.set_breakpoint(line_number('main.cpp', '// breakpoint 1'))
@@ -62,6 +44,9 @@ class RvalueReferencesTestCase(TestBase):
 
         self.expect("expression -- int &&k = 6; k",
                     startstr = "(int) $1 = 6")
+
+    def set_breakpoint(self, line):
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", line, num_expected_locations=1, loc_exact=True)
         
 if __name__ == '__main__':
     import atexit

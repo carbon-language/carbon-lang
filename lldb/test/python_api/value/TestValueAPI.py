@@ -12,26 +12,6 @@ class ValueAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym(self):
-        """Exercise some SBValue APIs."""
-        d = {'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.value_api(self.exe_name)
-
-    @expectedFailureWindows("llvm.org/pr24772")
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Exercise some SBValue APIs."""
-        d = {'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.value_api(self.exe_name)
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -40,9 +20,14 @@ class ValueAPITestCase(TestBase):
         # Find the line number to of function 'c'.
         self.line = line_number('main.c', '// Break at this line')
 
-    def value_api(self, exe_name):
+    @expectedFailureWindows("llvm.org/pr24772")
+    @python_api_test
+    def test(self):
         """Exercise some SBValue APIs."""
-        exe = os.path.join(os.getcwd(), exe_name)
+        d = {'EXE': self.exe_name}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        exe = os.path.join(os.getcwd(), self.exe_name)
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)

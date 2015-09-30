@@ -12,25 +12,13 @@ class ObjCXXTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    def test_break_with_dsym(self):
-        """Test ivars of Objective-C++ classes"""
-        if self.getArchitecture() == 'i386':
-            self.skipTest("requires Objective-C 2.0 runtime")
-        self.buildDsym()
-        self.do_testObjCXXClasses()
-
     @skipUnlessDarwin
-    @dwarf_test
-    def test_break_with_dwarf(self):
+    def test_break(self):
         """Test ivars of Objective-C++ classes"""
         if self.getArchitecture() == 'i386':
             self.skipTest("requires Objective-C 2.0 runtime")
-        self.buildDwarf()
-        self.do_testObjCXXClasses()
 
-    def do_testObjCXXClasses(self):
-        """Test ivars of Objective-C++ classes"""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

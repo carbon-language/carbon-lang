@@ -13,19 +13,6 @@ class UnsignedTypesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test that variables with signed types display correctly."""
-        self.buildDsym()
-        self.signed_types()
-
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test that variables with signed types display correctly."""
-        self.buildDwarf()
-        self.signed_types()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -33,7 +20,10 @@ class UnsignedTypesTestCase(TestBase):
         self.source = 'main.cpp'
         self.line = line_number(self.source, '// Set break point at this line.')
 
-    def signed_types(self):
+    def test(self):
+        """Test that variables with signed types display correctly."""
+        self.build()
+
         # Run in synchronous mode
         self.dbg.SetAsync(False)
 

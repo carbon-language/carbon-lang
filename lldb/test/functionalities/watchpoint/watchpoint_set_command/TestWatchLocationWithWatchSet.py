@@ -12,23 +12,6 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_watchlocation_with_dsym_using_watchpoint_set(self):
-        """Test watching a location with 'watchpoint set expression -w write -s size' option."""
-        self.buildDsym()
-        self.setTearDownCleanup()
-        self.watchlocation_using_watchpoint_set()
-
-    @dwarf_test
-    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
-    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
-    def test_watchlocation_with_dwarf_using_watchpoint_set(self):
-        """Test watching a location with 'watchpoint set expression -w write -s size' option."""
-        self.buildDwarf()
-        self.setTearDownCleanup()
-        self.watchlocation_using_watchpoint_set()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -40,8 +23,13 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
         self.violating_func = "do_bad_thing_with_location";
         # Build dictionary to have unique executable names for each test method.
 
-    def watchlocation_using_watchpoint_set(self):
-        """Test watching a location with '-s size' option."""
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
+    def test_watchlocation_using_watchpoint_set(self):
+        """Test watching a location with 'watchpoint set expression -w write -s size' option."""
+        self.build()
+        self.setTearDownCleanup()
+
         exe = os.path.join(os.getcwd(), 'a.out')
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

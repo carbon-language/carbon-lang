@@ -13,6 +13,7 @@ class CommandSourceTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @no_debug_info_test
     def test_command_source(self):
         """Test that lldb command "command source" works correctly."""
 

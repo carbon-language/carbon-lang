@@ -43,18 +43,16 @@ class TestGdbRemoteAttach(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEqual(reported_pid, inferior.pid)
 
     @debugserver_test
-    @dsym_test
-    def test_attach_with_vAttach_debugserver_dsym(self):
+    def test_attach_with_vAttach_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_attach_manually()
         self.attach_with_vAttach()
 
     @llgs_test
-    @dwarf_test
-    def test_attach_with_vAttach_llgs_dwarf(self):
+    def test_attach_with_vAttach_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_attach_manually()
         self.attach_with_vAttach()
 

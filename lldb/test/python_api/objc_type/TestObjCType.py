@@ -12,29 +12,16 @@ class ObjCSBTypeTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym(self):
-        """Test SBType for ObjC classes."""
-        self.buildDsym()
-        self.objc_sbtype_test()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test SBType for ObjC classes."""
-        self.buildDwarf()
-        self.objc_sbtype_test()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         self.line = line_number("main.m", '// Break at this line')
 
-    def objc_sbtype_test(self):
-        """Exercise SBType and SBTypeList API."""
+    @skipUnlessDarwin
+    @python_api_test
+    def test(self):
+        """Test SBType for ObjC classes."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.

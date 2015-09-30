@@ -13,21 +13,6 @@ class Char1632TestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test that the C++11 support for char16_t and char32_t works correctly."""
-        self.buildDsym()
-        self.char1632()
-
-    @expectedFailureIcc # ICC (13.1) does not emit the DW_TAG_base_type for char16_t and char32_t.
-    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test that the C++11 support for char16_t and char32_t works correctly."""
-        self.buildDwarf()
-        self.char1632()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -35,8 +20,12 @@ class Char1632TestCase(TestBase):
         self.source = 'main.cpp'
         self.lines = [ line_number(self.source, '// breakpoint1'), 
                        line_number(self.source, '// breakpoint2') ]
-    def char1632(self):
+
+    @expectedFailureIcc # ICC (13.1) does not emit the DW_TAG_base_type for char16_t and char32_t.
+    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
+    def test(self):
         """Test that the C++11 support for char16_t and char32_t works correctly."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.

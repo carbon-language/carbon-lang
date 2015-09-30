@@ -20,22 +20,6 @@ class WatchedVariableHitWhenInScopeTestCase(TestBase):
     # clearer API to express this.
     #
 
-    @dsym_test
-    @unittest2.expectedFailure("rdar://problem/18685649")
-    def test_watched_var_should_only_hit_when_in_scope_with_dsym(self):
-        """Test that a variable watchpoint should only hit when in scope."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.watched_var()
-
-    @unittest2.expectedFailure("rdar://problem/18685649")
-    @dwarf_test
-    def test_watched_var_should_only_hit_when_in_scope_with_dwarf(self):
-        """Test that a variable watchpoint should only hit when in scope."""
-        self.buildDwarf(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.watched_var()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -44,8 +28,12 @@ class WatchedVariableHitWhenInScopeTestCase(TestBase):
         self.exe_name = self.testMethodName
         self.d = {'C_SOURCES': self.source, 'EXE': self.exe_name}
 
-    def watched_var(self):
-        """Test a simple sequence of watchpoint creation and watchpoint hit."""
+    @unittest2.expectedFailure("rdar://problem/18685649")
+    def test_watched_var_should_only_hit_when_in_scope(self):
+        """Test that a variable watchpoint should only hit when in scope."""
+        self.build(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
+
         exe = os.path.join(os.getcwd(), self.exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

@@ -22,8 +22,7 @@ class FatArchiveTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @skipUnlessDarwin
-    @dwarf_test
-    def test_with_dwarf (self):
+    def test (self):
         if self.getArchitecture() == 'x86_64':
             execute_command ("make CC='%s'" % (os.environ["CC"]))
             self.main ()

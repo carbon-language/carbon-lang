@@ -12,31 +12,15 @@ class PythonSynthDataFormatterTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test data formatter commands."""
-        self.buildDsym()
-        self.data_formatter_commands()
-
     @skipIfFreeBSD # llvm.org/pr20545 bogus output confuses buildbot parser
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
+    def test_with_run_command(self):
         """Test data formatter commands."""
-        self.buildDwarf()
+        self.build()
         self.data_formatter_commands()
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_rdar10960550_with_dsym_and_run_command(self):
+    def test_rdar10960550_with_run_command(self):
         """Test data formatter commands."""
-        self.buildDsym()
-        self.rdar10960550_formatter_commands()
-
-    @dwarf_test
-    def test_rdar10960550_with_dwarf_and_run_command(self):
-        """Test data formatter commands."""
-        self.buildDwarf()
+        self.build()
         self.rdar10960550_formatter_commands()
 
 

@@ -39,102 +39,40 @@ class DebugIntegerTypesFailures(TestBase):
         # Call super's tearDown().
         TestBase.tearDown(self)
 
-    @skipUnlessDarwin
-    def test_char_type_with_dsym(self):
+    def test_char_type(self):
         """Test that char-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'char.cpp'}
-        self.buildDsym(dictionary=d)
+        self.build(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.char_type()
-
-    def test_char_type_with_dwarf(self):
-        """Test that char-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'char.cpp'}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.char_type()
-
-    @skipUnlessDarwin
-    def test_short_type_with_dsym(self):
-        """Test that short-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'short.cpp'}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.short_type()
-
-    def test_short_type_with_dwarf(self):
-        """Test that short-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'short.cpp'}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.short_type()
-
-    @skipUnlessDarwin
-    def test_int_type_with_dsym(self):
-        """Test that int-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'int.cpp'}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.int_type()
-
-    def test_int_type_with_dwarf(self):
-        """Test that int-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'int.cpp'}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.int_type()
-
-    @skipUnlessDarwin
-    def test_long_type_with_dsym(self):
-        """Test that long-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'long.cpp'}
-        print self.id()
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.long_type()
-
-    def test_long_type_with_dwarf(self):
-        """Test that long-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'long.cpp'}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.long_type()
-
-    @skipUnlessDarwin
-    def test_long_long_type_with_dsym(self):
-        """Test that 'long long'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'long_long.cpp'}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.long_long_type()
-
-    def test_long_long_type_with_dwarf(self):
-        """Test that 'long long'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'long_long.cpp'}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.long_long_type()
-
-    def char_type(self):
-        """Test that char-type variables are displayed correctly."""
         self.generic_type_tester(set(['char']), quotedDisplay=True)
 
-    def int_type(self):
-        """Test that int-type variables are displayed correctly."""
-        self.generic_type_tester(set(['int']))
-
-    def short_type(self):
+    def test_short_type(self):
         """Test that short-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'short.cpp'}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
         self.generic_type_tester(set(['short']))
 
-    def long_type(self):
+    def test_int_type(self):
+        """Test that int-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'int.cpp'}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.generic_type_tester(set(['int']))
+
+    def test_long_type(self):
         """Test that long-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'long.cpp'}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
         self.generic_type_tester(set(['long']))
 
-    def long_long_type(self):
-        """Test that long long-type variables are displayed correctly."""
+    def test_long_long_type(self):
+        """Test that 'long long'-type variables are displayed correctly."""
+        d = {'CXX_SOURCES': 'long_long.cpp'}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
         self.generic_type_tester(set(['long long']))
-
 
 if __name__ == '__main__':
     import atexit

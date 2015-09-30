@@ -12,22 +12,6 @@ class PrintObjTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    def test_print_obj_with_dsym(self):
-        """Test "print object" where another thread blocks the print object from making progress."""
-        d = {'EXE': 'a.out'}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.print_obj('a.out')
-
-    @dwarf_test
-    def test_print_obj_with_dwarf(self):
-        """Test "print object" where another thread blocks the print object from making progress."""
-        d = {'EXE': 'b.out'}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.print_obj('b.out')
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -36,7 +20,7 @@ class PrintObjTestCase(TestBase):
         # Find the line numbers to break at.
         self.line = line_number(self.source, '// Set a breakpoint here.')
 
-    def print_obj(self, exe_name):
+    def test_print_obj(self):
         """
         Test "print object" where another thread blocks the print object from making progress.
 
@@ -45,7 +29,10 @@ class PrintObjTestCase(TestBase):
         try to get the lock already gotten by my_pthread_routime thread, it will
         have to switch to running all threads, and that should then succeed.
         """
-        exe = os.path.join(os.getcwd(), exe_name)
+        d = {'EXE': 'b.out'}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        exe = os.path.join(os.getcwd(), 'b.out')
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)

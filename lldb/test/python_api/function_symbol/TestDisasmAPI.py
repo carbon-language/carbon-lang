@@ -12,21 +12,6 @@ class DisasmAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym(self):
-        """Exercise getting SBAddress objects, disassembly, and SBAddress APIs."""
-        self.buildDsym()
-        self.disasm_and_address_api()
-
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Exercise getting SBAddress objects, disassembly, and SBAddress APIs."""
-        self.buildDwarf()
-        self.disasm_and_address_api()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -34,8 +19,10 @@ class DisasmAPITestCase(TestBase):
         self.line1 = line_number('main.c', '// Find the line number for breakpoint 1 here.')
         self.line2 = line_number('main.c', '// Find the line number for breakpoint 2 here.')
 
-    def disasm_and_address_api(self):
+    @python_api_test
+    def test(self):
         """Exercise getting SBAddress objects, disassembly, and SBAddress APIs."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
@@ -119,7 +106,6 @@ class DisasmAPITestCase(TestBase):
         self.assertTrue(desc1 and desc2 and desc1 == desc2,
                         "SBAddress.GetDescription() API of sa1 and sa2 should return the same string")
 
-        
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

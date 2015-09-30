@@ -14,17 +14,9 @@ class InlinedBreakpointsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
+    def test_with_run_command(self):
         """Test 'b basic_types.cpp:176' does break (where int.cpp includes basic_type.cpp)."""
-        self.buildDsym()
-        self.inlined_breakpoints()
-
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Test 'b basic_types.cpp:176' does break (where int.cpp includes basic_type.cpp)."""
-        self.buildDwarf()
+        self.build()
         self.inlined_breakpoints()
 
     def setUp(self):

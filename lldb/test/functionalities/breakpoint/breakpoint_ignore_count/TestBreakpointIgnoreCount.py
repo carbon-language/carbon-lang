@@ -12,32 +12,15 @@ class BreakpointIgnoreCountTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
+    def test_with_run_command(self):
         """Exercise breakpoint ignore count with 'breakpoint set -i <count>'."""
-        self.buildDsym()
-        self.breakpoint_ignore_count()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Use Python APIs to set breakpoint ignore count."""
-        self.buildDsym()
-        self.breakpoint_ignore_count_python()
-
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Exercise breakpoint ignore count with 'breakpoint set -i <count>'."""
-        self.buildDwarf()
+        self.build()
         self.breakpoint_ignore_count()
 
     @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
+    def test_with_python_api(self):
         """Use Python APIs to set breakpoint ignore count."""
-        self.buildDwarf()
+        self.build()
         self.breakpoint_ignore_count_python()
 
     def setUp(self):

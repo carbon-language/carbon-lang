@@ -23,7 +23,7 @@ class StdCXXDisassembleTestCase(TestBase):
     @unittest2.skipIf(TestBase.skipLongRunningTest(), "Skip this long running test")
     def test_stdcxx_disasm(self):
         """Do 'disassemble' on each and every 'Code' symbol entry from the std c++ lib."""
-        self.buildDefault()
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

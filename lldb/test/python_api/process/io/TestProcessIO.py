@@ -10,86 +10,6 @@ class ProcessIOTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_stdin_by_api_with_dsym(self):
-        """Exercise SBProcess.PutSTDIN()."""
-        self.buildDsym()
-        self.do_stdin_by_api()
-
-    @skipIfWindows # stdio manipulation unsupported on Windows
-    @python_api_test
-    @dwarf_test
-    def test_stdin_by_api_with_dwarf(self):
-        """Exercise SBProcess.PutSTDIN()."""
-        self.buildDwarf()
-        self.do_stdin_by_api()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_stdin_redirection_with_dsym(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDIN without specifying STDOUT or STDERR."""
-        self.buildDsym()
-        self.do_stdin_redirection()
-
-    @skipIfWindows # stdio manipulation unsupported on Windows
-    @python_api_test
-    @dwarf_test
-    def test_stdin_redirection_with_dwarf(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDIN without specifying STDOUT or STDERR."""
-        self.buildDwarf()
-        self.do_stdin_redirection()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_stdout_redirection_with_dsym(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDOUT without specifying STDIN or STDERR."""
-        self.buildDsym()
-        self.do_stdout_redirection()
-
-    @skipIfWindows # stdio manipulation unsupported on Windows
-    @python_api_test
-    @dwarf_test
-    def test_stdout_redirection_with_dwarf(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDOUT without specifying STDIN or STDERR."""
-        self.buildDwarf()
-        self.do_stdout_redirection()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_stderr_redirection_with_dsym(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDERR without specifying STDIN or STDOUT."""
-        self.buildDsym()
-        self.do_stderr_redirection()
-
-    @skipIfWindows # stdio manipulation unsupported on Windows
-    @python_api_test
-    @dwarf_test
-    def test_stderr_redirection_with_dwarf(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDERR without specifying STDIN or STDOUT."""
-        self.buildDwarf()
-        self.do_stderr_redirection()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_stdout_stderr_redirection_with_dsym(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDOUT and STDERR without redirecting STDIN."""
-        self.buildDsym()
-        self.do_stdout_stderr_redirection()
-
-    @skipIfWindows # stdio manipulation unsupported on Windows
-    @python_api_test
-    @dwarf_test
-    def test_stdout_stderr_redirection_with_dwarf(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDOUT and STDERR without redirecting STDIN."""
-        self.buildDwarf()
-        self.do_stdout_stderr_redirection()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -103,6 +23,64 @@ class ProcessIOTestCase(TestBase):
         self.output_file = os.path.join(self.get_process_working_directory(), "output.txt")
         self.error_file  = os.path.join(self.get_process_working_directory(), "error.txt")
         self.lines = ["Line 1", "Line 2", "Line 3"]
+
+    @skipIfWindows # stdio manipulation unsupported on Windows
+    @python_api_test
+    def test_stdin_by_api(self):
+        """Exercise SBProcess.PutSTDIN()."""
+        self.build()
+        self.create_target()
+        self.run_process(True)
+        output = self.process.GetSTDOUT(1000)
+        self.check_process_output(output, output)
+
+    @skipIfWindows # stdio manipulation unsupported on Windows
+    @python_api_test
+    def test_stdin_redirection(self):
+        """Exercise SBLaunchInfo::AddOpenFileAction() for STDIN without specifying STDOUT or STDERR."""
+        self.build()
+        self.create_target()
+        self.redirect_stdin()
+        self.run_process(False)
+        output = self.process.GetSTDOUT(1000)        
+        self.check_process_output(output, output)
+
+    @skipIfWindows # stdio manipulation unsupported on Windows
+    @python_api_test
+    def test_stdout_redirection(self):
+        """Exercise SBLaunchInfo::AddOpenFileAction() for STDOUT without specifying STDIN or STDERR."""
+        self.build()
+        self.create_target()
+        self.redirect_stdout()
+        self.run_process(True)
+        output = self.read_output_file_and_delete()
+        error = self.process.GetSTDOUT(1000)
+        self.check_process_output(output, error)
+
+    @skipIfWindows # stdio manipulation unsupported on Windows
+    @python_api_test
+    def test_stderr_redirection(self):
+        """Exercise SBLaunchInfo::AddOpenFileAction() for STDERR without specifying STDIN or STDOUT."""
+        self.build()
+        self.create_target()
+        self.redirect_stderr()
+        self.run_process(True)
+        output = self.process.GetSTDOUT(1000)
+        error = self.read_error_file_and_delete()
+        self.check_process_output(output, error)
+
+    @skipIfWindows # stdio manipulation unsupported on Windows
+    @python_api_test
+    def test_stdout_stderr_redirection(self):
+        """Exercise SBLaunchInfo::AddOpenFileAction() for STDOUT and STDERR without redirecting STDIN."""
+        self.build()
+        self.create_target()
+        self.redirect_stdout()
+        self.redirect_stderr()
+        self.run_process(True)
+        output = self.read_output_file_and_delete()
+        error = self.read_error_file_and_delete()
+        self.check_process_output(output, error)
 
     # target_file - path on local file system or remote file system if running remote
     # local_file - path on local system
@@ -168,61 +146,6 @@ class ProcessIOTestCase(TestBase):
     def redirect_stderr(self):
         '''Redirect STDERR (file descriptor 2) to use our error.txt file'''
         self.launch_info.AddOpenFileAction(2, self.error_file, False, True);
-    
-    def do_stdin_redirection(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDIN without specifying STDOUT or STDERR."""
-        self.create_target()
-        self.redirect_stdin()
-        self.run_process(False)
-        output = self.process.GetSTDOUT(1000)        
-        self.check_process_output(output, output)
-
-    def do_stdout_redirection(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDOUT without specifying STDIN or STDERR."""
-        self.create_target()
-        self.redirect_stdout()
-        self.run_process(True)
-        output = self.read_output_file_and_delete()
-        error = self.process.GetSTDOUT(1000)
-        self.check_process_output(output, error)
-
-    def do_stderr_redirection(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDERR without specifying STDIN or STDOUT."""
-        self.create_target()
-        self.redirect_stderr()
-        self.run_process(True)
-        output = self.process.GetSTDOUT(1000)
-        error = self.read_error_file_and_delete()
-        self.check_process_output(output, error)
-
-    def do_stdout_stderr_redirection(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDOUT and STDERR without redirecting STDIN."""
-        self.create_target()
-        self.redirect_stdout()
-        self.redirect_stderr()
-        self.run_process(True)
-        output = self.read_output_file_and_delete()
-        error = self.read_error_file_and_delete()
-        self.check_process_output(output, error)
-
-    def do_stdin_stdout_stderr_redirection(self):
-        """Exercise SBLaunchInfo::AddOpenFileAction() for STDIN, STDOUT and STDERR."""
-        # Make the input.txt file to use
-        self.create_target()
-        self.redirect_stdin()
-        self.redirect_stdout()
-        self.redirect_stderr()
-        self.run_process(True)
-        output = self.read_output_file_and_delete()
-        error = self.read_error_file_and_delete()
-        self.check_process_output(output, error)
-        
-    def do_stdin_by_api(self):
-        """Launch a process and use SBProcess.PutSTDIN() to write data to it."""
-        self.create_target()
-        self.run_process(True)
-        output = self.process.GetSTDOUT(1000)
-        self.check_process_output(output, output)
         
     def run_process(self, put_stdin):
         '''Run the process to completion and optionally put lines to STDIN via the API if "put_stdin" is True'''

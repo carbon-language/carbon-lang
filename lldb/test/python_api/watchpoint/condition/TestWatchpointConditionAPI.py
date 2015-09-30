@@ -25,25 +25,12 @@ class WatchpointConditionAPITestCase(TestBase):
         self.exe_name = self.testMethodName
         self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_watchpoint_cond_api_with_dsym(self):
-        """Test watchpoint condition API."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.watchpoint_condition_api()
-
-    @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
-    def test_watchpoint_cond_api_with_dwarf(self):
+    def test_watchpoint_cond_api(self):
         """Test watchpoint condition API."""
-        self.buildDwarf(dictionary=self.d)
+        self.build(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
-        self.watchpoint_condition_api()
-
-    def watchpoint_condition_api(self):
-        """Do watchpoint condition API to set condition as 'global==5'."""
         exe = os.path.join(os.getcwd(), self.exe_name)
 
         # Create a target by the debugger.

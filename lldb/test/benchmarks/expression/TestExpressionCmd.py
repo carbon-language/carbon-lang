@@ -21,7 +21,7 @@ class ExpressionEvaluationCase(BenchBase):
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_expr_cmd(self):
         """Test lldb's expression commands and collect statistics."""
-        self.buildDefault()
+        self.build()
         self.exe_name = 'a.out'
 
         print

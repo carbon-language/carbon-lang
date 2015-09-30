@@ -11,15 +11,8 @@ class CmdPythonTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym (self):
-        self.buildDsym ()
-        self.pycmd_tests ()
-
-    @dwarf_test
-    def test_with_dwarf (self):
-        self.buildDwarf ()
+    def test (self):
+        self.build ()
         self.pycmd_tests ()
 
     def pycmd_tests (self):

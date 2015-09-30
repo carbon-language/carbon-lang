@@ -10,42 +10,15 @@ class ArrayTypesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test 'frame variable var_name' on some variables with array types."""
-        self.buildDsym()
-        self.array_types()
-
-    @skipUnlessDarwin
-    @python_api_test    
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Use Python APIs to inspect variables with array types."""
-        self.buildDsym()
-        self.array_types_python()
-
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Test 'frame variable var_name' on some variables with array types."""
-        self.buildDwarf()
-        self.array_types()
-
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Use Python APIs to inspect variables with array types."""
-        self.buildDwarf()
-        self.array_types_python()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
 
-    def array_types(self):
+    def test_and_run_command(self):
         """Test 'frame variable var_name' on some variables with array types."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -92,8 +65,10 @@ class ArrayTypesTestCase(TestBase):
         self.expect("frame variable --show-types long_6", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(long [6])')
 
-    def array_types_python(self):
+    @python_api_test
+    def test_and_python_api(self):
         """Use Python APIs to inspect variables with array types."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

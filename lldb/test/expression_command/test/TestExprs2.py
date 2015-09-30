@@ -22,7 +22,7 @@ class ExprCommands2TestCase(TestBase):
     @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     def test_more_expr_commands(self):
         """Test some more expression commands."""
-        self.buildDefault()
+        self.build()
 
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 

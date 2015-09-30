@@ -19,178 +19,95 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
         self.runCmd("settings set auto-confirm true")
         self.addTearDownHook(lambda: self.runCmd("settings clear auto-confirm"))
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_char_type_with_dsym(self):
+    def test_char_type(self):
         """Test that char-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('char.cpp', set(['char']), qd=True)
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_char_type_from_block_with_dsym(self):
+    def test_char_type_from_block(self):
         """Test that char-type variables are displayed correctly from a block."""
         self.build_and_run_expr('char.cpp', set(['char']), bc=True, qd=True)
 
-    @dwarf_test
-    def test_char_type_with_dwarf(self):
-        """Test that char-type variable expressions are evaluated correctly."""
-        self.build_and_run_expr('char.cpp', set(['char']), dsym=False, qd=True)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_unsigned_char_type_with_dsym(self):
+    def test_unsigned_char_type(self):
         """Test that 'unsigned_char'-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('unsigned_char.cpp', set(['unsigned', 'char']), qd=True)
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_unsigned_char_type_from_block_with_dsym(self):
+    def test_unsigned_char_type_from_block(self):
         """Test that 'unsigned char'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('unsigned_char.cpp', set(['unsigned', 'char']), bc=True, qd=True)
 
-    @dwarf_test
-    def test_unsigned_char_type_with_dwarf(self):
-        """Test that 'unsigned char'-type variable expressions are evaluated correctly."""
-        self.build_and_run_expr('unsigned_char.cpp', set(['unsigned', 'char']), dsym=False, qd=True)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_short_type_with_dsym(self):
+    def test_short_type(self):
         """Test that short-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('short.cpp', set(['short']))
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_short_type_from_block_with_dsym(self):
+    def test_short_type_from_block(self):
         """Test that short-type variables are displayed correctly from a block."""
         self.build_and_run_expr('short.cpp', set(['short']), bc=True)
 
-    @dwarf_test
-    def test_short_type_with_dwarf(self):
-        """Test that short-type variable expressions are evaluated correctly."""
-        self.build_and_run_expr('short.cpp', set(['short']), dsym=False)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_unsigned_short_type_with_dsym(self):
+    def test_unsigned_short_type(self):
         """Test that 'unsigned_short'-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('unsigned_short.cpp', set(['unsigned', 'short']))
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_unsigned_short_type_from_block_with_dsym(self):
+    def test_unsigned_short_type_from_block(self):
         """Test that 'unsigned short'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('unsigned_short.cpp', set(['unsigned', 'short']), bc=True)
 
-    @dwarf_test
-    def test_unsigned_short_type_with_dwarf(self):
-        """Test that 'unsigned short'-type variable expressions are evaluated correctly."""
-        self.build_and_run_expr('unsigned_short.cpp', set(['unsigned', 'short']), dsym=False)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_int_type_with_dsym(self):
+    def test_int_type(self):
         """Test that int-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('int.cpp', set(['int']))
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_int_type_from_block_with_dsym(self):
+    def test_int_type_from_block(self):
         """Test that int-type variables are displayed correctly from a block."""
-        self.build_and_run_expr('int.cpp', set(['int']), dsym=False)
+        self.build_and_run_expr('int.cpp', set(['int']))
 
-    @dwarf_test
-    def test_int_type_with_dwarf(self):
-        """Test that int-type variable expressions are evaluated correctly."""
-        self.build_and_run_expr('int.cpp', set(['int']), dsym=False)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_unsigned_int_type_with_dsym(self):
+    def test_unsigned_int_type(self):
         """Test that 'unsigned_int'-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('unsigned_int.cpp', set(['unsigned', 'int']))
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_unsigned_int_type_from_block_with_dsym(self):
+    def test_unsigned_int_type_from_block(self):
         """Test that 'unsigned int'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('unsigned_int.cpp', set(['unsigned', 'int']), bc=True)
 
-    @dwarf_test
-    def test_unsigned_int_type_with_dwarf(self):
-        """Test that 'unsigned int'-type variable expressions are evaluated correctly."""
-        self.build_and_run_expr('unsigned_int.cpp', set(['unsigned', 'int']), dsym=False)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_long_type_with_dsym(self):
+    def test_long_type(self):
         """Test that long-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('long.cpp', set(['long']))
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_long_type_from_block_with_dsym(self):
+    def test_long_type_from_block(self):
         """Test that long-type variables are displayed correctly from a block."""
         self.build_and_run_expr('long.cpp', set(['long']), bc=True)
 
-    @dwarf_test
-    def test_long_type_with_dwarf(self):
-        """Test that long-type variable expressions are evaluated correctly."""
-        self.build_and_run_expr('long.cpp', set(['long']), dsym=False)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_unsigned_long_type_with_dsym(self):
+    def test_unsigned_long_type(self):
         """Test that 'unsigned long'-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('unsigned_long.cpp', set(['unsigned', 'long']))
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_unsigned_long_type_from_block_with_dsym(self):
+    def test_unsigned_long_type_from_block(self):
         """Test that 'unsigned_long'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('unsigned_long.cpp', set(['unsigned', 'long']), bc=True)
 
-    @dwarf_test
-    def test_unsigned_long_type_with_dwarf(self):
-        """Test that 'unsigned long'-type variable expressions are evaluated correctly."""
-        self.build_and_run_expr('unsigned_long.cpp', set(['unsigned', 'long']), dsym=False)
-
-    # rdar://problem/8482903
-    # test suite failure for types dir -- "long long" and "unsigned long long"
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_long_long_type_with_dsym(self):
+    def test_long_long_type(self):
         """Test that 'long long'-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('long_long.cpp', set(['long long']))
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_long_long_type_from_block_with_dsym(self):
+    def test_long_long_type_from_block(self):
         """Test that 'long_long'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('long_long.cpp', set(['long long']), bc=True)
 
-    @dwarf_test
-    def test_long_long_type_with_dwarf(self):
-        """Test that 'long long'-type variable expressions are evaluated correctly."""
-        self.build_and_run_expr('long_long.cpp', set(['long long']), dsym=False)
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_unsigned_long_long_type_with_dsym(self):
+    def test_unsigned_long_long_type(self):
         """Test that 'unsigned long long'-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('unsigned_long_long.cpp', set(['unsigned', 'long long']))
 
     @skipUnlessDarwin
-    @dsym_test
-    def test_unsigned_long_long_type_from_block_with_dsym(self):
+    def test_unsigned_long_long_type_from_block(self):
         """Test that 'unsigned_long_long'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('unsigned_long_long.cpp', set(['unsigned', 'long long']), bc=True)
-
-    @dwarf_test
-    def test_unsigned_long_long_type_with_dwarf(self):
-        """Test that 'unsigned long long'-type variable expressions are evaluated correctly."""
-        self.build_and_run_expr('unsigned_long_long.cpp', set(['unsigned', 'long long']), dsym=False)
 
 
 if __name__ == '__main__':

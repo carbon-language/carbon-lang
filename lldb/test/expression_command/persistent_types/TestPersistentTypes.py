@@ -14,7 +14,7 @@ class PersistenttypesTestCase(TestBase):
     @expectedFailureWindows("llvm.org/pr21765")
     def test_persistent_types(self):
         """Test that lldb persistent types works correctly."""
-        self.buildDefault()
+        self.build()
 
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 

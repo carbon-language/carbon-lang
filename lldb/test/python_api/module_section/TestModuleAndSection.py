@@ -16,22 +16,7 @@ class ModuleAndSectionAPIsTestCase(TestBase):
     @python_api_test
     def test_module_and_section(self):
         """Test module and section APIs."""
-        self.buildDefault()
-        self.module_and_section()
-
-    @python_api_test
-    def test_module_and_section_boundary_condition(self):
-        """Test module and section APIs by passing None when it expects a Python string."""
-        self.buildDefault()
-        self.module_and_section_boundary_condition()
-
-    @python_api_test
-    def test_module_compile_unit_iter(self):
-        """Test module's compile unit iterator APIs."""
-        self.buildDefault()
-        self.module_compile_unit_iter()
-
-    def module_and_section(self):
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -68,7 +53,10 @@ class ModuleAndSectionAPIsTestCase(TestBase):
                         print INDENT2 + str(sym)
                         print INDENT2 + "symbol type: %s" % symbol_type_to_str(sym.GetType())
 
-    def module_and_section_boundary_condition(self):
+    @python_api_test
+    def test_module_and_section_boundary_condition(self):
+        """Test module and section APIs by passing None when it expects a Python string."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -106,7 +94,10 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         if sec1:
             sec1.FindSubSection(None)
 
-    def module_compile_unit_iter(self):
+    @python_api_test
+    def test_module_compile_unit_iter(self):
+        """Test module's compile unit iterator APIs."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -130,7 +121,6 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         INDENT2 = INDENT * 2
         for cu in exe_module.compile_unit_iter():
             print cu
-
 
 if __name__ == '__main__':
     import atexit

@@ -11,79 +11,15 @@ class ClassTypesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test 'frame variable this' when stopped on a class constructor."""
-        self.buildDsym()
-        self.class_types()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Use Python APIs to create a breakpoint by (filespec, line)."""
-        self.buildDsym()
-        self.breakpoint_creation_by_filespec_python()
-
-    # rdar://problem/8378863
-    # "frame variable this" returns
-    # error: unable to find any variables named 'this'
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Test 'frame variable this' when stopped on a class constructor."""
-        self.buildDwarf()
-        self.class_types()
-
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Use Python APIs to create a breakpoint by (filespec, line)."""
-        self.buildDwarf()
-        self.breakpoint_creation_by_filespec_python()
-
-    @skipUnlessDarwin
-    # rdar://problem/8557478
-    # test/class_types test failures: runCmd: expr this->m_c_int
-    @dsym_test
-    def test_with_dsym_and_expr_parser(self):
-        """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
-        self.buildDsym()
-        self.class_types_expr_parser()
-
-    # rdar://problem/8557478
-    # test/class_types test failures: runCmd: expr this->m_c_int
-    @dwarf_test
-    def test_with_dwarf_and_expr_parser(self):
-        """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
-        self.buildDwarf()
-        self.class_types_expr_parser()
-
-    @skipUnlessDarwin
-    # rdar://problem/8557478
-    # test/class_types test failures: runCmd: expr this->m_c_int
-    @dsym_test
-    def test_with_dsym_and_constructor_name(self):
-        """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
-        self.buildDsym()
-        self.class_types_constructor_name()
-
-    # rdar://problem/8557478
-    # test/class_types test failures: runCmd: expr this->m_c_int
-    @dwarf_test
-    def test_with_dwarf_and_constructor_name (self):
-        """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
-        self.buildDwarf()
-        self.class_types_constructor_name()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break for main.cpp.
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    def class_types(self):
+    def test_with_run_command(self):
         """Test 'frame variable this' when stopped on a class constructor."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -113,8 +49,10 @@ class ClassTypesTestCase(TestBase):
             substrs = ['C *',
                        ' this = '])
 
-    def breakpoint_creation_by_filespec_python(self):
+    @python_api_test
+    def test_with_python_api(self):
         """Use Python APIs to create a breakpoint by (filespec, line)."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -171,8 +109,9 @@ class ClassTypesTestCase(TestBase):
 
         process.Continue()
 
-    def class_types_expr_parser(self):
+    def test_with_expr_parser(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -222,9 +161,9 @@ class ClassTypesTestCase(TestBase):
         self.expect("expression this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
             patterns = ['\(int\) \$[0-9]+ = 66'])
 
-
-    def class_types_constructor_name (self):
-        """Check whether the constructor name has the class name prepended."""
+    def test_with_constructor_name (self):
+        """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

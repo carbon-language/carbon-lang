@@ -11,16 +11,9 @@ class ExprSyscallTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_setpgid_with_dsym(self):
-        self.buildDsym()
-        self.expr_syscall()
-
-    @dwarf_test
     @expectedFailureWindows("llvm.org/pr21765") # Also getpid() is not a function on Windows anyway
-    def test_setpgid_with_dwarf(self):
-        self.buildDwarf()
+    def test_setpgid(self):
+        self.build()
         self.expr_syscall()
 
     def expr_syscall(self):

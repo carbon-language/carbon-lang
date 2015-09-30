@@ -59,22 +59,19 @@ class GenericTester(TestBase):
     #                variable                                                  #
     #==========================================================================#
 
-    def build_and_run(self, source, atoms, dsym=True, bc=False, qd=False):
-        self.build_and_run_with_source_atoms_expr(source, atoms, expr=False, dsym=dsym, bc=bc, qd=qd)
+    def build_and_run(self, source, atoms, bc=False, qd=False):
+        self.build_and_run_with_source_atoms_expr(source, atoms, expr=False, bc=bc, qd=qd)
 
-    def build_and_run_expr(self, source, atoms, dsym=True, bc=False, qd=False):
-        self.build_and_run_with_source_atoms_expr(source, atoms, expr=True, dsym=dsym, bc=bc, qd=qd)
+    def build_and_run_expr(self, source, atoms, bc=False, qd=False):
+        self.build_and_run_with_source_atoms_expr(source, atoms, expr=True, bc=bc, qd=qd)
 
-    def build_and_run_with_source_atoms_expr(self, source, atoms, expr, dsym=True, bc=False, qd=False):
+    def build_and_run_with_source_atoms_expr(self, source, atoms, expr, bc=False, qd=False):
         # See also Makefile and basic_type.cpp:177.
         if bc:
             d = {'CXX_SOURCES': source, 'EXE': self.exe_name, 'CFLAGS_EXTRAS': '-DTEST_BLOCK_CAPTURED_VARS'}
         else:
             d = {'CXX_SOURCES': source, 'EXE': self.exe_name}
-        if dsym:
-            self.buildDsym(dictionary=d)
-        else:
-            self.buildDwarf(dictionary=d)
+        self.build(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
         if expr:
             self.generic_type_expr_tester(self.exe_name, atoms, blockCaptured=bc, quotedDisplay=qd)

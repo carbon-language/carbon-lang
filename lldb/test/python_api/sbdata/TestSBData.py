@@ -11,42 +11,16 @@ class SBDataAPICase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test the SBData APIs."""
-        self.buildDsym()
-        self.data_api()
-
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Test the SBData APIs."""
-        self.buildDwarf()
-        self.data_api()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break on inside main.cpp.
         self.line = line_number('main.cpp', '// set breakpoint here')
 
-    def assert_data(self, func, arg, expected):
-        """ Asserts func(SBError error, arg) == expected. """
-        error = lldb.SBError()
-        result = func(error, arg)
-        if not error.Success():
-            stream = lldb.SBStream()
-            error.GetDescription(stream)
-            self.assertTrue(error.Success(),
-                            "%s(error, %s) did not succeed: %s" % (func.__name__,
-                                                                   arg,
-                                                                   stream.GetData()))
-        self.assertTrue(expected == result, "%s(error, %s) == %s != %s" % (func.__name__, arg, result, expected))
-          
-    def data_api(self):
+    @python_api_test
+    def test_with_run_command(self):
         """Test the SBData APIs."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
         
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
@@ -356,6 +330,19 @@ class SBDataAPICase(TestBase):
         self.assertTrue( fabs(data2.double[0] - 3.14) < 0.5, 'read_data_helper failure: set double data2[0] = 3.14')
         self.assertTrue( fabs(data2.double[1] - 6.28) < 0.5, 'read_data_helper failure: set double data2[1] = 6.28')
         self.assertTrue( fabs(data2.double[2] - 2.71) < 0.5, 'read_data_helper failure: set double data2[2] = 2.71')
+
+    def assert_data(self, func, arg, expected):
+        """ Asserts func(SBError error, arg) == expected. """
+        error = lldb.SBError()
+        result = func(error, arg)
+        if not error.Success():
+            stream = lldb.SBStream()
+            error.GetDescription(stream)
+            self.assertTrue(error.Success(),
+                            "%s(error, %s) did not succeed: %s" % (func.__name__,
+                                                                   arg,
+                                                                   stream.GetData()))
+        self.assertTrue(expected == result, "%s(error, %s) == %s != %s" % (func.__name__, arg, result, expected))
 
 if __name__ == '__main__':
     import atexit

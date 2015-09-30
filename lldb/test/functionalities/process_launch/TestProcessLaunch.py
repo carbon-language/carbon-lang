@@ -18,22 +18,10 @@ class ProcessLaunchTestCase(TestBase):
         self.runCmd("settings set auto-confirm true")
         self.addTearDownHook(lambda: self.runCmd("settings clear auto-confirm"))
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_io_with_dsym (self):
-        """Test that process launch I/O redirection flags work properly."""
-        self.buildDsym ()
-        self.process_io_test ()
-
-    @dwarf_test
-    def test_io_with_dwarf (self):
-        """Test that process launch I/O redirection flags work properly."""
-        self.buildDwarf ()
-        self.process_io_test ()
-
     @not_remote_testsuite_ready
-    def process_io_test (self):
+    def test_io (self):
         """Test that process launch I/O redirection flags work properly."""
+        self.build ()
         exe = os.path.join (os.getcwd(), "a.out")
         self.expect("file " + exe,
                     patterns = [ "Current executable set to .*a.out" ])
@@ -115,29 +103,15 @@ class ProcessLaunchTestCase(TestBase):
         if not success:
             self.fail (err_msg)
 
-    d = {'CXX_SOURCES' : 'print_cwd.cpp'}
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_set_working_dir_with_dsym (self):
-        """Test that '-w dir' sets the working dir when running the inferior."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(self.d)
-        self.my_working_dir_test()
-
-    @expectedFailureLinux("llvm.org/pr20265")
-    @dwarf_test
-    def test_set_working_dir_with_dwarf (self):
-        """Test that '-w dir' sets the working dir when running the inferior."""
-        self.buildDwarf(dictionary=self.d)
-        self.setTearDownCleanup(self.d)
-        self.my_working_dir_test()
-
     # rdar://problem/9056462
     # The process launch flag '-w' for setting the current working directory not working?
     @not_remote_testsuite_ready
-    def my_working_dir_test (self):
+    @expectedFailureLinux("llvm.org/pr20265")
+    def test_set_working_dir (self):
         """Test that '-w dir' sets the working dir when running the inferior."""
+        d = {'CXX_SOURCES' : 'print_cwd.cpp'}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(d)
         exe = os.path.join (os.getcwd(), "a.out")
         self.runCmd("file " + exe)
 

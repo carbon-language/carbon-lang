@@ -12,88 +12,43 @@ class ThreadStateTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    @expectedFailureDarwin("rdar://15367566")
-    def test_state_after_breakpoint_with_dsym(self):
-        """Test thread state after breakpoint."""
-        self.buildDsym(dictionary=self.getBuildFlags(use_cpp11=False))
-        self.thread_state_after_breakpoint_test()
-
     @expectedFailureDarwin("rdar://15367566")
     @expectedFailureFreeBSD('llvm.org/pr15824')
     @expectedFailureLinux("llvm.org/pr15824") # thread states not properly maintained
     @expectedFailureWindows("llvm.org/pr24668") # Breakpoints not resolved correctly
-    @dwarf_test
-    def test_state_after_breakpoint_with_dwarf(self):
+    def test_state_after_breakpoint(self):
         """Test thread state after breakpoint."""
-        self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
+        self.build(dictionary=self.getBuildFlags(use_cpp11=False))
         self.thread_state_after_breakpoint_test()
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_state_after_continue_with_dsym(self):
-        """Test thread state after continue."""
-        self.buildDsym(dictionary=self.getBuildFlags(use_cpp11=False))
-        self.thread_state_after_continue_test()
-
-    @dwarf_test
     @skipIfDarwin # 'llvm.org/pr23669', cause Python crash randomly
     @expectedFailureDarwin('llvm.org/pr23669')
     @expectedFailureWindows("llvm.org/pr24660")
-    def test_state_after_continue_with_dwarf(self):
+    def test_state_after_continue(self):
         """Test thread state after continue."""
-        self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
-        self.thread_state_after_continue_test()
-
-    @skipUnlessDarwin
-    @skipIfDarwin # 'llvm.org/pr23669', cause Python crash randomly
-    @expectedFailureDarwin('llvm.org/pr23669')
-    @dsym_test
-    def test_state_after_expression_with_dsym(self):
-        """Test thread state after expression."""
-        self.buildDsym(dictionary=self.getBuildFlags(use_cpp11=False))
+        self.build(dictionary=self.getBuildFlags(use_cpp11=False))
         self.thread_state_after_continue_test()
 
     @skipIfDarwin # 'llvm.org/pr23669', cause Python crash randomly
     @expectedFailureDarwin('llvm.org/pr23669')
     @expectedFailureWindows("llvm.org/pr24660")
-    @dwarf_test
-    def test_state_after_expression_with_dwarf(self):
+    def test_state_after_expression(self):
         """Test thread state after expression."""
-        self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
+        self.build(dictionary=self.getBuildFlags(use_cpp11=False))
         self.thread_state_after_continue_test()
 
-    @skipUnlessDarwin
-    @dsym_test
-    @unittest2.expectedFailure("llvm.org/pr16172") # thread states not properly maintained
-    def test_process_interrupt_with_dsym(self):
-        """Test process interrupt."""
-        self.buildDsym(dictionary=self.getBuildFlags(use_cpp11=False))
-        self.process_interrupt_test()
-
-    @dwarf_test
     @unittest2.expectedFailure("llvm.org/pr16712") # thread states not properly maintained
     @expectedFailureWindows("llvm.org/pr24668") # Breakpoints not resolved correctly
-    def test_process_interrupt_with_dwarf(self):
+    def test_process_interrupt(self):
         """Test process interrupt."""
-        self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
+        self.build(dictionary=self.getBuildFlags(use_cpp11=False))
         self.process_interrupt_test()
 
-    @skipUnlessDarwin
-    @dsym_test
-    @unittest2.expectedFailure("llvm.org/pr15824") # thread states not properly maintained
-    def test_process_state_with_dsym(self):
-        """Test thread states (comprehensive)."""
-        self.buildDsym(dictionary=self.getBuildFlags(use_cpp11=False))
-        self.thread_states_test()
-
-    @dwarf_test
     @unittest2.expectedFailure("llvm.org/pr15824") # thread states not properly maintained
     @expectedFailureWindows("llvm.org/pr24668") # Breakpoints not resolved correctly
-    def test_process_state_with_dwarf(self):
+    def test_process_state(self):
         """Test thread states (comprehensive)."""
-        self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
+        self.build(dictionary=self.getBuildFlags(use_cpp11=False))
         self.thread_states_test()
 
     def setUp(self):

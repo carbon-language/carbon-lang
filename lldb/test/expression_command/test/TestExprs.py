@@ -35,7 +35,7 @@ class BasicExprCommandsTestCase(TestBase):
 
     def build_and_run(self):
         """These basic expression commands should work as expected."""
-        self.buildDefault()
+        self.build()
 
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
@@ -98,7 +98,7 @@ class BasicExprCommandsTestCase(TestBase):
     @expectedFailureWindows # Test crashes
     def test_evaluate_expression_python(self):
         """Test SBFrame.EvaluateExpression() API for evaluating an expression."""
-        self.buildDefault()
+        self.build()
 
         exe = os.path.join(os.getcwd(), "a.out")
 
@@ -198,7 +198,7 @@ class BasicExprCommandsTestCase(TestBase):
     @expectedFailureWindows("llvm.org/pr21765")
     def test_expr_commands_can_handle_quotes(self):
         """Throw some expression commands with quotes at lldb."""
-        self.buildDefault()
+        self.build()
 
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 

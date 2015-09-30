@@ -92,38 +92,34 @@ class TestGdbRemoteRegisterState(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(final_reg_values, initial_reg_values)
 
     @debugserver_test
-    @dsym_test
-    def test_grp_register_save_restore_works_with_suffix_debugserver_dsym(self):
+    def test_grp_register_save_restore_works_with_suffix_debugserver(self):
         USE_THREAD_SUFFIX = True
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.grp_register_save_restore_works(USE_THREAD_SUFFIX)
 
     @llgs_test
-    @dwarf_test
-    def test_grp_register_save_restore_works_with_suffix_llgs_dwarf(self):
+    def test_grp_register_save_restore_works_with_suffix_llgs(self):
         USE_THREAD_SUFFIX = True
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.grp_register_save_restore_works(USE_THREAD_SUFFIX)
 
     @debugserver_test
-    @dsym_test
-    def test_grp_register_save_restore_works_no_suffix_debugserver_dsym(self):
+    def test_grp_register_save_restore_works_no_suffix_debugserver(self):
         USE_THREAD_SUFFIX = False
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_launch()
         self.grp_register_save_restore_works(USE_THREAD_SUFFIX)
 
     @llgs_test
-    @dwarf_test
-    def test_grp_register_save_restore_works_no_suffix_llgs_dwarf(self):
+    def test_grp_register_save_restore_works_no_suffix_llgs(self):
         USE_THREAD_SUFFIX = False
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_launch()
         self.grp_register_save_restore_works(USE_THREAD_SUFFIX)
 

@@ -12,23 +12,7 @@ class InlinedFrameAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_stop_at_outer_inline_with_dsym(self):
-        """Exercise SBFrame.IsInlined() and SBFrame.GetFunctionName()."""
-        self.buildDsym()
-        self.do_stop_at_outer_inline()
-
-    @python_api_test
-    @dwarf_test
-    def test_stop_at_outer_inline_with_dwarf(self):
-        """Exercise SBFrame.IsInlined() and SBFrame.GetFunctionName()."""
-        self.buildDwarf()
-        self.do_stop_at_outer_inline()
-
     def setUp(self):
-        
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to of function 'c'.
@@ -36,8 +20,10 @@ class InlinedFrameAPITestCase(TestBase):
         self.first_stop = line_number(self.source, '// This should correspond to the first break stop.')
         self.second_stop = line_number(self.source, '// This should correspond to the second break stop.')
 
-    def do_stop_at_outer_inline(self):
+    @python_api_test
+    def test_stop_at_outer_inline(self):
         """Exercise SBFrame.IsInlined() and SBFrame.GetFunctionName()."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.

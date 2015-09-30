@@ -15,8 +15,8 @@ class HandleSegvTestCase(TestBase):
     @skipIfWindows # signals do not exist on Windows
     @skipIfDarwin
     @expectedFailureFreeBSD("llvm.org/pr23699 SIGSEGV is reported as exception, not signal")
-    def test_inferior_handle_sigsegv_with_dwarf(self):
-        self.buildDefault()
+    def test_inferior_handle_sigsegv(self):
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.

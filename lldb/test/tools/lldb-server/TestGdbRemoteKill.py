@@ -36,18 +36,16 @@ class TestGdbRemoteKill(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertFalse(lldbgdbserverutils.process_is_running(procs["inferior"].pid, False))
 
     @debugserver_test
-    @dsym_test
-    def test_attach_commandline_kill_after_initial_stop_debugserver_dsym(self):
+    def test_attach_commandline_kill_after_initial_stop_debugserver(self):
         self.init_debugserver_test()
-        self.buildDsym()
+        self.build()
         self.set_inferior_startup_attach()
         self.attach_commandline_kill_after_initial_stop()
 
     @llgs_test
-    @dwarf_test
-    def test_attach_commandline_kill_after_initial_stop_llgs_dwarf(self):
+    def test_attach_commandline_kill_after_initial_stop_llgs(self):
         self.init_llgs_test()
-        self.buildDwarf()
+        self.build()
         self.set_inferior_startup_attach()
         self.attach_commandline_kill_after_initial_stop()
 

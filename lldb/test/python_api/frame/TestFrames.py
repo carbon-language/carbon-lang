@@ -13,36 +13,11 @@ class FrameAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
     @python_api_test
-    @dsym_test
-    def test_get_arg_vals_for_call_stack_with_dsym(self):
-        """Exercise SBFrame.GetVariables() API to get argument vals."""
-        self.buildDsym()
-        self.do_get_arg_vals()
-
-    @python_api_test
-    @dwarf_test
     @expectedFailureWindows("llvm.org/pr24778")
-    def test_get_arg_vals_for_call_stack_with_dwarf(self):
+    def test_get_arg_vals_for_call_stack(self):
         """Exercise SBFrame.GetVariables() API to get argument vals."""
-        self.buildDwarf()
-        self.do_get_arg_vals()
-
-    @python_api_test
-    def test_frame_api_boundary_condition(self):
-        """Exercise SBFrame APIs with boundary condition inputs."""
-        self.buildDefault()
-        self.frame_api_boundary_condition()
-
-    @python_api_test
-    def test_frame_api_IsEqual(self):
-        """Exercise SBFrame API IsEqual."""
-        self.buildDefault()
-        self.frame_api_IsEqual()
-
-    def do_get_arg_vals(self):
-        """Get argument vals for the call stack when stopped on a breakpoint."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
@@ -128,7 +103,10 @@ class FrameAPITestCase(TestBase):
             substrs = ["a((int)val=1, (char)ch='A')",
                        "a((int)val=3, (char)ch='A')"])
 
-    def frame_api_boundary_condition(self):
+    @python_api_test
+    def test_frame_api_boundary_condition(self):
+        """Exercise SBFrame APIs with boundary condition inputs."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
@@ -164,8 +142,10 @@ class FrameAPITestCase(TestBase):
 
         frame.EvaluateExpression(None)
 
-    def frame_api_IsEqual(self):
+    @python_api_test
+    def test_frame_api_IsEqual(self):
         """Exercise SBFrame API IsEqual."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.

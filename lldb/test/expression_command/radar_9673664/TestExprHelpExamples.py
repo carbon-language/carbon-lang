@@ -22,7 +22,7 @@ class Radar9673644TestCase(TestBase):
     @expectedFailureWindows("llvm.org/pr21765")
     def test_expr_commands(self):
         """The following expression commands should just work."""
-        self.buildDefault()
+        self.build()
 
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 

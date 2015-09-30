@@ -24,20 +24,9 @@ class ObjcOptimizedTestCase(TestBase):
     mymethod = "description"
     method_spec = "-[%s %s]" % (myclass, mymethod)
 
-    @dsym_test
-    def test_break_with_dsym(self):
+    def test_break(self):
         """Test 'expr member' continues to work for optimized build."""
-        self.buildDsym()
-        self.objc_optimized()
-
-    @dwarf_test
-    def test_break_with_dwarf(self):
-        """Test 'expr member' continues to work for optimized build."""
-        self.buildDwarf()
-        self.objc_optimized()
-
-    def objc_optimized(self):
-        """Test 'expr member' continues to work for optimized build."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

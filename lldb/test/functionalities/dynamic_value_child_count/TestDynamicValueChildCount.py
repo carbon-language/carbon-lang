@@ -12,26 +12,6 @@ class DynamicValueChildCountTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    @expectedFailurei386("to be figured out")
-    def test_get_dynamic_vals_with_dsym(self):
-        """Test fetching C++ dynamic values from pointers & references."""
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.do_get_dynamic_vals()
-
-    @expectedFailureLinux("llvm.org/pr23039")
-    @expectedFailureFreeBSD("llvm.org/pr19311") # continue at a breakpoint does not work
-    @expectedFailureWindows("llvm.org/pr24663")
-    @python_api_test
-    @dwarf_test
-    @expectedFailurei386("to be figured out")
-    def test_get_dynamic_vals_with_dwarf(self):
-        """Test fetching C++ dynamic values from pointers & references."""
-        self.buildDwarf(dictionary=self.getBuildFlags())
-        self.do_get_dynamic_vals()
-
     def setUp(self):
         # Call super's setUp().                                                                                                           
         TestBase.setUp(self)
@@ -47,11 +27,15 @@ class DynamicValueChildCountTestCase(TestBase):
         self.main_sixth_call_line = line_number('pass-to-base.cpp',
                                                        '// Break here and check b has 0 children again')
 
-
-
-
-    def do_get_dynamic_vals(self):
+    @expectedFailureLinux("llvm.org/pr23039")
+    @expectedFailureFreeBSD("llvm.org/pr19311") # continue at a breakpoint does not work
+    @expectedFailureWindows("llvm.org/pr24663")
+    @expectedFailurei386("to be figured out")
+    @python_api_test
+    def test_get_dynamic_vals(self):
+        """Test fetching C++ dynamic values from pointers & references."""
         """Get argument vals for the call stack when stopped on a breakpoint."""
+        self.build(dictionary=self.getBuildFlags())
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target from the debugger.

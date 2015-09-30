@@ -13,24 +13,6 @@ class ObjCDynamicSBTypeTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    @skipIfi386
-    def test_dyn_with_dsym(self):
-        """Test that we are able to properly report a usable dynamic type."""
-        d = {'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.dyn(self.exe_name)
-
-    @dwarf_test
-    @skipIfi386
-    def test_dyn_with_dwarf(self):
-        """Test that we are able to properly report a usable dynamic type."""
-        d = {'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.dyn(self.exe_name)
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -40,9 +22,14 @@ class ObjCDynamicSBTypeTestCase(TestBase):
         self.main_source = "main.m"
         self.line = line_number(self.main_source, '// Set breakpoint here.')
 
-    def dyn(self, exe_name):
+    @skipIfi386
+    def test_dyn(self):
         """Test that we are able to properly report a usable dynamic type."""
-        exe = os.path.join(os.getcwd(), exe_name)
+        d = {'EXE': self.exe_name}
+        self.build(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+
+        exe = os.path.join(os.getcwd(), self.exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, self.main_source, self.line, num_expected_locations=1, loc_exact=True)

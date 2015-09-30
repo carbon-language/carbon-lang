@@ -9,29 +9,27 @@ class SharedLibTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    def test_expr_with_dsym(self):
+    def test_expr(self):
         """Test that types work when defined in a shared library and forward-declared in the main executable"""
-        self.buildDsym()
-        self.expr()
+        if "clang" in self.getCompiler() and "3.4" in self.getCompilerVersion():
+            self.skipTest("llvm.org/pr16214 -- clang emits partial DWARF for structures referenced via typedef")
 
-    @dwarf_test
-    def test_expr_with_dwarf(self):
-        """Test that types work when defined in a shared library and forward-declared in the main executable"""
-        self.buildDwarf()
-        self.expr()
+        self.build()
+        self.common_setup()
 
-    @dsym_test
-    def test_frame_variable_with_dsym(self):
-        """Test that types work when defined in a shared library and forward-declared in the main executable"""
-        self.buildDsym()
-        self.frame_var()
+        # This should display correctly.
+        self.expect("expression --show-types -- *my_foo_ptr", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["(foo)", "(sub_foo)", "other_element = 3"])
 
-    @dwarf_test
-    def test_frame_variable_with_dwarf(self):
+    @unittest2.expectedFailure("rdar://problem/10704639")
+    def test_frame_variable(self):
         """Test that types work when defined in a shared library and forward-declared in the main executable"""
-        self.buildDwarf()
-        self.frame_var()
+        self.build()
+        self.common_setup()
+
+        # This should display correctly.
+        self.expect("frame variable --show-types -- *my_foo_ptr", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["(foo)", "(sub_foo)", "other_element = 3"])
 
     def setUp(self):
         # Call super's setUp().
@@ -67,27 +65,6 @@ class SharedLibTestCase(TestBase):
         # The breakpoint should have a hit count of 1.
         self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
-
-    def expr(self):
-        """Test that types work when defined in a shared library and forward-declared in the main executable"""
-
-        if "clang" in self.getCompiler() and "3.4" in self.getCompilerVersion():
-            self.skipTest("llvm.org/pr16214 -- clang emits partial DWARF for structures referenced via typedef")
-
-        self.common_setup()
-
-        # This should display correctly.
-        self.expect("expression --show-types -- *my_foo_ptr", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["(foo)", "(sub_foo)", "other_element = 3"])
-
-    @unittest2.expectedFailure("rdar://problem/10704639")
-    def frame_var(self):
-        """Test that types work when defined in a shared library and forward-declared in the main executable"""
-        self.common_setup()
-
-        # This should display correctly.
-        self.expect("frame variable --show-types -- *my_foo_ptr", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["(foo)", "(sub_foo)", "other_element = 3"])
                        
 if __name__ == '__main__':
     import atexit

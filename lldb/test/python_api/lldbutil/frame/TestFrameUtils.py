@@ -21,10 +21,7 @@ class FrameUtilsTestCase(TestBase):
     @python_api_test
     def test_frame_utils(self):
         """Test utility functions for the frame object."""
-        self.buildDefault()
-        self.frame_utils()
-
-    def frame_utils(self):
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

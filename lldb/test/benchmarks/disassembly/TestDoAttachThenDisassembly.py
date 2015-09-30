@@ -22,6 +22,7 @@ class AttachThenDisassemblyBench(BenchBase):
             self.count = 10
 
     @benchmarks_test
+    @no_debug_info_test
     def test_attach_then_disassembly(self):
         """Attach to a spawned lldb process then run disassembly benchmarks."""
         print

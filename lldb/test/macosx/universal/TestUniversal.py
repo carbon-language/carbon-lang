@@ -23,7 +23,7 @@ class UniversalTestCase(TestBase):
     def test_sbdebugger_create_target_with_file_and_target_triple(self):
         """Test the SBDebugger.CreateTargetWithFileAndTargetTriple() API."""
         # Invoke the default build rule.
-        self.buildDefault()
+        self.build()
 
         # Note that "testit" is a universal binary.
         exe = os.path.join(os.getcwd(), "testit")
@@ -44,7 +44,7 @@ class UniversalTestCase(TestBase):
         from lldbutil import print_registers
 
         # Invoke the default build rule.
-        self.buildDefault()
+        self.build()
 
         # Note that "testit" is a universal binary.
         exe = os.path.join(os.getcwd(), "testit")

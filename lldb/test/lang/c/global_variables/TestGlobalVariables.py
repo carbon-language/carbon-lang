@@ -10,20 +10,6 @@ class GlobalVariablesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
-        """Test 'frame variable --scope --no-args' which omits args and shows scopes."""
-        self.buildDsym()
-        self.global_variables()
-
-    @dwarf_test
-    @expectedFailureWindows("llvm.org/pr24764")
-    def test_with_dwarf(self):
-        """Test 'frame variable --scope --no-args' which omits args and shows scopes."""
-        self.buildDwarf()
-        self.global_variables()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -32,8 +18,11 @@ class GlobalVariablesTestCase(TestBase):
         self.line = line_number(self.source, '// Set break point at this line.')
         self.shlib_names = ["a"]
 
-    def global_variables(self):
+    @expectedFailureWindows("llvm.org/pr24764")
+    def test(self):
         """Test 'frame variable --scope --no-args' which omits args and shows scopes."""
+        self.build()
+
         # Create a target by the debugger.
         target = self.dbg.CreateTarget("a.out")
         self.assertTrue(target, VALID_TARGET)

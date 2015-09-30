@@ -13,32 +13,17 @@ class BuiltinTrapTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test that LLDB handles a function with __builtin_trap correctly."""
-        self.buildDsym()
-        self.builtin_trap_unwind()
-
-    @dwarf_test
-    @expectedFailureAll("llvm.org/pr15936", compiler="gcc", compiler_version=["<=","4.6"])
-    @expectedFailureAll(archs="arm", compiler="gcc", triple=".*-android") # gcc generates incorrect linetable
-    @skipIfWindows
-    def test_with_dwarf_and_run_command(self):
-        """Test that LLDB handles a function with __builtin_trap correctly."""
-        self.buildDwarf()
-        self.builtin_trap_unwind()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break at.
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    def builtin_trap_unwind(self):
-        """Test that LLDB handles unwinding a frame that contains a function
-           with a __builtin_trap intrinsic.
-        """
+    @expectedFailureAll("llvm.org/pr15936", compiler="gcc", compiler_version=["<=","4.6"])
+    @expectedFailureAll(archs="arm", compiler="gcc", triple=".*-android") # gcc generates incorrect linetable
+    def test_with_run_command(self):
+        """Test that LLDB handles a function with __builtin_trap correctly."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line,
@@ -60,8 +45,6 @@ class BuiltinTrapTestCase(TestBase):
 
         # evaluate a local
         self.expect('p foo', substrs = ['= 5'])
-
-
 
 if __name__ == '__main__':
     import atexit

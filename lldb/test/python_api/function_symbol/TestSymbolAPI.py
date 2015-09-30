@@ -12,22 +12,6 @@ class SymbolAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym(self):
-        """Exercise some SBSymbol and SBAddress APIs."""
-        self.buildDsym()
-        self.symbol_and_address_api()
-
-    @python_api_test
-    @dwarf_test
-    @expectedFailureWindows("llvm.org/pr24778")
-    def test_with_dwarf(self):
-        """Exercise some SBSymbol and SBAddress APIs."""
-        self.buildDwarf()
-        self.symbol_and_address_api()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -35,8 +19,11 @@ class SymbolAPITestCase(TestBase):
         self.line1 = line_number('main.c', '// Find the line number for breakpoint 1 here.')
         self.line2 = line_number('main.c', '// Find the line number for breakpoint 2 here.')
 
-    def symbol_and_address_api(self):
+    @python_api_test
+    @expectedFailureWindows("llvm.org/pr24778")
+    def test(self):
         """Exercise some SBSymbol and SBAddress APIs."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.

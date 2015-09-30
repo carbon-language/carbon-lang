@@ -23,12 +23,7 @@ class ThreadsStackTracesTestCase(TestBase):
     @python_api_test
     def test_stack_traces(self):
         """Test SBprocess and SBThread APIs with printing of the stack traces."""
-        self.buildDefault()
-        self.break_and_print_stacktraces()
-
-    def break_and_print_stacktraces(self):
-        """Break at main.cpp:68 and do a threads dump"""
-
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

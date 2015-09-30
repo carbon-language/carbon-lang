@@ -13,27 +13,15 @@ class Radar9974002DataFormatterTestCase(TestBase):
     # test for rdar://problem/9974002 ()
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test data formatter commands."""
-        self.buildDsym()
-        self.data_formatter_commands()
-
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Test data formatter commands."""
-        self.buildDwarf()
-        self.data_formatter_commands()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break at.
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    def data_formatter_commands(self):
+    def test_with_run_command(self):
         """Test that that file and class static variables display correctly."""
+        self.build()
         if "clang" in self.getCompiler() and "3.4" in self.getCompilerVersion():
             self.skipTest("llvm.org/pr16214 -- clang emits partial DWARF for structures referenced via typedef")
 

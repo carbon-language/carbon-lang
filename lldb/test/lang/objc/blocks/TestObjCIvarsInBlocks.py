@@ -10,26 +10,6 @@ class TestObjCIvarsInBlocks(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    # This test requires the 2.0 runtime, so it will fail on i386.
-    @expectedFailurei386
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Test printing the ivars of the self when captured in blocks"""
-        self.buildDsym()
-        self.ivars_in_blocks()
-
-    @skipUnlessDarwin
-    @python_api_test
-    # This test requires the 2.0 runtime, so it will fail on i386.
-    @expectedFailurei386
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Test printing the ivars of the self when captured in blocks"""
-        self.buildDwarf()
-        self.ivars_in_blocks()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -38,8 +18,12 @@ class TestObjCIvarsInBlocks(TestBase):
         self.class_source = "ivars-in-blocks.m"
         self.class_source_file_spec = lldb.SBFileSpec(self.class_source)
 
-    def ivars_in_blocks (self):
+    @skipUnlessDarwin
+    @python_api_test
+    @expectedFailurei386 # This test requires the 2.0 runtime, so it will fail on i386.
+    def test_with_python_api(self):
         """Test printing the ivars of the self when captured in blocks"""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

@@ -10,12 +10,6 @@ class ConstVariableTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test interpreted and JITted expressions on constant values."""
-        self.buildDsym()
-        self.const_variable()
-
     @expectedFailureAll(
         oslist=["freebsd", "linux"],
         compiler="clang", compiler_version=["<", "3.5"])
@@ -28,18 +22,9 @@ class ConstVariableTestCase(TestBase):
     @expectedFailureAll(oslist=["freebsd", "linux"], compiler="icc")
     @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     @expectedFailureWindows("llvm.org/pr24490: We shouldn't be using platform-specific names like `getpid` in tests")
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
+    def test_and_run_command(self):
         """Test interpreted and JITted expressions on constant values."""
-        self.buildDwarf()
-        self.const_variable()
-
-    def setUp(self):
-        # Call super's setUp().
-        TestBase.setUp(self)
-
-    def const_variable(self):
-        """Test interpreted and JITted expressions on constant values."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

@@ -13,23 +13,11 @@ class LaunchWithShellExpandTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-        
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym (self):
-        self.buildDsym()
-        self.do_test ()
-
-
     @expectedFailureFreeBSD("llvm.org/pr22627 process launch w/ shell expansion not working")
     @expectedFailureLinux("llvm.org/pr22627 process launch w/ shell expansion not working")
     @expectedFailureWindows("llvm.org/pr24778")
-    @dwarf_test
-    def test_with_dwarf (self):
-        self.buildDwarf()
-        self.do_test ()
-
-    def do_test (self):
+    def test(self):
+        self.build()
         exe = os.path.join (os.getcwd(), "a.out")
         
         self.runCmd("target create %s" % exe)

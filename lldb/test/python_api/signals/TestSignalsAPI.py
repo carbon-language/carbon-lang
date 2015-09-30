@@ -16,7 +16,7 @@ class SignalsAPITestCase(TestBase):
     @skipIfWindows # Windows doesn't have signals
     def test_ignore_signal(self):
         """Test Python SBUnixSignals.Suppress/Stop/Notify() API."""
-        self.buildDefault()
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

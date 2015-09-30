@@ -14,19 +14,10 @@ class PythonBreakpointCommandSettingTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
     my_var = 10
 
-    @skipUnlessDarwin
     @python_api_test
-    @dsym_test
-    def test_step_out_with_dsym_python(self):
+    def test_step_out_python(self):
         """Test stepping out using avoid-no-debug with dsyms."""
-        self.buildDsym()
-        self.do_set_python_command_from_python()
-
-    @python_api_test
-    @dwarf_test
-    def test_step_out_with_dwarf_python(self):
-        """Test stepping out using avoid-no-debug with dsyms."""
-        self.buildDwarf()
+        self.build()
         self.do_set_python_command_from_python ()
 
     def setUp (self):

@@ -25,42 +25,13 @@ class WatchpointLLDBCommandTestCase(TestBase):
         self.exe_name = 'a%d.out' % self.test_number
         self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_watchpoint_command_with_dsym(self):
-        """Test 'watchpoint command'."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.watchpoint_command()
-
-    @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
-    def test_watchpoint_command_with_dwarf(self):
+    def test_watchpoint_command(self):
         """Test 'watchpoint command'."""
-        self.buildDwarf(dictionary=self.d)
+        self.build(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
-        self.watchpoint_command()
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_watchpoint_command_can_disable_a_watchpoint_with_dsym(self):
-        """Test that 'watchpoint command' action can disable a watchpoint after it is triggered."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.watchpoint_command_can_disable_a_watchpoint()
-
-    @dwarf_test
-    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
-    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
-    def test_watchpoint_command_can_disable_a_watchpoint_with_dwarf(self):
-        """Test that 'watchpoint command' action can disable a watchpoint after it is triggered."""
-        self.buildDwarf(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.watchpoint_command_can_disable_a_watchpoint()
-
-    def watchpoint_command(self):
-        """Do 'watchpoint command add'."""
+        
         exe = os.path.join(os.getcwd(), self.exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -108,8 +79,13 @@ class WatchpointLLDBCommandTestCase(TestBase):
         self.expect("frame variable --show-globals cookie",
             substrs = ['(int32_t)', 'cookie = 777'])
 
-    def watchpoint_command_can_disable_a_watchpoint(self):
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
+    def test_watchpoint_command_can_disable_a_watchpoint(self):
         """Test that 'watchpoint command' action can disable a watchpoint after it is triggered."""
+        self.build(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
+
         exe = os.path.join(os.getcwd(), self.exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

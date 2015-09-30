@@ -12,19 +12,9 @@ class DisassemblyTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym (self):
-        self.buildDsym ()
-        self.disassemble_breakpoint ()
-
-    @dwarf_test
     @expectedFailureWindows # Function name prints fully demangled instead of name-only
-    def test_with_dwarf (self):
-        self.buildDwarf ()
-        self.disassemble_breakpoint ()
-
-    def disassemble_breakpoint (self):
+    def test(self):
+        self.build()
         exe = os.path.join (os.getcwd(), "a.out")
         self.expect("file " + exe,
                     patterns = [ "Current executable set to .*a.out.*" ])

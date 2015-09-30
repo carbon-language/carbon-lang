@@ -18,22 +18,12 @@ class ExprCommandThatRestartsTestCase(TestBase):
         self.main_source = "lotta-signals.c"
         self.main_source_spec = lldb.SBFileSpec (self.main_source)
 
-
-    @skipUnlessDarwin
-    @dsym_test
-    @skipIfDarwin # llvm.org/pr19246: intermittent failure
-    def test_with_dsym(self):
-        """Test calling std::String member function."""
-        self.buildDsym()
-        self.call_function()
-
-    @dwarf_test
     @skipIfFreeBSD # llvm.org/pr19246: intermittent failure
     @skipIfDarwin # llvm.org/pr19246: intermittent failure
     @skipIfWindows # Test relies on signals, unsupported on Windows
-    def test_with_dwarf(self):
-        """Test calling std::String member function."""
-        self.buildDwarf()
+    def test(self):
+        """Test calling function that hits a signal and restarts."""
+        self.build()
         self.call_function()
 
     def check_after_call (self, num_sigchld):
@@ -45,9 +35,7 @@ class ExprCommandThatRestartsTestCase(TestBase):
         frame = self.thread.GetFrameAtIndex(0)
         self.assertTrue (self.orig_frame_pc == frame.GetPC(), "Restored the zeroth frame correctly")
 
-        
     def call_function(self):
-        """Test calling function that hits a signal and restarts."""
         exe_name = "a.out"
         exe = os.path.join(os.getcwd(), exe_name)
 

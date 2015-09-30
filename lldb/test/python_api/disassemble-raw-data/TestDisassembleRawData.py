@@ -13,14 +13,10 @@ class DisassembleRawDataTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
+    @no_debug_info_test
     def test_disassemble_raw_data(self):
         """Test disassembling raw bytes with the API."""
-        self.disassemble_raw_data()
-
-    def disassemble_raw_data(self):
-        """Test disassembling raw bytes with the API."""
         # Create a target from the debugger.
-
         target = self.dbg.CreateTargetWithFileAndTargetTriple ("", "x86_64")
         self.assertTrue(target, VALID_TARGET)
 

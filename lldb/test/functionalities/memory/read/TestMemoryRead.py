@@ -13,28 +13,16 @@ class MemoryReadTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_memory_read_with_dsym(self):
-        """Test the 'memory read' command with plain and vector formats."""
-        self.buildDsym()
-        self.memory_read_command()
-
-    @dwarf_test
-    @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
-    def test_memory_read_with_dwarf(self):
-        """Test the 'memory read' command with plain and vector formats."""
-        self.buildDwarf()
-        self.memory_read_command()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    def memory_read_command(self):
+    @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
+    def test_memory_read(self):
         """Test the 'memory read' command with plain and vector formats."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

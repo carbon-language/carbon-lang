@@ -13,18 +13,9 @@ class TestBenchmarkContinue(BenchBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @benchmarks_test
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
+    def test_run_command(self):
         """Benchmark different ways to continue a process"""
-        self.buildDsym()
-        self.data_formatter_commands()
-
-    @benchmarks_test
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Benchmark different ways to continue a process"""
-        self.buildDwarf()
+        self.build()
         self.data_formatter_commands()
 
     def setUp(self):

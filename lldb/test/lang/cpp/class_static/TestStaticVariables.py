@@ -11,42 +11,6 @@ import lldbutil
 class StaticVariableTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
-    failing_compilers = ['clang', 'gcc']
-
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test that file and class static variables display correctly."""
-        self.buildDsym()
-        self.static_variable_commands()
-
-    @expectedFailureWindows("llvm.org/pr24764")
-    @dwarf_test
-    def test_with_dwarf_and_run_command(self):
-        """Test that file and class static variables display correctly."""
-        self.buildDwarf()
-        self.static_variable_commands()
-
-    @skipUnlessDarwin
-    @expectedFailureClang(9980907)
-    @expectedFailureGcc(9980907)
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_python_api(self):
-        """Test Python APIs on file and class static variables."""
-        self.buildDsym()
-        self.static_variable_python()
-
-    @expectedFailureDarwin(9980907)
-    @expectedFailureClang('Clang emits incomplete debug info.')
-    @expectedFailureFreeBSD('llvm.org/pr20550 failing on FreeBSD-11')
-    @expectedFailureGcc('GCC emits incomplete debug info.')
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_python_api(self):
-        """Test Python APIs on file and class static variables."""
-        self.buildDwarf()
-        self.static_variable_python()
 
     def setUp(self):
         # Call super's setUp().
@@ -54,8 +18,10 @@ class StaticVariableTestCase(TestBase):
         # Find the line number to break at.
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    def static_variable_commands(self):
-        """Test that that file and class static variables display correctly."""
+    @expectedFailureWindows("llvm.org/pr24764")
+    def test_with_run_command(self):
+        """Test that file and class static variables display correctly."""
+        self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
@@ -79,8 +45,14 @@ class StaticVariableTestCase(TestBase):
             self.expect("target variable A::g_points[1].x", VARIABLES_DISPLAYED_CORRECTLY,
                 startstr = "(int) A::g_points[1].x = 11")
 
-    def static_variable_python(self):
+    @expectedFailureDarwin(9980907)
+    @expectedFailureClang('Clang emits incomplete debug info.')
+    @expectedFailureFreeBSD('llvm.org/pr20550 failing on FreeBSD-11')
+    @expectedFailureGcc('GCC emits incomplete debug info.')
+    @python_api_test
+    def test_with_python_api(self):
         """Test Python APIs on file and class static variables."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)

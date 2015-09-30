@@ -6,10 +6,9 @@ class TestCppIncompleteTypes(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dwarf_test
     @skipIfGcc
-    def test_with_dwarf_limit_debug_info(self):
-        self.buildDwarf()
+    def test_limit_debug_info(self):
+        self.build()
         frame = self.get_test_frame('limit')
 
         value_f = frame.EvaluateExpression("f")
@@ -20,10 +19,9 @@ class TestCppIncompleteTypes(TestBase):
         self.assertTrue(value_a.IsValid(), "'expr a' results in a valid SBValue object")
         self.assertFalse(value_a.GetError().Success(), "'expr a' results in an error, but LLDB does not crash")
 
-    @dwarf_test
     @skipIfGcc
-    def test_with_dwarf_partial_limit_debug_info(self):
-        self.buildDwarf()
+    def test_partial_limit_debug_info(self):
+        self.build()
         frame = self.get_test_frame('nolimit')
 
         value_f = frame.EvaluateExpression("f")
@@ -33,9 +31,6 @@ class TestCppIncompleteTypes(TestBase):
         value_a = frame.EvaluateExpression("a")
         self.assertTrue(value_a.IsValid(), "'expr a' results in a valid SBValue object")
         self.assertTrue(value_a.GetError().Success(), "'expr a' is successful")
-
-    def setUp(self):
-        TestBase.setUp(self)
 
     def get_test_frame(self, exe):
         # Get main source file

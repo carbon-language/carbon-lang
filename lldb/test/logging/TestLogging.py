@@ -13,23 +13,18 @@ class LogTestCase(TestBase):
     append_log_file = "lldb-commands-log-append.txt"
     truncate_log_file = "lldb-commands-log-truncate.txt"
 
-
     @classmethod
     def classCleanup(cls):
         """Cleanup the test byproducts."""
         cls.RemoveTempFile(cls.truncate_log_file)
         cls.RemoveTempFile(cls.append_log_file)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym (self):
-        self.buildDsym ()
-        self.command_log_tests ("dsym")
-
-    @dwarf_test
-    def test_with_dwarf (self):
-        self.buildDwarf ()
-        self.command_log_tests ("dwarf")
+    def test (self):
+        self.build()
+        if self.debug_info == "dsym":
+            self.command_log_tests ("dsym")
+        else:
+            self.command_log_tests ("dwarf")
 
     def command_log_tests (self, type):
         exe = os.path.join (os.getcwd(), "a.out")
@@ -66,6 +61,7 @@ class LogTestCase(TestBase):
         self.assertTrue(log_lines > 0, "Something was written to the log file.")
 
     # Check that lldb truncates its log files
+    @no_debug_info_test
     def test_log_truncate (self):
         if (os.path.exists (self.truncate_log_file)):
             os.remove (self.truncate_log_file)
@@ -87,6 +83,7 @@ class LogTestCase(TestBase):
         self.assertTrue(string.find(contents, "bacon") == -1)
 
     # Check that lldb can append to a log file
+    @no_debug_info_test
     def test_log_append (self):
         if (os.path.exists (self.append_log_file)):
             os.remove (self.append_log_file)
@@ -105,7 +102,6 @@ class LogTestCase(TestBase):
 
         # check that it is still there
         self.assertTrue(string.find(contents, "bacon") == 0)
-
 
 if __name__ == '__main__':
     import atexit

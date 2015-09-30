@@ -12,17 +12,9 @@ class RegexpBreakCommandTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym(self):
+    def test(self):
         """Test _regexp-break command."""
-        self.buildDsym()
-        self.regexp_break_command()
-
-    @dwarf_test
-    def test_with_dwarf(self):
-        """Test _regexp-break command."""
-        self.buildDwarf()
+        self.build()
         self.regexp_break_command()
 
     def setUp(self):

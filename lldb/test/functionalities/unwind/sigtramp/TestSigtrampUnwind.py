@@ -14,22 +14,11 @@ class SigtrampUnwind(TestBase):
     # On different platforms the "_sigtramp" and "__kill" frames are likely to be different.
     # This test could probably be adapted to run on linux/*bsd easily enough.
     @skipUnlessDarwin
-    @dsym_test
-    def test_with_dsym (self):
+    def test (self):
         """Test that we can backtrace correctly with _sigtramp on the stack"""
-        self.buildDsym()
+        self.build()
         self.setTearDownCleanup()
-        self.sigtramp_unwind_tests()
 
-    @skipUnlessDarwin
-    @dwarf_test
-    def test_with_dwarf (self):
-        """Test that we can backtrace correctly with _sigtramp on the stack"""
-        self.buildDwarf()
-        self.setTearDownCleanup()
-        self.sigtramp_unwind_tests()
-
-    def sigtramp_unwind_tests (self):
         exe = os.path.join(os.getcwd(), "a.out")
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)

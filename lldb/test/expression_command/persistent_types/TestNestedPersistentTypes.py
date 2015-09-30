@@ -14,7 +14,7 @@ class NestedPersistentTypesTestCase(TestBase):
     @expectedFailureWindows("llvm.org/pr21765")
     def test_persistent_types(self):
         """Test that nested persistent types work."""
-        self.buildDefault()
+        self.build()
 
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 

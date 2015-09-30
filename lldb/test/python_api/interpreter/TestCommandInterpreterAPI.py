@@ -9,29 +9,16 @@ class CommandInterpreterAPICase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_and_process_launch_api(self):
-        """Test the SBCommandInterpreter APIs."""
-        self.buildDsym()
-        self.command_interpreter_api()
-
-    @python_api_test
-    @dwarf_test
-    def test_with_dwarf_and_process_launch_api(self):
-        """Test the SBCommandInterpreter APIs."""
-        self.buildDwarf()
-        self.command_interpreter_api()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break on inside main.cpp.
         self.line = line_number('main.c', 'Hello world.')
 
-    def command_interpreter_api(self):
+    @python_api_test
+    def test_with_process_launch_api(self):
         """Test the SBCommandInterpreter APIs."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.

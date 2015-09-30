@@ -12,27 +12,14 @@ class ThreadSpecificBreakTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_with_dsym_python(self):
-        """Test that we obey thread conditioned breakpoints."""
-        self.buildDsym()
-        self.do_thread_specific_break()
-
     @skipIfFreeBSD # test frequently times out or hangs
     @expectedFailureFreeBSD('llvm.org/pr18522') # hits break in another thread in testrun
     @expectedFailureWindows("llvm.org/pr24777")
     @python_api_test
-    @dwarf_test
     @expectedFlakeyLinux # this test fails 6/100 dosep runs
-    def test_with_dwarf_python(self):
+    def test_python(self):
         """Test that we obey thread conditioned breakpoints."""
-        self.buildDwarf()
-        self.do_thread_specific_break()
-
-    def do_thread_specific_break(self):
-        """Test that we obey thread conditioned breakpoints."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         self.dbg.HandleCommand ("log enable -f /tmp/lldb-testsuite-log.txt lldb step breakpoint process") 

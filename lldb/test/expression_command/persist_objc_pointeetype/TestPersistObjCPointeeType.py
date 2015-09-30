@@ -18,26 +18,13 @@ class PersistObjCPointeeType(TestBase):
         self.line = line_number('main.m','// break here')
 
     @skipUnlessDarwin
-    @dsym_test
     @expectedFailureAll(
         bugnumber='http://llvm.org/pr23504',
         oslist=['macosx'], compiler='clang', compiler_version=['<', '7.0.0'])
-    def test_with_dsym(self):
+    def test_with(self):
         """Test that we can p *objcObject"""
-        self.buildDsym()
-        self.do_my_test()
+        self.build()
 
-    @skipUnlessDarwin
-    @dwarf_test
-    @expectedFailureAll(
-        bugnumber='http://llvm.org/pr23504',
-        oslist=['macosx'], compiler='clang', compiler_version=['<', '7.0.0'])
-    def test_with_dwarf(self):
-        """Test that we can p *objcObject"""
-        self.buildDwarf()
-        self.do_my_test()
-
-    def do_my_test(self):
         def cleanup():
             pass
 

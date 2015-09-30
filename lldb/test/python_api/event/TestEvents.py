@@ -12,64 +12,18 @@ class EventAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_listen_for_and_print_event_with_dsym(self):
-        """Exercise SBEvent API."""
-        self.buildDsym()
-        self.do_listen_for_and_print_event()
-
-    @python_api_test
-    @dwarf_test
-    @expectedFailureLinux("llvm.org/pr23730") # Flaky, fails ~1/10 cases
-    @skipIfLinux # skip to avoid crashes
-    def test_listen_for_and_print_event_with_dwarf(self):
-        """Exercise SBEvent API."""
-        self.buildDwarf()
-        self.do_listen_for_and_print_event()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_wait_for_event_with_dsym(self):
-        """Exercise SBListener.WaitForEvent() API."""
-        self.buildDsym()
-        self.do_wait_for_event()
-
-    @python_api_test
-    @dwarf_test
-    def test_wait_for_event_with_dwarf(self):
-        """Exercise SBListener.WaitForEvent() API."""
-        self.buildDwarf()
-        self.do_wait_for_event()
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_add_listener_to_broadcaster_with_dsym(self):
-        """Exercise some SBBroadcaster APIs."""
-        self.buildDsym()
-        self.do_add_listener_to_broadcaster()
-
-    @skipIfFreeBSD # llvm.org/pr21325
-    @python_api_test
-    @dwarf_test
-    @expectedFlakeyLinux("llvm.org/pr23617")  # Flaky, fails ~1/10 cases
-    @expectedFailureWindows("llvm.org/pr24778")
-    def test_add_listener_to_broadcaster_with_dwarf(self):
-        """Exercise some SBBroadcaster APIs."""
-        self.buildDwarf()
-        self.do_add_listener_to_broadcaster()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to of function 'c'.
         self.line = line_number('main.c', '// Find the line number of function "c" here.')
 
-    def do_listen_for_and_print_event(self):
-        """Create a listener and use SBEvent API to print the events received."""
+    @python_api_test
+    @expectedFailureLinux("llvm.org/pr23730") # Flaky, fails ~1/10 cases
+    @skipIfLinux # skip to avoid crashes
+    def test_listen_for_and_print_event(self):
+        """Exercise SBEvent API."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         self.dbg.SetAsync(True)
@@ -143,8 +97,10 @@ class EventAPITestCase(TestBase):
         # Wait until the 'MyListeningThread' terminates.
         my_thread.join()
 
-    def do_wait_for_event(self):
-        """Get the listener associated with the debugger and exercise WaitForEvent API."""
+    @python_api_test
+    def test_wait_for_event(self):
+        """Exercise SBListener.WaitForEvent() API."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         self.dbg.SetAsync(True)
@@ -212,8 +168,13 @@ class EventAPITestCase(TestBase):
         self.assertTrue(event,
                         "My listening thread successfully received an event")
 
-    def do_add_listener_to_broadcaster(self):
-        """Get the broadcaster associated with the process and wait for broadcaster events."""
+    @skipIfFreeBSD # llvm.org/pr21325
+    @python_api_test
+    @expectedFlakeyLinux("llvm.org/pr23617")  # Flaky, fails ~1/10 cases
+    @expectedFailureWindows("llvm.org/pr24778")
+    def test_add_listener_to_broadcaster(self):
+        """Exercise some SBBroadcaster APIs."""
+        self.build()
         exe = os.path.join(os.getcwd(), "a.out")
 
         self.dbg.SetAsync(True)
@@ -320,7 +281,6 @@ class EventAPITestCase(TestBase):
         self.assertTrue(self.state == 'stopped',
                         "Both expected state changed events received")
 
-        
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

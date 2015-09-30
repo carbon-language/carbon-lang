@@ -14,14 +14,10 @@ class Disassemble_VST1_64(TestBase):
 
     @skipIf(True) # llvm.org/pr24575: all tests get ERRORs in dotest.py after this
     @python_api_test
+    @no_debug_info_test
     def test_disassemble_invalid_vst_1_64_raw_data(self):
         """Test disassembling invalid vst1.64 raw bytes with the API."""
-        self.disassemble_invalid_vst_1_64_raw_data()
-
-    def disassemble_invalid_vst_1_64_raw_data(self):
-        """Test disassembling invalid vst1.64 raw bytes with the API."""
         # Create a target from the debugger.
-
         target = self.dbg.CreateTargetWithFileAndTargetTriple ("", "thumbv7")
         self.assertTrue(target, VALID_TARGET)
 

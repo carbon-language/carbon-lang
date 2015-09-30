@@ -9,32 +9,19 @@ class ConvenienceVariablesCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipUnlessDarwin
-    @dsym_test
-    @skipIfRemote
-    def test_with_dsym_and_run_command(self):
-        """Test convenience variables lldb.debugger, lldb.target, lldb.process, lldb.thread, and lldb.frame."""
-        self.buildDsym()
-        self.convenience_variables()
-
-    @dwarf_test
-    @skipIfFreeBSD # llvm.org/pr17228
-    @skipIfRemote
-    @expectedFailureAll("llvm.org/pr23560", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    def test_with_dwarf_and_run_commands(self):
-        """Test convenience variables lldb.debugger, lldb.target, lldb.process, lldb.thread, and lldb.frame."""
-        self.buildDwarf()
-        self.convenience_variables()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break on inside main.cpp.
         self.line = line_number('main.c', 'Hello world.')
 
-    def convenience_variables(self):
+    @skipIfFreeBSD # llvm.org/pr17228
+    @skipIfRemote
+    @expectedFailureAll("llvm.org/pr23560", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    def test_with_run_commands(self):
         """Test convenience variables lldb.debugger, lldb.target, lldb.process, lldb.thread, and lldb.frame."""
+        self.build()
         import pexpect
         exe = os.path.join(os.getcwd(), "a.out")
         prompt = "(lldb) "

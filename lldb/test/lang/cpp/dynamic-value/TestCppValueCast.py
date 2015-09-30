@@ -13,38 +13,17 @@ class CppValueCastTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.expectedFailure("rdar://problem/10808472 SBValue::Cast test case is failing (virtual inheritance)")
-    @skipUnlessDarwin
     @python_api_test
-    @dsym_test
-    def test_value_cast_with_dsym_and_virtual_inheritance(self):
+    def test_value_cast_with_virtual_inheritance(self):
         """Test SBValue::Cast(SBType) API for C++ types with virtual inheritance."""
-        self.buildDsym(dictionary=self.d_virtual)
+        self.build(dictionary=self.d_virtual)
         self.setTearDownCleanup(dictionary=self.d_virtual)
         self.do_sbvalue_cast(self.exe_name)
 
-    @unittest2.expectedFailure("rdar://problem/10808472 SBValue::Cast test case is failing (virtual inheritance)")
     @python_api_test
-    @dwarf_test
-    def test_value_cast_with_dwarf_and_virtual_inheritance(self):
-        """Test SBValue::Cast(SBType) API for C++ types with virtual inheritance."""
-        self.buildDwarf(dictionary=self.d_virtual)
-        self.setTearDownCleanup(dictionary=self.d_virtual)
-        self.do_sbvalue_cast(self.exe_name)
-
-    @skipUnlessDarwin
-    @python_api_test
-    @dsym_test
-    def test_value_cast_with_dsym_and_regular_inheritance(self):
+    def test_value_cast_with_regular_inheritance(self):
         """Test SBValue::Cast(SBType) API for C++ types with regular inheritance."""
-        self.buildDsym(dictionary=self.d_regular)
-        self.setTearDownCleanup(dictionary=self.d_regular)
-        self.do_sbvalue_cast(self.exe_name)
-
-    @python_api_test
-    @dwarf_test
-    def test_value_cast_with_dwarf_and_regular_inheritance(self):
-        """Test SBValue::Cast(SBType) API for C++ types with regular inheritance."""
-        self.buildDwarf(dictionary=self.d_regular)
+        self.build(dictionary=self.d_regular)
         self.setTearDownCleanup(dictionary=self.d_regular)
         self.do_sbvalue_cast(self.exe_name)
 
