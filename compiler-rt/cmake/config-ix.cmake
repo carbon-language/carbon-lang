@@ -288,6 +288,7 @@ if(APPLE)
   # be 10.8 or higher.
   set(SANITIZER_COMMON_SUPPORTED_OS osx)
   set(BUILTIN_SUPPORTED_OS osx)
+  set(PROFILE_SUPPORTED_OS osx)
   if(NOT SANITIZER_MIN_OSX_VERSION)
     string(REGEX MATCH "-mmacosx-version-min=([.0-9]+)"
            MACOSX_VERSION_MIN_FLAG "${CMAKE_CXX_FLAGS}")
@@ -393,6 +394,7 @@ if(APPLE)
 
       list(APPEND SANITIZER_COMMON_SUPPORTED_OS ios)
       list(APPEND BUILTIN_SUPPORTED_OS ios)
+      list(APPEND PROFILE_SUPPORTED_OS ios)
       darwin_test_archs(ios
         DARWIN_ios_ARCHS
         ${toolchain_arches})
@@ -427,10 +429,9 @@ if(APPLE)
   list_union(MSAN_SUPPORTED_ARCH
     ALL_MSAN_SUPPORTED_ARCH
     SANITIZER_COMMON_SUPPORTED_ARCH)
-  # Note: profiles is only built for OS X
   list_union(PROFILE_SUPPORTED_ARCH
     ALL_PROFILE_SUPPORTED_ARCH
-    DARWIN_osx_ARCHS)
+    SANITIZER_COMMON_SUPPORTED_ARCH)
   list_union(TSAN_SUPPORTED_ARCH
     ALL_TSAN_SUPPORTED_ARCH
     SANITIZER_COMMON_SUPPORTED_ARCH)
