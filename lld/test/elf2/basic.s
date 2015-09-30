@@ -184,17 +184,6 @@ _start:
 # RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
 # RUN:   | FileCheck %s
 
-# Test for the linker script
-# RUN: echo "GROUP(" %t ")" > %t.script
-# RUN: lld -flavor gnu2 -o %t2 %t.script
-# RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
-# RUN:   | FileCheck %s
-
-# RUN: echo "OUTPUT_FORMAT(\"elf64-x86-64\") /*/*/ GROUP(" %t ")" > %t.script
-# RUN: lld -flavor gnu2 -o %t2 %t.script
-# RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
-# RUN:   | FileCheck %s
-
 # RUN: not lld -flavor gnu2 %t.foo -o %t2 2>&1 | \
 # RUN:  FileCheck --check-prefix=MISSING %s
 # MISSING: cannot open {{.*}}.foo: {{[Nn]}}o such file or directory
