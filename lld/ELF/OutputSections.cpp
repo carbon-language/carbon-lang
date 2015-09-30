@@ -189,9 +189,11 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   unsigned NumEntries = 0;
   if (RelaDynSec.hasRelocs()) {
     ++NumEntries; // DT_RELA / DT_REL
-    ++NumEntries; // DT_RELASZ / DTRELSZ
+    ++NumEntries; // DT_RELASZ / DT_RELSZ
+    ++NumEntries; // DT_RELAENT / DT_RELENT
   }
   ++NumEntries; // DT_SYMTAB
+  ++NumEntries; // DT_SYMENT
   ++NumEntries; // DT_STRTAB
   ++NumEntries; // DT_STRSZ
   ++NumEntries; // DT_HASH
@@ -227,10 +229,18 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
     P->d_tag = IsRela ? DT_RELASZ : DT_RELSZ;
     P->d_un.d_val = RelaDynSec.getSize();
     ++P;
+
+    P->d_tag = IsRela ? DT_RELAENT : DT_RELENT;
+    P->d_un.d_val = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
+    ++P;
   }
 
   P->d_tag = DT_SYMTAB;
   P->d_un.d_ptr = DynSymSec.getVA();
+  ++P;
+
+  P->d_tag = DT_SYMENT;
+  P->d_un.d_ptr = sizeof(Elf_Sym);
   ++P;
 
   P->d_tag = DT_STRTAB;

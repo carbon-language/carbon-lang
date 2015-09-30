@@ -313,6 +313,9 @@ template <class ELFT>
 class DynamicSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef OutputSectionBase<ELFT::Is64Bits> Base;
   typedef typename Base::HeaderT HeaderT;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
 
 public:
   DynamicSection(SymbolTable &SymTab, HashTableSection<ELFT> &HashSec,

@@ -117,7 +117,22 @@
 // CHECK-NEXT: Address: [[RELADDR:.*]]
 // CHECK-NEXT: Offset:
 // CHECK-NEXT: Size: [[RELSIZE:.*]]
+// CHECK-NEXT: Link:
+// CHECK-NEXT: Info:
+// CHECK-NEXT: AddressAlignment:
+// CHECK-NEXT: EntrySize: [[RELENT:.*]]
 
+// CHECK:      Name: .symtab
+// CHECK-NEXT: Type: SHT_SYMTAB
+// CHECK-NEXT: Flags [
+// CHECK-NEXT: ]
+// CHECK-NEXT: Address:
+// CHECK-NEXT: Offset:
+// CHECK-NEXT: Size:
+// CHECK-NEXT: Link:
+// CHECK-NEXT: Info:
+// CHECK-NEXT: AddressAlignment:
+// CHECK-NEXT: EntrySize: [[SYMENT:.*]]
 
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
@@ -231,7 +246,9 @@
 // CHECK-NEXT:   Tag        Type                 Name/Value
 // CHECK-NEXT:   0x00000011 REL                  [[RELADDR]]
 // CHECK-NEXT:   0x00000012 RELSZ                [[RELSIZE]] (bytes)
+// CHECK-NEXT:   0x00000013 RELENT               [[RELENT]] (bytes)
 // CHECK-NEXT:   0x00000006 SYMTAB               [[DYNSYMADDR]]
+// CHECK-NEXT:   0x0000000B SYMENT               [[SYMENT]] (bytes)
 // CHECK-NEXT:   0x00000005 STRTAB               [[DYNSTRADDR]]
 // CHECK-NEXT:   0x0000000A STRSZ
 // CHECK-NEXT:   0x00000004 HASH                 [[HASHADDR]]
