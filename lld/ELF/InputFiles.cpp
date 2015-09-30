@@ -71,10 +71,9 @@ ELFData<ELFT>::getSymbolsHelper(bool Local) {
   if (FirstNonLocal > NumSymbols)
     error("Invalid sh_info in symbol table");
   if (!Local)
-    return llvm::make_range(Syms.begin() + FirstNonLocal, Syms.end());
-  else
-    // Skip over dummy symbol.
-    return llvm::make_range(Syms.begin() + 1, Syms.begin() + FirstNonLocal);
+    return make_range(Syms.begin() + FirstNonLocal, Syms.end());
+  // +1 to skip over dummy symbol.
+  return make_range(Syms.begin() + 1, Syms.begin() + FirstNonLocal);
 }
 
 template <class ELFT>
