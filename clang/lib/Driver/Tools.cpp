@@ -6551,34 +6551,15 @@ void darwin::Linker::AddLinkArgs(Compilation &C, const ArgList &Args,
                    options::OPT_fno_application_extension, false))
     CmdArgs.push_back("-application_extension");
 
-  if (D.IsUsingLTO(Args)) {
-    // If we are using LTO, then automatically create a temporary file path for
-    // the linker to use, so that it's lifetime will extend past a possible
-    // dsymutil step.
-    if (Version[0] >= 116 && NeedsTempPath(Inputs)) {
-      const char *TmpPath = C.getArgs().MakeArgString(
-          D.GetTemporaryPath("cc", types::getTypeTempSuffix(types::TY_Object)));
-      C.addTempFile(TmpPath);
-      CmdArgs.push_back("-object_path_lto");
-      CmdArgs.push_back(TmpPath);
-    }
-
-    // Use -lto_library option to specify the libLTO.dylib path. Try to find
-    // it in clang installed libraries. If not found, the option is not used
-    // and 'ld' will use its default mechanism to search for libLTO.dylib.
-    if (Version[0] >= 133) {
-      // Search for libLTO in <InstalledDir>/../lib/libLTO.dylib
-      StringRef P = llvm::sys::path::parent_path(D.getInstalledDir());
-      SmallString<128> LibLTOPath(P);
-      llvm::sys::path::append(LibLTOPath, "lib");
-      llvm::sys::path::append(LibLTOPath, "libLTO.dylib");
-      if (llvm::sys::fs::exists(LibLTOPath)) {
-        CmdArgs.push_back("-lto_library");
-        CmdArgs.push_back(C.getArgs().MakeArgString(LibLTOPath));
-      } else {
-        D.Diag(diag::warn_lto_libpath);
-      }
-    }
+  // If we are using LTO, then automatically create a temporary file path for
+  // the linker to use, so that it's lifetime will extend past a possible
+  // dsymutil step.
+  if (Version[0] >= 116 && D.IsUsingLTO(Args) && NeedsTempPath(Inputs)) {
+    const char *TmpPath = C.getArgs().MakeArgString(
+        D.GetTemporaryPath("cc", types::getTypeTempSuffix(types::TY_Object)));
+    C.addTempFile(TmpPath);
+    CmdArgs.push_back("-object_path_lto");
+    CmdArgs.push_back(TmpPath);
   }
 
   // Derived from the "link" spec.
