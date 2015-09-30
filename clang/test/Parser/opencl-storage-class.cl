@@ -8,7 +8,7 @@ void test_storage_class_specs()
   auto int d;      // expected-error {{OpenCL does not support the 'auto' storage class specifier}}
 
 #pragma OPENCL EXTENSION cl_clang_storage_class_specifiers : enable
-  static int e;
+  static int e; // expected-error {{program scope variable must reside in constant address space}}
   register int f;
   extern int g;
   auto int h;

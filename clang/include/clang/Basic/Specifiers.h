@@ -178,7 +178,6 @@ namespace clang {
     SC_PrivateExtern,
 
     // These are only legal on variables.
-    SC_OpenCLWorkGroupLocal,
     SC_Auto,
     SC_Register
   };

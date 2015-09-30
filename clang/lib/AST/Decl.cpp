@@ -1749,7 +1749,6 @@ const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
   case SC_None:                 break;
   case SC_Auto:                 return "auto";
   case SC_Extern:               return "extern";
-  case SC_OpenCLWorkGroupLocal: return "<<work-group-local>>";
   case SC_PrivateExtern:        return "__private_extern__";
   case SC_Register:             return "register";
   case SC_Static:               return "static";

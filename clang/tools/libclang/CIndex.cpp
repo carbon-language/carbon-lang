@@ -6602,8 +6602,6 @@ enum CX_StorageClass clang_Cursor_getStorageClass(CXCursor C) {
     return CX_SC_Static;
   case SC_PrivateExtern:
     return CX_SC_PrivateExtern;
-  case SC_OpenCLWorkGroupLocal:
-    return CX_SC_OpenCLWorkGroupLocal;
   case SC_Auto:
     return CX_SC_Auto;
   case SC_Register:

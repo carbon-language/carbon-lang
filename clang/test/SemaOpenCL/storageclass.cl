@@ -1,14 +1,29 @@
 // RUN: %clang_cc1 %s -verify -pedantic -fsyntax-only -cl-std=CL1.2
 
-static constant int A = 0;
+static constant int G1 = 0;
+constant int G2 = 0;
+int G3 = 0;        // expected-error{{program scope variable must reside in constant address space}}
+global int G4 = 0; // expected-error{{program scope variable must reside in constant address space}}
 
-int X = 0; // expected-error{{global variables must have a constant address space qualifier}}
-
-// static is not allowed at local scope.
 void kernel foo() {
-  static int X = 5; // expected-error{{variables in function scope cannot be declared static}} 
-  auto int Y = 7; // expected-error{{OpenCL does not support the 'auto' storage class specifier}}
+  // static is not allowed at local scope before CL2.0
+  static int S1 = 5;          // expected-error{{variables in function scope cannot be declared static}}
+  static constant int S2 = 5; // expected-error{{variables in function scope cannot be declared static}}
+
+  constant int L1 = 0;
+  local int L2;
+
+  auto int L3 = 7; // expected-error{{OpenCL does not support the 'auto' storage class specifier}}
 }
 
 static void kernel bar() { // expected-error{{kernel functions cannot be declared static}}
+}
+
+void f() {
+  constant int L1 = 0; // expected-error{{non-kernel function variable cannot be declared in constant address space}}
+  local int L2;        // expected-error{{non-kernel function variable cannot be declared in local address space}}
+  {
+    constant int L1 = 0; // expected-error{{non-kernel function variable cannot be declared in constant address space}}
+    local int L2;        // expected-error{{non-kernel function variable cannot be declared in local address space}}
+  }
 }
