@@ -14,7 +14,7 @@ int main(){
     int64_t v7[4];
 
     v1 = vld3_dup_s32(v0);
-// CHECK: [[T168:%.*]] = call { <2 x i32>, <2 x i32>, <2 x i32> } @llvm.arm.neon.vld3lane.v2i32(i8* {{.*}}, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, i32 {{[0-9]+}}, i32 {{[0-9]+}})
+// CHECK: [[T168:%.*]] = call { <2 x i32>, <2 x i32>, <2 x i32> } @llvm.arm.neon.vld3lane.v2i32.p0i8(i8* {{.*}}, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, i32 {{[0-9]+}}, i32 {{[0-9]+}})
 // CHECK-NEXT: [[T169:%.*]] = extractvalue { <2 x i32>, <2 x i32>, <2 x i32> } [[T168]], 0
 // CHECK-NEXT: [[T170:%.*]] = shufflevector <2 x i32> [[T169]], <2 x i32> [[T169]], <2 x i32> zeroinitializer
 // CHECK-NEXT: [[T171:%.*]] = insertvalue { <2 x i32>, <2 x i32>, <2 x i32> } [[T168]], <2 x i32> [[T170]], 0
@@ -26,7 +26,7 @@ int main(){
 // CHECK-NEXT: [[T177:%.*]] = insertvalue { <2 x i32>, <2 x i32>, <2 x i32> } [[T174]], <2 x i32> [[T176]], 2
 
     v3 = vld4_dup_s32(v2);
-// CHECK: [[T178:%.*]] = call { <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32> } @llvm.arm.neon.vld4lane.v2i32(i8* {{.*}}, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, i32 {{[0-9]+}}, i32 {{[0-9]+}})
+// CHECK: [[T178:%.*]] = call { <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32> } @llvm.arm.neon.vld4lane.v2i32.p0i8(i8* {{.*}}, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, i32 {{[0-9]+}}, i32 {{[0-9]+}})
 // CHECK-NEXT: [[T179:%.*]] = extractvalue { <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32> } [[T178]], 0
 // CHECK-NEXT: [[T180:%.*]] = shufflevector <2 x i32> [[T179]], <2 x i32> [[T179]], <2 x i32> zeroinitializer
 // CHECK-NEXT: [[T181:%.*]] = insertvalue { <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32> } [[T178]], <2 x i32> [[T180]], 0
@@ -41,10 +41,10 @@ int main(){
 // CHECK-NEXT: [[T190:%.*]] = insertvalue { <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32> } [[T187]], <2 x i32> [[T189]], 3
 
     v4 = vld3_dup_s64(v6);
-// CHECK: {{%.*}} = call { <1 x i64>, <1 x i64>, <1 x i64> } @llvm.arm.neon.vld3.v1i64(i8* {{.*}}, i32 {{[0-9]+}})
+// CHECK: {{%.*}} = call { <1 x i64>, <1 x i64>, <1 x i64> } @llvm.arm.neon.vld3.v1i64.p0i8(i8* {{.*}}, i32 {{[0-9]+}})
 
     v5 = vld4_dup_s64(v7);
-// CHECK: {{%.*}} = call { <1 x i64>, <1 x i64>, <1 x i64>, <1 x i64> } @llvm.arm.neon.vld4.v1i64(i8* {{.*}}, i32 {{[0-9]+}})
+// CHECK: {{%.*}} = call { <1 x i64>, <1 x i64>, <1 x i64>, <1 x i64> } @llvm.arm.neon.vld4.v1i64.p0i8(i8* {{.*}}, i32 {{[0-9]+}})
 
     return 0;
 }

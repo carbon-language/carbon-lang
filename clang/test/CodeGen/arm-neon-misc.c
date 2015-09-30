@@ -14,20 +14,20 @@
 void t1(uint64_t *src, uint8_t *dst) {
 // CHECK: @t1
   uint64x2_t q = vld1q_u64(src);
-// CHECK: call <2 x i64> @llvm.arm.neon.vld1.v2i64
+// CHECK: call <2 x i64> @llvm.arm.neon.vld1.v2i64.p0i8
   vst1q_lane_u64(dst, q, 1);
 // CHECK: bitcast <16 x i8> %{{.*}} to <2 x i64>
 // CHECK: shufflevector <2 x i64>
-// CHECK: call void @llvm.arm.neon.vst1.v1i64
+// CHECK: call void @llvm.arm.neon.vst1.p0i8.v1i64
 }
 
 void t2(uint64_t *src1, uint8_t *src2, uint64x2_t *dst) {
 // CHECK: @t2
     uint64x2_t q = vld1q_u64(src1);
-// CHECK: call <2 x i64> @llvm.arm.neon.vld1.v2i64
+// CHECK: call <2 x i64> @llvm.arm.neon.vld1.v2i64.p0i8
     q = vld1q_lane_u64(src2, q, 0);
 // CHECK: shufflevector <2 x i64>
-// CHECK: call <1 x i64> @llvm.arm.neon.vld1.v1i64
+// CHECK: call <1 x i64> @llvm.arm.neon.vld1.v1i64.p0i8
 // CHECK: shufflevector <1 x i64>
     *dst = q;
 // CHECK: store <2 x i64>

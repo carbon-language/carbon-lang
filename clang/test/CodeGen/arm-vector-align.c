@@ -14,9 +14,9 @@
 typedef float AlignedAddr __attribute__ ((aligned (16)));
 void t1(AlignedAddr *addr1, AlignedAddr *addr2) {
 // CHECK: @t1
-// CHECK: call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* %{{.*}}, i32 16)
+// CHECK: call <4 x float> @llvm.arm.neon.vld1.v4f32.p0i8(i8* %{{.*}}, i32 16)
   float32x4_t a = vld1q_f32(addr1);
-// CHECK: call void @llvm.arm.neon.vst1.v4f32(i8* %{{.*}}, <4 x float> %{{.*}}, i32 16)
+// CHECK: call void @llvm.arm.neon.vst1.p0i8.v4f32(i8* %{{.*}}, <4 x float> %{{.*}}, i32 16)
   vst1q_f32(addr2, a);
 }
 
