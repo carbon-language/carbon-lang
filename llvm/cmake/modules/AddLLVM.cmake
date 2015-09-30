@@ -194,34 +194,43 @@ endfunction(add_link_opts)
 # Set each output directory according to ${CMAKE_CONFIGURATION_TYPES}.
 # Note: Don't set variables CMAKE_*_OUTPUT_DIRECTORY any more,
 # or a certain builder, for eaxample, msbuild.exe, would be confused.
-function(set_output_directory target bindir libdir)
-  # Do nothing if *_OUTPUT_INTDIR is empty.
-  if("${bindir}" STREQUAL "")
-    return()
-  endif()
+function(set_output_directory target)
+  cmake_parse_arguments(ARG "" "BINARY_DIR;LIBRARY_DIR;" "" ${ARGN})
 
-  # moddir -- corresponding to LIBRARY_OUTPUT_DIRECTORY.
+  # module_dir -- corresponding to LIBRARY_OUTPUT_DIRECTORY.
   # It affects output of add_library(MODULE).
   if(WIN32 OR CYGWIN)
     # DLL platform
-    set(moddir ${bindir})
+    set(module_dir ${ARG_BINARY_DIR})
   else()
-    set(moddir ${libdir})
+    set(module_dir ${ARG_LIBRARY_DIR})
   endif()
   if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
     foreach(build_mode ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${build_mode}" CONFIG_SUFFIX)
-      string(REPLACE ${CMAKE_CFG_INTDIR} ${build_mode} bi ${bindir})
-      string(REPLACE ${CMAKE_CFG_INTDIR} ${build_mode} li ${libdir})
-      string(REPLACE ${CMAKE_CFG_INTDIR} ${build_mode} mi ${moddir})
-      set_target_properties(${target} PROPERTIES "RUNTIME_OUTPUT_DIRECTORY_${CONFIG_SUFFIX}" ${bi})
-      set_target_properties(${target} PROPERTIES "ARCHIVE_OUTPUT_DIRECTORY_${CONFIG_SUFFIX}" ${li})
-      set_target_properties(${target} PROPERTIES "LIBRARY_OUTPUT_DIRECTORY_${CONFIG_SUFFIX}" ${mi})
+      if(ARG_BINARY_DIR)
+        string(REPLACE ${CMAKE_CFG_INTDIR} ${build_mode} bi ${ARG_BINARY_DIR})
+        set_target_properties(${target} PROPERTIES "RUNTIME_OUTPUT_DIRECTORY_${CONFIG_SUFFIX}" ${bi})
+      endif()
+      if(ARG_LIBRARY_DIR)
+        string(REPLACE ${CMAKE_CFG_INTDIR} ${build_mode} li ${ARG_LIBRARY_DIR})
+        set_target_properties(${target} PROPERTIES "ARCHIVE_OUTPUT_DIRECTORY_${CONFIG_SUFFIX}" ${li})
+      endif()
+      if(module_dir)
+        string(REPLACE ${CMAKE_CFG_INTDIR} ${build_mode} mi ${module_dir})
+        set_target_properties(${target} PROPERTIES "LIBRARY_OUTPUT_DIRECTORY_${CONFIG_SUFFIX}" ${mi})
+      endif()
     endforeach()
   else()
-    set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${bindir})
-    set_target_properties(${target} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${libdir})
-    set_target_properties(${target} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${moddir})
+    if(ARG_BINARY_DIR)
+      set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ARG_BINARY_DIR})
+    endif()
+    if(ARG_LIBRARY_DIR)
+      set_target_properties(${target} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${ARG_LIBRARY_DIR})
+    endif()
+    if(module_dir)
+      set_target_properties(${target} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${module_dir})
+    endif()
   endif()
 endfunction()
 
@@ -399,7 +408,7 @@ function(llvm_add_library name)
     set(windows_resource_file ${windows_resource_file} PARENT_SCOPE)
   endif()
 
-  set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
+  set_output_directory(${name} BINARY_DIR ${LLVM_RUNTIME_OUTPUT_INTDIR} LIBRARY_DIR ${LLVM_LIBRARY_OUTPUT_INTDIR})
   # $<TARGET_OBJECTS> doesn't require compile flags.
   if(NOT obj_name)
     llvm_update_compile_flags(${name})
@@ -628,7 +637,7 @@ macro(add_llvm_executable name)
   endif()
 
   set(EXCLUDE_FROM_ALL OFF)
-  set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
+  set_output_directory(${name} BINARY_DIR ${LLVM_RUNTIME_OUTPUT_INTDIR} LIBRARY_DIR ${LLVM_LIBRARY_OUTPUT_INTDIR})
   llvm_config( ${name} ${USE_SHARED} ${LLVM_LINK_COMPONENTS} )
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
@@ -835,7 +844,7 @@ function(add_unittest test_suite test_name)
 
   add_llvm_executable(${test_name} ${ARGN})
   set(outdir ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
-  set_output_directory(${test_name} ${outdir} ${outdir})
+  set_output_directory(${test_name} BINARY_DIR ${outdir} LIBRARY_DIR ${outdir})
   target_link_libraries(${test_name}
     gtest
     gtest_main
