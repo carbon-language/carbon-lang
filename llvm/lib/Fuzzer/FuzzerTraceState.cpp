@@ -499,7 +499,7 @@ void __sanitizer_weak_hook_strcmp(void *caller_pc, const char *s1,
   TS->TraceCmpCallback(PC, N, fuzzer::ICMP_EQ, S1, S2);
 }
 
-
+__attribute__((visibility("default")))
 void __sanitizer_cov_trace_cmp(uint64_t SizeAndType, uint64_t Arg1,
                                uint64_t Arg2) {
   if (!TS) return;
@@ -509,6 +509,7 @@ void __sanitizer_cov_trace_cmp(uint64_t SizeAndType, uint64_t Arg1,
   TS->TraceCmpCallback(PC, CmpSize, Type, Arg1, Arg2);
 }
 
+__attribute__((visibility("default")))
 void __sanitizer_cov_trace_switch(uint64_t Val, uint64_t *Cases) {
   if (!TS) return;
   uintptr_t PC = reinterpret_cast<uintptr_t>(__builtin_return_address(0));
