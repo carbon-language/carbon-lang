@@ -1136,10 +1136,12 @@ void ScopDetection::print(raw_ostream &OS, const Module *) const {
 }
 
 void ScopDetection::releaseMemory() {
-  ValidRegions.clear();
   RejectLogs.clear();
-  NonAffineSubRegionMap.clear();
+  ValidRegions.clear();
   InsnToMemAcc.clear();
+  BoxedLoopsMap.clear();
+  NonAffineSubRegionMap.clear();
+  RequiredInvariantLoadsMap.clear();
 
   // Do not clear the invalid function set.
 }
