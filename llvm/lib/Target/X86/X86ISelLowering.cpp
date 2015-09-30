@@ -17893,18 +17893,28 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
 
       // i64 SRA needs to be performed as partial shifts.
       if ((VT == MVT::v2i64 || (Subtarget->hasInt256() && VT == MVT::v4i64)) &&
-          Op.getOpcode() == ISD::SRA)
+          Op.getOpcode() == ISD::SRA && !Subtarget->hasXOP())
         return ArithmeticShiftRight64(ShiftAmt);
 
       if (VT == MVT::v16i8 || (Subtarget->hasInt256() && VT == MVT::v32i8)) {
         unsigned NumElts = VT.getVectorNumElements();
         MVT ShiftVT = MVT::getVectorVT(MVT::i16, NumElts / 2);
 
-        if (Op.getOpcode() == ISD::SHL) {
-          // Simple i8 add case
-          if (ShiftAmt == 1)
-            return DAG.getNode(ISD::ADD, dl, VT, R, R);
+        // Simple i8 add case
+        if (Op.getOpcode() == ISD::SHL && ShiftAmt == 1)
+          return DAG.getNode(ISD::ADD, dl, VT, R, R);
 
+        // ashr(R, 7)  === cmp_slt(R, 0)
+        if (Op.getOpcode() == ISD::SRA && ShiftAmt == 7) {
+          SDValue Zeros = getZeroVector(VT, Subtarget, DAG, dl);
+          return DAG.getNode(X86ISD::PCMPGT, dl, VT, Zeros, R);
+        }
+
+        // XOP can shift v16i8 directly instead of as shift v8i16 + mask.
+        if (VT == MVT::v16i8 && Subtarget->hasXOP())
+          return SDValue();
+
+        if (Op.getOpcode() == ISD::SHL) {
           // Make a large shift.
           SDValue SHL = getTargetVShiftByConstNode(X86ISD::VSHLI, dl, ShiftVT,
                                                    R, ShiftAmt, DAG);
@@ -17927,12 +17937,6 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
                              DAG.getNode(ISD::BUILD_VECTOR, dl, VT, V));
         }
         if (Op.getOpcode() == ISD::SRA) {
-          if (ShiftAmt == 7) {
-            // ashr(R, 7)  === cmp_slt(R, 0)
-            SDValue Zeros = getZeroVector(VT, Subtarget, DAG, dl);
-            return DAG.getNode(X86ISD::PCMPGT, dl, VT, Zeros, R);
-          }
-
           // ashr(R, Amt) === sub(xor(lshr(R, Amt), Mask), Mask)
           SDValue Res = DAG.getNode(ISD::SRL, dl, VT, R, Amt);
           SmallVector<SDValue, 32> V(NumElts,
@@ -17949,7 +17953,7 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
   }
 
   // Special case in 32-bit mode, where i64 is expanded into high and low parts.
-  if (!Subtarget->is64Bit() &&
+  if (!Subtarget->is64Bit() && !Subtarget->hasXOP() &&
       (VT == MVT::v2i64 || (Subtarget->hasInt256() && VT == MVT::v4i64))) {
 
     // Peek through any splat that was introduced for i64 shift vectorization.
@@ -18103,10 +18107,25 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
     return V;
 
   if (SDValue V = LowerScalarVariableShift(Op, DAG, Subtarget))
-      return V;
+    return V;
 
   if (SupportedVectorVarShift(VT, Subtarget, Op.getOpcode()))
     return Op;
+
+  // XOP has 128-bit variable logical/arithmetic shifts.
+  // +ve/-ve Amt = shift left/right.
+  if (Subtarget->hasXOP() &&
+      (VT == MVT::v2i64 || VT == MVT::v4i32 ||
+       VT == MVT::v8i16 || VT == MVT::v16i8)) {
+    if (Op.getOpcode() == ISD::SRL || Op.getOpcode() == ISD::SRA) {
+      SDValue Zero = getZeroVector(VT, Subtarget, DAG, dl);
+      Amt = DAG.getNode(ISD::SUB, dl, VT, Zero, Amt);
+    }
+    if (Op.getOpcode() == ISD::SHL || Op.getOpcode() == ISD::SRL)
+      return DAG.getNode(X86ISD::VPSHL, dl, VT, R, Amt);
+    if (Op.getOpcode() == ISD::SRA)
+      return DAG.getNode(X86ISD::VPSHA, dl, VT, R, Amt);
+  }
 
   // 2i64 vector logical shifts can efficiently avoid scalarization - do the
   // shifts per-lane and then shuffle the partial results back together.
@@ -18296,7 +18315,8 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
     return DAG.getVectorShuffle(VT, dl, R02, R13, {0, 5, 2, 7});
   }
 
-  if (VT == MVT::v16i8 || (VT == MVT::v32i8 && Subtarget->hasInt256())) {
+  if (VT == MVT::v16i8 ||
+      (VT == MVT::v32i8 && Subtarget->hasInt256() && !Subtarget->hasXOP())) {
     MVT ExtVT = MVT::getVectorVT(MVT::i16, VT.getVectorNumElements() / 2);
     unsigned ShiftOpcode = Op->getOpcode();
 
@@ -18416,7 +18436,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
                        DAG.getNode(Op.getOpcode(), dl, ExtVT, R, Amt));
   }
 
-  if (Subtarget->hasInt256() && VT == MVT::v16i16) {
+  if (Subtarget->hasInt256() && !Subtarget->hasXOP() && VT == MVT::v16i16) {
     MVT ExtVT = MVT::v8i32;
     SDValue Z = getZeroVector(VT, Subtarget, DAG, dl);
     SDValue ALo = DAG.getNode(X86ISD::UNPCKL, dl, VT, Amt, Z);
@@ -19820,6 +19840,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::RDSEED:             return "X86ISD::RDSEED";
   case X86ISD::VPMADDUBSW:         return "X86ISD::VPMADDUBSW";
   case X86ISD::VPMADDWD:           return "X86ISD::VPMADDWD";
+  case X86ISD::VPSHA:              return "X86ISD::VPSHA";
+  case X86ISD::VPSHL:              return "X86ISD::VPSHL";
   case X86ISD::FMADD:              return "X86ISD::FMADD";
   case X86ISD::FMSUB:              return "X86ISD::FMSUB";
   case X86ISD::FNMADD:             return "X86ISD::FNMADD";

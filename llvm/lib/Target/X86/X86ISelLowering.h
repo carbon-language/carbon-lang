@@ -410,6 +410,9 @@ namespace llvm {
       /// SSE4A Extraction and Insertion.
       EXTRQI, INSERTQI,
 
+      // XOP arithmetic/logical shifts
+      VPSHA, VPSHL,
+
       // Vector multiply packed unsigned doubleword integers
       PMULUDQ,
       // Vector multiply packed signed doubleword integers

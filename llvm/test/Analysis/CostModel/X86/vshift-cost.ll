@@ -2,6 +2,8 @@
 ; RUN: opt < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=corei7 -cost-model -analyze | FileCheck %s -check-prefix=CHECK -check-prefix=SSE41
 ; RUN: opt < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=corei7-avx -cost-model -analyze | FileCheck %s -check-prefix=CHECK -check-prefix=AVX
 ; RUN: opt < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=core-avx2 -cost-model -analyze | FileCheck %s -check-prefix=CHECK -check-prefix=AVX2
+; RUN: opt < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=bdver2 -cost-model -analyze | FileCheck %s -check-prefix=CHECK -check-prefix=XOP -check-prefix=XOPAVX
+; RUN: opt < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=bdver4 -cost-model -analyze | FileCheck %s -check-prefix=CHECK -check-prefix=XOP -check-prefix=XOPAVX2
 
 
 ; Verify the cost of vector shift left instructions.
@@ -39,6 +41,7 @@ define <4 x i32> @test3(<4 x i32> %a) {
 ; SSE41: Found an estimated cost of 1 for instruction:   %shl
 ; AVX: Found an estimated cost of 1 for instruction:   %shl
 ; AVX2: Found an estimated cost of 1 for instruction:   %shl
+; XOP: Found an estimated cost of 1 for instruction:   %shl
 
 
 define <4 x i32> @test4(<4 x i32> %a) {
@@ -50,6 +53,7 @@ define <4 x i32> @test4(<4 x i32> %a) {
 ; SSE41: Found an estimated cost of 1 for instruction:   %shl
 ; AVX: Found an estimated cost of 1 for instruction:   %shl
 ; AVX2: Found an estimated cost of 1 for instruction:   %shl
+; XOP: Found an estimated cost of 1 for instruction:   %shl
 
 
 ; On AVX2 we are able to lower the following shift into a single
@@ -66,6 +70,7 @@ define <2 x i64> @test5(<2 x i64> %a) {
 ; SSE41: Found an estimated cost of 4 for instruction:   %shl
 ; AVX: Found an estimated cost of 4 for instruction:   %shl
 ; AVX2: Found an estimated cost of 1 for instruction:   %shl
+; XOP: Found an estimated cost of 1 for instruction:   %shl
 
 
 ; v16i16 and v8i32 shift left by non-uniform constant are lowered into
@@ -90,6 +95,8 @@ define <16 x i16> @test6(<16 x i16> %a) {
 ; SSE41: Found an estimated cost of 2 for instruction:   %shl
 ; AVX: Found an estimated cost of 4 for instruction:   %shl
 ; AVX2: Found an estimated cost of 1 for instruction:   %shl
+; XOPAVX: Found an estimated cost of 2 for instruction:   %shl
+; XOPAVX2: Found an estimated cost of 1 for instruction:   %shl
 
 
 ; With SSE2 and SSE4.1, the vector shift cost for 'test7' is twice
@@ -105,6 +112,8 @@ define <8 x i32> @test7(<8 x i32> %a) {
 ; SSE41: Found an estimated cost of 2 for instruction:   %shl
 ; AVX: Found an estimated cost of 4 for instruction:   %shl
 ; AVX2: Found an estimated cost of 1 for instruction:   %shl
+; XOPAVX: Found an estimated cost of 2 for instruction:   %shl
+; XOPAVX2: Found an estimated cost of 1 for instruction:   %shl
 
 
 ; On AVX2 we are able to lower the following shift into a single
@@ -121,6 +130,8 @@ define <4 x i64> @test8(<4 x i64> %a) {
 ; SSE41: Found an estimated cost of 8 for instruction:   %shl
 ; AVX: Found an estimated cost of 8 for instruction:   %shl
 ; AVX2: Found an estimated cost of 1 for instruction:   %shl
+; XOPAVX: Found an estimated cost of 2 for instruction:   %shl
+; XOPAVX2: Found an estimated cost of 1 for instruction:   %shl
 
 
 ; Same as 'test6', with the difference that the cost is double.
@@ -134,6 +145,8 @@ define <32 x i16> @test9(<32 x i16> %a) {
 ; SSE41: Found an estimated cost of 4 for instruction:   %shl
 ; AVX: Found an estimated cost of 8 for instruction:   %shl
 ; AVX2: Found an estimated cost of 2 for instruction:   %shl
+; XOPAVX: Found an estimated cost of 4 for instruction:   %shl
+; XOPAVX2: Found an estimated cost of 2 for instruction:   %shl
 
 
 ; Same as 'test7', except that now the cost is double.
@@ -147,6 +160,8 @@ define <16 x i32> @test10(<16 x i32> %a) {
 ; SSE41: Found an estimated cost of 4 for instruction:   %shl
 ; AVX: Found an estimated cost of 8 for instruction:   %shl
 ; AVX2: Found an estimated cost of 2 for instruction:   %shl
+; XOPAVX: Found an estimated cost of 4 for instruction:   %shl
+; XOPAVX2: Found an estimated cost of 2 for instruction:   %shl
 
 
 ; On AVX2 we are able to lower the following shift into a sequence of
@@ -163,5 +178,5 @@ define <8 x i64> @test11(<8 x i64> %a) {
 ; SSE41: Found an estimated cost of 16 for instruction:   %shl
 ; AVX: Found an estimated cost of 16 for instruction:   %shl
 ; AVX2: Found an estimated cost of 2 for instruction:   %shl
-
-
+; XOPAVX: Found an estimated cost of 4 for instruction:   %shl
+; XOPAVX2: Found an estimated cost of 2 for instruction:   %shl

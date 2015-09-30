@@ -83,7 +83,42 @@ let ExeDomain = SSEPackedDouble in {
   defm VFRCZPD : xop2op256<0x81, "vfrczpd", int_x86_xop_vfrcz_pd_256, loadv4f64>;
 }
 
-multiclass xop3op<bits<8> opc, string OpcodeStr, Intrinsic Int> {
+multiclass xop3op<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                  ValueType vt128> {
+  def rr : IXOP<opc, MRMSrcReg, (outs VR128:$dst),
+           (ins VR128:$src1, VR128:$src2),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+           [(set VR128:$dst,
+              (vt128 (OpNode (vt128 VR128:$src1), (vt128 VR128:$src2))))]>,
+           XOP_4VOp3, Sched<[WriteVarVecShift]>;
+  def rm : IXOP<opc, MRMSrcMem, (outs VR128:$dst),
+           (ins VR128:$src1, i128mem:$src2),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+           [(set VR128:$dst,
+              (vt128 (OpNode (vt128 VR128:$src1),
+                             (vt128 (bitconvert (loadv2i64 addr:$src2))))))]>,
+           XOP_4V, VEX_W, Sched<[WriteVarVecShift, ReadAfterLd]>;
+  def mr : IXOP<opc, MRMSrcMem, (outs VR128:$dst),
+           (ins i128mem:$src1, VR128:$src2),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+           [(set VR128:$dst,
+              (vt128 (OpNode (vt128 (bitconvert (loadv2i64 addr:$src1))),
+                             (vt128 VR128:$src2))))]>,
+             XOP_4VOp3, Sched<[WriteVarVecShift, ReadAfterLd]>;
+}
+
+let ExeDomain = SSEPackedInt in {
+  defm VPSHAB : xop3op<0x98, "vpshab", X86vpsha, v16i8>;
+  defm VPSHAD : xop3op<0x9A, "vpshad", X86vpsha, v4i32>;
+  defm VPSHAQ : xop3op<0x9B, "vpshaq", X86vpsha, v2i64>;
+  defm VPSHAW : xop3op<0x99, "vpshaw", X86vpsha, v8i16>;
+  defm VPSHLB : xop3op<0x94, "vpshlb", X86vpshl, v16i8>;
+  defm VPSHLD : xop3op<0x96, "vpshld", X86vpshl, v4i32>;
+  defm VPSHLQ : xop3op<0x97, "vpshlq", X86vpshl, v2i64>;
+  defm VPSHLW : xop3op<0x95, "vpshlw", X86vpshl, v8i16>;
+}
+
+multiclass xop3op_int<bits<8> opc, string OpcodeStr, Intrinsic Int> {
   def rr : IXOP<opc, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -103,18 +138,10 @@ multiclass xop3op<bits<8> opc, string OpcodeStr, Intrinsic Int> {
 }
 
 let ExeDomain = SSEPackedInt in {
-  defm VPSHLW : xop3op<0x95, "vpshlw", int_x86_xop_vpshlw>;
-  defm VPSHLQ : xop3op<0x97, "vpshlq", int_x86_xop_vpshlq>;
-  defm VPSHLD : xop3op<0x96, "vpshld", int_x86_xop_vpshld>;
-  defm VPSHLB : xop3op<0x94, "vpshlb", int_x86_xop_vpshlb>;
-  defm VPSHAW : xop3op<0x99, "vpshaw", int_x86_xop_vpshaw>;
-  defm VPSHAQ : xop3op<0x9B, "vpshaq", int_x86_xop_vpshaq>;
-  defm VPSHAD : xop3op<0x9A, "vpshad", int_x86_xop_vpshad>;
-  defm VPSHAB : xop3op<0x98, "vpshab", int_x86_xop_vpshab>;
-  defm VPROTW : xop3op<0x91, "vprotw", int_x86_xop_vprotw>;
-  defm VPROTQ : xop3op<0x93, "vprotq", int_x86_xop_vprotq>;
-  defm VPROTD : xop3op<0x92, "vprotd", int_x86_xop_vprotd>;
-  defm VPROTB : xop3op<0x90, "vprotb", int_x86_xop_vprotb>;
+  defm VPROTW : xop3op_int<0x91, "vprotw", int_x86_xop_vprotw>;
+  defm VPROTQ : xop3op_int<0x93, "vprotq", int_x86_xop_vprotq>;
+  defm VPROTD : xop3op_int<0x92, "vprotd", int_x86_xop_vprotd>;
+  defm VPROTB : xop3op_int<0x90, "vprotb", int_x86_xop_vprotb>;
 }
 
 multiclass xop3opimm<bits<8> opc, string OpcodeStr, Intrinsic Int> {
