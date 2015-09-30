@@ -3252,9 +3252,9 @@ void ScopInfo::addPHIReadAccess(PHINode *PHI) {
                   MemoryAccess::PHI);
 }
 
-Scop *ScopInfo::buildScop(Region &R, DominatorTree &DT) {
+void ScopInfo::buildScop(Region &R, DominatorTree &DT) {
   unsigned MaxLoopDepth = getMaxLoopDepthInRegion(R, *LI, *SD);
-  Scop *S = new Scop(R, AccFuncMap, *SE, DT, ctx, MaxLoopDepth);
+  scop = new Scop(R, AccFuncMap, *SE, DT, ctx, MaxLoopDepth);
 
   buildAccessFunctions(R, R);
 
@@ -3268,8 +3268,7 @@ Scop *ScopInfo::buildScop(Region &R, DominatorTree &DT) {
   if (!R.getExitingBlock())
     buildAccessFunctions(R, *R.getExit(), nullptr, /* IsExitBlock */ true);
 
-  S->init(*LI, *SD, *AA);
-  return S;
+  scop->init(*LI, *SD, *AA);
 }
 
 void ScopInfo::print(raw_ostream &OS, const Module *) const {
@@ -3324,7 +3323,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   TD = &F->getParent()->getDataLayout();
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
-  scop = buildScop(*R, DT);
+  buildScop(*R, DT);
 
   DEBUG(scop->print(dbgs()));
 

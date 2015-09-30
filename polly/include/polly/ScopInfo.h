@@ -1596,7 +1596,7 @@ class ScopInfo : public RegionPass {
   void clear();
 
   // Build the SCoP for Region @p R.
-  Scop *buildScop(Region &R, DominatorTree &DT);
+  void buildScop(Region &R, DominatorTree &DT);
 
   /// @brief Build an instance of MemoryAccess from the Load/Store instruction.
   ///
