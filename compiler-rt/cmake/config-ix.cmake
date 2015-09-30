@@ -356,6 +356,7 @@ if(APPLE)
 
       list(APPEND SANITIZER_COMMON_SUPPORTED_OS iossim)
       list(APPEND BUILTIN_SUPPORTED_OS iossim)
+      set(DARWIN_iossim_SKIP_CC_KEXT On)
       darwin_test_archs(iossim
         DARWIN_iossim_ARCHS
         ${toolchain_arches})

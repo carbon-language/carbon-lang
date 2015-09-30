@@ -270,7 +270,7 @@ macro(darwin_add_builtin_libraries)
     endforeach()
 
     # Don't build cc_kext libraries for simulator platforms
-    if(NOT ${os} MATCHES ".*sim$")
+    if(NOT DARWIN_${os}_SKIP_CC_KEXT)
       foreach (arch ${DARWIN_BUILTIN_ARCHS})
         # By not specifying MIN_VERSION this only reads the OS and OS-arch lists.
         # We don't want to filter out the builtins that are present in libSystem
