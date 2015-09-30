@@ -404,6 +404,31 @@ protected:
   /// the original value in the non-optimized SCoP.
   void createScalarFinalization(Region &R);
 
+  /// @brief Try to synthesize a new value
+  ///
+  /// Given an old value, we try to synthesize it in a new context from its
+  /// original SCEV expression. We start from the original SCEV expression,
+  /// then replace outdated parameter and loop references, and finally
+  /// expand it to code that computes this updated expression.
+  ///
+  /// @param Stmt      The statement to code generate
+  /// @param Old       The old Value
+  /// @param BBMap     A mapping from old values to their new values
+  ///                  (for values recalculated within this basic block)
+  /// @param LTS       A mapping from loops virtual canonical induction
+  ///                  variable to their new values
+  ///                  (for values recalculated in the new ScoP, but not
+  ///                   within this basic block)
+  /// @param L         The loop that surrounded the instruction that referenced
+  ///                  this value in the original code. This loop is used to
+  ///                  evaluate the scalar evolution at the right scope.
+  ///
+  /// @returns  o A newly synthesized value.
+  ///           o NULL, if synthesizing the value failed.
+  Value *trySynthesizeNewValue(ScopStmt &Stmt, const Value *Old,
+                               ValueMapT &BBMap, LoopToScevMapT &LTS,
+                               Loop *L) const;
+
   /// @brief Get the new version of a value.
   ///
   /// Given an old value, we first check if a new version of this value is

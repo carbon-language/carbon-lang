@@ -99,27 +99,10 @@ BlockGenerator::BlockGenerator(PollyIRBuilder &B, LoopInfo &LI,
       EntryBB(nullptr), PHIOpMap(PHIOpMap), ScalarMap(ScalarMap),
       EscapeMap(EscapeMap), GlobalMap(GlobalMap) {}
 
-Value *BlockGenerator::getNewValue(ScopStmt &Stmt, const Value *Old,
-                                   ValueMapT &BBMap, LoopToScevMapT &LTS,
-                                   Loop *L) const {
-  // We assume constants never change.
-  // This avoids map lookups for many calls to this function.
-  if (isa<Constant>(Old))
-    return const_cast<Value *>(Old);
-
-  if (Value *New = GlobalMap.lookup(Old)) {
-    if (Value *NewRemapped = GlobalMap.lookup(New))
-      New = NewRemapped;
-    if (Old->getType()->getScalarSizeInBits() <
-        New->getType()->getScalarSizeInBits())
-      New = Builder.CreateTruncOrBitCast(New, Old->getType());
-
-    return New;
-  }
-
-  if (Value *New = BBMap.lookup(Old))
-    return New;
-
+Value *BlockGenerator::trySynthesizeNewValue(ScopStmt &Stmt, const Value *Old,
+                                             ValueMapT &BBMap,
+                                             LoopToScevMapT &LTS,
+                                             Loop *L) const {
   if (SE.isSCEVable(Old->getType()))
     if (const SCEV *Scev = SE.getSCEVAtScope(const_cast<Value *>(Old), L)) {
       if (!isa<SCEVCouldNotCompute>(Scev)) {
@@ -143,6 +126,33 @@ Value *BlockGenerator::getNewValue(ScopStmt &Stmt, const Value *Old,
         return Expanded;
       }
     }
+
+  return nullptr;
+}
+
+Value *BlockGenerator::getNewValue(ScopStmt &Stmt, const Value *Old,
+                                   ValueMapT &BBMap, LoopToScevMapT &LTS,
+                                   Loop *L) const {
+  // We assume constants never change.
+  // This avoids map lookups for many calls to this function.
+  if (isa<Constant>(Old))
+    return const_cast<Value *>(Old);
+
+  if (Value *New = GlobalMap.lookup(Old)) {
+    if (Value *NewRemapped = GlobalMap.lookup(New))
+      New = NewRemapped;
+    if (Old->getType()->getScalarSizeInBits() <
+        New->getType()->getScalarSizeInBits())
+      New = Builder.CreateTruncOrBitCast(New, Old->getType());
+
+    return New;
+  }
+
+  if (Value *New = BBMap.lookup(Old))
+    return New;
+
+  if (Value *New = trySynthesizeNewValue(Stmt, Old, BBMap, LTS, L))
+    return New;
 
   // A scop-constant value defined by a global or a function parameter.
   if (isa<GlobalValue>(Old) || isa<Argument>(Old))
