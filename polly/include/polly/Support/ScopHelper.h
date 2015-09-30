@@ -15,9 +15,6 @@
 #define POLLY_SUPPORT_IRHELPER_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Analysis/AliasAnalysis.h"
 
 namespace llvm {
 class Type;
