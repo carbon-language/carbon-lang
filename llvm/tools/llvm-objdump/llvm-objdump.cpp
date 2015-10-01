@@ -917,6 +917,8 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
     // Make a list of all the symbols in this section.
     std::vector<std::pair<uint64_t, StringRef>> Symbols;
+    std::vector<uint64_t> DataMappingSymsAddr;
+    std::vector<uint64_t> TextMappingSymsAddr;
     for (const SymbolRef &Symbol : Obj->symbols()) {
       if (Section.containsSymbol(Symbol)) {
         ErrorOr<uint64_t> AddressOrErr = Symbol.getAddress();
@@ -929,11 +931,19 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
         ErrorOr<StringRef> Name = Symbol.getName();
         error(Name.getError());
         Symbols.push_back(std::make_pair(Address, *Name));
+        if (Obj->isELF() && Obj->getArch() == Triple::aarch64) {
+          if (Name->startswith("$d"))
+            DataMappingSymsAddr.push_back(Address);
+          if (Name->startswith("$x"))
+            TextMappingSymsAddr.push_back(Address);
+        }
       }
     }
 
     // Sort the symbols by address, just in case they didn't come in that way.
     array_pod_sort(Symbols.begin(), Symbols.end());
+    std::sort(DataMappingSymsAddr.begin(), DataMappingSymsAddr.end());
+    std::sort(TextMappingSymsAddr.begin(), TextMappingSymsAddr.end());
 
     // Make a list of all the relocations for this section.
     std::vector<RelocationRef> Rels;
@@ -997,6 +1007,45 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
       for (Index = Start; Index < End; Index += Size) {
         MCInst Inst;
+
+        // AArch64 ELF binaries can interleave data and text in the
+        // same section. We rely on the markers introduced to
+        // understand what we need to dump.
+        if (Obj->isELF() && Obj->getArch() == Triple::aarch64) {
+          uint64_t Stride = 0;
+
+          auto DAI = std::lower_bound(DataMappingSymsAddr.begin(),
+                                      DataMappingSymsAddr.end(), Index);
+          if (DAI != DataMappingSymsAddr.end() && *DAI == Index) {
+            // Switch to data.
+            while (Index < End) {
+              outs() << format("%8" PRIx64 ":", SectionAddr + Index);
+              outs() << "\t";
+              if (Index + 4 <= End) {
+                Stride = 4;
+                dumpBytes(Bytes.slice(Index, 4), outs());
+                outs() << "\t.word";
+              } else if (Index + 2 <= End) {
+                Stride = 2;
+                dumpBytes(Bytes.slice(Index, 2), outs());
+                outs() << "\t.short";
+              } else {
+                Stride = 1;
+                dumpBytes(Bytes.slice(Index, 1), outs());
+                outs() << "\t.byte";
+              }
+              Index += Stride;
+              outs() << "\n";
+              auto TAI = std::lower_bound(TextMappingSymsAddr.begin(),
+                                          TextMappingSymsAddr.end(), Index);
+              if (TAI != TextMappingSymsAddr.end() && *TAI == Index)
+                break;
+            }
+          }
+        }
+
+        if (Index >= End)
+          break;
 
         if (DisAsm->getInstruction(Inst, Size, Bytes.slice(Index),
                                    SectionAddr + Index, DebugOut,
