@@ -1,8 +1,8 @@
-#ifndef SUPPRESS_ARRAY_WARNINGS_H
-#define SUPPRESS_ARRAY_WARNINGS_H
+#ifndef SUPPORT_DISABLE_MISSING_BRACES_WARNING_H
+#define SUPPORT_DISABLE_MISSING_BRACES_WARNING_H
 
 // std::array is explicitly allowed to be initialized with A a = { init-list };.
 // Disable the missing braces warning for this reason.
 #pragma GCC diagnostic ignored "-Wmissing-braces"
 
-#endif // SUPPRESS_ARRAY_WARNINGS
+#endif // SUPPORT_DISABLE_MISSING_BRACES_WARNING_H

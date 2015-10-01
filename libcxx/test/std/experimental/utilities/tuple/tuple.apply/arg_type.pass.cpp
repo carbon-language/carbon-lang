@@ -20,6 +20,11 @@
 #include <utility>
 #include <cassert>
 
+// std::array is explicitly allowed to be initialized with A a = { init-list };.
+// Disable the missing braces warning for this reason.
+#include "disable_missing_braces_warning.h"
+
+
 namespace ex = std::experimental;
 
 int call_with_value(int x, int y) { return (x + y); }
