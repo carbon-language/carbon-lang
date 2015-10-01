@@ -213,12 +213,6 @@ public:
   void addHeadSamples(unsigned Num) { TotalHeadSamples += Num; }
   void addBodySamples(int LineOffset, unsigned Discriminator, unsigned Num) {
     assert(LineOffset >= 0);
-    // When dealing with instruction weights, we use the value
-    // zero to indicate the absence of a sample. If we read an
-    // actual zero from the profile file, use the value 1 to
-    // avoid the confusion later on.
-    if (Num == 0)
-      Num = 1;
     BodySamples[LineLocation(LineOffset, Discriminator)].addSamples(Num);
   }
   void addCalledTargetSamples(int LineOffset, unsigned Discriminator,

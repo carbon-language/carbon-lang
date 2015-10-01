@@ -282,6 +282,7 @@ bool SampleProfileLoader::computeBlockWeights(Function &F) {
     ErrorOr<unsigned> Weight = getBlockWeight(&BB);
     if (Weight) {
       BlockWeights[&BB] = Weight.get();
+      VisitedBlocks.insert(&BB);
       Changed = true;
     }
     DEBUG(printBlockWeight(dbgs(), &BB));
@@ -431,12 +432,13 @@ bool SampleProfileLoader::inlineHotFunctions(Function &F) {
 void SampleProfileLoader::findEquivalencesFor(
     BasicBlock *BB1, SmallVector<BasicBlock *, 8> Descendants,
     DominatorTreeBase<BasicBlock> *DomTree) {
+  const BasicBlock *EC = EquivalenceClass[BB1];
+  unsigned Weight = BlockWeights[EC];
   for (const auto *BB2 : Descendants) {
     bool IsDomParent = DomTree->dominates(BB2, BB1);
     bool IsInSameLoop = LI->getLoopFor(BB1) == LI->getLoopFor(BB2);
-    if (BB1 != BB2 && VisitedBlocks.insert(BB2).second && IsDomParent &&
-        IsInSameLoop) {
-      EquivalenceClass[BB2] = BB1;
+    if (BB1 != BB2 && IsDomParent && IsInSameLoop) {
+      EquivalenceClass[BB2] = EC;
 
       // If BB2 is heavier than BB1, make BB2 have the same weight
       // as BB1.
@@ -446,11 +448,10 @@ void SampleProfileLoader::findEquivalencesFor(
       // during the propagation phase. Right now, we just want to
       // make sure that BB1 has the largest weight of all the
       // members of its equivalence set.
-      unsigned &BB1Weight = BlockWeights[BB1];
-      unsigned &BB2Weight = BlockWeights[BB2];
-      BB1Weight = std::max(BB1Weight, BB2Weight);
+      Weight = std::max(Weight, BlockWeights[BB2]);
     }
   }
+  BlockWeights[EC] = Weight;
 }
 
 /// \brief Find equivalence classes.
@@ -491,18 +492,6 @@ void SampleProfileLoader::findEquivalenceClasses(Function &F) {
     DominatedBBs.clear();
     DT->getDescendants(BB1, DominatedBBs);
     findEquivalencesFor(BB1, DominatedBBs, PDT.get());
-
-    // Repeat the same logic for all the blocks post-dominated by BB1.
-    // We are looking for every basic block BB2 such that:
-    //
-    // 1- BB1 post-dominates BB2.
-    // 2- BB2 dominates BB1.
-    // 3- BB1 and BB2 are in the same loop nest.
-    //
-    // If all those conditions hold, BB2's equivalence class is BB1.
-    DominatedBBs.clear();
-    PDT->getDescendants(BB1, DominatedBBs);
-    findEquivalencesFor(BB1, DominatedBBs, DT.get());
 
     DEBUG(printBlockEquivalence(dbgs(), BB1));
   }
@@ -558,8 +547,9 @@ unsigned SampleProfileLoader::visitEdge(Edge E, unsigned *NumUnknownEdges,
 bool SampleProfileLoader::propagateThroughEdges(Function &F) {
   bool Changed = false;
   DEBUG(dbgs() << "\nPropagation through edges\n");
-  for (auto &BI : F) {
-    BasicBlock *BB = &BI;
+  for (const auto &BI : F) {
+    const BasicBlock *BB = &BI;
+    const BasicBlock *EC = EquivalenceClass[BB];
 
     // Visit all the predecessor and successor edges to determine
     // which ones have a weight assigned already. Note that it doesn't
@@ -611,7 +601,7 @@ bool SampleProfileLoader::propagateThroughEdges(Function &F) {
       // all edges will get a weight, or iteration will stop when
       // it reaches SampleProfileMaxPropagateIterations.
       if (NumUnknownEdges <= 1) {
-        unsigned &BBWeight = BlockWeights[BB];
+        unsigned &BBWeight = BlockWeights[EC];
         if (NumUnknownEdges == 0) {
           // If we already know the weight of all edges, the weight of the
           // basic block can be computed. It should be no larger than the sum
@@ -623,9 +613,9 @@ bool SampleProfileLoader::propagateThroughEdges(Function &F) {
                          << " known. Set weight for block: ";
                   printBlockWeight(dbgs(), BB););
           }
-          if (VisitedBlocks.insert(BB).second)
+          if (VisitedBlocks.insert(EC).second)
             Changed = true;
-        } else if (NumUnknownEdges == 1 && VisitedBlocks.count(BB)) {
+        } else if (NumUnknownEdges == 1 && VisitedBlocks.count(EC)) {
           // If there is a single unknown edge and the block has been
           // visited, then we can compute E's weight.
           if (BBWeight >= TotalWeight)
@@ -637,7 +627,7 @@ bool SampleProfileLoader::propagateThroughEdges(Function &F) {
           DEBUG(dbgs() << "Set weight for edge: ";
                 printEdgeWeight(dbgs(), UnknownEdge));
         }
-      } else if (SelfReferentialEdge.first && VisitedBlocks.count(BB)) {
+      } else if (SelfReferentialEdge.first && VisitedBlocks.count(EC)) {
         unsigned &BBWeight = BlockWeights[BB];
         // We have a self-referential edge and the weight of BB is known.
         if (BBWeight >= TotalWeight)
