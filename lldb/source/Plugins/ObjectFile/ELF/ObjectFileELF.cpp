@@ -2206,8 +2206,6 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
                 mangled.SetDemangledName( ConstString((demangled_name + suffix).str()) );
         }
 
-        printf("Symbol: name=%s, Type:%d value=%08lx\n", symbol_name, symbol_type, symbol.st_value);
-
         Symbol dc_symbol(
             i + start_id,       // ID is the original symbol table index.
             mangled,
