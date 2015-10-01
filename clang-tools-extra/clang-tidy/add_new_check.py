@@ -217,7 +217,7 @@ def update_checks_list(module_path):
 
   checks = map(lambda s: '   ' + s.replace('.rst', '\n'),
                filter(lambda s: s.endswith('.rst') and s != 'list.rst',
-                      os.listdir('docs/clang-tidy/checks')))
+                      os.listdir(os.path.join(module_path, '../../docs/clang-tidy/checks'))))
   checks.sort()
 
   print('Updating %s...' % filename)
