@@ -23,31 +23,15 @@ using namespace llvm;
 using namespace lld;
 using namespace lld::elf2;
 
-namespace lld {
-namespace elf2 {
+Configuration *lld::elf2::Config;
+LinkerDriver *lld::elf2::Driver;
 
-Configuration *Config;
-std::vector<std::unique_ptr<MemoryBuffer>> *MemoryBufferPool;
-
-void link(ArrayRef<const char *> Args) {
+void lld::elf2::link(ArrayRef<const char *> Args) {
   Configuration C;
+  LinkerDriver D;
   Config = &C;
-  std::vector<std::unique_ptr<MemoryBuffer>> V;
-  MemoryBufferPool = &V;
-  LinkerDriver().link(Args.slice(1));
-}
-
-// Opens a file. Path has to be resolved already.
-// Newly created memory buffers are owned by this driver.
-MemoryBufferRef openFile(StringRef Path) {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> MBOrErr = MemoryBuffer::getFile(Path);
-  error(MBOrErr, Twine("cannot open ") + Path);
-  std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
-  MemoryBufferRef MBRef = MB->getMemBufferRef();
-  MemoryBufferPool->push_back(std::move(MB)); // transfer ownership
-  return MBRef;
-}
-}
+  Driver = &D;
+  Driver->link(Args.slice(1));
 }
 
 // Makes a path by concatenating Dir and File.
@@ -82,10 +66,29 @@ static std::string searchLibrary(StringRef Path) {
   error(Twine("Unable to find library -l") + Path);
 }
 
-// Returns true if MB looks like a linker script.
-static bool isLinkerScript(MemoryBufferRef MB) {
+// Opens and parses a file. Path has to be resolved already.
+// Newly created memory buffers are owned by this driver.
+void LinkerDriver::addFile(StringRef Path) {
   using namespace llvm::sys::fs;
-  return identify_magic(MB.getBuffer()) == file_magic::unknown;
+  auto MBOrErr = MemoryBuffer::getFile(Path);
+  error(MBOrErr, Twine("cannot open ") + Path);
+  std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
+  MemoryBufferRef MBRef = MB->getMemBufferRef();
+  OwningMBs.push_back(std::move(MB)); // take MB ownership
+
+  switch (identify_magic(MBRef.getBuffer())) {
+  case file_magic::unknown:
+    readLinkerScript(MBRef);
+    return;
+  case file_magic::archive:
+    Symtab.addFile(make_unique<ArchiveFile>(MBRef));
+    return;
+  case file_magic::elf_shared_object:
+    Symtab.addFile(createELFFile<SharedFile>(MBRef));
+    return;
+  default:
+    Symtab.addFile(createELFFile<ObjectFile>(MBRef));
+  }
 }
 
 void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
@@ -121,20 +124,13 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Config->NoInhibitExec = Args.hasArg(OPT_noinhibit_exec);
   Config->Shared = Args.hasArg(OPT_shared);
 
-  // Create a symbol table.
-  SymbolTable Symtab;
-
   for (auto *Arg : Args.filtered(OPT_l, OPT_INPUT)) {
-    std::string Path = Arg->getValue();
-    if (Arg->getOption().getID() == OPT_l)
-      Path = searchLibrary(Path);
-    MemoryBufferRef MB = openFile(Path);
-    if (isLinkerScript(MB)) {
-      // readLinkerScript may add files to the symbol table.
-      readLinkerScript(&Symtab, MB);
-      continue;
+    StringRef Path = Arg->getValue();
+    if (Arg->getOption().getID() == OPT_l) {
+      addFile(searchLibrary(Path));
+    } else {
+      addFile(Path);
     }
-    Symtab.addFile(createFile(MB));
   }
 
   if (Symtab.getObjectFiles().empty())

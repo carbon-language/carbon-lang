@@ -29,8 +29,6 @@ class InputFile;
 class Lazy;
 class SymbolBody;
 
-std::unique_ptr<InputFile> createFile(MemoryBufferRef MB);
-
 // The root class of input files.
 class InputFile {
 public:

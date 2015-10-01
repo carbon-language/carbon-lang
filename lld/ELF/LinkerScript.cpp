@@ -26,7 +26,7 @@ using namespace lld::elf2;
 namespace {
 class LinkerScript {
 public:
-  LinkerScript(SymbolTable *T, StringRef S) : Symtab(T), Tokens(tokenize(S)) {}
+  LinkerScript(StringRef S) : Tokens(tokenize(S)) {}
   void run();
 
 private:
@@ -40,7 +40,6 @@ private:
   void readGroup();
   void readOutputFormat();
 
-  SymbolTable *Symtab;
   std::vector<StringRef> Tokens;
   size_t Pos = 0;
 };
@@ -125,7 +124,7 @@ void LinkerScript::readAsNeeded() {
     StringRef Tok = next();
     if (Tok == ")")
       return;
-    Symtab->addFile(createFile(openFile(Tok)));
+    Driver->addFile(Tok);
   }
 }
 
@@ -139,7 +138,7 @@ void LinkerScript::readGroup() {
       readAsNeeded();
       continue;
     }
-    Symtab->addFile(createFile(openFile(Tok)));
+    Driver->addFile(Tok);
   }
 }
 
@@ -151,6 +150,6 @@ void LinkerScript::readOutputFormat() {
 }
 
 // Entry point. The other functions or classes are private to this file.
-void lld::elf2::readLinkerScript(SymbolTable *Symtab, MemoryBufferRef MB) {
-  LinkerScript(Symtab, MB.getBuffer()).run();
+void lld::elf2::readLinkerScript(MemoryBufferRef MB) {
+  LinkerScript(MB.getBuffer()).run();
 }
