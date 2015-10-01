@@ -45,11 +45,6 @@ STATISTIC(NumUnscaledPairCreated,
 static cl::opt<unsigned> ScanLimit("aarch64-load-store-scan-limit",
                                    cl::init(20), cl::Hidden);
 
-// Place holder while testing unscaled load/store combining
-static cl::opt<bool> EnableAArch64UnscaledMemOp(
-    "aarch64-unscaled-mem-op", cl::Hidden,
-    cl::desc("Allow AArch64 unscaled load/store combining"), cl::init(true));
-
 namespace llvm {
 void initializeAArch64LoadStoreOptPass(PassRegistry &);
 }
@@ -462,8 +457,7 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   unsigned Opc =
       SExtIdx == -1 ? I->getOpcode() : getMatchingNonSExtOpcode(I->getOpcode());
   bool IsUnscaled = isUnscaledLdSt(Opc);
-  int OffsetStride =
-      IsUnscaled && EnableAArch64UnscaledMemOp ? getMemScale(I) : 1;
+  int OffsetStride = IsUnscaled ? getMemScale(I) : 1;
 
   bool MergeForward = Flags.getMergeForward();
   unsigned NewOpc = getMatchingPairOpcode(Opc);
@@ -492,7 +486,7 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   }
   // Handle Unscaled
   int OffsetImm = getLdStOffsetOp(RtMI).getImm();
-  if (IsUnscaled && EnableAArch64UnscaledMemOp)
+  if (IsUnscaled)
     OffsetImm /= OffsetStride;
 
   // Construct the new instruction.
@@ -650,8 +644,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
   // Early exit if the offset if not possible to match. (6 bits of positive
   // range, plus allow an extra one in case we find a later insn that matches
   // with Offset-1)
-  int OffsetStride =
-      IsUnscaled && EnableAArch64UnscaledMemOp ? getMemScale(FirstMI) : 1;
+  int OffsetStride = IsUnscaled ? getMemScale(FirstMI) : 1;
   if (!inBoundsForPair(IsUnscaled, Offset, OffsetStride))
     return E;
 
@@ -719,8 +712,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         // If the alignment requirements of the paired (scaled) instruction
         // can't express the offset of the unscaled input, bail and keep
         // looking.
-        if (IsUnscaled && EnableAArch64UnscaledMemOp &&
-            (alignTo(MinOffset, OffsetStride) != MinOffset)) {
+        if (IsUnscaled && (alignTo(MinOffset, OffsetStride) != MinOffset)) {
           trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
           MemInsns.push_back(MI);
           continue;
