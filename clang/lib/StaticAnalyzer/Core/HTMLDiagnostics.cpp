@@ -281,7 +281,12 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
 
   if (!AnalyzerOpts.shouldWriteStableReportFilename()) {
       llvm::sys::path::append(Model, Directory, "report-%%%%%%.html");
-
+      if (std::error_code EC =
+          llvm::sys::fs::make_absolute(Model)) {
+          llvm::errs() << "warning: could not make '" << Model
+                       << "' absolute: " << EC.message() << '\n';
+        return;
+      }
       if (std::error_code EC =
           llvm::sys::fs::createUniqueFile(Model, FD, ResultPath)) {
           llvm::errs() << "warning: could not create file in '" << Directory
