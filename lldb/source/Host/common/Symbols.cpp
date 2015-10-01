@@ -38,7 +38,8 @@ int
 LocateMacOSXFilesUsingDebugSymbols
 (
     const ModuleSpec &module_spec,
-    ModuleSpec &return_module_spec
+    FileSpec *out_exec_fspec,   // If non-NULL, try and find the executable
+    FileSpec *out_dsym_fspec    // If non-NULL try and find the debug symbol file
 );
 
 #else
@@ -47,7 +48,8 @@ int
 LocateMacOSXFilesUsingDebugSymbols
 (
     const ModuleSpec &module_spec,
-    ModuleSpec &return_module_spec
+    FileSpec *out_exec_fspec,   // If non-NULL, try and find the executable
+    FileSpec *out_dsym_fspec    // If non-NULL try and find the debug symbol file
 ) {
     // Cannot find MacOSX files using debug symbols on non MacOSX.
     return 0;
@@ -176,25 +178,19 @@ LocateExecutableSymbolFileDsym (const ModuleSpec &module_spec)
                         (const void*)uuid);
 
     FileSpec symbol_fspec;
-    ModuleSpec dsym_module_spec;
     // First try and find the dSYM in the same directory as the executable or in
     // an appropriate parent directory
     if (LocateDSYMInVincinityOfExecutable (module_spec, symbol_fspec) == false)
     {
         // We failed to easily find the dSYM above, so use DebugSymbols
-        LocateMacOSXFilesUsingDebugSymbols (module_spec, dsym_module_spec);
+        LocateMacOSXFilesUsingDebugSymbols (module_spec, NULL, &symbol_fspec);
     }
-    else
-    {
-        dsym_module_spec.GetSymbolFileSpec() = symbol_fspec;
-    }
-    return dsym_module_spec.GetSymbolFileSpec();
+    return symbol_fspec;
 }
 
-ModuleSpec
+FileSpec
 Symbols::LocateExecutableObjectFile (const ModuleSpec &module_spec)
 {
-    ModuleSpec result = module_spec;
     const FileSpec *exec_fspec = module_spec.GetFileSpecPtr();
     const ArchSpec *arch = module_spec.GetArchitecturePtr();
     const UUID *uuid = module_spec.GetUUIDPtr();
@@ -204,19 +200,20 @@ Symbols::LocateExecutableObjectFile (const ModuleSpec &module_spec)
                         arch ? arch->GetArchitectureName() : "<NULL>",
                         (const void*)uuid);
 
+    FileSpec objfile_fspec;
     ModuleSpecList module_specs;
     ModuleSpec matched_module_spec;
     if (exec_fspec &&
         ObjectFile::GetModuleSpecifications(*exec_fspec, 0, 0, module_specs) &&
         module_specs.FindMatchingModuleSpec(module_spec, matched_module_spec))
     {
-        result.GetFileSpec() = exec_fspec;
+        objfile_fspec = exec_fspec;
     }
     else
     {
-        LocateMacOSXFilesUsingDebugSymbols (module_spec, result);
+        LocateMacOSXFilesUsingDebugSymbols (module_spec, &objfile_fspec, NULL);
     }
-    return result;
+    return objfile_fspec;
 }
 
 FileSpec
