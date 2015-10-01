@@ -41,6 +41,11 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
       addLazy(&Sym);
     return;
   }
+  if (auto *S = dyn_cast<SharedFileBase>(File.get())) {
+    S->parseSoName();
+    if (!IncludedSoNames.insert(S->getSoName()).second)
+      return;
+  }
   File->parse();
   addELFFile(cast<ELFFileBase>(File.release()));
 }

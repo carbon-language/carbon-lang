@@ -77,13 +77,14 @@ ELFData<ELFT>::getSymbolsHelper(bool Local) {
   return make_range(Syms.begin() + 1, Syms.begin() + FirstNonLocal);
 }
 
-template <class ELFT>
-typename ELFData<ELFT>::Elf_Sym_Range ELFData<ELFT>::getNonLocalSymbols() {
-  if (!Symtab)
-    return Elf_Sym_Range(nullptr, nullptr);
+template <class ELFT> void ELFData<ELFT>::initStringTable() {
   ErrorOr<StringRef> StringTableOrErr = ELFObj.getStringTableForSymtab(*Symtab);
   error(StringTableOrErr.getError());
   StringTable = *StringTableOrErr;
+}
+
+template <class ELFT>
+typename ELFData<ELFT>::Elf_Sym_Range ELFData<ELFT>::getNonLocalSymbols() {
   return getSymbolsHelper(false);
 }
 
@@ -141,6 +142,7 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSections() {
 }
 
 template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
+  this->initStringTable();
   Elf_Sym_Range Syms = this->getNonLocalSymbols();
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols);
@@ -233,7 +235,7 @@ template <class ELFT>
 SharedFile<ELFT>::SharedFile(MemoryBufferRef M)
     : SharedFileBase(getStaticELFKind<ELFT>(), M), ELFData<ELFT>(M) {}
 
-template <class ELFT> void SharedFile<ELFT>::parse() {
+template <class ELFT> void SharedFile<ELFT>::parseSoName() {
   typedef typename ELFFile<ELFT>::Elf_Dyn Elf_Dyn;
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
   const Elf_Shdr *DynamicSec = nullptr;
@@ -247,8 +249,7 @@ template <class ELFT> void SharedFile<ELFT>::parse() {
       DynamicSec = &Sec;
   }
 
-  // Also sets StringTable
-  Elf_Sym_Range Syms = this->getNonLocalSymbols();
+  this->initStringTable();
   SoName = getName();
 
   if (DynamicSec) {
@@ -266,7 +267,10 @@ template <class ELFT> void SharedFile<ELFT>::parse() {
       }
     }
   }
+}
 
+template <class ELFT> void SharedFile<ELFT>::parse() {
+  Elf_Sym_Range Syms = this->getNonLocalSymbols();
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols);
   for (const Elf_Sym &Sym : Syms) {

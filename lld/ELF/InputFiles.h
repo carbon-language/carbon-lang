@@ -116,6 +116,7 @@ protected:
   llvm::object::ELFFile<ELFT> ELFObj;
   const Elf_Shdr *Symtab = nullptr;
   StringRef StringTable;
+  void initStringTable();
   Elf_Sym_Range getNonLocalSymbols();
   Elf_Sym_Range getSymbolsHelper(bool);
 };
@@ -194,6 +195,7 @@ public:
       : ELFFileBase(SharedKind, EKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == SharedKind; }
   StringRef getSoName() const { return SoName; }
+  virtual void parseSoName() = 0;
 };
 
 template <class ELFT>
@@ -217,6 +219,7 @@ public:
 
   explicit SharedFile(MemoryBufferRef M);
 
+  void parseSoName() override;
   void parse() override;
 };
 

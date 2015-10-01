@@ -93,6 +93,7 @@ private:
   std::vector<std::unique_ptr<ObjectFileBase>> ObjectFiles;
 
   std::vector<std::unique_ptr<SharedFileBase>> SharedFiles;
+  llvm::DenseSet<StringRef> IncludedSoNames;
 
   SymbolBody *EntrySym = nullptr;
 };
