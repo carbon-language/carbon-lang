@@ -47,14 +47,11 @@ source tree in the ``lib/Transforms/Hello`` directory.
 Setting up the build environment
 --------------------------------
 
-.. FIXME: Why does this recommend to build in-tree?
-
-First, configure and build LLVM.  This needs to be done directly inside the
-LLVM source tree rather than in a separate objects directory.  Next, you need
-to create a new directory somewhere in the LLVM source base.  For this example,
-we'll assume that you made ``lib/Transforms/Hello``.  Finally, you must set up
-a build script (``Makefile``) that will compile the source code for the new
-pass.  To do this, copy the following into ``Makefile``:
+First, configure and build LLVM.  Next, you need to create a new directory
+somewhere in the LLVM source base.  For this example, we'll assume that you
+made ``lib/Transforms/Hello``.  Finally, you must set up a build script
+(``Makefile``) that will compile the source code for the new pass.  To do this,
+copy the following into ``Makefile``:
 
 .. code-block:: make
 
