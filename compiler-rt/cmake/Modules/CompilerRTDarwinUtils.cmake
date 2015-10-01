@@ -349,6 +349,7 @@ function(darwin_add_embedded_builtin_libraries)
 
   darwin_read_list_from_file(common_FUNCTIONS ${MACHO_SYM_DIR}/common.txt)
   darwin_read_list_from_file(thumb2_FUNCTIONS ${MACHO_SYM_DIR}/thumb2.txt)
+  darwin_read_list_from_file(thumb2_64_FUNCTIONS ${MACHO_SYM_DIR}/thumb2-64.txt)
   darwin_read_list_from_file(arm_FUNCTIONS ${MACHO_SYM_DIR}/arm.txt)
   darwin_read_list_from_file(i386_FUNCTIONS ${MACHO_SYM_DIR}/i386.txt)
 
@@ -356,7 +357,7 @@ function(darwin_add_embedded_builtin_libraries)
   set(armv6m_FUNCTIONS ${common_FUNCTIONS} ${arm_FUNCTIONS})
   set(armv7m_FUNCTIONS ${common_FUNCTIONS} ${arm_FUNCTIONS} ${thumb2_FUNCTIONS})
   set(armv7em_FUNCTIONS ${common_FUNCTIONS} ${arm_FUNCTIONS} ${thumb2_FUNCTIONS})
-  set(armv7_FUNCTIONS ${common_FUNCTIONS} ${arm_FUNCTIONS} ${thumb2_FUNCTIONS})
+  set(armv7_FUNCTIONS ${common_FUNCTIONS} ${arm_FUNCTIONS} ${thumb2_FUNCTIONS} ${thumb2_64_FUNCTIONS})
   set(i386_FUNCTIONS ${common_FUNCTIONS} ${i386_FUNCTIONS})
   set(x86_64_FUNCTIONS ${common_FUNCTIONS})
 
