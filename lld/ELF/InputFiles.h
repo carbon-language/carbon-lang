@@ -185,10 +185,14 @@ private:
 
 // .so file.
 class SharedFileBase : public ELFFileBase {
+protected:
+  StringRef SoName;
+
 public:
   SharedFileBase(ELFKind EKind, MemoryBufferRef M)
       : ELFFileBase(SharedKind, EKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == SharedKind; }
+  StringRef getSoName() const { return SoName; }
 };
 
 template <class ELFT>

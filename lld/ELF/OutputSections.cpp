@@ -207,7 +207,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
       SymTab.getSharedFiles();
   for (const std::unique_ptr<SharedFileBase> &File : SharedFiles)
-    DynStrSec.add(File->getName());
+    DynStrSec.add(File->getSoName());
   NumEntries += SharedFiles.size();
 
   ++NumEntries; // DT_NULL
@@ -266,7 +266,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
       SymTab.getSharedFiles();
   for (const std::unique_ptr<SharedFileBase> &File : SharedFiles) {
     P->d_tag = DT_NEEDED;
-    P->d_un.d_val = DynStrSec.getFileOff(File->getName());
+    P->d_un.d_val = DynStrSec.getFileOff(File->getSoName());
     ++P;
   }
 

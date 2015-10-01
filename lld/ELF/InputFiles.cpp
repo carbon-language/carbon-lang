@@ -216,14 +216,39 @@ SharedFile<ELFT>::SharedFile(MemoryBufferRef M)
     : SharedFileBase(getStaticELFKind<ELFT>(), M), ELFData<ELFT>(M) {}
 
 template <class ELFT> void SharedFile<ELFT>::parse() {
-  for (const Elf_Shdr &Sec : this->ELFObj.sections()) {
-    if (Sec.sh_type == SHT_DYNSYM) {
+  typedef typename ELFFile<ELFT>::Elf_Dyn Elf_Dyn;
+  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+  const Elf_Shdr *DynamicSec = nullptr;
+
+  const ELFFile<ELFT> Obj = this->ELFObj;
+  for (const Elf_Shdr &Sec : Obj.sections()) {
+    uint32_t Type = Sec.sh_type;
+    if (Type == SHT_DYNSYM)
       this->Symtab = &Sec;
-      break;
+    else if (Type == SHT_DYNAMIC)
+      DynamicSec = &Sec;
+  }
+
+  // Also sets StringTable
+  Elf_Sym_Range Syms = this->getNonLocalSymbols();
+  SoName = getName();
+
+  if (DynamicSec) {
+    auto *Begin =
+        reinterpret_cast<const Elf_Dyn *>(Obj.base() + DynamicSec->sh_offset);
+    const Elf_Dyn *End = Begin + DynamicSec->sh_size / sizeof(Elf_Dyn);
+
+    for (const Elf_Dyn &Dyn : make_range(Begin, End)) {
+      if (Dyn.d_tag == DT_SONAME) {
+        uintX_t Val = Dyn.getVal();
+        if (Val >= this->StringTable.size())
+          error("Invalid DT_SONAME entry");
+        SoName = StringRef(this->StringTable.data() + Val);
+        break;
+      }
     }
   }
 
-  Elf_Sym_Range Syms = this->getNonLocalSymbols();
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols);
   for (const Elf_Sym &Sym : Syms) {
