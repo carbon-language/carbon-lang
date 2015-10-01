@@ -250,6 +250,10 @@ public:
     return ToolChain::RLT_Libgcc;
   }
 
+  virtual std::string getCompilerRT(const llvm::opt::ArgList &Args,
+                                    StringRef Component,
+                                    bool Shared = false) const;
+
   /// IsUnwindTablesDefault - Does this tool chain use -funwind-tables
   /// by default.
   virtual bool IsUnwindTablesDefault() const;

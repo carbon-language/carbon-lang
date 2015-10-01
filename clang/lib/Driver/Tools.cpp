@@ -2402,60 +2402,11 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
   }
 }
 
-// Until ARM libraries are build separately, we have them all in one library
-static StringRef getArchNameForCompilerRTLib(const ToolChain &TC,
-                                             const ArgList &Args) {
-  const llvm::Triple &Triple = TC.getTriple();
-  bool IsWindows = Triple.isOSWindows();
-
-  if (Triple.isWindowsMSVCEnvironment() && TC.getArch() == llvm::Triple::x86)
-    return "i386";
-
-  if (TC.getArch() == llvm::Triple::arm || TC.getArch() == llvm::Triple::armeb)
-    return (arm::getARMFloatABI(TC, Args) == arm::FloatABI::Hard && !IsWindows)
-               ? "armhf"
-               : "arm";
-
-  return TC.getArchName();
-}
-
-static SmallString<128> getCompilerRTLibDir(const ToolChain &TC) {
-  // The runtimes are located in the OS-specific resource directory.
-  SmallString<128> Res(TC.getDriver().ResourceDir);
-  const llvm::Triple &Triple = TC.getTriple();
-  // TC.getOS() yield "freebsd10.0" whereas "freebsd" is expected.
-  StringRef OSLibName =
-      (Triple.getOS() == llvm::Triple::FreeBSD) ? "freebsd" : TC.getOS();
-  llvm::sys::path::append(Res, "lib", OSLibName);
-  return Res;
-}
-
-SmallString<128> tools::getCompilerRT(const ToolChain &TC, const ArgList &Args,
-                                      StringRef Component, bool Shared) {
-  const char *Env = TC.getTriple().getEnvironment() == llvm::Triple::Android
-                        ? "-android"
-                        : "";
-
-  bool IsOSWindows = TC.getTriple().isOSWindows();
-  bool IsITANMSVCWindows = TC.getTriple().isWindowsMSVCEnvironment() ||
-                           TC.getTriple().isWindowsItaniumEnvironment();
-  StringRef Arch = getArchNameForCompilerRTLib(TC, Args);
-  const char *Prefix = IsITANMSVCWindows ? "" : "lib";
-  const char *Suffix =
-      Shared ? (IsOSWindows ? ".dll" : ".so") : (IsITANMSVCWindows ? ".lib" : ".a");
-
-  SmallString<128> Path = getCompilerRTLibDir(TC);
-  llvm::sys::path::append(Path, Prefix + Twine("clang_rt.") + Component + "-" +
-                                    Arch + Env + Suffix);
-
-  return Path;
-}
-
 static const char *getCompilerRTArgString(const ToolChain &TC,
                                           const llvm::opt::ArgList &Args,
                                           StringRef Component,
                                           bool Shared = false) {
-  return Args.MakeArgString(getCompilerRT(TC, Args, Component, Shared));
+  return Args.MakeArgString(TC.getCompilerRT(Args, Component, Shared));
 }
 
 // This adds the static libclang_rt.builtins-arch.a directly to the command line
@@ -2569,7 +2520,7 @@ static void addSanitizerRuntime(const ToolChain &TC, const ArgList &Args,
 static bool addSanitizerDynamicList(const ToolChain &TC, const ArgList &Args,
                                     ArgStringList &CmdArgs,
                                     StringRef Sanitizer) {
-  SmallString<128> SanRT = getCompilerRT(TC, Args, Sanitizer);
+  SmallString<128> SanRT(TC.getCompilerRT(Args, Sanitizer));
   if (llvm::sys::fs::exists(SanRT + ".syms")) {
     CmdArgs.push_back(Args.MakeArgString("--dynamic-list=" + SanRT + ".syms"));
     return true;

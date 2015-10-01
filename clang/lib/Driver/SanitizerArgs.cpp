@@ -609,13 +609,11 @@ void SanitizerArgs::addArgs(const ToolChain &TC, const llvm::opt::ArgList &Args,
   if (TC.getTriple().isOSWindows() && needsUbsanRt()) {
     // Instruct the code generator to embed linker directives in the object file
     // that cause the required runtime libraries to be linked.
-    CmdArgs.push_back(
-        Args.MakeArgString("--dependent-lib=" +
-                           tools::getCompilerRT(TC, Args, "ubsan_standalone")));
+    CmdArgs.push_back(Args.MakeArgString(
+        "--dependent-lib=" + TC.getCompilerRT(Args, "ubsan_standalone")));
     if (types::isCXX(InputType))
       CmdArgs.push_back(Args.MakeArgString(
-          "--dependent-lib=" +
-          tools::getCompilerRT(TC, Args, "ubsan_standalone_cxx")));
+          "--dependent-lib=" + TC.getCompilerRT(Args, "ubsan_standalone_cxx")));
   }
 }
 
