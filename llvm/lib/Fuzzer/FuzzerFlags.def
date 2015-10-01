@@ -66,3 +66,4 @@ FUZZER_FLAG_INT(tbm_depth, 5, "Apply at most this number of consecutive"
                                "trace-based-mutations (tbm).")
 FUZZER_FLAG_INT(tbm_width, 5, "Apply at most this number of independent"
                                "trace-based-mutations (tbm)")
+FUZZER_FLAG_STRING(test_single_input, "Use specified file as test input.")

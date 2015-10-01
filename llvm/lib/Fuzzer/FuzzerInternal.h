@@ -115,10 +115,10 @@ class Fuzzer {
   static void StaticAlarmCallback();
 
   Unit SubstituteTokens(const Unit &U) const;
+  void ExecuteCallback(const Unit &U);
 
  private:
   void AlarmCallback();
-  void ExecuteCallback(const Unit &U);
   void MutateAndTestOne(Unit *U);
   void ReportNewCoverage(size_t NewCoverage, const Unit &U);
   size_t RunOne(const Unit &U);

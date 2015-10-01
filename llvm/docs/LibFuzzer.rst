@@ -68,6 +68,7 @@ The most important flags are::
   sync_timeout                       	600	Minimum timeout between syncs.
   use_traces                            0       Experimental: use instruction traces
   only_ascii                            0       If 1, generate only ASCII (isprint+isspace) inputs.
+  test_single_input                     ""      Use specified file content as test input. Test will be run only once. Useful for debugging a particular case.
 
 
 For the full list of flags run the fuzzer binary with ``-help=1``.

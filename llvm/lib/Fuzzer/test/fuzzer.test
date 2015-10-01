@@ -1,6 +1,7 @@
 CHECK: BINGO
 
 RUN: LLVMFuzzer-SimpleTest 2>&1 | FileCheck %s
+RUN: LLVMFuzzer-SimpleTest -test_single_input=%S/hi.txt 2>&1 | FileCheck %s 
 
 RUN: not LLVMFuzzer-InfiniteTest -timeout=2 2>&1 | FileCheck %s --check-prefix=InfiniteTest
 InfiniteTest: ALARM: working on the last Unit for

@@ -202,6 +202,12 @@ int ApplyTokens(const Fuzzer &F, const char *InputFilePath) {
   return 0;
 }
 
+int RunOneTest(Fuzzer *F, const char *InputFilePath) {
+  Unit U = FileToVector(InputFilePath);
+  F->ExecuteCallback(U);
+  return 0;
+}
+
 int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
   FuzzerRandomLibc Rand(0);
   SimpleUserSuppliedFuzzer SUSF(&Rand, Callback);
@@ -274,6 +280,9 @@ int FuzzerDriver(const std::vector<std::string> &Args,
 
   if (Flags.apply_tokens)
     return ApplyTokens(F, Flags.apply_tokens);
+
+  if (Flags.test_single_input)
+    return RunOneTest(&F, Flags.test_single_input);
 
   unsigned Seed = Flags.seed;
   // Initialize Seed.
