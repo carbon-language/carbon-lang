@@ -48,6 +48,12 @@ def shared : Flag<["-"], "shared">,
 def sysroot : Joined<["--"], "sysroot=">,
   HelpText<"Set the system root">;
 
+def no_allow_shlib_undefined
+    : Flag<["--"], "no-allow-shlib-undefined">;
+
+def allow_shlib_undefined
+    : Flag<["--"], "allow-shlib-undefined">;
+
 // Aliases
 def alias_Bdynamic_call_shared: Flag<["-"], "call_shared">, Alias<Bdynamic>;
 def alias_Bdynamic_dy: Flag<["-"], "dy">, Alias<Bdynamic>;

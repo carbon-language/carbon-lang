@@ -271,6 +271,9 @@ static void reportUndefined(const SymbolTable &S, const SymbolBody &Sym) {
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
+  if (Config->Shared)
+    return;
+
   const Elf_Sym &SymE = cast<ELFSymbolBody<ELFT>>(Sym).Sym;
   ELFFileBase *SymFile = nullptr;
 
