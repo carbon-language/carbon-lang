@@ -104,6 +104,14 @@ void constArray() {
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto Elem : ConstArr)
   // CHECK-FIXES-NEXT: printf("2 * %d = %d\n", Elem, Elem + Elem);
+
+  const NonTriviallyCopyable NonCopy[N]{};
+  for (int I = 0; I < N; ++I) {
+    printf("2 * %d = %d\n", NonCopy[I].X, NonCopy[I].X + NonCopy[I].X);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (const auto & Elem : NonCopy)
+  // CHECK-FIXES-NEXT: printf("2 * %d = %d\n", Elem.X, Elem.X + Elem.X);
 }
 
 struct HasArr {
@@ -208,6 +216,13 @@ void f() {
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & P : *Ps)
   // CHECK-FIXES-NEXT: printf("s has value %d\n", P.X);
+
+  for (S::const_iterator It = Ss.cbegin(), E = Ss.cend(); It != E; ++It) {
+    printf("s has value %d\n", (*It).X);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto Elem : Ss)
+  // CHECK-FIXES-NEXT: printf("s has value %d\n", Elem.X);
 
   for (S::iterator It = Ss.begin(), E = Ss.end(); It != E; ++It) {
     printf("s has value %d\n", It->X);
@@ -459,8 +474,8 @@ namespace PseudoArray {
 const int N = 6;
 dependent<int> V;
 dependent<int> *Pv;
-const dependent<int> Constv;
-const dependent<int> *Pconstv;
+const dependent<NonTriviallyCopyable> Constv;
+const dependent<NonTriviallyCopyable> *Pconstv;
 
 transparent<dependent<int>> Cv;
 
@@ -516,50 +531,51 @@ void f() {
   // CHECK-FIXES-NEXT: Sum += Elem + 2;
 }
 
+// Ensure that 'const auto &' is used with containers of non-trivial types.
 void constness() {
   int Sum = 0;
   for (int I = 0, E = Constv.size(); I < E; ++I) {
-    printf("Fibonacci number is %d\n", Constv[I]);
-    Sum += Constv[I] + 2;
+    printf("Fibonacci number is %d\n", Constv[I].X);
+    Sum += Constv[I].X + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto Elem : Constv)
-  // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem);
-  // CHECK-FIXES-NEXT: Sum += Elem + 2;
+  // CHECK-FIXES: for (const auto & Elem : Constv)
+  // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem.X);
+  // CHECK-FIXES-NEXT: Sum += Elem.X + 2;
 
   for (int I = 0, E = Constv.size(); I < E; ++I) {
-    printf("Fibonacci number is %d\n", Constv.at(I));
-    Sum += Constv.at(I) + 2;
+    printf("Fibonacci number is %d\n", Constv.at(I).X);
+    Sum += Constv.at(I).X + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto Elem : Constv)
-  // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem);
-  // CHECK-FIXES-NEXT: Sum += Elem + 2;
+  // CHECK-FIXES: for (const auto & Elem : Constv)
+  // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem.X);
+  // CHECK-FIXES-NEXT: Sum += Elem.X + 2;
 
   for (int I = 0, E = Pconstv->size(); I < E; ++I) {
-    printf("Fibonacci number is %d\n", Pconstv->at(I));
-    Sum += Pconstv->at(I) + 2;
+    printf("Fibonacci number is %d\n", Pconstv->at(I).X);
+    Sum += Pconstv->at(I).X + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto Elem : *Pconstv)
-  // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem);
-  // CHECK-FIXES-NEXT: Sum += Elem + 2;
+  // CHECK-FIXES: for (const auto & Elem : *Pconstv)
+  // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem.X);
+  // CHECK-FIXES-NEXT: Sum += Elem.X + 2;
 
   // This test will fail if size() isn't called repeatedly, since it
   // returns unsigned int, and 0 is deduced to be signed int.
   // FIXME: Insert the necessary explicit conversion, or write out the types
   // explicitly.
   for (int I = 0; I < Pconstv->size(); ++I) {
-    printf("Fibonacci number is %d\n", (*Pconstv).at(I));
-    Sum += (*Pconstv)[I] + 2;
+    printf("Fibonacci number is %d\n", (*Pconstv).at(I).X);
+    Sum += (*Pconstv)[I].X + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (auto Elem : *Pconstv)
-  // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem);
-  // CHECK-FIXES-NEXT: Sum += Elem + 2;
+  // CHECK-FIXES: for (const auto & Elem : *Pconstv)
+  // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem.X);
+  // CHECK-FIXES-NEXT: Sum += Elem.X + 2;
 }
 
-void ConstRef(const dependent<int>& ConstVRef) {
+void constRef(const dependent<int>& ConstVRef) {
   int sum = 0;
   // FIXME: This does not work with size_t (probably due to the implementation
   // of dependent); make dependent work exactly like a std container type.

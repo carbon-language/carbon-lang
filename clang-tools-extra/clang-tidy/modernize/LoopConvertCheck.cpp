@@ -112,8 +112,9 @@ StatementMatcher makeArrayLoopMatcher() {
 ///   - If the end iterator variable 'g' is defined, it is the same as 'f'.
 StatementMatcher makeIteratorLoopMatcher() {
   StatementMatcher BeginCallMatcher =
-      cxxMemberCallExpr(argumentCountIs(0),
-                        callee(cxxMethodDecl(hasName("begin"))))
+      cxxMemberCallExpr(
+          argumentCountIs(0),
+          callee(cxxMethodDecl(anyOf(hasName("begin"), hasName("cbegin")))))
           .bind(BeginCallName);
 
   DeclarationMatcher InitDeclMatcher =
@@ -127,7 +128,8 @@ StatementMatcher makeIteratorLoopMatcher() {
       varDecl(hasInitializer(anything())).bind(EndVarName);
 
   StatementMatcher EndCallMatcher = cxxMemberCallExpr(
-      argumentCountIs(0), callee(cxxMethodDecl(hasName("end"))));
+      argumentCountIs(0),
+      callee(cxxMethodDecl(anyOf(hasName("end"), hasName("cend")))));
 
   StatementMatcher IteratorBoundMatcher =
       expr(anyOf(ignoringParenImpCasts(
@@ -296,7 +298,8 @@ static const Expr *getContainerFromBeginEndCall(const Expr *Init, bool IsBegin,
     return nullptr;
   StringRef Name = Member->getMemberDecl()->getName();
   StringRef TargetName = IsBegin ? "begin" : "end";
-  if (Name != TargetName)
+  StringRef ConstTargetName = IsBegin ? "cbegin" : "cend";
+  if (Name != TargetName && Name != ConstTargetName)
     return nullptr;
 
   const Expr *SourceExpr = Member->getBase();
@@ -423,7 +426,7 @@ void LoopConvertCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
   Options.store(Opts, "MinConfidence", Confs[static_cast<int>(MinConfidence)]);
 
   SmallVector<std::string, 4> Styles{"camelBack", "CamelCase", "lower_case",
-                                    "UPPER_CASE"};
+                                     "UPPER_CASE"};
   Options.store(Opts, "NamingStyle", Styles[static_cast<int>(NamingStyle)]);
 }
 

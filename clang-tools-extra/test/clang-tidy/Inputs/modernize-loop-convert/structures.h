@@ -16,11 +16,20 @@ struct MutableVal {
   int X;
 };
 
+struct NonTriviallyCopyable {
+  NonTriviallyCopyable() = default;
+  // Define this constructor to make this class non-trivially copyable.
+  NonTriviallyCopyable(const NonTriviallyCopyable& Ntc);
+  int X;
+};
+
 struct S {
   typedef MutableVal *iterator;
   typedef const MutableVal *const_iterator;
   const_iterator begin() const;
   const_iterator end() const;
+  const_iterator cbegin() const;
+  const_iterator cend() const;
   iterator begin();
   iterator end();
 };
