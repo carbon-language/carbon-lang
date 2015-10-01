@@ -12,6 +12,12 @@
 #include <stdlib.h>
 #include <type_traits>
 
+// As of 1/10/2015 clang emits a -Wnonnull warnings even if the warning occurs
+// in an unevaluated context. For this reason we manually suppress the warning.
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wnonnull"
+#endif
+
 #ifndef EXIT_FAILURE
 #error EXIT_FAILURE not defined
 #endif
