@@ -332,6 +332,9 @@ template <class ELFT> void Writer<ELFT>::createSections() {
           Map.lookup({".init_array", SHT_INIT_ARRAY, SHF_WRITE | SHF_ALLOC})) {
     Symtab.addSyntheticSym<ELFT>("__init_array_start", *OS, 0);
     Symtab.addSyntheticSym<ELFT>("__init_array_end", *OS, OS->getSize());
+  } else {
+    Symtab.addIgnoredSym<ELFT>("__init_array_start");
+    Symtab.addIgnoredSym<ELFT>("__init_array_end");
   }
 
   // FIXME: Try to avoid the extra walk over all global symbols.

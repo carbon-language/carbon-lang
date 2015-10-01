@@ -81,6 +81,13 @@ void SymbolTable::addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
   resolve<ELFT>(Sym);
 }
 
+template <class ELFT> void SymbolTable::addIgnoredSym(StringRef Name) {
+  DefinedAbsolute<ELFT>::IgnoreUndef.setVisibility(STV_HIDDEN);
+  auto Sym = new (Alloc)
+      DefinedAbsolute<ELFT>(Name, DefinedAbsolute<ELFT>::IgnoreUndef);
+  resolve<ELFT>(Sym);
+}
+
 template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
   Target.reset(createTarget(EMachine));
   if (Config->Shared)
@@ -102,10 +109,7 @@ template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
   // an undefined symbol in the .o files.
   // Given that the symbol is effectively unused, we just create a dummy
   // hidden one to avoid the undefined symbol error.
-  DefinedAbsolute<ELFT>::IgnoreUndef.setVisibility(STV_HIDDEN);
-  auto Got = new (Alloc) DefinedAbsolute<ELFT>(
-      "_GLOBAL_OFFSET_TABLE_", DefinedAbsolute<ELFT>::IgnoreUndef);
-  resolve<ELFT>(Got);
+  addIgnoredSym<ELFT>("_GLOBAL_OFFSET_TABLE_");
 }
 
 template <class ELFT> void SymbolTable::addELFFile(ELFFileBase *File) {
@@ -249,5 +253,10 @@ template void SymbolTable::addSyntheticSym(StringRef, OutputSection<ELF64LE> &,
                                            ELFFile<ELF64LE>::uintX_t);
 template void SymbolTable::addSyntheticSym(StringRef, OutputSection<ELF64BE> &,
                                            ELFFile<ELF64BE>::uintX_t);
+
+template void SymbolTable::addIgnoredSym<ELF32LE>(StringRef);
+template void SymbolTable::addIgnoredSym<ELF32BE>(StringRef);
+template void SymbolTable::addIgnoredSym<ELF64LE>(StringRef);
+template void SymbolTable::addIgnoredSym<ELF64BE>(StringRef);
 }
 }

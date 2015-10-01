@@ -65,6 +65,8 @@ public:
   void addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
                        typename llvm::object::ELFFile<ELFT>::uintX_t Value);
 
+  template <class ELFT> void addIgnoredSym(StringRef Name);
+
 private:
   Symbol *insert(SymbolBody *New);
   template <class ELFT> void addELFFile(ELFFileBase *File);
