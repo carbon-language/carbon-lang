@@ -91,7 +91,7 @@ void *Allocate(const StackTrace &stack, uptr size, uptr alignment,
     size = 1;
   if (size > kMaxAllowedMallocSize) {
     Report("WARNING: LeakSanitizer failed to allocate %zu bytes\n", size);
-    return 0;
+    return nullptr;
   }
   void *p = allocator.Allocate(&cache, size, alignment, false);
   // Do not rely on the allocator to clear the memory (it's slow).
@@ -114,7 +114,7 @@ void *Reallocate(const StackTrace &stack, void *p, uptr new_size,
   if (new_size > kMaxAllowedMallocSize) {
     Report("WARNING: LeakSanitizer failed to allocate %zu bytes\n", new_size);
     allocator.Deallocate(&cache, p);
-    return 0;
+    return nullptr;
   }
   p = allocator.Reallocate(&cache, p, new_size, alignment);
   RegisterAllocation(stack, p, new_size);
@@ -212,7 +212,7 @@ IgnoreObjectResult IgnoreObjectLocked(const void *p) {
     return kIgnoreObjectInvalid;
   }
 }
-}  // namespace __lsan
+} // namespace __lsan
 
 using namespace __lsan;
 
@@ -241,10 +241,10 @@ SANITIZER_INTERFACE_ATTRIBUTE
 uptr __sanitizer_get_estimated_allocated_size(uptr size) { return size; }
 
 SANITIZER_INTERFACE_ATTRIBUTE
-int __sanitizer_get_ownership(const void *p) { return Metadata(p) != 0; }
+int __sanitizer_get_ownership(const void *p) { return Metadata(p) != nullptr; }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 uptr __sanitizer_get_allocated_size(const void *p) {
   return GetMallocUsableSize(p);
 }
-}  // extern "C"
+} // extern "C"

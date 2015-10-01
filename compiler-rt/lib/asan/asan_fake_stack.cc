@@ -11,6 +11,7 @@
 //
 // FakeStack is used to detect use-after-return bugs.
 //===----------------------------------------------------------------------===//
+
 #include "asan_allocator.h"
 #include "asan_poisoning.h"
 #include "asan_thread.h"
@@ -32,7 +33,7 @@ ALWAYS_INLINE void SetShadow(uptr ptr, uptr size, uptr class_id, u64 magic) {
   if (class_id <= 6) {
     for (uptr i = 0; i < (1U << class_id); i++) {
       shadow[i] = magic;
-      SanitizerBreakOptimization(0);  // Make sure this does not become memset.
+      SanitizerBreakOptimization(nullptr);  // Make sure this does not become memset.
     }
   } else {
     // The size class is too big, it's cheaper to poison only size bytes.
@@ -108,7 +109,7 @@ FakeFrame *FakeStack::Allocate(uptr stack_size_log, uptr class_id,
     *SavedFlagPtr(reinterpret_cast<uptr>(res), class_id) = &flags[pos];
     return res;
   }
-  return 0; // We are out of fake stack.
+  return nullptr; // We are out of fake stack.
 }
 
 uptr FakeStack::AddrIsInFakeStack(uptr ptr, uptr *frame_beg, uptr *frame_end) {
@@ -185,7 +186,7 @@ void SetTLSFakeStack(FakeStack *fs) { }
 
 static FakeStack *GetFakeStack() {
   AsanThread *t = GetCurrentThread();
-  if (!t) return 0;
+  if (!t) return nullptr;
   return t->fake_stack();
 }
 
@@ -193,7 +194,7 @@ static FakeStack *GetFakeStackFast() {
   if (FakeStack *fs = GetTLSFakeStack())
     return fs;
   if (!__asan_option_detect_stack_use_after_return)
-    return 0;
+    return nullptr;
   return GetFakeStack();
 }
 
@@ -214,7 +215,7 @@ ALWAYS_INLINE void OnFree(uptr ptr, uptr class_id, uptr size) {
   SetShadow(ptr, size, class_id, kMagic8);
 }
 
-}  // namespace __asan
+} // namespace __asan
 
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;
@@ -247,13 +248,13 @@ SANITIZER_INTERFACE_ATTRIBUTE
 void *__asan_addr_is_in_fake_stack(void *fake_stack, void *addr, void **beg,
                                    void **end) {
   FakeStack *fs = reinterpret_cast<FakeStack*>(fake_stack);
-  if (!fs) return 0;
+  if (!fs) return nullptr;
   uptr frame_beg, frame_end;
   FakeFrame *frame = reinterpret_cast<FakeFrame *>(fs->AddrIsInFakeStack(
       reinterpret_cast<uptr>(addr), &frame_beg, &frame_end));
-  if (!frame) return 0;
+  if (!frame) return nullptr;
   if (frame->magic != kCurrentStackFrameMagic)
-    return 0;
+    return nullptr;
   if (beg) *beg = reinterpret_cast<void*>(frame_beg);
   if (end) *end = reinterpret_cast<void*>(frame_end);
   return reinterpret_cast<void*>(frame->real_stack);
@@ -278,4 +279,4 @@ void __asan_allocas_unpoison(uptr top, uptr bottom) {
   REAL(memset)(reinterpret_cast<void*>(MemToShadow(top)), 0,
                (bottom - top) / SHADOW_GRANULARITY);
 }
-}  // extern "C"
+} // extern "C"

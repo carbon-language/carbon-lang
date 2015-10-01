@@ -11,6 +11,7 @@
 //
 // ASan-private header for asan_stack.cc.
 //===----------------------------------------------------------------------===//
+
 #ifndef ASAN_STACK_H
 #define ASAN_STACK_H
 
@@ -48,15 +49,15 @@ void GetStackTraceWithPcBpAndContext(BufferedStackTrace *stack, uptr max_depth,
       uptr stack_bottom = t->stack_bottom();
       ScopedUnwinding unwind_scope(t);
       stack->Unwind(max_depth, pc, bp, context, stack_top, stack_bottom, fast);
-    } else if (t == 0 && !fast) {
+    } else if (!t && !fast) {
       /* If GetCurrentThread() has failed, try to do slow unwind anyways. */
       stack->Unwind(max_depth, pc, bp, context, 0, 0, false);
     }
   }
-#endif  // SANITIZER_WINDOWS
+#endif // SANITIZER_WINDOWS
 }
 
-}  // namespace __asan
+} // namespace __asan
 
 // NOTE: A Rule of thumb is to retrieve stack trace in the interceptors
 // as early as possible (in functions exposed to the user), as we generally
@@ -115,4 +116,4 @@ void GetStackTraceWithPcBpAndContext(BufferedStackTrace *stack, uptr max_depth,
     stack.Print();                  \
   }
 
-#endif  // ASAN_STACK_H
+#endif // ASAN_STACK_H

@@ -32,7 +32,7 @@ class MsanThread {
   uptr stack_bottom() { return stack_bottom_; }
   uptr tls_begin() { return tls_begin_; }
   uptr tls_end() { return tls_end_; }
-  bool IsMainThread() { return start_routine_ == 0; }
+  bool IsMainThread() { return start_routine_ == nullptr; }
 
   bool AddrIsInStack(uptr addr) {
     return addr >= stack_bottom_ && addr < stack_top_;

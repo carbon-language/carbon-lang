@@ -11,6 +11,7 @@
 //
 // Handle globals.
 //===----------------------------------------------------------------------===//
+
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
@@ -167,7 +168,7 @@ static void RegisterGlobal(const Global *g) {
   l->next = list_of_all_globals;
   list_of_all_globals = l;
   if (g->has_dynamic_init) {
-    if (dynamic_init_globals == 0) {
+    if (!dynamic_init_globals) {
       dynamic_init_globals = new(allocator_for_globals)
           VectorOfGlobals(kDynamicInitGlobalsInitialCapacity);
     }
@@ -206,7 +207,7 @@ void StopInitOrderChecking() {
   }
 }
 
-}  // namespace __asan
+} // namespace __asan
 
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT

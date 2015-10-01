@@ -165,7 +165,7 @@ void MsanDeallocate(StackTrace *stack, void *p) {
 void *MsanCalloc(StackTrace *stack, uptr nmemb, uptr size) {
   if (CallocShouldReturnNullDueToOverflow(size, nmemb))
     return allocator.ReturnNullOrDie();
-  return MsanReallocate(stack, 0, nmemb * size, sizeof(u64), true);
+  return MsanReallocate(stack, nullptr, nmemb * size, sizeof(u64), true);
 }
 
 void *MsanReallocate(StackTrace *stack, void *old_p, uptr new_size,
@@ -174,7 +174,7 @@ void *MsanReallocate(StackTrace *stack, void *old_p, uptr new_size,
     return MsanAllocate(stack, new_size, alignment, zeroise);
   if (!new_size) {
     MsanDeallocate(stack, old_p);
-    return 0;
+    return nullptr;
   }
   Metadata *meta = reinterpret_cast<Metadata*>(allocator.GetMetaData(old_p));
   uptr old_size = meta->requested_size;
@@ -204,14 +204,14 @@ void *MsanReallocate(StackTrace *stack, void *old_p, uptr new_size,
 }
 
 static uptr AllocationSize(const void *p) {
-  if (p == 0) return 0;
+  if (!p) return 0;
   const void *beg = allocator.GetBlockBegin(p);
   if (beg != p) return 0;
   Metadata *b = (Metadata *)allocator.GetMetaData(p);
   return b->requested_size;
 }
 
-}  // namespace __msan
+} // namespace __msan
 
 using namespace __msan;
 

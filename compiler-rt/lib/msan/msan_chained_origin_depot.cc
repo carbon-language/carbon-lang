@@ -28,12 +28,15 @@ struct ChainedOriginDepotNode {
   u32 prev_id;
 
   typedef ChainedOriginDepotDesc args_type;
+
   bool eq(u32 hash, const args_type &args) const {
     return here_id == args.here_id && prev_id == args.prev_id;
   }
+
   static uptr storage_size(const args_type &args) {
     return sizeof(ChainedOriginDepotNode);
   }
+
   /* This is murmur2 hash for the 64->32 bit case.
      It does not behave all that well because the keys have a very biased
      distribution (I've seen 7-element buckets with the table only 14% full).
@@ -76,19 +79,22 @@ struct ChainedOriginDepotNode {
     here_id = args.here_id;
     prev_id = args.prev_id;
   }
+
   args_type load() const {
     args_type ret = {here_id, prev_id};
     return ret;
   }
+
   struct Handle {
     ChainedOriginDepotNode *node_;
-    Handle() : node_(0) {}
+    Handle() : node_(nullptr) {}
     explicit Handle(ChainedOriginDepotNode *node) : node_(node) {}
     bool valid() { return node_; }
     u32 id() { return node_->id; }
     int here_id() { return node_->here_id; }
     int prev_id() { return node_->prev_id; }
   };
+
   Handle get_handle() { return Handle(this); }
 
   typedef Handle handle_type;
@@ -123,4 +129,4 @@ void ChainedOriginDepotUnlockAll() {
   chainedOriginDepot.UnlockAll();
 }
 
-}  // namespace __msan
+} // namespace __msan

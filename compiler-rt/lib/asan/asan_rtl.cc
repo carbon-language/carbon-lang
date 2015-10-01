@@ -11,6 +11,7 @@
 //
 // Main file of the ASan run-time library.
 //===----------------------------------------------------------------------===//
+
 #include "asan_activation.h"
 #include "asan_allocator.h"
 #include "asan_interceptors.h"
@@ -254,15 +255,15 @@ static NOINLINE void force_interface_symbols() {
     case 22: __asan_report_exp_store8(0, 0); break;
     case 23: __asan_report_exp_store16(0, 0); break;
     case 24: __asan_report_exp_store_n(0, 0, 0); break;
-    case 25: __asan_register_globals(0, 0); break;
-    case 26: __asan_unregister_globals(0, 0); break;
-    case 27: __asan_set_death_callback(0); break;
-    case 28: __asan_set_error_report_callback(0); break;
+    case 25: __asan_register_globals(nullptr, 0); break;
+    case 26: __asan_unregister_globals(nullptr, 0); break;
+    case 27: __asan_set_death_callback(nullptr); break;
+    case 28: __asan_set_error_report_callback(nullptr); break;
     case 29: __asan_handle_no_return(); break;
-    case 30: __asan_address_is_poisoned(0); break;
-    case 31: __asan_poison_memory_region(0, 0); break;
-    case 32: __asan_unpoison_memory_region(0, 0); break;
-    case 34: __asan_before_dynamic_init(0); break;
+    case 30: __asan_address_is_poisoned(nullptr); break;
+    case 31: __asan_poison_memory_region(nullptr, 0); break;
+    case 32: __asan_unpoison_memory_region(nullptr, 0); break;
+    case 34: __asan_before_dynamic_init(nullptr); break;
     case 35: __asan_after_dynamic_init(); break;
     case 36: __asan_poison_stack_memory(0, 0); break;
     case 37: __asan_unpoison_stack_memory(0, 0); break;
@@ -541,7 +542,7 @@ public:  // NOLINT
 static AsanInitializer asan_initializer;
 #endif  // ASAN_DYNAMIC
 
-}  // namespace __asan
+} // namespace __asan
 
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT

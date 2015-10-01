@@ -29,7 +29,7 @@ static const char kLinkerName[] = "ld";
 // We request 2 modules matching "ld", so we can print a warning if there's more
 // than one match. But only the first one is actually used.
 static char linker_placeholder[2 * sizeof(LoadedModule)] ALIGNED(64);
-static LoadedModule *linker = 0;
+static LoadedModule *linker = nullptr;
 
 static bool IsLinker(const char* full_name) {
   return LibraryNameIs(full_name, kLinkerName);
@@ -49,7 +49,7 @@ void InitializePlatformSpecificModules() {
   else if (num_matches > 1)
     VReport(1, "LeakSanitizer: Multiple modules match \"%s\". "
             "TLS will not be handled correctly.\n", kLinkerName);
-  linker = 0;
+  linker = nullptr;
 }
 
 static int ProcessGlobalRegionsCallback(struct dl_phdr_info *info, size_t size,
@@ -174,5 +174,6 @@ void DoStopTheWorld(StopTheWorldCallback callback, void *argument) {
   dl_iterate_phdr(DoStopTheWorldCallback, &param);
 }
 
-}  // namespace __lsan
-#endif  // CAN_SANITIZE_LEAKS && SANITIZER_LINUX
+} // namespace __lsan
+
+#endif // CAN_SANITIZE_LEAKS && SANITIZER_LINUX

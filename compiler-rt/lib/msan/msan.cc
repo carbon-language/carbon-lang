@@ -223,9 +223,9 @@ void GetStackTrace(BufferedStackTrace *stack, uptr max_s, uptr pc, uptr bp,
   if (!t || !StackTrace::WillUseFastUnwind(request_fast_unwind)) {
     // Block reports from our interceptors during _Unwind_Backtrace.
     SymbolizerScope sym_scope;
-    return stack->Unwind(max_s, pc, bp, 0, 0, 0, request_fast_unwind);
+    return stack->Unwind(max_s, pc, bp, nullptr, 0, 0, request_fast_unwind);
   }
-  stack->Unwind(max_s, pc, bp, 0, t->stack_top(), t->stack_bottom(),
+  stack->Unwind(max_s, pc, bp, nullptr, t->stack_top(), t->stack_bottom(),
                 request_fast_unwind);
 }
 
@@ -305,7 +305,7 @@ u32 ChainOrigin(u32 id, StackTrace *stack) {
   return chained.raw_id();
 }
 
-}  // namespace __msan
+} // namespace __msan
 
 // Interface.
 
@@ -417,7 +417,7 @@ void __msan_init() {
 
   MsanAllocatorInit();
 
-  MsanThread *main_thread = MsanThread::Create(0, 0);
+  MsanThread *main_thread = MsanThread::Create(nullptr, nullptr);
   SetCurrentThread(main_thread);
   main_thread->ThreadStart();
 
@@ -641,4 +641,4 @@ void __sanitizer_print_stack_trace() {
   GET_FATAL_STACK_TRACE_PC_BP(StackTrace::GetCurrentPc(), GET_CURRENT_FRAME());
   stack.Print();
 }
-}  // extern "C"
+} // extern "C"

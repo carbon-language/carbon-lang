@@ -11,8 +11,8 @@
 //
 // Intercept various libc functions.
 //===----------------------------------------------------------------------===//
-#include "asan_interceptors.h"
 
+#include "asan_interceptors.h"
 #include "asan_allocator.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
@@ -109,7 +109,7 @@ static inline bool RangesOverlap(const char *offset1, uptr length1,
 
 static inline uptr MaybeRealStrnlen(const char *s, uptr maxlen) {
 #if ASAN_INTERCEPT_STRNLEN
-  if (REAL(strnlen) != 0) {
+  if (REAL(strnlen)) {
     return REAL(strnlen)(s, maxlen);
   }
 #endif
@@ -127,7 +127,7 @@ int OnExit() {
   return 0;
 }
 
-}  // namespace __asan
+} // namespace __asan
 
 // ---------------------- Wrappers ---------------- {{{1
 using namespace __asan;  // NOLINT
@@ -220,7 +220,7 @@ static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
   ThreadStartParam *param = reinterpret_cast<ThreadStartParam *>(arg);
   AsanThread *t = nullptr;
   while ((t = reinterpret_cast<AsanThread *>(
-              atomic_load(&param->t, memory_order_acquire))) == 0)
+              atomic_load(&param->t, memory_order_acquire))) == nullptr)
     internal_sched_yield();
   SetCurrentThread(t);
   return t->ThreadStart(GetTid(), &param->is_registered);
@@ -235,7 +235,7 @@ INTERCEPTOR(int, pthread_create, void *thread,
     StopInitOrderChecking();
   GET_STACK_TRACE_THREAD;
   int detached = 0;
-  if (attr != 0)
+  if (attr)
     REAL(pthread_attr_getdetachstate)(attr, &detached);
   ThreadStartParam param;
   atomic_store(&param.t, 0, memory_order_relaxed);
@@ -280,7 +280,7 @@ INTERCEPTOR(void*, signal, int signum, void *handler) {
   if (!IsDeadlySignal(signum) || common_flags()->allow_user_segv_handler) {
     return REAL(signal)(signum, handler);
   }
-  return 0;
+  return nullptr;
 }
 
 INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
@@ -296,7 +296,7 @@ int real_sigaction(int signum, const void *act, void *oldact) {
   return REAL(sigaction)(signum, (const struct sigaction *)act,
                          (struct sigaction *)oldact);
 }
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
 #elif SANITIZER_POSIX
 // We need to have defined REAL(sigaction) on posix systems.
@@ -713,7 +713,7 @@ INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
 #endif
   ENSURE_ASAN_INITED();
   int res = REAL(__cxa_atexit)(func, arg, dso_handle);
-  REAL(__cxa_atexit)(AtCxaAtexit, 0, 0);
+  REAL(__cxa_atexit)(AtCxaAtexit, nullptr, nullptr);
   return res;
 }
 #endif  // ASAN_INTERCEPT___CXA_ATEXIT
@@ -817,4 +817,4 @@ void InitializeAsanInterceptors() {
   VReport(1, "AddressSanitizer: libc interceptors initialized\n");
 }
 
-}  // namespace __asan
+} // namespace __asan

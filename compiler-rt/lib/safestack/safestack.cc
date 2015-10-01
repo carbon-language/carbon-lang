@@ -171,7 +171,7 @@ INTERCEPTOR(int, pthread_create, pthread_t *thread,
   size_t size = 0;
   size_t guard = 0;
 
-  if (attr != NULL) {
+  if (attr) {
     pthread_attr_getstacksize(attr, &size);
     pthread_attr_getguardsize(attr, &guard);
   } else {

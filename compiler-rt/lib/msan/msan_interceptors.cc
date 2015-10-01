@@ -166,7 +166,7 @@ INTERCEPTOR(int, posix_memalign, void **memptr, SIZE_T alignment, SIZE_T size) {
   GET_MALLOC_STACK_TRACE;
   CHECK_EQ(alignment & (alignment - 1), 0);
   CHECK_NE(memptr, 0);
-  *memptr = MsanReallocate(&stack, 0, size, alignment, false);
+  *memptr = MsanReallocate(&stack, nullptr, size, alignment, false);
   CHECK_NE(*memptr, 0);
   __msan_unpoison(memptr, sizeof(*memptr));
   return 0;
@@ -176,7 +176,7 @@ INTERCEPTOR(int, posix_memalign, void **memptr, SIZE_T alignment, SIZE_T size) {
 INTERCEPTOR(void *, memalign, SIZE_T boundary, SIZE_T size) {
   GET_MALLOC_STACK_TRACE;
   CHECK_EQ(boundary & (boundary - 1), 0);
-  void *ptr = MsanReallocate(&stack, 0, size, boundary, false);
+  void *ptr = MsanReallocate(&stack, nullptr, size, boundary, false);
   return ptr;
 }
 #define MSAN_MAYBE_INTERCEPT_MEMALIGN INTERCEPT_FUNCTION(memalign)
@@ -187,21 +187,21 @@ INTERCEPTOR(void *, memalign, SIZE_T boundary, SIZE_T size) {
 INTERCEPTOR(void *, aligned_alloc, SIZE_T boundary, SIZE_T size) {
   GET_MALLOC_STACK_TRACE;
   CHECK_EQ(boundary & (boundary - 1), 0);
-  void *ptr = MsanReallocate(&stack, 0, size, boundary, false);
+  void *ptr = MsanReallocate(&stack, nullptr, size, boundary, false);
   return ptr;
 }
 
 INTERCEPTOR(void *, __libc_memalign, SIZE_T boundary, SIZE_T size) {
   GET_MALLOC_STACK_TRACE;
   CHECK_EQ(boundary & (boundary - 1), 0);
-  void *ptr = MsanReallocate(&stack, 0, size, boundary, false);
+  void *ptr = MsanReallocate(&stack, nullptr, size, boundary, false);
   DTLS_on_libc_memalign(ptr, size * boundary);
   return ptr;
 }
 
 INTERCEPTOR(void *, valloc, SIZE_T size) {
   GET_MALLOC_STACK_TRACE;
-  void *ptr = MsanReallocate(&stack, 0, size, GetPageSizeCached(), false);
+  void *ptr = MsanReallocate(&stack, nullptr, size, GetPageSizeCached(), false);
   return ptr;
 }
 
@@ -214,7 +214,7 @@ INTERCEPTOR(void *, pvalloc, SIZE_T size) {
     // pvalloc(0) should allocate one page.
     size = PageSize;
   }
-  void *ptr = MsanReallocate(&stack, 0, size, PageSize, false);
+  void *ptr = MsanReallocate(&stack, nullptr, size, PageSize, false);
   return ptr;
 }
 #define MSAN_MAYBE_INTERCEPT_PVALLOC INTERCEPT_FUNCTION(pvalloc)
@@ -224,14 +224,14 @@ INTERCEPTOR(void *, pvalloc, SIZE_T size) {
 
 INTERCEPTOR(void, free, void *ptr) {
   GET_MALLOC_STACK_TRACE;
-  if (ptr == 0) return;
+  if (!ptr) return;
   MsanDeallocate(&stack, ptr);
 }
 
 #if !SANITIZER_FREEBSD
 INTERCEPTOR(void, cfree, void *ptr) {
   GET_MALLOC_STACK_TRACE;
-  if (ptr == 0) return;
+  if (!ptr) return;
   MsanDeallocate(&stack, ptr);
 }
 #define MSAN_MAYBE_INTERCEPT_CFREE INTERCEPT_FUNCTION(cfree)
@@ -1000,7 +1000,7 @@ INTERCEPTOR(void *, realloc, void *ptr, SIZE_T size) {
 
 INTERCEPTOR(void *, malloc, SIZE_T size) {
   GET_MALLOC_STACK_TRACE;
-  return MsanReallocate(&stack, 0, size, sizeof(u64), false);
+  return MsanReallocate(&stack, nullptr, size, sizeof(u64), false);
 }
 
 void __msan_allocated_memory(const void *data, uptr size) {
@@ -1029,7 +1029,7 @@ INTERCEPTOR(void *, mmap, void *addr, SIZE_T length, int prot, int flags,
       *__errno_location() = errno_EINVAL;
       return (void *)-1;
     } else {
-      addr = 0;
+      addr = nullptr;
     }
   }
   void *res = REAL(mmap)(addr, length, prot, flags, fd, offset);
@@ -1047,7 +1047,7 @@ INTERCEPTOR(void *, mmap64, void *addr, SIZE_T length, int prot, int flags,
       *__errno_location() = errno_EINVAL;
       return (void *)-1;
     } else {
-      addr = 0;
+      addr = nullptr;
     }
   }
   void *res = REAL(mmap64)(addr, length, prot, flags, fd, offset);
@@ -1083,7 +1083,7 @@ INTERCEPTOR(int, dladdr, void *addr, dlinfo *info) {
 INTERCEPTOR(char *, dlerror, int fake) {
   ENSURE_MSAN_INITED();
   char *res = REAL(dlerror)(fake);
-  if (res != 0) __msan_unpoison(res, REAL(strlen)(res) + 1);
+  if (res) __msan_unpoison(res, REAL(strlen)(res) + 1);
   return res;
 }
 
@@ -1180,7 +1180,7 @@ INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
     CHECK_LT(signo, kMaxSignals);
     uptr old_cb = atomic_load(&sigactions[signo], memory_order_relaxed);
     __sanitizer_sigaction new_act;
-    __sanitizer_sigaction *pnew_act = act ? &new_act : 0;
+    __sanitizer_sigaction *pnew_act = act ? &new_act : nullptr;
     if (act) {
       REAL(memcpy)(pnew_act, act, sizeof(__sanitizer_sigaction));
       uptr cb = (uptr)pnew_act->sigaction;
@@ -1237,7 +1237,7 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
             void * param) {
   ENSURE_MSAN_INITED(); // for GetTlsSize()
   __sanitizer_pthread_attr_t myattr;
-  if (attr == 0) {
+  if (!attr) {
     pthread_attr_init(&myattr);
     attr = &myattr;
   }
@@ -1376,7 +1376,7 @@ int OnExit() {
   return 0;
 }
 
-}  // namespace __msan
+} // namespace __msan
 
 // A version of CHECK_UNPOISONED using a saved scope value. Used in common
 // interceptors.
@@ -1634,4 +1634,4 @@ void InitializeInterceptors() {
 
   inited = 1;
 }
-}  // namespace __msan
+} // namespace __msan

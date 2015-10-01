@@ -56,7 +56,7 @@ static bool CheckMemoryRangeAvailability(uptr beg, uptr size) {
 static bool ProtectMemoryRange(uptr beg, uptr size, const char *name) {
   if (size > 0) {
     void *addr = MmapNoAccess(beg, size, name);
-    if (beg == 0 && addr != 0) {
+    if (beg == 0 && addr) {
       // Depending on the kernel configuration, we may not be able to protect
       // the page at address zero.
       uptr gap = 16 * GetPageSizeCached();
@@ -204,6 +204,6 @@ void MsanTSDDtor(void *tsd) {
   MsanThread::TSDDtor(tsd);
 }
 
-}  // namespace __msan
+} // namespace __msan
 
-#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX
+#endif // SANITIZER_FREEBSD || SANITIZER_LINUX
