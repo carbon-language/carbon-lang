@@ -1609,7 +1609,16 @@ llvm::Value *ItaniumCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
   uint64_t VTableIndex = CGM.getItaniumVTableContext().getMethodVTableIndex(GD);
   llvm::Value *VFuncPtr =
       CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfn");
-  return CGF.Builder.CreateAlignedLoad(VFuncPtr, CGF.getPointerAlign());
+  auto *Inst = CGF.Builder.CreateAlignedLoad(VFuncPtr, CGF.getPointerAlign());
+
+  // It's safe to add "invariant.load" without -fstrict-vtable-pointers, but it
+  // would not help in devirtualization.
+  if (CGM.getCodeGenOpts().OptimizationLevel > 0 &&
+      CGM.getCodeGenOpts().StrictVTablePointers)
+    Inst->setMetadata(llvm::LLVMContext::MD_invariant_load,
+                      llvm::MDNode::get(CGM.getLLVMContext(),
+                                        llvm::ArrayRef<llvm::Metadata *>()));
+  return Inst;
 }
 
 llvm::Value *ItaniumCXXABI::EmitVirtualDestructorCall(
