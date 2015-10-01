@@ -158,8 +158,8 @@ Counters SIInsertWaits::getHwCounts(MachineInstr &MI) {
     if (TII->isSMRD(MI.getOpcode())) {
 
       if (MI.getNumOperands() != 0) {
-        MachineOperand &Op = MI.getOperand(0);
-        assert(Op.isReg() && "First LGKM operand must be a register!");
+        assert(MI.getOperand(0).isReg() &&
+               "First LGKM operand must be a register!");
 
         // XXX - What if this is a write into a super register?
         const TargetRegisterClass *RC = TII->getOpRegClass(MI, 0);
