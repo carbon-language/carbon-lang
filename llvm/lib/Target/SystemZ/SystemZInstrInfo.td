@@ -1462,6 +1462,26 @@ let usesCustomInserter = 1 in {
 let mayLoad = 1, Defs = [CC], Uses = [R0L] in
   defm SRST : StringRRE<"srst", 0xb25e, z_search_string>;
 
+// Other instructions for inline assembly
+let hasSideEffects = 1, Defs = [CC], mayStore = 1 in
+  def STCK : InstS<0xB205, (outs), (ins bdaddr12only:$BD2),
+                       "stck\t$BD2",
+                       []>;
+let hasSideEffects = 1, Defs = [CC], mayStore = 1 in
+  def STCKF : InstS<0xB27C, (outs), (ins bdaddr12only:$BD2),
+                       "stckf\t$BD2",
+                       []>;
+let hasSideEffects = 1, Defs = [CC], mayStore = 1 in
+  def STCKE : InstS<0xB278, (outs), (ins bdaddr12only:$BD2),
+                       "stcke\t$BD2",
+                       []>;
+let hasSideEffects = 1, Defs = [CC], mayStore = 1 in
+  def STFLE : InstS<0xB2B0, (outs), (ins bdaddr12only:$BD2),
+                       "stfle\t$BD2",
+                       []>;
+
+
+
 //===----------------------------------------------------------------------===//
 // Peepholes.
 //===----------------------------------------------------------------------===//

@@ -7946,6 +7946,62 @@
 	stc	%r0, 4095(%r15,%r1)
 	stc	%r15, 0
 
+#CHECK: stck	0                  	# encoding: [0xb2,0x05,0x00,0x00]
+#CHECK: stck	0(%r1)             	# encoding: [0xb2,0x05,0x10,0x00]
+#CHECK: stck	0(%r15)            	# encoding: [0xb2,0x05,0xf0,0x00]
+#CHECK: stck	4095                 	# encoding: [0xb2,0x05,0x0f,0xff]
+#CHECK: stck	4095(%r1)             	# encoding: [0xb2,0x05,0x1f,0xff]
+#CHECK: stck	4095(%r15)             	# encoding: [0xb2,0x05,0xff,0xff]	
+
+	stck	0
+	stck	0(%r1)
+	stck	0(%r15)
+	stck	4095	
+	stck	4095(%r1)
+	stck	4095(%r15)
+
+#CHECK: stckf	0                  	# encoding: [0xb2,0x7c,0x00,0x00]
+#CHECK: stckf	0(%r1)             	# encoding: [0xb2,0x7c,0x10,0x00]
+#CHECK: stckf	0(%r15)            	# encoding: [0xb2,0x7c,0xf0,0x00]
+#CHECK: stckf	4095                 	# encoding: [0xb2,0x7c,0x0f,0xff]
+#CHECK: stckf	4095(%r1)             	# encoding: [0xb2,0x7c,0x1f,0xff]
+#CHECK: stckf	4095(%r15)             	# encoding: [0xb2,0x7c,0xff,0xff]	
+
+	stckf	0
+	stckf	0(%r1)
+	stckf	0(%r15)
+	stckf	4095	
+	stckf	4095(%r1)
+	stckf	4095(%r15)
+
+#CHECK: stcke	0                  	# encoding: [0xb2,0x78,0x00,0x00]
+#CHECK: stcke	0(%r1)             	# encoding: [0xb2,0x78,0x10,0x00]
+#CHECK: stcke	0(%r15)            	# encoding: [0xb2,0x78,0xf0,0x00]
+#CHECK: stcke	4095                 	# encoding: [0xb2,0x78,0x0f,0xff]
+#CHECK: stcke	4095(%r1)             	# encoding: [0xb2,0x78,0x1f,0xff]
+#CHECK: stcke	4095(%r15)             	# encoding: [0xb2,0x78,0xff,0xff]	
+
+	stcke	0
+	stcke	0(%r1)
+	stcke	0(%r15)
+	stcke	4095	
+	stcke	4095(%r1)
+	stcke	4095(%r15)
+
+#CHECK: stfle	0                  	# encoding: [0xb2,0xb0,0x00,0x00]
+#CHECK: stfle	0(%r1)             	# encoding: [0xb2,0xb0,0x10,0x00]
+#CHECK: stfle	0(%r15)            	# encoding: [0xb2,0xb0,0xf0,0x00]
+#CHECK: stfle	4095                 	# encoding: [0xb2,0xb0,0x0f,0xff]
+#CHECK: stfle	4095(%r1)             	# encoding: [0xb2,0xb0,0x1f,0xff]
+#CHECK: stfle	4095(%r15)             	# encoding: [0xb2,0xb0,0xff,0xff]	
+
+	stfle	0
+	stfle	0(%r1)
+	stfle	0(%r15)
+	stfle	4095	
+	stfle	4095(%r1)
+	stfle	4095(%r15)
+
 #CHECK: stcy	%r0, -524288            # encoding: [0xe3,0x00,0x00,0x00,0x80,0x72]
 #CHECK: stcy	%r0, -1                 # encoding: [0xe3,0x00,0x0f,0xff,0xff,0x72]
 #CHECK: stcy	%r0, 0                  # encoding: [0xe3,0x00,0x00,0x00,0x00,0x72]
