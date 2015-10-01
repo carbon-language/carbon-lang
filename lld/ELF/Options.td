@@ -43,6 +43,9 @@ def no_whole_archive : Flag<["--"], "no-whole-archive">,
 def noinhibit_exec : Flag<["--"], "noinhibit-exec">,
   HelpText<"Retain the executable output file whenever it is still usable">;
 
+def no_undefined : Flag<["--"], "no-undefined">,
+  HelpText<"Report unresolved symbols even if the linker is creating a shared library">;
+
 def output : Separate<["-"], "o">, MetaVarName<"<path>">,
   HelpText<"Path to file to write output">;
 

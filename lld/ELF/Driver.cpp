@@ -126,6 +126,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Config->DiscardNone = Args.hasArg(OPT_discard_none);
   Config->ExportDynamic = Args.hasArg(OPT_export_dynamic);
   Config->NoInhibitExec = Args.hasArg(OPT_noinhibit_exec);
+  Config->NoUndefined = Args.hasArg(OPT_no_undefined);
   Config->Shared = Args.hasArg(OPT_shared);
 
   for (auto *Arg : Args) {

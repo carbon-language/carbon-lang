@@ -31,6 +31,7 @@ struct Configuration {
   bool DiscardNone;
   bool ExportDynamic;
   bool NoInhibitExec;
+  bool NoUndefined;
   bool Shared;
   bool Static = false;
   bool WholeArchive = false;
