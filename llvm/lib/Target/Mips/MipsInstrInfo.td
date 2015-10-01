@@ -1509,9 +1509,11 @@ def CLZ : MMRel, CountLeading0<"clz", GPR32Opnd>, CLO_FM<0x20>,
 def CLO : MMRel, CountLeading1<"clo", GPR32Opnd>, CLO_FM<0x21>,
           ISA_MIPS32_NOT_32R6_64R6;
 
-/// Word Swap Bytes Within Halfwords
-def WSBH : MMRel, SubwordSwap<"wsbh", GPR32Opnd, II_WSBH>, SEB_FM<2, 0x20>,
-           ISA_MIPS32R2;
+let AdditionalPredicates = [NotInMicroMips] in {
+  /// Word Swap Bytes Within Halfwords
+  def WSBH : MMRel, SubwordSwap<"wsbh", GPR32Opnd, II_WSBH>, SEB_FM<2, 0x20>,
+             ISA_MIPS32R2;
+}
 
 /// No operation.
 def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;

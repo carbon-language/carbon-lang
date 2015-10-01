@@ -623,3 +623,16 @@ class POOL16C_OR16_FM_MMR6 : MicroMipsR6Inst16 {
   let Inst{6-4}   = rs;
   let Inst{3-0}   = 0b1001;
 }
+
+class POOL32A_WRPGPR_WSBH_FM_MMR6<bits<10> funct> : MipsR6Inst {
+  bits<5> rt;
+  bits<5> rs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x00;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = rs;
+  let Inst{15-6}  = funct;
+  let Inst{5-0}   = 0x3c;
+}
