@@ -31,6 +31,7 @@ struct Configuration {
   bool ExportDynamic;
   bool NoInhibitExec;
   bool Shared;
+  bool Static = false;
 };
 
 extern Configuration *Config;

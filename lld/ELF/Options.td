@@ -1,5 +1,11 @@
 include "llvm/Option/OptParser.td"
 
+def Bdynamic: Flag<["-"], "Bdynamic">,
+  HelpText<"Link against shared libraries">;
+
+def Bstatic: Flag<["-"], "Bstatic">,
+  HelpText<"Do not link against shared libraries">;
+
 def L : Joined<["-"], "L">, MetaVarName<"<dir>">,
   HelpText<"Directory to search for libraries">;
 
@@ -43,6 +49,11 @@ def sysroot : Joined<["--"], "sysroot=">,
   HelpText<"Set the system root">;
 
 // Aliases
+def alias_Bdynamic_call_shared: Flag<["-"], "call_shared">, Alias<Bdynamic>;
+def alias_Bdynamic_dy: Flag<["-"], "dy">, Alias<Bdynamic>;
+def alias_Bstatic_dn: Flag<["-"], "dn">, Alias<Bstatic>;
+def alias_Bstatic_non_shared: Flag<["-"], "non_shared">, Alias<Bstatic>;
+def alias_Bstatic_static: Flag<["-"], "static">, Alias<Bstatic>;
 def alias_L : Joined<["--"], "library-path=">, Alias<L>;
 def alias_discard_all: Flag<["-"], "x">, Alias<discard_all>;
 def alias_discard_locals: Flag<["-"], "X">, Alias<discard_locals>;

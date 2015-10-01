@@ -53,7 +53,8 @@ static std::string searchLibrary(StringRef Path) {
   if (Path[0] == ':') {
     Names.push_back(Path.drop_front().str());
   } else {
-    Names.push_back((Twine("lib") + Path + ".so").str());
+    if (!Config->Static)
+      Names.push_back((Twine("lib") + Path + ".so").str());
     Names.push_back((Twine("lib") + Path + ".a").str());
   }
   for (StringRef Dir : Config->InputSearchPaths) {
@@ -124,12 +125,22 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Config->NoInhibitExec = Args.hasArg(OPT_noinhibit_exec);
   Config->Shared = Args.hasArg(OPT_shared);
 
-  for (auto *Arg : Args.filtered(OPT_l, OPT_INPUT)) {
-    StringRef Path = Arg->getValue();
-    if (Arg->getOption().getID() == OPT_l) {
-      addFile(searchLibrary(Path));
-    } else {
-      addFile(Path);
+  for (auto *Arg : Args) {
+    switch (Arg->getOption().getID()) {
+    case OPT_l:
+      addFile(searchLibrary(Arg->getValue()));
+      break;
+    case OPT_INPUT:
+      addFile(Arg->getValue());
+      break;
+    case OPT_Bstatic:
+      Config->Static = true;
+      break;
+    case OPT_Bdynamic:
+      Config->Static = false;
+      break;
+    default:
+      break;
     }
   }
 
