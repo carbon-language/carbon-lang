@@ -904,6 +904,12 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnForward(
   unsigned BaseReg = getLdStBaseOp(MemMI).getReg();
   int MIUnscaledOffset = getLdStOffsetOp(MemMI).getImm() * getMemScale(MemMI);
 
+  // Scan forward looking for post-index opportunities.  Updating instructions
+  // can't be formed if the memory instruction doesn't have the offset we're
+  // looking for.
+  if (MIUnscaledOffset != UnscaledOffset)
+    return E;
+
   // If the base register overlaps a destination register, we can't
   // merge the update.
   bool IsPairedInsn = isPairedLdSt(MemMI);
@@ -912,12 +918,6 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnForward(
     if (DestReg == BaseReg || TRI->isSubRegister(BaseReg, DestReg))
       return E;
   }
-
-  // Scan forward looking for post-index opportunities.  Updating instructions
-  // can't be formed if the memory instruction doesn't have the offset we're
-  // looking for.
-  if (MIUnscaledOffset != UnscaledOffset)
-    return E;
 
   // Track which registers have been modified and used between the first insn
   // (inclusive) and the second insn.
