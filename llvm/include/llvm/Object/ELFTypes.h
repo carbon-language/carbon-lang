@@ -306,14 +306,18 @@ struct Elf_Dyn_Base<ELFType<TargetEndianness, true>> {
   } d_un;
 };
 
-/// Elf_Dyn_Impl: This inherits from Elf_Dyn_Base, adding getters and setters.
+/// Elf_Dyn_Impl: This inherits from Elf_Dyn_Base, adding getters.
 template <class ELFT>
 struct Elf_Dyn_Impl : Elf_Dyn_Base<ELFT> {
   using Elf_Dyn_Base<ELFT>::d_tag;
   using Elf_Dyn_Base<ELFT>::d_un;
-  int64_t getTag() const { return d_tag; }
-  uint64_t getVal() const { return d_un.d_val; }
-  uint64_t getPtr() const { return d_un.d_ptr; }
+  typedef typename std::conditional<ELFT::Is64Bits,
+                                    int64_t, int32_t>::type intX_t;
+  typedef typename std::conditional<ELFT::Is64Bits,
+                                    uint64_t, uint32_t>::type uintX_t;
+  intX_t getTag() const { return d_tag; }
+  uintX_t getVal() const { return d_un.d_val; }
+  uintX_t getPtr() const { return d_un.d_ptr; }
 };
 
 // Elf_Rel: Elf Relocation
