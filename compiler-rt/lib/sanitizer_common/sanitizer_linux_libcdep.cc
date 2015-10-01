@@ -101,7 +101,8 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
     MemoryMappingLayout proc_maps(/*cache_enabled*/true);
     uptr start, end, offset;
     uptr prev_end = 0;
-    while (proc_maps.Next(&start, &end, &offset, nullptr, 0, /* protection */nullptr)) {
+    while (proc_maps.Next(&start, &end, &offset, nullptr, 0,
+          /* protection */nullptr)) {
       if ((uptr)&rl < end)
         break;
       prev_end = end;

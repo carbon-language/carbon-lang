@@ -78,7 +78,8 @@ void internal_bzero_aligned16(void *s, uptr n) {
   CHECK_EQ((reinterpret_cast<uptr>(s) | n) & 15, 0);
   for (S16 *p = reinterpret_cast<S16*>(s), *end = p + n / 16; p < end; p++) {
     p->a = p->b = 0;
-    SanitizerBreakOptimization(nullptr);  // Make sure this does not become memset.
+    // Make sure this does not become memset.
+    SanitizerBreakOptimization(nullptr);
   }
 }
 

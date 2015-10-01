@@ -150,7 +150,8 @@ bool ThreadSuspender::SuspendThread(SuspendedThreadID tid) {
         return false;
       }
       if (WIFSTOPPED(status) && WSTOPSIG(status) != SIGSTOP) {
-        internal_ptrace(PTRACE_CONT, tid, nullptr, (void*)(uptr)WSTOPSIG(status));
+        internal_ptrace(PTRACE_CONT, tid, nullptr,
+                        (void*)(uptr)WSTOPSIG(status));
         continue;
       }
       break;
