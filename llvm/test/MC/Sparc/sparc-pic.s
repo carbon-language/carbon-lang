@@ -1,16 +1,36 @@
-! RUN: llvm-mc %s -arch=sparcv9 --relocation-model=pic -filetype=obj | llvm-readobj -r | FileCheck %s
+! RUN: llvm-mc %s -arch=sparcv9 --relocation-model=pic -filetype=obj | llvm-readobj -r | FileCheck --check-prefix=PIC %s
+! RUN: llvm-mc %s -arch=sparcv9 --relocation-model=static -filetype=obj | llvm-readobj -r | FileCheck --check-prefix=NOPIC %s
 
 
-! CHECK:      Relocations [
-! CHECK-NOT:    0x{{[0-9,A-F]+}} R_SPARC_WPLT30 .text 0xC
-! CHECK:        0x{{[0-9,A-F]+}} R_SPARC_PC22 _GLOBAL_OFFSET_TABLE_ 0x4
-! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_PC10 _GLOBAL_OFFSET_TABLE_ 0x8
-! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT22 AGlobalVar 0x0
-! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT10 AGlobalVar 0x0
-! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT22 .LC0 0x0
-! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT10 .LC0 0x0
-! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_WPLT30 bar 0x0
-! CHECK:      ]
+! PIC:      Relocations [
+! PIC-NOT:    0x{{[0-9,A-F]+}} R_SPARC_WPLT30 .text 0xC
+! PIC:        0x{{[0-9,A-F]+}} R_SPARC_PC22 _GLOBAL_OFFSET_TABLE_ 0x4
+! PIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_PC10 _GLOBAL_OFFSET_TABLE_ 0x8
+! PIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_PC22 _GLOBAL_OFFSET_TABLE_ 0x0
+! PIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_PC10 _GLOBAL_OFFSET_TABLE_ 0x0
+! PIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT22 AGlobalVar 0x0
+! PIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT10 AGlobalVar 0x0
+! PIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT22 AGlobalVar 0x0
+! PIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT10 AGlobalVar 0x0
+! PIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT22 .LC0 0x0
+! PIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT10 .LC0 0x0
+! PIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_WPLT30 bar 0x0
+! PIC:      ]
+
+! NOPIC:      Relocations [
+! NOPIC-NOT:    0x{{[0-9,A-F]+}} R_SPARC_WPLT30 .text 0xC
+! NOPIC:        0x{{[0-9,A-F]+}} R_SPARC_HI22 _GLOBAL_OFFSET_TABLE_ 0x4
+! NOPIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_LO10 _GLOBAL_OFFSET_TABLE_ 0x8
+! NOPIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_HI22 _GLOBAL_OFFSET_TABLE_ 0x0
+! NOPIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_LO10 _GLOBAL_OFFSET_TABLE_ 0x0
+! NOPIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_HI22 AGlobalVar 0x0
+! NOPIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_LO10 AGlobalVar 0x0
+! NOPIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_HI22 AGlobalVar 0x0
+! NOPIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_LO10 AGlobalVar 0x0
+! NOPIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_HI22 .rodata 0x0
+! NOPIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_LO10 .rodata 0x0
+! NOPIC-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_WDISP30 bar 0x0
+! NOPIC:      ]
 
         .section        ".rodata"
         .align 8
@@ -33,9 +53,11 @@ foo:
         sethi %hi(_GLOBAL_OFFSET_TABLE_+(.Ltmp6-.Ltmp4)), %i1
 .Ltmp5:
         or %i1, %lo(_GLOBAL_OFFSET_TABLE_+(.Ltmp5-.Ltmp4)), %i1
+        set _GLOBAL_OFFSET_TABLE_, %i1
         add %i1, %o7, %i1
         sethi %hi(AGlobalVar), %i2
         add %i2, %lo(AGlobalVar), %i2
+        set AGlobalVar, %i2
         ldx [%i1+%i2], %i3
         ldx [%i3], %i3
         sethi %hi(.LC0), %i2
