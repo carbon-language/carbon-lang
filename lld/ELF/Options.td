@@ -61,3 +61,12 @@ def entry : Separate<["--", "-"], "entry">, MetaVarName<"<entry>">,
 
 def alias_entry : Separate<["-"], "e">,
      Alias<entry>;
+
+// Options listed below are silently ignored now.
+def as_needed : Flag<["--"], "as-needed">;
+def build_id : Flag<["--"], "build-id">;
+def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
+def hash_style : Joined<["--"], "hash-style=">;
+def m : Separate<["-"], "m">;
+def no_as_needed : Flag<["--"], "no-as-needed">;
+def z : Separate<["-"], "z">;
