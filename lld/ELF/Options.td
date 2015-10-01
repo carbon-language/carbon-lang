@@ -12,6 +12,8 @@ def L : Joined<["-"], "L">, MetaVarName<"<dir>">,
 def allow_multiple_definition: Flag<["--"], "allow-multiple-definition">,
   HelpText<"Allow multiple definitions">;
 
+def allow_shlib_undefined : Flag<["--"], "allow-shlib-undefined">;
+
 def discard_all : Flag<["-"], "discard-all">,
   HelpText<"Delete all local symbols">;
 
@@ -33,6 +35,8 @@ def export_dynamic : Flag<["--"], "export-dynamic">,
 def l : Joined<["-"], "l">, MetaVarName<"<libName>">,
   HelpText<"Root name of library to use">;
 
+def no_allow_shlib_undefined : Flag<["--"], "no-allow-shlib-undefined">;
+
 def noinhibit_exec : Flag<["--"], "noinhibit-exec">,
   HelpText<"Retain the executable output file whenever it is still usable">;
 
@@ -47,12 +51,6 @@ def shared : Flag<["-"], "shared">,
 
 def sysroot : Joined<["--"], "sysroot=">,
   HelpText<"Set the system root">;
-
-def no_allow_shlib_undefined
-    : Flag<["--"], "no-allow-shlib-undefined">;
-
-def allow_shlib_undefined
-    : Flag<["--"], "allow-shlib-undefined">;
 
 // Aliases
 def alias_Bdynamic_call_shared: Flag<["-"], "call_shared">, Alias<Bdynamic>;
