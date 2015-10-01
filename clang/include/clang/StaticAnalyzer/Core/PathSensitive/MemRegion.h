@@ -1335,7 +1335,10 @@ public:
     /// Suppress pointer-escaping of a region.
     TK_SuppressEscape = 0x2,
     // Do not invalidate super region.
-    TK_DoNotInvalidateSuperRegion = 0x4
+    TK_DoNotInvalidateSuperRegion = 0x4,
+    /// When applied to a MemSpaceRegion, indicates the entire memory space
+    /// should be invalidated.
+    TK_EntireMemSpace = 0x8
 
     // Do not forget to extend StorageTypeForKinds if number of traits exceed 
     // the number of bits StorageTypeForKinds can store.
