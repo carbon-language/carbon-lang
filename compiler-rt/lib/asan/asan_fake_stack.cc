@@ -33,7 +33,8 @@ ALWAYS_INLINE void SetShadow(uptr ptr, uptr size, uptr class_id, u64 magic) {
   if (class_id <= 6) {
     for (uptr i = 0; i < (1U << class_id); i++) {
       shadow[i] = magic;
-      SanitizerBreakOptimization(nullptr);  // Make sure this does not become memset.
+      // Make sure this does not become memset.
+      SanitizerBreakOptimization(nullptr);
     }
   } else {
     // The size class is too big, it's cheaper to poison only size bytes.
