@@ -623,13 +623,6 @@ NativeRegisterContextLinux_mips64::ReadRegister (const RegisterInfo *reg_info, R
     else
     {
         error = ReadRegisterRaw(reg, reg_value);
-        if (error.Success())
-        {
-            // If our return byte size was greater than the return value reg size, then
-            // use the type specified by reg_info rather than the uint64_t default
-            if (reg_value.GetByteSize() > reg_info->byte_size)
-                reg_value.SetType(reg_info);
-        }
     }
 
     return error;
@@ -1387,7 +1380,7 @@ NativeRegisterContextLinux_mips64::DoReadRegisterValue(uint32_t offset,
     {
         lldb_private::ArchSpec arch;
         if (m_thread.GetProcess()->GetArchitecture(arch))
-            value.SetBytes((void *)(((unsigned char *)(&regs)) + offset), 8, arch.GetByteOrder());
+            value.SetBytes((void *)(((unsigned char *)&regs) + offset + 4 * (arch.GetMachine() == llvm::Triple::mips)), arch.GetAddressByteSize(), arch.GetByteOrder());
         else
             error.SetErrorString("failed to get architecture");
     }
