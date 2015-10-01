@@ -1675,6 +1675,9 @@
 //
 // CHECK_PPC_CRYPTO_M64: #define __CRYPTO__
 //
+// RUN: %clang -mcpu=ppc64 -E -dM %s -o - 2>&1 \
+// RUN:     -target powerpc64-unknown-unknown \
+// RUN:   | FileCheck %s -check-prefix=CHECK_PPC_GCC_ATOMICS
 // RUN: %clang -mcpu=pwr8 -E -dM %s -o - 2>&1 \
 // RUN:     -target powerpc64-unknown-unknown \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PPC_GCC_ATOMICS
