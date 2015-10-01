@@ -73,6 +73,12 @@ public:
                              uint16_t flags = EVNone);
     
     ClangExpressionVariable(const lldb::ValueObjectSP &valobj_sp);
+    
+    ClangExpressionVariable(ExecutionContextScope *exe_scope,
+                            const ConstString &name,
+                            const TypeFromUser& user_type,
+                            lldb::ByteOrder byte_order,
+                            uint32_t addr_byte_size);
         
     //----------------------------------------------------------------------
     /// Utility functions for dealing with ExpressionVariableLists in Clang-specific ways
@@ -104,40 +110,6 @@ public:
             }
         }
         return nullptr;
-    }
-    
-    static ClangExpressionVariable *
-    CreateVariableInList (ExpressionVariableList &list, ExecutionContextScope *exe_scope, lldb::ByteOrder byte_order, uint32_t addr_byte_size)
-    {
-        ClangExpressionVariable *clang_var = new ClangExpressionVariable(exe_scope, byte_order, addr_byte_size);
-        lldb::ExpressionVariableSP var_sp(clang_var);
-        list.AddVariable(var_sp);
-        return clang_var;
-    }
-    
-    static ClangExpressionVariable *
-    CreateVariableInList (ExpressionVariableList &list, const lldb::ValueObjectSP &valobj_sp)
-    {
-        ClangExpressionVariable *clang_var = new ClangExpressionVariable(valobj_sp);
-        lldb::ExpressionVariableSP var_sp(clang_var);
-        list.AddVariable(var_sp);
-        return clang_var;
-    }
-    
-    static ClangExpressionVariable *
-    CreateVariableInList (ExpressionVariableList &list,
-                          ExecutionContextScope *exe_scope,
-                          const ConstString &name,
-                          const TypeFromUser& user_type,
-                          lldb::ByteOrder byte_order,
-                          uint32_t addr_byte_size)
-    {
-        ClangExpressionVariable *clang_var = new ClangExpressionVariable(exe_scope, byte_order, addr_byte_size);
-        lldb::ExpressionVariableSP var_sp(clang_var);
-        clang_var->SetName (name);
-        clang_var->SetCompilerType (user_type);
-        list.AddVariable(var_sp);
-        return clang_var;
     }
 
     //----------------------------------------------------------------------

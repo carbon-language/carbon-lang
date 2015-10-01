@@ -28,17 +28,17 @@ ClangPersistentVariables::ClangPersistentVariables () :
 ExpressionVariableSP
 ClangPersistentVariables::CreatePersistentVariable (const lldb::ValueObjectSP &valobj_sp)
 {
-    return ClangExpressionVariable::CreateVariableInList(*this, valobj_sp)->shared_from_this();
+    return AddNewlyConstructedVariable(new ClangExpressionVariable(valobj_sp));
 }
 
-ClangExpressionVariable *
+ExpressionVariableSP
 ClangPersistentVariables::CreatePersistentVariable (ExecutionContextScope *exe_scope, 
                                                     const ConstString &name, 
-                                                    const TypeFromUser& user_type, 
+                                                    const CompilerType& compiler_type,
                                                     lldb::ByteOrder byte_order, 
                                                     uint32_t addr_byte_size)
 {
-    return ClangExpressionVariable::CreateVariableInList(*this, exe_scope, name, user_type, byte_order, addr_byte_size);
+    return AddNewlyConstructedVariable(new ClangExpressionVariable(exe_scope, name, compiler_type, byte_order, addr_byte_size));
 }
 
 void

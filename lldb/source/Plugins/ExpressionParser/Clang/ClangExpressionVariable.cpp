@@ -53,6 +53,21 @@ ClangExpressionVariable::ClangExpressionVariable (const lldb::ValueObjectSP &val
     m_frozen_sp = valobj_sp;
 }
 
+ClangExpressionVariable::ClangExpressionVariable(ExecutionContextScope *exe_scope,
+                                                 const ConstString &name,
+                                                 const TypeFromUser& user_type,
+                                                 lldb::ByteOrder byte_order,
+                                                 uint32_t addr_byte_size) :
+    ExpressionVariable(LLVMCastKind::eKindClang),
+    m_parser_vars(),
+    m_jit_vars()
+{
+    m_flags = EVNone;
+    m_frozen_sp = ValueObjectConstResult::Create (exe_scope, byte_order, addr_byte_size);
+    SetName (name);
+    SetCompilerType (user_type);
+}
+
 TypeFromUser
 ClangExpressionVariable::GetTypeFromUser()
 {

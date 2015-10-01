@@ -875,12 +875,11 @@ public:
         
         ConstString name = persistent_state->GetNextPersistentVariableName();
         
-        lldb::ExpressionVariableSP ret = ClangExpressionVariable::CreateVariableInList(*persistent_state,
-                                                                                       exe_scope,
-                                                                                       name,
-                                                                                       m_type,
-                                                                                       map.GetByteOrder(),
-                                                                                       map.GetAddressByteSize())->shared_from_this();
+        lldb::ExpressionVariableSP ret = persistent_state->CreatePersistentVariable(exe_scope,
+                                                                                    name,
+                                                                                    m_type,
+                                                                                    map.GetByteOrder(),
+                                                                                    map.GetAddressByteSize());
         
         if (!ret)
         {
@@ -915,7 +914,7 @@ public:
             return;
         }
                 
-        result_variable_sp = ret;
+        result_variable_sp = persistent_state->GetVariable(name);
         
         if (!can_persist || !m_keep_in_memory)
         {

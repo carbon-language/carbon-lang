@@ -48,14 +48,14 @@ public:
     }
 
     lldb::ExpressionVariableSP
-    CreatePersistentVariable (const lldb::ValueObjectSP &valobj_sp);
+    CreatePersistentVariable (const lldb::ValueObjectSP &valobj_sp) override;
 
-    ClangExpressionVariable *
+    lldb::ExpressionVariableSP
     CreatePersistentVariable (ExecutionContextScope *exe_scope,
                               const ConstString &name, 
-                              const TypeFromUser& user_type, 
+                              const CompilerType& compiler_type, 
                               lldb::ByteOrder byte_order, 
-                              uint32_t addr_byte_size);
+                              uint32_t addr_byte_size) override;
 
     //----------------------------------------------------------------------
     /// Return the next entry in the sequence of strings "$0", "$1", ... for

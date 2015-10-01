@@ -184,6 +184,14 @@ public:
         m_variables.push_back(var_sp);
         return m_variables.size() - 1;
     }
+    
+    lldb::ExpressionVariableSP
+    AddNewlyConstructedVariable (ExpressionVariable *var)
+    {
+        lldb::ExpressionVariableSP var_sp(var);
+        m_variables.push_back(var_sp);
+        return m_variables.back();
+    }
 
     bool
     ContainsVariable (const lldb::ExpressionVariableSP &var_sp)
@@ -283,6 +291,16 @@ public:
         m_kind(kind)
     {
     }
+    
+    virtual lldb::ExpressionVariableSP
+    CreatePersistentVariable (const lldb::ValueObjectSP &valobj_sp) = 0;
+    
+    virtual lldb::ExpressionVariableSP
+    CreatePersistentVariable (ExecutionContextScope *exe_scope,
+                              const ConstString &name,
+                              const CompilerType &type,
+                              lldb::ByteOrder byte_order,
+                              uint32_t addr_byte_size) = 0;
 
     virtual ~PersistentExpressionState ();
     

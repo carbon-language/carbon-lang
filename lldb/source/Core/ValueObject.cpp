@@ -4284,13 +4284,11 @@ ValueObject::Persist ()
     
     ConstString name(persistent_state->GetNextPersistentVariableName());
     
-    ExpressionVariableSP clang_var_sp(new ClangExpressionVariable(target_sp.get(), GetValue(), name));
-    if (clang_var_sp)
-    {
-        clang_var_sp->m_live_sp = clang_var_sp->m_frozen_sp;
-        clang_var_sp->m_flags |= ClangExpressionVariable::EVIsProgramReference;
-        persistent_state->AddVariable(clang_var_sp);
-    }
+    ValueObjectSP const_result_sp = ValueObjectConstResult::Create (target_sp.get(), GetValue(), name);
+    
+    ExpressionVariableSP clang_var_sp = persistent_state->CreatePersistentVariable(const_result_sp);
+    clang_var_sp->m_live_sp = clang_var_sp->m_frozen_sp;
+    clang_var_sp->m_flags |= ExpressionVariable::EVIsProgramReference;
     
     return clang_var_sp->GetValueObject();
 }
