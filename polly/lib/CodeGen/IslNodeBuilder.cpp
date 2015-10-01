@@ -590,6 +590,11 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
     SubtreeValues.insert(V);
   }
 
+  // Values preloaded prior to the SCoP need to be available in the subfunction.
+  const auto &InvariantAccesses = S.getInvariantAccesses();
+  for (const InvariantAccessTy &IA : InvariantAccesses)
+    SubtreeValues.insert(ValueMap[IA.first->getAccessInstruction()]);
+
   ParallelLoopGenerator::ValueToValueMapTy NewValues;
   ParallelLoopGenerator ParallelLoopGen(Builder, P, LI, DT, DL);
 
