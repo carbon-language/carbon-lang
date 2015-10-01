@@ -42,6 +42,9 @@ extern "C" void LLVMInitializeAMDGPUTarget() {
   // Register the target
   RegisterTargetMachine<R600TargetMachine> X(TheAMDGPUTarget);
   RegisterTargetMachine<GCNTargetMachine> Y(TheGCNTarget);
+
+  PassRegistry *PR = PassRegistry::getPassRegistry();
+  initializeSIFixSGPRLiveRangesPass(*PR);
 }
 
 static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
@@ -160,6 +163,8 @@ public:
     : AMDGPUPassConfig(TM, PM) { }
   bool addPreISel() override;
   bool addInstSelector() override;
+  void addFastRegAlloc(FunctionPass *RegAllocPass) override;
+  void addOptimizedRegAlloc(FunctionPass *RegAllocPass) override;
   void addPreRegAlloc() override;
   void addPostRegAlloc() override;
   void addPreSched2() override;
@@ -294,7 +299,18 @@ void GCNPassConfig::addPreRegAlloc() {
     insertPass(&MachineSchedulerID, &RegisterCoalescerID);
   }
   addPass(createSIShrinkInstructionsPass(), false);
-  addPass(createSIFixSGPRLiveRangesPass());
+}
+
+void GCNPassConfig::addFastRegAlloc(FunctionPass *RegAllocPass) {
+  addPass(&SIFixSGPRLiveRangesID);
+  TargetPassConfig::addFastRegAlloc(RegAllocPass);
+}
+
+void GCNPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
+  // We want to run this after LiveVariables is computed to avoid computing them
+  // twice.
+  insertPass(&LiveVariablesID, &SIFixSGPRLiveRangesID);
+  TargetPassConfig::addOptimizedRegAlloc(RegAllocPass);
 }
 
 void GCNPassConfig::addPostRegAlloc() {
