@@ -78,6 +78,8 @@ ELFData<ELFT>::getSymbolsHelper(bool Local) {
 }
 
 template <class ELFT> void ELFData<ELFT>::initStringTable() {
+  if (!Symtab)
+    return;
   ErrorOr<StringRef> StringTableOrErr = ELFObj.getStringTableForSymtab(*Symtab);
   error(StringTableOrErr.getError());
   StringTable = *StringTableOrErr;
