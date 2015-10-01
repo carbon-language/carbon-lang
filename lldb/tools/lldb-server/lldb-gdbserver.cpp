@@ -9,7 +9,6 @@
 
 // C Includes
 #include <errno.h>
-#include <getopt.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +28,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
+#include "lldb/Host/HostGetOpt.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Host/Pipe.h"
