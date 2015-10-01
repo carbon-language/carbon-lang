@@ -108,6 +108,39 @@ conditions are satisfied:
   list. Otherwise, use of ``auto`` would cause the type of the variable to be
   deduced as``std::initializer_list``.
 
+New expressions
+---------------
+
+Frequently, when a pointer is declared and initialized with ``new``, the
+pointee type has to be written twice: in the declaration type and in the
+``new`` expression. In this cases, the declaration type can be replaced with
+``auto`` improving readability and maintainability.
+
+.. code-block:: c++
+
+  TypeName *my_pointer = new TypeName(my_param);
+
+  // becomes
+
+  auto my_pointer = new TypeName(my_param);
+
+The check will also replace the declaration type in multiple declarations, if
+the following conditions are satisfied:
+
+* All declared variables have the same type (i.e. all of them are pointers to
+  the same type).
+* All declared variables are initialized with a ``new`` expression.
+* The types of all the new expressions are the same than the pointee of the
+  declaration type.
+
+.. code-block:: c++
+
+  TypeName *my_first_pointer = new TypeName, *my_second_pointer = new TypeName;
+
+  // becomes
+
+  auto my_first_pointer = new TypeName, my_second_pointer = new TypeName;
+
 Known Limitations
 -----------------
 * If the initializer is an explicit conversion constructor, the check will not

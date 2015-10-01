@@ -42,6 +42,7 @@ List of clang-tidy Checks
    misc-unused-parameters
    misc-unused-raii
    modernize-loop-convert
+   modernize-make-unique
    modernize-pass-by-value
    modernize-replace-auto-ptr
    modernize-shrink-to-fit
