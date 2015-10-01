@@ -442,6 +442,30 @@ void LoopConvertCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(makePseudoArrayLoopMatcher(), this);
 }
 
+/// \brief Given the range of a single declaration, such as:
+/// \code
+///   unsigned &ThisIsADeclarationThatCanSpanSeveralLinesOfCode =
+///       InitializationValues[I];
+///   next_instruction;
+/// \endcode
+/// Finds the range that has to be erased to remove this declaration without
+/// leaving empty lines, by extending the range until the beginning of the
+/// next instruction.
+///
+/// We need to delete a potential newline after the deleted alias, as
+/// clang-format will leave empty lines untouched. For all other formatting we
+/// rely on clang-format to fix it.
+void LoopConvertCheck::getAliasRange(SourceManager &SM, SourceRange &Range) {
+  bool Invalid = false;
+  const char *TextAfter =
+      SM.getCharacterData(Range.getEnd().getLocWithOffset(1), &Invalid);
+  if (Invalid)
+    return;
+  unsigned Offset = std::strspn(TextAfter, " \t\r\n");
+  Range =
+      SourceRange(Range.getBegin(), Range.getEnd().getLocWithOffset(Offset));
+}
+
 /// \brief Computes the changes needed to convert a given for loop, and
 /// applies them.
 void LoopConvertCheck::doConversion(
@@ -460,7 +484,7 @@ void LoopConvertCheck::doConversion(
     AliasVarIsRef = AliasVar->getType()->isReferenceType();
 
     // We keep along the entire DeclStmt to keep the correct range here.
-    const SourceRange &ReplaceRange = AliasDecl->getSourceRange();
+    SourceRange ReplaceRange = AliasDecl->getSourceRange();
 
     std::string ReplacementText;
     if (AliasUseRequired) {
@@ -470,6 +494,9 @@ void LoopConvertCheck::doConversion(
       // in a for loop's init clause. Need to put this ';' back while removing
       // the declaration of the alias variable. This is probably a bug.
       ReplacementText = ";";
+    } else {
+      // Avoid leaving empty lines or trailing whitespaces.
+      getAliasRange(Context->getSourceManager(), ReplaceRange);
     }
 
     Diag << FixItHint::CreateReplacement(

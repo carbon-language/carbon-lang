@@ -53,7 +53,7 @@ void aliasing() {
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & T : Arr)
   // CHECK-FIXES-NOT: Val &{{[a-z_]+}} =
-  // CHECK-FIXES: {}
+  // CHECK-FIXES-NEXT: {}
   // CHECK-FIXES-NEXT: int Y = T.X;
 
   // The container was not only used to initialize a temporary loop variable for
@@ -89,7 +89,7 @@ void aliasing() {
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & T : V)
-  // CHECK-FIXES: {}
+  // CHECK-FIXES-NEXT: {}
   // CHECK-FIXES-NEXT: int Y = T.X;
 
   // The same with a call to at()
@@ -100,7 +100,7 @@ void aliasing() {
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & T : *Pv)
-  // CHECK-FIXES: {}
+  // CHECK-FIXES-NEXT: {}
   // CHECK-FIXES-NEXT: int Y = T.X;
 
   for (int I = 0; I < N; ++I) {
@@ -166,8 +166,17 @@ void aliasing() {
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & Elem : IntArr)
   // CHECK-FIXES-NEXT: IntRef Int(Elem);
-}
 
+  // Ensure that removing the alias doesn't leave empty lines behind.
+  for (int I = 0; I < N; ++I) {
+    auto &X = IntArr[I];
+    X = 0;
+  }
+  // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & X : IntArr) {
+  // CHECK-FIXES-NEXT: {{^    X = 0;$}}
+  // CHECK-FIXES-NEXT: {{^  }$}}
+}
 
 void refs_and_vals() {
   // The following tests check that the transform correctly preserves the
@@ -186,7 +195,7 @@ void refs_and_vals() {
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto Alias : S_const)
   // CHECK-FIXES-NOT: MutableVal {{[a-z_]+}} =
-  // CHECK-FIXES: {}
+  // CHECK-FIXES-NEXT: {}
   // CHECK-FIXES-NEXT: Alias.X = 0;
 
   for (S::iterator It = Ss.begin(), E = Ss.end(); It != E; ++It) {
@@ -197,7 +206,7 @@ void refs_and_vals() {
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto Alias : Ss)
   // CHECK-FIXES-NOT: MutableVal {{[a-z_]+}} =
-  // CHECK-FIXES: {}
+  // CHECK-FIXES-NEXT: {}
   // CHECK-FIXES-NEXT: Alias.X = 0;
 
   for (S::iterator It = Ss.begin(), E = Ss.end(); It != E; ++It) {
@@ -208,7 +217,7 @@ void refs_and_vals() {
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & Alias : Ss)
   // CHECK-FIXES-NOT: MutableVal &{{[a-z_]+}} =
-  // CHECK-FIXES: {}
+  // CHECK-FIXES-NEXT: {}
   // CHECK-FIXES-NEXT: Alias.X = 0;
 
   dependent<int> Dep, Other;
@@ -863,7 +872,7 @@ void implicitCapture() {
   // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto R5 : Arr)
   // CHECK-FIXES-NEXT: auto G5 = [&]()
-  // CHECK-FIXES: int J5 = 8 + R5;
+  // CHECK-FIXES-NEXT: int J5 = 8 + R5;
 
   // Alias by reference.
   for (int I = 0; I < N; ++I) {
@@ -875,7 +884,7 @@ void implicitCapture() {
   // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & R6 : Arr)
   // CHECK-FIXES-NEXT: auto G6 = [&]()
-  // CHECK-FIXES: int J6 = -1 + R6;
+  // CHECK-FIXES-NEXT: int J6 = -1 + R6;
 }
 
 void iterators() {
@@ -953,7 +962,8 @@ void f() {
     E Ee{ { { g( { Array[I] } ) } } };
   }
   // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: int A{ Elem };
+  // CHECK-FIXES: for (auto & Elem : Array)
+  // CHECK-FIXES-NEXT: int A{ Elem };
   // CHECK-FIXES-NEXT: int B{ g(Elem) };
   // CHECK-FIXES-NEXT: int C{ g( { Elem } ) };
   // CHECK-FIXES-NEXT: D Dd{ { g( { Elem } ) } };
