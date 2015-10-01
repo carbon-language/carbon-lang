@@ -1181,8 +1181,8 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
         ++NumPreFolded;
         break;
       }
-      // The immediate in the load/store is scaled by the size of the register
-      // being loaded. The immediate in the add we're looking for,
+      // The immediate in the load/store is scaled by the size of the memory
+      // operation. The immediate in the add we're looking for,
       // however, is not, so adjust here.
       int Value = getLdStOffsetOp(MI).getImm() * getMemScale(MI);
 
