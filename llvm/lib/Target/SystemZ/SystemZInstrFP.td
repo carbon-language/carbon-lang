@@ -238,26 +238,46 @@ let Predicates = [FeatureFPExtension] in {
 // Unary arithmetic
 //===----------------------------------------------------------------------===//
 
+// We prefer generic instructions during isel, because they do not
+// clobber CC and therefore give the scheduler more freedom. In cases
+// the CC is actually useful, the SystemZElimCompare pass will try to
+// convert generic instructions into opcodes that also set CC. Note
+// that lcdf / lpdf / lndf only affect the sign bit, and can therefore
+// be used with fp32 as well. This could be done for fp128, in which
+// case the operands would have to be tied.
+
 // Negation (Load Complement).
 let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0xF in {
-  def LCEBR : UnaryRRE<"lceb", 0xB303, fneg, FP32,  FP32>;
-  def LCDBR : UnaryRRE<"lcdb", 0xB313, fneg, FP64,  FP64>;
+  def LCEBR : UnaryRRE<"lceb", 0xB303, null_frag, FP32,  FP32>;
+  def LCDBR : UnaryRRE<"lcdb", 0xB313, null_frag, FP64,  FP64>;
   def LCXBR : UnaryRRE<"lcxb", 0xB343, fneg, FP128, FP128>;
 }
+// Generic form, which does not set CC.
+def LCDFR : UnaryRRE<"lcdf", 0xB373, fneg, FP64,  FP64>;
+let isCodeGenOnly = 1 in
+  def LCDFR_32 : UnaryRRE<"lcdf", 0xB373, fneg, FP32,  FP32>;
 
 // Absolute value (Load Positive).
 let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0xF in {
-  def LPEBR : UnaryRRE<"lpeb", 0xB300, fabs, FP32,  FP32>;
-  def LPDBR : UnaryRRE<"lpdb", 0xB310, fabs, FP64,  FP64>;
+  def LPEBR : UnaryRRE<"lpeb", 0xB300, null_frag, FP32,  FP32>;
+  def LPDBR : UnaryRRE<"lpdb", 0xB310, null_frag, FP64,  FP64>;
   def LPXBR : UnaryRRE<"lpxb", 0xB340, fabs, FP128, FP128>;
 }
+// Generic form, which does not set CC.
+def LPDFR : UnaryRRE<"lpdf", 0xB370, fabs, FP64,  FP64>;
+let isCodeGenOnly = 1 in
+  def LPDFR_32 : UnaryRRE<"lpdf", 0xB370, fabs, FP32,  FP32>;
 
 // Negative absolute value (Load Negative).
 let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0xF in {
-  def LNEBR : UnaryRRE<"lneb", 0xB301, fnabs, FP32,  FP32>;
-  def LNDBR : UnaryRRE<"lndb", 0xB311, fnabs, FP64,  FP64>;
+  def LNEBR : UnaryRRE<"lneb", 0xB301, null_frag, FP32,  FP32>;
+  def LNDBR : UnaryRRE<"lndb", 0xB311, null_frag, FP64,  FP64>;
   def LNXBR : UnaryRRE<"lnxb", 0xB341, fnabs, FP128, FP128>;
 }
+// Generic form, which does not set CC.
+def LNDFR : UnaryRRE<"lndf", 0xB371, fnabs, FP64,  FP64>;
+let isCodeGenOnly = 1 in
+  def LNDFR_32 : UnaryRRE<"lndf", 0xB371, fnabs, FP32,  FP32>;
 
 // Square root.
 def SQEBR : UnaryRRE<"sqeb", 0xB314, fsqrt, FP32,  FP32>;
@@ -414,6 +434,6 @@ let Defs = [CC], CCValues = 0xF in {
 // Peepholes
 //===----------------------------------------------------------------------===//
 
-def : Pat<(f32  fpimmneg0), (LCEBR (LZER))>;
-def : Pat<(f64  fpimmneg0), (LCDBR (LZDR))>;
+def : Pat<(f32  fpimmneg0), (LCDFR_32 (LZER))>;
+def : Pat<(f64  fpimmneg0), (LCDFR (LZDR))>;
 def : Pat<(f128 fpimmneg0), (LCXBR (LZXR))>;

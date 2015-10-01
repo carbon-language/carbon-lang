@@ -30,12 +30,12 @@ define void @foo() {
 ;
 ; CHECK-FLOAT-LABEL: foo:
 ; CHECK-FLOAT: lzer %f0
-; CHECK-FLOAT: lcebr %f4, %f0
+; CHECK-FLOAT: lcdfr %f4, %f0
 ; CHECK-FLOAT: brasl %r14, bar@PLT
 ;
 ; CHECK-DOUBLE-LABEL: foo:
 ; CHECK-DOUBLE: lzdr %f2
-; CHECK-DOUBLE: lcdbr %f6, %f2
+; CHECK-DOUBLE: lcdfr %f6, %f2
 ; CHECK-DOUBLE: brasl %r14, bar@PLT
 ;
 ; CHECK-FP128-1-LABEL: foo:

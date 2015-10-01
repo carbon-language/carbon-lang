@@ -215,15 +215,15 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
       break;
 
     case SystemZ::WFLCDB:
-      Changed |= shortenOn01(MI, SystemZ::LCDBR);
+      Changed |= shortenOn01(MI, SystemZ::LCDFR);
       break;
 
     case SystemZ::WFLNDB:
-      Changed |= shortenOn01(MI, SystemZ::LNDBR);
+      Changed |= shortenOn01(MI, SystemZ::LNDFR);
       break;
 
     case SystemZ::WFLPDB:
-      Changed |= shortenOn01(MI, SystemZ::LPDBR);
+      Changed |= shortenOn01(MI, SystemZ::LPDFR);
       break;
 
     case SystemZ::WFSQDB:

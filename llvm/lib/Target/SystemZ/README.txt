@@ -52,12 +52,6 @@ We don't use the TEST DATA CLASS instructions.
 
 --
 
-We could use the generic floating-point forms of LOAD COMPLEMENT,
-LOAD NEGATIVE and LOAD POSITIVE in cases where we don't need the
-condition codes.  For example, we could use LCDFR instead of LCDBR.
-
---
-
 We only use MVC, XC and CLC for constant-length block operations.
 We could extend them to variable-length operations too,
 using EXECUTE RELATIVE LONG.

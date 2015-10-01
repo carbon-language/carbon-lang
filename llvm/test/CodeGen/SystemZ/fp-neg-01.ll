@@ -6,7 +6,7 @@
 ; Test f32.
 define float @f1(float %f) {
 ; CHECK-LABEL: f1:
-; CHECK: lcebr %f0, %f0
+; CHECK: lcdfr %f0, %f0
 ; CHECK: br %r14
   %res = fsub float -0.0, %f
   ret float %res
@@ -15,7 +15,7 @@ define float @f1(float %f) {
 ; Test f64.
 define double @f2(double %f) {
 ; CHECK-LABEL: f2:
-; CHECK: lcdbr %f0, %f0
+; CHECK: lcdfr %f0, %f0
 ; CHECK: br %r14
   %res = fsub double -0.0, %f
   ret double %res

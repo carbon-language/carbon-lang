@@ -7,7 +7,7 @@
 declare float @llvm.fabs.f32(float %f)
 define float @f1(float %f) {
 ; CHECK-LABEL: f1:
-; CHECK: lnebr %f0, %f0
+; CHECK: lndfr %f0, %f0
 ; CHECK: br %r14
   %abs = call float @llvm.fabs.f32(float %f)
   %res = fsub float -0.0, %abs
@@ -18,7 +18,7 @@ define float @f1(float %f) {
 declare double @llvm.fabs.f64(double %f)
 define double @f2(double %f) {
 ; CHECK-LABEL: f2:
-; CHECK: lndbr %f0, %f0
+; CHECK: lndfr %f0, %f0
 ; CHECK: br %r14
   %abs = call double @llvm.fabs.f64(double %f)
   %res = fsub double -0.0, %abs

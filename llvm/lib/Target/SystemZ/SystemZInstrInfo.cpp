@@ -1186,6 +1186,12 @@ unsigned SystemZInstrInfo::getLoadAndTest(unsigned Opcode) const {
   case SystemZ::LER:    return SystemZ::LTEBR;
   case SystemZ::LDR:    return SystemZ::LTDBR;
   case SystemZ::LXR:    return SystemZ::LTXBR;
+  case SystemZ::LCDFR:  return SystemZ::LCDBR;
+  case SystemZ::LPDFR:  return SystemZ::LPDBR;
+  case SystemZ::LNDFR:  return SystemZ::LNDBR;
+  case SystemZ::LCDFR_32:  return SystemZ::LCEBR;
+  case SystemZ::LPDFR_32:  return SystemZ::LPEBR;
+  case SystemZ::LNDFR_32:  return SystemZ::LNEBR;
   // On zEC12 we prefer to use RISBGN.  But if there is a chance to
   // actually use the condition code, we may turn it back into RISGB.
   // Note that RISBG is not really a "load-and-test" instruction,
