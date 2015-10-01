@@ -35,10 +35,10 @@ ms WaitTime = ms(250);
 // Thread sanitizer causes more overhead and will sometimes cause this test
 // to fail. To prevent this we give Thread sanitizer more time to complete the
 // test.
-#if !TEST_HAS_FEATURE(thread_sanitizer)
+#if !defined(TEST_HAS_SANITIZERS)
 ms Tolerance = ms(50);
 #else
-ms Tolerance = ms(100);
+ms Tolerance = ms(50 * 5);
 #endif
 
 std::shared_timed_mutex m;

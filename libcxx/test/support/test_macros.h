@@ -96,4 +96,9 @@ template <unsigned> struct static_assert_check {};
 #define TEST_HAS_NO_EXCEPTIONS
 #endif
 
+#if TEST_HAS_FEATURE(address_sanitizer) || TEST_HAS_FEATURE(memory_sanitizer) || \
+    TEST_HAS_FEATURE(thread_sanitizer)
+#define TEST_HAS_SANITIZERS
+#endif
+
 #endif // SUPPORT_TEST_MACROS_HPP
