@@ -190,6 +190,10 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM,
   setSchedulingPreference(Sched::Source);
 }
 
+static inline bool isEOP(MachineBasicBlock::iterator I) {
+  return std::next(I)->getOpcode() == AMDGPU::RETURN;
+}
+
 MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
     MachineInstr * MI, MachineBasicBlock * BB) const {
   MachineFunction * MF = BB->getParent();
@@ -276,12 +280,10 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
   case AMDGPU::RAT_WRITE_CACHELESS_32_eg:
   case AMDGPU::RAT_WRITE_CACHELESS_64_eg:
   case AMDGPU::RAT_WRITE_CACHELESS_128_eg: {
-    unsigned EOP = (std::next(I)->getOpcode() == AMDGPU::RETURN) ? 1 : 0;
-
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(MI->getOpcode()))
             .addOperand(MI->getOperand(0))
             .addOperand(MI->getOperand(1))
-            .addImm(EOP); // Set End of program bit
+            .addImm(isEOP(I)); // Set End of program bit
     break;
   }
 
@@ -539,7 +541,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
         }
       }
     }
-    bool EOP = (std::next(I)->getOpcode() == AMDGPU::RETURN) ? 1 : 0;
+    bool EOP = isEOP(I);
     if (!EOP && !isLastInstructionOfItsType)
       return BB;
     unsigned CfInst = (MI->getOpcode() == AMDGPU::EG_ExportSwz)? 84 : 40;
