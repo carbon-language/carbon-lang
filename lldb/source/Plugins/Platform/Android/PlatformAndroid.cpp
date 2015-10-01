@@ -283,23 +283,19 @@ PlatformAndroid::GetSdkVersion()
     if (m_sdk_version != 0)
         return m_sdk_version;
 
-    int status = 0;
     std::string version_string;
-    Error error = RunShellCommand("getprop ro.build.version.sdk",
-                                  GetWorkingDirectory(),
-                                  &status,
-                                  nullptr,
-                                  &version_string,
-                                  1);
-    if (error.Fail() || status != 0 || version_string.empty())
+    AdbClient adb(m_device_id);
+    Error error = adb.Shell("getprop ro.build.version.sdk", 5000 /* ms */, &version_string);
+    version_string = llvm::StringRef(version_string).trim().str();
+
+    if (error.Fail() || version_string.empty())
     {
         Log* log = GetLogIfAllCategoriesSet(LIBLLDB_LOG_PLATFORM);
         if (log)
-            log->Printf("Get SDK version failed. (status: %d, error: %s, output: %s)",
-                        status, error.AsCString(), version_string.c_str());
+            log->Printf("Get SDK version failed. (error: %s, output: %s)",
+                        error.AsCString(), version_string.c_str());
         return 0;
     }
-    version_string.erase(version_string.size() - 1); // Remove trailing new line
 
     m_sdk_version = StringConvert::ToUInt32(version_string.c_str());
     return m_sdk_version;
