@@ -137,7 +137,7 @@ public:
 private:
     size_t                  __size_;
     value_type *            __base_;
-    _LIBCPP_ALWAYS_INLINE dynarray () noexcept : __base_(nullptr), __size_(0) {}
+    _LIBCPP_ALWAYS_INLINE dynarray () noexcept :  __size_(0), __base_(nullptr) {}
     
     static inline _LIBCPP_INLINE_VISIBILITY value_type* __allocate ( size_t count )
     {
