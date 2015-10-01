@@ -62,13 +62,16 @@
 // RUN:     {key: readability-identifier-naming.VirtualMethodCase, value: UPPER_CASE}, \
 // RUN:     {key: readability-identifier-naming.VirtualMethodPrefix, value: 'v_'}, \
 // RUN:     {key: readability-identifier-naming.IgnoreFailedSplit, value: 0} \
-// RUN:   ]}' -- -std=c++11 -fno-delayed-template-parsing
-
-// FIXME: There should be more test cases for checking that references to class
-// FIXME: name, declaration contexts, forward declarations, etc, are correctly
-// FIXME: checked and renamed
+// RUN:   ]}' -- -std=c++11 -fno-delayed-template-parsing \
+// RUN:   -I%S/Inputs/readability-identifier-naming \
+// RUN:   -isystem %S/Inputs/readability-identifier-naming/system
 
 // clang-format off
+
+#include <system-header.h>
+#include "user-header.h"
+// NO warnings or fixes expected from declarations within header files without
+// the -header-filter= option
 
 namespace FOO_NS {
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for namespace 'FOO_NS' [readability-identifier-naming]
@@ -77,10 +80,26 @@ inline namespace InlineNamespace {
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for inline namespace 'InlineNamespace'
 // CHECK-FIXES: {{^}}inline namespace inline_namespace {{{$}}
 
+SYSTEM_NS::structure g_s1;
+// NO warnings or fixes expected as SYSTEM_NS and structure are declared in a header file
+
+USER_NS::object g_s2;
+// NO warnings or fixes expected as USER_NS and object are declared in a header file
+
+SYSTEM_MACRO(var1);
+// NO warnings or fixes expected as var1 is from macro expansion
+
+USER_MACRO(var2);
+// NO warnings or fixes expected as var2 is declared in a macro expansion
+
+int global;
+#define USE_IN_MACRO(m) auto use_##m = m
+USE_IN_MACRO(global);
+// NO warnings or fixes expected as global is used in a macro expansion
+
 #define BLA int FOO_bar
 BLA;
-// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for global variable 'FOO_bar'
-// NO fix expected as FOO_bar is from macro expansion
+// NO warnings or fixes expected as FOO_bar is from macro expansion
 
 enum my_enumeration {
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for enum 'my_enumeration'
@@ -104,6 +123,13 @@ class my_class {
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for class 'my_class'
 // CHECK-FIXES: {{^}}class CMyClass {{{$}}
     my_class();
+// CHECK-FIXES: {{^}}    CMyClass();{{$}}
+
+    ~
+      my_class();
+// (space in destructor token test, we could check trigraph but they will be deprecated)
+// CHECK-FIXES: {{^}}    ~{{$}}
+// CHECK-FIXES: {{^}}      CMyClass();{{$}}
 
   const int MEMBER_one_1 = ConstExpr_variable;
 // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: invalid case style for constant member 'MEMBER_one_1'
@@ -137,15 +163,36 @@ public:
 
 const int my_class::classConstant = 4;
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for class constant 'classConstant'
-// CHECK-FIXES: {{^}}const int my_class::kClassConstant = 4;{{$}}
-// FIXME: The fixup should reflect class name fixups as well:
-// FIXME: {{^}}const int CMyClass::kClassConstant = 4;{{$}}
+// CHECK-FIXES: {{^}}const int CMyClass::kClassConstant = 4;{{$}}
 
 int my_class::ClassMember_2 = 5;
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for class member 'ClassMember_2'
-// CHECK-FIXES: {{^}}int my_class::ClassMember2 = 5;{{$}}
-// FIXME: The fixup should reflect class name fixups as well:
-// FIXME: {{^}}int CMyClass::ClassMember2 = 5;{{$}}
+// CHECK-FIXES: {{^}}int CMyClass::ClassMember2 = 5;{{$}}
+
+class my_derived_class : public virtual my_class {};
+// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for class 'my_derived_class'
+// CHECK-FIXES: {{^}}class CMyDerivedClass : public virtual CMyClass {};{{$}}
+
+class CMyWellNamedClass {};
+// No warning expected as this class is well named.
+
+template<typename T>
+// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: invalid case style for type template parameter 'T'
+// CHECK-FIXES: {{^}}template<typename t_t>{{$}}
+class my_templated_class : CMyWellNamedClass {};
+// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for class 'my_templated_class'
+// CHECK-FIXES: {{^}}class CMyTemplatedClass : CMyWellNamedClass {};{{$}}
+
+template<typename T>
+// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: invalid case style for type template parameter 'T'
+// CHECK-FIXES: {{^}}template<typename t_t>{{$}}
+class my_other_templated_class : my_templated_class<  my_class>, private my_derived_class {};
+// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for class 'my_other_templated_class'
+// CHECK-FIXES: {{^}}class CMyOtherTemplatedClass : CMyTemplatedClass<  CMyClass>, private CMyDerivedClass {};{{$}}
+
+template<typename t_t>
+using MYSUPER_TPL = my_other_templated_class  <:: FOO_NS  ::my_class>;
+// CHECK-FIXES: {{^}}using MYSUPER_TPL = CMyOtherTemplatedClass  <:: foo_ns  ::CMyClass>;{{$}}
 
 const int global_Constant = 6;
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for global constant 'global_Constant'
@@ -186,7 +233,7 @@ template<typename ... TYPE_parameters>
 void Global_Fun(TYPE_parameters... PARAMETER_PACK) {
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for global function 'Global_Fun'
 // CHECK-MESSAGES: :[[@LINE-2]]:17: warning: invalid case style for parameter pack 'PARAMETER_PACK'
-// CHECK-FIXES: {{^}}void GlobalFun(TYPE_parameters... parameterPack) {{{$}}
+// CHECK-FIXES: {{^}}void GlobalFun(typeParameters_t... parameterPack) {{{$}}
     global_function(1, 2);
 // CHECK-FIXES: {{^}}    GlobalFunction(1, 2);{{$}}
     FOO_bar = Global_variable;
@@ -208,12 +255,15 @@ class abstract_class {
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for abstract class 'abstract_class'
 // CHECK-FIXES: {{^}}class AAbstractClass {{{$}}
     virtual ~abstract_class() = 0;
+// CHECK-FIXES: {{^}}    virtual ~AAbstractClass() = 0;{{$}}
     virtual void VIRTUAL_METHOD();
 // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: invalid case style for virtual method 'VIRTUAL_METHOD'
 // CHECK-FIXES: {{^}}    virtual void v_VIRTUAL_METHOD();{{$}}
     void non_Virtual_METHOD() {}
 // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: invalid case style for private method 'non_Virtual_METHOD'
 // CHECK-FIXES: {{^}}    void __non_Virtual_METHOD() {}{{$}}
+
+public:
     static void CLASS_METHOD() {}
 // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: invalid case style for class method 'CLASS_METHOD'
 // CHECK-FIXES: {{^}}    static void classMethod() {}{{$}}
@@ -244,8 +294,7 @@ struct THIS___Structure {
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for struct 'THIS___Structure'
 // CHECK-FIXES: {{^}}struct this_structure {{{$}}
     THIS___Structure();
-// FIXME: There should be a fixup for the constructor as well
-// FIXME: {{^}}    this_structure();{{$}}
+// CHECK-FIXES: {{^}}    this_structure();{{$}}
 
   union __MyUnion_is_wonderful__ {};
 // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: invalid case style for union '__MyUnion_is_wonderful__'
@@ -254,13 +303,19 @@ struct THIS___Structure {
 
 typedef THIS___Structure struct_type;
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for typedef 'struct_type'
-// CHECK-FIXES: {{^}}typedef THIS___Structure struct_type_t;{{$}}
-// FIXME: The fixup should reflect structure name fixups as well:
-// FIXME: {{^}}typedef this_structure struct_type_t;{{$}}
+// CHECK-FIXES: {{^}}typedef this_structure struct_type_t;{{$}}
 
 static void static_Function() {
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: invalid case style for function 'static_Function'
 // CHECK-FIXES: {{^}}static void staticFunction() {{{$}}
+
+  ::FOO_NS::InlineNamespace::abstract_class::CLASS_METHOD();
+// CHECK-FIXES: {{^}}  ::foo_ns::inline_namespace::AAbstractClass::classMethod();{{$}}
+  ::FOO_NS::InlineNamespace::static_Function();
+// CHECK-FIXES: {{^}}  ::foo_ns::inline_namespace::staticFunction();{{$}}
+
+  using ::FOO_NS::InlineNamespace::CE_function;
+// CHECK-FIXES: {{^}}  using ::foo_ns::inline_namespace::ce_function;{{$}}
 }
 
 }
