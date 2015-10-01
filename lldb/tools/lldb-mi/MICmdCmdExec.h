@@ -55,11 +55,13 @@ class CMICmdCmdExecRun : public CMICmdBase
     // From CMICmdInvoker::ICmd
     bool Execute() override;
     bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
     /* dtor */ ~CMICmdCmdExecRun() override;
 
     // Attributes:
   private:
+    const CMIUtilString m_constStrArgStart; // StopAtEntry - run to first instruction or main() if specified
     lldb::SBCommandReturnObject m_lldbResult;
 };
 
