@@ -83,5 +83,6 @@ def build_id : Flag<["--"], "build-id">;
 def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
 def hash_style : Joined<["--"], "hash-style=">;
 def m : Separate<["-"], "m">;
+def no_add_needed : Flag<["--"], "no-add-needed">;
 def no_as_needed : Flag<["--"], "no-as-needed">;
 def z : Separate<["-"], "z">;
