@@ -96,7 +96,7 @@ void TestSizeClassAllocator() {
       uptr size = sizes[s];
       if (!a->CanAllocate(size, 1)) continue;
       // printf("s = %ld\n", size);
-      uptr n_iter = std::max((uptr)6, 8000000 / size);
+      uptr n_iter = std::max((uptr)6, 4000000 / size);
       // fprintf(stderr, "size: %ld iter: %ld\n", size, n_iter);
       for (uptr i = 0; i < n_iter; i++) {
         uptr class_id0 = Allocator::SizeClassMapT::ClassID(size);
