@@ -529,7 +529,6 @@ class Configuration(object):
             self.cxx.link_flags += ['-lc', '-lm']
             if enable_threads:
                 self.cxx.link_flags += ['-lpthread']
-            self.cxx.link_flags += ['-lrt']
             if llvm_unwinder:
                 self.cxx.link_flags += ['-lunwind', '-ldl']
             else:
@@ -604,7 +603,10 @@ class Configuration(object):
             # Setup the sanitizer compile flags
             self.cxx.flags += ['-g', '-fno-omit-frame-pointer']
             if self.target_info.platform() == 'linux':
-                self.cxx.link_flags += ['-ldl']
+                # The libraries and their order are taken from the
+                # linkSanitizerRuntimeDeps function in
+                # clang/lib/Driver/Tools.cpp
+                self.cxx.link_flags += ['-lpthread', '-lrt', '-lm', '-ldl']
             if san == 'Address':
                 self.cxx.flags += ['-fsanitize=address']
                 if llvm_symbolizer is not None:
