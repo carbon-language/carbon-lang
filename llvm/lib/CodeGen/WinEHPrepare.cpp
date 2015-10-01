@@ -2724,11 +2724,23 @@ static void calculateExplicitCXXStateNumbers(WinEHFuncInfo &FuncInfo,
   }
 }
 
-static int addSEHHandler(WinEHFuncInfo &FuncInfo, int ParentState,
-                         const Function *Filter, const BasicBlock *Handler) {
+static int addSEHExcept(WinEHFuncInfo &FuncInfo, int ParentState,
+                        const Function *Filter, const BasicBlock *Handler) {
   SEHUnwindMapEntry Entry;
   Entry.ToState = ParentState;
+  Entry.IsFinally = false;
   Entry.Filter = Filter;
+  Entry.Handler = Handler;
+  FuncInfo.SEHUnwindMap.push_back(Entry);
+  return FuncInfo.SEHUnwindMap.size() - 1;
+}
+
+static int addSEHFinally(WinEHFuncInfo &FuncInfo, int ParentState,
+                         const BasicBlock *Handler) {
+  SEHUnwindMapEntry Entry;
+  Entry.ToState = ParentState;
+  Entry.IsFinally = true;
+  Entry.Filter = nullptr;
   Entry.Handler = Handler;
   FuncInfo.SEHUnwindMap.push_back(Entry);
   return FuncInfo.SEHUnwindMap.size() - 1;
@@ -2753,10 +2765,13 @@ static void calculateExplicitSEHStateNumbers(WinEHFuncInfo &FuncInfo,
            "SEH doesn't have multiple handlers per __try");
     const CatchPadInst *CPI = Handlers.front();
     const BasicBlock *CatchPadBB = CPI->getParent();
-    const Function *Filter =
-        cast<Function>(CPI->getArgOperand(0)->stripPointerCasts());
+    const Constant *FilterOrNull =
+        cast<Constant>(CPI->getArgOperand(0)->stripPointerCasts());
+    const Function *Filter = dyn_cast<Function>(FilterOrNull);
+    assert((Filter || FilterOrNull->isNullValue()) &&
+           "unexpected filter value");
     int TryState =
-        addSEHHandler(FuncInfo, ParentState, Filter, CPI->getNormalDest());
+        addSEHExcept(FuncInfo, ParentState, Filter, CPI->getNormalDest());
 
     // Everything in the __try block uses TryState as its parent state.
     FuncInfo.EHPadStateMap[CPI] = TryState;
@@ -2775,8 +2790,7 @@ static void calculateExplicitSEHStateNumbers(WinEHFuncInfo &FuncInfo,
       if ((PredBlock = getEHPadFromPredecessor(PredBlock)))
         calculateExplicitSEHStateNumbers(FuncInfo, *PredBlock, ParentState);
   } else if (isa<CleanupPadInst>(FirstNonPHI)) {
-    int CleanupState =
-        addSEHHandler(FuncInfo, ParentState, /*Filter=*/nullptr, &BB);
+    int CleanupState = addSEHFinally(FuncInfo, ParentState, &BB);
     FuncInfo.EHPadStateMap[FirstNonPHI] = CleanupState;
     DEBUG(dbgs() << "Assigning state #" << CleanupState << " to BB "
                  << BB.getName() << '\n');

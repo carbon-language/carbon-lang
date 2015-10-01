@@ -131,6 +131,8 @@ struct SEHUnwindMapEntry {
   /// this state. This indexes into SEHUnwindMap.
   int ToState = -1;
 
+  bool IsFinally = false;
+
   /// Holds the filter expression function.
   const Function *Filter = nullptr;
 

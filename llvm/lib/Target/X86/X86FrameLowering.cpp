@@ -1489,10 +1489,21 @@ bool X86FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   if (CSI.empty())
     return false;
 
-  // Don't restore CSRs in 32-bit EH funclets. Matches
-  // spillCalleeSavedRegisters.
-  if (isFuncletReturnInstr(MI) && STI.is32Bit() && STI.isOSWindows())
-    return true;
+  if (isFuncletReturnInstr(MI) && STI.isOSWindows()) {
+    // Don't restore CSRs in 32-bit EH funclets. Matches
+    // spillCalleeSavedRegisters.
+    if (STI.is32Bit())
+      return true;
+    // Don't restore CSRs before an SEH catchret. SEH except blocks do not form
+    // funclets. emitEpilogue transforms these to normal jumps.
+    if (MI->getOpcode() == X86::CATCHRET) {
+      const Function *Func = MBB.getParent()->getFunction();
+      bool IsSEH = isAsynchronousEHPersonality(
+          classifyEHPersonality(Func->getPersonalityFn()));
+      if (IsSEH)
+        return true;
+    }
+  }
 
   DebugLoc DL = MBB.findDebugLoc(MI);
 
