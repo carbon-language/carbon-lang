@@ -39,8 +39,10 @@
 #include "lldb/Target/UnixSignals.h"
 #include "lldb/Utility/Utils.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
 
 #include "Utility/ModuleCache.h"
+
 
 // Define these constants from POSIX mman.h rather than include the file
 // so that they will be correct even when compiled on Linux.
@@ -99,13 +101,17 @@ PlatformProperties::PlatformProperties ()
     m_collection_sp->Initialize (g_properties);
 
     auto module_cache_dir = GetModuleCacheDirectory ();
-    if (!module_cache_dir)
-    {
-        if (!HostInfo::GetLLDBPath (ePathTypeGlobalLLDBTempSystemDir, module_cache_dir))
-            module_cache_dir = FileSpec ("/tmp/lldb", false);
-        module_cache_dir.AppendPathComponent ("module_cache");
-        SetModuleCacheDirectory (module_cache_dir);
-    }
+    if (module_cache_dir)
+        return;
+
+    llvm::SmallString<64> user_home_dir;
+    if (!llvm::sys::path::home_directory (user_home_dir))
+        return;
+
+    module_cache_dir = FileSpec (user_home_dir.c_str(), false);
+    module_cache_dir.AppendPathComponent (".lldb");
+    module_cache_dir.AppendPathComponent ("module_cache");
+    SetModuleCacheDirectory (module_cache_dir);
 }
 
 bool
@@ -1847,7 +1853,8 @@ Platform::GetCachedSharedModule (const ModuleSpec &module_spec,
                                  bool *did_create_ptr)
 {
     if (IsHost() ||
-        !GetGlobalPlatformProperties ()->GetUseModuleCache ())
+        !GetGlobalPlatformProperties ()->GetUseModuleCache () ||
+        !GetGlobalPlatformProperties ()->GetModuleCacheDirectory ())
         return false;
 
     Log *log = GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PLATFORM);
