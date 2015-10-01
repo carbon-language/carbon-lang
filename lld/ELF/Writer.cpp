@@ -267,7 +267,7 @@ void Writer<ELFT>::scanRelocs(const InputSection<ELFT> &C) {
 }
 
 template <class ELFT>
-static void undefError(const SymbolTable &S, const SymbolBody &Sym) {
+static void reportUndefined(const SymbolTable &S, const SymbolBody &Sym) {
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
@@ -337,7 +337,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     StringRef Name = P.first;
     SymbolBody *Body = P.second->Body;
     if (Body->isStrongUndefined())
-      undefError<ELFT>(Symtab, *Body);
+      reportUndefined<ELFT>(Symtab, *Body);
 
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
