@@ -1231,6 +1231,9 @@ public:
     TypeSystem *
     GetScratchTypeSystemForLanguage (lldb::LanguageType language, bool create_on_demand = true);
     
+    PersistentExpressionState *
+    GetPersistentExpressionStateForLanguage (lldb::LanguageType language);
+    
     // Creates a UserExpression for the given language, the rest of the parameters have the
     // same meaning as for the UserExpression constructor.
     // Returns a new-ed object which the caller owns.
@@ -1321,6 +1324,9 @@ public:
 
     lldb::ExpressionVariableSP
     GetPersistentVariable(const ConstString &name);
+    
+    lldb::addr_t
+    GetPersistentSymbol(const ConstString &name);
     
     //------------------------------------------------------------------
     // Target Stop Hooks
@@ -1499,6 +1505,9 @@ public:
     GetSearchFilterForModuleAndCUList (const FileSpecList *containingModules, const FileSpecList *containingSourceFiles);
 
 protected:
+    ClangASTContext *
+    GetScratchClangASTContextImpl();
+    
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
@@ -1519,7 +1528,10 @@ protected:
     lldb::ProcessSP m_process_sp;
     lldb::SearchFilterSP  m_search_filter_sp;
     PathMappingList m_image_search_paths;
-    lldb::ClangASTContextUP m_scratch_ast_context_ap;
+    
+    typedef std::map<lldb::LanguageType, lldb::TypeSystemSP> TypeSystemMap;
+    TypeSystemMap m_scratch_type_system_map;
+    
     lldb::ClangASTSourceUP m_scratch_ast_source_ap;
     lldb::ClangASTImporterUP m_ast_importer_ap;
     lldb::ClangModulesDeclVendorUP m_clang_modules_decl_vendor_ap;

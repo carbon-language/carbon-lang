@@ -104,7 +104,7 @@ ClangExpressionDeclMap::WillParse(ExecutionContext &exe_ctx,
 
     if (target)
     {
-        m_parser_vars->m_persistent_vars = llvm::cast<ClangPersistentVariables>(target->GetScratchTypeSystemForLanguage(eLanguageTypeC)->GetPersistentExpressionState());
+        m_parser_vars->m_persistent_vars = llvm::cast<ClangPersistentVariables>(target->GetPersistentExpressionStateForLanguage(eLanguageTypeC));
 
         if (!target->GetScratchClangASTContext())
             return false;

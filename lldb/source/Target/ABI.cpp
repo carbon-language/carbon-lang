@@ -124,7 +124,11 @@ ABI::GetReturnValueObject (Thread &thread,
     
     if (persistent)
     {
-        PersistentExpressionState *persistent_expression_state = thread.CalculateTarget()->GetScratchTypeSystemForLanguage(ast_type.GetMinimumLanguage())->GetPersistentExpressionState();
+        PersistentExpressionState *persistent_expression_state = thread.CalculateTarget()->GetPersistentExpressionStateForLanguage(ast_type.GetMinimumLanguage());
+        
+        if (!persistent_expression_state)
+            return ValueObjectSP();
+        
         ConstString persistent_variable_name (persistent_expression_state->GetNextPersistentVariableName());
 
         lldb::ValueObjectSP const_valobj_sp;

@@ -331,7 +331,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     
     if (ClangModulesDeclVendor *decl_vendor = target_sp->GetClangModulesDeclVendor())
     {
-        ClangPersistentVariables *clang_persistent_vars = llvm::cast<ClangPersistentVariables>(target_sp->GetScratchTypeSystemForLanguage(lldb::eLanguageTypeC)->GetPersistentExpressionState());
+        ClangPersistentVariables *clang_persistent_vars = llvm::cast<ClangPersistentVariables>(target_sp->GetPersistentExpressionStateForLanguage(lldb::eLanguageTypeC));
         std::unique_ptr<PPCallbacks> pp_callbacks(new LLDBPreprocessorCallbacks(*decl_vendor, *clang_persistent_vars));
         m_pp_callbacks = static_cast<LLDBPreprocessorCallbacks*>(pp_callbacks.get());
         m_compiler->getPreprocessor().addPPCallbacks(std::move(pp_callbacks));
