@@ -198,10 +198,14 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   ++NumEntries; // DT_STRSZ
   ++NumEntries; // DT_HASH
 
-  StringRef RPath = Config->RPath;
-  if (!RPath.empty()) {
+  if (!Config->RPath.empty()) {
     ++NumEntries; // DT_RUNPATH
-    DynStrSec.add(RPath);
+    DynStrSec.add(Config->RPath);
+  }
+
+  if (!Config->SoName.empty()) {
+    ++NumEntries; // DT_SONAME
+    DynStrSec.add(Config->SoName);
   }
 
   const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
@@ -255,10 +259,15 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
   P->d_un.d_ptr = HashSec.getVA();
   ++P;
 
-  StringRef RPath = Config->RPath;
-  if (!RPath.empty()) {
+  if (!Config->RPath.empty()) {
     P->d_tag = DT_RUNPATH;
-    P->d_un.d_val = DynStrSec.getFileOff(RPath);
+    P->d_un.d_val = DynStrSec.getFileOff(Config->RPath);
+    ++P;
+  }
+
+  if (!Config->SoName.empty()) {
+    P->d_tag = DT_SONAME;
+    P->d_un.d_val = DynStrSec.getFileOff(Config->SoName);
     ++P;
   }
 

@@ -21,6 +21,7 @@ struct Configuration {
   llvm::StringRef DynamicLinker;
   llvm::StringRef Entry;
   llvm::StringRef OutputFile = "a.out";
+  llvm::StringRef SoName;
   llvm::StringRef Sysroot;
   std::string RPath;
   std::vector<llvm::StringRef> InputSearchPaths;

@@ -117,6 +117,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (auto *Arg = Args.getLastArg(OPT_entry))
     Config->Entry = Arg->getValue();
 
+  if (auto *Arg = Args.getLastArg(OPT_soname))
+    Config->SoName = Arg->getValue();
+
   Config->AllowMultipleDefinition = Args.hasArg(OPT_allow_multiple_definition);
   Config->DiscardAll = Args.hasArg(OPT_discard_all);
   Config->DiscardLocals = Args.hasArg(OPT_discard_locals);

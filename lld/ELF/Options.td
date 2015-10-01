@@ -52,6 +52,9 @@ def rpath : Separate<["-"], "rpath">,
 def shared : Flag<["-"], "shared">,
   HelpText<"Build a shared object">;
 
+def soname : Joined<["-"], "soname=">,
+  HelpText<"Set DT_SONAME">;
+
 def sysroot : Joined<["--"], "sysroot=">,
   HelpText<"Set the system root">;
 
@@ -69,6 +72,7 @@ def alias_discard_all: Flag<["-"], "x">, Alias<discard_all>;
 def alias_discard_locals: Flag<["-"], "X">, Alias<discard_locals>;
 def alias_entry : Separate<["-"], "e">, Alias<entry>;
 def alias_l : Joined<["--"], "library=">, Alias<l>;
+def alias_soname : Separate<["-"], "h">, Alias<soname>;
 
 // Options listed below are silently ignored now.
 def as_needed : Flag<["--"], "as-needed">;
