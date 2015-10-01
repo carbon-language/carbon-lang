@@ -19,17 +19,6 @@
 // CHECK-NEXT:   AddressAlignment: 4
 // CHECK-NEXT:   EntrySize: 0
 // CHECK-NEXT: }
-// CHECK-NEXT: Section {
-// CHECK-NEXT:   Index:
-// CHECK-NEXT:   Name:
-// CHECK-NEXT:   Type:
-// CHECK-NEXT:   Flags [
-// CHECK-NEXT:     SHF_ALLOC
-// CHECK-NEXT:     SHF_EXECINSTR
-// CHECK-NEXT:   ]
-// CHECK-NEXT:   Address:
-// CHECK-NEXT:   Offset: 0x1000
-
 
         .global _start
 _start:

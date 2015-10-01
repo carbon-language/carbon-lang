@@ -371,7 +371,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   BssSec.setSize(Off);
 
   OutputSections.push_back(&SymTabSec);
-  OutputSections.push_back(&StrTabSec);
 
   if (needsDynamicSections()) {
     if (needsInterpSection())
@@ -392,12 +391,53 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       OutputSections.begin(), OutputSections.end(),
       [](OutputSectionBase<ELFT::Is64Bits> *A,
          OutputSectionBase<ELFT::Is64Bits> *B) {
-        // Place SHF_ALLOC sections first.
-        return (A->getFlags() & SHF_ALLOC) && !(B->getFlags() & SHF_ALLOC);
+        uintX_t AFlags = A->getFlags();
+        uintX_t BFlags = B->getFlags();
+
+        // Allocatable sections go first to reduce the total PT_LOAD size and
+        // so debug info doesn't change addresses in actual code.
+        bool AIsAlloc = AFlags & SHF_ALLOC;
+        bool BIsAlloc = BFlags & SHF_ALLOC;
+        if (AIsAlloc != BIsAlloc)
+          return AIsAlloc;
+
+        // We don't have any special requirements for the relative order of
+        // two non allocatable sections.
+        if (!AIsAlloc)
+          return false;
+
+        // We want the read only sections first so that they go in the PT_LOAD
+        // covering the program headers at the start of the file.
+        bool AIsWritable = AFlags & SHF_WRITE;
+        bool BIsWritable = BFlags & SHF_WRITE;
+        if (AIsWritable != BIsWritable)
+          return BIsWritable;
+
+        // For a corresponding reason, put non exec sections first (the program
+        // header PT_LOAD is not executable).
+        bool AIsExec = AFlags & SHF_EXECINSTR;
+        bool BIsExec = BFlags & SHF_EXECINSTR;
+        if (AIsExec != BIsExec)
+          return BIsExec;
+
+        // If we got here we know that both A and B and in the same PT_LOAD.
+        // The last requirement we have is to put nobits section last. The
+        // reason is that the only thing the dynamic linker will see about
+        // them is a p_memsz that is larger than p_filesz. Seeing that it
+        // zeros the end of the PT_LOAD, so that has to correspond to the
+        // nobits sections.
+        return A->getType() != SHT_NOBITS && B->getType() == SHT_NOBITS;
       });
+
+  // Always put StrTabSec last so that no section names are added to it after
+  // it's finalized.
+  OutputSections.push_back(&StrTabSec);
 
   for (unsigned I = 0, N = OutputSections.size(); I < N; ++I)
     OutputSections[I]->setSectionIndex(I + 1);
+
+  // Fill the DynStrSec early.
+  DynamicSec.finalize();
 }
 
 template <class ELFT>

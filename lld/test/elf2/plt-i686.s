@@ -12,7 +12,7 @@
 // CHECK-NEXT:   SHF_ALLOC
 // CHECK-NEXT:   SHF_EXECINSTR
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x16000
+// CHECK-NEXT: Address: 0x12010
 // CHECK-NEXT: Offset:
 // CHECK-NEXT: Size: 16
 // CHECK-NEXT: Link: 0
@@ -21,34 +21,34 @@
 
 // CHECK:      Relocations [
 // CHECK-NEXT:   Section ({{.*}}) .rel.dyn {
-// CHECK-NEXT:     0x15000 R_386_GLOB_DAT bar 0x0
-// CHECK-NEXT:     0x15004 R_386_GLOB_DAT zed 0x0
+// CHECK-NEXT:     0x13050 R_386_GLOB_DAT bar 0x0
+// CHECK-NEXT:     0x13054 R_386_GLOB_DAT zed 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
 // Unfortunately FileCheck can't do math, so we have to check for explicit
 // values:
 
-// 0x16000 - (0x11000 + 1) - 4 = 20475
-// 0x16000 - (0x11005 + 1) - 4 = 20470
-// 0x16008 - (0x1100a + 1) - 4 = 20473
+// 0x12010 - (0x12000 + 1) - 4 = 11
+// 0x12010 - (0x12005 + 1) - 4 = 2
+// 0x12018 - (0x1200a + 1) - 4 = 9
 
 // DISASM:      _start:
-// DISASM-NEXT:   11000:  e9 fb 4f 00 00  jmp  20475
-// DISASM-NEXT:   11005:  e9 f6 4f 00 00  jmp  20470
-// DISASM-NEXT:   1100a:  e9 f9 4f 00 00  jmp  20473
+// DISASM-NEXT:   12000:  e9 0b 00 00 00  jmp  11
+// DISASM-NEXT:   12005:  e9 06 00 00 00  jmp  6
+// DISASM-NEXT:   1200a:  e9 09 00 00 00  jmp  9
 
-// 0x15000 = 86016
-// 0x15004 = 86020
+// 0x13050 = 77904
+// 0x13054 = 77908
 
 // DISASM:      Disassembly of section .plt:
 // DISASM-NEXT: .plt:
-// DISASM-NEXT:   16000:  ff 25 00 50 01 00  jmpl *86016
-// DISASM-NEXT:   16006:  90                 nop
-// DISASM-NEXT:   16007:  90                 nop
-// DISASM-NEXT:   16008:  ff 25 04 50 01 00  jmpl *86020
-// DISASM-NEXT:   1600e:  90                 nop
-// DISASM-NEXT:   1600f:  90                 nop
+// DISASM-NEXT:   12010:  ff 25 {{.*}}       jmpl *77904
+// DISASM-NEXT:   12016:  90                 nop
+// DISASM-NEXT:   12017:  90                 nop
+// DISASM-NEXT:   12018:  ff 25 {{.*}}       jmpl *77908
+// DISASM-NEXT:   1201e:  90                 nop
+// DISASM-NEXT:   1201f:  90                 nop
 
 .global _start
 _start:

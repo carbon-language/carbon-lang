@@ -45,15 +45,12 @@ hidden:
 .internal internal
 internal:
 
-// CHECK:      Name: .bss
+// CHECK:      Name: foobar
 // CHECK-NEXT: Type: SHT_NOBITS
 // CHECK-NEXT: Flags [
 // CHECK-NEXT:   SHF_ALLOC
-// CHECK-NEXT:   SHF_WRITE
 // CHECK-NEXT: ]
 // CHECK-NEXT: Address: 0x11000
-// CHECK-NEXT: Offset: 0x1000
-// CHECK-NEXT: Size: 4
 
 // CHECK:      Name: .text
 // CHECK-NEXT: Type: SHT_PROGBITS
@@ -63,12 +60,15 @@ internal:
 // CHECK-NEXT: ]
 // CHECK-NEXT: Address: 0x12000
 
-// CHECK:      Name: foobar
+// CHECK:      Name: .bss
 // CHECK-NEXT: Type: SHT_NOBITS
 // CHECK-NEXT: Flags [
 // CHECK-NEXT:   SHF_ALLOC
+// CHECK-NEXT:   SHF_WRITE
 // CHECK-NEXT: ]
 // CHECK-NEXT: Address: 0x13000
+// CHECK-NEXT: Offset: 0x2000
+// CHECK-NEXT: Size: 4
 
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
@@ -109,7 +109,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: common
-// CHECK-NEXT:     Value: 0x11000
+// CHECK-NEXT:     Value: 0x13000
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Object
@@ -127,7 +127,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: protected
-// CHECK-NEXT:     Value: 0x13008
+// CHECK-NEXT:     Value: 0x11008
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
@@ -136,7 +136,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed
-// CHECK-NEXT:     Value: 0x13000
+// CHECK-NEXT:     Value: 0x11000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: None
@@ -145,7 +145,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed2
-// CHECK-NEXT:     Value: 0x13004
+// CHECK-NEXT:     Value: 0x11004
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
@@ -154,7 +154,7 @@ internal:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed3
-// CHECK-NEXT:     Value: 0x13008
+// CHECK-NEXT:     Value: 0x11008
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None

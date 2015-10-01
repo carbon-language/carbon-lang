@@ -27,14 +27,14 @@ R_386_PC32_2:
 
 // CHECK: Disassembly of section .R_386_32:
 // CHECK-NEXT: R_386_32:
-// CHECK-NEXT:  11000: {{.*}} movl $69633, %edx
+// CHECK-NEXT:  12000: {{.*}} movl $73729, %edx
 
 // CHECK: Disassembly of section .R_386_PC32:
 // CHECK-NEXT: R_386_PC32:
-// CHECK-NEXT:   11005:  e8 04 00 00 00  calll 4
+// CHECK-NEXT:   12005:  e8 04 00 00 00  calll 4
 
 // CHECK:      R_386_PC32_2:
-// CHECK-NEXT:   1100e:  90  nop
+// CHECK-NEXT:   1200e:  90  nop
 
 // Create a .got
 movl bar@GOT, %eax
@@ -46,23 +46,23 @@ movl bar@GOT, %eax
 // ADDR-NEXT:   SHF_ALLOC
 // ADDR-NEXT:   SHF_WRITE
 // ADDR-NEXT: ]
-// ADDR-NEXT: Address: 0x15000
+// ADDR-NEXT: Address: 0x13050
 
 .section .R_386_GOTPC,"ax",@progbits
 R_386_GOTPC:
  movl $_GLOBAL_OFFSET_TABLE_, %eax
 
-// 0x15000 - 0x11014 = 16364
+// 0x13050 - 0x12014 = 4156
 
 // CHECK:      Disassembly of section .R_386_GOTPC:
 // CHECK-NEXT: R_386_GOTPC:
-// CHECK-NEXT:   11014:  {{.*}} movl  $16364, %eax
+// CHECK-NEXT:   12014:  {{.*}} movl  $4156, %eax
 
 .section .dynamic_reloc, "ax",@progbits
         call bar+4
 // CHECK:      Disassembly of section .dynamic_reloc:
 // CHECK-NEXT: .dynamic_reloc:
-// CHECK-NEXT:   11019:  e8 00 00 00 00  calll  0
+// CHECK-NEXT:   12019:  e8 00 00 00 00  calll  0
 
 .section .R_386_GOT32,"ax",@progbits
 .global R_386_GOT32
@@ -71,4 +71,4 @@ R_386_GOT32:
 // This is the second symbol in the got, so the offset is 4.
 // CHECK:      Disassembly of section .R_386_GOT32:
 // CHECK-NEXT: R_386_GOT32:
-// CHECK-NEXT:   1101e:  {{.*}} movl 4, %eax
+// CHECK-NEXT:   1201e:  {{.*}} movl 4, %eax

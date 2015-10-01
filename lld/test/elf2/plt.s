@@ -12,7 +12,7 @@
 // CHECK-NEXT:   SHF_ALLOC
 // CHECK-NEXT:   SHF_EXECINSTR
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x16000
+// CHECK-NEXT: Address: 0x12020
 // CHECK-NEXT: Offset:
 // CHECK-NEXT: Size: 24
 // CHECK-NEXT: Link: 0
@@ -21,35 +21,35 @@
 
 // CHECK:      Relocations [
 // CHECK-NEXT:   Section ({{.*}}) .rela.dyn {
-// CHECK-NEXT:     0x15000 R_X86_64_GLOB_DAT bar 0x0
-// CHECK-NEXT:     0x15008 R_X86_64_GLOB_DAT zed 0x0
-// CHECK-NEXT:     0x15010 R_X86_64_GLOB_DAT _start 0x0
+// CHECK-NEXT:     0x130A0 R_X86_64_GLOB_DAT bar 0x0
+// CHECK-NEXT:     0x130A8 R_X86_64_GLOB_DAT zed 0x0
+// CHECK-NEXT:     0x130B0 R_X86_64_GLOB_DAT _start 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
 // Unfortunately FileCheck can't do math, so we have to check for explicit
 // values:
 
-// 0x16000 - (0x11000 + 1) - 4 = 20475
-// 0x16000 - (0x11005 + 1) - 4 = 20470
-// 0x16008 - (0x1100a + 1) - 4 = 20473
+// 0x12020 - (0x12000 + 1) - 4 = 27
+// 0x12020 - (0x12005 + 1) - 4 = 22
+// 0x12028 - (0x1200a + 1) - 4 = 25
 
 // DISASM:      _start:
-// DISASM-NEXT:   11000:  e9 fb 4f 00 00  jmp  20475
-// DISASM-NEXT:   11005:  e9 f6 4f 00 00  jmp  20470
-// DISASM-NEXT:   1100a:  e9 f9 4f 00 00  jmp  20473
+// DISASM-NEXT:   12000:  e9 {{.*}}       jmp  27
+// DISASM-NEXT:   12005:  e9 {{.*}}       jmp  22
+// DISASM-NEXT:   1200a:  e9 {{.*}}       jmp  25
 
-// 0x15000 - 0x16006  = -4102
-// 0x15008 - 0x1600e  = -4102
+// 0x130A0 - 0x12026  = 4218
+// 0x130A8 - 0x1202e  = 4218
 
 // DISASM:      Disassembly of section .plt:
 // DISASM-NEXT: .plt:
-// DISASM-NEXT:   16000:  ff 25 fa ef ff ff  jmpq *-4102(%rip)
-// DISASM-NEXT:   16006:  90                 nop
-// DISASM-NEXT:   16007:  90                 nop
-// DISASM-NEXT:   16008:  ff 25 fa ef ff ff  jmpq *-4102(%rip)
-// DISASM-NEXT:   1600e:  90                 nop
-// DISASM-NEXT:   1600f:  90                 nop
+// DISASM-NEXT:   12020:  ff 25 {{.*}}       jmpq *4218(%rip)
+// DISASM-NEXT:   12026:  90                 nop
+// DISASM-NEXT:   12027:  90                 nop
+// DISASM-NEXT:   12028:  ff 25 {{.*}}       jmpq *4218(%rip)
+// DISASM-NEXT:   1202e:  90                 nop
+// DISASM-NEXT:   1202f:  90                 nop
 
 .global _start
 _start:
