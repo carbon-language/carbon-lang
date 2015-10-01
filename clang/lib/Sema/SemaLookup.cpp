@@ -3818,6 +3818,8 @@ void TypoCorrectionConsumer::addNamespaces(
       SSIsTemplate = T->getTypeClass() == Type::TemplateSpecialization;
   }
   for (const auto *TI : SemaRef.getASTContext().types()) {
+    if (!TI->isClassType() && isa<TemplateSpecializationType>(TI))
+      continue;
     if (CXXRecordDecl *CD = TI->getAsCXXRecordDecl()) {
       CD = CD->getCanonicalDecl();
       if (!CD->isDependentType() && !CD->isAnonymousStructOrUnion() &&
