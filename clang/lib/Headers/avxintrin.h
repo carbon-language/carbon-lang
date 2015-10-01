@@ -35,6 +35,10 @@ typedef int __v8si __attribute__ ((__vector_size__ (32)));
 typedef short __v16hi __attribute__ ((__vector_size__ (32)));
 typedef char __v32qi __attribute__ ((__vector_size__ (32)));
 
+/* We need an explicitly signed variant for char. Note that this shouldn't
+ * appear in the interface though. */
+typedef signed char __v32qs __attribute__((__vector_size__(32)));
+
 typedef float __m256 __attribute__ ((__vector_size__ (32)));
 typedef double __m256d __attribute__((__vector_size__(32)));
 typedef long long __m256i __attribute__((__vector_size__(32)));

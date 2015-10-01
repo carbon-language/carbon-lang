@@ -1,11 +1,34 @@
 // REQUIRES: x86-registered-target
 // RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -target-feature +sse4.2 -emit-llvm -o - -Werror | FileCheck %s
+// RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -target-feature +sse4.2 -fno-signed-char -emit-llvm -o - -Werror | FileCheck %s
 // RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -target-feature +sse4.2 -S -o - -Werror | FileCheck %s --check-prefix=CHECK-ASM
+// RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -target-feature +sse4.2 -fno-signed-char -S -o - -Werror | FileCheck %s --check-prefix=CHECK-ASM
 
 // Don't include mm_malloc.h, it's system specific.
 #define __MM_MALLOC_H
 
 #include <x86intrin.h>
+
+__m128i test_mm_cmpgt_epi8(__m128i A, __m128i B) {
+  // CHECK-LABEL: test_mm_cmpgt_epi8
+  // CHECK: icmp sgt <16 x i8>
+  // CHECK-ASM: pcmpgtb %xmm{{.*}}, %xmm{{.*}}
+  return _mm_cmpgt_epi8(A, B);
+}
+
+__m128i test_mm_cmpgt_epi16(__m128i A, __m128i B) {
+  // CHECK-LABEL: test_mm_cmpgt_epi16
+  // CHECK: icmp sgt <8 x i16>
+  // CHECK-ASM: pcmpgtw %xmm{{.*}}, %xmm{{.*}}
+  return _mm_cmpgt_epi16(A, B);
+}
+
+__m128i test_mm_cmpgt_epi32(__m128i A, __m128i B) {
+  // CHECK-LABEL: test_mm_cmpgt_epi32
+  // CHECK: icmp sgt <4 x i32>
+  // CHECK-ASM: pcmpgtd %xmm{{.*}}, %xmm{{.*}}
+  return _mm_cmpgt_epi32(A, B);
+}
 
 __m128i test_mm_cmpgt_epi64(__m128i A, __m128i B) {
   // CHECK-LABEL: test_mm_cmpgt_epi64

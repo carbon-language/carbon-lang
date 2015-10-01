@@ -35,6 +35,10 @@ typedef long long __v2di __attribute__ ((__vector_size__ (16)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
 typedef char __v16qi __attribute__((__vector_size__(16)));
 
+/* We need an explicitly signed variant for char. Note that this shouldn't
+ * appear in the interface though. */
+typedef signed char __v16qs __attribute__((__vector_size__(16)));
+
 #include <f16cintrin.h>
 
 /* Define the default attributes for the functions in this file. */
@@ -996,8 +1000,7 @@ static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_cmpgt_epi8(__m128i __a, __m128i __b)
 {
   /* This function always performs a signed comparison, but __v16qi is a char
-     which may be signed or unsigned. */
-  typedef signed char __v16qs __attribute__((__vector_size__(16)));
+     which may be signed or unsigned, so use __v16qs. */
   return (__m128i)((__v16qs)__a > (__v16qs)__b);
 }
 

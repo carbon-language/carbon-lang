@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -target-feature +avx2 -emit-llvm -o - -Werror | FileCheck %s
+// RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -target-feature +avx2 -fno-signed-char -emit-llvm -o - -Werror | FileCheck %s
 // RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -target-feature +avx2 -S -o - -Werror | FileCheck %s --check-prefix=CHECK-ASM
+// RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -target-feature +avx2 -fno-signed-char -S -o - -Werror | FileCheck %s --check-prefix=CHECK-ASM
 
 // REQUIRES: x86-registered-target
 

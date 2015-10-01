@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -ffreestanding -target-feature +avx512bw -emit-llvm -o - -Werror | FileCheck %s
+// RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -ffreestanding -target-feature +avx512bw -fno-signed-char -emit-llvm -o - -Werror | FileCheck %s
 
 #include <immintrin.h>
 
