@@ -241,17 +241,13 @@ void SymbolTable::addMemberFile(Lazy *Body) {
 
 namespace lld {
 namespace elf2 {
-template void SymbolTable::addSyntheticSym(StringRef Name,
-                                           OutputSection<ELF32LE> &Section,
-                                           ELFFile<ELF32LE>::uintX_t Value);
-template void SymbolTable::addSyntheticSym(StringRef Name,
-                                           OutputSection<ELF32BE> &Section,
-                                           ELFFile<ELF32BE>::uintX_t Value);
-template void SymbolTable::addSyntheticSym(StringRef Name,
-                                           OutputSection<ELF64LE> &Section,
-                                           ELFFile<ELF64LE>::uintX_t Value);
-template void SymbolTable::addSyntheticSym(StringRef Name,
-                                           OutputSection<ELF64BE> &Section,
-                                           ELFFile<ELF64BE>::uintX_t Value);
+template void SymbolTable::addSyntheticSym(StringRef, OutputSection<ELF32LE> &,
+                                           ELFFile<ELF32LE>::uintX_t);
+template void SymbolTable::addSyntheticSym(StringRef, OutputSection<ELF32BE> &,
+                                           ELFFile<ELF32BE>::uintX_t);
+template void SymbolTable::addSyntheticSym(StringRef, OutputSection<ELF64LE> &,
+                                           ELFFile<ELF64LE>::uintX_t);
+template void SymbolTable::addSyntheticSym(StringRef, OutputSection<ELF64BE> &,
+                                           ELFFile<ELF64BE>::uintX_t);
 }
 }
