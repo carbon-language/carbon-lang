@@ -531,6 +531,23 @@ ReSimplify:
     break;
   }
 
+  case X86::CLEANUPRET: {
+    // Replace CATCHRET with the appropriate RET.
+    OutMI = MCInst();
+    OutMI.setOpcode(getRetOpcode(AsmPrinter.getSubtarget()));
+    break;
+  }
+
+  case X86::CATCHRET: {
+    // Replace CATCHRET with the appropriate RET.
+    const X86Subtarget &Subtarget = AsmPrinter.getSubtarget();
+    unsigned ReturnReg = Subtarget.is64Bit() ? X86::RAX : X86::EAX;
+    OutMI = MCInst();
+    OutMI.setOpcode(getRetOpcode(Subtarget));
+    OutMI.addOperand(MCOperand::createReg(ReturnReg));
+    break;
+  }
+
   // TAILJMPd, TAILJMPd64 - Lower to the correct jump instructions.
   case X86::TAILJMPr:
   case X86::TAILJMPd:
@@ -1076,6 +1093,18 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
                             X86ATTInstPrinter::getRegisterName(Reg));
     break;
   }
+  case X86::CLEANUPRET: {
+    // Lower these as normal, but add some comments.
+    OutStreamer->AddComment("CLEANUPRET");
+    break;
+  }
+
+  case X86::CATCHRET: {
+    // Lower these as normal, but add some comments.
+    OutStreamer->AddComment("CATCHRET");
+    break;
+  }
+
   case X86::TAILJMPr:
   case X86::TAILJMPm:
   case X86::TAILJMPd:

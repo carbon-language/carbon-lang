@@ -161,6 +161,8 @@ struct WinEHTryBlockMapEntry {
 
 struct WinEHFuncInfo {
   DenseMap<const Instruction *, int> EHPadStateMap;
+  DenseMap<const CatchReturnInst *, const BasicBlock *>
+      CatchRetSuccessorColorMap;
   DenseMap<MCSymbol *, std::pair<int, MCSymbol *>> InvokeToStateMap;
   SmallVector<WinEHUnwindMapEntry, 4> UnwindMap;
   SmallVector<WinEHTryBlockMapEntry, 4> TryBlockMap;
@@ -191,5 +193,8 @@ void calculateWinCXXEHStateNumbers(const Function *ParentFn,
 
 void calculateSEHStateNumbers(const Function *ParentFn,
                               WinEHFuncInfo &FuncInfo);
+
+void calculateCatchReturnSuccessorColors(const Function *Fn,
+                                         WinEHFuncInfo &FuncInfo);
 }
 #endif // LLVM_CODEGEN_WINEHFUNCINFO_H

@@ -399,6 +399,29 @@ FunctionPass *llvm::createWinEHPass(const TargetMachine *TM) {
   return new WinEHPrepare(TM);
 }
 
+static bool
+findExceptionalConstructs(Function &Fn,
+                          SmallVectorImpl<LandingPadInst *> &LPads,
+                          SmallVectorImpl<ResumeInst *> &Resumes,
+                          SmallVectorImpl<BasicBlock *> &EntryBlocks) {
+  bool ForExplicitEH = false;
+  for (BasicBlock &BB : Fn) {
+    Instruction *First = BB.getFirstNonPHI();
+    if (auto *LP = dyn_cast<LandingPadInst>(First)) {
+      LPads.push_back(LP);
+    } else if (First->isEHPad()) {
+      if (!ForExplicitEH)
+        EntryBlocks.push_back(&Fn.getEntryBlock());
+      if (!isa<CatchEndPadInst>(First) && !isa<CleanupEndPadInst>(First))
+        EntryBlocks.push_back(&BB);
+      ForExplicitEH = true;
+    }
+    if (auto *Resume = dyn_cast<ResumeInst>(BB.getTerminator()))
+      Resumes.push_back(Resume);
+  }
+  return ForExplicitEH;
+}
+
 bool WinEHPrepare::runOnFunction(Function &Fn) {
   if (!Fn.hasPersonalityFn())
     return false;
@@ -417,21 +440,8 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
   SmallVector<LandingPadInst *, 4> LPads;
   SmallVector<ResumeInst *, 4> Resumes;
   SmallVector<BasicBlock *, 4> EntryBlocks;
-  bool ForExplicitEH = false;
-  for (BasicBlock &BB : Fn) {
-    Instruction *First = BB.getFirstNonPHI();
-    if (auto *LP = dyn_cast<LandingPadInst>(First)) {
-      LPads.push_back(LP);
-    } else if (First->isEHPad()) {
-      if (!ForExplicitEH)
-        EntryBlocks.push_back(&Fn.getEntryBlock());
-      if (!isa<CatchEndPadInst>(First) && !isa<CleanupEndPadInst>(First))
-        EntryBlocks.push_back(&BB);
-      ForExplicitEH = true;
-    }
-    if (auto *Resume = dyn_cast<ResumeInst>(BB.getTerminator()))
-      Resumes.push_back(Resume);
-  }
+  bool ForExplicitEH =
+      findExceptionalConstructs(Fn, LPads, Resumes, EntryBlocks);
 
   if (ForExplicitEH)
     return prepareExplicitEH(Fn, EntryBlocks);
@@ -2878,8 +2888,11 @@ void WinEHPrepare::replaceTerminatePadWithCleanup(Function &F) {
   }
 }
 
-void WinEHPrepare::colorFunclets(Function &F,
-                                 SmallVectorImpl<BasicBlock *> &EntryBlocks) {
+static void
+colorFunclets(Function &F, SmallVectorImpl<BasicBlock *> &EntryBlocks,
+              std::map<BasicBlock *, std::set<BasicBlock *>> &BlockColors,
+              std::map<BasicBlock *, std::set<BasicBlock *>> &FuncletBlocks,
+              std::map<BasicBlock *, std::set<BasicBlock *>> &FuncletChildren) {
   SmallVector<std::pair<BasicBlock *, BasicBlock *>, 16> Worklist;
   BasicBlock *EntryBlock = &F.getEntryBlock();
 
@@ -2973,6 +2986,56 @@ void WinEHPrepare::colorFunclets(Function &F,
       FuncletChildren[Parent].insert(FuncletEntry);
     ColorMapItem.clear();
     ColorMapItem.insert(FuncletEntry);
+  }
+}
+
+void WinEHPrepare::colorFunclets(Function &F,
+                                 SmallVectorImpl<BasicBlock *> &EntryBlocks) {
+  ::colorFunclets(F, EntryBlocks, BlockColors, FuncletBlocks, FuncletChildren);
+}
+
+void llvm::calculateCatchReturnSuccessorColors(const Function *Fn,
+                                               WinEHFuncInfo &FuncInfo) {
+  SmallVector<LandingPadInst *, 4> LPads;
+  SmallVector<ResumeInst *, 4> Resumes;
+  SmallVector<BasicBlock *, 4> EntryBlocks;
+  // colorFunclets needs the set of EntryBlocks, get them using
+  // findExceptionalConstructs.
+  bool ForExplicitEH = findExceptionalConstructs(const_cast<Function &>(*Fn),
+                                                 LPads, Resumes, EntryBlocks);
+  if (!ForExplicitEH)
+    return;
+
+  std::map<BasicBlock *, std::set<BasicBlock *>> BlockColors;
+  std::map<BasicBlock *, std::set<BasicBlock *>> FuncletBlocks;
+  std::map<BasicBlock *, std::set<BasicBlock *>> FuncletChildren;
+  // Figure out which basic blocks belong to which funclets.
+  colorFunclets(const_cast<Function &>(*Fn), EntryBlocks, BlockColors,
+                FuncletBlocks, FuncletChildren);
+
+  // We need to find the catchret successors.  To do this, we must first find
+  // all the catchpad funclets.
+  for (auto &Funclet : FuncletBlocks) {
+    // Figure out what kind of funclet we are looking at; We only care about
+    // catchpads.
+    BasicBlock *FuncletPadBB = Funclet.first;
+    Instruction *FirstNonPHI = FuncletPadBB->getFirstNonPHI();
+    auto *CatchPad = dyn_cast<CatchPadInst>(FirstNonPHI);
+    if (!CatchPad)
+      continue;
+
+    // The users of a catchpad are always catchrets.
+    for (User *Exit : CatchPad->users()) {
+      auto *CatchReturn = cast<CatchReturnInst>(Exit);
+      BasicBlock *CatchRetSuccessor = CatchReturn->getSuccessor();
+      std::set<BasicBlock *> &SuccessorColors = BlockColors[CatchRetSuccessor];
+      assert(SuccessorColors.size() == 1 && "Expected BB to be monochrome!");
+      BasicBlock *Color = *SuccessorColors.begin();
+      if (auto *CPI = dyn_cast<CatchPadInst>(Color->getFirstNonPHI()))
+        Color = CPI->getNormalDest();
+      // Record the catchret successor's funclet membership.
+      FuncInfo.CatchRetSuccessorColorMap[CatchReturn] = Color;
+    }
   }
 }
 

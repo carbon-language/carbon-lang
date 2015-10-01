@@ -186,6 +186,10 @@ def SDTBrind : SDTypeProfile<0, 1, [        // brind
   SDTCisPtrTy<0>
 ]>;
 
+def SDTCatchret : SDTypeProfile<0, 2, [     // catchret
+  SDTCisVT<0, OtherVT>, SDTCisVT<1, OtherVT>
+]>;
+
 def SDTNone : SDTypeProfile<0, 0, []>;      // ret, trap
 
 def SDTLoad : SDTypeProfile<1, 1, [         // load
@@ -451,7 +455,7 @@ def brcc       : SDNode<"ISD::BR_CC"      , SDTBrCC,   [SDNPHasChain]>;
 def brcond     : SDNode<"ISD::BRCOND"     , SDTBrcond, [SDNPHasChain]>;
 def brind      : SDNode<"ISD::BRIND"      , SDTBrind,  [SDNPHasChain]>;
 def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
-def catchret   : SDNode<"ISD::CATCHRET"   , SDTBr,     [SDNPHasChain]>;
+def catchret   : SDNode<"ISD::CATCHRET"   , SDTCatchret, [SDNPHasChain]>;
 def cleanupret : SDNode<"ISD::CLEANUPRET" , SDTNone,   [SDNPHasChain]>;
 
 def trap       : SDNode<"ISD::TRAP"       , SDTNone,

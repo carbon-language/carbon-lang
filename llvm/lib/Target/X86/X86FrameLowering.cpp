@@ -1120,24 +1120,12 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
       BuildMI(*RestoreMBB, RestoreMBBI, DL, TII.get(X86::JMP_4))
           .addMBB(TargetMBB);
     }
-    // Replace CATCHRET with the appropriate RET.
-    unsigned RetOp = STI.is64Bit() ? X86::RETQ : X86::RETL;
-    MachineBasicBlock::iterator NewExit =
-        BuildMI(MBB, MBBI, DL, TII.get(RetOp)).addReg(ReturnReg);
-    MBBI->eraseFromParent();
-    MBBI = NewExit;
   } else if (MBBI->getOpcode() == X86::CLEANUPRET) {
     NumBytes = MFI->getMaxCallFrameSize();
     assert(hasFP(MF) && "EH funclets without FP not yet implemented");
     BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::POP64r : X86::POP32r),
             MachineFramePtr)
         .setMIFlag(MachineInstr::FrameDestroy);
-    // Replace CLEANUPRET with the appropriate RET.
-    unsigned RetOp = STI.is64Bit() ? X86::RETQ : X86::RETL;
-    MachineBasicBlock::iterator NewExit =
-        BuildMI(MBB, MBBI, DL, TII.get(RetOp));
-    MBBI->eraseFromParent();
-    MBBI = NewExit;
   } else if (hasFP(MF)) {
     // Calculate required stack adjustment.
     uint64_t FrameSize = StackSize - SlotSize;

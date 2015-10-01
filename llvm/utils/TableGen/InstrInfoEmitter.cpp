@@ -430,7 +430,7 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "namespace llvm {\n";
   OS << "struct " << ClassName << " : public TargetInstrInfo {\n"
      << "  explicit " << ClassName
-     << "(int CFSetupOpcode = -1, int CFDestroyOpcode = -1);\n"
+     << "(int CFSetupOpcode = -1, int CFDestroyOpcode = -1, int CatchRetOpcode = -1);\n"
      << "  ~" << ClassName << "() override {}\n"
      << "};\n";
   OS << "} // end llvm namespace \n";
@@ -445,8 +445,8 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "extern const unsigned " << TargetName << "InstrNameIndices[];\n";
   OS << "extern const char " << TargetName << "InstrNameData[];\n";
   OS << ClassName << "::" << ClassName
-     << "(int CFSetupOpcode, int CFDestroyOpcode)\n"
-     << "  : TargetInstrInfo(CFSetupOpcode, CFDestroyOpcode) {\n"
+     << "(int CFSetupOpcode, int CFDestroyOpcode, int CatchRetOpcode)\n"
+     << "  : TargetInstrInfo(CFSetupOpcode, CFDestroyOpcode, CatchRetOpcode) {\n"
      << "  InitMCInstrInfo(" << TargetName << "Insts, " << TargetName
      << "InstrNameIndices, " << TargetName << "InstrNameData, "
      << NumberedInstructions.size() << ");\n}\n";

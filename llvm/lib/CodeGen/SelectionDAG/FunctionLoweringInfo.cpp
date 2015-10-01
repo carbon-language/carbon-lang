@@ -290,8 +290,10 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
   if (Personality == EHPersonality::MSVC_CXX)
     calculateWinCXXEHStateNumbers(WinEHParentFn, EHInfo);
-  else
+  else if (isAsynchronousEHPersonality(Personality))
     calculateSEHStateNumbers(WinEHParentFn, EHInfo);
+
+  calculateCatchReturnSuccessorColors(WinEHParentFn, EHInfo);
 
   // Map all BB references in the WinEH data to MBBs.
   for (WinEHTryBlockMapEntry &TBME : EHInfo.TryBlockMap) {

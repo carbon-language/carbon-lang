@@ -101,9 +101,11 @@ struct X86MemoryFoldTableEntry {
 void X86InstrInfo::anchor() {}
 
 X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
-    : X86GenInstrInfo(
-          (STI.isTarget64BitLP64() ? X86::ADJCALLSTACKDOWN64 : X86::ADJCALLSTACKDOWN32),
-          (STI.isTarget64BitLP64() ? X86::ADJCALLSTACKUP64 : X86::ADJCALLSTACKUP32)),
+    : X86GenInstrInfo((STI.isTarget64BitLP64() ? X86::ADJCALLSTACKDOWN64
+                                               : X86::ADJCALLSTACKDOWN32),
+                      (STI.isTarget64BitLP64() ? X86::ADJCALLSTACKUP64
+                                               : X86::ADJCALLSTACKUP32),
+                      X86::CATCHRET),
       Subtarget(STI), RI(STI.getTargetTriple()) {
 
   static const X86MemoryFoldTableEntry MemoryFoldTable2Addr[] = {
