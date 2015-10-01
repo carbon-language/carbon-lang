@@ -362,3 +362,12 @@ PlatformAndroid::DownloadSymbolFile (const lldb::ModuleSP& module_sp,
     // Download the symbolfile from the remote device
     return GetFile(symfile_platform_filespec, dst_file_spec);
 }
+
+bool
+PlatformAndroid::GetRemoteOSVersion ()
+{
+    m_major_os_version = GetSdkVersion();
+    m_minor_os_version = 0;
+    m_update_os_version = 0;
+    return m_major_os_version != 0;
+}
