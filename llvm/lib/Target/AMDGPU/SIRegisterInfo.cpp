@@ -326,6 +326,8 @@ unsigned SIRegisterInfo::getHWRegIndex(unsigned Reg) const {
   return getEncodingValue(Reg) & 0xff;
 }
 
+// FIXME: This is very slow. It might be worth creating a map from physreg to
+// register class.
 const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
   assert(!TargetRegisterInfo::isVirtualRegister(Reg));
 
