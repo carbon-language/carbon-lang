@@ -113,8 +113,8 @@ llvm::Value *expandCodeFor(Scop &S, llvm::ScalarEvolution &SE,
 /// the following conditions:
 ///
 ///  - It is terminated by an unreachable instruction
-///  - It contains a call to a function named:
-///     + __ubsan_handle_out_of_bounds
+///  - It contains a call to a function listed in the command line argument
+///     --polly-error-functions=name1,name2,name3
 ///
 /// @param BB The block to check.
 ///

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/Support/ScopHelper.h"
+#include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -27,6 +28,11 @@ using namespace llvm;
 using namespace polly;
 
 #define DEBUG_TYPE "polly-scop-helper"
+
+static cl::list<std::string>
+    ErrorFunctions("polly-error-functions",
+                   cl::desc("A list of error functions"), cl::Hidden,
+                   cl::ZeroOrMore, cl::CommaSeparated, cl::cat(PollyCategory));
 
 Value *polly::getPointerOperand(Instruction &Inst) {
   if (LoadInst *load = dyn_cast<LoadInst>(&Inst))
@@ -343,14 +349,20 @@ Value *polly::expandCodeFor(Scop &S, ScalarEvolution &SE, const DataLayout &DL,
 
 bool polly::isErrorBlock(BasicBlock &BB) {
 
-  for (Instruction &Inst : BB)
-    if (CallInst *CI = dyn_cast<CallInst>(&Inst))
-      if (Function *F = CI->getCalledFunction())
-        if (F->getName().equals("__ubsan_handle_out_of_bounds"))
-          return true;
-
   if (isa<UnreachableInst>(BB.getTerminator()))
     return true;
+
+  if (ErrorFunctions.empty())
+    return false;
+
+  for (Instruction &Inst : BB)
+    if (CallInst *CI = dyn_cast<CallInst>(&Inst))
+      if (Function *F = CI->getCalledFunction()) {
+        const auto &FnName = F->getName();
+        for (const auto &ErrorFn : ErrorFunctions)
+          if (FnName.equals(ErrorFn))
+            return true;
+      }
 
   return false;
 }
