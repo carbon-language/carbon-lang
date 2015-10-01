@@ -33,6 +33,14 @@ defm int_r600_read_tgid : R600ReadPreloadRegisterIntrinsic_xyz <
                                        "__builtin_r600_read_tgid">;
 defm int_r600_read_tidig : R600ReadPreloadRegisterIntrinsic_xyz <
                                        "__builtin_r600_read_tidig">;
+
+def int_r600_rat_store_typed :
+  // 1st parameter: Data
+  // 2nd parameter: Index
+  // 3rd parameter: Constant RAT ID
+  Intrinsic<[], [llvm_v4i32_ty, llvm_v4i32_ty, llvm_i32_ty], []>,
+  GCCBuiltin<"__builtin_r600_rat_store_typed">;
+
 } // End TargetPrefix = "r600"
 
 let TargetPrefix = "AMDGPU" in {

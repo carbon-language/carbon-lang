@@ -286,6 +286,14 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
             .addImm(isEOP(I)); // Set End of program bit
     break;
   }
+  case AMDGPU::RAT_STORE_TYPED_eg: {
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(MI->getOpcode()))
+            .addOperand(MI->getOperand(0))
+            .addOperand(MI->getOperand(1))
+            .addOperand(MI->getOperand(2))
+            .addImm(isEOP(I)); // Set End of program bit
+    break;
+  }
 
   case AMDGPU::TXD: {
     unsigned T0 = MRI.createVirtualRegister(&AMDGPU::R600_Reg128RegClass);
