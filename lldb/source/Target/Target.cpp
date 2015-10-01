@@ -1892,8 +1892,6 @@ Target::ImageSearchPathsChanged
 TypeSystem *
 Target::GetScratchTypeSystemForLanguage (lldb::LanguageType language, bool create_on_demand)
 {
-    Mutex::Locker locker (m_mutex);
-    
     if (language == eLanguageTypeMipsAssembler // GNU AS and LLVM use it for all assembly code
         || language == eLanguageTypeUnknown) {
         language = eLanguageTypeC;
