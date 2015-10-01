@@ -193,15 +193,12 @@ bool SIFixSGPRCopies::isVGPRToSGPRCopy(const MachineInstr &Copy,
     return false;
   }
 
-  const TargetRegisterClass *DstRC = MRI.getRegClass(DstReg);
-
-  const TargetRegisterClass *SrcRC;
-
-  if (!TargetRegisterInfo::isVirtualRegister(SrcReg) ||
-      MRI.getRegClass(SrcReg) == &AMDGPU::VReg_1RegClass)
+  if (!TargetRegisterInfo::isVirtualRegister(SrcReg))
     return false;
 
-  SrcRC = TRI->getSubRegClass(MRI.getRegClass(SrcReg), SrcSubReg);
+  const TargetRegisterClass *DstRC = MRI.getRegClass(DstReg);
+  const TargetRegisterClass *SrcRC
+    = TRI->getSubRegClass(MRI.getRegClass(SrcReg), SrcSubReg);
   return TRI->isSGPRClass(DstRC) && TRI->hasVGPRs(SrcRC);
 }
 
