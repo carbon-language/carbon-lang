@@ -286,19 +286,34 @@ _mm_cmpeq_epi64(__m128i __V1, __m128i __V2)
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_cvtepi8_epi16(__m128i __V)
 {
-  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__v16qi)__V, (__v16qi)__V, 0, 1, 2, 3, 4, 5, 6, 7), __v8hi);
+  /* We need a local definitively signed typedef similar to __v16qi even in the
+   * presence of __UNSIGNED_CHAR__.
+   * FIXME: __v16qi should almost certainly be definitively signed.
+   */
+  typedef signed char __signed_v16qi __attribute__((__vector_size__(16)));
+  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__signed_v16qi)__V, (__signed_v16qi)__V, 0, 1, 2, 3, 4, 5, 6, 7), __v8hi);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_cvtepi8_epi32(__m128i __V)
 {
-  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__v16qi)__V, (__v16qi)__V, 0, 1, 2, 3), __v4si);
+  /* We need a local definitively signed typedef similar to __v16qi even in the
+   * presence of __UNSIGNED_CHAR__.
+   * FIXME: __v16qi should almost certainly be definitively signed.
+   */
+  typedef signed char __signed_v16qi __attribute__((__vector_size__(16)));
+  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__signed_v16qi)__V, (__signed_v16qi)__V, 0, 1, 2, 3), __v4si);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_cvtepi8_epi64(__m128i __V)
 {
-  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__v16qi)__V, (__v16qi)__V, 0, 1), __v2di);
+  /* We need a local definitively signed typedef similar to __v16qi even in the
+   * presence of __UNSIGNED_CHAR__.
+   * FIXME: __v16qi should almost certainly be definitively signed.
+   */
+  typedef signed char __signed_v16qi __attribute__((__vector_size__(16)));
+  return (__m128i)__builtin_convertvector(__builtin_shufflevector((__signed_v16qi)__V, (__signed_v16qi)__V, 0, 1), __v2di);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS
