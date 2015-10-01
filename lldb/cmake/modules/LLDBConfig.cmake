@@ -48,15 +48,39 @@ if (NOT LLDB_DISABLE_PYTHON)
   if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
     if (NOT "${PYTHON_HOME}" STREQUAL "")
       file(TO_CMAKE_PATH "${PYTHON_HOME}" PYTHON_HOME)
-      if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-        file(TO_CMAKE_PATH "${PYTHON_HOME}/python_d.exe" PYTHON_EXECUTABLE)
-        file(TO_CMAKE_PATH "${PYTHON_HOME}/libs/python27_d.lib" PYTHON_LIBRARY)
-        file(TO_CMAKE_PATH "${PYTHON_HOME}/python27_d.dll" PYTHON_DLL)
-      else()
-        file(TO_CMAKE_PATH "${PYTHON_HOME}/python.exe" PYTHON_EXECUTABLE)
-        file(TO_CMAKE_PATH "${PYTHON_HOME}/libs/python27.lib" PYTHON_LIBRARY)
-        file(TO_CMAKE_PATH "${PYTHON_HOME}/python27.dll" PYTHON_DLL)
-      endif()
+      file(TO_CMAKE_PATH "${PYTHON_HOME}/python_d.exe" PYTHON_DEBUG_EXE)
+      file(TO_CMAKE_PATH "${PYTHON_HOME}/libs/python27_d.lib" PYTHON_DEBUG_LIB)
+      file(TO_CMAKE_PATH "${PYTHON_HOME}/python27_d.dll" PYTHON_DEBUG_DLL)
+
+      file(TO_CMAKE_PATH "${PYTHON_HOME}/python.exe" PYTHON_RELEASE_EXE)
+      file(TO_CMAKE_PATH "${PYTHON_HOME}/libs/python27.lib" PYTHON_RELEASE_LIB)
+      file(TO_CMAKE_PATH "${PYTHON_HOME}/python27.dll" PYTHON_RELEASE_DLL)
+
+      # Generator expressions are evaluated in the context of each build configuration generated
+      # by CMake. Here we use the $<CONFIG:Debug>:VALUE logical generator expression to ensure
+      # that the debug Python library, DLL, and executable are used in the Debug build configuration.
+      #
+      # Generator expressions can be difficult to grok at first so here's a breakdown of the one
+      # used for PYTHON_LIBRARY:
+      #
+      # 1. $<CONFIG:Debug> evaluates to 1 when the Debug configuration is being generated,
+      #    or 0 in all other cases.
+      # 2. $<$<CONFIG:Debug>:${PYTHON_DEBUG_LIB}> expands to ${PYTHON_DEBUG_LIB} when the Debug
+      #    configuration is being generated, or nothing (literally) in all other cases.
+      # 3. $<$<NOT:$<CONFIG:Debug>>:${PYTHON_RELEASE_LIB}> expands to ${PYTHON_RELEASE_LIB} when
+      #    any configuration other than Debug is being generated, or nothing in all other cases.
+      # 4. The conditionals in 2 & 3 are mutually exclusive.
+      # 5. A logical expression with a conditional that evaluates to 0 yields no value at all.
+      #
+      # Due to 4 & 5 it's possible to concatenate 2 & 3 to obtain a single value specific to each
+      # build configuration. In this example the value will be ${PYTHON_DEBUG_LIB} when generating the
+      # Debug configuration, or ${PYTHON_RELEASE_LIB} when generating any other configuration.
+      # Note that it's imperative that there is no whitespace between the two expressions, otherwise
+      # CMake will insert a semicolon between the two.
+
+      set (PYTHON_EXECUTABLE $<$<CONFIG:Debug>:${PYTHON_DEBUG_EXE}>$<$<NOT:$<CONFIG:Debug>>:${PYTHON_RELEASE_EXE}>)
+      set (PYTHON_LIBRARY $<$<CONFIG:Debug>:${PYTHON_DEBUG_LIB}>$<$<NOT:$<CONFIG:Debug>>:${PYTHON_RELEASE_LIB}>)
+      set (PYTHON_DLL $<$<CONFIG:Debug>:${PYTHON_DEBUG_DLL}>$<$<NOT:$<CONFIG:Debug>>:${PYTHON_RELEASE_DLL}>)
 
       file(TO_CMAKE_PATH "${PYTHON_HOME}/Include" PYTHON_INCLUDE_DIR)
       if (NOT LLDB_RELOCATABLE_PYTHON)
