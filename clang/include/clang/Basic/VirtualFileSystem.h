@@ -63,8 +63,6 @@ public:
   uint32_t getUser() const { return User; }
   uint32_t getGroup() const { return Group; }
   uint64_t getSize() const { return Size; }
-  void setType(llvm::sys::fs::file_type v) { Type = v; }
-  void setPermissions(llvm::sys::fs::perms p) { Perms = p; }
   /// @}
   /// @name Status queries
   /// These are static queries in llvm::sys::fs.
