@@ -300,18 +300,32 @@ ELF:     Section: Absolute (0xFFF1)
 ELF:   }
 ELF: ]
 
-ELF: DynamicSection [ (9 entries)
-ELF:   Tag        Type                 Name/Value
-ELF:   00000001 NEEDED               SharedLibrary (libc.so.6)
-ELF:   00000001 NEEDED               SharedLibrary (libm.so.6)
-ELF:   0000000E SONAME               LibrarySoname (libfoo.so)
-ELF:   00000004 HASH                 {{[0-9a-f]+}}
-ELF:   00000005 STRTAB               {{[0-9a-f]+}}
-ELF:   00000006 SYMTAB               {{[0-9a-f]+}}
-ELF:   0000000A STRSZ                {{[0-9]+}} (bytes)
-ELF:   0000000B SYMENT               {{[0-9]+}} (bytes)
-ELF:   00000000 NULL                 0x0
-ELF: ]
+ELF32: DynamicSection [ (9 entries)
+ELF32:   Tag        Type                 Name/Value
+ELF32:   0x00000001 NEEDED               SharedLibrary (libc.so.6)
+ELF32:   0x00000001 NEEDED               SharedLibrary (libm.so.6)
+ELF32:   0x0000000E SONAME               LibrarySoname (libfoo.so)
+ELF32:   0x00000004 HASH                 {{[0-9a-f]+}}
+ELF32:   0x00000005 STRTAB               {{[0-9a-f]+}}
+ELF32:   0x00000006 SYMTAB               {{[0-9a-f]+}}
+ELF32:   0x0000000A STRSZ                {{[0-9]+}} (bytes)
+ELF32:   0x0000000B SYMENT               {{[0-9]+}} (bytes)
+ELF32:   0x00000000 NULL                 0x0
+ELF32: ]
+
+ELF64: DynamicSection [ (9 entries)
+ELF64:   Tag        Type                 Name/Value
+ELF64:   0x0000000000000001 NEEDED               SharedLibrary (libc.so.6)
+ELF64:   0x0000000000000001 NEEDED               SharedLibrary (libm.so.6)
+ELF64:   0x000000000000000E SONAME               LibrarySoname (libfoo.so)
+ELF64:   0x0000000000000004 HASH                 {{[0-9a-f]+}}
+ELF64:   0x0000000000000005 STRTAB               {{[0-9a-f]+}}
+ELF64:   0x0000000000000006 SYMTAB               {{[0-9a-f]+}}
+ELF64:   0x000000000000000A STRSZ                {{[0-9]+}} (bytes)
+ELF64:   0x000000000000000B SYMENT               {{[0-9]+}} (bytes)
+ELF64:   0x0000000000000000 NULL                 0x0
+ELF64: ]
+
 
 ELF:      NeededLibraries [
 ELF-NEXT:  libc.so.6
