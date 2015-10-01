@@ -739,7 +739,7 @@ ObjCLanguage::GetTypeScavenger ()
             return result;
         }
 
-        friend class ObjCLanguage;
+        friend class lldb_private::ObjCLanguage;
     };
     
     return std::unique_ptr<TypeScavenger>(new ObjCTypeScavenger());
