@@ -29,7 +29,7 @@ public:
     // Locating the file should happen only on the local computer or using
     // the current computers global settings.
     //----------------------------------------------------------------------
-    static FileSpec
+    static ModuleSpec
     LocateExecutableObjectFile (const ModuleSpec &module_spec);
 
     //----------------------------------------------------------------------
