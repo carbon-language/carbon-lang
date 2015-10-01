@@ -90,15 +90,18 @@ public:
   bool opCanUseInlineConstant(unsigned OpType) const;
 
   enum PreloadedValue {
-    TGID_X,
-    TGID_Y,
-    TGID_Z,
-    SCRATCH_WAVE_OFFSET,
-    SCRATCH_PTR,
-    INPUT_PTR,
-    TIDIG_X,
-    TIDIG_Y,
-    TIDIG_Z
+    // SGPRS:
+    SCRATCH_PTR         =  0,
+    INPUT_PTR           =  3,
+    TGID_X              = 10,
+    TGID_Y              = 11,
+    TGID_Z              = 12,
+    SCRATCH_WAVE_OFFSET = 14,
+    // VGPRS:
+    FIRST_VGPR_VALUE    = 15,
+    TIDIG_X             = FIRST_VGPR_VALUE,
+    TIDIG_Y             = 16,
+    TIDIG_Z             = 17,
   };
 
   /// \brief Returns the physical register that \p Value is stored in.
