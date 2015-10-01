@@ -83,7 +83,7 @@ uint8_t *SectionMemoryManager::allocateSection(MemoryGroup &MemGroup,
   // Save this address as the basis for our next request
   MemGroup.Near = MB;
 
-  MemGroup.AllocatedMem.push_back(MB);
+  MemGroup.PendingMem.push_back(MB);
   Addr = (uintptr_t)MB.base();
   uintptr_t EndOfBlock = Addr + MB.size();
 
@@ -138,6 +138,14 @@ bool SectionMemoryManager::finalizeMemory(std::string *ErrMsg)
   // relocations) will get to the data cache but not to the instruction cache.
   invalidateInstructionCache();
 
+  // Now, remember that we have successfully applied the permissions to avoid
+  // having to apply them again.
+  CodeMem.AllocatedMem.append(CodeMem.PendingMem.begin(),CodeMem.PendingMem.end());
+  CodeMem.PendingMem.clear();
+
+  RODataMem.AllocatedMem.append(RODataMem.PendingMem.begin(),RODataMem.PendingMem.end());
+  RODataMem.PendingMem.clear();
+
   return false;
 }
 
@@ -145,7 +153,7 @@ std::error_code
 SectionMemoryManager::applyMemoryGroupPermissions(MemoryGroup &MemGroup,
                                                   unsigned Permissions) {
 
-  for (sys::MemoryBlock &MB : MemGroup.AllocatedMem)
+  for (sys::MemoryBlock &MB : MemGroup.PendingMem)
     if (std::error_code EC = sys::Memory::protectMappedMemory(MB, Permissions))
       return EC;
 
@@ -153,14 +161,17 @@ SectionMemoryManager::applyMemoryGroupPermissions(MemoryGroup &MemGroup,
 }
 
 void SectionMemoryManager::invalidateInstructionCache() {
-  for (sys::MemoryBlock &Block : CodeMem.AllocatedMem)
+  for (sys::MemoryBlock &Block : CodeMem.PendingMem)
     sys::Memory::InvalidateInstructionCache(Block.base(), Block.size());
 }
 
 SectionMemoryManager::~SectionMemoryManager() {
-  for (MemoryGroup *Group : {&CodeMem, &RWDataMem, &RODataMem})
+  for (MemoryGroup *Group : {&CodeMem, &RWDataMem, &RODataMem}) {
     for (sys::MemoryBlock &Block : Group->AllocatedMem)
       sys::Memory::releaseMappedMemory(Block);
+    for (sys::MemoryBlock &Block : Group->PendingMem)
+      sys::Memory::releaseMappedMemory(Block);
+  }
 }
 
 } // namespace llvm

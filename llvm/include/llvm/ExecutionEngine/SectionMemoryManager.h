@@ -84,8 +84,23 @@ public:
 
 private:
   struct MemoryGroup {
-      SmallVector<sys::MemoryBlock, 16> AllocatedMem;
+      // PendingMem contains all allocated memory blocks
+      // which have not yet had their permissions set. Note
+      // that this tracks memory blocks that have been given to
+      // this memory manager by the system, not those
+      // given out to the user. In particular, the memory manager
+      // will give out subblocks of these MemoryBlocks in response
+      // to user requests. We track which subblocks have not beeen
+      // given out yet in `FreeMem`.
+      SmallVector<sys::MemoryBlock, 16> PendingMem;
       SmallVector<sys::MemoryBlock, 16> FreeMem;
+
+      // All allocated memory blocks that have had their permissions
+      // set (i.e. that have been finalized). Because of this, we may
+      // not give out subblocks of this memory to the user anymore,
+      // even if those subblocks have not been previously given out.
+      SmallVector<sys::MemoryBlock, 16> AllocatedMem;
+
       sys::MemoryBlock Near;
   };
 
