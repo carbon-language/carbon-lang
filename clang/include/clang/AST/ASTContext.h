@@ -968,6 +968,9 @@ public:
   const FunctionType *adjustFunctionType(const FunctionType *Fn,
                                          FunctionType::ExtInfo EInfo);
 
+  /// Adjust the given function result type.
+  CanQualType getCanonicalFunctionResultType(QualType ResultType) const;
+
   /// \brief Change the result type of a function type once it is deduced.
   void adjustDeducedFunctionResultType(FunctionDecl *FD, QualType ResultType);
 

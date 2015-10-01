@@ -685,7 +685,8 @@ void Sema::deduceClosureReturnType(CapturingScopeInfo &CSI) {
 
     QualType ReturnType =
         (RetE ? RetE->getType() : Context.VoidTy).getUnqualifiedType();
-    if (Context.hasSameType(ReturnType, CSI.ReturnType))
+    if (Context.getCanonicalFunctionResultType(ReturnType) ==
+          Context.getCanonicalFunctionResultType(CSI.ReturnType))
       continue;
 
     // FIXME: This is a poor diagnostic for ReturnStmts without expressions.
