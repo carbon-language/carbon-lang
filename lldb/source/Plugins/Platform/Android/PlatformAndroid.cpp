@@ -331,7 +331,7 @@ PlatformAndroid::DownloadSymbolFile (const lldb::ModuleSP& module_sp,
     Error error = adb.Shell("mktemp --directory --tmpdir /data/local/tmp", 5000 /* ms */, &tmpdir);
     if (error.Fail() || tmpdir.empty())
         return Error("Failed to generate temporary directory on the device (%s)", error.AsCString());
-    tmpdir.erase(tmpdir.size() - 1); // Remove trailing new line
+    tmpdir = llvm::StringRef(tmpdir).trim().str();
 
     // Create file remover for the temporary directory created on the device
     std::unique_ptr<std::string, std::function<void(std::string*)>> tmpdir_remover(
