@@ -17,3 +17,8 @@
 /// A
 @interface A<__covariant T : id, U : NSObject *> : NSObject
 @end
+
+// CHECK: <Declaration>@interface AA : A &lt;id, NSObject *&gt;
+/// AA
+@interface AA : A<id, NSObject *>
+@end

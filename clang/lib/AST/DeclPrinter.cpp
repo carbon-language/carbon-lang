@@ -1088,7 +1088,7 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   }
   
   if (SID)
-    Out << " : " << OID->getSuperClass()->getName();
+    Out << " : " << QualType(OID->getSuperClassType(), 0).getAsString(Policy);
 
   // Protocols?
   const ObjCList<ObjCProtocolDecl> &Protocols = OID->getReferencedProtocols();
