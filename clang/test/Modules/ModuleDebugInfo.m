@@ -20,6 +20,8 @@
 // CHECK: distinct !DICompileUnit(language: DW_LANG_ObjC
 // CHECK-SAME:                    isOptimized: false,
 // CHECK: !DICompositeType(tag: DW_TAG_structure_type,
+// CHECK-SAME:             name: "FwdDecl",
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type,
 // CHECK-SAME:             name: "ObjCClass",
 // CHECK: !DIObjCProperty(name: "property",
 // CHECK: !DIDerivedType(tag: DW_TAG_member, name: "ivar"
@@ -28,6 +30,9 @@
 // CHECK: !DISubprogram(name: "-[ categoryMethod]"
 
 // MODULE-CHECK: !DICompositeType(tag: DW_TAG_structure_type,
-// MODULE-CHECK-SAME:             name: "ObjCClass",
+// MODULE-CHECK-SAME:             name: "FwdDecl",
 // MODULE-CHECK-SAME:             scope: ![[MODULE:[0-9]+]],
 // MODULE-CHECK: ![[MODULE]] = !DIModule(scope: null, name: "DebugObjC"
+// MODULE-CHECK: !DICompositeType(tag: DW_TAG_structure_type,
+// MODULE-CHECK-SAME:             name: "ObjCClass",
+// MODULE-CHECK-SAME:             scope: ![[MODULE]],

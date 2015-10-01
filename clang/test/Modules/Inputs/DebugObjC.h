@@ -1,3 +1,5 @@
+@class FwdDecl;
+
 @interface ObjCClass {
   int ivar;
 }
