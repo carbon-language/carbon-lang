@@ -656,3 +656,91 @@ ObjCLanguage::GetPossibleFormattersMatches (ValueObject& valobj, lldb::DynamicVa
     
     return result;
 }
+
+std::unique_ptr<Language::TypeScavenger>
+ObjCLanguage::GetTypeScavenger ()
+{
+    class ObjCTypeScavenger : public Language::TypeScavenger
+    {
+    private:
+        class ObjCScavengerResult : public Language::TypeScavenger::Result
+        {
+        public:
+            ObjCScavengerResult (CompilerType type) :
+                Language::TypeScavenger::Result(),
+                m_compiler_type(type)
+            {
+            }
+            
+            bool
+            IsValid () override
+            {
+                return m_compiler_type.IsValid();
+            }
+            
+            bool
+            DumpToStream (Stream& stream,
+                          bool print_help_if_available) override
+            {
+                if (IsValid())
+                {
+                    m_compiler_type.DumpTypeDescription(&stream);
+                    stream.EOL();
+                    return true;
+                }
+                return false;
+            }
+
+            virtual ~ObjCScavengerResult() = default;
+        private:
+            CompilerType m_compiler_type;
+        };
+        
+    protected:
+        ObjCTypeScavenger() = default;
+        
+        virtual ~ObjCTypeScavenger() = default;
+        
+        bool
+        Find_Impl (ExecutionContextScope *exe_scope,
+                   const char *key,
+                   ResultSet &results) override
+        {
+            bool result = false;
+            
+            Process* process = exe_scope->CalculateProcess().get();
+            if (process)
+            {
+                const bool create_on_demand = false;
+                auto objc_runtime = process->GetObjCLanguageRuntime(create_on_demand);
+                if (objc_runtime)
+                {
+                    auto decl_vendor = objc_runtime->GetDeclVendor();
+                    if (decl_vendor)
+                    {
+                        std::vector<clang::NamedDecl *> decls;
+                        ConstString name(key);
+                        decl_vendor->FindDecls(name, true, UINT32_MAX, decls);
+                        for (auto decl : decls)
+                        {
+                            if (decl)
+                            {
+                                if (CompilerType candidate = ClangASTContext::GetTypeForDecl(decl))
+                                {
+                                    result = true;
+                                    std::unique_ptr<Language::TypeScavenger::Result> result(new ObjCScavengerResult(candidate));
+                                    results.insert(std::move(result));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
+        friend class ObjCLanguage;
+    };
+    
+    return std::unique_ptr<TypeScavenger>(new ObjCTypeScavenger());
+}

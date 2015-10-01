@@ -146,6 +146,9 @@ public:
     std::vector<ConstString>
     GetPossibleFormattersMatches (ValueObject& valobj, lldb::DynamicValueType use_dynamic) override;
     
+    std::unique_ptr<TypeScavenger>
+    GetTypeScavenger () override;
+    
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------

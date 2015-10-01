@@ -287,6 +287,34 @@ Language::LanguageIsPascal (LanguageType language)
     }
 }
 
+std::unique_ptr<Language::TypeScavenger>
+Language::GetTypeScavenger ()
+{
+    return nullptr;
+}
+
+size_t
+Language::TypeScavenger::Find (ExecutionContextScope *exe_scope,
+                               const char *key,
+                               ResultSet &results,
+                               bool append)
+{
+    if (!exe_scope || !exe_scope->CalculateTarget().get())
+        return false;
+    
+    if (!key || !key[0])
+        return false;
+
+    if (!append)
+        results.clear();
+    
+    size_t old_size = results.size();
+    
+    if (this->Find_Impl(exe_scope, key, results))
+        return results.size() - old_size;
+    return 0;
+}
+
 //----------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------

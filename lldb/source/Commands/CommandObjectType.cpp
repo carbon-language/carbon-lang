@@ -4558,6 +4558,218 @@ CommandObjectTypeFilterAdd::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
+//----------------------------------------------------------------------
+// "type lookup"
+//----------------------------------------------------------------------
+class CommandObjectTypeLookup : public CommandObjectRaw
+{
+protected:
+    
+    class CommandOptions : public OptionGroup
+    {
+    public:
+        
+        CommandOptions () :
+        OptionGroup(),
+        m_show_help(false),
+        m_language(eLanguageTypeUnknown)
+        {}
+        
+        virtual
+        ~CommandOptions () {}
+        
+        virtual uint32_t
+        GetNumDefinitions ()
+        {
+            return 3;
+        }
+        
+        virtual const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        virtual Error
+        SetOptionValue (CommandInterpreter &interpreter,
+                        uint32_t option_idx,
+                        const char *option_value)
+        {
+            Error error;
+            
+            const int short_option = g_option_table[option_idx].short_option;
+            
+            switch (short_option)
+            {
+                case 'h':
+                    m_show_help = true;
+                    break;
+                    
+                case 'l':
+                    m_language = Language::GetLanguageTypeFromString(option_value);
+                    break;
+                    
+                default:
+                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        virtual void
+        OptionParsingStarting (CommandInterpreter &interpreter)
+        {
+            m_show_help = false;
+            m_language = eLanguageTypeUnknown;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        bool m_show_help;
+        lldb::LanguageType m_language;
+    };
+    
+    OptionGroupOptions m_option_group;
+    CommandOptions m_command_options;
+    
+public:
+    
+    CommandObjectTypeLookup (CommandInterpreter &interpreter) :
+    CommandObjectRaw (interpreter,
+                      "type lookup",
+                      "Lookup a type by name in the select target.",
+                      "type lookup <typename>",
+                      eCommandRequiresTarget),
+    m_option_group(interpreter),
+    m_command_options()
+    {
+        m_option_group.Append(&m_command_options);
+        m_option_group.Finalize();
+    }
+    
+    virtual
+    ~CommandObjectTypeLookup ()
+    {
+    }
+    
+    virtual
+    Options *
+    GetOptions ()
+    {
+        return &m_option_group;
+    }
+    
+    virtual bool
+    DoExecute (const char *raw_command_line, CommandReturnObject &result)
+    {
+        if (!raw_command_line || !raw_command_line[0])
+        {
+            result.SetError("type lookup cannot be invoked without a type name as argument");
+            return false;
+        }
+        
+        m_option_group.NotifyOptionParsingStarting();
+        
+        const char * name_of_type = NULL;
+        
+        if (raw_command_line[0] == '-')
+        {
+            // We have some options and these options MUST end with --.
+            const char *end_options = NULL;
+            const char *s = raw_command_line;
+            while (s && s[0])
+            {
+                end_options = ::strstr (s, "--");
+                if (end_options)
+                {
+                    end_options += 2; // Get past the "--"
+                    if (::isspace (end_options[0]))
+                    {
+                        name_of_type = end_options;
+                        while (::isspace (*name_of_type))
+                            ++name_of_type;
+                        break;
+                    }
+                }
+                s = end_options;
+            }
+            
+            if (end_options)
+            {
+                Args args (llvm::StringRef(raw_command_line, end_options - raw_command_line));
+                if (!ParseOptions (args, result))
+                    return false;
+                
+                Error error (m_option_group.NotifyOptionParsingFinished());
+                if (error.Fail())
+                {
+                    result.AppendError (error.AsCString());
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+            }
+        }
+        if (nullptr == name_of_type)
+            name_of_type = raw_command_line;
+        
+        TargetSP target_sp(GetCommandInterpreter().GetDebugger().GetSelectedTarget());
+        const bool fill_all_in = true;
+        ExecutionContext exe_ctx(target_sp.get(), fill_all_in);
+        ExecutionContextScope *best_scope = exe_ctx.GetBestExecutionContextScope();
+        
+        bool any_found = false;
+        
+        std::vector<Language*> languages;
+        
+        if (m_command_options.m_language == eLanguageTypeUnknown)
+        {
+            // FIXME: hardcoding languages is not good
+            languages.push_back(Language::FindPlugin(eLanguageTypeObjC));
+            languages.push_back(Language::FindPlugin(eLanguageTypeC_plus_plus));
+        }
+        else
+        {
+            languages.push_back(Language::FindPlugin(m_command_options.m_language));
+        }
+        
+        for (Language* language : languages)
+        {
+            if (!language)
+                continue;
+
+            if (auto scavenger = language->GetTypeScavenger())
+            {
+                Language::TypeScavenger::ResultSet search_results;
+                if (scavenger->Find(best_scope, name_of_type, search_results) > 0)
+                {
+                    for (const auto& search_result : search_results)
+                    {
+                        if (search_result && search_result->IsValid())
+                        {
+                            any_found = true;
+                            search_result->DumpToStream(result.GetOutputStream(), this->m_command_options.m_show_help);
+                        }
+                    }
+                }
+            }
+        }
+        
+        result.SetStatus (any_found ? lldb::eReturnStatusSuccessFinishResult : lldb::eReturnStatusSuccessFinishNoResult);
+        return true;
+    }
+    
+};
+
+OptionDefinition
+CommandObjectTypeLookup::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "show-help",        'h', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,    "Display available help for types"},
+    { LLDB_OPT_SET_ALL, false, "language",         'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLanguage,    "Which language's types should the search scope be"},
+    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+};
+
 template <typename FormatterType>
 class CommandObjectFormatterInfo : public CommandObjectRaw
 {
@@ -4778,6 +4990,7 @@ CommandObjectType::CommandObjectType (CommandInterpreter &interpreter) :
 #ifndef LLDB_DISABLE_PYTHON
     LoadSubCommand ("synthetic", CommandObjectSP (new CommandObjectTypeSynth (interpreter)));
 #endif
+    LoadSubCommand ("lookup",   CommandObjectSP (new CommandObjectTypeLookup (interpreter)));
 }
 
 
