@@ -100,7 +100,7 @@ def main(argv):
     print('global:')
   result.sort()
   for f in result:
-    print('  ' + f.encode('utf-8') + ';')
+    print(u'  %s;' % f)
   if args.version_list:
     print('local:')
     print('  *;')
