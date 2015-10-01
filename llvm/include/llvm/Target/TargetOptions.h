@@ -71,7 +71,7 @@ namespace llvm {
           EnableFastISel(false), PositionIndependentExecutable(false),
           UseInitArray(false), DisableIntegratedAS(false),
           CompressDebugSections(false), FunctionSections(false),
-          DataSections(false), UniqueSectionNames(true),
+          DataSections(false), UniqueSectionNames(true), TrapUnreachable(false),
           EmulatedTLS(false), FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard), Reciprocals(TargetRecip()),
           JTType(JumpTable::Single),
@@ -169,6 +169,9 @@ namespace llvm {
 
     unsigned UniqueSectionNames : 1;
 
+    /// Emit target-specific trap instruction for 'unreachable' IR instructions.
+    unsigned TrapUnreachable : 1;
+
     /// EmulatedTLS - This flag enables emulated TLS model, using emutls
     /// function in the runtime library..
     unsigned EmulatedTLS : 1;
@@ -231,6 +234,7 @@ inline bool operator==(const TargetOptions &LHS,
     ARE_EQUAL(EnableFastISel) &&
     ARE_EQUAL(PositionIndependentExecutable) &&
     ARE_EQUAL(UseInitArray) &&
+    ARE_EQUAL(TrapUnreachable) &&
     ARE_EQUAL(EmulatedTLS) &&
     ARE_EQUAL(FloatABIType) &&
     ARE_EQUAL(AllowFPOpFusion) &&
