@@ -64,6 +64,17 @@ struct FormatStyle {
   /// \endcode
   bool AlignConsecutiveAssignments;
 
+  /// \brief If \c true, aligns consecutive declarations.
+  ///
+  /// This will align the declaration names of consecutive lines. This
+  /// will result in formattings like
+  /// \code
+  /// int         aaaa = 12;
+  /// float       b = 23;
+  /// std::string ccc = 23;
+  /// \endcode
+  bool AlignConsecutiveDeclarations;
+
   /// \brief If \c true, aligns escaped newlines as far left as possible.
   /// Otherwise puts them into the right-most column.
   bool AlignEscapedNewlinesLeft;
@@ -495,6 +506,7 @@ struct FormatStyle {
     return AccessModifierOffset == R.AccessModifierOffset &&
            AlignAfterOpenBracket == R.AlignAfterOpenBracket &&
            AlignConsecutiveAssignments == R.AlignConsecutiveAssignments &&
+           AlignConsecutiveDeclarations == R.AlignConsecutiveDeclarations &&
            AlignEscapedNewlinesLeft == R.AlignEscapedNewlinesLeft &&
            AlignOperands == R.AlignOperands &&
            AlignTrailingComments == R.AlignTrailingComments &&

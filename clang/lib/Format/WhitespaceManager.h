@@ -110,7 +110,7 @@ private:
            unsigned IndentLevel, int Spaces, unsigned StartOfTokenColumn,
            unsigned NewlinesBefore, StringRef PreviousLinePostfix,
            StringRef CurrentLinePrefix, tok::TokenKind Kind,
-           bool ContinuesPPDirective);
+           bool ContinuesPPDirective, bool IsStartOfDeclName);
 
     bool CreateReplacement;
     // Changes might be in the middle of a token, so we cannot just keep the
@@ -126,6 +126,7 @@ private:
     // the \c BreakableToken is still doing its own alignment.
     tok::TokenKind Kind;
     bool ContinuesPPDirective;
+    bool IsStartOfDeclName;
 
     // The number of nested blocks the token is in. This is used to add tabs
     // only for the indentation, and not for alignment, when
@@ -172,6 +173,14 @@ private:
   /// the specified \p Column.
   void alignConsecutiveAssignments(unsigned Start, unsigned End,
                                    unsigned Column);
+
+  /// \brief Align consecutive declarations over all \c Changes.
+  void alignConsecutiveDeclarations();
+
+  /// \brief Align consecutive declarations from change \p Start to change \p
+  /// End at the specified \p Column.
+  void alignConsecutiveDeclarations(unsigned Start, unsigned End,
+                                    unsigned Column);
 
   /// \brief Align trailing comments over all \c Changes.
   void alignTrailingComments();

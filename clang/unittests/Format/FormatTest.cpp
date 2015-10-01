@@ -8645,6 +8645,189 @@ TEST_F(FormatTest, AlignConsecutiveAssignments) {
       Alignment);
 }
 
+TEST_F(FormatTest, AlignConsecutiveDeclarations) {
+  FormatStyle Alignment = getLLVMStyle();
+  Alignment.AlignConsecutiveDeclarations = false;
+  verifyFormat("float const a = 5;\n"
+               "int oneTwoThree = 123;",
+               Alignment);
+  verifyFormat("int a = 5;\n"
+               "float const oneTwoThree = 123;",
+               Alignment);
+
+  Alignment.AlignConsecutiveDeclarations = true;
+  verifyFormat("float const a = 5;\n"
+               "int         oneTwoThree = 123;",
+               Alignment);
+  verifyFormat("int         a = method();\n"
+               "float const oneTwoThree = 133;",
+               Alignment);
+  verifyFormat("int i = 1, j = 10;\n"
+               "something = 2000;",
+               Alignment);
+  verifyFormat("something = 2000;\n"
+               "int i = 1, j = 10;\n",
+               Alignment);
+  verifyFormat("float      something = 2000;\n"
+               "double     another = 911;\n"
+               "int        i = 1, j = 10;\n"
+               "const int *oneMore = 1;\n"
+               "unsigned   i = 2;",
+               Alignment);
+  verifyFormat("float a = 5;\n"
+               "int   one = 1;\n"
+               "method();\n"
+               "const double       oneTwoThree = 123;\n"
+               "const unsigned int oneTwo = 12;",
+               Alignment);
+  verifyFormat("int      oneTwoThree{0}; // comment\n"
+               "unsigned oneTwo;         // comment",
+               Alignment);
+  EXPECT_EQ("float const a = 5;\n"
+            "\n"
+            "int oneTwoThree = 123;",
+            format("float const   a = 5;\n"
+                   "\n"
+                   "int           oneTwoThree= 123;",
+                   Alignment));
+  EXPECT_EQ("float a = 5;\n"
+            "int   one = 1;\n"
+            "\n"
+            "unsigned oneTwoThree = 123;",
+            format("float    a = 5;\n"
+                   "int      one = 1;\n"
+                   "\n"
+                   "unsigned oneTwoThree = 123;",
+                   Alignment));
+  EXPECT_EQ("float a = 5;\n"
+            "int   one = 1;\n"
+            "\n"
+            "unsigned oneTwoThree = 123;\n"
+            "int      oneTwo = 12;",
+            format("float    a = 5;\n"
+                   "int one = 1;\n"
+                   "\n"
+                   "unsigned oneTwoThree = 123;\n"
+                   "int oneTwo = 12;",
+                   Alignment));
+  Alignment.AlignConsecutiveAssignments = true;
+  verifyFormat("float      something = 2000;\n"
+               "double     another   = 911;\n"
+               "int        i = 1, j = 10;\n"
+               "const int *oneMore = 1;\n"
+               "unsigned   i       = 2;",
+               Alignment);
+  verifyFormat("int      oneTwoThree = {0}; // comment\n"
+               "unsigned oneTwo      = 0;   // comment",
+               Alignment);
+  EXPECT_EQ("void SomeFunction(int parameter = 0) {\n"
+            "  int const i   = 1;\n"
+            "  int *     j   = 2;\n"
+            "  int       big = 10000;\n"
+            "\n"
+            "  unsigned oneTwoThree = 123;\n"
+            "  int      oneTwo      = 12;\n"
+            "  method();\n"
+            "  float k  = 2;\n"
+            "  int   ll = 10000;\n"
+            "}",
+            format("void SomeFunction(int parameter= 0) {\n"
+                   " int const  i= 1;\n"
+                   "  int *j=2;\n"
+                   " int big  =  10000;\n"
+                   "\n"
+                   "unsigned oneTwoThree  =123;\n"
+                   "int oneTwo = 12;\n"
+                   "  method();\n"
+                   "float k= 2;\n"
+                   "int ll=10000;\n"
+                   "}",
+                   Alignment));
+  Alignment.AlignConsecutiveAssignments = false;
+  Alignment.AlignEscapedNewlinesLeft = true;
+  verifyFormat("#define A              \\\n"
+               "  int       aaaa = 12; \\\n"
+               "  float     b = 23;    \\\n"
+               "  const int ccc = 234; \\\n"
+               "  unsigned  dddddddddd = 2345;",
+               Alignment);
+  Alignment.AlignEscapedNewlinesLeft = false;
+  Alignment.ColumnLimit = 30;
+  verifyFormat("#define A                    \\\n"
+               "  int       aaaa = 12;       \\\n"
+               "  float     b = 23;          \\\n"
+               "  const int ccc = 234;       \\\n"
+               "  int       dddddddddd = 2345;",
+               Alignment);
+  Alignment.ColumnLimit = 80;
+  verifyFormat("void SomeFunction(int parameter = 1, int i = 2, int j = 3, int "
+               "k = 4, int l = 5,\n"
+               "                  int m = 6) {\n"
+               "  const int j = 10;\n"
+               "  otherThing = 1;\n"
+               "}",
+               Alignment);
+  verifyFormat("void SomeFunction(int parameter = 0) {\n"
+               "  int const i = 1;\n"
+               "  int *     j = 2;\n"
+               "  int       big = 10000;\n"
+               "}",
+               Alignment);
+  verifyFormat("class C {\n"
+               "public:\n"
+               "  int          i = 1;\n"
+               "  virtual void f() = 0;\n"
+               "};",
+               Alignment);
+  verifyFormat("float i = 1;\n"
+               "if (SomeType t = getSomething()) {\n"
+               "}\n"
+               "const unsigned j = 2;\n"
+               "int            big = 10000;",
+               Alignment);
+  verifyFormat("float j = 7;\n"
+               "for (int k = 0; k < N; ++k) {\n"
+               "}\n"
+               "unsigned j = 2;\n"
+               "int      big = 10000;\n"
+               "}",
+               Alignment);
+  Alignment.BreakBeforeBinaryOperators = FormatStyle::BOS_All;
+  verifyFormat("float              i = 1;\n"
+               "LooooooooooongType loooooooooooooooooooooongVariable\n"
+               "    = someLooooooooooooooooongFunction();\n"
+               "int j = 2;",
+               Alignment);
+  Alignment.BreakBeforeBinaryOperators = FormatStyle::BOS_None;
+  verifyFormat("int                i = 1;\n"
+               "LooooooooooongType loooooooooooooooooooooongVariable =\n"
+               "    someLooooooooooooooooongFunction();\n"
+               "int j = 2;",
+               Alignment);
+  // FIXME: Should align all three declarations
+  verifyFormat(
+      "int      i = 1;\n"
+      "SomeType a = SomeFunction(looooooooooooooooooooooongParameterA,\n"
+      "                          loooooooooooooooooooooongParameterB);\n"
+      "int j = 2;",
+      Alignment);
+
+  // Test interactions with ColumnLimit and AlignConsecutiveAssignments:
+  // We expect declarations and assignments to align, as long as it doesn't
+  // exceed the column limit, starting a new alignemnt sequence whenever it
+  // happens.
+  Alignment.AlignConsecutiveAssignments = true;
+  Alignment.ColumnLimit = 30;
+  verifyFormat("float    ii              = 1;\n"
+               "unsigned j               = 2;\n"
+               "int someVerylongVariable = 1;\n"
+               "AnotherLongType  ll = 123456;\n"
+               "VeryVeryLongType k  = 2;\n"
+               "int              myvar = 1;",
+               Alignment);
+  Alignment.ColumnLimit = 80;
+}
+
 TEST_F(FormatTest, LinuxBraceBreaking) {
   FormatStyle LinuxBraceStyle = getLLVMStyle();
   LinuxBraceStyle.BreakBeforeBraces = FormatStyle::BS_Linux;
@@ -9290,6 +9473,7 @@ TEST_F(FormatTest, ParsesConfigurationBools) {
   CHECK_PARSE_BOOL(AlignOperands);
   CHECK_PARSE_BOOL(AlignTrailingComments);
   CHECK_PARSE_BOOL(AlignConsecutiveAssignments);
+  CHECK_PARSE_BOOL(AlignConsecutiveDeclarations);
   CHECK_PARSE_BOOL(AllowAllParametersOfDeclarationOnNextLine);
   CHECK_PARSE_BOOL(AllowShortBlocksOnASingleLine);
   CHECK_PARSE_BOOL(AllowShortCaseLabelsOnASingleLine);
