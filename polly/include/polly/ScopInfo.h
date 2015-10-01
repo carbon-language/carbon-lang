@@ -1192,15 +1192,15 @@ private:
   void buildDomains(Region *R, LoopInfo &LI, ScopDetection &SD,
                     DominatorTree &DT);
 
-  /// @brief Check if a basic block is trivial.
+  /// @brief Check if a region part should be represented in the SCoP or not.
   ///
-  /// A trivial basic block does not contain any useful calculation. Therefore,
-  /// it does not need to be represented as a polyhedral statement.
+  /// If @p RN does not contain any useful calculation or is only reachable
+  /// via error blocks we do not model it in the polyhedral representation.
   ///
-  /// @param BB The basic block to check
+  /// @param RN The region part to check.
   ///
-  /// @return True if the basic block is trivial, otherwise false.
-  bool isTrivialBB(BasicBlock *BB);
+  /// @return True if the part should be ignored, otherwise false.
+  bool isIgnored(RegionNode *RN);
 
   /// @brief Add parameter constraints to @p C that imply a non-empty domain.
   __isl_give isl_set *addNonEmptyDomainConstraints(__isl_take isl_set *C) const;

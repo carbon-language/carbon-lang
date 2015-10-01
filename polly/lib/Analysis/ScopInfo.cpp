@@ -1693,6 +1693,15 @@ static inline unsigned getNumBlocksInRegionNode(RegionNode *RN) {
   return NumBlocks;
 }
 
+static bool containsErrorBlock(RegionNode *RN) {
+  if (!RN->isSubRegion())
+    return isErrorBlock(*RN->getNodeAs<BasicBlock>());
+  for (BasicBlock *BB : RN->getNodeAs<Region>()->blocks())
+    if (isErrorBlock(*BB))
+      return true;
+  return false;
+}
+
 ///}
 
 static inline __isl_give isl_set *addDomainDimId(__isl_take isl_set *Domain,
@@ -1765,22 +1774,29 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
       }
     }
 
+    // Error blocks are assumed not to be executed. Therefor they are not
+    // checked properly in the ScopDetection. Any attempt to generate control
+    // conditions from them might result in a crash. However, this is only true
+    // for the first step of the domain generation (this function) where we
+    // push the control conditions of a block to the successors. In the second
+    // step (propagateDomainConstraints) we only receive domain constraints from
+    // the predecessors and can therefor look at the domain of a error block.
+    // That allows us to generate the assumptions needed for them not to be
+    // executed at runtime.
+    if (containsErrorBlock(RN))
+      continue;
+
     BasicBlock *BB = getRegionNodeBasicBlock(RN);
     TerminatorInst *TI = BB->getTerminator();
 
-    // Unreachable instructions do not have successors so we can skip them.
-    if (isa<UnreachableInst>(TI)) {
-      // Assume unreachables only in error blocks.
-      assert(isErrorBlock(*BB));
+    isl_set *Domain = DomainMap.lookup(BB);
+    if (!Domain) {
+      DEBUG(dbgs() << "\tSkip: " << BB->getName()
+                   << ", it is only reachable from error blocks.\n");
       continue;
     }
 
-    isl_set *Domain = DomainMap[BB];
     DEBUG(dbgs() << "\tVisit: " << BB->getName() << " : " << Domain << "\n");
-    assert(Domain && "Due to reverse post order traversal of the region all "
-                     "predecessor of the current region node should have been "
-                     "visited and a domain for this region node should have "
-                     "been set.");
 
     Loop *BBLoop = getRegionNodeLoop(RN, LI);
     int BBLoopDepth = getRelativeLoopDepth(BBLoop);
@@ -1873,15 +1889,6 @@ getDomainForBlock(BasicBlock *BB, DenseMap<BasicBlock *, isl_set *> &DomainMap,
   return getDomainForBlock(R->getEntry(), DomainMap, RI);
 }
 
-static bool containsErrorBlock(RegionNode *RN) {
-  if (!RN->isSubRegion())
-    return isErrorBlock(*RN->getNodeAs<BasicBlock>());
-  for (BasicBlock *BB : RN->getNodeAs<Region>()->blocks())
-    if (isErrorBlock(*BB))
-      return true;
-  return false;
-}
-
 void Scop::propagateDomainConstraints(Region *R, LoopInfo &LI,
                                       ScopDetection &SD, DominatorTree &DT) {
   // Iterate over the region R and propagate the domain constrains from the
@@ -1909,15 +1916,25 @@ void Scop::propagateDomainConstraints(Region *R, LoopInfo &LI,
       }
     }
 
+    // Get the domain for the current block and check if it was initialized or
+    // not. The only way it was not is if this block is only reachable via error
+    // blocks, thus will not be executed under the assumptions we make. Such
+    // blocks have to be skipped as their predecessors might not have domains
+    // either. It would not benefit us to compute the domain anyway, only the
+    // domains of the error blocks that are reachable from non-error blocks
+    // are needed to generate assumptions.
     BasicBlock *BB = getRegionNodeBasicBlock(RN);
+    isl_set *&Domain = DomainMap[BB];
+    if (!Domain) {
+      DEBUG(dbgs() << "\tSkip: " << BB->getName()
+                   << ", it is only reachable from error blocks.\n");
+      DomainMap.erase(BB);
+      continue;
+    }
+    DEBUG(dbgs() << "\tVisit: " << BB->getName() << " : " << Domain << "\n");
+
     Loop *BBLoop = getRegionNodeLoop(RN, LI);
     int BBLoopDepth = getRelativeLoopDepth(BBLoop);
-
-    isl_set *&Domain = DomainMap[BB];
-    assert(Domain && "Due to reverse post order traversal of the region all "
-                     "predecessor of the current region node should have been "
-                     "visited and a domain for this region node should have "
-                     "been set.");
 
     isl_set *PredDom = isl_set_empty(isl_set_get_space(Domain));
     for (auto *PredBB : predecessors(BB)) {
@@ -2019,8 +2036,12 @@ void Scop::addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI) {
   L->getLoopLatches(LatchBlocks);
 
   for (BasicBlock *LatchBB : LatchBlocks) {
-    assert(DomainMap.count(LatchBB));
-    isl_set *LatchBBDom = DomainMap[LatchBB];
+
+    // If the latch is only reachable via error statements we skip it.
+    isl_set *LatchBBDom = DomainMap.lookup(LatchBB);
+    if (!LatchBBDom)
+      continue;
+
     isl_set *BackedgeCondition = nullptr;
 
     TerminatorInst *TI = LatchBB->getTerminator();
@@ -2752,11 +2773,28 @@ bool Scop::restrictDomains(__isl_take isl_union_set *Domain) {
 
 ScalarEvolution *Scop::getSE() const { return SE; }
 
-bool Scop::isTrivialBB(BasicBlock *BB) {
-  if (getAccessFunctions(BB) && !isErrorBlock(*BB))
-    return false;
+bool Scop::isIgnored(RegionNode *RN) {
+  BasicBlock *BB = getRegionNodeBasicBlock(RN);
 
-  return true;
+  // Check if there are accesses contained.
+  bool ContainsAccesses = false;
+  if (!RN->isSubRegion())
+    ContainsAccesses = getAccessFunctions(BB);
+  else
+    for (BasicBlock *RBB : RN->getNodeAs<Region>()->blocks())
+      ContainsAccesses |= (getAccessFunctions(RBB) != nullptr);
+  if (!ContainsAccesses)
+    return true;
+
+  // Check for reachability via non-error blocks.
+  if (!DomainMap.count(BB))
+    return true;
+
+  // Check if error blocks are contained.
+  if (containsErrorBlock(RN))
+    return true;
+
+  return false;
 }
 
 struct MapToDimensionDataTy {
@@ -2863,14 +2901,13 @@ void Scop::buildSchedule(
     auto &LSchedulePair = LoopSchedules[L];
     LSchedulePair.second += getNumBlocksInRegionNode(RN);
 
-    BasicBlock *BB = getRegionNodeBasicBlock(RN);
-    if (RN->isSubRegion() || !isTrivialBB(BB)) {
+    if (!isIgnored(RN)) {
 
       ScopStmt *Stmt;
       if (RN->isSubRegion())
         Stmt = addScopStmt(nullptr, RN->getNodeAs<Region>());
       else
-        Stmt = addScopStmt(BB, nullptr);
+        Stmt = addScopStmt(RN->getNodeAs<BasicBlock>(), nullptr);
 
       auto *UDomain = isl_union_set_from_set(Stmt->getDomain());
       auto *StmtSchedule = isl_schedule_from_domain(UDomain);
