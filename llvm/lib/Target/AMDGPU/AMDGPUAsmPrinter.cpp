@@ -278,27 +278,30 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
         unsigned width = 0;
         bool isSGPR = false;
 
-        if (!MO.isReg()) {
+        if (!MO.isReg())
           continue;
-        }
-        unsigned reg = MO.getReg();
-        if (reg == AMDGPU::VCC || reg == AMDGPU::VCC_LO ||
-            reg == AMDGPU::VCC_HI) {
-          VCCUsed = true;
-          continue;
-        } else if (reg == AMDGPU::FLAT_SCR ||
-                   reg == AMDGPU::FLAT_SCR_LO ||
-                   reg == AMDGPU::FLAT_SCR_HI) {
-          FlatUsed = true;
-          continue;
-        }
 
+        unsigned reg = MO.getReg();
         switch (reg) {
-        default: break;
-        case AMDGPU::SCC:
         case AMDGPU::EXEC:
+        case AMDGPU::SCC:
         case AMDGPU::M0:
           continue;
+
+        case AMDGPU::VCC:
+        case AMDGPU::VCC_LO:
+        case AMDGPU::VCC_HI:
+          VCCUsed = true;
+          continue;
+
+        case AMDGPU::FLAT_SCR:
+        case AMDGPU::FLAT_SCR_LO:
+        case AMDGPU::FLAT_SCR_HI:
+          FlatUsed = true;
+          continue;
+
+        default:
+          break;
         }
 
         if (AMDGPU::SReg_32RegClass.contains(reg)) {
