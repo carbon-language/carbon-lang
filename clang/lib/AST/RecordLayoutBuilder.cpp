@@ -2667,13 +2667,20 @@ void MicrosoftRecordLayoutBuilder::injectVFPtr(const CXXRecordDecl *RD) {
   // alignment.
   CharUnits Offset = PointerInfo.Size.RoundUpToAlignment(
       std::max(RequiredAlignment, Alignment));
-  // Increase the size of the object and push back all fields, the vbptr and all
-  // bases by the offset amount.
-  Size += Offset;
-  for (uint64_t &FieldOffset : FieldOffsets)
-    FieldOffset += Context.toBits(Offset);
+  // Push back the vbptr, but increase the size of the object and push back
+  // regular fields by the offset only if not using external record layout.
   if (HasVBPtr)
     VBPtrOffset += Offset;
+
+  if (UseExternalLayout)
+    return;
+
+  Size += Offset;
+
+  // If we're using an external layout, the fields offsets have already
+  // accounted for this adjustment.
+  for (uint64_t &FieldOffset : FieldOffsets)
+    FieldOffset += Context.toBits(Offset);
   for (BaseOffsetsMapTy::value_type &Base : Bases)
     Base.second += Offset;
 }
