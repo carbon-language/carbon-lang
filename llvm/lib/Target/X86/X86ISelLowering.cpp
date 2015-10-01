@@ -12490,6 +12490,15 @@ static SDValue lowerUINT_TO_FP_vXi32(SDValue Op, SelectionDAG &DAG,
   //     float4 fhi = (float4) hi - (0x1.0p39f + 0x1.0p23f);
   //     return (float4) lo + fhi;
 
+  // We shouldn't use it when unsafe-fp-math is enabled though: we might later
+  // reassociate the two FADDs, and if we do that, the algorithm fails
+  // spectacularly (PR24512).
+  // FIXME: If we ever have some kind of Machine FMF, this should be marked
+  // as non-fast and always be enabled. Why isn't SDAG FMF enough? Because
+  // there's also the MachineCombiner reassociations happening on Machine IR.
+  if (DAG.getTarget().Options.UnsafeFPMath)
+    return SDValue();
+
   SDLoc DL(Op);
   SDValue V = Op->getOperand(0);
   EVT VecIntVT = V.getValueType();
