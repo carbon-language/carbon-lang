@@ -291,6 +291,10 @@ public:
     
     virtual void
     RemovePersistentVariable (lldb::ExpressionVariableSP variable) = 0;
+    
+    virtual lldb::addr_t
+    LookupSymbol (const ConstString &name) = 0;
+    
 private:
     LLVMCastKind m_kind;
 };
