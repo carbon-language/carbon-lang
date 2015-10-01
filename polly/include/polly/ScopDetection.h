@@ -194,6 +194,14 @@ private:
   // Remember a list of errors for every region.
   mutable RejectLogsContainer RejectLogs;
 
+  /// @brief Remove cached results for @p R.
+  void removeCachedResults(const Region &R);
+
+  /// @brief Remove cached results for the children of @p R recursively.
+  ///
+  /// @returns The number of regions erased regions.
+  unsigned removeCachedResultsRecursively(const Region &R);
+
   /// @brief Add the region @p AR as over approximated sub-region in @p Context.
   ///
   /// @param AR      The non-affine subregion.

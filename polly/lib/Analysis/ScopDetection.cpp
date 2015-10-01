@@ -813,11 +813,14 @@ Region *ScopDetection::expandRegion(Region &R) {
       // If the exit is valid check all blocks
       //  - if true, a valid region was found => store it + keep expanding
       //  - if false, .tbd. => stop  (should this really end the loop?)
-      if (!allBlocksValid(Context) || Context.Log.hasErrors())
+      if (!allBlocksValid(Context) || Context.Log.hasErrors()) {
+        removeCachedResults(*ExpandedRegion);
         break;
+      }
 
       // Store this region, because it is the greatest valid (encountered so
       // far).
+      removeCachedResults(*LastValidRegion);
       LastValidRegion = std::move(ExpandedRegion);
 
       // Create and test the next greater region (if any)
@@ -848,22 +851,22 @@ static bool regionWithoutLoops(Region &R, LoopInfo *LI) {
   return true;
 }
 
-// Remove all direct and indirect children of region R from the region set Regs,
-// but do not recurse further if the first child has been found.
-//
-// Return the number of regions erased from Regs.
-static unsigned eraseAllChildren(ScopDetection::RegionSet &Regs,
-                                 const Region &R) {
+unsigned ScopDetection::removeCachedResultsRecursively(const Region &R) {
   unsigned Count = 0;
   for (auto &SubRegion : R) {
-    if (Regs.count(SubRegion.get())) {
+    if (ValidRegions.count(SubRegion.get())) {
+      removeCachedResults(*SubRegion.get());
       ++Count;
-      Regs.remove(SubRegion.get());
-    } else {
-      Count += eraseAllChildren(Regs, *SubRegion);
-    }
+    } else
+      Count += removeCachedResultsRecursively(*SubRegion);
   }
   return Count;
+}
+
+void ScopDetection::removeCachedResults(const Region &R) {
+  ValidRegions.remove(&R);
+  BoxedLoopsMap.erase(&R);
+  NonAffineSubRegionMap.erase(&R);
 }
 
 void ScopDetection::findScops(Region &R) {
@@ -871,9 +874,10 @@ void ScopDetection::findScops(Region &R) {
                            false /*verifying*/);
 
   bool RegionIsValid = false;
-  if (!DetectUnprofitable && regionWithoutLoops(R, LI))
+  if (!DetectUnprofitable && regionWithoutLoops(R, LI)) {
+    removeCachedResults(R);
     invalid<ReportUnprofitable>(Context, /*Assert=*/true, &R);
-  else
+  } else
     RegionIsValid = isValidRegion(Context);
 
   bool HasErrors = !RegionIsValid || Context.Log.size() > 0;
@@ -881,7 +885,9 @@ void ScopDetection::findScops(Region &R) {
   if (PollyTrackFailures && HasErrors)
     RejectLogs.insert(std::make_pair(&R, Context.Log));
 
-  if (!HasErrors) {
+  if (HasErrors) {
+    removeCachedResults(R);
+  } else {
     ++ValidRegion;
     ValidRegions.insert(&R);
     return;
@@ -919,11 +925,11 @@ void ScopDetection::findScops(Region &R) {
 
     R.addSubRegion(ExpandedR, true);
     ValidRegions.insert(ExpandedR);
-    ValidRegions.remove(CurrentRegion);
+    removeCachedResults(*CurrentRegion);
 
     // Erase all (direct and indirect) children of ExpandedR from the valid
     // regions and update the number of valid regions.
-    ValidRegion -= eraseAllChildren(ValidRegions, *ExpandedR);
+    ValidRegion -= removeCachedResultsRecursively(*ExpandedR);
   }
 }
 
@@ -1084,6 +1090,10 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
   if (ReportLevel)
     printLocations(F);
 
+  assert(ValidRegions.size() == BoxedLoopsMap.size() &&
+         "Cached more results than valid regions");
+  assert(ValidRegions.size() == NonAffineSubRegionMap.size() &&
+         "Cached more results than valid regions");
   return false;
 }
 
