@@ -1501,9 +1501,6 @@ static void DumpArchive(const Archive *a) {
 
 /// @brief Open file and figure out how to dump it.
 static void DumpInput(StringRef file) {
-  // If file isn't stdin, check that it exists.
-  if (file != "-" && !sys::fs::exists(file))
-    report_error(file, errc::no_such_file_or_directory);
 
   // If we are using the Mach-O specific object file parser, then let it parse
   // the file and process the command line options.  So the -arch flags can
