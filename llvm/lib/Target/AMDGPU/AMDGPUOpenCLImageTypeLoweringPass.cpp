@@ -94,8 +94,12 @@ GetFunctionFromMDNode(MDNode *Node) {
       return nullptr;
     if (!ArgNode->getOperand(0))
       return nullptr;
-    assert(cast<MDString>(ArgNode->getOperand(0))->getString() ==
-           KernelArgMDNodeNames[i] && "Wrong kernel arg metadata name");
+
+    // FIXME: It should be possible to do image lowering when some metadata
+    // args missing or not in the expected order.
+    MDString *StringNode = dyn_cast<MDString>(ArgNode->getOperand(0));
+    if (!StringNode || StringNode->getString() != KernelArgMDNodeNames[i])
+      return nullptr;
   }
 
   return F;
