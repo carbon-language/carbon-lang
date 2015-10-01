@@ -49,7 +49,7 @@ namespace VirtualNoreturn {
     p->f();
     // CHECK: call {{.*}}void %{{[^#]*$}}
     // CHECK-NOT: unreachable
-    // CHECK-INVARIANT: load {{.*}} align 8, !invariant.load ![[EMPTY_NODE:[0-9]]]
+    // CHECK-INVARIANT: load {{.*}} !invariant.load ![[EMPTY_NODE:[0-9]]]
   }
 }
 
