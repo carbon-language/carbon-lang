@@ -246,10 +246,8 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
   if (CIncludeDirs != "") {
     SmallVector<StringRef, 5> dirs;
     CIncludeDirs.split(dirs, ":");
-    for (SmallVectorImpl<StringRef>::iterator i = dirs.begin();
-         i != dirs.end();
-         ++i)
-      AddPath(*i, ExternCSystem, false);
+    for (StringRef dir : dirs)
+      AddPath(dir, ExternCSystem, false);
     return;
   }
 
@@ -559,39 +557,33 @@ void InitHeaderSearch::Realize(const LangOptions &Lang) {
   SearchList.reserve(IncludePath.size());
 
   // Quoted arguments go first.
-  for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
-       it != ie; ++it) {
-    if (it->first == Quoted)
-      SearchList.push_back(it->second);
-  }
+  for (auto &Include : IncludePath)
+    if (Include.first == Quoted)
+      SearchList.push_back(Include.second);
+
   // Deduplicate and remember index.
   RemoveDuplicates(SearchList, 0, Verbose);
   unsigned NumQuoted = SearchList.size();
 
-  for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
-       it != ie; ++it) {
-    if (it->first == Angled || it->first == IndexHeaderMap)
-      SearchList.push_back(it->second);
-  }
+  for (auto &Include : IncludePath)
+    if (Include.first == Angled || Include.first == IndexHeaderMap)
+      SearchList.push_back(Include.second);
 
   RemoveDuplicates(SearchList, NumQuoted, Verbose);
   unsigned NumAngled = SearchList.size();
 
-  for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
-       it != ie; ++it) {
-    if (it->first == System || it->first == ExternCSystem ||
-        (!Lang.ObjC1 && !Lang.CPlusPlus && it->first == CSystem)    ||
-        (/*FIXME !Lang.ObjC1 && */Lang.CPlusPlus  && it->first == CXXSystem)  ||
-        (Lang.ObjC1  && !Lang.CPlusPlus && it->first == ObjCSystem) ||
-        (Lang.ObjC1  && Lang.CPlusPlus  && it->first == ObjCXXSystem))
-      SearchList.push_back(it->second);
-  }
+  for (auto &Include : IncludePath)
+    if (Include.first == System || Include.first == ExternCSystem ||
+        (!Lang.ObjC1 && !Lang.CPlusPlus && Include.first == CSystem) ||
+        (/*FIXME !Lang.ObjC1 && */ Lang.CPlusPlus &&
+         Include.first == CXXSystem) ||
+        (Lang.ObjC1 && !Lang.CPlusPlus && Include.first == ObjCSystem) ||
+        (Lang.ObjC1 && Lang.CPlusPlus && Include.first == ObjCXXSystem))
+      SearchList.push_back(Include.second);
 
-  for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
-       it != ie; ++it) {
-    if (it->first == After)
-      SearchList.push_back(it->second);
-  }
+  for (auto &Include : IncludePath)
+    if (Include.first == After)
+      SearchList.push_back(Include.second);
 
   // Remove duplicates across both the Angled and System directories.  GCC does
   // this and failing to remove duplicates across these two groups breaks
