@@ -1433,6 +1433,29 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return EraseInstFromFunction(CI);
     break;
   }
+  case Intrinsic::lifetime_start: {
+    // Remove trivially empty lifetime_start/end ranges, i.e. a start
+    // immediately followed by an end (ignoring debuginfo or other
+    // lifetime markers in between).
+    BasicBlock::iterator BI = II, BE = II->getParent()->end();
+    for (++BI; BI != BE; ++BI) {
+      if (IntrinsicInst *LTE = dyn_cast<IntrinsicInst>(BI)) {
+        if (isa<DbgInfoIntrinsic>(LTE) ||
+            LTE->getIntrinsicID() == Intrinsic::lifetime_start)
+          continue;
+        if (LTE->getIntrinsicID() == Intrinsic::lifetime_end) {
+          if (II->getOperand(0) == LTE->getOperand(0) &&
+              II->getOperand(1) == LTE->getOperand(1)) {
+            EraseInstFromFunction(*LTE);
+            return EraseInstFromFunction(*II);
+          }
+          continue;
+        }
+      }
+      break;
+    }
+    break;
+  }
   case Intrinsic::assume: {
     // Canonicalize assume(a && b) -> assume(a); assume(b);
     // Note: New assumption intrinsics created here are registered by
