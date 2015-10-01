@@ -94,9 +94,11 @@ bool BranchFolderPass::runOnMachineFunction(MachineFunction &MF) {
 
   TargetPassConfig *PassConfig = &getAnalysis<TargetPassConfig>();
   // TailMerge can create jump into if branches that make CFG irreducible for
-  // HW that requires structurized CFG.
+  // HW that requires structurized CFG.  It can also cause BBs to get shared
+  // between funclets.
   bool EnableTailMerge = !MF.getTarget().requiresStructuredCFG() &&
-      PassConfig->getEnableTailMerge();
+                         !MF.getMMI().hasEHFunclets() &&
+                         PassConfig->getEnableTailMerge();
   BranchFolder Folder(EnableTailMerge, /*CommonHoist=*/true,
                       getAnalysis<MachineBlockFrequencyInfo>(),
                       getAnalysis<MachineBranchProbabilityInfo>());

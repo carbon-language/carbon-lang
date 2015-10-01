@@ -39,17 +39,9 @@ collectFuncletMembers(DenseMap<MachineBasicBlock *, int> &FuncletMembership,
                       int Funclet, MachineBasicBlock *MBB) {
   // Don't revisit blocks.
   if (FuncletMembership.count(MBB) > 0) {
-    // FIXME: This is a hack, we need to assert this unconditionally.
-    bool IsProbablyUnreachableBlock =
-        MBB->empty() ||
-        (MBB->succ_empty() && !MBB->getFirstTerminator()->isReturn() &&
-         MBB->size() == 1);
-
-    if (!IsProbablyUnreachableBlock) {
-      if (FuncletMembership[MBB] != Funclet) {
-        assert(false && "MBB is part of two funclets!");
-        report_fatal_error("MBB is part of two funclets!");
-      }
+    if (FuncletMembership[MBB] != Funclet) {
+      assert(false && "MBB is part of two funclets!");
+      report_fatal_error("MBB is part of two funclets!");
     }
     return;
   }

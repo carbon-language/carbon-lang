@@ -4,6 +4,10 @@ target datalayout = "e-m:w-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-windows-msvc"
 
 %eh.ThrowInfo = type { i32, i32, i32, i32 }
+%rtti.TypeDescriptor2 = type { i8**, i8*, [3 x i8] }
+
+@"\01??_7type_info@@6B@" = external constant i8*
+@"\01??_R0H@8" = internal global %rtti.TypeDescriptor2 { i8** @"\01??_7type_info@@6B@", i8* null, [3 x i8] c".H\00" }
 
 define void @test1(i1 %B) personality i32 (...)* @__CxxFrameHandler3 {
 entry:
@@ -38,7 +42,7 @@ unreachable:
 ; CHECK: retq
 
 ; The catch funclet contains %catch and %catchret
-; CHECK: # %catch
+; CHECK: # %catch{{$}}
 ; CHECK: # %catchret
 ; CHECK: retq
 
@@ -94,9 +98,54 @@ unreachable:                                      ; preds = %catch, %entry
 ; CHECK: retq
 
 ; The outer catch funclet contains %catch and %try.cont
-; CHECK: # %catch
+; CHECK: # %catch{{$}}
+; CHECK: # %try.cont{{$}}
+; CHECK: retq
+
+
+define void @test3() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
+entry:
+  invoke void @g()
+          to label %try.cont unwind label %catch.dispatch
+
+catch.dispatch:                                   ; preds = %entry
+  %0 = catchpad [%rtti.TypeDescriptor2* @"\01??_R0H@8", i32 0, i8* null]
+          to label %catch.2 unwind label %catch.dispatch.1
+
+catch.2:                                          ; preds = %catch.dispatch
+  tail call void @exit(i32 0) #2
+  unreachable
+
+catch.dispatch.1:                                 ; preds = %catch.dispatch
+  %1 = catchpad [i8* null, i32 64, i8* null]
+          to label %catch unwind label %catchendblock
+
+catch:                                            ; preds = %catch.dispatch.1
+  tail call void @exit(i32 0) #2
+  unreachable
+
+catchendblock:                                    ; preds = %catch.dispatch.1
+  catchendpad unwind to caller
+
+try.cont:                                         ; preds = %entry
+  ret void
+}
+
+; CHECK-LABEL: test3:
+
+; The entry funclet contains %entry and %try.cont
+; CHECK: # %entry
 ; CHECK: # %try.cont
 ; CHECK: retq
 
+; The catch(int) funclet contains %catch.2
+; CHECK: # %catch.2
+; CHECK: callq exit
+
+; The catch(...) funclet contains %catch
+; CHECK: # %catch{{$}}
+; CHECK: callq exit
+
+declare void @exit(i32) noreturn nounwind
 declare void @_CxxThrowException(i8*, %eh.ThrowInfo*)
 declare i32 @__CxxFrameHandler3(...)
