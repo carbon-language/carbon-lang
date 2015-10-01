@@ -4277,7 +4277,7 @@ ValueObject::Persist ()
     if (!target_sp)
         return nullptr;
     
-    PersistentExpressionState *persistent_state = target_sp->GetScratchTypeSystemForLanguage(GetCompilerType().GetMinimumLanguage())->GetPersistentExpressionState();
+    PersistentExpressionState *persistent_state = target_sp->GetScratchTypeSystemForLanguage(GetPreferredDisplayLanguage())->GetPersistentExpressionState();
     
     if (!persistent_state)
         return nullptr;
