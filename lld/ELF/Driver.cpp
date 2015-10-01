@@ -139,6 +139,12 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     case OPT_Bdynamic:
       Config->Static = false;
       break;
+    case OPT_whole_archive:
+      Config->WholeArchive = true;
+      break;
+    case OPT_no_whole_archive:
+      Config->WholeArchive = false;
+      break;
     default:
       break;
     }

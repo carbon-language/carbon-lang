@@ -32,6 +32,7 @@ struct Configuration {
   bool NoInhibitExec;
   bool Shared;
   bool Static = false;
+  bool WholeArchive = false;
 };
 
 extern Configuration *Config;

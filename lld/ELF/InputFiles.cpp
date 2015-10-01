@@ -181,10 +181,14 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   }
 }
 
-void ArchiveFile::parse() {
+static std::unique_ptr<Archive> openArchive(MemoryBufferRef MB) {
   ErrorOr<std::unique_ptr<Archive>> ArchiveOrErr = Archive::create(MB);
   error(ArchiveOrErr, "Failed to parse archive");
-  File = std::move(*ArchiveOrErr);
+  return std::move(*ArchiveOrErr);
+}
+
+void ArchiveFile::parse() {
+  File = openArchive(MB);
 
   // Allocate a buffer for Lazy objects.
   size_t NumSyms = File->getNumberOfSymbols();
@@ -209,6 +213,20 @@ MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
   error(Ret, Twine("Could not get the buffer for the member defining symbol ") +
                  Sym->getName());
   return *Ret;
+}
+
+std::vector<MemoryBufferRef> ArchiveFile::getMembers() {
+  File = openArchive(MB);
+
+  std::vector<MemoryBufferRef> Result;
+  for (const Archive::Child &Child : File->children()) {
+    ErrorOr<MemoryBufferRef> MbOrErr = Child.getMemoryBufferRef();
+    error(MbOrErr,
+          Twine("Could not get the buffer for a child of the archive ") +
+              File->getFileName());
+    Result.push_back(MbOrErr.get());
+  }
+  return Result;
 }
 
 template <class ELFT>

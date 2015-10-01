@@ -28,15 +28,21 @@ bool SymbolTable::shouldUseRela() const {
 }
 
 void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
-  File->parse();
-  InputFile *FileP = File.release();
-  if (auto *AF = dyn_cast<ArchiveFile>(FileP)) {
+  if (auto *AF = dyn_cast<ArchiveFile>(File.get())) {
+    File.release();
     ArchiveFiles.emplace_back(AF);
+    if (Config->WholeArchive) {
+      for (MemoryBufferRef &MBRef : AF->getMembers())
+        addFile(createELFFile<ObjectFile>(MBRef));
+      return;
+    }
+    AF->parse();
     for (Lazy &Sym : AF->getLazySymbols())
       addLazy(&Sym);
     return;
   }
-  addELFFile(cast<ELFFileBase>(FileP));
+  File->parse();
+  addELFFile(cast<ELFFileBase>(File.release()));
 }
 
 static TargetInfo *createTarget(uint16_t EMachine) {

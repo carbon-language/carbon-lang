@@ -37,6 +37,9 @@ def l : Joined<["-"], "l">, MetaVarName<"<libName>">,
 
 def no_allow_shlib_undefined : Flag<["--"], "no-allow-shlib-undefined">;
 
+def no_whole_archive : Flag<["--"], "no-whole-archive">,
+  HelpText<"Restores the default behavior of loading archive members">;
+
 def noinhibit_exec : Flag<["--"], "noinhibit-exec">,
   HelpText<"Retain the executable output file whenever it is still usable">;
 
@@ -51,6 +54,9 @@ def shared : Flag<["-"], "shared">,
 
 def sysroot : Joined<["--"], "sysroot=">,
   HelpText<"Set the system root">;
+
+def whole_archive : Flag<["--"], "whole-archive">,
+  HelpText<"Force load of all members in a static library">;
 
 // Aliases
 def alias_Bdynamic_call_shared: Flag<["-"], "call_shared">, Alias<Bdynamic>;
