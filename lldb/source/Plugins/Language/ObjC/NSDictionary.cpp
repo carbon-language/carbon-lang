@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Cocoa.h"
+#include "NSDictionary.h"
 
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
@@ -22,9 +22,25 @@
 
 #include "clang/AST/DeclCXX.h"
 
+#include <mutex>
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::formatters;
+
+std::map<ConstString, CXXFunctionSummaryFormat::Callback>&
+NSDictionary_Additionals::GetAdditionalSummaries ()
+{
+    static std::map<ConstString, CXXFunctionSummaryFormat::Callback> g_map;
+    return g_map;
+}
+
+std::map<ConstString, CXXSyntheticChildren::CreateFrontEndCallback>&
+NSDictionary_Additionals::GetAdditionalSynthetics ()
+{
+    static std::map<ConstString, CXXSyntheticChildren::CreateFrontEndCallback> g_map;
+    return g_map;
+}
 
 static CompilerType
 GetLLDBNSPairType (TargetSP target_sp)
@@ -221,7 +237,8 @@ lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stre
     
     uint64_t value = 0;
     
-    const char* class_name = descriptor->GetClassName().GetCString();
+    ConstString class_name_cs = descriptor->GetClassName();
+    const char* class_name = class_name_cs.GetCString();
     
     if (!class_name || !*class_name)
         return false;
@@ -253,6 +270,10 @@ lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stre
     }*/
     else
     {
+        auto& map(NSDictionary_Additionals::GetAdditionalSummaries());
+        auto iter = map.find(class_name_cs), end = map.end();
+        if (iter != end)
+            return iter->second(valobj, stream, options);
         if (!ExtractValueFromObjCExpression(valobj, "int", "count", value))
             return false;
     }
@@ -265,9 +286,8 @@ lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stre
     return true;
 }
 
-SyntheticChildrenFrontEnd* lldb_private::formatters::NSDictionarySyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
+SyntheticChildrenFrontEnd* lldb_private::formatters::NSDictionarySyntheticFrontEndCreator (CXXSyntheticChildren* synth, lldb::ValueObjectSP valobj_sp)
 {
-    
     lldb::ProcessSP process_sp (valobj_sp->GetProcessSP());
     if (!process_sp)
         return NULL;
@@ -288,7 +308,8 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSDictionarySyntheticFrontE
     if (!descriptor.get() || !descriptor->IsValid())
         return NULL;
     
-    const char* class_name = descriptor->GetClassName().GetCString();
+    ConstString class_name_cs = descriptor->GetClassName();
+    const char* class_name = class_name_cs.GetCString();
     
     if (!class_name || !*class_name)
         return NULL;
@@ -303,6 +324,10 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSDictionarySyntheticFrontE
     }
     else
     {
+        auto& map(NSDictionary_Additionals::GetAdditionalSynthetics());
+        auto iter = map.find(class_name_cs), end = map.end();
+        if (iter != end)
+            return iter->second(synth, valobj_sp);
         return (new NSDictionaryCodeRunningSyntheticFrontEnd(valobj_sp));
     }
 }

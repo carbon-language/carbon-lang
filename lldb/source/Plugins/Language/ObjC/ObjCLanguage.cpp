@@ -23,6 +23,9 @@
 #include "CF.h"
 #include "Cocoa.h"
 #include "CoreMedia.h"
+#include "NSDictionary.h"
+#include "NSSet.h"
+#include "NSString.h"
 
 using namespace lldb;
 using namespace lldb_private;

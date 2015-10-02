@@ -780,6 +780,7 @@
 		94B6385D1B8FB178004FE1E4 /* CPlusPlusLanguage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B6385B1B8FB174004FE1E4 /* CPlusPlusLanguage.cpp */; };
 		94B638631B8FB7F1004FE1E4 /* ObjCPlusPlusLanguage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B638621B8FB7F1004FE1E4 /* ObjCPlusPlusLanguage.cpp */; };
 		94B6E76213D88365005F417F /* ValueObjectSyntheticFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B6E76113D88362005F417F /* ValueObjectSyntheticFilter.cpp */; };
+		94B9E5121BBF20F4000A48DC /* NSString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B9E5111BBF20F4000A48DC /* NSString.cpp */; };
 		94BA8B6D176F8C9B005A91B5 /* Range.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94BA8B6C176F8C9B005A91B5 /* Range.cpp */; };
 		94BA8B70176F97CE005A91B5 /* CommandHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94BA8B6F176F97CE005A91B5 /* CommandHistory.cpp */; };
 		94CB255C16B069770059775D /* DataVisualization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CB255816B069770059775D /* DataVisualization.cpp */; };
@@ -2523,6 +2524,10 @@
 		94B638621B8FB7F1004FE1E4 /* ObjCPlusPlusLanguage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ObjCPlusPlusLanguage.cpp; path = Language/ObjCPlusPlus/ObjCPlusPlusLanguage.cpp; sourceTree = "<group>"; };
 		94B6E76013D8833C005F417F /* ValueObjectSyntheticFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectSyntheticFilter.h; path = include/lldb/Core/ValueObjectSyntheticFilter.h; sourceTree = "<group>"; };
 		94B6E76113D88362005F417F /* ValueObjectSyntheticFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectSyntheticFilter.cpp; path = source/Core/ValueObjectSyntheticFilter.cpp; sourceTree = "<group>"; };
+		94B9E50E1BBEFDFE000A48DC /* NSDictionary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NSDictionary.h; path = Language/ObjC/NSDictionary.h; sourceTree = "<group>"; };
+		94B9E50F1BBF0069000A48DC /* NSSet.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NSSet.h; path = Language/ObjC/NSSet.h; sourceTree = "<group>"; };
+		94B9E5101BBF20B7000A48DC /* NSString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NSString.h; path = Language/ObjC/NSString.h; sourceTree = "<group>"; };
+		94B9E5111BBF20F4000A48DC /* NSString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSString.cpp; path = Language/ObjC/NSString.cpp; sourceTree = "<group>"; };
 		94BA8B6C176F8C9B005A91B5 /* Range.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Range.cpp; path = source/Utility/Range.cpp; sourceTree = "<group>"; };
 		94BA8B6E176F8CA0005A91B5 /* Range.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Range.h; path = include/lldb/Utility/Range.h; sourceTree = "<group>"; };
 		94BA8B6F176F97CE005A91B5 /* CommandHistory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandHistory.cpp; path = source/Interpreter/CommandHistory.cpp; sourceTree = "<group>"; };
@@ -5342,9 +5347,13 @@
 				949EED9F1BA74B64008C63CF /* CoreMedia.h */,
 				949EED9E1BA74B64008C63CF /* CoreMedia.cpp */,
 				949EEDA41BA765B5008C63CF /* NSArray.cpp */,
+				94B9E50E1BBEFDFE000A48DC /* NSDictionary.h */,
 				949EEDA51BA765B5008C63CF /* NSDictionary.cpp */,
 				949EEDA61BA765B5008C63CF /* NSIndexPath.cpp */,
+				94B9E50F1BBF0069000A48DC /* NSSet.h */,
 				949EEDA71BA765B5008C63CF /* NSSet.cpp */,
+				94B9E5101BBF20B7000A48DC /* NSString.h */,
+				94B9E5111BBF20F4000A48DC /* NSString.cpp */,
 			);
 			name = Formatters;
 			sourceTree = "<group>";
@@ -6297,6 +6306,7 @@
 				6D99A3631BBC2F3200979793 /* ArmUnwindInfo.cpp in Sources */,
 				4984BA131B978C55008658D4 /* ClangExpressionVariable.cpp in Sources */,
 				3F81691A1ABA2419001DA9DF /* NameMatches.cpp in Sources */,
+				94B9E5121BBF20F4000A48DC /* NSString.cpp in Sources */,
 				AF0E22F018A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp in Sources */,
 				2689004E13353E0400698AC0 /* Stream.cpp in Sources */,
 				2689004F13353E0400698AC0 /* StreamFile.cpp in Sources */,
