@@ -125,7 +125,6 @@ class Fuzzer {
   size_t RunOne(const Unit &U);
   void RunOneAndUpdateCorpus(Unit &U);
   size_t RunOneMaximizeTotalCoverage(const Unit &U);
-  size_t RunOneMaximizeFullCoverageSet(const Unit &U);
   size_t RunOneMaximizeCoveragePairs(const Unit &U);
   void WriteToOutputCorpus(const Unit &U);
   void WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix);
@@ -155,7 +154,6 @@ class Fuzzer {
 
   std::vector<Unit> Corpus;
   std::unordered_set<std::string> UnitHashesAddedToCorpus;
-  std::unordered_set<uintptr_t> FullCoverageSets;
 
   // For UseCounters
   std::vector<uint8_t> CounterBitmap;

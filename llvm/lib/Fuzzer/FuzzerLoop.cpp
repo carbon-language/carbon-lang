@@ -156,11 +156,7 @@ void Fuzzer::ShuffleAndMinimize() {
 size_t Fuzzer::RunOne(const Unit &U) {
   UnitStartTime = system_clock::now();
   TotalNumberOfRuns++;
-  size_t Res = 0;
-  if (Options.UseFullCoverageSet)
-    Res = RunOneMaximizeFullCoverageSet(U);
-  else
-    Res = RunOneMaximizeTotalCoverage(U);
+  size_t Res = RunOneMaximizeTotalCoverage(U);
   auto UnitStopTime = system_clock::now();
   auto TimeOfUnit =
       duration_cast<seconds>(UnitStopTime - UnitStartTime).count();
@@ -181,14 +177,6 @@ void Fuzzer::RunOneAndUpdateCorpus(Unit &U) {
   if (Options.OnlyASCII)
     ToASCII(U);
   ReportNewCoverage(RunOne(U), U);
-}
-
-static uintptr_t HashOfArrayOfPCs(uintptr_t *PCs, uintptr_t NumPCs) {
-  uintptr_t Res = 0;
-  for (uintptr_t i = 0; i < NumPCs; i++) {
-    Res = (Res + PCs[i]) * 7;
-  }
-  return Res;
 }
 
 Unit Fuzzer::SubstituteTokens(const Unit &U) const {
@@ -212,22 +200,6 @@ void Fuzzer::ExecuteCallback(const Unit &U) {
     auto T = SubstituteTokens(U);
     USF.TargetFunction(T.data(), T.size());
   }
-}
-
-// Experimental.
-// Fuly reset the current coverage state, run a single unit,
-// compute a hash function from the full coverage set,
-// return non-zero if the hash value is new.
-// This produces tons of new units and as is it's only suitable for small tests,
-// e.g. test/FullCoverageSetTest.cpp. FIXME: make it scale.
-size_t Fuzzer::RunOneMaximizeFullCoverageSet(const Unit &U) {
-  __sanitizer_reset_coverage();
-  ExecuteCallback(U);
-  uintptr_t *PCs;
-  uintptr_t NumPCs =__sanitizer_get_coverage_guards(&PCs);
-  if (FullCoverageSets.insert(HashOfArrayOfPCs(PCs, NumPCs)).second)
-    return FullCoverageSets.size();
-  return 0;
 }
 
 size_t Fuzzer::RunOneMaximizeTotalCoverage(const Unit &U) {

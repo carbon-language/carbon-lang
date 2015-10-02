@@ -255,7 +255,6 @@ int FuzzerDriver(const std::vector<std::string> &Args,
   Options.ExitOnFirst = Flags.exit_on_first;
   Options.UseCounters = Flags.use_counters;
   Options.UseTraces = Flags.use_traces;
-  Options.UseFullCoverageSet = Flags.use_full_coverage_set;
   Options.PreferSmallDuringInitialShuffle =
       Flags.prefer_small_during_initial_shuffle;
   Options.Tokens = ReadTokensFile(Flags.deprecated_tokens);

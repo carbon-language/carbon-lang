@@ -37,10 +37,6 @@ FUZZER_FLAG_INT(
     "Example: ./fuzzer -save_minimized_corpus=1 NEW_EMPTY_DIR OLD_CORPUS")
 FUZZER_FLAG_INT(use_counters, 1, "Use coverage counters")
 FUZZER_FLAG_INT(use_traces, 0, "Experimental: use instruction traces")
-FUZZER_FLAG_INT(use_full_coverage_set, 0,
-            "Experimental: Maximize the number of different full"
-            " coverage sets as opposed to maximizing the total coverage."
-            " This is potentially MUCH slower, but may discover more paths.")
 FUZZER_FLAG_INT(jobs, 0, "Number of jobs to run. If jobs >= 1 we spawn"
                           " this number of jobs in separate worker processes"
                           " with stdout/stderr redirected to fuzz-JOB.log.")
