@@ -73,7 +73,7 @@ bool Driver::link(LinkingContext &ctx, raw_ostream &diagnostics) {
     args[0] = "lld (LLVM option parsing)";
     for (unsigned i = 0; i != numArgs; ++i)
       args[i + 1] = ctx.llvmOptions()[i];
-    args[numArgs + 1] = 0;
+    args[numArgs + 1] = nullptr;
     llvm::cl::ParseCommandLineOptions(numArgs + 1, args);
   }
   if (ctx.getNodes().empty())
@@ -136,4 +136,4 @@ bool Driver::link(LinkingContext &ctx, raw_ostream &diagnostics) {
   return true;
 }
 
-} // namespace
+} // anonymous namespace

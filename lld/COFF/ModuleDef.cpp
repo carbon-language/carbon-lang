@@ -234,7 +234,7 @@ private:
     read();
     if (Tok.K != Comma) {
       unget();
-      Commit = 0;
+      Commit = nullptr;
       return;
     }
     readAsInt(Commit);

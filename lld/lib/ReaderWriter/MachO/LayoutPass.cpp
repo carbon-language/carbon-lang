@@ -407,7 +407,7 @@ void LayoutPass::buildOrdinalOverrideMap(SimpleFile::DefinedAtomRange &range) {
     AtomToAtomT::iterator start = _followOnRoots.find(atom);
     if (start == _followOnRoots.end())
       continue;
-    for (const DefinedAtom *nextAtom = start->second; nextAtom != NULL;
+    for (const DefinedAtom *nextAtom = start->second; nextAtom;
          nextAtom = _followOnNexts[nextAtom]) {
       AtomToOrdinalT::iterator pos = _ordinalOverrideMap.find(nextAtom);
       if (pos == _ordinalOverrideMap.end())

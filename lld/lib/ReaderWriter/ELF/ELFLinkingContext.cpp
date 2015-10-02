@@ -235,7 +235,7 @@ std::string ELFLinkingContext::demangle(StringRef symbolName) const {
   const char *cstr = nullTermSym.data();
   int status;
   char *demangled = abi::__cxa_demangle(cstr, nullptr, nullptr, &status);
-  if (demangled == NULL)
+  if (!demangled)
     return symbolName;
   std::string result(demangled);
   // __cxa_demangle() always uses a malloc'ed buffer to return the result.

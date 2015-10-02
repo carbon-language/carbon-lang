@@ -74,7 +74,6 @@ bool MachOLinkingContext::parsePackedVersion(StringRef str, uint32_t &result) {
   return false;
 }
 
-
 MachOLinkingContext::ArchInfo MachOLinkingContext::_s_archInfos[] = {
   { "x86_64", arch_x86_64, true,  CPU_TYPE_X86_64,  CPU_SUBTYPE_X86_64_ALL },
   { "i386",   arch_x86,    true,  CPU_TYPE_I386,    CPU_SUBTYPE_X86_ALL },
@@ -273,8 +272,6 @@ bool MachOLinkingContext::isBigEndian(Arch arch) {
   llvm_unreachable("Unknown arch type");
 }
 
-
-
 bool MachOLinkingContext::is64Bit() const {
   return is64Bit(_arch);
 }
@@ -356,9 +353,6 @@ bool MachOLinkingContext::needsTLVPass() const {
 StringRef MachOLinkingContext::binderSymbolName() const {
   return archHandler().stubInfo().binderSymbolName;
 }
-
-
-
 
 bool MachOLinkingContext::minOS(StringRef mac, StringRef iOS) const {
   uint32_t parsedVersion;
@@ -489,7 +483,6 @@ void MachOLinkingContext::addFrameworkSearchDir(StringRef fwPath,
     _frameworkDirs.push_back(fwPath);
 }
 
-
 ErrorOr<StringRef>
 MachOLinkingContext::searchDirForLibrary(StringRef path,
                                          StringRef libName) const {
@@ -518,8 +511,6 @@ MachOLinkingContext::searchDirForLibrary(StringRef path,
   return make_error_code(llvm::errc::no_such_file_or_directory);
 }
 
-
-
 ErrorOr<StringRef> MachOLinkingContext::searchLibrary(StringRef libName) const {
   SmallString<256> path;
   for (StringRef dir : searchDirs()) {
@@ -530,7 +521,6 @@ ErrorOr<StringRef> MachOLinkingContext::searchLibrary(StringRef libName) const {
 
   return make_error_code(llvm::errc::no_such_file_or_directory);
 }
-
 
 ErrorOr<StringRef> MachOLinkingContext::findPathForFramework(StringRef fwName) const{
   SmallString<256> fullPath;
@@ -653,7 +643,6 @@ MachODylibFile* MachOLinkingContext::loadIndirectDylib(StringRef path) {
   return result;
 }
 
-
 MachODylibFile* MachOLinkingContext::findIndirectDylib(StringRef path) {
   // See if already loaded.
   auto pos = _pathToDylibMap.find(path);
@@ -728,7 +717,6 @@ void MachOLinkingContext::createImplicitFiles(
   }
 }
 
-
 void MachOLinkingContext::registerDylib(MachODylibFile *dylib,
                                         bool upward) const {
   std::lock_guard<std::mutex> lock(_dylibsMutex);
@@ -740,7 +728,6 @@ void MachOLinkingContext::registerDylib(MachODylibFile *dylib,
   if (upward)
     _upwardDylibs.insert(dylib);
 }
-
 
 bool MachOLinkingContext::isUpwardDylib(StringRef installName) const {
   for (MachODylibFile *dylib : _upwardDylibs) {
@@ -755,7 +742,6 @@ ArchHandler &MachOLinkingContext::archHandler() const {
     _archHandler = ArchHandler::create(_arch);
   return *_archHandler;
 }
-
 
 void MachOLinkingContext::addSectionAlignment(StringRef seg, StringRef sect,
                                               uint16_t align) {
@@ -773,7 +759,6 @@ bool MachOLinkingContext::sectionAligned(StringRef seg, StringRef sect,
   }
   return false;
 }
-
 
 void MachOLinkingContext::addExportSymbol(StringRef sym) {
   // Support old crufty export lists with bogus entries.
@@ -829,7 +814,7 @@ std::string MachOLinkingContext::demangle(StringRef symbolName) const {
   const char *cstr = nullTermSym.data() + 1;
   int status;
   char *demangled = abi::__cxa_demangle(cstr, nullptr, nullptr, &status);
-  if (demangled != NULL) {
+  if (demangled) {
     std::string result(demangled);
     // __cxa_demangle() always uses a malloc'ed buffer to return the result.
     free(demangled);
