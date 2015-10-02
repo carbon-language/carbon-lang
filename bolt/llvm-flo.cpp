@@ -61,6 +61,7 @@ FunctionNames("funcs", cl::desc("list of functions to optimzize"),
               cl::Optional);
 
 
+// Tool name used for reporting.
 static StringRef ToolName;
 
 static void report_error(StringRef Message, std::error_code EC) {
