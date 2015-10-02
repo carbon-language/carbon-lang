@@ -316,6 +316,7 @@ class DynamicSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Dyn Elf_Dyn;
 
 public:
   DynamicSection(SymbolTable &SymTab, HashTableSection<ELFT> &HashSec,

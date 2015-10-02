@@ -223,8 +223,6 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
 }
 
 template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
-  typedef typename std::conditional<ELFT::Is64Bits, Elf64_Dyn, Elf32_Dyn>::type
-      Elf_Dyn;
   auto *P = reinterpret_cast<Elf_Dyn *>(Buf);
 
   auto WritePtr = [&](int32_t Tag, uint64_t Val) {

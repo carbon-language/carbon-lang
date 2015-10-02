@@ -1,0 +1,35 @@
+// RUN: llvm-mc -filetype=obj -triple=powerpc64-unknown-linux %s -o %t.o
+// RUN: llvm-mc -filetype=obj -triple=powerpc64-unknown-linux %p/Inputs/shared.s -o %t2.o
+// RUN: lld -flavor gnu2 -shared %t2.o -o %t2.so
+// RUN: lld -flavor gnu2 -dynamic-linker /lib64/ld64.so.1 -rpath foo -rpath bar --export-dynamic %t.o %t2.so -o %t
+// RUN: llvm-readobj --program-headers --dynamic-table -t -s -dyn-symbols -section-data -hash-table %t | FileCheck %s
+// REQUIRES: ppc
+
+// CHECK:      Name: .rela.dyn
+// CHECK-NEXT: Type: SHT_REL
+// CHECK-NEXT: Flags [
+// CHECK-NEXT:   SHF_ALLOC
+// CHECK-NEXT: ]
+// CHECK-NEXT: Address: [[RELADDR:.*]]
+// CHECK-NEXT: Offset:
+// CHECK-NEXT: Size: [[RELSIZE:.*]]
+// CHECK-NEXT: Link:
+// CHECK-NEXT: Info:
+// CHECK-NEXT: AddressAlignment:
+// CHECK-NEXT: EntrySize: [[RELENT:.*]]
+
+// CHECK:      DynamicSection [
+// CHECK-NEXT:   Tag                Type                 Name/Value
+// CHECK-NEXT:   0x0000000000000007 RELA                 [[RELADDR]]
+// CHECK-NEXT:   0x0000000000000008 RELASZ               [[RELSIZE]] (bytes)
+// CHECK-NEXT:   0x0000000000000009 RELAENT              [[RELENT]] (bytes)
+// CHECK:        0x000000000000001D RUNPATH              foo:bar
+// CHECK-NEXT:   0x0000000000000001 NEEDED               SharedLibrary ({{.*}}2.so)
+// CHECK-NEXT:   0x0000000000000000 NULL                 0x0
+// CHECK-NEXT: ]
+
+.global _start
+_start:
+.long bar
+.long zed
+
