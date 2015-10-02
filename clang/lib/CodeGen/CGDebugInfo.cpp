@@ -2172,6 +2172,9 @@ ObjCInterfaceDecl *CGDebugInfo::getObjCInterfaceDecl(QualType Ty) {
 }
 
 llvm::DIModule *CGDebugInfo::getParentModuleOrNull(const Decl *D) {
+  // A forward declaration inside a module header does not belong to the module.
+  if (isa<RecordDecl>(D) && !cast<RecordDecl>(D)->getDefinition())
+    return nullptr;
   if (DebugTypeExtRefs && D->isFromASTFile()) {
     // Record a reference to an imported clang module or precompiled header.
     auto *Reader = CGM.getContext().getExternalSource();

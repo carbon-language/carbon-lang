@@ -5,6 +5,7 @@
 }
 + classMethod;
 - instanceMethodWithInt:(int)i;
+- (struct OpaqueData*) getSomethingOpaque;
 @property int property;
 @end
 
