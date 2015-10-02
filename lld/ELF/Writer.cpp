@@ -328,8 +328,14 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     }
   }
 
-  if (OutputSection<ELFT> *OS =
-          Map.lookup({".init_array", SHT_INIT_ARRAY, SHF_WRITE | SHF_ALLOC})) {
+  DynamicSec.PreInitArraySec =
+      Map.lookup({".preinit_array", SHT_PREINIT_ARRAY, SHF_WRITE | SHF_ALLOC});
+  DynamicSec.InitArraySec =
+      Map.lookup({".init_array", SHT_INIT_ARRAY, SHF_WRITE | SHF_ALLOC});
+  DynamicSec.FiniArraySec =
+      Map.lookup({".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC});
+
+  if (OutputSection<ELFT> *OS = DynamicSec.InitArraySec) {
     Symtab.addSyntheticSym<ELFT>("__init_array_start", *OS, 0);
     Symtab.addSyntheticSym<ELFT>("__init_array_end", *OS, OS->getSize());
   } else {

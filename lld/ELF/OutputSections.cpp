@@ -211,6 +211,13 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     DynStrSec.add(Config->SoName);
   }
 
+  if (PreInitArraySec)
+    NumEntries += 2;
+  if (InitArraySec)
+    NumEntries += 2;
+  if (FiniArraySec)
+    NumEntries += 2;
+
   const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
       SymTab.getSharedFiles();
   for (const std::unique_ptr<SharedFileBase> &File : SharedFiles)
@@ -256,6 +263,17 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 
   if (!Config->SoName.empty())
     WriteVal(DT_SONAME, DynStrSec.getFileOff(Config->SoName));
+
+  auto WriteArray = [&](int32_t T1, int32_t T2,
+                        const OutputSection<ELFT> *Sec) {
+    if (!Sec)
+      return;
+    WritePtr(T1, Sec->getVA());
+    WriteVal(T2, Sec->getSize());
+  };
+  WriteArray(DT_PREINIT_ARRAY, DT_PREINIT_ARRAYSZ, PreInitArraySec);
+  WriteArray(DT_INIT_ARRAY, DT_INIT_ARRAYSZ, InitArraySec);
+  WriteArray(DT_FINI_ARRAY, DT_FINI_ARRAYSZ, FiniArraySec);
 
   const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
       SymTab.getSharedFiles();

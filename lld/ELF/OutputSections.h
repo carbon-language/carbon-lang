@@ -70,7 +70,7 @@ public:
   void setSectionIndex(unsigned I) { SectionIndex = I; }
 
   // Returns the size of the section in the output file.
-  uintX_t getSize() { return Header.sh_size; }
+  uintX_t getSize() const { return Header.sh_size; }
   void setSize(uintX_t Val) { Header.sh_size = Val; }
   uintX_t getFlags() { return Header.sh_flags; }
   uintX_t getFileOff() { return Header.sh_offset; }
@@ -323,6 +323,10 @@ public:
                  RelocationSection<ELFT> &RelaDynSec);
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
+
+  OutputSection<ELFT> *PreInitArraySec = nullptr;
+  OutputSection<ELFT> *InitArraySec = nullptr;
+  OutputSection<ELFT> *FiniArraySec = nullptr;
 
 private:
   HashTableSection<ELFT> &HashSec;
