@@ -13,6 +13,4 @@ set(LLVM_LINK_COMPONENTS
 
 add_llvm_tool(llvm-flo
   llvm-flo.cpp
-  BinaryCFG.cpp
-  BinaryOptimizer.cpp
   )
