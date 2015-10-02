@@ -3826,7 +3826,8 @@ const SCEV *ScalarEvolution::createNodeFromSelectLikePHI(PHINode *PN) {
           if (isa<Argument>(V))
             return false;
 
-          if (isa<Instruction>(V) && DT.dominates(cast<Instruction>(V), BB))
+          if (isa<Instruction>(V) &&
+              this->DT.dominates(cast<Instruction>(V), BB))
             return false;
 
           return setUnavailable();
