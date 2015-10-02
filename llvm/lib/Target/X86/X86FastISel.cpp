@@ -3234,30 +3234,6 @@ X86FastISel::fastSelectInstruction(const Instruction *I)  {
     updateValueMap(I, Reg);
     return true;
   }
-  case Instruction::BitCast: {
-    // Select SSE2/AVX bitcasts between 128/256 bit vector types.
-    if (!Subtarget->hasSSE2())
-      return false;
-
-    EVT SrcVT = TLI.getValueType(DL, I->getOperand(0)->getType());
-    EVT DstVT = TLI.getValueType(DL, I->getType());
-
-    if (!SrcVT.isSimple() || !DstVT.isSimple())
-      return false;
-
-    if (!SrcVT.is128BitVector() &&
-        !(Subtarget->hasAVX() && SrcVT.is256BitVector()))
-      return false;
-
-    unsigned Reg = getRegForValue(I->getOperand(0));
-    if (Reg == 0)
-      return false;
-      
-    // No instruction is needed for conversion. Reuse the register used by
-    // the fist operand.
-    updateValueMap(I, Reg);
-    return true;
-  }
   }
 
   return false;
