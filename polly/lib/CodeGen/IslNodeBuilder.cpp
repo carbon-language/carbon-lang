@@ -175,6 +175,7 @@ struct SubtreeReferences {
   LoopInfo &LI;
   ScalarEvolution &SE;
   Region &R;
+  ValueMapT &GlobalMap;
   SetVector<Value *> &Values;
   SetVector<const SCEV *> &SCEVs;
   BlockGenerator &BlockGen;
@@ -190,7 +191,8 @@ static int findReferencesInBlock(struct SubtreeReferences &References,
         References.SCEVs.insert(
             References.SE.getSCEVAtScope(SrcVal, References.LI.getLoopFor(BB)));
         continue;
-      }
+      } else if (Value *NewVal = References.GlobalMap.lookup(SrcVal))
+        References.Values.insert(NewVal);
   return 0;
 }
 
@@ -282,8 +284,8 @@ void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
                                             SetVector<const Loop *> &Loops) {
 
   SetVector<const SCEV *> SCEVs;
-  struct SubtreeReferences References = {LI,     SE,    S.getRegion(),
-                                         Values, SCEVs, getBlockGenerator()};
+  struct SubtreeReferences References = {
+      LI, SE, S.getRegion(), ValueMap, Values, SCEVs, getBlockGenerator()};
 
   for (const auto &I : IDToValue)
     Values.insert(I.second);
@@ -589,11 +591,6 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
     OutsideLoopIterations[L] = SE.getUnknown(V);
     SubtreeValues.insert(V);
   }
-
-  // Values preloaded prior to the SCoP need to be available in the subfunction.
-  const auto &InvariantAccesses = S.getInvariantAccesses();
-  for (const InvariantAccessTy &IA : InvariantAccesses)
-    SubtreeValues.insert(ValueMap[IA.first->getAccessInstruction()]);
 
   ParallelLoopGenerator::ValueToValueMapTy NewValues;
   ParallelLoopGenerator ParallelLoopGen(Builder, P, LI, DT, DL);
