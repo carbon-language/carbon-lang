@@ -35,14 +35,12 @@ static const int VAStart = 0x10000;
 
 namespace {
 
-static uint32_t convertSectionFlagsToPHDRFlags(uint64_t Flags) {
+static uint32_t toPHDRFlags(uint64_t Flags) {
   uint32_t Ret = PF_R;
   if (Flags & SHF_WRITE)
     Ret |= PF_W;
-
   if (Flags & SHF_EXECINSTR)
     Ret |= PF_X;
-
   return Ret;
 }
 
@@ -53,15 +51,18 @@ public:
   typedef
     typename std::conditional<Is64Bits, Elf64_Phdr, Elf32_Phdr>::type HeaderT;
 
-  ProgramHeader(uintX_t Type, uintX_t Flags) {
+  ProgramHeader(uintX_t Type, uintX_t Flags, uintX_t FileOff, uintX_t VA) {
     std::memset(&Header, 0, sizeof(HeaderT));
     Header.p_type = Type;
     Header.p_flags = Flags;
     Header.p_align = PageSize;
+    Header.p_offset = FileOff;
+    Header.p_vaddr = VA;
+    Header.p_paddr = VA;
   }
 
   void setValuesFromSection(OutputSectionBase<Is64Bits> &Sec) {
-    Header.p_flags = convertSectionFlagsToPHDRFlags(Sec.getFlags());
+    Header.p_flags = toPHDRFlags(Sec.getFlags());
     Header.p_offset = Sec.getFileOff();
     Header.p_vaddr = Sec.getVA();
     Header.p_paddr = Header.p_vaddr;
@@ -131,9 +132,9 @@ private:
 
   llvm::BumpPtrAllocator PAlloc;
   std::vector<ProgramHeader<ELFT::Is64Bits> *> PHDRs;
-  ProgramHeader<ELFT::Is64Bits> FileHeaderPHDR{PT_LOAD, PF_R};
-  ProgramHeader<ELFT::Is64Bits> InterpPHDR{PT_INTERP, 0};
-  ProgramHeader<ELFT::Is64Bits> DynamicPHDR{PT_DYNAMIC, 0};
+  ProgramHeader<ELFT::Is64Bits> FileHeaderPHDR{PT_LOAD, PF_R, 0, 0};
+  ProgramHeader<ELFT::Is64Bits> InterpPHDR{PT_INTERP, 0, 0, 0};
+  ProgramHeader<ELFT::Is64Bits> DynamicPHDR{PT_DYNAMIC, 0, 0, 0};
 
   uintX_t FileSize;
   uintX_t ProgramHeaderOff;
@@ -450,7 +451,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 }
 
 template <class ELFT>
-static bool outputSectionHasPHDR(OutputSectionBase<ELFT::Is64Bits> *Sec) {
+static bool needsPHDR(OutputSectionBase<ELFT::Is64Bits> *Sec) {
   return Sec->getFlags() & SHF_ALLOC;
 }
 
@@ -472,7 +473,6 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   if (needsInterpSection())
     PHDRs.push_back(&InterpPHDR);
 
-  ProgramHeader<ELFT::Is64Bits> *LastPHDR = &FileHeaderPHDR;
   // Create a PHDR for the file header.
   PHDRs.push_back(&FileHeaderPHDR);
   FileHeaderPHDR.Header.p_vaddr = getVAStart();
@@ -484,24 +484,21 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     Sec->finalize();
 
     if (Sec->getSize()) {
-      uintX_t Flags = convertSectionFlagsToPHDRFlags(Sec->getFlags());
-      if (LastPHDR->Header.p_flags != Flags ||
-          !outputSectionHasPHDR<ELFT>(Sec)) {
+      uintX_t Flags = toPHDRFlags(Sec->getFlags());
+      ProgramHeader<ELFT::Is64Bits> *Last = PHDRs.back();
+      if (Last->Header.p_flags != Flags || !needsPHDR<ELFT>(Sec)) {
         // Flags changed. End current PHDR and potentially create a new one.
-        if (!LastPHDR->Closed) {
-          LastPHDR->Header.p_filesz = FileOff - LastPHDR->Header.p_offset;
-          LastPHDR->Header.p_memsz = VA - LastPHDR->Header.p_vaddr;
-          LastPHDR->Closed = true;
+        if (!Last->Closed) {
+          Last->Header.p_filesz = FileOff - Last->Header.p_offset;
+          Last->Header.p_memsz = VA - Last->Header.p_vaddr;
+          Last->Closed = true;
         }
 
-        if (outputSectionHasPHDR<ELFT>(Sec)) {
-          LastPHDR = new (PAlloc) ProgramHeader<ELFT::Is64Bits>(PT_LOAD, Flags);
-          PHDRs.push_back(LastPHDR);
+        if (needsPHDR<ELFT>(Sec)) {
           VA = RoundUpToAlignment(VA, PageSize);
           FileOff = RoundUpToAlignment(FileOff, PageSize);
-          LastPHDR->Header.p_offset = FileOff;
-          LastPHDR->Header.p_vaddr = VA;
-          LastPHDR->Header.p_paddr = VA;
+          PHDRs.push_back(new (PAlloc) ProgramHeader<ELFT::Is64Bits>(
+              PT_LOAD, Flags, FileOff, VA));
         }
       }
     }
