@@ -1294,8 +1294,8 @@ public:
   YAMLReader(const Registry &registry) : _registry(registry) {}
 
   bool canParse(file_magic magic, MemoryBufferRef mb) const override {
-    StringRef ext = llvm::sys::path::extension(mb.getBufferIdentifier());
-    return ext.equals(".objtxt") || ext.equals(".yaml");
+    StringRef name = mb.getBufferIdentifier();
+    return name.endswith(".objtxt") || name.endswith(".yaml");
   }
 
   ErrorOr<std::unique_ptr<File>>
