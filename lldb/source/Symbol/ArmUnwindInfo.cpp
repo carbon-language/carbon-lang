@@ -30,14 +30,26 @@
 using namespace lldb;
 using namespace lldb_private;
 
-namespace
+// Converts a prel31 avlue to lldb::addr_t with sign extension
+static addr_t
+Prel31ToAddr(uint32_t prel31)
 {
-    struct ArmExidxEntry
-    {
-        uint32_t address;
-        uint32_t data;
-    };
-};
+    addr_t res = prel31;
+    if (prel31 & (1<<30))
+        res |= 0xffffffff80000000ULL;
+    return res;
+}
+
+ArmUnwindInfo::ArmExidxEntry::ArmExidxEntry(uint32_t f, lldb::addr_t a, uint32_t d) :
+    file_address(f), address(a), data(d)
+{
+}
+
+bool
+ArmUnwindInfo::ArmExidxEntry::operator<(const ArmExidxEntry& other) const
+{
+    return address < other.address;
+}
 
 ArmUnwindInfo::ArmUnwindInfo(const ObjectFile& objfile,
                              SectionSP& arm_exidx,
@@ -48,6 +60,23 @@ ArmUnwindInfo::ArmUnwindInfo(const ObjectFile& objfile,
 {
     objfile.ReadSectionData(arm_exidx.get(), m_arm_exidx_data);
     objfile.ReadSectionData(arm_extab.get(), m_arm_extab_data);
+
+    addr_t exidx_base_addr = m_arm_exidx_sp->GetFileAddress();
+
+    offset_t offset = 0;
+    while (m_arm_exidx_data.ValidOffset(offset))
+    {
+        lldb::addr_t file_addr = exidx_base_addr + offset;
+        lldb::addr_t addr = exidx_base_addr +
+                            (addr_t)offset +
+                            Prel31ToAddr(m_arm_exidx_data.GetU32(&offset));
+        uint32_t data = m_arm_exidx_data.GetU32(&offset);
+        m_exidx_entries.emplace_back(file_addr, addr, data);
+    }
+
+    // Sort the entries in the exidx section. The entries should be sorted inside the section but
+    // some old compiler isn't sorted them.
+    std::sort(m_exidx_entries.begin(), m_exidx_entries.end());
 }
 
 ArmUnwindInfo::~ArmUnwindInfo()
@@ -85,7 +114,7 @@ ArmUnwindInfo::GetULEB128(const uint32_t* data, uint16_t& offset, uint16_t max_o
 bool
 ArmUnwindInfo::GetUnwindPlan(Target &target, const Address& addr, UnwindPlan& unwind_plan)
 {
-    const uint32_t* data = (const uint32_t*)GetExceptionHandlingTableEntry(addr.GetFileAddress());
+    const uint32_t* data = (const uint32_t*)GetExceptionHandlingTableEntry(addr);
     if (data == nullptr)
         return false; // No unwind information for the function
 
@@ -382,6 +411,8 @@ ArmUnwindInfo::GetUnwindPlan(Target &target, const Address& addr, UnwindPlan& un
         UnwindPlan::Row::RegisterLocation lr_location;
         if (row->GetRegisterInfo(dwarf_lr, lr_location))
             row->SetRegisterInfo(dwarf_pc, lr_location);
+        else
+            row->SetRegisterLocationToRegister(dwarf_pc, dwarf_lr, false);
     }
 
     unwind_plan.AppendRow(row);
@@ -396,38 +427,19 @@ ArmUnwindInfo::GetUnwindPlan(Target &target, const Address& addr, UnwindPlan& un
 const uint8_t*
 ArmUnwindInfo::GetExceptionHandlingTableEntry(const Address& addr)
 {
-    uint32_t file_addr = addr.GetFileAddress();
-    uint32_t exidx_base_addr = m_arm_exidx_sp->GetFileAddress();
-
-    const ArmExidxEntry* exidx_start = (const ArmExidxEntry*)m_arm_exidx_data.GetDataStart();
-    uint32_t bs_start = 0, bs_end = m_arm_exidx_data.GetByteSize() / sizeof(ArmExidxEntry);
-    while (bs_start + 1 < bs_end)
-    {
-        uint32_t mid = (bs_start + bs_end) / 2;
-        uint32_t mid_addr = exidx_base_addr + exidx_start[mid].address + mid * sizeof(ArmExidxEntry);
-        mid_addr &= 0x7fffffff;
-        if (mid_addr > file_addr)
-            bs_end = mid;
-        else
-            bs_start = mid;
-    }
-
-    uint32_t exidx_addr = exidx_base_addr +
-                          exidx_start[bs_start].address +
-                          bs_start * sizeof(ArmExidxEntry);
-    exidx_addr &= 0x7fffffff;
-    if (exidx_addr > file_addr)
+    auto it = std::upper_bound(m_exidx_entries.begin(),
+                               m_exidx_entries.end(),
+                               ArmExidxEntry{0, addr.GetFileAddress(), 0});
+    if (it == m_exidx_entries.begin())
         return nullptr;
+    --it;
 
-    if (exidx_start[bs_start].data == 0x1)
+    if (it->data == 0x1)
         return nullptr; // EXIDX_CANTUNWIND
 
-    if (exidx_start[bs_start].data & 0x80000000)
-        return (const uint8_t*)&exidx_start[bs_start].data;
+    if (it->data & 0x80000000)
+        return (const uint8_t*)&it->data;
 
-    uint32_t data_file_addr = exidx_base_addr +
-                              8 * bs_start + 4 +
-                              exidx_start[bs_start].data;
-    data_file_addr &= 0x7fffffff;
+    addr_t data_file_addr = it->file_address + 4 + Prel31ToAddr(it->data);
     return m_arm_extab_data.GetDataStart() + (data_file_addr - m_arm_extab_sp->GetFileAddress());
 }

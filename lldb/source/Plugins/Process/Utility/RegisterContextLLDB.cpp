@@ -881,12 +881,12 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
                 // then the architecture default plan and for hand written assembly code it is often
                 // written in a way that it valid at all location what helps in the most common
                 // cases when the instruction emulation fails.
-                UnwindPlanSP eh_frame_unwind_plan = func_unwinders_sp->GetEHFrameUnwindPlan (process->GetTarget(), m_current_offset_backed_up_one);
-                if (eh_frame_unwind_plan &&
-                    eh_frame_unwind_plan.get() != unwind_plan_sp.get() &&
-                    eh_frame_unwind_plan->GetSourceName() != unwind_plan_sp->GetSourceName())
+                UnwindPlanSP call_site_unwind_plan = func_unwinders_sp->GetUnwindPlanAtCallSite(process->GetTarget(), m_current_offset_backed_up_one);
+                if (call_site_unwind_plan &&
+                    call_site_unwind_plan.get() != unwind_plan_sp.get() &&
+                    call_site_unwind_plan->GetSourceName() != unwind_plan_sp->GetSourceName())
                 {
-                    m_fallback_unwind_plan_sp = eh_frame_unwind_plan;
+                    m_fallback_unwind_plan_sp = call_site_unwind_plan;
                 }
                 else
                 {
@@ -926,12 +926,12 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
         // more reliable even on non call sites then the architecture default plan and for hand
         // written assembly code it is often written in a way that it valid at all location what
         // helps in the most common cases when the instruction emulation fails.
-        UnwindPlanSP eh_frame_unwind_plan = func_unwinders_sp->GetEHFrameUnwindPlan (process->GetTarget(), m_current_offset_backed_up_one);
-        if (eh_frame_unwind_plan &&
-            eh_frame_unwind_plan.get() != unwind_plan_sp.get() &&
-            eh_frame_unwind_plan->GetSourceName() != unwind_plan_sp->GetSourceName())
+        UnwindPlanSP call_site_unwind_plan = func_unwinders_sp->GetUnwindPlanAtCallSite(process->GetTarget(), m_current_offset_backed_up_one);
+        if (call_site_unwind_plan &&
+            call_site_unwind_plan.get() != unwind_plan_sp.get() &&
+            call_site_unwind_plan->GetSourceName() != unwind_plan_sp->GetSourceName())
         {
-            m_fallback_unwind_plan_sp = eh_frame_unwind_plan;
+            m_fallback_unwind_plan_sp = call_site_unwind_plan;
         }
         else
         {

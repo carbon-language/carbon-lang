@@ -43,6 +43,18 @@ public:
     GetUnwindPlan(Target &target, const Address& addr, UnwindPlan& unwind_plan);
 
 private:
+    struct ArmExidxEntry
+    {
+        ArmExidxEntry(uint32_t f, lldb::addr_t a, uint32_t d);
+
+        bool
+        operator<(const ArmExidxEntry& other) const;
+
+        uint32_t file_address;
+        lldb::addr_t address;
+        uint32_t data;
+    };
+
     const uint8_t*
     GetExceptionHandlingTableEntry(const Address& addr);
 
@@ -57,6 +69,7 @@ private:
     lldb::SectionSP m_arm_extab_sp; // .ARM.extab section
     DataExtractor m_arm_exidx_data; // .ARM.exidx section data
     DataExtractor m_arm_extab_data; // .ARM.extab section data
+    std::vector<ArmExidxEntry> m_exidx_entries;
 };
 
 } // namespace lldb_private
