@@ -62,6 +62,10 @@ public:
 
   virtual ~TargetInstrInfo();
 
+  static bool isGenericOpcode(unsigned Opc) {
+    return Opc <= TargetOpcode::GENERIC_OP_END;
+  }
+
   /// Given a machine instruction descriptor, returns the register
   /// class constraint for OpNum, or NULL.
   const TargetRegisterClass *getRegClass(const MCInstrDesc &TID,
