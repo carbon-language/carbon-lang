@@ -187,6 +187,7 @@ function(darwin_lipo_libs name)
     "LIPO_FLAGS;DEPENDS"
     ${ARGN})
   add_custom_command(OUTPUT ${LIB_OUTPUT_DIR}/lib${name}.a
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${LIB_OUTPUT_DIR}
     COMMAND lipo -output
             ${LIB_OUTPUT_DIR}/lib${name}.a
             -create ${LIB_LIPO_FLAGS}
