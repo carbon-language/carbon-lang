@@ -93,4 +93,5 @@ def no_as_needed : Flag<["--"], "no-as-needed">;
 def no_fatal_warnings : Flag<["--"], "no-fatal-warnings">;
 def start_group : Flag<["--"], "start-group">;
 def strip_all : Flag<["--"], "strip-all">;
+def version_script : Separate<["--"], "version-script">;
 def z : Separate<["-"], "z">;
