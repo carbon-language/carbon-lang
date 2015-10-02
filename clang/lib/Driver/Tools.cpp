@@ -9760,6 +9760,8 @@ void tools::Myriad::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   const llvm::Triple &T = TC.getTriple();
   ArgStringList CmdArgs;
   bool UseStartfiles = !Args.hasArg(options::OPT_nostartfiles);
+  bool UseDefaultLibs = !Args.hasArg(options::OPT_nostdlib) &&
+                        !Args.hasArg(options::OPT_nodefaultlibs);
 
   std::string StartFilesDir, BuiltinLibDir;
   TC.getCompilerSupportDir(StartFilesDir);
@@ -9796,27 +9798,31 @@ void tools::Myriad::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                             options::OPT_e, options::OPT_s, options::OPT_t,
                             options::OPT_Z_Flag, options::OPT_r});
 
-  // The linker doesn't use these builtin paths unless directed to,
-  // because it was not compiled for support with sysroots, nor does
-  // it have a default of little-endian with FPU.
-  CmdArgs.push_back(Args.MakeArgString("-L" + BuiltinLibDir));
-  CmdArgs.push_back(Args.MakeArgString("-L" + StartFilesDir));
+  if (UseDefaultLibs) {
+    // The linker doesn't use these builtin paths unless directed to,
+    // because it was not compiled for support with sysroots, nor does
+    // it have a default of little-endian with FPU.
+    CmdArgs.push_back(Args.MakeArgString("-L" + BuiltinLibDir));
+    CmdArgs.push_back(Args.MakeArgString("-L" + StartFilesDir));
+  }
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
-  if (T.getOS() == llvm::Triple::RTEMS) {
-    CmdArgs.push_back("--start-group");
-    CmdArgs.push_back("-lc");
-    // You must provide your own "-L" option to enable finding these.
-    CmdArgs.push_back("-lrtemscpu");
-    CmdArgs.push_back("-lrtemsbsp");
-    CmdArgs.push_back("--end-group");
-  } else {
-    CmdArgs.push_back("-lc");
+  if (UseDefaultLibs) {
+    if (T.getOS() == llvm::Triple::RTEMS) {
+      CmdArgs.push_back("--start-group");
+      CmdArgs.push_back("-lc");
+      // You must provide your own "-L" option to enable finding these.
+      CmdArgs.push_back("-lrtemscpu");
+      CmdArgs.push_back("-lrtemsbsp");
+      CmdArgs.push_back("--end-group");
+    } else {
+      CmdArgs.push_back("-lc");
+    }
+    if (C.getDriver().CCCIsCXX())
+      CmdArgs.push_back("-lstdc++");
+    CmdArgs.push_back("-lgcc");
   }
-  if (C.getDriver().CCCIsCXX())
-    CmdArgs.push_back("-lstdc++");
-  CmdArgs.push_back("-lgcc");
   if (UseStartfiles) {
     CmdArgs.push_back(Args.MakeArgString(StartFilesDir + "/crtend.o"));
     CmdArgs.push_back(Args.MakeArgString(StartFilesDir + "/crtn.o"));

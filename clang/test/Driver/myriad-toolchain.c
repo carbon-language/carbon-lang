@@ -53,3 +53,7 @@
 // RUN: %clang -target shave-myriad -c %s -o foo.o -### -MD -MF dep.d 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=MDMF
 // MDMF: "-S" "-MD" "-MF" "dep.d" "-MT" "foo.o"
+
+// RUN: %clang -target sparc-myriad -### -nostdlib %s 2>&1 | FileCheck %s --check-prefix=NOSTDLIB
+//
+// NOSTDLIB-NOT: "-lc"
