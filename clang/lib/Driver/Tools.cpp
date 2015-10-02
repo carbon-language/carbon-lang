@@ -1077,16 +1077,6 @@ void mips::getMipsCPUAndABI(const ArgList &Args, const llvm::Triple &Triple,
   // FIXME: Warn on inconsistent use of -march and -mabi.
 }
 
-std::string mips::getMipsABILibSuffix(const ArgList &Args,
-                                      const llvm::Triple &Triple) {
-  StringRef CPUName, ABIName;
-  tools::mips::getMipsCPUAndABI(Args, Triple, CPUName, ABIName);
-  return llvm::StringSwitch<std::string>(ABIName)
-      .Case("o32", "")
-      .Case("n32", "32")
-      .Case("n64", "64");
-}
-
 // Convert ABI name to the GNU tools acceptable variant.
 static StringRef getGnuCompatibleMipsABIName(StringRef ABI) {
   return llvm::StringSwitch<llvm::StringRef>(ABI)
@@ -4569,16 +4559,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // -fuse-cxa-atexit is default.
-  if (!Args.hasFlag(
-          options::OPT_fuse_cxa_atexit, options::OPT_fno_use_cxa_atexit,
-          !IsWindowsCygnus && !IsWindowsGNU &&
-              getToolChain().getTriple().getOS() != llvm::Triple::Solaris &&
-              getToolChain().getArch() != llvm::Triple::hexagon &&
-              getToolChain().getArch() != llvm::Triple::xcore &&
-              getToolChain().getArch() != llvm::Triple::xcore &&
-              ((getToolChain().getTriple().getVendor() !=
-                llvm::Triple::MipsTechnologies) ||
-               getToolChain().getTriple().hasEnvironment())) ||
+  if (!Args.hasFlag(options::OPT_fuse_cxa_atexit,
+                    options::OPT_fno_use_cxa_atexit,
+                    !IsWindowsCygnus && !IsWindowsGNU &&
+                    getToolChain().getTriple().getOS() != llvm::Triple::Solaris &&
+                    getToolChain().getArch() != llvm::Triple::hexagon &&
+                    getToolChain().getArch() != llvm::Triple::xcore) ||
       KernelOrKext)
     CmdArgs.push_back("-fno-use-cxa-atexit");
 
@@ -8150,17 +8136,20 @@ static std::string getLinuxDynamicLinker(const ArgList &Args,
       return "/lib/ld-linux.so.3";
   } else if (Arch == llvm::Triple::mips || Arch == llvm::Triple::mipsel ||
              Arch == llvm::Triple::mips64 || Arch == llvm::Triple::mips64el) {
-    std::string LibDir =
-        "/lib" + mips::getMipsABILibSuffix(Args, ToolChain.getTriple());
-    StringRef LibName;
+    StringRef CPUName;
+    StringRef ABIName;
+    mips::getMipsCPUAndABI(Args, ToolChain.getTriple(), CPUName, ABIName);
     bool IsNaN2008 = mips::isNaN2008(Args, ToolChain.getTriple());
+
+    StringRef LibDir = llvm::StringSwitch<llvm::StringRef>(ABIName)
+                           .Case("o32", "/lib")
+                           .Case("n32", "/lib32")
+                           .Case("n64", "/lib64")
+                           .Default("/lib");
+    StringRef LibName;
     if (mips::isUCLibc(Args))
       LibName = IsNaN2008 ? "ld-uClibc-mipsn8.so.0" : "ld-uClibc.so.0";
-    else if (!ToolChain.getTriple().hasEnvironment()) {
-      bool LE = (ToolChain.getTriple().getArch() == llvm::Triple::mipsel) ||
-                (ToolChain.getTriple().getArch() == llvm::Triple::mips64el);
-      LibName = LE ? "ld-musl-mipsel.so.1" : "ld-musl-mips.so.1";
-    } else
+    else
       LibName = IsNaN2008 ? "ld-linux-mipsn8.so.1" : "ld.so.1";
 
     return (LibDir + "/" + LibName).str();
@@ -8273,9 +8262,6 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   const bool IsPIE =
       !Args.hasArg(options::OPT_shared) && !Args.hasArg(options::OPT_static) &&
       (Args.hasArg(options::OPT_pie) || ToolChain.isPIEDefault());
-  const bool HasCRTBeginEndFiles =
-      ToolChain.getTriple().hasEnvironment() ||
-      (ToolChain.getTriple().getVendor() != llvm::Triple::MipsTechnologies);
 
   ArgStringList CmdArgs;
 
@@ -8286,13 +8272,6 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   // and for "clang -w foo.o -o foo". Other warning options are already
   // handled somewhere else.
   Args.ClaimAllArgs(options::OPT_w);
-
-  if (llvm::sys::path::filename(ToolChain.Linker) == "lld") {
-    CmdArgs.push_back("-flavor");
-    CmdArgs.push_back("gnu");
-    CmdArgs.push_back("-target");
-    CmdArgs.push_back(Args.MakeArgString(getToolChain().getTripleString()));
-  }
 
   if (!D.SysRoot.empty())
     CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
@@ -8368,9 +8347,7 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
       crtbegin = isAndroid ? "crtbegin_dynamic.o" : "crtbeginS.o";
     else
       crtbegin = isAndroid ? "crtbegin_dynamic.o" : "crtbegin.o";
-
-    if (HasCRTBeginEndFiles)
-      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtbegin)));
+    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtbegin)));
 
     // Add crtfastmath.o if available and fast math is enabled.
     ToolChain.AddFastMathRuntimeIfAvailable(Args, CmdArgs);
@@ -8469,13 +8446,11 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
       else
         crtend = isAndroid ? "crtend_android.o" : "crtend.o";
 
-      if (HasCRTBeginEndFiles)
-        CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtend)));
+      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtend)));
       if (!isAndroid)
         CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
     }
-  } else if (Args.hasArg(options::OPT_rtlib_EQ))
-    AddRunTimeLibs(ToolChain, D, CmdArgs, Args);
+  }
 
   C.addCommand(llvm::make_unique<Command>(JA, *this, ToolChain.Linker.c_str(),
                                           CmdArgs, Inputs));
