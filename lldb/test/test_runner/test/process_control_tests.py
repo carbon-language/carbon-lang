@@ -202,6 +202,9 @@ class ProcessControlTimeoutTests(ProcessControlTests):
         """inferior exit detected when inferior children are live with shared
         stdout/stderr handles.
         """
+        # Requires review D13362 or equivalent to be implemented.
+        self.skipTest("http://reviews.llvm.org/D13362")
+
         driver = TestInferiorDriver()
 
         # Create the inferior (I1), and instruct it to create a child (C1)
@@ -220,7 +223,7 @@ class ProcessControlTimeoutTests(ProcessControlTests):
             "process failed to complete")
 
         # Ensure we didn't receive a timeout.
-        self.assertTrue(
+        self.assertFalse(
             driver.was_timeout, "inferior should have completed normally")
 
         self.assertEqual(

@@ -611,3 +611,48 @@ class ProcessDriver(object):
             self.io_thread.output,
             not completed_normally,
             self.returncode)
+
+
+def patched_init(self, *args, **kwargs):
+    self.original_init(*args, **kwargs)
+    # Initialize our condition variable that protects wait()/poll().
+    self.wait_condition = threading.Condition()
+
+
+def patched_wait(self):
+    self.wait_condition.acquire()
+    try:
+        result = self.original_wait()
+        # The process finished.  Signal the condition.
+        self.wait_condition.notify_all()
+        return result
+    finally:
+        self.wait_condition.release()
+
+
+def patched_poll(self):
+    self.wait_condition.acquire()
+    try:
+        result = self.original_poll()
+        if self.returncode is not None:
+            # We did complete, and we have the return value.
+            # Signal the event to indicate we're done.
+            self.wait_condition.notify_all()
+        return result
+    finally:
+        self.wait_condition.release()
+
+
+def patch_up_subprocess_popen():
+    subprocess.Popen.original_init = subprocess.Popen.__init__
+    subprocess.Popen.__init__ = patched_init
+
+    subprocess.Popen.original_wait = subprocess.Popen.wait
+    subprocess.Popen.wait = patched_wait
+
+    subprocess.Popen.original_poll = subprocess.Popen.poll
+    subprocess.Popen.poll = patched_poll
+
+# Replace key subprocess.Popen() threading-unprotected methods with
+# threading-protected versions.
+patch_up_subprocess_popen()
