@@ -47,6 +47,8 @@ class CompDirSymLinkTestCase(TestBase):
 
     def create_src_symlink(self):
         pwd_symlink = os.path.join(os.getcwd(), 'pwd_symlink')
+        if os.path.exists(pwd_symlink):
+          os.unlink(pwd_symlink)
         os.symlink(os.getcwd(), pwd_symlink)
         self.addTearDownHook(lambda: os.remove(pwd_symlink))
         return pwd_symlink
