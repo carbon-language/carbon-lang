@@ -15,11 +15,12 @@
 
 #include "clang/Format/Format.h"
 
-extern "C" void LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
+extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
   // FIXME: fuzz more things: different styles, different style features.
   std::string s((const char *)data, size);
   auto Style = getGoogleStyle(clang::format::FormatStyle::LK_Cpp);
   Style.ColumnLimit = 60;
   applyAllReplacements(s, clang::format::reformat(
                               Style, s, {clang::tooling::Range(0, s.size())}));
+  return 0;
 }
