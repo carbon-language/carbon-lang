@@ -2396,11 +2396,18 @@ void Scop::hoistInvariantLoads() {
     //       zero iterators, are by construction invariant, though we
     //       currently "hoist" them anyway.
 
+    BasicBlock *BB = Stmt.isBlockStmt() ? Stmt.getBasicBlock()
+                                        : Stmt.getRegion()->getEntry();
     isl_set *Domain = Stmt.getDomain();
     MemoryAccessList InvMAs;
 
     for (MemoryAccess *MA : Stmt) {
       if (MA->isImplicit() || MA->isWrite() || !MA->isAffine())
+        continue;
+
+      // Skip accesses in non-affine subregions as they might not be executed
+      // under the same condition as the entry of the non-affine subregion.
+      if (BB != MA->getAccessInstruction()->getParent())
         continue;
 
       isl_map *AccessRelation = MA->getAccessRelation();

@@ -4,10 +4,9 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 %struct.wombat = type {[4 x i32]}
 
-; CHECK:      polly.preload.begin:
-; CHECK-NEXT:   %polly.access.B = getelementptr i32, i32* %B, i64 0
-; CHECK-NEXT:   %polly.access.B.load = load i32, i32* %polly.access.B
-; CHECK-NOT:    %polly.access.B.load = load i32, i32* %polly.access.B
+; CHECK-NOT:  polly.preload.begin:
+; CHECK-NOT::   %polly.access.B
+; CHECK-NOT:    %polly.access.B.load
 
 ; CHECK: polly.stmt.bb3.entry:                             ; preds = %polly.start
 ; CHECK:   br label %polly.stmt.bb3
