@@ -25,7 +25,7 @@ lldb_private::formatters::CMTimeSummaryProvider (ValueObject& valobj, Stream& st
     if (!type.IsValid())
         return false;
 
-    TypeSystem *type_system = valobj.GetExecutionContextRef().GetTargetSP()->GetScratchTypeSystemForLanguage(lldb::eLanguageTypeC);
+    TypeSystem *type_system = valobj.GetExecutionContextRef().GetTargetSP()->GetScratchTypeSystemForLanguage(nullptr, lldb::eLanguageTypeC);
     if (!type_system)
         return false;
     

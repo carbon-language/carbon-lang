@@ -135,7 +135,7 @@ ThreadPlanAssemblyTracer::GetIntPointerType()
         TargetSP target_sp (m_thread.CalculateTarget());
         if (target_sp)
         {
-            TypeSystem *type_system = target_sp->GetScratchTypeSystemForLanguage(eLanguageTypeC);
+            TypeSystem *type_system = target_sp->GetScratchTypeSystemForLanguage(nullptr, eLanguageTypeC);
             if (type_system)
                 m_intptr_type = TypeFromUser(type_system->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, target_sp->GetArchitecture().GetAddressByteSize() * 8));
         }        

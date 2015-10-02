@@ -1229,7 +1229,7 @@ public:
     GetImageSearchPathList ();
     
     TypeSystem *
-    GetScratchTypeSystemForLanguage (lldb::LanguageType language, bool create_on_demand = true);
+    GetScratchTypeSystemForLanguage (Error *error, lldb::LanguageType language, bool create_on_demand = true);
     
     PersistentExpressionState *
     GetPersistentExpressionStateForLanguage (lldb::LanguageType language);
@@ -1506,7 +1506,7 @@ public:
 
 protected:
     ClangASTContext *
-    GetScratchClangASTContextImpl();
+    GetScratchClangASTContextImpl(Error *error);
     
     //------------------------------------------------------------------
     // Member variables.

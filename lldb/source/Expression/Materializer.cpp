@@ -857,11 +857,12 @@ public:
             return;
         }
         
-        TypeSystem *type_system = target_sp->GetScratchTypeSystemForLanguage(m_type.GetMinimumLanguage());
+        Error type_system_error;
+        TypeSystem *type_system = target_sp->GetScratchTypeSystemForLanguage(&type_system_error, m_type.GetMinimumLanguage());
         
         if (!type_system)
         {
-            err.SetErrorString("Couldn't dematerialize a result variable: couldn't get the corresponding type system");
+            err.SetErrorStringWithFormat("Couldn't dematerialize a result variable: couldn't get the corresponding type system: %s", type_system_error.AsCString());
             return;
         }
         

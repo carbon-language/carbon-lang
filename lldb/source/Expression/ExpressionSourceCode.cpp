@@ -83,7 +83,7 @@ bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrappi
         
         if (ClangModulesDeclVendor *decl_vendor = target->GetClangModulesDeclVendor())
         {
-            ClangPersistentVariables *persistent_vars = llvm::cast<ClangPersistentVariables>(target->GetScratchTypeSystemForLanguage(lldb::eLanguageTypeC)->GetPersistentExpressionState());
+            ClangPersistentVariables *persistent_vars = llvm::cast<ClangPersistentVariables>(target->GetPersistentExpressionStateForLanguage(lldb::eLanguageTypeC));
             const ClangModulesDeclVendor::ModuleVector &hand_imported_modules = persistent_vars->GetHandLoadedClangModules();
             ClangModulesDeclVendor::ModuleVector modules_for_macros;
             

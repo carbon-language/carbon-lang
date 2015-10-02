@@ -1890,10 +1890,16 @@ Target::ImageSearchPathsChanged
 }
 
 TypeSystem *
-Target::GetScratchTypeSystemForLanguage (lldb::LanguageType language, bool create_on_demand)
+Target::GetScratchTypeSystemForLanguage (Error *error, lldb::LanguageType language, bool create_on_demand)
 {
+    if (error)
+    {
+        error->Clear();
+    }
+    
     if (language == eLanguageTypeMipsAssembler // GNU AS and LLVM use it for all assembly code
-        || language == eLanguageTypeUnknown) {
+        || language == eLanguageTypeUnknown)
+    {
         language = eLanguageTypeC;
     }
     
@@ -1920,8 +1926,16 @@ Target::GetScratchTypeSystemForLanguage (lldb::LanguageType language, bool creat
        || Language::LanguageIsObjC(language)
        || Language::LanguageIsCPlusPlus(language))
     {
-        m_scratch_type_system_map[language].reset(GetScratchClangASTContextImpl());
-        return m_scratch_type_system_map[language].get();
+        TypeSystem* ret = GetScratchClangASTContextImpl(error);
+        if (ret)
+        {
+            m_scratch_type_system_map[language].reset(ret);
+            return m_scratch_type_system_map[language].get();
+        }
+        else
+        {
+            return nullptr;
+        }
     }
 
     return nullptr;
@@ -1930,7 +1944,7 @@ Target::GetScratchTypeSystemForLanguage (lldb::LanguageType language, bool creat
 PersistentExpressionState *
 Target::GetPersistentExpressionStateForLanguage (lldb::LanguageType language)
 {
-    TypeSystem *type_system = GetScratchTypeSystemForLanguage(language, true);
+    TypeSystem *type_system = GetScratchTypeSystemForLanguage(nullptr, language, true);
     
     if (type_system)
     {
@@ -1944,17 +1958,19 @@ Target::GetPersistentExpressionStateForLanguage (lldb::LanguageType language)
 
 UserExpression *
 Target::GetUserExpressionForLanguage(const char *expr,
-                             const char *expr_prefix,
-                             lldb::LanguageType language,
-                             Expression::ResultType desired_type,
-                             Error &error)
+                                     const char *expr_prefix,
+                                     lldb::LanguageType language,
+                                     Expression::ResultType desired_type,
+                                     Error &error)
 {
-    TypeSystem *type_system = GetScratchTypeSystemForLanguage (language);
+    Error type_system_error;
+    
+    TypeSystem *type_system = GetScratchTypeSystemForLanguage (&type_system_error, language);
     UserExpression *user_expr = nullptr;
     
     if (!type_system)
     {
-        error.SetErrorStringWithFormat("Could not find type system for language: %s", Language::GetNameForLanguageType(language));
+        error.SetErrorStringWithFormat("Could not find type system for language %s: %s", Language::GetNameForLanguageType(language), type_system_error.AsCString());
         return nullptr;
     }
     
@@ -1973,12 +1989,13 @@ Target::GetFunctionCallerForLanguage (lldb::LanguageType language,
                                       const char *name,
                                       Error &error)
 {
-    TypeSystem *type_system = GetScratchTypeSystemForLanguage (language);
+    Error type_system_error;
+    TypeSystem *type_system = GetScratchTypeSystemForLanguage (&type_system_error, language);
     FunctionCaller *persistent_fn = nullptr;
     
     if (!type_system)
     {
-        error.SetErrorStringWithFormat("Could not find type system for language: %s", Language::GetNameForLanguageType(language));
+        error.SetErrorStringWithFormat("Could not find type system for language %s: %s", Language::GetNameForLanguageType(language), type_system_error.AsCString());
         return persistent_fn;
     }
     
@@ -1995,12 +2012,13 @@ Target::GetUtilityFunctionForLanguage (const char *text,
                                        const char *name,
                                        Error &error)
 {
-    TypeSystem *type_system = GetScratchTypeSystemForLanguage (language);
+    Error type_system_error;
+    TypeSystem *type_system = GetScratchTypeSystemForLanguage (&type_system_error, language);
     UtilityFunction *utility_fn = nullptr;
     
     if (!type_system)
     {
-        error.SetErrorStringWithFormat("Could not find type system for language: %s", Language::GetNameForLanguageType(language));
+        error.SetErrorStringWithFormat("Could not find type system for language %s: %s", Language::GetNameForLanguageType(language), type_system_error.AsCString());
         return utility_fn;
     }
     
@@ -2014,7 +2032,7 @@ Target::GetUtilityFunctionForLanguage (const char *text,
 ClangASTContext *
 Target::GetScratchClangASTContext(bool create_on_demand)
 {
-    if (TypeSystem* type_system = GetScratchTypeSystemForLanguage(eLanguageTypeC, create_on_demand))
+    if (TypeSystem* type_system = GetScratchTypeSystemForLanguage(nullptr, eLanguageTypeC, create_on_demand))
     {
         return llvm::dyn_cast<ClangASTContext>(type_system);
     }
@@ -2025,7 +2043,7 @@ Target::GetScratchClangASTContext(bool create_on_demand)
 }
 
 ClangASTContext *
-Target::GetScratchClangASTContextImpl()
+Target::GetScratchClangASTContextImpl(Error *error)
 {
     ClangASTContextForExpressions *ast_context = new ClangASTContextForExpressions(*this);
         
@@ -2166,7 +2184,7 @@ Target::EvaluateExpression
     lldb::ExpressionVariableSP persistent_var_sp;
     // Only check for persistent variables the expression starts with a '$' 
     if (expr_cstr[0] == '$')
-        persistent_var_sp = GetScratchTypeSystemForLanguage(eLanguageTypeC)->GetPersistentExpressionState()->GetVariable (expr_cstr);
+        persistent_var_sp = GetScratchTypeSystemForLanguage(nullptr, eLanguageTypeC)->GetPersistentExpressionState()->GetVariable (expr_cstr);
 
     if (persistent_var_sp)
     {

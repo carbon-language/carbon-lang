@@ -181,7 +181,7 @@ AppleGetItemInfoHandler::SetupGetItemInfoFunction (Thread &thread, ValueList &ge
             // Next make the runner function for our implementation utility function.
             Error error;
             
-            TypeSystem *type_system = thread.GetProcess()->GetTarget().GetScratchTypeSystemForLanguage(eLanguageTypeC);
+            TypeSystem *type_system = thread.GetProcess()->GetTarget().GetScratchTypeSystemForLanguage(nullptr, eLanguageTypeC);
             CompilerType get_item_info_return_type = type_system->GetBasicTypeFromAST(eBasicTypeVoid).GetPointerType();
             
             get_item_info_caller = m_get_item_info_impl_code->MakeFunctionCaller(get_item_info_return_type,
