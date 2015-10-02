@@ -70,13 +70,13 @@ def alias_Bdynamic_dy: Flag<["-"], "dy">, Alias<Bdynamic>;
 def alias_Bstatic_dn: Flag<["-"], "dn">, Alias<Bstatic>;
 def alias_Bstatic_non_shared: Flag<["-"], "non_shared">, Alias<Bstatic>;
 def alias_Bstatic_static: Flag<["-"], "static">, Alias<Bstatic>;
-def alias_L : Joined<["--"], "library-path=">, Alias<L>;
-def alias_discard_all: Flag<["-"], "x">, Alias<discard_all>;
-def alias_discard_locals: Flag<["-"], "X">, Alias<discard_locals>;
-def alias_entry : Separate<["-"], "e">, Alias<entry>;
-def alias_l : Joined<["--"], "library=">, Alias<l>;
-def alias_soname : Separate<["-"], "h">, Alias<soname>;
-def alias_snoame : Separate<["-"], "soname">, Alias<soname>;
+def alias_L__library_path : Joined<["--"], "library-path=">, Alias<L>;
+def alias_discard_all_x: Flag<["-"], "x">, Alias<discard_all>;
+def alias_discard_locals_X: Flag<["-"], "X">, Alias<discard_locals>;
+def alias_entry_e : Separate<["-"], "e">, Alias<entry>;
+def alias_l__library : Joined<["--"], "library=">, Alias<l>;
+def alias_soname_h : Separate<["-"], "h">, Alias<soname>;
+def alias_soname_soname : Separate<["-"], "soname">, Alias<soname>;
 
 // Options listed below are silently ignored now.
 def O3 : Flag<["-"], "O3">;
