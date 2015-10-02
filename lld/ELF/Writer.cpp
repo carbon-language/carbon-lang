@@ -44,15 +44,12 @@ static uint32_t toPHDRFlags(uint64_t Flags) {
   return Ret;
 }
 
-template <bool Is64Bits>
-class ProgramHeader {
-public:
-  typedef typename std::conditional<Is64Bits, uint64_t, uint32_t>::type uintX_t;
-  typedef
-    typename std::conditional<Is64Bits, Elf64_Phdr, Elf32_Phdr>::type HeaderT;
+template <class ELFT> struct ProgramHeader {
+  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+  typedef typename ELFFile<ELFT>::Elf_Phdr Elf_Phdr;
 
   ProgramHeader(uintX_t Type, uintX_t Flags, uintX_t FileOff, uintX_t VA) {
-    std::memset(&Header, 0, sizeof(HeaderT));
+    std::memset(&Header, 0, sizeof(Elf_Phdr));
     Header.p_type = Type;
     Header.p_flags = Flags;
     Header.p_align = PageSize;
@@ -61,7 +58,7 @@ public:
     Header.p_paddr = VA;
   }
 
-  void setValuesFromSection(OutputSectionBase<Is64Bits> &Sec) {
+  void setValuesFromSection(OutputSectionBase<ELFT::Is64Bits> &Sec) {
     Header.p_flags = toPHDRFlags(Sec.getFlags());
     Header.p_offset = Sec.getFileOff();
     Header.p_vaddr = Sec.getVA();
@@ -71,19 +68,7 @@ public:
     Header.p_align = Sec.getAlign();
   }
 
-  template <endianness E>
-  void writeHeaderTo(typename ELFFile<ELFType<E, Is64Bits>>::Elf_Phdr *PHDR) {
-    PHDR->p_type = Header.p_type;
-    PHDR->p_flags = Header.p_flags;
-    PHDR->p_offset = Header.p_offset;
-    PHDR->p_vaddr = Header.p_vaddr;
-    PHDR->p_paddr = Header.p_paddr;
-    PHDR->p_filesz = Header.p_filesz;
-    PHDR->p_memsz = Header.p_memsz;
-    PHDR->p_align = Header.p_align;
-  }
-
-  HeaderT Header;
+  Elf_Phdr Header;
   bool Closed = false;
 };
 
@@ -131,10 +116,10 @@ private:
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
   llvm::BumpPtrAllocator PAlloc;
-  std::vector<ProgramHeader<ELFT::Is64Bits> *> PHDRs;
-  ProgramHeader<ELFT::Is64Bits> FileHeaderPHDR{PT_LOAD, PF_R, 0, 0};
-  ProgramHeader<ELFT::Is64Bits> InterpPHDR{PT_INTERP, 0, 0, 0};
-  ProgramHeader<ELFT::Is64Bits> DynamicPHDR{PT_DYNAMIC, 0, 0, 0};
+  std::vector<ProgramHeader<ELFT> *> PHDRs;
+  ProgramHeader<ELFT> FileHeaderPHDR{PT_LOAD, PF_R, 0, 0};
+  ProgramHeader<ELFT> InterpPHDR{PT_INTERP, 0, 0, 0};
+  ProgramHeader<ELFT> DynamicPHDR{PT_DYNAMIC, 0, 0, 0};
 
   uintX_t FileSize;
   uintX_t ProgramHeaderOff;
@@ -485,7 +470,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
 
     if (Sec->getSize()) {
       uintX_t Flags = toPHDRFlags(Sec->getFlags());
-      ProgramHeader<ELFT::Is64Bits> *Last = PHDRs.back();
+      ProgramHeader<ELFT> *Last = PHDRs.back();
       if (Last->Header.p_flags != Flags || !needsPHDR<ELFT>(Sec)) {
         // Flags changed. End current PHDR and potentially create a new one.
         if (!Last->Closed) {
@@ -497,8 +482,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
         if (needsPHDR<ELFT>(Sec)) {
           VA = RoundUpToAlignment(VA, PageSize);
           FileOff = RoundUpToAlignment(FileOff, PageSize);
-          PHDRs.push_back(new (PAlloc) ProgramHeader<ELFT::Is64Bits>(
-              PT_LOAD, Flags, FileOff, VA));
+          PHDRs.push_back(new (PAlloc)
+                              ProgramHeader<ELFT>(PT_LOAD, Flags, FileOff, VA));
         }
       }
     }
@@ -564,9 +549,11 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_shstrndx = StrTabSec.getSectionIndex();
 
   // If nothing was merged into the file header PT_LOAD, set the size correctly.
-  if (FileHeaderPHDR.Header.p_filesz == PageSize)
-    FileHeaderPHDR.Header.p_filesz = FileHeaderPHDR.Header.p_memsz =
-        sizeof(Elf_Ehdr) + sizeof(Elf_Phdr) * PHDRs.size();
+  if (FileHeaderPHDR.Header.p_filesz == PageSize) {
+    uint64_t Size = sizeof(Elf_Ehdr) + sizeof(Elf_Phdr) * PHDRs.size();
+    FileHeaderPHDR.Header.p_filesz = Size;
+    FileHeaderPHDR.Header.p_memsz = Size;
+  }
 
   if (needsInterpSection())
     InterpPHDR.setValuesFromSection(InterpSec);
@@ -574,8 +561,8 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
     DynamicPHDR.setValuesFromSection(DynamicSec);
 
   auto PHdrs = reinterpret_cast<Elf_Phdr *>(Buf + EHdr->e_phoff);
-  for (ProgramHeader<ELFT::Is64Bits> *PHDR : PHDRs)
-    PHDR->template writeHeaderTo<ELFT::TargetEndianness>(PHdrs++);
+  for (ProgramHeader<ELFT> *PHDR : PHDRs)
+    *PHdrs++ = PHDR->Header;
 
   auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
   // First entry is null.
