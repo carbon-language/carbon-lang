@@ -200,7 +200,7 @@ loop:
 ; CHECK-LABEL: simple_loop
 ; CHECK-NOT: br
 ; CHECK: BB8_1:
-; CHECK: (loop $BB8_1)
+; CHECK: (loop $BB8_2)
 ; CHECK: (brif $BB8_1 @4)
 ; CHECK: (return @2)
 define i32 @simple_loop(i32* %p, i32 %a) {
