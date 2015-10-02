@@ -12,7 +12,7 @@ def L : Joined<["-"], "L">, MetaVarName<"<dir>">,
 def allow_multiple_definition: Flag<["--"], "allow-multiple-definition">,
   HelpText<"Allow multiple definitions">;
 
-def allow_shlib_undefined : Flag<["--"], "allow-shlib-undefined">;
+def allow_shlib_undefined : Flag<["--", "-"], "allow-shlib-undefined">;
 
 def discard_all : Flag<["-"], "discard-all">,
   HelpText<"Delete all local symbols">;
@@ -29,7 +29,7 @@ def dynamic_linker : Separate<["-"], "dynamic-linker">,
 def entry : Separate<["--", "-"], "entry">, MetaVarName<"<entry>">,
   HelpText<"Name of entry point symbol">;
 
-def export_dynamic : Flag<["--"], "export-dynamic">,
+def export_dynamic : Flag<["--", "-"], "export-dynamic">,
   HelpText<"Put symbols in the dynamic symbol table">;
 
 def l : Joined<["-"], "l">, MetaVarName<"<libName>">,
