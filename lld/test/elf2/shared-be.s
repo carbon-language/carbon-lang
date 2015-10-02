@@ -2,7 +2,7 @@
 // RUN: llvm-mc -filetype=obj -triple=powerpc64-unknown-linux %p/Inputs/shared.s -o %t2.o
 // RUN: lld -flavor gnu2 -shared %t2.o -o %t2.so
 // RUN: lld -flavor gnu2 -dynamic-linker /lib64/ld64.so.1 -rpath foo -rpath bar --export-dynamic %t.o %t2.so -o %t
-// RUN: llvm-readobj --program-headers --dynamic-table -t -s -dyn-symbols -section-data -hash-table %t | FileCheck %s
+// RUN: llvm-readobj --dynamic-table -s %t | FileCheck %s
 // REQUIRES: ppc
 
 // CHECK:      Name: .rela.dyn
