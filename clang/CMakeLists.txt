@@ -598,9 +598,9 @@ if (CLANG_ENABLE_BOOTSTRAP)
   # DARWIN_LTO_LIBRARY so that -flto will work using the just-built compiler
   if(APPLE)
     set(LTO_DEP LTO llvm-ar llvm-ranlib)
-    set(LTO_LIBRARY -DDARWIN_LTO_LIBRARY=${CMAKE_BINARY_DIR}/lib/libLTO.dylib)
-    set(LTO_AR -DCMAKE_AR=${CMAKE_BINARY_DIR}/bin/llvm-ar)
-    set(LTO_RANLIB -DCMAKE_RANLIB=${CMAKE_BINARY_DIR}/bin/llvm-ranlib)
+    set(LTO_LIBRARY -DDARWIN_LTO_LIBRARY=${LLVM_RUNTIME_OUTPUT_INTDIR}/libLTO.dylib)
+    set(LTO_AR -DCMAKE_AR=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ar)
+    set(LTO_RANLIB -DCMAKE_RANLIB=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ranlib)
   endif()
 
   add_custom_target(bootstrap-clear
@@ -628,9 +628,9 @@ if (CLANG_ENABLE_BOOTSTRAP)
                 # seem to work, so instead I'm passing this through
                 -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                 ${CLANG_BOOTSTRAP_CMAKE_ARGS}
-                -DCMAKE_CXX_COMPILER=${CMAKE_BINARY_DIR}/bin/clang++
-                -DCMAKE_C_COMPILER=${CMAKE_BINARY_DIR}/bin/clang
-                -DCMAKE_ASM_COMPILER=${CMAKE_BINARY_DIR}/bin/clang
+                -DCMAKE_CXX_COMPILER=${LLVM_RUNTIME_OUTPUT_INTDIR}/clang++
+                -DCMAKE_C_COMPILER=${LLVM_RUNTIME_OUTPUT_INTDIR}/clang
+                -DCMAKE_ASM_COMPILER=${LLVM_RUNTIME_OUTPUT_INTDIR}/clang
                 ${LTO_LIBRARY} ${LTO_AR} ${LTO_RANLIB}
     INSTALL_COMMAND ""
     STEP_TARGETS configure build
