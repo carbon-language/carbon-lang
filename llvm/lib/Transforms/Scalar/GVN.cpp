@@ -1669,6 +1669,9 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
     if (Tags)
       NewLoad->setAAMetadata(Tags);
 
+    if (auto *InvGroupMD = LI->getMetadata(LLVMContext::MD_invariant_group))
+      NewLoad->setMetadata(LLVMContext::MD_invariant_group, InvGroupMD);
+
     // Transfer DebugLoc.
     NewLoad->setDebugLoc(LI->getDebugLoc());
 
@@ -1846,13 +1849,10 @@ static void patchReplacementInstruction(Instruction *I, Value *Repl) {
     // regions, and so we need a conservative combination of the noalias
     // scopes.
     static const unsigned KnownIDs[] = {
-      LLVMContext::MD_tbaa,
-      LLVMContext::MD_alias_scope,
-      LLVMContext::MD_noalias,
-      LLVMContext::MD_range,
-      LLVMContext::MD_fpmath,
-      LLVMContext::MD_invariant_load,
-    };
+        LLVMContext::MD_tbaa,           LLVMContext::MD_alias_scope,
+        LLVMContext::MD_noalias,        LLVMContext::MD_range,
+        LLVMContext::MD_fpmath,         LLVMContext::MD_invariant_load,
+        LLVMContext::MD_invariant_group};
     combineMetadata(ReplInst, I, KnownIDs);
   }
 }
@@ -2106,6 +2106,8 @@ bool GVN::replaceOperandsWithConsts(Instruction *Instr) const {
     if (it != ReplaceWithConstMap.end()) {
       assert(!isa<Constant>(Operand) &&
              "Replacing constants with constants is invalid");
+      DEBUG(dbgs() << "GVN replacing: " << *Operand << " with " << *it->second
+                   << " in instruction " << *Instr << '\n');
       Instr->setOperand(OpNum, it->second);
       Changed = true;
     }
@@ -2460,7 +2462,6 @@ bool GVN::runOnFunction(Function& F) {
 
   return Changed;
 }
-
 
 bool GVN::processBlock(BasicBlock *BB) {
   // FIXME: Kill off InstrsToErase by doing erasing eagerly in a helper function

@@ -755,13 +755,10 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
                                DefMaxInstsToScan, AA, &AATags)) {
     if (LoadInst *NLI = dyn_cast<LoadInst>(AvailableVal)) {
       unsigned KnownIDs[] = {
-        LLVMContext::MD_tbaa,
-        LLVMContext::MD_alias_scope,
-        LLVMContext::MD_noalias,
-        LLVMContext::MD_range,
-        LLVMContext::MD_invariant_load,
-        LLVMContext::MD_nonnull,
-      };
+          LLVMContext::MD_tbaa,           LLVMContext::MD_alias_scope,
+          LLVMContext::MD_noalias,        LLVMContext::MD_range,
+          LLVMContext::MD_invariant_load, LLVMContext::MD_nonnull,
+          LLVMContext::MD_invariant_group};
       combineMetadata(NLI, &LI, KnownIDs);
     };
 

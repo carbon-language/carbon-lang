@@ -380,6 +380,75 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
     const MemoryLocation &MemLoc, bool isLoad, BasicBlock::iterator ScanIt,
     BasicBlock *BB, Instruction *QueryInst) {
 
+  if (QueryInst != nullptr) {
+    if (auto *LI = dyn_cast<LoadInst>(QueryInst)) {
+      MemDepResult invariantGroupDependency =
+          getInvariantGroupPointerDependency(LI, BB);
+
+      if (invariantGroupDependency.isDef())
+        return invariantGroupDependency;
+    }
+  }
+  return getSimplePointerDependencyFrom(MemLoc, isLoad, ScanIt, BB, QueryInst);
+}
+
+MemDepResult
+MemoryDependenceAnalysis::getInvariantGroupPointerDependency(LoadInst *LI,
+                                                             BasicBlock *BB) {
+  Value *LoadOperand = LI->getPointerOperand();
+  // It's is not safe to walk the use list of global value, because function
+  // passes aren't allowed to look outside their functions.
+  if (isa<GlobalValue>(LoadOperand))
+    return MemDepResult::getUnknown();
+
+  auto *InvariantGroupMD = LI->getMetadata(LLVMContext::MD_invariant_group);
+  if (!InvariantGroupMD)
+    return MemDepResult::getUnknown();
+
+  MemDepResult Result = MemDepResult::getUnknown();
+  llvm::SmallSet<Value *, 14> Seen;
+  // Queue to process all pointers that are equivalent to load operand.
+  llvm::SmallVector<Value *, 8> LoadOperandsQueue;
+  LoadOperandsQueue.push_back(LoadOperand);
+  while (!LoadOperandsQueue.empty()) {
+    Value *Ptr = LoadOperandsQueue.pop_back_val();
+    if (isa<GlobalValue>(Ptr))
+      continue;
+
+    if (auto *BCI = dyn_cast<BitCastInst>(Ptr)) {
+      if (!Seen.count(BCI->getOperand(0))) {
+        LoadOperandsQueue.push_back(BCI->getOperand(0));
+        Seen.insert(BCI->getOperand(0));
+      }
+    }
+
+    for (Use &Us : Ptr->uses()) {
+      auto *U = dyn_cast<Instruction>(Us.getUser());
+      if (!U || U == LI || !DT->dominates(U, LI))
+        continue;
+
+      if (auto *BCI = dyn_cast<BitCastInst>(U)) {
+        if (!Seen.count(BCI)) {
+          LoadOperandsQueue.push_back(BCI);
+          Seen.insert(BCI);
+        }
+        continue;
+      }
+      // If we hit load/store with the same invariant.group metadata (and the
+      // same pointer operand) we can assume that value pointed by pointer
+      // operand didn't change.
+      if ((isa<LoadInst>(U) || isa<StoreInst>(U)) && U->getParent() == BB &&
+          U->getMetadata(LLVMContext::MD_invariant_group) == InvariantGroupMD)
+        return MemDepResult::getDef(U);
+    }
+  }
+  return Result;
+}
+
+MemDepResult MemoryDependenceAnalysis::getSimplePointerDependencyFrom(
+    const MemoryLocation &MemLoc, bool isLoad, BasicBlock::iterator ScanIt,
+    BasicBlock *BB, Instruction *QueryInst) {
+
   const Value *MemLocBase = nullptr;
   int64_t MemLocOffset = 0;
   unsigned Limit = BlockScanLimit;

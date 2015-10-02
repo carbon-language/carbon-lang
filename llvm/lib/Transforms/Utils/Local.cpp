@@ -1386,7 +1386,8 @@ bool llvm::removeUnreachableBlocks(Function &F) {
   return true;
 }
 
-void llvm::combineMetadata(Instruction *K, const Instruction *J, ArrayRef<unsigned> KnownIDs) {
+void llvm::combineMetadata(Instruction *K, const Instruction *J,
+                           ArrayRef<unsigned> KnownIDs) {
   SmallVector<std::pair<unsigned, MDNode *>, 4> Metadata;
   K->dropUnknownNonDebugMetadata(KnownIDs);
   K->getAllMetadataOtherThanDebugLoc(Metadata);
@@ -1424,8 +1425,20 @@ void llvm::combineMetadata(Instruction *K, const Instruction *J, ArrayRef<unsign
         // Only set the !nonnull if it is present in both instructions.
         K->setMetadata(Kind, JMD);
         break;
+      case LLVMContext::MD_invariant_group:
+        // Preserve !invariant.group in K.
+        break;
     }
   }
+  // Set !invariant.group from J if J has it. If both instructions have it
+  // then we will just pick it from J - even when they are different.
+  // Also make sure that K is load or store - f.e. combining bitcast with load
+  // could produce bitcast with invariant.group metadata, which is invalid.
+  // FIXME: we should try to preserve both invariant.group md if they are
+  // different, but right now instruction can only have one invariant.group.
+  if (auto *JMD = J->getMetadata(LLVMContext::MD_invariant_group))
+    if (isa<LoadInst>(K) || isa<StoreInst>(K))
+      K->setMetadata(LLVMContext::MD_invariant_group, JMD);
 }
 
 unsigned llvm::replaceDominatedUsesWith(Value *From, Value *To,

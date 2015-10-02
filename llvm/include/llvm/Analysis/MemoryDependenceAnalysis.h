@@ -397,12 +397,12 @@ namespace llvm {
     /// critical edges.
     void invalidateCachedPredecessors();
 
-    /// getPointerDependencyFrom - Return the instruction on which a memory
-    /// location depends.  If isLoad is true, this routine ignores may-aliases
-    /// with read-only operations.  If isLoad is false, this routine ignores
-    /// may-aliases with reads from read-only locations. If possible, pass
-    /// the query instruction as well; this function may take advantage of
-    /// the metadata annotated to the query instruction to refine the result.
+    /// \brief Return the instruction on which a memory location depends.
+    /// If isLoad is true, this routine ignores may-aliases with read-only
+    /// operations.  If isLoad is false, this routine ignores may-aliases
+    /// with reads from read-only locations. If possible, pass the query
+    /// instruction as well; this function may take advantage of the metadata
+    /// annotated to the query instruction to refine the result.
     ///
     /// Note that this is an uncached query, and thus may be inefficient.
     ///
@@ -411,6 +411,21 @@ namespace llvm {
                                           BasicBlock::iterator ScanIt,
                                           BasicBlock *BB,
                                           Instruction *QueryInst = nullptr);
+
+    MemDepResult getSimplePointerDependencyFrom(const MemoryLocation &MemLoc,
+                                                bool isLoad,
+                                                BasicBlock::iterator ScanIt,
+                                                BasicBlock *BB,
+                                                Instruction *QueryInst);
+
+    /// This analysis looks for other loads and stores with invariant.group
+    /// metadata and the same pointer operand. Returns Unknown if it does not
+    /// find anything, and Def if it can be assumed that 2 instructions load or
+    /// store the same value.
+    /// FIXME: This analysis works only on single block because of restrictions
+    /// at the call site.
+    MemDepResult getInvariantGroupPointerDependency(LoadInst *LI,
+                                                    BasicBlock *BB);
 
     /// getLoadLoadClobberFullWidthSize - This is a little bit of analysis that
     /// looks at a memory location for a load (specified by MemLocBase, Offs,

@@ -3120,12 +3120,9 @@ namespace {
       } else if (!isa<StoreInst>(K))
         K->mutateType(getVecTypeForPair(L->getType(), H->getType()));
 
-      unsigned KnownIDs[] = {
-        LLVMContext::MD_tbaa,
-        LLVMContext::MD_alias_scope,
-        LLVMContext::MD_noalias,
-        LLVMContext::MD_fpmath
-      };
+      unsigned KnownIDs[] = {LLVMContext::MD_tbaa, LLVMContext::MD_alias_scope,
+                             LLVMContext::MD_noalias, LLVMContext::MD_fpmath,
+                             LLVMContext::MD_invariant_group};
       combineMetadata(K, H, KnownIDs);
       K->intersectOptionalDataWith(H);
 
