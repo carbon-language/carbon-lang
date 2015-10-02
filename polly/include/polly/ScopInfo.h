@@ -1027,6 +1027,9 @@ private:
   DominatorTree &DT;
   ScalarEvolution *SE;
 
+  /// @brief The scop detection analysis.
+  ScopDetection &SD;
+
   /// The underlying Region.
   Region &R;
 
@@ -1153,11 +1156,12 @@ private:
   InvariantAccessesTy InvariantAccesses;
 
   /// @brief Scop constructor; invoked from ScopInfo::buildScop.
-  Scop(Region &R, AccFuncMapType &AccFuncMap, ScalarEvolution &SE,
-       DominatorTree &DT, isl_ctx *ctx, unsigned MaxLoopDepth);
+  Scop(Region &R, AccFuncMapType &AccFuncMap, ScopDetection &SD,
+       ScalarEvolution &SE, DominatorTree &DT, isl_ctx *ctx,
+       unsigned MaxLoopDepth);
 
   /// @brief Initialize this ScopInfo .
-  void init(LoopInfo &LI, ScopDetection &SD, AliasAnalysis &AA);
+  void init(LoopInfo &LI, AliasAnalysis &AA);
 
   /// @brief Add loop carried constraints to the header block of the loop @p L.
   ///
@@ -1169,28 +1173,23 @@ private:
   ///
   /// @param R  The region we currently build branching conditions for.
   /// @param LI The LoopInfo analysis to obtain the number of iterators.
-  /// @param SD The ScopDetection analysis to identify non-affine sub-regions.
   /// @param DT The dominator tree of the current function.
   void buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
-                                         ScopDetection &SD, DominatorTree &DT);
+                                         DominatorTree &DT);
 
   /// @brief Propagate the domain constraints through the region @p R.
   ///
   /// @param R  The region we currently build branching conditions for.
   /// @param LI The LoopInfo analysis to obtain the number of iterators.
-  /// @param SD The ScopDetection analysis to identify non-affine sub-regions.
   /// @param DT The dominator tree of the current function.
-  void propagateDomainConstraints(Region *R, LoopInfo &LI, ScopDetection &SD,
-                                  DominatorTree &DT);
+  void propagateDomainConstraints(Region *R, LoopInfo &LI, DominatorTree &DT);
 
   /// @brief Compute the domain for each basic block in @p R.
   ///
   /// @param R  The region we currently traverse.
   /// @param LI The LoopInfo analysis to argue about the number of iterators.
-  /// @param SD The ScopDetection analysis to identify non-affine sub-regions.
   /// @param DT The dominator tree of the current function.
-  void buildDomains(Region *R, LoopInfo &LI, ScopDetection &SD,
-                    DominatorTree &DT);
+  void buildDomains(Region *R, LoopInfo &LI, DominatorTree &DT);
 
   /// @brief Check if a region part should be represented in the SCoP or not.
   ///
@@ -1251,10 +1250,9 @@ private:
   ///
   /// @param R              The current region traversed.
   /// @param LI             The LoopInfo object.
-  /// @param SD             The ScopDetection object.
   /// @param LoopSchedules  Map from loops to their schedule and progress.
   void buildSchedule(
-      Region *R, LoopInfo &LI, ScopDetection &SD,
+      Region *R, LoopInfo &LI,
       DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules);
 
   /// @name Helper function for printing the Scop.

@@ -1723,8 +1723,7 @@ isl_set *Scop::getDomainConditions(BasicBlock *BB) {
   return isl_set_copy(DomainMap[BB]);
 }
 
-void Scop::buildDomains(Region *R, LoopInfo &LI, ScopDetection &SD,
-                        DominatorTree &DT) {
+void Scop::buildDomains(Region *R, LoopInfo &LI, DominatorTree &DT) {
 
   auto *EntryBB = R->getEntry();
   int LD = getRelativeLoopDepth(LI.getLoopFor(EntryBB));
@@ -1741,12 +1740,11 @@ void Scop::buildDomains(Region *R, LoopInfo &LI, ScopDetection &SD,
   if (SD.isNonAffineSubRegion(R, R))
     return;
 
-  buildDomainsWithBranchConstraints(R, LI, SD, DT);
-  propagateDomainConstraints(R, LI, SD, DT);
+  buildDomainsWithBranchConstraints(R, LI, DT);
+  propagateDomainConstraints(R, LI, DT);
 }
 
 void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
-                                             ScopDetection &SD,
                                              DominatorTree &DT) {
   RegionInfo &RI = *R->getRegionInfo();
 
@@ -1769,7 +1767,7 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
     if (RN->isSubRegion()) {
       Region *SubRegion = RN->getNodeAs<Region>();
       if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
-        buildDomainsWithBranchConstraints(SubRegion, LI, SD, DT);
+        buildDomainsWithBranchConstraints(SubRegion, LI, DT);
         continue;
       }
     }
@@ -1890,7 +1888,7 @@ getDomainForBlock(BasicBlock *BB, DenseMap<BasicBlock *, isl_set *> &DomainMap,
 }
 
 void Scop::propagateDomainConstraints(Region *R, LoopInfo &LI,
-                                      ScopDetection &SD, DominatorTree &DT) {
+                                      DominatorTree &DT) {
   // Iterate over the region R and propagate the domain constrains from the
   // predecessors to the current node. In contrast to the
   // buildDomainsWithBranchConstraints function, this one will pull the domain
@@ -1911,7 +1909,7 @@ void Scop::propagateDomainConstraints(Region *R, LoopInfo &LI,
     if (RN->isSubRegion()) {
       Region *SubRegion = RN->getNodeAs<Region>();
       if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
-        propagateDomainConstraints(SubRegion, LI, SD, DT);
+        propagateDomainConstraints(SubRegion, LI, DT);
         continue;
       }
     }
@@ -2302,24 +2300,24 @@ static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI,
   return MaxLD - MinLD + 1;
 }
 
-Scop::Scop(Region &R, AccFuncMapType &AccFuncMap,
+Scop::Scop(Region &R, AccFuncMapType &AccFuncMap, ScopDetection &SD,
            ScalarEvolution &ScalarEvolution, DominatorTree &DT,
            isl_ctx *Context, unsigned MaxLoopDepth)
-    : DT(DT), SE(&ScalarEvolution), R(R), AccFuncMap(AccFuncMap),
+    : DT(DT), SE(&ScalarEvolution), SD(SD), R(R), AccFuncMap(AccFuncMap),
       IsOptimized(false), HasSingleExitEdge(R.getExitingBlock()),
       MaxLoopDepth(MaxLoopDepth), IslCtx(Context), Affinator(this),
       BoundaryContext(nullptr) {}
 
-void Scop::init(LoopInfo &LI, ScopDetection &SD, AliasAnalysis &AA) {
+void Scop::init(LoopInfo &LI, AliasAnalysis &AA) {
   buildContext();
 
-  buildDomains(&R, LI, SD, DT);
+  buildDomains(&R, LI, DT);
 
   DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> LoopSchedules;
 
   Loop *L = getLoopSurroundingRegion(R, LI);
   LoopSchedules[L];
-  buildSchedule(&R, LI, SD, LoopSchedules);
+  buildSchedule(&R, LI, LoopSchedules);
   updateAccessDimensionality();
   Schedule = LoopSchedules[L].first;
 
@@ -2872,7 +2870,7 @@ ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R) {
 }
 
 void Scop::buildSchedule(
-    Region *R, LoopInfo &LI, ScopDetection &SD,
+    Region *R, LoopInfo &LI,
     DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules) {
 
   if (SD.isNonAffineSubRegion(R, &getRegion())) {
@@ -2891,7 +2889,7 @@ void Scop::buildSchedule(
     if (RN->isSubRegion()) {
       Region *SubRegion = RN->getNodeAs<Region>();
       if (!SD.isNonAffineSubRegion(SubRegion, &getRegion())) {
-        buildSchedule(SubRegion, LI, SD, LoopSchedules);
+        buildSchedule(SubRegion, LI, LoopSchedules);
         continue;
       }
     }
@@ -3291,7 +3289,7 @@ void ScopInfo::addPHIReadAccess(PHINode *PHI) {
 
 void ScopInfo::buildScop(Region &R, DominatorTree &DT) {
   unsigned MaxLoopDepth = getMaxLoopDepthInRegion(R, *LI, *SD);
-  scop = new Scop(R, AccFuncMap, *SE, DT, ctx, MaxLoopDepth);
+  scop = new Scop(R, AccFuncMap, *SD, *SE, DT, ctx, MaxLoopDepth);
 
   buildAccessFunctions(R, R);
 
@@ -3305,7 +3303,7 @@ void ScopInfo::buildScop(Region &R, DominatorTree &DT) {
   if (!R.getExitingBlock())
     buildAccessFunctions(R, *R.getExit(), nullptr, /* IsExitBlock */ true);
 
-  scop->init(*LI, *SD, *AA);
+  scop->init(*LI, *AA);
 }
 
 void ScopInfo::print(raw_ostream &OS, const Module *) const {
