@@ -425,8 +425,10 @@ void WinException::emitCSpecificHandlerTable(const MachineFunction *MF) {
 
     // Use the assembler to compute the number of table entries through label
     // difference and division.
-    MCSymbol *TableBegin = Ctx.createTempSymbol("lsda_begin");
-    MCSymbol *TableEnd = Ctx.createTempSymbol("lsda_end");
+    MCSymbol *TableBegin =
+        Ctx.createTempSymbol("lsda_begin", /*AlwaysAddSuffix=*/true);
+    MCSymbol *TableEnd =
+        Ctx.createTempSymbol("lsda_end", /*AlwaysAddSuffix=*/true);
     const MCExpr *LabelDiff =
         MCBinaryExpr::createSub(MCSymbolRefExpr::create(TableEnd, Ctx),
                                 MCSymbolRefExpr::create(TableBegin, Ctx), Ctx);

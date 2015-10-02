@@ -126,8 +126,8 @@ ehcleanup.end:                                    ; preds = %ehcleanup
 ; CHECK:         jmp     .LBB1_[[epilogue]]
 
 ; CHECK:         .seh_handlerdata
-; CHECK-NEXT:         .long   (.Ltmp14-.Ltmp13)/16
-; CHECK-NEXT: .Ltmp13:
+; CHECK-NEXT:         .long   (.Llsda_end0-.Llsda_begin0)/16
+; CHECK-NEXT: .Llsda_begin0:
 ; CHECK-NEXT:         .long   .Ltmp0@IMGREL
 ; CHECK-NEXT:         .long   .Ltmp1@IMGREL+1
 ; CHECK-NEXT:         .long   1
@@ -144,7 +144,7 @@ ehcleanup.end:                                    ; preds = %ehcleanup
 ; CHECK-NEXT:         .long   .Ltmp3@IMGREL+1
 ; CHECK-NEXT:         .long   "?filt$0@0@main@@"@IMGREL
 ; CHECK-NEXT:         .long   .LBB1_6@IMGREL
-; CHECK-NEXT: .Ltmp14:
+; CHECK-NEXT: .Llsda_end0:
 
 ; CHECK:         .text
 ; CHECK:         .seh_endproc
