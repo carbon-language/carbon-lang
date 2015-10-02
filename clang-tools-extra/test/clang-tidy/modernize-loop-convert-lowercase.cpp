@@ -7,6 +7,7 @@
 const int n = 10;
 int arr[n];
 int nums[n];
+int nums_[n];
 
 void naming() {
   for (int i = 0; i < n; ++i) {
@@ -21,6 +22,13 @@ void naming() {
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (auto & num : nums)
+  // CHECK-FIXES-NEXT: printf("%d\n", num);
+
+  for (int i = 0; i < n; ++i) {
+    printf("%d\n", nums_[i]);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & num : nums_)
   // CHECK-FIXES-NEXT: printf("%d\n", num);
 
   int num = 0;

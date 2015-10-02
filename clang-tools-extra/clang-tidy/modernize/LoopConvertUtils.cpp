@@ -819,6 +819,14 @@ std::string VariableNamer::createIndexName() {
   size_t Len = ContainerName.size();
   if (Len > 1 && ContainerName.endswith(Style == NS_UpperCase ? "S" : "s")) {
     IteratorName = ContainerName.substr(0, Len - 1);
+    // E.g.: (auto thing : things)
+    if (!declarationExists(IteratorName))
+      return IteratorName;
+  }
+
+  if (Len > 2 && ContainerName.endswith(Style == NS_UpperCase ? "S_" : "s_")) {
+    IteratorName = ContainerName.substr(0, Len - 2);
+    // E.g.: (auto thing : things_)
     if (!declarationExists(IteratorName))
       return IteratorName;
   }
@@ -835,14 +843,17 @@ std::string VariableNamer::createIndexName() {
   case NS_UpperCase:
     Elem = "ELEM";
   }
+  // E.g.: (auto elem : container)
   if (!declarationExists(Elem))
     return Elem;
 
   IteratorName = AppendWithStyle(ContainerName, OldIndex->getName());
+  // E.g.: (auto container_i : container)
   if (!declarationExists(IteratorName))
     return IteratorName;
 
   IteratorName = AppendWithStyle(ContainerName, Elem);
+  // E.g.: (auto container_elem : container)
   if (!declarationExists(IteratorName))
     return IteratorName;
 
