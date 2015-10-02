@@ -12,7 +12,7 @@ define void @test_basic() #0 {
         call void @dummy_use (i32* %mem, i32 10)
 	ret void
 
-; Thumb-android:      test_basic:
+; Thumb-android-LABEL:      test_basic:
 
 ; Thumb-android:      push    {r4, r5}
 ; Thumb-android-NEXT: mov     r5, sp
@@ -32,7 +32,11 @@ define void @test_basic() #0 {
 
 ; Thumb-android:      pop     {r4, r5}
 
-; Thumb-linux:      test_basic:
+; Thumb-android: .align 2
+; Thumb-android: .LCPI0_0:
+; Thumb-android-NEXT: .long __STACK_LIMIT
+
+; Thumb-linux-LABEL:      test_basic:
 
 ; Thumb-linux:      push    {r4, r5}
 ; Thumb-linux-NEXT: mov     r5, sp
@@ -61,7 +65,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
        call void @dummy_use (i32* %mem, i32 10)
        ret i32 %result
 
-; Thumb-android:      test_nested:
+; Thumb-android-LABEL:      test_nested:
 
 ; Thumb-android:      push  {r4, r5}
 ; Thumb-android-NEXT: mov     r5, sp
@@ -81,7 +85,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 
 ; Thumb-android:      pop     {r4, r5}
 
-; Thumb-linux:      test_nested:
+; Thumb-linux-LABEL:      test_nested:
 
 ; Thumb-linux:      push    {r4, r5}
 ; Thumb-linux-NEXT: mov     r5, sp
@@ -108,7 +112,7 @@ define void @test_large() #0 {
         call void @dummy_use (i32* %mem, i32 0)
         ret void
 
-; Thumb-android:      test_large:
+; Thumb-android-LABEL:      test_large:
 
 ; Thumb-android:      push    {r4, r5}
 ; Thumb-android-NEXT: mov     r5, sp
@@ -129,7 +133,7 @@ define void @test_large() #0 {
 
 ; Thumb-android:      pop     {r4, r5}
 
-; Thumb-linux:      test_large:
+; Thumb-linux-LABEL:      test_large:
 
 ; Thumb-linux:      push    {r4, r5}
 ; Thumb-linux-NEXT: mov     r5, sp
@@ -157,7 +161,7 @@ define fastcc void @test_fastcc() #0 {
         call void @dummy_use (i32* %mem, i32 10)
         ret void
 
-; Thumb-android:      test_fastcc:
+; Thumb-android-LABEL:      test_fastcc:
 
 ; Thumb-android:      push    {r4, r5}
 ; Thumb-android-NEXT: mov     r5, sp
@@ -177,7 +181,7 @@ define fastcc void @test_fastcc() #0 {
 
 ; Thumb-android:      pop     {r4, r5}
 
-; Thumb-linux:      test_fastcc:
+; Thumb-linux-LABEL:      test_fastcc:
 
 ; Thumb-linux:      push    {r4, r5}
 ; Thumb-linux-NEXT: mov     r5, sp
@@ -204,7 +208,7 @@ define fastcc void @test_fastcc_large() #0 {
         call void @dummy_use (i32* %mem, i32 0)
         ret void
 
-; Thumb-android:      test_fastcc_large:
+; Thumb-android-LABEL:      test_fastcc_large:
 
 ; Thumb-android:      push    {r4, r5}
 ; Thumb-android-NEXT: mov     r5, sp
@@ -225,7 +229,7 @@ define fastcc void @test_fastcc_large() #0 {
 
 ; Thumb-android:      pop     {r4, r5}
 
-; Thumb-linux:      test_fastcc_large:
+; Thumb-linux-LABEL:      test_fastcc_large:
 
 ; Thumb-linux:      push    {r4, r5}
 ; Thumb-linux-NEXT: mov     r5, sp
