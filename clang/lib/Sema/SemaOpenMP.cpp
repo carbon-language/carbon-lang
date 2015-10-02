@@ -194,6 +194,13 @@ public:
   bool hasExplicitDSA(VarDecl *D,
                       const llvm::function_ref<bool(OpenMPClauseKind)> &CPred,
                       unsigned Level);
+
+  /// \brief Returns true if the directive at level \Level matches in the
+  /// specified \a DPred predicate.
+  bool hasExplicitDirective(
+      const llvm::function_ref<bool(OpenMPDirectiveKind)> &DPred,
+      unsigned Level);
+
   /// \brief Finds a directive which matches specified \a DPred predicate.
   template <class NamedDirectivesPredicate>
   bool hasDirective(NamedDirectivesPredicate DPred, bool FromParent);
@@ -661,6 +668,19 @@ bool DSAStackTy::hasExplicitDSA(
          CPred(StartI->SharingMap[D].Attributes);
 }
 
+bool DSAStackTy::hasExplicitDirective(
+    const llvm::function_ref<bool(OpenMPDirectiveKind)> &DPred,
+    unsigned Level) {
+  if (isClauseParsingMode())
+    ++Level;
+  auto StartI = Stack.rbegin();
+  auto EndI = std::prev(Stack.rend());
+  if (std::distance(StartI, EndI) <= (int)Level)
+    return false;
+  std::advance(StartI, Level);
+  return DPred(StartI->Directive);
+}
+
 template <class NamedDirectivesPredicate>
 bool DSAStackTy::hasDirective(NamedDirectivesPredicate DPred, bool FromParent) {
   auto StartI = std::next(Stack.rbegin());
@@ -684,6 +704,30 @@ void Sema::InitDataSharingAttributesStack() {
 bool Sema::IsOpenMPCapturedVar(VarDecl *VD) {
   assert(LangOpts.OpenMP && "OpenMP is not allowed");
   VD = VD->getCanonicalDecl();
+
+  // If we are attempting to capture a global variable in a directive with
+  // 'target' we return true so that this global is also mapped to the device.
+  //
+  // FIXME: If the declaration is enclosed in a 'declare target' directive,
+  // then it should not be captured. Therefore, an extra check has to be
+  // inserted here once support for 'declare target' is added.
+  //
+  if (!VD->hasLocalStorage()) {
+    if (DSAStack->getCurrentDirective() == OMPD_target &&
+        !DSAStack->isClauseParsingMode()) {
+      return true;
+    }
+    if (DSAStack->getCurScope() &&
+        DSAStack->hasDirective(
+            [](OpenMPDirectiveKind K, const DeclarationNameInfo &DNI,
+               SourceLocation Loc) -> bool {
+              return isOpenMPTargetDirective(K);
+            },
+            false)) {
+      return true;
+    }
+  }
+
   if (DSAStack->getCurrentDirective() != OMPD_unknown &&
       (!DSAStack->isClauseParsingMode() ||
        DSAStack->getParentDirective() != OMPD_unknown)) {
@@ -706,6 +750,14 @@ bool Sema::isOpenMPPrivateVar(VarDecl *VD, unsigned Level) {
   assert(LangOpts.OpenMP && "OpenMP is not allowed");
   return DSAStack->hasExplicitDSA(
       VD, [](OpenMPClauseKind K) -> bool { return K == OMPC_private; }, Level);
+}
+
+bool Sema::isOpenMPTargetCapturedVar(VarDecl *VD, unsigned Level) {
+  assert(LangOpts.OpenMP && "OpenMP is not allowed");
+  // Return true if the current level is no longer enclosed in a target region.
+
+  return !VD->hasLocalStorage() &&
+         DSAStack->hasExplicitDirective(isOpenMPTargetDirective, Level);
 }
 
 void Sema::DestroyDataSharingAttributesStack() { delete DSAStack; }

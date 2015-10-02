@@ -424,6 +424,10 @@ bool clang::isOpenMPParallelDirective(OpenMPDirectiveKind DKind) {
          DKind == OMPD_parallel_sections; // TODO add next directives.
 }
 
+bool clang::isOpenMPTargetDirective(OpenMPDirectiveKind DKind) {
+  return DKind == OMPD_target; // TODO add next directives.
+}
+
 bool clang::isOpenMPTeamsDirective(OpenMPDirectiveKind DKind) {
   return DKind == OMPD_teams; // TODO add next directives.
 }
