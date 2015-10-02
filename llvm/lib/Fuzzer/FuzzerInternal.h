@@ -73,6 +73,7 @@ class Fuzzer {
     int Verbosity = 1;
     int MaxLen = 0;
     int UnitTimeoutSec = 300;
+    int MaxTotalTimeSec = 0;
     bool DoCrossOver = true;
     int  MutateDepth = 5;
     bool ExitOnFirst = false;

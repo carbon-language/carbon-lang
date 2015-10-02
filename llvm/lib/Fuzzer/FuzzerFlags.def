@@ -28,6 +28,8 @@ FUZZER_FLAG_INT(
     timeout, 1200,
     "Timeout in seconds (if positive). "
     "If one unit runs more than this number of seconds the process will abort.")
+FUZZER_FLAG_INT(max_total_time, 0, "If positive, indicates the maximal total "
+                                   "time in seconds to run the fuzzer.")
 FUZZER_FLAG_INT(help, 0, "Print help.")
 FUZZER_FLAG_INT(
     save_minimized_corpus, 0,

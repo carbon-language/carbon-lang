@@ -337,6 +337,10 @@ void Fuzzer::Loop() {
       RereadOutputCorpus();
       if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
         return;
+      if (Options.MaxTotalTimeSec > 0 &&
+          secondsSinceProcessStartUp() >
+              static_cast<size_t>(Options.MaxTotalTimeSec))
+        return;
       CurrentUnit = Corpus[J1];
       // Optionally, cross with another unit.
       if (Options.DoCrossOver && USF.GetRand().RandBool()) {
