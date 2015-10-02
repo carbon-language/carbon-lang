@@ -347,6 +347,11 @@ static int clangTidyMain(int argc, const char **argv) {
   return 0;
 }
 
+// This anchor is used to force the linker to link the CERTModule.
+extern volatile int CERTModuleAnchorSource;
+static int LLVM_ATTRIBUTE_UNUSED CERTModuleAnchorDestination =
+    CERTModuleAnchorSource;
+
 // This anchor is used to force the linker to link the LLVMModule.
 extern volatile int LLVMModuleAnchorSource;
 static int LLVM_ATTRIBUTE_UNUSED LLVMModuleAnchorDestination =
