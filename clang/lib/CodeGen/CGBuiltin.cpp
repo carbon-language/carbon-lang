@@ -7053,6 +7053,11 @@ Value *CodeGenFunction::EmitWebAssemblyBuiltinExpr(unsigned BuiltinID,
     Value *Callee = CGM.getIntrinsic(Intrinsic::wasm_memory_size, ResultType);
     return Builder.CreateCall(Callee);
   }
+  case WebAssembly::BI__builtin_wasm_resize_memory: {
+    Value *X = EmitScalarExpr(E->getArg(0));
+    Value *Callee = CGM.getIntrinsic(Intrinsic::wasm_resize_memory, X->getType());
+    return Builder.CreateCall(Callee, X);
+  }
 
   default:
     return nullptr;

@@ -14,3 +14,9 @@ __SIZE_TYPE__ f1(void) {
 // WEBASSEMBLY32: call {{i.*}} @llvm.wasm.memory.size.i32()
 // WEBASSEMBLY64: call {{i.*}} @llvm.wasm.memory.size.i64()
 }
+
+void f2(long delta) {
+  __builtin_wasm_resize_memory(delta);
+// WEBASSEMBLY32: call void @llvm.wasm.resize.memory.i32(i32 %{{.*}})
+// WEBASSEMBLY64: call void @llvm.wasm.resize.memory.i64(i64 %{{.*}})
+}
