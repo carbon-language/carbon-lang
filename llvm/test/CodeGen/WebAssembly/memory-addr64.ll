@@ -7,6 +7,7 @@ target triple = "wasm64-unknown-unknown"
 
 declare i64 @llvm.wasm.page.size.i64() nounwind readnone
 declare i64 @llvm.wasm.memory.size.i64() nounwind readnone
+declare void @llvm.wasm.resize.memory.i64(i64) nounwind
 
 ; CHECK-LABEL: (func $page_size
 ; CHECK-NEXT: (result i64)
@@ -24,4 +25,13 @@ define i64 @page_size() {
 define i64 @memory_size() {
   %a = call i64 @llvm.wasm.memory.size.i64()
   ret i64 %a
+}
+
+; CHECK-LABEL: (func $resize_memory
+; CHECK-NEXT: (param i64)
+; CHECK: (resize_memory @0)
+; CHECK-NEXT: (return)
+define void @resize_memory(i64 %n) {
+  call void @llvm.wasm.resize.memory.i64(i64 %n)
+  ret void
 }

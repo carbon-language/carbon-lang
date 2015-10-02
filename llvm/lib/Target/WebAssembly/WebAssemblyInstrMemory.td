@@ -106,3 +106,11 @@ def memory_size_I32 : I<(outs I32:$dst), (ins),
 def memory_size_I64 : I<(outs I64:$dst), (ins),
                         [(set I64:$dst, (int_wasm_memory_size))]>,
                       Requires<[HasAddr64]>;
+
+// Resize memory.
+def resize_memory_I32 : I<(outs), (ins I32:$delta),
+                          [(int_wasm_resize_memory I32:$delta)]>,
+                        Requires<[HasAddr32]>;
+def resize_memory_I64 : I<(outs), (ins I64:$delta),
+                          [(int_wasm_resize_memory I64:$delta)]>,
+                        Requires<[HasAddr64]>;
