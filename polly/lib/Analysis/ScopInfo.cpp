@@ -645,16 +645,16 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
   isl_space_free(Space);
 }
 
-MemoryAccess::MemoryAccess(Instruction *AccessInst, __isl_take isl_id *Id,
-                           AccessType Type, Value *BaseAddress,
-                           unsigned ElemBytes, bool Affine,
+MemoryAccess::MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst,
+                           __isl_take isl_id *Id, AccessType Type,
+                           Value *BaseAddress, unsigned ElemBytes, bool Affine,
                            ArrayRef<const SCEV *> Subscripts,
                            ArrayRef<const SCEV *> Sizes, Value *AccessValue,
                            AccessOrigin Origin, StringRef BaseName)
-    : Id(Id), Origin(Origin), AccType(Type), RedType(RT_NONE),
-      Statement(nullptr), BaseAddr(BaseAddress), BaseName(BaseName),
-      ElemBytes(ElemBytes), Sizes(Sizes.begin(), Sizes.end()),
-      AccessInstruction(AccessInst), AccessValue(AccessValue), IsAffine(Affine),
+    : Id(Id), Origin(Origin), AccType(Type), RedType(RT_NONE), Statement(Stmt),
+      BaseAddr(BaseAddress), BaseName(BaseName), ElemBytes(ElemBytes),
+      Sizes(Sizes.begin(), Sizes.end()), AccessInstruction(AccessInst),
+      AccessValue(AccessValue), IsAffine(Affine),
       Subscripts(Subscripts.begin(), Subscripts.end()), AccessRelation(nullptr),
       NewAccessRelation(nullptr) {}
 
@@ -820,29 +820,25 @@ void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
   Domain = NewDomain;
 }
 
-void ScopStmt::buildAccesses(BasicBlock *Block, bool isApproximated) {
-  AccFuncSetType *AFS = Parent.getAccessFunctions(Block);
-  if (!AFS)
-    return;
-
-  for (auto &Access : *AFS) {
-    Instruction *AccessInst = Access.getAccessInstruction();
-    Type *ElementType = Access.getAccessValue()->getType();
+void ScopStmt::buildAccessRelations() {
+  for (MemoryAccess *Access : MemAccs) {
+    Type *ElementType = Access->getAccessValue()->getType();
 
     const ScopArrayInfo *SAI = getParent()->getOrCreateScopArrayInfo(
-        Access.getBaseAddr(), ElementType, Access.Sizes, Access.isPHI());
+        Access->getBaseAddr(), ElementType, Access->Sizes, Access->isPHI());
 
-    if (isApproximated && Access.isMustWrite())
-      Access.AccType = MemoryAccess::MAY_WRITE;
-
-    MemoryAccessList *&MAL = InstructionToAccess[AccessInst];
-    if (!MAL)
-      MAL = new MemoryAccessList();
-    Access.setStatement(this);
-    Access.buildAccessRelation(SAI);
-    MAL->emplace_front(&Access);
-    MemAccs.push_back(MAL->front());
+    Access->buildAccessRelation(SAI);
   }
+}
+
+void ScopStmt::addAccess(MemoryAccess *Access) {
+  Instruction *AccessInst = Access->getAccessInstruction();
+
+  MemoryAccessList *&MAL = InstructionToAccess[AccessInst];
+  if (!MAL)
+    MAL = new MemoryAccessList();
+  MAL->emplace_front(Access);
+  MemAccs.push_back(MAL->front());
 }
 
 void ScopStmt::realignParams() {
@@ -1134,31 +1130,32 @@ void ScopStmt::collectSurroundingLoops() {
 }
 
 ScopStmt::ScopStmt(Scop &parent, Region &R)
-    : Parent(parent), BB(nullptr), R(&R), Build(nullptr) {
+    : Parent(parent), Domain(nullptr), BB(nullptr), R(&R), Build(nullptr) {
 
   BaseName = getIslCompatibleName("Stmt_", R.getNameStr(), "");
-
-  buildDomain();
-  collectSurroundingLoops();
-
-  BasicBlock *EntryBB = R.getEntry();
-  for (BasicBlock *Block : R.blocks()) {
-    buildAccesses(Block, Block != EntryBB);
-    deriveAssumptions(Block);
-  }
-  if (DetectReductions)
-    checkForReductions();
 }
 
 ScopStmt::ScopStmt(Scop &parent, BasicBlock &bb)
-    : Parent(parent), BB(&bb), R(nullptr), Build(nullptr) {
+    : Parent(parent), Domain(nullptr), BB(&bb), R(nullptr), Build(nullptr) {
 
   BaseName = getIslCompatibleName("Stmt_", &bb, "");
+}
+
+void ScopStmt::init() {
+  assert(!Domain && "init must be called only once");
 
   buildDomain();
   collectSurroundingLoops();
-  buildAccesses(BB);
-  deriveAssumptions(BB);
+  buildAccessRelations();
+
+  if (BB) {
+    deriveAssumptions(BB);
+  } else {
+    for (BasicBlock *Block : R->blocks()) {
+      deriveAssumptions(Block);
+    }
+  }
+
   if (DetectReductions)
     checkForReductions();
 }
@@ -2310,11 +2307,16 @@ Scop::Scop(Region &R, AccFuncMapType &AccFuncMap, ScopDetection &SD,
 
 void Scop::init(LoopInfo &LI, AliasAnalysis &AA) {
   buildContext();
-
   buildDomains(&R, LI, DT);
 
-  DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> LoopSchedules;
+  // Remove empty and ignored statements.
+  simplifySCoP(true);
 
+  // The ScopStmts now have enough information to initialize themselves.
+  for (ScopStmt &Stmt : Stmts)
+    Stmt.init();
+
+  DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> LoopSchedules;
   Loop *L = getLoopSurroundingRegion(R, LI);
   LoopSchedules[L];
   buildSchedule(&R, LI, LoopSchedules);
@@ -2329,7 +2331,7 @@ void Scop::init(LoopInfo &LI, AliasAnalysis &AA) {
   buildAliasChecks(AA);
 
   hoistInvariantLoads();
-  simplifySCoP();
+  simplifySCoP(false);
 }
 
 Scop::~Scop() {
@@ -2363,23 +2365,26 @@ void Scop::updateAccessDimensionality() {
       Access->updateDimensionality();
 }
 
-void Scop::simplifySCoP() {
-
+void Scop::simplifySCoP(bool RemoveIgnoredStmts) {
   for (auto StmtIt = Stmts.begin(), StmtEnd = Stmts.end(); StmtIt != StmtEnd;) {
     ScopStmt &Stmt = *StmtIt;
+    RegionNode *RN = Stmt.isRegionStmt()
+                         ? Stmt.getRegion()->getNode()
+                         : getRegion().getBBNode(Stmt.getBasicBlock());
 
-    if (!StmtIt->isEmpty()) {
-      StmtIt++;
+    if (StmtIt->isEmpty() || (RemoveIgnoredStmts && isIgnored(RN))) {
+      // Remove the statement because it is unnecessary.
+      if (Stmt.isRegionStmt())
+        for (BasicBlock *BB : Stmt.getRegion()->blocks())
+          StmtMap.erase(BB);
+      else
+        StmtMap.erase(Stmt.getBasicBlock());
+
+      StmtIt = Stmts.erase(StmtIt);
       continue;
     }
 
-    if (Stmt.isRegionStmt())
-      for (BasicBlock *BB : Stmt.getRegion()->blocks())
-        StmtMap.erase(BB);
-    else
-      StmtMap.erase(Stmt.getBasicBlock());
-
-    StmtIt = Stmts.erase(StmtIt);
+    StmtIt++;
   }
 }
 
@@ -2874,11 +2879,20 @@ void Scop::buildSchedule(
     DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules) {
 
   if (SD.isNonAffineSubRegion(R, &getRegion())) {
-    auto *Stmt = addScopStmt(nullptr, R);
-    auto *UDomain = isl_union_set_from_set(Stmt->getDomain());
-    auto *StmtSchedule = isl_schedule_from_domain(UDomain);
     Loop *L = getLoopSurroundingRegion(*R, LI);
     auto &LSchedulePair = LoopSchedules[L];
+    ScopStmt *Stmt = getStmtForBasicBlock(R->getEntry());
+    isl_set *Domain;
+    if (Stmt) {
+      Domain = Stmt->getDomain();
+    } else {
+      // This case happens when the SCoP consists of only one non-affine region
+      // which doesn't contain any accesses and has hence been optimized away.
+      // We use a dummy domain for this case.
+      Domain = isl_set_empty(isl_space_set_alloc(IslCtx, 0, 0));
+    }
+    auto *UDomain = isl_union_set_from_set(Domain);
+    auto *StmtSchedule = isl_schedule_from_domain(UDomain);
     LSchedulePair.first = StmtSchedule;
     return;
   }
@@ -2899,14 +2913,9 @@ void Scop::buildSchedule(
     auto &LSchedulePair = LoopSchedules[L];
     LSchedulePair.second += getNumBlocksInRegionNode(RN);
 
-    if (!isIgnored(RN)) {
-
-      ScopStmt *Stmt;
-      if (RN->isSubRegion())
-        Stmt = addScopStmt(nullptr, RN->getNodeAs<Region>());
-      else
-        Stmt = addScopStmt(RN->getNodeAs<BasicBlock>(), nullptr);
-
+    BasicBlock *BB = getRegionNodeBasicBlock(RN);
+    ScopStmt *Stmt = getStmtForBasicBlock(BB);
+    if (Stmt) {
       auto *UDomain = isl_union_set_from_set(Stmt->getDomain());
       auto *StmtSchedule = isl_schedule_from_domain(UDomain);
       LSchedulePair.first =
@@ -3195,6 +3204,21 @@ void ScopInfo::buildAccessFunctions(Region &R, Region &SR) {
       buildAccessFunctions(R, *I->getNodeAs<BasicBlock>());
 }
 
+void ScopInfo::buildStmts(Region &SR) {
+  Region *R = getRegion();
+
+  if (SD->isNonAffineSubRegion(&SR, R)) {
+    scop->addScopStmt(nullptr, &SR);
+    return;
+  }
+
+  for (auto I = SR.element_begin(), E = SR.element_end(); I != E; ++I)
+    if (I->isSubRegion())
+      buildStmts(*I->getNodeAs<Region>());
+    else
+      scop->addScopStmt(I->getNodeAs<BasicBlock>(), nullptr);
+}
+
 void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
                                     Region *NonAffineSubRegion,
                                     bool IsExitBlock) {
@@ -3234,6 +3258,13 @@ void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
                                ArrayRef<const SCEV *> Subscripts,
                                ArrayRef<const SCEV *> Sizes,
                                MemoryAccess::AccessOrigin Origin) {
+  ScopStmt *Stmt = scop->getStmtForBasicBlock(BB);
+
+  // Do not create a memory access for anything not in the SCoP. It would be
+  // ignored anyway.
+  if (!Stmt)
+    return;
+
   AccFuncSetType &AccList = AccFuncMap[BB];
   size_t Identifier = AccList.size();
 
@@ -3243,8 +3274,14 @@ void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
   std::string IdName = "__polly_array_ref_" + std::to_string(Identifier);
   isl_id *Id = isl_id_alloc(ctx, IdName.c_str(), nullptr);
 
-  AccList.emplace_back(Inst, Id, Type, BaseAddress, ElemBytes, Affine,
+  bool isApproximated =
+      Stmt->isRegionStmt() && (Stmt->getRegion()->getEntry() != BB);
+  if (isApproximated && Type == MemoryAccess::MUST_WRITE)
+    Type = MemoryAccess::MAY_WRITE;
+
+  AccList.emplace_back(Stmt, Inst, Id, Type, BaseAddress, ElemBytes, Affine,
                        Subscripts, Sizes, AccessValue, Origin, BaseName);
+  Stmt->addAccess(&AccList.back());
 }
 
 void ScopInfo::addExplicitAccess(
@@ -3291,6 +3328,7 @@ void ScopInfo::buildScop(Region &R, DominatorTree &DT) {
   unsigned MaxLoopDepth = getMaxLoopDepthInRegion(R, *LI, *SD);
   scop = new Scop(R, AccFuncMap, *SD, *SE, DT, ctx, MaxLoopDepth);
 
+  buildStmts(R);
   buildAccessFunctions(R, R);
 
   // In case the region does not have an exiting block we will later (during

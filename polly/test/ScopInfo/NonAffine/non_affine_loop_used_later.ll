@@ -27,10 +27,6 @@
 ; CHECK:                [N] -> { Stmt_bb4__TO__bb18[i0] -> [i0, 1] };
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:                [N] -> { Stmt_bb4__TO__bb18[i0] -> MemRef_A[i0] };
-; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                [N] -> { Stmt_bb4__TO__bb18[i0] -> MemRef_j_0[] };
-; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                [N] -> { Stmt_bb4__TO__bb18[i0] -> MemRef_j_2__phi[] };
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:                [N] -> { Stmt_bb4__TO__bb18[i0] -> MemRef_A[i0] };
 ; CHECK:            MayWriteAccess := [Reduction Type: NONE] [Scalar: 0]
@@ -38,6 +34,10 @@
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                [N] -> { Stmt_bb4__TO__bb18[i0] -> MemRef_smax[] };
 ; CHECK:            MayWriteAccess := [Reduction Type: NONE] [Scalar: 1]
+; CHECK:                [N] -> { Stmt_bb4__TO__bb18[i0] -> MemRef_j_2__phi[] };
+; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
+; CHECK:                [N] -> { Stmt_bb4__TO__bb18[i0] -> MemRef_j_0[] };
+; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                [N] -> { Stmt_bb4__TO__bb18[i0] -> MemRef_j_2__phi[] };
 ; CHECK:      Stmt_bb18
 ; CHECK:            Schedule :=

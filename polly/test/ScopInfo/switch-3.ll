@@ -18,16 +18,6 @@
 ;    }
 ;
 ; CHECK:    Statements {
-; CHECK:      Stmt_sw_bb_5
-; CHECK:            Domain :=
-; CHECK:                [N] -> { Stmt_sw_bb_5[i0] : exists (e0 = floor((-2 + i0)/4): 4e0 = -2 + i0 and i0 >= 2 and i0 <= -1 + N) };
-; CHECK:            Schedule :=
-; CHECK:                [N] -> { Stmt_sw_bb_5[i0] -> [i0, 0] };
-; CHECK:      Stmt_sw_bb_9
-; CHECK:            Domain :=
-; CHECK:                [N] -> { Stmt_sw_bb_9[i0] : exists (e0 = floor((i0)/4): i0 >= 0 and i0 <= -1 + N and 4e0 >= -3 + i0 and 4e0 <= -2 + i0) };
-; CHECK:            Schedule :=
-; CHECK:                [N] -> { Stmt_sw_bb_9[i0] -> [i0, 1] };
 ; CHECK:      Stmt_sw_bb
 ; CHECK:            Domain :=
 ; CHECK:                [N] -> { Stmt_sw_bb[i0] : exists (e0 = floor((i0)/4): 4e0 = i0 and i0 >= 0 and i0 <= -1 + N) };
@@ -38,6 +28,16 @@
 ; CHECK:                [N] -> { Stmt_sw_bb_1[i0] : exists (e0 = floor((2 + i0)/4): i0 >= 0 and i0 <= -1 + N and 4e0 >= -1 + i0 and 4e0 <= i0) };
 ; CHECK:            Schedule :=
 ; CHECK:                [N] -> { Stmt_sw_bb_1[i0] -> [i0, 3] };
+; CHECK:      Stmt_sw_bb_5
+; CHECK:            Domain :=
+; CHECK:                [N] -> { Stmt_sw_bb_5[i0] : exists (e0 = floor((-2 + i0)/4): 4e0 = -2 + i0 and i0 >= 2 and i0 <= -1 + N) };
+; CHECK:            Schedule :=
+; CHECK:                [N] -> { Stmt_sw_bb_5[i0] -> [i0, 0] };
+; CHECK:      Stmt_sw_bb_9
+; CHECK:            Domain :=
+; CHECK:                [N] -> { Stmt_sw_bb_9[i0] : exists (e0 = floor((i0)/4): i0 >= 0 and i0 <= -1 + N and 4e0 >= -3 + i0 and 4e0 <= -2 + i0) };
+; CHECK:            Schedule :=
+; CHECK:                [N] -> { Stmt_sw_bb_9[i0] -> [i0, 1] };
 ; CHECK:    }
 ;
 ; AST:  if (1)

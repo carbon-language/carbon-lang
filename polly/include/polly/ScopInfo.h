@@ -473,8 +473,6 @@ private:
   /// @brief Is this MemoryAccess modeling special PHI node accesses?
   bool isPHI() const { return Origin == PHI; }
 
-  void setStatement(ScopStmt *Stmt) { this->Statement = Stmt; }
-
   __isl_give isl_basic_map *createBasicAccessMap(ScopStmt *Statement);
 
   void assumeNoOutOfBound();
@@ -535,6 +533,7 @@ private:
 public:
   /// @brief Create a new MemoryAccess.
   ///
+  /// @param Stmt       The parent statement.
   /// @param AccessInst The instruction doing the access.
   /// @param Id         Identifier that is guranteed to be unique within the
   ///                   same ScopStmt.
@@ -546,10 +545,11 @@ public:
   /// @param Subscripts Subscipt expressions
   /// @param Sizes      Dimension lengths of the accessed array.
   /// @param BaseName   Name of the acessed array.
-  MemoryAccess(Instruction *AccessInst, __isl_take isl_id *Id, AccessType Type,
-               Value *BaseAddress, unsigned ElemBytes, bool Affine,
-               ArrayRef<const SCEV *> Subscripts, ArrayRef<const SCEV *> Sizes,
-               Value *AccessValue, AccessOrigin Origin, StringRef BaseName);
+  MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst, __isl_take isl_id *Id,
+               AccessType Type, Value *BaseAddress, unsigned ElemBytes,
+               bool Affine, ArrayRef<const SCEV *> Subscripts,
+               ArrayRef<const SCEV *> Sizes, Value *AccessValue,
+               AccessOrigin Origin, StringRef BaseName);
   ~MemoryAccess();
 
   /// @brief Get the type of a memory access.
@@ -721,6 +721,9 @@ public:
   /// Create an overapproximating ScopStmt for the region @p R.
   ScopStmt(Scop &parent, Region &R);
 
+  /// Initialize members after all MemoryAccesses have been added.
+  void init();
+
 private:
   /// Polyhedral description
   //@{
@@ -789,14 +792,8 @@ private:
   /// @brief Fill NestLoops with loops surrounding this statement.
   void collectSurroundingLoops();
 
-  /// @brief Create the accesses for instructions in @p Block.
-  ///
-  /// @param Block          The basic block for which accesses should be
-  ///                       created.
-  /// @param isApproximated Flag to indicate blocks that might not be executed,
-  ///                       hence for which write accesses need to be modeled as
-  ///                       may-write accesses.
-  void buildAccesses(BasicBlock *Block, bool isApproximated = false);
+  /// @brief Build the access relation of all memory accesses.
+  void buildAccessRelations();
 
   /// @brief Detect and mark reductions in the ScopStmt
   void checkForReductions();
@@ -924,6 +921,9 @@ public:
     assert(BB && "Cannot set a block for a region statement");
     BB = Block;
   }
+
+  /// @brief Add @p Access to this statement's list of accesses.
+  void addAccess(MemoryAccess *Access);
 
   /// @brief Move the memory access in @p InvMAs to @p TargetList.
   ///
@@ -1207,8 +1207,10 @@ private:
   /// @brief Simplify the SCoP representation
   ///
   /// At the moment we perform the following simplifications:
-  ///   - removal of empty statements (due to invariant load hoisting)
-  void simplifySCoP();
+  ///   - removal of no-op statements
+  /// @param RemoveIgnoredStmts If true, also removed ignored statments.
+  /// @see isIgnored()
+  void simplifySCoP(bool RemoveIgnoredStmts);
 
   /// @brief Hoist all invariant memory loads.
   void hoistInvariantLoads();
@@ -1590,6 +1592,13 @@ class ScopInfo : public RegionPass {
   Scop *scop;
   isl_ctx *ctx;
 
+  /// @brief Return the SCoP region that is currently processed.
+  Region *getRegion() const {
+    if (!scop)
+      return nullptr;
+    return &scop->getRegion();
+  }
+
   // Clear the context.
   void clear();
 
@@ -1631,6 +1640,12 @@ class ScopInfo : public RegionPass {
   /// @param R  The SCoP region.
   /// @param SR A subregion of @p R.
   void buildAccessFunctions(Region &R, Region &SR);
+
+  /// @brief Create ScopStmt for all BBs and non-affine subregions of @p SR.
+  ///
+  /// Some of the statments might be optimized away later when they do not
+  /// access any memory and thus have no effect.
+  void buildStmts(Region &SR);
 
   /// @brief Build the access functions for the basic block @p BB
   ///

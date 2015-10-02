@@ -1,3 +1,4 @@
+
 ; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ; RUN: opt %loadPolly -polly-ast -analyze < %s | FileCheck %s --check-prefix=AST
 ;
@@ -17,16 +18,16 @@
 ;    }
 ;
 ; CHECK:    Statements {
-; CHECK:      Stmt_for_body_7
-; CHECK:            Domain :=
-; CHECK:                [c, N] -> { Stmt_for_body_7[i0] : c = 1 and i0 >= 0 and i0 <= -1 + N };
-; CHECK:            Schedule :=
-; CHECK:                [c, N] -> { Stmt_for_body_7[i0] -> [0, i0] };
 ; CHECK:      Stmt_for_body
 ; CHECK:            Domain :=
 ; CHECK:                [c, N] -> { Stmt_for_body[i0] : c = -1 and i0 >= 0 and i0 <= -1 + N };
 ; CHECK:            Schedule :=
 ; CHECK:                [c, N] -> { Stmt_for_body[i0] -> [1, i0] };
+; CHECK:      Stmt_for_body_7
+; CHECK:            Domain :=
+; CHECK:                [c, N] -> { Stmt_for_body_7[i0] : c = 1 and i0 >= 0 and i0 <= -1 + N };
+; CHECK:            Schedule :=
+; CHECK:                [c, N] -> { Stmt_for_body_7[i0] -> [0, i0] };
 ; CHECK:    }
 ;
 ; AST:  if (1)

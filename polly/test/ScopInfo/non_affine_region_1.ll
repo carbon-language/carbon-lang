@@ -19,15 +19,15 @@
 ;    }
 ;
 ; CHECK:       Region: %bb1---%bb21
-; CHECK:       Stmt_bb8
-; CHECK:             MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                 [b] -> { Stmt_bb8[i0] -> MemRef_x_1__phi[] };
-; CHECK:       Stmt_bb7
-; CHECK:             MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                 [b] -> { Stmt_bb7[i0] -> MemRef_x_1__phi[] };
 ; CHECK:       Stmt_bb3
 ; CHECK:             MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                 [b] -> { Stmt_bb3[i0] -> MemRef_x_1__phi[] };
+; CHECK:       Stmt_bb7
+; CHECK:             MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; CHECK:                 [b] -> { Stmt_bb7[i0] -> MemRef_x_1__phi[] };
+; CHECK:       Stmt_bb8
+; CHECK:             MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; CHECK:                 [b] -> { Stmt_bb8[i0] -> MemRef_x_1__phi[] };
 ; CHECK:       Stmt_bb10__TO__bb18
 ; CHECK-NEXT:        Domain :=
 ; CHECK-NEXT:            [b] -> { Stmt_bb10__TO__bb18[i0] :

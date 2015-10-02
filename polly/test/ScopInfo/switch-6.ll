@@ -22,18 +22,18 @@
 ;    }
 ;
 ; CHECK:    Statements {
-; CHECK:      Stmt_sw_bb_9
-; CHECK:            Domain :=
-; CHECK:                [N] -> { Stmt_sw_bb_9[3] : N >= 4 };
-; CHECK:      Stmt_sw_bb_5
-; CHECK:            Domain :=
-; CHECK:                [N] -> { Stmt_sw_bb_5[2] : N >= 3 };
-; CHECK:      Stmt_sw_bb_1
-; CHECK:            Domain :=
-; CHECK:                [N] -> { Stmt_sw_bb_1[1] : N >= 2 };
 ; CHECK:      Stmt_sw_bb
 ; CHECK:            Domain :=
 ; CHECK:                [N] -> { Stmt_sw_bb[0] : N >= 1 };
+; CHECK:      Stmt_sw_bb_1
+; CHECK:            Domain :=
+; CHECK:                [N] -> { Stmt_sw_bb_1[1] : N >= 2 };
+; CHECK:      Stmt_sw_bb_5
+; CHECK:            Domain :=
+; CHECK:                [N] -> { Stmt_sw_bb_5[2] : N >= 3 };
+; CHECK:      Stmt_sw_bb_9
+; CHECK:            Domain :=
+; CHECK:                [N] -> { Stmt_sw_bb_9[3] : N >= 4 };
 ; CHECK:    }
 ;
 ; AST:  if (1)
