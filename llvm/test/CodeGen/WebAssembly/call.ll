@@ -98,8 +98,31 @@ define i32 @call_indirect_i32(i32 ()* %callee) {
   ret i32 %t
 }
 
+; CHECK-LABEL: (func $tail_call_void_nullary
+; CHECK-NEXT: (call $void_nullary)
+; CHECK-NEXT: (return)
+define void @tail_call_void_nullary() {
+  tail call void @void_nullary()
+  ret void
+}
+
+; CHECK-LABEL: (func $fastcc_tail_call_void_nullary
+; CHECK-NEXT: (call $void_nullary)
+; CHECK-NEXT: (return)
+define void @fastcc_tail_call_void_nullary() {
+  tail call fastcc void @void_nullary()
+  ret void
+}
+
+; CHECK-LABEL: (func $coldcc_tail_call_void_nullary
+; CHECK-NEXT: (call $void_nullary)
+; CHECK-NEXT: (return)
+define void @coldcc_tail_call_void_nullary() {
+  tail call coldcc void @void_nullary()
+  ret void
+}
+
 ; FIXME test the following:
-;  - Functions without return.
 ;  - More argument combinations.
 ;  - Tail call.
 ;  - Interesting returns (struct, multiple).

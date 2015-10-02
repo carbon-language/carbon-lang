@@ -229,12 +229,22 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
   MachineFunction &MF = DAG.getMachineFunction();
 
   CallingConv::ID CallConv = CLI.CallConv;
-  if (CallConv != CallingConv::C)
-    fail(DL, DAG, "WebAssembly doesn't support non-C calling conventions");
-  if (CLI.IsTailCall || MF.getTarget().Options.GuaranteedTailCallOpt)
-    fail(DL, DAG, "WebAssembly doesn't support tail call yet");
+  if (CallConv != CallingConv::C &&
+      CallConv != CallingConv::Fast &&
+      CallConv != CallingConv::Cold)
+    fail(DL, DAG,
+         "WebAssembly doesn't support language-specific or target-specific "
+         "calling conventions yet");
   if (CLI.IsPatchPoint)
     fail(DL, DAG, "WebAssembly doesn't support patch point yet");
+
+  // WebAssembly doesn't currently support explicit tail calls. If they are
+  // required, fail. Otherwise, just disable them.
+  if ((CallConv == CallingConv::Fast && CLI.IsTailCall &&
+       MF.getTarget().Options.GuaranteedTailCallOpt) ||
+      (CLI.CS && CLI.CS->isMustTailCall()))
+    fail(DL, DAG, "WebAssembly doesn't support tail call yet");
+  CLI.IsTailCall = false;
 
   SmallVectorImpl<ISD::OutputArg> &Outs = CLI.Outs;
   SmallVectorImpl<SDValue> &OutVals = CLI.OutVals;
