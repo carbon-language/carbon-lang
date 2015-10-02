@@ -78,13 +78,16 @@ def alias_l : Joined<["--"], "library=">, Alias<l>;
 def alias_soname : Separate<["-"], "h">, Alias<soname>;
 
 // Options listed below are silently ignored now.
+def O3 : Flag<["-"], "O3">;
 def as_needed : Flag<["--"], "as-needed">;
 def build_id : Flag<["--"], "build-id">;
 def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
 def end_group : Flag<["--"], "end-group">;
+def gc_sections : Flag<["--"], "gc-sections">;
 def hash_style : Joined<["--"], "hash-style=">;
 def m : Separate<["-"], "m">;
 def no_add_needed : Flag<["--"], "no-add-needed">;
 def no_as_needed : Flag<["--"], "no-as-needed">;
 def start_group : Flag<["--"], "start-group">;
+def strip_all : Flag<["--"], "strip-all">;
 def z : Separate<["-"], "z">;
