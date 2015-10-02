@@ -53,3 +53,34 @@ outer.latch:                                      ; preds = %inner.header
   %inc9 = add nsw i32 %storemerge1, 1
   br label %outer.header
 }
+
+; This case is similar to the previous one, and has the same CFG.
+; The difference is that loop unrolling doesn't remove any LCSSA definition,
+; yet breaks LCSSA form for the outer loop. It happens because before unrolling
+; block inner.latch was inside outer loop (and consequently, didn't require
+; LCSSA definition for %x), but after unrolling it occurs out of the outer
+; loop, so we need to insert an LCSSA definition to keep LCSSA.
+
+; Function Attrs: nounwind uwtable
+define void @fn2() {
+entry:
+  br label %outer.header
+
+outer.header:
+  br label %inner.header
+
+inner.header:
+  %x = load i32, i32* undef, align 4
+  br i1 true, label %outer.latch, label %inner.latch
+
+inner.latch:
+  %inc6 = add nsw i32 %x, 1
+  store i32 %inc6, i32* undef, align 4
+  br i1 false, label %inner.header, label %exit
+
+exit:
+  ret void
+
+outer.latch:
+  br label %outer.header
+}
