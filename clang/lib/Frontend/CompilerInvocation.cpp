@@ -1708,6 +1708,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.FiniteMathOnly = Args.hasArg(OPT_ffinite_math_only) ||
       Args.hasArg(OPT_cl_finite_math_only) ||
       Args.hasArg(OPT_cl_fast_relaxed_math);
+  Opts.UnsafeFPMath = Args.hasArg(OPT_menable_unsafe_fp_math) ||
+                      Args.hasArg(OPT_cl_unsafe_math_optimizations) ||
+                      Args.hasArg(OPT_cl_fast_relaxed_math);
 
   Opts.RetainCommentsFromSystemHeaders =
       Args.hasArg(OPT_fretain_comments_from_system_headers);

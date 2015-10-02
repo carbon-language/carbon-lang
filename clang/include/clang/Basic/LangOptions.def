@@ -146,6 +146,7 @@ COMPATIBLE_LANGOPT(NoInlineDefine    , 1, 0, "__NO_INLINE__ predefined macro")
 COMPATIBLE_LANGOPT(Deprecated        , 1, 0, "__DEPRECATED predefined macro")
 LANGOPT(FastMath          , 1, 0, "__FAST_MATH__ predefined macro")
 LANGOPT(FiniteMathOnly    , 1, 0, "__FINITE_MATH_ONLY__ predefined macro")
+LANGOPT(UnsafeFPMath      , 1, 0, "Unsafe Floating Point Math")
 
 BENIGN_LANGOPT(ObjCGCBitmapPrint , 1, 0, "printing of GC's bitmap layout for __weak/__strong ivars")
 

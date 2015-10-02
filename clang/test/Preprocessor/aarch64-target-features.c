@@ -30,10 +30,11 @@
 // CHECK: __ARM_FP16_ARGS 1
 // CHECK: __ARM_FP16_FORMAT_IEEE 1
 // CHECK-NOT: __ARM_FP_FAST 1
-// CHECK: __ARM_FP_FENV_ROUNDING 1
 // CHECK: __ARM_NEON 1
 // CHECK: __ARM_NEON_FP 0xE
 // CHECK: __ARM_PCS_AAPCS64 1
+// CHECK-NOT: __ARM_PCS 1
+// CHECK-NOT: __ARM_PCS_VFP 1
 // CHECK-NOT: __ARM_SIZEOF_MINIMAL_ENUM 1
 // CHECK-NOT: __ARM_SIZEOF_WCHAR_T 2
 
@@ -50,6 +51,9 @@
 // RUN: %clang -target arm64-none-linux-gnu -march=armv8-a+crc -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-CRC32 %s
 // CHECK-CRC32: __ARM_FEATURE_CRC32 1
 
+// RUN: %clang -target aarch64-none-linux-gnu -fno-math-errno -fno-signed-zeros\
+// RUN:        -fno-trapping-math -fassociative-math -freciprocal-math\
+// RUN:        -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-FASTMATH %s
 // RUN: %clang -target aarch64-none-linux-gnu -ffast-math -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-FASTMATH %s
 // RUN: %clang -target arm64-none-linux-gnu -ffast-math -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-FASTMATH %s
 // CHECK-FASTMATH: __ARM_FP_FAST 1

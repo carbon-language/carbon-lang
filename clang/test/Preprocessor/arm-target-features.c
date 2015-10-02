@@ -32,6 +32,7 @@
 // CHECK-V8-BAREHF: __ARM_FEATURE_DIRECTED_ROUNDING 1
 // CHECK-V8-BAREHF: __ARM_FEATURE_NUMERIC_MAXMIN 1
 // CHECK-V8-BAREHF: __ARM_NEON__ 1
+// CHECK-V8-BAREHF: __ARM_PCS_VFP 1
 // CHECK-V8-BAREHF: __VFP_FP__ 1
 
 // RUN: %clang -target armv8a -mfloat-abi=hard -mfpu=fp-armv8 -x c -E -dM %s | FileCheck --check-prefix=CHECK-V8-BAREHF-FP %s
@@ -85,8 +86,16 @@
 // THUMBV8A-EABI:#define __ARM_ARCH_EXT_IDIV__ 1
 
 // RUN: %clang -target arm-none-linux-gnu -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-DEFS %s
+// CHECK-DEFS:#define __ARM_PCS 1
 // CHECK-DEFS:#define __ARM_SIZEOF_MINIMAL_ENUM 4
 // CHECK-DEFS:#define __ARM_SIZEOF_WCHAR_T 4
+
+// RUN: %clang -target arm-none-linux-gnu -fno-math-errno -fno-signed-zeros\
+// RUN:        -fno-trapping-math -fassociative-math -freciprocal-math\
+// RUN:        -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-FASTMATH %s
+// RUN: %clang -target arm-none-linux-gnu -ffast-math -x c -E -dM %s -o -\
+// RUN:        | FileCheck --check-prefix=CHECK-FASTMATH %s
+// CHECK-FASTMATH: __ARM_FP_FAST 1
 
 // RUN: %clang -target arm-none-linux-gnu -fshort-wchar -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-SHORTWCHAR %s
 // CHECK-SHORTWCHAR:#define __ARM_SIZEOF_WCHAR_T 2

@@ -4751,6 +4751,9 @@ public:
     // ACLE 6.4.6 Q (saturation) flag
     if (DSP || SAT)
       Builder.defineMacro("__ARM_FEATURE_QBIT", "1");
+
+    if (Opts.UnsafeFPMath)
+      Builder.defineMacro("__ARM_FP_FAST", "1");
   }
 
   void getTargetBuiltins(const Builtin::Info *&Records,
@@ -5204,7 +5207,7 @@ public:
     Builder.defineMacro("__ARM_ARCH_PROFILE", "'A'");
 
     Builder.defineMacro("__ARM_64BIT_STATE", "1");
-    Builder.defineMacro("__ARM_PCS_AAPCS64");
+    Builder.defineMacro("__ARM_PCS_AAPCS64", "1");
     Builder.defineMacro("__ARM_ARCH_ISA_A64", "1");
 
     Builder.defineMacro("__ARM_FEATURE_CLZ", "1");
@@ -5225,11 +5228,8 @@ public:
     Builder.defineMacro("__ARM_FP16_FORMAT_IEEE", "1");
     Builder.defineMacro("__ARM_FP16_ARGS", "1");
 
-    if (Opts.FastMath || Opts.FiniteMathOnly)
-      Builder.defineMacro("__ARM_FP_FAST");
-
-    if (Opts.C99 && !Opts.Freestanding)
-      Builder.defineMacro("__ARM_FP_FENV_ROUNDING");
+    if (Opts.UnsafeFPMath)
+      Builder.defineMacro("__ARM_FP_FAST", "1");
 
     Builder.defineMacro("__ARM_SIZEOF_WCHAR_T", Opts.ShortWChar ? "2" : "4");
 
