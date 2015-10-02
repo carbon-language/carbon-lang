@@ -1302,6 +1302,10 @@ public:
 
   int getNumArrays() { return ScopArrayInfoMap.size(); }
 
+  /// @brief Return whether this scop is empty, i.e. contains no statements that
+  /// could be executed.
+  bool isEmpty() const { return Stmts.empty(); }
+
   typedef iterator_range<ArrayInfoMapTy::iterator> array_range;
   typedef iterator_range<ArrayInfoMapTy::const_iterator> const_array_range;
 

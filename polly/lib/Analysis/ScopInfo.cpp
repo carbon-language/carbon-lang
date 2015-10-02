@@ -2302,15 +2302,19 @@ Scop::Scop(Region &R, AccFuncMapType &AccFuncMap, ScopDetection &SD,
            isl_ctx *Context, unsigned MaxLoopDepth)
     : DT(DT), SE(&ScalarEvolution), SD(SD), R(R), AccFuncMap(AccFuncMap),
       IsOptimized(false), HasSingleExitEdge(R.getExitingBlock()),
-      MaxLoopDepth(MaxLoopDepth), IslCtx(Context), Affinator(this),
-      BoundaryContext(nullptr) {}
+      MaxLoopDepth(MaxLoopDepth), IslCtx(Context), Context(nullptr),
+      Affinator(this), AssumedContext(nullptr), BoundaryContext(nullptr),
+      Schedule(nullptr) {}
 
 void Scop::init(LoopInfo &LI, AliasAnalysis &AA) {
   buildContext();
   buildDomains(&R, LI, DT);
 
   // Remove empty and ignored statements.
+  // Exit early in case there are no executable statements left in this scop.
   simplifySCoP(true);
+  if (Stmts.empty())
+    return;
 
   // The ScopStmts now have enough information to initialize themselves.
   for (ScopStmt &Stmt : Stmts)
@@ -2889,15 +2893,7 @@ void Scop::buildSchedule(
     Loop *L = getLoopSurroundingRegion(*R, LI);
     auto &LSchedulePair = LoopSchedules[L];
     ScopStmt *Stmt = getStmtForBasicBlock(R->getEntry());
-    isl_set *Domain;
-    if (Stmt) {
-      Domain = Stmt->getDomain();
-    } else {
-      // This case happens when the SCoP consists of only one non-affine region
-      // which doesn't contain any accesses and has hence been optimized away.
-      // We use a dummy domain for this case.
-      Domain = isl_set_empty(isl_space_set_alloc(IslCtx, 0, 0));
-    }
+    isl_set *Domain = Stmt->getDomain();
     auto *UDomain = isl_union_set_from_set(Domain);
     auto *StmtSchedule = isl_schedule_from_domain(UDomain);
     LSchedulePair.first = StmtSchedule;
@@ -3407,7 +3403,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
   DEBUG(scop->print(dbgs()));
 
-  if (!scop->hasFeasibleRuntimeContext()) {
+  if (scop->isEmpty() || !scop->hasFeasibleRuntimeContext()) {
     delete scop;
     scop = nullptr;
     return false;
