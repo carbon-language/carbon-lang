@@ -7506,7 +7506,7 @@ static SDValue performIntToFpCombine(SDNode *N, SelectionDAG &DAG,
 
   // If the result of an integer load is only used by an integer-to-float
   // conversion, use a fp load instead and a AdvSIMD scalar {S|U}CVTF instead.
-  // This eliminates an "integer-to-vector-move UOP and improve throughput.
+  // This eliminates an "integer-to-vector-move" UOP and improves throughput.
   SDValue N0 = N->getOperand(0);
   if (Subtarget->hasNEON() && ISD::isNormalLoad(N0.getNode()) && N0.hasOneUse() &&
       // Do not change the width of a volatile load.
