@@ -946,7 +946,7 @@ public:
     return const_cast<FunctionTemplateDecl*>(this)->getMostRecentDecl();
   }
 
-  FunctionTemplateDecl *getInstantiatedFromMemberTemplate() {
+  FunctionTemplateDecl *getInstantiatedFromMemberTemplate() const {
     return cast_or_null<FunctionTemplateDecl>(
              RedeclarableTemplateDecl::getInstantiatedFromMemberTemplate());
   }
@@ -2034,7 +2034,7 @@ public:
     return const_cast<ClassTemplateDecl*>(this)->getMostRecentDecl();
   }
 
-  ClassTemplateDecl *getInstantiatedFromMemberTemplate() {
+  ClassTemplateDecl *getInstantiatedFromMemberTemplate() const {
     return cast_or_null<ClassTemplateDecl>(
              RedeclarableTemplateDecl::getInstantiatedFromMemberTemplate());
   }
@@ -2264,7 +2264,7 @@ public:
                this)->getPreviousDecl());
   }
 
-  TypeAliasTemplateDecl *getInstantiatedFromMemberTemplate() {
+  TypeAliasTemplateDecl *getInstantiatedFromMemberTemplate() const {
     return cast_or_null<TypeAliasTemplateDecl>(
              RedeclarableTemplateDecl::getInstantiatedFromMemberTemplate());
   }
@@ -2867,7 +2867,7 @@ public:
     return const_cast<VarTemplateDecl *>(this)->getMostRecentDecl();
   }
 
-  VarTemplateDecl *getInstantiatedFromMemberTemplate() {
+  VarTemplateDecl *getInstantiatedFromMemberTemplate() const {
     return cast_or_null<VarTemplateDecl>(
         RedeclarableTemplateDecl::getInstantiatedFromMemberTemplate());
   }
