@@ -226,7 +226,7 @@ void SymbolTable::addLazy(Lazy *New) {
   if (Sym->Body == New)
     return;
   SymbolBody *Existing = Sym->Body;
-  if (Existing->isDefined() || Existing->isLazy())
+  if (Existing->isDefined() || Existing->isLazy() || Existing->isWeak())
     return;
   Sym->Body = New;
   assert(Existing->isUndefined() && "Unexpected symbol kind.");
