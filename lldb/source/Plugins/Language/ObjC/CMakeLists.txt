@@ -7,4 +7,5 @@ add_lldb_library(lldbPluginObjCLanguage
   NSDictionary.cpp
   NSIndexPath.cpp
   NSSet.cpp
+  NSString.cpp
 )
