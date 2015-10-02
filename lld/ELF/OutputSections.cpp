@@ -227,64 +227,44 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
       Elf_Dyn;
   auto *P = reinterpret_cast<Elf_Dyn *>(Buf);
 
+  auto WritePtr = [&](int32_t Tag, uint64_t Val) {
+    P->d_tag = Tag;
+    P->d_un.d_ptr = Val;
+    ++P;
+  };
+
+  auto WriteVal = [&](int32_t Tag, uint32_t Val) {
+    P->d_tag = Tag;
+    P->d_un.d_val = Val;
+    ++P;
+  };
+
   if (RelaDynSec.hasRelocs()) {
     bool IsRela = RelaDynSec.isRela();
-    P->d_tag = IsRela ? DT_RELA : DT_REL;
-    P->d_un.d_ptr = RelaDynSec.getVA();
-    ++P;
-
-    P->d_tag = IsRela ? DT_RELASZ : DT_RELSZ;
-    P->d_un.d_val = RelaDynSec.getSize();
-    ++P;
-
-    P->d_tag = IsRela ? DT_RELAENT : DT_RELENT;
-    P->d_un.d_val = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
-    ++P;
+    WritePtr(IsRela ? DT_RELA : DT_REL, RelaDynSec.getVA());
+    WriteVal(IsRela ? DT_RELASZ : DT_RELSZ, RelaDynSec.getSize());
+    WriteVal(IsRela ? DT_RELAENT : DT_RELENT,
+             IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel));
   }
 
-  P->d_tag = DT_SYMTAB;
-  P->d_un.d_ptr = DynSymSec.getVA();
-  ++P;
+  WritePtr(DT_SYMTAB, DynSymSec.getVA());
+  WritePtr(DT_SYMENT, sizeof(Elf_Sym));
+  WritePtr(DT_STRTAB, DynStrSec.getVA());
+  WriteVal(DT_STRSZ, DynStrSec.data().size());
+  WritePtr(DT_HASH, HashSec.getVA());
 
-  P->d_tag = DT_SYMENT;
-  P->d_un.d_ptr = sizeof(Elf_Sym);
-  ++P;
+  if (!Config->RPath.empty())
+    WriteVal(DT_RUNPATH, DynStrSec.getFileOff(Config->RPath));
 
-  P->d_tag = DT_STRTAB;
-  P->d_un.d_ptr = DynStrSec.getVA();
-  ++P;
-
-  P->d_tag = DT_STRSZ;
-  P->d_un.d_val = DynStrSec.data().size();
-  ++P;
-
-  P->d_tag = DT_HASH;
-  P->d_un.d_ptr = HashSec.getVA();
-  ++P;
-
-  if (!Config->RPath.empty()) {
-    P->d_tag = DT_RUNPATH;
-    P->d_un.d_val = DynStrSec.getFileOff(Config->RPath);
-    ++P;
-  }
-
-  if (!Config->SoName.empty()) {
-    P->d_tag = DT_SONAME;
-    P->d_un.d_val = DynStrSec.getFileOff(Config->SoName);
-    ++P;
-  }
+  if (!Config->SoName.empty())
+    WriteVal(DT_SONAME, DynStrSec.getFileOff(Config->SoName));
 
   const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
       SymTab.getSharedFiles();
-  for (const std::unique_ptr<SharedFileBase> &File : SharedFiles) {
-    P->d_tag = DT_NEEDED;
-    P->d_un.d_val = DynStrSec.getFileOff(File->getSoName());
-    ++P;
-  }
+  for (const std::unique_ptr<SharedFileBase> &File : SharedFiles)
+    WriteVal(DT_NEEDED, DynStrSec.getFileOff(File->getSoName()));
 
-  P->d_tag = DT_NULL;
-  P->d_un.d_val = 0;
-  ++P;
+  WriteVal(DT_NULL, 0);
 }
 
 template <class ELFT>
