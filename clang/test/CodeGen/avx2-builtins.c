@@ -728,7 +728,7 @@ __m256i test_mm256_unpacklo_epi64(__m256i a, __m256i b) {
   return _mm256_unpacklo_epi64(a, b);
 }
 
-__m256i test_mm256_stream_load_si256(__m256i *a) {
+__m256i test_mm256_stream_load_si256(__m256i const *a) {
   // CHECK: @llvm.x86.avx2.movntdqa
   // CHECK-ASM: vmovntdqa (%rdi), %ymm{{.*}}
   return _mm256_stream_load_si256(a);
