@@ -3923,7 +3923,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
 
   // No problems found with the new argument list, propagate changes back
   // to caller.
-  TemplateArgs = NewArgs;
+  TemplateArgs = std::move(NewArgs);
 
   return false;
 }
@@ -6756,6 +6756,9 @@ bool Sema::CheckFunctionTemplateSpecialization(
   UnresolvedSet<8> Candidates;
   TemplateSpecCandidateSet FailedCandidates(FD->getLocation());
 
+  llvm::SmallDenseMap<FunctionDecl *, TemplateArgumentListInfo, 8>
+      ConvertedTemplateArgs;
+
   DeclContext *FDLookupContext = FD->getDeclContext()->getRedeclContext();
   for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
          I != E; ++I) {
@@ -6785,6 +6788,10 @@ bool Sema::CheckFunctionTemplateSpecialization(
         }
       }
 
+      TemplateArgumentListInfo Args;
+      if (ExplicitTemplateArgs)
+        Args = *ExplicitTemplateArgs;
+
       // C++ [temp.expl.spec]p11:
       //   A trailing template-argument can be left unspecified in the
       //   template-id naming an explicit function template specialization
@@ -6796,7 +6803,7 @@ bool Sema::CheckFunctionTemplateSpecialization(
       FunctionDecl *Specialization = nullptr;
       if (TemplateDeductionResult TDK = DeduceTemplateArguments(
               cast<FunctionTemplateDecl>(FunTmpl->getFirstDecl()),
-              ExplicitTemplateArgs, FT, Specialization, Info)) {
+              ExplicitTemplateArgs ? &Args : nullptr, FT, Specialization, Info)) {
         // Template argument deduction failed; record why it failed, so
         // that we can provide nifty diagnostics.
         FailedCandidates.addCandidate()
@@ -6807,6 +6814,8 @@ bool Sema::CheckFunctionTemplateSpecialization(
       }
 
       // Record this candidate.
+      if (ExplicitTemplateArgs)
+        ConvertedTemplateArgs[Specialization] = std::move(Args);
       Candidates.addDecl(Specialization, I.getAccess());
     }
   }
@@ -6885,10 +6894,10 @@ bool Sema::CheckFunctionTemplateSpecialization(
   // Take copies of (semantic and syntactic) template argument lists.
   const TemplateArgumentList* TemplArgs = new (Context)
     TemplateArgumentList(Specialization->getTemplateSpecializationArgs());
-  FD->setFunctionTemplateSpecialization(Specialization->getPrimaryTemplate(),
-                                        TemplArgs, /*InsertPos=*/nullptr,
-                                    SpecInfo->getTemplateSpecializationKind(),
-                                        ExplicitTemplateArgs);
+  FD->setFunctionTemplateSpecialization(
+      Specialization->getPrimaryTemplate(), TemplArgs, /*InsertPos=*/nullptr,
+      SpecInfo->getTemplateSpecializationKind(),
+      ExplicitTemplateArgs ? &ConvertedTemplateArgs[Specialization] : nullptr);
 
   // The "previous declaration" for this function template specialization is
   // the prior function template specialization.

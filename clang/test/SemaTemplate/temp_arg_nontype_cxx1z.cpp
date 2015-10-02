@@ -148,3 +148,10 @@ namespace DeclMatch {
   template<typename T, T> int f() { return X<T>::n; }
   int k = f<int, 0>(); // ok, friend
 }
+
+namespace PR24921 {
+  enum E { e };
+  template<E> void f();
+  template<int> void f(int);
+  template<> void f<e>() {}
+}
