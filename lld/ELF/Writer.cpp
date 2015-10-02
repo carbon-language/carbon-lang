@@ -53,10 +53,10 @@ public:
   typedef
     typename std::conditional<Is64Bits, Elf64_Phdr, Elf32_Phdr>::type HeaderT;
 
-  ProgramHeader(uintX_t p_type, uintX_t p_flags) {
+  ProgramHeader(uintX_t Type, uintX_t Flags) {
     std::memset(&Header, 0, sizeof(HeaderT));
-    Header.p_type = p_type;
-    Header.p_flags = p_flags;
+    Header.p_type = Type;
+    Header.p_flags = Flags;
     Header.p_align = PageSize;
   }
 
@@ -188,8 +188,8 @@ namespace {
 template <bool Is64Bits> struct SectionKey {
   typedef typename std::conditional<Is64Bits, uint64_t, uint32_t>::type uintX_t;
   StringRef Name;
-  uint32_t sh_type;
-  uintX_t sh_flags;
+  uint32_t Type;
+  uintX_t Flags;
 };
 }
 namespace llvm {
@@ -202,12 +202,12 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
                                 0};
   }
   static unsigned getHashValue(const SectionKey<Is64Bits> &Val) {
-    return hash_combine(Val.Name, Val.sh_type, Val.sh_flags);
+    return hash_combine(Val.Name, Val.Type, Val.Flags);
   }
   static bool isEqual(const SectionKey<Is64Bits> &LHS,
                       const SectionKey<Is64Bits> &RHS) {
     return DenseMapInfo<StringRef>::isEqual(LHS.Name, RHS.Name) &&
-           LHS.sh_type == RHS.sh_type && LHS.sh_flags == RHS.sh_flags;
+           LHS.Type == RHS.Type && LHS.Flags == RHS.Flags;
   }
 };
 }
@@ -320,7 +320,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       OutputSection<ELFT> *&Sec = Map[Key];
       if (!Sec) {
         Sec = new (CAlloc.Allocate()) OutputSection<ELFT>(
-            PltSec, GotSec, BssSec, Key.Name, Key.sh_type, Key.sh_flags);
+            PltSec, GotSec, BssSec, Key.Name, Key.Type, Key.Flags);
         OutputSections.push_back(Sec);
       }
       Sec->addSection(C);
