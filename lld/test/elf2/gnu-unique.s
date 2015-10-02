@@ -1,6 +1,6 @@
 // RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %s -o %t
 // RUN: lld -flavor gnu2 %t -shared -o %tout.so
-// RUN: llvm-readobj -t -dyn-symbols %tout.so | FileCheck %s
+// RUN: llvm-readobj -dyn-symbols %tout.so | FileCheck %s
 // REQUIRES: x86
 
 // Check that STB_GNU_UNIQUE is treated as a global and ends up in the dynamic
