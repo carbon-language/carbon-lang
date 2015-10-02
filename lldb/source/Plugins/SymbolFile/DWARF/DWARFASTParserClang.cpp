@@ -1597,15 +1597,14 @@ public:
     bool
     Finalize()
     {
-        ClangASTContext *ast = llvm::cast<ClangASTContext>(m_class_opaque_type.GetTypeSystem());
-        return ast->AddObjCClassProperty (m_class_opaque_type,
-                                          m_property_name,
-                                          m_property_opaque_type,
-                                          m_ivar_decl,
-                                          m_property_setter_name,
-                                          m_property_getter_name,
-                                          m_property_attributes,
-                                          m_metadata_ap.get());
+        return ClangASTContext::AddObjCClassProperty (m_class_opaque_type,
+                                                      m_property_name,
+                                                      m_property_opaque_type,
+                                                      m_ivar_decl,
+                                                      m_property_setter_name,
+                                                      m_property_getter_name,
+                                                      m_property_attributes,
+                                                      m_metadata_ap.get());
     }
 
 private:
