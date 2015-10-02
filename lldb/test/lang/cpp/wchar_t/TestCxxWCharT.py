@@ -20,7 +20,6 @@ class CxxWCharTTestCase(TestBase):
         self.source = 'main.cpp'
         self.line = line_number(self.source, '// Set break point at this line.')
 
-    @expectedFailureWindows("llvm.org/pr24764")
     def test(self):
         """Test that C++ supports wchar_t correctly."""
         self.build()

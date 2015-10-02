@@ -20,6 +20,7 @@ class TestCppIncompleteTypes(TestBase):
         self.assertFalse(value_a.GetError().Success(), "'expr a' results in an error, but LLDB does not crash")
 
     @skipIfGcc
+    @skipIfWindows # Clang on Windows asserts in external record layout in this case.
     def test_partial_limit_debug_info(self):
         self.build()
         frame = self.get_test_frame('nolimit')

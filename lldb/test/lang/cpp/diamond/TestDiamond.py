@@ -9,7 +9,6 @@ class CPPTestDiamondInheritance(TestBase):
     
     mydir = TestBase.compute_mydir(__file__)
     
-    @expectedFailureWindows("llvm.org/pr24764")
     def test_with_run_command(self):
         """Test that virtual base classes work in when SBValue objects are used to explore the variable value"""
         self.build()
