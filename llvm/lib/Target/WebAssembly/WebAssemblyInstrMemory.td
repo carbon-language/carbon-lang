@@ -98,3 +98,11 @@ def page_size_I32 : I<(outs I32:$dst), (ins),
 def page_size_I64 : I<(outs I64:$dst), (ins),
                       [(set I64:$dst, (int_wasm_page_size))]>,
                     Requires<[HasAddr64]>;
+
+// Memory size.
+def memory_size_I32 : I<(outs I32:$dst), (ins),
+                        [(set I32:$dst, (int_wasm_memory_size))]>,
+                      Requires<[HasAddr32]>;
+def memory_size_I64 : I<(outs I64:$dst), (ins),
+                        [(set I64:$dst, (int_wasm_memory_size))]>,
+                      Requires<[HasAddr64]>;

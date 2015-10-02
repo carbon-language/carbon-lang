@@ -15,5 +15,6 @@
 let TargetPrefix = "wasm" in {  // All intrinsics start with "llvm.wasm.".
 
 def int_wasm_page_size : Intrinsic<[llvm_anyint_ty], [], [IntrNoMem]>;
+def int_wasm_memory_size : Intrinsic<[llvm_anyint_ty], [], [IntrNoMem]>;
 
 }
