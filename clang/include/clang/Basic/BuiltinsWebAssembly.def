@@ -17,5 +17,6 @@
 // The format of this database matches clang/Basic/Builtins.def.
 
 BUILTIN(__builtin_wasm_page_size, "z", "nc")
+BUILTIN(__builtin_wasm_memory_size, "z", "nc")
 
 #undef BUILTIN
