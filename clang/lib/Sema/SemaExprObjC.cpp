@@ -1657,7 +1657,8 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
       // Objective-C pointer type, we may need to extend the lifetime
       // of the block object.
       if (typeArgs && Args[i]->isRValue() && paramType->isBlockPointerType() &&
-          origParamType->isBlockCompatibleObjCPointerType(Context)) {
+          Args[i]->getType()->isBlockPointerType() &&
+          origParamType->isObjCObjectPointerType()) {
         ExprResult arg = Args[i];
         maybeExtendBlockObject(arg);
         Args[i] = arg.get();

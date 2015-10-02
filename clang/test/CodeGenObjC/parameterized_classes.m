@@ -24,6 +24,8 @@ __attribute__((objc_root_class))
 - (void)addObject:(T)object;
 - (void)sortWithFunction:(int (*)(T, T))function;
 - (void)getObjects:(T __strong *)objects length:(unsigned*)length;
+- (T)objectAtIndexedSubscript:(unsigned)index;
+- (void)setObject:(T)object atIndexedSubscript:(unsigned)index;
 @end
 
 NSString *getFirstObjectProp(NSMutableArray<NSString *> *array) {
@@ -58,6 +60,11 @@ void printMe(NSString *name) { }
 
 // CHECK-LABEL: define void @blockTest
 void blockTest(NSMutableArray<void (^)(void)> *array, NSString *name) {
+  // CHECK-NOT: ret void
   // CHECK: call i8* @objc_retainBlock
   [array addObject: ^ { printMe(name); }];
+  // CHECK-NOT: ret void
+  array[0] = ^ { printMe(name); };
+  // CHECK: call i8* @objc_retainBlock
+  // CHECK: ret void
 }
