@@ -1853,8 +1853,8 @@ public:
   /// template partial specialization \c Outer<T>::Inner<U*>. Given
   /// \c Outer<float>::Inner<U*>, this function would return
   /// \c Outer<T>::Inner<U*>.
-  ClassTemplatePartialSpecializationDecl *getInstantiatedFromMember() {
-    ClassTemplatePartialSpecializationDecl *First =
+  ClassTemplatePartialSpecializationDecl *getInstantiatedFromMember() const {
+    const ClassTemplatePartialSpecializationDecl *First =
         cast<ClassTemplatePartialSpecializationDecl>(getFirstDecl());
     return First->InstantiatedFromMember.getPointer();
   }
@@ -2702,8 +2702,8 @@ public:
   /// variable template partial specialization \c Outer<T>::Inner<U*>. Given
   /// \c Outer<float>::Inner<U*>, this function would return
   /// \c Outer<T>::Inner<U*>.
-  VarTemplatePartialSpecializationDecl *getInstantiatedFromMember() {
-    VarTemplatePartialSpecializationDecl *First =
+  VarTemplatePartialSpecializationDecl *getInstantiatedFromMember() const {
+    const VarTemplatePartialSpecializationDecl *First =
         cast<VarTemplatePartialSpecializationDecl>(getFirstDecl());
     return First->InstantiatedFromMember.getPointer();
   }
