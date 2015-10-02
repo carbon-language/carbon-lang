@@ -21,6 +21,7 @@ class BuiltinTrapTestCase(TestBase):
 
     @expectedFailureAll("llvm.org/pr15936", compiler="gcc", compiler_version=["<=","4.6"])
     @expectedFailureAll(archs="arm", compiler="gcc", triple=".*-android") # gcc generates incorrect linetable
+    @skipIfWindows
     def test_with_run_command(self):
         """Test that LLDB handles a function with __builtin_trap correctly."""
         self.build()
