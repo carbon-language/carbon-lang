@@ -62,7 +62,7 @@ static cl::list<std::string>
                cl::desc("Options to pass to the fuzzer"), cl::ZeroOrMore,
                cl::PositionalEatsArgs);
 
-void DisassembleOneInput(const uint8_t *Data, size_t Size) {
+int DisassembleOneInput(const uint8_t *Data, size_t Size) {
   char AssemblyText[AssemblyTextBufSize];
 
   std::vector<uint8_t> DataCopy(Data, Data + Size);
@@ -85,6 +85,7 @@ void DisassembleOneInput(const uint8_t *Data, size_t Size) {
       break;
   } while (Consumed != 0);
   LLVMDisasmDispose(Ctx);
+  return 0;
 }
 
 int main(int argc, char **argv) {

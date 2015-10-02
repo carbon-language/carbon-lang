@@ -194,12 +194,14 @@ Unit Fuzzer::SubstituteTokens(const Unit &U) const {
 }
 
 void Fuzzer::ExecuteCallback(const Unit &U) {
+  int Res = 0;
   if (Options.Tokens.empty()) {
-    USF.TargetFunction(U.data(), U.size());
+    Res = USF.TargetFunction(U.data(), U.size());
   } else {
     auto T = SubstituteTokens(U);
-    USF.TargetFunction(T.data(), T.size());
+    Res = USF.TargetFunction(T.data(), T.size());
   }
+  assert(Res == 0);
 }
 
 size_t Fuzzer::RunOneMaximizeTotalCoverage(const Unit &U) {

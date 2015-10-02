@@ -16,9 +16,9 @@ class MyFuzzer : public fuzzer::UserSuppliedFuzzer {
  public:
   MyFuzzer(fuzzer::FuzzerRandomBase *Rand)
       : fuzzer::UserSuppliedFuzzer(Rand) {}
-  void TargetFunction(const uint8_t *Data, size_t Size) {
-    if (Size <= 10) return;
-    if (memcmp(Data, &kMagic, sizeof(kMagic))) return;
+  int TargetFunction(const uint8_t *Data, size_t Size) {
+    if (Size <= 10) return 0;
+    if (memcmp(Data, &kMagic, sizeof(kMagic))) return 0;
     // It's hard to get here w/o advanced fuzzing techniques (e.g. cmp tracing).
     // So, we simply 'fix' the data in the custom mutator.
     if (Data[8] == 'H') {
@@ -29,6 +29,7 @@ class MyFuzzer : public fuzzer::UserSuppliedFuzzer {
         }
       }
     }
+    return 0;
   }
   // Custom mutator.
   virtual size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {

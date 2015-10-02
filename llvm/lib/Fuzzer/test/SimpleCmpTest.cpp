@@ -4,8 +4,8 @@
 #include <cstring>
 #include <cstdio>
 
-extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
-  if (Size < 14) return;
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+  if (Size < 14) return 0;
   uint64_t x = 0;
   int64_t  y = 0;
   int z = 0;
@@ -27,4 +27,5 @@ extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
             Size, x, y, z, a);
     exit(1);
   }
+  return 0;
 }

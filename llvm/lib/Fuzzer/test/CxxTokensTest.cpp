@@ -10,9 +10,9 @@ static void Found() {
   exit(1);
 }
 
-extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   // looking for "thread_local unsigned A;"
-  if (Size < 24) return;
+  if (Size < 24) return 0;
   if (0 == memcmp(&Data[0], "thread_local", 12))
     if (Data[12] == ' ')
       if (0 == memcmp(&Data[13], "unsigned", 8))
@@ -20,5 +20,6 @@ extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
           if (Data[22] == 'A')
             if (Data[23] == ';')
               Found();
+  return 0;
 }
 

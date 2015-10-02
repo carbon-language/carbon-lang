@@ -176,12 +176,19 @@ class SimpleUserSuppliedFuzzer: public UserSuppliedFuzzer {
  public:
   SimpleUserSuppliedFuzzer(FuzzerRandomBase *Rand, UserCallback Callback)
       : UserSuppliedFuzzer(Rand), Callback(Callback) {}
-  virtual void TargetFunction(const uint8_t *Data, size_t Size) {
-    return Callback(Data, Size);
+
+  SimpleUserSuppliedFuzzer(FuzzerRandomBase *Rand, DeprecatedUserCallback Callback)
+      : UserSuppliedFuzzer(Rand), DeprecatedCallback(Callback) {}
+
+  virtual int TargetFunction(const uint8_t *Data, size_t Size) override {
+    if (Callback) return Callback(Data, Size);
+    DeprecatedCallback(Data, Size);
+    return 0;
   }
 
  private:
-  UserCallback Callback;
+  DeprecatedUserCallback DeprecatedCallback = nullptr;
+  UserCallback Callback = nullptr;
 };
 
 };  // namespace fuzzer

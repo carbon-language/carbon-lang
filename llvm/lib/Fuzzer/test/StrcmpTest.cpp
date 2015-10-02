@@ -16,7 +16,7 @@ bool Eq(const uint8_t *Data, size_t Size, const char *Str) {
   return res == 0;
 }
 
-extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   if (Eq(Data, Size, "AAA") &&
       Size >= 3 && Eq(Data + 3, Size - 3, "BBBB") &&
       Size >= 7 && Eq(Data + 7, Size - 7, "CCCCCC") &&
@@ -25,4 +25,5 @@ extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     fprintf(stderr, "BINGO\n");
     exit(1);
   }
+  return 0;
 }

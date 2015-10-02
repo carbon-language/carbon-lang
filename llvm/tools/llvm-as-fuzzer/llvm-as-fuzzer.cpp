@@ -43,7 +43,7 @@ static bool InstalledHandler = false;
 
 } // end of anonymous namespace
 
-extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
   // Allocate space for locals before setjmp so that memory can be collected
   // if parse exits prematurely (via longjmp).
@@ -58,7 +58,7 @@ extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
   if (setjmp(JmpBuf))
     // If reached, we have returned with non-zero status, so exit.
-    return;
+    return 0;
 
   // TODO(kschimpf) Write a main to do this initialization.
   if (!InstalledHandler) {
@@ -69,7 +69,8 @@ extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   M = parseAssembly(MemBuf->getMemBufferRef(), Err, Context);
 
   if (!M.get())
-    return;
+    return 0;
 
   verifyModule(*M.get());
+  return 0;
 }

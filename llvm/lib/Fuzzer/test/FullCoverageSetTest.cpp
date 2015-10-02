@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <iostream>
 
-extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   int bits = 0;
   if (Size > 0 && Data[0] == 'F') bits |= 1;
   if (Size > 1 && Data[1] == 'U') bits |= 2;
@@ -16,5 +16,6 @@ extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     std::cerr <<  "BINGO!\n";
     exit(1);
   }
+  return 0;
 }
 

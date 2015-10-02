@@ -21,7 +21,8 @@ This library is intended primarily for in-process coverage-guided fuzz testing
   optimizations options (e.g. -O0, -O1, -O2) to diversify testing.
 * Build a test driver using the same options as the library.
   The test driver is a C/C++ file containing interesting calls to the library
-  inside a single function  ``extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);``
+  inside a single function  ``extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);``.
+  Currently, the only expected return value is 0, others are reserved for future.
 * Link the Fuzzer, the library and the driver together into an executable
   using the same sanitizer options as for the library.
 * Collect the initial corpus of inputs for the
@@ -83,11 +84,12 @@ Toy example
 A simple function that does something interesting if it receives the input "HI!"::
 
   cat << EOF >> test_fuzzer.cc
-  extern "C" void LLVMFuzzerTestOneInput(const unsigned char *data, unsigned long size) {
+  extern "C" int LLVMFuzzerTestOneInput(const unsigned char *data, unsigned long size) {
     if (size > 0 && data[0] == 'H')
       if (size > 1 && data[1] == 'I')
          if (size > 2 && data[2] == '!')
          __builtin_trap();
+    return 0;
   }
   EOF
   # Get lib/Fuzzer. Assuming that you already have fresh clang in PATH.
@@ -119,8 +121,8 @@ Here we show how to use lib/Fuzzer on something real, yet simple: pcre2_::
   cat << EOF > pcre_fuzzer.cc
   #include <string.h>
   #include "pcre2posix.h"
-  extern "C" void LLVMFuzzerTestOneInput(const unsigned char *data, size_t size) {
-    if (size < 1) return;
+  extern "C" int LLVMFuzzerTestOneInput(const unsigned char *data, size_t size) {
+    if (size < 1) return 0;
     char *str = new char[size+1];
     memcpy(str, data, size);
     str[size] = 0;
@@ -130,6 +132,7 @@ Here we show how to use lib/Fuzzer on something real, yet simple: pcre2_::
       regfree(&preg);
     }
     delete [] str;
+    return 0;
   }
   EOF
   clang++ -g -fsanitize=address $COV_FLAGS -c -std=c++11  -I inst/include/ pcre_fuzzer.cc
@@ -227,7 +230,7 @@ to find Heartbleed with LibFuzzer::
     assert (SSL_CTX_use_PrivateKey_file(sctx, "server.key", SSL_FILETYPE_PEM));
     return 0;
   }
-  extern "C" void LLVMFuzzerTestOneInput(unsigned char *Data, size_t Size) {
+  extern "C" int LLVMFuzzerTestOneInput(unsigned char *Data, size_t Size) {
     static int unused = Init();
     SSL *server = SSL_new(sctx);
     BIO *sinbio = BIO_new(BIO_s_mem());
@@ -237,6 +240,7 @@ to find Heartbleed with LibFuzzer::
     BIO_write(sinbio, Data, Size);
     SSL_do_handshake(server);
     SSL_free(server);
+    return 0;
   }
   EOF
   # Build the fuzzer.

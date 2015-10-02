@@ -6,7 +6,7 @@
 
 static volatile int sink;
 
-extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   // TODO: check other sizes.
   char *S = (char*)Data;
   if (Size >= 8 && strncmp(S, "123", 8))
@@ -21,4 +21,5 @@ extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
       }
     }
   }
+  return 0;
 }

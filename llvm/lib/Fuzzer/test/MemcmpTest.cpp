@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   // TODO: check other sizes.
   if (Size >= 8 && memcmp(Data, "01234567", 8) == 0) {
     if (Size >= 12 && memcmp(Data + 8, "ABCD", 4) == 0) {
@@ -16,4 +16,5 @@ extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
       }
     }
   }
+  return 0;
 }

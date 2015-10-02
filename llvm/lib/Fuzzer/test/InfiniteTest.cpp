@@ -8,7 +8,7 @@ static volatile int Sink;
 
 static volatile int One = 1;
 
-extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   if (Size > 0 && Data[0] == 'H') {
     Sink = 1;
     if (Size > 1 && Data[1] == 'i') {
@@ -20,5 +20,6 @@ extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
       }
     }
   }
+  return 0;
 }
 
