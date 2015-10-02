@@ -282,7 +282,7 @@ protected:
            "# initial buckets must be a power of two!");
     const KeyT EmptyKey = getEmptyKey();
     for (BucketT *B = getBuckets(), *E = getBucketsEnd(); B != E; ++B)
-      new (&B->getFirst()) KeyT(EmptyKey);
+      ::new (&B->getFirst()) KeyT(EmptyKey);
   }
 
   void moveFromOldBuckets(BucketT *OldBucketsBegin, BucketT *OldBucketsEnd) {
@@ -300,7 +300,7 @@ protected:
         (void)FoundVal; // silence warning.
         assert(!FoundVal && "Key already in new map?");
         DestBucket->getFirst() = std::move(B->getFirst());
-        new (&DestBucket->getSecond()) ValueT(std::move(B->getSecond()));
+        ::new (&DestBucket->getSecond()) ValueT(std::move(B->getSecond()));
         incrementNumEntries();
 
         // Free the value.
@@ -324,11 +324,11 @@ protected:
              getNumBuckets() * sizeof(BucketT));
     else
       for (size_t i = 0; i < getNumBuckets(); ++i) {
-        new (&getBuckets()[i].getFirst())
+        ::new (&getBuckets()[i].getFirst())
             KeyT(other.getBuckets()[i].getFirst());
         if (!KeyInfoT::isEqual(getBuckets()[i].getFirst(), getEmptyKey()) &&
             !KeyInfoT::isEqual(getBuckets()[i].getFirst(), getTombstoneKey()))
-          new (&getBuckets()[i].getSecond())
+          ::new (&getBuckets()[i].getSecond())
               ValueT(other.getBuckets()[i].getSecond());
       }
   }
@@ -402,7 +402,7 @@ private:
     TheBucket = InsertIntoBucketImpl(Key, TheBucket);
 
     TheBucket->getFirst() = Key;
-    new (&TheBucket->getSecond()) ValueT(Value);
+    ::new (&TheBucket->getSecond()) ValueT(Value);
     return TheBucket;
   }
 
@@ -411,7 +411,7 @@ private:
     TheBucket = InsertIntoBucketImpl(Key, TheBucket);
 
     TheBucket->getFirst() = Key;
-    new (&TheBucket->getSecond()) ValueT(std::move(Value));
+    ::new (&TheBucket->getSecond()) ValueT(std::move(Value));
     return TheBucket;
   }
 
@@ -419,7 +419,7 @@ private:
     TheBucket = InsertIntoBucketImpl(Key, TheBucket);
 
     TheBucket->getFirst() = std::move(Key);
-    new (&TheBucket->getSecond()) ValueT(std::move(Value));
+    ::new (&TheBucket->getSecond()) ValueT(std::move(Value));
     return TheBucket;
   }
 
@@ -766,10 +766,10 @@ public:
         // Swap separately and handle any assymetry.
         std::swap(LHSB->getFirst(), RHSB->getFirst());
         if (hasLHSValue) {
-          new (&RHSB->getSecond()) ValueT(std::move(LHSB->getSecond()));
+          ::new (&RHSB->getSecond()) ValueT(std::move(LHSB->getSecond()));
           LHSB->getSecond().~ValueT();
         } else if (hasRHSValue) {
-          new (&LHSB->getSecond()) ValueT(std::move(RHSB->getSecond()));
+          ::new (&LHSB->getSecond()) ValueT(std::move(RHSB->getSecond()));
           RHSB->getSecond().~ValueT();
         }
       }
@@ -795,11 +795,11 @@ public:
     for (unsigned i = 0, e = InlineBuckets; i != e; ++i) {
       BucketT *NewB = &LargeSide.getInlineBuckets()[i],
               *OldB = &SmallSide.getInlineBuckets()[i];
-      new (&NewB->getFirst()) KeyT(std::move(OldB->getFirst()));
+      ::new (&NewB->getFirst()) KeyT(std::move(OldB->getFirst()));
       OldB->getFirst().~KeyT();
       if (!KeyInfoT::isEqual(NewB->getFirst(), EmptyKey) &&
           !KeyInfoT::isEqual(NewB->getFirst(), TombstoneKey)) {
-        new (&NewB->getSecond()) ValueT(std::move(OldB->getSecond()));
+        ::new (&NewB->getSecond()) ValueT(std::move(OldB->getSecond()));
         OldB->getSecond().~ValueT();
       }
     }
@@ -866,8 +866,8 @@ public:
             !KeyInfoT::isEqual(P->getFirst(), TombstoneKey)) {
           assert(size_t(TmpEnd - TmpBegin) < InlineBuckets &&
                  "Too many inline buckets!");
-          new (&TmpEnd->getFirst()) KeyT(std::move(P->getFirst()));
-          new (&TmpEnd->getSecond()) ValueT(std::move(P->getSecond()));
+          ::new (&TmpEnd->getFirst()) KeyT(std::move(P->getFirst()));
+          ::new (&TmpEnd->getSecond()) ValueT(std::move(P->getSecond()));
           ++TmpEnd;
           P->getSecond().~ValueT();
         }
