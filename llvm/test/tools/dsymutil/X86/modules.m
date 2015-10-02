@@ -8,7 +8,7 @@
        header "Bar.h"
        export *
      }
-   EOF
+EOF
    clang -D BAR_H -E -o Bar.h modules.m
    clang -D FOO_H -E -o Foo.h modules.m
    clang -cc1 -emit-obj -fmodules -fmodule-map-file=modules.modulemap \
@@ -58,9 +58,15 @@ struct PruneMeNot;
 // CHECK-NEXT:              DW_AT_name{{.*}}"Foo"
 // CHECK-NOT:               DW_TAG
 // CHECK:                   DW_TAG_typedef
+
 @import Bar;
 typedef struct Bar Bar;
 struct S {};
+
+@interface Foo {
+  int ivar;
+}
+@end
 
 // ---------------------------------------------------------------------
 #else
@@ -75,6 +81,10 @@ struct S {};
 // CHECK:       DW_TAG_typedef
 // CHECK-NOT:     DW_TAG
 // CHECK:         DW_AT_type [DW_FORM_ref_addr] (0x{{0*}}[[BAR]])
+// CHECK: 0x0[[INTERFACE:.*]]: DW_TAG_structure_type
+// CHECK-NOT:     DW_TAG
+// CHECK:         DW_AT_name{{.*}}"Foo"
+
 //
 // CHECK:   DW_TAG_imported_declaration
 // CHECK-NOT: DW_TAG
@@ -82,9 +92,21 @@ struct S {};
 //
 // CHECK:   DW_TAG_subprogram
 // CHECK:     DW_AT_name {{.*}}"main"
+//
+// CHECK:     DW_TAG_variable
+// CHECK:     DW_TAG_variable
+// CHECK-NOT:   DW_TAG
+// CHECK:       DW_AT_name{{.*}}"foo"
+// CHECK-NOT:   DW_TAG
+// CHECK:       DW_AT_type {{.*}}{0x{{0*}}[[PTR:.*]]}
+//
+// CHECK: 0x{{0*}}[[PTR]]: DW_TAG_pointer_type
+// CHECK-NEXT   DW_AT_type [DW_FORM_ref_addr] {0x{{0*}}[[INTERFACE]])
+
 @import Foo;
 int main(int argc, char **argv) {
   Bar bar;
+  Foo *foo = 0;
   bar.value = 42;
   return bar.value;
 }
