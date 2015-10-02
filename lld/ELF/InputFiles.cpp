@@ -181,6 +181,7 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
     error("unexpected binding");
   case STB_GLOBAL:
   case STB_WEAK:
+  case STB_GNU_UNIQUE:
     return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, *Sections[SecIndex]);
   }
 }
