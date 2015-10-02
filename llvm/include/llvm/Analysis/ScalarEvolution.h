@@ -415,12 +415,18 @@ namespace llvm {
     /// Provide the special handling we need to analyze PHI SCEVs.
     const SCEV *createNodeForPHI(PHINode *PN);
 
+    /// Helper function called from createNodeForPHI.
+    const SCEV *createAddRecFromPHI(PHINode *PN);
+
+    /// Helper function called from createNodeForPHI.
+    const SCEV *createNodeFromSelectLikePHI(PHINode *PN);
+
     /// Provide special handling for a select-like instruction (currently this
     /// is either a select instruction or a phi node).  \p I is the instruction
     /// being processed, and it is assumed equivalent to "Cond ? TrueVal :
     /// FalseVal".
-    const SCEV *createNodeForSelect(Instruction *I, Value *Cond, Value *TrueVal,
-                                    Value *FalseVal);
+    const SCEV *createNodeForSelectOrPHI(Instruction *I, Value *Cond,
+                                         Value *TrueVal, Value *FalseVal);
 
     /// Provide the special handling we need to analyze GEP SCEVs.
     const SCEV *createNodeForGEP(GEPOperator *GEP);
