@@ -9,4 +9,6 @@ add_clang_library(clangTidyCERTModule
   clangBasic
   clangLex
   clangTidy
+  clangTidyGoogleModule
+  clangTidyMiscModule
   )
