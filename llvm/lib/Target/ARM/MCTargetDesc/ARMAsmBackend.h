@@ -45,12 +45,19 @@ public:
                          const MCValue &Target, uint64_t &Value,
                          bool &IsResolved) override;
 
+  unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value, bool IsPCRel,
+                            MCContext *Ctx, bool IsLittleEndian,
+                            bool IsResolved) const;
+
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value, bool IsPCRel) const override;
 
   unsigned getRelaxedOpcode(unsigned Op) const;
 
   bool mayNeedRelaxation(const MCInst &Inst) const override;
+
+  const char *reasonForFixupRelaxation(const MCFixup &Fixup,
+                                       uint64_t Value) const;
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                             const MCRelaxableFragment *DF,
