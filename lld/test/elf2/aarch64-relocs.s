@@ -16,3 +16,17 @@ msgend:
 # CHECK: msg:
 # CHECK:        4:
 # #4 is the adr immediate value.
+
+.section .R_AARCH64_ADR_PREL_PG_H121,"ax",@progbits
+  adrp x1,mystr
+mystr:
+  .asciz "blah"
+  .size mystr, 4
+
+# S = 0x11012, A = 0x4, P = 0x11012
+# PAGE(S + A) = 0x11000
+# PAGE(P) = 0x11000
+#
+# CHECK: Disassembly of section .R_AARCH64_ADR_PREL_PG_H121:
+# CHECK-NEXT: $x.2:
+# CHECK-NEXT:   11012:       01 00 00 90     adrp    x1, #0

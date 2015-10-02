@@ -253,16 +253,31 @@ bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type,
   return false;
 }
 
+static void AArch64UpdateAdr(uint8_t *Location, uint64_t Imm) {
+  uint32_t ImmLo = (Imm & 0x3) << 29;
+  uint32_t ImmHi = ((Imm & 0x1FFFFC) >> 2) << 5;
+  uint64_t Mask = (0x3 << 29) | (0x7FFFF << 5);
+  write32le(Location, (read32le(Location) & ~Mask) | ImmLo | ImmHi);
+}
+
+static uint64_t AArch64GetPage(uint64_t Address) {
+  return (Address & (~static_cast<uint64_t>(0xFFF)));
+}
+
 static void handle_ADR_PREL_LO21(uint8_t *Location, uint64_t S, int64_t A,
                                  uint64_t P) {
   uint64_t X = S + A - P;
   if (!isInt<21>(X))
     error("Relocation R_AARCH64_ADR_PREL_LO21 out of range");
-  uint32_t Imm = X & 0x1FFFFF;
-  uint32_t ImmLo = (Imm & 0x3) << 29;
-  uint32_t ImmHi = ((Imm & 0x1FFFFC) >> 2) << 5;
-  uint64_t Mask = (0x3 << 29) | (0x7FFFF << 5);
-  write32le(Location, (read32le(Location) & ~Mask) | ImmLo | ImmHi);
+  AArch64UpdateAdr(Location, X & 0x1FFFFF);
+}
+
+static void handle_ADR_PREL_PG_HI21(uint8_t *Location, uint64_t S, int64_t A,
+                                    uint64_t P) {
+  uint64_t X = AArch64GetPage(S + A) - AArch64GetPage(P);
+  if (!isInt<33>(X))
+    error("Relocation R_AARCH64_ADR_PREL_PG_HI21 out of range");
+  AArch64UpdateAdr(Location, (X >> 12) & 0x1FFFFF); // X[32:12]
 }
 
 void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
@@ -278,6 +293,9 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
   switch (Type) {
   case R_AARCH64_ADR_PREL_LO21:
     handle_ADR_PREL_LO21(Location, S, A, P);
+    break;
+  case R_AARCH64_ADR_PREL_PG_HI21:
+    handle_ADR_PREL_PG_HI21(Location, S, A, P);
     break;
   default:
     error(Twine("unrecognized reloc ") + Twine(Type));
