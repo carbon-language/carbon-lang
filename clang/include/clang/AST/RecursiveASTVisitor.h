@@ -255,6 +255,12 @@ public:
   /// \returns false if the visitation was terminated early, true otherwise.
   bool TraverseLambdaBody(LambdaExpr *LE);
 
+  /// \brief Recursively visit the syntactic or semantic form of an
+  /// initialization list.
+  ///
+  /// \returns false if the visitation was terminated early, true otherwise.
+  bool TraverseSynOrSemInitListExpr(InitListExpr *S);
+
   // ---- Methods on Attrs ----
 
   // \brief Visit an attribute.
@@ -2056,28 +2062,30 @@ DEF_TRAVERSE_STMT(CXXStaticCastExpr, {
   TRY_TO(TraverseTypeLoc(S->getTypeInfoAsWritten()->getTypeLoc()));
 })
 
-// InitListExpr is a tricky one, because we want to do all our work on
-// the syntactic form of the listexpr, but this method takes the
-// semantic form by default.  We can't use the macro helper because it
-// calls WalkUp*() on the semantic form, before our code can convert
-// to the syntactic form.
+template <typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseSynOrSemInitListExpr(InitListExpr *S) {
+  if (S) {
+    TRY_TO(WalkUpFromInitListExpr(S));
+    // All we need are the default actions.  FIXME: use a helper function.
+    for (Stmt *SubStmt : S->children()) {
+      TRY_TO(TraverseStmt(SubStmt));
+    }
+  }
+  return true;
+}
+
+// This method is called once for each pair of syntactic and semantic
+// InitListExpr, and it traverses the subtrees defined by the two forms. This
+// may cause some of the children to be visited twice, if they appear both in
+// the syntactic and the semantic form.
+//
+// There is no guarantee about which form \p S takes when this method is called.
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseInitListExpr(InitListExpr *S) {
-  InitListExpr *Syn = S->isSemanticForm() ? S->getSyntacticForm() : S;
-  if (Syn) {
-    TRY_TO(WalkUpFromInitListExpr(Syn));
-    // All we need are the default actions.  FIXME: use a helper function.
-    for (Stmt *SubStmt : Syn->children()) {
-      TRY_TO(TraverseStmt(SubStmt));
-    }
-  }
-  InitListExpr *Sem = S->isSemanticForm() ? S : S->getSemanticForm();
-  if (Sem) {
-    TRY_TO(WalkUpFromInitListExpr(Sem));
-    for (Stmt *SubStmt : Sem->children()) {
-      TRY_TO(TraverseStmt(SubStmt));
-    }
-  }
+  TRY_TO(TraverseSynOrSemInitListExpr(
+      S->isSemanticForm() ? S->getSyntacticForm() : S));
+  TRY_TO(TraverseSynOrSemInitListExpr(
+      S->isSemanticForm() ? S : S->getSemanticForm()));
   return true;
 }
 
