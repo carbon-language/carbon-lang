@@ -2172,7 +2172,6 @@ ObjCInterfaceDecl *CGDebugInfo::getObjCInterfaceDecl(QualType Ty) {
 }
 
 llvm::DIModule *CGDebugInfo::getParentModuleOrNull(const Decl *D) {
-  ExternalASTSource::ASTSourceDescriptor Info;
   if (DebugTypeExtRefs && D->isFromASTFile()) {
     // Record a reference to an imported clang module or precompiled header.
     auto *Reader = CGM.getContext().getExternalSource();
