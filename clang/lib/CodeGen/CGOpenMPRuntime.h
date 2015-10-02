@@ -154,6 +154,14 @@ private:
     // Call to kmp_int32 __kmpc_cancel(ident_t *loc, kmp_int32 global_tid,
     // kmp_int32 cncl_kind);
     OMPRTL__kmpc_cancel,
+
+    //
+    // Offloading related calls
+    //
+    // Call to int32_t __tgt_target(int32_t device_id, void *host_ptr, int32_t
+    // arg_num, void** args_base, void **args, size_t *arg_sizes, int32_t
+    // *arg_types);
+    OMPRTL__tgt_target,
   };
 
   /// \brief Values for bit flags used in the ident_t to describe the fields.
@@ -725,6 +733,29 @@ public:
   virtual void emitCancelCall(CodeGenFunction &CGF, SourceLocation Loc,
                               const Expr *IfCond,
                               OpenMPDirectiveKind CancelRegion);
+
+  /// \brief Emit outilined function for 'target' directive.
+  /// \param D Directive to emit.
+  /// \param CodeGen Code generation sequence for the \a D directive.
+  virtual llvm::Value *
+  emitTargetOutlinedFunction(const OMPExecutableDirective &D,
+                             const RegionCodeGenTy &CodeGen);
+
+  /// \brief Emit the target offloading code associated with \a D. The emitted
+  /// code attempts offloading the execution to the device, an the event of
+  /// a failure it executes the host version outlined in \a OutlinedFn.
+  /// \param D Directive to emit.
+  /// \param OutlinedFn Host version of the code to be offloaded.
+  /// \param IfCond Expression evaluated in if clause associated with the target
+  /// directive, or null if no if clause is used.
+  /// \param Device Expression evaluated in device clause associated with the
+  /// target directive, or null if no device clause is used.
+  /// \param CapturedVars Values captured in the current region.
+  virtual void emitTargetCall(CodeGenFunction &CGF,
+                              const OMPExecutableDirective &D,
+                              llvm::Value *OutlinedFn, const Expr *IfCond,
+                              const Expr *Device,
+                              ArrayRef<llvm::Value *> CapturedVars);
 };
 
 } // namespace CodeGen

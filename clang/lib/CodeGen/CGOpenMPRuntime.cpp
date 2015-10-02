@@ -41,6 +41,8 @@ public:
     /// \brief Region for constructs that do not require function outlining,
     /// like 'for', 'sections', 'atomic' etc. directives.
     InlinedRegion,
+    /// \brief Region with outlined function for standalone 'target' directive.
+    TargetRegion,
   };
 
   CGOpenMPRegionInfo(const CapturedStmt &CS,
@@ -209,6 +211,29 @@ private:
   /// \brief CodeGen info about outer OpenMP region.
   CodeGenFunction::CGCapturedStmtInfo *OldCSI;
   CGOpenMPRegionInfo *OuterRegionInfo;
+};
+
+/// \brief API for captured statement code generation in OpenMP target
+/// constructs. For this captures, implicit parameters are used instead of the
+/// captured fields.
+class CGOpenMPTargetRegionInfo : public CGOpenMPRegionInfo {
+public:
+  CGOpenMPTargetRegionInfo(const CapturedStmt &CS,
+                           const RegionCodeGenTy &CodeGen)
+      : CGOpenMPRegionInfo(CS, TargetRegion, CodeGen, OMPD_target,
+                           /*HasCancel = */ false) {}
+
+  /// \brief This is unused for target regions because each starts executing
+  /// with a single thread.
+  const VarDecl *getThreadIDVariable() const override { return nullptr; }
+
+  /// \brief Get the name of the capture helper.
+  StringRef getHelperName() const override { return ".omp_offloading."; }
+
+  static bool classof(const CGCapturedStmtInfo *Info) {
+    return CGOpenMPRegionInfo::classof(Info) &&
+           cast<CGOpenMPRegionInfo>(Info)->getRegionKind() == TargetRegion;
+  }
 };
 
 /// \brief RAII for emitting code of OpenMP constructs.
@@ -875,6 +900,22 @@ CGOpenMPRuntime::createRuntimeFunction(OpenMPRTLFunction Function) {
     llvm::FunctionType *FnTy =
         llvm::FunctionType::get(CGM.Int32Ty, TypeParams, /*isVarArg*/ false);
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_cancel");
+    break;
+  }
+  case OMPRTL__tgt_target: {
+    // Build int32_t __tgt_target(int32_t device_id, void *host_ptr, int32_t
+    // arg_num, void** args_base, void **args, size_t *arg_sizes, int32_t
+    // *arg_types);
+    llvm::Type *TypeParams[] = {CGM.Int32Ty,
+                                CGM.VoidPtrTy,
+                                CGM.Int32Ty,
+                                CGM.VoidPtrPtrTy,
+                                CGM.VoidPtrPtrTy,
+                                CGM.SizeTy->getPointerTo(),
+                                CGM.Int32Ty->getPointerTo()};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.Int32Ty, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__tgt_target");
     break;
   }
   }
@@ -2951,4 +2992,266 @@ void CGOpenMPRuntime::emitCancelCall(CodeGenFunction &CGF, SourceLocation Loc,
     else
       ThenGen(CGF);
   }
+}
+
+llvm::Value *
+CGOpenMPRuntime::emitTargetOutlinedFunction(const OMPExecutableDirective &D,
+                                            const RegionCodeGenTy &CodeGen) {
+  const CapturedStmt &CS = *cast<CapturedStmt>(D.getAssociatedStmt());
+
+  CodeGenFunction CGF(CGM, true);
+  CGOpenMPTargetRegionInfo CGInfo(CS, CodeGen);
+  CodeGenFunction::CGCapturedStmtRAII CapInfoRAII(CGF, &CGInfo);
+  return CGF.GenerateOpenMPCapturedStmtFunction(CS, /*UseOnlyReferences=*/true);
+}
+
+void CGOpenMPRuntime::emitTargetCall(CodeGenFunction &CGF,
+                                     const OMPExecutableDirective &D,
+                                     llvm::Value *OutlinedFn,
+                                     const Expr *IfCond, const Expr *Device,
+                                     ArrayRef<llvm::Value *> CapturedVars) {
+  /// \brief Values for bit flags used to specify the mapping type for
+  /// offloading.
+  enum OpenMPOffloadMappingFlags {
+    /// \brief Allocate memory on the device and move data from host to device.
+    OMP_MAP_TO = 0x01,
+    /// \brief Allocate memory on the device and move data from device to host.
+    OMP_MAP_FROM = 0x02,
+  };
+
+  enum OpenMPOffloadingReservedDeviceIDs {
+    /// \brief Device ID if the device was not defined, runtime should get it
+    /// from environment variables in the spec.
+    OMP_DEVICEID_UNDEF = -1,
+  };
+
+  // Fill up the arrays with the all the captured variables.
+  SmallVector<llvm::Value *, 16> BasePointers;
+  SmallVector<llvm::Value *, 16> Pointers;
+  SmallVector<llvm::Value *, 16> Sizes;
+  SmallVector<unsigned, 16> MapTypes;
+
+  bool hasVLACaptures = false;
+
+  const CapturedStmt &CS = *cast<CapturedStmt>(D.getAssociatedStmt());
+  auto RI = CS.getCapturedRecordDecl()->field_begin();
+  // auto II = CS.capture_init_begin();
+  auto CV = CapturedVars.begin();
+  for (CapturedStmt::const_capture_iterator CI = CS.capture_begin(),
+                                            CE = CS.capture_end();
+       CI != CE; ++CI, ++RI, ++CV) {
+    StringRef Name;
+    QualType Ty;
+    llvm::Value *BasePointer;
+    llvm::Value *Pointer;
+    llvm::Value *Size;
+    unsigned MapType;
+
+    if (CI->capturesVariableArrayType()) {
+      BasePointer = Pointer = *CV;
+      Size = getTypeSize(CGF, RI->getType());
+      hasVLACaptures = true;
+      // VLA sizes don't need to be copied back from the device.
+      MapType = OMP_MAP_TO;
+    } else if (CI->capturesThis()) {
+      BasePointer = Pointer = *CV;
+      const PointerType *PtrTy = cast<PointerType>(RI->getType().getTypePtr());
+      Size = getTypeSize(CGF, PtrTy->getPointeeType());
+      // Default map type.
+      MapType = OMP_MAP_TO | OMP_MAP_FROM;
+    } else {
+      BasePointer = Pointer = *CV;
+
+      const ReferenceType *PtrTy =
+          cast<ReferenceType>(RI->getType().getTypePtr());
+      QualType ElementType = PtrTy->getPointeeType();
+      Size = getTypeSize(CGF, ElementType);
+      // Default map type.
+      MapType = OMP_MAP_TO | OMP_MAP_FROM;
+    }
+
+    BasePointers.push_back(BasePointer);
+    Pointers.push_back(Pointer);
+    Sizes.push_back(Size);
+    MapTypes.push_back(MapType);
+  }
+
+  // Keep track on whether the host function has to be executed.
+  auto OffloadErrorQType =
+      CGF.getContext().getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/true);
+  auto OffloadError = CGF.MakeAddrLValue(
+      CGF.CreateMemTemp(OffloadErrorQType, ".run_host_version"),
+      OffloadErrorQType);
+  CGF.EmitStoreOfScalar(llvm::Constant::getNullValue(CGM.Int32Ty),
+                        OffloadError);
+
+  // Fill up the pointer arrays and transfer execution to the device.
+  auto &&ThenGen = [this, &BasePointers, &Pointers, &Sizes, &MapTypes,
+                    hasVLACaptures, Device, OffloadError,
+                    OffloadErrorQType](CodeGenFunction &CGF) {
+    unsigned PointerNumVal = BasePointers.size();
+    llvm::Value *PointerNum = CGF.Builder.getInt32(PointerNumVal);
+    llvm::Value *BasePointersArray;
+    llvm::Value *PointersArray;
+    llvm::Value *SizesArray;
+    llvm::Value *MapTypesArray;
+
+    if (PointerNumVal) {
+      llvm::APInt PointerNumAP(32, PointerNumVal, /*isSigned=*/true);
+      QualType PointerArrayType = CGF.getContext().getConstantArrayType(
+          CGF.getContext().VoidPtrTy, PointerNumAP, ArrayType::Normal,
+          /*IndexTypeQuals=*/0);
+
+      BasePointersArray =
+          CGF.CreateMemTemp(PointerArrayType, ".offload_baseptrs").getPointer();
+      PointersArray =
+          CGF.CreateMemTemp(PointerArrayType, ".offload_ptrs").getPointer();
+
+      // If we don't have any VLA types, we can use a constant array for the map
+      // sizes, otherwise we need to fill up the arrays as we do for the
+      // pointers.
+      if (hasVLACaptures) {
+        QualType SizeArrayType = CGF.getContext().getConstantArrayType(
+            CGF.getContext().getSizeType(), PointerNumAP, ArrayType::Normal,
+            /*IndexTypeQuals=*/0);
+        SizesArray =
+            CGF.CreateMemTemp(SizeArrayType, ".offload_sizes").getPointer();
+      } else {
+        // We expect all the sizes to be constant, so we collect them to create
+        // a constant array.
+        SmallVector<llvm::Constant *, 16> ConstSizes;
+        for (auto S : Sizes)
+          ConstSizes.push_back(cast<llvm::Constant>(S));
+
+        auto *SizesArrayInit = llvm::ConstantArray::get(
+            llvm::ArrayType::get(CGM.SizeTy, ConstSizes.size()), ConstSizes);
+        auto *SizesArrayGbl = new llvm::GlobalVariable(
+            CGM.getModule(), SizesArrayInit->getType(),
+            /*isConstant=*/true, llvm::GlobalValue::PrivateLinkage,
+            SizesArrayInit, ".offload_sizes");
+        SizesArrayGbl->setUnnamedAddr(true);
+        SizesArray = SizesArrayGbl;
+      }
+
+      // The map types are always constant so we don't need to generate code to
+      // fill arrays. Instead, we create an array constant.
+      llvm::Constant *MapTypesArrayInit =
+          llvm::ConstantDataArray::get(CGF.Builder.getContext(), MapTypes);
+      auto *MapTypesArrayGbl = new llvm::GlobalVariable(
+          CGM.getModule(), MapTypesArrayInit->getType(),
+          /*isConstant=*/true, llvm::GlobalValue::PrivateLinkage,
+          MapTypesArrayInit, ".offload_maptypes");
+      MapTypesArrayGbl->setUnnamedAddr(true);
+      MapTypesArray = MapTypesArrayGbl;
+
+      for (unsigned i = 0; i < PointerNumVal; ++i) {
+        llvm::Value *BP = CGF.Builder.CreateConstInBoundsGEP2_32(
+            llvm::ArrayType::get(CGM.VoidPtrTy, PointerNumVal),
+            BasePointersArray, 0, i);
+        Address BPAddr(BP, CGM.getContext().getTypeAlignInChars(
+                               CGM.getContext().VoidPtrTy));
+        CGF.Builder.CreateStore(
+            CGF.Builder.CreateBitCast(BasePointers[i], CGM.VoidPtrTy), BPAddr);
+
+        llvm::Value *P = CGF.Builder.CreateConstInBoundsGEP2_32(
+            llvm::ArrayType::get(CGM.VoidPtrTy, PointerNumVal), PointersArray,
+            0, i);
+        Address PAddr(P, CGM.getContext().getTypeAlignInChars(
+                             CGM.getContext().VoidPtrTy));
+        CGF.Builder.CreateStore(
+            CGF.Builder.CreateBitCast(Pointers[i], CGM.VoidPtrTy), PAddr);
+
+        if (hasVLACaptures) {
+          llvm::Value *S = CGF.Builder.CreateConstInBoundsGEP2_32(
+              llvm::ArrayType::get(CGM.SizeTy, PointerNumVal), SizesArray,
+              /*Idx0=*/0,
+              /*Idx1=*/i);
+          Address SAddr(S, CGM.getContext().getTypeAlignInChars(
+                               CGM.getContext().getSizeType()));
+          CGF.Builder.CreateStore(CGF.Builder.CreateIntCast(
+                                      Sizes[i], CGM.SizeTy, /*isSigned=*/true),
+                                  SAddr);
+        }
+      }
+
+      BasePointersArray = CGF.Builder.CreateConstInBoundsGEP2_32(
+          llvm::ArrayType::get(CGM.VoidPtrTy, PointerNumVal), BasePointersArray,
+          /*Idx0=*/0, /*Idx1=*/0);
+      PointersArray = CGF.Builder.CreateConstInBoundsGEP2_32(
+          llvm::ArrayType::get(CGM.VoidPtrTy, PointerNumVal), PointersArray,
+          /*Idx0=*/0,
+          /*Idx1=*/0);
+      SizesArray = CGF.Builder.CreateConstInBoundsGEP2_32(
+          llvm::ArrayType::get(CGM.SizeTy, PointerNumVal), SizesArray,
+          /*Idx0=*/0, /*Idx1=*/0);
+      MapTypesArray = CGF.Builder.CreateConstInBoundsGEP2_32(
+          llvm::ArrayType::get(CGM.Int32Ty, PointerNumVal), MapTypesArray,
+          /*Idx0=*/0,
+          /*Idx1=*/0);
+
+    } else {
+      BasePointersArray = llvm::ConstantPointerNull::get(CGM.VoidPtrPtrTy);
+      PointersArray = llvm::ConstantPointerNull::get(CGM.VoidPtrPtrTy);
+      SizesArray = llvm::ConstantPointerNull::get(CGM.SizeTy->getPointerTo());
+      MapTypesArray =
+          llvm::ConstantPointerNull::get(CGM.Int32Ty->getPointerTo());
+    }
+
+    // On top of the arrays that were filled up, the target offloading call
+    // takes as arguments the device id as well as the host pointer. The host
+    // pointer is used by the runtime library to identify the current target
+    // region, so it only has to be unique and not necessarily point to
+    // anything. It could be the pointer to the outlined function that
+    // implements the target region, but we aren't using that so that the
+    // compiler doesn't need to keep that, and could therefore inline the host
+    // function if proven worthwhile during optimization.
+
+    llvm::Value *HostPtr = new llvm::GlobalVariable(
+        CGM.getModule(), CGM.Int8Ty, /*isConstant=*/true,
+        llvm::GlobalValue::PrivateLinkage,
+        llvm::Constant::getNullValue(CGM.Int8Ty), ".offload_hstptr");
+
+    // Emit device ID if any.
+    llvm::Value *DeviceID;
+    if (Device)
+      DeviceID = CGF.Builder.CreateIntCast(CGF.EmitScalarExpr(Device),
+                                           CGM.Int32Ty, /*isSigned=*/true);
+    else
+      DeviceID = CGF.Builder.getInt32(OMP_DEVICEID_UNDEF);
+
+    llvm::Value *OffloadingArgs[] = {
+        DeviceID,      HostPtr,    PointerNum,   BasePointersArray,
+        PointersArray, SizesArray, MapTypesArray};
+    auto Return = CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__tgt_target),
+                                      OffloadingArgs);
+
+    CGF.EmitStoreOfScalar(Return, OffloadError);
+  };
+
+  if (IfCond) {
+    // Notify that the host version must be executed.
+    auto &&ElseGen = [this, OffloadError,
+                      OffloadErrorQType](CodeGenFunction &CGF) {
+      CGF.EmitStoreOfScalar(llvm::ConstantInt::get(CGM.Int32Ty, /*V=*/-1u),
+                            OffloadError);
+    };
+    emitOMPIfClause(CGF, IfCond, ThenGen, ElseGen);
+  } else {
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    ThenGen(CGF);
+  }
+
+  // Check the error code and execute the host version if required.
+  auto OffloadFailedBlock = CGF.createBasicBlock("omp_offload.failed");
+  auto OffloadContBlock = CGF.createBasicBlock("omp_offload.cont");
+  auto OffloadErrorVal = CGF.EmitLoadOfScalar(OffloadError, SourceLocation());
+  auto Failed = CGF.Builder.CreateIsNotNull(OffloadErrorVal);
+  CGF.Builder.CreateCondBr(Failed, OffloadFailedBlock, OffloadContBlock);
+
+  CGF.EmitBlock(OffloadFailedBlock);
+  CGF.Builder.CreateCall(OutlinedFn, BasePointers);
+  CGF.EmitBranch(OffloadContBlock);
+
+  CGF.EmitBlock(OffloadContBlock, /*IsFinished=*/true);
+  return;
 }

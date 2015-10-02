@@ -21,7 +21,8 @@ using namespace clang;
 using namespace CodeGen;
 
 void CodeGenFunction::GenerateOpenMPCapturedVars(
-    const CapturedStmt &S, SmallVectorImpl<llvm::Value *> &CapturedVars) {
+    const CapturedStmt &S, SmallVectorImpl<llvm::Value *> &CapturedVars,
+    bool UseOnlyReferences) {
   const RecordDecl *RD = S.getCapturedRecordDecl();
   auto CurField = RD->field_begin();
   auto CurCap = S.captures().begin();
@@ -30,7 +31,17 @@ void CodeGenFunction::GenerateOpenMPCapturedVars(
        I != E; ++I, ++CurField, ++CurCap) {
     if (CurField->hasCapturedVLAType()) {
       auto VAT = CurField->getCapturedVLAType();
-      CapturedVars.push_back(VLASizeMap[VAT->getSizeExpr()]);
+      auto *Val = VLASizeMap[VAT->getSizeExpr()];
+      // If we need to use only references, create a temporary location for the
+      // size of the VAT.
+      if (UseOnlyReferences) {
+        LValue LV =
+            MakeAddrLValue(CreateMemTemp(CurField->getType(), "__vla_size_ref"),
+                           CurField->getType());
+        EmitStoreThroughLValue(RValue::get(Val), LV);
+        Val = LV.getAddress().getPointer();
+      }
+      CapturedVars.push_back(Val);
     } else if (CurCap->capturesThis())
       CapturedVars.push_back(CXXThisValue);
     else
@@ -39,7 +50,8 @@ void CodeGenFunction::GenerateOpenMPCapturedVars(
 }
 
 llvm::Function *
-CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S) {
+CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S,
+                                                    bool UseOnlyReferences) {
   assert(
       CapturedStmtInfo &&
       "CapturedStmtInfo should be set when generating the captured function");
@@ -65,6 +77,9 @@ CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S) {
     else {
       assert(I->capturesVariableArrayType());
       II = &getContext().Idents.get("vla");
+      if (UseOnlyReferences)
+        ArgType = getContext().getLValueReferenceType(
+            ArgType, /*SpelledAsLValue=*/false);
     }
     if (ArgType->isVariablyModifiedType())
       ArgType = getContext().getVariableArrayDecayedType(ArgType);
@@ -100,6 +115,9 @@ CodeGenFunction::GenerateOpenMPCapturedStmtFunction(const CapturedStmt &S) {
         MakeAddrLValue(GetAddrOfLocalVar(Args[Cnt]), Args[Cnt]->getType(),
                        AlignmentSource::Decl);
     if (FD->hasCapturedVLAType()) {
+      if (UseOnlyReferences)
+        ArgLVal = EmitLoadOfReferenceLValue(
+            ArgLVal.getAddress(), ArgLVal.getType()->castAs<ReferenceType>());
       auto *ExprArg =
           EmitLoadOfLValue(ArgLVal, SourceLocation()).getScalarVal();
       auto VAT = FD->getCapturedVLAType();
@@ -2269,8 +2287,37 @@ void CodeGenFunction::EmitOMPAtomicDirective(const OMPAtomicDirective &S) {
   CGM.getOpenMPRuntime().emitInlinedDirective(*this, OMPD_atomic, CodeGen);
 }
 
-void CodeGenFunction::EmitOMPTargetDirective(const OMPTargetDirective &) {
-  llvm_unreachable("CodeGen for 'omp target' is not supported yet.");
+void CodeGenFunction::EmitOMPTargetDirective(const OMPTargetDirective &S) {
+  LexicalScope Scope(*this, S.getSourceRange());
+  const CapturedStmt &CS = *cast<CapturedStmt>(S.getAssociatedStmt());
+
+  llvm::SmallVector<llvm::Value *, 16> CapturedVars;
+  GenerateOpenMPCapturedVars(CS, CapturedVars, /*UseOnlyReferences=*/true);
+
+  // Emit target region as a standalone region.
+  auto &&CodeGen = [&CS](CodeGenFunction &CGF) {
+    CGF.EmitStmt(CS.getCapturedStmt());
+  };
+
+  // Obtain the target region outlined function.
+  llvm::Value *Fn =
+      CGM.getOpenMPRuntime().emitTargetOutlinedFunction(S, CodeGen);
+
+  // Check if we have any if clause associated with the directive.
+  const Expr *IfCond = nullptr;
+
+  if (auto *C = S.getSingleClause<OMPIfClause>()) {
+    IfCond = C->getCondition();
+  }
+
+  // Check if we have any device clause associated with the directive.
+  const Expr *Device = nullptr;
+  if (auto *C = S.getSingleClause<OMPDeviceClause>()) {
+    Device = C->getDevice();
+  }
+
+  CGM.getOpenMPRuntime().emitTargetCall(*this, S, Fn, IfCond, Device,
+                                        CapturedVars);
 }
 
 void CodeGenFunction::EmitOMPTeamsDirective(const OMPTeamsDirective &) {
