@@ -2407,7 +2407,7 @@ class TestBase(Base):
         if lldb.pre_flight:
             lldb.pre_flight(self)
 
-        if lldb.remote_platform:
+        if lldb.remote_platform and lldb.remote_platform_working_dir:
             remote_test_dir = lldbutil.join_remote_paths(
                     lldb.remote_platform_working_dir,
                     self.getArchitecture(),
