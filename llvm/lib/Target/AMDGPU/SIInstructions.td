@@ -1859,7 +1859,7 @@ let hasSideEffects = 0, mayLoad = 0, mayStore = 0, Uses = [EXEC] in {
 def V_MOV_B64_PSEUDO : InstSI <(outs VReg_64:$dst), (ins VSrc_64:$src0), "", []>;
 } // end let hasSideEffects = 0, mayLoad = 0, mayStore = 0
 
-let hasSideEffects = 1 in {
+let hasSideEffects = 1, SALU = 1 in {
 def SGPR_USE : InstSI <(outs),(ins), "", []>;
 }
 
@@ -2062,7 +2062,9 @@ def SI_CONSTDATA_PTR : InstSI <
   (outs SReg_64:$dst),
   (ins),
   "", [(set SReg_64:$dst, (i64 SIconstdata_ptr))]
->;
+> {
+  let SALU = 1;
+}
 
 } // End Defs = [SCC]
 
