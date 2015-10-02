@@ -394,4 +394,87 @@ bb3:
   ret i1 true
 }
 
+define void @func_19(i32* %length.ptr) {
+; CHECK-LABEL: @func_19(
+ entry:
+  %length = load i32, i32* %length.ptr, !range !0
+  %length.is.nonzero = icmp ne i32 %length, 0
+  br i1 %length.is.nonzero, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  %iv.inc = add i32 %iv, 1
+  %range.check = icmp ult i32 %iv, %length
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 true, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv.inc, %length
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_20(i32* %length.ptr) {
+; Like @func_19, but %length is no longer provably positive, so
+; %range.check cannot be proved to be always true.
+
+; CHECK-LABEL: @func_20(
+ entry:
+  %length = load i32, i32* %length.ptr
+  %length.is.nonzero = icmp ne i32 %length, 0
+  br i1 %length.is.nonzero, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  %iv.inc = add i32 %iv, 1
+  %range.check = icmp ult i32 %iv, %length
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 %range.check, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv.inc, %length
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_21(i32* %length.ptr, i32 %init) {
+; Like @func_19, but it is no longer possible to prove %iv's start
+; value is positive without doing some control flow analysis.
+
+; CHECK-LABEL: @func_21(
+ entry:
+  %length = load i32, i32* %length.ptr, !range !0
+  %length.is.nonzero = icmp ne i32 %length, 0
+  %init.is.positive = icmp sgt i32 %init, 0
+  %entry.cond = and i1 %length.is.nonzero, %init.is.positive
+  br i1 %length.is.nonzero, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  %iv.inc = add i32 %iv, 1
+  %range.check = icmp ult i32 %iv, %length
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 true, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv.inc, %length
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
 !0 = !{i32 0, i32 2147483647}

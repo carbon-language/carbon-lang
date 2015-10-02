@@ -253,6 +253,10 @@ namespace llvm {
     /// conditions dominating the backedge of a loop.
     bool WalkingBEDominatingConds;
 
+    /// Set to true by isKnownPredicateViaSplitting when we're trying to prove a
+    /// predicate by splitting it into a set of independent predicates.
+    bool ProvingSplitPredicate;
+
     /// Information about the number of loop iterations for which a loop exit's
     /// branch condition evaluates to the not-taken path.  This is a temporary
     /// pair of exact and max expressions that are eventually summarized in
@@ -558,6 +562,11 @@ namespace llvm {
     ///
     bool isKnownPredicateWithRanges(ICmpInst::Predicate Pred,
                                     const SCEV *LHS, const SCEV *RHS);
+
+    /// Try to split Pred LHS RHS into logical conjunctions (and's) and try to
+    /// prove them individually.
+    bool isKnownPredicateViaSplitting(ICmpInst::Predicate Pred, const SCEV *LHS,
+                                      const SCEV *RHS);
 
     /// Drop memoized information computed for S.
     void forgetMemoizedResults(const SCEV *S);

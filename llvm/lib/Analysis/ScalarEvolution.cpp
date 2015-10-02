@@ -6764,6 +6764,9 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
   if (LeftGuarded && RightGuarded)
     return true;
 
+  if (isKnownPredicateViaSplitting(Pred, LHS, RHS))
+    return true;
+
   // Otherwise see what can be done with known constant ranges.
   return isKnownPredicateWithRanges(Pred, LHS, RHS);
 }
@@ -6966,6 +6969,31 @@ ScalarEvolution::isKnownPredicateWithRanges(ICmpInst::Predicate Pred,
     // the values are known to be equal.
     break;
   }
+  return false;
+}
+
+bool ScalarEvolution::isKnownPredicateViaSplitting(ICmpInst::Predicate Pred,
+                                                   const SCEV *LHS,
+                                                   const SCEV *RHS) {
+  if (ProvingSplitPredicate)
+    return false;
+
+  // Allowing arbitrary number of activations of isKnownPredicateViaSplitting on
+  // the stack can result in exponential time complexity.
+  SaveAndRestore<bool> Restore(ProvingSplitPredicate, true);
+
+  // If L >= 0 then I `ult` L <=> I >= 0 && I `slt` L
+  //
+  // To prove L >= 0 we use isKnownNonNegative whereas to prove I >= 0 we use
+  // isKnownPredicate.  isKnownPredicate is more powerful, but also more
+  // expensive; and using isKnownNonNegative(RHS) is sufficient for most of the
+  // interesting cases seen in practice.  We can consider "upgrading" L >= 0 to
+  // use isKnownPredicate later if needed.
+  if (Pred == ICmpInst::ICMP_ULT && isKnownNonNegative(RHS) &&
+      isKnownPredicate(CmpInst::ICMP_SGE, LHS, getZero(LHS->getType())) &&
+      isKnownPredicate(CmpInst::ICMP_SLT, LHS, RHS))
+    return true;
+
   return false;
 }
 
@@ -8529,14 +8557,15 @@ ScalarEvolution::ScalarEvolution(Function &F, TargetLibraryInfo &TLI,
                                  LoopInfo &LI)
     : F(F), TLI(TLI), AC(AC), DT(DT), LI(LI),
       CouldNotCompute(new SCEVCouldNotCompute()),
-      WalkingBEDominatingConds(false), ValuesAtScopes(64), LoopDispositions(64),
-      BlockDispositions(64), FirstUnknown(nullptr) {}
+      WalkingBEDominatingConds(false), ProvingSplitPredicate(false),
+      ValuesAtScopes(64), LoopDispositions(64), BlockDispositions(64),
+      FirstUnknown(nullptr) {}
 
 ScalarEvolution::ScalarEvolution(ScalarEvolution &&Arg)
     : F(Arg.F), TLI(Arg.TLI), AC(Arg.AC), DT(Arg.DT), LI(Arg.LI),
       CouldNotCompute(std::move(Arg.CouldNotCompute)),
       ValueExprMap(std::move(Arg.ValueExprMap)),
-      WalkingBEDominatingConds(false),
+      WalkingBEDominatingConds(false), ProvingSplitPredicate(false),
       BackedgeTakenCounts(std::move(Arg.BackedgeTakenCounts)),
       ConstantEvolutionLoopExitValue(
           std::move(Arg.ConstantEvolutionLoopExitValue)),
@@ -8573,6 +8602,7 @@ ScalarEvolution::~ScalarEvolution() {
 
   assert(PendingLoopPredicates.empty() && "isImpliedCond garbage");
   assert(!WalkingBEDominatingConds && "isLoopBackedgeGuardedByCond garbage!");
+  assert(!ProvingSplitPredicate && "ProvingSplitPredicate garbage!");
 }
 
 bool ScalarEvolution::hasLoopInvariantBackedgeTakenCount(const Loop *L) {
