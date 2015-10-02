@@ -76,6 +76,7 @@ def alias_discard_locals: Flag<["-"], "X">, Alias<discard_locals>;
 def alias_entry : Separate<["-"], "e">, Alias<entry>;
 def alias_l : Joined<["--"], "library=">, Alias<l>;
 def alias_soname : Separate<["-"], "h">, Alias<soname>;
+def alias_snoame : Separate<["-"], "soname">, Alias<soname>;
 
 // Options listed below are silently ignored now.
 def O3 : Flag<["-"], "O3">;
