@@ -194,8 +194,10 @@ static void SortBlocks(MachineFunction &MF, const MachineLoopInfo &MLI) {
     if (MachineLoop *Loop = MLI.getLoopFor(&MBB)) {
       // Assert that loops are contiguous.
       assert(Loop->getHeader() == Loop->getTopBlock());
-      assert(Loop->getHeader() == &MBB ||
-             MLI.getLoopFor(prev(MachineFunction::iterator(&MBB))) == Loop);
+      assert((Loop->getHeader() == &MBB ||
+              Loop->contains(
+                  MLI.getLoopFor(prev(MachineFunction::iterator(&MBB))))) &&
+             "Loop isn't contiguous");
     } else {
       // Assert that non-loops have no backedge predecessors.
       for (auto Pred : MBB.predecessors())
@@ -245,9 +247,18 @@ static void PlaceMarkers(MachineFunction &MF, const MachineLoopInfo &MLI,
   for (auto &MBB : MF) {
     // Place the LOOP for loops.
     if (MachineLoop *Loop = MLI.getLoopFor(&MBB))
-      if (Loop->getHeader() == &MBB)
+      if (Loop->getHeader() == &MBB) {
+        // The operand of a LOOP is the first block after the loop. If the loop
+        // is the bottom of the function, insert a dummy block at the end.
+        MachineBasicBlock *Bottom = Loop->getBottomBlock();
+        auto Iter = next(MachineFunction::iterator(Bottom));
+        if (Iter == MF.end()) {
+          MF.push_back(MF.CreateMachineBasicBlock());
+          Iter = next(MachineFunction::iterator(Bottom));
+        }
         BuildMI(MBB, MBB.begin(), DebugLoc(), TII.get(WebAssembly::LOOP))
-            .addMBB(Loop->getBottomBlock());
+            .addMBB(Iter);
+      }
 
     // Check for forward branches and switches that need BLOCKS placed.
     for (auto &Term : MBB.terminators())
