@@ -56,9 +56,8 @@ void testInternallyVisible(bool p) {
 
 // Checking D::D()
 // CHECK-LABEL: define linkonce_odr void @_ZN1DC2Ev(
-
-// CHECK:  call void @_ZN1AC2Ev(%struct.A*
 // CHECK:  = call i8* @llvm.invariant.group.barrier(i8*
+// CHECK:  call void @_ZN1AC2Ev(%struct.A*
 // CHECK: store {{.*}} !invariant.group ![[D_MD]]
 
 // Checking B::B()

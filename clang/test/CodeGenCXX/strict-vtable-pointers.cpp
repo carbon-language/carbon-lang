@@ -136,26 +136,43 @@ struct DynamicBase1;
 
 
 struct DynamicDerived;
+
 // CHECK-CTORS-LABEL: define linkonce_odr void @_ZN14DynamicDerivedC2Ev(
-// CHECK-CTORS: call void @_ZN12DynamicBase1C2Ev(
-// CHECK-CTORS: %[[THIS1:.*]] = bitcast %[[DynamicDerived:.*]]* %[[THIS0:.*]] to i8*
+// CHECK-CTORS: %[[THIS0:.*]] = load %[[DynamicDerived:.*]]*, %[[DynamicDerived]]** {{.*}}
+// CHECK-CTORS: %[[THIS1:.*]] = bitcast %[[DynamicDerived:.*]]* %[[THIS0]] to i8*
 // CHECK-CTORS: %[[THIS2:.*]] = call i8* @llvm.invariant.group.barrier(i8* %[[THIS1:.*]])
-// CHECK-CTORS: %[[THIS3:.*]] = bitcast i8* %[[THIS2:.*]] to %[[DynamicDerived]]*
-// CHECK-CTORS: %[[THIS4:.*]] = bitcast %struct.DynamicDerived* %[[THIS3:.*]] to i32 (...)***
-// CHECK-CTORS: store {{.*}} %[[THIS4:.*]]
+// CHECK-CTORS: %[[THIS3:.*]] = bitcast i8* %[[THIS2]] to %[[DynamicDerived]]*
+// CHECK-CTORS: %[[THIS4:.*]] = bitcast %[[DynamicDerived]]* %2 to %[[DynamicBase:.*]]*
+// CHECK-CTORS: call void @_ZN12DynamicBase1C2Ev(%[[DynamicBase]]* %[[THIS4]])
+
+// CHECK-CTORS: %[[THIS5:.*]] = bitcast %struct.DynamicDerived* %[[THIS0]] to i32 (...)***
+// CHECK-CTORS: store {{.*}} %[[THIS5]]
 // CHECK-CTORS-LABEL: }
 
 struct DynamicDerivedMultiple;
-// CHECK-CTORS-LABEL: define linkonce_odr void @_ZN22DynamicDerivedMultipleC2Ev
-// CHECK-CTORS: call void @_ZN12DynamicBase1C2Ev(
+// CHECK-CTORS-LABEL: define linkonce_odr void @_ZN22DynamicDerivedMultipleC2Ev(
+
+// CHECK-CTORS: %[[THIS0:.*]] = load %[[CLASS:.*]]*, %[[CLASS]]** {{.*}}
+// CHECK-CTORS: %[[THIS1:.*]] = bitcast %[[CLASS:.*]]* %[[THIS0]] to i8*
+// CHECK-CTORS: %[[THIS2:.*]] = call i8* @llvm.invariant.group.barrier(i8* %[[THIS1]])
+// CHECK-CTORS: %[[THIS3:.*]] = bitcast i8* %[[THIS2]] to %[[CLASS]]*
+// CHECK-CTORS: %[[THIS4:.*]] = bitcast %[[CLASS]]* %[[THIS3]] to %[[BASE_CLASS:.*]]*
+// CHECK-CTORS: call void @_ZN12DynamicBase1C2Ev(%[[BASE_CLASS]]* %[[THIS4]])
+
+// CHECK-CTORS: call i8* @llvm.invariant.group.barrier(
+
+// CHECK-CTORS: call void @_ZN12DynamicBase2C2Ev(
 // CHECK-CTORS-NOT: @llvm.invariant.group.barrier
-// CHECK-CTORS-LABEL: call void @_ZN12DynamicBase2C2Ev(
-// CHECK-CTORS: %[[THIS1:.*]] = bitcast %[[CLASS:.*]]* %[[THIS0:.*]] to i8*
-// CHECK-CTORS: %[[THIS2:.*]] = call i8* @llvm.invariant.group.barrier(i8* %[[THIS1:.*]])
-// CHECK-CTORS: %[[THIS3:.*]] = bitcast i8* %[[THIS2:.*]] to %[[CLASS]]*
-// CHECK-CTORS-NOT: invariant.group.barrier
-// CHECK-CTORS: store {{.*}} @_ZTV22DynamicDerivedMultiple, i64 0, i64 2)
-// CHECK-CTORS: store {{.*}} @_ZTV22DynamicDerivedMultiple, i64 0, i64 6)
+
+
+// CHECK-CTORS: %[[THIS10:.*]] = bitcast %struct.DynamicDerivedMultiple* %[[THIS0]] to i32 (...)***
+// CHECK-CTORS: store {{.*}} @_ZTV22DynamicDerivedMultiple, i64 0, i64 2) {{.*}} %[[THIS10]]
+// CHECK-CTORS: %[[THIS11:.*]] = bitcast %struct.DynamicDerivedMultiple* %[[THIS0]] to i8*
+// CHECK-CTORS: %[[THIS_ADD:.*]] = getelementptr inbounds i8, i8* %[[THIS11]], i64 16
+// CHECK-CTORS: %[[THIS12:.*]]  = bitcast i8* %[[THIS_ADD]] to i32 (...)***
+
+
+// CHECK-CTORS: store {{.*}} @_ZTV22DynamicDerivedMultiple, i64 0, i64 6) {{.*}} %[[THIS12]]
 // CHECK-CTORS-LABEL: }
 
 struct DynamicFromStatic;

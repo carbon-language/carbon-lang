@@ -1375,13 +1375,14 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
     assert(BaseCtorContinueBB);
   }
 
-  bool BaseVPtrsInitialized = false;
+  llvm::Value *const OldThis = CXXThisValue;
   // Virtual base initializers first.
   for (; B != E && (*B)->isBaseInitializer() && (*B)->isBaseVirtual(); B++) {
-    CXXCtorInitializer *BaseInit = *B;
+    if (CGM.getCodeGenOpts().StrictVTablePointers &&
+        CGM.getCodeGenOpts().OptimizationLevel > 0 &&
+        isInitializerOfDynamicClass(*B))
+      CXXThisValue = Builder.CreateInvariantGroupBarrier(LoadCXXThis());
     EmitBaseInitializer(*this, ClassDecl, *B, CtorType);
-    BaseVPtrsInitialized |= BaseInitializerUsesThis(getContext(),
-                                                    BaseInit->getInit());
   }
 
   if (BaseCtorContinueBB) {
@@ -1393,15 +1394,15 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
   // Then, non-virtual base initializers.
   for (; B != E && (*B)->isBaseInitializer(); B++) {
     assert(!(*B)->isBaseVirtual());
+
+    if (CGM.getCodeGenOpts().StrictVTablePointers &&
+        CGM.getCodeGenOpts().OptimizationLevel > 0 &&
+        isInitializerOfDynamicClass(*B))
+      CXXThisValue = Builder.CreateInvariantGroupBarrier(LoadCXXThis());
     EmitBaseInitializer(*this, ClassDecl, *B, CtorType);
-    BaseVPtrsInitialized |= isInitializerOfDynamicClass(*B);
   }
 
-  // Pointer to this requires to be passed through invariant.group.barrier
-  // only if we've initialized any base vptrs.
-  if (CGM.getCodeGenOpts().StrictVTablePointers &&
-      CGM.getCodeGenOpts().OptimizationLevel > 0 && BaseVPtrsInitialized)
-    CXXThisValue = Builder.CreateInvariantGroupBarrier(LoadCXXThis());
+  CXXThisValue = OldThis;
 
   InitializeVTablePointers(ClassDecl);
 
