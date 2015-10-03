@@ -210,7 +210,7 @@ private:
   SmallPtrSet<ScopArrayInfo *, 2> DerivedSAIs;
 
   /// @brief The base pointer.
-  Value *BasePtr;
+  AssertingVH<Value> BasePtr;
 
   /// @brief The type of the elements stored in this array.
   Type *ElementType;
@@ -427,7 +427,7 @@ private:
   // @{
 
   /// @brief The base address (e.g., A for A[i+j]).
-  Value *BaseAddr;
+  AssertingVH<Value> BaseAddr;
 
   /// @brief An unique name of the accessed array.
   std::string BaseName;
@@ -451,7 +451,7 @@ private:
   ///  - For straight line scalar accesses it is the access instruction itself.
   ///  - For PHI operand accesses it is the operand value.
   ///
-  Value *AccessValue;
+  AssertingVH<Value> AccessValue;
 
   /// @brief Are all the subscripts affine expression?
   bool IsAffine;
@@ -1072,7 +1072,7 @@ private:
   /// @brief The affinator used to translate SCEVs to isl expressions.
   SCEVAffinator Affinator;
 
-  typedef MapVector<std::pair<const Value *, int>,
+  typedef MapVector<std::pair<AssertingVH<const Value>, int>,
                     std::unique_ptr<ScopArrayInfo>> ArrayInfoMapTy;
   /// @brief A map to remember ScopArrayInfo objects for all base pointers.
   ///
