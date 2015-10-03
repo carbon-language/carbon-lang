@@ -22,7 +22,6 @@
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCLinkerOptimizationHint.h"
-#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
@@ -860,13 +859,7 @@ public:
   /// \name Backend Data Access
   /// @{
 
-  bool registerSection(MCSection &Section) {
-    if (Section.isRegistered())
-      return false;
-    Sections.push_back(&Section);
-    Section.setIsRegistered(true);
-    return true;
-  }
+  bool registerSection(MCSection &Section);
 
   void registerSymbol(const MCSymbol &Symbol, bool *Created = nullptr);
 

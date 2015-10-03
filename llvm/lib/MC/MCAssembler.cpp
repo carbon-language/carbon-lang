@@ -357,6 +357,14 @@ void MCAssembler::reset() {
   getLOHContainer().reset();
 }
 
+bool MCAssembler::registerSection(MCSection &Section) {
+  if (Section.isRegistered())
+    return false;
+  Sections.push_back(&Section);
+  Section.setIsRegistered(true);
+  return true;
+}
+
 bool MCAssembler::isThumbFunc(const MCSymbol *Symbol) const {
   if (ThumbFuncs.count(Symbol))
     return true;
