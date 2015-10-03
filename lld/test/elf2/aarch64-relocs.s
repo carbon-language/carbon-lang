@@ -30,3 +30,17 @@ mystr:
 # CHECK: Disassembly of section .R_AARCH64_ADR_PREL_PG_H121:
 # CHECK-NEXT: $x.2:
 # CHECK-NEXT:   11012:       01 00 00 90     adrp    x1, #0
+
+.section .R_AARCH64_ADD_ABS_LO12_NC,"ax",@progbits
+  add x0, x0, :lo12:.L.str
+.L.str:
+  .asciz "blah"
+  .size mystr, 4
+
+# S = 0x1101b, A = 0x4
+# R = (S + A) & 0xFFF = 0x1f
+# R << 10 = 0x7c00
+#
+# CHECK: Disassembly of section .R_AARCH64_ADD_ABS_LO12_NC:
+# CHECK-NEXT: $x.4:
+# CHECK-NEXT:   1101b:       00 7c 00 91     add     x0, x0, #31
