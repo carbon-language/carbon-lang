@@ -214,8 +214,6 @@ void MCWinCOFFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     Size = std::max(Size, static_cast<uint64_t>(ByteAlignment));
   }
 
-  AssignSection(Symbol, nullptr);
-
   getAssembler().registerSymbol(*Symbol);
   Symbol->setExternal(true);
   Symbol->setCommon(Size, ByteAlignment);

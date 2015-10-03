@@ -189,10 +189,8 @@ void MCStreamer::InitSections(bool NoExecStack) {
 }
 
 void MCStreamer::AssignSection(MCSymbol *Symbol, MCSection *Section) {
-  if (Section)
-    Symbol->setSection(*Section);
-  else
-    Symbol->setUndefined();
+  assert(Section);
+  Symbol->setSection(*Section);
 
   // As we emit symbols into a section, track the order so that they can
   // be sorted upon later. Zero is reserved to mean 'unemitted'.
