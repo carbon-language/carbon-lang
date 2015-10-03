@@ -7,8 +7,8 @@ target triple = "wasm32-unknown-unknown"
 
 ; CHECK-LABEL: (func $sti32
 ; CHECK-NEXT: (param i32) (param i32)
-; CHECK-NEXT: (setlocal @0 (argument 1))
-; CHECK-NEXT: (setlocal @1 (argument 0))
+; CHECK-NEXT: (set_local @0 (argument 1))
+; CHECK-NEXT: (set_local @1 (argument 0))
 ; CHECK-NEXT: (store_i32 @1 @0)
 ; CHECK-NEXT: (return)
 define void @sti32(i32 *%p, i32 %v) {
@@ -18,8 +18,8 @@ define void @sti32(i32 *%p, i32 %v) {
 
 ; CHECK-LABEL: (func $sti64
 ; CHECK-NEXT: (param i32) (param i64)
-; CHECK-NEXT: (setlocal @0 (argument 1))
-; CHECK-NEXT: (setlocal @1 (argument 0))
+; CHECK-NEXT: (set_local @0 (argument 1))
+; CHECK-NEXT: (set_local @1 (argument 0))
 ; CHECK-NEXT: (store_i64 @1 @0)
 ; CHECK-NEXT: (return)
 define void @sti64(i64 *%p, i64 %v) {
@@ -29,8 +29,8 @@ define void @sti64(i64 *%p, i64 %v) {
 
 ; CHECK-LABEL: (func $stf32
 ; CHECK-NEXT: (param i32) (param f32)
-; CHECK-NEXT: (setlocal @0 (argument 1))
-; CHECK-NEXT: (setlocal @1 (argument 0))
+; CHECK-NEXT: (set_local @0 (argument 1))
+; CHECK-NEXT: (set_local @1 (argument 0))
 ; CHECK-NEXT: (store_f32 @1 @0)
 ; CHECK-NEXT: (return)
 define void @stf32(float *%p, float %v) {
@@ -40,8 +40,8 @@ define void @stf32(float *%p, float %v) {
 
 ; CHECK-LABEL: (func $stf64
 ; CHECK-NEXT: (param i32) (param f64)
-; CHECK-NEXT: (setlocal @0 (argument 1))
-; CHECK-NEXT: (setlocal @1 (argument 0))
+; CHECK-NEXT: (set_local @0 (argument 1))
+; CHECK-NEXT: (set_local @1 (argument 0))
 ; CHECK-NEXT: (store_f64 @1 @0)
 ; CHECK-NEXT: (return)
 define void @stf64(double *%p, double %v) {

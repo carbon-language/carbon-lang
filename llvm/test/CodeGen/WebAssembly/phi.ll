@@ -8,8 +8,8 @@ target triple = "wasm32-unknown-unknown"
 ; Basic phi triangle.
 
 ; CHECK-LABEL: test0
-; CHECK: (setlocal [[REG:@.*]] (argument 0))
-; CHECK: (setlocal [[REG]] (sdiv [[REG]] {{.*}}))
+; CHECK: (set_local [[REG:@.*]] (argument 0))
+; CHECK: (set_local [[REG]] (sdiv [[REG]] {{.*}}))
 ; CHECK: (return [[REG]])
 define i32 @test0(i32 %p) {
 entry:
@@ -27,9 +27,9 @@ done:
 
 ; CHECK-LABEL: test1
 ; CHECK: BB1_1:
-; CHECK: (setlocal [[REG0:@.*]] [[REG1:@.*]])
-; CHECK: (setlocal [[REG1]] [[REG2:@.*]])
-; CHECK: (setlocal [[REG2]] [[REG0]])
+; CHECK: (set_local [[REG0:@.*]] [[REG1:@.*]])
+; CHECK: (set_local [[REG1]] [[REG2:@.*]])
+; CHECK: (set_local [[REG2]] [[REG0]])
 define i32 @test1(i32 %n) {
 entry:
   br label %loop

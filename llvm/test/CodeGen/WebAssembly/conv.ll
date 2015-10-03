@@ -7,8 +7,8 @@ target triple = "wasm32-unknown-unknown"
 
 ; CHECK-LABEL: $wrap_i64_i32
 ; CHECK-NEXT: (param i64) (result i32)
-; CHECK-NEXT: (setlocal @0 (argument 0))
-; CHECK-NEXT: (setlocal @1 (wrap_i64 @0))
+; CHECK-NEXT: (set_local @0 (argument 0))
+; CHECK-NEXT: (set_local @1 (wrap_i64 @0))
 ; CHECK-NEXT: (return @1)
 define i32 @wrap_i64_i32(i64 %x) {
   %a = trunc i64 %x to i32

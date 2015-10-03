@@ -11,7 +11,7 @@ declare void @llvm.wasm.resize.memory.i64(i64) nounwind
 
 ; CHECK-LABEL: (func $page_size
 ; CHECK-NEXT: (result i64)
-; CHECK-NEXT: (setlocal @0 (page_size))
+; CHECK-NEXT: (set_local @0 (page_size))
 ; CHECK-NEXT: (return @0)
 define i64 @page_size() {
   %a = call i64 @llvm.wasm.page.size.i64()
@@ -20,7 +20,7 @@ define i64 @page_size() {
 
 ; CHECK-LABEL: (func $memory_size
 ; CHECK-NEXT: (result i64)
-; CHECK-NEXT: (setlocal @0 (memory_size))
+; CHECK-NEXT: (set_local @0 (memory_size))
 ; CHECK-NEXT: (return @0)
 define i64 @memory_size() {
   %a = call i64 @llvm.wasm.memory.size.i64()

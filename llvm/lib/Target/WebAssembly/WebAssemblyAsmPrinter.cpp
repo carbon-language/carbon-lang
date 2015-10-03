@@ -288,7 +288,7 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   if (NumDefs != 0) {
     const MachineOperand &MO = MI->getOperand(0);
     unsigned Reg = MO.getReg();
-    OS << "(setlocal @" << TargetRegisterInfo::virtReg2Index(Reg) << ' ';
+    OS << "(set_local @" << TargetRegisterInfo::virtReg2Index(Reg) << ' ';
   }
 
   if (MI->getOpcode() == WebAssembly::COPY) {

@@ -8,11 +8,11 @@ target triple = "wasm32-unknown-unknown"
 
 ; CHECK-LABEL: (func $ord_f32
 ; CHECK-NEXT: (param f32) (param f32) (result i32)
-; CHECK-NEXT: (setlocal @0 (argument 0))
-; CHECK-NEXT: (setlocal @1 (argument 1))
-; CHECK-NEXT: (setlocal @2 (eq @1 @1))
-; CHECK-NEXT: (setlocal @3 (eq @0 @0))
-; CHECK-NEXT: (setlocal @4 (and @3 @2))
+; CHECK-NEXT: (set_local @0 (argument 0))
+; CHECK-NEXT: (set_local @1 (argument 1))
+; CHECK-NEXT: (set_local @2 (eq @1 @1))
+; CHECK-NEXT: (set_local @3 (eq @0 @0))
+; CHECK-NEXT: (set_local @4 (and @3 @2))
 ; CHECK-NEXT: (return @4)
 define i32 @ord_f32(float %x, float %y) {
   %a = fcmp ord float %x, %y
@@ -22,11 +22,11 @@ define i32 @ord_f32(float %x, float %y) {
 
 ; CHECK-LABEL: (func $uno_f32
 ; CHECK-NEXT: (param f32) (param f32) (result i32)
-; CHECK-NEXT: (setlocal @0 (argument 0))
-; CHECK-NEXT: (setlocal @1 (argument 1))
-; CHECK-NEXT: (setlocal @2 (ne @1 @1))
-; CHECK-NEXT: (setlocal @3 (ne @0 @0))
-; CHECK-NEXT: (setlocal @4 (ior @3 @2))
+; CHECK-NEXT: (set_local @0 (argument 0))
+; CHECK-NEXT: (set_local @1 (argument 1))
+; CHECK-NEXT: (set_local @2 (ne @1 @1))
+; CHECK-NEXT: (set_local @3 (ne @0 @0))
+; CHECK-NEXT: (set_local @4 (ior @3 @2))
 ; CHECK-NEXT: (return @4)
 define i32 @uno_f32(float %x, float %y) {
   %a = fcmp uno float %x, %y
@@ -36,9 +36,9 @@ define i32 @uno_f32(float %x, float %y) {
 
 ; CHECK-LABEL: (func $oeq_f32
 ; CHECK-NEXT: (param f32) (param f32) (result i32)
-; CHECK-NEXT: (setlocal @0 (argument 1))
-; CHECK-NEXT: (setlocal @1 (argument 0))
-; CHECK-NEXT: (setlocal @2 (eq @1 @0))
+; CHECK-NEXT: (set_local @0 (argument 1))
+; CHECK-NEXT: (set_local @1 (argument 0))
+; CHECK-NEXT: (set_local @2 (eq @1 @0))
 ; CHECK-NEXT: (return @2)
 define i32 @oeq_f32(float %x, float %y) {
   %a = fcmp oeq float %x, %y
@@ -47,7 +47,7 @@ define i32 @oeq_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: (func $une_f32
-; CHECK: (setlocal @2 (ne @1 @0))
+; CHECK: (set_local @2 (ne @1 @0))
 define i32 @une_f32(float %x, float %y) {
   %a = fcmp une float %x, %y
   %b = zext i1 %a to i32
@@ -55,7 +55,7 @@ define i32 @une_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: (func $olt_f32
-; CHECK: (setlocal @2 (lt @1 @0))
+; CHECK: (set_local @2 (lt @1 @0))
 define i32 @olt_f32(float %x, float %y) {
   %a = fcmp olt float %x, %y
   %b = zext i1 %a to i32
@@ -63,7 +63,7 @@ define i32 @olt_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: (func $ole_f32
-; CHECK: (setlocal @2 (le @1 @0))
+; CHECK: (set_local @2 (le @1 @0))
 define i32 @ole_f32(float %x, float %y) {
   %a = fcmp ole float %x, %y
   %b = zext i1 %a to i32
@@ -71,7 +71,7 @@ define i32 @ole_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: (func $ogt_f32
-; CHECK: (setlocal @2 (gt @1 @0))
+; CHECK: (set_local @2 (gt @1 @0))
 define i32 @ogt_f32(float %x, float %y) {
   %a = fcmp ogt float %x, %y
   %b = zext i1 %a to i32
@@ -79,7 +79,7 @@ define i32 @ogt_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: (func $oge_f32
-; CHECK: (setlocal @2 (ge @1 @0))
+; CHECK: (set_local @2 (ge @1 @0))
 define i32 @oge_f32(float %x, float %y) {
   %a = fcmp oge float %x, %y
   %b = zext i1 %a to i32
@@ -90,13 +90,13 @@ define i32 @oge_f32(float %x, float %y) {
 
 ; CHECK-LABEL: (func $ueq_f32
 ; CHECK-NEXT: (param f32) (param f32) (result i32)
-; CHECK-NEXT: (setlocal @0 (argument 1))
-; CHECK-NEXT: (setlocal @1 (argument 0))
-; CHECK-NEXT: (setlocal @2 (eq @1 @0))
-; CHECK-NEXT: (setlocal @3 (ne @0 @0))
-; CHECK-NEXT: (setlocal @4 (ne @1 @1))
-; CHECK-NEXT: (setlocal @5 (ior @4 @3))
-; CHECK-NEXT: (setlocal @6 (ior @2 @5))
+; CHECK-NEXT: (set_local @0 (argument 1))
+; CHECK-NEXT: (set_local @1 (argument 0))
+; CHECK-NEXT: (set_local @2 (eq @1 @0))
+; CHECK-NEXT: (set_local @3 (ne @0 @0))
+; CHECK-NEXT: (set_local @4 (ne @1 @1))
+; CHECK-NEXT: (set_local @5 (ior @4 @3))
+; CHECK-NEXT: (set_local @6 (ior @2 @5))
 ; CHECK-NEXT: (return @6)
 define i32 @ueq_f32(float %x, float %y) {
   %a = fcmp ueq float %x, %y
@@ -105,7 +105,7 @@ define i32 @ueq_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: (func $one_f32
-; CHECK: (setlocal @2 (ne @1 @0))
+; CHECK: (set_local @2 (ne @1 @0))
 define i32 @one_f32(float %x, float %y) {
   %a = fcmp one float %x, %y
   %b = zext i1 %a to i32
@@ -113,7 +113,7 @@ define i32 @one_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: (func $ult_f32
-; CHECK: (setlocal @2 (lt @1 @0))
+; CHECK: (set_local @2 (lt @1 @0))
 define i32 @ult_f32(float %x, float %y) {
   %a = fcmp ult float %x, %y
   %b = zext i1 %a to i32
@@ -121,7 +121,7 @@ define i32 @ult_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: (func $ule_f32
-; CHECK: (setlocal @2 (le @1 @0))
+; CHECK: (set_local @2 (le @1 @0))
 define i32 @ule_f32(float %x, float %y) {
   %a = fcmp ule float %x, %y
   %b = zext i1 %a to i32
@@ -129,7 +129,7 @@ define i32 @ule_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: (func $ugt_f32
-; CHECK: (setlocal @2 (gt @1 @0))
+; CHECK: (set_local @2 (gt @1 @0))
 define i32 @ugt_f32(float %x, float %y) {
   %a = fcmp ugt float %x, %y
   %b = zext i1 %a to i32
@@ -137,7 +137,7 @@ define i32 @ugt_f32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: (func $uge_f32
-; CHECK: (setlocal @2 (ge @1 @0))
+; CHECK: (set_local @2 (ge @1 @0))
 define i32 @uge_f32(float %x, float %y) {
   %a = fcmp uge float %x, %y
   %b = zext i1 %a to i32

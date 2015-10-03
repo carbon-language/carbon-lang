@@ -11,7 +11,7 @@ declare void @llvm.wasm.resize.memory.i32(i32) nounwind
 
 ; CHECK-LABEL: (func $page_size
 ; CHECK-NEXT: (result i32)
-; CHECK-NEXT: (setlocal @0 (page_size))
+; CHECK-NEXT: (set_local @0 (page_size))
 ; CHECK-NEXT: (return @0)
 define i32 @page_size() {
   %a = call i32 @llvm.wasm.page.size.i32()
@@ -20,7 +20,7 @@ define i32 @page_size() {
 
 ; CHECK-LABEL: (func $memory_size
 ; CHECK-NEXT: (result i32)
-; CHECK-NEXT: (setlocal @0 (memory_size))
+; CHECK-NEXT: (set_local @0 (memory_size))
 ; CHECK-NEXT: (return @0)
 define i32 @memory_size() {
   %a = call i32 @llvm.wasm.memory.size.i32()

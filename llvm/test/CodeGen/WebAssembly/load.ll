@@ -7,8 +7,8 @@ target triple = "wasm32-unknown-unknown"
 
 ; CHECK-LABEL: (func $ldi32
 ; CHECK-NEXT: (param i32) (result i32)
-; CHECK-NEXT: (setlocal @0 (argument 0))
-; CHECK-NEXT: (setlocal @1 (load_i32 @0))
+; CHECK-NEXT: (set_local @0 (argument 0))
+; CHECK-NEXT: (set_local @1 (load_i32 @0))
 ; CHECK-NEXT: (return @1)
 define i32 @ldi32(i32 *%p) {
   %v = load i32, i32* %p
@@ -17,8 +17,8 @@ define i32 @ldi32(i32 *%p) {
 
 ; CHECK-LABEL: (func $ldi64
 ; CHECK-NEXT: (param i32) (result i64)
-; CHECK-NEXT: (setlocal @0 (argument 0))
-; CHECK-NEXT: (setlocal @1 (load_i64 @0))
+; CHECK-NEXT: (set_local @0 (argument 0))
+; CHECK-NEXT: (set_local @1 (load_i64 @0))
 ; CHECK-NEXT: (return @1)
 define i64 @ldi64(i64 *%p) {
   %v = load i64, i64* %p
@@ -27,8 +27,8 @@ define i64 @ldi64(i64 *%p) {
 
 ; CHECK-LABEL: (func $ldf32
 ; CHECK-NEXT: (param i32) (result f32)
-; CHECK-NEXT: (setlocal @0 (argument 0))
-; CHECK-NEXT: (setlocal @1 (load_f32 @0))
+; CHECK-NEXT: (set_local @0 (argument 0))
+; CHECK-NEXT: (set_local @1 (load_f32 @0))
 ; CHECK-NEXT: (return @1)
 define float @ldf32(float *%p) {
   %v = load float, float* %p
@@ -37,8 +37,8 @@ define float @ldf32(float *%p) {
 
 ; CHECK-LABEL: (func $ldf64
 ; CHECK-NEXT: (param i32) (result f64)
-; CHECK-NEXT: (setlocal @0 (argument 0))
-; CHECK-NEXT: (setlocal @1 (load_f64 @0))
+; CHECK-NEXT: (set_local @0 (argument 0))
+; CHECK-NEXT: (set_local @1 (load_f64 @0))
 ; CHECK-NEXT: (return @1)
 define double @ldf64(double *%p) {
   %v = load double, double* %p
