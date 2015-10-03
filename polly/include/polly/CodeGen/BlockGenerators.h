@@ -65,7 +65,7 @@ public:
   ///@{
 
   /// @see The ScalarMap and PHIOpMap member.
-  using ScalarAllocaMapTy = DenseMap<Value *, Value *>;
+  using ScalarAllocaMapTy = DenseMap<AssertingVH<Value>, AssertingVH<Value>>;
 
   /// @brief Simple vector of instructions to store escape users.
   using EscapeUserVectorTy = SmallVector<Instruction *, 4>;
@@ -74,7 +74,8 @@ public:
   ///
   /// @see The EscapeMap member.
   using EscapeUsersAllocaMapTy =
-      DenseMap<Instruction *, std::pair<Value *, EscapeUserVectorTy>>;
+      DenseMap<Instruction *,
+               std::pair<AssertingVH<Value>, EscapeUserVectorTy>>;
 
   ///@}
 

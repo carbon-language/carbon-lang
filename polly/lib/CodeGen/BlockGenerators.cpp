@@ -362,17 +362,16 @@ void BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB, BasicBlock *CopyBB,
 Value *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
                                          ScalarAllocaMapTy &Map,
                                          const char *NameExt) {
-  // Check if an alloca was cached for the base instruction.
-  Value *&Addr = Map[ScalarBase];
-
   // If no alloca was found create one and insert it in the entry block.
-  if (!Addr) {
+  if (!Map.count(ScalarBase)) {
     auto *Ty = ScalarBase->getType();
     auto NewAddr = new AllocaInst(Ty, ScalarBase->getName() + NameExt);
     EntryBB = &Builder.GetInsertBlock()->getParent()->getEntryBlock();
     NewAddr->insertBefore(EntryBB->getFirstInsertionPt());
-    Addr = NewAddr;
+    Map[ScalarBase] = NewAddr;
   }
+
+  auto Addr = Map[ScalarBase];
 
   if (GlobalMap.count(Addr))
     return GlobalMap[Addr];
