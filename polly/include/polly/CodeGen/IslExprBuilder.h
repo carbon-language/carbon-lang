@@ -80,7 +80,7 @@ namespace polly {
 class IslExprBuilder {
 public:
   /// @brief A map from isl_ids to llvm::Values.
-  typedef llvm::MapVector<isl_id *, llvm::Value *> IDToValueTy;
+  typedef llvm::MapVector<isl_id *, llvm::AssertingVH<llvm::Value>> IDToValueTy;
   typedef llvm::DenseMap<const llvm::Value *, llvm::Value *> ValueToValueMap;
 
   /// @brief Construct an IslExprBuilder.

@@ -817,11 +817,11 @@ void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
 }
 
 void IslNodeBuilder::materializeValue(isl_id *Id) {
-  Value *&V = IDToValue[Id];
-
   // If the Id is already mapped, skip it.
-  if (!V)
-    V = generateSCEV((const SCEV *)isl_id_get_user(Id));
+  if (!IDToValue.count(Id)) {
+    auto V = generateSCEV((const SCEV *)isl_id_get_user(Id));
+    IDToValue[Id] = V;
+  }
 
   isl_id_free(Id);
 }
