@@ -249,9 +249,9 @@ bool MachineCombiner::improvesCriticalPathLen(
                << " NewRootLatency: " << NewRootLatency << "\n";
         dbgs() << " RootDepth: " << RootDepth << " RootLatency: " << RootLatency
                << " RootSlack: " << RootSlack << "\n";
-        dbgs() << " NewRootDepth + NewRootLatency "
+        dbgs() << " NewRootDepth + NewRootLatency = "
                << NewRootDepth + NewRootLatency << "\n";
-        dbgs() << " RootDepth + RootLatency + RootSlack "
+        dbgs() << " RootDepth + RootLatency + RootSlack = "
                << RootDepth + RootLatency + RootSlack << "\n";);
 
   unsigned NewCycleCount = NewRootDepth + NewRootLatency;
