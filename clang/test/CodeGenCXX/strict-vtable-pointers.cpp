@@ -142,7 +142,7 @@ struct DynamicDerived;
 // CHECK-CTORS: %[[THIS1:.*]] = bitcast %[[DynamicDerived:.*]]* %[[THIS0]] to i8*
 // CHECK-CTORS: %[[THIS2:.*]] = call i8* @llvm.invariant.group.barrier(i8* %[[THIS1:.*]])
 // CHECK-CTORS: %[[THIS3:.*]] = bitcast i8* %[[THIS2]] to %[[DynamicDerived]]*
-// CHECK-CTORS: %[[THIS4:.*]] = bitcast %[[DynamicDerived]]* %2 to %[[DynamicBase:.*]]*
+// CHECK-CTORS: %[[THIS4:.*]] = bitcast %[[DynamicDerived]]* %[[THIS3]] to %[[DynamicBase:.*]]*
 // CHECK-CTORS: call void @_ZN12DynamicBase1C2Ev(%[[DynamicBase]]* %[[THIS4]])
 
 // CHECK-CTORS: %[[THIS5:.*]] = bitcast %struct.DynamicDerived* %[[THIS0]] to i32 (...)***
