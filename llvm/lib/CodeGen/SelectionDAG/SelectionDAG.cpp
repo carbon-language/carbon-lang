@@ -3576,13 +3576,13 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
       SmallVector<SDValue, 8> Ops;
       for (int i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
         SDValue Op = N1.getOperand(i);
-        if (Op.getValueType() != VT.getScalarType()) break;
         if (Op.getOpcode() == ISD::UNDEF) {
-          Ops.push_back(Op);
+          Ops.push_back(getUNDEF(VT.getScalarType()));
           continue;
         }
         if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
           APInt Val = C->getAPIntValue();
+          Val = Val.zextOrTrunc(VT.getScalarSizeInBits());
           Ops.push_back(SignExtendInReg(Val));
           continue;
         }

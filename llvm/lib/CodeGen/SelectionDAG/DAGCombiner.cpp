@@ -6791,8 +6791,11 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   unsigned VTBits = VT.getScalarType().getSizeInBits();
   unsigned EVTBits = EVT.getScalarType().getSizeInBits();
 
+  if (N0.isUndef())
+    return DAG.getUNDEF(VT);
+
   // fold (sext_in_reg c1) -> c1
-  if (isa<ConstantSDNode>(N0) || N0.getOpcode() == ISD::UNDEF)
+  if (isConstantIntBuildVectorOrConstantInt(N0))
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, SDLoc(N), VT, N0, N1);
 
   // If the input is already sign extended, just drop the extension.
@@ -6883,29 +6886,6 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     if (BSwap.getNode())
       return DAG.getNode(ISD::SIGN_EXTEND_INREG, SDLoc(N), VT,
                          BSwap, N1);
-  }
-
-  // Fold a sext_inreg of a build_vector of ConstantSDNodes or undefs
-  // into a build_vector.
-  if (ISD::isBuildVectorOfConstantSDNodes(N0.getNode())) {
-    SmallVector<SDValue, 8> Elts;
-    unsigned NumElts = N0->getNumOperands();
-    unsigned ShAmt = VTBits - EVTBits;
-
-    for (unsigned i = 0; i != NumElts; ++i) {
-      SDValue Op = N0->getOperand(i);
-      if (Op->getOpcode() == ISD::UNDEF) {
-        Elts.push_back(Op);
-        continue;
-      }
-
-      ConstantSDNode *CurrentND = cast<ConstantSDNode>(Op);
-      const APInt &C = APInt(VTBits, CurrentND->getAPIntValue().getZExtValue());
-      Elts.push_back(DAG.getConstant(C.shl(ShAmt).ashr(ShAmt).getZExtValue(),
-                                     SDLoc(Op), Op.getValueType()));
-    }
-
-    return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), VT, Elts);
   }
 
   return SDValue();
