@@ -618,3 +618,55 @@ define <4 x double> @reassociate_maxs_v4f64(<4 x double> %x0, <4 x double> %x1, 
   ret <4 x double> %sel2
 }
 
+; PR25016: https://llvm.org/bugs/show_bug.cgi?id=25016
+; Verify that reassociation is not happening needlessly or wrongly.
+
+declare double @bar()
+
+define double @reassociate_adds_from_calls() {
+; AVX-LABEL: reassociate_adds_from_calls:
+; AVX:       callq   bar
+; AVX-NEXT:  vmovsd  %xmm0, 16(%rsp)
+; AVX-NEXT:  callq   bar
+; AVX-NEXT:  vmovsd  %xmm0, 8(%rsp)
+; AVX-NEXT:  callq   bar
+; AVX-NEXT:  vmovsd  %xmm0, (%rsp)
+; AVX-NEXT:  callq   bar
+; AVX-NEXT:  vmovsd  (%rsp), %xmm1
+; AVX:       vaddsd  8(%rsp), %xmm1, %xmm1
+; AVX-NEXT:  vaddsd  %xmm0, %xmm1, %xmm0
+; AVX-NEXT:  vaddsd  16(%rsp), %xmm0, %xmm0
+
+  %x0 = call double @bar()
+  %x1 = call double @bar()
+  %x2 = call double @bar()
+  %x3 = call double @bar()
+  %t0 = fadd double %x0, %x1
+  %t1 = fadd double %t0, %x2
+  %t2 = fadd double %t1, %x3
+  ret double %t2
+}
+
+define double @already_reassociated() {
+; AVX-LABEL: already_reassociated:
+; AVX:       callq   bar
+; AVX-NEXT:  vmovsd  %xmm0, 16(%rsp)
+; AVX-NEXT:  callq   bar
+; AVX-NEXT:  vmovsd  %xmm0, 8(%rsp)
+; AVX-NEXT:  callq   bar
+; AVX-NEXT:  vmovsd  %xmm0, (%rsp)
+; AVX-NEXT:  callq   bar
+; AVX-NEXT:  vaddsd  (%rsp), %xmm0, %xmm0
+; AVX-NEXT:  vaddsd  8(%rsp), %xmm0, %xmm0
+; AVX-NEXT:  vaddsd  16(%rsp), %xmm0, %xmm0
+
+  %x0 = call double @bar()
+  %x1 = call double @bar()
+  %x2 = call double @bar()
+  %x3 = call double @bar()
+  %t0 = fadd double %x0, %x1
+  %t1 = fadd double %x2, %x3
+  %t2 = fadd double %t0, %t1
+  ret double %t2
+}
+
