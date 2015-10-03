@@ -1,0 +1,2 @@
+RUN: llvm-size %t.blah 2>&1 | FileCheck --check-prefix=ENOENT %s
+ENOENT: {{.*}}llvm-size: {{.*}}.blah: {{[Nn]}}o such file or directory

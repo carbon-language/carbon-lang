@@ -413,14 +413,6 @@ static bool checkMachOAndArchFlags(ObjectFile *o, StringRef file) {
 /// @brief Print the section sizes for @p file. If @p file is an archive, print
 ///        the section sizes for each archive member.
 static void PrintFileSectionSizes(StringRef file) {
-  // If file is not stdin, check that it exists.
-  if (file != "-") {
-    if (!sys::fs::exists(file)) {
-      errs() << ToolName << ": '" << file << "': "
-             << "No such file\n";
-      return;
-    }
-  }
 
   // Attempt to open the binary.
   ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(file);
