@@ -3844,7 +3844,7 @@ const SCEV *ScalarEvolution::createNodeFromSelectLikePHI(PHINode *PN) {
       bool isDone() { return TraversalDone; }
     };
 
-    CheckAvailable CA(L, BB, DT);
+    CheckAvailable CA(L, BB, this->DT);
     SCEVTraversal<CheckAvailable> ST(CA);
 
     ST.visitAll(S);
