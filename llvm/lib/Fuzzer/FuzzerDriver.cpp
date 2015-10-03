@@ -318,7 +318,7 @@ int FuzzerDriver(const std::vector<std::string> &Args,
     Printf("Done %d runs in %zd second(s)\n", F.getTotalNumberOfRuns(),
            F.secondsSinceProcessStartUp());
 
-  return 0;
+  exit(0);  // Don't let F destroy itself.
 }
 
 }  // namespace fuzzer
