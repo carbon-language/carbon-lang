@@ -3742,116 +3742,116 @@ const SCEV *ScalarEvolution::createAddRecFromPHI(PHINode *PN) {
   return nullptr;
 }
 
-const SCEV *ScalarEvolution::createNodeFromSelectLikePHI(PHINode *PN) {
-  const Loop *L = LI.getLoopFor(PN->getParent());
+// Checks if the SCEV S is available at BB.  S is considered available at BB
+// if S can be materialized at BB without introducing a fault.
+static bool IsAvailableOnEntry(const Loop *L, DominatorTree &DT, const SCEV *S,
+                               BasicBlock *BB) {
+  struct CheckAvailable {
+    bool TraversalDone = false;
+    bool Available = true;
 
-  // Try to match a control flow sequence that branches out at BI and merges
-  // back at Merge into a "C ? LHS : RHS" select pattern.  Return true on a
-  // successful match.
-  auto BrPHIToSelect = [&](BranchInst *BI, PHINode *Merge, Value *&C,
-                           Value *&LHS, Value *&RHS) {
-    C = BI->getCondition();
+    const Loop *L = nullptr;  // The loop BB is in (can be nullptr)
+    BasicBlock *BB = nullptr;
+    DominatorTree &DT;
 
-    BasicBlockEdge LeftEdge(BI->getParent(), BI->getSuccessor(0));
-    BasicBlockEdge RightEdge(BI->getParent(), BI->getSuccessor(1));
+    CheckAvailable(const Loop *L, BasicBlock *BB, DominatorTree &DT)
+      : L(L), BB(BB), DT(DT) {}
 
-    if (!LeftEdge.isSingleEdge())
+    bool setUnavailable() {
+      TraversalDone = true;
+      Available = false;
       return false;
-
-    assert(RightEdge.isSingleEdge() && "Follows from LeftEdge.isSingleEdge()");
-
-    Use &LeftUse = Merge->getOperandUse(0);
-    Use &RightUse = Merge->getOperandUse(1);
-
-    if (DT.dominates(LeftEdge, LeftUse) && DT.dominates(RightEdge, RightUse)) {
-      LHS = LeftUse;
-      RHS = RightUse;
-      return true;
     }
 
-    if (DT.dominates(LeftEdge, RightUse) && DT.dominates(RightEdge, LeftUse)) {
-      LHS = RightUse;
-      RHS = LeftUse;
+    bool follow(const SCEV *S) {
+      switch (S->getSCEVType()) {
+      case scConstant: case scTruncate: case scZeroExtend: case scSignExtend:
+      case scAddExpr: case scMulExpr: case scUMaxExpr: case scSMaxExpr:
+      // These expressions are available if their operand(s) is/are.
       return true;
-    }
 
-    return false;
-  };
-
-  // Checks if the SCEV S is available at BB.  S is considered available at BB
-  // if S can be materialized at BB without introducing a fault.
-  auto IsAvailableOnEntry = [&](const SCEV *S, BasicBlock *BB) {
-    struct CheckAvailable {
-      bool TraversalDone = false;
-      bool Available = true;
-
-      const Loop *L = nullptr;  // The loop BB is in (can be nullptr)
-      BasicBlock *BB = nullptr;
-      DominatorTree &DT;
-
-      CheckAvailable(const Loop *L, BasicBlock *BB, DominatorTree &DT)
-          : L(L), BB(BB), DT(DT) {}
-
-      bool setUnavailable() {
-        TraversalDone = true;
-        Available = false;
-        return false;
-      }
-
-      bool follow(const SCEV *S) {
-        switch (S->getSCEVType()) {
-        case scConstant: case scTruncate: case scZeroExtend: case scSignExtend:
-        case scAddExpr: case scMulExpr: case scUMaxExpr: case scSMaxExpr:
-          // These expressions are available if their operand(s) is/are.
+      case scAddRecExpr: {
+        // We allow add recurrences that are on the loop BB is in, or some
+        // outer loop.  This guarantees availability because the value of the
+        // add recurrence at BB is simply the "current" value of the induction
+        // variable.  We can relax this in the future; for instance an add
+        // recurrence on a sibling dominating loop is also available at BB.
+        const auto *ARLoop = cast<SCEVAddRecExpr>(S)->getLoop();
+        if (L && (ARLoop == L || ARLoop->contains(L)))
           return true;
 
-        case scAddRecExpr: {
-          // We allow add recurrences that are on the loop BB is in, or some
-          // outer loop.  This guarantees availability because the value of the
-          // add recurrence at BB is simply the "current" value of the induction
-          // variable.  We can relax this in the future; for instance an add
-          // recurrence on a sibling dominating loop is also available at BB.
-          const auto *ARLoop = cast<SCEVAddRecExpr>(S)->getLoop();
-          if (L && (ARLoop == L || ARLoop->contains(L)))
-            return true;
-
-          return setUnavailable();
-        }
-
-        case scUnknown: {
-          // For SCEVUnknown, we check for simple dominance.
-          const auto *SU = cast<SCEVUnknown>(S);
-          Value *V = SU->getValue();
-
-          if (isa<Argument>(V))
-            return false;
-
-          if (isa<Instruction>(V) &&
-              this->DT.dominates(cast<Instruction>(V), BB))
-            return false;
-
-          return setUnavailable();
-        }
-
-        case scUDivExpr:
-        case scCouldNotCompute:
-          // We do not try to smart about these at all.
-          return setUnavailable();
-        }
-        llvm_unreachable("switch should be fully covered!");
+        return setUnavailable();
       }
 
-      bool isDone() { return TraversalDone; }
-    };
+      case scUnknown: {
+        // For SCEVUnknown, we check for simple dominance.
+        const auto *SU = cast<SCEVUnknown>(S);
+        Value *V = SU->getValue();
 
-    CheckAvailable CA(L, BB, this->DT);
-    SCEVTraversal<CheckAvailable> ST(CA);
+        if (isa<Argument>(V))
+          return false;
 
-    ST.visitAll(S);
-    return CA.Available;
+        if (isa<Instruction>(V) && DT.dominates(cast<Instruction>(V), BB))
+          return false;
+
+        return setUnavailable();
+      }
+
+      case scUDivExpr:
+      case scCouldNotCompute:
+      // We do not try to smart about these at all.
+      return setUnavailable();
+      }
+      llvm_unreachable("switch should be fully covered!");
+    }
+
+    bool isDone() { return TraversalDone; }
   };
 
+  CheckAvailable CA(L, BB, DT);
+  SCEVTraversal<CheckAvailable> ST(CA);
+
+  ST.visitAll(S);
+  return CA.Available;
+}
+
+// Try to match a control flow sequence that branches out at BI and merges back
+// at Merge into a "C ? LHS : RHS" select pattern.  Return true on a successful
+// match.
+static bool BrPHIToSelect(DominatorTree &DT, BranchInst *BI, PHINode *Merge,
+                          Value *&C, Value *&LHS, Value *&RHS) {
+  C = BI->getCondition();
+
+  BasicBlockEdge LeftEdge(BI->getParent(), BI->getSuccessor(0));
+  BasicBlockEdge RightEdge(BI->getParent(), BI->getSuccessor(1));
+
+  if (!LeftEdge.isSingleEdge())
+    return false;
+
+  assert(RightEdge.isSingleEdge() && "Follows from LeftEdge.isSingleEdge()");
+
+  Use &LeftUse = Merge->getOperandUse(0);
+  Use &RightUse = Merge->getOperandUse(1);
+
+  if (DT.dominates(LeftEdge, LeftUse) && DT.dominates(RightEdge, RightUse)) {
+    LHS = LeftUse;
+    RHS = RightUse;
+    return true;
+  }
+
+  if (DT.dominates(LeftEdge, RightUse) && DT.dominates(RightEdge, LeftUse)) {
+    LHS = RightUse;
+    RHS = LeftUse;
+    return true;
+  }
+
+  return false;
+}
+
+const SCEV *ScalarEvolution::createNodeFromSelectLikePHI(PHINode *PN) {
   if (PN->getNumIncomingValues() == 2) {
+    const Loop *L = LI.getLoopFor(PN->getParent());
+
     // Try to match
     //
     //  br %cond, label %left, label %right
@@ -3870,9 +3870,10 @@ const SCEV *ScalarEvolution::createNodeFromSelectLikePHI(PHINode *PN) {
     auto *BI = dyn_cast<BranchInst>(IDom->getTerminator());
     Value *Cond = nullptr, *LHS = nullptr, *RHS = nullptr;
 
-    if (BI && BI->isConditional() && BrPHIToSelect(BI, PN, Cond, LHS, RHS) &&
-        IsAvailableOnEntry(getSCEV(LHS), PN->getParent()) &&
-        IsAvailableOnEntry(getSCEV(RHS), PN->getParent()))
+    if (BI && BI->isConditional() &&
+        BrPHIToSelect(DT, BI, PN, Cond, LHS, RHS) &&
+        IsAvailableOnEntry(L, DT, getSCEV(LHS), PN->getParent()) &&
+        IsAvailableOnEntry(L, DT, getSCEV(RHS), PN->getParent()))
       return createNodeForSelectOrPHI(PN, Cond, LHS, RHS);
   }
 
