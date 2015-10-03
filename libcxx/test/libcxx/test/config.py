@@ -344,7 +344,20 @@ class Configuration(object):
         # Try and get the std version from the command line. Fall back to
         # default given in lit.site.cfg is not present. If default is not
         # present then force c++11.
-        std = self.get_lit_conf('std', 'c++11')
+        std = self.get_lit_conf('std')
+        if not std:
+            # Choose the newest possible language dialect if none is given.
+            possible_stds = ['c++1z', 'c++14', 'c++11', 'c++03']
+            for s in possible_stds:
+                if self.cxx.hasCompileFlag('-std=%s' % s):
+                    std = s
+                    self.lit_config.note(
+                        'inferred language dialect as: %s' % std)
+                    break
+            if not std:
+                self.lit_config.fatal(
+                    'Failed to infer a supported language dialect from one of %r'
+                    % possible_stds)
         self.cxx.compile_flags += ['-std={0}'.format(std)]
         self.config.available_features.add(std)
         # Configure include paths
