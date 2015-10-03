@@ -1424,22 +1424,6 @@ multiclass VOP3_m <vop op, dag outs, dag ins, string asm, list<dag> pattern,
                               HasMods>;
 }
 
-// VOP3_m without source modifiers
-multiclass VOP3_m_nomods <vop op, dag outs, dag ins, string asm, list<dag> pattern,
-                   string opName, int NumSrcArgs, bit HasMods = 1> {
-
-  def "" : VOP3_Pseudo <outs, ins, pattern, opName>;
-
-  let src0_modifiers = 0,
-      src1_modifiers = 0,
-      src2_modifiers = 0,
-      clamp = 0,
-      omod = 0 in {
-    def _si : VOP3_Real_si <op.SI3, outs, ins, asm, opName>;
-    def _vi : VOP3_Real_vi <op.VI3, outs, ins, asm, opName>;
-  }
-}
-
 multiclass VOP3_1_m <vop op, dag outs, dag ins, string asm,
                      list<dag> pattern, string opName, bit HasMods = 1> {
 
