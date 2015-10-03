@@ -95,17 +95,20 @@
 // RUN: %clang_cl /Oi- -### -- %s 2>&1 | FileCheck -check-prefix=Oi_ %s
 // Oi_: -fno-builtin
 
-// RUN: %clang_cl /Os -### -- %s 2>&1 | FileCheck -check-prefix=Os %s
+// RUN: %clang_cl /Os --target i686-pc-windows-msvc -### -- %s 2>&1 | FileCheck -check-prefix=Os %s
+// RUN: %clang_cl /Os --target x86_64-pc-windows-msvc -### -- %s 2>&1 | FileCheck -check-prefix=Os %s
 // Os-NOT: -mdisable-fp-elim
 // Os: -momit-leaf-frame-pointer
 // Os: -Os
 
-// RUN: %clang_cl /Ot -### -- %s 2>&1 | FileCheck -check-prefix=Ot %s
+// RUN: %clang_cl /Ot --target i686-pc-windows-msvc -### -- %s 2>&1 | FileCheck -check-prefix=Ot %s
+// RUN: %clang_cl /Ot --target x86_64-pc-windows-msvc -### -- %s 2>&1 | FileCheck -check-prefix=Ot %s
 // Ot-NOT: -mdisable-fp-elim
 // Ot: -momit-leaf-frame-pointer
 // Ot: -O2
 
-// RUN: %clang_cl /Ox -### -- %s 2>&1 | FileCheck -check-prefix=Ox %s
+// RUN: %clang_cl /Ox --target i686-pc-windows-msvc -### -- %s 2>&1 | FileCheck -check-prefix=Ox %s
+// RUN: %clang_cl /Ox --target x86_64-pc-windows-msvc -### -- %s 2>&1 | FileCheck -check-prefix=Ox %s
 // Ox-NOT: -mdisable-fp-elim
 // Ox: -momit-leaf-frame-pointer
 // Ox: -O2
