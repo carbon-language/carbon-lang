@@ -1799,7 +1799,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   if (IncludePos.isMacroID())
     IncludePos = SourceMgr.getExpansionRange(IncludePos).second;
   FileID FID = SourceMgr.createFileID(File, IncludePos, FileCharacter);
-  assert(!FID.isInvalid() && "Expected valid file ID");
+  assert(FID.isValid() && "Expected valid file ID");
 
   // If all is good, enter the new file!
   if (EnterSourceFile(FID, CurDir, FilenameTok.getLocation()))

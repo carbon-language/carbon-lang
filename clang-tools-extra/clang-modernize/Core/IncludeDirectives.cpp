@@ -354,7 +354,7 @@ bool IncludeDirectives::hasInclude(const FileEntry *File,
 Replacement IncludeDirectives::addAngledInclude(const clang::FileEntry *File,
                                                 llvm::StringRef Include) {
   FileID FID = Sources.translateFile(File);
-  assert(!FID.isInvalid() && "Invalid file entry given!");
+  assert(FID.isValid() && "Invalid file entry given!");
 
   if (hasInclude(File, Include))
     return Replacement();

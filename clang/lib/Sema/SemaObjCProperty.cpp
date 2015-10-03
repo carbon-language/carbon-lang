@@ -1563,7 +1563,7 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
         IMPDecl->FindPropertyImplIvarDecl(Prop->getIdentifier())) {
       Diag(Prop->getLocation(), diag::warn_no_autosynthesis_shared_ivar_property)
         << Prop->getIdentifier();
-      if (!PID->getLocation().isInvalid())
+      if (PID->getLocation().isValid())
         Diag(PID->getLocation(), diag::note_property_synthesize);
       continue;
     }

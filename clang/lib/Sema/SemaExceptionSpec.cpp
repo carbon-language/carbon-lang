@@ -232,7 +232,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
         hasImplicitExceptionSpec(Old) != hasImplicitExceptionSpec(New)) {
       Diag(New->getLocation(), diag::ext_implicit_exception_spec_mismatch)
         << hasImplicitExceptionSpec(Old);
-      if (!Old->getLocation().isInvalid())
+      if (Old->getLocation().isValid())
         Diag(Old->getLocation(), diag::note_previous_declaration);
     }
     return false;
@@ -353,7 +353,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
       << FixItHint::CreateInsertion(FixItLoc, " " + OS.str().str());
   }
 
-  if (!Old->getLocation().isInvalid())
+  if (Old->getLocation().isValid())
     Diag(Old->getLocation(), diag::note_previous_declaration);
 
   return ReturnValueOnError;

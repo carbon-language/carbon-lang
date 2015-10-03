@@ -559,7 +559,7 @@ bool ForLoopIndexUseVisitor::TraverseMemberExpr(MemberExpr *Member) {
         Context->getLangOpts());
     // If something complicated is happening (i.e. the next token isn't an
     // arrow), give up on making this work.
-    if (!ArrowLoc.isInvalid()) {
+    if (ArrowLoc.isValid()) {
       addUsage(Usage(ResultExpr, Usage::UK_MemberThroughArrow,
                      SourceRange(Base->getExprLoc(), ArrowLoc)));
       return true;

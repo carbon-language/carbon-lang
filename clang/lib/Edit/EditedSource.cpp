@@ -364,7 +364,7 @@ static void adjustRemoval(const SourceManager &SM, const LangOptions &LangOpts,
 static void applyRewrite(EditsReceiver &receiver,
                          StringRef text, FileOffset offs, unsigned len,
                          const SourceManager &SM, const LangOptions &LangOpts) {
-  assert(!offs.getFID().isInvalid());
+  assert(offs.getFID().isValid());
   SourceLocation Loc = SM.getLocForStartOfFile(offs.getFID());
   Loc = Loc.getLocWithOffset(offs.getOffset());
   assert(Loc.isFileID());

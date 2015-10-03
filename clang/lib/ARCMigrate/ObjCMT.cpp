@@ -1805,7 +1805,7 @@ private:
       FileID FID;
       unsigned Offset;
       std::tie(FID, Offset) = SourceMgr.getDecomposedLoc(Loc);
-      assert(!FID.isInvalid());
+      assert(FID.isValid());
       SmallString<200> Path =
           StringRef(SourceMgr.getFileEntryForID(FID)->getName());
       llvm::sys::fs::make_absolute(Path);
@@ -1862,8 +1862,8 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
     for (DeclContext::decl_iterator D = TU->decls_begin(), DEnd = TU->decls_end();
          D != DEnd; ++D) {
       FileID FID = PP.getSourceManager().getFileID((*D)->getLocation());
-      if (!FID.isInvalid())
-        if (!FileId.isInvalid() && FileId != FID) {
+      if (FID.isValid())
+        if (FileId.isValid() && FileId != FID) {
           if (ASTMigrateActions & FrontendOptions::ObjCMT_Annotation)
             AnnotateImplicitBridging(Ctx);
         }

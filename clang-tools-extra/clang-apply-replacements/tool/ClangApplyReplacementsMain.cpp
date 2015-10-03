@@ -118,7 +118,7 @@ getRewrittenData(const std::vector<tooling::Replacement> &Replacements,
   const clang::FileEntry *Entry = Files.getFile(FileName);
   assert(Entry && "Expected an existing file");
   FileID ID = SM.translateFile(Entry);
-  assert(!ID.isInvalid() && "Expected a valid FileID");
+  assert(ID.isValid() && "Expected a valid FileID");
   const RewriteBuffer *Buffer = Rewrites.getRewriteBufferFor(ID);
   Result = std::string(Buffer->begin(), Buffer->end());
 

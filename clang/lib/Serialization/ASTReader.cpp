@@ -1340,7 +1340,7 @@ SourceLocation ASTReader::getImportLocation(ModuleFile *F) {
   // location of its includer.
   if (F->ImportedBy.empty() || !F->ImportedBy[0]) {
     // Main file is the importer.
-    assert(!SourceMgr.getMainFileID().isInvalid() && "missing main file");
+    assert(SourceMgr.getMainFileID().isValid() && "missing main file");
     return SourceMgr.getLocForStartOfFile(SourceMgr.getMainFileID());
   }
   return F->ImportedBy[0]->FirstLoc;
@@ -3596,7 +3596,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     DeserializationListener->ReaderInitialized(this);
 
   ModuleFile &PrimaryModule = ModuleMgr.getPrimaryModule();
-  if (!PrimaryModule.OriginalSourceFileID.isInvalid()) {
+  if (PrimaryModule.OriginalSourceFileID.isValid()) {
     PrimaryModule.OriginalSourceFileID 
       = FileID::get(PrimaryModule.SLocEntryBaseID
                     + PrimaryModule.OriginalSourceFileID.getOpaqueValue() - 1);

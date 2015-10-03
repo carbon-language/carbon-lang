@@ -43,6 +43,7 @@ class FileID {
 public:
   FileID() : ID(0) {}
 
+  bool isValid() const { return ID != 0; }
   bool isInvalid() const { return ID == 0; }
 
   bool operator==(const FileID &RHS) const { return ID == RHS.ID; }

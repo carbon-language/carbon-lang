@@ -244,7 +244,7 @@ public:
       assert(Region.hasEndLoc() && "incomplete region");
 
       SourceLocation LocStart = Region.getStartLoc();
-      assert(!SM.getFileID(LocStart).isInvalid() && "region in invalid file");
+      assert(SM.getFileID(LocStart).isValid() && "region in invalid file");
 
       auto CovFileID = getCoverageFileID(LocStart);
       // Ignore regions that don't have a file, such as builtin macros.

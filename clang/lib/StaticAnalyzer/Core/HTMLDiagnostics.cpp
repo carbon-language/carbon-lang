@@ -126,7 +126,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   assert(!path.empty());
   FileID FID =
     (*path.begin())->getLocation().asLocation().getExpansionLoc().getFileID();
-  assert(!FID.isInvalid());
+  assert(FID.isValid());
 
   // Create a new rewriter to generate HTML.
   Rewriter R(const_cast<SourceManager&>(SMgr), PP.getLangOpts());

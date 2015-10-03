@@ -66,7 +66,7 @@ PreprocessingRecord::getPreprocessedEntitiesInRange(SourceRange Range) {
 
 static bool isPreprocessedEntityIfInFileID(PreprocessedEntity *PPE, FileID FID,
                                            SourceManager &SM) {
-  assert(!FID.isInvalid());
+  assert(FID.isValid());
   if (!PPE)
     return false;
 
