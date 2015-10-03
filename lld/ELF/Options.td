@@ -23,7 +23,7 @@ def discard_locals : Flag<["-"], "discard-locals">,
 def discard_none : Flag<["-"], "discard-none">,
   HelpText<"Keep all symbols in the symbol table">;
 
-def dynamic_linker : Separate<["-"], "dynamic-linker">,
+def dynamic_linker : Separate<["--", "-"], "dynamic-linker">,
   HelpText<"Which dynamic linker to use">;
 
 def entry : Separate<["--", "-"], "entry">, MetaVarName<"<entry>">,
