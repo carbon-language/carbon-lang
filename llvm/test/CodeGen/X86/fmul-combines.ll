@@ -86,15 +86,13 @@ define <4 x float> @fmul_v4f32_two_consts_no_splat_non_canonical(<4 x float> %x)
 }
 
 ; More than one use of a constant multiply should not inhibit the optimization.
-; Instead of a chain of 2 dependent mults, this test will have 2 independent mults. 
-; CHECK: float 5.000000e+00
-; CHECK: float 1.200000e+01
-; CHECK: float 2.100000e+01
-; CHECK: float 3.200000e+01
+; Instead of a chain of 2 dependent mults, this test will have 2 independent mults.
+; CHECK: float 6.000000e+00
+; CHECK: float 1.400000e+01
+; CHECK: float 2.400000e+01
+; CHECK: float 3.600000e+01
 ; CHECK-LABEL: fmul_v4f32_two_consts_no_splat_multiple_use:
 ; CHECK: mulps
-; CHECK: mulps
-; CHECK: addps
 ; CHECK: ret
 define <4 x float> @fmul_v4f32_two_consts_no_splat_multiple_use(<4 x float> %x) #0 {
   %y = fmul <4 x float> %x, <float 1.0, float 2.0, float 3.0, float 4.0>

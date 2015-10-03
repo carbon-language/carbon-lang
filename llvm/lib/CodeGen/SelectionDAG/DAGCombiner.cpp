@@ -7987,8 +7987,8 @@ SDValue DAGCombiner::visitFMULForFMACombine(SDNode *N) {
 SDValue DAGCombiner::visitFADD(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
-  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
-  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
+  bool N0CFP = isConstantFPBuildVectorOrConstantFP(N0);
+  bool N1CFP = isConstantFPBuildVectorOrConstantFP(N1);
   EVT VT = N->getValueType(0);
   SDLoc DL(N);
   const TargetOptions &Options = DAG.getTarget().Options;
@@ -8026,12 +8026,13 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
     bool AllowNewConst = (Level < AfterLegalizeDAG);
 
     // fold (fadd A, 0) -> A
-    if (N1CFP && N1CFP->isZero())
-      return N0;
+    if (ConstantFPSDNode *N1C = isConstOrConstSplatFP(N1))
+      if (N1C->isZero())
+        return N0;
 
     // fold (fadd (fadd x, c1), c2) -> (fadd x, (fadd c1, c2))
     if (N1CFP && N0.getOpcode() == ISD::FADD && N0.getNode()->hasOneUse() &&
-        isa<ConstantFPSDNode>(N0.getOperand(1)))
+        isConstantFPBuildVectorOrConstantFP(N0.getOperand(1)))
       return DAG.getNode(ISD::FADD, DL, VT, N0.getOperand(0),
                          DAG.getNode(ISD::FADD, DL, VT, N0.getOperand(1), N1,
                                      Flags),
@@ -8050,12 +8051,12 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
     // of rounding steps.
     if (TLI.isOperationLegalOrCustom(ISD::FMUL, VT) && !N0CFP && !N1CFP) {
       if (N0.getOpcode() == ISD::FMUL) {
-        ConstantFPSDNode *CFP00 = dyn_cast<ConstantFPSDNode>(N0.getOperand(0));
-        ConstantFPSDNode *CFP01 = dyn_cast<ConstantFPSDNode>(N0.getOperand(1));
+        bool CFP00 = isConstantFPBuildVectorOrConstantFP(N0.getOperand(0));
+        bool CFP01 = isConstantFPBuildVectorOrConstantFP(N0.getOperand(1));
 
         // (fadd (fmul x, c), x) -> (fmul x, c+1)
         if (CFP01 && !CFP00 && N0.getOperand(0) == N1) {
-          SDValue NewCFP = DAG.getNode(ISD::FADD, DL, VT, SDValue(CFP01, 0),
+          SDValue NewCFP = DAG.getNode(ISD::FADD, DL, VT, N0.getOperand(1),
                                        DAG.getConstantFP(1.0, DL, VT), Flags);
           return DAG.getNode(ISD::FMUL, DL, VT, N1, NewCFP, Flags);
         }
@@ -8064,19 +8065,19 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
         if (CFP01 && !CFP00 && N1.getOpcode() == ISD::FADD &&
             N1.getOperand(0) == N1.getOperand(1) &&
             N0.getOperand(0) == N1.getOperand(0)) {
-          SDValue NewCFP = DAG.getNode(ISD::FADD, DL, VT, SDValue(CFP01, 0),
+          SDValue NewCFP = DAG.getNode(ISD::FADD, DL, VT, N0.getOperand(1),
                                        DAG.getConstantFP(2.0, DL, VT), Flags);
           return DAG.getNode(ISD::FMUL, DL, VT, N0.getOperand(0), NewCFP, Flags);
         }
       }
 
       if (N1.getOpcode() == ISD::FMUL) {
-        ConstantFPSDNode *CFP10 = dyn_cast<ConstantFPSDNode>(N1.getOperand(0));
-        ConstantFPSDNode *CFP11 = dyn_cast<ConstantFPSDNode>(N1.getOperand(1));
+        bool CFP10 = isConstantFPBuildVectorOrConstantFP(N1.getOperand(0));
+        bool CFP11 = isConstantFPBuildVectorOrConstantFP(N1.getOperand(1));
 
         // (fadd x, (fmul x, c)) -> (fmul x, c+1)
         if (CFP11 && !CFP10 && N1.getOperand(0) == N0) {
-          SDValue NewCFP = DAG.getNode(ISD::FADD, DL, VT, SDValue(CFP11, 0),
+          SDValue NewCFP = DAG.getNode(ISD::FADD, DL, VT, N1.getOperand(1),
                                        DAG.getConstantFP(1.0, DL, VT), Flags);
           return DAG.getNode(ISD::FMUL, DL, VT, N0, NewCFP, Flags);
         }
@@ -8085,16 +8086,16 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
         if (CFP11 && !CFP10 && N0.getOpcode() == ISD::FADD &&
             N0.getOperand(0) == N0.getOperand(1) &&
             N1.getOperand(0) == N0.getOperand(0)) {
-          SDValue NewCFP = DAG.getNode(ISD::FADD, DL, VT, SDValue(CFP11, 0),
+          SDValue NewCFP = DAG.getNode(ISD::FADD, DL, VT, N1.getOperand(1),
                                        DAG.getConstantFP(2.0, DL, VT), Flags);
           return DAG.getNode(ISD::FMUL, DL, VT, N1.getOperand(0), NewCFP, Flags);
         }
       }
 
       if (N0.getOpcode() == ISD::FADD && AllowNewConst) {
-        ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N0.getOperand(0));
+        bool CFP00 = isConstantFPBuildVectorOrConstantFP(N0.getOperand(0));
         // (fadd (fadd x, x), x) -> (fmul x, 3.0)
-        if (!CFP && N0.getOperand(0) == N0.getOperand(1) &&
+        if (!CFP00 && N0.getOperand(0) == N0.getOperand(1) &&
             (N0.getOperand(0) == N1)) {
           return DAG.getNode(ISD::FMUL, DL, VT,
                              N1, DAG.getConstantFP(3.0, DL, VT), Flags);
@@ -8102,7 +8103,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
       }
 
       if (N1.getOpcode() == ISD::FADD && AllowNewConst) {
-        ConstantFPSDNode *CFP10 = dyn_cast<ConstantFPSDNode>(N1.getOperand(0));
+        bool CFP10 = isConstantFPBuildVectorOrConstantFP(N1.getOperand(0));
         // (fadd x, (fadd x, x)) -> (fmul x, 3.0)
         if (!CFP10 && N1.getOperand(0) == N1.getOperand(1) &&
             N1.getOperand(0) == N0) {
