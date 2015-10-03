@@ -56,11 +56,14 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace clang;
 
-ClangExpressionDeclMap::ClangExpressionDeclMap (bool keep_result_in_memory, ExecutionContext &exe_ctx) :
+ClangExpressionDeclMap::ClangExpressionDeclMap (bool keep_result_in_memory,
+                                                Materializer::PersistentVariableDelegate *result_delegate,
+                                                ExecutionContext &exe_ctx) :
     ClangASTSource (exe_ctx.GetTargetSP()),
     m_found_entities (),
     m_struct_members (),
     m_keep_result_in_memory (keep_result_in_memory),
+    m_result_delegate (result_delegate),
     m_parser_vars (),
     m_struct_vars ()
 {
@@ -216,8 +219,12 @@ ClangExpressionDeclMap::AddPersistentVariable
                                                           ast->getASTContext(),
                                                           parser_type.GetOpaqueQualType()),
                                context);
-
-        uint32_t offset = m_parser_vars->m_materializer->AddResultVariable(user_type, is_lvalue, m_keep_result_in_memory, err);
+        
+        uint32_t offset = m_parser_vars->m_materializer->AddResultVariable(user_type,
+                                                                           is_lvalue,
+                                                                           m_keep_result_in_memory,
+                                                                           m_result_delegate,
+                                                                           err);
 
         ClangExpressionVariable *var = new ClangExpressionVariable(exe_ctx.GetBestExecutionContextScope(),
                                                                    name,
@@ -381,7 +388,7 @@ ClangExpressionDeclMap::AddValueToStruct
         if (is_persistent_variable)
         {
             ExpressionVariableSP var_sp(var->shared_from_this());
-            offset = m_parser_vars->m_materializer->AddPersistentVariable(var_sp, err);
+            offset = m_parser_vars->m_materializer->AddPersistentVariable(var_sp, nullptr, err);
         }
         else
         {

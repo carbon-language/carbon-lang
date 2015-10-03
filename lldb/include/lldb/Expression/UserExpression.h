@@ -249,6 +249,12 @@ public:
     {
         return true;
     }
+    
+    virtual lldb::ExpressionVariableSP
+    GetResultAfterDematerialization(ExecutionContextScope *exe_scope)
+    {
+        return lldb::ExpressionVariableSP();
+    }
 
     //------------------------------------------------------------------
     /// Evaluate one expression in the scratch context of the

@@ -265,7 +265,7 @@ UserExpression::FinalizeJITExecution (Stream &error_stream,
 
     Error dematerialize_error;
 
-    m_dematerializer_sp->Dematerialize(dematerialize_error, result, function_stack_bottom, function_stack_top);
+    m_dematerializer_sp->Dematerialize(dematerialize_error, function_stack_bottom, function_stack_top);
 
     if (!dematerialize_error.Success())
     {
@@ -273,6 +273,8 @@ UserExpression::FinalizeJITExecution (Stream &error_stream,
         return false;
     }
 
+    result = GetResultAfterDematerialization(exe_ctx.GetBestExecutionContextScope());
+    
     if (result)
         result->TransferAddress();
 

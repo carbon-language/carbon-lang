@@ -65,9 +65,11 @@ Materializer::Entity::SetSizeAndAlignmentFromType (CompilerType &type)
 class EntityPersistentVariable : public Materializer::Entity
 {
 public:
-    EntityPersistentVariable (lldb::ExpressionVariableSP &persistent_variable_sp) :
+    EntityPersistentVariable (lldb::ExpressionVariableSP &persistent_variable_sp,
+                              Materializer::PersistentVariableDelegate *delegate) :
         Entity(),
-        m_persistent_variable_sp(persistent_variable_sp)
+        m_persistent_variable_sp(persistent_variable_sp),
+        m_delegate(delegate)
     {
         // Hard-coding to maximum size of a pointer since persistent variables are materialized by reference
         m_size = 8;
@@ -210,6 +212,11 @@ public:
                         m_persistent_variable_sp->m_flags);
         }
         
+        if (m_delegate)
+        {
+            m_delegate->DidDematerialize(m_persistent_variable_sp);
+        }
+
         if ((m_persistent_variable_sp->m_flags & ExpressionVariable::EVIsLLDBAllocated) ||
             (m_persistent_variable_sp->m_flags & ExpressionVariable::EVIsProgramReference))
         {
@@ -390,13 +397,16 @@ public:
     }
 private:
     lldb::ExpressionVariableSP m_persistent_variable_sp;
+    Materializer::PersistentVariableDelegate *m_delegate;
 };
 
 uint32_t
-Materializer::AddPersistentVariable (lldb::ExpressionVariableSP &persistent_variable_sp, Error &err)
+Materializer::AddPersistentVariable (lldb::ExpressionVariableSP &persistent_variable_sp,
+                                     PersistentVariableDelegate *delegate,
+                                     Error &err)
 {
     EntityVector::iterator iter = m_entities.insert(m_entities.end(), EntityUP());
-    iter->reset (new EntityPersistentVariable (persistent_variable_sp));
+    iter->reset (new EntityPersistentVariable (persistent_variable_sp, delegate));
     uint32_t ret = AddStructMember(**iter);
     (*iter)->SetOffset(ret);
     return ret;
@@ -755,13 +765,17 @@ Materializer::AddVariable (lldb::VariableSP &variable_sp, Error &err)
 class EntityResultVariable : public Materializer::Entity
 {
 public:
-    EntityResultVariable (const CompilerType &type, bool is_program_reference, bool keep_in_memory) :
+    EntityResultVariable (const CompilerType &type,
+                          bool is_program_reference,
+                          bool keep_in_memory,
+                          Materializer::PersistentVariableDelegate *delegate) :
         Entity(),
         m_type(type),
         m_is_program_reference(is_program_reference),
         m_keep_in_memory(keep_in_memory),
         m_temporary_allocation(LLDB_INVALID_ADDRESS),
-        m_temporary_allocation_size(0)
+        m_temporary_allocation_size(0),
+        m_delegate(delegate)
     {
         // Hard-coding to maximum size of a pointer since all results are materialized by reference
         m_size = 8;
@@ -816,17 +830,6 @@ public:
                         lldb::addr_t frame_bottom,
                         Error &err)
     {
-        err.SetErrorString("Tried to detmaterialize a result variable with the normal Dematerialize method");
-    }
-    
-    void Dematerialize (lldb::ExpressionVariableSP &result_variable_sp,
-                        lldb::StackFrameSP &frame_sp,
-                        IRMemoryMap &map,
-                        lldb::addr_t process_address,
-                        lldb::addr_t frame_top,
-                        lldb::addr_t frame_bottom,
-                        Error &err)
-    {
         err.Clear();
         
         ExecutionContextScope *exe_scope = map.GetBestExecutionContextScope();
@@ -874,7 +877,7 @@ public:
             return;
         }
         
-        ConstString name = persistent_state->GetNextPersistentVariableName();
+        ConstString name = m_delegate ? m_delegate->GetName() : persistent_state->GetNextPersistentVariableName();
         
         lldb::ExpressionVariableSP ret = persistent_state->CreatePersistentVariable(exe_scope,
                                                                                     name,
@@ -889,6 +892,11 @@ public:
         }
         
         lldb::ProcessSP process_sp = map.GetBestExecutionContextScope()->CalculateProcess();
+        
+        if (m_delegate)
+        {
+            m_delegate->DidDematerialize(ret);
+        }
         
         bool can_persist = (m_is_program_reference && process_sp && process_sp->CanJIT() && !(address >= frame_bottom && address < frame_top));
 
@@ -914,8 +922,6 @@ public:
             err.SetErrorString("Couldn't dematerialize a result variable: couldn't read its memory");
             return;
         }
-                
-        result_variable_sp = persistent_state->GetVariable(name);
         
         if (!can_persist || !m_keep_in_memory)
         {
@@ -1028,16 +1034,20 @@ private:
     
     lldb::addr_t    m_temporary_allocation;
     size_t          m_temporary_allocation_size;
+    Materializer::PersistentVariableDelegate *m_delegate;
 };
 
 uint32_t
-Materializer::AddResultVariable (const CompilerType &type, bool is_program_reference, bool keep_in_memory, Error &err)
+Materializer::AddResultVariable (const CompilerType &type,
+                                 bool is_program_reference,
+                                 bool keep_in_memory,
+                                 PersistentVariableDelegate *delegate,
+                                 Error &err)
 {
     EntityVector::iterator iter = m_entities.insert(m_entities.end(), EntityUP());
-    iter->reset (new EntityResultVariable (type, is_program_reference, keep_in_memory));
+    iter->reset (new EntityResultVariable (type, is_program_reference, keep_in_memory, delegate));
     uint32_t ret = AddStructMember(**iter);
     (*iter)->SetOffset(ret);
-    m_result_entity = iter->get();
     return ret;
 }
 
@@ -1349,7 +1359,6 @@ Materializer::AddRegister (const RegisterInfo &register_info, Error &err)
 
 Materializer::Materializer () :
     m_dematerializer_wp(),
-    m_result_entity(NULL),
     m_current_offset(0),
     m_struct_alignment(8)
 {
@@ -1409,7 +1418,9 @@ Materializer::Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb:
 }
 
 void
-Materializer::Dematerializer::Dematerialize (Error &error, lldb::ExpressionVariableSP &result_sp, lldb::addr_t frame_bottom, lldb::addr_t frame_top)
+Materializer::Dematerializer::Dematerialize (Error &error,
+                                             lldb::addr_t frame_bottom,
+                                             lldb::addr_t frame_top)
 {
     lldb::StackFrameSP frame_sp;
 
@@ -1442,14 +1453,7 @@ Materializer::Dematerializer::Dematerialize (Error &error, lldb::ExpressionVaria
 
         for (EntityUP &entity_up : m_materializer->m_entities)
         {
-            if (entity_up.get() == m_materializer->m_result_entity)
-            {
-                static_cast<EntityResultVariable*>(m_materializer->m_result_entity)->Dematerialize (result_sp, frame_sp, *m_map, m_process_address, frame_top, frame_bottom, error);
-            }
-            else
-            {
-                entity_up->Dematerialize (frame_sp, *m_map, m_process_address, frame_top, frame_bottom, error);
-            }
+            entity_up->Dematerialize (frame_sp, *m_map, m_process_address, frame_top, frame_bottom, error);
 
             if (!error.Success())
                 break;
@@ -1474,3 +1478,8 @@ Materializer::Dematerializer::Wipe ()
     m_map = NULL;
     m_process_address = LLDB_INVALID_ADDRESS;
 }
+
+Materializer::PersistentVariableDelegate::~PersistentVariableDelegate()
+{
+}
+

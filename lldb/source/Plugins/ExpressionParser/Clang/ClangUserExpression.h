@@ -81,7 +81,7 @@ public:
         }
         
         void
-        ResetDeclMap (ExecutionContext & exe_ctx, bool keep_result_in_memory);
+        ResetDeclMap (ExecutionContext & exe_ctx, Materializer::PersistentVariableDelegate &result_delegate, bool keep_result_in_memory);
         
         //------------------------------------------------------------------
         /// Return the object that the parser should allow to access ASTs.
@@ -177,10 +177,13 @@ public:
     }
     
     void
-    ResetDeclMap (ExecutionContext & exe_ctx, bool keep_result_in_memory)
+    ResetDeclMap (ExecutionContext & exe_ctx, Materializer::PersistentVariableDelegate &result_delegate, bool keep_result_in_memory)
     {
-        m_type_system_helper.ResetDeclMap(exe_ctx, keep_result_in_memory);
+        m_type_system_helper.ResetDeclMap(exe_ctx, result_delegate, keep_result_in_memory);
     }
+
+    lldb::ExpressionVariableSP
+    GetResultAfterDematerialization(ExecutionContextScope *exe_scope) override;
     
 private:
     //------------------------------------------------------------------
@@ -197,6 +200,22 @@ private:
                          Stream &error_stream) override;
     
     ClangUserExpressionHelper   m_type_system_helper;
+    
+    class ResultDelegate : public Materializer::PersistentVariableDelegate
+    {
+    public:
+        ResultDelegate();
+        ConstString GetName() override;
+        void DidDematerialize(lldb::ExpressionVariableSP &variable) override;
+        
+        void RegisterPersistentState(PersistentExpressionState *persistent_state);
+        lldb::ExpressionVariableSP &GetVariable();
+    private:
+        PersistentExpressionState *m_persistent_state;
+        lldb::ExpressionVariableSP m_variable;
+    };
+    
+    ResultDelegate                                          m_result_delegate;
 };
 
 } // namespace lldb_private

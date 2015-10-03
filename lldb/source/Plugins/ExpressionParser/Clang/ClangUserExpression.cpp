@@ -336,6 +336,24 @@ ClangUserExpression::Parse (Stream &error_stream,
     Error err;
 
     InstallContext(exe_ctx);
+    
+    if (Target *target = exe_ctx.GetTargetPtr())
+    {
+        if (PersistentExpressionState *persistent_state = target->GetPersistentExpressionStateForLanguage(lldb::eLanguageTypeC))
+        {
+            m_result_delegate.RegisterPersistentState(persistent_state);
+        }
+        else
+        {
+            error_stream.PutCString ("error: couldn't start parsing (no persistent data)");
+            return false;
+        }
+    }
+    else
+    {
+        error_stream.PutCString ("error: couldn't start parsing (no target)");
+        return false;
+    }
 
     ScanContext(exe_ctx, err);
 
@@ -424,7 +442,7 @@ ClangUserExpression::Parse (Stream &error_stream,
 
     m_materializer_ap.reset(new Materializer());
 
-    ResetDeclMap(exe_ctx, keep_result_in_memory);
+    ResetDeclMap(exe_ctx, m_result_delegate, keep_result_in_memory);
 
     class OnExit
     {
@@ -598,10 +616,16 @@ ClangUserExpression::AddInitialArguments (ExecutionContext &exe_ctx,
     return true;
 }
 
-void
-ClangUserExpression::ClangUserExpressionHelper::ResetDeclMap(ExecutionContext &exe_ctx, bool keep_result_in_memory)
+lldb::ExpressionVariableSP
+ClangUserExpression::GetResultAfterDematerialization(ExecutionContextScope *exe_scope)
 {
-    m_expr_decl_map_up.reset(new ClangExpressionDeclMap(keep_result_in_memory, exe_ctx));
+    return m_result_delegate.GetVariable();
+}
+
+void
+ClangUserExpression::ClangUserExpressionHelper::ResetDeclMap(ExecutionContext &exe_ctx, Materializer::PersistentVariableDelegate &delegate, bool keep_result_in_memory)
+{
+    m_expr_decl_map_up.reset(new ClangExpressionDeclMap(keep_result_in_memory, &delegate, exe_ctx));
 }
 
 clang::ASTConsumer *
@@ -611,5 +635,33 @@ ClangUserExpression::ClangUserExpressionHelper::ASTTransformer (clang::ASTConsum
                                                            m_target));
 
     return m_result_synthesizer_up.get();
+}
+
+ClangUserExpression::ResultDelegate::ResultDelegate()
+{
+}
+
+ConstString
+ClangUserExpression::ResultDelegate::GetName()
+{
+    return m_persistent_state->GetNextPersistentVariableName();
+}
+
+void
+ClangUserExpression::ResultDelegate::DidDematerialize(lldb::ExpressionVariableSP &variable)
+{
+    m_variable = variable;
+}
+
+void
+ClangUserExpression::ResultDelegate::RegisterPersistentState(PersistentExpressionState *persistent_state)
+{
+    m_persistent_state = persistent_state;
+}
+
+lldb::ExpressionVariableSP &
+ClangUserExpression::ResultDelegate::GetVariable()
+{
+    return m_variable;
 }
 
