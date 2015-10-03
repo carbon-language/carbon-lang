@@ -192,7 +192,7 @@ SourceLocation TypeLoc::getBeginLoc() const {
       Cur = Cur.getNextTypeLoc();
       continue;
     default:
-      if (!Cur.getLocalSourceRange().getBegin().isInvalid())
+      if (Cur.getLocalSourceRange().getBegin().isValid())
         LeftMost = Cur;
       Cur = Cur.getNextTypeLoc();
       if (Cur.isNull())

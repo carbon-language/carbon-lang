@@ -1060,7 +1060,7 @@ void TextDiagnostic::emitSnippetAndCaret(
     SmallVectorImpl<CharSourceRange>& Ranges,
     ArrayRef<FixItHint> Hints,
     const SourceManager &SM) {
-  assert(!Loc.isInvalid() && "must have a valid source location here");
+  assert(Loc.isValid() && "must have a valid source location here");
   assert(Loc.isFileID() && "must have a file location here");
 
   // If caret diagnostics are enabled and we have location, we want to

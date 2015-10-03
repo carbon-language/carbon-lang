@@ -518,7 +518,7 @@ void DiagnosticRenderer::emitMacroExpansions(SourceLocation Loc,
                                              ArrayRef<CharSourceRange> Ranges,
                                              ArrayRef<FixItHint> Hints,
                                              const SourceManager &SM) {
-  assert(!Loc.isInvalid() && "must have a valid source location here");
+  assert(Loc.isValid() && "must have a valid source location here");
 
   // Produce a stack of macro backtraces.
   SmallVector<SourceLocation, 8> LocationStack;
@@ -541,7 +541,7 @@ void DiagnosticRenderer::emitMacroExpansions(SourceLocation Loc,
     // backtraces.
     if (Loc.isFileID())
       Loc = SM.getImmediateMacroCallerLoc(LocationStack.back());
-    assert(!Loc.isInvalid() && "must have a valid source location here");
+    assert(Loc.isValid() && "must have a valid source location here");
   }
 
   LocationStack.erase(LocationStack.begin(),
@@ -598,7 +598,7 @@ void DiagnosticNoteRenderer::emitImportLocation(SourceLocation Loc,
   SmallString<200> MessageStorage;
   llvm::raw_svector_ostream Message(MessageStorage);
   Message << "in module '" << ModuleName;
-  if (!PLoc.isInvalid())
+  if (PLoc.isValid())
     Message << "' imported from " << PLoc.getFilename() << ':'
             << PLoc.getLine();
   Message << ":";

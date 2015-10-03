@@ -952,7 +952,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP, const PrintingPoli
     FixItHint Hints[NumLocs];
     SourceLocation FirstLoc;
     for (unsigned I = 0; I != NumLocs; ++I) {
-      if (!ExtraLocs[I].isInvalid()) {
+      if (ExtraLocs[I].isValid()) {
         if (FirstLoc.isInvalid() ||
             PP.getSourceManager().isBeforeInTranslationUnit(ExtraLocs[I],
                                                             FirstLoc))

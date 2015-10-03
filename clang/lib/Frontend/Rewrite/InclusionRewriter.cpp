@@ -160,7 +160,7 @@ void InclusionRewriter::FileChanged(SourceLocation Loc,
 void InclusionRewriter::FileSkipped(const FileEntry &/*SkippedFile*/,
                                     const Token &/*FilenameTok*/,
                                     SrcMgr::CharacteristicKind /*FileType*/) {
-  assert(!LastInclusionLocation.isInvalid() &&
+  assert(LastInclusionLocation.isValid() &&
          "A file, that wasn't found via an inclusion directive, was skipped");
   LastInclusionLocation = SourceLocation();
 }

@@ -787,7 +787,7 @@ static void findBlockLocations(CFG *CFGraph,
       }
     }
 
-    if (!CurrBlockInfo->ExitLoc.isInvalid()) {
+    if (CurrBlockInfo->ExitLoc.isValid()) {
       // This block contains at least one statement. Find the source location
       // of the first statement in the block.
       for (CFGBlock::const_iterator BI = CurrBlock->begin(),
