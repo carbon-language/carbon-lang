@@ -67,7 +67,8 @@ public:
   /// @see The ScalarMap and PHIOpMap member.
   using ScalarAllocaMapTy = DenseMap<AssertingVH<Value>, AssertingVH<Value>>;
 
-  typedef llvm::DenseMap<llvm::Value *, llvm::Value *> ValueMapT;
+  typedef llvm::DenseMap<AssertingVH<llvm::Value>, AssertingVH<llvm::Value>>
+      ValueMapT;
   typedef llvm::SmallVector<ValueMapT, 8> VectorValueMapT;
 
   /// @brief Simple vector of instructions to store escape users.
