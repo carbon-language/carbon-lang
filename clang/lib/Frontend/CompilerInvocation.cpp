@@ -1630,6 +1630,17 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.HalfArgsAndReturns = Args.hasArg(OPT_fallow_half_arguments_and_returns);
   Opts.GNUAsm = !Args.hasArg(OPT_fno_gnu_inline_asm);
 
+  // __declspec is enabled by default for the PS4 by the driver, and also
+  // enabled for Microsoft Extensions or Borland Extensions, here.
+  //
+  // FIXME: __declspec is also currently enabled for CUDA, but isn't really a
+  // CUDA extension, however it is required for supporting cuda_builtin_vars.h,
+  // which uses __declspec(property). Once that has been rewritten in terms of
+  // something more generic, remove the Opts.CUDA term here.
+  Opts.DeclSpecKeyword =
+      Args.hasFlag(OPT_fdeclspec, OPT_fno_declspec,
+                   (Opts.MicrosoftExt || Opts.Borland || Opts.CUDA));
+
   if (!Opts.CurrentModule.empty() && !Opts.ImplementationOfModule.empty() &&
       Opts.CurrentModule != Opts.ImplementationOfModule) {
     Diags.Report(diag::err_conflicting_module_names)

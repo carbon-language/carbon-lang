@@ -469,8 +469,11 @@ KEYWORD(__array_extent              , KEYCXX)
 KEYWORD(__private_extern__          , KEYALL)
 KEYWORD(__module_private__          , KEYALL)
 
+// Extension that will be enabled for Microsoft, Borland and PS4, but can be
+// disabled via '-fno-declspec'.
+KEYWORD(__declspec                  , 0)
+
 // Microsoft Extension.
-KEYWORD(__declspec                  , KEYMS|KEYBORLAND)
 KEYWORD(__cdecl                     , KEYALL)
 KEYWORD(__stdcall                   , KEYALL)
 KEYWORD(__fastcall                  , KEYALL)

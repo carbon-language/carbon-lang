@@ -220,10 +220,7 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
     AddKeyword("__unknown_anytype", tok::kw___unknown_anytype, KEYALL,
                LangOpts, *this);
 
-  // FIXME: __declspec isn't really a CUDA extension, however it is required for
-  // supporting cuda_builtin_vars.h, which uses __declspec(property). Once that
-  // has been rewritten in terms of something more generic, remove this code.
-  if (LangOpts.CUDA)
+  if (LangOpts.DeclSpecKeyword)
     AddKeyword("__declspec", tok::kw___declspec, KEYALL, LangOpts, *this);
 }
 

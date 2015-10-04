@@ -4610,6 +4610,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_fno_borland_extensions, false))
     CmdArgs.push_back("-fborland-extensions");
 
+  // -fno-declspec is default, except for PS4.
+  if (Args.hasFlag(options::OPT_fdeclspec, options::OPT_fno_declspec,
+                   getToolChain().getTriple().isPS4()))
+    CmdArgs.push_back("-fdeclspec");
+  else if (Args.hasArg(options::OPT_fno_declspec))
+    CmdArgs.push_back("-fno-declspec"); // Explicitly disabling __declspec.
+
   // -fthreadsafe-static is default, except for MSVC compatibility versions less
   // than 19.
   if (!Args.hasFlag(options::OPT_fthreadsafe_statics,

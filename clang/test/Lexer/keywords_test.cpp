@@ -1,6 +1,19 @@
 // RUN: %clang_cc1 -std=c++03 -fsyntax-only %s
 // RUN: %clang_cc1 -std=c++11 -DCXX11 -fsyntax-only %s
 // RUN: %clang_cc1 -std=c++14 -fconcepts-ts -DCXX11 -DCONCEPTS -fsyntax-only %s
+// RUN: %clang_cc1 -std=c++03 -fdeclspec -DDECLSPEC -fsyntax-only %s
+// RUN: %clang_cc1 -std=c++03 -fms-extensions -DDECLSPEC -fsyntax-only %s
+// RUN: %clang_cc1 -std=c++03 -fborland-extensions -DDECLSPEC -fsyntax-only %s
+// RUN: %clang_cc1 -std=c++03 -fms-extensions -fno-declspec -fsyntax-only %s
+// RUN: %clang_cc1 -std=c++03 -fborland-extensions -fno-declspec -fsyntax-only %s
+// RUN: %clang_cc1 -std=c++03 -fno-declspec -fdeclspec -DDECLSPEC -fsyntax-only %s
+// RUN: %clang_cc1 -std=c++03 -fdeclspec -fno-declspec -fsyntax-only %s
+// RUN: %clang_cc1 -std=c++03 -fms-extensions -fno-declspec -fdeclspec -DDECLSPEC -fsyntax-only %s
+// RUN: %clang_cc1 -std=c++03 -fms-extensions -fdeclspec -fno-declspec -fsyntax-only %s
+// RUN: %clang -std=c++03 -target i686-windows-msvc -DDECLSPEC -fsyntax-only %s
+// RUN: %clang -std=c++03 -target x86_64-scei-ps4 -DDECLSPEC -fsyntax-only %s
+// RUN: %clang -std=c++03 -target i686-windows-msvc -fno-declspec -fsyntax-only %s
+// RUN: %clang -std=c++03 -target x86_64-scei-ps4 -fno-declspec -fsyntax-only %s
 
 #define IS_KEYWORD(NAME) _Static_assert(!__is_identifier(NAME), #NAME)
 #define NOT_KEYWORD(NAME) _Static_assert(__is_identifier(NAME), #NAME)
@@ -10,6 +23,12 @@
 #define CONCEPTS_KEYWORD(NAME)  IS_KEYWORD(NAME)
 #else
 #define CONCEPTS_KEYWORD(NAME)  NOT_KEYWORD(NAME)
+#endif
+
+#ifdef DECLSPEC
+#define DECLSPEC_KEYWORD(NAME)  IS_KEYWORD(NAME)
+#else
+#define DECLSPEC_KEYWORD(NAME)  NOT_KEYWORD(NAME)
 #endif
 
 #ifdef CXX11
@@ -37,6 +56,9 @@ CXX11_KEYWORD(thread_local);
 // Concepts TS keywords
 CONCEPTS_KEYWORD(concept);
 CONCEPTS_KEYWORD(requires);
+
+// __declspec extension
+DECLSPEC_KEYWORD(__declspec);
 
 // Clang extension
 IS_KEYWORD(__char16_t);

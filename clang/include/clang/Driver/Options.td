@@ -516,6 +516,8 @@ def fdiagnostics_show_category_EQ : Joined<["-"], "fdiagnostics-show-category=">
 def fdiagnostics_show_template_tree : Flag<["-"], "fdiagnostics-show-template-tree">,
     Group<f_Group>, Flags<[CC1Option]>,
     HelpText<"Print a template comparison tree for differing templates">;
+def fdeclspec : Flag<["-"], "fdeclspec">, Group<f_clang_Group>,
+  HelpText<"Allow __declspec as a keyword">, Flags<[CC1Option]>;
 def fdollars_in_identifiers : Flag<["-"], "fdollars-in-identifiers">, Group<f_Group>,
   HelpText<"Allow '$' in identifiers">, Flags<[CC1Option]>;
 def fdwarf2_cfi_asm : Flag<["-"], "fdwarf2-cfi-asm">, Group<clang_ignored_f_Group>;
@@ -808,6 +810,8 @@ def fno_diagnostics_fixit_info : Flag<["-"], "fno-diagnostics-fixit-info">, Grou
 def fno_diagnostics_show_option : Flag<["-"], "fno-diagnostics-show-option">, Group<f_Group>;
 def fno_diagnostics_show_note_include_stack : Flag<["-"], "fno-diagnostics-show-note-include-stack">,
     Flags<[CC1Option]>, Group<f_Group>;
+def fno_declspec : Flag<["-"], "fno-declspec">, Group<f_clang_Group>,
+  HelpText<"Disallow __declspec as a keyword">, Flags<[CC1Option]>;
 def fno_dollars_in_identifiers : Flag<["-"], "fno-dollars-in-identifiers">, Group<f_Group>,
   HelpText<"Disallow '$' in identifiers">, Flags<[CC1Option]>;
 def fno_elide_constructors : Flag<["-"], "fno-elide-constructors">, Group<f_Group>,
